@@ -1,0 +1,60 @@
+{
+  "items": [
+    {
+      "type": "TODO",
+      "message": "Enviar email separado con la contraseña auto-generada",
+      "file": "src/app/api/auth/google/callback/route.ts",
+      "line": 125,
+      "column": 10
+    },
+    {
+      "type": "TODO",
+      "message": "obtener del contexto de usuario",
+      "file": "src/features/contabilidad/components/cierres/CierreForm.tsx",
+      "line": 106,
+      "column": 29
+    },
+    {
+      "type": "TODO",
+      "message": "Get from current user context",
+      "file": "src/features/empleados/components/asistencia-form.tsx",
+      "line": 146,
+      "column": 32
+    },
+    {
+      "type": "TODO",
+      "message": "Get from current user context",
+      "file": "src/features/empleados/components/attendance-history-view.tsx",
+      "line": 131,
+      "column": 32
+    },
+    {
+      "type": "TODO",
+      "message": "Get from current user context",
+      "file": "src/features/empleados/components/enhanced-asistencia-form.tsx",
+      "line": 171,
+      "column": 32
+    },
+    {
+      "type": "TODO",
+      "message": "count does not actually exist in DMMF",
+      "file": "src/generated/prisma/runtime/library.d.ts",
+      "line": 2404,
+      "column": 23
+    },
+    {
+      "type": "TODO",
+      "message": "what is this",
+      "file": "src/generated/prisma/runtime/library.d.ts",
+      "line": 2935,
+      "column": 8
+    },
+    {
+      "type": "TODO",
+      "message": "what is this",
+      "file": "src/generated/prisma/runtime/library.d.ts",
+      "line": 2937,
+      "column": 8
+    }
+  ]
+}

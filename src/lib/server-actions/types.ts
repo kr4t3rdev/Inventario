@@ -5,25 +5,13 @@
  */
 
 /**
- * Respuesta estandarizada de toda Server Action.
+ * Respuesta estandarizada de toda Server Action (discriminated union).
  *
  * @template T - Tipo de datos devueltos en caso de éxito
  */
-export interface ActionResponse<T = unknown> {
-  /** Indica si la operación fue exitosa */
-  success: boolean;
-  /** Datos devueltos (solo presente si success es true) */
-  data?: T;
-  /** Información del error (solo presente si success es false) */
-  error?: {
-    /** Mensaje descriptivo para el usuario */
-    message: string;
-    /** Código de error para tratamiento programático */
-    code?: string;
-    /** Errores por campo (ej. errores de validación Zod) */
-    details?: Record<string, string[]>;
-  };
-}
+export type ActionResponse<T = unknown> =
+  | { success: true; data: T }
+  | { success: false; error: { message: string; code?: string; details?: Record<string, string[]> } };
 
 /**
  * Tipo de una Server Action envuelta con withAction.

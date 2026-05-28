@@ -18,7 +18,7 @@ describe('miEmpresaUtils', () => {
       nit: undefined,
       licenciaOperacion: '  LIC-001 ',
       logoUrl: '  https://cdn.example.com/logo.png  ',
-      cuentaBancariaId: ' none ',
+      cuentaBancariaId: 'none',
       usaCodigoEan13: undefined,
     })
 

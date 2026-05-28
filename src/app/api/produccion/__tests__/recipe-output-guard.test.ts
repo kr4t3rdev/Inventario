@@ -17,8 +17,10 @@ vi.mock('@/lib/prisma', () => ({
 }));
 
 vi.mock('@/lib/auth-middleware', () => ({
-  withAuthGet: (fn: Function) => async (request: NextRequest, params?: unknown) => fn(request, params),
-  withAuthPost: (fn: Function) => async (request: NextRequest, params?: unknown) => fn(request, params),
+  withAuthGet: (fn: Function) => async (request: NextRequest, params?: unknown) =>
+    fn(request, params, { userId: 'user-test', tenantId: 'tenant-1', role: 'admin' }),
+  withAuthPost: (fn: Function) => async (request: NextRequest, params?: unknown) =>
+    fn(request, params, { userId: 'user-test', tenantId: 'tenant-1', role: 'admin' }),
 }));
 
 vi.mock('@/lib/utils/produccion', () => ({

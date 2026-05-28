@@ -16,7 +16,13 @@ import type { PeriodoContable } from "@/generated/prisma";
 
 // ── Re-export de enums de Prisma para uso en TypeScript puro ─────────────
 
-export { EstadoPeriodo, TipoPeriodo, EventoAuditoria, CategoriaPeriodo, ModoContable };
+export {
+	EstadoPeriodo,
+	TipoPeriodo,
+	EventoAuditoria,
+	CategoriaPeriodo,
+	ModoContable,
+};
 
 // ── Estados que permiten escritura contable ──────────────────────────────
 

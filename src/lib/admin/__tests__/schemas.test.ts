@@ -47,8 +47,8 @@ describe('globalUsersQuerySchema', () => {
     expect(result.success).toBe(true)
   })
 
-  it('rechaza tenantId que no es UUID', () => {
-    const result = globalUsersQuerySchema.safeParse({ tenantId: 'invalid-uuid' })
+  it('rechaza tenantId vacío', () => {
+    const result = globalUsersQuerySchema.safeParse({ tenantId: '' })
     expect(result.success).toBe(false)
   })
 

@@ -37,8 +37,8 @@ if (typeof window !== 'undefined') {
   })
 }
 
-vi.mock('framer-motion', () => ({
-  motion: new Proxy(
+const createMotionProxy = () =>
+  new Proxy(
     {},
     {
       get: (_, tag: string) => {
@@ -58,7 +58,17 @@ vi.mock('framer-motion', () => ({
         return Component
       },
     },
-  ),
+  )
+
+const motionProxy = createMotionProxy()
+
+vi.mock('framer-motion', () => ({
+  motion: motionProxy,
+  /** @description `m` es el mismo `motion` — se usa con `import { m as motion }` */
+  m: motionProxy,
+  /** @description LazyMotion: renderiza children sin cargar features en test */
+  LazyMotion: ({ children, features: _features, strict: _strict }: { children: React.ReactNode; features?: () => unknown; strict?: boolean }) =>
+    React.createElement(React.Fragment, null, children),
   AnimatePresence: ({ children }: { children: React.ReactNode }) =>
     React.createElement(React.Fragment, null, children),
   useReducedMotion: vi.fn(() => false),

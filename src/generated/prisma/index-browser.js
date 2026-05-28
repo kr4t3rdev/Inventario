@@ -272,7 +272,63 @@ exports.Prisma.PuntoDeVentaScalarFieldEnum = {
   ubicacion: 'ubicacion',
   createdAt: 'createdAt',
   updatedAt: 'updatedAt',
-  listaPrecioId: 'listaPrecioId'
+  listaPrecioId: 'listaPrecioId',
+  tipoCaja: 'tipoCaja',
+  almacenId: 'almacenId',
+  cuentaContableId: 'cuentaContableId'
+};
+
+exports.Prisma.TurnoPuntoVentaScalarFieldEnum = {
+  id: 'id',
+  tenantId: 'tenantId',
+  puntoDeVentaId: 'puntoDeVentaId',
+  empleadoId: 'empleadoId',
+  tipo: 'tipo',
+  fechaApertura: 'fechaApertura',
+  fechaCierre: 'fechaCierre',
+  fondoInicialCup: 'fondoInicialCup',
+  fondoInicialUsd: 'fondoInicialUsd',
+  estado: 'estado',
+  observaciones: 'observaciones',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+};
+
+exports.Prisma.ArqueoCajaScalarFieldEnum = {
+  id: 'id',
+  turnoId: 'turnoId',
+  tenantId: 'tenantId',
+  puntoDeVentaId: 'puntoDeVentaId',
+  billetes1000Cup: 'billetes1000Cup',
+  billetes500Cup: 'billetes500Cup',
+  billetes200Cup: 'billetes200Cup',
+  billetes100Cup: 'billetes100Cup',
+  billetes50Cup: 'billetes50Cup',
+  billetes20Cup: 'billetes20Cup',
+  monedasCup: 'monedasCup',
+  billetes100Usd: 'billetes100Usd',
+  billetes50Usd: 'billetes50Usd',
+  billetes20Usd: 'billetes20Usd',
+  billetes10Usd: 'billetes10Usd',
+  billetes5Usd: 'billetes5Usd',
+  billetes1Usd: 'billetes1Usd',
+  monedasUsd: 'monedasUsd',
+  totalEfectivoCup: 'totalEfectivoCup',
+  totalEfectivoUsd: 'totalEfectivoUsd',
+  totalTarjeta: 'totalTarjeta',
+  totalTransferencia: 'totalTransferencia',
+  totalCredito: 'totalCredito',
+  esperadoEfectivoCup: 'esperadoEfectivoCup',
+  esperadoEfectivoUsd: 'esperadoEfectivoUsd',
+  esperadoTarjeta: 'esperadoTarjeta',
+  esperadoTransferencia: 'esperadoTransferencia',
+  esperadoCredito: 'esperadoCredito',
+  diferenciaCup: 'diferenciaCup',
+  diferenciaUsd: 'diferenciaUsd',
+  observaciones: 'observaciones',
+  contabilizado: 'contabilizado',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
 };
 
 exports.Prisma.ProductoScalarFieldEnum = {
@@ -334,7 +390,13 @@ exports.Prisma.VentaScalarFieldEnum = {
   observaciones: 'observaciones',
   esVentaUnica: 'esVentaUnica',
   ofertaId: 'ofertaId',
-  ventaPadreId: 'ventaPadreId'
+  ventaPadreId: 'ventaPadreId',
+  turnoId: 'turnoId',
+  metodoPago: 'metodoPago',
+  montoEfectivo: 'montoEfectivo',
+  montoTarjeta: 'montoTarjeta',
+  montoTransferencia: 'montoTransferencia',
+  montoCredito: 'montoCredito'
 };
 
 exports.Prisma.VentaItemScalarFieldEnum = {
@@ -1526,6 +1588,7 @@ exports.Prisma.PeriodoContableScalarFieldEnum = {
   periodoPadreId: 'periodoPadreId',
   aperturaAutomatica: 'aperturaAutomatica',
   categoria: 'categoria',
+  modoContable: 'modoContable',
   abiertoPorId: 'abiertoPorId',
   fechaApertura: 'fechaApertura',
   cerradoPor: 'cerradoPor',
@@ -1623,6 +1686,15 @@ exports.Prisma.BackupPlanScalarFieldEnum = {
   updatedAt: 'updatedAt'
 };
 
+exports.Prisma.PeriodoCacheScalarFieldEnum = {
+  cacheKey: 'cacheKey',
+  tenantId: 'tenantId',
+  fecha: 'fecha',
+  resultadoJson: 'resultadoJson',
+  expiresAt: 'expiresAt',
+  createdAt: 'createdAt'
+};
+
 exports.Prisma.SortOrder = {
   asc: 'asc',
   desc: 'desc'
@@ -1661,6 +1733,19 @@ exports.EstadoDeuda = exports.$Enums.EstadoDeuda = {
   ACTIVA: 'ACTIVA',
   PAGADA: 'PAGADA',
   EN_MORA: 'EN_MORA'
+};
+
+exports.EstadoTurno = exports.$Enums.EstadoTurno = {
+  ABIERTO: 'ABIERTO',
+  CERRADO: 'CERRADO'
+};
+
+exports.MetodoPagoVenta = exports.$Enums.MetodoPagoVenta = {
+  EFECTIVO: 'EFECTIVO',
+  TARJETA: 'TARJETA',
+  TRANSFERENCIA: 'TRANSFERENCIA',
+  CREDITO: 'CREDITO',
+  MIXTO: 'MIXTO'
 };
 
 exports.EstadoContrato = exports.$Enums.EstadoContrato = {
@@ -1772,6 +1857,8 @@ exports.ContextoAnticipo = exports.$Enums.ContextoAnticipo = {
 exports.TipoPeriodo = exports.$Enums.TipoPeriodo = {
   DIARIO: 'DIARIO',
   MENSUAL: 'MENSUAL',
+  TRIMESTRAL: 'TRIMESTRAL',
+  SEMESTRAL: 'SEMESTRAL',
   ANUAL: 'ANUAL'
 };
 
@@ -1788,6 +1875,11 @@ exports.CategoriaPeriodo = exports.$Enums.CategoriaPeriodo = {
   ORDINARIO: 'ORDINARIO',
   EXTRAORDINARIO: 'EXTRAORDINARIO',
   RECTIFICATIVO: 'RECTIFICATIVO'
+};
+
+exports.ModoContable = exports.$Enums.ModoContable = {
+  CAJA: 'CAJA',
+  DEVENGO: 'DEVENGO'
 };
 
 exports.EventoAuditoria = exports.$Enums.EventoAuditoria = {
@@ -1827,6 +1919,8 @@ exports.Prisma.ModelName = {
   MiEmpresa: 'MiEmpresa',
   Almacen: 'Almacen',
   PuntoDeVenta: 'PuntoDeVenta',
+  TurnoPuntoVenta: 'TurnoPuntoVenta',
+  ArqueoCaja: 'ArqueoCaja',
   Producto: 'Producto',
   StockUbicacion: 'StockUbicacion',
   Venta: 'Venta',
@@ -1915,7 +2009,8 @@ exports.Prisma.ModelName = {
   SaldoSnapshot: 'SaldoSnapshot',
   AuditoriaPeriodo: 'AuditoriaPeriodo',
   BackupLog: 'BackupLog',
-  BackupPlan: 'BackupPlan'
+  BackupPlan: 'BackupPlan',
+  PeriodoCache: 'PeriodoCache'
 };
 
 /**

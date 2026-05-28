@@ -442,6 +442,8 @@ export function ReconciliacionGastosForm({
         moneda: baseData.moneda,
         descripcion: baseData.descripcion,
         cuentaPorPagarId: baseData.cuentaPorPagarId,
+        // Pasar distribución completa para multi-cuenta (CxP)
+        distribucion: baseData.distribucion,
       })
       if (!result.success) throw new Error(result.error?.message || 'Error al reconciliar')
 

@@ -32,6 +32,7 @@ const mockContext = { params: Promise.resolve({ id: 'p-1' }) }
 describe('API contabilidad/prestamos-cash/[id]/pagar', () => {
   beforeEach(() => {
     vi.clearAllMocks()
+    vi.stubEnv('PERIODO_GUARD_ENABLED', 'false')
     vi.stubEnv('NEXT_PUBLIC_ENABLE_PRESTAMOS_CASH', 'true')
   })
 

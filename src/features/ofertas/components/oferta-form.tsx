@@ -209,23 +209,18 @@ export function OfertaForm() {
         total: data.total
       } as Partial<Oferta>;
 
-  // @ts-expect-error - createOfertaAction recibe un payload parcial tipado en runtime.
-      const result = await createOfertaAction(payload);
+      const result = await createOfertaAction(payload as any);
       if (!result.success) {
-  // @ts-expect-error - result.error puede ser string o respuesta tipada según la acción.
-        throw new Error(result.error || "Error al crear la oferta")
+        throw new Error(result.error.message || "Error al crear la oferta")
       }
       const createdOferta = result.data
-  // @ts-expect-error - createdOferta se resuelve desde la respuesta de la acción.
-      await openOfertaPdf(createdOferta.id, printWindow);
+      await openOfertaPdf(createdOferta.id!, printWindow);
       sileo.success({ title: 'Oferta creada exitosamente' });
       const nextUrl = selectedAnticipoCobroId
         ? `/busy/ofertas/${
-  // @ts-expect-error - createdOferta se resuelve desde la respuesta de la acción.
         createdOferta.id}?anticipoCobroId=${encodeURIComponent(selectedAnticipoCobroId)
         }`
         : `/busy/ofertas/${
-  // @ts-expect-error - createdOferta se resuelve desde la respuesta de la acción.
         createdOferta.id
         }`
       router.push(nextUrl);

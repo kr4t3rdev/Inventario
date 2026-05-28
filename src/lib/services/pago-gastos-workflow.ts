@@ -316,6 +316,7 @@ export async function applyPagoGastoWorkflow(
       select: {
         cuentaPorPagarId: true,
         estado: true,
+        montoDeuda: true,
         montoPagado: true,
         saldoPendiente: true,
         gastoCompraId: true,
@@ -509,9 +510,19 @@ export async function applyPagoGastoWorkflow(
   if (cuentaPorPagarActual && params.cuentaPorPagarId) {
     const montoPagadoActual = Number(cuentaPorPagarActual.montoPagado || 0)
     const saldoPendienteActual = Number(cuentaPorPagarActual.saldoPendiente || 0)
+    const montoDeudaActual = Number(cuentaPorPagarActual.montoDeuda || 0)
     const nuevoMontoPagado = montoPagadoActual + montoTotal
     const nuevoSaldoPendiente = Math.max(0, saldoPendienteActual - montoTotal)
     const nuevoEstado = estadoReconciliacion === 'PAGADA' ? 'PAGADA' : 'PARCIAL'
+
+    // Protección: montoPagado nunca debe exceder montoDeuda
+    if (nuevoMontoPagado > montoDeudaActual + 0.01) {
+      throw createGastoWorkflowError(
+        400,
+        'MONTO_EXCEDE_DEUDA',
+        `El pago de ${montoTotal.toFixed(2)} excedería el monto de la deuda (${montoDeudaActual.toFixed(2)}). Monto actual pagado: ${montoPagadoActual.toFixed(2)}.`
+      )
+    }
     const fechaPago =
       params.fechaPago instanceof Date
         ? params.fechaPago

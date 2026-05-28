@@ -103,8 +103,7 @@ export function OfertasTable({ ofertas, isLoading, error }: OfertasTableProps) {
         setOfertaToDelete(null)
         router.refresh()
       } else {
-  // @ts-expect-error - result.error puede ser string o un objeto según la acción.
-        toast.error(result.error || "Error al eliminar la oferta")
+        toast.error(result.error.message || "Error al eliminar la oferta")
       }
     } catch (error: any) {
       console.error("Error eliminando oferta:", error)

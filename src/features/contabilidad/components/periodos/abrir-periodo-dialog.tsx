@@ -66,10 +66,7 @@ export function AbrirPeriodoDialog({
 					categoria !== "ORDINARIO"
 						? (categoria as CategoriaPeriodo)
 						: undefined,
-				modoContable:
-					modoContable !== "CAJA"
-						? modoContable
-						: undefined,
+				modoContable: modoContable !== "CAJA" ? modoContable : undefined,
 			});
 
 			if (!result.success) {
@@ -139,7 +136,7 @@ export function AbrirPeriodoDialog({
 								<SelectItem value="EXTRAORDINARIO">Extraordinario</SelectItem>
 								<SelectItem value="RECTIFICATIVO">Rectificativo</SelectItem>
 							</SelectContent>
-							</Select>
+						</Select>
 					</div>
 
 					<div className="space-y-2">

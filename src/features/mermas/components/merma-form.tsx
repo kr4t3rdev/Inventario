@@ -19,19 +19,22 @@ import { Skeleton } from "@/components/ui/skeleton"
 
 import { useProductos } from "@/features/productos/hooks/use-productos"
 import { createMermaAction, updateMermaAction } from "@/features/mermas/actions"
-import { apiSlice } from "@/lib/redux/services/apiSlice"
+import { createMermaSchema } from "@/features/mermas/schemas"
 
-const mermaSchema = z.object({
-  productoId: z.string({
-    required_error: 'El campo Producto no ha sido seleccionado',
-  }),
-  cantidad: z.coerce.number().positive({
-    message: "La cantidad debe ser mayor a 0",
-  }),
+/**
+ * Schema del formulario: extiende el schema del servidor agregando
+ * validaciones más estrictas de UX sin divergir del contrato server.
+ *
+ * - Server: `motivo` optional/nullable
+ * - Form: motivo requerido + min 3 caracteres
+ */
+const mermaFormSchema = createMermaSchema.extend({
   motivo: z.string().min(3, {
-    message: "El motivo debe tener al menos 3 caracteres",
-  })  
+    message: 'El motivo debe tener al menos 3 caracteres',
+  }),
 })
+
+type MermaFormValues = z.infer<typeof mermaFormSchema>
 
 type MermaFormValues = z.infer<typeof mermaSchema>
 
@@ -51,7 +54,7 @@ export function MermaForm({ initialData }: MermaFormProps) {
 
 
   const form = useForm<MermaFormValues>({
-    resolver: zodResolver(mermaSchema),
+    resolver: zodResolver(mermaFormSchema),
     defaultValues: {
       productoId: initialData?.productoId || "",
       cantidad: initialData?.cantidad || 1,
@@ -67,13 +70,11 @@ export function MermaForm({ initialData }: MermaFormProps) {
           mermaId: initialData.mermaId,
           ...data,
         })
-  // @ts-expect-error
-        if (!result.success) throw new Error(result.error)
+        if (!result.success) throw new Error(result.error?.message ?? 'Error desconocido')
         sileo.success({ title: 'La merma ha sido actualizada exitosamente.' })
       } else {
         const result = await createMermaAction(data)
-  // @ts-expect-error
-        if (!result.success) throw new Error(result.error)
+        if (!result.success) throw new Error(result.error?.message ?? 'Error desconocido')
         sileo.success({ title: 'La merma ha sido registrada exitosamente.' })
       }
 

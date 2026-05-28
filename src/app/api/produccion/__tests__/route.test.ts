@@ -80,8 +80,10 @@ vi.mock('@/lib/prisma', async () => {
 
 // Mock auth middleware
 vi.mock('@/lib/auth-middleware', () => ({
-  withAuthGet: (fn: Function) => async (request: NextRequest, context?: unknown, user?: unknown) => fn(request, context, user),
-  withAuthPost: (fn: Function) => async (request: NextRequest, context?: unknown, user?: unknown) => fn(request, context, user),
+  withAuthGet: (fn: Function) => async (request: NextRequest, context?: unknown) =>
+    fn(request, context, { userId: 'user-test', tenantId: 'tenant-1', role: 'admin' }),
+  withAuthPost: (fn: Function) => async (request: NextRequest, context?: unknown) =>
+    fn(request, context, { userId: 'user-test', tenantId: 'tenant-1', role: 'admin' }),
 }))
 
 // Import after mocking
@@ -96,6 +98,7 @@ import { GET as getVales, POST as createVale } from '../vales/route'
 describe('Production Module API Routes', () => {
   beforeEach(() => {
     vi.clearAllMocks()
+    vi.stubEnv('PERIODO_GUARD_ENABLED', 'false')
   })
 
   describe('GET /api/produccion/recetas', () => {

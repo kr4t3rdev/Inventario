@@ -1,0 +1,9 @@
+{
+  "success": false,
+  "issues": [],
+  "unusedExports": [],
+  "unusedFiles": [],
+  "unusedDeps": [],
+  "unlistedDeps": [],
+  "summary": "Knip not available. Install with: npm install -D knip"
+}

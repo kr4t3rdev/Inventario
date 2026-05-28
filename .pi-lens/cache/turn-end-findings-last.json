@@ -1,0 +1,4 @@
+{
+  "signature": "src/app/api/dashboard/__tests__/stats-minimum-stock.test.ts::Unresolved from this turn — src/app/api/dashboard/__tests__/stats-minimum-stock.test.ts:\n🔴 STOP — 1 issue(s) must be fixed:\n  L177: Parsing error: ',' expected.",
+  "sessionId": "lens-mpoqlpge-74a68777"
+}

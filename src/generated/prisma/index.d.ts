@@ -74,6 +74,16 @@ export type Almacen = $Result.DefaultSelection<Prisma.$AlmacenPayload>
  */
 export type PuntoDeVenta = $Result.DefaultSelection<Prisma.$PuntoDeVentaPayload>
 /**
+ * Model TurnoPuntoVenta
+ * 
+ */
+export type TurnoPuntoVenta = $Result.DefaultSelection<Prisma.$TurnoPuntoVentaPayload>
+/**
+ * Model ArqueoCaja
+ * 
+ */
+export type ArqueoCaja = $Result.DefaultSelection<Prisma.$ArqueoCajaPayload>
+/**
  * Model Producto
  * 
  */
@@ -519,6 +529,13 @@ export type BackupLog = $Result.DefaultSelection<Prisma.$BackupLogPayload>
  * Plan de backup programado.
  */
 export type BackupPlan = $Result.DefaultSelection<Prisma.$BackupPlanPayload>
+/**
+ * Model PeriodoCache
+ * Caché compartido de períodos contables activos (PostgreSQL-backed).
+ * Reemplaza el Map en memoria para que múltiples instancias compartan
+ * el mismo caché. Cada entrada tiene TTL definido por expiresAt.
+ */
+export type PeriodoCache = $Result.DefaultSelection<Prisma.$PeriodoCachePayload>
 
 /**
  * Enums
@@ -695,6 +712,8 @@ export type CostChangeReason = (typeof CostChangeReason)[keyof typeof CostChange
 export const TipoPeriodo: {
   DIARIO: 'DIARIO',
   MENSUAL: 'MENSUAL',
+  TRIMESTRAL: 'TRIMESTRAL',
+  SEMESTRAL: 'SEMESTRAL',
   ANUAL: 'ANUAL'
 };
 
@@ -726,6 +745,14 @@ export const EventoAuditoria: {
 export type EventoAuditoria = (typeof EventoAuditoria)[keyof typeof EventoAuditoria]
 
 
+export const ModoContable: {
+  CAJA: 'CAJA',
+  DEVENGO: 'DEVENGO'
+};
+
+export type ModoContable = (typeof ModoContable)[keyof typeof ModoContable]
+
+
 export const CategoriaPeriodo: {
   ORDINARIO: 'ORDINARIO',
   EXTRAORDINARIO: 'EXTRAORDINARIO',
@@ -753,6 +780,25 @@ export const BackupStatus: {
 };
 
 export type BackupStatus = (typeof BackupStatus)[keyof typeof BackupStatus]
+
+
+export const EstadoTurno: {
+  ABIERTO: 'ABIERTO',
+  CERRADO: 'CERRADO'
+};
+
+export type EstadoTurno = (typeof EstadoTurno)[keyof typeof EstadoTurno]
+
+
+export const MetodoPagoVenta: {
+  EFECTIVO: 'EFECTIVO',
+  TARJETA: 'TARJETA',
+  TRANSFERENCIA: 'TRANSFERENCIA',
+  CREDITO: 'CREDITO',
+  MIXTO: 'MIXTO'
+};
+
+export type MetodoPagoVenta = (typeof MetodoPagoVenta)[keyof typeof MetodoPagoVenta]
 
 }
 
@@ -836,6 +882,10 @@ export type EventoAuditoria = $Enums.EventoAuditoria
 
 export const EventoAuditoria: typeof $Enums.EventoAuditoria
 
+export type ModoContable = $Enums.ModoContable
+
+export const ModoContable: typeof $Enums.ModoContable
+
 export type CategoriaPeriodo = $Enums.CategoriaPeriodo
 
 export const CategoriaPeriodo: typeof $Enums.CategoriaPeriodo
@@ -847,6 +897,14 @@ export const BackupType: typeof $Enums.BackupType
 export type BackupStatus = $Enums.BackupStatus
 
 export const BackupStatus: typeof $Enums.BackupStatus
+
+export type EstadoTurno = $Enums.EstadoTurno
+
+export const EstadoTurno: typeof $Enums.EstadoTurno
+
+export type MetodoPagoVenta = $Enums.MetodoPagoVenta
+
+export const MetodoPagoVenta: typeof $Enums.MetodoPagoVenta
 
 /**
  * ##  Prisma Client ʲˢ
@@ -1085,6 +1143,26 @@ export class PrismaClient<
     * ```
     */
   get puntoDeVenta(): Prisma.PuntoDeVentaDelegate<ExtArgs, ClientOptions>;
+
+  /**
+   * `prisma.turnoPuntoVenta`: Exposes CRUD operations for the **TurnoPuntoVenta** model.
+    * Example usage:
+    * ```ts
+    * // Fetch zero or more TurnoPuntoVentas
+    * const turnoPuntoVentas = await prisma.turnoPuntoVenta.findMany()
+    * ```
+    */
+  get turnoPuntoVenta(): Prisma.TurnoPuntoVentaDelegate<ExtArgs, ClientOptions>;
+
+  /**
+   * `prisma.arqueoCaja`: Exposes CRUD operations for the **ArqueoCaja** model.
+    * Example usage:
+    * ```ts
+    * // Fetch zero or more ArqueoCajas
+    * const arqueoCajas = await prisma.arqueoCaja.findMany()
+    * ```
+    */
+  get arqueoCaja(): Prisma.ArqueoCajaDelegate<ExtArgs, ClientOptions>;
 
   /**
    * `prisma.producto`: Exposes CRUD operations for the **Producto** model.
@@ -1975,6 +2053,16 @@ export class PrismaClient<
     * ```
     */
   get backupPlan(): Prisma.BackupPlanDelegate<ExtArgs, ClientOptions>;
+
+  /**
+   * `prisma.periodoCache`: Exposes CRUD operations for the **PeriodoCache** model.
+    * Example usage:
+    * ```ts
+    * // Fetch zero or more PeriodoCaches
+    * const periodoCaches = await prisma.periodoCache.findMany()
+    * ```
+    */
+  get periodoCache(): Prisma.PeriodoCacheDelegate<ExtArgs, ClientOptions>;
 }
 
 export namespace Prisma {
@@ -2428,6 +2516,8 @@ export namespace Prisma {
     MiEmpresa: 'MiEmpresa',
     Almacen: 'Almacen',
     PuntoDeVenta: 'PuntoDeVenta',
+    TurnoPuntoVenta: 'TurnoPuntoVenta',
+    ArqueoCaja: 'ArqueoCaja',
     Producto: 'Producto',
     StockUbicacion: 'StockUbicacion',
     Venta: 'Venta',
@@ -2516,7 +2606,8 @@ export namespace Prisma {
     SaldoSnapshot: 'SaldoSnapshot',
     AuditoriaPeriodo: 'AuditoriaPeriodo',
     BackupLog: 'BackupLog',
-    BackupPlan: 'BackupPlan'
+    BackupPlan: 'BackupPlan',
+    PeriodoCache: 'PeriodoCache'
   };
 
   export type ModelName = (typeof ModelName)[keyof typeof ModelName]
@@ -2535,7 +2626,7 @@ export namespace Prisma {
       omit: GlobalOmitOptions
     }
     meta: {
-      modelProps: "categoria" | "unidad" | "vendor" | "inyeccionCapital" | "pagoDeuda" | "cliente" | "tenant" | "tenantMembership" | "tenantLicense" | "miEmpresa" | "almacen" | "puntoDeVenta" | "producto" | "stockUbicacion" | "venta" | "ventaItem" | "merma" | "transferencia" | "user" | "plan" | "licencia" | "licenciaAudit" | "notification" | "userActivityLog" | "userSession" | "attendance" | "employeeWorkSchedule" | "vacationRequest" | "vacationAccrual" | "empleado" | "pagosalario" | "cierreContable" | "gastoCompra" | "compraProducto" | "compraDocumento" | "compraDocumentoItem" | "servicios" | "ventaServicios" | "compraServicio" | "gastoConcepto" | "gastoElemento" | "gastosDE" | "moneda" | "catalogoReparacionConfig" | "tasaCambio" | "transaccionMoneda" | "cuentaBancaria" | "tipoPago" | "reconciliacionVenta" | "reconciliacionServicio" | "reconciliacionGasto" | "ajusteBancario" | "transferenciaBancaria" | "alertHistory" | "auditLog" | "reportHistory" | "scheduledReport" | "scenarioSimulation" | "contrato" | "contratoVersion" | "contratoFirma" | "contratoAprobacion" | "contratoArchivo" | "contratoAlerta" | "tipoContratoCustom" | "factura" | "serieFacturacion" | "oferta" | "ofertaItem" | "cuentaPorCobrar" | "cuentaPorPagar" | "deudaCash" | "prestamoCash" | "pagoCuentaPorPagar" | "equipoReparacion" | "piezaReparacion" | "ordenReparacion" | "ordenReparacionEquipo" | "ordenReparacionItem" | "ordenReparacionMaterial" | "defectacionCatalogo" | "configuracionSistema" | "ordenProduccion" | "ordenProduccionHistorial" | "receta" | "recetaIngrediente" | "valeSalida" | "valeSalidaItem" | "listaPrecio" | "precioProducto" | "productoCostHistory" | "vendorCodeSequence" | "anticipo" | "anticipoMovimiento" | "periodoContable" | "snapshotPeriodo" | "aperturaPeriodo" | "saldoSnapshot" | "auditoriaPeriodo" | "backupLog" | "backupPlan"
+      modelProps: "categoria" | "unidad" | "vendor" | "inyeccionCapital" | "pagoDeuda" | "cliente" | "tenant" | "tenantMembership" | "tenantLicense" | "miEmpresa" | "almacen" | "puntoDeVenta" | "turnoPuntoVenta" | "arqueoCaja" | "producto" | "stockUbicacion" | "venta" | "ventaItem" | "merma" | "transferencia" | "user" | "plan" | "licencia" | "licenciaAudit" | "notification" | "userActivityLog" | "userSession" | "attendance" | "employeeWorkSchedule" | "vacationRequest" | "vacationAccrual" | "empleado" | "pagosalario" | "cierreContable" | "gastoCompra" | "compraProducto" | "compraDocumento" | "compraDocumentoItem" | "servicios" | "ventaServicios" | "compraServicio" | "gastoConcepto" | "gastoElemento" | "gastosDE" | "moneda" | "catalogoReparacionConfig" | "tasaCambio" | "transaccionMoneda" | "cuentaBancaria" | "tipoPago" | "reconciliacionVenta" | "reconciliacionServicio" | "reconciliacionGasto" | "ajusteBancario" | "transferenciaBancaria" | "alertHistory" | "auditLog" | "reportHistory" | "scheduledReport" | "scenarioSimulation" | "contrato" | "contratoVersion" | "contratoFirma" | "contratoAprobacion" | "contratoArchivo" | "contratoAlerta" | "tipoContratoCustom" | "factura" | "serieFacturacion" | "oferta" | "ofertaItem" | "cuentaPorCobrar" | "cuentaPorPagar" | "deudaCash" | "prestamoCash" | "pagoCuentaPorPagar" | "equipoReparacion" | "piezaReparacion" | "ordenReparacion" | "ordenReparacionEquipo" | "ordenReparacionItem" | "ordenReparacionMaterial" | "defectacionCatalogo" | "configuracionSistema" | "ordenProduccion" | "ordenProduccionHistorial" | "receta" | "recetaIngrediente" | "valeSalida" | "valeSalidaItem" | "listaPrecio" | "precioProducto" | "productoCostHistory" | "vendorCodeSequence" | "anticipo" | "anticipoMovimiento" | "periodoContable" | "snapshotPeriodo" | "aperturaPeriodo" | "saldoSnapshot" | "auditoriaPeriodo" | "backupLog" | "backupPlan" | "periodoCache"
       txIsolationLevel: Prisma.TransactionIsolationLevel
     }
     model: {
@@ -3424,6 +3515,154 @@ export namespace Prisma {
           count: {
             args: Prisma.PuntoDeVentaCountArgs<ExtArgs>
             result: $Utils.Optional<PuntoDeVentaCountAggregateOutputType> | number
+          }
+        }
+      }
+      TurnoPuntoVenta: {
+        payload: Prisma.$TurnoPuntoVentaPayload<ExtArgs>
+        fields: Prisma.TurnoPuntoVentaFieldRefs
+        operations: {
+          findUnique: {
+            args: Prisma.TurnoPuntoVentaFindUniqueArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$TurnoPuntoVentaPayload> | null
+          }
+          findUniqueOrThrow: {
+            args: Prisma.TurnoPuntoVentaFindUniqueOrThrowArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$TurnoPuntoVentaPayload>
+          }
+          findFirst: {
+            args: Prisma.TurnoPuntoVentaFindFirstArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$TurnoPuntoVentaPayload> | null
+          }
+          findFirstOrThrow: {
+            args: Prisma.TurnoPuntoVentaFindFirstOrThrowArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$TurnoPuntoVentaPayload>
+          }
+          findMany: {
+            args: Prisma.TurnoPuntoVentaFindManyArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$TurnoPuntoVentaPayload>[]
+          }
+          create: {
+            args: Prisma.TurnoPuntoVentaCreateArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$TurnoPuntoVentaPayload>
+          }
+          createMany: {
+            args: Prisma.TurnoPuntoVentaCreateManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          createManyAndReturn: {
+            args: Prisma.TurnoPuntoVentaCreateManyAndReturnArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$TurnoPuntoVentaPayload>[]
+          }
+          delete: {
+            args: Prisma.TurnoPuntoVentaDeleteArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$TurnoPuntoVentaPayload>
+          }
+          update: {
+            args: Prisma.TurnoPuntoVentaUpdateArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$TurnoPuntoVentaPayload>
+          }
+          deleteMany: {
+            args: Prisma.TurnoPuntoVentaDeleteManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          updateMany: {
+            args: Prisma.TurnoPuntoVentaUpdateManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          updateManyAndReturn: {
+            args: Prisma.TurnoPuntoVentaUpdateManyAndReturnArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$TurnoPuntoVentaPayload>[]
+          }
+          upsert: {
+            args: Prisma.TurnoPuntoVentaUpsertArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$TurnoPuntoVentaPayload>
+          }
+          aggregate: {
+            args: Prisma.TurnoPuntoVentaAggregateArgs<ExtArgs>
+            result: $Utils.Optional<AggregateTurnoPuntoVenta>
+          }
+          groupBy: {
+            args: Prisma.TurnoPuntoVentaGroupByArgs<ExtArgs>
+            result: $Utils.Optional<TurnoPuntoVentaGroupByOutputType>[]
+          }
+          count: {
+            args: Prisma.TurnoPuntoVentaCountArgs<ExtArgs>
+            result: $Utils.Optional<TurnoPuntoVentaCountAggregateOutputType> | number
+          }
+        }
+      }
+      ArqueoCaja: {
+        payload: Prisma.$ArqueoCajaPayload<ExtArgs>
+        fields: Prisma.ArqueoCajaFieldRefs
+        operations: {
+          findUnique: {
+            args: Prisma.ArqueoCajaFindUniqueArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$ArqueoCajaPayload> | null
+          }
+          findUniqueOrThrow: {
+            args: Prisma.ArqueoCajaFindUniqueOrThrowArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$ArqueoCajaPayload>
+          }
+          findFirst: {
+            args: Prisma.ArqueoCajaFindFirstArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$ArqueoCajaPayload> | null
+          }
+          findFirstOrThrow: {
+            args: Prisma.ArqueoCajaFindFirstOrThrowArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$ArqueoCajaPayload>
+          }
+          findMany: {
+            args: Prisma.ArqueoCajaFindManyArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$ArqueoCajaPayload>[]
+          }
+          create: {
+            args: Prisma.ArqueoCajaCreateArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$ArqueoCajaPayload>
+          }
+          createMany: {
+            args: Prisma.ArqueoCajaCreateManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          createManyAndReturn: {
+            args: Prisma.ArqueoCajaCreateManyAndReturnArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$ArqueoCajaPayload>[]
+          }
+          delete: {
+            args: Prisma.ArqueoCajaDeleteArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$ArqueoCajaPayload>
+          }
+          update: {
+            args: Prisma.ArqueoCajaUpdateArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$ArqueoCajaPayload>
+          }
+          deleteMany: {
+            args: Prisma.ArqueoCajaDeleteManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          updateMany: {
+            args: Prisma.ArqueoCajaUpdateManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          updateManyAndReturn: {
+            args: Prisma.ArqueoCajaUpdateManyAndReturnArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$ArqueoCajaPayload>[]
+          }
+          upsert: {
+            args: Prisma.ArqueoCajaUpsertArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$ArqueoCajaPayload>
+          }
+          aggregate: {
+            args: Prisma.ArqueoCajaAggregateArgs<ExtArgs>
+            result: $Utils.Optional<AggregateArqueoCaja>
+          }
+          groupBy: {
+            args: Prisma.ArqueoCajaGroupByArgs<ExtArgs>
+            result: $Utils.Optional<ArqueoCajaGroupByOutputType>[]
+          }
+          count: {
+            args: Prisma.ArqueoCajaCountArgs<ExtArgs>
+            result: $Utils.Optional<ArqueoCajaCountAggregateOutputType> | number
           }
         }
       }
@@ -10013,6 +10252,80 @@ export namespace Prisma {
           }
         }
       }
+      PeriodoCache: {
+        payload: Prisma.$PeriodoCachePayload<ExtArgs>
+        fields: Prisma.PeriodoCacheFieldRefs
+        operations: {
+          findUnique: {
+            args: Prisma.PeriodoCacheFindUniqueArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$PeriodoCachePayload> | null
+          }
+          findUniqueOrThrow: {
+            args: Prisma.PeriodoCacheFindUniqueOrThrowArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$PeriodoCachePayload>
+          }
+          findFirst: {
+            args: Prisma.PeriodoCacheFindFirstArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$PeriodoCachePayload> | null
+          }
+          findFirstOrThrow: {
+            args: Prisma.PeriodoCacheFindFirstOrThrowArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$PeriodoCachePayload>
+          }
+          findMany: {
+            args: Prisma.PeriodoCacheFindManyArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$PeriodoCachePayload>[]
+          }
+          create: {
+            args: Prisma.PeriodoCacheCreateArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$PeriodoCachePayload>
+          }
+          createMany: {
+            args: Prisma.PeriodoCacheCreateManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          createManyAndReturn: {
+            args: Prisma.PeriodoCacheCreateManyAndReturnArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$PeriodoCachePayload>[]
+          }
+          delete: {
+            args: Prisma.PeriodoCacheDeleteArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$PeriodoCachePayload>
+          }
+          update: {
+            args: Prisma.PeriodoCacheUpdateArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$PeriodoCachePayload>
+          }
+          deleteMany: {
+            args: Prisma.PeriodoCacheDeleteManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          updateMany: {
+            args: Prisma.PeriodoCacheUpdateManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          updateManyAndReturn: {
+            args: Prisma.PeriodoCacheUpdateManyAndReturnArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$PeriodoCachePayload>[]
+          }
+          upsert: {
+            args: Prisma.PeriodoCacheUpsertArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$PeriodoCachePayload>
+          }
+          aggregate: {
+            args: Prisma.PeriodoCacheAggregateArgs<ExtArgs>
+            result: $Utils.Optional<AggregatePeriodoCache>
+          }
+          groupBy: {
+            args: Prisma.PeriodoCacheGroupByArgs<ExtArgs>
+            result: $Utils.Optional<PeriodoCacheGroupByOutputType>[]
+          }
+          count: {
+            args: Prisma.PeriodoCacheCountArgs<ExtArgs>
+            result: $Utils.Optional<PeriodoCacheCountAggregateOutputType> | number
+          }
+        }
+      }
     }
   } & {
     other: {
@@ -10121,6 +10434,8 @@ export namespace Prisma {
     miEmpresa?: MiEmpresaOmit
     almacen?: AlmacenOmit
     puntoDeVenta?: PuntoDeVentaOmit
+    turnoPuntoVenta?: TurnoPuntoVentaOmit
+    arqueoCaja?: ArqueoCajaOmit
     producto?: ProductoOmit
     stockUbicacion?: StockUbicacionOmit
     venta?: VentaOmit
@@ -10210,6 +10525,7 @@ export namespace Prisma {
     auditoriaPeriodo?: AuditoriaPeriodoOmit
     backupLog?: BackupLogOmit
     backupPlan?: BackupPlanOmit
+    periodoCache?: PeriodoCacheOmit
   }
 
   /* Types for Logging */
@@ -10663,6 +10979,8 @@ export namespace Prisma {
     periodosContables: number
     aperturaPeriodos: number
     auditoriaPeriodos: number
+    turnosPos: number
+    arqueosCaja: number
     backupLogs: number
     backupPlans: number
   }
@@ -10724,6 +11042,8 @@ export namespace Prisma {
     periodosContables?: boolean | TenantCountOutputTypeCountPeriodosContablesArgs
     aperturaPeriodos?: boolean | TenantCountOutputTypeCountAperturaPeriodosArgs
     auditoriaPeriodos?: boolean | TenantCountOutputTypeCountAuditoriaPeriodosArgs
+    turnosPos?: boolean | TenantCountOutputTypeCountTurnosPosArgs
+    arqueosCaja?: boolean | TenantCountOutputTypeCountArqueosCajaArgs
     backupLogs?: boolean | TenantCountOutputTypeCountBackupLogsArgs
     backupPlans?: boolean | TenantCountOutputTypeCountBackupPlansArgs
   }
@@ -11134,6 +11454,20 @@ export namespace Prisma {
   /**
    * TenantCountOutputType without action
    */
+  export type TenantCountOutputTypeCountTurnosPosArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    where?: TurnoPuntoVentaWhereInput
+  }
+
+  /**
+   * TenantCountOutputType without action
+   */
+  export type TenantCountOutputTypeCountArqueosCajaArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    where?: ArqueoCajaWhereInput
+  }
+
+  /**
+   * TenantCountOutputType without action
+   */
   export type TenantCountOutputTypeCountBackupLogsArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     where?: BackupLogWhereInput
   }
@@ -11152,12 +11486,14 @@ export namespace Prisma {
 
   export type AlmacenCountOutputType = {
     productos: number
+    puntosDeVenta: number
     transferenciasDestino: number
     transferenciasOrigen: number
   }
 
   export type AlmacenCountOutputTypeSelect<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     productos?: boolean | AlmacenCountOutputTypeCountProductosArgs
+    puntosDeVenta?: boolean | AlmacenCountOutputTypeCountPuntosDeVentaArgs
     transferenciasDestino?: boolean | AlmacenCountOutputTypeCountTransferenciasDestinoArgs
     transferenciasOrigen?: boolean | AlmacenCountOutputTypeCountTransferenciasOrigenArgs
   }
@@ -11178,6 +11514,13 @@ export namespace Prisma {
    */
   export type AlmacenCountOutputTypeCountProductosArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     where?: ProductoWhereInput
+  }
+
+  /**
+   * AlmacenCountOutputType without action
+   */
+  export type AlmacenCountOutputTypeCountPuntosDeVentaArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    where?: PuntoDeVentaWhereInput
   }
 
   /**
@@ -11204,6 +11547,8 @@ export namespace Prisma {
     transferenciasDestino: number
     transferenciasOrigen: number
     ventas: number
+    turnos: number
+    arqueos: number
   }
 
   export type PuntoDeVentaCountOutputTypeSelect<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
@@ -11211,6 +11556,8 @@ export namespace Prisma {
     transferenciasDestino?: boolean | PuntoDeVentaCountOutputTypeCountTransferenciasDestinoArgs
     transferenciasOrigen?: boolean | PuntoDeVentaCountOutputTypeCountTransferenciasOrigenArgs
     ventas?: boolean | PuntoDeVentaCountOutputTypeCountVentasArgs
+    turnos?: boolean | PuntoDeVentaCountOutputTypeCountTurnosArgs
+    arqueos?: boolean | PuntoDeVentaCountOutputTypeCountArqueosArgs
   }
 
   // Custom InputTypes
@@ -11249,6 +11596,51 @@ export namespace Prisma {
    * PuntoDeVentaCountOutputType without action
    */
   export type PuntoDeVentaCountOutputTypeCountVentasArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    where?: VentaWhereInput
+  }
+
+  /**
+   * PuntoDeVentaCountOutputType without action
+   */
+  export type PuntoDeVentaCountOutputTypeCountTurnosArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    where?: TurnoPuntoVentaWhereInput
+  }
+
+  /**
+   * PuntoDeVentaCountOutputType without action
+   */
+  export type PuntoDeVentaCountOutputTypeCountArqueosArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    where?: ArqueoCajaWhereInput
+  }
+
+
+  /**
+   * Count Type TurnoPuntoVentaCountOutputType
+   */
+
+  export type TurnoPuntoVentaCountOutputType = {
+    ventas: number
+  }
+
+  export type TurnoPuntoVentaCountOutputTypeSelect<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    ventas?: boolean | TurnoPuntoVentaCountOutputTypeCountVentasArgs
+  }
+
+  // Custom InputTypes
+  /**
+   * TurnoPuntoVentaCountOutputType without action
+   */
+  export type TurnoPuntoVentaCountOutputTypeDefaultArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the TurnoPuntoVentaCountOutputType
+     */
+    select?: TurnoPuntoVentaCountOutputTypeSelect<ExtArgs> | null
+  }
+
+  /**
+   * TurnoPuntoVentaCountOutputType without action
+   */
+  export type TurnoPuntoVentaCountOutputTypeCountVentasArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     where?: VentaWhereInput
   }
 
@@ -11726,6 +12118,7 @@ export namespace Prisma {
     vacationAccruals: number
     vacationRequests: number
     ventas: number
+    turnosPos: number
   }
 
   export type EmpleadoCountOutputTypeSelect<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
@@ -11736,6 +12129,7 @@ export namespace Prisma {
     vacationAccruals?: boolean | EmpleadoCountOutputTypeCountVacationAccrualsArgs
     vacationRequests?: boolean | EmpleadoCountOutputTypeCountVacationRequestsArgs
     ventas?: boolean | EmpleadoCountOutputTypeCountVentasArgs
+    turnosPos?: boolean | EmpleadoCountOutputTypeCountTurnosPosArgs
   }
 
   // Custom InputTypes
@@ -11796,6 +12190,13 @@ export namespace Prisma {
    */
   export type EmpleadoCountOutputTypeCountVentasArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     where?: VentaWhereInput
+  }
+
+  /**
+   * EmpleadoCountOutputType without action
+   */
+  export type EmpleadoCountOutputTypeCountTurnosPosArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    where?: TurnoPuntoVentaWhereInput
   }
 
 
@@ -20771,6 +21172,8 @@ export namespace Prisma {
     periodosContables?: boolean | Tenant$periodosContablesArgs<ExtArgs>
     aperturaPeriodos?: boolean | Tenant$aperturaPeriodosArgs<ExtArgs>
     auditoriaPeriodos?: boolean | Tenant$auditoriaPeriodosArgs<ExtArgs>
+    turnosPos?: boolean | Tenant$turnosPosArgs<ExtArgs>
+    arqueosCaja?: boolean | Tenant$arqueosCajaArgs<ExtArgs>
     backupLogs?: boolean | Tenant$backupLogsArgs<ExtArgs>
     backupPlans?: boolean | Tenant$backupPlansArgs<ExtArgs>
     _count?: boolean | TenantCountOutputTypeDefaultArgs<ExtArgs>
@@ -20862,6 +21265,8 @@ export namespace Prisma {
     periodosContables?: boolean | Tenant$periodosContablesArgs<ExtArgs>
     aperturaPeriodos?: boolean | Tenant$aperturaPeriodosArgs<ExtArgs>
     auditoriaPeriodos?: boolean | Tenant$auditoriaPeriodosArgs<ExtArgs>
+    turnosPos?: boolean | Tenant$turnosPosArgs<ExtArgs>
+    arqueosCaja?: boolean | Tenant$arqueosCajaArgs<ExtArgs>
     backupLogs?: boolean | Tenant$backupLogsArgs<ExtArgs>
     backupPlans?: boolean | Tenant$backupPlansArgs<ExtArgs>
     _count?: boolean | TenantCountOutputTypeDefaultArgs<ExtArgs>
@@ -20929,6 +21334,8 @@ export namespace Prisma {
       periodosContables: Prisma.$PeriodoContablePayload<ExtArgs>[]
       aperturaPeriodos: Prisma.$AperturaPeriodoPayload<ExtArgs>[]
       auditoriaPeriodos: Prisma.$AuditoriaPeriodoPayload<ExtArgs>[]
+      turnosPos: Prisma.$TurnoPuntoVentaPayload<ExtArgs>[]
+      arqueosCaja: Prisma.$ArqueoCajaPayload<ExtArgs>[]
       backupLogs: Prisma.$BackupLogPayload<ExtArgs>[]
       backupPlans: Prisma.$BackupPlanPayload<ExtArgs>[]
     }
@@ -21390,6 +21797,8 @@ export namespace Prisma {
     periodosContables<T extends Tenant$periodosContablesArgs<ExtArgs> = {}>(args?: Subset<T, Tenant$periodosContablesArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$PeriodoContablePayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
     aperturaPeriodos<T extends Tenant$aperturaPeriodosArgs<ExtArgs> = {}>(args?: Subset<T, Tenant$aperturaPeriodosArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$AperturaPeriodoPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
     auditoriaPeriodos<T extends Tenant$auditoriaPeriodosArgs<ExtArgs> = {}>(args?: Subset<T, Tenant$auditoriaPeriodosArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$AuditoriaPeriodoPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
+    turnosPos<T extends Tenant$turnosPosArgs<ExtArgs> = {}>(args?: Subset<T, Tenant$turnosPosArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$TurnoPuntoVentaPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
+    arqueosCaja<T extends Tenant$arqueosCajaArgs<ExtArgs> = {}>(args?: Subset<T, Tenant$arqueosCajaArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$ArqueoCajaPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
     backupLogs<T extends Tenant$backupLogsArgs<ExtArgs> = {}>(args?: Subset<T, Tenant$backupLogsArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$BackupLogPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
     backupPlans<T extends Tenant$backupPlansArgs<ExtArgs> = {}>(args?: Subset<T, Tenant$backupPlansArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$BackupPlanPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
     /**
@@ -23175,6 +23584,54 @@ export namespace Prisma {
     take?: number
     skip?: number
     distinct?: AuditoriaPeriodoScalarFieldEnum | AuditoriaPeriodoScalarFieldEnum[]
+  }
+
+  /**
+   * Tenant.turnosPos
+   */
+  export type Tenant$turnosPosArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the TurnoPuntoVenta
+     */
+    select?: TurnoPuntoVentaSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the TurnoPuntoVenta
+     */
+    omit?: TurnoPuntoVentaOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: TurnoPuntoVentaInclude<ExtArgs> | null
+    where?: TurnoPuntoVentaWhereInput
+    orderBy?: TurnoPuntoVentaOrderByWithRelationInput | TurnoPuntoVentaOrderByWithRelationInput[]
+    cursor?: TurnoPuntoVentaWhereUniqueInput
+    take?: number
+    skip?: number
+    distinct?: TurnoPuntoVentaScalarFieldEnum | TurnoPuntoVentaScalarFieldEnum[]
+  }
+
+  /**
+   * Tenant.arqueosCaja
+   */
+  export type Tenant$arqueosCajaArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the ArqueoCaja
+     */
+    select?: ArqueoCajaSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the ArqueoCaja
+     */
+    omit?: ArqueoCajaOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: ArqueoCajaInclude<ExtArgs> | null
+    where?: ArqueoCajaWhereInput
+    orderBy?: ArqueoCajaOrderByWithRelationInput | ArqueoCajaOrderByWithRelationInput[]
+    cursor?: ArqueoCajaWhereUniqueInput
+    take?: number
+    skip?: number
+    distinct?: ArqueoCajaScalarFieldEnum | ArqueoCajaScalarFieldEnum[]
   }
 
   /**
@@ -26983,6 +27440,7 @@ export namespace Prisma {
     createdAt?: boolean
     updatedAt?: boolean
     productos?: boolean | Almacen$productosArgs<ExtArgs>
+    puntosDeVenta?: boolean | Almacen$puntosDeVentaArgs<ExtArgs>
     transferenciasDestino?: boolean | Almacen$transferenciasDestinoArgs<ExtArgs>
     transferenciasOrigen?: boolean | Almacen$transferenciasOrigenArgs<ExtArgs>
     tenant?: boolean | TenantDefaultArgs<ExtArgs>
@@ -27018,6 +27476,7 @@ export namespace Prisma {
   export type AlmacenOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"almacenId" | "tenantId" | "nombre" | "createdAt" | "updatedAt", ExtArgs["result"]["almacen"]>
   export type AlmacenInclude<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     productos?: boolean | Almacen$productosArgs<ExtArgs>
+    puntosDeVenta?: boolean | Almacen$puntosDeVentaArgs<ExtArgs>
     transferenciasDestino?: boolean | Almacen$transferenciasDestinoArgs<ExtArgs>
     transferenciasOrigen?: boolean | Almacen$transferenciasOrigenArgs<ExtArgs>
     tenant?: boolean | TenantDefaultArgs<ExtArgs>
@@ -27034,6 +27493,7 @@ export namespace Prisma {
     name: "Almacen"
     objects: {
       productos: Prisma.$ProductoPayload<ExtArgs>[]
+      puntosDeVenta: Prisma.$PuntoDeVentaPayload<ExtArgs>[]
       transferenciasDestino: Prisma.$TransferenciaPayload<ExtArgs>[]
       transferenciasOrigen: Prisma.$TransferenciaPayload<ExtArgs>[]
       tenant: Prisma.$TenantPayload<ExtArgs>
@@ -27439,6 +27899,7 @@ export namespace Prisma {
   export interface Prisma__AlmacenClient<T, Null = never, ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs, GlobalOmitOptions = {}> extends Prisma.PrismaPromise<T> {
     readonly [Symbol.toStringTag]: "PrismaPromise"
     productos<T extends Almacen$productosArgs<ExtArgs> = {}>(args?: Subset<T, Almacen$productosArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$ProductoPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
+    puntosDeVenta<T extends Almacen$puntosDeVentaArgs<ExtArgs> = {}>(args?: Subset<T, Almacen$puntosDeVentaArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$PuntoDeVentaPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
     transferenciasDestino<T extends Almacen$transferenciasDestinoArgs<ExtArgs> = {}>(args?: Subset<T, Almacen$transferenciasDestinoArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$TransferenciaPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
     transferenciasOrigen<T extends Almacen$transferenciasOrigenArgs<ExtArgs> = {}>(args?: Subset<T, Almacen$transferenciasOrigenArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$TransferenciaPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
     tenant<T extends TenantDefaultArgs<ExtArgs> = {}>(args?: Subset<T, TenantDefaultArgs<ExtArgs>>): Prisma__TenantClient<$Result.GetResult<Prisma.$TenantPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | Null, Null, ExtArgs, GlobalOmitOptions>
@@ -27896,6 +28357,30 @@ export namespace Prisma {
   }
 
   /**
+   * Almacen.puntosDeVenta
+   */
+  export type Almacen$puntosDeVentaArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the PuntoDeVenta
+     */
+    select?: PuntoDeVentaSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the PuntoDeVenta
+     */
+    omit?: PuntoDeVentaOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: PuntoDeVentaInclude<ExtArgs> | null
+    where?: PuntoDeVentaWhereInput
+    orderBy?: PuntoDeVentaOrderByWithRelationInput | PuntoDeVentaOrderByWithRelationInput[]
+    cursor?: PuntoDeVentaWhereUniqueInput
+    take?: number
+    skip?: number
+    distinct?: PuntoDeVentaScalarFieldEnum | PuntoDeVentaScalarFieldEnum[]
+  }
+
+  /**
    * Almacen.transferenciasDestino
    */
   export type Almacen$transferenciasDestinoArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
@@ -27980,6 +28465,9 @@ export namespace Prisma {
     createdAt: Date | null
     updatedAt: Date | null
     listaPrecioId: string | null
+    tipoCaja: string | null
+    almacenId: string | null
+    cuentaContableId: string | null
   }
 
   export type PuntoDeVentaMaxAggregateOutputType = {
@@ -27990,6 +28478,9 @@ export namespace Prisma {
     createdAt: Date | null
     updatedAt: Date | null
     listaPrecioId: string | null
+    tipoCaja: string | null
+    almacenId: string | null
+    cuentaContableId: string | null
   }
 
   export type PuntoDeVentaCountAggregateOutputType = {
@@ -28000,6 +28491,9 @@ export namespace Prisma {
     createdAt: number
     updatedAt: number
     listaPrecioId: number
+    tipoCaja: number
+    almacenId: number
+    cuentaContableId: number
     _all: number
   }
 
@@ -28012,6 +28506,9 @@ export namespace Prisma {
     createdAt?: true
     updatedAt?: true
     listaPrecioId?: true
+    tipoCaja?: true
+    almacenId?: true
+    cuentaContableId?: true
   }
 
   export type PuntoDeVentaMaxAggregateInputType = {
@@ -28022,6 +28519,9 @@ export namespace Prisma {
     createdAt?: true
     updatedAt?: true
     listaPrecioId?: true
+    tipoCaja?: true
+    almacenId?: true
+    cuentaContableId?: true
   }
 
   export type PuntoDeVentaCountAggregateInputType = {
@@ -28032,6 +28532,9 @@ export namespace Prisma {
     createdAt?: true
     updatedAt?: true
     listaPrecioId?: true
+    tipoCaja?: true
+    almacenId?: true
+    cuentaContableId?: true
     _all?: true
   }
 
@@ -28115,6 +28618,9 @@ export namespace Prisma {
     createdAt: Date
     updatedAt: Date
     listaPrecioId: string | null
+    tipoCaja: string | null
+    almacenId: string | null
+    cuentaContableId: string | null
     _count: PuntoDeVentaCountAggregateOutputType | null
     _min: PuntoDeVentaMinAggregateOutputType | null
     _max: PuntoDeVentaMaxAggregateOutputType | null
@@ -28142,11 +28648,17 @@ export namespace Prisma {
     createdAt?: boolean
     updatedAt?: boolean
     listaPrecioId?: boolean
+    tipoCaja?: boolean
+    almacenId?: boolean
+    cuentaContableId?: boolean
     productos?: boolean | PuntoDeVenta$productosArgs<ExtArgs>
     listaPrecio?: boolean | PuntoDeVenta$listaPrecioArgs<ExtArgs>
+    almacen?: boolean | PuntoDeVenta$almacenArgs<ExtArgs>
     transferenciasDestino?: boolean | PuntoDeVenta$transferenciasDestinoArgs<ExtArgs>
     transferenciasOrigen?: boolean | PuntoDeVenta$transferenciasOrigenArgs<ExtArgs>
     ventas?: boolean | PuntoDeVenta$ventasArgs<ExtArgs>
+    turnos?: boolean | PuntoDeVenta$turnosArgs<ExtArgs>
+    arqueos?: boolean | PuntoDeVenta$arqueosArgs<ExtArgs>
     tenant?: boolean | TenantDefaultArgs<ExtArgs>
     _count?: boolean | PuntoDeVentaCountOutputTypeDefaultArgs<ExtArgs>
   }, ExtArgs["result"]["puntoDeVenta"]>
@@ -28159,7 +28671,11 @@ export namespace Prisma {
     createdAt?: boolean
     updatedAt?: boolean
     listaPrecioId?: boolean
+    tipoCaja?: boolean
+    almacenId?: boolean
+    cuentaContableId?: boolean
     listaPrecio?: boolean | PuntoDeVenta$listaPrecioArgs<ExtArgs>
+    almacen?: boolean | PuntoDeVenta$almacenArgs<ExtArgs>
     tenant?: boolean | TenantDefaultArgs<ExtArgs>
   }, ExtArgs["result"]["puntoDeVenta"]>
 
@@ -28171,7 +28687,11 @@ export namespace Prisma {
     createdAt?: boolean
     updatedAt?: boolean
     listaPrecioId?: boolean
+    tipoCaja?: boolean
+    almacenId?: boolean
+    cuentaContableId?: boolean
     listaPrecio?: boolean | PuntoDeVenta$listaPrecioArgs<ExtArgs>
+    almacen?: boolean | PuntoDeVenta$almacenArgs<ExtArgs>
     tenant?: boolean | TenantDefaultArgs<ExtArgs>
   }, ExtArgs["result"]["puntoDeVenta"]>
 
@@ -28183,24 +28703,32 @@ export namespace Prisma {
     createdAt?: boolean
     updatedAt?: boolean
     listaPrecioId?: boolean
+    tipoCaja?: boolean
+    almacenId?: boolean
+    cuentaContableId?: boolean
   }
 
-  export type PuntoDeVentaOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"pvId" | "tenantId" | "nombre" | "ubicacion" | "createdAt" | "updatedAt" | "listaPrecioId", ExtArgs["result"]["puntoDeVenta"]>
+  export type PuntoDeVentaOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"pvId" | "tenantId" | "nombre" | "ubicacion" | "createdAt" | "updatedAt" | "listaPrecioId" | "tipoCaja" | "almacenId" | "cuentaContableId", ExtArgs["result"]["puntoDeVenta"]>
   export type PuntoDeVentaInclude<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     productos?: boolean | PuntoDeVenta$productosArgs<ExtArgs>
     listaPrecio?: boolean | PuntoDeVenta$listaPrecioArgs<ExtArgs>
+    almacen?: boolean | PuntoDeVenta$almacenArgs<ExtArgs>
     transferenciasDestino?: boolean | PuntoDeVenta$transferenciasDestinoArgs<ExtArgs>
     transferenciasOrigen?: boolean | PuntoDeVenta$transferenciasOrigenArgs<ExtArgs>
     ventas?: boolean | PuntoDeVenta$ventasArgs<ExtArgs>
+    turnos?: boolean | PuntoDeVenta$turnosArgs<ExtArgs>
+    arqueos?: boolean | PuntoDeVenta$arqueosArgs<ExtArgs>
     tenant?: boolean | TenantDefaultArgs<ExtArgs>
     _count?: boolean | PuntoDeVentaCountOutputTypeDefaultArgs<ExtArgs>
   }
   export type PuntoDeVentaIncludeCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     listaPrecio?: boolean | PuntoDeVenta$listaPrecioArgs<ExtArgs>
+    almacen?: boolean | PuntoDeVenta$almacenArgs<ExtArgs>
     tenant?: boolean | TenantDefaultArgs<ExtArgs>
   }
   export type PuntoDeVentaIncludeUpdateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     listaPrecio?: boolean | PuntoDeVenta$listaPrecioArgs<ExtArgs>
+    almacen?: boolean | PuntoDeVenta$almacenArgs<ExtArgs>
     tenant?: boolean | TenantDefaultArgs<ExtArgs>
   }
 
@@ -28209,9 +28737,12 @@ export namespace Prisma {
     objects: {
       productos: Prisma.$ProductoPayload<ExtArgs>[]
       listaPrecio: Prisma.$ListaPrecioPayload<ExtArgs> | null
+      almacen: Prisma.$AlmacenPayload<ExtArgs> | null
       transferenciasDestino: Prisma.$TransferenciaPayload<ExtArgs>[]
       transferenciasOrigen: Prisma.$TransferenciaPayload<ExtArgs>[]
       ventas: Prisma.$VentaPayload<ExtArgs>[]
+      turnos: Prisma.$TurnoPuntoVentaPayload<ExtArgs>[]
+      arqueos: Prisma.$ArqueoCajaPayload<ExtArgs>[]
       tenant: Prisma.$TenantPayload<ExtArgs>
     }
     scalars: $Extensions.GetPayloadResult<{
@@ -28222,6 +28753,9 @@ export namespace Prisma {
       createdAt: Date
       updatedAt: Date
       listaPrecioId: string | null
+      tipoCaja: string | null
+      almacenId: string | null
+      cuentaContableId: string | null
     }, ExtArgs["result"]["puntoDeVenta"]>
     composites: {}
   }
@@ -28618,9 +29152,12 @@ export namespace Prisma {
     readonly [Symbol.toStringTag]: "PrismaPromise"
     productos<T extends PuntoDeVenta$productosArgs<ExtArgs> = {}>(args?: Subset<T, PuntoDeVenta$productosArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$ProductoPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
     listaPrecio<T extends PuntoDeVenta$listaPrecioArgs<ExtArgs> = {}>(args?: Subset<T, PuntoDeVenta$listaPrecioArgs<ExtArgs>>): Prisma__ListaPrecioClient<$Result.GetResult<Prisma.$ListaPrecioPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+    almacen<T extends PuntoDeVenta$almacenArgs<ExtArgs> = {}>(args?: Subset<T, PuntoDeVenta$almacenArgs<ExtArgs>>): Prisma__AlmacenClient<$Result.GetResult<Prisma.$AlmacenPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
     transferenciasDestino<T extends PuntoDeVenta$transferenciasDestinoArgs<ExtArgs> = {}>(args?: Subset<T, PuntoDeVenta$transferenciasDestinoArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$TransferenciaPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
     transferenciasOrigen<T extends PuntoDeVenta$transferenciasOrigenArgs<ExtArgs> = {}>(args?: Subset<T, PuntoDeVenta$transferenciasOrigenArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$TransferenciaPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
     ventas<T extends PuntoDeVenta$ventasArgs<ExtArgs> = {}>(args?: Subset<T, PuntoDeVenta$ventasArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$VentaPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
+    turnos<T extends PuntoDeVenta$turnosArgs<ExtArgs> = {}>(args?: Subset<T, PuntoDeVenta$turnosArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$TurnoPuntoVentaPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
+    arqueos<T extends PuntoDeVenta$arqueosArgs<ExtArgs> = {}>(args?: Subset<T, PuntoDeVenta$arqueosArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$ArqueoCajaPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
     tenant<T extends TenantDefaultArgs<ExtArgs> = {}>(args?: Subset<T, TenantDefaultArgs<ExtArgs>>): Prisma__TenantClient<$Result.GetResult<Prisma.$TenantPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | Null, Null, ExtArgs, GlobalOmitOptions>
     /**
      * Attaches callbacks for the resolution and/or rejection of the Promise.
@@ -28658,6 +29195,9 @@ export namespace Prisma {
     readonly createdAt: FieldRef<"PuntoDeVenta", 'DateTime'>
     readonly updatedAt: FieldRef<"PuntoDeVenta", 'DateTime'>
     readonly listaPrecioId: FieldRef<"PuntoDeVenta", 'String'>
+    readonly tipoCaja: FieldRef<"PuntoDeVenta", 'String'>
+    readonly almacenId: FieldRef<"PuntoDeVenta", 'String'>
+    readonly cuentaContableId: FieldRef<"PuntoDeVenta", 'String'>
   }
     
 
@@ -29097,6 +29637,25 @@ export namespace Prisma {
   }
 
   /**
+   * PuntoDeVenta.almacen
+   */
+  export type PuntoDeVenta$almacenArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the Almacen
+     */
+    select?: AlmacenSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the Almacen
+     */
+    omit?: AlmacenOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: AlmacenInclude<ExtArgs> | null
+    where?: AlmacenWhereInput
+  }
+
+  /**
    * PuntoDeVenta.transferenciasDestino
    */
   export type PuntoDeVenta$transferenciasDestinoArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
@@ -29169,6 +29728,54 @@ export namespace Prisma {
   }
 
   /**
+   * PuntoDeVenta.turnos
+   */
+  export type PuntoDeVenta$turnosArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the TurnoPuntoVenta
+     */
+    select?: TurnoPuntoVentaSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the TurnoPuntoVenta
+     */
+    omit?: TurnoPuntoVentaOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: TurnoPuntoVentaInclude<ExtArgs> | null
+    where?: TurnoPuntoVentaWhereInput
+    orderBy?: TurnoPuntoVentaOrderByWithRelationInput | TurnoPuntoVentaOrderByWithRelationInput[]
+    cursor?: TurnoPuntoVentaWhereUniqueInput
+    take?: number
+    skip?: number
+    distinct?: TurnoPuntoVentaScalarFieldEnum | TurnoPuntoVentaScalarFieldEnum[]
+  }
+
+  /**
+   * PuntoDeVenta.arqueos
+   */
+  export type PuntoDeVenta$arqueosArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the ArqueoCaja
+     */
+    select?: ArqueoCajaSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the ArqueoCaja
+     */
+    omit?: ArqueoCajaOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: ArqueoCajaInclude<ExtArgs> | null
+    where?: ArqueoCajaWhereInput
+    orderBy?: ArqueoCajaOrderByWithRelationInput | ArqueoCajaOrderByWithRelationInput[]
+    cursor?: ArqueoCajaWhereUniqueInput
+    take?: number
+    skip?: number
+    distinct?: ArqueoCajaScalarFieldEnum | ArqueoCajaScalarFieldEnum[]
+  }
+
+  /**
    * PuntoDeVenta without action
    */
   export type PuntoDeVentaDefaultArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
@@ -29184,6 +29791,2879 @@ export namespace Prisma {
      * Choose, which related nodes to fetch as well
      */
     include?: PuntoDeVentaInclude<ExtArgs> | null
+  }
+
+
+  /**
+   * Model TurnoPuntoVenta
+   */
+
+  export type AggregateTurnoPuntoVenta = {
+    _count: TurnoPuntoVentaCountAggregateOutputType | null
+    _avg: TurnoPuntoVentaAvgAggregateOutputType | null
+    _sum: TurnoPuntoVentaSumAggregateOutputType | null
+    _min: TurnoPuntoVentaMinAggregateOutputType | null
+    _max: TurnoPuntoVentaMaxAggregateOutputType | null
+  }
+
+  export type TurnoPuntoVentaAvgAggregateOutputType = {
+    fondoInicialCup: number | null
+    fondoInicialUsd: number | null
+  }
+
+  export type TurnoPuntoVentaSumAggregateOutputType = {
+    fondoInicialCup: number | null
+    fondoInicialUsd: number | null
+  }
+
+  export type TurnoPuntoVentaMinAggregateOutputType = {
+    id: string | null
+    tenantId: string | null
+    puntoDeVentaId: string | null
+    empleadoId: string | null
+    tipo: string | null
+    fechaApertura: Date | null
+    fechaCierre: Date | null
+    fondoInicialCup: number | null
+    fondoInicialUsd: number | null
+    estado: $Enums.EstadoTurno | null
+    observaciones: string | null
+    createdAt: Date | null
+    updatedAt: Date | null
+  }
+
+  export type TurnoPuntoVentaMaxAggregateOutputType = {
+    id: string | null
+    tenantId: string | null
+    puntoDeVentaId: string | null
+    empleadoId: string | null
+    tipo: string | null
+    fechaApertura: Date | null
+    fechaCierre: Date | null
+    fondoInicialCup: number | null
+    fondoInicialUsd: number | null
+    estado: $Enums.EstadoTurno | null
+    observaciones: string | null
+    createdAt: Date | null
+    updatedAt: Date | null
+  }
+
+  export type TurnoPuntoVentaCountAggregateOutputType = {
+    id: number
+    tenantId: number
+    puntoDeVentaId: number
+    empleadoId: number
+    tipo: number
+    fechaApertura: number
+    fechaCierre: number
+    fondoInicialCup: number
+    fondoInicialUsd: number
+    estado: number
+    observaciones: number
+    createdAt: number
+    updatedAt: number
+    _all: number
+  }
+
+
+  export type TurnoPuntoVentaAvgAggregateInputType = {
+    fondoInicialCup?: true
+    fondoInicialUsd?: true
+  }
+
+  export type TurnoPuntoVentaSumAggregateInputType = {
+    fondoInicialCup?: true
+    fondoInicialUsd?: true
+  }
+
+  export type TurnoPuntoVentaMinAggregateInputType = {
+    id?: true
+    tenantId?: true
+    puntoDeVentaId?: true
+    empleadoId?: true
+    tipo?: true
+    fechaApertura?: true
+    fechaCierre?: true
+    fondoInicialCup?: true
+    fondoInicialUsd?: true
+    estado?: true
+    observaciones?: true
+    createdAt?: true
+    updatedAt?: true
+  }
+
+  export type TurnoPuntoVentaMaxAggregateInputType = {
+    id?: true
+    tenantId?: true
+    puntoDeVentaId?: true
+    empleadoId?: true
+    tipo?: true
+    fechaApertura?: true
+    fechaCierre?: true
+    fondoInicialCup?: true
+    fondoInicialUsd?: true
+    estado?: true
+    observaciones?: true
+    createdAt?: true
+    updatedAt?: true
+  }
+
+  export type TurnoPuntoVentaCountAggregateInputType = {
+    id?: true
+    tenantId?: true
+    puntoDeVentaId?: true
+    empleadoId?: true
+    tipo?: true
+    fechaApertura?: true
+    fechaCierre?: true
+    fondoInicialCup?: true
+    fondoInicialUsd?: true
+    estado?: true
+    observaciones?: true
+    createdAt?: true
+    updatedAt?: true
+    _all?: true
+  }
+
+  export type TurnoPuntoVentaAggregateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Filter which TurnoPuntoVenta to aggregate.
+     */
+    where?: TurnoPuntoVentaWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of TurnoPuntoVentas to fetch.
+     */
+    orderBy?: TurnoPuntoVentaOrderByWithRelationInput | TurnoPuntoVentaOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the start position
+     */
+    cursor?: TurnoPuntoVentaWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` TurnoPuntoVentas from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` TurnoPuntoVentas.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Count returned TurnoPuntoVentas
+    **/
+    _count?: true | TurnoPuntoVentaCountAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to average
+    **/
+    _avg?: TurnoPuntoVentaAvgAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to sum
+    **/
+    _sum?: TurnoPuntoVentaSumAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to find the minimum value
+    **/
+    _min?: TurnoPuntoVentaMinAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to find the maximum value
+    **/
+    _max?: TurnoPuntoVentaMaxAggregateInputType
+  }
+
+  export type GetTurnoPuntoVentaAggregateType<T extends TurnoPuntoVentaAggregateArgs> = {
+        [P in keyof T & keyof AggregateTurnoPuntoVenta]: P extends '_count' | 'count'
+      ? T[P] extends true
+        ? number
+        : GetScalarType<T[P], AggregateTurnoPuntoVenta[P]>
+      : GetScalarType<T[P], AggregateTurnoPuntoVenta[P]>
+  }
+
+
+
+
+  export type TurnoPuntoVentaGroupByArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    where?: TurnoPuntoVentaWhereInput
+    orderBy?: TurnoPuntoVentaOrderByWithAggregationInput | TurnoPuntoVentaOrderByWithAggregationInput[]
+    by: TurnoPuntoVentaScalarFieldEnum[] | TurnoPuntoVentaScalarFieldEnum
+    having?: TurnoPuntoVentaScalarWhereWithAggregatesInput
+    take?: number
+    skip?: number
+    _count?: TurnoPuntoVentaCountAggregateInputType | true
+    _avg?: TurnoPuntoVentaAvgAggregateInputType
+    _sum?: TurnoPuntoVentaSumAggregateInputType
+    _min?: TurnoPuntoVentaMinAggregateInputType
+    _max?: TurnoPuntoVentaMaxAggregateInputType
+  }
+
+  export type TurnoPuntoVentaGroupByOutputType = {
+    id: string
+    tenantId: string
+    puntoDeVentaId: string
+    empleadoId: string | null
+    tipo: string
+    fechaApertura: Date
+    fechaCierre: Date | null
+    fondoInicialCup: number
+    fondoInicialUsd: number
+    estado: $Enums.EstadoTurno
+    observaciones: string | null
+    createdAt: Date
+    updatedAt: Date
+    _count: TurnoPuntoVentaCountAggregateOutputType | null
+    _avg: TurnoPuntoVentaAvgAggregateOutputType | null
+    _sum: TurnoPuntoVentaSumAggregateOutputType | null
+    _min: TurnoPuntoVentaMinAggregateOutputType | null
+    _max: TurnoPuntoVentaMaxAggregateOutputType | null
+  }
+
+  type GetTurnoPuntoVentaGroupByPayload<T extends TurnoPuntoVentaGroupByArgs> = Prisma.PrismaPromise<
+    Array<
+      PickEnumerable<TurnoPuntoVentaGroupByOutputType, T['by']> &
+        {
+          [P in ((keyof T) & (keyof TurnoPuntoVentaGroupByOutputType))]: P extends '_count'
+            ? T[P] extends boolean
+              ? number
+              : GetScalarType<T[P], TurnoPuntoVentaGroupByOutputType[P]>
+            : GetScalarType<T[P], TurnoPuntoVentaGroupByOutputType[P]>
+        }
+      >
+    >
+
+
+  export type TurnoPuntoVentaSelect<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    tenantId?: boolean
+    puntoDeVentaId?: boolean
+    empleadoId?: boolean
+    tipo?: boolean
+    fechaApertura?: boolean
+    fechaCierre?: boolean
+    fondoInicialCup?: boolean
+    fondoInicialUsd?: boolean
+    estado?: boolean
+    observaciones?: boolean
+    createdAt?: boolean
+    updatedAt?: boolean
+    puntoDeVenta?: boolean | PuntoDeVentaDefaultArgs<ExtArgs>
+    empleado?: boolean | TurnoPuntoVenta$empleadoArgs<ExtArgs>
+    ventas?: boolean | TurnoPuntoVenta$ventasArgs<ExtArgs>
+    arqueo?: boolean | TurnoPuntoVenta$arqueoArgs<ExtArgs>
+    tenant?: boolean | TenantDefaultArgs<ExtArgs>
+    _count?: boolean | TurnoPuntoVentaCountOutputTypeDefaultArgs<ExtArgs>
+  }, ExtArgs["result"]["turnoPuntoVenta"]>
+
+  export type TurnoPuntoVentaSelectCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    tenantId?: boolean
+    puntoDeVentaId?: boolean
+    empleadoId?: boolean
+    tipo?: boolean
+    fechaApertura?: boolean
+    fechaCierre?: boolean
+    fondoInicialCup?: boolean
+    fondoInicialUsd?: boolean
+    estado?: boolean
+    observaciones?: boolean
+    createdAt?: boolean
+    updatedAt?: boolean
+    puntoDeVenta?: boolean | PuntoDeVentaDefaultArgs<ExtArgs>
+    empleado?: boolean | TurnoPuntoVenta$empleadoArgs<ExtArgs>
+    tenant?: boolean | TenantDefaultArgs<ExtArgs>
+  }, ExtArgs["result"]["turnoPuntoVenta"]>
+
+  export type TurnoPuntoVentaSelectUpdateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    tenantId?: boolean
+    puntoDeVentaId?: boolean
+    empleadoId?: boolean
+    tipo?: boolean
+    fechaApertura?: boolean
+    fechaCierre?: boolean
+    fondoInicialCup?: boolean
+    fondoInicialUsd?: boolean
+    estado?: boolean
+    observaciones?: boolean
+    createdAt?: boolean
+    updatedAt?: boolean
+    puntoDeVenta?: boolean | PuntoDeVentaDefaultArgs<ExtArgs>
+    empleado?: boolean | TurnoPuntoVenta$empleadoArgs<ExtArgs>
+    tenant?: boolean | TenantDefaultArgs<ExtArgs>
+  }, ExtArgs["result"]["turnoPuntoVenta"]>
+
+  export type TurnoPuntoVentaSelectScalar = {
+    id?: boolean
+    tenantId?: boolean
+    puntoDeVentaId?: boolean
+    empleadoId?: boolean
+    tipo?: boolean
+    fechaApertura?: boolean
+    fechaCierre?: boolean
+    fondoInicialCup?: boolean
+    fondoInicialUsd?: boolean
+    estado?: boolean
+    observaciones?: boolean
+    createdAt?: boolean
+    updatedAt?: boolean
+  }
+
+  export type TurnoPuntoVentaOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "tenantId" | "puntoDeVentaId" | "empleadoId" | "tipo" | "fechaApertura" | "fechaCierre" | "fondoInicialCup" | "fondoInicialUsd" | "estado" | "observaciones" | "createdAt" | "updatedAt", ExtArgs["result"]["turnoPuntoVenta"]>
+  export type TurnoPuntoVentaInclude<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    puntoDeVenta?: boolean | PuntoDeVentaDefaultArgs<ExtArgs>
+    empleado?: boolean | TurnoPuntoVenta$empleadoArgs<ExtArgs>
+    ventas?: boolean | TurnoPuntoVenta$ventasArgs<ExtArgs>
+    arqueo?: boolean | TurnoPuntoVenta$arqueoArgs<ExtArgs>
+    tenant?: boolean | TenantDefaultArgs<ExtArgs>
+    _count?: boolean | TurnoPuntoVentaCountOutputTypeDefaultArgs<ExtArgs>
+  }
+  export type TurnoPuntoVentaIncludeCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    puntoDeVenta?: boolean | PuntoDeVentaDefaultArgs<ExtArgs>
+    empleado?: boolean | TurnoPuntoVenta$empleadoArgs<ExtArgs>
+    tenant?: boolean | TenantDefaultArgs<ExtArgs>
+  }
+  export type TurnoPuntoVentaIncludeUpdateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    puntoDeVenta?: boolean | PuntoDeVentaDefaultArgs<ExtArgs>
+    empleado?: boolean | TurnoPuntoVenta$empleadoArgs<ExtArgs>
+    tenant?: boolean | TenantDefaultArgs<ExtArgs>
+  }
+
+  export type $TurnoPuntoVentaPayload<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    name: "TurnoPuntoVenta"
+    objects: {
+      puntoDeVenta: Prisma.$PuntoDeVentaPayload<ExtArgs>
+      empleado: Prisma.$EmpleadoPayload<ExtArgs> | null
+      ventas: Prisma.$VentaPayload<ExtArgs>[]
+      arqueo: Prisma.$ArqueoCajaPayload<ExtArgs> | null
+      tenant: Prisma.$TenantPayload<ExtArgs>
+    }
+    scalars: $Extensions.GetPayloadResult<{
+      id: string
+      tenantId: string
+      puntoDeVentaId: string
+      empleadoId: string | null
+      tipo: string
+      fechaApertura: Date
+      fechaCierre: Date | null
+      fondoInicialCup: number
+      fondoInicialUsd: number
+      estado: $Enums.EstadoTurno
+      observaciones: string | null
+      createdAt: Date
+      updatedAt: Date
+    }, ExtArgs["result"]["turnoPuntoVenta"]>
+    composites: {}
+  }
+
+  type TurnoPuntoVentaGetPayload<S extends boolean | null | undefined | TurnoPuntoVentaDefaultArgs> = $Result.GetResult<Prisma.$TurnoPuntoVentaPayload, S>
+
+  type TurnoPuntoVentaCountArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> =
+    Omit<TurnoPuntoVentaFindManyArgs, 'select' | 'include' | 'distinct' | 'omit'> & {
+      select?: TurnoPuntoVentaCountAggregateInputType | true
+    }
+
+  export interface TurnoPuntoVentaDelegate<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs, GlobalOmitOptions = {}> {
+    [K: symbol]: { types: Prisma.TypeMap<ExtArgs>['model']['TurnoPuntoVenta'], meta: { name: 'TurnoPuntoVenta' } }
+    /**
+     * Find zero or one TurnoPuntoVenta that matches the filter.
+     * @param {TurnoPuntoVentaFindUniqueArgs} args - Arguments to find a TurnoPuntoVenta
+     * @example
+     * // Get one TurnoPuntoVenta
+     * const turnoPuntoVenta = await prisma.turnoPuntoVenta.findUnique({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findUnique<T extends TurnoPuntoVentaFindUniqueArgs>(args: SelectSubset<T, TurnoPuntoVentaFindUniqueArgs<ExtArgs>>): Prisma__TurnoPuntoVentaClient<$Result.GetResult<Prisma.$TurnoPuntoVentaPayload<ExtArgs>, T, "findUnique", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find one TurnoPuntoVenta that matches the filter or throw an error with `error.code='P2025'`
+     * if no matches were found.
+     * @param {TurnoPuntoVentaFindUniqueOrThrowArgs} args - Arguments to find a TurnoPuntoVenta
+     * @example
+     * // Get one TurnoPuntoVenta
+     * const turnoPuntoVenta = await prisma.turnoPuntoVenta.findUniqueOrThrow({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findUniqueOrThrow<T extends TurnoPuntoVentaFindUniqueOrThrowArgs>(args: SelectSubset<T, TurnoPuntoVentaFindUniqueOrThrowArgs<ExtArgs>>): Prisma__TurnoPuntoVentaClient<$Result.GetResult<Prisma.$TurnoPuntoVentaPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find the first TurnoPuntoVenta that matches the filter.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {TurnoPuntoVentaFindFirstArgs} args - Arguments to find a TurnoPuntoVenta
+     * @example
+     * // Get one TurnoPuntoVenta
+     * const turnoPuntoVenta = await prisma.turnoPuntoVenta.findFirst({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findFirst<T extends TurnoPuntoVentaFindFirstArgs>(args?: SelectSubset<T, TurnoPuntoVentaFindFirstArgs<ExtArgs>>): Prisma__TurnoPuntoVentaClient<$Result.GetResult<Prisma.$TurnoPuntoVentaPayload<ExtArgs>, T, "findFirst", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find the first TurnoPuntoVenta that matches the filter or
+     * throw `PrismaKnownClientError` with `P2025` code if no matches were found.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {TurnoPuntoVentaFindFirstOrThrowArgs} args - Arguments to find a TurnoPuntoVenta
+     * @example
+     * // Get one TurnoPuntoVenta
+     * const turnoPuntoVenta = await prisma.turnoPuntoVenta.findFirstOrThrow({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findFirstOrThrow<T extends TurnoPuntoVentaFindFirstOrThrowArgs>(args?: SelectSubset<T, TurnoPuntoVentaFindFirstOrThrowArgs<ExtArgs>>): Prisma__TurnoPuntoVentaClient<$Result.GetResult<Prisma.$TurnoPuntoVentaPayload<ExtArgs>, T, "findFirstOrThrow", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find zero or more TurnoPuntoVentas that matches the filter.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {TurnoPuntoVentaFindManyArgs} args - Arguments to filter and select certain fields only.
+     * @example
+     * // Get all TurnoPuntoVentas
+     * const turnoPuntoVentas = await prisma.turnoPuntoVenta.findMany()
+     * 
+     * // Get first 10 TurnoPuntoVentas
+     * const turnoPuntoVentas = await prisma.turnoPuntoVenta.findMany({ take: 10 })
+     * 
+     * // Only select the `id`
+     * const turnoPuntoVentaWithIdOnly = await prisma.turnoPuntoVenta.findMany({ select: { id: true } })
+     * 
+     */
+    findMany<T extends TurnoPuntoVentaFindManyArgs>(args?: SelectSubset<T, TurnoPuntoVentaFindManyArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$TurnoPuntoVentaPayload<ExtArgs>, T, "findMany", GlobalOmitOptions>>
+
+    /**
+     * Create a TurnoPuntoVenta.
+     * @param {TurnoPuntoVentaCreateArgs} args - Arguments to create a TurnoPuntoVenta.
+     * @example
+     * // Create one TurnoPuntoVenta
+     * const TurnoPuntoVenta = await prisma.turnoPuntoVenta.create({
+     *   data: {
+     *     // ... data to create a TurnoPuntoVenta
+     *   }
+     * })
+     * 
+     */
+    create<T extends TurnoPuntoVentaCreateArgs>(args: SelectSubset<T, TurnoPuntoVentaCreateArgs<ExtArgs>>): Prisma__TurnoPuntoVentaClient<$Result.GetResult<Prisma.$TurnoPuntoVentaPayload<ExtArgs>, T, "create", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Create many TurnoPuntoVentas.
+     * @param {TurnoPuntoVentaCreateManyArgs} args - Arguments to create many TurnoPuntoVentas.
+     * @example
+     * // Create many TurnoPuntoVentas
+     * const turnoPuntoVenta = await prisma.turnoPuntoVenta.createMany({
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     *     
+     */
+    createMany<T extends TurnoPuntoVentaCreateManyArgs>(args?: SelectSubset<T, TurnoPuntoVentaCreateManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Create many TurnoPuntoVentas and returns the data saved in the database.
+     * @param {TurnoPuntoVentaCreateManyAndReturnArgs} args - Arguments to create many TurnoPuntoVentas.
+     * @example
+     * // Create many TurnoPuntoVentas
+     * const turnoPuntoVenta = await prisma.turnoPuntoVenta.createManyAndReturn({
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * 
+     * // Create many TurnoPuntoVentas and only return the `id`
+     * const turnoPuntoVentaWithIdOnly = await prisma.turnoPuntoVenta.createManyAndReturn({
+     *   select: { id: true },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * 
+     */
+    createManyAndReturn<T extends TurnoPuntoVentaCreateManyAndReturnArgs>(args?: SelectSubset<T, TurnoPuntoVentaCreateManyAndReturnArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$TurnoPuntoVentaPayload<ExtArgs>, T, "createManyAndReturn", GlobalOmitOptions>>
+
+    /**
+     * Delete a TurnoPuntoVenta.
+     * @param {TurnoPuntoVentaDeleteArgs} args - Arguments to delete one TurnoPuntoVenta.
+     * @example
+     * // Delete one TurnoPuntoVenta
+     * const TurnoPuntoVenta = await prisma.turnoPuntoVenta.delete({
+     *   where: {
+     *     // ... filter to delete one TurnoPuntoVenta
+     *   }
+     * })
+     * 
+     */
+    delete<T extends TurnoPuntoVentaDeleteArgs>(args: SelectSubset<T, TurnoPuntoVentaDeleteArgs<ExtArgs>>): Prisma__TurnoPuntoVentaClient<$Result.GetResult<Prisma.$TurnoPuntoVentaPayload<ExtArgs>, T, "delete", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Update one TurnoPuntoVenta.
+     * @param {TurnoPuntoVentaUpdateArgs} args - Arguments to update one TurnoPuntoVenta.
+     * @example
+     * // Update one TurnoPuntoVenta
+     * const turnoPuntoVenta = await prisma.turnoPuntoVenta.update({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: {
+     *     // ... provide data here
+     *   }
+     * })
+     * 
+     */
+    update<T extends TurnoPuntoVentaUpdateArgs>(args: SelectSubset<T, TurnoPuntoVentaUpdateArgs<ExtArgs>>): Prisma__TurnoPuntoVentaClient<$Result.GetResult<Prisma.$TurnoPuntoVentaPayload<ExtArgs>, T, "update", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Delete zero or more TurnoPuntoVentas.
+     * @param {TurnoPuntoVentaDeleteManyArgs} args - Arguments to filter TurnoPuntoVentas to delete.
+     * @example
+     * // Delete a few TurnoPuntoVentas
+     * const { count } = await prisma.turnoPuntoVenta.deleteMany({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     * 
+     */
+    deleteMany<T extends TurnoPuntoVentaDeleteManyArgs>(args?: SelectSubset<T, TurnoPuntoVentaDeleteManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Update zero or more TurnoPuntoVentas.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {TurnoPuntoVentaUpdateManyArgs} args - Arguments to update one or more rows.
+     * @example
+     * // Update many TurnoPuntoVentas
+     * const turnoPuntoVenta = await prisma.turnoPuntoVenta.updateMany({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: {
+     *     // ... provide data here
+     *   }
+     * })
+     * 
+     */
+    updateMany<T extends TurnoPuntoVentaUpdateManyArgs>(args: SelectSubset<T, TurnoPuntoVentaUpdateManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Update zero or more TurnoPuntoVentas and returns the data updated in the database.
+     * @param {TurnoPuntoVentaUpdateManyAndReturnArgs} args - Arguments to update many TurnoPuntoVentas.
+     * @example
+     * // Update many TurnoPuntoVentas
+     * const turnoPuntoVenta = await prisma.turnoPuntoVenta.updateManyAndReturn({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * 
+     * // Update zero or more TurnoPuntoVentas and only return the `id`
+     * const turnoPuntoVentaWithIdOnly = await prisma.turnoPuntoVenta.updateManyAndReturn({
+     *   select: { id: true },
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * 
+     */
+    updateManyAndReturn<T extends TurnoPuntoVentaUpdateManyAndReturnArgs>(args: SelectSubset<T, TurnoPuntoVentaUpdateManyAndReturnArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$TurnoPuntoVentaPayload<ExtArgs>, T, "updateManyAndReturn", GlobalOmitOptions>>
+
+    /**
+     * Create or update one TurnoPuntoVenta.
+     * @param {TurnoPuntoVentaUpsertArgs} args - Arguments to update or create a TurnoPuntoVenta.
+     * @example
+     * // Update or create a TurnoPuntoVenta
+     * const turnoPuntoVenta = await prisma.turnoPuntoVenta.upsert({
+     *   create: {
+     *     // ... data to create a TurnoPuntoVenta
+     *   },
+     *   update: {
+     *     // ... in case it already exists, update
+     *   },
+     *   where: {
+     *     // ... the filter for the TurnoPuntoVenta we want to update
+     *   }
+     * })
+     */
+    upsert<T extends TurnoPuntoVentaUpsertArgs>(args: SelectSubset<T, TurnoPuntoVentaUpsertArgs<ExtArgs>>): Prisma__TurnoPuntoVentaClient<$Result.GetResult<Prisma.$TurnoPuntoVentaPayload<ExtArgs>, T, "upsert", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+
+    /**
+     * Count the number of TurnoPuntoVentas.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {TurnoPuntoVentaCountArgs} args - Arguments to filter TurnoPuntoVentas to count.
+     * @example
+     * // Count the number of TurnoPuntoVentas
+     * const count = await prisma.turnoPuntoVenta.count({
+     *   where: {
+     *     // ... the filter for the TurnoPuntoVentas we want to count
+     *   }
+     * })
+    **/
+    count<T extends TurnoPuntoVentaCountArgs>(
+      args?: Subset<T, TurnoPuntoVentaCountArgs>,
+    ): Prisma.PrismaPromise<
+      T extends $Utils.Record<'select', any>
+        ? T['select'] extends true
+          ? number
+          : GetScalarType<T['select'], TurnoPuntoVentaCountAggregateOutputType>
+        : number
+    >
+
+    /**
+     * Allows you to perform aggregations operations on a TurnoPuntoVenta.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {TurnoPuntoVentaAggregateArgs} args - Select which aggregations you would like to apply and on what fields.
+     * @example
+     * // Ordered by age ascending
+     * // Where email contains prisma.io
+     * // Limited to the 10 users
+     * const aggregations = await prisma.user.aggregate({
+     *   _avg: {
+     *     age: true,
+     *   },
+     *   where: {
+     *     email: {
+     *       contains: "prisma.io",
+     *     },
+     *   },
+     *   orderBy: {
+     *     age: "asc",
+     *   },
+     *   take: 10,
+     * })
+    **/
+    aggregate<T extends TurnoPuntoVentaAggregateArgs>(args: Subset<T, TurnoPuntoVentaAggregateArgs>): Prisma.PrismaPromise<GetTurnoPuntoVentaAggregateType<T>>
+
+    /**
+     * Group by TurnoPuntoVenta.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {TurnoPuntoVentaGroupByArgs} args - Group by arguments.
+     * @example
+     * // Group by city, order by createdAt, get count
+     * const result = await prisma.user.groupBy({
+     *   by: ['city', 'createdAt'],
+     *   orderBy: {
+     *     createdAt: true
+     *   },
+     *   _count: {
+     *     _all: true
+     *   },
+     * })
+     * 
+    **/
+    groupBy<
+      T extends TurnoPuntoVentaGroupByArgs,
+      HasSelectOrTake extends Or<
+        Extends<'skip', Keys<T>>,
+        Extends<'take', Keys<T>>
+      >,
+      OrderByArg extends True extends HasSelectOrTake
+        ? { orderBy: TurnoPuntoVentaGroupByArgs['orderBy'] }
+        : { orderBy?: TurnoPuntoVentaGroupByArgs['orderBy'] },
+      OrderFields extends ExcludeUnderscoreKeys<Keys<MaybeTupleToUnion<T['orderBy']>>>,
+      ByFields extends MaybeTupleToUnion<T['by']>,
+      ByValid extends Has<ByFields, OrderFields>,
+      HavingFields extends GetHavingFields<T['having']>,
+      HavingValid extends Has<ByFields, HavingFields>,
+      ByEmpty extends T['by'] extends never[] ? True : False,
+      InputErrors extends ByEmpty extends True
+      ? `Error: "by" must not be empty.`
+      : HavingValid extends False
+      ? {
+          [P in HavingFields]: P extends ByFields
+            ? never
+            : P extends string
+            ? `Error: Field "${P}" used in "having" needs to be provided in "by".`
+            : [
+                Error,
+                'Field ',
+                P,
+                ` in "having" needs to be provided in "by"`,
+              ]
+        }[HavingFields]
+      : 'take' extends Keys<T>
+      ? 'orderBy' extends Keys<T>
+        ? ByValid extends True
+          ? {}
+          : {
+              [P in OrderFields]: P extends ByFields
+                ? never
+                : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+            }[OrderFields]
+        : 'Error: If you provide "take", you also need to provide "orderBy"'
+      : 'skip' extends Keys<T>
+      ? 'orderBy' extends Keys<T>
+        ? ByValid extends True
+          ? {}
+          : {
+              [P in OrderFields]: P extends ByFields
+                ? never
+                : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+            }[OrderFields]
+        : 'Error: If you provide "skip", you also need to provide "orderBy"'
+      : ByValid extends True
+      ? {}
+      : {
+          [P in OrderFields]: P extends ByFields
+            ? never
+            : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+        }[OrderFields]
+    >(args: SubsetIntersection<T, TurnoPuntoVentaGroupByArgs, OrderByArg> & InputErrors): {} extends InputErrors ? GetTurnoPuntoVentaGroupByPayload<T> : Prisma.PrismaPromise<InputErrors>
+  /**
+   * Fields of the TurnoPuntoVenta model
+   */
+  readonly fields: TurnoPuntoVentaFieldRefs;
+  }
+
+  /**
+   * The delegate class that acts as a "Promise-like" for TurnoPuntoVenta.
+   * Why is this prefixed with `Prisma__`?
+   * Because we want to prevent naming conflicts as mentioned in
+   * https://github.com/prisma/prisma-client-js/issues/707
+   */
+  export interface Prisma__TurnoPuntoVentaClient<T, Null = never, ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs, GlobalOmitOptions = {}> extends Prisma.PrismaPromise<T> {
+    readonly [Symbol.toStringTag]: "PrismaPromise"
+    puntoDeVenta<T extends PuntoDeVentaDefaultArgs<ExtArgs> = {}>(args?: Subset<T, PuntoDeVentaDefaultArgs<ExtArgs>>): Prisma__PuntoDeVentaClient<$Result.GetResult<Prisma.$PuntoDeVentaPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | Null, Null, ExtArgs, GlobalOmitOptions>
+    empleado<T extends TurnoPuntoVenta$empleadoArgs<ExtArgs> = {}>(args?: Subset<T, TurnoPuntoVenta$empleadoArgs<ExtArgs>>): Prisma__EmpleadoClient<$Result.GetResult<Prisma.$EmpleadoPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+    ventas<T extends TurnoPuntoVenta$ventasArgs<ExtArgs> = {}>(args?: Subset<T, TurnoPuntoVenta$ventasArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$VentaPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
+    arqueo<T extends TurnoPuntoVenta$arqueoArgs<ExtArgs> = {}>(args?: Subset<T, TurnoPuntoVenta$arqueoArgs<ExtArgs>>): Prisma__ArqueoCajaClient<$Result.GetResult<Prisma.$ArqueoCajaPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+    tenant<T extends TenantDefaultArgs<ExtArgs> = {}>(args?: Subset<T, TenantDefaultArgs<ExtArgs>>): Prisma__TenantClient<$Result.GetResult<Prisma.$TenantPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | Null, Null, ExtArgs, GlobalOmitOptions>
+    /**
+     * Attaches callbacks for the resolution and/or rejection of the Promise.
+     * @param onfulfilled The callback to execute when the Promise is resolved.
+     * @param onrejected The callback to execute when the Promise is rejected.
+     * @returns A Promise for the completion of which ever callback is executed.
+     */
+    then<TResult1 = T, TResult2 = never>(onfulfilled?: ((value: T) => TResult1 | PromiseLike<TResult1>) | undefined | null, onrejected?: ((reason: any) => TResult2 | PromiseLike<TResult2>) | undefined | null): $Utils.JsPromise<TResult1 | TResult2>
+    /**
+     * Attaches a callback for only the rejection of the Promise.
+     * @param onrejected The callback to execute when the Promise is rejected.
+     * @returns A Promise for the completion of the callback.
+     */
+    catch<TResult = never>(onrejected?: ((reason: any) => TResult | PromiseLike<TResult>) | undefined | null): $Utils.JsPromise<T | TResult>
+    /**
+     * Attaches a callback that is invoked when the Promise is settled (fulfilled or rejected). The
+     * resolved value cannot be modified from the callback.
+     * @param onfinally The callback to execute when the Promise is settled (fulfilled or rejected).
+     * @returns A Promise for the completion of the callback.
+     */
+    finally(onfinally?: (() => void) | undefined | null): $Utils.JsPromise<T>
+  }
+
+
+
+
+  /**
+   * Fields of the TurnoPuntoVenta model
+   */
+  interface TurnoPuntoVentaFieldRefs {
+    readonly id: FieldRef<"TurnoPuntoVenta", 'String'>
+    readonly tenantId: FieldRef<"TurnoPuntoVenta", 'String'>
+    readonly puntoDeVentaId: FieldRef<"TurnoPuntoVenta", 'String'>
+    readonly empleadoId: FieldRef<"TurnoPuntoVenta", 'String'>
+    readonly tipo: FieldRef<"TurnoPuntoVenta", 'String'>
+    readonly fechaApertura: FieldRef<"TurnoPuntoVenta", 'DateTime'>
+    readonly fechaCierre: FieldRef<"TurnoPuntoVenta", 'DateTime'>
+    readonly fondoInicialCup: FieldRef<"TurnoPuntoVenta", 'Int'>
+    readonly fondoInicialUsd: FieldRef<"TurnoPuntoVenta", 'Int'>
+    readonly estado: FieldRef<"TurnoPuntoVenta", 'EstadoTurno'>
+    readonly observaciones: FieldRef<"TurnoPuntoVenta", 'String'>
+    readonly createdAt: FieldRef<"TurnoPuntoVenta", 'DateTime'>
+    readonly updatedAt: FieldRef<"TurnoPuntoVenta", 'DateTime'>
+  }
+    
+
+  // Custom InputTypes
+  /**
+   * TurnoPuntoVenta findUnique
+   */
+  export type TurnoPuntoVentaFindUniqueArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the TurnoPuntoVenta
+     */
+    select?: TurnoPuntoVentaSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the TurnoPuntoVenta
+     */
+    omit?: TurnoPuntoVentaOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: TurnoPuntoVentaInclude<ExtArgs> | null
+    /**
+     * Filter, which TurnoPuntoVenta to fetch.
+     */
+    where: TurnoPuntoVentaWhereUniqueInput
+  }
+
+  /**
+   * TurnoPuntoVenta findUniqueOrThrow
+   */
+  export type TurnoPuntoVentaFindUniqueOrThrowArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the TurnoPuntoVenta
+     */
+    select?: TurnoPuntoVentaSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the TurnoPuntoVenta
+     */
+    omit?: TurnoPuntoVentaOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: TurnoPuntoVentaInclude<ExtArgs> | null
+    /**
+     * Filter, which TurnoPuntoVenta to fetch.
+     */
+    where: TurnoPuntoVentaWhereUniqueInput
+  }
+
+  /**
+   * TurnoPuntoVenta findFirst
+   */
+  export type TurnoPuntoVentaFindFirstArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the TurnoPuntoVenta
+     */
+    select?: TurnoPuntoVentaSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the TurnoPuntoVenta
+     */
+    omit?: TurnoPuntoVentaOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: TurnoPuntoVentaInclude<ExtArgs> | null
+    /**
+     * Filter, which TurnoPuntoVenta to fetch.
+     */
+    where?: TurnoPuntoVentaWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of TurnoPuntoVentas to fetch.
+     */
+    orderBy?: TurnoPuntoVentaOrderByWithRelationInput | TurnoPuntoVentaOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for searching for TurnoPuntoVentas.
+     */
+    cursor?: TurnoPuntoVentaWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` TurnoPuntoVentas from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` TurnoPuntoVentas.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of TurnoPuntoVentas.
+     */
+    distinct?: TurnoPuntoVentaScalarFieldEnum | TurnoPuntoVentaScalarFieldEnum[]
+  }
+
+  /**
+   * TurnoPuntoVenta findFirstOrThrow
+   */
+  export type TurnoPuntoVentaFindFirstOrThrowArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the TurnoPuntoVenta
+     */
+    select?: TurnoPuntoVentaSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the TurnoPuntoVenta
+     */
+    omit?: TurnoPuntoVentaOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: TurnoPuntoVentaInclude<ExtArgs> | null
+    /**
+     * Filter, which TurnoPuntoVenta to fetch.
+     */
+    where?: TurnoPuntoVentaWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of TurnoPuntoVentas to fetch.
+     */
+    orderBy?: TurnoPuntoVentaOrderByWithRelationInput | TurnoPuntoVentaOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for searching for TurnoPuntoVentas.
+     */
+    cursor?: TurnoPuntoVentaWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` TurnoPuntoVentas from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` TurnoPuntoVentas.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of TurnoPuntoVentas.
+     */
+    distinct?: TurnoPuntoVentaScalarFieldEnum | TurnoPuntoVentaScalarFieldEnum[]
+  }
+
+  /**
+   * TurnoPuntoVenta findMany
+   */
+  export type TurnoPuntoVentaFindManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the TurnoPuntoVenta
+     */
+    select?: TurnoPuntoVentaSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the TurnoPuntoVenta
+     */
+    omit?: TurnoPuntoVentaOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: TurnoPuntoVentaInclude<ExtArgs> | null
+    /**
+     * Filter, which TurnoPuntoVentas to fetch.
+     */
+    where?: TurnoPuntoVentaWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of TurnoPuntoVentas to fetch.
+     */
+    orderBy?: TurnoPuntoVentaOrderByWithRelationInput | TurnoPuntoVentaOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for listing TurnoPuntoVentas.
+     */
+    cursor?: TurnoPuntoVentaWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` TurnoPuntoVentas from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` TurnoPuntoVentas.
+     */
+    skip?: number
+    distinct?: TurnoPuntoVentaScalarFieldEnum | TurnoPuntoVentaScalarFieldEnum[]
+  }
+
+  /**
+   * TurnoPuntoVenta create
+   */
+  export type TurnoPuntoVentaCreateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the TurnoPuntoVenta
+     */
+    select?: TurnoPuntoVentaSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the TurnoPuntoVenta
+     */
+    omit?: TurnoPuntoVentaOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: TurnoPuntoVentaInclude<ExtArgs> | null
+    /**
+     * The data needed to create a TurnoPuntoVenta.
+     */
+    data: XOR<TurnoPuntoVentaCreateInput, TurnoPuntoVentaUncheckedCreateInput>
+  }
+
+  /**
+   * TurnoPuntoVenta createMany
+   */
+  export type TurnoPuntoVentaCreateManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * The data used to create many TurnoPuntoVentas.
+     */
+    data: TurnoPuntoVentaCreateManyInput | TurnoPuntoVentaCreateManyInput[]
+    skipDuplicates?: boolean
+  }
+
+  /**
+   * TurnoPuntoVenta createManyAndReturn
+   */
+  export type TurnoPuntoVentaCreateManyAndReturnArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the TurnoPuntoVenta
+     */
+    select?: TurnoPuntoVentaSelectCreateManyAndReturn<ExtArgs> | null
+    /**
+     * Omit specific fields from the TurnoPuntoVenta
+     */
+    omit?: TurnoPuntoVentaOmit<ExtArgs> | null
+    /**
+     * The data used to create many TurnoPuntoVentas.
+     */
+    data: TurnoPuntoVentaCreateManyInput | TurnoPuntoVentaCreateManyInput[]
+    skipDuplicates?: boolean
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: TurnoPuntoVentaIncludeCreateManyAndReturn<ExtArgs> | null
+  }
+
+  /**
+   * TurnoPuntoVenta update
+   */
+  export type TurnoPuntoVentaUpdateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the TurnoPuntoVenta
+     */
+    select?: TurnoPuntoVentaSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the TurnoPuntoVenta
+     */
+    omit?: TurnoPuntoVentaOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: TurnoPuntoVentaInclude<ExtArgs> | null
+    /**
+     * The data needed to update a TurnoPuntoVenta.
+     */
+    data: XOR<TurnoPuntoVentaUpdateInput, TurnoPuntoVentaUncheckedUpdateInput>
+    /**
+     * Choose, which TurnoPuntoVenta to update.
+     */
+    where: TurnoPuntoVentaWhereUniqueInput
+  }
+
+  /**
+   * TurnoPuntoVenta updateMany
+   */
+  export type TurnoPuntoVentaUpdateManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * The data used to update TurnoPuntoVentas.
+     */
+    data: XOR<TurnoPuntoVentaUpdateManyMutationInput, TurnoPuntoVentaUncheckedUpdateManyInput>
+    /**
+     * Filter which TurnoPuntoVentas to update
+     */
+    where?: TurnoPuntoVentaWhereInput
+    /**
+     * Limit how many TurnoPuntoVentas to update.
+     */
+    limit?: number
+  }
+
+  /**
+   * TurnoPuntoVenta updateManyAndReturn
+   */
+  export type TurnoPuntoVentaUpdateManyAndReturnArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the TurnoPuntoVenta
+     */
+    select?: TurnoPuntoVentaSelectUpdateManyAndReturn<ExtArgs> | null
+    /**
+     * Omit specific fields from the TurnoPuntoVenta
+     */
+    omit?: TurnoPuntoVentaOmit<ExtArgs> | null
+    /**
+     * The data used to update TurnoPuntoVentas.
+     */
+    data: XOR<TurnoPuntoVentaUpdateManyMutationInput, TurnoPuntoVentaUncheckedUpdateManyInput>
+    /**
+     * Filter which TurnoPuntoVentas to update
+     */
+    where?: TurnoPuntoVentaWhereInput
+    /**
+     * Limit how many TurnoPuntoVentas to update.
+     */
+    limit?: number
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: TurnoPuntoVentaIncludeUpdateManyAndReturn<ExtArgs> | null
+  }
+
+  /**
+   * TurnoPuntoVenta upsert
+   */
+  export type TurnoPuntoVentaUpsertArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the TurnoPuntoVenta
+     */
+    select?: TurnoPuntoVentaSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the TurnoPuntoVenta
+     */
+    omit?: TurnoPuntoVentaOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: TurnoPuntoVentaInclude<ExtArgs> | null
+    /**
+     * The filter to search for the TurnoPuntoVenta to update in case it exists.
+     */
+    where: TurnoPuntoVentaWhereUniqueInput
+    /**
+     * In case the TurnoPuntoVenta found by the `where` argument doesn't exist, create a new TurnoPuntoVenta with this data.
+     */
+    create: XOR<TurnoPuntoVentaCreateInput, TurnoPuntoVentaUncheckedCreateInput>
+    /**
+     * In case the TurnoPuntoVenta was found with the provided `where` argument, update it with this data.
+     */
+    update: XOR<TurnoPuntoVentaUpdateInput, TurnoPuntoVentaUncheckedUpdateInput>
+  }
+
+  /**
+   * TurnoPuntoVenta delete
+   */
+  export type TurnoPuntoVentaDeleteArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the TurnoPuntoVenta
+     */
+    select?: TurnoPuntoVentaSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the TurnoPuntoVenta
+     */
+    omit?: TurnoPuntoVentaOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: TurnoPuntoVentaInclude<ExtArgs> | null
+    /**
+     * Filter which TurnoPuntoVenta to delete.
+     */
+    where: TurnoPuntoVentaWhereUniqueInput
+  }
+
+  /**
+   * TurnoPuntoVenta deleteMany
+   */
+  export type TurnoPuntoVentaDeleteManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Filter which TurnoPuntoVentas to delete
+     */
+    where?: TurnoPuntoVentaWhereInput
+    /**
+     * Limit how many TurnoPuntoVentas to delete.
+     */
+    limit?: number
+  }
+
+  /**
+   * TurnoPuntoVenta.empleado
+   */
+  export type TurnoPuntoVenta$empleadoArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the Empleado
+     */
+    select?: EmpleadoSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the Empleado
+     */
+    omit?: EmpleadoOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: EmpleadoInclude<ExtArgs> | null
+    where?: EmpleadoWhereInput
+  }
+
+  /**
+   * TurnoPuntoVenta.ventas
+   */
+  export type TurnoPuntoVenta$ventasArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the Venta
+     */
+    select?: VentaSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the Venta
+     */
+    omit?: VentaOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: VentaInclude<ExtArgs> | null
+    where?: VentaWhereInput
+    orderBy?: VentaOrderByWithRelationInput | VentaOrderByWithRelationInput[]
+    cursor?: VentaWhereUniqueInput
+    take?: number
+    skip?: number
+    distinct?: VentaScalarFieldEnum | VentaScalarFieldEnum[]
+  }
+
+  /**
+   * TurnoPuntoVenta.arqueo
+   */
+  export type TurnoPuntoVenta$arqueoArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the ArqueoCaja
+     */
+    select?: ArqueoCajaSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the ArqueoCaja
+     */
+    omit?: ArqueoCajaOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: ArqueoCajaInclude<ExtArgs> | null
+    where?: ArqueoCajaWhereInput
+  }
+
+  /**
+   * TurnoPuntoVenta without action
+   */
+  export type TurnoPuntoVentaDefaultArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the TurnoPuntoVenta
+     */
+    select?: TurnoPuntoVentaSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the TurnoPuntoVenta
+     */
+    omit?: TurnoPuntoVentaOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: TurnoPuntoVentaInclude<ExtArgs> | null
+  }
+
+
+  /**
+   * Model ArqueoCaja
+   */
+
+  export type AggregateArqueoCaja = {
+    _count: ArqueoCajaCountAggregateOutputType | null
+    _avg: ArqueoCajaAvgAggregateOutputType | null
+    _sum: ArqueoCajaSumAggregateOutputType | null
+    _min: ArqueoCajaMinAggregateOutputType | null
+    _max: ArqueoCajaMaxAggregateOutputType | null
+  }
+
+  export type ArqueoCajaAvgAggregateOutputType = {
+    billetes1000Cup: number | null
+    billetes500Cup: number | null
+    billetes200Cup: number | null
+    billetes100Cup: number | null
+    billetes50Cup: number | null
+    billetes20Cup: number | null
+    monedasCup: number | null
+    billetes100Usd: number | null
+    billetes50Usd: number | null
+    billetes20Usd: number | null
+    billetes10Usd: number | null
+    billetes5Usd: number | null
+    billetes1Usd: number | null
+    monedasUsd: number | null
+    totalEfectivoCup: number | null
+    totalEfectivoUsd: number | null
+    totalTarjeta: number | null
+    totalTransferencia: number | null
+    totalCredito: number | null
+    esperadoEfectivoCup: number | null
+    esperadoEfectivoUsd: number | null
+    esperadoTarjeta: number | null
+    esperadoTransferencia: number | null
+    esperadoCredito: number | null
+    diferenciaCup: number | null
+    diferenciaUsd: number | null
+  }
+
+  export type ArqueoCajaSumAggregateOutputType = {
+    billetes1000Cup: number | null
+    billetes500Cup: number | null
+    billetes200Cup: number | null
+    billetes100Cup: number | null
+    billetes50Cup: number | null
+    billetes20Cup: number | null
+    monedasCup: number | null
+    billetes100Usd: number | null
+    billetes50Usd: number | null
+    billetes20Usd: number | null
+    billetes10Usd: number | null
+    billetes5Usd: number | null
+    billetes1Usd: number | null
+    monedasUsd: number | null
+    totalEfectivoCup: number | null
+    totalEfectivoUsd: number | null
+    totalTarjeta: number | null
+    totalTransferencia: number | null
+    totalCredito: number | null
+    esperadoEfectivoCup: number | null
+    esperadoEfectivoUsd: number | null
+    esperadoTarjeta: number | null
+    esperadoTransferencia: number | null
+    esperadoCredito: number | null
+    diferenciaCup: number | null
+    diferenciaUsd: number | null
+  }
+
+  export type ArqueoCajaMinAggregateOutputType = {
+    id: string | null
+    turnoId: string | null
+    tenantId: string | null
+    puntoDeVentaId: string | null
+    billetes1000Cup: number | null
+    billetes500Cup: number | null
+    billetes200Cup: number | null
+    billetes100Cup: number | null
+    billetes50Cup: number | null
+    billetes20Cup: number | null
+    monedasCup: number | null
+    billetes100Usd: number | null
+    billetes50Usd: number | null
+    billetes20Usd: number | null
+    billetes10Usd: number | null
+    billetes5Usd: number | null
+    billetes1Usd: number | null
+    monedasUsd: number | null
+    totalEfectivoCup: number | null
+    totalEfectivoUsd: number | null
+    totalTarjeta: number | null
+    totalTransferencia: number | null
+    totalCredito: number | null
+    esperadoEfectivoCup: number | null
+    esperadoEfectivoUsd: number | null
+    esperadoTarjeta: number | null
+    esperadoTransferencia: number | null
+    esperadoCredito: number | null
+    diferenciaCup: number | null
+    diferenciaUsd: number | null
+    observaciones: string | null
+    contabilizado: boolean | null
+    createdAt: Date | null
+    updatedAt: Date | null
+  }
+
+  export type ArqueoCajaMaxAggregateOutputType = {
+    id: string | null
+    turnoId: string | null
+    tenantId: string | null
+    puntoDeVentaId: string | null
+    billetes1000Cup: number | null
+    billetes500Cup: number | null
+    billetes200Cup: number | null
+    billetes100Cup: number | null
+    billetes50Cup: number | null
+    billetes20Cup: number | null
+    monedasCup: number | null
+    billetes100Usd: number | null
+    billetes50Usd: number | null
+    billetes20Usd: number | null
+    billetes10Usd: number | null
+    billetes5Usd: number | null
+    billetes1Usd: number | null
+    monedasUsd: number | null
+    totalEfectivoCup: number | null
+    totalEfectivoUsd: number | null
+    totalTarjeta: number | null
+    totalTransferencia: number | null
+    totalCredito: number | null
+    esperadoEfectivoCup: number | null
+    esperadoEfectivoUsd: number | null
+    esperadoTarjeta: number | null
+    esperadoTransferencia: number | null
+    esperadoCredito: number | null
+    diferenciaCup: number | null
+    diferenciaUsd: number | null
+    observaciones: string | null
+    contabilizado: boolean | null
+    createdAt: Date | null
+    updatedAt: Date | null
+  }
+
+  export type ArqueoCajaCountAggregateOutputType = {
+    id: number
+    turnoId: number
+    tenantId: number
+    puntoDeVentaId: number
+    billetes1000Cup: number
+    billetes500Cup: number
+    billetes200Cup: number
+    billetes100Cup: number
+    billetes50Cup: number
+    billetes20Cup: number
+    monedasCup: number
+    billetes100Usd: number
+    billetes50Usd: number
+    billetes20Usd: number
+    billetes10Usd: number
+    billetes5Usd: number
+    billetes1Usd: number
+    monedasUsd: number
+    totalEfectivoCup: number
+    totalEfectivoUsd: number
+    totalTarjeta: number
+    totalTransferencia: number
+    totalCredito: number
+    esperadoEfectivoCup: number
+    esperadoEfectivoUsd: number
+    esperadoTarjeta: number
+    esperadoTransferencia: number
+    esperadoCredito: number
+    diferenciaCup: number
+    diferenciaUsd: number
+    observaciones: number
+    contabilizado: number
+    createdAt: number
+    updatedAt: number
+    _all: number
+  }
+
+
+  export type ArqueoCajaAvgAggregateInputType = {
+    billetes1000Cup?: true
+    billetes500Cup?: true
+    billetes200Cup?: true
+    billetes100Cup?: true
+    billetes50Cup?: true
+    billetes20Cup?: true
+    monedasCup?: true
+    billetes100Usd?: true
+    billetes50Usd?: true
+    billetes20Usd?: true
+    billetes10Usd?: true
+    billetes5Usd?: true
+    billetes1Usd?: true
+    monedasUsd?: true
+    totalEfectivoCup?: true
+    totalEfectivoUsd?: true
+    totalTarjeta?: true
+    totalTransferencia?: true
+    totalCredito?: true
+    esperadoEfectivoCup?: true
+    esperadoEfectivoUsd?: true
+    esperadoTarjeta?: true
+    esperadoTransferencia?: true
+    esperadoCredito?: true
+    diferenciaCup?: true
+    diferenciaUsd?: true
+  }
+
+  export type ArqueoCajaSumAggregateInputType = {
+    billetes1000Cup?: true
+    billetes500Cup?: true
+    billetes200Cup?: true
+    billetes100Cup?: true
+    billetes50Cup?: true
+    billetes20Cup?: true
+    monedasCup?: true
+    billetes100Usd?: true
+    billetes50Usd?: true
+    billetes20Usd?: true
+    billetes10Usd?: true
+    billetes5Usd?: true
+    billetes1Usd?: true
+    monedasUsd?: true
+    totalEfectivoCup?: true
+    totalEfectivoUsd?: true
+    totalTarjeta?: true
+    totalTransferencia?: true
+    totalCredito?: true
+    esperadoEfectivoCup?: true
+    esperadoEfectivoUsd?: true
+    esperadoTarjeta?: true
+    esperadoTransferencia?: true
+    esperadoCredito?: true
+    diferenciaCup?: true
+    diferenciaUsd?: true
+  }
+
+  export type ArqueoCajaMinAggregateInputType = {
+    id?: true
+    turnoId?: true
+    tenantId?: true
+    puntoDeVentaId?: true
+    billetes1000Cup?: true
+    billetes500Cup?: true
+    billetes200Cup?: true
+    billetes100Cup?: true
+    billetes50Cup?: true
+    billetes20Cup?: true
+    monedasCup?: true
+    billetes100Usd?: true
+    billetes50Usd?: true
+    billetes20Usd?: true
+    billetes10Usd?: true
+    billetes5Usd?: true
+    billetes1Usd?: true
+    monedasUsd?: true
+    totalEfectivoCup?: true
+    totalEfectivoUsd?: true
+    totalTarjeta?: true
+    totalTransferencia?: true
+    totalCredito?: true
+    esperadoEfectivoCup?: true
+    esperadoEfectivoUsd?: true
+    esperadoTarjeta?: true
+    esperadoTransferencia?: true
+    esperadoCredito?: true
+    diferenciaCup?: true
+    diferenciaUsd?: true
+    observaciones?: true
+    contabilizado?: true
+    createdAt?: true
+    updatedAt?: true
+  }
+
+  export type ArqueoCajaMaxAggregateInputType = {
+    id?: true
+    turnoId?: true
+    tenantId?: true
+    puntoDeVentaId?: true
+    billetes1000Cup?: true
+    billetes500Cup?: true
+    billetes200Cup?: true
+    billetes100Cup?: true
+    billetes50Cup?: true
+    billetes20Cup?: true
+    monedasCup?: true
+    billetes100Usd?: true
+    billetes50Usd?: true
+    billetes20Usd?: true
+    billetes10Usd?: true
+    billetes5Usd?: true
+    billetes1Usd?: true
+    monedasUsd?: true
+    totalEfectivoCup?: true
+    totalEfectivoUsd?: true
+    totalTarjeta?: true
+    totalTransferencia?: true
+    totalCredito?: true
+    esperadoEfectivoCup?: true
+    esperadoEfectivoUsd?: true
+    esperadoTarjeta?: true
+    esperadoTransferencia?: true
+    esperadoCredito?: true
+    diferenciaCup?: true
+    diferenciaUsd?: true
+    observaciones?: true
+    contabilizado?: true
+    createdAt?: true
+    updatedAt?: true
+  }
+
+  export type ArqueoCajaCountAggregateInputType = {
+    id?: true
+    turnoId?: true
+    tenantId?: true
+    puntoDeVentaId?: true
+    billetes1000Cup?: true
+    billetes500Cup?: true
+    billetes200Cup?: true
+    billetes100Cup?: true
+    billetes50Cup?: true
+    billetes20Cup?: true
+    monedasCup?: true
+    billetes100Usd?: true
+    billetes50Usd?: true
+    billetes20Usd?: true
+    billetes10Usd?: true
+    billetes5Usd?: true
+    billetes1Usd?: true
+    monedasUsd?: true
+    totalEfectivoCup?: true
+    totalEfectivoUsd?: true
+    totalTarjeta?: true
+    totalTransferencia?: true
+    totalCredito?: true
+    esperadoEfectivoCup?: true
+    esperadoEfectivoUsd?: true
+    esperadoTarjeta?: true
+    esperadoTransferencia?: true
+    esperadoCredito?: true
+    diferenciaCup?: true
+    diferenciaUsd?: true
+    observaciones?: true
+    contabilizado?: true
+    createdAt?: true
+    updatedAt?: true
+    _all?: true
+  }
+
+  export type ArqueoCajaAggregateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Filter which ArqueoCaja to aggregate.
+     */
+    where?: ArqueoCajaWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of ArqueoCajas to fetch.
+     */
+    orderBy?: ArqueoCajaOrderByWithRelationInput | ArqueoCajaOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the start position
+     */
+    cursor?: ArqueoCajaWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` ArqueoCajas from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` ArqueoCajas.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Count returned ArqueoCajas
+    **/
+    _count?: true | ArqueoCajaCountAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to average
+    **/
+    _avg?: ArqueoCajaAvgAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to sum
+    **/
+    _sum?: ArqueoCajaSumAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to find the minimum value
+    **/
+    _min?: ArqueoCajaMinAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to find the maximum value
+    **/
+    _max?: ArqueoCajaMaxAggregateInputType
+  }
+
+  export type GetArqueoCajaAggregateType<T extends ArqueoCajaAggregateArgs> = {
+        [P in keyof T & keyof AggregateArqueoCaja]: P extends '_count' | 'count'
+      ? T[P] extends true
+        ? number
+        : GetScalarType<T[P], AggregateArqueoCaja[P]>
+      : GetScalarType<T[P], AggregateArqueoCaja[P]>
+  }
+
+
+
+
+  export type ArqueoCajaGroupByArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    where?: ArqueoCajaWhereInput
+    orderBy?: ArqueoCajaOrderByWithAggregationInput | ArqueoCajaOrderByWithAggregationInput[]
+    by: ArqueoCajaScalarFieldEnum[] | ArqueoCajaScalarFieldEnum
+    having?: ArqueoCajaScalarWhereWithAggregatesInput
+    take?: number
+    skip?: number
+    _count?: ArqueoCajaCountAggregateInputType | true
+    _avg?: ArqueoCajaAvgAggregateInputType
+    _sum?: ArqueoCajaSumAggregateInputType
+    _min?: ArqueoCajaMinAggregateInputType
+    _max?: ArqueoCajaMaxAggregateInputType
+  }
+
+  export type ArqueoCajaGroupByOutputType = {
+    id: string
+    turnoId: string
+    tenantId: string
+    puntoDeVentaId: string
+    billetes1000Cup: number
+    billetes500Cup: number
+    billetes200Cup: number
+    billetes100Cup: number
+    billetes50Cup: number
+    billetes20Cup: number
+    monedasCup: number
+    billetes100Usd: number
+    billetes50Usd: number
+    billetes20Usd: number
+    billetes10Usd: number
+    billetes5Usd: number
+    billetes1Usd: number
+    monedasUsd: number
+    totalEfectivoCup: number
+    totalEfectivoUsd: number
+    totalTarjeta: number
+    totalTransferencia: number
+    totalCredito: number
+    esperadoEfectivoCup: number
+    esperadoEfectivoUsd: number
+    esperadoTarjeta: number
+    esperadoTransferencia: number
+    esperadoCredito: number
+    diferenciaCup: number
+    diferenciaUsd: number
+    observaciones: string | null
+    contabilizado: boolean
+    createdAt: Date
+    updatedAt: Date
+    _count: ArqueoCajaCountAggregateOutputType | null
+    _avg: ArqueoCajaAvgAggregateOutputType | null
+    _sum: ArqueoCajaSumAggregateOutputType | null
+    _min: ArqueoCajaMinAggregateOutputType | null
+    _max: ArqueoCajaMaxAggregateOutputType | null
+  }
+
+  type GetArqueoCajaGroupByPayload<T extends ArqueoCajaGroupByArgs> = Prisma.PrismaPromise<
+    Array<
+      PickEnumerable<ArqueoCajaGroupByOutputType, T['by']> &
+        {
+          [P in ((keyof T) & (keyof ArqueoCajaGroupByOutputType))]: P extends '_count'
+            ? T[P] extends boolean
+              ? number
+              : GetScalarType<T[P], ArqueoCajaGroupByOutputType[P]>
+            : GetScalarType<T[P], ArqueoCajaGroupByOutputType[P]>
+        }
+      >
+    >
+
+
+  export type ArqueoCajaSelect<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    turnoId?: boolean
+    tenantId?: boolean
+    puntoDeVentaId?: boolean
+    billetes1000Cup?: boolean
+    billetes500Cup?: boolean
+    billetes200Cup?: boolean
+    billetes100Cup?: boolean
+    billetes50Cup?: boolean
+    billetes20Cup?: boolean
+    monedasCup?: boolean
+    billetes100Usd?: boolean
+    billetes50Usd?: boolean
+    billetes20Usd?: boolean
+    billetes10Usd?: boolean
+    billetes5Usd?: boolean
+    billetes1Usd?: boolean
+    monedasUsd?: boolean
+    totalEfectivoCup?: boolean
+    totalEfectivoUsd?: boolean
+    totalTarjeta?: boolean
+    totalTransferencia?: boolean
+    totalCredito?: boolean
+    esperadoEfectivoCup?: boolean
+    esperadoEfectivoUsd?: boolean
+    esperadoTarjeta?: boolean
+    esperadoTransferencia?: boolean
+    esperadoCredito?: boolean
+    diferenciaCup?: boolean
+    diferenciaUsd?: boolean
+    observaciones?: boolean
+    contabilizado?: boolean
+    createdAt?: boolean
+    updatedAt?: boolean
+    turno?: boolean | TurnoPuntoVentaDefaultArgs<ExtArgs>
+    puntoDeVenta?: boolean | PuntoDeVentaDefaultArgs<ExtArgs>
+    tenant?: boolean | TenantDefaultArgs<ExtArgs>
+  }, ExtArgs["result"]["arqueoCaja"]>
+
+  export type ArqueoCajaSelectCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    turnoId?: boolean
+    tenantId?: boolean
+    puntoDeVentaId?: boolean
+    billetes1000Cup?: boolean
+    billetes500Cup?: boolean
+    billetes200Cup?: boolean
+    billetes100Cup?: boolean
+    billetes50Cup?: boolean
+    billetes20Cup?: boolean
+    monedasCup?: boolean
+    billetes100Usd?: boolean
+    billetes50Usd?: boolean
+    billetes20Usd?: boolean
+    billetes10Usd?: boolean
+    billetes5Usd?: boolean
+    billetes1Usd?: boolean
+    monedasUsd?: boolean
+    totalEfectivoCup?: boolean
+    totalEfectivoUsd?: boolean
+    totalTarjeta?: boolean
+    totalTransferencia?: boolean
+    totalCredito?: boolean
+    esperadoEfectivoCup?: boolean
+    esperadoEfectivoUsd?: boolean
+    esperadoTarjeta?: boolean
+    esperadoTransferencia?: boolean
+    esperadoCredito?: boolean
+    diferenciaCup?: boolean
+    diferenciaUsd?: boolean
+    observaciones?: boolean
+    contabilizado?: boolean
+    createdAt?: boolean
+    updatedAt?: boolean
+    turno?: boolean | TurnoPuntoVentaDefaultArgs<ExtArgs>
+    puntoDeVenta?: boolean | PuntoDeVentaDefaultArgs<ExtArgs>
+    tenant?: boolean | TenantDefaultArgs<ExtArgs>
+  }, ExtArgs["result"]["arqueoCaja"]>
+
+  export type ArqueoCajaSelectUpdateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    turnoId?: boolean
+    tenantId?: boolean
+    puntoDeVentaId?: boolean
+    billetes1000Cup?: boolean
+    billetes500Cup?: boolean
+    billetes200Cup?: boolean
+    billetes100Cup?: boolean
+    billetes50Cup?: boolean
+    billetes20Cup?: boolean
+    monedasCup?: boolean
+    billetes100Usd?: boolean
+    billetes50Usd?: boolean
+    billetes20Usd?: boolean
+    billetes10Usd?: boolean
+    billetes5Usd?: boolean
+    billetes1Usd?: boolean
+    monedasUsd?: boolean
+    totalEfectivoCup?: boolean
+    totalEfectivoUsd?: boolean
+    totalTarjeta?: boolean
+    totalTransferencia?: boolean
+    totalCredito?: boolean
+    esperadoEfectivoCup?: boolean
+    esperadoEfectivoUsd?: boolean
+    esperadoTarjeta?: boolean
+    esperadoTransferencia?: boolean
+    esperadoCredito?: boolean
+    diferenciaCup?: boolean
+    diferenciaUsd?: boolean
+    observaciones?: boolean
+    contabilizado?: boolean
+    createdAt?: boolean
+    updatedAt?: boolean
+    turno?: boolean | TurnoPuntoVentaDefaultArgs<ExtArgs>
+    puntoDeVenta?: boolean | PuntoDeVentaDefaultArgs<ExtArgs>
+    tenant?: boolean | TenantDefaultArgs<ExtArgs>
+  }, ExtArgs["result"]["arqueoCaja"]>
+
+  export type ArqueoCajaSelectScalar = {
+    id?: boolean
+    turnoId?: boolean
+    tenantId?: boolean
+    puntoDeVentaId?: boolean
+    billetes1000Cup?: boolean
+    billetes500Cup?: boolean
+    billetes200Cup?: boolean
+    billetes100Cup?: boolean
+    billetes50Cup?: boolean
+    billetes20Cup?: boolean
+    monedasCup?: boolean
+    billetes100Usd?: boolean
+    billetes50Usd?: boolean
+    billetes20Usd?: boolean
+    billetes10Usd?: boolean
+    billetes5Usd?: boolean
+    billetes1Usd?: boolean
+    monedasUsd?: boolean
+    totalEfectivoCup?: boolean
+    totalEfectivoUsd?: boolean
+    totalTarjeta?: boolean
+    totalTransferencia?: boolean
+    totalCredito?: boolean
+    esperadoEfectivoCup?: boolean
+    esperadoEfectivoUsd?: boolean
+    esperadoTarjeta?: boolean
+    esperadoTransferencia?: boolean
+    esperadoCredito?: boolean
+    diferenciaCup?: boolean
+    diferenciaUsd?: boolean
+    observaciones?: boolean
+    contabilizado?: boolean
+    createdAt?: boolean
+    updatedAt?: boolean
+  }
+
+  export type ArqueoCajaOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "turnoId" | "tenantId" | "puntoDeVentaId" | "billetes1000Cup" | "billetes500Cup" | "billetes200Cup" | "billetes100Cup" | "billetes50Cup" | "billetes20Cup" | "monedasCup" | "billetes100Usd" | "billetes50Usd" | "billetes20Usd" | "billetes10Usd" | "billetes5Usd" | "billetes1Usd" | "monedasUsd" | "totalEfectivoCup" | "totalEfectivoUsd" | "totalTarjeta" | "totalTransferencia" | "totalCredito" | "esperadoEfectivoCup" | "esperadoEfectivoUsd" | "esperadoTarjeta" | "esperadoTransferencia" | "esperadoCredito" | "diferenciaCup" | "diferenciaUsd" | "observaciones" | "contabilizado" | "createdAt" | "updatedAt", ExtArgs["result"]["arqueoCaja"]>
+  export type ArqueoCajaInclude<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    turno?: boolean | TurnoPuntoVentaDefaultArgs<ExtArgs>
+    puntoDeVenta?: boolean | PuntoDeVentaDefaultArgs<ExtArgs>
+    tenant?: boolean | TenantDefaultArgs<ExtArgs>
+  }
+  export type ArqueoCajaIncludeCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    turno?: boolean | TurnoPuntoVentaDefaultArgs<ExtArgs>
+    puntoDeVenta?: boolean | PuntoDeVentaDefaultArgs<ExtArgs>
+    tenant?: boolean | TenantDefaultArgs<ExtArgs>
+  }
+  export type ArqueoCajaIncludeUpdateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    turno?: boolean | TurnoPuntoVentaDefaultArgs<ExtArgs>
+    puntoDeVenta?: boolean | PuntoDeVentaDefaultArgs<ExtArgs>
+    tenant?: boolean | TenantDefaultArgs<ExtArgs>
+  }
+
+  export type $ArqueoCajaPayload<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    name: "ArqueoCaja"
+    objects: {
+      turno: Prisma.$TurnoPuntoVentaPayload<ExtArgs>
+      puntoDeVenta: Prisma.$PuntoDeVentaPayload<ExtArgs>
+      tenant: Prisma.$TenantPayload<ExtArgs>
+    }
+    scalars: $Extensions.GetPayloadResult<{
+      id: string
+      turnoId: string
+      tenantId: string
+      puntoDeVentaId: string
+      billetes1000Cup: number
+      billetes500Cup: number
+      billetes200Cup: number
+      billetes100Cup: number
+      billetes50Cup: number
+      billetes20Cup: number
+      monedasCup: number
+      billetes100Usd: number
+      billetes50Usd: number
+      billetes20Usd: number
+      billetes10Usd: number
+      billetes5Usd: number
+      billetes1Usd: number
+      monedasUsd: number
+      totalEfectivoCup: number
+      totalEfectivoUsd: number
+      totalTarjeta: number
+      totalTransferencia: number
+      totalCredito: number
+      esperadoEfectivoCup: number
+      esperadoEfectivoUsd: number
+      esperadoTarjeta: number
+      esperadoTransferencia: number
+      esperadoCredito: number
+      diferenciaCup: number
+      diferenciaUsd: number
+      observaciones: string | null
+      contabilizado: boolean
+      createdAt: Date
+      updatedAt: Date
+    }, ExtArgs["result"]["arqueoCaja"]>
+    composites: {}
+  }
+
+  type ArqueoCajaGetPayload<S extends boolean | null | undefined | ArqueoCajaDefaultArgs> = $Result.GetResult<Prisma.$ArqueoCajaPayload, S>
+
+  type ArqueoCajaCountArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> =
+    Omit<ArqueoCajaFindManyArgs, 'select' | 'include' | 'distinct' | 'omit'> & {
+      select?: ArqueoCajaCountAggregateInputType | true
+    }
+
+  export interface ArqueoCajaDelegate<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs, GlobalOmitOptions = {}> {
+    [K: symbol]: { types: Prisma.TypeMap<ExtArgs>['model']['ArqueoCaja'], meta: { name: 'ArqueoCaja' } }
+    /**
+     * Find zero or one ArqueoCaja that matches the filter.
+     * @param {ArqueoCajaFindUniqueArgs} args - Arguments to find a ArqueoCaja
+     * @example
+     * // Get one ArqueoCaja
+     * const arqueoCaja = await prisma.arqueoCaja.findUnique({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findUnique<T extends ArqueoCajaFindUniqueArgs>(args: SelectSubset<T, ArqueoCajaFindUniqueArgs<ExtArgs>>): Prisma__ArqueoCajaClient<$Result.GetResult<Prisma.$ArqueoCajaPayload<ExtArgs>, T, "findUnique", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find one ArqueoCaja that matches the filter or throw an error with `error.code='P2025'`
+     * if no matches were found.
+     * @param {ArqueoCajaFindUniqueOrThrowArgs} args - Arguments to find a ArqueoCaja
+     * @example
+     * // Get one ArqueoCaja
+     * const arqueoCaja = await prisma.arqueoCaja.findUniqueOrThrow({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findUniqueOrThrow<T extends ArqueoCajaFindUniqueOrThrowArgs>(args: SelectSubset<T, ArqueoCajaFindUniqueOrThrowArgs<ExtArgs>>): Prisma__ArqueoCajaClient<$Result.GetResult<Prisma.$ArqueoCajaPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find the first ArqueoCaja that matches the filter.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {ArqueoCajaFindFirstArgs} args - Arguments to find a ArqueoCaja
+     * @example
+     * // Get one ArqueoCaja
+     * const arqueoCaja = await prisma.arqueoCaja.findFirst({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findFirst<T extends ArqueoCajaFindFirstArgs>(args?: SelectSubset<T, ArqueoCajaFindFirstArgs<ExtArgs>>): Prisma__ArqueoCajaClient<$Result.GetResult<Prisma.$ArqueoCajaPayload<ExtArgs>, T, "findFirst", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find the first ArqueoCaja that matches the filter or
+     * throw `PrismaKnownClientError` with `P2025` code if no matches were found.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {ArqueoCajaFindFirstOrThrowArgs} args - Arguments to find a ArqueoCaja
+     * @example
+     * // Get one ArqueoCaja
+     * const arqueoCaja = await prisma.arqueoCaja.findFirstOrThrow({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findFirstOrThrow<T extends ArqueoCajaFindFirstOrThrowArgs>(args?: SelectSubset<T, ArqueoCajaFindFirstOrThrowArgs<ExtArgs>>): Prisma__ArqueoCajaClient<$Result.GetResult<Prisma.$ArqueoCajaPayload<ExtArgs>, T, "findFirstOrThrow", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find zero or more ArqueoCajas that matches the filter.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {ArqueoCajaFindManyArgs} args - Arguments to filter and select certain fields only.
+     * @example
+     * // Get all ArqueoCajas
+     * const arqueoCajas = await prisma.arqueoCaja.findMany()
+     * 
+     * // Get first 10 ArqueoCajas
+     * const arqueoCajas = await prisma.arqueoCaja.findMany({ take: 10 })
+     * 
+     * // Only select the `id`
+     * const arqueoCajaWithIdOnly = await prisma.arqueoCaja.findMany({ select: { id: true } })
+     * 
+     */
+    findMany<T extends ArqueoCajaFindManyArgs>(args?: SelectSubset<T, ArqueoCajaFindManyArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$ArqueoCajaPayload<ExtArgs>, T, "findMany", GlobalOmitOptions>>
+
+    /**
+     * Create a ArqueoCaja.
+     * @param {ArqueoCajaCreateArgs} args - Arguments to create a ArqueoCaja.
+     * @example
+     * // Create one ArqueoCaja
+     * const ArqueoCaja = await prisma.arqueoCaja.create({
+     *   data: {
+     *     // ... data to create a ArqueoCaja
+     *   }
+     * })
+     * 
+     */
+    create<T extends ArqueoCajaCreateArgs>(args: SelectSubset<T, ArqueoCajaCreateArgs<ExtArgs>>): Prisma__ArqueoCajaClient<$Result.GetResult<Prisma.$ArqueoCajaPayload<ExtArgs>, T, "create", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Create many ArqueoCajas.
+     * @param {ArqueoCajaCreateManyArgs} args - Arguments to create many ArqueoCajas.
+     * @example
+     * // Create many ArqueoCajas
+     * const arqueoCaja = await prisma.arqueoCaja.createMany({
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     *     
+     */
+    createMany<T extends ArqueoCajaCreateManyArgs>(args?: SelectSubset<T, ArqueoCajaCreateManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Create many ArqueoCajas and returns the data saved in the database.
+     * @param {ArqueoCajaCreateManyAndReturnArgs} args - Arguments to create many ArqueoCajas.
+     * @example
+     * // Create many ArqueoCajas
+     * const arqueoCaja = await prisma.arqueoCaja.createManyAndReturn({
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * 
+     * // Create many ArqueoCajas and only return the `id`
+     * const arqueoCajaWithIdOnly = await prisma.arqueoCaja.createManyAndReturn({
+     *   select: { id: true },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * 
+     */
+    createManyAndReturn<T extends ArqueoCajaCreateManyAndReturnArgs>(args?: SelectSubset<T, ArqueoCajaCreateManyAndReturnArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$ArqueoCajaPayload<ExtArgs>, T, "createManyAndReturn", GlobalOmitOptions>>
+
+    /**
+     * Delete a ArqueoCaja.
+     * @param {ArqueoCajaDeleteArgs} args - Arguments to delete one ArqueoCaja.
+     * @example
+     * // Delete one ArqueoCaja
+     * const ArqueoCaja = await prisma.arqueoCaja.delete({
+     *   where: {
+     *     // ... filter to delete one ArqueoCaja
+     *   }
+     * })
+     * 
+     */
+    delete<T extends ArqueoCajaDeleteArgs>(args: SelectSubset<T, ArqueoCajaDeleteArgs<ExtArgs>>): Prisma__ArqueoCajaClient<$Result.GetResult<Prisma.$ArqueoCajaPayload<ExtArgs>, T, "delete", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Update one ArqueoCaja.
+     * @param {ArqueoCajaUpdateArgs} args - Arguments to update one ArqueoCaja.
+     * @example
+     * // Update one ArqueoCaja
+     * const arqueoCaja = await prisma.arqueoCaja.update({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: {
+     *     // ... provide data here
+     *   }
+     * })
+     * 
+     */
+    update<T extends ArqueoCajaUpdateArgs>(args: SelectSubset<T, ArqueoCajaUpdateArgs<ExtArgs>>): Prisma__ArqueoCajaClient<$Result.GetResult<Prisma.$ArqueoCajaPayload<ExtArgs>, T, "update", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Delete zero or more ArqueoCajas.
+     * @param {ArqueoCajaDeleteManyArgs} args - Arguments to filter ArqueoCajas to delete.
+     * @example
+     * // Delete a few ArqueoCajas
+     * const { count } = await prisma.arqueoCaja.deleteMany({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     * 
+     */
+    deleteMany<T extends ArqueoCajaDeleteManyArgs>(args?: SelectSubset<T, ArqueoCajaDeleteManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Update zero or more ArqueoCajas.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {ArqueoCajaUpdateManyArgs} args - Arguments to update one or more rows.
+     * @example
+     * // Update many ArqueoCajas
+     * const arqueoCaja = await prisma.arqueoCaja.updateMany({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: {
+     *     // ... provide data here
+     *   }
+     * })
+     * 
+     */
+    updateMany<T extends ArqueoCajaUpdateManyArgs>(args: SelectSubset<T, ArqueoCajaUpdateManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Update zero or more ArqueoCajas and returns the data updated in the database.
+     * @param {ArqueoCajaUpdateManyAndReturnArgs} args - Arguments to update many ArqueoCajas.
+     * @example
+     * // Update many ArqueoCajas
+     * const arqueoCaja = await prisma.arqueoCaja.updateManyAndReturn({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * 
+     * // Update zero or more ArqueoCajas and only return the `id`
+     * const arqueoCajaWithIdOnly = await prisma.arqueoCaja.updateManyAndReturn({
+     *   select: { id: true },
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * 
+     */
+    updateManyAndReturn<T extends ArqueoCajaUpdateManyAndReturnArgs>(args: SelectSubset<T, ArqueoCajaUpdateManyAndReturnArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$ArqueoCajaPayload<ExtArgs>, T, "updateManyAndReturn", GlobalOmitOptions>>
+
+    /**
+     * Create or update one ArqueoCaja.
+     * @param {ArqueoCajaUpsertArgs} args - Arguments to update or create a ArqueoCaja.
+     * @example
+     * // Update or create a ArqueoCaja
+     * const arqueoCaja = await prisma.arqueoCaja.upsert({
+     *   create: {
+     *     // ... data to create a ArqueoCaja
+     *   },
+     *   update: {
+     *     // ... in case it already exists, update
+     *   },
+     *   where: {
+     *     // ... the filter for the ArqueoCaja we want to update
+     *   }
+     * })
+     */
+    upsert<T extends ArqueoCajaUpsertArgs>(args: SelectSubset<T, ArqueoCajaUpsertArgs<ExtArgs>>): Prisma__ArqueoCajaClient<$Result.GetResult<Prisma.$ArqueoCajaPayload<ExtArgs>, T, "upsert", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+
+    /**
+     * Count the number of ArqueoCajas.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {ArqueoCajaCountArgs} args - Arguments to filter ArqueoCajas to count.
+     * @example
+     * // Count the number of ArqueoCajas
+     * const count = await prisma.arqueoCaja.count({
+     *   where: {
+     *     // ... the filter for the ArqueoCajas we want to count
+     *   }
+     * })
+    **/
+    count<T extends ArqueoCajaCountArgs>(
+      args?: Subset<T, ArqueoCajaCountArgs>,
+    ): Prisma.PrismaPromise<
+      T extends $Utils.Record<'select', any>
+        ? T['select'] extends true
+          ? number
+          : GetScalarType<T['select'], ArqueoCajaCountAggregateOutputType>
+        : number
+    >
+
+    /**
+     * Allows you to perform aggregations operations on a ArqueoCaja.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {ArqueoCajaAggregateArgs} args - Select which aggregations you would like to apply and on what fields.
+     * @example
+     * // Ordered by age ascending
+     * // Where email contains prisma.io
+     * // Limited to the 10 users
+     * const aggregations = await prisma.user.aggregate({
+     *   _avg: {
+     *     age: true,
+     *   },
+     *   where: {
+     *     email: {
+     *       contains: "prisma.io",
+     *     },
+     *   },
+     *   orderBy: {
+     *     age: "asc",
+     *   },
+     *   take: 10,
+     * })
+    **/
+    aggregate<T extends ArqueoCajaAggregateArgs>(args: Subset<T, ArqueoCajaAggregateArgs>): Prisma.PrismaPromise<GetArqueoCajaAggregateType<T>>
+
+    /**
+     * Group by ArqueoCaja.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {ArqueoCajaGroupByArgs} args - Group by arguments.
+     * @example
+     * // Group by city, order by createdAt, get count
+     * const result = await prisma.user.groupBy({
+     *   by: ['city', 'createdAt'],
+     *   orderBy: {
+     *     createdAt: true
+     *   },
+     *   _count: {
+     *     _all: true
+     *   },
+     * })
+     * 
+    **/
+    groupBy<
+      T extends ArqueoCajaGroupByArgs,
+      HasSelectOrTake extends Or<
+        Extends<'skip', Keys<T>>,
+        Extends<'take', Keys<T>>
+      >,
+      OrderByArg extends True extends HasSelectOrTake
+        ? { orderBy: ArqueoCajaGroupByArgs['orderBy'] }
+        : { orderBy?: ArqueoCajaGroupByArgs['orderBy'] },
+      OrderFields extends ExcludeUnderscoreKeys<Keys<MaybeTupleToUnion<T['orderBy']>>>,
+      ByFields extends MaybeTupleToUnion<T['by']>,
+      ByValid extends Has<ByFields, OrderFields>,
+      HavingFields extends GetHavingFields<T['having']>,
+      HavingValid extends Has<ByFields, HavingFields>,
+      ByEmpty extends T['by'] extends never[] ? True : False,
+      InputErrors extends ByEmpty extends True
+      ? `Error: "by" must not be empty.`
+      : HavingValid extends False
+      ? {
+          [P in HavingFields]: P extends ByFields
+            ? never
+            : P extends string
+            ? `Error: Field "${P}" used in "having" needs to be provided in "by".`
+            : [
+                Error,
+                'Field ',
+                P,
+                ` in "having" needs to be provided in "by"`,
+              ]
+        }[HavingFields]
+      : 'take' extends Keys<T>
+      ? 'orderBy' extends Keys<T>
+        ? ByValid extends True
+          ? {}
+          : {
+              [P in OrderFields]: P extends ByFields
+                ? never
+                : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+            }[OrderFields]
+        : 'Error: If you provide "take", you also need to provide "orderBy"'
+      : 'skip' extends Keys<T>
+      ? 'orderBy' extends Keys<T>
+        ? ByValid extends True
+          ? {}
+          : {
+              [P in OrderFields]: P extends ByFields
+                ? never
+                : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+            }[OrderFields]
+        : 'Error: If you provide "skip", you also need to provide "orderBy"'
+      : ByValid extends True
+      ? {}
+      : {
+          [P in OrderFields]: P extends ByFields
+            ? never
+            : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+        }[OrderFields]
+    >(args: SubsetIntersection<T, ArqueoCajaGroupByArgs, OrderByArg> & InputErrors): {} extends InputErrors ? GetArqueoCajaGroupByPayload<T> : Prisma.PrismaPromise<InputErrors>
+  /**
+   * Fields of the ArqueoCaja model
+   */
+  readonly fields: ArqueoCajaFieldRefs;
+  }
+
+  /**
+   * The delegate class that acts as a "Promise-like" for ArqueoCaja.
+   * Why is this prefixed with `Prisma__`?
+   * Because we want to prevent naming conflicts as mentioned in
+   * https://github.com/prisma/prisma-client-js/issues/707
+   */
+  export interface Prisma__ArqueoCajaClient<T, Null = never, ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs, GlobalOmitOptions = {}> extends Prisma.PrismaPromise<T> {
+    readonly [Symbol.toStringTag]: "PrismaPromise"
+    turno<T extends TurnoPuntoVentaDefaultArgs<ExtArgs> = {}>(args?: Subset<T, TurnoPuntoVentaDefaultArgs<ExtArgs>>): Prisma__TurnoPuntoVentaClient<$Result.GetResult<Prisma.$TurnoPuntoVentaPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | Null, Null, ExtArgs, GlobalOmitOptions>
+    puntoDeVenta<T extends PuntoDeVentaDefaultArgs<ExtArgs> = {}>(args?: Subset<T, PuntoDeVentaDefaultArgs<ExtArgs>>): Prisma__PuntoDeVentaClient<$Result.GetResult<Prisma.$PuntoDeVentaPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | Null, Null, ExtArgs, GlobalOmitOptions>
+    tenant<T extends TenantDefaultArgs<ExtArgs> = {}>(args?: Subset<T, TenantDefaultArgs<ExtArgs>>): Prisma__TenantClient<$Result.GetResult<Prisma.$TenantPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | Null, Null, ExtArgs, GlobalOmitOptions>
+    /**
+     * Attaches callbacks for the resolution and/or rejection of the Promise.
+     * @param onfulfilled The callback to execute when the Promise is resolved.
+     * @param onrejected The callback to execute when the Promise is rejected.
+     * @returns A Promise for the completion of which ever callback is executed.
+     */
+    then<TResult1 = T, TResult2 = never>(onfulfilled?: ((value: T) => TResult1 | PromiseLike<TResult1>) | undefined | null, onrejected?: ((reason: any) => TResult2 | PromiseLike<TResult2>) | undefined | null): $Utils.JsPromise<TResult1 | TResult2>
+    /**
+     * Attaches a callback for only the rejection of the Promise.
+     * @param onrejected The callback to execute when the Promise is rejected.
+     * @returns A Promise for the completion of the callback.
+     */
+    catch<TResult = never>(onrejected?: ((reason: any) => TResult | PromiseLike<TResult>) | undefined | null): $Utils.JsPromise<T | TResult>
+    /**
+     * Attaches a callback that is invoked when the Promise is settled (fulfilled or rejected). The
+     * resolved value cannot be modified from the callback.
+     * @param onfinally The callback to execute when the Promise is settled (fulfilled or rejected).
+     * @returns A Promise for the completion of the callback.
+     */
+    finally(onfinally?: (() => void) | undefined | null): $Utils.JsPromise<T>
+  }
+
+
+
+
+  /**
+   * Fields of the ArqueoCaja model
+   */
+  interface ArqueoCajaFieldRefs {
+    readonly id: FieldRef<"ArqueoCaja", 'String'>
+    readonly turnoId: FieldRef<"ArqueoCaja", 'String'>
+    readonly tenantId: FieldRef<"ArqueoCaja", 'String'>
+    readonly puntoDeVentaId: FieldRef<"ArqueoCaja", 'String'>
+    readonly billetes1000Cup: FieldRef<"ArqueoCaja", 'Int'>
+    readonly billetes500Cup: FieldRef<"ArqueoCaja", 'Int'>
+    readonly billetes200Cup: FieldRef<"ArqueoCaja", 'Int'>
+    readonly billetes100Cup: FieldRef<"ArqueoCaja", 'Int'>
+    readonly billetes50Cup: FieldRef<"ArqueoCaja", 'Int'>
+    readonly billetes20Cup: FieldRef<"ArqueoCaja", 'Int'>
+    readonly monedasCup: FieldRef<"ArqueoCaja", 'Int'>
+    readonly billetes100Usd: FieldRef<"ArqueoCaja", 'Int'>
+    readonly billetes50Usd: FieldRef<"ArqueoCaja", 'Int'>
+    readonly billetes20Usd: FieldRef<"ArqueoCaja", 'Int'>
+    readonly billetes10Usd: FieldRef<"ArqueoCaja", 'Int'>
+    readonly billetes5Usd: FieldRef<"ArqueoCaja", 'Int'>
+    readonly billetes1Usd: FieldRef<"ArqueoCaja", 'Int'>
+    readonly monedasUsd: FieldRef<"ArqueoCaja", 'Int'>
+    readonly totalEfectivoCup: FieldRef<"ArqueoCaja", 'Int'>
+    readonly totalEfectivoUsd: FieldRef<"ArqueoCaja", 'Int'>
+    readonly totalTarjeta: FieldRef<"ArqueoCaja", 'Int'>
+    readonly totalTransferencia: FieldRef<"ArqueoCaja", 'Int'>
+    readonly totalCredito: FieldRef<"ArqueoCaja", 'Int'>
+    readonly esperadoEfectivoCup: FieldRef<"ArqueoCaja", 'Int'>
+    readonly esperadoEfectivoUsd: FieldRef<"ArqueoCaja", 'Int'>
+    readonly esperadoTarjeta: FieldRef<"ArqueoCaja", 'Int'>
+    readonly esperadoTransferencia: FieldRef<"ArqueoCaja", 'Int'>
+    readonly esperadoCredito: FieldRef<"ArqueoCaja", 'Int'>
+    readonly diferenciaCup: FieldRef<"ArqueoCaja", 'Int'>
+    readonly diferenciaUsd: FieldRef<"ArqueoCaja", 'Int'>
+    readonly observaciones: FieldRef<"ArqueoCaja", 'String'>
+    readonly contabilizado: FieldRef<"ArqueoCaja", 'Boolean'>
+    readonly createdAt: FieldRef<"ArqueoCaja", 'DateTime'>
+    readonly updatedAt: FieldRef<"ArqueoCaja", 'DateTime'>
+  }
+    
+
+  // Custom InputTypes
+  /**
+   * ArqueoCaja findUnique
+   */
+  export type ArqueoCajaFindUniqueArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the ArqueoCaja
+     */
+    select?: ArqueoCajaSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the ArqueoCaja
+     */
+    omit?: ArqueoCajaOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: ArqueoCajaInclude<ExtArgs> | null
+    /**
+     * Filter, which ArqueoCaja to fetch.
+     */
+    where: ArqueoCajaWhereUniqueInput
+  }
+
+  /**
+   * ArqueoCaja findUniqueOrThrow
+   */
+  export type ArqueoCajaFindUniqueOrThrowArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the ArqueoCaja
+     */
+    select?: ArqueoCajaSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the ArqueoCaja
+     */
+    omit?: ArqueoCajaOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: ArqueoCajaInclude<ExtArgs> | null
+    /**
+     * Filter, which ArqueoCaja to fetch.
+     */
+    where: ArqueoCajaWhereUniqueInput
+  }
+
+  /**
+   * ArqueoCaja findFirst
+   */
+  export type ArqueoCajaFindFirstArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the ArqueoCaja
+     */
+    select?: ArqueoCajaSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the ArqueoCaja
+     */
+    omit?: ArqueoCajaOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: ArqueoCajaInclude<ExtArgs> | null
+    /**
+     * Filter, which ArqueoCaja to fetch.
+     */
+    where?: ArqueoCajaWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of ArqueoCajas to fetch.
+     */
+    orderBy?: ArqueoCajaOrderByWithRelationInput | ArqueoCajaOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for searching for ArqueoCajas.
+     */
+    cursor?: ArqueoCajaWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` ArqueoCajas from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` ArqueoCajas.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of ArqueoCajas.
+     */
+    distinct?: ArqueoCajaScalarFieldEnum | ArqueoCajaScalarFieldEnum[]
+  }
+
+  /**
+   * ArqueoCaja findFirstOrThrow
+   */
+  export type ArqueoCajaFindFirstOrThrowArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the ArqueoCaja
+     */
+    select?: ArqueoCajaSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the ArqueoCaja
+     */
+    omit?: ArqueoCajaOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: ArqueoCajaInclude<ExtArgs> | null
+    /**
+     * Filter, which ArqueoCaja to fetch.
+     */
+    where?: ArqueoCajaWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of ArqueoCajas to fetch.
+     */
+    orderBy?: ArqueoCajaOrderByWithRelationInput | ArqueoCajaOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for searching for ArqueoCajas.
+     */
+    cursor?: ArqueoCajaWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` ArqueoCajas from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` ArqueoCajas.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of ArqueoCajas.
+     */
+    distinct?: ArqueoCajaScalarFieldEnum | ArqueoCajaScalarFieldEnum[]
+  }
+
+  /**
+   * ArqueoCaja findMany
+   */
+  export type ArqueoCajaFindManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the ArqueoCaja
+     */
+    select?: ArqueoCajaSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the ArqueoCaja
+     */
+    omit?: ArqueoCajaOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: ArqueoCajaInclude<ExtArgs> | null
+    /**
+     * Filter, which ArqueoCajas to fetch.
+     */
+    where?: ArqueoCajaWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of ArqueoCajas to fetch.
+     */
+    orderBy?: ArqueoCajaOrderByWithRelationInput | ArqueoCajaOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for listing ArqueoCajas.
+     */
+    cursor?: ArqueoCajaWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` ArqueoCajas from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` ArqueoCajas.
+     */
+    skip?: number
+    distinct?: ArqueoCajaScalarFieldEnum | ArqueoCajaScalarFieldEnum[]
+  }
+
+  /**
+   * ArqueoCaja create
+   */
+  export type ArqueoCajaCreateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the ArqueoCaja
+     */
+    select?: ArqueoCajaSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the ArqueoCaja
+     */
+    omit?: ArqueoCajaOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: ArqueoCajaInclude<ExtArgs> | null
+    /**
+     * The data needed to create a ArqueoCaja.
+     */
+    data: XOR<ArqueoCajaCreateInput, ArqueoCajaUncheckedCreateInput>
+  }
+
+  /**
+   * ArqueoCaja createMany
+   */
+  export type ArqueoCajaCreateManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * The data used to create many ArqueoCajas.
+     */
+    data: ArqueoCajaCreateManyInput | ArqueoCajaCreateManyInput[]
+    skipDuplicates?: boolean
+  }
+
+  /**
+   * ArqueoCaja createManyAndReturn
+   */
+  export type ArqueoCajaCreateManyAndReturnArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the ArqueoCaja
+     */
+    select?: ArqueoCajaSelectCreateManyAndReturn<ExtArgs> | null
+    /**
+     * Omit specific fields from the ArqueoCaja
+     */
+    omit?: ArqueoCajaOmit<ExtArgs> | null
+    /**
+     * The data used to create many ArqueoCajas.
+     */
+    data: ArqueoCajaCreateManyInput | ArqueoCajaCreateManyInput[]
+    skipDuplicates?: boolean
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: ArqueoCajaIncludeCreateManyAndReturn<ExtArgs> | null
+  }
+
+  /**
+   * ArqueoCaja update
+   */
+  export type ArqueoCajaUpdateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the ArqueoCaja
+     */
+    select?: ArqueoCajaSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the ArqueoCaja
+     */
+    omit?: ArqueoCajaOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: ArqueoCajaInclude<ExtArgs> | null
+    /**
+     * The data needed to update a ArqueoCaja.
+     */
+    data: XOR<ArqueoCajaUpdateInput, ArqueoCajaUncheckedUpdateInput>
+    /**
+     * Choose, which ArqueoCaja to update.
+     */
+    where: ArqueoCajaWhereUniqueInput
+  }
+
+  /**
+   * ArqueoCaja updateMany
+   */
+  export type ArqueoCajaUpdateManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * The data used to update ArqueoCajas.
+     */
+    data: XOR<ArqueoCajaUpdateManyMutationInput, ArqueoCajaUncheckedUpdateManyInput>
+    /**
+     * Filter which ArqueoCajas to update
+     */
+    where?: ArqueoCajaWhereInput
+    /**
+     * Limit how many ArqueoCajas to update.
+     */
+    limit?: number
+  }
+
+  /**
+   * ArqueoCaja updateManyAndReturn
+   */
+  export type ArqueoCajaUpdateManyAndReturnArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the ArqueoCaja
+     */
+    select?: ArqueoCajaSelectUpdateManyAndReturn<ExtArgs> | null
+    /**
+     * Omit specific fields from the ArqueoCaja
+     */
+    omit?: ArqueoCajaOmit<ExtArgs> | null
+    /**
+     * The data used to update ArqueoCajas.
+     */
+    data: XOR<ArqueoCajaUpdateManyMutationInput, ArqueoCajaUncheckedUpdateManyInput>
+    /**
+     * Filter which ArqueoCajas to update
+     */
+    where?: ArqueoCajaWhereInput
+    /**
+     * Limit how many ArqueoCajas to update.
+     */
+    limit?: number
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: ArqueoCajaIncludeUpdateManyAndReturn<ExtArgs> | null
+  }
+
+  /**
+   * ArqueoCaja upsert
+   */
+  export type ArqueoCajaUpsertArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the ArqueoCaja
+     */
+    select?: ArqueoCajaSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the ArqueoCaja
+     */
+    omit?: ArqueoCajaOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: ArqueoCajaInclude<ExtArgs> | null
+    /**
+     * The filter to search for the ArqueoCaja to update in case it exists.
+     */
+    where: ArqueoCajaWhereUniqueInput
+    /**
+     * In case the ArqueoCaja found by the `where` argument doesn't exist, create a new ArqueoCaja with this data.
+     */
+    create: XOR<ArqueoCajaCreateInput, ArqueoCajaUncheckedCreateInput>
+    /**
+     * In case the ArqueoCaja was found with the provided `where` argument, update it with this data.
+     */
+    update: XOR<ArqueoCajaUpdateInput, ArqueoCajaUncheckedUpdateInput>
+  }
+
+  /**
+   * ArqueoCaja delete
+   */
+  export type ArqueoCajaDeleteArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the ArqueoCaja
+     */
+    select?: ArqueoCajaSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the ArqueoCaja
+     */
+    omit?: ArqueoCajaOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: ArqueoCajaInclude<ExtArgs> | null
+    /**
+     * Filter which ArqueoCaja to delete.
+     */
+    where: ArqueoCajaWhereUniqueInput
+  }
+
+  /**
+   * ArqueoCaja deleteMany
+   */
+  export type ArqueoCajaDeleteManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Filter which ArqueoCajas to delete
+     */
+    where?: ArqueoCajaWhereInput
+    /**
+     * Limit how many ArqueoCajas to delete.
+     */
+    limit?: number
+  }
+
+  /**
+   * ArqueoCaja without action
+   */
+  export type ArqueoCajaDefaultArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the ArqueoCaja
+     */
+    select?: ArqueoCajaSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the ArqueoCaja
+     */
+    omit?: ArqueoCajaOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: ArqueoCajaInclude<ExtArgs> | null
   }
 
 
@@ -32367,12 +35847,20 @@ export namespace Prisma {
     cantidad: number | null
     total: number | null
     descuento: number | null
+    montoEfectivo: number | null
+    montoTarjeta: number | null
+    montoTransferencia: number | null
+    montoCredito: number | null
   }
 
   export type VentaSumAggregateOutputType = {
     cantidad: number | null
     total: number | null
     descuento: number | null
+    montoEfectivo: number | null
+    montoTarjeta: number | null
+    montoTransferencia: number | null
+    montoCredito: number | null
   }
 
   export type VentaMinAggregateOutputType = {
@@ -32392,6 +35880,12 @@ export namespace Prisma {
     esVentaUnica: boolean | null
     ofertaId: string | null
     ventaPadreId: string | null
+    turnoId: string | null
+    metodoPago: $Enums.MetodoPagoVenta | null
+    montoEfectivo: number | null
+    montoTarjeta: number | null
+    montoTransferencia: number | null
+    montoCredito: number | null
   }
 
   export type VentaMaxAggregateOutputType = {
@@ -32411,6 +35905,12 @@ export namespace Prisma {
     esVentaUnica: boolean | null
     ofertaId: string | null
     ventaPadreId: string | null
+    turnoId: string | null
+    metodoPago: $Enums.MetodoPagoVenta | null
+    montoEfectivo: number | null
+    montoTarjeta: number | null
+    montoTransferencia: number | null
+    montoCredito: number | null
   }
 
   export type VentaCountAggregateOutputType = {
@@ -32430,6 +35930,12 @@ export namespace Prisma {
     esVentaUnica: number
     ofertaId: number
     ventaPadreId: number
+    turnoId: number
+    metodoPago: number
+    montoEfectivo: number
+    montoTarjeta: number
+    montoTransferencia: number
+    montoCredito: number
     _all: number
   }
 
@@ -32438,12 +35944,20 @@ export namespace Prisma {
     cantidad?: true
     total?: true
     descuento?: true
+    montoEfectivo?: true
+    montoTarjeta?: true
+    montoTransferencia?: true
+    montoCredito?: true
   }
 
   export type VentaSumAggregateInputType = {
     cantidad?: true
     total?: true
     descuento?: true
+    montoEfectivo?: true
+    montoTarjeta?: true
+    montoTransferencia?: true
+    montoCredito?: true
   }
 
   export type VentaMinAggregateInputType = {
@@ -32463,6 +35977,12 @@ export namespace Prisma {
     esVentaUnica?: true
     ofertaId?: true
     ventaPadreId?: true
+    turnoId?: true
+    metodoPago?: true
+    montoEfectivo?: true
+    montoTarjeta?: true
+    montoTransferencia?: true
+    montoCredito?: true
   }
 
   export type VentaMaxAggregateInputType = {
@@ -32482,6 +36002,12 @@ export namespace Prisma {
     esVentaUnica?: true
     ofertaId?: true
     ventaPadreId?: true
+    turnoId?: true
+    metodoPago?: true
+    montoEfectivo?: true
+    montoTarjeta?: true
+    montoTransferencia?: true
+    montoCredito?: true
   }
 
   export type VentaCountAggregateInputType = {
@@ -32501,6 +36027,12 @@ export namespace Prisma {
     esVentaUnica?: true
     ofertaId?: true
     ventaPadreId?: true
+    turnoId?: true
+    metodoPago?: true
+    montoEfectivo?: true
+    montoTarjeta?: true
+    montoTransferencia?: true
+    montoCredito?: true
     _all?: true
   }
 
@@ -32607,6 +36139,12 @@ export namespace Prisma {
     esVentaUnica: boolean
     ofertaId: string | null
     ventaPadreId: string | null
+    turnoId: string | null
+    metodoPago: $Enums.MetodoPagoVenta | null
+    montoEfectivo: number | null
+    montoTarjeta: number | null
+    montoTransferencia: number | null
+    montoCredito: number | null
     _count: VentaCountAggregateOutputType | null
     _avg: VentaAvgAggregateOutputType | null
     _sum: VentaSumAggregateOutputType | null
@@ -32645,6 +36183,12 @@ export namespace Prisma {
     esVentaUnica?: boolean
     ofertaId?: boolean
     ventaPadreId?: boolean
+    turnoId?: boolean
+    metodoPago?: boolean
+    montoEfectivo?: boolean
+    montoTarjeta?: boolean
+    montoTransferencia?: boolean
+    montoCredito?: boolean
     ordenReparacion?: boolean | Venta$ordenReparacionArgs<ExtArgs>
     reconciliaciones?: boolean | Venta$reconciliacionesArgs<ExtArgs>
     cliente?: boolean | Venta$clienteArgs<ExtArgs>
@@ -32652,6 +36196,7 @@ export namespace Prisma {
     oferta?: boolean | Venta$ofertaArgs<ExtArgs>
     producto?: boolean | Venta$productoArgs<ExtArgs>
     puntoDeVenta?: boolean | PuntoDeVentaDefaultArgs<ExtArgs>
+    turno?: boolean | Venta$turnoArgs<ExtArgs>
     factura?: boolean | Venta$facturaArgs<ExtArgs>
     items?: boolean | Venta$itemsArgs<ExtArgs>
     tenant?: boolean | TenantDefaultArgs<ExtArgs>
@@ -32675,11 +36220,18 @@ export namespace Prisma {
     esVentaUnica?: boolean
     ofertaId?: boolean
     ventaPadreId?: boolean
+    turnoId?: boolean
+    metodoPago?: boolean
+    montoEfectivo?: boolean
+    montoTarjeta?: boolean
+    montoTransferencia?: boolean
+    montoCredito?: boolean
     cliente?: boolean | Venta$clienteArgs<ExtArgs>
     empleado?: boolean | Venta$empleadoArgs<ExtArgs>
     oferta?: boolean | Venta$ofertaArgs<ExtArgs>
     producto?: boolean | Venta$productoArgs<ExtArgs>
     puntoDeVenta?: boolean | PuntoDeVentaDefaultArgs<ExtArgs>
+    turno?: boolean | Venta$turnoArgs<ExtArgs>
     tenant?: boolean | TenantDefaultArgs<ExtArgs>
   }, ExtArgs["result"]["venta"]>
 
@@ -32700,11 +36252,18 @@ export namespace Prisma {
     esVentaUnica?: boolean
     ofertaId?: boolean
     ventaPadreId?: boolean
+    turnoId?: boolean
+    metodoPago?: boolean
+    montoEfectivo?: boolean
+    montoTarjeta?: boolean
+    montoTransferencia?: boolean
+    montoCredito?: boolean
     cliente?: boolean | Venta$clienteArgs<ExtArgs>
     empleado?: boolean | Venta$empleadoArgs<ExtArgs>
     oferta?: boolean | Venta$ofertaArgs<ExtArgs>
     producto?: boolean | Venta$productoArgs<ExtArgs>
     puntoDeVenta?: boolean | PuntoDeVentaDefaultArgs<ExtArgs>
+    turno?: boolean | Venta$turnoArgs<ExtArgs>
     tenant?: boolean | TenantDefaultArgs<ExtArgs>
   }, ExtArgs["result"]["venta"]>
 
@@ -32725,9 +36284,15 @@ export namespace Prisma {
     esVentaUnica?: boolean
     ofertaId?: boolean
     ventaPadreId?: boolean
+    turnoId?: boolean
+    metodoPago?: boolean
+    montoEfectivo?: boolean
+    montoTarjeta?: boolean
+    montoTransferencia?: boolean
+    montoCredito?: boolean
   }
 
-  export type VentaOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"ventaId" | "tenantId" | "productoId" | "cantidad" | "puntoDeVentaId" | "createdAt" | "updatedAt" | "empleadoId" | "total" | "clienteId" | "ordenId" | "descuento" | "observaciones" | "esVentaUnica" | "ofertaId" | "ventaPadreId", ExtArgs["result"]["venta"]>
+  export type VentaOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"ventaId" | "tenantId" | "productoId" | "cantidad" | "puntoDeVentaId" | "createdAt" | "updatedAt" | "empleadoId" | "total" | "clienteId" | "ordenId" | "descuento" | "observaciones" | "esVentaUnica" | "ofertaId" | "ventaPadreId" | "turnoId" | "metodoPago" | "montoEfectivo" | "montoTarjeta" | "montoTransferencia" | "montoCredito", ExtArgs["result"]["venta"]>
   export type VentaInclude<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     ordenReparacion?: boolean | Venta$ordenReparacionArgs<ExtArgs>
     reconciliaciones?: boolean | Venta$reconciliacionesArgs<ExtArgs>
@@ -32736,6 +36301,7 @@ export namespace Prisma {
     oferta?: boolean | Venta$ofertaArgs<ExtArgs>
     producto?: boolean | Venta$productoArgs<ExtArgs>
     puntoDeVenta?: boolean | PuntoDeVentaDefaultArgs<ExtArgs>
+    turno?: boolean | Venta$turnoArgs<ExtArgs>
     factura?: boolean | Venta$facturaArgs<ExtArgs>
     items?: boolean | Venta$itemsArgs<ExtArgs>
     tenant?: boolean | TenantDefaultArgs<ExtArgs>
@@ -32747,6 +36313,7 @@ export namespace Prisma {
     oferta?: boolean | Venta$ofertaArgs<ExtArgs>
     producto?: boolean | Venta$productoArgs<ExtArgs>
     puntoDeVenta?: boolean | PuntoDeVentaDefaultArgs<ExtArgs>
+    turno?: boolean | Venta$turnoArgs<ExtArgs>
     tenant?: boolean | TenantDefaultArgs<ExtArgs>
   }
   export type VentaIncludeUpdateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
@@ -32755,6 +36322,7 @@ export namespace Prisma {
     oferta?: boolean | Venta$ofertaArgs<ExtArgs>
     producto?: boolean | Venta$productoArgs<ExtArgs>
     puntoDeVenta?: boolean | PuntoDeVentaDefaultArgs<ExtArgs>
+    turno?: boolean | Venta$turnoArgs<ExtArgs>
     tenant?: boolean | TenantDefaultArgs<ExtArgs>
   }
 
@@ -32768,6 +36336,7 @@ export namespace Prisma {
       oferta: Prisma.$OfertaPayload<ExtArgs> | null
       producto: Prisma.$ProductoPayload<ExtArgs> | null
       puntoDeVenta: Prisma.$PuntoDeVentaPayload<ExtArgs>
+      turno: Prisma.$TurnoPuntoVentaPayload<ExtArgs> | null
       factura: Prisma.$FacturaPayload<ExtArgs> | null
       items: Prisma.$VentaItemPayload<ExtArgs>[]
       tenant: Prisma.$TenantPayload<ExtArgs>
@@ -32789,6 +36358,12 @@ export namespace Prisma {
       esVentaUnica: boolean
       ofertaId: string | null
       ventaPadreId: string | null
+      turnoId: string | null
+      metodoPago: $Enums.MetodoPagoVenta | null
+      montoEfectivo: number | null
+      montoTarjeta: number | null
+      montoTransferencia: number | null
+      montoCredito: number | null
     }, ExtArgs["result"]["venta"]>
     composites: {}
   }
@@ -33190,6 +36765,7 @@ export namespace Prisma {
     oferta<T extends Venta$ofertaArgs<ExtArgs> = {}>(args?: Subset<T, Venta$ofertaArgs<ExtArgs>>): Prisma__OfertaClient<$Result.GetResult<Prisma.$OfertaPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
     producto<T extends Venta$productoArgs<ExtArgs> = {}>(args?: Subset<T, Venta$productoArgs<ExtArgs>>): Prisma__ProductoClient<$Result.GetResult<Prisma.$ProductoPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
     puntoDeVenta<T extends PuntoDeVentaDefaultArgs<ExtArgs> = {}>(args?: Subset<T, PuntoDeVentaDefaultArgs<ExtArgs>>): Prisma__PuntoDeVentaClient<$Result.GetResult<Prisma.$PuntoDeVentaPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | Null, Null, ExtArgs, GlobalOmitOptions>
+    turno<T extends Venta$turnoArgs<ExtArgs> = {}>(args?: Subset<T, Venta$turnoArgs<ExtArgs>>): Prisma__TurnoPuntoVentaClient<$Result.GetResult<Prisma.$TurnoPuntoVentaPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
     factura<T extends Venta$facturaArgs<ExtArgs> = {}>(args?: Subset<T, Venta$facturaArgs<ExtArgs>>): Prisma__FacturaClient<$Result.GetResult<Prisma.$FacturaPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
     items<T extends Venta$itemsArgs<ExtArgs> = {}>(args?: Subset<T, Venta$itemsArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$VentaItemPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
     tenant<T extends TenantDefaultArgs<ExtArgs> = {}>(args?: Subset<T, TenantDefaultArgs<ExtArgs>>): Prisma__TenantClient<$Result.GetResult<Prisma.$TenantPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | Null, Null, ExtArgs, GlobalOmitOptions>
@@ -33238,6 +36814,12 @@ export namespace Prisma {
     readonly esVentaUnica: FieldRef<"Venta", 'Boolean'>
     readonly ofertaId: FieldRef<"Venta", 'String'>
     readonly ventaPadreId: FieldRef<"Venta", 'String'>
+    readonly turnoId: FieldRef<"Venta", 'String'>
+    readonly metodoPago: FieldRef<"Venta", 'MetodoPagoVenta'>
+    readonly montoEfectivo: FieldRef<"Venta", 'Int'>
+    readonly montoTarjeta: FieldRef<"Venta", 'Int'>
+    readonly montoTransferencia: FieldRef<"Venta", 'Int'>
+    readonly montoCredito: FieldRef<"Venta", 'Int'>
   }
     
 
@@ -33750,6 +37332,25 @@ export namespace Prisma {
      */
     include?: ProductoInclude<ExtArgs> | null
     where?: ProductoWhereInput
+  }
+
+  /**
+   * Venta.turno
+   */
+  export type Venta$turnoArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the TurnoPuntoVenta
+     */
+    select?: TurnoPuntoVentaSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the TurnoPuntoVenta
+     */
+    omit?: TurnoPuntoVentaOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: TurnoPuntoVentaInclude<ExtArgs> | null
+    where?: TurnoPuntoVentaWhereInput
   }
 
   /**
@@ -51170,6 +54771,7 @@ export namespace Prisma {
     vacationAccruals?: boolean | Empleado$vacationAccrualsArgs<ExtArgs>
     vacationRequests?: boolean | Empleado$vacationRequestsArgs<ExtArgs>
     ventas?: boolean | Empleado$ventasArgs<ExtArgs>
+    turnosPos?: boolean | Empleado$turnosPosArgs<ExtArgs>
     tenant?: boolean | TenantDefaultArgs<ExtArgs>
     _count?: boolean | EmpleadoCountOutputTypeDefaultArgs<ExtArgs>
   }, ExtArgs["result"]["empleado"]>
@@ -51236,6 +54838,7 @@ export namespace Prisma {
     vacationAccruals?: boolean | Empleado$vacationAccrualsArgs<ExtArgs>
     vacationRequests?: boolean | Empleado$vacationRequestsArgs<ExtArgs>
     ventas?: boolean | Empleado$ventasArgs<ExtArgs>
+    turnosPos?: boolean | Empleado$turnosPosArgs<ExtArgs>
     tenant?: boolean | TenantDefaultArgs<ExtArgs>
     _count?: boolean | EmpleadoCountOutputTypeDefaultArgs<ExtArgs>
   }
@@ -51256,6 +54859,7 @@ export namespace Prisma {
       vacationAccruals: Prisma.$VacationAccrualPayload<ExtArgs>[]
       vacationRequests: Prisma.$VacationRequestPayload<ExtArgs>[]
       ventas: Prisma.$VentaPayload<ExtArgs>[]
+      turnosPos: Prisma.$TurnoPuntoVentaPayload<ExtArgs>[]
       tenant: Prisma.$TenantPayload<ExtArgs>
     }
     scalars: $Extensions.GetPayloadResult<{
@@ -51674,6 +55278,7 @@ export namespace Prisma {
     vacationAccruals<T extends Empleado$vacationAccrualsArgs<ExtArgs> = {}>(args?: Subset<T, Empleado$vacationAccrualsArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$VacationAccrualPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
     vacationRequests<T extends Empleado$vacationRequestsArgs<ExtArgs> = {}>(args?: Subset<T, Empleado$vacationRequestsArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$VacationRequestPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
     ventas<T extends Empleado$ventasArgs<ExtArgs> = {}>(args?: Subset<T, Empleado$ventasArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$VentaPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
+    turnosPos<T extends Empleado$turnosPosArgs<ExtArgs> = {}>(args?: Subset<T, Empleado$turnosPosArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$TurnoPuntoVentaPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
     tenant<T extends TenantDefaultArgs<ExtArgs> = {}>(args?: Subset<T, TenantDefaultArgs<ExtArgs>>): Prisma__TenantClient<$Result.GetResult<Prisma.$TenantPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | Null, Null, ExtArgs, GlobalOmitOptions>
     /**
      * Attaches callbacks for the resolution and/or rejection of the Promise.
@@ -52279,6 +55884,30 @@ export namespace Prisma {
     take?: number
     skip?: number
     distinct?: VentaScalarFieldEnum | VentaScalarFieldEnum[]
+  }
+
+  /**
+   * Empleado.turnosPos
+   */
+  export type Empleado$turnosPosArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the TurnoPuntoVenta
+     */
+    select?: TurnoPuntoVentaSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the TurnoPuntoVenta
+     */
+    omit?: TurnoPuntoVentaOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: TurnoPuntoVentaInclude<ExtArgs> | null
+    where?: TurnoPuntoVentaWhereInput
+    orderBy?: TurnoPuntoVentaOrderByWithRelationInput | TurnoPuntoVentaOrderByWithRelationInput[]
+    cursor?: TurnoPuntoVentaWhereUniqueInput
+    take?: number
+    skip?: number
+    distinct?: TurnoPuntoVentaScalarFieldEnum | TurnoPuntoVentaScalarFieldEnum[]
   }
 
   /**
@@ -130695,6 +134324,7 @@ export namespace Prisma {
     periodoPadreId: string | null
     aperturaAutomatica: boolean | null
     categoria: $Enums.CategoriaPeriodo | null
+    modoContable: $Enums.ModoContable | null
     abiertoPorId: string | null
     fechaApertura: Date | null
     cerradoPor: string | null
@@ -130722,6 +134352,7 @@ export namespace Prisma {
     periodoPadreId: string | null
     aperturaAutomatica: boolean | null
     categoria: $Enums.CategoriaPeriodo | null
+    modoContable: $Enums.ModoContable | null
     abiertoPorId: string | null
     fechaApertura: Date | null
     cerradoPor: string | null
@@ -130749,6 +134380,7 @@ export namespace Prisma {
     periodoPadreId: number
     aperturaAutomatica: number
     categoria: number
+    modoContable: number
     abiertoPorId: number
     fechaApertura: number
     cerradoPor: number
@@ -130779,6 +134411,7 @@ export namespace Prisma {
     periodoPadreId?: true
     aperturaAutomatica?: true
     categoria?: true
+    modoContable?: true
     abiertoPorId?: true
     fechaApertura?: true
     cerradoPor?: true
@@ -130806,6 +134439,7 @@ export namespace Prisma {
     periodoPadreId?: true
     aperturaAutomatica?: true
     categoria?: true
+    modoContable?: true
     abiertoPorId?: true
     fechaApertura?: true
     cerradoPor?: true
@@ -130833,6 +134467,7 @@ export namespace Prisma {
     periodoPadreId?: true
     aperturaAutomatica?: true
     categoria?: true
+    modoContable?: true
     abiertoPorId?: true
     fechaApertura?: true
     cerradoPor?: true
@@ -130934,6 +134569,7 @@ export namespace Prisma {
     periodoPadreId: string | null
     aperturaAutomatica: boolean
     categoria: $Enums.CategoriaPeriodo
+    modoContable: $Enums.ModoContable
     abiertoPorId: string | null
     fechaApertura: Date | null
     cerradoPor: string | null
@@ -130979,6 +134615,7 @@ export namespace Prisma {
     periodoPadreId?: boolean
     aperturaAutomatica?: boolean
     categoria?: boolean
+    modoContable?: boolean
     abiertoPorId?: boolean
     fechaApertura?: boolean
     cerradoPor?: boolean
@@ -131015,6 +134652,7 @@ export namespace Prisma {
     periodoPadreId?: boolean
     aperturaAutomatica?: boolean
     categoria?: boolean
+    modoContable?: boolean
     abiertoPorId?: boolean
     fechaApertura?: boolean
     cerradoPor?: boolean
@@ -131045,6 +134683,7 @@ export namespace Prisma {
     periodoPadreId?: boolean
     aperturaAutomatica?: boolean
     categoria?: boolean
+    modoContable?: boolean
     abiertoPorId?: boolean
     fechaApertura?: boolean
     cerradoPor?: boolean
@@ -131075,6 +134714,7 @@ export namespace Prisma {
     periodoPadreId?: boolean
     aperturaAutomatica?: boolean
     categoria?: boolean
+    modoContable?: boolean
     abiertoPorId?: boolean
     fechaApertura?: boolean
     cerradoPor?: boolean
@@ -131092,7 +134732,7 @@ export namespace Prisma {
     updatedAt?: boolean
   }
 
-  export type PeriodoContableOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"periodoId" | "tenantId" | "tipo" | "codigo" | "fechaInicio" | "fechaFin" | "estado" | "periodoPadreId" | "aperturaAutomatica" | "categoria" | "abiertoPorId" | "fechaApertura" | "cerradoPor" | "cerradoAt" | "aprobadoPor" | "aprobadoAt" | "reabiertoPorId" | "fechaReapertura" | "segundoAprobadorId" | "motivoReapertura" | "observaciones" | "resumenJson" | "hashIntegridad" | "createdAt" | "updatedAt", ExtArgs["result"]["periodoContable"]>
+  export type PeriodoContableOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"periodoId" | "tenantId" | "tipo" | "codigo" | "fechaInicio" | "fechaFin" | "estado" | "periodoPadreId" | "aperturaAutomatica" | "categoria" | "modoContable" | "abiertoPorId" | "fechaApertura" | "cerradoPor" | "cerradoAt" | "aprobadoPor" | "aprobadoAt" | "reabiertoPorId" | "fechaReapertura" | "segundoAprobadorId" | "motivoReapertura" | "observaciones" | "resumenJson" | "hashIntegridad" | "createdAt" | "updatedAt", ExtArgs["result"]["periodoContable"]>
   export type PeriodoContableInclude<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     tenant?: boolean | TenantDefaultArgs<ExtArgs>
     snapshots?: boolean | PeriodoContable$snapshotsArgs<ExtArgs>
@@ -131140,6 +134780,7 @@ export namespace Prisma {
       periodoPadreId: string | null
       aperturaAutomatica: boolean
       categoria: $Enums.CategoriaPeriodo
+      modoContable: $Enums.ModoContable
       abiertoPorId: string | null
       fechaApertura: Date | null
       cerradoPor: string | null
@@ -131604,6 +135245,7 @@ export namespace Prisma {
     readonly periodoPadreId: FieldRef<"PeriodoContable", 'String'>
     readonly aperturaAutomatica: FieldRef<"PeriodoContable", 'Boolean'>
     readonly categoria: FieldRef<"PeriodoContable", 'CategoriaPeriodo'>
+    readonly modoContable: FieldRef<"PeriodoContable", 'ModoContable'>
     readonly abiertoPorId: FieldRef<"PeriodoContable", 'String'>
     readonly fechaApertura: FieldRef<"PeriodoContable", 'DateTime'>
     readonly cerradoPor: FieldRef<"PeriodoContable", 'String'>
@@ -139184,6 +142826,1010 @@ export namespace Prisma {
 
 
   /**
+   * Model PeriodoCache
+   */
+
+  export type AggregatePeriodoCache = {
+    _count: PeriodoCacheCountAggregateOutputType | null
+    _min: PeriodoCacheMinAggregateOutputType | null
+    _max: PeriodoCacheMaxAggregateOutputType | null
+  }
+
+  export type PeriodoCacheMinAggregateOutputType = {
+    cacheKey: string | null
+    tenantId: string | null
+    fecha: Date | null
+    expiresAt: Date | null
+    createdAt: Date | null
+  }
+
+  export type PeriodoCacheMaxAggregateOutputType = {
+    cacheKey: string | null
+    tenantId: string | null
+    fecha: Date | null
+    expiresAt: Date | null
+    createdAt: Date | null
+  }
+
+  export type PeriodoCacheCountAggregateOutputType = {
+    cacheKey: number
+    tenantId: number
+    fecha: number
+    resultadoJson: number
+    expiresAt: number
+    createdAt: number
+    _all: number
+  }
+
+
+  export type PeriodoCacheMinAggregateInputType = {
+    cacheKey?: true
+    tenantId?: true
+    fecha?: true
+    expiresAt?: true
+    createdAt?: true
+  }
+
+  export type PeriodoCacheMaxAggregateInputType = {
+    cacheKey?: true
+    tenantId?: true
+    fecha?: true
+    expiresAt?: true
+    createdAt?: true
+  }
+
+  export type PeriodoCacheCountAggregateInputType = {
+    cacheKey?: true
+    tenantId?: true
+    fecha?: true
+    resultadoJson?: true
+    expiresAt?: true
+    createdAt?: true
+    _all?: true
+  }
+
+  export type PeriodoCacheAggregateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Filter which PeriodoCache to aggregate.
+     */
+    where?: PeriodoCacheWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of PeriodoCaches to fetch.
+     */
+    orderBy?: PeriodoCacheOrderByWithRelationInput | PeriodoCacheOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the start position
+     */
+    cursor?: PeriodoCacheWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` PeriodoCaches from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` PeriodoCaches.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Count returned PeriodoCaches
+    **/
+    _count?: true | PeriodoCacheCountAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to find the minimum value
+    **/
+    _min?: PeriodoCacheMinAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to find the maximum value
+    **/
+    _max?: PeriodoCacheMaxAggregateInputType
+  }
+
+  export type GetPeriodoCacheAggregateType<T extends PeriodoCacheAggregateArgs> = {
+        [P in keyof T & keyof AggregatePeriodoCache]: P extends '_count' | 'count'
+      ? T[P] extends true
+        ? number
+        : GetScalarType<T[P], AggregatePeriodoCache[P]>
+      : GetScalarType<T[P], AggregatePeriodoCache[P]>
+  }
+
+
+
+
+  export type PeriodoCacheGroupByArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    where?: PeriodoCacheWhereInput
+    orderBy?: PeriodoCacheOrderByWithAggregationInput | PeriodoCacheOrderByWithAggregationInput[]
+    by: PeriodoCacheScalarFieldEnum[] | PeriodoCacheScalarFieldEnum
+    having?: PeriodoCacheScalarWhereWithAggregatesInput
+    take?: number
+    skip?: number
+    _count?: PeriodoCacheCountAggregateInputType | true
+    _min?: PeriodoCacheMinAggregateInputType
+    _max?: PeriodoCacheMaxAggregateInputType
+  }
+
+  export type PeriodoCacheGroupByOutputType = {
+    cacheKey: string
+    tenantId: string
+    fecha: Date
+    resultadoJson: JsonValue
+    expiresAt: Date
+    createdAt: Date
+    _count: PeriodoCacheCountAggregateOutputType | null
+    _min: PeriodoCacheMinAggregateOutputType | null
+    _max: PeriodoCacheMaxAggregateOutputType | null
+  }
+
+  type GetPeriodoCacheGroupByPayload<T extends PeriodoCacheGroupByArgs> = Prisma.PrismaPromise<
+    Array<
+      PickEnumerable<PeriodoCacheGroupByOutputType, T['by']> &
+        {
+          [P in ((keyof T) & (keyof PeriodoCacheGroupByOutputType))]: P extends '_count'
+            ? T[P] extends boolean
+              ? number
+              : GetScalarType<T[P], PeriodoCacheGroupByOutputType[P]>
+            : GetScalarType<T[P], PeriodoCacheGroupByOutputType[P]>
+        }
+      >
+    >
+
+
+  export type PeriodoCacheSelect<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    cacheKey?: boolean
+    tenantId?: boolean
+    fecha?: boolean
+    resultadoJson?: boolean
+    expiresAt?: boolean
+    createdAt?: boolean
+  }, ExtArgs["result"]["periodoCache"]>
+
+  export type PeriodoCacheSelectCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    cacheKey?: boolean
+    tenantId?: boolean
+    fecha?: boolean
+    resultadoJson?: boolean
+    expiresAt?: boolean
+    createdAt?: boolean
+  }, ExtArgs["result"]["periodoCache"]>
+
+  export type PeriodoCacheSelectUpdateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    cacheKey?: boolean
+    tenantId?: boolean
+    fecha?: boolean
+    resultadoJson?: boolean
+    expiresAt?: boolean
+    createdAt?: boolean
+  }, ExtArgs["result"]["periodoCache"]>
+
+  export type PeriodoCacheSelectScalar = {
+    cacheKey?: boolean
+    tenantId?: boolean
+    fecha?: boolean
+    resultadoJson?: boolean
+    expiresAt?: boolean
+    createdAt?: boolean
+  }
+
+  export type PeriodoCacheOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"cacheKey" | "tenantId" | "fecha" | "resultadoJson" | "expiresAt" | "createdAt", ExtArgs["result"]["periodoCache"]>
+
+  export type $PeriodoCachePayload<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    name: "PeriodoCache"
+    objects: {}
+    scalars: $Extensions.GetPayloadResult<{
+      cacheKey: string
+      tenantId: string
+      fecha: Date
+      resultadoJson: Prisma.JsonValue
+      expiresAt: Date
+      createdAt: Date
+    }, ExtArgs["result"]["periodoCache"]>
+    composites: {}
+  }
+
+  type PeriodoCacheGetPayload<S extends boolean | null | undefined | PeriodoCacheDefaultArgs> = $Result.GetResult<Prisma.$PeriodoCachePayload, S>
+
+  type PeriodoCacheCountArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> =
+    Omit<PeriodoCacheFindManyArgs, 'select' | 'include' | 'distinct' | 'omit'> & {
+      select?: PeriodoCacheCountAggregateInputType | true
+    }
+
+  export interface PeriodoCacheDelegate<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs, GlobalOmitOptions = {}> {
+    [K: symbol]: { types: Prisma.TypeMap<ExtArgs>['model']['PeriodoCache'], meta: { name: 'PeriodoCache' } }
+    /**
+     * Find zero or one PeriodoCache that matches the filter.
+     * @param {PeriodoCacheFindUniqueArgs} args - Arguments to find a PeriodoCache
+     * @example
+     * // Get one PeriodoCache
+     * const periodoCache = await prisma.periodoCache.findUnique({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findUnique<T extends PeriodoCacheFindUniqueArgs>(args: SelectSubset<T, PeriodoCacheFindUniqueArgs<ExtArgs>>): Prisma__PeriodoCacheClient<$Result.GetResult<Prisma.$PeriodoCachePayload<ExtArgs>, T, "findUnique", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find one PeriodoCache that matches the filter or throw an error with `error.code='P2025'`
+     * if no matches were found.
+     * @param {PeriodoCacheFindUniqueOrThrowArgs} args - Arguments to find a PeriodoCache
+     * @example
+     * // Get one PeriodoCache
+     * const periodoCache = await prisma.periodoCache.findUniqueOrThrow({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findUniqueOrThrow<T extends PeriodoCacheFindUniqueOrThrowArgs>(args: SelectSubset<T, PeriodoCacheFindUniqueOrThrowArgs<ExtArgs>>): Prisma__PeriodoCacheClient<$Result.GetResult<Prisma.$PeriodoCachePayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find the first PeriodoCache that matches the filter.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {PeriodoCacheFindFirstArgs} args - Arguments to find a PeriodoCache
+     * @example
+     * // Get one PeriodoCache
+     * const periodoCache = await prisma.periodoCache.findFirst({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findFirst<T extends PeriodoCacheFindFirstArgs>(args?: SelectSubset<T, PeriodoCacheFindFirstArgs<ExtArgs>>): Prisma__PeriodoCacheClient<$Result.GetResult<Prisma.$PeriodoCachePayload<ExtArgs>, T, "findFirst", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find the first PeriodoCache that matches the filter or
+     * throw `PrismaKnownClientError` with `P2025` code if no matches were found.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {PeriodoCacheFindFirstOrThrowArgs} args - Arguments to find a PeriodoCache
+     * @example
+     * // Get one PeriodoCache
+     * const periodoCache = await prisma.periodoCache.findFirstOrThrow({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findFirstOrThrow<T extends PeriodoCacheFindFirstOrThrowArgs>(args?: SelectSubset<T, PeriodoCacheFindFirstOrThrowArgs<ExtArgs>>): Prisma__PeriodoCacheClient<$Result.GetResult<Prisma.$PeriodoCachePayload<ExtArgs>, T, "findFirstOrThrow", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find zero or more PeriodoCaches that matches the filter.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {PeriodoCacheFindManyArgs} args - Arguments to filter and select certain fields only.
+     * @example
+     * // Get all PeriodoCaches
+     * const periodoCaches = await prisma.periodoCache.findMany()
+     * 
+     * // Get first 10 PeriodoCaches
+     * const periodoCaches = await prisma.periodoCache.findMany({ take: 10 })
+     * 
+     * // Only select the `cacheKey`
+     * const periodoCacheWithCacheKeyOnly = await prisma.periodoCache.findMany({ select: { cacheKey: true } })
+     * 
+     */
+    findMany<T extends PeriodoCacheFindManyArgs>(args?: SelectSubset<T, PeriodoCacheFindManyArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$PeriodoCachePayload<ExtArgs>, T, "findMany", GlobalOmitOptions>>
+
+    /**
+     * Create a PeriodoCache.
+     * @param {PeriodoCacheCreateArgs} args - Arguments to create a PeriodoCache.
+     * @example
+     * // Create one PeriodoCache
+     * const PeriodoCache = await prisma.periodoCache.create({
+     *   data: {
+     *     // ... data to create a PeriodoCache
+     *   }
+     * })
+     * 
+     */
+    create<T extends PeriodoCacheCreateArgs>(args: SelectSubset<T, PeriodoCacheCreateArgs<ExtArgs>>): Prisma__PeriodoCacheClient<$Result.GetResult<Prisma.$PeriodoCachePayload<ExtArgs>, T, "create", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Create many PeriodoCaches.
+     * @param {PeriodoCacheCreateManyArgs} args - Arguments to create many PeriodoCaches.
+     * @example
+     * // Create many PeriodoCaches
+     * const periodoCache = await prisma.periodoCache.createMany({
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     *     
+     */
+    createMany<T extends PeriodoCacheCreateManyArgs>(args?: SelectSubset<T, PeriodoCacheCreateManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Create many PeriodoCaches and returns the data saved in the database.
+     * @param {PeriodoCacheCreateManyAndReturnArgs} args - Arguments to create many PeriodoCaches.
+     * @example
+     * // Create many PeriodoCaches
+     * const periodoCache = await prisma.periodoCache.createManyAndReturn({
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * 
+     * // Create many PeriodoCaches and only return the `cacheKey`
+     * const periodoCacheWithCacheKeyOnly = await prisma.periodoCache.createManyAndReturn({
+     *   select: { cacheKey: true },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * 
+     */
+    createManyAndReturn<T extends PeriodoCacheCreateManyAndReturnArgs>(args?: SelectSubset<T, PeriodoCacheCreateManyAndReturnArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$PeriodoCachePayload<ExtArgs>, T, "createManyAndReturn", GlobalOmitOptions>>
+
+    /**
+     * Delete a PeriodoCache.
+     * @param {PeriodoCacheDeleteArgs} args - Arguments to delete one PeriodoCache.
+     * @example
+     * // Delete one PeriodoCache
+     * const PeriodoCache = await prisma.periodoCache.delete({
+     *   where: {
+     *     // ... filter to delete one PeriodoCache
+     *   }
+     * })
+     * 
+     */
+    delete<T extends PeriodoCacheDeleteArgs>(args: SelectSubset<T, PeriodoCacheDeleteArgs<ExtArgs>>): Prisma__PeriodoCacheClient<$Result.GetResult<Prisma.$PeriodoCachePayload<ExtArgs>, T, "delete", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Update one PeriodoCache.
+     * @param {PeriodoCacheUpdateArgs} args - Arguments to update one PeriodoCache.
+     * @example
+     * // Update one PeriodoCache
+     * const periodoCache = await prisma.periodoCache.update({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: {
+     *     // ... provide data here
+     *   }
+     * })
+     * 
+     */
+    update<T extends PeriodoCacheUpdateArgs>(args: SelectSubset<T, PeriodoCacheUpdateArgs<ExtArgs>>): Prisma__PeriodoCacheClient<$Result.GetResult<Prisma.$PeriodoCachePayload<ExtArgs>, T, "update", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Delete zero or more PeriodoCaches.
+     * @param {PeriodoCacheDeleteManyArgs} args - Arguments to filter PeriodoCaches to delete.
+     * @example
+     * // Delete a few PeriodoCaches
+     * const { count } = await prisma.periodoCache.deleteMany({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     * 
+     */
+    deleteMany<T extends PeriodoCacheDeleteManyArgs>(args?: SelectSubset<T, PeriodoCacheDeleteManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Update zero or more PeriodoCaches.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {PeriodoCacheUpdateManyArgs} args - Arguments to update one or more rows.
+     * @example
+     * // Update many PeriodoCaches
+     * const periodoCache = await prisma.periodoCache.updateMany({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: {
+     *     // ... provide data here
+     *   }
+     * })
+     * 
+     */
+    updateMany<T extends PeriodoCacheUpdateManyArgs>(args: SelectSubset<T, PeriodoCacheUpdateManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Update zero or more PeriodoCaches and returns the data updated in the database.
+     * @param {PeriodoCacheUpdateManyAndReturnArgs} args - Arguments to update many PeriodoCaches.
+     * @example
+     * // Update many PeriodoCaches
+     * const periodoCache = await prisma.periodoCache.updateManyAndReturn({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * 
+     * // Update zero or more PeriodoCaches and only return the `cacheKey`
+     * const periodoCacheWithCacheKeyOnly = await prisma.periodoCache.updateManyAndReturn({
+     *   select: { cacheKey: true },
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * 
+     */
+    updateManyAndReturn<T extends PeriodoCacheUpdateManyAndReturnArgs>(args: SelectSubset<T, PeriodoCacheUpdateManyAndReturnArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$PeriodoCachePayload<ExtArgs>, T, "updateManyAndReturn", GlobalOmitOptions>>
+
+    /**
+     * Create or update one PeriodoCache.
+     * @param {PeriodoCacheUpsertArgs} args - Arguments to update or create a PeriodoCache.
+     * @example
+     * // Update or create a PeriodoCache
+     * const periodoCache = await prisma.periodoCache.upsert({
+     *   create: {
+     *     // ... data to create a PeriodoCache
+     *   },
+     *   update: {
+     *     // ... in case it already exists, update
+     *   },
+     *   where: {
+     *     // ... the filter for the PeriodoCache we want to update
+     *   }
+     * })
+     */
+    upsert<T extends PeriodoCacheUpsertArgs>(args: SelectSubset<T, PeriodoCacheUpsertArgs<ExtArgs>>): Prisma__PeriodoCacheClient<$Result.GetResult<Prisma.$PeriodoCachePayload<ExtArgs>, T, "upsert", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+
+    /**
+     * Count the number of PeriodoCaches.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {PeriodoCacheCountArgs} args - Arguments to filter PeriodoCaches to count.
+     * @example
+     * // Count the number of PeriodoCaches
+     * const count = await prisma.periodoCache.count({
+     *   where: {
+     *     // ... the filter for the PeriodoCaches we want to count
+     *   }
+     * })
+    **/
+    count<T extends PeriodoCacheCountArgs>(
+      args?: Subset<T, PeriodoCacheCountArgs>,
+    ): Prisma.PrismaPromise<
+      T extends $Utils.Record<'select', any>
+        ? T['select'] extends true
+          ? number
+          : GetScalarType<T['select'], PeriodoCacheCountAggregateOutputType>
+        : number
+    >
+
+    /**
+     * Allows you to perform aggregations operations on a PeriodoCache.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {PeriodoCacheAggregateArgs} args - Select which aggregations you would like to apply and on what fields.
+     * @example
+     * // Ordered by age ascending
+     * // Where email contains prisma.io
+     * // Limited to the 10 users
+     * const aggregations = await prisma.user.aggregate({
+     *   _avg: {
+     *     age: true,
+     *   },
+     *   where: {
+     *     email: {
+     *       contains: "prisma.io",
+     *     },
+     *   },
+     *   orderBy: {
+     *     age: "asc",
+     *   },
+     *   take: 10,
+     * })
+    **/
+    aggregate<T extends PeriodoCacheAggregateArgs>(args: Subset<T, PeriodoCacheAggregateArgs>): Prisma.PrismaPromise<GetPeriodoCacheAggregateType<T>>
+
+    /**
+     * Group by PeriodoCache.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {PeriodoCacheGroupByArgs} args - Group by arguments.
+     * @example
+     * // Group by city, order by createdAt, get count
+     * const result = await prisma.user.groupBy({
+     *   by: ['city', 'createdAt'],
+     *   orderBy: {
+     *     createdAt: true
+     *   },
+     *   _count: {
+     *     _all: true
+     *   },
+     * })
+     * 
+    **/
+    groupBy<
+      T extends PeriodoCacheGroupByArgs,
+      HasSelectOrTake extends Or<
+        Extends<'skip', Keys<T>>,
+        Extends<'take', Keys<T>>
+      >,
+      OrderByArg extends True extends HasSelectOrTake
+        ? { orderBy: PeriodoCacheGroupByArgs['orderBy'] }
+        : { orderBy?: PeriodoCacheGroupByArgs['orderBy'] },
+      OrderFields extends ExcludeUnderscoreKeys<Keys<MaybeTupleToUnion<T['orderBy']>>>,
+      ByFields extends MaybeTupleToUnion<T['by']>,
+      ByValid extends Has<ByFields, OrderFields>,
+      HavingFields extends GetHavingFields<T['having']>,
+      HavingValid extends Has<ByFields, HavingFields>,
+      ByEmpty extends T['by'] extends never[] ? True : False,
+      InputErrors extends ByEmpty extends True
+      ? `Error: "by" must not be empty.`
+      : HavingValid extends False
+      ? {
+          [P in HavingFields]: P extends ByFields
+            ? never
+            : P extends string
+            ? `Error: Field "${P}" used in "having" needs to be provided in "by".`
+            : [
+                Error,
+                'Field ',
+                P,
+                ` in "having" needs to be provided in "by"`,
+              ]
+        }[HavingFields]
+      : 'take' extends Keys<T>
+      ? 'orderBy' extends Keys<T>
+        ? ByValid extends True
+          ? {}
+          : {
+              [P in OrderFields]: P extends ByFields
+                ? never
+                : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+            }[OrderFields]
+        : 'Error: If you provide "take", you also need to provide "orderBy"'
+      : 'skip' extends Keys<T>
+      ? 'orderBy' extends Keys<T>
+        ? ByValid extends True
+          ? {}
+          : {
+              [P in OrderFields]: P extends ByFields
+                ? never
+                : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+            }[OrderFields]
+        : 'Error: If you provide "skip", you also need to provide "orderBy"'
+      : ByValid extends True
+      ? {}
+      : {
+          [P in OrderFields]: P extends ByFields
+            ? never
+            : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+        }[OrderFields]
+    >(args: SubsetIntersection<T, PeriodoCacheGroupByArgs, OrderByArg> & InputErrors): {} extends InputErrors ? GetPeriodoCacheGroupByPayload<T> : Prisma.PrismaPromise<InputErrors>
+  /**
+   * Fields of the PeriodoCache model
+   */
+  readonly fields: PeriodoCacheFieldRefs;
+  }
+
+  /**
+   * The delegate class that acts as a "Promise-like" for PeriodoCache.
+   * Why is this prefixed with `Prisma__`?
+   * Because we want to prevent naming conflicts as mentioned in
+   * https://github.com/prisma/prisma-client-js/issues/707
+   */
+  export interface Prisma__PeriodoCacheClient<T, Null = never, ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs, GlobalOmitOptions = {}> extends Prisma.PrismaPromise<T> {
+    readonly [Symbol.toStringTag]: "PrismaPromise"
+    /**
+     * Attaches callbacks for the resolution and/or rejection of the Promise.
+     * @param onfulfilled The callback to execute when the Promise is resolved.
+     * @param onrejected The callback to execute when the Promise is rejected.
+     * @returns A Promise for the completion of which ever callback is executed.
+     */
+    then<TResult1 = T, TResult2 = never>(onfulfilled?: ((value: T) => TResult1 | PromiseLike<TResult1>) | undefined | null, onrejected?: ((reason: any) => TResult2 | PromiseLike<TResult2>) | undefined | null): $Utils.JsPromise<TResult1 | TResult2>
+    /**
+     * Attaches a callback for only the rejection of the Promise.
+     * @param onrejected The callback to execute when the Promise is rejected.
+     * @returns A Promise for the completion of the callback.
+     */
+    catch<TResult = never>(onrejected?: ((reason: any) => TResult | PromiseLike<TResult>) | undefined | null): $Utils.JsPromise<T | TResult>
+    /**
+     * Attaches a callback that is invoked when the Promise is settled (fulfilled or rejected). The
+     * resolved value cannot be modified from the callback.
+     * @param onfinally The callback to execute when the Promise is settled (fulfilled or rejected).
+     * @returns A Promise for the completion of the callback.
+     */
+    finally(onfinally?: (() => void) | undefined | null): $Utils.JsPromise<T>
+  }
+
+
+
+
+  /**
+   * Fields of the PeriodoCache model
+   */
+  interface PeriodoCacheFieldRefs {
+    readonly cacheKey: FieldRef<"PeriodoCache", 'String'>
+    readonly tenantId: FieldRef<"PeriodoCache", 'String'>
+    readonly fecha: FieldRef<"PeriodoCache", 'DateTime'>
+    readonly resultadoJson: FieldRef<"PeriodoCache", 'Json'>
+    readonly expiresAt: FieldRef<"PeriodoCache", 'DateTime'>
+    readonly createdAt: FieldRef<"PeriodoCache", 'DateTime'>
+  }
+    
+
+  // Custom InputTypes
+  /**
+   * PeriodoCache findUnique
+   */
+  export type PeriodoCacheFindUniqueArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the PeriodoCache
+     */
+    select?: PeriodoCacheSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the PeriodoCache
+     */
+    omit?: PeriodoCacheOmit<ExtArgs> | null
+    /**
+     * Filter, which PeriodoCache to fetch.
+     */
+    where: PeriodoCacheWhereUniqueInput
+  }
+
+  /**
+   * PeriodoCache findUniqueOrThrow
+   */
+  export type PeriodoCacheFindUniqueOrThrowArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the PeriodoCache
+     */
+    select?: PeriodoCacheSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the PeriodoCache
+     */
+    omit?: PeriodoCacheOmit<ExtArgs> | null
+    /**
+     * Filter, which PeriodoCache to fetch.
+     */
+    where: PeriodoCacheWhereUniqueInput
+  }
+
+  /**
+   * PeriodoCache findFirst
+   */
+  export type PeriodoCacheFindFirstArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the PeriodoCache
+     */
+    select?: PeriodoCacheSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the PeriodoCache
+     */
+    omit?: PeriodoCacheOmit<ExtArgs> | null
+    /**
+     * Filter, which PeriodoCache to fetch.
+     */
+    where?: PeriodoCacheWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of PeriodoCaches to fetch.
+     */
+    orderBy?: PeriodoCacheOrderByWithRelationInput | PeriodoCacheOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for searching for PeriodoCaches.
+     */
+    cursor?: PeriodoCacheWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` PeriodoCaches from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` PeriodoCaches.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of PeriodoCaches.
+     */
+    distinct?: PeriodoCacheScalarFieldEnum | PeriodoCacheScalarFieldEnum[]
+  }
+
+  /**
+   * PeriodoCache findFirstOrThrow
+   */
+  export type PeriodoCacheFindFirstOrThrowArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the PeriodoCache
+     */
+    select?: PeriodoCacheSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the PeriodoCache
+     */
+    omit?: PeriodoCacheOmit<ExtArgs> | null
+    /**
+     * Filter, which PeriodoCache to fetch.
+     */
+    where?: PeriodoCacheWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of PeriodoCaches to fetch.
+     */
+    orderBy?: PeriodoCacheOrderByWithRelationInput | PeriodoCacheOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for searching for PeriodoCaches.
+     */
+    cursor?: PeriodoCacheWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` PeriodoCaches from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` PeriodoCaches.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of PeriodoCaches.
+     */
+    distinct?: PeriodoCacheScalarFieldEnum | PeriodoCacheScalarFieldEnum[]
+  }
+
+  /**
+   * PeriodoCache findMany
+   */
+  export type PeriodoCacheFindManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the PeriodoCache
+     */
+    select?: PeriodoCacheSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the PeriodoCache
+     */
+    omit?: PeriodoCacheOmit<ExtArgs> | null
+    /**
+     * Filter, which PeriodoCaches to fetch.
+     */
+    where?: PeriodoCacheWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of PeriodoCaches to fetch.
+     */
+    orderBy?: PeriodoCacheOrderByWithRelationInput | PeriodoCacheOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for listing PeriodoCaches.
+     */
+    cursor?: PeriodoCacheWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` PeriodoCaches from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` PeriodoCaches.
+     */
+    skip?: number
+    distinct?: PeriodoCacheScalarFieldEnum | PeriodoCacheScalarFieldEnum[]
+  }
+
+  /**
+   * PeriodoCache create
+   */
+  export type PeriodoCacheCreateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the PeriodoCache
+     */
+    select?: PeriodoCacheSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the PeriodoCache
+     */
+    omit?: PeriodoCacheOmit<ExtArgs> | null
+    /**
+     * The data needed to create a PeriodoCache.
+     */
+    data: XOR<PeriodoCacheCreateInput, PeriodoCacheUncheckedCreateInput>
+  }
+
+  /**
+   * PeriodoCache createMany
+   */
+  export type PeriodoCacheCreateManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * The data used to create many PeriodoCaches.
+     */
+    data: PeriodoCacheCreateManyInput | PeriodoCacheCreateManyInput[]
+    skipDuplicates?: boolean
+  }
+
+  /**
+   * PeriodoCache createManyAndReturn
+   */
+  export type PeriodoCacheCreateManyAndReturnArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the PeriodoCache
+     */
+    select?: PeriodoCacheSelectCreateManyAndReturn<ExtArgs> | null
+    /**
+     * Omit specific fields from the PeriodoCache
+     */
+    omit?: PeriodoCacheOmit<ExtArgs> | null
+    /**
+     * The data used to create many PeriodoCaches.
+     */
+    data: PeriodoCacheCreateManyInput | PeriodoCacheCreateManyInput[]
+    skipDuplicates?: boolean
+  }
+
+  /**
+   * PeriodoCache update
+   */
+  export type PeriodoCacheUpdateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the PeriodoCache
+     */
+    select?: PeriodoCacheSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the PeriodoCache
+     */
+    omit?: PeriodoCacheOmit<ExtArgs> | null
+    /**
+     * The data needed to update a PeriodoCache.
+     */
+    data: XOR<PeriodoCacheUpdateInput, PeriodoCacheUncheckedUpdateInput>
+    /**
+     * Choose, which PeriodoCache to update.
+     */
+    where: PeriodoCacheWhereUniqueInput
+  }
+
+  /**
+   * PeriodoCache updateMany
+   */
+  export type PeriodoCacheUpdateManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * The data used to update PeriodoCaches.
+     */
+    data: XOR<PeriodoCacheUpdateManyMutationInput, PeriodoCacheUncheckedUpdateManyInput>
+    /**
+     * Filter which PeriodoCaches to update
+     */
+    where?: PeriodoCacheWhereInput
+    /**
+     * Limit how many PeriodoCaches to update.
+     */
+    limit?: number
+  }
+
+  /**
+   * PeriodoCache updateManyAndReturn
+   */
+  export type PeriodoCacheUpdateManyAndReturnArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the PeriodoCache
+     */
+    select?: PeriodoCacheSelectUpdateManyAndReturn<ExtArgs> | null
+    /**
+     * Omit specific fields from the PeriodoCache
+     */
+    omit?: PeriodoCacheOmit<ExtArgs> | null
+    /**
+     * The data used to update PeriodoCaches.
+     */
+    data: XOR<PeriodoCacheUpdateManyMutationInput, PeriodoCacheUncheckedUpdateManyInput>
+    /**
+     * Filter which PeriodoCaches to update
+     */
+    where?: PeriodoCacheWhereInput
+    /**
+     * Limit how many PeriodoCaches to update.
+     */
+    limit?: number
+  }
+
+  /**
+   * PeriodoCache upsert
+   */
+  export type PeriodoCacheUpsertArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the PeriodoCache
+     */
+    select?: PeriodoCacheSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the PeriodoCache
+     */
+    omit?: PeriodoCacheOmit<ExtArgs> | null
+    /**
+     * The filter to search for the PeriodoCache to update in case it exists.
+     */
+    where: PeriodoCacheWhereUniqueInput
+    /**
+     * In case the PeriodoCache found by the `where` argument doesn't exist, create a new PeriodoCache with this data.
+     */
+    create: XOR<PeriodoCacheCreateInput, PeriodoCacheUncheckedCreateInput>
+    /**
+     * In case the PeriodoCache was found with the provided `where` argument, update it with this data.
+     */
+    update: XOR<PeriodoCacheUpdateInput, PeriodoCacheUncheckedUpdateInput>
+  }
+
+  /**
+   * PeriodoCache delete
+   */
+  export type PeriodoCacheDeleteArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the PeriodoCache
+     */
+    select?: PeriodoCacheSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the PeriodoCache
+     */
+    omit?: PeriodoCacheOmit<ExtArgs> | null
+    /**
+     * Filter which PeriodoCache to delete.
+     */
+    where: PeriodoCacheWhereUniqueInput
+  }
+
+  /**
+   * PeriodoCache deleteMany
+   */
+  export type PeriodoCacheDeleteManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Filter which PeriodoCaches to delete
+     */
+    where?: PeriodoCacheWhereInput
+    /**
+     * Limit how many PeriodoCaches to delete.
+     */
+    limit?: number
+  }
+
+  /**
+   * PeriodoCache without action
+   */
+  export type PeriodoCacheDefaultArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the PeriodoCache
+     */
+    select?: PeriodoCacheSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the PeriodoCache
+     */
+    omit?: PeriodoCacheOmit<ExtArgs> | null
+  }
+
+
+  /**
    * Enums
    */
 
@@ -139381,10 +144027,72 @@ export namespace Prisma {
     ubicacion: 'ubicacion',
     createdAt: 'createdAt',
     updatedAt: 'updatedAt',
-    listaPrecioId: 'listaPrecioId'
+    listaPrecioId: 'listaPrecioId',
+    tipoCaja: 'tipoCaja',
+    almacenId: 'almacenId',
+    cuentaContableId: 'cuentaContableId'
   };
 
   export type PuntoDeVentaScalarFieldEnum = (typeof PuntoDeVentaScalarFieldEnum)[keyof typeof PuntoDeVentaScalarFieldEnum]
+
+
+  export const TurnoPuntoVentaScalarFieldEnum: {
+    id: 'id',
+    tenantId: 'tenantId',
+    puntoDeVentaId: 'puntoDeVentaId',
+    empleadoId: 'empleadoId',
+    tipo: 'tipo',
+    fechaApertura: 'fechaApertura',
+    fechaCierre: 'fechaCierre',
+    fondoInicialCup: 'fondoInicialCup',
+    fondoInicialUsd: 'fondoInicialUsd',
+    estado: 'estado',
+    observaciones: 'observaciones',
+    createdAt: 'createdAt',
+    updatedAt: 'updatedAt'
+  };
+
+  export type TurnoPuntoVentaScalarFieldEnum = (typeof TurnoPuntoVentaScalarFieldEnum)[keyof typeof TurnoPuntoVentaScalarFieldEnum]
+
+
+  export const ArqueoCajaScalarFieldEnum: {
+    id: 'id',
+    turnoId: 'turnoId',
+    tenantId: 'tenantId',
+    puntoDeVentaId: 'puntoDeVentaId',
+    billetes1000Cup: 'billetes1000Cup',
+    billetes500Cup: 'billetes500Cup',
+    billetes200Cup: 'billetes200Cup',
+    billetes100Cup: 'billetes100Cup',
+    billetes50Cup: 'billetes50Cup',
+    billetes20Cup: 'billetes20Cup',
+    monedasCup: 'monedasCup',
+    billetes100Usd: 'billetes100Usd',
+    billetes50Usd: 'billetes50Usd',
+    billetes20Usd: 'billetes20Usd',
+    billetes10Usd: 'billetes10Usd',
+    billetes5Usd: 'billetes5Usd',
+    billetes1Usd: 'billetes1Usd',
+    monedasUsd: 'monedasUsd',
+    totalEfectivoCup: 'totalEfectivoCup',
+    totalEfectivoUsd: 'totalEfectivoUsd',
+    totalTarjeta: 'totalTarjeta',
+    totalTransferencia: 'totalTransferencia',
+    totalCredito: 'totalCredito',
+    esperadoEfectivoCup: 'esperadoEfectivoCup',
+    esperadoEfectivoUsd: 'esperadoEfectivoUsd',
+    esperadoTarjeta: 'esperadoTarjeta',
+    esperadoTransferencia: 'esperadoTransferencia',
+    esperadoCredito: 'esperadoCredito',
+    diferenciaCup: 'diferenciaCup',
+    diferenciaUsd: 'diferenciaUsd',
+    observaciones: 'observaciones',
+    contabilizado: 'contabilizado',
+    createdAt: 'createdAt',
+    updatedAt: 'updatedAt'
+  };
+
+  export type ArqueoCajaScalarFieldEnum = (typeof ArqueoCajaScalarFieldEnum)[keyof typeof ArqueoCajaScalarFieldEnum]
 
 
   export const ProductoScalarFieldEnum: {
@@ -139452,7 +144160,13 @@ export namespace Prisma {
     observaciones: 'observaciones',
     esVentaUnica: 'esVentaUnica',
     ofertaId: 'ofertaId',
-    ventaPadreId: 'ventaPadreId'
+    ventaPadreId: 'ventaPadreId',
+    turnoId: 'turnoId',
+    metodoPago: 'metodoPago',
+    montoEfectivo: 'montoEfectivo',
+    montoTarjeta: 'montoTarjeta',
+    montoTransferencia: 'montoTransferencia',
+    montoCredito: 'montoCredito'
   };
 
   export type VentaScalarFieldEnum = (typeof VentaScalarFieldEnum)[keyof typeof VentaScalarFieldEnum]
@@ -140884,6 +145598,7 @@ export namespace Prisma {
     periodoPadreId: 'periodoPadreId',
     aperturaAutomatica: 'aperturaAutomatica',
     categoria: 'categoria',
+    modoContable: 'modoContable',
     abiertoPorId: 'abiertoPorId',
     fechaApertura: 'fechaApertura',
     cerradoPor: 'cerradoPor',
@@ -141000,6 +145715,18 @@ export namespace Prisma {
   };
 
   export type BackupPlanScalarFieldEnum = (typeof BackupPlanScalarFieldEnum)[keyof typeof BackupPlanScalarFieldEnum]
+
+
+  export const PeriodoCacheScalarFieldEnum: {
+    cacheKey: 'cacheKey',
+    tenantId: 'tenantId',
+    fecha: 'fecha',
+    resultadoJson: 'resultadoJson',
+    expiresAt: 'expiresAt',
+    createdAt: 'createdAt'
+  };
+
+  export type PeriodoCacheScalarFieldEnum = (typeof PeriodoCacheScalarFieldEnum)[keyof typeof PeriodoCacheScalarFieldEnum]
 
 
   export const SortOrder: {
@@ -141157,6 +145884,34 @@ export namespace Prisma {
    * Reference to a field of type 'QueryMode'
    */
   export type EnumQueryModeFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'QueryMode'>
+    
+
+
+  /**
+   * Reference to a field of type 'EstadoTurno'
+   */
+  export type EnumEstadoTurnoFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'EstadoTurno'>
+    
+
+
+  /**
+   * Reference to a field of type 'EstadoTurno[]'
+   */
+  export type ListEnumEstadoTurnoFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'EstadoTurno[]'>
+    
+
+
+  /**
+   * Reference to a field of type 'MetodoPagoVenta'
+   */
+  export type EnumMetodoPagoVentaFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'MetodoPagoVenta'>
+    
+
+
+  /**
+   * Reference to a field of type 'MetodoPagoVenta[]'
+   */
+  export type ListEnumMetodoPagoVentaFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'MetodoPagoVenta[]'>
     
 
 
@@ -141423,6 +146178,20 @@ export namespace Prisma {
    * Reference to a field of type 'CategoriaPeriodo[]'
    */
   export type ListEnumCategoriaPeriodoFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'CategoriaPeriodo[]'>
+    
+
+
+  /**
+   * Reference to a field of type 'ModoContable'
+   */
+  export type EnumModoContableFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'ModoContable'>
+    
+
+
+  /**
+   * Reference to a field of type 'ModoContable[]'
+   */
+  export type ListEnumModoContableFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'ModoContable[]'>
     
 
 
@@ -142125,6 +146894,8 @@ export namespace Prisma {
     periodosContables?: PeriodoContableListRelationFilter
     aperturaPeriodos?: AperturaPeriodoListRelationFilter
     auditoriaPeriodos?: AuditoriaPeriodoListRelationFilter
+    turnosPos?: TurnoPuntoVentaListRelationFilter
+    arqueosCaja?: ArqueoCajaListRelationFilter
     backupLogs?: BackupLogListRelationFilter
     backupPlans?: BackupPlanListRelationFilter
   }
@@ -142193,6 +146964,8 @@ export namespace Prisma {
     periodosContables?: PeriodoContableOrderByRelationAggregateInput
     aperturaPeriodos?: AperturaPeriodoOrderByRelationAggregateInput
     auditoriaPeriodos?: AuditoriaPeriodoOrderByRelationAggregateInput
+    turnosPos?: TurnoPuntoVentaOrderByRelationAggregateInput
+    arqueosCaja?: ArqueoCajaOrderByRelationAggregateInput
     backupLogs?: BackupLogOrderByRelationAggregateInput
     backupPlans?: BackupPlanOrderByRelationAggregateInput
   }
@@ -142264,6 +147037,8 @@ export namespace Prisma {
     periodosContables?: PeriodoContableListRelationFilter
     aperturaPeriodos?: AperturaPeriodoListRelationFilter
     auditoriaPeriodos?: AuditoriaPeriodoListRelationFilter
+    turnosPos?: TurnoPuntoVentaListRelationFilter
+    arqueosCaja?: ArqueoCajaListRelationFilter
     backupLogs?: BackupLogListRelationFilter
     backupPlans?: BackupPlanListRelationFilter
   }, "tenantId" | "slug">
@@ -142576,6 +147351,7 @@ export namespace Prisma {
     createdAt?: DateTimeFilter<"Almacen"> | Date | string
     updatedAt?: DateTimeFilter<"Almacen"> | Date | string
     productos?: ProductoListRelationFilter
+    puntosDeVenta?: PuntoDeVentaListRelationFilter
     transferenciasDestino?: TransferenciaListRelationFilter
     transferenciasOrigen?: TransferenciaListRelationFilter
     tenant?: XOR<TenantScalarRelationFilter, TenantWhereInput>
@@ -142588,6 +147364,7 @@ export namespace Prisma {
     createdAt?: SortOrder
     updatedAt?: SortOrder
     productos?: ProductoOrderByRelationAggregateInput
+    puntosDeVenta?: PuntoDeVentaOrderByRelationAggregateInput
     transferenciasDestino?: TransferenciaOrderByRelationAggregateInput
     transferenciasOrigen?: TransferenciaOrderByRelationAggregateInput
     tenant?: TenantOrderByWithRelationInput
@@ -142603,6 +147380,7 @@ export namespace Prisma {
     createdAt?: DateTimeFilter<"Almacen"> | Date | string
     updatedAt?: DateTimeFilter<"Almacen"> | Date | string
     productos?: ProductoListRelationFilter
+    puntosDeVenta?: PuntoDeVentaListRelationFilter
     transferenciasDestino?: TransferenciaListRelationFilter
     transferenciasOrigen?: TransferenciaListRelationFilter
     tenant?: XOR<TenantScalarRelationFilter, TenantWhereInput>
@@ -142641,11 +147419,17 @@ export namespace Prisma {
     createdAt?: DateTimeFilter<"PuntoDeVenta"> | Date | string
     updatedAt?: DateTimeFilter<"PuntoDeVenta"> | Date | string
     listaPrecioId?: StringNullableFilter<"PuntoDeVenta"> | string | null
+    tipoCaja?: StringNullableFilter<"PuntoDeVenta"> | string | null
+    almacenId?: StringNullableFilter<"PuntoDeVenta"> | string | null
+    cuentaContableId?: StringNullableFilter<"PuntoDeVenta"> | string | null
     productos?: ProductoListRelationFilter
     listaPrecio?: XOR<ListaPrecioNullableScalarRelationFilter, ListaPrecioWhereInput> | null
+    almacen?: XOR<AlmacenNullableScalarRelationFilter, AlmacenWhereInput> | null
     transferenciasDestino?: TransferenciaListRelationFilter
     transferenciasOrigen?: TransferenciaListRelationFilter
     ventas?: VentaListRelationFilter
+    turnos?: TurnoPuntoVentaListRelationFilter
+    arqueos?: ArqueoCajaListRelationFilter
     tenant?: XOR<TenantScalarRelationFilter, TenantWhereInput>
   }
 
@@ -142657,11 +147441,17 @@ export namespace Prisma {
     createdAt?: SortOrder
     updatedAt?: SortOrder
     listaPrecioId?: SortOrderInput | SortOrder
+    tipoCaja?: SortOrderInput | SortOrder
+    almacenId?: SortOrderInput | SortOrder
+    cuentaContableId?: SortOrderInput | SortOrder
     productos?: ProductoOrderByRelationAggregateInput
     listaPrecio?: ListaPrecioOrderByWithRelationInput
+    almacen?: AlmacenOrderByWithRelationInput
     transferenciasDestino?: TransferenciaOrderByRelationAggregateInput
     transferenciasOrigen?: TransferenciaOrderByRelationAggregateInput
     ventas?: VentaOrderByRelationAggregateInput
+    turnos?: TurnoPuntoVentaOrderByRelationAggregateInput
+    arqueos?: ArqueoCajaOrderByRelationAggregateInput
     tenant?: TenantOrderByWithRelationInput
   }
 
@@ -142676,11 +147466,17 @@ export namespace Prisma {
     createdAt?: DateTimeFilter<"PuntoDeVenta"> | Date | string
     updatedAt?: DateTimeFilter<"PuntoDeVenta"> | Date | string
     listaPrecioId?: StringNullableFilter<"PuntoDeVenta"> | string | null
+    tipoCaja?: StringNullableFilter<"PuntoDeVenta"> | string | null
+    almacenId?: StringNullableFilter<"PuntoDeVenta"> | string | null
+    cuentaContableId?: StringNullableFilter<"PuntoDeVenta"> | string | null
     productos?: ProductoListRelationFilter
     listaPrecio?: XOR<ListaPrecioNullableScalarRelationFilter, ListaPrecioWhereInput> | null
+    almacen?: XOR<AlmacenNullableScalarRelationFilter, AlmacenWhereInput> | null
     transferenciasDestino?: TransferenciaListRelationFilter
     transferenciasOrigen?: TransferenciaListRelationFilter
     ventas?: VentaListRelationFilter
+    turnos?: TurnoPuntoVentaListRelationFilter
+    arqueos?: ArqueoCajaListRelationFilter
     tenant?: XOR<TenantScalarRelationFilter, TenantWhereInput>
   }, "pvId">
 
@@ -142692,6 +147488,9 @@ export namespace Prisma {
     createdAt?: SortOrder
     updatedAt?: SortOrder
     listaPrecioId?: SortOrderInput | SortOrder
+    tipoCaja?: SortOrderInput | SortOrder
+    almacenId?: SortOrderInput | SortOrder
+    cuentaContableId?: SortOrderInput | SortOrder
     _count?: PuntoDeVentaCountOrderByAggregateInput
     _max?: PuntoDeVentaMaxOrderByAggregateInput
     _min?: PuntoDeVentaMinOrderByAggregateInput
@@ -142708,6 +147507,326 @@ export namespace Prisma {
     createdAt?: DateTimeWithAggregatesFilter<"PuntoDeVenta"> | Date | string
     updatedAt?: DateTimeWithAggregatesFilter<"PuntoDeVenta"> | Date | string
     listaPrecioId?: StringNullableWithAggregatesFilter<"PuntoDeVenta"> | string | null
+    tipoCaja?: StringNullableWithAggregatesFilter<"PuntoDeVenta"> | string | null
+    almacenId?: StringNullableWithAggregatesFilter<"PuntoDeVenta"> | string | null
+    cuentaContableId?: StringNullableWithAggregatesFilter<"PuntoDeVenta"> | string | null
+  }
+
+  export type TurnoPuntoVentaWhereInput = {
+    AND?: TurnoPuntoVentaWhereInput | TurnoPuntoVentaWhereInput[]
+    OR?: TurnoPuntoVentaWhereInput[]
+    NOT?: TurnoPuntoVentaWhereInput | TurnoPuntoVentaWhereInput[]
+    id?: StringFilter<"TurnoPuntoVenta"> | string
+    tenantId?: StringFilter<"TurnoPuntoVenta"> | string
+    puntoDeVentaId?: StringFilter<"TurnoPuntoVenta"> | string
+    empleadoId?: StringNullableFilter<"TurnoPuntoVenta"> | string | null
+    tipo?: StringFilter<"TurnoPuntoVenta"> | string
+    fechaApertura?: DateTimeFilter<"TurnoPuntoVenta"> | Date | string
+    fechaCierre?: DateTimeNullableFilter<"TurnoPuntoVenta"> | Date | string | null
+    fondoInicialCup?: IntFilter<"TurnoPuntoVenta"> | number
+    fondoInicialUsd?: IntFilter<"TurnoPuntoVenta"> | number
+    estado?: EnumEstadoTurnoFilter<"TurnoPuntoVenta"> | $Enums.EstadoTurno
+    observaciones?: StringNullableFilter<"TurnoPuntoVenta"> | string | null
+    createdAt?: DateTimeFilter<"TurnoPuntoVenta"> | Date | string
+    updatedAt?: DateTimeFilter<"TurnoPuntoVenta"> | Date | string
+    puntoDeVenta?: XOR<PuntoDeVentaScalarRelationFilter, PuntoDeVentaWhereInput>
+    empleado?: XOR<EmpleadoNullableScalarRelationFilter, EmpleadoWhereInput> | null
+    ventas?: VentaListRelationFilter
+    arqueo?: XOR<ArqueoCajaNullableScalarRelationFilter, ArqueoCajaWhereInput> | null
+    tenant?: XOR<TenantScalarRelationFilter, TenantWhereInput>
+  }
+
+  export type TurnoPuntoVentaOrderByWithRelationInput = {
+    id?: SortOrder
+    tenantId?: SortOrder
+    puntoDeVentaId?: SortOrder
+    empleadoId?: SortOrderInput | SortOrder
+    tipo?: SortOrder
+    fechaApertura?: SortOrder
+    fechaCierre?: SortOrderInput | SortOrder
+    fondoInicialCup?: SortOrder
+    fondoInicialUsd?: SortOrder
+    estado?: SortOrder
+    observaciones?: SortOrderInput | SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+    puntoDeVenta?: PuntoDeVentaOrderByWithRelationInput
+    empleado?: EmpleadoOrderByWithRelationInput
+    ventas?: VentaOrderByRelationAggregateInput
+    arqueo?: ArqueoCajaOrderByWithRelationInput
+    tenant?: TenantOrderByWithRelationInput
+  }
+
+  export type TurnoPuntoVentaWhereUniqueInput = Prisma.AtLeast<{
+    id?: string
+    AND?: TurnoPuntoVentaWhereInput | TurnoPuntoVentaWhereInput[]
+    OR?: TurnoPuntoVentaWhereInput[]
+    NOT?: TurnoPuntoVentaWhereInput | TurnoPuntoVentaWhereInput[]
+    tenantId?: StringFilter<"TurnoPuntoVenta"> | string
+    puntoDeVentaId?: StringFilter<"TurnoPuntoVenta"> | string
+    empleadoId?: StringNullableFilter<"TurnoPuntoVenta"> | string | null
+    tipo?: StringFilter<"TurnoPuntoVenta"> | string
+    fechaApertura?: DateTimeFilter<"TurnoPuntoVenta"> | Date | string
+    fechaCierre?: DateTimeNullableFilter<"TurnoPuntoVenta"> | Date | string | null
+    fondoInicialCup?: IntFilter<"TurnoPuntoVenta"> | number
+    fondoInicialUsd?: IntFilter<"TurnoPuntoVenta"> | number
+    estado?: EnumEstadoTurnoFilter<"TurnoPuntoVenta"> | $Enums.EstadoTurno
+    observaciones?: StringNullableFilter<"TurnoPuntoVenta"> | string | null
+    createdAt?: DateTimeFilter<"TurnoPuntoVenta"> | Date | string
+    updatedAt?: DateTimeFilter<"TurnoPuntoVenta"> | Date | string
+    puntoDeVenta?: XOR<PuntoDeVentaScalarRelationFilter, PuntoDeVentaWhereInput>
+    empleado?: XOR<EmpleadoNullableScalarRelationFilter, EmpleadoWhereInput> | null
+    ventas?: VentaListRelationFilter
+    arqueo?: XOR<ArqueoCajaNullableScalarRelationFilter, ArqueoCajaWhereInput> | null
+    tenant?: XOR<TenantScalarRelationFilter, TenantWhereInput>
+  }, "id">
+
+  export type TurnoPuntoVentaOrderByWithAggregationInput = {
+    id?: SortOrder
+    tenantId?: SortOrder
+    puntoDeVentaId?: SortOrder
+    empleadoId?: SortOrderInput | SortOrder
+    tipo?: SortOrder
+    fechaApertura?: SortOrder
+    fechaCierre?: SortOrderInput | SortOrder
+    fondoInicialCup?: SortOrder
+    fondoInicialUsd?: SortOrder
+    estado?: SortOrder
+    observaciones?: SortOrderInput | SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+    _count?: TurnoPuntoVentaCountOrderByAggregateInput
+    _avg?: TurnoPuntoVentaAvgOrderByAggregateInput
+    _max?: TurnoPuntoVentaMaxOrderByAggregateInput
+    _min?: TurnoPuntoVentaMinOrderByAggregateInput
+    _sum?: TurnoPuntoVentaSumOrderByAggregateInput
+  }
+
+  export type TurnoPuntoVentaScalarWhereWithAggregatesInput = {
+    AND?: TurnoPuntoVentaScalarWhereWithAggregatesInput | TurnoPuntoVentaScalarWhereWithAggregatesInput[]
+    OR?: TurnoPuntoVentaScalarWhereWithAggregatesInput[]
+    NOT?: TurnoPuntoVentaScalarWhereWithAggregatesInput | TurnoPuntoVentaScalarWhereWithAggregatesInput[]
+    id?: StringWithAggregatesFilter<"TurnoPuntoVenta"> | string
+    tenantId?: StringWithAggregatesFilter<"TurnoPuntoVenta"> | string
+    puntoDeVentaId?: StringWithAggregatesFilter<"TurnoPuntoVenta"> | string
+    empleadoId?: StringNullableWithAggregatesFilter<"TurnoPuntoVenta"> | string | null
+    tipo?: StringWithAggregatesFilter<"TurnoPuntoVenta"> | string
+    fechaApertura?: DateTimeWithAggregatesFilter<"TurnoPuntoVenta"> | Date | string
+    fechaCierre?: DateTimeNullableWithAggregatesFilter<"TurnoPuntoVenta"> | Date | string | null
+    fondoInicialCup?: IntWithAggregatesFilter<"TurnoPuntoVenta"> | number
+    fondoInicialUsd?: IntWithAggregatesFilter<"TurnoPuntoVenta"> | number
+    estado?: EnumEstadoTurnoWithAggregatesFilter<"TurnoPuntoVenta"> | $Enums.EstadoTurno
+    observaciones?: StringNullableWithAggregatesFilter<"TurnoPuntoVenta"> | string | null
+    createdAt?: DateTimeWithAggregatesFilter<"TurnoPuntoVenta"> | Date | string
+    updatedAt?: DateTimeWithAggregatesFilter<"TurnoPuntoVenta"> | Date | string
+  }
+
+  export type ArqueoCajaWhereInput = {
+    AND?: ArqueoCajaWhereInput | ArqueoCajaWhereInput[]
+    OR?: ArqueoCajaWhereInput[]
+    NOT?: ArqueoCajaWhereInput | ArqueoCajaWhereInput[]
+    id?: StringFilter<"ArqueoCaja"> | string
+    turnoId?: StringFilter<"ArqueoCaja"> | string
+    tenantId?: StringFilter<"ArqueoCaja"> | string
+    puntoDeVentaId?: StringFilter<"ArqueoCaja"> | string
+    billetes1000Cup?: IntFilter<"ArqueoCaja"> | number
+    billetes500Cup?: IntFilter<"ArqueoCaja"> | number
+    billetes200Cup?: IntFilter<"ArqueoCaja"> | number
+    billetes100Cup?: IntFilter<"ArqueoCaja"> | number
+    billetes50Cup?: IntFilter<"ArqueoCaja"> | number
+    billetes20Cup?: IntFilter<"ArqueoCaja"> | number
+    monedasCup?: IntFilter<"ArqueoCaja"> | number
+    billetes100Usd?: IntFilter<"ArqueoCaja"> | number
+    billetes50Usd?: IntFilter<"ArqueoCaja"> | number
+    billetes20Usd?: IntFilter<"ArqueoCaja"> | number
+    billetes10Usd?: IntFilter<"ArqueoCaja"> | number
+    billetes5Usd?: IntFilter<"ArqueoCaja"> | number
+    billetes1Usd?: IntFilter<"ArqueoCaja"> | number
+    monedasUsd?: IntFilter<"ArqueoCaja"> | number
+    totalEfectivoCup?: IntFilter<"ArqueoCaja"> | number
+    totalEfectivoUsd?: IntFilter<"ArqueoCaja"> | number
+    totalTarjeta?: IntFilter<"ArqueoCaja"> | number
+    totalTransferencia?: IntFilter<"ArqueoCaja"> | number
+    totalCredito?: IntFilter<"ArqueoCaja"> | number
+    esperadoEfectivoCup?: IntFilter<"ArqueoCaja"> | number
+    esperadoEfectivoUsd?: IntFilter<"ArqueoCaja"> | number
+    esperadoTarjeta?: IntFilter<"ArqueoCaja"> | number
+    esperadoTransferencia?: IntFilter<"ArqueoCaja"> | number
+    esperadoCredito?: IntFilter<"ArqueoCaja"> | number
+    diferenciaCup?: IntFilter<"ArqueoCaja"> | number
+    diferenciaUsd?: IntFilter<"ArqueoCaja"> | number
+    observaciones?: StringNullableFilter<"ArqueoCaja"> | string | null
+    contabilizado?: BoolFilter<"ArqueoCaja"> | boolean
+    createdAt?: DateTimeFilter<"ArqueoCaja"> | Date | string
+    updatedAt?: DateTimeFilter<"ArqueoCaja"> | Date | string
+    turno?: XOR<TurnoPuntoVentaScalarRelationFilter, TurnoPuntoVentaWhereInput>
+    puntoDeVenta?: XOR<PuntoDeVentaScalarRelationFilter, PuntoDeVentaWhereInput>
+    tenant?: XOR<TenantScalarRelationFilter, TenantWhereInput>
+  }
+
+  export type ArqueoCajaOrderByWithRelationInput = {
+    id?: SortOrder
+    turnoId?: SortOrder
+    tenantId?: SortOrder
+    puntoDeVentaId?: SortOrder
+    billetes1000Cup?: SortOrder
+    billetes500Cup?: SortOrder
+    billetes200Cup?: SortOrder
+    billetes100Cup?: SortOrder
+    billetes50Cup?: SortOrder
+    billetes20Cup?: SortOrder
+    monedasCup?: SortOrder
+    billetes100Usd?: SortOrder
+    billetes50Usd?: SortOrder
+    billetes20Usd?: SortOrder
+    billetes10Usd?: SortOrder
+    billetes5Usd?: SortOrder
+    billetes1Usd?: SortOrder
+    monedasUsd?: SortOrder
+    totalEfectivoCup?: SortOrder
+    totalEfectivoUsd?: SortOrder
+    totalTarjeta?: SortOrder
+    totalTransferencia?: SortOrder
+    totalCredito?: SortOrder
+    esperadoEfectivoCup?: SortOrder
+    esperadoEfectivoUsd?: SortOrder
+    esperadoTarjeta?: SortOrder
+    esperadoTransferencia?: SortOrder
+    esperadoCredito?: SortOrder
+    diferenciaCup?: SortOrder
+    diferenciaUsd?: SortOrder
+    observaciones?: SortOrderInput | SortOrder
+    contabilizado?: SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+    turno?: TurnoPuntoVentaOrderByWithRelationInput
+    puntoDeVenta?: PuntoDeVentaOrderByWithRelationInput
+    tenant?: TenantOrderByWithRelationInput
+  }
+
+  export type ArqueoCajaWhereUniqueInput = Prisma.AtLeast<{
+    id?: string
+    turnoId?: string
+    AND?: ArqueoCajaWhereInput | ArqueoCajaWhereInput[]
+    OR?: ArqueoCajaWhereInput[]
+    NOT?: ArqueoCajaWhereInput | ArqueoCajaWhereInput[]
+    tenantId?: StringFilter<"ArqueoCaja"> | string
+    puntoDeVentaId?: StringFilter<"ArqueoCaja"> | string
+    billetes1000Cup?: IntFilter<"ArqueoCaja"> | number
+    billetes500Cup?: IntFilter<"ArqueoCaja"> | number
+    billetes200Cup?: IntFilter<"ArqueoCaja"> | number
+    billetes100Cup?: IntFilter<"ArqueoCaja"> | number
+    billetes50Cup?: IntFilter<"ArqueoCaja"> | number
+    billetes20Cup?: IntFilter<"ArqueoCaja"> | number
+    monedasCup?: IntFilter<"ArqueoCaja"> | number
+    billetes100Usd?: IntFilter<"ArqueoCaja"> | number
+    billetes50Usd?: IntFilter<"ArqueoCaja"> | number
+    billetes20Usd?: IntFilter<"ArqueoCaja"> | number
+    billetes10Usd?: IntFilter<"ArqueoCaja"> | number
+    billetes5Usd?: IntFilter<"ArqueoCaja"> | number
+    billetes1Usd?: IntFilter<"ArqueoCaja"> | number
+    monedasUsd?: IntFilter<"ArqueoCaja"> | number
+    totalEfectivoCup?: IntFilter<"ArqueoCaja"> | number
+    totalEfectivoUsd?: IntFilter<"ArqueoCaja"> | number
+    totalTarjeta?: IntFilter<"ArqueoCaja"> | number
+    totalTransferencia?: IntFilter<"ArqueoCaja"> | number
+    totalCredito?: IntFilter<"ArqueoCaja"> | number
+    esperadoEfectivoCup?: IntFilter<"ArqueoCaja"> | number
+    esperadoEfectivoUsd?: IntFilter<"ArqueoCaja"> | number
+    esperadoTarjeta?: IntFilter<"ArqueoCaja"> | number
+    esperadoTransferencia?: IntFilter<"ArqueoCaja"> | number
+    esperadoCredito?: IntFilter<"ArqueoCaja"> | number
+    diferenciaCup?: IntFilter<"ArqueoCaja"> | number
+    diferenciaUsd?: IntFilter<"ArqueoCaja"> | number
+    observaciones?: StringNullableFilter<"ArqueoCaja"> | string | null
+    contabilizado?: BoolFilter<"ArqueoCaja"> | boolean
+    createdAt?: DateTimeFilter<"ArqueoCaja"> | Date | string
+    updatedAt?: DateTimeFilter<"ArqueoCaja"> | Date | string
+    turno?: XOR<TurnoPuntoVentaScalarRelationFilter, TurnoPuntoVentaWhereInput>
+    puntoDeVenta?: XOR<PuntoDeVentaScalarRelationFilter, PuntoDeVentaWhereInput>
+    tenant?: XOR<TenantScalarRelationFilter, TenantWhereInput>
+  }, "id" | "turnoId">
+
+  export type ArqueoCajaOrderByWithAggregationInput = {
+    id?: SortOrder
+    turnoId?: SortOrder
+    tenantId?: SortOrder
+    puntoDeVentaId?: SortOrder
+    billetes1000Cup?: SortOrder
+    billetes500Cup?: SortOrder
+    billetes200Cup?: SortOrder
+    billetes100Cup?: SortOrder
+    billetes50Cup?: SortOrder
+    billetes20Cup?: SortOrder
+    monedasCup?: SortOrder
+    billetes100Usd?: SortOrder
+    billetes50Usd?: SortOrder
+    billetes20Usd?: SortOrder
+    billetes10Usd?: SortOrder
+    billetes5Usd?: SortOrder
+    billetes1Usd?: SortOrder
+    monedasUsd?: SortOrder
+    totalEfectivoCup?: SortOrder
+    totalEfectivoUsd?: SortOrder
+    totalTarjeta?: SortOrder
+    totalTransferencia?: SortOrder
+    totalCredito?: SortOrder
+    esperadoEfectivoCup?: SortOrder
+    esperadoEfectivoUsd?: SortOrder
+    esperadoTarjeta?: SortOrder
+    esperadoTransferencia?: SortOrder
+    esperadoCredito?: SortOrder
+    diferenciaCup?: SortOrder
+    diferenciaUsd?: SortOrder
+    observaciones?: SortOrderInput | SortOrder
+    contabilizado?: SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+    _count?: ArqueoCajaCountOrderByAggregateInput
+    _avg?: ArqueoCajaAvgOrderByAggregateInput
+    _max?: ArqueoCajaMaxOrderByAggregateInput
+    _min?: ArqueoCajaMinOrderByAggregateInput
+    _sum?: ArqueoCajaSumOrderByAggregateInput
+  }
+
+  export type ArqueoCajaScalarWhereWithAggregatesInput = {
+    AND?: ArqueoCajaScalarWhereWithAggregatesInput | ArqueoCajaScalarWhereWithAggregatesInput[]
+    OR?: ArqueoCajaScalarWhereWithAggregatesInput[]
+    NOT?: ArqueoCajaScalarWhereWithAggregatesInput | ArqueoCajaScalarWhereWithAggregatesInput[]
+    id?: StringWithAggregatesFilter<"ArqueoCaja"> | string
+    turnoId?: StringWithAggregatesFilter<"ArqueoCaja"> | string
+    tenantId?: StringWithAggregatesFilter<"ArqueoCaja"> | string
+    puntoDeVentaId?: StringWithAggregatesFilter<"ArqueoCaja"> | string
+    billetes1000Cup?: IntWithAggregatesFilter<"ArqueoCaja"> | number
+    billetes500Cup?: IntWithAggregatesFilter<"ArqueoCaja"> | number
+    billetes200Cup?: IntWithAggregatesFilter<"ArqueoCaja"> | number
+    billetes100Cup?: IntWithAggregatesFilter<"ArqueoCaja"> | number
+    billetes50Cup?: IntWithAggregatesFilter<"ArqueoCaja"> | number
+    billetes20Cup?: IntWithAggregatesFilter<"ArqueoCaja"> | number
+    monedasCup?: IntWithAggregatesFilter<"ArqueoCaja"> | number
+    billetes100Usd?: IntWithAggregatesFilter<"ArqueoCaja"> | number
+    billetes50Usd?: IntWithAggregatesFilter<"ArqueoCaja"> | number
+    billetes20Usd?: IntWithAggregatesFilter<"ArqueoCaja"> | number
+    billetes10Usd?: IntWithAggregatesFilter<"ArqueoCaja"> | number
+    billetes5Usd?: IntWithAggregatesFilter<"ArqueoCaja"> | number
+    billetes1Usd?: IntWithAggregatesFilter<"ArqueoCaja"> | number
+    monedasUsd?: IntWithAggregatesFilter<"ArqueoCaja"> | number
+    totalEfectivoCup?: IntWithAggregatesFilter<"ArqueoCaja"> | number
+    totalEfectivoUsd?: IntWithAggregatesFilter<"ArqueoCaja"> | number
+    totalTarjeta?: IntWithAggregatesFilter<"ArqueoCaja"> | number
+    totalTransferencia?: IntWithAggregatesFilter<"ArqueoCaja"> | number
+    totalCredito?: IntWithAggregatesFilter<"ArqueoCaja"> | number
+    esperadoEfectivoCup?: IntWithAggregatesFilter<"ArqueoCaja"> | number
+    esperadoEfectivoUsd?: IntWithAggregatesFilter<"ArqueoCaja"> | number
+    esperadoTarjeta?: IntWithAggregatesFilter<"ArqueoCaja"> | number
+    esperadoTransferencia?: IntWithAggregatesFilter<"ArqueoCaja"> | number
+    esperadoCredito?: IntWithAggregatesFilter<"ArqueoCaja"> | number
+    diferenciaCup?: IntWithAggregatesFilter<"ArqueoCaja"> | number
+    diferenciaUsd?: IntWithAggregatesFilter<"ArqueoCaja"> | number
+    observaciones?: StringNullableWithAggregatesFilter<"ArqueoCaja"> | string | null
+    contabilizado?: BoolWithAggregatesFilter<"ArqueoCaja"> | boolean
+    createdAt?: DateTimeWithAggregatesFilter<"ArqueoCaja"> | Date | string
+    updatedAt?: DateTimeWithAggregatesFilter<"ArqueoCaja"> | Date | string
   }
 
   export type ProductoWhereInput = {
@@ -143054,6 +148173,12 @@ export namespace Prisma {
     esVentaUnica?: BoolFilter<"Venta"> | boolean
     ofertaId?: StringNullableFilter<"Venta"> | string | null
     ventaPadreId?: StringNullableFilter<"Venta"> | string | null
+    turnoId?: StringNullableFilter<"Venta"> | string | null
+    metodoPago?: EnumMetodoPagoVentaNullableFilter<"Venta"> | $Enums.MetodoPagoVenta | null
+    montoEfectivo?: IntNullableFilter<"Venta"> | number | null
+    montoTarjeta?: IntNullableFilter<"Venta"> | number | null
+    montoTransferencia?: IntNullableFilter<"Venta"> | number | null
+    montoCredito?: IntNullableFilter<"Venta"> | number | null
     ordenReparacion?: XOR<OrdenReparacionNullableScalarRelationFilter, OrdenReparacionWhereInput> | null
     reconciliaciones?: ReconciliacionVentaListRelationFilter
     cliente?: XOR<ClienteNullableScalarRelationFilter, ClienteWhereInput> | null
@@ -143061,6 +148186,7 @@ export namespace Prisma {
     oferta?: XOR<OfertaNullableScalarRelationFilter, OfertaWhereInput> | null
     producto?: XOR<ProductoNullableScalarRelationFilter, ProductoWhereInput> | null
     puntoDeVenta?: XOR<PuntoDeVentaScalarRelationFilter, PuntoDeVentaWhereInput>
+    turno?: XOR<TurnoPuntoVentaNullableScalarRelationFilter, TurnoPuntoVentaWhereInput> | null
     factura?: XOR<FacturaNullableScalarRelationFilter, FacturaWhereInput> | null
     items?: VentaItemListRelationFilter
     tenant?: XOR<TenantScalarRelationFilter, TenantWhereInput>
@@ -143083,6 +148209,12 @@ export namespace Prisma {
     esVentaUnica?: SortOrder
     ofertaId?: SortOrderInput | SortOrder
     ventaPadreId?: SortOrderInput | SortOrder
+    turnoId?: SortOrderInput | SortOrder
+    metodoPago?: SortOrderInput | SortOrder
+    montoEfectivo?: SortOrderInput | SortOrder
+    montoTarjeta?: SortOrderInput | SortOrder
+    montoTransferencia?: SortOrderInput | SortOrder
+    montoCredito?: SortOrderInput | SortOrder
     ordenReparacion?: OrdenReparacionOrderByWithRelationInput
     reconciliaciones?: ReconciliacionVentaOrderByRelationAggregateInput
     cliente?: ClienteOrderByWithRelationInput
@@ -143090,6 +148222,7 @@ export namespace Prisma {
     oferta?: OfertaOrderByWithRelationInput
     producto?: ProductoOrderByWithRelationInput
     puntoDeVenta?: PuntoDeVentaOrderByWithRelationInput
+    turno?: TurnoPuntoVentaOrderByWithRelationInput
     factura?: FacturaOrderByWithRelationInput
     items?: VentaItemOrderByRelationAggregateInput
     tenant?: TenantOrderByWithRelationInput
@@ -143115,6 +148248,12 @@ export namespace Prisma {
     observaciones?: StringNullableFilter<"Venta"> | string | null
     esVentaUnica?: BoolFilter<"Venta"> | boolean
     ventaPadreId?: StringNullableFilter<"Venta"> | string | null
+    turnoId?: StringNullableFilter<"Venta"> | string | null
+    metodoPago?: EnumMetodoPagoVentaNullableFilter<"Venta"> | $Enums.MetodoPagoVenta | null
+    montoEfectivo?: IntNullableFilter<"Venta"> | number | null
+    montoTarjeta?: IntNullableFilter<"Venta"> | number | null
+    montoTransferencia?: IntNullableFilter<"Venta"> | number | null
+    montoCredito?: IntNullableFilter<"Venta"> | number | null
     ordenReparacion?: XOR<OrdenReparacionNullableScalarRelationFilter, OrdenReparacionWhereInput> | null
     reconciliaciones?: ReconciliacionVentaListRelationFilter
     cliente?: XOR<ClienteNullableScalarRelationFilter, ClienteWhereInput> | null
@@ -143122,6 +148261,7 @@ export namespace Prisma {
     oferta?: XOR<OfertaNullableScalarRelationFilter, OfertaWhereInput> | null
     producto?: XOR<ProductoNullableScalarRelationFilter, ProductoWhereInput> | null
     puntoDeVenta?: XOR<PuntoDeVentaScalarRelationFilter, PuntoDeVentaWhereInput>
+    turno?: XOR<TurnoPuntoVentaNullableScalarRelationFilter, TurnoPuntoVentaWhereInput> | null
     factura?: XOR<FacturaNullableScalarRelationFilter, FacturaWhereInput> | null
     items?: VentaItemListRelationFilter
     tenant?: XOR<TenantScalarRelationFilter, TenantWhereInput>
@@ -143144,6 +148284,12 @@ export namespace Prisma {
     esVentaUnica?: SortOrder
     ofertaId?: SortOrderInput | SortOrder
     ventaPadreId?: SortOrderInput | SortOrder
+    turnoId?: SortOrderInput | SortOrder
+    metodoPago?: SortOrderInput | SortOrder
+    montoEfectivo?: SortOrderInput | SortOrder
+    montoTarjeta?: SortOrderInput | SortOrder
+    montoTransferencia?: SortOrderInput | SortOrder
+    montoCredito?: SortOrderInput | SortOrder
     _count?: VentaCountOrderByAggregateInput
     _avg?: VentaAvgOrderByAggregateInput
     _max?: VentaMaxOrderByAggregateInput
@@ -143171,6 +148317,12 @@ export namespace Prisma {
     esVentaUnica?: BoolWithAggregatesFilter<"Venta"> | boolean
     ofertaId?: StringNullableWithAggregatesFilter<"Venta"> | string | null
     ventaPadreId?: StringNullableWithAggregatesFilter<"Venta"> | string | null
+    turnoId?: StringNullableWithAggregatesFilter<"Venta"> | string | null
+    metodoPago?: EnumMetodoPagoVentaNullableWithAggregatesFilter<"Venta"> | $Enums.MetodoPagoVenta | null
+    montoEfectivo?: IntNullableWithAggregatesFilter<"Venta"> | number | null
+    montoTarjeta?: IntNullableWithAggregatesFilter<"Venta"> | number | null
+    montoTransferencia?: IntNullableWithAggregatesFilter<"Venta"> | number | null
+    montoCredito?: IntNullableWithAggregatesFilter<"Venta"> | number | null
   }
 
   export type VentaItemWhereInput = {
@@ -144504,6 +149656,7 @@ export namespace Prisma {
     vacationAccruals?: VacationAccrualListRelationFilter
     vacationRequests?: VacationRequestListRelationFilter
     ventas?: VentaListRelationFilter
+    turnosPos?: TurnoPuntoVentaListRelationFilter
     tenant?: XOR<TenantScalarRelationFilter, TenantWhereInput>
   }
 
@@ -144529,6 +149682,7 @@ export namespace Prisma {
     vacationAccruals?: VacationAccrualOrderByRelationAggregateInput
     vacationRequests?: VacationRequestOrderByRelationAggregateInput
     ventas?: VentaOrderByRelationAggregateInput
+    turnosPos?: TurnoPuntoVentaOrderByRelationAggregateInput
     tenant?: TenantOrderByWithRelationInput
   }
 
@@ -144557,6 +149711,7 @@ export namespace Prisma {
     vacationAccruals?: VacationAccrualListRelationFilter
     vacationRequests?: VacationRequestListRelationFilter
     ventas?: VentaListRelationFilter
+    turnosPos?: TurnoPuntoVentaListRelationFilter
     tenant?: XOR<TenantScalarRelationFilter, TenantWhereInput>
   }, "empleadoId">
 
@@ -150940,6 +156095,7 @@ export namespace Prisma {
     periodoPadreId?: StringNullableFilter<"PeriodoContable"> | string | null
     aperturaAutomatica?: BoolFilter<"PeriodoContable"> | boolean
     categoria?: EnumCategoriaPeriodoFilter<"PeriodoContable"> | $Enums.CategoriaPeriodo
+    modoContable?: EnumModoContableFilter<"PeriodoContable"> | $Enums.ModoContable
     abiertoPorId?: StringNullableFilter<"PeriodoContable"> | string | null
     fechaApertura?: DateTimeNullableFilter<"PeriodoContable"> | Date | string | null
     cerradoPor?: StringNullableFilter<"PeriodoContable"> | string | null
@@ -150975,6 +156131,7 @@ export namespace Prisma {
     periodoPadreId?: SortOrderInput | SortOrder
     aperturaAutomatica?: SortOrder
     categoria?: SortOrder
+    modoContable?: SortOrder
     abiertoPorId?: SortOrderInput | SortOrder
     fechaApertura?: SortOrderInput | SortOrder
     cerradoPor?: SortOrderInput | SortOrder
@@ -151014,6 +156171,7 @@ export namespace Prisma {
     periodoPadreId?: StringNullableFilter<"PeriodoContable"> | string | null
     aperturaAutomatica?: BoolFilter<"PeriodoContable"> | boolean
     categoria?: EnumCategoriaPeriodoFilter<"PeriodoContable"> | $Enums.CategoriaPeriodo
+    modoContable?: EnumModoContableFilter<"PeriodoContable"> | $Enums.ModoContable
     abiertoPorId?: StringNullableFilter<"PeriodoContable"> | string | null
     fechaApertura?: DateTimeNullableFilter<"PeriodoContable"> | Date | string | null
     cerradoPor?: StringNullableFilter<"PeriodoContable"> | string | null
@@ -151049,6 +156207,7 @@ export namespace Prisma {
     periodoPadreId?: SortOrderInput | SortOrder
     aperturaAutomatica?: SortOrder
     categoria?: SortOrder
+    modoContable?: SortOrder
     abiertoPorId?: SortOrderInput | SortOrder
     fechaApertura?: SortOrderInput | SortOrder
     cerradoPor?: SortOrderInput | SortOrder
@@ -151083,6 +156242,7 @@ export namespace Prisma {
     periodoPadreId?: StringNullableWithAggregatesFilter<"PeriodoContable"> | string | null
     aperturaAutomatica?: BoolWithAggregatesFilter<"PeriodoContable"> | boolean
     categoria?: EnumCategoriaPeriodoWithAggregatesFilter<"PeriodoContable"> | $Enums.CategoriaPeriodo
+    modoContable?: EnumModoContableWithAggregatesFilter<"PeriodoContable"> | $Enums.ModoContable
     abiertoPorId?: StringNullableWithAggregatesFilter<"PeriodoContable"> | string | null
     fechaApertura?: DateTimeNullableWithAggregatesFilter<"PeriodoContable"> | Date | string | null
     cerradoPor?: StringNullableWithAggregatesFilter<"PeriodoContable"> | string | null
@@ -151611,6 +156771,63 @@ export namespace Prisma {
     createdBy?: StringWithAggregatesFilter<"BackupPlan"> | string
     createdAt?: DateTimeWithAggregatesFilter<"BackupPlan"> | Date | string
     updatedAt?: DateTimeWithAggregatesFilter<"BackupPlan"> | Date | string
+  }
+
+  export type PeriodoCacheWhereInput = {
+    AND?: PeriodoCacheWhereInput | PeriodoCacheWhereInput[]
+    OR?: PeriodoCacheWhereInput[]
+    NOT?: PeriodoCacheWhereInput | PeriodoCacheWhereInput[]
+    cacheKey?: StringFilter<"PeriodoCache"> | string
+    tenantId?: StringFilter<"PeriodoCache"> | string
+    fecha?: DateTimeFilter<"PeriodoCache"> | Date | string
+    resultadoJson?: JsonFilter<"PeriodoCache">
+    expiresAt?: DateTimeFilter<"PeriodoCache"> | Date | string
+    createdAt?: DateTimeFilter<"PeriodoCache"> | Date | string
+  }
+
+  export type PeriodoCacheOrderByWithRelationInput = {
+    cacheKey?: SortOrder
+    tenantId?: SortOrder
+    fecha?: SortOrder
+    resultadoJson?: SortOrder
+    expiresAt?: SortOrder
+    createdAt?: SortOrder
+  }
+
+  export type PeriodoCacheWhereUniqueInput = Prisma.AtLeast<{
+    cacheKey?: string
+    AND?: PeriodoCacheWhereInput | PeriodoCacheWhereInput[]
+    OR?: PeriodoCacheWhereInput[]
+    NOT?: PeriodoCacheWhereInput | PeriodoCacheWhereInput[]
+    tenantId?: StringFilter<"PeriodoCache"> | string
+    fecha?: DateTimeFilter<"PeriodoCache"> | Date | string
+    resultadoJson?: JsonFilter<"PeriodoCache">
+    expiresAt?: DateTimeFilter<"PeriodoCache"> | Date | string
+    createdAt?: DateTimeFilter<"PeriodoCache"> | Date | string
+  }, "cacheKey">
+
+  export type PeriodoCacheOrderByWithAggregationInput = {
+    cacheKey?: SortOrder
+    tenantId?: SortOrder
+    fecha?: SortOrder
+    resultadoJson?: SortOrder
+    expiresAt?: SortOrder
+    createdAt?: SortOrder
+    _count?: PeriodoCacheCountOrderByAggregateInput
+    _max?: PeriodoCacheMaxOrderByAggregateInput
+    _min?: PeriodoCacheMinOrderByAggregateInput
+  }
+
+  export type PeriodoCacheScalarWhereWithAggregatesInput = {
+    AND?: PeriodoCacheScalarWhereWithAggregatesInput | PeriodoCacheScalarWhereWithAggregatesInput[]
+    OR?: PeriodoCacheScalarWhereWithAggregatesInput[]
+    NOT?: PeriodoCacheScalarWhereWithAggregatesInput | PeriodoCacheScalarWhereWithAggregatesInput[]
+    cacheKey?: StringWithAggregatesFilter<"PeriodoCache"> | string
+    tenantId?: StringWithAggregatesFilter<"PeriodoCache"> | string
+    fecha?: DateTimeWithAggregatesFilter<"PeriodoCache"> | Date | string
+    resultadoJson?: JsonWithAggregatesFilter<"PeriodoCache">
+    expiresAt?: DateTimeWithAggregatesFilter<"PeriodoCache"> | Date | string
+    createdAt?: DateTimeWithAggregatesFilter<"PeriodoCache"> | Date | string
   }
 
   export type CategoriaCreateInput = {
@@ -152350,6 +157567,8 @@ export namespace Prisma {
     periodosContables?: PeriodoContableCreateNestedManyWithoutTenantInput
     aperturaPeriodos?: AperturaPeriodoCreateNestedManyWithoutTenantInput
     auditoriaPeriodos?: AuditoriaPeriodoCreateNestedManyWithoutTenantInput
+    turnosPos?: TurnoPuntoVentaCreateNestedManyWithoutTenantInput
+    arqueosCaja?: ArqueoCajaCreateNestedManyWithoutTenantInput
     backupLogs?: BackupLogCreateNestedManyWithoutTenantInput
     backupPlans?: BackupPlanCreateNestedManyWithoutTenantInput
   }
@@ -152418,6 +157637,8 @@ export namespace Prisma {
     periodosContables?: PeriodoContableUncheckedCreateNestedManyWithoutTenantInput
     aperturaPeriodos?: AperturaPeriodoUncheckedCreateNestedManyWithoutTenantInput
     auditoriaPeriodos?: AuditoriaPeriodoUncheckedCreateNestedManyWithoutTenantInput
+    turnosPos?: TurnoPuntoVentaUncheckedCreateNestedManyWithoutTenantInput
+    arqueosCaja?: ArqueoCajaUncheckedCreateNestedManyWithoutTenantInput
     backupLogs?: BackupLogUncheckedCreateNestedManyWithoutTenantInput
     backupPlans?: BackupPlanUncheckedCreateNestedManyWithoutTenantInput
   }
@@ -152486,6 +157707,8 @@ export namespace Prisma {
     periodosContables?: PeriodoContableUpdateManyWithoutTenantNestedInput
     aperturaPeriodos?: AperturaPeriodoUpdateManyWithoutTenantNestedInput
     auditoriaPeriodos?: AuditoriaPeriodoUpdateManyWithoutTenantNestedInput
+    turnosPos?: TurnoPuntoVentaUpdateManyWithoutTenantNestedInput
+    arqueosCaja?: ArqueoCajaUpdateManyWithoutTenantNestedInput
     backupLogs?: BackupLogUpdateManyWithoutTenantNestedInput
     backupPlans?: BackupPlanUpdateManyWithoutTenantNestedInput
   }
@@ -152554,6 +157777,8 @@ export namespace Prisma {
     periodosContables?: PeriodoContableUncheckedUpdateManyWithoutTenantNestedInput
     aperturaPeriodos?: AperturaPeriodoUncheckedUpdateManyWithoutTenantNestedInput
     auditoriaPeriodos?: AuditoriaPeriodoUncheckedUpdateManyWithoutTenantNestedInput
+    turnosPos?: TurnoPuntoVentaUncheckedUpdateManyWithoutTenantNestedInput
+    arqueosCaja?: ArqueoCajaUncheckedUpdateManyWithoutTenantNestedInput
     backupLogs?: BackupLogUncheckedUpdateManyWithoutTenantNestedInput
     backupPlans?: BackupPlanUncheckedUpdateManyWithoutTenantNestedInput
   }
@@ -152886,6 +158111,7 @@ export namespace Prisma {
     createdAt?: Date | string
     updatedAt?: Date | string
     productos?: ProductoCreateNestedManyWithoutAlmacenInput
+    puntosDeVenta?: PuntoDeVentaCreateNestedManyWithoutAlmacenInput
     transferenciasDestino?: TransferenciaCreateNestedManyWithoutDestinoInput
     transferenciasOrigen?: TransferenciaCreateNestedManyWithoutOrigenInput
     tenant: TenantCreateNestedOneWithoutAlmacenesInput
@@ -152898,6 +158124,7 @@ export namespace Prisma {
     createdAt?: Date | string
     updatedAt?: Date | string
     productos?: ProductoUncheckedCreateNestedManyWithoutAlmacenInput
+    puntosDeVenta?: PuntoDeVentaUncheckedCreateNestedManyWithoutAlmacenInput
     transferenciasDestino?: TransferenciaUncheckedCreateNestedManyWithoutDestinoInput
     transferenciasOrigen?: TransferenciaUncheckedCreateNestedManyWithoutOrigenInput
   }
@@ -152908,6 +158135,7 @@ export namespace Prisma {
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     productos?: ProductoUpdateManyWithoutAlmacenNestedInput
+    puntosDeVenta?: PuntoDeVentaUpdateManyWithoutAlmacenNestedInput
     transferenciasDestino?: TransferenciaUpdateManyWithoutDestinoNestedInput
     transferenciasOrigen?: TransferenciaUpdateManyWithoutOrigenNestedInput
     tenant?: TenantUpdateOneRequiredWithoutAlmacenesNestedInput
@@ -152920,6 +158148,7 @@ export namespace Prisma {
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     productos?: ProductoUncheckedUpdateManyWithoutAlmacenNestedInput
+    puntosDeVenta?: PuntoDeVentaUncheckedUpdateManyWithoutAlmacenNestedInput
     transferenciasDestino?: TransferenciaUncheckedUpdateManyWithoutDestinoNestedInput
     transferenciasOrigen?: TransferenciaUncheckedUpdateManyWithoutOrigenNestedInput
   }
@@ -152953,11 +158182,16 @@ export namespace Prisma {
     ubicacion?: string | null
     createdAt?: Date | string
     updatedAt?: Date | string
+    tipoCaja?: string | null
+    cuentaContableId?: string | null
     productos?: ProductoCreateNestedManyWithoutPuntoDeVentaInput
     listaPrecio?: ListaPrecioCreateNestedOneWithoutPuntosDeVentaInput
+    almacen?: AlmacenCreateNestedOneWithoutPuntosDeVentaInput
     transferenciasDestino?: TransferenciaCreateNestedManyWithoutPuntoDeVentaDestinoInput
     transferenciasOrigen?: TransferenciaCreateNestedManyWithoutPuntoDeVentaOrigenInput
     ventas?: VentaCreateNestedManyWithoutPuntoDeVentaInput
+    turnos?: TurnoPuntoVentaCreateNestedManyWithoutPuntoDeVentaInput
+    arqueos?: ArqueoCajaCreateNestedManyWithoutPuntoDeVentaInput
     tenant: TenantCreateNestedOneWithoutPuntosDeVentaInput
   }
 
@@ -152969,10 +158203,15 @@ export namespace Prisma {
     createdAt?: Date | string
     updatedAt?: Date | string
     listaPrecioId?: string | null
+    tipoCaja?: string | null
+    almacenId?: string | null
+    cuentaContableId?: string | null
     productos?: ProductoUncheckedCreateNestedManyWithoutPuntoDeVentaInput
     transferenciasDestino?: TransferenciaUncheckedCreateNestedManyWithoutPuntoDeVentaDestinoInput
     transferenciasOrigen?: TransferenciaUncheckedCreateNestedManyWithoutPuntoDeVentaOrigenInput
     ventas?: VentaUncheckedCreateNestedManyWithoutPuntoDeVentaInput
+    turnos?: TurnoPuntoVentaUncheckedCreateNestedManyWithoutPuntoDeVentaInput
+    arqueos?: ArqueoCajaUncheckedCreateNestedManyWithoutPuntoDeVentaInput
   }
 
   export type PuntoDeVentaUpdateInput = {
@@ -152981,11 +158220,16 @@ export namespace Prisma {
     ubicacion?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    tipoCaja?: NullableStringFieldUpdateOperationsInput | string | null
+    cuentaContableId?: NullableStringFieldUpdateOperationsInput | string | null
     productos?: ProductoUpdateManyWithoutPuntoDeVentaNestedInput
     listaPrecio?: ListaPrecioUpdateOneWithoutPuntosDeVentaNestedInput
+    almacen?: AlmacenUpdateOneWithoutPuntosDeVentaNestedInput
     transferenciasDestino?: TransferenciaUpdateManyWithoutPuntoDeVentaDestinoNestedInput
     transferenciasOrigen?: TransferenciaUpdateManyWithoutPuntoDeVentaOrigenNestedInput
     ventas?: VentaUpdateManyWithoutPuntoDeVentaNestedInput
+    turnos?: TurnoPuntoVentaUpdateManyWithoutPuntoDeVentaNestedInput
+    arqueos?: ArqueoCajaUpdateManyWithoutPuntoDeVentaNestedInput
     tenant?: TenantUpdateOneRequiredWithoutPuntosDeVentaNestedInput
   }
 
@@ -152997,10 +158241,15 @@ export namespace Prisma {
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     listaPrecioId?: NullableStringFieldUpdateOperationsInput | string | null
+    tipoCaja?: NullableStringFieldUpdateOperationsInput | string | null
+    almacenId?: NullableStringFieldUpdateOperationsInput | string | null
+    cuentaContableId?: NullableStringFieldUpdateOperationsInput | string | null
     productos?: ProductoUncheckedUpdateManyWithoutPuntoDeVentaNestedInput
     transferenciasDestino?: TransferenciaUncheckedUpdateManyWithoutPuntoDeVentaDestinoNestedInput
     transferenciasOrigen?: TransferenciaUncheckedUpdateManyWithoutPuntoDeVentaOrigenNestedInput
     ventas?: VentaUncheckedUpdateManyWithoutPuntoDeVentaNestedInput
+    turnos?: TurnoPuntoVentaUncheckedUpdateManyWithoutPuntoDeVentaNestedInput
+    arqueos?: ArqueoCajaUncheckedUpdateManyWithoutPuntoDeVentaNestedInput
   }
 
   export type PuntoDeVentaCreateManyInput = {
@@ -153011,6 +158260,9 @@ export namespace Prisma {
     createdAt?: Date | string
     updatedAt?: Date | string
     listaPrecioId?: string | null
+    tipoCaja?: string | null
+    almacenId?: string | null
+    cuentaContableId?: string | null
   }
 
   export type PuntoDeVentaUpdateManyMutationInput = {
@@ -153019,6 +158271,8 @@ export namespace Prisma {
     ubicacion?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    tipoCaja?: NullableStringFieldUpdateOperationsInput | string | null
+    cuentaContableId?: NullableStringFieldUpdateOperationsInput | string | null
   }
 
   export type PuntoDeVentaUncheckedUpdateManyInput = {
@@ -153029,6 +158283,382 @@ export namespace Prisma {
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     listaPrecioId?: NullableStringFieldUpdateOperationsInput | string | null
+    tipoCaja?: NullableStringFieldUpdateOperationsInput | string | null
+    almacenId?: NullableStringFieldUpdateOperationsInput | string | null
+    cuentaContableId?: NullableStringFieldUpdateOperationsInput | string | null
+  }
+
+  export type TurnoPuntoVentaCreateInput = {
+    id?: string
+    tipo?: string
+    fechaApertura?: Date | string
+    fechaCierre?: Date | string | null
+    fondoInicialCup?: number
+    fondoInicialUsd?: number
+    estado?: $Enums.EstadoTurno
+    observaciones?: string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    puntoDeVenta: PuntoDeVentaCreateNestedOneWithoutTurnosInput
+    empleado?: EmpleadoCreateNestedOneWithoutTurnosPosInput
+    ventas?: VentaCreateNestedManyWithoutTurnoInput
+    arqueo?: ArqueoCajaCreateNestedOneWithoutTurnoInput
+    tenant: TenantCreateNestedOneWithoutTurnosPosInput
+  }
+
+  export type TurnoPuntoVentaUncheckedCreateInput = {
+    id?: string
+    tenantId: string
+    puntoDeVentaId: string
+    empleadoId?: string | null
+    tipo?: string
+    fechaApertura?: Date | string
+    fechaCierre?: Date | string | null
+    fondoInicialCup?: number
+    fondoInicialUsd?: number
+    estado?: $Enums.EstadoTurno
+    observaciones?: string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    ventas?: VentaUncheckedCreateNestedManyWithoutTurnoInput
+    arqueo?: ArqueoCajaUncheckedCreateNestedOneWithoutTurnoInput
+  }
+
+  export type TurnoPuntoVentaUpdateInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    tipo?: StringFieldUpdateOperationsInput | string
+    fechaApertura?: DateTimeFieldUpdateOperationsInput | Date | string
+    fechaCierre?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    fondoInicialCup?: IntFieldUpdateOperationsInput | number
+    fondoInicialUsd?: IntFieldUpdateOperationsInput | number
+    estado?: EnumEstadoTurnoFieldUpdateOperationsInput | $Enums.EstadoTurno
+    observaciones?: NullableStringFieldUpdateOperationsInput | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    puntoDeVenta?: PuntoDeVentaUpdateOneRequiredWithoutTurnosNestedInput
+    empleado?: EmpleadoUpdateOneWithoutTurnosPosNestedInput
+    ventas?: VentaUpdateManyWithoutTurnoNestedInput
+    arqueo?: ArqueoCajaUpdateOneWithoutTurnoNestedInput
+    tenant?: TenantUpdateOneRequiredWithoutTurnosPosNestedInput
+  }
+
+  export type TurnoPuntoVentaUncheckedUpdateInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    tenantId?: StringFieldUpdateOperationsInput | string
+    puntoDeVentaId?: StringFieldUpdateOperationsInput | string
+    empleadoId?: NullableStringFieldUpdateOperationsInput | string | null
+    tipo?: StringFieldUpdateOperationsInput | string
+    fechaApertura?: DateTimeFieldUpdateOperationsInput | Date | string
+    fechaCierre?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    fondoInicialCup?: IntFieldUpdateOperationsInput | number
+    fondoInicialUsd?: IntFieldUpdateOperationsInput | number
+    estado?: EnumEstadoTurnoFieldUpdateOperationsInput | $Enums.EstadoTurno
+    observaciones?: NullableStringFieldUpdateOperationsInput | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    ventas?: VentaUncheckedUpdateManyWithoutTurnoNestedInput
+    arqueo?: ArqueoCajaUncheckedUpdateOneWithoutTurnoNestedInput
+  }
+
+  export type TurnoPuntoVentaCreateManyInput = {
+    id?: string
+    tenantId: string
+    puntoDeVentaId: string
+    empleadoId?: string | null
+    tipo?: string
+    fechaApertura?: Date | string
+    fechaCierre?: Date | string | null
+    fondoInicialCup?: number
+    fondoInicialUsd?: number
+    estado?: $Enums.EstadoTurno
+    observaciones?: string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+  }
+
+  export type TurnoPuntoVentaUpdateManyMutationInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    tipo?: StringFieldUpdateOperationsInput | string
+    fechaApertura?: DateTimeFieldUpdateOperationsInput | Date | string
+    fechaCierre?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    fondoInicialCup?: IntFieldUpdateOperationsInput | number
+    fondoInicialUsd?: IntFieldUpdateOperationsInput | number
+    estado?: EnumEstadoTurnoFieldUpdateOperationsInput | $Enums.EstadoTurno
+    observaciones?: NullableStringFieldUpdateOperationsInput | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type TurnoPuntoVentaUncheckedUpdateManyInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    tenantId?: StringFieldUpdateOperationsInput | string
+    puntoDeVentaId?: StringFieldUpdateOperationsInput | string
+    empleadoId?: NullableStringFieldUpdateOperationsInput | string | null
+    tipo?: StringFieldUpdateOperationsInput | string
+    fechaApertura?: DateTimeFieldUpdateOperationsInput | Date | string
+    fechaCierre?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    fondoInicialCup?: IntFieldUpdateOperationsInput | number
+    fondoInicialUsd?: IntFieldUpdateOperationsInput | number
+    estado?: EnumEstadoTurnoFieldUpdateOperationsInput | $Enums.EstadoTurno
+    observaciones?: NullableStringFieldUpdateOperationsInput | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type ArqueoCajaCreateInput = {
+    id?: string
+    billetes1000Cup?: number
+    billetes500Cup?: number
+    billetes200Cup?: number
+    billetes100Cup?: number
+    billetes50Cup?: number
+    billetes20Cup?: number
+    monedasCup?: number
+    billetes100Usd?: number
+    billetes50Usd?: number
+    billetes20Usd?: number
+    billetes10Usd?: number
+    billetes5Usd?: number
+    billetes1Usd?: number
+    monedasUsd?: number
+    totalEfectivoCup?: number
+    totalEfectivoUsd?: number
+    totalTarjeta?: number
+    totalTransferencia?: number
+    totalCredito?: number
+    esperadoEfectivoCup?: number
+    esperadoEfectivoUsd?: number
+    esperadoTarjeta?: number
+    esperadoTransferencia?: number
+    esperadoCredito?: number
+    diferenciaCup?: number
+    diferenciaUsd?: number
+    observaciones?: string | null
+    contabilizado?: boolean
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    turno: TurnoPuntoVentaCreateNestedOneWithoutArqueoInput
+    puntoDeVenta: PuntoDeVentaCreateNestedOneWithoutArqueosInput
+    tenant: TenantCreateNestedOneWithoutArqueosCajaInput
+  }
+
+  export type ArqueoCajaUncheckedCreateInput = {
+    id?: string
+    turnoId: string
+    tenantId: string
+    puntoDeVentaId: string
+    billetes1000Cup?: number
+    billetes500Cup?: number
+    billetes200Cup?: number
+    billetes100Cup?: number
+    billetes50Cup?: number
+    billetes20Cup?: number
+    monedasCup?: number
+    billetes100Usd?: number
+    billetes50Usd?: number
+    billetes20Usd?: number
+    billetes10Usd?: number
+    billetes5Usd?: number
+    billetes1Usd?: number
+    monedasUsd?: number
+    totalEfectivoCup?: number
+    totalEfectivoUsd?: number
+    totalTarjeta?: number
+    totalTransferencia?: number
+    totalCredito?: number
+    esperadoEfectivoCup?: number
+    esperadoEfectivoUsd?: number
+    esperadoTarjeta?: number
+    esperadoTransferencia?: number
+    esperadoCredito?: number
+    diferenciaCup?: number
+    diferenciaUsd?: number
+    observaciones?: string | null
+    contabilizado?: boolean
+    createdAt?: Date | string
+    updatedAt?: Date | string
+  }
+
+  export type ArqueoCajaUpdateInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    billetes1000Cup?: IntFieldUpdateOperationsInput | number
+    billetes500Cup?: IntFieldUpdateOperationsInput | number
+    billetes200Cup?: IntFieldUpdateOperationsInput | number
+    billetes100Cup?: IntFieldUpdateOperationsInput | number
+    billetes50Cup?: IntFieldUpdateOperationsInput | number
+    billetes20Cup?: IntFieldUpdateOperationsInput | number
+    monedasCup?: IntFieldUpdateOperationsInput | number
+    billetes100Usd?: IntFieldUpdateOperationsInput | number
+    billetes50Usd?: IntFieldUpdateOperationsInput | number
+    billetes20Usd?: IntFieldUpdateOperationsInput | number
+    billetes10Usd?: IntFieldUpdateOperationsInput | number
+    billetes5Usd?: IntFieldUpdateOperationsInput | number
+    billetes1Usd?: IntFieldUpdateOperationsInput | number
+    monedasUsd?: IntFieldUpdateOperationsInput | number
+    totalEfectivoCup?: IntFieldUpdateOperationsInput | number
+    totalEfectivoUsd?: IntFieldUpdateOperationsInput | number
+    totalTarjeta?: IntFieldUpdateOperationsInput | number
+    totalTransferencia?: IntFieldUpdateOperationsInput | number
+    totalCredito?: IntFieldUpdateOperationsInput | number
+    esperadoEfectivoCup?: IntFieldUpdateOperationsInput | number
+    esperadoEfectivoUsd?: IntFieldUpdateOperationsInput | number
+    esperadoTarjeta?: IntFieldUpdateOperationsInput | number
+    esperadoTransferencia?: IntFieldUpdateOperationsInput | number
+    esperadoCredito?: IntFieldUpdateOperationsInput | number
+    diferenciaCup?: IntFieldUpdateOperationsInput | number
+    diferenciaUsd?: IntFieldUpdateOperationsInput | number
+    observaciones?: NullableStringFieldUpdateOperationsInput | string | null
+    contabilizado?: BoolFieldUpdateOperationsInput | boolean
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    turno?: TurnoPuntoVentaUpdateOneRequiredWithoutArqueoNestedInput
+    puntoDeVenta?: PuntoDeVentaUpdateOneRequiredWithoutArqueosNestedInput
+    tenant?: TenantUpdateOneRequiredWithoutArqueosCajaNestedInput
+  }
+
+  export type ArqueoCajaUncheckedUpdateInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    turnoId?: StringFieldUpdateOperationsInput | string
+    tenantId?: StringFieldUpdateOperationsInput | string
+    puntoDeVentaId?: StringFieldUpdateOperationsInput | string
+    billetes1000Cup?: IntFieldUpdateOperationsInput | number
+    billetes500Cup?: IntFieldUpdateOperationsInput | number
+    billetes200Cup?: IntFieldUpdateOperationsInput | number
+    billetes100Cup?: IntFieldUpdateOperationsInput | number
+    billetes50Cup?: IntFieldUpdateOperationsInput | number
+    billetes20Cup?: IntFieldUpdateOperationsInput | number
+    monedasCup?: IntFieldUpdateOperationsInput | number
+    billetes100Usd?: IntFieldUpdateOperationsInput | number
+    billetes50Usd?: IntFieldUpdateOperationsInput | number
+    billetes20Usd?: IntFieldUpdateOperationsInput | number
+    billetes10Usd?: IntFieldUpdateOperationsInput | number
+    billetes5Usd?: IntFieldUpdateOperationsInput | number
+    billetes1Usd?: IntFieldUpdateOperationsInput | number
+    monedasUsd?: IntFieldUpdateOperationsInput | number
+    totalEfectivoCup?: IntFieldUpdateOperationsInput | number
+    totalEfectivoUsd?: IntFieldUpdateOperationsInput | number
+    totalTarjeta?: IntFieldUpdateOperationsInput | number
+    totalTransferencia?: IntFieldUpdateOperationsInput | number
+    totalCredito?: IntFieldUpdateOperationsInput | number
+    esperadoEfectivoCup?: IntFieldUpdateOperationsInput | number
+    esperadoEfectivoUsd?: IntFieldUpdateOperationsInput | number
+    esperadoTarjeta?: IntFieldUpdateOperationsInput | number
+    esperadoTransferencia?: IntFieldUpdateOperationsInput | number
+    esperadoCredito?: IntFieldUpdateOperationsInput | number
+    diferenciaCup?: IntFieldUpdateOperationsInput | number
+    diferenciaUsd?: IntFieldUpdateOperationsInput | number
+    observaciones?: NullableStringFieldUpdateOperationsInput | string | null
+    contabilizado?: BoolFieldUpdateOperationsInput | boolean
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type ArqueoCajaCreateManyInput = {
+    id?: string
+    turnoId: string
+    tenantId: string
+    puntoDeVentaId: string
+    billetes1000Cup?: number
+    billetes500Cup?: number
+    billetes200Cup?: number
+    billetes100Cup?: number
+    billetes50Cup?: number
+    billetes20Cup?: number
+    monedasCup?: number
+    billetes100Usd?: number
+    billetes50Usd?: number
+    billetes20Usd?: number
+    billetes10Usd?: number
+    billetes5Usd?: number
+    billetes1Usd?: number
+    monedasUsd?: number
+    totalEfectivoCup?: number
+    totalEfectivoUsd?: number
+    totalTarjeta?: number
+    totalTransferencia?: number
+    totalCredito?: number
+    esperadoEfectivoCup?: number
+    esperadoEfectivoUsd?: number
+    esperadoTarjeta?: number
+    esperadoTransferencia?: number
+    esperadoCredito?: number
+    diferenciaCup?: number
+    diferenciaUsd?: number
+    observaciones?: string | null
+    contabilizado?: boolean
+    createdAt?: Date | string
+    updatedAt?: Date | string
+  }
+
+  export type ArqueoCajaUpdateManyMutationInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    billetes1000Cup?: IntFieldUpdateOperationsInput | number
+    billetes500Cup?: IntFieldUpdateOperationsInput | number
+    billetes200Cup?: IntFieldUpdateOperationsInput | number
+    billetes100Cup?: IntFieldUpdateOperationsInput | number
+    billetes50Cup?: IntFieldUpdateOperationsInput | number
+    billetes20Cup?: IntFieldUpdateOperationsInput | number
+    monedasCup?: IntFieldUpdateOperationsInput | number
+    billetes100Usd?: IntFieldUpdateOperationsInput | number
+    billetes50Usd?: IntFieldUpdateOperationsInput | number
+    billetes20Usd?: IntFieldUpdateOperationsInput | number
+    billetes10Usd?: IntFieldUpdateOperationsInput | number
+    billetes5Usd?: IntFieldUpdateOperationsInput | number
+    billetes1Usd?: IntFieldUpdateOperationsInput | number
+    monedasUsd?: IntFieldUpdateOperationsInput | number
+    totalEfectivoCup?: IntFieldUpdateOperationsInput | number
+    totalEfectivoUsd?: IntFieldUpdateOperationsInput | number
+    totalTarjeta?: IntFieldUpdateOperationsInput | number
+    totalTransferencia?: IntFieldUpdateOperationsInput | number
+    totalCredito?: IntFieldUpdateOperationsInput | number
+    esperadoEfectivoCup?: IntFieldUpdateOperationsInput | number
+    esperadoEfectivoUsd?: IntFieldUpdateOperationsInput | number
+    esperadoTarjeta?: IntFieldUpdateOperationsInput | number
+    esperadoTransferencia?: IntFieldUpdateOperationsInput | number
+    esperadoCredito?: IntFieldUpdateOperationsInput | number
+    diferenciaCup?: IntFieldUpdateOperationsInput | number
+    diferenciaUsd?: IntFieldUpdateOperationsInput | number
+    observaciones?: NullableStringFieldUpdateOperationsInput | string | null
+    contabilizado?: BoolFieldUpdateOperationsInput | boolean
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type ArqueoCajaUncheckedUpdateManyInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    turnoId?: StringFieldUpdateOperationsInput | string
+    tenantId?: StringFieldUpdateOperationsInput | string
+    puntoDeVentaId?: StringFieldUpdateOperationsInput | string
+    billetes1000Cup?: IntFieldUpdateOperationsInput | number
+    billetes500Cup?: IntFieldUpdateOperationsInput | number
+    billetes200Cup?: IntFieldUpdateOperationsInput | number
+    billetes100Cup?: IntFieldUpdateOperationsInput | number
+    billetes50Cup?: IntFieldUpdateOperationsInput | number
+    billetes20Cup?: IntFieldUpdateOperationsInput | number
+    monedasCup?: IntFieldUpdateOperationsInput | number
+    billetes100Usd?: IntFieldUpdateOperationsInput | number
+    billetes50Usd?: IntFieldUpdateOperationsInput | number
+    billetes20Usd?: IntFieldUpdateOperationsInput | number
+    billetes10Usd?: IntFieldUpdateOperationsInput | number
+    billetes5Usd?: IntFieldUpdateOperationsInput | number
+    billetes1Usd?: IntFieldUpdateOperationsInput | number
+    monedasUsd?: IntFieldUpdateOperationsInput | number
+    totalEfectivoCup?: IntFieldUpdateOperationsInput | number
+    totalEfectivoUsd?: IntFieldUpdateOperationsInput | number
+    totalTarjeta?: IntFieldUpdateOperationsInput | number
+    totalTransferencia?: IntFieldUpdateOperationsInput | number
+    totalCredito?: IntFieldUpdateOperationsInput | number
+    esperadoEfectivoCup?: IntFieldUpdateOperationsInput | number
+    esperadoEfectivoUsd?: IntFieldUpdateOperationsInput | number
+    esperadoTarjeta?: IntFieldUpdateOperationsInput | number
+    esperadoTransferencia?: IntFieldUpdateOperationsInput | number
+    esperadoCredito?: IntFieldUpdateOperationsInput | number
+    diferenciaCup?: IntFieldUpdateOperationsInput | number
+    diferenciaUsd?: IntFieldUpdateOperationsInput | number
+    observaciones?: NullableStringFieldUpdateOperationsInput | string | null
+    contabilizado?: BoolFieldUpdateOperationsInput | boolean
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
 
   export type ProductoCreateInput = {
@@ -153397,6 +159027,11 @@ export namespace Prisma {
     observaciones?: string | null
     esVentaUnica?: boolean
     ventaPadreId?: string | null
+    metodoPago?: $Enums.MetodoPagoVenta | null
+    montoEfectivo?: number | null
+    montoTarjeta?: number | null
+    montoTransferencia?: number | null
+    montoCredito?: number | null
     ordenReparacion?: OrdenReparacionCreateNestedOneWithoutVentaInput
     reconciliaciones?: ReconciliacionVentaCreateNestedManyWithoutVentaInput
     cliente?: ClienteCreateNestedOneWithoutVentaInput
@@ -153404,6 +159039,7 @@ export namespace Prisma {
     oferta?: OfertaCreateNestedOneWithoutVentaInput
     producto?: ProductoCreateNestedOneWithoutVentasInput
     puntoDeVenta: PuntoDeVentaCreateNestedOneWithoutVentasInput
+    turno?: TurnoPuntoVentaCreateNestedOneWithoutVentasInput
     factura?: FacturaCreateNestedOneWithoutVentaInput
     items?: VentaItemCreateNestedManyWithoutVentaInput
     tenant: TenantCreateNestedOneWithoutVentasInput
@@ -153426,6 +159062,12 @@ export namespace Prisma {
     esVentaUnica?: boolean
     ofertaId?: string | null
     ventaPadreId?: string | null
+    turnoId?: string | null
+    metodoPago?: $Enums.MetodoPagoVenta | null
+    montoEfectivo?: number | null
+    montoTarjeta?: number | null
+    montoTransferencia?: number | null
+    montoCredito?: number | null
     ordenReparacion?: OrdenReparacionUncheckedCreateNestedOneWithoutVentaInput
     reconciliaciones?: ReconciliacionVentaUncheckedCreateNestedManyWithoutVentaInput
     factura?: FacturaUncheckedCreateNestedOneWithoutVentaInput
@@ -153443,6 +159085,11 @@ export namespace Prisma {
     observaciones?: NullableStringFieldUpdateOperationsInput | string | null
     esVentaUnica?: BoolFieldUpdateOperationsInput | boolean
     ventaPadreId?: NullableStringFieldUpdateOperationsInput | string | null
+    metodoPago?: NullableEnumMetodoPagoVentaFieldUpdateOperationsInput | $Enums.MetodoPagoVenta | null
+    montoEfectivo?: NullableIntFieldUpdateOperationsInput | number | null
+    montoTarjeta?: NullableIntFieldUpdateOperationsInput | number | null
+    montoTransferencia?: NullableIntFieldUpdateOperationsInput | number | null
+    montoCredito?: NullableIntFieldUpdateOperationsInput | number | null
     ordenReparacion?: OrdenReparacionUpdateOneWithoutVentaNestedInput
     reconciliaciones?: ReconciliacionVentaUpdateManyWithoutVentaNestedInput
     cliente?: ClienteUpdateOneWithoutVentaNestedInput
@@ -153450,6 +159097,7 @@ export namespace Prisma {
     oferta?: OfertaUpdateOneWithoutVentaNestedInput
     producto?: ProductoUpdateOneWithoutVentasNestedInput
     puntoDeVenta?: PuntoDeVentaUpdateOneRequiredWithoutVentasNestedInput
+    turno?: TurnoPuntoVentaUpdateOneWithoutVentasNestedInput
     factura?: FacturaUpdateOneWithoutVentaNestedInput
     items?: VentaItemUpdateManyWithoutVentaNestedInput
     tenant?: TenantUpdateOneRequiredWithoutVentasNestedInput
@@ -153472,6 +159120,12 @@ export namespace Prisma {
     esVentaUnica?: BoolFieldUpdateOperationsInput | boolean
     ofertaId?: NullableStringFieldUpdateOperationsInput | string | null
     ventaPadreId?: NullableStringFieldUpdateOperationsInput | string | null
+    turnoId?: NullableStringFieldUpdateOperationsInput | string | null
+    metodoPago?: NullableEnumMetodoPagoVentaFieldUpdateOperationsInput | $Enums.MetodoPagoVenta | null
+    montoEfectivo?: NullableIntFieldUpdateOperationsInput | number | null
+    montoTarjeta?: NullableIntFieldUpdateOperationsInput | number | null
+    montoTransferencia?: NullableIntFieldUpdateOperationsInput | number | null
+    montoCredito?: NullableIntFieldUpdateOperationsInput | number | null
     ordenReparacion?: OrdenReparacionUncheckedUpdateOneWithoutVentaNestedInput
     reconciliaciones?: ReconciliacionVentaUncheckedUpdateManyWithoutVentaNestedInput
     factura?: FacturaUncheckedUpdateOneWithoutVentaNestedInput
@@ -153495,6 +159149,12 @@ export namespace Prisma {
     esVentaUnica?: boolean
     ofertaId?: string | null
     ventaPadreId?: string | null
+    turnoId?: string | null
+    metodoPago?: $Enums.MetodoPagoVenta | null
+    montoEfectivo?: number | null
+    montoTarjeta?: number | null
+    montoTransferencia?: number | null
+    montoCredito?: number | null
   }
 
   export type VentaUpdateManyMutationInput = {
@@ -153508,6 +159168,11 @@ export namespace Prisma {
     observaciones?: NullableStringFieldUpdateOperationsInput | string | null
     esVentaUnica?: BoolFieldUpdateOperationsInput | boolean
     ventaPadreId?: NullableStringFieldUpdateOperationsInput | string | null
+    metodoPago?: NullableEnumMetodoPagoVentaFieldUpdateOperationsInput | $Enums.MetodoPagoVenta | null
+    montoEfectivo?: NullableIntFieldUpdateOperationsInput | number | null
+    montoTarjeta?: NullableIntFieldUpdateOperationsInput | number | null
+    montoTransferencia?: NullableIntFieldUpdateOperationsInput | number | null
+    montoCredito?: NullableIntFieldUpdateOperationsInput | number | null
   }
 
   export type VentaUncheckedUpdateManyInput = {
@@ -153527,6 +159192,12 @@ export namespace Prisma {
     esVentaUnica?: BoolFieldUpdateOperationsInput | boolean
     ofertaId?: NullableStringFieldUpdateOperationsInput | string | null
     ventaPadreId?: NullableStringFieldUpdateOperationsInput | string | null
+    turnoId?: NullableStringFieldUpdateOperationsInput | string | null
+    metodoPago?: NullableEnumMetodoPagoVentaFieldUpdateOperationsInput | $Enums.MetodoPagoVenta | null
+    montoEfectivo?: NullableIntFieldUpdateOperationsInput | number | null
+    montoTarjeta?: NullableIntFieldUpdateOperationsInput | number | null
+    montoTransferencia?: NullableIntFieldUpdateOperationsInput | number | null
+    montoCredito?: NullableIntFieldUpdateOperationsInput | number | null
   }
 
   export type VentaItemCreateInput = {
@@ -154998,6 +160669,7 @@ export namespace Prisma {
     vacationAccruals?: VacationAccrualCreateNestedManyWithoutEmployeeInput
     vacationRequests?: VacationRequestCreateNestedManyWithoutEmployeeInput
     ventas?: VentaCreateNestedManyWithoutEmpleadoInput
+    turnosPos?: TurnoPuntoVentaCreateNestedManyWithoutEmpleadoInput
     tenant: TenantCreateNestedOneWithoutEmpleadosInput
   }
 
@@ -155023,6 +160695,7 @@ export namespace Prisma {
     vacationAccruals?: VacationAccrualUncheckedCreateNestedManyWithoutEmployeeInput
     vacationRequests?: VacationRequestUncheckedCreateNestedManyWithoutEmployeeInput
     ventas?: VentaUncheckedCreateNestedManyWithoutEmpleadoInput
+    turnosPos?: TurnoPuntoVentaUncheckedCreateNestedManyWithoutEmpleadoInput
   }
 
   export type EmpleadoUpdateInput = {
@@ -155046,6 +160719,7 @@ export namespace Prisma {
     vacationAccruals?: VacationAccrualUpdateManyWithoutEmployeeNestedInput
     vacationRequests?: VacationRequestUpdateManyWithoutEmployeeNestedInput
     ventas?: VentaUpdateManyWithoutEmpleadoNestedInput
+    turnosPos?: TurnoPuntoVentaUpdateManyWithoutEmpleadoNestedInput
     tenant?: TenantUpdateOneRequiredWithoutEmpleadosNestedInput
   }
 
@@ -155071,6 +160745,7 @@ export namespace Prisma {
     vacationAccruals?: VacationAccrualUncheckedUpdateManyWithoutEmployeeNestedInput
     vacationRequests?: VacationRequestUncheckedUpdateManyWithoutEmployeeNestedInput
     ventas?: VentaUncheckedUpdateManyWithoutEmpleadoNestedInput
+    turnosPos?: TurnoPuntoVentaUncheckedUpdateManyWithoutEmpleadoNestedInput
   }
 
   export type EmpleadoCreateManyInput = {
@@ -162002,6 +167677,7 @@ export namespace Prisma {
     estado?: $Enums.EstadoPeriodo
     aperturaAutomatica?: boolean
     categoria?: $Enums.CategoriaPeriodo
+    modoContable?: $Enums.ModoContable
     abiertoPorId?: string | null
     fechaApertura?: Date | string | null
     cerradoPor?: string | null
@@ -162037,6 +167713,7 @@ export namespace Prisma {
     periodoPadreId?: string | null
     aperturaAutomatica?: boolean
     categoria?: $Enums.CategoriaPeriodo
+    modoContable?: $Enums.ModoContable
     abiertoPorId?: string | null
     fechaApertura?: Date | string | null
     cerradoPor?: string | null
@@ -162068,6 +167745,7 @@ export namespace Prisma {
     estado?: EnumEstadoPeriodoFieldUpdateOperationsInput | $Enums.EstadoPeriodo
     aperturaAutomatica?: BoolFieldUpdateOperationsInput | boolean
     categoria?: EnumCategoriaPeriodoFieldUpdateOperationsInput | $Enums.CategoriaPeriodo
+    modoContable?: EnumModoContableFieldUpdateOperationsInput | $Enums.ModoContable
     abiertoPorId?: NullableStringFieldUpdateOperationsInput | string | null
     fechaApertura?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     cerradoPor?: NullableStringFieldUpdateOperationsInput | string | null
@@ -162103,6 +167781,7 @@ export namespace Prisma {
     periodoPadreId?: NullableStringFieldUpdateOperationsInput | string | null
     aperturaAutomatica?: BoolFieldUpdateOperationsInput | boolean
     categoria?: EnumCategoriaPeriodoFieldUpdateOperationsInput | $Enums.CategoriaPeriodo
+    modoContable?: EnumModoContableFieldUpdateOperationsInput | $Enums.ModoContable
     abiertoPorId?: NullableStringFieldUpdateOperationsInput | string | null
     fechaApertura?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     cerradoPor?: NullableStringFieldUpdateOperationsInput | string | null
@@ -162136,6 +167815,7 @@ export namespace Prisma {
     periodoPadreId?: string | null
     aperturaAutomatica?: boolean
     categoria?: $Enums.CategoriaPeriodo
+    modoContable?: $Enums.ModoContable
     abiertoPorId?: string | null
     fechaApertura?: Date | string | null
     cerradoPor?: string | null
@@ -162162,6 +167842,7 @@ export namespace Prisma {
     estado?: EnumEstadoPeriodoFieldUpdateOperationsInput | $Enums.EstadoPeriodo
     aperturaAutomatica?: BoolFieldUpdateOperationsInput | boolean
     categoria?: EnumCategoriaPeriodoFieldUpdateOperationsInput | $Enums.CategoriaPeriodo
+    modoContable?: EnumModoContableFieldUpdateOperationsInput | $Enums.ModoContable
     abiertoPorId?: NullableStringFieldUpdateOperationsInput | string | null
     fechaApertura?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     cerradoPor?: NullableStringFieldUpdateOperationsInput | string | null
@@ -162190,6 +167871,7 @@ export namespace Prisma {
     periodoPadreId?: NullableStringFieldUpdateOperationsInput | string | null
     aperturaAutomatica?: BoolFieldUpdateOperationsInput | boolean
     categoria?: EnumCategoriaPeriodoFieldUpdateOperationsInput | $Enums.CategoriaPeriodo
+    modoContable?: EnumModoContableFieldUpdateOperationsInput | $Enums.ModoContable
     abiertoPorId?: NullableStringFieldUpdateOperationsInput | string | null
     fechaApertura?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     cerradoPor?: NullableStringFieldUpdateOperationsInput | string | null
@@ -162755,6 +168437,69 @@ export namespace Prisma {
     createdBy?: StringFieldUpdateOperationsInput | string
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type PeriodoCacheCreateInput = {
+    cacheKey: string
+    tenantId: string
+    fecha: Date | string
+    resultadoJson: JsonNullValueInput | InputJsonValue
+    expiresAt: Date | string
+    createdAt?: Date | string
+  }
+
+  export type PeriodoCacheUncheckedCreateInput = {
+    cacheKey: string
+    tenantId: string
+    fecha: Date | string
+    resultadoJson: JsonNullValueInput | InputJsonValue
+    expiresAt: Date | string
+    createdAt?: Date | string
+  }
+
+  export type PeriodoCacheUpdateInput = {
+    cacheKey?: StringFieldUpdateOperationsInput | string
+    tenantId?: StringFieldUpdateOperationsInput | string
+    fecha?: DateTimeFieldUpdateOperationsInput | Date | string
+    resultadoJson?: JsonNullValueInput | InputJsonValue
+    expiresAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type PeriodoCacheUncheckedUpdateInput = {
+    cacheKey?: StringFieldUpdateOperationsInput | string
+    tenantId?: StringFieldUpdateOperationsInput | string
+    fecha?: DateTimeFieldUpdateOperationsInput | Date | string
+    resultadoJson?: JsonNullValueInput | InputJsonValue
+    expiresAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type PeriodoCacheCreateManyInput = {
+    cacheKey: string
+    tenantId: string
+    fecha: Date | string
+    resultadoJson: JsonNullValueInput | InputJsonValue
+    expiresAt: Date | string
+    createdAt?: Date | string
+  }
+
+  export type PeriodoCacheUpdateManyMutationInput = {
+    cacheKey?: StringFieldUpdateOperationsInput | string
+    tenantId?: StringFieldUpdateOperationsInput | string
+    fecha?: DateTimeFieldUpdateOperationsInput | Date | string
+    resultadoJson?: JsonNullValueInput | InputJsonValue
+    expiresAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type PeriodoCacheUncheckedUpdateManyInput = {
+    cacheKey?: StringFieldUpdateOperationsInput | string
+    tenantId?: StringFieldUpdateOperationsInput | string
+    fecha?: DateTimeFieldUpdateOperationsInput | Date | string
+    resultadoJson?: JsonNullValueInput | InputJsonValue
+    expiresAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
 
   export type StringFilter<$PrismaModel = never> = {
@@ -163717,6 +169462,18 @@ export namespace Prisma {
     none?: AuditoriaPeriodoWhereInput
   }
 
+  export type TurnoPuntoVentaListRelationFilter = {
+    every?: TurnoPuntoVentaWhereInput
+    some?: TurnoPuntoVentaWhereInput
+    none?: TurnoPuntoVentaWhereInput
+  }
+
+  export type ArqueoCajaListRelationFilter = {
+    every?: ArqueoCajaWhereInput
+    some?: ArqueoCajaWhereInput
+    none?: ArqueoCajaWhereInput
+  }
+
   export type BackupLogListRelationFilter = {
     every?: BackupLogWhereInput
     some?: BackupLogWhereInput
@@ -163882,6 +169639,14 @@ export namespace Prisma {
   }
 
   export type AuditoriaPeriodoOrderByRelationAggregateInput = {
+    _count?: SortOrder
+  }
+
+  export type TurnoPuntoVentaOrderByRelationAggregateInput = {
+    _count?: SortOrder
+  }
+
+  export type ArqueoCajaOrderByRelationAggregateInput = {
     _count?: SortOrder
   }
 
@@ -164210,6 +169975,11 @@ export namespace Prisma {
     isNot?: ListaPrecioWhereInput | null
   }
 
+  export type AlmacenNullableScalarRelationFilter = {
+    is?: AlmacenWhereInput | null
+    isNot?: AlmacenWhereInput | null
+  }
+
   export type PuntoDeVentaCountOrderByAggregateInput = {
     pvId?: SortOrder
     tenantId?: SortOrder
@@ -164218,6 +169988,9 @@ export namespace Prisma {
     createdAt?: SortOrder
     updatedAt?: SortOrder
     listaPrecioId?: SortOrder
+    tipoCaja?: SortOrder
+    almacenId?: SortOrder
+    cuentaContableId?: SortOrder
   }
 
   export type PuntoDeVentaMaxOrderByAggregateInput = {
@@ -164228,6 +170001,9 @@ export namespace Prisma {
     createdAt?: SortOrder
     updatedAt?: SortOrder
     listaPrecioId?: SortOrder
+    tipoCaja?: SortOrder
+    almacenId?: SortOrder
+    cuentaContableId?: SortOrder
   }
 
   export type PuntoDeVentaMinOrderByAggregateInput = {
@@ -164238,6 +170014,273 @@ export namespace Prisma {
     createdAt?: SortOrder
     updatedAt?: SortOrder
     listaPrecioId?: SortOrder
+    tipoCaja?: SortOrder
+    almacenId?: SortOrder
+    cuentaContableId?: SortOrder
+  }
+
+  export type EnumEstadoTurnoFilter<$PrismaModel = never> = {
+    equals?: $Enums.EstadoTurno | EnumEstadoTurnoFieldRefInput<$PrismaModel>
+    in?: $Enums.EstadoTurno[] | ListEnumEstadoTurnoFieldRefInput<$PrismaModel>
+    notIn?: $Enums.EstadoTurno[] | ListEnumEstadoTurnoFieldRefInput<$PrismaModel>
+    not?: NestedEnumEstadoTurnoFilter<$PrismaModel> | $Enums.EstadoTurno
+  }
+
+  export type PuntoDeVentaScalarRelationFilter = {
+    is?: PuntoDeVentaWhereInput
+    isNot?: PuntoDeVentaWhereInput
+  }
+
+  export type EmpleadoNullableScalarRelationFilter = {
+    is?: EmpleadoWhereInput | null
+    isNot?: EmpleadoWhereInput | null
+  }
+
+  export type ArqueoCajaNullableScalarRelationFilter = {
+    is?: ArqueoCajaWhereInput | null
+    isNot?: ArqueoCajaWhereInput | null
+  }
+
+  export type TurnoPuntoVentaCountOrderByAggregateInput = {
+    id?: SortOrder
+    tenantId?: SortOrder
+    puntoDeVentaId?: SortOrder
+    empleadoId?: SortOrder
+    tipo?: SortOrder
+    fechaApertura?: SortOrder
+    fechaCierre?: SortOrder
+    fondoInicialCup?: SortOrder
+    fondoInicialUsd?: SortOrder
+    estado?: SortOrder
+    observaciones?: SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+  }
+
+  export type TurnoPuntoVentaAvgOrderByAggregateInput = {
+    fondoInicialCup?: SortOrder
+    fondoInicialUsd?: SortOrder
+  }
+
+  export type TurnoPuntoVentaMaxOrderByAggregateInput = {
+    id?: SortOrder
+    tenantId?: SortOrder
+    puntoDeVentaId?: SortOrder
+    empleadoId?: SortOrder
+    tipo?: SortOrder
+    fechaApertura?: SortOrder
+    fechaCierre?: SortOrder
+    fondoInicialCup?: SortOrder
+    fondoInicialUsd?: SortOrder
+    estado?: SortOrder
+    observaciones?: SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+  }
+
+  export type TurnoPuntoVentaMinOrderByAggregateInput = {
+    id?: SortOrder
+    tenantId?: SortOrder
+    puntoDeVentaId?: SortOrder
+    empleadoId?: SortOrder
+    tipo?: SortOrder
+    fechaApertura?: SortOrder
+    fechaCierre?: SortOrder
+    fondoInicialCup?: SortOrder
+    fondoInicialUsd?: SortOrder
+    estado?: SortOrder
+    observaciones?: SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+  }
+
+  export type TurnoPuntoVentaSumOrderByAggregateInput = {
+    fondoInicialCup?: SortOrder
+    fondoInicialUsd?: SortOrder
+  }
+
+  export type EnumEstadoTurnoWithAggregatesFilter<$PrismaModel = never> = {
+    equals?: $Enums.EstadoTurno | EnumEstadoTurnoFieldRefInput<$PrismaModel>
+    in?: $Enums.EstadoTurno[] | ListEnumEstadoTurnoFieldRefInput<$PrismaModel>
+    notIn?: $Enums.EstadoTurno[] | ListEnumEstadoTurnoFieldRefInput<$PrismaModel>
+    not?: NestedEnumEstadoTurnoWithAggregatesFilter<$PrismaModel> | $Enums.EstadoTurno
+    _count?: NestedIntFilter<$PrismaModel>
+    _min?: NestedEnumEstadoTurnoFilter<$PrismaModel>
+    _max?: NestedEnumEstadoTurnoFilter<$PrismaModel>
+  }
+
+  export type TurnoPuntoVentaScalarRelationFilter = {
+    is?: TurnoPuntoVentaWhereInput
+    isNot?: TurnoPuntoVentaWhereInput
+  }
+
+  export type ArqueoCajaCountOrderByAggregateInput = {
+    id?: SortOrder
+    turnoId?: SortOrder
+    tenantId?: SortOrder
+    puntoDeVentaId?: SortOrder
+    billetes1000Cup?: SortOrder
+    billetes500Cup?: SortOrder
+    billetes200Cup?: SortOrder
+    billetes100Cup?: SortOrder
+    billetes50Cup?: SortOrder
+    billetes20Cup?: SortOrder
+    monedasCup?: SortOrder
+    billetes100Usd?: SortOrder
+    billetes50Usd?: SortOrder
+    billetes20Usd?: SortOrder
+    billetes10Usd?: SortOrder
+    billetes5Usd?: SortOrder
+    billetes1Usd?: SortOrder
+    monedasUsd?: SortOrder
+    totalEfectivoCup?: SortOrder
+    totalEfectivoUsd?: SortOrder
+    totalTarjeta?: SortOrder
+    totalTransferencia?: SortOrder
+    totalCredito?: SortOrder
+    esperadoEfectivoCup?: SortOrder
+    esperadoEfectivoUsd?: SortOrder
+    esperadoTarjeta?: SortOrder
+    esperadoTransferencia?: SortOrder
+    esperadoCredito?: SortOrder
+    diferenciaCup?: SortOrder
+    diferenciaUsd?: SortOrder
+    observaciones?: SortOrder
+    contabilizado?: SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+  }
+
+  export type ArqueoCajaAvgOrderByAggregateInput = {
+    billetes1000Cup?: SortOrder
+    billetes500Cup?: SortOrder
+    billetes200Cup?: SortOrder
+    billetes100Cup?: SortOrder
+    billetes50Cup?: SortOrder
+    billetes20Cup?: SortOrder
+    monedasCup?: SortOrder
+    billetes100Usd?: SortOrder
+    billetes50Usd?: SortOrder
+    billetes20Usd?: SortOrder
+    billetes10Usd?: SortOrder
+    billetes5Usd?: SortOrder
+    billetes1Usd?: SortOrder
+    monedasUsd?: SortOrder
+    totalEfectivoCup?: SortOrder
+    totalEfectivoUsd?: SortOrder
+    totalTarjeta?: SortOrder
+    totalTransferencia?: SortOrder
+    totalCredito?: SortOrder
+    esperadoEfectivoCup?: SortOrder
+    esperadoEfectivoUsd?: SortOrder
+    esperadoTarjeta?: SortOrder
+    esperadoTransferencia?: SortOrder
+    esperadoCredito?: SortOrder
+    diferenciaCup?: SortOrder
+    diferenciaUsd?: SortOrder
+  }
+
+  export type ArqueoCajaMaxOrderByAggregateInput = {
+    id?: SortOrder
+    turnoId?: SortOrder
+    tenantId?: SortOrder
+    puntoDeVentaId?: SortOrder
+    billetes1000Cup?: SortOrder
+    billetes500Cup?: SortOrder
+    billetes200Cup?: SortOrder
+    billetes100Cup?: SortOrder
+    billetes50Cup?: SortOrder
+    billetes20Cup?: SortOrder
+    monedasCup?: SortOrder
+    billetes100Usd?: SortOrder
+    billetes50Usd?: SortOrder
+    billetes20Usd?: SortOrder
+    billetes10Usd?: SortOrder
+    billetes5Usd?: SortOrder
+    billetes1Usd?: SortOrder
+    monedasUsd?: SortOrder
+    totalEfectivoCup?: SortOrder
+    totalEfectivoUsd?: SortOrder
+    totalTarjeta?: SortOrder
+    totalTransferencia?: SortOrder
+    totalCredito?: SortOrder
+    esperadoEfectivoCup?: SortOrder
+    esperadoEfectivoUsd?: SortOrder
+    esperadoTarjeta?: SortOrder
+    esperadoTransferencia?: SortOrder
+    esperadoCredito?: SortOrder
+    diferenciaCup?: SortOrder
+    diferenciaUsd?: SortOrder
+    observaciones?: SortOrder
+    contabilizado?: SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+  }
+
+  export type ArqueoCajaMinOrderByAggregateInput = {
+    id?: SortOrder
+    turnoId?: SortOrder
+    tenantId?: SortOrder
+    puntoDeVentaId?: SortOrder
+    billetes1000Cup?: SortOrder
+    billetes500Cup?: SortOrder
+    billetes200Cup?: SortOrder
+    billetes100Cup?: SortOrder
+    billetes50Cup?: SortOrder
+    billetes20Cup?: SortOrder
+    monedasCup?: SortOrder
+    billetes100Usd?: SortOrder
+    billetes50Usd?: SortOrder
+    billetes20Usd?: SortOrder
+    billetes10Usd?: SortOrder
+    billetes5Usd?: SortOrder
+    billetes1Usd?: SortOrder
+    monedasUsd?: SortOrder
+    totalEfectivoCup?: SortOrder
+    totalEfectivoUsd?: SortOrder
+    totalTarjeta?: SortOrder
+    totalTransferencia?: SortOrder
+    totalCredito?: SortOrder
+    esperadoEfectivoCup?: SortOrder
+    esperadoEfectivoUsd?: SortOrder
+    esperadoTarjeta?: SortOrder
+    esperadoTransferencia?: SortOrder
+    esperadoCredito?: SortOrder
+    diferenciaCup?: SortOrder
+    diferenciaUsd?: SortOrder
+    observaciones?: SortOrder
+    contabilizado?: SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+  }
+
+  export type ArqueoCajaSumOrderByAggregateInput = {
+    billetes1000Cup?: SortOrder
+    billetes500Cup?: SortOrder
+    billetes200Cup?: SortOrder
+    billetes100Cup?: SortOrder
+    billetes50Cup?: SortOrder
+    billetes20Cup?: SortOrder
+    monedasCup?: SortOrder
+    billetes100Usd?: SortOrder
+    billetes50Usd?: SortOrder
+    billetes20Usd?: SortOrder
+    billetes10Usd?: SortOrder
+    billetes5Usd?: SortOrder
+    billetes1Usd?: SortOrder
+    monedasUsd?: SortOrder
+    totalEfectivoCup?: SortOrder
+    totalEfectivoUsd?: SortOrder
+    totalTarjeta?: SortOrder
+    totalTransferencia?: SortOrder
+    totalCredito?: SortOrder
+    esperadoEfectivoCup?: SortOrder
+    esperadoEfectivoUsd?: SortOrder
+    esperadoTarjeta?: SortOrder
+    esperadoTransferencia?: SortOrder
+    esperadoCredito?: SortOrder
+    diferenciaCup?: SortOrder
+    diferenciaUsd?: SortOrder
   }
 
   export type StringNullableListFilter<$PrismaModel = never> = {
@@ -164494,6 +170537,13 @@ export namespace Prisma {
     cantidadDisponible?: SortOrder
   }
 
+  export type EnumMetodoPagoVentaNullableFilter<$PrismaModel = never> = {
+    equals?: $Enums.MetodoPagoVenta | EnumMetodoPagoVentaFieldRefInput<$PrismaModel> | null
+    in?: $Enums.MetodoPagoVenta[] | ListEnumMetodoPagoVentaFieldRefInput<$PrismaModel> | null
+    notIn?: $Enums.MetodoPagoVenta[] | ListEnumMetodoPagoVentaFieldRefInput<$PrismaModel> | null
+    not?: NestedEnumMetodoPagoVentaNullableFilter<$PrismaModel> | $Enums.MetodoPagoVenta | null
+  }
+
   export type OrdenReparacionNullableScalarRelationFilter = {
     is?: OrdenReparacionWhereInput | null
     isNot?: OrdenReparacionWhereInput | null
@@ -164504,19 +170554,14 @@ export namespace Prisma {
     isNot?: ClienteWhereInput | null
   }
 
-  export type EmpleadoNullableScalarRelationFilter = {
-    is?: EmpleadoWhereInput | null
-    isNot?: EmpleadoWhereInput | null
-  }
-
   export type OfertaNullableScalarRelationFilter = {
     is?: OfertaWhereInput | null
     isNot?: OfertaWhereInput | null
   }
 
-  export type PuntoDeVentaScalarRelationFilter = {
-    is?: PuntoDeVentaWhereInput
-    isNot?: PuntoDeVentaWhereInput
+  export type TurnoPuntoVentaNullableScalarRelationFilter = {
+    is?: TurnoPuntoVentaWhereInput | null
+    isNot?: TurnoPuntoVentaWhereInput | null
   }
 
   export type FacturaNullableScalarRelationFilter = {
@@ -164541,12 +170586,22 @@ export namespace Prisma {
     esVentaUnica?: SortOrder
     ofertaId?: SortOrder
     ventaPadreId?: SortOrder
+    turnoId?: SortOrder
+    metodoPago?: SortOrder
+    montoEfectivo?: SortOrder
+    montoTarjeta?: SortOrder
+    montoTransferencia?: SortOrder
+    montoCredito?: SortOrder
   }
 
   export type VentaAvgOrderByAggregateInput = {
     cantidad?: SortOrder
     total?: SortOrder
     descuento?: SortOrder
+    montoEfectivo?: SortOrder
+    montoTarjeta?: SortOrder
+    montoTransferencia?: SortOrder
+    montoCredito?: SortOrder
   }
 
   export type VentaMaxOrderByAggregateInput = {
@@ -164566,6 +170621,12 @@ export namespace Prisma {
     esVentaUnica?: SortOrder
     ofertaId?: SortOrder
     ventaPadreId?: SortOrder
+    turnoId?: SortOrder
+    metodoPago?: SortOrder
+    montoEfectivo?: SortOrder
+    montoTarjeta?: SortOrder
+    montoTransferencia?: SortOrder
+    montoCredito?: SortOrder
   }
 
   export type VentaMinOrderByAggregateInput = {
@@ -164585,12 +170646,32 @@ export namespace Prisma {
     esVentaUnica?: SortOrder
     ofertaId?: SortOrder
     ventaPadreId?: SortOrder
+    turnoId?: SortOrder
+    metodoPago?: SortOrder
+    montoEfectivo?: SortOrder
+    montoTarjeta?: SortOrder
+    montoTransferencia?: SortOrder
+    montoCredito?: SortOrder
   }
 
   export type VentaSumOrderByAggregateInput = {
     cantidad?: SortOrder
     total?: SortOrder
     descuento?: SortOrder
+    montoEfectivo?: SortOrder
+    montoTarjeta?: SortOrder
+    montoTransferencia?: SortOrder
+    montoCredito?: SortOrder
+  }
+
+  export type EnumMetodoPagoVentaNullableWithAggregatesFilter<$PrismaModel = never> = {
+    equals?: $Enums.MetodoPagoVenta | EnumMetodoPagoVentaFieldRefInput<$PrismaModel> | null
+    in?: $Enums.MetodoPagoVenta[] | ListEnumMetodoPagoVentaFieldRefInput<$PrismaModel> | null
+    notIn?: $Enums.MetodoPagoVenta[] | ListEnumMetodoPagoVentaFieldRefInput<$PrismaModel> | null
+    not?: NestedEnumMetodoPagoVentaNullableWithAggregatesFilter<$PrismaModel> | $Enums.MetodoPagoVenta | null
+    _count?: NestedIntNullableFilter<$PrismaModel>
+    _min?: NestedEnumMetodoPagoVentaNullableFilter<$PrismaModel>
+    _max?: NestedEnumMetodoPagoVentaNullableFilter<$PrismaModel>
   }
 
   export type VentaScalarRelationFilter = {
@@ -164684,11 +170765,6 @@ export namespace Prisma {
   export type MermaSumOrderByAggregateInput = {
     cantidad?: SortOrder
     costoTotal?: SortOrder
-  }
-
-  export type AlmacenNullableScalarRelationFilter = {
-    is?: AlmacenWhereInput | null
-    isNot?: AlmacenWhereInput | null
   }
 
   export type UserNullableScalarRelationFilter = {
@@ -169660,6 +175736,13 @@ export namespace Prisma {
     not?: NestedEnumCategoriaPeriodoFilter<$PrismaModel> | $Enums.CategoriaPeriodo
   }
 
+  export type EnumModoContableFilter<$PrismaModel = never> = {
+    equals?: $Enums.ModoContable | EnumModoContableFieldRefInput<$PrismaModel>
+    in?: $Enums.ModoContable[] | ListEnumModoContableFieldRefInput<$PrismaModel>
+    notIn?: $Enums.ModoContable[] | ListEnumModoContableFieldRefInput<$PrismaModel>
+    not?: NestedEnumModoContableFilter<$PrismaModel> | $Enums.ModoContable
+  }
+
   export type SaldoSnapshotListRelationFilter = {
     every?: SaldoSnapshotWhereInput
     some?: SaldoSnapshotWhereInput
@@ -169706,6 +175789,7 @@ export namespace Prisma {
     periodoPadreId?: SortOrder
     aperturaAutomatica?: SortOrder
     categoria?: SortOrder
+    modoContable?: SortOrder
     abiertoPorId?: SortOrder
     fechaApertura?: SortOrder
     cerradoPor?: SortOrder
@@ -169734,6 +175818,7 @@ export namespace Prisma {
     periodoPadreId?: SortOrder
     aperturaAutomatica?: SortOrder
     categoria?: SortOrder
+    modoContable?: SortOrder
     abiertoPorId?: SortOrder
     fechaApertura?: SortOrder
     cerradoPor?: SortOrder
@@ -169761,6 +175846,7 @@ export namespace Prisma {
     periodoPadreId?: SortOrder
     aperturaAutomatica?: SortOrder
     categoria?: SortOrder
+    modoContable?: SortOrder
     abiertoPorId?: SortOrder
     fechaApertura?: SortOrder
     cerradoPor?: SortOrder
@@ -169805,6 +175891,16 @@ export namespace Prisma {
     _count?: NestedIntFilter<$PrismaModel>
     _min?: NestedEnumCategoriaPeriodoFilter<$PrismaModel>
     _max?: NestedEnumCategoriaPeriodoFilter<$PrismaModel>
+  }
+
+  export type EnumModoContableWithAggregatesFilter<$PrismaModel = never> = {
+    equals?: $Enums.ModoContable | EnumModoContableFieldRefInput<$PrismaModel>
+    in?: $Enums.ModoContable[] | ListEnumModoContableFieldRefInput<$PrismaModel>
+    notIn?: $Enums.ModoContable[] | ListEnumModoContableFieldRefInput<$PrismaModel>
+    not?: NestedEnumModoContableWithAggregatesFilter<$PrismaModel> | $Enums.ModoContable
+    _count?: NestedIntFilter<$PrismaModel>
+    _min?: NestedEnumModoContableFilter<$PrismaModel>
+    _max?: NestedEnumModoContableFilter<$PrismaModel>
   }
 
   export type PeriodoContableScalarRelationFilter = {
@@ -170146,6 +176242,31 @@ export namespace Prisma {
 
   export type BackupPlanSumOrderByAggregateInput = {
     retention?: SortOrder
+  }
+
+  export type PeriodoCacheCountOrderByAggregateInput = {
+    cacheKey?: SortOrder
+    tenantId?: SortOrder
+    fecha?: SortOrder
+    resultadoJson?: SortOrder
+    expiresAt?: SortOrder
+    createdAt?: SortOrder
+  }
+
+  export type PeriodoCacheMaxOrderByAggregateInput = {
+    cacheKey?: SortOrder
+    tenantId?: SortOrder
+    fecha?: SortOrder
+    expiresAt?: SortOrder
+    createdAt?: SortOrder
+  }
+
+  export type PeriodoCacheMinOrderByAggregateInput = {
+    cacheKey?: SortOrder
+    tenantId?: SortOrder
+    fecha?: SortOrder
+    expiresAt?: SortOrder
+    createdAt?: SortOrder
   }
 
   export type CategoriaCreateNestedOneWithoutSubcategoriasInput = {
@@ -171660,6 +177781,20 @@ export namespace Prisma {
     connect?: AuditoriaPeriodoWhereUniqueInput | AuditoriaPeriodoWhereUniqueInput[]
   }
 
+  export type TurnoPuntoVentaCreateNestedManyWithoutTenantInput = {
+    create?: XOR<TurnoPuntoVentaCreateWithoutTenantInput, TurnoPuntoVentaUncheckedCreateWithoutTenantInput> | TurnoPuntoVentaCreateWithoutTenantInput[] | TurnoPuntoVentaUncheckedCreateWithoutTenantInput[]
+    connectOrCreate?: TurnoPuntoVentaCreateOrConnectWithoutTenantInput | TurnoPuntoVentaCreateOrConnectWithoutTenantInput[]
+    createMany?: TurnoPuntoVentaCreateManyTenantInputEnvelope
+    connect?: TurnoPuntoVentaWhereUniqueInput | TurnoPuntoVentaWhereUniqueInput[]
+  }
+
+  export type ArqueoCajaCreateNestedManyWithoutTenantInput = {
+    create?: XOR<ArqueoCajaCreateWithoutTenantInput, ArqueoCajaUncheckedCreateWithoutTenantInput> | ArqueoCajaCreateWithoutTenantInput[] | ArqueoCajaUncheckedCreateWithoutTenantInput[]
+    connectOrCreate?: ArqueoCajaCreateOrConnectWithoutTenantInput | ArqueoCajaCreateOrConnectWithoutTenantInput[]
+    createMany?: ArqueoCajaCreateManyTenantInputEnvelope
+    connect?: ArqueoCajaWhereUniqueInput | ArqueoCajaWhereUniqueInput[]
+  }
+
   export type BackupLogCreateNestedManyWithoutTenantInput = {
     create?: XOR<BackupLogCreateWithoutTenantInput, BackupLogUncheckedCreateWithoutTenantInput> | BackupLogCreateWithoutTenantInput[] | BackupLogUncheckedCreateWithoutTenantInput[]
     connectOrCreate?: BackupLogCreateOrConnectWithoutTenantInput | BackupLogCreateOrConnectWithoutTenantInput[]
@@ -172070,6 +178205,20 @@ export namespace Prisma {
     connectOrCreate?: AuditoriaPeriodoCreateOrConnectWithoutTenantInput | AuditoriaPeriodoCreateOrConnectWithoutTenantInput[]
     createMany?: AuditoriaPeriodoCreateManyTenantInputEnvelope
     connect?: AuditoriaPeriodoWhereUniqueInput | AuditoriaPeriodoWhereUniqueInput[]
+  }
+
+  export type TurnoPuntoVentaUncheckedCreateNestedManyWithoutTenantInput = {
+    create?: XOR<TurnoPuntoVentaCreateWithoutTenantInput, TurnoPuntoVentaUncheckedCreateWithoutTenantInput> | TurnoPuntoVentaCreateWithoutTenantInput[] | TurnoPuntoVentaUncheckedCreateWithoutTenantInput[]
+    connectOrCreate?: TurnoPuntoVentaCreateOrConnectWithoutTenantInput | TurnoPuntoVentaCreateOrConnectWithoutTenantInput[]
+    createMany?: TurnoPuntoVentaCreateManyTenantInputEnvelope
+    connect?: TurnoPuntoVentaWhereUniqueInput | TurnoPuntoVentaWhereUniqueInput[]
+  }
+
+  export type ArqueoCajaUncheckedCreateNestedManyWithoutTenantInput = {
+    create?: XOR<ArqueoCajaCreateWithoutTenantInput, ArqueoCajaUncheckedCreateWithoutTenantInput> | ArqueoCajaCreateWithoutTenantInput[] | ArqueoCajaUncheckedCreateWithoutTenantInput[]
+    connectOrCreate?: ArqueoCajaCreateOrConnectWithoutTenantInput | ArqueoCajaCreateOrConnectWithoutTenantInput[]
+    createMany?: ArqueoCajaCreateManyTenantInputEnvelope
+    connect?: ArqueoCajaWhereUniqueInput | ArqueoCajaWhereUniqueInput[]
   }
 
   export type BackupLogUncheckedCreateNestedManyWithoutTenantInput = {
@@ -172878,6 +179027,34 @@ export namespace Prisma {
     update?: AuditoriaPeriodoUpdateWithWhereUniqueWithoutTenantInput | AuditoriaPeriodoUpdateWithWhereUniqueWithoutTenantInput[]
     updateMany?: AuditoriaPeriodoUpdateManyWithWhereWithoutTenantInput | AuditoriaPeriodoUpdateManyWithWhereWithoutTenantInput[]
     deleteMany?: AuditoriaPeriodoScalarWhereInput | AuditoriaPeriodoScalarWhereInput[]
+  }
+
+  export type TurnoPuntoVentaUpdateManyWithoutTenantNestedInput = {
+    create?: XOR<TurnoPuntoVentaCreateWithoutTenantInput, TurnoPuntoVentaUncheckedCreateWithoutTenantInput> | TurnoPuntoVentaCreateWithoutTenantInput[] | TurnoPuntoVentaUncheckedCreateWithoutTenantInput[]
+    connectOrCreate?: TurnoPuntoVentaCreateOrConnectWithoutTenantInput | TurnoPuntoVentaCreateOrConnectWithoutTenantInput[]
+    upsert?: TurnoPuntoVentaUpsertWithWhereUniqueWithoutTenantInput | TurnoPuntoVentaUpsertWithWhereUniqueWithoutTenantInput[]
+    createMany?: TurnoPuntoVentaCreateManyTenantInputEnvelope
+    set?: TurnoPuntoVentaWhereUniqueInput | TurnoPuntoVentaWhereUniqueInput[]
+    disconnect?: TurnoPuntoVentaWhereUniqueInput | TurnoPuntoVentaWhereUniqueInput[]
+    delete?: TurnoPuntoVentaWhereUniqueInput | TurnoPuntoVentaWhereUniqueInput[]
+    connect?: TurnoPuntoVentaWhereUniqueInput | TurnoPuntoVentaWhereUniqueInput[]
+    update?: TurnoPuntoVentaUpdateWithWhereUniqueWithoutTenantInput | TurnoPuntoVentaUpdateWithWhereUniqueWithoutTenantInput[]
+    updateMany?: TurnoPuntoVentaUpdateManyWithWhereWithoutTenantInput | TurnoPuntoVentaUpdateManyWithWhereWithoutTenantInput[]
+    deleteMany?: TurnoPuntoVentaScalarWhereInput | TurnoPuntoVentaScalarWhereInput[]
+  }
+
+  export type ArqueoCajaUpdateManyWithoutTenantNestedInput = {
+    create?: XOR<ArqueoCajaCreateWithoutTenantInput, ArqueoCajaUncheckedCreateWithoutTenantInput> | ArqueoCajaCreateWithoutTenantInput[] | ArqueoCajaUncheckedCreateWithoutTenantInput[]
+    connectOrCreate?: ArqueoCajaCreateOrConnectWithoutTenantInput | ArqueoCajaCreateOrConnectWithoutTenantInput[]
+    upsert?: ArqueoCajaUpsertWithWhereUniqueWithoutTenantInput | ArqueoCajaUpsertWithWhereUniqueWithoutTenantInput[]
+    createMany?: ArqueoCajaCreateManyTenantInputEnvelope
+    set?: ArqueoCajaWhereUniqueInput | ArqueoCajaWhereUniqueInput[]
+    disconnect?: ArqueoCajaWhereUniqueInput | ArqueoCajaWhereUniqueInput[]
+    delete?: ArqueoCajaWhereUniqueInput | ArqueoCajaWhereUniqueInput[]
+    connect?: ArqueoCajaWhereUniqueInput | ArqueoCajaWhereUniqueInput[]
+    update?: ArqueoCajaUpdateWithWhereUniqueWithoutTenantInput | ArqueoCajaUpdateWithWhereUniqueWithoutTenantInput[]
+    updateMany?: ArqueoCajaUpdateManyWithWhereWithoutTenantInput | ArqueoCajaUpdateManyWithWhereWithoutTenantInput[]
+    deleteMany?: ArqueoCajaScalarWhereInput | ArqueoCajaScalarWhereInput[]
   }
 
   export type BackupLogUpdateManyWithoutTenantNestedInput = {
@@ -173702,6 +179879,34 @@ export namespace Prisma {
     deleteMany?: AuditoriaPeriodoScalarWhereInput | AuditoriaPeriodoScalarWhereInput[]
   }
 
+  export type TurnoPuntoVentaUncheckedUpdateManyWithoutTenantNestedInput = {
+    create?: XOR<TurnoPuntoVentaCreateWithoutTenantInput, TurnoPuntoVentaUncheckedCreateWithoutTenantInput> | TurnoPuntoVentaCreateWithoutTenantInput[] | TurnoPuntoVentaUncheckedCreateWithoutTenantInput[]
+    connectOrCreate?: TurnoPuntoVentaCreateOrConnectWithoutTenantInput | TurnoPuntoVentaCreateOrConnectWithoutTenantInput[]
+    upsert?: TurnoPuntoVentaUpsertWithWhereUniqueWithoutTenantInput | TurnoPuntoVentaUpsertWithWhereUniqueWithoutTenantInput[]
+    createMany?: TurnoPuntoVentaCreateManyTenantInputEnvelope
+    set?: TurnoPuntoVentaWhereUniqueInput | TurnoPuntoVentaWhereUniqueInput[]
+    disconnect?: TurnoPuntoVentaWhereUniqueInput | TurnoPuntoVentaWhereUniqueInput[]
+    delete?: TurnoPuntoVentaWhereUniqueInput | TurnoPuntoVentaWhereUniqueInput[]
+    connect?: TurnoPuntoVentaWhereUniqueInput | TurnoPuntoVentaWhereUniqueInput[]
+    update?: TurnoPuntoVentaUpdateWithWhereUniqueWithoutTenantInput | TurnoPuntoVentaUpdateWithWhereUniqueWithoutTenantInput[]
+    updateMany?: TurnoPuntoVentaUpdateManyWithWhereWithoutTenantInput | TurnoPuntoVentaUpdateManyWithWhereWithoutTenantInput[]
+    deleteMany?: TurnoPuntoVentaScalarWhereInput | TurnoPuntoVentaScalarWhereInput[]
+  }
+
+  export type ArqueoCajaUncheckedUpdateManyWithoutTenantNestedInput = {
+    create?: XOR<ArqueoCajaCreateWithoutTenantInput, ArqueoCajaUncheckedCreateWithoutTenantInput> | ArqueoCajaCreateWithoutTenantInput[] | ArqueoCajaUncheckedCreateWithoutTenantInput[]
+    connectOrCreate?: ArqueoCajaCreateOrConnectWithoutTenantInput | ArqueoCajaCreateOrConnectWithoutTenantInput[]
+    upsert?: ArqueoCajaUpsertWithWhereUniqueWithoutTenantInput | ArqueoCajaUpsertWithWhereUniqueWithoutTenantInput[]
+    createMany?: ArqueoCajaCreateManyTenantInputEnvelope
+    set?: ArqueoCajaWhereUniqueInput | ArqueoCajaWhereUniqueInput[]
+    disconnect?: ArqueoCajaWhereUniqueInput | ArqueoCajaWhereUniqueInput[]
+    delete?: ArqueoCajaWhereUniqueInput | ArqueoCajaWhereUniqueInput[]
+    connect?: ArqueoCajaWhereUniqueInput | ArqueoCajaWhereUniqueInput[]
+    update?: ArqueoCajaUpdateWithWhereUniqueWithoutTenantInput | ArqueoCajaUpdateWithWhereUniqueWithoutTenantInput[]
+    updateMany?: ArqueoCajaUpdateManyWithWhereWithoutTenantInput | ArqueoCajaUpdateManyWithWhereWithoutTenantInput[]
+    deleteMany?: ArqueoCajaScalarWhereInput | ArqueoCajaScalarWhereInput[]
+  }
+
   export type BackupLogUncheckedUpdateManyWithoutTenantNestedInput = {
     create?: XOR<BackupLogCreateWithoutTenantInput, BackupLogUncheckedCreateWithoutTenantInput> | BackupLogCreateWithoutTenantInput[] | BackupLogUncheckedCreateWithoutTenantInput[]
     connectOrCreate?: BackupLogCreateOrConnectWithoutTenantInput | BackupLogCreateOrConnectWithoutTenantInput[]
@@ -173839,6 +180044,13 @@ export namespace Prisma {
     connect?: ProductoWhereUniqueInput | ProductoWhereUniqueInput[]
   }
 
+  export type PuntoDeVentaCreateNestedManyWithoutAlmacenInput = {
+    create?: XOR<PuntoDeVentaCreateWithoutAlmacenInput, PuntoDeVentaUncheckedCreateWithoutAlmacenInput> | PuntoDeVentaCreateWithoutAlmacenInput[] | PuntoDeVentaUncheckedCreateWithoutAlmacenInput[]
+    connectOrCreate?: PuntoDeVentaCreateOrConnectWithoutAlmacenInput | PuntoDeVentaCreateOrConnectWithoutAlmacenInput[]
+    createMany?: PuntoDeVentaCreateManyAlmacenInputEnvelope
+    connect?: PuntoDeVentaWhereUniqueInput | PuntoDeVentaWhereUniqueInput[]
+  }
+
   export type TransferenciaCreateNestedManyWithoutDestinoInput = {
     create?: XOR<TransferenciaCreateWithoutDestinoInput, TransferenciaUncheckedCreateWithoutDestinoInput> | TransferenciaCreateWithoutDestinoInput[] | TransferenciaUncheckedCreateWithoutDestinoInput[]
     connectOrCreate?: TransferenciaCreateOrConnectWithoutDestinoInput | TransferenciaCreateOrConnectWithoutDestinoInput[]
@@ -173864,6 +180076,13 @@ export namespace Prisma {
     connectOrCreate?: ProductoCreateOrConnectWithoutAlmacenInput | ProductoCreateOrConnectWithoutAlmacenInput[]
     createMany?: ProductoCreateManyAlmacenInputEnvelope
     connect?: ProductoWhereUniqueInput | ProductoWhereUniqueInput[]
+  }
+
+  export type PuntoDeVentaUncheckedCreateNestedManyWithoutAlmacenInput = {
+    create?: XOR<PuntoDeVentaCreateWithoutAlmacenInput, PuntoDeVentaUncheckedCreateWithoutAlmacenInput> | PuntoDeVentaCreateWithoutAlmacenInput[] | PuntoDeVentaUncheckedCreateWithoutAlmacenInput[]
+    connectOrCreate?: PuntoDeVentaCreateOrConnectWithoutAlmacenInput | PuntoDeVentaCreateOrConnectWithoutAlmacenInput[]
+    createMany?: PuntoDeVentaCreateManyAlmacenInputEnvelope
+    connect?: PuntoDeVentaWhereUniqueInput | PuntoDeVentaWhereUniqueInput[]
   }
 
   export type TransferenciaUncheckedCreateNestedManyWithoutDestinoInput = {
@@ -173892,6 +180111,20 @@ export namespace Prisma {
     update?: ProductoUpdateWithWhereUniqueWithoutAlmacenInput | ProductoUpdateWithWhereUniqueWithoutAlmacenInput[]
     updateMany?: ProductoUpdateManyWithWhereWithoutAlmacenInput | ProductoUpdateManyWithWhereWithoutAlmacenInput[]
     deleteMany?: ProductoScalarWhereInput | ProductoScalarWhereInput[]
+  }
+
+  export type PuntoDeVentaUpdateManyWithoutAlmacenNestedInput = {
+    create?: XOR<PuntoDeVentaCreateWithoutAlmacenInput, PuntoDeVentaUncheckedCreateWithoutAlmacenInput> | PuntoDeVentaCreateWithoutAlmacenInput[] | PuntoDeVentaUncheckedCreateWithoutAlmacenInput[]
+    connectOrCreate?: PuntoDeVentaCreateOrConnectWithoutAlmacenInput | PuntoDeVentaCreateOrConnectWithoutAlmacenInput[]
+    upsert?: PuntoDeVentaUpsertWithWhereUniqueWithoutAlmacenInput | PuntoDeVentaUpsertWithWhereUniqueWithoutAlmacenInput[]
+    createMany?: PuntoDeVentaCreateManyAlmacenInputEnvelope
+    set?: PuntoDeVentaWhereUniqueInput | PuntoDeVentaWhereUniqueInput[]
+    disconnect?: PuntoDeVentaWhereUniqueInput | PuntoDeVentaWhereUniqueInput[]
+    delete?: PuntoDeVentaWhereUniqueInput | PuntoDeVentaWhereUniqueInput[]
+    connect?: PuntoDeVentaWhereUniqueInput | PuntoDeVentaWhereUniqueInput[]
+    update?: PuntoDeVentaUpdateWithWhereUniqueWithoutAlmacenInput | PuntoDeVentaUpdateWithWhereUniqueWithoutAlmacenInput[]
+    updateMany?: PuntoDeVentaUpdateManyWithWhereWithoutAlmacenInput | PuntoDeVentaUpdateManyWithWhereWithoutAlmacenInput[]
+    deleteMany?: PuntoDeVentaScalarWhereInput | PuntoDeVentaScalarWhereInput[]
   }
 
   export type TransferenciaUpdateManyWithoutDestinoNestedInput = {
@@ -173944,6 +180177,20 @@ export namespace Prisma {
     deleteMany?: ProductoScalarWhereInput | ProductoScalarWhereInput[]
   }
 
+  export type PuntoDeVentaUncheckedUpdateManyWithoutAlmacenNestedInput = {
+    create?: XOR<PuntoDeVentaCreateWithoutAlmacenInput, PuntoDeVentaUncheckedCreateWithoutAlmacenInput> | PuntoDeVentaCreateWithoutAlmacenInput[] | PuntoDeVentaUncheckedCreateWithoutAlmacenInput[]
+    connectOrCreate?: PuntoDeVentaCreateOrConnectWithoutAlmacenInput | PuntoDeVentaCreateOrConnectWithoutAlmacenInput[]
+    upsert?: PuntoDeVentaUpsertWithWhereUniqueWithoutAlmacenInput | PuntoDeVentaUpsertWithWhereUniqueWithoutAlmacenInput[]
+    createMany?: PuntoDeVentaCreateManyAlmacenInputEnvelope
+    set?: PuntoDeVentaWhereUniqueInput | PuntoDeVentaWhereUniqueInput[]
+    disconnect?: PuntoDeVentaWhereUniqueInput | PuntoDeVentaWhereUniqueInput[]
+    delete?: PuntoDeVentaWhereUniqueInput | PuntoDeVentaWhereUniqueInput[]
+    connect?: PuntoDeVentaWhereUniqueInput | PuntoDeVentaWhereUniqueInput[]
+    update?: PuntoDeVentaUpdateWithWhereUniqueWithoutAlmacenInput | PuntoDeVentaUpdateWithWhereUniqueWithoutAlmacenInput[]
+    updateMany?: PuntoDeVentaUpdateManyWithWhereWithoutAlmacenInput | PuntoDeVentaUpdateManyWithWhereWithoutAlmacenInput[]
+    deleteMany?: PuntoDeVentaScalarWhereInput | PuntoDeVentaScalarWhereInput[]
+  }
+
   export type TransferenciaUncheckedUpdateManyWithoutDestinoNestedInput = {
     create?: XOR<TransferenciaCreateWithoutDestinoInput, TransferenciaUncheckedCreateWithoutDestinoInput> | TransferenciaCreateWithoutDestinoInput[] | TransferenciaUncheckedCreateWithoutDestinoInput[]
     connectOrCreate?: TransferenciaCreateOrConnectWithoutDestinoInput | TransferenciaCreateOrConnectWithoutDestinoInput[]
@@ -173985,6 +180232,12 @@ export namespace Prisma {
     connect?: ListaPrecioWhereUniqueInput
   }
 
+  export type AlmacenCreateNestedOneWithoutPuntosDeVentaInput = {
+    create?: XOR<AlmacenCreateWithoutPuntosDeVentaInput, AlmacenUncheckedCreateWithoutPuntosDeVentaInput>
+    connectOrCreate?: AlmacenCreateOrConnectWithoutPuntosDeVentaInput
+    connect?: AlmacenWhereUniqueInput
+  }
+
   export type TransferenciaCreateNestedManyWithoutPuntoDeVentaDestinoInput = {
     create?: XOR<TransferenciaCreateWithoutPuntoDeVentaDestinoInput, TransferenciaUncheckedCreateWithoutPuntoDeVentaDestinoInput> | TransferenciaCreateWithoutPuntoDeVentaDestinoInput[] | TransferenciaUncheckedCreateWithoutPuntoDeVentaDestinoInput[]
     connectOrCreate?: TransferenciaCreateOrConnectWithoutPuntoDeVentaDestinoInput | TransferenciaCreateOrConnectWithoutPuntoDeVentaDestinoInput[]
@@ -174004,6 +180257,20 @@ export namespace Prisma {
     connectOrCreate?: VentaCreateOrConnectWithoutPuntoDeVentaInput | VentaCreateOrConnectWithoutPuntoDeVentaInput[]
     createMany?: VentaCreateManyPuntoDeVentaInputEnvelope
     connect?: VentaWhereUniqueInput | VentaWhereUniqueInput[]
+  }
+
+  export type TurnoPuntoVentaCreateNestedManyWithoutPuntoDeVentaInput = {
+    create?: XOR<TurnoPuntoVentaCreateWithoutPuntoDeVentaInput, TurnoPuntoVentaUncheckedCreateWithoutPuntoDeVentaInput> | TurnoPuntoVentaCreateWithoutPuntoDeVentaInput[] | TurnoPuntoVentaUncheckedCreateWithoutPuntoDeVentaInput[]
+    connectOrCreate?: TurnoPuntoVentaCreateOrConnectWithoutPuntoDeVentaInput | TurnoPuntoVentaCreateOrConnectWithoutPuntoDeVentaInput[]
+    createMany?: TurnoPuntoVentaCreateManyPuntoDeVentaInputEnvelope
+    connect?: TurnoPuntoVentaWhereUniqueInput | TurnoPuntoVentaWhereUniqueInput[]
+  }
+
+  export type ArqueoCajaCreateNestedManyWithoutPuntoDeVentaInput = {
+    create?: XOR<ArqueoCajaCreateWithoutPuntoDeVentaInput, ArqueoCajaUncheckedCreateWithoutPuntoDeVentaInput> | ArqueoCajaCreateWithoutPuntoDeVentaInput[] | ArqueoCajaUncheckedCreateWithoutPuntoDeVentaInput[]
+    connectOrCreate?: ArqueoCajaCreateOrConnectWithoutPuntoDeVentaInput | ArqueoCajaCreateOrConnectWithoutPuntoDeVentaInput[]
+    createMany?: ArqueoCajaCreateManyPuntoDeVentaInputEnvelope
+    connect?: ArqueoCajaWhereUniqueInput | ArqueoCajaWhereUniqueInput[]
   }
 
   export type TenantCreateNestedOneWithoutPuntosDeVentaInput = {
@@ -174040,6 +180307,20 @@ export namespace Prisma {
     connect?: VentaWhereUniqueInput | VentaWhereUniqueInput[]
   }
 
+  export type TurnoPuntoVentaUncheckedCreateNestedManyWithoutPuntoDeVentaInput = {
+    create?: XOR<TurnoPuntoVentaCreateWithoutPuntoDeVentaInput, TurnoPuntoVentaUncheckedCreateWithoutPuntoDeVentaInput> | TurnoPuntoVentaCreateWithoutPuntoDeVentaInput[] | TurnoPuntoVentaUncheckedCreateWithoutPuntoDeVentaInput[]
+    connectOrCreate?: TurnoPuntoVentaCreateOrConnectWithoutPuntoDeVentaInput | TurnoPuntoVentaCreateOrConnectWithoutPuntoDeVentaInput[]
+    createMany?: TurnoPuntoVentaCreateManyPuntoDeVentaInputEnvelope
+    connect?: TurnoPuntoVentaWhereUniqueInput | TurnoPuntoVentaWhereUniqueInput[]
+  }
+
+  export type ArqueoCajaUncheckedCreateNestedManyWithoutPuntoDeVentaInput = {
+    create?: XOR<ArqueoCajaCreateWithoutPuntoDeVentaInput, ArqueoCajaUncheckedCreateWithoutPuntoDeVentaInput> | ArqueoCajaCreateWithoutPuntoDeVentaInput[] | ArqueoCajaUncheckedCreateWithoutPuntoDeVentaInput[]
+    connectOrCreate?: ArqueoCajaCreateOrConnectWithoutPuntoDeVentaInput | ArqueoCajaCreateOrConnectWithoutPuntoDeVentaInput[]
+    createMany?: ArqueoCajaCreateManyPuntoDeVentaInputEnvelope
+    connect?: ArqueoCajaWhereUniqueInput | ArqueoCajaWhereUniqueInput[]
+  }
+
   export type ProductoUpdateManyWithoutPuntoDeVentaNestedInput = {
     create?: XOR<ProductoCreateWithoutPuntoDeVentaInput, ProductoUncheckedCreateWithoutPuntoDeVentaInput> | ProductoCreateWithoutPuntoDeVentaInput[] | ProductoUncheckedCreateWithoutPuntoDeVentaInput[]
     connectOrCreate?: ProductoCreateOrConnectWithoutPuntoDeVentaInput | ProductoCreateOrConnectWithoutPuntoDeVentaInput[]
@@ -174062,6 +180343,16 @@ export namespace Prisma {
     delete?: ListaPrecioWhereInput | boolean
     connect?: ListaPrecioWhereUniqueInput
     update?: XOR<XOR<ListaPrecioUpdateToOneWithWhereWithoutPuntosDeVentaInput, ListaPrecioUpdateWithoutPuntosDeVentaInput>, ListaPrecioUncheckedUpdateWithoutPuntosDeVentaInput>
+  }
+
+  export type AlmacenUpdateOneWithoutPuntosDeVentaNestedInput = {
+    create?: XOR<AlmacenCreateWithoutPuntosDeVentaInput, AlmacenUncheckedCreateWithoutPuntosDeVentaInput>
+    connectOrCreate?: AlmacenCreateOrConnectWithoutPuntosDeVentaInput
+    upsert?: AlmacenUpsertWithoutPuntosDeVentaInput
+    disconnect?: AlmacenWhereInput | boolean
+    delete?: AlmacenWhereInput | boolean
+    connect?: AlmacenWhereUniqueInput
+    update?: XOR<XOR<AlmacenUpdateToOneWithWhereWithoutPuntosDeVentaInput, AlmacenUpdateWithoutPuntosDeVentaInput>, AlmacenUncheckedUpdateWithoutPuntosDeVentaInput>
   }
 
   export type TransferenciaUpdateManyWithoutPuntoDeVentaDestinoNestedInput = {
@@ -174104,6 +180395,34 @@ export namespace Prisma {
     update?: VentaUpdateWithWhereUniqueWithoutPuntoDeVentaInput | VentaUpdateWithWhereUniqueWithoutPuntoDeVentaInput[]
     updateMany?: VentaUpdateManyWithWhereWithoutPuntoDeVentaInput | VentaUpdateManyWithWhereWithoutPuntoDeVentaInput[]
     deleteMany?: VentaScalarWhereInput | VentaScalarWhereInput[]
+  }
+
+  export type TurnoPuntoVentaUpdateManyWithoutPuntoDeVentaNestedInput = {
+    create?: XOR<TurnoPuntoVentaCreateWithoutPuntoDeVentaInput, TurnoPuntoVentaUncheckedCreateWithoutPuntoDeVentaInput> | TurnoPuntoVentaCreateWithoutPuntoDeVentaInput[] | TurnoPuntoVentaUncheckedCreateWithoutPuntoDeVentaInput[]
+    connectOrCreate?: TurnoPuntoVentaCreateOrConnectWithoutPuntoDeVentaInput | TurnoPuntoVentaCreateOrConnectWithoutPuntoDeVentaInput[]
+    upsert?: TurnoPuntoVentaUpsertWithWhereUniqueWithoutPuntoDeVentaInput | TurnoPuntoVentaUpsertWithWhereUniqueWithoutPuntoDeVentaInput[]
+    createMany?: TurnoPuntoVentaCreateManyPuntoDeVentaInputEnvelope
+    set?: TurnoPuntoVentaWhereUniqueInput | TurnoPuntoVentaWhereUniqueInput[]
+    disconnect?: TurnoPuntoVentaWhereUniqueInput | TurnoPuntoVentaWhereUniqueInput[]
+    delete?: TurnoPuntoVentaWhereUniqueInput | TurnoPuntoVentaWhereUniqueInput[]
+    connect?: TurnoPuntoVentaWhereUniqueInput | TurnoPuntoVentaWhereUniqueInput[]
+    update?: TurnoPuntoVentaUpdateWithWhereUniqueWithoutPuntoDeVentaInput | TurnoPuntoVentaUpdateWithWhereUniqueWithoutPuntoDeVentaInput[]
+    updateMany?: TurnoPuntoVentaUpdateManyWithWhereWithoutPuntoDeVentaInput | TurnoPuntoVentaUpdateManyWithWhereWithoutPuntoDeVentaInput[]
+    deleteMany?: TurnoPuntoVentaScalarWhereInput | TurnoPuntoVentaScalarWhereInput[]
+  }
+
+  export type ArqueoCajaUpdateManyWithoutPuntoDeVentaNestedInput = {
+    create?: XOR<ArqueoCajaCreateWithoutPuntoDeVentaInput, ArqueoCajaUncheckedCreateWithoutPuntoDeVentaInput> | ArqueoCajaCreateWithoutPuntoDeVentaInput[] | ArqueoCajaUncheckedCreateWithoutPuntoDeVentaInput[]
+    connectOrCreate?: ArqueoCajaCreateOrConnectWithoutPuntoDeVentaInput | ArqueoCajaCreateOrConnectWithoutPuntoDeVentaInput[]
+    upsert?: ArqueoCajaUpsertWithWhereUniqueWithoutPuntoDeVentaInput | ArqueoCajaUpsertWithWhereUniqueWithoutPuntoDeVentaInput[]
+    createMany?: ArqueoCajaCreateManyPuntoDeVentaInputEnvelope
+    set?: ArqueoCajaWhereUniqueInput | ArqueoCajaWhereUniqueInput[]
+    disconnect?: ArqueoCajaWhereUniqueInput | ArqueoCajaWhereUniqueInput[]
+    delete?: ArqueoCajaWhereUniqueInput | ArqueoCajaWhereUniqueInput[]
+    connect?: ArqueoCajaWhereUniqueInput | ArqueoCajaWhereUniqueInput[]
+    update?: ArqueoCajaUpdateWithWhereUniqueWithoutPuntoDeVentaInput | ArqueoCajaUpdateWithWhereUniqueWithoutPuntoDeVentaInput[]
+    updateMany?: ArqueoCajaUpdateManyWithWhereWithoutPuntoDeVentaInput | ArqueoCajaUpdateManyWithWhereWithoutPuntoDeVentaInput[]
+    deleteMany?: ArqueoCajaScalarWhereInput | ArqueoCajaScalarWhereInput[]
   }
 
   export type TenantUpdateOneRequiredWithoutPuntosDeVentaNestedInput = {
@@ -174168,6 +180487,198 @@ export namespace Prisma {
     update?: VentaUpdateWithWhereUniqueWithoutPuntoDeVentaInput | VentaUpdateWithWhereUniqueWithoutPuntoDeVentaInput[]
     updateMany?: VentaUpdateManyWithWhereWithoutPuntoDeVentaInput | VentaUpdateManyWithWhereWithoutPuntoDeVentaInput[]
     deleteMany?: VentaScalarWhereInput | VentaScalarWhereInput[]
+  }
+
+  export type TurnoPuntoVentaUncheckedUpdateManyWithoutPuntoDeVentaNestedInput = {
+    create?: XOR<TurnoPuntoVentaCreateWithoutPuntoDeVentaInput, TurnoPuntoVentaUncheckedCreateWithoutPuntoDeVentaInput> | TurnoPuntoVentaCreateWithoutPuntoDeVentaInput[] | TurnoPuntoVentaUncheckedCreateWithoutPuntoDeVentaInput[]
+    connectOrCreate?: TurnoPuntoVentaCreateOrConnectWithoutPuntoDeVentaInput | TurnoPuntoVentaCreateOrConnectWithoutPuntoDeVentaInput[]
+    upsert?: TurnoPuntoVentaUpsertWithWhereUniqueWithoutPuntoDeVentaInput | TurnoPuntoVentaUpsertWithWhereUniqueWithoutPuntoDeVentaInput[]
+    createMany?: TurnoPuntoVentaCreateManyPuntoDeVentaInputEnvelope
+    set?: TurnoPuntoVentaWhereUniqueInput | TurnoPuntoVentaWhereUniqueInput[]
+    disconnect?: TurnoPuntoVentaWhereUniqueInput | TurnoPuntoVentaWhereUniqueInput[]
+    delete?: TurnoPuntoVentaWhereUniqueInput | TurnoPuntoVentaWhereUniqueInput[]
+    connect?: TurnoPuntoVentaWhereUniqueInput | TurnoPuntoVentaWhereUniqueInput[]
+    update?: TurnoPuntoVentaUpdateWithWhereUniqueWithoutPuntoDeVentaInput | TurnoPuntoVentaUpdateWithWhereUniqueWithoutPuntoDeVentaInput[]
+    updateMany?: TurnoPuntoVentaUpdateManyWithWhereWithoutPuntoDeVentaInput | TurnoPuntoVentaUpdateManyWithWhereWithoutPuntoDeVentaInput[]
+    deleteMany?: TurnoPuntoVentaScalarWhereInput | TurnoPuntoVentaScalarWhereInput[]
+  }
+
+  export type ArqueoCajaUncheckedUpdateManyWithoutPuntoDeVentaNestedInput = {
+    create?: XOR<ArqueoCajaCreateWithoutPuntoDeVentaInput, ArqueoCajaUncheckedCreateWithoutPuntoDeVentaInput> | ArqueoCajaCreateWithoutPuntoDeVentaInput[] | ArqueoCajaUncheckedCreateWithoutPuntoDeVentaInput[]
+    connectOrCreate?: ArqueoCajaCreateOrConnectWithoutPuntoDeVentaInput | ArqueoCajaCreateOrConnectWithoutPuntoDeVentaInput[]
+    upsert?: ArqueoCajaUpsertWithWhereUniqueWithoutPuntoDeVentaInput | ArqueoCajaUpsertWithWhereUniqueWithoutPuntoDeVentaInput[]
+    createMany?: ArqueoCajaCreateManyPuntoDeVentaInputEnvelope
+    set?: ArqueoCajaWhereUniqueInput | ArqueoCajaWhereUniqueInput[]
+    disconnect?: ArqueoCajaWhereUniqueInput | ArqueoCajaWhereUniqueInput[]
+    delete?: ArqueoCajaWhereUniqueInput | ArqueoCajaWhereUniqueInput[]
+    connect?: ArqueoCajaWhereUniqueInput | ArqueoCajaWhereUniqueInput[]
+    update?: ArqueoCajaUpdateWithWhereUniqueWithoutPuntoDeVentaInput | ArqueoCajaUpdateWithWhereUniqueWithoutPuntoDeVentaInput[]
+    updateMany?: ArqueoCajaUpdateManyWithWhereWithoutPuntoDeVentaInput | ArqueoCajaUpdateManyWithWhereWithoutPuntoDeVentaInput[]
+    deleteMany?: ArqueoCajaScalarWhereInput | ArqueoCajaScalarWhereInput[]
+  }
+
+  export type PuntoDeVentaCreateNestedOneWithoutTurnosInput = {
+    create?: XOR<PuntoDeVentaCreateWithoutTurnosInput, PuntoDeVentaUncheckedCreateWithoutTurnosInput>
+    connectOrCreate?: PuntoDeVentaCreateOrConnectWithoutTurnosInput
+    connect?: PuntoDeVentaWhereUniqueInput
+  }
+
+  export type EmpleadoCreateNestedOneWithoutTurnosPosInput = {
+    create?: XOR<EmpleadoCreateWithoutTurnosPosInput, EmpleadoUncheckedCreateWithoutTurnosPosInput>
+    connectOrCreate?: EmpleadoCreateOrConnectWithoutTurnosPosInput
+    connect?: EmpleadoWhereUniqueInput
+  }
+
+  export type VentaCreateNestedManyWithoutTurnoInput = {
+    create?: XOR<VentaCreateWithoutTurnoInput, VentaUncheckedCreateWithoutTurnoInput> | VentaCreateWithoutTurnoInput[] | VentaUncheckedCreateWithoutTurnoInput[]
+    connectOrCreate?: VentaCreateOrConnectWithoutTurnoInput | VentaCreateOrConnectWithoutTurnoInput[]
+    createMany?: VentaCreateManyTurnoInputEnvelope
+    connect?: VentaWhereUniqueInput | VentaWhereUniqueInput[]
+  }
+
+  export type ArqueoCajaCreateNestedOneWithoutTurnoInput = {
+    create?: XOR<ArqueoCajaCreateWithoutTurnoInput, ArqueoCajaUncheckedCreateWithoutTurnoInput>
+    connectOrCreate?: ArqueoCajaCreateOrConnectWithoutTurnoInput
+    connect?: ArqueoCajaWhereUniqueInput
+  }
+
+  export type TenantCreateNestedOneWithoutTurnosPosInput = {
+    create?: XOR<TenantCreateWithoutTurnosPosInput, TenantUncheckedCreateWithoutTurnosPosInput>
+    connectOrCreate?: TenantCreateOrConnectWithoutTurnosPosInput
+    connect?: TenantWhereUniqueInput
+  }
+
+  export type VentaUncheckedCreateNestedManyWithoutTurnoInput = {
+    create?: XOR<VentaCreateWithoutTurnoInput, VentaUncheckedCreateWithoutTurnoInput> | VentaCreateWithoutTurnoInput[] | VentaUncheckedCreateWithoutTurnoInput[]
+    connectOrCreate?: VentaCreateOrConnectWithoutTurnoInput | VentaCreateOrConnectWithoutTurnoInput[]
+    createMany?: VentaCreateManyTurnoInputEnvelope
+    connect?: VentaWhereUniqueInput | VentaWhereUniqueInput[]
+  }
+
+  export type ArqueoCajaUncheckedCreateNestedOneWithoutTurnoInput = {
+    create?: XOR<ArqueoCajaCreateWithoutTurnoInput, ArqueoCajaUncheckedCreateWithoutTurnoInput>
+    connectOrCreate?: ArqueoCajaCreateOrConnectWithoutTurnoInput
+    connect?: ArqueoCajaWhereUniqueInput
+  }
+
+  export type EnumEstadoTurnoFieldUpdateOperationsInput = {
+    set?: $Enums.EstadoTurno
+  }
+
+  export type PuntoDeVentaUpdateOneRequiredWithoutTurnosNestedInput = {
+    create?: XOR<PuntoDeVentaCreateWithoutTurnosInput, PuntoDeVentaUncheckedCreateWithoutTurnosInput>
+    connectOrCreate?: PuntoDeVentaCreateOrConnectWithoutTurnosInput
+    upsert?: PuntoDeVentaUpsertWithoutTurnosInput
+    connect?: PuntoDeVentaWhereUniqueInput
+    update?: XOR<XOR<PuntoDeVentaUpdateToOneWithWhereWithoutTurnosInput, PuntoDeVentaUpdateWithoutTurnosInput>, PuntoDeVentaUncheckedUpdateWithoutTurnosInput>
+  }
+
+  export type EmpleadoUpdateOneWithoutTurnosPosNestedInput = {
+    create?: XOR<EmpleadoCreateWithoutTurnosPosInput, EmpleadoUncheckedCreateWithoutTurnosPosInput>
+    connectOrCreate?: EmpleadoCreateOrConnectWithoutTurnosPosInput
+    upsert?: EmpleadoUpsertWithoutTurnosPosInput
+    disconnect?: EmpleadoWhereInput | boolean
+    delete?: EmpleadoWhereInput | boolean
+    connect?: EmpleadoWhereUniqueInput
+    update?: XOR<XOR<EmpleadoUpdateToOneWithWhereWithoutTurnosPosInput, EmpleadoUpdateWithoutTurnosPosInput>, EmpleadoUncheckedUpdateWithoutTurnosPosInput>
+  }
+
+  export type VentaUpdateManyWithoutTurnoNestedInput = {
+    create?: XOR<VentaCreateWithoutTurnoInput, VentaUncheckedCreateWithoutTurnoInput> | VentaCreateWithoutTurnoInput[] | VentaUncheckedCreateWithoutTurnoInput[]
+    connectOrCreate?: VentaCreateOrConnectWithoutTurnoInput | VentaCreateOrConnectWithoutTurnoInput[]
+    upsert?: VentaUpsertWithWhereUniqueWithoutTurnoInput | VentaUpsertWithWhereUniqueWithoutTurnoInput[]
+    createMany?: VentaCreateManyTurnoInputEnvelope
+    set?: VentaWhereUniqueInput | VentaWhereUniqueInput[]
+    disconnect?: VentaWhereUniqueInput | VentaWhereUniqueInput[]
+    delete?: VentaWhereUniqueInput | VentaWhereUniqueInput[]
+    connect?: VentaWhereUniqueInput | VentaWhereUniqueInput[]
+    update?: VentaUpdateWithWhereUniqueWithoutTurnoInput | VentaUpdateWithWhereUniqueWithoutTurnoInput[]
+    updateMany?: VentaUpdateManyWithWhereWithoutTurnoInput | VentaUpdateManyWithWhereWithoutTurnoInput[]
+    deleteMany?: VentaScalarWhereInput | VentaScalarWhereInput[]
+  }
+
+  export type ArqueoCajaUpdateOneWithoutTurnoNestedInput = {
+    create?: XOR<ArqueoCajaCreateWithoutTurnoInput, ArqueoCajaUncheckedCreateWithoutTurnoInput>
+    connectOrCreate?: ArqueoCajaCreateOrConnectWithoutTurnoInput
+    upsert?: ArqueoCajaUpsertWithoutTurnoInput
+    disconnect?: ArqueoCajaWhereInput | boolean
+    delete?: ArqueoCajaWhereInput | boolean
+    connect?: ArqueoCajaWhereUniqueInput
+    update?: XOR<XOR<ArqueoCajaUpdateToOneWithWhereWithoutTurnoInput, ArqueoCajaUpdateWithoutTurnoInput>, ArqueoCajaUncheckedUpdateWithoutTurnoInput>
+  }
+
+  export type TenantUpdateOneRequiredWithoutTurnosPosNestedInput = {
+    create?: XOR<TenantCreateWithoutTurnosPosInput, TenantUncheckedCreateWithoutTurnosPosInput>
+    connectOrCreate?: TenantCreateOrConnectWithoutTurnosPosInput
+    upsert?: TenantUpsertWithoutTurnosPosInput
+    connect?: TenantWhereUniqueInput
+    update?: XOR<XOR<TenantUpdateToOneWithWhereWithoutTurnosPosInput, TenantUpdateWithoutTurnosPosInput>, TenantUncheckedUpdateWithoutTurnosPosInput>
+  }
+
+  export type VentaUncheckedUpdateManyWithoutTurnoNestedInput = {
+    create?: XOR<VentaCreateWithoutTurnoInput, VentaUncheckedCreateWithoutTurnoInput> | VentaCreateWithoutTurnoInput[] | VentaUncheckedCreateWithoutTurnoInput[]
+    connectOrCreate?: VentaCreateOrConnectWithoutTurnoInput | VentaCreateOrConnectWithoutTurnoInput[]
+    upsert?: VentaUpsertWithWhereUniqueWithoutTurnoInput | VentaUpsertWithWhereUniqueWithoutTurnoInput[]
+    createMany?: VentaCreateManyTurnoInputEnvelope
+    set?: VentaWhereUniqueInput | VentaWhereUniqueInput[]
+    disconnect?: VentaWhereUniqueInput | VentaWhereUniqueInput[]
+    delete?: VentaWhereUniqueInput | VentaWhereUniqueInput[]
+    connect?: VentaWhereUniqueInput | VentaWhereUniqueInput[]
+    update?: VentaUpdateWithWhereUniqueWithoutTurnoInput | VentaUpdateWithWhereUniqueWithoutTurnoInput[]
+    updateMany?: VentaUpdateManyWithWhereWithoutTurnoInput | VentaUpdateManyWithWhereWithoutTurnoInput[]
+    deleteMany?: VentaScalarWhereInput | VentaScalarWhereInput[]
+  }
+
+  export type ArqueoCajaUncheckedUpdateOneWithoutTurnoNestedInput = {
+    create?: XOR<ArqueoCajaCreateWithoutTurnoInput, ArqueoCajaUncheckedCreateWithoutTurnoInput>
+    connectOrCreate?: ArqueoCajaCreateOrConnectWithoutTurnoInput
+    upsert?: ArqueoCajaUpsertWithoutTurnoInput
+    disconnect?: ArqueoCajaWhereInput | boolean
+    delete?: ArqueoCajaWhereInput | boolean
+    connect?: ArqueoCajaWhereUniqueInput
+    update?: XOR<XOR<ArqueoCajaUpdateToOneWithWhereWithoutTurnoInput, ArqueoCajaUpdateWithoutTurnoInput>, ArqueoCajaUncheckedUpdateWithoutTurnoInput>
+  }
+
+  export type TurnoPuntoVentaCreateNestedOneWithoutArqueoInput = {
+    create?: XOR<TurnoPuntoVentaCreateWithoutArqueoInput, TurnoPuntoVentaUncheckedCreateWithoutArqueoInput>
+    connectOrCreate?: TurnoPuntoVentaCreateOrConnectWithoutArqueoInput
+    connect?: TurnoPuntoVentaWhereUniqueInput
+  }
+
+  export type PuntoDeVentaCreateNestedOneWithoutArqueosInput = {
+    create?: XOR<PuntoDeVentaCreateWithoutArqueosInput, PuntoDeVentaUncheckedCreateWithoutArqueosInput>
+    connectOrCreate?: PuntoDeVentaCreateOrConnectWithoutArqueosInput
+    connect?: PuntoDeVentaWhereUniqueInput
+  }
+
+  export type TenantCreateNestedOneWithoutArqueosCajaInput = {
+    create?: XOR<TenantCreateWithoutArqueosCajaInput, TenantUncheckedCreateWithoutArqueosCajaInput>
+    connectOrCreate?: TenantCreateOrConnectWithoutArqueosCajaInput
+    connect?: TenantWhereUniqueInput
+  }
+
+  export type TurnoPuntoVentaUpdateOneRequiredWithoutArqueoNestedInput = {
+    create?: XOR<TurnoPuntoVentaCreateWithoutArqueoInput, TurnoPuntoVentaUncheckedCreateWithoutArqueoInput>
+    connectOrCreate?: TurnoPuntoVentaCreateOrConnectWithoutArqueoInput
+    upsert?: TurnoPuntoVentaUpsertWithoutArqueoInput
+    connect?: TurnoPuntoVentaWhereUniqueInput
+    update?: XOR<XOR<TurnoPuntoVentaUpdateToOneWithWhereWithoutArqueoInput, TurnoPuntoVentaUpdateWithoutArqueoInput>, TurnoPuntoVentaUncheckedUpdateWithoutArqueoInput>
+  }
+
+  export type PuntoDeVentaUpdateOneRequiredWithoutArqueosNestedInput = {
+    create?: XOR<PuntoDeVentaCreateWithoutArqueosInput, PuntoDeVentaUncheckedCreateWithoutArqueosInput>
+    connectOrCreate?: PuntoDeVentaCreateOrConnectWithoutArqueosInput
+    upsert?: PuntoDeVentaUpsertWithoutArqueosInput
+    connect?: PuntoDeVentaWhereUniqueInput
+    update?: XOR<XOR<PuntoDeVentaUpdateToOneWithWhereWithoutArqueosInput, PuntoDeVentaUpdateWithoutArqueosInput>, PuntoDeVentaUncheckedUpdateWithoutArqueosInput>
+  }
+
+  export type TenantUpdateOneRequiredWithoutArqueosCajaNestedInput = {
+    create?: XOR<TenantCreateWithoutArqueosCajaInput, TenantUncheckedCreateWithoutArqueosCajaInput>
+    connectOrCreate?: TenantCreateOrConnectWithoutArqueosCajaInput
+    upsert?: TenantUpsertWithoutArqueosCajaInput
+    connect?: TenantWhereUniqueInput
+    update?: XOR<XOR<TenantUpdateToOneWithWhereWithoutArqueosCajaInput, TenantUpdateWithoutArqueosCajaInput>, TenantUncheckedUpdateWithoutArqueosCajaInput>
   }
 
   export type ProductoCreatefotosInput = {
@@ -175044,6 +181555,12 @@ export namespace Prisma {
     connect?: PuntoDeVentaWhereUniqueInput
   }
 
+  export type TurnoPuntoVentaCreateNestedOneWithoutVentasInput = {
+    create?: XOR<TurnoPuntoVentaCreateWithoutVentasInput, TurnoPuntoVentaUncheckedCreateWithoutVentasInput>
+    connectOrCreate?: TurnoPuntoVentaCreateOrConnectWithoutVentasInput
+    connect?: TurnoPuntoVentaWhereUniqueInput
+  }
+
   export type FacturaCreateNestedOneWithoutVentaInput = {
     create?: XOR<FacturaCreateWithoutVentaInput, FacturaUncheckedCreateWithoutVentaInput>
     connectOrCreate?: FacturaCreateOrConnectWithoutVentaInput
@@ -175087,6 +181604,10 @@ export namespace Prisma {
     connectOrCreate?: VentaItemCreateOrConnectWithoutVentaInput | VentaItemCreateOrConnectWithoutVentaInput[]
     createMany?: VentaItemCreateManyVentaInputEnvelope
     connect?: VentaItemWhereUniqueInput | VentaItemWhereUniqueInput[]
+  }
+
+  export type NullableEnumMetodoPagoVentaFieldUpdateOperationsInput = {
+    set?: $Enums.MetodoPagoVenta | null
   }
 
   export type OrdenReparacionUpdateOneWithoutVentaNestedInput = {
@@ -175159,6 +181680,16 @@ export namespace Prisma {
     upsert?: PuntoDeVentaUpsertWithoutVentasInput
     connect?: PuntoDeVentaWhereUniqueInput
     update?: XOR<XOR<PuntoDeVentaUpdateToOneWithWhereWithoutVentasInput, PuntoDeVentaUpdateWithoutVentasInput>, PuntoDeVentaUncheckedUpdateWithoutVentasInput>
+  }
+
+  export type TurnoPuntoVentaUpdateOneWithoutVentasNestedInput = {
+    create?: XOR<TurnoPuntoVentaCreateWithoutVentasInput, TurnoPuntoVentaUncheckedCreateWithoutVentasInput>
+    connectOrCreate?: TurnoPuntoVentaCreateOrConnectWithoutVentasInput
+    upsert?: TurnoPuntoVentaUpsertWithoutVentasInput
+    disconnect?: TurnoPuntoVentaWhereInput | boolean
+    delete?: TurnoPuntoVentaWhereInput | boolean
+    connect?: TurnoPuntoVentaWhereUniqueInput
+    update?: XOR<XOR<TurnoPuntoVentaUpdateToOneWithWhereWithoutVentasInput, TurnoPuntoVentaUpdateWithoutVentasInput>, TurnoPuntoVentaUncheckedUpdateWithoutVentasInput>
   }
 
   export type FacturaUpdateOneWithoutVentaNestedInput = {
@@ -176494,6 +183025,13 @@ export namespace Prisma {
     connect?: VentaWhereUniqueInput | VentaWhereUniqueInput[]
   }
 
+  export type TurnoPuntoVentaCreateNestedManyWithoutEmpleadoInput = {
+    create?: XOR<TurnoPuntoVentaCreateWithoutEmpleadoInput, TurnoPuntoVentaUncheckedCreateWithoutEmpleadoInput> | TurnoPuntoVentaCreateWithoutEmpleadoInput[] | TurnoPuntoVentaUncheckedCreateWithoutEmpleadoInput[]
+    connectOrCreate?: TurnoPuntoVentaCreateOrConnectWithoutEmpleadoInput | TurnoPuntoVentaCreateOrConnectWithoutEmpleadoInput[]
+    createMany?: TurnoPuntoVentaCreateManyEmpleadoInputEnvelope
+    connect?: TurnoPuntoVentaWhereUniqueInput | TurnoPuntoVentaWhereUniqueInput[]
+  }
+
   export type TenantCreateNestedOneWithoutEmpleadosInput = {
     create?: XOR<TenantCreateWithoutEmpleadosInput, TenantUncheckedCreateWithoutEmpleadosInput>
     connectOrCreate?: TenantCreateOrConnectWithoutEmpleadosInput
@@ -176547,6 +183085,13 @@ export namespace Prisma {
     connectOrCreate?: VentaCreateOrConnectWithoutEmpleadoInput | VentaCreateOrConnectWithoutEmpleadoInput[]
     createMany?: VentaCreateManyEmpleadoInputEnvelope
     connect?: VentaWhereUniqueInput | VentaWhereUniqueInput[]
+  }
+
+  export type TurnoPuntoVentaUncheckedCreateNestedManyWithoutEmpleadoInput = {
+    create?: XOR<TurnoPuntoVentaCreateWithoutEmpleadoInput, TurnoPuntoVentaUncheckedCreateWithoutEmpleadoInput> | TurnoPuntoVentaCreateWithoutEmpleadoInput[] | TurnoPuntoVentaUncheckedCreateWithoutEmpleadoInput[]
+    connectOrCreate?: TurnoPuntoVentaCreateOrConnectWithoutEmpleadoInput | TurnoPuntoVentaCreateOrConnectWithoutEmpleadoInput[]
+    createMany?: TurnoPuntoVentaCreateManyEmpleadoInputEnvelope
+    connect?: TurnoPuntoVentaWhereUniqueInput | TurnoPuntoVentaWhereUniqueInput[]
   }
 
   export type AttendanceUpdateManyWithoutEmployeeNestedInput = {
@@ -176645,6 +183190,20 @@ export namespace Prisma {
     update?: VentaUpdateWithWhereUniqueWithoutEmpleadoInput | VentaUpdateWithWhereUniqueWithoutEmpleadoInput[]
     updateMany?: VentaUpdateManyWithWhereWithoutEmpleadoInput | VentaUpdateManyWithWhereWithoutEmpleadoInput[]
     deleteMany?: VentaScalarWhereInput | VentaScalarWhereInput[]
+  }
+
+  export type TurnoPuntoVentaUpdateManyWithoutEmpleadoNestedInput = {
+    create?: XOR<TurnoPuntoVentaCreateWithoutEmpleadoInput, TurnoPuntoVentaUncheckedCreateWithoutEmpleadoInput> | TurnoPuntoVentaCreateWithoutEmpleadoInput[] | TurnoPuntoVentaUncheckedCreateWithoutEmpleadoInput[]
+    connectOrCreate?: TurnoPuntoVentaCreateOrConnectWithoutEmpleadoInput | TurnoPuntoVentaCreateOrConnectWithoutEmpleadoInput[]
+    upsert?: TurnoPuntoVentaUpsertWithWhereUniqueWithoutEmpleadoInput | TurnoPuntoVentaUpsertWithWhereUniqueWithoutEmpleadoInput[]
+    createMany?: TurnoPuntoVentaCreateManyEmpleadoInputEnvelope
+    set?: TurnoPuntoVentaWhereUniqueInput | TurnoPuntoVentaWhereUniqueInput[]
+    disconnect?: TurnoPuntoVentaWhereUniqueInput | TurnoPuntoVentaWhereUniqueInput[]
+    delete?: TurnoPuntoVentaWhereUniqueInput | TurnoPuntoVentaWhereUniqueInput[]
+    connect?: TurnoPuntoVentaWhereUniqueInput | TurnoPuntoVentaWhereUniqueInput[]
+    update?: TurnoPuntoVentaUpdateWithWhereUniqueWithoutEmpleadoInput | TurnoPuntoVentaUpdateWithWhereUniqueWithoutEmpleadoInput[]
+    updateMany?: TurnoPuntoVentaUpdateManyWithWhereWithoutEmpleadoInput | TurnoPuntoVentaUpdateManyWithWhereWithoutEmpleadoInput[]
+    deleteMany?: TurnoPuntoVentaScalarWhereInput | TurnoPuntoVentaScalarWhereInput[]
   }
 
   export type TenantUpdateOneRequiredWithoutEmpleadosNestedInput = {
@@ -176751,6 +183310,20 @@ export namespace Prisma {
     update?: VentaUpdateWithWhereUniqueWithoutEmpleadoInput | VentaUpdateWithWhereUniqueWithoutEmpleadoInput[]
     updateMany?: VentaUpdateManyWithWhereWithoutEmpleadoInput | VentaUpdateManyWithWhereWithoutEmpleadoInput[]
     deleteMany?: VentaScalarWhereInput | VentaScalarWhereInput[]
+  }
+
+  export type TurnoPuntoVentaUncheckedUpdateManyWithoutEmpleadoNestedInput = {
+    create?: XOR<TurnoPuntoVentaCreateWithoutEmpleadoInput, TurnoPuntoVentaUncheckedCreateWithoutEmpleadoInput> | TurnoPuntoVentaCreateWithoutEmpleadoInput[] | TurnoPuntoVentaUncheckedCreateWithoutEmpleadoInput[]
+    connectOrCreate?: TurnoPuntoVentaCreateOrConnectWithoutEmpleadoInput | TurnoPuntoVentaCreateOrConnectWithoutEmpleadoInput[]
+    upsert?: TurnoPuntoVentaUpsertWithWhereUniqueWithoutEmpleadoInput | TurnoPuntoVentaUpsertWithWhereUniqueWithoutEmpleadoInput[]
+    createMany?: TurnoPuntoVentaCreateManyEmpleadoInputEnvelope
+    set?: TurnoPuntoVentaWhereUniqueInput | TurnoPuntoVentaWhereUniqueInput[]
+    disconnect?: TurnoPuntoVentaWhereUniqueInput | TurnoPuntoVentaWhereUniqueInput[]
+    delete?: TurnoPuntoVentaWhereUniqueInput | TurnoPuntoVentaWhereUniqueInput[]
+    connect?: TurnoPuntoVentaWhereUniqueInput | TurnoPuntoVentaWhereUniqueInput[]
+    update?: TurnoPuntoVentaUpdateWithWhereUniqueWithoutEmpleadoInput | TurnoPuntoVentaUpdateWithWhereUniqueWithoutEmpleadoInput[]
+    updateMany?: TurnoPuntoVentaUpdateManyWithWhereWithoutEmpleadoInput | TurnoPuntoVentaUpdateManyWithWhereWithoutEmpleadoInput[]
+    deleteMany?: TurnoPuntoVentaScalarWhereInput | TurnoPuntoVentaScalarWhereInput[]
   }
 
   export type EmpleadoCreateNestedOneWithoutPagoSalarioInput = {
@@ -181737,6 +188310,10 @@ export namespace Prisma {
     set?: $Enums.CategoriaPeriodo
   }
 
+  export type EnumModoContableFieldUpdateOperationsInput = {
+    set?: $Enums.ModoContable
+  }
+
   export type TenantUpdateOneRequiredWithoutPeriodosContablesNestedInput = {
     create?: XOR<TenantCreateWithoutPeriodosContablesInput, TenantUncheckedCreateWithoutPeriodosContablesInput>
     connectOrCreate?: TenantCreateOrConnectWithoutPeriodosContablesInput
@@ -182355,6 +188932,40 @@ export namespace Prisma {
     not?: InputJsonValue | JsonFieldRefInput<$PrismaModel> | JsonNullValueFilter
   }
 
+  export type NestedEnumEstadoTurnoFilter<$PrismaModel = never> = {
+    equals?: $Enums.EstadoTurno | EnumEstadoTurnoFieldRefInput<$PrismaModel>
+    in?: $Enums.EstadoTurno[] | ListEnumEstadoTurnoFieldRefInput<$PrismaModel>
+    notIn?: $Enums.EstadoTurno[] | ListEnumEstadoTurnoFieldRefInput<$PrismaModel>
+    not?: NestedEnumEstadoTurnoFilter<$PrismaModel> | $Enums.EstadoTurno
+  }
+
+  export type NestedEnumEstadoTurnoWithAggregatesFilter<$PrismaModel = never> = {
+    equals?: $Enums.EstadoTurno | EnumEstadoTurnoFieldRefInput<$PrismaModel>
+    in?: $Enums.EstadoTurno[] | ListEnumEstadoTurnoFieldRefInput<$PrismaModel>
+    notIn?: $Enums.EstadoTurno[] | ListEnumEstadoTurnoFieldRefInput<$PrismaModel>
+    not?: NestedEnumEstadoTurnoWithAggregatesFilter<$PrismaModel> | $Enums.EstadoTurno
+    _count?: NestedIntFilter<$PrismaModel>
+    _min?: NestedEnumEstadoTurnoFilter<$PrismaModel>
+    _max?: NestedEnumEstadoTurnoFilter<$PrismaModel>
+  }
+
+  export type NestedEnumMetodoPagoVentaNullableFilter<$PrismaModel = never> = {
+    equals?: $Enums.MetodoPagoVenta | EnumMetodoPagoVentaFieldRefInput<$PrismaModel> | null
+    in?: $Enums.MetodoPagoVenta[] | ListEnumMetodoPagoVentaFieldRefInput<$PrismaModel> | null
+    notIn?: $Enums.MetodoPagoVenta[] | ListEnumMetodoPagoVentaFieldRefInput<$PrismaModel> | null
+    not?: NestedEnumMetodoPagoVentaNullableFilter<$PrismaModel> | $Enums.MetodoPagoVenta | null
+  }
+
+  export type NestedEnumMetodoPagoVentaNullableWithAggregatesFilter<$PrismaModel = never> = {
+    equals?: $Enums.MetodoPagoVenta | EnumMetodoPagoVentaFieldRefInput<$PrismaModel> | null
+    in?: $Enums.MetodoPagoVenta[] | ListEnumMetodoPagoVentaFieldRefInput<$PrismaModel> | null
+    notIn?: $Enums.MetodoPagoVenta[] | ListEnumMetodoPagoVentaFieldRefInput<$PrismaModel> | null
+    not?: NestedEnumMetodoPagoVentaNullableWithAggregatesFilter<$PrismaModel> | $Enums.MetodoPagoVenta | null
+    _count?: NestedIntNullableFilter<$PrismaModel>
+    _min?: NestedEnumMetodoPagoVentaNullableFilter<$PrismaModel>
+    _max?: NestedEnumMetodoPagoVentaNullableFilter<$PrismaModel>
+  }
+
   export type NestedBoolNullableFilter<$PrismaModel = never> = {
     equals?: boolean | BooleanFieldRefInput<$PrismaModel> | null
     not?: NestedBoolNullableFilter<$PrismaModel> | boolean | null
@@ -182699,6 +189310,13 @@ export namespace Prisma {
     not?: NestedEnumCategoriaPeriodoFilter<$PrismaModel> | $Enums.CategoriaPeriodo
   }
 
+  export type NestedEnumModoContableFilter<$PrismaModel = never> = {
+    equals?: $Enums.ModoContable | EnumModoContableFieldRefInput<$PrismaModel>
+    in?: $Enums.ModoContable[] | ListEnumModoContableFieldRefInput<$PrismaModel>
+    notIn?: $Enums.ModoContable[] | ListEnumModoContableFieldRefInput<$PrismaModel>
+    not?: NestedEnumModoContableFilter<$PrismaModel> | $Enums.ModoContable
+  }
+
   export type NestedEnumTipoPeriodoWithAggregatesFilter<$PrismaModel = never> = {
     equals?: $Enums.TipoPeriodo | EnumTipoPeriodoFieldRefInput<$PrismaModel>
     in?: $Enums.TipoPeriodo[] | ListEnumTipoPeriodoFieldRefInput<$PrismaModel>
@@ -182727,6 +189345,16 @@ export namespace Prisma {
     _count?: NestedIntFilter<$PrismaModel>
     _min?: NestedEnumCategoriaPeriodoFilter<$PrismaModel>
     _max?: NestedEnumCategoriaPeriodoFilter<$PrismaModel>
+  }
+
+  export type NestedEnumModoContableWithAggregatesFilter<$PrismaModel = never> = {
+    equals?: $Enums.ModoContable | EnumModoContableFieldRefInput<$PrismaModel>
+    in?: $Enums.ModoContable[] | ListEnumModoContableFieldRefInput<$PrismaModel>
+    notIn?: $Enums.ModoContable[] | ListEnumModoContableFieldRefInput<$PrismaModel>
+    not?: NestedEnumModoContableWithAggregatesFilter<$PrismaModel> | $Enums.ModoContable
+    _count?: NestedIntFilter<$PrismaModel>
+    _min?: NestedEnumModoContableFilter<$PrismaModel>
+    _max?: NestedEnumModoContableFilter<$PrismaModel>
   }
 
   export type NestedEnumEventoAuditoriaFilter<$PrismaModel = never> = {
@@ -183114,6 +189742,8 @@ export namespace Prisma {
     periodosContables?: PeriodoContableCreateNestedManyWithoutTenantInput
     aperturaPeriodos?: AperturaPeriodoCreateNestedManyWithoutTenantInput
     auditoriaPeriodos?: AuditoriaPeriodoCreateNestedManyWithoutTenantInput
+    turnosPos?: TurnoPuntoVentaCreateNestedManyWithoutTenantInput
+    arqueosCaja?: ArqueoCajaCreateNestedManyWithoutTenantInput
     backupLogs?: BackupLogCreateNestedManyWithoutTenantInput
     backupPlans?: BackupPlanCreateNestedManyWithoutTenantInput
   }
@@ -183181,6 +189811,8 @@ export namespace Prisma {
     periodosContables?: PeriodoContableUncheckedCreateNestedManyWithoutTenantInput
     aperturaPeriodos?: AperturaPeriodoUncheckedCreateNestedManyWithoutTenantInput
     auditoriaPeriodos?: AuditoriaPeriodoUncheckedCreateNestedManyWithoutTenantInput
+    turnosPos?: TurnoPuntoVentaUncheckedCreateNestedManyWithoutTenantInput
+    arqueosCaja?: ArqueoCajaUncheckedCreateNestedManyWithoutTenantInput
     backupLogs?: BackupLogUncheckedCreateNestedManyWithoutTenantInput
     backupPlans?: BackupPlanUncheckedCreateNestedManyWithoutTenantInput
   }
@@ -183399,6 +190031,8 @@ export namespace Prisma {
     periodosContables?: PeriodoContableUpdateManyWithoutTenantNestedInput
     aperturaPeriodos?: AperturaPeriodoUpdateManyWithoutTenantNestedInput
     auditoriaPeriodos?: AuditoriaPeriodoUpdateManyWithoutTenantNestedInput
+    turnosPos?: TurnoPuntoVentaUpdateManyWithoutTenantNestedInput
+    arqueosCaja?: ArqueoCajaUpdateManyWithoutTenantNestedInput
     backupLogs?: BackupLogUpdateManyWithoutTenantNestedInput
     backupPlans?: BackupPlanUpdateManyWithoutTenantNestedInput
   }
@@ -183466,6 +190100,8 @@ export namespace Prisma {
     periodosContables?: PeriodoContableUncheckedUpdateManyWithoutTenantNestedInput
     aperturaPeriodos?: AperturaPeriodoUncheckedUpdateManyWithoutTenantNestedInput
     auditoriaPeriodos?: AuditoriaPeriodoUncheckedUpdateManyWithoutTenantNestedInput
+    turnosPos?: TurnoPuntoVentaUncheckedUpdateManyWithoutTenantNestedInput
+    arqueosCaja?: ArqueoCajaUncheckedUpdateManyWithoutTenantNestedInput
     backupLogs?: BackupLogUncheckedUpdateManyWithoutTenantNestedInput
     backupPlans?: BackupPlanUncheckedUpdateManyWithoutTenantNestedInput
   }
@@ -184189,6 +190825,8 @@ export namespace Prisma {
     periodosContables?: PeriodoContableCreateNestedManyWithoutTenantInput
     aperturaPeriodos?: AperturaPeriodoCreateNestedManyWithoutTenantInput
     auditoriaPeriodos?: AuditoriaPeriodoCreateNestedManyWithoutTenantInput
+    turnosPos?: TurnoPuntoVentaCreateNestedManyWithoutTenantInput
+    arqueosCaja?: ArqueoCajaCreateNestedManyWithoutTenantInput
     backupLogs?: BackupLogCreateNestedManyWithoutTenantInput
     backupPlans?: BackupPlanCreateNestedManyWithoutTenantInput
   }
@@ -184256,6 +190894,8 @@ export namespace Prisma {
     periodosContables?: PeriodoContableUncheckedCreateNestedManyWithoutTenantInput
     aperturaPeriodos?: AperturaPeriodoUncheckedCreateNestedManyWithoutTenantInput
     auditoriaPeriodos?: AuditoriaPeriodoUncheckedCreateNestedManyWithoutTenantInput
+    turnosPos?: TurnoPuntoVentaUncheckedCreateNestedManyWithoutTenantInput
+    arqueosCaja?: ArqueoCajaUncheckedCreateNestedManyWithoutTenantInput
     backupLogs?: BackupLogUncheckedCreateNestedManyWithoutTenantInput
     backupPlans?: BackupPlanUncheckedCreateNestedManyWithoutTenantInput
   }
@@ -184676,6 +191316,8 @@ export namespace Prisma {
     periodosContables?: PeriodoContableUpdateManyWithoutTenantNestedInput
     aperturaPeriodos?: AperturaPeriodoUpdateManyWithoutTenantNestedInput
     auditoriaPeriodos?: AuditoriaPeriodoUpdateManyWithoutTenantNestedInput
+    turnosPos?: TurnoPuntoVentaUpdateManyWithoutTenantNestedInput
+    arqueosCaja?: ArqueoCajaUpdateManyWithoutTenantNestedInput
     backupLogs?: BackupLogUpdateManyWithoutTenantNestedInput
     backupPlans?: BackupPlanUpdateManyWithoutTenantNestedInput
   }
@@ -184743,6 +191385,8 @@ export namespace Prisma {
     periodosContables?: PeriodoContableUncheckedUpdateManyWithoutTenantNestedInput
     aperturaPeriodos?: AperturaPeriodoUncheckedUpdateManyWithoutTenantNestedInput
     auditoriaPeriodos?: AuditoriaPeriodoUncheckedUpdateManyWithoutTenantNestedInput
+    turnosPos?: TurnoPuntoVentaUncheckedUpdateManyWithoutTenantNestedInput
+    arqueosCaja?: ArqueoCajaUncheckedUpdateManyWithoutTenantNestedInput
     backupLogs?: BackupLogUncheckedUpdateManyWithoutTenantNestedInput
     backupPlans?: BackupPlanUncheckedUpdateManyWithoutTenantNestedInput
   }
@@ -185476,12 +192120,18 @@ export namespace Prisma {
     observaciones?: string | null
     esVentaUnica?: boolean
     ventaPadreId?: string | null
+    metodoPago?: $Enums.MetodoPagoVenta | null
+    montoEfectivo?: number | null
+    montoTarjeta?: number | null
+    montoTransferencia?: number | null
+    montoCredito?: number | null
     ordenReparacion?: OrdenReparacionCreateNestedOneWithoutVentaInput
     reconciliaciones?: ReconciliacionVentaCreateNestedManyWithoutVentaInput
     empleado?: EmpleadoCreateNestedOneWithoutVentasInput
     oferta?: OfertaCreateNestedOneWithoutVentaInput
     producto?: ProductoCreateNestedOneWithoutVentasInput
     puntoDeVenta: PuntoDeVentaCreateNestedOneWithoutVentasInput
+    turno?: TurnoPuntoVentaCreateNestedOneWithoutVentasInput
     factura?: FacturaCreateNestedOneWithoutVentaInput
     items?: VentaItemCreateNestedManyWithoutVentaInput
     tenant: TenantCreateNestedOneWithoutVentasInput
@@ -185503,6 +192153,12 @@ export namespace Prisma {
     esVentaUnica?: boolean
     ofertaId?: string | null
     ventaPadreId?: string | null
+    turnoId?: string | null
+    metodoPago?: $Enums.MetodoPagoVenta | null
+    montoEfectivo?: number | null
+    montoTarjeta?: number | null
+    montoTransferencia?: number | null
+    montoCredito?: number | null
     ordenReparacion?: OrdenReparacionUncheckedCreateNestedOneWithoutVentaInput
     reconciliaciones?: ReconciliacionVentaUncheckedCreateNestedManyWithoutVentaInput
     factura?: FacturaUncheckedCreateNestedOneWithoutVentaInput
@@ -185690,6 +192346,8 @@ export namespace Prisma {
     periodosContables?: PeriodoContableCreateNestedManyWithoutTenantInput
     aperturaPeriodos?: AperturaPeriodoCreateNestedManyWithoutTenantInput
     auditoriaPeriodos?: AuditoriaPeriodoCreateNestedManyWithoutTenantInput
+    turnosPos?: TurnoPuntoVentaCreateNestedManyWithoutTenantInput
+    arqueosCaja?: ArqueoCajaCreateNestedManyWithoutTenantInput
     backupLogs?: BackupLogCreateNestedManyWithoutTenantInput
     backupPlans?: BackupPlanCreateNestedManyWithoutTenantInput
   }
@@ -185757,6 +192415,8 @@ export namespace Prisma {
     periodosContables?: PeriodoContableUncheckedCreateNestedManyWithoutTenantInput
     aperturaPeriodos?: AperturaPeriodoUncheckedCreateNestedManyWithoutTenantInput
     auditoriaPeriodos?: AuditoriaPeriodoUncheckedCreateNestedManyWithoutTenantInput
+    turnosPos?: TurnoPuntoVentaUncheckedCreateNestedManyWithoutTenantInput
+    arqueosCaja?: ArqueoCajaUncheckedCreateNestedManyWithoutTenantInput
     backupLogs?: BackupLogUncheckedCreateNestedManyWithoutTenantInput
     backupPlans?: BackupPlanUncheckedCreateNestedManyWithoutTenantInput
   }
@@ -185995,6 +192655,12 @@ export namespace Prisma {
     esVentaUnica?: BoolFilter<"Venta"> | boolean
     ofertaId?: StringNullableFilter<"Venta"> | string | null
     ventaPadreId?: StringNullableFilter<"Venta"> | string | null
+    turnoId?: StringNullableFilter<"Venta"> | string | null
+    metodoPago?: EnumMetodoPagoVentaNullableFilter<"Venta"> | $Enums.MetodoPagoVenta | null
+    montoEfectivo?: IntNullableFilter<"Venta"> | number | null
+    montoTarjeta?: IntNullableFilter<"Venta"> | number | null
+    montoTransferencia?: IntNullableFilter<"Venta"> | number | null
+    montoCredito?: IntNullableFilter<"Venta"> | number | null
   }
 
   export type VentaServiciosUpsertWithWhereUniqueWithoutClienteInput = {
@@ -186152,6 +192818,8 @@ export namespace Prisma {
     periodosContables?: PeriodoContableUpdateManyWithoutTenantNestedInput
     aperturaPeriodos?: AperturaPeriodoUpdateManyWithoutTenantNestedInput
     auditoriaPeriodos?: AuditoriaPeriodoUpdateManyWithoutTenantNestedInput
+    turnosPos?: TurnoPuntoVentaUpdateManyWithoutTenantNestedInput
+    arqueosCaja?: ArqueoCajaUpdateManyWithoutTenantNestedInput
     backupLogs?: BackupLogUpdateManyWithoutTenantNestedInput
     backupPlans?: BackupPlanUpdateManyWithoutTenantNestedInput
   }
@@ -186219,6 +192887,8 @@ export namespace Prisma {
     periodosContables?: PeriodoContableUncheckedUpdateManyWithoutTenantNestedInput
     aperturaPeriodos?: AperturaPeriodoUncheckedUpdateManyWithoutTenantNestedInput
     auditoriaPeriodos?: AuditoriaPeriodoUncheckedUpdateManyWithoutTenantNestedInput
+    turnosPos?: TurnoPuntoVentaUncheckedUpdateManyWithoutTenantNestedInput
+    arqueosCaja?: ArqueoCajaUncheckedUpdateManyWithoutTenantNestedInput
     backupLogs?: BackupLogUncheckedUpdateManyWithoutTenantNestedInput
     backupPlans?: BackupPlanUncheckedUpdateManyWithoutTenantNestedInput
   }
@@ -186484,6 +193154,7 @@ export namespace Prisma {
     createdAt?: Date | string
     updatedAt?: Date | string
     productos?: ProductoCreateNestedManyWithoutAlmacenInput
+    puntosDeVenta?: PuntoDeVentaCreateNestedManyWithoutAlmacenInput
     transferenciasDestino?: TransferenciaCreateNestedManyWithoutDestinoInput
     transferenciasOrigen?: TransferenciaCreateNestedManyWithoutOrigenInput
   }
@@ -186494,6 +193165,7 @@ export namespace Prisma {
     createdAt?: Date | string
     updatedAt?: Date | string
     productos?: ProductoUncheckedCreateNestedManyWithoutAlmacenInput
+    puntosDeVenta?: PuntoDeVentaUncheckedCreateNestedManyWithoutAlmacenInput
     transferenciasDestino?: TransferenciaUncheckedCreateNestedManyWithoutDestinoInput
     transferenciasOrigen?: TransferenciaUncheckedCreateNestedManyWithoutOrigenInput
   }
@@ -186514,11 +193186,16 @@ export namespace Prisma {
     ubicacion?: string | null
     createdAt?: Date | string
     updatedAt?: Date | string
+    tipoCaja?: string | null
+    cuentaContableId?: string | null
     productos?: ProductoCreateNestedManyWithoutPuntoDeVentaInput
     listaPrecio?: ListaPrecioCreateNestedOneWithoutPuntosDeVentaInput
+    almacen?: AlmacenCreateNestedOneWithoutPuntosDeVentaInput
     transferenciasDestino?: TransferenciaCreateNestedManyWithoutPuntoDeVentaDestinoInput
     transferenciasOrigen?: TransferenciaCreateNestedManyWithoutPuntoDeVentaOrigenInput
     ventas?: VentaCreateNestedManyWithoutPuntoDeVentaInput
+    turnos?: TurnoPuntoVentaCreateNestedManyWithoutPuntoDeVentaInput
+    arqueos?: ArqueoCajaCreateNestedManyWithoutPuntoDeVentaInput
   }
 
   export type PuntoDeVentaUncheckedCreateWithoutTenantInput = {
@@ -186528,10 +193205,15 @@ export namespace Prisma {
     createdAt?: Date | string
     updatedAt?: Date | string
     listaPrecioId?: string | null
+    tipoCaja?: string | null
+    almacenId?: string | null
+    cuentaContableId?: string | null
     productos?: ProductoUncheckedCreateNestedManyWithoutPuntoDeVentaInput
     transferenciasDestino?: TransferenciaUncheckedCreateNestedManyWithoutPuntoDeVentaDestinoInput
     transferenciasOrigen?: TransferenciaUncheckedCreateNestedManyWithoutPuntoDeVentaOrigenInput
     ventas?: VentaUncheckedCreateNestedManyWithoutPuntoDeVentaInput
+    turnos?: TurnoPuntoVentaUncheckedCreateNestedManyWithoutPuntoDeVentaInput
+    arqueos?: ArqueoCajaUncheckedCreateNestedManyWithoutPuntoDeVentaInput
   }
 
   export type PuntoDeVentaCreateOrConnectWithoutTenantInput = {
@@ -186655,6 +193337,11 @@ export namespace Prisma {
     observaciones?: string | null
     esVentaUnica?: boolean
     ventaPadreId?: string | null
+    metodoPago?: $Enums.MetodoPagoVenta | null
+    montoEfectivo?: number | null
+    montoTarjeta?: number | null
+    montoTransferencia?: number | null
+    montoCredito?: number | null
     ordenReparacion?: OrdenReparacionCreateNestedOneWithoutVentaInput
     reconciliaciones?: ReconciliacionVentaCreateNestedManyWithoutVentaInput
     cliente?: ClienteCreateNestedOneWithoutVentaInput
@@ -186662,6 +193349,7 @@ export namespace Prisma {
     oferta?: OfertaCreateNestedOneWithoutVentaInput
     producto?: ProductoCreateNestedOneWithoutVentasInput
     puntoDeVenta: PuntoDeVentaCreateNestedOneWithoutVentasInput
+    turno?: TurnoPuntoVentaCreateNestedOneWithoutVentasInput
     factura?: FacturaCreateNestedOneWithoutVentaInput
     items?: VentaItemCreateNestedManyWithoutVentaInput
   }
@@ -186682,6 +193370,12 @@ export namespace Prisma {
     esVentaUnica?: boolean
     ofertaId?: string | null
     ventaPadreId?: string | null
+    turnoId?: string | null
+    metodoPago?: $Enums.MetodoPagoVenta | null
+    montoEfectivo?: number | null
+    montoTarjeta?: number | null
+    montoTransferencia?: number | null
+    montoCredito?: number | null
     ordenReparacion?: OrdenReparacionUncheckedCreateNestedOneWithoutVentaInput
     reconciliaciones?: ReconciliacionVentaUncheckedCreateNestedManyWithoutVentaInput
     factura?: FacturaUncheckedCreateNestedOneWithoutVentaInput
@@ -187827,6 +194521,7 @@ export namespace Prisma {
     vacationAccruals?: VacationAccrualCreateNestedManyWithoutEmployeeInput
     vacationRequests?: VacationRequestCreateNestedManyWithoutEmployeeInput
     ventas?: VentaCreateNestedManyWithoutEmpleadoInput
+    turnosPos?: TurnoPuntoVentaCreateNestedManyWithoutEmpleadoInput
   }
 
   export type EmpleadoUncheckedCreateWithoutTenantInput = {
@@ -187850,6 +194545,7 @@ export namespace Prisma {
     vacationAccruals?: VacationAccrualUncheckedCreateNestedManyWithoutEmployeeInput
     vacationRequests?: VacationRequestUncheckedCreateNestedManyWithoutEmployeeInput
     ventas?: VentaUncheckedCreateNestedManyWithoutEmpleadoInput
+    turnosPos?: TurnoPuntoVentaUncheckedCreateNestedManyWithoutEmpleadoInput
   }
 
   export type EmpleadoCreateOrConnectWithoutTenantInput = {
@@ -188641,6 +195337,7 @@ export namespace Prisma {
     estado?: $Enums.EstadoPeriodo
     aperturaAutomatica?: boolean
     categoria?: $Enums.CategoriaPeriodo
+    modoContable?: $Enums.ModoContable
     abiertoPorId?: string | null
     fechaApertura?: Date | string | null
     cerradoPor?: string | null
@@ -188674,6 +195371,7 @@ export namespace Prisma {
     periodoPadreId?: string | null
     aperturaAutomatica?: boolean
     categoria?: $Enums.CategoriaPeriodo
+    modoContable?: $Enums.ModoContable
     abiertoPorId?: string | null
     fechaApertura?: Date | string | null
     cerradoPor?: string | null
@@ -188779,6 +195477,132 @@ export namespace Prisma {
 
   export type AuditoriaPeriodoCreateManyTenantInputEnvelope = {
     data: AuditoriaPeriodoCreateManyTenantInput | AuditoriaPeriodoCreateManyTenantInput[]
+    skipDuplicates?: boolean
+  }
+
+  export type TurnoPuntoVentaCreateWithoutTenantInput = {
+    id?: string
+    tipo?: string
+    fechaApertura?: Date | string
+    fechaCierre?: Date | string | null
+    fondoInicialCup?: number
+    fondoInicialUsd?: number
+    estado?: $Enums.EstadoTurno
+    observaciones?: string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    puntoDeVenta: PuntoDeVentaCreateNestedOneWithoutTurnosInput
+    empleado?: EmpleadoCreateNestedOneWithoutTurnosPosInput
+    ventas?: VentaCreateNestedManyWithoutTurnoInput
+    arqueo?: ArqueoCajaCreateNestedOneWithoutTurnoInput
+  }
+
+  export type TurnoPuntoVentaUncheckedCreateWithoutTenantInput = {
+    id?: string
+    puntoDeVentaId: string
+    empleadoId?: string | null
+    tipo?: string
+    fechaApertura?: Date | string
+    fechaCierre?: Date | string | null
+    fondoInicialCup?: number
+    fondoInicialUsd?: number
+    estado?: $Enums.EstadoTurno
+    observaciones?: string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    ventas?: VentaUncheckedCreateNestedManyWithoutTurnoInput
+    arqueo?: ArqueoCajaUncheckedCreateNestedOneWithoutTurnoInput
+  }
+
+  export type TurnoPuntoVentaCreateOrConnectWithoutTenantInput = {
+    where: TurnoPuntoVentaWhereUniqueInput
+    create: XOR<TurnoPuntoVentaCreateWithoutTenantInput, TurnoPuntoVentaUncheckedCreateWithoutTenantInput>
+  }
+
+  export type TurnoPuntoVentaCreateManyTenantInputEnvelope = {
+    data: TurnoPuntoVentaCreateManyTenantInput | TurnoPuntoVentaCreateManyTenantInput[]
+    skipDuplicates?: boolean
+  }
+
+  export type ArqueoCajaCreateWithoutTenantInput = {
+    id?: string
+    billetes1000Cup?: number
+    billetes500Cup?: number
+    billetes200Cup?: number
+    billetes100Cup?: number
+    billetes50Cup?: number
+    billetes20Cup?: number
+    monedasCup?: number
+    billetes100Usd?: number
+    billetes50Usd?: number
+    billetes20Usd?: number
+    billetes10Usd?: number
+    billetes5Usd?: number
+    billetes1Usd?: number
+    monedasUsd?: number
+    totalEfectivoCup?: number
+    totalEfectivoUsd?: number
+    totalTarjeta?: number
+    totalTransferencia?: number
+    totalCredito?: number
+    esperadoEfectivoCup?: number
+    esperadoEfectivoUsd?: number
+    esperadoTarjeta?: number
+    esperadoTransferencia?: number
+    esperadoCredito?: number
+    diferenciaCup?: number
+    diferenciaUsd?: number
+    observaciones?: string | null
+    contabilizado?: boolean
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    turno: TurnoPuntoVentaCreateNestedOneWithoutArqueoInput
+    puntoDeVenta: PuntoDeVentaCreateNestedOneWithoutArqueosInput
+  }
+
+  export type ArqueoCajaUncheckedCreateWithoutTenantInput = {
+    id?: string
+    turnoId: string
+    puntoDeVentaId: string
+    billetes1000Cup?: number
+    billetes500Cup?: number
+    billetes200Cup?: number
+    billetes100Cup?: number
+    billetes50Cup?: number
+    billetes20Cup?: number
+    monedasCup?: number
+    billetes100Usd?: number
+    billetes50Usd?: number
+    billetes20Usd?: number
+    billetes10Usd?: number
+    billetes5Usd?: number
+    billetes1Usd?: number
+    monedasUsd?: number
+    totalEfectivoCup?: number
+    totalEfectivoUsd?: number
+    totalTarjeta?: number
+    totalTransferencia?: number
+    totalCredito?: number
+    esperadoEfectivoCup?: number
+    esperadoEfectivoUsd?: number
+    esperadoTarjeta?: number
+    esperadoTransferencia?: number
+    esperadoCredito?: number
+    diferenciaCup?: number
+    diferenciaUsd?: number
+    observaciones?: string | null
+    contabilizado?: boolean
+    createdAt?: Date | string
+    updatedAt?: Date | string
+  }
+
+  export type ArqueoCajaCreateOrConnectWithoutTenantInput = {
+    where: ArqueoCajaWhereUniqueInput
+    create: XOR<ArqueoCajaCreateWithoutTenantInput, ArqueoCajaUncheckedCreateWithoutTenantInput>
+  }
+
+  export type ArqueoCajaCreateManyTenantInputEnvelope = {
+    data: ArqueoCajaCreateManyTenantInput | ArqueoCajaCreateManyTenantInput[]
     skipDuplicates?: boolean
   }
 
@@ -189102,6 +195926,9 @@ export namespace Prisma {
     createdAt?: DateTimeFilter<"PuntoDeVenta"> | Date | string
     updatedAt?: DateTimeFilter<"PuntoDeVenta"> | Date | string
     listaPrecioId?: StringNullableFilter<"PuntoDeVenta"> | string | null
+    tipoCaja?: StringNullableFilter<"PuntoDeVenta"> | string | null
+    almacenId?: StringNullableFilter<"PuntoDeVenta"> | string | null
+    cuentaContableId?: StringNullableFilter<"PuntoDeVenta"> | string | null
   }
 
   export type ProductoUpsertWithWhereUniqueWithoutTenantInput = {
@@ -190389,6 +197216,7 @@ export namespace Prisma {
     periodoPadreId?: StringNullableFilter<"PeriodoContable"> | string | null
     aperturaAutomatica?: BoolFilter<"PeriodoContable"> | boolean
     categoria?: EnumCategoriaPeriodoFilter<"PeriodoContable"> | $Enums.CategoriaPeriodo
+    modoContable?: EnumModoContableFilter<"PeriodoContable"> | $Enums.ModoContable
     abiertoPorId?: StringNullableFilter<"PeriodoContable"> | string | null
     fechaApertura?: DateTimeNullableFilter<"PeriodoContable"> | Date | string | null
     cerradoPor?: StringNullableFilter<"PeriodoContable"> | string | null
@@ -190472,6 +197300,97 @@ export namespace Prisma {
     motivo?: StringNullableFilter<"AuditoriaPeriodo"> | string | null
     payload?: JsonNullableFilter<"AuditoriaPeriodo">
     createdAt?: DateTimeFilter<"AuditoriaPeriodo"> | Date | string
+  }
+
+  export type TurnoPuntoVentaUpsertWithWhereUniqueWithoutTenantInput = {
+    where: TurnoPuntoVentaWhereUniqueInput
+    update: XOR<TurnoPuntoVentaUpdateWithoutTenantInput, TurnoPuntoVentaUncheckedUpdateWithoutTenantInput>
+    create: XOR<TurnoPuntoVentaCreateWithoutTenantInput, TurnoPuntoVentaUncheckedCreateWithoutTenantInput>
+  }
+
+  export type TurnoPuntoVentaUpdateWithWhereUniqueWithoutTenantInput = {
+    where: TurnoPuntoVentaWhereUniqueInput
+    data: XOR<TurnoPuntoVentaUpdateWithoutTenantInput, TurnoPuntoVentaUncheckedUpdateWithoutTenantInput>
+  }
+
+  export type TurnoPuntoVentaUpdateManyWithWhereWithoutTenantInput = {
+    where: TurnoPuntoVentaScalarWhereInput
+    data: XOR<TurnoPuntoVentaUpdateManyMutationInput, TurnoPuntoVentaUncheckedUpdateManyWithoutTenantInput>
+  }
+
+  export type TurnoPuntoVentaScalarWhereInput = {
+    AND?: TurnoPuntoVentaScalarWhereInput | TurnoPuntoVentaScalarWhereInput[]
+    OR?: TurnoPuntoVentaScalarWhereInput[]
+    NOT?: TurnoPuntoVentaScalarWhereInput | TurnoPuntoVentaScalarWhereInput[]
+    id?: StringFilter<"TurnoPuntoVenta"> | string
+    tenantId?: StringFilter<"TurnoPuntoVenta"> | string
+    puntoDeVentaId?: StringFilter<"TurnoPuntoVenta"> | string
+    empleadoId?: StringNullableFilter<"TurnoPuntoVenta"> | string | null
+    tipo?: StringFilter<"TurnoPuntoVenta"> | string
+    fechaApertura?: DateTimeFilter<"TurnoPuntoVenta"> | Date | string
+    fechaCierre?: DateTimeNullableFilter<"TurnoPuntoVenta"> | Date | string | null
+    fondoInicialCup?: IntFilter<"TurnoPuntoVenta"> | number
+    fondoInicialUsd?: IntFilter<"TurnoPuntoVenta"> | number
+    estado?: EnumEstadoTurnoFilter<"TurnoPuntoVenta"> | $Enums.EstadoTurno
+    observaciones?: StringNullableFilter<"TurnoPuntoVenta"> | string | null
+    createdAt?: DateTimeFilter<"TurnoPuntoVenta"> | Date | string
+    updatedAt?: DateTimeFilter<"TurnoPuntoVenta"> | Date | string
+  }
+
+  export type ArqueoCajaUpsertWithWhereUniqueWithoutTenantInput = {
+    where: ArqueoCajaWhereUniqueInput
+    update: XOR<ArqueoCajaUpdateWithoutTenantInput, ArqueoCajaUncheckedUpdateWithoutTenantInput>
+    create: XOR<ArqueoCajaCreateWithoutTenantInput, ArqueoCajaUncheckedCreateWithoutTenantInput>
+  }
+
+  export type ArqueoCajaUpdateWithWhereUniqueWithoutTenantInput = {
+    where: ArqueoCajaWhereUniqueInput
+    data: XOR<ArqueoCajaUpdateWithoutTenantInput, ArqueoCajaUncheckedUpdateWithoutTenantInput>
+  }
+
+  export type ArqueoCajaUpdateManyWithWhereWithoutTenantInput = {
+    where: ArqueoCajaScalarWhereInput
+    data: XOR<ArqueoCajaUpdateManyMutationInput, ArqueoCajaUncheckedUpdateManyWithoutTenantInput>
+  }
+
+  export type ArqueoCajaScalarWhereInput = {
+    AND?: ArqueoCajaScalarWhereInput | ArqueoCajaScalarWhereInput[]
+    OR?: ArqueoCajaScalarWhereInput[]
+    NOT?: ArqueoCajaScalarWhereInput | ArqueoCajaScalarWhereInput[]
+    id?: StringFilter<"ArqueoCaja"> | string
+    turnoId?: StringFilter<"ArqueoCaja"> | string
+    tenantId?: StringFilter<"ArqueoCaja"> | string
+    puntoDeVentaId?: StringFilter<"ArqueoCaja"> | string
+    billetes1000Cup?: IntFilter<"ArqueoCaja"> | number
+    billetes500Cup?: IntFilter<"ArqueoCaja"> | number
+    billetes200Cup?: IntFilter<"ArqueoCaja"> | number
+    billetes100Cup?: IntFilter<"ArqueoCaja"> | number
+    billetes50Cup?: IntFilter<"ArqueoCaja"> | number
+    billetes20Cup?: IntFilter<"ArqueoCaja"> | number
+    monedasCup?: IntFilter<"ArqueoCaja"> | number
+    billetes100Usd?: IntFilter<"ArqueoCaja"> | number
+    billetes50Usd?: IntFilter<"ArqueoCaja"> | number
+    billetes20Usd?: IntFilter<"ArqueoCaja"> | number
+    billetes10Usd?: IntFilter<"ArqueoCaja"> | number
+    billetes5Usd?: IntFilter<"ArqueoCaja"> | number
+    billetes1Usd?: IntFilter<"ArqueoCaja"> | number
+    monedasUsd?: IntFilter<"ArqueoCaja"> | number
+    totalEfectivoCup?: IntFilter<"ArqueoCaja"> | number
+    totalEfectivoUsd?: IntFilter<"ArqueoCaja"> | number
+    totalTarjeta?: IntFilter<"ArqueoCaja"> | number
+    totalTransferencia?: IntFilter<"ArqueoCaja"> | number
+    totalCredito?: IntFilter<"ArqueoCaja"> | number
+    esperadoEfectivoCup?: IntFilter<"ArqueoCaja"> | number
+    esperadoEfectivoUsd?: IntFilter<"ArqueoCaja"> | number
+    esperadoTarjeta?: IntFilter<"ArqueoCaja"> | number
+    esperadoTransferencia?: IntFilter<"ArqueoCaja"> | number
+    esperadoCredito?: IntFilter<"ArqueoCaja"> | number
+    diferenciaCup?: IntFilter<"ArqueoCaja"> | number
+    diferenciaUsd?: IntFilter<"ArqueoCaja"> | number
+    observaciones?: StringNullableFilter<"ArqueoCaja"> | string | null
+    contabilizado?: BoolFilter<"ArqueoCaja"> | boolean
+    createdAt?: DateTimeFilter<"ArqueoCaja"> | Date | string
+    updatedAt?: DateTimeFilter<"ArqueoCaja"> | Date | string
   }
 
   export type BackupLogUpsertWithWhereUniqueWithoutTenantInput = {
@@ -190604,6 +197523,8 @@ export namespace Prisma {
     periodosContables?: PeriodoContableCreateNestedManyWithoutTenantInput
     aperturaPeriodos?: AperturaPeriodoCreateNestedManyWithoutTenantInput
     auditoriaPeriodos?: AuditoriaPeriodoCreateNestedManyWithoutTenantInput
+    turnosPos?: TurnoPuntoVentaCreateNestedManyWithoutTenantInput
+    arqueosCaja?: ArqueoCajaCreateNestedManyWithoutTenantInput
     backupLogs?: BackupLogCreateNestedManyWithoutTenantInput
     backupPlans?: BackupPlanCreateNestedManyWithoutTenantInput
   }
@@ -190671,6 +197592,8 @@ export namespace Prisma {
     periodosContables?: PeriodoContableUncheckedCreateNestedManyWithoutTenantInput
     aperturaPeriodos?: AperturaPeriodoUncheckedCreateNestedManyWithoutTenantInput
     auditoriaPeriodos?: AuditoriaPeriodoUncheckedCreateNestedManyWithoutTenantInput
+    turnosPos?: TurnoPuntoVentaUncheckedCreateNestedManyWithoutTenantInput
+    arqueosCaja?: ArqueoCajaUncheckedCreateNestedManyWithoutTenantInput
     backupLogs?: BackupLogUncheckedCreateNestedManyWithoutTenantInput
     backupPlans?: BackupPlanUncheckedCreateNestedManyWithoutTenantInput
   }
@@ -190837,6 +197760,8 @@ export namespace Prisma {
     periodosContables?: PeriodoContableUpdateManyWithoutTenantNestedInput
     aperturaPeriodos?: AperturaPeriodoUpdateManyWithoutTenantNestedInput
     auditoriaPeriodos?: AuditoriaPeriodoUpdateManyWithoutTenantNestedInput
+    turnosPos?: TurnoPuntoVentaUpdateManyWithoutTenantNestedInput
+    arqueosCaja?: ArqueoCajaUpdateManyWithoutTenantNestedInput
     backupLogs?: BackupLogUpdateManyWithoutTenantNestedInput
     backupPlans?: BackupPlanUpdateManyWithoutTenantNestedInput
   }
@@ -190904,6 +197829,8 @@ export namespace Prisma {
     periodosContables?: PeriodoContableUncheckedUpdateManyWithoutTenantNestedInput
     aperturaPeriodos?: AperturaPeriodoUncheckedUpdateManyWithoutTenantNestedInput
     auditoriaPeriodos?: AuditoriaPeriodoUncheckedUpdateManyWithoutTenantNestedInput
+    turnosPos?: TurnoPuntoVentaUncheckedUpdateManyWithoutTenantNestedInput
+    arqueosCaja?: ArqueoCajaUncheckedUpdateManyWithoutTenantNestedInput
     backupLogs?: BackupLogUncheckedUpdateManyWithoutTenantNestedInput
     backupPlans?: BackupPlanUncheckedUpdateManyWithoutTenantNestedInput
   }
@@ -191060,6 +197987,8 @@ export namespace Prisma {
     periodosContables?: PeriodoContableCreateNestedManyWithoutTenantInput
     aperturaPeriodos?: AperturaPeriodoCreateNestedManyWithoutTenantInput
     auditoriaPeriodos?: AuditoriaPeriodoCreateNestedManyWithoutTenantInput
+    turnosPos?: TurnoPuntoVentaCreateNestedManyWithoutTenantInput
+    arqueosCaja?: ArqueoCajaCreateNestedManyWithoutTenantInput
     backupLogs?: BackupLogCreateNestedManyWithoutTenantInput
     backupPlans?: BackupPlanCreateNestedManyWithoutTenantInput
   }
@@ -191127,6 +198056,8 @@ export namespace Prisma {
     periodosContables?: PeriodoContableUncheckedCreateNestedManyWithoutTenantInput
     aperturaPeriodos?: AperturaPeriodoUncheckedCreateNestedManyWithoutTenantInput
     auditoriaPeriodos?: AuditoriaPeriodoUncheckedCreateNestedManyWithoutTenantInput
+    turnosPos?: TurnoPuntoVentaUncheckedCreateNestedManyWithoutTenantInput
+    arqueosCaja?: ArqueoCajaUncheckedCreateNestedManyWithoutTenantInput
     backupLogs?: BackupLogUncheckedCreateNestedManyWithoutTenantInput
     backupPlans?: BackupPlanUncheckedCreateNestedManyWithoutTenantInput
   }
@@ -191243,6 +198174,8 @@ export namespace Prisma {
     periodosContables?: PeriodoContableUpdateManyWithoutTenantNestedInput
     aperturaPeriodos?: AperturaPeriodoUpdateManyWithoutTenantNestedInput
     auditoriaPeriodos?: AuditoriaPeriodoUpdateManyWithoutTenantNestedInput
+    turnosPos?: TurnoPuntoVentaUpdateManyWithoutTenantNestedInput
+    arqueosCaja?: ArqueoCajaUpdateManyWithoutTenantNestedInput
     backupLogs?: BackupLogUpdateManyWithoutTenantNestedInput
     backupPlans?: BackupPlanUpdateManyWithoutTenantNestedInput
   }
@@ -191310,6 +198243,8 @@ export namespace Prisma {
     periodosContables?: PeriodoContableUncheckedUpdateManyWithoutTenantNestedInput
     aperturaPeriodos?: AperturaPeriodoUncheckedUpdateManyWithoutTenantNestedInput
     auditoriaPeriodos?: AuditoriaPeriodoUncheckedUpdateManyWithoutTenantNestedInput
+    turnosPos?: TurnoPuntoVentaUncheckedUpdateManyWithoutTenantNestedInput
+    arqueosCaja?: ArqueoCajaUncheckedUpdateManyWithoutTenantNestedInput
     backupLogs?: BackupLogUncheckedUpdateManyWithoutTenantNestedInput
     backupPlans?: BackupPlanUncheckedUpdateManyWithoutTenantNestedInput
   }
@@ -191416,6 +198351,8 @@ export namespace Prisma {
     periodosContables?: PeriodoContableCreateNestedManyWithoutTenantInput
     aperturaPeriodos?: AperturaPeriodoCreateNestedManyWithoutTenantInput
     auditoriaPeriodos?: AuditoriaPeriodoCreateNestedManyWithoutTenantInput
+    turnosPos?: TurnoPuntoVentaCreateNestedManyWithoutTenantInput
+    arqueosCaja?: ArqueoCajaCreateNestedManyWithoutTenantInput
     backupLogs?: BackupLogCreateNestedManyWithoutTenantInput
     backupPlans?: BackupPlanCreateNestedManyWithoutTenantInput
   }
@@ -191483,6 +198420,8 @@ export namespace Prisma {
     periodosContables?: PeriodoContableUncheckedCreateNestedManyWithoutTenantInput
     aperturaPeriodos?: AperturaPeriodoUncheckedCreateNestedManyWithoutTenantInput
     auditoriaPeriodos?: AuditoriaPeriodoUncheckedCreateNestedManyWithoutTenantInput
+    turnosPos?: TurnoPuntoVentaUncheckedCreateNestedManyWithoutTenantInput
+    arqueosCaja?: ArqueoCajaUncheckedCreateNestedManyWithoutTenantInput
     backupLogs?: BackupLogUncheckedCreateNestedManyWithoutTenantInput
     backupPlans?: BackupPlanUncheckedCreateNestedManyWithoutTenantInput
   }
@@ -191615,6 +198554,8 @@ export namespace Prisma {
     periodosContables?: PeriodoContableUpdateManyWithoutTenantNestedInput
     aperturaPeriodos?: AperturaPeriodoUpdateManyWithoutTenantNestedInput
     auditoriaPeriodos?: AuditoriaPeriodoUpdateManyWithoutTenantNestedInput
+    turnosPos?: TurnoPuntoVentaUpdateManyWithoutTenantNestedInput
+    arqueosCaja?: ArqueoCajaUpdateManyWithoutTenantNestedInput
     backupLogs?: BackupLogUpdateManyWithoutTenantNestedInput
     backupPlans?: BackupPlanUpdateManyWithoutTenantNestedInput
   }
@@ -191682,6 +198623,8 @@ export namespace Prisma {
     periodosContables?: PeriodoContableUncheckedUpdateManyWithoutTenantNestedInput
     aperturaPeriodos?: AperturaPeriodoUncheckedUpdateManyWithoutTenantNestedInput
     auditoriaPeriodos?: AuditoriaPeriodoUncheckedUpdateManyWithoutTenantNestedInput
+    turnosPos?: TurnoPuntoVentaUncheckedUpdateManyWithoutTenantNestedInput
+    arqueosCaja?: ArqueoCajaUncheckedUpdateManyWithoutTenantNestedInput
     backupLogs?: BackupLogUncheckedUpdateManyWithoutTenantNestedInput
     backupPlans?: BackupPlanUncheckedUpdateManyWithoutTenantNestedInput
   }
@@ -191838,6 +198781,52 @@ export namespace Prisma {
 
   export type ProductoCreateManyAlmacenInputEnvelope = {
     data: ProductoCreateManyAlmacenInput | ProductoCreateManyAlmacenInput[]
+    skipDuplicates?: boolean
+  }
+
+  export type PuntoDeVentaCreateWithoutAlmacenInput = {
+    pvId?: string
+    nombre: string
+    ubicacion?: string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    tipoCaja?: string | null
+    cuentaContableId?: string | null
+    productos?: ProductoCreateNestedManyWithoutPuntoDeVentaInput
+    listaPrecio?: ListaPrecioCreateNestedOneWithoutPuntosDeVentaInput
+    transferenciasDestino?: TransferenciaCreateNestedManyWithoutPuntoDeVentaDestinoInput
+    transferenciasOrigen?: TransferenciaCreateNestedManyWithoutPuntoDeVentaOrigenInput
+    ventas?: VentaCreateNestedManyWithoutPuntoDeVentaInput
+    turnos?: TurnoPuntoVentaCreateNestedManyWithoutPuntoDeVentaInput
+    arqueos?: ArqueoCajaCreateNestedManyWithoutPuntoDeVentaInput
+    tenant: TenantCreateNestedOneWithoutPuntosDeVentaInput
+  }
+
+  export type PuntoDeVentaUncheckedCreateWithoutAlmacenInput = {
+    pvId?: string
+    tenantId: string
+    nombre: string
+    ubicacion?: string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    listaPrecioId?: string | null
+    tipoCaja?: string | null
+    cuentaContableId?: string | null
+    productos?: ProductoUncheckedCreateNestedManyWithoutPuntoDeVentaInput
+    transferenciasDestino?: TransferenciaUncheckedCreateNestedManyWithoutPuntoDeVentaDestinoInput
+    transferenciasOrigen?: TransferenciaUncheckedCreateNestedManyWithoutPuntoDeVentaOrigenInput
+    ventas?: VentaUncheckedCreateNestedManyWithoutPuntoDeVentaInput
+    turnos?: TurnoPuntoVentaUncheckedCreateNestedManyWithoutPuntoDeVentaInput
+    arqueos?: ArqueoCajaUncheckedCreateNestedManyWithoutPuntoDeVentaInput
+  }
+
+  export type PuntoDeVentaCreateOrConnectWithoutAlmacenInput = {
+    where: PuntoDeVentaWhereUniqueInput
+    create: XOR<PuntoDeVentaCreateWithoutAlmacenInput, PuntoDeVentaUncheckedCreateWithoutAlmacenInput>
+  }
+
+  export type PuntoDeVentaCreateManyAlmacenInputEnvelope = {
+    data: PuntoDeVentaCreateManyAlmacenInput | PuntoDeVentaCreateManyAlmacenInput[]
     skipDuplicates?: boolean
   }
 
@@ -192000,6 +198989,8 @@ export namespace Prisma {
     periodosContables?: PeriodoContableCreateNestedManyWithoutTenantInput
     aperturaPeriodos?: AperturaPeriodoCreateNestedManyWithoutTenantInput
     auditoriaPeriodos?: AuditoriaPeriodoCreateNestedManyWithoutTenantInput
+    turnosPos?: TurnoPuntoVentaCreateNestedManyWithoutTenantInput
+    arqueosCaja?: ArqueoCajaCreateNestedManyWithoutTenantInput
     backupLogs?: BackupLogCreateNestedManyWithoutTenantInput
     backupPlans?: BackupPlanCreateNestedManyWithoutTenantInput
   }
@@ -192067,6 +199058,8 @@ export namespace Prisma {
     periodosContables?: PeriodoContableUncheckedCreateNestedManyWithoutTenantInput
     aperturaPeriodos?: AperturaPeriodoUncheckedCreateNestedManyWithoutTenantInput
     auditoriaPeriodos?: AuditoriaPeriodoUncheckedCreateNestedManyWithoutTenantInput
+    turnosPos?: TurnoPuntoVentaUncheckedCreateNestedManyWithoutTenantInput
+    arqueosCaja?: ArqueoCajaUncheckedCreateNestedManyWithoutTenantInput
     backupLogs?: BackupLogUncheckedCreateNestedManyWithoutTenantInput
     backupPlans?: BackupPlanUncheckedCreateNestedManyWithoutTenantInput
   }
@@ -192090,6 +199083,22 @@ export namespace Prisma {
   export type ProductoUpdateManyWithWhereWithoutAlmacenInput = {
     where: ProductoScalarWhereInput
     data: XOR<ProductoUpdateManyMutationInput, ProductoUncheckedUpdateManyWithoutAlmacenInput>
+  }
+
+  export type PuntoDeVentaUpsertWithWhereUniqueWithoutAlmacenInput = {
+    where: PuntoDeVentaWhereUniqueInput
+    update: XOR<PuntoDeVentaUpdateWithoutAlmacenInput, PuntoDeVentaUncheckedUpdateWithoutAlmacenInput>
+    create: XOR<PuntoDeVentaCreateWithoutAlmacenInput, PuntoDeVentaUncheckedCreateWithoutAlmacenInput>
+  }
+
+  export type PuntoDeVentaUpdateWithWhereUniqueWithoutAlmacenInput = {
+    where: PuntoDeVentaWhereUniqueInput
+    data: XOR<PuntoDeVentaUpdateWithoutAlmacenInput, PuntoDeVentaUncheckedUpdateWithoutAlmacenInput>
+  }
+
+  export type PuntoDeVentaUpdateManyWithWhereWithoutAlmacenInput = {
+    where: PuntoDeVentaScalarWhereInput
+    data: XOR<PuntoDeVentaUpdateManyMutationInput, PuntoDeVentaUncheckedUpdateManyWithoutAlmacenInput>
   }
 
   export type TransferenciaUpsertWithWhereUniqueWithoutDestinoInput = {
@@ -192198,6 +199207,8 @@ export namespace Prisma {
     periodosContables?: PeriodoContableUpdateManyWithoutTenantNestedInput
     aperturaPeriodos?: AperturaPeriodoUpdateManyWithoutTenantNestedInput
     auditoriaPeriodos?: AuditoriaPeriodoUpdateManyWithoutTenantNestedInput
+    turnosPos?: TurnoPuntoVentaUpdateManyWithoutTenantNestedInput
+    arqueosCaja?: ArqueoCajaUpdateManyWithoutTenantNestedInput
     backupLogs?: BackupLogUpdateManyWithoutTenantNestedInput
     backupPlans?: BackupPlanUpdateManyWithoutTenantNestedInput
   }
@@ -192265,6 +199276,8 @@ export namespace Prisma {
     periodosContables?: PeriodoContableUncheckedUpdateManyWithoutTenantNestedInput
     aperturaPeriodos?: AperturaPeriodoUncheckedUpdateManyWithoutTenantNestedInput
     auditoriaPeriodos?: AuditoriaPeriodoUncheckedUpdateManyWithoutTenantNestedInput
+    turnosPos?: TurnoPuntoVentaUncheckedUpdateManyWithoutTenantNestedInput
+    arqueosCaja?: ArqueoCajaUncheckedUpdateManyWithoutTenantNestedInput
     backupLogs?: BackupLogUncheckedUpdateManyWithoutTenantNestedInput
     backupPlans?: BackupPlanUncheckedUpdateManyWithoutTenantNestedInput
   }
@@ -192396,6 +199409,33 @@ export namespace Prisma {
     create: XOR<ListaPrecioCreateWithoutPuntosDeVentaInput, ListaPrecioUncheckedCreateWithoutPuntosDeVentaInput>
   }
 
+  export type AlmacenCreateWithoutPuntosDeVentaInput = {
+    almacenId?: string
+    nombre: string
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    productos?: ProductoCreateNestedManyWithoutAlmacenInput
+    transferenciasDestino?: TransferenciaCreateNestedManyWithoutDestinoInput
+    transferenciasOrigen?: TransferenciaCreateNestedManyWithoutOrigenInput
+    tenant: TenantCreateNestedOneWithoutAlmacenesInput
+  }
+
+  export type AlmacenUncheckedCreateWithoutPuntosDeVentaInput = {
+    almacenId?: string
+    tenantId: string
+    nombre: string
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    productos?: ProductoUncheckedCreateNestedManyWithoutAlmacenInput
+    transferenciasDestino?: TransferenciaUncheckedCreateNestedManyWithoutDestinoInput
+    transferenciasOrigen?: TransferenciaUncheckedCreateNestedManyWithoutOrigenInput
+  }
+
+  export type AlmacenCreateOrConnectWithoutPuntosDeVentaInput = {
+    where: AlmacenWhereUniqueInput
+    create: XOR<AlmacenCreateWithoutPuntosDeVentaInput, AlmacenUncheckedCreateWithoutPuntosDeVentaInput>
+  }
+
   export type TransferenciaCreateWithoutPuntoDeVentaDestinoInput = {
     transferenciaId?: string
     cantidad: number
@@ -192503,12 +199543,18 @@ export namespace Prisma {
     observaciones?: string | null
     esVentaUnica?: boolean
     ventaPadreId?: string | null
+    metodoPago?: $Enums.MetodoPagoVenta | null
+    montoEfectivo?: number | null
+    montoTarjeta?: number | null
+    montoTransferencia?: number | null
+    montoCredito?: number | null
     ordenReparacion?: OrdenReparacionCreateNestedOneWithoutVentaInput
     reconciliaciones?: ReconciliacionVentaCreateNestedManyWithoutVentaInput
     cliente?: ClienteCreateNestedOneWithoutVentaInput
     empleado?: EmpleadoCreateNestedOneWithoutVentasInput
     oferta?: OfertaCreateNestedOneWithoutVentaInput
     producto?: ProductoCreateNestedOneWithoutVentasInput
+    turno?: TurnoPuntoVentaCreateNestedOneWithoutVentasInput
     factura?: FacturaCreateNestedOneWithoutVentaInput
     items?: VentaItemCreateNestedManyWithoutVentaInput
     tenant: TenantCreateNestedOneWithoutVentasInput
@@ -192530,6 +199576,12 @@ export namespace Prisma {
     esVentaUnica?: boolean
     ofertaId?: string | null
     ventaPadreId?: string | null
+    turnoId?: string | null
+    metodoPago?: $Enums.MetodoPagoVenta | null
+    montoEfectivo?: number | null
+    montoTarjeta?: number | null
+    montoTransferencia?: number | null
+    montoCredito?: number | null
     ordenReparacion?: OrdenReparacionUncheckedCreateNestedOneWithoutVentaInput
     reconciliaciones?: ReconciliacionVentaUncheckedCreateNestedManyWithoutVentaInput
     factura?: FacturaUncheckedCreateNestedOneWithoutVentaInput
@@ -192543,6 +199595,132 @@ export namespace Prisma {
 
   export type VentaCreateManyPuntoDeVentaInputEnvelope = {
     data: VentaCreateManyPuntoDeVentaInput | VentaCreateManyPuntoDeVentaInput[]
+    skipDuplicates?: boolean
+  }
+
+  export type TurnoPuntoVentaCreateWithoutPuntoDeVentaInput = {
+    id?: string
+    tipo?: string
+    fechaApertura?: Date | string
+    fechaCierre?: Date | string | null
+    fondoInicialCup?: number
+    fondoInicialUsd?: number
+    estado?: $Enums.EstadoTurno
+    observaciones?: string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    empleado?: EmpleadoCreateNestedOneWithoutTurnosPosInput
+    ventas?: VentaCreateNestedManyWithoutTurnoInput
+    arqueo?: ArqueoCajaCreateNestedOneWithoutTurnoInput
+    tenant: TenantCreateNestedOneWithoutTurnosPosInput
+  }
+
+  export type TurnoPuntoVentaUncheckedCreateWithoutPuntoDeVentaInput = {
+    id?: string
+    tenantId: string
+    empleadoId?: string | null
+    tipo?: string
+    fechaApertura?: Date | string
+    fechaCierre?: Date | string | null
+    fondoInicialCup?: number
+    fondoInicialUsd?: number
+    estado?: $Enums.EstadoTurno
+    observaciones?: string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    ventas?: VentaUncheckedCreateNestedManyWithoutTurnoInput
+    arqueo?: ArqueoCajaUncheckedCreateNestedOneWithoutTurnoInput
+  }
+
+  export type TurnoPuntoVentaCreateOrConnectWithoutPuntoDeVentaInput = {
+    where: TurnoPuntoVentaWhereUniqueInput
+    create: XOR<TurnoPuntoVentaCreateWithoutPuntoDeVentaInput, TurnoPuntoVentaUncheckedCreateWithoutPuntoDeVentaInput>
+  }
+
+  export type TurnoPuntoVentaCreateManyPuntoDeVentaInputEnvelope = {
+    data: TurnoPuntoVentaCreateManyPuntoDeVentaInput | TurnoPuntoVentaCreateManyPuntoDeVentaInput[]
+    skipDuplicates?: boolean
+  }
+
+  export type ArqueoCajaCreateWithoutPuntoDeVentaInput = {
+    id?: string
+    billetes1000Cup?: number
+    billetes500Cup?: number
+    billetes200Cup?: number
+    billetes100Cup?: number
+    billetes50Cup?: number
+    billetes20Cup?: number
+    monedasCup?: number
+    billetes100Usd?: number
+    billetes50Usd?: number
+    billetes20Usd?: number
+    billetes10Usd?: number
+    billetes5Usd?: number
+    billetes1Usd?: number
+    monedasUsd?: number
+    totalEfectivoCup?: number
+    totalEfectivoUsd?: number
+    totalTarjeta?: number
+    totalTransferencia?: number
+    totalCredito?: number
+    esperadoEfectivoCup?: number
+    esperadoEfectivoUsd?: number
+    esperadoTarjeta?: number
+    esperadoTransferencia?: number
+    esperadoCredito?: number
+    diferenciaCup?: number
+    diferenciaUsd?: number
+    observaciones?: string | null
+    contabilizado?: boolean
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    turno: TurnoPuntoVentaCreateNestedOneWithoutArqueoInput
+    tenant: TenantCreateNestedOneWithoutArqueosCajaInput
+  }
+
+  export type ArqueoCajaUncheckedCreateWithoutPuntoDeVentaInput = {
+    id?: string
+    turnoId: string
+    tenantId: string
+    billetes1000Cup?: number
+    billetes500Cup?: number
+    billetes200Cup?: number
+    billetes100Cup?: number
+    billetes50Cup?: number
+    billetes20Cup?: number
+    monedasCup?: number
+    billetes100Usd?: number
+    billetes50Usd?: number
+    billetes20Usd?: number
+    billetes10Usd?: number
+    billetes5Usd?: number
+    billetes1Usd?: number
+    monedasUsd?: number
+    totalEfectivoCup?: number
+    totalEfectivoUsd?: number
+    totalTarjeta?: number
+    totalTransferencia?: number
+    totalCredito?: number
+    esperadoEfectivoCup?: number
+    esperadoEfectivoUsd?: number
+    esperadoTarjeta?: number
+    esperadoTransferencia?: number
+    esperadoCredito?: number
+    diferenciaCup?: number
+    diferenciaUsd?: number
+    observaciones?: string | null
+    contabilizado?: boolean
+    createdAt?: Date | string
+    updatedAt?: Date | string
+  }
+
+  export type ArqueoCajaCreateOrConnectWithoutPuntoDeVentaInput = {
+    where: ArqueoCajaWhereUniqueInput
+    create: XOR<ArqueoCajaCreateWithoutPuntoDeVentaInput, ArqueoCajaUncheckedCreateWithoutPuntoDeVentaInput>
+  }
+
+  export type ArqueoCajaCreateManyPuntoDeVentaInputEnvelope = {
+    data: ArqueoCajaCreateManyPuntoDeVentaInput | ArqueoCajaCreateManyPuntoDeVentaInput[]
     skipDuplicates?: boolean
   }
 
@@ -192609,6 +199787,8 @@ export namespace Prisma {
     periodosContables?: PeriodoContableCreateNestedManyWithoutTenantInput
     aperturaPeriodos?: AperturaPeriodoCreateNestedManyWithoutTenantInput
     auditoriaPeriodos?: AuditoriaPeriodoCreateNestedManyWithoutTenantInput
+    turnosPos?: TurnoPuntoVentaCreateNestedManyWithoutTenantInput
+    arqueosCaja?: ArqueoCajaCreateNestedManyWithoutTenantInput
     backupLogs?: BackupLogCreateNestedManyWithoutTenantInput
     backupPlans?: BackupPlanCreateNestedManyWithoutTenantInput
   }
@@ -192676,6 +199856,8 @@ export namespace Prisma {
     periodosContables?: PeriodoContableUncheckedCreateNestedManyWithoutTenantInput
     aperturaPeriodos?: AperturaPeriodoUncheckedCreateNestedManyWithoutTenantInput
     auditoriaPeriodos?: AuditoriaPeriodoUncheckedCreateNestedManyWithoutTenantInput
+    turnosPos?: TurnoPuntoVentaUncheckedCreateNestedManyWithoutTenantInput
+    arqueosCaja?: ArqueoCajaUncheckedCreateNestedManyWithoutTenantInput
     backupLogs?: BackupLogUncheckedCreateNestedManyWithoutTenantInput
     backupPlans?: BackupPlanUncheckedCreateNestedManyWithoutTenantInput
   }
@@ -192734,6 +199916,39 @@ export namespace Prisma {
     precios?: PrecioProductoUncheckedUpdateManyWithoutListaPrecioNestedInput
   }
 
+  export type AlmacenUpsertWithoutPuntosDeVentaInput = {
+    update: XOR<AlmacenUpdateWithoutPuntosDeVentaInput, AlmacenUncheckedUpdateWithoutPuntosDeVentaInput>
+    create: XOR<AlmacenCreateWithoutPuntosDeVentaInput, AlmacenUncheckedCreateWithoutPuntosDeVentaInput>
+    where?: AlmacenWhereInput
+  }
+
+  export type AlmacenUpdateToOneWithWhereWithoutPuntosDeVentaInput = {
+    where?: AlmacenWhereInput
+    data: XOR<AlmacenUpdateWithoutPuntosDeVentaInput, AlmacenUncheckedUpdateWithoutPuntosDeVentaInput>
+  }
+
+  export type AlmacenUpdateWithoutPuntosDeVentaInput = {
+    almacenId?: StringFieldUpdateOperationsInput | string
+    nombre?: StringFieldUpdateOperationsInput | string
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    productos?: ProductoUpdateManyWithoutAlmacenNestedInput
+    transferenciasDestino?: TransferenciaUpdateManyWithoutDestinoNestedInput
+    transferenciasOrigen?: TransferenciaUpdateManyWithoutOrigenNestedInput
+    tenant?: TenantUpdateOneRequiredWithoutAlmacenesNestedInput
+  }
+
+  export type AlmacenUncheckedUpdateWithoutPuntosDeVentaInput = {
+    almacenId?: StringFieldUpdateOperationsInput | string
+    tenantId?: StringFieldUpdateOperationsInput | string
+    nombre?: StringFieldUpdateOperationsInput | string
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    productos?: ProductoUncheckedUpdateManyWithoutAlmacenNestedInput
+    transferenciasDestino?: TransferenciaUncheckedUpdateManyWithoutDestinoNestedInput
+    transferenciasOrigen?: TransferenciaUncheckedUpdateManyWithoutOrigenNestedInput
+  }
+
   export type TransferenciaUpsertWithWhereUniqueWithoutPuntoDeVentaDestinoInput = {
     where: TransferenciaWhereUniqueInput
     update: XOR<TransferenciaUpdateWithoutPuntoDeVentaDestinoInput, TransferenciaUncheckedUpdateWithoutPuntoDeVentaDestinoInput>
@@ -192780,6 +199995,38 @@ export namespace Prisma {
   export type VentaUpdateManyWithWhereWithoutPuntoDeVentaInput = {
     where: VentaScalarWhereInput
     data: XOR<VentaUpdateManyMutationInput, VentaUncheckedUpdateManyWithoutPuntoDeVentaInput>
+  }
+
+  export type TurnoPuntoVentaUpsertWithWhereUniqueWithoutPuntoDeVentaInput = {
+    where: TurnoPuntoVentaWhereUniqueInput
+    update: XOR<TurnoPuntoVentaUpdateWithoutPuntoDeVentaInput, TurnoPuntoVentaUncheckedUpdateWithoutPuntoDeVentaInput>
+    create: XOR<TurnoPuntoVentaCreateWithoutPuntoDeVentaInput, TurnoPuntoVentaUncheckedCreateWithoutPuntoDeVentaInput>
+  }
+
+  export type TurnoPuntoVentaUpdateWithWhereUniqueWithoutPuntoDeVentaInput = {
+    where: TurnoPuntoVentaWhereUniqueInput
+    data: XOR<TurnoPuntoVentaUpdateWithoutPuntoDeVentaInput, TurnoPuntoVentaUncheckedUpdateWithoutPuntoDeVentaInput>
+  }
+
+  export type TurnoPuntoVentaUpdateManyWithWhereWithoutPuntoDeVentaInput = {
+    where: TurnoPuntoVentaScalarWhereInput
+    data: XOR<TurnoPuntoVentaUpdateManyMutationInput, TurnoPuntoVentaUncheckedUpdateManyWithoutPuntoDeVentaInput>
+  }
+
+  export type ArqueoCajaUpsertWithWhereUniqueWithoutPuntoDeVentaInput = {
+    where: ArqueoCajaWhereUniqueInput
+    update: XOR<ArqueoCajaUpdateWithoutPuntoDeVentaInput, ArqueoCajaUncheckedUpdateWithoutPuntoDeVentaInput>
+    create: XOR<ArqueoCajaCreateWithoutPuntoDeVentaInput, ArqueoCajaUncheckedCreateWithoutPuntoDeVentaInput>
+  }
+
+  export type ArqueoCajaUpdateWithWhereUniqueWithoutPuntoDeVentaInput = {
+    where: ArqueoCajaWhereUniqueInput
+    data: XOR<ArqueoCajaUpdateWithoutPuntoDeVentaInput, ArqueoCajaUncheckedUpdateWithoutPuntoDeVentaInput>
+  }
+
+  export type ArqueoCajaUpdateManyWithWhereWithoutPuntoDeVentaInput = {
+    where: ArqueoCajaScalarWhereInput
+    data: XOR<ArqueoCajaUpdateManyMutationInput, ArqueoCajaUncheckedUpdateManyWithoutPuntoDeVentaInput>
   }
 
   export type TenantUpsertWithoutPuntosDeVentaInput = {
@@ -192856,6 +200103,8 @@ export namespace Prisma {
     periodosContables?: PeriodoContableUpdateManyWithoutTenantNestedInput
     aperturaPeriodos?: AperturaPeriodoUpdateManyWithoutTenantNestedInput
     auditoriaPeriodos?: AuditoriaPeriodoUpdateManyWithoutTenantNestedInput
+    turnosPos?: TurnoPuntoVentaUpdateManyWithoutTenantNestedInput
+    arqueosCaja?: ArqueoCajaUpdateManyWithoutTenantNestedInput
     backupLogs?: BackupLogUpdateManyWithoutTenantNestedInput
     backupPlans?: BackupPlanUpdateManyWithoutTenantNestedInput
   }
@@ -192923,6 +200172,1206 @@ export namespace Prisma {
     periodosContables?: PeriodoContableUncheckedUpdateManyWithoutTenantNestedInput
     aperturaPeriodos?: AperturaPeriodoUncheckedUpdateManyWithoutTenantNestedInput
     auditoriaPeriodos?: AuditoriaPeriodoUncheckedUpdateManyWithoutTenantNestedInput
+    turnosPos?: TurnoPuntoVentaUncheckedUpdateManyWithoutTenantNestedInput
+    arqueosCaja?: ArqueoCajaUncheckedUpdateManyWithoutTenantNestedInput
+    backupLogs?: BackupLogUncheckedUpdateManyWithoutTenantNestedInput
+    backupPlans?: BackupPlanUncheckedUpdateManyWithoutTenantNestedInput
+  }
+
+  export type PuntoDeVentaCreateWithoutTurnosInput = {
+    pvId?: string
+    nombre: string
+    ubicacion?: string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    tipoCaja?: string | null
+    cuentaContableId?: string | null
+    productos?: ProductoCreateNestedManyWithoutPuntoDeVentaInput
+    listaPrecio?: ListaPrecioCreateNestedOneWithoutPuntosDeVentaInput
+    almacen?: AlmacenCreateNestedOneWithoutPuntosDeVentaInput
+    transferenciasDestino?: TransferenciaCreateNestedManyWithoutPuntoDeVentaDestinoInput
+    transferenciasOrigen?: TransferenciaCreateNestedManyWithoutPuntoDeVentaOrigenInput
+    ventas?: VentaCreateNestedManyWithoutPuntoDeVentaInput
+    arqueos?: ArqueoCajaCreateNestedManyWithoutPuntoDeVentaInput
+    tenant: TenantCreateNestedOneWithoutPuntosDeVentaInput
+  }
+
+  export type PuntoDeVentaUncheckedCreateWithoutTurnosInput = {
+    pvId?: string
+    tenantId: string
+    nombre: string
+    ubicacion?: string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    listaPrecioId?: string | null
+    tipoCaja?: string | null
+    almacenId?: string | null
+    cuentaContableId?: string | null
+    productos?: ProductoUncheckedCreateNestedManyWithoutPuntoDeVentaInput
+    transferenciasDestino?: TransferenciaUncheckedCreateNestedManyWithoutPuntoDeVentaDestinoInput
+    transferenciasOrigen?: TransferenciaUncheckedCreateNestedManyWithoutPuntoDeVentaOrigenInput
+    ventas?: VentaUncheckedCreateNestedManyWithoutPuntoDeVentaInput
+    arqueos?: ArqueoCajaUncheckedCreateNestedManyWithoutPuntoDeVentaInput
+  }
+
+  export type PuntoDeVentaCreateOrConnectWithoutTurnosInput = {
+    where: PuntoDeVentaWhereUniqueInput
+    create: XOR<PuntoDeVentaCreateWithoutTurnosInput, PuntoDeVentaUncheckedCreateWithoutTurnosInput>
+  }
+
+  export type EmpleadoCreateWithoutTurnosPosInput = {
+    empleadoId?: string
+    nombre: string
+    apellido: string
+    telefono?: string | null
+    cargo: string
+    salarioBases: number
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    diasVacacionesAnuales?: number
+    esTiempoCompleto?: boolean
+    fechaContratacion: Date | string
+    vacationDaysAccrued?: number
+    vacationDaysUsed?: number
+    attendances?: AttendanceCreateNestedManyWithoutEmployeeInput
+    workSchedules?: EmployeeWorkScheduleCreateNestedManyWithoutEmployeeInput
+    ordenesAsignadas?: OrdenReparacionCreateNestedManyWithoutTecnicoInput
+    PagoSalario?: PagosalarioCreateNestedManyWithoutEmpleadoInput
+    vacationAccruals?: VacationAccrualCreateNestedManyWithoutEmployeeInput
+    vacationRequests?: VacationRequestCreateNestedManyWithoutEmployeeInput
+    ventas?: VentaCreateNestedManyWithoutEmpleadoInput
+    tenant: TenantCreateNestedOneWithoutEmpleadosInput
+  }
+
+  export type EmpleadoUncheckedCreateWithoutTurnosPosInput = {
+    empleadoId?: string
+    tenantId: string
+    nombre: string
+    apellido: string
+    telefono?: string | null
+    cargo: string
+    salarioBases: number
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    diasVacacionesAnuales?: number
+    esTiempoCompleto?: boolean
+    fechaContratacion: Date | string
+    vacationDaysAccrued?: number
+    vacationDaysUsed?: number
+    attendances?: AttendanceUncheckedCreateNestedManyWithoutEmployeeInput
+    workSchedules?: EmployeeWorkScheduleUncheckedCreateNestedManyWithoutEmployeeInput
+    ordenesAsignadas?: OrdenReparacionUncheckedCreateNestedManyWithoutTecnicoInput
+    PagoSalario?: PagosalarioUncheckedCreateNestedManyWithoutEmpleadoInput
+    vacationAccruals?: VacationAccrualUncheckedCreateNestedManyWithoutEmployeeInput
+    vacationRequests?: VacationRequestUncheckedCreateNestedManyWithoutEmployeeInput
+    ventas?: VentaUncheckedCreateNestedManyWithoutEmpleadoInput
+  }
+
+  export type EmpleadoCreateOrConnectWithoutTurnosPosInput = {
+    where: EmpleadoWhereUniqueInput
+    create: XOR<EmpleadoCreateWithoutTurnosPosInput, EmpleadoUncheckedCreateWithoutTurnosPosInput>
+  }
+
+  export type VentaCreateWithoutTurnoInput = {
+    ventaId?: string
+    cantidad: number
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    total?: number | null
+    ordenId?: string | null
+    descuento?: number | null
+    observaciones?: string | null
+    esVentaUnica?: boolean
+    ventaPadreId?: string | null
+    metodoPago?: $Enums.MetodoPagoVenta | null
+    montoEfectivo?: number | null
+    montoTarjeta?: number | null
+    montoTransferencia?: number | null
+    montoCredito?: number | null
+    ordenReparacion?: OrdenReparacionCreateNestedOneWithoutVentaInput
+    reconciliaciones?: ReconciliacionVentaCreateNestedManyWithoutVentaInput
+    cliente?: ClienteCreateNestedOneWithoutVentaInput
+    empleado?: EmpleadoCreateNestedOneWithoutVentasInput
+    oferta?: OfertaCreateNestedOneWithoutVentaInput
+    producto?: ProductoCreateNestedOneWithoutVentasInput
+    puntoDeVenta: PuntoDeVentaCreateNestedOneWithoutVentasInput
+    factura?: FacturaCreateNestedOneWithoutVentaInput
+    items?: VentaItemCreateNestedManyWithoutVentaInput
+    tenant: TenantCreateNestedOneWithoutVentasInput
+  }
+
+  export type VentaUncheckedCreateWithoutTurnoInput = {
+    ventaId?: string
+    tenantId: string
+    productoId?: string | null
+    cantidad: number
+    puntoDeVentaId: string
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    empleadoId?: string | null
+    total?: number | null
+    clienteId?: string | null
+    ordenId?: string | null
+    descuento?: number | null
+    observaciones?: string | null
+    esVentaUnica?: boolean
+    ofertaId?: string | null
+    ventaPadreId?: string | null
+    metodoPago?: $Enums.MetodoPagoVenta | null
+    montoEfectivo?: number | null
+    montoTarjeta?: number | null
+    montoTransferencia?: number | null
+    montoCredito?: number | null
+    ordenReparacion?: OrdenReparacionUncheckedCreateNestedOneWithoutVentaInput
+    reconciliaciones?: ReconciliacionVentaUncheckedCreateNestedManyWithoutVentaInput
+    factura?: FacturaUncheckedCreateNestedOneWithoutVentaInput
+    items?: VentaItemUncheckedCreateNestedManyWithoutVentaInput
+  }
+
+  export type VentaCreateOrConnectWithoutTurnoInput = {
+    where: VentaWhereUniqueInput
+    create: XOR<VentaCreateWithoutTurnoInput, VentaUncheckedCreateWithoutTurnoInput>
+  }
+
+  export type VentaCreateManyTurnoInputEnvelope = {
+    data: VentaCreateManyTurnoInput | VentaCreateManyTurnoInput[]
+    skipDuplicates?: boolean
+  }
+
+  export type ArqueoCajaCreateWithoutTurnoInput = {
+    id?: string
+    billetes1000Cup?: number
+    billetes500Cup?: number
+    billetes200Cup?: number
+    billetes100Cup?: number
+    billetes50Cup?: number
+    billetes20Cup?: number
+    monedasCup?: number
+    billetes100Usd?: number
+    billetes50Usd?: number
+    billetes20Usd?: number
+    billetes10Usd?: number
+    billetes5Usd?: number
+    billetes1Usd?: number
+    monedasUsd?: number
+    totalEfectivoCup?: number
+    totalEfectivoUsd?: number
+    totalTarjeta?: number
+    totalTransferencia?: number
+    totalCredito?: number
+    esperadoEfectivoCup?: number
+    esperadoEfectivoUsd?: number
+    esperadoTarjeta?: number
+    esperadoTransferencia?: number
+    esperadoCredito?: number
+    diferenciaCup?: number
+    diferenciaUsd?: number
+    observaciones?: string | null
+    contabilizado?: boolean
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    puntoDeVenta: PuntoDeVentaCreateNestedOneWithoutArqueosInput
+    tenant: TenantCreateNestedOneWithoutArqueosCajaInput
+  }
+
+  export type ArqueoCajaUncheckedCreateWithoutTurnoInput = {
+    id?: string
+    tenantId: string
+    puntoDeVentaId: string
+    billetes1000Cup?: number
+    billetes500Cup?: number
+    billetes200Cup?: number
+    billetes100Cup?: number
+    billetes50Cup?: number
+    billetes20Cup?: number
+    monedasCup?: number
+    billetes100Usd?: number
+    billetes50Usd?: number
+    billetes20Usd?: number
+    billetes10Usd?: number
+    billetes5Usd?: number
+    billetes1Usd?: number
+    monedasUsd?: number
+    totalEfectivoCup?: number
+    totalEfectivoUsd?: number
+    totalTarjeta?: number
+    totalTransferencia?: number
+    totalCredito?: number
+    esperadoEfectivoCup?: number
+    esperadoEfectivoUsd?: number
+    esperadoTarjeta?: number
+    esperadoTransferencia?: number
+    esperadoCredito?: number
+    diferenciaCup?: number
+    diferenciaUsd?: number
+    observaciones?: string | null
+    contabilizado?: boolean
+    createdAt?: Date | string
+    updatedAt?: Date | string
+  }
+
+  export type ArqueoCajaCreateOrConnectWithoutTurnoInput = {
+    where: ArqueoCajaWhereUniqueInput
+    create: XOR<ArqueoCajaCreateWithoutTurnoInput, ArqueoCajaUncheckedCreateWithoutTurnoInput>
+  }
+
+  export type TenantCreateWithoutTurnosPosInput = {
+    tenantId?: string
+    nombre: string
+    slug?: string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    contabilidadTimezone?: string
+    empresa?: MiEmpresaCreateNestedOneWithoutTenantInput
+    memberships?: TenantMembershipCreateNestedManyWithoutTenantInput
+    licencias?: TenantLicenseCreateNestedManyWithoutTenantInput
+    categorias?: CategoriaCreateNestedManyWithoutTenantInput
+    vendors?: VendorCreateNestedManyWithoutTenantInput
+    clientes?: ClienteCreateNestedManyWithoutTenantInput
+    almacenes?: AlmacenCreateNestedManyWithoutTenantInput
+    puntosDeVenta?: PuntoDeVentaCreateNestedManyWithoutTenantInput
+    productos?: ProductoCreateNestedManyWithoutTenantInput
+    ventas?: VentaCreateNestedManyWithoutTenantInput
+    facturas?: FacturaCreateNestedManyWithoutTenantInput
+    gastosDE?: GastosDECreateNestedManyWithoutTenantInput
+    gastosCompra?: GastoCompraCreateNestedManyWithoutTenantInput
+    comprasProducto?: CompraProductoCreateNestedManyWithoutTenantInput
+    comprasDocumento?: CompraDocumentoCreateNestedManyWithoutTenantInput
+    comprasDocumentoItem?: CompraDocumentoItemCreateNestedManyWithoutTenantInput
+    servicios?: ServiciosCreateNestedManyWithoutTenantInput
+    ventasServicios?: VentaServiciosCreateNestedManyWithoutTenantInput
+    comprasServicio?: CompraServicioCreateNestedManyWithoutTenantInput
+    cuentasBancarias?: CuentaBancariaCreateNestedManyWithoutTenantInput
+    reconciliacionesVenta?: ReconciliacionVentaCreateNestedManyWithoutTenantInput
+    reconciliacionesServicio?: ReconciliacionServicioCreateNestedManyWithoutTenantInput
+    reconciliacionesGasto?: ReconciliacionGastoCreateNestedManyWithoutTenantInput
+    ajustesBancarios?: AjusteBancarioCreateNestedManyWithoutTenantInput
+    transferenciasBancarias?: TransferenciaBancariaCreateNestedManyWithoutTenantInput
+    contratos?: ContratoCreateNestedManyWithoutTenantInput
+    seriesFacturacion?: SerieFacturacionCreateNestedManyWithoutTenantInput
+    ofertas?: OfertaCreateNestedManyWithoutTenantInput
+    cuentasPorCobrar?: CuentaPorCobrarCreateNestedManyWithoutTenantInput
+    cuentasPorPagar?: CuentaPorPagarCreateNestedManyWithoutTenantInput
+    deudasCash?: DeudaCashCreateNestedManyWithoutTenantInput
+    prestamosCash?: PrestamoCashCreateNestedManyWithoutTenantInput
+    pagosCuentaPorPagar?: PagoCuentaPorPagarCreateNestedManyWithoutTenantInput
+    empleados?: EmpleadoCreateNestedManyWithoutTenantInput
+    ordenesProduccion?: OrdenProduccionCreateNestedManyWithoutTenantInput
+    ordenesProduccionHistorial?: OrdenProduccionHistorialCreateNestedManyWithoutTenantInput
+    recetas?: RecetaCreateNestedManyWithoutTenantInput
+    recetasIngredientes?: RecetaIngredienteCreateNestedManyWithoutTenantInput
+    valesSalida?: ValeSalidaCreateNestedManyWithoutTenantInput
+    valesSalidaItem?: ValeSalidaItemCreateNestedManyWithoutTenantInput
+    listasPrecio?: ListaPrecioCreateNestedManyWithoutTenantInput
+    equiposReparacion?: EquipoReparacionCreateNestedManyWithoutTenantInput
+    piezasReparacion?: PiezaReparacionCreateNestedManyWithoutTenantInput
+    ordenesReparacion?: OrdenReparacionCreateNestedManyWithoutTenantInput
+    ordenesReparacionEquipo?: OrdenReparacionEquipoCreateNestedManyWithoutTenantInput
+    ordenesReparacionItem?: OrdenReparacionItemCreateNestedManyWithoutTenantInput
+    ordenesReparacionMaterial?: OrdenReparacionMaterialCreateNestedManyWithoutTenantInput
+    defectacionesCatalogo?: DefectacionCatalogoCreateNestedManyWithoutTenantInput
+    anticipos?: AnticipoCreateNestedManyWithoutTenantInput
+    transferencias?: TransferenciaCreateNestedManyWithoutTenantInput
+    mermas?: MermaCreateNestedManyWithoutTenantInput
+    stockUbicaciones?: StockUbicacionCreateNestedManyWithoutTenantInput
+    pagosSalario?: PagosalarioCreateNestedManyWithoutTenantInput
+    cierresContables?: CierreContableCreateNestedManyWithoutTenantInput
+    periodosContables?: PeriodoContableCreateNestedManyWithoutTenantInput
+    aperturaPeriodos?: AperturaPeriodoCreateNestedManyWithoutTenantInput
+    auditoriaPeriodos?: AuditoriaPeriodoCreateNestedManyWithoutTenantInput
+    arqueosCaja?: ArqueoCajaCreateNestedManyWithoutTenantInput
+    backupLogs?: BackupLogCreateNestedManyWithoutTenantInput
+    backupPlans?: BackupPlanCreateNestedManyWithoutTenantInput
+  }
+
+  export type TenantUncheckedCreateWithoutTurnosPosInput = {
+    tenantId?: string
+    nombre: string
+    slug?: string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    contabilidadTimezone?: string
+    empresa?: MiEmpresaUncheckedCreateNestedOneWithoutTenantInput
+    memberships?: TenantMembershipUncheckedCreateNestedManyWithoutTenantInput
+    licencias?: TenantLicenseUncheckedCreateNestedManyWithoutTenantInput
+    categorias?: CategoriaUncheckedCreateNestedManyWithoutTenantInput
+    vendors?: VendorUncheckedCreateNestedManyWithoutTenantInput
+    clientes?: ClienteUncheckedCreateNestedManyWithoutTenantInput
+    almacenes?: AlmacenUncheckedCreateNestedManyWithoutTenantInput
+    puntosDeVenta?: PuntoDeVentaUncheckedCreateNestedManyWithoutTenantInput
+    productos?: ProductoUncheckedCreateNestedManyWithoutTenantInput
+    ventas?: VentaUncheckedCreateNestedManyWithoutTenantInput
+    facturas?: FacturaUncheckedCreateNestedManyWithoutTenantInput
+    gastosDE?: GastosDEUncheckedCreateNestedManyWithoutTenantInput
+    gastosCompra?: GastoCompraUncheckedCreateNestedManyWithoutTenantInput
+    comprasProducto?: CompraProductoUncheckedCreateNestedManyWithoutTenantInput
+    comprasDocumento?: CompraDocumentoUncheckedCreateNestedManyWithoutTenantInput
+    comprasDocumentoItem?: CompraDocumentoItemUncheckedCreateNestedManyWithoutTenantInput
+    servicios?: ServiciosUncheckedCreateNestedManyWithoutTenantInput
+    ventasServicios?: VentaServiciosUncheckedCreateNestedManyWithoutTenantInput
+    comprasServicio?: CompraServicioUncheckedCreateNestedManyWithoutTenantInput
+    cuentasBancarias?: CuentaBancariaUncheckedCreateNestedManyWithoutTenantInput
+    reconciliacionesVenta?: ReconciliacionVentaUncheckedCreateNestedManyWithoutTenantInput
+    reconciliacionesServicio?: ReconciliacionServicioUncheckedCreateNestedManyWithoutTenantInput
+    reconciliacionesGasto?: ReconciliacionGastoUncheckedCreateNestedManyWithoutTenantInput
+    ajustesBancarios?: AjusteBancarioUncheckedCreateNestedManyWithoutTenantInput
+    transferenciasBancarias?: TransferenciaBancariaUncheckedCreateNestedManyWithoutTenantInput
+    contratos?: ContratoUncheckedCreateNestedManyWithoutTenantInput
+    seriesFacturacion?: SerieFacturacionUncheckedCreateNestedManyWithoutTenantInput
+    ofertas?: OfertaUncheckedCreateNestedManyWithoutTenantInput
+    cuentasPorCobrar?: CuentaPorCobrarUncheckedCreateNestedManyWithoutTenantInput
+    cuentasPorPagar?: CuentaPorPagarUncheckedCreateNestedManyWithoutTenantInput
+    deudasCash?: DeudaCashUncheckedCreateNestedManyWithoutTenantInput
+    prestamosCash?: PrestamoCashUncheckedCreateNestedManyWithoutTenantInput
+    pagosCuentaPorPagar?: PagoCuentaPorPagarUncheckedCreateNestedManyWithoutTenantInput
+    empleados?: EmpleadoUncheckedCreateNestedManyWithoutTenantInput
+    ordenesProduccion?: OrdenProduccionUncheckedCreateNestedManyWithoutTenantInput
+    ordenesProduccionHistorial?: OrdenProduccionHistorialUncheckedCreateNestedManyWithoutTenantInput
+    recetas?: RecetaUncheckedCreateNestedManyWithoutTenantInput
+    recetasIngredientes?: RecetaIngredienteUncheckedCreateNestedManyWithoutTenantInput
+    valesSalida?: ValeSalidaUncheckedCreateNestedManyWithoutTenantInput
+    valesSalidaItem?: ValeSalidaItemUncheckedCreateNestedManyWithoutTenantInput
+    listasPrecio?: ListaPrecioUncheckedCreateNestedManyWithoutTenantInput
+    equiposReparacion?: EquipoReparacionUncheckedCreateNestedManyWithoutTenantInput
+    piezasReparacion?: PiezaReparacionUncheckedCreateNestedManyWithoutTenantInput
+    ordenesReparacion?: OrdenReparacionUncheckedCreateNestedManyWithoutTenantInput
+    ordenesReparacionEquipo?: OrdenReparacionEquipoUncheckedCreateNestedManyWithoutTenantInput
+    ordenesReparacionItem?: OrdenReparacionItemUncheckedCreateNestedManyWithoutTenantInput
+    ordenesReparacionMaterial?: OrdenReparacionMaterialUncheckedCreateNestedManyWithoutTenantInput
+    defectacionesCatalogo?: DefectacionCatalogoUncheckedCreateNestedManyWithoutTenantInput
+    anticipos?: AnticipoUncheckedCreateNestedManyWithoutTenantInput
+    transferencias?: TransferenciaUncheckedCreateNestedManyWithoutTenantInput
+    mermas?: MermaUncheckedCreateNestedManyWithoutTenantInput
+    stockUbicaciones?: StockUbicacionUncheckedCreateNestedManyWithoutTenantInput
+    pagosSalario?: PagosalarioUncheckedCreateNestedManyWithoutTenantInput
+    cierresContables?: CierreContableUncheckedCreateNestedManyWithoutTenantInput
+    periodosContables?: PeriodoContableUncheckedCreateNestedManyWithoutTenantInput
+    aperturaPeriodos?: AperturaPeriodoUncheckedCreateNestedManyWithoutTenantInput
+    auditoriaPeriodos?: AuditoriaPeriodoUncheckedCreateNestedManyWithoutTenantInput
+    arqueosCaja?: ArqueoCajaUncheckedCreateNestedManyWithoutTenantInput
+    backupLogs?: BackupLogUncheckedCreateNestedManyWithoutTenantInput
+    backupPlans?: BackupPlanUncheckedCreateNestedManyWithoutTenantInput
+  }
+
+  export type TenantCreateOrConnectWithoutTurnosPosInput = {
+    where: TenantWhereUniqueInput
+    create: XOR<TenantCreateWithoutTurnosPosInput, TenantUncheckedCreateWithoutTurnosPosInput>
+  }
+
+  export type PuntoDeVentaUpsertWithoutTurnosInput = {
+    update: XOR<PuntoDeVentaUpdateWithoutTurnosInput, PuntoDeVentaUncheckedUpdateWithoutTurnosInput>
+    create: XOR<PuntoDeVentaCreateWithoutTurnosInput, PuntoDeVentaUncheckedCreateWithoutTurnosInput>
+    where?: PuntoDeVentaWhereInput
+  }
+
+  export type PuntoDeVentaUpdateToOneWithWhereWithoutTurnosInput = {
+    where?: PuntoDeVentaWhereInput
+    data: XOR<PuntoDeVentaUpdateWithoutTurnosInput, PuntoDeVentaUncheckedUpdateWithoutTurnosInput>
+  }
+
+  export type PuntoDeVentaUpdateWithoutTurnosInput = {
+    pvId?: StringFieldUpdateOperationsInput | string
+    nombre?: StringFieldUpdateOperationsInput | string
+    ubicacion?: NullableStringFieldUpdateOperationsInput | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    tipoCaja?: NullableStringFieldUpdateOperationsInput | string | null
+    cuentaContableId?: NullableStringFieldUpdateOperationsInput | string | null
+    productos?: ProductoUpdateManyWithoutPuntoDeVentaNestedInput
+    listaPrecio?: ListaPrecioUpdateOneWithoutPuntosDeVentaNestedInput
+    almacen?: AlmacenUpdateOneWithoutPuntosDeVentaNestedInput
+    transferenciasDestino?: TransferenciaUpdateManyWithoutPuntoDeVentaDestinoNestedInput
+    transferenciasOrigen?: TransferenciaUpdateManyWithoutPuntoDeVentaOrigenNestedInput
+    ventas?: VentaUpdateManyWithoutPuntoDeVentaNestedInput
+    arqueos?: ArqueoCajaUpdateManyWithoutPuntoDeVentaNestedInput
+    tenant?: TenantUpdateOneRequiredWithoutPuntosDeVentaNestedInput
+  }
+
+  export type PuntoDeVentaUncheckedUpdateWithoutTurnosInput = {
+    pvId?: StringFieldUpdateOperationsInput | string
+    tenantId?: StringFieldUpdateOperationsInput | string
+    nombre?: StringFieldUpdateOperationsInput | string
+    ubicacion?: NullableStringFieldUpdateOperationsInput | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    listaPrecioId?: NullableStringFieldUpdateOperationsInput | string | null
+    tipoCaja?: NullableStringFieldUpdateOperationsInput | string | null
+    almacenId?: NullableStringFieldUpdateOperationsInput | string | null
+    cuentaContableId?: NullableStringFieldUpdateOperationsInput | string | null
+    productos?: ProductoUncheckedUpdateManyWithoutPuntoDeVentaNestedInput
+    transferenciasDestino?: TransferenciaUncheckedUpdateManyWithoutPuntoDeVentaDestinoNestedInput
+    transferenciasOrigen?: TransferenciaUncheckedUpdateManyWithoutPuntoDeVentaOrigenNestedInput
+    ventas?: VentaUncheckedUpdateManyWithoutPuntoDeVentaNestedInput
+    arqueos?: ArqueoCajaUncheckedUpdateManyWithoutPuntoDeVentaNestedInput
+  }
+
+  export type EmpleadoUpsertWithoutTurnosPosInput = {
+    update: XOR<EmpleadoUpdateWithoutTurnosPosInput, EmpleadoUncheckedUpdateWithoutTurnosPosInput>
+    create: XOR<EmpleadoCreateWithoutTurnosPosInput, EmpleadoUncheckedCreateWithoutTurnosPosInput>
+    where?: EmpleadoWhereInput
+  }
+
+  export type EmpleadoUpdateToOneWithWhereWithoutTurnosPosInput = {
+    where?: EmpleadoWhereInput
+    data: XOR<EmpleadoUpdateWithoutTurnosPosInput, EmpleadoUncheckedUpdateWithoutTurnosPosInput>
+  }
+
+  export type EmpleadoUpdateWithoutTurnosPosInput = {
+    empleadoId?: StringFieldUpdateOperationsInput | string
+    nombre?: StringFieldUpdateOperationsInput | string
+    apellido?: StringFieldUpdateOperationsInput | string
+    telefono?: NullableStringFieldUpdateOperationsInput | string | null
+    cargo?: StringFieldUpdateOperationsInput | string
+    salarioBases?: IntFieldUpdateOperationsInput | number
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    diasVacacionesAnuales?: IntFieldUpdateOperationsInput | number
+    esTiempoCompleto?: BoolFieldUpdateOperationsInput | boolean
+    fechaContratacion?: DateTimeFieldUpdateOperationsInput | Date | string
+    vacationDaysAccrued?: IntFieldUpdateOperationsInput | number
+    vacationDaysUsed?: IntFieldUpdateOperationsInput | number
+    attendances?: AttendanceUpdateManyWithoutEmployeeNestedInput
+    workSchedules?: EmployeeWorkScheduleUpdateManyWithoutEmployeeNestedInput
+    ordenesAsignadas?: OrdenReparacionUpdateManyWithoutTecnicoNestedInput
+    PagoSalario?: PagosalarioUpdateManyWithoutEmpleadoNestedInput
+    vacationAccruals?: VacationAccrualUpdateManyWithoutEmployeeNestedInput
+    vacationRequests?: VacationRequestUpdateManyWithoutEmployeeNestedInput
+    ventas?: VentaUpdateManyWithoutEmpleadoNestedInput
+    tenant?: TenantUpdateOneRequiredWithoutEmpleadosNestedInput
+  }
+
+  export type EmpleadoUncheckedUpdateWithoutTurnosPosInput = {
+    empleadoId?: StringFieldUpdateOperationsInput | string
+    tenantId?: StringFieldUpdateOperationsInput | string
+    nombre?: StringFieldUpdateOperationsInput | string
+    apellido?: StringFieldUpdateOperationsInput | string
+    telefono?: NullableStringFieldUpdateOperationsInput | string | null
+    cargo?: StringFieldUpdateOperationsInput | string
+    salarioBases?: IntFieldUpdateOperationsInput | number
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    diasVacacionesAnuales?: IntFieldUpdateOperationsInput | number
+    esTiempoCompleto?: BoolFieldUpdateOperationsInput | boolean
+    fechaContratacion?: DateTimeFieldUpdateOperationsInput | Date | string
+    vacationDaysAccrued?: IntFieldUpdateOperationsInput | number
+    vacationDaysUsed?: IntFieldUpdateOperationsInput | number
+    attendances?: AttendanceUncheckedUpdateManyWithoutEmployeeNestedInput
+    workSchedules?: EmployeeWorkScheduleUncheckedUpdateManyWithoutEmployeeNestedInput
+    ordenesAsignadas?: OrdenReparacionUncheckedUpdateManyWithoutTecnicoNestedInput
+    PagoSalario?: PagosalarioUncheckedUpdateManyWithoutEmpleadoNestedInput
+    vacationAccruals?: VacationAccrualUncheckedUpdateManyWithoutEmployeeNestedInput
+    vacationRequests?: VacationRequestUncheckedUpdateManyWithoutEmployeeNestedInput
+    ventas?: VentaUncheckedUpdateManyWithoutEmpleadoNestedInput
+  }
+
+  export type VentaUpsertWithWhereUniqueWithoutTurnoInput = {
+    where: VentaWhereUniqueInput
+    update: XOR<VentaUpdateWithoutTurnoInput, VentaUncheckedUpdateWithoutTurnoInput>
+    create: XOR<VentaCreateWithoutTurnoInput, VentaUncheckedCreateWithoutTurnoInput>
+  }
+
+  export type VentaUpdateWithWhereUniqueWithoutTurnoInput = {
+    where: VentaWhereUniqueInput
+    data: XOR<VentaUpdateWithoutTurnoInput, VentaUncheckedUpdateWithoutTurnoInput>
+  }
+
+  export type VentaUpdateManyWithWhereWithoutTurnoInput = {
+    where: VentaScalarWhereInput
+    data: XOR<VentaUpdateManyMutationInput, VentaUncheckedUpdateManyWithoutTurnoInput>
+  }
+
+  export type ArqueoCajaUpsertWithoutTurnoInput = {
+    update: XOR<ArqueoCajaUpdateWithoutTurnoInput, ArqueoCajaUncheckedUpdateWithoutTurnoInput>
+    create: XOR<ArqueoCajaCreateWithoutTurnoInput, ArqueoCajaUncheckedCreateWithoutTurnoInput>
+    where?: ArqueoCajaWhereInput
+  }
+
+  export type ArqueoCajaUpdateToOneWithWhereWithoutTurnoInput = {
+    where?: ArqueoCajaWhereInput
+    data: XOR<ArqueoCajaUpdateWithoutTurnoInput, ArqueoCajaUncheckedUpdateWithoutTurnoInput>
+  }
+
+  export type ArqueoCajaUpdateWithoutTurnoInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    billetes1000Cup?: IntFieldUpdateOperationsInput | number
+    billetes500Cup?: IntFieldUpdateOperationsInput | number
+    billetes200Cup?: IntFieldUpdateOperationsInput | number
+    billetes100Cup?: IntFieldUpdateOperationsInput | number
+    billetes50Cup?: IntFieldUpdateOperationsInput | number
+    billetes20Cup?: IntFieldUpdateOperationsInput | number
+    monedasCup?: IntFieldUpdateOperationsInput | number
+    billetes100Usd?: IntFieldUpdateOperationsInput | number
+    billetes50Usd?: IntFieldUpdateOperationsInput | number
+    billetes20Usd?: IntFieldUpdateOperationsInput | number
+    billetes10Usd?: IntFieldUpdateOperationsInput | number
+    billetes5Usd?: IntFieldUpdateOperationsInput | number
+    billetes1Usd?: IntFieldUpdateOperationsInput | number
+    monedasUsd?: IntFieldUpdateOperationsInput | number
+    totalEfectivoCup?: IntFieldUpdateOperationsInput | number
+    totalEfectivoUsd?: IntFieldUpdateOperationsInput | number
+    totalTarjeta?: IntFieldUpdateOperationsInput | number
+    totalTransferencia?: IntFieldUpdateOperationsInput | number
+    totalCredito?: IntFieldUpdateOperationsInput | number
+    esperadoEfectivoCup?: IntFieldUpdateOperationsInput | number
+    esperadoEfectivoUsd?: IntFieldUpdateOperationsInput | number
+    esperadoTarjeta?: IntFieldUpdateOperationsInput | number
+    esperadoTransferencia?: IntFieldUpdateOperationsInput | number
+    esperadoCredito?: IntFieldUpdateOperationsInput | number
+    diferenciaCup?: IntFieldUpdateOperationsInput | number
+    diferenciaUsd?: IntFieldUpdateOperationsInput | number
+    observaciones?: NullableStringFieldUpdateOperationsInput | string | null
+    contabilizado?: BoolFieldUpdateOperationsInput | boolean
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    puntoDeVenta?: PuntoDeVentaUpdateOneRequiredWithoutArqueosNestedInput
+    tenant?: TenantUpdateOneRequiredWithoutArqueosCajaNestedInput
+  }
+
+  export type ArqueoCajaUncheckedUpdateWithoutTurnoInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    tenantId?: StringFieldUpdateOperationsInput | string
+    puntoDeVentaId?: StringFieldUpdateOperationsInput | string
+    billetes1000Cup?: IntFieldUpdateOperationsInput | number
+    billetes500Cup?: IntFieldUpdateOperationsInput | number
+    billetes200Cup?: IntFieldUpdateOperationsInput | number
+    billetes100Cup?: IntFieldUpdateOperationsInput | number
+    billetes50Cup?: IntFieldUpdateOperationsInput | number
+    billetes20Cup?: IntFieldUpdateOperationsInput | number
+    monedasCup?: IntFieldUpdateOperationsInput | number
+    billetes100Usd?: IntFieldUpdateOperationsInput | number
+    billetes50Usd?: IntFieldUpdateOperationsInput | number
+    billetes20Usd?: IntFieldUpdateOperationsInput | number
+    billetes10Usd?: IntFieldUpdateOperationsInput | number
+    billetes5Usd?: IntFieldUpdateOperationsInput | number
+    billetes1Usd?: IntFieldUpdateOperationsInput | number
+    monedasUsd?: IntFieldUpdateOperationsInput | number
+    totalEfectivoCup?: IntFieldUpdateOperationsInput | number
+    totalEfectivoUsd?: IntFieldUpdateOperationsInput | number
+    totalTarjeta?: IntFieldUpdateOperationsInput | number
+    totalTransferencia?: IntFieldUpdateOperationsInput | number
+    totalCredito?: IntFieldUpdateOperationsInput | number
+    esperadoEfectivoCup?: IntFieldUpdateOperationsInput | number
+    esperadoEfectivoUsd?: IntFieldUpdateOperationsInput | number
+    esperadoTarjeta?: IntFieldUpdateOperationsInput | number
+    esperadoTransferencia?: IntFieldUpdateOperationsInput | number
+    esperadoCredito?: IntFieldUpdateOperationsInput | number
+    diferenciaCup?: IntFieldUpdateOperationsInput | number
+    diferenciaUsd?: IntFieldUpdateOperationsInput | number
+    observaciones?: NullableStringFieldUpdateOperationsInput | string | null
+    contabilizado?: BoolFieldUpdateOperationsInput | boolean
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type TenantUpsertWithoutTurnosPosInput = {
+    update: XOR<TenantUpdateWithoutTurnosPosInput, TenantUncheckedUpdateWithoutTurnosPosInput>
+    create: XOR<TenantCreateWithoutTurnosPosInput, TenantUncheckedCreateWithoutTurnosPosInput>
+    where?: TenantWhereInput
+  }
+
+  export type TenantUpdateToOneWithWhereWithoutTurnosPosInput = {
+    where?: TenantWhereInput
+    data: XOR<TenantUpdateWithoutTurnosPosInput, TenantUncheckedUpdateWithoutTurnosPosInput>
+  }
+
+  export type TenantUpdateWithoutTurnosPosInput = {
+    tenantId?: StringFieldUpdateOperationsInput | string
+    nombre?: StringFieldUpdateOperationsInput | string
+    slug?: NullableStringFieldUpdateOperationsInput | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    contabilidadTimezone?: StringFieldUpdateOperationsInput | string
+    empresa?: MiEmpresaUpdateOneWithoutTenantNestedInput
+    memberships?: TenantMembershipUpdateManyWithoutTenantNestedInput
+    licencias?: TenantLicenseUpdateManyWithoutTenantNestedInput
+    categorias?: CategoriaUpdateManyWithoutTenantNestedInput
+    vendors?: VendorUpdateManyWithoutTenantNestedInput
+    clientes?: ClienteUpdateManyWithoutTenantNestedInput
+    almacenes?: AlmacenUpdateManyWithoutTenantNestedInput
+    puntosDeVenta?: PuntoDeVentaUpdateManyWithoutTenantNestedInput
+    productos?: ProductoUpdateManyWithoutTenantNestedInput
+    ventas?: VentaUpdateManyWithoutTenantNestedInput
+    facturas?: FacturaUpdateManyWithoutTenantNestedInput
+    gastosDE?: GastosDEUpdateManyWithoutTenantNestedInput
+    gastosCompra?: GastoCompraUpdateManyWithoutTenantNestedInput
+    comprasProducto?: CompraProductoUpdateManyWithoutTenantNestedInput
+    comprasDocumento?: CompraDocumentoUpdateManyWithoutTenantNestedInput
+    comprasDocumentoItem?: CompraDocumentoItemUpdateManyWithoutTenantNestedInput
+    servicios?: ServiciosUpdateManyWithoutTenantNestedInput
+    ventasServicios?: VentaServiciosUpdateManyWithoutTenantNestedInput
+    comprasServicio?: CompraServicioUpdateManyWithoutTenantNestedInput
+    cuentasBancarias?: CuentaBancariaUpdateManyWithoutTenantNestedInput
+    reconciliacionesVenta?: ReconciliacionVentaUpdateManyWithoutTenantNestedInput
+    reconciliacionesServicio?: ReconciliacionServicioUpdateManyWithoutTenantNestedInput
+    reconciliacionesGasto?: ReconciliacionGastoUpdateManyWithoutTenantNestedInput
+    ajustesBancarios?: AjusteBancarioUpdateManyWithoutTenantNestedInput
+    transferenciasBancarias?: TransferenciaBancariaUpdateManyWithoutTenantNestedInput
+    contratos?: ContratoUpdateManyWithoutTenantNestedInput
+    seriesFacturacion?: SerieFacturacionUpdateManyWithoutTenantNestedInput
+    ofertas?: OfertaUpdateManyWithoutTenantNestedInput
+    cuentasPorCobrar?: CuentaPorCobrarUpdateManyWithoutTenantNestedInput
+    cuentasPorPagar?: CuentaPorPagarUpdateManyWithoutTenantNestedInput
+    deudasCash?: DeudaCashUpdateManyWithoutTenantNestedInput
+    prestamosCash?: PrestamoCashUpdateManyWithoutTenantNestedInput
+    pagosCuentaPorPagar?: PagoCuentaPorPagarUpdateManyWithoutTenantNestedInput
+    empleados?: EmpleadoUpdateManyWithoutTenantNestedInput
+    ordenesProduccion?: OrdenProduccionUpdateManyWithoutTenantNestedInput
+    ordenesProduccionHistorial?: OrdenProduccionHistorialUpdateManyWithoutTenantNestedInput
+    recetas?: RecetaUpdateManyWithoutTenantNestedInput
+    recetasIngredientes?: RecetaIngredienteUpdateManyWithoutTenantNestedInput
+    valesSalida?: ValeSalidaUpdateManyWithoutTenantNestedInput
+    valesSalidaItem?: ValeSalidaItemUpdateManyWithoutTenantNestedInput
+    listasPrecio?: ListaPrecioUpdateManyWithoutTenantNestedInput
+    equiposReparacion?: EquipoReparacionUpdateManyWithoutTenantNestedInput
+    piezasReparacion?: PiezaReparacionUpdateManyWithoutTenantNestedInput
+    ordenesReparacion?: OrdenReparacionUpdateManyWithoutTenantNestedInput
+    ordenesReparacionEquipo?: OrdenReparacionEquipoUpdateManyWithoutTenantNestedInput
+    ordenesReparacionItem?: OrdenReparacionItemUpdateManyWithoutTenantNestedInput
+    ordenesReparacionMaterial?: OrdenReparacionMaterialUpdateManyWithoutTenantNestedInput
+    defectacionesCatalogo?: DefectacionCatalogoUpdateManyWithoutTenantNestedInput
+    anticipos?: AnticipoUpdateManyWithoutTenantNestedInput
+    transferencias?: TransferenciaUpdateManyWithoutTenantNestedInput
+    mermas?: MermaUpdateManyWithoutTenantNestedInput
+    stockUbicaciones?: StockUbicacionUpdateManyWithoutTenantNestedInput
+    pagosSalario?: PagosalarioUpdateManyWithoutTenantNestedInput
+    cierresContables?: CierreContableUpdateManyWithoutTenantNestedInput
+    periodosContables?: PeriodoContableUpdateManyWithoutTenantNestedInput
+    aperturaPeriodos?: AperturaPeriodoUpdateManyWithoutTenantNestedInput
+    auditoriaPeriodos?: AuditoriaPeriodoUpdateManyWithoutTenantNestedInput
+    arqueosCaja?: ArqueoCajaUpdateManyWithoutTenantNestedInput
+    backupLogs?: BackupLogUpdateManyWithoutTenantNestedInput
+    backupPlans?: BackupPlanUpdateManyWithoutTenantNestedInput
+  }
+
+  export type TenantUncheckedUpdateWithoutTurnosPosInput = {
+    tenantId?: StringFieldUpdateOperationsInput | string
+    nombre?: StringFieldUpdateOperationsInput | string
+    slug?: NullableStringFieldUpdateOperationsInput | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    contabilidadTimezone?: StringFieldUpdateOperationsInput | string
+    empresa?: MiEmpresaUncheckedUpdateOneWithoutTenantNestedInput
+    memberships?: TenantMembershipUncheckedUpdateManyWithoutTenantNestedInput
+    licencias?: TenantLicenseUncheckedUpdateManyWithoutTenantNestedInput
+    categorias?: CategoriaUncheckedUpdateManyWithoutTenantNestedInput
+    vendors?: VendorUncheckedUpdateManyWithoutTenantNestedInput
+    clientes?: ClienteUncheckedUpdateManyWithoutTenantNestedInput
+    almacenes?: AlmacenUncheckedUpdateManyWithoutTenantNestedInput
+    puntosDeVenta?: PuntoDeVentaUncheckedUpdateManyWithoutTenantNestedInput
+    productos?: ProductoUncheckedUpdateManyWithoutTenantNestedInput
+    ventas?: VentaUncheckedUpdateManyWithoutTenantNestedInput
+    facturas?: FacturaUncheckedUpdateManyWithoutTenantNestedInput
+    gastosDE?: GastosDEUncheckedUpdateManyWithoutTenantNestedInput
+    gastosCompra?: GastoCompraUncheckedUpdateManyWithoutTenantNestedInput
+    comprasProducto?: CompraProductoUncheckedUpdateManyWithoutTenantNestedInput
+    comprasDocumento?: CompraDocumentoUncheckedUpdateManyWithoutTenantNestedInput
+    comprasDocumentoItem?: CompraDocumentoItemUncheckedUpdateManyWithoutTenantNestedInput
+    servicios?: ServiciosUncheckedUpdateManyWithoutTenantNestedInput
+    ventasServicios?: VentaServiciosUncheckedUpdateManyWithoutTenantNestedInput
+    comprasServicio?: CompraServicioUncheckedUpdateManyWithoutTenantNestedInput
+    cuentasBancarias?: CuentaBancariaUncheckedUpdateManyWithoutTenantNestedInput
+    reconciliacionesVenta?: ReconciliacionVentaUncheckedUpdateManyWithoutTenantNestedInput
+    reconciliacionesServicio?: ReconciliacionServicioUncheckedUpdateManyWithoutTenantNestedInput
+    reconciliacionesGasto?: ReconciliacionGastoUncheckedUpdateManyWithoutTenantNestedInput
+    ajustesBancarios?: AjusteBancarioUncheckedUpdateManyWithoutTenantNestedInput
+    transferenciasBancarias?: TransferenciaBancariaUncheckedUpdateManyWithoutTenantNestedInput
+    contratos?: ContratoUncheckedUpdateManyWithoutTenantNestedInput
+    seriesFacturacion?: SerieFacturacionUncheckedUpdateManyWithoutTenantNestedInput
+    ofertas?: OfertaUncheckedUpdateManyWithoutTenantNestedInput
+    cuentasPorCobrar?: CuentaPorCobrarUncheckedUpdateManyWithoutTenantNestedInput
+    cuentasPorPagar?: CuentaPorPagarUncheckedUpdateManyWithoutTenantNestedInput
+    deudasCash?: DeudaCashUncheckedUpdateManyWithoutTenantNestedInput
+    prestamosCash?: PrestamoCashUncheckedUpdateManyWithoutTenantNestedInput
+    pagosCuentaPorPagar?: PagoCuentaPorPagarUncheckedUpdateManyWithoutTenantNestedInput
+    empleados?: EmpleadoUncheckedUpdateManyWithoutTenantNestedInput
+    ordenesProduccion?: OrdenProduccionUncheckedUpdateManyWithoutTenantNestedInput
+    ordenesProduccionHistorial?: OrdenProduccionHistorialUncheckedUpdateManyWithoutTenantNestedInput
+    recetas?: RecetaUncheckedUpdateManyWithoutTenantNestedInput
+    recetasIngredientes?: RecetaIngredienteUncheckedUpdateManyWithoutTenantNestedInput
+    valesSalida?: ValeSalidaUncheckedUpdateManyWithoutTenantNestedInput
+    valesSalidaItem?: ValeSalidaItemUncheckedUpdateManyWithoutTenantNestedInput
+    listasPrecio?: ListaPrecioUncheckedUpdateManyWithoutTenantNestedInput
+    equiposReparacion?: EquipoReparacionUncheckedUpdateManyWithoutTenantNestedInput
+    piezasReparacion?: PiezaReparacionUncheckedUpdateManyWithoutTenantNestedInput
+    ordenesReparacion?: OrdenReparacionUncheckedUpdateManyWithoutTenantNestedInput
+    ordenesReparacionEquipo?: OrdenReparacionEquipoUncheckedUpdateManyWithoutTenantNestedInput
+    ordenesReparacionItem?: OrdenReparacionItemUncheckedUpdateManyWithoutTenantNestedInput
+    ordenesReparacionMaterial?: OrdenReparacionMaterialUncheckedUpdateManyWithoutTenantNestedInput
+    defectacionesCatalogo?: DefectacionCatalogoUncheckedUpdateManyWithoutTenantNestedInput
+    anticipos?: AnticipoUncheckedUpdateManyWithoutTenantNestedInput
+    transferencias?: TransferenciaUncheckedUpdateManyWithoutTenantNestedInput
+    mermas?: MermaUncheckedUpdateManyWithoutTenantNestedInput
+    stockUbicaciones?: StockUbicacionUncheckedUpdateManyWithoutTenantNestedInput
+    pagosSalario?: PagosalarioUncheckedUpdateManyWithoutTenantNestedInput
+    cierresContables?: CierreContableUncheckedUpdateManyWithoutTenantNestedInput
+    periodosContables?: PeriodoContableUncheckedUpdateManyWithoutTenantNestedInput
+    aperturaPeriodos?: AperturaPeriodoUncheckedUpdateManyWithoutTenantNestedInput
+    auditoriaPeriodos?: AuditoriaPeriodoUncheckedUpdateManyWithoutTenantNestedInput
+    arqueosCaja?: ArqueoCajaUncheckedUpdateManyWithoutTenantNestedInput
+    backupLogs?: BackupLogUncheckedUpdateManyWithoutTenantNestedInput
+    backupPlans?: BackupPlanUncheckedUpdateManyWithoutTenantNestedInput
+  }
+
+  export type TurnoPuntoVentaCreateWithoutArqueoInput = {
+    id?: string
+    tipo?: string
+    fechaApertura?: Date | string
+    fechaCierre?: Date | string | null
+    fondoInicialCup?: number
+    fondoInicialUsd?: number
+    estado?: $Enums.EstadoTurno
+    observaciones?: string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    puntoDeVenta: PuntoDeVentaCreateNestedOneWithoutTurnosInput
+    empleado?: EmpleadoCreateNestedOneWithoutTurnosPosInput
+    ventas?: VentaCreateNestedManyWithoutTurnoInput
+    tenant: TenantCreateNestedOneWithoutTurnosPosInput
+  }
+
+  export type TurnoPuntoVentaUncheckedCreateWithoutArqueoInput = {
+    id?: string
+    tenantId: string
+    puntoDeVentaId: string
+    empleadoId?: string | null
+    tipo?: string
+    fechaApertura?: Date | string
+    fechaCierre?: Date | string | null
+    fondoInicialCup?: number
+    fondoInicialUsd?: number
+    estado?: $Enums.EstadoTurno
+    observaciones?: string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    ventas?: VentaUncheckedCreateNestedManyWithoutTurnoInput
+  }
+
+  export type TurnoPuntoVentaCreateOrConnectWithoutArqueoInput = {
+    where: TurnoPuntoVentaWhereUniqueInput
+    create: XOR<TurnoPuntoVentaCreateWithoutArqueoInput, TurnoPuntoVentaUncheckedCreateWithoutArqueoInput>
+  }
+
+  export type PuntoDeVentaCreateWithoutArqueosInput = {
+    pvId?: string
+    nombre: string
+    ubicacion?: string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    tipoCaja?: string | null
+    cuentaContableId?: string | null
+    productos?: ProductoCreateNestedManyWithoutPuntoDeVentaInput
+    listaPrecio?: ListaPrecioCreateNestedOneWithoutPuntosDeVentaInput
+    almacen?: AlmacenCreateNestedOneWithoutPuntosDeVentaInput
+    transferenciasDestino?: TransferenciaCreateNestedManyWithoutPuntoDeVentaDestinoInput
+    transferenciasOrigen?: TransferenciaCreateNestedManyWithoutPuntoDeVentaOrigenInput
+    ventas?: VentaCreateNestedManyWithoutPuntoDeVentaInput
+    turnos?: TurnoPuntoVentaCreateNestedManyWithoutPuntoDeVentaInput
+    tenant: TenantCreateNestedOneWithoutPuntosDeVentaInput
+  }
+
+  export type PuntoDeVentaUncheckedCreateWithoutArqueosInput = {
+    pvId?: string
+    tenantId: string
+    nombre: string
+    ubicacion?: string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    listaPrecioId?: string | null
+    tipoCaja?: string | null
+    almacenId?: string | null
+    cuentaContableId?: string | null
+    productos?: ProductoUncheckedCreateNestedManyWithoutPuntoDeVentaInput
+    transferenciasDestino?: TransferenciaUncheckedCreateNestedManyWithoutPuntoDeVentaDestinoInput
+    transferenciasOrigen?: TransferenciaUncheckedCreateNestedManyWithoutPuntoDeVentaOrigenInput
+    ventas?: VentaUncheckedCreateNestedManyWithoutPuntoDeVentaInput
+    turnos?: TurnoPuntoVentaUncheckedCreateNestedManyWithoutPuntoDeVentaInput
+  }
+
+  export type PuntoDeVentaCreateOrConnectWithoutArqueosInput = {
+    where: PuntoDeVentaWhereUniqueInput
+    create: XOR<PuntoDeVentaCreateWithoutArqueosInput, PuntoDeVentaUncheckedCreateWithoutArqueosInput>
+  }
+
+  export type TenantCreateWithoutArqueosCajaInput = {
+    tenantId?: string
+    nombre: string
+    slug?: string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    contabilidadTimezone?: string
+    empresa?: MiEmpresaCreateNestedOneWithoutTenantInput
+    memberships?: TenantMembershipCreateNestedManyWithoutTenantInput
+    licencias?: TenantLicenseCreateNestedManyWithoutTenantInput
+    categorias?: CategoriaCreateNestedManyWithoutTenantInput
+    vendors?: VendorCreateNestedManyWithoutTenantInput
+    clientes?: ClienteCreateNestedManyWithoutTenantInput
+    almacenes?: AlmacenCreateNestedManyWithoutTenantInput
+    puntosDeVenta?: PuntoDeVentaCreateNestedManyWithoutTenantInput
+    productos?: ProductoCreateNestedManyWithoutTenantInput
+    ventas?: VentaCreateNestedManyWithoutTenantInput
+    facturas?: FacturaCreateNestedManyWithoutTenantInput
+    gastosDE?: GastosDECreateNestedManyWithoutTenantInput
+    gastosCompra?: GastoCompraCreateNestedManyWithoutTenantInput
+    comprasProducto?: CompraProductoCreateNestedManyWithoutTenantInput
+    comprasDocumento?: CompraDocumentoCreateNestedManyWithoutTenantInput
+    comprasDocumentoItem?: CompraDocumentoItemCreateNestedManyWithoutTenantInput
+    servicios?: ServiciosCreateNestedManyWithoutTenantInput
+    ventasServicios?: VentaServiciosCreateNestedManyWithoutTenantInput
+    comprasServicio?: CompraServicioCreateNestedManyWithoutTenantInput
+    cuentasBancarias?: CuentaBancariaCreateNestedManyWithoutTenantInput
+    reconciliacionesVenta?: ReconciliacionVentaCreateNestedManyWithoutTenantInput
+    reconciliacionesServicio?: ReconciliacionServicioCreateNestedManyWithoutTenantInput
+    reconciliacionesGasto?: ReconciliacionGastoCreateNestedManyWithoutTenantInput
+    ajustesBancarios?: AjusteBancarioCreateNestedManyWithoutTenantInput
+    transferenciasBancarias?: TransferenciaBancariaCreateNestedManyWithoutTenantInput
+    contratos?: ContratoCreateNestedManyWithoutTenantInput
+    seriesFacturacion?: SerieFacturacionCreateNestedManyWithoutTenantInput
+    ofertas?: OfertaCreateNestedManyWithoutTenantInput
+    cuentasPorCobrar?: CuentaPorCobrarCreateNestedManyWithoutTenantInput
+    cuentasPorPagar?: CuentaPorPagarCreateNestedManyWithoutTenantInput
+    deudasCash?: DeudaCashCreateNestedManyWithoutTenantInput
+    prestamosCash?: PrestamoCashCreateNestedManyWithoutTenantInput
+    pagosCuentaPorPagar?: PagoCuentaPorPagarCreateNestedManyWithoutTenantInput
+    empleados?: EmpleadoCreateNestedManyWithoutTenantInput
+    ordenesProduccion?: OrdenProduccionCreateNestedManyWithoutTenantInput
+    ordenesProduccionHistorial?: OrdenProduccionHistorialCreateNestedManyWithoutTenantInput
+    recetas?: RecetaCreateNestedManyWithoutTenantInput
+    recetasIngredientes?: RecetaIngredienteCreateNestedManyWithoutTenantInput
+    valesSalida?: ValeSalidaCreateNestedManyWithoutTenantInput
+    valesSalidaItem?: ValeSalidaItemCreateNestedManyWithoutTenantInput
+    listasPrecio?: ListaPrecioCreateNestedManyWithoutTenantInput
+    equiposReparacion?: EquipoReparacionCreateNestedManyWithoutTenantInput
+    piezasReparacion?: PiezaReparacionCreateNestedManyWithoutTenantInput
+    ordenesReparacion?: OrdenReparacionCreateNestedManyWithoutTenantInput
+    ordenesReparacionEquipo?: OrdenReparacionEquipoCreateNestedManyWithoutTenantInput
+    ordenesReparacionItem?: OrdenReparacionItemCreateNestedManyWithoutTenantInput
+    ordenesReparacionMaterial?: OrdenReparacionMaterialCreateNestedManyWithoutTenantInput
+    defectacionesCatalogo?: DefectacionCatalogoCreateNestedManyWithoutTenantInput
+    anticipos?: AnticipoCreateNestedManyWithoutTenantInput
+    transferencias?: TransferenciaCreateNestedManyWithoutTenantInput
+    mermas?: MermaCreateNestedManyWithoutTenantInput
+    stockUbicaciones?: StockUbicacionCreateNestedManyWithoutTenantInput
+    pagosSalario?: PagosalarioCreateNestedManyWithoutTenantInput
+    cierresContables?: CierreContableCreateNestedManyWithoutTenantInput
+    periodosContables?: PeriodoContableCreateNestedManyWithoutTenantInput
+    aperturaPeriodos?: AperturaPeriodoCreateNestedManyWithoutTenantInput
+    auditoriaPeriodos?: AuditoriaPeriodoCreateNestedManyWithoutTenantInput
+    turnosPos?: TurnoPuntoVentaCreateNestedManyWithoutTenantInput
+    backupLogs?: BackupLogCreateNestedManyWithoutTenantInput
+    backupPlans?: BackupPlanCreateNestedManyWithoutTenantInput
+  }
+
+  export type TenantUncheckedCreateWithoutArqueosCajaInput = {
+    tenantId?: string
+    nombre: string
+    slug?: string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    contabilidadTimezone?: string
+    empresa?: MiEmpresaUncheckedCreateNestedOneWithoutTenantInput
+    memberships?: TenantMembershipUncheckedCreateNestedManyWithoutTenantInput
+    licencias?: TenantLicenseUncheckedCreateNestedManyWithoutTenantInput
+    categorias?: CategoriaUncheckedCreateNestedManyWithoutTenantInput
+    vendors?: VendorUncheckedCreateNestedManyWithoutTenantInput
+    clientes?: ClienteUncheckedCreateNestedManyWithoutTenantInput
+    almacenes?: AlmacenUncheckedCreateNestedManyWithoutTenantInput
+    puntosDeVenta?: PuntoDeVentaUncheckedCreateNestedManyWithoutTenantInput
+    productos?: ProductoUncheckedCreateNestedManyWithoutTenantInput
+    ventas?: VentaUncheckedCreateNestedManyWithoutTenantInput
+    facturas?: FacturaUncheckedCreateNestedManyWithoutTenantInput
+    gastosDE?: GastosDEUncheckedCreateNestedManyWithoutTenantInput
+    gastosCompra?: GastoCompraUncheckedCreateNestedManyWithoutTenantInput
+    comprasProducto?: CompraProductoUncheckedCreateNestedManyWithoutTenantInput
+    comprasDocumento?: CompraDocumentoUncheckedCreateNestedManyWithoutTenantInput
+    comprasDocumentoItem?: CompraDocumentoItemUncheckedCreateNestedManyWithoutTenantInput
+    servicios?: ServiciosUncheckedCreateNestedManyWithoutTenantInput
+    ventasServicios?: VentaServiciosUncheckedCreateNestedManyWithoutTenantInput
+    comprasServicio?: CompraServicioUncheckedCreateNestedManyWithoutTenantInput
+    cuentasBancarias?: CuentaBancariaUncheckedCreateNestedManyWithoutTenantInput
+    reconciliacionesVenta?: ReconciliacionVentaUncheckedCreateNestedManyWithoutTenantInput
+    reconciliacionesServicio?: ReconciliacionServicioUncheckedCreateNestedManyWithoutTenantInput
+    reconciliacionesGasto?: ReconciliacionGastoUncheckedCreateNestedManyWithoutTenantInput
+    ajustesBancarios?: AjusteBancarioUncheckedCreateNestedManyWithoutTenantInput
+    transferenciasBancarias?: TransferenciaBancariaUncheckedCreateNestedManyWithoutTenantInput
+    contratos?: ContratoUncheckedCreateNestedManyWithoutTenantInput
+    seriesFacturacion?: SerieFacturacionUncheckedCreateNestedManyWithoutTenantInput
+    ofertas?: OfertaUncheckedCreateNestedManyWithoutTenantInput
+    cuentasPorCobrar?: CuentaPorCobrarUncheckedCreateNestedManyWithoutTenantInput
+    cuentasPorPagar?: CuentaPorPagarUncheckedCreateNestedManyWithoutTenantInput
+    deudasCash?: DeudaCashUncheckedCreateNestedManyWithoutTenantInput
+    prestamosCash?: PrestamoCashUncheckedCreateNestedManyWithoutTenantInput
+    pagosCuentaPorPagar?: PagoCuentaPorPagarUncheckedCreateNestedManyWithoutTenantInput
+    empleados?: EmpleadoUncheckedCreateNestedManyWithoutTenantInput
+    ordenesProduccion?: OrdenProduccionUncheckedCreateNestedManyWithoutTenantInput
+    ordenesProduccionHistorial?: OrdenProduccionHistorialUncheckedCreateNestedManyWithoutTenantInput
+    recetas?: RecetaUncheckedCreateNestedManyWithoutTenantInput
+    recetasIngredientes?: RecetaIngredienteUncheckedCreateNestedManyWithoutTenantInput
+    valesSalida?: ValeSalidaUncheckedCreateNestedManyWithoutTenantInput
+    valesSalidaItem?: ValeSalidaItemUncheckedCreateNestedManyWithoutTenantInput
+    listasPrecio?: ListaPrecioUncheckedCreateNestedManyWithoutTenantInput
+    equiposReparacion?: EquipoReparacionUncheckedCreateNestedManyWithoutTenantInput
+    piezasReparacion?: PiezaReparacionUncheckedCreateNestedManyWithoutTenantInput
+    ordenesReparacion?: OrdenReparacionUncheckedCreateNestedManyWithoutTenantInput
+    ordenesReparacionEquipo?: OrdenReparacionEquipoUncheckedCreateNestedManyWithoutTenantInput
+    ordenesReparacionItem?: OrdenReparacionItemUncheckedCreateNestedManyWithoutTenantInput
+    ordenesReparacionMaterial?: OrdenReparacionMaterialUncheckedCreateNestedManyWithoutTenantInput
+    defectacionesCatalogo?: DefectacionCatalogoUncheckedCreateNestedManyWithoutTenantInput
+    anticipos?: AnticipoUncheckedCreateNestedManyWithoutTenantInput
+    transferencias?: TransferenciaUncheckedCreateNestedManyWithoutTenantInput
+    mermas?: MermaUncheckedCreateNestedManyWithoutTenantInput
+    stockUbicaciones?: StockUbicacionUncheckedCreateNestedManyWithoutTenantInput
+    pagosSalario?: PagosalarioUncheckedCreateNestedManyWithoutTenantInput
+    cierresContables?: CierreContableUncheckedCreateNestedManyWithoutTenantInput
+    periodosContables?: PeriodoContableUncheckedCreateNestedManyWithoutTenantInput
+    aperturaPeriodos?: AperturaPeriodoUncheckedCreateNestedManyWithoutTenantInput
+    auditoriaPeriodos?: AuditoriaPeriodoUncheckedCreateNestedManyWithoutTenantInput
+    turnosPos?: TurnoPuntoVentaUncheckedCreateNestedManyWithoutTenantInput
+    backupLogs?: BackupLogUncheckedCreateNestedManyWithoutTenantInput
+    backupPlans?: BackupPlanUncheckedCreateNestedManyWithoutTenantInput
+  }
+
+  export type TenantCreateOrConnectWithoutArqueosCajaInput = {
+    where: TenantWhereUniqueInput
+    create: XOR<TenantCreateWithoutArqueosCajaInput, TenantUncheckedCreateWithoutArqueosCajaInput>
+  }
+
+  export type TurnoPuntoVentaUpsertWithoutArqueoInput = {
+    update: XOR<TurnoPuntoVentaUpdateWithoutArqueoInput, TurnoPuntoVentaUncheckedUpdateWithoutArqueoInput>
+    create: XOR<TurnoPuntoVentaCreateWithoutArqueoInput, TurnoPuntoVentaUncheckedCreateWithoutArqueoInput>
+    where?: TurnoPuntoVentaWhereInput
+  }
+
+  export type TurnoPuntoVentaUpdateToOneWithWhereWithoutArqueoInput = {
+    where?: TurnoPuntoVentaWhereInput
+    data: XOR<TurnoPuntoVentaUpdateWithoutArqueoInput, TurnoPuntoVentaUncheckedUpdateWithoutArqueoInput>
+  }
+
+  export type TurnoPuntoVentaUpdateWithoutArqueoInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    tipo?: StringFieldUpdateOperationsInput | string
+    fechaApertura?: DateTimeFieldUpdateOperationsInput | Date | string
+    fechaCierre?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    fondoInicialCup?: IntFieldUpdateOperationsInput | number
+    fondoInicialUsd?: IntFieldUpdateOperationsInput | number
+    estado?: EnumEstadoTurnoFieldUpdateOperationsInput | $Enums.EstadoTurno
+    observaciones?: NullableStringFieldUpdateOperationsInput | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    puntoDeVenta?: PuntoDeVentaUpdateOneRequiredWithoutTurnosNestedInput
+    empleado?: EmpleadoUpdateOneWithoutTurnosPosNestedInput
+    ventas?: VentaUpdateManyWithoutTurnoNestedInput
+    tenant?: TenantUpdateOneRequiredWithoutTurnosPosNestedInput
+  }
+
+  export type TurnoPuntoVentaUncheckedUpdateWithoutArqueoInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    tenantId?: StringFieldUpdateOperationsInput | string
+    puntoDeVentaId?: StringFieldUpdateOperationsInput | string
+    empleadoId?: NullableStringFieldUpdateOperationsInput | string | null
+    tipo?: StringFieldUpdateOperationsInput | string
+    fechaApertura?: DateTimeFieldUpdateOperationsInput | Date | string
+    fechaCierre?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    fondoInicialCup?: IntFieldUpdateOperationsInput | number
+    fondoInicialUsd?: IntFieldUpdateOperationsInput | number
+    estado?: EnumEstadoTurnoFieldUpdateOperationsInput | $Enums.EstadoTurno
+    observaciones?: NullableStringFieldUpdateOperationsInput | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    ventas?: VentaUncheckedUpdateManyWithoutTurnoNestedInput
+  }
+
+  export type PuntoDeVentaUpsertWithoutArqueosInput = {
+    update: XOR<PuntoDeVentaUpdateWithoutArqueosInput, PuntoDeVentaUncheckedUpdateWithoutArqueosInput>
+    create: XOR<PuntoDeVentaCreateWithoutArqueosInput, PuntoDeVentaUncheckedCreateWithoutArqueosInput>
+    where?: PuntoDeVentaWhereInput
+  }
+
+  export type PuntoDeVentaUpdateToOneWithWhereWithoutArqueosInput = {
+    where?: PuntoDeVentaWhereInput
+    data: XOR<PuntoDeVentaUpdateWithoutArqueosInput, PuntoDeVentaUncheckedUpdateWithoutArqueosInput>
+  }
+
+  export type PuntoDeVentaUpdateWithoutArqueosInput = {
+    pvId?: StringFieldUpdateOperationsInput | string
+    nombre?: StringFieldUpdateOperationsInput | string
+    ubicacion?: NullableStringFieldUpdateOperationsInput | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    tipoCaja?: NullableStringFieldUpdateOperationsInput | string | null
+    cuentaContableId?: NullableStringFieldUpdateOperationsInput | string | null
+    productos?: ProductoUpdateManyWithoutPuntoDeVentaNestedInput
+    listaPrecio?: ListaPrecioUpdateOneWithoutPuntosDeVentaNestedInput
+    almacen?: AlmacenUpdateOneWithoutPuntosDeVentaNestedInput
+    transferenciasDestino?: TransferenciaUpdateManyWithoutPuntoDeVentaDestinoNestedInput
+    transferenciasOrigen?: TransferenciaUpdateManyWithoutPuntoDeVentaOrigenNestedInput
+    ventas?: VentaUpdateManyWithoutPuntoDeVentaNestedInput
+    turnos?: TurnoPuntoVentaUpdateManyWithoutPuntoDeVentaNestedInput
+    tenant?: TenantUpdateOneRequiredWithoutPuntosDeVentaNestedInput
+  }
+
+  export type PuntoDeVentaUncheckedUpdateWithoutArqueosInput = {
+    pvId?: StringFieldUpdateOperationsInput | string
+    tenantId?: StringFieldUpdateOperationsInput | string
+    nombre?: StringFieldUpdateOperationsInput | string
+    ubicacion?: NullableStringFieldUpdateOperationsInput | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    listaPrecioId?: NullableStringFieldUpdateOperationsInput | string | null
+    tipoCaja?: NullableStringFieldUpdateOperationsInput | string | null
+    almacenId?: NullableStringFieldUpdateOperationsInput | string | null
+    cuentaContableId?: NullableStringFieldUpdateOperationsInput | string | null
+    productos?: ProductoUncheckedUpdateManyWithoutPuntoDeVentaNestedInput
+    transferenciasDestino?: TransferenciaUncheckedUpdateManyWithoutPuntoDeVentaDestinoNestedInput
+    transferenciasOrigen?: TransferenciaUncheckedUpdateManyWithoutPuntoDeVentaOrigenNestedInput
+    ventas?: VentaUncheckedUpdateManyWithoutPuntoDeVentaNestedInput
+    turnos?: TurnoPuntoVentaUncheckedUpdateManyWithoutPuntoDeVentaNestedInput
+  }
+
+  export type TenantUpsertWithoutArqueosCajaInput = {
+    update: XOR<TenantUpdateWithoutArqueosCajaInput, TenantUncheckedUpdateWithoutArqueosCajaInput>
+    create: XOR<TenantCreateWithoutArqueosCajaInput, TenantUncheckedCreateWithoutArqueosCajaInput>
+    where?: TenantWhereInput
+  }
+
+  export type TenantUpdateToOneWithWhereWithoutArqueosCajaInput = {
+    where?: TenantWhereInput
+    data: XOR<TenantUpdateWithoutArqueosCajaInput, TenantUncheckedUpdateWithoutArqueosCajaInput>
+  }
+
+  export type TenantUpdateWithoutArqueosCajaInput = {
+    tenantId?: StringFieldUpdateOperationsInput | string
+    nombre?: StringFieldUpdateOperationsInput | string
+    slug?: NullableStringFieldUpdateOperationsInput | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    contabilidadTimezone?: StringFieldUpdateOperationsInput | string
+    empresa?: MiEmpresaUpdateOneWithoutTenantNestedInput
+    memberships?: TenantMembershipUpdateManyWithoutTenantNestedInput
+    licencias?: TenantLicenseUpdateManyWithoutTenantNestedInput
+    categorias?: CategoriaUpdateManyWithoutTenantNestedInput
+    vendors?: VendorUpdateManyWithoutTenantNestedInput
+    clientes?: ClienteUpdateManyWithoutTenantNestedInput
+    almacenes?: AlmacenUpdateManyWithoutTenantNestedInput
+    puntosDeVenta?: PuntoDeVentaUpdateManyWithoutTenantNestedInput
+    productos?: ProductoUpdateManyWithoutTenantNestedInput
+    ventas?: VentaUpdateManyWithoutTenantNestedInput
+    facturas?: FacturaUpdateManyWithoutTenantNestedInput
+    gastosDE?: GastosDEUpdateManyWithoutTenantNestedInput
+    gastosCompra?: GastoCompraUpdateManyWithoutTenantNestedInput
+    comprasProducto?: CompraProductoUpdateManyWithoutTenantNestedInput
+    comprasDocumento?: CompraDocumentoUpdateManyWithoutTenantNestedInput
+    comprasDocumentoItem?: CompraDocumentoItemUpdateManyWithoutTenantNestedInput
+    servicios?: ServiciosUpdateManyWithoutTenantNestedInput
+    ventasServicios?: VentaServiciosUpdateManyWithoutTenantNestedInput
+    comprasServicio?: CompraServicioUpdateManyWithoutTenantNestedInput
+    cuentasBancarias?: CuentaBancariaUpdateManyWithoutTenantNestedInput
+    reconciliacionesVenta?: ReconciliacionVentaUpdateManyWithoutTenantNestedInput
+    reconciliacionesServicio?: ReconciliacionServicioUpdateManyWithoutTenantNestedInput
+    reconciliacionesGasto?: ReconciliacionGastoUpdateManyWithoutTenantNestedInput
+    ajustesBancarios?: AjusteBancarioUpdateManyWithoutTenantNestedInput
+    transferenciasBancarias?: TransferenciaBancariaUpdateManyWithoutTenantNestedInput
+    contratos?: ContratoUpdateManyWithoutTenantNestedInput
+    seriesFacturacion?: SerieFacturacionUpdateManyWithoutTenantNestedInput
+    ofertas?: OfertaUpdateManyWithoutTenantNestedInput
+    cuentasPorCobrar?: CuentaPorCobrarUpdateManyWithoutTenantNestedInput
+    cuentasPorPagar?: CuentaPorPagarUpdateManyWithoutTenantNestedInput
+    deudasCash?: DeudaCashUpdateManyWithoutTenantNestedInput
+    prestamosCash?: PrestamoCashUpdateManyWithoutTenantNestedInput
+    pagosCuentaPorPagar?: PagoCuentaPorPagarUpdateManyWithoutTenantNestedInput
+    empleados?: EmpleadoUpdateManyWithoutTenantNestedInput
+    ordenesProduccion?: OrdenProduccionUpdateManyWithoutTenantNestedInput
+    ordenesProduccionHistorial?: OrdenProduccionHistorialUpdateManyWithoutTenantNestedInput
+    recetas?: RecetaUpdateManyWithoutTenantNestedInput
+    recetasIngredientes?: RecetaIngredienteUpdateManyWithoutTenantNestedInput
+    valesSalida?: ValeSalidaUpdateManyWithoutTenantNestedInput
+    valesSalidaItem?: ValeSalidaItemUpdateManyWithoutTenantNestedInput
+    listasPrecio?: ListaPrecioUpdateManyWithoutTenantNestedInput
+    equiposReparacion?: EquipoReparacionUpdateManyWithoutTenantNestedInput
+    piezasReparacion?: PiezaReparacionUpdateManyWithoutTenantNestedInput
+    ordenesReparacion?: OrdenReparacionUpdateManyWithoutTenantNestedInput
+    ordenesReparacionEquipo?: OrdenReparacionEquipoUpdateManyWithoutTenantNestedInput
+    ordenesReparacionItem?: OrdenReparacionItemUpdateManyWithoutTenantNestedInput
+    ordenesReparacionMaterial?: OrdenReparacionMaterialUpdateManyWithoutTenantNestedInput
+    defectacionesCatalogo?: DefectacionCatalogoUpdateManyWithoutTenantNestedInput
+    anticipos?: AnticipoUpdateManyWithoutTenantNestedInput
+    transferencias?: TransferenciaUpdateManyWithoutTenantNestedInput
+    mermas?: MermaUpdateManyWithoutTenantNestedInput
+    stockUbicaciones?: StockUbicacionUpdateManyWithoutTenantNestedInput
+    pagosSalario?: PagosalarioUpdateManyWithoutTenantNestedInput
+    cierresContables?: CierreContableUpdateManyWithoutTenantNestedInput
+    periodosContables?: PeriodoContableUpdateManyWithoutTenantNestedInput
+    aperturaPeriodos?: AperturaPeriodoUpdateManyWithoutTenantNestedInput
+    auditoriaPeriodos?: AuditoriaPeriodoUpdateManyWithoutTenantNestedInput
+    turnosPos?: TurnoPuntoVentaUpdateManyWithoutTenantNestedInput
+    backupLogs?: BackupLogUpdateManyWithoutTenantNestedInput
+    backupPlans?: BackupPlanUpdateManyWithoutTenantNestedInput
+  }
+
+  export type TenantUncheckedUpdateWithoutArqueosCajaInput = {
+    tenantId?: StringFieldUpdateOperationsInput | string
+    nombre?: StringFieldUpdateOperationsInput | string
+    slug?: NullableStringFieldUpdateOperationsInput | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    contabilidadTimezone?: StringFieldUpdateOperationsInput | string
+    empresa?: MiEmpresaUncheckedUpdateOneWithoutTenantNestedInput
+    memberships?: TenantMembershipUncheckedUpdateManyWithoutTenantNestedInput
+    licencias?: TenantLicenseUncheckedUpdateManyWithoutTenantNestedInput
+    categorias?: CategoriaUncheckedUpdateManyWithoutTenantNestedInput
+    vendors?: VendorUncheckedUpdateManyWithoutTenantNestedInput
+    clientes?: ClienteUncheckedUpdateManyWithoutTenantNestedInput
+    almacenes?: AlmacenUncheckedUpdateManyWithoutTenantNestedInput
+    puntosDeVenta?: PuntoDeVentaUncheckedUpdateManyWithoutTenantNestedInput
+    productos?: ProductoUncheckedUpdateManyWithoutTenantNestedInput
+    ventas?: VentaUncheckedUpdateManyWithoutTenantNestedInput
+    facturas?: FacturaUncheckedUpdateManyWithoutTenantNestedInput
+    gastosDE?: GastosDEUncheckedUpdateManyWithoutTenantNestedInput
+    gastosCompra?: GastoCompraUncheckedUpdateManyWithoutTenantNestedInput
+    comprasProducto?: CompraProductoUncheckedUpdateManyWithoutTenantNestedInput
+    comprasDocumento?: CompraDocumentoUncheckedUpdateManyWithoutTenantNestedInput
+    comprasDocumentoItem?: CompraDocumentoItemUncheckedUpdateManyWithoutTenantNestedInput
+    servicios?: ServiciosUncheckedUpdateManyWithoutTenantNestedInput
+    ventasServicios?: VentaServiciosUncheckedUpdateManyWithoutTenantNestedInput
+    comprasServicio?: CompraServicioUncheckedUpdateManyWithoutTenantNestedInput
+    cuentasBancarias?: CuentaBancariaUncheckedUpdateManyWithoutTenantNestedInput
+    reconciliacionesVenta?: ReconciliacionVentaUncheckedUpdateManyWithoutTenantNestedInput
+    reconciliacionesServicio?: ReconciliacionServicioUncheckedUpdateManyWithoutTenantNestedInput
+    reconciliacionesGasto?: ReconciliacionGastoUncheckedUpdateManyWithoutTenantNestedInput
+    ajustesBancarios?: AjusteBancarioUncheckedUpdateManyWithoutTenantNestedInput
+    transferenciasBancarias?: TransferenciaBancariaUncheckedUpdateManyWithoutTenantNestedInput
+    contratos?: ContratoUncheckedUpdateManyWithoutTenantNestedInput
+    seriesFacturacion?: SerieFacturacionUncheckedUpdateManyWithoutTenantNestedInput
+    ofertas?: OfertaUncheckedUpdateManyWithoutTenantNestedInput
+    cuentasPorCobrar?: CuentaPorCobrarUncheckedUpdateManyWithoutTenantNestedInput
+    cuentasPorPagar?: CuentaPorPagarUncheckedUpdateManyWithoutTenantNestedInput
+    deudasCash?: DeudaCashUncheckedUpdateManyWithoutTenantNestedInput
+    prestamosCash?: PrestamoCashUncheckedUpdateManyWithoutTenantNestedInput
+    pagosCuentaPorPagar?: PagoCuentaPorPagarUncheckedUpdateManyWithoutTenantNestedInput
+    empleados?: EmpleadoUncheckedUpdateManyWithoutTenantNestedInput
+    ordenesProduccion?: OrdenProduccionUncheckedUpdateManyWithoutTenantNestedInput
+    ordenesProduccionHistorial?: OrdenProduccionHistorialUncheckedUpdateManyWithoutTenantNestedInput
+    recetas?: RecetaUncheckedUpdateManyWithoutTenantNestedInput
+    recetasIngredientes?: RecetaIngredienteUncheckedUpdateManyWithoutTenantNestedInput
+    valesSalida?: ValeSalidaUncheckedUpdateManyWithoutTenantNestedInput
+    valesSalidaItem?: ValeSalidaItemUncheckedUpdateManyWithoutTenantNestedInput
+    listasPrecio?: ListaPrecioUncheckedUpdateManyWithoutTenantNestedInput
+    equiposReparacion?: EquipoReparacionUncheckedUpdateManyWithoutTenantNestedInput
+    piezasReparacion?: PiezaReparacionUncheckedUpdateManyWithoutTenantNestedInput
+    ordenesReparacion?: OrdenReparacionUncheckedUpdateManyWithoutTenantNestedInput
+    ordenesReparacionEquipo?: OrdenReparacionEquipoUncheckedUpdateManyWithoutTenantNestedInput
+    ordenesReparacionItem?: OrdenReparacionItemUncheckedUpdateManyWithoutTenantNestedInput
+    ordenesReparacionMaterial?: OrdenReparacionMaterialUncheckedUpdateManyWithoutTenantNestedInput
+    defectacionesCatalogo?: DefectacionCatalogoUncheckedUpdateManyWithoutTenantNestedInput
+    anticipos?: AnticipoUncheckedUpdateManyWithoutTenantNestedInput
+    transferencias?: TransferenciaUncheckedUpdateManyWithoutTenantNestedInput
+    mermas?: MermaUncheckedUpdateManyWithoutTenantNestedInput
+    stockUbicaciones?: StockUbicacionUncheckedUpdateManyWithoutTenantNestedInput
+    pagosSalario?: PagosalarioUncheckedUpdateManyWithoutTenantNestedInput
+    cierresContables?: CierreContableUncheckedUpdateManyWithoutTenantNestedInput
+    periodosContables?: PeriodoContableUncheckedUpdateManyWithoutTenantNestedInput
+    aperturaPeriodos?: AperturaPeriodoUncheckedUpdateManyWithoutTenantNestedInput
+    auditoriaPeriodos?: AuditoriaPeriodoUncheckedUpdateManyWithoutTenantNestedInput
+    turnosPos?: TurnoPuntoVentaUncheckedUpdateManyWithoutTenantNestedInput
     backupLogs?: BackupLogUncheckedUpdateManyWithoutTenantNestedInput
     backupPlans?: BackupPlanUncheckedUpdateManyWithoutTenantNestedInput
   }
@@ -193182,6 +201631,7 @@ export namespace Prisma {
     nombre: string
     createdAt?: Date | string
     updatedAt?: Date | string
+    puntosDeVenta?: PuntoDeVentaCreateNestedManyWithoutAlmacenInput
     transferenciasDestino?: TransferenciaCreateNestedManyWithoutDestinoInput
     transferenciasOrigen?: TransferenciaCreateNestedManyWithoutOrigenInput
     tenant: TenantCreateNestedOneWithoutAlmacenesInput
@@ -193193,6 +201643,7 @@ export namespace Prisma {
     nombre: string
     createdAt?: Date | string
     updatedAt?: Date | string
+    puntosDeVenta?: PuntoDeVentaUncheckedCreateNestedManyWithoutAlmacenInput
     transferenciasDestino?: TransferenciaUncheckedCreateNestedManyWithoutDestinoInput
     transferenciasOrigen?: TransferenciaUncheckedCreateNestedManyWithoutOrigenInput
   }
@@ -193241,10 +201692,15 @@ export namespace Prisma {
     ubicacion?: string | null
     createdAt?: Date | string
     updatedAt?: Date | string
+    tipoCaja?: string | null
+    cuentaContableId?: string | null
     listaPrecio?: ListaPrecioCreateNestedOneWithoutPuntosDeVentaInput
+    almacen?: AlmacenCreateNestedOneWithoutPuntosDeVentaInput
     transferenciasDestino?: TransferenciaCreateNestedManyWithoutPuntoDeVentaDestinoInput
     transferenciasOrigen?: TransferenciaCreateNestedManyWithoutPuntoDeVentaOrigenInput
     ventas?: VentaCreateNestedManyWithoutPuntoDeVentaInput
+    turnos?: TurnoPuntoVentaCreateNestedManyWithoutPuntoDeVentaInput
+    arqueos?: ArqueoCajaCreateNestedManyWithoutPuntoDeVentaInput
     tenant: TenantCreateNestedOneWithoutPuntosDeVentaInput
   }
 
@@ -193256,9 +201712,14 @@ export namespace Prisma {
     createdAt?: Date | string
     updatedAt?: Date | string
     listaPrecioId?: string | null
+    tipoCaja?: string | null
+    almacenId?: string | null
+    cuentaContableId?: string | null
     transferenciasDestino?: TransferenciaUncheckedCreateNestedManyWithoutPuntoDeVentaDestinoInput
     transferenciasOrigen?: TransferenciaUncheckedCreateNestedManyWithoutPuntoDeVentaOrigenInput
     ventas?: VentaUncheckedCreateNestedManyWithoutPuntoDeVentaInput
+    turnos?: TurnoPuntoVentaUncheckedCreateNestedManyWithoutPuntoDeVentaInput
+    arqueos?: ArqueoCajaUncheckedCreateNestedManyWithoutPuntoDeVentaInput
   }
 
   export type PuntoDeVentaCreateOrConnectWithoutProductosInput = {
@@ -193631,6 +202092,8 @@ export namespace Prisma {
     periodosContables?: PeriodoContableCreateNestedManyWithoutTenantInput
     aperturaPeriodos?: AperturaPeriodoCreateNestedManyWithoutTenantInput
     auditoriaPeriodos?: AuditoriaPeriodoCreateNestedManyWithoutTenantInput
+    turnosPos?: TurnoPuntoVentaCreateNestedManyWithoutTenantInput
+    arqueosCaja?: ArqueoCajaCreateNestedManyWithoutTenantInput
     backupLogs?: BackupLogCreateNestedManyWithoutTenantInput
     backupPlans?: BackupPlanCreateNestedManyWithoutTenantInput
   }
@@ -193698,6 +202161,8 @@ export namespace Prisma {
     periodosContables?: PeriodoContableUncheckedCreateNestedManyWithoutTenantInput
     aperturaPeriodos?: AperturaPeriodoUncheckedCreateNestedManyWithoutTenantInput
     auditoriaPeriodos?: AuditoriaPeriodoUncheckedCreateNestedManyWithoutTenantInput
+    turnosPos?: TurnoPuntoVentaUncheckedCreateNestedManyWithoutTenantInput
+    arqueosCaja?: ArqueoCajaUncheckedCreateNestedManyWithoutTenantInput
     backupLogs?: BackupLogUncheckedCreateNestedManyWithoutTenantInput
     backupPlans?: BackupPlanUncheckedCreateNestedManyWithoutTenantInput
   }
@@ -193898,12 +202363,18 @@ export namespace Prisma {
     observaciones?: string | null
     esVentaUnica?: boolean
     ventaPadreId?: string | null
+    metodoPago?: $Enums.MetodoPagoVenta | null
+    montoEfectivo?: number | null
+    montoTarjeta?: number | null
+    montoTransferencia?: number | null
+    montoCredito?: number | null
     ordenReparacion?: OrdenReparacionCreateNestedOneWithoutVentaInput
     reconciliaciones?: ReconciliacionVentaCreateNestedManyWithoutVentaInput
     cliente?: ClienteCreateNestedOneWithoutVentaInput
     empleado?: EmpleadoCreateNestedOneWithoutVentasInput
     oferta?: OfertaCreateNestedOneWithoutVentaInput
     puntoDeVenta: PuntoDeVentaCreateNestedOneWithoutVentasInput
+    turno?: TurnoPuntoVentaCreateNestedOneWithoutVentasInput
     factura?: FacturaCreateNestedOneWithoutVentaInput
     items?: VentaItemCreateNestedManyWithoutVentaInput
     tenant: TenantCreateNestedOneWithoutVentasInput
@@ -193925,6 +202396,12 @@ export namespace Prisma {
     esVentaUnica?: boolean
     ofertaId?: string | null
     ventaPadreId?: string | null
+    turnoId?: string | null
+    metodoPago?: $Enums.MetodoPagoVenta | null
+    montoEfectivo?: number | null
+    montoTarjeta?: number | null
+    montoTransferencia?: number | null
+    montoCredito?: number | null
     ordenReparacion?: OrdenReparacionUncheckedCreateNestedOneWithoutVentaInput
     reconciliaciones?: ReconciliacionVentaUncheckedCreateNestedManyWithoutVentaInput
     factura?: FacturaUncheckedCreateNestedOneWithoutVentaInput
@@ -194158,6 +202635,7 @@ export namespace Prisma {
     nombre?: StringFieldUpdateOperationsInput | string
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    puntosDeVenta?: PuntoDeVentaUpdateManyWithoutAlmacenNestedInput
     transferenciasDestino?: TransferenciaUpdateManyWithoutDestinoNestedInput
     transferenciasOrigen?: TransferenciaUpdateManyWithoutOrigenNestedInput
     tenant?: TenantUpdateOneRequiredWithoutAlmacenesNestedInput
@@ -194169,6 +202647,7 @@ export namespace Prisma {
     nombre?: StringFieldUpdateOperationsInput | string
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    puntosDeVenta?: PuntoDeVentaUncheckedUpdateManyWithoutAlmacenNestedInput
     transferenciasDestino?: TransferenciaUncheckedUpdateManyWithoutDestinoNestedInput
     transferenciasOrigen?: TransferenciaUncheckedUpdateManyWithoutOrigenNestedInput
   }
@@ -194229,10 +202708,15 @@ export namespace Prisma {
     ubicacion?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    tipoCaja?: NullableStringFieldUpdateOperationsInput | string | null
+    cuentaContableId?: NullableStringFieldUpdateOperationsInput | string | null
     listaPrecio?: ListaPrecioUpdateOneWithoutPuntosDeVentaNestedInput
+    almacen?: AlmacenUpdateOneWithoutPuntosDeVentaNestedInput
     transferenciasDestino?: TransferenciaUpdateManyWithoutPuntoDeVentaDestinoNestedInput
     transferenciasOrigen?: TransferenciaUpdateManyWithoutPuntoDeVentaOrigenNestedInput
     ventas?: VentaUpdateManyWithoutPuntoDeVentaNestedInput
+    turnos?: TurnoPuntoVentaUpdateManyWithoutPuntoDeVentaNestedInput
+    arqueos?: ArqueoCajaUpdateManyWithoutPuntoDeVentaNestedInput
     tenant?: TenantUpdateOneRequiredWithoutPuntosDeVentaNestedInput
   }
 
@@ -194244,9 +202728,14 @@ export namespace Prisma {
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     listaPrecioId?: NullableStringFieldUpdateOperationsInput | string | null
+    tipoCaja?: NullableStringFieldUpdateOperationsInput | string | null
+    almacenId?: NullableStringFieldUpdateOperationsInput | string | null
+    cuentaContableId?: NullableStringFieldUpdateOperationsInput | string | null
     transferenciasDestino?: TransferenciaUncheckedUpdateManyWithoutPuntoDeVentaDestinoNestedInput
     transferenciasOrigen?: TransferenciaUncheckedUpdateManyWithoutPuntoDeVentaOrigenNestedInput
     ventas?: VentaUncheckedUpdateManyWithoutPuntoDeVentaNestedInput
+    turnos?: TurnoPuntoVentaUncheckedUpdateManyWithoutPuntoDeVentaNestedInput
+    arqueos?: ArqueoCajaUncheckedUpdateManyWithoutPuntoDeVentaNestedInput
   }
 
   export type ProductoUpsertWithoutProductosHijosInput = {
@@ -194565,6 +203054,8 @@ export namespace Prisma {
     periodosContables?: PeriodoContableUpdateManyWithoutTenantNestedInput
     aperturaPeriodos?: AperturaPeriodoUpdateManyWithoutTenantNestedInput
     auditoriaPeriodos?: AuditoriaPeriodoUpdateManyWithoutTenantNestedInput
+    turnosPos?: TurnoPuntoVentaUpdateManyWithoutTenantNestedInput
+    arqueosCaja?: ArqueoCajaUpdateManyWithoutTenantNestedInput
     backupLogs?: BackupLogUpdateManyWithoutTenantNestedInput
     backupPlans?: BackupPlanUpdateManyWithoutTenantNestedInput
   }
@@ -194632,6 +203123,8 @@ export namespace Prisma {
     periodosContables?: PeriodoContableUncheckedUpdateManyWithoutTenantNestedInput
     aperturaPeriodos?: AperturaPeriodoUncheckedUpdateManyWithoutTenantNestedInput
     auditoriaPeriodos?: AuditoriaPeriodoUncheckedUpdateManyWithoutTenantNestedInput
+    turnosPos?: TurnoPuntoVentaUncheckedUpdateManyWithoutTenantNestedInput
+    arqueosCaja?: ArqueoCajaUncheckedUpdateManyWithoutTenantNestedInput
     backupLogs?: BackupLogUncheckedUpdateManyWithoutTenantNestedInput
     backupPlans?: BackupPlanUncheckedUpdateManyWithoutTenantNestedInput
   }
@@ -194953,6 +203446,8 @@ export namespace Prisma {
     periodosContables?: PeriodoContableCreateNestedManyWithoutTenantInput
     aperturaPeriodos?: AperturaPeriodoCreateNestedManyWithoutTenantInput
     auditoriaPeriodos?: AuditoriaPeriodoCreateNestedManyWithoutTenantInput
+    turnosPos?: TurnoPuntoVentaCreateNestedManyWithoutTenantInput
+    arqueosCaja?: ArqueoCajaCreateNestedManyWithoutTenantInput
     backupLogs?: BackupLogCreateNestedManyWithoutTenantInput
     backupPlans?: BackupPlanCreateNestedManyWithoutTenantInput
   }
@@ -195020,6 +203515,8 @@ export namespace Prisma {
     periodosContables?: PeriodoContableUncheckedCreateNestedManyWithoutTenantInput
     aperturaPeriodos?: AperturaPeriodoUncheckedCreateNestedManyWithoutTenantInput
     auditoriaPeriodos?: AuditoriaPeriodoUncheckedCreateNestedManyWithoutTenantInput
+    turnosPos?: TurnoPuntoVentaUncheckedCreateNestedManyWithoutTenantInput
+    arqueosCaja?: ArqueoCajaUncheckedCreateNestedManyWithoutTenantInput
     backupLogs?: BackupLogUncheckedCreateNestedManyWithoutTenantInput
     backupPlans?: BackupPlanUncheckedCreateNestedManyWithoutTenantInput
   }
@@ -195204,6 +203701,8 @@ export namespace Prisma {
     periodosContables?: PeriodoContableUpdateManyWithoutTenantNestedInput
     aperturaPeriodos?: AperturaPeriodoUpdateManyWithoutTenantNestedInput
     auditoriaPeriodos?: AuditoriaPeriodoUpdateManyWithoutTenantNestedInput
+    turnosPos?: TurnoPuntoVentaUpdateManyWithoutTenantNestedInput
+    arqueosCaja?: ArqueoCajaUpdateManyWithoutTenantNestedInput
     backupLogs?: BackupLogUpdateManyWithoutTenantNestedInput
     backupPlans?: BackupPlanUpdateManyWithoutTenantNestedInput
   }
@@ -195271,6 +203770,8 @@ export namespace Prisma {
     periodosContables?: PeriodoContableUncheckedUpdateManyWithoutTenantNestedInput
     aperturaPeriodos?: AperturaPeriodoUncheckedUpdateManyWithoutTenantNestedInput
     auditoriaPeriodos?: AuditoriaPeriodoUncheckedUpdateManyWithoutTenantNestedInput
+    turnosPos?: TurnoPuntoVentaUncheckedUpdateManyWithoutTenantNestedInput
+    arqueosCaja?: ArqueoCajaUncheckedUpdateManyWithoutTenantNestedInput
     backupLogs?: BackupLogUncheckedUpdateManyWithoutTenantNestedInput
     backupPlans?: BackupPlanUncheckedUpdateManyWithoutTenantNestedInput
   }
@@ -195467,6 +203968,7 @@ export namespace Prisma {
     PagoSalario?: PagosalarioCreateNestedManyWithoutEmpleadoInput
     vacationAccruals?: VacationAccrualCreateNestedManyWithoutEmployeeInput
     vacationRequests?: VacationRequestCreateNestedManyWithoutEmployeeInput
+    turnosPos?: TurnoPuntoVentaCreateNestedManyWithoutEmpleadoInput
     tenant: TenantCreateNestedOneWithoutEmpleadosInput
   }
 
@@ -195491,6 +203993,7 @@ export namespace Prisma {
     PagoSalario?: PagosalarioUncheckedCreateNestedManyWithoutEmpleadoInput
     vacationAccruals?: VacationAccrualUncheckedCreateNestedManyWithoutEmployeeInput
     vacationRequests?: VacationRequestUncheckedCreateNestedManyWithoutEmployeeInput
+    turnosPos?: TurnoPuntoVentaUncheckedCreateNestedManyWithoutEmpleadoInput
   }
 
   export type EmpleadoCreateOrConnectWithoutVentasInput = {
@@ -195638,10 +204141,15 @@ export namespace Prisma {
     ubicacion?: string | null
     createdAt?: Date | string
     updatedAt?: Date | string
+    tipoCaja?: string | null
+    cuentaContableId?: string | null
     productos?: ProductoCreateNestedManyWithoutPuntoDeVentaInput
     listaPrecio?: ListaPrecioCreateNestedOneWithoutPuntosDeVentaInput
+    almacen?: AlmacenCreateNestedOneWithoutPuntosDeVentaInput
     transferenciasDestino?: TransferenciaCreateNestedManyWithoutPuntoDeVentaDestinoInput
     transferenciasOrigen?: TransferenciaCreateNestedManyWithoutPuntoDeVentaOrigenInput
+    turnos?: TurnoPuntoVentaCreateNestedManyWithoutPuntoDeVentaInput
+    arqueos?: ArqueoCajaCreateNestedManyWithoutPuntoDeVentaInput
     tenant: TenantCreateNestedOneWithoutPuntosDeVentaInput
   }
 
@@ -195653,14 +204161,58 @@ export namespace Prisma {
     createdAt?: Date | string
     updatedAt?: Date | string
     listaPrecioId?: string | null
+    tipoCaja?: string | null
+    almacenId?: string | null
+    cuentaContableId?: string | null
     productos?: ProductoUncheckedCreateNestedManyWithoutPuntoDeVentaInput
     transferenciasDestino?: TransferenciaUncheckedCreateNestedManyWithoutPuntoDeVentaDestinoInput
     transferenciasOrigen?: TransferenciaUncheckedCreateNestedManyWithoutPuntoDeVentaOrigenInput
+    turnos?: TurnoPuntoVentaUncheckedCreateNestedManyWithoutPuntoDeVentaInput
+    arqueos?: ArqueoCajaUncheckedCreateNestedManyWithoutPuntoDeVentaInput
   }
 
   export type PuntoDeVentaCreateOrConnectWithoutVentasInput = {
     where: PuntoDeVentaWhereUniqueInput
     create: XOR<PuntoDeVentaCreateWithoutVentasInput, PuntoDeVentaUncheckedCreateWithoutVentasInput>
+  }
+
+  export type TurnoPuntoVentaCreateWithoutVentasInput = {
+    id?: string
+    tipo?: string
+    fechaApertura?: Date | string
+    fechaCierre?: Date | string | null
+    fondoInicialCup?: number
+    fondoInicialUsd?: number
+    estado?: $Enums.EstadoTurno
+    observaciones?: string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    puntoDeVenta: PuntoDeVentaCreateNestedOneWithoutTurnosInput
+    empleado?: EmpleadoCreateNestedOneWithoutTurnosPosInput
+    arqueo?: ArqueoCajaCreateNestedOneWithoutTurnoInput
+    tenant: TenantCreateNestedOneWithoutTurnosPosInput
+  }
+
+  export type TurnoPuntoVentaUncheckedCreateWithoutVentasInput = {
+    id?: string
+    tenantId: string
+    puntoDeVentaId: string
+    empleadoId?: string | null
+    tipo?: string
+    fechaApertura?: Date | string
+    fechaCierre?: Date | string | null
+    fondoInicialCup?: number
+    fondoInicialUsd?: number
+    estado?: $Enums.EstadoTurno
+    observaciones?: string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    arqueo?: ArqueoCajaUncheckedCreateNestedOneWithoutTurnoInput
+  }
+
+  export type TurnoPuntoVentaCreateOrConnectWithoutVentasInput = {
+    where: TurnoPuntoVentaWhereUniqueInput
+    create: XOR<TurnoPuntoVentaCreateWithoutVentasInput, TurnoPuntoVentaUncheckedCreateWithoutVentasInput>
   }
 
   export type FacturaCreateWithoutVentaInput = {
@@ -195821,6 +204373,8 @@ export namespace Prisma {
     periodosContables?: PeriodoContableCreateNestedManyWithoutTenantInput
     aperturaPeriodos?: AperturaPeriodoCreateNestedManyWithoutTenantInput
     auditoriaPeriodos?: AuditoriaPeriodoCreateNestedManyWithoutTenantInput
+    turnosPos?: TurnoPuntoVentaCreateNestedManyWithoutTenantInput
+    arqueosCaja?: ArqueoCajaCreateNestedManyWithoutTenantInput
     backupLogs?: BackupLogCreateNestedManyWithoutTenantInput
     backupPlans?: BackupPlanCreateNestedManyWithoutTenantInput
   }
@@ -195888,6 +204442,8 @@ export namespace Prisma {
     periodosContables?: PeriodoContableUncheckedCreateNestedManyWithoutTenantInput
     aperturaPeriodos?: AperturaPeriodoUncheckedCreateNestedManyWithoutTenantInput
     auditoriaPeriodos?: AuditoriaPeriodoUncheckedCreateNestedManyWithoutTenantInput
+    turnosPos?: TurnoPuntoVentaUncheckedCreateNestedManyWithoutTenantInput
+    arqueosCaja?: ArqueoCajaUncheckedCreateNestedManyWithoutTenantInput
     backupLogs?: BackupLogUncheckedCreateNestedManyWithoutTenantInput
     backupPlans?: BackupPlanUncheckedCreateNestedManyWithoutTenantInput
   }
@@ -196076,6 +204632,7 @@ export namespace Prisma {
     PagoSalario?: PagosalarioUpdateManyWithoutEmpleadoNestedInput
     vacationAccruals?: VacationAccrualUpdateManyWithoutEmployeeNestedInput
     vacationRequests?: VacationRequestUpdateManyWithoutEmployeeNestedInput
+    turnosPos?: TurnoPuntoVentaUpdateManyWithoutEmpleadoNestedInput
     tenant?: TenantUpdateOneRequiredWithoutEmpleadosNestedInput
   }
 
@@ -196100,6 +204657,7 @@ export namespace Prisma {
     PagoSalario?: PagosalarioUncheckedUpdateManyWithoutEmpleadoNestedInput
     vacationAccruals?: VacationAccrualUncheckedUpdateManyWithoutEmployeeNestedInput
     vacationRequests?: VacationRequestUncheckedUpdateManyWithoutEmployeeNestedInput
+    turnosPos?: TurnoPuntoVentaUncheckedUpdateManyWithoutEmpleadoNestedInput
   }
 
   export type OfertaUpsertWithoutVentaInput = {
@@ -196265,10 +204823,15 @@ export namespace Prisma {
     ubicacion?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    tipoCaja?: NullableStringFieldUpdateOperationsInput | string | null
+    cuentaContableId?: NullableStringFieldUpdateOperationsInput | string | null
     productos?: ProductoUpdateManyWithoutPuntoDeVentaNestedInput
     listaPrecio?: ListaPrecioUpdateOneWithoutPuntosDeVentaNestedInput
+    almacen?: AlmacenUpdateOneWithoutPuntosDeVentaNestedInput
     transferenciasDestino?: TransferenciaUpdateManyWithoutPuntoDeVentaDestinoNestedInput
     transferenciasOrigen?: TransferenciaUpdateManyWithoutPuntoDeVentaOrigenNestedInput
+    turnos?: TurnoPuntoVentaUpdateManyWithoutPuntoDeVentaNestedInput
+    arqueos?: ArqueoCajaUpdateManyWithoutPuntoDeVentaNestedInput
     tenant?: TenantUpdateOneRequiredWithoutPuntosDeVentaNestedInput
   }
 
@@ -196280,9 +204843,59 @@ export namespace Prisma {
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     listaPrecioId?: NullableStringFieldUpdateOperationsInput | string | null
+    tipoCaja?: NullableStringFieldUpdateOperationsInput | string | null
+    almacenId?: NullableStringFieldUpdateOperationsInput | string | null
+    cuentaContableId?: NullableStringFieldUpdateOperationsInput | string | null
     productos?: ProductoUncheckedUpdateManyWithoutPuntoDeVentaNestedInput
     transferenciasDestino?: TransferenciaUncheckedUpdateManyWithoutPuntoDeVentaDestinoNestedInput
     transferenciasOrigen?: TransferenciaUncheckedUpdateManyWithoutPuntoDeVentaOrigenNestedInput
+    turnos?: TurnoPuntoVentaUncheckedUpdateManyWithoutPuntoDeVentaNestedInput
+    arqueos?: ArqueoCajaUncheckedUpdateManyWithoutPuntoDeVentaNestedInput
+  }
+
+  export type TurnoPuntoVentaUpsertWithoutVentasInput = {
+    update: XOR<TurnoPuntoVentaUpdateWithoutVentasInput, TurnoPuntoVentaUncheckedUpdateWithoutVentasInput>
+    create: XOR<TurnoPuntoVentaCreateWithoutVentasInput, TurnoPuntoVentaUncheckedCreateWithoutVentasInput>
+    where?: TurnoPuntoVentaWhereInput
+  }
+
+  export type TurnoPuntoVentaUpdateToOneWithWhereWithoutVentasInput = {
+    where?: TurnoPuntoVentaWhereInput
+    data: XOR<TurnoPuntoVentaUpdateWithoutVentasInput, TurnoPuntoVentaUncheckedUpdateWithoutVentasInput>
+  }
+
+  export type TurnoPuntoVentaUpdateWithoutVentasInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    tipo?: StringFieldUpdateOperationsInput | string
+    fechaApertura?: DateTimeFieldUpdateOperationsInput | Date | string
+    fechaCierre?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    fondoInicialCup?: IntFieldUpdateOperationsInput | number
+    fondoInicialUsd?: IntFieldUpdateOperationsInput | number
+    estado?: EnumEstadoTurnoFieldUpdateOperationsInput | $Enums.EstadoTurno
+    observaciones?: NullableStringFieldUpdateOperationsInput | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    puntoDeVenta?: PuntoDeVentaUpdateOneRequiredWithoutTurnosNestedInput
+    empleado?: EmpleadoUpdateOneWithoutTurnosPosNestedInput
+    arqueo?: ArqueoCajaUpdateOneWithoutTurnoNestedInput
+    tenant?: TenantUpdateOneRequiredWithoutTurnosPosNestedInput
+  }
+
+  export type TurnoPuntoVentaUncheckedUpdateWithoutVentasInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    tenantId?: StringFieldUpdateOperationsInput | string
+    puntoDeVentaId?: StringFieldUpdateOperationsInput | string
+    empleadoId?: NullableStringFieldUpdateOperationsInput | string | null
+    tipo?: StringFieldUpdateOperationsInput | string
+    fechaApertura?: DateTimeFieldUpdateOperationsInput | Date | string
+    fechaCierre?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    fondoInicialCup?: IntFieldUpdateOperationsInput | number
+    fondoInicialUsd?: IntFieldUpdateOperationsInput | number
+    estado?: EnumEstadoTurnoFieldUpdateOperationsInput | $Enums.EstadoTurno
+    observaciones?: NullableStringFieldUpdateOperationsInput | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    arqueo?: ArqueoCajaUncheckedUpdateOneWithoutTurnoNestedInput
   }
 
   export type FacturaUpsertWithoutVentaInput = {
@@ -196446,6 +205059,8 @@ export namespace Prisma {
     periodosContables?: PeriodoContableUpdateManyWithoutTenantNestedInput
     aperturaPeriodos?: AperturaPeriodoUpdateManyWithoutTenantNestedInput
     auditoriaPeriodos?: AuditoriaPeriodoUpdateManyWithoutTenantNestedInput
+    turnosPos?: TurnoPuntoVentaUpdateManyWithoutTenantNestedInput
+    arqueosCaja?: ArqueoCajaUpdateManyWithoutTenantNestedInput
     backupLogs?: BackupLogUpdateManyWithoutTenantNestedInput
     backupPlans?: BackupPlanUpdateManyWithoutTenantNestedInput
   }
@@ -196513,6 +205128,8 @@ export namespace Prisma {
     periodosContables?: PeriodoContableUncheckedUpdateManyWithoutTenantNestedInput
     aperturaPeriodos?: AperturaPeriodoUncheckedUpdateManyWithoutTenantNestedInput
     auditoriaPeriodos?: AuditoriaPeriodoUncheckedUpdateManyWithoutTenantNestedInput
+    turnosPos?: TurnoPuntoVentaUncheckedUpdateManyWithoutTenantNestedInput
+    arqueosCaja?: ArqueoCajaUncheckedUpdateManyWithoutTenantNestedInput
     backupLogs?: BackupLogUncheckedUpdateManyWithoutTenantNestedInput
     backupPlans?: BackupPlanUncheckedUpdateManyWithoutTenantNestedInput
   }
@@ -196623,6 +205240,11 @@ export namespace Prisma {
     observaciones?: string | null
     esVentaUnica?: boolean
     ventaPadreId?: string | null
+    metodoPago?: $Enums.MetodoPagoVenta | null
+    montoEfectivo?: number | null
+    montoTarjeta?: number | null
+    montoTransferencia?: number | null
+    montoCredito?: number | null
     ordenReparacion?: OrdenReparacionCreateNestedOneWithoutVentaInput
     reconciliaciones?: ReconciliacionVentaCreateNestedManyWithoutVentaInput
     cliente?: ClienteCreateNestedOneWithoutVentaInput
@@ -196630,6 +205252,7 @@ export namespace Prisma {
     oferta?: OfertaCreateNestedOneWithoutVentaInput
     producto?: ProductoCreateNestedOneWithoutVentasInput
     puntoDeVenta: PuntoDeVentaCreateNestedOneWithoutVentasInput
+    turno?: TurnoPuntoVentaCreateNestedOneWithoutVentasInput
     factura?: FacturaCreateNestedOneWithoutVentaInput
     tenant: TenantCreateNestedOneWithoutVentasInput
   }
@@ -196651,6 +205274,12 @@ export namespace Prisma {
     esVentaUnica?: boolean
     ofertaId?: string | null
     ventaPadreId?: string | null
+    turnoId?: string | null
+    metodoPago?: $Enums.MetodoPagoVenta | null
+    montoEfectivo?: number | null
+    montoTarjeta?: number | null
+    montoTransferencia?: number | null
+    montoCredito?: number | null
     ordenReparacion?: OrdenReparacionUncheckedCreateNestedOneWithoutVentaInput
     reconciliaciones?: ReconciliacionVentaUncheckedCreateNestedManyWithoutVentaInput
     factura?: FacturaUncheckedCreateNestedOneWithoutVentaInput
@@ -196784,6 +205413,11 @@ export namespace Prisma {
     observaciones?: NullableStringFieldUpdateOperationsInput | string | null
     esVentaUnica?: BoolFieldUpdateOperationsInput | boolean
     ventaPadreId?: NullableStringFieldUpdateOperationsInput | string | null
+    metodoPago?: NullableEnumMetodoPagoVentaFieldUpdateOperationsInput | $Enums.MetodoPagoVenta | null
+    montoEfectivo?: NullableIntFieldUpdateOperationsInput | number | null
+    montoTarjeta?: NullableIntFieldUpdateOperationsInput | number | null
+    montoTransferencia?: NullableIntFieldUpdateOperationsInput | number | null
+    montoCredito?: NullableIntFieldUpdateOperationsInput | number | null
     ordenReparacion?: OrdenReparacionUpdateOneWithoutVentaNestedInput
     reconciliaciones?: ReconciliacionVentaUpdateManyWithoutVentaNestedInput
     cliente?: ClienteUpdateOneWithoutVentaNestedInput
@@ -196791,6 +205425,7 @@ export namespace Prisma {
     oferta?: OfertaUpdateOneWithoutVentaNestedInput
     producto?: ProductoUpdateOneWithoutVentasNestedInput
     puntoDeVenta?: PuntoDeVentaUpdateOneRequiredWithoutVentasNestedInput
+    turno?: TurnoPuntoVentaUpdateOneWithoutVentasNestedInput
     factura?: FacturaUpdateOneWithoutVentaNestedInput
     tenant?: TenantUpdateOneRequiredWithoutVentasNestedInput
   }
@@ -196812,6 +205447,12 @@ export namespace Prisma {
     esVentaUnica?: BoolFieldUpdateOperationsInput | boolean
     ofertaId?: NullableStringFieldUpdateOperationsInput | string | null
     ventaPadreId?: NullableStringFieldUpdateOperationsInput | string | null
+    turnoId?: NullableStringFieldUpdateOperationsInput | string | null
+    metodoPago?: NullableEnumMetodoPagoVentaFieldUpdateOperationsInput | $Enums.MetodoPagoVenta | null
+    montoEfectivo?: NullableIntFieldUpdateOperationsInput | number | null
+    montoTarjeta?: NullableIntFieldUpdateOperationsInput | number | null
+    montoTransferencia?: NullableIntFieldUpdateOperationsInput | number | null
+    montoCredito?: NullableIntFieldUpdateOperationsInput | number | null
     ordenReparacion?: OrdenReparacionUncheckedUpdateOneWithoutVentaNestedInput
     reconciliaciones?: ReconciliacionVentaUncheckedUpdateManyWithoutVentaNestedInput
     factura?: FacturaUncheckedUpdateOneWithoutVentaNestedInput
@@ -196975,6 +205616,8 @@ export namespace Prisma {
     periodosContables?: PeriodoContableCreateNestedManyWithoutTenantInput
     aperturaPeriodos?: AperturaPeriodoCreateNestedManyWithoutTenantInput
     auditoriaPeriodos?: AuditoriaPeriodoCreateNestedManyWithoutTenantInput
+    turnosPos?: TurnoPuntoVentaCreateNestedManyWithoutTenantInput
+    arqueosCaja?: ArqueoCajaCreateNestedManyWithoutTenantInput
     backupLogs?: BackupLogCreateNestedManyWithoutTenantInput
     backupPlans?: BackupPlanCreateNestedManyWithoutTenantInput
   }
@@ -197042,6 +205685,8 @@ export namespace Prisma {
     periodosContables?: PeriodoContableUncheckedCreateNestedManyWithoutTenantInput
     aperturaPeriodos?: AperturaPeriodoUncheckedCreateNestedManyWithoutTenantInput
     auditoriaPeriodos?: AuditoriaPeriodoUncheckedCreateNestedManyWithoutTenantInput
+    turnosPos?: TurnoPuntoVentaUncheckedCreateNestedManyWithoutTenantInput
+    arqueosCaja?: ArqueoCajaUncheckedCreateNestedManyWithoutTenantInput
     backupLogs?: BackupLogUncheckedCreateNestedManyWithoutTenantInput
     backupPlans?: BackupPlanUncheckedCreateNestedManyWithoutTenantInput
   }
@@ -197226,6 +205871,8 @@ export namespace Prisma {
     periodosContables?: PeriodoContableUpdateManyWithoutTenantNestedInput
     aperturaPeriodos?: AperturaPeriodoUpdateManyWithoutTenantNestedInput
     auditoriaPeriodos?: AuditoriaPeriodoUpdateManyWithoutTenantNestedInput
+    turnosPos?: TurnoPuntoVentaUpdateManyWithoutTenantNestedInput
+    arqueosCaja?: ArqueoCajaUpdateManyWithoutTenantNestedInput
     backupLogs?: BackupLogUpdateManyWithoutTenantNestedInput
     backupPlans?: BackupPlanUpdateManyWithoutTenantNestedInput
   }
@@ -197293,6 +205940,8 @@ export namespace Prisma {
     periodosContables?: PeriodoContableUncheckedUpdateManyWithoutTenantNestedInput
     aperturaPeriodos?: AperturaPeriodoUncheckedUpdateManyWithoutTenantNestedInput
     auditoriaPeriodos?: AuditoriaPeriodoUncheckedUpdateManyWithoutTenantNestedInput
+    turnosPos?: TurnoPuntoVentaUncheckedUpdateManyWithoutTenantNestedInput
+    arqueosCaja?: ArqueoCajaUncheckedUpdateManyWithoutTenantNestedInput
     backupLogs?: BackupLogUncheckedUpdateManyWithoutTenantNestedInput
     backupPlans?: BackupPlanUncheckedUpdateManyWithoutTenantNestedInput
   }
@@ -197303,6 +205952,7 @@ export namespace Prisma {
     createdAt?: Date | string
     updatedAt?: Date | string
     productos?: ProductoCreateNestedManyWithoutAlmacenInput
+    puntosDeVenta?: PuntoDeVentaCreateNestedManyWithoutAlmacenInput
     transferenciasOrigen?: TransferenciaCreateNestedManyWithoutOrigenInput
     tenant: TenantCreateNestedOneWithoutAlmacenesInput
   }
@@ -197314,6 +205964,7 @@ export namespace Prisma {
     createdAt?: Date | string
     updatedAt?: Date | string
     productos?: ProductoUncheckedCreateNestedManyWithoutAlmacenInput
+    puntosDeVenta?: PuntoDeVentaUncheckedCreateNestedManyWithoutAlmacenInput
     transferenciasOrigen?: TransferenciaUncheckedCreateNestedManyWithoutOrigenInput
   }
 
@@ -197328,6 +205979,7 @@ export namespace Prisma {
     createdAt?: Date | string
     updatedAt?: Date | string
     productos?: ProductoCreateNestedManyWithoutAlmacenInput
+    puntosDeVenta?: PuntoDeVentaCreateNestedManyWithoutAlmacenInput
     transferenciasDestino?: TransferenciaCreateNestedManyWithoutDestinoInput
     tenant: TenantCreateNestedOneWithoutAlmacenesInput
   }
@@ -197339,6 +205991,7 @@ export namespace Prisma {
     createdAt?: Date | string
     updatedAt?: Date | string
     productos?: ProductoUncheckedCreateNestedManyWithoutAlmacenInput
+    puntosDeVenta?: PuntoDeVentaUncheckedCreateNestedManyWithoutAlmacenInput
     transferenciasDestino?: TransferenciaUncheckedCreateNestedManyWithoutDestinoInput
   }
 
@@ -197531,10 +206184,15 @@ export namespace Prisma {
     ubicacion?: string | null
     createdAt?: Date | string
     updatedAt?: Date | string
+    tipoCaja?: string | null
+    cuentaContableId?: string | null
     productos?: ProductoCreateNestedManyWithoutPuntoDeVentaInput
     listaPrecio?: ListaPrecioCreateNestedOneWithoutPuntosDeVentaInput
+    almacen?: AlmacenCreateNestedOneWithoutPuntosDeVentaInput
     transferenciasOrigen?: TransferenciaCreateNestedManyWithoutPuntoDeVentaOrigenInput
     ventas?: VentaCreateNestedManyWithoutPuntoDeVentaInput
+    turnos?: TurnoPuntoVentaCreateNestedManyWithoutPuntoDeVentaInput
+    arqueos?: ArqueoCajaCreateNestedManyWithoutPuntoDeVentaInput
     tenant: TenantCreateNestedOneWithoutPuntosDeVentaInput
   }
 
@@ -197546,9 +206204,14 @@ export namespace Prisma {
     createdAt?: Date | string
     updatedAt?: Date | string
     listaPrecioId?: string | null
+    tipoCaja?: string | null
+    almacenId?: string | null
+    cuentaContableId?: string | null
     productos?: ProductoUncheckedCreateNestedManyWithoutPuntoDeVentaInput
     transferenciasOrigen?: TransferenciaUncheckedCreateNestedManyWithoutPuntoDeVentaOrigenInput
     ventas?: VentaUncheckedCreateNestedManyWithoutPuntoDeVentaInput
+    turnos?: TurnoPuntoVentaUncheckedCreateNestedManyWithoutPuntoDeVentaInput
+    arqueos?: ArqueoCajaUncheckedCreateNestedManyWithoutPuntoDeVentaInput
   }
 
   export type PuntoDeVentaCreateOrConnectWithoutTransferenciasDestinoInput = {
@@ -197562,10 +206225,15 @@ export namespace Prisma {
     ubicacion?: string | null
     createdAt?: Date | string
     updatedAt?: Date | string
+    tipoCaja?: string | null
+    cuentaContableId?: string | null
     productos?: ProductoCreateNestedManyWithoutPuntoDeVentaInput
     listaPrecio?: ListaPrecioCreateNestedOneWithoutPuntosDeVentaInput
+    almacen?: AlmacenCreateNestedOneWithoutPuntosDeVentaInput
     transferenciasDestino?: TransferenciaCreateNestedManyWithoutPuntoDeVentaDestinoInput
     ventas?: VentaCreateNestedManyWithoutPuntoDeVentaInput
+    turnos?: TurnoPuntoVentaCreateNestedManyWithoutPuntoDeVentaInput
+    arqueos?: ArqueoCajaCreateNestedManyWithoutPuntoDeVentaInput
     tenant: TenantCreateNestedOneWithoutPuntosDeVentaInput
   }
 
@@ -197577,9 +206245,14 @@ export namespace Prisma {
     createdAt?: Date | string
     updatedAt?: Date | string
     listaPrecioId?: string | null
+    tipoCaja?: string | null
+    almacenId?: string | null
+    cuentaContableId?: string | null
     productos?: ProductoUncheckedCreateNestedManyWithoutPuntoDeVentaInput
     transferenciasDestino?: TransferenciaUncheckedCreateNestedManyWithoutPuntoDeVentaDestinoInput
     ventas?: VentaUncheckedCreateNestedManyWithoutPuntoDeVentaInput
+    turnos?: TurnoPuntoVentaUncheckedCreateNestedManyWithoutPuntoDeVentaInput
+    arqueos?: ArqueoCajaUncheckedCreateNestedManyWithoutPuntoDeVentaInput
   }
 
   export type PuntoDeVentaCreateOrConnectWithoutTransferenciasOrigenInput = {
@@ -197650,6 +206323,8 @@ export namespace Prisma {
     periodosContables?: PeriodoContableCreateNestedManyWithoutTenantInput
     aperturaPeriodos?: AperturaPeriodoCreateNestedManyWithoutTenantInput
     auditoriaPeriodos?: AuditoriaPeriodoCreateNestedManyWithoutTenantInput
+    turnosPos?: TurnoPuntoVentaCreateNestedManyWithoutTenantInput
+    arqueosCaja?: ArqueoCajaCreateNestedManyWithoutTenantInput
     backupLogs?: BackupLogCreateNestedManyWithoutTenantInput
     backupPlans?: BackupPlanCreateNestedManyWithoutTenantInput
   }
@@ -197717,6 +206392,8 @@ export namespace Prisma {
     periodosContables?: PeriodoContableUncheckedCreateNestedManyWithoutTenantInput
     aperturaPeriodos?: AperturaPeriodoUncheckedCreateNestedManyWithoutTenantInput
     auditoriaPeriodos?: AuditoriaPeriodoUncheckedCreateNestedManyWithoutTenantInput
+    turnosPos?: TurnoPuntoVentaUncheckedCreateNestedManyWithoutTenantInput
+    arqueosCaja?: ArqueoCajaUncheckedCreateNestedManyWithoutTenantInput
     backupLogs?: BackupLogUncheckedCreateNestedManyWithoutTenantInput
     backupPlans?: BackupPlanUncheckedCreateNestedManyWithoutTenantInput
   }
@@ -197743,6 +206420,7 @@ export namespace Prisma {
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     productos?: ProductoUpdateManyWithoutAlmacenNestedInput
+    puntosDeVenta?: PuntoDeVentaUpdateManyWithoutAlmacenNestedInput
     transferenciasOrigen?: TransferenciaUpdateManyWithoutOrigenNestedInput
     tenant?: TenantUpdateOneRequiredWithoutAlmacenesNestedInput
   }
@@ -197754,6 +206432,7 @@ export namespace Prisma {
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     productos?: ProductoUncheckedUpdateManyWithoutAlmacenNestedInput
+    puntosDeVenta?: PuntoDeVentaUncheckedUpdateManyWithoutAlmacenNestedInput
     transferenciasOrigen?: TransferenciaUncheckedUpdateManyWithoutOrigenNestedInput
   }
 
@@ -197774,6 +206453,7 @@ export namespace Prisma {
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     productos?: ProductoUpdateManyWithoutAlmacenNestedInput
+    puntosDeVenta?: PuntoDeVentaUpdateManyWithoutAlmacenNestedInput
     transferenciasDestino?: TransferenciaUpdateManyWithoutDestinoNestedInput
     tenant?: TenantUpdateOneRequiredWithoutAlmacenesNestedInput
   }
@@ -197785,6 +206465,7 @@ export namespace Prisma {
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     productos?: ProductoUncheckedUpdateManyWithoutAlmacenNestedInput
+    puntosDeVenta?: PuntoDeVentaUncheckedUpdateManyWithoutAlmacenNestedInput
     transferenciasDestino?: TransferenciaUncheckedUpdateManyWithoutDestinoNestedInput
   }
 
@@ -197995,10 +206676,15 @@ export namespace Prisma {
     ubicacion?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    tipoCaja?: NullableStringFieldUpdateOperationsInput | string | null
+    cuentaContableId?: NullableStringFieldUpdateOperationsInput | string | null
     productos?: ProductoUpdateManyWithoutPuntoDeVentaNestedInput
     listaPrecio?: ListaPrecioUpdateOneWithoutPuntosDeVentaNestedInput
+    almacen?: AlmacenUpdateOneWithoutPuntosDeVentaNestedInput
     transferenciasOrigen?: TransferenciaUpdateManyWithoutPuntoDeVentaOrigenNestedInput
     ventas?: VentaUpdateManyWithoutPuntoDeVentaNestedInput
+    turnos?: TurnoPuntoVentaUpdateManyWithoutPuntoDeVentaNestedInput
+    arqueos?: ArqueoCajaUpdateManyWithoutPuntoDeVentaNestedInput
     tenant?: TenantUpdateOneRequiredWithoutPuntosDeVentaNestedInput
   }
 
@@ -198010,9 +206696,14 @@ export namespace Prisma {
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     listaPrecioId?: NullableStringFieldUpdateOperationsInput | string | null
+    tipoCaja?: NullableStringFieldUpdateOperationsInput | string | null
+    almacenId?: NullableStringFieldUpdateOperationsInput | string | null
+    cuentaContableId?: NullableStringFieldUpdateOperationsInput | string | null
     productos?: ProductoUncheckedUpdateManyWithoutPuntoDeVentaNestedInput
     transferenciasOrigen?: TransferenciaUncheckedUpdateManyWithoutPuntoDeVentaOrigenNestedInput
     ventas?: VentaUncheckedUpdateManyWithoutPuntoDeVentaNestedInput
+    turnos?: TurnoPuntoVentaUncheckedUpdateManyWithoutPuntoDeVentaNestedInput
+    arqueos?: ArqueoCajaUncheckedUpdateManyWithoutPuntoDeVentaNestedInput
   }
 
   export type PuntoDeVentaUpsertWithoutTransferenciasOrigenInput = {
@@ -198032,10 +206723,15 @@ export namespace Prisma {
     ubicacion?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    tipoCaja?: NullableStringFieldUpdateOperationsInput | string | null
+    cuentaContableId?: NullableStringFieldUpdateOperationsInput | string | null
     productos?: ProductoUpdateManyWithoutPuntoDeVentaNestedInput
     listaPrecio?: ListaPrecioUpdateOneWithoutPuntosDeVentaNestedInput
+    almacen?: AlmacenUpdateOneWithoutPuntosDeVentaNestedInput
     transferenciasDestino?: TransferenciaUpdateManyWithoutPuntoDeVentaDestinoNestedInput
     ventas?: VentaUpdateManyWithoutPuntoDeVentaNestedInput
+    turnos?: TurnoPuntoVentaUpdateManyWithoutPuntoDeVentaNestedInput
+    arqueos?: ArqueoCajaUpdateManyWithoutPuntoDeVentaNestedInput
     tenant?: TenantUpdateOneRequiredWithoutPuntosDeVentaNestedInput
   }
 
@@ -198047,9 +206743,14 @@ export namespace Prisma {
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     listaPrecioId?: NullableStringFieldUpdateOperationsInput | string | null
+    tipoCaja?: NullableStringFieldUpdateOperationsInput | string | null
+    almacenId?: NullableStringFieldUpdateOperationsInput | string | null
+    cuentaContableId?: NullableStringFieldUpdateOperationsInput | string | null
     productos?: ProductoUncheckedUpdateManyWithoutPuntoDeVentaNestedInput
     transferenciasDestino?: TransferenciaUncheckedUpdateManyWithoutPuntoDeVentaDestinoNestedInput
     ventas?: VentaUncheckedUpdateManyWithoutPuntoDeVentaNestedInput
+    turnos?: TurnoPuntoVentaUncheckedUpdateManyWithoutPuntoDeVentaNestedInput
+    arqueos?: ArqueoCajaUncheckedUpdateManyWithoutPuntoDeVentaNestedInput
   }
 
   export type TenantUpsertWithoutTransferenciasInput = {
@@ -198126,6 +206827,8 @@ export namespace Prisma {
     periodosContables?: PeriodoContableUpdateManyWithoutTenantNestedInput
     aperturaPeriodos?: AperturaPeriodoUpdateManyWithoutTenantNestedInput
     auditoriaPeriodos?: AuditoriaPeriodoUpdateManyWithoutTenantNestedInput
+    turnosPos?: TurnoPuntoVentaUpdateManyWithoutTenantNestedInput
+    arqueosCaja?: ArqueoCajaUpdateManyWithoutTenantNestedInput
     backupLogs?: BackupLogUpdateManyWithoutTenantNestedInput
     backupPlans?: BackupPlanUpdateManyWithoutTenantNestedInput
   }
@@ -198193,6 +206896,8 @@ export namespace Prisma {
     periodosContables?: PeriodoContableUncheckedUpdateManyWithoutTenantNestedInput
     aperturaPeriodos?: AperturaPeriodoUncheckedUpdateManyWithoutTenantNestedInput
     auditoriaPeriodos?: AuditoriaPeriodoUncheckedUpdateManyWithoutTenantNestedInput
+    turnosPos?: TurnoPuntoVentaUncheckedUpdateManyWithoutTenantNestedInput
+    arqueosCaja?: ArqueoCajaUncheckedUpdateManyWithoutTenantNestedInput
     backupLogs?: BackupLogUncheckedUpdateManyWithoutTenantNestedInput
     backupPlans?: BackupPlanUncheckedUpdateManyWithoutTenantNestedInput
   }
@@ -200505,6 +209210,7 @@ export namespace Prisma {
     vacationAccruals?: VacationAccrualCreateNestedManyWithoutEmployeeInput
     vacationRequests?: VacationRequestCreateNestedManyWithoutEmployeeInput
     ventas?: VentaCreateNestedManyWithoutEmpleadoInput
+    turnosPos?: TurnoPuntoVentaCreateNestedManyWithoutEmpleadoInput
     tenant: TenantCreateNestedOneWithoutEmpleadosInput
   }
 
@@ -200529,6 +209235,7 @@ export namespace Prisma {
     vacationAccruals?: VacationAccrualUncheckedCreateNestedManyWithoutEmployeeInput
     vacationRequests?: VacationRequestUncheckedCreateNestedManyWithoutEmployeeInput
     ventas?: VentaUncheckedCreateNestedManyWithoutEmpleadoInput
+    turnosPos?: TurnoPuntoVentaUncheckedCreateNestedManyWithoutEmpleadoInput
   }
 
   export type EmpleadoCreateOrConnectWithoutAttendancesInput = {
@@ -200567,6 +209274,7 @@ export namespace Prisma {
     vacationAccruals?: VacationAccrualUpdateManyWithoutEmployeeNestedInput
     vacationRequests?: VacationRequestUpdateManyWithoutEmployeeNestedInput
     ventas?: VentaUpdateManyWithoutEmpleadoNestedInput
+    turnosPos?: TurnoPuntoVentaUpdateManyWithoutEmpleadoNestedInput
     tenant?: TenantUpdateOneRequiredWithoutEmpleadosNestedInput
   }
 
@@ -200591,6 +209299,7 @@ export namespace Prisma {
     vacationAccruals?: VacationAccrualUncheckedUpdateManyWithoutEmployeeNestedInput
     vacationRequests?: VacationRequestUncheckedUpdateManyWithoutEmployeeNestedInput
     ventas?: VentaUncheckedUpdateManyWithoutEmpleadoNestedInput
+    turnosPos?: TurnoPuntoVentaUncheckedUpdateManyWithoutEmpleadoNestedInput
   }
 
   export type EmpleadoCreateWithoutWorkSchedulesInput = {
@@ -200613,6 +209322,7 @@ export namespace Prisma {
     vacationAccruals?: VacationAccrualCreateNestedManyWithoutEmployeeInput
     vacationRequests?: VacationRequestCreateNestedManyWithoutEmployeeInput
     ventas?: VentaCreateNestedManyWithoutEmpleadoInput
+    turnosPos?: TurnoPuntoVentaCreateNestedManyWithoutEmpleadoInput
     tenant: TenantCreateNestedOneWithoutEmpleadosInput
   }
 
@@ -200637,6 +209347,7 @@ export namespace Prisma {
     vacationAccruals?: VacationAccrualUncheckedCreateNestedManyWithoutEmployeeInput
     vacationRequests?: VacationRequestUncheckedCreateNestedManyWithoutEmployeeInput
     ventas?: VentaUncheckedCreateNestedManyWithoutEmpleadoInput
+    turnosPos?: TurnoPuntoVentaUncheckedCreateNestedManyWithoutEmpleadoInput
   }
 
   export type EmpleadoCreateOrConnectWithoutWorkSchedulesInput = {
@@ -200675,6 +209386,7 @@ export namespace Prisma {
     vacationAccruals?: VacationAccrualUpdateManyWithoutEmployeeNestedInput
     vacationRequests?: VacationRequestUpdateManyWithoutEmployeeNestedInput
     ventas?: VentaUpdateManyWithoutEmpleadoNestedInput
+    turnosPos?: TurnoPuntoVentaUpdateManyWithoutEmpleadoNestedInput
     tenant?: TenantUpdateOneRequiredWithoutEmpleadosNestedInput
   }
 
@@ -200699,6 +209411,7 @@ export namespace Prisma {
     vacationAccruals?: VacationAccrualUncheckedUpdateManyWithoutEmployeeNestedInput
     vacationRequests?: VacationRequestUncheckedUpdateManyWithoutEmployeeNestedInput
     ventas?: VentaUncheckedUpdateManyWithoutEmpleadoNestedInput
+    turnosPos?: TurnoPuntoVentaUncheckedUpdateManyWithoutEmpleadoNestedInput
   }
 
   export type EmpleadoCreateWithoutVacationRequestsInput = {
@@ -200721,6 +209434,7 @@ export namespace Prisma {
     PagoSalario?: PagosalarioCreateNestedManyWithoutEmpleadoInput
     vacationAccruals?: VacationAccrualCreateNestedManyWithoutEmployeeInput
     ventas?: VentaCreateNestedManyWithoutEmpleadoInput
+    turnosPos?: TurnoPuntoVentaCreateNestedManyWithoutEmpleadoInput
     tenant: TenantCreateNestedOneWithoutEmpleadosInput
   }
 
@@ -200745,6 +209459,7 @@ export namespace Prisma {
     PagoSalario?: PagosalarioUncheckedCreateNestedManyWithoutEmpleadoInput
     vacationAccruals?: VacationAccrualUncheckedCreateNestedManyWithoutEmployeeInput
     ventas?: VentaUncheckedCreateNestedManyWithoutEmpleadoInput
+    turnosPos?: TurnoPuntoVentaUncheckedCreateNestedManyWithoutEmpleadoInput
   }
 
   export type EmpleadoCreateOrConnectWithoutVacationRequestsInput = {
@@ -200783,6 +209498,7 @@ export namespace Prisma {
     PagoSalario?: PagosalarioUpdateManyWithoutEmpleadoNestedInput
     vacationAccruals?: VacationAccrualUpdateManyWithoutEmployeeNestedInput
     ventas?: VentaUpdateManyWithoutEmpleadoNestedInput
+    turnosPos?: TurnoPuntoVentaUpdateManyWithoutEmpleadoNestedInput
     tenant?: TenantUpdateOneRequiredWithoutEmpleadosNestedInput
   }
 
@@ -200807,6 +209523,7 @@ export namespace Prisma {
     PagoSalario?: PagosalarioUncheckedUpdateManyWithoutEmpleadoNestedInput
     vacationAccruals?: VacationAccrualUncheckedUpdateManyWithoutEmployeeNestedInput
     ventas?: VentaUncheckedUpdateManyWithoutEmpleadoNestedInput
+    turnosPos?: TurnoPuntoVentaUncheckedUpdateManyWithoutEmpleadoNestedInput
   }
 
   export type EmpleadoCreateWithoutVacationAccrualsInput = {
@@ -200829,6 +209546,7 @@ export namespace Prisma {
     PagoSalario?: PagosalarioCreateNestedManyWithoutEmpleadoInput
     vacationRequests?: VacationRequestCreateNestedManyWithoutEmployeeInput
     ventas?: VentaCreateNestedManyWithoutEmpleadoInput
+    turnosPos?: TurnoPuntoVentaCreateNestedManyWithoutEmpleadoInput
     tenant: TenantCreateNestedOneWithoutEmpleadosInput
   }
 
@@ -200853,6 +209571,7 @@ export namespace Prisma {
     PagoSalario?: PagosalarioUncheckedCreateNestedManyWithoutEmpleadoInput
     vacationRequests?: VacationRequestUncheckedCreateNestedManyWithoutEmployeeInput
     ventas?: VentaUncheckedCreateNestedManyWithoutEmpleadoInput
+    turnosPos?: TurnoPuntoVentaUncheckedCreateNestedManyWithoutEmpleadoInput
   }
 
   export type EmpleadoCreateOrConnectWithoutVacationAccrualsInput = {
@@ -200891,6 +209610,7 @@ export namespace Prisma {
     PagoSalario?: PagosalarioUpdateManyWithoutEmpleadoNestedInput
     vacationRequests?: VacationRequestUpdateManyWithoutEmployeeNestedInput
     ventas?: VentaUpdateManyWithoutEmpleadoNestedInput
+    turnosPos?: TurnoPuntoVentaUpdateManyWithoutEmpleadoNestedInput
     tenant?: TenantUpdateOneRequiredWithoutEmpleadosNestedInput
   }
 
@@ -200915,6 +209635,7 @@ export namespace Prisma {
     PagoSalario?: PagosalarioUncheckedUpdateManyWithoutEmpleadoNestedInput
     vacationRequests?: VacationRequestUncheckedUpdateManyWithoutEmployeeNestedInput
     ventas?: VentaUncheckedUpdateManyWithoutEmpleadoNestedInput
+    turnosPos?: TurnoPuntoVentaUncheckedUpdateManyWithoutEmpleadoNestedInput
   }
 
   export type AttendanceCreateWithoutEmployeeInput = {
@@ -201200,12 +209921,18 @@ export namespace Prisma {
     observaciones?: string | null
     esVentaUnica?: boolean
     ventaPadreId?: string | null
+    metodoPago?: $Enums.MetodoPagoVenta | null
+    montoEfectivo?: number | null
+    montoTarjeta?: number | null
+    montoTransferencia?: number | null
+    montoCredito?: number | null
     ordenReparacion?: OrdenReparacionCreateNestedOneWithoutVentaInput
     reconciliaciones?: ReconciliacionVentaCreateNestedManyWithoutVentaInput
     cliente?: ClienteCreateNestedOneWithoutVentaInput
     oferta?: OfertaCreateNestedOneWithoutVentaInput
     producto?: ProductoCreateNestedOneWithoutVentasInput
     puntoDeVenta: PuntoDeVentaCreateNestedOneWithoutVentasInput
+    turno?: TurnoPuntoVentaCreateNestedOneWithoutVentasInput
     factura?: FacturaCreateNestedOneWithoutVentaInput
     items?: VentaItemCreateNestedManyWithoutVentaInput
     tenant: TenantCreateNestedOneWithoutVentasInput
@@ -201227,6 +209954,12 @@ export namespace Prisma {
     esVentaUnica?: boolean
     ofertaId?: string | null
     ventaPadreId?: string | null
+    turnoId?: string | null
+    metodoPago?: $Enums.MetodoPagoVenta | null
+    montoEfectivo?: number | null
+    montoTarjeta?: number | null
+    montoTransferencia?: number | null
+    montoCredito?: number | null
     ordenReparacion?: OrdenReparacionUncheckedCreateNestedOneWithoutVentaInput
     reconciliaciones?: ReconciliacionVentaUncheckedCreateNestedManyWithoutVentaInput
     factura?: FacturaUncheckedCreateNestedOneWithoutVentaInput
@@ -201240,6 +209973,50 @@ export namespace Prisma {
 
   export type VentaCreateManyEmpleadoInputEnvelope = {
     data: VentaCreateManyEmpleadoInput | VentaCreateManyEmpleadoInput[]
+    skipDuplicates?: boolean
+  }
+
+  export type TurnoPuntoVentaCreateWithoutEmpleadoInput = {
+    id?: string
+    tipo?: string
+    fechaApertura?: Date | string
+    fechaCierre?: Date | string | null
+    fondoInicialCup?: number
+    fondoInicialUsd?: number
+    estado?: $Enums.EstadoTurno
+    observaciones?: string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    puntoDeVenta: PuntoDeVentaCreateNestedOneWithoutTurnosInput
+    ventas?: VentaCreateNestedManyWithoutTurnoInput
+    arqueo?: ArqueoCajaCreateNestedOneWithoutTurnoInput
+    tenant: TenantCreateNestedOneWithoutTurnosPosInput
+  }
+
+  export type TurnoPuntoVentaUncheckedCreateWithoutEmpleadoInput = {
+    id?: string
+    tenantId: string
+    puntoDeVentaId: string
+    tipo?: string
+    fechaApertura?: Date | string
+    fechaCierre?: Date | string | null
+    fondoInicialCup?: number
+    fondoInicialUsd?: number
+    estado?: $Enums.EstadoTurno
+    observaciones?: string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    ventas?: VentaUncheckedCreateNestedManyWithoutTurnoInput
+    arqueo?: ArqueoCajaUncheckedCreateNestedOneWithoutTurnoInput
+  }
+
+  export type TurnoPuntoVentaCreateOrConnectWithoutEmpleadoInput = {
+    where: TurnoPuntoVentaWhereUniqueInput
+    create: XOR<TurnoPuntoVentaCreateWithoutEmpleadoInput, TurnoPuntoVentaUncheckedCreateWithoutEmpleadoInput>
+  }
+
+  export type TurnoPuntoVentaCreateManyEmpleadoInputEnvelope = {
+    data: TurnoPuntoVentaCreateManyEmpleadoInput | TurnoPuntoVentaCreateManyEmpleadoInput[]
     skipDuplicates?: boolean
   }
 
@@ -201306,6 +210083,8 @@ export namespace Prisma {
     periodosContables?: PeriodoContableCreateNestedManyWithoutTenantInput
     aperturaPeriodos?: AperturaPeriodoCreateNestedManyWithoutTenantInput
     auditoriaPeriodos?: AuditoriaPeriodoCreateNestedManyWithoutTenantInput
+    turnosPos?: TurnoPuntoVentaCreateNestedManyWithoutTenantInput
+    arqueosCaja?: ArqueoCajaCreateNestedManyWithoutTenantInput
     backupLogs?: BackupLogCreateNestedManyWithoutTenantInput
     backupPlans?: BackupPlanCreateNestedManyWithoutTenantInput
   }
@@ -201373,6 +210152,8 @@ export namespace Prisma {
     periodosContables?: PeriodoContableUncheckedCreateNestedManyWithoutTenantInput
     aperturaPeriodos?: AperturaPeriodoUncheckedCreateNestedManyWithoutTenantInput
     auditoriaPeriodos?: AuditoriaPeriodoUncheckedCreateNestedManyWithoutTenantInput
+    turnosPos?: TurnoPuntoVentaUncheckedCreateNestedManyWithoutTenantInput
+    arqueosCaja?: ArqueoCajaUncheckedCreateNestedManyWithoutTenantInput
     backupLogs?: BackupLogUncheckedCreateNestedManyWithoutTenantInput
     backupPlans?: BackupPlanUncheckedCreateNestedManyWithoutTenantInput
   }
@@ -201569,6 +210350,22 @@ export namespace Prisma {
     data: XOR<VentaUpdateManyMutationInput, VentaUncheckedUpdateManyWithoutEmpleadoInput>
   }
 
+  export type TurnoPuntoVentaUpsertWithWhereUniqueWithoutEmpleadoInput = {
+    where: TurnoPuntoVentaWhereUniqueInput
+    update: XOR<TurnoPuntoVentaUpdateWithoutEmpleadoInput, TurnoPuntoVentaUncheckedUpdateWithoutEmpleadoInput>
+    create: XOR<TurnoPuntoVentaCreateWithoutEmpleadoInput, TurnoPuntoVentaUncheckedCreateWithoutEmpleadoInput>
+  }
+
+  export type TurnoPuntoVentaUpdateWithWhereUniqueWithoutEmpleadoInput = {
+    where: TurnoPuntoVentaWhereUniqueInput
+    data: XOR<TurnoPuntoVentaUpdateWithoutEmpleadoInput, TurnoPuntoVentaUncheckedUpdateWithoutEmpleadoInput>
+  }
+
+  export type TurnoPuntoVentaUpdateManyWithWhereWithoutEmpleadoInput = {
+    where: TurnoPuntoVentaScalarWhereInput
+    data: XOR<TurnoPuntoVentaUpdateManyMutationInput, TurnoPuntoVentaUncheckedUpdateManyWithoutEmpleadoInput>
+  }
+
   export type TenantUpsertWithoutEmpleadosInput = {
     update: XOR<TenantUpdateWithoutEmpleadosInput, TenantUncheckedUpdateWithoutEmpleadosInput>
     create: XOR<TenantCreateWithoutEmpleadosInput, TenantUncheckedCreateWithoutEmpleadosInput>
@@ -201643,6 +210440,8 @@ export namespace Prisma {
     periodosContables?: PeriodoContableUpdateManyWithoutTenantNestedInput
     aperturaPeriodos?: AperturaPeriodoUpdateManyWithoutTenantNestedInput
     auditoriaPeriodos?: AuditoriaPeriodoUpdateManyWithoutTenantNestedInput
+    turnosPos?: TurnoPuntoVentaUpdateManyWithoutTenantNestedInput
+    arqueosCaja?: ArqueoCajaUpdateManyWithoutTenantNestedInput
     backupLogs?: BackupLogUpdateManyWithoutTenantNestedInput
     backupPlans?: BackupPlanUpdateManyWithoutTenantNestedInput
   }
@@ -201710,6 +210509,8 @@ export namespace Prisma {
     periodosContables?: PeriodoContableUncheckedUpdateManyWithoutTenantNestedInput
     aperturaPeriodos?: AperturaPeriodoUncheckedUpdateManyWithoutTenantNestedInput
     auditoriaPeriodos?: AuditoriaPeriodoUncheckedUpdateManyWithoutTenantNestedInput
+    turnosPos?: TurnoPuntoVentaUncheckedUpdateManyWithoutTenantNestedInput
+    arqueosCaja?: ArqueoCajaUncheckedUpdateManyWithoutTenantNestedInput
     backupLogs?: BackupLogUncheckedUpdateManyWithoutTenantNestedInput
     backupPlans?: BackupPlanUncheckedUpdateManyWithoutTenantNestedInput
   }
@@ -201734,6 +210535,7 @@ export namespace Prisma {
     vacationAccruals?: VacationAccrualCreateNestedManyWithoutEmployeeInput
     vacationRequests?: VacationRequestCreateNestedManyWithoutEmployeeInput
     ventas?: VentaCreateNestedManyWithoutEmpleadoInput
+    turnosPos?: TurnoPuntoVentaCreateNestedManyWithoutEmpleadoInput
     tenant: TenantCreateNestedOneWithoutEmpleadosInput
   }
 
@@ -201758,6 +210560,7 @@ export namespace Prisma {
     vacationAccruals?: VacationAccrualUncheckedCreateNestedManyWithoutEmployeeInput
     vacationRequests?: VacationRequestUncheckedCreateNestedManyWithoutEmployeeInput
     ventas?: VentaUncheckedCreateNestedManyWithoutEmpleadoInput
+    turnosPos?: TurnoPuntoVentaUncheckedCreateNestedManyWithoutEmpleadoInput
   }
 
   export type EmpleadoCreateOrConnectWithoutPagoSalarioInput = {
@@ -201888,6 +210691,8 @@ export namespace Prisma {
     periodosContables?: PeriodoContableCreateNestedManyWithoutTenantInput
     aperturaPeriodos?: AperturaPeriodoCreateNestedManyWithoutTenantInput
     auditoriaPeriodos?: AuditoriaPeriodoCreateNestedManyWithoutTenantInput
+    turnosPos?: TurnoPuntoVentaCreateNestedManyWithoutTenantInput
+    arqueosCaja?: ArqueoCajaCreateNestedManyWithoutTenantInput
     backupLogs?: BackupLogCreateNestedManyWithoutTenantInput
     backupPlans?: BackupPlanCreateNestedManyWithoutTenantInput
   }
@@ -201955,6 +210760,8 @@ export namespace Prisma {
     periodosContables?: PeriodoContableUncheckedCreateNestedManyWithoutTenantInput
     aperturaPeriodos?: AperturaPeriodoUncheckedCreateNestedManyWithoutTenantInput
     auditoriaPeriodos?: AuditoriaPeriodoUncheckedCreateNestedManyWithoutTenantInput
+    turnosPos?: TurnoPuntoVentaUncheckedCreateNestedManyWithoutTenantInput
+    arqueosCaja?: ArqueoCajaUncheckedCreateNestedManyWithoutTenantInput
     backupLogs?: BackupLogUncheckedCreateNestedManyWithoutTenantInput
     backupPlans?: BackupPlanUncheckedCreateNestedManyWithoutTenantInput
   }
@@ -201995,6 +210802,7 @@ export namespace Prisma {
     vacationAccruals?: VacationAccrualUpdateManyWithoutEmployeeNestedInput
     vacationRequests?: VacationRequestUpdateManyWithoutEmployeeNestedInput
     ventas?: VentaUpdateManyWithoutEmpleadoNestedInput
+    turnosPos?: TurnoPuntoVentaUpdateManyWithoutEmpleadoNestedInput
     tenant?: TenantUpdateOneRequiredWithoutEmpleadosNestedInput
   }
 
@@ -202019,6 +210827,7 @@ export namespace Prisma {
     vacationAccruals?: VacationAccrualUncheckedUpdateManyWithoutEmployeeNestedInput
     vacationRequests?: VacationRequestUncheckedUpdateManyWithoutEmployeeNestedInput
     ventas?: VentaUncheckedUpdateManyWithoutEmpleadoNestedInput
+    turnosPos?: TurnoPuntoVentaUncheckedUpdateManyWithoutEmpleadoNestedInput
   }
 
   export type ReconciliacionGastoUpsertWithWhereUniqueWithoutPagoSalarioInput = {
@@ -202111,6 +210920,8 @@ export namespace Prisma {
     periodosContables?: PeriodoContableUpdateManyWithoutTenantNestedInput
     aperturaPeriodos?: AperturaPeriodoUpdateManyWithoutTenantNestedInput
     auditoriaPeriodos?: AuditoriaPeriodoUpdateManyWithoutTenantNestedInput
+    turnosPos?: TurnoPuntoVentaUpdateManyWithoutTenantNestedInput
+    arqueosCaja?: ArqueoCajaUpdateManyWithoutTenantNestedInput
     backupLogs?: BackupLogUpdateManyWithoutTenantNestedInput
     backupPlans?: BackupPlanUpdateManyWithoutTenantNestedInput
   }
@@ -202178,6 +210989,8 @@ export namespace Prisma {
     periodosContables?: PeriodoContableUncheckedUpdateManyWithoutTenantNestedInput
     aperturaPeriodos?: AperturaPeriodoUncheckedUpdateManyWithoutTenantNestedInput
     auditoriaPeriodos?: AuditoriaPeriodoUncheckedUpdateManyWithoutTenantNestedInput
+    turnosPos?: TurnoPuntoVentaUncheckedUpdateManyWithoutTenantNestedInput
+    arqueosCaja?: ArqueoCajaUncheckedUpdateManyWithoutTenantNestedInput
     backupLogs?: BackupLogUncheckedUpdateManyWithoutTenantNestedInput
     backupPlans?: BackupPlanUncheckedUpdateManyWithoutTenantNestedInput
   }
@@ -202245,6 +211058,8 @@ export namespace Prisma {
     periodosContables?: PeriodoContableCreateNestedManyWithoutTenantInput
     aperturaPeriodos?: AperturaPeriodoCreateNestedManyWithoutTenantInput
     auditoriaPeriodos?: AuditoriaPeriodoCreateNestedManyWithoutTenantInput
+    turnosPos?: TurnoPuntoVentaCreateNestedManyWithoutTenantInput
+    arqueosCaja?: ArqueoCajaCreateNestedManyWithoutTenantInput
     backupLogs?: BackupLogCreateNestedManyWithoutTenantInput
     backupPlans?: BackupPlanCreateNestedManyWithoutTenantInput
   }
@@ -202312,6 +211127,8 @@ export namespace Prisma {
     periodosContables?: PeriodoContableUncheckedCreateNestedManyWithoutTenantInput
     aperturaPeriodos?: AperturaPeriodoUncheckedCreateNestedManyWithoutTenantInput
     auditoriaPeriodos?: AuditoriaPeriodoUncheckedCreateNestedManyWithoutTenantInput
+    turnosPos?: TurnoPuntoVentaUncheckedCreateNestedManyWithoutTenantInput
+    arqueosCaja?: ArqueoCajaUncheckedCreateNestedManyWithoutTenantInput
     backupLogs?: BackupLogUncheckedCreateNestedManyWithoutTenantInput
     backupPlans?: BackupPlanUncheckedCreateNestedManyWithoutTenantInput
   }
@@ -202395,6 +211212,8 @@ export namespace Prisma {
     periodosContables?: PeriodoContableUpdateManyWithoutTenantNestedInput
     aperturaPeriodos?: AperturaPeriodoUpdateManyWithoutTenantNestedInput
     auditoriaPeriodos?: AuditoriaPeriodoUpdateManyWithoutTenantNestedInput
+    turnosPos?: TurnoPuntoVentaUpdateManyWithoutTenantNestedInput
+    arqueosCaja?: ArqueoCajaUpdateManyWithoutTenantNestedInput
     backupLogs?: BackupLogUpdateManyWithoutTenantNestedInput
     backupPlans?: BackupPlanUpdateManyWithoutTenantNestedInput
   }
@@ -202462,6 +211281,8 @@ export namespace Prisma {
     periodosContables?: PeriodoContableUncheckedUpdateManyWithoutTenantNestedInput
     aperturaPeriodos?: AperturaPeriodoUncheckedUpdateManyWithoutTenantNestedInput
     auditoriaPeriodos?: AuditoriaPeriodoUncheckedUpdateManyWithoutTenantNestedInput
+    turnosPos?: TurnoPuntoVentaUncheckedUpdateManyWithoutTenantNestedInput
+    arqueosCaja?: ArqueoCajaUncheckedUpdateManyWithoutTenantNestedInput
     backupLogs?: BackupLogUncheckedUpdateManyWithoutTenantNestedInput
     backupPlans?: BackupPlanUncheckedUpdateManyWithoutTenantNestedInput
   }
@@ -202890,6 +211711,8 @@ export namespace Prisma {
     periodosContables?: PeriodoContableCreateNestedManyWithoutTenantInput
     aperturaPeriodos?: AperturaPeriodoCreateNestedManyWithoutTenantInput
     auditoriaPeriodos?: AuditoriaPeriodoCreateNestedManyWithoutTenantInput
+    turnosPos?: TurnoPuntoVentaCreateNestedManyWithoutTenantInput
+    arqueosCaja?: ArqueoCajaCreateNestedManyWithoutTenantInput
     backupLogs?: BackupLogCreateNestedManyWithoutTenantInput
     backupPlans?: BackupPlanCreateNestedManyWithoutTenantInput
   }
@@ -202957,6 +211780,8 @@ export namespace Prisma {
     periodosContables?: PeriodoContableUncheckedCreateNestedManyWithoutTenantInput
     aperturaPeriodos?: AperturaPeriodoUncheckedCreateNestedManyWithoutTenantInput
     auditoriaPeriodos?: AuditoriaPeriodoUncheckedCreateNestedManyWithoutTenantInput
+    turnosPos?: TurnoPuntoVentaUncheckedCreateNestedManyWithoutTenantInput
+    arqueosCaja?: ArqueoCajaUncheckedCreateNestedManyWithoutTenantInput
     backupLogs?: BackupLogUncheckedCreateNestedManyWithoutTenantInput
     backupPlans?: BackupPlanUncheckedCreateNestedManyWithoutTenantInput
   }
@@ -203387,6 +212212,8 @@ export namespace Prisma {
     periodosContables?: PeriodoContableUpdateManyWithoutTenantNestedInput
     aperturaPeriodos?: AperturaPeriodoUpdateManyWithoutTenantNestedInput
     auditoriaPeriodos?: AuditoriaPeriodoUpdateManyWithoutTenantNestedInput
+    turnosPos?: TurnoPuntoVentaUpdateManyWithoutTenantNestedInput
+    arqueosCaja?: ArqueoCajaUpdateManyWithoutTenantNestedInput
     backupLogs?: BackupLogUpdateManyWithoutTenantNestedInput
     backupPlans?: BackupPlanUpdateManyWithoutTenantNestedInput
   }
@@ -203454,6 +212281,8 @@ export namespace Prisma {
     periodosContables?: PeriodoContableUncheckedUpdateManyWithoutTenantNestedInput
     aperturaPeriodos?: AperturaPeriodoUncheckedUpdateManyWithoutTenantNestedInput
     auditoriaPeriodos?: AuditoriaPeriodoUncheckedUpdateManyWithoutTenantNestedInput
+    turnosPos?: TurnoPuntoVentaUncheckedUpdateManyWithoutTenantNestedInput
+    arqueosCaja?: ArqueoCajaUncheckedUpdateManyWithoutTenantNestedInput
     backupLogs?: BackupLogUncheckedUpdateManyWithoutTenantNestedInput
     backupPlans?: BackupPlanUncheckedUpdateManyWithoutTenantNestedInput
   }
@@ -203824,6 +212653,8 @@ export namespace Prisma {
     periodosContables?: PeriodoContableCreateNestedManyWithoutTenantInput
     aperturaPeriodos?: AperturaPeriodoCreateNestedManyWithoutTenantInput
     auditoriaPeriodos?: AuditoriaPeriodoCreateNestedManyWithoutTenantInput
+    turnosPos?: TurnoPuntoVentaCreateNestedManyWithoutTenantInput
+    arqueosCaja?: ArqueoCajaCreateNestedManyWithoutTenantInput
     backupLogs?: BackupLogCreateNestedManyWithoutTenantInput
     backupPlans?: BackupPlanCreateNestedManyWithoutTenantInput
   }
@@ -203891,6 +212722,8 @@ export namespace Prisma {
     periodosContables?: PeriodoContableUncheckedCreateNestedManyWithoutTenantInput
     aperturaPeriodos?: AperturaPeriodoUncheckedCreateNestedManyWithoutTenantInput
     auditoriaPeriodos?: AuditoriaPeriodoUncheckedCreateNestedManyWithoutTenantInput
+    turnosPos?: TurnoPuntoVentaUncheckedCreateNestedManyWithoutTenantInput
+    arqueosCaja?: ArqueoCajaUncheckedCreateNestedManyWithoutTenantInput
     backupLogs?: BackupLogUncheckedCreateNestedManyWithoutTenantInput
     backupPlans?: BackupPlanUncheckedCreateNestedManyWithoutTenantInput
   }
@@ -204307,6 +213140,8 @@ export namespace Prisma {
     periodosContables?: PeriodoContableUpdateManyWithoutTenantNestedInput
     aperturaPeriodos?: AperturaPeriodoUpdateManyWithoutTenantNestedInput
     auditoriaPeriodos?: AuditoriaPeriodoUpdateManyWithoutTenantNestedInput
+    turnosPos?: TurnoPuntoVentaUpdateManyWithoutTenantNestedInput
+    arqueosCaja?: ArqueoCajaUpdateManyWithoutTenantNestedInput
     backupLogs?: BackupLogUpdateManyWithoutTenantNestedInput
     backupPlans?: BackupPlanUpdateManyWithoutTenantNestedInput
   }
@@ -204374,6 +213209,8 @@ export namespace Prisma {
     periodosContables?: PeriodoContableUncheckedUpdateManyWithoutTenantNestedInput
     aperturaPeriodos?: AperturaPeriodoUncheckedUpdateManyWithoutTenantNestedInput
     auditoriaPeriodos?: AuditoriaPeriodoUncheckedUpdateManyWithoutTenantNestedInput
+    turnosPos?: TurnoPuntoVentaUncheckedUpdateManyWithoutTenantNestedInput
+    arqueosCaja?: ArqueoCajaUncheckedUpdateManyWithoutTenantNestedInput
     backupLogs?: BackupLogUncheckedUpdateManyWithoutTenantNestedInput
     backupPlans?: BackupPlanUncheckedUpdateManyWithoutTenantNestedInput
   }
@@ -204711,6 +213548,8 @@ export namespace Prisma {
     periodosContables?: PeriodoContableCreateNestedManyWithoutTenantInput
     aperturaPeriodos?: AperturaPeriodoCreateNestedManyWithoutTenantInput
     auditoriaPeriodos?: AuditoriaPeriodoCreateNestedManyWithoutTenantInput
+    turnosPos?: TurnoPuntoVentaCreateNestedManyWithoutTenantInput
+    arqueosCaja?: ArqueoCajaCreateNestedManyWithoutTenantInput
     backupLogs?: BackupLogCreateNestedManyWithoutTenantInput
     backupPlans?: BackupPlanCreateNestedManyWithoutTenantInput
   }
@@ -204778,6 +213617,8 @@ export namespace Prisma {
     periodosContables?: PeriodoContableUncheckedCreateNestedManyWithoutTenantInput
     aperturaPeriodos?: AperturaPeriodoUncheckedCreateNestedManyWithoutTenantInput
     auditoriaPeriodos?: AuditoriaPeriodoUncheckedCreateNestedManyWithoutTenantInput
+    turnosPos?: TurnoPuntoVentaUncheckedCreateNestedManyWithoutTenantInput
+    arqueosCaja?: ArqueoCajaUncheckedCreateNestedManyWithoutTenantInput
     backupLogs?: BackupLogUncheckedCreateNestedManyWithoutTenantInput
     backupPlans?: BackupPlanUncheckedCreateNestedManyWithoutTenantInput
   }
@@ -205139,6 +213980,8 @@ export namespace Prisma {
     periodosContables?: PeriodoContableUpdateManyWithoutTenantNestedInput
     aperturaPeriodos?: AperturaPeriodoUpdateManyWithoutTenantNestedInput
     auditoriaPeriodos?: AuditoriaPeriodoUpdateManyWithoutTenantNestedInput
+    turnosPos?: TurnoPuntoVentaUpdateManyWithoutTenantNestedInput
+    arqueosCaja?: ArqueoCajaUpdateManyWithoutTenantNestedInput
     backupLogs?: BackupLogUpdateManyWithoutTenantNestedInput
     backupPlans?: BackupPlanUpdateManyWithoutTenantNestedInput
   }
@@ -205206,6 +214049,8 @@ export namespace Prisma {
     periodosContables?: PeriodoContableUncheckedUpdateManyWithoutTenantNestedInput
     aperturaPeriodos?: AperturaPeriodoUncheckedUpdateManyWithoutTenantNestedInput
     auditoriaPeriodos?: AuditoriaPeriodoUncheckedUpdateManyWithoutTenantNestedInput
+    turnosPos?: TurnoPuntoVentaUncheckedUpdateManyWithoutTenantNestedInput
+    arqueosCaja?: ArqueoCajaUncheckedUpdateManyWithoutTenantNestedInput
     backupLogs?: BackupLogUncheckedUpdateManyWithoutTenantNestedInput
     backupPlans?: BackupPlanUncheckedUpdateManyWithoutTenantNestedInput
   }
@@ -205413,6 +214258,8 @@ export namespace Prisma {
     periodosContables?: PeriodoContableCreateNestedManyWithoutTenantInput
     aperturaPeriodos?: AperturaPeriodoCreateNestedManyWithoutTenantInput
     auditoriaPeriodos?: AuditoriaPeriodoCreateNestedManyWithoutTenantInput
+    turnosPos?: TurnoPuntoVentaCreateNestedManyWithoutTenantInput
+    arqueosCaja?: ArqueoCajaCreateNestedManyWithoutTenantInput
     backupLogs?: BackupLogCreateNestedManyWithoutTenantInput
     backupPlans?: BackupPlanCreateNestedManyWithoutTenantInput
   }
@@ -205480,6 +214327,8 @@ export namespace Prisma {
     periodosContables?: PeriodoContableUncheckedCreateNestedManyWithoutTenantInput
     aperturaPeriodos?: AperturaPeriodoUncheckedCreateNestedManyWithoutTenantInput
     auditoriaPeriodos?: AuditoriaPeriodoUncheckedCreateNestedManyWithoutTenantInput
+    turnosPos?: TurnoPuntoVentaUncheckedCreateNestedManyWithoutTenantInput
+    arqueosCaja?: ArqueoCajaUncheckedCreateNestedManyWithoutTenantInput
     backupLogs?: BackupLogUncheckedCreateNestedManyWithoutTenantInput
     backupPlans?: BackupPlanUncheckedCreateNestedManyWithoutTenantInput
   }
@@ -205715,6 +214564,8 @@ export namespace Prisma {
     periodosContables?: PeriodoContableUpdateManyWithoutTenantNestedInput
     aperturaPeriodos?: AperturaPeriodoUpdateManyWithoutTenantNestedInput
     auditoriaPeriodos?: AuditoriaPeriodoUpdateManyWithoutTenantNestedInput
+    turnosPos?: TurnoPuntoVentaUpdateManyWithoutTenantNestedInput
+    arqueosCaja?: ArqueoCajaUpdateManyWithoutTenantNestedInput
     backupLogs?: BackupLogUpdateManyWithoutTenantNestedInput
     backupPlans?: BackupPlanUpdateManyWithoutTenantNestedInput
   }
@@ -205782,6 +214633,8 @@ export namespace Prisma {
     periodosContables?: PeriodoContableUncheckedUpdateManyWithoutTenantNestedInput
     aperturaPeriodos?: AperturaPeriodoUncheckedUpdateManyWithoutTenantNestedInput
     auditoriaPeriodos?: AuditoriaPeriodoUncheckedUpdateManyWithoutTenantNestedInput
+    turnosPos?: TurnoPuntoVentaUncheckedUpdateManyWithoutTenantNestedInput
+    arqueosCaja?: ArqueoCajaUncheckedUpdateManyWithoutTenantNestedInput
     backupLogs?: BackupLogUncheckedUpdateManyWithoutTenantNestedInput
     backupPlans?: BackupPlanUncheckedUpdateManyWithoutTenantNestedInput
   }
@@ -205959,6 +214812,8 @@ export namespace Prisma {
     periodosContables?: PeriodoContableCreateNestedManyWithoutTenantInput
     aperturaPeriodos?: AperturaPeriodoCreateNestedManyWithoutTenantInput
     auditoriaPeriodos?: AuditoriaPeriodoCreateNestedManyWithoutTenantInput
+    turnosPos?: TurnoPuntoVentaCreateNestedManyWithoutTenantInput
+    arqueosCaja?: ArqueoCajaCreateNestedManyWithoutTenantInput
     backupLogs?: BackupLogCreateNestedManyWithoutTenantInput
     backupPlans?: BackupPlanCreateNestedManyWithoutTenantInput
   }
@@ -206026,6 +214881,8 @@ export namespace Prisma {
     periodosContables?: PeriodoContableUncheckedCreateNestedManyWithoutTenantInput
     aperturaPeriodos?: AperturaPeriodoUncheckedCreateNestedManyWithoutTenantInput
     auditoriaPeriodos?: AuditoriaPeriodoUncheckedCreateNestedManyWithoutTenantInput
+    turnosPos?: TurnoPuntoVentaUncheckedCreateNestedManyWithoutTenantInput
+    arqueosCaja?: ArqueoCajaUncheckedCreateNestedManyWithoutTenantInput
     backupLogs?: BackupLogUncheckedCreateNestedManyWithoutTenantInput
     backupPlans?: BackupPlanUncheckedCreateNestedManyWithoutTenantInput
   }
@@ -206157,6 +215014,8 @@ export namespace Prisma {
     periodosContables?: PeriodoContableUpdateManyWithoutTenantNestedInput
     aperturaPeriodos?: AperturaPeriodoUpdateManyWithoutTenantNestedInput
     auditoriaPeriodos?: AuditoriaPeriodoUpdateManyWithoutTenantNestedInput
+    turnosPos?: TurnoPuntoVentaUpdateManyWithoutTenantNestedInput
+    arqueosCaja?: ArqueoCajaUpdateManyWithoutTenantNestedInput
     backupLogs?: BackupLogUpdateManyWithoutTenantNestedInput
     backupPlans?: BackupPlanUpdateManyWithoutTenantNestedInput
   }
@@ -206224,6 +215083,8 @@ export namespace Prisma {
     periodosContables?: PeriodoContableUncheckedUpdateManyWithoutTenantNestedInput
     aperturaPeriodos?: AperturaPeriodoUncheckedUpdateManyWithoutTenantNestedInput
     auditoriaPeriodos?: AuditoriaPeriodoUncheckedUpdateManyWithoutTenantNestedInput
+    turnosPos?: TurnoPuntoVentaUncheckedUpdateManyWithoutTenantNestedInput
+    arqueosCaja?: ArqueoCajaUncheckedUpdateManyWithoutTenantNestedInput
     backupLogs?: BackupLogUncheckedUpdateManyWithoutTenantNestedInput
     backupPlans?: BackupPlanUncheckedUpdateManyWithoutTenantNestedInput
   }
@@ -206413,6 +215274,8 @@ export namespace Prisma {
     periodosContables?: PeriodoContableCreateNestedManyWithoutTenantInput
     aperturaPeriodos?: AperturaPeriodoCreateNestedManyWithoutTenantInput
     auditoriaPeriodos?: AuditoriaPeriodoCreateNestedManyWithoutTenantInput
+    turnosPos?: TurnoPuntoVentaCreateNestedManyWithoutTenantInput
+    arqueosCaja?: ArqueoCajaCreateNestedManyWithoutTenantInput
     backupLogs?: BackupLogCreateNestedManyWithoutTenantInput
     backupPlans?: BackupPlanCreateNestedManyWithoutTenantInput
   }
@@ -206480,6 +215343,8 @@ export namespace Prisma {
     periodosContables?: PeriodoContableUncheckedCreateNestedManyWithoutTenantInput
     aperturaPeriodos?: AperturaPeriodoUncheckedCreateNestedManyWithoutTenantInput
     auditoriaPeriodos?: AuditoriaPeriodoUncheckedCreateNestedManyWithoutTenantInput
+    turnosPos?: TurnoPuntoVentaUncheckedCreateNestedManyWithoutTenantInput
+    arqueosCaja?: ArqueoCajaUncheckedCreateNestedManyWithoutTenantInput
     backupLogs?: BackupLogUncheckedCreateNestedManyWithoutTenantInput
     backupPlans?: BackupPlanUncheckedCreateNestedManyWithoutTenantInput
   }
@@ -206671,6 +215536,8 @@ export namespace Prisma {
     periodosContables?: PeriodoContableUpdateManyWithoutTenantNestedInput
     aperturaPeriodos?: AperturaPeriodoUpdateManyWithoutTenantNestedInput
     auditoriaPeriodos?: AuditoriaPeriodoUpdateManyWithoutTenantNestedInput
+    turnosPos?: TurnoPuntoVentaUpdateManyWithoutTenantNestedInput
+    arqueosCaja?: ArqueoCajaUpdateManyWithoutTenantNestedInput
     backupLogs?: BackupLogUpdateManyWithoutTenantNestedInput
     backupPlans?: BackupPlanUpdateManyWithoutTenantNestedInput
   }
@@ -206738,6 +215605,8 @@ export namespace Prisma {
     periodosContables?: PeriodoContableUncheckedUpdateManyWithoutTenantNestedInput
     aperturaPeriodos?: AperturaPeriodoUncheckedUpdateManyWithoutTenantNestedInput
     auditoriaPeriodos?: AuditoriaPeriodoUncheckedUpdateManyWithoutTenantNestedInput
+    turnosPos?: TurnoPuntoVentaUncheckedUpdateManyWithoutTenantNestedInput
+    arqueosCaja?: ArqueoCajaUncheckedUpdateManyWithoutTenantNestedInput
     backupLogs?: BackupLogUncheckedUpdateManyWithoutTenantNestedInput
     backupPlans?: BackupPlanUncheckedUpdateManyWithoutTenantNestedInput
   }
@@ -206889,6 +215758,8 @@ export namespace Prisma {
     periodosContables?: PeriodoContableCreateNestedManyWithoutTenantInput
     aperturaPeriodos?: AperturaPeriodoCreateNestedManyWithoutTenantInput
     auditoriaPeriodos?: AuditoriaPeriodoCreateNestedManyWithoutTenantInput
+    turnosPos?: TurnoPuntoVentaCreateNestedManyWithoutTenantInput
+    arqueosCaja?: ArqueoCajaCreateNestedManyWithoutTenantInput
     backupLogs?: BackupLogCreateNestedManyWithoutTenantInput
     backupPlans?: BackupPlanCreateNestedManyWithoutTenantInput
   }
@@ -206956,6 +215827,8 @@ export namespace Prisma {
     periodosContables?: PeriodoContableUncheckedCreateNestedManyWithoutTenantInput
     aperturaPeriodos?: AperturaPeriodoUncheckedCreateNestedManyWithoutTenantInput
     auditoriaPeriodos?: AuditoriaPeriodoUncheckedCreateNestedManyWithoutTenantInput
+    turnosPos?: TurnoPuntoVentaUncheckedCreateNestedManyWithoutTenantInput
+    arqueosCaja?: ArqueoCajaUncheckedCreateNestedManyWithoutTenantInput
     backupLogs?: BackupLogUncheckedCreateNestedManyWithoutTenantInput
     backupPlans?: BackupPlanUncheckedCreateNestedManyWithoutTenantInput
   }
@@ -207135,6 +216008,8 @@ export namespace Prisma {
     periodosContables?: PeriodoContableUpdateManyWithoutTenantNestedInput
     aperturaPeriodos?: AperturaPeriodoUpdateManyWithoutTenantNestedInput
     auditoriaPeriodos?: AuditoriaPeriodoUpdateManyWithoutTenantNestedInput
+    turnosPos?: TurnoPuntoVentaUpdateManyWithoutTenantNestedInput
+    arqueosCaja?: ArqueoCajaUpdateManyWithoutTenantNestedInput
     backupLogs?: BackupLogUpdateManyWithoutTenantNestedInput
     backupPlans?: BackupPlanUpdateManyWithoutTenantNestedInput
   }
@@ -207202,6 +216077,8 @@ export namespace Prisma {
     periodosContables?: PeriodoContableUncheckedUpdateManyWithoutTenantNestedInput
     aperturaPeriodos?: AperturaPeriodoUncheckedUpdateManyWithoutTenantNestedInput
     auditoriaPeriodos?: AuditoriaPeriodoUncheckedUpdateManyWithoutTenantNestedInput
+    turnosPos?: TurnoPuntoVentaUncheckedUpdateManyWithoutTenantNestedInput
+    arqueosCaja?: ArqueoCajaUncheckedUpdateManyWithoutTenantNestedInput
     backupLogs?: BackupLogUncheckedUpdateManyWithoutTenantNestedInput
     backupPlans?: BackupPlanUncheckedUpdateManyWithoutTenantNestedInput
   }
@@ -207671,6 +216548,8 @@ export namespace Prisma {
     periodosContables?: PeriodoContableCreateNestedManyWithoutTenantInput
     aperturaPeriodos?: AperturaPeriodoCreateNestedManyWithoutTenantInput
     auditoriaPeriodos?: AuditoriaPeriodoCreateNestedManyWithoutTenantInput
+    turnosPos?: TurnoPuntoVentaCreateNestedManyWithoutTenantInput
+    arqueosCaja?: ArqueoCajaCreateNestedManyWithoutTenantInput
     backupLogs?: BackupLogCreateNestedManyWithoutTenantInput
     backupPlans?: BackupPlanCreateNestedManyWithoutTenantInput
   }
@@ -207738,6 +216617,8 @@ export namespace Prisma {
     periodosContables?: PeriodoContableUncheckedCreateNestedManyWithoutTenantInput
     aperturaPeriodos?: AperturaPeriodoUncheckedCreateNestedManyWithoutTenantInput
     auditoriaPeriodos?: AuditoriaPeriodoUncheckedCreateNestedManyWithoutTenantInput
+    turnosPos?: TurnoPuntoVentaUncheckedCreateNestedManyWithoutTenantInput
+    arqueosCaja?: ArqueoCajaUncheckedCreateNestedManyWithoutTenantInput
     backupLogs?: BackupLogUncheckedCreateNestedManyWithoutTenantInput
     backupPlans?: BackupPlanUncheckedCreateNestedManyWithoutTenantInput
   }
@@ -207962,6 +216843,8 @@ export namespace Prisma {
     periodosContables?: PeriodoContableUpdateManyWithoutTenantNestedInput
     aperturaPeriodos?: AperturaPeriodoUpdateManyWithoutTenantNestedInput
     auditoriaPeriodos?: AuditoriaPeriodoUpdateManyWithoutTenantNestedInput
+    turnosPos?: TurnoPuntoVentaUpdateManyWithoutTenantNestedInput
+    arqueosCaja?: ArqueoCajaUpdateManyWithoutTenantNestedInput
     backupLogs?: BackupLogUpdateManyWithoutTenantNestedInput
     backupPlans?: BackupPlanUpdateManyWithoutTenantNestedInput
   }
@@ -208029,6 +216912,8 @@ export namespace Prisma {
     periodosContables?: PeriodoContableUncheckedUpdateManyWithoutTenantNestedInput
     aperturaPeriodos?: AperturaPeriodoUncheckedUpdateManyWithoutTenantNestedInput
     auditoriaPeriodos?: AuditoriaPeriodoUncheckedUpdateManyWithoutTenantNestedInput
+    turnosPos?: TurnoPuntoVentaUncheckedUpdateManyWithoutTenantNestedInput
+    arqueosCaja?: ArqueoCajaUncheckedUpdateManyWithoutTenantNestedInput
     backupLogs?: BackupLogUncheckedUpdateManyWithoutTenantNestedInput
     backupPlans?: BackupPlanUncheckedUpdateManyWithoutTenantNestedInput
   }
@@ -208937,6 +217822,8 @@ export namespace Prisma {
     periodosContables?: PeriodoContableCreateNestedManyWithoutTenantInput
     aperturaPeriodos?: AperturaPeriodoCreateNestedManyWithoutTenantInput
     auditoriaPeriodos?: AuditoriaPeriodoCreateNestedManyWithoutTenantInput
+    turnosPos?: TurnoPuntoVentaCreateNestedManyWithoutTenantInput
+    arqueosCaja?: ArqueoCajaCreateNestedManyWithoutTenantInput
     backupLogs?: BackupLogCreateNestedManyWithoutTenantInput
     backupPlans?: BackupPlanCreateNestedManyWithoutTenantInput
   }
@@ -209004,6 +217891,8 @@ export namespace Prisma {
     periodosContables?: PeriodoContableUncheckedCreateNestedManyWithoutTenantInput
     aperturaPeriodos?: AperturaPeriodoUncheckedCreateNestedManyWithoutTenantInput
     auditoriaPeriodos?: AuditoriaPeriodoUncheckedCreateNestedManyWithoutTenantInput
+    turnosPos?: TurnoPuntoVentaUncheckedCreateNestedManyWithoutTenantInput
+    arqueosCaja?: ArqueoCajaUncheckedCreateNestedManyWithoutTenantInput
     backupLogs?: BackupLogUncheckedCreateNestedManyWithoutTenantInput
     backupPlans?: BackupPlanUncheckedCreateNestedManyWithoutTenantInput
   }
@@ -209300,6 +218189,8 @@ export namespace Prisma {
     periodosContables?: PeriodoContableUpdateManyWithoutTenantNestedInput
     aperturaPeriodos?: AperturaPeriodoUpdateManyWithoutTenantNestedInput
     auditoriaPeriodos?: AuditoriaPeriodoUpdateManyWithoutTenantNestedInput
+    turnosPos?: TurnoPuntoVentaUpdateManyWithoutTenantNestedInput
+    arqueosCaja?: ArqueoCajaUpdateManyWithoutTenantNestedInput
     backupLogs?: BackupLogUpdateManyWithoutTenantNestedInput
     backupPlans?: BackupPlanUpdateManyWithoutTenantNestedInput
   }
@@ -209367,6 +218258,8 @@ export namespace Prisma {
     periodosContables?: PeriodoContableUncheckedUpdateManyWithoutTenantNestedInput
     aperturaPeriodos?: AperturaPeriodoUncheckedUpdateManyWithoutTenantNestedInput
     auditoriaPeriodos?: AuditoriaPeriodoUncheckedUpdateManyWithoutTenantNestedInput
+    turnosPos?: TurnoPuntoVentaUncheckedUpdateManyWithoutTenantNestedInput
+    arqueosCaja?: ArqueoCajaUncheckedUpdateManyWithoutTenantNestedInput
     backupLogs?: BackupLogUncheckedUpdateManyWithoutTenantNestedInput
     backupPlans?: BackupPlanUncheckedUpdateManyWithoutTenantNestedInput
   }
@@ -209756,12 +218649,18 @@ export namespace Prisma {
     observaciones?: string | null
     esVentaUnica?: boolean
     ventaPadreId?: string | null
+    metodoPago?: $Enums.MetodoPagoVenta | null
+    montoEfectivo?: number | null
+    montoTarjeta?: number | null
+    montoTransferencia?: number | null
+    montoCredito?: number | null
     ordenReparacion?: OrdenReparacionCreateNestedOneWithoutVentaInput
     cliente?: ClienteCreateNestedOneWithoutVentaInput
     empleado?: EmpleadoCreateNestedOneWithoutVentasInput
     oferta?: OfertaCreateNestedOneWithoutVentaInput
     producto?: ProductoCreateNestedOneWithoutVentasInput
     puntoDeVenta: PuntoDeVentaCreateNestedOneWithoutVentasInput
+    turno?: TurnoPuntoVentaCreateNestedOneWithoutVentasInput
     factura?: FacturaCreateNestedOneWithoutVentaInput
     items?: VentaItemCreateNestedManyWithoutVentaInput
     tenant: TenantCreateNestedOneWithoutVentasInput
@@ -209784,6 +218683,12 @@ export namespace Prisma {
     esVentaUnica?: boolean
     ofertaId?: string | null
     ventaPadreId?: string | null
+    turnoId?: string | null
+    metodoPago?: $Enums.MetodoPagoVenta | null
+    montoEfectivo?: number | null
+    montoTarjeta?: number | null
+    montoTransferencia?: number | null
+    montoCredito?: number | null
     ordenReparacion?: OrdenReparacionUncheckedCreateNestedOneWithoutVentaInput
     factura?: FacturaUncheckedCreateNestedOneWithoutVentaInput
     items?: VentaItemUncheckedCreateNestedManyWithoutVentaInput
@@ -209857,6 +218762,8 @@ export namespace Prisma {
     periodosContables?: PeriodoContableCreateNestedManyWithoutTenantInput
     aperturaPeriodos?: AperturaPeriodoCreateNestedManyWithoutTenantInput
     auditoriaPeriodos?: AuditoriaPeriodoCreateNestedManyWithoutTenantInput
+    turnosPos?: TurnoPuntoVentaCreateNestedManyWithoutTenantInput
+    arqueosCaja?: ArqueoCajaCreateNestedManyWithoutTenantInput
     backupLogs?: BackupLogCreateNestedManyWithoutTenantInput
     backupPlans?: BackupPlanCreateNestedManyWithoutTenantInput
   }
@@ -209924,6 +218831,8 @@ export namespace Prisma {
     periodosContables?: PeriodoContableUncheckedCreateNestedManyWithoutTenantInput
     aperturaPeriodos?: AperturaPeriodoUncheckedCreateNestedManyWithoutTenantInput
     auditoriaPeriodos?: AuditoriaPeriodoUncheckedCreateNestedManyWithoutTenantInput
+    turnosPos?: TurnoPuntoVentaUncheckedCreateNestedManyWithoutTenantInput
+    arqueosCaja?: ArqueoCajaUncheckedCreateNestedManyWithoutTenantInput
     backupLogs?: BackupLogUncheckedCreateNestedManyWithoutTenantInput
     backupPlans?: BackupPlanUncheckedCreateNestedManyWithoutTenantInput
   }
@@ -210151,12 +219060,18 @@ export namespace Prisma {
     observaciones?: NullableStringFieldUpdateOperationsInput | string | null
     esVentaUnica?: BoolFieldUpdateOperationsInput | boolean
     ventaPadreId?: NullableStringFieldUpdateOperationsInput | string | null
+    metodoPago?: NullableEnumMetodoPagoVentaFieldUpdateOperationsInput | $Enums.MetodoPagoVenta | null
+    montoEfectivo?: NullableIntFieldUpdateOperationsInput | number | null
+    montoTarjeta?: NullableIntFieldUpdateOperationsInput | number | null
+    montoTransferencia?: NullableIntFieldUpdateOperationsInput | number | null
+    montoCredito?: NullableIntFieldUpdateOperationsInput | number | null
     ordenReparacion?: OrdenReparacionUpdateOneWithoutVentaNestedInput
     cliente?: ClienteUpdateOneWithoutVentaNestedInput
     empleado?: EmpleadoUpdateOneWithoutVentasNestedInput
     oferta?: OfertaUpdateOneWithoutVentaNestedInput
     producto?: ProductoUpdateOneWithoutVentasNestedInput
     puntoDeVenta?: PuntoDeVentaUpdateOneRequiredWithoutVentasNestedInput
+    turno?: TurnoPuntoVentaUpdateOneWithoutVentasNestedInput
     factura?: FacturaUpdateOneWithoutVentaNestedInput
     items?: VentaItemUpdateManyWithoutVentaNestedInput
     tenant?: TenantUpdateOneRequiredWithoutVentasNestedInput
@@ -210179,6 +219094,12 @@ export namespace Prisma {
     esVentaUnica?: BoolFieldUpdateOperationsInput | boolean
     ofertaId?: NullableStringFieldUpdateOperationsInput | string | null
     ventaPadreId?: NullableStringFieldUpdateOperationsInput | string | null
+    turnoId?: NullableStringFieldUpdateOperationsInput | string | null
+    metodoPago?: NullableEnumMetodoPagoVentaFieldUpdateOperationsInput | $Enums.MetodoPagoVenta | null
+    montoEfectivo?: NullableIntFieldUpdateOperationsInput | number | null
+    montoTarjeta?: NullableIntFieldUpdateOperationsInput | number | null
+    montoTransferencia?: NullableIntFieldUpdateOperationsInput | number | null
+    montoCredito?: NullableIntFieldUpdateOperationsInput | number | null
     ordenReparacion?: OrdenReparacionUncheckedUpdateOneWithoutVentaNestedInput
     factura?: FacturaUncheckedUpdateOneWithoutVentaNestedInput
     items?: VentaItemUncheckedUpdateManyWithoutVentaNestedInput
@@ -210258,6 +219179,8 @@ export namespace Prisma {
     periodosContables?: PeriodoContableUpdateManyWithoutTenantNestedInput
     aperturaPeriodos?: AperturaPeriodoUpdateManyWithoutTenantNestedInput
     auditoriaPeriodos?: AuditoriaPeriodoUpdateManyWithoutTenantNestedInput
+    turnosPos?: TurnoPuntoVentaUpdateManyWithoutTenantNestedInput
+    arqueosCaja?: ArqueoCajaUpdateManyWithoutTenantNestedInput
     backupLogs?: BackupLogUpdateManyWithoutTenantNestedInput
     backupPlans?: BackupPlanUpdateManyWithoutTenantNestedInput
   }
@@ -210325,6 +219248,8 @@ export namespace Prisma {
     periodosContables?: PeriodoContableUncheckedUpdateManyWithoutTenantNestedInput
     aperturaPeriodos?: AperturaPeriodoUncheckedUpdateManyWithoutTenantNestedInput
     auditoriaPeriodos?: AuditoriaPeriodoUncheckedUpdateManyWithoutTenantNestedInput
+    turnosPos?: TurnoPuntoVentaUncheckedUpdateManyWithoutTenantNestedInput
+    arqueosCaja?: ArqueoCajaUncheckedUpdateManyWithoutTenantNestedInput
     backupLogs?: BackupLogUncheckedUpdateManyWithoutTenantNestedInput
     backupPlans?: BackupPlanUncheckedUpdateManyWithoutTenantNestedInput
   }
@@ -210505,6 +219430,8 @@ export namespace Prisma {
     periodosContables?: PeriodoContableCreateNestedManyWithoutTenantInput
     aperturaPeriodos?: AperturaPeriodoCreateNestedManyWithoutTenantInput
     auditoriaPeriodos?: AuditoriaPeriodoCreateNestedManyWithoutTenantInput
+    turnosPos?: TurnoPuntoVentaCreateNestedManyWithoutTenantInput
+    arqueosCaja?: ArqueoCajaCreateNestedManyWithoutTenantInput
     backupLogs?: BackupLogCreateNestedManyWithoutTenantInput
     backupPlans?: BackupPlanCreateNestedManyWithoutTenantInput
   }
@@ -210572,6 +219499,8 @@ export namespace Prisma {
     periodosContables?: PeriodoContableUncheckedCreateNestedManyWithoutTenantInput
     aperturaPeriodos?: AperturaPeriodoUncheckedCreateNestedManyWithoutTenantInput
     auditoriaPeriodos?: AuditoriaPeriodoUncheckedCreateNestedManyWithoutTenantInput
+    turnosPos?: TurnoPuntoVentaUncheckedCreateNestedManyWithoutTenantInput
+    arqueosCaja?: ArqueoCajaUncheckedCreateNestedManyWithoutTenantInput
     backupLogs?: BackupLogUncheckedCreateNestedManyWithoutTenantInput
     backupPlans?: BackupPlanUncheckedCreateNestedManyWithoutTenantInput
   }
@@ -210786,6 +219715,8 @@ export namespace Prisma {
     periodosContables?: PeriodoContableUpdateManyWithoutTenantNestedInput
     aperturaPeriodos?: AperturaPeriodoUpdateManyWithoutTenantNestedInput
     auditoriaPeriodos?: AuditoriaPeriodoUpdateManyWithoutTenantNestedInput
+    turnosPos?: TurnoPuntoVentaUpdateManyWithoutTenantNestedInput
+    arqueosCaja?: ArqueoCajaUpdateManyWithoutTenantNestedInput
     backupLogs?: BackupLogUpdateManyWithoutTenantNestedInput
     backupPlans?: BackupPlanUpdateManyWithoutTenantNestedInput
   }
@@ -210853,6 +219784,8 @@ export namespace Prisma {
     periodosContables?: PeriodoContableUncheckedUpdateManyWithoutTenantNestedInput
     aperturaPeriodos?: AperturaPeriodoUncheckedUpdateManyWithoutTenantNestedInput
     auditoriaPeriodos?: AuditoriaPeriodoUncheckedUpdateManyWithoutTenantNestedInput
+    turnosPos?: TurnoPuntoVentaUncheckedUpdateManyWithoutTenantNestedInput
+    arqueosCaja?: ArqueoCajaUncheckedUpdateManyWithoutTenantNestedInput
     backupLogs?: BackupLogUncheckedUpdateManyWithoutTenantNestedInput
     backupPlans?: BackupPlanUncheckedUpdateManyWithoutTenantNestedInput
   }
@@ -211174,6 +220107,8 @@ export namespace Prisma {
     periodosContables?: PeriodoContableCreateNestedManyWithoutTenantInput
     aperturaPeriodos?: AperturaPeriodoCreateNestedManyWithoutTenantInput
     auditoriaPeriodos?: AuditoriaPeriodoCreateNestedManyWithoutTenantInput
+    turnosPos?: TurnoPuntoVentaCreateNestedManyWithoutTenantInput
+    arqueosCaja?: ArqueoCajaCreateNestedManyWithoutTenantInput
     backupLogs?: BackupLogCreateNestedManyWithoutTenantInput
     backupPlans?: BackupPlanCreateNestedManyWithoutTenantInput
   }
@@ -211241,6 +220176,8 @@ export namespace Prisma {
     periodosContables?: PeriodoContableUncheckedCreateNestedManyWithoutTenantInput
     aperturaPeriodos?: AperturaPeriodoUncheckedCreateNestedManyWithoutTenantInput
     auditoriaPeriodos?: AuditoriaPeriodoUncheckedCreateNestedManyWithoutTenantInput
+    turnosPos?: TurnoPuntoVentaUncheckedCreateNestedManyWithoutTenantInput
+    arqueosCaja?: ArqueoCajaUncheckedCreateNestedManyWithoutTenantInput
     backupLogs?: BackupLogUncheckedCreateNestedManyWithoutTenantInput
     backupPlans?: BackupPlanUncheckedCreateNestedManyWithoutTenantInput
   }
@@ -211614,6 +220551,8 @@ export namespace Prisma {
     periodosContables?: PeriodoContableUpdateManyWithoutTenantNestedInput
     aperturaPeriodos?: AperturaPeriodoUpdateManyWithoutTenantNestedInput
     auditoriaPeriodos?: AuditoriaPeriodoUpdateManyWithoutTenantNestedInput
+    turnosPos?: TurnoPuntoVentaUpdateManyWithoutTenantNestedInput
+    arqueosCaja?: ArqueoCajaUpdateManyWithoutTenantNestedInput
     backupLogs?: BackupLogUpdateManyWithoutTenantNestedInput
     backupPlans?: BackupPlanUpdateManyWithoutTenantNestedInput
   }
@@ -211681,6 +220620,8 @@ export namespace Prisma {
     periodosContables?: PeriodoContableUncheckedUpdateManyWithoutTenantNestedInput
     aperturaPeriodos?: AperturaPeriodoUncheckedUpdateManyWithoutTenantNestedInput
     auditoriaPeriodos?: AuditoriaPeriodoUncheckedUpdateManyWithoutTenantNestedInput
+    turnosPos?: TurnoPuntoVentaUncheckedUpdateManyWithoutTenantNestedInput
+    arqueosCaja?: ArqueoCajaUncheckedUpdateManyWithoutTenantNestedInput
     backupLogs?: BackupLogUncheckedUpdateManyWithoutTenantNestedInput
     backupPlans?: BackupPlanUncheckedUpdateManyWithoutTenantNestedInput
   }
@@ -211797,6 +220738,8 @@ export namespace Prisma {
     periodosContables?: PeriodoContableCreateNestedManyWithoutTenantInput
     aperturaPeriodos?: AperturaPeriodoCreateNestedManyWithoutTenantInput
     auditoriaPeriodos?: AuditoriaPeriodoCreateNestedManyWithoutTenantInput
+    turnosPos?: TurnoPuntoVentaCreateNestedManyWithoutTenantInput
+    arqueosCaja?: ArqueoCajaCreateNestedManyWithoutTenantInput
     backupLogs?: BackupLogCreateNestedManyWithoutTenantInput
     backupPlans?: BackupPlanCreateNestedManyWithoutTenantInput
   }
@@ -211864,6 +220807,8 @@ export namespace Prisma {
     periodosContables?: PeriodoContableUncheckedCreateNestedManyWithoutTenantInput
     aperturaPeriodos?: AperturaPeriodoUncheckedCreateNestedManyWithoutTenantInput
     auditoriaPeriodos?: AuditoriaPeriodoUncheckedCreateNestedManyWithoutTenantInput
+    turnosPos?: TurnoPuntoVentaUncheckedCreateNestedManyWithoutTenantInput
+    arqueosCaja?: ArqueoCajaUncheckedCreateNestedManyWithoutTenantInput
     backupLogs?: BackupLogUncheckedCreateNestedManyWithoutTenantInput
     backupPlans?: BackupPlanUncheckedCreateNestedManyWithoutTenantInput
   }
@@ -212002,6 +220947,8 @@ export namespace Prisma {
     periodosContables?: PeriodoContableUpdateManyWithoutTenantNestedInput
     aperturaPeriodos?: AperturaPeriodoUpdateManyWithoutTenantNestedInput
     auditoriaPeriodos?: AuditoriaPeriodoUpdateManyWithoutTenantNestedInput
+    turnosPos?: TurnoPuntoVentaUpdateManyWithoutTenantNestedInput
+    arqueosCaja?: ArqueoCajaUpdateManyWithoutTenantNestedInput
     backupLogs?: BackupLogUpdateManyWithoutTenantNestedInput
     backupPlans?: BackupPlanUpdateManyWithoutTenantNestedInput
   }
@@ -212069,6 +221016,8 @@ export namespace Prisma {
     periodosContables?: PeriodoContableUncheckedUpdateManyWithoutTenantNestedInput
     aperturaPeriodos?: AperturaPeriodoUncheckedUpdateManyWithoutTenantNestedInput
     auditoriaPeriodos?: AuditoriaPeriodoUncheckedUpdateManyWithoutTenantNestedInput
+    turnosPos?: TurnoPuntoVentaUncheckedUpdateManyWithoutTenantNestedInput
+    arqueosCaja?: ArqueoCajaUncheckedUpdateManyWithoutTenantNestedInput
     backupLogs?: BackupLogUncheckedUpdateManyWithoutTenantNestedInput
     backupPlans?: BackupPlanUncheckedUpdateManyWithoutTenantNestedInput
   }
@@ -212234,6 +221183,8 @@ export namespace Prisma {
     periodosContables?: PeriodoContableCreateNestedManyWithoutTenantInput
     aperturaPeriodos?: AperturaPeriodoCreateNestedManyWithoutTenantInput
     auditoriaPeriodos?: AuditoriaPeriodoCreateNestedManyWithoutTenantInput
+    turnosPos?: TurnoPuntoVentaCreateNestedManyWithoutTenantInput
+    arqueosCaja?: ArqueoCajaCreateNestedManyWithoutTenantInput
     backupLogs?: BackupLogCreateNestedManyWithoutTenantInput
     backupPlans?: BackupPlanCreateNestedManyWithoutTenantInput
   }
@@ -212301,6 +221252,8 @@ export namespace Prisma {
     periodosContables?: PeriodoContableUncheckedCreateNestedManyWithoutTenantInput
     aperturaPeriodos?: AperturaPeriodoUncheckedCreateNestedManyWithoutTenantInput
     auditoriaPeriodos?: AuditoriaPeriodoUncheckedCreateNestedManyWithoutTenantInput
+    turnosPos?: TurnoPuntoVentaUncheckedCreateNestedManyWithoutTenantInput
+    arqueosCaja?: ArqueoCajaUncheckedCreateNestedManyWithoutTenantInput
     backupLogs?: BackupLogUncheckedCreateNestedManyWithoutTenantInput
     backupPlans?: BackupPlanUncheckedCreateNestedManyWithoutTenantInput
   }
@@ -212494,6 +221447,8 @@ export namespace Prisma {
     periodosContables?: PeriodoContableUpdateManyWithoutTenantNestedInput
     aperturaPeriodos?: AperturaPeriodoUpdateManyWithoutTenantNestedInput
     auditoriaPeriodos?: AuditoriaPeriodoUpdateManyWithoutTenantNestedInput
+    turnosPos?: TurnoPuntoVentaUpdateManyWithoutTenantNestedInput
+    arqueosCaja?: ArqueoCajaUpdateManyWithoutTenantNestedInput
     backupLogs?: BackupLogUpdateManyWithoutTenantNestedInput
     backupPlans?: BackupPlanUpdateManyWithoutTenantNestedInput
   }
@@ -212561,6 +221516,8 @@ export namespace Prisma {
     periodosContables?: PeriodoContableUncheckedUpdateManyWithoutTenantNestedInput
     aperturaPeriodos?: AperturaPeriodoUncheckedUpdateManyWithoutTenantNestedInput
     auditoriaPeriodos?: AuditoriaPeriodoUncheckedUpdateManyWithoutTenantNestedInput
+    turnosPos?: TurnoPuntoVentaUncheckedUpdateManyWithoutTenantNestedInput
+    arqueosCaja?: ArqueoCajaUncheckedUpdateManyWithoutTenantNestedInput
     backupLogs?: BackupLogUncheckedUpdateManyWithoutTenantNestedInput
     backupPlans?: BackupPlanUncheckedUpdateManyWithoutTenantNestedInput
   }
@@ -213110,6 +222067,8 @@ export namespace Prisma {
     periodosContables?: PeriodoContableCreateNestedManyWithoutTenantInput
     aperturaPeriodos?: AperturaPeriodoCreateNestedManyWithoutTenantInput
     auditoriaPeriodos?: AuditoriaPeriodoCreateNestedManyWithoutTenantInput
+    turnosPos?: TurnoPuntoVentaCreateNestedManyWithoutTenantInput
+    arqueosCaja?: ArqueoCajaCreateNestedManyWithoutTenantInput
     backupLogs?: BackupLogCreateNestedManyWithoutTenantInput
     backupPlans?: BackupPlanCreateNestedManyWithoutTenantInput
   }
@@ -213177,6 +222136,8 @@ export namespace Prisma {
     periodosContables?: PeriodoContableUncheckedCreateNestedManyWithoutTenantInput
     aperturaPeriodos?: AperturaPeriodoUncheckedCreateNestedManyWithoutTenantInput
     auditoriaPeriodos?: AuditoriaPeriodoUncheckedCreateNestedManyWithoutTenantInput
+    turnosPos?: TurnoPuntoVentaUncheckedCreateNestedManyWithoutTenantInput
+    arqueosCaja?: ArqueoCajaUncheckedCreateNestedManyWithoutTenantInput
     backupLogs?: BackupLogUncheckedCreateNestedManyWithoutTenantInput
     backupPlans?: BackupPlanUncheckedCreateNestedManyWithoutTenantInput
   }
@@ -213662,6 +222623,8 @@ export namespace Prisma {
     periodosContables?: PeriodoContableUpdateManyWithoutTenantNestedInput
     aperturaPeriodos?: AperturaPeriodoUpdateManyWithoutTenantNestedInput
     auditoriaPeriodos?: AuditoriaPeriodoUpdateManyWithoutTenantNestedInput
+    turnosPos?: TurnoPuntoVentaUpdateManyWithoutTenantNestedInput
+    arqueosCaja?: ArqueoCajaUpdateManyWithoutTenantNestedInput
     backupLogs?: BackupLogUpdateManyWithoutTenantNestedInput
     backupPlans?: BackupPlanUpdateManyWithoutTenantNestedInput
   }
@@ -213729,6 +222692,8 @@ export namespace Prisma {
     periodosContables?: PeriodoContableUncheckedUpdateManyWithoutTenantNestedInput
     aperturaPeriodos?: AperturaPeriodoUncheckedUpdateManyWithoutTenantNestedInput
     auditoriaPeriodos?: AuditoriaPeriodoUncheckedUpdateManyWithoutTenantNestedInput
+    turnosPos?: TurnoPuntoVentaUncheckedUpdateManyWithoutTenantNestedInput
+    arqueosCaja?: ArqueoCajaUncheckedUpdateManyWithoutTenantNestedInput
     backupLogs?: BackupLogUncheckedUpdateManyWithoutTenantNestedInput
     backupPlans?: BackupPlanUncheckedUpdateManyWithoutTenantNestedInput
   }
@@ -215605,6 +224570,11 @@ export namespace Prisma {
     observaciones?: string | null
     esVentaUnica?: boolean
     ventaPadreId?: string | null
+    metodoPago?: $Enums.MetodoPagoVenta | null
+    montoEfectivo?: number | null
+    montoTarjeta?: number | null
+    montoTransferencia?: number | null
+    montoCredito?: number | null
     ordenReparacion?: OrdenReparacionCreateNestedOneWithoutVentaInput
     reconciliaciones?: ReconciliacionVentaCreateNestedManyWithoutVentaInput
     cliente?: ClienteCreateNestedOneWithoutVentaInput
@@ -215612,6 +224582,7 @@ export namespace Prisma {
     oferta?: OfertaCreateNestedOneWithoutVentaInput
     producto?: ProductoCreateNestedOneWithoutVentasInput
     puntoDeVenta: PuntoDeVentaCreateNestedOneWithoutVentasInput
+    turno?: TurnoPuntoVentaCreateNestedOneWithoutVentasInput
     items?: VentaItemCreateNestedManyWithoutVentaInput
     tenant: TenantCreateNestedOneWithoutVentasInput
   }
@@ -215633,6 +224604,12 @@ export namespace Prisma {
     esVentaUnica?: boolean
     ofertaId?: string | null
     ventaPadreId?: string | null
+    turnoId?: string | null
+    metodoPago?: $Enums.MetodoPagoVenta | null
+    montoEfectivo?: number | null
+    montoTarjeta?: number | null
+    montoTransferencia?: number | null
+    montoCredito?: number | null
     ordenReparacion?: OrdenReparacionUncheckedCreateNestedOneWithoutVentaInput
     reconciliaciones?: ReconciliacionVentaUncheckedCreateNestedManyWithoutVentaInput
     items?: VentaItemUncheckedCreateNestedManyWithoutVentaInput
@@ -215706,6 +224683,8 @@ export namespace Prisma {
     periodosContables?: PeriodoContableCreateNestedManyWithoutTenantInput
     aperturaPeriodos?: AperturaPeriodoCreateNestedManyWithoutTenantInput
     auditoriaPeriodos?: AuditoriaPeriodoCreateNestedManyWithoutTenantInput
+    turnosPos?: TurnoPuntoVentaCreateNestedManyWithoutTenantInput
+    arqueosCaja?: ArqueoCajaCreateNestedManyWithoutTenantInput
     backupLogs?: BackupLogCreateNestedManyWithoutTenantInput
     backupPlans?: BackupPlanCreateNestedManyWithoutTenantInput
   }
@@ -215773,6 +224752,8 @@ export namespace Prisma {
     periodosContables?: PeriodoContableUncheckedCreateNestedManyWithoutTenantInput
     aperturaPeriodos?: AperturaPeriodoUncheckedCreateNestedManyWithoutTenantInput
     auditoriaPeriodos?: AuditoriaPeriodoUncheckedCreateNestedManyWithoutTenantInput
+    turnosPos?: TurnoPuntoVentaUncheckedCreateNestedManyWithoutTenantInput
+    arqueosCaja?: ArqueoCajaUncheckedCreateNestedManyWithoutTenantInput
     backupLogs?: BackupLogUncheckedCreateNestedManyWithoutTenantInput
     backupPlans?: BackupPlanUncheckedCreateNestedManyWithoutTenantInput
   }
@@ -216053,6 +225034,11 @@ export namespace Prisma {
     observaciones?: NullableStringFieldUpdateOperationsInput | string | null
     esVentaUnica?: BoolFieldUpdateOperationsInput | boolean
     ventaPadreId?: NullableStringFieldUpdateOperationsInput | string | null
+    metodoPago?: NullableEnumMetodoPagoVentaFieldUpdateOperationsInput | $Enums.MetodoPagoVenta | null
+    montoEfectivo?: NullableIntFieldUpdateOperationsInput | number | null
+    montoTarjeta?: NullableIntFieldUpdateOperationsInput | number | null
+    montoTransferencia?: NullableIntFieldUpdateOperationsInput | number | null
+    montoCredito?: NullableIntFieldUpdateOperationsInput | number | null
     ordenReparacion?: OrdenReparacionUpdateOneWithoutVentaNestedInput
     reconciliaciones?: ReconciliacionVentaUpdateManyWithoutVentaNestedInput
     cliente?: ClienteUpdateOneWithoutVentaNestedInput
@@ -216060,6 +225046,7 @@ export namespace Prisma {
     oferta?: OfertaUpdateOneWithoutVentaNestedInput
     producto?: ProductoUpdateOneWithoutVentasNestedInput
     puntoDeVenta?: PuntoDeVentaUpdateOneRequiredWithoutVentasNestedInput
+    turno?: TurnoPuntoVentaUpdateOneWithoutVentasNestedInput
     items?: VentaItemUpdateManyWithoutVentaNestedInput
     tenant?: TenantUpdateOneRequiredWithoutVentasNestedInput
   }
@@ -216081,6 +225068,12 @@ export namespace Prisma {
     esVentaUnica?: BoolFieldUpdateOperationsInput | boolean
     ofertaId?: NullableStringFieldUpdateOperationsInput | string | null
     ventaPadreId?: NullableStringFieldUpdateOperationsInput | string | null
+    turnoId?: NullableStringFieldUpdateOperationsInput | string | null
+    metodoPago?: NullableEnumMetodoPagoVentaFieldUpdateOperationsInput | $Enums.MetodoPagoVenta | null
+    montoEfectivo?: NullableIntFieldUpdateOperationsInput | number | null
+    montoTarjeta?: NullableIntFieldUpdateOperationsInput | number | null
+    montoTransferencia?: NullableIntFieldUpdateOperationsInput | number | null
+    montoCredito?: NullableIntFieldUpdateOperationsInput | number | null
     ordenReparacion?: OrdenReparacionUncheckedUpdateOneWithoutVentaNestedInput
     reconciliaciones?: ReconciliacionVentaUncheckedUpdateManyWithoutVentaNestedInput
     items?: VentaItemUncheckedUpdateManyWithoutVentaNestedInput
@@ -216160,6 +225153,8 @@ export namespace Prisma {
     periodosContables?: PeriodoContableUpdateManyWithoutTenantNestedInput
     aperturaPeriodos?: AperturaPeriodoUpdateManyWithoutTenantNestedInput
     auditoriaPeriodos?: AuditoriaPeriodoUpdateManyWithoutTenantNestedInput
+    turnosPos?: TurnoPuntoVentaUpdateManyWithoutTenantNestedInput
+    arqueosCaja?: ArqueoCajaUpdateManyWithoutTenantNestedInput
     backupLogs?: BackupLogUpdateManyWithoutTenantNestedInput
     backupPlans?: BackupPlanUpdateManyWithoutTenantNestedInput
   }
@@ -216227,6 +225222,8 @@ export namespace Prisma {
     periodosContables?: PeriodoContableUncheckedUpdateManyWithoutTenantNestedInput
     aperturaPeriodos?: AperturaPeriodoUncheckedUpdateManyWithoutTenantNestedInput
     auditoriaPeriodos?: AuditoriaPeriodoUncheckedUpdateManyWithoutTenantNestedInput
+    turnosPos?: TurnoPuntoVentaUncheckedUpdateManyWithoutTenantNestedInput
+    arqueosCaja?: ArqueoCajaUncheckedUpdateManyWithoutTenantNestedInput
     backupLogs?: BackupLogUncheckedUpdateManyWithoutTenantNestedInput
     backupPlans?: BackupPlanUncheckedUpdateManyWithoutTenantNestedInput
   }
@@ -216364,6 +225361,8 @@ export namespace Prisma {
     periodosContables?: PeriodoContableCreateNestedManyWithoutTenantInput
     aperturaPeriodos?: AperturaPeriodoCreateNestedManyWithoutTenantInput
     auditoriaPeriodos?: AuditoriaPeriodoCreateNestedManyWithoutTenantInput
+    turnosPos?: TurnoPuntoVentaCreateNestedManyWithoutTenantInput
+    arqueosCaja?: ArqueoCajaCreateNestedManyWithoutTenantInput
     backupLogs?: BackupLogCreateNestedManyWithoutTenantInput
     backupPlans?: BackupPlanCreateNestedManyWithoutTenantInput
   }
@@ -216431,6 +225430,8 @@ export namespace Prisma {
     periodosContables?: PeriodoContableUncheckedCreateNestedManyWithoutTenantInput
     aperturaPeriodos?: AperturaPeriodoUncheckedCreateNestedManyWithoutTenantInput
     auditoriaPeriodos?: AuditoriaPeriodoUncheckedCreateNestedManyWithoutTenantInput
+    turnosPos?: TurnoPuntoVentaUncheckedCreateNestedManyWithoutTenantInput
+    arqueosCaja?: ArqueoCajaUncheckedCreateNestedManyWithoutTenantInput
     backupLogs?: BackupLogUncheckedCreateNestedManyWithoutTenantInput
     backupPlans?: BackupPlanUncheckedCreateNestedManyWithoutTenantInput
   }
@@ -216530,6 +225531,8 @@ export namespace Prisma {
     periodosContables?: PeriodoContableUpdateManyWithoutTenantNestedInput
     aperturaPeriodos?: AperturaPeriodoUpdateManyWithoutTenantNestedInput
     auditoriaPeriodos?: AuditoriaPeriodoUpdateManyWithoutTenantNestedInput
+    turnosPos?: TurnoPuntoVentaUpdateManyWithoutTenantNestedInput
+    arqueosCaja?: ArqueoCajaUpdateManyWithoutTenantNestedInput
     backupLogs?: BackupLogUpdateManyWithoutTenantNestedInput
     backupPlans?: BackupPlanUpdateManyWithoutTenantNestedInput
   }
@@ -216597,6 +225600,8 @@ export namespace Prisma {
     periodosContables?: PeriodoContableUncheckedUpdateManyWithoutTenantNestedInput
     aperturaPeriodos?: AperturaPeriodoUncheckedUpdateManyWithoutTenantNestedInput
     auditoriaPeriodos?: AuditoriaPeriodoUncheckedUpdateManyWithoutTenantNestedInput
+    turnosPos?: TurnoPuntoVentaUncheckedUpdateManyWithoutTenantNestedInput
+    arqueosCaja?: ArqueoCajaUncheckedUpdateManyWithoutTenantNestedInput
     backupLogs?: BackupLogUncheckedUpdateManyWithoutTenantNestedInput
     backupPlans?: BackupPlanUncheckedUpdateManyWithoutTenantNestedInput
   }
@@ -216689,12 +225694,18 @@ export namespace Prisma {
     observaciones?: string | null
     esVentaUnica?: boolean
     ventaPadreId?: string | null
+    metodoPago?: $Enums.MetodoPagoVenta | null
+    montoEfectivo?: number | null
+    montoTarjeta?: number | null
+    montoTransferencia?: number | null
+    montoCredito?: number | null
     ordenReparacion?: OrdenReparacionCreateNestedOneWithoutVentaInput
     reconciliaciones?: ReconciliacionVentaCreateNestedManyWithoutVentaInput
     cliente?: ClienteCreateNestedOneWithoutVentaInput
     empleado?: EmpleadoCreateNestedOneWithoutVentasInput
     producto?: ProductoCreateNestedOneWithoutVentasInput
     puntoDeVenta: PuntoDeVentaCreateNestedOneWithoutVentasInput
+    turno?: TurnoPuntoVentaCreateNestedOneWithoutVentasInput
     factura?: FacturaCreateNestedOneWithoutVentaInput
     items?: VentaItemCreateNestedManyWithoutVentaInput
     tenant: TenantCreateNestedOneWithoutVentasInput
@@ -216716,6 +225727,12 @@ export namespace Prisma {
     observaciones?: string | null
     esVentaUnica?: boolean
     ventaPadreId?: string | null
+    turnoId?: string | null
+    metodoPago?: $Enums.MetodoPagoVenta | null
+    montoEfectivo?: number | null
+    montoTarjeta?: number | null
+    montoTransferencia?: number | null
+    montoCredito?: number | null
     ordenReparacion?: OrdenReparacionUncheckedCreateNestedOneWithoutVentaInput
     reconciliaciones?: ReconciliacionVentaUncheckedCreateNestedManyWithoutVentaInput
     factura?: FacturaUncheckedCreateNestedOneWithoutVentaInput
@@ -216790,6 +225807,8 @@ export namespace Prisma {
     periodosContables?: PeriodoContableCreateNestedManyWithoutTenantInput
     aperturaPeriodos?: AperturaPeriodoCreateNestedManyWithoutTenantInput
     auditoriaPeriodos?: AuditoriaPeriodoCreateNestedManyWithoutTenantInput
+    turnosPos?: TurnoPuntoVentaCreateNestedManyWithoutTenantInput
+    arqueosCaja?: ArqueoCajaCreateNestedManyWithoutTenantInput
     backupLogs?: BackupLogCreateNestedManyWithoutTenantInput
     backupPlans?: BackupPlanCreateNestedManyWithoutTenantInput
   }
@@ -216857,6 +225876,8 @@ export namespace Prisma {
     periodosContables?: PeriodoContableUncheckedCreateNestedManyWithoutTenantInput
     aperturaPeriodos?: AperturaPeriodoUncheckedCreateNestedManyWithoutTenantInput
     auditoriaPeriodos?: AuditoriaPeriodoUncheckedCreateNestedManyWithoutTenantInput
+    turnosPos?: TurnoPuntoVentaUncheckedCreateNestedManyWithoutTenantInput
+    arqueosCaja?: ArqueoCajaUncheckedCreateNestedManyWithoutTenantInput
     backupLogs?: BackupLogUncheckedCreateNestedManyWithoutTenantInput
     backupPlans?: BackupPlanUncheckedCreateNestedManyWithoutTenantInput
   }
@@ -216959,12 +225980,18 @@ export namespace Prisma {
     observaciones?: NullableStringFieldUpdateOperationsInput | string | null
     esVentaUnica?: BoolFieldUpdateOperationsInput | boolean
     ventaPadreId?: NullableStringFieldUpdateOperationsInput | string | null
+    metodoPago?: NullableEnumMetodoPagoVentaFieldUpdateOperationsInput | $Enums.MetodoPagoVenta | null
+    montoEfectivo?: NullableIntFieldUpdateOperationsInput | number | null
+    montoTarjeta?: NullableIntFieldUpdateOperationsInput | number | null
+    montoTransferencia?: NullableIntFieldUpdateOperationsInput | number | null
+    montoCredito?: NullableIntFieldUpdateOperationsInput | number | null
     ordenReparacion?: OrdenReparacionUpdateOneWithoutVentaNestedInput
     reconciliaciones?: ReconciliacionVentaUpdateManyWithoutVentaNestedInput
     cliente?: ClienteUpdateOneWithoutVentaNestedInput
     empleado?: EmpleadoUpdateOneWithoutVentasNestedInput
     producto?: ProductoUpdateOneWithoutVentasNestedInput
     puntoDeVenta?: PuntoDeVentaUpdateOneRequiredWithoutVentasNestedInput
+    turno?: TurnoPuntoVentaUpdateOneWithoutVentasNestedInput
     factura?: FacturaUpdateOneWithoutVentaNestedInput
     items?: VentaItemUpdateManyWithoutVentaNestedInput
     tenant?: TenantUpdateOneRequiredWithoutVentasNestedInput
@@ -216986,6 +226013,12 @@ export namespace Prisma {
     observaciones?: NullableStringFieldUpdateOperationsInput | string | null
     esVentaUnica?: BoolFieldUpdateOperationsInput | boolean
     ventaPadreId?: NullableStringFieldUpdateOperationsInput | string | null
+    turnoId?: NullableStringFieldUpdateOperationsInput | string | null
+    metodoPago?: NullableEnumMetodoPagoVentaFieldUpdateOperationsInput | $Enums.MetodoPagoVenta | null
+    montoEfectivo?: NullableIntFieldUpdateOperationsInput | number | null
+    montoTarjeta?: NullableIntFieldUpdateOperationsInput | number | null
+    montoTransferencia?: NullableIntFieldUpdateOperationsInput | number | null
+    montoCredito?: NullableIntFieldUpdateOperationsInput | number | null
     ordenReparacion?: OrdenReparacionUncheckedUpdateOneWithoutVentaNestedInput
     reconciliaciones?: ReconciliacionVentaUncheckedUpdateManyWithoutVentaNestedInput
     factura?: FacturaUncheckedUpdateOneWithoutVentaNestedInput
@@ -217066,6 +226099,8 @@ export namespace Prisma {
     periodosContables?: PeriodoContableUpdateManyWithoutTenantNestedInput
     aperturaPeriodos?: AperturaPeriodoUpdateManyWithoutTenantNestedInput
     auditoriaPeriodos?: AuditoriaPeriodoUpdateManyWithoutTenantNestedInput
+    turnosPos?: TurnoPuntoVentaUpdateManyWithoutTenantNestedInput
+    arqueosCaja?: ArqueoCajaUpdateManyWithoutTenantNestedInput
     backupLogs?: BackupLogUpdateManyWithoutTenantNestedInput
     backupPlans?: BackupPlanUpdateManyWithoutTenantNestedInput
   }
@@ -217133,6 +226168,8 @@ export namespace Prisma {
     periodosContables?: PeriodoContableUncheckedUpdateManyWithoutTenantNestedInput
     aperturaPeriodos?: AperturaPeriodoUncheckedUpdateManyWithoutTenantNestedInput
     auditoriaPeriodos?: AuditoriaPeriodoUncheckedUpdateManyWithoutTenantNestedInput
+    turnosPos?: TurnoPuntoVentaUncheckedUpdateManyWithoutTenantNestedInput
+    arqueosCaja?: ArqueoCajaUncheckedUpdateManyWithoutTenantNestedInput
     backupLogs?: BackupLogUncheckedUpdateManyWithoutTenantNestedInput
     backupPlans?: BackupPlanUncheckedUpdateManyWithoutTenantNestedInput
   }
@@ -217709,6 +226746,8 @@ export namespace Prisma {
     periodosContables?: PeriodoContableCreateNestedManyWithoutTenantInput
     aperturaPeriodos?: AperturaPeriodoCreateNestedManyWithoutTenantInput
     auditoriaPeriodos?: AuditoriaPeriodoCreateNestedManyWithoutTenantInput
+    turnosPos?: TurnoPuntoVentaCreateNestedManyWithoutTenantInput
+    arqueosCaja?: ArqueoCajaCreateNestedManyWithoutTenantInput
     backupLogs?: BackupLogCreateNestedManyWithoutTenantInput
     backupPlans?: BackupPlanCreateNestedManyWithoutTenantInput
   }
@@ -217776,6 +226815,8 @@ export namespace Prisma {
     periodosContables?: PeriodoContableUncheckedCreateNestedManyWithoutTenantInput
     aperturaPeriodos?: AperturaPeriodoUncheckedCreateNestedManyWithoutTenantInput
     auditoriaPeriodos?: AuditoriaPeriodoUncheckedCreateNestedManyWithoutTenantInput
+    turnosPos?: TurnoPuntoVentaUncheckedCreateNestedManyWithoutTenantInput
+    arqueosCaja?: ArqueoCajaUncheckedCreateNestedManyWithoutTenantInput
     backupLogs?: BackupLogUncheckedCreateNestedManyWithoutTenantInput
     backupPlans?: BackupPlanUncheckedCreateNestedManyWithoutTenantInput
   }
@@ -218038,6 +227079,8 @@ export namespace Prisma {
     periodosContables?: PeriodoContableUpdateManyWithoutTenantNestedInput
     aperturaPeriodos?: AperturaPeriodoUpdateManyWithoutTenantNestedInput
     auditoriaPeriodos?: AuditoriaPeriodoUpdateManyWithoutTenantNestedInput
+    turnosPos?: TurnoPuntoVentaUpdateManyWithoutTenantNestedInput
+    arqueosCaja?: ArqueoCajaUpdateManyWithoutTenantNestedInput
     backupLogs?: BackupLogUpdateManyWithoutTenantNestedInput
     backupPlans?: BackupPlanUpdateManyWithoutTenantNestedInput
   }
@@ -218105,6 +227148,8 @@ export namespace Prisma {
     periodosContables?: PeriodoContableUncheckedUpdateManyWithoutTenantNestedInput
     aperturaPeriodos?: AperturaPeriodoUncheckedUpdateManyWithoutTenantNestedInput
     auditoriaPeriodos?: AuditoriaPeriodoUncheckedUpdateManyWithoutTenantNestedInput
+    turnosPos?: TurnoPuntoVentaUncheckedUpdateManyWithoutTenantNestedInput
+    arqueosCaja?: ArqueoCajaUncheckedUpdateManyWithoutTenantNestedInput
     backupLogs?: BackupLogUncheckedUpdateManyWithoutTenantNestedInput
     backupPlans?: BackupPlanUncheckedUpdateManyWithoutTenantNestedInput
   }
@@ -218544,6 +227589,8 @@ export namespace Prisma {
     periodosContables?: PeriodoContableCreateNestedManyWithoutTenantInput
     aperturaPeriodos?: AperturaPeriodoCreateNestedManyWithoutTenantInput
     auditoriaPeriodos?: AuditoriaPeriodoCreateNestedManyWithoutTenantInput
+    turnosPos?: TurnoPuntoVentaCreateNestedManyWithoutTenantInput
+    arqueosCaja?: ArqueoCajaCreateNestedManyWithoutTenantInput
     backupLogs?: BackupLogCreateNestedManyWithoutTenantInput
     backupPlans?: BackupPlanCreateNestedManyWithoutTenantInput
   }
@@ -218611,6 +227658,8 @@ export namespace Prisma {
     periodosContables?: PeriodoContableUncheckedCreateNestedManyWithoutTenantInput
     aperturaPeriodos?: AperturaPeriodoUncheckedCreateNestedManyWithoutTenantInput
     auditoriaPeriodos?: AuditoriaPeriodoUncheckedCreateNestedManyWithoutTenantInput
+    turnosPos?: TurnoPuntoVentaUncheckedCreateNestedManyWithoutTenantInput
+    arqueosCaja?: ArqueoCajaUncheckedCreateNestedManyWithoutTenantInput
     backupLogs?: BackupLogUncheckedCreateNestedManyWithoutTenantInput
     backupPlans?: BackupPlanUncheckedCreateNestedManyWithoutTenantInput
   }
@@ -219040,6 +228089,8 @@ export namespace Prisma {
     periodosContables?: PeriodoContableUpdateManyWithoutTenantNestedInput
     aperturaPeriodos?: AperturaPeriodoUpdateManyWithoutTenantNestedInput
     auditoriaPeriodos?: AuditoriaPeriodoUpdateManyWithoutTenantNestedInput
+    turnosPos?: TurnoPuntoVentaUpdateManyWithoutTenantNestedInput
+    arqueosCaja?: ArqueoCajaUpdateManyWithoutTenantNestedInput
     backupLogs?: BackupLogUpdateManyWithoutTenantNestedInput
     backupPlans?: BackupPlanUpdateManyWithoutTenantNestedInput
   }
@@ -219107,6 +228158,8 @@ export namespace Prisma {
     periodosContables?: PeriodoContableUncheckedUpdateManyWithoutTenantNestedInput
     aperturaPeriodos?: AperturaPeriodoUncheckedUpdateManyWithoutTenantNestedInput
     auditoriaPeriodos?: AuditoriaPeriodoUncheckedUpdateManyWithoutTenantNestedInput
+    turnosPos?: TurnoPuntoVentaUncheckedUpdateManyWithoutTenantNestedInput
+    arqueosCaja?: ArqueoCajaUncheckedUpdateManyWithoutTenantNestedInput
     backupLogs?: BackupLogUncheckedUpdateManyWithoutTenantNestedInput
     backupPlans?: BackupPlanUncheckedUpdateManyWithoutTenantNestedInput
   }
@@ -219336,6 +228389,8 @@ export namespace Prisma {
     periodosContables?: PeriodoContableCreateNestedManyWithoutTenantInput
     aperturaPeriodos?: AperturaPeriodoCreateNestedManyWithoutTenantInput
     auditoriaPeriodos?: AuditoriaPeriodoCreateNestedManyWithoutTenantInput
+    turnosPos?: TurnoPuntoVentaCreateNestedManyWithoutTenantInput
+    arqueosCaja?: ArqueoCajaCreateNestedManyWithoutTenantInput
     backupLogs?: BackupLogCreateNestedManyWithoutTenantInput
     backupPlans?: BackupPlanCreateNestedManyWithoutTenantInput
   }
@@ -219403,6 +228458,8 @@ export namespace Prisma {
     periodosContables?: PeriodoContableUncheckedCreateNestedManyWithoutTenantInput
     aperturaPeriodos?: AperturaPeriodoUncheckedCreateNestedManyWithoutTenantInput
     auditoriaPeriodos?: AuditoriaPeriodoUncheckedCreateNestedManyWithoutTenantInput
+    turnosPos?: TurnoPuntoVentaUncheckedCreateNestedManyWithoutTenantInput
+    arqueosCaja?: ArqueoCajaUncheckedCreateNestedManyWithoutTenantInput
     backupLogs?: BackupLogUncheckedCreateNestedManyWithoutTenantInput
     backupPlans?: BackupPlanUncheckedCreateNestedManyWithoutTenantInput
   }
@@ -219624,6 +228681,8 @@ export namespace Prisma {
     periodosContables?: PeriodoContableUpdateManyWithoutTenantNestedInput
     aperturaPeriodos?: AperturaPeriodoUpdateManyWithoutTenantNestedInput
     auditoriaPeriodos?: AuditoriaPeriodoUpdateManyWithoutTenantNestedInput
+    turnosPos?: TurnoPuntoVentaUpdateManyWithoutTenantNestedInput
+    arqueosCaja?: ArqueoCajaUpdateManyWithoutTenantNestedInput
     backupLogs?: BackupLogUpdateManyWithoutTenantNestedInput
     backupPlans?: BackupPlanUpdateManyWithoutTenantNestedInput
   }
@@ -219691,6 +228750,8 @@ export namespace Prisma {
     periodosContables?: PeriodoContableUncheckedUpdateManyWithoutTenantNestedInput
     aperturaPeriodos?: AperturaPeriodoUncheckedUpdateManyWithoutTenantNestedInput
     auditoriaPeriodos?: AuditoriaPeriodoUncheckedUpdateManyWithoutTenantNestedInput
+    turnosPos?: TurnoPuntoVentaUncheckedUpdateManyWithoutTenantNestedInput
+    arqueosCaja?: ArqueoCajaUncheckedUpdateManyWithoutTenantNestedInput
     backupLogs?: BackupLogUncheckedUpdateManyWithoutTenantNestedInput
     backupPlans?: BackupPlanUncheckedUpdateManyWithoutTenantNestedInput
   }
@@ -219898,6 +228959,8 @@ export namespace Prisma {
     periodosContables?: PeriodoContableCreateNestedManyWithoutTenantInput
     aperturaPeriodos?: AperturaPeriodoCreateNestedManyWithoutTenantInput
     auditoriaPeriodos?: AuditoriaPeriodoCreateNestedManyWithoutTenantInput
+    turnosPos?: TurnoPuntoVentaCreateNestedManyWithoutTenantInput
+    arqueosCaja?: ArqueoCajaCreateNestedManyWithoutTenantInput
     backupLogs?: BackupLogCreateNestedManyWithoutTenantInput
     backupPlans?: BackupPlanCreateNestedManyWithoutTenantInput
   }
@@ -219965,6 +229028,8 @@ export namespace Prisma {
     periodosContables?: PeriodoContableUncheckedCreateNestedManyWithoutTenantInput
     aperturaPeriodos?: AperturaPeriodoUncheckedCreateNestedManyWithoutTenantInput
     auditoriaPeriodos?: AuditoriaPeriodoUncheckedCreateNestedManyWithoutTenantInput
+    turnosPos?: TurnoPuntoVentaUncheckedCreateNestedManyWithoutTenantInput
+    arqueosCaja?: ArqueoCajaUncheckedCreateNestedManyWithoutTenantInput
     backupLogs?: BackupLogUncheckedCreateNestedManyWithoutTenantInput
     backupPlans?: BackupPlanUncheckedCreateNestedManyWithoutTenantInput
   }
@@ -220164,6 +229229,8 @@ export namespace Prisma {
     periodosContables?: PeriodoContableUpdateManyWithoutTenantNestedInput
     aperturaPeriodos?: AperturaPeriodoUpdateManyWithoutTenantNestedInput
     auditoriaPeriodos?: AuditoriaPeriodoUpdateManyWithoutTenantNestedInput
+    turnosPos?: TurnoPuntoVentaUpdateManyWithoutTenantNestedInput
+    arqueosCaja?: ArqueoCajaUpdateManyWithoutTenantNestedInput
     backupLogs?: BackupLogUpdateManyWithoutTenantNestedInput
     backupPlans?: BackupPlanUpdateManyWithoutTenantNestedInput
   }
@@ -220231,6 +229298,8 @@ export namespace Prisma {
     periodosContables?: PeriodoContableUncheckedUpdateManyWithoutTenantNestedInput
     aperturaPeriodos?: AperturaPeriodoUncheckedUpdateManyWithoutTenantNestedInput
     auditoriaPeriodos?: AuditoriaPeriodoUncheckedUpdateManyWithoutTenantNestedInput
+    turnosPos?: TurnoPuntoVentaUncheckedUpdateManyWithoutTenantNestedInput
+    arqueosCaja?: ArqueoCajaUncheckedUpdateManyWithoutTenantNestedInput
     backupLogs?: BackupLogUncheckedUpdateManyWithoutTenantNestedInput
     backupPlans?: BackupPlanUncheckedUpdateManyWithoutTenantNestedInput
   }
@@ -220355,6 +229424,8 @@ export namespace Prisma {
     periodosContables?: PeriodoContableCreateNestedManyWithoutTenantInput
     aperturaPeriodos?: AperturaPeriodoCreateNestedManyWithoutTenantInput
     auditoriaPeriodos?: AuditoriaPeriodoCreateNestedManyWithoutTenantInput
+    turnosPos?: TurnoPuntoVentaCreateNestedManyWithoutTenantInput
+    arqueosCaja?: ArqueoCajaCreateNestedManyWithoutTenantInput
     backupLogs?: BackupLogCreateNestedManyWithoutTenantInput
     backupPlans?: BackupPlanCreateNestedManyWithoutTenantInput
   }
@@ -220422,6 +229493,8 @@ export namespace Prisma {
     periodosContables?: PeriodoContableUncheckedCreateNestedManyWithoutTenantInput
     aperturaPeriodos?: AperturaPeriodoUncheckedCreateNestedManyWithoutTenantInput
     auditoriaPeriodos?: AuditoriaPeriodoUncheckedCreateNestedManyWithoutTenantInput
+    turnosPos?: TurnoPuntoVentaUncheckedCreateNestedManyWithoutTenantInput
+    arqueosCaja?: ArqueoCajaUncheckedCreateNestedManyWithoutTenantInput
     backupLogs?: BackupLogUncheckedCreateNestedManyWithoutTenantInput
     backupPlans?: BackupPlanUncheckedCreateNestedManyWithoutTenantInput
   }
@@ -220568,6 +229641,8 @@ export namespace Prisma {
     periodosContables?: PeriodoContableUpdateManyWithoutTenantNestedInput
     aperturaPeriodos?: AperturaPeriodoUpdateManyWithoutTenantNestedInput
     auditoriaPeriodos?: AuditoriaPeriodoUpdateManyWithoutTenantNestedInput
+    turnosPos?: TurnoPuntoVentaUpdateManyWithoutTenantNestedInput
+    arqueosCaja?: ArqueoCajaUpdateManyWithoutTenantNestedInput
     backupLogs?: BackupLogUpdateManyWithoutTenantNestedInput
     backupPlans?: BackupPlanUpdateManyWithoutTenantNestedInput
   }
@@ -220635,6 +229710,8 @@ export namespace Prisma {
     periodosContables?: PeriodoContableUncheckedUpdateManyWithoutTenantNestedInput
     aperturaPeriodos?: AperturaPeriodoUncheckedUpdateManyWithoutTenantNestedInput
     auditoriaPeriodos?: AuditoriaPeriodoUncheckedUpdateManyWithoutTenantNestedInput
+    turnosPos?: TurnoPuntoVentaUncheckedUpdateManyWithoutTenantNestedInput
+    arqueosCaja?: ArqueoCajaUncheckedUpdateManyWithoutTenantNestedInput
     backupLogs?: BackupLogUncheckedUpdateManyWithoutTenantNestedInput
     backupPlans?: BackupPlanUncheckedUpdateManyWithoutTenantNestedInput
   }
@@ -220854,6 +229931,8 @@ export namespace Prisma {
     periodosContables?: PeriodoContableCreateNestedManyWithoutTenantInput
     aperturaPeriodos?: AperturaPeriodoCreateNestedManyWithoutTenantInput
     auditoriaPeriodos?: AuditoriaPeriodoCreateNestedManyWithoutTenantInput
+    turnosPos?: TurnoPuntoVentaCreateNestedManyWithoutTenantInput
+    arqueosCaja?: ArqueoCajaCreateNestedManyWithoutTenantInput
     backupLogs?: BackupLogCreateNestedManyWithoutTenantInput
     backupPlans?: BackupPlanCreateNestedManyWithoutTenantInput
   }
@@ -220921,6 +230000,8 @@ export namespace Prisma {
     periodosContables?: PeriodoContableUncheckedCreateNestedManyWithoutTenantInput
     aperturaPeriodos?: AperturaPeriodoUncheckedCreateNestedManyWithoutTenantInput
     auditoriaPeriodos?: AuditoriaPeriodoUncheckedCreateNestedManyWithoutTenantInput
+    turnosPos?: TurnoPuntoVentaUncheckedCreateNestedManyWithoutTenantInput
+    arqueosCaja?: ArqueoCajaUncheckedCreateNestedManyWithoutTenantInput
     backupLogs?: BackupLogUncheckedCreateNestedManyWithoutTenantInput
     backupPlans?: BackupPlanUncheckedCreateNestedManyWithoutTenantInput
   }
@@ -221052,6 +230133,8 @@ export namespace Prisma {
     periodosContables?: PeriodoContableUpdateManyWithoutTenantNestedInput
     aperturaPeriodos?: AperturaPeriodoUpdateManyWithoutTenantNestedInput
     auditoriaPeriodos?: AuditoriaPeriodoUpdateManyWithoutTenantNestedInput
+    turnosPos?: TurnoPuntoVentaUpdateManyWithoutTenantNestedInput
+    arqueosCaja?: ArqueoCajaUpdateManyWithoutTenantNestedInput
     backupLogs?: BackupLogUpdateManyWithoutTenantNestedInput
     backupPlans?: BackupPlanUpdateManyWithoutTenantNestedInput
   }
@@ -221119,6 +230202,8 @@ export namespace Prisma {
     periodosContables?: PeriodoContableUncheckedUpdateManyWithoutTenantNestedInput
     aperturaPeriodos?: AperturaPeriodoUncheckedUpdateManyWithoutTenantNestedInput
     auditoriaPeriodos?: AuditoriaPeriodoUncheckedUpdateManyWithoutTenantNestedInput
+    turnosPos?: TurnoPuntoVentaUncheckedUpdateManyWithoutTenantNestedInput
+    arqueosCaja?: ArqueoCajaUncheckedUpdateManyWithoutTenantNestedInput
     backupLogs?: BackupLogUncheckedUpdateManyWithoutTenantNestedInput
     backupPlans?: BackupPlanUncheckedUpdateManyWithoutTenantNestedInput
   }
@@ -221247,6 +230332,8 @@ export namespace Prisma {
     periodosContables?: PeriodoContableCreateNestedManyWithoutTenantInput
     aperturaPeriodos?: AperturaPeriodoCreateNestedManyWithoutTenantInput
     auditoriaPeriodos?: AuditoriaPeriodoCreateNestedManyWithoutTenantInput
+    turnosPos?: TurnoPuntoVentaCreateNestedManyWithoutTenantInput
+    arqueosCaja?: ArqueoCajaCreateNestedManyWithoutTenantInput
     backupLogs?: BackupLogCreateNestedManyWithoutTenantInput
     backupPlans?: BackupPlanCreateNestedManyWithoutTenantInput
   }
@@ -221314,6 +230401,8 @@ export namespace Prisma {
     periodosContables?: PeriodoContableUncheckedCreateNestedManyWithoutTenantInput
     aperturaPeriodos?: AperturaPeriodoUncheckedCreateNestedManyWithoutTenantInput
     auditoriaPeriodos?: AuditoriaPeriodoUncheckedCreateNestedManyWithoutTenantInput
+    turnosPos?: TurnoPuntoVentaUncheckedCreateNestedManyWithoutTenantInput
+    arqueosCaja?: ArqueoCajaUncheckedCreateNestedManyWithoutTenantInput
     backupLogs?: BackupLogUncheckedCreateNestedManyWithoutTenantInput
     backupPlans?: BackupPlanUncheckedCreateNestedManyWithoutTenantInput
   }
@@ -221446,6 +230535,8 @@ export namespace Prisma {
     periodosContables?: PeriodoContableUpdateManyWithoutTenantNestedInput
     aperturaPeriodos?: AperturaPeriodoUpdateManyWithoutTenantNestedInput
     auditoriaPeriodos?: AuditoriaPeriodoUpdateManyWithoutTenantNestedInput
+    turnosPos?: TurnoPuntoVentaUpdateManyWithoutTenantNestedInput
+    arqueosCaja?: ArqueoCajaUpdateManyWithoutTenantNestedInput
     backupLogs?: BackupLogUpdateManyWithoutTenantNestedInput
     backupPlans?: BackupPlanUpdateManyWithoutTenantNestedInput
   }
@@ -221513,6 +230604,8 @@ export namespace Prisma {
     periodosContables?: PeriodoContableUncheckedUpdateManyWithoutTenantNestedInput
     aperturaPeriodos?: AperturaPeriodoUncheckedUpdateManyWithoutTenantNestedInput
     auditoriaPeriodos?: AuditoriaPeriodoUncheckedUpdateManyWithoutTenantNestedInput
+    turnosPos?: TurnoPuntoVentaUncheckedUpdateManyWithoutTenantNestedInput
+    arqueosCaja?: ArqueoCajaUncheckedUpdateManyWithoutTenantNestedInput
     backupLogs?: BackupLogUncheckedUpdateManyWithoutTenantNestedInput
     backupPlans?: BackupPlanUncheckedUpdateManyWithoutTenantNestedInput
   }
@@ -221613,6 +230706,7 @@ export namespace Prisma {
     vacationAccruals?: VacationAccrualCreateNestedManyWithoutEmployeeInput
     vacationRequests?: VacationRequestCreateNestedManyWithoutEmployeeInput
     ventas?: VentaCreateNestedManyWithoutEmpleadoInput
+    turnosPos?: TurnoPuntoVentaCreateNestedManyWithoutEmpleadoInput
     tenant: TenantCreateNestedOneWithoutEmpleadosInput
   }
 
@@ -221637,6 +230731,7 @@ export namespace Prisma {
     vacationAccruals?: VacationAccrualUncheckedCreateNestedManyWithoutEmployeeInput
     vacationRequests?: VacationRequestUncheckedCreateNestedManyWithoutEmployeeInput
     ventas?: VentaUncheckedCreateNestedManyWithoutEmpleadoInput
+    turnosPos?: TurnoPuntoVentaUncheckedCreateNestedManyWithoutEmpleadoInput
   }
 
   export type EmpleadoCreateOrConnectWithoutOrdenesAsignadasInput = {
@@ -221655,12 +230750,18 @@ export namespace Prisma {
     observaciones?: string | null
     esVentaUnica?: boolean
     ventaPadreId?: string | null
+    metodoPago?: $Enums.MetodoPagoVenta | null
+    montoEfectivo?: number | null
+    montoTarjeta?: number | null
+    montoTransferencia?: number | null
+    montoCredito?: number | null
     reconciliaciones?: ReconciliacionVentaCreateNestedManyWithoutVentaInput
     cliente?: ClienteCreateNestedOneWithoutVentaInput
     empleado?: EmpleadoCreateNestedOneWithoutVentasInput
     oferta?: OfertaCreateNestedOneWithoutVentaInput
     producto?: ProductoCreateNestedOneWithoutVentasInput
     puntoDeVenta: PuntoDeVentaCreateNestedOneWithoutVentasInput
+    turno?: TurnoPuntoVentaCreateNestedOneWithoutVentasInput
     factura?: FacturaCreateNestedOneWithoutVentaInput
     items?: VentaItemCreateNestedManyWithoutVentaInput
     tenant: TenantCreateNestedOneWithoutVentasInput
@@ -221683,6 +230784,12 @@ export namespace Prisma {
     esVentaUnica?: boolean
     ofertaId?: string | null
     ventaPadreId?: string | null
+    turnoId?: string | null
+    metodoPago?: $Enums.MetodoPagoVenta | null
+    montoEfectivo?: number | null
+    montoTarjeta?: number | null
+    montoTransferencia?: number | null
+    montoCredito?: number | null
     reconciliaciones?: ReconciliacionVentaUncheckedCreateNestedManyWithoutVentaInput
     factura?: FacturaUncheckedCreateNestedOneWithoutVentaInput
     items?: VentaItemUncheckedCreateNestedManyWithoutVentaInput
@@ -221860,6 +230967,8 @@ export namespace Prisma {
     periodosContables?: PeriodoContableCreateNestedManyWithoutTenantInput
     aperturaPeriodos?: AperturaPeriodoCreateNestedManyWithoutTenantInput
     auditoriaPeriodos?: AuditoriaPeriodoCreateNestedManyWithoutTenantInput
+    turnosPos?: TurnoPuntoVentaCreateNestedManyWithoutTenantInput
+    arqueosCaja?: ArqueoCajaCreateNestedManyWithoutTenantInput
     backupLogs?: BackupLogCreateNestedManyWithoutTenantInput
     backupPlans?: BackupPlanCreateNestedManyWithoutTenantInput
   }
@@ -221927,6 +231036,8 @@ export namespace Prisma {
     periodosContables?: PeriodoContableUncheckedCreateNestedManyWithoutTenantInput
     aperturaPeriodos?: AperturaPeriodoUncheckedCreateNestedManyWithoutTenantInput
     auditoriaPeriodos?: AuditoriaPeriodoUncheckedCreateNestedManyWithoutTenantInput
+    turnosPos?: TurnoPuntoVentaUncheckedCreateNestedManyWithoutTenantInput
+    arqueosCaja?: ArqueoCajaUncheckedCreateNestedManyWithoutTenantInput
     backupLogs?: BackupLogUncheckedCreateNestedManyWithoutTenantInput
     backupPlans?: BackupPlanUncheckedCreateNestedManyWithoutTenantInput
   }
@@ -222055,6 +231166,7 @@ export namespace Prisma {
     vacationAccruals?: VacationAccrualUpdateManyWithoutEmployeeNestedInput
     vacationRequests?: VacationRequestUpdateManyWithoutEmployeeNestedInput
     ventas?: VentaUpdateManyWithoutEmpleadoNestedInput
+    turnosPos?: TurnoPuntoVentaUpdateManyWithoutEmpleadoNestedInput
     tenant?: TenantUpdateOneRequiredWithoutEmpleadosNestedInput
   }
 
@@ -222079,6 +231191,7 @@ export namespace Prisma {
     vacationAccruals?: VacationAccrualUncheckedUpdateManyWithoutEmployeeNestedInput
     vacationRequests?: VacationRequestUncheckedUpdateManyWithoutEmployeeNestedInput
     ventas?: VentaUncheckedUpdateManyWithoutEmpleadoNestedInput
+    turnosPos?: TurnoPuntoVentaUncheckedUpdateManyWithoutEmpleadoNestedInput
   }
 
   export type VentaUpsertWithoutOrdenReparacionInput = {
@@ -222103,12 +231216,18 @@ export namespace Prisma {
     observaciones?: NullableStringFieldUpdateOperationsInput | string | null
     esVentaUnica?: BoolFieldUpdateOperationsInput | boolean
     ventaPadreId?: NullableStringFieldUpdateOperationsInput | string | null
+    metodoPago?: NullableEnumMetodoPagoVentaFieldUpdateOperationsInput | $Enums.MetodoPagoVenta | null
+    montoEfectivo?: NullableIntFieldUpdateOperationsInput | number | null
+    montoTarjeta?: NullableIntFieldUpdateOperationsInput | number | null
+    montoTransferencia?: NullableIntFieldUpdateOperationsInput | number | null
+    montoCredito?: NullableIntFieldUpdateOperationsInput | number | null
     reconciliaciones?: ReconciliacionVentaUpdateManyWithoutVentaNestedInput
     cliente?: ClienteUpdateOneWithoutVentaNestedInput
     empleado?: EmpleadoUpdateOneWithoutVentasNestedInput
     oferta?: OfertaUpdateOneWithoutVentaNestedInput
     producto?: ProductoUpdateOneWithoutVentasNestedInput
     puntoDeVenta?: PuntoDeVentaUpdateOneRequiredWithoutVentasNestedInput
+    turno?: TurnoPuntoVentaUpdateOneWithoutVentasNestedInput
     factura?: FacturaUpdateOneWithoutVentaNestedInput
     items?: VentaItemUpdateManyWithoutVentaNestedInput
     tenant?: TenantUpdateOneRequiredWithoutVentasNestedInput
@@ -222131,6 +231250,12 @@ export namespace Prisma {
     esVentaUnica?: BoolFieldUpdateOperationsInput | boolean
     ofertaId?: NullableStringFieldUpdateOperationsInput | string | null
     ventaPadreId?: NullableStringFieldUpdateOperationsInput | string | null
+    turnoId?: NullableStringFieldUpdateOperationsInput | string | null
+    metodoPago?: NullableEnumMetodoPagoVentaFieldUpdateOperationsInput | $Enums.MetodoPagoVenta | null
+    montoEfectivo?: NullableIntFieldUpdateOperationsInput | number | null
+    montoTarjeta?: NullableIntFieldUpdateOperationsInput | number | null
+    montoTransferencia?: NullableIntFieldUpdateOperationsInput | number | null
+    montoCredito?: NullableIntFieldUpdateOperationsInput | number | null
     reconciliaciones?: ReconciliacionVentaUncheckedUpdateManyWithoutVentaNestedInput
     factura?: FacturaUncheckedUpdateOneWithoutVentaNestedInput
     items?: VentaItemUncheckedUpdateManyWithoutVentaNestedInput
@@ -222258,6 +231383,8 @@ export namespace Prisma {
     periodosContables?: PeriodoContableUpdateManyWithoutTenantNestedInput
     aperturaPeriodos?: AperturaPeriodoUpdateManyWithoutTenantNestedInput
     auditoriaPeriodos?: AuditoriaPeriodoUpdateManyWithoutTenantNestedInput
+    turnosPos?: TurnoPuntoVentaUpdateManyWithoutTenantNestedInput
+    arqueosCaja?: ArqueoCajaUpdateManyWithoutTenantNestedInput
     backupLogs?: BackupLogUpdateManyWithoutTenantNestedInput
     backupPlans?: BackupPlanUpdateManyWithoutTenantNestedInput
   }
@@ -222325,6 +231452,8 @@ export namespace Prisma {
     periodosContables?: PeriodoContableUncheckedUpdateManyWithoutTenantNestedInput
     aperturaPeriodos?: AperturaPeriodoUncheckedUpdateManyWithoutTenantNestedInput
     auditoriaPeriodos?: AuditoriaPeriodoUncheckedUpdateManyWithoutTenantNestedInput
+    turnosPos?: TurnoPuntoVentaUncheckedUpdateManyWithoutTenantNestedInput
+    arqueosCaja?: ArqueoCajaUncheckedUpdateManyWithoutTenantNestedInput
     backupLogs?: BackupLogUncheckedUpdateManyWithoutTenantNestedInput
     backupPlans?: BackupPlanUncheckedUpdateManyWithoutTenantNestedInput
   }
@@ -222524,6 +231653,8 @@ export namespace Prisma {
     periodosContables?: PeriodoContableCreateNestedManyWithoutTenantInput
     aperturaPeriodos?: AperturaPeriodoCreateNestedManyWithoutTenantInput
     auditoriaPeriodos?: AuditoriaPeriodoCreateNestedManyWithoutTenantInput
+    turnosPos?: TurnoPuntoVentaCreateNestedManyWithoutTenantInput
+    arqueosCaja?: ArqueoCajaCreateNestedManyWithoutTenantInput
     backupLogs?: BackupLogCreateNestedManyWithoutTenantInput
     backupPlans?: BackupPlanCreateNestedManyWithoutTenantInput
   }
@@ -222591,6 +231722,8 @@ export namespace Prisma {
     periodosContables?: PeriodoContableUncheckedCreateNestedManyWithoutTenantInput
     aperturaPeriodos?: AperturaPeriodoUncheckedCreateNestedManyWithoutTenantInput
     auditoriaPeriodos?: AuditoriaPeriodoUncheckedCreateNestedManyWithoutTenantInput
+    turnosPos?: TurnoPuntoVentaUncheckedCreateNestedManyWithoutTenantInput
+    arqueosCaja?: ArqueoCajaUncheckedCreateNestedManyWithoutTenantInput
     backupLogs?: BackupLogUncheckedCreateNestedManyWithoutTenantInput
     backupPlans?: BackupPlanUncheckedCreateNestedManyWithoutTenantInput
   }
@@ -222800,6 +231933,8 @@ export namespace Prisma {
     periodosContables?: PeriodoContableUpdateManyWithoutTenantNestedInput
     aperturaPeriodos?: AperturaPeriodoUpdateManyWithoutTenantNestedInput
     auditoriaPeriodos?: AuditoriaPeriodoUpdateManyWithoutTenantNestedInput
+    turnosPos?: TurnoPuntoVentaUpdateManyWithoutTenantNestedInput
+    arqueosCaja?: ArqueoCajaUpdateManyWithoutTenantNestedInput
     backupLogs?: BackupLogUpdateManyWithoutTenantNestedInput
     backupPlans?: BackupPlanUpdateManyWithoutTenantNestedInput
   }
@@ -222867,6 +232002,8 @@ export namespace Prisma {
     periodosContables?: PeriodoContableUncheckedUpdateManyWithoutTenantNestedInput
     aperturaPeriodos?: AperturaPeriodoUncheckedUpdateManyWithoutTenantNestedInput
     auditoriaPeriodos?: AuditoriaPeriodoUncheckedUpdateManyWithoutTenantNestedInput
+    turnosPos?: TurnoPuntoVentaUncheckedUpdateManyWithoutTenantNestedInput
+    arqueosCaja?: ArqueoCajaUncheckedUpdateManyWithoutTenantNestedInput
     backupLogs?: BackupLogUncheckedUpdateManyWithoutTenantNestedInput
     backupPlans?: BackupPlanUncheckedUpdateManyWithoutTenantNestedInput
   }
@@ -223094,6 +232231,8 @@ export namespace Prisma {
     periodosContables?: PeriodoContableCreateNestedManyWithoutTenantInput
     aperturaPeriodos?: AperturaPeriodoCreateNestedManyWithoutTenantInput
     auditoriaPeriodos?: AuditoriaPeriodoCreateNestedManyWithoutTenantInput
+    turnosPos?: TurnoPuntoVentaCreateNestedManyWithoutTenantInput
+    arqueosCaja?: ArqueoCajaCreateNestedManyWithoutTenantInput
     backupLogs?: BackupLogCreateNestedManyWithoutTenantInput
     backupPlans?: BackupPlanCreateNestedManyWithoutTenantInput
   }
@@ -223161,6 +232300,8 @@ export namespace Prisma {
     periodosContables?: PeriodoContableUncheckedCreateNestedManyWithoutTenantInput
     aperturaPeriodos?: AperturaPeriodoUncheckedCreateNestedManyWithoutTenantInput
     auditoriaPeriodos?: AuditoriaPeriodoUncheckedCreateNestedManyWithoutTenantInput
+    turnosPos?: TurnoPuntoVentaUncheckedCreateNestedManyWithoutTenantInput
+    arqueosCaja?: ArqueoCajaUncheckedCreateNestedManyWithoutTenantInput
     backupLogs?: BackupLogUncheckedCreateNestedManyWithoutTenantInput
     backupPlans?: BackupPlanUncheckedCreateNestedManyWithoutTenantInput
   }
@@ -223428,6 +232569,8 @@ export namespace Prisma {
     periodosContables?: PeriodoContableUpdateManyWithoutTenantNestedInput
     aperturaPeriodos?: AperturaPeriodoUpdateManyWithoutTenantNestedInput
     auditoriaPeriodos?: AuditoriaPeriodoUpdateManyWithoutTenantNestedInput
+    turnosPos?: TurnoPuntoVentaUpdateManyWithoutTenantNestedInput
+    arqueosCaja?: ArqueoCajaUpdateManyWithoutTenantNestedInput
     backupLogs?: BackupLogUpdateManyWithoutTenantNestedInput
     backupPlans?: BackupPlanUpdateManyWithoutTenantNestedInput
   }
@@ -223495,6 +232638,8 @@ export namespace Prisma {
     periodosContables?: PeriodoContableUncheckedUpdateManyWithoutTenantNestedInput
     aperturaPeriodos?: AperturaPeriodoUncheckedUpdateManyWithoutTenantNestedInput
     auditoriaPeriodos?: AuditoriaPeriodoUncheckedUpdateManyWithoutTenantNestedInput
+    turnosPos?: TurnoPuntoVentaUncheckedUpdateManyWithoutTenantNestedInput
+    arqueosCaja?: ArqueoCajaUncheckedUpdateManyWithoutTenantNestedInput
     backupLogs?: BackupLogUncheckedUpdateManyWithoutTenantNestedInput
     backupPlans?: BackupPlanUncheckedUpdateManyWithoutTenantNestedInput
   }
@@ -223728,6 +232873,8 @@ export namespace Prisma {
     periodosContables?: PeriodoContableCreateNestedManyWithoutTenantInput
     aperturaPeriodos?: AperturaPeriodoCreateNestedManyWithoutTenantInput
     auditoriaPeriodos?: AuditoriaPeriodoCreateNestedManyWithoutTenantInput
+    turnosPos?: TurnoPuntoVentaCreateNestedManyWithoutTenantInput
+    arqueosCaja?: ArqueoCajaCreateNestedManyWithoutTenantInput
     backupLogs?: BackupLogCreateNestedManyWithoutTenantInput
     backupPlans?: BackupPlanCreateNestedManyWithoutTenantInput
   }
@@ -223795,6 +232942,8 @@ export namespace Prisma {
     periodosContables?: PeriodoContableUncheckedCreateNestedManyWithoutTenantInput
     aperturaPeriodos?: AperturaPeriodoUncheckedCreateNestedManyWithoutTenantInput
     auditoriaPeriodos?: AuditoriaPeriodoUncheckedCreateNestedManyWithoutTenantInput
+    turnosPos?: TurnoPuntoVentaUncheckedCreateNestedManyWithoutTenantInput
+    arqueosCaja?: ArqueoCajaUncheckedCreateNestedManyWithoutTenantInput
     backupLogs?: BackupLogUncheckedCreateNestedManyWithoutTenantInput
     backupPlans?: BackupPlanUncheckedCreateNestedManyWithoutTenantInput
   }
@@ -224056,6 +233205,8 @@ export namespace Prisma {
     periodosContables?: PeriodoContableUpdateManyWithoutTenantNestedInput
     aperturaPeriodos?: AperturaPeriodoUpdateManyWithoutTenantNestedInput
     auditoriaPeriodos?: AuditoriaPeriodoUpdateManyWithoutTenantNestedInput
+    turnosPos?: TurnoPuntoVentaUpdateManyWithoutTenantNestedInput
+    arqueosCaja?: ArqueoCajaUpdateManyWithoutTenantNestedInput
     backupLogs?: BackupLogUpdateManyWithoutTenantNestedInput
     backupPlans?: BackupPlanUpdateManyWithoutTenantNestedInput
   }
@@ -224123,6 +233274,8 @@ export namespace Prisma {
     periodosContables?: PeriodoContableUncheckedUpdateManyWithoutTenantNestedInput
     aperturaPeriodos?: AperturaPeriodoUncheckedUpdateManyWithoutTenantNestedInput
     auditoriaPeriodos?: AuditoriaPeriodoUncheckedUpdateManyWithoutTenantNestedInput
+    turnosPos?: TurnoPuntoVentaUncheckedUpdateManyWithoutTenantNestedInput
+    arqueosCaja?: ArqueoCajaUncheckedUpdateManyWithoutTenantNestedInput
     backupLogs?: BackupLogUncheckedUpdateManyWithoutTenantNestedInput
     backupPlans?: BackupPlanUncheckedUpdateManyWithoutTenantNestedInput
   }
@@ -224224,6 +233377,8 @@ export namespace Prisma {
     periodosContables?: PeriodoContableCreateNestedManyWithoutTenantInput
     aperturaPeriodos?: AperturaPeriodoCreateNestedManyWithoutTenantInput
     auditoriaPeriodos?: AuditoriaPeriodoCreateNestedManyWithoutTenantInput
+    turnosPos?: TurnoPuntoVentaCreateNestedManyWithoutTenantInput
+    arqueosCaja?: ArqueoCajaCreateNestedManyWithoutTenantInput
     backupLogs?: BackupLogCreateNestedManyWithoutTenantInput
     backupPlans?: BackupPlanCreateNestedManyWithoutTenantInput
   }
@@ -224291,6 +233446,8 @@ export namespace Prisma {
     periodosContables?: PeriodoContableUncheckedCreateNestedManyWithoutTenantInput
     aperturaPeriodos?: AperturaPeriodoUncheckedCreateNestedManyWithoutTenantInput
     auditoriaPeriodos?: AuditoriaPeriodoUncheckedCreateNestedManyWithoutTenantInput
+    turnosPos?: TurnoPuntoVentaUncheckedCreateNestedManyWithoutTenantInput
+    arqueosCaja?: ArqueoCajaUncheckedCreateNestedManyWithoutTenantInput
     backupLogs?: BackupLogUncheckedCreateNestedManyWithoutTenantInput
     backupPlans?: BackupPlanUncheckedCreateNestedManyWithoutTenantInput
   }
@@ -224390,6 +233547,8 @@ export namespace Prisma {
     periodosContables?: PeriodoContableUpdateManyWithoutTenantNestedInput
     aperturaPeriodos?: AperturaPeriodoUpdateManyWithoutTenantNestedInput
     auditoriaPeriodos?: AuditoriaPeriodoUpdateManyWithoutTenantNestedInput
+    turnosPos?: TurnoPuntoVentaUpdateManyWithoutTenantNestedInput
+    arqueosCaja?: ArqueoCajaUpdateManyWithoutTenantNestedInput
     backupLogs?: BackupLogUpdateManyWithoutTenantNestedInput
     backupPlans?: BackupPlanUpdateManyWithoutTenantNestedInput
   }
@@ -224457,6 +233616,8 @@ export namespace Prisma {
     periodosContables?: PeriodoContableUncheckedUpdateManyWithoutTenantNestedInput
     aperturaPeriodos?: AperturaPeriodoUncheckedUpdateManyWithoutTenantNestedInput
     auditoriaPeriodos?: AuditoriaPeriodoUncheckedUpdateManyWithoutTenantNestedInput
+    turnosPos?: TurnoPuntoVentaUncheckedUpdateManyWithoutTenantNestedInput
+    arqueosCaja?: ArqueoCajaUncheckedUpdateManyWithoutTenantNestedInput
     backupLogs?: BackupLogUncheckedUpdateManyWithoutTenantNestedInput
     backupPlans?: BackupPlanUncheckedUpdateManyWithoutTenantNestedInput
   }
@@ -224587,6 +233748,8 @@ export namespace Prisma {
     periodosContables?: PeriodoContableCreateNestedManyWithoutTenantInput
     aperturaPeriodos?: AperturaPeriodoCreateNestedManyWithoutTenantInput
     auditoriaPeriodos?: AuditoriaPeriodoCreateNestedManyWithoutTenantInput
+    turnosPos?: TurnoPuntoVentaCreateNestedManyWithoutTenantInput
+    arqueosCaja?: ArqueoCajaCreateNestedManyWithoutTenantInput
     backupLogs?: BackupLogCreateNestedManyWithoutTenantInput
     backupPlans?: BackupPlanCreateNestedManyWithoutTenantInput
   }
@@ -224654,6 +233817,8 @@ export namespace Prisma {
     periodosContables?: PeriodoContableUncheckedCreateNestedManyWithoutTenantInput
     aperturaPeriodos?: AperturaPeriodoUncheckedCreateNestedManyWithoutTenantInput
     auditoriaPeriodos?: AuditoriaPeriodoUncheckedCreateNestedManyWithoutTenantInput
+    turnosPos?: TurnoPuntoVentaUncheckedCreateNestedManyWithoutTenantInput
+    arqueosCaja?: ArqueoCajaUncheckedCreateNestedManyWithoutTenantInput
     backupLogs?: BackupLogUncheckedCreateNestedManyWithoutTenantInput
     backupPlans?: BackupPlanUncheckedCreateNestedManyWithoutTenantInput
   }
@@ -224792,6 +233957,8 @@ export namespace Prisma {
     periodosContables?: PeriodoContableUpdateManyWithoutTenantNestedInput
     aperturaPeriodos?: AperturaPeriodoUpdateManyWithoutTenantNestedInput
     auditoriaPeriodos?: AuditoriaPeriodoUpdateManyWithoutTenantNestedInput
+    turnosPos?: TurnoPuntoVentaUpdateManyWithoutTenantNestedInput
+    arqueosCaja?: ArqueoCajaUpdateManyWithoutTenantNestedInput
     backupLogs?: BackupLogUpdateManyWithoutTenantNestedInput
     backupPlans?: BackupPlanUpdateManyWithoutTenantNestedInput
   }
@@ -224859,6 +234026,8 @@ export namespace Prisma {
     periodosContables?: PeriodoContableUncheckedUpdateManyWithoutTenantNestedInput
     aperturaPeriodos?: AperturaPeriodoUncheckedUpdateManyWithoutTenantNestedInput
     auditoriaPeriodos?: AuditoriaPeriodoUncheckedUpdateManyWithoutTenantNestedInput
+    turnosPos?: TurnoPuntoVentaUncheckedUpdateManyWithoutTenantNestedInput
+    arqueosCaja?: ArqueoCajaUncheckedUpdateManyWithoutTenantNestedInput
     backupLogs?: BackupLogUncheckedUpdateManyWithoutTenantNestedInput
     backupPlans?: BackupPlanUncheckedUpdateManyWithoutTenantNestedInput
   }
@@ -224957,6 +234126,8 @@ export namespace Prisma {
     periodosContables?: PeriodoContableCreateNestedManyWithoutTenantInput
     aperturaPeriodos?: AperturaPeriodoCreateNestedManyWithoutTenantInput
     auditoriaPeriodos?: AuditoriaPeriodoCreateNestedManyWithoutTenantInput
+    turnosPos?: TurnoPuntoVentaCreateNestedManyWithoutTenantInput
+    arqueosCaja?: ArqueoCajaCreateNestedManyWithoutTenantInput
     backupLogs?: BackupLogCreateNestedManyWithoutTenantInput
     backupPlans?: BackupPlanCreateNestedManyWithoutTenantInput
   }
@@ -225024,6 +234195,8 @@ export namespace Prisma {
     periodosContables?: PeriodoContableUncheckedCreateNestedManyWithoutTenantInput
     aperturaPeriodos?: AperturaPeriodoUncheckedCreateNestedManyWithoutTenantInput
     auditoriaPeriodos?: AuditoriaPeriodoUncheckedCreateNestedManyWithoutTenantInput
+    turnosPos?: TurnoPuntoVentaUncheckedCreateNestedManyWithoutTenantInput
+    arqueosCaja?: ArqueoCajaUncheckedCreateNestedManyWithoutTenantInput
     backupLogs?: BackupLogUncheckedCreateNestedManyWithoutTenantInput
     backupPlans?: BackupPlanUncheckedCreateNestedManyWithoutTenantInput
   }
@@ -225144,6 +234317,8 @@ export namespace Prisma {
     periodosContables?: PeriodoContableUpdateManyWithoutTenantNestedInput
     aperturaPeriodos?: AperturaPeriodoUpdateManyWithoutTenantNestedInput
     auditoriaPeriodos?: AuditoriaPeriodoUpdateManyWithoutTenantNestedInput
+    turnosPos?: TurnoPuntoVentaUpdateManyWithoutTenantNestedInput
+    arqueosCaja?: ArqueoCajaUpdateManyWithoutTenantNestedInput
     backupLogs?: BackupLogUpdateManyWithoutTenantNestedInput
     backupPlans?: BackupPlanUpdateManyWithoutTenantNestedInput
   }
@@ -225211,6 +234386,8 @@ export namespace Prisma {
     periodosContables?: PeriodoContableUncheckedUpdateManyWithoutTenantNestedInput
     aperturaPeriodos?: AperturaPeriodoUncheckedUpdateManyWithoutTenantNestedInput
     auditoriaPeriodos?: AuditoriaPeriodoUncheckedUpdateManyWithoutTenantNestedInput
+    turnosPos?: TurnoPuntoVentaUncheckedUpdateManyWithoutTenantNestedInput
+    arqueosCaja?: ArqueoCajaUncheckedUpdateManyWithoutTenantNestedInput
     backupLogs?: BackupLogUncheckedUpdateManyWithoutTenantNestedInput
     backupPlans?: BackupPlanUncheckedUpdateManyWithoutTenantNestedInput
   }
@@ -225441,6 +234618,8 @@ export namespace Prisma {
     periodosContables?: PeriodoContableCreateNestedManyWithoutTenantInput
     aperturaPeriodos?: AperturaPeriodoCreateNestedManyWithoutTenantInput
     auditoriaPeriodos?: AuditoriaPeriodoCreateNestedManyWithoutTenantInput
+    turnosPos?: TurnoPuntoVentaCreateNestedManyWithoutTenantInput
+    arqueosCaja?: ArqueoCajaCreateNestedManyWithoutTenantInput
     backupLogs?: BackupLogCreateNestedManyWithoutTenantInput
     backupPlans?: BackupPlanCreateNestedManyWithoutTenantInput
   }
@@ -225508,6 +234687,8 @@ export namespace Prisma {
     periodosContables?: PeriodoContableUncheckedCreateNestedManyWithoutTenantInput
     aperturaPeriodos?: AperturaPeriodoUncheckedCreateNestedManyWithoutTenantInput
     auditoriaPeriodos?: AuditoriaPeriodoUncheckedCreateNestedManyWithoutTenantInput
+    turnosPos?: TurnoPuntoVentaUncheckedCreateNestedManyWithoutTenantInput
+    arqueosCaja?: ArqueoCajaUncheckedCreateNestedManyWithoutTenantInput
     backupLogs?: BackupLogUncheckedCreateNestedManyWithoutTenantInput
     backupPlans?: BackupPlanUncheckedCreateNestedManyWithoutTenantInput
   }
@@ -225724,6 +234905,8 @@ export namespace Prisma {
     periodosContables?: PeriodoContableUpdateManyWithoutTenantNestedInput
     aperturaPeriodos?: AperturaPeriodoUpdateManyWithoutTenantNestedInput
     auditoriaPeriodos?: AuditoriaPeriodoUpdateManyWithoutTenantNestedInput
+    turnosPos?: TurnoPuntoVentaUpdateManyWithoutTenantNestedInput
+    arqueosCaja?: ArqueoCajaUpdateManyWithoutTenantNestedInput
     backupLogs?: BackupLogUpdateManyWithoutTenantNestedInput
     backupPlans?: BackupPlanUpdateManyWithoutTenantNestedInput
   }
@@ -225791,6 +234974,8 @@ export namespace Prisma {
     periodosContables?: PeriodoContableUncheckedUpdateManyWithoutTenantNestedInput
     aperturaPeriodos?: AperturaPeriodoUncheckedUpdateManyWithoutTenantNestedInput
     auditoriaPeriodos?: AuditoriaPeriodoUncheckedUpdateManyWithoutTenantNestedInput
+    turnosPos?: TurnoPuntoVentaUncheckedUpdateManyWithoutTenantNestedInput
+    arqueosCaja?: ArqueoCajaUncheckedUpdateManyWithoutTenantNestedInput
     backupLogs?: BackupLogUncheckedUpdateManyWithoutTenantNestedInput
     backupPlans?: BackupPlanUncheckedUpdateManyWithoutTenantNestedInput
   }
@@ -225986,6 +235171,8 @@ export namespace Prisma {
     periodosContables?: PeriodoContableCreateNestedManyWithoutTenantInput
     aperturaPeriodos?: AperturaPeriodoCreateNestedManyWithoutTenantInput
     auditoriaPeriodos?: AuditoriaPeriodoCreateNestedManyWithoutTenantInput
+    turnosPos?: TurnoPuntoVentaCreateNestedManyWithoutTenantInput
+    arqueosCaja?: ArqueoCajaCreateNestedManyWithoutTenantInput
     backupLogs?: BackupLogCreateNestedManyWithoutTenantInput
     backupPlans?: BackupPlanCreateNestedManyWithoutTenantInput
   }
@@ -226053,6 +235240,8 @@ export namespace Prisma {
     periodosContables?: PeriodoContableUncheckedCreateNestedManyWithoutTenantInput
     aperturaPeriodos?: AperturaPeriodoUncheckedCreateNestedManyWithoutTenantInput
     auditoriaPeriodos?: AuditoriaPeriodoUncheckedCreateNestedManyWithoutTenantInput
+    turnosPos?: TurnoPuntoVentaUncheckedCreateNestedManyWithoutTenantInput
+    arqueosCaja?: ArqueoCajaUncheckedCreateNestedManyWithoutTenantInput
     backupLogs?: BackupLogUncheckedCreateNestedManyWithoutTenantInput
     backupPlans?: BackupPlanUncheckedCreateNestedManyWithoutTenantInput
   }
@@ -226276,6 +235465,8 @@ export namespace Prisma {
     periodosContables?: PeriodoContableUpdateManyWithoutTenantNestedInput
     aperturaPeriodos?: AperturaPeriodoUpdateManyWithoutTenantNestedInput
     auditoriaPeriodos?: AuditoriaPeriodoUpdateManyWithoutTenantNestedInput
+    turnosPos?: TurnoPuntoVentaUpdateManyWithoutTenantNestedInput
+    arqueosCaja?: ArqueoCajaUpdateManyWithoutTenantNestedInput
     backupLogs?: BackupLogUpdateManyWithoutTenantNestedInput
     backupPlans?: BackupPlanUpdateManyWithoutTenantNestedInput
   }
@@ -226343,6 +235534,8 @@ export namespace Prisma {
     periodosContables?: PeriodoContableUncheckedUpdateManyWithoutTenantNestedInput
     aperturaPeriodos?: AperturaPeriodoUncheckedUpdateManyWithoutTenantNestedInput
     auditoriaPeriodos?: AuditoriaPeriodoUncheckedUpdateManyWithoutTenantNestedInput
+    turnosPos?: TurnoPuntoVentaUncheckedUpdateManyWithoutTenantNestedInput
+    arqueosCaja?: ArqueoCajaUncheckedUpdateManyWithoutTenantNestedInput
     backupLogs?: BackupLogUncheckedUpdateManyWithoutTenantNestedInput
     backupPlans?: BackupPlanUncheckedUpdateManyWithoutTenantNestedInput
   }
@@ -226436,6 +235629,8 @@ export namespace Prisma {
     periodosContables?: PeriodoContableCreateNestedManyWithoutTenantInput
     aperturaPeriodos?: AperturaPeriodoCreateNestedManyWithoutTenantInput
     auditoriaPeriodos?: AuditoriaPeriodoCreateNestedManyWithoutTenantInput
+    turnosPos?: TurnoPuntoVentaCreateNestedManyWithoutTenantInput
+    arqueosCaja?: ArqueoCajaCreateNestedManyWithoutTenantInput
     backupLogs?: BackupLogCreateNestedManyWithoutTenantInput
     backupPlans?: BackupPlanCreateNestedManyWithoutTenantInput
   }
@@ -226503,6 +235698,8 @@ export namespace Prisma {
     periodosContables?: PeriodoContableUncheckedCreateNestedManyWithoutTenantInput
     aperturaPeriodos?: AperturaPeriodoUncheckedCreateNestedManyWithoutTenantInput
     auditoriaPeriodos?: AuditoriaPeriodoUncheckedCreateNestedManyWithoutTenantInput
+    turnosPos?: TurnoPuntoVentaUncheckedCreateNestedManyWithoutTenantInput
+    arqueosCaja?: ArqueoCajaUncheckedCreateNestedManyWithoutTenantInput
     backupLogs?: BackupLogUncheckedCreateNestedManyWithoutTenantInput
     backupPlans?: BackupPlanUncheckedCreateNestedManyWithoutTenantInput
   }
@@ -226602,6 +235799,8 @@ export namespace Prisma {
     periodosContables?: PeriodoContableUpdateManyWithoutTenantNestedInput
     aperturaPeriodos?: AperturaPeriodoUpdateManyWithoutTenantNestedInput
     auditoriaPeriodos?: AuditoriaPeriodoUpdateManyWithoutTenantNestedInput
+    turnosPos?: TurnoPuntoVentaUpdateManyWithoutTenantNestedInput
+    arqueosCaja?: ArqueoCajaUpdateManyWithoutTenantNestedInput
     backupLogs?: BackupLogUpdateManyWithoutTenantNestedInput
     backupPlans?: BackupPlanUpdateManyWithoutTenantNestedInput
   }
@@ -226669,6 +235868,8 @@ export namespace Prisma {
     periodosContables?: PeriodoContableUncheckedUpdateManyWithoutTenantNestedInput
     aperturaPeriodos?: AperturaPeriodoUncheckedUpdateManyWithoutTenantNestedInput
     auditoriaPeriodos?: AuditoriaPeriodoUncheckedUpdateManyWithoutTenantNestedInput
+    turnosPos?: TurnoPuntoVentaUncheckedUpdateManyWithoutTenantNestedInput
+    arqueosCaja?: ArqueoCajaUncheckedUpdateManyWithoutTenantNestedInput
     backupLogs?: BackupLogUncheckedUpdateManyWithoutTenantNestedInput
     backupPlans?: BackupPlanUncheckedUpdateManyWithoutTenantNestedInput
   }
@@ -226856,6 +236057,8 @@ export namespace Prisma {
     periodosContables?: PeriodoContableCreateNestedManyWithoutTenantInput
     aperturaPeriodos?: AperturaPeriodoCreateNestedManyWithoutTenantInput
     auditoriaPeriodos?: AuditoriaPeriodoCreateNestedManyWithoutTenantInput
+    turnosPos?: TurnoPuntoVentaCreateNestedManyWithoutTenantInput
+    arqueosCaja?: ArqueoCajaCreateNestedManyWithoutTenantInput
     backupLogs?: BackupLogCreateNestedManyWithoutTenantInput
     backupPlans?: BackupPlanCreateNestedManyWithoutTenantInput
   }
@@ -226923,6 +236126,8 @@ export namespace Prisma {
     periodosContables?: PeriodoContableUncheckedCreateNestedManyWithoutTenantInput
     aperturaPeriodos?: AperturaPeriodoUncheckedCreateNestedManyWithoutTenantInput
     auditoriaPeriodos?: AuditoriaPeriodoUncheckedCreateNestedManyWithoutTenantInput
+    turnosPos?: TurnoPuntoVentaUncheckedCreateNestedManyWithoutTenantInput
+    arqueosCaja?: ArqueoCajaUncheckedCreateNestedManyWithoutTenantInput
     backupLogs?: BackupLogUncheckedCreateNestedManyWithoutTenantInput
     backupPlans?: BackupPlanUncheckedCreateNestedManyWithoutTenantInput
   }
@@ -227138,6 +236343,8 @@ export namespace Prisma {
     periodosContables?: PeriodoContableUpdateManyWithoutTenantNestedInput
     aperturaPeriodos?: AperturaPeriodoUpdateManyWithoutTenantNestedInput
     auditoriaPeriodos?: AuditoriaPeriodoUpdateManyWithoutTenantNestedInput
+    turnosPos?: TurnoPuntoVentaUpdateManyWithoutTenantNestedInput
+    arqueosCaja?: ArqueoCajaUpdateManyWithoutTenantNestedInput
     backupLogs?: BackupLogUpdateManyWithoutTenantNestedInput
     backupPlans?: BackupPlanUpdateManyWithoutTenantNestedInput
   }
@@ -227205,6 +236412,8 @@ export namespace Prisma {
     periodosContables?: PeriodoContableUncheckedUpdateManyWithoutTenantNestedInput
     aperturaPeriodos?: AperturaPeriodoUncheckedUpdateManyWithoutTenantNestedInput
     auditoriaPeriodos?: AuditoriaPeriodoUncheckedUpdateManyWithoutTenantNestedInput
+    turnosPos?: TurnoPuntoVentaUncheckedUpdateManyWithoutTenantNestedInput
+    arqueosCaja?: ArqueoCajaUncheckedUpdateManyWithoutTenantNestedInput
     backupLogs?: BackupLogUncheckedUpdateManyWithoutTenantNestedInput
     backupPlans?: BackupPlanUncheckedUpdateManyWithoutTenantNestedInput
   }
@@ -227241,10 +236450,15 @@ export namespace Prisma {
     ubicacion?: string | null
     createdAt?: Date | string
     updatedAt?: Date | string
+    tipoCaja?: string | null
+    cuentaContableId?: string | null
     productos?: ProductoCreateNestedManyWithoutPuntoDeVentaInput
+    almacen?: AlmacenCreateNestedOneWithoutPuntosDeVentaInput
     transferenciasDestino?: TransferenciaCreateNestedManyWithoutPuntoDeVentaDestinoInput
     transferenciasOrigen?: TransferenciaCreateNestedManyWithoutPuntoDeVentaOrigenInput
     ventas?: VentaCreateNestedManyWithoutPuntoDeVentaInput
+    turnos?: TurnoPuntoVentaCreateNestedManyWithoutPuntoDeVentaInput
+    arqueos?: ArqueoCajaCreateNestedManyWithoutPuntoDeVentaInput
     tenant: TenantCreateNestedOneWithoutPuntosDeVentaInput
   }
 
@@ -227255,10 +236469,15 @@ export namespace Prisma {
     ubicacion?: string | null
     createdAt?: Date | string
     updatedAt?: Date | string
+    tipoCaja?: string | null
+    almacenId?: string | null
+    cuentaContableId?: string | null
     productos?: ProductoUncheckedCreateNestedManyWithoutPuntoDeVentaInput
     transferenciasDestino?: TransferenciaUncheckedCreateNestedManyWithoutPuntoDeVentaDestinoInput
     transferenciasOrigen?: TransferenciaUncheckedCreateNestedManyWithoutPuntoDeVentaOrigenInput
     ventas?: VentaUncheckedCreateNestedManyWithoutPuntoDeVentaInput
+    turnos?: TurnoPuntoVentaUncheckedCreateNestedManyWithoutPuntoDeVentaInput
+    arqueos?: ArqueoCajaUncheckedCreateNestedManyWithoutPuntoDeVentaInput
   }
 
   export type PuntoDeVentaCreateOrConnectWithoutListaPrecioInput = {
@@ -227334,6 +236553,8 @@ export namespace Prisma {
     periodosContables?: PeriodoContableCreateNestedManyWithoutTenantInput
     aperturaPeriodos?: AperturaPeriodoCreateNestedManyWithoutTenantInput
     auditoriaPeriodos?: AuditoriaPeriodoCreateNestedManyWithoutTenantInput
+    turnosPos?: TurnoPuntoVentaCreateNestedManyWithoutTenantInput
+    arqueosCaja?: ArqueoCajaCreateNestedManyWithoutTenantInput
     backupLogs?: BackupLogCreateNestedManyWithoutTenantInput
     backupPlans?: BackupPlanCreateNestedManyWithoutTenantInput
   }
@@ -227401,6 +236622,8 @@ export namespace Prisma {
     periodosContables?: PeriodoContableUncheckedCreateNestedManyWithoutTenantInput
     aperturaPeriodos?: AperturaPeriodoUncheckedCreateNestedManyWithoutTenantInput
     auditoriaPeriodos?: AuditoriaPeriodoUncheckedCreateNestedManyWithoutTenantInput
+    turnosPos?: TurnoPuntoVentaUncheckedCreateNestedManyWithoutTenantInput
+    arqueosCaja?: ArqueoCajaUncheckedCreateNestedManyWithoutTenantInput
     backupLogs?: BackupLogUncheckedCreateNestedManyWithoutTenantInput
     backupPlans?: BackupPlanUncheckedCreateNestedManyWithoutTenantInput
   }
@@ -227516,6 +236739,8 @@ export namespace Prisma {
     periodosContables?: PeriodoContableUpdateManyWithoutTenantNestedInput
     aperturaPeriodos?: AperturaPeriodoUpdateManyWithoutTenantNestedInput
     auditoriaPeriodos?: AuditoriaPeriodoUpdateManyWithoutTenantNestedInput
+    turnosPos?: TurnoPuntoVentaUpdateManyWithoutTenantNestedInput
+    arqueosCaja?: ArqueoCajaUpdateManyWithoutTenantNestedInput
     backupLogs?: BackupLogUpdateManyWithoutTenantNestedInput
     backupPlans?: BackupPlanUpdateManyWithoutTenantNestedInput
   }
@@ -227583,6 +236808,8 @@ export namespace Prisma {
     periodosContables?: PeriodoContableUncheckedUpdateManyWithoutTenantNestedInput
     aperturaPeriodos?: AperturaPeriodoUncheckedUpdateManyWithoutTenantNestedInput
     auditoriaPeriodos?: AuditoriaPeriodoUncheckedUpdateManyWithoutTenantNestedInput
+    turnosPos?: TurnoPuntoVentaUncheckedUpdateManyWithoutTenantNestedInput
+    arqueosCaja?: ArqueoCajaUncheckedUpdateManyWithoutTenantNestedInput
     backupLogs?: BackupLogUncheckedUpdateManyWithoutTenantNestedInput
     backupPlans?: BackupPlanUncheckedUpdateManyWithoutTenantNestedInput
   }
@@ -228516,6 +237743,8 @@ export namespace Prisma {
     periodosContables?: PeriodoContableCreateNestedManyWithoutTenantInput
     aperturaPeriodos?: AperturaPeriodoCreateNestedManyWithoutTenantInput
     auditoriaPeriodos?: AuditoriaPeriodoCreateNestedManyWithoutTenantInput
+    turnosPos?: TurnoPuntoVentaCreateNestedManyWithoutTenantInput
+    arqueosCaja?: ArqueoCajaCreateNestedManyWithoutTenantInput
     backupLogs?: BackupLogCreateNestedManyWithoutTenantInput
     backupPlans?: BackupPlanCreateNestedManyWithoutTenantInput
   }
@@ -228583,6 +237812,8 @@ export namespace Prisma {
     periodosContables?: PeriodoContableUncheckedCreateNestedManyWithoutTenantInput
     aperturaPeriodos?: AperturaPeriodoUncheckedCreateNestedManyWithoutTenantInput
     auditoriaPeriodos?: AuditoriaPeriodoUncheckedCreateNestedManyWithoutTenantInput
+    turnosPos?: TurnoPuntoVentaUncheckedCreateNestedManyWithoutTenantInput
+    arqueosCaja?: ArqueoCajaUncheckedCreateNestedManyWithoutTenantInput
     backupLogs?: BackupLogUncheckedCreateNestedManyWithoutTenantInput
     backupPlans?: BackupPlanUncheckedCreateNestedManyWithoutTenantInput
   }
@@ -229107,6 +238338,8 @@ export namespace Prisma {
     periodosContables?: PeriodoContableUpdateManyWithoutTenantNestedInput
     aperturaPeriodos?: AperturaPeriodoUpdateManyWithoutTenantNestedInput
     auditoriaPeriodos?: AuditoriaPeriodoUpdateManyWithoutTenantNestedInput
+    turnosPos?: TurnoPuntoVentaUpdateManyWithoutTenantNestedInput
+    arqueosCaja?: ArqueoCajaUpdateManyWithoutTenantNestedInput
     backupLogs?: BackupLogUpdateManyWithoutTenantNestedInput
     backupPlans?: BackupPlanUpdateManyWithoutTenantNestedInput
   }
@@ -229174,6 +238407,8 @@ export namespace Prisma {
     periodosContables?: PeriodoContableUncheckedUpdateManyWithoutTenantNestedInput
     aperturaPeriodos?: AperturaPeriodoUncheckedUpdateManyWithoutTenantNestedInput
     auditoriaPeriodos?: AuditoriaPeriodoUncheckedUpdateManyWithoutTenantNestedInput
+    turnosPos?: TurnoPuntoVentaUncheckedUpdateManyWithoutTenantNestedInput
+    arqueosCaja?: ArqueoCajaUncheckedUpdateManyWithoutTenantNestedInput
     backupLogs?: BackupLogUncheckedUpdateManyWithoutTenantNestedInput
     backupPlans?: BackupPlanUncheckedUpdateManyWithoutTenantNestedInput
   }
@@ -229353,6 +238588,8 @@ export namespace Prisma {
     cierresContables?: CierreContableCreateNestedManyWithoutTenantInput
     aperturaPeriodos?: AperturaPeriodoCreateNestedManyWithoutTenantInput
     auditoriaPeriodos?: AuditoriaPeriodoCreateNestedManyWithoutTenantInput
+    turnosPos?: TurnoPuntoVentaCreateNestedManyWithoutTenantInput
+    arqueosCaja?: ArqueoCajaCreateNestedManyWithoutTenantInput
     backupLogs?: BackupLogCreateNestedManyWithoutTenantInput
     backupPlans?: BackupPlanCreateNestedManyWithoutTenantInput
   }
@@ -229420,6 +238657,8 @@ export namespace Prisma {
     cierresContables?: CierreContableUncheckedCreateNestedManyWithoutTenantInput
     aperturaPeriodos?: AperturaPeriodoUncheckedCreateNestedManyWithoutTenantInput
     auditoriaPeriodos?: AuditoriaPeriodoUncheckedCreateNestedManyWithoutTenantInput
+    turnosPos?: TurnoPuntoVentaUncheckedCreateNestedManyWithoutTenantInput
+    arqueosCaja?: ArqueoCajaUncheckedCreateNestedManyWithoutTenantInput
     backupLogs?: BackupLogUncheckedCreateNestedManyWithoutTenantInput
     backupPlans?: BackupPlanUncheckedCreateNestedManyWithoutTenantInput
   }
@@ -229530,6 +238769,7 @@ export namespace Prisma {
     estado?: $Enums.EstadoPeriodo
     aperturaAutomatica?: boolean
     categoria?: $Enums.CategoriaPeriodo
+    modoContable?: $Enums.ModoContable
     abiertoPorId?: string | null
     fechaApertura?: Date | string | null
     cerradoPor?: string | null
@@ -229564,6 +238804,7 @@ export namespace Prisma {
     periodoPadreId?: string | null
     aperturaAutomatica?: boolean
     categoria?: $Enums.CategoriaPeriodo
+    modoContable?: $Enums.ModoContable
     abiertoPorId?: string | null
     fechaApertura?: Date | string | null
     cerradoPor?: string | null
@@ -229599,6 +238840,7 @@ export namespace Prisma {
     estado?: $Enums.EstadoPeriodo
     aperturaAutomatica?: boolean
     categoria?: $Enums.CategoriaPeriodo
+    modoContable?: $Enums.ModoContable
     abiertoPorId?: string | null
     fechaApertura?: Date | string | null
     cerradoPor?: string | null
@@ -229632,6 +238874,7 @@ export namespace Prisma {
     estado?: $Enums.EstadoPeriodo
     aperturaAutomatica?: boolean
     categoria?: $Enums.CategoriaPeriodo
+    modoContable?: $Enums.ModoContable
     abiertoPorId?: string | null
     fechaApertura?: Date | string | null
     cerradoPor?: string | null
@@ -229775,6 +239018,8 @@ export namespace Prisma {
     cierresContables?: CierreContableUpdateManyWithoutTenantNestedInput
     aperturaPeriodos?: AperturaPeriodoUpdateManyWithoutTenantNestedInput
     auditoriaPeriodos?: AuditoriaPeriodoUpdateManyWithoutTenantNestedInput
+    turnosPos?: TurnoPuntoVentaUpdateManyWithoutTenantNestedInput
+    arqueosCaja?: ArqueoCajaUpdateManyWithoutTenantNestedInput
     backupLogs?: BackupLogUpdateManyWithoutTenantNestedInput
     backupPlans?: BackupPlanUpdateManyWithoutTenantNestedInput
   }
@@ -229842,6 +239087,8 @@ export namespace Prisma {
     cierresContables?: CierreContableUncheckedUpdateManyWithoutTenantNestedInput
     aperturaPeriodos?: AperturaPeriodoUncheckedUpdateManyWithoutTenantNestedInput
     auditoriaPeriodos?: AuditoriaPeriodoUncheckedUpdateManyWithoutTenantNestedInput
+    turnosPos?: TurnoPuntoVentaUncheckedUpdateManyWithoutTenantNestedInput
+    arqueosCaja?: ArqueoCajaUncheckedUpdateManyWithoutTenantNestedInput
     backupLogs?: BackupLogUncheckedUpdateManyWithoutTenantNestedInput
     backupPlans?: BackupPlanUncheckedUpdateManyWithoutTenantNestedInput
   }
@@ -229941,6 +239188,7 @@ export namespace Prisma {
     estado?: EnumEstadoPeriodoFieldUpdateOperationsInput | $Enums.EstadoPeriodo
     aperturaAutomatica?: BoolFieldUpdateOperationsInput | boolean
     categoria?: EnumCategoriaPeriodoFieldUpdateOperationsInput | $Enums.CategoriaPeriodo
+    modoContable?: EnumModoContableFieldUpdateOperationsInput | $Enums.ModoContable
     abiertoPorId?: NullableStringFieldUpdateOperationsInput | string | null
     fechaApertura?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     cerradoPor?: NullableStringFieldUpdateOperationsInput | string | null
@@ -229975,6 +239223,7 @@ export namespace Prisma {
     periodoPadreId?: NullableStringFieldUpdateOperationsInput | string | null
     aperturaAutomatica?: BoolFieldUpdateOperationsInput | boolean
     categoria?: EnumCategoriaPeriodoFieldUpdateOperationsInput | $Enums.CategoriaPeriodo
+    modoContable?: EnumModoContableFieldUpdateOperationsInput | $Enums.ModoContable
     abiertoPorId?: NullableStringFieldUpdateOperationsInput | string | null
     fechaApertura?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     cerradoPor?: NullableStringFieldUpdateOperationsInput | string | null
@@ -230064,6 +239313,7 @@ export namespace Prisma {
     estado?: $Enums.EstadoPeriodo
     aperturaAutomatica?: boolean
     categoria?: $Enums.CategoriaPeriodo
+    modoContable?: $Enums.ModoContable
     abiertoPorId?: string | null
     fechaApertura?: Date | string | null
     cerradoPor?: string | null
@@ -230098,6 +239348,7 @@ export namespace Prisma {
     periodoPadreId?: string | null
     aperturaAutomatica?: boolean
     categoria?: $Enums.CategoriaPeriodo
+    modoContable?: $Enums.ModoContable
     abiertoPorId?: string | null
     fechaApertura?: Date | string | null
     cerradoPor?: string | null
@@ -230144,6 +239395,7 @@ export namespace Prisma {
     estado?: EnumEstadoPeriodoFieldUpdateOperationsInput | $Enums.EstadoPeriodo
     aperturaAutomatica?: BoolFieldUpdateOperationsInput | boolean
     categoria?: EnumCategoriaPeriodoFieldUpdateOperationsInput | $Enums.CategoriaPeriodo
+    modoContable?: EnumModoContableFieldUpdateOperationsInput | $Enums.ModoContable
     abiertoPorId?: NullableStringFieldUpdateOperationsInput | string | null
     fechaApertura?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     cerradoPor?: NullableStringFieldUpdateOperationsInput | string | null
@@ -230178,6 +239430,7 @@ export namespace Prisma {
     periodoPadreId?: NullableStringFieldUpdateOperationsInput | string | null
     aperturaAutomatica?: BoolFieldUpdateOperationsInput | boolean
     categoria?: EnumCategoriaPeriodoFieldUpdateOperationsInput | $Enums.CategoriaPeriodo
+    modoContable?: EnumModoContableFieldUpdateOperationsInput | $Enums.ModoContable
     abiertoPorId?: NullableStringFieldUpdateOperationsInput | string | null
     fechaApertura?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     cerradoPor?: NullableStringFieldUpdateOperationsInput | string | null
@@ -230208,6 +239461,7 @@ export namespace Prisma {
     estado?: $Enums.EstadoPeriodo
     aperturaAutomatica?: boolean
     categoria?: $Enums.CategoriaPeriodo
+    modoContable?: $Enums.ModoContable
     abiertoPorId?: string | null
     fechaApertura?: Date | string | null
     cerradoPor?: string | null
@@ -230242,6 +239496,7 @@ export namespace Prisma {
     periodoPadreId?: string | null
     aperturaAutomatica?: boolean
     categoria?: $Enums.CategoriaPeriodo
+    modoContable?: $Enums.ModoContable
     abiertoPorId?: string | null
     fechaApertura?: Date | string | null
     cerradoPor?: string | null
@@ -230331,6 +239586,8 @@ export namespace Prisma {
     cierresContables?: CierreContableCreateNestedManyWithoutTenantInput
     periodosContables?: PeriodoContableCreateNestedManyWithoutTenantInput
     auditoriaPeriodos?: AuditoriaPeriodoCreateNestedManyWithoutTenantInput
+    turnosPos?: TurnoPuntoVentaCreateNestedManyWithoutTenantInput
+    arqueosCaja?: ArqueoCajaCreateNestedManyWithoutTenantInput
     backupLogs?: BackupLogCreateNestedManyWithoutTenantInput
     backupPlans?: BackupPlanCreateNestedManyWithoutTenantInput
   }
@@ -230398,6 +239655,8 @@ export namespace Prisma {
     cierresContables?: CierreContableUncheckedCreateNestedManyWithoutTenantInput
     periodosContables?: PeriodoContableUncheckedCreateNestedManyWithoutTenantInput
     auditoriaPeriodos?: AuditoriaPeriodoUncheckedCreateNestedManyWithoutTenantInput
+    turnosPos?: TurnoPuntoVentaUncheckedCreateNestedManyWithoutTenantInput
+    arqueosCaja?: ArqueoCajaUncheckedCreateNestedManyWithoutTenantInput
     backupLogs?: BackupLogUncheckedCreateNestedManyWithoutTenantInput
     backupPlans?: BackupPlanUncheckedCreateNestedManyWithoutTenantInput
   }
@@ -230427,6 +239686,7 @@ export namespace Prisma {
     estado?: EnumEstadoPeriodoFieldUpdateOperationsInput | $Enums.EstadoPeriodo
     aperturaAutomatica?: BoolFieldUpdateOperationsInput | boolean
     categoria?: EnumCategoriaPeriodoFieldUpdateOperationsInput | $Enums.CategoriaPeriodo
+    modoContable?: EnumModoContableFieldUpdateOperationsInput | $Enums.ModoContable
     abiertoPorId?: NullableStringFieldUpdateOperationsInput | string | null
     fechaApertura?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     cerradoPor?: NullableStringFieldUpdateOperationsInput | string | null
@@ -230461,6 +239721,7 @@ export namespace Prisma {
     periodoPadreId?: NullableStringFieldUpdateOperationsInput | string | null
     aperturaAutomatica?: BoolFieldUpdateOperationsInput | boolean
     categoria?: EnumCategoriaPeriodoFieldUpdateOperationsInput | $Enums.CategoriaPeriodo
+    modoContable?: EnumModoContableFieldUpdateOperationsInput | $Enums.ModoContable
     abiertoPorId?: NullableStringFieldUpdateOperationsInput | string | null
     fechaApertura?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     cerradoPor?: NullableStringFieldUpdateOperationsInput | string | null
@@ -230556,6 +239817,8 @@ export namespace Prisma {
     cierresContables?: CierreContableUpdateManyWithoutTenantNestedInput
     periodosContables?: PeriodoContableUpdateManyWithoutTenantNestedInput
     auditoriaPeriodos?: AuditoriaPeriodoUpdateManyWithoutTenantNestedInput
+    turnosPos?: TurnoPuntoVentaUpdateManyWithoutTenantNestedInput
+    arqueosCaja?: ArqueoCajaUpdateManyWithoutTenantNestedInput
     backupLogs?: BackupLogUpdateManyWithoutTenantNestedInput
     backupPlans?: BackupPlanUpdateManyWithoutTenantNestedInput
   }
@@ -230623,6 +239886,8 @@ export namespace Prisma {
     cierresContables?: CierreContableUncheckedUpdateManyWithoutTenantNestedInput
     periodosContables?: PeriodoContableUncheckedUpdateManyWithoutTenantNestedInput
     auditoriaPeriodos?: AuditoriaPeriodoUncheckedUpdateManyWithoutTenantNestedInput
+    turnosPos?: TurnoPuntoVentaUncheckedUpdateManyWithoutTenantNestedInput
+    arqueosCaja?: ArqueoCajaUncheckedUpdateManyWithoutTenantNestedInput
     backupLogs?: BackupLogUncheckedUpdateManyWithoutTenantNestedInput
     backupPlans?: BackupPlanUncheckedUpdateManyWithoutTenantNestedInput
   }
@@ -230636,6 +239901,7 @@ export namespace Prisma {
     estado?: $Enums.EstadoPeriodo
     aperturaAutomatica?: boolean
     categoria?: $Enums.CategoriaPeriodo
+    modoContable?: $Enums.ModoContable
     abiertoPorId?: string | null
     fechaApertura?: Date | string | null
     cerradoPor?: string | null
@@ -230670,6 +239936,7 @@ export namespace Prisma {
     periodoPadreId?: string | null
     aperturaAutomatica?: boolean
     categoria?: $Enums.CategoriaPeriodo
+    modoContable?: $Enums.ModoContable
     abiertoPorId?: string | null
     fechaApertura?: Date | string | null
     cerradoPor?: string | null
@@ -230716,6 +239983,7 @@ export namespace Prisma {
     estado?: EnumEstadoPeriodoFieldUpdateOperationsInput | $Enums.EstadoPeriodo
     aperturaAutomatica?: BoolFieldUpdateOperationsInput | boolean
     categoria?: EnumCategoriaPeriodoFieldUpdateOperationsInput | $Enums.CategoriaPeriodo
+    modoContable?: EnumModoContableFieldUpdateOperationsInput | $Enums.ModoContable
     abiertoPorId?: NullableStringFieldUpdateOperationsInput | string | null
     fechaApertura?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     cerradoPor?: NullableStringFieldUpdateOperationsInput | string | null
@@ -230750,6 +240018,7 @@ export namespace Prisma {
     periodoPadreId?: NullableStringFieldUpdateOperationsInput | string | null
     aperturaAutomatica?: BoolFieldUpdateOperationsInput | boolean
     categoria?: EnumCategoriaPeriodoFieldUpdateOperationsInput | $Enums.CategoriaPeriodo
+    modoContable?: EnumModoContableFieldUpdateOperationsInput | $Enums.ModoContable
     abiertoPorId?: NullableStringFieldUpdateOperationsInput | string | null
     fechaApertura?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     cerradoPor?: NullableStringFieldUpdateOperationsInput | string | null
@@ -230780,6 +240049,7 @@ export namespace Prisma {
     estado?: $Enums.EstadoPeriodo
     aperturaAutomatica?: boolean
     categoria?: $Enums.CategoriaPeriodo
+    modoContable?: $Enums.ModoContable
     abiertoPorId?: string | null
     fechaApertura?: Date | string | null
     cerradoPor?: string | null
@@ -230814,6 +240084,7 @@ export namespace Prisma {
     periodoPadreId?: string | null
     aperturaAutomatica?: boolean
     categoria?: $Enums.CategoriaPeriodo
+    modoContable?: $Enums.ModoContable
     abiertoPorId?: string | null
     fechaApertura?: Date | string | null
     cerradoPor?: string | null
@@ -230903,6 +240174,8 @@ export namespace Prisma {
     cierresContables?: CierreContableCreateNestedManyWithoutTenantInput
     periodosContables?: PeriodoContableCreateNestedManyWithoutTenantInput
     aperturaPeriodos?: AperturaPeriodoCreateNestedManyWithoutTenantInput
+    turnosPos?: TurnoPuntoVentaCreateNestedManyWithoutTenantInput
+    arqueosCaja?: ArqueoCajaCreateNestedManyWithoutTenantInput
     backupLogs?: BackupLogCreateNestedManyWithoutTenantInput
     backupPlans?: BackupPlanCreateNestedManyWithoutTenantInput
   }
@@ -230970,6 +240243,8 @@ export namespace Prisma {
     cierresContables?: CierreContableUncheckedCreateNestedManyWithoutTenantInput
     periodosContables?: PeriodoContableUncheckedCreateNestedManyWithoutTenantInput
     aperturaPeriodos?: AperturaPeriodoUncheckedCreateNestedManyWithoutTenantInput
+    turnosPos?: TurnoPuntoVentaUncheckedCreateNestedManyWithoutTenantInput
+    arqueosCaja?: ArqueoCajaUncheckedCreateNestedManyWithoutTenantInput
     backupLogs?: BackupLogUncheckedCreateNestedManyWithoutTenantInput
     backupPlans?: BackupPlanUncheckedCreateNestedManyWithoutTenantInput
   }
@@ -230999,6 +240274,7 @@ export namespace Prisma {
     estado?: EnumEstadoPeriodoFieldUpdateOperationsInput | $Enums.EstadoPeriodo
     aperturaAutomatica?: BoolFieldUpdateOperationsInput | boolean
     categoria?: EnumCategoriaPeriodoFieldUpdateOperationsInput | $Enums.CategoriaPeriodo
+    modoContable?: EnumModoContableFieldUpdateOperationsInput | $Enums.ModoContable
     abiertoPorId?: NullableStringFieldUpdateOperationsInput | string | null
     fechaApertura?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     cerradoPor?: NullableStringFieldUpdateOperationsInput | string | null
@@ -231033,6 +240309,7 @@ export namespace Prisma {
     periodoPadreId?: NullableStringFieldUpdateOperationsInput | string | null
     aperturaAutomatica?: BoolFieldUpdateOperationsInput | boolean
     categoria?: EnumCategoriaPeriodoFieldUpdateOperationsInput | $Enums.CategoriaPeriodo
+    modoContable?: EnumModoContableFieldUpdateOperationsInput | $Enums.ModoContable
     abiertoPorId?: NullableStringFieldUpdateOperationsInput | string | null
     fechaApertura?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     cerradoPor?: NullableStringFieldUpdateOperationsInput | string | null
@@ -231128,6 +240405,8 @@ export namespace Prisma {
     cierresContables?: CierreContableUpdateManyWithoutTenantNestedInput
     periodosContables?: PeriodoContableUpdateManyWithoutTenantNestedInput
     aperturaPeriodos?: AperturaPeriodoUpdateManyWithoutTenantNestedInput
+    turnosPos?: TurnoPuntoVentaUpdateManyWithoutTenantNestedInput
+    arqueosCaja?: ArqueoCajaUpdateManyWithoutTenantNestedInput
     backupLogs?: BackupLogUpdateManyWithoutTenantNestedInput
     backupPlans?: BackupPlanUpdateManyWithoutTenantNestedInput
   }
@@ -231195,6 +240474,8 @@ export namespace Prisma {
     cierresContables?: CierreContableUncheckedUpdateManyWithoutTenantNestedInput
     periodosContables?: PeriodoContableUncheckedUpdateManyWithoutTenantNestedInput
     aperturaPeriodos?: AperturaPeriodoUncheckedUpdateManyWithoutTenantNestedInput
+    turnosPos?: TurnoPuntoVentaUncheckedUpdateManyWithoutTenantNestedInput
+    arqueosCaja?: ArqueoCajaUncheckedUpdateManyWithoutTenantNestedInput
     backupLogs?: BackupLogUncheckedUpdateManyWithoutTenantNestedInput
     backupPlans?: BackupPlanUncheckedUpdateManyWithoutTenantNestedInput
   }
@@ -231263,6 +240544,8 @@ export namespace Prisma {
     periodosContables?: PeriodoContableCreateNestedManyWithoutTenantInput
     aperturaPeriodos?: AperturaPeriodoCreateNestedManyWithoutTenantInput
     auditoriaPeriodos?: AuditoriaPeriodoCreateNestedManyWithoutTenantInput
+    turnosPos?: TurnoPuntoVentaCreateNestedManyWithoutTenantInput
+    arqueosCaja?: ArqueoCajaCreateNestedManyWithoutTenantInput
     backupPlans?: BackupPlanCreateNestedManyWithoutTenantInput
   }
 
@@ -231330,6 +240613,8 @@ export namespace Prisma {
     periodosContables?: PeriodoContableUncheckedCreateNestedManyWithoutTenantInput
     aperturaPeriodos?: AperturaPeriodoUncheckedCreateNestedManyWithoutTenantInput
     auditoriaPeriodos?: AuditoriaPeriodoUncheckedCreateNestedManyWithoutTenantInput
+    turnosPos?: TurnoPuntoVentaUncheckedCreateNestedManyWithoutTenantInput
+    arqueosCaja?: ArqueoCajaUncheckedCreateNestedManyWithoutTenantInput
     backupPlans?: BackupPlanUncheckedCreateNestedManyWithoutTenantInput
   }
 
@@ -231496,6 +240781,8 @@ export namespace Prisma {
     periodosContables?: PeriodoContableUpdateManyWithoutTenantNestedInput
     aperturaPeriodos?: AperturaPeriodoUpdateManyWithoutTenantNestedInput
     auditoriaPeriodos?: AuditoriaPeriodoUpdateManyWithoutTenantNestedInput
+    turnosPos?: TurnoPuntoVentaUpdateManyWithoutTenantNestedInput
+    arqueosCaja?: ArqueoCajaUpdateManyWithoutTenantNestedInput
     backupPlans?: BackupPlanUpdateManyWithoutTenantNestedInput
   }
 
@@ -231563,6 +240850,8 @@ export namespace Prisma {
     periodosContables?: PeriodoContableUncheckedUpdateManyWithoutTenantNestedInput
     aperturaPeriodos?: AperturaPeriodoUncheckedUpdateManyWithoutTenantNestedInput
     auditoriaPeriodos?: AuditoriaPeriodoUncheckedUpdateManyWithoutTenantNestedInput
+    turnosPos?: TurnoPuntoVentaUncheckedUpdateManyWithoutTenantNestedInput
+    arqueosCaja?: ArqueoCajaUncheckedUpdateManyWithoutTenantNestedInput
     backupPlans?: BackupPlanUncheckedUpdateManyWithoutTenantNestedInput
   }
 
@@ -231719,6 +241008,8 @@ export namespace Prisma {
     periodosContables?: PeriodoContableCreateNestedManyWithoutTenantInput
     aperturaPeriodos?: AperturaPeriodoCreateNestedManyWithoutTenantInput
     auditoriaPeriodos?: AuditoriaPeriodoCreateNestedManyWithoutTenantInput
+    turnosPos?: TurnoPuntoVentaCreateNestedManyWithoutTenantInput
+    arqueosCaja?: ArqueoCajaCreateNestedManyWithoutTenantInput
     backupLogs?: BackupLogCreateNestedManyWithoutTenantInput
   }
 
@@ -231786,6 +241077,8 @@ export namespace Prisma {
     periodosContables?: PeriodoContableUncheckedCreateNestedManyWithoutTenantInput
     aperturaPeriodos?: AperturaPeriodoUncheckedCreateNestedManyWithoutTenantInput
     auditoriaPeriodos?: AuditoriaPeriodoUncheckedCreateNestedManyWithoutTenantInput
+    turnosPos?: TurnoPuntoVentaUncheckedCreateNestedManyWithoutTenantInput
+    arqueosCaja?: ArqueoCajaUncheckedCreateNestedManyWithoutTenantInput
     backupLogs?: BackupLogUncheckedCreateNestedManyWithoutTenantInput
   }
 
@@ -231952,6 +241245,8 @@ export namespace Prisma {
     periodosContables?: PeriodoContableUpdateManyWithoutTenantNestedInput
     aperturaPeriodos?: AperturaPeriodoUpdateManyWithoutTenantNestedInput
     auditoriaPeriodos?: AuditoriaPeriodoUpdateManyWithoutTenantNestedInput
+    turnosPos?: TurnoPuntoVentaUpdateManyWithoutTenantNestedInput
+    arqueosCaja?: ArqueoCajaUpdateManyWithoutTenantNestedInput
     backupLogs?: BackupLogUpdateManyWithoutTenantNestedInput
   }
 
@@ -232019,6 +241314,8 @@ export namespace Prisma {
     periodosContables?: PeriodoContableUncheckedUpdateManyWithoutTenantNestedInput
     aperturaPeriodos?: AperturaPeriodoUncheckedUpdateManyWithoutTenantNestedInput
     auditoriaPeriodos?: AuditoriaPeriodoUncheckedUpdateManyWithoutTenantNestedInput
+    turnosPos?: TurnoPuntoVentaUncheckedUpdateManyWithoutTenantNestedInput
+    arqueosCaja?: ArqueoCajaUncheckedUpdateManyWithoutTenantNestedInput
     backupLogs?: BackupLogUncheckedUpdateManyWithoutTenantNestedInput
   }
 
@@ -233627,6 +242924,12 @@ export namespace Prisma {
     esVentaUnica?: boolean
     ofertaId?: string | null
     ventaPadreId?: string | null
+    turnoId?: string | null
+    metodoPago?: $Enums.MetodoPagoVenta | null
+    montoEfectivo?: number | null
+    montoTarjeta?: number | null
+    montoTransferencia?: number | null
+    montoCredito?: number | null
   }
 
   export type VentaServiciosCreateManyClienteInput = {
@@ -234093,12 +243396,18 @@ export namespace Prisma {
     observaciones?: NullableStringFieldUpdateOperationsInput | string | null
     esVentaUnica?: BoolFieldUpdateOperationsInput | boolean
     ventaPadreId?: NullableStringFieldUpdateOperationsInput | string | null
+    metodoPago?: NullableEnumMetodoPagoVentaFieldUpdateOperationsInput | $Enums.MetodoPagoVenta | null
+    montoEfectivo?: NullableIntFieldUpdateOperationsInput | number | null
+    montoTarjeta?: NullableIntFieldUpdateOperationsInput | number | null
+    montoTransferencia?: NullableIntFieldUpdateOperationsInput | number | null
+    montoCredito?: NullableIntFieldUpdateOperationsInput | number | null
     ordenReparacion?: OrdenReparacionUpdateOneWithoutVentaNestedInput
     reconciliaciones?: ReconciliacionVentaUpdateManyWithoutVentaNestedInput
     empleado?: EmpleadoUpdateOneWithoutVentasNestedInput
     oferta?: OfertaUpdateOneWithoutVentaNestedInput
     producto?: ProductoUpdateOneWithoutVentasNestedInput
     puntoDeVenta?: PuntoDeVentaUpdateOneRequiredWithoutVentasNestedInput
+    turno?: TurnoPuntoVentaUpdateOneWithoutVentasNestedInput
     factura?: FacturaUpdateOneWithoutVentaNestedInput
     items?: VentaItemUpdateManyWithoutVentaNestedInput
     tenant?: TenantUpdateOneRequiredWithoutVentasNestedInput
@@ -234120,6 +243429,12 @@ export namespace Prisma {
     esVentaUnica?: BoolFieldUpdateOperationsInput | boolean
     ofertaId?: NullableStringFieldUpdateOperationsInput | string | null
     ventaPadreId?: NullableStringFieldUpdateOperationsInput | string | null
+    turnoId?: NullableStringFieldUpdateOperationsInput | string | null
+    metodoPago?: NullableEnumMetodoPagoVentaFieldUpdateOperationsInput | $Enums.MetodoPagoVenta | null
+    montoEfectivo?: NullableIntFieldUpdateOperationsInput | number | null
+    montoTarjeta?: NullableIntFieldUpdateOperationsInput | number | null
+    montoTransferencia?: NullableIntFieldUpdateOperationsInput | number | null
+    montoCredito?: NullableIntFieldUpdateOperationsInput | number | null
     ordenReparacion?: OrdenReparacionUncheckedUpdateOneWithoutVentaNestedInput
     reconciliaciones?: ReconciliacionVentaUncheckedUpdateManyWithoutVentaNestedInput
     factura?: FacturaUncheckedUpdateOneWithoutVentaNestedInput
@@ -234142,6 +243457,12 @@ export namespace Prisma {
     esVentaUnica?: BoolFieldUpdateOperationsInput | boolean
     ofertaId?: NullableStringFieldUpdateOperationsInput | string | null
     ventaPadreId?: NullableStringFieldUpdateOperationsInput | string | null
+    turnoId?: NullableStringFieldUpdateOperationsInput | string | null
+    metodoPago?: NullableEnumMetodoPagoVentaFieldUpdateOperationsInput | $Enums.MetodoPagoVenta | null
+    montoEfectivo?: NullableIntFieldUpdateOperationsInput | number | null
+    montoTarjeta?: NullableIntFieldUpdateOperationsInput | number | null
+    montoTransferencia?: NullableIntFieldUpdateOperationsInput | number | null
+    montoCredito?: NullableIntFieldUpdateOperationsInput | number | null
   }
 
   export type VentaServiciosUpdateWithoutClienteInput = {
@@ -234349,6 +243670,9 @@ export namespace Prisma {
     createdAt?: Date | string
     updatedAt?: Date | string
     listaPrecioId?: string | null
+    tipoCaja?: string | null
+    almacenId?: string | null
+    cuentaContableId?: string | null
   }
 
   export type ProductoCreateManyTenantInput = {
@@ -234396,6 +243720,12 @@ export namespace Prisma {
     esVentaUnica?: boolean
     ofertaId?: string | null
     ventaPadreId?: string | null
+    turnoId?: string | null
+    metodoPago?: $Enums.MetodoPagoVenta | null
+    montoEfectivo?: number | null
+    montoTarjeta?: number | null
+    montoTransferencia?: number | null
+    montoCredito?: number | null
   }
 
   export type FacturaCreateManyTenantInput = {
@@ -235090,6 +244420,7 @@ export namespace Prisma {
     periodoPadreId?: string | null
     aperturaAutomatica?: boolean
     categoria?: $Enums.CategoriaPeriodo
+    modoContable?: $Enums.ModoContable
     abiertoPorId?: string | null
     fechaApertura?: Date | string | null
     cerradoPor?: string | null
@@ -235133,6 +244464,57 @@ export namespace Prisma {
     motivo?: string | null
     payload?: NullableJsonNullValueInput | InputJsonValue
     createdAt?: Date | string
+  }
+
+  export type TurnoPuntoVentaCreateManyTenantInput = {
+    id?: string
+    puntoDeVentaId: string
+    empleadoId?: string | null
+    tipo?: string
+    fechaApertura?: Date | string
+    fechaCierre?: Date | string | null
+    fondoInicialCup?: number
+    fondoInicialUsd?: number
+    estado?: $Enums.EstadoTurno
+    observaciones?: string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+  }
+
+  export type ArqueoCajaCreateManyTenantInput = {
+    id?: string
+    turnoId: string
+    puntoDeVentaId: string
+    billetes1000Cup?: number
+    billetes500Cup?: number
+    billetes200Cup?: number
+    billetes100Cup?: number
+    billetes50Cup?: number
+    billetes20Cup?: number
+    monedasCup?: number
+    billetes100Usd?: number
+    billetes50Usd?: number
+    billetes20Usd?: number
+    billetes10Usd?: number
+    billetes5Usd?: number
+    billetes1Usd?: number
+    monedasUsd?: number
+    totalEfectivoCup?: number
+    totalEfectivoUsd?: number
+    totalTarjeta?: number
+    totalTransferencia?: number
+    totalCredito?: number
+    esperadoEfectivoCup?: number
+    esperadoEfectivoUsd?: number
+    esperadoTarjeta?: number
+    esperadoTransferencia?: number
+    esperadoCredito?: number
+    diferenciaCup?: number
+    diferenciaUsd?: number
+    observaciones?: string | null
+    contabilizado?: boolean
+    createdAt?: Date | string
+    updatedAt?: Date | string
   }
 
   export type BackupLogCreateManyTenantInput = {
@@ -235396,6 +244778,7 @@ export namespace Prisma {
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     productos?: ProductoUpdateManyWithoutAlmacenNestedInput
+    puntosDeVenta?: PuntoDeVentaUpdateManyWithoutAlmacenNestedInput
     transferenciasDestino?: TransferenciaUpdateManyWithoutDestinoNestedInput
     transferenciasOrigen?: TransferenciaUpdateManyWithoutOrigenNestedInput
   }
@@ -235406,6 +244789,7 @@ export namespace Prisma {
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     productos?: ProductoUncheckedUpdateManyWithoutAlmacenNestedInput
+    puntosDeVenta?: PuntoDeVentaUncheckedUpdateManyWithoutAlmacenNestedInput
     transferenciasDestino?: TransferenciaUncheckedUpdateManyWithoutDestinoNestedInput
     transferenciasOrigen?: TransferenciaUncheckedUpdateManyWithoutOrigenNestedInput
   }
@@ -235423,11 +244807,16 @@ export namespace Prisma {
     ubicacion?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    tipoCaja?: NullableStringFieldUpdateOperationsInput | string | null
+    cuentaContableId?: NullableStringFieldUpdateOperationsInput | string | null
     productos?: ProductoUpdateManyWithoutPuntoDeVentaNestedInput
     listaPrecio?: ListaPrecioUpdateOneWithoutPuntosDeVentaNestedInput
+    almacen?: AlmacenUpdateOneWithoutPuntosDeVentaNestedInput
     transferenciasDestino?: TransferenciaUpdateManyWithoutPuntoDeVentaDestinoNestedInput
     transferenciasOrigen?: TransferenciaUpdateManyWithoutPuntoDeVentaOrigenNestedInput
     ventas?: VentaUpdateManyWithoutPuntoDeVentaNestedInput
+    turnos?: TurnoPuntoVentaUpdateManyWithoutPuntoDeVentaNestedInput
+    arqueos?: ArqueoCajaUpdateManyWithoutPuntoDeVentaNestedInput
   }
 
   export type PuntoDeVentaUncheckedUpdateWithoutTenantInput = {
@@ -235437,10 +244826,15 @@ export namespace Prisma {
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     listaPrecioId?: NullableStringFieldUpdateOperationsInput | string | null
+    tipoCaja?: NullableStringFieldUpdateOperationsInput | string | null
+    almacenId?: NullableStringFieldUpdateOperationsInput | string | null
+    cuentaContableId?: NullableStringFieldUpdateOperationsInput | string | null
     productos?: ProductoUncheckedUpdateManyWithoutPuntoDeVentaNestedInput
     transferenciasDestino?: TransferenciaUncheckedUpdateManyWithoutPuntoDeVentaDestinoNestedInput
     transferenciasOrigen?: TransferenciaUncheckedUpdateManyWithoutPuntoDeVentaOrigenNestedInput
     ventas?: VentaUncheckedUpdateManyWithoutPuntoDeVentaNestedInput
+    turnos?: TurnoPuntoVentaUncheckedUpdateManyWithoutPuntoDeVentaNestedInput
+    arqueos?: ArqueoCajaUncheckedUpdateManyWithoutPuntoDeVentaNestedInput
   }
 
   export type PuntoDeVentaUncheckedUpdateManyWithoutTenantInput = {
@@ -235450,6 +244844,9 @@ export namespace Prisma {
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     listaPrecioId?: NullableStringFieldUpdateOperationsInput | string | null
+    tipoCaja?: NullableStringFieldUpdateOperationsInput | string | null
+    almacenId?: NullableStringFieldUpdateOperationsInput | string | null
+    cuentaContableId?: NullableStringFieldUpdateOperationsInput | string | null
   }
 
   export type ProductoUpdateWithoutTenantInput = {
@@ -235582,6 +244979,11 @@ export namespace Prisma {
     observaciones?: NullableStringFieldUpdateOperationsInput | string | null
     esVentaUnica?: BoolFieldUpdateOperationsInput | boolean
     ventaPadreId?: NullableStringFieldUpdateOperationsInput | string | null
+    metodoPago?: NullableEnumMetodoPagoVentaFieldUpdateOperationsInput | $Enums.MetodoPagoVenta | null
+    montoEfectivo?: NullableIntFieldUpdateOperationsInput | number | null
+    montoTarjeta?: NullableIntFieldUpdateOperationsInput | number | null
+    montoTransferencia?: NullableIntFieldUpdateOperationsInput | number | null
+    montoCredito?: NullableIntFieldUpdateOperationsInput | number | null
     ordenReparacion?: OrdenReparacionUpdateOneWithoutVentaNestedInput
     reconciliaciones?: ReconciliacionVentaUpdateManyWithoutVentaNestedInput
     cliente?: ClienteUpdateOneWithoutVentaNestedInput
@@ -235589,6 +244991,7 @@ export namespace Prisma {
     oferta?: OfertaUpdateOneWithoutVentaNestedInput
     producto?: ProductoUpdateOneWithoutVentasNestedInput
     puntoDeVenta?: PuntoDeVentaUpdateOneRequiredWithoutVentasNestedInput
+    turno?: TurnoPuntoVentaUpdateOneWithoutVentasNestedInput
     factura?: FacturaUpdateOneWithoutVentaNestedInput
     items?: VentaItemUpdateManyWithoutVentaNestedInput
   }
@@ -235609,6 +245012,12 @@ export namespace Prisma {
     esVentaUnica?: BoolFieldUpdateOperationsInput | boolean
     ofertaId?: NullableStringFieldUpdateOperationsInput | string | null
     ventaPadreId?: NullableStringFieldUpdateOperationsInput | string | null
+    turnoId?: NullableStringFieldUpdateOperationsInput | string | null
+    metodoPago?: NullableEnumMetodoPagoVentaFieldUpdateOperationsInput | $Enums.MetodoPagoVenta | null
+    montoEfectivo?: NullableIntFieldUpdateOperationsInput | number | null
+    montoTarjeta?: NullableIntFieldUpdateOperationsInput | number | null
+    montoTransferencia?: NullableIntFieldUpdateOperationsInput | number | null
+    montoCredito?: NullableIntFieldUpdateOperationsInput | number | null
     ordenReparacion?: OrdenReparacionUncheckedUpdateOneWithoutVentaNestedInput
     reconciliaciones?: ReconciliacionVentaUncheckedUpdateManyWithoutVentaNestedInput
     factura?: FacturaUncheckedUpdateOneWithoutVentaNestedInput
@@ -235631,6 +245040,12 @@ export namespace Prisma {
     esVentaUnica?: BoolFieldUpdateOperationsInput | boolean
     ofertaId?: NullableStringFieldUpdateOperationsInput | string | null
     ventaPadreId?: NullableStringFieldUpdateOperationsInput | string | null
+    turnoId?: NullableStringFieldUpdateOperationsInput | string | null
+    metodoPago?: NullableEnumMetodoPagoVentaFieldUpdateOperationsInput | $Enums.MetodoPagoVenta | null
+    montoEfectivo?: NullableIntFieldUpdateOperationsInput | number | null
+    montoTarjeta?: NullableIntFieldUpdateOperationsInput | number | null
+    montoTransferencia?: NullableIntFieldUpdateOperationsInput | number | null
+    montoCredito?: NullableIntFieldUpdateOperationsInput | number | null
   }
 
   export type FacturaUpdateWithoutTenantInput = {
@@ -236930,6 +246345,7 @@ export namespace Prisma {
     vacationAccruals?: VacationAccrualUpdateManyWithoutEmployeeNestedInput
     vacationRequests?: VacationRequestUpdateManyWithoutEmployeeNestedInput
     ventas?: VentaUpdateManyWithoutEmpleadoNestedInput
+    turnosPos?: TurnoPuntoVentaUpdateManyWithoutEmpleadoNestedInput
   }
 
   export type EmpleadoUncheckedUpdateWithoutTenantInput = {
@@ -236953,6 +246369,7 @@ export namespace Prisma {
     vacationAccruals?: VacationAccrualUncheckedUpdateManyWithoutEmployeeNestedInput
     vacationRequests?: VacationRequestUncheckedUpdateManyWithoutEmployeeNestedInput
     ventas?: VentaUncheckedUpdateManyWithoutEmpleadoNestedInput
+    turnosPos?: TurnoPuntoVentaUncheckedUpdateManyWithoutEmpleadoNestedInput
   }
 
   export type EmpleadoUncheckedUpdateManyWithoutTenantInput = {
@@ -237818,6 +247235,7 @@ export namespace Prisma {
     estado?: EnumEstadoPeriodoFieldUpdateOperationsInput | $Enums.EstadoPeriodo
     aperturaAutomatica?: BoolFieldUpdateOperationsInput | boolean
     categoria?: EnumCategoriaPeriodoFieldUpdateOperationsInput | $Enums.CategoriaPeriodo
+    modoContable?: EnumModoContableFieldUpdateOperationsInput | $Enums.ModoContable
     abiertoPorId?: NullableStringFieldUpdateOperationsInput | string | null
     fechaApertura?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     cerradoPor?: NullableStringFieldUpdateOperationsInput | string | null
@@ -237851,6 +247269,7 @@ export namespace Prisma {
     periodoPadreId?: NullableStringFieldUpdateOperationsInput | string | null
     aperturaAutomatica?: BoolFieldUpdateOperationsInput | boolean
     categoria?: EnumCategoriaPeriodoFieldUpdateOperationsInput | $Enums.CategoriaPeriodo
+    modoContable?: EnumModoContableFieldUpdateOperationsInput | $Enums.ModoContable
     abiertoPorId?: NullableStringFieldUpdateOperationsInput | string | null
     fechaApertura?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     cerradoPor?: NullableStringFieldUpdateOperationsInput | string | null
@@ -237883,6 +247302,7 @@ export namespace Prisma {
     periodoPadreId?: NullableStringFieldUpdateOperationsInput | string | null
     aperturaAutomatica?: BoolFieldUpdateOperationsInput | boolean
     categoria?: EnumCategoriaPeriodoFieldUpdateOperationsInput | $Enums.CategoriaPeriodo
+    modoContable?: EnumModoContableFieldUpdateOperationsInput | $Enums.ModoContable
     abiertoPorId?: NullableStringFieldUpdateOperationsInput | string | null
     fechaApertura?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     cerradoPor?: NullableStringFieldUpdateOperationsInput | string | null
@@ -237982,6 +247402,163 @@ export namespace Prisma {
     motivo?: NullableStringFieldUpdateOperationsInput | string | null
     payload?: NullableJsonNullValueInput | InputJsonValue
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type TurnoPuntoVentaUpdateWithoutTenantInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    tipo?: StringFieldUpdateOperationsInput | string
+    fechaApertura?: DateTimeFieldUpdateOperationsInput | Date | string
+    fechaCierre?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    fondoInicialCup?: IntFieldUpdateOperationsInput | number
+    fondoInicialUsd?: IntFieldUpdateOperationsInput | number
+    estado?: EnumEstadoTurnoFieldUpdateOperationsInput | $Enums.EstadoTurno
+    observaciones?: NullableStringFieldUpdateOperationsInput | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    puntoDeVenta?: PuntoDeVentaUpdateOneRequiredWithoutTurnosNestedInput
+    empleado?: EmpleadoUpdateOneWithoutTurnosPosNestedInput
+    ventas?: VentaUpdateManyWithoutTurnoNestedInput
+    arqueo?: ArqueoCajaUpdateOneWithoutTurnoNestedInput
+  }
+
+  export type TurnoPuntoVentaUncheckedUpdateWithoutTenantInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    puntoDeVentaId?: StringFieldUpdateOperationsInput | string
+    empleadoId?: NullableStringFieldUpdateOperationsInput | string | null
+    tipo?: StringFieldUpdateOperationsInput | string
+    fechaApertura?: DateTimeFieldUpdateOperationsInput | Date | string
+    fechaCierre?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    fondoInicialCup?: IntFieldUpdateOperationsInput | number
+    fondoInicialUsd?: IntFieldUpdateOperationsInput | number
+    estado?: EnumEstadoTurnoFieldUpdateOperationsInput | $Enums.EstadoTurno
+    observaciones?: NullableStringFieldUpdateOperationsInput | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    ventas?: VentaUncheckedUpdateManyWithoutTurnoNestedInput
+    arqueo?: ArqueoCajaUncheckedUpdateOneWithoutTurnoNestedInput
+  }
+
+  export type TurnoPuntoVentaUncheckedUpdateManyWithoutTenantInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    puntoDeVentaId?: StringFieldUpdateOperationsInput | string
+    empleadoId?: NullableStringFieldUpdateOperationsInput | string | null
+    tipo?: StringFieldUpdateOperationsInput | string
+    fechaApertura?: DateTimeFieldUpdateOperationsInput | Date | string
+    fechaCierre?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    fondoInicialCup?: IntFieldUpdateOperationsInput | number
+    fondoInicialUsd?: IntFieldUpdateOperationsInput | number
+    estado?: EnumEstadoTurnoFieldUpdateOperationsInput | $Enums.EstadoTurno
+    observaciones?: NullableStringFieldUpdateOperationsInput | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type ArqueoCajaUpdateWithoutTenantInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    billetes1000Cup?: IntFieldUpdateOperationsInput | number
+    billetes500Cup?: IntFieldUpdateOperationsInput | number
+    billetes200Cup?: IntFieldUpdateOperationsInput | number
+    billetes100Cup?: IntFieldUpdateOperationsInput | number
+    billetes50Cup?: IntFieldUpdateOperationsInput | number
+    billetes20Cup?: IntFieldUpdateOperationsInput | number
+    monedasCup?: IntFieldUpdateOperationsInput | number
+    billetes100Usd?: IntFieldUpdateOperationsInput | number
+    billetes50Usd?: IntFieldUpdateOperationsInput | number
+    billetes20Usd?: IntFieldUpdateOperationsInput | number
+    billetes10Usd?: IntFieldUpdateOperationsInput | number
+    billetes5Usd?: IntFieldUpdateOperationsInput | number
+    billetes1Usd?: IntFieldUpdateOperationsInput | number
+    monedasUsd?: IntFieldUpdateOperationsInput | number
+    totalEfectivoCup?: IntFieldUpdateOperationsInput | number
+    totalEfectivoUsd?: IntFieldUpdateOperationsInput | number
+    totalTarjeta?: IntFieldUpdateOperationsInput | number
+    totalTransferencia?: IntFieldUpdateOperationsInput | number
+    totalCredito?: IntFieldUpdateOperationsInput | number
+    esperadoEfectivoCup?: IntFieldUpdateOperationsInput | number
+    esperadoEfectivoUsd?: IntFieldUpdateOperationsInput | number
+    esperadoTarjeta?: IntFieldUpdateOperationsInput | number
+    esperadoTransferencia?: IntFieldUpdateOperationsInput | number
+    esperadoCredito?: IntFieldUpdateOperationsInput | number
+    diferenciaCup?: IntFieldUpdateOperationsInput | number
+    diferenciaUsd?: IntFieldUpdateOperationsInput | number
+    observaciones?: NullableStringFieldUpdateOperationsInput | string | null
+    contabilizado?: BoolFieldUpdateOperationsInput | boolean
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    turno?: TurnoPuntoVentaUpdateOneRequiredWithoutArqueoNestedInput
+    puntoDeVenta?: PuntoDeVentaUpdateOneRequiredWithoutArqueosNestedInput
+  }
+
+  export type ArqueoCajaUncheckedUpdateWithoutTenantInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    turnoId?: StringFieldUpdateOperationsInput | string
+    puntoDeVentaId?: StringFieldUpdateOperationsInput | string
+    billetes1000Cup?: IntFieldUpdateOperationsInput | number
+    billetes500Cup?: IntFieldUpdateOperationsInput | number
+    billetes200Cup?: IntFieldUpdateOperationsInput | number
+    billetes100Cup?: IntFieldUpdateOperationsInput | number
+    billetes50Cup?: IntFieldUpdateOperationsInput | number
+    billetes20Cup?: IntFieldUpdateOperationsInput | number
+    monedasCup?: IntFieldUpdateOperationsInput | number
+    billetes100Usd?: IntFieldUpdateOperationsInput | number
+    billetes50Usd?: IntFieldUpdateOperationsInput | number
+    billetes20Usd?: IntFieldUpdateOperationsInput | number
+    billetes10Usd?: IntFieldUpdateOperationsInput | number
+    billetes5Usd?: IntFieldUpdateOperationsInput | number
+    billetes1Usd?: IntFieldUpdateOperationsInput | number
+    monedasUsd?: IntFieldUpdateOperationsInput | number
+    totalEfectivoCup?: IntFieldUpdateOperationsInput | number
+    totalEfectivoUsd?: IntFieldUpdateOperationsInput | number
+    totalTarjeta?: IntFieldUpdateOperationsInput | number
+    totalTransferencia?: IntFieldUpdateOperationsInput | number
+    totalCredito?: IntFieldUpdateOperationsInput | number
+    esperadoEfectivoCup?: IntFieldUpdateOperationsInput | number
+    esperadoEfectivoUsd?: IntFieldUpdateOperationsInput | number
+    esperadoTarjeta?: IntFieldUpdateOperationsInput | number
+    esperadoTransferencia?: IntFieldUpdateOperationsInput | number
+    esperadoCredito?: IntFieldUpdateOperationsInput | number
+    diferenciaCup?: IntFieldUpdateOperationsInput | number
+    diferenciaUsd?: IntFieldUpdateOperationsInput | number
+    observaciones?: NullableStringFieldUpdateOperationsInput | string | null
+    contabilizado?: BoolFieldUpdateOperationsInput | boolean
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type ArqueoCajaUncheckedUpdateManyWithoutTenantInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    turnoId?: StringFieldUpdateOperationsInput | string
+    puntoDeVentaId?: StringFieldUpdateOperationsInput | string
+    billetes1000Cup?: IntFieldUpdateOperationsInput | number
+    billetes500Cup?: IntFieldUpdateOperationsInput | number
+    billetes200Cup?: IntFieldUpdateOperationsInput | number
+    billetes100Cup?: IntFieldUpdateOperationsInput | number
+    billetes50Cup?: IntFieldUpdateOperationsInput | number
+    billetes20Cup?: IntFieldUpdateOperationsInput | number
+    monedasCup?: IntFieldUpdateOperationsInput | number
+    billetes100Usd?: IntFieldUpdateOperationsInput | number
+    billetes50Usd?: IntFieldUpdateOperationsInput | number
+    billetes20Usd?: IntFieldUpdateOperationsInput | number
+    billetes10Usd?: IntFieldUpdateOperationsInput | number
+    billetes5Usd?: IntFieldUpdateOperationsInput | number
+    billetes1Usd?: IntFieldUpdateOperationsInput | number
+    monedasUsd?: IntFieldUpdateOperationsInput | number
+    totalEfectivoCup?: IntFieldUpdateOperationsInput | number
+    totalEfectivoUsd?: IntFieldUpdateOperationsInput | number
+    totalTarjeta?: IntFieldUpdateOperationsInput | number
+    totalTransferencia?: IntFieldUpdateOperationsInput | number
+    totalCredito?: IntFieldUpdateOperationsInput | number
+    esperadoEfectivoCup?: IntFieldUpdateOperationsInput | number
+    esperadoEfectivoUsd?: IntFieldUpdateOperationsInput | number
+    esperadoTarjeta?: IntFieldUpdateOperationsInput | number
+    esperadoTransferencia?: IntFieldUpdateOperationsInput | number
+    esperadoCredito?: IntFieldUpdateOperationsInput | number
+    diferenciaCup?: IntFieldUpdateOperationsInput | number
+    diferenciaUsd?: IntFieldUpdateOperationsInput | number
+    observaciones?: NullableStringFieldUpdateOperationsInput | string | null
+    contabilizado?: BoolFieldUpdateOperationsInput | boolean
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
 
   export type BackupLogUpdateWithoutTenantInput = {
@@ -238092,6 +247669,18 @@ export namespace Prisma {
     surtidoCodigo?: string | null
     dcCodigo?: string | null
     fotos?: ProductoCreatefotosInput | string[]
+  }
+
+  export type PuntoDeVentaCreateManyAlmacenInput = {
+    pvId?: string
+    tenantId: string
+    nombre: string
+    ubicacion?: string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    listaPrecioId?: string | null
+    tipoCaja?: string | null
+    cuentaContableId?: string | null
   }
 
   export type TransferenciaCreateManyDestinoInput = {
@@ -238249,6 +247838,54 @@ export namespace Prisma {
     surtidoCodigo?: NullableStringFieldUpdateOperationsInput | string | null
     dcCodigo?: NullableStringFieldUpdateOperationsInput | string | null
     fotos?: ProductoUpdatefotosInput | string[]
+  }
+
+  export type PuntoDeVentaUpdateWithoutAlmacenInput = {
+    pvId?: StringFieldUpdateOperationsInput | string
+    nombre?: StringFieldUpdateOperationsInput | string
+    ubicacion?: NullableStringFieldUpdateOperationsInput | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    tipoCaja?: NullableStringFieldUpdateOperationsInput | string | null
+    cuentaContableId?: NullableStringFieldUpdateOperationsInput | string | null
+    productos?: ProductoUpdateManyWithoutPuntoDeVentaNestedInput
+    listaPrecio?: ListaPrecioUpdateOneWithoutPuntosDeVentaNestedInput
+    transferenciasDestino?: TransferenciaUpdateManyWithoutPuntoDeVentaDestinoNestedInput
+    transferenciasOrigen?: TransferenciaUpdateManyWithoutPuntoDeVentaOrigenNestedInput
+    ventas?: VentaUpdateManyWithoutPuntoDeVentaNestedInput
+    turnos?: TurnoPuntoVentaUpdateManyWithoutPuntoDeVentaNestedInput
+    arqueos?: ArqueoCajaUpdateManyWithoutPuntoDeVentaNestedInput
+    tenant?: TenantUpdateOneRequiredWithoutPuntosDeVentaNestedInput
+  }
+
+  export type PuntoDeVentaUncheckedUpdateWithoutAlmacenInput = {
+    pvId?: StringFieldUpdateOperationsInput | string
+    tenantId?: StringFieldUpdateOperationsInput | string
+    nombre?: StringFieldUpdateOperationsInput | string
+    ubicacion?: NullableStringFieldUpdateOperationsInput | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    listaPrecioId?: NullableStringFieldUpdateOperationsInput | string | null
+    tipoCaja?: NullableStringFieldUpdateOperationsInput | string | null
+    cuentaContableId?: NullableStringFieldUpdateOperationsInput | string | null
+    productos?: ProductoUncheckedUpdateManyWithoutPuntoDeVentaNestedInput
+    transferenciasDestino?: TransferenciaUncheckedUpdateManyWithoutPuntoDeVentaDestinoNestedInput
+    transferenciasOrigen?: TransferenciaUncheckedUpdateManyWithoutPuntoDeVentaOrigenNestedInput
+    ventas?: VentaUncheckedUpdateManyWithoutPuntoDeVentaNestedInput
+    turnos?: TurnoPuntoVentaUncheckedUpdateManyWithoutPuntoDeVentaNestedInput
+    arqueos?: ArqueoCajaUncheckedUpdateManyWithoutPuntoDeVentaNestedInput
+  }
+
+  export type PuntoDeVentaUncheckedUpdateManyWithoutAlmacenInput = {
+    pvId?: StringFieldUpdateOperationsInput | string
+    tenantId?: StringFieldUpdateOperationsInput | string
+    nombre?: StringFieldUpdateOperationsInput | string
+    ubicacion?: NullableStringFieldUpdateOperationsInput | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    listaPrecioId?: NullableStringFieldUpdateOperationsInput | string | null
+    tipoCaja?: NullableStringFieldUpdateOperationsInput | string | null
+    cuentaContableId?: NullableStringFieldUpdateOperationsInput | string | null
   }
 
   export type TransferenciaUpdateWithoutDestinoInput = {
@@ -238448,6 +248085,63 @@ export namespace Prisma {
     esVentaUnica?: boolean
     ofertaId?: string | null
     ventaPadreId?: string | null
+    turnoId?: string | null
+    metodoPago?: $Enums.MetodoPagoVenta | null
+    montoEfectivo?: number | null
+    montoTarjeta?: number | null
+    montoTransferencia?: number | null
+    montoCredito?: number | null
+  }
+
+  export type TurnoPuntoVentaCreateManyPuntoDeVentaInput = {
+    id?: string
+    tenantId: string
+    empleadoId?: string | null
+    tipo?: string
+    fechaApertura?: Date | string
+    fechaCierre?: Date | string | null
+    fondoInicialCup?: number
+    fondoInicialUsd?: number
+    estado?: $Enums.EstadoTurno
+    observaciones?: string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+  }
+
+  export type ArqueoCajaCreateManyPuntoDeVentaInput = {
+    id?: string
+    turnoId: string
+    tenantId: string
+    billetes1000Cup?: number
+    billetes500Cup?: number
+    billetes200Cup?: number
+    billetes100Cup?: number
+    billetes50Cup?: number
+    billetes20Cup?: number
+    monedasCup?: number
+    billetes100Usd?: number
+    billetes50Usd?: number
+    billetes20Usd?: number
+    billetes10Usd?: number
+    billetes5Usd?: number
+    billetes1Usd?: number
+    monedasUsd?: number
+    totalEfectivoCup?: number
+    totalEfectivoUsd?: number
+    totalTarjeta?: number
+    totalTransferencia?: number
+    totalCredito?: number
+    esperadoEfectivoCup?: number
+    esperadoEfectivoUsd?: number
+    esperadoTarjeta?: number
+    esperadoTransferencia?: number
+    esperadoCredito?: number
+    diferenciaCup?: number
+    diferenciaUsd?: number
+    observaciones?: string | null
+    contabilizado?: boolean
+    createdAt?: Date | string
+    updatedAt?: Date | string
   }
 
   export type ProductoUpdateWithoutPuntoDeVentaInput = {
@@ -238694,12 +248388,18 @@ export namespace Prisma {
     observaciones?: NullableStringFieldUpdateOperationsInput | string | null
     esVentaUnica?: BoolFieldUpdateOperationsInput | boolean
     ventaPadreId?: NullableStringFieldUpdateOperationsInput | string | null
+    metodoPago?: NullableEnumMetodoPagoVentaFieldUpdateOperationsInput | $Enums.MetodoPagoVenta | null
+    montoEfectivo?: NullableIntFieldUpdateOperationsInput | number | null
+    montoTarjeta?: NullableIntFieldUpdateOperationsInput | number | null
+    montoTransferencia?: NullableIntFieldUpdateOperationsInput | number | null
+    montoCredito?: NullableIntFieldUpdateOperationsInput | number | null
     ordenReparacion?: OrdenReparacionUpdateOneWithoutVentaNestedInput
     reconciliaciones?: ReconciliacionVentaUpdateManyWithoutVentaNestedInput
     cliente?: ClienteUpdateOneWithoutVentaNestedInput
     empleado?: EmpleadoUpdateOneWithoutVentasNestedInput
     oferta?: OfertaUpdateOneWithoutVentaNestedInput
     producto?: ProductoUpdateOneWithoutVentasNestedInput
+    turno?: TurnoPuntoVentaUpdateOneWithoutVentasNestedInput
     factura?: FacturaUpdateOneWithoutVentaNestedInput
     items?: VentaItemUpdateManyWithoutVentaNestedInput
     tenant?: TenantUpdateOneRequiredWithoutVentasNestedInput
@@ -238721,6 +248421,12 @@ export namespace Prisma {
     esVentaUnica?: BoolFieldUpdateOperationsInput | boolean
     ofertaId?: NullableStringFieldUpdateOperationsInput | string | null
     ventaPadreId?: NullableStringFieldUpdateOperationsInput | string | null
+    turnoId?: NullableStringFieldUpdateOperationsInput | string | null
+    metodoPago?: NullableEnumMetodoPagoVentaFieldUpdateOperationsInput | $Enums.MetodoPagoVenta | null
+    montoEfectivo?: NullableIntFieldUpdateOperationsInput | number | null
+    montoTarjeta?: NullableIntFieldUpdateOperationsInput | number | null
+    montoTransferencia?: NullableIntFieldUpdateOperationsInput | number | null
+    montoCredito?: NullableIntFieldUpdateOperationsInput | number | null
     ordenReparacion?: OrdenReparacionUncheckedUpdateOneWithoutVentaNestedInput
     reconciliaciones?: ReconciliacionVentaUncheckedUpdateManyWithoutVentaNestedInput
     factura?: FacturaUncheckedUpdateOneWithoutVentaNestedInput
@@ -238743,6 +248449,273 @@ export namespace Prisma {
     esVentaUnica?: BoolFieldUpdateOperationsInput | boolean
     ofertaId?: NullableStringFieldUpdateOperationsInput | string | null
     ventaPadreId?: NullableStringFieldUpdateOperationsInput | string | null
+    turnoId?: NullableStringFieldUpdateOperationsInput | string | null
+    metodoPago?: NullableEnumMetodoPagoVentaFieldUpdateOperationsInput | $Enums.MetodoPagoVenta | null
+    montoEfectivo?: NullableIntFieldUpdateOperationsInput | number | null
+    montoTarjeta?: NullableIntFieldUpdateOperationsInput | number | null
+    montoTransferencia?: NullableIntFieldUpdateOperationsInput | number | null
+    montoCredito?: NullableIntFieldUpdateOperationsInput | number | null
+  }
+
+  export type TurnoPuntoVentaUpdateWithoutPuntoDeVentaInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    tipo?: StringFieldUpdateOperationsInput | string
+    fechaApertura?: DateTimeFieldUpdateOperationsInput | Date | string
+    fechaCierre?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    fondoInicialCup?: IntFieldUpdateOperationsInput | number
+    fondoInicialUsd?: IntFieldUpdateOperationsInput | number
+    estado?: EnumEstadoTurnoFieldUpdateOperationsInput | $Enums.EstadoTurno
+    observaciones?: NullableStringFieldUpdateOperationsInput | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    empleado?: EmpleadoUpdateOneWithoutTurnosPosNestedInput
+    ventas?: VentaUpdateManyWithoutTurnoNestedInput
+    arqueo?: ArqueoCajaUpdateOneWithoutTurnoNestedInput
+    tenant?: TenantUpdateOneRequiredWithoutTurnosPosNestedInput
+  }
+
+  export type TurnoPuntoVentaUncheckedUpdateWithoutPuntoDeVentaInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    tenantId?: StringFieldUpdateOperationsInput | string
+    empleadoId?: NullableStringFieldUpdateOperationsInput | string | null
+    tipo?: StringFieldUpdateOperationsInput | string
+    fechaApertura?: DateTimeFieldUpdateOperationsInput | Date | string
+    fechaCierre?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    fondoInicialCup?: IntFieldUpdateOperationsInput | number
+    fondoInicialUsd?: IntFieldUpdateOperationsInput | number
+    estado?: EnumEstadoTurnoFieldUpdateOperationsInput | $Enums.EstadoTurno
+    observaciones?: NullableStringFieldUpdateOperationsInput | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    ventas?: VentaUncheckedUpdateManyWithoutTurnoNestedInput
+    arqueo?: ArqueoCajaUncheckedUpdateOneWithoutTurnoNestedInput
+  }
+
+  export type TurnoPuntoVentaUncheckedUpdateManyWithoutPuntoDeVentaInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    tenantId?: StringFieldUpdateOperationsInput | string
+    empleadoId?: NullableStringFieldUpdateOperationsInput | string | null
+    tipo?: StringFieldUpdateOperationsInput | string
+    fechaApertura?: DateTimeFieldUpdateOperationsInput | Date | string
+    fechaCierre?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    fondoInicialCup?: IntFieldUpdateOperationsInput | number
+    fondoInicialUsd?: IntFieldUpdateOperationsInput | number
+    estado?: EnumEstadoTurnoFieldUpdateOperationsInput | $Enums.EstadoTurno
+    observaciones?: NullableStringFieldUpdateOperationsInput | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type ArqueoCajaUpdateWithoutPuntoDeVentaInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    billetes1000Cup?: IntFieldUpdateOperationsInput | number
+    billetes500Cup?: IntFieldUpdateOperationsInput | number
+    billetes200Cup?: IntFieldUpdateOperationsInput | number
+    billetes100Cup?: IntFieldUpdateOperationsInput | number
+    billetes50Cup?: IntFieldUpdateOperationsInput | number
+    billetes20Cup?: IntFieldUpdateOperationsInput | number
+    monedasCup?: IntFieldUpdateOperationsInput | number
+    billetes100Usd?: IntFieldUpdateOperationsInput | number
+    billetes50Usd?: IntFieldUpdateOperationsInput | number
+    billetes20Usd?: IntFieldUpdateOperationsInput | number
+    billetes10Usd?: IntFieldUpdateOperationsInput | number
+    billetes5Usd?: IntFieldUpdateOperationsInput | number
+    billetes1Usd?: IntFieldUpdateOperationsInput | number
+    monedasUsd?: IntFieldUpdateOperationsInput | number
+    totalEfectivoCup?: IntFieldUpdateOperationsInput | number
+    totalEfectivoUsd?: IntFieldUpdateOperationsInput | number
+    totalTarjeta?: IntFieldUpdateOperationsInput | number
+    totalTransferencia?: IntFieldUpdateOperationsInput | number
+    totalCredito?: IntFieldUpdateOperationsInput | number
+    esperadoEfectivoCup?: IntFieldUpdateOperationsInput | number
+    esperadoEfectivoUsd?: IntFieldUpdateOperationsInput | number
+    esperadoTarjeta?: IntFieldUpdateOperationsInput | number
+    esperadoTransferencia?: IntFieldUpdateOperationsInput | number
+    esperadoCredito?: IntFieldUpdateOperationsInput | number
+    diferenciaCup?: IntFieldUpdateOperationsInput | number
+    diferenciaUsd?: IntFieldUpdateOperationsInput | number
+    observaciones?: NullableStringFieldUpdateOperationsInput | string | null
+    contabilizado?: BoolFieldUpdateOperationsInput | boolean
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    turno?: TurnoPuntoVentaUpdateOneRequiredWithoutArqueoNestedInput
+    tenant?: TenantUpdateOneRequiredWithoutArqueosCajaNestedInput
+  }
+
+  export type ArqueoCajaUncheckedUpdateWithoutPuntoDeVentaInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    turnoId?: StringFieldUpdateOperationsInput | string
+    tenantId?: StringFieldUpdateOperationsInput | string
+    billetes1000Cup?: IntFieldUpdateOperationsInput | number
+    billetes500Cup?: IntFieldUpdateOperationsInput | number
+    billetes200Cup?: IntFieldUpdateOperationsInput | number
+    billetes100Cup?: IntFieldUpdateOperationsInput | number
+    billetes50Cup?: IntFieldUpdateOperationsInput | number
+    billetes20Cup?: IntFieldUpdateOperationsInput | number
+    monedasCup?: IntFieldUpdateOperationsInput | number
+    billetes100Usd?: IntFieldUpdateOperationsInput | number
+    billetes50Usd?: IntFieldUpdateOperationsInput | number
+    billetes20Usd?: IntFieldUpdateOperationsInput | number
+    billetes10Usd?: IntFieldUpdateOperationsInput | number
+    billetes5Usd?: IntFieldUpdateOperationsInput | number
+    billetes1Usd?: IntFieldUpdateOperationsInput | number
+    monedasUsd?: IntFieldUpdateOperationsInput | number
+    totalEfectivoCup?: IntFieldUpdateOperationsInput | number
+    totalEfectivoUsd?: IntFieldUpdateOperationsInput | number
+    totalTarjeta?: IntFieldUpdateOperationsInput | number
+    totalTransferencia?: IntFieldUpdateOperationsInput | number
+    totalCredito?: IntFieldUpdateOperationsInput | number
+    esperadoEfectivoCup?: IntFieldUpdateOperationsInput | number
+    esperadoEfectivoUsd?: IntFieldUpdateOperationsInput | number
+    esperadoTarjeta?: IntFieldUpdateOperationsInput | number
+    esperadoTransferencia?: IntFieldUpdateOperationsInput | number
+    esperadoCredito?: IntFieldUpdateOperationsInput | number
+    diferenciaCup?: IntFieldUpdateOperationsInput | number
+    diferenciaUsd?: IntFieldUpdateOperationsInput | number
+    observaciones?: NullableStringFieldUpdateOperationsInput | string | null
+    contabilizado?: BoolFieldUpdateOperationsInput | boolean
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type ArqueoCajaUncheckedUpdateManyWithoutPuntoDeVentaInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    turnoId?: StringFieldUpdateOperationsInput | string
+    tenantId?: StringFieldUpdateOperationsInput | string
+    billetes1000Cup?: IntFieldUpdateOperationsInput | number
+    billetes500Cup?: IntFieldUpdateOperationsInput | number
+    billetes200Cup?: IntFieldUpdateOperationsInput | number
+    billetes100Cup?: IntFieldUpdateOperationsInput | number
+    billetes50Cup?: IntFieldUpdateOperationsInput | number
+    billetes20Cup?: IntFieldUpdateOperationsInput | number
+    monedasCup?: IntFieldUpdateOperationsInput | number
+    billetes100Usd?: IntFieldUpdateOperationsInput | number
+    billetes50Usd?: IntFieldUpdateOperationsInput | number
+    billetes20Usd?: IntFieldUpdateOperationsInput | number
+    billetes10Usd?: IntFieldUpdateOperationsInput | number
+    billetes5Usd?: IntFieldUpdateOperationsInput | number
+    billetes1Usd?: IntFieldUpdateOperationsInput | number
+    monedasUsd?: IntFieldUpdateOperationsInput | number
+    totalEfectivoCup?: IntFieldUpdateOperationsInput | number
+    totalEfectivoUsd?: IntFieldUpdateOperationsInput | number
+    totalTarjeta?: IntFieldUpdateOperationsInput | number
+    totalTransferencia?: IntFieldUpdateOperationsInput | number
+    totalCredito?: IntFieldUpdateOperationsInput | number
+    esperadoEfectivoCup?: IntFieldUpdateOperationsInput | number
+    esperadoEfectivoUsd?: IntFieldUpdateOperationsInput | number
+    esperadoTarjeta?: IntFieldUpdateOperationsInput | number
+    esperadoTransferencia?: IntFieldUpdateOperationsInput | number
+    esperadoCredito?: IntFieldUpdateOperationsInput | number
+    diferenciaCup?: IntFieldUpdateOperationsInput | number
+    diferenciaUsd?: IntFieldUpdateOperationsInput | number
+    observaciones?: NullableStringFieldUpdateOperationsInput | string | null
+    contabilizado?: BoolFieldUpdateOperationsInput | boolean
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type VentaCreateManyTurnoInput = {
+    ventaId?: string
+    tenantId: string
+    productoId?: string | null
+    cantidad: number
+    puntoDeVentaId: string
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    empleadoId?: string | null
+    total?: number | null
+    clienteId?: string | null
+    ordenId?: string | null
+    descuento?: number | null
+    observaciones?: string | null
+    esVentaUnica?: boolean
+    ofertaId?: string | null
+    ventaPadreId?: string | null
+    metodoPago?: $Enums.MetodoPagoVenta | null
+    montoEfectivo?: number | null
+    montoTarjeta?: number | null
+    montoTransferencia?: number | null
+    montoCredito?: number | null
+  }
+
+  export type VentaUpdateWithoutTurnoInput = {
+    ventaId?: StringFieldUpdateOperationsInput | string
+    cantidad?: IntFieldUpdateOperationsInput | number
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    total?: NullableIntFieldUpdateOperationsInput | number | null
+    ordenId?: NullableStringFieldUpdateOperationsInput | string | null
+    descuento?: NullableIntFieldUpdateOperationsInput | number | null
+    observaciones?: NullableStringFieldUpdateOperationsInput | string | null
+    esVentaUnica?: BoolFieldUpdateOperationsInput | boolean
+    ventaPadreId?: NullableStringFieldUpdateOperationsInput | string | null
+    metodoPago?: NullableEnumMetodoPagoVentaFieldUpdateOperationsInput | $Enums.MetodoPagoVenta | null
+    montoEfectivo?: NullableIntFieldUpdateOperationsInput | number | null
+    montoTarjeta?: NullableIntFieldUpdateOperationsInput | number | null
+    montoTransferencia?: NullableIntFieldUpdateOperationsInput | number | null
+    montoCredito?: NullableIntFieldUpdateOperationsInput | number | null
+    ordenReparacion?: OrdenReparacionUpdateOneWithoutVentaNestedInput
+    reconciliaciones?: ReconciliacionVentaUpdateManyWithoutVentaNestedInput
+    cliente?: ClienteUpdateOneWithoutVentaNestedInput
+    empleado?: EmpleadoUpdateOneWithoutVentasNestedInput
+    oferta?: OfertaUpdateOneWithoutVentaNestedInput
+    producto?: ProductoUpdateOneWithoutVentasNestedInput
+    puntoDeVenta?: PuntoDeVentaUpdateOneRequiredWithoutVentasNestedInput
+    factura?: FacturaUpdateOneWithoutVentaNestedInput
+    items?: VentaItemUpdateManyWithoutVentaNestedInput
+    tenant?: TenantUpdateOneRequiredWithoutVentasNestedInput
+  }
+
+  export type VentaUncheckedUpdateWithoutTurnoInput = {
+    ventaId?: StringFieldUpdateOperationsInput | string
+    tenantId?: StringFieldUpdateOperationsInput | string
+    productoId?: NullableStringFieldUpdateOperationsInput | string | null
+    cantidad?: IntFieldUpdateOperationsInput | number
+    puntoDeVentaId?: StringFieldUpdateOperationsInput | string
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    empleadoId?: NullableStringFieldUpdateOperationsInput | string | null
+    total?: NullableIntFieldUpdateOperationsInput | number | null
+    clienteId?: NullableStringFieldUpdateOperationsInput | string | null
+    ordenId?: NullableStringFieldUpdateOperationsInput | string | null
+    descuento?: NullableIntFieldUpdateOperationsInput | number | null
+    observaciones?: NullableStringFieldUpdateOperationsInput | string | null
+    esVentaUnica?: BoolFieldUpdateOperationsInput | boolean
+    ofertaId?: NullableStringFieldUpdateOperationsInput | string | null
+    ventaPadreId?: NullableStringFieldUpdateOperationsInput | string | null
+    metodoPago?: NullableEnumMetodoPagoVentaFieldUpdateOperationsInput | $Enums.MetodoPagoVenta | null
+    montoEfectivo?: NullableIntFieldUpdateOperationsInput | number | null
+    montoTarjeta?: NullableIntFieldUpdateOperationsInput | number | null
+    montoTransferencia?: NullableIntFieldUpdateOperationsInput | number | null
+    montoCredito?: NullableIntFieldUpdateOperationsInput | number | null
+    ordenReparacion?: OrdenReparacionUncheckedUpdateOneWithoutVentaNestedInput
+    reconciliaciones?: ReconciliacionVentaUncheckedUpdateManyWithoutVentaNestedInput
+    factura?: FacturaUncheckedUpdateOneWithoutVentaNestedInput
+    items?: VentaItemUncheckedUpdateManyWithoutVentaNestedInput
+  }
+
+  export type VentaUncheckedUpdateManyWithoutTurnoInput = {
+    ventaId?: StringFieldUpdateOperationsInput | string
+    tenantId?: StringFieldUpdateOperationsInput | string
+    productoId?: NullableStringFieldUpdateOperationsInput | string | null
+    cantidad?: IntFieldUpdateOperationsInput | number
+    puntoDeVentaId?: StringFieldUpdateOperationsInput | string
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    empleadoId?: NullableStringFieldUpdateOperationsInput | string | null
+    total?: NullableIntFieldUpdateOperationsInput | number | null
+    clienteId?: NullableStringFieldUpdateOperationsInput | string | null
+    ordenId?: NullableStringFieldUpdateOperationsInput | string | null
+    descuento?: NullableIntFieldUpdateOperationsInput | number | null
+    observaciones?: NullableStringFieldUpdateOperationsInput | string | null
+    esVentaUnica?: BoolFieldUpdateOperationsInput | boolean
+    ofertaId?: NullableStringFieldUpdateOperationsInput | string | null
+    ventaPadreId?: NullableStringFieldUpdateOperationsInput | string | null
+    metodoPago?: NullableEnumMetodoPagoVentaFieldUpdateOperationsInput | $Enums.MetodoPagoVenta | null
+    montoEfectivo?: NullableIntFieldUpdateOperationsInput | number | null
+    montoTarjeta?: NullableIntFieldUpdateOperationsInput | number | null
+    montoTransferencia?: NullableIntFieldUpdateOperationsInput | number | null
+    montoCredito?: NullableIntFieldUpdateOperationsInput | number | null
   }
 
   export type CompraProductoCreateManyProductoInput = {
@@ -238938,6 +248911,12 @@ export namespace Prisma {
     esVentaUnica?: boolean
     ofertaId?: string | null
     ventaPadreId?: string | null
+    turnoId?: string | null
+    metodoPago?: $Enums.MetodoPagoVenta | null
+    montoEfectivo?: number | null
+    montoTarjeta?: number | null
+    montoTransferencia?: number | null
+    montoCredito?: number | null
   }
 
   export type VentaItemCreateManyProductoInput = {
@@ -239550,12 +249529,18 @@ export namespace Prisma {
     observaciones?: NullableStringFieldUpdateOperationsInput | string | null
     esVentaUnica?: BoolFieldUpdateOperationsInput | boolean
     ventaPadreId?: NullableStringFieldUpdateOperationsInput | string | null
+    metodoPago?: NullableEnumMetodoPagoVentaFieldUpdateOperationsInput | $Enums.MetodoPagoVenta | null
+    montoEfectivo?: NullableIntFieldUpdateOperationsInput | number | null
+    montoTarjeta?: NullableIntFieldUpdateOperationsInput | number | null
+    montoTransferencia?: NullableIntFieldUpdateOperationsInput | number | null
+    montoCredito?: NullableIntFieldUpdateOperationsInput | number | null
     ordenReparacion?: OrdenReparacionUpdateOneWithoutVentaNestedInput
     reconciliaciones?: ReconciliacionVentaUpdateManyWithoutVentaNestedInput
     cliente?: ClienteUpdateOneWithoutVentaNestedInput
     empleado?: EmpleadoUpdateOneWithoutVentasNestedInput
     oferta?: OfertaUpdateOneWithoutVentaNestedInput
     puntoDeVenta?: PuntoDeVentaUpdateOneRequiredWithoutVentasNestedInput
+    turno?: TurnoPuntoVentaUpdateOneWithoutVentasNestedInput
     factura?: FacturaUpdateOneWithoutVentaNestedInput
     items?: VentaItemUpdateManyWithoutVentaNestedInput
     tenant?: TenantUpdateOneRequiredWithoutVentasNestedInput
@@ -239577,6 +249562,12 @@ export namespace Prisma {
     esVentaUnica?: BoolFieldUpdateOperationsInput | boolean
     ofertaId?: NullableStringFieldUpdateOperationsInput | string | null
     ventaPadreId?: NullableStringFieldUpdateOperationsInput | string | null
+    turnoId?: NullableStringFieldUpdateOperationsInput | string | null
+    metodoPago?: NullableEnumMetodoPagoVentaFieldUpdateOperationsInput | $Enums.MetodoPagoVenta | null
+    montoEfectivo?: NullableIntFieldUpdateOperationsInput | number | null
+    montoTarjeta?: NullableIntFieldUpdateOperationsInput | number | null
+    montoTransferencia?: NullableIntFieldUpdateOperationsInput | number | null
+    montoCredito?: NullableIntFieldUpdateOperationsInput | number | null
     ordenReparacion?: OrdenReparacionUncheckedUpdateOneWithoutVentaNestedInput
     reconciliaciones?: ReconciliacionVentaUncheckedUpdateManyWithoutVentaNestedInput
     factura?: FacturaUncheckedUpdateOneWithoutVentaNestedInput
@@ -239599,6 +249590,12 @@ export namespace Prisma {
     esVentaUnica?: BoolFieldUpdateOperationsInput | boolean
     ofertaId?: NullableStringFieldUpdateOperationsInput | string | null
     ventaPadreId?: NullableStringFieldUpdateOperationsInput | string | null
+    turnoId?: NullableStringFieldUpdateOperationsInput | string | null
+    metodoPago?: NullableEnumMetodoPagoVentaFieldUpdateOperationsInput | $Enums.MetodoPagoVenta | null
+    montoEfectivo?: NullableIntFieldUpdateOperationsInput | number | null
+    montoTarjeta?: NullableIntFieldUpdateOperationsInput | number | null
+    montoTransferencia?: NullableIntFieldUpdateOperationsInput | number | null
+    montoCredito?: NullableIntFieldUpdateOperationsInput | number | null
   }
 
   export type VentaItemUpdateWithoutProductoInput = {
@@ -241079,6 +251076,27 @@ export namespace Prisma {
     esVentaUnica?: boolean
     ofertaId?: string | null
     ventaPadreId?: string | null
+    turnoId?: string | null
+    metodoPago?: $Enums.MetodoPagoVenta | null
+    montoEfectivo?: number | null
+    montoTarjeta?: number | null
+    montoTransferencia?: number | null
+    montoCredito?: number | null
+  }
+
+  export type TurnoPuntoVentaCreateManyEmpleadoInput = {
+    id?: string
+    tenantId: string
+    puntoDeVentaId: string
+    tipo?: string
+    fechaApertura?: Date | string
+    fechaCierre?: Date | string | null
+    fondoInicialCup?: number
+    fondoInicialUsd?: number
+    estado?: $Enums.EstadoTurno
+    observaciones?: string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
   }
 
   export type AttendanceUpdateWithoutEmployeeInput = {
@@ -241406,12 +251424,18 @@ export namespace Prisma {
     observaciones?: NullableStringFieldUpdateOperationsInput | string | null
     esVentaUnica?: BoolFieldUpdateOperationsInput | boolean
     ventaPadreId?: NullableStringFieldUpdateOperationsInput | string | null
+    metodoPago?: NullableEnumMetodoPagoVentaFieldUpdateOperationsInput | $Enums.MetodoPagoVenta | null
+    montoEfectivo?: NullableIntFieldUpdateOperationsInput | number | null
+    montoTarjeta?: NullableIntFieldUpdateOperationsInput | number | null
+    montoTransferencia?: NullableIntFieldUpdateOperationsInput | number | null
+    montoCredito?: NullableIntFieldUpdateOperationsInput | number | null
     ordenReparacion?: OrdenReparacionUpdateOneWithoutVentaNestedInput
     reconciliaciones?: ReconciliacionVentaUpdateManyWithoutVentaNestedInput
     cliente?: ClienteUpdateOneWithoutVentaNestedInput
     oferta?: OfertaUpdateOneWithoutVentaNestedInput
     producto?: ProductoUpdateOneWithoutVentasNestedInput
     puntoDeVenta?: PuntoDeVentaUpdateOneRequiredWithoutVentasNestedInput
+    turno?: TurnoPuntoVentaUpdateOneWithoutVentasNestedInput
     factura?: FacturaUpdateOneWithoutVentaNestedInput
     items?: VentaItemUpdateManyWithoutVentaNestedInput
     tenant?: TenantUpdateOneRequiredWithoutVentasNestedInput
@@ -241433,6 +251457,12 @@ export namespace Prisma {
     esVentaUnica?: BoolFieldUpdateOperationsInput | boolean
     ofertaId?: NullableStringFieldUpdateOperationsInput | string | null
     ventaPadreId?: NullableStringFieldUpdateOperationsInput | string | null
+    turnoId?: NullableStringFieldUpdateOperationsInput | string | null
+    metodoPago?: NullableEnumMetodoPagoVentaFieldUpdateOperationsInput | $Enums.MetodoPagoVenta | null
+    montoEfectivo?: NullableIntFieldUpdateOperationsInput | number | null
+    montoTarjeta?: NullableIntFieldUpdateOperationsInput | number | null
+    montoTransferencia?: NullableIntFieldUpdateOperationsInput | number | null
+    montoCredito?: NullableIntFieldUpdateOperationsInput | number | null
     ordenReparacion?: OrdenReparacionUncheckedUpdateOneWithoutVentaNestedInput
     reconciliaciones?: ReconciliacionVentaUncheckedUpdateManyWithoutVentaNestedInput
     factura?: FacturaUncheckedUpdateOneWithoutVentaNestedInput
@@ -241455,6 +251485,61 @@ export namespace Prisma {
     esVentaUnica?: BoolFieldUpdateOperationsInput | boolean
     ofertaId?: NullableStringFieldUpdateOperationsInput | string | null
     ventaPadreId?: NullableStringFieldUpdateOperationsInput | string | null
+    turnoId?: NullableStringFieldUpdateOperationsInput | string | null
+    metodoPago?: NullableEnumMetodoPagoVentaFieldUpdateOperationsInput | $Enums.MetodoPagoVenta | null
+    montoEfectivo?: NullableIntFieldUpdateOperationsInput | number | null
+    montoTarjeta?: NullableIntFieldUpdateOperationsInput | number | null
+    montoTransferencia?: NullableIntFieldUpdateOperationsInput | number | null
+    montoCredito?: NullableIntFieldUpdateOperationsInput | number | null
+  }
+
+  export type TurnoPuntoVentaUpdateWithoutEmpleadoInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    tipo?: StringFieldUpdateOperationsInput | string
+    fechaApertura?: DateTimeFieldUpdateOperationsInput | Date | string
+    fechaCierre?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    fondoInicialCup?: IntFieldUpdateOperationsInput | number
+    fondoInicialUsd?: IntFieldUpdateOperationsInput | number
+    estado?: EnumEstadoTurnoFieldUpdateOperationsInput | $Enums.EstadoTurno
+    observaciones?: NullableStringFieldUpdateOperationsInput | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    puntoDeVenta?: PuntoDeVentaUpdateOneRequiredWithoutTurnosNestedInput
+    ventas?: VentaUpdateManyWithoutTurnoNestedInput
+    arqueo?: ArqueoCajaUpdateOneWithoutTurnoNestedInput
+    tenant?: TenantUpdateOneRequiredWithoutTurnosPosNestedInput
+  }
+
+  export type TurnoPuntoVentaUncheckedUpdateWithoutEmpleadoInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    tenantId?: StringFieldUpdateOperationsInput | string
+    puntoDeVentaId?: StringFieldUpdateOperationsInput | string
+    tipo?: StringFieldUpdateOperationsInput | string
+    fechaApertura?: DateTimeFieldUpdateOperationsInput | Date | string
+    fechaCierre?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    fondoInicialCup?: IntFieldUpdateOperationsInput | number
+    fondoInicialUsd?: IntFieldUpdateOperationsInput | number
+    estado?: EnumEstadoTurnoFieldUpdateOperationsInput | $Enums.EstadoTurno
+    observaciones?: NullableStringFieldUpdateOperationsInput | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    ventas?: VentaUncheckedUpdateManyWithoutTurnoNestedInput
+    arqueo?: ArqueoCajaUncheckedUpdateOneWithoutTurnoNestedInput
+  }
+
+  export type TurnoPuntoVentaUncheckedUpdateManyWithoutEmpleadoInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    tenantId?: StringFieldUpdateOperationsInput | string
+    puntoDeVentaId?: StringFieldUpdateOperationsInput | string
+    tipo?: StringFieldUpdateOperationsInput | string
+    fechaApertura?: DateTimeFieldUpdateOperationsInput | Date | string
+    fechaCierre?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    fondoInicialCup?: IntFieldUpdateOperationsInput | number
+    fondoInicialUsd?: IntFieldUpdateOperationsInput | number
+    estado?: EnumEstadoTurnoFieldUpdateOperationsInput | $Enums.EstadoTurno
+    observaciones?: NullableStringFieldUpdateOperationsInput | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
 
   export type ReconciliacionGastoCreateManyPagoSalarioInput = {
@@ -244748,6 +254833,9 @@ export namespace Prisma {
     ubicacion?: string | null
     createdAt?: Date | string
     updatedAt?: Date | string
+    tipoCaja?: string | null
+    almacenId?: string | null
+    cuentaContableId?: string | null
   }
 
   export type PrecioProductoUpdateWithoutListaPrecioInput = {
@@ -244780,10 +254868,15 @@ export namespace Prisma {
     ubicacion?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    tipoCaja?: NullableStringFieldUpdateOperationsInput | string | null
+    cuentaContableId?: NullableStringFieldUpdateOperationsInput | string | null
     productos?: ProductoUpdateManyWithoutPuntoDeVentaNestedInput
+    almacen?: AlmacenUpdateOneWithoutPuntosDeVentaNestedInput
     transferenciasDestino?: TransferenciaUpdateManyWithoutPuntoDeVentaDestinoNestedInput
     transferenciasOrigen?: TransferenciaUpdateManyWithoutPuntoDeVentaOrigenNestedInput
     ventas?: VentaUpdateManyWithoutPuntoDeVentaNestedInput
+    turnos?: TurnoPuntoVentaUpdateManyWithoutPuntoDeVentaNestedInput
+    arqueos?: ArqueoCajaUpdateManyWithoutPuntoDeVentaNestedInput
     tenant?: TenantUpdateOneRequiredWithoutPuntosDeVentaNestedInput
   }
 
@@ -244794,10 +254887,15 @@ export namespace Prisma {
     ubicacion?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    tipoCaja?: NullableStringFieldUpdateOperationsInput | string | null
+    almacenId?: NullableStringFieldUpdateOperationsInput | string | null
+    cuentaContableId?: NullableStringFieldUpdateOperationsInput | string | null
     productos?: ProductoUncheckedUpdateManyWithoutPuntoDeVentaNestedInput
     transferenciasDestino?: TransferenciaUncheckedUpdateManyWithoutPuntoDeVentaDestinoNestedInput
     transferenciasOrigen?: TransferenciaUncheckedUpdateManyWithoutPuntoDeVentaOrigenNestedInput
     ventas?: VentaUncheckedUpdateManyWithoutPuntoDeVentaNestedInput
+    turnos?: TurnoPuntoVentaUncheckedUpdateManyWithoutPuntoDeVentaNestedInput
+    arqueos?: ArqueoCajaUncheckedUpdateManyWithoutPuntoDeVentaNestedInput
   }
 
   export type PuntoDeVentaUncheckedUpdateManyWithoutListaPrecioInput = {
@@ -244807,6 +254905,9 @@ export namespace Prisma {
     ubicacion?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    tipoCaja?: NullableStringFieldUpdateOperationsInput | string | null
+    almacenId?: NullableStringFieldUpdateOperationsInput | string | null
+    cuentaContableId?: NullableStringFieldUpdateOperationsInput | string | null
   }
 
   export type AnticipoMovimientoCreateManyAnticipoInput = {
@@ -244926,6 +255027,7 @@ export namespace Prisma {
     estado?: $Enums.EstadoPeriodo
     aperturaAutomatica?: boolean
     categoria?: $Enums.CategoriaPeriodo
+    modoContable?: $Enums.ModoContable
     abiertoPorId?: string | null
     fechaApertura?: Date | string | null
     cerradoPor?: string | null
@@ -245045,6 +255147,7 @@ export namespace Prisma {
     estado?: EnumEstadoPeriodoFieldUpdateOperationsInput | $Enums.EstadoPeriodo
     aperturaAutomatica?: BoolFieldUpdateOperationsInput | boolean
     categoria?: EnumCategoriaPeriodoFieldUpdateOperationsInput | $Enums.CategoriaPeriodo
+    modoContable?: EnumModoContableFieldUpdateOperationsInput | $Enums.ModoContable
     abiertoPorId?: NullableStringFieldUpdateOperationsInput | string | null
     fechaApertura?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     cerradoPor?: NullableStringFieldUpdateOperationsInput | string | null
@@ -245078,6 +255181,7 @@ export namespace Prisma {
     estado?: EnumEstadoPeriodoFieldUpdateOperationsInput | $Enums.EstadoPeriodo
     aperturaAutomatica?: BoolFieldUpdateOperationsInput | boolean
     categoria?: EnumCategoriaPeriodoFieldUpdateOperationsInput | $Enums.CategoriaPeriodo
+    modoContable?: EnumModoContableFieldUpdateOperationsInput | $Enums.ModoContable
     abiertoPorId?: NullableStringFieldUpdateOperationsInput | string | null
     fechaApertura?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     cerradoPor?: NullableStringFieldUpdateOperationsInput | string | null
@@ -245110,6 +255214,7 @@ export namespace Prisma {
     estado?: EnumEstadoPeriodoFieldUpdateOperationsInput | $Enums.EstadoPeriodo
     aperturaAutomatica?: BoolFieldUpdateOperationsInput | boolean
     categoria?: EnumCategoriaPeriodoFieldUpdateOperationsInput | $Enums.CategoriaPeriodo
+    modoContable?: EnumModoContableFieldUpdateOperationsInput | $Enums.ModoContable
     abiertoPorId?: NullableStringFieldUpdateOperationsInput | string | null
     fechaApertura?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     cerradoPor?: NullableStringFieldUpdateOperationsInput | string | null

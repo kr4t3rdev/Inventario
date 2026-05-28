@@ -117,6 +117,7 @@ describe('pago-gastos-workflow', () => {
     tx.cuentaPorPagar.findUnique.mockResolvedValue({
       cuentaPorPagarId: 'cxp-1',
       estado: 'PENDIENTE',
+      montoDeuda: 100,
       montoPagado: 0,
       saldoPendiente: 100,
       gastoCompraId: null,
@@ -194,6 +195,7 @@ describe('pago-gastos-workflow', () => {
     tx.cuentaPorPagar.findUnique.mockResolvedValue({
       cuentaPorPagarId: 'cxp-1',
       estado: 'PENDIENTE',
+      montoDeuda: 100,
       montoPagado: 0,
       saldoPendiente: 100,
       gastoCompraId: null,
@@ -242,6 +244,7 @@ describe('pago-gastos-workflow', () => {
     tx.cuentaPorPagar.findUnique.mockResolvedValue({
       cuentaPorPagarId: 'cxp-2',
       estado: 'PENDIENTE',
+      montoDeuda: 100,
       montoPagado: 0,
       saldoPendiente: 100,
       gastoCompraId: 'gc-10',

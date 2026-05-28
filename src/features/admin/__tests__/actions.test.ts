@@ -12,6 +12,7 @@ vi.mock('@/lib/prisma', () => ({
     user: {
       findMany: vi.fn(), findUnique: vi.fn(), create: vi.fn(),
       update: vi.fn(), delete: vi.fn(), count: vi.fn(),
+      groupBy: vi.fn(),
     },
     tenant: { findMany: vi.fn(), count: vi.fn(), findUnique: vi.fn(), create: vi.fn() },
     tenantMembership: { create: vi.fn() },
@@ -116,6 +117,7 @@ describe('Admin Server Actions', () => {
       vi.mocked(prisma.tenant.count).mockResolvedValue(2);
       vi.mocked(prisma.userSession.count).mockResolvedValue(10);
       vi.mocked(prisma.tenantLicense.count).mockResolvedValue(3);
+      vi.mocked(prisma.user.groupBy).mockResolvedValue([]);
       const r = await getAdminSystemHealthAction();
       expect(r.success).toBe(true);
     });
@@ -146,7 +148,7 @@ describe('Admin Server Actions', () => {
   });
 
   describe('approveGlobalUserAction', () => {
-    it('crea tenant y membresía para usuario company', async () => {
+    it('activa al usuario y lo marca como aprobado', async () => {
       vi.mocked(getCurrentUser).mockResolvedValue(adminUser);
       vi.mocked(prisma.user.findUnique).mockResolvedValue({
         userId: 'user-company',
@@ -155,17 +157,13 @@ describe('Admin Server Actions', () => {
         onboardingStatus: 'awaiting_global_approval',
         onboardingType: 'company',
       } as any);
-      vi.mocked(prisma.tenant.findUnique).mockResolvedValue(null);
-      vi.mocked(prisma.tenant.create).mockResolvedValue({ tenantId: 'tenant-1', nombre: 'Empresa Demo', slug: 'empresa-demo' } as any);
-      vi.mocked(prisma.tenantMembership.create).mockResolvedValue({ membershipId: 'membership-1' } as any);
-      vi.mocked(prisma.user.update).mockResolvedValue({ userId: 'user-company' } as any);
-      vi.mocked(prisma.moneda.upsert).mockResolvedValue({} as any);
+      vi.mocked(prisma.user.update).mockResolvedValue({ userId: 'user-company', isActive: true } as any);
 
-      const r = await approveGlobalUserAction({ userId: 'user-company', tenantName: 'Empresa Demo' });
+      const r = await approveGlobalUserAction({ userId: 'user-company' });
 
       expect(r.success).toBe(true);
-      expect(prisma.tenant.create).toHaveBeenCalled();
-      expect(prisma.tenantMembership.create).toHaveBeenCalled();
+      expect(prisma.user.findUnique).toHaveBeenCalledWith({ where: { userId: 'user-company' } });
+      expect(prisma.user.update).toHaveBeenCalled();
     });
   });
 });

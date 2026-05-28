@@ -19,12 +19,11 @@ describe('sendEmail', () => {
     vi.stubEnv('SMTP_PASSWORD', 'app-password');
   });
 
-  it('propaga el error SMTP cuando el login falla', async () => {
+  it('retorna null cuando el login SMTP falla (el error se atrapa internamente)', async () => {
     const smtpError = Object.assign(new Error('Invalid login'), { code: 'EAUTH' });
     sendMailMock.mockRejectedValueOnce(smtpError);
 
-    await expect(sendEmail('test@example.com', 'Asunto', '<p>hola</p>')).rejects.toThrow(
-      'Invalid login',
-    );
+    const result = await sendEmail('test@example.com', 'Asunto', '<p>hola</p>');
+    expect(result).toBeNull();
   });
 });

@@ -4,11 +4,12 @@
 'use server';
 
 import { revalidatePath } from 'next/cache';
-import { withAction } from '@/lib/server-actions';
+import { withAction, ActionError } from '@/lib/server-actions';
 import { prisma } from '@/lib/prisma';
 import { Prisma } from '@/generated/prisma';
 import { requireTenant } from '@/lib/services/tenant-scope';
 import { withPeriodValidation } from '@/lib/services/with-period-validation';
+import { applyPagoGastoWorkflow, isGastoWorkflowError } from '@/lib/services/pago-gastos-workflow';
 import type { AuthenticatedUser } from '@/lib/auth-middleware';
 
 // ─── Stats Hub ────────────────────────────────────────────
@@ -620,6 +621,60 @@ export const reconciliarGastoAction = withAction(withPeriodValidation(
     const tenantId = requireTenant(user);
     const fechaPago = input.fechaReconciliacion ? new Date(input.fechaReconciliacion) : new Date();
 
+    // ── Si es CxP, delegar a applyPagoGastoWorkflow ──
+    if (input.cuentaPorPagarId) {
+      const referenciaIdCxP = input.pgId || input.gastoCompraId || input.compraServicioId || input.ventaServicioId;
+      if (!referenciaIdCxP) throw new Error('Se requiere referencia del gasto para pagar CxP');
+
+      // Determinar tipoGasto según qué ID vino
+      const esVentaServicioCxP = !!input.ventaServicioId;
+      const esServicioCxP = !!input.compraServicioId;
+      const esSalarioCxP = !!input.pgId;
+      const tipoGastoCxP = esVentaServicioCxP ? 'venta_servicio' as const
+        : esServicioCxP ? 'servicio' as const
+        : esSalarioCxP ? 'salario' as const
+        : 'compra' as const;
+
+      try {
+        const result = await prisma.$transaction(async (tx) => {
+          // Si hay distribución explícita, usarla; si no, crear una simple
+          const distribucion = input.distribucion && input.distribucion.length > 0
+            ? input.distribucion.map(d => ({ cuentaId: d.cuentaId, monto: d.monto }))
+            : [{ cuentaId: input.cuentaId, monto: input.monto }];
+
+          return applyPagoGastoWorkflow(tx, {
+            tipoGasto: tipoGastoCxP,
+            referenciaId: referenciaIdCxP,
+            reconciliadoPor: user.userId,
+            descripcion: input.descripcion || `Pago CxP #${input.cuentaPorPagarId.slice(-8)}`,
+            monto: input.monto,
+            moneda: input.moneda || 'CUP',
+            tenantId,
+            tasaCambio: input.distribucion?.[0]?.tasaCambio,
+            observaciones: input.distribucion?.[0]?.observaciones || input.descripcion,
+            estado: 'PAGADA',
+            cuentaPorPagarId: input.cuentaPorPagarId,
+            numeroTransaccion: input.distribucion?.[0]?.numeroTransaccion,
+            gastoCompraId: input.gastoCompraId,
+            tipoPagoId: input.tipoPagoId,
+            distribucion,
+          });
+        });
+
+        revalidatePath('/busy/contabilidad/reconciliacion');
+        revalidatePath('/busy/contabilidad/cuentas-por-pagar');
+        // Serializar Decimal → number
+        return JSON.parse(JSON.stringify(result));
+      } catch (error: unknown) {
+        if (isGastoWorkflowError(error)) {
+          // GastoWorkflowError no es reconocido por withAction, convertirlo
+          throw new ActionError(error.message, error.code);
+        }
+        throw error;
+      }
+    }
+
+    // ── Flujo legacy (no-CxP): salarios, gastosDE, servicios, venta_servicio ──
     const esSalario = !!input.pgId;
     const esServicio = !!input.compraServicioId;
     const esVentaServicio = !!input.ventaServicioId;
@@ -639,7 +694,7 @@ export const reconciliarGastoAction = withAction(withPeriodValidation(
         fechaReconciliacion: fechaPago,
         reconciliadoPor: user.userId,
         estado: 'PAGADA',
-        cuentaPorPagarId: input.cuentaPorPagarId || null,
+        cuentaPorPagarId: null,
         tenantId,
       };
 
@@ -659,62 +714,11 @@ export const reconciliarGastoAction = withAction(withPeriodValidation(
         data: { saldo: { decrement: input.monto } },
       });
 
-      // 3. Si viene de una CuentaPorPagar, actualizarla
-      if (input.cuentaPorPagarId) {
-        const cxp = await tx.cuentaPorPagar.findUnique({
-          where: { cuentaPorPagarId: input.cuentaPorPagarId },
-          select: { saldoPendiente: true, montoPagado: true },
-        });
-
-        if (cxp) {
-          const nuevoPagado = (cxp.montoPagado || 0) + input.monto;
-          const nuevoSaldo = Math.max(0, (cxp.saldoPendiente || 0) - input.monto);
-          const nuevoEstado = nuevoSaldo <= 0 ? 'PAGADA' : 'PARCIAL';
-
-          await tx.cuentaPorPagar.update({
-            where: { cuentaPorPagarId: input.cuentaPorPagarId },
-            data: {
-              montoPagado: nuevoPagado,
-              saldoPendiente: nuevoSaldo,
-              estado: nuevoEstado,
-            },
-          });
-
-          // Registrar el pago en PagoCuentaPorPagar para que se vea en el detalle
-          await tx.pagoCuentaPorPagar.create({
-            data: {
-              tenantId,
-              cuentaPorPagarId: input.cuentaPorPagarId,
-              monto: input.monto,
-              numeroTransaccion: input.descripcion?.slice(0, 50) || `Pago ${fechaPago.toISOString().slice(0, 10)}`,
-              cuentaProveedor: 'N/A',
-              fechaPago,
-              observaciones: input.descripcion || null,
-            },
-          });
-
-          // Si quedó pagada totalmente, actualizar el CompraDocumento vinculado
-          if (nuevoEstado === 'PAGADA') {
-            const doc = await tx.compraDocumento.findFirst({
-              where: { cuentaPorPagarId: input.cuentaPorPagarId },
-              select: { compraDocumentoId: true },
-            });
-            if (doc) {
-              await tx.compraDocumento.update({
-                where: { compraDocumentoId: doc.compraDocumentoId },
-                data: { estado: 'PAGADA' },
-              });
-            }
-          }
-        }
-      }
-
       // Serializar Decimal → number para cliente
       return JSON.parse(JSON.stringify(reconciliacion));
     });
 
     revalidatePath('/busy/contabilidad/reconciliacion');
-    revalidatePath('/busy/contabilidad/cuentas-por-pagar');
     return result;
   }
 ));

@@ -1,330 +1,381 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest'
-import { NextRequest } from 'next/server'
-import { GET } from '../stats/route'
+import { describe, it, expect, vi, beforeEach } from "vitest";
+import { NextRequest } from "next/server";
 
-// Mock Prisma
-const mockPrisma = {
-  producto: {
-    count: vi.fn(),
-    findMany: vi.fn(),
-  },
-  almacen: {
-    count: vi.fn(),
-  },
-  puntoDeVenta: {
-    count: vi.fn(),
-  },
-  venta: {
-    findMany: vi.fn(),
-    groupBy: vi.fn(),
-  },
-  merma: {
-    findMany: vi.fn(),
-  },
-  gastosServicios: {
-    findMany: vi.fn(),
-  },
-  empleado: {
-    findMany: vi.fn(),
-  },
-  transferencia: {
-    findMany: vi.fn(),
-  },
-  categoria: {
-    findMany: vi.fn(),
-  },
-}
+const mockPrisma = vi.hoisted(() => ({
+	producto: {
+		count: vi.fn(),
+		findMany: vi.fn(),
+	},
+	almacen: {
+		count: vi.fn(),
+	},
+	puntoDeVenta: {
+		count: vi.fn(),
+	},
+	venta: {
+		findMany: vi.fn(),
+		groupBy: vi.fn(),
+	},
+	ventaItem: {
+		findMany: vi.fn(),
+	},
+	ventaServicios: {
+		findMany: vi.fn(),
+	},
+	merma: {
+		findMany: vi.fn(),
+	},
+	gastosDE: {
+		findMany: vi.fn(),
+	},
+	gastosServicios: {
+		findMany: vi.fn(),
+	},
+	pagosalario: {
+		findMany: vi.fn(),
+	},
+	empleado: {
+		findMany: vi.fn(),
+	},
+	transferencia: {
+		findMany: vi.fn(),
+	},
+	categoria: {
+		findMany: vi.fn(),
+	},
+	gastoCompra: {
+		findMany: vi.fn(),
+	},
+	$transaction: vi.fn(),
+}));
 
-vi.mock('@/lib/prisma', () => ({
-  default: mockPrisma,
-}))
+vi.mock("@/lib/auth-middleware", () => ({
+	withAuthGet: (handler: any) => handler,
+}));
 
-describe('Dashboard Stats API - Minimum Stock Integration', () => {
-  beforeEach(() => {
-    vi.clearAllMocks()
-    
-    // Setup default mock responses
-    mockPrisma.producto.count.mockResolvedValue(100)
-    mockPrisma.almacen.count.mockResolvedValue(5)
-    mockPrisma.puntoDeVenta.count.mockResolvedValue(3)
-    mockPrisma.venta.findMany.mockResolvedValue([])
-    mockPrisma.venta.groupBy.mockResolvedValue([])
-    mockPrisma.merma.findMany.mockResolvedValue([])
-    mockPrisma.gastosServicios.findMany.mockResolvedValue([])
-    mockPrisma.empleado.findMany.mockResolvedValue([])
-    mockPrisma.transferencia.findMany.mockResolvedValue([])
-    mockPrisma.categoria.findMany.mockResolvedValue([])
-  })
+vi.mock("@/lib/prisma", () => ({
+	default: mockPrisma,
+	prisma: mockPrisma,
+}));
 
-  it('should calculate low stock using hybrid logic with custom minimums', async () => {
-    const mockProductos = [
-      {
-        id: 'prod1',
-        nombre: 'Producto A',
-        stock: 5,
-        stockMinimo: 10,
-        categoria: { nombre: 'Categoria 1' },
-        unidad: { simbolo: 'pcs' }
-      },
-      {
-        id: 'prod2',
-        nombre: 'Producto B',
-        stock: 15,
-        stockMinimo: 20,
-        categoria: { nombre: 'Categoria 2' },
-        unidad: { simbolo: 'kg' }
-      },
-      {
-        id: 'prod3',
-        nombre: 'Producto C',
-        stock: 25,
-        stockMinimo: 20,
-        categoria: { nombre: 'Categoria 3' },
-        unidad: { simbolo: 'L' }
-      }
-    ]
+import { GET } from "../stats/route";
 
-    // Mock the first call for general products
-    mockPrisma.producto.findMany
-      .mockResolvedValueOnce(mockProductos) // For valor total inventario
-      .mockResolvedValueOnce(mockProductos) // For low stock calculation
+describe("Dashboard Stats API - Minimum Stock Integration", () => {
+	beforeEach(() => {
+		vi.clearAllMocks();
 
-    const request = new NextRequest('http://localhost:3000/api/dashboard/stats')
-    const response = await GET(request)
-    const data = await response.json()
+		// Setup default mock responses
+		mockPrisma.producto.count.mockResolvedValue(100);
+		mockPrisma.almacen.count.mockResolvedValue(5);
+		mockPrisma.puntoDeVenta.count.mockResolvedValue(3);
+		mockPrisma.venta.findMany.mockResolvedValue([]);
+		mockPrisma.venta.groupBy.mockResolvedValue([]);
+		mockPrisma.ventaItem.findMany.mockResolvedValue([]);
+		mockPrisma.ventaServicios.findMany.mockResolvedValue([]);
+		mockPrisma.merma.findMany.mockResolvedValue([]);
+		mockPrisma.gastosDE.findMany.mockResolvedValue([]);
+		mockPrisma.gastosServicios.findMany.mockResolvedValue([]);
+		mockPrisma.pagosalario.findMany.mockResolvedValue([]);
+		mockPrisma.empleado.findMany.mockResolvedValue([]);
+		mockPrisma.transferencia.findMany.mockResolvedValue([]);
+		mockPrisma.categoria.findMany.mockResolvedValue([]);
+		mockPrisma.producto.findMany.mockResolvedValue([]);
+		mockPrisma.gastoCompra.findMany.mockResolvedValue([]);
+	});
 
-    expect(response.status).toBe(200)
-    expect(data.productosStockBajo).toBeDefined()
-    expect(Array.isArray(data.productosStockBajo)).toBe(true)
-    
-    // Should include products with stock below their custom minimum
-    const lowStockProducts = data.productosStockBajo
-    expect(lowStockProducts.length).toBeGreaterThan(0)
-    
-    // Producto A should be in low stock (5 < 10)
-    const prodA = lowStockProducts.find((p: any) => p.nombre === 'Producto A')
-    expect(prodA).toBeDefined()
-    expect(prodA.stockTotal).toBe(5)
-    expect(prodA.stockMinimo).toBe(10)
-    expect(prodA.umbralUsado).toBe(10)
-    expect(prodA.diferencia).toBe(5)
+	it("should calculate low stock using hybrid logic with custom minimums", async () => {
+		const mockProductos = [
+			{
+				id: "prod1",
+				nombre: "Producto A",
+				stock: 5,
+				stockMinimo: 10,
+				categoria: { nombre: "Categoria 1" },
+				unidad: { simbolo: "pcs" },
+			},
+			{
+				id: "prod2",
+				nombre: "Producto B",
+				stock: 15,
+				stockMinimo: 20,
+				categoria: { nombre: "Categoria 2" },
+				unidad: { simbolo: "kg" },
+			},
+			{
+				id: "prod3",
+				nombre: "Producto C",
+				stock: 25,
+				stockMinimo: 20,
+				categoria: { nombre: "Categoria 3" },
+				unidad: { simbolo: "L" },
+			},
+		];
 
-    // Producto B should be in low stock (15 < 20)
-    const prodB = lowStockProducts.find((p: any) => p.nombre === 'Producto B')
-    expect(prodB).toBeDefined()
-    expect(prodB.stockTotal).toBe(15)
-    expect(prodB.stockMinimo).toBe(20)
-    expect(prodB.umbralUsado).toBe(20)
+		// Mock the multiple calls for general, top, and low-stock products
+		mockPrisma.producto.findMany
+			.mockResolvedValueOnce(mockProductos)
+			.mockResolvedValueOnce(mockProductos)
+			.mockResolvedValueOnce(mockProductos);
 
-    // Producto C should NOT be in low stock (25 >= 20)
-    const prodC = lowStockProducts.find((p: any) => p.nombre === 'Producto C')
-    expect(prodC).toBeUndefined()
-  })
+		const request = new NextRequest(
+			"http://localhost:3000/api/dashboard/stats",
+		);
+		const response = await GET(request);
+		const data = await response.json();
 
-  it('should use default threshold for products with stockMinimo = 0', async () => {
-    const mockProductos = [
-      {
-        id: 'prod1',
-        nombre: 'Producto A',
-        stock: 5,
-        stockMinimo: 0, // No custom minimum set
-        categoria: { nombre: 'Categoria 1' },
-        unidad: { simbolo: 'pcs' }
-      },
-      {
-        id: 'prod2',
-        nombre: 'Producto B',
-        stock: 15,
-        stockMinimo: 0, // No custom minimum set
-        categoria: { nombre: 'Categoria 2' },
-        unidad: { simbolo: 'kg' }
-      }
-    ]
+		expect(response.status).toBe(200);
+		expect(data.productosStockBajo).toBeDefined();
+		expect(Array.isArray(data.productosStockBajo)).toBe(true);
 
-    mockPrisma.producto.findMany
-      .mockResolvedValueOnce(mockProductos)
-      .mockResolvedValueOnce(mockProductos)
+		// Should include products with stock below their custom minimum
+		const lowStockProducts = data.productosStockBajo;
+		expect(lowStockProducts.length).toBeGreaterThan(0);
 
-    const request = new NextRequest('http://localhost:3000/api/dashboard/stats')
-    const response = await GET(request)
-    const data = await response.json()
+		// Producto A should be in low stock (5 < 10)
+		const prodA = lowStockProducts.find((p: any) => p.nombre === "Producto A");
+		expect(prodA).toBeDefined();
+		expect(prodA.stockTotal).toBe(5);
+		expect(prodA.stockMinimo).toBe(10);
+		expect(prodA.umbralUsado).toBe(10);
+		expect(prodA.diferencia).toBe(5);
 
-    expect(response.status).toBe(200)
-    
-    const lowStockProducts = data.productosStockBajo
-    
-    // Producto A should be in low stock (5 < 10 default)
-    const prodA = lowStockProducts.find((p: any) => p.nombre === 'Producto A')
-    expect(prodA).toBeDefined()
-    expect(prodA.stockTotal).toBe(5)
-    expect(prodA.stockMinimo).toBe(0)
-    expect(prodA.umbralUsado).toBe(10) // Default threshold
+		// Producto B should be in low stock (15 < 20)
+		const prodB = lowStockProducts.find((p: any) => p.nombre === "Producto B");
+		expect(prodB).toBeDefined();
+		expect(prodB.stockTotal).toBe(15);
+		expect(prodB.stockMinimo).toBe(20);
+		expect(prodB.umbralUsado).toBe(20);
 
-    // Producto B should NOT be in low stock (15 >= 10 default)
-    const prodB = lowStockProducts.find((p: any) => p.nombre === 'Producto B')
-    expect(prodB).toBeUndefined()
-  })
+		// Producto C should NOT be in low stock (25 >= 20)
+		const prodC = lowStockProducts.find((p: any) => p.nombre === "Producto C");
+		expect(prodC).toBeUndefined();
+	});
 
-  it('should aggregate stock across multiple product instances', async () => {
-    const mockProductos = [
-      {
-        id: 'prod1a',
-        nombre: 'Producto A',
-        stock: 3,
-        stockMinimo: 15,
-        categoria: { nombre: 'Categoria 1' },
-        unidad: { simbolo: 'pcs' }
-      },
-      {
-        id: 'prod1b',
-        nombre: 'Producto A', // Same product, different instance
-        stock: 7,
-        stockMinimo: 12, // Different minimum
-        categoria: { nombre: 'Categoria 1' },
-        unidad: { simbolo: 'pcs' }
-      }
-    ]
+	it("should use default threshold for products with stockMinimo = 0", async () => {
+		const mockProductos = [
+			{
+				id: "prod1",
+				nombre: "Producto A",
+				stock: 5,
+				stockMinimo: 0, // No custom minimum set
+				categoria: { nombre: "Categoria 1" },
+				unidad: { simbolo: "pcs" },
+			},
+			{
+				id: "prod2",
+				nombre: "Producto B",
+				stock: 15,
+				stockMinimo: 0, // No custom minimum set
+				categoria: { nombre: "Categoria 2" },
+				unidad: { simbolo: "kg" },
+			},
+		];
 
-    mockPrisma.produto.findMany
-      .mockResolvedValueOnce(mockProductos)
-      .mockResolvedValueOnce(mockProductos)
+		mockPrisma.producto.findMany
+			.mockResolvedValueOnce(mockProductos)
+			.mockResolvedValueOnce(mockProductos)
+			.mockResolvedValueOnce(mockProductos);
 
-    const request = new NextRequest('http://localhost:3000/api/dashboard/stats')
-    const response = await GET(request)
-    const data = await response.json()
+		const request = new NextRequest(
+			"http://localhost:3000/api/dashboard/stats",
+		);
+		const response = await GET(request);
+		const data = await response.json();
 
-    expect(response.status).toBe(200)
-    
-    const lowStockProducts = data.productosStockBajo
-    const prodA = lowStockProducts.find((p: any) => p.nome === 'Produto A')
-    
-    expect(prodA).toBeDefined()
-    expect(prodA.stockTotal).toBe(10) // 3 + 7 aggregated
-    expect(prodA.stockMinimo).toBe(12) // Minimum of 15 and 12
-    expect(prodA.umbralUsado).toBe(12)
-  })
+		expect(response.status).toBe(200);
 
-  it('should filter by location when ubicacionId and tipoUbicacion are provided', async () => {
-    const mockProductos = [
-      {
-        id: 'prod1',
-        nombre: 'Producto A',
-        stock: 5,
-        stockMinimo: 10,
-        almacenId: 'almacen1',
-        categoria: { nombre: 'Categoria 1' },
-        unidad: { simbolo: 'pcs' }
-      }
-    ]
+		const lowStockProducts = data.productosStockBajo;
 
-    mockPrisma.producto.findMany
-      .mockResolvedValueOnce(mockProductos)
-      .mockResolvedValueOnce(mockProductos)
+		// Producto A should be in low stock (5 < 10 default)
+		const prodA = lowStockProducts.find((p: any) => p.nombre === "Producto A");
+		expect(prodA).toBeDefined();
+		expect(prodA.stockTotal).toBe(5);
+		expect(prodA.stockMinimo).toBe(0);
+		expect(prodA.umbralUsado).toBe(10); // Default threshold
 
-    const request = new NextRequest('http://localhost:3000/api/dashboard/stats?ubicacionId=almacen1&tipoUbicacion=almacen')
-    const response = await GET(request)
+		// Producto B should NOT be in low stock (15 >= 10 default)
+		const prodB = lowStockProducts.find((p: any) => p.nombre === "Producto B");
+		expect(prodB).toBeUndefined();
+	});
 
-    expect(response.status).toBe(200)
-    
-    // Verify that findMany was called with location filter
-    expect(mockPrisma.producto.findMany).toHaveBeenCalledWith(
-      expect.objectContaining({
-        where: { almacenId: 'almacen1' }
-      })
-    )
-  })
+	it("should aggregate stock across multiple product instances", async () => {
+		const mockProductos = [
+			{
+				id: "prod1a",
+				nombre: "Producto A",
+				stock: 3,
+				stockMinimo: 15,
+				categoria: { nombre: "Categoria 1" },
+				unidad: { simbolo: "pcs" },
+			},
+			{
+				id: "prod1b",
+				nombre: "Producto A", // Same product, different instance
+				stock: 7,
+				stockMinimo: 12, // Different minimum
+				categoria: { nombre: "Categoria 1" },
+				unidad: { simbolo: "pcs" },
+			},
+		];
 
-  it('should handle empty product list gracefully', async () => {
-    mockPrisma.producto.findMany
-      .mockResolvedValueOnce([])
-      .mockResolvedValueOnce([])
+		mockPrisma.producto.findMany
+			.mockResolvedValueOnce(mockProductos)
+			.mockResolvedValueOnce(mockProductos)
+			.mockResolvedValueOnce(mockProductos);
 
-    const request = new NextRequest('http://localhost:3000/api/dashboard/stats')
-    const response = await GET(request)
-    const data = await response.json()
+		const request = new NextRequest(
+			"http://localhost:3000/api/dashboard/stats",
+		);
+		const response = await GET(request);
+		const data = await response.json();
 
-    expect(response.status).toBe(200)
-    expect(data.productosStockBajo).toEqual([])
-    expect(data.valorTotalInventario).toBe(0)
-  })
+		expect(response.status).toBe(200);
 
-  it('should limit low stock products to 5 items', async () => {
-    const mockProductos = Array.from({ length: 10 }, (_, i) => ({
-      id: `prod${i}`,
-      nombre: `Producto ${i}`,
-      stock: 1, // All have very low stock
-      stockMinimo: 10,
-      categoria: { nombre: `Categoria ${i}` },
-      unidad: { simbolo: 'pcs' }
-    }))
+		const lowStockProducts = data.productosStockBajo;
+		const prodA = lowStockProducts.find((p: any) => p.nombre === "Producto A");
 
-    mockPrisma.produto.findMany
-      .mockResolvedValueOnce(mockProductos)
-      .mockResolvedValueOnce(mockProductos)
+		expect(prodA).toBeDefined();
+		expect(prodA.stockTotal).toBe(10); // 3 + 7 aggregated
+		expect(prodA.stockMinimo).toBe(12); // Minimum of 15 and 12
+		expect(prodA.umbralUsado).toBe(12);
+	});
 
-    const request = new NextRequest('http://localhost:3000/api/dashboard/stats')
-    const response = await GET(request)
-    const data = await response.json()
+	it("should filter by location when ubicacionId and tipoUbicacion are provided", async () => {
+		const mockProductos = [
+			{
+				id: "prod1",
+				nombre: "Producto A",
+				stock: 5,
+				stockMinimo: 10,
+				almacenId: "almacen1",
+				categoria: { nombre: "Categoria 1" },
+				unidad: { simbolo: "pcs" },
+			},
+		];
 
-    expect(response.status).toBe(200)
-    expect(data.productosStockBajo).toHaveLength(5) // Limited to 5
-  })
+		mockPrisma.producto.findMany
+			.mockResolvedValueOnce(mockProductos)
+			.mockResolvedValueOnce(mockProductos)
+			.mockResolvedValueOnce(mockProductos);
 
-  it('should sort low stock products by stock total ascending', async () => {
-    const mockProductos = [
-      {
-        id: 'prod1',
-        nombre: 'Produto A',
-        stock: 8,
-        stockMinimo: 10,
-        categoria: { nombre: 'Categoria 1' },
-        unidad: { simbolo: 'pcs' }
-      },
-      {
-        id: 'prod2',
-        nome: 'Produto B',
-        stock: 3,
-        stockMinimo: 10,
-        categoria: { nombre: 'Categoria 2' },
-        unidad: { simbolo: 'pcs' }
-      },
-      {
-        id: 'prod3',
-        nome: 'Produto C',
-        stock: 5,
-        stockMinimo: 10,
-        categoria: { nombre: 'Categoria 3' },
-        unidad: { simbolo: 'pcs' }
-      }
-    ]
+		const request = new NextRequest(
+			"http://localhost:3000/api/dashboard/stats?ubicacionId=almacen1&tipoUbicacion=almacen",
+		);
+		const response = await GET(request);
 
-    mockPrisma.produto.findMany
-      .mockResolvedValueOnce(mockProductos)
-      .mockResolvedValueOnce(mockProductos)
+		expect(response.status).toBe(200);
 
-    const request = new NextRequest('http://localhost:3000/api/dashboard/stats')
-    const response = await GET(request)
-    const data = await response.json()
+		// Verify that findMany was called with location filter
+		expect(mockPrisma.producto.findMany).toHaveBeenCalledWith(
+			expect.objectContaining({
+				where: { almacenId: "almacen1" },
+			}),
+		);
+	});
 
-    expect(response.status).toBe(200)
-    
-    const lowStockProducts = data.productosStockBajo
-    expect(lowStockProducts).toHaveLength(3)
-    
-    // Should be sorted by stock ascending: B(3), C(5), A(8)
-    expect(lowStockProducts[0].stockTotal).toBe(3)
-    expect(lowStockProducts[1].stockTotal).toBe(5)
-    expect(lowStockProducts[2].stockTotal).toBe(8)
-  })
+	it("should handle empty product list gracefully", async () => {
+		mockPrisma.producto.findMany
+			.mockResolvedValueOnce([])
+			.mockResolvedValueOnce([]);
 
-  it('should handle database errors gracefully', async () => {
-    mockPrisma.produto.count.mockRejectedValue(new Error('Database connection failed'))
+		const request = new NextRequest(
+			"http://localhost:3000/api/dashboard/stats",
+		);
+		const response = await GET(request);
+		const data = await response.json();
 
-    const request = new NextRequest('http://localhost:3000/api/dashboard/stats')
-    const response = await GET(request)
-    const data = await response.json()
+		expect(response.status).toBe(200);
+		expect(data.productosStockBajo).toEqual([]);
+		expect(data.valorTotalInventario).toBe(0);
+	});
 
-    expect(response.status).toBe(500)
-    expect(data.error).toBe('Error al obtener estadísticas')
-  })
-})
+	it("should limit low stock products to 5 items", async () => {
+		const mockProductos = Array.from({ length: 10 }, (_, i) => ({
+			id: `prod${i}`,
+			nombre: `Producto ${i}`,
+			stock: 1, // All have very low stock
+			stockMinimo: 10,
+			categoria: { nombre: `Categoria ${i}` },
+			unidad: { simbolo: "pcs" },
+		}));
+
+		mockPrisma.producto.findMany
+			.mockResolvedValueOnce(mockProductos)
+			.mockResolvedValueOnce(mockProductos)
+			.mockResolvedValueOnce(mockProductos);
+
+		const request = new NextRequest(
+			"http://localhost:3000/api/dashboard/stats",
+		);
+		const response = await GET(request);
+		const data = await response.json();
+
+		expect(response.status).toBe(200);
+		expect(data.productosStockBajo).toHaveLength(5); // Limited to 5
+	});
+
+	it("should sort low stock products by stock total ascending", async () => {
+		const mockProductos = [
+			{
+				id: "prod1",
+				nombre: "Producto A",
+				stock: 8,
+				stockMinimo: 10,
+				categoria: { nombre: "Categoria 1" },
+				unidad: { simbolo: "pcs" },
+			},
+			{
+				id: "prod2",
+				nome: "Producto B",
+				stock: 3,
+				stockMinimo: 10,
+				categoria: { nombre: "Categoria 2" },
+				unidad: { simbolo: "pcs" },
+			},
+			{
+				id: "prod3",
+				nome: "Producto C",
+				stock: 5,
+				stockMinimo: 10,
+				categoria: { nombre: "Categoria 3" },
+				unidad: { simbolo: "pcs" },
+			},
+		];
+
+		mockPrisma.producto.findMany
+			.mockResolvedValueOnce(mockProductos)
+			.mockResolvedValueOnce(mockProductos)
+			.mockResolvedValueOnce(mockProductos);
+
+		const request = new NextRequest(
+			"http://localhost:3000/api/dashboard/stats",
+		);
+		const response = await GET(request);
+		const data = await response.json();
+
+		expect(response.status).toBe(200);
+
+		const lowStockProducts = data.productosStockBajo;
+		expect(lowStockProducts).toHaveLength(3);
+
+		// Should be sorted by stock ascending: B(3), C(5), A(8)
+		expect(lowStockProducts[0].stockTotal).toBe(3);
+		expect(lowStockProducts[1].stockTotal).toBe(5);
+		expect(lowStockProducts[2].stockTotal).toBe(8);
+	});
+
+	it("should handle database errors gracefully", async () => {
+		mockPrisma.producto.count.mockRejectedValue(
+			new Error("Database connection failed"),
+		);
+
+		const request = new NextRequest(
+			"http://localhost:3000/api/dashboard/stats",
+		);
+		const response = await GET(request);
+		const data = await response.json();
+
+		expect(response.status).toBe(500);
+		expect(data.error).toBe("Error al obtener estadísticas");
+	});
+});

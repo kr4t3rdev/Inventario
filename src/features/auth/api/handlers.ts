@@ -59,14 +59,15 @@ export async function login(request: NextRequest) {
       return NextResponse.json({ error: 'Credenciales inválidas' }, { status: 401 })
     }
 
-    if (user.isActive === false) {
+    const midOnboarding = isMidOnboarding(user.onboardingStatus)
+
+    // Mid-onboarding users may have isActive=false — bypass the inactive check
+    if (!midOnboarding && user.isActive === false) {
       return NextResponse.json(
         { error: 'Su usuario está inactivo, por favor contacte con el administrador.' },
         { status: 403 },
       )
     }
-
-    const midOnboarding = isMidOnboarding(user.onboardingStatus)
 
     if (!midOnboarding && user.expiresAt && new Date(user.expiresAt) < new Date() && user.role !== 'admin') {
       return NextResponse.json(

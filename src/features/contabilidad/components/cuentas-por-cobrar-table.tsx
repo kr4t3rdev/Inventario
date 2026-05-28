@@ -37,6 +37,9 @@ interface CuentasPorCobrarTableProps {
   isLoading: boolean
   error: any
   onPagar?: (cuenta: CuentaPorCobrar) => void
+  page?: number
+  totalPages?: number
+  onPageChange?: (page: number) => void
 }
 
 const surfaceCardClass = cn(
@@ -191,6 +194,42 @@ async function downloadFile(url: string, filename: string) {
   }
 }
 
+// Componente para el badge de antigüedad
+function AgingBadge({ rango }: { rango: string }) {
+  const config: Record<string, { label: string; className: string; icon: typeof Clock }> = {
+    '0-30': {
+      label: 'Al día',
+      className: 'bg-green-100 text-green-700 border-green-200 dark:bg-green-900/30 dark:text-green-300 dark:border-green-800',
+      icon: CheckCircle2,
+    },
+    '31-60': {
+      label: '30+ días',
+      className: 'bg-amber-100 text-amber-700 border-amber-200 dark:bg-amber-900/30 dark:text-amber-300 dark:border-amber-800',
+      icon: Clock,
+    },
+    '61-90': {
+      label: '60+ días',
+      className: 'bg-orange-100 text-orange-700 border-orange-200 dark:bg-orange-900/30 dark:text-orange-300 dark:border-orange-800',
+      icon: AlertCircle,
+    },
+    '90+': {
+      label: '90+ días',
+      className: 'bg-red-100 text-red-700 border-red-200 dark:bg-red-900/30 dark:text-red-300 dark:border-red-800',
+      icon: AlertCircle,
+    },
+  };
+
+  const cfg = config[rango] ?? config['0-30'];
+  const Icon = cfg.icon;
+
+  return (
+    <Badge variant="outline" className={`flex items-center gap-1.5 w-fit ${cfg.className}`}>
+      <Icon className="h-3 w-3" />
+      {cfg.label}
+    </Badge>
+  );
+}
+
 // Componente para el badge de estado mejorado
 function EstadoBadge({ estado }: { estado: string }) {
   const configs = {
@@ -228,7 +267,10 @@ function EstadoBadge({ estado }: { estado: string }) {
   )
 }
 
-export function CuentasPorCobrarTable({ cuentas, isLoading, error, onPagar }: CuentasPorCobrarTableProps) {
+export function CuentasPorCobrarTable({
+  cuentas, isLoading, error, onPagar,
+  page, totalPages, onPageChange,
+}: CuentasPorCobrarTableProps) {
   
   const [sorting, setSorting] = useState<SortingState>([])
   const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([])
@@ -361,19 +403,8 @@ export function CuentasPorCobrarTable({ cuentas, isLoading, error, onPagar }: Cu
       },
     },
     {
-      accessorKey: "montoPagado",
-      header: "Pagado",
-      cell: ({ row }) => {
-        const cuenta = row.original as CuentaPorCobrar
-        const pagado = Number(cuenta.totalPagadoFactura ?? row.getValue("montoPagado"))
-        return <div className="text-green-600 font-medium tabular-nums">
-          {formatTableCurrency(pagado)}
-        </div>
-      },
-    },
-    {
-      id: "saldo",
-      header: "Saldo",
+      id: "pendiente",
+      header: "Pendiente",
       cell: ({ row }) => {
         const cuenta = row.original as CuentaPorCobrar;
         const saldo = Number.isFinite(Number(cuenta.saldoFactura))
@@ -384,6 +415,15 @@ export function CuentasPorCobrarTable({ cuentas, isLoading, error, onPagar }: Cu
             {formatTableCurrency(saldo)}
           </div>
         )
+      },
+    },
+    {
+      id: "antiguedad",
+      header: "Antigüedad",
+      cell: ({ row }) => {
+        const cuenta = row.original as CuentaPorCobrar;
+        const rango = (cuenta as any).rangoAntiguedad ?? '0-30';
+        return <AgingBadge rango={rango} />;
       },
     },
     {
@@ -507,7 +547,6 @@ export function CuentasPorCobrarTable({ cuentas, isLoading, error, onPagar }: Cu
     onSortingChange: setSorting,
     onColumnFiltersChange: setColumnFilters,
     getCoreRowModel: getCoreRowModel(),
-    getPaginationRowModel: getPaginationRowModel(),
     getSortedRowModel: getSortedRowModel(),
     getFilteredRowModel: getFilteredRowModel(),
     onColumnVisibilityChange: setColumnVisibility,
@@ -669,27 +708,26 @@ export function CuentasPorCobrarTable({ cuentas, isLoading, error, onPagar }: Cu
         {/* Paginación */}
         <div className="flex flex-col sm:flex-row items-center justify-between gap-4 pt-2">
           <div className="text-sm text-muted-foreground">
-            Mostrando <span className="font-medium text-foreground">{table.getRowModel().rows.length}</span> de{" "}
-            <span className="font-medium text-foreground">{cuentasFiltradas.length}</span> registros
+            Mostrando <span className="font-medium text-foreground">{cuentasFiltradas.length}</span> registros
           </div>
           <div className="flex items-center gap-2">
             <Button 
               variant="outline" 
               size="sm" 
-              onClick={() => table.previousPage()} 
-              disabled={!table.getCanPreviousPage()}
+              onClick={() => onPageChange?.((page ?? 1) - 1)} 
+              disabled={!page || page <= 1}
               className="h-8"
             >
               Anterior
             </Button>
             <div className="text-sm text-muted-foreground px-2">
-              Página {table.getState().pagination.pageIndex + 1} de {table.getPageCount() || 1}
+              Página {page ?? 1} de {totalPages ?? 1}
             </div>
             <Button 
               variant="outline" 
               size="sm" 
-              onClick={() => table.nextPage()} 
-              disabled={!table.getCanNextPage()}
+              onClick={() => onPageChange?.((page ?? 1) + 1)} 
+              disabled={!totalPages || (page ?? 1) >= totalPages}
               className="h-8"
             >
               Siguiente
