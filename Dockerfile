@@ -74,7 +74,9 @@ COPY --from=builder /app/node_modules/@prisma /app/node_modules/@prisma
 # Crear script de inicio
 RUN printf '#!/bin/sh\nset -e\necho "Iniciando aplicación..."\ncd /app\nexec node server.js\n' > /app/start.sh && chmod +x /app/start.sh
 
-EXPOSE 3000
-ENV PORT=3000
+# Copiar prisma.config.ts para Prisma 6 runtime
+COPY --from=builder /app/prisma.config.ts /app/prisma.config.ts
+
+EXPOSE 8080
 ENV HOSTNAME="0.0.0.0"
 CMD ["/app/start.sh"]
