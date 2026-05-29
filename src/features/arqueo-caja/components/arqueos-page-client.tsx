@@ -263,7 +263,7 @@ export function ArqueosPageClient() {
   const [puntosDeVenta, setPuntosDeVenta] = useState<PvOption[]>([]);
 
   // Filtros
-  const [filtroPv, setFiltroPv] = useState('');
+  const [filtroPv, setFiltroPv] = useState('__all__');
   const [filtroFechaDesde, setFiltroFechaDesde] = useState('');
   const [filtroFechaHasta, setFiltroFechaHasta] = useState('');
   const [filtroSoloDif, setFiltroSoloDif] = useState(false);
@@ -276,7 +276,7 @@ export function ArqueosPageClient() {
     setIsLoading(true);
     try {
       const result = await getArqueosAction({
-        puntoDeVentaId: filtroPv || undefined,
+        puntoDeVentaId: filtroPv !== '__all__' ? filtroPv : undefined,
         fechaDesde: filtroFechaDesde || undefined,
         fechaHasta: filtroFechaHasta || undefined,
         soloConDiferencia: filtroSoloDif || undefined,
@@ -339,7 +339,7 @@ export function ArqueosPageClient() {
                   <SelectValue placeholder="Todos los PV" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="">Todos los PV</SelectItem>
+                  <SelectItem value="__all__">Todos los PV</SelectItem>
                   {puntosDeVenta.map((pv) => (
                     <SelectItem key={pv.pvId} value={pv.pvId}>{pv.nombre}</SelectItem>
                   ))}
