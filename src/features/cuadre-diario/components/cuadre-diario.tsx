@@ -226,8 +226,7 @@ export function CuadreDiarioFinanciero({
       },
     ]
 
-  // @ts-expect-error - ventas items have dynamic fields from Prisma
-    const ventasData = ventas.map((v) => ({
+    const ventasData = ventas.map((v: any) => ({
       id: v.id.slice(-8),
       hora: v.horaFormateada,
       cliente: v.cliente,
@@ -238,8 +237,7 @@ export function CuadreDiarioFinanciero({
       total: formatCurrency(v.total),
     }))
 
-  // @ts-expect-error - gastos items have dynamic fields from Prisma
-    const gastosData = gastos.map((g) => ({
+    const gastosData = gastos.map((g: any) => ({
       hora: g.horaFormateada,
       tipo: g.tipo,
       descripcion: g.descripcion,
@@ -689,8 +687,7 @@ export function CuadreDiarioFinanciero({
                           </TableCell>
                         </TableRow>
                       ) : (
-  // @ts-expect-error - resumenMetodosPago is Record not Array
-                        resumenMetodosPago.map((metodo) => (
+                        resumenMetodosPago.map((metodo: any) => (
                           <TableRow key={metodo.metodo}>
                             <TableCell className="font-medium">
                               {metodo.metodo}
