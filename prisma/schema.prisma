@@ -200,6 +200,9 @@ model User {
   email                                               String               @unique
   password                                            String
   role                                                String               @default("regularUser")
+  onboardingType                                      String?
+  onboardingStatus                                    String               @default("pending_email_verification")
+  emailVerifiedAt                                     DateTime?
   isActive                                            Boolean              @default(true)
   avatar                                              String?
   activatedAt                                         DateTime?
@@ -221,6 +224,7 @@ model User {
   PlantillaDocumento                                  PlantillaDocumento[]
   activityLogs                                        UserActivityLog[]
   sessions                                            UserSession[]
+  tenantMemberships                                   TenantMembership[]
 }
 
 model Notification {
@@ -878,4 +882,56 @@ enum TipoAcceso {
   FIRMA
   ELIMINACION
   ADMINISTRACION
+}
+
+model Tenant {
+  tenantId  String   @id @default(cuid())
+  nombre    String
+  slug      String?  @unique
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  memberships TenantMembership[]
+  licencias   TenantLicense[]
+
+  @@index([slug])
+  @@map("tenants")
+}
+
+model TenantMembership {
+  membershipId String   @id @default(cuid())
+  tenantId     String
+  userId       String
+  tenantRole   String   @default("dependiente")
+  isActive     Boolean  @default(true)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  tenant Tenant @relation(fields: [tenantId], references: [tenantId], onDelete: Cascade)
+  user   User   @relation(fields: [userId], references: [userId], onDelete: Cascade)
+
+  @@unique([tenantId, userId])
+  @@index([userId])
+  @@index([tenantId])
+  @@map("tenant_memberships")
+}
+
+model TenantLicense {
+  tenantLicenseId String   @id @default(cuid())
+  tenantId        String
+  planId          String?
+  activa          Boolean  @default(true)
+  inicio          DateTime @default(now())
+  expiracion      DateTime
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+  maxUsuarios     Int      @default(1)
+  maxAlmacenes    Int      @default(1)
+  maxProductos    Int      @default(100)
+  features        Json?
+
+  tenant Tenant @relation(fields: [tenantId], references: [tenantId], onDelete: Cascade)
+
+  @@index([tenantId])
+  @@map("tenant_licenses")
 }

@@ -268,6 +268,9 @@ exports.Prisma.UserScalarFieldEnum = {
   email: 'email',
   password: 'password',
   role: 'role',
+  onboardingType: 'onboardingType',
+  onboardingStatus: 'onboardingStatus',
+  emailVerifiedAt: 'emailVerifiedAt',
   isActive: 'isActive',
   avatar: 'avatar',
   activatedAt: 'activatedAt',
@@ -813,6 +816,39 @@ exports.Prisma.PlantillaDocumentoScalarFieldEnum = {
   updatedAt: 'updatedAt'
 };
 
+exports.Prisma.TenantScalarFieldEnum = {
+  tenantId: 'tenantId',
+  nombre: 'nombre',
+  slug: 'slug',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+};
+
+exports.Prisma.TenantMembershipScalarFieldEnum = {
+  membershipId: 'membershipId',
+  tenantId: 'tenantId',
+  userId: 'userId',
+  tenantRole: 'tenantRole',
+  isActive: 'isActive',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+};
+
+exports.Prisma.TenantLicenseScalarFieldEnum = {
+  tenantLicenseId: 'tenantLicenseId',
+  tenantId: 'tenantId',
+  planId: 'planId',
+  activa: 'activa',
+  inicio: 'inicio',
+  expiracion: 'expiracion',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt',
+  maxUsuarios: 'maxUsuarios',
+  maxAlmacenes: 'maxAlmacenes',
+  maxProductos: 'maxProductos',
+  features: 'features'
+};
+
 exports.Prisma.SortOrder = {
   asc: 'asc',
   desc: 'desc'
@@ -931,7 +967,10 @@ exports.Prisma.ModelName = {
   DocumentoAuditoria: 'DocumentoAuditoria',
   DocumentoFirma: 'DocumentoFirma',
   DocumentoVersion: 'DocumentoVersion',
-  PlantillaDocumento: 'PlantillaDocumento'
+  PlantillaDocumento: 'PlantillaDocumento',
+  Tenant: 'Tenant',
+  TenantMembership: 'TenantMembership',
+  TenantLicense: 'TenantLicense'
 };
 
 /**
