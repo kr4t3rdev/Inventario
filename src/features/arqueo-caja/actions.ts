@@ -7,8 +7,8 @@ import { revalidatePath } from 'next/cache';
 import { withAction, ActionError } from '@/lib/server-actions';
 import { prisma } from '@/lib/prisma';
 import { requireTenant } from '@/lib/services/tenant-scope';
-import { realizarArqueoSchema } from './schemas';
-import type { RealizarArqueoInput } from './schemas';
+import { realizarArqueoSchema, listarArqueosSchema } from './schemas';
+import type { RealizarArqueoInput, ListarArqueosInput } from './schemas';
 import type { EsperadosArqueo } from './types';
 import type { AuthenticatedUser } from '@/lib/auth-middleware';
 
@@ -247,4 +247,55 @@ export const realizarArqueoAction = withAction(async (input: RealizarArqueoInput
     diferencias: { cup: diferenciaCup, usd: diferenciaUsd },
     ...(advertencia ? { advertencia } : {}),
   };
+});
+
+/**
+ * @description Lista arqueos de caja con filtros opcionales.
+ * Incluye datos del turno, punto de venta y empleado.
+ *
+ * @param {ListarArqueosInput} input - Filtros (fecha, PV, solo diferencias)
+ * @returns {Promise<ArqueoCajaConRelaciones[]>} Lista de arqueos
+ */
+export const getArqueosAction = withAction(async (input: ListarArqueosInput, user: AuthenticatedUser) => {
+  const parsed = listarArqueosSchema.parse(input);
+  const tenantId = requireTenant(user);
+
+  const where: Record<string, unknown> = { tenantId };
+
+  if (parsed.puntoDeVentaId) {
+    where.puntoDeVentaId = parsed.puntoDeVentaId;
+  }
+
+  if (parsed.soloConDiferencia) {
+    where.OR = [
+      { diferenciaCup: { not: 0 } },
+      { diferenciaUsd: { not: 0 } },
+    ];
+  }
+
+  if (parsed.fechaDesde || parsed.fechaHasta) {
+    where.createdAt = {};
+    if (parsed.fechaDesde) {
+      (where.createdAt as Record<string, unknown>).gte = new Date(`${parsed.fechaDesde}T00:00:00`);
+    }
+    if (parsed.fechaHasta) {
+      (where.createdAt as Record<string, unknown>).lte = new Date(`${parsed.fechaHasta}T23:59:59.999`);
+    }
+  }
+
+  const arqueos = await prisma.arqueoCaja.findMany({
+    where,
+    include: {
+      turno: {
+        include: {
+          puntoDeVenta: { select: { pvId: true, nombre: true } },
+          empleado: { select: { empleadoId: true, nombre: true, apellido: true } },
+        },
+      },
+    },
+    orderBy: { createdAt: 'desc' },
+    take: parsed.limit,
+  });
+
+  return arqueos;
 });

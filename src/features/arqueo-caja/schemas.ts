@@ -40,7 +40,16 @@ export const realizarArqueoSchema = z.object({
   observaciones: z.string().max(500).optional().nullable(),
 });
 
-// ─── Tipos inferidos ──────────────────────────────────────
+/** Schema para listar arqueos con filtros */
+export const listarArqueosSchema = z.object({
+  fechaDesde: z.string().optional(),
+  fechaHasta: z.string().optional(),
+  puntoDeVentaId: z.string().optional(),
+  soloConDiferencia: z.coerce.boolean().optional(),
+  limit: z.coerce.number().int().min(1).max(200).default(100),
+});
+
+export type ListarArqueosInput = z.infer<typeof listarArqueosSchema>;
 
 export type RealizarArqueoInput = z.infer<typeof realizarArqueoSchema>;
 export type ConteoCupInput = z.infer<typeof conteoCupSchema>;

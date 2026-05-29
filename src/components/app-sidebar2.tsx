@@ -49,7 +49,7 @@ import Link from "next/link"
 
 import { useAuth } from "@/contexts/auth-context"
 import { useIsMounted } from "@/hooks/use-is-mounted"
-import { isTenantAdminRole } from '@/lib/auth/roles'
+import { isTenantAdminRole, type TenantRole } from '@/lib/auth/roles'
 import { cn } from "@/lib/utils"
 import { NavMain } from "./nav-main"
 import { NavUser } from "./nav-user"
@@ -486,6 +486,11 @@ export function AppSidebar2({
             url: "/busy/cuadre",
             icon: Briefcase,
           },
+          {
+            title: "Arqueos de Caja",
+            url: "/busy/caja/arqueos",
+            icon: DollarSign,
+          },
         ],
       },
       // {
@@ -512,41 +517,92 @@ export function AppSidebar2({
     Reportes: "from-rose-500/15 via-sidebar-accent/45 to-transparent",
   }
 
+  // ── Permisos de sidebar por rol de tenant ──
+  // Define qué items del menú ve cada rol de tenant.
+  // Items sin entrada en el mapa solo los ve manager.
+  const SIDEBAR_TENANT_PERMISSIONS: Record<string, TenantRole[]> = {
+    // Gestión
+    'Productos': ['dependiente', 'manager'],
+    'Categorías': ['manager'],
+    'Unidades': ['manager'],
+    'Almacenes': ['manager'],
+    'Puntos de Venta': ['manager'],
+    'Listas de Precios': ['manager'],
+    'Proveedores': ['manager'],
+    // Acciones
+    'Compras de Productos': ['manager'],
+    'Ventas': ['dependiente', 'manager'],
+    'Gestión de Facturas': ['dependiente', 'manager'],
+    'Mermas': ['manager'],
+    'Transferencias': ['manager'],
+    'Empleados': ['manager'],
+    'Gastos DE': ['economico', 'manager'],
+    'Lista de Gastos': ['economico', 'manager'],
+    'Conceptos de Gastos': ['economico', 'manager'],
+    'Producción': ['manager'],
+    'Clientes': ['manager'],
+    'Servicios': ['dependiente', 'manager'],
+    'Contratos': ['manager'],
+    'Ofertas': ['manager'],
+    // Configuración
+    'Mi Empresa': ['dependiente', 'economico', 'manager'],
+    'Usuarios': ['manager'],
+    // Reportes
+    'Reportes': ['dependiente', 'economico', 'manager'],
+    'Venta Diaria': ['dependiente', 'manager'],
+    'Reconciliación': ['economico', 'manager'],
+    'Reconciliación Ventas': ['economico', 'manager'],
+    'Reconciliación Servicios': ['economico', 'manager'],
+    'Reconciliación Gastos': ['economico', 'manager'],
+    'Cuadre Financiero': ['economico', 'manager'],
+  }
+
+  /**
+   * @description Verifica si un item del sidebar es visible para el rol de tenant del usuario.
+   */
+  function canSeeSidebarItem(itemTitle: string): boolean {
+    // Admin global ve todo
+    if (user?.role === 'admin') return true
+
+    // Si no hay tenantRole (usuario sin membresía), no ve nada
+    if (!user?.tenantRole) return false
+
+    const allowedRoles = SIDEBAR_TENANT_PERMISSIONS[itemTitle]
+    // Si el item no está en el mapa, solo manager tiene acceso
+    if (!allowedRoles) return user.tenantRole === 'manager'
+
+    return allowedRoles.includes(user.tenantRole as TenantRole)
+  }
+
+  /**
+   * @description Filtra los subitems recursivamente según el rol.
+   */
+  function filterSidebarItems(items: any[]): any[] {
+    return items.filter(item => {
+      // Verificar el item principal
+      if (!canSeeSidebarItem(item.title)) return false
+
+      // Si tiene subitems, filtrarlos también
+      if (item.subItems) {
+        item.subItems = item.subItems.filter(sub => canSeeSidebarItem(sub.title))
+        if (item.subItems.length === 0) return false
+      }
+
+      return true
+    })
+  }
+
   // Filter groups based on user role
   const filteredGroups = (() => {
-    // First, filter out Administración unless user is admin
-    const baseGroups = data.groups.map(group => {
-      if (group.title === "Administración" && user?.role !== "admin") {
-        return {
-          ...group,
-          items: group.items.filter(item => item.title === "Mi Empresa")
-        }
-      }
-      return group
+    return data.groups.map(group => {
+      // Licencias y Planes son solo para admin global
+      const items = filterSidebarItems(group.items).filter(item => {
+        if (item.title === 'Licencias' || item.title === 'Planes') return user?.role === 'admin'
+        // Usuarios ya se filtra por tenantRole en canSeeSidebarItem
+        return true
+      })
+      return { ...group, items }
     }).filter(group => group.items.length > 0)
-
-    // Otros roles ven todos los grupos excepto Administración (ya filtrado)
-    return baseGroups.map(group => {
-      if (group.title === "Contabilidad" && user?.role !== "admin") {
-        return {
-          ...group,
-          items: group.items.filter(item => item.title !== "Logs")
-        }
-      }
-      if (group.title === "Configuración" && user?.role !== "admin") {
-        return {
-          ...group,
-          items: group.items.filter(item => {
-            // Licencias y Planes son solo para admin global
-            if (item.title === "Licencias" || item.title === "Planes") return false
-            // Usuarios solo para tenant admins o admin global
-            if (item.title === "Usuarios" && !isTenantAdminRole(user?.tenantRole)) return false
-            return true
-          }),
-        }
-      }
-      return group
-    })
   })()
 
   return (
