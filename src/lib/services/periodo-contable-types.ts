@@ -5,24 +5,67 @@
  * que usan el servicio de dominio, el guard y las Server Actions.
  */
 
-import {
-	EstadoPeriodo,
-	TipoPeriodo,
-	EventoAuditoria,
-	CategoriaPeriodo,
-	ModoContable,
-} from "@/generated/prisma";
-import type { PeriodoContable } from "@/generated/prisma";
+// ── Enums locales (NO importados de Prisma ─ se almacenan como string en DB) ──
 
-// ── Re-export de enums de Prisma para uso en TypeScript puro ─────────────
+export enum EstadoPeriodo {
+	BORRADOR = "BORRADOR",
+	ABIERTO = "ABIERTO",
+	EN_CIERRE = "EN_CIERRE",
+	CERRADO = "CERRADO",
+	APROBADO = "APROBADO",
+	REABIERTO = "REABIERTO",
+}
 
-export {
-	EstadoPeriodo,
-	TipoPeriodo,
-	EventoAuditoria,
-	CategoriaPeriodo,
-	ModoContable,
-};
+export enum TipoPeriodo {
+	DIARIO = "DIARIO",
+	MENSUAL = "MENSUAL",
+	TRIMESTRAL = "TRIMESTRAL",
+	SEMESTRAL = "SEMESTRAL",
+	ANUAL = "ANUAL",
+	PERSONALIZADO = "PERSONALIZADO",
+}
+
+export enum EventoAuditoria {
+	CREACION = "CREACION",
+	APERTURA = "APERTURA",
+	CIERRE = "CIERRE",
+	REAPERTURA = "REAPERTURA",
+	APROBACION = "APROBACION",
+	RECHAZO = "RECHAZO",
+	MODIFICACION = "MODIFICACION",
+}
+
+export enum CategoriaPeriodo {
+	ORDINARIO = "ORDINARIO",
+	REGULAR = "REGULAR",
+	CIERRE_EJERCICIO = "CIERRE_EJERCICIO",
+	LIQUIDACION = "LIQUIDACION",
+	REORGANIZACION = "REORGANIZACION",
+}
+
+export enum ModoContable {
+	CAJA = "CAJA",
+	DEVENGO = "DEVENGO",
+}
+
+export interface PeriodoContable {
+	periodoId: string;
+	tenantId: string;
+	tipo: string;
+	estado: string;
+	fechaInicio: Date;
+	fechaFin: Date;
+	fechaApertura?: Date | null;
+	fechaCierre?: Date | null;
+	fechaAprobacion?: Date | null;
+	fechaReapertura?: Date | null;
+	observaciones?: string | null;
+	categoria?: string | null;
+	modoContable?: string | null;
+	periodoPadreId?: string | null;
+	createdAt: Date;
+	updatedAt: Date;
+}
 
 // ── Estados que permiten escritura contable ──────────────────────────────
 

@@ -3,7 +3,7 @@ import { prisma } from './prisma'
 import jwt from 'jsonwebtoken'
 import { getJwtSecret } from './secrets'
 import { checkApiPermission, checkTenantApiPermission, type UserRole } from './permissions'
-import { normalizeTenantRole, type TenantRole } from './auth/roles'
+import type { TenantRole } from './auth/roles'
 
 export interface PlanLimits {
   maxUsuarios: number
@@ -35,54 +35,13 @@ export interface AuthenticatedUser {
  * @returns {Promise<{ tenantId: string; tenantRole: TenantRole; planLimits?: PlanLimits } | null>}
  */
 export async function resolveTenantContext(
-  userId: string,
-  headerTenantId: string | null,
+  _userId: string,
+  _headerTenantId: string | null,
 ): Promise<{ tenantId: string; tenantRole: TenantRole; planLimits?: PlanLimits; licenseExpiresAt?: Date } | null> {
-  try {
-    const where = headerTenantId
-      ? { tenantId: headerTenantId, userId, isActive: true }
-      : { userId, isActive: true };
-
-    const membership = headerTenantId
-      ? await prisma.tenantMembership.findUnique({
-          where: { tenantId_userId: { tenantId: headerTenantId, userId } },
-        })
-      : await prisma.tenantMembership.findFirst({
-          where: { userId, isActive: true },
-          orderBy: { createdAt: 'asc' },
-        });
-
-    if (!membership || !membership.isActive) return null;
-
-    // Obtener límites del plan desde la licencia activa del tenant
-    let planLimits: PlanLimits | undefined;
-    const license = await prisma.tenantLicense.findFirst({
-      where: {
-        tenantId: membership.tenantId,
-        activa: true,
-        expiracion: { gt: new Date() },
-      },
-      orderBy: { inicio: 'desc' },
-    });
-
-    if (license) {
-      planLimits = {
-        maxUsuarios: license.maxUsuarios,
-        maxAlmacenes: license.maxAlmacenes,
-        maxProductos: license.maxProductos,
-      };
-    }
-
-    return {
-      tenantId: membership.tenantId,
-      tenantRole: normalizeTenantRole(membership.tenantRole) ?? 'dependiente',
-      planLimits,
-      licenseExpiresAt: license?.expiracion,
-    };
-  } catch (error) {
-    console.error('[Auth] Error resolviendo contexto tenant:', error);
-    return null;
-  }
+  // NOTE: Tenant models (TenantMembership, TenantLicense) no existen actualmente
+  // en el schema de Prisma. Esta funcionalidad se reintroducirá cuando se
+  // restaure el modelo multi-tenant. Por ahora retorna null silenciosamente.
+  return null;
 }
 
 /**
