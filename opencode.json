@@ -15,6 +15,11 @@
       "type": "local",
       "command": ["npx", "-y", "@testsprite/testsprite-mcp"],
       "enabled": true
+    },
+    "railway": {
+      "type": "remote",
+      "url": "https://mcp.railway.com",
+      "enabled": true
     }
   }
 }

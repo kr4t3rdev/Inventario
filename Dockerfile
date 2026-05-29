@@ -1,5 +1,6 @@
 # Builder
 FROM node:20 AS builder
+ARG DATABASE_URL
 WORKDIR /app
 
 # Instalar dependencias del sistema necesarias para Prisma y compilación
@@ -25,6 +26,10 @@ RUN pnpm install --frozen-lockfile --prefer-offline || \
 
 # Copiar código fuente
 COPY . .
+
+# Railway inyecta variables de servicio solo si se declaran con ARG en el Dockerfile
+ARG DATABASE_URL
+ENV DATABASE_URL=$DATABASE_URL
 
 # Generar cliente Prisma
 RUN pnpm prisma generate
