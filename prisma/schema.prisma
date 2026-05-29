@@ -277,6 +277,7 @@ model Almacen {
   createdAt             DateTime        @default(now())
   updatedAt             DateTime        @updatedAt
   productos             Producto[]
+  mermas                Merma[]
   puntosDeVenta         PuntoDeVenta[]
   transferenciasDestino Transferencia[] @relation("TransferenciasDestino")
   transferenciasOrigen  Transferencia[] @relation("TransferenciasOrigen")
@@ -483,6 +484,7 @@ model Venta {
   esVentaUnica       Boolean               @default(false)
   ofertaId           String?               @unique
   ventaPadreId       String?
+  deletedAt          DateTime?
   turnoId            String?
   metodoPago         MetodoPagoVenta?
   montoEfectivo      Int?
@@ -532,6 +534,8 @@ model Merma {
   costoTotal Int?
   producto   Producto @relation(fields: [productoId], references: [id], onDelete: Cascade)
   tenant     Tenant   @relation(fields: [tenantId], references: [tenantId])
+  almacenId  String?
+  almacen    Almacen? @relation(fields: [almacenId], references: [almacenId])
 
   @@index([tenantId])
 }
@@ -549,7 +553,7 @@ model Transferencia {
   costoUnitario         Int?
   costoTotal            Int?
   deletedAt             DateTime?
-  estado                String        @default("COMPLETADA")
+  estado                String        @default("COMPLETADA") // PENDIENTE | APROBADA | EN_TRANSITO | COMPLETADA | RECHAZADA | CANCELADA
   numeroTransferencia   String?       @unique
   creadoPorId           String?
   puntoDeVentaDestinoId String?

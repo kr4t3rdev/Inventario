@@ -171,6 +171,7 @@ export interface ProductInstanceParams {
     precioCosto: number
     precioVenta: number
     stock: number
+    stockMinimo: number
     fotos: string[]
     categoriaId: string
     unidadId: string | null
@@ -195,6 +196,7 @@ export interface NewInstanceData {
   precioCosto: number
   precioVenta: number
   stock: number
+  stockMinimo: number
   fotos: string[]
   categoriaId: string
   unidadId: string | null
@@ -244,6 +246,7 @@ export function determineProductInstanceNeed(params: ProductInstanceParams): Pro
       precioCosto: newCostPrice ?? currentProduct.precioCosto,
       precioVenta: newSellingPrice ?? currentProduct.precioVenta,
       stock: 0,
+      stockMinimo: currentProduct.stockMinimo,
       fotos: currentProduct.fotos,
       categoriaId: currentProduct.categoriaId,
       unidadId: currentProduct.unidadId,
@@ -295,6 +298,7 @@ export function determineProductInstanceNeed(params: ProductInstanceParams): Pro
     precioCosto: newCostPrice ?? currentProduct.precioCosto,
     precioVenta: newSellingPrice ?? currentProduct.precioVenta,
     stock: 0, // New instance starts with 0 stock, will be updated during restock
+    stockMinimo: currentProduct.stockMinimo,
     fotos: currentProduct.fotos, // Inherit photos from original product
     categoriaId: currentProduct.categoriaId,
     unidadId: currentProduct.unidadId,

@@ -3,7 +3,11 @@ export {
   getTransferenciasAction,
   getTransferenciaByIdAction,
   createTransferenciaAction,
+  updateTransferenciaAction,
   deleteTransferenciaAction,
+  aprobarTransferenciaAction,
+  completarTransferenciaAction,
+  rechazarTransferenciaAction,
 } from './actions';
 
 // Client Components

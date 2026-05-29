@@ -11,8 +11,20 @@ import { prisma } from '@/lib/prisma';
 import { requireTenant } from '@/lib/services/tenant-scope';
 import { notificarTransferencia } from '@/lib/notificaciones-utils';
 import { upsertStockUbicacion } from '@/lib/services/stock-ubicacion-service';
-import { createTransferenciaSchema, updateTransferenciaSchema } from './schemas';
-import type { CreateTransferenciaInput, UpdateTransferenciaInput } from './schemas';
+import {
+  createTransferenciaSchema,
+  updateTransferenciaSchema,
+  aprobarTransferenciaSchema,
+  completarTransferenciaSchema,
+  rechazarTransferenciaSchema,
+} from './schemas';
+import type {
+  CreateTransferenciaInput,
+  UpdateTransferenciaInput,
+  AprobarTransferenciaInput,
+  CompletarTransferenciaInput,
+  RechazarTransferenciaInput,
+} from './schemas';
 import type { AuthenticatedUser } from '@/lib/auth-middleware';
 
 // ─── Helpers ───────────────────────────────────────────────
@@ -213,7 +225,7 @@ export const createTransferenciaAction = withAction(async (input: CreateTransfer
         tenant: { connect: { tenantId } },
         costoUnitario: producto.precioCosto,
         costoTotal, descripcion: descripcion || `Transferencia - ${producto.nombre}`,
-        estado: 'COMPLETADA', creadoPorId: user.userId,
+        estado: parsed.estado ?? 'COMPLETADA', creadoPorId: user.userId,
         numeroTransferencia: `${numeroTransferencia}-${String(transferenciasCreadas.length + 1).padStart(3, '0')}`,
       };
       if (tipoOrigen === 'almacen') data.origenId = origenId;
@@ -225,14 +237,20 @@ export const createTransferenciaAction = withAction(async (input: CreateTransfer
 
       const transferencia = await tx.transferencia.create({ data });
 
-      const stockDelta = (tipoOrigen === 'almacen' ? -cantidad : 0) + (tipoDestino === 'almacen' ? cantidad : 0);
-      console.log(`=== createTransferenciaAction :: stockDelta[${idx}] ===`, { stockDelta });
-      if (stockDelta !== 0) {
-        await tx.producto.update({ where: { id: producto.id }, data: { stock: { increment: stockDelta } } });
+      // Solo ajustar Producto.stock si la transferencia es COMPLETADA
+      const estadoFinal = parsed.estado ?? 'COMPLETADA';
+      if (estadoFinal === 'COMPLETADA') {
+        const stockDelta = (tipoOrigen === 'almacen' ? -cantidad : 0) + (tipoDestino === 'almacen' ? cantidad : 0);
+        console.log(`=== createTransferenciaAction :: stockDelta[${idx}] ===`, { stockDelta });
+        if (stockDelta !== 0) {
+          await tx.producto.update({ where: { id: producto.id }, data: { stock: { increment: stockDelta } } });
+        }
       }
 
-      await upsertStockUbicacion(tx, { productoId: producto.id, tipoUbicacion: tipoOrigen, ubicacionId: origenId, modo: 'increment', delta: -cantidad });
-      await upsertStockUbicacion(tx, { productoId: producto.id, tipoUbicacion: tipoDestino, ubicacionId: destinoId, modo: 'increment', delta: cantidad });
+      if (estadoFinal === 'COMPLETADA') {
+        await upsertStockUbicacion(tx, { productoId: producto.id, tipoUbicacion: tipoOrigen, ubicacionId: origenId, modo: 'increment', delta: -cantidad });
+        await upsertStockUbicacion(tx, { productoId: producto.id, tipoUbicacion: tipoDestino, ubicacionId: destinoId, modo: 'increment', delta: cantidad });
+      }
 
       transferenciasCreadas.push(transferencia);
     }
@@ -314,4 +332,127 @@ export const deleteTransferenciaAction = withAction(async (id: string, user: Aut
 
   revalidatePath('/busy/transferencias');
   return { success: true, id, message: 'Transferencia cancelada' };
+});
+
+/**
+ * @description Aprueba una transferencia PENDIENTE y mueve el stock.
+ * Transición: PENDIENTE → APROBADA. El stock se descuenta del origen y se suma al destino.
+ */
+export const aprobarTransferenciaAction = withAction(async (input: AprobarTransferenciaInput, user: AuthenticatedUser) => {
+  const parsed = aprobarTransferenciaSchema.parse(input);
+  const tenantId = requireTenant(user);
+
+  const transferencia = await prisma.transferencia.findFirst({
+    where: { transferenciaId: parsed.transferenciaId, tenantId, deletedAt: null },
+    include: { producto: true },
+  });
+  if (!transferencia) throw new ActionError('Transferencia no encontrada', 'NOT_FOUND');
+  if (transferencia.estado !== 'PENDIENTE') {
+    throw new ActionError(`La transferencia está en estado ${transferencia.estado}, solo se pueden aprobar transferencias pendientes`, 'VALIDATION_ERROR');
+  }
+
+  await prisma.$transaction(async (tx: any) => {
+    await tx.transferencia.update({
+      where: { transferenciaId: parsed.transferenciaId },
+      data: { estado: 'APROBADA' },
+    });
+
+    // No mover stock aún — se mueve al completar
+  });
+
+  revalidatePath('/busy/transferencias');
+  return { success: true, message: 'Transferencia aprobada' };
+});
+
+/**
+ * @description Completa una transferencia APROBADA o EN_TRANSITO, moviendo el stock definitivamente.
+ * Transición: {APROBADA, EN_TRANSITO} → COMPLETADA. El stock se descuenta del origen y se suma al destino.
+ */
+export const completarTransferenciaAction = withAction(async (input: CompletarTransferenciaInput, user: AuthenticatedUser) => {
+  const parsed = completarTransferenciaSchema.parse(input);
+  const tenantId = requireTenant(user);
+
+  const transferencia = await prisma.transferencia.findFirst({
+    where: { transferenciaId: parsed.transferenciaId, tenantId, deletedAt: null },
+    include: { producto: true },
+  });
+  if (!transferencia) throw new ActionError('Transferencia no encontrada', 'NOT_FOUND');
+  if (!['APROBADA', 'EN_TRANSITO'].includes(transferencia.estado)) {
+    throw new ActionError(
+      `La transferencia está en estado ${transferencia.estado}, solo se pueden completar transferencias aprobadas o en tránsito`,
+      'VALIDATION_ERROR',
+    );
+  }
+
+  const { cantidad, productoId, origenId, destinoId, puntoDeVentaOrigenId, puntoDeVentaDestinoId } = transferencia;
+
+  await prisma.$transaction(async (tx: any) => {
+    await tx.transferencia.update({
+      where: { transferenciaId: parsed.transferenciaId },
+      data: { estado: 'COMPLETADA' },
+    });
+
+    // Ajustar stock general del producto
+    const origenEsAlmacen = !!origenId;
+    const destinoEsAlmacen = !!destinoId;
+    const stockDelta = (origenEsAlmacen ? -cantidad : 0) + (destinoEsAlmacen ? cantidad : 0);
+    if (stockDelta !== 0) {
+      await tx.producto.update({
+        where: { id: productoId },
+        data: { stock: { increment: stockDelta } },
+      });
+    }
+
+    // Sincronizar StockUbicacion
+    const tipoOrigen = origenEsAlmacen ? 'almacen' as const : 'punto_venta' as const;
+    const tipoDestino = destinoEsAlmacen ? 'almacen' as const : 'punto_venta' as const;
+    const origenUbicacionId = (origenId || puntoDeVentaOrigenId)!;
+    const destinoUbicacionId = (destinoId || puntoDeVentaDestinoId)!;
+
+    await upsertStockUbicacion(tx, {
+      productoId,
+      tipoUbicacion: tipoOrigen,
+      ubicacionId: origenUbicacionId,
+      modo: 'increment',
+      delta: -cantidad,
+    });
+    await upsertStockUbicacion(tx, {
+      productoId,
+      tipoUbicacion: tipoDestino,
+      ubicacionId: destinoUbicacionId,
+      modo: 'increment',
+      delta: cantidad,
+    });
+  });
+
+  revalidatePath('/busy/transferencias');
+  return { success: true, message: 'Transferencia completada' };
+});
+
+/**
+ * @description Rechaza una transferencia PENDIENTE. No mueve stock.
+ * Transición: PENDIENTE → RECHAZADA.
+ */
+export const rechazarTransferenciaAction = withAction(async (input: RechazarTransferenciaInput, user: AuthenticatedUser) => {
+  const parsed = rechazarTransferenciaSchema.parse(input);
+  const tenantId = requireTenant(user);
+
+  const transferencia = await prisma.transferencia.findFirst({
+    where: { transferenciaId: parsed.transferenciaId, tenantId, deletedAt: null },
+  });
+  if (!transferencia) throw new ActionError('Transferencia no encontrada', 'NOT_FOUND');
+  if (transferencia.estado !== 'PENDIENTE') {
+    throw new ActionError(`La transferencia está en estado ${transferencia.estado}, solo se pueden rechazar transferencias pendientes`, 'VALIDATION_ERROR');
+  }
+
+  await prisma.transferencia.update({
+    where: { transferenciaId: parsed.transferenciaId },
+    data: {
+      estado: 'RECHAZADA',
+      descripcion: parsed.motivo,
+    },
+  });
+
+  revalidatePath('/busy/transferencias');
+  return { success: true, message: 'Transferencia rechazada' };
 });

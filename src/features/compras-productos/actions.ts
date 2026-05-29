@@ -12,6 +12,7 @@ import { requireTenant } from '@/lib/services/tenant-scope';
 import { calcularPrecioCostoCompra } from '@/lib/inventory-cost-utils';
 import { applyAnticipoAllocations } from '@/lib/services/anticipos-workflow';
 import { upsertStockUbicacion } from '@/lib/services/stock-ubicacion-service';
+import { recordCostChange, CostChangeReason } from '@/lib/cost-history-utils';
 import { hasUnrevertedAnticipoExecution } from '@/lib/services/anticipos-guards';
 import { FORMA_PAGO_ANTICIPO_PAGO } from '@/lib/constants/anticipos';
 import { createCompraProductoSchema, updateCompraProductoSchema } from './schemas';
@@ -127,6 +128,8 @@ export const createCompraProductoAction = withAction(async (input: CreateCompraP
     // Actualizar stock y precios
   // @ts-expect-error
     for (const item of items) {
+      const oldPrecioCosto = item.producto.precioCosto;
+
       await tx.producto.update({
         where: { id: item.producto.id },
         data: {
@@ -139,6 +142,28 @@ export const createCompraProductoAction = withAction(async (input: CreateCompraP
         tenantId, productoId: item.producto.id, tipoUbicacion: 'almacen',
         ubicacionId: item.producto.almacenId, modo: 'increment', delta: item.cantidad,
       });
+
+      // Registrar cambio de costo en historial
+      if (item.nuevoPrecioCosto.precioCostoNuevo !== oldPrecioCosto) {
+        try {
+          await recordCostChange(
+            // @ts-expect-error - tx es compatible con PrismaClient
+            tx,
+            {
+              productoId: item.producto.id,
+              oldPrecioCosto,
+              newPrecioCosto: item.nuevoPrecioCosto.precioCostoNuevo,
+              oldPrecioVenta: item.producto.precioVenta,
+              newPrecioVenta: item.producto.precioVenta,
+              reason: CostChangeReason.RESTOCK,
+              changedBy: user.userId || 'system',
+              notes: `Compra x${item.cantidad} - Factura ${parsed.numeroFactura || 'N/A'}`,
+            },
+          )
+        } catch (_chErr) {
+          console.error('Error registrando cost history (no bloqueante):', _chErr);
+        }
+      }
     }
 
     // ── Crear GastoCompra (registro contable del gasto) ──

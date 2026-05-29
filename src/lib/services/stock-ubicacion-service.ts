@@ -8,6 +8,8 @@ type UpsertStockOpts =
       ubicacionId: string
       modo: 'increment'
       delta: number
+      /** Stock reservado (pedidos pendientes, etc.). Si se omite, preserva el valor existente. */
+      cantidadReservada?: number
     }
   | {
       tenantId?: string
@@ -16,6 +18,8 @@ type UpsertStockOpts =
       ubicacionId: string
       modo: 'set'
       valor: number
+      /** Stock reservado (pedidos pendientes, etc.). Si se omite, preserva el valor existente. */
+      cantidadReservada?: number
     }
 
 /**
@@ -42,51 +46,77 @@ export async function upsertStockUbicacion(
   ).tenantId
 
   if (opts.modo === 'increment') {
-    const { delta } = opts
-    await tx.stockUbicacion.upsert({
-      where: {
-        productoId_tipoUbicacion_ubicacionId: {
-          productoId,
-          tipoUbicacion,
-          ubicacionId,
+    const { delta, cantidadReservada } = opts
+
+    if (cantidadReservada !== undefined) {
+      // Si se provee cantidadReservada, leer registro existente para calcular disponible
+      const existing = await tx.stockUbicacion.findUnique({
+        where: {
+          productoId_tipoUbicacion_ubicacionId: {
+            productoId, tipoUbicacion, ubicacionId,
+          },
         },
-      },
-      update: {
-        cantidad: { increment: delta },
-        cantidadDisponible: { increment: delta },
-      },
-      create: {
-        tenantId,
-        productoId,
-        tipoUbicacion,
-        ubicacionId,
-        cantidad: delta,
-        cantidadReservada: 0,
-        cantidadDisponible: delta,
-      },
-    })
+        select: { cantidad: true },
+      })
+
+      await tx.stockUbicacion.upsert({
+        where: {
+          productoId_tipoUbicacion_ubicacionId: {
+            productoId, tipoUbicacion, ubicacionId,
+          },
+        },
+        update: {
+          cantidad: { increment: delta },
+          cantidadReservada,
+          cantidadDisponible: (existing ? existing.cantidad + delta : delta) - cantidadReservada,
+        },
+        create: {
+          tenantId, productoId, tipoUbicacion, ubicacionId,
+          cantidad: delta,
+          cantidadReservada,
+          cantidadDisponible: delta - cantidadReservada,
+        },
+      })
+    } else {
+      // Sin cantidadReservada: comportamiento legacy, disponible = cantidad
+      await tx.stockUbicacion.upsert({
+        where: {
+          productoId_tipoUbicacion_ubicacionId: {
+            productoId, tipoUbicacion, ubicacionId,
+          },
+        },
+        update: {
+          cantidad: { increment: delta },
+          cantidadDisponible: { increment: delta },
+        },
+        create: {
+          tenantId, productoId, tipoUbicacion, ubicacionId,
+          cantidad: delta,
+          cantidadReservada: 0,
+          cantidadDisponible: delta,
+        },
+      })
+    }
   } else {
-    const { valor } = opts
+    const { valor, cantidadReservada } = opts
+    const reservada = cantidadReservada ?? 0
+
     await tx.stockUbicacion.upsert({
       where: {
         productoId_tipoUbicacion_ubicacionId: {
-          productoId,
-          tipoUbicacion,
-          ubicacionId,
+          productoId, tipoUbicacion, ubicacionId,
         },
       },
       update: {
         cantidad: valor,
-        cantidadDisponible: valor,
+        cantidadReservada: reservada,
+        cantidadDisponible: valor - reservada,
       },
       create: {
-        tenantId,
-        productoId,
-        tipoUbicacion,
-        ubicacionId,
+        tenantId, productoId, tipoUbicacion, ubicacionId,
         cantidad: valor,
-        cantidadReservada: 0,
-        cantidadDisponible: valor,
+        cantidadReservada: reservada,
+        cantidadDisponible: valor - reservada,
       },
     })
   }

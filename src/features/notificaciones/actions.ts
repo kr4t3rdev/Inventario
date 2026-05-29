@@ -7,7 +7,7 @@
 
 import { withAction, ActionError } from '@/lib/server-actions';
 import { prisma } from '@/lib/prisma';
-import { verificarStockBajo } from '@/lib/notificaciones-utils';
+import { verificarStockBajo } from '@/lib/verificar-stock';
 import { createNotificacionSchema, updateNotificacionSchema } from './schemas';
 import type { CreateNotificacionInput, UpdateNotificacionInput } from './schemas';
 import type { AuthenticatedUser } from '@/lib/auth-middleware';
@@ -86,7 +86,7 @@ export const verificarStockAction = withAction(async (_input: void, user: Authen
 
   return {
     success: true,
-    mensaje: `Verificación completada. ${resultado.stockBajo} productos con stock bajo, ${resultado.sinStock} productos sin stock`,
+    mensaje: `Verificación completada. ${resultado.productosStockBajo} productos con stock bajo, ${resultado.productosSinStock} productos sin stock, ${resultado.notificacionesCreadas} notificaciones creadas`,
     ...resultado,
   };
 });

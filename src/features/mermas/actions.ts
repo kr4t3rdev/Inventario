@@ -10,6 +10,7 @@ import { withAction, ActionError } from '@/lib/server-actions';
 import { prisma } from '@/lib/prisma';
 import { requireTenant } from '@/lib/services/tenant-scope';
 import { notificarMerma } from '@/lib/notificaciones-utils';
+import { upsertStockUbicacion } from '@/lib/services/stock-ubicacion-service';
 import { createMermaSchema, updateMermaSchema } from './schemas';
 import type { CreateMermaInput, UpdateMermaInput } from './schemas';
 import type { AuthenticatedUser } from '@/lib/auth-middleware';
@@ -45,26 +46,63 @@ export const createMermaAction = withAction(async (input: CreateMermaInput, user
   });
   if (!producto) throw new ActionError('Producto no encontrado', 'NOT_FOUND');
   if (producto.tenantId !== tenantId) throw new ActionError('Producto no encontrado', 'NOT_FOUND');
-  if (producto.stock < parsed.cantidad) throw new ActionError('Stock insuficiente', 'STOCK_INSUFICIENTE');
+
+  // Validar stock según ubicación (si se especifica) o global
+  const tieneUbicacion = !!parsed.almacenId;
+  if (tieneUbicacion) {
+    const stockUbicacion = await prisma.stockUbicacion.findUnique({
+      where: {
+        productoId_tipoUbicacion_ubicacionId: {
+          productoId: parsed.productoId,
+          tipoUbicacion: 'almacen',
+          ubicacionId: parsed.almacenId!,
+        },
+      },
+    });
+    if (!stockUbicacion || stockUbicacion.cantidad < parsed.cantidad) {
+      throw new ActionError(
+        `Stock insuficiente en el almacén. Disponible: ${stockUbicacion?.cantidad ?? 0}`,
+        'STOCK_INSUFICIENTE',
+      );
+    }
+  } else if (producto.stock < parsed.cantidad) {
+    throw new ActionError('Stock insuficiente', 'STOCK_INSUFICIENTE');
+  }
 
   const costoTotal = producto.precioCosto * parsed.cantidad;
 
-  const [merma] = await prisma.$transaction([
-    prisma.merma.create({
+  // Crear merma y actualizar stock en transacción
+  const merma = await prisma.$transaction(async (tx: any) => {
+    const creada = await tx.merma.create({
       data: {
         productoId: parsed.productoId,
         cantidad: parsed.cantidad,
         motivo: parsed.motivo ?? null,
         costoTotal,
         tenantId,
+        almacenId: parsed.almacenId ?? null,
       },
       include: MERMA_INCLUDE,
-    }),
-    prisma.producto.update({
+    });
+
+    await tx.producto.update({
       where: { id: parsed.productoId },
       data: { stock: { decrement: parsed.cantidad } },
-    }),
-  ]);
+    });
+
+    // Sincronizar StockUbicacion si la merma está asociada a un almacén
+    if (tieneUbicacion) {
+      await upsertStockUbicacion(tx, {
+        productoId: parsed.productoId,
+        tipoUbicacion: 'almacen',
+        ubicacionId: parsed.almacenId!,
+        modo: 'increment',
+        delta: -parsed.cantidad,
+      });
+    }
+
+    return creada;
+  });
 
   try {
     await notificarMerma(merma.mermaId);
@@ -147,17 +185,28 @@ export const deleteMermaAction = withAction(async (id: string, user: Authenticat
   const tenantId = requireTenant(user);
   const merma = await prisma.merma.findFirst({
     where: { mermaId: id, tenantId },
-    select: { mermaId: true, productoId: true, cantidad: true },
+    select: { mermaId: true, productoId: true, cantidad: true, almacenId: true },
   });
   if (!merma) throw new ActionError('Merma no encontrada', 'NOT_FOUND');
 
-  await prisma.$transaction([
-    prisma.merma.delete({ where: { mermaId: id } }),
-    prisma.producto.update({
+  await prisma.$transaction(async (tx: any) => {
+    await tx.merma.delete({ where: { mermaId: id } });
+    await tx.producto.update({
       where: { id: merma.productoId },
       data: { stock: { increment: merma.cantidad } },
-    }),
-  ]);
+    });
+
+    // Restaurar StockUbicacion si la merma estaba asociada a un almacén
+    if (merma.almacenId) {
+      await upsertStockUbicacion(tx, {
+        productoId: merma.productoId,
+        tipoUbicacion: 'almacen',
+        ubicacionId: merma.almacenId,
+        modo: 'increment',
+        delta: merma.cantidad,
+      });
+    }
+  });
 
   revalidatePath('/busy/mermas');
   return { id, eliminado: true };
