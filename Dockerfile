@@ -26,6 +26,9 @@ RUN pnpm install --frozen-lockfile --prefer-offline || \
 # Copiar código fuente
 COPY . .
 
+# Declare DATABASE_URL so Railway injects it at build time (required by prisma.config.ts)
+ARG DATABASE_URL
+
 # Generar cliente Prisma
 RUN pnpm prisma generate
 
