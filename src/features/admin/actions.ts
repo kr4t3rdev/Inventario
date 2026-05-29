@@ -220,8 +220,8 @@ export const getAdminFinanceAction = withAction(async (_input: void, user: Authe
     prisma.venta.aggregate({ _count: true, _sum: { total: true } }),
     prisma.ventaServicios.aggregate({ _count: true, _sum: { total: true } }),
     prisma.gastosDE.aggregate({ _count: true, _sum: { monto: true } }),
-    prisma.cuentasPorCobrar.aggregate({ _count: true, _sum: { montoDeuda: true, montoPagado: true } }),
-    prisma.cuentasPorPagar.aggregate({ _count: true, _sum: { saldoPendiente: true } }),
+    prisma.cuentaPorCobrar.aggregate({ _count: true, _sum: { montoDeuda: true, montoPagado: true } }),
+    prisma.cuentaPorPagar.aggregate({ _count: true, _sum: { saldoPendiente: true } }),
     prisma.tenant.count(),
   ]);
   return {
