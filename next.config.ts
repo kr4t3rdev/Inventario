@@ -25,8 +25,9 @@ const nextConfig: NextConfig = {
     '/**': ['./src/generated/prisma/**'],
   },
   
-  // Packages that should not be bundled by the server runtime
-  serverExternalPackages: ['@vercel/blob'],
+  // Packages that should not be bundled by the server runtime.
+  // @prisma/client tiene native bindings (.so.node) que no pueden ser bundleados.
+  serverExternalPackages: ['@vercel/blob', '@prisma/client'],
 
   // Optimizaciones experimentales
   experimental: {

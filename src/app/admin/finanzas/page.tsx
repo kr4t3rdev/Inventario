@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { PageTransition } from "@/components/ui/animations"
 import type { AdminFinance } from '@/features/admin'
-import { fetchAdminFinance } from './lib/fetch-admin-finance'
+import { getAdminFinanceAction } from '@/features/admin'
 
 export const dynamic = 'force-dynamic'
 
@@ -24,8 +24,12 @@ export default function FinanzasPage() {
     setError(null)
 
     try {
-      const data = await fetchAdminFinance()
-      setFinance(data)
+      const result = await getAdminFinanceAction()
+      if (result.success) {
+        setFinance(result.data as AdminFinance)
+      } else {
+        setError(result.error?.message || 'No se pudo cargar la información financiera')
+      }
     } catch (loadError) {
       setFinance(null)
       setError(loadError instanceof Error ? loadError.message : 'No se pudo cargar la información financiera')

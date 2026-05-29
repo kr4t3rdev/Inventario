@@ -125,10 +125,14 @@ export function AdminUsersPageClient({ initialData }: { initialData: AdminUsersP
 
   const refresh = () => {
     getGlobalUsersAction({ limit: 100 }).then((r) => {
-      if (r.success) setGlobalUsers(r.data)
+      if (r?.success) setGlobalUsers(r.data)
+    }).catch((err) => {
+      console.error('Error al refrescar usuarios:', err)
     })
     getAdminPlanesAction().then((r) => {
-      if (r.success) setPlanesData(r.data)
+      if (r?.success) setPlanesData(r.data)
+    }).catch((err) => {
+      console.error('Error al refrescar planes:', err)
     })
   }
 
