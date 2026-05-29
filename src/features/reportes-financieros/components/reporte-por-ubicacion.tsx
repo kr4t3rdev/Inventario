@@ -22,6 +22,7 @@ import { exportToPdf, exportToCsv } from "@/lib/export-utils"
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from "recharts"
 import { StaggerContainer, StaggerItem, AnimatedCard } from "@/components/ui/animations"
 import { cn } from "@/lib/utils"
+import { getStockPorUbicacionAction } from "@/features/productos/actions"
 import { getProductDisplayIdentifier } from "@/lib/product-display-utils"
 
 const surfaceCardClass = cn(
@@ -39,8 +40,7 @@ export function ReportePorUbicacion() {
   const { puntosDeVenta: puntosVenta } = usePuntosDeVenta()
 
   // ─── Server Actions state ─────────────────────────────
-  // @ts-expect-error
-  const [productosUbicacion, setProductosUbicacion] = useState<Awaited<ReturnType<typeof getStockPorUbicacionAction>>['data']>([])
+  const [productosUbicacion, setProductosUbicacion] = useState<any[]>([])
   const [isLoadingStock, setIsLoadingStock] = useState(false)
   const [stockError, setStockError] = useState<string | null>(null)
 
@@ -49,12 +49,8 @@ export function ReportePorUbicacion() {
     let cancelled = false
     setIsLoadingStock(true)
     setStockError(null)
-  // @ts-expect-error
-    getStockPorUbicacionAction({
-    ubicacionId, tipoUbicacion, includeZero: true
-    })
-  // @ts-expect-error
-      .then(r => {
+    getStockPorUbicacionAction({ ubicacionId, tipoUbicacion, includeZero: true })
+      .then((r: any) => {
         if (cancelled) return
         if (r.success) setProductosUbicacion(r.data ?? [])
         else setStockError(r.error?.message ?? 'Error desconocido')
@@ -70,8 +66,7 @@ export function ReportePorUbicacion() {
   }
 
   const chartData = productosUbicacion
-  // @ts-expect-error
-    ?.filter((p) => p.stockUbicacion > 0)
+    ?.filter((p: any) => p.stockUbicacion > 0)
     .slice(0, 10)
     .map((p: any) => ({
       name: getProductDisplayIdentifier(p).length > 15
@@ -196,8 +191,7 @@ export function ReportePorUbicacion() {
               <CardContent className="p-4">
                 <div className="text-2xl font-bold">
                   {
-  // @ts-expect-error
-                  productosUbicacion?.filter((p) => p.stockUbicacion > 0).length || 0
+                  productosUbicacion?.filter((p: any) => p.stockUbicacion > 0).length || 0
                   }
                 </div>
                 <p className="text-xs text-muted-foreground">Productos en ubicación</p>
