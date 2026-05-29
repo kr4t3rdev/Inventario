@@ -31,7 +31,7 @@ COPY . .
 ARG DATABASE_URL
 ENV DATABASE_URL=$DATABASE_URL
 
-# Generar cliente Prisma
+# Generar cliente Prisma (output: src/generated/prisma según schema)
 RUN pnpm prisma generate
 
 # Build con variables de entorno para estabilidad
@@ -40,7 +40,7 @@ ENV NODE_OPTIONS="--max-http-header-size=80000 --dns-result-order=ipv4first"
 RUN pnpm build
 
 # Runtime
-FROM node:20
+FROM node:20-slim
 WORKDIR /app
 ENV NODE_ENV=production
 
@@ -60,13 +60,17 @@ COPY --from=builder /app/.next/static /app/.next/static
 # Copiar archivos públicos
 COPY --from=builder /app/public /app/public
 
-# Copiar Prisma
+# Copiar schema Prisma para usar en runtime
 COPY --from=builder /app/prisma /app/prisma
 
-# Copiar el cliente Prisma generado
-RUN mkdir -p /app/node_modules/.prisma
-COPY --from=builder /app/node_modules/.prisma/client /app/node_modules/.prisma/client
+# Copiar el cliente Prisma generado (output en src/generated/prisma según schema)
+COPY --from=builder /app/src/generated/prisma /app/src/generated/prisma
+
+# Copiar runtime de @prisma (necesario para consultas)
 COPY --from=builder /app/node_modules/@prisma /app/node_modules/@prisma
+
+# Copiar el engine de Prisma
+COPY --from=builder /app/node_modules/.prisma/client /app/node_modules/.prisma/client 2>/dev/null || true
 
 # Crear script de inicio
 RUN printf '#!/bin/sh\nset -e\necho "Iniciando aplicación..."\ncd /app\nexec node server.js\n' > /app/start.sh && chmod +x /app/start.sh
