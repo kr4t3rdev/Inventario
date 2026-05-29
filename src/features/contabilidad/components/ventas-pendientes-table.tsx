@@ -54,6 +54,7 @@ interface VentasPendientesTableProps {
   pageSize?: number
   onPageChange?: (page: number) => void
   onPageSizeChange?: (size: number) => void
+  refreshKey?: number
 }
 
 const MONEDA_SIMBOLOS: Record<string, string> = {
@@ -77,7 +78,8 @@ export function VentasPendientesTable({
   totalItems = 0,
   pageSize = 50,
   onPageChange,
-  onPageSizeChange
+  onPageSizeChange,
+  refreshKey
 }: VentasPendientesTableProps) {
   const shouldReduceMotion = useReducedMotion()
   const [searchTerm, setSearchTerm] = useState("")
@@ -96,7 +98,7 @@ export function VentasPendientesTable({
       if (r.success) setVentasData((r.data ?? { ventas: [], pagination: { page: 1, limit: 50, total: 0, totalPages: 0 } }) as any)
       setIsLoadingVentas(false)
     }).catch(e => { setErrorVentas(e); setIsLoadingVentas(false) })
-  }, [fechaInicio, fechaFin, currentPage, pageSize])
+  }, [fechaInicio, fechaFin, currentPage, pageSize, refreshKey])
 
   const [cuentasPorCobrarData, setCuentasPorCobrarData] = useState<any[]>([])
   const [isLoadingCuentas, setIsLoadingCuentas] = useState(true)
@@ -106,7 +108,7 @@ export function VentasPendientesTable({
       if (r.success) setCuentasPorCobrarData((r.data?.cuentas ?? []) as any)
       setIsLoadingCuentas(false)
     }).catch(() => setIsLoadingCuentas(false))
-  }, [])
+  }, [refreshKey])
 
   const isLoading = isLoadingVentas || isLoadingCuentas
   const error = errorVentas

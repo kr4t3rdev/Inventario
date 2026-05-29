@@ -10,14 +10,12 @@ export type UserRole = AppUserRole;
 
 /**
  * Definición de permisos por rol de tenant.
- * director: todo dentro del tenant (usuarios, plan, licencias, config)
- * admin: casi todo dentro del tenant
+ * manager: todo dentro del tenant (usuarios, plan, licencias, config)
  * economico: finanzas, reportes, licencias operativas
+ * dependiente: operaciones diarias
  */
 export const TENANT_PERMISSIONS: Record<TenantRole, string[]> = {
   manager: ['*'],
-  director: ['*'],
-  admin: ['*'],
   economico: [
     '/api/reportes-financieros',
     '/api/ventas/stats',
@@ -41,56 +39,13 @@ export const TENANT_PERMISSIONS: Record<TenantRole, string[]> = {
   ],
 };
 
-// Definición de permisos por rol
+// Definición de permisos por rol de plataforma
 export const ROLE_PERMISSIONS: Record<UserRole, string[]> = {
   admin: [
-    // Acceso completo a todas las rutas
     '/api/*',
     '/busy/*',
   ],
-  regularUser: [
-    // Acceso limitado, sin administración
-    '/api/ventas',
-    '/api/venta-servicios',
-    '/api/servicios',
-    '/api/ventas/stats',
-    '/api/dashboard/stats',
-    '/api/productos',
-    '/api/productos/*',
-    '/api/compras-productos',
-    '/api/restaurante/*',
-    'GET /api/mi-empresa',
-    'PUT /api/mi-empresa',
-    'GET /api/facturas/*',
-    'POST /api/productos/restock',
-    '/busy/dashboard',
-    '/busy/productos',
-    '/busy/compras-productos',
-    '/busy/servicios',
-    '/busy/ventas',
-    '/busy/reportes',
-    '/busy/restaurante',
-    '/busy/restaurante/*',
-  ],
-  dependiente: [
-    // Acceso limitado solo a ventas, servicios y reportes, más restock
-    'GET /api/ventas',
-    'POST /api/ventas',
-    'GET /api/venta-servicios',
-    'POST /api/venta-servicios',
-    'GET /api/servicios',
-    'GET /api/mi-empresa',
-    'GET /api/facturas/*',
-    'GET /api/reportes-financieros',
-    '/api/restaurante/*',
-    'POST /api/productos/restock',
-    '/busy/sales',
-    '/busy/servicios',
-    '/busy/reportes',
-    '/busy/reportes/venta-diaria',
-    '/busy/restaurante',
-    '/busy/restaurante/*',
-  ],
+  regularUser: [],
 
 }
 
@@ -176,9 +131,9 @@ export function checkApiPermission(
  */
 export function filterMenuItems(menuItems: any[], userRole: UserRole): any[] {
   if (userRole === 'admin') return menuItems
-  
-  // Rol de plataforma legado: excluir solo administración.
-  return menuItems.filter(item => item.title !== 'Administración')
+
+  // regularUser no tiene acceso a nada
+  return []
 }
 
 /**
@@ -209,8 +164,8 @@ export function hasTenantPermission(
   const permissions = TENANT_PERMISSIONS[tenantRole];
   if (!permissions) return false;
 
-  // manager y admin tienen acceso total
-  if (tenantRole === 'manager' || tenantRole === 'admin') return true;
+  // manager tiene acceso total
+  if (tenantRole === 'manager') return true;
 
   for (const permission of permissions) {
     if (permission === '*') return true;

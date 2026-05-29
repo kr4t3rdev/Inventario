@@ -16,7 +16,8 @@ describe('roles - plataforma', () => {
   });
 
   it('reconoce roles válidos y rechaza inválidos', () => {
-    expect(normalizeUserRole('dependiente')).toBe('dependiente');
+    // dependiente se mapea a regularUser (legado)
+    expect(normalizeUserRole('dependiente')).toBe('regularUser');
     expect(normalizeUserRole('regularUser')).toBe('regularUser');
     expect(normalizeUserRole('guest')).toBeNull();
   });
@@ -30,16 +31,12 @@ describe('roles - plataforma', () => {
 
 describe('roles - tenant', () => {
   describe('platformRoleToTenantRole', () => {
-    it('mapea admin → admin', () => {
-      expect(platformRoleToTenantRole('admin')).toBe('admin');
+    it('mapea admin → manager', () => {
+      expect(platformRoleToTenantRole('admin')).toBe('manager');
     });
 
     it('mapea rol regular de plataforma → dependiente', () => {
       expect(platformRoleToTenantRole('regularUser')).toBe('dependiente');
-    });
-
-    it('mapea dependiente → dependiente', () => {
-      expect(platformRoleToTenantRole('dependiente')).toBe('dependiente');
     });
   });
 
@@ -48,7 +45,7 @@ describe('roles - tenant', () => {
       expect(isTenantAdminRole('manager')).toBe(true);
     });
 
-    it('reconoce admin como admin tenant', () => {
+    it('mapea admin legacy a manager', () => {
       expect(isTenantAdminRole('admin')).toBe(true);
     });
 
@@ -71,9 +68,12 @@ describe('roles - tenant', () => {
       expect(isTenantEconomicoRole('economico')).toBe(true);
     });
 
-    it('reconoce admin y manager como roles con acceso económico', () => {
-      expect(isTenantEconomicoRole('admin')).toBe(true);
+    it('reconoce manager como rol con acceso económico', () => {
       expect(isTenantEconomicoRole('manager')).toBe(true);
+    });
+
+    it('mapea admin legacy a manager', () => {
+      expect(isTenantEconomicoRole('admin')).toBe(true);
     });
 
     it('rechaza dependiente', () => {

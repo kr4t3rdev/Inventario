@@ -312,7 +312,7 @@ describe('authenticateUser', () => {
       }
 
       expect(result.user.tenantId).toBe('tenant-1')
-      expect(result.user.tenantRole).toBe('admin')
+      expect(result.user.tenantRole).toBe('manager')
     })
 
     it('resolves tenant from x-tenant-id header when provided', async () => {

@@ -2,19 +2,11 @@ import { describe, expect, it } from 'vitest';
 import { hasTenantPermission } from '@/lib/permissions'
 
 describe('hasTenantPermission', () => {
-  describe('director', () => {
+  describe('manager', () => {
     it('tiene acceso a todo', () => {
-      expect(hasTenantPermission('director', '/api/admin/users')).toBe(true)
-      expect(hasTenantPermission('director', '/api/ventas')).toBe(true)
-      expect(hasTenantPermission('director', '/api/cualquier-cosa')).toBe(true)
-    })
-  })
-
-  describe('admin', () => {
-    it('tiene acceso a todo', () => {
-      expect(hasTenantPermission('admin', '/api/productos')).toBe(true)
-      expect(hasTenantPermission('admin', '/api/ventas')).toBe(true)
-      expect(hasTenantPermission('admin', '/api/admin/tenant/license')).toBe(true)
+      expect(hasTenantPermission('manager', '/api/admin/users')).toBe(true)
+      expect(hasTenantPermission('manager', '/api/ventas')).toBe(true)
+      expect(hasTenantPermission('manager', '/api/cualquier-cosa')).toBe(true)
     })
   })
 

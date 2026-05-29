@@ -508,8 +508,8 @@ export async function getTecnicosStats(params?: { startDate?: string; endDate?: 
 export async function deleteOrdenReparacion(id: string): Promise<{ success: boolean; id: string }> {
   const ctx = await getAuthenticatedContext()
 
-  if (ctx.tenantRole !== 'admin') {
-    throw new ServerActionError('deleteOrdenReparacion', 'DELETE', 403, 'Solo administradores pueden eliminar órdenes')
+  if (ctx.tenantRole !== 'manager') {
+    throw new ServerActionError('deleteOrdenReparacion', 'DELETE', 403, 'Solo el manager puede eliminar órdenes de reparación')
   }
 
   try {

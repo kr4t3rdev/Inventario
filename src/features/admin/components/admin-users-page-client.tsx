@@ -147,7 +147,7 @@ export function AdminUsersPageClient({ initialData }: { initialData: AdminUsersP
   const inactiveUsers = safeUsers.filter((candidate: any) => !candidate.isActive).length
   const adminUsers = safeUsers.filter((candidate: any) => {
     const effectiveRole = candidate.tenantRole ?? candidate.role
-    return effectiveRole === "manager" || effectiveRole === "admin"
+    return effectiveRole === "manager"
   }).length
   const lockedUsers = safeUsers.filter((candidate: any) => {
     return Boolean(candidate.lockedUntil && new Date(candidate.lockedUntil) > new Date())

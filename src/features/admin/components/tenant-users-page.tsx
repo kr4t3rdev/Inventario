@@ -56,12 +56,11 @@ export function TenantUsersPage() {
   const fetchUsers = useCallback(async () => {
     setUsersLoading(true)
     try {
-      const data = await getGlobalUsersAction({
-  // @ts-expect-error
+      const result = await getGlobalUsersAction({
         tenantId: (user as any)?.tenantId ?? undefined,
         limit: 100,
       })
-      setUsersData(data)
+      setUsersData(result?.success ? result.data : undefined)
     } catch {
       setUsersData(undefined)
     } finally {
@@ -92,7 +91,7 @@ export function TenantUsersPage() {
   // @ts-expect-error
   const adminUsers = safeUsers.filter((u) => {
     const role = u.tenantRole ?? u.role
-    return role === 'manager' || role === 'admin'
+    return role === 'manager'
   }).length
   const pendingCount = pendingMemberships.length
 

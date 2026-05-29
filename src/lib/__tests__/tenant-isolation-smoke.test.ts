@@ -51,8 +51,8 @@ describe('aislamiento multi-tenant', () => {
       expect(result!.status).toBe(403)
     })
 
-    it('director puede acceder a cualquier ruta', () => {
-      const result = checkTenantApiPermission('director', '/api/admin/users', 'GET')
+    it('manager puede acceder a cualquier ruta', () => {
+      const result = checkTenantApiPermission('manager', '/api/admin/users', 'GET')
       expect(result).toBeNull()
     })
 
@@ -81,9 +81,8 @@ describe('aislamiento multi-tenant', () => {
       expect(hasTenantPermission('economico', '/api/ventas', 'POST')).toBe(false)
     })
 
-    it('admin y director tienen acceso irrestricto', () => {
-      expect(hasTenantPermission('admin', '/api/cualquier/recurso')).toBe(true)
-      expect(hasTenantPermission('director', '/api/cualquier/recurso')).toBe(true)
+    it('manager tiene acceso irrestricto', () => {
+      expect(hasTenantPermission('manager', '/api/cualquier/recurso')).toBe(true)
     })
   })
 })

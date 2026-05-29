@@ -13,7 +13,7 @@ export const createUserBodySchema = z.object({
   email: z.string().trim().email(),
   password: z.string().min(6),
   role: roleSchema.default('regularUser'),
-  tenantRole: z.enum(['manager', 'admin', 'economico', 'dependiente']).optional(),
+  tenantRole: z.enum(['manager', 'economico', 'dependiente']).optional(),
   daysToExpire: z.number().int().positive().max(3650).optional(),
 });
 
@@ -23,7 +23,7 @@ export const updateUserBodySchema = z
     email: z.string().trim().email().optional(),
     password: z.string().min(6).optional(),
     role: roleSchema.optional(),
-    tenantRole: z.enum(['manager', 'admin', 'economico', 'dependiente']).optional(),
+    tenantRole: z.enum(['manager', 'economico', 'dependiente']).optional(),
     isActive: z.boolean().optional(),
     daysToExpire: z.number().int().positive().max(3650).optional(),
   })

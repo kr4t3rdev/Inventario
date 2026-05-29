@@ -188,8 +188,7 @@ export function CreateUserDialog({ open, onClose }: CreateUserDialogProps): Reac
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="admin">Administrador</SelectItem>
-                    <SelectItem value="dependiente">Dependiente</SelectItem>
-                    <SelectItem value="regularUser">Usuario legado</SelectItem>
+                    <SelectItem value="regularUser">Regular User</SelectItem>
                   </SelectContent>
                 </Select>
                 <p className="text-xs text-muted-foreground">
@@ -210,8 +209,7 @@ export function CreateUserDialog({ open, onClose }: CreateUserDialogProps): Reac
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="">Auto-asignado</SelectItem>
-                    <SelectItem value="manager">Manager</SelectItem>
-                    <SelectItem value="admin">Administrador</SelectItem>
+                    <SelectItem value="manager">Manager / Director</SelectItem>
                     <SelectItem value="economico">Económico</SelectItem>
                     <SelectItem value="dependiente">Dependiente</SelectItem>
                   </SelectContent>

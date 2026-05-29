@@ -118,14 +118,59 @@ export const unlockUserAction = withAction(async (input: LockUnlockInput, user: 
 
 // ─── Global Users ─────────────────────────────────────────
 
-export const getGlobalUsersAction = withAction(async (input: { limit?: number } = {}, user: AuthenticatedUser) => {
-  if (user.role !== 'admin') throw new ActionError('Acceso restringido', 'FORBIDDEN');
+export const getGlobalUsersAction = withAction(async (input: { tenantId?: string; limit?: number } = {}, user: AuthenticatedUser) => {
+  const isPlatformAdmin = user.role === 'admin';
+  const isTenantManager = user.tenantRole === 'manager';
+
+  if (!isPlatformAdmin && !isTenantManager) {
+    throw new ActionError('Acceso restringido', 'FORBIDDEN');
+  }
+
+  const tenantId = input.tenantId || user.tenantId;
+
+  if (tenantId) {
+    // Modo tenant: buscar membresías activas de esa empresa
+    const memberships = await prisma.tenantMembership.findMany({
+      where: { tenantId, isActive: true },
+      include: {
+        user: {
+          select: {
+            userId: true,
+            name: true,
+            email: true,
+            role: true,
+            isActive: true,
+            onboardingType: true,
+            onboardingStatus: true,
+            createdAt: true,
+            expiresAt: true,
+            lockedUntil: true,
+            avatar: true,
+          },
+        },
+      },
+      orderBy: { createdAt: 'desc' },
+      take: input.limit || 100,
+    });
+
+    const users = memberships.map((m) => ({
+      ...m.user,
+      tenantRole: m.tenantRole,
+      membershipId: m.membershipId,
+    }));
+
+    return { users, total: users.length };
+  }
+
+  // Modo global: solo admin ve todos los usuarios
   const users = await prisma.user.findMany({
     take: input.limit || 100,
     orderBy: { createdAt: 'desc' },
     include: {
-  // @ts-expect-error
-    tenants: { include: { tenant: true } }
+      tenantMemberships: {
+        include: { tenant: true },
+        take: 1,
+      },
     },
   });
   const total = await prisma.user.count();
@@ -312,19 +357,44 @@ export const sendExpiryNotificationsAction = withAction(async (_input: void, use
 // ─── Pending Memberships ────────────────────────────────────
 
 export const getPendingMembershipsAction = withAction(async (_input: void, user: AuthenticatedUser) => {
-  if (user.role !== 'admin') throw new ActionError('Acceso restringido', 'FORBIDDEN');
-  // @ts-expect-error
-  return prisma.userTenant.findMany({
-    where: { approved: false },
-    include: { user: { select: { userId: true, name: true, email: true, role: true } }, tenant: { select: { tenantId: true, nombre: true } } },
+  const isPlatformAdmin = user.role === 'admin';
+  const isTenantManager = user.tenantRole === 'manager';
+
+  if (!isPlatformAdmin && !isTenantManager) {
+    throw new ActionError('Acceso restringido', 'FORBIDDEN');
+  }
+
+  const where = isPlatformAdmin
+    ? { isActive: false }
+    : { isActive: false, tenantId: user.tenantId };
+
+  return prisma.tenantMembership.findMany({
+    where,
+    include: {
+      user: { select: { userId: true, name: true, email: true, onboardingType: true, onboardingStatus: true, createdAt: true } },
+      tenant: { select: { tenantId: true, nombre: true } },
+    },
+    orderBy: { createdAt: 'desc' },
   });
 });
 
 export const rejectMembershipAction = withAction(async (input: { membershipId: string }, user: AuthenticatedUser) => {
-  if (user.role !== 'admin') throw new ActionError('Acceso restringido', 'FORBIDDEN');
-  // @ts-expect-error
-  await prisma.userTenant.delete({
-  where: { id: input.membershipId }
+  const membership = await prisma.tenantMembership.findUnique({
+    where: { membershipId: input.membershipId },
+    select: { membershipId: true, tenantId: true },
+  });
+
+  if (!membership) throw new ActionError('Solicitud no encontrada', 'NOT_FOUND');
+
+  const isPlatformAdmin = user.role === 'admin';
+  const isTenantManager = user.tenantRole === 'manager' && user.tenantId === membership.tenantId;
+
+  if (!isPlatformAdmin && !isTenantManager) {
+    throw new ActionError('Acceso restringido', 'FORBIDDEN');
+  }
+
+  await prisma.tenantMembership.delete({
+    where: { membershipId: input.membershipId },
   });
   revalidatePath('/admin');
   return { success: true };

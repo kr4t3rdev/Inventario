@@ -122,9 +122,8 @@ export default function SistemaPage() {
                     : 0
                   const colors: Record<string, string> = {
                     admin: "bg-violet-500",
-                    manager: "bg-blue-500",
                     regularUser: "bg-slate-500",
-                    economico: "bg-amber-500",
+                    dependiente: "bg-slate-500",
                   }
                   return (
                     <div key={r.role} className="flex items-center justify-between">

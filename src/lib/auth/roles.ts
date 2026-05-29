@@ -1,14 +1,15 @@
-// ── Roles de plataforma (identidad global del usuario; contrato legado incluido) ──
-export const APP_USER_ROLES = ['admin', 'dependiente', 'regularUser'] as const;
+// ── Roles de plataforma (identidad global del usuario) ──
+export const APP_USER_ROLES = ['admin', 'regularUser'] as const;
 export type AppUserRole = (typeof APP_USER_ROLES)[number];
 
 // ── Roles de tenant (autorización operativa dentro de una empresa) ──
-export const TENANT_ROLES = ['manager', 'director', 'admin', 'economico', 'dependiente'] as const;
+export const TENANT_ROLES = ['manager', 'economico', 'dependiente'] as const;
 export type TenantRole = (typeof TENANT_ROLES)[number];
 
 const LEGACY_ROLE_MAP: Record<string, AppUserRole> = {
   ADMIN: 'admin',
   SUPERADMIN: 'admin',
+  dependiente: 'regularUser',
   // `user` sigue entrando como alias legado del rol regular de plataforma.
   user: 'regularUser',
 };
@@ -20,7 +21,7 @@ const LEGACY_ROLE_MAP: Record<string, AppUserRole> = {
  * @returns {TenantRole} Rol de tenant por defecto.
  */
 export function platformRoleToTenantRole(platformRole: AppUserRole): TenantRole {
-  if (platformRole === 'admin') return 'admin';
+  if (platformRole === 'admin') return 'manager';
   return 'dependiente';
 }
 
@@ -36,7 +37,10 @@ export function normalizeTenantRole(role: unknown): TenantRole | null {
   }
 
   const trimmedRole = role.trim();
+
+  // Mapear roles legados
   if (trimmedRole === 'director') return 'manager';
+  if (trimmedRole === 'admin') return 'manager';
 
   if (TENANT_ROLES.includes(trimmedRole as TenantRole)) {
     return trimmedRole as TenantRole;
@@ -82,7 +86,7 @@ export function isAdminRole(role: unknown): boolean {
  */
 export function isTenantAdminRole(role: unknown): boolean {
   const normalizedRole = normalizeTenantRole(role);
-  return normalizedRole === 'manager' || normalizedRole === 'admin';
+  return normalizedRole === 'manager';
 }
 
 /**
@@ -93,7 +97,7 @@ export function isTenantAdminRole(role: unknown): boolean {
  */
 export function isTenantEconomicoRole(role: unknown): boolean {
   const normalizedRole = normalizeTenantRole(role);
-  return normalizedRole === 'economico' || normalizedRole === 'admin' || normalizedRole === 'manager';
+  return normalizedRole === 'economico' || normalizedRole === 'manager';
 }
 
 /**
@@ -104,9 +108,7 @@ export function isTenantEconomicoRole(role: unknown): boolean {
 export function getTenantRoleLabel(role: TenantRole | null | undefined): string {
   switch (role) {
     case 'manager':
-      return 'Manager';
-    case 'admin':
-      return 'Administrador';
+      return 'Manager / Director';
     case 'economico':
       return 'Económico';
     case 'dependiente':

@@ -46,11 +46,7 @@ const roleStyles: Record<string, { bg: string; text: string; border: string }> =
     text: 'text-violet-700 dark:text-violet-300',
     border: 'border-violet-200 dark:border-violet-700',
   },
-  admin: {
-    bg: 'bg-blue-100 dark:bg-blue-900/40',
-    text: 'text-blue-700 dark:text-blue-300',
-    border: 'border-blue-200 dark:border-blue-700',
-  },
+
   economico: {
     bg: 'bg-amber-100 dark:bg-amber-900/40',
     text: 'text-amber-700 dark:text-amber-300',

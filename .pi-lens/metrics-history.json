@@ -269,12 +269,12 @@
     "src/lib/services/pago-gastos-workflow.ts": {
       "latest": {
         "commit": "5dd54d4",
-        "timestamp": "2026-05-28T04:04:02.515Z",
-        "mi": 16.2,
-        "cognitive": 157,
+        "timestamp": "2026-05-26T23:34:11.568Z",
+        "mi": 16.4,
+        "cognitive": 153,
         "nesting": 4,
-        "lines": 571,
-        "maxCyclomatic": 102,
+        "lines": 562,
+        "maxCyclomatic": 97,
         "entropy": 6.83
       },
       "history": [
@@ -286,16 +286,6 @@
           "nesting": 4,
           "lines": 562,
           "maxCyclomatic": 97,
-          "entropy": 6.83
-        },
-        {
-          "commit": "5dd54d4",
-          "timestamp": "2026-05-28T04:04:02.515Z",
-          "mi": 16.2,
-          "cognitive": 157,
-          "nesting": 4,
-          "lines": 571,
-          "maxCyclomatic": 102,
           "entropy": 6.83
         }
       ],
@@ -2504,13 +2494,13 @@
     "src/app/api/contabilidad/prestamos-cash/__tests__/route.test.ts": {
       "latest": {
         "commit": "5dd54d4",
-        "timestamp": "2026-05-28T03:44:20.628Z",
-        "mi": 29.6,
+        "timestamp": "2026-05-28T03:13:29.535Z",
+        "mi": 29.7,
         "cognitive": 0,
         "nesting": 3,
-        "lines": 158,
+        "lines": 157,
         "maxCyclomatic": 1,
-        "entropy": 5.92
+        "entropy": 5.94
       },
       "history": [
         {
@@ -2522,16 +2512,6 @@
           "lines": 157,
           "maxCyclomatic": 1,
           "entropy": 5.94
-        },
-        {
-          "commit": "5dd54d4",
-          "timestamp": "2026-05-28T03:44:20.628Z",
-          "mi": 29.6,
-          "cognitive": 0,
-          "nesting": 3,
-          "lines": 158,
-          "maxCyclomatic": 1,
-          "entropy": 5.92
         }
       ],
       "trend": "stable"
@@ -2564,11 +2544,11 @@
     "src/app/api/contabilidad/reconciliacion/gastos/__tests__/route.test.ts": {
       "latest": {
         "commit": "5dd54d4",
-        "timestamp": "2026-05-28T03:55:23.361Z",
-        "mi": 21.3,
+        "timestamp": "2026-05-28T03:14:27.255Z",
+        "mi": 21.4,
         "cognitive": 0,
         "nesting": 3,
-        "lines": 296,
+        "lines": 295,
         "maxCyclomatic": 1,
         "entropy": 6.24
       },
@@ -2580,16 +2560,6 @@
           "cognitive": 0,
           "nesting": 3,
           "lines": 295,
-          "maxCyclomatic": 1,
-          "entropy": 6.24
-        },
-        {
-          "commit": "5dd54d4",
-          "timestamp": "2026-05-28T03:55:23.361Z",
-          "mi": 21.3,
-          "cognitive": 0,
-          "nesting": 3,
-          "lines": 296,
           "maxCyclomatic": 1,
           "entropy": 6.24
         }
@@ -2624,13 +2594,13 @@
     "src/app/api/anticipos/[id]/__tests__/route.test.ts": {
       "latest": {
         "commit": "5dd54d4",
-        "timestamp": "2026-05-28T03:54:24.794Z",
-        "mi": 43,
+        "timestamp": "2026-05-28T03:14:47.682Z",
+        "mi": 43.3,
         "cognitive": 0,
         "nesting": 2,
-        "lines": 56,
+        "lines": 55,
         "maxCyclomatic": 1,
-        "entropy": 5.35
+        "entropy": 5.37
       },
       "history": [
         {
@@ -2642,16 +2612,6 @@
           "lines": 55,
           "maxCyclomatic": 1,
           "entropy": 5.37
-        },
-        {
-          "commit": "5dd54d4",
-          "timestamp": "2026-05-28T03:54:24.794Z",
-          "mi": 43,
-          "cognitive": 0,
-          "nesting": 2,
-          "lines": 56,
-          "maxCyclomatic": 1,
-          "entropy": 5.35
         }
       ],
       "trend": "stable"
@@ -2659,13 +2619,13 @@
     "src/app/api/ofertas/[id]/__tests__/route.test.ts": {
       "latest": {
         "commit": "5dd54d4",
-        "timestamp": "2026-05-28T03:50:15.153Z",
-        "mi": 39.8,
+        "timestamp": "2026-05-28T03:15:45.311Z",
+        "mi": 40,
         "cognitive": 0,
         "nesting": 2,
-        "lines": 74,
+        "lines": 73,
         "maxCyclomatic": 1,
-        "entropy": 5.64
+        "entropy": 5.65
       },
       "history": [
         {
@@ -2677,16 +2637,6 @@
           "lines": 73,
           "maxCyclomatic": 1,
           "entropy": 5.65
-        },
-        {
-          "commit": "5dd54d4",
-          "timestamp": "2026-05-28T03:50:15.153Z",
-          "mi": 39.8,
-          "cognitive": 0,
-          "nesting": 2,
-          "lines": 74,
-          "maxCyclomatic": 1,
-          "entropy": 5.64
         }
       ],
       "trend": "stable"
@@ -2694,13 +2644,13 @@
     "src/app/api/ofertas/[id]/facturar/__tests__/route.test.ts": {
       "latest": {
         "commit": "5dd54d4",
-        "timestamp": "2026-05-28T03:49:53.127Z",
-        "mi": 34.4,
+        "timestamp": "2026-05-28T03:16:08.343Z",
+        "mi": 34.6,
         "cognitive": 0,
         "nesting": 3,
-        "lines": 101,
+        "lines": 100,
         "maxCyclomatic": 1,
-        "entropy": 5.79
+        "entropy": 5.8
       },
       "history": [
         {
@@ -2712,16 +2662,6 @@
           "lines": 100,
           "maxCyclomatic": 1,
           "entropy": 5.8
-        },
-        {
-          "commit": "5dd54d4",
-          "timestamp": "2026-05-28T03:49:53.127Z",
-          "mi": 34.4,
-          "cognitive": 0,
-          "nesting": 3,
-          "lines": 101,
-          "maxCyclomatic": 1,
-          "entropy": 5.79
         }
       ],
       "trend": "stable"
@@ -2729,13 +2669,13 @@
     "src/app/api/dashboard/__tests__/stats-minimum-stock.test.ts": {
       "latest": {
         "commit": "5dd54d4",
-        "timestamp": "2026-05-28T04:37:19.157Z",
-        "mi": 24.6,
+        "timestamp": "2026-05-28T03:16:56.198Z",
+        "mi": 26.4,
         "cognitive": 0,
         "nesting": 3,
-        "lines": 299,
+        "lines": 273,
         "maxCyclomatic": 6,
-        "entropy": 6.06
+        "entropy": 5.91
       },
       "history": [
         {
@@ -2747,16 +2687,6 @@
           "lines": 273,
           "maxCyclomatic": 6,
           "entropy": 5.91
-        },
-        {
-          "commit": "5dd54d4",
-          "timestamp": "2026-05-28T04:37:19.157Z",
-          "mi": 24.6,
-          "cognitive": 0,
-          "nesting": 3,
-          "lines": 299,
-          "maxCyclomatic": 6,
-          "entropy": 6.06
         }
       ],
       "trend": "stable"
@@ -2961,106 +2891,181 @@
       ],
       "trend": "stable"
     },
-    "src/app/api/ofertas/[id]/route.ts": {
+    "src/app/busy/cuadre/page.tsx": {
       "latest": {
-        "commit": "5dd54d4",
-        "timestamp": "2026-05-28T03:51:47.943Z",
-        "mi": 47.9,
-        "cognitive": 2,
-        "nesting": 2,
-        "lines": 34,
-        "maxCyclomatic": 2,
-        "entropy": 5.46
-      },
-      "history": [
-        {
-          "commit": "5dd54d4",
-          "timestamp": "2026-05-28T03:51:47.943Z",
-          "mi": 47.9,
-          "cognitive": 2,
-          "nesting": 2,
-          "lines": 34,
-          "maxCyclomatic": 2,
-          "entropy": 5.46
-        }
-      ],
-      "trend": "stable"
-    },
-    "src/app/api/anticipos/[id]/route.ts": {
-      "latest": {
-        "commit": "5dd54d4",
-        "timestamp": "2026-05-28T03:54:17.118Z",
-        "mi": 30.7,
-        "cognitive": 63,
-        "nesting": 4,
-        "lines": 186,
-        "maxCyclomatic": 15,
-        "entropy": 6.3
-      },
-      "history": [
-        {
-          "commit": "5dd54d4",
-          "timestamp": "2026-05-28T03:54:17.118Z",
-          "mi": 30.7,
-          "cognitive": 63,
-          "nesting": 4,
-          "lines": 186,
-          "maxCyclomatic": 15,
-          "entropy": 6.3
-        }
-      ],
-      "trend": "stable"
-    },
-    "src/features/dashboard/api/handlers.ts": {
-      "latest": {
-        "commit": "5dd54d4",
-        "timestamp": "2026-05-28T04:49:28.298Z",
-        "mi": 0,
-        "cognitive": 301,
-        "nesting": 6,
-        "lines": 1345,
-        "maxCyclomatic": 271,
-        "entropy": 7.86
-      },
-      "history": [
-        {
-          "commit": "5dd54d4",
-          "timestamp": "2026-05-28T04:49:28.298Z",
-          "mi": 0,
-          "cognitive": 301,
-          "nesting": 6,
-          "lines": 1345,
-          "maxCyclomatic": 271,
-          "entropy": 7.86
-        }
-      ],
-      "trend": "stable"
-    },
-    "src/app/busy/produccion/__tests__/unit-validation-e2e.test.ts": {
-      "latest": {
-        "commit": "5dd54d4",
-        "timestamp": "2026-05-28T04:59:05.761Z",
-        "mi": 27.6,
+        "commit": "ae393a7",
+        "timestamp": "2026-05-29T04:16:36.022Z",
+        "mi": 74.4,
         "cognitive": 0,
-        "nesting": 3,
-        "lines": 166,
+        "nesting": 1,
+        "lines": 13,
         "maxCyclomatic": 1,
-        "entropy": 4.89
+        "entropy": 3.74
       },
       "history": [
         {
-          "commit": "5dd54d4",
-          "timestamp": "2026-05-28T04:59:05.761Z",
-          "mi": 27.6,
+          "commit": "ae393a7",
+          "timestamp": "2026-05-29T04:16:36.022Z",
+          "mi": 74.4,
           "cognitive": 0,
-          "nesting": 3,
-          "lines": 166,
+          "nesting": 1,
+          "lines": 13,
           "maxCyclomatic": 1,
-          "entropy": 4.89
+          "entropy": 3.74
+        }
+      ],
+      "trend": "stable"
+    },
+    "src/features/cuadre-diario/components/cuadre-page-client.tsx": {
+      "latest": {
+        "commit": "ae393a7",
+        "timestamp": "2026-05-29T04:16:49.729Z",
+        "mi": 30,
+        "cognitive": 10,
+        "nesting": 2,
+        "lines": 173,
+        "maxCyclomatic": 5,
+        "entropy": 5.44
+      },
+      "history": [
+        {
+          "commit": "ae393a7",
+          "timestamp": "2026-05-29T04:16:49.729Z",
+          "mi": 30,
+          "cognitive": 10,
+          "nesting": 2,
+          "lines": 173,
+          "maxCyclomatic": 5,
+          "entropy": 5.44
+        }
+      ],
+      "trend": "stable"
+    },
+    "src/features/arqueo-caja/components/denominaciones.ts": {
+      "latest": {
+        "commit": "ae393a7",
+        "timestamp": "2026-05-29T04:16:58.575Z",
+        "mi": 57.4,
+        "cognitive": 0,
+        "nesting": 0,
+        "lines": 28,
+        "maxCyclomatic": 1,
+        "entropy": 2.94
+      },
+      "history": [
+        {
+          "commit": "ae393a7",
+          "timestamp": "2026-05-29T04:16:58.575Z",
+          "mi": 57.4,
+          "cognitive": 0,
+          "nesting": 0,
+          "lines": 28,
+          "maxCyclomatic": 1,
+          "entropy": 2.94
+        }
+      ],
+      "trend": "stable"
+    },
+    "src/features/transferencias/index.ts": {
+      "latest": {
+        "commit": "ae393a7",
+        "timestamp": "2026-05-29T04:21:50.652Z",
+        "mi": 77.6,
+        "cognitive": 0,
+        "nesting": 0,
+        "lines": 9,
+        "maxCyclomatic": 1,
+        "entropy": 3.25
+      },
+      "history": [
+        {
+          "commit": "ae393a7",
+          "timestamp": "2026-05-29T04:21:50.652Z",
+          "mi": 77.6,
+          "cognitive": 0,
+          "nesting": 0,
+          "lines": 9,
+          "maxCyclomatic": 1,
+          "entropy": 3.25
+        }
+      ],
+      "trend": "stable"
+    },
+    "src/components/app-sidebar2.tsx": {
+      "latest": {
+        "commit": "ae393a7",
+        "timestamp": "2026-05-29T04:26:48.161Z",
+        "mi": 20.6,
+        "cognitive": 69,
+        "nesting": 5,
+        "lines": 581,
+        "maxCyclomatic": 51,
+        "entropy": 5.35
+      },
+      "history": [
+        {
+          "commit": "ae393a7",
+          "timestamp": "2026-05-29T04:26:48.161Z",
+          "mi": 20.6,
+          "cognitive": 69,
+          "nesting": 5,
+          "lines": 581,
+          "maxCyclomatic": 51,
+          "entropy": 5.35
+        }
+      ],
+      "trend": "stable"
+    },
+    "src/features/arqueo-caja/components/arqueos-page-client.tsx": {
+      "latest": {
+        "commit": "1fed4b4",
+        "timestamp": "2026-05-29T11:17:44.626Z",
+        "mi": 15.8,
+        "cognitive": 84,
+        "nesting": 4,
+        "lines": 466,
+        "maxCyclomatic": 43,
+        "entropy": 6.32
+      },
+      "history": [
+        {
+          "commit": "1fed4b4",
+          "timestamp": "2026-05-29T11:17:44.626Z",
+          "mi": 15.8,
+          "cognitive": 84,
+          "nesting": 4,
+          "lines": 466,
+          "maxCyclomatic": 43,
+          "entropy": 6.32
+        }
+      ],
+      "trend": "stable"
+    },
+    "src/features/empleados/components/empleados-nomina-content.tsx": {
+      "latest": {
+        "commit": "d988775",
+        "timestamp": "2026-05-29T12:07:25.379Z",
+        "mi": 13.6,
+        "cognitive": 43,
+        "nesting": 4,
+        "lines": 487,
+        "maxCyclomatic": 48,
+        "entropy": 6.6
+      },
+      "history": [
+        {
+          "commit": "d988775",
+          "timestamp": "2026-05-29T12:07:25.379Z",
+          "mi": 13.6,
+          "cognitive": 43,
+          "nesting": 4,
+          "lines": 487,
+          "maxCyclomatic": 48,
+          "entropy": 6.6
         }
       ],
       "trend": "stable"
     }
   },
-  "capturedAt": "2026-05-28T04:59:10.762Z"
+  "capturedAt": "2026-05-29T12:07:30.380Z"
 }

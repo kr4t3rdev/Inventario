@@ -84,7 +84,7 @@ export function MembershipActionDialog({
               <SelectContent>
                 <SelectItem value="dependiente">Dependiente</SelectItem>
                 <SelectItem value="economico">Económico</SelectItem>
-                <SelectItem value="admin">Administrador</SelectItem>
+                <SelectItem value="manager">Manager</SelectItem>
               </SelectContent>
             </Select>
           </div>

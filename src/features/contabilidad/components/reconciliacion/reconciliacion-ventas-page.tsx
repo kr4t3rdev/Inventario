@@ -92,7 +92,7 @@ export function ReconciliacionVentasPage({cuentaId}: RecoProps) {
     getCuentasPorCobrarAction({ page: 1, limit: 1000 }).then(r => {
       if (r.success) setCuentasPorCobrar((r.data?.cuentas ?? []) as any[])
     }).catch(() => {})
-  }, [])
+  }, [refetchTrigger])
 
   const [allVentasData, setAllVentasData] = useState({ pagination: {}, ventas: [] })
 
@@ -397,6 +397,7 @@ export function ReconciliacionVentasPage({cuentaId}: RecoProps) {
             pageSize={pageSize}
             onPageChange={handlePageChange}
             onPageSizeChange={handlePageSizeChange}
+            refreshKey={refetchTrigger}
           />
         </AnimatedCard>
       </StaggerItem>
@@ -418,7 +419,13 @@ export function ReconciliacionVentasPage({cuentaId}: RecoProps) {
                     <div key={rec.reconciliacionId} className="flex items-center justify-between p-3 bg-slate-50 dark:bg-slate-900/50 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800/50 transition-colors">
                       <div className="flex items-center gap-3">
                         <Badge variant="outline" className="font-mono text-xs">
-                          {rec.venta?.ventaId?.slice(-8) || "Venta"}
+                          {(() => {
+  if (rec.tipoReconciliacion === 'PRESTAMO_CASH') return 'Cobro Préstamo';
+  if (rec.tipoReconciliacion === 'PRESTAMO_CASH_DESEMBOLSO') return 'Desembolso Préstamo';
+  if (rec.tipoReconciliacion === 'DEUDA_CASH') return 'Pago Deuda';
+  if (rec.tipoReconciliacion === 'DEUDA_CASH_DESEMBOLSO') return 'Desembolso Deuda';
+  return rec.venta?.ventaId?.slice(-8) || 'Venta directa';
+})()}
                         </Badge>
                         <span className="text-sm">
                           {rec.cuentaBancaria?.nombreBanco || "Cuenta"}

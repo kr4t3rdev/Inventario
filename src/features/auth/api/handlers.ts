@@ -747,7 +747,7 @@ export async function onboardingTenant(request: NextRequest) {
     })
 
     const managers = await prisma.tenantMembership.findMany({
-      where: { tenantId, isActive: true, tenantRole: { in: ['manager', 'admin'] } },
+      where: { tenantId, isActive: true, tenantRole: 'manager' },
       select: { userId: true },
     })
 
