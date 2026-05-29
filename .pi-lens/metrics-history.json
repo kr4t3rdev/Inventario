@@ -1248,12 +1248,12 @@
     },
     "src/lib/server-actions/with-action.ts": {
       "latest": {
-        "commit": "5dd54d4",
-        "timestamp": "2026-05-28T00:20:43.994Z",
-        "mi": 43.8,
+        "commit": "4c8feae",
+        "timestamp": "2026-05-29T13:57:24.954Z",
+        "mi": 43.1,
         "cognitive": 34,
         "nesting": 5,
-        "lines": 110,
+        "lines": 118,
         "maxCyclomatic": 11,
         "entropy": 5.2
       },
@@ -1265,6 +1265,16 @@
           "cognitive": 34,
           "nesting": 5,
           "lines": 110,
+          "maxCyclomatic": 11,
+          "entropy": 5.2
+        },
+        {
+          "commit": "4c8feae",
+          "timestamp": "2026-05-29T13:57:24.954Z",
+          "mi": 43.1,
+          "cognitive": 34,
+          "nesting": 5,
+          "lines": 118,
           "maxCyclomatic": 11,
           "entropy": 5.2
         }
@@ -1348,14 +1358,14 @@
     },
     "src/lib/auth-middleware.ts": {
       "latest": {
-        "commit": "5dd54d4",
-        "timestamp": "2026-05-28T00:38:03.476Z",
-        "mi": 25.8,
-        "cognitive": 82,
+        "commit": "b63110b",
+        "timestamp": "2026-05-29T16:53:01.687Z",
+        "mi": 29,
+        "cognitive": 66,
         "nesting": 4,
-        "lines": 331,
+        "lines": 293,
         "maxCyclomatic": 37,
-        "entropy": 6.41
+        "entropy": 6.23
       },
       "history": [
         {
@@ -1367,9 +1377,19 @@
           "lines": 331,
           "maxCyclomatic": 37,
           "entropy": 6.41
+        },
+        {
+          "commit": "b63110b",
+          "timestamp": "2026-05-29T16:53:01.687Z",
+          "mi": 29,
+          "cognitive": 66,
+          "nesting": 4,
+          "lines": 293,
+          "maxCyclomatic": 37,
+          "entropy": 6.23
         }
       ],
-      "trend": "stable"
+      "trend": "improving"
     },
     "src/lib/server-actions/helpers.ts": {
       "latest": {
@@ -2768,13 +2788,13 @@
     },
     "src/features/auth/api/handlers.ts": {
       "latest": {
-        "commit": "5dd54d4",
-        "timestamp": "2026-05-28T03:20:16.913Z",
-        "mi": 7.5,
-        "cognitive": 245,
+        "commit": "d7915af",
+        "timestamp": "2026-05-29T14:58:18.174Z",
+        "mi": 7.6,
+        "cognitive": 246,
         "nesting": 5,
         "lines": 685,
-        "maxCyclomatic": 77,
+        "maxCyclomatic": 79,
         "entropy": 6.41
       },
       "history": [
@@ -2786,6 +2806,16 @@
           "nesting": 5,
           "lines": 685,
           "maxCyclomatic": 77,
+          "entropy": 6.41
+        },
+        {
+          "commit": "d7915af",
+          "timestamp": "2026-05-29T14:58:18.174Z",
+          "mi": 7.6,
+          "cognitive": 246,
+          "nesting": 5,
+          "lines": 685,
+          "maxCyclomatic": 79,
           "entropy": 6.41
         }
       ],
@@ -2843,8 +2873,8 @@
     },
     "src/lib/server-actions/get-current-user.ts": {
       "latest": {
-        "commit": "5dd54d4",
-        "timestamp": "2026-05-28T03:23:10.839Z",
+        "commit": "d7915af",
+        "timestamp": "2026-05-29T14:58:55.715Z",
         "mi": 42.8,
         "cognitive": 35,
         "nesting": 4,
@@ -2856,6 +2886,16 @@
         {
           "commit": "5dd54d4",
           "timestamp": "2026-05-28T03:23:10.839Z",
+          "mi": 42.8,
+          "cognitive": 35,
+          "nesting": 4,
+          "lines": 116,
+          "maxCyclomatic": 15,
+          "entropy": 5.87
+        },
+        {
+          "commit": "d7915af",
+          "timestamp": "2026-05-29T14:58:55.715Z",
           "mi": 42.8,
           "cognitive": 35,
           "nesting": 4,
@@ -3043,14 +3083,14 @@
     },
     "src/features/empleados/components/empleados-nomina-content.tsx": {
       "latest": {
-        "commit": "d988775",
-        "timestamp": "2026-05-29T12:07:25.379Z",
-        "mi": 13.6,
+        "commit": "4c8feae",
+        "timestamp": "2026-05-29T13:58:07.909Z",
+        "mi": 10.5,
         "cognitive": 43,
         "nesting": 4,
-        "lines": 487,
+        "lines": 655,
         "maxCyclomatic": 48,
-        "entropy": 6.6
+        "entropy": 6.59
       },
       "history": [
         {
@@ -3062,10 +3102,195 @@
           "lines": 487,
           "maxCyclomatic": 48,
           "entropy": 6.6
+        },
+        {
+          "commit": "4c8feae",
+          "timestamp": "2026-05-29T13:58:07.909Z",
+          "mi": 10.5,
+          "cognitive": 43,
+          "nesting": 4,
+          "lines": 655,
+          "maxCyclomatic": 48,
+          "entropy": 6.59
+        }
+      ],
+      "trend": "regressing"
+    },
+    "src/app/busy/empleados/page.tsx": {
+      "latest": {
+        "commit": "4c8feae",
+        "timestamp": "2026-05-29T13:57:14.781Z",
+        "mi": 62,
+        "cognitive": 4,
+        "nesting": 1,
+        "lines": 29,
+        "maxCyclomatic": 4,
+        "entropy": 4.43
+      },
+      "history": [
+        {
+          "commit": "4c8feae",
+          "timestamp": "2026-05-29T13:57:14.781Z",
+          "mi": 62,
+          "cognitive": 4,
+          "nesting": 1,
+          "lines": 29,
+          "maxCyclomatic": 4,
+          "entropy": 4.43
+        }
+      ],
+      "trend": "stable"
+    },
+    "src/app/busy/layout.tsx": {
+      "latest": {
+        "commit": "4c8feae",
+        "timestamp": "2026-05-29T13:58:28.656Z",
+        "mi": 61.5,
+        "cognitive": 1,
+        "nesting": 1,
+        "lines": 30,
+        "maxCyclomatic": 3,
+        "entropy": 4.25
+      },
+      "history": [
+        {
+          "commit": "4c8feae",
+          "timestamp": "2026-05-29T13:58:28.656Z",
+          "mi": 61.5,
+          "cognitive": 1,
+          "nesting": 1,
+          "lines": 30,
+          "maxCyclomatic": 3,
+          "entropy": 4.25
+        }
+      ],
+      "trend": "stable"
+    },
+    "src/lib/services/periodo-contable-types.ts": {
+      "latest": {
+        "commit": "4c8feae",
+        "timestamp": "2026-05-29T14:02:32.732Z",
+        "mi": 35,
+        "cognitive": 20,
+        "nesting": 2,
+        "lines": 220,
+        "maxCyclomatic": 9,
+        "entropy": 6.02
+      },
+      "history": [
+        {
+          "commit": "4c8feae",
+          "timestamp": "2026-05-29T14:02:32.732Z",
+          "mi": 35,
+          "cognitive": 20,
+          "nesting": 2,
+          "lines": 220,
+          "maxCyclomatic": 9,
+          "entropy": 6.02
+        }
+      ],
+      "trend": "stable"
+    },
+    "src/app/busy/dashboard/page.tsx": {
+      "latest": {
+        "commit": "d7915af",
+        "timestamp": "2026-05-29T14:57:51.867Z",
+        "mi": 44,
+        "cognitive": 7,
+        "nesting": 2,
+        "lines": 96,
+        "maxCyclomatic": 6,
+        "entropy": 5.76
+      },
+      "history": [
+        {
+          "commit": "d7915af",
+          "timestamp": "2026-05-29T14:57:51.867Z",
+          "mi": 44,
+          "cognitive": 7,
+          "nesting": 2,
+          "lines": 96,
+          "maxCyclomatic": 6,
+          "entropy": 5.76
+        }
+      ],
+      "trend": "stable"
+    },
+    "src/lib/prisma.ts": {
+      "latest": {
+        "commit": "d7915af",
+        "timestamp": "2026-05-29T15:00:12.756Z",
+        "mi": 64.8,
+        "cognitive": 1,
+        "nesting": 1,
+        "lines": 10,
+        "maxCyclomatic": 1,
+        "entropy": 3.89
+      },
+      "history": [
+        {
+          "commit": "d7915af",
+          "timestamp": "2026-05-29T15:00:12.756Z",
+          "mi": 64.8,
+          "cognitive": 1,
+          "nesting": 1,
+          "lines": 10,
+          "maxCyclomatic": 1,
+          "entropy": 3.89
+        }
+      ],
+      "trend": "stable"
+    },
+    "prisma.config.ts": {
+      "latest": {
+        "commit": "b63110b",
+        "timestamp": "2026-05-29T15:05:19.355Z",
+        "mi": 62.3,
+        "cognitive": 1,
+        "nesting": 0,
+        "lines": 12,
+        "maxCyclomatic": 1,
+        "entropy": 3.78
+      },
+      "history": [
+        {
+          "commit": "b63110b",
+          "timestamp": "2026-05-29T15:05:19.355Z",
+          "mi": 62.3,
+          "cognitive": 1,
+          "nesting": 0,
+          "lines": 12,
+          "maxCyclomatic": 1,
+          "entropy": 3.78
+        }
+      ],
+      "trend": "stable"
+    },
+    "src/lib/auth/roles.ts": {
+      "latest": {
+        "commit": "b63110b",
+        "timestamp": "2026-05-29T16:55:47.490Z",
+        "mi": 46,
+        "cognitive": 28,
+        "nesting": 2,
+        "lines": 99,
+        "maxCyclomatic": 10,
+        "entropy": 4.79
+      },
+      "history": [
+        {
+          "commit": "b63110b",
+          "timestamp": "2026-05-29T16:55:47.490Z",
+          "mi": 46,
+          "cognitive": 28,
+          "nesting": 2,
+          "lines": 99,
+          "maxCyclomatic": 10,
+          "entropy": 4.79
         }
       ],
       "trend": "stable"
     }
   },
-  "capturedAt": "2026-05-29T12:07:30.380Z"
+  "capturedAt": "2026-05-29T16:55:52.491Z"
 }
