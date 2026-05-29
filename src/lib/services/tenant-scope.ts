@@ -1,5 +1,26 @@
-import { prisma } from '@/lib/prisma'
-import type { AuthenticatedUser } from '@/lib/auth-middleware'
+import { prisma } from '@/lib/prisma';
+import { ActionError } from '@/lib/server-actions/types';
+import type { AuthenticatedUser } from '@/lib/auth-middleware';
+
+/**
+ * @description Valida que el usuario tenga rol de manager (o superior) en el tenant.
+ * Lanza ActionError si no tiene permisos de escritura/administración.
+ *
+ * @example
+ * requireManagerRole(user, 'crear productos')
+ *
+ * @param {AuthenticatedUser} user - Usuario autenticado.
+ * @param {string} [action='realizar esta acción'] - Descripción de la acción para el mensaje de error.
+ * @throws {ActionError} Si el rol no es manager.
+ */
+export function requireManagerRole(user: AuthenticatedUser, action: string = 'realizar esta acción'): void {
+  if (user.tenantRole !== 'manager') {
+    throw new ActionError(
+      `No tienes permisos para ${action}. Solo el administrador de la empresa puede realizar esta operación.`,
+      'FORBIDDEN',
+    )
+  }
+}
 
 /**
  * @description Extiende un where de Prisma con filtro por tenantId.

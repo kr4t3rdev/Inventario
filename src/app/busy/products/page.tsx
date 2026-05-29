@@ -30,11 +30,13 @@ export default async function ProductosPage() {
     getPuntosDeVentaAction(),
   ])
 
-  // ── Configuración de empresa ──
+  // ── Configuración de empresa y rol ──
   let usaEan13 = false
+  let tenantRole: string | undefined
   try {
     const user = await getCurrentUser()
     if (user) {
+      tenantRole = user.tenantRole
       const empresa = await prisma.miEmpresa.findFirst({
         where: { tenantId: user.tenantId },
         select: { usaCodigoEan13: true },
@@ -55,6 +57,7 @@ export default async function ProductosPage() {
       initialAlmacenes={initialAlmacenes}
       initialPuntosVenta={initialPuntosVenta}
       usaEan13={usaEan13}
+      tenantRole={tenantRole}
     />
   )
 }

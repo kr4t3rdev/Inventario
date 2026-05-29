@@ -15,7 +15,7 @@ import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import { withAction, ActionError } from "@/lib/server-actions";
 import { prisma } from "@/lib/prisma";
-import { requireTenant } from "@/lib/services/tenant-scope";
+import { requireTenant, requireManagerRole } from "@/lib/services/tenant-scope";
 import { withPeriodValidation } from "@/lib/services/with-period-validation";
 import { upsertStockUbicacion } from "@/lib/services/stock-ubicacion-service";
 import { executeProductInstanceCreationWorkflow } from "@/lib/restock-utils";
@@ -382,6 +382,7 @@ export const createProductoAction = withAction(
  */
 export const updateProductoAction = withAction(
 	async (input: ProductoUpdateInput, user: AuthenticatedUser) => {
+		requireManagerRole(user, 'editar productos');
 		const parsed = productoUpdateSchema.parse(input);
 		const { id, ...updateData } = parsed;
 
@@ -519,6 +520,7 @@ export const updateProductoAction = withAction(
  */
 export const deleteProductoAction = withAction(
 	async (id: string, user: AuthenticatedUser) => {
+		requireManagerRole(user, 'eliminar productos');
 		const tenantId = requireTenant(user);
 
 		const existing = await prisma.producto.findUnique({
@@ -659,6 +661,7 @@ const bulkUpdateSchema = z.object({
  */
 export const bulkUpdateStockMinimoAction = withAction(
 	async (input: z.infer<typeof bulkUpdateSchema>, user: AuthenticatedUser) => {
+		requireManagerRole(user, 'modificar el stock mínimo de productos');
 		const { updates } = bulkUpdateSchema.parse(input);
 		requireTenant(user);
 
@@ -880,6 +883,7 @@ export const restockProductoAction = withAction(
 	withPeriodValidation(
 		() => new Date(),
 		async (input: RestockInput, user: AuthenticatedUser) => {
+			requireManagerRole(user, 'hacer restock de productos');
 			const parsed = restockSchema.parse(input);
 			const {
 				productoId,

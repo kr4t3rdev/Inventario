@@ -532,7 +532,7 @@ export function AppSidebar2({
     // Acciones
     'Compras de Productos': ['manager'],
     'Ventas': ['dependiente', 'manager'],
-    'Gestión de Facturas': ['dependiente', 'manager'],
+    'Gestión de Facturas': ['manager'],
     'Mermas': ['manager'],
     'Transferencias': ['manager'],
     'Empleados': ['manager'],
