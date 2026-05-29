@@ -69,8 +69,7 @@ COPY --from=builder /app/src/generated/prisma /app/src/generated/prisma
 # Copiar runtime de @prisma (necesario para consultas)
 COPY --from=builder /app/node_modules/@prisma /app/node_modules/@prisma
 
-# Copiar el engine de Prisma
-COPY --from=builder /app/node_modules/.prisma/client /app/node_modules/.prisma/client 2>/dev/null || true
+# El engine de Prisma ya está incluido en src/generated/prisma (Prisma 6 con prisma.config.ts)
 
 # Crear script de inicio
 RUN printf '#!/bin/sh\nset -e\necho "Iniciando aplicación..."\ncd /app\nexec node server.js\n' > /app/start.sh && chmod +x /app/start.sh
