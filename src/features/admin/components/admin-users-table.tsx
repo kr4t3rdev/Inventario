@@ -232,6 +232,8 @@ export function AdminUsersTable({
         return (<Badge variant="outline" className="border-emerald-500/40 bg-emerald-500/10 text-emerald-700"><User className="mr-1 h-3 w-3" />{getTenantRoleLabel('economico')}</Badge>)
       case 'dependiente':
         return (<Badge variant="outline" className="border-amber-500/40 bg-amber-500/10 text-amber-700"><User className="mr-1 h-3 w-3" />{getTenantRoleLabel('dependiente')}</Badge>)
+      case 'regularUser':
+        return (<Badge variant="outline" className="border-slate-300/50 bg-slate-100/50 text-slate-600 dark:border-slate-600/50 dark:bg-slate-800/30 dark:text-slate-400"><User className="mr-1 h-3 w-3" />{getTenantRoleLabel('regularUser')}</Badge>)
       default:
         return (<Badge variant="outline" className="border-border/80 bg-muted/40 text-foreground"><User className="mr-1 h-3 w-3" />{getTenantRoleLabel(null)}</Badge>)
     }
