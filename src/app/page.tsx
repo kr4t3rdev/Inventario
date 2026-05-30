@@ -3,7 +3,12 @@
 import React, { useEffect, useState } from "react";
 import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
 
-import { LandingStatsDynamic, ReviewHeroBadge, RealTestimonials } from "@/features/reviews";
+import {
+	LandingStatsDynamic,
+	PricingDynamic,
+	ReviewHeroBadge,
+	RealTestimonials,
+} from "@/features/reviews";
 import {
 	AwsIcon,
 	FramerIcon,
@@ -27,7 +32,6 @@ import {
 	LandingFooter,
 	LandingHeader,
 	LandingHero,
-	LandingPricing,
 	LandingPreloader,
 } from "@/features/landing";
 
@@ -119,7 +123,10 @@ export default function Home(): React.JSX.Element {
 					items={[
 						{ icon: <NextjsIcon />, href: "https://nextjs.org" },
 						{ icon: <ReactIcon />, href: "https://react.dev" },
-						{ icon: <TypeScriptIcon />, href: "https://www.typescriptlang.org" },
+						{
+							icon: <TypeScriptIcon />,
+							href: "https://www.typescriptlang.org",
+						},
 						{ icon: <TailwindIcon />, href: "https://tailwindcss.com" },
 						{ icon: <PrismaIcon />, href: "https://www.prisma.io" },
 						{ icon: <PostgresIcon />, href: "https://www.postgresql.org" },
@@ -137,7 +144,7 @@ export default function Home(): React.JSX.Element {
 				<RealTestimonials />
 
 				{/* ═══ PRICING ═══ */}
-				<LandingPricing />
+				<PricingDynamic />
 
 				{/* ═══ MARQUEE 3 ═══ */}
 				<MarqueeText

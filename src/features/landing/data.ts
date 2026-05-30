@@ -33,13 +33,7 @@ export interface BenefitItem {
 	icon: LucideIcon;
 }
 
-export interface PlanItem {
-	name: string;
-	description: string;
-	cta: string;
-	featured?: boolean;
-	bullets: string[];
-}
+
 
 export interface ContactItem {
 	label: string;
@@ -224,45 +218,7 @@ export const BENEFIT_ITEMS: BenefitItem[] = [
 
 /* ─── Pricing Plans ─── */
 
-export const PLAN_ITEMS: PlanItem[] = [
-	{
-		name: "Básico",
-		description:
-			"Ideal para negocios en crecimiento que necesitan control operativo sólido.",
-		cta: "Comenzar",
-		bullets: [
-			"Gestión de gastos e ingresos",
-			"Control básico de inventario",
-			"Reportes operativos esenciales",
-			"Soporte técnico estándar",
-		],
-	},
-	{
-		name: "Profesional",
-		description:
-			"Pensado para PYMES que requieren automatización y análisis avanzado.",
-		cta: "Solicitar demo",
-		featured: true,
-		bullets: [
-			"Todo lo del plan Básico",
-			"Automatización de ventas",
-			"Contabilidad y capital humano",
-			"Soporte prioritario",
-		],
-	},
-	{
-		name: "Empresarial",
-		description:
-			"Configuración personalizada para operaciones de alta complejidad.",
-		cta: "Hablar con ventas",
-		bullets: [
-			"Todo lo del plan Profesional",
-			"Integraciones personalizadas",
-			"Analítica avanzada y optimizaciones",
-			"Acompañamiento dedicado",
-		],
-	},
-];
+
 
 /* ─── Contact ─── */
 

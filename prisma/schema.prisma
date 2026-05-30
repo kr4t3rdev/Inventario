@@ -603,18 +603,24 @@ model User {
 }
 
 model Plan {
-  planId         String          @id @default(cuid())
-  nombre         String
-  descripcion    String?
-  precio         Decimal         @default(0)
-  duracionDias   Int
-  maxUsuarios    Int             @default(1)
-  maxAlmacenes   Int             @default(1)
-  maxProductos   Int             @default(100)
-  createdAt      DateTime        @default(now())
-  updatedAt      DateTime        @updatedAt
-  licencias      Licencia[]
-  tenantLicenses TenantLicense[]
+  planId           String          @id @default(cuid())
+  nombre           String
+  descripcion      String?
+  precio           Decimal         @default(0)
+  duracionDias     Int
+  maxUsuarios      Int             @default(1)
+  maxAlmacenes     Int             @default(1)
+  maxProductos     Int             @default(100)
+  maxClientes      Int             @default(200)
+  maxPuntosVenta   Int             @default(1)
+  maxFacturasMes   Int             @default(200)
+  maxContratos     Int             @default(0)
+  incluyeBackups   Boolean         @default(false)
+  features         Json            @default("{}")
+  createdAt        DateTime        @default(now())
+  updatedAt        DateTime        @updatedAt
+  licencias        Licencia[]
+  tenantLicenses   TenantLicense[]
 }
 
 model Licencia {
