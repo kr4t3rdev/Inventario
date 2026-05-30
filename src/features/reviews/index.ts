@@ -21,6 +21,7 @@ export { ReviewStars } from './components/review-stars';
 export { ReviewDialog } from './components/review-dialog';
 export { ReviewDialogProvider } from './components/review-dialog-provider';
 export { ReviewHeroBadge } from './components/review-hero-badge';
+export { HeroSocialProof } from './components/hero-social-proof';
 export { RealTestimonials } from './components/real-testimonials';
 
 /* ─── Hooks ─── */

@@ -138,6 +138,23 @@ export const getReviewStatsAction = withAction(async (_: unknown, user: { userId
   };
 });
 
+/* ─── getActiveTenantsCountAction ─── */
+
+/**
+ * @description Retorna la cantidad real de empresas activas (con licencia activa).
+ */
+export async function getActiveTenantsCountAction(): Promise<number> {
+  try {
+    return await prisma.tenant.count({
+      where: {
+        licencias: { some: { activa: true } },
+      },
+    });
+  } catch {
+    return 0;
+  }
+}
+
 /* ─── getReviewStatsPublicAction ─── */
 
 /**

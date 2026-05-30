@@ -5,7 +5,6 @@ import { AnimatePresence, motion } from 'framer-motion';
 import {
   ArrowRight,
   Sparkles,
-  Star,
   TrendingUp,
 } from 'lucide-react';
 import Image from 'next/image';
@@ -13,7 +12,8 @@ import Link from 'next/link';
 
 import { Button } from '@/components/ui/button';
 import { WordReveal } from '@/components/ui/word-reveal';
-import { HERO_BADGES, HERO_TRUST, HERO_VALUE_PROPS } from '@/features/landing/data';
+import { HERO_BADGES, HERO_VALUE_PROPS } from '@/features/landing/data';
+import { HeroSocialProof } from '@/features/reviews';
 import { ParallaxLayer } from '@/features/landing/utils';
 
 const SPRING_STIFF = {
@@ -136,51 +136,7 @@ export function LandingHero({ reduceMotion }: { reduceMotion?: boolean }): React
         </div>
 
         {/* Social proof */}
-        <motion.div
-          initial={{ opacity: 0, y: 10 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.6, duration: 0.5 }}
-          className="flex flex-wrap items-center gap-6 border-t border-border/40 pt-6"
-        >
-          {/* Rating */}
-          <div className="flex items-center gap-2">
-            <div className="flex">
-              {Array.from({ length: 5 }).map((_, i) => (
-                <Star
-                  key={i}
-                  className={`h-3.5 w-3.5 ${
-                    i < Math.floor(HERO_TRUST.rating)
-                      ? 'fill-amber-400 text-amber-400'
-                      : 'fill-muted-foreground/20 text-muted-foreground/20'
-                  }`}
-                />
-              ))}
-            </div>
-            <span className="text-sm font-semibold font-mono">{HERO_TRUST.rating}</span>
-            <span className="text-xs text-muted-foreground/60 font-mono">
-              ({HERO_TRUST.reviews} reseñas)
-            </span>
-          </div>
-
-          {/* Client count */}
-          <div className="flex items-center gap-2">
-            <div className="flex -space-x-2">
-              {['#4f46e5', '#059669', '#dc2626', '#ca8a04', '#7c3aed'].map((color, i) => (
-                <div
-                  key={color}
-                  className="flex h-7 w-7 items-center justify-center rounded-full border-2 border-background text-[10px] font-bold text-white font-mono"
-                  style={{ backgroundColor: color }}
-                >
-                  {['M', 'C', 'A', 'L', 'P'][i]}
-                </div>
-              ))}
-            </div>
-            <span className="text-sm font-semibold font-mono">{HERO_TRUST.clients}</span>
-            <span className="text-xs text-muted-foreground/60 font-mono">
-              {HERO_TRUST.clientLabel}
-            </span>
-          </div>
-        </motion.div>
+        <HeroSocialProof />
       </motion.div>
 
       {/* ─── Right Column: Image + Floating Badges ─── */}

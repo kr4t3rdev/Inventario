@@ -246,15 +246,6 @@ export const HERO_VALUE_PROPS = [
   'Nómina y comisiones sin errores',
 ];
 
-/* ─── Social Proof ─── */
-
-export const HERO_TRUST = {
-  rating: 4.9,
-  reviews: 120,
-  clients: '+50',
-  clientLabel: 'empresas activas',
-};
-
 /* ─── Floating badges for Hero image ─── */
 
 export const HERO_BADGES = [
