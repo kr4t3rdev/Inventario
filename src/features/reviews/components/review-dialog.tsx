@@ -11,7 +11,7 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog';
 import { Textarea } from '@/components/ui/textarea';
-import { toast } from '@/hooks/use-toast';
+import { toast } from 'sonner';
 import { dismissReviewPromptAction, submitReviewAction } from '@/features/reviews/actions';
 import { ReviewStars } from '@/features/reviews/components/review-stars';
 
@@ -36,7 +36,7 @@ export function ReviewDialog({
 
   const handleSubmit = async () => {
     if (rating === 0) {
-      toast({ title: 'Seleccioná una calificación', variant: 'destructive' });
+      toast.error('Seleccioná una calificación');
       return;
     }
 
@@ -48,18 +48,15 @@ export function ReviewDialog({
       });
 
       if (!result.success) {
-        toast({
-          title: result.error?.message || 'No se pudo enviar tu reseña',
-          variant: 'destructive',
-        });
+        toast.error(result.error?.message || 'No se pudo enviar tu reseña');
         return;
       }
 
-      toast({ title: '¡Gracias por tu reseña! Será visible tras revisión.' });
+      toast.success('¡Gracias por tu reseña! Será visible tras revisión.');
       onSubmitted?.();
       onClose();
     } catch {
-      toast({ title: 'Error al enviar reseña', variant: 'destructive' });
+      toast.error('Error al enviar reseña');
     } finally {
       setIsSubmitting(false);
     }

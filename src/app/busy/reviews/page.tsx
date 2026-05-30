@@ -11,7 +11,7 @@ import {
   rejectReviewAction,
   type ReviewWithUser,
 } from '@/features/reviews';
-import { toast } from '@/hooks/use-toast';
+import { toast } from 'sonner';
 
 /**
  * @description Página de moderación de reseñas para admin/manager.
@@ -40,20 +40,20 @@ export default function ReviewsPage(): React.JSX.Element {
   const handleApprove = async (reviewId: string) => {
     const result = await approveReviewAction(reviewId);
     if (result.success) {
-      toast({ title: 'Reseña aprobada y visible en la página.' });
+      toast.success('Reseña aprobada y visible en la página.');
       loadReviews();
     } else {
-      toast({ title: result.error?.message || 'Error al aprobar', variant: 'destructive' });
+      toast.error(result.error?.message || 'Error al aprobar');
     }
   };
 
   const handleReject = async (reviewId: string) => {
     const result = await rejectReviewAction(reviewId);
     if (result.success) {
-      toast({ title: 'Reseña rechazada y eliminada.' });
+      toast.success('Reseña rechazada y eliminada.');
       loadReviews();
     } else {
-      toast({ title: result.error?.message || 'Error al rechazar', variant: 'destructive' });
+      toast.error(result.error?.message || 'Error al rechazar');
     }
   };
 
