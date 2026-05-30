@@ -202,6 +202,8 @@ model Tenant {
   licencias                  TenantLicense[]
   memberships                TenantMembership[]
   turnosPos                  TurnoPuntoVenta[]
+  reviews                    Review[]
+  reviewPrompts              ReviewPrompt[]
 
   @@index([slug])
   @@map("tenants")
@@ -596,6 +598,8 @@ model User {
   backupLogs               BackupLog[]
   backupPlans              BackupPlan[]
   tenantMemberships        TenantMembership[]
+  reviews                  Review[]
+  reviewPrompts            ReviewPrompt[]
 }
 
 model Plan {
@@ -2459,4 +2463,41 @@ enum MetodoPagoVenta {
   TRANSFERENCIA
   CREDITO
   MIXTO
+}
+
+/// Reseña de un usuario sobre el sistema.
+model Review {
+  reviewId    String   @id @default(cuid())
+  tenantId    String
+  userId      String
+  rating      Int      // 1-5
+  comment     String?
+  isApproved  Boolean  @default(false)
+  isPositive  Boolean
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  tenant Tenant @relation(fields: [tenantId], references: [tenantId], onDelete: Cascade)
+  user   User   @relation(fields: [userId], references: [userId], onDelete: Cascade)
+
+  @@unique([tenantId, userId])
+  @@index([tenantId, isApproved])
+  @@index([tenantId, isPositive, isApproved])
+  @@map("reviews")
+}
+
+/// Traza de solicitudes de reseña.
+model ReviewPrompt {
+  promptId    String   @id @default(cuid())
+  tenantId    String
+  userId      String
+  promptedAt  DateTime @default(now())
+  dismissedAt DateTime?
+  submittedAt DateTime?
+
+  tenant Tenant @relation(fields: [tenantId], references: [tenantId], onDelete: Cascade)
+  user   User   @relation(fields: [userId], references: [userId], onDelete: Cascade)
+
+  @@index([tenantId, userId, promptedAt])
+  @@map("review_prompts")
 }

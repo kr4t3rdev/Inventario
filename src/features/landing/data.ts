@@ -236,6 +236,51 @@ export const FAQ_ITEMS: FaqItem[] = [
   },
 ];
 
+/* ─── Hero Value Props (rotating) ─── */
+
+export const HERO_VALUE_PROPS = [
+  'Control financiero en tiempo real',
+  'Stock inteligente sin quiebres',
+  'Facturación automatizada al instante',
+  'Reportes contables con un clic',
+  'Nómina y comisiones sin errores',
+];
+
+/* ─── Social Proof ─── */
+
+export const HERO_TRUST = {
+  rating: 4.9,
+  reviews: 120,
+  clients: '+50',
+  clientLabel: 'empresas activas',
+};
+
+/* ─── Floating badges for Hero image ─── */
+
+export const HERO_BADGES = [
+  {
+    icon: TrendingUp,
+    label: 'Eficiencia',
+    value: '+30%',
+    className: '-bottom-7 -left-4 md:-left-8',
+    color: 'text-cyan-accent',
+  },
+  {
+    icon: Wallet,
+    label: 'Ahorro operativo',
+    value: '-40%',
+    className: '-top-3 -right-4 md:-right-6',
+    color: 'text-emerald-400',
+  },
+  {
+    icon: BarChart3,
+    label: 'Tiempo de cierre',
+    value: '3x',
+    className: 'bottom-12 -right-5 md:-right-8',
+    color: 'text-primary',
+  },
+];
+
 /* ─── Stats ─── */
 
 export const STATS = [

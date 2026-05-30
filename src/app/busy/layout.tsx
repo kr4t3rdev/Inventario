@@ -6,6 +6,7 @@ import { SiteHeader } from '@/components/site-header'
 import { SidebarInset, SidebarProvider } from '@/components/ui/sidebar'
 import { Toaster } from 'sonner'
 import { AppSidebar2 } from '@/components/app-sidebar2'
+import { ReviewDialogProvider } from '@/features/reviews'
 
 /**
  * @description Layout para rutas /busy - proporciona sidebar, header y layout principal
@@ -28,6 +29,7 @@ export default async function BusyLayout({ children }: { children: ReactNode }) 
         </SidebarInset>
       </SidebarProvider>
       <Toaster />
+      <ReviewDialogProvider />
     </main>
   )
 }

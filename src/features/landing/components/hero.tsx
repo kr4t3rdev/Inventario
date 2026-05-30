@@ -1,13 +1,19 @@
 'use client';
 
-import React from 'react';
-import { motion } from 'framer-motion';
-import { ArrowRight, Sparkles, TrendingUp } from 'lucide-react';
+import React, { useEffect, useState } from 'react';
+import { AnimatePresence, motion } from 'framer-motion';
+import {
+  ArrowRight,
+  Sparkles,
+  Star,
+  TrendingUp,
+} from 'lucide-react';
 import Image from 'next/image';
 import Link from 'next/link';
 
 import { Button } from '@/components/ui/button';
 import { WordReveal } from '@/components/ui/word-reveal';
+import { HERO_BADGES, HERO_TRUST, HERO_VALUE_PROPS } from '@/features/landing/data';
 import { ParallaxLayer } from '@/features/landing/utils';
 
 const SPRING_STIFF = {
@@ -16,96 +22,229 @@ const SPRING_STIFF = {
   damping: 15,
 };
 
+const ROTATION_INTERVAL = 3500;
+
 /**
- * @description Hero section con headline animado, CTAs e imagen con parallax.
+ * @description Hero section con headline animado, value props rotativos,
+ *              social proof, CTAs e imagen con badges flotantes.
  * @param {{ reduceMotion?: boolean }} props
  * @returns {JSX.Element} Sección hero del landing
  */
 export function LandingHero({ reduceMotion }: { reduceMotion?: boolean }): React.JSX.Element {
+  const [propIndex, setPropIndex] = useState(0);
+
+  useEffect(() => {
+    if (reduceMotion) return;
+    const interval = setInterval(() => {
+      setPropIndex((prev) => (prev + 1) % HERO_VALUE_PROPS.length);
+    }, ROTATION_INTERVAL);
+    return () => clearInterval(interval);
+  }, [reduceMotion]);
+
   return (
     <section className="grid items-center gap-12 lg:grid-cols-[1.05fr_0.95fr]">
+      {/* ─── Left Column: Text + CTAs ─── */}
       <motion.div
         initial={{ opacity: 0, y: 30 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ type: 'spring', stiffness: 120, damping: 20 }}
         className="space-y-8"
       >
-        <div className="space-y-4">
-          <span className="inline-flex items-center gap-2 rounded-full border border-cyan-accent bg-primary/10 px-3 py-1 text-xs font-semibold uppercase tracking-[0.16em] text-cyan-accent font-mono">
+        <div className="space-y-5">
+          {/* Badge */}
+          <span className="inline-flex w-fit items-center gap-2 rounded-full border border-primary/20 bg-primary/10 px-3 py-1 text-xs font-semibold uppercase tracking-[0.16em] text-primary font-mono">
             <Sparkles className="h-3.5 w-3.5" />
-            Plataforma integral
+            Gestión empresarial todo-en-uno
           </span>
+
+          {/* Headline */}
           <h1 className="max-w-2xl text-5xl font-bold tracking-tight sm:text-6xl lg:text-7xl font-mono leading-[1.05] tracking-display">
-            <WordReveal text="Gestión financiera e inventario con experiencia premium." />
+            <WordReveal text="Tu negocio entero en un solo panel. Sin fricción, en tiempo real." />
           </h1>
-          <p className="max-w-2xl text-base text-muted-foreground sm:text-lg">
-            FinanceMDM conecta ventas, contabilidad, inventario y capital humano en una sola
-            plataforma para que tu empresa tome mejores decisiones en menos tiempo.
+
+          {/* Subtítulo */}
+          <p className="max-w-xl text-base text-muted-foreground sm:text-lg">
+            FinanceMDM unifica ventas, inventario, contabilidad y capital humano en una plataforma.
+            Más de 50 PYMES en Latinoamérica ya operan con datos precisos y decisiones más rápidas.
+          </p>
+
+          {/* Rotating value prop */}
+          <div className="h-7 overflow-hidden">
+            <AnimatePresence mode="wait">
+              <motion.span
+                key={HERO_VALUE_PROPS[propIndex]}
+                initial={reduceMotion ? { opacity: 1 } : { opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={reduceMotion ? { opacity: 1 } : { opacity: 0, y: -20 }}
+                transition={{ duration: 0.3 }}
+                className="inline-flex items-center gap-2 text-sm font-semibold text-cyan-accent font-mono"
+              >
+                <TrendingUp className="h-3.5 w-3.5" />
+                {HERO_VALUE_PROPS[propIndex]}
+              </motion.span>
+            </AnimatePresence>
+          </div>
+        </div>
+
+        {/* CTAs */}
+        <div className="space-y-4">
+          <div className="flex flex-wrap items-center gap-3">
+            <motion.div
+              whileHover={{ scale: 1.03, transition: SPRING_STIFF }}
+              whileTap={{ scale: 0.98, transition: SPRING_STIFF }}
+            >
+              <Link href="/register">
+                <Button size="lg" className="group cursor-pointer gap-2">
+                  Empezar ahora
+                  <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1" />
+                </Button>
+              </Link>
+            </motion.div>
+            <motion.div
+              whileHover={{ scale: 1.03, transition: SPRING_STIFF }}
+              whileTap={{ scale: 0.98, transition: SPRING_STIFF }}
+            >
+              <Link href="#precios">
+                <Button size="lg" variant="outline" className="cursor-pointer">
+                  Ver planes
+                </Button>
+              </Link>
+            </motion.div>
+            <motion.div
+              whileHover={{ scale: 1.03, transition: SPRING_STIFF }}
+              whileTap={{ scale: 0.98, transition: SPRING_STIFF }}
+            >
+              <Link href="#contacto">
+                <Button size="lg" variant="ghost" className="cursor-pointer gap-2">
+                  <span className="flex h-6 w-6 items-center justify-center rounded-full bg-primary/10">
+                    <span className="text-xs font-bold text-primary">▶</span>
+                  </span>
+                  Ver demo
+                </Button>
+              </Link>
+            </motion.div>
+          </div>
+
+          {/* Trust text */}
+          <p className="flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-muted-foreground/70 font-mono">
+            <span>Sin compromiso</span>
+            <span className="hidden sm:inline">·</span>
+            <span>Implementación desde 48h</span>
+            <span className="hidden sm:inline">·</span>
+            <span>Soporte incluido</span>
           </p>
         </div>
 
-        <div className="flex flex-wrap items-center gap-3">
-          <motion.div
-            whileHover={{ scale: 1.03, transition: SPRING_STIFF }}
-            whileTap={{ scale: 0.98, transition: SPRING_STIFF }}
-          >
-            <Link href="/register">
-              <Button size="lg" className="group cursor-pointer gap-2">
-                Empezar ahora
-                <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1" />
-              </Button>
-            </Link>
-          </motion.div>
-          <motion.div
-            whileHover={{ scale: 1.03, transition: SPRING_STIFF }}
-            whileTap={{ scale: 0.98, transition: SPRING_STIFF }}
-          >
-            <Link href="#precios">
-              <Button size="lg" variant="outline" className="cursor-pointer">
-                Ver planes
-              </Button>
-            </Link>
-          </motion.div>
-        </div>
+        {/* Social proof */}
+        <motion.div
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.6, duration: 0.5 }}
+          className="flex flex-wrap items-center gap-6 border-t border-border/40 pt-6"
+        >
+          {/* Rating */}
+          <div className="flex items-center gap-2">
+            <div className="flex">
+              {Array.from({ length: 5 }).map((_, i) => (
+                <Star
+                  key={i}
+                  className={`h-3.5 w-3.5 ${
+                    i < Math.floor(HERO_TRUST.rating)
+                      ? 'fill-amber-400 text-amber-400'
+                      : 'fill-muted-foreground/20 text-muted-foreground/20'
+                  }`}
+                />
+              ))}
+            </div>
+            <span className="text-sm font-semibold font-mono">{HERO_TRUST.rating}</span>
+            <span className="text-xs text-muted-foreground/60 font-mono">
+              ({HERO_TRUST.reviews} reseñas)
+            </span>
+          </div>
+
+          {/* Client count */}
+          <div className="flex items-center gap-2">
+            <div className="flex -space-x-2">
+              {['#4f46e5', '#059669', '#dc2626', '#ca8a04', '#7c3aed'].map((color, i) => (
+                <div
+                  key={color}
+                  className="flex h-7 w-7 items-center justify-center rounded-full border-2 border-background text-[10px] font-bold text-white font-mono"
+                  style={{ backgroundColor: color }}
+                >
+                  {['M', 'C', 'A', 'L', 'P'][i]}
+                </div>
+              ))}
+            </div>
+            <span className="text-sm font-semibold font-mono">{HERO_TRUST.clients}</span>
+            <span className="text-xs text-muted-foreground/60 font-mono">
+              {HERO_TRUST.clientLabel}
+            </span>
+          </div>
+        </motion.div>
       </motion.div>
 
-      {/* Hero Image with Parallax */}
+      {/* ─── Right Column: Image + Floating Badges ─── */}
       <ParallaxLayer speed={0.2} className="relative">
         <motion.div
           initial={{ opacity: 0, y: 30 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ type: 'spring', stiffness: 120, damping: 20, delay: 0.15 }}
         >
+          {/* Main image */}
           <motion.div
-            className="overflow-hidden rounded-asymmetric-tl-br border border-primary/20 bg-card p-2 shadow-xl shadow-primary/10 glow-primary"
-            whileHover={{ y: -8, scale: 1.015, transition: { type: 'spring', stiffness: 200, damping: 12 } }}
+            className="relative overflow-hidden rounded-asymmetric-tl-br border border-primary/20 bg-card p-2 shadow-xl shadow-primary/10 glow-primary"
+            whileHover={{
+              y: -8,
+              scale: 1.015,
+              transition: { type: 'spring', stiffness: 200, damping: 12 },
+            }}
           >
             <Image
               src="/images/Finanzas3.jpeg"
               width={760}
               height={620}
               alt="Dashboard de FinanceMDM"
-              className="h-auto w-full rounded-2xl object-cover transition-transform duration-700 group-hover:scale-105"
+              className="h-auto w-full rounded-2xl object-cover"
               priority
             />
           </motion.div>
 
-          {/* Floating stat badge */}
-          <motion.div
-            className="absolute -bottom-7 -left-4 rounded-asymmetric-tr-bl border border-cyan-accent bg-background/95 p-4 shadow-lg backdrop-blur md:-left-8 glow-cyan"
-            animate={reduceMotion ? undefined : { y: [0, -8, 0] }}
-            transition={{ duration: 3.5, repeat: Infinity, ease: 'easeInOut' }}
-          >
-            <div className="flex items-center gap-3">
-              <div className="rounded-full bg-primary/10 p-2">
-                <TrendingUp className="h-5 w-5 text-cyan-accent" />
-              </div>
-              <div>
-                <p className="text-xs uppercase tracking-wide text-muted-foreground font-mono">Crecimiento</p>
-                <p className="text-xl font-bold font-mono text-cyan-accent">+127%</p>
-              </div>
-            </div>
-          </motion.div>
+          {/* Floating badges */}
+          {HERO_BADGES.map((badge, index) => {
+            const Icon = badge.icon;
+
+            return (
+              <motion.div
+                key={badge.label}
+                className={`absolute ${badge.className} rounded-asymmetric-tr-bl border border-border/60 bg-background/95 p-3 shadow-lg backdrop-blur md:p-4`}
+                animate={
+                  reduceMotion
+                    ? undefined
+                    : { y: [0, -(6 + index * 2), 0] }
+                }
+                transition={{
+                  duration: 3.5 + index * 0.6,
+                  repeat: Infinity,
+                  ease: 'easeInOut',
+                  delay: index * 0.4,
+                }}
+              >
+                <div className="flex items-center gap-2 md:gap-3">
+                  <div className="rounded-full bg-primary/10 p-1.5 md:p-2">
+                    <Icon className={`h-4 w-4 md:h-5 md:w-5 ${badge.color}`} />
+                  </div>
+                  <div>
+                    <p className="text-[10px] uppercase tracking-wide text-muted-foreground font-mono md:text-xs">
+                      {badge.label}
+                    </p>
+                    <p className={`text-base font-bold font-mono md:text-xl ${badge.color}`}>
+                      {badge.value}
+                    </p>
+                  </div>
+                </div>
+              </motion.div>
+            );
+          })}
         </motion.div>
       </ParallaxLayer>
     </section>

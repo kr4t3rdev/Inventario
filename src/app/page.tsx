@@ -3,6 +3,7 @@
 import React, { useEffect, useState } from "react";
 import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
 
+import { ReviewHeroBadge, RealTestimonials } from "@/features/reviews";
 import {
 	AwsIcon,
 	FramerIcon,
@@ -29,7 +30,6 @@ import {
 	LandingPricing,
 	LandingPreloader,
 	LandingStats,
-	LandingTestimonials,
 } from "@/features/landing";
 
 /**
@@ -95,6 +95,9 @@ export default function Home(): React.JSX.Element {
 				{/* ═══ HERO ═══ */}
 				<LandingHero reduceMotion={!!reduceMotion} />
 
+				{/* ═══ REVIEW BADGE ═══ */}
+				<ReviewHeroBadge />
+
 				{/* ═══ STATS ═══ */}
 				<LandingStats reduceMotion={!!reduceMotion} />
 
@@ -132,7 +135,7 @@ export default function Home(): React.JSX.Element {
 				/>
 
 				{/* ═══ TESTIMONIALS ═══ */}
-				<LandingTestimonials />
+				<RealTestimonials />
 
 				{/* ═══ PRICING ═══ */}
 				<LandingPricing />
