@@ -24,7 +24,7 @@ import {
   Pagination, PaginationContent, PaginationItem, PaginationNext, PaginationPrevious,
 } from '@/components/ui/pagination'
 import { useAdminUsers } from '@/features/admin/hooks/use-admin-users'
-import { deleteUserAction, lockUserAction, unlockUserAction, getAdminTenantsAction } from '@/features/admin/actions'
+import { deleteUserAction, updateUserAction, lockUserAction, unlockUserAction, getAdminTenantsAction } from '@/features/admin/actions'
 import { getAuthToken } from '@/lib/token'
 import { getTenantRoleLabel } from '@/lib/auth/roles'
 
@@ -153,7 +153,15 @@ export function AdminUsersTable({
     const count = selectedUserIds.size
     if (count === 0) return
 
-    const confirmMsg = {
+    const actionLabel: Record<string, string> = {
+      activate: 'Activados',
+      deactivate: 'Desactivados',
+      delete: 'Eliminados',
+      lock: 'Bloqueados',
+      unlock: 'Desbloqueados',
+    }
+
+    const confirmMsg: Record<string, string> = {
       activate: `¿Activar ${count} usuario${count > 1 ? 's' : ''}?`,
       deactivate: `¿Desactivar ${count} usuario${count > 1 ? 's' : ''}?`,
       delete: `¿Eliminar ${count} usuario${count > 1 ? 's' : ''}? Esta acción no se puede deshacer.`,
@@ -163,25 +171,34 @@ export function AdminUsersTable({
 
     if (!window.confirm(confirmMsg[action])) return
 
-    try {
-      let successCount = 0
-      for (const userId of selectedUserIds) {
-        try {
-          if (action === 'delete') { const r = await deleteUserAction(userId); if (!r.success) throw new Error(r.error?.message ?? 'Error') }
-          else if (action === 'lock') { const r = await lockUserAction({ userId, reason: 'Bloqueo masivo desde admin' }); if (!r.success) throw new Error(r.error?.message ?? 'Error') }
-          else if (action === 'unlock') { const r = await unlockUserAction({ userId }); if (!r.success) throw new Error(r.error?.message ?? 'Error') }
-          successCount++
-        } catch (err) {
-          console.error(`Error en ${action} para usuario ${userId}:`, err)
-        }
+    const entries = Array.from(selectedUserIds)
+    const results = await Promise.allSettled(
+      entries.map(async (userId) => {
+        if (action === 'delete') { const r = await deleteUserAction(userId); if (!r.success) throw new Error(r.error?.message ?? 'Error') }
+        else if (action === 'lock') { const r = await lockUserAction({ userId, reason: 'Bloqueo masivo desde admin' }); if (!r.success) throw new Error(r.error?.message ?? 'Error') }
+        else if (action === 'unlock') { const r = await unlockUserAction({ userId }); if (!r.success) throw new Error(r.error?.message ?? 'Error') }
+        else if (action === 'activate') { const r = await updateUserAction({ userId, isActive: true }); if (!r.success) throw new Error(r.error?.message ?? 'Error') }
+        else if (action === 'deactivate') { const r = await updateUserAction({ userId, isActive: false }); if (!r.success) throw new Error(r.error?.message ?? 'Error') }
+      }),
+    )
+
+    const successCount = results.filter((r) => r.status === 'fulfilled').length
+    const failCount = count - successCount
+
+    results.forEach((r, i) => {
+      if (r.status === 'rejected') {
+        console.error(`Error en ${action} para usuario ${entries[i]}:`, r.reason)
       }
-      toast.success(`${action === 'delete' ? 'Eliminados' : action === 'lock' ? 'Bloqueados' : action === 'unlock' ? 'Desbloqueados' : action === 'activate' ? 'Activados' : 'Desactivados'} ${successCount}/${count} usuario${count > 1 ? 's' : ''}`)
-      clearSelection()
-      await onRefresh()
-    } catch (error) {
-      console.error('Error en acción masiva:', error)
-      toast.error(`Error al ${action === 'delete' ? 'eliminar' : 'procesar'} usuarios`)
+    })
+
+    if (failCount > 0) {
+      toast.error(`${actionLabel[action]} ${successCount}/${count} usuario${count > 1 ? 's' : ''} (${failCount} fallo${failCount > 1 ? 's' : ''})`)
+    } else {
+      toast.success(`${actionLabel[action]} ${successCount}/${count} usuario${count > 1 ? 's' : ''}`)
     }
+
+    clearSelection()
+    await onRefresh()
   }
 
   const handleSort = (column: SortableColumn) => {

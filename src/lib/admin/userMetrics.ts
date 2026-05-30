@@ -1,93 +1,104 @@
-import { Prisma, PrismaClient } from '@/generated/prisma';
+import { Prisma, PrismaClient } from "@/generated/prisma";
 
 interface UserMetricsRow {
-  monthStart: Date;
-  usersCreated: number;
-  activeUsersStart: number;
-  activeUsersEnd: number;
-  inactiveUsers: number;
-  logins: number;
-  logouts: number;
-  blockedUsers: number;
-  admin: number;
-  manager: number;
-  economico: number;
-  dependiente: number;
-  regularUser: number;
+	monthStart: Date;
+	usersCreated: number;
+	activeUsersStart: number;
+	activeUsersEnd: number;
+	inactiveUsers: number;
+	logins: number;
+	logouts: number;
+	blockedUsers: number;
+	admin: number;
+	manager: number;
+	economico: number;
+	dependiente: number;
+	regularUser: number;
 }
 
 interface UserMetricsResponse {
-  monthlyData: Array<{
-    year: number;
-    month: string;
-    yearMonth: string;
-    usersCreated: number;
-    activeUsersStart: number;
-    activeUsersEnd: number;
-    inactiveUsers: number;
-    logins: number;
-    logouts: number;
-    blockedUsers: number;
-    newUsersByRole: {
-      admin: number;
-      manager: number;
-      economico: number;
-      dependiente: number;
-      regularUser: number;
-    };
-  }>;
-  summary: {
-    totalUsers: number;
-    usersCreatedInPeriod: number;
-    totalLogins: number;
-    totalLogouts: number;
-    totalBlocks: number;
-  };
+	monthlyData: Array<{
+		year: number;
+		month: string;
+		yearMonth: string;
+		usersCreated: number;
+		activeUsersStart: number;
+		activeUsersEnd: number;
+		inactiveUsers: number;
+		logins: number;
+		logouts: number;
+		blockedUsers: number;
+		newUsersByRole: {
+			admin: number;
+			manager: number;
+			economico: number;
+			dependiente: number;
+			regularUser: number;
+		};
+	}>;
+	summary: {
+		totalUsers: number;
+		usersCreatedInPeriod: number;
+		totalLogins: number;
+		totalLogouts: number;
+		totalBlocks: number;
+	};
+}
+
+/**
+ * @description Formatea una fecha como string ISO para usarla en SQL.
+ */
+function fmt(d: Date): string {
+	return d.toISOString().replace("T", " ").replace("Z", "");
 }
 
 /**
  * @description Obtiene metricas temporales de usuarios usando agregaciones SQL.
+ *
+ * NOTA: Usa $queryRawUnsafe porque Prisma.sql + Date objects + CTEs con
+ * generate_series genera un error de sintaxis en la parametrización ($N).
+ * Los valores son generados internamente (fechas), no hay riesgo de inyección.
+ *
  * @param {PrismaClient} prismaClient - Cliente de Prisma.
  * @param {number} months - Cantidad de meses a incluir.
+ * @param {string} [tenantId] - Opcional: filtrar por tenant.
  * @returns {Promise<UserMetricsResponse>} Serie temporal y resumen de metricas.
  */
 export async function getUserMetrics(
-  prismaClient: PrismaClient,
-  months: number,
-  tenantId?: string,
+	prismaClient: PrismaClient,
+	months: number,
+	tenantId?: string,
 ): Promise<UserMetricsResponse> {
-  const now = new Date();
-  const startDate = new Date(now);
-  startDate.setMonth(startDate.getMonth() - months + 1);
-  startDate.setDate(1);
-  startDate.setHours(0, 0, 0, 0);
+	const now = new Date();
+	const startDate = new Date(now);
+	startDate.setMonth(startDate.getMonth() - months + 1);
+	startDate.setDate(1);
+	startDate.setHours(0, 0, 0, 0);
 
-  const endDate = new Date(now.getFullYear(), now.getMonth(), 1);
+	const endDate = new Date(now.getFullYear(), now.getMonth(), 1);
 
-  const userMembershipFilter = tenantId
-    ? Prisma.sql` AND EXISTS (
-        SELECT 1
-        FROM tenant_memberships tm
+	const tenantFilter = tenantId
+		? `AND EXISTS (
+        SELECT 1 FROM tenant_memberships tm
         WHERE tm."userId" = u."userId"
-          AND tm."tenantId" = ${tenantId}
+          AND tm."tenantId" = '${tenantId}'
           AND tm."isActive" = true
       )`
-    : Prisma.sql``;
+		: "";
 
-  const activityMembershipFilter = tenantId
-    ? Prisma.sql` AND EXISTS (
-        SELECT 1
-        FROM tenant_memberships tm
+	const activityTenantFilter = tenantId
+		? `AND EXISTS (
+        SELECT 1 FROM tenant_memberships tm
         WHERE tm."userId" = ual."userId"
-          AND tm."tenantId" = ${tenantId}
+          AND tm."tenantId" = '${tenantId}'
           AND tm."isActive" = true
       )`
-    : Prisma.sql``;
+		: "";
 
-  const monthlyRows = await prismaClient.$queryRaw<UserMetricsRow[]>`
+	const mainSql = `
     WITH months AS (
       SELECT date_trunc('month', gs)::date AS "monthStart"
-      FROM generate_series(${startDate}::timestamp, ${endDate}::timestamp, interval '1 month') AS gs
+      FROM generate_series('${fmt(startDate)}'::timestamp, '${fmt(endDate)}'::timestamp, interval '1 month') AS gs
     ),
     user_creations AS (
       SELECT
@@ -98,10 +109,10 @@ export async function getUserMetrics(
         COUNT(*) FILTER (WHERE role = 'economico')::int AS economico,
         COUNT(*) FILTER (WHERE role = 'dependiente')::int AS dependiente,
         COUNT(*) FILTER (WHERE role = 'regularUser')::int AS "regularUser"
-      FROM "User"
-      WHERE "createdAt" >= ${startDate}
-        AND "createdAt" < (${endDate}::timestamp + interval '1 month')
-        ${userMembershipFilter}
+      FROM "User" u
+      WHERE "createdAt" >= '${fmt(startDate)}'::timestamp
+        AND "createdAt" < ('${fmt(endDate)}'::timestamp + interval '1 month')
+        ${tenantFilter}
       GROUP BY 1
     ),
     activity AS (
@@ -110,10 +121,10 @@ export async function getUserMetrics(
         COUNT(*) FILTER (WHERE action = 'login')::int AS logins,
         COUNT(*) FILTER (WHERE action = 'logout')::int AS logouts,
         COUNT(*) FILTER (WHERE action = 'manual_lock')::int AS "blockedUsers"
-      FROM "UserActivityLog"
-      WHERE "createdAt" >= ${startDate}
-        AND "createdAt" < (${endDate}::timestamp + interval '1 month')
-        ${activityMembershipFilter}
+      FROM "UserActivityLog" ual
+      WHERE "createdAt" >= '${fmt(startDate)}'::timestamp
+        AND "createdAt" < ('${fmt(endDate)}'::timestamp + interval '1 month')
+        ${activityTenantFilter}
       GROUP BY 1
     ),
     active_start AS (
@@ -125,7 +136,7 @@ export async function getUserMetrics(
         ON u."createdAt" < m."monthStart"
        AND u."isActive" = true
        AND (u."expiresAt" IS NULL OR u."expiresAt" >= m."monthStart")
-       ${userMembershipFilter}
+       ${tenantFilter.replace(/u\."userId"/g, 'u."userId"')}
       GROUP BY m."monthStart"
     ),
     active_end AS (
@@ -137,7 +148,7 @@ export async function getUserMetrics(
         ON u."createdAt" < (m."monthStart" + interval '1 month')
        AND u."isActive" = true
        AND (u."expiresAt" IS NULL OR u."expiresAt" >= (m."monthStart" + interval '1 month'))
-       ${userMembershipFilter}
+       ${tenantFilter.replace(/u\."userId"/g, 'u."userId"')}
       GROUP BY m."monthStart"
     )
     SELECT
@@ -162,82 +173,92 @@ export async function getUserMetrics(
     ORDER BY m."monthStart" ASC;
   `;
 
-  const [totalUsers, summaryActivity] = await Promise.all([
-    tenantId
-      ? prismaClient.$queryRaw<Array<{ totalUsers: bigint }>>(Prisma.sql`
-          SELECT COUNT(*)::bigint AS "totalUsers"
-          FROM "User" u
-          WHERE EXISTS (
-            SELECT 1
-            FROM tenant_memberships tm
-            WHERE tm."userId" = u."userId"
-              AND tm."tenantId" = ${tenantId}
-              AND tm."isActive" = true
-          )
-        `)
-      : prismaClient.$queryRaw<Array<{ totalUsers: bigint }>>(Prisma.sql`
-          SELECT COUNT(*)::bigint AS "totalUsers"
-          FROM "User"
-        `),
-    prismaClient.$queryRaw<Array<{ action: string; count: bigint }>>(Prisma.sql`
-      SELECT action, COUNT(*)::bigint AS count
-      FROM "UserActivityLog" ual
-      WHERE ual."createdAt" >= ${startDate}
-        AND ual."createdAt" < (${endDate}::timestamp + interval '1 month')
-        AND ual.action IN ('login', 'logout', 'manual_lock')
-        ${tenantId
-          ? Prisma.sql`AND EXISTS (
-              SELECT 1
-              FROM tenant_memberships tm
-              WHERE tm."userId" = ual."userId"
-                AND tm."tenantId" = ${tenantId}
-                AND tm."isActive" = true
-            )`
-          : Prisma.sql``}
-      GROUP BY action
-    `),
-  ]);
+	const monthlyRows =
+		await prismaClient.$queryRawUnsafe<UserMetricsRow[]>(mainSql);
 
-  const summaryMap = summaryActivity.reduce<Record<string, number>>((acc, current) => {
-    acc[current.action] = Number(current.count);
-    return acc;
-  }, {});
+	const tenantTotalFilter = tenantId
+		? `WHERE EXISTS (
+        SELECT 1 FROM tenant_memberships tm
+        WHERE tm."userId" = u."userId"
+          AND tm."tenantId" = '${tenantId}'
+          AND tm."isActive" = true
+      )`
+		: "";
 
-  const monthlyData = monthlyRows.map((row) => {
-    const monthDate = new Date(row.monthStart);
+	const [totalUsers, summaryActivity] = await Promise.all([
+		prismaClient.$queryRawUnsafe<Array<{ totalUsers: bigint }>>(
+			`SELECT COUNT(*)::bigint AS "totalUsers" FROM "User" u ${tenantTotalFilter}`,
+		),
+		tenantId
+			? prismaClient.$queryRawUnsafe<Array<{ action: string; count: bigint }>>(
+					`SELECT action, COUNT(*)::bigint AS count
+           FROM "UserActivityLog" ual
+           WHERE ual."createdAt" >= '${fmt(startDate)}'::timestamp
+             AND ual."createdAt" < ('${fmt(endDate)}'::timestamp + interval '1 month')
+             AND ual.action IN ('login', 'logout', 'manual_lock')
+             AND EXISTS (
+               SELECT 1 FROM tenant_memberships tm
+               WHERE tm."userId" = ual."userId"
+                 AND tm."tenantId" = '${tenantId}'
+                 AND tm."isActive" = true
+             )
+           GROUP BY action`,
+				)
+			: prismaClient.$queryRawUnsafe<Array<{ action: string; count: bigint }>>(
+					`SELECT action, COUNT(*)::bigint AS count
+           FROM "UserActivityLog" ual
+           WHERE ual."createdAt" >= '${fmt(startDate)}'::timestamp
+             AND ual."createdAt" < ('${fmt(endDate)}'::timestamp + interval '1 month')
+             AND ual.action IN ('login', 'logout', 'manual_lock')
+           GROUP BY action`,
+				),
+	]);
 
-    return {
-      year: monthDate.getFullYear(),
-      month: monthDate.toLocaleDateString('es-ES', {
-        month: 'long',
-        year: 'numeric',
-      }),
-      yearMonth: `${monthDate.getFullYear()}-${String(monthDate.getMonth() + 1).padStart(2, '0')}`,
-      usersCreated: row.usersCreated,
-      activeUsersStart: row.activeUsersStart,
-      activeUsersEnd: row.activeUsersEnd,
-      inactiveUsers: row.inactiveUsers,
-      logins: row.logins,
-      logouts: row.logouts,
-      blockedUsers: row.blockedUsers,
-      newUsersByRole: {
-        admin: row.admin,
-        manager: row.manager,
-        economico: row.economico,
-        dependiente: row.dependiente,
-        regularUser: row.regularUser,
-      },
-    };
-  });
+	const summaryMap = summaryActivity.reduce<Record<string, number>>(
+		(acc, current) => {
+			acc[current.action] = Number(current.count);
+			return acc;
+		},
+		{},
+	);
 
-  return {
-    monthlyData,
-    summary: {
-      totalUsers: Number(totalUsers[0]?.totalUsers ?? 0),
-      usersCreatedInPeriod: monthlyData.reduce((sum, row) => sum + row.usersCreated, 0),
-      totalLogins: summaryMap.login ?? 0,
-      totalLogouts: summaryMap.logout ?? 0,
-      totalBlocks: summaryMap.manual_lock ?? 0,
-    },
-  };
+	const monthlyData = monthlyRows.map((row) => {
+		const monthDate = new Date(row.monthStart);
+		return {
+			year: monthDate.getFullYear(),
+			month: monthDate.toLocaleDateString("es-ES", {
+				month: "long",
+				year: "numeric",
+			}),
+			yearMonth: `${monthDate.getFullYear()}-${String(monthDate.getMonth() + 1).padStart(2, "0")}`,
+			usersCreated: row.usersCreated,
+			activeUsersStart: row.activeUsersStart,
+			activeUsersEnd: row.activeUsersEnd,
+			inactiveUsers: row.inactiveUsers,
+			logins: row.logins,
+			logouts: row.logouts,
+			blockedUsers: row.blockedUsers,
+			newUsersByRole: {
+				admin: row.admin,
+				manager: row.manager,
+				economico: row.economico,
+				dependiente: row.dependiente,
+				regularUser: row.regularUser,
+			},
+		};
+	});
+
+	return {
+		monthlyData,
+		summary: {
+			totalUsers: Number(totalUsers[0]?.totalUsers ?? 0),
+			usersCreatedInPeriod: monthlyData.reduce(
+				(sum, row) => sum + row.usersCreated,
+				0,
+			),
+			totalLogins: summaryMap.login ?? 0,
+			totalLogouts: summaryMap.logout ?? 0,
+			totalBlocks: summaryMap.manual_lock ?? 0,
+		},
+	};
 }

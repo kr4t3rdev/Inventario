@@ -10,7 +10,6 @@
  * @returns ServerAction<TInput, TOutput>
  */
 import { ZodError } from "zod";
-import { Prisma } from "@/generated/prisma";
 import { getCurrentUser } from "./get-current-user";
 import { ActionError, type ActionResponse, type ServerAction } from "./types";
 import type { AuthenticatedUser } from "@/lib/auth-middleware";
@@ -66,22 +65,34 @@ export function withAction<TInput, TOutput>(
 				};
 			}
 
-			if (error instanceof Prisma.PrismaClientKnownRequestError) {
+			// Duck-typing para errores de Prisma: instanceof puede fallar
+			// cuando pnpm/npm resuelve @prisma/client desde distintas ubicaciones.
+			const errorObj = error as Record<string, unknown>;
+			const errorName =
+				(errorObj?.constructor?.name as string) ||
+				(errorObj?.name as string) ||
+				"";
+			const isPrismaKnownError =
+				errorName === "PrismaClientKnownRequestError" ||
+				(typeof errorObj.code === "string" && errorObj.code.startsWith("P"));
+
+			if (isPrismaKnownError) {
+				const code = errorObj.code as string;
 				return {
 					success: false,
 					error: {
-						message: getPrismaErrorMessage(error),
-						code: error.code,
+						message: getPrismaErrorMessage(code),
+						code,
 					},
 				};
 			}
 
-			if (error instanceof Prisma.PrismaClientValidationError) {
+			if (errorName === "PrismaClientValidationError") {
 				return {
 					success: false,
 					error: {
-						message: 'Error de validación en la base de datos',
-						code: 'PRISMA_VALIDATION_ERROR',
+						message: "Error de validación en la base de datos",
+						code: "PRISMA_VALIDATION_ERROR",
 					},
 				};
 			}
@@ -115,14 +126,9 @@ export function withAction<TInput, TOutput>(
 /**
  * @description Mapea códigos de error de Prisma a mensajes amigables en español.
  *
- * @param error - Instancia de PrismaClientKnownRequestError
+ * @param code - Código de error Prisma (ej: "P2002", "42601")
  * @returns Mensaje descriptivo en español
  */
-function getPrismaErrorMessage(
-	error: Prisma.PrismaClientKnownRequestError,
-): string {
-	return (
-		PRISMA_ERROR_MESSAGES[error.code] ||
-		`Error de base de datos (${error.code})`
-	);
+function getPrismaErrorMessage(code: string): string {
+	return PRISMA_ERROR_MESSAGES[code] || `Error de base de datos (${code})`;
 }
