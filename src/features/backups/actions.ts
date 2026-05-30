@@ -275,7 +275,7 @@ export const importBackupAction = withAction(
       .toISOString()
       .replace(/[:.]/g, '-')
       .slice(0, 19)
-    const storagePath = `backups/imported_${timestamp}.sql.gz`
+    const storagePath = `imported_${timestamp}.sql.gz`
 
     const fileUrl = await storage.save(storagePath, buffer)
     const fileSize = parsed.fileSize ?? buffer.length

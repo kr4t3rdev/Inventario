@@ -61,7 +61,7 @@ export const POST = withAuthPost(async (request: NextRequest, _context, user) =>
       .toISOString()
       .replace(/[:.]/g, '-')
       .slice(0, 19)
-    const storagePath = `backups/imported_${timestamp}.sql.gz`
+    const storagePath = `imported_${timestamp}.sql.gz`
     const fileUrl = await storage.save(storagePath, buffer)
 
     // Create BackupLog — imported files are immediately completed

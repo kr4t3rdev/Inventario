@@ -264,7 +264,7 @@ export class BackupEngine {
     const ts = date.toISOString().replace(/[:.]/g, '-').slice(0, 19)
     const type = options.type
     const tenant = options.tenantId ? `_${options.tenantId}` : ''
-    return `backups/${type}${tenant}_${ts}.sql.gz`
+    return `${type}${tenant}_${ts}.sql.gz`
   }
 }
 

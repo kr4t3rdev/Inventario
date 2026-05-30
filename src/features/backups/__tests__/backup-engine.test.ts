@@ -121,7 +121,7 @@ describe('BackupEngine', () => {
 
     expect(mockStorage.save).toHaveBeenCalledOnce()
     const saveCall = mockStorage.save.mock.calls[0]
-    expect(saveCall[0]).toMatch(/^backups\/full_.+\.sql\.gz$/)
+    expect(saveCall[0]).toMatch(/^full_.+\.sql\.gz$/)
     expect(saveCall[1]).toBeInstanceOf(Buffer)
   })
 
