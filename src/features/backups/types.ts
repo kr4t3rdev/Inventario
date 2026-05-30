@@ -24,8 +24,11 @@ export interface ColumnDef {
 }
 
 export interface FKDef {
-  column: string
+  /** Table that owns the foreign key */
+  tableName: string
+  /** Referenced table */
   refTable: string
+  /** Referenced column */
   refColumn: string
 }
 

@@ -203,7 +203,7 @@ export class BackupEngine {
       columns: ColumnDef[]
       primaryKey: string[]
       indexes: string[]
-      foreignKeys: Array<{ column: string; refTable: string; refColumn: string }>
+      foreignKeys: Array<{ tableName: string; refTable: string; refColumn: string }>
     }>,
     options: BackupOptions,
   ): typeof tables {

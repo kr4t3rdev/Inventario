@@ -102,20 +102,8 @@ export class SchemaReader {
     // Build edges: [parent, child] for topological sort
     // Table A has FK to Table B => child = A, parent = B => edge [B, A]
     const edges: Array<[string, string]> = []
-    const fkByTable = new Map<string, FKDef[]>()
     for (const fk of allFks) {
-      const list = fkByTable.get(fk.column) ?? []
-      list.push(fk)
-      fkByTable.set(fk.column, list)
-    }
-    // Note: fk.column in FKDef is the column name, but in the context
-    // of SchemaReader.discoverForeignKeys(), we use tableName as column
-    // to simplify. Let me fix this.
-    // Actually looking at the discoverForeignKeys query — it returns
-    // tableName as column, not columnName. So fk.column IS the table name.
-
-    for (const fk of allFks) {
-      edges.push([fk.refTable, fk.column])
+      edges.push([fk.refTable, fk.tableName])
     }
 
     const topologicalOrder = topologicalSort(tableNames, edges)
@@ -125,7 +113,7 @@ export class SchemaReader {
       const columns = await this.discoverColumns(name)
       const primaryKey = await this.discoverPrimaryKey(name)
       const indexes = await this.discoverIndexes(name)
-      const foreignKeys = allFks.filter((fk) => fk.column === name)
+      const foreignKeys = allFks.filter((fk) => fk.tableName === name)
 
       tables.push({
         name,
@@ -206,8 +194,7 @@ export class SchemaReader {
 
   /**
    * Discover foreign key constraints for all tables in the list.
-   * Returns FKDef[] where column is the TABLE name (not column name)
-   * and refTable is the referenced table.
+   * Returns FKDef[] for topological sorting of tables during dump/restore.
    */
   async discoverForeignKeys(tableNames: string[]): Promise<FKDef[]> {
     if (tableNames.length === 0) return []
@@ -233,8 +220,8 @@ export class SchemaReader {
       [tableNames],
     )
     return result.rows.map((r) => ({
-      column: r.tableName as string,   // The table that has the FK
-      refTable: r.refTable as string,  // The table being referenced
+      tableName: r.tableName as string,
+      refTable: r.refTable as string,
       refColumn: r.refColumn as string,
     }))
   }

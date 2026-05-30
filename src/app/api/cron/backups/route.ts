@@ -19,6 +19,7 @@ import { prisma } from '@/lib/prisma'
 import { BackupEngine } from '@/features/backups/backup-engine'
 import { createStorage } from '@/features/backups/storage'
 import { pruneBackups } from '@/features/backups/prune'
+import { calculateNextRun } from '@/features/backups/cron-utils'
 
 /**
  * @description Validates the cron request via CRON_SECRET env var.
@@ -157,49 +158,4 @@ export async function GET(request: Request): Promise<NextResponse> {
     failed,
     errors: errors.length > 0 ? errors : undefined,
   })
-}
-
-/**
- * @description Simple cron next-run calculator.
- * Supports presets: daily, weekly, hourly, and standard cron expressions.
- */
-function calculateNextRun(cronExpr: string): Date {
-  const now = new Date()
-
-  switch (cronExpr.trim()) {
-    case 'hourly':
-    case '0 * * * *': {
-      const next = new Date(now)
-      next.setMinutes(0, 0, 0)
-      next.setHours(next.getHours() + 1)
-      return next
-    }
-    case 'daily':
-    case '0 2 * * *': {
-      const next = new Date(now)
-      next.setHours(2, 0, 0, 0)
-      if (next <= now) next.setDate(next.getDate() + 1)
-      return next
-    }
-    case 'weekly':
-    case '0 2 * * 0': {
-      return getNextWeeklyRun(now, 0, 2)
-    }
-    default: {
-      // Fallback: 1 hour from now
-      return new Date(now.getTime() + 60 * 60 * 1000)
-    }
-  }
-}
-
-function getNextWeeklyRun(now: Date, dayOfWeek: number, hour: number): Date {
-  const next = new Date(now)
-  next.setHours(hour, 0, 0, 0)
-  const daysUntil = (dayOfWeek - next.getDay() + 7) % 7
-  if (daysUntil === 0 && next <= now) {
-    next.setDate(next.getDate() + 7)
-  } else {
-    next.setDate(next.getDate() + daysUntil)
-  }
-  return next
 }
