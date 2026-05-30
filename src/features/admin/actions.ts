@@ -70,6 +70,41 @@ export const createUserAction = withAction(
 			await sendEmailVerificationLink(newUser as any);
 		} catch {}
 
+		// ── Crear TenantMembership si se especificó tenantRole ──────
+		const adminTenantId = user.tenantId;
+		if (parsed.tenantRole && adminTenantId) {
+			await prisma.tenantMembership.upsert({
+				where: {
+					tenantId_userId: { tenantId: adminTenantId, userId: newUser.userId },
+				},
+				create: {
+					tenantId: adminTenantId,
+					userId: newUser.userId,
+					tenantRole: parsed.tenantRole,
+					isActive: true,
+				},
+				update: { tenantRole: parsed.tenantRole, isActive: true },
+			});
+		}
+
+		// ── Crear Empleado si el rol es dependiente ────────────────
+		if (parsed.tenantRole === 'dependiente' && adminTenantId) {
+			const nameParts = parsed.name.trim().split(/\s+/);
+			const nombre = nameParts[0] || parsed.name;
+			const apellido = nameParts.slice(1).join(' ') || '';
+
+			await prisma.empleado.create({
+				data: {
+					nombre,
+					apellido,
+					cargo: 'Dependiente',
+					salarioBases: 0,
+					fechaContratacion: new Date(),
+					tenantId: adminTenantId,
+				},
+			});
+		}
+
 		revalidatePath("/admin");
 		return newUser;
 	},
