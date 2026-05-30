@@ -11,7 +11,7 @@ import { EditarVendorPageClient } from "@/features/vendors/components/vendor-edi
 
 
 export const metadata = {
-  title: "Editar Proveedor - FinanceTCP",
+  title: "Editar Proveedor - FinanceMDM",
 }
 
 export default async function UpdateVendorPage({

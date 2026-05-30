@@ -18,7 +18,7 @@ import { VentasPageClient } from "@/features/ventas/components/ventas-page-clien
  */
 
 export const metadata = {
-  title: "Sales - FinanceTCP",
+  title: "Sales - FinanceMDM",
 }
 
 export default async function VentasPage() {

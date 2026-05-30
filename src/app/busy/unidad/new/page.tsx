@@ -8,7 +8,7 @@ import { NuevaUnidadPageClient } from "@/features/unidades/components/unidad-new
 
 
 export const metadata = {
-  title: "Nueva Unidad - FinanceTCP",
+  title: "Nueva Unidad - FinanceMDM",
 }
 
 export default function NewUnidad() {

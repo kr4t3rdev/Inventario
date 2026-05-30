@@ -12,7 +12,7 @@ import { MermasContent } from "@/features/mermas"
 
 
 export const metadata = {
-  title: "Mermas - FinanceTCP",
+  title: "Mermas - FinanceMDM",
 }
 
 export default async function MermasPage() {

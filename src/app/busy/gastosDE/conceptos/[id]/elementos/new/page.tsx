@@ -13,7 +13,7 @@ import { notFound } from "next/navigation"
 
 
 export const metadata = {
-  title: "Nuevo Elemento - FinanceTCP",
+  title: "Nuevo Elemento - FinanceMDM",
 }
 
 interface Props {

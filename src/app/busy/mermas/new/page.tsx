@@ -6,7 +6,7 @@
 import { NuevaMermaContent } from "@/features/mermas"
 
 export const metadata = {
-  title: "Nueva Merma - FinanceTCP",
+  title: "Nueva Merma - FinanceMDM",
 }
 
 export default function NuevaMermaPage() {

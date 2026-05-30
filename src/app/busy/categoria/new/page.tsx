@@ -8,7 +8,7 @@ import { CategoryForm } from '@/features/categorias/components/category-form'
 
 
 export const metadata = {
-  title: "Nueva Categoría - FinanceTCP",
+  title: "Nueva Categoría - FinanceMDM",
 }
 
 function NuevaCategoriaFallback() {

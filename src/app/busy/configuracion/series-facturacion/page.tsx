@@ -6,7 +6,7 @@ import SeriesFacturacionTable from "@/features/series-facturacion"
  */
 
 export const metadata = {
-  title: "Series de Facturación - FinanceTCP",
+  title: "Series de Facturación - FinanceMDM",
 }
 
 export default function SeriesFacturacionPage() {

@@ -9,7 +9,7 @@ import { AuthCallbackClient } from './auth-callback-client'
  */
 
 export const metadata = {
-  title: "Autenticación - FinanceTCP",
+  title: "Autenticación - FinanceMDM",
 }
 
 export default function AuthCallbackPage() {

@@ -9,7 +9,7 @@ import { OfertaDetailContent } from '@/features/ofertas/components/oferta-detail
 
 
 export const metadata = {
-  title: "Detalle de Oferta - FinanceTCP",
+  title: "Detalle de Oferta - FinanceMDM",
 }
 
 interface OfertaDetailPageProps {

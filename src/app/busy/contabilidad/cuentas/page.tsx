@@ -11,7 +11,7 @@ import { serializePrismaData } from "@/lib/prisma-utils"
 
 
 export const metadata = {
-  title: "Cuentas - FinanceTCP",
+  title: "Cuentas - FinanceMDM",
 }
 
 export default async function CuentasBancariasPage() {

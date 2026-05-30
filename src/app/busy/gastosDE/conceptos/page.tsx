@@ -12,7 +12,7 @@ import { GastoConceptosContent } from "@/features/gastosDE"
 
 
 export const metadata = {
-  title: "Conceptos de Gasto - FinanceTCP",
+  title: "Conceptos de Gasto - FinanceMDM",
 }
 
 export default async function GastoConceptosPage() {

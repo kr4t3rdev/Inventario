@@ -11,7 +11,7 @@ import { CategoriaEditPageClient } from "@/features/categorias/components/catego
 
 
 export const metadata = {
-  title: "Editar Categoría - FinanceTCP",
+  title: "Editar Categoría - FinanceMDM",
 }
 
 export default async function EditarCategoryPage({

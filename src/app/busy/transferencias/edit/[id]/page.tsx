@@ -11,7 +11,7 @@ import { EditarTransferenciaContent } from "@/features/transferencias/components
 import { notFound } from "next/navigation"
 
 export const metadata = {
-  title: "Editar Transferencia - FinanceTCP",
+  title: "Editar Transferencia - FinanceMDM",
 }
 
 interface Props {

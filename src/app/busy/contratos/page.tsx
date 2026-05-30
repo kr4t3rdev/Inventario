@@ -11,7 +11,7 @@ import { authenticateUser } from '@/lib/auth-middleware'
 
 
 export const metadata = {
-  title: "Contratos - FinanceTCP",
+  title: "Contratos - FinanceMDM",
 }
 
 interface PageProps {

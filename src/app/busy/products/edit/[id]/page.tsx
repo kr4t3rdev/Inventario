@@ -15,7 +15,7 @@ import { ProductoFormPageClient } from '@/features/productos/components/producto
 
 
 export const metadata = {
-  title: "Editar Producto - FinanceTCP",
+  title: "Editar Producto - FinanceMDM",
 }
 
 interface EditPageProps {

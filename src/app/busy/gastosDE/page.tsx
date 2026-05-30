@@ -15,7 +15,7 @@ import type { Vendor } from "@/app/models/model"
 
 
 export const metadata = {
-  title: "Gastos D/E - FinanceTCP",
+  title: "Gastos D/E - FinanceMDM",
 }
 
 export default async function GastosDEPage() {

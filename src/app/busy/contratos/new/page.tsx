@@ -15,7 +15,7 @@ import prisma from '@/lib/prisma'
  */
 
 export const metadata = {
-  title: "Nuevo Contrato - FinanceTCP",
+  title: "Nuevo Contrato - FinanceMDM",
 }
 
 export default async function NewContratoPage() {

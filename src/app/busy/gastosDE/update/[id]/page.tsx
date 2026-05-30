@@ -15,7 +15,7 @@ import { notFound } from "next/navigation"
 
 
 export const metadata = {
-  title: "Editar Gasto D/E - FinanceTCP",
+  title: "Editar Gasto D/E - FinanceMDM",
 }
 
 interface Props {

@@ -8,7 +8,7 @@ import { FacturasContent } from "@/features/facturas"
 
 
 export const metadata = {
-  title: "Facturas - FinanceTCP",
+  title: "Facturas - FinanceMDM",
 }
 
 interface PageProps {

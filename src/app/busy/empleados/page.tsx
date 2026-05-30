@@ -8,7 +8,7 @@ import { EmpleadosNominaContent } from '@/features/empleados/components'
  */
 
 export const metadata = {
-  title: "Empleados - FinanceTCP",
+  title: "Empleados - FinanceMDM",
 }
 
 export const dynamic = 'force-dynamic'

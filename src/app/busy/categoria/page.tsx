@@ -15,7 +15,7 @@ import type { Categoria, CategoriaHierarchy } from "@/app/models/model"
 
 
 export const metadata = {
-  title: "Categorías - FinanceTCP",
+  title: "Categorías - FinanceMDM",
 }
 
 export default async function CategoriaPage() {

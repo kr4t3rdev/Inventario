@@ -16,7 +16,7 @@ import { notFound } from "next/navigation"
 
 
 export const metadata = {
-  title: "Editar Elemento - FinanceTCP",
+  title: "Editar Elemento - FinanceMDM",
 }
 
 interface Props {

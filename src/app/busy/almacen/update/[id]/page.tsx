@@ -11,7 +11,7 @@ import { EditarAlmacenPageClient } from "@/features/almacenes/components/almacen
 
 
 export const metadata = {
-  title: "Editar Almacén - FinanceTCP",
+  title: "Editar Almacén - FinanceMDM",
 }
 
 export default async function EditarAlmacenPage({

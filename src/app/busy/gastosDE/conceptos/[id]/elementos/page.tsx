@@ -14,7 +14,7 @@ import { notFound } from "next/navigation"
 
 
 export const metadata = {
-  title: "Elementos del Concepto - FinanceTCP",
+  title: "Elementos del Concepto - FinanceMDM",
 }
 
 interface Props {

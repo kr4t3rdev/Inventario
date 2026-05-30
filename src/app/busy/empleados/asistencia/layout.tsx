@@ -1,5 +1,5 @@
 export const metadata = {
-  title: "Asistencia - FinanceTCP",
+  title: "Asistencia - FinanceMDM",
 }
 
 export default function PageLayout({ children }: { children: React.ReactNode }) {

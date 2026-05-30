@@ -8,7 +8,7 @@ import { CompraProductoForm } from '@/features/compras-productos/components/comp
 
 
 export const metadata = {
-  title: "Nueva Compra - FinanceTCP",
+  title: "Nueva Compra - FinanceMDM",
 }
 
 function NuevaCompraFallback() {

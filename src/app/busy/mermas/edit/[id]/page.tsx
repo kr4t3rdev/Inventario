@@ -10,7 +10,7 @@ import { getMermaByIdAction, EditarMermaContent } from "@/features/mermas"
 import { notFound } from "next/navigation"
 
 export const metadata = {
-  title: "Editar Merma - FinanceTCP",
+  title: "Editar Merma - FinanceMDM",
 }
 
 interface Props {

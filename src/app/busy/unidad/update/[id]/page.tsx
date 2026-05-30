@@ -11,7 +11,7 @@ import { EditarUnidadPageClient } from "@/features/unidades/components/unidad-ed
 
 
 export const metadata = {
-  title: "Editar Unidad - FinanceTCP",
+  title: "Editar Unidad - FinanceMDM",
 }
 
 export default async function UpdateUnidadPage({

@@ -12,7 +12,7 @@ import { OfertasPageContent } from "./page-client"
  */
 
 export const metadata = {
-  title: "Ofertas - FinanceTCP",
+  title: "Ofertas - FinanceMDM",
 }
 
 export default async function OfertasPage() {

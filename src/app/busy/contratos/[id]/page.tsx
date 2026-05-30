@@ -9,7 +9,7 @@ import { ContratoDetailContent } from '@/features/contratos'
 
 
 export const metadata = {
-  title: "Detalle de Contrato - FinanceTCP",
+  title: "Detalle de Contrato - FinanceMDM",
 }
 
 interface PageProps {

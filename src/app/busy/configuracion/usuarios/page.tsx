@@ -7,7 +7,7 @@ import { TenantUsersPage } from '@/features/admin/components/tenant-users-page'
  */
 
 export const metadata = {
-  title: "Usuarios - FinanceTCP",
+  title: "Usuarios - FinanceMDM",
 }
 
 export default function UsersConfigPage() {

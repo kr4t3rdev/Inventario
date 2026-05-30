@@ -13,7 +13,7 @@ import prisma from '@/lib/prisma'
 
 
 export const metadata = {
-  title: "Editar Contrato - FinanceTCP",
+  title: "Editar Contrato - FinanceMDM",
 }
 
 interface PageProps {

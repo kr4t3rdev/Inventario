@@ -8,7 +8,7 @@ import { NuevoVendorPageClient } from "@/features/vendors/components/vendor-new-
 
 
 export const metadata = {
-  title: "Nuevo Proveedor - FinanceTCP",
+  title: "Nuevo Proveedor - FinanceMDM",
 }
 
 export default function NewVendor() {

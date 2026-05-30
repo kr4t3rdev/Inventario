@@ -8,7 +8,7 @@ import { ReconciliacionVentasPage } from "@/features/contabilidad/components/rec
 
 
 export const metadata = {
-  title: "Reconciliar Ventas - FinanceTCP",
+  title: "Reconciliar Ventas - FinanceMDM",
 }
 
 export default function VentasReconciliacionPage() {

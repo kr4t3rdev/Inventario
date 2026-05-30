@@ -10,7 +10,7 @@ import { PvPageClient } from "@/features/puntos-venta/components/pv-page-client"
 
 
 export const metadata = {
-  title: "Puntos de Venta - FinanceTCP",
+  title: "Puntos de Venta - FinanceMDM",
 }
 
 export default async function PuntosDeVentaPage() {

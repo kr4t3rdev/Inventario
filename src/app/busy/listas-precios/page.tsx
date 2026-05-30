@@ -10,7 +10,7 @@ import { ListasPreciosPageClient } from "@/features/listas-precios/components/li
 
 
 export const metadata = {
-  title: "Listas de Precios - FinanceTCP",
+  title: "Listas de Precios - FinanceMDM",
 }
 
 export default async function ListasPreciosPage() {

@@ -14,7 +14,7 @@ import {
  */
 
 export const metadata = {
-  title: "Mi Empresa - FinanceTCP",
+  title: "Mi Empresa - FinanceMDM",
 }
 
 export default async function MiEmpresaConfigPage() {

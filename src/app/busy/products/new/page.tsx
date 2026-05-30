@@ -12,7 +12,7 @@ import { ProductoFormPageClient } from '@/features/productos/components/producto
 
 
 export const metadata = {
-  title: "Nuevo Producto - FinanceTCP",
+  title: "Nuevo Producto - FinanceMDM",
 }
 
 export default async function NuevoProductosPage(): Promise<React.JSX.Element> {

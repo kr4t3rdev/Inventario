@@ -1,5 +1,5 @@
 export const metadata = {
-  title: "Stock Mínimo Masivo - FinanceTCP",
+  title: "Stock Mínimo Masivo - FinanceMDM",
 }
 
 export default function PageLayout({ children }: { children: React.ReactNode }) {

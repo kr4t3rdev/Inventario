@@ -11,7 +11,7 @@ import type { Unidad } from "@/features/unidades"
 
 
 export const metadata = {
-  title: "Unidades - FinanceTCP",
+  title: "Unidades - FinanceMDM",
 }
 
 export default async function UnidadPage() {

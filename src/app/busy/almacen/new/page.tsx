@@ -9,7 +9,7 @@ import { NuevoAlmacenPageClient } from "@/features/almacenes/components/almacen-
 
 
 export const metadata = {
-  title: "Nuevo Almacén - FinanceTCP",
+  title: "Nuevo Almacén - FinanceMDM",
 }
 
 export default function NuevoAlmacenPage() {

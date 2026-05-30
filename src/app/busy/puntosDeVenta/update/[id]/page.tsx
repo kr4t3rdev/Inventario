@@ -11,7 +11,7 @@ import { EditarPvPageClient } from "@/features/puntos-venta/components/pv-edit-p
 
 
 export const metadata = {
-  title: "Editar Punto de Venta - FinanceTCP",
+  title: "Editar Punto de Venta - FinanceMDM",
 }
 
 export default async function EditarPuntoVentaPage({

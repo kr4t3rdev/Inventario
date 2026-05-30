@@ -5,7 +5,7 @@ import { CierreDetailsPageClient } from "@/features/contabilidad/components/cier
 
 
 export const metadata = {
-  title: "Detalle de Cierre - FinanceTCP",
+  title: "Detalle de Cierre - FinanceMDM",
 }
 
 interface Props {

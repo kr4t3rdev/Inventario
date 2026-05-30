@@ -3,7 +3,7 @@ import { ComprasProductosContent } from '@/features/compras-productos/components
 
 
 export const metadata = {
-  title: "Compras a Productos - FinanceTCP",
+  title: "Compras a Productos - FinanceMDM",
 }
 
 export default async function ComprasProductosPage() {

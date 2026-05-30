@@ -12,7 +12,7 @@ import { ProduccionContent } from "@/features/produccion"
 
 
 export const metadata = {
-  title: "Producción - FinanceTCP",
+  title: "Producción - FinanceMDM",
 }
 
 export default async function ProduccionPage() {

@@ -8,7 +8,7 @@ import { listarPeriodosAction } from "@/features/contabilidad/actions-periodos";
 import { PeriodosPageClient } from "@/features/contabilidad/components/periodos/periodos-page-client";
 
 export const metadata = {
-  title: "Períodos Contables - FinanceTCP",
+  title: "Períodos Contables - FinanceMDM",
 };
 
 export default async function PeriodosPage() {

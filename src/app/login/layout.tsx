@@ -1,5 +1,5 @@
 export const metadata = {
-  title: "Iniciar Sesión - FinanceTCP",
+  title: "Iniciar Sesión - FinanceMDM",
 }
 
 export default function PageLayout({ children }: { children: React.ReactNode }) {

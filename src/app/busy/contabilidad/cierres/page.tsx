@@ -9,7 +9,7 @@ import { CierresManager } from "@/features/contabilidad/components/cierres/Cierr
 
 
 export const metadata = {
-  title: "Cierres - FinanceTCP",
+  title: "Cierres - FinanceMDM",
 }
 
 export default async function CierresPage() {

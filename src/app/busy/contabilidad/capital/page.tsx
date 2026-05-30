@@ -8,7 +8,7 @@ import { CapitalPageClient } from "@/features/contabilidad/components/capital/ca
 
 
 export const metadata = {
-  title: "Capital - FinanceTCP",
+  title: "Capital - FinanceMDM",
 }
 
 export default function InyeccionCapitalPage() {

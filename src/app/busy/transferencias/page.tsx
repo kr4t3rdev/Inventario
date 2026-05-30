@@ -12,7 +12,7 @@ import { TransferenciasContent } from "@/features/transferencias"
 
 
 export const metadata = {
-  title: "Transferencias - FinanceTCP",
+  title: "Transferencias - FinanceMDM",
 }
 
 export default async function TransferenciasPage() {

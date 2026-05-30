@@ -1,5 +1,5 @@
 export const metadata = {
-  title: "Verificar Email - FinanceTCP",
+  title: "Verificar Email - FinanceMDM",
 }
 
 export default function PageLayout({ children }: { children: React.ReactNode }) {

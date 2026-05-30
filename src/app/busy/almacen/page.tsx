@@ -15,7 +15,7 @@ import type { Almacen } from "@/features/almacenes"
 
 
 export const metadata = {
-  title: "Almacenes - FinanceTCP",
+  title: "Almacenes - FinanceMDM",
 }
 
 export const dynamic = 'force-dynamic'

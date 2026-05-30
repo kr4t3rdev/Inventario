@@ -9,7 +9,7 @@ import { ReconciliacionHubClient } from "@/features/contabilidad/components/reco
 
 
 export const metadata = {
-  title: "Reconciliación - FinanceTCP",
+  title: "Reconciliación - FinanceMDM",
 }
 
 export default async function ReconciliacionHubPage() {

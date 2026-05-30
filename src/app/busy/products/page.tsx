@@ -19,7 +19,7 @@ import type { Producto } from "@/features/productos/types"
  */
 
 export const metadata = {
-  title: "Productos - FinanceTCP",
+  title: "Productos - FinanceMDM",
 }
 
 export default async function ProductosPage() {

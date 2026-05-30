@@ -11,13 +11,18 @@
 import { getServiciosAction } from "@/features/servicios/actions"
 import { getVentaServiciosAction } from "@/features/venta-servicios/actions"
 import { ServiciosContent } from "@/features/servicios"
+import { getCurrentUser } from "@/lib/server-actions"
 
 
 export const metadata = {
-  title: "Servicios - FinanceTCP",
+  title: "Servicios - FinanceMDM",
 }
 
 export default async function ServiciosPage() {
+  // ── Obtener datos y rol del usuario ──
+  const user = await getCurrentUser()
+  const tenantRole = user?.tenantRole
+
   // ── Resolver datos en paralelo en el servidor ──
   const [serviciosResult, ventaServiciosResult] = await Promise.all([
     getServiciosAction(),
@@ -34,6 +39,7 @@ export default async function ServiciosPage() {
       initialVentaServicios={
       initialVentaServicios
       }
+      tenantRole={tenantRole}
     />
   )
 }

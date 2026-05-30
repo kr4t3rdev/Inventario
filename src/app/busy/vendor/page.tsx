@@ -10,7 +10,7 @@ import { VendorPageClient } from "@/features/vendors/components/vendor-page-clie
 
 
 export const metadata = {
-  title: "Proveedores - FinanceTCP",
+  title: "Proveedores - FinanceMDM",
 }
 
 export default async function VendorPage() {

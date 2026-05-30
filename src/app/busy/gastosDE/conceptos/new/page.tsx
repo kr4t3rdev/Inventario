@@ -8,7 +8,7 @@ import { GastoConceptoForm } from "@/features/gastosDE"
 
 
 export const metadata = {
-  title: "Nuevo Concepto - FinanceTCP",
+  title: "Nuevo Concepto - FinanceMDM",
 }
 
 export default function NewGastoConceptoPage() {
