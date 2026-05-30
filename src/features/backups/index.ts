@@ -3,8 +3,8 @@
  */
 
 // Schemas
-export { createBackupSchema, createPlanSchema, updatePlanSchema, deleteBackupSchema, restoreBackupSchema, getBackupsSchema } from './schemas'
-export type { CreateBackupInput, CreatePlanInput, UpdatePlanInput, RestoreBackupInput, GetBackupsInput } from './schemas'
+export { createBackupSchema, createPlanSchema, updatePlanSchema, deleteBackupSchema, restoreBackupSchema, getBackupsSchema, importBackupSchema } from './schemas'
+export type { CreateBackupInput, CreatePlanInput, UpdatePlanInput, RestoreBackupInput, GetBackupsInput, ImportBackupInput } from './schemas'
 
 // Types
 export type { BackupOptions, BackupResult, ColumnDef, FKDef, TableSchema, BackupLogRow } from './types'
@@ -14,7 +14,7 @@ export { createStorage } from './storage'
 export type { BackupStorage } from './storage/types'
 
 // Engine
-export { BackupEngine } from './backup-engine'
+export { BackupEngine, validateBackupFile } from './backup-engine'
 export { RestoreEngine } from './restore-engine'
 export type { RestoreResult, SqlStatement, SqlStatementType } from './restore-engine'
 export { SchemaReader, topologicalSort } from './schema-reader'
@@ -22,7 +22,7 @@ export { DataExporter } from './data-exporter'
 export { SQLBuilder } from './sql-builder'
 
 // Actions
-export { createBackupAction, getBackupsAction, getBackupAction, getBackupStatusAction, deleteBackupAction, downloadBackupAction, restoreBackupAction } from './actions'
+export { createBackupAction, getBackupsAction, getBackupAction, getBackupStatusAction, deleteBackupAction, downloadBackupAction, restoreBackupAction, importBackupAction } from './actions'
 export { createPlanAction, updatePlanAction, deletePlanAction, getPlansAction } from './actions-plans'
 
 // Hooks
@@ -36,3 +36,4 @@ export { BackupTriggerDialog } from './components/backup-trigger-dialog'
 export { RestoreDialog } from './components/restore-dialog'
 export { PlanList } from './components/plan-list'
 export { PlanFormDialog } from './components/plan-form-dialog'
+export { ImportBackupDialog } from './components/import-backup-dialog'

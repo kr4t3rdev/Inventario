@@ -6,7 +6,7 @@
  * Memory-safe: processes one table at a time, one batch at a time.
  * Each batch is immediately written to the output buffer.
  */
-import { gzipSync } from 'zlib'
+import { gzipSync, gunzipSync } from 'zlib'
 import { PrismaClient } from '@/generated/prisma'
 import type { BackupStorage } from './storage/types'
 import { SchemaReader } from './schema-reader'
@@ -14,6 +14,49 @@ import { DataExporter } from './data-exporter'
 import { SQLBuilder } from './sql-builder'
 import type { BackupOptions, BackupResult } from './types'
 import type { ColumnDef } from './types'
+
+/**
+ * @description Validates a buffer as a valid .sql.gz backup file.
+ * Checks gzip magic bytes (0x1f 0x8b), decompresses, and verifies SQL-like content.
+ *
+ * @param buffer - Raw file buffer
+ * @returns Object with valid flag and optional error message
+ */
+export function validateBackupFile(buffer: Buffer): {
+	valid: boolean
+	error?: string
+} {
+	if (buffer.length < 2 || buffer[0] !== 0x1f || buffer[1] !== 0x8b) {
+		return {
+			valid: false,
+			error: 'El archivo no es un backup v\u00e1lido (.sql.gz)',
+		}
+	}
+
+	try {
+		const decompressed = gunzipSync(buffer)
+		const content = decompressed.toString('utf-8').trim()
+
+		if (!content || content.length === 0) {
+			return { valid: false, error: 'El archivo est\u00e1 vac\u00edo' }
+		}
+
+		const hasSQLHeader = /^(--|<|CREATE|INSERT|SET|BEGIN)/i.test(content)
+		if (!hasSQLHeader) {
+			return {
+				valid: false,
+				error: 'El archivo no contiene un backup SQL v\u00e1lido',
+			}
+		}
+
+		return { valid: true }
+	} catch {
+		return {
+			valid: false,
+			error: 'El archivo no se puede descomprimir como gzip',
+		}
+	}
+}
 
 const DEFAULT_PRISMA = new PrismaClient()
 

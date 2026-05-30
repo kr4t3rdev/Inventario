@@ -51,7 +51,7 @@ export function RestoreDialog({
 
   if (!backup) return null
 
-  const expectedConfirmation = backup.type === 'full' ? 'FULL RESTORE' : 'RESTORE'
+  const expectedConfirmation = backup.type === 'full' || backup.type === 'imported' ? 'FULL RESTORE' : 'RESTORE'
   const isValid = typedText === expectedConfirmation
 
   const handleStartRestore = async () => {
@@ -66,7 +66,7 @@ export function RestoreDialog({
     setStep('result')
   }
 
-  const typeLabel = backup.type === 'full' ? 'completa' : backup.type === 'tenant' ? 'de tenant' : 'de configuración'
+  const typeLabel = backup.type === 'full' || backup.type === 'imported' ? 'completa' : backup.type === 'tenant' ? 'de tenant' : 'de configuración'
 
   return (
     <Dialog open={open} onOpenChange={handleOpenChange}>

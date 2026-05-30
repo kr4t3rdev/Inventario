@@ -42,6 +42,7 @@ const TYPE_LABELS: Record<string, { label: string; icon: typeof Database; color:
   full: { label: 'Completo', icon: Database, color: 'text-violet-600' },
   tenant: { label: 'Por Tenant', icon: Building2, color: 'text-amber-600' },
   config: { label: 'Config', icon: Settings, color: 'text-emerald-600' },
+  imported: { label: 'Importada', icon: HardDrive, color: 'text-sky-600' },
 }
 
 const STATUS_BADGES: Record<string, { label: string; variant: 'default' | 'secondary' | 'destructive' | 'outline' }> = {
@@ -107,6 +108,7 @@ export function BackupHistoryTable({
             <option value="full">Completo</option>
             <option value="tenant">Por Tenant</option>
             <option value="config">Config</option>
+            <option value="imported">Importada</option>
           </select>
         </div>
 

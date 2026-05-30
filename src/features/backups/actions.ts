@@ -12,7 +12,7 @@
 import { revalidatePath } from 'next/cache'
 import { withAction, ActionError } from '@/lib/server-actions'
 import { prisma } from '@/lib/prisma'
-import { BackupEngine } from './backup-engine'
+import { BackupEngine, validateBackupFile } from './backup-engine'
 import { RestoreEngine } from './restore-engine'
 import { createStorage } from './storage'
 import {
@@ -20,11 +20,13 @@ import {
   deleteBackupSchema,
   restoreBackupSchema,
   getBackupsSchema,
+  importBackupSchema,
 } from './schemas'
 import type {
   CreateBackupInput,
   RestoreBackupInput,
   GetBackupsInput,
+  ImportBackupInput,
 } from './schemas'
 import type { AuthenticatedUser } from '@/lib/auth-middleware'
 
@@ -212,6 +214,91 @@ export const getBackupStatusAction = withAction(
   },
 )
 
+// ─── Import External Backup ─────────────────────────────────
+
+/**
+ * @description Imports an external .sql.gz backup file by downloading from a URL.
+ * Validates the file (gzip + SQL content), stores it, and creates a BackupLog
+ * with type='imported' and status='completed'.
+ *
+ * For file upload (multipart), use POST /api/backups/import instead.
+ *
+ * Auth: admin only
+ */
+export const importBackupAction = withAction(
+  async (input: ImportBackupInput, user: AuthenticatedUser) => {
+    if (user.role !== 'admin') {
+      throw new ActionError('Acceso restringido', 'FORBIDDEN')
+    }
+
+    const parsed = importBackupSchema.parse(input)
+
+    if (!parsed.url) {
+      throw new ActionError(
+        'Se requiere una URL para importar',
+        'VALIDATION_ERROR',
+      )
+    }
+
+    // Download the file
+    let response: Response
+    try {
+      response = await fetch(parsed.url)
+      if (!response.ok) {
+        throw new ActionError(
+          `No se pudo descargar el archivo (${response.status})`,
+          'DOWNLOAD_FAILED',
+        )
+      }
+    } catch (err) {
+      if (err instanceof ActionError) throw err
+      throw new ActionError(
+        'No se pudo conectar con la URL proporcionada',
+        'DOWNLOAD_FAILED',
+      )
+    }
+
+    const buffer = Buffer.from(await response.arrayBuffer())
+
+    // Validate file
+    const validation = validateBackupFile(buffer)
+    if (!validation.valid) {
+      throw new ActionError(
+        validation.error ?? 'Archivo de backup inv\u00e1lido',
+        'VALIDATION_ERROR',
+      )
+    }
+
+    // Build filename and store
+    const storage = createStorage()
+    const timestamp = new Date()
+      .toISOString()
+      .replace(/[:.]/g, '-')
+      .slice(0, 19)
+    const storagePath = `backups/imported_${timestamp}.sql.gz`
+
+    const fileUrl = await storage.save(storagePath, buffer)
+    const fileSize = parsed.fileSize ?? buffer.length
+
+    // Create BackupLog — imported files are immediately completed
+    const log = await prisma.backupLog.create({
+      data: {
+        type: 'imported',
+        status: 'completed',
+        fileUrl,
+        fileName: storagePath,
+        fileSize,
+        createdBy: user.userId,
+        completedAt: new Date(),
+      },
+      select: { backupLogId: true },
+    })
+
+    revalidatePath('/admin/backups')
+    return { backupLogId: log.backupLogId, type: 'imported' }
+  },
+)
+
 // ─── Backup Deletion ────────────────────────────────────────
 
 /**
@@ -350,7 +437,7 @@ export const restoreBackupAction = withAction(
 
     // Verify confirmation string
     const expectedConfirmation =
-      log.type === 'full' ? 'FULL RESTORE' : 'RESTORE'
+      log.type === 'full' || log.type === 'imported' ? 'FULL RESTORE' : 'RESTORE'
 
     if (parsed.confirmation !== expectedConfirmation) {
       throw new ActionError(

@@ -126,7 +126,7 @@ export class RestoreEngine {
       try {
         await client.query('BEGIN')
 
-        if (log.type === 'full') {
+        if (log.type === 'full' || log.type === 'imported') {
           await this.executeFullRestore(client, tableOrder, inserts)
         } else if (log.type === 'tenant') {
           await this.executeTenantRestore(client, log.tenantId!, tableOrder, statements)

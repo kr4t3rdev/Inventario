@@ -14,6 +14,7 @@ import {
   RefreshCw,
   AlertCircle,
   Plus,
+  Upload,
 } from 'lucide-react'
 import { toast } from 'sonner'
 import { Button } from '@/components/ui/button'
@@ -23,6 +24,7 @@ import { useBackups } from '../hooks/use-backups'
 import { useBackupPlans } from '../hooks/use-backup-plans'
 import { BackupHistoryTable } from './backup-history-table'
 import { BackupTriggerDialog } from './backup-trigger-dialog'
+import { ImportBackupDialog } from './import-backup-dialog'
 import { RestoreDialog } from './restore-dialog'
 import { PlanList } from './plan-list'
 import { PlanFormDialog } from './plan-form-dialog'
@@ -237,25 +239,33 @@ export function BackupDashboardPage() {
             Administrá las copias de seguridad de la base de datos
           </p>
         </div>
-        <BackupTriggerDialog
-          isCreating={isCreating}
-          error={backupError}
-          onCreateBackup={handleCreateBackup}
-        >
-          <Button className="bg-violet-600 hover:bg-violet-700">
-            {isCreating ? (
-              <>
-                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                Creando...
-              </>
-            ) : (
-              <>
-                <Database className="mr-2 h-4 w-4" />
-                Nueva copia
-              </>
-            )}
-          </Button>
-        </BackupTriggerDialog>
+        <div className="flex items-center gap-2">
+          <ImportBackupDialog onSuccess={refreshLogs}>
+            <Button variant="outline" className="border-violet-200 text-violet-700 hover:bg-violet-50 dark:border-violet-800 dark:text-violet-400 dark:hover:bg-violet-950/30">
+              <Upload className="mr-2 h-4 w-4" />
+              Importar
+            </Button>
+          </ImportBackupDialog>
+          <BackupTriggerDialog
+            isCreating={isCreating}
+            error={backupError}
+            onCreateBackup={handleCreateBackup}
+          >
+            <Button className="bg-violet-600 hover:bg-violet-700">
+              {isCreating ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Creando...
+                </>
+              ) : (
+                <>
+                  <Database className="mr-2 h-4 w-4" />
+                  Nueva copia
+                </>
+              )}
+            </Button>
+          </BackupTriggerDialog>
+        </div>
       </div>
 
       {/* Quick stats */}
