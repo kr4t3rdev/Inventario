@@ -3,11 +3,14 @@ import {
 	BarChart3,
 	Building2,
 	CreditCard,
+	Database,
 	DollarSign,
 	FileText,
+	Globe,
 	Mail,
 	MessageCircle,
 	Package,
+	Shield,
 	ShoppingCart,
 	Sparkles,
 	TrendingUp,
@@ -184,26 +187,44 @@ export const BENEFIT_ITEMS: BenefitItem[] = [
 	{
 		title: "Reportes accionables",
 		description:
-			"Convierte datos de ventas e inventario en decisiones estratégicas en segundos.",
+			"Convertí datos de ventas, inventario y contabilidad en decisiones estratégicas en segundos con dashboards ejecutivos.",
 		icon: BarChart3,
 	},
 	{
-		title: "Proyecciones confiables",
+		title: "Un solo sistema",
 		description:
-			"Anticipa escenarios de liquidez y crecimiento con modelos financieros claros.",
-		icon: Wallet,
+			"Olvidate de las planillas y los sistemas desconectados. Ventas, stock, contabilidad y nómina en una plataforma integrada.",
+		icon: Database,
 	},
 	{
 		title: "Inventario sin quiebres",
 		description:
-			"Reduce pérdidas con alertas preventivas y control operacional continuo.",
+			"Alertas automáticas de stock mínimo, sugerencias de reposición y control de mermas para que nunca te falte producto.",
 		icon: Package,
 	},
 	{
 		title: "Operación automatizada",
 		description:
-			"Menos tareas manuales, menos errores y más foco en el crecimiento.",
+			"Cada venta genera asientos contables, descuenta inventario y actualiza cuentas por cobrar automáticamente. Cero doble ingreso.",
 		icon: Sparkles,
+	},
+	{
+		title: "Multi-sucursal en tiempo real",
+		description:
+			"Controlá todas tus sucursales desde un panel: stock consolidado, ventas por punto y transferencias auditadas entre almacenes.",
+		icon: Globe,
+	},
+	{
+		title: "Seguridad y respaldo",
+		description:
+			"Datos aislados por empresa, respaldos automáticos en la nube con opción de descarga local y restauración point-in-time.",
+		icon: Shield,
+	},
+	{
+		title: "Proyecciones confiables",
+		description:
+			"Anticipá escenarios de liquidez y rentabilidad con reportes financieros que cruzan datos reales de ventas, gastos y cobranzas.",
+		icon: Wallet,
 	},
 ];
 
@@ -266,40 +287,38 @@ export const CONTACT_ITEMS: ContactItem[] = [
 	},
 ];
 
-/* ─── Testimonials ─── */
-
 /* ─── FAQ ─── */
 
 export const FAQ_ITEMS: FaqItem[] = [
 	{
-		question: "¿Qué incluye cada plan?",
+		question: "¿Qué módulos específicos tiene FinanceMDM?",
 		answer:
-			"Cada plan incluye acceso completo a los módulos detallados en la sección de precios. Todos incluyen soporte técnico, actualizaciones y respaldo de datos. Podés escalar de plan en cualquier momento sin perder información.",
+			"FinanceMDM cubre nueve áreas clave: gestión financiera multi-moneda, inventario y almacenes, puntos de venta, ventas y facturación, compras y abastecimiento, contabilidad, capital humano, producción y taller, y reportes ejecutivos. Cada módulo está integrado: una venta genera automáticamente el asiento contable, descuenta del stock y actualiza las cuentas por cobrar.",
 	},
 	{
-		question: "¿Cuánto tiempo toma la implementación?",
+		question: "¿Cómo controla el acceso por roles y sucursales?",
 		answer:
-			"La implementación básica toma entre 1 y 3 días hábiles. Para operaciones complejas con integraciones personalizadas, puede extenderse hasta 2 semanas. Nuestro equipo te acompaña durante todo el proceso.",
+			"Cada usuario tiene un rol de plataforma (admin o regular) y un rol de tenant que define lo que puede ver y hacer. El sistema aísla los datos por empresa y podés restringir módulos por rol: un dependiente solo accede al POS, mientras que el gerente ve reportes, contabilidad y empleados.",
 	},
 	{
-		question: "¿Ofrecen soporte después de la implementación?",
+		question: "¿Maneja múltiples monedas y conversión automática?",
 		answer:
-			"Sí, todos los planes incluyen soporte técnico continuo. Los planes Profesional y Empresarial cuentan con soporte prioritario y acompañamiento dedicado para garantizar que tu operación nunca se detenga.",
+			"Sí. El sistema opera con varias monedas (USD, CUP, ARS, etc.) y tasas de cambio configurables. Las transacciones se registran en la moneda original y se convierten automáticamente para los reportes contables. Ideal para negocios que operan con tipo de cambio variable.",
 	},
 	{
-		question: "¿Puedo integrar FinanceMDM con otros sistemas?",
+		question: "¿Tiene control de caja y arqueo diario?",
 		answer:
-			"Sí, ofrecemos integraciones vía API REST para conectar con tus sistemas existentes. El plan Empresarial incluye integraciones personalizadas desarrolladas específicamente para tu operación.",
+			"Sí. Cada punto de venta tiene su propio arqueo de caja por turno. El sistema registra apertura, movimientos y cierre con cuadre automático. Podés tener varios turnos por día y conciliar las ventas contra el efectivo declarado.",
 	},
 	{
-		question: "¿Cómo funciona el multi-sucursal?",
+		question: "¿Cómo funcionan las copias de seguridad?",
 		answer:
-			"Podés gestionar todas tus sucursales desde un panel centralizado. Cada sucursal opera con su propio inventario y puntos de venta, pero vos tenés visibilidad consolidada de todo el negocio en tiempo real.",
+			"Las copias pueden ser automáticas (programadas por hora o día) o manuales. Se almacenan en la nube (S3) y también podés descargarlas localmente. Hay un historial de respaldos con logs de verificación y la opción de restaurar desde cualquier punto.",
 	},
 	{
-		question: "¿Los datos están seguros?",
+		question: "¿Se puede facturar con control de series y numeración?",
 		answer:
-			"Absolutamente. Usamos encriptación TLS en tránsito y AES-256 en reposo. Los respaldos son automáticos y diarios. Cumplimos con estándares de seguridad de datos financieros. Además, cada tenant tiene sus datos aislados.",
+			"Sí. El sistema tiene un módulo de series de facturación donde definís prefijos, rangos numéricos y puntos de venta asociados. Cada factura se emite con numeración correlativa automática y queda registrada en el historial del cliente y en la contabilidad. También manejás notas de crédito y anulaciones.",
 	},
 ];
 
