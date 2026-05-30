@@ -3,7 +3,7 @@
 import React, { useEffect, useState } from "react";
 import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
 
-import { ReviewHeroBadge, RealTestimonials } from "@/features/reviews";
+import { LandingStatsDynamic, ReviewHeroBadge, RealTestimonials } from "@/features/reviews";
 import {
 	AwsIcon,
 	FramerIcon,
@@ -29,7 +29,6 @@ import {
 	LandingHero,
 	LandingPricing,
 	LandingPreloader,
-	LandingStats,
 } from "@/features/landing";
 
 /**
@@ -99,7 +98,7 @@ export default function Home(): React.JSX.Element {
 				<ReviewHeroBadge />
 
 				{/* ═══ STATS ═══ */}
-				<LandingStats reduceMotion={!!reduceMotion} />
+				<LandingStatsDynamic />
 
 				{/* ═══ MARQUEE 1 ═══ */}
 				<MarqueeText

@@ -42,12 +42,6 @@ export interface ContactItem {
   icon: LucideIcon;
 }
 
-export interface TestimonialItem {
-  quote: string;
-  author: string;
-  role: string;
-}
-
 export interface FaqItem {
   question: string;
   answer: string;
@@ -189,24 +183,6 @@ export const CONTACT_ITEMS: ContactItem[] = [
 
 /* ─── Testimonials ─── */
 
-export const TESTIMONIAL_ITEMS: TestimonialItem[] = [
-  {
-    quote: 'FinanceMDM transformó nuestra operación. Pasamos de 3 sistemas a uno solo. La implementación fue rápida y el soporte excepcional.',
-    author: 'María García',
-    role: 'CFO, TechCorp LATAM',
-  },
-  {
-    quote: 'El control de inventario en tiempo real nos ahorró miles de dólares en pérdidas. Y la contabilidad automatizada nos devolvió horas todos los días.',
-    author: 'Carlos Mendoza',
-    role: 'Director de Operaciones, Distribuidora RM',
-  },
-  {
-    quote: 'Tener ventas, inventario y contabilidad en un solo lugar nos dio una visibilidad que nunca tuvimos. Las decisiones ahora son mucho más rápidas.',
-    author: 'Ana Lucía Pérez',
-    role: 'CEO, Grupo Nova',
-  },
-];
-
 /* ─── FAQ ─── */
 
 export const FAQ_ITEMS: FaqItem[] = [
@@ -274,9 +250,4 @@ export const HERO_BADGES = [
 
 /* ─── Stats ─── */
 
-export const STATS = [
-  { value: 127, suffix: '%', label: 'Productividad operativa' },
-  { value: 6, suffix: '', label: 'Módulos clave integrados' },
-  { value: 3, suffix: '', label: 'Sucursales simultáneas' },
-  { value: 99, suffix: '%', label: 'Disponibilidad garantizada' },
-];
+
