@@ -220,12 +220,6 @@ export const BENEFIT_ITEMS: BenefitItem[] = [
 			"Datos aislados por empresa, respaldos automáticos en la nube con opción de descarga local y restauración point-in-time.",
 		icon: Shield,
 	},
-	{
-		title: "Proyecciones confiables",
-		description:
-			"Anticipá escenarios de liquidez y rentabilidad con reportes financieros que cruzan datos reales de ventas, gastos y cobranzas.",
-		icon: Wallet,
-	},
 ];
 
 /* ─── Pricing Plans ─── */
