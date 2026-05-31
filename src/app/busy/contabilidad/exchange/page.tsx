@@ -7,7 +7,7 @@ import { ArrowLeft, Coins, Sparkles } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import Link from 'next/link';
-import { SidebarInset, SidebarProvider } from '@/components/ui/sidebar';
+;
 import { Skeleton } from '@/components/ui/skeleton';
 import { cn } from '@/lib/utils';
 
@@ -96,19 +96,13 @@ export default function ExchangePage() {
 
   if (!mounted) {
     return (
-      <SidebarProvider>
-        <SidebarInset className="bg-background">
           <div className="space-y-8 p-8">
             <ExchangePageLoader />
           </div>
-        </SidebarInset>
-      </SidebarProvider>
     );
   }
 
   return (
-    <SidebarProvider>
-      <SidebarInset className="bg-background">
         <motion.div
           className="space-y-8 p-8"
           variants={fadeIn}
@@ -178,7 +172,5 @@ export default function ExchangePage() {
             </div>
           </motion.div>
         </motion.div>
-      </SidebarInset>
-    </SidebarProvider>
   );
 }

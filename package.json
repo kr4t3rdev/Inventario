@@ -13,6 +13,7 @@
     "typecheck": "tsc --noEmit",
     "typecheck:tests": "tsc -p tsconfig.test.json --noEmit",
     "test": "vitest",
+    "prepare": "husky",
     "test:run": "vitest run",
     "seed:implementacion": "tsx prisma/seed/implementation-seed.ts",
     "seed:qa": "tsx prisma/seed/qa-scenarios-seed.ts",
@@ -31,7 +32,8 @@
     "remotion:render": "remotion render remotion/index.ts Battle-Short out/battle-short.mp4",
     "remotion:render-404": "remotion render remotion/index.ts NotFoundAnimation out/404-animation.mp4",
     "remotion:render-404-gif": "remotion render remotion/index.ts NotFoundAnimation out/404-animation.gif --format gif",
-    "test:live": "vitest run --config vitest.live.config.mjs"
+    "test:live": "vitest run --config vitest.live.config.mjs",
+    "prepare": "husky"
   },
   "dependencies": {
     "@clerk/nextjs": "^6.22.0",
@@ -68,11 +70,9 @@
     "@types/bcryptjs": "^2.4.6",
     "@upstash/redis": "^1.36.2",
     "@vercel/blob": "^2.4.0",
-    "add": "^2.0.6",
     "bcryptjs": "^3.0.2",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
-    "cookies-next": "^6.0.0",
     "date-fns": "^4.1.0",
     "formidable": "^3.5.4",
     "framer-motion": "^12.31.0",
@@ -92,20 +92,15 @@
     "pg": "^8.21.0",
     "prom-client": "^15.1.3",
     "react": "19.2.5",
-    "react-date-picker": "^11.0.0",
     "react-day-picker": "^9.7.0",
     "react-dom": "19.2.5",
     "react-dropzone": "^14.3.8",
     "react-hook-form": "^7.56.4",
     "react-hook-toast": "^0.0.3",
-    "react-to-print": "^3.1.1",
     "recharts": "^2.15.3",
     "shadcn": "^2.7.0",
     "sonner": "^2.0.3",
-    "styled-components": "^6.1.19",
-    "switch": "^0.0.0",
     "tailwind-merge": "^3.3.0",
-    "toast": "^0.5.4",
     "uuid": "^11.1.0",
     "zod": "^3.24.4"
   },
@@ -138,8 +133,10 @@
     "eslint": "^9",
     "eslint-config-next": "16.2.4",
     "fast-check": "^4.5.3",
+    "husky": "^9.1.7",
     "jest-axe": "^10.0.0",
     "jsdom": "^26.1.0",
+    "lint-staged": "^17.0.7",
     "prisma": "^6.19.0",
     "remotion": "^4.0.417",
     "tailwindcss": "^4",
@@ -154,5 +151,13 @@
   "overrides": {
     "@types/react": "19.2.14",
     "@types/react-dom": "19.2.3"
+  },
+  "lint-staged": {
+    "*.{ts,tsx}": [
+      "eslint --fix --quiet"
+    ],
+    "*.{json,css,md}": [
+      "eslint --fix --quiet"
+    ]
   }
 }

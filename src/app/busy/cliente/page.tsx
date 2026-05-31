@@ -2,7 +2,6 @@
 import { DataTable } from "@/components/data-table"
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog"
 import { Button } from "@/components/ui/button"
-import { SidebarProvider, SidebarInset } from "@/components/ui/sidebar"
 import { Skeleton } from "@/components/ui/skeleton"
 import { getClientesAction, deleteClienteAction } from "@/features/clientes"
 import { ColumnDef } from "@tanstack/react-table"
@@ -129,8 +128,6 @@ const Cliente = () => {
             ]
             if (isLoading) {
                     return (
-                      <SidebarProvider>           
-                        <SidebarInset>              
                           <div className="container mx-auto py-4">
                             <motion.div 
                               className="flex justify-between items-center mb-6"
@@ -170,14 +167,10 @@ const Cliente = () => {
                               </div>
                             </motion.div>
                           </div>
-                        </SidebarInset>
-                      </SidebarProvider>
                     )
                   }  
                   return (
                     <div>
-                        <SidebarProvider>          
-                      <SidebarInset>            
                         <div className="container mx-auto py-4">
                           <motion.div 
                             className="flex justify-between items-center mb-6"
@@ -241,9 +234,6 @@ const Cliente = () => {
                             />
                           </motion.div>
                         </div>
-                      </SidebarInset>
-                    </SidebarProvider>
-                                        
                    {/* Diálogo de confirmación para eliminar */}
                   <AlertDialog open={!!clienteToDelete} onOpenChange={(open) => !open && setClienteToDelete(null)}>
                   <AlertDialogContent className="border-dashed">

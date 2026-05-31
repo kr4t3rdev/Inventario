@@ -7,7 +7,6 @@ import { ArrowLeft, Loader2, ShoppingCart, Package } from 'lucide-react'
 import { LazyMotion, m as motion } from 'framer-motion'
 
 import { Button } from '@/components/ui/button'
-import { SidebarInset, SidebarProvider } from '@/components/ui/sidebar'
 import { Skeleton } from '@/components/ui/skeleton'
 import { getCompraProductoByIdAction, updateCompraProductoAction } from '@/features/compras-productos/actions'
 import { toast } from 'sonner'
@@ -122,8 +121,6 @@ export default function EditCompraProductoPage() {
 
   if (isLoadingCompra) {
     return (
-      <SidebarProvider>
-        <SidebarInset>
           <div className="container mx-auto py-4 max-w-2xl">
             <div className="space-y-6">
               <Skeleton className="h-8 w-48" />
@@ -134,16 +131,12 @@ export default function EditCompraProductoPage() {
               </div>
             </div>
           </div>
-        </SidebarInset>
-      </SidebarProvider>
     )
   }
 
   const compra = compraData
 
   return (
-    <SidebarProvider>
-      <SidebarInset>
         <div className="container mx-auto py-4 max-w-2xl">
           <motion.div
             initial={{ opacity: 0, y: -20 }}
@@ -323,7 +316,5 @@ export default function EditCompraProductoPage() {
             )}
           </motion.div>
         </div>
-      </SidebarInset>
-    </SidebarProvider>
   )
 }

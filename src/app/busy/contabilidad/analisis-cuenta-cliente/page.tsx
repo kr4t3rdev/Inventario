@@ -31,7 +31,6 @@ import {
   TableHeader, 
   TableRow 
 } from "@/components/ui/table"
-import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar"
 import {
   PageTransition
 } from '@/components/ui/animations';
@@ -155,8 +154,6 @@ export default function AnalisisCuentaClientePage() {
   );
 
   return (
-    <SidebarProvider>
-      <SidebarInset className="bg-background">
         <PageTransition className="flex-1 space-y-8 p-4 md:p-8 pt-6">
           <ContabilidadBreadcrumb />
           <div className="space-y-8">
@@ -459,7 +456,5 @@ export default function AnalisisCuentaClientePage() {
             )}
           </div>
         </PageTransition>
-      </SidebarInset>
-    </SidebarProvider>
   )
 }

@@ -4,7 +4,6 @@ import Link from 'next/link'
 import { LazyMotion, m as motion } from 'framer-motion'
 import { ArrowLeft, Boxes, Sparkles } from 'lucide-react'
 
-import { SidebarProvider, SidebarInset } from '@/components/ui/sidebar'
 import { BulkStockMinimoManager } from '@/features/productos/components/bulk-stock-minimo-manager'
 import { Button } from '@/components/ui/button'
 
@@ -14,8 +13,6 @@ import { Button } from '@/components/ui/button'
  */
 export default function BulkStockMinimoPage(): React.JSX.Element {
   return (
-    <SidebarProvider>
-      <SidebarInset>
         <motion.div
           className="container mx-auto py-4"
           initial={{ opacity: 0 }}
@@ -74,7 +71,5 @@ export default function BulkStockMinimoPage(): React.JSX.Element {
             <BulkStockMinimoManager />
           </motion.div>
         </motion.div>
-      </SidebarInset>
-    </SidebarProvider>
   )
 }

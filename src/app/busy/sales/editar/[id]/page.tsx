@@ -3,7 +3,6 @@ import { useState, useEffect } from "react"
 import { useParams, useRouter } from "next/navigation"
 import { VentaForm } from "@/features/ventas"
 import { getVentaByIdAction, updateVentaAction } from "@/features/ventas/actions"
-import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar"
 import { Skeleton } from "@/components/ui/skeleton"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
@@ -35,8 +34,6 @@ export default function EditarVentaPage() {
 
   if (isLoading) {
     return (
-      <SidebarProvider>
-        <SidebarInset>
           <div className="container mx-auto py-4">
             <motion.div 
               className="mb-6"
@@ -73,15 +70,11 @@ export default function EditarVentaPage() {
               </div>
             </motion.div>
           </div>
-        </SidebarInset>
-      </SidebarProvider>
     )
   }
 
   if (error || !venta) {
     return (
-      <SidebarProvider>
-        <SidebarInset>
           <div className="container mx-auto py-4">
             <motion.div
               initial={{ opacity: 0, y: -20 }}
@@ -97,8 +90,6 @@ export default function EditarVentaPage() {
               </Alert>
             </motion.div>
           </div>
-        </SidebarInset>
-      </SidebarProvider>
     )
   }
 
@@ -111,8 +102,6 @@ export default function EditarVentaPage() {
   const cantidadInicial = venta.productoId ? venta.cantidad : (itemUnico?.cantidad ?? venta.cantidad ?? 1)
 
   return (
-    <SidebarProvider>
-      <SidebarInset>
         <div className="container mx-auto py-4">
           <motion.div 
             className="mb-6"
@@ -236,7 +225,5 @@ export default function EditarVentaPage() {
             </motion.div>
           )}
         </div>
-      </SidebarInset>
-    </SidebarProvider>
   )
 }

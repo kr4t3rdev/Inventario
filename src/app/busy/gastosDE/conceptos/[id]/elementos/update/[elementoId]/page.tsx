@@ -8,7 +8,6 @@
  */
 import { getGastoConceptoByIdAction } from "@/features/gastosDE/actions"
 import { GastoElementoForm } from "@/features/gastosDE"
-import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar"
 import { Button } from "@/components/ui/button"
 import { ArrowLeft } from "lucide-react"
 import Link from "next/link"
@@ -41,8 +40,6 @@ export default async function UpdateGastoElementoPage({ params }: Props) {
   }
 
   return (
-    <SidebarProvider>
-      <SidebarInset>
         <div className="container mx-auto py-6 max-w-2xl">
           <div className="mb-4">
             <Button variant="ghost" asChild>
@@ -60,7 +57,5 @@ export default async function UpdateGastoElementoPage({ params }: Props) {
             initialData={elemento}
           />
         </div>
-      </SidebarInset>
-    </SidebarProvider>
   )
 }

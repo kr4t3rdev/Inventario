@@ -15,7 +15,6 @@ import {
   getSortedRowModel,
   useReactTable,
 } from "@tanstack/react-table"
-import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar"
 import { useVentas } from "@/features/ventas/hooks/use-ventas"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -270,8 +269,6 @@ export default function FacturasPage() {
   })
 
   return (
-    <SidebarProvider>
-      <SidebarInset>
         <div className="container mx-auto py-4">
           <div className="flex justify-between items-center mb-4">
             <h1 className="text-2xl font-bold">Facturas</h1>
@@ -372,7 +369,5 @@ export default function FacturasPage() {
             </div>
           )}
         </div>
-      </SidebarInset>
-    </SidebarProvider>
   )
 }

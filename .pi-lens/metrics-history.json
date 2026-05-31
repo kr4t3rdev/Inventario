@@ -3373,8 +3373,8 @@
     },
     "src/app/busy/dashboard/page.tsx": {
       "latest": {
-        "commit": "d7915af",
-        "timestamp": "2026-05-29T14:57:51.867Z",
+        "commit": "1987a3b",
+        "timestamp": "2026-05-31T13:22:15.802Z",
         "mi": 44,
         "cognitive": 7,
         "nesting": 2,
@@ -3386,6 +3386,16 @@
         {
           "commit": "d7915af",
           "timestamp": "2026-05-29T14:57:51.867Z",
+          "mi": 44,
+          "cognitive": 7,
+          "nesting": 2,
+          "lines": 96,
+          "maxCyclomatic": 6,
+          "entropy": 5.76
+        },
+        {
+          "commit": "1987a3b",
+          "timestamp": "2026-05-31T13:22:15.802Z",
           "mi": 44,
           "cognitive": 7,
           "nesting": 2,
@@ -5023,8 +5033,8 @@
     },
     "src/app/layout.tsx": {
       "latest": {
-        "commit": "f9c7ecf",
-        "timestamp": "2026-05-30T00:26:53.352Z",
+        "commit": "1987a3b",
+        "timestamp": "2026-05-31T22:45:13.610Z",
         "mi": 49.2,
         "cognitive": 0,
         "nesting": 1,
@@ -5036,6 +5046,16 @@
         {
           "commit": "f9c7ecf",
           "timestamp": "2026-05-30T00:26:53.352Z",
+          "mi": 49.2,
+          "cognitive": 0,
+          "nesting": 1,
+          "lines": 34,
+          "maxCyclomatic": 1,
+          "entropy": 4.6
+        },
+        {
+          "commit": "1987a3b",
+          "timestamp": "2026-05-31T22:45:13.610Z",
           "mi": 49.2,
           "cognitive": 0,
           "nesting": 1,
@@ -5770,7 +5790,132 @@
         }
       ],
       "trend": "stable"
+    },
+    "src/components/Loaders/hoja/loader.tsx": {
+      "latest": {
+        "commit": "1987a3b",
+        "timestamp": "2026-05-31T13:19:20.612Z",
+        "mi": 34.6,
+        "cognitive": 0,
+        "nesting": 1,
+        "lines": 157,
+        "maxCyclomatic": 1,
+        "entropy": 4.31
+      },
+      "history": [
+        {
+          "commit": "1987a3b",
+          "timestamp": "2026-05-31T13:19:20.612Z",
+          "mi": 34.6,
+          "cognitive": 0,
+          "nesting": 1,
+          "lines": 157,
+          "maxCyclomatic": 1,
+          "entropy": 4.31
+        }
+      ],
+      "trend": "stable"
+    },
+    "src/components/Loaders/maq_escr/loader.tsx": {
+      "latest": {
+        "commit": "1987a3b",
+        "timestamp": "2026-05-31T13:19:20.638Z",
+        "mi": 35.1,
+        "cognitive": 0,
+        "nesting": 1,
+        "lines": 210,
+        "maxCyclomatic": 1,
+        "entropy": 3.56
+      },
+      "history": [
+        {
+          "commit": "1987a3b",
+          "timestamp": "2026-05-31T13:19:20.638Z",
+          "mi": 35.1,
+          "cognitive": 0,
+          "nesting": 1,
+          "lines": 210,
+          "maxCyclomatic": 1,
+          "entropy": 3.56
+        }
+      ],
+      "trend": "stable"
+    },
+    "src/components/Loaders/rojo/loader.tsx": {
+      "latest": {
+        "commit": "1987a3b",
+        "timestamp": "2026-05-31T13:19:20.663Z",
+        "mi": 25.4,
+        "cognitive": 0,
+        "nesting": 1,
+        "lines": 322,
+        "maxCyclomatic": 1,
+        "entropy": 4.07
+      },
+      "history": [
+        {
+          "commit": "1987a3b",
+          "timestamp": "2026-05-31T13:19:20.663Z",
+          "mi": 25.4,
+          "cognitive": 0,
+          "nesting": 1,
+          "lines": 322,
+          "maxCyclomatic": 1,
+          "entropy": 4.07
+        }
+      ],
+      "trend": "stable"
+    },
+    "src/app/busy/sales/page.tsx": {
+      "latest": {
+        "commit": "1987a3b",
+        "timestamp": "2026-05-31T13:22:15.776Z",
+        "mi": 60.6,
+        "cognitive": 2,
+        "nesting": 1,
+        "lines": 32,
+        "maxCyclomatic": 2,
+        "entropy": 4.36
+      },
+      "history": [
+        {
+          "commit": "1987a3b",
+          "timestamp": "2026-05-31T13:22:15.776Z",
+          "mi": 60.6,
+          "cognitive": 2,
+          "nesting": 1,
+          "lines": 32,
+          "maxCyclomatic": 2,
+          "entropy": 4.36
+        }
+      ],
+      "trend": "stable"
+    },
+    "src/app/busy/contabilidad/cuentas-por-cobrar/page.tsx": {
+      "latest": {
+        "commit": "1987a3b",
+        "timestamp": "2026-05-31T13:22:15.847Z",
+        "mi": 19,
+        "cognitive": 149,
+        "nesting": 7,
+        "lines": 354,
+        "maxCyclomatic": 94,
+        "entropy": 7.08
+      },
+      "history": [
+        {
+          "commit": "1987a3b",
+          "timestamp": "2026-05-31T13:22:15.847Z",
+          "mi": 19,
+          "cognitive": 149,
+          "nesting": 7,
+          "lines": 354,
+          "maxCyclomatic": 94,
+          "entropy": 7.08
+        }
+      ],
+      "trend": "stable"
     }
   },
-  "capturedAt": "2026-05-31T12:55:44.795Z"
+  "capturedAt": "2026-05-31T22:45:18.611Z"
 }

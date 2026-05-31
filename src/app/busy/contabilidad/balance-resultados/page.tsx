@@ -9,7 +9,6 @@ import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, Responsive
 import { Loader2, TrendingUp, TrendingDown, DollarSign, Wallet, Building2, Landmark, ArrowLeft } from "lucide-react"
 import { PageTransition, StaggerContainer, StaggerItem, AnimatedCard } from "@/components/ui/animations"
 import { cn } from "@/lib/utils"
-import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar"
 import { ContabilidadBreadcrumb } from "@/features/contabilidad/components/contabilidad-breadcrumb"
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
@@ -99,20 +98,14 @@ export default function BalanceResultadosPage() {
 
   if (loading && !data) {
     return (
-      <SidebarProvider>
-        <SidebarInset className="bg-background">
           <div className="flex h-screen items-center justify-center bg-background">
             <Loader2 className="h-8 w-8 animate-spin text-primary" />
           </div>
-        </SidebarInset>
-      </SidebarProvider>
     )
   }
 
   if (!data) {
     return (
-      <SidebarProvider>
-        <SidebarInset className="bg-background">
           <div className="flex h-screen flex-col items-center justify-center gap-4 bg-background">
             <p className="text-muted-foreground">No se pudieron cargar los datos financieros.</p>
             <button 
@@ -122,14 +115,10 @@ export default function BalanceResultadosPage() {
               Reintentar
             </button>
           </div>
-        </SidebarInset>
-      </SidebarProvider>
     )
   }
 
   return (
-    <SidebarProvider>
-      <SidebarInset className="bg-background">
         <PageTransition className="space-y-8 p-6">
           <ContabilidadBreadcrumb />
           <StaggerContainer className="space-y-8">
@@ -421,7 +410,5 @@ export default function BalanceResultadosPage() {
             </StaggerItem>
           </StaggerContainer>
         </PageTransition>
-      </SidebarInset>
-    </SidebarProvider>
   )
 }

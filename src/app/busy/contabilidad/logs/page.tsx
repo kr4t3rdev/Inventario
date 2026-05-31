@@ -7,7 +7,7 @@ import { ArrowLeft, ShieldCheck, ShieldAlert } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import Link from 'next/link';
-import { SidebarInset, SidebarProvider } from '@/components/ui/sidebar';
+;
 import { Skeleton } from '@/components/ui/skeleton';
 import { ContabilidadBreadcrumb } from '@/features/contabilidad/components/contabilidad-breadcrumb';
 import { cn } from '@/lib/utils';
@@ -83,19 +83,13 @@ export default function LogsPage() {
 
   if (!mounted) {
     return (
-      <SidebarProvider>
-        <SidebarInset className="bg-background">
           <div className="space-y-8 p-8">
             <LogsPageLoader />
           </div>
-        </SidebarInset>
-      </SidebarProvider>
     );
   }
 
   return (
-    <SidebarProvider>
-      <SidebarInset className="bg-background">
         <motion.div
           className="space-y-8 p-8"
           variants={fadeIn}
@@ -151,7 +145,5 @@ export default function LogsPage() {
             </div>
           </motion.div>
         </motion.div>
-      </SidebarInset>
-    </SidebarProvider>
   );
 }

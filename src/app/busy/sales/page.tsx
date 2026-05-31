@@ -6,7 +6,6 @@
 import Link from "next/link"
 import { getVentasAction } from "@/features/ventas/actions"
 import { VentasTable } from "@/features/ventas"
-import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar"
 import { Button } from "@/components/ui/button"
 import { Skeleton } from "@/components/ui/skeleton"
 import { TrendingUp, PlusCircle, Sparkles } from "lucide-react"
@@ -27,12 +26,8 @@ export default async function VentasPage() {
   const ventas = result.success ? result.data ?? [] : []
 
   return (
-    <SidebarProvider>
-      <SidebarInset>
         <div className="container mx-auto py-4">
           <VentasPageClient ventas={ventas} />
         </div>
-      </SidebarInset>
-    </SidebarProvider>
   )
 }

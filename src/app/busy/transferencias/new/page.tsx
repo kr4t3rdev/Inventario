@@ -6,14 +6,11 @@
  * El formulario (TransferenciaForm) también es un Client Component.
  */
 import { TransferenciaForm } from "@/features/transferencias"
-import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar"
 import { LazyMotion, m as motion } from "framer-motion"
 import { ArrowLeftRight, Sparkles } from "lucide-react"
 
 export default function NuevaTransferenciaPage() {
   return (
-    <SidebarProvider>
-      <SidebarInset>
         <motion.div 
           className="container mx-auto py-4"
           initial={{ opacity: 0 }}
@@ -60,7 +57,5 @@ export default function NuevaTransferenciaPage() {
 
           <TransferenciaForm />
         </motion.div>
-      </SidebarInset>
-    </SidebarProvider>
   )
 }

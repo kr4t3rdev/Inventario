@@ -1,7 +1,6 @@
 "use client"
 
 import { useMemo, useState, useEffect, useCallback, useRef } from "react"
-import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar"
 import { ReconciliacionVentasForm } from "@/features/contabilidad/components/reconciliacion/reconciliacion-ventas-form"
 import { CuentasPorCobrarTable } from "@/features/contabilidad/components/cuentas-por-cobrar-table"
 import { getCuentasPorCobrarAction, getCxcMetricsAction } from "@/features/contabilidad"
@@ -258,8 +257,6 @@ export default function CuentasPorCobrarPage() {
   }
 
   return (
-    <SidebarProvider>
-      <SidebarInset className="bg-background">
         <motion.div
           className="container mx-auto py-6 px-4 space-y-8"
           variants={containerVariants}
@@ -402,7 +399,5 @@ export default function CuentasPorCobrarPage() {
             )}
           </AnimatePresence>
         </motion.div>
-      </SidebarInset>
-    </SidebarProvider>
   )
 }

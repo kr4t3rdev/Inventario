@@ -8,7 +8,6 @@
 import Link from "next/link"
 import { OfertaForm } from "@/features/ofertas/components/oferta-form"
 import { Button } from "@/components/ui/button"
-import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar"
 import { Tag, Sparkles, ArrowLeft } from "lucide-react"
 import { LazyMotion, m as motion } from "framer-motion"
 
@@ -26,8 +25,6 @@ interface NewOfertaPageContentProps {
  */
 export function NewOfertaPageContent({ initialClientes }: NewOfertaPageContentProps) {
   return (
-    <SidebarProvider>
-      <SidebarInset>
         <div className="container mx-auto py-4">
           <motion.div
             className="mb-6"
@@ -87,7 +84,5 @@ export function NewOfertaPageContent({ initialClientes }: NewOfertaPageContentPr
           </motion.div>
           <OfertaForm {...{ initialClientes } as any} />
         </div>
-      </SidebarInset>
-    </SidebarProvider>
   )
 }

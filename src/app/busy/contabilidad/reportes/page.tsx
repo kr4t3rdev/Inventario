@@ -9,7 +9,7 @@ import { ArrowLeft, BarChart3, Sparkles } from 'lucide-react';
 import { ContabilidadBreadcrumb } from '@/features/contabilidad/components/contabilidad-breadcrumb';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { SidebarInset, SidebarProvider } from '@/components/ui/sidebar';
+;
 import { Skeleton } from '@/components/ui/skeleton';
 import { cn } from '@/lib/utils';
 
@@ -101,19 +101,13 @@ export default function ReportesPage() {
 
   if (!mounted) {
     return (
-      <SidebarProvider>
-        <SidebarInset className="bg-background">
           <div className="space-y-8 p-8">
             <ReportesPageLoader />
           </div>
-        </SidebarInset>
-      </SidebarProvider>
     );
   }
 
   return (
-    <SidebarProvider>
-      <SidebarInset className="bg-background">
         <motion.div className="space-y-8 p-8" variants={fadeIn} initial="hidden" animate="show">
           <div className="pointer-events-none absolute inset-0 -z-10 overflow-hidden">
             <div className="absolute inset-0 bg-linear-to-b from-slate-50 via-white to-slate-100 dark:from-slate-950 dark:via-slate-900 dark:to-slate-900" />
@@ -185,7 +179,5 @@ export default function ReportesPage() {
             </div>
           </motion.div>
         </motion.div>
-      </SidebarInset>
-    </SidebarProvider>
   );
 }

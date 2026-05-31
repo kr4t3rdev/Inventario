@@ -2,7 +2,6 @@
 
 import { LazyMotion, m as motion } from "framer-motion"
 import { EmpleadoForm } from "@/features/empleados"
-import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar"
 import { Skeleton } from "@/components/ui/skeleton"
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
 import { Button } from "@/components/ui/button"
@@ -22,8 +21,6 @@ export default function EditarEmpleadoPage() {
 
   if (isLoading) {
     return (
-      <SidebarProvider>
-        <SidebarInset>
           <div className="flex min-h-[60vh] items-center justify-center">
             <motion.div
               className="flex flex-col items-center gap-4"
@@ -39,15 +36,11 @@ export default function EditarEmpleadoPage() {
               <p className="text-muted-foreground animate-pulse">Cargando empleado...</p>
             </motion.div>
           </div>
-        </SidebarInset>
-      </SidebarProvider>
     )
   }
 
   if (error || !empleado) {
     return (
-      <SidebarProvider>
-        <SidebarInset>
           <motion.div
             className="container mx-auto py-6 px-4"
             initial={{ opacity: 0 }}
@@ -111,14 +104,10 @@ export default function EditarEmpleadoPage() {
               </motion.div>
             </motion.div>
           </motion.div>
-        </SidebarInset>
-      </SidebarProvider>
     )
   }
 
   return (
-    <SidebarProvider>
-      <SidebarInset>
         <motion.div
           className="container mx-auto py-6 px-4"
           initial={{ opacity: 0 }}
@@ -185,7 +174,5 @@ export default function EditarEmpleadoPage() {
             <EmpleadoForm initialData={empleado as any} />
           </motion.div>
         </motion.div>
-      </SidebarInset>
-    </SidebarProvider>
   )
 }

@@ -21,7 +21,6 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
-import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar"
 import { PageTransition, StaggerContainer, StaggerItem, AnimatedCard } from "@/components/ui/animations"
 import { cn } from "@/lib/utils"
 import { ContabilidadBreadcrumb } from "@/features/contabilidad/components/contabilidad-breadcrumb"
@@ -214,8 +213,6 @@ export default function FacturasVencidasPage() {
   }
 
   return (
-    <SidebarProvider>
-      <SidebarInset className="bg-background">
         <PageTransition className="flex-1 space-y-8 p-4 md:p-8 pt-6">
           <ContabilidadBreadcrumb />
           <StaggerContainer className="space-y-8">
@@ -362,7 +359,5 @@ export default function FacturasVencidasPage() {
             </StaggerItem>
           </StaggerContainer>
         </PageTransition>
-      </SidebarInset>
-    </SidebarProvider>
   )
 }

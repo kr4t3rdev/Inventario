@@ -1,6 +1,5 @@
 import type { Metadata } from "next"
 import { getVendorsAction } from "@/features/vendors/actions"
-import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar"
 import { ServicioForm } from "@/features/servicios/components/servicios-form"
 
 export const metadata: Metadata = {
@@ -13,8 +12,6 @@ export default async function NuevoServicioPage() {
   const initialVendors = vendorsResult.success ? vendorsResult.data ?? [] : []
 
   return (
-    <SidebarProvider>
-      <SidebarInset>
         <div className="container mx-auto py-4">
           <div className="mb-6">
             <h1 className="text-2xl font-bold">Nuevo Servicio</h1>
@@ -22,7 +19,5 @@ export default async function NuevoServicioPage() {
           </div>
           <ServicioForm initialVendors={initialVendors} />
         </div>
-      </SidebarInset>
-    </SidebarProvider>
   )
 }

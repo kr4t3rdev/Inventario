@@ -8,7 +8,6 @@
  */
 import { getGastoConceptoByIdAction } from "@/features/gastosDE/actions"
 import { GastoElementoForm } from "@/features/gastosDE"
-import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar"
 import { notFound } from "next/navigation"
 
 
@@ -32,15 +31,11 @@ export default async function NewGastoElementoPage({ params }: Props) {
   const concepto = conceptoResult.data
 
   return (
-    <SidebarProvider>
-      <SidebarInset>
         <div className="container mx-auto py-6 max-w-2xl">
           <GastoElementoForm conceptoId={
   // @ts-expect-error
           conceptoId} conceptoNombre={concepto.nombre
           } />
         </div>
-      </SidebarInset>
-    </SidebarProvider>
   )
 }

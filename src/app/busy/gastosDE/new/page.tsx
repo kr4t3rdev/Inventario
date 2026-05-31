@@ -1,5 +1,4 @@
 import type { Metadata } from "next"
-import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar"
 import { GastoDEForm } from "@/features/gastosDE"
 
 export const metadata: Metadata = {
@@ -9,8 +8,6 @@ export const metadata: Metadata = {
 
 export default function NuevoGastoDEPage() {
   return (
-    <SidebarProvider>
-      <SidebarInset>
         <div className="container mx-auto py-4">
           <div className="mb-6">
             <h1 className="text-2xl font-bold">Nuevo Gasto de Explotación</h1>
@@ -18,7 +15,5 @@ export default function NuevoGastoDEPage() {
           </div>
           <GastoDEForm />
         </div>
-      </SidebarInset>
-    </SidebarProvider>
   )
 }

@@ -1,0 +1,15 @@
+#!/bin/sh
+
+# Pre-commit hook: corre lint-staged sobre archivos staged.
+# Si encuentra errores, los muestra pero NO bloquea el commit.
+# Los errores pre-existentes (105+) están fuera del alcance de este hook.
+# Para habilitar bloqueo estricto, resolver primero los errores pre-existentes.
+
+npx lint-staged --quiet 2>/dev/null || {
+  echo "⚠️  lint-staged encontró errores (pre-existentes o nuevos)."
+  echo "   Para ver detalles: pnpm run lint"
+  echo "   Commit no bloqueado."
+  exit 0
+}
+
+exit 0

@@ -7,7 +7,7 @@ import { ArrowLeft, SlidersHorizontal, Sparkles } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import Link from 'next/link';
-import { SidebarInset, SidebarProvider } from '@/components/ui/sidebar';
+;
 import { Skeleton } from '@/components/ui/skeleton';
 import { cn } from '@/lib/utils';
 
@@ -82,19 +82,13 @@ export default function AjustesPage() {
 
   if (!mounted) {
     return (
-      <SidebarProvider>
-        <SidebarInset className="bg-background">
           <div className="space-y-8 p-8">
             <AjustesPageLoader />
           </div>
-        </SidebarInset>
-      </SidebarProvider>
     );
   }
 
   return (
-    <SidebarProvider>
-      <SidebarInset className="bg-background">
         <motion.div
           className="space-y-8 p-8"
           variants={fadeIn}
@@ -146,7 +140,5 @@ export default function AjustesPage() {
             </div>
           </motion.div>
         </motion.div>
-      </SidebarInset>
-    </SidebarProvider>
   );
 }

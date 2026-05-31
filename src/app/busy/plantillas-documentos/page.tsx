@@ -1,7 +1,6 @@
 "use client"
 
 import { useState, useEffect } from "react"
-import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar"
 import { Button } from "@/components/ui/button"
 import { PlusCircle, FileText, Copy, Edit, Trash2 } from "lucide-react"
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
@@ -115,33 +114,23 @@ export default function PlantillasPage() {
 
   if (isLoading) {
     return (
-      <SidebarProvider>
-        <SidebarInset>
           <div className="container mx-auto py-6">
             <div className="text-center py-12">Cargando plantillas...</div>
           </div>
-        </SidebarInset>
-      </SidebarProvider>
     )
   }
 
   if (error) {
     return (
-      <SidebarProvider>
-        <SidebarInset>
           <div className="container mx-auto py-6">
             <div className="text-center py-12 text-destructive">
               Error al cargar plantillas: {error?.message || "Error desconocido"}
             </div>
           </div>
-        </SidebarInset>
-      </SidebarProvider>
     )
   }
 
   return (
-    <SidebarProvider>
-      <SidebarInset>
         <div className="container mx-auto py-6">
           <div className="flex justify-between items-center mb-6">
             <div>
@@ -293,7 +282,5 @@ export default function PlantillasPage() {
             </AlertDialogContent>
           </AlertDialog>
         </div>
-      </SidebarInset>
-    </SidebarProvider>
   )
 }

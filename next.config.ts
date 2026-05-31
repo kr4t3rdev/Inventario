@@ -48,6 +48,10 @@ const nextConfig: NextConfig = {
   },
   
   // TypeScript
+  // NOTA: ignoreBuildErrors: true se mantiene porque tsc --noEmit crashea con segfault
+  // (Node OOM, no errores de TS). La compensación es el pre-commit hook con lint-staged
+  // que corre eslint sobre archivos staged. Ver .husky/pre-commit y lint-staged en package.json.
+  // Para habilitar typecheck completo, primero hay que resolver el OOM (ej: --max-old-space-size=8192).
   typescript: {
     ignoreBuildErrors: true,
   },

@@ -1,7 +1,6 @@
 'use client'
 
 import { LazyMotion, m as motion } from "framer-motion"
-import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar"
 import { EmpleadoForm } from "@/features/empleados"
 import { Button } from "@/components/ui/button"
 import { ArrowLeft, Users, Sparkles } from "lucide-react"
@@ -9,8 +8,6 @@ import Link from "next/link"
 
 export default function NuevaEmpleadoPage() {
   return (
-    <SidebarProvider>
-      <SidebarInset>
         <motion.div
           className="container mx-auto py-6 px-4"
           initial={{ opacity: 0 }}
@@ -80,7 +77,5 @@ export default function NuevaEmpleadoPage() {
             <EmpleadoForm />
           </motion.div>
         </motion.div>
-      </SidebarInset>
-    </SidebarProvider>
   )
 }

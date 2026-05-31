@@ -8,7 +8,7 @@ import { Button } from '@/components/ui/button';
 import Link from 'next/link';
 import { cn } from '@/lib/utils';
 
-import { SidebarInset, SidebarProvider } from '@/components/ui/sidebar';
+;
 
 // Dynamic imports with skeleton loaders
 const TiposPagoConfigPage = dynamic(
@@ -77,8 +77,6 @@ export default function ConfiguracionPage(): React.JSX.Element {
   if (!mounted) return <div className="min-h-screen bg-background" />;
 
   return (
-    <SidebarProvider>
-      <SidebarInset className="bg-background">
         <motion.div 
           className="container mx-auto py-6 px-4 space-y-8" 
           variants={fadeIn} 
@@ -126,7 +124,5 @@ export default function ConfiguracionPage(): React.JSX.Element {
              <TiposPagoConfigPage />
           </motion.div>
         </motion.div>
-      </SidebarInset>
-    </SidebarProvider>
   );
 }

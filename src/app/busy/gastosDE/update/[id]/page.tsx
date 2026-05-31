@@ -10,7 +10,6 @@
 import { getGastoDEByIdAction } from "@/features/gastosDE/actions"
 import { getVendorsAction } from "@/features/vendors/actions"
 import { GastoDEForm } from "@/features/gastosDE"
-import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar"
 import { notFound } from "next/navigation"
 
 
@@ -39,8 +38,6 @@ export default async function EditarGastoDEPage({ params }: Props) {
   const initialVendors = vendorsResult.success ? vendorsResult.data ?? [] : []
 
   return (
-    <SidebarProvider>
-      <SidebarInset>
         <div className="container mx-auto py-4">
           <div className="mb-6">
             <h1 className="text-2xl font-bold">Editar Gasto de Explotación</h1>
@@ -61,7 +58,5 @@ export default async function EditarGastoDEPage({ params }: Props) {
             initialVendors={initialVendors}
           />
         </div>
-      </SidebarInset>
-    </SidebarProvider>
   )
 }

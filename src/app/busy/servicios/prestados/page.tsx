@@ -2,8 +2,6 @@ import type { Metadata } from 'next'
 
 import { getServiciosAction } from '@/features/servicios/actions'
 import { ServiciosPrestadosForm } from '@/features/servicios/components'
-import { SidebarInset, SidebarProvider } from '@/components/ui/sidebar'
-
 export const metadata: Metadata = {
   title: 'Servicios Prestados',
   description: 'Registro de servicios prestados a clientes',
@@ -18,8 +16,6 @@ export default async function ServiciosPrestadosPage() {
   const initialServicios = serviciosResult.success ? serviciosResult.data ?? [] : []
 
   return (
-    <SidebarProvider>
-      <SidebarInset>
         <div className='container mx-auto py-4'>
           <div className='mb-6'>
             <h1 className='text-2xl font-bold'>Servicios Prestados</h1>
@@ -29,7 +25,5 @@ export default async function ServiciosPrestadosPage() {
           </div>
           <ServiciosPrestadosForm initialServicios={initialServicios} />
         </div>
-      </SidebarInset>
-    </SidebarProvider>
   )
 }

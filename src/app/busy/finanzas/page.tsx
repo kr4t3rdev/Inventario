@@ -1,12 +1,9 @@
 "use client"
 
-import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar"
 import { ResumenFinanciero } from "@/features/contabilidad/components/resumen-financiero"
 
 export default function EconomiaPage() {
   return (
-    <SidebarProvider>
-      <SidebarInset>
         <div className="flex flex-1 flex-col gap-4 p-4">
           <div className="flex items-center justify-between">
             <div>
@@ -21,7 +18,5 @@ export default function EconomiaPage() {
             limit={10}
           />
         </div>
-      </SidebarInset>
-    </SidebarProvider>
   )
 }

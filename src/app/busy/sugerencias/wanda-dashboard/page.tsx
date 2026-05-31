@@ -3,7 +3,6 @@
 import { useEffect, useState } from "react"
 import { RefreshCw, Loader2, Coins, Sparkles } from "lucide-react"
 import { LazyMotion, m as motion, useReducedMotion } from "framer-motion"
-import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar"
 import { Button } from "@/components/ui/button"
 import { GaugeChart } from "@/components/sugerencias/wanda/gauge-chart"
 import { TotalFacturadoChart } from "@/components/sugerencias/wanda/total-facturado-chart"
@@ -187,8 +186,6 @@ export default function WandaDashboardPage() {
 
   if (loading) {
     return (
-      <SidebarProvider>
-        <SidebarInset className="bg-background">
           <div className="container mx-auto py-8">
             <motion.div 
               className="flex items-center justify-between mb-6"
@@ -208,15 +205,11 @@ export default function WandaDashboardPage() {
             </div>
             <Skeleton className="h-100 rounded-xl" />
           </div>
-        </SidebarInset>
-      </SidebarProvider>
     )
   }
 
   if (error) {
     return (
-      <SidebarProvider>
-        <SidebarInset className="bg-background">
           <div className="container mx-auto py-8">
             <motion.div 
               className="flex flex-col items-center justify-center h-[60vh] gap-4"
@@ -233,8 +226,6 @@ export default function WandaDashboardPage() {
               </Button>
             </motion.div>
           </div>
-        </SidebarInset>
-      </SidebarProvider>
     )
   }
 
@@ -264,8 +255,6 @@ export default function WandaDashboardPage() {
   })
 
   return (
-    <SidebarProvider>
-      <SidebarInset className="bg-background">
         <PageTransition className="relative min-h-screen w-full">
           {/* Background Decor */}
           <div className="fixed inset-0 pointer-events-none overflow-hidden -z-10">
@@ -460,7 +449,5 @@ export default function WandaDashboardPage() {
             </StaggerItem>
           </StaggerContainer>
         </PageTransition>
-      </SidebarInset>
-    </SidebarProvider>
   )
 }

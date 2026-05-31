@@ -8,7 +8,6 @@
 import Link from "next/link"
 import { OfertasTable } from "@/features/ofertas/components/ofertas-table"
 import { Button } from "@/components/ui/button"
-import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar"
 import { PlusCircle, Tag, Sparkles } from "lucide-react"
 import { LazyMotion, m as motion } from "framer-motion"
 import type { Oferta } from "@/app/models/model"
@@ -29,8 +28,6 @@ interface OfertasPageContentProps {
  */
 export function OfertasPageContent({ ofertas }: OfertasPageContentProps) {
   return (
-    <SidebarProvider>
-      <SidebarInset>
         <div className="container mx-auto py-4">
           {/* Header */}
           <motion.div
@@ -100,7 +97,5 @@ export function OfertasPageContent({ ofertas }: OfertasPageContentProps) {
             />
           </motion.div>
         </div>
-      </SidebarInset>
-    </SidebarProvider>
   )
 }

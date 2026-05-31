@@ -13,7 +13,6 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, Dialog
 import { TransferenciaBancaria } from '@/app/models/model';
 import { getTransferenciasBancariasAction } from '@/features/contabilidad/actions';
 import { cn, formatCurrency } from '@/lib/utils';
-import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar"
 import { AnimatedNumber } from '@/components/ui/animated-number'
 import { Skeleton } from '@/components/ui/skeleton';
 
@@ -117,8 +116,6 @@ export default function TransferenciasBancariasPage(): React.JSX.Element {
   );
 
   return (
-    <SidebarProvider>
-      <SidebarInset className="bg-background">
         <motion.div 
           className="space-y-8 p-8" 
           variants={fadeIn} 
@@ -268,7 +265,5 @@ export default function TransferenciasBancariasPage(): React.JSX.Element {
             </Card>
           </motion.div>
         </motion.div>
-      </SidebarInset>
-    </SidebarProvider>
   );
 }

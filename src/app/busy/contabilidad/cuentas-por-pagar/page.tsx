@@ -1,7 +1,7 @@
 "use client";
 
 import { useMemo, useState, useCallback, useEffect } from "react";
-import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar";
+;
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -377,8 +377,6 @@ export default function CuentasPorPagarPage() {
 	};
 
 	return (
-		<SidebarProvider>
-			<SidebarInset className="bg-background">
 				<PageTransition className="container mx-auto py-6 px-4 space-y-8">
 					<StaggerContainer className="space-y-8">
 						{/* Header con navegación */}
@@ -954,7 +952,5 @@ export default function CuentasPorPagarPage() {
 						/>
 					)}
 				</PageTransition>
-			</SidebarInset>
-		</SidebarProvider>
 	);
 }
