@@ -474,6 +474,12 @@ exports.Prisma.PlanScalarFieldEnum = {
   maxUsuarios: 'maxUsuarios',
   maxAlmacenes: 'maxAlmacenes',
   maxProductos: 'maxProductos',
+  maxClientes: 'maxClientes',
+  maxPuntosVenta: 'maxPuntosVenta',
+  maxFacturasMes: 'maxFacturasMes',
+  maxContratos: 'maxContratos',
+  incluyeBackups: 'incluyeBackups',
+  features: 'features',
   createdAt: 'createdAt',
   updatedAt: 'updatedAt'
 };
@@ -1697,6 +1703,27 @@ exports.Prisma.PeriodoCacheScalarFieldEnum = {
   createdAt: 'createdAt'
 };
 
+exports.Prisma.ReviewScalarFieldEnum = {
+  reviewId: 'reviewId',
+  tenantId: 'tenantId',
+  userId: 'userId',
+  rating: 'rating',
+  comment: 'comment',
+  isApproved: 'isApproved',
+  isPositive: 'isPositive',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+};
+
+exports.Prisma.ReviewPromptScalarFieldEnum = {
+  promptId: 'promptId',
+  tenantId: 'tenantId',
+  userId: 'userId',
+  promptedAt: 'promptedAt',
+  dismissedAt: 'dismissedAt',
+  submittedAt: 'submittedAt'
+};
+
 exports.Prisma.SortOrder = {
   asc: 'asc',
   desc: 'desc'
@@ -1897,7 +1924,8 @@ exports.EventoAuditoria = exports.$Enums.EventoAuditoria = {
 exports.BackupType = exports.$Enums.BackupType = {
   full: 'full',
   tenant: 'tenant',
-  config: 'config'
+  config: 'config',
+  imported: 'imported'
 };
 
 exports.BackupStatus = exports.$Enums.BackupStatus = {
@@ -2012,7 +2040,9 @@ exports.Prisma.ModelName = {
   AuditoriaPeriodo: 'AuditoriaPeriodo',
   BackupLog: 'BackupLog',
   BackupPlan: 'BackupPlan',
-  PeriodoCache: 'PeriodoCache'
+  PeriodoCache: 'PeriodoCache',
+  Review: 'Review',
+  ReviewPrompt: 'ReviewPrompt'
 };
 
 /**

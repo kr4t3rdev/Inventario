@@ -33,8 +33,6 @@ export interface BenefitItem {
 	icon: LucideIcon;
 }
 
-
-
 export interface ContactItem {
 	label: string;
 	value: string;
@@ -217,8 +215,6 @@ export const BENEFIT_ITEMS: BenefitItem[] = [
 ];
 
 /* ─── Pricing Plans ─── */
-
-
 
 /* ─── Contact ─── */
 

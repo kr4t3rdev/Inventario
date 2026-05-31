@@ -2,7 +2,7 @@
 import { revalidatePath } from 'next/cache';
 import { withAction, ActionError } from '@/lib/server-actions';
 import { prisma } from '@/lib/prisma';
-import { requireTenant } from '@/lib/services/tenant-scope';
+import { requireTenant, requireManagerRole } from '@/lib/services/tenant-scope';
 import { servicioSchema, servicioUpdateSchema } from './schemas';
 import type { ServicioInput, ServicioUpdateInput } from './schemas';
 import type { AuthenticatedUser } from '@/lib/auth-middleware';
@@ -34,11 +34,13 @@ export const getServicioByIdAction = withAction(async (id: string, user: Authent
   return serializeServicio(s);
 });
 export const createServicioAction = withAction(async (input: ServicioInput, user: AuthenticatedUser) => {
+  requireManagerRole(user, 'crear servicios');
   const p = servicioSchema.parse(input); const tid = requireTenant(user);
   const s = await prisma.servicios.create({ data: { ...p, tenantId: tid } });
   revalidatePath('/busy/servicios'); return serializeServicio(s);
 });
 export const updateServicioAction = withAction(async (input: ServicioUpdateInput, user: AuthenticatedUser) => {
+  requireManagerRole(user, 'editar servicios');
   const p = servicioUpdateSchema.parse(input); const { servicioId, ...d } = p; const tid = requireTenant(user);
   const ex = await prisma.servicios.findFirst({ where: { servicioId, tenantId: tid } });
   if (!ex) throw new ActionError('Servicio no encontrado', 'NOT_FOUND');
@@ -46,6 +48,7 @@ export const updateServicioAction = withAction(async (input: ServicioUpdateInput
   revalidatePath('/busy/servicios'); return serializeServicio(s);
 });
 export const deleteServicioAction = withAction(async (id: string, user: AuthenticatedUser) => {
+  requireManagerRole(user, 'eliminar servicios');
   const tid = requireTenant(user);
   const ex = await prisma.servicios.findFirst({ where: { servicioId: id, tenantId: tid } });
   if (!ex) throw new ActionError('Servicio no encontrado', 'NOT_FOUND');

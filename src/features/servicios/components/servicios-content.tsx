@@ -50,12 +50,16 @@ interface ServicioItem {
 interface ServiciosContentProps {
   initialServicios: Servicio[]
   initialVentaServicios: VentaServicio[]
+  tenantRole?: string
 }
 
-export function ServiciosContent({ initialServicios, initialVentaServicios }: ServiciosContentProps) {
+export function ServiciosContent({ initialServicios, initialVentaServicios, tenantRole }: ServiciosContentProps) {
   const [servicios, setServicios] = useState<Servicio[]>(initialServicios)
   const [isLoading, setIsLoading] = useState(false)
   const [isPending, startTransition] = useTransition()
+
+  // ─── Permisos ──
+  const puedeEditar = tenantRole === 'manager' || !tenantRole
 
   const [servicioToDelete, setServicioToDelete] = useState<string | null>(null)
   const [searchTerm, setSearchTerm] = useState('')
@@ -212,6 +216,7 @@ export function ServiciosContent({ initialServicios, initialVentaServicios }: Se
                   </Link>
                 </Button>
               </motion.div>
+              {puedeEditar && (
               <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}>
                 <Button asChild variant='outline'>
                   <Link href='/busy/servicios/recibidos'>
@@ -219,6 +224,8 @@ export function ServiciosContent({ initialServicios, initialVentaServicios }: Se
                   </Link>
                 </Button>
               </motion.div>
+              )}
+              {puedeEditar && (
               <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}>
                 <Button 
                   asChild 
@@ -229,6 +236,7 @@ export function ServiciosContent({ initialServicios, initialVentaServicios }: Se
                   </Link>
                 </Button>
               </motion.div>
+              )}
               <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}>
                 <Button 
                   onClick={() => setIsCartDialogOpen(true)}
@@ -261,10 +269,12 @@ export function ServiciosContent({ initialServicios, initialVentaServicios }: Se
                   <CheckCircle className='mr-2 h-4 w-4' />
                   Servicios Vendidos
                 </TabsTrigger>
+                {puedeEditar && (
                 <TabsTrigger value='recibidos'>
                   <Truck className='mr-2 h-4 w-4' />
                   Servicios Recibidos
                 </TabsTrigger>
+                )}
               </TabsList>
             </motion.div>
 
@@ -316,11 +326,14 @@ export function ServiciosContent({ initialServicios, initialVentaServicios }: Se
                                 {servicio.nombre}
                               </CardTitle>
                               <div className='flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity duration-200'>
+                                {puedeEditar && (
                                 <Link href={`/busy/servicios/update/${servicio.servicioId}`}>
                                   <Button variant='ghost' size='icon' className='h-8 w-8'>
                                     <Pencil className='h-4 w-4' />
                                   </Button>
                                 </Link>
+                                )}
+                                {puedeEditar && (
                                 <Button 
                                   variant='ghost' 
                                   size='icon' 
@@ -329,6 +342,7 @@ export function ServiciosContent({ initialServicios, initialVentaServicios }: Se
                                 >
                                   <Trash2 className='h-4 w-4 text-destructive' />
                                 </Button>
+                                )}
                               </div>
                             </div>
                             <CardDescription className='line-clamp-2 mt-1'>
@@ -370,6 +384,7 @@ export function ServiciosContent({ initialServicios, initialVentaServicios }: Se
                       <p className='text-muted-foreground mb-4'>
                         Intenta con otro término de búsqueda o crea un nuevo servicio
                       </p>
+                      {puedeEditar && (
                       <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}>
                         <Button 
                           asChild
@@ -380,6 +395,7 @@ export function ServiciosContent({ initialServicios, initialVentaServicios }: Se
                           </Link>
                         </Button>
                       </motion.div>
+                      )}
                     </motion.div>
                   )}
                 </motion.div>
@@ -444,6 +460,7 @@ export function ServiciosContent({ initialServicios, initialVentaServicios }: Se
                 </motion.div>
               </TabsContent>
 
+              {puedeEditar && (
               <TabsContent value='recibidos' className='mt-0'>
                 <motion.div
                   initial={{ opacity: 0, y: 20 }}
@@ -467,6 +484,7 @@ export function ServiciosContent({ initialServicios, initialVentaServicios }: Se
                   </Card>
                 </motion.div>
               </TabsContent>
+              )}
             </AnimatePresence>
           </Tabs>
 

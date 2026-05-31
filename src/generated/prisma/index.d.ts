@@ -536,6 +536,16 @@ export type BackupPlan = $Result.DefaultSelection<Prisma.$BackupPlanPayload>
  * el mismo caché. Cada entrada tiene TTL definido por expiresAt.
  */
 export type PeriodoCache = $Result.DefaultSelection<Prisma.$PeriodoCachePayload>
+/**
+ * Model Review
+ * Reseña de un usuario sobre el sistema.
+ */
+export type Review = $Result.DefaultSelection<Prisma.$ReviewPayload>
+/**
+ * Model ReviewPrompt
+ * Traza de solicitudes de reseña.
+ */
+export type ReviewPrompt = $Result.DefaultSelection<Prisma.$ReviewPromptPayload>
 
 /**
  * Enums
@@ -765,7 +775,8 @@ export type CategoriaPeriodo = (typeof CategoriaPeriodo)[keyof typeof CategoriaP
 export const BackupType: {
   full: 'full',
   tenant: 'tenant',
-  config: 'config'
+  config: 'config',
+  imported: 'imported'
 };
 
 export type BackupType = (typeof BackupType)[keyof typeof BackupType]
@@ -2063,6 +2074,26 @@ export class PrismaClient<
     * ```
     */
   get periodoCache(): Prisma.PeriodoCacheDelegate<ExtArgs, ClientOptions>;
+
+  /**
+   * `prisma.review`: Exposes CRUD operations for the **Review** model.
+    * Example usage:
+    * ```ts
+    * // Fetch zero or more Reviews
+    * const reviews = await prisma.review.findMany()
+    * ```
+    */
+  get review(): Prisma.ReviewDelegate<ExtArgs, ClientOptions>;
+
+  /**
+   * `prisma.reviewPrompt`: Exposes CRUD operations for the **ReviewPrompt** model.
+    * Example usage:
+    * ```ts
+    * // Fetch zero or more ReviewPrompts
+    * const reviewPrompts = await prisma.reviewPrompt.findMany()
+    * ```
+    */
+  get reviewPrompt(): Prisma.ReviewPromptDelegate<ExtArgs, ClientOptions>;
 }
 
 export namespace Prisma {
@@ -2607,7 +2638,9 @@ export namespace Prisma {
     AuditoriaPeriodo: 'AuditoriaPeriodo',
     BackupLog: 'BackupLog',
     BackupPlan: 'BackupPlan',
-    PeriodoCache: 'PeriodoCache'
+    PeriodoCache: 'PeriodoCache',
+    Review: 'Review',
+    ReviewPrompt: 'ReviewPrompt'
   };
 
   export type ModelName = (typeof ModelName)[keyof typeof ModelName]
@@ -2626,7 +2659,7 @@ export namespace Prisma {
       omit: GlobalOmitOptions
     }
     meta: {
-      modelProps: "categoria" | "unidad" | "vendor" | "inyeccionCapital" | "pagoDeuda" | "cliente" | "tenant" | "tenantMembership" | "tenantLicense" | "miEmpresa" | "almacen" | "puntoDeVenta" | "turnoPuntoVenta" | "arqueoCaja" | "producto" | "stockUbicacion" | "venta" | "ventaItem" | "merma" | "transferencia" | "user" | "plan" | "licencia" | "licenciaAudit" | "notification" | "userActivityLog" | "userSession" | "attendance" | "employeeWorkSchedule" | "vacationRequest" | "vacationAccrual" | "empleado" | "pagosalario" | "cierreContable" | "gastoCompra" | "compraProducto" | "compraDocumento" | "compraDocumentoItem" | "servicios" | "ventaServicios" | "compraServicio" | "gastoConcepto" | "gastoElemento" | "gastosDE" | "moneda" | "catalogoReparacionConfig" | "tasaCambio" | "transaccionMoneda" | "cuentaBancaria" | "tipoPago" | "reconciliacionVenta" | "reconciliacionServicio" | "reconciliacionGasto" | "ajusteBancario" | "transferenciaBancaria" | "alertHistory" | "auditLog" | "reportHistory" | "scheduledReport" | "scenarioSimulation" | "contrato" | "contratoVersion" | "contratoFirma" | "contratoAprobacion" | "contratoArchivo" | "contratoAlerta" | "tipoContratoCustom" | "factura" | "serieFacturacion" | "oferta" | "ofertaItem" | "cuentaPorCobrar" | "cuentaPorPagar" | "deudaCash" | "prestamoCash" | "pagoCuentaPorPagar" | "equipoReparacion" | "piezaReparacion" | "ordenReparacion" | "ordenReparacionEquipo" | "ordenReparacionItem" | "ordenReparacionMaterial" | "defectacionCatalogo" | "configuracionSistema" | "ordenProduccion" | "ordenProduccionHistorial" | "receta" | "recetaIngrediente" | "valeSalida" | "valeSalidaItem" | "listaPrecio" | "precioProducto" | "productoCostHistory" | "vendorCodeSequence" | "anticipo" | "anticipoMovimiento" | "periodoContable" | "snapshotPeriodo" | "aperturaPeriodo" | "saldoSnapshot" | "auditoriaPeriodo" | "backupLog" | "backupPlan" | "periodoCache"
+      modelProps: "categoria" | "unidad" | "vendor" | "inyeccionCapital" | "pagoDeuda" | "cliente" | "tenant" | "tenantMembership" | "tenantLicense" | "miEmpresa" | "almacen" | "puntoDeVenta" | "turnoPuntoVenta" | "arqueoCaja" | "producto" | "stockUbicacion" | "venta" | "ventaItem" | "merma" | "transferencia" | "user" | "plan" | "licencia" | "licenciaAudit" | "notification" | "userActivityLog" | "userSession" | "attendance" | "employeeWorkSchedule" | "vacationRequest" | "vacationAccrual" | "empleado" | "pagosalario" | "cierreContable" | "gastoCompra" | "compraProducto" | "compraDocumento" | "compraDocumentoItem" | "servicios" | "ventaServicios" | "compraServicio" | "gastoConcepto" | "gastoElemento" | "gastosDE" | "moneda" | "catalogoReparacionConfig" | "tasaCambio" | "transaccionMoneda" | "cuentaBancaria" | "tipoPago" | "reconciliacionVenta" | "reconciliacionServicio" | "reconciliacionGasto" | "ajusteBancario" | "transferenciaBancaria" | "alertHistory" | "auditLog" | "reportHistory" | "scheduledReport" | "scenarioSimulation" | "contrato" | "contratoVersion" | "contratoFirma" | "contratoAprobacion" | "contratoArchivo" | "contratoAlerta" | "tipoContratoCustom" | "factura" | "serieFacturacion" | "oferta" | "ofertaItem" | "cuentaPorCobrar" | "cuentaPorPagar" | "deudaCash" | "prestamoCash" | "pagoCuentaPorPagar" | "equipoReparacion" | "piezaReparacion" | "ordenReparacion" | "ordenReparacionEquipo" | "ordenReparacionItem" | "ordenReparacionMaterial" | "defectacionCatalogo" | "configuracionSistema" | "ordenProduccion" | "ordenProduccionHistorial" | "receta" | "recetaIngrediente" | "valeSalida" | "valeSalidaItem" | "listaPrecio" | "precioProducto" | "productoCostHistory" | "vendorCodeSequence" | "anticipo" | "anticipoMovimiento" | "periodoContable" | "snapshotPeriodo" | "aperturaPeriodo" | "saldoSnapshot" | "auditoriaPeriodo" | "backupLog" | "backupPlan" | "periodoCache" | "review" | "reviewPrompt"
       txIsolationLevel: Prisma.TransactionIsolationLevel
     }
     model: {
@@ -10326,6 +10359,154 @@ export namespace Prisma {
           }
         }
       }
+      Review: {
+        payload: Prisma.$ReviewPayload<ExtArgs>
+        fields: Prisma.ReviewFieldRefs
+        operations: {
+          findUnique: {
+            args: Prisma.ReviewFindUniqueArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$ReviewPayload> | null
+          }
+          findUniqueOrThrow: {
+            args: Prisma.ReviewFindUniqueOrThrowArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$ReviewPayload>
+          }
+          findFirst: {
+            args: Prisma.ReviewFindFirstArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$ReviewPayload> | null
+          }
+          findFirstOrThrow: {
+            args: Prisma.ReviewFindFirstOrThrowArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$ReviewPayload>
+          }
+          findMany: {
+            args: Prisma.ReviewFindManyArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$ReviewPayload>[]
+          }
+          create: {
+            args: Prisma.ReviewCreateArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$ReviewPayload>
+          }
+          createMany: {
+            args: Prisma.ReviewCreateManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          createManyAndReturn: {
+            args: Prisma.ReviewCreateManyAndReturnArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$ReviewPayload>[]
+          }
+          delete: {
+            args: Prisma.ReviewDeleteArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$ReviewPayload>
+          }
+          update: {
+            args: Prisma.ReviewUpdateArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$ReviewPayload>
+          }
+          deleteMany: {
+            args: Prisma.ReviewDeleteManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          updateMany: {
+            args: Prisma.ReviewUpdateManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          updateManyAndReturn: {
+            args: Prisma.ReviewUpdateManyAndReturnArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$ReviewPayload>[]
+          }
+          upsert: {
+            args: Prisma.ReviewUpsertArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$ReviewPayload>
+          }
+          aggregate: {
+            args: Prisma.ReviewAggregateArgs<ExtArgs>
+            result: $Utils.Optional<AggregateReview>
+          }
+          groupBy: {
+            args: Prisma.ReviewGroupByArgs<ExtArgs>
+            result: $Utils.Optional<ReviewGroupByOutputType>[]
+          }
+          count: {
+            args: Prisma.ReviewCountArgs<ExtArgs>
+            result: $Utils.Optional<ReviewCountAggregateOutputType> | number
+          }
+        }
+      }
+      ReviewPrompt: {
+        payload: Prisma.$ReviewPromptPayload<ExtArgs>
+        fields: Prisma.ReviewPromptFieldRefs
+        operations: {
+          findUnique: {
+            args: Prisma.ReviewPromptFindUniqueArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$ReviewPromptPayload> | null
+          }
+          findUniqueOrThrow: {
+            args: Prisma.ReviewPromptFindUniqueOrThrowArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$ReviewPromptPayload>
+          }
+          findFirst: {
+            args: Prisma.ReviewPromptFindFirstArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$ReviewPromptPayload> | null
+          }
+          findFirstOrThrow: {
+            args: Prisma.ReviewPromptFindFirstOrThrowArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$ReviewPromptPayload>
+          }
+          findMany: {
+            args: Prisma.ReviewPromptFindManyArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$ReviewPromptPayload>[]
+          }
+          create: {
+            args: Prisma.ReviewPromptCreateArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$ReviewPromptPayload>
+          }
+          createMany: {
+            args: Prisma.ReviewPromptCreateManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          createManyAndReturn: {
+            args: Prisma.ReviewPromptCreateManyAndReturnArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$ReviewPromptPayload>[]
+          }
+          delete: {
+            args: Prisma.ReviewPromptDeleteArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$ReviewPromptPayload>
+          }
+          update: {
+            args: Prisma.ReviewPromptUpdateArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$ReviewPromptPayload>
+          }
+          deleteMany: {
+            args: Prisma.ReviewPromptDeleteManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          updateMany: {
+            args: Prisma.ReviewPromptUpdateManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          updateManyAndReturn: {
+            args: Prisma.ReviewPromptUpdateManyAndReturnArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$ReviewPromptPayload>[]
+          }
+          upsert: {
+            args: Prisma.ReviewPromptUpsertArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$ReviewPromptPayload>
+          }
+          aggregate: {
+            args: Prisma.ReviewPromptAggregateArgs<ExtArgs>
+            result: $Utils.Optional<AggregateReviewPrompt>
+          }
+          groupBy: {
+            args: Prisma.ReviewPromptGroupByArgs<ExtArgs>
+            result: $Utils.Optional<ReviewPromptGroupByOutputType>[]
+          }
+          count: {
+            args: Prisma.ReviewPromptCountArgs<ExtArgs>
+            result: $Utils.Optional<ReviewPromptCountAggregateOutputType> | number
+          }
+        }
+      }
     }
   } & {
     other: {
@@ -10526,6 +10707,8 @@ export namespace Prisma {
     backupLog?: BackupLogOmit
     backupPlan?: BackupPlanOmit
     periodoCache?: PeriodoCacheOmit
+    review?: ReviewOmit
+    reviewPrompt?: ReviewPromptOmit
   }
 
   /* Types for Logging */
@@ -10983,6 +11166,8 @@ export namespace Prisma {
     licencias: number
     memberships: number
     turnosPos: number
+    reviews: number
+    reviewPrompts: number
   }
 
   export type TenantCountOutputTypeSelect<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
@@ -11046,6 +11231,8 @@ export namespace Prisma {
     licencias?: boolean | TenantCountOutputTypeCountLicenciasArgs
     memberships?: boolean | TenantCountOutputTypeCountMembershipsArgs
     turnosPos?: boolean | TenantCountOutputTypeCountTurnosPosArgs
+    reviews?: boolean | TenantCountOutputTypeCountReviewsArgs
+    reviewPrompts?: boolean | TenantCountOutputTypeCountReviewPromptsArgs
   }
 
   // Custom InputTypes
@@ -11479,6 +11666,20 @@ export namespace Prisma {
     where?: TurnoPuntoVentaWhereInput
   }
 
+  /**
+   * TenantCountOutputType without action
+   */
+  export type TenantCountOutputTypeCountReviewsArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    where?: ReviewWhereInput
+  }
+
+  /**
+   * TenantCountOutputType without action
+   */
+  export type TenantCountOutputTypeCountReviewPromptsArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    where?: ReviewPromptWhereInput
+  }
+
 
   /**
    * Count Type AlmacenCountOutputType
@@ -11883,6 +12084,8 @@ export namespace Prisma {
     backupLogs: number
     backupPlans: number
     tenantMemberships: number
+    reviews: number
+    reviewPrompts: number
   }
 
   export type UserCountOutputTypeSelect<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
@@ -11904,6 +12107,8 @@ export namespace Prisma {
     backupLogs?: boolean | UserCountOutputTypeCountBackupLogsArgs
     backupPlans?: boolean | UserCountOutputTypeCountBackupPlansArgs
     tenantMemberships?: boolean | UserCountOutputTypeCountTenantMembershipsArgs
+    reviews?: boolean | UserCountOutputTypeCountReviewsArgs
+    reviewPrompts?: boolean | UserCountOutputTypeCountReviewPromptsArgs
   }
 
   // Custom InputTypes
@@ -12041,6 +12246,20 @@ export namespace Prisma {
    */
   export type UserCountOutputTypeCountTenantMembershipsArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     where?: TenantMembershipWhereInput
+  }
+
+  /**
+   * UserCountOutputType without action
+   */
+  export type UserCountOutputTypeCountReviewsArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    where?: ReviewWhereInput
+  }
+
+  /**
+   * UserCountOutputType without action
+   */
+  export type UserCountOutputTypeCountReviewPromptsArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    where?: ReviewPromptWhereInput
   }
 
 
@@ -21185,6 +21404,8 @@ export namespace Prisma {
     licencias?: boolean | Tenant$licenciasArgs<ExtArgs>
     memberships?: boolean | Tenant$membershipsArgs<ExtArgs>
     turnosPos?: boolean | Tenant$turnosPosArgs<ExtArgs>
+    reviews?: boolean | Tenant$reviewsArgs<ExtArgs>
+    reviewPrompts?: boolean | Tenant$reviewPromptsArgs<ExtArgs>
     _count?: boolean | TenantCountOutputTypeDefaultArgs<ExtArgs>
   }, ExtArgs["result"]["tenant"]>
 
@@ -21278,6 +21499,8 @@ export namespace Prisma {
     licencias?: boolean | Tenant$licenciasArgs<ExtArgs>
     memberships?: boolean | Tenant$membershipsArgs<ExtArgs>
     turnosPos?: boolean | Tenant$turnosPosArgs<ExtArgs>
+    reviews?: boolean | Tenant$reviewsArgs<ExtArgs>
+    reviewPrompts?: boolean | Tenant$reviewPromptsArgs<ExtArgs>
     _count?: boolean | TenantCountOutputTypeDefaultArgs<ExtArgs>
   }
   export type TenantIncludeCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {}
@@ -21347,6 +21570,8 @@ export namespace Prisma {
       licencias: Prisma.$TenantLicensePayload<ExtArgs>[]
       memberships: Prisma.$TenantMembershipPayload<ExtArgs>[]
       turnosPos: Prisma.$TurnoPuntoVentaPayload<ExtArgs>[]
+      reviews: Prisma.$ReviewPayload<ExtArgs>[]
+      reviewPrompts: Prisma.$ReviewPromptPayload<ExtArgs>[]
     }
     scalars: $Extensions.GetPayloadResult<{
       tenantId: string
@@ -21810,6 +22035,8 @@ export namespace Prisma {
     licencias<T extends Tenant$licenciasArgs<ExtArgs> = {}>(args?: Subset<T, Tenant$licenciasArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$TenantLicensePayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
     memberships<T extends Tenant$membershipsArgs<ExtArgs> = {}>(args?: Subset<T, Tenant$membershipsArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$TenantMembershipPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
     turnosPos<T extends Tenant$turnosPosArgs<ExtArgs> = {}>(args?: Subset<T, Tenant$turnosPosArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$TurnoPuntoVentaPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
+    reviews<T extends Tenant$reviewsArgs<ExtArgs> = {}>(args?: Subset<T, Tenant$reviewsArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$ReviewPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
+    reviewPrompts<T extends Tenant$reviewPromptsArgs<ExtArgs> = {}>(args?: Subset<T, Tenant$reviewPromptsArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$ReviewPromptPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
     /**
      * Attaches callbacks for the resolution and/or rejection of the Promise.
      * @param onfulfilled The callback to execute when the Promise is resolved.
@@ -23689,6 +23916,54 @@ export namespace Prisma {
     take?: number
     skip?: number
     distinct?: TurnoPuntoVentaScalarFieldEnum | TurnoPuntoVentaScalarFieldEnum[]
+  }
+
+  /**
+   * Tenant.reviews
+   */
+  export type Tenant$reviewsArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the Review
+     */
+    select?: ReviewSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the Review
+     */
+    omit?: ReviewOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: ReviewInclude<ExtArgs> | null
+    where?: ReviewWhereInput
+    orderBy?: ReviewOrderByWithRelationInput | ReviewOrderByWithRelationInput[]
+    cursor?: ReviewWhereUniqueInput
+    take?: number
+    skip?: number
+    distinct?: ReviewScalarFieldEnum | ReviewScalarFieldEnum[]
+  }
+
+  /**
+   * Tenant.reviewPrompts
+   */
+  export type Tenant$reviewPromptsArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the ReviewPrompt
+     */
+    select?: ReviewPromptSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the ReviewPrompt
+     */
+    omit?: ReviewPromptOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: ReviewPromptInclude<ExtArgs> | null
+    where?: ReviewPromptWhereInput
+    orderBy?: ReviewPromptOrderByWithRelationInput | ReviewPromptOrderByWithRelationInput[]
+    cursor?: ReviewPromptWhereUniqueInput
+    take?: number
+    skip?: number
+    distinct?: ReviewPromptScalarFieldEnum | ReviewPromptScalarFieldEnum[]
   }
 
   /**
@@ -41522,6 +41797,8 @@ export namespace Prisma {
     backupLogs?: boolean | User$backupLogsArgs<ExtArgs>
     backupPlans?: boolean | User$backupPlansArgs<ExtArgs>
     tenantMemberships?: boolean | User$tenantMembershipsArgs<ExtArgs>
+    reviews?: boolean | User$reviewsArgs<ExtArgs>
+    reviewPrompts?: boolean | User$reviewPromptsArgs<ExtArgs>
     _count?: boolean | UserCountOutputTypeDefaultArgs<ExtArgs>
   }, ExtArgs["result"]["user"]>
 
@@ -41611,6 +41888,8 @@ export namespace Prisma {
     backupLogs?: boolean | User$backupLogsArgs<ExtArgs>
     backupPlans?: boolean | User$backupPlansArgs<ExtArgs>
     tenantMemberships?: boolean | User$tenantMembershipsArgs<ExtArgs>
+    reviews?: boolean | User$reviewsArgs<ExtArgs>
+    reviewPrompts?: boolean | User$reviewPromptsArgs<ExtArgs>
     _count?: boolean | UserCountOutputTypeDefaultArgs<ExtArgs>
   }
   export type UserIncludeCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {}
@@ -41637,6 +41916,8 @@ export namespace Prisma {
       backupLogs: Prisma.$BackupLogPayload<ExtArgs>[]
       backupPlans: Prisma.$BackupPlanPayload<ExtArgs>[]
       tenantMemberships: Prisma.$TenantMembershipPayload<ExtArgs>[]
+      reviews: Prisma.$ReviewPayload<ExtArgs>[]
+      reviewPrompts: Prisma.$ReviewPromptPayload<ExtArgs>[]
     }
     scalars: $Extensions.GetPayloadResult<{
       userId: string
@@ -42070,6 +42351,8 @@ export namespace Prisma {
     backupLogs<T extends User$backupLogsArgs<ExtArgs> = {}>(args?: Subset<T, User$backupLogsArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$BackupLogPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
     backupPlans<T extends User$backupPlansArgs<ExtArgs> = {}>(args?: Subset<T, User$backupPlansArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$BackupPlanPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
     tenantMemberships<T extends User$tenantMembershipsArgs<ExtArgs> = {}>(args?: Subset<T, User$tenantMembershipsArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$TenantMembershipPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
+    reviews<T extends User$reviewsArgs<ExtArgs> = {}>(args?: Subset<T, User$reviewsArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$ReviewPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
+    reviewPrompts<T extends User$reviewPromptsArgs<ExtArgs> = {}>(args?: Subset<T, User$reviewPromptsArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$ReviewPromptPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
     /**
      * Attaches callbacks for the resolution and/or rejection of the Promise.
      * @param onfulfilled The callback to execute when the Promise is resolved.
@@ -42938,6 +43221,54 @@ export namespace Prisma {
   }
 
   /**
+   * User.reviews
+   */
+  export type User$reviewsArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the Review
+     */
+    select?: ReviewSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the Review
+     */
+    omit?: ReviewOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: ReviewInclude<ExtArgs> | null
+    where?: ReviewWhereInput
+    orderBy?: ReviewOrderByWithRelationInput | ReviewOrderByWithRelationInput[]
+    cursor?: ReviewWhereUniqueInput
+    take?: number
+    skip?: number
+    distinct?: ReviewScalarFieldEnum | ReviewScalarFieldEnum[]
+  }
+
+  /**
+   * User.reviewPrompts
+   */
+  export type User$reviewPromptsArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the ReviewPrompt
+     */
+    select?: ReviewPromptSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the ReviewPrompt
+     */
+    omit?: ReviewPromptOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: ReviewPromptInclude<ExtArgs> | null
+    where?: ReviewPromptWhereInput
+    orderBy?: ReviewPromptOrderByWithRelationInput | ReviewPromptOrderByWithRelationInput[]
+    cursor?: ReviewPromptWhereUniqueInput
+    take?: number
+    skip?: number
+    distinct?: ReviewPromptScalarFieldEnum | ReviewPromptScalarFieldEnum[]
+  }
+
+  /**
    * User without action
    */
   export type UserDefaultArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
@@ -42974,6 +43305,10 @@ export namespace Prisma {
     maxUsuarios: number | null
     maxAlmacenes: number | null
     maxProductos: number | null
+    maxClientes: number | null
+    maxPuntosVenta: number | null
+    maxFacturasMes: number | null
+    maxContratos: number | null
   }
 
   export type PlanSumAggregateOutputType = {
@@ -42982,6 +43317,10 @@ export namespace Prisma {
     maxUsuarios: number | null
     maxAlmacenes: number | null
     maxProductos: number | null
+    maxClientes: number | null
+    maxPuntosVenta: number | null
+    maxFacturasMes: number | null
+    maxContratos: number | null
   }
 
   export type PlanMinAggregateOutputType = {
@@ -42993,6 +43332,11 @@ export namespace Prisma {
     maxUsuarios: number | null
     maxAlmacenes: number | null
     maxProductos: number | null
+    maxClientes: number | null
+    maxPuntosVenta: number | null
+    maxFacturasMes: number | null
+    maxContratos: number | null
+    incluyeBackups: boolean | null
     createdAt: Date | null
     updatedAt: Date | null
   }
@@ -43006,6 +43350,11 @@ export namespace Prisma {
     maxUsuarios: number | null
     maxAlmacenes: number | null
     maxProductos: number | null
+    maxClientes: number | null
+    maxPuntosVenta: number | null
+    maxFacturasMes: number | null
+    maxContratos: number | null
+    incluyeBackups: boolean | null
     createdAt: Date | null
     updatedAt: Date | null
   }
@@ -43019,6 +43368,12 @@ export namespace Prisma {
     maxUsuarios: number
     maxAlmacenes: number
     maxProductos: number
+    maxClientes: number
+    maxPuntosVenta: number
+    maxFacturasMes: number
+    maxContratos: number
+    incluyeBackups: number
+    features: number
     createdAt: number
     updatedAt: number
     _all: number
@@ -43031,6 +43386,10 @@ export namespace Prisma {
     maxUsuarios?: true
     maxAlmacenes?: true
     maxProductos?: true
+    maxClientes?: true
+    maxPuntosVenta?: true
+    maxFacturasMes?: true
+    maxContratos?: true
   }
 
   export type PlanSumAggregateInputType = {
@@ -43039,6 +43398,10 @@ export namespace Prisma {
     maxUsuarios?: true
     maxAlmacenes?: true
     maxProductos?: true
+    maxClientes?: true
+    maxPuntosVenta?: true
+    maxFacturasMes?: true
+    maxContratos?: true
   }
 
   export type PlanMinAggregateInputType = {
@@ -43050,6 +43413,11 @@ export namespace Prisma {
     maxUsuarios?: true
     maxAlmacenes?: true
     maxProductos?: true
+    maxClientes?: true
+    maxPuntosVenta?: true
+    maxFacturasMes?: true
+    maxContratos?: true
+    incluyeBackups?: true
     createdAt?: true
     updatedAt?: true
   }
@@ -43063,6 +43431,11 @@ export namespace Prisma {
     maxUsuarios?: true
     maxAlmacenes?: true
     maxProductos?: true
+    maxClientes?: true
+    maxPuntosVenta?: true
+    maxFacturasMes?: true
+    maxContratos?: true
+    incluyeBackups?: true
     createdAt?: true
     updatedAt?: true
   }
@@ -43076,6 +43449,12 @@ export namespace Prisma {
     maxUsuarios?: true
     maxAlmacenes?: true
     maxProductos?: true
+    maxClientes?: true
+    maxPuntosVenta?: true
+    maxFacturasMes?: true
+    maxContratos?: true
+    incluyeBackups?: true
+    features?: true
     createdAt?: true
     updatedAt?: true
     _all?: true
@@ -43176,6 +43555,12 @@ export namespace Prisma {
     maxUsuarios: number
     maxAlmacenes: number
     maxProductos: number
+    maxClientes: number
+    maxPuntosVenta: number
+    maxFacturasMes: number
+    maxContratos: number
+    incluyeBackups: boolean
+    features: JsonValue
     createdAt: Date
     updatedAt: Date
     _count: PlanCountAggregateOutputType | null
@@ -43208,6 +43593,12 @@ export namespace Prisma {
     maxUsuarios?: boolean
     maxAlmacenes?: boolean
     maxProductos?: boolean
+    maxClientes?: boolean
+    maxPuntosVenta?: boolean
+    maxFacturasMes?: boolean
+    maxContratos?: boolean
+    incluyeBackups?: boolean
+    features?: boolean
     createdAt?: boolean
     updatedAt?: boolean
     licencias?: boolean | Plan$licenciasArgs<ExtArgs>
@@ -43224,6 +43615,12 @@ export namespace Prisma {
     maxUsuarios?: boolean
     maxAlmacenes?: boolean
     maxProductos?: boolean
+    maxClientes?: boolean
+    maxPuntosVenta?: boolean
+    maxFacturasMes?: boolean
+    maxContratos?: boolean
+    incluyeBackups?: boolean
+    features?: boolean
     createdAt?: boolean
     updatedAt?: boolean
   }, ExtArgs["result"]["plan"]>
@@ -43237,6 +43634,12 @@ export namespace Prisma {
     maxUsuarios?: boolean
     maxAlmacenes?: boolean
     maxProductos?: boolean
+    maxClientes?: boolean
+    maxPuntosVenta?: boolean
+    maxFacturasMes?: boolean
+    maxContratos?: boolean
+    incluyeBackups?: boolean
+    features?: boolean
     createdAt?: boolean
     updatedAt?: boolean
   }, ExtArgs["result"]["plan"]>
@@ -43250,11 +43653,17 @@ export namespace Prisma {
     maxUsuarios?: boolean
     maxAlmacenes?: boolean
     maxProductos?: boolean
+    maxClientes?: boolean
+    maxPuntosVenta?: boolean
+    maxFacturasMes?: boolean
+    maxContratos?: boolean
+    incluyeBackups?: boolean
+    features?: boolean
     createdAt?: boolean
     updatedAt?: boolean
   }
 
-  export type PlanOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"planId" | "nombre" | "descripcion" | "precio" | "duracionDias" | "maxUsuarios" | "maxAlmacenes" | "maxProductos" | "createdAt" | "updatedAt", ExtArgs["result"]["plan"]>
+  export type PlanOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"planId" | "nombre" | "descripcion" | "precio" | "duracionDias" | "maxUsuarios" | "maxAlmacenes" | "maxProductos" | "maxClientes" | "maxPuntosVenta" | "maxFacturasMes" | "maxContratos" | "incluyeBackups" | "features" | "createdAt" | "updatedAt", ExtArgs["result"]["plan"]>
   export type PlanInclude<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     licencias?: boolean | Plan$licenciasArgs<ExtArgs>
     tenantLicenses?: boolean | Plan$tenantLicensesArgs<ExtArgs>
@@ -43278,6 +43687,12 @@ export namespace Prisma {
       maxUsuarios: number
       maxAlmacenes: number
       maxProductos: number
+      maxClientes: number
+      maxPuntosVenta: number
+      maxFacturasMes: number
+      maxContratos: number
+      incluyeBackups: boolean
+      features: Prisma.JsonValue
       createdAt: Date
       updatedAt: Date
     }, ExtArgs["result"]["plan"]>
@@ -43713,6 +44128,12 @@ export namespace Prisma {
     readonly maxUsuarios: FieldRef<"Plan", 'Int'>
     readonly maxAlmacenes: FieldRef<"Plan", 'Int'>
     readonly maxProductos: FieldRef<"Plan", 'Int'>
+    readonly maxClientes: FieldRef<"Plan", 'Int'>
+    readonly maxPuntosVenta: FieldRef<"Plan", 'Int'>
+    readonly maxFacturasMes: FieldRef<"Plan", 'Int'>
+    readonly maxContratos: FieldRef<"Plan", 'Int'>
+    readonly incluyeBackups: FieldRef<"Plan", 'Boolean'>
+    readonly features: FieldRef<"Plan", 'Json'>
     readonly createdAt: FieldRef<"Plan", 'DateTime'>
     readonly updatedAt: FieldRef<"Plan", 'DateTime'>
   }
@@ -143920,6 +144341,2237 @@ export namespace Prisma {
 
 
   /**
+   * Model Review
+   */
+
+  export type AggregateReview = {
+    _count: ReviewCountAggregateOutputType | null
+    _avg: ReviewAvgAggregateOutputType | null
+    _sum: ReviewSumAggregateOutputType | null
+    _min: ReviewMinAggregateOutputType | null
+    _max: ReviewMaxAggregateOutputType | null
+  }
+
+  export type ReviewAvgAggregateOutputType = {
+    rating: number | null
+  }
+
+  export type ReviewSumAggregateOutputType = {
+    rating: number | null
+  }
+
+  export type ReviewMinAggregateOutputType = {
+    reviewId: string | null
+    tenantId: string | null
+    userId: string | null
+    rating: number | null
+    comment: string | null
+    isApproved: boolean | null
+    isPositive: boolean | null
+    createdAt: Date | null
+    updatedAt: Date | null
+  }
+
+  export type ReviewMaxAggregateOutputType = {
+    reviewId: string | null
+    tenantId: string | null
+    userId: string | null
+    rating: number | null
+    comment: string | null
+    isApproved: boolean | null
+    isPositive: boolean | null
+    createdAt: Date | null
+    updatedAt: Date | null
+  }
+
+  export type ReviewCountAggregateOutputType = {
+    reviewId: number
+    tenantId: number
+    userId: number
+    rating: number
+    comment: number
+    isApproved: number
+    isPositive: number
+    createdAt: number
+    updatedAt: number
+    _all: number
+  }
+
+
+  export type ReviewAvgAggregateInputType = {
+    rating?: true
+  }
+
+  export type ReviewSumAggregateInputType = {
+    rating?: true
+  }
+
+  export type ReviewMinAggregateInputType = {
+    reviewId?: true
+    tenantId?: true
+    userId?: true
+    rating?: true
+    comment?: true
+    isApproved?: true
+    isPositive?: true
+    createdAt?: true
+    updatedAt?: true
+  }
+
+  export type ReviewMaxAggregateInputType = {
+    reviewId?: true
+    tenantId?: true
+    userId?: true
+    rating?: true
+    comment?: true
+    isApproved?: true
+    isPositive?: true
+    createdAt?: true
+    updatedAt?: true
+  }
+
+  export type ReviewCountAggregateInputType = {
+    reviewId?: true
+    tenantId?: true
+    userId?: true
+    rating?: true
+    comment?: true
+    isApproved?: true
+    isPositive?: true
+    createdAt?: true
+    updatedAt?: true
+    _all?: true
+  }
+
+  export type ReviewAggregateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Filter which Review to aggregate.
+     */
+    where?: ReviewWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of Reviews to fetch.
+     */
+    orderBy?: ReviewOrderByWithRelationInput | ReviewOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the start position
+     */
+    cursor?: ReviewWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` Reviews from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` Reviews.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Count returned Reviews
+    **/
+    _count?: true | ReviewCountAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to average
+    **/
+    _avg?: ReviewAvgAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to sum
+    **/
+    _sum?: ReviewSumAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to find the minimum value
+    **/
+    _min?: ReviewMinAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to find the maximum value
+    **/
+    _max?: ReviewMaxAggregateInputType
+  }
+
+  export type GetReviewAggregateType<T extends ReviewAggregateArgs> = {
+        [P in keyof T & keyof AggregateReview]: P extends '_count' | 'count'
+      ? T[P] extends true
+        ? number
+        : GetScalarType<T[P], AggregateReview[P]>
+      : GetScalarType<T[P], AggregateReview[P]>
+  }
+
+
+
+
+  export type ReviewGroupByArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    where?: ReviewWhereInput
+    orderBy?: ReviewOrderByWithAggregationInput | ReviewOrderByWithAggregationInput[]
+    by: ReviewScalarFieldEnum[] | ReviewScalarFieldEnum
+    having?: ReviewScalarWhereWithAggregatesInput
+    take?: number
+    skip?: number
+    _count?: ReviewCountAggregateInputType | true
+    _avg?: ReviewAvgAggregateInputType
+    _sum?: ReviewSumAggregateInputType
+    _min?: ReviewMinAggregateInputType
+    _max?: ReviewMaxAggregateInputType
+  }
+
+  export type ReviewGroupByOutputType = {
+    reviewId: string
+    tenantId: string
+    userId: string
+    rating: number
+    comment: string | null
+    isApproved: boolean
+    isPositive: boolean
+    createdAt: Date
+    updatedAt: Date
+    _count: ReviewCountAggregateOutputType | null
+    _avg: ReviewAvgAggregateOutputType | null
+    _sum: ReviewSumAggregateOutputType | null
+    _min: ReviewMinAggregateOutputType | null
+    _max: ReviewMaxAggregateOutputType | null
+  }
+
+  type GetReviewGroupByPayload<T extends ReviewGroupByArgs> = Prisma.PrismaPromise<
+    Array<
+      PickEnumerable<ReviewGroupByOutputType, T['by']> &
+        {
+          [P in ((keyof T) & (keyof ReviewGroupByOutputType))]: P extends '_count'
+            ? T[P] extends boolean
+              ? number
+              : GetScalarType<T[P], ReviewGroupByOutputType[P]>
+            : GetScalarType<T[P], ReviewGroupByOutputType[P]>
+        }
+      >
+    >
+
+
+  export type ReviewSelect<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    reviewId?: boolean
+    tenantId?: boolean
+    userId?: boolean
+    rating?: boolean
+    comment?: boolean
+    isApproved?: boolean
+    isPositive?: boolean
+    createdAt?: boolean
+    updatedAt?: boolean
+    tenant?: boolean | TenantDefaultArgs<ExtArgs>
+    user?: boolean | UserDefaultArgs<ExtArgs>
+  }, ExtArgs["result"]["review"]>
+
+  export type ReviewSelectCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    reviewId?: boolean
+    tenantId?: boolean
+    userId?: boolean
+    rating?: boolean
+    comment?: boolean
+    isApproved?: boolean
+    isPositive?: boolean
+    createdAt?: boolean
+    updatedAt?: boolean
+    tenant?: boolean | TenantDefaultArgs<ExtArgs>
+    user?: boolean | UserDefaultArgs<ExtArgs>
+  }, ExtArgs["result"]["review"]>
+
+  export type ReviewSelectUpdateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    reviewId?: boolean
+    tenantId?: boolean
+    userId?: boolean
+    rating?: boolean
+    comment?: boolean
+    isApproved?: boolean
+    isPositive?: boolean
+    createdAt?: boolean
+    updatedAt?: boolean
+    tenant?: boolean | TenantDefaultArgs<ExtArgs>
+    user?: boolean | UserDefaultArgs<ExtArgs>
+  }, ExtArgs["result"]["review"]>
+
+  export type ReviewSelectScalar = {
+    reviewId?: boolean
+    tenantId?: boolean
+    userId?: boolean
+    rating?: boolean
+    comment?: boolean
+    isApproved?: boolean
+    isPositive?: boolean
+    createdAt?: boolean
+    updatedAt?: boolean
+  }
+
+  export type ReviewOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"reviewId" | "tenantId" | "userId" | "rating" | "comment" | "isApproved" | "isPositive" | "createdAt" | "updatedAt", ExtArgs["result"]["review"]>
+  export type ReviewInclude<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    tenant?: boolean | TenantDefaultArgs<ExtArgs>
+    user?: boolean | UserDefaultArgs<ExtArgs>
+  }
+  export type ReviewIncludeCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    tenant?: boolean | TenantDefaultArgs<ExtArgs>
+    user?: boolean | UserDefaultArgs<ExtArgs>
+  }
+  export type ReviewIncludeUpdateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    tenant?: boolean | TenantDefaultArgs<ExtArgs>
+    user?: boolean | UserDefaultArgs<ExtArgs>
+  }
+
+  export type $ReviewPayload<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    name: "Review"
+    objects: {
+      tenant: Prisma.$TenantPayload<ExtArgs>
+      user: Prisma.$UserPayload<ExtArgs>
+    }
+    scalars: $Extensions.GetPayloadResult<{
+      reviewId: string
+      tenantId: string
+      userId: string
+      rating: number
+      comment: string | null
+      isApproved: boolean
+      isPositive: boolean
+      createdAt: Date
+      updatedAt: Date
+    }, ExtArgs["result"]["review"]>
+    composites: {}
+  }
+
+  type ReviewGetPayload<S extends boolean | null | undefined | ReviewDefaultArgs> = $Result.GetResult<Prisma.$ReviewPayload, S>
+
+  type ReviewCountArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> =
+    Omit<ReviewFindManyArgs, 'select' | 'include' | 'distinct' | 'omit'> & {
+      select?: ReviewCountAggregateInputType | true
+    }
+
+  export interface ReviewDelegate<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs, GlobalOmitOptions = {}> {
+    [K: symbol]: { types: Prisma.TypeMap<ExtArgs>['model']['Review'], meta: { name: 'Review' } }
+    /**
+     * Find zero or one Review that matches the filter.
+     * @param {ReviewFindUniqueArgs} args - Arguments to find a Review
+     * @example
+     * // Get one Review
+     * const review = await prisma.review.findUnique({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findUnique<T extends ReviewFindUniqueArgs>(args: SelectSubset<T, ReviewFindUniqueArgs<ExtArgs>>): Prisma__ReviewClient<$Result.GetResult<Prisma.$ReviewPayload<ExtArgs>, T, "findUnique", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find one Review that matches the filter or throw an error with `error.code='P2025'`
+     * if no matches were found.
+     * @param {ReviewFindUniqueOrThrowArgs} args - Arguments to find a Review
+     * @example
+     * // Get one Review
+     * const review = await prisma.review.findUniqueOrThrow({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findUniqueOrThrow<T extends ReviewFindUniqueOrThrowArgs>(args: SelectSubset<T, ReviewFindUniqueOrThrowArgs<ExtArgs>>): Prisma__ReviewClient<$Result.GetResult<Prisma.$ReviewPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find the first Review that matches the filter.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {ReviewFindFirstArgs} args - Arguments to find a Review
+     * @example
+     * // Get one Review
+     * const review = await prisma.review.findFirst({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findFirst<T extends ReviewFindFirstArgs>(args?: SelectSubset<T, ReviewFindFirstArgs<ExtArgs>>): Prisma__ReviewClient<$Result.GetResult<Prisma.$ReviewPayload<ExtArgs>, T, "findFirst", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find the first Review that matches the filter or
+     * throw `PrismaKnownClientError` with `P2025` code if no matches were found.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {ReviewFindFirstOrThrowArgs} args - Arguments to find a Review
+     * @example
+     * // Get one Review
+     * const review = await prisma.review.findFirstOrThrow({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findFirstOrThrow<T extends ReviewFindFirstOrThrowArgs>(args?: SelectSubset<T, ReviewFindFirstOrThrowArgs<ExtArgs>>): Prisma__ReviewClient<$Result.GetResult<Prisma.$ReviewPayload<ExtArgs>, T, "findFirstOrThrow", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find zero or more Reviews that matches the filter.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {ReviewFindManyArgs} args - Arguments to filter and select certain fields only.
+     * @example
+     * // Get all Reviews
+     * const reviews = await prisma.review.findMany()
+     * 
+     * // Get first 10 Reviews
+     * const reviews = await prisma.review.findMany({ take: 10 })
+     * 
+     * // Only select the `reviewId`
+     * const reviewWithReviewIdOnly = await prisma.review.findMany({ select: { reviewId: true } })
+     * 
+     */
+    findMany<T extends ReviewFindManyArgs>(args?: SelectSubset<T, ReviewFindManyArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$ReviewPayload<ExtArgs>, T, "findMany", GlobalOmitOptions>>
+
+    /**
+     * Create a Review.
+     * @param {ReviewCreateArgs} args - Arguments to create a Review.
+     * @example
+     * // Create one Review
+     * const Review = await prisma.review.create({
+     *   data: {
+     *     // ... data to create a Review
+     *   }
+     * })
+     * 
+     */
+    create<T extends ReviewCreateArgs>(args: SelectSubset<T, ReviewCreateArgs<ExtArgs>>): Prisma__ReviewClient<$Result.GetResult<Prisma.$ReviewPayload<ExtArgs>, T, "create", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Create many Reviews.
+     * @param {ReviewCreateManyArgs} args - Arguments to create many Reviews.
+     * @example
+     * // Create many Reviews
+     * const review = await prisma.review.createMany({
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     *     
+     */
+    createMany<T extends ReviewCreateManyArgs>(args?: SelectSubset<T, ReviewCreateManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Create many Reviews and returns the data saved in the database.
+     * @param {ReviewCreateManyAndReturnArgs} args - Arguments to create many Reviews.
+     * @example
+     * // Create many Reviews
+     * const review = await prisma.review.createManyAndReturn({
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * 
+     * // Create many Reviews and only return the `reviewId`
+     * const reviewWithReviewIdOnly = await prisma.review.createManyAndReturn({
+     *   select: { reviewId: true },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * 
+     */
+    createManyAndReturn<T extends ReviewCreateManyAndReturnArgs>(args?: SelectSubset<T, ReviewCreateManyAndReturnArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$ReviewPayload<ExtArgs>, T, "createManyAndReturn", GlobalOmitOptions>>
+
+    /**
+     * Delete a Review.
+     * @param {ReviewDeleteArgs} args - Arguments to delete one Review.
+     * @example
+     * // Delete one Review
+     * const Review = await prisma.review.delete({
+     *   where: {
+     *     // ... filter to delete one Review
+     *   }
+     * })
+     * 
+     */
+    delete<T extends ReviewDeleteArgs>(args: SelectSubset<T, ReviewDeleteArgs<ExtArgs>>): Prisma__ReviewClient<$Result.GetResult<Prisma.$ReviewPayload<ExtArgs>, T, "delete", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Update one Review.
+     * @param {ReviewUpdateArgs} args - Arguments to update one Review.
+     * @example
+     * // Update one Review
+     * const review = await prisma.review.update({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: {
+     *     // ... provide data here
+     *   }
+     * })
+     * 
+     */
+    update<T extends ReviewUpdateArgs>(args: SelectSubset<T, ReviewUpdateArgs<ExtArgs>>): Prisma__ReviewClient<$Result.GetResult<Prisma.$ReviewPayload<ExtArgs>, T, "update", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Delete zero or more Reviews.
+     * @param {ReviewDeleteManyArgs} args - Arguments to filter Reviews to delete.
+     * @example
+     * // Delete a few Reviews
+     * const { count } = await prisma.review.deleteMany({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     * 
+     */
+    deleteMany<T extends ReviewDeleteManyArgs>(args?: SelectSubset<T, ReviewDeleteManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Update zero or more Reviews.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {ReviewUpdateManyArgs} args - Arguments to update one or more rows.
+     * @example
+     * // Update many Reviews
+     * const review = await prisma.review.updateMany({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: {
+     *     // ... provide data here
+     *   }
+     * })
+     * 
+     */
+    updateMany<T extends ReviewUpdateManyArgs>(args: SelectSubset<T, ReviewUpdateManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Update zero or more Reviews and returns the data updated in the database.
+     * @param {ReviewUpdateManyAndReturnArgs} args - Arguments to update many Reviews.
+     * @example
+     * // Update many Reviews
+     * const review = await prisma.review.updateManyAndReturn({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * 
+     * // Update zero or more Reviews and only return the `reviewId`
+     * const reviewWithReviewIdOnly = await prisma.review.updateManyAndReturn({
+     *   select: { reviewId: true },
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * 
+     */
+    updateManyAndReturn<T extends ReviewUpdateManyAndReturnArgs>(args: SelectSubset<T, ReviewUpdateManyAndReturnArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$ReviewPayload<ExtArgs>, T, "updateManyAndReturn", GlobalOmitOptions>>
+
+    /**
+     * Create or update one Review.
+     * @param {ReviewUpsertArgs} args - Arguments to update or create a Review.
+     * @example
+     * // Update or create a Review
+     * const review = await prisma.review.upsert({
+     *   create: {
+     *     // ... data to create a Review
+     *   },
+     *   update: {
+     *     // ... in case it already exists, update
+     *   },
+     *   where: {
+     *     // ... the filter for the Review we want to update
+     *   }
+     * })
+     */
+    upsert<T extends ReviewUpsertArgs>(args: SelectSubset<T, ReviewUpsertArgs<ExtArgs>>): Prisma__ReviewClient<$Result.GetResult<Prisma.$ReviewPayload<ExtArgs>, T, "upsert", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+
+    /**
+     * Count the number of Reviews.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {ReviewCountArgs} args - Arguments to filter Reviews to count.
+     * @example
+     * // Count the number of Reviews
+     * const count = await prisma.review.count({
+     *   where: {
+     *     // ... the filter for the Reviews we want to count
+     *   }
+     * })
+    **/
+    count<T extends ReviewCountArgs>(
+      args?: Subset<T, ReviewCountArgs>,
+    ): Prisma.PrismaPromise<
+      T extends $Utils.Record<'select', any>
+        ? T['select'] extends true
+          ? number
+          : GetScalarType<T['select'], ReviewCountAggregateOutputType>
+        : number
+    >
+
+    /**
+     * Allows you to perform aggregations operations on a Review.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {ReviewAggregateArgs} args - Select which aggregations you would like to apply and on what fields.
+     * @example
+     * // Ordered by age ascending
+     * // Where email contains prisma.io
+     * // Limited to the 10 users
+     * const aggregations = await prisma.user.aggregate({
+     *   _avg: {
+     *     age: true,
+     *   },
+     *   where: {
+     *     email: {
+     *       contains: "prisma.io",
+     *     },
+     *   },
+     *   orderBy: {
+     *     age: "asc",
+     *   },
+     *   take: 10,
+     * })
+    **/
+    aggregate<T extends ReviewAggregateArgs>(args: Subset<T, ReviewAggregateArgs>): Prisma.PrismaPromise<GetReviewAggregateType<T>>
+
+    /**
+     * Group by Review.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {ReviewGroupByArgs} args - Group by arguments.
+     * @example
+     * // Group by city, order by createdAt, get count
+     * const result = await prisma.user.groupBy({
+     *   by: ['city', 'createdAt'],
+     *   orderBy: {
+     *     createdAt: true
+     *   },
+     *   _count: {
+     *     _all: true
+     *   },
+     * })
+     * 
+    **/
+    groupBy<
+      T extends ReviewGroupByArgs,
+      HasSelectOrTake extends Or<
+        Extends<'skip', Keys<T>>,
+        Extends<'take', Keys<T>>
+      >,
+      OrderByArg extends True extends HasSelectOrTake
+        ? { orderBy: ReviewGroupByArgs['orderBy'] }
+        : { orderBy?: ReviewGroupByArgs['orderBy'] },
+      OrderFields extends ExcludeUnderscoreKeys<Keys<MaybeTupleToUnion<T['orderBy']>>>,
+      ByFields extends MaybeTupleToUnion<T['by']>,
+      ByValid extends Has<ByFields, OrderFields>,
+      HavingFields extends GetHavingFields<T['having']>,
+      HavingValid extends Has<ByFields, HavingFields>,
+      ByEmpty extends T['by'] extends never[] ? True : False,
+      InputErrors extends ByEmpty extends True
+      ? `Error: "by" must not be empty.`
+      : HavingValid extends False
+      ? {
+          [P in HavingFields]: P extends ByFields
+            ? never
+            : P extends string
+            ? `Error: Field "${P}" used in "having" needs to be provided in "by".`
+            : [
+                Error,
+                'Field ',
+                P,
+                ` in "having" needs to be provided in "by"`,
+              ]
+        }[HavingFields]
+      : 'take' extends Keys<T>
+      ? 'orderBy' extends Keys<T>
+        ? ByValid extends True
+          ? {}
+          : {
+              [P in OrderFields]: P extends ByFields
+                ? never
+                : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+            }[OrderFields]
+        : 'Error: If you provide "take", you also need to provide "orderBy"'
+      : 'skip' extends Keys<T>
+      ? 'orderBy' extends Keys<T>
+        ? ByValid extends True
+          ? {}
+          : {
+              [P in OrderFields]: P extends ByFields
+                ? never
+                : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+            }[OrderFields]
+        : 'Error: If you provide "skip", you also need to provide "orderBy"'
+      : ByValid extends True
+      ? {}
+      : {
+          [P in OrderFields]: P extends ByFields
+            ? never
+            : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+        }[OrderFields]
+    >(args: SubsetIntersection<T, ReviewGroupByArgs, OrderByArg> & InputErrors): {} extends InputErrors ? GetReviewGroupByPayload<T> : Prisma.PrismaPromise<InputErrors>
+  /**
+   * Fields of the Review model
+   */
+  readonly fields: ReviewFieldRefs;
+  }
+
+  /**
+   * The delegate class that acts as a "Promise-like" for Review.
+   * Why is this prefixed with `Prisma__`?
+   * Because we want to prevent naming conflicts as mentioned in
+   * https://github.com/prisma/prisma-client-js/issues/707
+   */
+  export interface Prisma__ReviewClient<T, Null = never, ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs, GlobalOmitOptions = {}> extends Prisma.PrismaPromise<T> {
+    readonly [Symbol.toStringTag]: "PrismaPromise"
+    tenant<T extends TenantDefaultArgs<ExtArgs> = {}>(args?: Subset<T, TenantDefaultArgs<ExtArgs>>): Prisma__TenantClient<$Result.GetResult<Prisma.$TenantPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | Null, Null, ExtArgs, GlobalOmitOptions>
+    user<T extends UserDefaultArgs<ExtArgs> = {}>(args?: Subset<T, UserDefaultArgs<ExtArgs>>): Prisma__UserClient<$Result.GetResult<Prisma.$UserPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | Null, Null, ExtArgs, GlobalOmitOptions>
+    /**
+     * Attaches callbacks for the resolution and/or rejection of the Promise.
+     * @param onfulfilled The callback to execute when the Promise is resolved.
+     * @param onrejected The callback to execute when the Promise is rejected.
+     * @returns A Promise for the completion of which ever callback is executed.
+     */
+    then<TResult1 = T, TResult2 = never>(onfulfilled?: ((value: T) => TResult1 | PromiseLike<TResult1>) | undefined | null, onrejected?: ((reason: any) => TResult2 | PromiseLike<TResult2>) | undefined | null): $Utils.JsPromise<TResult1 | TResult2>
+    /**
+     * Attaches a callback for only the rejection of the Promise.
+     * @param onrejected The callback to execute when the Promise is rejected.
+     * @returns A Promise for the completion of the callback.
+     */
+    catch<TResult = never>(onrejected?: ((reason: any) => TResult | PromiseLike<TResult>) | undefined | null): $Utils.JsPromise<T | TResult>
+    /**
+     * Attaches a callback that is invoked when the Promise is settled (fulfilled or rejected). The
+     * resolved value cannot be modified from the callback.
+     * @param onfinally The callback to execute when the Promise is settled (fulfilled or rejected).
+     * @returns A Promise for the completion of the callback.
+     */
+    finally(onfinally?: (() => void) | undefined | null): $Utils.JsPromise<T>
+  }
+
+
+
+
+  /**
+   * Fields of the Review model
+   */
+  interface ReviewFieldRefs {
+    readonly reviewId: FieldRef<"Review", 'String'>
+    readonly tenantId: FieldRef<"Review", 'String'>
+    readonly userId: FieldRef<"Review", 'String'>
+    readonly rating: FieldRef<"Review", 'Int'>
+    readonly comment: FieldRef<"Review", 'String'>
+    readonly isApproved: FieldRef<"Review", 'Boolean'>
+    readonly isPositive: FieldRef<"Review", 'Boolean'>
+    readonly createdAt: FieldRef<"Review", 'DateTime'>
+    readonly updatedAt: FieldRef<"Review", 'DateTime'>
+  }
+    
+
+  // Custom InputTypes
+  /**
+   * Review findUnique
+   */
+  export type ReviewFindUniqueArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the Review
+     */
+    select?: ReviewSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the Review
+     */
+    omit?: ReviewOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: ReviewInclude<ExtArgs> | null
+    /**
+     * Filter, which Review to fetch.
+     */
+    where: ReviewWhereUniqueInput
+  }
+
+  /**
+   * Review findUniqueOrThrow
+   */
+  export type ReviewFindUniqueOrThrowArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the Review
+     */
+    select?: ReviewSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the Review
+     */
+    omit?: ReviewOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: ReviewInclude<ExtArgs> | null
+    /**
+     * Filter, which Review to fetch.
+     */
+    where: ReviewWhereUniqueInput
+  }
+
+  /**
+   * Review findFirst
+   */
+  export type ReviewFindFirstArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the Review
+     */
+    select?: ReviewSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the Review
+     */
+    omit?: ReviewOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: ReviewInclude<ExtArgs> | null
+    /**
+     * Filter, which Review to fetch.
+     */
+    where?: ReviewWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of Reviews to fetch.
+     */
+    orderBy?: ReviewOrderByWithRelationInput | ReviewOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for searching for Reviews.
+     */
+    cursor?: ReviewWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` Reviews from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` Reviews.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of Reviews.
+     */
+    distinct?: ReviewScalarFieldEnum | ReviewScalarFieldEnum[]
+  }
+
+  /**
+   * Review findFirstOrThrow
+   */
+  export type ReviewFindFirstOrThrowArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the Review
+     */
+    select?: ReviewSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the Review
+     */
+    omit?: ReviewOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: ReviewInclude<ExtArgs> | null
+    /**
+     * Filter, which Review to fetch.
+     */
+    where?: ReviewWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of Reviews to fetch.
+     */
+    orderBy?: ReviewOrderByWithRelationInput | ReviewOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for searching for Reviews.
+     */
+    cursor?: ReviewWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` Reviews from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` Reviews.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of Reviews.
+     */
+    distinct?: ReviewScalarFieldEnum | ReviewScalarFieldEnum[]
+  }
+
+  /**
+   * Review findMany
+   */
+  export type ReviewFindManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the Review
+     */
+    select?: ReviewSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the Review
+     */
+    omit?: ReviewOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: ReviewInclude<ExtArgs> | null
+    /**
+     * Filter, which Reviews to fetch.
+     */
+    where?: ReviewWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of Reviews to fetch.
+     */
+    orderBy?: ReviewOrderByWithRelationInput | ReviewOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for listing Reviews.
+     */
+    cursor?: ReviewWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` Reviews from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` Reviews.
+     */
+    skip?: number
+    distinct?: ReviewScalarFieldEnum | ReviewScalarFieldEnum[]
+  }
+
+  /**
+   * Review create
+   */
+  export type ReviewCreateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the Review
+     */
+    select?: ReviewSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the Review
+     */
+    omit?: ReviewOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: ReviewInclude<ExtArgs> | null
+    /**
+     * The data needed to create a Review.
+     */
+    data: XOR<ReviewCreateInput, ReviewUncheckedCreateInput>
+  }
+
+  /**
+   * Review createMany
+   */
+  export type ReviewCreateManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * The data used to create many Reviews.
+     */
+    data: ReviewCreateManyInput | ReviewCreateManyInput[]
+    skipDuplicates?: boolean
+  }
+
+  /**
+   * Review createManyAndReturn
+   */
+  export type ReviewCreateManyAndReturnArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the Review
+     */
+    select?: ReviewSelectCreateManyAndReturn<ExtArgs> | null
+    /**
+     * Omit specific fields from the Review
+     */
+    omit?: ReviewOmit<ExtArgs> | null
+    /**
+     * The data used to create many Reviews.
+     */
+    data: ReviewCreateManyInput | ReviewCreateManyInput[]
+    skipDuplicates?: boolean
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: ReviewIncludeCreateManyAndReturn<ExtArgs> | null
+  }
+
+  /**
+   * Review update
+   */
+  export type ReviewUpdateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the Review
+     */
+    select?: ReviewSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the Review
+     */
+    omit?: ReviewOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: ReviewInclude<ExtArgs> | null
+    /**
+     * The data needed to update a Review.
+     */
+    data: XOR<ReviewUpdateInput, ReviewUncheckedUpdateInput>
+    /**
+     * Choose, which Review to update.
+     */
+    where: ReviewWhereUniqueInput
+  }
+
+  /**
+   * Review updateMany
+   */
+  export type ReviewUpdateManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * The data used to update Reviews.
+     */
+    data: XOR<ReviewUpdateManyMutationInput, ReviewUncheckedUpdateManyInput>
+    /**
+     * Filter which Reviews to update
+     */
+    where?: ReviewWhereInput
+    /**
+     * Limit how many Reviews to update.
+     */
+    limit?: number
+  }
+
+  /**
+   * Review updateManyAndReturn
+   */
+  export type ReviewUpdateManyAndReturnArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the Review
+     */
+    select?: ReviewSelectUpdateManyAndReturn<ExtArgs> | null
+    /**
+     * Omit specific fields from the Review
+     */
+    omit?: ReviewOmit<ExtArgs> | null
+    /**
+     * The data used to update Reviews.
+     */
+    data: XOR<ReviewUpdateManyMutationInput, ReviewUncheckedUpdateManyInput>
+    /**
+     * Filter which Reviews to update
+     */
+    where?: ReviewWhereInput
+    /**
+     * Limit how many Reviews to update.
+     */
+    limit?: number
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: ReviewIncludeUpdateManyAndReturn<ExtArgs> | null
+  }
+
+  /**
+   * Review upsert
+   */
+  export type ReviewUpsertArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the Review
+     */
+    select?: ReviewSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the Review
+     */
+    omit?: ReviewOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: ReviewInclude<ExtArgs> | null
+    /**
+     * The filter to search for the Review to update in case it exists.
+     */
+    where: ReviewWhereUniqueInput
+    /**
+     * In case the Review found by the `where` argument doesn't exist, create a new Review with this data.
+     */
+    create: XOR<ReviewCreateInput, ReviewUncheckedCreateInput>
+    /**
+     * In case the Review was found with the provided `where` argument, update it with this data.
+     */
+    update: XOR<ReviewUpdateInput, ReviewUncheckedUpdateInput>
+  }
+
+  /**
+   * Review delete
+   */
+  export type ReviewDeleteArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the Review
+     */
+    select?: ReviewSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the Review
+     */
+    omit?: ReviewOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: ReviewInclude<ExtArgs> | null
+    /**
+     * Filter which Review to delete.
+     */
+    where: ReviewWhereUniqueInput
+  }
+
+  /**
+   * Review deleteMany
+   */
+  export type ReviewDeleteManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Filter which Reviews to delete
+     */
+    where?: ReviewWhereInput
+    /**
+     * Limit how many Reviews to delete.
+     */
+    limit?: number
+  }
+
+  /**
+   * Review without action
+   */
+  export type ReviewDefaultArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the Review
+     */
+    select?: ReviewSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the Review
+     */
+    omit?: ReviewOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: ReviewInclude<ExtArgs> | null
+  }
+
+
+  /**
+   * Model ReviewPrompt
+   */
+
+  export type AggregateReviewPrompt = {
+    _count: ReviewPromptCountAggregateOutputType | null
+    _min: ReviewPromptMinAggregateOutputType | null
+    _max: ReviewPromptMaxAggregateOutputType | null
+  }
+
+  export type ReviewPromptMinAggregateOutputType = {
+    promptId: string | null
+    tenantId: string | null
+    userId: string | null
+    promptedAt: Date | null
+    dismissedAt: Date | null
+    submittedAt: Date | null
+  }
+
+  export type ReviewPromptMaxAggregateOutputType = {
+    promptId: string | null
+    tenantId: string | null
+    userId: string | null
+    promptedAt: Date | null
+    dismissedAt: Date | null
+    submittedAt: Date | null
+  }
+
+  export type ReviewPromptCountAggregateOutputType = {
+    promptId: number
+    tenantId: number
+    userId: number
+    promptedAt: number
+    dismissedAt: number
+    submittedAt: number
+    _all: number
+  }
+
+
+  export type ReviewPromptMinAggregateInputType = {
+    promptId?: true
+    tenantId?: true
+    userId?: true
+    promptedAt?: true
+    dismissedAt?: true
+    submittedAt?: true
+  }
+
+  export type ReviewPromptMaxAggregateInputType = {
+    promptId?: true
+    tenantId?: true
+    userId?: true
+    promptedAt?: true
+    dismissedAt?: true
+    submittedAt?: true
+  }
+
+  export type ReviewPromptCountAggregateInputType = {
+    promptId?: true
+    tenantId?: true
+    userId?: true
+    promptedAt?: true
+    dismissedAt?: true
+    submittedAt?: true
+    _all?: true
+  }
+
+  export type ReviewPromptAggregateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Filter which ReviewPrompt to aggregate.
+     */
+    where?: ReviewPromptWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of ReviewPrompts to fetch.
+     */
+    orderBy?: ReviewPromptOrderByWithRelationInput | ReviewPromptOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the start position
+     */
+    cursor?: ReviewPromptWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` ReviewPrompts from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` ReviewPrompts.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Count returned ReviewPrompts
+    **/
+    _count?: true | ReviewPromptCountAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to find the minimum value
+    **/
+    _min?: ReviewPromptMinAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to find the maximum value
+    **/
+    _max?: ReviewPromptMaxAggregateInputType
+  }
+
+  export type GetReviewPromptAggregateType<T extends ReviewPromptAggregateArgs> = {
+        [P in keyof T & keyof AggregateReviewPrompt]: P extends '_count' | 'count'
+      ? T[P] extends true
+        ? number
+        : GetScalarType<T[P], AggregateReviewPrompt[P]>
+      : GetScalarType<T[P], AggregateReviewPrompt[P]>
+  }
+
+
+
+
+  export type ReviewPromptGroupByArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    where?: ReviewPromptWhereInput
+    orderBy?: ReviewPromptOrderByWithAggregationInput | ReviewPromptOrderByWithAggregationInput[]
+    by: ReviewPromptScalarFieldEnum[] | ReviewPromptScalarFieldEnum
+    having?: ReviewPromptScalarWhereWithAggregatesInput
+    take?: number
+    skip?: number
+    _count?: ReviewPromptCountAggregateInputType | true
+    _min?: ReviewPromptMinAggregateInputType
+    _max?: ReviewPromptMaxAggregateInputType
+  }
+
+  export type ReviewPromptGroupByOutputType = {
+    promptId: string
+    tenantId: string
+    userId: string
+    promptedAt: Date
+    dismissedAt: Date | null
+    submittedAt: Date | null
+    _count: ReviewPromptCountAggregateOutputType | null
+    _min: ReviewPromptMinAggregateOutputType | null
+    _max: ReviewPromptMaxAggregateOutputType | null
+  }
+
+  type GetReviewPromptGroupByPayload<T extends ReviewPromptGroupByArgs> = Prisma.PrismaPromise<
+    Array<
+      PickEnumerable<ReviewPromptGroupByOutputType, T['by']> &
+        {
+          [P in ((keyof T) & (keyof ReviewPromptGroupByOutputType))]: P extends '_count'
+            ? T[P] extends boolean
+              ? number
+              : GetScalarType<T[P], ReviewPromptGroupByOutputType[P]>
+            : GetScalarType<T[P], ReviewPromptGroupByOutputType[P]>
+        }
+      >
+    >
+
+
+  export type ReviewPromptSelect<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    promptId?: boolean
+    tenantId?: boolean
+    userId?: boolean
+    promptedAt?: boolean
+    dismissedAt?: boolean
+    submittedAt?: boolean
+    tenant?: boolean | TenantDefaultArgs<ExtArgs>
+    user?: boolean | UserDefaultArgs<ExtArgs>
+  }, ExtArgs["result"]["reviewPrompt"]>
+
+  export type ReviewPromptSelectCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    promptId?: boolean
+    tenantId?: boolean
+    userId?: boolean
+    promptedAt?: boolean
+    dismissedAt?: boolean
+    submittedAt?: boolean
+    tenant?: boolean | TenantDefaultArgs<ExtArgs>
+    user?: boolean | UserDefaultArgs<ExtArgs>
+  }, ExtArgs["result"]["reviewPrompt"]>
+
+  export type ReviewPromptSelectUpdateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    promptId?: boolean
+    tenantId?: boolean
+    userId?: boolean
+    promptedAt?: boolean
+    dismissedAt?: boolean
+    submittedAt?: boolean
+    tenant?: boolean | TenantDefaultArgs<ExtArgs>
+    user?: boolean | UserDefaultArgs<ExtArgs>
+  }, ExtArgs["result"]["reviewPrompt"]>
+
+  export type ReviewPromptSelectScalar = {
+    promptId?: boolean
+    tenantId?: boolean
+    userId?: boolean
+    promptedAt?: boolean
+    dismissedAt?: boolean
+    submittedAt?: boolean
+  }
+
+  export type ReviewPromptOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"promptId" | "tenantId" | "userId" | "promptedAt" | "dismissedAt" | "submittedAt", ExtArgs["result"]["reviewPrompt"]>
+  export type ReviewPromptInclude<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    tenant?: boolean | TenantDefaultArgs<ExtArgs>
+    user?: boolean | UserDefaultArgs<ExtArgs>
+  }
+  export type ReviewPromptIncludeCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    tenant?: boolean | TenantDefaultArgs<ExtArgs>
+    user?: boolean | UserDefaultArgs<ExtArgs>
+  }
+  export type ReviewPromptIncludeUpdateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    tenant?: boolean | TenantDefaultArgs<ExtArgs>
+    user?: boolean | UserDefaultArgs<ExtArgs>
+  }
+
+  export type $ReviewPromptPayload<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    name: "ReviewPrompt"
+    objects: {
+      tenant: Prisma.$TenantPayload<ExtArgs>
+      user: Prisma.$UserPayload<ExtArgs>
+    }
+    scalars: $Extensions.GetPayloadResult<{
+      promptId: string
+      tenantId: string
+      userId: string
+      promptedAt: Date
+      dismissedAt: Date | null
+      submittedAt: Date | null
+    }, ExtArgs["result"]["reviewPrompt"]>
+    composites: {}
+  }
+
+  type ReviewPromptGetPayload<S extends boolean | null | undefined | ReviewPromptDefaultArgs> = $Result.GetResult<Prisma.$ReviewPromptPayload, S>
+
+  type ReviewPromptCountArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> =
+    Omit<ReviewPromptFindManyArgs, 'select' | 'include' | 'distinct' | 'omit'> & {
+      select?: ReviewPromptCountAggregateInputType | true
+    }
+
+  export interface ReviewPromptDelegate<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs, GlobalOmitOptions = {}> {
+    [K: symbol]: { types: Prisma.TypeMap<ExtArgs>['model']['ReviewPrompt'], meta: { name: 'ReviewPrompt' } }
+    /**
+     * Find zero or one ReviewPrompt that matches the filter.
+     * @param {ReviewPromptFindUniqueArgs} args - Arguments to find a ReviewPrompt
+     * @example
+     * // Get one ReviewPrompt
+     * const reviewPrompt = await prisma.reviewPrompt.findUnique({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findUnique<T extends ReviewPromptFindUniqueArgs>(args: SelectSubset<T, ReviewPromptFindUniqueArgs<ExtArgs>>): Prisma__ReviewPromptClient<$Result.GetResult<Prisma.$ReviewPromptPayload<ExtArgs>, T, "findUnique", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find one ReviewPrompt that matches the filter or throw an error with `error.code='P2025'`
+     * if no matches were found.
+     * @param {ReviewPromptFindUniqueOrThrowArgs} args - Arguments to find a ReviewPrompt
+     * @example
+     * // Get one ReviewPrompt
+     * const reviewPrompt = await prisma.reviewPrompt.findUniqueOrThrow({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findUniqueOrThrow<T extends ReviewPromptFindUniqueOrThrowArgs>(args: SelectSubset<T, ReviewPromptFindUniqueOrThrowArgs<ExtArgs>>): Prisma__ReviewPromptClient<$Result.GetResult<Prisma.$ReviewPromptPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find the first ReviewPrompt that matches the filter.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {ReviewPromptFindFirstArgs} args - Arguments to find a ReviewPrompt
+     * @example
+     * // Get one ReviewPrompt
+     * const reviewPrompt = await prisma.reviewPrompt.findFirst({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findFirst<T extends ReviewPromptFindFirstArgs>(args?: SelectSubset<T, ReviewPromptFindFirstArgs<ExtArgs>>): Prisma__ReviewPromptClient<$Result.GetResult<Prisma.$ReviewPromptPayload<ExtArgs>, T, "findFirst", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find the first ReviewPrompt that matches the filter or
+     * throw `PrismaKnownClientError` with `P2025` code if no matches were found.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {ReviewPromptFindFirstOrThrowArgs} args - Arguments to find a ReviewPrompt
+     * @example
+     * // Get one ReviewPrompt
+     * const reviewPrompt = await prisma.reviewPrompt.findFirstOrThrow({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findFirstOrThrow<T extends ReviewPromptFindFirstOrThrowArgs>(args?: SelectSubset<T, ReviewPromptFindFirstOrThrowArgs<ExtArgs>>): Prisma__ReviewPromptClient<$Result.GetResult<Prisma.$ReviewPromptPayload<ExtArgs>, T, "findFirstOrThrow", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find zero or more ReviewPrompts that matches the filter.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {ReviewPromptFindManyArgs} args - Arguments to filter and select certain fields only.
+     * @example
+     * // Get all ReviewPrompts
+     * const reviewPrompts = await prisma.reviewPrompt.findMany()
+     * 
+     * // Get first 10 ReviewPrompts
+     * const reviewPrompts = await prisma.reviewPrompt.findMany({ take: 10 })
+     * 
+     * // Only select the `promptId`
+     * const reviewPromptWithPromptIdOnly = await prisma.reviewPrompt.findMany({ select: { promptId: true } })
+     * 
+     */
+    findMany<T extends ReviewPromptFindManyArgs>(args?: SelectSubset<T, ReviewPromptFindManyArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$ReviewPromptPayload<ExtArgs>, T, "findMany", GlobalOmitOptions>>
+
+    /**
+     * Create a ReviewPrompt.
+     * @param {ReviewPromptCreateArgs} args - Arguments to create a ReviewPrompt.
+     * @example
+     * // Create one ReviewPrompt
+     * const ReviewPrompt = await prisma.reviewPrompt.create({
+     *   data: {
+     *     // ... data to create a ReviewPrompt
+     *   }
+     * })
+     * 
+     */
+    create<T extends ReviewPromptCreateArgs>(args: SelectSubset<T, ReviewPromptCreateArgs<ExtArgs>>): Prisma__ReviewPromptClient<$Result.GetResult<Prisma.$ReviewPromptPayload<ExtArgs>, T, "create", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Create many ReviewPrompts.
+     * @param {ReviewPromptCreateManyArgs} args - Arguments to create many ReviewPrompts.
+     * @example
+     * // Create many ReviewPrompts
+     * const reviewPrompt = await prisma.reviewPrompt.createMany({
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     *     
+     */
+    createMany<T extends ReviewPromptCreateManyArgs>(args?: SelectSubset<T, ReviewPromptCreateManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Create many ReviewPrompts and returns the data saved in the database.
+     * @param {ReviewPromptCreateManyAndReturnArgs} args - Arguments to create many ReviewPrompts.
+     * @example
+     * // Create many ReviewPrompts
+     * const reviewPrompt = await prisma.reviewPrompt.createManyAndReturn({
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * 
+     * // Create many ReviewPrompts and only return the `promptId`
+     * const reviewPromptWithPromptIdOnly = await prisma.reviewPrompt.createManyAndReturn({
+     *   select: { promptId: true },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * 
+     */
+    createManyAndReturn<T extends ReviewPromptCreateManyAndReturnArgs>(args?: SelectSubset<T, ReviewPromptCreateManyAndReturnArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$ReviewPromptPayload<ExtArgs>, T, "createManyAndReturn", GlobalOmitOptions>>
+
+    /**
+     * Delete a ReviewPrompt.
+     * @param {ReviewPromptDeleteArgs} args - Arguments to delete one ReviewPrompt.
+     * @example
+     * // Delete one ReviewPrompt
+     * const ReviewPrompt = await prisma.reviewPrompt.delete({
+     *   where: {
+     *     // ... filter to delete one ReviewPrompt
+     *   }
+     * })
+     * 
+     */
+    delete<T extends ReviewPromptDeleteArgs>(args: SelectSubset<T, ReviewPromptDeleteArgs<ExtArgs>>): Prisma__ReviewPromptClient<$Result.GetResult<Prisma.$ReviewPromptPayload<ExtArgs>, T, "delete", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Update one ReviewPrompt.
+     * @param {ReviewPromptUpdateArgs} args - Arguments to update one ReviewPrompt.
+     * @example
+     * // Update one ReviewPrompt
+     * const reviewPrompt = await prisma.reviewPrompt.update({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: {
+     *     // ... provide data here
+     *   }
+     * })
+     * 
+     */
+    update<T extends ReviewPromptUpdateArgs>(args: SelectSubset<T, ReviewPromptUpdateArgs<ExtArgs>>): Prisma__ReviewPromptClient<$Result.GetResult<Prisma.$ReviewPromptPayload<ExtArgs>, T, "update", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Delete zero or more ReviewPrompts.
+     * @param {ReviewPromptDeleteManyArgs} args - Arguments to filter ReviewPrompts to delete.
+     * @example
+     * // Delete a few ReviewPrompts
+     * const { count } = await prisma.reviewPrompt.deleteMany({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     * 
+     */
+    deleteMany<T extends ReviewPromptDeleteManyArgs>(args?: SelectSubset<T, ReviewPromptDeleteManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Update zero or more ReviewPrompts.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {ReviewPromptUpdateManyArgs} args - Arguments to update one or more rows.
+     * @example
+     * // Update many ReviewPrompts
+     * const reviewPrompt = await prisma.reviewPrompt.updateMany({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: {
+     *     // ... provide data here
+     *   }
+     * })
+     * 
+     */
+    updateMany<T extends ReviewPromptUpdateManyArgs>(args: SelectSubset<T, ReviewPromptUpdateManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Update zero or more ReviewPrompts and returns the data updated in the database.
+     * @param {ReviewPromptUpdateManyAndReturnArgs} args - Arguments to update many ReviewPrompts.
+     * @example
+     * // Update many ReviewPrompts
+     * const reviewPrompt = await prisma.reviewPrompt.updateManyAndReturn({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * 
+     * // Update zero or more ReviewPrompts and only return the `promptId`
+     * const reviewPromptWithPromptIdOnly = await prisma.reviewPrompt.updateManyAndReturn({
+     *   select: { promptId: true },
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * 
+     */
+    updateManyAndReturn<T extends ReviewPromptUpdateManyAndReturnArgs>(args: SelectSubset<T, ReviewPromptUpdateManyAndReturnArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$ReviewPromptPayload<ExtArgs>, T, "updateManyAndReturn", GlobalOmitOptions>>
+
+    /**
+     * Create or update one ReviewPrompt.
+     * @param {ReviewPromptUpsertArgs} args - Arguments to update or create a ReviewPrompt.
+     * @example
+     * // Update or create a ReviewPrompt
+     * const reviewPrompt = await prisma.reviewPrompt.upsert({
+     *   create: {
+     *     // ... data to create a ReviewPrompt
+     *   },
+     *   update: {
+     *     // ... in case it already exists, update
+     *   },
+     *   where: {
+     *     // ... the filter for the ReviewPrompt we want to update
+     *   }
+     * })
+     */
+    upsert<T extends ReviewPromptUpsertArgs>(args: SelectSubset<T, ReviewPromptUpsertArgs<ExtArgs>>): Prisma__ReviewPromptClient<$Result.GetResult<Prisma.$ReviewPromptPayload<ExtArgs>, T, "upsert", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+
+    /**
+     * Count the number of ReviewPrompts.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {ReviewPromptCountArgs} args - Arguments to filter ReviewPrompts to count.
+     * @example
+     * // Count the number of ReviewPrompts
+     * const count = await prisma.reviewPrompt.count({
+     *   where: {
+     *     // ... the filter for the ReviewPrompts we want to count
+     *   }
+     * })
+    **/
+    count<T extends ReviewPromptCountArgs>(
+      args?: Subset<T, ReviewPromptCountArgs>,
+    ): Prisma.PrismaPromise<
+      T extends $Utils.Record<'select', any>
+        ? T['select'] extends true
+          ? number
+          : GetScalarType<T['select'], ReviewPromptCountAggregateOutputType>
+        : number
+    >
+
+    /**
+     * Allows you to perform aggregations operations on a ReviewPrompt.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {ReviewPromptAggregateArgs} args - Select which aggregations you would like to apply and on what fields.
+     * @example
+     * // Ordered by age ascending
+     * // Where email contains prisma.io
+     * // Limited to the 10 users
+     * const aggregations = await prisma.user.aggregate({
+     *   _avg: {
+     *     age: true,
+     *   },
+     *   where: {
+     *     email: {
+     *       contains: "prisma.io",
+     *     },
+     *   },
+     *   orderBy: {
+     *     age: "asc",
+     *   },
+     *   take: 10,
+     * })
+    **/
+    aggregate<T extends ReviewPromptAggregateArgs>(args: Subset<T, ReviewPromptAggregateArgs>): Prisma.PrismaPromise<GetReviewPromptAggregateType<T>>
+
+    /**
+     * Group by ReviewPrompt.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {ReviewPromptGroupByArgs} args - Group by arguments.
+     * @example
+     * // Group by city, order by createdAt, get count
+     * const result = await prisma.user.groupBy({
+     *   by: ['city', 'createdAt'],
+     *   orderBy: {
+     *     createdAt: true
+     *   },
+     *   _count: {
+     *     _all: true
+     *   },
+     * })
+     * 
+    **/
+    groupBy<
+      T extends ReviewPromptGroupByArgs,
+      HasSelectOrTake extends Or<
+        Extends<'skip', Keys<T>>,
+        Extends<'take', Keys<T>>
+      >,
+      OrderByArg extends True extends HasSelectOrTake
+        ? { orderBy: ReviewPromptGroupByArgs['orderBy'] }
+        : { orderBy?: ReviewPromptGroupByArgs['orderBy'] },
+      OrderFields extends ExcludeUnderscoreKeys<Keys<MaybeTupleToUnion<T['orderBy']>>>,
+      ByFields extends MaybeTupleToUnion<T['by']>,
+      ByValid extends Has<ByFields, OrderFields>,
+      HavingFields extends GetHavingFields<T['having']>,
+      HavingValid extends Has<ByFields, HavingFields>,
+      ByEmpty extends T['by'] extends never[] ? True : False,
+      InputErrors extends ByEmpty extends True
+      ? `Error: "by" must not be empty.`
+      : HavingValid extends False
+      ? {
+          [P in HavingFields]: P extends ByFields
+            ? never
+            : P extends string
+            ? `Error: Field "${P}" used in "having" needs to be provided in "by".`
+            : [
+                Error,
+                'Field ',
+                P,
+                ` in "having" needs to be provided in "by"`,
+              ]
+        }[HavingFields]
+      : 'take' extends Keys<T>
+      ? 'orderBy' extends Keys<T>
+        ? ByValid extends True
+          ? {}
+          : {
+              [P in OrderFields]: P extends ByFields
+                ? never
+                : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+            }[OrderFields]
+        : 'Error: If you provide "take", you also need to provide "orderBy"'
+      : 'skip' extends Keys<T>
+      ? 'orderBy' extends Keys<T>
+        ? ByValid extends True
+          ? {}
+          : {
+              [P in OrderFields]: P extends ByFields
+                ? never
+                : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+            }[OrderFields]
+        : 'Error: If you provide "skip", you also need to provide "orderBy"'
+      : ByValid extends True
+      ? {}
+      : {
+          [P in OrderFields]: P extends ByFields
+            ? never
+            : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+        }[OrderFields]
+    >(args: SubsetIntersection<T, ReviewPromptGroupByArgs, OrderByArg> & InputErrors): {} extends InputErrors ? GetReviewPromptGroupByPayload<T> : Prisma.PrismaPromise<InputErrors>
+  /**
+   * Fields of the ReviewPrompt model
+   */
+  readonly fields: ReviewPromptFieldRefs;
+  }
+
+  /**
+   * The delegate class that acts as a "Promise-like" for ReviewPrompt.
+   * Why is this prefixed with `Prisma__`?
+   * Because we want to prevent naming conflicts as mentioned in
+   * https://github.com/prisma/prisma-client-js/issues/707
+   */
+  export interface Prisma__ReviewPromptClient<T, Null = never, ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs, GlobalOmitOptions = {}> extends Prisma.PrismaPromise<T> {
+    readonly [Symbol.toStringTag]: "PrismaPromise"
+    tenant<T extends TenantDefaultArgs<ExtArgs> = {}>(args?: Subset<T, TenantDefaultArgs<ExtArgs>>): Prisma__TenantClient<$Result.GetResult<Prisma.$TenantPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | Null, Null, ExtArgs, GlobalOmitOptions>
+    user<T extends UserDefaultArgs<ExtArgs> = {}>(args?: Subset<T, UserDefaultArgs<ExtArgs>>): Prisma__UserClient<$Result.GetResult<Prisma.$UserPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | Null, Null, ExtArgs, GlobalOmitOptions>
+    /**
+     * Attaches callbacks for the resolution and/or rejection of the Promise.
+     * @param onfulfilled The callback to execute when the Promise is resolved.
+     * @param onrejected The callback to execute when the Promise is rejected.
+     * @returns A Promise for the completion of which ever callback is executed.
+     */
+    then<TResult1 = T, TResult2 = never>(onfulfilled?: ((value: T) => TResult1 | PromiseLike<TResult1>) | undefined | null, onrejected?: ((reason: any) => TResult2 | PromiseLike<TResult2>) | undefined | null): $Utils.JsPromise<TResult1 | TResult2>
+    /**
+     * Attaches a callback for only the rejection of the Promise.
+     * @param onrejected The callback to execute when the Promise is rejected.
+     * @returns A Promise for the completion of the callback.
+     */
+    catch<TResult = never>(onrejected?: ((reason: any) => TResult | PromiseLike<TResult>) | undefined | null): $Utils.JsPromise<T | TResult>
+    /**
+     * Attaches a callback that is invoked when the Promise is settled (fulfilled or rejected). The
+     * resolved value cannot be modified from the callback.
+     * @param onfinally The callback to execute when the Promise is settled (fulfilled or rejected).
+     * @returns A Promise for the completion of the callback.
+     */
+    finally(onfinally?: (() => void) | undefined | null): $Utils.JsPromise<T>
+  }
+
+
+
+
+  /**
+   * Fields of the ReviewPrompt model
+   */
+  interface ReviewPromptFieldRefs {
+    readonly promptId: FieldRef<"ReviewPrompt", 'String'>
+    readonly tenantId: FieldRef<"ReviewPrompt", 'String'>
+    readonly userId: FieldRef<"ReviewPrompt", 'String'>
+    readonly promptedAt: FieldRef<"ReviewPrompt", 'DateTime'>
+    readonly dismissedAt: FieldRef<"ReviewPrompt", 'DateTime'>
+    readonly submittedAt: FieldRef<"ReviewPrompt", 'DateTime'>
+  }
+    
+
+  // Custom InputTypes
+  /**
+   * ReviewPrompt findUnique
+   */
+  export type ReviewPromptFindUniqueArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the ReviewPrompt
+     */
+    select?: ReviewPromptSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the ReviewPrompt
+     */
+    omit?: ReviewPromptOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: ReviewPromptInclude<ExtArgs> | null
+    /**
+     * Filter, which ReviewPrompt to fetch.
+     */
+    where: ReviewPromptWhereUniqueInput
+  }
+
+  /**
+   * ReviewPrompt findUniqueOrThrow
+   */
+  export type ReviewPromptFindUniqueOrThrowArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the ReviewPrompt
+     */
+    select?: ReviewPromptSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the ReviewPrompt
+     */
+    omit?: ReviewPromptOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: ReviewPromptInclude<ExtArgs> | null
+    /**
+     * Filter, which ReviewPrompt to fetch.
+     */
+    where: ReviewPromptWhereUniqueInput
+  }
+
+  /**
+   * ReviewPrompt findFirst
+   */
+  export type ReviewPromptFindFirstArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the ReviewPrompt
+     */
+    select?: ReviewPromptSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the ReviewPrompt
+     */
+    omit?: ReviewPromptOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: ReviewPromptInclude<ExtArgs> | null
+    /**
+     * Filter, which ReviewPrompt to fetch.
+     */
+    where?: ReviewPromptWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of ReviewPrompts to fetch.
+     */
+    orderBy?: ReviewPromptOrderByWithRelationInput | ReviewPromptOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for searching for ReviewPrompts.
+     */
+    cursor?: ReviewPromptWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` ReviewPrompts from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` ReviewPrompts.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of ReviewPrompts.
+     */
+    distinct?: ReviewPromptScalarFieldEnum | ReviewPromptScalarFieldEnum[]
+  }
+
+  /**
+   * ReviewPrompt findFirstOrThrow
+   */
+  export type ReviewPromptFindFirstOrThrowArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the ReviewPrompt
+     */
+    select?: ReviewPromptSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the ReviewPrompt
+     */
+    omit?: ReviewPromptOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: ReviewPromptInclude<ExtArgs> | null
+    /**
+     * Filter, which ReviewPrompt to fetch.
+     */
+    where?: ReviewPromptWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of ReviewPrompts to fetch.
+     */
+    orderBy?: ReviewPromptOrderByWithRelationInput | ReviewPromptOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for searching for ReviewPrompts.
+     */
+    cursor?: ReviewPromptWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` ReviewPrompts from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` ReviewPrompts.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of ReviewPrompts.
+     */
+    distinct?: ReviewPromptScalarFieldEnum | ReviewPromptScalarFieldEnum[]
+  }
+
+  /**
+   * ReviewPrompt findMany
+   */
+  export type ReviewPromptFindManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the ReviewPrompt
+     */
+    select?: ReviewPromptSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the ReviewPrompt
+     */
+    omit?: ReviewPromptOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: ReviewPromptInclude<ExtArgs> | null
+    /**
+     * Filter, which ReviewPrompts to fetch.
+     */
+    where?: ReviewPromptWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of ReviewPrompts to fetch.
+     */
+    orderBy?: ReviewPromptOrderByWithRelationInput | ReviewPromptOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for listing ReviewPrompts.
+     */
+    cursor?: ReviewPromptWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` ReviewPrompts from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` ReviewPrompts.
+     */
+    skip?: number
+    distinct?: ReviewPromptScalarFieldEnum | ReviewPromptScalarFieldEnum[]
+  }
+
+  /**
+   * ReviewPrompt create
+   */
+  export type ReviewPromptCreateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the ReviewPrompt
+     */
+    select?: ReviewPromptSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the ReviewPrompt
+     */
+    omit?: ReviewPromptOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: ReviewPromptInclude<ExtArgs> | null
+    /**
+     * The data needed to create a ReviewPrompt.
+     */
+    data: XOR<ReviewPromptCreateInput, ReviewPromptUncheckedCreateInput>
+  }
+
+  /**
+   * ReviewPrompt createMany
+   */
+  export type ReviewPromptCreateManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * The data used to create many ReviewPrompts.
+     */
+    data: ReviewPromptCreateManyInput | ReviewPromptCreateManyInput[]
+    skipDuplicates?: boolean
+  }
+
+  /**
+   * ReviewPrompt createManyAndReturn
+   */
+  export type ReviewPromptCreateManyAndReturnArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the ReviewPrompt
+     */
+    select?: ReviewPromptSelectCreateManyAndReturn<ExtArgs> | null
+    /**
+     * Omit specific fields from the ReviewPrompt
+     */
+    omit?: ReviewPromptOmit<ExtArgs> | null
+    /**
+     * The data used to create many ReviewPrompts.
+     */
+    data: ReviewPromptCreateManyInput | ReviewPromptCreateManyInput[]
+    skipDuplicates?: boolean
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: ReviewPromptIncludeCreateManyAndReturn<ExtArgs> | null
+  }
+
+  /**
+   * ReviewPrompt update
+   */
+  export type ReviewPromptUpdateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the ReviewPrompt
+     */
+    select?: ReviewPromptSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the ReviewPrompt
+     */
+    omit?: ReviewPromptOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: ReviewPromptInclude<ExtArgs> | null
+    /**
+     * The data needed to update a ReviewPrompt.
+     */
+    data: XOR<ReviewPromptUpdateInput, ReviewPromptUncheckedUpdateInput>
+    /**
+     * Choose, which ReviewPrompt to update.
+     */
+    where: ReviewPromptWhereUniqueInput
+  }
+
+  /**
+   * ReviewPrompt updateMany
+   */
+  export type ReviewPromptUpdateManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * The data used to update ReviewPrompts.
+     */
+    data: XOR<ReviewPromptUpdateManyMutationInput, ReviewPromptUncheckedUpdateManyInput>
+    /**
+     * Filter which ReviewPrompts to update
+     */
+    where?: ReviewPromptWhereInput
+    /**
+     * Limit how many ReviewPrompts to update.
+     */
+    limit?: number
+  }
+
+  /**
+   * ReviewPrompt updateManyAndReturn
+   */
+  export type ReviewPromptUpdateManyAndReturnArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the ReviewPrompt
+     */
+    select?: ReviewPromptSelectUpdateManyAndReturn<ExtArgs> | null
+    /**
+     * Omit specific fields from the ReviewPrompt
+     */
+    omit?: ReviewPromptOmit<ExtArgs> | null
+    /**
+     * The data used to update ReviewPrompts.
+     */
+    data: XOR<ReviewPromptUpdateManyMutationInput, ReviewPromptUncheckedUpdateManyInput>
+    /**
+     * Filter which ReviewPrompts to update
+     */
+    where?: ReviewPromptWhereInput
+    /**
+     * Limit how many ReviewPrompts to update.
+     */
+    limit?: number
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: ReviewPromptIncludeUpdateManyAndReturn<ExtArgs> | null
+  }
+
+  /**
+   * ReviewPrompt upsert
+   */
+  export type ReviewPromptUpsertArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the ReviewPrompt
+     */
+    select?: ReviewPromptSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the ReviewPrompt
+     */
+    omit?: ReviewPromptOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: ReviewPromptInclude<ExtArgs> | null
+    /**
+     * The filter to search for the ReviewPrompt to update in case it exists.
+     */
+    where: ReviewPromptWhereUniqueInput
+    /**
+     * In case the ReviewPrompt found by the `where` argument doesn't exist, create a new ReviewPrompt with this data.
+     */
+    create: XOR<ReviewPromptCreateInput, ReviewPromptUncheckedCreateInput>
+    /**
+     * In case the ReviewPrompt was found with the provided `where` argument, update it with this data.
+     */
+    update: XOR<ReviewPromptUpdateInput, ReviewPromptUncheckedUpdateInput>
+  }
+
+  /**
+   * ReviewPrompt delete
+   */
+  export type ReviewPromptDeleteArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the ReviewPrompt
+     */
+    select?: ReviewPromptSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the ReviewPrompt
+     */
+    omit?: ReviewPromptOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: ReviewPromptInclude<ExtArgs> | null
+    /**
+     * Filter which ReviewPrompt to delete.
+     */
+    where: ReviewPromptWhereUniqueInput
+  }
+
+  /**
+   * ReviewPrompt deleteMany
+   */
+  export type ReviewPromptDeleteManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Filter which ReviewPrompts to delete
+     */
+    where?: ReviewPromptWhereInput
+    /**
+     * Limit how many ReviewPrompts to delete.
+     */
+    limit?: number
+  }
+
+  /**
+   * ReviewPrompt without action
+   */
+  export type ReviewPromptDefaultArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the ReviewPrompt
+     */
+    select?: ReviewPromptSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the ReviewPrompt
+     */
+    omit?: ReviewPromptOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: ReviewPromptInclude<ExtArgs> | null
+  }
+
+
+  /**
    * Enums
    */
 
@@ -144349,6 +147001,12 @@ export namespace Prisma {
     maxUsuarios: 'maxUsuarios',
     maxAlmacenes: 'maxAlmacenes',
     maxProductos: 'maxProductos',
+    maxClientes: 'maxClientes',
+    maxPuntosVenta: 'maxPuntosVenta',
+    maxFacturasMes: 'maxFacturasMes',
+    maxContratos: 'maxContratos',
+    incluyeBackups: 'incluyeBackups',
+    features: 'features',
     createdAt: 'createdAt',
     updatedAt: 'updatedAt'
   };
@@ -145821,6 +148479,33 @@ export namespace Prisma {
   export type PeriodoCacheScalarFieldEnum = (typeof PeriodoCacheScalarFieldEnum)[keyof typeof PeriodoCacheScalarFieldEnum]
 
 
+  export const ReviewScalarFieldEnum: {
+    reviewId: 'reviewId',
+    tenantId: 'tenantId',
+    userId: 'userId',
+    rating: 'rating',
+    comment: 'comment',
+    isApproved: 'isApproved',
+    isPositive: 'isPositive',
+    createdAt: 'createdAt',
+    updatedAt: 'updatedAt'
+  };
+
+  export type ReviewScalarFieldEnum = (typeof ReviewScalarFieldEnum)[keyof typeof ReviewScalarFieldEnum]
+
+
+  export const ReviewPromptScalarFieldEnum: {
+    promptId: 'promptId',
+    tenantId: 'tenantId',
+    userId: 'userId',
+    promptedAt: 'promptedAt',
+    dismissedAt: 'dismissedAt',
+    submittedAt: 'submittedAt'
+  };
+
+  export type ReviewPromptScalarFieldEnum = (typeof ReviewPromptScalarFieldEnum)[keyof typeof ReviewPromptScalarFieldEnum]
+
+
   export const SortOrder: {
     asc: 'asc',
     desc: 'desc'
@@ -146990,6 +149675,8 @@ export namespace Prisma {
     licencias?: TenantLicenseListRelationFilter
     memberships?: TenantMembershipListRelationFilter
     turnosPos?: TurnoPuntoVentaListRelationFilter
+    reviews?: ReviewListRelationFilter
+    reviewPrompts?: ReviewPromptListRelationFilter
   }
 
   export type TenantOrderByWithRelationInput = {
@@ -147060,6 +149747,8 @@ export namespace Prisma {
     licencias?: TenantLicenseOrderByRelationAggregateInput
     memberships?: TenantMembershipOrderByRelationAggregateInput
     turnosPos?: TurnoPuntoVentaOrderByRelationAggregateInput
+    reviews?: ReviewOrderByRelationAggregateInput
+    reviewPrompts?: ReviewPromptOrderByRelationAggregateInput
   }
 
   export type TenantWhereUniqueInput = Prisma.AtLeast<{
@@ -147133,6 +149822,8 @@ export namespace Prisma {
     licencias?: TenantLicenseListRelationFilter
     memberships?: TenantMembershipListRelationFilter
     turnosPos?: TurnoPuntoVentaListRelationFilter
+    reviews?: ReviewListRelationFilter
+    reviewPrompts?: ReviewPromptListRelationFilter
   }, "tenantId" | "slug">
 
   export type TenantOrderByWithAggregationInput = {
@@ -148759,6 +151450,8 @@ export namespace Prisma {
     backupLogs?: BackupLogListRelationFilter
     backupPlans?: BackupPlanListRelationFilter
     tenantMemberships?: TenantMembershipListRelationFilter
+    reviews?: ReviewListRelationFilter
+    reviewPrompts?: ReviewPromptListRelationFilter
   }
 
   export type UserOrderByWithRelationInput = {
@@ -148799,6 +151492,8 @@ export namespace Prisma {
     backupLogs?: BackupLogOrderByRelationAggregateInput
     backupPlans?: BackupPlanOrderByRelationAggregateInput
     tenantMemberships?: TenantMembershipOrderByRelationAggregateInput
+    reviews?: ReviewOrderByRelationAggregateInput
+    reviewPrompts?: ReviewPromptOrderByRelationAggregateInput
   }
 
   export type UserWhereUniqueInput = Prisma.AtLeast<{
@@ -148842,6 +151537,8 @@ export namespace Prisma {
     backupLogs?: BackupLogListRelationFilter
     backupPlans?: BackupPlanListRelationFilter
     tenantMemberships?: TenantMembershipListRelationFilter
+    reviews?: ReviewListRelationFilter
+    reviewPrompts?: ReviewPromptListRelationFilter
   }, "userId" | "email" | "googleId">
 
   export type UserOrderByWithAggregationInput = {
@@ -148908,6 +151605,12 @@ export namespace Prisma {
     maxUsuarios?: IntFilter<"Plan"> | number
     maxAlmacenes?: IntFilter<"Plan"> | number
     maxProductos?: IntFilter<"Plan"> | number
+    maxClientes?: IntFilter<"Plan"> | number
+    maxPuntosVenta?: IntFilter<"Plan"> | number
+    maxFacturasMes?: IntFilter<"Plan"> | number
+    maxContratos?: IntFilter<"Plan"> | number
+    incluyeBackups?: BoolFilter<"Plan"> | boolean
+    features?: JsonFilter<"Plan">
     createdAt?: DateTimeFilter<"Plan"> | Date | string
     updatedAt?: DateTimeFilter<"Plan"> | Date | string
     licencias?: LicenciaListRelationFilter
@@ -148923,6 +151626,12 @@ export namespace Prisma {
     maxUsuarios?: SortOrder
     maxAlmacenes?: SortOrder
     maxProductos?: SortOrder
+    maxClientes?: SortOrder
+    maxPuntosVenta?: SortOrder
+    maxFacturasMes?: SortOrder
+    maxContratos?: SortOrder
+    incluyeBackups?: SortOrder
+    features?: SortOrder
     createdAt?: SortOrder
     updatedAt?: SortOrder
     licencias?: LicenciaOrderByRelationAggregateInput
@@ -148941,6 +151650,12 @@ export namespace Prisma {
     maxUsuarios?: IntFilter<"Plan"> | number
     maxAlmacenes?: IntFilter<"Plan"> | number
     maxProductos?: IntFilter<"Plan"> | number
+    maxClientes?: IntFilter<"Plan"> | number
+    maxPuntosVenta?: IntFilter<"Plan"> | number
+    maxFacturasMes?: IntFilter<"Plan"> | number
+    maxContratos?: IntFilter<"Plan"> | number
+    incluyeBackups?: BoolFilter<"Plan"> | boolean
+    features?: JsonFilter<"Plan">
     createdAt?: DateTimeFilter<"Plan"> | Date | string
     updatedAt?: DateTimeFilter<"Plan"> | Date | string
     licencias?: LicenciaListRelationFilter
@@ -148956,6 +151671,12 @@ export namespace Prisma {
     maxUsuarios?: SortOrder
     maxAlmacenes?: SortOrder
     maxProductos?: SortOrder
+    maxClientes?: SortOrder
+    maxPuntosVenta?: SortOrder
+    maxFacturasMes?: SortOrder
+    maxContratos?: SortOrder
+    incluyeBackups?: SortOrder
+    features?: SortOrder
     createdAt?: SortOrder
     updatedAt?: SortOrder
     _count?: PlanCountOrderByAggregateInput
@@ -148977,6 +151698,12 @@ export namespace Prisma {
     maxUsuarios?: IntWithAggregatesFilter<"Plan"> | number
     maxAlmacenes?: IntWithAggregatesFilter<"Plan"> | number
     maxProductos?: IntWithAggregatesFilter<"Plan"> | number
+    maxClientes?: IntWithAggregatesFilter<"Plan"> | number
+    maxPuntosVenta?: IntWithAggregatesFilter<"Plan"> | number
+    maxFacturasMes?: IntWithAggregatesFilter<"Plan"> | number
+    maxContratos?: IntWithAggregatesFilter<"Plan"> | number
+    incluyeBackups?: BoolWithAggregatesFilter<"Plan"> | boolean
+    features?: JsonWithAggregatesFilter<"Plan">
     createdAt?: DateTimeWithAggregatesFilter<"Plan"> | Date | string
     updatedAt?: DateTimeWithAggregatesFilter<"Plan"> | Date | string
   }
@@ -156938,6 +159665,150 @@ export namespace Prisma {
     createdAt?: DateTimeWithAggregatesFilter<"PeriodoCache"> | Date | string
   }
 
+  export type ReviewWhereInput = {
+    AND?: ReviewWhereInput | ReviewWhereInput[]
+    OR?: ReviewWhereInput[]
+    NOT?: ReviewWhereInput | ReviewWhereInput[]
+    reviewId?: StringFilter<"Review"> | string
+    tenantId?: StringFilter<"Review"> | string
+    userId?: StringFilter<"Review"> | string
+    rating?: IntFilter<"Review"> | number
+    comment?: StringNullableFilter<"Review"> | string | null
+    isApproved?: BoolFilter<"Review"> | boolean
+    isPositive?: BoolFilter<"Review"> | boolean
+    createdAt?: DateTimeFilter<"Review"> | Date | string
+    updatedAt?: DateTimeFilter<"Review"> | Date | string
+    tenant?: XOR<TenantScalarRelationFilter, TenantWhereInput>
+    user?: XOR<UserScalarRelationFilter, UserWhereInput>
+  }
+
+  export type ReviewOrderByWithRelationInput = {
+    reviewId?: SortOrder
+    tenantId?: SortOrder
+    userId?: SortOrder
+    rating?: SortOrder
+    comment?: SortOrderInput | SortOrder
+    isApproved?: SortOrder
+    isPositive?: SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+    tenant?: TenantOrderByWithRelationInput
+    user?: UserOrderByWithRelationInput
+  }
+
+  export type ReviewWhereUniqueInput = Prisma.AtLeast<{
+    reviewId?: string
+    tenantId_userId?: ReviewTenantIdUserIdCompoundUniqueInput
+    AND?: ReviewWhereInput | ReviewWhereInput[]
+    OR?: ReviewWhereInput[]
+    NOT?: ReviewWhereInput | ReviewWhereInput[]
+    tenantId?: StringFilter<"Review"> | string
+    userId?: StringFilter<"Review"> | string
+    rating?: IntFilter<"Review"> | number
+    comment?: StringNullableFilter<"Review"> | string | null
+    isApproved?: BoolFilter<"Review"> | boolean
+    isPositive?: BoolFilter<"Review"> | boolean
+    createdAt?: DateTimeFilter<"Review"> | Date | string
+    updatedAt?: DateTimeFilter<"Review"> | Date | string
+    tenant?: XOR<TenantScalarRelationFilter, TenantWhereInput>
+    user?: XOR<UserScalarRelationFilter, UserWhereInput>
+  }, "reviewId" | "tenantId_userId">
+
+  export type ReviewOrderByWithAggregationInput = {
+    reviewId?: SortOrder
+    tenantId?: SortOrder
+    userId?: SortOrder
+    rating?: SortOrder
+    comment?: SortOrderInput | SortOrder
+    isApproved?: SortOrder
+    isPositive?: SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+    _count?: ReviewCountOrderByAggregateInput
+    _avg?: ReviewAvgOrderByAggregateInput
+    _max?: ReviewMaxOrderByAggregateInput
+    _min?: ReviewMinOrderByAggregateInput
+    _sum?: ReviewSumOrderByAggregateInput
+  }
+
+  export type ReviewScalarWhereWithAggregatesInput = {
+    AND?: ReviewScalarWhereWithAggregatesInput | ReviewScalarWhereWithAggregatesInput[]
+    OR?: ReviewScalarWhereWithAggregatesInput[]
+    NOT?: ReviewScalarWhereWithAggregatesInput | ReviewScalarWhereWithAggregatesInput[]
+    reviewId?: StringWithAggregatesFilter<"Review"> | string
+    tenantId?: StringWithAggregatesFilter<"Review"> | string
+    userId?: StringWithAggregatesFilter<"Review"> | string
+    rating?: IntWithAggregatesFilter<"Review"> | number
+    comment?: StringNullableWithAggregatesFilter<"Review"> | string | null
+    isApproved?: BoolWithAggregatesFilter<"Review"> | boolean
+    isPositive?: BoolWithAggregatesFilter<"Review"> | boolean
+    createdAt?: DateTimeWithAggregatesFilter<"Review"> | Date | string
+    updatedAt?: DateTimeWithAggregatesFilter<"Review"> | Date | string
+  }
+
+  export type ReviewPromptWhereInput = {
+    AND?: ReviewPromptWhereInput | ReviewPromptWhereInput[]
+    OR?: ReviewPromptWhereInput[]
+    NOT?: ReviewPromptWhereInput | ReviewPromptWhereInput[]
+    promptId?: StringFilter<"ReviewPrompt"> | string
+    tenantId?: StringFilter<"ReviewPrompt"> | string
+    userId?: StringFilter<"ReviewPrompt"> | string
+    promptedAt?: DateTimeFilter<"ReviewPrompt"> | Date | string
+    dismissedAt?: DateTimeNullableFilter<"ReviewPrompt"> | Date | string | null
+    submittedAt?: DateTimeNullableFilter<"ReviewPrompt"> | Date | string | null
+    tenant?: XOR<TenantScalarRelationFilter, TenantWhereInput>
+    user?: XOR<UserScalarRelationFilter, UserWhereInput>
+  }
+
+  export type ReviewPromptOrderByWithRelationInput = {
+    promptId?: SortOrder
+    tenantId?: SortOrder
+    userId?: SortOrder
+    promptedAt?: SortOrder
+    dismissedAt?: SortOrderInput | SortOrder
+    submittedAt?: SortOrderInput | SortOrder
+    tenant?: TenantOrderByWithRelationInput
+    user?: UserOrderByWithRelationInput
+  }
+
+  export type ReviewPromptWhereUniqueInput = Prisma.AtLeast<{
+    promptId?: string
+    AND?: ReviewPromptWhereInput | ReviewPromptWhereInput[]
+    OR?: ReviewPromptWhereInput[]
+    NOT?: ReviewPromptWhereInput | ReviewPromptWhereInput[]
+    tenantId?: StringFilter<"ReviewPrompt"> | string
+    userId?: StringFilter<"ReviewPrompt"> | string
+    promptedAt?: DateTimeFilter<"ReviewPrompt"> | Date | string
+    dismissedAt?: DateTimeNullableFilter<"ReviewPrompt"> | Date | string | null
+    submittedAt?: DateTimeNullableFilter<"ReviewPrompt"> | Date | string | null
+    tenant?: XOR<TenantScalarRelationFilter, TenantWhereInput>
+    user?: XOR<UserScalarRelationFilter, UserWhereInput>
+  }, "promptId">
+
+  export type ReviewPromptOrderByWithAggregationInput = {
+    promptId?: SortOrder
+    tenantId?: SortOrder
+    userId?: SortOrder
+    promptedAt?: SortOrder
+    dismissedAt?: SortOrderInput | SortOrder
+    submittedAt?: SortOrderInput | SortOrder
+    _count?: ReviewPromptCountOrderByAggregateInput
+    _max?: ReviewPromptMaxOrderByAggregateInput
+    _min?: ReviewPromptMinOrderByAggregateInput
+  }
+
+  export type ReviewPromptScalarWhereWithAggregatesInput = {
+    AND?: ReviewPromptScalarWhereWithAggregatesInput | ReviewPromptScalarWhereWithAggregatesInput[]
+    OR?: ReviewPromptScalarWhereWithAggregatesInput[]
+    NOT?: ReviewPromptScalarWhereWithAggregatesInput | ReviewPromptScalarWhereWithAggregatesInput[]
+    promptId?: StringWithAggregatesFilter<"ReviewPrompt"> | string
+    tenantId?: StringWithAggregatesFilter<"ReviewPrompt"> | string
+    userId?: StringWithAggregatesFilter<"ReviewPrompt"> | string
+    promptedAt?: DateTimeWithAggregatesFilter<"ReviewPrompt"> | Date | string
+    dismissedAt?: DateTimeNullableWithAggregatesFilter<"ReviewPrompt"> | Date | string | null
+    submittedAt?: DateTimeNullableWithAggregatesFilter<"ReviewPrompt"> | Date | string | null
+  }
+
   export type CategoriaCreateInput = {
     catId?: string
     nombre: string
@@ -157679,6 +160550,8 @@ export namespace Prisma {
     licencias?: TenantLicenseCreateNestedManyWithoutTenantInput
     memberships?: TenantMembershipCreateNestedManyWithoutTenantInput
     turnosPos?: TurnoPuntoVentaCreateNestedManyWithoutTenantInput
+    reviews?: ReviewCreateNestedManyWithoutTenantInput
+    reviewPrompts?: ReviewPromptCreateNestedManyWithoutTenantInput
   }
 
   export type TenantUncheckedCreateInput = {
@@ -157749,6 +160622,8 @@ export namespace Prisma {
     licencias?: TenantLicenseUncheckedCreateNestedManyWithoutTenantInput
     memberships?: TenantMembershipUncheckedCreateNestedManyWithoutTenantInput
     turnosPos?: TurnoPuntoVentaUncheckedCreateNestedManyWithoutTenantInput
+    reviews?: ReviewUncheckedCreateNestedManyWithoutTenantInput
+    reviewPrompts?: ReviewPromptUncheckedCreateNestedManyWithoutTenantInput
   }
 
   export type TenantUpdateInput = {
@@ -157819,6 +160694,8 @@ export namespace Prisma {
     licencias?: TenantLicenseUpdateManyWithoutTenantNestedInput
     memberships?: TenantMembershipUpdateManyWithoutTenantNestedInput
     turnosPos?: TurnoPuntoVentaUpdateManyWithoutTenantNestedInput
+    reviews?: ReviewUpdateManyWithoutTenantNestedInput
+    reviewPrompts?: ReviewPromptUpdateManyWithoutTenantNestedInput
   }
 
   export type TenantUncheckedUpdateInput = {
@@ -157889,6 +160766,8 @@ export namespace Prisma {
     licencias?: TenantLicenseUncheckedUpdateManyWithoutTenantNestedInput
     memberships?: TenantMembershipUncheckedUpdateManyWithoutTenantNestedInput
     turnosPos?: TurnoPuntoVentaUncheckedUpdateManyWithoutTenantNestedInput
+    reviews?: ReviewUncheckedUpdateManyWithoutTenantNestedInput
+    reviewPrompts?: ReviewPromptUncheckedUpdateManyWithoutTenantNestedInput
   }
 
   export type TenantCreateManyInput = {
@@ -159646,6 +162525,8 @@ export namespace Prisma {
     backupLogs?: BackupLogCreateNestedManyWithoutUserInput
     backupPlans?: BackupPlanCreateNestedManyWithoutUserInput
     tenantMemberships?: TenantMembershipCreateNestedManyWithoutUserInput
+    reviews?: ReviewCreateNestedManyWithoutUserInput
+    reviewPrompts?: ReviewPromptCreateNestedManyWithoutUserInput
   }
 
   export type UserUncheckedCreateInput = {
@@ -159686,6 +162567,8 @@ export namespace Prisma {
     backupLogs?: BackupLogUncheckedCreateNestedManyWithoutUserInput
     backupPlans?: BackupPlanUncheckedCreateNestedManyWithoutUserInput
     tenantMemberships?: TenantMembershipUncheckedCreateNestedManyWithoutUserInput
+    reviews?: ReviewUncheckedCreateNestedManyWithoutUserInput
+    reviewPrompts?: ReviewPromptUncheckedCreateNestedManyWithoutUserInput
   }
 
   export type UserUpdateInput = {
@@ -159726,6 +162609,8 @@ export namespace Prisma {
     backupLogs?: BackupLogUpdateManyWithoutUserNestedInput
     backupPlans?: BackupPlanUpdateManyWithoutUserNestedInput
     tenantMemberships?: TenantMembershipUpdateManyWithoutUserNestedInput
+    reviews?: ReviewUpdateManyWithoutUserNestedInput
+    reviewPrompts?: ReviewPromptUpdateManyWithoutUserNestedInput
   }
 
   export type UserUncheckedUpdateInput = {
@@ -159766,6 +162651,8 @@ export namespace Prisma {
     backupLogs?: BackupLogUncheckedUpdateManyWithoutUserNestedInput
     backupPlans?: BackupPlanUncheckedUpdateManyWithoutUserNestedInput
     tenantMemberships?: TenantMembershipUncheckedUpdateManyWithoutUserNestedInput
+    reviews?: ReviewUncheckedUpdateManyWithoutUserNestedInput
+    reviewPrompts?: ReviewPromptUncheckedUpdateManyWithoutUserNestedInput
   }
 
   export type UserCreateManyInput = {
@@ -159843,6 +162730,12 @@ export namespace Prisma {
     maxUsuarios?: number
     maxAlmacenes?: number
     maxProductos?: number
+    maxClientes?: number
+    maxPuntosVenta?: number
+    maxFacturasMes?: number
+    maxContratos?: number
+    incluyeBackups?: boolean
+    features?: JsonNullValueInput | InputJsonValue
     createdAt?: Date | string
     updatedAt?: Date | string
     licencias?: LicenciaCreateNestedManyWithoutPlanInput
@@ -159858,6 +162751,12 @@ export namespace Prisma {
     maxUsuarios?: number
     maxAlmacenes?: number
     maxProductos?: number
+    maxClientes?: number
+    maxPuntosVenta?: number
+    maxFacturasMes?: number
+    maxContratos?: number
+    incluyeBackups?: boolean
+    features?: JsonNullValueInput | InputJsonValue
     createdAt?: Date | string
     updatedAt?: Date | string
     licencias?: LicenciaUncheckedCreateNestedManyWithoutPlanInput
@@ -159873,6 +162772,12 @@ export namespace Prisma {
     maxUsuarios?: IntFieldUpdateOperationsInput | number
     maxAlmacenes?: IntFieldUpdateOperationsInput | number
     maxProductos?: IntFieldUpdateOperationsInput | number
+    maxClientes?: IntFieldUpdateOperationsInput | number
+    maxPuntosVenta?: IntFieldUpdateOperationsInput | number
+    maxFacturasMes?: IntFieldUpdateOperationsInput | number
+    maxContratos?: IntFieldUpdateOperationsInput | number
+    incluyeBackups?: BoolFieldUpdateOperationsInput | boolean
+    features?: JsonNullValueInput | InputJsonValue
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     licencias?: LicenciaUpdateManyWithoutPlanNestedInput
@@ -159888,6 +162793,12 @@ export namespace Prisma {
     maxUsuarios?: IntFieldUpdateOperationsInput | number
     maxAlmacenes?: IntFieldUpdateOperationsInput | number
     maxProductos?: IntFieldUpdateOperationsInput | number
+    maxClientes?: IntFieldUpdateOperationsInput | number
+    maxPuntosVenta?: IntFieldUpdateOperationsInput | number
+    maxFacturasMes?: IntFieldUpdateOperationsInput | number
+    maxContratos?: IntFieldUpdateOperationsInput | number
+    incluyeBackups?: BoolFieldUpdateOperationsInput | boolean
+    features?: JsonNullValueInput | InputJsonValue
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     licencias?: LicenciaUncheckedUpdateManyWithoutPlanNestedInput
@@ -159903,6 +162814,12 @@ export namespace Prisma {
     maxUsuarios?: number
     maxAlmacenes?: number
     maxProductos?: number
+    maxClientes?: number
+    maxPuntosVenta?: number
+    maxFacturasMes?: number
+    maxContratos?: number
+    incluyeBackups?: boolean
+    features?: JsonNullValueInput | InputJsonValue
     createdAt?: Date | string
     updatedAt?: Date | string
   }
@@ -159916,6 +162833,12 @@ export namespace Prisma {
     maxUsuarios?: IntFieldUpdateOperationsInput | number
     maxAlmacenes?: IntFieldUpdateOperationsInput | number
     maxProductos?: IntFieldUpdateOperationsInput | number
+    maxClientes?: IntFieldUpdateOperationsInput | number
+    maxPuntosVenta?: IntFieldUpdateOperationsInput | number
+    maxFacturasMes?: IntFieldUpdateOperationsInput | number
+    maxContratos?: IntFieldUpdateOperationsInput | number
+    incluyeBackups?: BoolFieldUpdateOperationsInput | boolean
+    features?: JsonNullValueInput | InputJsonValue
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
@@ -159929,6 +162852,12 @@ export namespace Prisma {
     maxUsuarios?: IntFieldUpdateOperationsInput | number
     maxAlmacenes?: IntFieldUpdateOperationsInput | number
     maxProductos?: IntFieldUpdateOperationsInput | number
+    maxClientes?: IntFieldUpdateOperationsInput | number
+    maxPuntosVenta?: IntFieldUpdateOperationsInput | number
+    maxFacturasMes?: IntFieldUpdateOperationsInput | number
+    maxContratos?: IntFieldUpdateOperationsInput | number
+    incluyeBackups?: BoolFieldUpdateOperationsInput | boolean
+    features?: JsonNullValueInput | InputJsonValue
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
@@ -168627,6 +171556,149 @@ export namespace Prisma {
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
 
+  export type ReviewCreateInput = {
+    reviewId?: string
+    rating: number
+    comment?: string | null
+    isApproved?: boolean
+    isPositive: boolean
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    tenant: TenantCreateNestedOneWithoutReviewsInput
+    user: UserCreateNestedOneWithoutReviewsInput
+  }
+
+  export type ReviewUncheckedCreateInput = {
+    reviewId?: string
+    tenantId: string
+    userId: string
+    rating: number
+    comment?: string | null
+    isApproved?: boolean
+    isPositive: boolean
+    createdAt?: Date | string
+    updatedAt?: Date | string
+  }
+
+  export type ReviewUpdateInput = {
+    reviewId?: StringFieldUpdateOperationsInput | string
+    rating?: IntFieldUpdateOperationsInput | number
+    comment?: NullableStringFieldUpdateOperationsInput | string | null
+    isApproved?: BoolFieldUpdateOperationsInput | boolean
+    isPositive?: BoolFieldUpdateOperationsInput | boolean
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    tenant?: TenantUpdateOneRequiredWithoutReviewsNestedInput
+    user?: UserUpdateOneRequiredWithoutReviewsNestedInput
+  }
+
+  export type ReviewUncheckedUpdateInput = {
+    reviewId?: StringFieldUpdateOperationsInput | string
+    tenantId?: StringFieldUpdateOperationsInput | string
+    userId?: StringFieldUpdateOperationsInput | string
+    rating?: IntFieldUpdateOperationsInput | number
+    comment?: NullableStringFieldUpdateOperationsInput | string | null
+    isApproved?: BoolFieldUpdateOperationsInput | boolean
+    isPositive?: BoolFieldUpdateOperationsInput | boolean
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type ReviewCreateManyInput = {
+    reviewId?: string
+    tenantId: string
+    userId: string
+    rating: number
+    comment?: string | null
+    isApproved?: boolean
+    isPositive: boolean
+    createdAt?: Date | string
+    updatedAt?: Date | string
+  }
+
+  export type ReviewUpdateManyMutationInput = {
+    reviewId?: StringFieldUpdateOperationsInput | string
+    rating?: IntFieldUpdateOperationsInput | number
+    comment?: NullableStringFieldUpdateOperationsInput | string | null
+    isApproved?: BoolFieldUpdateOperationsInput | boolean
+    isPositive?: BoolFieldUpdateOperationsInput | boolean
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type ReviewUncheckedUpdateManyInput = {
+    reviewId?: StringFieldUpdateOperationsInput | string
+    tenantId?: StringFieldUpdateOperationsInput | string
+    userId?: StringFieldUpdateOperationsInput | string
+    rating?: IntFieldUpdateOperationsInput | number
+    comment?: NullableStringFieldUpdateOperationsInput | string | null
+    isApproved?: BoolFieldUpdateOperationsInput | boolean
+    isPositive?: BoolFieldUpdateOperationsInput | boolean
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type ReviewPromptCreateInput = {
+    promptId?: string
+    promptedAt?: Date | string
+    dismissedAt?: Date | string | null
+    submittedAt?: Date | string | null
+    tenant: TenantCreateNestedOneWithoutReviewPromptsInput
+    user: UserCreateNestedOneWithoutReviewPromptsInput
+  }
+
+  export type ReviewPromptUncheckedCreateInput = {
+    promptId?: string
+    tenantId: string
+    userId: string
+    promptedAt?: Date | string
+    dismissedAt?: Date | string | null
+    submittedAt?: Date | string | null
+  }
+
+  export type ReviewPromptUpdateInput = {
+    promptId?: StringFieldUpdateOperationsInput | string
+    promptedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    dismissedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    submittedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    tenant?: TenantUpdateOneRequiredWithoutReviewPromptsNestedInput
+    user?: UserUpdateOneRequiredWithoutReviewPromptsNestedInput
+  }
+
+  export type ReviewPromptUncheckedUpdateInput = {
+    promptId?: StringFieldUpdateOperationsInput | string
+    tenantId?: StringFieldUpdateOperationsInput | string
+    userId?: StringFieldUpdateOperationsInput | string
+    promptedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    dismissedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    submittedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  }
+
+  export type ReviewPromptCreateManyInput = {
+    promptId?: string
+    tenantId: string
+    userId: string
+    promptedAt?: Date | string
+    dismissedAt?: Date | string | null
+    submittedAt?: Date | string | null
+  }
+
+  export type ReviewPromptUpdateManyMutationInput = {
+    promptId?: StringFieldUpdateOperationsInput | string
+    promptedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    dismissedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    submittedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  }
+
+  export type ReviewPromptUncheckedUpdateManyInput = {
+    promptId?: StringFieldUpdateOperationsInput | string
+    tenantId?: StringFieldUpdateOperationsInput | string
+    userId?: StringFieldUpdateOperationsInput | string
+    promptedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    dismissedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    submittedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  }
+
   export type StringFilter<$PrismaModel = never> = {
     equals?: string | StringFieldRefInput<$PrismaModel>
     in?: string[] | ListStringFieldRefInput<$PrismaModel>
@@ -169611,6 +172683,18 @@ export namespace Prisma {
     none?: TurnoPuntoVentaWhereInput
   }
 
+  export type ReviewListRelationFilter = {
+    every?: ReviewWhereInput
+    some?: ReviewWhereInput
+    none?: ReviewWhereInput
+  }
+
+  export type ReviewPromptListRelationFilter = {
+    every?: ReviewPromptWhereInput
+    some?: ReviewPromptWhereInput
+    none?: ReviewPromptWhereInput
+  }
+
   export type AjusteBancarioOrderByRelationAggregateInput = {
     _count?: SortOrder
   }
@@ -169780,6 +172864,14 @@ export namespace Prisma {
   }
 
   export type TurnoPuntoVentaOrderByRelationAggregateInput = {
+    _count?: SortOrder
+  }
+
+  export type ReviewOrderByRelationAggregateInput = {
+    _count?: SortOrder
+  }
+
+  export type ReviewPromptOrderByRelationAggregateInput = {
     _count?: SortOrder
   }
 
@@ -171148,6 +174240,29 @@ export namespace Prisma {
   export type UserSumOrderByAggregateInput = {
     loginAttempts?: SortOrder
   }
+  export type JsonFilter<$PrismaModel = never> =
+    | PatchUndefined<
+        Either<Required<JsonFilterBase<$PrismaModel>>, Exclude<keyof Required<JsonFilterBase<$PrismaModel>>, 'path'>>,
+        Required<JsonFilterBase<$PrismaModel>>
+      >
+    | OptionalFlat<Omit<Required<JsonFilterBase<$PrismaModel>>, 'path'>>
+
+  export type JsonFilterBase<$PrismaModel = never> = {
+    equals?: InputJsonValue | JsonFieldRefInput<$PrismaModel> | JsonNullValueFilter
+    path?: string[]
+    mode?: QueryMode | EnumQueryModeFieldRefInput<$PrismaModel>
+    string_contains?: string | StringFieldRefInput<$PrismaModel>
+    string_starts_with?: string | StringFieldRefInput<$PrismaModel>
+    string_ends_with?: string | StringFieldRefInput<$PrismaModel>
+    array_starts_with?: InputJsonValue | JsonFieldRefInput<$PrismaModel> | null
+    array_ends_with?: InputJsonValue | JsonFieldRefInput<$PrismaModel> | null
+    array_contains?: InputJsonValue | JsonFieldRefInput<$PrismaModel> | null
+    lt?: InputJsonValue | JsonFieldRefInput<$PrismaModel>
+    lte?: InputJsonValue | JsonFieldRefInput<$PrismaModel>
+    gt?: InputJsonValue | JsonFieldRefInput<$PrismaModel>
+    gte?: InputJsonValue | JsonFieldRefInput<$PrismaModel>
+    not?: InputJsonValue | JsonFieldRefInput<$PrismaModel> | JsonNullValueFilter
+  }
 
   export type PlanCountOrderByAggregateInput = {
     planId?: SortOrder
@@ -171158,6 +174273,12 @@ export namespace Prisma {
     maxUsuarios?: SortOrder
     maxAlmacenes?: SortOrder
     maxProductos?: SortOrder
+    maxClientes?: SortOrder
+    maxPuntosVenta?: SortOrder
+    maxFacturasMes?: SortOrder
+    maxContratos?: SortOrder
+    incluyeBackups?: SortOrder
+    features?: SortOrder
     createdAt?: SortOrder
     updatedAt?: SortOrder
   }
@@ -171168,6 +174289,10 @@ export namespace Prisma {
     maxUsuarios?: SortOrder
     maxAlmacenes?: SortOrder
     maxProductos?: SortOrder
+    maxClientes?: SortOrder
+    maxPuntosVenta?: SortOrder
+    maxFacturasMes?: SortOrder
+    maxContratos?: SortOrder
   }
 
   export type PlanMaxOrderByAggregateInput = {
@@ -171179,6 +174304,11 @@ export namespace Prisma {
     maxUsuarios?: SortOrder
     maxAlmacenes?: SortOrder
     maxProductos?: SortOrder
+    maxClientes?: SortOrder
+    maxPuntosVenta?: SortOrder
+    maxFacturasMes?: SortOrder
+    maxContratos?: SortOrder
+    incluyeBackups?: SortOrder
     createdAt?: SortOrder
     updatedAt?: SortOrder
   }
@@ -171192,6 +174322,11 @@ export namespace Prisma {
     maxUsuarios?: SortOrder
     maxAlmacenes?: SortOrder
     maxProductos?: SortOrder
+    maxClientes?: SortOrder
+    maxPuntosVenta?: SortOrder
+    maxFacturasMes?: SortOrder
+    maxContratos?: SortOrder
+    incluyeBackups?: SortOrder
     createdAt?: SortOrder
     updatedAt?: SortOrder
   }
@@ -171202,6 +174337,36 @@ export namespace Prisma {
     maxUsuarios?: SortOrder
     maxAlmacenes?: SortOrder
     maxProductos?: SortOrder
+    maxClientes?: SortOrder
+    maxPuntosVenta?: SortOrder
+    maxFacturasMes?: SortOrder
+    maxContratos?: SortOrder
+  }
+  export type JsonWithAggregatesFilter<$PrismaModel = never> =
+    | PatchUndefined<
+        Either<Required<JsonWithAggregatesFilterBase<$PrismaModel>>, Exclude<keyof Required<JsonWithAggregatesFilterBase<$PrismaModel>>, 'path'>>,
+        Required<JsonWithAggregatesFilterBase<$PrismaModel>>
+      >
+    | OptionalFlat<Omit<Required<JsonWithAggregatesFilterBase<$PrismaModel>>, 'path'>>
+
+  export type JsonWithAggregatesFilterBase<$PrismaModel = never> = {
+    equals?: InputJsonValue | JsonFieldRefInput<$PrismaModel> | JsonNullValueFilter
+    path?: string[]
+    mode?: QueryMode | EnumQueryModeFieldRefInput<$PrismaModel>
+    string_contains?: string | StringFieldRefInput<$PrismaModel>
+    string_starts_with?: string | StringFieldRefInput<$PrismaModel>
+    string_ends_with?: string | StringFieldRefInput<$PrismaModel>
+    array_starts_with?: InputJsonValue | JsonFieldRefInput<$PrismaModel> | null
+    array_ends_with?: InputJsonValue | JsonFieldRefInput<$PrismaModel> | null
+    array_contains?: InputJsonValue | JsonFieldRefInput<$PrismaModel> | null
+    lt?: InputJsonValue | JsonFieldRefInput<$PrismaModel>
+    lte?: InputJsonValue | JsonFieldRefInput<$PrismaModel>
+    gt?: InputJsonValue | JsonFieldRefInput<$PrismaModel>
+    gte?: InputJsonValue | JsonFieldRefInput<$PrismaModel>
+    not?: InputJsonValue | JsonFieldRefInput<$PrismaModel> | JsonNullValueFilter
+    _count?: NestedIntFilter<$PrismaModel>
+    _min?: NestedJsonFilter<$PrismaModel>
+    _max?: NestedJsonFilter<$PrismaModel>
   }
 
   export type PlanScalarRelationFilter = {
@@ -173664,29 +176829,6 @@ export namespace Prisma {
     _min?: NestedEnumEstadoContratoFilter<$PrismaModel>
     _max?: NestedEnumEstadoContratoFilter<$PrismaModel>
   }
-  export type JsonFilter<$PrismaModel = never> =
-    | PatchUndefined<
-        Either<Required<JsonFilterBase<$PrismaModel>>, Exclude<keyof Required<JsonFilterBase<$PrismaModel>>, 'path'>>,
-        Required<JsonFilterBase<$PrismaModel>>
-      >
-    | OptionalFlat<Omit<Required<JsonFilterBase<$PrismaModel>>, 'path'>>
-
-  export type JsonFilterBase<$PrismaModel = never> = {
-    equals?: InputJsonValue | JsonFieldRefInput<$PrismaModel> | JsonNullValueFilter
-    path?: string[]
-    mode?: QueryMode | EnumQueryModeFieldRefInput<$PrismaModel>
-    string_contains?: string | StringFieldRefInput<$PrismaModel>
-    string_starts_with?: string | StringFieldRefInput<$PrismaModel>
-    string_ends_with?: string | StringFieldRefInput<$PrismaModel>
-    array_starts_with?: InputJsonValue | JsonFieldRefInput<$PrismaModel> | null
-    array_ends_with?: InputJsonValue | JsonFieldRefInput<$PrismaModel> | null
-    array_contains?: InputJsonValue | JsonFieldRefInput<$PrismaModel> | null
-    lt?: InputJsonValue | JsonFieldRefInput<$PrismaModel>
-    lte?: InputJsonValue | JsonFieldRefInput<$PrismaModel>
-    gt?: InputJsonValue | JsonFieldRefInput<$PrismaModel>
-    gte?: InputJsonValue | JsonFieldRefInput<$PrismaModel>
-    not?: InputJsonValue | JsonFieldRefInput<$PrismaModel> | JsonNullValueFilter
-  }
 
   export type ContratoScalarRelationFilter = {
     is?: ContratoWhereInput
@@ -173732,32 +176874,6 @@ export namespace Prisma {
 
   export type ContratoVersionSumOrderByAggregateInput = {
     numeroVersion?: SortOrder
-  }
-  export type JsonWithAggregatesFilter<$PrismaModel = never> =
-    | PatchUndefined<
-        Either<Required<JsonWithAggregatesFilterBase<$PrismaModel>>, Exclude<keyof Required<JsonWithAggregatesFilterBase<$PrismaModel>>, 'path'>>,
-        Required<JsonWithAggregatesFilterBase<$PrismaModel>>
-      >
-    | OptionalFlat<Omit<Required<JsonWithAggregatesFilterBase<$PrismaModel>>, 'path'>>
-
-  export type JsonWithAggregatesFilterBase<$PrismaModel = never> = {
-    equals?: InputJsonValue | JsonFieldRefInput<$PrismaModel> | JsonNullValueFilter
-    path?: string[]
-    mode?: QueryMode | EnumQueryModeFieldRefInput<$PrismaModel>
-    string_contains?: string | StringFieldRefInput<$PrismaModel>
-    string_starts_with?: string | StringFieldRefInput<$PrismaModel>
-    string_ends_with?: string | StringFieldRefInput<$PrismaModel>
-    array_starts_with?: InputJsonValue | JsonFieldRefInput<$PrismaModel> | null
-    array_ends_with?: InputJsonValue | JsonFieldRefInput<$PrismaModel> | null
-    array_contains?: InputJsonValue | JsonFieldRefInput<$PrismaModel> | null
-    lt?: InputJsonValue | JsonFieldRefInput<$PrismaModel>
-    lte?: InputJsonValue | JsonFieldRefInput<$PrismaModel>
-    gt?: InputJsonValue | JsonFieldRefInput<$PrismaModel>
-    gte?: InputJsonValue | JsonFieldRefInput<$PrismaModel>
-    not?: InputJsonValue | JsonFieldRefInput<$PrismaModel> | JsonNullValueFilter
-    _count?: NestedIntFilter<$PrismaModel>
-    _min?: NestedJsonFilter<$PrismaModel>
-    _max?: NestedJsonFilter<$PrismaModel>
   }
 
   export type EnumTipoFirmaFilter<$PrismaModel = never> = {
@@ -176400,6 +179516,82 @@ export namespace Prisma {
     createdAt?: SortOrder
   }
 
+  export type ReviewTenantIdUserIdCompoundUniqueInput = {
+    tenantId: string
+    userId: string
+  }
+
+  export type ReviewCountOrderByAggregateInput = {
+    reviewId?: SortOrder
+    tenantId?: SortOrder
+    userId?: SortOrder
+    rating?: SortOrder
+    comment?: SortOrder
+    isApproved?: SortOrder
+    isPositive?: SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+  }
+
+  export type ReviewAvgOrderByAggregateInput = {
+    rating?: SortOrder
+  }
+
+  export type ReviewMaxOrderByAggregateInput = {
+    reviewId?: SortOrder
+    tenantId?: SortOrder
+    userId?: SortOrder
+    rating?: SortOrder
+    comment?: SortOrder
+    isApproved?: SortOrder
+    isPositive?: SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+  }
+
+  export type ReviewMinOrderByAggregateInput = {
+    reviewId?: SortOrder
+    tenantId?: SortOrder
+    userId?: SortOrder
+    rating?: SortOrder
+    comment?: SortOrder
+    isApproved?: SortOrder
+    isPositive?: SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+  }
+
+  export type ReviewSumOrderByAggregateInput = {
+    rating?: SortOrder
+  }
+
+  export type ReviewPromptCountOrderByAggregateInput = {
+    promptId?: SortOrder
+    tenantId?: SortOrder
+    userId?: SortOrder
+    promptedAt?: SortOrder
+    dismissedAt?: SortOrder
+    submittedAt?: SortOrder
+  }
+
+  export type ReviewPromptMaxOrderByAggregateInput = {
+    promptId?: SortOrder
+    tenantId?: SortOrder
+    userId?: SortOrder
+    promptedAt?: SortOrder
+    dismissedAt?: SortOrder
+    submittedAt?: SortOrder
+  }
+
+  export type ReviewPromptMinOrderByAggregateInput = {
+    promptId?: SortOrder
+    tenantId?: SortOrder
+    userId?: SortOrder
+    promptedAt?: SortOrder
+    dismissedAt?: SortOrder
+    submittedAt?: SortOrder
+  }
+
   export type CategoriaCreateNestedOneWithoutSubcategoriasInput = {
     create?: XOR<CategoriaCreateWithoutSubcategoriasInput, CategoriaUncheckedCreateWithoutSubcategoriasInput>
     connectOrCreate?: CategoriaCreateOrConnectWithoutSubcategoriasInput
@@ -177940,6 +181132,20 @@ export namespace Prisma {
     connect?: TurnoPuntoVentaWhereUniqueInput | TurnoPuntoVentaWhereUniqueInput[]
   }
 
+  export type ReviewCreateNestedManyWithoutTenantInput = {
+    create?: XOR<ReviewCreateWithoutTenantInput, ReviewUncheckedCreateWithoutTenantInput> | ReviewCreateWithoutTenantInput[] | ReviewUncheckedCreateWithoutTenantInput[]
+    connectOrCreate?: ReviewCreateOrConnectWithoutTenantInput | ReviewCreateOrConnectWithoutTenantInput[]
+    createMany?: ReviewCreateManyTenantInputEnvelope
+    connect?: ReviewWhereUniqueInput | ReviewWhereUniqueInput[]
+  }
+
+  export type ReviewPromptCreateNestedManyWithoutTenantInput = {
+    create?: XOR<ReviewPromptCreateWithoutTenantInput, ReviewPromptUncheckedCreateWithoutTenantInput> | ReviewPromptCreateWithoutTenantInput[] | ReviewPromptUncheckedCreateWithoutTenantInput[]
+    connectOrCreate?: ReviewPromptCreateOrConnectWithoutTenantInput | ReviewPromptCreateOrConnectWithoutTenantInput[]
+    createMany?: ReviewPromptCreateManyTenantInputEnvelope
+    connect?: ReviewPromptWhereUniqueInput | ReviewPromptWhereUniqueInput[]
+  }
+
   export type AjusteBancarioUncheckedCreateNestedManyWithoutTenantInput = {
     create?: XOR<AjusteBancarioCreateWithoutTenantInput, AjusteBancarioUncheckedCreateWithoutTenantInput> | AjusteBancarioCreateWithoutTenantInput[] | AjusteBancarioUncheckedCreateWithoutTenantInput[]
     connectOrCreate?: AjusteBancarioCreateOrConnectWithoutTenantInput | AjusteBancarioCreateOrConnectWithoutTenantInput[]
@@ -178364,6 +181570,20 @@ export namespace Prisma {
     connectOrCreate?: TurnoPuntoVentaCreateOrConnectWithoutTenantInput | TurnoPuntoVentaCreateOrConnectWithoutTenantInput[]
     createMany?: TurnoPuntoVentaCreateManyTenantInputEnvelope
     connect?: TurnoPuntoVentaWhereUniqueInput | TurnoPuntoVentaWhereUniqueInput[]
+  }
+
+  export type ReviewUncheckedCreateNestedManyWithoutTenantInput = {
+    create?: XOR<ReviewCreateWithoutTenantInput, ReviewUncheckedCreateWithoutTenantInput> | ReviewCreateWithoutTenantInput[] | ReviewUncheckedCreateWithoutTenantInput[]
+    connectOrCreate?: ReviewCreateOrConnectWithoutTenantInput | ReviewCreateOrConnectWithoutTenantInput[]
+    createMany?: ReviewCreateManyTenantInputEnvelope
+    connect?: ReviewWhereUniqueInput | ReviewWhereUniqueInput[]
+  }
+
+  export type ReviewPromptUncheckedCreateNestedManyWithoutTenantInput = {
+    create?: XOR<ReviewPromptCreateWithoutTenantInput, ReviewPromptUncheckedCreateWithoutTenantInput> | ReviewPromptCreateWithoutTenantInput[] | ReviewPromptUncheckedCreateWithoutTenantInput[]
+    connectOrCreate?: ReviewPromptCreateOrConnectWithoutTenantInput | ReviewPromptCreateOrConnectWithoutTenantInput[]
+    createMany?: ReviewPromptCreateManyTenantInputEnvelope
+    connect?: ReviewPromptWhereUniqueInput | ReviewPromptWhereUniqueInput[]
   }
 
   export type AjusteBancarioUpdateManyWithoutTenantNestedInput = {
@@ -179216,6 +182436,34 @@ export namespace Prisma {
     deleteMany?: TurnoPuntoVentaScalarWhereInput | TurnoPuntoVentaScalarWhereInput[]
   }
 
+  export type ReviewUpdateManyWithoutTenantNestedInput = {
+    create?: XOR<ReviewCreateWithoutTenantInput, ReviewUncheckedCreateWithoutTenantInput> | ReviewCreateWithoutTenantInput[] | ReviewUncheckedCreateWithoutTenantInput[]
+    connectOrCreate?: ReviewCreateOrConnectWithoutTenantInput | ReviewCreateOrConnectWithoutTenantInput[]
+    upsert?: ReviewUpsertWithWhereUniqueWithoutTenantInput | ReviewUpsertWithWhereUniqueWithoutTenantInput[]
+    createMany?: ReviewCreateManyTenantInputEnvelope
+    set?: ReviewWhereUniqueInput | ReviewWhereUniqueInput[]
+    disconnect?: ReviewWhereUniqueInput | ReviewWhereUniqueInput[]
+    delete?: ReviewWhereUniqueInput | ReviewWhereUniqueInput[]
+    connect?: ReviewWhereUniqueInput | ReviewWhereUniqueInput[]
+    update?: ReviewUpdateWithWhereUniqueWithoutTenantInput | ReviewUpdateWithWhereUniqueWithoutTenantInput[]
+    updateMany?: ReviewUpdateManyWithWhereWithoutTenantInput | ReviewUpdateManyWithWhereWithoutTenantInput[]
+    deleteMany?: ReviewScalarWhereInput | ReviewScalarWhereInput[]
+  }
+
+  export type ReviewPromptUpdateManyWithoutTenantNestedInput = {
+    create?: XOR<ReviewPromptCreateWithoutTenantInput, ReviewPromptUncheckedCreateWithoutTenantInput> | ReviewPromptCreateWithoutTenantInput[] | ReviewPromptUncheckedCreateWithoutTenantInput[]
+    connectOrCreate?: ReviewPromptCreateOrConnectWithoutTenantInput | ReviewPromptCreateOrConnectWithoutTenantInput[]
+    upsert?: ReviewPromptUpsertWithWhereUniqueWithoutTenantInput | ReviewPromptUpsertWithWhereUniqueWithoutTenantInput[]
+    createMany?: ReviewPromptCreateManyTenantInputEnvelope
+    set?: ReviewPromptWhereUniqueInput | ReviewPromptWhereUniqueInput[]
+    disconnect?: ReviewPromptWhereUniqueInput | ReviewPromptWhereUniqueInput[]
+    delete?: ReviewPromptWhereUniqueInput | ReviewPromptWhereUniqueInput[]
+    connect?: ReviewPromptWhereUniqueInput | ReviewPromptWhereUniqueInput[]
+    update?: ReviewPromptUpdateWithWhereUniqueWithoutTenantInput | ReviewPromptUpdateWithWhereUniqueWithoutTenantInput[]
+    updateMany?: ReviewPromptUpdateManyWithWhereWithoutTenantInput | ReviewPromptUpdateManyWithWhereWithoutTenantInput[]
+    deleteMany?: ReviewPromptScalarWhereInput | ReviewPromptScalarWhereInput[]
+  }
+
   export type AjusteBancarioUncheckedUpdateManyWithoutTenantNestedInput = {
     create?: XOR<AjusteBancarioCreateWithoutTenantInput, AjusteBancarioUncheckedCreateWithoutTenantInput> | AjusteBancarioCreateWithoutTenantInput[] | AjusteBancarioUncheckedCreateWithoutTenantInput[]
     connectOrCreate?: AjusteBancarioCreateOrConnectWithoutTenantInput | AjusteBancarioCreateOrConnectWithoutTenantInput[]
@@ -180064,6 +183312,34 @@ export namespace Prisma {
     update?: TurnoPuntoVentaUpdateWithWhereUniqueWithoutTenantInput | TurnoPuntoVentaUpdateWithWhereUniqueWithoutTenantInput[]
     updateMany?: TurnoPuntoVentaUpdateManyWithWhereWithoutTenantInput | TurnoPuntoVentaUpdateManyWithWhereWithoutTenantInput[]
     deleteMany?: TurnoPuntoVentaScalarWhereInput | TurnoPuntoVentaScalarWhereInput[]
+  }
+
+  export type ReviewUncheckedUpdateManyWithoutTenantNestedInput = {
+    create?: XOR<ReviewCreateWithoutTenantInput, ReviewUncheckedCreateWithoutTenantInput> | ReviewCreateWithoutTenantInput[] | ReviewUncheckedCreateWithoutTenantInput[]
+    connectOrCreate?: ReviewCreateOrConnectWithoutTenantInput | ReviewCreateOrConnectWithoutTenantInput[]
+    upsert?: ReviewUpsertWithWhereUniqueWithoutTenantInput | ReviewUpsertWithWhereUniqueWithoutTenantInput[]
+    createMany?: ReviewCreateManyTenantInputEnvelope
+    set?: ReviewWhereUniqueInput | ReviewWhereUniqueInput[]
+    disconnect?: ReviewWhereUniqueInput | ReviewWhereUniqueInput[]
+    delete?: ReviewWhereUniqueInput | ReviewWhereUniqueInput[]
+    connect?: ReviewWhereUniqueInput | ReviewWhereUniqueInput[]
+    update?: ReviewUpdateWithWhereUniqueWithoutTenantInput | ReviewUpdateWithWhereUniqueWithoutTenantInput[]
+    updateMany?: ReviewUpdateManyWithWhereWithoutTenantInput | ReviewUpdateManyWithWhereWithoutTenantInput[]
+    deleteMany?: ReviewScalarWhereInput | ReviewScalarWhereInput[]
+  }
+
+  export type ReviewPromptUncheckedUpdateManyWithoutTenantNestedInput = {
+    create?: XOR<ReviewPromptCreateWithoutTenantInput, ReviewPromptUncheckedCreateWithoutTenantInput> | ReviewPromptCreateWithoutTenantInput[] | ReviewPromptUncheckedCreateWithoutTenantInput[]
+    connectOrCreate?: ReviewPromptCreateOrConnectWithoutTenantInput | ReviewPromptCreateOrConnectWithoutTenantInput[]
+    upsert?: ReviewPromptUpsertWithWhereUniqueWithoutTenantInput | ReviewPromptUpsertWithWhereUniqueWithoutTenantInput[]
+    createMany?: ReviewPromptCreateManyTenantInputEnvelope
+    set?: ReviewPromptWhereUniqueInput | ReviewPromptWhereUniqueInput[]
+    disconnect?: ReviewPromptWhereUniqueInput | ReviewPromptWhereUniqueInput[]
+    delete?: ReviewPromptWhereUniqueInput | ReviewPromptWhereUniqueInput[]
+    connect?: ReviewPromptWhereUniqueInput | ReviewPromptWhereUniqueInput[]
+    update?: ReviewPromptUpdateWithWhereUniqueWithoutTenantInput | ReviewPromptUpdateWithWhereUniqueWithoutTenantInput[]
+    updateMany?: ReviewPromptUpdateManyWithWhereWithoutTenantInput | ReviewPromptUpdateManyWithWhereWithoutTenantInput[]
+    deleteMany?: ReviewPromptScalarWhereInput | ReviewPromptScalarWhereInput[]
   }
 
   export type TenantCreateNestedOneWithoutMembershipsInput = {
@@ -182251,6 +185527,20 @@ export namespace Prisma {
     connect?: TenantMembershipWhereUniqueInput | TenantMembershipWhereUniqueInput[]
   }
 
+  export type ReviewCreateNestedManyWithoutUserInput = {
+    create?: XOR<ReviewCreateWithoutUserInput, ReviewUncheckedCreateWithoutUserInput> | ReviewCreateWithoutUserInput[] | ReviewUncheckedCreateWithoutUserInput[]
+    connectOrCreate?: ReviewCreateOrConnectWithoutUserInput | ReviewCreateOrConnectWithoutUserInput[]
+    createMany?: ReviewCreateManyUserInputEnvelope
+    connect?: ReviewWhereUniqueInput | ReviewWhereUniqueInput[]
+  }
+
+  export type ReviewPromptCreateNestedManyWithoutUserInput = {
+    create?: XOR<ReviewPromptCreateWithoutUserInput, ReviewPromptUncheckedCreateWithoutUserInput> | ReviewPromptCreateWithoutUserInput[] | ReviewPromptUncheckedCreateWithoutUserInput[]
+    connectOrCreate?: ReviewPromptCreateOrConnectWithoutUserInput | ReviewPromptCreateOrConnectWithoutUserInput[]
+    createMany?: ReviewPromptCreateManyUserInputEnvelope
+    connect?: ReviewPromptWhereUniqueInput | ReviewPromptWhereUniqueInput[]
+  }
+
   export type AnticipoUncheckedCreateNestedManyWithoutCreadorInput = {
     create?: XOR<AnticipoCreateWithoutCreadorInput, AnticipoUncheckedCreateWithoutCreadorInput> | AnticipoCreateWithoutCreadorInput[] | AnticipoUncheckedCreateWithoutCreadorInput[]
     connectOrCreate?: AnticipoCreateOrConnectWithoutCreadorInput | AnticipoCreateOrConnectWithoutCreadorInput[]
@@ -182375,6 +185665,20 @@ export namespace Prisma {
     connectOrCreate?: TenantMembershipCreateOrConnectWithoutUserInput | TenantMembershipCreateOrConnectWithoutUserInput[]
     createMany?: TenantMembershipCreateManyUserInputEnvelope
     connect?: TenantMembershipWhereUniqueInput | TenantMembershipWhereUniqueInput[]
+  }
+
+  export type ReviewUncheckedCreateNestedManyWithoutUserInput = {
+    create?: XOR<ReviewCreateWithoutUserInput, ReviewUncheckedCreateWithoutUserInput> | ReviewCreateWithoutUserInput[] | ReviewUncheckedCreateWithoutUserInput[]
+    connectOrCreate?: ReviewCreateOrConnectWithoutUserInput | ReviewCreateOrConnectWithoutUserInput[]
+    createMany?: ReviewCreateManyUserInputEnvelope
+    connect?: ReviewWhereUniqueInput | ReviewWhereUniqueInput[]
+  }
+
+  export type ReviewPromptUncheckedCreateNestedManyWithoutUserInput = {
+    create?: XOR<ReviewPromptCreateWithoutUserInput, ReviewPromptUncheckedCreateWithoutUserInput> | ReviewPromptCreateWithoutUserInput[] | ReviewPromptUncheckedCreateWithoutUserInput[]
+    connectOrCreate?: ReviewPromptCreateOrConnectWithoutUserInput | ReviewPromptCreateOrConnectWithoutUserInput[]
+    createMany?: ReviewPromptCreateManyUserInputEnvelope
+    connect?: ReviewPromptWhereUniqueInput | ReviewPromptWhereUniqueInput[]
   }
 
   export type AnticipoUpdateManyWithoutCreadorNestedInput = {
@@ -182629,6 +185933,34 @@ export namespace Prisma {
     deleteMany?: TenantMembershipScalarWhereInput | TenantMembershipScalarWhereInput[]
   }
 
+  export type ReviewUpdateManyWithoutUserNestedInput = {
+    create?: XOR<ReviewCreateWithoutUserInput, ReviewUncheckedCreateWithoutUserInput> | ReviewCreateWithoutUserInput[] | ReviewUncheckedCreateWithoutUserInput[]
+    connectOrCreate?: ReviewCreateOrConnectWithoutUserInput | ReviewCreateOrConnectWithoutUserInput[]
+    upsert?: ReviewUpsertWithWhereUniqueWithoutUserInput | ReviewUpsertWithWhereUniqueWithoutUserInput[]
+    createMany?: ReviewCreateManyUserInputEnvelope
+    set?: ReviewWhereUniqueInput | ReviewWhereUniqueInput[]
+    disconnect?: ReviewWhereUniqueInput | ReviewWhereUniqueInput[]
+    delete?: ReviewWhereUniqueInput | ReviewWhereUniqueInput[]
+    connect?: ReviewWhereUniqueInput | ReviewWhereUniqueInput[]
+    update?: ReviewUpdateWithWhereUniqueWithoutUserInput | ReviewUpdateWithWhereUniqueWithoutUserInput[]
+    updateMany?: ReviewUpdateManyWithWhereWithoutUserInput | ReviewUpdateManyWithWhereWithoutUserInput[]
+    deleteMany?: ReviewScalarWhereInput | ReviewScalarWhereInput[]
+  }
+
+  export type ReviewPromptUpdateManyWithoutUserNestedInput = {
+    create?: XOR<ReviewPromptCreateWithoutUserInput, ReviewPromptUncheckedCreateWithoutUserInput> | ReviewPromptCreateWithoutUserInput[] | ReviewPromptUncheckedCreateWithoutUserInput[]
+    connectOrCreate?: ReviewPromptCreateOrConnectWithoutUserInput | ReviewPromptCreateOrConnectWithoutUserInput[]
+    upsert?: ReviewPromptUpsertWithWhereUniqueWithoutUserInput | ReviewPromptUpsertWithWhereUniqueWithoutUserInput[]
+    createMany?: ReviewPromptCreateManyUserInputEnvelope
+    set?: ReviewPromptWhereUniqueInput | ReviewPromptWhereUniqueInput[]
+    disconnect?: ReviewPromptWhereUniqueInput | ReviewPromptWhereUniqueInput[]
+    delete?: ReviewPromptWhereUniqueInput | ReviewPromptWhereUniqueInput[]
+    connect?: ReviewPromptWhereUniqueInput | ReviewPromptWhereUniqueInput[]
+    update?: ReviewPromptUpdateWithWhereUniqueWithoutUserInput | ReviewPromptUpdateWithWhereUniqueWithoutUserInput[]
+    updateMany?: ReviewPromptUpdateManyWithWhereWithoutUserInput | ReviewPromptUpdateManyWithWhereWithoutUserInput[]
+    deleteMany?: ReviewPromptScalarWhereInput | ReviewPromptScalarWhereInput[]
+  }
+
   export type AnticipoUncheckedUpdateManyWithoutCreadorNestedInput = {
     create?: XOR<AnticipoCreateWithoutCreadorInput, AnticipoUncheckedCreateWithoutCreadorInput> | AnticipoCreateWithoutCreadorInput[] | AnticipoUncheckedCreateWithoutCreadorInput[]
     connectOrCreate?: AnticipoCreateOrConnectWithoutCreadorInput | AnticipoCreateOrConnectWithoutCreadorInput[]
@@ -182879,6 +186211,34 @@ export namespace Prisma {
     update?: TenantMembershipUpdateWithWhereUniqueWithoutUserInput | TenantMembershipUpdateWithWhereUniqueWithoutUserInput[]
     updateMany?: TenantMembershipUpdateManyWithWhereWithoutUserInput | TenantMembershipUpdateManyWithWhereWithoutUserInput[]
     deleteMany?: TenantMembershipScalarWhereInput | TenantMembershipScalarWhereInput[]
+  }
+
+  export type ReviewUncheckedUpdateManyWithoutUserNestedInput = {
+    create?: XOR<ReviewCreateWithoutUserInput, ReviewUncheckedCreateWithoutUserInput> | ReviewCreateWithoutUserInput[] | ReviewUncheckedCreateWithoutUserInput[]
+    connectOrCreate?: ReviewCreateOrConnectWithoutUserInput | ReviewCreateOrConnectWithoutUserInput[]
+    upsert?: ReviewUpsertWithWhereUniqueWithoutUserInput | ReviewUpsertWithWhereUniqueWithoutUserInput[]
+    createMany?: ReviewCreateManyUserInputEnvelope
+    set?: ReviewWhereUniqueInput | ReviewWhereUniqueInput[]
+    disconnect?: ReviewWhereUniqueInput | ReviewWhereUniqueInput[]
+    delete?: ReviewWhereUniqueInput | ReviewWhereUniqueInput[]
+    connect?: ReviewWhereUniqueInput | ReviewWhereUniqueInput[]
+    update?: ReviewUpdateWithWhereUniqueWithoutUserInput | ReviewUpdateWithWhereUniqueWithoutUserInput[]
+    updateMany?: ReviewUpdateManyWithWhereWithoutUserInput | ReviewUpdateManyWithWhereWithoutUserInput[]
+    deleteMany?: ReviewScalarWhereInput | ReviewScalarWhereInput[]
+  }
+
+  export type ReviewPromptUncheckedUpdateManyWithoutUserNestedInput = {
+    create?: XOR<ReviewPromptCreateWithoutUserInput, ReviewPromptUncheckedCreateWithoutUserInput> | ReviewPromptCreateWithoutUserInput[] | ReviewPromptUncheckedCreateWithoutUserInput[]
+    connectOrCreate?: ReviewPromptCreateOrConnectWithoutUserInput | ReviewPromptCreateOrConnectWithoutUserInput[]
+    upsert?: ReviewPromptUpsertWithWhereUniqueWithoutUserInput | ReviewPromptUpsertWithWhereUniqueWithoutUserInput[]
+    createMany?: ReviewPromptCreateManyUserInputEnvelope
+    set?: ReviewPromptWhereUniqueInput | ReviewPromptWhereUniqueInput[]
+    disconnect?: ReviewPromptWhereUniqueInput | ReviewPromptWhereUniqueInput[]
+    delete?: ReviewPromptWhereUniqueInput | ReviewPromptWhereUniqueInput[]
+    connect?: ReviewPromptWhereUniqueInput | ReviewPromptWhereUniqueInput[]
+    update?: ReviewPromptUpdateWithWhereUniqueWithoutUserInput | ReviewPromptUpdateWithWhereUniqueWithoutUserInput[]
+    updateMany?: ReviewPromptUpdateManyWithWhereWithoutUserInput | ReviewPromptUpdateManyWithWhereWithoutUserInput[]
+    deleteMany?: ReviewPromptScalarWhereInput | ReviewPromptScalarWhereInput[]
   }
 
   export type LicenciaCreateNestedManyWithoutPlanInput = {
@@ -188809,6 +192169,62 @@ export namespace Prisma {
     update?: XOR<XOR<TenantUpdateToOneWithWhereWithoutBackupPlansInput, TenantUpdateWithoutBackupPlansInput>, TenantUncheckedUpdateWithoutBackupPlansInput>
   }
 
+  export type TenantCreateNestedOneWithoutReviewsInput = {
+    create?: XOR<TenantCreateWithoutReviewsInput, TenantUncheckedCreateWithoutReviewsInput>
+    connectOrCreate?: TenantCreateOrConnectWithoutReviewsInput
+    connect?: TenantWhereUniqueInput
+  }
+
+  export type UserCreateNestedOneWithoutReviewsInput = {
+    create?: XOR<UserCreateWithoutReviewsInput, UserUncheckedCreateWithoutReviewsInput>
+    connectOrCreate?: UserCreateOrConnectWithoutReviewsInput
+    connect?: UserWhereUniqueInput
+  }
+
+  export type TenantUpdateOneRequiredWithoutReviewsNestedInput = {
+    create?: XOR<TenantCreateWithoutReviewsInput, TenantUncheckedCreateWithoutReviewsInput>
+    connectOrCreate?: TenantCreateOrConnectWithoutReviewsInput
+    upsert?: TenantUpsertWithoutReviewsInput
+    connect?: TenantWhereUniqueInput
+    update?: XOR<XOR<TenantUpdateToOneWithWhereWithoutReviewsInput, TenantUpdateWithoutReviewsInput>, TenantUncheckedUpdateWithoutReviewsInput>
+  }
+
+  export type UserUpdateOneRequiredWithoutReviewsNestedInput = {
+    create?: XOR<UserCreateWithoutReviewsInput, UserUncheckedCreateWithoutReviewsInput>
+    connectOrCreate?: UserCreateOrConnectWithoutReviewsInput
+    upsert?: UserUpsertWithoutReviewsInput
+    connect?: UserWhereUniqueInput
+    update?: XOR<XOR<UserUpdateToOneWithWhereWithoutReviewsInput, UserUpdateWithoutReviewsInput>, UserUncheckedUpdateWithoutReviewsInput>
+  }
+
+  export type TenantCreateNestedOneWithoutReviewPromptsInput = {
+    create?: XOR<TenantCreateWithoutReviewPromptsInput, TenantUncheckedCreateWithoutReviewPromptsInput>
+    connectOrCreate?: TenantCreateOrConnectWithoutReviewPromptsInput
+    connect?: TenantWhereUniqueInput
+  }
+
+  export type UserCreateNestedOneWithoutReviewPromptsInput = {
+    create?: XOR<UserCreateWithoutReviewPromptsInput, UserUncheckedCreateWithoutReviewPromptsInput>
+    connectOrCreate?: UserCreateOrConnectWithoutReviewPromptsInput
+    connect?: UserWhereUniqueInput
+  }
+
+  export type TenantUpdateOneRequiredWithoutReviewPromptsNestedInput = {
+    create?: XOR<TenantCreateWithoutReviewPromptsInput, TenantUncheckedCreateWithoutReviewPromptsInput>
+    connectOrCreate?: TenantCreateOrConnectWithoutReviewPromptsInput
+    upsert?: TenantUpsertWithoutReviewPromptsInput
+    connect?: TenantWhereUniqueInput
+    update?: XOR<XOR<TenantUpdateToOneWithWhereWithoutReviewPromptsInput, TenantUpdateWithoutReviewPromptsInput>, TenantUncheckedUpdateWithoutReviewPromptsInput>
+  }
+
+  export type UserUpdateOneRequiredWithoutReviewPromptsNestedInput = {
+    create?: XOR<UserCreateWithoutReviewPromptsInput, UserUncheckedCreateWithoutReviewPromptsInput>
+    connectOrCreate?: UserCreateOrConnectWithoutReviewPromptsInput
+    upsert?: UserUpsertWithoutReviewPromptsInput
+    connect?: UserWhereUniqueInput
+    update?: XOR<XOR<UserUpdateToOneWithWhereWithoutReviewPromptsInput, UserUpdateWithoutReviewPromptsInput>, UserUncheckedUpdateWithoutReviewPromptsInput>
+  }
+
   export type NestedStringFilter<$PrismaModel = never> = {
     equals?: string | StringFieldRefInput<$PrismaModel>
     in?: string[] | ListStringFieldRefInput<$PrismaModel>
@@ -189154,6 +192570,29 @@ export namespace Prisma {
     _min?: NestedEnumMetodoPagoVentaNullableFilter<$PrismaModel>
     _max?: NestedEnumMetodoPagoVentaNullableFilter<$PrismaModel>
   }
+  export type NestedJsonFilter<$PrismaModel = never> =
+    | PatchUndefined<
+        Either<Required<NestedJsonFilterBase<$PrismaModel>>, Exclude<keyof Required<NestedJsonFilterBase<$PrismaModel>>, 'path'>>,
+        Required<NestedJsonFilterBase<$PrismaModel>>
+      >
+    | OptionalFlat<Omit<Required<NestedJsonFilterBase<$PrismaModel>>, 'path'>>
+
+  export type NestedJsonFilterBase<$PrismaModel = never> = {
+    equals?: InputJsonValue | JsonFieldRefInput<$PrismaModel> | JsonNullValueFilter
+    path?: string[]
+    mode?: QueryMode | EnumQueryModeFieldRefInput<$PrismaModel>
+    string_contains?: string | StringFieldRefInput<$PrismaModel>
+    string_starts_with?: string | StringFieldRefInput<$PrismaModel>
+    string_ends_with?: string | StringFieldRefInput<$PrismaModel>
+    array_starts_with?: InputJsonValue | JsonFieldRefInput<$PrismaModel> | null
+    array_ends_with?: InputJsonValue | JsonFieldRefInput<$PrismaModel> | null
+    array_contains?: InputJsonValue | JsonFieldRefInput<$PrismaModel> | null
+    lt?: InputJsonValue | JsonFieldRefInput<$PrismaModel>
+    lte?: InputJsonValue | JsonFieldRefInput<$PrismaModel>
+    gt?: InputJsonValue | JsonFieldRefInput<$PrismaModel>
+    gte?: InputJsonValue | JsonFieldRefInput<$PrismaModel>
+    not?: InputJsonValue | JsonFieldRefInput<$PrismaModel> | JsonNullValueFilter
+  }
 
   export type NestedBoolNullableFilter<$PrismaModel = never> = {
     equals?: boolean | BooleanFieldRefInput<$PrismaModel> | null
@@ -189199,29 +192638,6 @@ export namespace Prisma {
     _count?: NestedIntFilter<$PrismaModel>
     _min?: NestedEnumEstadoContratoFilter<$PrismaModel>
     _max?: NestedEnumEstadoContratoFilter<$PrismaModel>
-  }
-  export type NestedJsonFilter<$PrismaModel = never> =
-    | PatchUndefined<
-        Either<Required<NestedJsonFilterBase<$PrismaModel>>, Exclude<keyof Required<NestedJsonFilterBase<$PrismaModel>>, 'path'>>,
-        Required<NestedJsonFilterBase<$PrismaModel>>
-      >
-    | OptionalFlat<Omit<Required<NestedJsonFilterBase<$PrismaModel>>, 'path'>>
-
-  export type NestedJsonFilterBase<$PrismaModel = never> = {
-    equals?: InputJsonValue | JsonFieldRefInput<$PrismaModel> | JsonNullValueFilter
-    path?: string[]
-    mode?: QueryMode | EnumQueryModeFieldRefInput<$PrismaModel>
-    string_contains?: string | StringFieldRefInput<$PrismaModel>
-    string_starts_with?: string | StringFieldRefInput<$PrismaModel>
-    string_ends_with?: string | StringFieldRefInput<$PrismaModel>
-    array_starts_with?: InputJsonValue | JsonFieldRefInput<$PrismaModel> | null
-    array_ends_with?: InputJsonValue | JsonFieldRefInput<$PrismaModel> | null
-    array_contains?: InputJsonValue | JsonFieldRefInput<$PrismaModel> | null
-    lt?: InputJsonValue | JsonFieldRefInput<$PrismaModel>
-    lte?: InputJsonValue | JsonFieldRefInput<$PrismaModel>
-    gt?: InputJsonValue | JsonFieldRefInput<$PrismaModel>
-    gte?: InputJsonValue | JsonFieldRefInput<$PrismaModel>
-    not?: InputJsonValue | JsonFieldRefInput<$PrismaModel> | JsonNullValueFilter
   }
 
   export type NestedEnumTipoFirmaFilter<$PrismaModel = never> = {
@@ -189735,6 +193151,8 @@ export namespace Prisma {
     licencias?: TenantLicenseCreateNestedManyWithoutTenantInput
     memberships?: TenantMembershipCreateNestedManyWithoutTenantInput
     turnosPos?: TurnoPuntoVentaCreateNestedManyWithoutTenantInput
+    reviews?: ReviewCreateNestedManyWithoutTenantInput
+    reviewPrompts?: ReviewPromptCreateNestedManyWithoutTenantInput
   }
 
   export type TenantUncheckedCreateWithoutCategoriasInput = {
@@ -189804,6 +193222,8 @@ export namespace Prisma {
     licencias?: TenantLicenseUncheckedCreateNestedManyWithoutTenantInput
     memberships?: TenantMembershipUncheckedCreateNestedManyWithoutTenantInput
     turnosPos?: TurnoPuntoVentaUncheckedCreateNestedManyWithoutTenantInput
+    reviews?: ReviewUncheckedCreateNestedManyWithoutTenantInput
+    reviewPrompts?: ReviewPromptUncheckedCreateNestedManyWithoutTenantInput
   }
 
   export type TenantCreateOrConnectWithoutCategoriasInput = {
@@ -190159,6 +193579,8 @@ export namespace Prisma {
     licencias?: TenantLicenseUpdateManyWithoutTenantNestedInput
     memberships?: TenantMembershipUpdateManyWithoutTenantNestedInput
     turnosPos?: TurnoPuntoVentaUpdateManyWithoutTenantNestedInput
+    reviews?: ReviewUpdateManyWithoutTenantNestedInput
+    reviewPrompts?: ReviewPromptUpdateManyWithoutTenantNestedInput
   }
 
   export type TenantUncheckedUpdateWithoutCategoriasInput = {
@@ -190228,6 +193650,8 @@ export namespace Prisma {
     licencias?: TenantLicenseUncheckedUpdateManyWithoutTenantNestedInput
     memberships?: TenantMembershipUncheckedUpdateManyWithoutTenantNestedInput
     turnosPos?: TurnoPuntoVentaUncheckedUpdateManyWithoutTenantNestedInput
+    reviews?: ReviewUncheckedUpdateManyWithoutTenantNestedInput
+    reviewPrompts?: ReviewPromptUncheckedUpdateManyWithoutTenantNestedInput
   }
 
   export type ProductoUpsertWithWhereUniqueWithoutCategoriaInput = {
@@ -191018,6 +194442,8 @@ export namespace Prisma {
     licencias?: TenantLicenseCreateNestedManyWithoutTenantInput
     memberships?: TenantMembershipCreateNestedManyWithoutTenantInput
     turnosPos?: TurnoPuntoVentaCreateNestedManyWithoutTenantInput
+    reviews?: ReviewCreateNestedManyWithoutTenantInput
+    reviewPrompts?: ReviewPromptCreateNestedManyWithoutTenantInput
   }
 
   export type TenantUncheckedCreateWithoutVendorsInput = {
@@ -191087,6 +194513,8 @@ export namespace Prisma {
     licencias?: TenantLicenseUncheckedCreateNestedManyWithoutTenantInput
     memberships?: TenantMembershipUncheckedCreateNestedManyWithoutTenantInput
     turnosPos?: TurnoPuntoVentaUncheckedCreateNestedManyWithoutTenantInput
+    reviews?: ReviewUncheckedCreateNestedManyWithoutTenantInput
+    reviewPrompts?: ReviewPromptUncheckedCreateNestedManyWithoutTenantInput
   }
 
   export type TenantCreateOrConnectWithoutVendorsInput = {
@@ -191509,6 +194937,8 @@ export namespace Prisma {
     licencias?: TenantLicenseUpdateManyWithoutTenantNestedInput
     memberships?: TenantMembershipUpdateManyWithoutTenantNestedInput
     turnosPos?: TurnoPuntoVentaUpdateManyWithoutTenantNestedInput
+    reviews?: ReviewUpdateManyWithoutTenantNestedInput
+    reviewPrompts?: ReviewPromptUpdateManyWithoutTenantNestedInput
   }
 
   export type TenantUncheckedUpdateWithoutVendorsInput = {
@@ -191578,6 +195008,8 @@ export namespace Prisma {
     licencias?: TenantLicenseUncheckedUpdateManyWithoutTenantNestedInput
     memberships?: TenantMembershipUncheckedUpdateManyWithoutTenantNestedInput
     turnosPos?: TurnoPuntoVentaUncheckedUpdateManyWithoutTenantNestedInput
+    reviews?: ReviewUncheckedUpdateManyWithoutTenantNestedInput
+    reviewPrompts?: ReviewPromptUncheckedUpdateManyWithoutTenantNestedInput
   }
 
   export type CuentaBancariaCreateWithoutInyeccionesCapitalInput = {
@@ -192079,6 +195511,8 @@ export namespace Prisma {
     licencias?: TenantLicenseCreateNestedManyWithoutTenantInput
     memberships?: TenantMembershipCreateNestedManyWithoutTenantInput
     turnosPos?: TurnoPuntoVentaCreateNestedManyWithoutTenantInput
+    reviews?: ReviewCreateNestedManyWithoutTenantInput
+    reviewPrompts?: ReviewPromptCreateNestedManyWithoutTenantInput
   }
 
   export type TenantUncheckedCreateWithoutClientesInput = {
@@ -192148,6 +195582,8 @@ export namespace Prisma {
     licencias?: TenantLicenseUncheckedCreateNestedManyWithoutTenantInput
     memberships?: TenantMembershipUncheckedCreateNestedManyWithoutTenantInput
     turnosPos?: TurnoPuntoVentaUncheckedCreateNestedManyWithoutTenantInput
+    reviews?: ReviewUncheckedCreateNestedManyWithoutTenantInput
+    reviewPrompts?: ReviewPromptUncheckedCreateNestedManyWithoutTenantInput
   }
 
   export type TenantCreateOrConnectWithoutClientesInput = {
@@ -192711,6 +196147,8 @@ export namespace Prisma {
     licencias?: TenantLicenseUpdateManyWithoutTenantNestedInput
     memberships?: TenantMembershipUpdateManyWithoutTenantNestedInput
     turnosPos?: TurnoPuntoVentaUpdateManyWithoutTenantNestedInput
+    reviews?: ReviewUpdateManyWithoutTenantNestedInput
+    reviewPrompts?: ReviewPromptUpdateManyWithoutTenantNestedInput
   }
 
   export type TenantUncheckedUpdateWithoutClientesInput = {
@@ -192780,6 +196218,8 @@ export namespace Prisma {
     licencias?: TenantLicenseUncheckedUpdateManyWithoutTenantNestedInput
     memberships?: TenantMembershipUncheckedUpdateManyWithoutTenantNestedInput
     turnosPos?: TurnoPuntoVentaUncheckedUpdateManyWithoutTenantNestedInput
+    reviews?: ReviewUncheckedUpdateManyWithoutTenantNestedInput
+    reviewPrompts?: ReviewPromptUncheckedUpdateManyWithoutTenantNestedInput
   }
 
   export type ContratoUpsertWithWhereUniqueWithoutClienteInput = {
@@ -195878,6 +199318,64 @@ export namespace Prisma {
     skipDuplicates?: boolean
   }
 
+  export type ReviewCreateWithoutTenantInput = {
+    reviewId?: string
+    rating: number
+    comment?: string | null
+    isApproved?: boolean
+    isPositive: boolean
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    user: UserCreateNestedOneWithoutReviewsInput
+  }
+
+  export type ReviewUncheckedCreateWithoutTenantInput = {
+    reviewId?: string
+    userId: string
+    rating: number
+    comment?: string | null
+    isApproved?: boolean
+    isPositive: boolean
+    createdAt?: Date | string
+    updatedAt?: Date | string
+  }
+
+  export type ReviewCreateOrConnectWithoutTenantInput = {
+    where: ReviewWhereUniqueInput
+    create: XOR<ReviewCreateWithoutTenantInput, ReviewUncheckedCreateWithoutTenantInput>
+  }
+
+  export type ReviewCreateManyTenantInputEnvelope = {
+    data: ReviewCreateManyTenantInput | ReviewCreateManyTenantInput[]
+    skipDuplicates?: boolean
+  }
+
+  export type ReviewPromptCreateWithoutTenantInput = {
+    promptId?: string
+    promptedAt?: Date | string
+    dismissedAt?: Date | string | null
+    submittedAt?: Date | string | null
+    user: UserCreateNestedOneWithoutReviewPromptsInput
+  }
+
+  export type ReviewPromptUncheckedCreateWithoutTenantInput = {
+    promptId?: string
+    userId: string
+    promptedAt?: Date | string
+    dismissedAt?: Date | string | null
+    submittedAt?: Date | string | null
+  }
+
+  export type ReviewPromptCreateOrConnectWithoutTenantInput = {
+    where: ReviewPromptWhereUniqueInput
+    create: XOR<ReviewPromptCreateWithoutTenantInput, ReviewPromptUncheckedCreateWithoutTenantInput>
+  }
+
+  export type ReviewPromptCreateManyTenantInputEnvelope = {
+    data: ReviewPromptCreateManyTenantInput | ReviewPromptCreateManyTenantInput[]
+    skipDuplicates?: boolean
+  }
+
   export type AjusteBancarioUpsertWithWhereUniqueWithoutTenantInput = {
     where: AjusteBancarioWhereUniqueInput
     update: XOR<AjusteBancarioUpdateWithoutTenantInput, AjusteBancarioUncheckedUpdateWithoutTenantInput>
@@ -197659,6 +201157,65 @@ export namespace Prisma {
     updatedAt?: DateTimeFilter<"TurnoPuntoVenta"> | Date | string
   }
 
+  export type ReviewUpsertWithWhereUniqueWithoutTenantInput = {
+    where: ReviewWhereUniqueInput
+    update: XOR<ReviewUpdateWithoutTenantInput, ReviewUncheckedUpdateWithoutTenantInput>
+    create: XOR<ReviewCreateWithoutTenantInput, ReviewUncheckedCreateWithoutTenantInput>
+  }
+
+  export type ReviewUpdateWithWhereUniqueWithoutTenantInput = {
+    where: ReviewWhereUniqueInput
+    data: XOR<ReviewUpdateWithoutTenantInput, ReviewUncheckedUpdateWithoutTenantInput>
+  }
+
+  export type ReviewUpdateManyWithWhereWithoutTenantInput = {
+    where: ReviewScalarWhereInput
+    data: XOR<ReviewUpdateManyMutationInput, ReviewUncheckedUpdateManyWithoutTenantInput>
+  }
+
+  export type ReviewScalarWhereInput = {
+    AND?: ReviewScalarWhereInput | ReviewScalarWhereInput[]
+    OR?: ReviewScalarWhereInput[]
+    NOT?: ReviewScalarWhereInput | ReviewScalarWhereInput[]
+    reviewId?: StringFilter<"Review"> | string
+    tenantId?: StringFilter<"Review"> | string
+    userId?: StringFilter<"Review"> | string
+    rating?: IntFilter<"Review"> | number
+    comment?: StringNullableFilter<"Review"> | string | null
+    isApproved?: BoolFilter<"Review"> | boolean
+    isPositive?: BoolFilter<"Review"> | boolean
+    createdAt?: DateTimeFilter<"Review"> | Date | string
+    updatedAt?: DateTimeFilter<"Review"> | Date | string
+  }
+
+  export type ReviewPromptUpsertWithWhereUniqueWithoutTenantInput = {
+    where: ReviewPromptWhereUniqueInput
+    update: XOR<ReviewPromptUpdateWithoutTenantInput, ReviewPromptUncheckedUpdateWithoutTenantInput>
+    create: XOR<ReviewPromptCreateWithoutTenantInput, ReviewPromptUncheckedCreateWithoutTenantInput>
+  }
+
+  export type ReviewPromptUpdateWithWhereUniqueWithoutTenantInput = {
+    where: ReviewPromptWhereUniqueInput
+    data: XOR<ReviewPromptUpdateWithoutTenantInput, ReviewPromptUncheckedUpdateWithoutTenantInput>
+  }
+
+  export type ReviewPromptUpdateManyWithWhereWithoutTenantInput = {
+    where: ReviewPromptScalarWhereInput
+    data: XOR<ReviewPromptUpdateManyMutationInput, ReviewPromptUncheckedUpdateManyWithoutTenantInput>
+  }
+
+  export type ReviewPromptScalarWhereInput = {
+    AND?: ReviewPromptScalarWhereInput | ReviewPromptScalarWhereInput[]
+    OR?: ReviewPromptScalarWhereInput[]
+    NOT?: ReviewPromptScalarWhereInput | ReviewPromptScalarWhereInput[]
+    promptId?: StringFilter<"ReviewPrompt"> | string
+    tenantId?: StringFilter<"ReviewPrompt"> | string
+    userId?: StringFilter<"ReviewPrompt"> | string
+    promptedAt?: DateTimeFilter<"ReviewPrompt"> | Date | string
+    dismissedAt?: DateTimeNullableFilter<"ReviewPrompt"> | Date | string | null
+    submittedAt?: DateTimeNullableFilter<"ReviewPrompt"> | Date | string | null
+  }
+
   export type TenantCreateWithoutMembershipsInput = {
     tenantId?: string
     nombre: string
@@ -197726,6 +201283,8 @@ export namespace Prisma {
     seriesFacturacion?: SerieFacturacionCreateNestedManyWithoutTenantInput
     licencias?: TenantLicenseCreateNestedManyWithoutTenantInput
     turnosPos?: TurnoPuntoVentaCreateNestedManyWithoutTenantInput
+    reviews?: ReviewCreateNestedManyWithoutTenantInput
+    reviewPrompts?: ReviewPromptCreateNestedManyWithoutTenantInput
   }
 
   export type TenantUncheckedCreateWithoutMembershipsInput = {
@@ -197795,6 +201354,8 @@ export namespace Prisma {
     seriesFacturacion?: SerieFacturacionUncheckedCreateNestedManyWithoutTenantInput
     licencias?: TenantLicenseUncheckedCreateNestedManyWithoutTenantInput
     turnosPos?: TurnoPuntoVentaUncheckedCreateNestedManyWithoutTenantInput
+    reviews?: ReviewUncheckedCreateNestedManyWithoutTenantInput
+    reviewPrompts?: ReviewPromptUncheckedCreateNestedManyWithoutTenantInput
   }
 
   export type TenantCreateOrConnectWithoutMembershipsInput = {
@@ -197839,6 +201400,8 @@ export namespace Prisma {
     sessions?: UserSessionCreateNestedManyWithoutUserInput
     backupLogs?: BackupLogCreateNestedManyWithoutUserInput
     backupPlans?: BackupPlanCreateNestedManyWithoutUserInput
+    reviews?: ReviewCreateNestedManyWithoutUserInput
+    reviewPrompts?: ReviewPromptCreateNestedManyWithoutUserInput
   }
 
   export type UserUncheckedCreateWithoutTenantMembershipsInput = {
@@ -197878,6 +201441,8 @@ export namespace Prisma {
     sessions?: UserSessionUncheckedCreateNestedManyWithoutUserInput
     backupLogs?: BackupLogUncheckedCreateNestedManyWithoutUserInput
     backupPlans?: BackupPlanUncheckedCreateNestedManyWithoutUserInput
+    reviews?: ReviewUncheckedCreateNestedManyWithoutUserInput
+    reviewPrompts?: ReviewPromptUncheckedCreateNestedManyWithoutUserInput
   }
 
   export type UserCreateOrConnectWithoutTenantMembershipsInput = {
@@ -197963,6 +201528,8 @@ export namespace Prisma {
     seriesFacturacion?: SerieFacturacionUpdateManyWithoutTenantNestedInput
     licencias?: TenantLicenseUpdateManyWithoutTenantNestedInput
     turnosPos?: TurnoPuntoVentaUpdateManyWithoutTenantNestedInput
+    reviews?: ReviewUpdateManyWithoutTenantNestedInput
+    reviewPrompts?: ReviewPromptUpdateManyWithoutTenantNestedInput
   }
 
   export type TenantUncheckedUpdateWithoutMembershipsInput = {
@@ -198032,6 +201599,8 @@ export namespace Prisma {
     seriesFacturacion?: SerieFacturacionUncheckedUpdateManyWithoutTenantNestedInput
     licencias?: TenantLicenseUncheckedUpdateManyWithoutTenantNestedInput
     turnosPos?: TurnoPuntoVentaUncheckedUpdateManyWithoutTenantNestedInput
+    reviews?: ReviewUncheckedUpdateManyWithoutTenantNestedInput
+    reviewPrompts?: ReviewPromptUncheckedUpdateManyWithoutTenantNestedInput
   }
 
   export type UserUpsertWithoutTenantMembershipsInput = {
@@ -198082,6 +201651,8 @@ export namespace Prisma {
     sessions?: UserSessionUpdateManyWithoutUserNestedInput
     backupLogs?: BackupLogUpdateManyWithoutUserNestedInput
     backupPlans?: BackupPlanUpdateManyWithoutUserNestedInput
+    reviews?: ReviewUpdateManyWithoutUserNestedInput
+    reviewPrompts?: ReviewPromptUpdateManyWithoutUserNestedInput
   }
 
   export type UserUncheckedUpdateWithoutTenantMembershipsInput = {
@@ -198121,6 +201692,8 @@ export namespace Prisma {
     sessions?: UserSessionUncheckedUpdateManyWithoutUserNestedInput
     backupLogs?: BackupLogUncheckedUpdateManyWithoutUserNestedInput
     backupPlans?: BackupPlanUncheckedUpdateManyWithoutUserNestedInput
+    reviews?: ReviewUncheckedUpdateManyWithoutUserNestedInput
+    reviewPrompts?: ReviewPromptUncheckedUpdateManyWithoutUserNestedInput
   }
 
   export type PlanCreateWithoutTenantLicensesInput = {
@@ -198132,6 +201705,12 @@ export namespace Prisma {
     maxUsuarios?: number
     maxAlmacenes?: number
     maxProductos?: number
+    maxClientes?: number
+    maxPuntosVenta?: number
+    maxFacturasMes?: number
+    maxContratos?: number
+    incluyeBackups?: boolean
+    features?: JsonNullValueInput | InputJsonValue
     createdAt?: Date | string
     updatedAt?: Date | string
     licencias?: LicenciaCreateNestedManyWithoutPlanInput
@@ -198146,6 +201725,12 @@ export namespace Prisma {
     maxUsuarios?: number
     maxAlmacenes?: number
     maxProductos?: number
+    maxClientes?: number
+    maxPuntosVenta?: number
+    maxFacturasMes?: number
+    maxContratos?: number
+    incluyeBackups?: boolean
+    features?: JsonNullValueInput | InputJsonValue
     createdAt?: Date | string
     updatedAt?: Date | string
     licencias?: LicenciaUncheckedCreateNestedManyWithoutPlanInput
@@ -198223,6 +201808,8 @@ export namespace Prisma {
     seriesFacturacion?: SerieFacturacionCreateNestedManyWithoutTenantInput
     memberships?: TenantMembershipCreateNestedManyWithoutTenantInput
     turnosPos?: TurnoPuntoVentaCreateNestedManyWithoutTenantInput
+    reviews?: ReviewCreateNestedManyWithoutTenantInput
+    reviewPrompts?: ReviewPromptCreateNestedManyWithoutTenantInput
   }
 
   export type TenantUncheckedCreateWithoutLicenciasInput = {
@@ -198292,6 +201879,8 @@ export namespace Prisma {
     seriesFacturacion?: SerieFacturacionUncheckedCreateNestedManyWithoutTenantInput
     memberships?: TenantMembershipUncheckedCreateNestedManyWithoutTenantInput
     turnosPos?: TurnoPuntoVentaUncheckedCreateNestedManyWithoutTenantInput
+    reviews?: ReviewUncheckedCreateNestedManyWithoutTenantInput
+    reviewPrompts?: ReviewPromptUncheckedCreateNestedManyWithoutTenantInput
   }
 
   export type TenantCreateOrConnectWithoutLicenciasInput = {
@@ -198319,6 +201908,12 @@ export namespace Prisma {
     maxUsuarios?: IntFieldUpdateOperationsInput | number
     maxAlmacenes?: IntFieldUpdateOperationsInput | number
     maxProductos?: IntFieldUpdateOperationsInput | number
+    maxClientes?: IntFieldUpdateOperationsInput | number
+    maxPuntosVenta?: IntFieldUpdateOperationsInput | number
+    maxFacturasMes?: IntFieldUpdateOperationsInput | number
+    maxContratos?: IntFieldUpdateOperationsInput | number
+    incluyeBackups?: BoolFieldUpdateOperationsInput | boolean
+    features?: JsonNullValueInput | InputJsonValue
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     licencias?: LicenciaUpdateManyWithoutPlanNestedInput
@@ -198333,6 +201928,12 @@ export namespace Prisma {
     maxUsuarios?: IntFieldUpdateOperationsInput | number
     maxAlmacenes?: IntFieldUpdateOperationsInput | number
     maxProductos?: IntFieldUpdateOperationsInput | number
+    maxClientes?: IntFieldUpdateOperationsInput | number
+    maxPuntosVenta?: IntFieldUpdateOperationsInput | number
+    maxFacturasMes?: IntFieldUpdateOperationsInput | number
+    maxContratos?: IntFieldUpdateOperationsInput | number
+    incluyeBackups?: BoolFieldUpdateOperationsInput | boolean
+    features?: JsonNullValueInput | InputJsonValue
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     licencias?: LicenciaUncheckedUpdateManyWithoutPlanNestedInput
@@ -198416,6 +202017,8 @@ export namespace Prisma {
     seriesFacturacion?: SerieFacturacionUpdateManyWithoutTenantNestedInput
     memberships?: TenantMembershipUpdateManyWithoutTenantNestedInput
     turnosPos?: TurnoPuntoVentaUpdateManyWithoutTenantNestedInput
+    reviews?: ReviewUpdateManyWithoutTenantNestedInput
+    reviewPrompts?: ReviewPromptUpdateManyWithoutTenantNestedInput
   }
 
   export type TenantUncheckedUpdateWithoutLicenciasInput = {
@@ -198485,6 +202088,8 @@ export namespace Prisma {
     seriesFacturacion?: SerieFacturacionUncheckedUpdateManyWithoutTenantNestedInput
     memberships?: TenantMembershipUncheckedUpdateManyWithoutTenantNestedInput
     turnosPos?: TurnoPuntoVentaUncheckedUpdateManyWithoutTenantNestedInput
+    reviews?: ReviewUncheckedUpdateManyWithoutTenantNestedInput
+    reviewPrompts?: ReviewPromptUncheckedUpdateManyWithoutTenantNestedInput
   }
 
   export type CuentaBancariaCreateWithoutMiEmpresaInput = {
@@ -198603,6 +202208,8 @@ export namespace Prisma {
     licencias?: TenantLicenseCreateNestedManyWithoutTenantInput
     memberships?: TenantMembershipCreateNestedManyWithoutTenantInput
     turnosPos?: TurnoPuntoVentaCreateNestedManyWithoutTenantInput
+    reviews?: ReviewCreateNestedManyWithoutTenantInput
+    reviewPrompts?: ReviewPromptCreateNestedManyWithoutTenantInput
   }
 
   export type TenantUncheckedCreateWithoutEmpresaInput = {
@@ -198672,6 +202279,8 @@ export namespace Prisma {
     licencias?: TenantLicenseUncheckedCreateNestedManyWithoutTenantInput
     memberships?: TenantMembershipUncheckedCreateNestedManyWithoutTenantInput
     turnosPos?: TurnoPuntoVentaUncheckedCreateNestedManyWithoutTenantInput
+    reviews?: ReviewUncheckedCreateNestedManyWithoutTenantInput
+    reviewPrompts?: ReviewPromptUncheckedCreateNestedManyWithoutTenantInput
   }
 
   export type TenantCreateOrConnectWithoutEmpresaInput = {
@@ -198812,6 +202421,8 @@ export namespace Prisma {
     licencias?: TenantLicenseUpdateManyWithoutTenantNestedInput
     memberships?: TenantMembershipUpdateManyWithoutTenantNestedInput
     turnosPos?: TurnoPuntoVentaUpdateManyWithoutTenantNestedInput
+    reviews?: ReviewUpdateManyWithoutTenantNestedInput
+    reviewPrompts?: ReviewPromptUpdateManyWithoutTenantNestedInput
   }
 
   export type TenantUncheckedUpdateWithoutEmpresaInput = {
@@ -198881,6 +202492,8 @@ export namespace Prisma {
     licencias?: TenantLicenseUncheckedUpdateManyWithoutTenantNestedInput
     memberships?: TenantMembershipUncheckedUpdateManyWithoutTenantNestedInput
     turnosPos?: TurnoPuntoVentaUncheckedUpdateManyWithoutTenantNestedInput
+    reviews?: ReviewUncheckedUpdateManyWithoutTenantNestedInput
+    reviewPrompts?: ReviewPromptUncheckedUpdateManyWithoutTenantNestedInput
   }
 
   export type TenantCreateWithoutAlmacenesInput = {
@@ -198950,6 +202563,8 @@ export namespace Prisma {
     licencias?: TenantLicenseCreateNestedManyWithoutTenantInput
     memberships?: TenantMembershipCreateNestedManyWithoutTenantInput
     turnosPos?: TurnoPuntoVentaCreateNestedManyWithoutTenantInput
+    reviews?: ReviewCreateNestedManyWithoutTenantInput
+    reviewPrompts?: ReviewPromptCreateNestedManyWithoutTenantInput
   }
 
   export type TenantUncheckedCreateWithoutAlmacenesInput = {
@@ -199019,6 +202634,8 @@ export namespace Prisma {
     licencias?: TenantLicenseUncheckedCreateNestedManyWithoutTenantInput
     memberships?: TenantMembershipUncheckedCreateNestedManyWithoutTenantInput
     turnosPos?: TurnoPuntoVentaUncheckedCreateNestedManyWithoutTenantInput
+    reviews?: ReviewUncheckedCreateNestedManyWithoutTenantInput
+    reviewPrompts?: ReviewPromptUncheckedCreateNestedManyWithoutTenantInput
   }
 
   export type TenantCreateOrConnectWithoutAlmacenesInput = {
@@ -199378,6 +202995,8 @@ export namespace Prisma {
     licencias?: TenantLicenseUpdateManyWithoutTenantNestedInput
     memberships?: TenantMembershipUpdateManyWithoutTenantNestedInput
     turnosPos?: TurnoPuntoVentaUpdateManyWithoutTenantNestedInput
+    reviews?: ReviewUpdateManyWithoutTenantNestedInput
+    reviewPrompts?: ReviewPromptUpdateManyWithoutTenantNestedInput
   }
 
   export type TenantUncheckedUpdateWithoutAlmacenesInput = {
@@ -199447,6 +203066,8 @@ export namespace Prisma {
     licencias?: TenantLicenseUncheckedUpdateManyWithoutTenantNestedInput
     memberships?: TenantMembershipUncheckedUpdateManyWithoutTenantNestedInput
     turnosPos?: TurnoPuntoVentaUncheckedUpdateManyWithoutTenantNestedInput
+    reviews?: ReviewUncheckedUpdateManyWithoutTenantNestedInput
+    reviewPrompts?: ReviewPromptUncheckedUpdateManyWithoutTenantNestedInput
   }
 
   export type MermaUpsertWithWhereUniqueWithoutAlmacenInput = {
@@ -199752,6 +203373,8 @@ export namespace Prisma {
     licencias?: TenantLicenseCreateNestedManyWithoutTenantInput
     memberships?: TenantMembershipCreateNestedManyWithoutTenantInput
     turnosPos?: TurnoPuntoVentaCreateNestedManyWithoutTenantInput
+    reviews?: ReviewCreateNestedManyWithoutTenantInput
+    reviewPrompts?: ReviewPromptCreateNestedManyWithoutTenantInput
   }
 
   export type TenantUncheckedCreateWithoutPuntosDeVentaInput = {
@@ -199821,6 +203444,8 @@ export namespace Prisma {
     licencias?: TenantLicenseUncheckedCreateNestedManyWithoutTenantInput
     memberships?: TenantMembershipUncheckedCreateNestedManyWithoutTenantInput
     turnosPos?: TurnoPuntoVentaUncheckedCreateNestedManyWithoutTenantInput
+    reviews?: ReviewUncheckedCreateNestedManyWithoutTenantInput
+    reviewPrompts?: ReviewPromptUncheckedCreateNestedManyWithoutTenantInput
   }
 
   export type TenantCreateOrConnectWithoutPuntosDeVentaInput = {
@@ -200280,6 +203905,8 @@ export namespace Prisma {
     licencias?: TenantLicenseUpdateManyWithoutTenantNestedInput
     memberships?: TenantMembershipUpdateManyWithoutTenantNestedInput
     turnosPos?: TurnoPuntoVentaUpdateManyWithoutTenantNestedInput
+    reviews?: ReviewUpdateManyWithoutTenantNestedInput
+    reviewPrompts?: ReviewPromptUpdateManyWithoutTenantNestedInput
   }
 
   export type TenantUncheckedUpdateWithoutPuntosDeVentaInput = {
@@ -200349,6 +203976,8 @@ export namespace Prisma {
     licencias?: TenantLicenseUncheckedUpdateManyWithoutTenantNestedInput
     memberships?: TenantMembershipUncheckedUpdateManyWithoutTenantNestedInput
     turnosPos?: TurnoPuntoVentaUncheckedUpdateManyWithoutTenantNestedInput
+    reviews?: ReviewUncheckedUpdateManyWithoutTenantNestedInput
+    reviewPrompts?: ReviewPromptUncheckedUpdateManyWithoutTenantNestedInput
   }
 
   export type TransferenciaUpsertWithWhereUniqueWithoutPuntoDeVentaDestinoInput = {
@@ -200737,6 +204366,8 @@ export namespace Prisma {
     seriesFacturacion?: SerieFacturacionCreateNestedManyWithoutTenantInput
     licencias?: TenantLicenseCreateNestedManyWithoutTenantInput
     memberships?: TenantMembershipCreateNestedManyWithoutTenantInput
+    reviews?: ReviewCreateNestedManyWithoutTenantInput
+    reviewPrompts?: ReviewPromptCreateNestedManyWithoutTenantInput
   }
 
   export type TenantUncheckedCreateWithoutTurnosPosInput = {
@@ -200806,6 +204437,8 @@ export namespace Prisma {
     seriesFacturacion?: SerieFacturacionUncheckedCreateNestedManyWithoutTenantInput
     licencias?: TenantLicenseUncheckedCreateNestedManyWithoutTenantInput
     memberships?: TenantMembershipUncheckedCreateNestedManyWithoutTenantInput
+    reviews?: ReviewUncheckedCreateNestedManyWithoutTenantInput
+    reviewPrompts?: ReviewPromptUncheckedCreateNestedManyWithoutTenantInput
   }
 
   export type TenantCreateOrConnectWithoutTurnosPosInput = {
@@ -201096,6 +204729,8 @@ export namespace Prisma {
     seriesFacturacion?: SerieFacturacionUpdateManyWithoutTenantNestedInput
     licencias?: TenantLicenseUpdateManyWithoutTenantNestedInput
     memberships?: TenantMembershipUpdateManyWithoutTenantNestedInput
+    reviews?: ReviewUpdateManyWithoutTenantNestedInput
+    reviewPrompts?: ReviewPromptUpdateManyWithoutTenantNestedInput
   }
 
   export type TenantUncheckedUpdateWithoutTurnosPosInput = {
@@ -201165,6 +204800,8 @@ export namespace Prisma {
     seriesFacturacion?: SerieFacturacionUncheckedUpdateManyWithoutTenantNestedInput
     licencias?: TenantLicenseUncheckedUpdateManyWithoutTenantNestedInput
     memberships?: TenantMembershipUncheckedUpdateManyWithoutTenantNestedInput
+    reviews?: ReviewUncheckedUpdateManyWithoutTenantNestedInput
+    reviewPrompts?: ReviewPromptUncheckedUpdateManyWithoutTenantNestedInput
   }
 
   export type PuntoDeVentaCreateWithoutArqueosInput = {
@@ -201275,6 +204912,8 @@ export namespace Prisma {
     licencias?: TenantLicenseCreateNestedManyWithoutTenantInput
     memberships?: TenantMembershipCreateNestedManyWithoutTenantInput
     turnosPos?: TurnoPuntoVentaCreateNestedManyWithoutTenantInput
+    reviews?: ReviewCreateNestedManyWithoutTenantInput
+    reviewPrompts?: ReviewPromptCreateNestedManyWithoutTenantInput
   }
 
   export type TenantUncheckedCreateWithoutArqueosCajaInput = {
@@ -201344,6 +204983,8 @@ export namespace Prisma {
     licencias?: TenantLicenseUncheckedCreateNestedManyWithoutTenantInput
     memberships?: TenantMembershipUncheckedCreateNestedManyWithoutTenantInput
     turnosPos?: TurnoPuntoVentaUncheckedCreateNestedManyWithoutTenantInput
+    reviews?: ReviewUncheckedCreateNestedManyWithoutTenantInput
+    reviewPrompts?: ReviewPromptUncheckedCreateNestedManyWithoutTenantInput
   }
 
   export type TenantCreateOrConnectWithoutArqueosCajaInput = {
@@ -201515,6 +205156,8 @@ export namespace Prisma {
     licencias?: TenantLicenseUpdateManyWithoutTenantNestedInput
     memberships?: TenantMembershipUpdateManyWithoutTenantNestedInput
     turnosPos?: TurnoPuntoVentaUpdateManyWithoutTenantNestedInput
+    reviews?: ReviewUpdateManyWithoutTenantNestedInput
+    reviewPrompts?: ReviewPromptUpdateManyWithoutTenantNestedInput
   }
 
   export type TenantUncheckedUpdateWithoutArqueosCajaInput = {
@@ -201584,6 +205227,8 @@ export namespace Prisma {
     licencias?: TenantLicenseUncheckedUpdateManyWithoutTenantNestedInput
     memberships?: TenantMembershipUncheckedUpdateManyWithoutTenantNestedInput
     turnosPos?: TurnoPuntoVentaUncheckedUpdateManyWithoutTenantNestedInput
+    reviews?: ReviewUncheckedUpdateManyWithoutTenantNestedInput
+    reviewPrompts?: ReviewPromptUncheckedUpdateManyWithoutTenantNestedInput
   }
 
   export type TurnoPuntoVentaUpsertWithoutArqueoInput = {
@@ -202281,6 +205926,8 @@ export namespace Prisma {
     licencias?: TenantLicenseCreateNestedManyWithoutTenantInput
     memberships?: TenantMembershipCreateNestedManyWithoutTenantInput
     turnosPos?: TurnoPuntoVentaCreateNestedManyWithoutTenantInput
+    reviews?: ReviewCreateNestedManyWithoutTenantInput
+    reviewPrompts?: ReviewPromptCreateNestedManyWithoutTenantInput
   }
 
   export type TenantUncheckedCreateWithoutProductosInput = {
@@ -202350,6 +205997,8 @@ export namespace Prisma {
     licencias?: TenantLicenseUncheckedCreateNestedManyWithoutTenantInput
     memberships?: TenantMembershipUncheckedCreateNestedManyWithoutTenantInput
     turnosPos?: TurnoPuntoVentaUncheckedCreateNestedManyWithoutTenantInput
+    reviews?: ReviewUncheckedCreateNestedManyWithoutTenantInput
+    reviewPrompts?: ReviewPromptUncheckedCreateNestedManyWithoutTenantInput
   }
 
   export type TenantCreateOrConnectWithoutProductosInput = {
@@ -203235,6 +206884,8 @@ export namespace Prisma {
     licencias?: TenantLicenseUpdateManyWithoutTenantNestedInput
     memberships?: TenantMembershipUpdateManyWithoutTenantNestedInput
     turnosPos?: TurnoPuntoVentaUpdateManyWithoutTenantNestedInput
+    reviews?: ReviewUpdateManyWithoutTenantNestedInput
+    reviewPrompts?: ReviewPromptUpdateManyWithoutTenantNestedInput
   }
 
   export type TenantUncheckedUpdateWithoutProductosInput = {
@@ -203304,6 +206955,8 @@ export namespace Prisma {
     licencias?: TenantLicenseUncheckedUpdateManyWithoutTenantNestedInput
     memberships?: TenantMembershipUncheckedUpdateManyWithoutTenantNestedInput
     turnosPos?: TurnoPuntoVentaUncheckedUpdateManyWithoutTenantNestedInput
+    reviews?: ReviewUncheckedUpdateManyWithoutTenantNestedInput
+    reviewPrompts?: ReviewPromptUncheckedUpdateManyWithoutTenantNestedInput
   }
 
   export type UnidadUpsertWithoutProductosInput = {
@@ -203713,6 +207366,8 @@ export namespace Prisma {
     licencias?: TenantLicenseCreateNestedManyWithoutTenantInput
     memberships?: TenantMembershipCreateNestedManyWithoutTenantInput
     turnosPos?: TurnoPuntoVentaCreateNestedManyWithoutTenantInput
+    reviews?: ReviewCreateNestedManyWithoutTenantInput
+    reviewPrompts?: ReviewPromptCreateNestedManyWithoutTenantInput
   }
 
   export type TenantUncheckedCreateWithoutStockUbicacionesInput = {
@@ -203782,6 +207437,8 @@ export namespace Prisma {
     licencias?: TenantLicenseUncheckedCreateNestedManyWithoutTenantInput
     memberships?: TenantMembershipUncheckedCreateNestedManyWithoutTenantInput
     turnosPos?: TurnoPuntoVentaUncheckedCreateNestedManyWithoutTenantInput
+    reviews?: ReviewUncheckedCreateNestedManyWithoutTenantInput
+    reviewPrompts?: ReviewPromptUncheckedCreateNestedManyWithoutTenantInput
   }
 
   export type TenantCreateOrConnectWithoutStockUbicacionesInput = {
@@ -203968,6 +207625,8 @@ export namespace Prisma {
     licencias?: TenantLicenseUpdateManyWithoutTenantNestedInput
     memberships?: TenantMembershipUpdateManyWithoutTenantNestedInput
     turnosPos?: TurnoPuntoVentaUpdateManyWithoutTenantNestedInput
+    reviews?: ReviewUpdateManyWithoutTenantNestedInput
+    reviewPrompts?: ReviewPromptUpdateManyWithoutTenantNestedInput
   }
 
   export type TenantUncheckedUpdateWithoutStockUbicacionesInput = {
@@ -204037,6 +207696,8 @@ export namespace Prisma {
     licencias?: TenantLicenseUncheckedUpdateManyWithoutTenantNestedInput
     memberships?: TenantMembershipUncheckedUpdateManyWithoutTenantNestedInput
     turnosPos?: TurnoPuntoVentaUncheckedUpdateManyWithoutTenantNestedInput
+    reviews?: ReviewUncheckedUpdateManyWithoutTenantNestedInput
+    reviewPrompts?: ReviewPromptUncheckedUpdateManyWithoutTenantNestedInput
   }
 
   export type OrdenReparacionCreateWithoutVentaInput = {
@@ -204506,6 +208167,8 @@ export namespace Prisma {
     licencias?: TenantLicenseCreateNestedManyWithoutTenantInput
     memberships?: TenantMembershipCreateNestedManyWithoutTenantInput
     turnosPos?: TurnoPuntoVentaCreateNestedManyWithoutTenantInput
+    reviews?: ReviewCreateNestedManyWithoutTenantInput
+    reviewPrompts?: ReviewPromptCreateNestedManyWithoutTenantInput
   }
 
   export type TenantUncheckedCreateWithoutVentasInput = {
@@ -204575,6 +208238,8 @@ export namespace Prisma {
     licencias?: TenantLicenseUncheckedCreateNestedManyWithoutTenantInput
     memberships?: TenantMembershipUncheckedCreateNestedManyWithoutTenantInput
     turnosPos?: TurnoPuntoVentaUncheckedCreateNestedManyWithoutTenantInput
+    reviews?: ReviewUncheckedCreateNestedManyWithoutTenantInput
+    reviewPrompts?: ReviewPromptUncheckedCreateNestedManyWithoutTenantInput
   }
 
   export type TenantCreateOrConnectWithoutVentasInput = {
@@ -205194,6 +208859,8 @@ export namespace Prisma {
     licencias?: TenantLicenseUpdateManyWithoutTenantNestedInput
     memberships?: TenantMembershipUpdateManyWithoutTenantNestedInput
     turnosPos?: TurnoPuntoVentaUpdateManyWithoutTenantNestedInput
+    reviews?: ReviewUpdateManyWithoutTenantNestedInput
+    reviewPrompts?: ReviewPromptUpdateManyWithoutTenantNestedInput
   }
 
   export type TenantUncheckedUpdateWithoutVentasInput = {
@@ -205263,6 +208930,8 @@ export namespace Prisma {
     licencias?: TenantLicenseUncheckedUpdateManyWithoutTenantNestedInput
     memberships?: TenantMembershipUncheckedUpdateManyWithoutTenantNestedInput
     turnosPos?: TurnoPuntoVentaUncheckedUpdateManyWithoutTenantNestedInput
+    reviews?: ReviewUncheckedUpdateManyWithoutTenantNestedInput
+    reviewPrompts?: ReviewPromptUncheckedUpdateManyWithoutTenantNestedInput
   }
 
   export type TurnoPuntoVentaUpsertWithoutVentasInput = {
@@ -205916,6 +209585,8 @@ export namespace Prisma {
     licencias?: TenantLicenseCreateNestedManyWithoutTenantInput
     memberships?: TenantMembershipCreateNestedManyWithoutTenantInput
     turnosPos?: TurnoPuntoVentaCreateNestedManyWithoutTenantInput
+    reviews?: ReviewCreateNestedManyWithoutTenantInput
+    reviewPrompts?: ReviewPromptCreateNestedManyWithoutTenantInput
   }
 
   export type TenantUncheckedCreateWithoutMermasInput = {
@@ -205985,6 +209656,8 @@ export namespace Prisma {
     licencias?: TenantLicenseUncheckedCreateNestedManyWithoutTenantInput
     memberships?: TenantMembershipUncheckedCreateNestedManyWithoutTenantInput
     turnosPos?: TurnoPuntoVentaUncheckedCreateNestedManyWithoutTenantInput
+    reviews?: ReviewUncheckedCreateNestedManyWithoutTenantInput
+    reviewPrompts?: ReviewPromptUncheckedCreateNestedManyWithoutTenantInput
   }
 
   export type TenantCreateOrConnectWithoutMermasInput = {
@@ -206206,6 +209879,8 @@ export namespace Prisma {
     licencias?: TenantLicenseUpdateManyWithoutTenantNestedInput
     memberships?: TenantMembershipUpdateManyWithoutTenantNestedInput
     turnosPos?: TurnoPuntoVentaUpdateManyWithoutTenantNestedInput
+    reviews?: ReviewUpdateManyWithoutTenantNestedInput
+    reviewPrompts?: ReviewPromptUpdateManyWithoutTenantNestedInput
   }
 
   export type TenantUncheckedUpdateWithoutMermasInput = {
@@ -206275,6 +209950,8 @@ export namespace Prisma {
     licencias?: TenantLicenseUncheckedUpdateManyWithoutTenantNestedInput
     memberships?: TenantMembershipUncheckedUpdateManyWithoutTenantNestedInput
     turnosPos?: TurnoPuntoVentaUncheckedUpdateManyWithoutTenantNestedInput
+    reviews?: ReviewUncheckedUpdateManyWithoutTenantNestedInput
+    reviewPrompts?: ReviewPromptUncheckedUpdateManyWithoutTenantNestedInput
   }
 
   export type UserCreateWithoutTransferenciasCreadasInput = {
@@ -206314,6 +209991,8 @@ export namespace Prisma {
     backupLogs?: BackupLogCreateNestedManyWithoutUserInput
     backupPlans?: BackupPlanCreateNestedManyWithoutUserInput
     tenantMemberships?: TenantMembershipCreateNestedManyWithoutUserInput
+    reviews?: ReviewCreateNestedManyWithoutUserInput
+    reviewPrompts?: ReviewPromptCreateNestedManyWithoutUserInput
   }
 
   export type UserUncheckedCreateWithoutTransferenciasCreadasInput = {
@@ -206353,6 +210032,8 @@ export namespace Prisma {
     backupLogs?: BackupLogUncheckedCreateNestedManyWithoutUserInput
     backupPlans?: BackupPlanUncheckedCreateNestedManyWithoutUserInput
     tenantMemberships?: TenantMembershipUncheckedCreateNestedManyWithoutUserInput
+    reviews?: ReviewUncheckedCreateNestedManyWithoutUserInput
+    reviewPrompts?: ReviewPromptUncheckedCreateNestedManyWithoutUserInput
   }
 
   export type UserCreateOrConnectWithoutTransferenciasCreadasInput = {
@@ -206662,6 +210343,8 @@ export namespace Prisma {
     licencias?: TenantLicenseCreateNestedManyWithoutTenantInput
     memberships?: TenantMembershipCreateNestedManyWithoutTenantInput
     turnosPos?: TurnoPuntoVentaCreateNestedManyWithoutTenantInput
+    reviews?: ReviewCreateNestedManyWithoutTenantInput
+    reviewPrompts?: ReviewPromptCreateNestedManyWithoutTenantInput
   }
 
   export type TenantUncheckedCreateWithoutTransferenciasInput = {
@@ -206731,6 +210414,8 @@ export namespace Prisma {
     licencias?: TenantLicenseUncheckedCreateNestedManyWithoutTenantInput
     memberships?: TenantMembershipUncheckedCreateNestedManyWithoutTenantInput
     turnosPos?: TurnoPuntoVentaUncheckedCreateNestedManyWithoutTenantInput
+    reviews?: ReviewUncheckedCreateNestedManyWithoutTenantInput
+    reviewPrompts?: ReviewPromptUncheckedCreateNestedManyWithoutTenantInput
   }
 
   export type TenantCreateOrConnectWithoutTransferenciasInput = {
@@ -206786,6 +210471,8 @@ export namespace Prisma {
     backupLogs?: BackupLogUpdateManyWithoutUserNestedInput
     backupPlans?: BackupPlanUpdateManyWithoutUserNestedInput
     tenantMemberships?: TenantMembershipUpdateManyWithoutUserNestedInput
+    reviews?: ReviewUpdateManyWithoutUserNestedInput
+    reviewPrompts?: ReviewPromptUpdateManyWithoutUserNestedInput
   }
 
   export type UserUncheckedUpdateWithoutTransferenciasCreadasInput = {
@@ -206825,6 +210512,8 @@ export namespace Prisma {
     backupLogs?: BackupLogUncheckedUpdateManyWithoutUserNestedInput
     backupPlans?: BackupPlanUncheckedUpdateManyWithoutUserNestedInput
     tenantMemberships?: TenantMembershipUncheckedUpdateManyWithoutUserNestedInput
+    reviews?: ReviewUncheckedUpdateManyWithoutUserNestedInput
+    reviewPrompts?: ReviewPromptUncheckedUpdateManyWithoutUserNestedInput
   }
 
   export type AlmacenUpsertWithoutTransferenciasDestinoInput = {
@@ -207170,6 +210859,8 @@ export namespace Prisma {
     licencias?: TenantLicenseUpdateManyWithoutTenantNestedInput
     memberships?: TenantMembershipUpdateManyWithoutTenantNestedInput
     turnosPos?: TurnoPuntoVentaUpdateManyWithoutTenantNestedInput
+    reviews?: ReviewUpdateManyWithoutTenantNestedInput
+    reviewPrompts?: ReviewPromptUpdateManyWithoutTenantNestedInput
   }
 
   export type TenantUncheckedUpdateWithoutTransferenciasInput = {
@@ -207239,6 +210930,8 @@ export namespace Prisma {
     licencias?: TenantLicenseUncheckedUpdateManyWithoutTenantNestedInput
     memberships?: TenantMembershipUncheckedUpdateManyWithoutTenantNestedInput
     turnosPos?: TurnoPuntoVentaUncheckedUpdateManyWithoutTenantNestedInput
+    reviews?: ReviewUncheckedUpdateManyWithoutTenantNestedInput
+    reviewPrompts?: ReviewPromptUncheckedUpdateManyWithoutTenantNestedInput
   }
 
   export type AnticipoCreateWithoutCreadorInput = {
@@ -207951,6 +211644,64 @@ export namespace Prisma {
     skipDuplicates?: boolean
   }
 
+  export type ReviewCreateWithoutUserInput = {
+    reviewId?: string
+    rating: number
+    comment?: string | null
+    isApproved?: boolean
+    isPositive: boolean
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    tenant: TenantCreateNestedOneWithoutReviewsInput
+  }
+
+  export type ReviewUncheckedCreateWithoutUserInput = {
+    reviewId?: string
+    tenantId: string
+    rating: number
+    comment?: string | null
+    isApproved?: boolean
+    isPositive: boolean
+    createdAt?: Date | string
+    updatedAt?: Date | string
+  }
+
+  export type ReviewCreateOrConnectWithoutUserInput = {
+    where: ReviewWhereUniqueInput
+    create: XOR<ReviewCreateWithoutUserInput, ReviewUncheckedCreateWithoutUserInput>
+  }
+
+  export type ReviewCreateManyUserInputEnvelope = {
+    data: ReviewCreateManyUserInput | ReviewCreateManyUserInput[]
+    skipDuplicates?: boolean
+  }
+
+  export type ReviewPromptCreateWithoutUserInput = {
+    promptId?: string
+    promptedAt?: Date | string
+    dismissedAt?: Date | string | null
+    submittedAt?: Date | string | null
+    tenant: TenantCreateNestedOneWithoutReviewPromptsInput
+  }
+
+  export type ReviewPromptUncheckedCreateWithoutUserInput = {
+    promptId?: string
+    tenantId: string
+    promptedAt?: Date | string
+    dismissedAt?: Date | string | null
+    submittedAt?: Date | string | null
+  }
+
+  export type ReviewPromptCreateOrConnectWithoutUserInput = {
+    where: ReviewPromptWhereUniqueInput
+    create: XOR<ReviewPromptCreateWithoutUserInput, ReviewPromptUncheckedCreateWithoutUserInput>
+  }
+
+  export type ReviewPromptCreateManyUserInputEnvelope = {
+    data: ReviewPromptCreateManyUserInput | ReviewPromptCreateManyUserInput[]
+    skipDuplicates?: boolean
+  }
+
   export type AnticipoUpsertWithWhereUniqueWithoutCreadorInput = {
     where: AnticipoWhereUniqueInput
     update: XOR<AnticipoUpdateWithoutCreadorInput, AnticipoUncheckedUpdateWithoutCreadorInput>
@@ -208383,6 +212134,38 @@ export namespace Prisma {
     data: XOR<TenantMembershipUpdateManyMutationInput, TenantMembershipUncheckedUpdateManyWithoutUserInput>
   }
 
+  export type ReviewUpsertWithWhereUniqueWithoutUserInput = {
+    where: ReviewWhereUniqueInput
+    update: XOR<ReviewUpdateWithoutUserInput, ReviewUncheckedUpdateWithoutUserInput>
+    create: XOR<ReviewCreateWithoutUserInput, ReviewUncheckedCreateWithoutUserInput>
+  }
+
+  export type ReviewUpdateWithWhereUniqueWithoutUserInput = {
+    where: ReviewWhereUniqueInput
+    data: XOR<ReviewUpdateWithoutUserInput, ReviewUncheckedUpdateWithoutUserInput>
+  }
+
+  export type ReviewUpdateManyWithWhereWithoutUserInput = {
+    where: ReviewScalarWhereInput
+    data: XOR<ReviewUpdateManyMutationInput, ReviewUncheckedUpdateManyWithoutUserInput>
+  }
+
+  export type ReviewPromptUpsertWithWhereUniqueWithoutUserInput = {
+    where: ReviewPromptWhereUniqueInput
+    update: XOR<ReviewPromptUpdateWithoutUserInput, ReviewPromptUncheckedUpdateWithoutUserInput>
+    create: XOR<ReviewPromptCreateWithoutUserInput, ReviewPromptUncheckedCreateWithoutUserInput>
+  }
+
+  export type ReviewPromptUpdateWithWhereUniqueWithoutUserInput = {
+    where: ReviewPromptWhereUniqueInput
+    data: XOR<ReviewPromptUpdateWithoutUserInput, ReviewPromptUncheckedUpdateWithoutUserInput>
+  }
+
+  export type ReviewPromptUpdateManyWithWhereWithoutUserInput = {
+    where: ReviewPromptScalarWhereInput
+    data: XOR<ReviewPromptUpdateManyMutationInput, ReviewPromptUncheckedUpdateManyWithoutUserInput>
+  }
+
   export type LicenciaCreateWithoutPlanInput = {
     licenciaId?: string
     clave: string
@@ -208496,6 +212279,12 @@ export namespace Prisma {
     maxUsuarios?: number
     maxAlmacenes?: number
     maxProductos?: number
+    maxClientes?: number
+    maxPuntosVenta?: number
+    maxFacturasMes?: number
+    maxContratos?: number
+    incluyeBackups?: boolean
+    features?: JsonNullValueInput | InputJsonValue
     createdAt?: Date | string
     updatedAt?: Date | string
     tenantLicenses?: TenantLicenseCreateNestedManyWithoutPlanInput
@@ -208510,6 +212299,12 @@ export namespace Prisma {
     maxUsuarios?: number
     maxAlmacenes?: number
     maxProductos?: number
+    maxClientes?: number
+    maxPuntosVenta?: number
+    maxFacturasMes?: number
+    maxContratos?: number
+    incluyeBackups?: boolean
+    features?: JsonNullValueInput | InputJsonValue
     createdAt?: Date | string
     updatedAt?: Date | string
     tenantLicenses?: TenantLicenseUncheckedCreateNestedManyWithoutPlanInput
@@ -208557,6 +212352,8 @@ export namespace Prisma {
     backupLogs?: BackupLogCreateNestedManyWithoutUserInput
     backupPlans?: BackupPlanCreateNestedManyWithoutUserInput
     tenantMemberships?: TenantMembershipCreateNestedManyWithoutUserInput
+    reviews?: ReviewCreateNestedManyWithoutUserInput
+    reviewPrompts?: ReviewPromptCreateNestedManyWithoutUserInput
   }
 
   export type UserUncheckedCreateWithoutLicenciasInput = {
@@ -208596,6 +212393,8 @@ export namespace Prisma {
     backupLogs?: BackupLogUncheckedCreateNestedManyWithoutUserInput
     backupPlans?: BackupPlanUncheckedCreateNestedManyWithoutUserInput
     tenantMemberships?: TenantMembershipUncheckedCreateNestedManyWithoutUserInput
+    reviews?: ReviewUncheckedCreateNestedManyWithoutUserInput
+    reviewPrompts?: ReviewPromptUncheckedCreateNestedManyWithoutUserInput
   }
 
   export type UserCreateOrConnectWithoutLicenciasInput = {
@@ -208653,6 +212452,12 @@ export namespace Prisma {
     maxUsuarios?: IntFieldUpdateOperationsInput | number
     maxAlmacenes?: IntFieldUpdateOperationsInput | number
     maxProductos?: IntFieldUpdateOperationsInput | number
+    maxClientes?: IntFieldUpdateOperationsInput | number
+    maxPuntosVenta?: IntFieldUpdateOperationsInput | number
+    maxFacturasMes?: IntFieldUpdateOperationsInput | number
+    maxContratos?: IntFieldUpdateOperationsInput | number
+    incluyeBackups?: BoolFieldUpdateOperationsInput | boolean
+    features?: JsonNullValueInput | InputJsonValue
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     tenantLicenses?: TenantLicenseUpdateManyWithoutPlanNestedInput
@@ -208667,6 +212472,12 @@ export namespace Prisma {
     maxUsuarios?: IntFieldUpdateOperationsInput | number
     maxAlmacenes?: IntFieldUpdateOperationsInput | number
     maxProductos?: IntFieldUpdateOperationsInput | number
+    maxClientes?: IntFieldUpdateOperationsInput | number
+    maxPuntosVenta?: IntFieldUpdateOperationsInput | number
+    maxFacturasMes?: IntFieldUpdateOperationsInput | number
+    maxContratos?: IntFieldUpdateOperationsInput | number
+    incluyeBackups?: BoolFieldUpdateOperationsInput | boolean
+    features?: JsonNullValueInput | InputJsonValue
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     tenantLicenses?: TenantLicenseUncheckedUpdateManyWithoutPlanNestedInput
@@ -208720,6 +212531,8 @@ export namespace Prisma {
     backupLogs?: BackupLogUpdateManyWithoutUserNestedInput
     backupPlans?: BackupPlanUpdateManyWithoutUserNestedInput
     tenantMemberships?: TenantMembershipUpdateManyWithoutUserNestedInput
+    reviews?: ReviewUpdateManyWithoutUserNestedInput
+    reviewPrompts?: ReviewPromptUpdateManyWithoutUserNestedInput
   }
 
   export type UserUncheckedUpdateWithoutLicenciasInput = {
@@ -208759,6 +212572,8 @@ export namespace Prisma {
     backupLogs?: BackupLogUncheckedUpdateManyWithoutUserNestedInput
     backupPlans?: BackupPlanUncheckedUpdateManyWithoutUserNestedInput
     tenantMemberships?: TenantMembershipUncheckedUpdateManyWithoutUserNestedInput
+    reviews?: ReviewUncheckedUpdateManyWithoutUserNestedInput
+    reviewPrompts?: ReviewPromptUncheckedUpdateManyWithoutUserNestedInput
   }
 
   export type LicenciaAuditUpsertWithWhereUniqueWithoutLicenciaInput = {
@@ -208843,6 +212658,8 @@ export namespace Prisma {
     backupLogs?: BackupLogCreateNestedManyWithoutUserInput
     backupPlans?: BackupPlanCreateNestedManyWithoutUserInput
     tenantMemberships?: TenantMembershipCreateNestedManyWithoutUserInput
+    reviews?: ReviewCreateNestedManyWithoutUserInput
+    reviewPrompts?: ReviewPromptCreateNestedManyWithoutUserInput
   }
 
   export type UserUncheckedCreateWithoutLicenciasAuditInput = {
@@ -208882,6 +212699,8 @@ export namespace Prisma {
     backupLogs?: BackupLogUncheckedCreateNestedManyWithoutUserInput
     backupPlans?: BackupPlanUncheckedCreateNestedManyWithoutUserInput
     tenantMemberships?: TenantMembershipUncheckedCreateNestedManyWithoutUserInput
+    reviews?: ReviewUncheckedCreateNestedManyWithoutUserInput
+    reviewPrompts?: ReviewPromptUncheckedCreateNestedManyWithoutUserInput
   }
 
   export type UserCreateOrConnectWithoutLicenciasAuditInput = {
@@ -208972,6 +212791,8 @@ export namespace Prisma {
     backupLogs?: BackupLogUpdateManyWithoutUserNestedInput
     backupPlans?: BackupPlanUpdateManyWithoutUserNestedInput
     tenantMemberships?: TenantMembershipUpdateManyWithoutUserNestedInput
+    reviews?: ReviewUpdateManyWithoutUserNestedInput
+    reviewPrompts?: ReviewPromptUpdateManyWithoutUserNestedInput
   }
 
   export type UserUncheckedUpdateWithoutLicenciasAuditInput = {
@@ -209011,6 +212832,8 @@ export namespace Prisma {
     backupLogs?: BackupLogUncheckedUpdateManyWithoutUserNestedInput
     backupPlans?: BackupPlanUncheckedUpdateManyWithoutUserNestedInput
     tenantMemberships?: TenantMembershipUncheckedUpdateManyWithoutUserNestedInput
+    reviews?: ReviewUncheckedUpdateManyWithoutUserNestedInput
+    reviewPrompts?: ReviewPromptUncheckedUpdateManyWithoutUserNestedInput
   }
 
   export type UserCreateWithoutNotificationsInput = {
@@ -209050,6 +212873,8 @@ export namespace Prisma {
     backupLogs?: BackupLogCreateNestedManyWithoutUserInput
     backupPlans?: BackupPlanCreateNestedManyWithoutUserInput
     tenantMemberships?: TenantMembershipCreateNestedManyWithoutUserInput
+    reviews?: ReviewCreateNestedManyWithoutUserInput
+    reviewPrompts?: ReviewPromptCreateNestedManyWithoutUserInput
   }
 
   export type UserUncheckedCreateWithoutNotificationsInput = {
@@ -209089,6 +212914,8 @@ export namespace Prisma {
     backupLogs?: BackupLogUncheckedCreateNestedManyWithoutUserInput
     backupPlans?: BackupPlanUncheckedCreateNestedManyWithoutUserInput
     tenantMemberships?: TenantMembershipUncheckedCreateNestedManyWithoutUserInput
+    reviews?: ReviewUncheckedCreateNestedManyWithoutUserInput
+    reviewPrompts?: ReviewPromptUncheckedCreateNestedManyWithoutUserInput
   }
 
   export type UserCreateOrConnectWithoutNotificationsInput = {
@@ -209144,6 +212971,8 @@ export namespace Prisma {
     backupLogs?: BackupLogUpdateManyWithoutUserNestedInput
     backupPlans?: BackupPlanUpdateManyWithoutUserNestedInput
     tenantMemberships?: TenantMembershipUpdateManyWithoutUserNestedInput
+    reviews?: ReviewUpdateManyWithoutUserNestedInput
+    reviewPrompts?: ReviewPromptUpdateManyWithoutUserNestedInput
   }
 
   export type UserUncheckedUpdateWithoutNotificationsInput = {
@@ -209183,6 +213012,8 @@ export namespace Prisma {
     backupLogs?: BackupLogUncheckedUpdateManyWithoutUserNestedInput
     backupPlans?: BackupPlanUncheckedUpdateManyWithoutUserNestedInput
     tenantMemberships?: TenantMembershipUncheckedUpdateManyWithoutUserNestedInput
+    reviews?: ReviewUncheckedUpdateManyWithoutUserNestedInput
+    reviewPrompts?: ReviewPromptUncheckedUpdateManyWithoutUserNestedInput
   }
 
   export type UserCreateWithoutActivityLogsInput = {
@@ -209222,6 +213053,8 @@ export namespace Prisma {
     backupLogs?: BackupLogCreateNestedManyWithoutUserInput
     backupPlans?: BackupPlanCreateNestedManyWithoutUserInput
     tenantMemberships?: TenantMembershipCreateNestedManyWithoutUserInput
+    reviews?: ReviewCreateNestedManyWithoutUserInput
+    reviewPrompts?: ReviewPromptCreateNestedManyWithoutUserInput
   }
 
   export type UserUncheckedCreateWithoutActivityLogsInput = {
@@ -209261,6 +213094,8 @@ export namespace Prisma {
     backupLogs?: BackupLogUncheckedCreateNestedManyWithoutUserInput
     backupPlans?: BackupPlanUncheckedCreateNestedManyWithoutUserInput
     tenantMemberships?: TenantMembershipUncheckedCreateNestedManyWithoutUserInput
+    reviews?: ReviewUncheckedCreateNestedManyWithoutUserInput
+    reviewPrompts?: ReviewPromptUncheckedCreateNestedManyWithoutUserInput
   }
 
   export type UserCreateOrConnectWithoutActivityLogsInput = {
@@ -209316,6 +213151,8 @@ export namespace Prisma {
     backupLogs?: BackupLogUpdateManyWithoutUserNestedInput
     backupPlans?: BackupPlanUpdateManyWithoutUserNestedInput
     tenantMemberships?: TenantMembershipUpdateManyWithoutUserNestedInput
+    reviews?: ReviewUpdateManyWithoutUserNestedInput
+    reviewPrompts?: ReviewPromptUpdateManyWithoutUserNestedInput
   }
 
   export type UserUncheckedUpdateWithoutActivityLogsInput = {
@@ -209355,6 +213192,8 @@ export namespace Prisma {
     backupLogs?: BackupLogUncheckedUpdateManyWithoutUserNestedInput
     backupPlans?: BackupPlanUncheckedUpdateManyWithoutUserNestedInput
     tenantMemberships?: TenantMembershipUncheckedUpdateManyWithoutUserNestedInput
+    reviews?: ReviewUncheckedUpdateManyWithoutUserNestedInput
+    reviewPrompts?: ReviewPromptUncheckedUpdateManyWithoutUserNestedInput
   }
 
   export type UserCreateWithoutSessionsInput = {
@@ -209394,6 +213233,8 @@ export namespace Prisma {
     backupLogs?: BackupLogCreateNestedManyWithoutUserInput
     backupPlans?: BackupPlanCreateNestedManyWithoutUserInput
     tenantMemberships?: TenantMembershipCreateNestedManyWithoutUserInput
+    reviews?: ReviewCreateNestedManyWithoutUserInput
+    reviewPrompts?: ReviewPromptCreateNestedManyWithoutUserInput
   }
 
   export type UserUncheckedCreateWithoutSessionsInput = {
@@ -209433,6 +213274,8 @@ export namespace Prisma {
     backupLogs?: BackupLogUncheckedCreateNestedManyWithoutUserInput
     backupPlans?: BackupPlanUncheckedCreateNestedManyWithoutUserInput
     tenantMemberships?: TenantMembershipUncheckedCreateNestedManyWithoutUserInput
+    reviews?: ReviewUncheckedCreateNestedManyWithoutUserInput
+    reviewPrompts?: ReviewPromptUncheckedCreateNestedManyWithoutUserInput
   }
 
   export type UserCreateOrConnectWithoutSessionsInput = {
@@ -209488,6 +213331,8 @@ export namespace Prisma {
     backupLogs?: BackupLogUpdateManyWithoutUserNestedInput
     backupPlans?: BackupPlanUpdateManyWithoutUserNestedInput
     tenantMemberships?: TenantMembershipUpdateManyWithoutUserNestedInput
+    reviews?: ReviewUpdateManyWithoutUserNestedInput
+    reviewPrompts?: ReviewPromptUpdateManyWithoutUserNestedInput
   }
 
   export type UserUncheckedUpdateWithoutSessionsInput = {
@@ -209527,6 +213372,8 @@ export namespace Prisma {
     backupLogs?: BackupLogUncheckedUpdateManyWithoutUserNestedInput
     backupPlans?: BackupPlanUncheckedUpdateManyWithoutUserNestedInput
     tenantMemberships?: TenantMembershipUncheckedUpdateManyWithoutUserNestedInput
+    reviews?: ReviewUncheckedUpdateManyWithoutUserNestedInput
+    reviewPrompts?: ReviewPromptUncheckedUpdateManyWithoutUserNestedInput
   }
 
   export type EmpleadoCreateWithoutAttendancesInput = {
@@ -210094,6 +213941,8 @@ export namespace Prisma {
     licencias?: TenantLicenseCreateNestedManyWithoutTenantInput
     memberships?: TenantMembershipCreateNestedManyWithoutTenantInput
     turnosPos?: TurnoPuntoVentaCreateNestedManyWithoutTenantInput
+    reviews?: ReviewCreateNestedManyWithoutTenantInput
+    reviewPrompts?: ReviewPromptCreateNestedManyWithoutTenantInput
   }
 
   export type TenantUncheckedCreateWithoutEmpleadosInput = {
@@ -210163,6 +214012,8 @@ export namespace Prisma {
     licencias?: TenantLicenseUncheckedCreateNestedManyWithoutTenantInput
     memberships?: TenantMembershipUncheckedCreateNestedManyWithoutTenantInput
     turnosPos?: TurnoPuntoVentaUncheckedCreateNestedManyWithoutTenantInput
+    reviews?: ReviewUncheckedCreateNestedManyWithoutTenantInput
+    reviewPrompts?: ReviewPromptUncheckedCreateNestedManyWithoutTenantInput
   }
 
   export type TenantCreateOrConnectWithoutEmpleadosInput = {
@@ -210622,6 +214473,8 @@ export namespace Prisma {
     licencias?: TenantLicenseUpdateManyWithoutTenantNestedInput
     memberships?: TenantMembershipUpdateManyWithoutTenantNestedInput
     turnosPos?: TurnoPuntoVentaUpdateManyWithoutTenantNestedInput
+    reviews?: ReviewUpdateManyWithoutTenantNestedInput
+    reviewPrompts?: ReviewPromptUpdateManyWithoutTenantNestedInput
   }
 
   export type TenantUncheckedUpdateWithoutEmpleadosInput = {
@@ -210691,6 +214544,8 @@ export namespace Prisma {
     licencias?: TenantLicenseUncheckedUpdateManyWithoutTenantNestedInput
     memberships?: TenantMembershipUncheckedUpdateManyWithoutTenantNestedInput
     turnosPos?: TurnoPuntoVentaUncheckedUpdateManyWithoutTenantNestedInput
+    reviews?: ReviewUncheckedUpdateManyWithoutTenantNestedInput
+    reviewPrompts?: ReviewPromptUncheckedUpdateManyWithoutTenantNestedInput
   }
 
   export type EmployeeWorkScheduleUpsertWithWhereUniqueWithoutEmployeeInput = {
@@ -210976,6 +214831,8 @@ export namespace Prisma {
     licencias?: TenantLicenseCreateNestedManyWithoutTenantInput
     memberships?: TenantMembershipCreateNestedManyWithoutTenantInput
     turnosPos?: TurnoPuntoVentaCreateNestedManyWithoutTenantInput
+    reviews?: ReviewCreateNestedManyWithoutTenantInput
+    reviewPrompts?: ReviewPromptCreateNestedManyWithoutTenantInput
   }
 
   export type TenantUncheckedCreateWithoutPagosSalarioInput = {
@@ -211045,6 +214902,8 @@ export namespace Prisma {
     licencias?: TenantLicenseUncheckedCreateNestedManyWithoutTenantInput
     memberships?: TenantMembershipUncheckedCreateNestedManyWithoutTenantInput
     turnosPos?: TurnoPuntoVentaUncheckedCreateNestedManyWithoutTenantInput
+    reviews?: ReviewUncheckedCreateNestedManyWithoutTenantInput
+    reviewPrompts?: ReviewPromptUncheckedCreateNestedManyWithoutTenantInput
   }
 
   export type TenantCreateOrConnectWithoutPagosSalarioInput = {
@@ -211249,6 +215108,8 @@ export namespace Prisma {
     licencias?: TenantLicenseUpdateManyWithoutTenantNestedInput
     memberships?: TenantMembershipUpdateManyWithoutTenantNestedInput
     turnosPos?: TurnoPuntoVentaUpdateManyWithoutTenantNestedInput
+    reviews?: ReviewUpdateManyWithoutTenantNestedInput
+    reviewPrompts?: ReviewPromptUpdateManyWithoutTenantNestedInput
   }
 
   export type TenantUncheckedUpdateWithoutPagosSalarioInput = {
@@ -211318,6 +215179,8 @@ export namespace Prisma {
     licencias?: TenantLicenseUncheckedUpdateManyWithoutTenantNestedInput
     memberships?: TenantMembershipUncheckedUpdateManyWithoutTenantNestedInput
     turnosPos?: TurnoPuntoVentaUncheckedUpdateManyWithoutTenantNestedInput
+    reviews?: ReviewUncheckedUpdateManyWithoutTenantNestedInput
+    reviewPrompts?: ReviewPromptUncheckedUpdateManyWithoutTenantNestedInput
   }
 
   export type ReconciliacionGastoUpsertWithWhereUniqueWithoutPagoSalarioInput = {
@@ -211403,6 +215266,8 @@ export namespace Prisma {
     licencias?: TenantLicenseCreateNestedManyWithoutTenantInput
     memberships?: TenantMembershipCreateNestedManyWithoutTenantInput
     turnosPos?: TurnoPuntoVentaCreateNestedManyWithoutTenantInput
+    reviews?: ReviewCreateNestedManyWithoutTenantInput
+    reviewPrompts?: ReviewPromptCreateNestedManyWithoutTenantInput
   }
 
   export type TenantUncheckedCreateWithoutCierresContablesInput = {
@@ -211472,6 +215337,8 @@ export namespace Prisma {
     licencias?: TenantLicenseUncheckedCreateNestedManyWithoutTenantInput
     memberships?: TenantMembershipUncheckedCreateNestedManyWithoutTenantInput
     turnosPos?: TurnoPuntoVentaUncheckedCreateNestedManyWithoutTenantInput
+    reviews?: ReviewUncheckedCreateNestedManyWithoutTenantInput
+    reviewPrompts?: ReviewPromptUncheckedCreateNestedManyWithoutTenantInput
   }
 
   export type TenantCreateOrConnectWithoutCierresContablesInput = {
@@ -211557,6 +215424,8 @@ export namespace Prisma {
     licencias?: TenantLicenseUpdateManyWithoutTenantNestedInput
     memberships?: TenantMembershipUpdateManyWithoutTenantNestedInput
     turnosPos?: TurnoPuntoVentaUpdateManyWithoutTenantNestedInput
+    reviews?: ReviewUpdateManyWithoutTenantNestedInput
+    reviewPrompts?: ReviewPromptUpdateManyWithoutTenantNestedInput
   }
 
   export type TenantUncheckedUpdateWithoutCierresContablesInput = {
@@ -211626,6 +215495,8 @@ export namespace Prisma {
     licencias?: TenantLicenseUncheckedUpdateManyWithoutTenantNestedInput
     memberships?: TenantMembershipUncheckedUpdateManyWithoutTenantNestedInput
     turnosPos?: TurnoPuntoVentaUncheckedUpdateManyWithoutTenantNestedInput
+    reviews?: ReviewUncheckedUpdateManyWithoutTenantNestedInput
+    reviewPrompts?: ReviewPromptUncheckedUpdateManyWithoutTenantNestedInput
   }
 
   export type CompraDocumentoCreateWithoutGastoCompraInput = {
@@ -211943,6 +215814,8 @@ export namespace Prisma {
     licencias?: TenantLicenseCreateNestedManyWithoutTenantInput
     memberships?: TenantMembershipCreateNestedManyWithoutTenantInput
     turnosPos?: TurnoPuntoVentaCreateNestedManyWithoutTenantInput
+    reviews?: ReviewCreateNestedManyWithoutTenantInput
+    reviewPrompts?: ReviewPromptCreateNestedManyWithoutTenantInput
   }
 
   export type TenantUncheckedCreateWithoutGastosCompraInput = {
@@ -212012,6 +215885,8 @@ export namespace Prisma {
     licencias?: TenantLicenseUncheckedCreateNestedManyWithoutTenantInput
     memberships?: TenantMembershipUncheckedCreateNestedManyWithoutTenantInput
     turnosPos?: TurnoPuntoVentaUncheckedCreateNestedManyWithoutTenantInput
+    reviews?: ReviewUncheckedCreateNestedManyWithoutTenantInput
+    reviewPrompts?: ReviewPromptUncheckedCreateNestedManyWithoutTenantInput
   }
 
   export type TenantCreateOrConnectWithoutGastosCompraInput = {
@@ -212482,6 +216357,8 @@ export namespace Prisma {
     licencias?: TenantLicenseUpdateManyWithoutTenantNestedInput
     memberships?: TenantMembershipUpdateManyWithoutTenantNestedInput
     turnosPos?: TurnoPuntoVentaUpdateManyWithoutTenantNestedInput
+    reviews?: ReviewUpdateManyWithoutTenantNestedInput
+    reviewPrompts?: ReviewPromptUpdateManyWithoutTenantNestedInput
   }
 
   export type TenantUncheckedUpdateWithoutGastosCompraInput = {
@@ -212551,6 +216428,8 @@ export namespace Prisma {
     licencias?: TenantLicenseUncheckedUpdateManyWithoutTenantNestedInput
     memberships?: TenantMembershipUncheckedUpdateManyWithoutTenantNestedInput
     turnosPos?: TurnoPuntoVentaUncheckedUpdateManyWithoutTenantNestedInput
+    reviews?: ReviewUncheckedUpdateManyWithoutTenantNestedInput
+    reviewPrompts?: ReviewPromptUncheckedUpdateManyWithoutTenantNestedInput
   }
 
   export type VendorUpsertWithoutGastoComprasInput = {
@@ -212998,6 +216877,8 @@ export namespace Prisma {
     licencias?: TenantLicenseCreateNestedManyWithoutTenantInput
     memberships?: TenantMembershipCreateNestedManyWithoutTenantInput
     turnosPos?: TurnoPuntoVentaCreateNestedManyWithoutTenantInput
+    reviews?: ReviewCreateNestedManyWithoutTenantInput
+    reviewPrompts?: ReviewPromptCreateNestedManyWithoutTenantInput
   }
 
   export type TenantUncheckedCreateWithoutComprasProductoInput = {
@@ -213067,6 +216948,8 @@ export namespace Prisma {
     licencias?: TenantLicenseUncheckedCreateNestedManyWithoutTenantInput
     memberships?: TenantMembershipUncheckedCreateNestedManyWithoutTenantInput
     turnosPos?: TurnoPuntoVentaUncheckedCreateNestedManyWithoutTenantInput
+    reviews?: ReviewUncheckedCreateNestedManyWithoutTenantInput
+    reviewPrompts?: ReviewPromptUncheckedCreateNestedManyWithoutTenantInput
   }
 
   export type TenantCreateOrConnectWithoutComprasProductoInput = {
@@ -213485,6 +217368,8 @@ export namespace Prisma {
     licencias?: TenantLicenseUpdateManyWithoutTenantNestedInput
     memberships?: TenantMembershipUpdateManyWithoutTenantNestedInput
     turnosPos?: TurnoPuntoVentaUpdateManyWithoutTenantNestedInput
+    reviews?: ReviewUpdateManyWithoutTenantNestedInput
+    reviewPrompts?: ReviewPromptUpdateManyWithoutTenantNestedInput
   }
 
   export type TenantUncheckedUpdateWithoutComprasProductoInput = {
@@ -213554,6 +217439,8 @@ export namespace Prisma {
     licencias?: TenantLicenseUncheckedUpdateManyWithoutTenantNestedInput
     memberships?: TenantMembershipUncheckedUpdateManyWithoutTenantNestedInput
     turnosPos?: TurnoPuntoVentaUncheckedUpdateManyWithoutTenantNestedInput
+    reviews?: ReviewUncheckedUpdateManyWithoutTenantNestedInput
+    reviewPrompts?: ReviewPromptUncheckedUpdateManyWithoutTenantNestedInput
   }
 
   export type CuentaPorPagarCreateWithoutCompraDocumentoInput = {
@@ -213778,6 +217665,8 @@ export namespace Prisma {
     licencias?: TenantLicenseCreateNestedManyWithoutTenantInput
     memberships?: TenantMembershipCreateNestedManyWithoutTenantInput
     turnosPos?: TurnoPuntoVentaCreateNestedManyWithoutTenantInput
+    reviews?: ReviewCreateNestedManyWithoutTenantInput
+    reviewPrompts?: ReviewPromptCreateNestedManyWithoutTenantInput
   }
 
   export type TenantUncheckedCreateWithoutComprasDocumentoInput = {
@@ -213847,6 +217736,8 @@ export namespace Prisma {
     licencias?: TenantLicenseUncheckedCreateNestedManyWithoutTenantInput
     memberships?: TenantMembershipUncheckedCreateNestedManyWithoutTenantInput
     turnosPos?: TurnoPuntoVentaUncheckedCreateNestedManyWithoutTenantInput
+    reviews?: ReviewUncheckedCreateNestedManyWithoutTenantInput
+    reviewPrompts?: ReviewPromptUncheckedCreateNestedManyWithoutTenantInput
   }
 
   export type TenantCreateOrConnectWithoutComprasDocumentoInput = {
@@ -213891,6 +217782,8 @@ export namespace Prisma {
     backupLogs?: BackupLogCreateNestedManyWithoutUserInput
     backupPlans?: BackupPlanCreateNestedManyWithoutUserInput
     tenantMemberships?: TenantMembershipCreateNestedManyWithoutUserInput
+    reviews?: ReviewCreateNestedManyWithoutUserInput
+    reviewPrompts?: ReviewPromptCreateNestedManyWithoutUserInput
   }
 
   export type UserUncheckedCreateWithoutCompraDocumentosEditadosInput = {
@@ -213930,6 +217823,8 @@ export namespace Prisma {
     backupLogs?: BackupLogUncheckedCreateNestedManyWithoutUserInput
     backupPlans?: BackupPlanUncheckedCreateNestedManyWithoutUserInput
     tenantMemberships?: TenantMembershipUncheckedCreateNestedManyWithoutUserInput
+    reviews?: ReviewUncheckedCreateNestedManyWithoutUserInput
+    reviewPrompts?: ReviewPromptUncheckedCreateNestedManyWithoutUserInput
   }
 
   export type UserCreateOrConnectWithoutCompraDocumentosEditadosInput = {
@@ -214220,6 +218115,8 @@ export namespace Prisma {
     licencias?: TenantLicenseUpdateManyWithoutTenantNestedInput
     memberships?: TenantMembershipUpdateManyWithoutTenantNestedInput
     turnosPos?: TurnoPuntoVentaUpdateManyWithoutTenantNestedInput
+    reviews?: ReviewUpdateManyWithoutTenantNestedInput
+    reviewPrompts?: ReviewPromptUpdateManyWithoutTenantNestedInput
   }
 
   export type TenantUncheckedUpdateWithoutComprasDocumentoInput = {
@@ -214289,6 +218186,8 @@ export namespace Prisma {
     licencias?: TenantLicenseUncheckedUpdateManyWithoutTenantNestedInput
     memberships?: TenantMembershipUncheckedUpdateManyWithoutTenantNestedInput
     turnosPos?: TurnoPuntoVentaUncheckedUpdateManyWithoutTenantNestedInput
+    reviews?: ReviewUncheckedUpdateManyWithoutTenantNestedInput
+    reviewPrompts?: ReviewPromptUncheckedUpdateManyWithoutTenantNestedInput
   }
 
   export type UserUpsertWithoutCompraDocumentosEditadosInput = {
@@ -214339,6 +218238,8 @@ export namespace Prisma {
     backupLogs?: BackupLogUpdateManyWithoutUserNestedInput
     backupPlans?: BackupPlanUpdateManyWithoutUserNestedInput
     tenantMemberships?: TenantMembershipUpdateManyWithoutUserNestedInput
+    reviews?: ReviewUpdateManyWithoutUserNestedInput
+    reviewPrompts?: ReviewPromptUpdateManyWithoutUserNestedInput
   }
 
   export type UserUncheckedUpdateWithoutCompraDocumentosEditadosInput = {
@@ -214378,6 +218279,8 @@ export namespace Prisma {
     backupLogs?: BackupLogUncheckedUpdateManyWithoutUserNestedInput
     backupPlans?: BackupPlanUncheckedUpdateManyWithoutUserNestedInput
     tenantMemberships?: TenantMembershipUncheckedUpdateManyWithoutUserNestedInput
+    reviews?: ReviewUncheckedUpdateManyWithoutUserNestedInput
+    reviewPrompts?: ReviewPromptUncheckedUpdateManyWithoutUserNestedInput
   }
 
   export type CompraDocumentoItemUpsertWithWhereUniqueWithoutCompraDocumentoInput = {
@@ -214603,6 +218506,8 @@ export namespace Prisma {
     licencias?: TenantLicenseCreateNestedManyWithoutTenantInput
     memberships?: TenantMembershipCreateNestedManyWithoutTenantInput
     turnosPos?: TurnoPuntoVentaCreateNestedManyWithoutTenantInput
+    reviews?: ReviewCreateNestedManyWithoutTenantInput
+    reviewPrompts?: ReviewPromptCreateNestedManyWithoutTenantInput
   }
 
   export type TenantUncheckedCreateWithoutComprasDocumentoItemInput = {
@@ -214672,6 +218577,8 @@ export namespace Prisma {
     licencias?: TenantLicenseUncheckedCreateNestedManyWithoutTenantInput
     memberships?: TenantMembershipUncheckedCreateNestedManyWithoutTenantInput
     turnosPos?: TurnoPuntoVentaUncheckedCreateNestedManyWithoutTenantInput
+    reviews?: ReviewUncheckedCreateNestedManyWithoutTenantInput
+    reviewPrompts?: ReviewPromptUncheckedCreateNestedManyWithoutTenantInput
   }
 
   export type TenantCreateOrConnectWithoutComprasDocumentoItemInput = {
@@ -214909,6 +218816,8 @@ export namespace Prisma {
     licencias?: TenantLicenseUpdateManyWithoutTenantNestedInput
     memberships?: TenantMembershipUpdateManyWithoutTenantNestedInput
     turnosPos?: TurnoPuntoVentaUpdateManyWithoutTenantNestedInput
+    reviews?: ReviewUpdateManyWithoutTenantNestedInput
+    reviewPrompts?: ReviewPromptUpdateManyWithoutTenantNestedInput
   }
 
   export type TenantUncheckedUpdateWithoutComprasDocumentoItemInput = {
@@ -214978,6 +218887,8 @@ export namespace Prisma {
     licencias?: TenantLicenseUncheckedUpdateManyWithoutTenantNestedInput
     memberships?: TenantMembershipUncheckedUpdateManyWithoutTenantNestedInput
     turnosPos?: TurnoPuntoVentaUncheckedUpdateManyWithoutTenantNestedInput
+    reviews?: ReviewUncheckedUpdateManyWithoutTenantNestedInput
+    reviewPrompts?: ReviewPromptUncheckedUpdateManyWithoutTenantNestedInput
   }
 
   export type CompraServicioCreateWithoutServicioInput = {
@@ -215119,6 +219030,8 @@ export namespace Prisma {
     licencias?: TenantLicenseCreateNestedManyWithoutTenantInput
     memberships?: TenantMembershipCreateNestedManyWithoutTenantInput
     turnosPos?: TurnoPuntoVentaCreateNestedManyWithoutTenantInput
+    reviews?: ReviewCreateNestedManyWithoutTenantInput
+    reviewPrompts?: ReviewPromptCreateNestedManyWithoutTenantInput
   }
 
   export type TenantUncheckedCreateWithoutServiciosInput = {
@@ -215188,6 +219101,8 @@ export namespace Prisma {
     licencias?: TenantLicenseUncheckedCreateNestedManyWithoutTenantInput
     memberships?: TenantMembershipUncheckedCreateNestedManyWithoutTenantInput
     turnosPos?: TurnoPuntoVentaUncheckedCreateNestedManyWithoutTenantInput
+    reviews?: ReviewUncheckedCreateNestedManyWithoutTenantInput
+    reviewPrompts?: ReviewPromptUncheckedCreateNestedManyWithoutTenantInput
   }
 
   export type TenantCreateOrConnectWithoutServiciosInput = {
@@ -215343,6 +219258,8 @@ export namespace Prisma {
     licencias?: TenantLicenseUpdateManyWithoutTenantNestedInput
     memberships?: TenantMembershipUpdateManyWithoutTenantNestedInput
     turnosPos?: TurnoPuntoVentaUpdateManyWithoutTenantNestedInput
+    reviews?: ReviewUpdateManyWithoutTenantNestedInput
+    reviewPrompts?: ReviewPromptUpdateManyWithoutTenantNestedInput
   }
 
   export type TenantUncheckedUpdateWithoutServiciosInput = {
@@ -215412,6 +219329,8 @@ export namespace Prisma {
     licencias?: TenantLicenseUncheckedUpdateManyWithoutTenantNestedInput
     memberships?: TenantMembershipUncheckedUpdateManyWithoutTenantNestedInput
     turnosPos?: TurnoPuntoVentaUncheckedUpdateManyWithoutTenantNestedInput
+    reviews?: ReviewUncheckedUpdateManyWithoutTenantNestedInput
+    reviewPrompts?: ReviewPromptUncheckedUpdateManyWithoutTenantNestedInput
   }
 
   export type VentaServiciosUpsertWithWhereUniqueWithoutServicioInput = {
@@ -215619,6 +219538,8 @@ export namespace Prisma {
     licencias?: TenantLicenseCreateNestedManyWithoutTenantInput
     memberships?: TenantMembershipCreateNestedManyWithoutTenantInput
     turnosPos?: TurnoPuntoVentaCreateNestedManyWithoutTenantInput
+    reviews?: ReviewCreateNestedManyWithoutTenantInput
+    reviewPrompts?: ReviewPromptCreateNestedManyWithoutTenantInput
   }
 
   export type TenantUncheckedCreateWithoutVentasServiciosInput = {
@@ -215688,6 +219609,8 @@ export namespace Prisma {
     licencias?: TenantLicenseUncheckedCreateNestedManyWithoutTenantInput
     memberships?: TenantMembershipUncheckedCreateNestedManyWithoutTenantInput
     turnosPos?: TurnoPuntoVentaUncheckedCreateNestedManyWithoutTenantInput
+    reviews?: ReviewUncheckedCreateNestedManyWithoutTenantInput
+    reviewPrompts?: ReviewPromptUncheckedCreateNestedManyWithoutTenantInput
   }
 
   export type TenantCreateOrConnectWithoutVentasServiciosInput = {
@@ -215881,6 +219804,8 @@ export namespace Prisma {
     licencias?: TenantLicenseUpdateManyWithoutTenantNestedInput
     memberships?: TenantMembershipUpdateManyWithoutTenantNestedInput
     turnosPos?: TurnoPuntoVentaUpdateManyWithoutTenantNestedInput
+    reviews?: ReviewUpdateManyWithoutTenantNestedInput
+    reviewPrompts?: ReviewPromptUpdateManyWithoutTenantNestedInput
   }
 
   export type TenantUncheckedUpdateWithoutVentasServiciosInput = {
@@ -215950,6 +219875,8 @@ export namespace Prisma {
     licencias?: TenantLicenseUncheckedUpdateManyWithoutTenantNestedInput
     memberships?: TenantMembershipUncheckedUpdateManyWithoutTenantNestedInput
     turnosPos?: TurnoPuntoVentaUncheckedUpdateManyWithoutTenantNestedInput
+    reviews?: ReviewUncheckedUpdateManyWithoutTenantNestedInput
+    reviewPrompts?: ReviewPromptUncheckedUpdateManyWithoutTenantNestedInput
   }
 
   export type VendorCreateWithoutCompraServiciosInput = {
@@ -216103,6 +220030,8 @@ export namespace Prisma {
     licencias?: TenantLicenseCreateNestedManyWithoutTenantInput
     memberships?: TenantMembershipCreateNestedManyWithoutTenantInput
     turnosPos?: TurnoPuntoVentaCreateNestedManyWithoutTenantInput
+    reviews?: ReviewCreateNestedManyWithoutTenantInput
+    reviewPrompts?: ReviewPromptCreateNestedManyWithoutTenantInput
   }
 
   export type TenantUncheckedCreateWithoutComprasServicioInput = {
@@ -216172,6 +220101,8 @@ export namespace Prisma {
     licencias?: TenantLicenseUncheckedCreateNestedManyWithoutTenantInput
     memberships?: TenantMembershipUncheckedCreateNestedManyWithoutTenantInput
     turnosPos?: TurnoPuntoVentaUncheckedCreateNestedManyWithoutTenantInput
+    reviews?: ReviewUncheckedCreateNestedManyWithoutTenantInput
+    reviewPrompts?: ReviewPromptUncheckedCreateNestedManyWithoutTenantInput
   }
 
   export type TenantCreateOrConnectWithoutComprasServicioInput = {
@@ -216353,6 +220284,8 @@ export namespace Prisma {
     licencias?: TenantLicenseUpdateManyWithoutTenantNestedInput
     memberships?: TenantMembershipUpdateManyWithoutTenantNestedInput
     turnosPos?: TurnoPuntoVentaUpdateManyWithoutTenantNestedInput
+    reviews?: ReviewUpdateManyWithoutTenantNestedInput
+    reviewPrompts?: ReviewPromptUpdateManyWithoutTenantNestedInput
   }
 
   export type TenantUncheckedUpdateWithoutComprasServicioInput = {
@@ -216422,6 +220355,8 @@ export namespace Prisma {
     licencias?: TenantLicenseUncheckedUpdateManyWithoutTenantNestedInput
     memberships?: TenantMembershipUncheckedUpdateManyWithoutTenantNestedInput
     turnosPos?: TurnoPuntoVentaUncheckedUpdateManyWithoutTenantNestedInput
+    reviews?: ReviewUncheckedUpdateManyWithoutTenantNestedInput
+    reviewPrompts?: ReviewPromptUncheckedUpdateManyWithoutTenantNestedInput
   }
 
   export type GastoElementoCreateWithoutConceptoInput = {
@@ -216833,6 +220768,8 @@ export namespace Prisma {
     licencias?: TenantLicenseCreateNestedManyWithoutTenantInput
     memberships?: TenantMembershipCreateNestedManyWithoutTenantInput
     turnosPos?: TurnoPuntoVentaCreateNestedManyWithoutTenantInput
+    reviews?: ReviewCreateNestedManyWithoutTenantInput
+    reviewPrompts?: ReviewPromptCreateNestedManyWithoutTenantInput
   }
 
   export type TenantUncheckedCreateWithoutGastosDEInput = {
@@ -216902,6 +220839,8 @@ export namespace Prisma {
     licencias?: TenantLicenseUncheckedCreateNestedManyWithoutTenantInput
     memberships?: TenantMembershipUncheckedCreateNestedManyWithoutTenantInput
     turnosPos?: TurnoPuntoVentaUncheckedCreateNestedManyWithoutTenantInput
+    reviews?: ReviewUncheckedCreateNestedManyWithoutTenantInput
+    reviewPrompts?: ReviewPromptUncheckedCreateNestedManyWithoutTenantInput
   }
 
   export type TenantCreateOrConnectWithoutGastosDEInput = {
@@ -217172,6 +221111,8 @@ export namespace Prisma {
     licencias?: TenantLicenseUpdateManyWithoutTenantNestedInput
     memberships?: TenantMembershipUpdateManyWithoutTenantNestedInput
     turnosPos?: TurnoPuntoVentaUpdateManyWithoutTenantNestedInput
+    reviews?: ReviewUpdateManyWithoutTenantNestedInput
+    reviewPrompts?: ReviewPromptUpdateManyWithoutTenantNestedInput
   }
 
   export type TenantUncheckedUpdateWithoutGastosDEInput = {
@@ -217241,6 +221182,8 @@ export namespace Prisma {
     licencias?: TenantLicenseUncheckedUpdateManyWithoutTenantNestedInput
     memberships?: TenantMembershipUncheckedUpdateManyWithoutTenantNestedInput
     turnosPos?: TurnoPuntoVentaUncheckedUpdateManyWithoutTenantNestedInput
+    reviews?: ReviewUncheckedUpdateManyWithoutTenantNestedInput
+    reviewPrompts?: ReviewPromptUncheckedUpdateManyWithoutTenantNestedInput
   }
 
   export type ReconciliacionGastoUpsertWithWhereUniqueWithoutGastoDEInput = {
@@ -217718,6 +221661,8 @@ export namespace Prisma {
     licencias?: TenantLicenseCreateNestedManyWithoutTenantInput
     memberships?: TenantMembershipCreateNestedManyWithoutTenantInput
     turnosPos?: TurnoPuntoVentaCreateNestedManyWithoutTenantInput
+    reviews?: ReviewCreateNestedManyWithoutTenantInput
+    reviewPrompts?: ReviewPromptCreateNestedManyWithoutTenantInput
   }
 
   export type TenantUncheckedCreateWithoutCuentasBancariasInput = {
@@ -217787,6 +221732,8 @@ export namespace Prisma {
     licencias?: TenantLicenseUncheckedCreateNestedManyWithoutTenantInput
     memberships?: TenantMembershipUncheckedCreateNestedManyWithoutTenantInput
     turnosPos?: TurnoPuntoVentaUncheckedCreateNestedManyWithoutTenantInput
+    reviews?: ReviewUncheckedCreateNestedManyWithoutTenantInput
+    reviewPrompts?: ReviewPromptUncheckedCreateNestedManyWithoutTenantInput
   }
 
   export type TenantCreateOrConnectWithoutCuentasBancariasInput = {
@@ -218337,6 +222284,8 @@ export namespace Prisma {
     licencias?: TenantLicenseUpdateManyWithoutTenantNestedInput
     memberships?: TenantMembershipUpdateManyWithoutTenantNestedInput
     turnosPos?: TurnoPuntoVentaUpdateManyWithoutTenantNestedInput
+    reviews?: ReviewUpdateManyWithoutTenantNestedInput
+    reviewPrompts?: ReviewPromptUpdateManyWithoutTenantNestedInput
   }
 
   export type TenantUncheckedUpdateWithoutCuentasBancariasInput = {
@@ -218406,6 +222355,8 @@ export namespace Prisma {
     licencias?: TenantLicenseUncheckedUpdateManyWithoutTenantNestedInput
     memberships?: TenantMembershipUncheckedUpdateManyWithoutTenantNestedInput
     turnosPos?: TurnoPuntoVentaUncheckedUpdateManyWithoutTenantNestedInput
+    reviews?: ReviewUncheckedUpdateManyWithoutTenantNestedInput
+    reviewPrompts?: ReviewPromptUncheckedUpdateManyWithoutTenantNestedInput
   }
 
   export type InyeccionCapitalUpsertWithWhereUniqueWithoutCuentaBancariaInput = {
@@ -219015,6 +222966,8 @@ export namespace Prisma {
     licencias?: TenantLicenseCreateNestedManyWithoutTenantInput
     memberships?: TenantMembershipCreateNestedManyWithoutTenantInput
     turnosPos?: TurnoPuntoVentaCreateNestedManyWithoutTenantInput
+    reviews?: ReviewCreateNestedManyWithoutTenantInput
+    reviewPrompts?: ReviewPromptCreateNestedManyWithoutTenantInput
   }
 
   export type TenantUncheckedCreateWithoutReconciliacionesVentaInput = {
@@ -219084,6 +223037,8 @@ export namespace Prisma {
     licencias?: TenantLicenseUncheckedCreateNestedManyWithoutTenantInput
     memberships?: TenantMembershipUncheckedCreateNestedManyWithoutTenantInput
     turnosPos?: TurnoPuntoVentaUncheckedCreateNestedManyWithoutTenantInput
+    reviews?: ReviewUncheckedCreateNestedManyWithoutTenantInput
+    reviewPrompts?: ReviewPromptUncheckedCreateNestedManyWithoutTenantInput
   }
 
   export type TenantCreateOrConnectWithoutReconciliacionesVentaInput = {
@@ -219422,6 +223377,8 @@ export namespace Prisma {
     licencias?: TenantLicenseUpdateManyWithoutTenantNestedInput
     memberships?: TenantMembershipUpdateManyWithoutTenantNestedInput
     turnosPos?: TurnoPuntoVentaUpdateManyWithoutTenantNestedInput
+    reviews?: ReviewUpdateManyWithoutTenantNestedInput
+    reviewPrompts?: ReviewPromptUpdateManyWithoutTenantNestedInput
   }
 
   export type TenantUncheckedUpdateWithoutReconciliacionesVentaInput = {
@@ -219491,6 +223448,8 @@ export namespace Prisma {
     licencias?: TenantLicenseUncheckedUpdateManyWithoutTenantNestedInput
     memberships?: TenantMembershipUncheckedUpdateManyWithoutTenantNestedInput
     turnosPos?: TurnoPuntoVentaUncheckedUpdateManyWithoutTenantNestedInput
+    reviews?: ReviewUncheckedUpdateManyWithoutTenantNestedInput
+    reviewPrompts?: ReviewPromptUncheckedUpdateManyWithoutTenantNestedInput
   }
 
   export type TipoPagoUpsertWithoutReconciliacionesVentaInput = {
@@ -219715,6 +223674,8 @@ export namespace Prisma {
     licencias?: TenantLicenseCreateNestedManyWithoutTenantInput
     memberships?: TenantMembershipCreateNestedManyWithoutTenantInput
     turnosPos?: TurnoPuntoVentaCreateNestedManyWithoutTenantInput
+    reviews?: ReviewCreateNestedManyWithoutTenantInput
+    reviewPrompts?: ReviewPromptCreateNestedManyWithoutTenantInput
   }
 
   export type TenantUncheckedCreateWithoutReconciliacionesServicioInput = {
@@ -219784,6 +223745,8 @@ export namespace Prisma {
     licencias?: TenantLicenseUncheckedCreateNestedManyWithoutTenantInput
     memberships?: TenantMembershipUncheckedCreateNestedManyWithoutTenantInput
     turnosPos?: TurnoPuntoVentaUncheckedCreateNestedManyWithoutTenantInput
+    reviews?: ReviewUncheckedCreateNestedManyWithoutTenantInput
+    reviewPrompts?: ReviewPromptUncheckedCreateNestedManyWithoutTenantInput
   }
 
   export type TenantCreateOrConnectWithoutReconciliacionesServicioInput = {
@@ -219988,6 +223951,8 @@ export namespace Prisma {
     licencias?: TenantLicenseUpdateManyWithoutTenantNestedInput
     memberships?: TenantMembershipUpdateManyWithoutTenantNestedInput
     turnosPos?: TurnoPuntoVentaUpdateManyWithoutTenantNestedInput
+    reviews?: ReviewUpdateManyWithoutTenantNestedInput
+    reviewPrompts?: ReviewPromptUpdateManyWithoutTenantNestedInput
   }
 
   export type TenantUncheckedUpdateWithoutReconciliacionesServicioInput = {
@@ -220057,6 +224022,8 @@ export namespace Prisma {
     licencias?: TenantLicenseUncheckedUpdateManyWithoutTenantNestedInput
     memberships?: TenantMembershipUncheckedUpdateManyWithoutTenantNestedInput
     turnosPos?: TurnoPuntoVentaUncheckedUpdateManyWithoutTenantNestedInput
+    reviews?: ReviewUncheckedUpdateManyWithoutTenantNestedInput
+    reviewPrompts?: ReviewPromptUncheckedUpdateManyWithoutTenantNestedInput
   }
 
   export type TipoPagoUpsertWithoutReconciliacionesServicioInput = {
@@ -220425,6 +224392,8 @@ export namespace Prisma {
     licencias?: TenantLicenseCreateNestedManyWithoutTenantInput
     memberships?: TenantMembershipCreateNestedManyWithoutTenantInput
     turnosPos?: TurnoPuntoVentaCreateNestedManyWithoutTenantInput
+    reviews?: ReviewCreateNestedManyWithoutTenantInput
+    reviewPrompts?: ReviewPromptCreateNestedManyWithoutTenantInput
   }
 
   export type TenantUncheckedCreateWithoutReconciliacionesGastoInput = {
@@ -220494,6 +224463,8 @@ export namespace Prisma {
     licencias?: TenantLicenseUncheckedCreateNestedManyWithoutTenantInput
     memberships?: TenantMembershipUncheckedCreateNestedManyWithoutTenantInput
     turnosPos?: TurnoPuntoVentaUncheckedCreateNestedManyWithoutTenantInput
+    reviews?: ReviewUncheckedCreateNestedManyWithoutTenantInput
+    reviewPrompts?: ReviewPromptUncheckedCreateNestedManyWithoutTenantInput
   }
 
   export type TenantCreateOrConnectWithoutReconciliacionesGastoInput = {
@@ -220863,6 +224834,8 @@ export namespace Prisma {
     licencias?: TenantLicenseUpdateManyWithoutTenantNestedInput
     memberships?: TenantMembershipUpdateManyWithoutTenantNestedInput
     turnosPos?: TurnoPuntoVentaUpdateManyWithoutTenantNestedInput
+    reviews?: ReviewUpdateManyWithoutTenantNestedInput
+    reviewPrompts?: ReviewPromptUpdateManyWithoutTenantNestedInput
   }
 
   export type TenantUncheckedUpdateWithoutReconciliacionesGastoInput = {
@@ -220932,6 +224905,8 @@ export namespace Prisma {
     licencias?: TenantLicenseUncheckedUpdateManyWithoutTenantNestedInput
     memberships?: TenantMembershipUncheckedUpdateManyWithoutTenantNestedInput
     turnosPos?: TurnoPuntoVentaUncheckedUpdateManyWithoutTenantNestedInput
+    reviews?: ReviewUncheckedUpdateManyWithoutTenantNestedInput
+    reviewPrompts?: ReviewPromptUncheckedUpdateManyWithoutTenantNestedInput
   }
 
   export type TipoPagoUpsertWithoutReconciliacionesGastoInput = {
@@ -221087,6 +225062,8 @@ export namespace Prisma {
     licencias?: TenantLicenseCreateNestedManyWithoutTenantInput
     memberships?: TenantMembershipCreateNestedManyWithoutTenantInput
     turnosPos?: TurnoPuntoVentaCreateNestedManyWithoutTenantInput
+    reviews?: ReviewCreateNestedManyWithoutTenantInput
+    reviewPrompts?: ReviewPromptCreateNestedManyWithoutTenantInput
   }
 
   export type TenantUncheckedCreateWithoutAjustesBancariosInput = {
@@ -221156,6 +225133,8 @@ export namespace Prisma {
     licencias?: TenantLicenseUncheckedCreateNestedManyWithoutTenantInput
     memberships?: TenantMembershipUncheckedCreateNestedManyWithoutTenantInput
     turnosPos?: TurnoPuntoVentaUncheckedCreateNestedManyWithoutTenantInput
+    reviews?: ReviewUncheckedCreateNestedManyWithoutTenantInput
+    reviewPrompts?: ReviewPromptUncheckedCreateNestedManyWithoutTenantInput
   }
 
   export type TenantCreateOrConnectWithoutAjustesBancariosInput = {
@@ -221296,6 +225275,8 @@ export namespace Prisma {
     licencias?: TenantLicenseUpdateManyWithoutTenantNestedInput
     memberships?: TenantMembershipUpdateManyWithoutTenantNestedInput
     turnosPos?: TurnoPuntoVentaUpdateManyWithoutTenantNestedInput
+    reviews?: ReviewUpdateManyWithoutTenantNestedInput
+    reviewPrompts?: ReviewPromptUpdateManyWithoutTenantNestedInput
   }
 
   export type TenantUncheckedUpdateWithoutAjustesBancariosInput = {
@@ -221365,6 +225346,8 @@ export namespace Prisma {
     licencias?: TenantLicenseUncheckedUpdateManyWithoutTenantNestedInput
     memberships?: TenantMembershipUncheckedUpdateManyWithoutTenantNestedInput
     turnosPos?: TurnoPuntoVentaUncheckedUpdateManyWithoutTenantNestedInput
+    reviews?: ReviewUncheckedUpdateManyWithoutTenantNestedInput
+    reviewPrompts?: ReviewPromptUncheckedUpdateManyWithoutTenantNestedInput
   }
 
   export type CuentaBancariaCreateWithoutTransferenciasDestinoInput = {
@@ -221532,6 +225515,8 @@ export namespace Prisma {
     licencias?: TenantLicenseCreateNestedManyWithoutTenantInput
     memberships?: TenantMembershipCreateNestedManyWithoutTenantInput
     turnosPos?: TurnoPuntoVentaCreateNestedManyWithoutTenantInput
+    reviews?: ReviewCreateNestedManyWithoutTenantInput
+    reviewPrompts?: ReviewPromptCreateNestedManyWithoutTenantInput
   }
 
   export type TenantUncheckedCreateWithoutTransferenciasBancariasInput = {
@@ -221601,6 +225586,8 @@ export namespace Prisma {
     licencias?: TenantLicenseUncheckedCreateNestedManyWithoutTenantInput
     memberships?: TenantMembershipUncheckedCreateNestedManyWithoutTenantInput
     turnosPos?: TurnoPuntoVentaUncheckedCreateNestedManyWithoutTenantInput
+    reviews?: ReviewUncheckedCreateNestedManyWithoutTenantInput
+    reviewPrompts?: ReviewPromptUncheckedCreateNestedManyWithoutTenantInput
   }
 
   export type TenantCreateOrConnectWithoutTransferenciasBancariasInput = {
@@ -221796,6 +225783,8 @@ export namespace Prisma {
     licencias?: TenantLicenseUpdateManyWithoutTenantNestedInput
     memberships?: TenantMembershipUpdateManyWithoutTenantNestedInput
     turnosPos?: TurnoPuntoVentaUpdateManyWithoutTenantNestedInput
+    reviews?: ReviewUpdateManyWithoutTenantNestedInput
+    reviewPrompts?: ReviewPromptUpdateManyWithoutTenantNestedInput
   }
 
   export type TenantUncheckedUpdateWithoutTransferenciasBancariasInput = {
@@ -221865,6 +225854,8 @@ export namespace Prisma {
     licencias?: TenantLicenseUncheckedUpdateManyWithoutTenantNestedInput
     memberships?: TenantMembershipUncheckedUpdateManyWithoutTenantNestedInput
     turnosPos?: TurnoPuntoVentaUncheckedUpdateManyWithoutTenantNestedInput
+    reviews?: ReviewUncheckedUpdateManyWithoutTenantNestedInput
+    reviewPrompts?: ReviewPromptUncheckedUpdateManyWithoutTenantNestedInput
   }
 
   export type AnticipoCreateWithoutContratoInput = {
@@ -221962,6 +225953,8 @@ export namespace Prisma {
     backupLogs?: BackupLogCreateNestedManyWithoutUserInput
     backupPlans?: BackupPlanCreateNestedManyWithoutUserInput
     tenantMemberships?: TenantMembershipCreateNestedManyWithoutUserInput
+    reviews?: ReviewCreateNestedManyWithoutUserInput
+    reviewPrompts?: ReviewPromptCreateNestedManyWithoutUserInput
   }
 
   export type UserUncheckedCreateWithoutContratosAprobadosInput = {
@@ -222001,6 +225994,8 @@ export namespace Prisma {
     backupLogs?: BackupLogUncheckedCreateNestedManyWithoutUserInput
     backupPlans?: BackupPlanUncheckedCreateNestedManyWithoutUserInput
     tenantMemberships?: TenantMembershipUncheckedCreateNestedManyWithoutUserInput
+    reviews?: ReviewUncheckedCreateNestedManyWithoutUserInput
+    reviewPrompts?: ReviewPromptUncheckedCreateNestedManyWithoutUserInput
   }
 
   export type UserCreateOrConnectWithoutContratosAprobadosInput = {
@@ -222094,6 +226089,8 @@ export namespace Prisma {
     backupLogs?: BackupLogCreateNestedManyWithoutUserInput
     backupPlans?: BackupPlanCreateNestedManyWithoutUserInput
     tenantMemberships?: TenantMembershipCreateNestedManyWithoutUserInput
+    reviews?: ReviewCreateNestedManyWithoutUserInput
+    reviewPrompts?: ReviewPromptCreateNestedManyWithoutUserInput
   }
 
   export type UserUncheckedCreateWithoutContratosCreadosInput = {
@@ -222133,6 +226130,8 @@ export namespace Prisma {
     backupLogs?: BackupLogUncheckedCreateNestedManyWithoutUserInput
     backupPlans?: BackupPlanUncheckedCreateNestedManyWithoutUserInput
     tenantMemberships?: TenantMembershipUncheckedCreateNestedManyWithoutUserInput
+    reviews?: ReviewUncheckedCreateNestedManyWithoutUserInput
+    reviewPrompts?: ReviewPromptUncheckedCreateNestedManyWithoutUserInput
   }
 
   export type UserCreateOrConnectWithoutContratosCreadosInput = {
@@ -222207,6 +226206,8 @@ export namespace Prisma {
     licencias?: TenantLicenseCreateNestedManyWithoutTenantInput
     memberships?: TenantMembershipCreateNestedManyWithoutTenantInput
     turnosPos?: TurnoPuntoVentaCreateNestedManyWithoutTenantInput
+    reviews?: ReviewCreateNestedManyWithoutTenantInput
+    reviewPrompts?: ReviewPromptCreateNestedManyWithoutTenantInput
   }
 
   export type TenantUncheckedCreateWithoutContratosInput = {
@@ -222276,6 +226277,8 @@ export namespace Prisma {
     licencias?: TenantLicenseUncheckedCreateNestedManyWithoutTenantInput
     memberships?: TenantMembershipUncheckedCreateNestedManyWithoutTenantInput
     turnosPos?: TurnoPuntoVentaUncheckedCreateNestedManyWithoutTenantInput
+    reviews?: ReviewUncheckedCreateNestedManyWithoutTenantInput
+    reviewPrompts?: ReviewPromptUncheckedCreateNestedManyWithoutTenantInput
   }
 
   export type TenantCreateOrConnectWithoutContratosInput = {
@@ -222556,6 +226559,8 @@ export namespace Prisma {
     backupLogs?: BackupLogUpdateManyWithoutUserNestedInput
     backupPlans?: BackupPlanUpdateManyWithoutUserNestedInput
     tenantMemberships?: TenantMembershipUpdateManyWithoutUserNestedInput
+    reviews?: ReviewUpdateManyWithoutUserNestedInput
+    reviewPrompts?: ReviewPromptUpdateManyWithoutUserNestedInput
   }
 
   export type UserUncheckedUpdateWithoutContratosAprobadosInput = {
@@ -222595,6 +226600,8 @@ export namespace Prisma {
     backupLogs?: BackupLogUncheckedUpdateManyWithoutUserNestedInput
     backupPlans?: BackupPlanUncheckedUpdateManyWithoutUserNestedInput
     tenantMemberships?: TenantMembershipUncheckedUpdateManyWithoutUserNestedInput
+    reviews?: ReviewUncheckedUpdateManyWithoutUserNestedInput
+    reviewPrompts?: ReviewPromptUncheckedUpdateManyWithoutUserNestedInput
   }
 
   export type ClienteUpsertWithoutContratosInput = {
@@ -222700,6 +226707,8 @@ export namespace Prisma {
     backupLogs?: BackupLogUpdateManyWithoutUserNestedInput
     backupPlans?: BackupPlanUpdateManyWithoutUserNestedInput
     tenantMemberships?: TenantMembershipUpdateManyWithoutUserNestedInput
+    reviews?: ReviewUpdateManyWithoutUserNestedInput
+    reviewPrompts?: ReviewPromptUpdateManyWithoutUserNestedInput
   }
 
   export type UserUncheckedUpdateWithoutContratosCreadosInput = {
@@ -222739,6 +226748,8 @@ export namespace Prisma {
     backupLogs?: BackupLogUncheckedUpdateManyWithoutUserNestedInput
     backupPlans?: BackupPlanUncheckedUpdateManyWithoutUserNestedInput
     tenantMemberships?: TenantMembershipUncheckedUpdateManyWithoutUserNestedInput
+    reviews?: ReviewUncheckedUpdateManyWithoutUserNestedInput
+    reviewPrompts?: ReviewPromptUncheckedUpdateManyWithoutUserNestedInput
   }
 
   export type TenantUpsertWithoutContratosInput = {
@@ -222819,6 +226830,8 @@ export namespace Prisma {
     licencias?: TenantLicenseUpdateManyWithoutTenantNestedInput
     memberships?: TenantMembershipUpdateManyWithoutTenantNestedInput
     turnosPos?: TurnoPuntoVentaUpdateManyWithoutTenantNestedInput
+    reviews?: ReviewUpdateManyWithoutTenantNestedInput
+    reviewPrompts?: ReviewPromptUpdateManyWithoutTenantNestedInput
   }
 
   export type TenantUncheckedUpdateWithoutContratosInput = {
@@ -222888,6 +226901,8 @@ export namespace Prisma {
     licencias?: TenantLicenseUncheckedUpdateManyWithoutTenantNestedInput
     memberships?: TenantMembershipUncheckedUpdateManyWithoutTenantNestedInput
     turnosPos?: TurnoPuntoVentaUncheckedUpdateManyWithoutTenantNestedInput
+    reviews?: ReviewUncheckedUpdateManyWithoutTenantNestedInput
+    reviewPrompts?: ReviewPromptUncheckedUpdateManyWithoutTenantNestedInput
   }
 
   export type VendorUpsertWithoutContratosInput = {
@@ -223175,6 +227190,8 @@ export namespace Prisma {
     backupLogs?: BackupLogCreateNestedManyWithoutUserInput
     backupPlans?: BackupPlanCreateNestedManyWithoutUserInput
     tenantMemberships?: TenantMembershipCreateNestedManyWithoutUserInput
+    reviews?: ReviewCreateNestedManyWithoutUserInput
+    reviewPrompts?: ReviewPromptCreateNestedManyWithoutUserInput
   }
 
   export type UserUncheckedCreateWithoutContratoVersionesInput = {
@@ -223214,6 +227231,8 @@ export namespace Prisma {
     backupLogs?: BackupLogUncheckedCreateNestedManyWithoutUserInput
     backupPlans?: BackupPlanUncheckedCreateNestedManyWithoutUserInput
     tenantMemberships?: TenantMembershipUncheckedCreateNestedManyWithoutUserInput
+    reviews?: ReviewUncheckedCreateNestedManyWithoutUserInput
+    reviewPrompts?: ReviewPromptUncheckedCreateNestedManyWithoutUserInput
   }
 
   export type UserCreateOrConnectWithoutContratoVersionesInput = {
@@ -223356,6 +227375,8 @@ export namespace Prisma {
     backupLogs?: BackupLogUpdateManyWithoutUserNestedInput
     backupPlans?: BackupPlanUpdateManyWithoutUserNestedInput
     tenantMemberships?: TenantMembershipUpdateManyWithoutUserNestedInput
+    reviews?: ReviewUpdateManyWithoutUserNestedInput
+    reviewPrompts?: ReviewPromptUpdateManyWithoutUserNestedInput
   }
 
   export type UserUncheckedUpdateWithoutContratoVersionesInput = {
@@ -223395,6 +227416,8 @@ export namespace Prisma {
     backupLogs?: BackupLogUncheckedUpdateManyWithoutUserNestedInput
     backupPlans?: BackupPlanUncheckedUpdateManyWithoutUserNestedInput
     tenantMemberships?: TenantMembershipUncheckedUpdateManyWithoutUserNestedInput
+    reviews?: ReviewUncheckedUpdateManyWithoutUserNestedInput
+    reviewPrompts?: ReviewPromptUncheckedUpdateManyWithoutUserNestedInput
   }
 
   export type ContratoCreateWithoutFirmasInput = {
@@ -223499,6 +227522,8 @@ export namespace Prisma {
     backupLogs?: BackupLogCreateNestedManyWithoutUserInput
     backupPlans?: BackupPlanCreateNestedManyWithoutUserInput
     tenantMemberships?: TenantMembershipCreateNestedManyWithoutUserInput
+    reviews?: ReviewCreateNestedManyWithoutUserInput
+    reviewPrompts?: ReviewPromptCreateNestedManyWithoutUserInput
   }
 
   export type UserUncheckedCreateWithoutContratoFirmasInput = {
@@ -223538,6 +227563,8 @@ export namespace Prisma {
     backupLogs?: BackupLogUncheckedCreateNestedManyWithoutUserInput
     backupPlans?: BackupPlanUncheckedCreateNestedManyWithoutUserInput
     tenantMemberships?: TenantMembershipUncheckedCreateNestedManyWithoutUserInput
+    reviews?: ReviewUncheckedCreateNestedManyWithoutUserInput
+    reviewPrompts?: ReviewPromptUncheckedCreateNestedManyWithoutUserInput
   }
 
   export type UserCreateOrConnectWithoutContratoFirmasInput = {
@@ -223664,6 +227691,8 @@ export namespace Prisma {
     backupLogs?: BackupLogUpdateManyWithoutUserNestedInput
     backupPlans?: BackupPlanUpdateManyWithoutUserNestedInput
     tenantMemberships?: TenantMembershipUpdateManyWithoutUserNestedInput
+    reviews?: ReviewUpdateManyWithoutUserNestedInput
+    reviewPrompts?: ReviewPromptUpdateManyWithoutUserNestedInput
   }
 
   export type UserUncheckedUpdateWithoutContratoFirmasInput = {
@@ -223703,6 +227732,8 @@ export namespace Prisma {
     backupLogs?: BackupLogUncheckedUpdateManyWithoutUserNestedInput
     backupPlans?: BackupPlanUncheckedUpdateManyWithoutUserNestedInput
     tenantMemberships?: TenantMembershipUncheckedUpdateManyWithoutUserNestedInput
+    reviews?: ReviewUncheckedUpdateManyWithoutUserNestedInput
+    reviewPrompts?: ReviewPromptUncheckedUpdateManyWithoutUserNestedInput
   }
 
   export type UserCreateWithoutContratoAprobacionesInput = {
@@ -223742,6 +227773,8 @@ export namespace Prisma {
     backupLogs?: BackupLogCreateNestedManyWithoutUserInput
     backupPlans?: BackupPlanCreateNestedManyWithoutUserInput
     tenantMemberships?: TenantMembershipCreateNestedManyWithoutUserInput
+    reviews?: ReviewCreateNestedManyWithoutUserInput
+    reviewPrompts?: ReviewPromptCreateNestedManyWithoutUserInput
   }
 
   export type UserUncheckedCreateWithoutContratoAprobacionesInput = {
@@ -223781,6 +227814,8 @@ export namespace Prisma {
     backupLogs?: BackupLogUncheckedCreateNestedManyWithoutUserInput
     backupPlans?: BackupPlanUncheckedCreateNestedManyWithoutUserInput
     tenantMemberships?: TenantMembershipUncheckedCreateNestedManyWithoutUserInput
+    reviews?: ReviewUncheckedCreateNestedManyWithoutUserInput
+    reviewPrompts?: ReviewPromptUncheckedCreateNestedManyWithoutUserInput
   }
 
   export type UserCreateOrConnectWithoutContratoAprobacionesInput = {
@@ -223901,6 +227936,8 @@ export namespace Prisma {
     backupLogs?: BackupLogUpdateManyWithoutUserNestedInput
     backupPlans?: BackupPlanUpdateManyWithoutUserNestedInput
     tenantMemberships?: TenantMembershipUpdateManyWithoutUserNestedInput
+    reviews?: ReviewUpdateManyWithoutUserNestedInput
+    reviewPrompts?: ReviewPromptUpdateManyWithoutUserNestedInput
   }
 
   export type UserUncheckedUpdateWithoutContratoAprobacionesInput = {
@@ -223940,6 +227977,8 @@ export namespace Prisma {
     backupLogs?: BackupLogUncheckedUpdateManyWithoutUserNestedInput
     backupPlans?: BackupPlanUncheckedUpdateManyWithoutUserNestedInput
     tenantMemberships?: TenantMembershipUncheckedUpdateManyWithoutUserNestedInput
+    reviews?: ReviewUncheckedUpdateManyWithoutUserNestedInput
+    reviewPrompts?: ReviewPromptUncheckedUpdateManyWithoutUserNestedInput
   }
 
   export type ContratoUpsertWithoutAprobacionesInput = {
@@ -224115,6 +228154,8 @@ export namespace Prisma {
     backupLogs?: BackupLogCreateNestedManyWithoutUserInput
     backupPlans?: BackupPlanCreateNestedManyWithoutUserInput
     tenantMemberships?: TenantMembershipCreateNestedManyWithoutUserInput
+    reviews?: ReviewCreateNestedManyWithoutUserInput
+    reviewPrompts?: ReviewPromptCreateNestedManyWithoutUserInput
   }
 
   export type UserUncheckedCreateWithoutContratoArchivosInput = {
@@ -224154,6 +228195,8 @@ export namespace Prisma {
     backupLogs?: BackupLogUncheckedCreateNestedManyWithoutUserInput
     backupPlans?: BackupPlanUncheckedCreateNestedManyWithoutUserInput
     tenantMemberships?: TenantMembershipUncheckedCreateNestedManyWithoutUserInput
+    reviews?: ReviewUncheckedCreateNestedManyWithoutUserInput
+    reviewPrompts?: ReviewPromptUncheckedCreateNestedManyWithoutUserInput
   }
 
   export type UserCreateOrConnectWithoutContratoArchivosInput = {
@@ -224305,6 +228348,8 @@ export namespace Prisma {
     backupLogs?: BackupLogUpdateManyWithoutUserNestedInput
     backupPlans?: BackupPlanUpdateManyWithoutUserNestedInput
     tenantMemberships?: TenantMembershipUpdateManyWithoutUserNestedInput
+    reviews?: ReviewUpdateManyWithoutUserNestedInput
+    reviewPrompts?: ReviewPromptUpdateManyWithoutUserNestedInput
   }
 
   export type UserUncheckedUpdateWithoutContratoArchivosInput = {
@@ -224344,6 +228389,8 @@ export namespace Prisma {
     backupLogs?: BackupLogUncheckedUpdateManyWithoutUserNestedInput
     backupPlans?: BackupPlanUncheckedUpdateManyWithoutUserNestedInput
     tenantMemberships?: TenantMembershipUncheckedUpdateManyWithoutUserNestedInput
+    reviews?: ReviewUncheckedUpdateManyWithoutUserNestedInput
+    reviewPrompts?: ReviewPromptUncheckedUpdateManyWithoutUserNestedInput
   }
 
   export type ContratoVersionUpsertWithoutArchivosInput = {
@@ -224550,6 +228597,8 @@ export namespace Prisma {
     backupLogs?: BackupLogCreateNestedManyWithoutUserInput
     backupPlans?: BackupPlanCreateNestedManyWithoutUserInput
     tenantMemberships?: TenantMembershipCreateNestedManyWithoutUserInput
+    reviews?: ReviewCreateNestedManyWithoutUserInput
+    reviewPrompts?: ReviewPromptCreateNestedManyWithoutUserInput
   }
 
   export type UserUncheckedCreateWithoutTiposContratosCustomInput = {
@@ -224589,6 +228638,8 @@ export namespace Prisma {
     backupLogs?: BackupLogUncheckedCreateNestedManyWithoutUserInput
     backupPlans?: BackupPlanUncheckedCreateNestedManyWithoutUserInput
     tenantMemberships?: TenantMembershipUncheckedCreateNestedManyWithoutUserInput
+    reviews?: ReviewUncheckedCreateNestedManyWithoutUserInput
+    reviewPrompts?: ReviewPromptUncheckedCreateNestedManyWithoutUserInput
   }
 
   export type UserCreateOrConnectWithoutTiposContratosCustomInput = {
@@ -224644,6 +228695,8 @@ export namespace Prisma {
     backupLogs?: BackupLogUpdateManyWithoutUserNestedInput
     backupPlans?: BackupPlanUpdateManyWithoutUserNestedInput
     tenantMemberships?: TenantMembershipUpdateManyWithoutUserNestedInput
+    reviews?: ReviewUpdateManyWithoutUserNestedInput
+    reviewPrompts?: ReviewPromptUpdateManyWithoutUserNestedInput
   }
 
   export type UserUncheckedUpdateWithoutTiposContratosCustomInput = {
@@ -224683,6 +228736,8 @@ export namespace Prisma {
     backupLogs?: BackupLogUncheckedUpdateManyWithoutUserNestedInput
     backupPlans?: BackupPlanUncheckedUpdateManyWithoutUserNestedInput
     tenantMemberships?: TenantMembershipUncheckedUpdateManyWithoutUserNestedInput
+    reviews?: ReviewUncheckedUpdateManyWithoutUserNestedInput
+    reviewPrompts?: ReviewPromptUncheckedUpdateManyWithoutUserNestedInput
   }
 
   export type AnticipoCreateWithoutFacturaInput = {
@@ -224971,6 +229026,8 @@ export namespace Prisma {
     licencias?: TenantLicenseCreateNestedManyWithoutTenantInput
     memberships?: TenantMembershipCreateNestedManyWithoutTenantInput
     turnosPos?: TurnoPuntoVentaCreateNestedManyWithoutTenantInput
+    reviews?: ReviewCreateNestedManyWithoutTenantInput
+    reviewPrompts?: ReviewPromptCreateNestedManyWithoutTenantInput
   }
 
   export type TenantUncheckedCreateWithoutFacturasInput = {
@@ -225040,6 +229097,8 @@ export namespace Prisma {
     licencias?: TenantLicenseUncheckedCreateNestedManyWithoutTenantInput
     memberships?: TenantMembershipUncheckedCreateNestedManyWithoutTenantInput
     turnosPos?: TurnoPuntoVentaUncheckedCreateNestedManyWithoutTenantInput
+    reviews?: ReviewUncheckedCreateNestedManyWithoutTenantInput
+    reviewPrompts?: ReviewPromptUncheckedCreateNestedManyWithoutTenantInput
   }
 
   export type TenantCreateOrConnectWithoutFacturasInput = {
@@ -225437,6 +229496,8 @@ export namespace Prisma {
     licencias?: TenantLicenseUpdateManyWithoutTenantNestedInput
     memberships?: TenantMembershipUpdateManyWithoutTenantNestedInput
     turnosPos?: TurnoPuntoVentaUpdateManyWithoutTenantNestedInput
+    reviews?: ReviewUpdateManyWithoutTenantNestedInput
+    reviewPrompts?: ReviewPromptUpdateManyWithoutTenantNestedInput
   }
 
   export type TenantUncheckedUpdateWithoutFacturasInput = {
@@ -225506,6 +229567,8 @@ export namespace Prisma {
     licencias?: TenantLicenseUncheckedUpdateManyWithoutTenantNestedInput
     memberships?: TenantMembershipUncheckedUpdateManyWithoutTenantNestedInput
     turnosPos?: TurnoPuntoVentaUncheckedUpdateManyWithoutTenantNestedInput
+    reviews?: ReviewUncheckedUpdateManyWithoutTenantNestedInput
+    reviewPrompts?: ReviewPromptUncheckedUpdateManyWithoutTenantNestedInput
   }
 
   export type VentaUpsertWithoutFacturaInput = {
@@ -225714,6 +229777,8 @@ export namespace Prisma {
     licencias?: TenantLicenseCreateNestedManyWithoutTenantInput
     memberships?: TenantMembershipCreateNestedManyWithoutTenantInput
     turnosPos?: TurnoPuntoVentaCreateNestedManyWithoutTenantInput
+    reviews?: ReviewCreateNestedManyWithoutTenantInput
+    reviewPrompts?: ReviewPromptCreateNestedManyWithoutTenantInput
   }
 
   export type TenantUncheckedCreateWithoutSeriesFacturacionInput = {
@@ -225783,6 +229848,8 @@ export namespace Prisma {
     licencias?: TenantLicenseUncheckedCreateNestedManyWithoutTenantInput
     memberships?: TenantMembershipUncheckedCreateNestedManyWithoutTenantInput
     turnosPos?: TurnoPuntoVentaUncheckedCreateNestedManyWithoutTenantInput
+    reviews?: ReviewUncheckedCreateNestedManyWithoutTenantInput
+    reviewPrompts?: ReviewPromptUncheckedCreateNestedManyWithoutTenantInput
   }
 
   export type TenantCreateOrConnectWithoutSeriesFacturacionInput = {
@@ -225884,6 +229951,8 @@ export namespace Prisma {
     licencias?: TenantLicenseUpdateManyWithoutTenantNestedInput
     memberships?: TenantMembershipUpdateManyWithoutTenantNestedInput
     turnosPos?: TurnoPuntoVentaUpdateManyWithoutTenantNestedInput
+    reviews?: ReviewUpdateManyWithoutTenantNestedInput
+    reviewPrompts?: ReviewPromptUpdateManyWithoutTenantNestedInput
   }
 
   export type TenantUncheckedUpdateWithoutSeriesFacturacionInput = {
@@ -225953,6 +230022,8 @@ export namespace Prisma {
     licencias?: TenantLicenseUncheckedUpdateManyWithoutTenantNestedInput
     memberships?: TenantMembershipUncheckedUpdateManyWithoutTenantNestedInput
     turnosPos?: TurnoPuntoVentaUncheckedUpdateManyWithoutTenantNestedInput
+    reviews?: ReviewUncheckedUpdateManyWithoutTenantNestedInput
+    reviewPrompts?: ReviewPromptUncheckedUpdateManyWithoutTenantNestedInput
   }
 
   export type ClienteCreateWithoutOfertasInput = {
@@ -226071,6 +230142,8 @@ export namespace Prisma {
     licencias?: TenantLicenseCreateNestedManyWithoutTenantInput
     memberships?: TenantMembershipCreateNestedManyWithoutTenantInput
     turnosPos?: TurnoPuntoVentaCreateNestedManyWithoutTenantInput
+    reviews?: ReviewCreateNestedManyWithoutTenantInput
+    reviewPrompts?: ReviewPromptCreateNestedManyWithoutTenantInput
   }
 
   export type TenantUncheckedCreateWithoutOfertasInput = {
@@ -226140,6 +230213,8 @@ export namespace Prisma {
     licencias?: TenantLicenseUncheckedCreateNestedManyWithoutTenantInput
     memberships?: TenantMembershipUncheckedCreateNestedManyWithoutTenantInput
     turnosPos?: TurnoPuntoVentaUncheckedCreateNestedManyWithoutTenantInput
+    reviews?: ReviewUncheckedCreateNestedManyWithoutTenantInput
+    reviewPrompts?: ReviewPromptUncheckedCreateNestedManyWithoutTenantInput
   }
 
   export type TenantCreateOrConnectWithoutOfertasInput = {
@@ -226371,6 +230446,8 @@ export namespace Prisma {
     licencias?: TenantLicenseUpdateManyWithoutTenantNestedInput
     memberships?: TenantMembershipUpdateManyWithoutTenantNestedInput
     turnosPos?: TurnoPuntoVentaUpdateManyWithoutTenantNestedInput
+    reviews?: ReviewUpdateManyWithoutTenantNestedInput
+    reviewPrompts?: ReviewPromptUpdateManyWithoutTenantNestedInput
   }
 
   export type TenantUncheckedUpdateWithoutOfertasInput = {
@@ -226440,6 +230517,8 @@ export namespace Prisma {
     licencias?: TenantLicenseUncheckedUpdateManyWithoutTenantNestedInput
     memberships?: TenantMembershipUncheckedUpdateManyWithoutTenantNestedInput
     turnosPos?: TurnoPuntoVentaUncheckedUpdateManyWithoutTenantNestedInput
+    reviews?: ReviewUncheckedUpdateManyWithoutTenantNestedInput
+    reviewPrompts?: ReviewPromptUncheckedUpdateManyWithoutTenantNestedInput
   }
 
   export type OfertaItemUpsertWithWhereUniqueWithoutOfertaInput = {
@@ -227056,6 +231135,8 @@ export namespace Prisma {
     licencias?: TenantLicenseCreateNestedManyWithoutTenantInput
     memberships?: TenantMembershipCreateNestedManyWithoutTenantInput
     turnosPos?: TurnoPuntoVentaCreateNestedManyWithoutTenantInput
+    reviews?: ReviewCreateNestedManyWithoutTenantInput
+    reviewPrompts?: ReviewPromptCreateNestedManyWithoutTenantInput
   }
 
   export type TenantUncheckedCreateWithoutCuentasPorCobrarInput = {
@@ -227125,6 +231206,8 @@ export namespace Prisma {
     licencias?: TenantLicenseUncheckedCreateNestedManyWithoutTenantInput
     memberships?: TenantMembershipUncheckedCreateNestedManyWithoutTenantInput
     turnosPos?: TurnoPuntoVentaUncheckedCreateNestedManyWithoutTenantInput
+    reviews?: ReviewUncheckedCreateNestedManyWithoutTenantInput
+    reviewPrompts?: ReviewPromptUncheckedCreateNestedManyWithoutTenantInput
   }
 
   export type TenantCreateOrConnectWithoutCuentasPorCobrarInput = {
@@ -227383,6 +231466,8 @@ export namespace Prisma {
     licencias?: TenantLicenseUpdateManyWithoutTenantNestedInput
     memberships?: TenantMembershipUpdateManyWithoutTenantNestedInput
     turnosPos?: TurnoPuntoVentaUpdateManyWithoutTenantNestedInput
+    reviews?: ReviewUpdateManyWithoutTenantNestedInput
+    reviewPrompts?: ReviewPromptUpdateManyWithoutTenantNestedInput
   }
 
   export type TenantUncheckedUpdateWithoutCuentasPorCobrarInput = {
@@ -227452,6 +231537,8 @@ export namespace Prisma {
     licencias?: TenantLicenseUncheckedUpdateManyWithoutTenantNestedInput
     memberships?: TenantMembershipUncheckedUpdateManyWithoutTenantNestedInput
     turnosPos?: TurnoPuntoVentaUncheckedUpdateManyWithoutTenantNestedInput
+    reviews?: ReviewUncheckedUpdateManyWithoutTenantNestedInput
+    reviewPrompts?: ReviewPromptUncheckedUpdateManyWithoutTenantNestedInput
   }
 
   export type PrestamoCashUpsertWithoutCuentaPorCobrarInput = {
@@ -227807,6 +231894,8 @@ export namespace Prisma {
     licencias?: TenantLicenseCreateNestedManyWithoutTenantInput
     memberships?: TenantMembershipCreateNestedManyWithoutTenantInput
     turnosPos?: TurnoPuntoVentaCreateNestedManyWithoutTenantInput
+    reviews?: ReviewCreateNestedManyWithoutTenantInput
+    reviewPrompts?: ReviewPromptCreateNestedManyWithoutTenantInput
   }
 
   export type TenantUncheckedCreateWithoutCuentasPorPagarInput = {
@@ -227876,6 +231965,8 @@ export namespace Prisma {
     licencias?: TenantLicenseUncheckedCreateNestedManyWithoutTenantInput
     memberships?: TenantMembershipUncheckedCreateNestedManyWithoutTenantInput
     turnosPos?: TurnoPuntoVentaUncheckedCreateNestedManyWithoutTenantInput
+    reviews?: ReviewUncheckedCreateNestedManyWithoutTenantInput
+    reviewPrompts?: ReviewPromptUncheckedCreateNestedManyWithoutTenantInput
   }
 
   export type TenantCreateOrConnectWithoutCuentasPorPagarInput = {
@@ -228363,6 +232454,8 @@ export namespace Prisma {
     licencias?: TenantLicenseUpdateManyWithoutTenantNestedInput
     memberships?: TenantMembershipUpdateManyWithoutTenantNestedInput
     turnosPos?: TurnoPuntoVentaUpdateManyWithoutTenantNestedInput
+    reviews?: ReviewUpdateManyWithoutTenantNestedInput
+    reviewPrompts?: ReviewPromptUpdateManyWithoutTenantNestedInput
   }
 
   export type TenantUncheckedUpdateWithoutCuentasPorPagarInput = {
@@ -228432,6 +232525,8 @@ export namespace Prisma {
     licencias?: TenantLicenseUncheckedUpdateManyWithoutTenantNestedInput
     memberships?: TenantMembershipUncheckedUpdateManyWithoutTenantNestedInput
     turnosPos?: TurnoPuntoVentaUncheckedUpdateManyWithoutTenantNestedInput
+    reviews?: ReviewUncheckedUpdateManyWithoutTenantNestedInput
+    reviewPrompts?: ReviewPromptUncheckedUpdateManyWithoutTenantNestedInput
   }
 
   export type DeudaCashUpsertWithoutCuentaPorPagarInput = {
@@ -228694,6 +232789,8 @@ export namespace Prisma {
     licencias?: TenantLicenseCreateNestedManyWithoutTenantInput
     memberships?: TenantMembershipCreateNestedManyWithoutTenantInput
     turnosPos?: TurnoPuntoVentaCreateNestedManyWithoutTenantInput
+    reviews?: ReviewCreateNestedManyWithoutTenantInput
+    reviewPrompts?: ReviewPromptCreateNestedManyWithoutTenantInput
   }
 
   export type TenantUncheckedCreateWithoutDeudasCashInput = {
@@ -228763,6 +232860,8 @@ export namespace Prisma {
     licencias?: TenantLicenseUncheckedCreateNestedManyWithoutTenantInput
     memberships?: TenantMembershipUncheckedCreateNestedManyWithoutTenantInput
     turnosPos?: TurnoPuntoVentaUncheckedCreateNestedManyWithoutTenantInput
+    reviews?: ReviewUncheckedCreateNestedManyWithoutTenantInput
+    reviewPrompts?: ReviewPromptUncheckedCreateNestedManyWithoutTenantInput
   }
 
   export type TenantCreateOrConnectWithoutDeudasCashInput = {
@@ -229022,6 +233121,8 @@ export namespace Prisma {
     licencias?: TenantLicenseUpdateManyWithoutTenantNestedInput
     memberships?: TenantMembershipUpdateManyWithoutTenantNestedInput
     turnosPos?: TurnoPuntoVentaUpdateManyWithoutTenantNestedInput
+    reviews?: ReviewUpdateManyWithoutTenantNestedInput
+    reviewPrompts?: ReviewPromptUpdateManyWithoutTenantNestedInput
   }
 
   export type TenantUncheckedUpdateWithoutDeudasCashInput = {
@@ -229091,6 +233192,8 @@ export namespace Prisma {
     licencias?: TenantLicenseUncheckedUpdateManyWithoutTenantNestedInput
     memberships?: TenantMembershipUncheckedUpdateManyWithoutTenantNestedInput
     turnosPos?: TurnoPuntoVentaUncheckedUpdateManyWithoutTenantNestedInput
+    reviews?: ReviewUncheckedUpdateManyWithoutTenantNestedInput
+    reviewPrompts?: ReviewPromptUncheckedUpdateManyWithoutTenantNestedInput
   }
 
   export type ReconciliacionVentaUpsertWithWhereUniqueWithoutDeudaCashInput = {
@@ -229264,6 +233367,8 @@ export namespace Prisma {
     licencias?: TenantLicenseCreateNestedManyWithoutTenantInput
     memberships?: TenantMembershipCreateNestedManyWithoutTenantInput
     turnosPos?: TurnoPuntoVentaCreateNestedManyWithoutTenantInput
+    reviews?: ReviewCreateNestedManyWithoutTenantInput
+    reviewPrompts?: ReviewPromptCreateNestedManyWithoutTenantInput
   }
 
   export type TenantUncheckedCreateWithoutPrestamosCashInput = {
@@ -229333,6 +233438,8 @@ export namespace Prisma {
     licencias?: TenantLicenseUncheckedCreateNestedManyWithoutTenantInput
     memberships?: TenantMembershipUncheckedCreateNestedManyWithoutTenantInput
     turnosPos?: TurnoPuntoVentaUncheckedCreateNestedManyWithoutTenantInput
+    reviews?: ReviewUncheckedCreateNestedManyWithoutTenantInput
+    reviewPrompts?: ReviewPromptUncheckedCreateNestedManyWithoutTenantInput
   }
 
   export type TenantCreateOrConnectWithoutPrestamosCashInput = {
@@ -229570,6 +233677,8 @@ export namespace Prisma {
     licencias?: TenantLicenseUpdateManyWithoutTenantNestedInput
     memberships?: TenantMembershipUpdateManyWithoutTenantNestedInput
     turnosPos?: TurnoPuntoVentaUpdateManyWithoutTenantNestedInput
+    reviews?: ReviewUpdateManyWithoutTenantNestedInput
+    reviewPrompts?: ReviewPromptUpdateManyWithoutTenantNestedInput
   }
 
   export type TenantUncheckedUpdateWithoutPrestamosCashInput = {
@@ -229639,6 +233748,8 @@ export namespace Prisma {
     licencias?: TenantLicenseUncheckedUpdateManyWithoutTenantNestedInput
     memberships?: TenantMembershipUncheckedUpdateManyWithoutTenantNestedInput
     turnosPos?: TurnoPuntoVentaUncheckedUpdateManyWithoutTenantNestedInput
+    reviews?: ReviewUncheckedUpdateManyWithoutTenantNestedInput
+    reviewPrompts?: ReviewPromptUncheckedUpdateManyWithoutTenantNestedInput
   }
 
   export type ReconciliacionVentaUpsertWithWhereUniqueWithoutPrestamoCashInput = {
@@ -229781,6 +233892,8 @@ export namespace Prisma {
     licencias?: TenantLicenseCreateNestedManyWithoutTenantInput
     memberships?: TenantMembershipCreateNestedManyWithoutTenantInput
     turnosPos?: TurnoPuntoVentaCreateNestedManyWithoutTenantInput
+    reviews?: ReviewCreateNestedManyWithoutTenantInput
+    reviewPrompts?: ReviewPromptCreateNestedManyWithoutTenantInput
   }
 
   export type TenantUncheckedCreateWithoutPagosCuentaPorPagarInput = {
@@ -229850,6 +233963,8 @@ export namespace Prisma {
     licencias?: TenantLicenseUncheckedCreateNestedManyWithoutTenantInput
     memberships?: TenantMembershipUncheckedCreateNestedManyWithoutTenantInput
     turnosPos?: TurnoPuntoVentaUncheckedCreateNestedManyWithoutTenantInput
+    reviews?: ReviewUncheckedCreateNestedManyWithoutTenantInput
+    reviewPrompts?: ReviewPromptUncheckedCreateNestedManyWithoutTenantInput
   }
 
   export type TenantCreateOrConnectWithoutPagosCuentaPorPagarInput = {
@@ -229998,6 +234113,8 @@ export namespace Prisma {
     licencias?: TenantLicenseUpdateManyWithoutTenantNestedInput
     memberships?: TenantMembershipUpdateManyWithoutTenantNestedInput
     turnosPos?: TurnoPuntoVentaUpdateManyWithoutTenantNestedInput
+    reviews?: ReviewUpdateManyWithoutTenantNestedInput
+    reviewPrompts?: ReviewPromptUpdateManyWithoutTenantNestedInput
   }
 
   export type TenantUncheckedUpdateWithoutPagosCuentaPorPagarInput = {
@@ -230067,6 +234184,8 @@ export namespace Prisma {
     licencias?: TenantLicenseUncheckedUpdateManyWithoutTenantNestedInput
     memberships?: TenantMembershipUncheckedUpdateManyWithoutTenantNestedInput
     turnosPos?: TurnoPuntoVentaUncheckedUpdateManyWithoutTenantNestedInput
+    reviews?: ReviewUncheckedUpdateManyWithoutTenantNestedInput
+    reviewPrompts?: ReviewPromptUncheckedUpdateManyWithoutTenantNestedInput
   }
 
   export type TenantCreateWithoutEquiposReparacionInput = {
@@ -230136,6 +234255,8 @@ export namespace Prisma {
     licencias?: TenantLicenseCreateNestedManyWithoutTenantInput
     memberships?: TenantMembershipCreateNestedManyWithoutTenantInput
     turnosPos?: TurnoPuntoVentaCreateNestedManyWithoutTenantInput
+    reviews?: ReviewCreateNestedManyWithoutTenantInput
+    reviewPrompts?: ReviewPromptCreateNestedManyWithoutTenantInput
   }
 
   export type TenantUncheckedCreateWithoutEquiposReparacionInput = {
@@ -230205,6 +234326,8 @@ export namespace Prisma {
     licencias?: TenantLicenseUncheckedCreateNestedManyWithoutTenantInput
     memberships?: TenantMembershipUncheckedCreateNestedManyWithoutTenantInput
     turnosPos?: TurnoPuntoVentaUncheckedCreateNestedManyWithoutTenantInput
+    reviews?: ReviewUncheckedCreateNestedManyWithoutTenantInput
+    reviewPrompts?: ReviewPromptUncheckedCreateNestedManyWithoutTenantInput
   }
 
   export type TenantCreateOrConnectWithoutEquiposReparacionInput = {
@@ -230442,6 +234565,8 @@ export namespace Prisma {
     licencias?: TenantLicenseUpdateManyWithoutTenantNestedInput
     memberships?: TenantMembershipUpdateManyWithoutTenantNestedInput
     turnosPos?: TurnoPuntoVentaUpdateManyWithoutTenantNestedInput
+    reviews?: ReviewUpdateManyWithoutTenantNestedInput
+    reviewPrompts?: ReviewPromptUpdateManyWithoutTenantNestedInput
   }
 
   export type TenantUncheckedUpdateWithoutEquiposReparacionInput = {
@@ -230511,6 +234636,8 @@ export namespace Prisma {
     licencias?: TenantLicenseUncheckedUpdateManyWithoutTenantNestedInput
     memberships?: TenantMembershipUncheckedUpdateManyWithoutTenantNestedInput
     turnosPos?: TurnoPuntoVentaUncheckedUpdateManyWithoutTenantNestedInput
+    reviews?: ReviewUncheckedUpdateManyWithoutTenantNestedInput
+    reviewPrompts?: ReviewPromptUncheckedUpdateManyWithoutTenantNestedInput
   }
 
   export type OrdenReparacionUpsertWithWhereUniqueWithoutEquipoTipoInput = {
@@ -230689,6 +234816,8 @@ export namespace Prisma {
     licencias?: TenantLicenseCreateNestedManyWithoutTenantInput
     memberships?: TenantMembershipCreateNestedManyWithoutTenantInput
     turnosPos?: TurnoPuntoVentaCreateNestedManyWithoutTenantInput
+    reviews?: ReviewCreateNestedManyWithoutTenantInput
+    reviewPrompts?: ReviewPromptCreateNestedManyWithoutTenantInput
   }
 
   export type TenantUncheckedCreateWithoutPiezasReparacionInput = {
@@ -230758,6 +234887,8 @@ export namespace Prisma {
     licencias?: TenantLicenseUncheckedCreateNestedManyWithoutTenantInput
     memberships?: TenantMembershipUncheckedCreateNestedManyWithoutTenantInput
     turnosPos?: TurnoPuntoVentaUncheckedCreateNestedManyWithoutTenantInput
+    reviews?: ReviewUncheckedCreateNestedManyWithoutTenantInput
+    reviewPrompts?: ReviewPromptUncheckedCreateNestedManyWithoutTenantInput
   }
 
   export type TenantCreateOrConnectWithoutPiezasReparacionInput = {
@@ -230892,6 +235023,8 @@ export namespace Prisma {
     licencias?: TenantLicenseUpdateManyWithoutTenantNestedInput
     memberships?: TenantMembershipUpdateManyWithoutTenantNestedInput
     turnosPos?: TurnoPuntoVentaUpdateManyWithoutTenantNestedInput
+    reviews?: ReviewUpdateManyWithoutTenantNestedInput
+    reviewPrompts?: ReviewPromptUpdateManyWithoutTenantNestedInput
   }
 
   export type TenantUncheckedUpdateWithoutPiezasReparacionInput = {
@@ -230961,6 +235094,8 @@ export namespace Prisma {
     licencias?: TenantLicenseUncheckedUpdateManyWithoutTenantNestedInput
     memberships?: TenantMembershipUncheckedUpdateManyWithoutTenantNestedInput
     turnosPos?: TurnoPuntoVentaUncheckedUpdateManyWithoutTenantNestedInput
+    reviews?: ReviewUncheckedUpdateManyWithoutTenantNestedInput
+    reviewPrompts?: ReviewPromptUncheckedUpdateManyWithoutTenantNestedInput
   }
 
   export type ClienteCreateWithoutOrdenesReparacionInput = {
@@ -231159,6 +235294,8 @@ export namespace Prisma {
     licencias?: TenantLicenseCreateNestedManyWithoutTenantInput
     memberships?: TenantMembershipCreateNestedManyWithoutTenantInput
     turnosPos?: TurnoPuntoVentaCreateNestedManyWithoutTenantInput
+    reviews?: ReviewCreateNestedManyWithoutTenantInput
+    reviewPrompts?: ReviewPromptCreateNestedManyWithoutTenantInput
   }
 
   export type TenantUncheckedCreateWithoutOrdenesReparacionInput = {
@@ -231228,6 +235365,8 @@ export namespace Prisma {
     licencias?: TenantLicenseUncheckedCreateNestedManyWithoutTenantInput
     memberships?: TenantMembershipUncheckedCreateNestedManyWithoutTenantInput
     turnosPos?: TurnoPuntoVentaUncheckedCreateNestedManyWithoutTenantInput
+    reviews?: ReviewUncheckedCreateNestedManyWithoutTenantInput
+    reviewPrompts?: ReviewPromptUncheckedCreateNestedManyWithoutTenantInput
   }
 
   export type TenantCreateOrConnectWithoutOrdenesReparacionInput = {
@@ -231627,6 +235766,8 @@ export namespace Prisma {
     licencias?: TenantLicenseUpdateManyWithoutTenantNestedInput
     memberships?: TenantMembershipUpdateManyWithoutTenantNestedInput
     turnosPos?: TurnoPuntoVentaUpdateManyWithoutTenantNestedInput
+    reviews?: ReviewUpdateManyWithoutTenantNestedInput
+    reviewPrompts?: ReviewPromptUpdateManyWithoutTenantNestedInput
   }
 
   export type TenantUncheckedUpdateWithoutOrdenesReparacionInput = {
@@ -231696,6 +235837,8 @@ export namespace Prisma {
     licencias?: TenantLicenseUncheckedUpdateManyWithoutTenantNestedInput
     memberships?: TenantMembershipUncheckedUpdateManyWithoutTenantNestedInput
     turnosPos?: TurnoPuntoVentaUncheckedUpdateManyWithoutTenantNestedInput
+    reviews?: ReviewUncheckedUpdateManyWithoutTenantNestedInput
+    reviewPrompts?: ReviewPromptUncheckedUpdateManyWithoutTenantNestedInput
   }
 
   export type VentaUpsertWithoutOrdenReparacionInput = {
@@ -231980,6 +236123,8 @@ export namespace Prisma {
     licencias?: TenantLicenseCreateNestedManyWithoutTenantInput
     memberships?: TenantMembershipCreateNestedManyWithoutTenantInput
     turnosPos?: TurnoPuntoVentaCreateNestedManyWithoutTenantInput
+    reviews?: ReviewCreateNestedManyWithoutTenantInput
+    reviewPrompts?: ReviewPromptCreateNestedManyWithoutTenantInput
   }
 
   export type TenantUncheckedCreateWithoutOrdenesReparacionEquipoInput = {
@@ -232049,6 +236194,8 @@ export namespace Prisma {
     licencias?: TenantLicenseUncheckedCreateNestedManyWithoutTenantInput
     memberships?: TenantMembershipUncheckedCreateNestedManyWithoutTenantInput
     turnosPos?: TurnoPuntoVentaUncheckedCreateNestedManyWithoutTenantInput
+    reviews?: ReviewUncheckedCreateNestedManyWithoutTenantInput
+    reviewPrompts?: ReviewPromptUncheckedCreateNestedManyWithoutTenantInput
   }
 
   export type TenantCreateOrConnectWithoutOrdenesReparacionEquipoInput = {
@@ -232278,6 +236425,8 @@ export namespace Prisma {
     licencias?: TenantLicenseUpdateManyWithoutTenantNestedInput
     memberships?: TenantMembershipUpdateManyWithoutTenantNestedInput
     turnosPos?: TurnoPuntoVentaUpdateManyWithoutTenantNestedInput
+    reviews?: ReviewUpdateManyWithoutTenantNestedInput
+    reviewPrompts?: ReviewPromptUpdateManyWithoutTenantNestedInput
   }
 
   export type TenantUncheckedUpdateWithoutOrdenesReparacionEquipoInput = {
@@ -232347,6 +236496,8 @@ export namespace Prisma {
     licencias?: TenantLicenseUncheckedUpdateManyWithoutTenantNestedInput
     memberships?: TenantMembershipUncheckedUpdateManyWithoutTenantNestedInput
     turnosPos?: TurnoPuntoVentaUncheckedUpdateManyWithoutTenantNestedInput
+    reviews?: ReviewUncheckedUpdateManyWithoutTenantNestedInput
+    reviewPrompts?: ReviewPromptUncheckedUpdateManyWithoutTenantNestedInput
   }
 
   export type OrdenReparacionItemUpsertWithWhereUniqueWithoutOrdenEquipoInput = {
@@ -232592,6 +236743,8 @@ export namespace Prisma {
     licencias?: TenantLicenseCreateNestedManyWithoutTenantInput
     memberships?: TenantMembershipCreateNestedManyWithoutTenantInput
     turnosPos?: TurnoPuntoVentaCreateNestedManyWithoutTenantInput
+    reviews?: ReviewCreateNestedManyWithoutTenantInput
+    reviewPrompts?: ReviewPromptCreateNestedManyWithoutTenantInput
   }
 
   export type TenantUncheckedCreateWithoutOrdenesReparacionItemInput = {
@@ -232661,6 +236814,8 @@ export namespace Prisma {
     licencias?: TenantLicenseUncheckedCreateNestedManyWithoutTenantInput
     memberships?: TenantMembershipUncheckedCreateNestedManyWithoutTenantInput
     turnosPos?: TurnoPuntoVentaUncheckedCreateNestedManyWithoutTenantInput
+    reviews?: ReviewUncheckedCreateNestedManyWithoutTenantInput
+    reviewPrompts?: ReviewPromptUncheckedCreateNestedManyWithoutTenantInput
   }
 
   export type TenantCreateOrConnectWithoutOrdenesReparacionItemInput = {
@@ -232930,6 +237085,8 @@ export namespace Prisma {
     licencias?: TenantLicenseUpdateManyWithoutTenantNestedInput
     memberships?: TenantMembershipUpdateManyWithoutTenantNestedInput
     turnosPos?: TurnoPuntoVentaUpdateManyWithoutTenantNestedInput
+    reviews?: ReviewUpdateManyWithoutTenantNestedInput
+    reviewPrompts?: ReviewPromptUpdateManyWithoutTenantNestedInput
   }
 
   export type TenantUncheckedUpdateWithoutOrdenesReparacionItemInput = {
@@ -232999,6 +237156,8 @@ export namespace Prisma {
     licencias?: TenantLicenseUncheckedUpdateManyWithoutTenantNestedInput
     memberships?: TenantMembershipUncheckedUpdateManyWithoutTenantNestedInput
     turnosPos?: TurnoPuntoVentaUncheckedUpdateManyWithoutTenantNestedInput
+    reviews?: ReviewUncheckedUpdateManyWithoutTenantNestedInput
+    reviewPrompts?: ReviewPromptUncheckedUpdateManyWithoutTenantNestedInput
   }
 
   export type OrdenReparacionCreateWithoutMaterialesInput = {
@@ -233234,6 +237393,8 @@ export namespace Prisma {
     licencias?: TenantLicenseCreateNestedManyWithoutTenantInput
     memberships?: TenantMembershipCreateNestedManyWithoutTenantInput
     turnosPos?: TurnoPuntoVentaCreateNestedManyWithoutTenantInput
+    reviews?: ReviewCreateNestedManyWithoutTenantInput
+    reviewPrompts?: ReviewPromptCreateNestedManyWithoutTenantInput
   }
 
   export type TenantUncheckedCreateWithoutOrdenesReparacionMaterialInput = {
@@ -233303,6 +237464,8 @@ export namespace Prisma {
     licencias?: TenantLicenseUncheckedCreateNestedManyWithoutTenantInput
     memberships?: TenantMembershipUncheckedCreateNestedManyWithoutTenantInput
     turnosPos?: TurnoPuntoVentaUncheckedCreateNestedManyWithoutTenantInput
+    reviews?: ReviewUncheckedCreateNestedManyWithoutTenantInput
+    reviewPrompts?: ReviewPromptUncheckedCreateNestedManyWithoutTenantInput
   }
 
   export type TenantCreateOrConnectWithoutOrdenesReparacionMaterialInput = {
@@ -233566,6 +237729,8 @@ export namespace Prisma {
     licencias?: TenantLicenseUpdateManyWithoutTenantNestedInput
     memberships?: TenantMembershipUpdateManyWithoutTenantNestedInput
     turnosPos?: TurnoPuntoVentaUpdateManyWithoutTenantNestedInput
+    reviews?: ReviewUpdateManyWithoutTenantNestedInput
+    reviewPrompts?: ReviewPromptUpdateManyWithoutTenantNestedInput
   }
 
   export type TenantUncheckedUpdateWithoutOrdenesReparacionMaterialInput = {
@@ -233635,6 +237800,8 @@ export namespace Prisma {
     licencias?: TenantLicenseUncheckedUpdateManyWithoutTenantNestedInput
     memberships?: TenantMembershipUncheckedUpdateManyWithoutTenantNestedInput
     turnosPos?: TurnoPuntoVentaUncheckedUpdateManyWithoutTenantNestedInput
+    reviews?: ReviewUncheckedUpdateManyWithoutTenantNestedInput
+    reviewPrompts?: ReviewPromptUncheckedUpdateManyWithoutTenantNestedInput
   }
 
   export type TenantCreateWithoutDefectacionesCatalogoInput = {
@@ -233704,6 +237871,8 @@ export namespace Prisma {
     licencias?: TenantLicenseCreateNestedManyWithoutTenantInput
     memberships?: TenantMembershipCreateNestedManyWithoutTenantInput
     turnosPos?: TurnoPuntoVentaCreateNestedManyWithoutTenantInput
+    reviews?: ReviewCreateNestedManyWithoutTenantInput
+    reviewPrompts?: ReviewPromptCreateNestedManyWithoutTenantInput
   }
 
   export type TenantUncheckedCreateWithoutDefectacionesCatalogoInput = {
@@ -233773,6 +237942,8 @@ export namespace Prisma {
     licencias?: TenantLicenseUncheckedCreateNestedManyWithoutTenantInput
     memberships?: TenantMembershipUncheckedCreateNestedManyWithoutTenantInput
     turnosPos?: TurnoPuntoVentaUncheckedCreateNestedManyWithoutTenantInput
+    reviews?: ReviewUncheckedCreateNestedManyWithoutTenantInput
+    reviewPrompts?: ReviewPromptUncheckedCreateNestedManyWithoutTenantInput
   }
 
   export type TenantCreateOrConnectWithoutDefectacionesCatalogoInput = {
@@ -233892,6 +238063,8 @@ export namespace Prisma {
     licencias?: TenantLicenseUpdateManyWithoutTenantNestedInput
     memberships?: TenantMembershipUpdateManyWithoutTenantNestedInput
     turnosPos?: TurnoPuntoVentaUpdateManyWithoutTenantNestedInput
+    reviews?: ReviewUpdateManyWithoutTenantNestedInput
+    reviewPrompts?: ReviewPromptUpdateManyWithoutTenantNestedInput
   }
 
   export type TenantUncheckedUpdateWithoutDefectacionesCatalogoInput = {
@@ -233961,6 +238134,8 @@ export namespace Prisma {
     licencias?: TenantLicenseUncheckedUpdateManyWithoutTenantNestedInput
     memberships?: TenantMembershipUncheckedUpdateManyWithoutTenantNestedInput
     turnosPos?: TurnoPuntoVentaUncheckedUpdateManyWithoutTenantNestedInput
+    reviews?: ReviewUncheckedUpdateManyWithoutTenantNestedInput
+    reviewPrompts?: ReviewPromptUncheckedUpdateManyWithoutTenantNestedInput
   }
 
   export type OrdenReparacionItemUpsertWithWhereUniqueWithoutDefectacionInput = {
@@ -234079,6 +238254,8 @@ export namespace Prisma {
     licencias?: TenantLicenseCreateNestedManyWithoutTenantInput
     memberships?: TenantMembershipCreateNestedManyWithoutTenantInput
     turnosPos?: TurnoPuntoVentaCreateNestedManyWithoutTenantInput
+    reviews?: ReviewCreateNestedManyWithoutTenantInput
+    reviewPrompts?: ReviewPromptCreateNestedManyWithoutTenantInput
   }
 
   export type TenantUncheckedCreateWithoutOrdenesProduccionInput = {
@@ -234148,6 +238325,8 @@ export namespace Prisma {
     licencias?: TenantLicenseUncheckedCreateNestedManyWithoutTenantInput
     memberships?: TenantMembershipUncheckedCreateNestedManyWithoutTenantInput
     turnosPos?: TurnoPuntoVentaUncheckedCreateNestedManyWithoutTenantInput
+    reviews?: ReviewUncheckedCreateNestedManyWithoutTenantInput
+    reviewPrompts?: ReviewPromptUncheckedCreateNestedManyWithoutTenantInput
   }
 
   export type TenantCreateOrConnectWithoutOrdenesProduccionInput = {
@@ -234302,6 +238481,8 @@ export namespace Prisma {
     licencias?: TenantLicenseUpdateManyWithoutTenantNestedInput
     memberships?: TenantMembershipUpdateManyWithoutTenantNestedInput
     turnosPos?: TurnoPuntoVentaUpdateManyWithoutTenantNestedInput
+    reviews?: ReviewUpdateManyWithoutTenantNestedInput
+    reviewPrompts?: ReviewPromptUpdateManyWithoutTenantNestedInput
   }
 
   export type TenantUncheckedUpdateWithoutOrdenesProduccionInput = {
@@ -234371,6 +238552,8 @@ export namespace Prisma {
     licencias?: TenantLicenseUncheckedUpdateManyWithoutTenantNestedInput
     memberships?: TenantMembershipUncheckedUpdateManyWithoutTenantNestedInput
     turnosPos?: TurnoPuntoVentaUncheckedUpdateManyWithoutTenantNestedInput
+    reviews?: ReviewUncheckedUpdateManyWithoutTenantNestedInput
+    reviewPrompts?: ReviewPromptUncheckedUpdateManyWithoutTenantNestedInput
   }
 
   export type OrdenProduccionHistorialUpsertWithWhereUniqueWithoutOrdenProduccionInput = {
@@ -234487,6 +238670,8 @@ export namespace Prisma {
     licencias?: TenantLicenseCreateNestedManyWithoutTenantInput
     memberships?: TenantMembershipCreateNestedManyWithoutTenantInput
     turnosPos?: TurnoPuntoVentaCreateNestedManyWithoutTenantInput
+    reviews?: ReviewCreateNestedManyWithoutTenantInput
+    reviewPrompts?: ReviewPromptCreateNestedManyWithoutTenantInput
   }
 
   export type TenantUncheckedCreateWithoutOrdenesProduccionHistorialInput = {
@@ -234556,6 +238741,8 @@ export namespace Prisma {
     licencias?: TenantLicenseUncheckedCreateNestedManyWithoutTenantInput
     memberships?: TenantMembershipUncheckedCreateNestedManyWithoutTenantInput
     turnosPos?: TurnoPuntoVentaUncheckedCreateNestedManyWithoutTenantInput
+    reviews?: ReviewUncheckedCreateNestedManyWithoutTenantInput
+    reviewPrompts?: ReviewPromptUncheckedCreateNestedManyWithoutTenantInput
   }
 
   export type TenantCreateOrConnectWithoutOrdenesProduccionHistorialInput = {
@@ -234678,6 +238865,8 @@ export namespace Prisma {
     licencias?: TenantLicenseUpdateManyWithoutTenantNestedInput
     memberships?: TenantMembershipUpdateManyWithoutTenantNestedInput
     turnosPos?: TurnoPuntoVentaUpdateManyWithoutTenantNestedInput
+    reviews?: ReviewUpdateManyWithoutTenantNestedInput
+    reviewPrompts?: ReviewPromptUpdateManyWithoutTenantNestedInput
   }
 
   export type TenantUncheckedUpdateWithoutOrdenesProduccionHistorialInput = {
@@ -234747,6 +238936,8 @@ export namespace Prisma {
     licencias?: TenantLicenseUncheckedUpdateManyWithoutTenantNestedInput
     memberships?: TenantMembershipUncheckedUpdateManyWithoutTenantNestedInput
     turnosPos?: TurnoPuntoVentaUncheckedUpdateManyWithoutTenantNestedInput
+    reviews?: ReviewUncheckedUpdateManyWithoutTenantNestedInput
+    reviewPrompts?: ReviewPromptUncheckedUpdateManyWithoutTenantNestedInput
   }
 
   export type OrdenProduccionCreateWithoutRecetaInput = {
@@ -234947,6 +239138,8 @@ export namespace Prisma {
     licencias?: TenantLicenseCreateNestedManyWithoutTenantInput
     memberships?: TenantMembershipCreateNestedManyWithoutTenantInput
     turnosPos?: TurnoPuntoVentaCreateNestedManyWithoutTenantInput
+    reviews?: ReviewCreateNestedManyWithoutTenantInput
+    reviewPrompts?: ReviewPromptCreateNestedManyWithoutTenantInput
   }
 
   export type TenantUncheckedCreateWithoutRecetasInput = {
@@ -235016,6 +239209,8 @@ export namespace Prisma {
     licencias?: TenantLicenseUncheckedCreateNestedManyWithoutTenantInput
     memberships?: TenantMembershipUncheckedCreateNestedManyWithoutTenantInput
     turnosPos?: TurnoPuntoVentaUncheckedCreateNestedManyWithoutTenantInput
+    reviews?: ReviewUncheckedCreateNestedManyWithoutTenantInput
+    reviewPrompts?: ReviewPromptUncheckedCreateNestedManyWithoutTenantInput
   }
 
   export type TenantCreateOrConnectWithoutRecetasInput = {
@@ -235250,6 +239445,8 @@ export namespace Prisma {
     licencias?: TenantLicenseUpdateManyWithoutTenantNestedInput
     memberships?: TenantMembershipUpdateManyWithoutTenantNestedInput
     turnosPos?: TurnoPuntoVentaUpdateManyWithoutTenantNestedInput
+    reviews?: ReviewUpdateManyWithoutTenantNestedInput
+    reviewPrompts?: ReviewPromptUpdateManyWithoutTenantNestedInput
   }
 
   export type TenantUncheckedUpdateWithoutRecetasInput = {
@@ -235319,6 +239516,8 @@ export namespace Prisma {
     licencias?: TenantLicenseUncheckedUpdateManyWithoutTenantNestedInput
     memberships?: TenantMembershipUncheckedUpdateManyWithoutTenantNestedInput
     turnosPos?: TurnoPuntoVentaUncheckedUpdateManyWithoutTenantNestedInput
+    reviews?: ReviewUncheckedUpdateManyWithoutTenantNestedInput
+    reviewPrompts?: ReviewPromptUncheckedUpdateManyWithoutTenantNestedInput
   }
 
   export type RecetaIngredienteUpsertWithWhereUniqueWithoutRecetaInput = {
@@ -235532,6 +239731,8 @@ export namespace Prisma {
     licencias?: TenantLicenseCreateNestedManyWithoutTenantInput
     memberships?: TenantMembershipCreateNestedManyWithoutTenantInput
     turnosPos?: TurnoPuntoVentaCreateNestedManyWithoutTenantInput
+    reviews?: ReviewCreateNestedManyWithoutTenantInput
+    reviewPrompts?: ReviewPromptCreateNestedManyWithoutTenantInput
   }
 
   export type TenantUncheckedCreateWithoutRecetasIngredientesInput = {
@@ -235601,6 +239802,8 @@ export namespace Prisma {
     licencias?: TenantLicenseUncheckedCreateNestedManyWithoutTenantInput
     memberships?: TenantMembershipUncheckedCreateNestedManyWithoutTenantInput
     turnosPos?: TurnoPuntoVentaUncheckedCreateNestedManyWithoutTenantInput
+    reviews?: ReviewUncheckedCreateNestedManyWithoutTenantInput
+    reviewPrompts?: ReviewPromptUncheckedCreateNestedManyWithoutTenantInput
   }
 
   export type TenantCreateOrConnectWithoutRecetasIngredientesInput = {
@@ -235826,6 +240029,8 @@ export namespace Prisma {
     licencias?: TenantLicenseUpdateManyWithoutTenantNestedInput
     memberships?: TenantMembershipUpdateManyWithoutTenantNestedInput
     turnosPos?: TurnoPuntoVentaUpdateManyWithoutTenantNestedInput
+    reviews?: ReviewUpdateManyWithoutTenantNestedInput
+    reviewPrompts?: ReviewPromptUpdateManyWithoutTenantNestedInput
   }
 
   export type TenantUncheckedUpdateWithoutRecetasIngredientesInput = {
@@ -235895,6 +240100,8 @@ export namespace Prisma {
     licencias?: TenantLicenseUncheckedUpdateManyWithoutTenantNestedInput
     memberships?: TenantMembershipUncheckedUpdateManyWithoutTenantNestedInput
     turnosPos?: TurnoPuntoVentaUncheckedUpdateManyWithoutTenantNestedInput
+    reviews?: ReviewUncheckedUpdateManyWithoutTenantNestedInput
+    reviewPrompts?: ReviewPromptUncheckedUpdateManyWithoutTenantNestedInput
   }
 
   export type TenantCreateWithoutValesSalidaInput = {
@@ -235964,6 +240171,8 @@ export namespace Prisma {
     licencias?: TenantLicenseCreateNestedManyWithoutTenantInput
     memberships?: TenantMembershipCreateNestedManyWithoutTenantInput
     turnosPos?: TurnoPuntoVentaCreateNestedManyWithoutTenantInput
+    reviews?: ReviewCreateNestedManyWithoutTenantInput
+    reviewPrompts?: ReviewPromptCreateNestedManyWithoutTenantInput
   }
 
   export type TenantUncheckedCreateWithoutValesSalidaInput = {
@@ -236033,6 +240242,8 @@ export namespace Prisma {
     licencias?: TenantLicenseUncheckedCreateNestedManyWithoutTenantInput
     memberships?: TenantMembershipUncheckedCreateNestedManyWithoutTenantInput
     turnosPos?: TurnoPuntoVentaUncheckedCreateNestedManyWithoutTenantInput
+    reviews?: ReviewUncheckedCreateNestedManyWithoutTenantInput
+    reviewPrompts?: ReviewPromptUncheckedCreateNestedManyWithoutTenantInput
   }
 
   export type TenantCreateOrConnectWithoutValesSalidaInput = {
@@ -236144,6 +240355,8 @@ export namespace Prisma {
     licencias?: TenantLicenseUpdateManyWithoutTenantNestedInput
     memberships?: TenantMembershipUpdateManyWithoutTenantNestedInput
     turnosPos?: TurnoPuntoVentaUpdateManyWithoutTenantNestedInput
+    reviews?: ReviewUpdateManyWithoutTenantNestedInput
+    reviewPrompts?: ReviewPromptUpdateManyWithoutTenantNestedInput
   }
 
   export type TenantUncheckedUpdateWithoutValesSalidaInput = {
@@ -236213,6 +240426,8 @@ export namespace Prisma {
     licencias?: TenantLicenseUncheckedUpdateManyWithoutTenantNestedInput
     memberships?: TenantMembershipUncheckedUpdateManyWithoutTenantNestedInput
     turnosPos?: TurnoPuntoVentaUncheckedUpdateManyWithoutTenantNestedInput
+    reviews?: ReviewUncheckedUpdateManyWithoutTenantNestedInput
+    reviewPrompts?: ReviewPromptUncheckedUpdateManyWithoutTenantNestedInput
   }
 
   export type ValeSalidaItemUpsertWithWhereUniqueWithoutValeSalidaInput = {
@@ -236393,6 +240608,8 @@ export namespace Prisma {
     licencias?: TenantLicenseCreateNestedManyWithoutTenantInput
     memberships?: TenantMembershipCreateNestedManyWithoutTenantInput
     turnosPos?: TurnoPuntoVentaCreateNestedManyWithoutTenantInput
+    reviews?: ReviewCreateNestedManyWithoutTenantInput
+    reviewPrompts?: ReviewPromptCreateNestedManyWithoutTenantInput
   }
 
   export type TenantUncheckedCreateWithoutValesSalidaItemInput = {
@@ -236462,6 +240679,8 @@ export namespace Prisma {
     licencias?: TenantLicenseUncheckedCreateNestedManyWithoutTenantInput
     memberships?: TenantMembershipUncheckedCreateNestedManyWithoutTenantInput
     turnosPos?: TurnoPuntoVentaUncheckedCreateNestedManyWithoutTenantInput
+    reviews?: ReviewUncheckedCreateNestedManyWithoutTenantInput
+    reviewPrompts?: ReviewPromptUncheckedCreateNestedManyWithoutTenantInput
   }
 
   export type TenantCreateOrConnectWithoutValesSalidaItemInput = {
@@ -236673,6 +240892,8 @@ export namespace Prisma {
     licencias?: TenantLicenseUpdateManyWithoutTenantNestedInput
     memberships?: TenantMembershipUpdateManyWithoutTenantNestedInput
     turnosPos?: TurnoPuntoVentaUpdateManyWithoutTenantNestedInput
+    reviews?: ReviewUpdateManyWithoutTenantNestedInput
+    reviewPrompts?: ReviewPromptUpdateManyWithoutTenantNestedInput
   }
 
   export type TenantUncheckedUpdateWithoutValesSalidaItemInput = {
@@ -236742,6 +240963,8 @@ export namespace Prisma {
     licencias?: TenantLicenseUncheckedUpdateManyWithoutTenantNestedInput
     memberships?: TenantMembershipUncheckedUpdateManyWithoutTenantNestedInput
     turnosPos?: TurnoPuntoVentaUncheckedUpdateManyWithoutTenantNestedInput
+    reviews?: ReviewUncheckedUpdateManyWithoutTenantNestedInput
+    reviewPrompts?: ReviewPromptUncheckedUpdateManyWithoutTenantNestedInput
   }
 
   export type ValeSalidaUpsertWithoutValeSalidaItemInput = {
@@ -236842,6 +241065,8 @@ export namespace Prisma {
     licencias?: TenantLicenseCreateNestedManyWithoutTenantInput
     memberships?: TenantMembershipCreateNestedManyWithoutTenantInput
     turnosPos?: TurnoPuntoVentaCreateNestedManyWithoutTenantInput
+    reviews?: ReviewCreateNestedManyWithoutTenantInput
+    reviewPrompts?: ReviewPromptCreateNestedManyWithoutTenantInput
   }
 
   export type TenantUncheckedCreateWithoutListasPrecioInput = {
@@ -236911,6 +241136,8 @@ export namespace Prisma {
     licencias?: TenantLicenseUncheckedCreateNestedManyWithoutTenantInput
     memberships?: TenantMembershipUncheckedCreateNestedManyWithoutTenantInput
     turnosPos?: TurnoPuntoVentaUncheckedCreateNestedManyWithoutTenantInput
+    reviews?: ReviewUncheckedCreateNestedManyWithoutTenantInput
+    reviewPrompts?: ReviewPromptUncheckedCreateNestedManyWithoutTenantInput
   }
 
   export type TenantCreateOrConnectWithoutListasPrecioInput = {
@@ -237068,6 +241295,8 @@ export namespace Prisma {
     licencias?: TenantLicenseUpdateManyWithoutTenantNestedInput
     memberships?: TenantMembershipUpdateManyWithoutTenantNestedInput
     turnosPos?: TurnoPuntoVentaUpdateManyWithoutTenantNestedInput
+    reviews?: ReviewUpdateManyWithoutTenantNestedInput
+    reviewPrompts?: ReviewPromptUpdateManyWithoutTenantNestedInput
   }
 
   export type TenantUncheckedUpdateWithoutListasPrecioInput = {
@@ -237137,6 +241366,8 @@ export namespace Prisma {
     licencias?: TenantLicenseUncheckedUpdateManyWithoutTenantNestedInput
     memberships?: TenantMembershipUncheckedUpdateManyWithoutTenantNestedInput
     turnosPos?: TurnoPuntoVentaUncheckedUpdateManyWithoutTenantNestedInput
+    reviews?: ReviewUncheckedUpdateManyWithoutTenantNestedInput
+    reviewPrompts?: ReviewPromptUncheckedUpdateManyWithoutTenantNestedInput
   }
 
   export type PrecioProductoUpsertWithWhereUniqueWithoutListaPrecioInput = {
@@ -237825,6 +242056,8 @@ export namespace Prisma {
     backupLogs?: BackupLogCreateNestedManyWithoutUserInput
     backupPlans?: BackupPlanCreateNestedManyWithoutUserInput
     tenantMemberships?: TenantMembershipCreateNestedManyWithoutUserInput
+    reviews?: ReviewCreateNestedManyWithoutUserInput
+    reviewPrompts?: ReviewPromptCreateNestedManyWithoutUserInput
   }
 
   export type UserUncheckedCreateWithoutAnticiposCreadosInput = {
@@ -237864,6 +242097,8 @@ export namespace Prisma {
     backupLogs?: BackupLogUncheckedCreateNestedManyWithoutUserInput
     backupPlans?: BackupPlanUncheckedCreateNestedManyWithoutUserInput
     tenantMemberships?: TenantMembershipUncheckedCreateNestedManyWithoutUserInput
+    reviews?: ReviewUncheckedCreateNestedManyWithoutUserInput
+    reviewPrompts?: ReviewPromptUncheckedCreateNestedManyWithoutUserInput
   }
 
   export type UserCreateOrConnectWithoutAnticiposCreadosInput = {
@@ -238056,6 +242291,8 @@ export namespace Prisma {
     licencias?: TenantLicenseCreateNestedManyWithoutTenantInput
     memberships?: TenantMembershipCreateNestedManyWithoutTenantInput
     turnosPos?: TurnoPuntoVentaCreateNestedManyWithoutTenantInput
+    reviews?: ReviewCreateNestedManyWithoutTenantInput
+    reviewPrompts?: ReviewPromptCreateNestedManyWithoutTenantInput
   }
 
   export type TenantUncheckedCreateWithoutAnticiposInput = {
@@ -238125,6 +242362,8 @@ export namespace Prisma {
     licencias?: TenantLicenseUncheckedCreateNestedManyWithoutTenantInput
     memberships?: TenantMembershipUncheckedCreateNestedManyWithoutTenantInput
     turnosPos?: TurnoPuntoVentaUncheckedCreateNestedManyWithoutTenantInput
+    reviews?: ReviewUncheckedCreateNestedManyWithoutTenantInput
+    reviewPrompts?: ReviewPromptUncheckedCreateNestedManyWithoutTenantInput
   }
 
   export type TenantCreateOrConnectWithoutAnticiposInput = {
@@ -238411,6 +242650,8 @@ export namespace Prisma {
     backupLogs?: BackupLogUpdateManyWithoutUserNestedInput
     backupPlans?: BackupPlanUpdateManyWithoutUserNestedInput
     tenantMemberships?: TenantMembershipUpdateManyWithoutUserNestedInput
+    reviews?: ReviewUpdateManyWithoutUserNestedInput
+    reviewPrompts?: ReviewPromptUpdateManyWithoutUserNestedInput
   }
 
   export type UserUncheckedUpdateWithoutAnticiposCreadosInput = {
@@ -238450,6 +242691,8 @@ export namespace Prisma {
     backupLogs?: BackupLogUncheckedUpdateManyWithoutUserNestedInput
     backupPlans?: BackupPlanUncheckedUpdateManyWithoutUserNestedInput
     tenantMemberships?: TenantMembershipUncheckedUpdateManyWithoutUserNestedInput
+    reviews?: ReviewUncheckedUpdateManyWithoutUserNestedInput
+    reviewPrompts?: ReviewPromptUncheckedUpdateManyWithoutUserNestedInput
   }
 
   export type FacturaUpsertWithoutAnticipoInput = {
@@ -238660,6 +242903,8 @@ export namespace Prisma {
     licencias?: TenantLicenseUpdateManyWithoutTenantNestedInput
     memberships?: TenantMembershipUpdateManyWithoutTenantNestedInput
     turnosPos?: TurnoPuntoVentaUpdateManyWithoutTenantNestedInput
+    reviews?: ReviewUpdateManyWithoutTenantNestedInput
+    reviewPrompts?: ReviewPromptUpdateManyWithoutTenantNestedInput
   }
 
   export type TenantUncheckedUpdateWithoutAnticiposInput = {
@@ -238729,6 +242974,8 @@ export namespace Prisma {
     licencias?: TenantLicenseUncheckedUpdateManyWithoutTenantNestedInput
     memberships?: TenantMembershipUncheckedUpdateManyWithoutTenantNestedInput
     turnosPos?: TurnoPuntoVentaUncheckedUpdateManyWithoutTenantNestedInput
+    reviews?: ReviewUncheckedUpdateManyWithoutTenantNestedInput
+    reviewPrompts?: ReviewPromptUncheckedUpdateManyWithoutTenantNestedInput
   }
 
   export type AnticipoMovimientoUpsertWithWhereUniqueWithoutAnticipoInput = {
@@ -239167,6 +243414,8 @@ export namespace Prisma {
     licencias?: TenantLicenseCreateNestedManyWithoutTenantInput
     memberships?: TenantMembershipCreateNestedManyWithoutTenantInput
     turnosPos?: TurnoPuntoVentaCreateNestedManyWithoutTenantInput
+    reviews?: ReviewCreateNestedManyWithoutTenantInput
+    reviewPrompts?: ReviewPromptCreateNestedManyWithoutTenantInput
   }
 
   export type TenantUncheckedCreateWithoutPeriodosContablesInput = {
@@ -239236,6 +243485,8 @@ export namespace Prisma {
     licencias?: TenantLicenseUncheckedCreateNestedManyWithoutTenantInput
     memberships?: TenantMembershipUncheckedCreateNestedManyWithoutTenantInput
     turnosPos?: TurnoPuntoVentaUncheckedCreateNestedManyWithoutTenantInput
+    reviews?: ReviewUncheckedCreateNestedManyWithoutTenantInput
+    reviewPrompts?: ReviewPromptUncheckedCreateNestedManyWithoutTenantInput
   }
 
   export type TenantCreateOrConnectWithoutPeriodosContablesInput = {
@@ -239531,6 +243782,8 @@ export namespace Prisma {
     licencias?: TenantLicenseUpdateManyWithoutTenantNestedInput
     memberships?: TenantMembershipUpdateManyWithoutTenantNestedInput
     turnosPos?: TurnoPuntoVentaUpdateManyWithoutTenantNestedInput
+    reviews?: ReviewUpdateManyWithoutTenantNestedInput
+    reviewPrompts?: ReviewPromptUpdateManyWithoutTenantNestedInput
   }
 
   export type TenantUncheckedUpdateWithoutPeriodosContablesInput = {
@@ -239600,6 +243853,8 @@ export namespace Prisma {
     licencias?: TenantLicenseUncheckedUpdateManyWithoutTenantNestedInput
     memberships?: TenantMembershipUncheckedUpdateManyWithoutTenantNestedInput
     turnosPos?: TurnoPuntoVentaUncheckedUpdateManyWithoutTenantNestedInput
+    reviews?: ReviewUncheckedUpdateManyWithoutTenantNestedInput
+    reviewPrompts?: ReviewPromptUncheckedUpdateManyWithoutTenantNestedInput
   }
 
   export type SaldoSnapshotUpsertWithWhereUniqueWithoutPeriodoInput = {
@@ -239947,6 +244202,8 @@ export namespace Prisma {
     licencias?: TenantLicenseCreateNestedManyWithoutTenantInput
     memberships?: TenantMembershipCreateNestedManyWithoutTenantInput
     turnosPos?: TurnoPuntoVentaCreateNestedManyWithoutTenantInput
+    reviews?: ReviewCreateNestedManyWithoutTenantInput
+    reviewPrompts?: ReviewPromptCreateNestedManyWithoutTenantInput
   }
 
   export type TenantUncheckedCreateWithoutAperturaPeriodosInput = {
@@ -240016,6 +244273,8 @@ export namespace Prisma {
     licencias?: TenantLicenseUncheckedCreateNestedManyWithoutTenantInput
     memberships?: TenantMembershipUncheckedCreateNestedManyWithoutTenantInput
     turnosPos?: TurnoPuntoVentaUncheckedCreateNestedManyWithoutTenantInput
+    reviews?: ReviewUncheckedCreateNestedManyWithoutTenantInput
+    reviewPrompts?: ReviewPromptUncheckedCreateNestedManyWithoutTenantInput
   }
 
   export type TenantCreateOrConnectWithoutAperturaPeriodosInput = {
@@ -240178,6 +244437,8 @@ export namespace Prisma {
     licencias?: TenantLicenseUpdateManyWithoutTenantNestedInput
     memberships?: TenantMembershipUpdateManyWithoutTenantNestedInput
     turnosPos?: TurnoPuntoVentaUpdateManyWithoutTenantNestedInput
+    reviews?: ReviewUpdateManyWithoutTenantNestedInput
+    reviewPrompts?: ReviewPromptUpdateManyWithoutTenantNestedInput
   }
 
   export type TenantUncheckedUpdateWithoutAperturaPeriodosInput = {
@@ -240247,6 +244508,8 @@ export namespace Prisma {
     licencias?: TenantLicenseUncheckedUpdateManyWithoutTenantNestedInput
     memberships?: TenantMembershipUncheckedUpdateManyWithoutTenantNestedInput
     turnosPos?: TurnoPuntoVentaUncheckedUpdateManyWithoutTenantNestedInput
+    reviews?: ReviewUncheckedUpdateManyWithoutTenantNestedInput
+    reviewPrompts?: ReviewPromptUncheckedUpdateManyWithoutTenantNestedInput
   }
 
   export type PeriodoContableCreateWithoutSnapshotsInput = {
@@ -240535,6 +244798,8 @@ export namespace Prisma {
     licencias?: TenantLicenseCreateNestedManyWithoutTenantInput
     memberships?: TenantMembershipCreateNestedManyWithoutTenantInput
     turnosPos?: TurnoPuntoVentaCreateNestedManyWithoutTenantInput
+    reviews?: ReviewCreateNestedManyWithoutTenantInput
+    reviewPrompts?: ReviewPromptCreateNestedManyWithoutTenantInput
   }
 
   export type TenantUncheckedCreateWithoutAuditoriaPeriodosInput = {
@@ -240604,6 +244869,8 @@ export namespace Prisma {
     licencias?: TenantLicenseUncheckedCreateNestedManyWithoutTenantInput
     memberships?: TenantMembershipUncheckedCreateNestedManyWithoutTenantInput
     turnosPos?: TurnoPuntoVentaUncheckedCreateNestedManyWithoutTenantInput
+    reviews?: ReviewUncheckedCreateNestedManyWithoutTenantInput
+    reviewPrompts?: ReviewPromptUncheckedCreateNestedManyWithoutTenantInput
   }
 
   export type TenantCreateOrConnectWithoutAuditoriaPeriodosInput = {
@@ -240766,6 +245033,8 @@ export namespace Prisma {
     licencias?: TenantLicenseUpdateManyWithoutTenantNestedInput
     memberships?: TenantMembershipUpdateManyWithoutTenantNestedInput
     turnosPos?: TurnoPuntoVentaUpdateManyWithoutTenantNestedInput
+    reviews?: ReviewUpdateManyWithoutTenantNestedInput
+    reviewPrompts?: ReviewPromptUpdateManyWithoutTenantNestedInput
   }
 
   export type TenantUncheckedUpdateWithoutAuditoriaPeriodosInput = {
@@ -240835,6 +245104,8 @@ export namespace Prisma {
     licencias?: TenantLicenseUncheckedUpdateManyWithoutTenantNestedInput
     memberships?: TenantMembershipUncheckedUpdateManyWithoutTenantNestedInput
     turnosPos?: TurnoPuntoVentaUncheckedUpdateManyWithoutTenantNestedInput
+    reviews?: ReviewUncheckedUpdateManyWithoutTenantNestedInput
+    reviewPrompts?: ReviewPromptUncheckedUpdateManyWithoutTenantNestedInput
   }
 
   export type UserCreateWithoutBackupLogsInput = {
@@ -240874,6 +245145,8 @@ export namespace Prisma {
     sessions?: UserSessionCreateNestedManyWithoutUserInput
     backupPlans?: BackupPlanCreateNestedManyWithoutUserInput
     tenantMemberships?: TenantMembershipCreateNestedManyWithoutUserInput
+    reviews?: ReviewCreateNestedManyWithoutUserInput
+    reviewPrompts?: ReviewPromptCreateNestedManyWithoutUserInput
   }
 
   export type UserUncheckedCreateWithoutBackupLogsInput = {
@@ -240913,6 +245186,8 @@ export namespace Prisma {
     sessions?: UserSessionUncheckedCreateNestedManyWithoutUserInput
     backupPlans?: BackupPlanUncheckedCreateNestedManyWithoutUserInput
     tenantMemberships?: TenantMembershipUncheckedCreateNestedManyWithoutUserInput
+    reviews?: ReviewUncheckedCreateNestedManyWithoutUserInput
+    reviewPrompts?: ReviewPromptUncheckedCreateNestedManyWithoutUserInput
   }
 
   export type UserCreateOrConnectWithoutBackupLogsInput = {
@@ -240987,6 +245262,8 @@ export namespace Prisma {
     licencias?: TenantLicenseCreateNestedManyWithoutTenantInput
     memberships?: TenantMembershipCreateNestedManyWithoutTenantInput
     turnosPos?: TurnoPuntoVentaCreateNestedManyWithoutTenantInput
+    reviews?: ReviewCreateNestedManyWithoutTenantInput
+    reviewPrompts?: ReviewPromptCreateNestedManyWithoutTenantInput
   }
 
   export type TenantUncheckedCreateWithoutBackupLogsInput = {
@@ -241056,6 +245333,8 @@ export namespace Prisma {
     licencias?: TenantLicenseUncheckedCreateNestedManyWithoutTenantInput
     memberships?: TenantMembershipUncheckedCreateNestedManyWithoutTenantInput
     turnosPos?: TurnoPuntoVentaUncheckedCreateNestedManyWithoutTenantInput
+    reviews?: ReviewUncheckedCreateNestedManyWithoutTenantInput
+    reviewPrompts?: ReviewPromptUncheckedCreateNestedManyWithoutTenantInput
   }
 
   export type TenantCreateOrConnectWithoutBackupLogsInput = {
@@ -241111,6 +245390,8 @@ export namespace Prisma {
     sessions?: UserSessionUpdateManyWithoutUserNestedInput
     backupPlans?: BackupPlanUpdateManyWithoutUserNestedInput
     tenantMemberships?: TenantMembershipUpdateManyWithoutUserNestedInput
+    reviews?: ReviewUpdateManyWithoutUserNestedInput
+    reviewPrompts?: ReviewPromptUpdateManyWithoutUserNestedInput
   }
 
   export type UserUncheckedUpdateWithoutBackupLogsInput = {
@@ -241150,6 +245431,8 @@ export namespace Prisma {
     sessions?: UserSessionUncheckedUpdateManyWithoutUserNestedInput
     backupPlans?: BackupPlanUncheckedUpdateManyWithoutUserNestedInput
     tenantMemberships?: TenantMembershipUncheckedUpdateManyWithoutUserNestedInput
+    reviews?: ReviewUncheckedUpdateManyWithoutUserNestedInput
+    reviewPrompts?: ReviewPromptUncheckedUpdateManyWithoutUserNestedInput
   }
 
   export type TenantUpsertWithoutBackupLogsInput = {
@@ -241230,6 +245513,8 @@ export namespace Prisma {
     licencias?: TenantLicenseUpdateManyWithoutTenantNestedInput
     memberships?: TenantMembershipUpdateManyWithoutTenantNestedInput
     turnosPos?: TurnoPuntoVentaUpdateManyWithoutTenantNestedInput
+    reviews?: ReviewUpdateManyWithoutTenantNestedInput
+    reviewPrompts?: ReviewPromptUpdateManyWithoutTenantNestedInput
   }
 
   export type TenantUncheckedUpdateWithoutBackupLogsInput = {
@@ -241299,6 +245584,8 @@ export namespace Prisma {
     licencias?: TenantLicenseUncheckedUpdateManyWithoutTenantNestedInput
     memberships?: TenantMembershipUncheckedUpdateManyWithoutTenantNestedInput
     turnosPos?: TurnoPuntoVentaUncheckedUpdateManyWithoutTenantNestedInput
+    reviews?: ReviewUncheckedUpdateManyWithoutTenantNestedInput
+    reviewPrompts?: ReviewPromptUncheckedUpdateManyWithoutTenantNestedInput
   }
 
   export type UserCreateWithoutBackupPlansInput = {
@@ -241338,6 +245625,8 @@ export namespace Prisma {
     sessions?: UserSessionCreateNestedManyWithoutUserInput
     backupLogs?: BackupLogCreateNestedManyWithoutUserInput
     tenantMemberships?: TenantMembershipCreateNestedManyWithoutUserInput
+    reviews?: ReviewCreateNestedManyWithoutUserInput
+    reviewPrompts?: ReviewPromptCreateNestedManyWithoutUserInput
   }
 
   export type UserUncheckedCreateWithoutBackupPlansInput = {
@@ -241377,6 +245666,8 @@ export namespace Prisma {
     sessions?: UserSessionUncheckedCreateNestedManyWithoutUserInput
     backupLogs?: BackupLogUncheckedCreateNestedManyWithoutUserInput
     tenantMemberships?: TenantMembershipUncheckedCreateNestedManyWithoutUserInput
+    reviews?: ReviewUncheckedCreateNestedManyWithoutUserInput
+    reviewPrompts?: ReviewPromptUncheckedCreateNestedManyWithoutUserInput
   }
 
   export type UserCreateOrConnectWithoutBackupPlansInput = {
@@ -241451,6 +245742,8 @@ export namespace Prisma {
     licencias?: TenantLicenseCreateNestedManyWithoutTenantInput
     memberships?: TenantMembershipCreateNestedManyWithoutTenantInput
     turnosPos?: TurnoPuntoVentaCreateNestedManyWithoutTenantInput
+    reviews?: ReviewCreateNestedManyWithoutTenantInput
+    reviewPrompts?: ReviewPromptCreateNestedManyWithoutTenantInput
   }
 
   export type TenantUncheckedCreateWithoutBackupPlansInput = {
@@ -241520,6 +245813,8 @@ export namespace Prisma {
     licencias?: TenantLicenseUncheckedCreateNestedManyWithoutTenantInput
     memberships?: TenantMembershipUncheckedCreateNestedManyWithoutTenantInput
     turnosPos?: TurnoPuntoVentaUncheckedCreateNestedManyWithoutTenantInput
+    reviews?: ReviewUncheckedCreateNestedManyWithoutTenantInput
+    reviewPrompts?: ReviewPromptUncheckedCreateNestedManyWithoutTenantInput
   }
 
   export type TenantCreateOrConnectWithoutBackupPlansInput = {
@@ -241575,6 +245870,8 @@ export namespace Prisma {
     sessions?: UserSessionUpdateManyWithoutUserNestedInput
     backupLogs?: BackupLogUpdateManyWithoutUserNestedInput
     tenantMemberships?: TenantMembershipUpdateManyWithoutUserNestedInput
+    reviews?: ReviewUpdateManyWithoutUserNestedInput
+    reviewPrompts?: ReviewPromptUpdateManyWithoutUserNestedInput
   }
 
   export type UserUncheckedUpdateWithoutBackupPlansInput = {
@@ -241614,6 +245911,8 @@ export namespace Prisma {
     sessions?: UserSessionUncheckedUpdateManyWithoutUserNestedInput
     backupLogs?: BackupLogUncheckedUpdateManyWithoutUserNestedInput
     tenantMemberships?: TenantMembershipUncheckedUpdateManyWithoutUserNestedInput
+    reviews?: ReviewUncheckedUpdateManyWithoutUserNestedInput
+    reviewPrompts?: ReviewPromptUncheckedUpdateManyWithoutUserNestedInput
   }
 
   export type TenantUpsertWithoutBackupPlansInput = {
@@ -241694,6 +245993,8 @@ export namespace Prisma {
     licencias?: TenantLicenseUpdateManyWithoutTenantNestedInput
     memberships?: TenantMembershipUpdateManyWithoutTenantNestedInput
     turnosPos?: TurnoPuntoVentaUpdateManyWithoutTenantNestedInput
+    reviews?: ReviewUpdateManyWithoutTenantNestedInput
+    reviewPrompts?: ReviewPromptUpdateManyWithoutTenantNestedInput
   }
 
   export type TenantUncheckedUpdateWithoutBackupPlansInput = {
@@ -241763,6 +246064,968 @@ export namespace Prisma {
     licencias?: TenantLicenseUncheckedUpdateManyWithoutTenantNestedInput
     memberships?: TenantMembershipUncheckedUpdateManyWithoutTenantNestedInput
     turnosPos?: TurnoPuntoVentaUncheckedUpdateManyWithoutTenantNestedInput
+    reviews?: ReviewUncheckedUpdateManyWithoutTenantNestedInput
+    reviewPrompts?: ReviewPromptUncheckedUpdateManyWithoutTenantNestedInput
+  }
+
+  export type TenantCreateWithoutReviewsInput = {
+    tenantId?: string
+    nombre: string
+    slug?: string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    contabilidadTimezone?: string
+    ajustesBancarios?: AjusteBancarioCreateNestedManyWithoutTenantInput
+    almacenes?: AlmacenCreateNestedManyWithoutTenantInput
+    anticipos?: AnticipoCreateNestedManyWithoutTenantInput
+    categorias?: CategoriaCreateNestedManyWithoutTenantInput
+    cierresContables?: CierreContableCreateNestedManyWithoutTenantInput
+    clientes?: ClienteCreateNestedManyWithoutTenantInput
+    comprasDocumento?: CompraDocumentoCreateNestedManyWithoutTenantInput
+    comprasDocumentoItem?: CompraDocumentoItemCreateNestedManyWithoutTenantInput
+    comprasProducto?: CompraProductoCreateNestedManyWithoutTenantInput
+    comprasServicio?: CompraServicioCreateNestedManyWithoutTenantInput
+    contratos?: ContratoCreateNestedManyWithoutTenantInput
+    cuentasBancarias?: CuentaBancariaCreateNestedManyWithoutTenantInput
+    cuentasPorCobrar?: CuentaPorCobrarCreateNestedManyWithoutTenantInput
+    cuentasPorPagar?: CuentaPorPagarCreateNestedManyWithoutTenantInput
+    defectacionesCatalogo?: DefectacionCatalogoCreateNestedManyWithoutTenantInput
+    deudasCash?: DeudaCashCreateNestedManyWithoutTenantInput
+    empleados?: EmpleadoCreateNestedManyWithoutTenantInput
+    equiposReparacion?: EquipoReparacionCreateNestedManyWithoutTenantInput
+    gastosCompra?: GastoCompraCreateNestedManyWithoutTenantInput
+    gastosDE?: GastosDECreateNestedManyWithoutTenantInput
+    listasPrecio?: ListaPrecioCreateNestedManyWithoutTenantInput
+    mermas?: MermaCreateNestedManyWithoutTenantInput
+    empresa?: MiEmpresaCreateNestedOneWithoutTenantInput
+    ofertas?: OfertaCreateNestedManyWithoutTenantInput
+    ordenesProduccion?: OrdenProduccionCreateNestedManyWithoutTenantInput
+    ordenesProduccionHistorial?: OrdenProduccionHistorialCreateNestedManyWithoutTenantInput
+    ordenesReparacion?: OrdenReparacionCreateNestedManyWithoutTenantInput
+    ordenesReparacionEquipo?: OrdenReparacionEquipoCreateNestedManyWithoutTenantInput
+    ordenesReparacionItem?: OrdenReparacionItemCreateNestedManyWithoutTenantInput
+    ordenesReparacionMaterial?: OrdenReparacionMaterialCreateNestedManyWithoutTenantInput
+    pagosCuentaPorPagar?: PagoCuentaPorPagarCreateNestedManyWithoutTenantInput
+    pagosSalario?: PagosalarioCreateNestedManyWithoutTenantInput
+    piezasReparacion?: PiezaReparacionCreateNestedManyWithoutTenantInput
+    prestamosCash?: PrestamoCashCreateNestedManyWithoutTenantInput
+    productos?: ProductoCreateNestedManyWithoutTenantInput
+    puntosDeVenta?: PuntoDeVentaCreateNestedManyWithoutTenantInput
+    recetas?: RecetaCreateNestedManyWithoutTenantInput
+    recetasIngredientes?: RecetaIngredienteCreateNestedManyWithoutTenantInput
+    reconciliacionesGasto?: ReconciliacionGastoCreateNestedManyWithoutTenantInput
+    reconciliacionesServicio?: ReconciliacionServicioCreateNestedManyWithoutTenantInput
+    reconciliacionesVenta?: ReconciliacionVentaCreateNestedManyWithoutTenantInput
+    servicios?: ServiciosCreateNestedManyWithoutTenantInput
+    stockUbicaciones?: StockUbicacionCreateNestedManyWithoutTenantInput
+    transferencias?: TransferenciaCreateNestedManyWithoutTenantInput
+    transferenciasBancarias?: TransferenciaBancariaCreateNestedManyWithoutTenantInput
+    valesSalida?: ValeSalidaCreateNestedManyWithoutTenantInput
+    valesSalidaItem?: ValeSalidaItemCreateNestedManyWithoutTenantInput
+    vendors?: VendorCreateNestedManyWithoutTenantInput
+    ventas?: VentaCreateNestedManyWithoutTenantInput
+    ventasServicios?: VentaServiciosCreateNestedManyWithoutTenantInput
+    aperturaPeriodos?: AperturaPeriodoCreateNestedManyWithoutTenantInput
+    arqueosCaja?: ArqueoCajaCreateNestedManyWithoutTenantInput
+    auditoriaPeriodos?: AuditoriaPeriodoCreateNestedManyWithoutTenantInput
+    backupLogs?: BackupLogCreateNestedManyWithoutTenantInput
+    backupPlans?: BackupPlanCreateNestedManyWithoutTenantInput
+    facturas?: FacturaCreateNestedManyWithoutTenantInput
+    periodosContables?: PeriodoContableCreateNestedManyWithoutTenantInput
+    seriesFacturacion?: SerieFacturacionCreateNestedManyWithoutTenantInput
+    licencias?: TenantLicenseCreateNestedManyWithoutTenantInput
+    memberships?: TenantMembershipCreateNestedManyWithoutTenantInput
+    turnosPos?: TurnoPuntoVentaCreateNestedManyWithoutTenantInput
+    reviewPrompts?: ReviewPromptCreateNestedManyWithoutTenantInput
+  }
+
+  export type TenantUncheckedCreateWithoutReviewsInput = {
+    tenantId?: string
+    nombre: string
+    slug?: string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    contabilidadTimezone?: string
+    ajustesBancarios?: AjusteBancarioUncheckedCreateNestedManyWithoutTenantInput
+    almacenes?: AlmacenUncheckedCreateNestedManyWithoutTenantInput
+    anticipos?: AnticipoUncheckedCreateNestedManyWithoutTenantInput
+    categorias?: CategoriaUncheckedCreateNestedManyWithoutTenantInput
+    cierresContables?: CierreContableUncheckedCreateNestedManyWithoutTenantInput
+    clientes?: ClienteUncheckedCreateNestedManyWithoutTenantInput
+    comprasDocumento?: CompraDocumentoUncheckedCreateNestedManyWithoutTenantInput
+    comprasDocumentoItem?: CompraDocumentoItemUncheckedCreateNestedManyWithoutTenantInput
+    comprasProducto?: CompraProductoUncheckedCreateNestedManyWithoutTenantInput
+    comprasServicio?: CompraServicioUncheckedCreateNestedManyWithoutTenantInput
+    contratos?: ContratoUncheckedCreateNestedManyWithoutTenantInput
+    cuentasBancarias?: CuentaBancariaUncheckedCreateNestedManyWithoutTenantInput
+    cuentasPorCobrar?: CuentaPorCobrarUncheckedCreateNestedManyWithoutTenantInput
+    cuentasPorPagar?: CuentaPorPagarUncheckedCreateNestedManyWithoutTenantInput
+    defectacionesCatalogo?: DefectacionCatalogoUncheckedCreateNestedManyWithoutTenantInput
+    deudasCash?: DeudaCashUncheckedCreateNestedManyWithoutTenantInput
+    empleados?: EmpleadoUncheckedCreateNestedManyWithoutTenantInput
+    equiposReparacion?: EquipoReparacionUncheckedCreateNestedManyWithoutTenantInput
+    gastosCompra?: GastoCompraUncheckedCreateNestedManyWithoutTenantInput
+    gastosDE?: GastosDEUncheckedCreateNestedManyWithoutTenantInput
+    listasPrecio?: ListaPrecioUncheckedCreateNestedManyWithoutTenantInput
+    mermas?: MermaUncheckedCreateNestedManyWithoutTenantInput
+    empresa?: MiEmpresaUncheckedCreateNestedOneWithoutTenantInput
+    ofertas?: OfertaUncheckedCreateNestedManyWithoutTenantInput
+    ordenesProduccion?: OrdenProduccionUncheckedCreateNestedManyWithoutTenantInput
+    ordenesProduccionHistorial?: OrdenProduccionHistorialUncheckedCreateNestedManyWithoutTenantInput
+    ordenesReparacion?: OrdenReparacionUncheckedCreateNestedManyWithoutTenantInput
+    ordenesReparacionEquipo?: OrdenReparacionEquipoUncheckedCreateNestedManyWithoutTenantInput
+    ordenesReparacionItem?: OrdenReparacionItemUncheckedCreateNestedManyWithoutTenantInput
+    ordenesReparacionMaterial?: OrdenReparacionMaterialUncheckedCreateNestedManyWithoutTenantInput
+    pagosCuentaPorPagar?: PagoCuentaPorPagarUncheckedCreateNestedManyWithoutTenantInput
+    pagosSalario?: PagosalarioUncheckedCreateNestedManyWithoutTenantInput
+    piezasReparacion?: PiezaReparacionUncheckedCreateNestedManyWithoutTenantInput
+    prestamosCash?: PrestamoCashUncheckedCreateNestedManyWithoutTenantInput
+    productos?: ProductoUncheckedCreateNestedManyWithoutTenantInput
+    puntosDeVenta?: PuntoDeVentaUncheckedCreateNestedManyWithoutTenantInput
+    recetas?: RecetaUncheckedCreateNestedManyWithoutTenantInput
+    recetasIngredientes?: RecetaIngredienteUncheckedCreateNestedManyWithoutTenantInput
+    reconciliacionesGasto?: ReconciliacionGastoUncheckedCreateNestedManyWithoutTenantInput
+    reconciliacionesServicio?: ReconciliacionServicioUncheckedCreateNestedManyWithoutTenantInput
+    reconciliacionesVenta?: ReconciliacionVentaUncheckedCreateNestedManyWithoutTenantInput
+    servicios?: ServiciosUncheckedCreateNestedManyWithoutTenantInput
+    stockUbicaciones?: StockUbicacionUncheckedCreateNestedManyWithoutTenantInput
+    transferencias?: TransferenciaUncheckedCreateNestedManyWithoutTenantInput
+    transferenciasBancarias?: TransferenciaBancariaUncheckedCreateNestedManyWithoutTenantInput
+    valesSalida?: ValeSalidaUncheckedCreateNestedManyWithoutTenantInput
+    valesSalidaItem?: ValeSalidaItemUncheckedCreateNestedManyWithoutTenantInput
+    vendors?: VendorUncheckedCreateNestedManyWithoutTenantInput
+    ventas?: VentaUncheckedCreateNestedManyWithoutTenantInput
+    ventasServicios?: VentaServiciosUncheckedCreateNestedManyWithoutTenantInput
+    aperturaPeriodos?: AperturaPeriodoUncheckedCreateNestedManyWithoutTenantInput
+    arqueosCaja?: ArqueoCajaUncheckedCreateNestedManyWithoutTenantInput
+    auditoriaPeriodos?: AuditoriaPeriodoUncheckedCreateNestedManyWithoutTenantInput
+    backupLogs?: BackupLogUncheckedCreateNestedManyWithoutTenantInput
+    backupPlans?: BackupPlanUncheckedCreateNestedManyWithoutTenantInput
+    facturas?: FacturaUncheckedCreateNestedManyWithoutTenantInput
+    periodosContables?: PeriodoContableUncheckedCreateNestedManyWithoutTenantInput
+    seriesFacturacion?: SerieFacturacionUncheckedCreateNestedManyWithoutTenantInput
+    licencias?: TenantLicenseUncheckedCreateNestedManyWithoutTenantInput
+    memberships?: TenantMembershipUncheckedCreateNestedManyWithoutTenantInput
+    turnosPos?: TurnoPuntoVentaUncheckedCreateNestedManyWithoutTenantInput
+    reviewPrompts?: ReviewPromptUncheckedCreateNestedManyWithoutTenantInput
+  }
+
+  export type TenantCreateOrConnectWithoutReviewsInput = {
+    where: TenantWhereUniqueInput
+    create: XOR<TenantCreateWithoutReviewsInput, TenantUncheckedCreateWithoutReviewsInput>
+  }
+
+  export type UserCreateWithoutReviewsInput = {
+    userId?: string
+    name: string
+    email: string
+    password: string
+    role?: string
+    onboardingType?: string | null
+    onboardingStatus?: string
+    emailVerifiedAt?: Date | string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    activatedAt?: Date | string | null
+    avatar?: string | null
+    expiresAt?: Date | string | null
+    isActive?: boolean
+    lastFailedLogin?: Date | string | null
+    lastModifiedBy?: string | null
+    lockedUntil?: Date | string | null
+    loginAttempts?: number
+    googleId?: string | null
+    anticiposCreados?: AnticipoCreateNestedManyWithoutCreadorInput
+    compraDocumentosEditados?: CompraDocumentoCreateNestedManyWithoutUpdatedByInput
+    contratosAprobados?: ContratoCreateNestedManyWithoutAprobadorInput
+    contratosCreados?: ContratoCreateNestedManyWithoutCreadorInput
+    contratoAprobaciones?: ContratoAprobacionCreateNestedManyWithoutAprobadorInput
+    contratoArchivos?: ContratoArchivoCreateNestedManyWithoutGeneradorInput
+    contratoFirmas?: ContratoFirmaCreateNestedManyWithoutFirmanteInput
+    contratoVersiones?: ContratoVersionCreateNestedManyWithoutCreadorInput
+    licencias?: LicenciaCreateNestedManyWithoutUsuarioInput
+    licenciasAudit?: LicenciaAuditCreateNestedManyWithoutActorInput
+    notifications?: NotificationCreateNestedManyWithoutUserInput
+    tiposContratosCustom?: TipoContratoCustomCreateNestedManyWithoutCreadorInput
+    transferenciasCreadas?: TransferenciaCreateNestedManyWithoutCreadoPorInput
+    activityLogs?: UserActivityLogCreateNestedManyWithoutUserInput
+    sessions?: UserSessionCreateNestedManyWithoutUserInput
+    backupLogs?: BackupLogCreateNestedManyWithoutUserInput
+    backupPlans?: BackupPlanCreateNestedManyWithoutUserInput
+    tenantMemberships?: TenantMembershipCreateNestedManyWithoutUserInput
+    reviewPrompts?: ReviewPromptCreateNestedManyWithoutUserInput
+  }
+
+  export type UserUncheckedCreateWithoutReviewsInput = {
+    userId?: string
+    name: string
+    email: string
+    password: string
+    role?: string
+    onboardingType?: string | null
+    onboardingStatus?: string
+    emailVerifiedAt?: Date | string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    activatedAt?: Date | string | null
+    avatar?: string | null
+    expiresAt?: Date | string | null
+    isActive?: boolean
+    lastFailedLogin?: Date | string | null
+    lastModifiedBy?: string | null
+    lockedUntil?: Date | string | null
+    loginAttempts?: number
+    googleId?: string | null
+    anticiposCreados?: AnticipoUncheckedCreateNestedManyWithoutCreadorInput
+    compraDocumentosEditados?: CompraDocumentoUncheckedCreateNestedManyWithoutUpdatedByInput
+    contratosAprobados?: ContratoUncheckedCreateNestedManyWithoutAprobadorInput
+    contratosCreados?: ContratoUncheckedCreateNestedManyWithoutCreadorInput
+    contratoAprobaciones?: ContratoAprobacionUncheckedCreateNestedManyWithoutAprobadorInput
+    contratoArchivos?: ContratoArchivoUncheckedCreateNestedManyWithoutGeneradorInput
+    contratoFirmas?: ContratoFirmaUncheckedCreateNestedManyWithoutFirmanteInput
+    contratoVersiones?: ContratoVersionUncheckedCreateNestedManyWithoutCreadorInput
+    licencias?: LicenciaUncheckedCreateNestedManyWithoutUsuarioInput
+    licenciasAudit?: LicenciaAuditUncheckedCreateNestedManyWithoutActorInput
+    notifications?: NotificationUncheckedCreateNestedManyWithoutUserInput
+    tiposContratosCustom?: TipoContratoCustomUncheckedCreateNestedManyWithoutCreadorInput
+    transferenciasCreadas?: TransferenciaUncheckedCreateNestedManyWithoutCreadoPorInput
+    activityLogs?: UserActivityLogUncheckedCreateNestedManyWithoutUserInput
+    sessions?: UserSessionUncheckedCreateNestedManyWithoutUserInput
+    backupLogs?: BackupLogUncheckedCreateNestedManyWithoutUserInput
+    backupPlans?: BackupPlanUncheckedCreateNestedManyWithoutUserInput
+    tenantMemberships?: TenantMembershipUncheckedCreateNestedManyWithoutUserInput
+    reviewPrompts?: ReviewPromptUncheckedCreateNestedManyWithoutUserInput
+  }
+
+  export type UserCreateOrConnectWithoutReviewsInput = {
+    where: UserWhereUniqueInput
+    create: XOR<UserCreateWithoutReviewsInput, UserUncheckedCreateWithoutReviewsInput>
+  }
+
+  export type TenantUpsertWithoutReviewsInput = {
+    update: XOR<TenantUpdateWithoutReviewsInput, TenantUncheckedUpdateWithoutReviewsInput>
+    create: XOR<TenantCreateWithoutReviewsInput, TenantUncheckedCreateWithoutReviewsInput>
+    where?: TenantWhereInput
+  }
+
+  export type TenantUpdateToOneWithWhereWithoutReviewsInput = {
+    where?: TenantWhereInput
+    data: XOR<TenantUpdateWithoutReviewsInput, TenantUncheckedUpdateWithoutReviewsInput>
+  }
+
+  export type TenantUpdateWithoutReviewsInput = {
+    tenantId?: StringFieldUpdateOperationsInput | string
+    nombre?: StringFieldUpdateOperationsInput | string
+    slug?: NullableStringFieldUpdateOperationsInput | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    contabilidadTimezone?: StringFieldUpdateOperationsInput | string
+    ajustesBancarios?: AjusteBancarioUpdateManyWithoutTenantNestedInput
+    almacenes?: AlmacenUpdateManyWithoutTenantNestedInput
+    anticipos?: AnticipoUpdateManyWithoutTenantNestedInput
+    categorias?: CategoriaUpdateManyWithoutTenantNestedInput
+    cierresContables?: CierreContableUpdateManyWithoutTenantNestedInput
+    clientes?: ClienteUpdateManyWithoutTenantNestedInput
+    comprasDocumento?: CompraDocumentoUpdateManyWithoutTenantNestedInput
+    comprasDocumentoItem?: CompraDocumentoItemUpdateManyWithoutTenantNestedInput
+    comprasProducto?: CompraProductoUpdateManyWithoutTenantNestedInput
+    comprasServicio?: CompraServicioUpdateManyWithoutTenantNestedInput
+    contratos?: ContratoUpdateManyWithoutTenantNestedInput
+    cuentasBancarias?: CuentaBancariaUpdateManyWithoutTenantNestedInput
+    cuentasPorCobrar?: CuentaPorCobrarUpdateManyWithoutTenantNestedInput
+    cuentasPorPagar?: CuentaPorPagarUpdateManyWithoutTenantNestedInput
+    defectacionesCatalogo?: DefectacionCatalogoUpdateManyWithoutTenantNestedInput
+    deudasCash?: DeudaCashUpdateManyWithoutTenantNestedInput
+    empleados?: EmpleadoUpdateManyWithoutTenantNestedInput
+    equiposReparacion?: EquipoReparacionUpdateManyWithoutTenantNestedInput
+    gastosCompra?: GastoCompraUpdateManyWithoutTenantNestedInput
+    gastosDE?: GastosDEUpdateManyWithoutTenantNestedInput
+    listasPrecio?: ListaPrecioUpdateManyWithoutTenantNestedInput
+    mermas?: MermaUpdateManyWithoutTenantNestedInput
+    empresa?: MiEmpresaUpdateOneWithoutTenantNestedInput
+    ofertas?: OfertaUpdateManyWithoutTenantNestedInput
+    ordenesProduccion?: OrdenProduccionUpdateManyWithoutTenantNestedInput
+    ordenesProduccionHistorial?: OrdenProduccionHistorialUpdateManyWithoutTenantNestedInput
+    ordenesReparacion?: OrdenReparacionUpdateManyWithoutTenantNestedInput
+    ordenesReparacionEquipo?: OrdenReparacionEquipoUpdateManyWithoutTenantNestedInput
+    ordenesReparacionItem?: OrdenReparacionItemUpdateManyWithoutTenantNestedInput
+    ordenesReparacionMaterial?: OrdenReparacionMaterialUpdateManyWithoutTenantNestedInput
+    pagosCuentaPorPagar?: PagoCuentaPorPagarUpdateManyWithoutTenantNestedInput
+    pagosSalario?: PagosalarioUpdateManyWithoutTenantNestedInput
+    piezasReparacion?: PiezaReparacionUpdateManyWithoutTenantNestedInput
+    prestamosCash?: PrestamoCashUpdateManyWithoutTenantNestedInput
+    productos?: ProductoUpdateManyWithoutTenantNestedInput
+    puntosDeVenta?: PuntoDeVentaUpdateManyWithoutTenantNestedInput
+    recetas?: RecetaUpdateManyWithoutTenantNestedInput
+    recetasIngredientes?: RecetaIngredienteUpdateManyWithoutTenantNestedInput
+    reconciliacionesGasto?: ReconciliacionGastoUpdateManyWithoutTenantNestedInput
+    reconciliacionesServicio?: ReconciliacionServicioUpdateManyWithoutTenantNestedInput
+    reconciliacionesVenta?: ReconciliacionVentaUpdateManyWithoutTenantNestedInput
+    servicios?: ServiciosUpdateManyWithoutTenantNestedInput
+    stockUbicaciones?: StockUbicacionUpdateManyWithoutTenantNestedInput
+    transferencias?: TransferenciaUpdateManyWithoutTenantNestedInput
+    transferenciasBancarias?: TransferenciaBancariaUpdateManyWithoutTenantNestedInput
+    valesSalida?: ValeSalidaUpdateManyWithoutTenantNestedInput
+    valesSalidaItem?: ValeSalidaItemUpdateManyWithoutTenantNestedInput
+    vendors?: VendorUpdateManyWithoutTenantNestedInput
+    ventas?: VentaUpdateManyWithoutTenantNestedInput
+    ventasServicios?: VentaServiciosUpdateManyWithoutTenantNestedInput
+    aperturaPeriodos?: AperturaPeriodoUpdateManyWithoutTenantNestedInput
+    arqueosCaja?: ArqueoCajaUpdateManyWithoutTenantNestedInput
+    auditoriaPeriodos?: AuditoriaPeriodoUpdateManyWithoutTenantNestedInput
+    backupLogs?: BackupLogUpdateManyWithoutTenantNestedInput
+    backupPlans?: BackupPlanUpdateManyWithoutTenantNestedInput
+    facturas?: FacturaUpdateManyWithoutTenantNestedInput
+    periodosContables?: PeriodoContableUpdateManyWithoutTenantNestedInput
+    seriesFacturacion?: SerieFacturacionUpdateManyWithoutTenantNestedInput
+    licencias?: TenantLicenseUpdateManyWithoutTenantNestedInput
+    memberships?: TenantMembershipUpdateManyWithoutTenantNestedInput
+    turnosPos?: TurnoPuntoVentaUpdateManyWithoutTenantNestedInput
+    reviewPrompts?: ReviewPromptUpdateManyWithoutTenantNestedInput
+  }
+
+  export type TenantUncheckedUpdateWithoutReviewsInput = {
+    tenantId?: StringFieldUpdateOperationsInput | string
+    nombre?: StringFieldUpdateOperationsInput | string
+    slug?: NullableStringFieldUpdateOperationsInput | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    contabilidadTimezone?: StringFieldUpdateOperationsInput | string
+    ajustesBancarios?: AjusteBancarioUncheckedUpdateManyWithoutTenantNestedInput
+    almacenes?: AlmacenUncheckedUpdateManyWithoutTenantNestedInput
+    anticipos?: AnticipoUncheckedUpdateManyWithoutTenantNestedInput
+    categorias?: CategoriaUncheckedUpdateManyWithoutTenantNestedInput
+    cierresContables?: CierreContableUncheckedUpdateManyWithoutTenantNestedInput
+    clientes?: ClienteUncheckedUpdateManyWithoutTenantNestedInput
+    comprasDocumento?: CompraDocumentoUncheckedUpdateManyWithoutTenantNestedInput
+    comprasDocumentoItem?: CompraDocumentoItemUncheckedUpdateManyWithoutTenantNestedInput
+    comprasProducto?: CompraProductoUncheckedUpdateManyWithoutTenantNestedInput
+    comprasServicio?: CompraServicioUncheckedUpdateManyWithoutTenantNestedInput
+    contratos?: ContratoUncheckedUpdateManyWithoutTenantNestedInput
+    cuentasBancarias?: CuentaBancariaUncheckedUpdateManyWithoutTenantNestedInput
+    cuentasPorCobrar?: CuentaPorCobrarUncheckedUpdateManyWithoutTenantNestedInput
+    cuentasPorPagar?: CuentaPorPagarUncheckedUpdateManyWithoutTenantNestedInput
+    defectacionesCatalogo?: DefectacionCatalogoUncheckedUpdateManyWithoutTenantNestedInput
+    deudasCash?: DeudaCashUncheckedUpdateManyWithoutTenantNestedInput
+    empleados?: EmpleadoUncheckedUpdateManyWithoutTenantNestedInput
+    equiposReparacion?: EquipoReparacionUncheckedUpdateManyWithoutTenantNestedInput
+    gastosCompra?: GastoCompraUncheckedUpdateManyWithoutTenantNestedInput
+    gastosDE?: GastosDEUncheckedUpdateManyWithoutTenantNestedInput
+    listasPrecio?: ListaPrecioUncheckedUpdateManyWithoutTenantNestedInput
+    mermas?: MermaUncheckedUpdateManyWithoutTenantNestedInput
+    empresa?: MiEmpresaUncheckedUpdateOneWithoutTenantNestedInput
+    ofertas?: OfertaUncheckedUpdateManyWithoutTenantNestedInput
+    ordenesProduccion?: OrdenProduccionUncheckedUpdateManyWithoutTenantNestedInput
+    ordenesProduccionHistorial?: OrdenProduccionHistorialUncheckedUpdateManyWithoutTenantNestedInput
+    ordenesReparacion?: OrdenReparacionUncheckedUpdateManyWithoutTenantNestedInput
+    ordenesReparacionEquipo?: OrdenReparacionEquipoUncheckedUpdateManyWithoutTenantNestedInput
+    ordenesReparacionItem?: OrdenReparacionItemUncheckedUpdateManyWithoutTenantNestedInput
+    ordenesReparacionMaterial?: OrdenReparacionMaterialUncheckedUpdateManyWithoutTenantNestedInput
+    pagosCuentaPorPagar?: PagoCuentaPorPagarUncheckedUpdateManyWithoutTenantNestedInput
+    pagosSalario?: PagosalarioUncheckedUpdateManyWithoutTenantNestedInput
+    piezasReparacion?: PiezaReparacionUncheckedUpdateManyWithoutTenantNestedInput
+    prestamosCash?: PrestamoCashUncheckedUpdateManyWithoutTenantNestedInput
+    productos?: ProductoUncheckedUpdateManyWithoutTenantNestedInput
+    puntosDeVenta?: PuntoDeVentaUncheckedUpdateManyWithoutTenantNestedInput
+    recetas?: RecetaUncheckedUpdateManyWithoutTenantNestedInput
+    recetasIngredientes?: RecetaIngredienteUncheckedUpdateManyWithoutTenantNestedInput
+    reconciliacionesGasto?: ReconciliacionGastoUncheckedUpdateManyWithoutTenantNestedInput
+    reconciliacionesServicio?: ReconciliacionServicioUncheckedUpdateManyWithoutTenantNestedInput
+    reconciliacionesVenta?: ReconciliacionVentaUncheckedUpdateManyWithoutTenantNestedInput
+    servicios?: ServiciosUncheckedUpdateManyWithoutTenantNestedInput
+    stockUbicaciones?: StockUbicacionUncheckedUpdateManyWithoutTenantNestedInput
+    transferencias?: TransferenciaUncheckedUpdateManyWithoutTenantNestedInput
+    transferenciasBancarias?: TransferenciaBancariaUncheckedUpdateManyWithoutTenantNestedInput
+    valesSalida?: ValeSalidaUncheckedUpdateManyWithoutTenantNestedInput
+    valesSalidaItem?: ValeSalidaItemUncheckedUpdateManyWithoutTenantNestedInput
+    vendors?: VendorUncheckedUpdateManyWithoutTenantNestedInput
+    ventas?: VentaUncheckedUpdateManyWithoutTenantNestedInput
+    ventasServicios?: VentaServiciosUncheckedUpdateManyWithoutTenantNestedInput
+    aperturaPeriodos?: AperturaPeriodoUncheckedUpdateManyWithoutTenantNestedInput
+    arqueosCaja?: ArqueoCajaUncheckedUpdateManyWithoutTenantNestedInput
+    auditoriaPeriodos?: AuditoriaPeriodoUncheckedUpdateManyWithoutTenantNestedInput
+    backupLogs?: BackupLogUncheckedUpdateManyWithoutTenantNestedInput
+    backupPlans?: BackupPlanUncheckedUpdateManyWithoutTenantNestedInput
+    facturas?: FacturaUncheckedUpdateManyWithoutTenantNestedInput
+    periodosContables?: PeriodoContableUncheckedUpdateManyWithoutTenantNestedInput
+    seriesFacturacion?: SerieFacturacionUncheckedUpdateManyWithoutTenantNestedInput
+    licencias?: TenantLicenseUncheckedUpdateManyWithoutTenantNestedInput
+    memberships?: TenantMembershipUncheckedUpdateManyWithoutTenantNestedInput
+    turnosPos?: TurnoPuntoVentaUncheckedUpdateManyWithoutTenantNestedInput
+    reviewPrompts?: ReviewPromptUncheckedUpdateManyWithoutTenantNestedInput
+  }
+
+  export type UserUpsertWithoutReviewsInput = {
+    update: XOR<UserUpdateWithoutReviewsInput, UserUncheckedUpdateWithoutReviewsInput>
+    create: XOR<UserCreateWithoutReviewsInput, UserUncheckedCreateWithoutReviewsInput>
+    where?: UserWhereInput
+  }
+
+  export type UserUpdateToOneWithWhereWithoutReviewsInput = {
+    where?: UserWhereInput
+    data: XOR<UserUpdateWithoutReviewsInput, UserUncheckedUpdateWithoutReviewsInput>
+  }
+
+  export type UserUpdateWithoutReviewsInput = {
+    userId?: StringFieldUpdateOperationsInput | string
+    name?: StringFieldUpdateOperationsInput | string
+    email?: StringFieldUpdateOperationsInput | string
+    password?: StringFieldUpdateOperationsInput | string
+    role?: StringFieldUpdateOperationsInput | string
+    onboardingType?: NullableStringFieldUpdateOperationsInput | string | null
+    onboardingStatus?: StringFieldUpdateOperationsInput | string
+    emailVerifiedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    activatedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    avatar?: NullableStringFieldUpdateOperationsInput | string | null
+    expiresAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    isActive?: BoolFieldUpdateOperationsInput | boolean
+    lastFailedLogin?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    lastModifiedBy?: NullableStringFieldUpdateOperationsInput | string | null
+    lockedUntil?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    loginAttempts?: IntFieldUpdateOperationsInput | number
+    googleId?: NullableStringFieldUpdateOperationsInput | string | null
+    anticiposCreados?: AnticipoUpdateManyWithoutCreadorNestedInput
+    compraDocumentosEditados?: CompraDocumentoUpdateManyWithoutUpdatedByNestedInput
+    contratosAprobados?: ContratoUpdateManyWithoutAprobadorNestedInput
+    contratosCreados?: ContratoUpdateManyWithoutCreadorNestedInput
+    contratoAprobaciones?: ContratoAprobacionUpdateManyWithoutAprobadorNestedInput
+    contratoArchivos?: ContratoArchivoUpdateManyWithoutGeneradorNestedInput
+    contratoFirmas?: ContratoFirmaUpdateManyWithoutFirmanteNestedInput
+    contratoVersiones?: ContratoVersionUpdateManyWithoutCreadorNestedInput
+    licencias?: LicenciaUpdateManyWithoutUsuarioNestedInput
+    licenciasAudit?: LicenciaAuditUpdateManyWithoutActorNestedInput
+    notifications?: NotificationUpdateManyWithoutUserNestedInput
+    tiposContratosCustom?: TipoContratoCustomUpdateManyWithoutCreadorNestedInput
+    transferenciasCreadas?: TransferenciaUpdateManyWithoutCreadoPorNestedInput
+    activityLogs?: UserActivityLogUpdateManyWithoutUserNestedInput
+    sessions?: UserSessionUpdateManyWithoutUserNestedInput
+    backupLogs?: BackupLogUpdateManyWithoutUserNestedInput
+    backupPlans?: BackupPlanUpdateManyWithoutUserNestedInput
+    tenantMemberships?: TenantMembershipUpdateManyWithoutUserNestedInput
+    reviewPrompts?: ReviewPromptUpdateManyWithoutUserNestedInput
+  }
+
+  export type UserUncheckedUpdateWithoutReviewsInput = {
+    userId?: StringFieldUpdateOperationsInput | string
+    name?: StringFieldUpdateOperationsInput | string
+    email?: StringFieldUpdateOperationsInput | string
+    password?: StringFieldUpdateOperationsInput | string
+    role?: StringFieldUpdateOperationsInput | string
+    onboardingType?: NullableStringFieldUpdateOperationsInput | string | null
+    onboardingStatus?: StringFieldUpdateOperationsInput | string
+    emailVerifiedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    activatedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    avatar?: NullableStringFieldUpdateOperationsInput | string | null
+    expiresAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    isActive?: BoolFieldUpdateOperationsInput | boolean
+    lastFailedLogin?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    lastModifiedBy?: NullableStringFieldUpdateOperationsInput | string | null
+    lockedUntil?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    loginAttempts?: IntFieldUpdateOperationsInput | number
+    googleId?: NullableStringFieldUpdateOperationsInput | string | null
+    anticiposCreados?: AnticipoUncheckedUpdateManyWithoutCreadorNestedInput
+    compraDocumentosEditados?: CompraDocumentoUncheckedUpdateManyWithoutUpdatedByNestedInput
+    contratosAprobados?: ContratoUncheckedUpdateManyWithoutAprobadorNestedInput
+    contratosCreados?: ContratoUncheckedUpdateManyWithoutCreadorNestedInput
+    contratoAprobaciones?: ContratoAprobacionUncheckedUpdateManyWithoutAprobadorNestedInput
+    contratoArchivos?: ContratoArchivoUncheckedUpdateManyWithoutGeneradorNestedInput
+    contratoFirmas?: ContratoFirmaUncheckedUpdateManyWithoutFirmanteNestedInput
+    contratoVersiones?: ContratoVersionUncheckedUpdateManyWithoutCreadorNestedInput
+    licencias?: LicenciaUncheckedUpdateManyWithoutUsuarioNestedInput
+    licenciasAudit?: LicenciaAuditUncheckedUpdateManyWithoutActorNestedInput
+    notifications?: NotificationUncheckedUpdateManyWithoutUserNestedInput
+    tiposContratosCustom?: TipoContratoCustomUncheckedUpdateManyWithoutCreadorNestedInput
+    transferenciasCreadas?: TransferenciaUncheckedUpdateManyWithoutCreadoPorNestedInput
+    activityLogs?: UserActivityLogUncheckedUpdateManyWithoutUserNestedInput
+    sessions?: UserSessionUncheckedUpdateManyWithoutUserNestedInput
+    backupLogs?: BackupLogUncheckedUpdateManyWithoutUserNestedInput
+    backupPlans?: BackupPlanUncheckedUpdateManyWithoutUserNestedInput
+    tenantMemberships?: TenantMembershipUncheckedUpdateManyWithoutUserNestedInput
+    reviewPrompts?: ReviewPromptUncheckedUpdateManyWithoutUserNestedInput
+  }
+
+  export type TenantCreateWithoutReviewPromptsInput = {
+    tenantId?: string
+    nombre: string
+    slug?: string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    contabilidadTimezone?: string
+    ajustesBancarios?: AjusteBancarioCreateNestedManyWithoutTenantInput
+    almacenes?: AlmacenCreateNestedManyWithoutTenantInput
+    anticipos?: AnticipoCreateNestedManyWithoutTenantInput
+    categorias?: CategoriaCreateNestedManyWithoutTenantInput
+    cierresContables?: CierreContableCreateNestedManyWithoutTenantInput
+    clientes?: ClienteCreateNestedManyWithoutTenantInput
+    comprasDocumento?: CompraDocumentoCreateNestedManyWithoutTenantInput
+    comprasDocumentoItem?: CompraDocumentoItemCreateNestedManyWithoutTenantInput
+    comprasProducto?: CompraProductoCreateNestedManyWithoutTenantInput
+    comprasServicio?: CompraServicioCreateNestedManyWithoutTenantInput
+    contratos?: ContratoCreateNestedManyWithoutTenantInput
+    cuentasBancarias?: CuentaBancariaCreateNestedManyWithoutTenantInput
+    cuentasPorCobrar?: CuentaPorCobrarCreateNestedManyWithoutTenantInput
+    cuentasPorPagar?: CuentaPorPagarCreateNestedManyWithoutTenantInput
+    defectacionesCatalogo?: DefectacionCatalogoCreateNestedManyWithoutTenantInput
+    deudasCash?: DeudaCashCreateNestedManyWithoutTenantInput
+    empleados?: EmpleadoCreateNestedManyWithoutTenantInput
+    equiposReparacion?: EquipoReparacionCreateNestedManyWithoutTenantInput
+    gastosCompra?: GastoCompraCreateNestedManyWithoutTenantInput
+    gastosDE?: GastosDECreateNestedManyWithoutTenantInput
+    listasPrecio?: ListaPrecioCreateNestedManyWithoutTenantInput
+    mermas?: MermaCreateNestedManyWithoutTenantInput
+    empresa?: MiEmpresaCreateNestedOneWithoutTenantInput
+    ofertas?: OfertaCreateNestedManyWithoutTenantInput
+    ordenesProduccion?: OrdenProduccionCreateNestedManyWithoutTenantInput
+    ordenesProduccionHistorial?: OrdenProduccionHistorialCreateNestedManyWithoutTenantInput
+    ordenesReparacion?: OrdenReparacionCreateNestedManyWithoutTenantInput
+    ordenesReparacionEquipo?: OrdenReparacionEquipoCreateNestedManyWithoutTenantInput
+    ordenesReparacionItem?: OrdenReparacionItemCreateNestedManyWithoutTenantInput
+    ordenesReparacionMaterial?: OrdenReparacionMaterialCreateNestedManyWithoutTenantInput
+    pagosCuentaPorPagar?: PagoCuentaPorPagarCreateNestedManyWithoutTenantInput
+    pagosSalario?: PagosalarioCreateNestedManyWithoutTenantInput
+    piezasReparacion?: PiezaReparacionCreateNestedManyWithoutTenantInput
+    prestamosCash?: PrestamoCashCreateNestedManyWithoutTenantInput
+    productos?: ProductoCreateNestedManyWithoutTenantInput
+    puntosDeVenta?: PuntoDeVentaCreateNestedManyWithoutTenantInput
+    recetas?: RecetaCreateNestedManyWithoutTenantInput
+    recetasIngredientes?: RecetaIngredienteCreateNestedManyWithoutTenantInput
+    reconciliacionesGasto?: ReconciliacionGastoCreateNestedManyWithoutTenantInput
+    reconciliacionesServicio?: ReconciliacionServicioCreateNestedManyWithoutTenantInput
+    reconciliacionesVenta?: ReconciliacionVentaCreateNestedManyWithoutTenantInput
+    servicios?: ServiciosCreateNestedManyWithoutTenantInput
+    stockUbicaciones?: StockUbicacionCreateNestedManyWithoutTenantInput
+    transferencias?: TransferenciaCreateNestedManyWithoutTenantInput
+    transferenciasBancarias?: TransferenciaBancariaCreateNestedManyWithoutTenantInput
+    valesSalida?: ValeSalidaCreateNestedManyWithoutTenantInput
+    valesSalidaItem?: ValeSalidaItemCreateNestedManyWithoutTenantInput
+    vendors?: VendorCreateNestedManyWithoutTenantInput
+    ventas?: VentaCreateNestedManyWithoutTenantInput
+    ventasServicios?: VentaServiciosCreateNestedManyWithoutTenantInput
+    aperturaPeriodos?: AperturaPeriodoCreateNestedManyWithoutTenantInput
+    arqueosCaja?: ArqueoCajaCreateNestedManyWithoutTenantInput
+    auditoriaPeriodos?: AuditoriaPeriodoCreateNestedManyWithoutTenantInput
+    backupLogs?: BackupLogCreateNestedManyWithoutTenantInput
+    backupPlans?: BackupPlanCreateNestedManyWithoutTenantInput
+    facturas?: FacturaCreateNestedManyWithoutTenantInput
+    periodosContables?: PeriodoContableCreateNestedManyWithoutTenantInput
+    seriesFacturacion?: SerieFacturacionCreateNestedManyWithoutTenantInput
+    licencias?: TenantLicenseCreateNestedManyWithoutTenantInput
+    memberships?: TenantMembershipCreateNestedManyWithoutTenantInput
+    turnosPos?: TurnoPuntoVentaCreateNestedManyWithoutTenantInput
+    reviews?: ReviewCreateNestedManyWithoutTenantInput
+  }
+
+  export type TenantUncheckedCreateWithoutReviewPromptsInput = {
+    tenantId?: string
+    nombre: string
+    slug?: string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    contabilidadTimezone?: string
+    ajustesBancarios?: AjusteBancarioUncheckedCreateNestedManyWithoutTenantInput
+    almacenes?: AlmacenUncheckedCreateNestedManyWithoutTenantInput
+    anticipos?: AnticipoUncheckedCreateNestedManyWithoutTenantInput
+    categorias?: CategoriaUncheckedCreateNestedManyWithoutTenantInput
+    cierresContables?: CierreContableUncheckedCreateNestedManyWithoutTenantInput
+    clientes?: ClienteUncheckedCreateNestedManyWithoutTenantInput
+    comprasDocumento?: CompraDocumentoUncheckedCreateNestedManyWithoutTenantInput
+    comprasDocumentoItem?: CompraDocumentoItemUncheckedCreateNestedManyWithoutTenantInput
+    comprasProducto?: CompraProductoUncheckedCreateNestedManyWithoutTenantInput
+    comprasServicio?: CompraServicioUncheckedCreateNestedManyWithoutTenantInput
+    contratos?: ContratoUncheckedCreateNestedManyWithoutTenantInput
+    cuentasBancarias?: CuentaBancariaUncheckedCreateNestedManyWithoutTenantInput
+    cuentasPorCobrar?: CuentaPorCobrarUncheckedCreateNestedManyWithoutTenantInput
+    cuentasPorPagar?: CuentaPorPagarUncheckedCreateNestedManyWithoutTenantInput
+    defectacionesCatalogo?: DefectacionCatalogoUncheckedCreateNestedManyWithoutTenantInput
+    deudasCash?: DeudaCashUncheckedCreateNestedManyWithoutTenantInput
+    empleados?: EmpleadoUncheckedCreateNestedManyWithoutTenantInput
+    equiposReparacion?: EquipoReparacionUncheckedCreateNestedManyWithoutTenantInput
+    gastosCompra?: GastoCompraUncheckedCreateNestedManyWithoutTenantInput
+    gastosDE?: GastosDEUncheckedCreateNestedManyWithoutTenantInput
+    listasPrecio?: ListaPrecioUncheckedCreateNestedManyWithoutTenantInput
+    mermas?: MermaUncheckedCreateNestedManyWithoutTenantInput
+    empresa?: MiEmpresaUncheckedCreateNestedOneWithoutTenantInput
+    ofertas?: OfertaUncheckedCreateNestedManyWithoutTenantInput
+    ordenesProduccion?: OrdenProduccionUncheckedCreateNestedManyWithoutTenantInput
+    ordenesProduccionHistorial?: OrdenProduccionHistorialUncheckedCreateNestedManyWithoutTenantInput
+    ordenesReparacion?: OrdenReparacionUncheckedCreateNestedManyWithoutTenantInput
+    ordenesReparacionEquipo?: OrdenReparacionEquipoUncheckedCreateNestedManyWithoutTenantInput
+    ordenesReparacionItem?: OrdenReparacionItemUncheckedCreateNestedManyWithoutTenantInput
+    ordenesReparacionMaterial?: OrdenReparacionMaterialUncheckedCreateNestedManyWithoutTenantInput
+    pagosCuentaPorPagar?: PagoCuentaPorPagarUncheckedCreateNestedManyWithoutTenantInput
+    pagosSalario?: PagosalarioUncheckedCreateNestedManyWithoutTenantInput
+    piezasReparacion?: PiezaReparacionUncheckedCreateNestedManyWithoutTenantInput
+    prestamosCash?: PrestamoCashUncheckedCreateNestedManyWithoutTenantInput
+    productos?: ProductoUncheckedCreateNestedManyWithoutTenantInput
+    puntosDeVenta?: PuntoDeVentaUncheckedCreateNestedManyWithoutTenantInput
+    recetas?: RecetaUncheckedCreateNestedManyWithoutTenantInput
+    recetasIngredientes?: RecetaIngredienteUncheckedCreateNestedManyWithoutTenantInput
+    reconciliacionesGasto?: ReconciliacionGastoUncheckedCreateNestedManyWithoutTenantInput
+    reconciliacionesServicio?: ReconciliacionServicioUncheckedCreateNestedManyWithoutTenantInput
+    reconciliacionesVenta?: ReconciliacionVentaUncheckedCreateNestedManyWithoutTenantInput
+    servicios?: ServiciosUncheckedCreateNestedManyWithoutTenantInput
+    stockUbicaciones?: StockUbicacionUncheckedCreateNestedManyWithoutTenantInput
+    transferencias?: TransferenciaUncheckedCreateNestedManyWithoutTenantInput
+    transferenciasBancarias?: TransferenciaBancariaUncheckedCreateNestedManyWithoutTenantInput
+    valesSalida?: ValeSalidaUncheckedCreateNestedManyWithoutTenantInput
+    valesSalidaItem?: ValeSalidaItemUncheckedCreateNestedManyWithoutTenantInput
+    vendors?: VendorUncheckedCreateNestedManyWithoutTenantInput
+    ventas?: VentaUncheckedCreateNestedManyWithoutTenantInput
+    ventasServicios?: VentaServiciosUncheckedCreateNestedManyWithoutTenantInput
+    aperturaPeriodos?: AperturaPeriodoUncheckedCreateNestedManyWithoutTenantInput
+    arqueosCaja?: ArqueoCajaUncheckedCreateNestedManyWithoutTenantInput
+    auditoriaPeriodos?: AuditoriaPeriodoUncheckedCreateNestedManyWithoutTenantInput
+    backupLogs?: BackupLogUncheckedCreateNestedManyWithoutTenantInput
+    backupPlans?: BackupPlanUncheckedCreateNestedManyWithoutTenantInput
+    facturas?: FacturaUncheckedCreateNestedManyWithoutTenantInput
+    periodosContables?: PeriodoContableUncheckedCreateNestedManyWithoutTenantInput
+    seriesFacturacion?: SerieFacturacionUncheckedCreateNestedManyWithoutTenantInput
+    licencias?: TenantLicenseUncheckedCreateNestedManyWithoutTenantInput
+    memberships?: TenantMembershipUncheckedCreateNestedManyWithoutTenantInput
+    turnosPos?: TurnoPuntoVentaUncheckedCreateNestedManyWithoutTenantInput
+    reviews?: ReviewUncheckedCreateNestedManyWithoutTenantInput
+  }
+
+  export type TenantCreateOrConnectWithoutReviewPromptsInput = {
+    where: TenantWhereUniqueInput
+    create: XOR<TenantCreateWithoutReviewPromptsInput, TenantUncheckedCreateWithoutReviewPromptsInput>
+  }
+
+  export type UserCreateWithoutReviewPromptsInput = {
+    userId?: string
+    name: string
+    email: string
+    password: string
+    role?: string
+    onboardingType?: string | null
+    onboardingStatus?: string
+    emailVerifiedAt?: Date | string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    activatedAt?: Date | string | null
+    avatar?: string | null
+    expiresAt?: Date | string | null
+    isActive?: boolean
+    lastFailedLogin?: Date | string | null
+    lastModifiedBy?: string | null
+    lockedUntil?: Date | string | null
+    loginAttempts?: number
+    googleId?: string | null
+    anticiposCreados?: AnticipoCreateNestedManyWithoutCreadorInput
+    compraDocumentosEditados?: CompraDocumentoCreateNestedManyWithoutUpdatedByInput
+    contratosAprobados?: ContratoCreateNestedManyWithoutAprobadorInput
+    contratosCreados?: ContratoCreateNestedManyWithoutCreadorInput
+    contratoAprobaciones?: ContratoAprobacionCreateNestedManyWithoutAprobadorInput
+    contratoArchivos?: ContratoArchivoCreateNestedManyWithoutGeneradorInput
+    contratoFirmas?: ContratoFirmaCreateNestedManyWithoutFirmanteInput
+    contratoVersiones?: ContratoVersionCreateNestedManyWithoutCreadorInput
+    licencias?: LicenciaCreateNestedManyWithoutUsuarioInput
+    licenciasAudit?: LicenciaAuditCreateNestedManyWithoutActorInput
+    notifications?: NotificationCreateNestedManyWithoutUserInput
+    tiposContratosCustom?: TipoContratoCustomCreateNestedManyWithoutCreadorInput
+    transferenciasCreadas?: TransferenciaCreateNestedManyWithoutCreadoPorInput
+    activityLogs?: UserActivityLogCreateNestedManyWithoutUserInput
+    sessions?: UserSessionCreateNestedManyWithoutUserInput
+    backupLogs?: BackupLogCreateNestedManyWithoutUserInput
+    backupPlans?: BackupPlanCreateNestedManyWithoutUserInput
+    tenantMemberships?: TenantMembershipCreateNestedManyWithoutUserInput
+    reviews?: ReviewCreateNestedManyWithoutUserInput
+  }
+
+  export type UserUncheckedCreateWithoutReviewPromptsInput = {
+    userId?: string
+    name: string
+    email: string
+    password: string
+    role?: string
+    onboardingType?: string | null
+    onboardingStatus?: string
+    emailVerifiedAt?: Date | string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    activatedAt?: Date | string | null
+    avatar?: string | null
+    expiresAt?: Date | string | null
+    isActive?: boolean
+    lastFailedLogin?: Date | string | null
+    lastModifiedBy?: string | null
+    lockedUntil?: Date | string | null
+    loginAttempts?: number
+    googleId?: string | null
+    anticiposCreados?: AnticipoUncheckedCreateNestedManyWithoutCreadorInput
+    compraDocumentosEditados?: CompraDocumentoUncheckedCreateNestedManyWithoutUpdatedByInput
+    contratosAprobados?: ContratoUncheckedCreateNestedManyWithoutAprobadorInput
+    contratosCreados?: ContratoUncheckedCreateNestedManyWithoutCreadorInput
+    contratoAprobaciones?: ContratoAprobacionUncheckedCreateNestedManyWithoutAprobadorInput
+    contratoArchivos?: ContratoArchivoUncheckedCreateNestedManyWithoutGeneradorInput
+    contratoFirmas?: ContratoFirmaUncheckedCreateNestedManyWithoutFirmanteInput
+    contratoVersiones?: ContratoVersionUncheckedCreateNestedManyWithoutCreadorInput
+    licencias?: LicenciaUncheckedCreateNestedManyWithoutUsuarioInput
+    licenciasAudit?: LicenciaAuditUncheckedCreateNestedManyWithoutActorInput
+    notifications?: NotificationUncheckedCreateNestedManyWithoutUserInput
+    tiposContratosCustom?: TipoContratoCustomUncheckedCreateNestedManyWithoutCreadorInput
+    transferenciasCreadas?: TransferenciaUncheckedCreateNestedManyWithoutCreadoPorInput
+    activityLogs?: UserActivityLogUncheckedCreateNestedManyWithoutUserInput
+    sessions?: UserSessionUncheckedCreateNestedManyWithoutUserInput
+    backupLogs?: BackupLogUncheckedCreateNestedManyWithoutUserInput
+    backupPlans?: BackupPlanUncheckedCreateNestedManyWithoutUserInput
+    tenantMemberships?: TenantMembershipUncheckedCreateNestedManyWithoutUserInput
+    reviews?: ReviewUncheckedCreateNestedManyWithoutUserInput
+  }
+
+  export type UserCreateOrConnectWithoutReviewPromptsInput = {
+    where: UserWhereUniqueInput
+    create: XOR<UserCreateWithoutReviewPromptsInput, UserUncheckedCreateWithoutReviewPromptsInput>
+  }
+
+  export type TenantUpsertWithoutReviewPromptsInput = {
+    update: XOR<TenantUpdateWithoutReviewPromptsInput, TenantUncheckedUpdateWithoutReviewPromptsInput>
+    create: XOR<TenantCreateWithoutReviewPromptsInput, TenantUncheckedCreateWithoutReviewPromptsInput>
+    where?: TenantWhereInput
+  }
+
+  export type TenantUpdateToOneWithWhereWithoutReviewPromptsInput = {
+    where?: TenantWhereInput
+    data: XOR<TenantUpdateWithoutReviewPromptsInput, TenantUncheckedUpdateWithoutReviewPromptsInput>
+  }
+
+  export type TenantUpdateWithoutReviewPromptsInput = {
+    tenantId?: StringFieldUpdateOperationsInput | string
+    nombre?: StringFieldUpdateOperationsInput | string
+    slug?: NullableStringFieldUpdateOperationsInput | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    contabilidadTimezone?: StringFieldUpdateOperationsInput | string
+    ajustesBancarios?: AjusteBancarioUpdateManyWithoutTenantNestedInput
+    almacenes?: AlmacenUpdateManyWithoutTenantNestedInput
+    anticipos?: AnticipoUpdateManyWithoutTenantNestedInput
+    categorias?: CategoriaUpdateManyWithoutTenantNestedInput
+    cierresContables?: CierreContableUpdateManyWithoutTenantNestedInput
+    clientes?: ClienteUpdateManyWithoutTenantNestedInput
+    comprasDocumento?: CompraDocumentoUpdateManyWithoutTenantNestedInput
+    comprasDocumentoItem?: CompraDocumentoItemUpdateManyWithoutTenantNestedInput
+    comprasProducto?: CompraProductoUpdateManyWithoutTenantNestedInput
+    comprasServicio?: CompraServicioUpdateManyWithoutTenantNestedInput
+    contratos?: ContratoUpdateManyWithoutTenantNestedInput
+    cuentasBancarias?: CuentaBancariaUpdateManyWithoutTenantNestedInput
+    cuentasPorCobrar?: CuentaPorCobrarUpdateManyWithoutTenantNestedInput
+    cuentasPorPagar?: CuentaPorPagarUpdateManyWithoutTenantNestedInput
+    defectacionesCatalogo?: DefectacionCatalogoUpdateManyWithoutTenantNestedInput
+    deudasCash?: DeudaCashUpdateManyWithoutTenantNestedInput
+    empleados?: EmpleadoUpdateManyWithoutTenantNestedInput
+    equiposReparacion?: EquipoReparacionUpdateManyWithoutTenantNestedInput
+    gastosCompra?: GastoCompraUpdateManyWithoutTenantNestedInput
+    gastosDE?: GastosDEUpdateManyWithoutTenantNestedInput
+    listasPrecio?: ListaPrecioUpdateManyWithoutTenantNestedInput
+    mermas?: MermaUpdateManyWithoutTenantNestedInput
+    empresa?: MiEmpresaUpdateOneWithoutTenantNestedInput
+    ofertas?: OfertaUpdateManyWithoutTenantNestedInput
+    ordenesProduccion?: OrdenProduccionUpdateManyWithoutTenantNestedInput
+    ordenesProduccionHistorial?: OrdenProduccionHistorialUpdateManyWithoutTenantNestedInput
+    ordenesReparacion?: OrdenReparacionUpdateManyWithoutTenantNestedInput
+    ordenesReparacionEquipo?: OrdenReparacionEquipoUpdateManyWithoutTenantNestedInput
+    ordenesReparacionItem?: OrdenReparacionItemUpdateManyWithoutTenantNestedInput
+    ordenesReparacionMaterial?: OrdenReparacionMaterialUpdateManyWithoutTenantNestedInput
+    pagosCuentaPorPagar?: PagoCuentaPorPagarUpdateManyWithoutTenantNestedInput
+    pagosSalario?: PagosalarioUpdateManyWithoutTenantNestedInput
+    piezasReparacion?: PiezaReparacionUpdateManyWithoutTenantNestedInput
+    prestamosCash?: PrestamoCashUpdateManyWithoutTenantNestedInput
+    productos?: ProductoUpdateManyWithoutTenantNestedInput
+    puntosDeVenta?: PuntoDeVentaUpdateManyWithoutTenantNestedInput
+    recetas?: RecetaUpdateManyWithoutTenantNestedInput
+    recetasIngredientes?: RecetaIngredienteUpdateManyWithoutTenantNestedInput
+    reconciliacionesGasto?: ReconciliacionGastoUpdateManyWithoutTenantNestedInput
+    reconciliacionesServicio?: ReconciliacionServicioUpdateManyWithoutTenantNestedInput
+    reconciliacionesVenta?: ReconciliacionVentaUpdateManyWithoutTenantNestedInput
+    servicios?: ServiciosUpdateManyWithoutTenantNestedInput
+    stockUbicaciones?: StockUbicacionUpdateManyWithoutTenantNestedInput
+    transferencias?: TransferenciaUpdateManyWithoutTenantNestedInput
+    transferenciasBancarias?: TransferenciaBancariaUpdateManyWithoutTenantNestedInput
+    valesSalida?: ValeSalidaUpdateManyWithoutTenantNestedInput
+    valesSalidaItem?: ValeSalidaItemUpdateManyWithoutTenantNestedInput
+    vendors?: VendorUpdateManyWithoutTenantNestedInput
+    ventas?: VentaUpdateManyWithoutTenantNestedInput
+    ventasServicios?: VentaServiciosUpdateManyWithoutTenantNestedInput
+    aperturaPeriodos?: AperturaPeriodoUpdateManyWithoutTenantNestedInput
+    arqueosCaja?: ArqueoCajaUpdateManyWithoutTenantNestedInput
+    auditoriaPeriodos?: AuditoriaPeriodoUpdateManyWithoutTenantNestedInput
+    backupLogs?: BackupLogUpdateManyWithoutTenantNestedInput
+    backupPlans?: BackupPlanUpdateManyWithoutTenantNestedInput
+    facturas?: FacturaUpdateManyWithoutTenantNestedInput
+    periodosContables?: PeriodoContableUpdateManyWithoutTenantNestedInput
+    seriesFacturacion?: SerieFacturacionUpdateManyWithoutTenantNestedInput
+    licencias?: TenantLicenseUpdateManyWithoutTenantNestedInput
+    memberships?: TenantMembershipUpdateManyWithoutTenantNestedInput
+    turnosPos?: TurnoPuntoVentaUpdateManyWithoutTenantNestedInput
+    reviews?: ReviewUpdateManyWithoutTenantNestedInput
+  }
+
+  export type TenantUncheckedUpdateWithoutReviewPromptsInput = {
+    tenantId?: StringFieldUpdateOperationsInput | string
+    nombre?: StringFieldUpdateOperationsInput | string
+    slug?: NullableStringFieldUpdateOperationsInput | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    contabilidadTimezone?: StringFieldUpdateOperationsInput | string
+    ajustesBancarios?: AjusteBancarioUncheckedUpdateManyWithoutTenantNestedInput
+    almacenes?: AlmacenUncheckedUpdateManyWithoutTenantNestedInput
+    anticipos?: AnticipoUncheckedUpdateManyWithoutTenantNestedInput
+    categorias?: CategoriaUncheckedUpdateManyWithoutTenantNestedInput
+    cierresContables?: CierreContableUncheckedUpdateManyWithoutTenantNestedInput
+    clientes?: ClienteUncheckedUpdateManyWithoutTenantNestedInput
+    comprasDocumento?: CompraDocumentoUncheckedUpdateManyWithoutTenantNestedInput
+    comprasDocumentoItem?: CompraDocumentoItemUncheckedUpdateManyWithoutTenantNestedInput
+    comprasProducto?: CompraProductoUncheckedUpdateManyWithoutTenantNestedInput
+    comprasServicio?: CompraServicioUncheckedUpdateManyWithoutTenantNestedInput
+    contratos?: ContratoUncheckedUpdateManyWithoutTenantNestedInput
+    cuentasBancarias?: CuentaBancariaUncheckedUpdateManyWithoutTenantNestedInput
+    cuentasPorCobrar?: CuentaPorCobrarUncheckedUpdateManyWithoutTenantNestedInput
+    cuentasPorPagar?: CuentaPorPagarUncheckedUpdateManyWithoutTenantNestedInput
+    defectacionesCatalogo?: DefectacionCatalogoUncheckedUpdateManyWithoutTenantNestedInput
+    deudasCash?: DeudaCashUncheckedUpdateManyWithoutTenantNestedInput
+    empleados?: EmpleadoUncheckedUpdateManyWithoutTenantNestedInput
+    equiposReparacion?: EquipoReparacionUncheckedUpdateManyWithoutTenantNestedInput
+    gastosCompra?: GastoCompraUncheckedUpdateManyWithoutTenantNestedInput
+    gastosDE?: GastosDEUncheckedUpdateManyWithoutTenantNestedInput
+    listasPrecio?: ListaPrecioUncheckedUpdateManyWithoutTenantNestedInput
+    mermas?: MermaUncheckedUpdateManyWithoutTenantNestedInput
+    empresa?: MiEmpresaUncheckedUpdateOneWithoutTenantNestedInput
+    ofertas?: OfertaUncheckedUpdateManyWithoutTenantNestedInput
+    ordenesProduccion?: OrdenProduccionUncheckedUpdateManyWithoutTenantNestedInput
+    ordenesProduccionHistorial?: OrdenProduccionHistorialUncheckedUpdateManyWithoutTenantNestedInput
+    ordenesReparacion?: OrdenReparacionUncheckedUpdateManyWithoutTenantNestedInput
+    ordenesReparacionEquipo?: OrdenReparacionEquipoUncheckedUpdateManyWithoutTenantNestedInput
+    ordenesReparacionItem?: OrdenReparacionItemUncheckedUpdateManyWithoutTenantNestedInput
+    ordenesReparacionMaterial?: OrdenReparacionMaterialUncheckedUpdateManyWithoutTenantNestedInput
+    pagosCuentaPorPagar?: PagoCuentaPorPagarUncheckedUpdateManyWithoutTenantNestedInput
+    pagosSalario?: PagosalarioUncheckedUpdateManyWithoutTenantNestedInput
+    piezasReparacion?: PiezaReparacionUncheckedUpdateManyWithoutTenantNestedInput
+    prestamosCash?: PrestamoCashUncheckedUpdateManyWithoutTenantNestedInput
+    productos?: ProductoUncheckedUpdateManyWithoutTenantNestedInput
+    puntosDeVenta?: PuntoDeVentaUncheckedUpdateManyWithoutTenantNestedInput
+    recetas?: RecetaUncheckedUpdateManyWithoutTenantNestedInput
+    recetasIngredientes?: RecetaIngredienteUncheckedUpdateManyWithoutTenantNestedInput
+    reconciliacionesGasto?: ReconciliacionGastoUncheckedUpdateManyWithoutTenantNestedInput
+    reconciliacionesServicio?: ReconciliacionServicioUncheckedUpdateManyWithoutTenantNestedInput
+    reconciliacionesVenta?: ReconciliacionVentaUncheckedUpdateManyWithoutTenantNestedInput
+    servicios?: ServiciosUncheckedUpdateManyWithoutTenantNestedInput
+    stockUbicaciones?: StockUbicacionUncheckedUpdateManyWithoutTenantNestedInput
+    transferencias?: TransferenciaUncheckedUpdateManyWithoutTenantNestedInput
+    transferenciasBancarias?: TransferenciaBancariaUncheckedUpdateManyWithoutTenantNestedInput
+    valesSalida?: ValeSalidaUncheckedUpdateManyWithoutTenantNestedInput
+    valesSalidaItem?: ValeSalidaItemUncheckedUpdateManyWithoutTenantNestedInput
+    vendors?: VendorUncheckedUpdateManyWithoutTenantNestedInput
+    ventas?: VentaUncheckedUpdateManyWithoutTenantNestedInput
+    ventasServicios?: VentaServiciosUncheckedUpdateManyWithoutTenantNestedInput
+    aperturaPeriodos?: AperturaPeriodoUncheckedUpdateManyWithoutTenantNestedInput
+    arqueosCaja?: ArqueoCajaUncheckedUpdateManyWithoutTenantNestedInput
+    auditoriaPeriodos?: AuditoriaPeriodoUncheckedUpdateManyWithoutTenantNestedInput
+    backupLogs?: BackupLogUncheckedUpdateManyWithoutTenantNestedInput
+    backupPlans?: BackupPlanUncheckedUpdateManyWithoutTenantNestedInput
+    facturas?: FacturaUncheckedUpdateManyWithoutTenantNestedInput
+    periodosContables?: PeriodoContableUncheckedUpdateManyWithoutTenantNestedInput
+    seriesFacturacion?: SerieFacturacionUncheckedUpdateManyWithoutTenantNestedInput
+    licencias?: TenantLicenseUncheckedUpdateManyWithoutTenantNestedInput
+    memberships?: TenantMembershipUncheckedUpdateManyWithoutTenantNestedInput
+    turnosPos?: TurnoPuntoVentaUncheckedUpdateManyWithoutTenantNestedInput
+    reviews?: ReviewUncheckedUpdateManyWithoutTenantNestedInput
+  }
+
+  export type UserUpsertWithoutReviewPromptsInput = {
+    update: XOR<UserUpdateWithoutReviewPromptsInput, UserUncheckedUpdateWithoutReviewPromptsInput>
+    create: XOR<UserCreateWithoutReviewPromptsInput, UserUncheckedCreateWithoutReviewPromptsInput>
+    where?: UserWhereInput
+  }
+
+  export type UserUpdateToOneWithWhereWithoutReviewPromptsInput = {
+    where?: UserWhereInput
+    data: XOR<UserUpdateWithoutReviewPromptsInput, UserUncheckedUpdateWithoutReviewPromptsInput>
+  }
+
+  export type UserUpdateWithoutReviewPromptsInput = {
+    userId?: StringFieldUpdateOperationsInput | string
+    name?: StringFieldUpdateOperationsInput | string
+    email?: StringFieldUpdateOperationsInput | string
+    password?: StringFieldUpdateOperationsInput | string
+    role?: StringFieldUpdateOperationsInput | string
+    onboardingType?: NullableStringFieldUpdateOperationsInput | string | null
+    onboardingStatus?: StringFieldUpdateOperationsInput | string
+    emailVerifiedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    activatedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    avatar?: NullableStringFieldUpdateOperationsInput | string | null
+    expiresAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    isActive?: BoolFieldUpdateOperationsInput | boolean
+    lastFailedLogin?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    lastModifiedBy?: NullableStringFieldUpdateOperationsInput | string | null
+    lockedUntil?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    loginAttempts?: IntFieldUpdateOperationsInput | number
+    googleId?: NullableStringFieldUpdateOperationsInput | string | null
+    anticiposCreados?: AnticipoUpdateManyWithoutCreadorNestedInput
+    compraDocumentosEditados?: CompraDocumentoUpdateManyWithoutUpdatedByNestedInput
+    contratosAprobados?: ContratoUpdateManyWithoutAprobadorNestedInput
+    contratosCreados?: ContratoUpdateManyWithoutCreadorNestedInput
+    contratoAprobaciones?: ContratoAprobacionUpdateManyWithoutAprobadorNestedInput
+    contratoArchivos?: ContratoArchivoUpdateManyWithoutGeneradorNestedInput
+    contratoFirmas?: ContratoFirmaUpdateManyWithoutFirmanteNestedInput
+    contratoVersiones?: ContratoVersionUpdateManyWithoutCreadorNestedInput
+    licencias?: LicenciaUpdateManyWithoutUsuarioNestedInput
+    licenciasAudit?: LicenciaAuditUpdateManyWithoutActorNestedInput
+    notifications?: NotificationUpdateManyWithoutUserNestedInput
+    tiposContratosCustom?: TipoContratoCustomUpdateManyWithoutCreadorNestedInput
+    transferenciasCreadas?: TransferenciaUpdateManyWithoutCreadoPorNestedInput
+    activityLogs?: UserActivityLogUpdateManyWithoutUserNestedInput
+    sessions?: UserSessionUpdateManyWithoutUserNestedInput
+    backupLogs?: BackupLogUpdateManyWithoutUserNestedInput
+    backupPlans?: BackupPlanUpdateManyWithoutUserNestedInput
+    tenantMemberships?: TenantMembershipUpdateManyWithoutUserNestedInput
+    reviews?: ReviewUpdateManyWithoutUserNestedInput
+  }
+
+  export type UserUncheckedUpdateWithoutReviewPromptsInput = {
+    userId?: StringFieldUpdateOperationsInput | string
+    name?: StringFieldUpdateOperationsInput | string
+    email?: StringFieldUpdateOperationsInput | string
+    password?: StringFieldUpdateOperationsInput | string
+    role?: StringFieldUpdateOperationsInput | string
+    onboardingType?: NullableStringFieldUpdateOperationsInput | string | null
+    onboardingStatus?: StringFieldUpdateOperationsInput | string
+    emailVerifiedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    activatedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    avatar?: NullableStringFieldUpdateOperationsInput | string | null
+    expiresAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    isActive?: BoolFieldUpdateOperationsInput | boolean
+    lastFailedLogin?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    lastModifiedBy?: NullableStringFieldUpdateOperationsInput | string | null
+    lockedUntil?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    loginAttempts?: IntFieldUpdateOperationsInput | number
+    googleId?: NullableStringFieldUpdateOperationsInput | string | null
+    anticiposCreados?: AnticipoUncheckedUpdateManyWithoutCreadorNestedInput
+    compraDocumentosEditados?: CompraDocumentoUncheckedUpdateManyWithoutUpdatedByNestedInput
+    contratosAprobados?: ContratoUncheckedUpdateManyWithoutAprobadorNestedInput
+    contratosCreados?: ContratoUncheckedUpdateManyWithoutCreadorNestedInput
+    contratoAprobaciones?: ContratoAprobacionUncheckedUpdateManyWithoutAprobadorNestedInput
+    contratoArchivos?: ContratoArchivoUncheckedUpdateManyWithoutGeneradorNestedInput
+    contratoFirmas?: ContratoFirmaUncheckedUpdateManyWithoutFirmanteNestedInput
+    contratoVersiones?: ContratoVersionUncheckedUpdateManyWithoutCreadorNestedInput
+    licencias?: LicenciaUncheckedUpdateManyWithoutUsuarioNestedInput
+    licenciasAudit?: LicenciaAuditUncheckedUpdateManyWithoutActorNestedInput
+    notifications?: NotificationUncheckedUpdateManyWithoutUserNestedInput
+    tiposContratosCustom?: TipoContratoCustomUncheckedUpdateManyWithoutCreadorNestedInput
+    transferenciasCreadas?: TransferenciaUncheckedUpdateManyWithoutCreadoPorNestedInput
+    activityLogs?: UserActivityLogUncheckedUpdateManyWithoutUserNestedInput
+    sessions?: UserSessionUncheckedUpdateManyWithoutUserNestedInput
+    backupLogs?: BackupLogUncheckedUpdateManyWithoutUserNestedInput
+    backupPlans?: BackupPlanUncheckedUpdateManyWithoutUserNestedInput
+    tenantMemberships?: TenantMembershipUncheckedUpdateManyWithoutUserNestedInput
+    reviews?: ReviewUncheckedUpdateManyWithoutUserNestedInput
   }
 
   export type CategoriaCreateManyParentInput = {
@@ -244907,6 +250170,25 @@ export namespace Prisma {
     updatedAt?: Date | string
   }
 
+  export type ReviewCreateManyTenantInput = {
+    reviewId?: string
+    userId: string
+    rating: number
+    comment?: string | null
+    isApproved?: boolean
+    isPositive: boolean
+    createdAt?: Date | string
+    updatedAt?: Date | string
+  }
+
+  export type ReviewPromptCreateManyTenantInput = {
+    promptId?: string
+    userId: string
+    promptedAt?: Date | string
+    dismissedAt?: Date | string | null
+    submittedAt?: Date | string | null
+  }
+
   export type AjusteBancarioUpdateWithoutTenantInput = {
     ajusteId?: StringFieldUpdateOperationsInput | string
     tipo?: StringFieldUpdateOperationsInput | string
@@ -248013,6 +253295,63 @@ export namespace Prisma {
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
 
+  export type ReviewUpdateWithoutTenantInput = {
+    reviewId?: StringFieldUpdateOperationsInput | string
+    rating?: IntFieldUpdateOperationsInput | number
+    comment?: NullableStringFieldUpdateOperationsInput | string | null
+    isApproved?: BoolFieldUpdateOperationsInput | boolean
+    isPositive?: BoolFieldUpdateOperationsInput | boolean
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    user?: UserUpdateOneRequiredWithoutReviewsNestedInput
+  }
+
+  export type ReviewUncheckedUpdateWithoutTenantInput = {
+    reviewId?: StringFieldUpdateOperationsInput | string
+    userId?: StringFieldUpdateOperationsInput | string
+    rating?: IntFieldUpdateOperationsInput | number
+    comment?: NullableStringFieldUpdateOperationsInput | string | null
+    isApproved?: BoolFieldUpdateOperationsInput | boolean
+    isPositive?: BoolFieldUpdateOperationsInput | boolean
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type ReviewUncheckedUpdateManyWithoutTenantInput = {
+    reviewId?: StringFieldUpdateOperationsInput | string
+    userId?: StringFieldUpdateOperationsInput | string
+    rating?: IntFieldUpdateOperationsInput | number
+    comment?: NullableStringFieldUpdateOperationsInput | string | null
+    isApproved?: BoolFieldUpdateOperationsInput | boolean
+    isPositive?: BoolFieldUpdateOperationsInput | boolean
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type ReviewPromptUpdateWithoutTenantInput = {
+    promptId?: StringFieldUpdateOperationsInput | string
+    promptedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    dismissedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    submittedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    user?: UserUpdateOneRequiredWithoutReviewPromptsNestedInput
+  }
+
+  export type ReviewPromptUncheckedUpdateWithoutTenantInput = {
+    promptId?: StringFieldUpdateOperationsInput | string
+    userId?: StringFieldUpdateOperationsInput | string
+    promptedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    dismissedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    submittedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  }
+
+  export type ReviewPromptUncheckedUpdateManyWithoutTenantInput = {
+    promptId?: StringFieldUpdateOperationsInput | string
+    userId?: StringFieldUpdateOperationsInput | string
+    promptedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    dismissedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    submittedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  }
+
   export type MermaCreateManyAlmacenInput = {
     mermaId?: string
     tenantId: string
@@ -250468,6 +255807,25 @@ export namespace Prisma {
     updatedAt?: Date | string
   }
 
+  export type ReviewCreateManyUserInput = {
+    reviewId?: string
+    tenantId: string
+    rating: number
+    comment?: string | null
+    isApproved?: boolean
+    isPositive: boolean
+    createdAt?: Date | string
+    updatedAt?: Date | string
+  }
+
+  export type ReviewPromptCreateManyUserInput = {
+    promptId?: string
+    tenantId: string
+    promptedAt?: Date | string
+    dismissedAt?: Date | string | null
+    submittedAt?: Date | string | null
+  }
+
   export type AnticipoUpdateWithoutCreadorInput = {
     anticipoId?: StringFieldUpdateOperationsInput | string
     tipo?: EnumTipoAnticipoFieldUpdateOperationsInput | $Enums.TipoAnticipo
@@ -251245,6 +256603,63 @@ export namespace Prisma {
     isActive?: BoolFieldUpdateOperationsInput | boolean
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type ReviewUpdateWithoutUserInput = {
+    reviewId?: StringFieldUpdateOperationsInput | string
+    rating?: IntFieldUpdateOperationsInput | number
+    comment?: NullableStringFieldUpdateOperationsInput | string | null
+    isApproved?: BoolFieldUpdateOperationsInput | boolean
+    isPositive?: BoolFieldUpdateOperationsInput | boolean
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    tenant?: TenantUpdateOneRequiredWithoutReviewsNestedInput
+  }
+
+  export type ReviewUncheckedUpdateWithoutUserInput = {
+    reviewId?: StringFieldUpdateOperationsInput | string
+    tenantId?: StringFieldUpdateOperationsInput | string
+    rating?: IntFieldUpdateOperationsInput | number
+    comment?: NullableStringFieldUpdateOperationsInput | string | null
+    isApproved?: BoolFieldUpdateOperationsInput | boolean
+    isPositive?: BoolFieldUpdateOperationsInput | boolean
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type ReviewUncheckedUpdateManyWithoutUserInput = {
+    reviewId?: StringFieldUpdateOperationsInput | string
+    tenantId?: StringFieldUpdateOperationsInput | string
+    rating?: IntFieldUpdateOperationsInput | number
+    comment?: NullableStringFieldUpdateOperationsInput | string | null
+    isApproved?: BoolFieldUpdateOperationsInput | boolean
+    isPositive?: BoolFieldUpdateOperationsInput | boolean
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type ReviewPromptUpdateWithoutUserInput = {
+    promptId?: StringFieldUpdateOperationsInput | string
+    promptedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    dismissedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    submittedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    tenant?: TenantUpdateOneRequiredWithoutReviewPromptsNestedInput
+  }
+
+  export type ReviewPromptUncheckedUpdateWithoutUserInput = {
+    promptId?: StringFieldUpdateOperationsInput | string
+    tenantId?: StringFieldUpdateOperationsInput | string
+    promptedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    dismissedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    submittedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  }
+
+  export type ReviewPromptUncheckedUpdateManyWithoutUserInput = {
+    promptId?: StringFieldUpdateOperationsInput | string
+    tenantId?: StringFieldUpdateOperationsInput | string
+    promptedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    dismissedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    submittedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   }
 
   export type LicenciaCreateManyPlanInput = {
