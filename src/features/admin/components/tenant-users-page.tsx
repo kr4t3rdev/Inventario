@@ -8,7 +8,6 @@ import Link from 'next/link'
 
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { useAuth } from '@/contexts/auth-context'
-import { getAuthToken } from '@/lib/token'
 import {
   getGlobalUsersAction,
   getPendingMembershipsAction,
@@ -123,7 +122,6 @@ export function TenantUsersPage() {
         method: 'PATCH',
         headers: {
           'Content-Type': 'application/json',
-          Authorization: getAuthToken(),
         },
         body: JSON.stringify({ action: 'approve', tenantRole }),
       })
