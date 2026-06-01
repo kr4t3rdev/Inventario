@@ -4,7 +4,6 @@ import React, { useEffect, useState, useTransition } from 'react'
 import { useRouter } from 'next/navigation'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { useForm, type FieldErrors } from 'react-hook-form'
-import { z } from 'zod'
 import { LazyMotion, m as motion } from 'framer-motion'
 import {
   Boxes,
@@ -42,104 +41,17 @@ import {
 import { buildPreciosPayload } from './precios-payload'
 import { ProductPhotoUpload } from './product-photo-upload'
 import { ClasificadorInfoNote } from './clasificador-info-note'
-import { mapCategoryToSection, mapSubcategoryToSpecific } from '@/lib/category-mapping'
-
-export function buildProductosSchema(usaEan13: boolean) {
-  return z.object({
-    nombre: z
-      .string({ required_error: 'El campo Nombre no ha sido rellenado' })
-      .min(1, 'El campo Nombre no ha sido rellenado')
-      .max(120, 'El nombre no puede superar los 120 caracteres'),
-    descripcion: z
-      .string()
-      .max(300, 'La descripción no puede superar los 300 caracteres')
-      .optional()
-      .or(z.literal('')),
-    codigoInterno: z
-      .string()
-      .regex(/^[0-9]{11}$/, 'El código interno debe contener exactamente 11 números')
-      .optional()
-      .or(z.literal('')),
-    proveedorCodigo: z.string().optional(),
-    vendorId: z.string().optional(),
-    categoriaId: z
-      .string({ required_error: 'El campo Categoría no ha sido seleccionada' })
-      .min(1, 'El campo Categoría no ha sido seleccionada'),
-    subcategoriaId: z.string().optional(),
-    precioCosto: z.coerce
-      .number({
-        required_error: 'El campo Precio de costo no ha sido rellenado',
-        invalid_type_error: 'El campo Precio de costo no ha sido rellenado',
-      })
-      .positive('El precio de costo debe ser mayor a 0'),
-    precioVenta: z.coerce
-      .number({
-        required_error: 'El campo Precio de venta no ha sido rellenado',
-        invalid_type_error: 'El campo Precio de venta no ha sido rellenado',
-      })
-      .positive('El precio de venta debe ser mayor a 0'),
-    stock: z.coerce
-      .number({ invalid_type_error: 'Ingrese un número válido' })
-      .int('El stock debe ser un número entero')
-      .min(0, 'El stock debe ser mayor o igual a 0'),
-    stockMinimo: z.coerce
-      .number({ invalid_type_error: 'Ingrese un número válido' })
-      .int('El stock mínimo debe ser un número entero')
-      .min(0, 'El stock mínimo debe ser mayor o igual a 0'),
-    fotos: z.array(z.string()),
-    unidadId: z
-      .string({ required_error: 'El campo Unidad no ha sido seleccionada' })
-      .min(1, 'El campo Unidad no ha sido seleccionada'),
-    almacenId: z
-      .string({ required_error: 'El campo Almacén no ha sido seleccionado' })
-      .min(1, 'El campo Almacén no ha sido seleccionado'),
-  }).superRefine((value, ctx) => {
-    if (
-      value.precioCosto > 0 &&
-      value.precioVenta > 0 &&
-      value.precioVenta < value.precioCosto
-    ) {
-      ctx.addIssue({
-        code: z.ZodIssueCode.custom,
-        path: ['precioVenta'],
-        message: 'El precio de venta es menor al precio de costo — ¿es correcto?',
-      })
-    }
-
-    if (!usaEan13) {
-      return
-    }
-
-    if (!value.vendorId?.trim() && !value.proveedorCodigo?.trim()) {
-      ctx.addIssue({
-        code: z.ZodIssueCode.custom,
-        path: ['vendorId'],
-        message: 'Seleccione un proveedor para generar el EAN-13',
-      })
-    }
-
-    if (!value.subcategoriaId?.trim()) {
-      ctx.addIssue({
-        code: z.ZodIssueCode.custom,
-        path: ['subcategoriaId'],
-        message: 'Selecciona una subcategoría para generar el EAN-13',
-      })
-    }
-
-    if (
-      value.proveedorCodigo?.trim() &&
-      !/^\d{1,2}$/.test(value.proveedorCodigo.trim())
-    ) {
-      ctx.addIssue({
-        code: z.ZodIssueCode.custom,
-        path: ['proveedorCodigo'],
-        message: 'Proveedor debe tener hasta 2 dígitos',
-      })
-    }
-  })
-}
-
-export type ProductosFormValues = z.infer<ReturnType<typeof buildProductosSchema>>
+import {
+  buildProductBusinessCodePreview,
+  DEFAULT_PARENT_PREVIEW_SURTIDO,
+  type ProductBusinessCodeResult,
+} from '@/lib/product-business-code'
+import { buildPreciosPayload } from './precios-payload'
+import { ProductPhotoUpload } from './product-photo-upload'
+import { ClasificadorInfoNote } from './clasificador-info-note'
+import { buildProductosSchema, type ProductosFormValues } from './productos-form-schema'
+import { PulseSkeleton } from './pulse-skeleton'
+import { ProductosPriceListsSection } from './productos-price-lists'
 
 function getFirstFormErrorMessage(errors: FieldErrors<ProductosFormValues>): string | null {
   for (const value of Object.values(errors)) {
@@ -204,16 +116,6 @@ interface ProductosFormProps {
  */
 function formatPreviewValue(value: string | null | undefined): string {
   return value && value.trim() !== '' ? value : 'Pendiente'
-}
-
-function PulseSkeleton({ className }: { className?: string }): React.JSX.Element {
-  return (
-    <motion.div
-      className={`bg-muted rounded ${className}`}
-      animate={{ opacity: [0.45, 0.8, 0.45] }}
-      transition={{ duration: 1.4, repeat: Infinity, ease: 'easeInOut' }}
-    />
-  )
 }
 
 /**
@@ -1058,35 +960,15 @@ export function ProductoForm({
                 </motion.div>
 
                 {listasPrecios && listasPrecios.length > 0 && (
-                  <motion.div
-                    className="space-y-3 rounded-xl border border-dashed p-4"
-                    initial={{ opacity: 0, y: 14 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: 0.43 }}
-                  >
-                    <p className="text-sm font-semibold">Precios por lista</p>
-                    <p className="text-xs text-muted-foreground">
-                      Si dejas vacío un campo, el sistema usará el precio base de venta.
-                    </p>
-                    <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
-                       {listasPrecios.map((lista) => (
-                         <div key={lista.id} className="space-y-1">
-                           <label className="text-xs text-muted-foreground">{lista.nombre}</label>
-                           <CurrencyInput
-                             value={preciosPorLista[lista.id] ?? ''}
-                             onChange={(newValue) =>
-                               setPreciosPorLista((prev) => ({
-                                 ...prev,
-                                 [lista.id]: newValue,
-                               }))
-                             }
-                             disabled={isLoading}
-                             placeholder={`Base: ${Number(form.watch('precioVenta') || 0).toFixed(2)}`}
-                           />
-                         </div>
-                       ))}
-                     </div>
-                  </motion.div>
+                  <ProductosPriceListsSection
+                    listasPrecios={listasPrecios}
+                    preciosPorLista={preciosPorLista}
+                    onPrecioChange={(listaId, value) =>
+                      setPreciosPorLista((prev) => ({ ...prev, [listaId]: value }))
+                    }
+                    precioBase={Number(form.watch('precioVenta') || 0)}
+                    isLoading={isLoading}
+                  />
                 )}
 
                 {usaEan13 && (
