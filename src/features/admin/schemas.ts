@@ -30,6 +30,14 @@ export const lockUnlockSchema = z.object({
   reason: z.string().optional(),
 });
 
+// ─── Tenant User Management ────────────────────────────────
+
+export const updateTenantUserSchema = z.object({
+  userId: z.string().min(1),
+  tenantRole: z.string().optional(),
+  isActive: z.boolean().optional(),
+});
+
 // ─── Memberships ───────────────────────────────────────────
 
 export const membershipActionSchema = z.object({
@@ -81,6 +89,7 @@ export const updatePlanSchema = z.object({
 export type CreateUserInput = z.infer<typeof createUserSchema>;
 export type UpdateUserInput = z.infer<typeof updateUserSchema>;
 export type LockUnlockInput = z.infer<typeof lockUnlockSchema>;
+export type UpdateTenantUserInput = z.infer<typeof updateTenantUserSchema>;
 export type MembershipActionInput = z.infer<typeof membershipActionSchema>;
 export type CreateLicenciaInput = z.infer<typeof createLicenciaSchema>;
 export type UpdateLicenciaInput = z.infer<typeof updateLicenciaSchema>;

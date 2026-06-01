@@ -19,11 +19,13 @@ import {
 	getGlobalUsersAction,
 	getPendingMembershipsAction,
 	rejectMembershipAction,
+	updateTenantUserAction,
 } from "@/features/admin/actions";
 import { TenantUsersStats } from "./tenant-users-stats";
 import { TenantUsersTable } from "./tenant-users-table";
 import { PendingMembershipsTable } from "./pending-memberships-table";
 import { MembershipActionDialog } from "./membership-action-dialog";
+import { TenantUserRoleDialog } from "./tenant-user-role-dialog";
 import { TenantUsersSkeleton } from "./tenant-users-skeleton";
 
 interface PendingMembership {
@@ -54,6 +56,9 @@ export function TenantUsersPage() {
 	const [selectedMembership, setSelectedMembership] =
 		useState<PendingMembership | null>(null);
 	const [dialogOpen, setDialogOpen] = useState(false);
+
+	const [roleDialogUser, setRoleDialogUser] = useState<any | null>(null);
+	const [roleDialogOpen, setRoleDialogOpen] = useState(false);
 
 	const [usersData, setUsersData] = useState<any | undefined>(undefined);
 	const [usersLoading, setUsersLoading] = useState(true);
@@ -150,6 +155,60 @@ export function TenantUsersPage() {
 			}
 		},
 		[fetchPending, fetchUsers],
+	);
+
+	const handleRoleChange = useCallback((u: any) => {
+		setRoleDialogUser(u);
+		setRoleDialogOpen(true);
+	}, []);
+
+	const handleRoleConfirm = useCallback(
+		async (userId: string, tenantRole: string) => {
+			try {
+				const result = await updateTenantUserAction({
+					userId,
+					tenantRole,
+				});
+				if (!result.success) {
+					throw new Error(
+						result.error?.message || "Error al cambiar rol",
+					);
+				}
+				toast.success("Rol actualizado correctamente.");
+				fetchUsers();
+			} catch (error) {
+				console.error("Error cambiando rol:", error);
+				toast.error("Error al cambiar el rol.");
+			}
+		},
+		[fetchUsers],
+	);
+
+	const handleToggleActive = useCallback(
+		async (u: any) => {
+			try {
+				const newState = !u.isActive;
+				const result = await updateTenantUserAction({
+					userId: u.userId,
+					isActive: newState,
+				});
+				if (!result.success) {
+					throw new Error(
+						result.error?.message || "Error al cambiar estado",
+					);
+				}
+				toast.success(
+					newState
+						? `Usuario ${u.name} activado correctamente.`
+						: `Usuario ${u.name} desactivado correctamente.`,
+				);
+				fetchUsers();
+			} catch (error) {
+				console.error("Error cambiando estado:", error);
+				toast.error("Error al cambiar el estado del usuario.");
+			}
+		},
+		[fetchUsers],
 	);
 
 	const pendingBadge = pendingCount > 0 ? pendingCount.toString() : undefined;
@@ -268,6 +327,9 @@ export function TenantUsersPage() {
 								}))}
 								isLoading={usersLoading}
 								onRefresh={handleRefresh}
+								currentUserId={user?.userId}
+								onRoleChange={handleRoleChange}
+								onToggleActive={handleToggleActive}
 							/>
 						</TabsContent>
 
@@ -293,6 +355,17 @@ export function TenantUsersPage() {
 					setSelectedMembership(null);
 				}}
 				onConfirm={handleConfirmApprove}
+			/>
+
+			{/* Role Change Dialog */}
+			<TenantUserRoleDialog
+				user={roleDialogUser}
+				open={roleDialogOpen}
+				onClose={() => {
+					setRoleDialogOpen(false);
+					setRoleDialogUser(null);
+				}}
+				onConfirm={handleRoleConfirm}
 			/>
 		</div>
 	);

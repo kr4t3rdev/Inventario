@@ -22,6 +22,7 @@ import {
 	updateLicenciaSchema,
 	createPlanSchema,
 	updatePlanSchema,
+	updateTenantUserSchema,
 } from "./schemas";
 import type {
 	CreateUserInput,
@@ -32,6 +33,7 @@ import type {
 	UpdateLicenciaInput,
 	CreatePlanInput,
 	UpdatePlanInput,
+	UpdateTenantUserInput,
 } from "./schemas";
 import type { AuthenticatedUser } from "@/lib/auth-middleware";
 
@@ -701,6 +703,79 @@ export const rejectMembershipAction = withAction(
 			where: { membershipId: input.membershipId },
 		});
 		revalidatePath("/admin");
+		return { success: true };
+	},
+);
+
+export const updateTenantUserAction = withAction(
+	async (
+		input: UpdateTenantUserInput,
+		user: AuthenticatedUser,
+	) => {
+		const parsed = updateTenantUserSchema.parse(input);
+		const { userId, tenantRole, isActive } = parsed;
+
+		if (!tenantRole && isActive === undefined) {
+			throw new ActionError(
+				"Debe proporcionar al menos un campo para actualizar",
+				"VALIDATION",
+			);
+		}
+
+		// Solo manager del mismo tenant puede actualizar usuarios
+		if (user.tenantRole !== "manager") {
+			throw new ActionError(
+				"Solo un manager puede gestionar usuarios del tenant",
+				"FORBIDDEN",
+			);
+		}
+
+		if (!user.tenantId) {
+			throw new ActionError(
+				"No tenés un tenant asignado",
+				"FORBIDDEN",
+			);
+		}
+
+		// Verificar que el usuario pertenece al mismo tenant
+		const membership = await prisma.tenantMembership.findFirst({
+			where: { userId, tenantId: user.tenantId },
+			select: { membershipId: true, tenantRole: true, isActive: true },
+		});
+
+		if (!membership) {
+			throw new ActionError(
+				"El usuario no pertenece a tu empresa",
+				"NOT_FOUND",
+			);
+		}
+
+		// Un manager no puede cambiar su propio rol ni desactivarse
+		if (userId === user.userId) {
+			throw new ActionError(
+				"No podés modificar tu propio usuario desde aquí",
+				"FORBIDDEN",
+			);
+		}
+
+		const updateData: Record<string, unknown> = {};
+		if (tenantRole !== undefined) updateData.tenantRole = tenantRole;
+		if (isActive !== undefined) updateData.isActive = isActive;
+
+		await prisma.tenantMembership.update({
+			where: { membershipId: membership.membershipId },
+			data: updateData,
+		});
+
+		// Si se desactiva, también desactivar el usuario global
+		if (isActive !== undefined) {
+			await prisma.user.update({
+				where: { userId },
+				data: { isActive },
+			});
+		}
+
+		revalidatePath("/busy/configuracion/usuarios");
 		return { success: true };
 	},
 );

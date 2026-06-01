@@ -2,7 +2,16 @@
 
 import { useEffect, useDeferredValue, useMemo, useState } from 'react'
 import { LazyMotion, m as motion, AnimatePresence, useReducedMotion } from 'framer-motion'
-import { Loader2, RefreshCw, Search, Users, X } from 'lucide-react'
+import {
+  Loader2,
+  RefreshCw,
+  Search,
+  Users,
+  X,
+  ShieldCheck,
+  Power,
+  PowerOff,
+} from 'lucide-react'
 import { formatDistanceToNow } from 'date-fns'
 import { es } from 'date-fns/locale'
 
@@ -27,6 +36,9 @@ interface TenantUsersTableProps {
   users: TenantUser[]
   isLoading: boolean
   onRefresh: () => void
+  currentUserId?: string
+  onRoleChange?: (user: TenantUser) => void
+  onToggleActive?: (user: TenantUser) => void
 }
 
 /** Genera iniciales a partir del nombre */
@@ -64,7 +76,14 @@ const roleStyles: Record<string, { bg: string; text: string; border: string }> =
  * @param {TenantUsersTableProps} props - Usuarios, estado de carga, acción de refrescar
  * @returns {JSX.Element} Tabla paginada con búsqueda
  */
-export function TenantUsersTable({ users, isLoading, onRefresh }: TenantUsersTableProps) {
+export function TenantUsersTable({
+  users,
+  isLoading,
+  onRefresh,
+  currentUserId,
+  onRoleChange,
+  onToggleActive,
+}: TenantUsersTableProps) {
   const [search, setSearch] = useState('')
   const [page, setPage] = useState(1)
   const deferredSearch = useDeferredValue(search)
@@ -153,6 +172,9 @@ export function TenantUsersTable({ users, isLoading, onRefresh }: TenantUsersTab
                     <TableHead>Rol</TableHead>
                     <TableHead>Estado</TableHead>
                     <TableHead className="pr-6">Ingreso</TableHead>
+                    {(onRoleChange || onToggleActive) && (
+                      <TableHead className="pr-6 text-right">Acciones</TableHead>
+                    )}
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -211,6 +233,42 @@ export function TenantUsersTable({ users, isLoading, onRefresh }: TenantUsersTab
                           <TableCell className="pr-6 text-sm text-muted-foreground">
                             {formatDistanceToNow(new Date(user.createdAt), { locale: es, addSuffix: true })}
                           </TableCell>
+                          {(onRoleChange || onToggleActive) && (
+                            <TableCell className="pr-6 text-right">
+                              <div className="flex items-center justify-end gap-1">
+                                {onRoleChange && user.userId !== currentUserId && (
+                                  <Button
+                                    variant="ghost"
+                                    size="sm"
+                                    className="h-8 w-8 p-0 text-muted-foreground hover:text-violet-600"
+                                    onClick={() => onRoleChange(user)}
+                                    title="Cambiar rol"
+                                  >
+                                    <ShieldCheck className="h-4 w-4" />
+                                  </Button>
+                                )}
+                                {onToggleActive && user.userId !== currentUserId && (
+                                  <Button
+                                    variant="ghost"
+                                    size="sm"
+                                    className={`h-8 w-8 p-0 ${
+                                      user.isActive
+                                        ? 'text-muted-foreground hover:text-red-600'
+                                        : 'text-muted-foreground hover:text-emerald-600'
+                                    }`}
+                                    onClick={() => onToggleActive(user)}
+                                    title={user.isActive ? 'Desactivar' : 'Activar'}
+                                  >
+                                    {user.isActive ? (
+                                      <PowerOff className="h-4 w-4" />
+                                    ) : (
+                                      <Power className="h-4 w-4" />
+                                    )}
+                                  </Button>
+                                )}
+                              </div>
+                            </TableCell>
+                          )}
                         </motion.tr>
                       )
                     })}
