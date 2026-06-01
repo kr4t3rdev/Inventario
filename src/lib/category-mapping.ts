@@ -8,8 +8,8 @@
  * @module lib/category-mapping
  */
 
-import categoryToSection from './data/category-to-section.json';
-import subcategoryToSpecific from './data/subcategory-to-specific.json';
+import categoryToSection from "./data/category-to-section.json";
+import subcategoryToSpecific from "./data/subcategory-to-specific.json";
 
 // ─── Mappings (datos en JSON) ───────────────────────────
 

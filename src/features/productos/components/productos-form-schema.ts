@@ -55,4 +55,6 @@ export function buildProductosSchema(usaEan13: boolean) {
 	return z.object(baseSchema);
 }
 
-export type ProductosFormValues = z.infer<ReturnType<typeof buildProductosSchema>>;
+export type ProductosFormValues = z.infer<
+	ReturnType<typeof buildProductosSchema>
+>;
