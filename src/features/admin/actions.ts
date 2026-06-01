@@ -580,6 +580,105 @@ export const getPendingMembershipsAction = withAction(
 	},
 );
 
+export const approveMembershipAction = withAction(
+	async (
+		input: { membershipId: string; tenantRole: string },
+		user: AuthenticatedUser,
+	) => {
+		const { membershipId, tenantRole } = input;
+
+		if (!tenantRole || typeof tenantRole !== "string") {
+			throw new ActionError("El rol del tenant es requerido", "VALIDATION");
+		}
+
+		const validRoles = ["manager", "economico", "dependiente", "admin"];
+		if (!validRoles.includes(tenantRole)) {
+			throw new ActionError(
+				`Rol inválido: ${tenantRole}. Roles válidos: ${validRoles.join(", ")}`,
+				"VALIDATION",
+			);
+		}
+
+		const membership = await prisma.tenantMembership.findUnique({
+			where: { membershipId },
+			select: {
+				membershipId: true,
+				tenantId: true,
+				userId: true,
+				isActive: true,
+				user: { select: { userId: true, name: true, email: true } },
+			},
+		});
+
+		if (!membership) {
+			throw new ActionError("Solicitud de membresía no encontrada", "NOT_FOUND");
+		}
+
+		if (membership.isActive) {
+			throw new ActionError("Esta membresía ya está activa", "CONFLICT");
+		}
+
+		const isPlatformAdmin = user.role === "admin";
+		const isTenantManager =
+			user.tenantRole === "manager" && user.tenantId === membership.tenantId;
+
+		if (!isPlatformAdmin && !isTenantManager) {
+			throw new ActionError(
+				"No tenés permisos para aprobar esta solicitud",
+				"FORBIDDEN",
+			);
+		}
+
+		// Activar membresía
+		await prisma.tenantMembership.update({
+			where: { membershipId },
+			data: { isActive: true, tenantRole },
+		});
+
+		// Activar usuario
+		await prisma.user.update({
+			where: { userId: membership.userId },
+			data: { isActive: true },
+		});
+
+		// Crear Empleado
+		const nameParts = membership.user.name.trim().split(" ");
+		const nombre = nameParts[0];
+		const apellido = nameParts.slice(1).join(" ") || nombre;
+
+		const cargoMap: Record<string, string> = {
+			manager: "Director / Manager",
+			economico: "Económico",
+			dependiente: "Dependiente",
+			admin: "Administrador",
+		};
+
+		let empleadoCreado = false;
+
+		const existingEmpleado = await prisma.empleado.findFirst({
+			where: { tenantId: membership.tenantId, nombre, apellido },
+		});
+
+		if (!existingEmpleado) {
+			const cargo = cargoMap[tenantRole] || tenantRole;
+			await prisma.empleado.create({
+				data: {
+					tenantId: membership.tenantId,
+					nombre,
+					apellido,
+					cargo,
+					salarioBases: 0,
+					fechaContratacion: new Date(),
+				},
+			});
+			empleadoCreado = true;
+		}
+
+		revalidatePath("/busy/configuracion/usuarios");
+		return { success: true, empleadoCreado };
+	},
+);
+
 export const rejectMembershipAction = withAction(
 	async (input: { membershipId: string }, user: AuthenticatedUser) => {
 		const membership = await prisma.tenantMembership.findUnique({

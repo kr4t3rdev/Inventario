@@ -15,6 +15,7 @@ import Link from "next/link";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useAuth } from "@/contexts/auth-context";
 import {
+	approveMembershipAction,
 	getGlobalUsersAction,
 	getPendingMembershipsAction,
 	rejectMembershipAction,
@@ -131,17 +132,14 @@ export function TenantUsersPage() {
 	const handleConfirmApprove = useCallback(
 		async (membershipId: string, tenantRole: string) => {
 			try {
-				const response = await fetch(`/api/admin/memberships/${membershipId}`, {
-					method: "PATCH",
-					credentials: "include",
-					headers: {
-						"Content-Type": "application/json",
-					},
-					body: JSON.stringify({ action: "approve", tenantRole }),
+				const result = await approveMembershipAction({
+					membershipId,
+					tenantRole,
 				});
-				const payload = await response.json().catch(() => ({}));
-				if (!response.ok) {
-					throw new Error(payload?.error || "Error aprobando acceso");
+				if (!result.success) {
+					throw new Error(
+						result.error?.message || "Error aprobando acceso",
+					);
 				}
 				toast.success("Acceso aprobado correctamente.");
 				fetchPending();
