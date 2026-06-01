@@ -95,16 +95,14 @@ const nextConfig: NextConfig = {
 		NEXT_TELEMETRY_DISABLED: "1",
 	},
 
-	// Developer Experience Logging
-	// Forwardea logs del browser a la terminal durante desarrollo para mejor visibilidad
-	// durante debugging. Este es un nivel intermedio que maximiza señal/ruido sin
-	// introducir observabilidad completa (OpenTelemetry/instrumentation.ts aún no).
+	// OpenTelemetry
+	// src/instrumentation.ts ya está configurado con @vercel/otel y
+	// @prisma/instrumentation para tracing de Server Actions, Route Handlers
+	// y queries de base de datos. Ver src/instrumentation.ts y src/lib/tracing.ts.
 	//
-	// Next escalation path (cuando sea necesario):
-	// Si terminal logging no es suficiente para diagnosticar problemas complejos,
-	// el siguiente paso es crear `src/instrumentation.ts` con OpenTelemetry y exporters
-	// para tracing distribuido y métricas. Ese nivel proporciona observabilidad completa
-	// pero requiere setup más pesado (SDK init, trace exporters, etc.).
+	// Para exportar trazas, configurar las variables de entorno:
+	//   OTEL_EXPORTER_OTLP_ENDPOINT=http://localhost:4318/v1/traces
+	//   OTEL_EXPORTER_OTLP_HEADERS=...
 	logging: {
 		browserToTerminal: true,
 	},
