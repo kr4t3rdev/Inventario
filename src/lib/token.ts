@@ -10,13 +10,13 @@
  * @deprecated Mantenido para compatibilidad. Todas las funciones son no-ops.
  */
 export const getAuthToken = (): string => {
-  return '';
+	return "";
 };
 
 export const setAuthToken = (_token: string): void => {
-  // No-op: auth via cookies httpOnly
+	// No-op: auth via cookies httpOnly
 };
 
 export const clearAuthToken = (): void => {
-  // No-op: auth via cookies httpOnly
+	// No-op: auth via cookies httpOnly
 };

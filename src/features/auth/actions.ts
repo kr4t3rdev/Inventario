@@ -87,7 +87,10 @@ export async function loginAction(
 		if (!user) {
 			return {
 				success: false,
-				error: { message: "Credenciales inválidas", code: "INVALID_CREDENTIALS" },
+				error: {
+					message: "Credenciales inválidas",
+					code: "INVALID_CREDENTIALS",
+				},
 			};
 		}
 
@@ -97,7 +100,8 @@ export async function loginAction(
 			return {
 				success: false,
 				error: {
-					message: "Su usuario está inactivo, por favor contacte con el administrador.",
+					message:
+						"Su usuario está inactivo, por favor contacte con el administrador.",
 					code: "USER_INACTIVE",
 				},
 			};
@@ -111,7 +115,10 @@ export async function loginAction(
 		) {
 			return {
 				success: false,
-				error: { message: "Licencia expirada o no válida", code: "LICENSE_EXPIRED" },
+				error: {
+					message: "Licencia expirada o no válida",
+					code: "LICENSE_EXPIRED",
+				},
 			};
 		}
 
@@ -313,58 +320,62 @@ export async function loginAction(
  * @description Cierra sesión del usuario actual.
  * Desactiva todas las UserSession activas y elimina las cookies.
  */
-export const logoutAction = withAction(async (_void: void, user: AuthenticatedUser) => {
-	await prisma.userSession.updateMany({
-		where: { userId: user.userId, isActive: true },
-		data: { isActive: false },
-	});
+export const logoutAction = withAction(
+	async (_void: void, user: AuthenticatedUser) => {
+		await prisma.userSession.updateMany({
+			where: { userId: user.userId, isActive: true },
+			data: { isActive: false },
+		});
 
-	await prisma.userActivityLog.create({
-		data: {
-			userId: user.userId,
-			action: "logout",
-			details: JSON.stringify({ timestamp: new Date().toISOString() }),
-			performedBy: user.userId,
-		},
-	});
+		await prisma.userActivityLog.create({
+			data: {
+				userId: user.userId,
+				action: "logout",
+				details: JSON.stringify({ timestamp: new Date().toISOString() }),
+				performedBy: user.userId,
+			},
+		});
 
-	const cookieStore = await cookies();
-	cookieStore.delete("auth_token");
-	cookieStore.delete("refreshToken");
+		const cookieStore = await cookies();
+		cookieStore.delete("auth_token");
+		cookieStore.delete("refreshToken");
 
-	revalidatePath("/login");
-	return { success: true };
-});
+		revalidatePath("/login");
+		return { success: true };
+	},
+);
 
 // ─── meAction (autenticada) ──────────────────────────────
 
 /**
  * @description Devuelve el usuario autenticado actual.
  */
-export const meAction = withAction(async (_void: void, user: AuthenticatedUser) => {
-	const dbUser = await prisma.user.findUnique({
-		where: { userId: user.userId },
-		select: {
-			userId: true,
-			name: true,
-			email: true,
-			role: true,
-			isActive: true,
-		},
-	});
+export const meAction = withAction(
+	async (_void: void, user: AuthenticatedUser) => {
+		const dbUser = await prisma.user.findUnique({
+			where: { userId: user.userId },
+			select: {
+				userId: true,
+				name: true,
+				email: true,
+				role: true,
+				isActive: true,
+			},
+		});
 
-	if (!dbUser) {
-		throw new ActionError("Usuario no encontrado", "NOT_FOUND");
-	}
+		if (!dbUser) {
+			throw new ActionError("Usuario no encontrado", "NOT_FOUND");
+		}
 
-	return {
-		user: {
-			...dbUser,
-			tenantId: user.tenantId,
-			tenantRole: user.tenantRole,
-		},
-	};
-});
+		return {
+			user: {
+				...dbUser,
+				tenantId: user.tenantId,
+				tenantRole: user.tenantRole,
+			},
+		};
+	},
+);
 
 // ─── refreshSessionAction (autenticada) ──────────────────
 
@@ -381,7 +392,10 @@ export const refreshSessionAction = withAction(async (_void: void) => {
 	}
 
 	try {
-		const payload = jwt.verify(refreshTokenCookie.value, getRefreshJwtSecret()) as {
+		const payload = jwt.verify(
+			refreshTokenCookie.value,
+			getRefreshJwtSecret(),
+		) as {
 			userId: string;
 			email: string;
 		};
