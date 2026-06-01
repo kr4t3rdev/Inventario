@@ -46,9 +46,6 @@ import {
   DEFAULT_PARENT_PREVIEW_SURTIDO,
   type ProductBusinessCodeResult,
 } from '@/lib/product-business-code'
-import { buildPreciosPayload } from './precios-payload'
-import { ProductPhotoUpload } from './product-photo-upload'
-import { ClasificadorInfoNote } from './clasificador-info-note'
 import { buildProductosSchema, type ProductosFormValues } from './productos-form-schema'
 import { PulseSkeleton } from './pulse-skeleton'
 import { ProductosPriceListsSection } from './productos-price-lists'
