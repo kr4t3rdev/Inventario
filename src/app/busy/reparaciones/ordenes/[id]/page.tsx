@@ -138,7 +138,7 @@ export default function OrdenDetail({ params }: { params: Promise<{ id: string }
     const loadCurrency = async () => {
       try {
         // Usar la API de exchange existente para obtener la tasa USD -> CUP (Moneda Nacional)
-        const token = sessionStorage.getItem('token')
+        const token = ''
         const res = await fetch('/api/exchange?from=USD&to=CUP', {
           headers: {
             Authorization: `Bearer ${token}`,
@@ -356,7 +356,7 @@ export default function OrdenDetail({ params }: { params: Promise<{ id: string }
     formData.append('file', e.target.files[0])
 
     try {
-      const token = sessionStorage.getItem('token')
+      const token = ''
       const res = await fetch('/api/upload', {
         method: 'POST',
         headers: token ? { Authorization: `Bearer ${token}` } : {},
@@ -1402,7 +1402,7 @@ export default function OrdenDetail({ params }: { params: Promise<{ id: string }
                             if (moneda === "CUP" && !exchangeRate) {
                               const loadExchangeRate = async () => {
                                 try {
-                                  const token = sessionStorage.getItem('token')
+                                  const token = ''
                                   const res = await fetch('/api/exchange?from=USD&to=CUP', {
                                     headers: { Authorization: `Bearer ${token}` },
                                   })

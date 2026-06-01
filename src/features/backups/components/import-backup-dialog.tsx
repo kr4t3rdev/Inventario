@@ -98,7 +98,7 @@ export function ImportBackupDialog({
     setUploadProgress(true)
 
     try {
-      const token = sessionStorage.getItem('token')
+      const token = ''
       const formData = new FormData()
       formData.append('file', selectedFile)
 

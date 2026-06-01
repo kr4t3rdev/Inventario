@@ -2,10 +2,14 @@
 
 import { useEffect } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
+import { handleAuthCallback } from '@/features/auth/actions'
 
 /**
- * @description Procesa el callback de autenticación leyendo query params y redirigiendo.
- * @returns {JSX.Element} Vista de espera mientras se guarda la sesión.
+ * @description Procesa el callback de autenticación externa (OAuth, Google).
+ * En lugar de guardar tokens en sessionStorage, llama a handleAuthCallback
+ * Server Action que setea cookies httpOnly desde el servidor.
+ *
+ * @returns {JSX.Element} Vista de espera mientras se procesa la sesión.
  */
 export function AuthCallbackClient() {
   const router = useRouter()
@@ -27,16 +31,17 @@ export function AuthCallbackClient() {
       return
     }
 
-    // Guardás los tokens en sessionStorage (igual que el interceptor espera)
-    sessionStorage.setItem('token', token)
-    if (refreshToken) {
-      sessionStorage.setItem('refreshToken', refreshToken)
-    }
-
-    // Si es usuario nuevo, va al onboarding
-    // Si no, va al dashboard
-    const redirectPath = isNewUser ? '/onboarding' : '/busy/dashboard'
-    router.push(redirectPath)
+    // Enviar token al servidor para que setee cookies httpOnly
+    handleAuthCallback({ token, refreshToken: refreshToken ?? undefined }).then(
+      (result) => {
+        if (result.success) {
+          const redirectPath = isNewUser ? '/onboarding' : '/busy/dashboard'
+          router.push(redirectPath)
+        } else {
+          router.push('/login?error=callback_failed')
+        }
+      },
+    )
   }, [searchParams, router])
 
   return (

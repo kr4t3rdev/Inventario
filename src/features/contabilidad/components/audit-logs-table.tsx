@@ -200,7 +200,7 @@ export function AuditLogsTable() {
       if (entidad !== 'all') url += `&entidad=${entidad}`;
       if (accion !== 'all') url += `&accion=${accion}`;
 
-      const token = sessionStorage.getItem('token');
+      const token = '';
       const response = await fetch(url, {
         headers: token ? { Authorization: `Bearer ${token}` } : {},
       });

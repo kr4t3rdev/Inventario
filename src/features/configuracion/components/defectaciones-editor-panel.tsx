@@ -23,7 +23,7 @@ export function DefectacionesEditorPanel(): React.ReactElement {
     // Cargar defectaciones desde DB al inicio
     const loadFromDb = async () => {
       try {
-        const token = sessionStorage.getItem('token');
+        const token = '';
         const res = await fetch('/api/defectaciones', {
           headers: token ? { Authorization: `Bearer ${token}` } : {}
         })
@@ -45,7 +45,7 @@ export function DefectacionesEditorPanel(): React.ReactElement {
     if (!name || Number.isNaN(priceInput) || priceInput < 0) return
     const payload = { defecto: name, costo: priceInput }
     try {
-      const token = sessionStorage.getItem('token');
+      const token = '';
       const res = await fetch('/api/defectaciones', {
         method: 'POST',
         headers: { 
@@ -71,7 +71,7 @@ export function DefectacionesEditorPanel(): React.ReactElement {
 
   const removeTarifa = async (id: string) => {
     try {
-      const token = sessionStorage.getItem('token');
+      const token = '';
       const res = await fetch(`/api/defectaciones/${id}`, { 
         method: 'DELETE',
         headers: token ? { Authorization: `Bearer ${token}` } : {}

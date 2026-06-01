@@ -151,21 +151,10 @@ export default function WandaDashboardPage() {
       setLoading(true)
       setError(null)
       
-      const token = sessionStorage.getItem('token')
-      
-      if (!token) {
-        throw new Error('No hay sesión activa. Por favor, inicie sesión.')
-      }
-      
-      const response = await fetch('/api/dashboard/wanda', {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      })
+      const response = await fetch('/api/dashboard/wanda')
       
       if (!response.ok) {
         if (response.status === 401) {
-          sessionStorage.removeItem('token')
           throw new Error('Sesión expirada. Por favor, inicie sesión nuevamente.')
         }
         throw new Error('Error al cargar datos del dashboard')

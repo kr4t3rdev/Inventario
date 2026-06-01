@@ -66,7 +66,7 @@ export default function BalanceResultadosPage() {
     const fetchData = async () => {
       setLoading(true)
       try {
-        const token = sessionStorage.getItem("token")
+        const token = ""
         const headers: HeadersInit = {}
         if (token) {
           headers["Authorization"] = `Bearer ${token}`

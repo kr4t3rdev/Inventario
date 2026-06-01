@@ -31,7 +31,7 @@ export default function OrdenesReparacionPage() {
     let mounted = true
     const loadRate = async () => {
       try {
-        const token = sessionStorage.getItem('token')
+        const token = ''
         const res = await fetch('/api/exchange?from=USD&to=CUP', {
           headers: { Authorization: `Bearer ${token}` },
         })

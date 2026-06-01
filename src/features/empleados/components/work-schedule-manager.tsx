@@ -63,7 +63,7 @@ export function WorkScheduleManager() {
     if (!selectedEmpleado) return;
 
     try {
-      const token = sessionStorage.getItem('token');
+      const token = '';
       const response = await fetch(`/api/empleados/work-schedules?employeeId=${selectedEmpleado}`, {
         headers: {
           ...(token && { Authorization: `Bearer ${token}` }),
@@ -124,7 +124,7 @@ export function WorkScheduleManager() {
         scheduledHours: calculatedHours
       };
 
-      const token = sessionStorage.getItem('token');
+      const token = '';
       const response = await fetch("/api/empleados/work-schedules", {
         method: "POST",
         headers: {
@@ -162,7 +162,7 @@ export function WorkScheduleManager() {
   const handleDeleteSchedule = async (scheduleId: string) => {
     setLoading(true);
     try {
-      const token = sessionStorage.getItem('token');
+      const token = '';
       const response = await fetch(`/api/empleados/work-schedules?scheduleId=${scheduleId}`, {
         method: "DELETE",
         headers: {

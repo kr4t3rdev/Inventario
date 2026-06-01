@@ -183,7 +183,7 @@ export function OfertasTable({ ofertas, isLoading, error }: OfertasTableProps) {
                 size="sm"
                 onClick={async () => {
                   try {
-                    const token = sessionStorage.getItem("token")
+                    const token = ""
                     const response = await fetch(`/api/ofertas/${oferta.id}/pdf`, {
                       headers: {
                         Authorization: `Bearer ${token}`

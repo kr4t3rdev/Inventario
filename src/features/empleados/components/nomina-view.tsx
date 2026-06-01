@@ -213,7 +213,7 @@ export function NominaView() {
         ? `/api/empleados/nomina?periodo=${periodoFilter}`
         : "/api/empleados/nomina";
 
-      const token = sessionStorage.getItem('token');
+      const token = '';
       const response = await fetch(url, {
         headers: {
           ...(token && { Authorization: `Bearer ${token}` }),
@@ -242,7 +242,7 @@ export function NominaView() {
 
     setCalculating(true);
     try {
-      const token = sessionStorage.getItem('token');
+      const token = '';
       const response = await fetch("/api/empleados/nomina", {
         method: "POST",
         headers: {
@@ -325,7 +325,7 @@ export function NominaView() {
 
   const handleSaveEdit = async (id: string, updates: Partial<PayrollRecord>) => {
     try {
-      const token = sessionStorage.getItem('token');
+      const token = '';
       const response = await fetch(`/api/pago-salario/${id}`, {
         method: 'PUT',
         headers: {

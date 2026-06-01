@@ -124,7 +124,7 @@ export function BackupDashboardPage() {
 
         if (url.startsWith('/')) {
           // LocalFS: fetch via API route with auth token, then download as blob
-          const token = sessionStorage.getItem('token')
+          const token = ''
           const response = await fetch(url, {
             headers: token ? { Authorization: `Bearer ${token}` } : {},
           })

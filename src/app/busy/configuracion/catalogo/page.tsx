@@ -17,7 +17,7 @@ export default function CatalogoConfiguracionPage(): React.JSX.Element {
     let mounted = true
     const loadConfig = async () => {
       try {
-        const token = sessionStorage.getItem('token')
+        const token = ''
         const res = await fetch('/api/reparaciones/catalogo/config', {
           headers: token ? { Authorization: `Bearer ${token}` } : undefined,
         })
@@ -39,7 +39,7 @@ export default function CatalogoConfiguracionPage(): React.JSX.Element {
     let mounted = true
     const load = async () => {
       try {
-        const token = sessionStorage.getItem('token')
+        const token = ''
         const res = await fetch(`/api/exchange?from=${currencyCode}&to=CUP`, {
           headers: token ? { Authorization: `Bearer ${token}` } : undefined,
         })
@@ -91,7 +91,7 @@ export default function CatalogoConfiguracionPage(): React.JSX.Element {
             <button onClick={async () => {
               // Recalcular tasa para asegurar consistent rate
               try {
-                const token = sessionStorage.getItem('token')
+                const token = ''
                 const res = await fetch(`/api/exchange?from=${currencyCode}&to=CUP`, {
                   headers: token ? { Authorization: `Bearer ${token}` } : undefined,
                 })

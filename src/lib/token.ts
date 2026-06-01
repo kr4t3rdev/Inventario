@@ -1,19 +1,22 @@
-export const getAuthToken = () => {
-  if (typeof window !== 'undefined') {
-    const token = sessionStorage.getItem('token') || '';
-    return token ? `Bearer ${token}` : '';
-  }
+/**
+ * @description Utilidades de token JWT en cliente.
+ *
+ * DEPRECATED: La autenticación ahora usa cookies httpOnly seteadas
+ * por las Server Actions. El token JWT nunca está disponible en JS cliente.
+ *
+ * getAuthToken() siempre devuelve '' para no enviar Bearer header.
+ * El servidor usa la cookie httpOnly 'auth_token' automáticamente.
+ *
+ * @deprecated Mantenido para compatibilidad. Todas las funciones son no-ops.
+ */
+export const getAuthToken = (): string => {
   return '';
 };
 
-export const setAuthToken = (token: string) => {
-  if (typeof window !== 'undefined') {
-    sessionStorage.setItem('token', token);
-  }
+export const setAuthToken = (_token: string): void => {
+  // No-op: auth via cookies httpOnly
 };
 
-export const clearAuthToken = () => {
-  if (typeof window !== 'undefined') {
-    sessionStorage.removeItem('token');
-  }
+export const clearAuthToken = (): void => {
+  // No-op: auth via cookies httpOnly
 };

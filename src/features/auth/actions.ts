@@ -440,3 +440,42 @@ export const refreshSessionAction = withAction(async (_void: void) => {
 		throw new ActionError("Sesión expirada", "SESSION_EXPIRED");
 	}
 });
+
+// ─── handleAuthCallback (pública — sin withAction) ───────
+
+/**
+ * @description Procesa un callback de autenticación externo (OAuth, etc.).
+ * Setea las cookies httpOnly con los tokens recibidos.
+ * Pública: recibe tokens ya validados por el provider externo.
+ */
+export async function handleAuthCallback(input: {
+	token: string;
+	refreshToken?: string;
+}) {
+	try {
+		const cookieStore = await cookies();
+
+		cookieStore.set("auth_token", input.token, {
+			httpOnly: true,
+			secure: process.env.NODE_ENV === "production",
+			sameSite: "lax",
+			path: "/",
+			maxAge: 30 * 24 * 60 * 60,
+		});
+
+		if (input.refreshToken) {
+			cookieStore.set("refreshToken", input.refreshToken, {
+				httpOnly: true,
+				secure: process.env.NODE_ENV === "production",
+				sameSite: "lax",
+				path: "/",
+				maxAge: 30 * 24 * 60 * 60,
+			});
+		}
+
+		return { success: true };
+	} catch (error) {
+		console.error("[handleAuthCallback] Error:", error);
+		return { success: false, error: "Error al procesar autenticación" };
+	}
+}
