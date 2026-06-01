@@ -2928,8 +2928,8 @@
     },
     "src/features/auth/api/handlers.ts": {
       "latest": {
-        "commit": "d7915af",
-        "timestamp": "2026-05-29T14:58:18.174Z",
+        "commit": "ef53195",
+        "timestamp": "2026-05-31T23:07:07.813Z",
         "mi": 7.6,
         "cognitive": 246,
         "nesting": 5,
@@ -2951,6 +2951,16 @@
         {
           "commit": "d7915af",
           "timestamp": "2026-05-29T14:58:18.174Z",
+          "mi": 7.6,
+          "cognitive": 246,
+          "nesting": 5,
+          "lines": 685,
+          "maxCyclomatic": 79,
+          "entropy": 6.41
+        },
+        {
+          "commit": "ef53195",
+          "timestamp": "2026-05-31T23:07:07.813Z",
           "mi": 7.6,
           "cognitive": 246,
           "nesting": 5,
@@ -3013,8 +3023,8 @@
     },
     "src/lib/server-actions/get-current-user.ts": {
       "latest": {
-        "commit": "d7915af",
-        "timestamp": "2026-05-29T14:58:55.715Z",
+        "commit": "ef53195",
+        "timestamp": "2026-05-31T23:07:03.545Z",
         "mi": 42.8,
         "cognitive": 35,
         "nesting": 4,
@@ -3036,6 +3046,16 @@
         {
           "commit": "d7915af",
           "timestamp": "2026-05-29T14:58:55.715Z",
+          "mi": 42.8,
+          "cognitive": 35,
+          "nesting": 4,
+          "lines": 116,
+          "maxCyclomatic": 15,
+          "entropy": 5.87
+        },
+        {
+          "commit": "ef53195",
+          "timestamp": "2026-05-31T23:07:03.545Z",
           "mi": 42.8,
           "cognitive": 35,
           "nesting": 4,
@@ -3488,8 +3508,8 @@
     },
     "src/lib/auth/roles.ts": {
       "latest": {
-        "commit": "e6a1af2",
-        "timestamp": "2026-05-30T15:03:13.191Z",
+        "commit": "ef53195",
+        "timestamp": "2026-05-31T23:07:20.731Z",
         "mi": 45.2,
         "cognitive": 34,
         "nesting": 2,
@@ -3527,6 +3547,16 @@
           "lines": 107,
           "maxCyclomatic": 10,
           "entropy": 4.75
+        },
+        {
+          "commit": "ef53195",
+          "timestamp": "2026-05-31T23:07:20.731Z",
+          "mi": 45.2,
+          "cognitive": 34,
+          "nesting": 2,
+          "lines": 107,
+          "maxCyclomatic": 10,
+          "entropy": 4.75
         }
       ],
       "trend": "stable"
@@ -3558,8 +3588,8 @@
     },
     "src/lib/permissions.ts": {
       "latest": {
-        "commit": "e6a1af2",
-        "timestamp": "2026-05-30T15:03:13.225Z",
+        "commit": "ef53195",
+        "timestamp": "2026-05-31T23:07:20.758Z",
         "mi": 36,
         "cognitive": 70,
         "nesting": 4,
@@ -3581,6 +3611,16 @@
         {
           "commit": "e6a1af2",
           "timestamp": "2026-05-30T15:03:13.225Z",
+          "mi": 36,
+          "cognitive": 70,
+          "nesting": 4,
+          "lines": 208,
+          "maxCyclomatic": 21,
+          "entropy": 5.85
+        },
+        {
+          "commit": "ef53195",
+          "timestamp": "2026-05-31T23:07:20.758Z",
           "mi": 36,
           "cognitive": 70,
           "nesting": 4,
@@ -5618,8 +5658,8 @@
     },
     "src/contexts/auth-context.tsx": {
       "latest": {
-        "commit": "e6a1af2",
-        "timestamp": "2026-05-30T15:04:02.017Z",
+        "commit": "ef53195",
+        "timestamp": "2026-05-31T23:07:07.852Z",
         "mi": 31.6,
         "cognitive": 77,
         "nesting": 6,
@@ -5631,6 +5671,16 @@
         {
           "commit": "e6a1af2",
           "timestamp": "2026-05-30T15:04:02.017Z",
+          "mi": 31.6,
+          "cognitive": 77,
+          "nesting": 6,
+          "lines": 144,
+          "maxCyclomatic": 38,
+          "entropy": 5.9
+        },
+        {
+          "commit": "ef53195",
+          "timestamp": "2026-05-31T23:07:07.852Z",
           "mi": 31.6,
           "cognitive": 77,
           "nesting": 6,
@@ -5915,7 +5965,232 @@
         }
       ],
       "trend": "stable"
+    },
+    "src/app/api/auth/login/route.ts": {
+      "latest": {
+        "commit": "ef53195",
+        "timestamp": "2026-05-31T23:07:03.593Z",
+        "mi": 81.4,
+        "cognitive": 0,
+        "nesting": 0,
+        "lines": 3,
+        "maxCyclomatic": 1,
+        "entropy": 2.92
+      },
+      "history": [
+        {
+          "commit": "ef53195",
+          "timestamp": "2026-05-31T23:07:03.593Z",
+          "mi": 81.4,
+          "cognitive": 0,
+          "nesting": 0,
+          "lines": 3,
+          "maxCyclomatic": 1,
+          "entropy": 2.92
+        }
+      ],
+      "trend": "stable"
+    },
+    "src/app/api/auth/logout/route.ts": {
+      "latest": {
+        "commit": "ef53195",
+        "timestamp": "2026-05-31T23:07:03.631Z",
+        "mi": 81.4,
+        "cognitive": 0,
+        "nesting": 0,
+        "lines": 3,
+        "maxCyclomatic": 1,
+        "entropy": 2.92
+      },
+      "history": [
+        {
+          "commit": "ef53195",
+          "timestamp": "2026-05-31T23:07:03.631Z",
+          "mi": 81.4,
+          "cognitive": 0,
+          "nesting": 0,
+          "lines": 3,
+          "maxCyclomatic": 1,
+          "entropy": 2.92
+        }
+      ],
+      "trend": "stable"
+    },
+    "src/app/api/auth/me/route.ts": {
+      "latest": {
+        "commit": "ef53195",
+        "timestamp": "2026-05-31T23:07:07.886Z",
+        "mi": 81.4,
+        "cognitive": 0,
+        "nesting": 0,
+        "lines": 3,
+        "maxCyclomatic": 1,
+        "entropy": 2.92
+      },
+      "history": [
+        {
+          "commit": "ef53195",
+          "timestamp": "2026-05-31T23:07:07.886Z",
+          "mi": 81.4,
+          "cognitive": 0,
+          "nesting": 0,
+          "lines": 3,
+          "maxCyclomatic": 1,
+          "entropy": 2.92
+        }
+      ],
+      "trend": "stable"
+    },
+    "src/app/api/auth/refresh/route.ts": {
+      "latest": {
+        "commit": "ef53195",
+        "timestamp": "2026-05-31T23:07:11.403Z",
+        "mi": 81.4,
+        "cognitive": 0,
+        "nesting": 0,
+        "lines": 3,
+        "maxCyclomatic": 1,
+        "entropy": 2.92
+      },
+      "history": [
+        {
+          "commit": "ef53195",
+          "timestamp": "2026-05-31T23:07:11.403Z",
+          "mi": 81.4,
+          "cognitive": 0,
+          "nesting": 0,
+          "lines": 3,
+          "maxCyclomatic": 1,
+          "entropy": 2.92
+        }
+      ],
+      "trend": "stable"
+    },
+    "src/app/api/auth/register/route.ts": {
+      "latest": {
+        "commit": "ef53195",
+        "timestamp": "2026-05-31T23:07:11.440Z",
+        "mi": 81.4,
+        "cognitive": 0,
+        "nesting": 0,
+        "lines": 3,
+        "maxCyclomatic": 1,
+        "entropy": 2.92
+      },
+      "history": [
+        {
+          "commit": "ef53195",
+          "timestamp": "2026-05-31T23:07:11.440Z",
+          "mi": 81.4,
+          "cognitive": 0,
+          "nesting": 0,
+          "lines": 3,
+          "maxCyclomatic": 1,
+          "entropy": 2.92
+        }
+      ],
+      "trend": "stable"
+    },
+    "src/lib/auth/onboarding.ts": {
+      "latest": {
+        "commit": "ef53195",
+        "timestamp": "2026-05-31T23:07:11.475Z",
+        "mi": 55.8,
+        "cognitive": 7,
+        "nesting": 2,
+        "lines": 44,
+        "maxCyclomatic": 5,
+        "entropy": 5.08
+      },
+      "history": [
+        {
+          "commit": "ef53195",
+          "timestamp": "2026-05-31T23:07:11.475Z",
+          "mi": 55.8,
+          "cognitive": 7,
+          "nesting": 2,
+          "lines": 44,
+          "maxCyclomatic": 5,
+          "entropy": 5.08
+        }
+      ],
+      "trend": "stable"
+    },
+    "src/lib/token.ts": {
+      "latest": {
+        "commit": "ef53195",
+        "timestamp": "2026-05-31T23:07:20.707Z",
+        "mi": 57.7,
+        "cognitive": 10,
+        "nesting": 2,
+        "lines": 17,
+        "maxCyclomatic": 5,
+        "entropy": 3.48
+      },
+      "history": [
+        {
+          "commit": "ef53195",
+          "timestamp": "2026-05-31T23:07:20.707Z",
+          "mi": 57.7,
+          "cognitive": 10,
+          "nesting": 2,
+          "lines": 17,
+          "maxCyclomatic": 5,
+          "entropy": 3.48
+        }
+      ],
+      "trend": "stable"
+    },
+    "src/features/auth/actions.ts": {
+      "latest": {
+        "commit": "ef53195",
+        "timestamp": "2026-06-01T00:14:15.958Z",
+        "mi": 24.1,
+        "cognitive": 64,
+        "nesting": 4,
+        "lines": 341,
+        "maxCyclomatic": 66,
+        "entropy": 6.3
+      },
+      "history": [
+        {
+          "commit": "ef53195",
+          "timestamp": "2026-06-01T00:14:15.958Z",
+          "mi": 24.1,
+          "cognitive": 64,
+          "nesting": 4,
+          "lines": 341,
+          "maxCyclomatic": 66,
+          "entropy": 6.3
+        }
+      ],
+      "trend": "stable"
+    },
+    "src/features/auth/__tests__/actions.test.ts": {
+      "latest": {
+        "commit": "ef53195",
+        "timestamp": "2026-06-01T00:15:35.686Z",
+        "mi": 37,
+        "cognitive": 0,
+        "nesting": 2,
+        "lines": 166,
+        "maxCyclomatic": 3,
+        "entropy": 5.73
+      },
+      "history": [
+        {
+          "commit": "ef53195",
+          "timestamp": "2026-06-01T00:15:35.686Z",
+          "mi": 37,
+          "cognitive": 0,
+          "nesting": 2,
+          "lines": 166,
+          "maxCyclomatic": 3,
+          "entropy": 5.73
+        }
+      ],
+      "trend": "stable"
     }
   },
-  "capturedAt": "2026-05-31T22:45:18.611Z"
+  "capturedAt": "2026-06-01T00:15:40.687Z"
 }
