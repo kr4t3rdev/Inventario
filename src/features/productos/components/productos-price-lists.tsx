@@ -8,7 +8,7 @@
 "use client";
 
 import { motion } from "framer-motion";
-import CurrencyInput from "@/components/currency-input";
+import { CurrencyInput } from "@/components/ui/currency-input";
 
 /**
  * @description Props para el componente ProductosPriceListsSection
