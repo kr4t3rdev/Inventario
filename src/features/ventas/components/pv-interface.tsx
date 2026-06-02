@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect, useMemo } from "react"
+import { useState, useEffect, useMemo, useCallback } from "react"
 import { useRouter } from "next/navigation"
 import { LazyMotion, m as motion, AnimatePresence } from "framer-motion"
 import { ShoppingCart, Store, Package, Search, Loader2, Sparkles, TrendingUp, Filter, CreditCard, Truck, Calendar, LayoutGrid, List, Table as TableIcon, X, Minus, Plus, ImageIcon } from "lucide-react"
@@ -111,25 +111,25 @@ export function VentaInterface() {
   }, [selectedPuntoVenta])
 
   // Cargar turno activo al seleccionar punto de venta
-  useEffect(() => {
+  const refreshTurno = useCallback(async () => {
     if (!selectedPuntoVenta) {
       setTurnoActivo(null)
       return
     }
 
-    const loadTurno = async () => {
-      try {
-        const result = await getTurnoActivoAction(selectedPuntoVenta)
-        if (result.success) {
-          setTurnoActivo(result.data)
-        }
-      } catch {
-        setTurnoActivo(null)
+    try {
+      const result = await getTurnoActivoAction(selectedPuntoVenta)
+      if (result.success) {
+        setTurnoActivo(result.data)
       }
+    } catch {
+      setTurnoActivo(null)
     }
+  }, [selectedPuntoVenta])
 
-    loadTurno()
-  }, [selectedPuntoVenta, isCierreDialogOpen])
+  useEffect(() => {
+    refreshTurno()
+  }, [refreshTurno, isCierreDialogOpen])
 
   const { clientes, isLoading: isLoadingClientes } = useClientes()
   const { categorias, isLoading: isLoadingCategorias } = useCategorias()
@@ -366,6 +366,7 @@ export function VentaInterface() {
 
       toast(`Se ha registrado la venta por $${totalConDescuento}`)
       setCart([])
+      refreshTurno()
       router.refresh()
     } catch (error) {
       console.error("Error al procesar venta:", error)

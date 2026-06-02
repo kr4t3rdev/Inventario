@@ -197,49 +197,12 @@ export async function getLandingStatsPublicAction(): Promise<LandingStats> {
 
 /* ─── getPlansPublicAction ─── */
 
-const FEATURE_LABELS: Record<string, string> = {
-	productos: "Gestión de productos",
-	categorias: "Categorías jerárquicas",
-	unidades: "Unidades de medida",
-	almacenes: "Hasta 1 almacén",
-	ventas: "Ventas POS",
-	"venta-servicios": "Ventas de servicios",
-	clientes: "Gestión de clientes",
-	facturas: "Facturación electrónica",
-	"series-facturacion": "Series fiscales",
-	gastos: "Control de gastos",
-	dashboard: "Dashboard ejecutivo",
-	"reportes-basicos": "Reportes operativos",
-	"puntos-venta": "Punto de venta",
-	"turnos-pos": "Turnos POS",
-	"arqueo-caja": "Arqueo de caja",
-	"cuadre-diario": "Cuadre diario",
-	perfil: "Perfil de usuario",
-	"mi-empresa": "Datos de empresa",
-	configuracion: "Configuración del sistema",
-	servicios: "Servicios",
-	notificaciones: "Notificaciones",
-	ofertas: "Ofertas y promociones",
-	contabilidad: "Contabilidad completa",
-	empleados: "Gestión de empleados",
-	"pago-salario": "Nómina y salarios",
-	compras: "Compras y abastecimiento",
-	vendors: "Proveedores",
-	mermas: "Control de mermas",
-	transferencias: "Transferencias entre sucursales",
-	produccion: "Órdenes de producción",
-	reparaciones: "Taller de reparaciones",
-	contratos: "Gestión de contratos",
-	"listas-precios": "Listas de precios",
-	"reportes-financieros": "Reportes financieros avanzados",
-	backups: "Backups automáticos diarios",
-	"cuentas-cobrar": "Cuentas por cobrar",
-	"cuentas-pagar": "Cuentas por pagar",
-	"prestamos-cash": "Préstamos cash",
-	"deudas-cash": "Deudas cash",
-	anticipos: "Anticipos",
-	"multi-moneda": "Multi-moneda con tasas",
-};
+import {
+	FEATURE_REGISTRY,
+	CATEGORY_ORDER,
+	CATEGORY_LABELS,
+	getEnabledFeatureLabels,
+} from "@/features/planes/feature-registry";
 
 export interface PlanDisplay {
 	planId: string;
@@ -247,13 +210,21 @@ export interface PlanDisplay {
 	description: string | null;
 	price: number;
 	bullets: string[];
+	featuresByCategory: Record<string, string[]>;
 	featured: boolean;
 	cta: string;
+	limits: {
+		maxUsuarios: number;
+		maxAlmacenes: number;
+		maxProductos: number;
+		maxClientes: number;
+		maxPuntosVenta: number;
+	};
 }
 
 /**
  * @description Retorna los planes activos desde la BD para la landing pública.
- * Deriva los bullets de feature flags reales del plan.
+ * Usa el Feature Registry para generar bullets y agrupaciones dinámicamente.
  */
 export async function getPlansPublicAction(): Promise<PlanDisplay[]> {
 	try {
@@ -263,61 +234,61 @@ export async function getPlansPublicAction(): Promise<PlanDisplay[]> {
 
 		return plans.map((plan) => {
 			const features = (plan.features as Record<string, boolean>) ?? {};
-			const allEnabled = Object.entries(features)
-				.filter(([, v]) => v === true)
-				.map(([k]) => k);
 
-			// Base features para el plan Básico
-			const baseKeys = [
-				"ventas",
-				"facturas",
-				"clientes",
-				"series-facturacion",
-				"gastos",
-				"dashboard",
-				"reportes-basicos",
-				"puntos-venta",
-				"arqueo-caja",
-				"cuadre-diario",
-				"mi-empresa",
-				"notificaciones",
-				"ofertas",
-			];
+			const enabledLabels = getEnabledFeatureLabels(features);
 
-			const base = baseKeys
-				.filter((m) => features[m])
-				.map((m) => FEATURE_LABELS[m]);
+			// Agrupar features por categoría
+			const featuresByCategory: Record<string, string[]> = {};
+			for (const cat of CATEGORY_ORDER) {
+				const catFeatures = FEATURE_REGISTRY.filter(
+					(f) => f.category === cat && features[f.key] === true,
+				).map((f) => f.label);
+				if (catFeatures.length > 0) {
+					featuresByCategory[CATEGORY_LABELS[cat]] = catFeatures;
+				}
+			}
 
-			// Extra features (Profesional+)
-			const extraKeys = [
-				"contabilidad",
-				"empleados",
-				"pago-salario",
-				"compras",
-				"vendors",
-				"mermas",
-				"transferencias",
-				"produccion",
-				"reparaciones",
-				"contratos",
-				"listas-precios",
-				"reportes-financieros",
-				"backups",
-				"cuentas-cobrar",
-				"cuentas-pagar",
-				"prestamos-cash",
-				"anticipos",
-				"multi-moneda",
-			];
+			// Límites del plan como bullets
+			const limitBullets: string[] = [];
+			if (plan.maxUsuarios > 0) {
+				limitBullets.push(
+					plan.maxUsuarios >= 999
+						? "Usuarios ilimitados"
+						: `Hasta ${plan.maxUsuarios} usuarios`,
+				);
+			}
+			if (plan.maxAlmacenes > 0) {
+				limitBullets.push(
+					plan.maxAlmacenes >= 999
+						? "Almacenes ilimitados"
+						: `Hasta ${plan.maxAlmacenes} almacenes`,
+				);
+			}
+			if (plan.maxPuntosVenta > 0) {
+				limitBullets.push(
+					plan.maxPuntosVenta >= 999
+						? "Puntos de venta ilimitados"
+						: `Hasta ${plan.maxPuntosVenta} puntos de venta`,
+				);
+			}
+			if (plan.maxProductos > 0) {
+				limitBullets.push(
+					plan.maxProductos >= 999999
+						? "Productos ilimitados"
+						: `Hasta ${plan.maxProductos.toLocaleString()} productos`,
+				);
+			}
 
-			const extras = extraKeys
-				.filter((m) => features[m])
-				.map((m) => FEATURE_LABELS[m]);
+			const bullets = [...limitBullets, ...enabledLabels];
 
-			const bullets =
-				plan.nombre === "Básico"
-					? ["Gestión completa de productos", ...base]
-					: ["Gestión de productos (hasta 5.000)", ...base, ...extras];
+			const nameLower = plan.nombre.toLowerCase();
+			const featured = nameLower === "profesional" || nameLower === "recomendado";
+			const cta =
+				nameLower === "básico" || nameLower === "basico"
+					? "Comenzar"
+					: nameLower === "empresarial" || nameLower === "enterprise"
+						? "Hablar con ventas"
+						: "Solicitar demo";
 
 			return {
 				planId: plan.planId,
@@ -325,13 +296,16 @@ export async function getPlansPublicAction(): Promise<PlanDisplay[]> {
 				description: plan.descripcion,
 				price: Number(plan.precio),
 				bullets,
-				featured: plan.nombre === "Profesional",
-				cta:
-					plan.nombre === "Básico"
-						? "Comenzar"
-						: plan.nombre === "Empresarial"
-							? "Hablar con ventas"
-							: "Solicitar demo",
+				featuresByCategory,
+				featured,
+				cta,
+				limits: {
+					maxUsuarios: plan.maxUsuarios,
+					maxAlmacenes: plan.maxAlmacenes,
+					maxProductos: plan.maxProductos,
+					maxClientes: plan.maxClientes,
+					maxPuntosVenta: plan.maxPuntosVenta,
+				},
 			};
 		});
 	} catch {

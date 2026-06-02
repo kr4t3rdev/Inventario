@@ -142,6 +142,8 @@ describe('Admin Server Actions', () => {
         maxUsuarios: 5,
         maxAlmacenes: 3,
         maxProductos: 100,
+        maxPuntosVenta: 1,
+        features: {},
       });
       expect(r.success).toBe(true);
     });

@@ -65,23 +65,35 @@ export const updateLicenciaSchema = z.object({
 
 export const createPlanSchema = z.object({
   nombre: z.string().min(1),
+  descripcion: z.string().optional(),
+  precio: z.number().min(0).default(0),
   duracionDias: z.number().int().min(1),
   maxUsuarios: z.number().int().min(1),
   maxAlmacenes: z.number().int().min(1),
   maxProductos: z.number().int().min(1),
-  precio: z.number().optional(),
-  descripcion: z.string().optional(),
+  maxClientes: z.number().int().min(0).default(200),
+  maxPuntosVenta: z.number().int().min(1),
+  maxFacturasMes: z.number().int().min(0).default(200),
+  maxContratos: z.number().int().min(0).default(0),
+  incluyeBackups: z.boolean().default(false),
+  features: z.record(z.boolean()).default({}),
 });
 
 export const updatePlanSchema = z.object({
   planId: z.string().min(1),
   nombre: z.string().min(1).optional(),
+  descripcion: z.string().optional(),
+  precio: z.number().min(0).optional(),
   duracionDias: z.number().int().min(1).optional(),
   maxUsuarios: z.number().int().min(1).optional(),
   maxAlmacenes: z.number().int().min(1).optional(),
   maxProductos: z.number().int().min(1).optional(),
-  precio: z.number().optional(),
-  descripcion: z.string().optional(),
+  maxClientes: z.number().int().min(0).optional(),
+  maxPuntosVenta: z.number().int().min(1).optional(),
+  maxFacturasMes: z.number().int().min(0).optional(),
+  maxContratos: z.number().int().min(0).optional(),
+  incluyeBackups: z.boolean().optional(),
+  features: z.record(z.boolean()).optional(),
 });
 
 // ─── Types ─────────────────────────────────────────────────

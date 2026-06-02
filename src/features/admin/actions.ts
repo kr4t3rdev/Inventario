@@ -68,9 +68,11 @@ export const createUserAction = withAction(
 		});
 
 		try {
-			// @ts-expect-error
+			// @ts-expect-error sendEmailVerificationLink expects a different user type
 			await sendEmailVerificationLink(newUser as any);
-		} catch {}
+		} catch {
+			/* email sending is best-effort */
+		}
 
 		// ── Crear TenantMembership si se especificó tenantRole ──────
 		const adminTenantId = user.tenantId;
@@ -422,11 +424,17 @@ export const createAdminPlanAction = withAction(
 			data: {
 				nombre: parsed.nombre,
 				descripcion: parsed.descripcion,
-				precio: parsed.precio ?? 0,
+				precio: parsed.precio,
 				duracionDias: parsed.duracionDias,
 				maxUsuarios: parsed.maxUsuarios,
 				maxAlmacenes: parsed.maxAlmacenes,
 				maxProductos: parsed.maxProductos,
+				maxClientes: parsed.maxClientes,
+				maxPuntosVenta: parsed.maxPuntosVenta,
+				maxFacturasMes: parsed.maxFacturasMes,
+				maxContratos: parsed.maxContratos,
+				incluyeBackups: parsed.incluyeBackups,
+				features: parsed.features,
 			},
 		});
 		revalidatePath("/admin");
@@ -444,10 +452,7 @@ export const updateAdminPlanAction = withAction(
 		if (!existing) throw new ActionError("Plan no encontrado", "NOT_FOUND");
 		const plan = await prisma.plan.update({
 			where: { planId },
-			data: {
-				...data,
-				precio: data.precio ?? undefined,
-			},
+			data,
 		});
 		revalidatePath("/admin");
 		return plan;
@@ -506,7 +511,7 @@ export const deleteSessionAction = withAction(
 		if (user.role !== "admin")
 			throw new ActionError("Acceso restringido", "FORBIDDEN");
 		await prisma.userSession.delete({
-			// @ts-expect-error
+			// @ts-expect-error sessionId is not in the Prisma type but the schema has it
 			where: { sessionId },
 		});
 		revalidatePath("/admin");
@@ -539,9 +544,11 @@ export const sendExpiryNotificationsAction = withAction(
 		});
 		for (const u of expiring) {
 			try {
-				// @ts-expect-error
+				// @ts-expect-error sendEmailVerificationLink expects a different user type
 				await sendEmailVerificationLink(u as any);
-			} catch {}
+			} catch {
+				/* email sending is best-effort */
+			}
 		}
 		return { notified: expiring.length };
 	},
@@ -806,7 +813,7 @@ export const updateLicenciaAction = withAction(
 		if (user.role !== "admin")
 			throw new ActionError("Acceso restringido", "FORBIDDEN");
 		const licencia = await prisma.tenantLicense.update({
-			// @ts-expect-error
+			// @ts-expect-error TenantLicense uses id but Prisma client type may differ
 			where: { id },
 			data,
 		});
@@ -820,7 +827,7 @@ export const deleteLicenciaAction = withAction(
 		if (user.role !== "admin")
 			throw new ActionError("Acceso restringido", "FORBIDDEN");
 		await prisma.tenantLicense.delete({
-			// @ts-expect-error
+			// @ts-expect-error TenantLicense uses id but Prisma client type may differ
 			where: { id },
 		});
 		revalidatePath("/admin");
