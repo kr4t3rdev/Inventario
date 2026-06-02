@@ -17,6 +17,7 @@ const TURNOS_INCLUDE = {
   puntoDeVenta: { select: { pvId: true, nombre: true, tipoCaja: true } },
   empleado: { select: { empleadoId: true, nombre: true, apellido: true } },
   arqueo: true,
+  ventas: { select: { total: true } },
   _count: { select: { ventas: true } },
 } as const;
 
