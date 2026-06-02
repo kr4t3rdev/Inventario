@@ -14,6 +14,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
 import { Lock, ClipboardList, Clock, User, DollarSign, ShoppingCart } from 'lucide-react';
+import { formatCurrency, formatCurrencyUsd } from '@/lib/utils';
 
 interface TurnoInfo {
   id: string;
@@ -66,16 +67,16 @@ export function CabeceraTurno({ turno, onCerrar, onArqueo }: CabeceraTurnoProps)
           <div className="flex items-center gap-1.5 text-muted-foreground">
             <DollarSign className="h-3.5 w-3.5" />
             <span>
-              Fondo: <strong>${(turno.fondoInicialCup / 100).toFixed(2)} CUP</strong>
+              Fondo: <strong>{formatCurrency(turno.fondoInicialCup / 100)}</strong>
               {turno.fondoInicialUsd > 0 &&
-                ` · $${(turno.fondoInicialUsd / 100).toFixed(2)} USD`}
+                ` · ${formatCurrencyUsd(turno.fondoInicialUsd / 100)}`}
             </span>
           </div>
 
           <div className="flex items-center gap-1.5 text-muted-foreground">
             <ShoppingCart className="h-3.5 w-3.5" />
             <span>
-              Ventas: <strong>${(totalVentas / 100).toFixed(2)}</strong> ({totalTickets} tickets)
+              Ventas: <strong>{formatCurrency(totalVentas)}</strong> ({totalTickets} tickets)
             </span>
           </div>
         </div>

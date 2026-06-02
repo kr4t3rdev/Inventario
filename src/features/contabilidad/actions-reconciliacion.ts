@@ -367,6 +367,12 @@ export const reconciliarVentaAction = withAction(
 			const tenantId = requireTenant(user);
 
 			const result = await prisma.$transaction(async (tx) => {
+				// Incrementar saldo de la cuenta bancaria (ingreso por venta)
+				await tx.cuentaBancaria.update({
+					where: { cuentaId: input.cuentaId },
+					data: { saldo: { increment: input.monto } },
+				});
+
 				const reconciliacion = await tx.reconciliacionVenta.create({
 					data: {
 						ventaId: input.ventaId,
@@ -442,6 +448,7 @@ export const reconciliarVentaAction = withAction(
 
 			revalidatePath("/busy/contabilidad/reconciliacion");
 			revalidatePath("/busy/contabilidad/cuentas-por-cobrar");
+			revalidatePath("/busy/contabilidad");
 			return result;
 		},
 	),
@@ -563,23 +570,36 @@ export const reconciliarServicioAction = withAction(
 			user: AuthenticatedUser,
 		) => {
 			const tenantId = requireTenant(user);
-			const reconciliacion = await prisma.reconciliacionServicio.create({
-				// @ts-expect-error — tenantId no está en el tipo de create de ReconciliacionServicio pero la BD lo requiere
-				data: {
-					ventaServicioId: input.ventaServicioId,
-					cuentaId: input.cuentaId,
-					tipoPagoId: input.tipoPagoId,
-					monto: input.monto,
-					moneda: input.moneda || "CUP",
-					fechaReconciliacion: input.fechaReconciliacion
-						? new Date(input.fechaReconciliacion)
-						: new Date(),
-					observaciones: input.observaciones,
-					tenantId,
-				},
+
+			const result = await prisma.$transaction(async (tx) => {
+				// Incrementar saldo de la cuenta bancaria (ingreso por servicio)
+				await tx.cuentaBancaria.update({
+					where: { cuentaId: input.cuentaId },
+					data: { saldo: { increment: input.monto } },
+				});
+
+				const reconciliacion = await tx.reconciliacionServicio.create({
+					// @ts-expect-error — tenantId no está en el tipo de create de ReconciliacionServicio pero la BD lo requiere
+					data: {
+						ventaServicioId: input.ventaServicioId,
+						cuentaId: input.cuentaId,
+						tipoPagoId: input.tipoPagoId,
+						monto: input.monto,
+						moneda: input.moneda || "CUP",
+						fechaReconciliacion: input.fechaReconciliacion
+							? new Date(input.fechaReconciliacion)
+							: new Date(),
+						observaciones: input.observaciones,
+						tenantId,
+					},
+				});
+
+				return reconciliacion;
 			});
+
 			revalidatePath("/busy/contabilidad/reconciliacion");
-			return reconciliacion;
+			revalidatePath("/busy/contabilidad");
+			return result;
 		},
 	),
 );

@@ -71,8 +71,25 @@ export const getResumenFinancieroAction = withAction(
 			sf = Object.keys(df).length ? { gte: df.gte, lte: df.lte } : {},
 			af = f.cuentaId ? { cuentaId: f.cuentaId } : {};
 		const wf = Object.keys(sf).length ? { fechaReconciliacion: sf } : {};
+		const sfVenta = Object.keys(sf).length
+			? { createdAt: { gte: sf.gte, lte: sf.lte } }
+			: {};
 
-		const [cuentas, rV, rS, rG, tfs, ajs, iC, pD, mPC, dC] = await Promise.all([
+		const [
+			cuentas,
+			ventasRealizadas,
+			serviciosRealizados,
+			rG,
+			tfs,
+			ajs,
+			iC,
+			pD,
+			mPC,
+			dC,
+			rV_especiales,
+			reconVentasCount,
+			reconServiciosCount,
+		] = await Promise.all([
 			prisma.cuentaBancaria.findMany({
 				where: { isActive: true, ...af },
 				select: {
@@ -84,24 +101,15 @@ export const getResumenFinancieroAction = withAction(
 					tipoCuenta: true,
 				},
 			}),
-			// rV: exclude ALL debt-related tipoReconciliacion — solo ingreso real (ventas, cobros de préstamos)
-			prisma.reconciliacionVenta.findMany({
-				where: {
-					...af,
-					...wf,
-					tipoReconciliacion: {
-						notIn: [
-							"PRESTAMO_CASH_DESEMBOLSO",
-							"DEUDA_CASH_DESEMBOLSO",
-							"DEUDA_CASH",
-						],
-					},
-				},
-				select: { monto: true, moneda: true, tipoReconciliacion: true },
+			// Ingresos reales por ventas de productos (desde Venta, no desde reconciliación)
+			prisma.venta.findMany({
+				where: { deletedAt: null, ...sfVenta },
+				select: { total: true },
 			}),
-			prisma.reconciliacionServicio.findMany({
-				where: { ...af, ...wf },
-				select: { monto: true, moneda: true },
+			// Ingresos reales por ventas de servicios
+			prisma.ventaServicios.findMany({
+				where: { ...sfVenta },
+				select: { total: true },
 			}),
 			prisma.reconciliacionGasto.findMany({
 				where: { ...af, ...wf },
@@ -159,6 +167,23 @@ export const getResumenFinancieroAction = withAction(
 				where: { ...af, ...wf, tipoReconciliacion: { in: ["DEUDA_CASH"] } },
 				select: { monto: true, moneda: true },
 			}),
+			// Cobros de préstamos cash (ingreso, no egreso)
+			prisma.reconciliacionVenta.findMany({
+				where: {
+					...af,
+					...wf,
+					tipoReconciliacion: { in: ["PRESTAMO_CASH"] },
+				},
+				select: { monto: true, moneda: true },
+			}),
+			// Total de reconciliaciones de ventas para estadísticas
+			prisma.reconciliacionVenta.count({
+				where: { ...af, ...wf },
+			}),
+			// Total de reconciliaciones de servicios para estadísticas
+			prisma.reconciliacionServicio.count({
+				where: { ...af, ...wf },
+			}),
 		]);
 
 		const sumBy = (items: any[], key: string, val: string) =>
@@ -189,9 +214,24 @@ export const getResumenFinancieroAction = withAction(
 				{} as Record<string, number>,
 			);
 
-		const iV = sumBy(rV, "moneda", "monto"),
-			iS = sumBy(rS, "moneda", "monto"),
-			iI = sumBy(iC, "moneda", "montoRecibido");
+		// Ingresos reales: ventas de productos + servicios desde tablas fuente
+		const ingresosVentasCUP = ventasRealizadas.reduce(
+			(sum: number, v: any) => sum + Number(v.total || 0),
+			0,
+		);
+		const ingresosServiciosCUP = serviciosRealizados.reduce(
+			(sum: number, v: any) => sum + Number(v.total || 0),
+			0,
+		);
+		// Ingresos especiales (cobros de préstamos cash) desde reconciliaciones
+		const rV_especial_sum = sumBy(rV_especiales, "moneda", "monto");
+
+		const iV: Record<string, number> = { CUP: ingresosVentasCUP };
+		for (const [m, val] of Object.entries(rV_especial_sum)) {
+			iV[m] = (iV[m] || 0) + (val as number);
+		}
+		const iS: Record<string, number> = { CUP: ingresosServiciosCUP };
+		const iI = sumBy(iC, "moneda", "montoRecibido");
 		const eG = sumBy(rG, "moneda", "monto"),
 			eA = ajs
 				.filter((a: any) => a.tipo === "egreso")
@@ -282,7 +322,8 @@ export const getResumenFinancieroAction = withAction(
 			cuentasBancarias: cuentas.map((c) => ({ ...c, saldo: Number(c.saldo) })),
 			estadisticas: {
 				totalCuentas: cuentas.length,
-				totalReconciliaciones: rV.length + rS.length + rG.length,
+				totalReconciliaciones:
+					reconVentasCount + reconServiciosCount + rG.length,
 				totalTransferencias: tfs.length,
 				totalAjustes: ajs.length,
 				totalInyecciones: iC.length,
