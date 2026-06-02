@@ -37,6 +37,9 @@ export function CabeceraTurno({ turno, onCerrar, onArqueo }: CabeceraTurnoProps)
   const totalVentas = turno.ventas?.reduce((sum, v) => sum + (v.total ?? 0), 0) ?? 0;
   const totalTickets = turno._count?.ventas ?? turno.ventas?.length ?? 0;
 
+  const rawVentasStr = JSON.stringify(turno.ventas);
+  const rawCountStr = JSON.stringify(turno._count);
+
   return (
     <div className="rounded-lg border bg-card text-card-foreground shadow-sm">
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 p-3">
@@ -77,6 +80,9 @@ export function CabeceraTurno({ turno, onCerrar, onArqueo }: CabeceraTurnoProps)
             <ShoppingCart className="h-3.5 w-3.5" />
             <span>
               Ventas: <strong>{formatCurrency(totalVentas)}</strong> ({totalTickets} tickets)
+            </span>
+            <span className="text-[10px] text-muted-foreground/40" title={rawVentasStr}>
+              [raw:{rawVentasStr} count:{rawCountStr}]
             </span>
           </div>
         </div>

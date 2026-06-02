@@ -117,7 +117,7 @@ export const getTurnosAction = withAction(async (input: ListarTurnosInput, user:
 export const getTurnoActivoAction = withAction(async (puntoDeVentaId: string, user: AuthenticatedUser) => {
   const tenantId = requireTenant(user);
 
-  return prisma.turnoPuntoVenta.findFirst({
+  const turno = await prisma.turnoPuntoVenta.findFirst({
     where: {
       puntoDeVentaId,
       tenantId,
@@ -125,6 +125,8 @@ export const getTurnoActivoAction = withAction(async (puntoDeVentaId: string, us
     },
     include: TURNOS_INCLUDE,
   });
+
+  return turno;
 });
 
 /**
