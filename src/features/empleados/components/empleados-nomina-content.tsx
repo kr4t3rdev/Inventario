@@ -8,6 +8,7 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { useAuth } from "@/contexts/auth-context";
 import { LazyMotion, m as motion } from "framer-motion";
 import {
 	AlertDialog,
@@ -110,6 +111,8 @@ export function EmpleadosNominaContent({
 	initialPagos,
 }: EmpleadosNominaContentProps) {
 	const router = useRouter();
+	const { user } = useAuth();
+	const puedeEditar = user?.tenantRole === "manager" || user?.role === "admin";
 	const [empleados, setEmpleados] = useState<Empleado[]>(initialEmpleados);
 	const [pagos, setPagos] = useState<Pagosalario[]>(initialPagos);
 	const [empleadoToDelete, setEmpleadoToDelete] = useState<string | null>(null);
@@ -292,52 +295,60 @@ export function EmpleadosNominaContent({
 										</p>
 									</CardContent>
 									<CardFooter className="flex flex-wrap gap-2">
-										<motion.div
-											whileHover={{ scale: 1.02 }}
-											whileTap={{ scale: 0.98 }}
-											className="flex-1 min-w-25"
-										>
-											<Button
-												asChild
-												variant="outline"
-												size="sm"
-												className="w-full dark:border-slate-700/10 dark:hover:bg-slate-800/10"
+										{puedeEditar && (
+											<motion.div
+												whileHover={{ scale: 1.02 }}
+												whileTap={{ scale: 0.98 }}
+												className="flex-1 min-w-25"
 											>
-												<Link
-													href={`/busy/empleados/update/${empleado.empleadoId}`}
+												<Button
+													asChild
+													variant="outline"
+													size="sm"
+													className="w-full dark:border-slate-700/10 dark:hover:bg-slate-800/10"
 												>
-													<Pencil className="h-4 w-4 mr-2" /> Editar
-												</Link>
-											</Button>
-										</motion.div>
-										<motion.div
-											whileHover={{ scale: 1.02 }}
-											whileTap={{ scale: 0.98 }}
-											className="flex-1 min-w-25"
-										>
-											<Button
-												onClick={() => handleOpenPagoDialog(empleado)}
-												variant="outline"
-												size="sm"
-												className="w-full dark:border-slate-700/10 dark:hover:bg-slate-800/10"
+													<Link
+														href={`/busy/empleados/update/${empleado.empleadoId}`}
+													>
+														<Pencil className="h-4 w-4 mr-2" /> Editar
+													</Link>
+												</Button>
+											</motion.div>
+										)}
+										{puedeEditar && (
+											<motion.div
+												whileHover={{ scale: 1.02 }}
+												whileTap={{ scale: 0.98 }}
+												className="flex-1 min-w-25"
 											>
-												<CreditCard className="h-4 w-4 mr-2" /> Realizar Pago
-											</Button>
-										</motion.div>
-										<motion.div
-											whileHover={{ scale: 1.02 }}
-											whileTap={{ scale: 0.98 }}
-											className="flex-1 min-w-25"
-										>
-											<Button
-												onClick={() => setEmpleadoToDelete(empleado.empleadoId)}
-												variant="outline"
-												size="sm"
-												className="w-full hover:bg-destructive/10 hover:text-destructive hover:border-destructive dark:border-slate-700/10"
+												<Button
+													onClick={() => handleOpenPagoDialog(empleado)}
+													variant="outline"
+													size="sm"
+													className="w-full dark:border-slate-700/10 dark:hover:bg-slate-800/10"
+												>
+													<CreditCard className="h-4 w-4 mr-2" /> Realizar Pago
+												</Button>
+											</motion.div>
+										)}
+										{puedeEditar && (
+											<motion.div
+												whileHover={{ scale: 1.02 }}
+												whileTap={{ scale: 0.98 }}
+												className="flex-1 min-w-25"
 											>
-												<Trash2 className="h-4 w-4 mr-2" /> Eliminar
-											</Button>
-										</motion.div>
+												<Button
+													onClick={() =>
+														setEmpleadoToDelete(empleado.empleadoId)
+													}
+													variant="outline"
+													size="sm"
+													className="w-full hover:bg-destructive/10 hover:text-destructive hover:border-destructive dark:border-slate-700/10"
+												>
+													<Trash2 className="h-4 w-4 mr-2" /> Eliminar
+												</Button>
+											</motion.div>
+										)}
 									</CardFooter>
 								</Card>
 							</motion.div>
