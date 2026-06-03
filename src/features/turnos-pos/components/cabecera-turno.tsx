@@ -8,106 +8,119 @@
  * @param {function} props.onArqueo - Callback al hacer click en ver arqueo
  * @returns {JSX.Element} Cabecera de turno
  */
-'use client';
+"use client";
 
-import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
-import { Separator } from '@/components/ui/separator';
-import { Lock, ClipboardList, Clock, User, DollarSign, ShoppingCart } from 'lucide-react';
-import { formatCurrency, formatCurrencyUsd } from '@/lib/utils';
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { Separator } from "@/components/ui/separator";
+import {
+	Lock,
+	ClipboardList,
+	Clock,
+	User,
+	DollarSign,
+	ShoppingCart,
+} from "lucide-react";
+import { formatCurrency, formatCurrencyUsd } from "@/lib/utils";
 
 interface TurnoInfo {
-  id: string;
-  empleado?: { nombre: string; apellido: string } | null;
-  fondoInicialCup: number;
-  fondoInicialUsd: number;
-  _count?: { ventas: number };
-  ventas?: Array<{ total?: number | null }>;
+	id: string;
+	empleado?: { nombre: string; apellido: string } | null;
+	fondoInicialCup: number;
+	fondoInicialUsd: number;
+	_count?: { ventas: number };
+	ventas?: Array<{ total?: number | null }>;
 }
 
 interface CabeceraTurnoProps {
-  turno: TurnoInfo | null;
-  onCerrar?: () => void;
-  onArqueo?: () => void;
+	turno: TurnoInfo | null;
+	onCerrar?: () => void;
+	onArqueo?: () => void;
 }
 
-export function CabeceraTurno({ turno, onCerrar, onArqueo }: CabeceraTurnoProps) {
-  if (!turno) return null;
+export function CabeceraTurno({
+	turno,
+	onCerrar,
+	onArqueo,
+}: CabeceraTurnoProps) {
+	if (!turno) return null;
 
-  const totalVentas = turno.ventas?.reduce((sum, v) => sum + (v.total ?? 0), 0) ?? 0;
-  const totalTickets = turno._count?.ventas ?? turno.ventas?.length ?? 0;
+	const totalVentas =
+		turno.ventas?.reduce((sum, v) => sum + (v.total ?? 0), 0) ?? 0;
+	const totalTickets = turno._count?.ventas ?? turno.ventas?.length ?? 0;
 
-  const rawVentasStr = JSON.stringify(turno.ventas);
-  const rawCountStr = JSON.stringify(turno._count);
+	return (
+		<div className="rounded-lg border bg-card text-card-foreground shadow-sm">
+			<div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 p-3">
+				{/* Izquierda: indicador y datos principales */}
+				<div className="flex items-center gap-3">
+					<Badge
+						variant="outline"
+						className="gap-1.5 bg-green-50 text-green-700 border-green-200 dark:bg-green-950 dark:text-green-400 dark:border-green-800"
+					>
+						<span className="h-2 w-2 rounded-full bg-green-500 animate-pulse" />
+						Turno activo
+					</Badge>
 
-  return (
-    <div className="rounded-lg border bg-card text-card-foreground shadow-sm">
-      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 p-3">
-        {/* Izquierda: indicador y datos principales */}
-        <div className="flex items-center gap-3">
-          <Badge
-            variant="outline"
-            className="gap-1.5 bg-green-50 text-green-700 border-green-200 dark:bg-green-950 dark:text-green-400 dark:border-green-800"
-          >
-            <span className="h-2 w-2 rounded-full bg-green-500 animate-pulse" />
-            Turno activo
-          </Badge>
+					<Separator orientation="vertical" className="h-6" />
 
-          <Separator orientation="vertical" className="h-6" />
+					<div className="flex items-center gap-1.5 text-sm text-muted-foreground">
+						<User className="h-3.5 w-3.5" />
+						<span className="font-medium text-foreground">
+							{turno.empleado
+								? `${turno.empleado.nombre} ${turno.empleado.apellido}`
+								: "Sin asignar"}
+						</span>
+					</div>
+				</div>
 
-          <div className="flex items-center gap-1.5 text-sm text-muted-foreground">
-            <User className="h-3.5 w-3.5" />
-            <span className="font-medium text-foreground">
-              {turno.empleado
-                ? `${turno.empleado.nombre} ${turno.empleado.apellido}`
-                : 'Sin asignar'}
-            </span>
-          </div>
-        </div>
+				{/* Centro: datos del turno */}
+				<div className="flex flex-wrap items-center gap-4 text-sm">
+					<div className="flex items-center gap-1.5 text-muted-foreground">
+						<DollarSign className="h-3.5 w-3.5" />
+						<span>
+							Fondo:{" "}
+							<strong>{formatCurrency(turno.fondoInicialCup / 100)}</strong>
+							{turno.fondoInicialUsd > 0 &&
+								` · ${formatCurrencyUsd(turno.fondoInicialUsd / 100)}`}
+						</span>
+					</div>
 
-        {/* Centro: datos del turno */}
-        <div className="flex flex-wrap items-center gap-4 text-sm">
-          <div className="flex items-center gap-1.5 text-muted-foreground">
-            <DollarSign className="h-3.5 w-3.5" />
-            <span>
-              Fondo: <strong>{formatCurrency(turno.fondoInicialCup / 100)}</strong>
-              {turno.fondoInicialUsd > 0 &&
-                ` · ${formatCurrencyUsd(turno.fondoInicialUsd / 100)}`}
-            </span>
-          </div>
+					<div className="flex items-center gap-1.5 text-muted-foreground">
+						<ShoppingCart className="h-3.5 w-3.5" />
+						<span>
+							Ventas: <strong>{formatCurrency(totalVentas)}</strong> (
+							{totalTickets} tickets)
+						</span>
+					</div>
+				</div>
 
-          <div className="flex items-center gap-1.5 text-muted-foreground">
-            <ShoppingCart className="h-3.5 w-3.5" />
-            <span>
-              Ventas: <strong>{formatCurrency(totalVentas)}</strong> ({totalTickets} tickets)
-            </span>
-            <span className="text-[10px] text-muted-foreground/40" title={rawVentasStr}>
-              [raw:{rawVentasStr} count:{rawCountStr}]
-            </span>
-          </div>
-        </div>
-
-        {/* Derecha: acciones */}
-        <div className="flex items-center gap-2">
-          {onArqueo && (
-            <Button variant="outline" size="sm" onClick={onArqueo} className="gap-1.5">
-              <ClipboardList className="h-3.5 w-3.5" />
-              Arqueo
-            </Button>
-          )}
-          {onCerrar && (
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={onCerrar}
-              className="gap-1.5 text-amber-600 border-amber-200 hover:bg-amber-50 dark:text-amber-400 dark:border-amber-800 dark:hover:bg-amber-950"
-            >
-              <Lock className="h-3.5 w-3.5" />
-              Cerrar Turno
-            </Button>
-          )}
-        </div>
-      </div>
-    </div>
-  );
+				{/* Derecha: acciones */}
+				<div className="flex items-center gap-2">
+					{onArqueo && (
+						<Button
+							variant="outline"
+							size="sm"
+							onClick={onArqueo}
+							className="gap-1.5"
+						>
+							<ClipboardList className="h-3.5 w-3.5" />
+							Arqueo
+						</Button>
+					)}
+					{onCerrar && (
+						<Button
+							variant="outline"
+							size="sm"
+							onClick={onCerrar}
+							className="gap-1.5 text-amber-600 border-amber-200 hover:bg-amber-50 dark:text-amber-400 dark:border-amber-800 dark:hover:bg-amber-950"
+						>
+							<Lock className="h-3.5 w-3.5" />
+							Cerrar Turno
+						</Button>
+					)}
+				</div>
+			</div>
+		</div>
+	);
 }

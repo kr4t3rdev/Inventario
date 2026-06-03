@@ -80,20 +80,15 @@ export const createVentaAction = withAction(
 		// Resolver turno activo
 		let turnoId: string | null = parsed.turnoId ?? null;
 		if (!turnoId) {
-			try {
-				const turnoResult = await getOrCreateTurnoActivo(
-					{
-						puntoDeVentaId: parsed.puntoDeVentaId,
-						empleadoId: parsed.empleadoId,
-					},
-					user,
-				);
-				turnoId = turnoResult.turnoId;
-			} catch (_turnoErr) {
-				// Si falla la resolución de turno (ej: PRINCIPAL sin turno), la venta se crea igual
-				// con turnoId null. El control de turno obligatorio se aplica en getOrCreateTurnoActivo.
-				// Permitir LEGACY: ventas existentes pueden no tener turno.
+			const turnoResult = await getOrCreateTurnoActivo({
+				puntoDeVentaId: parsed.puntoDeVentaId,
+				empleadoId: parsed.empleadoId,
+			});
+			// getOrCreateTurnoActivo retorna ActionResponse, no el raw result
+			if (turnoResult.success) {
+				turnoId = turnoResult.data.turnoId;
 			}
+			// Si falla (ej: PRINCIPAL sin turno), se permite venta sin turno (legacy)
 		}
 
 		// Calcular totales de la venta
