@@ -5,6 +5,7 @@
 "use client";
 
 import { useState } from "react";
+import { motion } from "framer-motion";
 import {
 	BarChart,
 	Bar,
@@ -46,7 +47,12 @@ export function DailyTrendChart({ data }: DailyTrendChartProps) {
 		}));
 
 	return (
-		<div className="bg-card border rounded-lg p-4 h-full">
+		<motion.div
+			initial={{ opacity: 0, y: 16 }}
+			animate={{ opacity: 1, y: 0 }}
+			transition={{ duration: 0.4, ease: "easeOut", delay: 0.1 }}
+			className="bg-card border rounded-lg p-4 h-full"
+		>
 			<div className="flex items-center gap-2 mb-3">
 				<TrendingIcon className="h-4 w-4 text-muted-foreground" />
 				<h3 className="text-sm font-semibold">Tendencia Diaria</h3>
@@ -125,6 +131,6 @@ export function DailyTrendChart({ data }: DailyTrendChartProps) {
 					</BarChart>
 				</ResponsiveContainer>
 			</div>
-		</div>
+		</motion.div>
 	);
 }

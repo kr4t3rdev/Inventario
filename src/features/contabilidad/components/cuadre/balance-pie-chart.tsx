@@ -5,6 +5,7 @@
 "use client";
 
 import { useState } from "react";
+import { motion } from "framer-motion";
 import {
 	PieChart,
 	Pie,
@@ -57,7 +58,12 @@ export function BalancePieChart({ saldosPorCuenta }: BalancePieChartProps) {
 	if (data.length === 0) return null;
 
 	return (
-		<div className="bg-card border rounded-lg p-4 h-full">
+		<motion.div
+			initial={{ opacity: 0, scale: 0.96 }}
+			animate={{ opacity: 1, scale: 1 }}
+			transition={{ duration: 0.4, ease: "easeOut" }}
+			className="bg-card border rounded-lg p-4 h-full"
+		>
 			<div className="flex items-center gap-2 mb-3">
 				<PieChartIcon className="h-4 w-4 text-muted-foreground" />
 				<h3 className="text-sm font-semibold">
@@ -117,6 +123,6 @@ export function BalancePieChart({ saldosPorCuenta }: BalancePieChartProps) {
 					</PieChart>
 				</ResponsiveContainer>
 			</div>
-		</div>
+		</motion.div>
 	);
 }

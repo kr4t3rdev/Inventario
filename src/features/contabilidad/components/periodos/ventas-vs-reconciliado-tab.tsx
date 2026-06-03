@@ -1,13 +1,11 @@
 /**
  * @description Tab de ventas, servicios y gastos vs reconciliado del cuadre de período.
  * Muestra cada operación con su estado de reconciliación, diferencias,
- * y cards de totales agregados. Incluye gastos (GastosDE, GastoCompra,
- * CompraServicio, Costo de Servicio Vendido) y muestra operaciones
- * pendientes de períodos anteriores separadas con advertencia.
+ * y cards de totales agregados. Incluye animaciones Framer Motion.
  */
 "use client";
 
-import { useState } from "react";
+import { motion } from "framer-motion";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -32,6 +30,13 @@ import {
 	CalendarClock,
 	History,
 } from "lucide-react";
+import {
+	staggerContainer,
+	slideRow,
+	fadeUp,
+	cardSlideUp,
+	cardHover,
+} from "../cuadre/animations";
 import type {
 	VentaVsReconciliadoItem,
 	VentasVsReconciliadoData,
@@ -58,10 +63,11 @@ const METODO_PAGO_COLORS: Record<string, string> = {
 	MIXTO: "bg-indigo-100 text-indigo-800",
 };
 
-/** @description Fila de operación en la tabla */
+/** @description Fila de operación con entrada animada */
 function OperacionRow({ item }: { item: VentaVsReconciliadoItem }) {
 	return (
-		<TableRow
+		<motion.tr
+			variants={slideRow}
 			className={
 				item.diferencia !== 0 && item.estaReconciliado ? "bg-amber-50/50" : ""
 			}
@@ -89,20 +95,14 @@ function OperacionRow({ item }: { item: VentaVsReconciliadoItem }) {
 				</Badge>
 			</TableCell>
 			<TableCell className="text-sm">
-				{format(new Date(item.fecha), "dd/MM/yy HH:mm", {
-					locale: es,
-				})}
+				{format(new Date(item.fecha), "dd/MM/yy HH:mm", { locale: es })}
 			</TableCell>
-			<TableCell className="font-medium">
-				{formatMonto(item.monto)}
-			</TableCell>
+			<TableCell className="font-medium">{formatMonto(item.monto)}</TableCell>
 			<TableCell>
 				{item.metodoPago ? (
 					<Badge
 						variant="outline"
-						className={`text-xs ${
-							METODO_PAGO_COLORS[item.metodoPago] ?? ""
-						}`}
+						className={`text-xs ${METODO_PAGO_COLORS[item.metodoPago] ?? ""}`}
 					>
 						{item.metodoPago}
 					</Badge>
@@ -142,20 +142,14 @@ function OperacionRow({ item }: { item: VentaVsReconciliadoItem }) {
 							: "text-amber-600 font-medium"
 					}
 				>
-					{item.diferencia === 0
-						? "✓"
-						: formatMonto(item.diferencia)}
+					{item.diferencia === 0 ? "✓" : formatMonto(item.diferencia)}
 				</span>
 			</TableCell>
-		</TableRow>
+		</motion.tr>
 	);
 }
 
-/**
- * @description Tabla de operaciones con encabezados y cuerpo.
- * @param {{ items: VentaVsReconciliadoItem[]; emptyMessage: string; className?: string }} props
- * @returns {JSX.Element}
- */
+/** @description Tabla reutilizable con entrada animada y stagger en filas */
 function OperacionesTable({
 	items,
 	emptyMessage,
@@ -166,41 +160,49 @@ function OperacionesTable({
 	className?: string;
 }) {
 	return (
-		<Card className={className}>
-			<CardContent className="p-0">
-				<Table>
-					<TableHeader>
-						<TableRow>
-							<TableHead>Folio</TableHead>
-							<TableHead>Origen</TableHead>
-							<TableHead>Tipo</TableHead>
-							<TableHead>Fecha</TableHead>
-							<TableHead>Monto</TableHead>
-							<TableHead>Método Pago</TableHead>
-							<TableHead>Estado</TableHead>
-							<TableHead>Monto Reconc.</TableHead>
-							<TableHead className="text-right">Diferencia</TableHead>
-						</TableRow>
-					</TableHeader>
-					<TableBody>
-						{items.length === 0 ? (
+		<motion.div variants={fadeUp} initial="hidden" animate="visible">
+			<Card className={className}>
+				<CardContent className="p-0">
+					<Table>
+						<TableHeader>
 							<TableRow>
-								<TableCell
-									colSpan={9}
-									className="text-center text-muted-foreground py-8"
-								>
-									{emptyMessage}
-								</TableCell>
+								<TableHead>Folio</TableHead>
+								<TableHead>Origen</TableHead>
+								<TableHead>Tipo</TableHead>
+								<TableHead>Fecha</TableHead>
+								<TableHead>Monto</TableHead>
+								<TableHead>Método Pago</TableHead>
+								<TableHead>Estado</TableHead>
+								<TableHead>Monto Reconc.</TableHead>
+								<TableHead className="text-right">Diferencia</TableHead>
 							</TableRow>
-						) : (
-							items.map((item) => (
-								<OperacionRow key={item.id} item={item} />
-							))
-						)}
-					</TableBody>
-				</Table>
-			</CardContent>
-		</Card>
+						</TableHeader>
+						<TableBody asChild>
+							<motion.tbody
+								variants={staggerContainer}
+								initial="hidden"
+								animate="visible"
+							>
+								{items.length === 0 ? (
+									<TableRow>
+										<TableCell
+											colSpan={9}
+											className="text-center text-muted-foreground py-8"
+										>
+											{emptyMessage}
+										</TableCell>
+									</TableRow>
+								) : (
+									items.map((item) => (
+										<OperacionRow key={item.id} item={item} />
+									))
+								)}
+							</motion.tbody>
+						</TableBody>
+					</Table>
+				</CardContent>
+			</Card>
+		</motion.div>
 	);
 }
 
@@ -214,110 +216,136 @@ export function VentasVsReconciliadoTab({
 	return (
 		<div className="space-y-4">
 			{/* Cards de totales */}
-			<div className="grid gap-3 grid-cols-2 lg:grid-cols-4">
-				<Card>
-					<CardHeader className="pb-2">
-						<CardTitle className="text-xs font-medium text-muted-foreground">
-							Total Ventas
-						</CardTitle>
-					</CardHeader>
-					<CardContent>
-						<div className="flex items-center gap-2">
-							<Receipt className="h-4 w-4 text-blue-500" />
-							<span className="text-lg font-bold">
-								{formatMonto(totales.totalVentas)}
-							</span>
-						</div>
-						<p className="text-xs text-muted-foreground mt-1">
-							{totales.cantidadVentas} operaciones
-						</p>
-					</CardContent>
-				</Card>
+			<motion.div
+				variants={staggerContainer}
+				initial="hidden"
+				animate="visible"
+				className="grid gap-3 grid-cols-2 lg:grid-cols-4"
+			>
+				<motion.div variants={cardSlideUp} custom={0} {...cardHover}>
+					<Card>
+						<CardHeader className="pb-2">
+							<CardTitle className="text-xs font-medium text-muted-foreground">
+								Total Ventas
+							</CardTitle>
+						</CardHeader>
+						<CardContent>
+							<div className="flex items-center gap-2">
+								<Receipt className="h-4 w-4 text-blue-500" />
+								<span className="text-lg font-bold">
+									{formatMonto(totales.totalVentas)}
+								</span>
+							</div>
+							<p className="text-xs text-muted-foreground mt-1">
+								{totales.cantidadVentas} operaciones
+							</p>
+						</CardContent>
+					</Card>
+				</motion.div>
 
-				<Card>
-					<CardHeader className="pb-2">
-						<CardTitle className="text-xs font-medium text-muted-foreground">
-							Total Reconciliado
-						</CardTitle>
-					</CardHeader>
-					<CardContent>
-						<div className="flex items-center gap-2">
-							<Banknote className="h-4 w-4 text-green-500" />
-							<span className="text-lg font-bold text-green-700">
-								{formatMonto(totales.totalReconciliado)}
-							</span>
-						</div>
-						<p className="text-xs text-muted-foreground mt-1">
-							{totales.cantidadReconciliadas} reconciliadas
-						</p>
-					</CardContent>
-				</Card>
+				<motion.div variants={cardSlideUp} custom={1} {...cardHover}>
+					<Card>
+						<CardHeader className="pb-2">
+							<CardTitle className="text-xs font-medium text-muted-foreground">
+								Total Reconciliado
+							</CardTitle>
+						</CardHeader>
+						<CardContent>
+							<div className="flex items-center gap-2">
+								<Banknote className="h-4 w-4 text-green-500" />
+								<span className="text-lg font-bold text-green-700">
+									{formatMonto(totales.totalReconciliado)}
+								</span>
+							</div>
+							<p className="text-xs text-muted-foreground mt-1">
+								{totales.cantidadReconciliadas} reconciliadas
+							</p>
+						</CardContent>
+					</Card>
+				</motion.div>
 
-				<Card>
-					<CardHeader className="pb-2">
-						<CardTitle className="text-xs font-medium text-muted-foreground">
-							Diferencia
-						</CardTitle>
-					</CardHeader>
-					<CardContent>
-						<div className="flex items-center gap-2">
-							<AlertTriangle
-								className={`h-4 w-4 ${
-									totales.diferencia === 0 ? "text-green-500" : "text-amber-500"
-								}`}
-							/>
-							<span
-								className={`text-lg font-bold ${
-									totales.diferencia === 0 ? "text-green-700" : "text-amber-700"
-								}`}
-							>
-								{formatMonto(totales.diferencia)}
-							</span>
-						</div>
-					</CardContent>
-				</Card>
+				<motion.div variants={cardSlideUp} custom={2} {...cardHover}>
+					<Card>
+						<CardHeader className="pb-2">
+							<CardTitle className="text-xs font-medium text-muted-foreground">
+								Diferencia
+							</CardTitle>
+						</CardHeader>
+						<CardContent>
+							<div className="flex items-center gap-2">
+								<AlertTriangle
+									className={`h-4 w-4 ${
+										totales.diferencia === 0
+											? "text-green-500"
+											: "text-amber-500"
+									}`}
+								/>
+								<span
+									className={`text-lg font-bold ${
+										totales.diferencia === 0
+											? "text-green-700"
+											: "text-amber-700"
+									}`}
+								>
+									{formatMonto(totales.diferencia)}
+								</span>
+							</div>
+						</CardContent>
+					</Card>
+				</motion.div>
 
-				<Card>
-					<CardHeader className="pb-2">
-						<CardTitle className="text-xs font-medium text-muted-foreground">
-							Pendientes
-						</CardTitle>
-					</CardHeader>
-					<CardContent>
-						<div className="flex items-center gap-2">
-							<XCircle className="h-4 w-4 text-red-500" />
-							<span className="text-lg font-bold text-red-700">
-								{totales.cantidadPendientes}
-							</span>
-						</div>
-						<p className="text-xs text-muted-foreground mt-1">
-							sin reconciliar
-						</p>
-					</CardContent>
-				</Card>
-			</div>
+				<motion.div variants={cardSlideUp} custom={3} {...cardHover}>
+					<Card>
+						<CardHeader className="pb-2">
+							<CardTitle className="text-xs font-medium text-muted-foreground">
+								Pendientes
+							</CardTitle>
+						</CardHeader>
+						<CardContent>
+							<div className="flex items-center gap-2">
+								<XCircle className="h-4 w-4 text-red-500" />
+								<span className="text-lg font-bold text-red-700">
+									{totales.cantidadPendientes}
+								</span>
+							</div>
+							<p className="text-xs text-muted-foreground mt-1">
+								sin reconciliar
+							</p>
+						</CardContent>
+					</Card>
+				</motion.div>
+			</motion.div>
 
 			{/* Card de Gastos */}
-			<div className="grid gap-3 grid-cols-2 lg:grid-cols-4">
-				<Card>
-					<CardHeader className="pb-2">
-						<CardTitle className="text-xs font-medium text-muted-foreground">
-							Total Gastos
-						</CardTitle>
-					</CardHeader>
-					<CardContent>
-						<div className="flex items-center gap-2">
-							<Receipt className="h-4 w-4 text-orange-500" />
-							<span className="text-lg font-bold">
-								{formatMonto(totales.totalGastos)}
-							</span>
-						</div>
-						<p className="text-xs text-muted-foreground mt-1">
-							{totales.cantidadGastos} gastos · {totales.cantidadGastosReconciliados} reconciliados · {totales.cantidadGastosPendientes} pendientes
-						</p>
-					</CardContent>
-				</Card>
-			</div>
+			<motion.div
+				variants={staggerContainer}
+				initial="hidden"
+				animate="visible"
+				className="grid gap-3 grid-cols-2 lg:grid-cols-4"
+			>
+				<motion.div variants={cardSlideUp} custom={0} {...cardHover}>
+					<Card>
+						<CardHeader className="pb-2">
+							<CardTitle className="text-xs font-medium text-muted-foreground">
+								Total Gastos
+							</CardTitle>
+						</CardHeader>
+						<CardContent>
+							<div className="flex items-center gap-2">
+								<Receipt className="h-4 w-4 text-orange-500" />
+								<span className="text-lg font-bold">
+									{formatMonto(totales.totalGastos)}
+								</span>
+							</div>
+							<p className="text-xs text-muted-foreground mt-1">
+								{totales.cantidadGastos} gastos ·{" "}
+								{totales.cantidadGastosReconciliados} reconciliados ·{" "}
+								{totales.cantidadGastosPendientes} pendientes
+							</p>
+						</CardContent>
+					</Card>
+				</motion.div>
+			</motion.div>
 
 			{/* Tabla del período actual */}
 			<OperacionesTable
@@ -327,7 +355,11 @@ export function VentasVsReconciliadoTab({
 
 			{/* ── Separador de operaciones antiguas ── */}
 			{itemsAntiguos.length > 0 && (
-				<>
+				<motion.div
+					initial={{ opacity: 0 }}
+					animate={{ opacity: 1 }}
+					transition={{ duration: 0.5, delay: 0.3 }}
+				>
 					<div className="relative">
 						<div className="absolute inset-0 flex items-center">
 							<div className="w-full border-t-2 border-destructive" />
@@ -341,14 +373,21 @@ export function VentasVsReconciliadoTab({
 							</div>
 						</div>
 					</div>
-					<p className="text-xs text-muted-foreground text-center">
-						Estas operaciones no fueron reconciliadas en su período y deben solventarse antes del cierre.
-					</p>
+					<motion.p
+						initial={{ opacity: 0, y: 8 }}
+						animate={{ opacity: 1, y: 0 }}
+						transition={{ delay: 0.4 }}
+						className="text-xs text-muted-foreground text-center"
+					>
+						Estas operaciones no fueron reconciliadas en su período y deben
+						solventarse antes del cierre.
+					</motion.p>
 
 					<div className="flex items-center gap-2 text-sm text-muted-foreground mb-2">
 						<History className="h-4 w-4" />
 						<span>
-							{itemsAntiguos.length} operacion(es) sin reconciliar de períodos anteriores
+							{itemsAntiguos.length} operacion(es) sin reconciliar de períodos
+							anteriores
 						</span>
 					</div>
 
@@ -357,12 +396,17 @@ export function VentasVsReconciliadoTab({
 						emptyMessage=""
 						className="border-destructive/30"
 					/>
-				</>
+				</motion.div>
 			)}
 
 			{/* Paginación */}
 			{totalPages > 1 && (
-				<div className="flex items-center justify-between">
+				<motion.div
+					initial={{ opacity: 0 }}
+					animate={{ opacity: 1 }}
+					transition={{ delay: 0.5 }}
+					className="flex items-center justify-between"
+				>
 					<p className="text-sm text-muted-foreground">
 						Página {page} de {totalPages}
 					</p>
@@ -373,8 +417,7 @@ export function VentasVsReconciliadoTab({
 							onClick={() => onPageChange(page - 1)}
 							disabled={page <= 1 || isLoading}
 						>
-							<ChevronLeft className="h-4 w-4 mr-1" />
-							Anterior
+							<ChevronLeft className="h-4 w-4 mr-1" /> Anterior
 						</Button>
 						<Button
 							variant="outline"
@@ -386,7 +429,7 @@ export function VentasVsReconciliadoTab({
 							<ChevronRight className="h-4 w-4 ml-1" />
 						</Button>
 					</div>
-				</div>
+				</motion.div>
 			)}
 		</div>
 	);
