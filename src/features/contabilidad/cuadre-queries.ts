@@ -368,6 +368,10 @@ export async function obtenerVentasVsReconciliado(
 		reconciliadosVentaServicio.map((r) => r.referenciaId).filter(Boolean),
 	);
 
+	// Arrays para usar con Prisma notIn (los Set no son arrays)
+	const idsReconciliadosCSArr = [...idsReconciliadosCS];
+	const idsReconciliadosVSArr = [...idsReconciliadosVS];
+
 	// ── Servicios contratados (CompraServicio) ──
 	const filtroCompraServicio = { tenantId, createdAt: rango };
 	const [comprasServicio, totalCompraServicio] = await Promise.all([
