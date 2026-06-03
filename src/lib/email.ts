@@ -1,17 +1,33 @@
-import nodemailer from "nodemailer";
+import { Resend } from "resend";
 
-// Create a transporter object using the default SMTP transport
-const transporter = nodemailer.createTransport({
-	host: process.env.SMTP_HOST || "smtp.gmail.com",
-	port: parseInt(process.env.SMTP_PORT || "587"),
-	secure: process.env.SMTP_SECURE === "true", // true for 465, false for other ports
-	auth: {
-		user: process.env.SMTP_USER,
-		pass: process.env.SMTP_PASSWORD,
-	},
-});
+// Resend client singleton
+let resend: Resend | null = null;
 
-// Rate limiting simple para errores (evita spam de emails)
+function getResend(): Resend | null {
+	if (resend) return resend;
+
+	const apiKey = process.env.RESEND_API_KEY;
+	if (!apiKey) {
+		return null;
+	}
+
+	resend = new Resend(apiKey);
+	return resend;
+}
+
+/**
+ * @description Devuelve la dirección from configurada.
+ * Si RESEND_FROM no está definida, usa el dominio de prueba de Resend.
+ */
+function getFromAddress(): string {
+	return (
+		process.env.RESEND_FROM || process.env.SMTP_FROM || "onboarding@resend.dev"
+	);
+}
+
+/**
+ * TTL cache para rate limiting de errores (evita spam de emails).
+ */
 const errorCache = new Map<string, number>();
 const ERROR_COOLDOWN_MS = 5 * 60 * 1000; // 5 minutos entre emails del mismo error
 
@@ -21,28 +37,47 @@ const ERROR_COOLDOWN_MS = 5 * 60 * 1000; // 5 minutos entre emails del mismo err
  * @returns {string} Clave única del error
  */
 function getErrorKey(error: Error): string {
-	// Usa solo las primeras 100 chars del mensaje para agrupar errores similares
 	return error.message.slice(0, 100);
 }
 
-export async function sendEmail(to: string, subject: string, html: string) {
-	if (!process.env.SMTP_USER || !process.env.SMTP_PASSWORD) {
-		console.warn(
-			"SMTP credentials not found (SMTP_USER/SMTP_PASSWORD). Email not sent.",
-		);
+/**
+ * @description Envía un email transaccional usando Resend.
+ *
+ * Lee RESEND_API_KEY del entorno. Si no está configurada, loguea un warning
+ * y retorna null (no lanza excepción). Retorna el objeto con id en éxito,
+ * o null si falla.
+ *
+ * @param {string} to - Destinatario
+ * @param {string} subject - Asunto
+ * @param {string} html - Cuerpo HTML
+ * @returns {Promise<{ id: string } | null>}
+ */
+export async function sendEmail(
+	to: string,
+	subject: string,
+	html: string,
+): Promise<{ id: string } | null> {
+	const client = getResend();
+	if (!client) {
+		console.warn("RESEND_API_KEY not configured. Email not sent.");
 		return null;
 	}
 
 	try {
-		const info = await transporter.sendMail({
-			from: process.env.SMTP_FROM || process.env.SMTP_USER,
+		const { data, error } = await client.emails.send({
+			from: getFromAddress(),
 			to,
 			subject,
 			html,
 		});
 
-		console.log("Email sent: %s", info.messageId);
-		return info;
+		if (error) {
+			console.error("Error sending email via Resend:", error.message);
+			return null;
+		}
+
+		console.log("Email sent via Resend — id: %s, to: %s", data?.id, to);
+		return data ?? null;
 	} catch (error) {
 		console.error("Error sending email:", error);
 		return null;
@@ -79,7 +114,7 @@ export async function sendEmailVerificationLink(
   `;
 
 	const result = await sendEmail(to, `Verificá tu correo en ${appName}`, html);
-	return { success: result !== null, messageId: result?.messageId };
+	return { success: result !== null, messageId: result?.id };
 }
 
 export async function sendNewUserNotification(
@@ -98,7 +133,7 @@ export async function sendNewUserNotification(
 	const html = `
     <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
       <h2 style="color: #059669;">✅ Nuevo usuario registrado en ${appName}</h2>
-      
+
       <table style="width: 100%; border-collapse: collapse; margin: 20px 0;">
         <tr style="background: #f3f4f6;">
           <td style="padding: 10px; border: 1px solid #d1d5db;"><strong>Nombre:</strong></td>
@@ -159,13 +194,13 @@ export async function sendFailedLoginAttemptsNotification(
 	const html = `
     <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
       <h2 style="color: #dc2626;">🚨 Alerta de seguridad: Intentos de login fallidos</h2>
-      
+
       <div style="background: #fef2f2; border-left: 4px solid #dc2626; padding: 15px; margin: 20px 0;">
         <p style="margin: 0; color: #991b1b;">
           <strong>Se han producido ${attempts} intentos fallidos de inicio de sesión.</strong>
         </p>
       </div>
-      
+
       <table style="width: 100%; border-collapse: collapse; margin: 20px 0;">
         <tr style="background: #f3f4f6;">
           <td style="padding: 10px; border: 1px solid #d1d5db;"><strong>Usuario:</strong></td>
@@ -228,7 +263,6 @@ export async function sendErrorAlert(
 		additionalInfo?: string;
 	},
 ): Promise<void> {
-	// Verificar que esté configurado el email de alertas
 	if (!process.env.ERROR_ALERT_EMAIL) {
 		return;
 	}
@@ -239,11 +273,9 @@ export async function sendErrorAlert(
 	const now = Date.now();
 
 	if (lastSent && now - lastSent < ERROR_COOLDOWN_MS) {
-		// Error similar enviado recientemente, ignorar
 		return;
 	}
 
-	// Actualizar cache
 	errorCache.set(errorKey, now);
 
 	// Limpiar entradas antiguas del cache (mantener solo últimas 100)
@@ -259,7 +291,7 @@ export async function sendErrorAlert(
 	const html = `
     <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
       <h2 style="color: #dc2626;">🚨 Error en ${appName}</h2>
-      
+
       <div style="background: #fef2f2; border-left: 4px solid #dc2626; padding: 15px; margin: 20px 0;">
         <p style="margin: 0; color: #991b1b;"><strong>Mensaje:</strong> ${error.message}</p>
       </div>
