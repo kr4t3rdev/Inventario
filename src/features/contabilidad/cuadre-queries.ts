@@ -728,7 +728,7 @@ export async function obtenerOperacionesPeriodo(
 				.findMany({
 					where: { tenantId, createdAt: rango },
 					select: {
-						inyeccionId: true,
+						id: true,
 						createdAt: true,
 						montoRecibido: true,
 						moneda: true,
@@ -738,7 +738,7 @@ export async function obtenerOperacionesPeriodo(
 				})
 				.then((rows) =>
 					rows.map((r) => ({
-						id: r.inyeccionId,
+						id: r.id,
 						tipo: "CAPITAL" as const,
 						descripcion: "Inyección de capital",
 						fecha: r.createdAt,
@@ -758,7 +758,7 @@ export async function obtenerOperacionesPeriodo(
 				.findMany({
 					where: { tenantId, fechaPago: rango },
 					select: {
-						pagoId: true,
+						id: true,
 						fechaPago: true,
 						montoPagado: true,
 						cuentaBancaria: { select: { moneda: true, nombre: true } },
@@ -767,7 +767,7 @@ export async function obtenerOperacionesPeriodo(
 				})
 				.then((rows) =>
 					rows.map((r) => ({
-						id: r.pagoId,
+						id: r.id,
 						tipo: "PAGO_DEUDA" as const,
 						descripcion: "Pago de deuda",
 						fecha: r.fechaPago,
