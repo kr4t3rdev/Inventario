@@ -777,26 +777,45 @@ export const obtenerCuadrePeriodoAction = withAction(
 		const modoContable = periodo.modoContable ?? "CAJA";
 		const rango = { gte: periodo.fechaInicio, lte: periodo.fechaFin };
 
-		const [balance, ventasVsReconciliado, resumenDiario, operaciones] =
-			await Promise.all([
-				obtenerBalanceConVariacion(tenantId, rango, modoContable),
-				obtenerVentasVsReconciliado(
-					tenantId,
-					rango,
-					modoContable,
-					parsed.pageVentas,
-					parsed.pageSize,
-				),
-				obtenerResumenDiario(tenantId, rango, modoContable),
-				obtenerOperacionesPeriodo(
-					tenantId,
-					rango,
-					modoContable,
-					parsed.pageOperaciones,
-					parsed.pageSize,
-					parsed.filtroOperacion,
-				),
-			]);
+		// Debug: ejecutar cada query por separado para identificar cuál falla
+		let balance, ventasVsReconciliado, resumenDiario, operaciones;
+		try {
+			balance = await obtenerBalanceConVariacion(tenantId, rango, modoContable);
+		} catch (e) {
+			console.error("[cuadre] FAILED obtenerBalanceConVariacion:", e);
+			throw e;
+		}
+		try {
+			ventasVsReconciliado = await obtenerVentasVsReconciliado(
+				tenantId,
+				rango,
+				modoContable,
+				parsed.pageVentas,
+				parsed.pageSize,
+			);
+		} catch (e) {
+			console.error("[cuadre] FAILED obtenerVentasVsReconciliado:", e);
+			throw e;
+		}
+		try {
+			resumenDiario = await obtenerResumenDiario(tenantId, rango, modoContable);
+		} catch (e) {
+			console.error("[cuadre] FAILED obtenerResumenDiario:", e);
+			throw e;
+		}
+		try {
+			operaciones = await obtenerOperacionesPeriodo(
+				tenantId,
+				rango,
+				modoContable,
+				parsed.pageOperaciones,
+				parsed.pageSize,
+				parsed.filtroOperacion,
+			);
+		} catch (e) {
+			console.error("[cuadre] FAILED obtenerOperacionesPeriodo:", e);
+			throw e;
+		}
 
 		return {
 			periodo: {
@@ -861,5 +880,127 @@ export const obtenerOperacionesDiaAction = withAction(
 		);
 
 		return result.items;
+	},
+);
+
+/**
+ * @description Verifica si quedan operaciones pendientes (sin reconciliar) en el período.
+ *
+ * Revisa ventas, servicios y gastos dentro del rango de fechas del período
+ * que no tienen reconciliación bancaria asociada. Si hay alguna, el período
+ * no puede cerrarse.
+ *
+ * @param {string} periodoId - ID del período contable.
+ * @param {AuthenticatedUser} user - Usuario autenticado (inyectado por withAction).
+ * @returns {Promise<{ ventasSinReconciliar: number; serviciosSinReconciliar: number; gastosSinReconciliar: number }>}
+ */
+export const verificarOperacionesPendientesAction = withAction(
+	async (periodoId: string, user: AuthenticatedUser) => {
+		const tenantId = requireTenant(user);
+
+		const periodo = await prisma.periodoContable.findFirst({
+			where: { periodoId, tenantId },
+		});
+
+		if (!periodo) {
+			throw new ActionError("Período no encontrado", "NOT_FOUND");
+		}
+
+		const rango = { gte: periodo.fechaInicio, lte: periodo.fechaFin };
+
+		// Ventas sin reconciliar
+		const ventasSinReconciliar = await prisma.venta.count({
+			where: {
+				tenantId,
+				createdAt: rango,
+				deletedAt: null,
+				reconciliaciones: { none: {} },
+			},
+		});
+
+		// Servicios sin reconciliar
+		const serviciosSinReconciliar = await prisma.ventaServicios.count({
+			where: {
+				tenantId,
+				createdAt: rango,
+				reconciliaciones: { none: {} },
+			},
+		});
+
+		// Gastos sin reconciliar (GastosDE + GastoCompra)
+		const gastosSinReconciliar =
+			(await prisma.gastosDE.count({
+				where: {
+					tenantId,
+					createdAt: rango,
+					reconciliaciones: { none: {} },
+				},
+			})) +
+			(await prisma.gastoCompra.count({
+				where: {
+					tenantId,
+					createdAt: rango,
+					deletedAt: null,
+					reconciliaciones: { none: {} },
+				},
+			}));
+
+		// CompraServicio sin reconciliar (vía ReconciliacionGasto tipoGasto="servicio")
+		const reconciliadosCS = await prisma.reconciliacionGasto.findMany({
+			where: {
+				tenantId,
+				tipoGasto: "servicio",
+				fechaReconciliacion: rango,
+			},
+			select: { referenciaId: true },
+			distinct: ["referenciaId"],
+		});
+		const idsReconciliadosCS = reconciliadosCS
+			.map((r) => r.referenciaId)
+			.filter(Boolean);
+		const compraServicioSinReconciliar = await prisma.compraServicio.count({
+			where: {
+				tenantId,
+				createdAt: rango,
+				compraServicioId:
+					idsReconciliadosCS.length > 0
+						? { notIn: idsReconciliadosCS }
+						: undefined,
+			},
+		});
+
+		// Costo de servicios vendidos sin reconciliar (vía ReconciliacionGasto tipoGasto="venta_servicio")
+		const reconciliadosVSCosto = await prisma.reconciliacionGasto.findMany({
+			where: {
+				tenantId,
+				tipoGasto: "venta_servicio",
+				fechaReconciliacion: rango,
+			},
+			select: { referenciaId: true },
+			distinct: ["referenciaId"],
+		});
+		const idsReconciliadosVSCosto = reconciliadosVSCosto
+			.map((r) => r.referenciaId)
+			.filter(Boolean);
+		const ventaServicioCostoSinReconciliar = await prisma.ventaServicios.count({
+			where: {
+				tenantId,
+				createdAt: rango,
+				costo: { gt: 0 },
+				ventaServicioId:
+					idsReconciliadosVSCosto.length > 0
+						? { notIn: idsReconciliadosVSCosto }
+						: undefined,
+			},
+		});
+
+		return {
+			ventasSinReconciliar,
+			serviciosSinReconciliar,
+			gastosSinReconciliar:
+				gastosSinReconciliar +
+				compraServicioSinReconciliar +
+				ventaServicioCostoSinReconciliar,
+		};
 	},
 );

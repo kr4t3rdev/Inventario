@@ -2,7 +2,7 @@
  * @description Modal de pantalla completa que muestra el cuadre contable
  * de un período antes de confirmar su cierre.
  *
- * Contiene 4 tabs: Balance, Ventas vs Reconciliado, Operaciones, Resumen Diario.
+ * Contiene 4 tabs: Balance, Ventas, Serv. y Gastos vs Reconc., Operaciones, Resumen Diario.
  * Al confirmar, ejecuta cerrarPeriodoAction. Si falla, muestra el error sin cerrarse.
  */
 "use client";
@@ -267,7 +267,7 @@ export function CuadrePeriodoModal({
 								<TabsList>
 									<TabsTrigger value="balance">Balance</TabsTrigger>
 									<TabsTrigger value="ventas">
-										Ventas vs Reconciliado
+										Ventas, Serv. y Gastos vs Reconc.
 									</TabsTrigger>
 									<TabsTrigger value="operaciones">Operaciones</TabsTrigger>
 									<TabsTrigger value="diario">Resumen Diario</TabsTrigger>

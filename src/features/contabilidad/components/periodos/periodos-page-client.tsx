@@ -9,6 +9,7 @@
 "use client";
 
 import React, { useState, useEffect, useCallback } from "react";
+import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import {
@@ -108,6 +109,7 @@ export function PeriodosPageClient({
 	initialPeriodos: any[];
 	initialPagination: any;
 }) {
+	const router = useRouter();
 	// Data state
 	const [periodos, setPeriodos] = useState(initialPeriodos);
 	const [pagination] = useState(initialPagination);
@@ -232,6 +234,10 @@ export function PeriodosPageClient({
 		switch (periodo.estado) {
 			case "ABIERTO":
 			case "REABIERTO":
+				acciones.push({
+					label: "Ver Cuadre",
+					action: () => router.push(`/busy/contabilidad/periodos/${periodo.periodoId}/cuadre`),
+				});
 				acciones.push({
 					label: "Cerrar",
 					action: () => handleCerrar(periodo),

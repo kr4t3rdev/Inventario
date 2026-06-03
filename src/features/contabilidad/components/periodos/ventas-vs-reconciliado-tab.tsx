@@ -154,6 +154,7 @@ export function VentasVsReconciliadoTab({
 						<TableHeader>
 							<TableRow>
 								<TableHead>Folio</TableHead>
+								<TableHead>Origen</TableHead>
 								<TableHead>Tipo</TableHead>
 								<TableHead>Fecha</TableHead>
 								<TableHead>Monto</TableHead>
@@ -167,10 +168,10 @@ export function VentasVsReconciliadoTab({
 							{items.length === 0 ? (
 								<TableRow>
 									<TableCell
-										colSpan={8}
+										colSpan={9}
 										className="text-center text-muted-foreground py-8"
 									>
-										No hay ventas en este período.
+										No hay ventas, servicios o gastos en este período.
 									</TableCell>
 								</TableRow>
 							) : (
@@ -186,14 +187,25 @@ export function VentasVsReconciliadoTab({
 										<TableCell className="font-mono text-xs">
 											#{item.folio}
 										</TableCell>
+										<TableCell className="text-xs text-muted-foreground">
+											{item.origen ?? "—"}
+										</TableCell>
 										<TableCell>
 											<Badge
 												variant={
-													item.tipo === "VENTA" ? "default" : "secondary"
+													item.tipo === "VENTA"
+														? "default"
+														: item.tipo === "SERVICIO"
+															? "secondary"
+															: "outline"
 												}
 												className="text-xs"
 											>
-												{item.tipo === "VENTA" ? "Producto" : "Servicio"}
+												{item.tipo === "VENTA"
+													? "Producto"
+													: item.tipo === "SERVICIO"
+														? "Servicio"
+														: "Gasto"}
 											</Badge>
 										</TableCell>
 										<TableCell className="text-sm">

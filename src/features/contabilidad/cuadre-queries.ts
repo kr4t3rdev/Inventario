@@ -35,12 +35,13 @@ export interface BalanceData {
 
 export interface VentaVsReconciliadoItem {
 	id: string;
-	tipo: "VENTA" | "SERVICIO";
+	tipo: "VENTA" | "SERVICIO" | "GASTO";
 	folio: string | null;
 	fecha: Date;
 	monto: number;
 	moneda: string;
 	metodoPago: string | null;
+	origen: string | null;
 	estaReconciliado: boolean;
 	montoReconciliado: number | null;
 	diferencia: number;
@@ -56,6 +57,10 @@ export interface VentasVsReconciliadoData {
 		cantidadVentas: number;
 		cantidadReconciliadas: number;
 		cantidadPendientes: number;
+		totalGastos: number;
+		cantidadGastos: number;
+		cantidadGastosReconciliados: number;
+		cantidadGastosPendientes: number;
 	};
 	totalPages: number;
 	page: number;
@@ -159,7 +164,7 @@ async function calcularCambioNetoCuenta(
 	});
 	const capital = await prisma.inyeccionCapital.aggregate({
 		_sum: { montoRecibido: true },
-		where: { tenantId, cuentaId, createdAt: rango },
+		where: { cuentaBancaria: { tenantId }, cuentaId, createdAt: rango },
 	});
 
 	// ── Egresos ──
@@ -177,7 +182,7 @@ async function calcularCambioNetoCuenta(
 	});
 	const pagos = await prisma.pagoDeuda.aggregate({
 		_sum: { montoPagado: true },
-		where: { tenantId, cuentaId, fechaPago: rango },
+		where: { cuentaBancaria: { tenantId }, cuentaId, fechaPago: rango },
 	});
 
 	const ingresos =
@@ -237,7 +242,7 @@ export async function obtenerBalanceConVariacion(
 
 		saldosPorCuenta.push({
 			cuentaId: cuenta.cuentaId,
-			nombre: cuenta.nombre ?? "Sin nombre",
+			nombre: cuenta.nombreBanco ?? "Sin nombre",
 			moneda: cuenta.moneda,
 			saldoActual,
 			saldoInicioPeriodo: saldoInicio,
@@ -336,6 +341,107 @@ export async function obtenerVentasVsReconciliado(
 		prisma.ventaServicios.count({ where: filtroServicio }),
 	]);
 
+	// ── IDs reconciliados de CompraServicio y VentaServicios.costo ──
+	const [reconciliadosCompraServicio, reconciliadosVentaServicio] =
+		await Promise.all([
+			prisma.reconciliacionGasto.findMany({
+				where: { tenantId, tipoGasto: "servicio", fechaReconciliacion: rango },
+				select: { referenciaId: true },
+				distinct: ["referenciaId"],
+			}),
+			prisma.reconciliacionGasto.findMany({
+				where: {
+					tenantId,
+					tipoGasto: "venta_servicio",
+					fechaReconciliacion: rango,
+				},
+				select: { referenciaId: true },
+				distinct: ["referenciaId"],
+			}),
+		]);
+
+	const idsReconciliadosCS = new Set(
+		reconciliadosCompraServicio.map((r) => r.referenciaId).filter(Boolean),
+	);
+	const idsReconciliadosVS = new Set(
+		reconciliadosVentaServicio.map((r) => r.referenciaId).filter(Boolean),
+	);
+
+	// ── Servicios contratados (CompraServicio) ──
+	const filtroCompraServicio = { tenantId, createdAt: rango };
+	const [comprasServicio, totalCompraServicio] = await Promise.all([
+		prisma.compraServicio.findMany({
+			where: filtroCompraServicio,
+			orderBy: { createdAt: "desc" },
+			skip,
+			take: pageSize,
+		}),
+		prisma.compraServicio.count({ where: filtroCompraServicio }),
+	]);
+
+	// ── Costo de servicios vendidos (VentaServicios con costo > 0) ──
+	// Estos aparecen como GASTO aparte de la línea SERVICIO (que muestra el total)
+	const filtroVentaServicioCosto = {
+		tenantId,
+		createdAt: rango,
+		costo: { gt: 0 },
+	};
+	const [ventasServicioCosto, totalVentaServicioCosto] = await Promise.all([
+		prisma.ventaServicios.findMany({
+			where: filtroVentaServicioCosto,
+			orderBy: { createdAt: "desc" },
+			skip,
+			take: pageSize,
+		}),
+		prisma.ventaServicios.count({ where: filtroVentaServicioCosto }),
+	]);
+
+	// ── Gastos de operación (GastosDE) ──
+	const filtroGastosDE = { tenantId, createdAt: rango };
+	const [gastosDE, totalGastosDE] = await Promise.all([
+		prisma.gastosDE.findMany({
+			where: filtroGastosDE,
+			include: {
+				reconciliaciones: {
+					select: {
+						monto: true,
+						montoConvertido: true,
+						fechaReconciliacion: true,
+						moneda: true,
+					},
+					take: 1,
+				},
+			},
+			orderBy: { createdAt: "desc" },
+			skip,
+			take: pageSize,
+		}),
+		prisma.gastosDE.count({ where: filtroGastosDE }),
+	]);
+
+	// ── Gastos de compras (GastoCompra) ──
+	const filtroGastoCompra = { tenantId, createdAt: rango, deletedAt: null };
+	const [gastosCompra, totalGastosCompra] = await Promise.all([
+		prisma.gastoCompra.findMany({
+			where: filtroGastoCompra,
+			include: {
+				reconciliaciones: {
+					select: {
+						monto: true,
+						montoConvertido: true,
+						fechaReconciliacion: true,
+						moneda: true,
+					},
+					take: 1,
+				},
+			},
+			orderBy: { createdAt: "desc" },
+			skip,
+			take: pageSize,
+		}),
+		prisma.gastoCompra.count({ where: filtroGastoCompra }),
+	]);
+
 	// Mapear a tipo unificado
 	const mapVenta = (v: (typeof ventas)[number]): VentaVsReconciliadoItem => {
 		const rec = v.reconciliaciones[0];
@@ -349,6 +455,7 @@ export async function obtenerVentasVsReconciliado(
 			monto,
 			moneda: "CUP",
 			metodoPago: v.metodoPago,
+			origen: null,
 			estaReconciliado: !!rec,
 			montoReconciliado: rec ? montoRec : null,
 			diferencia: monto - montoRec,
@@ -370,6 +477,7 @@ export async function obtenerVentasVsReconciliado(
 			monto,
 			moneda: "CUP",
 			metodoPago: null,
+			origen: null,
 			estaReconciliado: !!rec,
 			montoReconciliado: rec ? montoRec : null,
 			diferencia: monto - montoRec,
@@ -377,13 +485,114 @@ export async function obtenerVentasVsReconciliado(
 		};
 	};
 
+	const mapGastoDE = (
+		g: (typeof gastosDE)[number],
+	): VentaVsReconciliadoItem => {
+		const rec = g.reconciliaciones[0];
+		const monto = Number(g.monto ?? 0);
+		const montoRec = rec ? Number(rec.montoConvertido ?? rec.monto ?? 0) : 0;
+		return {
+			id: g.gastosDEId,
+			tipo: "GASTO",
+			folio: g.numeroFactura ?? g.gastosDEId.slice(0, 8),
+			fecha: g.createdAt,
+			monto,
+			moneda: "CUP",
+			metodoPago: null,
+			origen: g.proveedor ?? "Gasto DE",
+			estaReconciliado: !!rec,
+			montoReconciliado: rec ? montoRec : null,
+			diferencia: monto - montoRec,
+			fechaReconciliacion: rec?.fechaReconciliacion ?? null,
+		};
+	};
+
+	const mapGastoCompra = (
+		g: (typeof gastosCompra)[number],
+	): VentaVsReconciliadoItem => {
+		const rec = g.reconciliaciones[0];
+		const monto = Number(g.total ?? 0);
+		const montoRec = rec ? Number(rec.montoConvertido ?? rec.monto ?? 0) : 0;
+		return {
+			id: g.gastoCompraId,
+			tipo: "GASTO",
+			folio: g.numeroFactura ?? g.gastoCompraId.slice(0, 8),
+			fecha: g.createdAt,
+			monto,
+			moneda: "CUP",
+			metodoPago: null,
+			origen: "Compra",
+			estaReconciliado: !!rec,
+			montoReconciliado: rec ? montoRec : null,
+			diferencia: monto - montoRec,
+			fechaReconciliacion: rec?.fechaReconciliacion ?? null,
+		};
+	};
+
+	const mapCompraServicio = (
+		g: (typeof comprasServicio)[number],
+	): VentaVsReconciliadoItem => {
+		const estaReconciliado = idsReconciliadosCS.has(g.compraServicioId);
+		const monto = Number(g.total ?? 0);
+		return {
+			id: g.compraServicioId,
+			tipo: "GASTO",
+			folio: g.numeroFactura ?? g.compraServicioId.slice(0, 8),
+			fecha: g.createdAt,
+			monto,
+			moneda: "CUP",
+			metodoPago: null,
+			origen: "Servicio Contratado",
+			estaReconciliado,
+			montoReconciliado: null,
+			diferencia: estaReconciliado ? 0 : monto,
+			fechaReconciliacion: null,
+		};
+	};
+
+	const mapVentaServicioCosto = (
+		vs: (typeof ventasServicioCosto)[number],
+	): VentaVsReconciliadoItem => {
+		const estaReconciliado = idsReconciliadosVS.has(vs.ventaServicioId);
+		const monto = Number(vs.costo ?? 0);
+		return {
+			id: `costo-${vs.ventaServicioId}`,
+			tipo: "GASTO",
+			folio: vs.ventaServicioId.slice(0, 8),
+			fecha: vs.createdAt,
+			monto,
+			moneda: "CUP",
+			metodoPago: null,
+			origen: "Costo de Servicio Vendido",
+			estaReconciliado,
+			montoReconciliado: null,
+			diferencia: estaReconciliado ? 0 : monto,
+			fechaReconciliacion: null,
+		};
+	};
+
 	const items = [
 		...ventas.map(mapVenta),
 		...ventasServicios.map(mapServicio),
+		...gastosDE.map(mapGastoDE),
+		...gastosCompra.map(mapGastoCompra),
+		...comprasServicio.map(mapCompraServicio),
+		...ventasServicioCosto.map(mapVentaServicioCosto),
 	].sort((a, b) => b.fecha.getTime() - a.fecha.getTime());
 
 	const reconciliadas = items.filter((i) => i.estaReconciliado).length;
-	const totalCount = totalVentas + totalServicios;
+	const totalCount =
+		totalVentas +
+		totalServicios +
+		totalGastosDE +
+		totalGastosCompra +
+		totalCompraServicio +
+		totalVentaServicioCosto;
+
+	const gastosItems = items.filter((i) => i.tipo === "GASTO");
+	const gastosReconciliados = gastosItems.filter(
+		(i) => i.estaReconciliado,
+	).length;
 
 	return {
 		items,
@@ -398,6 +607,10 @@ export async function obtenerVentasVsReconciliado(
 			cantidadVentas: totalCount,
 			cantidadReconciliadas: reconciliadas,
 			cantidadPendientes: totalCount - reconciliadas,
+			totalGastos: round2(gastosItems.reduce((s, i) => s + i.monto, 0)),
+			cantidadGastos: gastosItems.length,
+			cantidadGastosReconciliados: gastosReconciliados,
+			cantidadGastosPendientes: gastosItems.length - gastosReconciliados,
 		},
 		totalPages: Math.ceil(totalCount / pageSize),
 		page,
@@ -641,7 +854,7 @@ export async function obtenerOperacionesPeriodo(
 						descripcion: true,
 						tipoGasto: true,
 						cuentaId: true,
-						cuentaBancaria: { select: { nombre: true } },
+						cuentaBancaria: { select: { nombreBanco: true } },
 					},
 				})
 				.then((rows) =>
@@ -654,7 +867,7 @@ export async function obtenerOperacionesPeriodo(
 						moneda: r.moneda,
 						referencia: null,
 						cuentaId: r.cuentaId,
-						cuentaNombre: r.cuentaBancaria?.nombre ?? null,
+						cuentaNombre: r.cuentaBancaria?.nombreBanco ?? null,
 					})),
 				),
 		);
@@ -703,7 +916,7 @@ export async function obtenerOperacionesPeriodo(
 						descripcion: true,
 						tipo: true,
 						cuentaId: true,
-						cuentaBancaria: { select: { nombre: true } },
+						cuentaBancaria: { select: { nombreBanco: true } },
 					},
 				})
 				.then((rows) =>
@@ -716,7 +929,7 @@ export async function obtenerOperacionesPeriodo(
 						moneda: r.moneda,
 						referencia: null,
 						cuentaId: r.cuentaId,
-						cuentaNombre: r.cuentaBancaria?.nombre ?? null,
+						cuentaNombre: r.cuentaBancaria?.nombreBanco ?? null,
 					})),
 				),
 		);
@@ -726,14 +939,14 @@ export async function obtenerOperacionesPeriodo(
 		promises.push(
 			prisma.inyeccionCapital
 				.findMany({
-					where: { tenantId, createdAt: rango },
+					where: { cuentaBancaria: { tenantId }, createdAt: rango },
 					select: {
 						id: true,
 						createdAt: true,
 						montoRecibido: true,
 						moneda: true,
 						cuentaId: true,
-						cuentaBancaria: { select: { nombre: true } },
+						cuentaBancaria: { select: { nombreBanco: true } },
 					},
 				})
 				.then((rows) =>
@@ -746,7 +959,7 @@ export async function obtenerOperacionesPeriodo(
 						moneda: r.moneda,
 						referencia: null,
 						cuentaId: r.cuentaId,
-						cuentaNombre: r.cuentaBancaria?.nombre ?? null,
+						cuentaNombre: r.cuentaBancaria?.nombreBanco ?? null,
 					})),
 				),
 		);
@@ -756,12 +969,12 @@ export async function obtenerOperacionesPeriodo(
 		promises.push(
 			prisma.pagoDeuda
 				.findMany({
-					where: { tenantId, fechaPago: rango },
+					where: { cuentaBancaria: { tenantId }, fechaPago: rango },
 					select: {
 						id: true,
 						fechaPago: true,
 						montoPagado: true,
-						cuentaBancaria: { select: { moneda: true, nombre: true } },
+						cuentaBancaria: { select: { moneda: true, nombreBanco: true } },
 						cuentaId: true,
 					},
 				})
@@ -775,7 +988,7 @@ export async function obtenerOperacionesPeriodo(
 						moneda: r.cuentaBancaria?.moneda ?? "CUP",
 						referencia: null,
 						cuentaId: r.cuentaId,
-						cuentaNombre: r.cuentaBancaria?.nombre ?? null,
+						cuentaNombre: r.cuentaBancaria?.nombreBanco ?? null,
 					})),
 				),
 		);

@@ -25,16 +25,6 @@ function formatHora(date: Date): string {
 	return `${String(date.getHours()).padStart(2, "0")}:${String(date.getMinutes()).padStart(2, "0")}`;
 }
 
-/**
- * @description Convierte centavos a pesos.
- * Toda la lógica monetaria en el sistema usa centavos (Int).
- * @param centavos - Valor en centavos
- * @returns Valor en pesos
- */
-function centavosAPesos(centavos: number | null | undefined): number {
-	return (centavos ?? 0) / 100;
-}
-
 const METODO_PAGO_LABEL: Record<string, string> = {
 	EFECTIVO: "efectivo",
 	TARJETA: "tarjeta",
@@ -123,30 +113,26 @@ export const getCuadreDiarioAction = withAction(
 		]);
 
 		// ── Totales (centavos → pesos) ────────────────────────────────
-		const totalVentas = centavosAPesos(
-			ventasDelDia.reduce(
-				(sum, v) =>
-					sum + (v.total ?? v.cantidad * (v.producto?.precioVenta ?? 0)),
-				0,
-			),
+		const totalVentas = ventasDelDia.reduce(
+			(sum, v) =>
+				sum + (v.total ?? v.cantidad * (v.producto?.precioVenta ?? 0)),
+			0,
 		);
-		const totalServicios = centavosAPesos(
-			ventaServiciosDelDia.reduce((sum, v) => sum + (v.total ?? 0), 0),
+		const totalServicios = ventaServiciosDelDia.reduce(
+			(sum, v) => sum + (v.total ?? 0),
+			0,
 		);
 		const totalIngresos = totalVentas + totalServicios;
 
-		const totalGastosDE = centavosAPesos(
-			gastosDEdelDia.reduce((sum, g) => sum + g.monto, 0),
+		const totalGastosDE = gastosDEdelDia.reduce((sum, g) => sum + g.monto, 0);
+		const totalGastosSalarios = gastosSalariosDia.reduce(
+			(sum, s) =>
+				sum + s.salario + (s.bonificaciones ?? 0) + (s.horasExtras ?? 0),
+			0,
 		);
-		const totalGastosSalarios = centavosAPesos(
-			gastosSalariosDia.reduce(
-				(sum, s) =>
-					sum + s.salario + (s.bonificaciones ?? 0) + (s.horasExtras ?? 0),
-				0,
-			),
-		);
-		const totalGastosCompra = centavosAPesos(
-			gastosCompraDelDia.reduce((sum, c) => sum + Number(c.total ?? 0), 0),
+		const totalGastosCompra = gastosCompraDelDia.reduce(
+			(sum, c) => sum + Number(c.total ?? 0),
+			0,
 		);
 		const totalGastos = totalGastosDE + totalGastosSalarios + totalGastosCompra;
 		const diferencia = totalIngresos - totalGastos;
@@ -178,12 +164,11 @@ export const getCuadreDiarioAction = withAction(
 			}),
 		]);
 
-		const ingresosAyer = centavosAPesos(
+		const ingresosAyer =
 			ventasAyer.reduce((sum, v) => {
 				const monto = v.total ?? v.cantidad * ((v as any).precioVenta ?? 0);
 				return sum + monto;
-			}, 0) + serviciosAyer.reduce((sum, v) => sum + (v.total ?? 0), 0),
-		);
+			}, 0) + serviciosAyer.reduce((sum, v) => sum + (v.total ?? 0), 0);
 
 		const variacionVentas = calcularVariacion(totalIngresos, ingresosAyer);
 
@@ -191,9 +176,7 @@ export const getCuadreDiarioAction = withAction(
 		const ventas: any[] = [];
 
 		for (const v of ventasDelDia) {
-			const total = centavosAPesos(
-				v.total ?? v.cantidad * (v.producto?.precioVenta ?? 0),
-			);
+			const total = v.total ?? v.cantidad * (v.producto?.precioVenta ?? 0);
 			const metodoPago =
 				METODO_PAGO_LABEL[v.metodoPago ?? "EFECTIVO"] ?? "efectivo";
 			ventas.push({
@@ -219,7 +202,7 @@ export const getCuadreDiarioAction = withAction(
 				cliente: v.cliente?.nombre ?? "Mostrador",
 				producto: v.servicio?.nombre ?? "Servicio",
 				cantidad: v.cantidad,
-				total: centavosAPesos(v.total ?? 0),
+				total: v.total ?? 0,
 				metodoPago,
 				esServicio: true,
 				puntoDeVenta: "",
@@ -237,7 +220,7 @@ export const getCuadreDiarioAction = withAction(
 				tipo: "gasto_operativo",
 				descripcion: g.descripcion || g.tipo || "Gasto operativo",
 				referencia: g.gastosDEId.slice(-8),
-				monto: centavosAPesos(g.monto),
+				monto: g.monto,
 				bonificaciones: null,
 				deducciones: null,
 				observaciones: null,
@@ -253,7 +236,7 @@ export const getCuadreDiarioAction = withAction(
 				tipo: "compra",
 				descripcion: c.descripcion || (c.vendor?.nombre ?? "Compra"),
 				referencia: c.numeroFactura || c.gastoCompraId.slice(-8),
-				monto: centavosAPesos(Number(c.total ?? 0)),
+				monto: Number(c.total ?? 0),
 				bonificaciones: null,
 				deducciones: null,
 				observaciones: null,
@@ -262,9 +245,7 @@ export const getCuadreDiarioAction = withAction(
 		}
 
 		for (const s of gastosSalariosDia) {
-			const monto = centavosAPesos(
-				s.salario + (s.bonificaciones ?? 0) + (s.horasExtras ?? 0),
-			);
+			const monto = s.salario + (s.bonificaciones ?? 0) + (s.horasExtras ?? 0);
 			gastos.push({
 				id: s.pgId,
 				hora: formatoFecha(s.createdAt),
@@ -304,27 +285,22 @@ export const getCuadreDiarioAction = withAction(
 			}),
 		);
 
-		// ── Efectivo inicial / final (centavos → pesos) ──────────────
-		const efectivoInicial = centavosAPesos(
-			turnosDelDia.reduce((sum, t) => sum + t.fondoInicialCup, 0),
-		);
+		// ── Efectivo inicial / final ────────────────────────────────────
+		const efectivoInicial =
+			turnosDelDia.reduce((sum, t) => sum + t.fondoInicialCup, 0) / 100;
 		const efectivoFinal =
 			arqueosDelDia.length > 0
-				? centavosAPesos(
-						arqueosDelDia.reduce((sum, a) => sum + a.totalEfectivoCup, 0),
-					)
-				: centavosAPesos(
-						turnosDelDia.reduce((sum, t) => {
-							const ventasEfectivo = ventasDelDia
-								.filter(
-									(v) =>
-										v.turnoId === t.id &&
-										(v.metodoPago === "EFECTIVO" || v.metodoPago === "MIXTO"),
-								)
-								.reduce((s, v) => s + (v.montoEfectivo ?? 0), 0);
-							return sum + t.fondoInicialCup + ventasEfectivo;
-						}, 0),
-					);
+				? arqueosDelDia.reduce((sum, a) => sum + a.totalEfectivoCup, 0) / 100
+				: turnosDelDia.reduce((sum, t) => {
+						const ventasEfectivo = ventasDelDia
+							.filter(
+								(v) =>
+									v.turnoId === t.id &&
+									(v.metodoPago === "EFECTIVO" || v.metodoPago === "MIXTO"),
+							)
+							.reduce((s, v) => s + (v.montoEfectivo ?? 0), 0);
+						return sum + t.fondoInicialCup + ventasEfectivo;
+					}, 0) / 100;
 
 		// ── Response ─────────────────────────────────────────────────
 		return {
@@ -349,25 +325,25 @@ export const getCuadreDiarioAction = withAction(
 				id: t.id,
 				puntoDeVenta: t.puntoDeVenta?.nombre ?? "Desconocido",
 				estado: t.estado,
-				fondoInicialCup: centavosAPesos(t.fondoInicialCup),
-				fondoInicialUsd: centavosAPesos(t.fondoInicialUsd),
+				fondoInicialCup: (t.fondoInicialCup ?? 0) / 100,
+				fondoInicialUsd: (t.fondoInicialUsd ?? 0) / 100,
 				totalVentas: t._count?.ventas ?? 0,
 				tieneArqueo: !!t.arqueo,
 				arqueo: t.arqueo
 					? {
-							totalEfectivoCup: centavosAPesos(t.arqueo.totalEfectivoCup),
-							totalEfectivoUsd: centavosAPesos(t.arqueo.totalEfectivoUsd),
-							diferenciaCup: centavosAPesos(t.arqueo.diferenciaCup),
-							diferenciaUsd: centavosAPesos(t.arqueo.diferenciaUsd),
+							totalEfectivoCup: (t.arqueo.totalEfectivoCup ?? 0) / 100,
+							totalEfectivoUsd: (t.arqueo.totalEfectivoUsd ?? 0) / 100,
+							diferenciaCup: (t.arqueo.diferenciaCup ?? 0) / 100,
+							diferenciaUsd: (t.arqueo.diferenciaUsd ?? 0) / 100,
 						}
 					: null,
 			})),
 			arqueosDelDia: arqueosDelDia.map((a) => ({
 				id: a.id,
-				totalEfectivoCup: centavosAPesos(a.totalEfectivoCup),
-				totalEfectivoUsd: centavosAPesos(a.totalEfectivoUsd),
-				diferenciaCup: centavosAPesos(a.diferenciaCup),
-				diferenciaUsd: centavosAPesos(a.diferenciaUsd),
+				totalEfectivoCup: (a.totalEfectivoCup ?? 0) / 100,
+				totalEfectivoUsd: (a.totalEfectivoUsd ?? 0) / 100,
+				diferenciaCup: (a.diferenciaCup ?? 0) / 100,
+				diferenciaUsd: (a.diferenciaUsd ?? 0) / 100,
 			})),
 		};
 	},
