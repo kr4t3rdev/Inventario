@@ -1,7 +1,7 @@
 /**
- * @description Gráfico de barras con gradientes que muestra la tendencia diaria
- * de ingresos vs egresos del período. Incluye hover interactivo, tooltip
- * detallado y máx 31 días.
+ * @description Gráfico de barras que muestra la tendencia diaria de ingresos vs egresos.
+ * Sin gradientes SVG para evitar problemas de resolución en Recharts.
+ * Incluye hover interactivo con opacidad manejada por estado, tooltip y ReferenceLine.
  */
 "use client";
 
@@ -17,6 +17,7 @@ import {
 	Tooltip,
 	Legend,
 	ReferenceLine,
+	Cell,
 } from "recharts";
 import { TrendingUp as TrendingIcon } from "lucide-react";
 import {
@@ -25,9 +26,7 @@ import {
 	chartTooltipItemStyle,
 	formatCurrency,
 	cuadreChartPalette,
-	GRADIENT_ID,
 } from "./chart-theme";
-import { GradientDefs } from "./gradient-defs";
 import type { ResumenDiarioItem } from "../../cuadre-queries";
 
 interface DailyTrendChartProps {
@@ -42,9 +41,7 @@ const CustomLegend = (props: any) => {
 				<div key={`legend-${index}`} className="flex items-center gap-1.5">
 					<span
 						className="inline-block w-3 h-3 rounded"
-						style={{
-							background: entry.color,
-						}}
+						style={{ background: entry.color }}
 					/>
 					<span className="text-muted-foreground">{entry.value}</span>
 				</div>
@@ -99,7 +96,6 @@ export function DailyTrendChart({ data }: DailyTrendChartProps) {
 						}}
 						onMouseLeave={() => setActiveBar(null)}
 					>
-						<GradientDefs />
 						<CartesianGrid
 							strokeDasharray="3 3"
 							vertical={false}
@@ -128,9 +124,7 @@ export function DailyTrendChart({ data }: DailyTrendChartProps) {
 								fontSize: 10,
 								fill: "hsl(var(--muted-foreground))",
 							}}
-							tickFormatter={(v: number) =>
-								`$${(v / 1000).toFixed(0)}k`
-							}
+							tickFormatter={(v: number) => `$${(v / 1000).toFixed(0)}k`}
 						/>
 						<Tooltip
 							contentStyle={chartTooltipStyle}
@@ -148,32 +142,40 @@ export function DailyTrendChart({ data }: DailyTrendChartProps) {
 						<Legend content={CustomLegend} />
 						<Bar
 							dataKey="ingresos"
-							fill={`url(#${GRADIENT_ID.income})`}
+							fill={cuadreChartPalette.income}
 							radius={[4, 4, 0, 0]}
 							barSize={12}
-							opacity={
-								activeBar
-									? (d: any) => (d?.name === activeBar ? 1 : 0.5)
-									: 1
-							}
 							animationDuration={500}
 							animationEasing="ease-out"
 							animationBegin={300}
-						/>
+						>
+							{chartData.map((entry, index) => (
+								<Cell
+									key={`ingreso-${index}`}
+									opacity={
+										activeBar === null || entry.name === activeBar ? 1 : 0.4
+									}
+								/>
+							))}
+						</Bar>
 						<Bar
 							dataKey="egresos"
-							fill={`url(#${GRADIENT_ID.expense})`}
+							fill={cuadreChartPalette.expense}
 							radius={[4, 4, 0, 0]}
 							barSize={12}
-							opacity={
-								activeBar
-									? (d: any) => (d?.name === activeBar ? 1 : 0.5)
-									: 1
-							}
 							animationDuration={500}
 							animationEasing="ease-out"
 							animationBegin={400}
-						/>
+						>
+							{chartData.map((entry, index) => (
+								<Cell
+									key={`egreso-${index}`}
+									opacity={
+										activeBar === null || entry.name === activeBar ? 1 : 0.4
+									}
+								/>
+							))}
+						</Bar>
 					</BarChart>
 				</ResponsiveContainer>
 			</div>

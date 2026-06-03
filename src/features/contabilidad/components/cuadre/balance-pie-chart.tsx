@@ -1,7 +1,7 @@
 /**
- * @description Gráfico de dona con gradientes que muestra la distribución del balance
- * por cuenta bancaria. Incluye total en el centro, colores por gradiente,
- * hover con realce y tooltip mejorado.
+ * @description Gráfico de dona que muestra la distribución del balance
+ * por cuenta bancaria. Colores sólidos (sin gradientes SVG) para
+ * compatibilidad con Recharts. Incluye total en el centro y hover.
  */
 "use client";
 
@@ -23,7 +23,6 @@ import {
 	formatCurrency,
 	cuadreChartPalette,
 } from "./chart-theme";
-import { GradientDefs } from "./gradient-defs";
 import type { SaldoCuentaData } from "../../cuadre-queries";
 
 interface BalancePieChartProps {
@@ -46,18 +45,6 @@ const CUSTOMIZED_LEGEND = (props: any) => {
 		</ul>
 	);
 };
-
-function renderCustomizedLabel({
-	cx,
-	cy,
-}: {
-	cx: number;
-	cy: number;
-	totalSaldo: number;
-}) {
-	// Don't render — we use a positioned overlay instead
-	return null;
-}
 
 export function BalancePieChart({ saldosPorCuenta }: BalancePieChartProps) {
 	const [activeIndex, setActiveIndex] = useState<number | null>(null);
@@ -91,15 +78,12 @@ export function BalancePieChart({ saldosPorCuenta }: BalancePieChartProps) {
 				<div className="p-1.5 rounded-lg bg-primary/10">
 					<PieChartIcon className="h-4 w-4 text-primary" />
 				</div>
-				<h3 className="text-sm font-semibold">
-					Distribución del Balance
-				</h3>
+				<h3 className="text-sm font-semibold">Distribución del Balance</h3>
 			</div>
 
 			<div className="relative h-[260px]">
 				<ResponsiveContainer width="100%" height="100%">
 					<PieChart>
-						<GradientDefs />
 						<Pie
 							data={data}
 							cx="50%"
@@ -119,7 +103,11 @@ export function BalancePieChart({ saldosPorCuenta }: BalancePieChartProps) {
 							{data.map((_entry, index) => (
 								<Cell
 									key={`cell-${index}`}
-									fill={`url(#${`pieGradient-${index}`})`}
+									fill={
+										cuadreChartPalette.sequence[
+											index % cuadreChartPalette.sequence.length
+										]
+									}
 									opacity={
 										activeIndex === null || activeIndex === index ? 1 : 0.4
 									}
@@ -141,10 +129,7 @@ export function BalancePieChart({ saldosPorCuenta }: BalancePieChartProps) {
 								value: number,
 								_name: string,
 								props: { payload: { saldoActual: number; moneda: string } },
-							) => [
-								formatCurrency(value, props.payload.moneda),
-								"Saldo",
-							]}
+							) => [formatCurrency(value, props.payload.moneda), "Saldo"]}
 						/>
 						<Legend content={CUSTOMIZED_LEGEND} />
 					</PieChart>

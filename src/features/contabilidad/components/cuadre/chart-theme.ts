@@ -33,13 +33,7 @@ export const cuadreChartPalette = {
 	],
 };
 
-/* ─── IDs de gradientes SVG ─── */
-
-export const GRADIENT_ID = {
-	income: "incomeGradient",
-	expense: "expenseGradient",
-	pie: (index: number) => `pieGradient-${index}`,
-};
+/* ─── IDs de gradientes SVG (deprecated — se usan colores sólidos por compatibilidad con Recharts) ─── */
 
 /* ─── Estilos de tooltip ─── */
 
