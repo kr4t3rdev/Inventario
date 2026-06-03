@@ -593,102 +593,124 @@ export async function obtenerVentasVsReconciliado(
 	const gastosItems = items.filter((i) => i.tipo === "GASTO");
 	const gastosReconciliados = gastosItems.filter(
 		(i) => i.estaReconciliado,
-		).length;
+	).length;
 
 	// ── Items antiguos sin reconciliar (períodos anteriores) ──
 	const LIMITE_ANTIGUOS = 100;
 	const rangoAntiguos = { lt: rango.gte };
 
-	const [ventasAntiguas, serviciosAntiguos, gastosDEAntiguos, gastosCompraAntiguos, comprasServicioAntiguos, ventasServicioCostoAntiguos] =
-		await Promise.all([
-			prisma.venta.findMany({
-				where: {
-					tenantId,
-					createdAt: rangoAntiguos,
-					deletedAt: null,
-					reconciliaciones: { none: {} },
-				},
-				include: {
-					reconciliaciones: {
-						select: { monto: true, montoConvertido: true, fechaReconciliacion: true },
-						take: 1,
+	const [
+		ventasAntiguas,
+		serviciosAntiguos,
+		gastosDEAntiguos,
+		gastosCompraAntiguos,
+		comprasServicioAntiguos,
+		ventasServicioCostoAntiguos,
+	] = await Promise.all([
+		prisma.venta.findMany({
+			where: {
+				tenantId,
+				createdAt: rangoAntiguos,
+				deletedAt: null,
+				reconciliaciones: { none: {} },
+			},
+			include: {
+				reconciliaciones: {
+					select: {
+						monto: true,
+						montoConvertido: true,
+						fechaReconciliacion: true,
 					},
+					take: 1,
 				},
-				orderBy: { createdAt: "desc" },
-				take: LIMITE_ANTIGUOS,
-			}),
-			prisma.ventaServicios.findMany({
-				where: {
-					tenantId,
-					createdAt: rangoAntiguos,
-					reconciliaciones: { none: {} },
-				},
-				include: {
-					reconciliaciones: {
-						select: { monto: true, montoConvertido: true, fechaReconciliacion: true },
-						take: 1,
+			},
+			orderBy: { createdAt: "desc" },
+			take: LIMITE_ANTIGUOS,
+		}),
+		prisma.ventaServicios.findMany({
+			where: {
+				tenantId,
+				createdAt: rangoAntiguos,
+				reconciliaciones: { none: {} },
+			},
+			include: {
+				reconciliaciones: {
+					select: {
+						monto: true,
+						montoConvertido: true,
+						fechaReconciliacion: true,
 					},
+					take: 1,
 				},
-				orderBy: { createdAt: "desc" },
-				take: LIMITE_ANTIGUOS,
-			}),
-			prisma.gastosDE.findMany({
-				where: {
-					tenantId,
-					createdAt: rangoAntiguos,
-					reconciliaciones: { none: {} },
-				},
-				include: {
-					reconciliaciones: {
-						select: { monto: true, montoConvertido: true, fechaReconciliacion: true },
-						take: 1,
+			},
+			orderBy: { createdAt: "desc" },
+			take: LIMITE_ANTIGUOS,
+		}),
+		prisma.gastosDE.findMany({
+			where: {
+				tenantId,
+				createdAt: rangoAntiguos,
+				reconciliaciones: { none: {} },
+			},
+			include: {
+				reconciliaciones: {
+					select: {
+						monto: true,
+						montoConvertido: true,
+						fechaReconciliacion: true,
 					},
+					take: 1,
 				},
-				orderBy: { createdAt: "desc" },
-				take: LIMITE_ANTIGUOS,
-			}),
-			prisma.gastoCompra.findMany({
-				where: {
-					tenantId,
-					createdAt: rangoAntiguos,
-					deletedAt: null,
-					reconciliaciones: { none: {} },
-				},
-				include: {
-					reconciliaciones: {
-						select: { monto: true, montoConvertido: true, fechaReconciliacion: true },
-						take: 1,
+			},
+			orderBy: { createdAt: "desc" },
+			take: LIMITE_ANTIGUOS,
+		}),
+		prisma.gastoCompra.findMany({
+			where: {
+				tenantId,
+				createdAt: rangoAntiguos,
+				deletedAt: null,
+				reconciliaciones: { none: {} },
+			},
+			include: {
+				reconciliaciones: {
+					select: {
+						monto: true,
+						montoConvertido: true,
+						fechaReconciliacion: true,
 					},
+					take: 1,
 				},
-				orderBy: { createdAt: "desc" },
-				take: LIMITE_ANTIGUOS,
-			}),
-			prisma.compraServicio.findMany({
-				where: {
-					tenantId,
-					createdAt: rangoAntiguos,
-					compraServicioId:
-						idsReconciliadosCS.length > 0
-							? { notIn: idsReconciliadosCS }
-							: undefined,
-				},
-				orderBy: { createdAt: "desc" },
-				take: LIMITE_ANTIGUOS,
-			}),
-			prisma.ventaServicios.findMany({
-				where: {
-					tenantId,
-					createdAt: rangoAntiguos,
-					costo: { gt: 0 },
-					ventaServicioId:
-						idsReconciliadosVSCosto.length > 0
-							? { notIn: idsReconciliadosVSCosto }
-							: undefined,
-				},
-				orderBy: { createdAt: "desc" },
-				take: LIMITE_ANTIGUOS,
-			}),
-		]);
+			},
+			orderBy: { createdAt: "desc" },
+			take: LIMITE_ANTIGUOS,
+		}),
+		prisma.compraServicio.findMany({
+			where: {
+				tenantId,
+				createdAt: rangoAntiguos,
+				compraServicioId:
+					idsReconciliadosCSArr.length > 0
+						? { notIn: idsReconciliadosCSArr }
+						: undefined,
+			},
+			orderBy: { createdAt: "desc" },
+			take: LIMITE_ANTIGUOS,
+		}),
+		prisma.ventaServicios.findMany({
+			where: {
+				tenantId,
+				createdAt: rangoAntiguos,
+				costo: { gt: 0 },
+				ventaServicioId:
+					idsReconciliadosVSArr.length > 0
+						? { notIn: idsReconciliadosVSArr }
+						: undefined,
+			},
+			orderBy: { createdAt: "desc" },
+			take: LIMITE_ANTIGUOS,
+		}),
+	]);
 
 	const mapVentaAntigua = (
 		v: (typeof ventasAntiguas)[number],
@@ -802,7 +824,7 @@ export async function obtenerVentasVsReconciliado(
 	const mapVentaServicioCostoAntiguo = (
 		vs: (typeof ventasServicioCostoAntiguos)[number],
 	): VentaVsReconciliadoItem => {
-		const estaReconciliado = idsReconciliadosVSCosto.has(vs.ventaServicioId);
+		const estaReconciliado = idsReconciliadosVS.has(vs.ventaServicioId);
 		const monto = Number(vs.costo ?? 0);
 		return {
 			id: `costo-${vs.ventaServicioId}`,
