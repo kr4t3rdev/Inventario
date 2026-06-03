@@ -8,7 +8,9 @@ async function main() {
 	const apiKey = process.env.RESEND_API_KEY;
 	if (!apiKey) {
 		console.error("❌ RESEND_API_KEY no está configurada.");
-		console.error("   Uso: RESEND_API_KEY=re_xxx npx tsx scripts/test-resend.ts");
+		console.error(
+			"   Uso: RESEND_API_KEY=re_xxx npx tsx scripts/test-resend.ts",
+		);
 		process.exit(1);
 	}
 
