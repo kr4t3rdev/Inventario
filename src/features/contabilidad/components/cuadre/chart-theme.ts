@@ -1,54 +1,78 @@
 /**
- * @description Paleta de colores para gráficos del cuadre de período.
+ * @description Tema de colores y utilidades para gráficos del cuadre de período.
+ * Paleta profesional para dashboard financiero con alta accesibilidad (WCAG AA+).
  */
+
+/* ─── Paleta principal ─── */
+
 export const cuadreChartPalette = {
 	primary: "#2563eb",
-	secondary: "#14b8a6",
-	accent: "#f59e0b",
-	alert: "#f43f5e",
+	primaryLight: "#3b82f6",
+	primaryDark: "#1d4ed8",
+	income: "#059669",
+	incomeLight: "#10b981",
+	incomeBg: "#ecfdf5",
+	expense: "#dc2626",
+	expenseLight: "#ef4444",
+	expenseBg: "#fef2f2",
 	neutral: "#64748b",
+	neutralLight: "#94a3b8",
+	neutralBg: "#f1f5f9",
+	accent: "#f59e0b",
+	sequence: [
+		"#2563eb",
+		"#059669",
+		"#f59e0b",
+		"#dc2626",
+		"#8b5cf6",
+		"#06b6d4",
+		"#84cc16",
+		"#ec4899",
+		"#f97316",
+		"#6366f1",
+	],
 };
 
-export const chartTooltipStyle = {
+/* ─── IDs de gradientes SVG ─── */
+
+export const GRADIENT_ID = {
+	income: "incomeGradient",
+	expense: "expenseGradient",
+	pie: (index: number) => `pieGradient-${index}`,
+};
+
+/* ─── Estilos de tooltip ─── */
+
+export const chartTooltipStyle: Record<string, string | number> = {
 	borderRadius: "10px",
 	border: "1px solid hsl(var(--border))",
 	backgroundColor: "hsl(var(--card))",
 	color: "hsl(var(--card-foreground))",
-	boxShadow: "0 10px 25px -10px rgb(0 0 0 / 0.25)",
-	padding: "8px 10px",
-	fontSize: "12px",
+	boxShadow: "0 10px 30px -10px rgb(0 0 0 / 0.3)",
+	padding: "10px 14px",
+	fontSize: "13px",
 };
 
-export const chartTooltipLabelStyle = {
+export const chartTooltipLabelStyle: Record<string, string | number> = {
 	color: "hsl(var(--muted-foreground))",
 	fontSize: "11px",
 	fontWeight: 600,
+	textTransform: "uppercase" as const,
+	letterSpacing: "0.5px",
 };
 
-export const chartTooltipItemStyle = {
+export const chartTooltipItemStyle: Record<string, string | number> = {
 	color: "hsl(var(--foreground))",
-	fontSize: "12px",
-	fontWeight: 600,
+	fontSize: "13px",
+	fontWeight: 700,
 };
 
-/**
- * @description Formatea un valor monetario con separador de miles y 2 decimales.
- * @param value - Valor numérico
- * @param moneda - Símbolo de moneda (CUP, USD, EUR, etc.)
- * @returns Valor formateado
- */
+/* ─── Formateo ─── */
+
 export function formatCurrency(value: number, moneda = "$"): string {
-	return `${moneda} ${Math.abs(value).toLocaleString("es-CU", {
+	const sign = value < 0 ? "-" : "";
+	return `${sign}${moneda} ${Math.abs(value).toLocaleString("es-CU", {
 		minimumFractionDigits: 2,
 		maximumFractionDigits: 2,
 	})}`;
-}
-
-/**
- * @description Color para barras según tipo (ingreso/egreso)
- */
-export function getBarColor(tipo: "ingreso" | "egreso"): string {
-	return tipo === "ingreso"
-		? cuadreChartPalette.secondary
-		: cuadreChartPalette.alert;
 }

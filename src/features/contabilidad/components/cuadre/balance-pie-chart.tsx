@@ -1,6 +1,7 @@
 /**
- * @description Gráfico de torta que muestra la distribución del balance por cuenta bancaria.
- * Agrupa cuentas por moneda y muestra la proporción de cada cuenta.
+ * @description Gráfico de dona con gradientes que muestra la distribución del balance
+ * por cuenta bancaria. Incluye total en el centro, colores por gradiente,
+ * hover con realce y tooltip mejorado.
  */
 "use client";
 
@@ -20,30 +21,49 @@ import {
 	chartTooltipLabelStyle,
 	chartTooltipItemStyle,
 	formatCurrency,
+	cuadreChartPalette,
 } from "./chart-theme";
+import { GradientDefs } from "./gradient-defs";
 import type { SaldoCuentaData } from "../../cuadre-queries";
 
 interface BalancePieChartProps {
 	saldosPorCuenta: SaldoCuentaData[];
 }
 
-const COLORS = [
-	"#2563eb",
-	"#14b8a6",
-	"#f59e0b",
-	"#f43f5e",
-	"#8b5cf6",
-	"#06b6d4",
-	"#84cc16",
-	"#ec4899",
-];
+const CUSTOMIZED_LEGEND = (props: any) => {
+	const { payload } = props;
+	return (
+		<ul className="flex flex-wrap justify-center gap-x-4 gap-y-1 pt-2 text-xs">
+			{payload.map((entry: any, index: number) => (
+				<li key={`legend-${index}`} className="flex items-center gap-1.5">
+					<span
+						className="inline-block w-2.5 h-2.5 rounded-full"
+						style={{ background: entry.color }}
+					/>
+					<span className="text-muted-foreground">{entry.value}</span>
+				</li>
+			))}
+		</ul>
+	);
+};
+
+function renderCustomizedLabel({
+	cx,
+	cy,
+}: {
+	cx: number;
+	cy: number;
+	totalSaldo: number;
+}) {
+	// Don't render — we use a positioned overlay instead
+	return null;
+}
 
 export function BalancePieChart({ saldosPorCuenta }: BalancePieChartProps) {
 	const [activeIndex, setActiveIndex] = useState<number | null>(null);
 
 	if (saldosPorCuenta.length === 0) return null;
 
-	// Agrupar por moneda y preparar datos
 	const data = saldosPorCuenta
 		.filter((c) => c.saldoActual !== 0)
 		.map((c) => ({
@@ -51,52 +71,65 @@ export function BalancePieChart({ saldosPorCuenta }: BalancePieChartProps) {
 			value: Math.abs(c.saldoActual),
 			moneda: c.moneda,
 			saldoActual: c.saldoActual,
-			label: `${c.nombre} (${c.moneda})`,
 		}))
 		.sort((a, b) => b.value - a.value);
 
 	if (data.length === 0) return null;
 
+	const totalSaldo = data.reduce((s, d) => s + d.saldoActual, 0);
+	const totalSign = totalSaldo >= 0 ? "" : "-";
+	const totalAbs = Math.abs(totalSaldo);
+
 	return (
 		<motion.div
-			initial={{ opacity: 0, scale: 0.96 }}
-			animate={{ opacity: 1, scale: 1 }}
+			initial={{ opacity: 0, y: 16 }}
+			animate={{ opacity: 1, y: 0 }}
 			transition={{ duration: 0.4, ease: "easeOut" }}
-			className="bg-card border rounded-lg p-4 h-full"
+			className="bg-card border rounded-xl p-5 h-full shadow-sm"
 		>
 			<div className="flex items-center gap-2 mb-3">
-				<PieChartIcon className="h-4 w-4 text-muted-foreground" />
+				<div className="p-1.5 rounded-lg bg-primary/10">
+					<PieChartIcon className="h-4 w-4 text-primary" />
+				</div>
 				<h3 className="text-sm font-semibold">
-					Distribución del Balance por Cuenta
+					Distribución del Balance
 				</h3>
 			</div>
-			<div className="h-[240px]">
+
+			<div className="relative h-[260px]">
 				<ResponsiveContainer width="100%" height="100%">
 					<PieChart>
+						<GradientDefs />
 						<Pie
 							data={data}
 							cx="50%"
 							cy="50%"
-							innerRadius={55}
-							outerRadius={95}
-							paddingAngle={2}
+							innerRadius={58}
+							outerRadius={98}
+							paddingAngle={3}
 							dataKey="value"
+							strokeWidth={2}
+							stroke="hsl(var(--background))"
 							onMouseEnter={(_, index) => setActiveIndex(index)}
 							onMouseLeave={() => setActiveIndex(null)}
-							animationDuration={400}
+							animationBegin={200}
+							animationDuration={600}
 							animationEasing="ease-out"
 						>
-							{data.map((entry, index) => (
+							{data.map((_entry, index) => (
 								<Cell
 									key={`cell-${index}`}
-									fill={COLORS[index % COLORS.length]}
+									fill={`url(#${`pieGradient-${index}`})`}
 									opacity={
-										activeIndex === null || activeIndex === index ? 1 : 0.5
+										activeIndex === null || activeIndex === index ? 1 : 0.4
 									}
 									stroke={
-										activeIndex === index ? "hsl(var(--foreground))" : "none"
+										activeIndex === index
+											? "hsl(var(--foreground))"
+											: "hsl(var(--background))"
 									}
-									strokeWidth={activeIndex === index ? 2 : 0}
+									strokeWidth={activeIndex === index ? 2.5 : 2}
+									style={{ cursor: "pointer" }}
 								/>
 							))}
 						</Pie>
@@ -110,18 +143,28 @@ export function BalancePieChart({ saldosPorCuenta }: BalancePieChartProps) {
 								props: { payload: { saldoActual: number; moneda: string } },
 							) => [
 								formatCurrency(value, props.payload.moneda),
-								props.payload.name,
+								"Saldo",
 							]}
 						/>
-						<Legend
-							formatter={(value: string) => (
-								<span className="text-xs text-muted-foreground">{value}</span>
-							)}
-							iconSize={10}
-							wrapperStyle={{ fontSize: "11px", paddingTop: "8px" }}
-						/>
+						<Legend content={CUSTOMIZED_LEGEND} />
 					</PieChart>
 				</ResponsiveContainer>
+
+				{/* Total en el centro de la dona */}
+				<div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+					<div className="text-center">
+						<p className="text-[10px] text-muted-foreground uppercase tracking-wider">
+							Total
+						</p>
+						<p className="text-base font-bold">
+							{totalSign}${" "}
+							{totalAbs.toLocaleString("es-CU", {
+								minimumFractionDigits: 2,
+								maximumFractionDigits: 2,
+							})}
+						</p>
+					</div>
+				</div>
 			</div>
 		</motion.div>
 	);

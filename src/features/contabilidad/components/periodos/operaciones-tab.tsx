@@ -1,9 +1,11 @@
 /**
- * @description Tab de operaciones del período en el cuadre de cierre.
- * Muestra todas las transacciones del período con filtros y paginación.
+ * @description Tab de operaciones del período con animaciones Framer Motion.
+ * Muestra todas las transacciones del período con filtros, paginación
+ * y entrada animada de filas.
  */
 "use client";
 
+import { motion } from "framer-motion";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -36,6 +38,12 @@ import {
 	Landmark,
 	HandCoins,
 } from "lucide-react";
+import {
+	staggerContainer,
+	fadeUp,
+	slideRow,
+	staggerSlow,
+} from "../cuadre/animations";
 import type { OperacionItem, OperacionesData } from "../../cuadre-queries";
 
 interface OperacionesTabProps {
@@ -118,9 +126,17 @@ export function OperacionesTab({
 	const { items, totalPages, page, totalCount } = data;
 
 	return (
-		<div className="space-y-4">
+		<motion.div
+			variants={staggerContainer}
+			initial="hidden"
+			animate="visible"
+			className="space-y-4"
+		>
 			{/* Filtro y contador */}
-			<div className="flex items-center justify-between">
+			<motion.div
+				variants={fadeUp}
+				className="flex items-center justify-between"
+			>
 				<div className="flex items-center gap-3">
 					<Select value={filtroActivo} onValueChange={onFiltroChange}>
 						<SelectTrigger className="w-[180px]">
@@ -138,82 +154,100 @@ export function OperacionesTab({
 				<p className="text-sm text-muted-foreground">
 					{totalCount} operación{totalCount !== 1 ? "es" : ""}
 				</p>
-			</div>
+			</motion.div>
 
 			{/* Tabla */}
-			<Card>
-				<CardContent className="p-0">
-					<Table>
-						<TableHeader>
-							<TableRow>
-								<TableHead>Fecha</TableHead>
-								<TableHead>Tipo</TableHead>
-								<TableHead>Descripción</TableHead>
-								<TableHead>Monto</TableHead>
-								<TableHead>Moneda</TableHead>
-								<TableHead>Referencia</TableHead>
-							</TableRow>
-						</TableHeader>
-						<TableBody>
-							{items.length === 0 ? (
+			<motion.div variants={fadeUp}>
+				<Card>
+					<CardContent className="p-0">
+						<Table>
+							<TableHeader>
 								<TableRow>
-									<TableCell
-										colSpan={6}
-										className="text-center text-muted-foreground py-8"
-									>
-										No hay operaciones con el filtro seleccionado.
-									</TableCell>
+									<TableHead>Fecha</TableHead>
+									<TableHead>Tipo</TableHead>
+									<TableHead>Descripción</TableHead>
+									<TableHead>Monto</TableHead>
+									<TableHead>Moneda</TableHead>
+									<TableHead>Referencia</TableHead>
 								</TableRow>
-							) : (
-								items.map((item) => {
-									const cfg = TIPO_CONFIG[item.tipo] ?? {
-										label: item.tipo,
-										icon: Receipt,
-										color: "bg-gray-100 text-gray-800",
-									};
-									const Icon = cfg.icon;
-									return (
-										<TableRow key={`${item.tipo}-${item.id}`}>
-											<TableCell className="text-sm">
-												{format(new Date(item.fecha), "dd/MM/yy HH:mm", {
-													locale: es,
-												})}
-											</TableCell>
-											<TableCell>
-												<Badge
-													variant="outline"
-													className={`text-xs ${cfg.color}`}
-												>
-													<Icon className="h-3 w-3 mr-1" />
-													{cfg.label}
-												</Badge>
-											</TableCell>
-											<TableCell className="text-sm max-w-[250px] truncate">
-												{item.descripcion}
-											</TableCell>
-											<TableCell className="font-medium">
-												{formatMonto(item.monto)}
-											</TableCell>
-											<TableCell>
-												<Badge variant="secondary" className="text-xs">
-													{item.moneda}
-												</Badge>
-											</TableCell>
-											<TableCell className="text-xs text-muted-foreground font-mono">
-												{item.referencia ?? "—"}
+							</TableHeader>
+							<TableBody asChild>
+								<motion.tbody
+									variants={staggerSlow}
+									initial="hidden"
+									animate="visible"
+								>
+									{items.length === 0 ? (
+										<TableRow>
+											<TableCell
+												colSpan={6}
+												className="text-center text-muted-foreground py-8"
+											>
+												No hay operaciones con el filtro seleccionado.
 											</TableCell>
 										</TableRow>
-									);
-								})
-							)}
-						</TableBody>
-					</Table>
-				</CardContent>
-			</Card>
+									) : (
+										items.map((item) => {
+											const cfg = TIPO_CONFIG[item.tipo] ?? {
+												label: item.tipo,
+												icon: Receipt,
+												color: "bg-gray-100 text-gray-800",
+											};
+											const Icon = cfg.icon;
+											return (
+												<motion.tr
+													key={`${item.tipo}-${item.id}`}
+													variants={slideRow}
+												>
+													<TableCell className="text-sm">
+														{format(
+															new Date(item.fecha),
+															"dd/MM/yy HH:mm",
+															{ locale: es },
+														)}
+													</TableCell>
+													<TableCell>
+														<Badge
+															variant="outline"
+															className={`text-xs ${cfg.color}`}
+														>
+															<Icon className="h-3 w-3 mr-1" />
+															{cfg.label}
+														</Badge>
+													</TableCell>
+													<TableCell className="text-sm max-w-[250px] truncate">
+														{item.descripcion}
+													</TableCell>
+													<TableCell className="font-medium">
+														{formatMonto(item.monto)}
+													</TableCell>
+													<TableCell>
+														<Badge variant="secondary" className="text-xs">
+															{item.moneda}
+														</Badge>
+													</TableCell>
+													<TableCell className="text-xs text-muted-foreground font-mono">
+														{item.referencia ?? "—"}
+													</TableCell>
+												</motion.tr>
+											);
+										})
+									)}
+								</motion.tbody>
+							</TableBody>
+						</Table>
+					</CardContent>
+				</Card>
+			</motion.div>
 
 			{/* Paginación */}
 			{totalPages > 1 && (
-				<div className="flex items-center justify-between">
+				<motion.div
+					initial={{ opacity: 0 }}
+					animate={{ opacity: 1 }}
+					transition={{ delay: 0.3 }}
+					className="flex items-center justify-between"
+				>
 					<p className="text-sm text-muted-foreground">
 						Página {page} de {totalPages}
 					</p>
@@ -224,8 +258,7 @@ export function OperacionesTab({
 							onClick={() => onPageChange(page - 1)}
 							disabled={page <= 1 || isLoading}
 						>
-							<ChevronLeft className="h-4 w-4 mr-1" />
-							Anterior
+							<ChevronLeft className="h-4 w-4 mr-1" /> Anterior
 						</Button>
 						<Button
 							variant="outline"
@@ -237,8 +270,8 @@ export function OperacionesTab({
 							<ChevronRight className="h-4 w-4 ml-1" />
 						</Button>
 					</div>
-				</div>
+				</motion.div>
 			)}
-		</div>
+		</motion.div>
 	);
 }

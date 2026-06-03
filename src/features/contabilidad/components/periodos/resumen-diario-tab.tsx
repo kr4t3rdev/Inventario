@@ -1,11 +1,12 @@
 /**
- * @description Tab de resumen diario del cuadre de período.
- * Muestra acordeón por día con ingresos/egresos/neto,
- * expandible para ver operaciones individuales de cada día.
+ * @description Tab de resumen diario con acordeón animado (Framer Motion).
+ * Muestra ingresos/egresos/neto por día, expandible para ver
+ * operaciones individuales cargadas bajo demanda.
  */
 "use client";
 
 import { useState } from "react";
+import { motion, AnimatePresence } from "framer-motion";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import {
@@ -21,11 +22,16 @@ import { es } from "date-fns/locale";
 import {
 	ChevronDown,
 	ChevronRight,
-	TrendingUp,
-	TrendingDown,
 	CalendarDays,
 	Loader2,
 } from "lucide-react";
+import {
+	staggerContainer,
+	fadeUp,
+	listItem,
+	cardSlideUp,
+	cardHover,
+} from "../cuadre/animations";
 import type { ResumenDiarioItem, OperacionItem } from "../../cuadre-queries";
 
 interface ResumenDiarioTabProps {
@@ -40,6 +46,7 @@ function formatMonto(monto: number): string {
 	})}`;
 }
 
+/** @description Fila de acordeón con animación de expand */
 function DiaRow({
 	item,
 	operaciones,
@@ -58,18 +65,22 @@ function DiaRow({
 	const fechaFormatted = format(fechaObj, "d 'de' MMM", { locale: es });
 
 	return (
-		<div className="border rounded-lg overflow-hidden">
+		<motion.div
+			variants={listItem}
+			className="border rounded-lg overflow-hidden"
+		>
 			<button
 				type="button"
 				onClick={onToggle}
-				className="w-full flex items-center justify-between px-4 py-3 hover:bg-muted/50 transition-colors text-left"
+				className="w-full flex items-center justify-between px-4 py-3 hover:bg-muted/50 transition-colors text-left cursor-pointer"
 			>
 				<div className="flex items-center gap-3">
-					{isExpanded ? (
-						<ChevronDown className="h-4 w-4 text-muted-foreground" />
-					) : (
+					<motion.div
+						animate={{ rotate: isExpanded ? 90 : 0 }}
+						transition={{ duration: 0.2 }}
+					>
 						<ChevronRight className="h-4 w-4 text-muted-foreground" />
-					)}
+					</motion.div>
 					<div>
 						<div className="flex items-center gap-2">
 							<CalendarDays className="h-4 w-4 text-muted-foreground" />
@@ -121,51 +132,64 @@ function DiaRow({
 				</div>
 			</button>
 
-			{/* Expandido: operaciones del día */}
-			{isExpanded && (
-				<div className="border-t bg-muted/30 px-4 py-3">
-					{isLoading ? (
-						<div className="flex items-center justify-center py-4">
-							<Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
+			{/* Expandido animado */}
+			<AnimatePresence initial={false}>
+				{isExpanded && (
+					<motion.div
+						key={`content-${item.fecha}`}
+						initial={{ height: 0, opacity: 0 }}
+						animate={{ height: "auto", opacity: 1 }}
+						exit={{ height: 0, opacity: 0 }}
+						transition={{ duration: 0.25, ease: "easeInOut" }}
+						className="overflow-hidden"
+					>
+						<div className="border-t bg-muted/30 px-4 py-3">
+							{isLoading ? (
+								<div className="flex items-center justify-center py-4">
+									<Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
+								</div>
+							) : operaciones.length === 0 ? (
+								<p className="text-sm text-muted-foreground text-center py-2">
+									No hay operaciones este día.
+								</p>
+							) : (
+								<div className="overflow-x-auto">
+									<Table>
+										<TableHeader>
+											<TableRow>
+												<TableHead className="text-xs">Tipo</TableHead>
+												<TableHead className="text-xs">Descripción</TableHead>
+												<TableHead className="text-xs text-right">
+													Monto
+												</TableHead>
+											</TableRow>
+										</TableHeader>
+										<TableBody>
+											{operaciones.map((op) => (
+												<TableRow key={`${op.tipo}-${op.id}`}>
+													<TableCell>
+														<Badge variant="outline" className="text-[10px]">
+															{op.tipo}
+														</Badge>
+													</TableCell>
+													<TableCell className="text-sm max-w-[200px] truncate">
+														{op.descripcion}
+													</TableCell>
+													<TableCell className="text-sm text-right font-medium">
+														{op.monto > 0 ? "+" : ""}
+														{formatMonto(op.monto)}
+													</TableCell>
+												</TableRow>
+											))}
+										</TableBody>
+									</Table>
+								</div>
+							)}
 						</div>
-					) : operaciones.length === 0 ? (
-						<p className="text-sm text-muted-foreground text-center py-2">
-							No hay operaciones este día.
-						</p>
-					) : (
-						<div className="overflow-x-auto">
-							<Table>
-								<TableHeader>
-									<TableRow>
-										<TableHead className="text-xs">Tipo</TableHead>
-										<TableHead className="text-xs">Descripción</TableHead>
-										<TableHead className="text-xs text-right">Monto</TableHead>
-									</TableRow>
-								</TableHeader>
-								<TableBody>
-									{operaciones.map((op) => (
-										<TableRow key={`${op.tipo}-${op.id}`}>
-											<TableCell>
-												<Badge variant="outline" className="text-[10px]">
-													{op.tipo}
-												</Badge>
-											</TableCell>
-											<TableCell className="text-sm max-w-[200px] truncate">
-												{op.descripcion}
-											</TableCell>
-											<TableCell className="text-sm text-right font-medium">
-												{op.monto > 0 ? "+" : ""}
-												{formatMonto(op.monto)}
-											</TableCell>
-										</TableRow>
-									))}
-								</TableBody>
-							</Table>
-						</div>
-					)}
-				</div>
-			)}
-		</div>
+					</motion.div>
+				)}
+			</AnimatePresence>
+		</motion.div>
 	);
 }
 
@@ -184,7 +208,6 @@ export function ResumenDiarioTab({ items, onLoadDia }: ResumenDiarioTabProps) {
 
 		setExpandedDia(fecha);
 
-		// Si no tenemos las operaciones y hay un loader, cargar bajo demanda
 		if (!operacionesPorDia[fecha] && onLoadDia) {
 			setLoadingDia(fecha);
 			try {
@@ -198,49 +221,68 @@ export function ResumenDiarioTab({ items, onLoadDia }: ResumenDiarioTabProps) {
 
 	if (items.length === 0) {
 		return (
-			<div className="flex flex-col items-center justify-center py-12 text-muted-foreground">
+			<motion.div
+				variants={fadeUp}
+				initial="hidden"
+				animate="visible"
+				className="flex flex-col items-center justify-center py-12 text-muted-foreground"
+			>
 				<CalendarDays className="h-12 w-12 mb-3 opacity-20" />
 				<p>No hay operaciones en este período.</p>
-			</div>
+			</motion.div>
 		);
 	}
 
+	const totalIngresos = items.reduce((s, i) => s + i.totalIngresos, 0);
+	const totalEgresos = items.reduce((s, i) => s + i.totalEgresos, 0);
+	const totalNeto = items.reduce((s, i) => s + i.neto, 0);
+
 	return (
-		<div className="space-y-2">
+		<motion.div
+			variants={staggerContainer}
+			initial="hidden"
+			animate="visible"
+			className="space-y-2"
+		>
 			{/* Totales del período */}
-			<Card className="mb-4">
-				<CardContent className="p-4">
-					<div className="grid grid-cols-3 gap-4 text-center">
-						<div>
-							<p className="text-xs text-muted-foreground">Total Ingresos</p>
-							<p className="text-lg font-bold text-green-600">
-								+{formatMonto(items.reduce((s, i) => s + i.totalIngresos, 0))}
-							</p>
+			<motion.div variants={cardSlideUp} custom={0} {...cardHover}>
+				<Card className="mb-4">
+					<CardContent className="p-4">
+						<div className="grid grid-cols-3 gap-4 text-center">
+							<div>
+								<p className="text-xs text-muted-foreground">
+									Total Ingresos
+								</p>
+								<p className="text-lg font-bold text-green-600">
+									+{formatMonto(totalIngresos)}
+								</p>
+							</div>
+							<div>
+								<p className="text-xs text-muted-foreground">
+									Total Egresos
+								</p>
+								<p className="text-lg font-bold text-red-600">
+									-{formatMonto(totalEgresos)}
+								</p>
+							</div>
+							<div>
+								<p className="text-xs text-muted-foreground">Neto</p>
+								<p
+									className={`text-lg font-bold ${
+										totalNeto >= 0 ? "text-green-700" : "text-red-700"
+									}`}
+								>
+									{totalNeto >= 0 ? "+" : ""}
+									{formatMonto(totalNeto)}
+								</p>
+							</div>
 						</div>
-						<div>
-							<p className="text-xs text-muted-foreground">Total Egresos</p>
-							<p className="text-lg font-bold text-red-600">
-								-{formatMonto(items.reduce((s, i) => s + i.totalEgresos, 0))}
-							</p>
-						</div>
-						<div>
-							<p className="text-xs text-muted-foreground">Neto</p>
-							<p
-								className={`text-lg font-bold ${
-									items.reduce((s, i) => s + i.neto, 0) >= 0
-										? "text-green-700"
-										: "text-red-700"
-								}`}
-							>
-								{formatMonto(items.reduce((s, i) => s + i.neto, 0))}
-							</p>
-						</div>
-					</div>
-				</CardContent>
-			</Card>
+					</CardContent>
+				</Card>
+			</motion.div>
 
 			{/* Acordeón por día */}
-			<div className="space-y-1">
+			<motion.div variants={staggerContainer} className="space-y-1">
 				{items.map((item) => (
 					<DiaRow
 						key={item.fecha}
@@ -251,7 +293,7 @@ export function ResumenDiarioTab({ items, onLoadDia }: ResumenDiarioTabProps) {
 						isExpanded={expandedDia === item.fecha}
 					/>
 				))}
-			</div>
-		</div>
+			</motion.div>
+		</motion.div>
 	);
 }
