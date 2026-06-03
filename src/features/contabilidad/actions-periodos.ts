@@ -26,6 +26,12 @@ import {
 } from "@/lib/services/periodo-contable-types";
 import { isTenantAdminRole } from "@/lib/auth/roles";
 import { prisma } from "@/lib/prisma";
+import {
+	obtenerBalanceConVariacion,
+	obtenerVentasVsReconciliado,
+	obtenerResumenDiario,
+	obtenerOperacionesPeriodo,
+} from "@/features/contabilidad/cuadre-queries";
 
 // ── Period Lock Check (para bloqueos visuales en UI) ─────────────────────
 
@@ -714,5 +720,146 @@ export const integrarArqueosEnPeriodoAction = withAction(
 		});
 
 		return { arqueosIntegrados: arqueos.length };
+	},
+);
+
+// ── Cuadre para cierre de período ────────────────────────────────────────
+
+const obtenerCuadreSchema = z.object({
+	periodoId: z.string().min(1),
+	pageVentas: z.number().int().positive().default(1),
+	pageOperaciones: z.number().int().positive().default(1),
+	pageSize: z.number().int().positive().max(50).default(20),
+	filtroOperacion: z
+		.enum(["todas", "venta", "servicio", "gasto", "transferencia", "ajuste"])
+		.default("todas"),
+});
+
+/**
+ * @description Obtiene el cuadre completo de un período para la pantalla de cierre.
+ *
+ * Retorna balance (saldos por cuenta con variación), ventas vs reconciliado
+ * (operación por operación), resumen diario (agregado por día) y operaciones
+ * del período. Los datos reflejan el estado en vivo de la base de datos.
+ *
+ * @param {Object} input - Parámetros de consulta.
+ * @param {string} input.periodoId - ID del período.
+ * @param {number} [input.pageVentas=1] - Página de ventas.
+ * @param {number} [input.pageOperaciones=1] - Página de operaciones.
+ * @param {number} [input.pageSize=20] - Items por página.
+ * @param {string} [input.filtroOperacion="todas"] - Filtro por tipo.
+ * @param {AuthenticatedUser} user - Usuario autenticado (inyectado por withAction).
+ * @returns {Promise<Object>} Cuadre completo del período.
+ */
+export const obtenerCuadrePeriodoAction = withAction(
+	async (
+		input: z.infer<typeof obtenerCuadreSchema>,
+		user: AuthenticatedUser,
+	) => {
+		const tenantId = requireTenant(user);
+		const parsed = obtenerCuadreSchema.parse(input);
+
+		const periodo = await prisma.periodoContable.findFirst({
+			where: { periodoId: parsed.periodoId, tenantId },
+		});
+
+		if (!periodo) {
+			throw new ActionError("Período no encontrado", "NOT_FOUND");
+		}
+
+		if (periodo.estado !== "ABIERTO" && periodo.estado !== "REABIERTO") {
+			throw new ActionError(
+				"El período debe estar abierto para ver el cuadre",
+				"INVALID_STATE",
+			);
+		}
+
+		const modoContable = periodo.modoContable ?? "CAJA";
+		const rango = { gte: periodo.fechaInicio, lte: periodo.fechaFin };
+
+		const [balance, ventasVsReconciliado, resumenDiario, operaciones] =
+			await Promise.all([
+				obtenerBalanceConVariacion(tenantId, rango, modoContable),
+				obtenerVentasVsReconciliado(
+					tenantId,
+					rango,
+					modoContable,
+					parsed.pageVentas,
+					parsed.pageSize,
+				),
+				obtenerResumenDiario(tenantId, rango, modoContable),
+				obtenerOperacionesPeriodo(
+					tenantId,
+					rango,
+					modoContable,
+					parsed.pageOperaciones,
+					parsed.pageSize,
+					parsed.filtroOperacion,
+				),
+			]);
+
+		return {
+			periodo: {
+				periodoId: periodo.periodoId,
+				codigo: periodo.codigo,
+				tipo: periodo.tipo,
+				estado: periodo.estado,
+				modoContable: periodo.modoContable,
+				fechaInicio: periodo.fechaInicio.toISOString(),
+				fechaFin: periodo.fechaFin.toISOString(),
+				abiertoPorId: periodo.abiertoPorId,
+				fechaApertura: periodo.fechaApertura?.toISOString() ?? null,
+			},
+			balance,
+			ventasVsReconciliado,
+			resumenDiario,
+			operaciones,
+		};
+	},
+);
+
+const obtenerOperacionesDiaSchema = z.object({
+	periodoId: z.string().min(1),
+	fecha: z.string().min(10), // YYYY-MM-DD
+});
+
+/**
+ * @description Obtiene las operaciones detalladas de un día específico dentro de un período.
+ * Usado por el tab de Resumen Diario para lazy loading al expandir un día.
+ *
+ * @param {Object} input - { periodoId, fecha }.
+ * @param {AuthenticatedUser} user - Usuario autenticado.
+ * @returns {Promise<OperacionItem[]>} Operaciones del día.
+ */
+export const obtenerOperacionesDiaAction = withAction(
+	async (
+		input: z.infer<typeof obtenerOperacionesDiaSchema>,
+		user: AuthenticatedUser,
+	) => {
+		const tenantId = requireTenant(user);
+		const parsed = obtenerOperacionesDiaSchema.parse(input);
+
+		const periodo = await prisma.periodoContable.findFirst({
+			where: { periodoId: parsed.periodoId, tenantId },
+		});
+		if (!periodo) {
+			throw new ActionError("Período no encontrado", "NOT_FOUND");
+		}
+
+		const modoContable = periodo.modoContable ?? "CAJA";
+		const inicio = new Date(`${parsed.fecha}T00:00:00.000Z`);
+		const fin = new Date(`${parsed.fecha}T23:59:59.999Z`);
+		const rango = { gte: inicio, lte: fin };
+
+		const result = await obtenerOperacionesPeriodo(
+			tenantId,
+			rango,
+			modoContable,
+			1,
+			500,
+			"todas",
+		);
+
+		return result.items;
 	},
 );
