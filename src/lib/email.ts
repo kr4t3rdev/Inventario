@@ -1,19 +1,19 @@
-import nodemailer from 'nodemailer'
+import nodemailer from "nodemailer";
 
 // Create a transporter object using the default SMTP transport
 const transporter = nodemailer.createTransport({
-  host: process.env.SMTP_HOST || 'smtp.gmail.com',
-  port: parseInt(process.env.SMTP_PORT || '587'),
-  secure: process.env.SMTP_SECURE === 'true', // true for 465, false for other ports
-  auth: {
-    user: process.env.SMTP_USER,
-    pass: process.env.SMTP_PASSWORD,
-  },
-})
+	host: process.env.SMTP_HOST || "smtp.gmail.com",
+	port: parseInt(process.env.SMTP_PORT || "587"),
+	secure: process.env.SMTP_SECURE === "true", // true for 465, false for other ports
+	auth: {
+		user: process.env.SMTP_USER,
+		pass: process.env.SMTP_PASSWORD,
+	},
+});
 
 // Rate limiting simple para errores (evita spam de emails)
-const errorCache = new Map<string, number>()
-const ERROR_COOLDOWN_MS = 5 * 60 * 1000 // 5 minutos entre emails del mismo error
+const errorCache = new Map<string, number>();
+const ERROR_COOLDOWN_MS = 5 * 60 * 1000; // 5 minutos entre emails del mismo error
 
 /**
  * @description Genera una clave única para el error basada en el mensaje
@@ -21,30 +21,32 @@ const ERROR_COOLDOWN_MS = 5 * 60 * 1000 // 5 minutos entre emails del mismo erro
  * @returns {string} Clave única del error
  */
 function getErrorKey(error: Error): string {
-  // Usa solo las primeras 100 chars del mensaje para agrupar errores similares
-  return error.message.slice(0, 100)
+	// Usa solo las primeras 100 chars del mensaje para agrupar errores similares
+	return error.message.slice(0, 100);
 }
 
 export async function sendEmail(to: string, subject: string, html: string) {
-  if (!process.env.SMTP_USER || !process.env.SMTP_PASSWORD) {
-    console.warn('SMTP credentials not found (SMTP_USER/SMTP_PASSWORD). Email not sent.')
-    return null
-  }
+	if (!process.env.SMTP_USER || !process.env.SMTP_PASSWORD) {
+		console.warn(
+			"SMTP credentials not found (SMTP_USER/SMTP_PASSWORD). Email not sent.",
+		);
+		return null;
+	}
 
-  try {
-    const info = await transporter.sendMail({
-      from: process.env.SMTP_FROM || process.env.SMTP_USER,
-      to,
-      subject,
-      html,
-    })
+	try {
+		const info = await transporter.sendMail({
+			from: process.env.SMTP_FROM || process.env.SMTP_USER,
+			to,
+			subject,
+			html,
+		});
 
-    console.log('Email sent: %s', info.messageId)
-    return info
-  } catch (error) {
-    console.error('Error sending email:', error)
-    return null
-  }
+		console.log("Email sent: %s", info.messageId);
+		return info;
+	} catch (error) {
+		console.error("Error sending email:", error);
+		return null;
+	}
 }
 
 /**
@@ -52,16 +54,17 @@ export async function sendEmail(to: string, subject: string, html: string) {
  * @param {string} to - Correo del usuario.
  * @param {string} verificationUrl - URL completa con el token temporal.
  * @param {string} userName - Nombre del usuario.
- * @returns {Promise<void>}
+ * @returns {Promise<{success: boolean, messageId?: string}>} Resultado del envío
  */
 export async function sendEmailVerificationLink(
-  to: string,
-  verificationUrl: string,
-  userName: string,
-): Promise<void> {
-  const appName = process.env.NEXT_PUBLIC_APP_NAME || 'Sistema de Gestion FinanceMDM'
+	to: string,
+	verificationUrl: string,
+	userName: string,
+): Promise<{ success: boolean; messageId?: string }> {
+	const appName =
+		process.env.NEXT_PUBLIC_APP_NAME || "Sistema de Gestion FinanceMDM";
 
-  const html = `
+	const html = `
     <div style="font-family: Arial, sans-serif; max-width: 640px; margin: 0 auto; padding: 24px; color: #0f172a;">
       <h2 style="margin: 0 0 16px; color: #4f46e5;">Verificá tu correo</h2>
       <p>Hola ${userName}, gracias por registrarte en <strong>${appName}</strong>.</p>
@@ -73,25 +76,26 @@ export async function sendEmailVerificationLink(
       </p>
       <p style="font-size: 14px; color: #64748b;">Si no fuiste vos, ignorá este mensaje.</p>
     </div>
-  `
+  `;
 
-  await sendEmail(to, `Verificá tu correo en ${appName}`, html)
+	const result = await sendEmail(to, `Verificá tu correo en ${appName}`, html);
+	return { success: result !== null, messageId: result?.messageId };
 }
 
 export async function sendNewUserNotification(
-  newUserName: string,
-  newUserEmail: string,
-  newUserRole: string,
-  createdBy: string
+	newUserName: string,
+	newUserEmail: string,
+	newUserRole: string,
+	createdBy: string,
 ): Promise<void> {
-  const adminEmail = process.env.ADMIN_EMAIL
-  if (!adminEmail) {
-    console.warn('ADMIN_EMAIL not configured. Skipping new user notification.')
-    return
-  }
+	const adminEmail = process.env.ADMIN_EMAIL;
+	if (!adminEmail) {
+		console.warn("ADMIN_EMAIL not configured. Skipping new user notification.");
+		return;
+	}
 
-  const appName = process.env.NEXT_PUBLIC_APP_NAME || 'Sistema de Inventario'
-  const html = `
+	const appName = process.env.NEXT_PUBLIC_APP_NAME || "Sistema de Inventario";
+	const html = `
     <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
       <h2 style="color: #059669;">✅ Nuevo usuario registrado en ${appName}</h2>
       
@@ -106,7 +110,7 @@ export async function sendNewUserNotification(
         </tr>
         <tr style="background: #f3f4f6;">
           <td style="padding: 10px; border: 1px solid #d1d5db;"><strong>Rol:</strong></td>
-          <td style="padding: 10px; border: 1px solid #d1d5db;">${newUserRole === 'admin' ? 'Administrador' : 'Usuario'}</td>
+          <td style="padding: 10px; border: 1px solid #d1d5db;">${newUserRole === "admin" ? "Administrador" : "Usuario"}</td>
         </tr>
         <tr>
           <td style="padding: 10px; border: 1px solid #d1d5db;"><strong>Registrado por:</strong></td>
@@ -114,7 +118,7 @@ export async function sendNewUserNotification(
         </tr>
         <tr style="background: #f3f4f6;">
           <td style="padding: 10px; border: 1px solid #d1d5db;"><strong>Fecha:</strong></td>
-          <td style="padding: 10px; border: 1px solid #d1d5db;">${new Date().toLocaleString('es-ES')}</td>
+          <td style="padding: 10px; border: 1px solid #d1d5db;">${new Date().toLocaleString("es-ES")}</td>
         </tr>
       </table>
 
@@ -127,30 +131,32 @@ export async function sendNewUserNotification(
         Este es un mensaje automático del sistema ${appName}.
       </p>
     </div>
-  `
+  `;
 
-  await sendEmail(
-    adminEmail,
-    `✅ Nuevo usuario registrado: ${newUserName}`,
-    html
-  )
+	await sendEmail(
+		adminEmail,
+		`✅ Nuevo usuario registrado: ${newUserName}`,
+		html,
+	);
 }
 
 export async function sendFailedLoginAttemptsNotification(
-  userName: string,
-  userEmail: string,
-  attempts: number,
-  ipAddress: string | null,
-  userAgent: string | null
+	userName: string,
+	userEmail: string,
+	attempts: number,
+	ipAddress: string | null,
+	userAgent: string | null,
 ): Promise<void> {
-  const adminEmail = process.env.ADMIN_EMAIL
-  if (!adminEmail) {
-    console.warn('ADMIN_EMAIL not configured. Skipping failed login notification.')
-    return
-  }
+	const adminEmail = process.env.ADMIN_EMAIL;
+	if (!adminEmail) {
+		console.warn(
+			"ADMIN_EMAIL not configured. Skipping failed login notification.",
+		);
+		return;
+	}
 
-  const appName = process.env.NEXT_PUBLIC_APP_NAME || 'Sistema de Inventario'
-  const html = `
+	const appName = process.env.NEXT_PUBLIC_APP_NAME || "Sistema de Inventario";
+	const html = `
     <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
       <h2 style="color: #dc2626;">🚨 Alerta de seguridad: Intentos de login fallidos</h2>
       
@@ -175,15 +181,15 @@ export async function sendFailedLoginAttemptsNotification(
         </tr>
         <tr>
           <td style="padding: 10px; border: 1px solid #d1d5db;"><strong>IP:</strong></td>
-          <td style="padding: 10px; border: 1px solid #d1d5db;">${ipAddress || 'No detectada'}</td>
+          <td style="padding: 10px; border: 1px solid #d1d5db;">${ipAddress || "No detectada"}</td>
         </tr>
         <tr style="background: #f3f4f6;">
           <td style="padding: 10px; border: 1px solid #d1d5db;"><strong>Dispositivo:</strong></td>
-          <td style="padding: 10px; border: 1px solid #d1d5db;">${userAgent || 'No detectado'}</td>
+          <td style="padding: 10px; border: 1px solid #d1d5db;">${userAgent || "No detectado"}</td>
         </tr>
         <tr>
           <td style="padding: 10px; border: 1px solid #d1d5db;"><strong>Fecha:</strong></td>
-          <td style="padding: 10px; border: 1px solid #d1d5db;">${new Date().toLocaleString('es-ES')}</td>
+          <td style="padding: 10px; border: 1px solid #d1d5db;">${new Date().toLocaleString("es-ES")}</td>
         </tr>
       </table>
 
@@ -196,13 +202,13 @@ export async function sendFailedLoginAttemptsNotification(
         Este es un mensaje automático del sistema ${appName}.
       </p>
     </div>
-  `
+  `;
 
-  await sendEmail(
-    adminEmail,
-    `🚨 Alerta: ${attempts} intentos fallidos para ${userName}`,
-    html
-  )
+	await sendEmail(
+		adminEmail,
+		`🚨 Alerta: ${attempts} intentos fallidos para ${userName}`,
+		html,
+	);
 }
 
 /**
@@ -215,42 +221,42 @@ export async function sendFailedLoginAttemptsNotification(
  * @returns {Promise<void>}
  */
 export async function sendErrorAlert(
-  error: Error,
-  context?: {
-    endpoint?: string
-    userId?: string
-    additionalInfo?: string
-  }
+	error: Error,
+	context?: {
+		endpoint?: string;
+		userId?: string;
+		additionalInfo?: string;
+	},
 ): Promise<void> {
-  // Verificar que esté configurado el email de alertas
-  if (!process.env.ERROR_ALERT_EMAIL) {
-    return
-  }
+	// Verificar que esté configurado el email de alertas
+	if (!process.env.ERROR_ALERT_EMAIL) {
+		return;
+	}
 
-  // Rate limiting: evitar spam de emails
-  const errorKey = getErrorKey(error)
-  const lastSent = errorCache.get(errorKey)
-  const now = Date.now()
+	// Rate limiting: evitar spam de emails
+	const errorKey = getErrorKey(error);
+	const lastSent = errorCache.get(errorKey);
+	const now = Date.now();
 
-  if (lastSent && now - lastSent < ERROR_COOLDOWN_MS) {
-    // Error similar enviado recientemente, ignorar
-    return
-  }
+	if (lastSent && now - lastSent < ERROR_COOLDOWN_MS) {
+		// Error similar enviado recientemente, ignorar
+		return;
+	}
 
-  // Actualizar cache
-  errorCache.set(errorKey, now)
+	// Actualizar cache
+	errorCache.set(errorKey, now);
 
-  // Limpiar entradas antiguas del cache (mantener solo últimas 100)
-  if (errorCache.size > 100) {
-    const entries = Array.from(errorCache.entries())
-    const toDelete = entries.slice(0, entries.length - 100)
-    toDelete.forEach(([key]) => errorCache.delete(key))
-  }
+	// Limpiar entradas antiguas del cache (mantener solo últimas 100)
+	if (errorCache.size > 100) {
+		const entries = Array.from(errorCache.entries());
+		const toDelete = entries.slice(0, entries.length - 100);
+		toDelete.forEach(([key]) => errorCache.delete(key));
+	}
 
-  const appName = process.env.NEXT_PUBLIC_APP_NAME || 'Sistema de Inventario'
-  const environment = process.env.NODE_ENV || 'development'
+	const appName = process.env.NEXT_PUBLIC_APP_NAME || "Sistema de Inventario";
+	const environment = process.env.NODE_ENV || "development";
 
-  const html = `
+	const html = `
     <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
       <h2 style="color: #dc2626;">🚨 Error en ${appName}</h2>
       
@@ -263,34 +269,46 @@ export async function sendErrorAlert(
           <td style="padding: 10px; border: 1px solid #d1d5db;"><strong>Ambiente:</strong></td>
           <td style="padding: 10px; border: 1px solid #d1d5db;">${environment}</td>
         </tr>
-        ${context?.endpoint ? `
+        ${
+					context?.endpoint
+						? `
         <tr>
           <td style="padding: 10px; border: 1px solid #d1d5db;"><strong>Endpoint:</strong></td>
           <td style="padding: 10px; border: 1px solid #d1d5db;">${context.endpoint}</td>
         </tr>
-        ` : ''}
-        ${context?.userId ? `
+        `
+						: ""
+				}
+        ${
+					context?.userId
+						? `
         <tr style="background: #f3f4f6;">
           <td style="padding: 10px; border: 1px solid #d1d5db;"><strong>Usuario:</strong></td>
           <td style="padding: 10px; border: 1px solid #d1d5db;">${context.userId}</td>
         </tr>
-        ` : ''}
+        `
+						: ""
+				}
         <tr>
           <td style="padding: 10px; border: 1px solid #d1d5db;"><strong>Fecha:</strong></td>
-          <td style="padding: 10px; border: 1px solid #d1d5db;">${new Date().toLocaleString('es-ES')}</td>
+          <td style="padding: 10px; border: 1px solid #d1d5db;">${new Date().toLocaleString("es-ES")}</td>
         </tr>
       </table>
 
-      ${context?.additionalInfo ? `
+      ${
+				context?.additionalInfo
+					? `
       <div style="background: #fef3c7; padding: 15px; margin: 20px 0; border-radius: 5px;">
         <strong>Información adicional:</strong>
         <pre style="margin: 10px 0; white-space: pre-wrap;">${context.additionalInfo}</pre>
       </div>
-      ` : ''}
+      `
+					: ""
+			}
 
       <div style="background: #1f2937; color: #e5e7eb; padding: 15px; border-radius: 5px; overflow-x: auto;">
         <strong style="color: #fbbf24;">Stack Trace:</strong>
-        <pre style="margin: 10px 0; font-size: 12px; white-space: pre-wrap; word-break: break-all;">${error.stack || 'No stack trace disponible'}</pre>
+        <pre style="margin: 10px 0; font-size: 12px; white-space: pre-wrap; word-break: break-all;">${error.stack || "No stack trace disponible"}</pre>
       </div>
 
       <hr style="margin: 30px 0; border: none; border-top: 1px solid #e5e7eb;">
@@ -298,11 +316,11 @@ export async function sendErrorAlert(
         Este es un mensaje automático del sistema. Para evitar spam, errores similares no generarán nuevos emails durante 5 minutos.
       </p>
     </div>
-  `
+  `;
 
-  await sendEmail(
-    process.env.ERROR_ALERT_EMAIL,
-    `🚨 [${environment.toUpperCase()}] Error: ${error.message.slice(0, 50)}...`,
-    html
-  )
+	await sendEmail(
+		process.env.ERROR_ALERT_EMAIL,
+		`🚨 [${environment.toUpperCase()}] Error: ${error.message.slice(0, 50)}...`,
+		html,
+	);
 }
