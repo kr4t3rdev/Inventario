@@ -467,7 +467,10 @@ export const getServiciosPendientesAction = withAction(
 		user: AuthenticatedUser,
 	) => {
 		const tenantId = requireTenant(user);
-		const where: any = { tenantId };
+		const where: any = {
+			tenantId,
+			reconciliado: null,
+		};
 		if (params.fechaDesde || params.fechaHasta) {
 			where.createdAt = {};
 			if (params.fechaDesde) where.createdAt.gte = new Date(params.fechaDesde);
@@ -560,41 +563,85 @@ export const reconciliarServicioAction = withAction(
 		async (
 			input: {
 				ventaServicioId: string;
-				cuentaId: string;
-				tipoPagoId: string;
-				monto: number;
-				moneda?: string;
+				distribuciones: Array<{
+					cuentaId: string;
+					tipoPagoId: string;
+					monto: number;
+					moneda?: string;
+					observaciones?: string;
+				}>;
 				fechaReconciliacion?: string;
-				observaciones?: string;
 			},
 			user: AuthenticatedUser,
 		) => {
 			const tenantId = requireTenant(user);
 
+			if (!input.distribuciones?.length) {
+				throw new ActionError(
+					"Debe incluir al menos una distribución",
+					"INVALID_INPUT",
+				);
+			}
+
 			const result = await prisma.$transaction(async (tx) => {
-				// Incrementar saldo de la cuenta bancaria (ingreso por servicio)
-				await tx.cuentaBancaria.update({
-					where: { cuentaId: input.cuentaId },
-					data: { saldo: { increment: input.monto } },
+				// Verificar el total del servicio
+				const servicio = await tx.ventaServicios.findUnique({
+					where: { ventaServicioId: input.ventaServicioId },
+					select: { total: true },
+				});
+				if (!servicio) {
+					throw new ActionError("Servicio no encontrado", "NOT_FOUND");
+				}
+
+				const montoTotalDistribuido = input.distribuciones.reduce(
+					(sum, d) => sum + d.monto,
+					0,
+				);
+				const precioServicio = Number(servicio.total);
+
+				if (Math.abs(montoTotalDistribuido - precioServicio) > 0.01) {
+					throw new ActionError(
+						`El monto total distribuido (${montoTotalDistribuido.toFixed(2)}) debe ser igual al precio del servicio (${precioServicio.toFixed(2)})`,
+						"VALIDATION_ERROR",
+					);
+				}
+
+				// Crear todas las reconciliaciones e incrementar saldos en una sola transacción
+				for (const dist of input.distribuciones) {
+					// Incrementar saldo de la cuenta bancaria (ingreso por servicio)
+					await tx.cuentaBancaria.update({
+						where: { cuentaId: dist.cuentaId },
+						data: { saldo: { increment: dist.monto } },
+					});
+
+					await tx.reconciliacionServicio.create({
+						// @ts-expect-error — tenantId no está en el tipo de create de ReconciliacionServicio pero la BD lo requiere
+						data: {
+							ventaServicioId: input.ventaServicioId,
+							cuentaId: dist.cuentaId,
+							tipoPagoId: dist.tipoPagoId,
+							monto: dist.monto,
+							moneda: dist.moneda || "CUP",
+							fechaReconciliacion: input.fechaReconciliacion
+								? new Date(input.fechaReconciliacion)
+								: new Date(),
+							observaciones: dist.observaciones,
+							tenantId,
+							reconciliadoPor: user.userId,
+						},
+					});
+				}
+
+				// Marcar el servicio como reconciliado
+				await tx.ventaServicios.update({
+					where: { ventaServicioId: input.ventaServicioId },
+					data: { reconciliado: true },
 				});
 
-				const reconciliacion = await tx.reconciliacionServicio.create({
-					// @ts-expect-error — tenantId no está en el tipo de create de ReconciliacionServicio pero la BD lo requiere
-					data: {
-						ventaServicioId: input.ventaServicioId,
-						cuentaId: input.cuentaId,
-						tipoPagoId: input.tipoPagoId,
-						monto: input.monto,
-						moneda: input.moneda || "CUP",
-						fechaReconciliacion: input.fechaReconciliacion
-							? new Date(input.fechaReconciliacion)
-							: new Date(),
-						observaciones: input.observaciones,
-						tenantId,
-					},
-				});
-
-				return reconciliacion;
+				return {
+					reconciliado: true,
+					distribuciones: input.distribuciones.length,
+				};
 			});
 
 			revalidatePath("/busy/contabilidad/reconciliacion");
