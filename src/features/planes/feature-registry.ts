@@ -210,6 +210,12 @@ export const FEATURE_REGISTRY: FeatureDef[] = [
 		category: "financiero",
 	},
 	{
+		key: "rentabilidad-compra",
+		label: "Rentabilidad por compra",
+		description: "Análisis de rentabilidad detallado por cada compra realizada",
+		category: "financiero",
+	},
+	{
 		key: "reportes-financieros",
 		label: "Reportes financieros avanzados",
 		description: "Indicadores de rentabilidad, balances y reportes exportables",
