@@ -50,6 +50,7 @@ export interface VentaVsReconciliadoItem {
 
 export interface VentasVsReconciliadoData {
 	items: VentaVsReconciliadoItem[];
+	itemsAntiguos: VentaVsReconciliadoItem[];
 	totales: {
 		totalVentas: number;
 		totalReconciliado: number;
@@ -592,10 +593,245 @@ export async function obtenerVentasVsReconciliado(
 	const gastosItems = items.filter((i) => i.tipo === "GASTO");
 	const gastosReconciliados = gastosItems.filter(
 		(i) => i.estaReconciliado,
-	).length;
+		).length;
+
+	// ── Items antiguos sin reconciliar (períodos anteriores) ──
+	const LIMITE_ANTIGUOS = 100;
+	const rangoAntiguos = { lt: rango.gte };
+
+	const [ventasAntiguas, serviciosAntiguos, gastosDEAntiguos, gastosCompraAntiguos, comprasServicioAntiguos, ventasServicioCostoAntiguos] =
+		await Promise.all([
+			prisma.venta.findMany({
+				where: {
+					tenantId,
+					createdAt: rangoAntiguos,
+					deletedAt: null,
+					reconciliaciones: { none: {} },
+				},
+				include: {
+					reconciliaciones: {
+						select: { monto: true, montoConvertido: true, fechaReconciliacion: true },
+						take: 1,
+					},
+				},
+				orderBy: { createdAt: "desc" },
+				take: LIMITE_ANTIGUOS,
+			}),
+			prisma.ventaServicios.findMany({
+				where: {
+					tenantId,
+					createdAt: rangoAntiguos,
+					reconciliaciones: { none: {} },
+				},
+				include: {
+					reconciliaciones: {
+						select: { monto: true, montoConvertido: true, fechaReconciliacion: true },
+						take: 1,
+					},
+				},
+				orderBy: { createdAt: "desc" },
+				take: LIMITE_ANTIGUOS,
+			}),
+			prisma.gastosDE.findMany({
+				where: {
+					tenantId,
+					createdAt: rangoAntiguos,
+					reconciliaciones: { none: {} },
+				},
+				include: {
+					reconciliaciones: {
+						select: { monto: true, montoConvertido: true, fechaReconciliacion: true },
+						take: 1,
+					},
+				},
+				orderBy: { createdAt: "desc" },
+				take: LIMITE_ANTIGUOS,
+			}),
+			prisma.gastoCompra.findMany({
+				where: {
+					tenantId,
+					createdAt: rangoAntiguos,
+					deletedAt: null,
+					reconciliaciones: { none: {} },
+				},
+				include: {
+					reconciliaciones: {
+						select: { monto: true, montoConvertido: true, fechaReconciliacion: true },
+						take: 1,
+					},
+				},
+				orderBy: { createdAt: "desc" },
+				take: LIMITE_ANTIGUOS,
+			}),
+			prisma.compraServicio.findMany({
+				where: {
+					tenantId,
+					createdAt: rangoAntiguos,
+					compraServicioId:
+						idsReconciliadosCS.length > 0
+							? { notIn: idsReconciliadosCS }
+							: undefined,
+				},
+				orderBy: { createdAt: "desc" },
+				take: LIMITE_ANTIGUOS,
+			}),
+			prisma.ventaServicios.findMany({
+				where: {
+					tenantId,
+					createdAt: rangoAntiguos,
+					costo: { gt: 0 },
+					ventaServicioId:
+						idsReconciliadosVSCosto.length > 0
+							? { notIn: idsReconciliadosVSCosto }
+							: undefined,
+				},
+				orderBy: { createdAt: "desc" },
+				take: LIMITE_ANTIGUOS,
+			}),
+		]);
+
+	const mapVentaAntigua = (
+		v: (typeof ventasAntiguas)[number],
+	): VentaVsReconciliadoItem => {
+		const rec = v.reconciliaciones[0];
+		const monto = Number(v.total ?? 0);
+		const montoRec = rec ? Number(rec.montoConvertido ?? rec.monto ?? 0) : 0;
+		return {
+			id: v.ventaId,
+			tipo: "VENTA",
+			folio: v.ventaId.slice(0, 8),
+			fecha: v.createdAt,
+			monto,
+			moneda: "CUP",
+			metodoPago: v.metodoPago,
+			origen: null,
+			estaReconciliado: !!rec,
+			montoReconciliado: rec ? montoRec : null,
+			diferencia: monto - montoRec,
+			fechaReconciliacion: rec?.fechaReconciliacion ?? null,
+		};
+	};
+
+	const mapServicioAntiguo = (
+		vs: (typeof serviciosAntiguos)[number],
+	): VentaVsReconciliadoItem => {
+		const rec = vs.reconciliaciones[0];
+		const monto = Number(vs.total ?? 0);
+		const montoRec = rec ? Number(rec.montoConvertido ?? rec.monto ?? 0) : 0;
+		return {
+			id: vs.ventaServicioId,
+			tipo: "SERVICIO",
+			folio: vs.ventaServicioId.slice(0, 8),
+			fecha: vs.createdAt,
+			monto,
+			moneda: "CUP",
+			metodoPago: null,
+			origen: null,
+			estaReconciliado: !!rec,
+			montoReconciliado: rec ? montoRec : null,
+			diferencia: monto - montoRec,
+			fechaReconciliacion: rec?.fechaReconciliacion ?? null,
+		};
+	};
+
+	const mapGastoDEAntiguo = (
+		g: (typeof gastosDEAntiguos)[number],
+	): VentaVsReconciliadoItem => {
+		const rec = g.reconciliaciones[0];
+		const monto = Number(g.monto ?? 0);
+		const montoRec = rec ? Number(rec.montoConvertido ?? rec.monto ?? 0) : 0;
+		return {
+			id: g.gastosDEId,
+			tipo: "GASTO",
+			folio: g.numeroFactura ?? g.gastosDEId.slice(0, 8),
+			fecha: g.createdAt,
+			monto,
+			moneda: "CUP",
+			metodoPago: null,
+			origen: g.proveedor ?? "Gasto DE",
+			estaReconciliado: !!rec,
+			montoReconciliado: rec ? montoRec : null,
+			diferencia: monto - montoRec,
+			fechaReconciliacion: rec?.fechaReconciliacion ?? null,
+		};
+	};
+
+	const mapGastoCompraAntiguo = (
+		g: (typeof gastosCompraAntiguos)[number],
+	): VentaVsReconciliadoItem => {
+		const rec = g.reconciliaciones[0];
+		const monto = Number(g.total ?? 0);
+		const montoRec = rec ? Number(rec.montoConvertido ?? rec.monto ?? 0) : 0;
+		return {
+			id: g.gastoCompraId,
+			tipo: "GASTO",
+			folio: g.numeroFactura ?? g.gastoCompraId.slice(0, 8),
+			fecha: g.createdAt,
+			monto,
+			moneda: "CUP",
+			metodoPago: null,
+			origen: "Compra",
+			estaReconciliado: !!rec,
+			montoReconciliado: rec ? montoRec : null,
+			diferencia: monto - montoRec,
+			fechaReconciliacion: rec?.fechaReconciliacion ?? null,
+		};
+	};
+
+	const mapCompraServicioAntiguo = (
+		g: (typeof comprasServicioAntiguos)[number],
+	): VentaVsReconciliadoItem => {
+		const estaReconciliado = idsReconciliadosCS.has(g.compraServicioId);
+		const monto = Number(g.total ?? 0);
+		return {
+			id: g.compraServicioId,
+			tipo: "GASTO",
+			folio: g.numeroFactura ?? g.compraServicioId.slice(0, 8),
+			fecha: g.createdAt,
+			monto,
+			moneda: "CUP",
+			metodoPago: null,
+			origen: "Servicio Contratado",
+			estaReconciliado,
+			montoReconciliado: null,
+			diferencia: estaReconciliado ? 0 : monto,
+			fechaReconciliacion: null,
+		};
+	};
+
+	const mapVentaServicioCostoAntiguo = (
+		vs: (typeof ventasServicioCostoAntiguos)[number],
+	): VentaVsReconciliadoItem => {
+		const estaReconciliado = idsReconciliadosVSCosto.has(vs.ventaServicioId);
+		const monto = Number(vs.costo ?? 0);
+		return {
+			id: `costo-${vs.ventaServicioId}`,
+			tipo: "GASTO",
+			folio: vs.ventaServicioId.slice(0, 8),
+			fecha: vs.createdAt,
+			monto,
+			moneda: "CUP",
+			metodoPago: null,
+			origen: "Costo de Servicio Vendido",
+			estaReconciliado,
+			montoReconciliado: null,
+			diferencia: estaReconciliado ? 0 : monto,
+			fechaReconciliacion: null,
+		};
+	};
+
+	const itemsAntiguos = [
+		...ventasAntiguas.map(mapVentaAntigua),
+		...serviciosAntiguos.map(mapServicioAntiguo),
+		...gastosDEAntiguos.map(mapGastoDEAntiguo),
+		...gastosCompraAntiguos.map(mapGastoCompraAntiguo),
+		...comprasServicioAntiguos.map(mapCompraServicioAntiguo),
+		...ventasServicioCostoAntiguos.map(mapVentaServicioCostoAntiguo),
+	].sort((a, b) => b.fecha.getTime() - a.fecha.getTime());
 
 	return {
 		items,
+		itemsAntiguos,
 		totales: {
 			totalVentas: round2(items.reduce((s, i) => s + i.monto, 0)),
 			totalReconciliado: round2(

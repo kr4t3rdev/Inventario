@@ -1,7 +1,9 @@
 /**
- * @description Tab de ventas vs reconciliado del cuadre de período.
- * Muestra cada venta con su estado de reconciliación, diferencias,
- * y cards de totales agregados.
+ * @description Tab de ventas, servicios y gastos vs reconciliado del cuadre de período.
+ * Muestra cada operación con su estado de reconciliación, diferencias,
+ * y cards de totales agregados. Incluye gastos (GastosDE, GastoCompra,
+ * CompraServicio, Costo de Servicio Vendido) y muestra operaciones
+ * pendientes de períodos anteriores separadas con advertencia.
  */
 "use client";
 
@@ -27,6 +29,8 @@ import {
 	Receipt,
 	Banknote,
 	AlertTriangle,
+	CalendarClock,
+	History,
 } from "lucide-react";
 import type {
 	VentaVsReconciliadoItem,
@@ -54,12 +58,158 @@ const METODO_PAGO_COLORS: Record<string, string> = {
 	MIXTO: "bg-indigo-100 text-indigo-800",
 };
 
+/** @description Fila de operación en la tabla */
+function OperacionRow({ item }: { item: VentaVsReconciliadoItem }) {
+	return (
+		<TableRow
+			className={
+				item.diferencia !== 0 && item.estaReconciliado ? "bg-amber-50/50" : ""
+			}
+		>
+			<TableCell className="font-mono text-xs">#{item.folio}</TableCell>
+			<TableCell className="text-xs text-muted-foreground">
+				{item.origen ?? "—"}
+			</TableCell>
+			<TableCell>
+				<Badge
+					variant={
+						item.tipo === "VENTA"
+							? "default"
+							: item.tipo === "SERVICIO"
+								? "secondary"
+								: "outline"
+					}
+					className="text-xs"
+				>
+					{item.tipo === "VENTA"
+						? "Producto"
+						: item.tipo === "SERVICIO"
+							? "Servicio"
+							: "Gasto"}
+				</Badge>
+			</TableCell>
+			<TableCell className="text-sm">
+				{format(new Date(item.fecha), "dd/MM/yy HH:mm", {
+					locale: es,
+				})}
+			</TableCell>
+			<TableCell className="font-medium">
+				{formatMonto(item.monto)}
+			</TableCell>
+			<TableCell>
+				{item.metodoPago ? (
+					<Badge
+						variant="outline"
+						className={`text-xs ${
+							METODO_PAGO_COLORS[item.metodoPago] ?? ""
+						}`}
+					>
+						{item.metodoPago}
+					</Badge>
+				) : (
+					<span className="text-xs text-muted-foreground">—</span>
+				)}
+			</TableCell>
+			<TableCell>
+				{item.estaReconciliado ? (
+					<Badge
+						variant="outline"
+						className="bg-green-50 text-green-700 border-green-200"
+					>
+						<CheckCircle2 className="h-3 w-3 mr-1" />
+						Reconciliada
+					</Badge>
+				) : (
+					<Badge
+						variant="outline"
+						className="bg-red-50 text-red-700 border-red-200"
+					>
+						<XCircle className="h-3 w-3 mr-1" />
+						Pendiente
+					</Badge>
+				)}
+			</TableCell>
+			<TableCell>
+				{item.montoReconciliado !== null
+					? formatMonto(item.montoReconciliado)
+					: "—"}
+			</TableCell>
+			<TableCell className="text-right">
+				<span
+					className={
+						item.diferencia === 0
+							? "text-green-600"
+							: "text-amber-600 font-medium"
+					}
+				>
+					{item.diferencia === 0
+						? "✓"
+						: formatMonto(item.diferencia)}
+				</span>
+			</TableCell>
+		</TableRow>
+	);
+}
+
+/**
+ * @description Tabla de operaciones con encabezados y cuerpo.
+ * @param {{ items: VentaVsReconciliadoItem[]; emptyMessage: string; className?: string }} props
+ * @returns {JSX.Element}
+ */
+function OperacionesTable({
+	items,
+	emptyMessage,
+	className,
+}: {
+	items: VentaVsReconciliadoItem[];
+	emptyMessage: string;
+	className?: string;
+}) {
+	return (
+		<Card className={className}>
+			<CardContent className="p-0">
+				<Table>
+					<TableHeader>
+						<TableRow>
+							<TableHead>Folio</TableHead>
+							<TableHead>Origen</TableHead>
+							<TableHead>Tipo</TableHead>
+							<TableHead>Fecha</TableHead>
+							<TableHead>Monto</TableHead>
+							<TableHead>Método Pago</TableHead>
+							<TableHead>Estado</TableHead>
+							<TableHead>Monto Reconc.</TableHead>
+							<TableHead className="text-right">Diferencia</TableHead>
+						</TableRow>
+					</TableHeader>
+					<TableBody>
+						{items.length === 0 ? (
+							<TableRow>
+								<TableCell
+									colSpan={9}
+									className="text-center text-muted-foreground py-8"
+								>
+									{emptyMessage}
+								</TableCell>
+							</TableRow>
+						) : (
+							items.map((item) => (
+								<OperacionRow key={item.id} item={item} />
+							))
+						)}
+					</TableBody>
+				</Table>
+			</CardContent>
+		</Card>
+	);
+}
+
 export function VentasVsReconciliadoTab({
 	data,
 	onPageChange,
 	isLoading = false,
 }: VentasVsReconciliadoTabProps) {
-	const { items, totales, totalPages, page } = data;
+	const { items, itemsAntiguos, totales, totalPages, page } = data;
 
 	return (
 		<div className="space-y-4">
@@ -147,133 +297,68 @@ export function VentasVsReconciliadoTab({
 				</Card>
 			</div>
 
-			{/* Tabla de ventas */}
-			<Card>
-				<CardContent className="p-0">
-					<Table>
-						<TableHeader>
-							<TableRow>
-								<TableHead>Folio</TableHead>
-								<TableHead>Origen</TableHead>
-								<TableHead>Tipo</TableHead>
-								<TableHead>Fecha</TableHead>
-								<TableHead>Monto</TableHead>
-								<TableHead>Método Pago</TableHead>
-								<TableHead>Estado</TableHead>
-								<TableHead>Monto Reconc.</TableHead>
-								<TableHead className="text-right">Diferencia</TableHead>
-							</TableRow>
-						</TableHeader>
-						<TableBody>
-							{items.length === 0 ? (
-								<TableRow>
-									<TableCell
-										colSpan={9}
-										className="text-center text-muted-foreground py-8"
-									>
-										No hay ventas, servicios o gastos en este período.
-									</TableCell>
-								</TableRow>
-							) : (
-								items.map((item) => (
-									<TableRow
-										key={item.id}
-										className={
-											item.diferencia !== 0 && item.estaReconciliado
-												? "bg-amber-50/50"
-												: ""
-										}
-									>
-										<TableCell className="font-mono text-xs">
-											#{item.folio}
-										</TableCell>
-										<TableCell className="text-xs text-muted-foreground">
-											{item.origen ?? "—"}
-										</TableCell>
-										<TableCell>
-											<Badge
-												variant={
-													item.tipo === "VENTA"
-														? "default"
-														: item.tipo === "SERVICIO"
-															? "secondary"
-															: "outline"
-												}
-												className="text-xs"
-											>
-												{item.tipo === "VENTA"
-													? "Producto"
-													: item.tipo === "SERVICIO"
-														? "Servicio"
-														: "Gasto"}
-											</Badge>
-										</TableCell>
-										<TableCell className="text-sm">
-											{format(new Date(item.fecha), "dd/MM/yy HH:mm", {
-												locale: es,
-											})}
-										</TableCell>
-										<TableCell className="font-medium">
-											{formatMonto(item.monto)}
-										</TableCell>
-										<TableCell>
-											{item.metodoPago ? (
-												<Badge
-													variant="outline"
-													className={`text-xs ${
-														METODO_PAGO_COLORS[item.metodoPago] ?? ""
-													}`}
-												>
-													{item.metodoPago}
-												</Badge>
-											) : (
-												<span className="text-xs text-muted-foreground">—</span>
-											)}
-										</TableCell>
-										<TableCell>
-											{item.estaReconciliado ? (
-												<Badge
-													variant="outline"
-													className="bg-green-50 text-green-700 border-green-200"
-												>
-													<CheckCircle2 className="h-3 w-3 mr-1" />
-													Reconciliada
-												</Badge>
-											) : (
-												<Badge
-													variant="outline"
-													className="bg-red-50 text-red-700 border-red-200"
-												>
-													<XCircle className="h-3 w-3 mr-1" />
-													Pendiente
-												</Badge>
-											)}
-										</TableCell>
-										<TableCell>
-											{item.montoReconciliado !== null
-												? formatMonto(item.montoReconciliado)
-												: "—"}
-										</TableCell>
-										<TableCell className="text-right">
-											<span
-												className={
-													item.diferencia === 0
-														? "text-green-600"
-														: "text-amber-600 font-medium"
-												}
-											>
-												{item.diferencia === 0
-													? "✓"
-													: formatMonto(item.diferencia)}
-											</span>
-										</TableCell>
-									</TableRow>
-								))
-							)}
-						</TableBody>
-					</Table>
-				</CardContent>
-			</Card>
+			{/* Card de Gastos */}
+			<div className="grid gap-3 grid-cols-2 lg:grid-cols-4">
+				<Card>
+					<CardHeader className="pb-2">
+						<CardTitle className="text-xs font-medium text-muted-foreground">
+							Total Gastos
+						</CardTitle>
+					</CardHeader>
+					<CardContent>
+						<div className="flex items-center gap-2">
+							<Receipt className="h-4 w-4 text-orange-500" />
+							<span className="text-lg font-bold">
+								{formatMonto(totales.totalGastos)}
+							</span>
+						</div>
+						<p className="text-xs text-muted-foreground mt-1">
+							{totales.cantidadGastos} gastos · {totales.cantidadGastosReconciliados} reconciliados · {totales.cantidadGastosPendientes} pendientes
+						</p>
+					</CardContent>
+				</Card>
+			</div>
+
+			{/* Tabla del período actual */}
+			<OperacionesTable
+				items={items}
+				emptyMessage="No hay ventas, servicios o gastos en este período."
+			/>
+
+			{/* ── Separador de operaciones antiguas ── */}
+			{itemsAntiguos.length > 0 && (
+				<>
+					<div className="relative">
+						<div className="absolute inset-0 flex items-center">
+							<div className="w-full border-t-2 border-destructive" />
+						</div>
+						<div className="relative flex justify-center">
+							<div className="bg-background px-4 flex items-center gap-2 text-destructive">
+								<CalendarClock className="h-5 w-5" />
+								<span className="text-sm font-medium">
+									Operaciones pendientes de períodos anteriores
+								</span>
+							</div>
+						</div>
+					</div>
+					<p className="text-xs text-muted-foreground text-center">
+						Estas operaciones no fueron reconciliadas en su período y deben solventarse antes del cierre.
+					</p>
+
+					<div className="flex items-center gap-2 text-sm text-muted-foreground mb-2">
+						<History className="h-4 w-4" />
+						<span>
+							{itemsAntiguos.length} operacion(es) sin reconciliar de períodos anteriores
+						</span>
+					</div>
+
+					<OperacionesTable
+						items={itemsAntiguos}
+						emptyMessage=""
+						className="border-destructive/30"
+					/>
+				</>
+			)}
 
 			{/* Paginación */}
 			{totalPages > 1 && (
