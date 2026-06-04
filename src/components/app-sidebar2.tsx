@@ -485,6 +485,11 @@ export function AppSidebar2({
 						icon: Calendar,
 					},
 					{
+						title: "Rentabilidad x Compra",
+						url: "/busy/reportes/rentabilidad-compra",
+						icon: BarChart3,
+					},
+					{
 						title: "Cuadre Financiero",
 						url: "/busy/cuadre",
 						icon: Briefcase,

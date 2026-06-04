@@ -11,6 +11,7 @@ import { requireTenant } from "@/lib/services/tenant-scope";
 import { revalidatePath } from "next/cache";
 import { createVentaSchema, anularVentaSchema } from "./schemas";
 import { upsertStockUbicacion } from "@/lib/services/stock-ubicacion-service";
+import { allocateFifoForSale } from "@/lib/services/fifo-allocation";
 import type { CreateVentaInput, AnularVentaInput } from "./schemas";
 import type { AuthenticatedUser } from "@/lib/auth-middleware";
 import { applyFacturacionCobroWorkflow } from "./services/facturacion-workflow";
@@ -202,6 +203,9 @@ export const createVentaAction = withAction(
 					});
 				}
 			}
+
+			// 3c. Asignación FIFO de compras
+			await allocateFifoForSale(tx, tenantId, venta.ventaId);
 
 			// 4. Crear factura solo si hay cliente (campo requerido en Factura)
 			if (parsed.clienteId) {
