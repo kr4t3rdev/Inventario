@@ -19,12 +19,7 @@ import {
 } from "@/components/ui/table";
 import { format } from "date-fns";
 import { es } from "date-fns/locale";
-import {
-	ChevronDown,
-	ChevronRight,
-	CalendarDays,
-	Loader2,
-} from "lucide-react";
+import { ChevronDown, ChevronRight, CalendarDays, Loader2 } from "lucide-react";
 import {
 	staggerContainer,
 	fadeUp,
@@ -250,17 +245,13 @@ export function ResumenDiarioTab({ items, onLoadDia }: ResumenDiarioTabProps) {
 					<CardContent className="p-4">
 						<div className="grid grid-cols-3 gap-4 text-center">
 							<div>
-								<p className="text-xs text-muted-foreground">
-									Total Ingresos
-								</p>
+								<p className="text-xs text-muted-foreground">Total Ingresos</p>
 								<p className="text-lg font-bold text-green-600">
 									+{formatMonto(totalIngresos)}
 								</p>
 							</div>
 							<div>
-								<p className="text-xs text-muted-foreground">
-									Total Egresos
-								</p>
+								<p className="text-xs text-muted-foreground">Total Egresos</p>
 								<p className="text-lg font-bold text-red-600">
 									-{formatMonto(totalEgresos)}
 								</p>

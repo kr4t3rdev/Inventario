@@ -124,12 +124,19 @@ export function VentaInterface() {
 	const [selectedAnticipoCobroId, setSelectedAnticipoCobroId] =
 		useState<string>("");
 	const [productos, setProductos] = useState<ProductoConStock[]>([]);
+	const [productosRefreshKey, setProductosRefreshKey] = useState(0);
 	const [isLoadingProductos, setIsLoadingProductos] = useState(false);
 	const [isFetchingProductos, setIsFetchingProductos] = useState(false);
 	const [turnoActivo, setTurnoActivo] = useState<any>(null);
 	const [isAperturaDialogOpen, setIsAperturaDialogOpen] = useState(false);
 	const [isCierreDialogOpen, setIsCierreDialogOpen] = useState(false);
 	const [isArqueoDialogOpen, setIsArqueoDialogOpen] = useState(false);
+
+	// Cerrar todo el flujo de turno (cuando el usuario cierra un diálogo manualmente)
+	const resetTurnoFlow = useCallback(() => {
+		setIsCierreDialogOpen(false);
+		setIsArqueoDialogOpen(false);
+	}, []);
 
 	const { puntosDeVenta, isLoading: isLoadingPuntosVenta } = usePuntosDeVenta();
 
@@ -158,7 +165,7 @@ export function VentaInterface() {
 		};
 
 		loadProductos();
-	}, [selectedPuntoVenta]);
+	}, [selectedPuntoVenta, productosRefreshKey]);
 
 	// Cargar turno activo al seleccionar punto de venta
 	const refreshTurno = useCallback(async () => {
@@ -470,6 +477,7 @@ export function VentaInterface() {
 			toast(`Se ha registrado la venta por $${totalConDescuento}`);
 			setCart([]);
 			refreshTurno();
+			setProductosRefreshKey((k) => k + 1);
 			router.refresh();
 		} catch (error) {
 			console.error("Error al procesar venta:", error);
@@ -530,6 +538,7 @@ export function VentaInterface() {
 			setIsInvoiceDialogOpen(false);
 			setSelectedClienteId("");
 			setSelectedAnticipoCobroId("");
+			setProductosRefreshKey((k) => k + 1);
 			setCargoTransporte(0);
 			const ventaId = ventaCreada?.ventaId;
 			if (ventaId) {
@@ -858,7 +867,12 @@ export function VentaInterface() {
 								{turnoActivo && (
 									<CabeceraTurno
 										turno={turnoActivo}
-										onCerrar={() => setIsCierreDialogOpen(true)}
+										onArqueo={() => setIsArqueoDialogOpen(true)}
+										onCuadre={() =>
+											router.push(
+												`/busy/sales/cuadre/${turnoActivo.id}?pvId=${selectedPuntoVenta}`,
+											)
+										}
 									/>
 								)}
 
@@ -1589,11 +1603,10 @@ export function VentaInterface() {
 			/>
 
 			{/* Diálogo de cierre de turno */}
-			{turnoActivo && (
+			{turnoActivo && isCierreDialogOpen && (
 				<CierreTurnoDialog
-					open={isCierreDialogOpen}
-					onOpenChange={setIsCierreDialogOpen}
-					turnoId={turnoActivo.id}
+					open={true}
+					onOpenChange={resetTurnoFlow}
 					totalVentas={
 						turnoActivo.ventas?.reduce(
 							(s: number, v: any) => s + (v.total ?? 0),
@@ -1601,26 +1614,25 @@ export function VentaInterface() {
 						) ?? 0
 					}
 					totalTickets={turnoActivo._count?.ventas ?? 0}
-					tieneArqueo={!!turnoActivo.arqueo}
 					onIrAArqueo={() => {
 						setIsCierreDialogOpen(false);
 						setIsArqueoDialogOpen(true);
 					}}
-					onSuccess={() => setTurnoActivo(null)}
 				/>
 			)}
 
 			{/* Diálogo de arqueo de caja */}
-			{turnoActivo && (
+			{turnoActivo && isArqueoDialogOpen && (
 				<ArqueoForm
-					open={isArqueoDialogOpen}
-					onOpenChange={setIsArqueoDialogOpen}
+					open={true}
+					onOpenChange={resetTurnoFlow}
 					turnoId={turnoActivo.id}
+					submitLabel="Continuar con el Cuadre"
 					onSuccess={() => {
-						// Arqueo registrado — turno sigue ABIERTO
-						// Aquí se abrirá CuadreTurnoDialog (SDD siguiente)
 						setIsArqueoDialogOpen(false);
-						refreshTurno();
+						router.push(
+							`/busy/sales/cuadre/${turnoActivo.id}?pvId=${selectedPuntoVenta}`,
+						);
 					}}
 				/>
 			)}

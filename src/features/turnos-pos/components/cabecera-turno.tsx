@@ -1,11 +1,12 @@
 /**
  * @description Cabecera que muestra el estado del turno activo en el POS.
- * Incluye indicador visual, datos del turno y botones de acción.
+ * Incluye indicador visual, datos del turno y botones de acción para
+ * arqueo (conteo de efectivo) y cuadre (revisión de productos/ventas).
  *
  * @param {object} props - Props del componente
  * @param {object | null} props.turno - Turno activo o null
- * @param {function} props.onCerrar - Callback al hacer click en cerrar
- * @param {function} props.onArqueo - Callback al hacer click en ver arqueo
+ * @param {function} props.onArqueo - Callback para abrir arqueo
+ * @param {function} props.onCuadre - Callback para ir al cuadre
  * @returns {JSX.Element} Cabecera de turno
  */
 "use client";
@@ -14,9 +15,8 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import {
-	Lock,
 	ClipboardList,
-	Clock,
+	BarChart3,
 	User,
 	DollarSign,
 	ShoppingCart,
@@ -34,13 +34,13 @@ interface TurnoInfo {
 
 interface CabeceraTurnoProps {
 	turno: TurnoInfo | null;
-	onCerrar?: () => void;
 	onArqueo?: () => void;
+	onCuadre?: () => void;
 }
 
 export function CabeceraTurno({
 	turno,
-	onCerrar,
+	onCuadre,
 	onArqueo,
 }: CabeceraTurnoProps) {
 	if (!turno) return null;
@@ -108,15 +108,15 @@ export function CabeceraTurno({
 							Arqueo
 						</Button>
 					)}
-					{onCerrar && (
+					{onCuadre && (
 						<Button
 							variant="outline"
 							size="sm"
-							onClick={onCerrar}
-							className="gap-1.5 text-amber-600 border-amber-200 hover:bg-amber-50 dark:text-amber-400 dark:border-amber-800 dark:hover:bg-amber-950"
+							onClick={onCuadre}
+							className="gap-1.5 text-emerald-600 border-emerald-200 hover:bg-emerald-50 dark:text-emerald-400 dark:border-emerald-800 dark:hover:bg-emerald-950"
 						>
-							<Lock className="h-3.5 w-3.5" />
-							Cerrar Turno
+							<BarChart3 className="h-3.5 w-3.5" />
+							Cuadre
 						</Button>
 					)}
 				</div>

@@ -132,10 +132,7 @@ export function BalanceTab({
 						<CardTitle className="text-base">Cuentas Bancarias</CardTitle>
 					</CardHeader>
 					<CardContent className="p-0">
-						<motion.div
-							variants={staggerContainer}
-							className="divide-y"
-						>
+						<motion.div variants={staggerContainer} className="divide-y">
 							{saldosPorCuenta.map((c) => (
 								<motion.div
 									key={c.cuentaId}
@@ -153,8 +150,7 @@ export function BalanceTab({
 													{c.moneda}
 												</Badge>
 												<span className="text-xs text-muted-foreground">
-													Inicio:{" "}
-													{formatMoneda(c.saldoInicioPeriodo, c.moneda)}
+													Inicio: {formatMoneda(c.saldoInicioPeriodo, c.moneda)}
 												</span>
 											</div>
 										</div>

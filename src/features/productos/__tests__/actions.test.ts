@@ -81,6 +81,12 @@ vi.mock("@/lib/prisma", () => {
 vi.mock("@/lib/services/stock-ubicacion-service", () => ({
 	upsertStockUbicacion: vi.fn(),
 }));
+vi.mock("@/lib/cost-history-utils", () => ({
+	recordCostChange: vi.fn(),
+	CostChangeReason: {
+		RESTOCK: "RESTOCK",
+	},
+}));
 vi.mock("@/lib/restock-utils", () => {
 	const actual = vi.importActual("@/lib/restock-utils");
 	return {
@@ -111,7 +117,7 @@ const mockUser: AuthenticatedUser = {
 	role: "admin",
 	isActive: true,
 	tenantId: "tenant-test",
-	tenantRole: "admin",
+	tenantRole: "manager",
 };
 
 const mockProducto = {
@@ -397,6 +403,9 @@ describe("Productos Server Actions", () => {
 			},
 			tipoPago: {
 				findFirst: vi.fn(),
+			},
+			precioProducto: {
+				findMany: vi.fn(),
 			},
 			cuentaBancaria: {
 				findUnique: vi.fn(),
@@ -757,6 +766,11 @@ describe("Productos Server Actions", () => {
 			mockTx.compraProducto.create.mockResolvedValue({
 				compraProductoId: "compra-new-1",
 			});
+			// Mockear precios originales para copiar a nueva instancia
+			mockTx.precioProducto.findMany.mockResolvedValue([
+				{ listaPrecioId: "lp-1", precio: 150 },
+				{ listaPrecioId: "lp-2", precio: 200 },
+			]);
 			// Proveer cuenta para flujo PAGO_COMPLETO
 			mockTx.tipoPago.findFirst.mockResolvedValue({
 				tipoId: "tipo-1",

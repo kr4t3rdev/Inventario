@@ -325,7 +325,7 @@ model TurnoPuntoVenta {
   createdAt       DateTime     @default(now())
   updatedAt       DateTime     @updatedAt
   ventas          Venta[]
-  arqueo          ArqueoCaja?
+  arqueos         ArqueoCaja[]
   empleado        Empleado?    @relation(fields: [empleadoId], references: [empleadoId])
   puntoDeVenta    PuntoDeVenta @relation(fields: [puntoDeVentaId], references: [pvId])
   tenant          Tenant       @relation(fields: [tenantId], references: [tenantId])
@@ -337,7 +337,7 @@ model TurnoPuntoVenta {
 
 model ArqueoCaja {
   id                    String          @id @default(cuid())
-  turnoId               String          @unique
+  turnoId               String
   tenantId              String
   puntoDeVentaId        String
   billetes1000Cup       Int             @default(0)
@@ -346,6 +346,9 @@ model ArqueoCaja {
   billetes100Cup        Int             @default(0)
   billetes50Cup         Int             @default(0)
   billetes20Cup         Int             @default(0)
+  billetes10Cup         Int             @default(0)
+  billetes5Cup          Int             @default(0)
+  billetes1Cup          Int             @default(0)
   monedasCup            Int             @default(0)
   billetes100Usd        Int             @default(0)
   billetes50Usd         Int             @default(0)

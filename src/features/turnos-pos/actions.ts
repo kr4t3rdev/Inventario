@@ -25,7 +25,7 @@ import type { AuthenticatedUser } from "@/lib/auth-middleware";
 const TURNOS_INCLUDE = {
 	puntoDeVenta: { select: { pvId: true, nombre: true, tipoCaja: true } },
 	empleado: { select: { empleadoId: true, nombre: true, apellido: true } },
-	arqueo: true,
+	arqueos: { orderBy: { createdAt: "desc" }, take: 1 },
 	ventas: { select: { total: true } },
 	_count: { select: { ventas: true } },
 } as const;
@@ -145,12 +145,14 @@ export const getTurnoActivoAction = withAction(
 );
 
 /**
- * @description Cierra un turno. Requiere que exista un arqueo registrado.
- * La validación de coincidencia arqueo vs total ventas se hace en CuadreTurnoDialog.
+ * @description Cierra un turno POS con validación server-side.
+ * Exige que exista un arqueo registrado y que coincida con las ventas
+ * del turno dentro de una tolerancia de $0.01.
  *
  * @param {CerrarTurnoInput} input - Datos de cierre (turnoId)
  * @returns {Promise<{ turno: TurnoPuntoVenta }>}
- * @throws {ActionError} Si el turno no existe, no está abierto, o no tiene arqueo
+ * @throws {ActionError} Si el turno no existe, no está abierto,
+ *   no tiene arqueo, o el arqueo no coincide con las ventas
  */
 export const cerrarTurnoAction = withAction(
 	async (input: CerrarTurnoInput, user: AuthenticatedUser) => {
@@ -159,16 +161,47 @@ export const cerrarTurnoAction = withAction(
 
 		const turno = await prisma.turnoPuntoVenta.findFirst({
 			where: { id: parsed.turnoId, tenantId },
-			include: { arqueo: true },
+			include: {
+				arqueos: { orderBy: { createdAt: "desc" }, take: 1 },
+				puntoDeVenta: { select: { pvId: true } },
+			},
 		});
 		if (!turno) throw new ActionError("Turno no encontrado", "NOT_FOUND");
 		if (turno.estado !== "ABIERTO") {
 			throw new ActionError("El turno ya está cerrado", "CONFLICT");
 		}
-		if (!turno.arqueo) {
+
+		// ── Validación server-side: debe existir arqueo ──
+		const ultimoArqueo = turno.arqueos[0];
+		if (!ultimoArqueo) {
 			throw new ActionError(
 				"Debe realizar el arqueo de caja antes de cerrar el turno",
 				"NO_ARQUEO",
+			);
+		}
+
+		// ── Validación server-side: arqueo debe coincidir con ventas ──
+		const ventaAgg = await prisma.venta.aggregate({
+			where: { turnoId: parsed.turnoId, deletedAt: null },
+			_sum: { total: true },
+		});
+		const totalVentaTurno = (ventaAgg._sum.total ?? 0) / 100; // centavos → pesos
+
+		const fondo = turno.fondoInicialCup;
+		const arqueoTotalPesos =
+			(ultimoArqueo.totalEfectivoCup -
+				fondo +
+				ultimoArqueo.totalTarjeta +
+				ultimoArqueo.totalTransferencia +
+				ultimoArqueo.totalCredito) /
+			100;
+
+		const diferencia = Math.abs(arqueoTotalPesos - totalVentaTurno);
+		// Tolerancia de $0.01 por redondeo
+		if (diferencia > 0.01) {
+			throw new ActionError(
+				`El arqueo ($${arqueoTotalPesos.toFixed(2)}) no coincide con las ventas ($${totalVentaTurno.toFixed(2)}). Diferencia: $${diferencia.toFixed(2)}. Revise el conteo e intente nuevamente.`,
+				"ARQUEO_MISMATCH",
 			);
 		}
 

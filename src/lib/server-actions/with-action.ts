@@ -88,11 +88,19 @@ export function withAction<TInput, TOutput>(
 			}
 
 			if (errorName === "PrismaClientValidationError") {
+				const message = (errorObj?.message as string) ?? "";
+				// Extraer la parte relevante del mensaje (primeros 500 chars)
+				const detail =
+					message.length > 500 ? message.substring(0, 500) + "..." : message;
+				console.error("Prisma Validation Error:", {
+					message: detail,
+				});
 				return {
 					success: false,
 					error: {
 						message: "Error de validación en la base de datos",
 						code: "PRISMA_VALIDATION_ERROR",
+						details: detail,
 					},
 				};
 			}

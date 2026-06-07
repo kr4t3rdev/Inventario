@@ -28,6 +28,9 @@ function calcularTotalCup(conteo: {
 	billetes100Cup: number;
 	billetes50Cup: number;
 	billetes20Cup: number;
+	billetes10Cup: number;
+	billetes5Cup: number;
+	billetes1Cup: number;
 	monedasCup: number;
 }): number {
 	return (
@@ -37,6 +40,9 @@ function calcularTotalCup(conteo: {
 		conteo.billetes100Cup * 10000 +
 		conteo.billetes50Cup * 5000 +
 		conteo.billetes20Cup * 2000 +
+		conteo.billetes10Cup * 1000 +
+		conteo.billetes5Cup * 500 +
+		conteo.billetes1Cup * 100 +
 		conteo.monedasCup
 	);
 }
@@ -104,7 +110,7 @@ export const getEsperadosArqueoAction = withAction(
 		const ventasEfectivoUsd = 0;
 
 		return {
-			esperadoEfectivoCup: turno.fondoInicialCup + ventasEfectivoCup,
+			esperadoEfectivoCup: ventasEfectivoCup, // sin fondoInicial — se descuenta al mostrar
 			esperadoEfectivoUsd: turno.fondoInicialUsd + ventasEfectivoUsd,
 			esperadoTarjeta: turno.ventas
 				.filter((v) => v.metodoPago === "TARJETA" || v.metodoPago === "MIXTO")
@@ -143,7 +149,6 @@ export const realizarArqueoAction = withAction(
 		const turno = await prisma.turnoPuntoVenta.findFirst({
 			where: { id: parsed.turnoId, tenantId },
 			include: {
-				arqueo: true,
 				ventas: {
 					select: {
 						metodoPago: true,
@@ -160,12 +165,7 @@ export const realizarArqueoAction = withAction(
 		if (turno.estado !== "ABIERTO") {
 			throw new ActionError("El turno ya está cerrado", "CONFLICT");
 		}
-		if (turno.arqueo) {
-			throw new ActionError(
-				"Este turno ya tiene un arqueo registrado",
-				"CONFLICT",
-			);
-		}
+		// Se permiten múltiples arqueos (conteos) por turno
 
 		// 2. Calcular totales físicos
 		const totalEfectivoCup = calcularTotalCup(parsed);
@@ -174,12 +174,10 @@ export const realizarArqueoAction = withAction(
 		const totalTransferencia = parsed.totalTransferencia;
 		const totalCredito = parsed.totalCredito;
 
-		// 3. Calcular esperados desde las ventas
-		const esperadoEfectivoCup =
-			turno.fondoInicialCup +
-			turno.ventas
-				.filter((v) => v.metodoPago === "EFECTIVO" || v.metodoPago === "MIXTO")
-				.reduce((sum, v) => sum + (v.montoEfectivo ?? 0), 0);
+		// 3. Calcular esperados desde las ventas (sin fondoInicial — se descuenta al mostrar la diferencia)
+		const esperadoEfectivoCup = turno.ventas
+			.filter((v) => v.metodoPago === "EFECTIVO" || v.metodoPago === "MIXTO")
+			.reduce((sum, v) => sum + (v.montoEfectivo ?? 0), 0);
 
 		const esperadoEfectivoUsd = turno.fondoInicialUsd;
 
@@ -195,8 +193,9 @@ export const realizarArqueoAction = withAction(
 			.filter((v) => v.metodoPago === "CREDITO" || v.metodoPago === "MIXTO")
 			.reduce((sum, v) => sum + (v.montoCredito ?? 0), 0);
 
-		// 4. Calcular diferencias
-		const diferenciaCup = totalEfectivoCup - esperadoEfectivoCup;
+		// 4. Calcular diferencias (descontando fondoInicial del efectivo contado)
+		const diferenciaCup =
+			totalEfectivoCup - turno.fondoInicialCup - esperadoEfectivoCup;
 		const diferenciaUsd = totalEfectivoUsd - esperadoEfectivoUsd;
 
 		// 5. Crear arqueo (ya NO cierra el turno; eso se hace desde CuadreTurnoDialog)
@@ -212,6 +211,9 @@ export const realizarArqueoAction = withAction(
 				billetes100Cup: parsed.billetes100Cup,
 				billetes50Cup: parsed.billetes50Cup,
 				billetes20Cup: parsed.billetes20Cup,
+				billetes10Cup: parsed.billetes10Cup,
+				billetes5Cup: parsed.billetes5Cup,
+				billetes1Cup: parsed.billetes1Cup,
 				monedasCup: parsed.monedasCup,
 				// Conteo USD
 				billetes100Usd: parsed.billetes100Usd,

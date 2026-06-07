@@ -2,14 +2,29 @@
   "mcpServers": {
     "next-devtools": {
       "command": "npx",
-      "args": ["-y", "next-devtools-mcp@latest"]
+      "args": [
+        "-y",
+        "next-devtools-mcp@latest"
+      ],
+      "directTools": true
     },
     "vercel": {
-      "url": "https://mcp.vercel.com"
+      "url": "https://mcp.vercel.com",
+      "directTools": true
     },
     "testsprite": {
       "command": "npx",
-      "args": ["-y", "@testsprite/testsprite-mcp"]
+      "args": [
+        "-y",
+        "@testsprite/testsprite-mcp"
+      ]
+    },
+    "railway": {
+      "command": "railway",
+      "args": [
+        "mcp"
+      ],
+      "directTools": true
     }
   }
 }

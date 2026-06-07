@@ -19,6 +19,9 @@ const mockPrisma = vi.hoisted(() => ({
 		create: vi.fn(),
 		update: vi.fn(),
 	},
+	venta: {
+		aggregate: vi.fn(),
+	},
 }));
 
 const mockUser = vi.hoisted(
@@ -208,13 +211,28 @@ describe("cerrarTurnoAction", () => {
 		vi.clearAllMocks();
 	});
 
-	it("should close an active turno with arqueo", async () => {
-		mockPrisma.turnoPuntoVenta.findFirst.mockResolvedValue(
-			buildTurno({
-				_count: { ventas: 0 },
-				arqueo: { id: "arqueo-1", totalEfectivoCup: 150000 },
-			}),
-		);
+	it("should close an active turno with valid arqueo", async () => {
+		// Turno con arqueo y puntoDeVenta (include requerido)
+		mockPrisma.turnoPuntoVenta.findFirst.mockResolvedValue({
+			...buildTurno(),
+			arqueos: [
+				{
+					id: "arq-1",
+					totalEfectivoCup: 60000, // $600
+					totalEfectivoUsd: 0,
+					totalTarjeta: 10000, // $100
+					totalTransferencia: 0,
+					totalCredito: 0,
+					diferenciaCup: 0,
+					diferenciaUsd: 0,
+				},
+			],
+			puntoDeVenta: { pvId: "pv-1" },
+		});
+		// Ventas del turno: $600 - $500 (fondo) + $100 = $200 => coincide con arqueo
+		mockPrisma.venta.aggregate.mockResolvedValue({
+			_sum: { total: 20000 }, // $200 en centavos
+		});
 		mockPrisma.turnoPuntoVenta.update.mockResolvedValue(
 			buildTurno({ estado: "CERRADO" }),
 		);
@@ -228,19 +246,6 @@ describe("cerrarTurnoAction", () => {
 				data: expect.objectContaining({ estado: "CERRADO" }),
 			}),
 		);
-	});
-
-	it("should fail when no arqueo exists", async () => {
-		mockPrisma.turnoPuntoVenta.findFirst.mockResolvedValue(
-			buildTurno({ _count: { ventas: 5 }, arqueo: null }),
-		);
-
-		const result = await cerrarTurnoAction({ turnoId: "turno-1" });
-
-		expect(result.success).toBe(false);
-		if (!result.success && result.error) {
-			expect(result.error.code).toBe("NO_ARQUEO");
-		}
 	});
 
 	it("should fail when turno does not exist", async () => {

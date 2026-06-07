@@ -65,7 +65,11 @@ export const staggerSlow: Variants = {
 
 export const slideRow: Variants = {
 	hidden: { opacity: 0, x: -12 },
-	visible: { opacity: 1, x: 0, transition: { duration: 0.25, ease: "easeOut" } },
+	visible: {
+		opacity: 1,
+		x: 0,
+		transition: { duration: 0.25, ease: "easeOut" },
+	},
 };
 
 export const cardSlideUp: Variants = {
@@ -127,5 +131,9 @@ export const scaleIn: Variants = {
 
 export const listItem: Variants = {
 	hidden: { opacity: 0, y: 10 },
-	visible: { opacity: 1, y: 0, transition: { duration: 0.25, ease: "easeOut" } },
+	visible: {
+		opacity: 1,
+		y: 0,
+		transition: { duration: 0.25, ease: "easeOut" },
+	},
 };

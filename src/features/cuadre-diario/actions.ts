@@ -102,7 +102,7 @@ export const getCuadreDiarioAction = withAction(
 				where: { tenantId, fechaApertura: { gte: fechaInicio, lte: fechaFin } },
 				include: {
 					puntoDeVenta: { select: { nombre: true } },
-					arqueo: true,
+					arqueos: { orderBy: { createdAt: "desc" }, take: 1 },
 					_count: { select: { ventas: true } },
 				},
 			}),
@@ -328,13 +328,13 @@ export const getCuadreDiarioAction = withAction(
 				fondoInicialCup: (t.fondoInicialCup ?? 0) / 100,
 				fondoInicialUsd: (t.fondoInicialUsd ?? 0) / 100,
 				totalVentas: t._count?.ventas ?? 0,
-				tieneArqueo: !!t.arqueo,
-				arqueo: t.arqueo
+				tieneArqueo: (t.arqueos?.length ?? 0) > 0,
+				arqueo: t.arqueos?.[0]
 					? {
-							totalEfectivoCup: (t.arqueo.totalEfectivoCup ?? 0) / 100,
-							totalEfectivoUsd: (t.arqueo.totalEfectivoUsd ?? 0) / 100,
-							diferenciaCup: (t.arqueo.diferenciaCup ?? 0) / 100,
-							diferenciaUsd: (t.arqueo.diferenciaUsd ?? 0) / 100,
+							totalEfectivoCup: (t.arqueos[0].totalEfectivoCup ?? 0) / 100,
+							totalEfectivoUsd: (t.arqueos[0].totalEfectivoUsd ?? 0) / 100,
+							diferenciaCup: (t.arqueos[0].diferenciaCup ?? 0) / 100,
+							diferenciaUsd: (t.arqueos[0].diferenciaUsd ?? 0) / 100,
 						}
 					: null,
 			})),

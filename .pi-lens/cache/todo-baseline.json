@@ -32,8 +32,8 @@
       "type": "TODO",
       "message": "Get from current user context",
       "file": "src/features/empleados/components/enhanced-asistencia-form.tsx",
-      "line": 171,
-      "column": 32
+      "line": 217,
+      "column": 28
     },
     {
       "type": "TODO",

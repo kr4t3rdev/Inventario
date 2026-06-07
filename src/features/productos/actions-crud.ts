@@ -370,7 +370,7 @@ export const createProductoAction = withAction(
  */
 export const updateProductoAction = withAction(
 	async (input: ProductoUpdateInput, user: AuthenticatedUser) => {
-		requireManagerRole(user, 'editar productos');
+		requireManagerRole(user, "editar productos");
 		const parsed = productoUpdateSchema.parse(input);
 		const { id, ...updateData } = parsed;
 
@@ -388,113 +388,139 @@ export const updateProductoAction = withAction(
 		const oldStock = existing.stock;
 		const oldAlmacenId = existing.almacenId;
 
-		// Upsert precios por lista antes de actualizar el producto
-		if (parsed.precios?.length) {
-			await Promise.all(
-				parsed.precios.map((p) =>
-					prisma.precioProducto.upsert({
-						where: {
-							listaPrecioId_productoId: {
+		const producto = await prisma.$transaction(async (tx: any) => {
+			// Upsert precios dentro de la misma transacción
+			if (parsed.precios?.length) {
+				await Promise.all(
+					parsed.precios.map((p) =>
+						tx.precioProducto.upsert({
+							where: {
+								listaPrecioId_productoId: {
+									listaPrecioId: p.listaPrecioId,
+									productoId: id,
+								},
+							},
+							update: { precio: p.precio },
+							create: {
 								listaPrecioId: p.listaPrecioId,
 								productoId: id,
+								precio: p.precio,
 							},
-						},
-						update: { precio: p.precio },
-						create: {
-							listaPrecioId: p.listaPrecioId,
-							productoId: id,
-							precio: p.precio,
-						},
-					}),
-				),
-			);
-		}
-
-		const producto = await prisma.producto.update({
-			where: { id },
-			data: {
-				...(updateData.nombre !== undefined && { nombre: updateData.nombre }),
-				...(updateData.descripcion !== undefined && {
-					descripcion: updateData.descripcion,
-				}),
-				...(updateData.precioCosto !== undefined && {
-					precioCosto: updateData.precioCosto,
-				}),
-				...(updateData.precioVenta !== undefined && {
-					precioVenta: updateData.precioVenta,
-				}),
-				...(updateData.stock !== undefined && { stock: updateData.stock }),
-				...(updateData.stockMinimo !== undefined && {
-					stockMinimo: updateData.stockMinimo,
-				}),
-				...(updateData.codigoInterno !== undefined && {
-					codigoInterno: updateData.codigoInterno,
-				}),
-				...(updateData.proveedorCodigo !== undefined && {
-					proveedorCodigo: updateData.proveedorCodigo,
-				}),
-				...(updateData.categoriaId !== undefined && {
-					categoriaId: updateData.categoriaId,
-				}),
-				...(updateData.subcategoriaId !== undefined && {
-					subcategoriaId: updateData.subcategoriaId,
-				}),
-				...(updateData.unidadId !== undefined && {
-					unidadId: updateData.unidadId,
-				}),
-				...(updateData.vendorId !== undefined && {
-					vendorId: updateData.vendorId,
-				}),
-				...(updateData.almacenId !== undefined && {
-					almacenId: updateData.almacenId,
-				}),
-				...(updateData.puntoDeVentaId !== undefined && {
-					puntoDeVentaId: updateData.puntoDeVentaId,
-				}),
-				...(updateData.fotos !== undefined && { fotos: updateData.fotos }),
-			},
-			select: PRODUCTO_SELECT,
-		});
-
-		// Sincronizar StockUbicacion si cambió stock o almacén
-		const newStock = updateData.stock;
-		const newAlmacenId = updateData.almacenId;
-
-		if (newStock !== undefined) {
-			// Stock manual: set en la ubicación actual (usar newAlmacenId o oldAlmacenId)
-			const targetAlmacen = newAlmacenId ?? oldAlmacenId;
-			if (targetAlmacen) {
-				await upsertStockUbicacion(prisma, {
-					productoId: producto.id,
-					tipoUbicacion: "almacen",
-					ubicacionId: targetAlmacen,
-					modo: "set",
-					valor: newStock,
-				});
+						}),
+					),
+				);
 			}
-		} else if (newAlmacenId !== undefined && newAlmacenId !== oldAlmacenId) {
-			// Cambio de almacén: mover el stock de la ubicación anterior a la nueva
-			if (oldStock > 0) {
+
+			const updated = await tx.producto.update({
+				where: { id },
+				data: {
+					...(updateData.nombre !== undefined && { nombre: updateData.nombre }),
+					...(updateData.descripcion !== undefined && {
+						descripcion: updateData.descripcion,
+					}),
+					...(updateData.precioCosto !== undefined && {
+						precioCosto: updateData.precioCosto,
+					}),
+					...(updateData.precioVenta !== undefined && {
+						precioVenta: updateData.precioVenta,
+					}),
+					...(updateData.stock !== undefined && { stock: updateData.stock }),
+					...(updateData.stockMinimo !== undefined && {
+						stockMinimo: updateData.stockMinimo,
+					}),
+					...(updateData.codigoInterno !== undefined && {
+						codigoInterno: updateData.codigoInterno,
+					}),
+					...(updateData.proveedorCodigo !== undefined && {
+						proveedorCodigo: updateData.proveedorCodigo,
+					}),
+					...(updateData.categoriaId !== undefined && {
+						categoriaId: updateData.categoriaId,
+					}),
+					...(updateData.subcategoriaId !== undefined && {
+						subcategoriaId: updateData.subcategoriaId,
+					}),
+					...(updateData.unidadId !== undefined && {
+						unidadId: updateData.unidadId,
+					}),
+					...(updateData.vendorId !== undefined && {
+						vendorId: updateData.vendorId,
+					}),
+					...(updateData.almacenId !== undefined && {
+						almacenId: updateData.almacenId,
+					}),
+					...(updateData.puntoDeVentaId !== undefined && {
+						puntoDeVentaId: updateData.puntoDeVentaId,
+					}),
+					...(updateData.fotos !== undefined && { fotos: updateData.fotos }),
+				},
+				select: PRODUCTO_SELECT,
+			});
+
+			// Sincronizar StockUbicacion si cambió stock o almacén
+			const newStock = updateData.stock;
+			const newAlmacenId = updateData.almacenId;
+			const almacenCambio =
+				newAlmacenId !== undefined && newAlmacenId !== oldAlmacenId;
+
+			if (newStock !== undefined && almacenCambio) {
+				// Caso combinado: stock + almacén cambiaron simultáneamente
+				// Clear old almacén, set new stock en new almacén
 				if (oldAlmacenId) {
-					await upsertStockUbicacion(prisma, {
-						productoId: producto.id,
+					await upsertStockUbicacion(tx, {
+						productoId: updated.id,
 						tipoUbicacion: "almacen",
 						ubicacionId: oldAlmacenId,
-						modo: "increment",
-						delta: -oldStock,
+						modo: "set",
+						valor: 0,
 					});
 				}
 				if (newAlmacenId) {
-					await upsertStockUbicacion(prisma, {
-						productoId: producto.id,
+					await upsertStockUbicacion(tx, {
+						productoId: updated.id,
 						tipoUbicacion: "almacen",
 						ubicacionId: newAlmacenId,
-						modo: "increment",
-						delta: oldStock,
+						modo: "set",
+						valor: newStock,
 					});
 				}
+			} else if (newStock !== undefined) {
+				// Solo cambió stock: set en la ubicación actual
+				if (oldAlmacenId) {
+					await upsertStockUbicacion(tx, {
+						productoId: updated.id,
+						tipoUbicacion: "almacen",
+						ubicacionId: oldAlmacenId,
+						modo: "set",
+						valor: newStock,
+					});
+				}
+			} else if (almacenCambio) {
+				// Solo cambió almacén: mover stock
+				if (oldStock > 0) {
+					if (oldAlmacenId) {
+						await upsertStockUbicacion(tx, {
+							productoId: updated.id,
+							tipoUbicacion: "almacen",
+							ubicacionId: oldAlmacenId,
+							modo: "increment",
+							delta: -oldStock,
+						});
+					}
+					if (newAlmacenId) {
+						await upsertStockUbicacion(tx, {
+							productoId: updated.id,
+							tipoUbicacion: "almacen",
+							ubicacionId: newAlmacenId,
+							modo: "increment",
+							delta: oldStock,
+						});
+					}
+				}
 			}
-		}
+
+			return updated;
+		});
 
 		revalidatePath("/busy/products");
 		return producto;
@@ -508,7 +534,7 @@ export const updateProductoAction = withAction(
  */
 export const deleteProductoAction = withAction(
 	async (id: string, user: AuthenticatedUser) => {
-		requireManagerRole(user, 'eliminar productos');
+		requireManagerRole(user, "eliminar productos");
 		const tenantId = requireTenant(user);
 
 		const existing = await prisma.producto.findUnique({
@@ -526,4 +552,3 @@ export const deleteProductoAction = withAction(
 		return { id, eliminado: true };
 	},
 );
-

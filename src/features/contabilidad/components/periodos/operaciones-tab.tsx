@@ -200,11 +200,9 @@ export function OperacionesTab({
 													variants={slideRow}
 												>
 													<TableCell className="text-sm">
-														{format(
-															new Date(item.fecha),
-															"dd/MM/yy HH:mm",
-															{ locale: es },
-														)}
+														{format(new Date(item.fecha), "dd/MM/yy HH:mm", {
+															locale: es,
+														})}
 													</TableCell>
 													<TableCell>
 														<Badge

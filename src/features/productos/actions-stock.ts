@@ -4,7 +4,7 @@ import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import { withAction, ActionError } from "@/lib/server-actions";
 import { prisma } from "@/lib/prisma";
-import { requireTenant } from "@/lib/services/tenant-scope";
+import { requireTenant, requireManagerRole } from "@/lib/services/tenant-scope";
 import { stockUbicacionQuerySchema } from "./schemas";
 import type { StockUbicacionQuery } from "./schemas";
 import type { AuthenticatedUser } from "@/lib/auth-middleware";
@@ -130,7 +130,7 @@ const bulkUpdateSchema = z.object({
  */
 export const bulkUpdateStockMinimoAction = withAction(
 	async (input: z.infer<typeof bulkUpdateSchema>, user: AuthenticatedUser) => {
-		requireManagerRole(user, 'modificar el stock mínimo de productos');
+		requireManagerRole(user, "modificar el stock mínimo de productos");
 		const { updates } = bulkUpdateSchema.parse(input);
 		requireTenant(user);
 
@@ -308,4 +308,3 @@ export const getRestockHistoryAction = withAction(
 		};
 	},
 );
-
