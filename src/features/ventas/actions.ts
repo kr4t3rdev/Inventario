@@ -170,7 +170,13 @@ export const createVentaAction = withAction(
 			for (const item of itemsData) {
 				const producto = await tx.producto.findUnique({
 					where: { id: item.productoId },
-					select: { id: true, stock: true, almacenId: true, tenantId: true },
+					select: {
+						id: true,
+						nombre: true,
+						stock: true,
+						almacenId: true,
+						tenantId: true,
+					},
 				});
 
 				if (!producto) {
@@ -180,20 +186,72 @@ export const createVentaAction = withAction(
 					);
 				}
 
-				if (producto.stock < item.cantidad) {
-					throw new ActionError(
-						`Stock insuficiente para el producto. Disponible: ${producto.stock}, solicitado: ${item.cantidad}`,
-						"STOCK_INSUFICIENTE",
-					);
+				// Validar stock contra StockUbicacion del punto de venta
+				if (parsed.puntoDeVentaId) {
+					// Validar contra cantidadDisponible (Fase 3)
+					const stockPV = await tx.stockUbicacion.findUnique({
+						where: {
+							productoId_tipoUbicacion_ubicacionId: {
+								productoId: item.productoId,
+								tipoUbicacion: "punto_venta",
+								ubicacionId: parsed.puntoDeVentaId,
+							},
+						},
+						select: { cantidadDisponible: true },
+					});
+
+					if (stockPV === null) {
+						throw new ActionError(
+							`El producto "${producto.nombre}" no tiene registro de stock en este punto de venta. Complete el backfill de StockUbicacion antes de vender.`,
+							"STOCK_INCONSISTENTE",
+						);
+					}
+
+					if (stockPV.cantidadDisponible < item.cantidad) {
+						throw new ActionError(
+							`Stock insuficiente en el punto de venta. Disponible: ${stockPV.cantidadDisponible}, solicitado: ${item.cantidad}`,
+							"STOCK_INSUFICIENTE",
+						);
+					}
+				} else if (producto.almacenId) {
+					const stockAlmacen = await tx.stockUbicacion.findUnique({
+						where: {
+							productoId_tipoUbicacion_ubicacionId: {
+								productoId: item.productoId,
+								tipoUbicacion: "almacen",
+								ubicacionId: producto.almacenId,
+							},
+						},
+						select: { cantidadDisponible: true },
+					});
+
+					if (stockAlmacen === null) {
+						throw new ActionError(
+							`El producto "${producto.nombre}" no tiene registro de stock en su almacén. Complete el backfill de StockUbicacion antes de vender.`,
+							"STOCK_INCONSISTENTE",
+						);
+					}
+
+					if (stockAlmacen.cantidadDisponible < item.cantidad) {
+						throw new ActionError(
+							`Stock insuficiente en el almacén. Disponible: ${stockAlmacen.cantidadDisponible}, solicitado: ${item.cantidad}`,
+							"STOCK_INSUFICIENTE",
+						);
+					}
 				}
 
-				await tx.producto.update({
-					where: { id: item.productoId },
-					data: { stock: { decrement: item.cantidad } },
-				});
-
-				// Sincronizar StockUbicacion en el punto de venta
-				if (producto.almacenId) {
+				// Sincronizar StockUbicacion solo de la ubicación correcta
+				// Si la venta tiene PV, solo descontar del PV (el stock ya fue transferido del almacén)
+				if (parsed.puntoDeVentaId) {
+					await upsertStockUbicacion(tx, {
+						tenantId: producto.tenantId,
+						productoId: item.productoId,
+						tipoUbicacion: "punto_venta",
+						ubicacionId: parsed.puntoDeVentaId,
+						modo: "increment",
+						delta: -item.cantidad,
+					});
+				} else if (producto.almacenId) {
 					await upsertStockUbicacion(tx, {
 						productoId: item.productoId,
 						tipoUbicacion: "almacen",
@@ -319,13 +377,14 @@ export const anularVentaAction = withAction(
 			select: {
 				ventaId: true,
 				tenantId: true,
+				puntoDeVentaId: true,
 				deletedAt: true,
 				items: {
 					select: {
 						productoId: true,
 						cantidad: true,
 						producto: {
-							select: { id: true, almacenId: true },
+							select: { id: true, almacenId: true, tenantId: true },
 						},
 					},
 				},
@@ -343,12 +402,18 @@ export const anularVentaAction = withAction(
 		// Restaurar stock en una transacción
 		await prisma.$transaction(async (tx) => {
 			for (const item of venta.items) {
-				await tx.producto.update({
-					where: { id: item.productoId },
-					data: { stock: { increment: item.cantidad } },
-				});
-
-				if (item.producto?.almacenId) {
+				// Restaurar SOLO la ubicación que realmente se descontó al vender
+				// Si la venta tiene PV, el stock salió del PV, no del almacén
+				if (venta.puntoDeVentaId) {
+					await upsertStockUbicacion(tx, {
+						tenantId: item.producto.tenantId,
+						productoId: item.productoId,
+						tipoUbicacion: "punto_venta",
+						ubicacionId: venta.puntoDeVentaId,
+						modo: "increment",
+						delta: item.cantidad,
+					});
+				} else if (item.producto?.almacenId) {
 					await upsertStockUbicacion(tx, {
 						productoId: item.productoId,
 						tipoUbicacion: "almacen",

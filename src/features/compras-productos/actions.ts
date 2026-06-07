@@ -12,6 +12,7 @@ import { requireTenant } from '@/lib/services/tenant-scope';
 import { calcularPrecioCostoCompra } from '@/lib/inventory-cost-utils';
 import { applyAnticipoAllocations } from '@/lib/services/anticipos-workflow';
 import { upsertStockUbicacion } from '@/lib/services/stock-ubicacion-service';
+import { getStockTotalProducto } from '@/lib/services/stock-ubicacion-queries';
 import { recordCostChange, CostChangeReason } from '@/lib/cost-history-utils';
 import { hasUnrevertedAnticipoExecution } from '@/lib/services/anticipos-guards';
 import { FORMA_PAGO_ANTICIPO_PAGO } from '@/lib/constants/anticipos';
@@ -95,9 +96,12 @@ export const createCompraProductoAction = withAction(async (input: CreateCompraP
   for (const item of parsed.items) {
     const producto = await prisma.producto.findFirst({ where: { id: item.productoId, tenantId } });
     if (!producto) throw new ActionError(`Producto ${item.productoId} no encontrado`, 'NOT_FOUND');
+    const stockAntes = await getStockTotalProducto(prisma, {
+      productoId: item.productoId,
+    });
 
     const nuevoPrecioCosto = calcularPrecioCostoCompra({
-      stockAntes: producto.stock,
+      stockAntes,
       precioCostoActual: producto.precioCosto,
       cantidadCompra: item.cantidad,
       costoUnitario: item.precioCosto,
@@ -133,7 +137,6 @@ export const createCompraProductoAction = withAction(async (input: CreateCompraP
       await tx.producto.update({
         where: { id: item.producto.id },
         data: {
-          stock: { increment: item.cantidad },
           precioCosto: item.nuevoPrecioCosto.precioCostoNuevo,
         },
       });

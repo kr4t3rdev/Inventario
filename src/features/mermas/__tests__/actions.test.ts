@@ -6,6 +6,22 @@ import { describe, it, expect, beforeEach, vi } from 'vitest';
 vi.mock('@/lib/server-actions/get-current-user');
 vi.mock('next/cache', () => ({ revalidatePath: vi.fn() }));
 vi.mock('@/lib/notificaciones-utils', () => ({ notificarMerma: vi.fn() }));
+vi.mock('@/lib/services/stock-ubicacion-service', () => ({
+	upsertStockUbicacion: vi.fn(),
+}));
+
+const { mockTx } = vi.hoisted(() => ({
+	mockTx: {
+		merma: {
+			create: vi.fn(),
+			delete: vi.fn(),
+			update: vi.fn(),
+		},
+		producto: {
+			update: vi.fn(),
+		},
+	},
+}));
 
 vi.mock('@/lib/prisma', () => ({
   prisma: {
@@ -22,7 +38,10 @@ vi.mock('@/lib/prisma', () => ({
       findFirst: vi.fn(),
       update: vi.fn(),
     },
-    $transaction: vi.fn((args: any) => Promise.all(args)),
+    stockUbicacion: {
+      findUnique: vi.fn(),
+    },
+    $transaction: vi.fn((args: any) => typeof args === 'function' ? args(mockTx) : Promise.all(args)),
     $queryRaw: vi.fn(),
   },
 }));
@@ -30,6 +49,7 @@ vi.mock('@/lib/prisma', () => ({
 import { getCurrentUser } from '@/lib/server-actions/get-current-user';
 import { prisma } from '@/lib/prisma';
 import { notificarMerma } from '@/lib/notificaciones-utils';
+import { upsertStockUbicacion } from '@/lib/services/stock-ubicacion-service';
 import {
   getMermasAction,
   getMermaByIdAction,
@@ -62,6 +82,7 @@ const mockProducto = {
   stock: 50,
   precioCosto: 1000,
   tenantId: 'tenant-test',
+  almacenId: 'alm-1',
 };
 
 describe('Mermas Server Actions', () => {
@@ -90,8 +111,8 @@ describe('Mermas Server Actions', () => {
     it('crea merma y decrementa stock', async () => {
       vi.mocked(getCurrentUser).mockResolvedValue(mockUser);
       vi.mocked(prisma.producto.findUnique).mockResolvedValue(mockProducto);
-      vi.mocked(prisma.merma.create).mockResolvedValue(mockMermaRow);
-      vi.mocked(prisma.producto.update).mockResolvedValue({ ...mockProducto, stock: 45 });
+      vi.mocked(prisma.stockUbicacion.findUnique).mockResolvedValue({ cantidadDisponible: 50 } as any);
+      mockTx.merma.create.mockResolvedValue(mockMermaRow);
       vi.mocked(notificarMerma).mockResolvedValue(undefined);
 
       const result = await createMermaAction({ productoId: 'prod-1', cantidad: 5, motivo: 'Dañado' });
@@ -113,35 +134,128 @@ describe('Mermas Server Actions', () => {
     it('rechaza si stock es insuficiente', async () => {
       vi.mocked(getCurrentUser).mockResolvedValue(mockUser);
       vi.mocked(prisma.producto.findUnique).mockResolvedValue({ ...mockProducto, stock: 2 });
+      vi.mocked(prisma.stockUbicacion.findUnique).mockResolvedValue({ cantidadDisponible: 2 } as any);
 
       const result = await createMermaAction({ productoId: 'prod-1', cantidad: 5 });
 
       expect(result.success).toBe(false);
       expect(result.error!.code).toBe('STOCK_INSUFICIENTE');
     });
+
+    it('(RETIRE LEGACY) con almacén no escribe Producto.stock', async () => {
+      vi.mocked(getCurrentUser).mockResolvedValue(mockUser);
+      vi.mocked(prisma.producto.findUnique).mockResolvedValue(mockProducto);
+      vi.mocked(prisma.stockUbicacion.findUnique).mockResolvedValue({
+        cantidadDisponible: 10,
+      } as any);
+      mockTx.merma.create.mockResolvedValue({
+        ...mockMermaRow,
+        almacenId: 'alm-1',
+      });
+      vi.mocked(notificarMerma).mockResolvedValue(undefined);
+
+      const result = await createMermaAction({
+        productoId: 'prod-1',
+        cantidad: 5,
+        almacenId: 'alm-1',
+      });
+
+      expect(result.success).toBe(true);
+      expect(mockTx.producto.update).not.toHaveBeenCalled();
+      expect(upsertStockUbicacion).toHaveBeenCalledWith(
+        mockTx,
+        expect.objectContaining({
+          productoId: 'prod-1',
+          tipoUbicacion: 'almacen',
+          ubicacionId: 'alm-1',
+          delta: -5,
+        }),
+      );
+    });
   });
 
   describe('updateMermaAction', () => {
     it('actualiza solo motivo', async () => {
       vi.mocked(getCurrentUser).mockResolvedValue(mockUser);
-      vi.mocked(prisma.merma.findFirst).mockResolvedValue({ mermaId: 'mer-1', productoId: 'prod-1', cantidad: 5, tenantId: 'tenant-test' });
+      vi.mocked(prisma.merma.findFirst).mockResolvedValue({ mermaId: 'mer-1', productoId: 'prod-1', cantidad: 5, tenantId: 'tenant-test', almacenId: 'alm-1' });
       vi.mocked(prisma.merma.update).mockResolvedValue(mockMermaRow);
 
       const result = await updateMermaAction({ mermaId: 'mer-1', motivo: 'Nuevo motivo' });
 
       expect(result.success).toBe(true);
     });
+
+    it('(RETIRE LEGACY) update con almacén no escribe Producto.stock', async () => {
+      vi.mocked(getCurrentUser).mockResolvedValue(mockUser);
+      vi.mocked(prisma.merma.findFirst).mockResolvedValue({
+        mermaId: 'mer-1',
+        productoId: 'prod-1',
+        cantidad: 5,
+        tenantId: 'tenant-test',
+        almacenId: 'alm-1',
+      } as any);
+      vi.mocked(prisma.producto.findFirst).mockResolvedValue(mockProducto as any);
+      vi.mocked(prisma.stockUbicacion.findUnique).mockResolvedValue({ cantidadDisponible: 20 } as any);
+      mockTx.merma.update.mockResolvedValue(mockMermaRow);
+
+      const result = await updateMermaAction({ mermaId: 'mer-1', cantidad: 7 });
+
+      expect(result.success).toBe(true);
+      expect(mockTx.producto.update).not.toHaveBeenCalled();
+      expect(upsertStockUbicacion).toHaveBeenCalledWith(
+        mockTx,
+        expect.objectContaining({
+          productoId: 'prod-1',
+          tipoUbicacion: 'almacen',
+          ubicacionId: 'alm-1',
+          delta: 5,
+        }),
+      );
+      expect(upsertStockUbicacion).toHaveBeenCalledWith(
+        mockTx,
+        expect.objectContaining({
+          productoId: 'prod-1',
+          tipoUbicacion: 'almacen',
+          ubicacionId: 'alm-1',
+          delta: -7,
+        }),
+      );
+    });
   });
 
   describe('deleteMermaAction', () => {
     it('elimina merma y restaura stock', async () => {
       vi.mocked(getCurrentUser).mockResolvedValue(mockUser);
-      vi.mocked(prisma.merma.findFirst).mockResolvedValue({ mermaId: 'mer-1', productoId: 'prod-1', cantidad: 5 });
-      vi.mocked(prisma.merma.delete).mockResolvedValue(mockMermaRow);
-      vi.mocked(prisma.producto.update).mockResolvedValue(mockProducto);
+      vi.mocked(prisma.merma.findFirst).mockResolvedValue({ mermaId: 'mer-1', productoId: 'prod-1', cantidad: 5, almacenId: 'alm-1' });
+      mockTx.merma.delete.mockResolvedValue(mockMermaRow);
 
       const result = await deleteMermaAction('mer-1');
       expect(result.success).toBe(true);
+    });
+
+    it('(RETIRE LEGACY) delete con almacén no escribe Producto.stock', async () => {
+      vi.mocked(getCurrentUser).mockResolvedValue(mockUser);
+      vi.mocked(prisma.merma.findFirst).mockResolvedValue({
+        mermaId: 'mer-1',
+        productoId: 'prod-1',
+        cantidad: 5,
+        almacenId: 'alm-1',
+      } as any);
+      mockTx.merma.delete.mockResolvedValue(mockMermaRow);
+
+      const result = await deleteMermaAction('mer-1');
+
+      expect(result.success).toBe(true);
+      expect(mockTx.producto.update).not.toHaveBeenCalled();
+      expect(upsertStockUbicacion).toHaveBeenCalledWith(
+        mockTx,
+        expect.objectContaining({
+          productoId: 'prod-1',
+          tipoUbicacion: 'almacen',
+          ubicacionId: 'alm-1',
+          delta: 5,
+        }),
+      );
     });
   });
 

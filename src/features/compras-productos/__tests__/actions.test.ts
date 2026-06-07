@@ -17,6 +17,13 @@ vi.mock("@/lib/services/anticipos-workflow", () => ({
 vi.mock("@/lib/services/stock-ubicacion-service", () => ({
 	upsertStockUbicacion: vi.fn(),
 }));
+vi.mock("@/lib/services/stock-ubicacion-queries", () => ({
+	getStockTotalProducto: vi.fn(),
+}));
+vi.mock("@/lib/cost-history-utils", () => ({
+	recordCostChange: vi.fn(),
+	CostChangeReason: { RESTOCK: "RESTOCK" },
+}));
 vi.mock("@/lib/services/anticipos-guards", () => ({
 	hasUnrevertedAnticipoExecution: vi.fn(),
 }));
@@ -44,6 +51,8 @@ vi.mock("@/lib/prisma", () => ({
 import { getCurrentUser } from "@/lib/server-actions/get-current-user";
 import { prisma } from "@/lib/prisma";
 import { calcularPrecioCostoCompra } from "@/lib/inventory-cost-utils";
+import { getStockTotalProducto } from "@/lib/services/stock-ubicacion-queries";
+import { upsertStockUbicacion } from "@/lib/services/stock-ubicacion-service";
 import {
 	getComprasProductosAction,
 	getCompraProductoByIdAction,
@@ -108,7 +117,11 @@ describe("ComprasProductos Server Actions", () => {
 			});
 			mockTx.gastoCompra.create.mockResolvedValue({ gastoCompraId: "gc-1" });
 			mockTx.compraDocumento.update.mockResolvedValue({} as any);
-			vi.mocked(calcularPrecioCostoCompra).mockReturnValue(450);
+			vi.mocked(getStockTotalProducto).mockResolvedValue(12);
+			vi.mocked(calcularPrecioCostoCompra).mockReturnValue({
+				precioCostoNuevo: 450,
+				metodoCosto: "PONDERADO",
+			} as any);
 
 			const result = await createCompraProductoAction({
 				proveedorId: "ven-1",
@@ -118,6 +131,23 @@ describe("ComprasProductos Server Actions", () => {
 			});
 
 			expect(result.success).toBe(true);
+			expect(getStockTotalProducto).toHaveBeenCalledWith(
+				prisma,
+				expect.objectContaining({ productoId: "prod-1" }),
+			);
+			expect(mockTx.producto.update).toHaveBeenCalledWith({
+				where: { id: "prod-1" },
+				data: { precioCosto: 450 },
+			});
+			expect(upsertStockUbicacion).toHaveBeenCalledWith(
+				mockTx,
+				expect.objectContaining({
+					productoId: "prod-1",
+					tipoUbicacion: "almacen",
+					ubicacionId: "alm-1",
+					delta: 10,
+				}),
+			);
 		});
 
 		it("rechaza si proveedor no existe", async () => {

@@ -373,6 +373,16 @@ export const aprobarOrdenProduccionAction = withAction(
 						almacenId: true,
 					},
 				});
+				const stockUbicacion = await tx.stockUbicacion.findUnique({
+					where: {
+						productoId_tipoUbicacion_ubicacionId: {
+							productoId: ingrediente.productoId,
+							tipoUbicacion: "almacen",
+							ubicacionId: producto?.almacenId,
+						},
+					},
+					select: { cantidadDisponible: true },
+				});
 
 				if (!producto) {
 					throw new ActionError(
@@ -390,7 +400,7 @@ export const aprobarOrdenProduccionAction = withAction(
 					producto: {
 						nombre: producto.nombre,
 						precioCosto: producto.precioCosto,
-						stock: producto.stock,
+						stock: stockUbicacion?.cantidadDisponible ?? 0,
 					},
 				});
 			}
@@ -414,11 +424,6 @@ export const aprobarOrdenProduccionAction = withAction(
 					ing,
 					orden.cantidad,
 				);
-
-				await tx.producto.update({
-					where: { id: ing.productoId },
-					data: { stock: { decrement: cantidadRequerida } },
-				});
 
 				if (ing.almacenId) {
 					await upsertStockUbicacion(tx, {
@@ -530,12 +535,6 @@ export const completarOrdenProduccionAction = withAction(
 
 			// Incrementar stock del producto final
 			const stockIncrementado = orden.cantidad * orden.Receta.rendimiento;
-			await tx.producto.update({
-				where: { id: productoId },
-				data: { stock: { increment: stockIncrementado } },
-			});
-
-			// Sincronizar StockUbicacion
 			if (productoFinal.almacenId) {
 				await upsertStockUbicacion(tx, {
 					productoId,
