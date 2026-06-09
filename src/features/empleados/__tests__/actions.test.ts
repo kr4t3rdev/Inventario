@@ -14,6 +14,20 @@ vi.mock('@/lib/prisma', () => ({
       update: vi.fn(),
       delete: vi.fn(),
     },
+    pagosalario: {
+      findMany: vi.fn(),
+      create: vi.fn(),
+      deleteMany: vi.fn(),
+    },
+    employeeWorkSchedule: {
+      findMany: vi.fn(),
+      findFirst: vi.fn(),
+      upsert: vi.fn(),
+      delete: vi.fn(),
+    },
+    attendance: {
+      findMany: vi.fn(),
+    },
   },
 }));
 
@@ -25,12 +39,15 @@ import {
   createEmpleadoAction,
   updateEmpleadoAction,
   deleteEmpleadoAction,
+  getNominaAction,
+  getWorkSchedulesAction,
+  upsertWorkScheduleAction,
 } from '@/features/empleados/actions';
 import type { AuthenticatedUser } from '@/lib/auth-middleware';
 
 const mockUser: AuthenticatedUser = {
   userId: 'user-1', name: 'Test', email: 'test@test.com',
-  role: 'admin', isActive: true, tenantId: 'tenant-test', tenantRole: 'admin',
+  role: 'admin', isActive: true, tenantId: 'tenant-test', tenantRole: 'manager',
 };
 
 describe('Empleados Server Actions', () => {
@@ -71,6 +88,51 @@ describe('Empleados Server Actions', () => {
     vi.mocked(prisma.empleado.delete).mockResolvedValue({} as any);
     const result = await deleteEmpleadoAction('emp-1');
     expect(result.success).toBe(true);
+  });
+
+  it('getNominaAction retorna nómina filtrada por tenant', async () => {
+    vi.mocked(getCurrentUser).mockResolvedValue(mockUser);
+    vi.mocked(prisma.pagosalario.findMany).mockResolvedValue([] as any);
+    const result = await getNominaAction({});
+    expect(result.success).toBe(true);
+    expect(prisma.pagosalario.findMany).toHaveBeenCalledWith(
+      expect.objectContaining({
+        where: expect.objectContaining({ tenantId: 'tenant-test' }),
+      }),
+    );
+  });
+
+  it('getWorkSchedulesAction retorna horarios del empleado filtrado', async () => {
+    vi.mocked(getCurrentUser).mockResolvedValue(mockUser);
+    vi.mocked(prisma.employeeWorkSchedule.findMany).mockResolvedValue([] as any);
+    const result = await getWorkSchedulesAction({ employeeId: 'emp-1' });
+    expect(result.success).toBe(true);
+    expect(prisma.employeeWorkSchedule.findMany).toHaveBeenCalledWith(
+      expect.objectContaining({
+        where: expect.objectContaining({
+          employeeId: 'emp-1',
+          employee: { tenantId: 'tenant-test' },
+        }),
+      }),
+    );
+  });
+
+  it('upsertWorkScheduleAction crea o actualiza horario validando tenant', async () => {
+    vi.mocked(getCurrentUser).mockResolvedValue(mockUser);
+    vi.mocked(prisma.empleado.findFirst).mockResolvedValue({ empleadoId: 'emp-1' } as any);
+    vi.mocked(prisma.employeeWorkSchedule.upsert).mockResolvedValue({ scheduleId: 'sch-1' } as any);
+    const result = await upsertWorkScheduleAction({
+      employeeId: 'emp-1',
+      dayOfWeek: 1,
+      startTime: '09:00',
+      endTime: '17:00',
+      breakStartTime: '12:00',
+      breakEndTime: '13:00',
+      isWorkingDay: true,
+      scheduledHours: 7,
+    });
+    expect(result.success).toBe(true);
+    expect(prisma.employeeWorkSchedule.upsert).toHaveBeenCalled();
   });
 
   it('retorna AUTH_REQUIRED sin usuario', async () => {

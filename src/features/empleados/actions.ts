@@ -14,6 +14,10 @@ import type { EmpleadoInput, EmpleadoUpdateInput } from "./schemas";
 import type { AuthenticatedUser } from "@/lib/auth-middleware";
 import { Decimal } from "@prisma/client/runtime/library";
 import { z } from "zod";
+import {
+	calculatePayrollFormulas,
+	getPayrollConfig,
+} from "@/lib/payroll-formulas";
 
 export const getEmpleadosAction = withAction(
 	async (_input: void, user: AuthenticatedUser) => {
@@ -492,10 +496,319 @@ export const createVacacionAction = withAction(
 export const getVacacionAccumulacionAction = withAction(
 	async (input: { employeeId: string }, user: AuthenticatedUser) => {
 		const tenantId = requireTenant(user);
+		const empleado = await prisma.empleado.findFirst({
+			where: { empleadoId: input.employeeId, tenantId },
+			select: { empleadoId: true },
+		});
+		if (!empleado) throw new ActionError("Empleado no encontrado", "NOT_FOUND");
 		const { VacationAccrualService } = await import(
 			"@/lib/vacation-accrual-service"
 		);
 		const service = new VacationAccrualService();
 		return service.getAccrualSummary(input.employeeId);
+	},
+);
+
+const nominaInclude = {
+	empleado: {
+		select: {
+			nombre: true,
+			apellido: true,
+			cargo: true,
+			salarioBases: true,
+		},
+	},
+} as const;
+
+export const getNominaAction = withAction(
+	async (
+		input: { periodo?: string; employeeId?: string } = {},
+		user: AuthenticatedUser,
+	) => {
+		const tenantId = requireTenant(user);
+		return prisma.pagosalario.findMany({
+			where: {
+				tenantId,
+				...(input.periodo ? { periodo: input.periodo } : {}),
+				...(input.employeeId ? { empleadoId: input.employeeId } : {}),
+			},
+			include: nominaInclude,
+			orderBy: { createdAt: "desc" },
+		});
+	},
+);
+
+const calculateNominaSchema = z.object({
+	periodo: z.string().regex(/^\d{4}-\d{2}$/, "Formato de período inválido (YYYY-MM)"),
+	employeeIds: z.array(z.string()).optional(),
+	includeVacationAccrual: z.boolean().default(true),
+	forceRecalculate: z.boolean().default(false),
+});
+
+export const calculateNominaAction = withAction(
+	async (
+		input: z.infer<typeof calculateNominaSchema>,
+		user: AuthenticatedUser,
+	) => {
+		requireManagerRole(user, "calcular nómina");
+		const tenantId = requireTenant(user);
+		const parsed = calculateNominaSchema.parse(input);
+		const {
+			periodo,
+			employeeIds,
+			includeVacationAccrual = true,
+			forceRecalculate = false,
+		} = parsed;
+
+		const [year, month] = periodo.split("-").map(Number);
+		const startDate = new Date(year, month - 1, 1);
+		const endDate = new Date(year, month, 0);
+
+		if (!forceRecalculate) {
+			const existingPayrolls = await prisma.pagosalario.findMany({
+				where: { tenantId, periodo },
+				include: nominaInclude,
+			});
+
+			if (existingPayrolls.length > 0) {
+				return {
+					payrolls: existingPayrolls,
+					message: `Ya existe nómina calculada para este período con ${existingPayrolls.length} empleados`,
+					existing: true,
+				};
+			}
+		} else {
+			await prisma.pagosalario.deleteMany({
+				where: { tenantId, periodo },
+			});
+		}
+
+		const empleados = await prisma.empleado.findMany({
+			where: {
+				tenantId,
+				...(employeeIds?.length ? { empleadoId: { in: employeeIds } } : {}),
+				fechaContratacion: { not: undefined },
+			},
+		});
+
+		if (empleados.length === 0) {
+			throw new ActionError(
+				"No se encontraron empleados con fecha de contratación para calcular nómina",
+				"NOT_FOUND",
+			);
+		}
+
+		const payrollConfig = await getPayrollConfig(periodo);
+		const { VacationAccrualService } = await import(
+			"@/lib/vacation-accrual-service"
+		);
+		const vacationService = new VacationAccrualService();
+		const payrollRecords: Array<Record<string, unknown>> = [];
+		const vacationResults: Array<Record<string, unknown>> = [];
+
+		for (const empleado of empleados) {
+			try {
+				const attendances = await prisma.attendance.findMany({
+					where: {
+						employeeId: empleado.empleadoId,
+						date: {
+							gte: startDate,
+							lte: endDate,
+						},
+					},
+				});
+
+				let totalHours = 0;
+				let overtimeHours = 0;
+
+				for (const attendance of attendances) {
+					if (attendance.totalHours) {
+						const hours = Number(attendance.totalHours);
+						totalHours += hours;
+						if (hours > 8) overtimeHours += hours - 8;
+					}
+				}
+
+				const standardHours = 192;
+				const bonificaciones = 0;
+				const hoursWorked = totalHours > 0 ? totalHours : standardHours;
+				const devengadoReal =
+					(hoursWorked / standardHours) * empleado.salarioBases + bonificaciones;
+				const calculations = calculatePayrollFormulas(
+					devengadoReal,
+					payrollConfig,
+				);
+
+				const payroll = await prisma.pagosalario.create({
+					data: {
+						empleadoId: empleado.empleadoId,
+						salario: Math.round(calculations.netoACobrar),
+						bonificaciones,
+						deducciones: Math.round(calculations.deducciones.total),
+						horasExtras: Math.round(overtimeHours),
+						periodo,
+						tenantId,
+						observaciones:
+							`Devengado: ${devengadoReal.toFixed(2)}, Vacaciones (9.09%): ${calculations.vacaciones.toFixed(2)}. ` +
+							`Deducciones: 5%($${calculations.deducciones.p5.toFixed(2)}), 3%($${calculations.deducciones.p3.toFixed(2)})` +
+							(payrollConfig.aplicar12_5y1_5
+								? `, 12.5%($${calculations.deducciones.p12_5.toFixed(2)}), 1.5%($${calculations.deducciones.p1_5.toFixed(2)})`
+								: ""),
+					},
+					include: nominaInclude,
+				});
+
+				payrollRecords.push(payroll);
+
+				if (includeVacationAccrual) {
+					try {
+						const vacationResult =
+							await vacationService.calculateAccrualForEmployee(
+								empleado.empleadoId,
+								endDate,
+								periodo,
+							);
+						vacationResults.push({
+							empleadoId: empleado.empleadoId,
+							empleado: `${empleado.nombre} ${empleado.apellido}`,
+							...vacationResult,
+						});
+					} catch (vacationError) {
+						vacationResults.push({
+							empleadoId: empleado.empleadoId,
+							empleado: `${empleado.nombre} ${empleado.apellido}`,
+							error:
+								vacationError instanceof Error
+									? vacationError.message
+									: "Error calculando vacaciones",
+							processed: false,
+						});
+					}
+				}
+			} catch (error) {
+				payrollRecords.push({
+					empleadoId: empleado.empleadoId,
+					empleado: `${empleado.nombre} ${empleado.apellido}`,
+					error:
+						error instanceof Error ? error.message : "Error procesando empleado",
+					processed: false,
+				});
+			}
+		}
+
+		return {
+			payrolls: payrollRecords,
+			vacationAccruals: vacationResults.length > 0 ? vacationResults : undefined,
+			message: `Nómina procesada para ${payrollRecords.length} empleados${vacationResults.length > 0 ? ` y acumulación de vacaciones para ${vacationResults.filter((v) => v.processed).length} empleados` : ""}`,
+		};
+	},
+);
+
+const workScheduleSchema = z.object({
+	employeeId: z.string().min(1, "ID de empleado requerido"),
+	dayOfWeek: z.number().min(0).max(6, "Día de la semana debe ser 0-6"),
+	startTime: z
+		.string()
+		.regex(/^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$/, "Formato de hora inválido (HH:MM)"),
+	endTime: z
+		.string()
+		.regex(/^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$/, "Formato de hora inválido (HH:MM)"),
+	breakStartTime: z
+		.string()
+		.regex(/^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$/)
+		.optional(),
+	breakEndTime: z
+		.string()
+		.regex(/^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$/)
+		.optional(),
+	isWorkingDay: z.boolean().default(true),
+	scheduledHours: z.number().min(0).max(24),
+});
+
+export const getWorkSchedulesAction = withAction(
+	async (input: { employeeId?: string } = {}, user: AuthenticatedUser) => {
+		const tenantId = requireTenant(user);
+		return prisma.employeeWorkSchedule.findMany({
+			where: {
+				...(input.employeeId ? { employeeId: input.employeeId } : {}),
+				employee: { tenantId },
+			},
+			include: {
+				employee: {
+					select: { nombre: true, apellido: true, cargo: true },
+				},
+			},
+			orderBy: [{ employeeId: "asc" }, { dayOfWeek: "asc" }],
+		});
+	},
+);
+
+export const upsertWorkScheduleAction = withAction(
+	async (
+		input: z.infer<typeof workScheduleSchema>,
+		user: AuthenticatedUser,
+	) => {
+		requireManagerRole(user, "guardar horarios de trabajo");
+		const tenantId = requireTenant(user);
+		const parsed = workScheduleSchema.parse(input);
+
+		const empleado = await prisma.empleado.findFirst({
+			where: { empleadoId: parsed.employeeId, tenantId },
+			select: { empleadoId: true },
+		});
+		if (!empleado) throw new ActionError("Empleado no encontrado", "NOT_FOUND");
+
+		return prisma.employeeWorkSchedule.upsert({
+			where: {
+				employeeId_dayOfWeek: {
+					employeeId: parsed.employeeId,
+					dayOfWeek: parsed.dayOfWeek,
+				},
+			},
+			update: {
+				startTime: parsed.startTime,
+				endTime: parsed.endTime,
+				breakStartTime: parsed.breakStartTime,
+				breakEndTime: parsed.breakEndTime,
+				isWorkingDay: parsed.isWorkingDay,
+				scheduledHours: parsed.scheduledHours,
+			},
+			create: {
+				employeeId: parsed.employeeId,
+				dayOfWeek: parsed.dayOfWeek,
+				startTime: parsed.startTime,
+				endTime: parsed.endTime,
+				breakStartTime: parsed.breakStartTime,
+				breakEndTime: parsed.breakEndTime,
+				isWorkingDay: parsed.isWorkingDay,
+				scheduledHours: parsed.scheduledHours,
+			},
+			include: {
+				employee: {
+					select: { nombre: true, apellido: true, cargo: true },
+				},
+			},
+		});
+	},
+);
+
+export const deleteWorkScheduleAction = withAction(
+	async (input: { scheduleId: string }, user: AuthenticatedUser) => {
+		requireManagerRole(user, "eliminar horarios de trabajo");
+		const tenantId = requireTenant(user);
+		const existing = await prisma.employeeWorkSchedule.findFirst({
+			where: {
+				scheduleId: input.scheduleId,
+				employee: { tenantId },
+			},
+			select: { scheduleId: true },
+		});
+		if (!existing)
+			throw new ActionError("Horario de trabajo no encontrado", "NOT_FOUND");
+
+		await prisma.employeeWorkSchedule.delete({
+			where: { scheduleId: input.scheduleId },
+		});
+		return { success: true };
 	},
 );

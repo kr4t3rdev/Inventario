@@ -2,6 +2,8 @@ import { type NextRequest, NextResponse } from "next/server"
 import { prisma } from "@/lib/prisma"
 import { z } from "zod"
 import { VacationAccrualService } from "@/lib/vacation-accrual-service"
+import { requireManagerRole, requireTenant } from "@/lib/services/tenant-scope"
+import type { AuthenticatedUser } from "@/lib/auth-middleware"
 
 const vacationRequestSchema = z.object({
   employeeId: z.string().min(1, "ID de empleado requerido"),
@@ -10,13 +12,18 @@ const vacationRequestSchema = z.object({
   reason: z.string().optional()
 });
 
-export async function getVacacionesHandler(request: NextRequest) {
+export async function getVacacionesHandler(
+  request: NextRequest,
+  _context: any,
+  user: AuthenticatedUser,
+) {
   try {
+    const tenantId = requireTenant(user);
     const { searchParams } = new URL(request.url);
     const employeeId = searchParams.get("employeeId");
     const status = searchParams.get("status");
 
-    const where: any = {};
+    const where: any = { employee: { tenantId } };
 
     if (employeeId) {
       where.employeeId = employeeId;
@@ -56,15 +63,21 @@ export async function getVacacionesHandler(request: NextRequest) {
   }
 }
 
-export async function createVacacionHandler(request: NextRequest) {
+export async function createVacacionHandler(
+  request: NextRequest,
+  _context: any,
+  user: AuthenticatedUser,
+) {
   try {
+    requireManagerRole(user, "crear solicitudes de vacaciones");
+    const tenantId = requireTenant(user);
     const body = await request.json();
     const validatedData = vacationRequestSchema.parse(body);
 
     const { employeeId, startDate, endDate, reason } = validatedData;
 
-    const empleado = await prisma.empleado.findUnique({
-      where: { empleadoId: employeeId },
+    const empleado = await prisma.empleado.findFirst({
+      where: { empleadoId: employeeId, tenantId },
       select: {
         vacationDaysAccrued: true,
         vacationDaysUsed: true,
@@ -204,13 +217,15 @@ const updateVacationSchema = z.object({
 
 export async function getVacacionByIdHandler(
   request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
+  { params }: { params: Promise<{ id: string }> },
+  user: AuthenticatedUser,
 ) {
   try {
+    const tenantId = requireTenant(user);
     const { id } = await params;
 
-    const vacationRequest = await prisma.vacationRequest.findUnique({
-      where: { requestId: id },
+    const vacationRequest = await prisma.vacationRequest.findFirst({
+      where: { requestId: id, employee: { tenantId } },
       include: {
         employee: {
           select: {
@@ -243,15 +258,18 @@ export async function getVacacionByIdHandler(
 
 export async function updateVacacionHandler(
   request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
+  { params }: { params: Promise<{ id: string }> },
+  user: AuthenticatedUser,
 ) {
   try {
+    requireManagerRole(user, "aprobar o rechazar vacaciones");
+    const tenantId = requireTenant(user);
     const { id } = await params;
     const body = await request.json();
     const validatedData = updateVacationSchema.parse(body);
 
-    const existingRequest = await prisma.vacationRequest.findUnique({
-      where: { requestId: id },
+    const existingRequest = await prisma.vacationRequest.findFirst({
+      where: { requestId: id, employee: { tenantId } },
       include: {
         employee: {
           select: {
@@ -319,13 +337,16 @@ export async function updateVacacionHandler(
 
 export async function deleteVacacionHandler(
   request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
+  { params }: { params: Promise<{ id: string }> },
+  user: AuthenticatedUser,
 ) {
   try {
+    requireManagerRole(user, "eliminar solicitudes de vacaciones");
+    const tenantId = requireTenant(user);
     const { id } = await params;
 
-    const existingRequest = await prisma.vacationRequest.findUnique({
-      where: { requestId: id }
+    const existingRequest = await prisma.vacationRequest.findFirst({
+      where: { requestId: id, employee: { tenantId } }
     });
 
     if (!existingRequest) {
@@ -364,8 +385,13 @@ const manualAccrualSchema = z.object({
   fechaCalculo: z.string().optional()
 });
 
-export async function getVacacionAccumulacionHandler(request: NextRequest) {
+export async function getVacacionAccumulacionHandler(
+  request: NextRequest,
+  _context: any,
+  user: AuthenticatedUser,
+) {
   try {
+    const tenantId = requireTenant(user);
     const { searchParams } = new URL(request.url);
     const employeeId = searchParams.get("employeeId");
 
@@ -373,6 +399,17 @@ export async function getVacacionAccumulacionHandler(request: NextRequest) {
       return NextResponse.json(
         { error: "ID de empleado requerido" },
         { status: 400 }
+      );
+    }
+
+    const empleado = await prisma.empleado.findFirst({
+      where: { empleadoId: employeeId, tenantId },
+      select: { empleadoId: true },
+    });
+    if (!empleado) {
+      return NextResponse.json(
+        { error: "Empleado no encontrado" },
+        { status: 404 }
       );
     }
 
@@ -389,12 +426,29 @@ export async function getVacacionAccumulacionHandler(request: NextRequest) {
   }
 }
 
-export async function calculateVacacionAccumulacionHandler(request: NextRequest) {
+export async function calculateVacacionAccumulacionHandler(
+  request: NextRequest,
+  _context: any,
+  user: AuthenticatedUser,
+) {
   try {
+    requireManagerRole(user, "calcular acumulación de vacaciones");
+    const tenantId = requireTenant(user);
     const body = await request.json();
     const validatedData = manualAccrualSchema.parse(body);
 
     const { employeeId, periodo, fechaCalculo } = validatedData;
+
+    const empleado = await prisma.empleado.findFirst({
+      where: { empleadoId: employeeId, tenantId },
+      select: { empleadoId: true },
+    });
+    if (!empleado) {
+      return NextResponse.json(
+        { error: "Empleado no encontrado" },
+        { status: 404 }
+      );
+    }
 
     const vacationService = new VacationAccrualService();
     const fechaCalculoDate = fechaCalculo ? new Date(fechaCalculo) : new Date();
@@ -431,13 +485,18 @@ const massAccrualSchema = z.object({
   incluirSinFechaContratacion: z.boolean().default(false)
 });
 
-export async function getMassAccrualHandler(request: NextRequest) {
+export async function getMassAccrualHandler(
+  request: NextRequest,
+  _context: any,
+  user: AuthenticatedUser,
+) {
   try {
+    const tenantId = requireTenant(user);
     const { searchParams } = new URL(request.url);
     const periodo = searchParams.get("periodo") || new Date().toISOString().slice(0, 7);
 
     const acumulaciones = await prisma.vacationAccrual.findMany({
-      where: { periodo },
+      where: { periodo, employee: { tenantId } },
       include: {
         employee: {
           select: {
@@ -451,7 +510,7 @@ export async function getMassAccrualHandler(request: NextRequest) {
     });
 
     const empleados = await prisma.empleado.findMany({
-      where: { fechaContratacion: { not: undefined } },
+      where: { tenantId, fechaContratacion: { not: undefined } },
       select: {
         empleadoId: true,
         nombre: true,
@@ -502,14 +561,20 @@ export async function getMassAccrualHandler(request: NextRequest) {
   }
 }
 
-export async function massAccrualHandler(request: NextRequest) {
+export async function massAccrualHandler(
+  request: NextRequest,
+  _context: any,
+  user: AuthenticatedUser,
+) {
   try {
+    requireManagerRole(user, "calcular acumulación masiva de vacaciones");
+    const tenantId = requireTenant(user);
     const body = await request.json();
     const validatedData = massAccrualSchema.parse(body);
 
     const { periodo, employeeIds, fechaCalculo, incluirSinFechaContratacion = false } = validatedData;
 
-    const whereClause: any = {};
+    const whereClause: any = { tenantId };
 
     if (employeeIds && employeeIds.length > 0) {
       whereClause.empleadoId = { in: employeeIds };
@@ -589,4 +654,3 @@ export async function massAccrualHandler(request: NextRequest) {
     );
   }
 }
-

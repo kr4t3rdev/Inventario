@@ -9,7 +9,11 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Badge } from "@/components/ui/badge";
 import { Calculator, DollarSign, Download, Calendar, Filter, RefreshCw, TrendingUp, Users, Wallet, Pencil } from "lucide-react";
 import { toast } from "sonner";
-import { getPagoSalariosAction } from "@/features/pago-salario/actions";
+import {
+  calculateNominaAction,
+  getNominaAction,
+} from "@/features/empleados/actions";
+import { updatePagoSalarioAction } from "@/features/pago-salario/actions";
 import { LazyMotion, m as motion, AnimatePresence } from "framer-motion";
 import { Switch } from "@/components/ui/switch";
 import {
@@ -209,19 +213,13 @@ export function NominaView() {
   const fetchPayrollRecords = async (periodoFilter?: string) => {
     setLoading(true);
     try {
-      const url = periodoFilter
-        ? `/api/empleados/nomina?periodo=${periodoFilter}`
-        : "/api/empleados/nomina";
-
-      const token = '';
-      const response = await fetch(url, {
-        headers: {
-          ...(token && { Authorization: `Bearer ${token}` }),
-        },
-      });
-      if (response.ok) {
-        const data = await response.json();
-        setPayrollRecords(data);
+      const result = await getNominaAction(
+        periodoFilter ? { periodo: periodoFilter } : {},
+      );
+      if (result.success) {
+        setPayrollRecords((result.data ?? []) as PayrollRecord[]);
+      } else {
+        toast.error(result.error?.message || "Error al cargar registros de nómina");
       }
     } catch (error) {
       console.error("Error cargando nómina:", error);
@@ -242,24 +240,14 @@ export function NominaView() {
 
     setCalculating(true);
     try {
-      const token = '';
-      const response = await fetch("/api/empleados/nomina", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          ...(token && { Authorization: `Bearer ${token}` }),
-        },
-        body: JSON.stringify({
+      const result = await calculateNominaAction({
           periodo,
-          forceRecalculate
-        }),
+          forceRecalculate,
       });
-
-      const data = await response.json();
-
-      if (response.ok) {
+      if (result.success) {
+        const data = result.data;
         // El API devuelve { payrolls: [...], vacationAccruals: [...], message: "...", existing?: true }
-        const newPayrolls = data.payrolls || [];
+        const newPayrolls = data?.payrolls || [];
         
         if (data.existing) {
           // Si ya existía nómina, reemplazar los registros actuales
@@ -279,7 +267,7 @@ export function NominaView() {
           }
         }
       } else {
-        toast.error(data.error || "Error al calcular nómina");
+        toast.error(result.error?.message || "Error al calcular nómina");
       }
     } catch (error) {
       console.error("Error calculando nómina:", error);
@@ -325,22 +313,19 @@ export function NominaView() {
 
   const handleSaveEdit = async (id: string, updates: Partial<PayrollRecord>) => {
     try {
-      const token = '';
-      const response = await fetch(`/api/pago-salario/${id}`, {
-        method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-          ...(token && { Authorization: `Bearer ${token}` }),
-        },
-        body: JSON.stringify(updates),
+      const result = await updatePagoSalarioAction({
+        pgId: id,
+        salario: updates.salario,
+        bonificaciones: updates.bonificaciones,
+        deducciones: updates.deducciones,
+        horasExtras: updates.horasExtras,
       });
-
-      if (response.ok) {
-        const updatedRecord = await response.json();
-        setPayrollRecords(prev => prev.map(r => r.pgId === id ? { ...r, ...updatedRecord, empleado: r.empleado } : r));
+      if (result.success && result.data) {
+        const updatedRecord = result.data as PayrollRecord;
+        setPayrollRecords(prev => prev.map(r => r.pgId === id ? { ...r, ...updatedRecord } : r));
         toast.success("Registro actualizado");
       } else {
-        toast.error("Error al actualizar");
+        toast.error(result.error?.message || "Error al actualizar");
       }
     } catch (error) {
       console.error("Error updating:", error);

@@ -3,6 +3,8 @@ import { prisma } from "@/lib/prisma"
 import { z } from "zod"
 import { VacationAccrualService } from "@/lib/vacation-accrual-service"
 import { calculatePayrollFormulas, getPayrollConfig } from "@/lib/payroll-formulas"
+import { requireManagerRole, requireTenant } from "@/lib/services/tenant-scope"
+import type { AuthenticatedUser } from "@/lib/auth-middleware"
 
 const calculatePayrollSchema = z.object({
   periodo: z.string().regex(/^\d{4}-\d{2}$/, "Formato de período inválido (YYYY-MM)"),
@@ -13,13 +15,18 @@ const calculatePayrollSchema = z.object({
 
 const vacationService = new VacationAccrualService();
 
-export async function getNominaHandler(request: NextRequest) {
+export async function getNominaHandler(
+  request: NextRequest,
+  _context: any,
+  user: AuthenticatedUser,
+) {
   try {
+    const tenantId = requireTenant(user);
     const { searchParams } = new URL(request.url);
     const periodo = searchParams.get("periodo");
     const employeeId = searchParams.get("employeeId");
 
-    const where: any = {};
+    const where: any = { tenantId };
 
     if (periodo) {
       where.periodo = periodo;
@@ -56,8 +63,14 @@ export async function getNominaHandler(request: NextRequest) {
   }
 }
 
-export async function calculateNominaHandler(request: NextRequest) {
+export async function calculateNominaHandler(
+  request: NextRequest,
+  _context: any,
+  user: AuthenticatedUser,
+) {
   try {
+    requireManagerRole(user, "calcular nómina");
+    const tenantId = requireTenant(user);
     const body = await request.json();
     const validatedData = calculatePayrollSchema.parse(body);
 
@@ -68,7 +81,7 @@ export async function calculateNominaHandler(request: NextRequest) {
 
     if (!forceRecalculate) {
       const existingPayrolls = await prisma.pagosalario.findMany({
-        where: { periodo },
+        where: { periodo, tenantId },
         include: {
           empleado: {
             select: {
@@ -90,7 +103,7 @@ export async function calculateNominaHandler(request: NextRequest) {
       }
     } else {
       await prisma.pagosalario.deleteMany({
-        where: { periodo }
+        where: { periodo, tenantId }
       });
     }
 
@@ -98,6 +111,7 @@ export async function calculateNominaHandler(request: NextRequest) {
     if (employeeIds && employeeIds.length > 0) {
       empleados = await prisma.empleado.findMany({
         where: {
+          tenantId,
           empleadoId: { in: employeeIds },
           fechaContratacion: { not: undefined }
         }
@@ -105,6 +119,7 @@ export async function calculateNominaHandler(request: NextRequest) {
     } else {
       empleados = await prisma.empleado.findMany({
         where: {
+          tenantId,
           fechaContratacion: { not: undefined }
         }
       });
@@ -166,7 +181,7 @@ export async function calculateNominaHandler(request: NextRequest) {
             deducciones: Math.round(calculations.deducciones.total),
             horasExtras: Math.round(overtimeHours),
             periodo,
-            tenantId: empleado.tenantId,
+            tenantId,
             observaciones: `Devengado: ${devengadoReal.toFixed(2)}, Vacaciones (9.09%): ${calculations.vacaciones.toFixed(2)}. ` +
                            `Deducciones: 5%($${calculations.deducciones.p5.toFixed(2)}), 3%($${calculations.deducciones.p3.toFixed(2)})` +
                            (payrollConfig.aplicar12_5y1_5 ? `, 12.5%($${calculations.deducciones.p12_5.toFixed(2)}), 1.5%($${calculations.deducciones.p1_5.toFixed(2)})` : '')
@@ -251,13 +266,15 @@ const updatePayrollSchema = z.object({
 
 export async function getNominaByIdHandler(
   request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
+  { params }: { params: Promise<{ id: string }> },
+  user: AuthenticatedUser,
 ) {
   try {
+    const tenantId = requireTenant(user);
     const { id } = await params;
 
-    const payroll = await prisma.pagosalario.findUnique({
-      where: { pgId: id },
+    const payroll = await prisma.pagosalario.findFirst({
+      where: { pgId: id, tenantId },
       include: {
         empleado: {
           select: {
@@ -289,15 +306,18 @@ export async function getNominaByIdHandler(
 
 export async function updateNominaHandler(
   request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
+  { params }: { params: Promise<{ id: string }> },
+  user: AuthenticatedUser,
 ) {
   try {
+    requireManagerRole(user, "editar nómina");
+    const tenantId = requireTenant(user);
     const { id } = await params;
     const body = await request.json();
     const validatedData = updatePayrollSchema.parse(body);
 
-    const existingPayroll = await prisma.pagosalario.findUnique({
-      where: { pgId: id }
+    const existingPayroll = await prisma.pagosalario.findFirst({
+      where: { pgId: id, tenantId }
     });
 
     if (!existingPayroll) {
@@ -341,13 +361,16 @@ export async function updateNominaHandler(
 
 export async function deleteNominaHandler(
   request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
+  { params }: { params: Promise<{ id: string }> },
+  user: AuthenticatedUser,
 ) {
   try {
+    requireManagerRole(user, "eliminar nómina");
+    const tenantId = requireTenant(user);
     const { id } = await params;
 
-    const existingPayroll = await prisma.pagosalario.findUnique({
-      where: { pgId: id }
+    const existingPayroll = await prisma.pagosalario.findFirst({
+      where: { pgId: id, tenantId }
     });
 
     if (!existingPayroll) {
@@ -370,4 +393,3 @@ export async function deleteNominaHandler(
     );
   }
 }
-

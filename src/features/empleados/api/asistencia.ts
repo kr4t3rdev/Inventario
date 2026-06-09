@@ -2,6 +2,8 @@ import { type NextRequest, NextResponse } from "next/server"
 import { prisma } from "@/lib/prisma"
 import { z } from "zod"
 import { Decimal } from "@/generated/prisma/runtime/library"
+import { requireManagerRole, requireTenant } from "@/lib/services/tenant-scope"
+import type { AuthenticatedUser } from "@/lib/auth-middleware"
 
 const asistenciaSchema = z.object({
   employeeId: z.string().min(1, "ID de empleado requerido"),
@@ -18,14 +20,15 @@ const manualAttendanceSchema = z.object({
   approvedBy: z.string().optional()
 });
 
-async function handleManualAttendanceUpdate(body: any) {
+async function handleManualAttendanceUpdate(body: any, user: AuthenticatedUser) {
+  const tenantId = requireTenant(user);
   const validatedData = manualAttendanceSchema.parse(body);
 
   const { attendanceId, manualCheckIn, manualCheckOut, notes, approvedBy } = validatedData;
 
   const existingAttendance = await prisma.attendance.findUnique({
     where: { attendanceId },
-    include: { employee: { select: { nombre: true, apellido: true, cargo: true } } }
+    include: { employee: { select: { nombre: true, apellido: true, cargo: true, tenantId: true } } }
   });
 
   if (!existingAttendance) {
@@ -87,15 +90,20 @@ async function handleManualAttendanceUpdate(body: any) {
   return NextResponse.json(updatedAttendance);
 }
 
-export async function getAsistenciaHandler(request: NextRequest) {
+export async function getAsistenciaHandler(
+  request: NextRequest,
+  _context: any,
+  user: AuthenticatedUser,
+) {
   try {
+    const tenantId = requireTenant(user);
     const { searchParams } = new URL(request.url);
     const employeeId = searchParams.get("employeeId");
     const date = searchParams.get("date");
     const startDate = searchParams.get("startDate");
     const endDate = searchParams.get("endDate");
 
-    const where: any = {};
+    const where: any = { employee: { tenantId } };
 
     if (employeeId) {
       where.employeeId = employeeId;
@@ -166,12 +174,18 @@ export async function getAsistenciaHandler(request: NextRequest) {
   }
 }
 
-export async function postAsistenciaHandler(request: NextRequest) {
+export async function postAsistenciaHandler(
+  request: NextRequest,
+  _context: any,
+  user: AuthenticatedUser,
+) {
   try {
+    requireManagerRole(user, "registrar asistencia");
+    const tenantId = requireTenant(user);
     const body = await request.json();
 
     if (body.attendanceId) {
-      return await handleManualAttendanceUpdate(body);
+      return await handleManualAttendanceUpdate(body, user);
     }
 
     const validatedData = asistenciaSchema.parse(body);
@@ -180,8 +194,8 @@ export async function postAsistenciaHandler(request: NextRequest) {
     const now = new Date();
     const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
 
-    const empleado = await prisma.empleado.findUnique({
-      where: { empleadoId: employeeId }
+    const empleado = await prisma.empleado.findFirst({
+      where: { empleadoId: employeeId, tenantId }
     });
 
     if (!empleado) {
@@ -305,13 +319,15 @@ const updateAsistenciaSchema = z.object({
 
 export async function getAsistenciaByIdHandler(
   request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
+  { params }: { params: Promise<{ id: string }> },
+  user: AuthenticatedUser,
 ) {
   try {
+    const tenantId = requireTenant(user);
     const { id } = await params;
 
-    const asistencia = await prisma.attendance.findUnique({
-      where: { attendanceId: id },
+    const asistencia = await prisma.attendance.findFirst({
+      where: { attendanceId: id, employee: { tenantId } },
       include: {
         employee: {
           select: {
@@ -342,15 +358,18 @@ export async function getAsistenciaByIdHandler(
 
 export async function updateAsistenciaHandler(
   request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
+  { params }: { params: Promise<{ id: string }> },
+  user: AuthenticatedUser,
 ) {
   try {
+    requireManagerRole(user, "editar asistencia");
+    const tenantId = requireTenant(user);
     const { id } = await params;
     const body = await request.json();
     const validatedData = updateAsistenciaSchema.parse(body);
 
-    const existingAsistencia = await prisma.attendance.findUnique({
-      where: { attendanceId: id }
+    const existingAsistencia = await prisma.attendance.findFirst({
+      where: { attendanceId: id, employee: { tenantId } }
     });
 
     if (!existingAsistencia) {
@@ -409,13 +428,16 @@ export async function updateAsistenciaHandler(
 
 export async function deleteAsistenciaHandler(
   request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
+  { params }: { params: Promise<{ id: string }> },
+  user: AuthenticatedUser,
 ) {
   try {
+    requireManagerRole(user, "eliminar asistencia");
+    const tenantId = requireTenant(user);
     const { id } = await params;
 
-    const existingAsistencia = await prisma.attendance.findUnique({
-      where: { attendanceId: id }
+    const existingAsistencia = await prisma.attendance.findFirst({
+      where: { attendanceId: id, employee: { tenantId } }
     });
 
     if (!existingAsistencia) {
@@ -438,4 +460,9 @@ export async function deleteAsistenciaHandler(
     );
   }
 }
-
+  if (existingAttendance.employee.tenantId !== tenantId) {
+    return NextResponse.json(
+      { error: "Registro de asistencia no encontrado" },
+      { status: 404 }
+    );
+  }

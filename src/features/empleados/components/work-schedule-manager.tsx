@@ -11,6 +11,12 @@ import { Badge } from "@/components/ui/badge";
 import { Clock, Save, User, Calendar, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import type { EmployeeWorkSchedule } from "@/app/models/model";
+import {
+  deleteWorkScheduleAction,
+  getEmpleadosAction,
+  getWorkSchedulesAction,
+  upsertWorkScheduleAction,
+} from "@/features/empleados/actions";
 
 interface Empleado {
   empleadoId: string;
@@ -63,16 +69,11 @@ export function WorkScheduleManager() {
     if (!selectedEmpleado) return;
 
     try {
-      const token = '';
-      const response = await fetch(`/api/empleados/work-schedules?employeeId=${selectedEmpleado}`, {
-        headers: {
-          ...(token && { Authorization: `Bearer ${token}` }),
-        },
-      });
-
-      if (response.ok) {
-        const data = await response.json();
-        setWorkSchedules(data);
+      const result = await getWorkSchedulesAction({ employeeId: selectedEmpleado });
+      if (result.success) {
+        setWorkSchedules((result.data ?? []) as EmployeeWorkSchedule[]);
+      } else {
+        toast.error(result.error?.message || "Error cargando horarios de trabajo");
       }
     } catch (error) {
       console.error("Error cargando horarios de trabajo:", error);
@@ -124,19 +125,8 @@ export function WorkScheduleManager() {
         scheduledHours: calculatedHours
       };
 
-      const token = '';
-      const response = await fetch("/api/empleados/work-schedules", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          ...(token && { Authorization: `Bearer ${token}` }),
-        },
-        body: JSON.stringify(scheduleData),
-      });
-
-      const data = await response.json();
-
-      if (response.ok) {
+      const result = await upsertWorkScheduleAction(scheduleData);
+      if (result.success) {
         await fetchWorkSchedules(); // Refresh the list
         setScheduleForm({
           dayOfWeek: 1,
@@ -147,9 +137,10 @@ export function WorkScheduleManager() {
           isWorkingDay: true,
           scheduledHours: 8
         });
+        setEditingSchedule(null);
         toast.success("Horario guardado correctamente");
       } else {
-        toast.error(data.error || "Error al guardar horario");
+        toast.error(result.error?.message || "Error al guardar horario");
       }
     } catch (error) {
       console.error("Error guardando horario:", error);
@@ -162,20 +153,12 @@ export function WorkScheduleManager() {
   const handleDeleteSchedule = async (scheduleId: string) => {
     setLoading(true);
     try {
-      const token = '';
-      const response = await fetch(`/api/empleados/work-schedules?scheduleId=${scheduleId}`, {
-        method: "DELETE",
-        headers: {
-          ...(token && { Authorization: `Bearer ${token}` }),
-        },
-      });
-
-      if (response.ok) {
+      const result = await deleteWorkScheduleAction({ scheduleId });
+      if (result.success) {
         await fetchWorkSchedules(); // Refresh the list
         toast.success("Horario eliminado correctamente");
       } else {
-        const data = await response.json();
-        toast.error(data.error || "Error al eliminar horario");
+        toast.error(result.error?.message || "Error al eliminar horario");
       }
     } catch (error) {
       console.error("Error eliminando horario:", error);

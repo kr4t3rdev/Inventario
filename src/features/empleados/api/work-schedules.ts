@@ -1,6 +1,8 @@
 import { type NextRequest, NextResponse } from "next/server"
 import { prisma } from "@/lib/prisma"
 import { z } from "zod"
+import { requireManagerRole, requireTenant } from "@/lib/services/tenant-scope"
+import type { AuthenticatedUser } from "@/lib/auth-middleware"
 
 const workScheduleSchema = z.object({
   employeeId: z.string().min(1, "ID de empleado requerido"),
@@ -13,8 +15,13 @@ const workScheduleSchema = z.object({
   scheduledHours: z.number().min(0).max(24)
 });
 
-export async function getWorkSchedulesHandler(request: NextRequest) {
+export async function getWorkSchedulesHandler(
+  request: NextRequest,
+  _context: any,
+  user: AuthenticatedUser,
+) {
   try {
+    const tenantId = requireTenant(user);
     const { searchParams } = new URL(request.url);
     const employeeId = searchParams.get("employeeId");
 
@@ -25,7 +32,10 @@ export async function getWorkSchedulesHandler(request: NextRequest) {
     }
 
     const workSchedules = await prisma.employeeWorkSchedule.findMany({
-      where,
+      where: {
+        ...where,
+        employee: { tenantId },
+      },
       include: {
         employee: {
           select: {
@@ -51,15 +61,21 @@ export async function getWorkSchedulesHandler(request: NextRequest) {
   }
 }
 
-export async function upsertWorkScheduleHandler(request: NextRequest) {
+export async function upsertWorkScheduleHandler(
+  request: NextRequest,
+  _context: any,
+  user: AuthenticatedUser,
+) {
   try {
+    requireManagerRole(user, "guardar horarios de trabajo");
+    const tenantId = requireTenant(user);
     const body = await request.json();
     const validatedData = workScheduleSchema.parse(body);
 
     const { employeeId, dayOfWeek, startTime, endTime, breakStartTime, breakEndTime, isWorkingDay, scheduledHours } = validatedData;
 
-    const empleado = await prisma.empleado.findUnique({
-      where: { empleadoId: employeeId }
+    const empleado = await prisma.empleado.findFirst({
+      where: { empleadoId: employeeId, tenantId }
     });
 
     if (!empleado) {
@@ -131,8 +147,14 @@ export async function upsertWorkScheduleHandler(request: NextRequest) {
   }
 }
 
-export async function deleteWorkScheduleHandler(request: NextRequest) {
+export async function deleteWorkScheduleHandler(
+  request: NextRequest,
+  _context: any,
+  user: AuthenticatedUser,
+) {
   try {
+    requireManagerRole(user, "eliminar horarios de trabajo");
+    const tenantId = requireTenant(user);
     const { searchParams } = new URL(request.url);
     const scheduleId = searchParams.get("scheduleId");
 
@@ -140,6 +162,18 @@ export async function deleteWorkScheduleHandler(request: NextRequest) {
       return NextResponse.json(
         { error: "ID de horario requerido" },
         { status: 400 }
+      );
+    }
+
+    const existing = await prisma.employeeWorkSchedule.findFirst({
+      where: { scheduleId, employee: { tenantId } },
+      select: { scheduleId: true },
+    });
+
+    if (!existing) {
+      return NextResponse.json(
+        { error: "Horario de trabajo no encontrado" },
+        { status: 404 }
       );
     }
 
