@@ -76,7 +76,12 @@ export async function resolveTenantContext(
       licenseExpiresAt: license?.expiracion,
     };
   } catch (error) {
-    console.error('[Auth] Error resolviendo contexto tenant:', error);
+    console.error('[Auth] Error resolviendo contexto tenant:', {
+      error: error instanceof Error ? error.message : String(error),
+      stack: error instanceof Error ? error.stack?.split('\n').slice(0, 3).join('\n') : undefined,
+      userId,
+      headerTenantId,
+    });
     return null;
   }
 }

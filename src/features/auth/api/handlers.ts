@@ -488,7 +488,7 @@ export async function refreshToken(request: NextRequest) {
 		await prisma.userSession.create({
 			data: {
 				userId,
-				token: newRefreshToken,
+				token: newToken,
 				ipAddress: request.headers.get("x-forwarded-for") || null,
 				userAgent: request.headers.get("user-agent") || null,
 				isActive: true,

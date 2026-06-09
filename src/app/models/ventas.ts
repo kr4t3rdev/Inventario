@@ -241,6 +241,7 @@ export interface Usuario {
 	password: string;
 	role: string;
 	tenantRole?: string | null;
+	tenantId?: string | null;
 	isActive: boolean;
 	avatar: string | null;
 	activatedAt: string | null;

@@ -9,17 +9,23 @@ vi.mock('bcryptjs', () => ({ default: { hash: vi.fn().mockResolvedValue('hashed'
 vi.mock('@/lib/email', () => ({ sendEmailVerificationLink: vi.fn() }));
 vi.mock('@/lib/prisma', () => ({
   prisma: {
+    $transaction: vi.fn((cb: any) => cb({
+      tenant: { create: vi.fn().mockResolvedValue({ tenantId: 'tenant-new' }) },
+      tenantMembership: { create: vi.fn().mockResolvedValue({ membershipId: 'mem-new' }) },
+      tenantLicense: { create: vi.fn().mockResolvedValue({ tenantLicenseId: 'lic-new', expiracion: new Date(Date.now() + 365 * 86400000) }) },
+      user: { update: vi.fn().mockResolvedValue({}) },
+    })),
     user: {
       findMany: vi.fn(), findUnique: vi.fn(), create: vi.fn(),
       update: vi.fn(), delete: vi.fn(), count: vi.fn(),
       groupBy: vi.fn(),
     },
     tenant: { findMany: vi.fn(), count: vi.fn(), findUnique: vi.fn(), create: vi.fn() },
-    tenantMembership: { create: vi.fn() },
+    tenantMembership: { create: vi.fn(), findFirst: vi.fn(), findUnique: vi.fn(), update: vi.fn() },
     moneda: { upsert: vi.fn() },
     plan: { findMany: vi.fn(), findUnique: vi.fn(), create: vi.fn(), update: vi.fn(), delete: vi.fn() },
     userSession: { count: vi.fn() },
-    tenantLicense: { count: vi.fn() },
+    tenantLicense: { count: vi.fn(), create: vi.fn() },
   },
 }));
 
@@ -31,6 +37,7 @@ import {
   getAdminTenantsAction, getAdminSystemHealthAction,
   getAdminPlanesAction, createAdminPlanAction, approveGlobalUserAction,
 } from '@/features/admin/actions';
+import { createTenantForUser } from '@/lib/services/tenant-factory';
 import type { AuthenticatedUser } from '@/lib/auth-middleware';
 
 const adminUser: AuthenticatedUser = {
@@ -111,7 +118,7 @@ describe('Admin Server Actions', () => {
   });
 
   describe('getAdminSystemHealthAction', () => {
-    it('retorna métricas', async () => {
+    it('retorna mÃ©tricas', async () => {
       vi.mocked(getCurrentUser).mockResolvedValue(adminUser);
       vi.mocked(prisma.user.count).mockResolvedValue(5);
       vi.mocked(prisma.tenant.count).mockResolvedValue(2);
@@ -124,11 +131,16 @@ describe('Admin Server Actions', () => {
   });
 
   describe('getAdminPlanesAction', () => {
-    it('retorna planes', async () => {
+    it('retorna planes con billingCycle', async () => {
       vi.mocked(getCurrentUser).mockResolvedValue(adminUser);
-      vi.mocked(prisma.plan.findMany).mockResolvedValue([]);
+      vi.mocked(prisma.plan.findMany).mockResolvedValue([
+        { planId: 'p1', nombre: 'BÃ¡sico', precio: 30, duracionDias: 30 },
+      ] as any);
       const r = await getAdminPlanesAction();
       expect(r.success).toBe(true);
+      if (r.success && r.data) {
+        expect(Array.isArray(r.data)).toBe(true);
+      }
     });
   });
 
@@ -150,7 +162,7 @@ describe('Admin Server Actions', () => {
   });
 
   describe('approveGlobalUserAction', () => {
-    it('activa al usuario y lo marca como aprobado', async () => {
+    it('company user -> crea tenant completo', async () => {
       vi.mocked(getCurrentUser).mockResolvedValue(adminUser);
       vi.mocked(prisma.user.findUnique).mockResolvedValue({
         userId: 'user-company',
@@ -159,13 +171,127 @@ describe('Admin Server Actions', () => {
         onboardingStatus: 'awaiting_global_approval',
         onboardingType: 'company',
       } as any);
-      vi.mocked(prisma.user.update).mockResolvedValue({ userId: 'user-company', isActive: true } as any);
+      vi.mocked(prisma.tenantMembership.findFirst).mockResolvedValue(null);
+      vi.mocked(prisma.plan.findUnique).mockResolvedValue({
+        planId: 'plan-basico',
+        nombre: 'B\u00e1sico',
+        precio: 30,
+        maxUsuarios: 3,
+        maxAlmacenes: 2,
+        maxProductos: 500,
+        features: {},
+      } as any);
+      vi.mocked(prisma.tenant.findUnique).mockResolvedValue(null); // slug libre
 
-      const r = await approveGlobalUserAction({ userId: 'user-company' });
+      const r = await approveGlobalUserAction({
+        userId: 'user-company',
+        tenantName: 'Mi Empresa SRL',
+        planId: 'plan-basico',
+      });
 
       expect(r.success).toBe(true);
-      expect(prisma.user.findUnique).toHaveBeenCalledWith({ where: { userId: 'user-company' } });
-      expect(prisma.user.update).toHaveBeenCalled();
+      if (r.success && r.data) {
+        const data = r.data as any;
+        expect(data.tenantCreated).toBe(true);
+        expect(data.tenantId).toBe('tenant-new');
+        expect(data.membershipId).toBe('mem-new');
+      }
+      expect(prisma.$transaction).toHaveBeenCalled();
+    });
+
+    it('worker user -> legacy activation (solo activar)', async () => {
+      vi.mocked(getCurrentUser).mockResolvedValue(adminUser);
+      vi.mocked(prisma.user.findUnique).mockResolvedValue({
+        userId: 'user-worker',
+        name: 'Worker',
+        email: 'worker@test.com',
+        onboardingStatus: 'awaiting_manager_approval',
+        onboardingType: 'worker',
+      } as any);
+      vi.mocked(prisma.user.update).mockResolvedValue({} as any);
+
+      const r = await approveGlobalUserAction({ userId: 'user-worker' });
+
+      expect(r.success).toBe(true);
+      if (r.success && r.data) {
+        expect((r.data as any).tenantCreated).toBe(false);
+      }
+      expect(prisma.$transaction).not.toHaveBeenCalled();
+    });
+
+    it('non-admin rechazado', async () => {
+      vi.mocked(getCurrentUser).mockResolvedValue(nonAdmin);
+      const r = await approveGlobalUserAction({ userId: 'user-company' });
+      expect(r.success).toBe(false);
+      expect(r.error!.code).toBe('FORBIDDEN');
+    });
+  });
+
+  describe('createTenantForUser', () => {
+    it('llama a $transaction con los datos del plan', async () => {
+      vi.mocked(prisma.user.findUnique).mockResolvedValue({
+        userId: 'user-test',
+        name: 'Test User',
+        onboardingStatus: 'awaiting_global_approval',
+      } as any);
+      vi.mocked(prisma.tenantMembership.findFirst).mockResolvedValue(null);
+      vi.mocked(prisma.tenant.findUnique).mockResolvedValue(null);
+      vi.mocked(prisma.plan.findUnique).mockResolvedValue({
+        planId: 'plan-basico',
+        nombre: 'B\u00e1sico',
+        precio: 30,
+        maxUsuarios: 3,
+        maxAlmacenes: 2,
+        maxProductos: 500,
+        features: {},
+      } as any);
+
+      await createTenantForUser({
+        userId: 'user-test',
+        planId: 'plan-basico',
+        tenantName: 'Test Corp',
+      });
+
+      expect(prisma.$transaction).toHaveBeenCalled();
+    });
+
+    it('error si onboardingStatus incorrecto', async () => {
+      vi.mocked(prisma.user.findUnique).mockResolvedValue({
+        userId: 'user-test',
+        name: 'Test',
+        onboardingStatus: 'selecting_user_type',
+      } as any);
+
+      await expect(createTenantForUser({ userId: 'user-test' }))
+        .rejects.toThrow('El usuario no est');
+    });
+
+    it('error si ya tiene membership activa', async () => {
+      vi.mocked(prisma.user.findUnique).mockResolvedValue({
+        userId: 'user-test',
+        name: 'Test',
+        onboardingStatus: 'awaiting_global_approval',
+      } as any);
+      vi.mocked(prisma.tenantMembership.findFirst).mockResolvedValue({
+        membershipId: 'existing',
+        isActive: true,
+      } as any);
+
+      await expect(createTenantForUser({ userId: 'user-test' }))
+        .rejects.toThrow('ya tiene una empresa activa');
+    });
+
+    it('error si plan no encontrado', async () => {
+      vi.mocked(prisma.user.findUnique).mockResolvedValue({
+        userId: 'user-test',
+        name: 'Test',
+        onboardingStatus: 'awaiting_global_approval',
+      } as any);
+      vi.mocked(prisma.tenantMembership.findFirst).mockResolvedValue(null);
+      vi.mocked(prisma.plan.findUnique).mockResolvedValue(null);
+
+      await expect(createTenantForUser({ userId: 'user-test', planId: 'x' }))
+        .rejects.toThrow('Plan no encontrado');
     });
   });
 });

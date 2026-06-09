@@ -9,6 +9,7 @@
 
 import { revalidatePath } from "next/cache";
 import { withAction, ActionError } from "@/lib/server-actions";
+import { createTenantForUser } from "@/lib/services/tenant-factory";
 import { prisma } from "@/lib/prisma";
 import bcrypt from "bcryptjs";
 import { sendEmailVerificationLink } from "@/lib/email";
@@ -92,16 +93,16 @@ export const createUserAction = withAction(
 		}
 
 		// ── Crear Empleado si el rol es dependiente ────────────────
-		if (parsed.tenantRole === 'dependiente' && adminTenantId) {
+		if (parsed.tenantRole === "dependiente" && adminTenantId) {
 			const nameParts = parsed.name.trim().split(/\s+/);
 			const nombre = nameParts[0] || parsed.name;
-			const apellido = nameParts.slice(1).join(' ') || '';
+			const apellido = nameParts.slice(1).join(" ") || "";
 
 			await prisma.empleado.create({
 				data: {
 					nombre,
 					apellido,
-					cargo: 'Dependiente',
+					cargo: "Dependiente",
 					salarioBases: 0,
 					fechaContratacion: new Date(),
 					tenantId: adminTenantId,
@@ -293,20 +294,40 @@ export const approveGlobalUserAction = withAction(
 	) => {
 		if (user.role !== "admin")
 			throw new ActionError("Acceso restringido", "FORBIDDEN");
-		const existing = await prisma.user.findUnique({
+
+		const targetUser = await prisma.user.findUnique({
 			where: { userId: input.userId },
+			select: { userId: true, onboardingType: true, onboardingStatus: true },
 		});
-		if (!existing) throw new ActionError("Usuario no encontrado", "NOT_FOUND");
+		if (!targetUser)
+			throw new ActionError("Usuario no encontrado", "NOT_FOUND");
+
+		// Si es tipo "company" o en estado await_global_approval → crear tenant completo
+		if (
+			targetUser.onboardingType === "company" ||
+			targetUser.onboardingStatus === "awaiting_global_approval"
+		) {
+			const result = await createTenantForUser({
+				userId: input.userId,
+				planId: input.planId,
+				tenantName: input.tenantName,
+				licenseDurationDays: input.licenseDurationDays,
+			});
+			return { success: true, tenantCreated: true, ...result };
+		}
+
+		// Tipo "worker" o legacy: solo activar usuario y limpiar onboardingStatus
 		await prisma.user.update({
 			where: { userId: input.userId },
 			data: {
 				isActive: true,
+				onboardingStatus: null,
 				expiresAt: input.licenseDurationDays
 					? new Date(Date.now() + input.licenseDurationDays * 86400000)
 					: null,
 			},
 		});
-		return { success: true };
+		return { success: true, tenantCreated: false };
 	},
 );
 
@@ -411,7 +432,14 @@ export const getAdminPlanesAction = withAction(
 	async (_input: void, user: AuthenticatedUser) => {
 		if (user.role !== "admin")
 			throw new ActionError("Acceso restringido", "FORBIDDEN");
-		return prisma.plan.findMany({ orderBy: { createdAt: "desc" } });
+		const planes = await prisma.plan.findMany({
+			orderBy: { createdAt: "desc" },
+		});
+		return planes.map((p) => ({
+			...p,
+			precio: Number(p.precio),
+			billingCycle: `${p.duracionDias} días`,
+		}));
 	},
 );
 
@@ -620,7 +648,10 @@ export const approveMembershipAction = withAction(
 		});
 
 		if (!membership) {
-			throw new ActionError("Solicitud de membresía no encontrada", "NOT_FOUND");
+			throw new ActionError(
+				"Solicitud de membresía no encontrada",
+				"NOT_FOUND",
+			);
 		}
 
 		if (membership.isActive) {
@@ -715,10 +746,7 @@ export const rejectMembershipAction = withAction(
 );
 
 export const updateTenantUserAction = withAction(
-	async (
-		input: UpdateTenantUserInput,
-		user: AuthenticatedUser,
-	) => {
+	async (input: UpdateTenantUserInput, user: AuthenticatedUser) => {
 		const parsed = updateTenantUserSchema.parse(input);
 		const { userId, tenantRole, isActive } = parsed;
 
@@ -738,10 +766,7 @@ export const updateTenantUserAction = withAction(
 		}
 
 		if (!user.tenantId) {
-			throw new ActionError(
-				"No tenés un tenant asignado",
-				"FORBIDDEN",
-			);
+			throw new ActionError("No tenés un tenant asignado", "FORBIDDEN");
 		}
 
 		// Verificar que el usuario pertenece al mismo tenant

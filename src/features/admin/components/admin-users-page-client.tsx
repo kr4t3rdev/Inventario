@@ -28,6 +28,8 @@ import {
 	CardHeader,
 	CardTitle,
 } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import {
 	Dialog,
 	DialogContent,
@@ -132,6 +134,7 @@ export function AdminUsersPageClient({
 	const [selectedUser, setSelectedUser] = useState<Usuario | null>(null);
 	const [approveUser, setSelectedApproveUser] = useState<Usuario | null>(null);
 	const [selectedPlanId, setSelectedPlanId] = useState<string>("");
+	const [tenantName, setTenantName] = useState<string>("");
 	const [isApproving, setIsApproving] = useState(false);
 
 	// Estado de datos: arranca con initialData, se actualiza con refresh
@@ -283,6 +286,7 @@ export function AdminUsersPageClient({
 	const handleApproveUser = (candidate: Usuario): void => {
 		setSelectedApproveUser(candidate);
 		setSelectedPlanId("");
+		setTenantName("");
 		setApproveDialogOpen(true);
 	};
 
@@ -296,6 +300,7 @@ export function AdminUsersPageClient({
 					selectedPlanId && selectedPlanId !== "none"
 						? selectedPlanId
 						: undefined,
+					tenantName: tenantName || undefined,
 					licenseDurationDays: undefined,
 			});
 
@@ -307,6 +312,7 @@ export function AdminUsersPageClient({
 			setApproveDialogOpen(false);
 			setSelectedApproveUser(null);
 			setSelectedPlanId("");
+			setTenantName("");
 			refresh();
 		} catch (error) {
 			toast.error(
@@ -528,6 +534,15 @@ export function AdminUsersPageClient({
 					</DialogHeader>
 
 					<div className="space-y-4 py-4">
+						<div className="space-y-2">
+							<Label htmlFor="tenantName">Nombre de la empresa</Label>
+							<Input
+								id="tenantName"
+								value={tenantName}
+								onChange={(e) => setTenantName(e.target.value)}
+								placeholder="Ej: Mi Empresa SRL"
+							/>
+						</div>
 						<div className="space-y-2">
 							<span className="text-sm font-medium">
 								Plan de licencia (opcional)

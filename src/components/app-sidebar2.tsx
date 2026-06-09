@@ -591,12 +591,27 @@ export function AppSidebar2({
 	/**
 	 * @description Verifica si un item del sidebar es visible para el rol de tenant del usuario.
 	 */
+	/** Items públicos visibles aunque el usuario no tenga rol de tenant (modo degraded) */
+	const TENANTLESS_PUBLIC_ITEMS = new Set([
+		"Productos",
+		"Ventas",
+		"Clientes",
+		"Servicios",
+		"Reportes",
+		"Venta Diaria",
+		"Mi Empresa",
+		"Cuadre Financiero",
+		"Dashboard",
+	]);
+
 	function canSeeSidebarItem(itemTitle: string): boolean {
 		// Admin global ve todo
 		if (user?.role === "admin") return true;
 
-		// Si no hay tenantRole (usuario sin membresía), no ve nada
-		if (!user?.tenantRole) return false;
+		// Si no hay tenantRole (usuario sin membresía), mostrar items públicos
+		if (!user?.tenantRole) {
+			return TENANTLESS_PUBLIC_ITEMS.has(itemTitle);
+		}
 
 		const allowedRoles = SIDEBAR_TENANT_PERMISSIONS[itemTitle];
 		// Si el item no está en el mapa, solo manager tiene acceso

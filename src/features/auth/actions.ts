@@ -426,7 +426,7 @@ export const refreshSessionAction = withAction(async (_void: void) => {
 		await prisma.userSession.create({
 			data: {
 				userId: user.userId,
-				token: newRefreshToken,
+				token: newToken,
 				isActive: true,
 				expiresAt: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000),
 			},
