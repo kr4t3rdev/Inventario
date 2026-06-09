@@ -65,12 +65,14 @@ export async function proxy(request: NextRequest) {
     return NextResponse.next()
   }
 
-  // Rutas API protegidas: verificar presencia del Bearer token
+  // Rutas API protegidas: verificar presencia del token (Bearer o cookie)
   // La validación completa (JWT + sesión + permisos) la hacen los wrappers withAuth*
   if (path.startsWith('/api')) {
     const authorization = request.headers.get('authorization')
+    const hasBearer = authorization && authorization.startsWith('Bearer ')
+    const hasCookieToken = request.cookies.get('auth_token')?.value
 
-    if (!authorization || !authorization.startsWith('Bearer ')) {
+    if (!hasBearer && !hasCookieToken) {
       return NextResponse.json(
         {
           error: 'Token no proporcionado',

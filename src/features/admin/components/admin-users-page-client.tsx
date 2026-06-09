@@ -50,10 +50,9 @@ import {
 	AnimatedCard,
 } from "@/components/ui/animations";
 import { useAuth } from "@/contexts/auth-context";
-import { getGlobalUsersAction, getAdminPlanesAction } from "@/features/admin";
+import { getGlobalUsersAction, getAdminPlanesAction, approveGlobalUserAction } from "@/features/admin";
 import { LazyMotion, m as motion, type Variants } from "framer-motion";
 import type { AdminUsersPageData } from "../server/data";
-import { getAuthToken } from "@/lib/token";
 
 const UserAnalyticsPanel = dynamic(
 	() =>
@@ -291,25 +290,19 @@ export function AdminUsersPageClient({
 		if (!approveUser) return;
 		setIsApproving(true);
 		try {
-			const response = await fetch(
-				`/api/admin/global/users/${approveUser.userId}/approve`,
-				{
-					method: "POST",
-					headers: {
-						"Content-Type": "application/json",
-						Authorization: getAuthToken(),
-					},
-					body: JSON.stringify({
-						planId:
-							selectedPlanId && selectedPlanId !== "none"
-								? selectedPlanId
-								: undefined,
-					}),
-				},
-			);
-			const payload = await response.json();
-			if (!response.ok)
-				throw new Error(payload?.error || "Error aprobando usuario");
+			const result = await approveGlobalUserAction({
+				userId: approveUser.userId,
+				planId:
+					selectedPlanId && selectedPlanId !== "none"
+						? selectedPlanId
+						: undefined,
+					licenseDurationDays: undefined,
+			});
+
+			if (!result.success) {
+				throw new Error(result.error?.message || "Error aprobando usuario");
+			}
+
 			toast.success("Usuario aprobado correctamente");
 			setApproveDialogOpen(false);
 			setSelectedApproveUser(null);
