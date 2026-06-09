@@ -281,24 +281,24 @@ describe("Cuentas por Pagar — reconciliarGastoAction (flujo real)", () => {
 		expect(result.error?.code).toBe("CUENTA_YA_PAGADA");
 	});
 
-	it("6. Sin cuentaPorPagarId → flujo legacy preservado", async () => {
-		prismaMock.$transaction.mockImplementation(async (cb: any) => {
-			const mockTx = {
-				reconciliacionGasto: {
-					create: vi.fn().mockResolvedValue({
-						reconciliacionId: "rec-legacy",
-						monto: 200,
-						moneda: "CUP",
-						montoConvertido: 200,
-						estado: "PAGADA",
-					}),
+	it("6. Sin cuentaPorPagarId → usa workflow unified", async () => {
+		const workflowResult = {
+			reconciliaciones: [
+				{
+					reconciliacionId: "rec-legacy",
+					cuentaId: "cb-1",
+					monto: 200,
+					moneda: "CUP",
+					montoConvertido: 200,
+					descripcion: "Pago salario",
 				},
-				cuentaBancaria: {
-					update: vi.fn().mockResolvedValue({}),
-				},
-			};
-			return cb(mockTx);
-		});
+			],
+			cuentaPorPagar: null,
+			pagoCuentaPorPagar: null,
+		};
+
+		workflowMock.applyPagoGastoWorkflow.mockResolvedValue(workflowResult);
+		prismaMock.$transaction.mockImplementation(async (cb: any) => cb({}));
 
 		const result = await reconciliarGastoAction({
 			pgId: "pg-1",
@@ -310,7 +310,30 @@ describe("Cuentas por Pagar — reconciliarGastoAction (flujo real)", () => {
 		});
 
 		expect(result.success).toBe(true);
-		// applyPagoGastoWorkflow NO debe haberse llamado (es flujo legacy)
-		expect(workflowMock.applyPagoGastoWorkflow).not.toHaveBeenCalled();
+		// El workflow DEBE haberse llamado (path unificado)
+		expect(workflowMock.applyPagoGastoWorkflow).toHaveBeenCalledWith(
+			expect.anything(),
+			expect.objectContaining({
+				tipoGasto: "salario",
+				referenciaId: "pg-1",
+				monto: 200,
+			}),
+		);
+	});
+
+	it("7. RED: Sin cuentaPorPagarId DEBE llamar al workflow (parity)", async () => {
+		prismaMock.$transaction.mockImplementation(async (cb: any) => cb({}));
+
+		await reconciliarGastoAction({
+			pgId: "pg-7",
+			cuentaId: "cb-1",
+			tipoPagoId: "tp-1",
+			monto: 200,
+			moneda: "CUP",
+			descripcion: "Pago salario RED parity",
+		});
+
+		// Assert: el workflow debe llamarse incluso SIN cuentaPorPagarId
+		expect(workflowMock.applyPagoGastoWorkflow).toHaveBeenCalled();
 	});
 });

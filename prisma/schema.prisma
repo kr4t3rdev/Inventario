@@ -28,6 +28,7 @@ model Categoria {
   @@index([clasSectionId])
   @@index([clasSpecificId])
   @@index([tenantId])
+  @@index([tenantId, parentId])
 }
 
 model Unidad {
@@ -440,6 +441,7 @@ model Producto {
   @@index([tenantId])
   @@index([tenantId, categoriaId])
   @@index([tenantId, vendorId])
+  @@index([tenantId, subcategoriaId])
 }
 
 model StockUbicacion {

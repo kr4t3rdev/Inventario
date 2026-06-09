@@ -23,5 +23,5 @@ export default async function EditarPuntoVentaPage({
   const result = await getPuntoDeVentaByIdAction(id)
   const puntoVenta = result.success ? (result.data ?? null) : null
 
-  return <EditarPvPageClient puntoVenta={puntoVenta as any} />
+  return <EditarPvPageClient puntoVenta={puntoVenta} />
 }

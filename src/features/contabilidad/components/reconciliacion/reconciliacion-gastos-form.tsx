@@ -408,6 +408,11 @@ export function ReconciliacionGastosForm({
         distribucion: data.distribuciones.map(dist => ({
           cuentaId: dist.cuentaId,
           monto: dist.monto,
+          tipoPagoId: dist.tipoPagoId,
+          moneda: dist.moneda,
+          numeroTransaccion: dist.numeroTransaccion,
+          observaciones: dist.observaciones,
+          tasaCambio: dist.tasaCambio,
           porcentaje: Math.round((dist.monto / precioGasto) * 100 * 100) / 100 // Calcular porcentaje
         }))
       }

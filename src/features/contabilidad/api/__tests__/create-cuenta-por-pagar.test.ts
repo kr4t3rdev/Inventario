@@ -109,6 +109,55 @@ describe('Cuentas por Pagar — createCuentaPorPagarAction', () => {
     expect(findCall.where.numeroFactura).toBe('FAC-001')
   })
 
+  it('permite crear cuando CxP previa con misma factura+proveedor está PAGADA', async () => {
+    // Simular que existe una CxP pagada con FAC-001 para proveedor A
+    prismaMock.cuentaPorPagar.findFirst.mockResolvedValueOnce(null);
+
+    prismaMock.cuentaPorPagar.create.mockResolvedValue({
+      cuentaPorPagarId: 'cxp-3',
+      tenantId: 'tenant-1',
+      numeroFactura: 'FAC-001',
+      tipo: 'compra',
+      proveedorId: 'prov-1',
+      proveedorNombre: 'Proveedor A',
+      montoDeuda: 150,
+      montoPagado: 0,
+      saldoPendiente: 150,
+      moneda: 'CUP',
+      fechaEmision: new Date(),
+      fechaVencimiento: null,
+      estado: 'PENDIENTE',
+      tipoDeuda: null,
+      proveedor: null,
+      pagos: [],
+      deudaCash: null,
+      createdAt: new Date(),
+      updatedAt: new Date(),
+      deletedAt: null,
+      compraProducto: null,
+      compraDocumento: null,
+      gastoCompra: null,
+      gastosDE: null,
+      reconciliaciones: [],
+      tenant: null,
+      gastoCompraId: null,
+      gastosDEId: null,
+    });
+
+    const result = await createCuentaPorPagarAction({
+      numeroFactura: 'FAC-001',
+      tipo: 'compra',
+      proveedorId: 'prov-1',
+      proveedorNombre: 'Proveedor A',
+      montoDeuda: 150,
+    });
+
+    expect(result.success).toBe(true);
+    // Verificar que findFirst filtró por estado !== 'PAGADA'
+    const findCall = prismaMock.cuentaPorPagar.findFirst.mock.calls[0][0];
+    expect(findCall.where.estado).toEqual({ not: 'PAGADA' });
+  });
+
   it('retorna AUTH_REQUIRED cuando el usuario no está autenticado', async () => {
     getCurrentUserMock.mockResolvedValue(null)
 

@@ -5,7 +5,7 @@ import type { ReactElement } from 'react'
 import { useRouter } from 'next/navigation'
 import { LazyMotion, m as motion } from 'framer-motion'
 import { zodResolver } from '@hookform/resolvers/zod'
-import { useForm } from 'react-hook-form'
+import { useForm, useWatch } from 'react-hook-form'
 import { z } from 'zod'
 import { sileo } from '@/lib/sileo-shim'
 
@@ -70,10 +70,10 @@ export function ServiciosRecibidosForm({ initialServicios }: ServiciosRecibidosF
     },
   })
 
-  const formaPago = form.watch('formaPago')
-  const proveedorId = form.watch('proveedorId')
-  const costoUnitario = form.watch('costoUnitario') || 0
-  const cantidad = form.watch('cantidad') || 1
+  const formaPago = useWatch({ control: form.control, name: 'formaPago' })
+  const proveedorId = useWatch({ control: form.control, name: 'proveedorId' })
+  const costoUnitario = useWatch({ control: form.control, name: 'costoUnitario' }) || 0
+  const cantidad = useWatch({ control: form.control, name: 'cantidad' }) || 1
   const costoTotal = costoUnitario * cantidad
 
   /**

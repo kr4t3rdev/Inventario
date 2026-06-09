@@ -105,7 +105,7 @@ export default function ServiciosCart({
 		);
 	};
 
-	// Procesar venta de servicios
+	// Procesar venta de servicios (batch atómico via transactional mixed-line)
 	const processVenta = async () => {
 		if (cart.length === 0) {
 			toast("Añada servicios al carrito para realizar una venta");
@@ -119,18 +119,20 @@ export default function ServiciosCart({
 
 		setIsProcessing(true);
 		try {
-			for (const item of cart) {
-				const result = await createVentaServicioAction({
+			const result = await createVentaServicioAction({
+				clienteId: selectedClienteId,
+				observaciones: observaciones || undefined,
+				lineas: cart.map((item) => ({
+					tipoLinea: 'SERVICIO' as const,
 					servicioId: item.servicioId,
 					cantidad: item.cantidad,
+					precioUnitario: Math.round(item.precio),
 					costo: Math.round(item.costo),
-					clienteId: selectedClienteId,
-					observaciones,
-					total: Math.round(item.precio * item.cantidad),
-				});
-				if (!result.success) {
-					throw new Error(result.error?.message ?? "Error desconocido");
-				}
+				})),
+			});
+
+			if (!result.success) {
+				throw new Error(result.error?.message ?? "Error desconocido");
 			}
 
 			toast("Venta de servicios procesada exitosamente");
@@ -140,7 +142,7 @@ export default function ServiciosCart({
 			onOpenChange(false);
 		} catch (error) {
 			console.error("Error al procesar la venta:", error);
-			toast("Hubo un error al procesar la venta");
+			toast("Hubo un error al procesar la venta. El carrito se ha preservado para reintentar.");
 		} finally {
 			setIsProcessing(false);
 		}

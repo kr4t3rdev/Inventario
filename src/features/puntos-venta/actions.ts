@@ -30,12 +30,11 @@ export const createPuntoDeVentaAction = withAction(async (input: PvInput, user: 
   const parsed = pvSchema.parse(input);
   const tenantId = requireTenant(user);
   const pv = await prisma.puntoDeVenta.create({
-  // @ts-expect-error
     data: {
       nombre: parsed.nombre,
       ubicacion: parsed.ubicacion ?? null,
       tenantId,
-      ...(parsed.listaPrecioId ? { listaPrecio: { connect: { id: parsed.listaPrecioId } } } : {}),
+      listaPrecioId: parsed.listaPrecioId ?? null,
     },
   });
   revalidatePath('/busy/puntosDeVenta');
@@ -53,9 +52,7 @@ export const updatePuntoDeVentaAction = withAction(async (input: PvUpdateInput, 
     data: {
       ...(data.nombre !== undefined && { nombre: data.nombre }),
       ...(data.ubicacion !== undefined && { ubicacion: data.ubicacion }),
-      ...(data.listaPrecioId !== undefined && {
-        listaPrecio: data.listaPrecioId ? { connect: { id: data.listaPrecioId } } : { disconnect: true },
-      }),
+      ...(data.listaPrecioId !== undefined && { listaPrecioId: data.listaPrecioId }),
     },
   });
   revalidatePath('/busy/puntosDeVenta');

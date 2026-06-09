@@ -33,6 +33,11 @@ vi.mock('@/lib/services/audit-log-service', () => ({
   }
 }))
 
+vi.mock('@/lib/services/validate-period-write', () => ({
+  validarEscrituraPeriodo: vi.fn(),
+  extraerFechaDeBody: vi.fn().mockReturnValue(new Date()),
+}))
+
 /**
  * @description Crea un cliente transaccional mínimo para ejecutar el workflow real desde la ruta.
  * @param {Record<string, unknown>} overrides - Métodos a sobreescribir para cada prueba.
@@ -89,8 +94,10 @@ describe('Reconciliacion gastos API - POST', () => {
     const { POST } = await import('../route')
     const prisma = (await import('@/lib/prisma')).default as any
     const { authenticateUser } = await import('@/lib/auth-middleware')
+    const { validarEscrituraPeriodo } = await import('@/lib/services/validate-period-write')
 
-    vi.mocked(authenticateUser).mockResolvedValue({ user: { userId: 'user-1' } } as any)
+    vi.mocked(validarEscrituraPeriodo).mockResolvedValue({ permitido: true, modo: 'enforce' })
+    vi.mocked(authenticateUser).mockResolvedValue({ user: { userId: 'user-1', tenantId: 't1' } } as any)
     vi.mocked(prisma.gastosDE.findUnique).mockResolvedValue({
       gastosDEId: 'gde-1'
     })
@@ -168,8 +175,10 @@ describe('Reconciliacion gastos API - POST', () => {
     const { POST } = await import('../route')
     const prisma = (await import('@/lib/prisma')).default as any
     const { authenticateUser } = await import('@/lib/auth-middleware')
+    const { validarEscrituraPeriodo } = await import('@/lib/services/validate-period-write')
 
-    vi.mocked(authenticateUser).mockResolvedValue({ user: { userId: 'user-2' } } as any)
+    vi.mocked(validarEscrituraPeriodo).mockResolvedValue({ permitido: true, modo: 'enforce' })
+    vi.mocked(authenticateUser).mockResolvedValue({ user: { userId: 'user-2', tenantId: 't1' } } as any)
     vi.mocked(prisma.gastosDE.findUnique).mockResolvedValue({
       gastosDEId: 'gde-2'
     })
@@ -191,6 +200,7 @@ describe('Reconciliacion gastos API - POST', () => {
     vi.mocked(tx.cuentaPorPagar.findUnique).mockResolvedValue({
       cuentaPorPagarId: 'cxp-2',
       estado: 'PENDIENTE',
+      montoDeuda: 100,
       montoPagado: 0,
       saldoPendiente: 100,
       gastoCompraId: null,
@@ -261,8 +271,10 @@ describe('Reconciliacion gastos API - POST', () => {
     const { POST } = await import('../route')
     const prisma = (await import('@/lib/prisma')).default as any
     const { authenticateUser } = await import('@/lib/auth-middleware')
+    const { validarEscrituraPeriodo } = await import('@/lib/services/validate-period-write')
 
-    vi.mocked(authenticateUser).mockResolvedValue({ user: { userId: 'user-3' } } as any)
+    vi.mocked(validarEscrituraPeriodo).mockResolvedValue({ permitido: true, modo: 'enforce' })
+    vi.mocked(authenticateUser).mockResolvedValue({ user: { userId: 'user-3', tenantId: 't1' } } as any)
     vi.mocked(prisma.gastosDE.findUnique).mockResolvedValue({
       gastosDEId: 'gde-3'
     })
@@ -284,6 +296,7 @@ describe('Reconciliacion gastos API - POST', () => {
     vi.mocked(tx.cuentaPorPagar.findUnique).mockResolvedValue({
       cuentaPorPagarId: 'cxp-3',
       estado: 'PENDIENTE',
+      montoDeuda: 100,
       montoPagado: 0,
       saldoPendiente: 100,
       gastoCompraId: null,
@@ -318,5 +331,42 @@ describe('Reconciliacion gastos API - POST', () => {
     expect(response.status).toBe(409)
     expect(data.code).toBe('DUPLICADO_TRANSACCION')
     expect(tx.reconciliacionGasto.create).not.toHaveBeenCalled()
+  })
+
+  it('retorna 400 PERIODO_CERRADO cuando el período está cerrado', async () => {
+    const { POST } = await import('../route')
+    const { authenticateUser } = await import('@/lib/auth-middleware')
+    const { validarEscrituraPeriodo } = await import('@/lib/services/validate-period-write')
+
+    vi.mocked(validarEscrituraPeriodo).mockResolvedValue({
+      permitido: false,
+      modo: 'enforce',
+      error: { message: 'Período contable cerrado', code: 'PERIODO_CERRADO' },
+    })
+    vi.mocked(authenticateUser).mockResolvedValue({ user: { userId: 'user-4', tenantId: 't1' } } as any)
+
+    const request = new NextRequest('http://localhost/api/contabilidad/reconciliacion/gastos', {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({
+        tipoGasto: 'gastoDE',
+        gastosDEId: 'gde-4',
+        cuentaId: 'cb-4',
+        tipoPagoId: 'tp-4',
+        monto: 50,
+        moneda: 'CUP',
+        descripcion: 'Pago en periodo cerrado',
+        estado: 'PAGADA',
+      })
+    })
+
+    const response = await POST(request)
+    const data = await response.json()
+
+    expect(response.status).toBe(400)
+    expect(data.code).toBe('PERIODO_CERRADO')
+    // Verificar que el workflow no se ejecutó
+    const prisma = (await import('@/lib/prisma')).default as any
+    expect(prisma.$transaction).not.toHaveBeenCalled()
   })
 })

@@ -7,29 +7,15 @@ import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { sileo } from '@/lib/sileo-shim';
-import { z } from "zod";
 import { Card, CardContent } from "@/components/ui/card";
 import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { vendorSchema } from "@/features/vendors/schemas";
+import type { VendorInput } from "@/features/vendors/schemas";
 import { createVendorAction, updateVendorAction } from "@/features/vendors/actions";
 import { VendorLogoUpload } from "./vendor-logo-upload";
-
-
-const vendorSchema = z.object({
-    nombre: z.string({
-        required_error: 'El campo Nombre no ha sido rellenado',
-    }),
-    direccion: z.string().optional(),
-    telefono: z.string().optional(),
-    contacto: z.string().optional(),
-    cuentaCUP: z.string().optional(),
-    cuentaUSD: z.string().optional(),
-    logo: z.string().nullable().optional(),
-})
-
-type VendorFormValues = z.infer<typeof vendorSchema>
 
 interface VendorFormProps {
     initialData?: {
@@ -66,7 +52,7 @@ export function VendorForm({initialData}: VendorFormProps) {
         setTimeout(() => setCopiedField(null), 2000)
     }
 
-    const form = useForm<VendorFormValues>({
+    const form = useForm<VendorInput>({
         resolver: zodResolver(vendorSchema),
         defaultValues: {
             nombre: initialData?.nombre || "",
@@ -79,7 +65,7 @@ export function VendorForm({initialData}: VendorFormProps) {
         }
     })
 
-    async function onSubmit(data: VendorFormValues) {
+    async function onSubmit(data: VendorInput) {
         setIsLoading(true)
         try {
             if (initialData) {

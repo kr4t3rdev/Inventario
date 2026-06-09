@@ -4,7 +4,6 @@ import { useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { useForm } from "react-hook-form"
-import { z } from "zod"
 
 import { Button } from "@/components/ui/button"
 import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form"
@@ -16,24 +15,19 @@ import { createPuntoDeVentaAction, updatePuntoDeVentaAction } from "@/features/p
 import { getListasPreciosAction } from "@/features/listas-precios"
 import { LazyMotion, m as motion } from "framer-motion"
 import { Store, MapPin, Sparkles, ArrowLeft, Loader2 } from "lucide-react"
+import {
+  parsePvFormValues,
+  ptoVentaFormValuesSchema,
+  type PtoVentaFormValues,
+} from "@/features/puntos-venta/form-values"
 
-const ptoVentaSchema = z.object({
-  nombre: z.string({
-    required_error: 'El campo Nombre no ha sido rellenado',
-  }),
-  ubicacion: z.string({
-    required_error: 'El campo Ubicación no ha sido rellenado',
-  }),
-  listaPrecioId: z.string().optional(),
-})
 
-type PtoVentaFormValues = z.infer<typeof ptoVentaSchema>
 
 interface PtoVentaFormProps {
   initialData?: {
     pvId: string
     nombre: string
-    ubicacion: string
+    ubicacion: string | null
     stockPuntoVenta?: number
     listaPrecioId?: string | null
   }
@@ -67,25 +61,25 @@ export function PtoVentaForm({ initialData }: PtoVentaFormProps) {
   }, [])
 
   const form = useForm<PtoVentaFormValues>({
-    resolver: zodResolver(ptoVentaSchema) as any,
+    resolver: zodResolver(ptoVentaFormValuesSchema),
     defaultValues: {
       nombre: initialData?.nombre || "",
-      ubicacion: initialData?.ubicacion || "",
-      listaPrecioId: initialData?.listaPrecioId || "default",
+      ubicacion: initialData?.ubicacion ?? "",
+      listaPrecioId: initialData?.listaPrecioId ?? "default",
     },
   })
 
-  async function onSubmit(data: PtoVentaFormValues) {
+  async function onSubmit(values: PtoVentaFormValues) {
     setIsLoading(true)
     try {
-      const listaPrecioId = data.listaPrecioId === "default" ? null : data.listaPrecioId
+      const data = parsePvFormValues(values)
 
       if (initialData) {
         const result = await updatePuntoDeVentaAction({
           pvId: initialData.pvId,
           nombre: data.nombre,
           ubicacion: data.ubicacion,
-          listaPrecioId,
+          listaPrecioId: data.listaPrecioId,
         })
 
         if (!result.success) {
@@ -96,7 +90,7 @@ export function PtoVentaForm({ initialData }: PtoVentaFormProps) {
         const result = await createPuntoDeVentaAction({
           nombre: data.nombre,
           ubicacion: data.ubicacion,
-          listaPrecioId,
+          listaPrecioId: data.listaPrecioId,
         })
 
         if (!result.success) {
@@ -184,7 +178,7 @@ export function PtoVentaForm({ initialData }: PtoVentaFormProps) {
                         <Input 
                           type="text" 
                           placeholder="Ej: Tienda Principal, Sucursal Norte..."
-                          {...field} 
+                          {...field}
                           disabled={isLoading}
                           className="transition-all duration-200 focus:ring-2 focus:ring-primary/20"
                         />
@@ -207,18 +201,19 @@ export function PtoVentaForm({ initialData }: PtoVentaFormProps) {
                 <FormField
                   control={form.control}
                   name="ubicacion"
-                  render={({ field }) => (
+                  render={({ field: { value, ...field } }) => (
                     <FormItem>
                       <FormLabel className="flex items-center gap-2">
                         <MapPin className="h-4 w-4 text-muted-foreground" />
                         Ubicación
-                        <span className="text-xs text-muted-foreground font-normal">(requerido)</span>
+                        <span className="text-xs text-muted-foreground font-normal">(opcional)</span>
                       </FormLabel>
                       <FormControl>
                         <Input 
                           type="text" 
                           placeholder="Ej: Calle Principal #123, Centro Comercial..."
-                          {...field} 
+                          {...field}
+                          value={value ?? ""}
                           disabled={isLoading}
                           className="transition-all duration-200 focus:ring-2 focus:ring-primary/20"
                         />

@@ -472,7 +472,7 @@ export const createCuentaPorCobrarAction = withAction(
 				clienteId: p.clienteId,
 				montoDeuda: p.monto,
 				montoPagado: 0,
-				// @ts-expect-error
+				// @ts-expect-error — Prisma schema has moneda column but type def may lack it
 				moneda: p.moneda,
 				estado: "PENDIENTE",
 				facturaId: facturaIdReal || p.ventaId,
@@ -660,6 +660,7 @@ export const createCuentaPorPagarAction = withAction(
 				numeroFactura: p.numeroFactura,
 				proveedorId: p.proveedorId,
 				tenantId,
+				estado: { not: "PAGADA" },
 				deletedAt: null,
 			},
 		});

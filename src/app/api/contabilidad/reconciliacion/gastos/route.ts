@@ -1,71 +1,74 @@
 import { NextRequest, NextResponse } from 'next/server'
 import prisma from '@/lib/prisma'
-import { z } from 'zod'
-import type { Prisma } from '@/generated/prisma'
 import { authenticateUser } from "@/lib/auth-middleware"
-import { AuditLogService } from "@/lib/services/audit-log-service"
 import { validarEscrituraPeriodo, extraerFechaDeBody } from '@/lib/services/validate-period-write'
 import {
-  applyPagoGastoWorkflow,
-  isGastoWorkflowError
-} from '@/lib/services/pago-gastos-workflow'
+  reconciliarGastoAdapter,
+} from '@/features/contabilidad/api/reconciliacion-gastos-adapter'
+import { z } from 'zod'
 
-// Schema para validar la reconciliación de gastos
-const reconciliacionGastoSchema = z.object({
-  tipoGasto: z.enum(['salario', 'gastoDE', 'compra'], {
-    errorMap: () => ({ message: 'Tipo de gasto debe ser: salario, gastoDE o compra' })
-  }),
-  pgId: z.string().optional(),
-  gastosDEId: z.string().optional(),
-  gastoCompraId: z.string().optional(),
-  referenciaId: z.string().optional(), // Campo genérico aceptado como alias de los IDs específicos
-  // Para modo de una sola cuenta, se requiere cuentaId; para distribución multi-cuenta, no.
-  cuentaId: z.string().min(1, 'ID de cuenta bancaria es requerido').optional(),
-  tipoPagoId: z.string().min(1, 'Tipo de pago es requerido').optional(),
-  monto: z.number().positive('El monto debe ser positivo'),
-  moneda: z.string().default('CUP'),
-  tasaCambio: z.number().positive().optional(),
-  descripcion: z.string().min(1, 'Descripción es requerida'),
-  periodo: z.string().optional(),
-  observaciones: z.string().optional(),
-  estado: z.enum(['PENDIENTE', 'PAGADA', 'PARCIAL']).default('PAGADA'),
-  cuentaPorPagarId: z.string().optional(),
-  numeroTransaccion: z.string().optional(),
-  // Para distribución multi-cuenta en salarios
-  distribucion: z.array(z.object({
-    cuentaId: z.string(),
-    monto: z.number().positive(),
-    porcentaje: z.number().min(0).max(100).optional()
-  })).optional()
-}).refine((data) => {
-  // Validar que se proporcione exactamente uno de los IDs según el tipo de gasto
-  const { tipoGasto, pgId, gastosDEId, gastoCompraId, referenciaId } = data
+// POST - Reconciliar gasto con cuenta(s) bancaria(s)
+// Thin adapter: solo auth + period guard; la lógica de negocio está en reconciliarGastoAdapter
+export async function POST(request: NextRequest) {
+  try {
+    const authResultUser = await authenticateUser(request)
+    if ('status' in authResultUser) return authResultUser as Response
+    const user = authResultUser.user
 
-  if (tipoGasto === 'salario' && !(pgId || referenciaId)) {
-    return false
-  }
-  if (tipoGasto === 'gastoDE' && !(gastosDEId || referenciaId)) {
-    return false
-  }
-  if (tipoGasto === 'compra' && !(gastoCompraId || referenciaId)) {
-    return false
-  }
+    const body = await request.json()
 
-  return true
-}, {
-  message: "Debe proporcionar el ID correspondiente al tipo de gasto"
-}).refine((data) => {
-  // Si es PAGADA, debe tener cuentaId o distribucion
-  if (data.estado === 'PAGADA') {
-    const hasDistribucion = Array.isArray(data.distribucion) && data.distribucion.length > 0
-    const hasCuenta = !!data.cuentaId
-    return hasDistribucion || hasCuenta
+    // Validar período contable antes de escribir
+    const fechaOperacion = extraerFechaDeBody(body) ?? new Date()
+    const validacionPeriodo = await validarEscrituraPeriodo({
+      fecha: fechaOperacion,
+      tenantId: user.tenantId ?? '',
+      tipoOperacion: 'reconciliacion_gastos',
+      actor: user.userId,
+    })
+    if (!validacionPeriodo.permitido) {
+      return NextResponse.json(
+        { error: validacionPeriodo.error?.message ?? 'Período contable cerrado', code: validacionPeriodo.error?.code ?? 'PERIODO_CERRADO' },
+        { status: 400 }
+      )
+    }
+
+    // Delegar toda la lógica de negocio al adapter
+    const result = await reconciliarGastoAdapter(body, user)
+
+    return NextResponse.json(
+      {
+        message: 'Gasto reconciliado exitosamente',
+        reconciliaciones: result.reconciliaciones,
+        cuentaPorPagar: result.cuentaPorPagar,
+        pagoCuentaPorPagar: result.pagoCuentaPorPagar,
+        distribucionMultiCuenta: result.distribucionMultiCuenta,
+      },
+      { status: 201 },
+    )
+  } catch (error: unknown) {
+    if (error instanceof z.ZodError) {
+      return NextResponse.json(
+        { error: 'Datos de entrada inválidos', details: error.errors },
+        { status: 400 },
+      )
+    }
+
+    // Errores lanzados desde el adapter con status + code
+    const err = error as { status?: number; code?: string; message?: string }
+    if (err.status && err.code) {
+      return NextResponse.json(
+        { error: err.message, code: err.code },
+        { status: err.status },
+      )
+    }
+
+    console.error('Error reconciliando gasto:', error)
+    return NextResponse.json(
+      { error: error instanceof Error ? error.message : 'Error interno del servidor', code: 'INTERNAL_ERROR' },
+      { status: 500 },
+    )
   }
-  return true
-}, {
-  message: 'Debe indicar una cuenta bancaria o una distribución multi-cuenta para pagar',
-  path: ['cuentaId']
-})
+}
 
 // GET - Obtener gastos pendientes de reconciliar
 export async function GET(request: NextRequest) {
@@ -311,235 +314,4 @@ export async function GET(request: NextRequest) {
 }
 
 // POST - Reconciliar gasto con cuenta(s) bancaria(s)
-export async function POST(request: NextRequest) {
-  try {
-    const authResultUser = await authenticateUser(request)
-    if ('status' in authResultUser) return authResultUser as Response
-    const user = authResultUser.user
 
-    const body = await request.json()
-    const validatedData = reconciliacionGastoSchema.parse(body)
-
-    // Validar período contable antes de escribir
-    const fechaOperacion = extraerFechaDeBody(body) ?? new Date()
-    const validacionPeriodo = await validarEscrituraPeriodo({
-      fecha: fechaOperacion,
-      tenantId: user.tenantId ?? '',
-      tipoOperacion: 'reconciliacion_gastos',
-      actor: user.userId,
-    })
-    if (!validacionPeriodo.permitido) {
-      return NextResponse.json(
-        { error: validacionPeriodo.error?.message ?? 'Período contable cerrado', code: validacionPeriodo.error?.code ?? 'PERIODO_CERRADO' },
-        { status: 400 }
-      )
-    }
-
-    // Verificar que la referencia existe según el tipo de gasto
-    let referenciaExiste = false
-    let referenciaId: string = ''
-    let pgIdResolved: string | undefined
-    let gastosDEIdResolved: string | undefined
-    let gastoCompraIdResolved: string | undefined
-
-    switch (validatedData.tipoGasto) {
-      case 'salario': {
-        // aceptar empleadoId o referenciaId
-        const empleadoIdToUse = validatedData.pgId ?? validatedData.referenciaId
-        if (!empleadoIdToUse) {
-          return NextResponse.json(
-            { error: 'Id de pago salario es requerido para gastos de salario', code: 'EMPLEADO_ID_REQUERIDO' },
-            { status: 400 }
-          )
-        }
-        const pagoSalario = await prisma.pagosalario.findUnique({
-          where: { pgId: empleadoIdToUse }
-        })
-        if (pagoSalario) {
-          referenciaExiste = true
-          referenciaId = empleadoIdToUse
-          pgIdResolved = empleadoIdToUse
-        }
-        break
-      }
-
-      case 'gastoDE': {
-        // aceptar gastosDEId o referenciaId
-        const gastosDEIdToUse = validatedData.gastosDEId ?? validatedData.referenciaId
-        if (!gastosDEIdToUse) {
-          return NextResponse.json(
-            { error: 'gastosDEId es requerido para gastos DE', code: 'GASTO_DE_ID_REQUERIDO' },
-            { status: 400 }
-          )
-        }
-        const gastoDE = await prisma.gastosDE.findUnique({
-          where: { gastosDEId: gastosDEIdToUse }
-        })
-        if (gastoDE) {
-          referenciaExiste = true
-          referenciaId = gastosDEIdToUse
-          gastosDEIdResolved = gastosDEIdToUse
-        }
-        break
-      }
-
-      case 'compra': {
-        // aceptar gastoCompraId o referenciaId
-        const gastoCompraIdToUse = validatedData.gastoCompraId ?? validatedData.referenciaId
-        if (!gastoCompraIdToUse) {
-          return NextResponse.json(
-            { error: 'gastoCompraId es requerido para gastos de compra', code: 'GASTO_COMPRA_ID_REQUERIDO' },
-            { status: 400 }
-          )
-        }
-        const compra = await prisma.gastoCompra.findUnique({
-          where: { gastoCompraId: gastoCompraIdToUse }
-        })
-        if (compra) {
-          referenciaExiste = true
-          referenciaId = gastoCompraIdToUse
-          gastoCompraIdResolved = gastoCompraIdToUse
-        }
-        break
-      }
-    }
-
-    if (!referenciaExiste) {
-      return NextResponse.json(
-        { error: `${validatedData.tipoGasto} no encontrado`, code: 'REFERENCIA_NO_ENCONTRADA' },
-        { status: 404 }
-      )
-    }
-
-    // Verificar si ya está reconciliado (solo para gastos que NO son cuentas por pagar)
-    // Las cuentas por pagar permiten pagos parciales, por lo que pueden tener múltiples reconciliaciones
-    if (!validatedData.cuentaPorPagarId) {
-      const whereReconciliacion: any = {
-        tipoGasto: validatedData.tipoGasto,
-        ...(validatedData.periodo && { periodo: validatedData.periodo })
-      }
-
-      // Usar referenciaId como campo principal de búsqueda
-      whereReconciliacion.referenciaId = referenciaId
-
-      const reconciliacionExistente = await prisma.reconciliacionGasto.findFirst({
-        where: whereReconciliacion
-      })
-
-      if (reconciliacionExistente) {
-        return NextResponse.json(
-          { error: 'Este gasto ya ha sido reconciliado', code: 'GASTO_YA_RECONCILIADO' },
-          { status: 400 }
-        )
-      }
-    }
-
-    // Validación de tasa de cambio: realizarla antes de la transacción
-    if (validatedData.distribucion && validatedData.distribucion.length > 0) {
-      const cuentaIds = Array.from(new Set(validatedData.distribucion.map(d => d.cuentaId)))
-      if (cuentaIds.length > 0) {
-        const cuentas = await prisma.cuentaBancaria.findMany({
-          where: { cuentaId: { in: cuentaIds } },
-          select: { cuentaId: true, moneda: true }
-        })
-        const monedasDifieren = cuentas.some((c: { moneda: string }) => c.moneda !== validatedData.moneda)
-        if (monedasDifieren && !validatedData.tasaCambio) {
-          return NextResponse.json(
-            { error: 'Tasa de cambio requerida por desajuste de moneda', code: 'TASA_CAMBIO_REQUERIDA' },
-            { status: 400 }
-          )
-        }
-      }
-    } else if (validatedData.cuentaId) {
-      const cuenta = await prisma.cuentaBancaria.findUnique({
-        where: { cuentaId: validatedData.cuentaId },
-        select: { moneda: true }
-      })
-      if (cuenta && cuenta.moneda !== validatedData.moneda && !validatedData.tasaCambio) {
-        return NextResponse.json(
-          { error: 'Tasa de cambio requerida por desajuste de moneda', code: 'TASA_CAMBIO_REQUERIDA' },
-          { status: 400 }
-        )
-      }
-    }
-
-    const result = await prisma.$transaction(async (tx: Prisma.TransactionClient) => {
-      return applyPagoGastoWorkflow(tx, {
-        tipoGasto: validatedData.tipoGasto,
-        referenciaId,
-        reconciliadoPor: user.userId,
-        descripcion: validatedData.descripcion,
-        monto: Number(validatedData.monto),
-        moneda: validatedData.moneda,
-        tenantId: user.tenantId ?? '',
-        tasaCambio: validatedData.tasaCambio,
-        periodo: validatedData.periodo,
-        observaciones: validatedData.observaciones,
-        estado: validatedData.estado,
-        cuentaPorPagarId: validatedData.cuentaPorPagarId,
-        numeroTransaccion: validatedData.numeroTransaccion,
-        pgId: pgIdResolved,
-        gastosDEId: gastosDEIdResolved,
-        gastoCompraId: gastoCompraIdResolved,
-        cuentaId: validatedData.cuentaId,
-        tipoPagoId: validatedData.tipoPagoId,
-        distribucion: validatedData.distribucion
-      })
-    })
-
-    for (const rec of result.reconciliaciones) {
-      try {
-        await AuditLogService.log({
-          accion: "CREATE",
-          entidad: "RECONCILIACION",
-          entidadId: rec.reconciliacionId,
-          usuarioId: user.userId,
-          detalles: {
-            tipo: "GASTO",
-            tipoGasto: validatedData.tipoGasto,
-            referenciaId,
-            cuentaId: rec.cuentaId,
-            monto: rec.monto,
-            moneda: rec.moneda,
-            montoConvertido: rec.montoConvertido,
-            descripcion: rec.descripcion
-          }
-        });
-      } catch (auditError) {
-        console.error('Error registrando auditoría de reconciliación de gasto:', auditError)
-      }
-    }
-
-    return NextResponse.json(
-      {
-        message: 'Gasto reconciliado exitosamente',
-        reconciliaciones: result.reconciliaciones,
-        cuentaPorPagar: result.cuentaPorPagar,
-        pagoCuentaPorPagar: result.pagoCuentaPorPagar,
-        distribucionMultiCuenta: Boolean(validatedData.distribucion?.length)
-      },
-      { status: 201 }
-    )
-
-  } catch (error:unknown) {
-    if (error instanceof z.ZodError) {
-      return NextResponse.json(
-        { error: 'Datos de entrada inválidos', details: error.errors },
-        { status: 400 }
-      )
-    }
-
-    if (isGastoWorkflowError(error)) {
-      return NextResponse.json(
-        { error: error.message, code: error.code },
-        { status: error.status }
-      )
-    }
-
-    console.error('Error reconciling expense:', error)
-    return NextResponse.json(
-      { error: error instanceof Error ? error.message : 'Error interno del servidor', code: 'INTERNAL_ERROR' },
-      { status: 500 }
-    )
-  }
-}

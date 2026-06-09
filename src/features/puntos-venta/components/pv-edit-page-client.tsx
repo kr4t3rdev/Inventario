@@ -12,7 +12,7 @@ interface PvEditPageClientProps {
   puntoVenta: {
     pvId: string
     nombre: string
-    ubicacion: string
+    ubicacion: string | null
     stockPuntoVenta?: number
     listaPrecioId?: string | null
   } | null

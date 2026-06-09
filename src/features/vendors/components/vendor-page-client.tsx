@@ -145,31 +145,18 @@ export function VendorPageClient({ vendors: initialVendors }: VendorPageClientPr
       }
     },
     {
-      accessorKey: 'contratos',
+      accessorKey: 'contrato',
       header: 'Contrato',
       cell: ({ row }) => {
-        const vendor = row.original as { contratos?: { numeroContrato: string }[] }
-        const contratos = vendor.contratos || []
-        if (contratos.length === 0) {
+        const contrato = row.getValue('contrato') as string | null
+        if (!contrato) {
           return <span className="text-muted-foreground text-sm">Sin contrato</span>
         }
         return (
-          <div className="flex flex-col gap-1">
-            {contratos.map((contrato, index) => (
-              <motion.span 
-                key={contrato.numeroContrato || index} 
-                className="text-sm font-medium"
-                initial={{ opacity: 0, x: -10 }}
-                animate={{ opacity: 1, x: 0 }}
-                transition={{ delay: index * 0.1 }}
-              >
-                <Badge variant="outline" className="gap-1">
-                  <FileText className="h-3 w-3" />
-                  {contrato.numeroContrato}
-                </Badge>
-              </motion.span>
-            ))}
-          </div>
+          <Badge variant="outline" className="gap-1">
+            <FileText className="h-3 w-3" />
+            {contrato}
+          </Badge>
         )
       },
     },

@@ -5,7 +5,7 @@ import type { ReactElement } from 'react'
 import { useRouter } from 'next/navigation'
 import { LazyMotion, m as motion } from 'framer-motion'
 import { zodResolver } from '@hookform/resolvers/zod'
-import { useForm } from 'react-hook-form'
+import { useForm, useWatch } from 'react-hook-form'
 import { z } from 'zod'
 import { sileo } from '@/lib/sileo-shim'
 
@@ -67,12 +67,12 @@ export function ServiciosPrestadosForm({ initialServicios }: ServiciosPrestadosF
     },
   })
 
-  const servicioId = form.watch('servicioId')
-  const clienteId = form.watch('clienteId')
-  const cantidad = form.watch('cantidad') || 1
-  const precioUnitario = form.watch('precioUnitario') || 0
+  const servicioId = useWatch({ control: form.control, name: 'servicioId' })
+  const clienteId = useWatch({ control: form.control, name: 'clienteId' })
+  const cantidad = useWatch({ control: form.control, name: 'cantidad' }) || 1
+  const precioUnitario = useWatch({ control: form.control, name: 'precioUnitario' }) || 0
   const totalServicio = cantidad * precioUnitario
-  const formaCobro = form.watch('formaCobro')
+  const formaCobro = useWatch({ control: form.control, name: 'formaCobro' })
 
   /**
    * @description Maneja el envío del formulario de servicio prestado.

@@ -5,34 +5,17 @@ import { useRouter } from 'next/navigation'
 import { LazyMotion, m as motion } from 'framer-motion'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { useForm } from 'react-hook-form'
-import { z } from 'zod'
 import { Button } from '@/components/ui/button'
 import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form'
 import { Input } from '@/components/ui/input'
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card'
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { sileo } from '@/lib/sileo-shim'
-import { Skeleton } from '@/components/ui/skeleton'
-import { useVendors } from '@/features/vendors/hooks/use-vendors'
-import type { Vendor } from '@/app/models/model'
+import { servicioSchema } from '@/features/servicios/schemas'
+import type { ServicioInput } from '@/features/servicios/schemas'
 import { createServicioAction, updateServicioAction } from '@/features/servicios/actions'
-import { ArrowLeft, Package, Save, Loader2 } from 'lucide-react'
+import { ArrowLeft, Package, Save, Loader2, DollarSign } from 'lucide-react'
 import Link from 'next/link'
-
-const servicioSchema = z.object({
-  nombre: z.string({
-    required_error: 'Escribe el tipo de servicio',
-  }).min(1, 'El nombre es requerido'),
-  precio: z.coerce.number().positive({
-    message: 'El monto debe ser mayor a 0',
-  }),
-  descripcion: z.string().min(1, 'La descripción es requerida'),
-  precioCosto: z.coerce.number().nonnegative().optional(),
-  codigoInterno: z.string().max(11).optional(),
-  codigoNegocio: z.string().max(40).optional(),
-  vendorId: z.string().optional(),
-})
-
-type ServicioFormValues = z.infer<typeof servicioSchema>
 
 const servicioInputClassName = 'bg-slate-50 dark:bg-slate-900/10 border-slate-200 dark:border-orange-900/20 focus:border-transparent focus:ring-2 focus:ring-orange-500 focus-visible:border-transparent focus-visible:ring-0 h-12 text-base transition-all'
 
@@ -42,8 +25,8 @@ interface ServicioFormProps {
     nombre: string
     precio: number
     descripcion: string
+    moneda?: string
   }
-  initialVendors?: Vendor[]
 }
 
 /**
@@ -51,29 +34,21 @@ interface ServicioFormProps {
  * @param {ServicioFormProps} props - Props del componente
  * @returns {JSX.Element} Formulario de servicio
  */
-export function ServicioForm({ initialData, initialVendors }: ServicioFormProps) {
+export function ServicioForm({ initialData }: ServicioFormProps) {
   const router = useRouter()
   const [isLoading, setIsLoading] = useState(false)
 
-  // Si se pasan vendors por props, usar esos; sino usar el hook
-  const hookVendors = useVendors()
-  const vendors = initialVendors ?? hookVendors.vendors
-  const isLoadingServicios = initialVendors ? false : hookVendors.isLoading
-
-  const form = useForm<ServicioFormValues>({
+  const form = useForm<ServicioInput>({
     resolver: zodResolver(servicioSchema),
     defaultValues: {
       nombre: initialData?.nombre || '',
       descripcion: initialData?.descripcion || '',
       precio: initialData?.precio ?? undefined,
-      precioCosto: undefined,
-      codigoInterno: '',
-      codigoNegocio: '',
-      vendorId: '',
+      moneda: initialData?.moneda || 'CUP',
     },
   })
 
-  async function onSubmit(data: ServicioFormValues) {
+  async function onSubmit(data: ServicioInput) {
     setIsLoading(true)
     try {
       if (initialData) {
@@ -95,28 +70,6 @@ export function ServicioForm({ initialData, initialVendors }: ServicioFormProps)
     } finally {
       setIsLoading(false)
     }
-  }
-
-  if (isLoadingServicios) {
-    return (
-      <div className='min-h-screen bg-linear-to-br  py-8 px-4'>
-        <div className='container mx-auto max-w-2xl'>
-          <Card className='border-slate-200 backdrop-blur-sm shadow-xl'>
-            <CardContent className='pt-8'>
-              <div className='space-y-6'>
-                <Skeleton className='h-12 w-full bg-slate-200 dark:bg-slate-800/60' />
-                <Skeleton className='h-12 w-full bg-slate-200 dark:bg-slate-800/60' />
-                <Skeleton className='h-24 w-full bg-slate-200 dark:bg-slate-800/60' />
-                <div className='flex justify-end space-x-4'>
-                  <Skeleton className='h-10 w-24 bg-slate-200 dark:bg-slate-800/60' />
-                  <Skeleton className='h-10 w-32 bg-slate-200 dark:bg-slate-800/60' />
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-        </div>
-      </div>
-    )
   }
 
   return (
@@ -254,52 +207,40 @@ export function ServicioForm({ initialData, initialVendors }: ServicioFormProps)
                   />
                 </motion.div>
 
-                <div className='grid grid-cols-1 md:grid-cols-2 gap-4'>
+                <motion.div
+                  initial={{ opacity: 0, x: -20 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  transition={{ delay: 0.45 }}
+                >
                   <FormField
                     control={form.control}
-                    name='precioCosto'
+                    name='moneda'
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel className='text-slate-700 dark:text-slate-300 text-base'>Costo de referencia</FormLabel>
-                        <FormControl>
-                          <Input 
-                            type='number' 
-                            min='0' 
-                            {...field} 
-                            className={servicioInputClassName}
-                          />
-                        </FormControl>
+                        <FormLabel className='text-slate-700 dark:text-slate-300 text-base flex items-center gap-2'>
+                          <DollarSign className='h-4 w-4' />
+                          Moneda
+                        </FormLabel>
+                        <Select onValueChange={field.onChange} value={field.value}>
+                          <FormControl>
+                            <SelectTrigger className={servicioInputClassName}>
+                              <SelectValue placeholder='Seleccione moneda' />
+                            </SelectTrigger>
+                          </FormControl>
+                          <SelectContent>
+                            <SelectItem value='CUP'>CUP - Peso cubano</SelectItem>
+                            <SelectItem value='USD'>USD - Dólar americano</SelectItem>
+                            <SelectItem value='MLC'>MLC - Moneda Libremente Convertible</SelectItem>
+                          </SelectContent>
+                        </Select>
+                        <FormDescription className='text-slate-500 dark:text-slate-500'>
+                          Seleccione la moneda del servicio (opcional, por defecto CUP).
+                        </FormDescription>
                         <FormMessage />
                       </FormItem>
                     )}
                   />
-
-                  <FormField
-                    control={form.control}
-                    name='vendorId'
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel className='text-slate-700 dark:text-slate-300 text-base'>Proveedor (opcional)</FormLabel>
-                        <FormControl>
-                          <select
-                            className='h-12 w-full rounded-md border border-slate-200 dark:border-orange-900/20 bg-slate-50 dark:bg-slate-900/10 px-3 focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent transition-all'
-                            {...field}
-                          >
-                            <option value=''>Sin proveedor</option>
-                            {vendors?.map((vendor: any) => (
-                              vendor.vendorId ? (
-                                <option key={vendor.vendorId} value={vendor.vendorId}>
-                                  {vendor.nombre}
-                                </option>
-                              ) : null
-                            ))}
-                          </select>
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                </div>
+                </motion.div>
 
                 <motion.div 
                   className='flex justify-end space-x-4 pt-6 border-t border-slate-100 dark:border-slate-700'

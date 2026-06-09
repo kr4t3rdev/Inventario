@@ -4,7 +4,6 @@ import { useState } from "react"
 import { useRouter } from "next/navigation"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { useForm } from "react-hook-form"
-import { z } from "zod"
 
 import { Button } from "@/components/ui/button"
 import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form"
@@ -12,16 +11,12 @@ import { Input } from "@/components/ui/input"
 import { Card, CardContent } from "@/components/ui/card"
 import { sileo } from '@/lib/sileo-shim'
 import { createAlmacenAction, updateAlmacenAction } from "@/features/almacenes/actions"
+import { almacenSchema } from "@/features/almacenes/schemas"
+import type { AlmacenInput } from "@/features/almacenes/schemas"
 import { LazyMotion, m as motion } from "framer-motion"
 import { Warehouse, Sparkles, ArrowLeft, Loader2 } from "lucide-react"
 
-const almacenSchema = z.object({
-  nombre: z.string({
-    required_error: 'El campo Nombre no ha sido rellenado',
-  }),
-})
 
-type AlmacenFormValues = z.infer<typeof almacenSchema>
 
 interface AlmacenFormProps {
   initialData?: {
@@ -58,14 +53,14 @@ export function AlmacenForm({ initialData }: AlmacenFormProps) {
   const router = useRouter()
   const [isLoading, setIsLoading] = useState(false)
 
-  const form = useForm<AlmacenFormValues>({
+  const form = useForm<AlmacenInput>({
     resolver: zodResolver(almacenSchema),
     defaultValues: {
       nombre: initialData?.nombre || "",
     }
   })
 
-  async function onSubmit(data: AlmacenFormValues) {
+  async function onSubmit(data: AlmacenInput) {
     setIsLoading(true)
     try {
       if (initialData) {

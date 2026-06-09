@@ -4,7 +4,6 @@ import { useState } from "react"
 import { useRouter } from "next/navigation"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { useForm } from "react-hook-form"
-import { z } from "zod"
 
 import { Button } from "@/components/ui/button"
 import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form"
@@ -12,19 +11,12 @@ import { Input } from "@/components/ui/input"
 import { Card, CardContent } from "@/components/ui/card"
 import { sileo } from '@/lib/sileo-shim'
 import { createUnidadAction, updateUnidadAction } from "@/features/unidades/actions"
+import { unidadSchema } from "@/features/unidades/schemas"
+import type { UnidadInput } from "@/features/unidades/schemas"
 import { LazyMotion, m as motion } from "framer-motion"
 import { Scale, Sparkles, ArrowLeft, Loader2 } from "lucide-react"
 
-const unidadSchema = z.object({
-  nombre: z.string({
-    required_error: 'El campo Nombre no ha sido rellenado',
-  }),
-  simbolo: z.string({
-    required_error: 'El campo Símbolo no ha sido rellenado',
-  })
-})
 
-type UnidadFormValues = z.infer<typeof unidadSchema>
 
 interface UnidadFormProps {
   initialData?: {
@@ -46,7 +38,7 @@ export function UnidadForm({ initialData }: UnidadFormProps) {
   const router = useRouter()
   const [isLoading, setIsLoading] = useState(false)
 
-  const form = useForm<UnidadFormValues>({
+  const form = useForm<UnidadInput>({
     resolver: zodResolver(unidadSchema),
     defaultValues: {
       nombre: initialData?.nombre || "",
@@ -54,7 +46,7 @@ export function UnidadForm({ initialData }: UnidadFormProps) {
     },
   })
 
-  async function onSubmit(data: UnidadFormValues) {
+  async function onSubmit(data: UnidadInput) {
     setIsLoading(true)
     try {
       if (initialData) {
