@@ -79,6 +79,7 @@ import {
 import { getTurnoActivoAction } from "@/features/turnos-pos/actions";
 import { ArqueoForm } from "@/features/arqueo-caja";
 import { VentaInvoiceDialog } from "./pv-invoice-dialog";
+import { useAuth } from "@/contexts/auth-context";
 
 interface CartProduct {
 	cartId: string; // Unique identifier for the cart item
@@ -94,6 +95,8 @@ interface CartProduct {
 
 export function VentaInterface() {
 	const router = useRouter();
+	const { user } = useAuth();
+	const hasFacturacion = user?.planFeatures?.['facturacion'] === true;
 	const anticiposFeatureEnabled =
 		process.env.NEXT_PUBLIC_ENABLE_ANTICIPOS !== "false";
 	const [searchTerm, setSearchTerm] = useState("");
@@ -287,8 +290,9 @@ export function VentaInterface() {
 		setSelectedAnticipoCobroId("");
 	}, [selectedPuntoVenta]);
 
-	// Cargar series de facturación activas
+	// Cargar series de facturación activas (solo si el plan tiene facturación)
 	useEffect(() => {
+		if (!hasFacturacion) return;
 		getSeriesFacturacionAction()
 			.then((r) => {
 				if (r.success) {
@@ -312,7 +316,7 @@ export function VentaInterface() {
 			.catch((error) => {
 				console.error("Error cargando series:", error);
 			});
-	}, []);
+	}, [hasFacturacion]);
 
 	// Filtrar productos
 	const filteredProducts = productos?.filter((producto) => {
@@ -1512,28 +1516,29 @@ export function VentaInterface() {
 								animate={{ opacity: 1, y: 0 }}
 								transition={{ delay: 0.4 }}
 							>
-								<motion.div
-									whileHover={{ scale: 1.02 }}
-									whileTap={{ scale: 0.98 }}
+							<motion.div
+								whileHover={{ scale: 1.02 }}
+								whileTap={{ scale: 0.98 }}
+							>
+								<Button
+									className="w-full bg-linear-to-r from-orange-500 to-red-600 hover:from-orange-500/90 hover:to-red-600/90 text-white"
+									size="lg"
+									disabled={
+										cart.length === 0 || !selectedPuntoVenta || isProcessing
+									}
+									onClick={processVenta}
 								>
-									<Button
-										className="w-full bg-linear-to-r from-orange-500 to-red-600 hover:from-orange-500/90 hover:to-red-600/90 text-white"
-										size="lg"
-										disabled={
-											cart.length === 0 || !selectedPuntoVenta || isProcessing
-										}
-										onClick={processVenta}
-									>
-										{isProcessing ? (
-											<>
-												<Loader2 className="mr-2 h-4 w-4 animate-spin" />
-												Procesando...
-											</>
-										) : (
-											"Crear Venta"
-										)}
-									</Button>
-								</motion.div>
+									{isProcessing ? (
+										<>
+											<Loader2 className="mr-2 h-4 w-4 animate-spin" />
+											Procesando...
+										</>
+									) : (
+										"Crear Venta"
+									)}
+								</Button>
+							</motion.div>
+							{hasFacturacion && (
 								<motion.div
 									whileHover={{ scale: 1.02 }}
 									whileTap={{ scale: 0.98 }}
@@ -1551,37 +1556,40 @@ export function VentaInterface() {
 										{isProcessing ? "Procesando..." : "Crear venta y factura"}
 									</Button>
 								</motion.div>
+							)}
 							</motion.div>
 						</CardFooter>
 					</Card>
 				</motion.div>
 			</div>
 
-			{/* Diálogo de selección de cliente para facturar */}
-			<VentaInvoiceDialog
-				open={isInvoiceDialogOpen}
-				onOpenChange={setIsInvoiceDialogOpen}
-				clientes={clientes as any[]}
-				selectedClienteId={selectedClienteId}
-				setSelectedClienteId={setSelectedClienteId}
-				series={series}
-				selectedSerieId={selectedSerieId}
-				setSelectedSerieId={setSelectedSerieId}
-				cargoTransporte={cargoTransporte}
-				setCargoTransporte={setCargoTransporte}
-				tipoVencimiento={tipoVencimiento}
-				setTipoVencimiento={setTipoVencimiento}
-				fechaVencimiento={fechaVencimiento}
-				setFechaVencimiento={setFechaVencimiento}
-				anticiposFeatureEnabled={anticiposFeatureEnabled}
-				anticiposCobro={anticiposCobroDisponibles?.anticipos || []}
-				selectedAnticipoCobroId={selectedAnticipoCobroId}
-				setSelectedAnticipoCobroId={setSelectedAnticipoCobroId}
-				isLoadingAnticiposCobro={isLoadingAnticiposCobro}
-				onConfirm={processVentaConFactura}
-				isProcessing={isProcessing}
-				isLoadingClientes={isLoadingClientes}
-			/>
+			{/* Diálogo de selección de cliente para facturar (solo si el plan tiene facturación) */}
+			{hasFacturacion && (
+				<VentaInvoiceDialog
+					open={isInvoiceDialogOpen}
+					onOpenChange={setIsInvoiceDialogOpen}
+					clientes={clientes as any[]}
+					selectedClienteId={selectedClienteId}
+					setSelectedClienteId={setSelectedClienteId}
+					series={series}
+					selectedSerieId={selectedSerieId}
+					setSelectedSerieId={setSelectedSerieId}
+					cargoTransporte={cargoTransporte}
+					setCargoTransporte={setCargoTransporte}
+					tipoVencimiento={tipoVencimiento}
+					setTipoVencimiento={setTipoVencimiento}
+					fechaVencimiento={fechaVencimiento}
+					setFechaVencimiento={setFechaVencimiento}
+					anticiposFeatureEnabled={anticiposFeatureEnabled}
+					anticiposCobro={anticiposCobroDisponibles?.anticipos || []}
+					selectedAnticipoCobroId={selectedAnticipoCobroId}
+					setSelectedAnticipoCobroId={setSelectedAnticipoCobroId}
+					isLoadingAnticiposCobro={isLoadingAnticiposCobro}
+					onConfirm={processVentaConFactura}
+					isProcessing={isProcessing}
+					isLoadingClientes={isLoadingClientes}
+				/>
+			)}
 
 			{/* Diálogo de apertura de turno */}
 			<AperturaTurnoDialog

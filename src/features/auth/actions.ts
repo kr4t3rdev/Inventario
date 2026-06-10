@@ -372,6 +372,7 @@ export const meAction = withAction(
 				...dbUser,
 				tenantId: user.tenantId,
 				tenantRole: user.tenantRole,
+				planFeatures: user.planFeatures,
 			},
 		};
 	},

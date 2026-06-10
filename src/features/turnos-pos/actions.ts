@@ -241,7 +241,6 @@ export const getOrCreateTurnoActivo = withAction(
 		params: { puntoDeVentaId: string; empleadoId?: string | null },
 		user: AuthenticatedUser,
 	) => {
-		requireFeature(user, 'turnos-pos', 'gestionar turnos POS');
 		const parsed = turnoAutomaticoSchema.parse(params);
 		const tenantId = requireTenant(user);
 

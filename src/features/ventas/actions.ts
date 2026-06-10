@@ -7,7 +7,7 @@
 
 import { withAction, ActionError } from "@/lib/server-actions";
 import { prisma } from "@/lib/prisma";
-import { requireTenant } from "@/lib/services/tenant-scope";
+import { requireFeature, requireTenant } from "@/lib/services/tenant-scope";
 import { revalidatePath } from "next/cache";
 import { createVentaSchema, anularVentaSchema } from "./schemas";
 import { upsertStockUbicacion } from "@/lib/services/stock-ubicacion-service";
@@ -60,6 +60,7 @@ const VENTA_SELECT = {
  */
 export const getVentasAction = withAction(
 	async (_input: void, user: AuthenticatedUser) => {
+		requireFeature(user, 'ventas-pos', 'ver ventas');
 		const tenantId = requireTenant(user);
 		return prisma.venta.findMany({
 			where: { tenantId, deletedAt: null },
@@ -75,8 +76,18 @@ export const getVentasAction = withAction(
  */
 export const createVentaAction = withAction(
 	async (input: CreateVentaInput, user: AuthenticatedUser) => {
+		requireFeature(user, 'ventas-pos', 'realizar ventas');
 		const parsed = createVentaSchema.parse(input);
 		const tenantId = requireTenant(user);
+
+		const hasFacturacion = user.planFeatures?.['facturacion'] === true;
+
+		if (parsed.clienteId && !hasFacturacion) {
+			throw new ActionError(
+				'Tu plan no incluye facturación. Para vincular clientes a ventas, actualiza tu plan.',
+				'FEATURE_NOT_AVAILABLE',
+			);
+		}
 
 		// Resolver turno activo
 		let turnoId: string | null = parsed.turnoId ?? null;
@@ -107,40 +118,47 @@ export const createVentaAction = withAction(
 			0,
 		);
 
-		// Crear venta + factura en una transacción
+		// Crear venta + factura (si el plan lo permite) en una transacción
 		const result = await prisma.$transaction(async (tx) => {
-			// 1. Obtener o crear serie de facturación por defecto para el tenant
-			let serie = await tx.serieFacturacion.findFirst({
-				where: { tenantId, esPorDefecto: true },
-			});
+			// Variables para facturación (solo si el plan lo permite)
+			let serie: any = null;
+			let numeroConsecutivo = 0;
+			let numeroFactura = '';
 
-			if (!serie) {
+			if (hasFacturacion) {
+				// 1. Obtener o crear serie de facturación por defecto para el tenant
 				serie = await tx.serieFacturacion.findFirst({
-					where: { tenantId },
-					orderBy: { createdAt: "asc" },
+					where: { tenantId, esPorDefecto: true },
 				});
-			}
 
-			if (!serie) {
-				serie = await tx.serieFacturacion.create({
-					data: {
-						tenantId,
-						prefijo: "FV",
-						descripcion: "Facturas de Venta",
-						consecutivo: 1,
-						esPorDefecto: true,
-					},
+				if (!serie) {
+					serie = await tx.serieFacturacion.findFirst({
+						where: { tenantId },
+						orderBy: { createdAt: "asc" },
+					});
+				}
+
+				if (!serie) {
+					serie = await tx.serieFacturacion.create({
+						data: {
+							tenantId,
+							prefijo: "FV",
+							descripcion: "Facturas de Venta",
+							consecutivo: 1,
+							esPorDefecto: true,
+						},
+					});
+				}
+
+				// 2. Incrementar consecutivo
+				const updatedSerie = await tx.serieFacturacion.update({
+					where: { serieId: serie.serieId },
+					data: { consecutivo: { increment: 1 } },
 				});
+
+				numeroConsecutivo = updatedSerie.consecutivo - 1;
+				numeroFactura = `${serie.prefijo}-${String(numeroConsecutivo).padStart(6, "0")}`;
 			}
-
-			// 2. Incrementar consecutivo
-			const updatedSerie = await tx.serieFacturacion.update({
-				where: { serieId: serie.serieId },
-				data: { consecutivo: { increment: 1 } },
-			});
-
-			const numeroConsecutivo = updatedSerie.consecutivo - 1;
-			const numeroFactura = `${serie.prefijo}-${String(numeroConsecutivo).padStart(6, "0")}`;
 
 			// 3. Crear venta
 			const venta = await tx.venta.create({
@@ -265,8 +283,8 @@ export const createVentaAction = withAction(
 			// 3c. Asignación FIFO de compras
 			await allocateFifoForSale(tx, tenantId, venta.ventaId);
 
-			// 4. Crear factura solo si hay cliente (campo requerido en Factura)
-			if (parsed.clienteId) {
+			// 4. Crear factura solo si el plan tiene facturación Y hay cliente
+			if (hasFacturacion && parsed.clienteId && serie) {
 				const factura = await tx.factura.create({
 					data: {
 						tenantId,
@@ -326,6 +344,7 @@ export const createVentaAction = withAction(
  */
 export const getVentaByIdAction = withAction(
 	async (id: string, user: AuthenticatedUser) => {
+		requireFeature(user, 'ventas-pos', 'ver ventas');
 		const tenantId = requireTenant(user);
 		const venta = await prisma.venta.findFirst({
 			where: { ventaId: id, tenantId, deletedAt: null },
@@ -349,6 +368,7 @@ export const updateVentaAction = withAction(
 		}>,
 		user: AuthenticatedUser,
 	) => {
+		requireFeature(user, 'ventas-pos', 'editar ventas');
 		const { ventaId, ...data } = input;
 		const tenantId = requireTenant(user);
 		const existing = await prisma.venta.findFirst({
@@ -368,6 +388,7 @@ export const updateVentaAction = withAction(
 
 export const anularVentaAction = withAction(
 	async (input: AnularVentaInput, user: AuthenticatedUser) => {
+		requireFeature(user, 'ventas-pos', 'anular ventas');
 		const parsed = anularVentaSchema.parse(input);
 		const tenantId = requireTenant(user);
 

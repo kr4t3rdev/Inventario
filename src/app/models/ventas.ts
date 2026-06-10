@@ -250,6 +250,7 @@ export interface Usuario {
 	updatedAt: string;
 	onboardingStatus?: string | null;
 	onboardingType?: string | null;
+	planFeatures?: Record<string, boolean> | null;
 
 	lastModifiedBy: string | null;
 	loginAttempts: number;
