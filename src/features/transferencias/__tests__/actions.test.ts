@@ -79,6 +79,9 @@ describe("Transferencias Server Actions", () => {
 
 			expect(result.success).toBe(true);
 			expect(result.data!.pagination.total).toBe(0);
+			expect(prisma.transferencia.count).toHaveBeenCalledWith({
+				where: { tenantId: "tenant-test", deletedAt: null },
+			});
 		});
 	});
 
@@ -374,6 +377,46 @@ describe("Transferencias Server Actions", () => {
 
 			expect(mockTx.producto.update).not.toHaveBeenCalled();
 		});
+
+		it("actualiza transferencia PENDIENTE sin tocar stock", async () => {
+			vi.mocked(getCurrentUser).mockResolvedValue(mockUser);
+			vi.mocked(prisma.transferencia.findFirst).mockResolvedValue({
+				transferenciaId: "tr-1",
+				cantidad: 3,
+				estado: "PENDIENTE",
+				origenId: "alm-1",
+				destinoId: null,
+				productoId: "prod-1",
+				puntoDeVentaOrigenId: null,
+				puntoDeVentaDestinoId: "pv-2",
+				tenantId: "tenant-test",
+				deletedAt: null,
+			} as any);
+			mockTx.transferencia.update.mockResolvedValue({
+				transferenciaId: "tr-1",
+				cantidad: 5,
+			});
+			mockTx.transferencia.findUnique.mockResolvedValue({
+				transferenciaId: "tr-1",
+				cantidad: 5,
+			});
+
+			const result = await updateTransferenciaAction({
+				transferenciaId: "tr-1",
+				productoId: "prod-1",
+				cantidad: 5,
+				tipoOrigen: "almacen",
+				origenId: "alm-1",
+				tipoDestino: "punto_venta",
+				destinoId: "pv-2",
+			});
+
+			expect(result.success).toBe(true);
+			const { upsertStockUbicacion } = await import(
+				"@/lib/services/stock-ubicacion-service"
+			);
+			expect(upsertStockUbicacion).not.toHaveBeenCalled();
+		});
 	});
 
 	it("no-op: retorna Sin cambios si origen, destino y cantidad son iguales", async () => {
@@ -629,6 +672,33 @@ describe("Transferencias Server Actions", () => {
 			const result = await deleteTransferenciaAction("tr-1");
 			expect(result.success).toBe(true);
 			expect(mockTx.producto.update).not.toHaveBeenCalled();
+		});
+
+		it("cancela transferencia PENDIENTE sin revertir stock", async () => {
+			vi.mocked(getCurrentUser).mockResolvedValue(mockUser);
+			vi.mocked(prisma.transferencia.findFirst).mockResolvedValue({
+				transferenciaId: "tr-1",
+				estado: "PENDIENTE",
+				cantidad: 5,
+				origenId: "alm-1",
+				destinoId: "alm-2",
+				productoId: "prod-1",
+				tenantId: "tenant-test",
+				deletedAt: null,
+				producto: { unidad: { simbolo: "u" }, nombre: "Test" } as any,
+				origen: { nombre: "Almacén 1" } as any,
+				destino: { nombre: "Almacén 2" } as any,
+				puntoDeVentaOrigen: null,
+				puntoDeVentaDestino: null,
+			});
+
+			const result = await deleteTransferenciaAction("tr-1");
+			expect(result.success).toBe(true);
+
+			const { upsertStockUbicacion } = await import(
+				"@/lib/services/stock-ubicacion-service"
+			);
+			expect(upsertStockUbicacion).not.toHaveBeenCalled();
 		});
 
 		it("(FASE 3) revierte StockUbicacion al cancelar", async () => {

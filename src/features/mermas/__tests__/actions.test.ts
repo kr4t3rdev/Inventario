@@ -183,6 +183,7 @@ describe('Mermas Server Actions', () => {
       const result = await updateMermaAction({ mermaId: 'mer-1', motivo: 'Nuevo motivo' });
 
       expect(result.success).toBe(true);
+      expect(upsertStockUbicacion).not.toHaveBeenCalled();
     });
 
     it('(RETIRE LEGACY) update con almacén no escribe Producto.stock', async () => {
@@ -220,6 +221,79 @@ describe('Mermas Server Actions', () => {
           delta: -7,
         }),
       );
+    });
+
+    it('cambia solo almacén y mueve stock entre ubicaciones', async () => {
+      vi.mocked(getCurrentUser).mockResolvedValue(mockUser);
+      vi.mocked(prisma.merma.findFirst).mockResolvedValue({
+        mermaId: 'mer-1',
+        productoId: 'prod-1',
+        cantidad: 5,
+        tenantId: 'tenant-test',
+        almacenId: 'alm-1',
+      } as any);
+      vi.mocked(prisma.stockUbicacion.findUnique).mockResolvedValue({
+        cantidadDisponible: 10,
+      } as any);
+      mockTx.merma.update.mockResolvedValue({
+        ...mockMermaRow,
+        almacenId: 'alm-2',
+      });
+
+      const result = await updateMermaAction({
+        mermaId: 'mer-1',
+        almacenId: 'alm-2',
+      });
+
+      expect(result.success).toBe(true);
+      expect(prisma.stockUbicacion.findUnique).toHaveBeenCalledWith({
+        where: {
+          productoId_tipoUbicacion_ubicacionId: {
+            productoId: 'prod-1',
+            tipoUbicacion: 'almacen',
+            ubicacionId: 'alm-2',
+          },
+        },
+        select: { cantidadDisponible: true },
+      });
+      expect(upsertStockUbicacion).toHaveBeenCalledWith(
+        mockTx,
+        expect.objectContaining({
+          productoId: 'prod-1',
+          ubicacionId: 'alm-1',
+          delta: 5,
+        }),
+      );
+      expect(upsertStockUbicacion).toHaveBeenCalledWith(
+        mockTx,
+        expect.objectContaining({
+          productoId: 'prod-1',
+          ubicacionId: 'alm-2',
+          delta: -5,
+        }),
+      );
+    });
+
+    it('rechaza cambio solo de almacén si no hay stock suficiente en destino', async () => {
+      vi.mocked(getCurrentUser).mockResolvedValue(mockUser);
+      vi.mocked(prisma.merma.findFirst).mockResolvedValue({
+        mermaId: 'mer-1',
+        productoId: 'prod-1',
+        cantidad: 5,
+        tenantId: 'tenant-test',
+        almacenId: 'alm-1',
+      } as any);
+      vi.mocked(prisma.stockUbicacion.findUnique).mockResolvedValue({
+        cantidadDisponible: 2,
+      } as any);
+
+      const result = await updateMermaAction({
+        mermaId: 'mer-1',
+        almacenId: 'alm-2',
+      });
+
+      expect(result.success).toBe(false);
+      expect(result.error?.code).toBe('STOCK_INSUFICIENTE');
     });
   });
 

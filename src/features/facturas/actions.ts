@@ -58,8 +58,7 @@ export const updateFacturaAction = withAction(async (input: UpdateFacturaInput, 
   const { facturaId, ...data } = p;
   const tenantId = requireTenant(user);
   const ex = await prisma.factura.findFirst({
-  // @ts-expect-error
-  where: { facturaId, tenantId }
+  where: { idFactura: facturaId, tenantId }
   });
   if (!ex) throw new ActionError('Factura no encontrada', 'NOT_FOUND');
   const upd: any = {};
@@ -70,8 +69,7 @@ export const updateFacturaAction = withAction(async (input: UpdateFacturaInput, 
   if (data.terminosPago !== undefined) upd.terminosPago = data.terminosPago;
   if (data.metodoPago !== undefined) upd.metodoPago = data.metodoPago;
   const f = await prisma.factura.update({
-  // @ts-expect-error
-  where: { facturaId }, data: upd, include: FACTURA_INCLUDE
+  where: { idFactura: facturaId }, data: upd, include: FACTURA_INCLUDE
   });
   revalidatePath('/busy/facturas');
   return {

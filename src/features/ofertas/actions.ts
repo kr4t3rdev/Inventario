@@ -9,9 +9,10 @@ import { revalidatePath } from 'next/cache';
 import { withAction, ActionError } from '@/lib/server-actions';
 import { prisma } from '@/lib/prisma';
 import { requireTenant } from '@/lib/services/tenant-scope';
-import { applyFacturacionCobroWorkflow } from '@/features/ventas/services/facturacion-workflow';
 import { applyAnticipoAllocations } from '@/lib/services/anticipos-workflow';
+import { getOrCreateTurnoActivo } from '@/features/turnos-pos';
 import { ofertaSchema, ofertaUpdateSchema, facturarOfertaSchema } from './schemas';
+import { facturarOfertaWorkflow } from './services/facturar-oferta-workflow';
 import type { OfertaInput, OfertaUpdateInput, FacturarOfertaInput } from './schemas';
 import type { AuthenticatedUser } from '@/lib/auth-middleware';
 import type { Oferta } from '@/app/models/model';
@@ -98,16 +99,12 @@ export const updateOfertaAction = withAction(async (input: OfertaUpdateInput, us
   const tenantId = requireTenant(user);
 
   const existing = await prisma.oferta.findFirst({
-  // @ts-expect-error
-  where: { ofertaId, tenantId }
+  where: { id: ofertaId, tenantId }
   });
   if (!existing) throw new ActionError('Oferta no encontrada', 'NOT_FOUND');
 
   const oferta = await prisma.oferta.update({
-    where: {
-  // @ts-expect-error
-    ofertaId
-    },
+    where: { id: ofertaId },
     data: {
       ...(data.estado !== undefined && { estado: data.estado }),
       ...(data.observaciones !== undefined && { observaciones: data.observaciones }),
@@ -141,16 +138,24 @@ export const facturarOfertaAction = withAction(async (input: FacturarOfertaInput
   if (oferta.estado === 'FACTURADA') throw new ActionError('La oferta ya fue facturada', 'VALIDATION_ERROR');
   if (oferta.estado === 'RECHAZADA') throw new ActionError('No se puede facturar una oferta rechazada', 'VALIDATION_ERROR');
 
+  let turnoId: string | null = null;
+  const turnoResult = await getOrCreateTurnoActivo({
+    puntoDeVentaId: parsed.puntoDeVentaId,
+    empleadoId: parsed.empleadoId,
+  });
+  if (turnoResult.success) {
+    turnoId = turnoResult.data.turnoId;
+  }
+
   const resultado = await prisma.$transaction(async (tx: any) => {
-    // Workflow de facturación
-    const venta = await applyFacturacionCobroWorkflow(tx, {
+    const workflow = await facturarOfertaWorkflow(tx, {
       tenantId,
-      clienteId: oferta.clienteId,
-  // @ts-expect-error
       ofertaId: oferta.id,
+      clienteId: oferta.clienteId,
+      puntoDeVentaId: parsed.puntoDeVentaId,
+      turnoId,
       items: oferta.items.map((item) => ({
         productoId: item.productoId,
-        servicioId: item.servicioId,
         cantidad: item.cantidad,
         precioUnitario: item.precioUnitario,
         total: item.total,
@@ -158,23 +163,23 @@ export const facturarOfertaAction = withAction(async (input: FacturarOfertaInput
       subtotal: oferta.subtotal,
       impuestos: oferta.impuestos,
       total: oferta.total,
-      puntoDeVentaId: parsed.puntoDeVentaId,
       empleadoId: parsed.empleadoId || null,
       observaciones: parsed.observaciones || null,
       cargoTransporte: parsed.cargoTransporte || 0,
       serieId: parsed.serieId || null,
+      tipoVencimiento: parsed.tipoVencimiento || null,
+      fechaVencimiento: parsed.fechaVencimiento || null,
+      cuentaBancariaId: parsed.cuentaBancariaId || null,
       usuarioId: user.userId,
     });
 
     // Anticipo
     if (parsed.anticipoCobroId && parsed.idempotencyKey) {
       await applyAnticipoAllocations(tx, [{
-  // @ts-expect-error
-      anticipoId: parsed.anticipoCobroId, montoAplicado: oferta.total
+      anticipoId: parsed.anticipoCobroId, montoAplicado: Number(oferta.total)
       }], {
-  // @ts-expect-error
-        documentoDestinoId: venta.ventaId,
-        contexto: 'OFERTA_FACTURACION',
+        documentoDestinoId: workflow.facturaId,
+        contexto: 'FACTURA_OFERTA',
         usuarioId: user.userId,
         observaciones: `Anticipo aplicado a facturación de oferta ${oferta.id}`,
       });
@@ -186,7 +191,7 @@ export const facturarOfertaAction = withAction(async (input: FacturarOfertaInput
       data: { estado: 'FACTURADA' },
     });
 
-    return venta;
+    return workflow;
   });
 
   revalidatePath('/busy/ofertas');

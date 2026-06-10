@@ -1,0 +1,122 @@
+{
+  "version": 1,
+  "projectRoot": "/Users/arturo/Documents/Proyecto Inventario/TCP",
+  "generatedAt": "2026-06-10T01:22:00.346Z",
+  "seq": 67,
+  "files": {},
+  "symbols": {},
+  "reverseDeps": {},
+  "cachedExports": [],
+  "projectRulesScan": {
+    "rules": [
+      {
+        "source": "root",
+        "name": "AGENTS.md",
+        "filePath": "/Users/arturo/Documents/Proyecto Inventario/TCP/AGENTS.md",
+        "relativePath": "AGENTS.md"
+      }
+    ],
+    "hasCustomRules": true
+  },
+  "startupScan": {
+    "cwd": "/Users/arturo/Documents/Proyecto Inventario/TCP",
+    "scanRoot": "/Users/arturo/Documents/Proyecto Inventario/TCP",
+    "projectRoot": "/Users/arturo/Documents/Proyecto Inventario/TCP",
+    "canWarmCaches": true,
+    "sourceFileCount": 1243
+  },
+  "languageProfile": {
+    "present": {
+      "jsts": true,
+      "python": true,
+      "go": false,
+      "rust": false,
+      "cxx": false,
+      "cmake": false,
+      "fish": false,
+      "shell": false,
+      "json": false,
+      "markdown": false,
+      "css": false,
+      "yaml": false,
+      "sql": false,
+      "ruby": false,
+      "html": false,
+      "docker": false,
+      "php": false,
+      "powershell": false,
+      "prisma": true,
+      "csharp": false,
+      "fsharp": false,
+      "java": false,
+      "kotlin": false,
+      "swift": false,
+      "dart": false,
+      "lua": false,
+      "zig": false,
+      "haskell": false,
+      "elixir": false,
+      "gleam": false,
+      "ocaml": false,
+      "clojure": false,
+      "terraform": false,
+      "nix": false,
+      "toml": false
+    },
+    "configured": {
+      "jsts": true,
+      "prisma": true
+    },
+    "counts": {
+      "jsts": 1250,
+      "python": 1
+    },
+    "detectedKinds": [
+      "jsts",
+      "python",
+      "prisma"
+    ]
+  },
+  "conventions": {
+    "frameworks": [
+      {
+        "id": "react",
+        "confidence": "high",
+        "signals": [
+          "package.json:dependencies.react",
+          "package.json:dependencies.react-dom",
+          "package.json:devDependencies.@types/react"
+        ]
+      },
+      {
+        "id": "next",
+        "confidence": "high",
+        "signals": [
+          "package.json:dependencies.next",
+          "next.config.mjs",
+          "src/app/"
+        ]
+      },
+      {
+        "id": "vitest",
+        "confidence": "high",
+        "signals": [
+          "package.json:devDependencies.vitest",
+          "vitest.config.mjs"
+        ]
+      }
+    ],
+    "testRunners": [
+      "vitest"
+    ],
+    "buildTools": [
+      "next"
+    ],
+    "agentDocs": [
+      {
+        "filePath": "AGENTS.md",
+        "lineCount": 290
+      }
+    ]
+  }
+}

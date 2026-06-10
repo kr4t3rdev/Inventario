@@ -34,27 +34,6 @@
       "file": "src/features/empleados/components/enhanced-asistencia-form.tsx",
       "line": 217,
       "column": 28
-    },
-    {
-      "type": "TODO",
-      "message": "count does not actually exist in DMMF",
-      "file": "src/generated/prisma/runtime/library.d.ts",
-      "line": 2404,
-      "column": 23
-    },
-    {
-      "type": "TODO",
-      "message": "what is this",
-      "file": "src/generated/prisma/runtime/library.d.ts",
-      "line": 2935,
-      "column": 8
-    },
-    {
-      "type": "TODO",
-      "message": "what is this",
-      "file": "src/generated/prisma/runtime/library.d.ts",
-      "line": 2937,
-      "column": 8
     }
   ]
 }

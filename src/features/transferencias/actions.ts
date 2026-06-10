@@ -141,7 +141,7 @@ export const getTransferenciasAction = withAction(
 		});
 
 		const total = await prisma.transferencia.count({
-			where: { deletedAt: null },
+			where: { tenantId, deletedAt: null },
 		});
 
 		const transferenciasProcessed = transferencias.map((t: any) => {
@@ -459,6 +459,7 @@ export const updateTransferenciaAction = withAction(
 				destinoId: true,
 				puntoDeVentaOrigenId: true,
 				puntoDeVentaDestinoId: true,
+				estado: true,
 			},
 		});
 		if (!existing)
@@ -509,47 +510,50 @@ export const updateTransferenciaAction = withAction(
 				data: updateData,
 			});
 
-			const syncOrigen = origenCambio || cantidadCambio || productoCambio;
-			const syncDestino = destinoCambio || cantidadCambio || productoCambio;
+			// Solo resincronizar stock si la transferencia estaba COMPLETADA
+			if (existing.estado === "COMPLETADA") {
+				const syncOrigen = origenCambio || cantidadCambio || productoCambio;
+				const syncDestino = destinoCambio || cantidadCambio || productoCambio;
 
-			// ── Revertir movimiento anterior (oldProductoId) ──
-			if (syncOrigen) {
-				await upsertStockUbicacion(tx, {
-					productoId: oldProductoId,
-					tipoUbicacion: oldTipoOrigen as "almacen" | "punto_venta",
-					ubicacionId: oldOrigenId!,
-					modo: "increment",
-					delta: oldCantidad,
-				});
-			}
-			if (syncDestino) {
-				await upsertStockUbicacion(tx, {
-					productoId: oldProductoId,
-					tipoUbicacion: oldTipoDestino as "almacen" | "punto_venta",
-					ubicacionId: oldDestinoId!,
-					modo: "increment",
-					delta: -oldCantidad,
-				});
-			}
+				// ── Revertir movimiento anterior (oldProductoId) ──
+				if (syncOrigen) {
+					await upsertStockUbicacion(tx, {
+						productoId: oldProductoId,
+						tipoUbicacion: oldTipoOrigen as "almacen" | "punto_venta",
+						ubicacionId: oldOrigenId!,
+						modo: "increment",
+						delta: oldCantidad,
+					});
+				}
+				if (syncDestino) {
+					await upsertStockUbicacion(tx, {
+						productoId: oldProductoId,
+						tipoUbicacion: oldTipoDestino as "almacen" | "punto_venta",
+						ubicacionId: oldDestinoId!,
+						modo: "increment",
+						delta: -oldCantidad,
+					});
+				}
 
-			// ── Aplicar movimiento nuevo (new productoId) ──
-			if (syncOrigen) {
-				await upsertStockUbicacion(tx, {
-					productoId,
-					tipoUbicacion: tipoOrigen as "almacen" | "punto_venta",
-					ubicacionId: origenId,
-					modo: "increment",
-					delta: -cantidad,
-				});
-			}
-			if (syncDestino) {
-				await upsertStockUbicacion(tx, {
-					productoId,
-					tipoUbicacion: tipoDestino as "almacen" | "punto_venta",
-					ubicacionId: destinoId,
-					modo: "increment",
-					delta: cantidad,
-				});
+				// ── Aplicar movimiento nuevo (new productoId) ──
+				if (syncOrigen) {
+					await upsertStockUbicacion(tx, {
+						productoId,
+						tipoUbicacion: tipoOrigen as "almacen" | "punto_venta",
+						ubicacionId: origenId,
+						modo: "increment",
+						delta: -cantidad,
+					});
+				}
+				if (syncDestino) {
+					await upsertStockUbicacion(tx, {
+						productoId,
+						tipoUbicacion: tipoDestino as "almacen" | "punto_venta",
+						ubicacionId: destinoId,
+						modo: "increment",
+						delta: cantidad,
+					});
+				}
 			}
 
 			const updated = await tx.transferencia.findUnique({
@@ -590,32 +594,35 @@ export const deleteTransferenciaAction = withAction(
 				data: { estado: "CANCELADA", deletedAt: new Date() },
 			});
 
-			// Revertir StockUbicacion (Fase 3)
-			const tipoOrigen = transferencia.origenId
-				? ("almacen" as const)
-				: ("punto_venta" as const);
-			const tipoDestino = transferencia.destinoId
-				? ("almacen" as const)
-				: ("punto_venta" as const);
-			const origenUbicacionId = (transferencia.origenId ||
-				transferencia.puntoDeVentaOrigenId)!;
-			const destinoUbicacionId = (transferencia.destinoId ||
-				transferencia.puntoDeVentaDestinoId)!;
+			// Solo revertir stock si la transferencia estaba COMPLETADA
+			// (PENDIENTE/APROBADA nunca movieron stock)
+			if (transferencia.estado === "COMPLETADA") {
+				const tipoOrigen = transferencia.origenId
+					? ("almacen" as const)
+					: ("punto_venta" as const);
+				const tipoDestino = transferencia.destinoId
+					? ("almacen" as const)
+					: ("punto_venta" as const);
+				const origenUbicacionId = (transferencia.origenId ||
+					transferencia.puntoDeVentaOrigenId)!;
+				const destinoUbicacionId = (transferencia.destinoId ||
+					transferencia.puntoDeVentaDestinoId)!;
 
-			await upsertStockUbicacion(tx, {
-				productoId: transferencia.productoId,
-				tipoUbicacion: tipoOrigen,
-				ubicacionId: origenUbicacionId,
-				modo: "increment",
-				delta: transferencia.cantidad, // revertir lo que salió
-			});
-			await upsertStockUbicacion(tx, {
-				productoId: transferencia.productoId,
-				tipoUbicacion: tipoDestino,
-				ubicacionId: destinoUbicacionId,
-				modo: "increment",
-				delta: -transferencia.cantidad, // revertir lo que llegó
-			});
+				await upsertStockUbicacion(tx, {
+					productoId: transferencia.productoId,
+					tipoUbicacion: tipoOrigen,
+					ubicacionId: origenUbicacionId,
+					modo: "increment",
+					delta: transferencia.cantidad,
+				});
+				await upsertStockUbicacion(tx, {
+					productoId: transferencia.productoId,
+					tipoUbicacion: tipoDestino,
+					ubicacionId: destinoUbicacionId,
+					modo: "increment",
+					delta: -transferencia.cantidad,
+				});
+			}
 		});
 
 		revalidatePath("/busy/transferencias");

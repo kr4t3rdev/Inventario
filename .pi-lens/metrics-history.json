@@ -78,12 +78,12 @@
     },
     "src/app/busy/contabilidad/cuentas-por-pagar/page.tsx": {
       "latest": {
-        "commit": "5dd54d4",
-        "timestamp": "2026-05-27T11:13:56.449Z",
+        "commit": "d1b34ee",
+        "timestamp": "2026-06-09T12:49:33.208Z",
         "mi": 6.1,
         "cognitive": 102,
         "nesting": 4,
-        "lines": 918,
+        "lines": 914,
         "maxCyclomatic": 104,
         "entropy": 6.83
       },
@@ -105,6 +105,16 @@
           "cognitive": 102,
           "nesting": 4,
           "lines": 918,
+          "maxCyclomatic": 104,
+          "entropy": 6.83
+        },
+        {
+          "commit": "d1b34ee",
+          "timestamp": "2026-06-09T12:49:33.208Z",
+          "mi": 6.1,
+          "cognitive": 102,
+          "nesting": 4,
+          "lines": 914,
           "maxCyclomatic": 104,
           "entropy": 6.83
         }
@@ -138,8 +148,8 @@
     },
     "src/features/contabilidad/actions-cuentas.ts": {
       "latest": {
-        "commit": "5dd54d4",
-        "timestamp": "2026-05-27T11:14:28.384Z",
+        "commit": "b3502d7",
+        "timestamp": "2026-06-09T02:20:54.654Z",
         "mi": 14,
         "cognitive": 70,
         "nesting": 4,
@@ -167,14 +177,24 @@
           "lines": 622,
           "maxCyclomatic": 17,
           "entropy": 7.07
+        },
+        {
+          "commit": "b3502d7",
+          "timestamp": "2026-06-09T02:20:54.654Z",
+          "mi": 14,
+          "cognitive": 70,
+          "nesting": 4,
+          "lines": 622,
+          "maxCyclomatic": 17,
+          "entropy": 7.07
         }
       ],
       "trend": "improving"
     },
     "src/features/contabilidad/schemas-cuentas.ts": {
       "latest": {
-        "commit": "5dd54d4",
-        "timestamp": "2026-05-27T11:20:17.803Z",
+        "commit": "b3502d7",
+        "timestamp": "2026-06-09T10:59:07.681Z",
         "mi": 45.1,
         "cognitive": 0,
         "nesting": 0,
@@ -196,6 +216,16 @@
         {
           "commit": "5dd54d4",
           "timestamp": "2026-05-27T11:20:17.803Z",
+          "mi": 45.1,
+          "cognitive": 0,
+          "nesting": 0,
+          "lines": 63,
+          "maxCyclomatic": 1,
+          "entropy": 5
+        },
+        {
+          "commit": "b3502d7",
+          "timestamp": "2026-06-09T10:59:07.681Z",
           "mi": 45.1,
           "cognitive": 0,
           "nesting": 0,
@@ -243,14 +273,14 @@
     },
     "src/app/models/model.ts": {
       "latest": {
-        "commit": "e6a1af2",
-        "timestamp": "2026-05-30T15:04:06.805Z",
-        "mi": 0,
+        "commit": "b3502d7",
+        "timestamp": "2026-06-08T17:53:53.850Z",
+        "mi": 63.8,
         "cognitive": 0,
         "nesting": 0,
-        "lines": 2083,
+        "lines": 13,
         "maxCyclomatic": 1,
-        "entropy": 6.41
+        "entropy": 1.58
       },
       "history": [
         {
@@ -282,19 +312,29 @@
           "lines": 2083,
           "maxCyclomatic": 1,
           "entropy": 6.41
+        },
+        {
+          "commit": "b3502d7",
+          "timestamp": "2026-06-08T17:53:53.850Z",
+          "mi": 63.8,
+          "cognitive": 0,
+          "nesting": 0,
+          "lines": 13,
+          "maxCyclomatic": 1,
+          "entropy": 1.58
         }
       ],
-      "trend": "stable"
+      "trend": "improving"
     },
     "src/lib/services/pago-gastos-workflow.ts": {
       "latest": {
-        "commit": "5dd54d4",
-        "timestamp": "2026-05-26T23:34:11.568Z",
-        "mi": 16.4,
-        "cognitive": 153,
+        "commit": "b3502d7",
+        "timestamp": "2026-06-09T02:20:45.815Z",
+        "mi": 16.2,
+        "cognitive": 157,
         "nesting": 4,
-        "lines": 562,
-        "maxCyclomatic": 97,
+        "lines": 571,
+        "maxCyclomatic": 102,
         "entropy": 6.83
       },
       "history": [
@@ -306,6 +346,16 @@
           "nesting": 4,
           "lines": 562,
           "maxCyclomatic": 97,
+          "entropy": 6.83
+        },
+        {
+          "commit": "b3502d7",
+          "timestamp": "2026-06-09T02:20:45.815Z",
+          "mi": 16.2,
+          "cognitive": 157,
+          "nesting": 4,
+          "lines": 571,
+          "maxCyclomatic": 102,
           "entropy": 6.83
         }
       ],
@@ -363,12 +413,12 @@
     },
     "src/features/contabilidad/components/reconciliacion/reconciliacion-gastos-form.tsx": {
       "latest": {
-        "commit": "5dd54d4",
-        "timestamp": "2026-05-26T23:34:15.958Z",
+        "commit": "b3502d7",
+        "timestamp": "2026-06-09T10:59:07.507Z",
         "mi": 8,
         "cognitive": 298,
         "nesting": 8,
-        "lines": 810,
+        "lines": 811,
         "maxCyclomatic": 277,
         "entropy": 7.27
       },
@@ -380,6 +430,16 @@
           "cognitive": 298,
           "nesting": 8,
           "lines": 810,
+          "maxCyclomatic": 277,
+          "entropy": 7.27
+        },
+        {
+          "commit": "b3502d7",
+          "timestamp": "2026-06-09T10:59:07.507Z",
+          "mi": 8,
+          "cognitive": 298,
+          "nesting": 8,
+          "lines": 811,
           "maxCyclomatic": 277,
           "entropy": 7.27
         }
@@ -433,14 +493,14 @@
     },
     "src/features/contabilidad/actions-reconciliacion.ts": {
       "latest": {
-        "commit": "5dd54d4",
-        "timestamp": "2026-05-27T11:18:23.279Z",
-        "mi": 10.5,
-        "cognitive": 302,
+        "commit": "b3502d7",
+        "timestamp": "2026-06-09T02:20:54.552Z",
+        "mi": 4.9,
+        "cognitive": 315,
         "nesting": 5,
-        "lines": 628,
+        "lines": 1006,
         "maxCyclomatic": 151,
-        "entropy": 7.64
+        "entropy": 7.68
       },
       "history": [
         {
@@ -462,9 +522,19 @@
           "lines": 628,
           "maxCyclomatic": 151,
           "entropy": 7.64
+        },
+        {
+          "commit": "b3502d7",
+          "timestamp": "2026-06-09T02:20:54.552Z",
+          "mi": 4.9,
+          "cognitive": 315,
+          "nesting": 5,
+          "lines": 1006,
+          "maxCyclomatic": 151,
+          "entropy": 7.68
         }
       ],
-      "trend": "stable"
+      "trend": "regressing"
     },
     "src/features/contabilidad/api/__tests__/cuentas-por-pagar-pagar.test.ts": {
       "latest": {
@@ -543,8 +613,8 @@
     },
     "src/features/contabilidad/__tests__/reconciliar-gasto-cxp.test.ts": {
       "latest": {
-        "commit": "5dd54d4",
-        "timestamp": "2026-05-27T11:23:17.909Z",
+        "commit": "b3502d7",
+        "timestamp": "2026-06-09T02:21:02.338Z",
         "mi": 20.9,
         "cognitive": 3,
         "nesting": 3,
@@ -572,14 +642,24 @@
           "lines": 285,
           "maxCyclomatic": 9,
           "entropy": 5.59
+        },
+        {
+          "commit": "b3502d7",
+          "timestamp": "2026-06-09T02:21:02.338Z",
+          "mi": 20.9,
+          "cognitive": 3,
+          "nesting": 3,
+          "lines": 285,
+          "maxCyclomatic": 9,
+          "entropy": 5.59
         }
       ],
       "trend": "stable"
     },
     "src/app/api/contabilidad/reconciliacion/gastos/route.ts": {
       "latest": {
-        "commit": "5dd54d4",
-        "timestamp": "2026-05-27T11:22:59.910Z",
+        "commit": "b3502d7",
+        "timestamp": "2026-06-09T02:20:45.703Z",
         "mi": 14.8,
         "cognitive": 233,
         "nesting": 5,
@@ -591,6 +671,16 @@
         {
           "commit": "5dd54d4",
           "timestamp": "2026-05-27T11:22:59.910Z",
+          "mi": 14.8,
+          "cognitive": 233,
+          "nesting": 5,
+          "lines": 471,
+          "maxCyclomatic": 77,
+          "entropy": 7.21
+        },
+        {
+          "commit": "b3502d7",
+          "timestamp": "2026-06-09T02:20:45.703Z",
           "mi": 14.8,
           "cognitive": 233,
           "nesting": 5,
@@ -653,8 +743,8 @@
     },
     "src/features/contabilidad/api/__tests__/create-cuenta-por-pagar.test.ts": {
       "latest": {
-        "commit": "5dd54d4",
-        "timestamp": "2026-05-27T11:26:34.659Z",
+        "commit": "b3502d7",
+        "timestamp": "2026-06-09T11:04:41.144Z",
         "mi": 34.5,
         "cognitive": 0,
         "nesting": 2,
@@ -672,20 +762,30 @@
           "lines": 106,
           "maxCyclomatic": 1,
           "entropy": 5.45
+        },
+        {
+          "commit": "b3502d7",
+          "timestamp": "2026-06-09T11:04:41.144Z",
+          "mi": 34.5,
+          "cognitive": 0,
+          "nesting": 2,
+          "lines": 106,
+          "maxCyclomatic": 1,
+          "entropy": 5.45
         }
       ],
       "trend": "stable"
     },
     "src/lib/services/__tests__/pago-gastos-workflow.test.ts": {
       "latest": {
-        "commit": "5dd54d4",
-        "timestamp": "2026-05-27T11:33:28.218Z",
-        "mi": 21.7,
+        "commit": "b3502d7",
+        "timestamp": "2026-06-09T02:21:02.557Z",
+        "mi": 21.6,
         "cognitive": 9,
         "nesting": 5,
-        "lines": 289,
+        "lines": 292,
         "maxCyclomatic": 1,
-        "entropy": 5.6
+        "entropy": 5.61
       },
       "history": [
         {
@@ -697,14 +797,24 @@
           "lines": 289,
           "maxCyclomatic": 1,
           "entropy": 5.6
+        },
+        {
+          "commit": "b3502d7",
+          "timestamp": "2026-06-09T02:21:02.557Z",
+          "mi": 21.6,
+          "cognitive": 9,
+          "nesting": 5,
+          "lines": 292,
+          "maxCyclomatic": 1,
+          "entropy": 5.61
         }
       ],
       "trend": "stable"
     },
     "src/features/puntos-venta/actions.ts": {
       "latest": {
-        "commit": "5dd54d4",
-        "timestamp": "2026-05-27T21:12:40.422Z",
+        "commit": "b3502d7",
+        "timestamp": "2026-06-08T17:50:33.892Z",
         "mi": 39.2,
         "cognitive": 13,
         "nesting": 2,
@@ -722,14 +832,24 @@
           "lines": 66,
           "maxCyclomatic": 11,
           "entropy": 5.53
+        },
+        {
+          "commit": "b3502d7",
+          "timestamp": "2026-06-08T17:50:33.892Z",
+          "mi": 39.2,
+          "cognitive": 13,
+          "nesting": 2,
+          "lines": 66,
+          "maxCyclomatic": 11,
+          "entropy": 5.53
         }
       ],
       "trend": "stable"
     },
     "src/features/puntos-venta/types.ts": {
       "latest": {
-        "commit": "5dd54d4",
-        "timestamp": "2026-05-27T21:12:40.442Z",
+        "commit": "b3502d7",
+        "timestamp": "2026-06-08T17:50:40.460Z",
         "mi": 87,
         "cognitive": 0,
         "nesting": 0,
@@ -747,14 +867,24 @@
           "lines": 2,
           "maxCyclomatic": 1,
           "entropy": 2.91
+        },
+        {
+          "commit": "b3502d7",
+          "timestamp": "2026-06-08T17:50:40.460Z",
+          "mi": 87,
+          "cognitive": 0,
+          "nesting": 0,
+          "lines": 2,
+          "maxCyclomatic": 1,
+          "entropy": 2.91
         }
       ],
       "trend": "stable"
     },
     "src/features/puntos-venta/schemas.ts": {
       "latest": {
-        "commit": "5dd54d4",
-        "timestamp": "2026-05-27T21:12:40.463Z",
+        "commit": "b3502d7",
+        "timestamp": "2026-06-08T17:50:19.862Z",
         "mi": 58.4,
         "cognitive": 0,
         "nesting": 0,
@@ -766,6 +896,16 @@
         {
           "commit": "5dd54d4",
           "timestamp": "2026-05-27T21:12:40.463Z",
+          "mi": 58.4,
+          "cognitive": 0,
+          "nesting": 0,
+          "lines": 14,
+          "maxCyclomatic": 1,
+          "entropy": 4.3
+        },
+        {
+          "commit": "b3502d7",
+          "timestamp": "2026-06-08T17:50:19.862Z",
           "mi": 58.4,
           "cognitive": 0,
           "nesting": 0,
@@ -1053,8 +1193,8 @@
     },
     "src/features/puntos-venta/components/pv-page-client.tsx": {
       "latest": {
-        "commit": "5dd54d4",
-        "timestamp": "2026-05-27T21:13:33.421Z",
+        "commit": "b3502d7",
+        "timestamp": "2026-06-08T17:51:00.738Z",
         "mi": 22.6,
         "cognitive": 10,
         "nesting": 4,
@@ -1066,6 +1206,16 @@
         {
           "commit": "5dd54d4",
           "timestamp": "2026-05-27T21:13:33.421Z",
+          "mi": 22.6,
+          "cognitive": 10,
+          "nesting": 4,
+          "lines": 300,
+          "maxCyclomatic": 11,
+          "entropy": 6.25
+        },
+        {
+          "commit": "b3502d7",
+          "timestamp": "2026-06-08T17:51:00.738Z",
           "mi": 22.6,
           "cognitive": 10,
           "nesting": 4,
@@ -1148,14 +1298,14 @@
     },
     "src/features/mermas/actions.ts": {
       "latest": {
-        "commit": "5f6f302",
-        "timestamp": "2026-06-04T14:57:43.582Z",
-        "mi": 26.3,
-        "cognitive": 50,
+        "commit": "f989785",
+        "timestamp": "2026-06-09T18:28:05.392Z",
+        "mi": 24.1,
+        "cognitive": 33,
         "nesting": 4,
-        "lines": 204,
-        "maxCyclomatic": 24,
-        "entropy": 6.21
+        "lines": 238,
+        "maxCyclomatic": 22,
+        "entropy": 6.22
       },
       "history": [
         {
@@ -1177,6 +1327,16 @@
           "lines": 204,
           "maxCyclomatic": 24,
           "entropy": 6.21
+        },
+        {
+          "commit": "f989785",
+          "timestamp": "2026-06-09T18:28:05.392Z",
+          "mi": 24.1,
+          "cognitive": 33,
+          "nesting": 4,
+          "lines": 238,
+          "maxCyclomatic": 22,
+          "entropy": 6.22
         }
       ],
       "trend": "regressing"
@@ -1408,14 +1568,14 @@
     },
     "src/lib/server-actions/with-action.ts": {
       "latest": {
-        "commit": "5f6f302",
-        "timestamp": "2026-06-04T04:06:25.160Z",
-        "mi": 41.5,
-        "cognitive": 38,
+        "commit": "9b295be",
+        "timestamp": "2026-06-09T14:05:30.655Z",
+        "mi": 40.1,
+        "cognitive": 44,
         "nesting": 5,
-        "lines": 121,
-        "maxCyclomatic": 20,
-        "entropy": 5.32
+        "lines": 128,
+        "maxCyclomatic": 24,
+        "entropy": 5.41
       },
       "history": [
         {
@@ -1467,6 +1627,26 @@
           "lines": 121,
           "maxCyclomatic": 20,
           "entropy": 5.32
+        },
+        {
+          "commit": "b3502d7",
+          "timestamp": "2026-06-09T11:47:54.239Z",
+          "mi": 40.1,
+          "cognitive": 44,
+          "nesting": 5,
+          "lines": 128,
+          "maxCyclomatic": 24,
+          "entropy": 5.41
+        },
+        {
+          "commit": "9b295be",
+          "timestamp": "2026-06-09T14:05:30.655Z",
+          "mi": 40.1,
+          "cognitive": 44,
+          "nesting": 5,
+          "lines": 128,
+          "maxCyclomatic": 24,
+          "entropy": 5.41
         }
       ],
       "trend": "stable"
@@ -1533,8 +1713,8 @@
     },
     "src/lib/server-actions/index.ts": {
       "latest": {
-        "commit": "2d44509",
-        "timestamp": "2026-06-03T11:42:05.325Z",
+        "commit": "9b295be",
+        "timestamp": "2026-06-09T14:05:26.293Z",
         "mi": 79,
         "cognitive": 0,
         "nesting": 0,
@@ -1572,14 +1752,24 @@
           "lines": 9,
           "maxCyclomatic": 1,
           "entropy": 2.84
+        },
+        {
+          "commit": "9b295be",
+          "timestamp": "2026-06-09T14:05:26.293Z",
+          "mi": 79,
+          "cognitive": 0,
+          "nesting": 0,
+          "lines": 9,
+          "maxCyclomatic": 1,
+          "entropy": 2.84
         }
       ],
       "trend": "stable"
     },
     "src/lib/auth-middleware.ts": {
       "latest": {
-        "commit": "27dabeb",
-        "timestamp": "2026-05-31T12:55:35.418Z",
+        "commit": "9b295be",
+        "timestamp": "2026-06-09T14:04:32.522Z",
         "mi": 26.1,
         "cognitive": 79,
         "nesting": 4,
@@ -1631,6 +1821,26 @@
         {
           "commit": "27dabeb",
           "timestamp": "2026-05-31T12:55:35.418Z",
+          "mi": 26.1,
+          "cognitive": 79,
+          "nesting": 4,
+          "lines": 328,
+          "maxCyclomatic": 37,
+          "entropy": 6.41
+        },
+        {
+          "commit": "b3502d7",
+          "timestamp": "2026-06-09T11:44:45.860Z",
+          "mi": 26.1,
+          "cognitive": 79,
+          "nesting": 4,
+          "lines": 328,
+          "maxCyclomatic": 37,
+          "entropy": 6.41
+        },
+        {
+          "commit": "9b295be",
+          "timestamp": "2026-06-09T14:04:32.522Z",
           "mi": 26.1,
           "cognitive": 79,
           "nesting": 4,
@@ -2053,8 +2263,8 @@
     },
     "src/features/puntos-venta/components/pvtoVenta-form.tsx": {
       "latest": {
-        "commit": "5dd54d4",
-        "timestamp": "2026-05-28T01:55:14.798Z",
+        "commit": "b3502d7",
+        "timestamp": "2026-06-08T17:50:24.129Z",
         "mi": 21.8,
         "cognitive": 46,
         "nesting": 5,
@@ -2066,6 +2276,16 @@
         {
           "commit": "5dd54d4",
           "timestamp": "2026-05-28T01:55:14.798Z",
+          "mi": 21.8,
+          "cognitive": 46,
+          "nesting": 5,
+          "lines": 300,
+          "maxCyclomatic": 26,
+          "entropy": 6.47
+        },
+        {
+          "commit": "b3502d7",
+          "timestamp": "2026-06-08T17:50:24.129Z",
           "mi": 21.8,
           "cognitive": 46,
           "nesting": 5,
@@ -2303,14 +2523,14 @@
     },
     "src/features/admin/__tests__/actions.test.ts": {
       "latest": {
-        "commit": "5dd54d4",
-        "timestamp": "2026-05-28T02:01:35.312Z",
-        "mi": 28,
+        "commit": "9b295be",
+        "timestamp": "2026-06-09T17:59:25.233Z",
+        "mi": 28.1,
         "cognitive": 0,
         "nesting": 3,
         "lines": 153,
         "maxCyclomatic": 1,
-        "entropy": 5.47
+        "entropy": 5.46
       },
       "history": [
         {
@@ -2322,6 +2542,26 @@
           "lines": 153,
           "maxCyclomatic": 1,
           "entropy": 5.47
+        },
+        {
+          "commit": "b3502d7",
+          "timestamp": "2026-06-09T11:50:04.922Z",
+          "mi": 28.1,
+          "cognitive": 0,
+          "nesting": 3,
+          "lines": 153,
+          "maxCyclomatic": 1,
+          "entropy": 5.46
+        },
+        {
+          "commit": "9b295be",
+          "timestamp": "2026-06-09T17:59:25.233Z",
+          "mi": 28.1,
+          "cognitive": 0,
+          "nesting": 3,
+          "lines": 153,
+          "maxCyclomatic": 1,
+          "entropy": 5.46
         }
       ],
       "trend": "stable"
@@ -2633,12 +2873,12 @@
     },
     "src/features/venta-servicios/__tests__/actions.test.ts": {
       "latest": {
-        "commit": "5dd54d4",
-        "timestamp": "2026-05-28T02:44:19.177Z",
-        "mi": 30.1,
+        "commit": "b3502d7",
+        "timestamp": "2026-06-08T20:25:20.863Z",
+        "mi": 27.6,
         "cognitive": 5,
         "nesting": 5,
-        "lines": 142,
+        "lines": 178,
         "maxCyclomatic": 1,
         "entropy": 5.69
       },
@@ -2652,14 +2892,24 @@
           "lines": 142,
           "maxCyclomatic": 1,
           "entropy": 5.69
+        },
+        {
+          "commit": "b3502d7",
+          "timestamp": "2026-06-08T20:25:20.863Z",
+          "mi": 27.6,
+          "cognitive": 5,
+          "nesting": 5,
+          "lines": 178,
+          "maxCyclomatic": 1,
+          "entropy": 5.69
         }
       ],
-      "trend": "stable"
+      "trend": "regressing"
     },
     "src/features/venta-servicios/actions.ts": {
       "latest": {
-        "commit": "5dd54d4",
-        "timestamp": "2026-05-28T02:44:19.230Z",
+        "commit": "b3502d7",
+        "timestamp": "2026-06-08T20:24:57.355Z",
         "mi": 28.7,
         "cognitive": 41,
         "nesting": 4,
@@ -2671,6 +2921,16 @@
         {
           "commit": "5dd54d4",
           "timestamp": "2026-05-28T02:44:19.230Z",
+          "mi": 28.7,
+          "cognitive": 41,
+          "nesting": 4,
+          "lines": 157,
+          "maxCyclomatic": 35,
+          "entropy": 6.48
+        },
+        {
+          "commit": "b3502d7",
+          "timestamp": "2026-06-08T20:24:57.355Z",
           "mi": 28.7,
           "cognitive": 41,
           "nesting": 4,
@@ -2758,14 +3018,14 @@
     },
     "src/features/servicios/__tests__/actions.test.ts": {
       "latest": {
-        "commit": "5dd54d4",
-        "timestamp": "2026-05-28T02:44:29.944Z",
-        "mi": 53.6,
+        "commit": "b3502d7",
+        "timestamp": "2026-06-08T20:25:20.707Z",
+        "mi": 23.2,
         "cognitive": 0,
         "nesting": 2,
-        "lines": 15,
+        "lines": 210,
         "maxCyclomatic": 1,
-        "entropy": 5.14
+        "entropy": 5.45
       },
       "history": [
         {
@@ -2777,20 +3037,40 @@
           "lines": 15,
           "maxCyclomatic": 1,
           "entropy": 5.14
+        },
+        {
+          "commit": "b3502d7",
+          "timestamp": "2026-06-08T18:09:39.221Z",
+          "mi": 39.9,
+          "cognitive": 0,
+          "nesting": 2,
+          "lines": 63,
+          "maxCyclomatic": 1,
+          "entropy": 5.22
+        },
+        {
+          "commit": "b3502d7",
+          "timestamp": "2026-06-08T20:25:20.707Z",
+          "mi": 23.2,
+          "cognitive": 0,
+          "nesting": 2,
+          "lines": 210,
+          "maxCyclomatic": 1,
+          "entropy": 5.45
         }
       ],
-      "trend": "stable"
+      "trend": "regressing"
     },
     "src/features/servicios/actions.ts": {
       "latest": {
-        "commit": "9216157",
-        "timestamp": "2026-05-29T22:17:10.850Z",
-        "mi": 41.5,
-        "cognitive": 6,
-        "nesting": 2,
-        "lines": 50,
-        "maxCyclomatic": 1,
-        "entropy": 5.56
+        "commit": "b3502d7",
+        "timestamp": "2026-06-08T20:24:57.245Z",
+        "mi": 42.3,
+        "cognitive": 19,
+        "nesting": 3,
+        "lines": 112,
+        "maxCyclomatic": 15,
+        "entropy": 5.73
       },
       "history": [
         {
@@ -2812,9 +3092,29 @@
           "lines": 50,
           "maxCyclomatic": 1,
           "entropy": 5.56
+        },
+        {
+          "commit": "b3502d7",
+          "timestamp": "2026-06-08T17:53:44.805Z",
+          "mi": 40.7,
+          "cognitive": 6,
+          "nesting": 2,
+          "lines": 53,
+          "maxCyclomatic": 1,
+          "entropy": 5.55
+        },
+        {
+          "commit": "b3502d7",
+          "timestamp": "2026-06-08T20:24:57.245Z",
+          "mi": 42.3,
+          "cognitive": 19,
+          "nesting": 3,
+          "lines": 112,
+          "maxCyclomatic": 15,
+          "entropy": 5.73
         }
       ],
-      "trend": "stable"
+      "trend": "regressing"
     },
     "src/features/turnos-pos/actions.ts": {
       "latest": {
@@ -3023,8 +3323,8 @@
     },
     "src/app/api/contabilidad/reconciliacion/gastos/__tests__/route.test.ts": {
       "latest": {
-        "commit": "5dd54d4",
-        "timestamp": "2026-05-28T03:14:27.255Z",
+        "commit": "b3502d7",
+        "timestamp": "2026-06-09T02:21:02.177Z",
         "mi": 21.4,
         "cognitive": 0,
         "nesting": 3,
@@ -3036,6 +3336,16 @@
         {
           "commit": "5dd54d4",
           "timestamp": "2026-05-28T03:14:27.255Z",
+          "mi": 21.4,
+          "cognitive": 0,
+          "nesting": 3,
+          "lines": 295,
+          "maxCyclomatic": 1,
+          "entropy": 6.24
+        },
+        {
+          "commit": "b3502d7",
+          "timestamp": "2026-06-09T02:21:02.177Z",
           "mi": 21.4,
           "cognitive": 0,
           "nesting": 3,
@@ -3278,14 +3588,14 @@
     },
     "src/features/auth/api/handlers.ts": {
       "latest": {
-        "commit": "2d44509",
-        "timestamp": "2026-06-03T11:52:29.258Z",
-        "mi": 7.6,
-        "cognitive": 246,
+        "commit": "9b295be",
+        "timestamp": "2026-06-09T14:22:23.969Z",
+        "mi": 5.5,
+        "cognitive": 249,
         "nesting": 5,
-        "lines": 685,
+        "lines": 844,
         "maxCyclomatic": 79,
-        "entropy": 6.41
+        "entropy": 6.42
       },
       "history": [
         {
@@ -3327,9 +3637,19 @@
           "lines": 685,
           "maxCyclomatic": 79,
           "entropy": 6.41
+        },
+        {
+          "commit": "9b295be",
+          "timestamp": "2026-06-09T14:22:23.969Z",
+          "mi": 5.5,
+          "cognitive": 249,
+          "nesting": 5,
+          "lines": 844,
+          "maxCyclomatic": 79,
+          "entropy": 6.42
         }
       ],
-      "trend": "stable"
+      "trend": "regressing"
     },
     "src/features/contabilidad/__tests__/actions-periodos-arqueo.test.ts": {
       "latest": {
@@ -3383,8 +3703,8 @@
     },
     "src/lib/server-actions/get-current-user.ts": {
       "latest": {
-        "commit": "ef53195",
-        "timestamp": "2026-05-31T23:07:03.545Z",
+        "commit": "9b295be",
+        "timestamp": "2026-06-09T14:05:30.684Z",
         "mi": 42.8,
         "cognitive": 35,
         "nesting": 4,
@@ -3416,6 +3736,26 @@
         {
           "commit": "ef53195",
           "timestamp": "2026-05-31T23:07:03.545Z",
+          "mi": 42.8,
+          "cognitive": 35,
+          "nesting": 4,
+          "lines": 116,
+          "maxCyclomatic": 15,
+          "entropy": 5.87
+        },
+        {
+          "commit": "b3502d7",
+          "timestamp": "2026-06-09T11:48:08.409Z",
+          "mi": 42.8,
+          "cognitive": 35,
+          "nesting": 4,
+          "lines": 116,
+          "maxCyclomatic": 15,
+          "entropy": 5.87
+        },
+        {
+          "commit": "9b295be",
+          "timestamp": "2026-06-09T14:05:30.684Z",
           "mi": 42.8,
           "cognitive": 35,
           "nesting": 4,
@@ -3583,14 +3923,14 @@
     },
     "src/components/app-sidebar2.tsx": {
       "latest": {
-        "commit": "e6a1af2",
-        "timestamp": "2026-05-30T15:03:17.766Z",
-        "mi": 20.4,
+        "commit": "9b295be",
+        "timestamp": "2026-06-09T14:18:15.598Z",
+        "mi": 18.3,
         "cognitive": 69,
         "nesting": 5,
-        "lines": 586,
+        "lines": 655,
         "maxCyclomatic": 51,
-        "entropy": 5.34
+        "entropy": 5.33
       },
       "history": [
         {
@@ -3622,9 +3962,19 @@
           "lines": 586,
           "maxCyclomatic": 51,
           "entropy": 5.34
+        },
+        {
+          "commit": "9b295be",
+          "timestamp": "2026-06-09T14:18:15.598Z",
+          "mi": 18.3,
+          "cognitive": 69,
+          "nesting": 5,
+          "lines": 655,
+          "maxCyclomatic": 51,
+          "entropy": 5.33
         }
       ],
-      "trend": "stable"
+      "trend": "regressing"
     },
     "src/features/arqueo-caja/components/arqueos-page-client.tsx": {
       "latest": {
@@ -3713,14 +4063,14 @@
     },
     "src/app/busy/layout.tsx": {
       "latest": {
-        "commit": "b04dc09",
-        "timestamp": "2026-05-30T04:11:49.437Z",
-        "mi": 61.5,
+        "commit": "9b295be",
+        "timestamp": "2026-06-09T14:17:57.799Z",
+        "mi": 60.6,
         "cognitive": 1,
         "nesting": 1,
-        "lines": 30,
+        "lines": 32,
         "maxCyclomatic": 3,
-        "entropy": 4.25
+        "entropy": 4.26
       },
       "history": [
         {
@@ -3742,6 +4092,16 @@
           "lines": 30,
           "maxCyclomatic": 3,
           "entropy": 4.25
+        },
+        {
+          "commit": "9b295be",
+          "timestamp": "2026-06-09T14:17:57.799Z",
+          "mi": 60.6,
+          "cognitive": 1,
+          "nesting": 1,
+          "lines": 32,
+          "maxCyclomatic": 3,
+          "entropy": 4.26
         }
       ],
       "trend": "stable"
@@ -3773,8 +4133,8 @@
     },
     "src/app/busy/dashboard/page.tsx": {
       "latest": {
-        "commit": "1987a3b",
-        "timestamp": "2026-05-31T13:22:15.802Z",
+        "commit": "9b295be",
+        "timestamp": "2026-06-09T14:17:57.761Z",
         "mi": 44,
         "cognitive": 7,
         "nesting": 2,
@@ -3796,6 +4156,16 @@
         {
           "commit": "1987a3b",
           "timestamp": "2026-05-31T13:22:15.802Z",
+          "mi": 44,
+          "cognitive": 7,
+          "nesting": 2,
+          "lines": 96,
+          "maxCyclomatic": 6,
+          "entropy": 5.76
+        },
+        {
+          "commit": "9b295be",
+          "timestamp": "2026-06-09T14:17:57.761Z",
           "mi": 44,
           "cognitive": 7,
           "nesting": 2,
@@ -3888,8 +4258,8 @@
     },
     "src/lib/auth/roles.ts": {
       "latest": {
-        "commit": "ef53195",
-        "timestamp": "2026-05-31T23:07:20.731Z",
+        "commit": "9b295be",
+        "timestamp": "2026-06-09T14:05:48.834Z",
         "mi": 45.2,
         "cognitive": 34,
         "nesting": 2,
@@ -3931,6 +4301,16 @@
         {
           "commit": "ef53195",
           "timestamp": "2026-05-31T23:07:20.731Z",
+          "mi": 45.2,
+          "cognitive": 34,
+          "nesting": 2,
+          "lines": 107,
+          "maxCyclomatic": 10,
+          "entropy": 4.75
+        },
+        {
+          "commit": "9b295be",
+          "timestamp": "2026-06-09T14:05:48.834Z",
           "mi": 45.2,
           "cognitive": 34,
           "nesting": 2,
@@ -4073,8 +4453,8 @@
     },
     "src/lib/services/tenant-scope.ts": {
       "latest": {
-        "commit": "27dabeb",
-        "timestamp": "2026-05-31T12:55:39.650Z",
+        "commit": "9b295be",
+        "timestamp": "2026-06-09T14:04:27.020Z",
         "mi": 44.8,
         "cognitive": 14,
         "nesting": 2,
@@ -4112,9 +4492,19 @@
           "lines": 124,
           "maxCyclomatic": 4,
           "entropy": 5.21
+        },
+        {
+          "commit": "9b295be",
+          "timestamp": "2026-06-09T14:04:27.020Z",
+          "mi": 44.8,
+          "cognitive": 14,
+          "nesting": 2,
+          "lines": 124,
+          "maxCyclomatic": 4,
+          "entropy": 5.21
         }
       ],
-      "trend": "regressing"
+      "trend": "stable"
     },
     "src/features/reportes-financieros/components/reporte-por-ubicacion.tsx": {
       "latest": {
@@ -4258,14 +4648,14 @@
     },
     "src/app/busy/servicios/page.tsx": {
       "latest": {
-        "commit": "9216157",
-        "timestamp": "2026-05-29T22:10:49.899Z",
-        "mi": 61.4,
+        "commit": "b3502d7",
+        "timestamp": "2026-06-08T18:10:10.307Z",
+        "mi": 59.3,
         "cognitive": 4,
         "nesting": 1,
-        "lines": 32,
+        "lines": 36,
         "maxCyclomatic": 4,
-        "entropy": 4.43
+        "entropy": 4.58
       },
       "history": [
         {
@@ -4277,20 +4667,30 @@
           "lines": 32,
           "maxCyclomatic": 4,
           "entropy": 4.43
+        },
+        {
+          "commit": "b3502d7",
+          "timestamp": "2026-06-08T18:10:10.307Z",
+          "mi": 59.3,
+          "cognitive": 4,
+          "nesting": 1,
+          "lines": 36,
+          "maxCyclomatic": 4,
+          "entropy": 4.58
         }
       ],
-      "trend": "stable"
+      "trend": "regressing"
     },
     "src/features/servicios/components/servicios-content.tsx": {
       "latest": {
-        "commit": "9216157",
-        "timestamp": "2026-05-29T22:11:00.568Z",
-        "mi": 14.2,
-        "cognitive": 23,
+        "commit": "b3502d7",
+        "timestamp": "2026-06-08T18:09:44.628Z",
+        "mi": 13.8,
+        "cognitive": 31,
         "nesting": 6,
-        "lines": 510,
-        "maxCyclomatic": 24,
-        "entropy": 6.33
+        "lines": 526,
+        "maxCyclomatic": 41,
+        "entropy": 6.35
       },
       "history": [
         {
@@ -4302,6 +4702,16 @@
           "lines": 510,
           "maxCyclomatic": 24,
           "entropy": 6.33
+        },
+        {
+          "commit": "b3502d7",
+          "timestamp": "2026-06-08T18:09:44.628Z",
+          "mi": 13.8,
+          "cognitive": 31,
+          "nesting": 6,
+          "lines": 526,
+          "maxCyclomatic": 41,
+          "entropy": 6.35
         }
       ],
       "trend": "stable"
@@ -4333,8 +4743,8 @@
     },
     "src/app/admin/usuarios/page.tsx": {
       "latest": {
-        "commit": "dc95237",
-        "timestamp": "2026-05-29T22:34:54.472Z",
+        "commit": "b3502d7",
+        "timestamp": "2026-06-09T12:23:46.312Z",
         "mi": 72.6,
         "cognitive": 0,
         "nesting": 1,
@@ -4352,20 +4762,30 @@
           "lines": 14,
           "maxCyclomatic": 1,
           "entropy": 3.96
+        },
+        {
+          "commit": "b3502d7",
+          "timestamp": "2026-06-09T12:23:46.312Z",
+          "mi": 72.6,
+          "cognitive": 0,
+          "nesting": 1,
+          "lines": 14,
+          "maxCyclomatic": 1,
+          "entropy": 3.96
         }
       ],
       "trend": "stable"
     },
     "src/features/admin/components/admin-users-page-client.tsx": {
       "latest": {
-        "commit": "dc95237",
-        "timestamp": "2026-05-29T22:34:54.542Z",
-        "mi": 15,
+        "commit": "9b295be",
+        "timestamp": "2026-06-09T14:42:13.487Z",
+        "mi": 13.3,
         "cognitive": 52,
         "nesting": 4,
-        "lines": 464,
-        "maxCyclomatic": 42,
-        "entropy": 6.9
+        "lines": 542,
+        "maxCyclomatic": 44,
+        "entropy": 6.91
       },
       "history": [
         {
@@ -4377,20 +4797,40 @@
           "lines": 464,
           "maxCyclomatic": 42,
           "entropy": 6.9
+        },
+        {
+          "commit": "b3502d7",
+          "timestamp": "2026-06-09T12:24:19.559Z",
+          "mi": 13.1,
+          "cognitive": 52,
+          "nesting": 4,
+          "lines": 551,
+          "maxCyclomatic": 44,
+          "entropy": 6.91
+        },
+        {
+          "commit": "9b295be",
+          "timestamp": "2026-06-09T14:42:13.487Z",
+          "mi": 13.3,
+          "cognitive": 52,
+          "nesting": 4,
+          "lines": 542,
+          "maxCyclomatic": 44,
+          "entropy": 6.91
         }
       ],
       "trend": "stable"
     },
     "src/features/admin/server/data.ts": {
       "latest": {
-        "commit": "dc95237",
-        "timestamp": "2026-05-29T22:34:54.588Z",
-        "mi": 43.6,
+        "commit": "9b295be",
+        "timestamp": "2026-06-09T17:14:34.107Z",
+        "mi": 41.8,
         "cognitive": 3,
         "nesting": 3,
-        "lines": 102,
-        "maxCyclomatic": 5,
-        "entropy": 6.09
+        "lines": 110,
+        "maxCyclomatic": 8,
+        "entropy": 6.11
       },
       "history": [
         {
@@ -4402,14 +4842,24 @@
           "lines": 102,
           "maxCyclomatic": 5,
           "entropy": 6.09
+        },
+        {
+          "commit": "9b295be",
+          "timestamp": "2026-06-09T17:14:34.107Z",
+          "mi": 41.8,
+          "cognitive": 3,
+          "nesting": 3,
+          "lines": 110,
+          "maxCyclomatic": 8,
+          "entropy": 6.11
         }
       ],
       "trend": "stable"
     },
     "src/features/admin/components/admin-users-table.tsx": {
       "latest": {
-        "commit": "e6a1af2",
-        "timestamp": "2026-05-30T15:03:31.264Z",
+        "commit": "b3502d7",
+        "timestamp": "2026-06-09T12:32:34.998Z",
         "mi": 4.3,
         "cognitive": 353,
         "nesting": 9,
@@ -4437,14 +4887,24 @@
           "lines": 919,
           "maxCyclomatic": 260,
           "entropy": 7.02
+        },
+        {
+          "commit": "b3502d7",
+          "timestamp": "2026-06-09T12:32:34.998Z",
+          "mi": 4.3,
+          "cognitive": 353,
+          "nesting": 9,
+          "lines": 919,
+          "maxCyclomatic": 260,
+          "entropy": 7.02
         }
       ],
       "trend": "regressing"
     },
     "src/features/admin/components/create-user-dialog.tsx": {
       "latest": {
-        "commit": "038bf51",
-        "timestamp": "2026-05-30T00:58:31.524Z",
+        "commit": "f989785",
+        "timestamp": "2026-06-10T01:21:18.716Z",
         "mi": 22.9,
         "cognitive": 40,
         "nesting": 4,
@@ -4466,6 +4926,16 @@
         {
           "commit": "038bf51",
           "timestamp": "2026-05-30T00:58:31.524Z",
+          "mi": 22.9,
+          "cognitive": 40,
+          "nesting": 4,
+          "lines": 252,
+          "maxCyclomatic": 22,
+          "entropy": 6.62
+        },
+        {
+          "commit": "f989785",
+          "timestamp": "2026-06-10T01:21:18.716Z",
           "mi": 22.9,
           "cognitive": 40,
           "nesting": 4,
@@ -4528,14 +4998,14 @@
     },
     "src/features/admin/actions.ts": {
       "latest": {
-        "commit": "038bf51",
-        "timestamp": "2026-05-30T00:58:45.546Z",
-        "mi": 12.3,
-        "cognitive": 131,
+        "commit": "9b295be",
+        "timestamp": "2026-06-09T14:23:42.110Z",
+        "mi": 9.2,
+        "cognitive": 173,
         "nesting": 4,
-        "lines": 580,
+        "lines": 755,
         "maxCyclomatic": 30,
-        "entropy": 6.61
+        "entropy": 6.7
       },
       "history": [
         {
@@ -4557,6 +5027,26 @@
           "lines": 580,
           "maxCyclomatic": 30,
           "entropy": 6.61
+        },
+        {
+          "commit": "b3502d7",
+          "timestamp": "2026-06-09T11:45:08.570Z",
+          "mi": 9.2,
+          "cognitive": 173,
+          "nesting": 4,
+          "lines": 755,
+          "maxCyclomatic": 30,
+          "entropy": 6.7
+        },
+        {
+          "commit": "9b295be",
+          "timestamp": "2026-06-09T14:23:42.110Z",
+          "mi": 9.2,
+          "cognitive": 173,
+          "nesting": 4,
+          "lines": 755,
+          "maxCyclomatic": 30,
+          "entropy": 6.7
         }
       ],
       "trend": "regressing"
@@ -6098,14 +6588,14 @@
     },
     "src/contexts/auth-context.tsx": {
       "latest": {
-        "commit": "ef53195",
-        "timestamp": "2026-05-31T23:07:07.852Z",
-        "mi": 31.6,
-        "cognitive": 77,
+        "commit": "9b295be",
+        "timestamp": "2026-06-09T14:19:24.497Z",
+        "mi": 35.1,
+        "cognitive": 81,
         "nesting": 6,
-        "lines": 144,
-        "maxCyclomatic": 38,
-        "entropy": 5.9
+        "lines": 164,
+        "maxCyclomatic": 50,
+        "entropy": 6.03
       },
       "history": [
         {
@@ -6127,14 +6617,34 @@
           "lines": 144,
           "maxCyclomatic": 38,
           "entropy": 5.9
+        },
+        {
+          "commit": "b3502d7",
+          "timestamp": "2026-06-09T11:49:42.344Z",
+          "mi": 35.1,
+          "cognitive": 81,
+          "nesting": 6,
+          "lines": 164,
+          "maxCyclomatic": 50,
+          "entropy": 6.03
+        },
+        {
+          "commit": "9b295be",
+          "timestamp": "2026-06-09T14:19:24.497Z",
+          "mi": 35.1,
+          "cognitive": 81,
+          "nesting": 6,
+          "lines": 164,
+          "maxCyclomatic": 50,
+          "entropy": 6.03
         }
       ],
-      "trend": "stable"
+      "trend": "improving"
     },
     "src/app/api/admin/memberships/[id]/route.ts": {
       "latest": {
-        "commit": "e6a1af2",
-        "timestamp": "2026-05-30T15:04:02.054Z",
+        "commit": "b3502d7",
+        "timestamp": "2026-06-09T11:49:58.525Z",
         "mi": 36.9,
         "cognitive": 29,
         "nesting": 3,
@@ -6152,14 +6662,24 @@
           "lines": 126,
           "maxCyclomatic": 23,
           "entropy": 5.78
+        },
+        {
+          "commit": "b3502d7",
+          "timestamp": "2026-06-09T11:49:58.525Z",
+          "mi": 36.9,
+          "cognitive": 29,
+          "nesting": 3,
+          "lines": 126,
+          "maxCyclomatic": 23,
+          "entropy": 5.78
         }
       ],
       "trend": "stable"
     },
     "src/features/admin/components/membership-action-dialog.tsx": {
       "latest": {
-        "commit": "e6a1af2",
-        "timestamp": "2026-05-30T15:04:50.953Z",
+        "commit": "b3502d7",
+        "timestamp": "2026-06-09T11:45:15.145Z",
         "mi": 37.4,
         "cognitive": 9,
         "nesting": 3,
@@ -6171,6 +6691,16 @@
         {
           "commit": "e6a1af2",
           "timestamp": "2026-05-30T15:04:50.953Z",
+          "mi": 37.4,
+          "cognitive": 9,
+          "nesting": 3,
+          "lines": 101,
+          "maxCyclomatic": 5,
+          "entropy": 6.04
+        },
+        {
+          "commit": "b3502d7",
+          "timestamp": "2026-06-09T11:45:15.145Z",
           "mi": 37.4,
           "cognitive": 9,
           "nesting": 3,
@@ -6208,14 +6738,14 @@
     },
     "prisma/seed/plans-seed.ts": {
       "latest": {
-        "commit": "6c98647",
-        "timestamp": "2026-05-30T16:13:13.683Z",
-        "mi": 34.7,
-        "cognitive": 4,
+        "commit": "9b295be",
+        "timestamp": "2026-06-09T14:57:57.970Z",
+        "mi": 36,
+        "cognitive": 3,
         "nesting": 2,
-        "lines": 99,
+        "lines": 163,
         "maxCyclomatic": 2,
-        "entropy": 5.2
+        "entropy": 4.72
       },
       "history": [
         {
@@ -6227,6 +6757,16 @@
           "lines": 99,
           "maxCyclomatic": 2,
           "entropy": 5.2
+        },
+        {
+          "commit": "9b295be",
+          "timestamp": "2026-06-09T14:57:57.970Z",
+          "mi": 36,
+          "cognitive": 3,
+          "nesting": 2,
+          "lines": 163,
+          "maxCyclomatic": 2,
+          "entropy": 4.72
         }
       ],
       "trend": "stable"
@@ -6593,14 +7133,14 @@
     },
     "src/features/auth/actions.ts": {
       "latest": {
-        "commit": "ef53195",
-        "timestamp": "2026-06-01T00:14:15.958Z",
-        "mi": 24.1,
-        "cognitive": 64,
-        "nesting": 4,
-        "lines": 341,
-        "maxCyclomatic": 66,
-        "entropy": 6.3
+        "commit": "9b295be",
+        "timestamp": "2026-06-09T14:05:53.452Z",
+        "mi": 19.2,
+        "cognitive": 97,
+        "nesting": 5,
+        "lines": 429,
+        "maxCyclomatic": 69,
+        "entropy": 6.35
       },
       "history": [
         {
@@ -6612,9 +7152,19 @@
           "lines": 341,
           "maxCyclomatic": 66,
           "entropy": 6.3
+        },
+        {
+          "commit": "9b295be",
+          "timestamp": "2026-06-09T14:05:53.452Z",
+          "mi": 19.2,
+          "cognitive": 97,
+          "nesting": 5,
+          "lines": 429,
+          "maxCyclomatic": 69,
+          "entropy": 6.35
         }
       ],
-      "trend": "stable"
+      "trend": "regressing"
     },
     "src/features/auth/__tests__/actions.test.ts": {
       "latest": {
@@ -7218,8 +7768,8 @@
     },
     "src/app/models/ventas.ts": {
       "latest": {
-        "commit": "2d44509",
-        "timestamp": "2026-06-03T11:41:23.028Z",
+        "commit": "9b295be",
+        "timestamp": "2026-06-09T14:21:47.271Z",
         "mi": 22.9,
         "cognitive": 0,
         "nesting": 0,
@@ -7231,6 +7781,16 @@
         {
           "commit": "2d44509",
           "timestamp": "2026-06-03T11:41:23.028Z",
+          "mi": 22.9,
+          "cognitive": 0,
+          "nesting": 0,
+          "lines": 279,
+          "maxCyclomatic": 1,
+          "entropy": 5.51
+        },
+        {
+          "commit": "9b295be",
+          "timestamp": "2026-06-09T14:21:47.271Z",
           "mi": 22.9,
           "cognitive": 0,
           "nesting": 0,
@@ -7853,14 +8413,14 @@
     },
     "src/features/transferencias/actions.ts": {
       "latest": {
-        "commit": "5f6f302",
-        "timestamp": "2026-06-04T14:57:05.519Z",
-        "mi": 18,
-        "cognitive": 140,
-        "nesting": 5,
-        "lines": 384,
-        "maxCyclomatic": 50,
-        "entropy": 6.76
+        "commit": "f989785",
+        "timestamp": "2026-06-09T18:28:05.337Z",
+        "mi": 10,
+        "cognitive": 147,
+        "nesting": 4,
+        "lines": 696,
+        "maxCyclomatic": 47,
+        "entropy": 6.81
       },
       "history": [
         {
@@ -7872,9 +8432,19 @@
           "lines": 384,
           "maxCyclomatic": 50,
           "entropy": 6.76
+        },
+        {
+          "commit": "f989785",
+          "timestamp": "2026-06-09T18:28:05.337Z",
+          "mi": 10,
+          "cognitive": 147,
+          "nesting": 4,
+          "lines": 696,
+          "maxCyclomatic": 47,
+          "entropy": 6.81
         }
       ],
-      "trend": "stable"
+      "trend": "regressing"
     },
     "src/features/transferencias/__tests__/actions.test.ts": {
       "latest": {
@@ -8125,7 +8695,1432 @@
         }
       ],
       "trend": "stable"
+    },
+    "src/lib/categoria-validation.ts": {
+      "latest": {
+        "commit": "b3502d7",
+        "timestamp": "2026-06-08T08:14:38.977Z",
+        "mi": 18.8,
+        "cognitive": 193,
+        "nesting": 5,
+        "lines": 562,
+        "maxCyclomatic": 26,
+        "entropy": 6.49
+      },
+      "history": [
+        {
+          "commit": "b3502d7",
+          "timestamp": "2026-06-08T08:14:38.977Z",
+          "mi": 18.8,
+          "cognitive": 193,
+          "nesting": 5,
+          "lines": 562,
+          "maxCyclomatic": 26,
+          "entropy": 6.49
+        }
+      ],
+      "trend": "stable"
+    },
+    "src/lib/categoria-errors.ts": {
+      "latest": {
+        "commit": "b3502d7",
+        "timestamp": "2026-06-08T08:14:39.004Z",
+        "mi": 28.2,
+        "cognitive": 94,
+        "nesting": 4,
+        "lines": 362,
+        "maxCyclomatic": 16,
+        "entropy": 6.39
+      },
+      "history": [
+        {
+          "commit": "b3502d7",
+          "timestamp": "2026-06-08T08:14:39.004Z",
+          "mi": 28.2,
+          "cognitive": 94,
+          "nesting": 4,
+          "lines": 362,
+          "maxCyclomatic": 16,
+          "entropy": 6.39
+        }
+      ],
+      "trend": "stable"
+    },
+    "src/features/categorias/actions.ts": {
+      "latest": {
+        "commit": "b3502d7",
+        "timestamp": "2026-06-08T08:14:39.030Z",
+        "mi": 34.2,
+        "cognitive": 17,
+        "nesting": 2,
+        "lines": 221,
+        "maxCyclomatic": 8,
+        "entropy": 6.21
+      },
+      "history": [
+        {
+          "commit": "b3502d7",
+          "timestamp": "2026-06-08T08:14:39.030Z",
+          "mi": 34.2,
+          "cognitive": 17,
+          "nesting": 2,
+          "lines": 221,
+          "maxCyclomatic": 8,
+          "entropy": 6.21
+        }
+      ],
+      "trend": "stable"
+    },
+    "src/features/categorias/schemas.ts": {
+      "latest": {
+        "commit": "b3502d7",
+        "timestamp": "2026-06-08T08:14:48.236Z",
+        "mi": 53.3,
+        "cognitive": 0,
+        "nesting": 1,
+        "lines": 52,
+        "maxCyclomatic": 1,
+        "entropy": 4.58
+      },
+      "history": [
+        {
+          "commit": "b3502d7",
+          "timestamp": "2026-06-08T08:14:48.236Z",
+          "mi": 53.3,
+          "cognitive": 0,
+          "nesting": 1,
+          "lines": 52,
+          "maxCyclomatic": 1,
+          "entropy": 4.58
+        }
+      ],
+      "trend": "stable"
+    },
+    "src/features/categorias/__tests__/actions.test.ts": {
+      "latest": {
+        "commit": "b3502d7",
+        "timestamp": "2026-06-08T08:14:57.211Z",
+        "mi": 26.8,
+        "cognitive": 0,
+        "nesting": 3,
+        "lines": 246,
+        "maxCyclomatic": 1,
+        "entropy": 5.71
+      },
+      "history": [
+        {
+          "commit": "b3502d7",
+          "timestamp": "2026-06-08T08:14:57.211Z",
+          "mi": 26.8,
+          "cognitive": 0,
+          "nesting": 3,
+          "lines": 246,
+          "maxCyclomatic": 1,
+          "entropy": 5.71
+        }
+      ],
+      "trend": "stable"
+    },
+    "src/features/categorias/types.ts": {
+      "latest": {
+        "commit": "b3502d7",
+        "timestamp": "2026-06-08T08:14:57.227Z",
+        "mi": 75.8,
+        "cognitive": 0,
+        "nesting": 0,
+        "lines": 4,
+        "maxCyclomatic": 1,
+        "entropy": 3.46
+      },
+      "history": [
+        {
+          "commit": "b3502d7",
+          "timestamp": "2026-06-08T08:14:57.227Z",
+          "mi": 75.8,
+          "cognitive": 0,
+          "nesting": 0,
+          "lines": 4,
+          "maxCyclomatic": 1,
+          "entropy": 3.46
+        }
+      ],
+      "trend": "stable"
+    },
+    "src/features/categorias/__tests__/index.test.ts": {
+      "latest": {
+        "commit": "b3502d7",
+        "timestamp": "2026-06-08T08:15:01.955Z",
+        "mi": 58.5,
+        "cognitive": 0,
+        "nesting": 2,
+        "lines": 17,
+        "maxCyclomatic": 1,
+        "entropy": 3.43
+      },
+      "history": [
+        {
+          "commit": "b3502d7",
+          "timestamp": "2026-06-08T08:15:01.955Z",
+          "mi": 58.5,
+          "cognitive": 0,
+          "nesting": 2,
+          "lines": 17,
+          "maxCyclomatic": 1,
+          "entropy": 3.43
+        }
+      ],
+      "trend": "stable"
+    },
+    "src/app/api/categorias/[id]/can-delete/route.ts": {
+      "latest": {
+        "commit": "b3502d7",
+        "timestamp": "2026-06-08T08:19:53.288Z",
+        "mi": 39.1,
+        "cognitive": 30,
+        "nesting": 4,
+        "lines": 87,
+        "maxCyclomatic": 14,
+        "entropy": 5.67
+      },
+      "history": [
+        {
+          "commit": "b3502d7",
+          "timestamp": "2026-06-08T08:19:53.288Z",
+          "mi": 39.1,
+          "cognitive": 30,
+          "nesting": 4,
+          "lines": 87,
+          "maxCyclomatic": 14,
+          "entropy": 5.67
+        }
+      ],
+      "trend": "stable"
+    },
+    "src/app/api/categorias/[id]/move/route.ts": {
+      "latest": {
+        "commit": "b3502d7",
+        "timestamp": "2026-06-08T08:19:53.340Z",
+        "mi": 34.6,
+        "cognitive": 35,
+        "nesting": 4,
+        "lines": 131,
+        "maxCyclomatic": 10,
+        "entropy": 5.52
+      },
+      "history": [
+        {
+          "commit": "b3502d7",
+          "timestamp": "2026-06-08T08:19:53.340Z",
+          "mi": 34.6,
+          "cognitive": 35,
+          "nesting": 4,
+          "lines": 131,
+          "maxCyclomatic": 10,
+          "entropy": 5.52
+        }
+      ],
+      "trend": "stable"
+    },
+    "src/app/api/categorias/[id]/subcategorias/route.ts": {
+      "latest": {
+        "commit": "b3502d7",
+        "timestamp": "2026-06-08T08:19:53.397Z",
+        "mi": 46.7,
+        "cognitive": 6,
+        "nesting": 3,
+        "lines": 50,
+        "maxCyclomatic": 1,
+        "entropy": 5.04
+      },
+      "history": [
+        {
+          "commit": "b3502d7",
+          "timestamp": "2026-06-08T08:19:53.397Z",
+          "mi": 46.7,
+          "cognitive": 6,
+          "nesting": 3,
+          "lines": 50,
+          "maxCyclomatic": 1,
+          "entropy": 5.04
+        }
+      ],
+      "trend": "stable"
+    },
+    "src/features/categorias/components/category-move-dialog.tsx": {
+      "latest": {
+        "commit": "b3502d7",
+        "timestamp": "2026-06-08T08:20:30.115Z",
+        "mi": 18.9,
+        "cognitive": 83,
+        "nesting": 4,
+        "lines": 370,
+        "maxCyclomatic": 70,
+        "entropy": 6.37
+      },
+      "history": [
+        {
+          "commit": "b3502d7",
+          "timestamp": "2026-06-08T08:20:30.115Z",
+          "mi": 18.9,
+          "cognitive": 83,
+          "nesting": 4,
+          "lines": 370,
+          "maxCyclomatic": 70,
+          "entropy": 6.37
+        }
+      ],
+      "trend": "stable"
+    },
+    "src/features/almacenes/schemas.ts": {
+      "latest": {
+        "commit": "b3502d7",
+        "timestamp": "2026-06-08T17:50:19.813Z",
+        "mi": 61.4,
+        "cognitive": 0,
+        "nesting": 0,
+        "lines": 31,
+        "maxCyclomatic": 1,
+        "entropy": 4.27
+      },
+      "history": [
+        {
+          "commit": "b3502d7",
+          "timestamp": "2026-06-08T17:50:19.813Z",
+          "mi": 61.4,
+          "cognitive": 0,
+          "nesting": 0,
+          "lines": 31,
+          "maxCyclomatic": 1,
+          "entropy": 4.27
+        }
+      ],
+      "trend": "stable"
+    },
+    "src/features/unidades/schemas.ts": {
+      "latest": {
+        "commit": "b3502d7",
+        "timestamp": "2026-06-08T17:50:19.838Z",
+        "mi": 55.9,
+        "cognitive": 0,
+        "nesting": 0,
+        "lines": 29,
+        "maxCyclomatic": 1,
+        "entropy": 4.17
+      },
+      "history": [
+        {
+          "commit": "b3502d7",
+          "timestamp": "2026-06-08T17:50:19.838Z",
+          "mi": 55.9,
+          "cognitive": 0,
+          "nesting": 0,
+          "lines": 29,
+          "maxCyclomatic": 1,
+          "entropy": 4.17
+        }
+      ],
+      "trend": "stable"
+    },
+    "src/features/almacenes/components/almacen-form.tsx": {
+      "latest": {
+        "commit": "b3502d7",
+        "timestamp": "2026-06-08T17:50:24.044Z",
+        "mi": 26.2,
+        "cognitive": 35,
+        "nesting": 5,
+        "lines": 216,
+        "maxCyclomatic": 16,
+        "entropy": 6
+      },
+      "history": [
+        {
+          "commit": "b3502d7",
+          "timestamp": "2026-06-08T17:50:24.044Z",
+          "mi": 26.2,
+          "cognitive": 35,
+          "nesting": 5,
+          "lines": 216,
+          "maxCyclomatic": 16,
+          "entropy": 6
+        }
+      ],
+      "trend": "stable"
+    },
+    "src/features/unidades/components/unidad-form.tsx": {
+      "latest": {
+        "commit": "b3502d7",
+        "timestamp": "2026-06-08T17:50:24.088Z",
+        "mi": 25,
+        "cognitive": 36,
+        "nesting": 5,
+        "lines": 243,
+        "maxCyclomatic": 18,
+        "entropy": 6.08
+      },
+      "history": [
+        {
+          "commit": "b3502d7",
+          "timestamp": "2026-06-08T17:50:24.088Z",
+          "mi": 25,
+          "cognitive": 36,
+          "nesting": 5,
+          "lines": 243,
+          "maxCyclomatic": 18,
+          "entropy": 6.08
+        }
+      ],
+      "trend": "stable"
+    },
+    "src/features/almacenes/actions.ts": {
+      "latest": {
+        "commit": "b3502d7",
+        "timestamp": "2026-06-08T17:50:33.853Z",
+        "mi": 43.9,
+        "cognitive": 7,
+        "nesting": 2,
+        "lines": 114,
+        "maxCyclomatic": 4,
+        "entropy": 5.34
+      },
+      "history": [
+        {
+          "commit": "b3502d7",
+          "timestamp": "2026-06-08T17:50:33.853Z",
+          "mi": 43.9,
+          "cognitive": 7,
+          "nesting": 2,
+          "lines": 114,
+          "maxCyclomatic": 4,
+          "entropy": 5.34
+        }
+      ],
+      "trend": "stable"
+    },
+    "src/features/unidades/actions.ts": {
+      "latest": {
+        "commit": "b3502d7",
+        "timestamp": "2026-06-08T17:50:33.874Z",
+        "mi": 43.5,
+        "cognitive": 12,
+        "nesting": 2,
+        "lines": 113,
+        "maxCyclomatic": 11,
+        "entropy": 5.43
+      },
+      "history": [
+        {
+          "commit": "b3502d7",
+          "timestamp": "2026-06-08T17:50:33.874Z",
+          "mi": 43.5,
+          "cognitive": 12,
+          "nesting": 2,
+          "lines": 113,
+          "maxCyclomatic": 11,
+          "entropy": 5.43
+        }
+      ],
+      "trend": "stable"
+    },
+    "src/features/puntos-venta/__tests__/actions.test.ts": {
+      "latest": {
+        "commit": "b3502d7",
+        "timestamp": "2026-06-08T17:50:40.443Z",
+        "mi": 52.7,
+        "cognitive": 0,
+        "nesting": 2,
+        "lines": 16,
+        "maxCyclomatic": 1,
+        "entropy": 5.09
+      },
+      "history": [
+        {
+          "commit": "b3502d7",
+          "timestamp": "2026-06-08T17:50:40.443Z",
+          "mi": 52.7,
+          "cognitive": 0,
+          "nesting": 2,
+          "lines": 16,
+          "maxCyclomatic": 1,
+          "entropy": 5.09
+        }
+      ],
+      "trend": "stable"
+    },
+    "src/app/busy/unidad/page.tsx": {
+      "latest": {
+        "commit": "b3502d7",
+        "timestamp": "2026-06-08T17:50:50.442Z",
+        "mi": 68.7,
+        "cognitive": 2,
+        "nesting": 1,
+        "lines": 18,
+        "maxCyclomatic": 2,
+        "entropy": 4.2
+      },
+      "history": [
+        {
+          "commit": "b3502d7",
+          "timestamp": "2026-06-08T17:50:50.442Z",
+          "mi": 68.7,
+          "cognitive": 2,
+          "nesting": 1,
+          "lines": 18,
+          "maxCyclomatic": 2,
+          "entropy": 4.2
+        }
+      ],
+      "trend": "stable"
+    },
+    "src/features/almacenes/__tests__/actions.test.ts": {
+      "latest": {
+        "commit": "b3502d7",
+        "timestamp": "2026-06-08T17:50:55.856Z",
+        "mi": 30.9,
+        "cognitive": 0,
+        "nesting": 3,
+        "lines": 188,
+        "maxCyclomatic": 1,
+        "entropy": 5.26
+      },
+      "history": [
+        {
+          "commit": "b3502d7",
+          "timestamp": "2026-06-08T17:50:55.856Z",
+          "mi": 30.9,
+          "cognitive": 0,
+          "nesting": 3,
+          "lines": 188,
+          "maxCyclomatic": 1,
+          "entropy": 5.26
+        }
+      ],
+      "trend": "stable"
+    },
+    "src/features/unidades/__tests__/actions.test.ts": {
+      "latest": {
+        "commit": "b3502d7",
+        "timestamp": "2026-06-08T17:50:55.887Z",
+        "mi": 29.3,
+        "cognitive": 0,
+        "nesting": 3,
+        "lines": 221,
+        "maxCyclomatic": 1,
+        "entropy": 5.25
+      },
+      "history": [
+        {
+          "commit": "b3502d7",
+          "timestamp": "2026-06-08T17:50:55.887Z",
+          "mi": 29.3,
+          "cognitive": 0,
+          "nesting": 3,
+          "lines": 221,
+          "maxCyclomatic": 1,
+          "entropy": 5.25
+        }
+      ],
+      "trend": "stable"
+    },
+    "src/features/puntos-venta/components/pv-edit-page-client.tsx": {
+      "latest": {
+        "commit": "b3502d7",
+        "timestamp": "2026-06-08T17:51:00.708Z",
+        "mi": 36.1,
+        "cognitive": 2,
+        "nesting": 2,
+        "lines": 102,
+        "maxCyclomatic": 1,
+        "entropy": 5.45
+      },
+      "history": [
+        {
+          "commit": "b3502d7",
+          "timestamp": "2026-06-08T17:51:00.708Z",
+          "mi": 36.1,
+          "cognitive": 2,
+          "nesting": 2,
+          "lines": 102,
+          "maxCyclomatic": 1,
+          "entropy": 5.45
+        }
+      ],
+      "trend": "stable"
+    },
+    "src/features/servicios/index.ts": {
+      "latest": {
+        "commit": "b3502d7",
+        "timestamp": "2026-06-08T20:25:20.616Z",
+        "mi": 69.8,
+        "cognitive": 0,
+        "nesting": 0,
+        "lines": 16,
+        "maxCyclomatic": 1,
+        "entropy": 3.91
+      },
+      "history": [
+        {
+          "commit": "b3502d7",
+          "timestamp": "2026-06-08T17:53:44.766Z",
+          "mi": 84.4,
+          "cognitive": 0,
+          "nesting": 0,
+          "lines": 4,
+          "maxCyclomatic": 1,
+          "entropy": 3.58
+        },
+        {
+          "commit": "b3502d7",
+          "timestamp": "2026-06-08T20:25:20.616Z",
+          "mi": 69.8,
+          "cognitive": 0,
+          "nesting": 0,
+          "lines": 16,
+          "maxCyclomatic": 1,
+          "entropy": 3.91
+        }
+      ],
+      "trend": "regressing"
+    },
+    "src/features/servicios/types.ts": {
+      "latest": {
+        "commit": "b3502d7",
+        "timestamp": "2026-06-08T20:24:57.268Z",
+        "mi": 65.9,
+        "cognitive": 0,
+        "nesting": 0,
+        "lines": 28,
+        "maxCyclomatic": 1,
+        "entropy": 3.98
+      },
+      "history": [
+        {
+          "commit": "b3502d7",
+          "timestamp": "2026-06-08T17:53:44.781Z",
+          "mi": 97.8,
+          "cognitive": 0,
+          "nesting": 0,
+          "lines": 1,
+          "maxCyclomatic": 1,
+          "entropy": 2.32
+        },
+        {
+          "commit": "b3502d7",
+          "timestamp": "2026-06-08T20:24:57.268Z",
+          "mi": 65.9,
+          "cognitive": 0,
+          "nesting": 0,
+          "lines": 28,
+          "maxCyclomatic": 1,
+          "entropy": 3.98
+        }
+      ],
+      "trend": "regressing"
+    },
+    "src/features/servicios/schemas.ts": {
+      "latest": {
+        "commit": "b3502d7",
+        "timestamp": "2026-06-08T20:24:57.215Z",
+        "mi": 61.8,
+        "cognitive": 0,
+        "nesting": 0,
+        "lines": 25,
+        "maxCyclomatic": 1,
+        "entropy": 4.52
+      },
+      "history": [
+        {
+          "commit": "b3502d7",
+          "timestamp": "2026-06-08T17:53:44.821Z",
+          "mi": 67.8,
+          "cognitive": 0,
+          "nesting": 0,
+          "lines": 5,
+          "maxCyclomatic": 1,
+          "entropy": 4.55
+        },
+        {
+          "commit": "b3502d7",
+          "timestamp": "2026-06-08T20:24:57.215Z",
+          "mi": 61.8,
+          "cognitive": 0,
+          "nesting": 0,
+          "lines": 25,
+          "maxCyclomatic": 1,
+          "entropy": 4.52
+        }
+      ],
+      "trend": "regressing"
+    },
+    "src/features/compras-productos/index.ts": {
+      "latest": {
+        "commit": "b3502d7",
+        "timestamp": "2026-06-08T17:53:53.730Z",
+        "mi": 69.1,
+        "cognitive": 0,
+        "nesting": 0,
+        "lines": 8,
+        "maxCyclomatic": 1,
+        "entropy": 3.63
+      },
+      "history": [
+        {
+          "commit": "b3502d7",
+          "timestamp": "2026-06-08T17:53:53.730Z",
+          "mi": 69.1,
+          "cognitive": 0,
+          "nesting": 0,
+          "lines": 8,
+          "maxCyclomatic": 1,
+          "entropy": 3.63
+        }
+      ],
+      "trend": "stable"
+    },
+    "src/features/gastosDE/index.ts": {
+      "latest": {
+        "commit": "b3502d7",
+        "timestamp": "2026-06-08T17:53:53.775Z",
+        "mi": 63.5,
+        "cognitive": 0,
+        "nesting": 0,
+        "lines": 9,
+        "maxCyclomatic": 1,
+        "entropy": 4.05
+      },
+      "history": [
+        {
+          "commit": "b3502d7",
+          "timestamp": "2026-06-08T17:53:53.775Z",
+          "mi": 63.5,
+          "cognitive": 0,
+          "nesting": 0,
+          "lines": 9,
+          "maxCyclomatic": 1,
+          "entropy": 4.05
+        }
+      ],
+      "trend": "stable"
+    },
+    "src/features/servicios/components/index.ts": {
+      "latest": {
+        "commit": "b3502d7",
+        "timestamp": "2026-06-08T17:54:01.825Z",
+        "mi": 77.1,
+        "cognitive": 0,
+        "nesting": 0,
+        "lines": 4,
+        "maxCyclomatic": 1,
+        "entropy": 2.84
+      },
+      "history": [
+        {
+          "commit": "b3502d7",
+          "timestamp": "2026-06-08T17:54:01.825Z",
+          "mi": 77.1,
+          "cognitive": 0,
+          "nesting": 0,
+          "lines": 4,
+          "maxCyclomatic": 1,
+          "entropy": 2.84
+        }
+      ],
+      "trend": "stable"
+    },
+    "src/app/models/economicos.ts": {
+      "latest": {
+        "commit": "b3502d7",
+        "timestamp": "2026-06-08T17:54:04.643Z",
+        "mi": 30.3,
+        "cognitive": 0,
+        "nesting": 0,
+        "lines": 182,
+        "maxCyclomatic": 1,
+        "entropy": 5.38
+      },
+      "history": [
+        {
+          "commit": "b3502d7",
+          "timestamp": "2026-06-08T17:54:04.643Z",
+          "mi": 30.3,
+          "cognitive": 0,
+          "nesting": 0,
+          "lines": 182,
+          "maxCyclomatic": 1,
+          "entropy": 5.38
+        }
+      ],
+      "trend": "stable"
+    },
+    "src/features/gastosDE/types.ts": {
+      "latest": {
+        "commit": "b3502d7",
+        "timestamp": "2026-06-08T18:07:38.867Z",
+        "mi": 93.5,
+        "cognitive": 0,
+        "nesting": 0,
+        "lines": 1,
+        "maxCyclomatic": 1,
+        "entropy": 2.81
+      },
+      "history": [
+        {
+          "commit": "b3502d7",
+          "timestamp": "2026-06-08T18:07:38.867Z",
+          "mi": 93.5,
+          "cognitive": 0,
+          "nesting": 0,
+          "lines": 1,
+          "maxCyclomatic": 1,
+          "entropy": 2.81
+        }
+      ],
+      "trend": "stable"
+    },
+    "src/features/gastosDE/actions.ts": {
+      "latest": {
+        "commit": "b3502d7",
+        "timestamp": "2026-06-08T18:07:39.234Z",
+        "mi": 30.5,
+        "cognitive": 58,
+        "nesting": 3,
+        "lines": 114,
+        "maxCyclomatic": 22,
+        "entropy": 6.09
+      },
+      "history": [
+        {
+          "commit": "b3502d7",
+          "timestamp": "2026-06-08T18:07:39.234Z",
+          "mi": 30.5,
+          "cognitive": 58,
+          "nesting": 3,
+          "lines": 114,
+          "maxCyclomatic": 22,
+          "entropy": 6.09
+        }
+      ],
+      "trend": "stable"
+    },
+    "src/features/gastosDE/schemas.ts": {
+      "latest": {
+        "commit": "b3502d7",
+        "timestamp": "2026-06-08T18:07:39.539Z",
+        "mi": 50.7,
+        "cognitive": 0,
+        "nesting": 0,
+        "lines": 24,
+        "maxCyclomatic": 1,
+        "entropy": 4.5
+      },
+      "history": [
+        {
+          "commit": "b3502d7",
+          "timestamp": "2026-06-08T18:07:39.539Z",
+          "mi": 50.7,
+          "cognitive": 0,
+          "nesting": 0,
+          "lines": 24,
+          "maxCyclomatic": 1,
+          "entropy": 4.5
+        }
+      ],
+      "trend": "stable"
+    },
+    "src/features/servicios/components/enhanced-servicios-form.tsx": {
+      "latest": {
+        "commit": "b3502d7",
+        "timestamp": "2026-06-08T20:25:20.583Z",
+        "mi": 21.5,
+        "cognitive": 42,
+        "nesting": 4,
+        "lines": 270,
+        "maxCyclomatic": 47,
+        "entropy": 6.61
+      },
+      "history": [
+        {
+          "commit": "b3502d7",
+          "timestamp": "2026-06-08T18:09:44.660Z",
+          "mi": 20.4,
+          "cognitive": 50,
+          "nesting": 5,
+          "lines": 295,
+          "maxCyclomatic": 52,
+          "entropy": 6.75
+        },
+        {
+          "commit": "b3502d7",
+          "timestamp": "2026-06-08T20:25:20.583Z",
+          "mi": 21.5,
+          "cognitive": 42,
+          "nesting": 4,
+          "lines": 270,
+          "maxCyclomatic": 47,
+          "entropy": 6.61
+        }
+      ],
+      "trend": "stable"
+    },
+    "src/features/servicios/components/servicios-form.tsx": {
+      "latest": {
+        "commit": "b3502d7",
+        "timestamp": "2026-06-08T20:25:03.273Z",
+        "mi": 24,
+        "cognitive": 28,
+        "nesting": 5,
+        "lines": 242,
+        "maxCyclomatic": 12,
+        "entropy": 6.15
+      },
+      "history": [
+        {
+          "commit": "b3502d7",
+          "timestamp": "2026-06-08T18:10:10.541Z",
+          "mi": 19.8,
+          "cognitive": 36,
+          "nesting": 5,
+          "lines": 328,
+          "maxCyclomatic": 16,
+          "entropy": 6.35
+        },
+        {
+          "commit": "b3502d7",
+          "timestamp": "2026-06-08T20:25:03.273Z",
+          "mi": 24,
+          "cognitive": 28,
+          "nesting": 5,
+          "lines": 242,
+          "maxCyclomatic": 12,
+          "entropy": 6.15
+        }
+      ],
+      "trend": "improving"
+    },
+    "src/app/busy/servicios/new/page.tsx": {
+      "latest": {
+        "commit": "b3502d7",
+        "timestamp": "2026-06-08T18:56:02.781Z",
+        "mi": 55.4,
+        "cognitive": 2,
+        "nesting": 1,
+        "lines": 20,
+        "maxCyclomatic": 2,
+        "entropy": 4.82
+      },
+      "history": [
+        {
+          "commit": "b3502d7",
+          "timestamp": "2026-06-08T18:56:02.781Z",
+          "mi": 55.4,
+          "cognitive": 2,
+          "nesting": 1,
+          "lines": 20,
+          "maxCyclomatic": 2,
+          "entropy": 4.82
+        }
+      ],
+      "trend": "stable"
+    },
+    "src/app/busy/servicios/update/[id]/page.tsx": {
+      "latest": {
+        "commit": "b3502d7",
+        "timestamp": "2026-06-08T18:56:02.878Z",
+        "mi": 57.4,
+        "cognitive": 4,
+        "nesting": 2,
+        "lines": 39,
+        "maxCyclomatic": 3,
+        "entropy": 5.18
+      },
+      "history": [
+        {
+          "commit": "b3502d7",
+          "timestamp": "2026-06-08T18:56:02.878Z",
+          "mi": 57.4,
+          "cognitive": 4,
+          "nesting": 2,
+          "lines": 39,
+          "maxCyclomatic": 3,
+          "entropy": 5.18
+        }
+      ],
+      "trend": "stable"
+    },
+    "src/features/venta-servicios/schemas.ts": {
+      "latest": {
+        "commit": "b3502d7",
+        "timestamp": "2026-06-08T20:24:57.302Z",
+        "mi": 43.7,
+        "cognitive": 6,
+        "nesting": 2,
+        "lines": 49,
+        "maxCyclomatic": 8,
+        "entropy": 5.26
+      },
+      "history": [
+        {
+          "commit": "b3502d7",
+          "timestamp": "2026-06-08T20:24:57.302Z",
+          "mi": 43.7,
+          "cognitive": 6,
+          "nesting": 2,
+          "lines": 49,
+          "maxCyclomatic": 8,
+          "entropy": 5.26
+        }
+      ],
+      "trend": "stable"
+    },
+    "src/features/venta-servicios/types.ts": {
+      "latest": {
+        "commit": "b3502d7",
+        "timestamp": "2026-06-08T20:24:57.324Z",
+        "mi": 97.8,
+        "cognitive": 0,
+        "nesting": 0,
+        "lines": 1,
+        "maxCyclomatic": 1,
+        "entropy": 2.32
+      },
+      "history": [
+        {
+          "commit": "b3502d7",
+          "timestamp": "2026-06-08T20:24:57.324Z",
+          "mi": 97.8,
+          "cognitive": 0,
+          "nesting": 0,
+          "lines": 1,
+          "maxCyclomatic": 1,
+          "entropy": 2.32
+        }
+      ],
+      "trend": "stable"
+    },
+    "src/features/servicios/components/servicios-cart.tsx": {
+      "latest": {
+        "commit": "b3502d7",
+        "timestamp": "2026-06-08T20:25:03.243Z",
+        "mi": 19.9,
+        "cognitive": 46,
+        "nesting": 5,
+        "lines": 339,
+        "maxCyclomatic": 37,
+        "entropy": 6.11
+      },
+      "history": [
+        {
+          "commit": "b3502d7",
+          "timestamp": "2026-06-08T20:25:03.243Z",
+          "mi": 19.9,
+          "cognitive": 46,
+          "nesting": 5,
+          "lines": 339,
+          "maxCyclomatic": 37,
+          "entropy": 6.11
+        }
+      ],
+      "trend": "stable"
+    },
+    "src/features/servicios/components/servicios-recibidos-table.tsx": {
+      "latest": {
+        "commit": "b3502d7",
+        "timestamp": "2026-06-08T20:25:11.595Z",
+        "mi": 36.5,
+        "cognitive": 20,
+        "nesting": 4,
+        "lines": 99,
+        "maxCyclomatic": 12,
+        "entropy": 5.19
+      },
+      "history": [
+        {
+          "commit": "b3502d7",
+          "timestamp": "2026-06-08T20:25:11.595Z",
+          "mi": 36.5,
+          "cognitive": 20,
+          "nesting": 4,
+          "lines": 99,
+          "maxCyclomatic": 12,
+          "entropy": 5.19
+        }
+      ],
+      "trend": "stable"
+    },
+    "src/features/servicios/components/servicios-prestados-form.tsx": {
+      "latest": {
+        "commit": "b3502d7",
+        "timestamp": "2026-06-08T20:25:11.768Z",
+        "mi": 16.5,
+        "cognitive": 26,
+        "nesting": 4,
+        "lines": 423,
+        "maxCyclomatic": 25,
+        "entropy": 6.47
+      },
+      "history": [
+        {
+          "commit": "b3502d7",
+          "timestamp": "2026-06-08T20:25:11.768Z",
+          "mi": 16.5,
+          "cognitive": 26,
+          "nesting": 4,
+          "lines": 423,
+          "maxCyclomatic": 25,
+          "entropy": 6.47
+        }
+      ],
+      "trend": "stable"
+    },
+    ".dependency-cruiser.mjs": {
+      "latest": {
+        "commit": "b3502d7",
+        "timestamp": "2026-06-08T20:29:45.226Z",
+        "mi": 32.8,
+        "cognitive": 0,
+        "nesting": 0,
+        "lines": 180,
+        "maxCyclomatic": 1,
+        "entropy": 3.95
+      },
+      "history": [
+        {
+          "commit": "b3502d7",
+          "timestamp": "2026-06-08T20:29:45.226Z",
+          "mi": 32.8,
+          "cognitive": 0,
+          "nesting": 0,
+          "lines": 180,
+          "maxCyclomatic": 1,
+          "entropy": 3.95
+        }
+      ],
+      "trend": "stable"
+    },
+    "src/features/servicios/components/servicios-recibidos-form.tsx": {
+      "latest": {
+        "commit": "b3502d7",
+        "timestamp": "2026-06-08T21:24:18.808Z",
+        "mi": 16.2,
+        "cognitive": 40,
+        "nesting": 4,
+        "lines": 423,
+        "maxCyclomatic": 33,
+        "entropy": 6.44
+      },
+      "history": [
+        {
+          "commit": "b3502d7",
+          "timestamp": "2026-06-08T21:24:18.808Z",
+          "mi": 16.2,
+          "cognitive": 40,
+          "nesting": 4,
+          "lines": 423,
+          "maxCyclomatic": 33,
+          "entropy": 6.44
+        }
+      ],
+      "trend": "stable"
+    },
+    "src/features/contabilidad/api/handlers-reconciliacion-gastos.ts": {
+      "latest": {
+        "commit": "b3502d7",
+        "timestamp": "2026-06-09T02:20:45.759Z",
+        "mi": 18.4,
+        "cognitive": 266,
+        "nesting": 5,
+        "lines": 216,
+        "maxCyclomatic": 75,
+        "entropy": 7.21
+      },
+      "history": [
+        {
+          "commit": "b3502d7",
+          "timestamp": "2026-06-09T02:20:45.759Z",
+          "mi": 18.4,
+          "cognitive": 266,
+          "nesting": 5,
+          "lines": 216,
+          "maxCyclomatic": 75,
+          "entropy": 7.21
+        }
+      ],
+      "trend": "stable"
+    },
+    "src/lib/services/validate-period-write.ts": {
+      "latest": {
+        "commit": "b3502d7",
+        "timestamp": "2026-06-09T02:21:58.536Z",
+        "mi": 41.6,
+        "cognitive": 31,
+        "nesting": 4,
+        "lines": 137,
+        "maxCyclomatic": 11,
+        "entropy": 5.55
+      },
+      "history": [
+        {
+          "commit": "b3502d7",
+          "timestamp": "2026-06-09T02:21:58.536Z",
+          "mi": 41.6,
+          "cognitive": 31,
+          "nesting": 4,
+          "lines": 137,
+          "maxCyclomatic": 11,
+          "entropy": 5.55
+        }
+      ],
+      "trend": "stable"
+    },
+    "src/features/contabilidad/hooks/use-pago-cuenta-por-pagar.ts": {
+      "latest": {
+        "commit": "b3502d7",
+        "timestamp": "2026-06-09T02:28:49.376Z",
+        "mi": 36.3,
+        "cognitive": 41,
+        "nesting": 5,
+        "lines": 176,
+        "maxCyclomatic": 22,
+        "entropy": 6.32
+      },
+      "history": [
+        {
+          "commit": "b3502d7",
+          "timestamp": "2026-06-09T02:28:49.376Z",
+          "mi": 36.3,
+          "cognitive": 41,
+          "nesting": 5,
+          "lines": 176,
+          "maxCyclomatic": 22,
+          "entropy": 6.32
+        }
+      ],
+      "trend": "stable"
+    },
+    "src/features/admin/components/tenant-users-page.tsx": {
+      "latest": {
+        "commit": "b3502d7",
+        "timestamp": "2026-06-09T11:45:49.950Z",
+        "mi": 22.4,
+        "cognitive": 57,
+        "nesting": 4,
+        "lines": 341,
+        "maxCyclomatic": 24,
+        "entropy": 6.65
+      },
+      "history": [
+        {
+          "commit": "b3502d7",
+          "timestamp": "2026-06-09T11:45:49.950Z",
+          "mi": 22.4,
+          "cognitive": 57,
+          "nesting": 4,
+          "lines": 341,
+          "maxCyclomatic": 24,
+          "entropy": 6.65
+        }
+      ],
+      "trend": "stable"
+    },
+    "src/app/busy/configuracion/usuarios/page.tsx": {
+      "latest": {
+        "commit": "b3502d7",
+        "timestamp": "2026-06-09T12:23:59.678Z",
+        "mi": 72.8,
+        "cognitive": 0,
+        "nesting": 1,
+        "lines": 16,
+        "maxCyclomatic": 1,
+        "entropy": 3.68
+      },
+      "history": [
+        {
+          "commit": "b3502d7",
+          "timestamp": "2026-06-09T12:23:59.678Z",
+          "mi": 72.8,
+          "cognitive": 0,
+          "nesting": 1,
+          "lines": 16,
+          "maxCyclomatic": 1,
+          "entropy": 3.68
+        }
+      ],
+      "trend": "stable"
+    },
+    "src/proxy.ts": {
+      "latest": {
+        "commit": "b3502d7",
+        "timestamp": "2026-06-09T12:35:08.160Z",
+        "mi": 46,
+        "cognitive": 16,
+        "nesting": 3,
+        "lines": 76,
+        "maxCyclomatic": 20,
+        "entropy": 4.66
+      },
+      "history": [
+        {
+          "commit": "b3502d7",
+          "timestamp": "2026-06-09T12:35:08.160Z",
+          "mi": 46,
+          "cognitive": 16,
+          "nesting": 3,
+          "lines": 76,
+          "maxCyclomatic": 20,
+          "entropy": 4.66
+        }
+      ],
+      "trend": "stable"
+    },
+    "src/app/api/auth/onboarding/tenant/route.ts": {
+      "latest": {
+        "commit": "9b295be",
+        "timestamp": "2026-06-09T14:22:20.455Z",
+        "mi": 81.4,
+        "cognitive": 0,
+        "nesting": 0,
+        "lines": 3,
+        "maxCyclomatic": 1,
+        "entropy": 2.92
+      },
+      "history": [
+        {
+          "commit": "9b295be",
+          "timestamp": "2026-06-09T14:22:20.455Z",
+          "mi": 81.4,
+          "cognitive": 0,
+          "nesting": 0,
+          "lines": 3,
+          "maxCyclomatic": 1,
+          "entropy": 2.92
+        }
+      ],
+      "trend": "stable"
+    },
+    "src/app/admin/tenants/page.tsx": {
+      "latest": {
+        "commit": "9b295be",
+        "timestamp": "2026-06-09T14:24:13.329Z",
+        "mi": 28.4,
+        "cognitive": 37,
+        "nesting": 4,
+        "lines": 152,
+        "maxCyclomatic": 21,
+        "entropy": 5.72
+      },
+      "history": [
+        {
+          "commit": "9b295be",
+          "timestamp": "2026-06-09T14:24:13.329Z",
+          "mi": 28.4,
+          "cognitive": 37,
+          "nesting": 4,
+          "lines": 152,
+          "maxCyclomatic": 21,
+          "entropy": 5.72
+        }
+      ],
+      "trend": "stable"
+    },
+    "src/app/admin/planes/page.tsx": {
+      "latest": {
+        "commit": "9b295be",
+        "timestamp": "2026-06-09T14:42:31.555Z",
+        "mi": 7.7,
+        "cognitive": 117,
+        "nesting": 5,
+        "lines": 824,
+        "maxCyclomatic": 90,
+        "entropy": 6.82
+      },
+      "history": [
+        {
+          "commit": "9b295be",
+          "timestamp": "2026-06-09T14:42:31.555Z",
+          "mi": 7.7,
+          "cognitive": 117,
+          "nesting": 5,
+          "lines": 824,
+          "maxCyclomatic": 90,
+          "entropy": 6.82
+        }
+      ],
+      "trend": "stable"
+    },
+    "src/features/planes/feature-registry.ts": {
+      "latest": {
+        "commit": "9b295be",
+        "timestamp": "2026-06-09T14:43:15.836Z",
+        "mi": 26.5,
+        "cognitive": 7,
+        "nesting": 3,
+        "lines": 373,
+        "maxCyclomatic": 5,
+        "entropy": 3.31
+      },
+      "history": [
+        {
+          "commit": "9b295be",
+          "timestamp": "2026-06-09T14:43:15.836Z",
+          "mi": 26.5,
+          "cognitive": 7,
+          "nesting": 3,
+          "lines": 373,
+          "maxCyclomatic": 5,
+          "entropy": 3.31
+        }
+      ],
+      "trend": "stable"
+    },
+    "src/features/ofertas/actions.ts": {
+      "latest": {
+        "commit": "f989785",
+        "timestamp": "2026-06-09T18:28:05.196Z",
+        "mi": 31.3,
+        "cognitive": 31,
+        "nesting": 3,
+        "lines": 161,
+        "maxCyclomatic": 16,
+        "entropy": 6.38
+      },
+      "history": [
+        {
+          "commit": "f989785",
+          "timestamp": "2026-06-09T18:28:05.196Z",
+          "mi": 31.3,
+          "cognitive": 31,
+          "nesting": 3,
+          "lines": 161,
+          "maxCyclomatic": 16,
+          "entropy": 6.38
+        }
+      ],
+      "trend": "stable"
+    },
+    "src/features/facturas/actions.ts": {
+      "latest": {
+        "commit": "f989785",
+        "timestamp": "2026-06-09T18:28:05.241Z",
+        "mi": 32.8,
+        "cognitive": 45,
+        "nesting": 3,
+        "lines": 88,
+        "maxCyclomatic": 25,
+        "entropy": 6.39
+      },
+      "history": [
+        {
+          "commit": "f989785",
+          "timestamp": "2026-06-09T18:28:05.241Z",
+          "mi": 32.8,
+          "cognitive": 45,
+          "nesting": 3,
+          "lines": 88,
+          "maxCyclomatic": 25,
+          "entropy": 6.39
+        }
+      ],
+      "trend": "stable"
     }
   },
-  "capturedAt": "2026-06-07T14:30:37.190Z"
+  "capturedAt": "2026-06-10T01:21:23.718Z"
 }

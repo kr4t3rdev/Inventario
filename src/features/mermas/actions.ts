@@ -135,19 +135,30 @@ export const updateMermaAction = withAction(
 
 		const productoId = data.productoId ?? mermaActual.productoId;
 		const cantidad = data.cantidad ?? mermaActual.cantidad;
+		const nuevoAlmacenId = data.almacenId ?? mermaActual.almacenId;
+		const oldAlmacenId = mermaActual.almacenId;
 
-		if (productoId !== mermaActual.productoId || cantidad !== mermaActual.cantidad) {
-			const productoNuevo = await prisma.producto.findFirst({
-				where: { id: productoId, tenantId },
-				select: { id: true, almacenId: true },
-			});
-			if (!productoNuevo)
-				throw new ActionError("Producto no encontrado", "NOT_FOUND");
+		const productoCambia = productoId !== mermaActual.productoId;
+		const cantidadCambia = cantidad !== mermaActual.cantidad;
+		const almacenCambia = data.almacenId !== undefined && nuevoAlmacenId !== oldAlmacenId;
 
-			const nuevoAlmacenId = data.almacenId ?? productoNuevo.almacenId;
-			const oldAlmacenId = mermaActual.almacenId ?? productoNuevo.almacenId;
+		if (productoCambia || cantidadCambia || almacenCambia) {
+			// Resolver almacén destino: si cambia producto, puede venir del producto nuevo
+			let resolvedAlmacenId = nuevoAlmacenId;
+			if (productoCambia) {
+				const productoNuevo = await prisma.producto.findFirst({
+					where: { id: productoId, tenantId },
+					select: { id: true, almacenId: true },
+				});
+				if (!productoNuevo)
+					throw new ActionError("Producto no encontrado", "NOT_FOUND");
+				if (data.almacenId === undefined) {
+					resolvedAlmacenId = productoNuevo.almacenId;
+				}
+			}
+
 			const cantidadAdicional =
-				productoId !== mermaActual.productoId
+				productoCambia || almacenCambia
 					? cantidad
 					: cantidad - mermaActual.cantidad;
 
@@ -157,7 +168,7 @@ export const updateMermaAction = withAction(
 						productoId_tipoUbicacion_ubicacionId: {
 							productoId,
 							tipoUbicacion: "almacen",
-							ubicacionId: nuevoAlmacenId,
+							ubicacionId: resolvedAlmacenId,
 						},
 					},
 					select: { cantidadDisponible: true },
@@ -174,11 +185,12 @@ export const updateMermaAction = withAction(
 						productoId,
 						cantidad,
 						motivo: data.motivo ?? undefined,
-						almacenId: nuevoAlmacenId,
+						almacenId: resolvedAlmacenId,
 					},
 					include: MERMA_INCLUDE,
 				});
 
+				// Revertir stock del producto/almacén anterior
 				await upsertStockUbicacion(tx, {
 					productoId: mermaActual.productoId,
 					tipoUbicacion: "almacen",
@@ -186,10 +198,11 @@ export const updateMermaAction = withAction(
 					modo: "increment",
 					delta: mermaActual.cantidad,
 				});
+				// Aplicar stock al nuevo producto/almacén
 				await upsertStockUbicacion(tx, {
 					productoId,
 					tipoUbicacion: "almacen",
-					ubicacionId: nuevoAlmacenId,
+					ubicacionId: resolvedAlmacenId,
 					modo: "increment",
 					delta: -cantidad,
 				});
@@ -201,6 +214,7 @@ export const updateMermaAction = withAction(
 			return merma;
 		}
 
+		// Solo cambió el motivo — no tocar stock
 		const merma = await prisma.merma.update({
 			where: { mermaId },
 			data: { motivo: data.motivo ?? undefined },

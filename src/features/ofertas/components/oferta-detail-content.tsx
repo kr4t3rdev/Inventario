@@ -165,7 +165,7 @@ export function OfertaDetailContent({ initialOferta }: OfertaDetailContentProps)
         toast.success('Oferta facturada exitosamente')
         setIsFacturarDialogOpen(false)
 
-        const ventaId = (result.data as any)?.venta?.ventaId
+        const ventaId = (result.data as any)?.ventaId ?? (result.data as any)?.venta?.ventaId
         if (ventaId) {
           router.push(`/busy/invoice/print?id=${ventaId}`)
         } else {
