@@ -54,11 +54,12 @@ export function CreateUserDialog({ open, onClose }: CreateUserDialogProps): Reac
   const shouldReduceMotion = useReducedMotion();
   const [formData, setFormData] = useState<CreateUserFormState>(INITIAL_FORM_STATE);
   const [loading, setLoading] = useState(false);
+  const [errors, setErrors] = useState<Record<string, string>>({});
+
   const resetForm = (): void => {
     setFormData(INITIAL_FORM_STATE);
+    setErrors({});
   };
-
-  const [errors, setErrors] = useState<Record<string, string>>({});
 
   const handleSubmit = async (event: React.FormEvent<HTMLFormElement>): Promise<void> => {
     event.preventDefault();
@@ -129,6 +130,7 @@ export function CreateUserDialog({ open, onClose }: CreateUserDialogProps): Reac
         </DialogHeader>
 
         <motion.form
+          key={open ? 'open' : 'closed'}
           onSubmit={handleSubmit}
           className="space-y-4"
           initial={shouldReduceMotion ? { opacity: 1, y: 0 } : { opacity: 0, y: 8 }}
