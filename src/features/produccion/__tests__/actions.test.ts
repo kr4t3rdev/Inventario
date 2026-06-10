@@ -146,4 +146,17 @@ describe('Producción Server Actions', () => {
 			}),
 		);
 	});
+
+	it('retorna FEATURE_NOT_AVAILABLE cuando el plan no incluye produccion', async () => {
+		const restrictedUser: AuthenticatedUser = {
+			...mockUser,
+			role: 'user',
+			tenantRole: 'manager',
+			planFeatures: { produccion: false },
+		};
+		vi.mocked(getCurrentUser).mockResolvedValue(restrictedUser);
+		const result = await aprobarOrdenProduccionAction('op-1');
+		expect(result.success).toBe(false);
+		expect(result.error!.code).toBe('FEATURE_NOT_AVAILABLE');
+	});
 });

@@ -4,6 +4,10 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 
 vi.mock('@/lib/server-actions/get-current-user');
+vi.mock('@/lib/services/tenant-scope', () => ({
+  requireTenant: vi.fn(() => 'tenant-test'),
+  requireFeature: vi.fn(),
+}));
 vi.mock('@/lib/prisma', () => ({
   prisma: {
     notification: {

@@ -13,4 +13,11 @@ describe('Series Actions', () => {
   it('crea', async () => { vi.mocked(getCurrentUser).mockResolvedValue(u); vi.mocked(prisma.serieFacturacion.findFirst).mockResolvedValue(null); vi.mocked(prisma.serieFacturacion.create).mockResolvedValue({}as any); const r=await createSerieFacturacionAction({prefijo:'A',descripcion:'Test'}); expect(r.success).toBe(true); });
   it('rechaza duplicado', async () => { vi.mocked(getCurrentUser).mockResolvedValue(u); vi.mocked(prisma.serieFacturacion.findFirst).mockResolvedValue({serieId:'1'}); const r=await createSerieFacturacionAction({prefijo:'A',descripcion:'Test'}); expect(r.success).toBe(false); });
   it('elimina', async () => { vi.mocked(getCurrentUser).mockResolvedValue(u); vi.mocked(prisma.serieFacturacion.findFirst).mockResolvedValue({serieId:'1'}); vi.mocked(prisma.serieFacturacion.delete).mockResolvedValue({}as any); const r=await deleteSerieFacturacionAction('1'); expect(r.success).toBe(true); });
+  it('retorna FEATURE_NOT_AVAILABLE cuando el plan no incluye series-facturacion', async () => {
+    const restrictedUser: AuthenticatedUser = { ...u, role: 'user', tenantRole: 'manager', planFeatures: { 'series-facturacion': false } };
+    vi.mocked(getCurrentUser).mockResolvedValue(restrictedUser);
+    const r = await getSeriesFacturacionAction();
+    expect(r.success).toBe(false);
+    expect(r.error!.code).toBe('FEATURE_NOT_AVAILABLE');
+  });
 });

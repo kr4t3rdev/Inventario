@@ -149,4 +149,19 @@ describe('Clientes Server Actions', () => {
       expect(result.error!.code).toBe('AUTH_REQUIRED');
     });
   });
+
+  describe('plan feature enforcement', () => {
+    it('retorna FEATURE_NOT_AVAILABLE cuando el plan no incluye clientes', async () => {
+      const restrictedUser: AuthenticatedUser = {
+        ...mockUser,
+        role: 'user',
+        tenantRole: 'manager',
+        planFeatures: { clientes: false },
+      };
+      vi.mocked(getCurrentUser).mockResolvedValue(restrictedUser);
+      const result = await getClientesAction();
+      expect(result.success).toBe(false);
+      expect(result.error!.code).toBe('FEATURE_NOT_AVAILABLE');
+    });
+  });
 });

@@ -141,4 +141,17 @@ describe('Empleados Server Actions', () => {
     expect(result.success).toBe(false);
     expect(result.error!.code).toBe('AUTH_REQUIRED');
   });
+
+  it('retorna FEATURE_NOT_AVAILABLE cuando el plan no incluye empleados', async () => {
+    const restrictedUser: AuthenticatedUser = {
+      ...mockUser,
+      role: 'user',
+      tenantRole: 'manager',
+      planFeatures: { empleados: false },
+    };
+    vi.mocked(getCurrentUser).mockResolvedValue(restrictedUser);
+    const result = await getEmpleadosAction();
+    expect(result.success).toBe(false);
+    expect(result.error!.code).toBe('FEATURE_NOT_AVAILABLE');
+  });
 });

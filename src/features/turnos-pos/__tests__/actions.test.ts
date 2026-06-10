@@ -40,6 +40,7 @@ vi.mock("@/lib/prisma", () => ({
 
 vi.mock("@/lib/services/tenant-scope", () => ({
 	requireTenant: vi.fn(() => "tenant-mock-1"),
+	requireFeature: vi.fn(),
 }));
 
 vi.mock("@/lib/server-actions/get-current-user", () => ({

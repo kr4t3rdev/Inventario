@@ -132,4 +132,19 @@ describe('ListasPrecios Server Actions', () => {
       expect(result.error!.code).toBe('AUTH_REQUIRED');
     });
   });
+
+  describe('plan feature enforcement', () => {
+    it('retorna FEATURE_NOT_AVAILABLE cuando el plan no incluye listas-precios', async () => {
+      const restrictedUser: AuthenticatedUser = {
+        ...mockUser,
+        role: 'user',
+        tenantRole: 'manager',
+        planFeatures: { 'listas-precios': false },
+      };
+      vi.mocked(getCurrentUser).mockResolvedValue(restrictedUser);
+      const result = await getListasPreciosAction();
+      expect(result.success).toBe(false);
+      expect(result.error!.code).toBe('FEATURE_NOT_AVAILABLE');
+    });
+  });
 });
