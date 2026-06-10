@@ -7,7 +7,7 @@
 
 import { withAction, ActionError } from "@/lib/server-actions";
 import { prisma } from "@/lib/prisma";
-import { requireTenant } from "@/lib/services/tenant-scope";
+import { requireFeature, requireTenant } from "@/lib/services/tenant-scope";
 import type { AuthenticatedUser } from "@/lib/auth-middleware";
 
 // ─── Select reutilizable ──────────────────────────────────
@@ -88,6 +88,7 @@ export const searchComprasAction = withAction(
 		params: { search?: string; page?: number; limit?: number } = {},
 		user: AuthenticatedUser,
 	) => {
+		requireFeature(user, 'rentabilidad-compra', 'consultar rentabilidad por compra');
 		const tenantId = requireTenant(user);
 		const page = params.page ?? 1;
 		const limit = params.limit ?? 20;
@@ -164,6 +165,7 @@ export const searchComprasAction = withAction(
  */
 export const getRentabilidadCompraAction = withAction(
 	async (compraId: string, user: AuthenticatedUser) => {
+		requireFeature(user, 'rentabilidad-compra', 'analizar rentabilidad');
 		const tenantId = requireTenant(user);
 
 		// 1. Obtener compra con items y productos

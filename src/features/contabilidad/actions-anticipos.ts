@@ -10,7 +10,7 @@ import { revalidatePath } from 'next/cache';
 import { z } from 'zod';
 import { withAction, ActionError } from '@/lib/server-actions';
 import { prisma } from '@/lib/prisma';
-import { requireTenant } from '@/lib/services/tenant-scope';
+import { requireFeature, requireTenant } from '@/lib/services/tenant-scope';
 import { withPeriodValidation } from '@/lib/services/with-period-validation';
 import type { AuthenticatedUser } from '@/lib/auth-middleware';
 
@@ -53,6 +53,7 @@ export const getAnticiposAction = withAction(async (params: {
   clienteId?: string;
   moneda?: string;
 } = {}, user: AuthenticatedUser) => {
+  requireFeature(user, 'anticipos', 'consultar anticipos');
   const tenantId = requireTenant(user);
   const where: any = { tenantId };
   if (params.tipo) where.tipo = params.tipo;
@@ -69,6 +70,7 @@ export const getAnticiposAction = withAction(async (params: {
 });
 
 export const getAnticipoByIdAction = withAction(async (id: string, user: AuthenticatedUser) => {
+  requireFeature(user, 'anticipos', 'consultar anticipo');
   const tenantId = requireTenant(user);
   const anticipo = await prisma.anticipo.findFirst({
     where: { anticipoId: id, tenantId },
@@ -86,6 +88,7 @@ export const getAnticipoByIdAction = withAction(async (id: string, user: Authent
 export const createAnticipoAction = withAction(withPeriodValidation(
   (input) => input.fechaAnticipo ? new Date(input.fechaAnticipo) : new Date(),
   async (input: z.infer<typeof createSchema>, user: AuthenticatedUser) => {
+    requireFeature(user, 'anticipos', 'crear anticipos');
     const parsed = createSchema.parse(input);
     const tenantId = requireTenant(user);
 
@@ -113,7 +116,8 @@ export const createAnticipoAction = withAction(withPeriodValidation(
 export const executeAnticipoAction = withAction(withPeriodValidation(
   () => new Date(),
   async (input: z.infer<typeof executeSchema>, user: AuthenticatedUser) => {
-  const parsed = executeSchema.parse(input);
+    requireFeature(user, 'anticipos', 'ejecutar anticipos');
+    const parsed = executeSchema.parse(input);
   const tenantId = requireTenant(user);
 
   const anticipo = await prisma.anticipo.findFirst({
@@ -133,7 +137,8 @@ export const executeAnticipoAction = withAction(withPeriodValidation(
 export const reverseAnticipoAction = withAction(withPeriodValidation(
   () => new Date(),
   async (input: z.infer<typeof reverseSchema>, user: AuthenticatedUser) => {
-  const parsed = reverseSchema.parse(input);
+    requireFeature(user, 'anticipos', 'anular anticipos');
+    const parsed = reverseSchema.parse(input);
   const tenantId = requireTenant(user);
 
   const anticipo = await prisma.anticipo.findFirst({
@@ -150,7 +155,8 @@ export const reverseAnticipoAction = withAction(withPeriodValidation(
   return { anticipo: updated };
 }));
 
-export const getResumenAnticiposAction = withAction(async (params: { fechaInicio?: string; fechaFin?: string; tipo?: string } = {}, _user: AuthenticatedUser) => {
+export const getResumenAnticiposAction = withAction(async (params: { fechaInicio?: string; fechaFin?: string; tipo?: string } = {}, user: AuthenticatedUser) => {
+  requireFeature(user, 'anticipos', 'consultar resumen de anticipos');
   const where: any = {};
   if (params.tipo) where.tipo = params.tipo;
   if (params.fechaInicio || params.fechaFin) {

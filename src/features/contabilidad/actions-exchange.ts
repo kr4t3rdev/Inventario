@@ -1,18 +1,18 @@
-/**
- * @description Server Actions para Exchange/Monedas/Tasas.
- */
 'use server';
 
 import { withAction } from '@/lib/server-actions';
 import { prisma } from '@/lib/prisma';
+import { requireFeature } from '@/lib/services/tenant-scope';
 import type { AuthenticatedUser } from '@/lib/auth-middleware';
 
 export const getMonedasAction = withAction(async (_input: void, user: AuthenticatedUser) => {
+  requireFeature(user, 'multi-moneda', 'consultar monedas');
   // Moneda is a global system table, not tenant-scoped
   return await prisma.moneda.findMany({ orderBy: { nombre: 'asc' } });
 });
 
 export const getTasasActualesAction = withAction(async (_input: void, user: AuthenticatedUser) => {
+  requireFeature(user, 'multi-moneda', 'consultar tasas de cambio');
   // TasaCambio is a global system table, not tenant-scoped
   const monedas = await prisma.moneda.findMany();
   const monedaPrincipal = monedas.find(m => m.esPrincipal) || monedas[0];
@@ -25,6 +25,7 @@ export const getTasasActualesAction = withAction(async (_input: void, user: Auth
 });
 
 export const convertMoneyAction = withAction(async (input: { monto: number; monedaOrigen: string; monedaDestino: string }, user: AuthenticatedUser) => {
+  requireFeature(user, 'multi-moneda', 'convertir monedas');
   // TasaCambio is a global system table, not tenant-scoped
   const tasa = await prisma.tasaCambio.findFirst({
     where: { monedaOrigenId: input.monedaOrigen, monedaDestino: input.monedaDestino },
@@ -35,6 +36,7 @@ export const convertMoneyAction = withAction(async (input: { monto: number; mone
 });
 
 export const createMonedaAction = withAction(async (input: { codigo: string; nombre: string; simbolo: string; esPrincipal?: boolean }, user: AuthenticatedUser) => {
+  requireFeature(user, 'multi-moneda', 'crear monedas');
   const existing = await prisma.moneda.findUnique({ where: { codigo: input.codigo.toUpperCase() } });
   if (existing) throw new Error('Ya existe una moneda con ese código');
 
@@ -50,6 +52,7 @@ export const createMonedaAction = withAction(async (input: { codigo: string; nom
 });
 
 export const updateMonedaAction = withAction(async (input: { codigo: string; nombre?: string; simbolo?: string; esPrincipal?: boolean; isActive?: boolean }, user: AuthenticatedUser) => {
+  requireFeature(user, 'multi-moneda', 'editar monedas');
   const { codigo, ...data } = input;
   const existing = await prisma.moneda.findUnique({ where: { codigo } });
   if (!existing) throw new Error('Moneda no encontrada');
@@ -58,6 +61,7 @@ export const updateMonedaAction = withAction(async (input: { codigo: string; nom
 });
 
 export const updateTasaCambioAction = withAction(async (input: { monedaOrigenId: string; monedaDestino: string; tasa: number }, user: AuthenticatedUser) => {
+  requireFeature(user, 'multi-moneda', 'actualizar tasas de cambio');
   const { monedaOrigenId, monedaDestino, tasa } = input;
 
   const monedaExiste = await prisma.moneda.findUnique({ where: { codigo: monedaOrigenId } });
@@ -84,6 +88,7 @@ export const updateTasaCambioAction = withAction(async (input: { monedaOrigenId:
 });
 
 export const getHistorialTasasAction = withAction(async (params: { monedaOrigen?: string; fechaDesde?: string; fechaHasta?: string; busqueda?: string; pagina?: number; limite?: number } = {}, user: AuthenticatedUser) => {
+  requireFeature(user, 'multi-moneda', 'consultar historial de tasas');
   const where: any = {};
   if (params.monedaOrigen) where.monedaOrigenId = params.monedaOrigen;
   if (params.fechaDesde || params.fechaHasta) {

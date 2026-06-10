@@ -10,7 +10,7 @@
 
 import { withAction, ActionError } from "@/lib/server-actions";
 import { prisma } from "@/lib/prisma";
-import { requireTenant } from "@/lib/services/tenant-scope";
+import { requireFeature, requireTenant } from "@/lib/services/tenant-scope";
 import { revalidatePath } from "next/cache";
 import type { AuthenticatedUser } from "@/lib/auth-middleware";
 import {
@@ -386,6 +386,7 @@ export const getCuentasPorCobrarAction = withAction(
 		input: GetCuentasPorCobrarInput,
 		user: AuthenticatedUser,
 	): Promise<GetCuentasPorCobrarResult> => {
+		requireFeature(user, 'cuentas-cobrar', 'consultar cuentas por cobrar');
 		const tenantId = requireTenant(user);
 		const f = getCuentasPorCobrarSchema.parse(input);
 
@@ -436,6 +437,7 @@ export const createCuentaPorCobrarAction = withAction(
 		input: CreateCuentaPorCobrarInput,
 		user: AuthenticatedUser,
 	): Promise<CuentaPorCobrarEnriquecida> => {
+		requireFeature(user, 'cuentas-cobrar', 'crear cuentas por cobrar');
 		const tenantId = requireTenant(user);
 		const p = createCuentaPorCobrarSchema.parse(input);
 
@@ -499,6 +501,7 @@ export const updateCuentaPorCobrarAction = withAction(
 		input: UpdateCuentaPorCobrarInput,
 		user: AuthenticatedUser,
 	): Promise<CuentaPorCobrarEnriquecida> => {
+		requireFeature(user, 'cuentas-cobrar', 'editar cuentas por cobrar');
 		const tenantId = requireTenant(user);
 		const p = updateCuentaPorCobrarSchema.parse(input);
 
@@ -544,6 +547,7 @@ export const getCxcMetricsAction = withAction(
 		_input: Record<string, never>,
 		user: AuthenticatedUser,
 	): Promise<CxcMetrics> => {
+		requireFeature(user, 'cuentas-cobrar', 'ver métricas de cuentas por cobrar');
 		const tenantId = requireTenant(user);
 
 		const ahora = new Date();
@@ -585,6 +589,7 @@ export const getCuentasPorPagarAction = withAction(
 		input: GetCuentasPorPagarInput,
 		user: AuthenticatedUser,
 	): Promise<GetCuentasPorPagarResult> => {
+		requireFeature(user, 'cuentas-pagar', 'consultar cuentas por pagar');
 		const tenantId = requireTenant(user);
 		const f = getCuentasPorPagarSchema.parse(input);
 
@@ -652,6 +657,7 @@ export const createCuentaPorPagarAction = withAction(
 		input: CreateCuentaPorPagarInput,
 		user: AuthenticatedUser,
 	): Promise<CuentaPorPagarEnriquecida> => {
+		requireFeature(user, 'cuentas-pagar', 'crear cuentas por pagar');
 		const tenantId = requireTenant(user);
 		const p = createCuentaPorPagarSchema.parse(input);
 
