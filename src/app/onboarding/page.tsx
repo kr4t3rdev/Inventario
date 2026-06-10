@@ -564,7 +564,7 @@ export default function OnboardingPage(): React.ReactNode {
         initial={{ opacity: 0, y: 16 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.7, ease: [0.22, 1, 0.36, 1] as const }}
-        className="relative w-full max-w-lg"
+        className="relative w-full max-w-2xl"
       >
         {/* Glow effect */}
         <div className="absolute -inset-1 rounded-3xl bg-linear-to-r from-primary/30 via-purple-500/30 to-primary/30 opacity-60 blur-xl" />
