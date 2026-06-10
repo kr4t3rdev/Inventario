@@ -44,6 +44,8 @@ vi.mock("@/lib/prisma", () => ({
 		},
 		vendor: { findFirst: vi.fn() },
 		producto: { findFirst: vi.fn() },
+		anticipoMovimiento: { findFirst: vi.fn() },
+		cuentaPorPagar: { create: vi.fn(), delete: vi.fn() },
 		$transaction: vi.fn((cb: any) => cb(mockTx)),
 	},
 }));
@@ -139,6 +141,10 @@ describe("ComprasProductos Server Actions", () => {
 				where: { id: "prod-1" },
 				data: { precioCosto: 450 },
 			});
+			expect(mockTx.producto.update).toHaveBeenCalledWith({
+				where: { id: "prod-1" },
+				data: { stock: { increment: 10 } },
+			});
 			expect(upsertStockUbicacion).toHaveBeenCalledWith(
 				mockTx,
 				expect.objectContaining({
@@ -167,10 +173,12 @@ describe("ComprasProductos Server Actions", () => {
 	});
 
 	describe("updateCompraProductoAction", () => {
-		it("actualiza compra exitosamente", async () => {
+		it("actualiza campos de cabecera sin impacto contable", async () => {
 			vi.mocked(getCurrentUser).mockResolvedValue(mockUser);
 			vi.mocked(prisma.compraDocumento.findFirst).mockResolvedValue({
 				compraDocumentoId: "cd-1",
+				formaPago: "PAGO_COMPLETO",
+				cuentaPorPagar: null,
 			});
 			vi.mocked(prisma.compraDocumento.update).mockResolvedValue({} as any);
 
@@ -180,18 +188,186 @@ describe("ComprasProductos Server Actions", () => {
 			});
 			expect(result.success).toBe(true);
 		});
-	});
 
-	describe("deleteCompraProductoAction", () => {
-		it("soft-delete compra exitosamente", async () => {
+		it("PAGO_PARCIAL → PAGO_COMPLETO elimina cuentaPorPagar", async () => {
 			vi.mocked(getCurrentUser).mockResolvedValue(mockUser);
 			vi.mocked(prisma.compraDocumento.findFirst).mockResolvedValue({
 				compraDocumentoId: "cd-1",
+				formaPago: "PAGO_PARCIAL",
+				cuentaPorPagarId: "cxp-1",
+				cuentaPorPagar: {
+					cuentaPorPagarId: "cxp-1",
+					montoDeuda: 1000,
+					saldoPendiente: 1000,
+					estado: "PENDIENTE",
+				},
 			});
+			vi.mocked(prisma.cuentaPorPagar.delete).mockResolvedValue({} as any);
+			vi.mocked(prisma.compraDocumento.update).mockResolvedValue({} as any);
+
+			const result = await updateCompraProductoAction({
+				compraDocumentoId: "cd-1",
+				formaPago: "PAGO_COMPLETO",
+			});
+
+			expect(result.success).toBe(true);
+			expect(prisma.cuentaPorPagar.delete).toHaveBeenCalledWith({
+				where: { cuentaPorPagarId: "cxp-1" },
+			});
+		});
+
+		it("PAGO_COMPLETO → PAGO_PARCIAL crea cuentaPorPagar", async () => {
+			vi.mocked(getCurrentUser).mockResolvedValue(mockUser);
+			vi.mocked(prisma.compraDocumento.findFirst).mockResolvedValue({
+				compraDocumentoId: "cd-1",
+				tenantId: "tenant-test",
+				proveedorId: "prov-1",
+				numeroFactura: "F-001",
+				total: 1000,
+				gastoCompraId: "gc-1",
+				formaPago: "PAGO_COMPLETO",
+				cuentaPorPagarId: null,
+				cuentaPorPagar: null,
+			});
+			vi.mocked(prisma.cuentaPorPagar.create).mockResolvedValue({
+				cuentaPorPagarId: "cxp-new",
+			});
+			vi.mocked(prisma.compraDocumento.update).mockResolvedValue({} as any);
+
+			const result = await updateCompraProductoAction({
+				compraDocumentoId: "cd-1",
+				formaPago: "PAGO_PARCIAL",
+			});
+
+			expect(result.success).toBe(true);
+			expect(prisma.cuentaPorPagar.create).toHaveBeenCalledWith(
+				expect.objectContaining({
+					data: expect.objectContaining({
+						montoDeuda: 1000,
+						saldoPendiente: 1000,
+						estado: "PENDIENTE",
+						tipo: "compra",
+					}),
+				}),
+			);
+		});
+
+		it("rechaza cambiar a ANTICIPO_PAGO (validado por schema Zod)", async () => {
+			vi.mocked(getCurrentUser).mockResolvedValue(mockUser);
+			vi.mocked(prisma.compraDocumento.findFirst).mockResolvedValue({
+				compraDocumentoId: "cd-1",
+				formaPago: "PAGO_COMPLETO",
+				cuentaPorPagar: null,
+			});
+
+			const result = await updateCompraProductoAction({
+				compraDocumentoId: "cd-1",
+				formaPago: "ANTICIPO_PAGO" as any,
+			});
+
+			expect(result.success).toBe(false);
+			expect(prisma.compraDocumento.update).not.toHaveBeenCalled();
+		});
+
+		it("rechaza cambiar desde ANTICIPO_PAGO", async () => {
+			vi.mocked(getCurrentUser).mockResolvedValue(mockUser);
+			vi.mocked(prisma.compraDocumento.findFirst).mockResolvedValue({
+				compraDocumentoId: "cd-1",
+				formaPago: "ANTICIPO_PAGO",
+				cuentaPorPagar: null,
+			});
+
+			const result = await updateCompraProductoAction({
+				compraDocumentoId: "cd-1",
+				formaPago: "PAGO_COMPLETO",
+			});
+
+			expect(result.success).toBe(false);
+			expect(result.error!.message).toContain("ANTICIPO_PAGO");
+		});
+
+		it("rechaza PAGO_PARCIAL → PAGO_COMPLETO con pagos parciales", async () => {
+			vi.mocked(getCurrentUser).mockResolvedValue(mockUser);
+			vi.mocked(prisma.compraDocumento.findFirst).mockResolvedValue({
+				compraDocumentoId: "cd-1",
+				formaPago: "PAGO_PARCIAL",
+				cuentaPorPagarId: "cxp-1",
+				cuentaPorPagar: {
+					cuentaPorPagarId: "cxp-1",
+					montoDeuda: 1000,
+					saldoPendiente: 500,
+					estado: "PENDIENTE",
+				},
+			});
+
+			const result = await updateCompraProductoAction({
+				compraDocumentoId: "cd-1",
+				formaPago: "PAGO_COMPLETO",
+			});
+
+			expect(result.success).toBe(false);
+			expect(result.error!.message).toContain("pagos parciales");
+		});
+	});
+
+	describe("deleteCompraProductoAction", () => {
+		it("soft-delete compra sin impacto contable", async () => {
+			vi.mocked(getCurrentUser).mockResolvedValue(mockUser);
+			vi.mocked(prisma.compraDocumento.findFirst).mockResolvedValue({
+				compraDocumentoId: "cd-1",
+				gastoCompraId: null,
+				cuentaPorPagarId: null,
+			});
+			vi.mocked(prisma.anticipoMovimiento.findFirst).mockResolvedValue(null);
 			vi.mocked(prisma.compraDocumento.update).mockResolvedValue({} as any);
 
 			const result = await deleteCompraProductoAction("cd-1");
 			expect(result.success).toBe(true);
+		});
+
+		it("rechaza borrar compra con gastoCompraId", async () => {
+			vi.mocked(getCurrentUser).mockResolvedValue(mockUser);
+			vi.mocked(prisma.compraDocumento.findFirst).mockResolvedValue({
+				compraDocumentoId: "cd-1",
+				gastoCompraId: "gc-1",
+				cuentaPorPagarId: null,
+			});
+
+			const result = await deleteCompraProductoAction("cd-1");
+			expect(result.success).toBe(false);
+			expect(result.error!.message).toContain("gasto contable");
+			expect(prisma.compraDocumento.update).not.toHaveBeenCalled();
+		});
+
+		it("rechaza borrar compra con cuentaPorPagarId", async () => {
+			vi.mocked(getCurrentUser).mockResolvedValue(mockUser);
+			vi.mocked(prisma.compraDocumento.findFirst).mockResolvedValue({
+				compraDocumentoId: "cd-1",
+				gastoCompraId: null,
+				cuentaPorPagarId: "cxp-1",
+			});
+
+			const result = await deleteCompraProductoAction("cd-1");
+			expect(result.success).toBe(false);
+			expect(result.error!.message).toContain("cuenta por pagar");
+			expect(prisma.compraDocumento.update).not.toHaveBeenCalled();
+		});
+
+		it("rechaza borrar compra con anticipo aplicado", async () => {
+			vi.mocked(getCurrentUser).mockResolvedValue(mockUser);
+			vi.mocked(prisma.compraDocumento.findFirst).mockResolvedValue({
+				compraDocumentoId: "cd-1",
+				gastoCompraId: null,
+				cuentaPorPagarId: null,
+			});
+			vi.mocked(prisma.anticipoMovimiento.findFirst).mockResolvedValue({
+				movimientoId: "mov-1",
+			});
+
+			const result = await deleteCompraProductoAction("cd-1");
+			expect(result.success).toBe(false);
+			expect(result.error!.message).toContain("anticipo");
+			expect(prisma.compraDocumento.update).not.toHaveBeenCalled();
 		});
 	});
 
