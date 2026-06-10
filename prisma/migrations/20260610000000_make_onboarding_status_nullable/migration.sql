@@ -1,0 +1,1 @@
+ALTER TABLE "User" ALTER COLUMN "onboardingStatus" DROP NOT NULL;

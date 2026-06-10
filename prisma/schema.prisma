@@ -574,7 +574,7 @@ model User {
   password                 String
   role                     String               @default("regularUser")
   onboardingType           String?
-  onboardingStatus         String               @default("pending_email_verification")
+  onboardingStatus         String?              @default("pending_email_verification")
   emailVerifiedAt          DateTime?
   createdAt                DateTime             @default(now())
   updatedAt                DateTime             @updatedAt
