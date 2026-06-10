@@ -7,7 +7,7 @@ import { revalidatePath } from 'next/cache'
 import { z } from 'zod'
 import { prisma } from '@/lib/prisma'
 import { withAction, ActionError } from '@/lib/server-actions'
-import { requireTenant } from '@/lib/services/tenant-scope'
+import { requireFeature, requireTenant } from '@/lib/services/tenant-scope'
 import { AuditLogService } from '@/lib/services/audit-log-service'
 import { withPeriodValidation } from '@/lib/services/with-period-validation'
 import { calcularSaldoPendientePrestamo, normalizarEstadoPrestamoCash } from '@/lib/utils/prestamo-cash'
@@ -54,6 +54,7 @@ export const getPrestamosCashAction = withAction(async (
   input: { estado?: string; clienteId?: string; moneda?: string; page?: number; limit?: number } = {},
   user: AuthenticatedUser
 ) => {
+  requireFeature(user, 'prestamos-cash', 'gestionar préstamos cash');
   if (!prestamosCashEnabled()) throw new ActionError('Módulo de préstamos cash deshabilitado', 'DISABLED')
   const tenantId = requireTenant(user)
   const page = input.page || 1
@@ -91,6 +92,7 @@ export const getPrestamosCashAction = withAction(async (
 })
 
 export const getPrestamoCashByIdAction = withAction(async (id: string, user: AuthenticatedUser) => {
+  requireFeature(user, 'prestamos-cash', 'consultar préstamos cash');
   if (!prestamosCashEnabled()) throw new ActionError('Módulo de préstamos cash deshabilitado', 'DISABLED')
   const tenantId = requireTenant(user)
   const prestamo = await prisma.prestamoCash.findFirst({
@@ -102,6 +104,7 @@ export const getPrestamoCashByIdAction = withAction(async (id: string, user: Aut
 })
 
 export const getPrestamoCashHistorialAction = withAction(async (id: string, user: AuthenticatedUser) => {
+  requireFeature(user, 'prestamos-cash', 'consultar historial de préstamos cash');
   if (!prestamosCashEnabled()) throw new ActionError('Módulo de préstamos cash deshabilitado', 'DISABLED')
   const tenantId = requireTenant(user)
   const prestamo = await prisma.prestamoCash.findFirst({
@@ -149,6 +152,7 @@ export const createPrestamoCashAction = withAction(withPeriodValidation(
   // Usa fecha actual para el desembolso
   () => new Date(),
   async (input: z.infer<typeof createSchema>, user: AuthenticatedUser) => {
+    requireFeature(user, 'prestamos-cash', 'crear préstamos cash');
     if (!prestamosCashEnabled()) throw new ActionError('Módulo de préstamos cash deshabilitado', 'DISABLED')
     const body = createSchema.parse(input)
     const tenantId = requireTenant(user)
@@ -235,6 +239,7 @@ export const updatePrestamoCashAction = withAction(async (
   input: { id: string } & z.infer<typeof updateSchema>,
   user: AuthenticatedUser
 ) => {
+  requireFeature(user, 'prestamos-cash', 'editar préstamos cash');
   if (!prestamosCashEnabled()) throw new ActionError('Módulo de préstamos cash deshabilitado', 'DISABLED')
   const { id, ...data } = input
   const parsed = updateSchema.parse(data)
@@ -267,6 +272,7 @@ export const registrarPagoPrestamoAction = withAction(withPeriodValidation(
     input: { id: string } & z.infer<typeof pagoSchema>,
     user: AuthenticatedUser
   ) => {
+    requireFeature(user, 'prestamos-cash', 'registrar pagos de préstamos cash');
     if (!prestamosCashEnabled()) throw new ActionError('Módulo de préstamos cash deshabilitado', 'DISABLED')
     const {
     // @ts-expect-error
@@ -333,6 +339,7 @@ export const registrarPagoPrestamoAction = withAction(withPeriodValidation(
 ));
 
 export const getPrestamosCashStatsAction = withAction(async (_input: void, user: AuthenticatedUser) => {
+  requireFeature(user, 'prestamos-cash', 'ver estadísticas de préstamos cash');
   if (!prestamosCashEnabled()) throw new ActionError('Módulo de préstamos cash deshabilitado', 'DISABLED')
   requireTenant(user)
 

@@ -7,7 +7,7 @@ import { revalidatePath } from 'next/cache'
 import { z } from 'zod'
 import { prisma } from '@/lib/prisma'
 import { withAction, ActionError } from '@/lib/server-actions'
-import { requireTenant } from '@/lib/services/tenant-scope'
+import { requireFeature, requireTenant } from '@/lib/services/tenant-scope'
 import { AuditLogService } from '@/lib/services/audit-log-service'
 import { withPeriodValidation } from '@/lib/services/with-period-validation'
 import { calcularSaldoPendienteDeuda, calcularTotalDeudaConInteres, normalizarEstadoDeudaCash } from '@/lib/utils/deuda-cash'
@@ -54,6 +54,7 @@ export const getDeudasCashAction = withAction(async (
   input: { estado?: string; proveedorId?: string; moneda?: string; page?: number; limit?: number } = {},
   user: AuthenticatedUser
 ) => {
+  requireFeature(user, 'deudas-cash', 'gestionar deudas cash');
   if (!deudasCashEnabled()) throw new ActionError('Módulo de deudas cash deshabilitado', 'DISABLED')
   const tenantId = requireTenant(user)
   const page = input.page || 1
@@ -91,6 +92,7 @@ export const getDeudasCashAction = withAction(async (
 })
 
 export const getDeudaCashByIdAction = withAction(async (id: string, user: AuthenticatedUser) => {
+  requireFeature(user, 'deudas-cash', 'consultar deudas cash');
   if (!deudasCashEnabled()) throw new ActionError('Módulo de deudas cash deshabilitado', 'DISABLED')
   const tenantId = requireTenant(user)
   const deuda = await prisma.deudaCash.findFirst({
@@ -105,6 +107,7 @@ export const createDeudaCashAction = withAction(withPeriodValidation(
   // Usa fecha actual para el desembolso
   () => new Date(),
   async (input: z.infer<typeof createSchema>, user: AuthenticatedUser) => {
+    requireFeature(user, 'deudas-cash', 'crear deudas cash');
     if (!deudasCashEnabled()) throw new ActionError('Módulo de deudas cash deshabilitado', 'DISABLED')
     const body = createSchema.parse(input)
     const tenantId = requireTenant(user)
@@ -177,6 +180,7 @@ export const updateDeudaCashAction = withAction(async (
   input: { id: string } & z.infer<typeof updateSchema>,
   user: AuthenticatedUser
 ) => {
+  requireFeature(user, 'deudas-cash', 'editar deudas cash');
   if (!deudasCashEnabled()) throw new ActionError('Módulo de deudas cash deshabilitado', 'DISABLED')
   const { id, ...data } = input
   const parsed = updateSchema.parse(data)
@@ -209,6 +213,7 @@ export const registrarPagoDeudaAction = withAction(withPeriodValidation(
     input: { id: string } & z.infer<typeof pagoSchema>,
     user: AuthenticatedUser
   ) => {
+    requireFeature(user, 'deudas-cash', 'registrar pagos de deudas cash');
     if (!deudasCashEnabled()) throw new ActionError('Módulo de deudas cash deshabilitado', 'DISABLED')
     const tenantId = requireTenant(user)
     const {
@@ -274,6 +279,7 @@ export const registrarPagoDeudaAction = withAction(withPeriodValidation(
 ));
 
 export const getDeudasCashStatsAction = withAction(async (_input: void, user: AuthenticatedUser) => {
+  requireFeature(user, 'deudas-cash', 'ver estadísticas de deudas cash');
   if (!deudasCashEnabled()) throw new ActionError('Módulo de deudas cash deshabilitado', 'DISABLED')
   requireTenant(user)
 
