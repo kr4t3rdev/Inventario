@@ -25,6 +25,7 @@ export interface AuthenticatedUser {
   tenantId?: string
   tenantRole?: TenantRole
   planLimits?: PlanLimits
+  planFeatures?: Record<string, boolean>
 }
 
 /**
@@ -37,7 +38,7 @@ export interface AuthenticatedUser {
 export async function resolveTenantContext(
   userId: string,
   headerTenantId: string | null,
-): Promise<{ tenantId: string; tenantRole: TenantRole; planLimits?: PlanLimits; licenseExpiresAt?: Date } | null> {
+): Promise<{ tenantId: string; tenantRole: TenantRole; planLimits?: PlanLimits; planFeatures?: Record<string, boolean>; licenseExpiresAt?: Date } | null> {
   try {
     const membership = headerTenantId
       ? await prisma.tenantMembership.findUnique({
@@ -69,10 +70,16 @@ export async function resolveTenantContext(
       };
     }
 
+    let planFeatures: Record<string, boolean> | undefined;
+    if (license?.features && typeof license.features === 'object') {
+      planFeatures = license.features as Record<string, boolean>;
+    }
+
     return {
       tenantId: membership.tenantId,
       tenantRole: normalizeTenantRole(membership.tenantRole) ?? 'dependiente',
       planLimits,
+      planFeatures,
       licenseExpiresAt: license?.expiracion,
     };
   } catch (error) {
@@ -244,6 +251,7 @@ export async function authenticateUser(
         tenantId: tenantContext.tenantId,
         tenantRole: tenantContext.tenantRole,
         planLimits: tenantContext.planLimits,
+        planFeatures: tenantContext.planFeatures,
       }),
     } as AuthenticatedUser
 

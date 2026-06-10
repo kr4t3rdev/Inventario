@@ -126,6 +126,7 @@ export async function getCurrentUser(): Promise<AuthenticatedUser | null> {
         tenantId: tenantContext.tenantId,
         tenantRole: tenantContext.tenantRole,
         planLimits: tenantContext.planLimits,
+        planFeatures: tenantContext.planFeatures,
       }),
     };
 
