@@ -260,7 +260,7 @@ export default function LoginPage(): React.ReactElement {
         <div className="absolute -inset-1 bg-linear-to-r from-primary/30 via-purple-500/30 to-primary/30 rounded-3xl blur-xl opacity-60 animate-pulse" />
         
         {/* Main Card */}
-        <div className="relative bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl rounded-2xl shadow-2xl border border-white/20 dark:border-slate-700/30 overflow-hidden">
+        <div className="relative bg-white/80 dark:bg-slate-950/40 backdrop-blur-xl rounded-2xl shadow-2xl border border-white/20 dark:border-slate-700/20 overflow-hidden">
           {/* Header Section */}
           <motion.div 
             initial={{ opacity: 0 }}

@@ -315,7 +315,7 @@ export default function RegisterPage() {
         <div className="absolute -inset-1 bg-linear-to-r from-purple-500/30 via-primary/30 to-purple-500/30 rounded-3xl blur-xl opacity-60 animate-pulse" />
         
         {/* Main Card */}
-        <div className="relative bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl rounded-2xl shadow-2xl border border-white/20 dark:border-slate-700/30 overflow-hidden">
+        <div className="relative bg-white/80 dark:bg-slate-950/40 backdrop-blur-xl rounded-2xl shadow-2xl border border-white/20 dark:border-slate-700/20 overflow-hidden">
           {/* Header Section */}
           <motion.div 
             initial={{ opacity: 0 }}
