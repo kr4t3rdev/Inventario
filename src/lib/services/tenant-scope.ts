@@ -23,6 +23,30 @@ export function requireManagerRole(user: AuthenticatedUser, action: string = 're
 }
 
 /**
+ * @description Valida que el plan del tenant incluya el feature requerido.
+ * Los usuarios admin globales bypass this check.
+ *
+ * @param {AuthenticatedUser} user - Usuario autenticado.
+ * @param {string} featureKey - Clave del feature en el registro del plan.
+ * @param {string} [action='acceder a esta funcionalidad'] - Descripción de la acción para el mensaje de error.
+ * @throws {ActionError} Si el plan no incluye el feature.
+ */
+export function requireFeature(
+  user: AuthenticatedUser,
+  featureKey: string,
+  action: string = 'acceder a esta funcionalidad',
+): void {
+  if (user.role === 'admin') return;
+  requireTenant(user);
+  if (user.planFeatures?.[featureKey] !== true) {
+    throw new ActionError(
+      `Tu plan actual no incluye la funcionalidad de ${action}. Actualiza tu plan para continuar.`,
+      'FEATURE_NOT_AVAILABLE',
+    );
+  }
+}
+
+/**
  * @description Extiende un where de Prisma con filtro por tenantId.
  * Úsalo en cada query de negocio para garantizar aislamiento entre tenants.
  *
