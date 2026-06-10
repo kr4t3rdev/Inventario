@@ -3,7 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { withAction, ActionError } from "@/lib/server-actions";
 import { prisma } from "@/lib/prisma";
-import { requireTenant } from "@/lib/services/tenant-scope";
+import { requireFeature, requireTenant } from "@/lib/services/tenant-scope";
 import { upsertStockUbicacion } from "@/lib/services/stock-ubicacion-service";
 import { PRODUCTION_STATES } from "@/lib/constants/production";
 import {
@@ -25,6 +25,7 @@ export const getRecetasProduccionAction = withAction(
 		} = {},
 		user: AuthenticatedUser,
 	) => {
+		requireFeature(user, 'produccion', 'gestionar producción');
 		const tenantId = requireTenant(user);
 		const { search, productoId, page = 1, limit = 20 } = filters;
 
@@ -65,6 +66,7 @@ export const getRecetasProduccionAction = withAction(
 
 export const getRecetaProduccionByIdAction = withAction(
 	async (id: string, user: AuthenticatedUser) => {
+		requireFeature(user, 'produccion', 'gestionar producción');
 		const tenantId = requireTenant(user);
 		const receta = await prisma.receta.findFirst({
 			where: { recetaId: id, tenantId },
@@ -90,6 +92,7 @@ export const createRecetaProduccionAction = withAction(
 		},
 		user: AuthenticatedUser,
 	) => {
+		requireFeature(user, 'produccion', 'gestionar producción');
 		const tenantId = requireTenant(user);
 		const receta = await prisma.receta.create({
 			// @ts-expect-error
@@ -120,6 +123,7 @@ export const updateRecetaProduccionAction = withAction(
 		},
 		user: AuthenticatedUser,
 	) => {
+		requireFeature(user, 'produccion', 'gestionar producción');
 		const tenantId = requireTenant(user);
 		const { recetaId, ...data } = input;
 
@@ -140,6 +144,7 @@ export const updateRecetaProduccionAction = withAction(
 
 export const deleteRecetaProduccionAction = withAction(
 	async (id: string, user: AuthenticatedUser) => {
+		requireFeature(user, 'produccion', 'gestionar producción');
 		const tenantId = requireTenant(user);
 		const existing = await prisma.receta.findFirst({
 			where: { recetaId: id, tenantId },
@@ -165,6 +170,7 @@ export const setIngredientesRecetaProduccionAction = withAction(
 		},
 		user: AuthenticatedUser,
 	) => {
+		requireFeature(user, 'produccion', 'gestionar producción');
 		const tenantId = requireTenant(user);
 
 		// Verify recipe exists
@@ -213,6 +219,7 @@ export const getOrdenesProduccionAction = withAction(
 		filters: { estado?: string; page?: number; limit?: number } = {},
 		user: AuthenticatedUser,
 	) => {
+		requireFeature(user, 'produccion', 'gestionar producción');
 		const tenantId = requireTenant(user);
 		const { estado, page = 1, limit = 20 } = filters;
 
@@ -254,6 +261,7 @@ export const getOrdenesProduccionAction = withAction(
 
 export const getOrdenProduccionByIdAction = withAction(
 	async (id: string, user: AuthenticatedUser) => {
+		requireFeature(user, 'produccion', 'gestionar producción');
 		const tenantId = requireTenant(user);
 		const orden = await prisma.ordenProduccion.findFirst({
 			where: { ordenProduccionId: id, tenantId },
@@ -283,6 +291,7 @@ export const createOrdenProduccionAction = withAction(
 		},
 		user: AuthenticatedUser,
 	) => {
+		requireFeature(user, 'produccion', 'gestionar producción');
 		const tenantId = requireTenant(user);
 
 		// Verify recipe exists
@@ -331,6 +340,7 @@ export const createOrdenProduccionAction = withAction(
 
 export const aprobarOrdenProduccionAction = withAction(
 	async (id: string, user: AuthenticatedUser) => {
+		requireFeature(user, 'produccion', 'gestionar producción');
 		const tenantId = requireTenant(user);
 
 		const result = await prisma.$transaction(async (tx) => {
@@ -464,6 +474,7 @@ export const aprobarOrdenProduccionAction = withAction(
 
 export const completarOrdenProduccionAction = withAction(
 	async (id: string, user: AuthenticatedUser) => {
+		requireFeature(user, 'produccion', 'gestionar producción');
 		const tenantId = requireTenant(user);
 
 		const result = await prisma.$transaction(async (tx) => {
@@ -594,6 +605,7 @@ export const completarOrdenProduccionAction = withAction(
 
 export const cancelarOrdenProduccionAction = withAction(
 	async (id: string, user: AuthenticatedUser) => {
+		requireFeature(user, 'produccion', 'gestionar producción');
 		const tenantId = requireTenant(user);
 
 		const orden = await prisma.ordenProduccion.findFirst({

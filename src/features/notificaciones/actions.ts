@@ -7,12 +7,14 @@
 
 import { withAction, ActionError } from '@/lib/server-actions';
 import { prisma } from '@/lib/prisma';
+import { requireFeature } from '@/lib/services/tenant-scope';
 import { verificarStockBajo } from '@/lib/verificar-stock';
 import { createNotificacionSchema, updateNotificacionSchema } from './schemas';
 import type { CreateNotificacionInput, UpdateNotificacionInput } from './schemas';
 import type { AuthenticatedUser } from '@/lib/auth-middleware';
 
 export const getNotificacionesAction = withAction(async (_input: void, user: AuthenticatedUser) => {
+  requireFeature(user, 'notificaciones', 'gestionar notificaciones');
   const notificaciones = await prisma.notification.findMany({
     where: { userId: user.userId },
     orderBy: { createdAt: 'desc' },
@@ -30,6 +32,7 @@ export const getNotificacionesAction = withAction(async (_input: void, user: Aut
 });
 
 export const marcarNotificacionLeidaAction = withAction(async (id: string, user: AuthenticatedUser) => {
+  requireFeature(user, 'notificaciones', 'gestionar notificaciones');
   const notificacion = await prisma.notification.update({
     where: { id, userId: user.userId },
     data: { isRead: true },
@@ -38,6 +41,7 @@ export const marcarNotificacionLeidaAction = withAction(async (id: string, user:
 });
 
 export const createNotificacionAction = withAction(async (input: CreateNotificacionInput, user: AuthenticatedUser) => {
+  requireFeature(user, 'notificaciones', 'gestionar notificaciones');
   const parsed = createNotificacionSchema.parse(input);
 
   if (user.role !== 'admin') {
@@ -58,6 +62,7 @@ export const createNotificacionAction = withAction(async (input: CreateNotificac
 });
 
 export const updateNotificacionAction = withAction(async (input: UpdateNotificacionInput, user: AuthenticatedUser) => {
+  requireFeature(user, 'notificaciones', 'gestionar notificaciones');
   const parsed = updateNotificacionSchema.parse(input);
 
   const notificacion = await prisma.notification.update({
@@ -73,11 +78,13 @@ export const updateNotificacionAction = withAction(async (input: UpdateNotificac
 });
 
 export const deleteNotificacionAction = withAction(async (id: string, user: AuthenticatedUser) => {
+  requireFeature(user, 'notificaciones', 'gestionar notificaciones');
   await prisma.notification.delete({ where: { id, userId: user.userId } });
   return { success: true };
 });
 
 export const verificarStockAction = withAction(async (_input: void, user: AuthenticatedUser) => {
+  requireFeature(user, 'notificaciones', 'gestionar notificaciones');
   if (user.role !== 'admin') {
     throw new ActionError('No autorizado', 'FORBIDDEN');
   }

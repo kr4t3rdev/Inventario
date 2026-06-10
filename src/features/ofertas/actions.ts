@@ -8,7 +8,7 @@
 import { revalidatePath } from 'next/cache';
 import { withAction, ActionError } from '@/lib/server-actions';
 import { prisma } from '@/lib/prisma';
-import { requireTenant } from '@/lib/services/tenant-scope';
+import { requireFeature, requireTenant } from '@/lib/services/tenant-scope';
 import { applyAnticipoAllocations } from '@/lib/services/anticipos-workflow';
 import { getOrCreateTurnoActivo } from '@/features/turnos-pos';
 import { ofertaSchema, ofertaUpdateSchema, facturarOfertaSchema } from './schemas';
@@ -27,6 +27,7 @@ function serializeOferta(oferta: unknown): Oferta {
 }
 
 export const getOfertasAction = withAction(async (_input: void, user: AuthenticatedUser) => {
+  requireFeature(user, 'ofertas', 'gestionar ofertas');
   const tenantId = requireTenant(user);
   const ofertas = await prisma.oferta.findMany({
     where: { tenantId },
@@ -37,6 +38,7 @@ export const getOfertasAction = withAction(async (_input: void, user: Authentica
 });
 
 export const getOfertaByIdAction = withAction(async (id: string, user: AuthenticatedUser) => {
+  requireFeature(user, 'ofertas', 'gestionar ofertas');
   const tenantId = requireTenant(user);
   const oferta = await prisma.oferta.findFirst({
     where: { id, tenantId },
@@ -47,6 +49,7 @@ export const getOfertaByIdAction = withAction(async (id: string, user: Authentic
 });
 
 export const createOfertaAction = withAction(async (input: OfertaInput, user: AuthenticatedUser) => {
+  requireFeature(user, 'ofertas', 'gestionar ofertas');
   const parsed = ofertaSchema.parse(input);
   const tenantId = requireTenant(user);
 
@@ -94,6 +97,7 @@ export const createOfertaAction = withAction(async (input: OfertaInput, user: Au
 });
 
 export const updateOfertaAction = withAction(async (input: OfertaUpdateInput, user: AuthenticatedUser) => {
+  requireFeature(user, 'ofertas', 'gestionar ofertas');
   const parsed = ofertaUpdateSchema.parse(input);
   const { ofertaId, ...data } = parsed;
   const tenantId = requireTenant(user);
@@ -117,6 +121,7 @@ export const updateOfertaAction = withAction(async (input: OfertaUpdateInput, us
 });
 
 export const deleteOfertaAction = withAction(async (id: string, user: AuthenticatedUser) => {
+  requireFeature(user, 'ofertas', 'gestionar ofertas');
   const tenantId = requireTenant(user);
   const existing = await prisma.oferta.findFirst({ where: { id: id, tenantId } });
   if (!existing) throw new ActionError('Oferta no encontrada', 'NOT_FOUND');
@@ -127,6 +132,7 @@ export const deleteOfertaAction = withAction(async (id: string, user: Authentica
 });
 
 export const facturarOfertaAction = withAction(async (input: FacturarOfertaInput, user: AuthenticatedUser) => {
+  requireFeature(user, 'ofertas', 'gestionar ofertas');
   const parsed = facturarOfertaSchema.parse(input);
   const tenantId = requireTenant(user);
 

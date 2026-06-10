@@ -8,7 +8,7 @@
 
 import { withAction } from "@/lib/server-actions";
 import { prisma } from "@/lib/prisma";
-import { requireTenant } from "@/lib/services/tenant-scope";
+import { requireFeature, requireTenant } from "@/lib/services/tenant-scope";
 import type { AuthenticatedUser } from "@/lib/auth-middleware";
 
 /**
@@ -43,6 +43,7 @@ function calcularVariacion(actual: number, anterior: number): number {
 
 export const getCuadreDiarioAction = withAction(
 	async (fecha: string, user: AuthenticatedUser) => {
+		requireFeature(user, 'cuadre-diario', 'gestionar cuadre diario');
 		const tenantId = requireTenant(user);
 
 		const ahora = new Date();

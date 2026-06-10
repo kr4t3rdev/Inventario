@@ -2,7 +2,7 @@
 import { revalidatePath } from 'next/cache';
 import { withAction, ActionError } from '@/lib/server-actions';
 import { prisma } from '@/lib/prisma';
-import { requireTenant } from '@/lib/services/tenant-scope';
+import { requireFeature, requireTenant } from '@/lib/services/tenant-scope';
 import { updateFacturaSchema } from './schemas';
 import type { UpdateFacturaInput } from './schemas';
 import type { AuthenticatedUser } from '@/lib/auth-middleware';
@@ -14,6 +14,7 @@ const FACTURA_INCLUDE = {
 } as const;
 
 export const getFacturasAction = withAction(async (f: { search?: string; estado?: string; clienteId?: string; serieId?: string; fechaInicio?: string; fechaFin?: string; page?: number; limit?: number } = {}, user: AuthenticatedUser) => {
+  requireFeature(user, 'facturacion', 'gestionar facturación');
   const tenantId = requireTenant(user);
   const { search, estado, clienteId, serieId, fechaInicio, fechaFin, page=1, limit=50 } = f;
   const where: any = { tenantId };
@@ -39,6 +40,7 @@ export const getFacturasAction = withAction(async (f: { search?: string; estado?
 });
 
 export const getFacturaByIdAction = withAction(async (id: string, user: AuthenticatedUser) => {
+  requireFeature(user, 'facturacion', 'gestionar facturación');
   const tenantId = requireTenant(user);
   const f = await prisma.factura.findFirst({ where: { idFactura: id, tenantId }, include: FACTURA_INCLUDE });
   if (!f) throw new ActionError('Factura no encontrada', 'NOT_FOUND');
@@ -54,6 +56,7 @@ export const getFacturaByIdAction = withAction(async (id: string, user: Authenti
 });
 
 export const updateFacturaAction = withAction(async (input: UpdateFacturaInput, user: AuthenticatedUser) => {
+  requireFeature(user, 'facturacion', 'gestionar facturación');
   const p = updateFacturaSchema.parse(input);
   const { facturaId, ...data } = p;
   const tenantId = requireTenant(user);
@@ -84,6 +87,7 @@ export const updateFacturaAction = withAction(async (input: UpdateFacturaInput, 
 });
 
 export const deleteFacturaAction = withAction(async (id: string, user: AuthenticatedUser) => {
+  requireFeature(user, 'facturacion', 'gestionar facturación');
   const tenantId = requireTenant(user);
   const ex = await prisma.factura.findFirst({ where: { idFactura: id, tenantId } });
   if (!ex) throw new ActionError('Factura no encontrada', 'NOT_FOUND');

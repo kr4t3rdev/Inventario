@@ -8,7 +8,7 @@
 import { revalidatePath } from 'next/cache';
 import { withAction, ActionError } from '@/lib/server-actions';
 import { prisma } from '@/lib/prisma';
-import { requireTenant } from '@/lib/services/tenant-scope';
+import { requireFeature, requireTenant } from '@/lib/services/tenant-scope';
 import { clienteSchema, clienteUpdateSchema } from './schemas';
 import type { ClienteInput, ClienteUpdateInput } from './schemas';
 import type { AuthenticatedUser } from '@/lib/auth-middleware';
@@ -26,6 +26,7 @@ const CLIENTE_SELECT = {
 } as const;
 
 export const getClientesAction = withAction(async (_input: void, user: AuthenticatedUser) => {
+  requireFeature(user, 'clientes', 'gestionar clientes');
   const tenantId = requireTenant(user);
   return prisma.cliente.findMany({
     where: { tenantId },
@@ -35,6 +36,7 @@ export const getClientesAction = withAction(async (_input: void, user: Authentic
 });
 
 export const getClienteByIdAction = withAction(async (clienteId: string, user: AuthenticatedUser) => {
+  requireFeature(user, 'clientes', 'gestionar clientes');
   const tenantId = requireTenant(user);
   const cliente = await prisma.cliente.findFirst({
     where: { clienteId, tenantId },
@@ -45,6 +47,7 @@ export const getClienteByIdAction = withAction(async (clienteId: string, user: A
 });
 
 export const createClienteAction = withAction(async (input: ClienteInput, user: AuthenticatedUser) => {
+  requireFeature(user, 'clientes', 'gestionar clientes');
   const parsed = clienteSchema.parse(input);
   const tenantId = requireTenant(user);
   const cliente = await prisma.cliente.create({
@@ -56,6 +59,7 @@ export const createClienteAction = withAction(async (input: ClienteInput, user: 
 });
 
 export const updateClienteAction = withAction(async (input: ClienteUpdateInput, user: AuthenticatedUser) => {
+  requireFeature(user, 'clientes', 'gestionar clientes');
   const parsed = clienteUpdateSchema.parse(input);
   const { clienteId, ...data } = parsed;
   const tenantId = requireTenant(user);
@@ -71,6 +75,7 @@ export const updateClienteAction = withAction(async (input: ClienteUpdateInput, 
 });
 
 export const deleteClienteAction = withAction(async (clienteId: string, user: AuthenticatedUser) => {
+  requireFeature(user, 'clientes', 'gestionar clientes');
   const tenantId = requireTenant(user);
   const existing = await prisma.cliente.findFirst({ where: { clienteId, tenantId }, select: { clienteId: true } });
   if (!existing) throw new ActionError('Cliente no encontrado', 'NOT_FOUND');

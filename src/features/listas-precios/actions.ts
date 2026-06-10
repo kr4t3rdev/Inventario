@@ -8,7 +8,7 @@
 import { revalidatePath } from 'next/cache';
 import { withAction, ActionError } from '@/lib/server-actions';
 import { prisma } from '@/lib/prisma';
-import { requireTenant } from '@/lib/services/tenant-scope';
+import { requireFeature, requireTenant } from '@/lib/services/tenant-scope';
 import { listaPrecioSchema, listaPrecioUpdateSchema } from './schemas';
 import type { ListaPrecioInput, ListaPrecioUpdateInput } from './schemas';
 import type { AuthenticatedUser } from '@/lib/auth-middleware';
@@ -23,6 +23,7 @@ const LISTA_SELECT = {
 } as const;
 
 export const getListasPreciosAction = withAction(async (_input: void, user: AuthenticatedUser) => {
+  requireFeature(user, 'listas-precios', 'gestionar listas de precios');
   const tenantId = requireTenant(user);
   return prisma.listaPrecio.findMany({
     where: { tenantId },
@@ -32,6 +33,7 @@ export const getListasPreciosAction = withAction(async (_input: void, user: Auth
 });
 
 export const getListaPrecioByIdAction = withAction(async (id: string, user: AuthenticatedUser) => {
+  requireFeature(user, 'listas-precios', 'gestionar listas de precios');
   const tenantId = requireTenant(user);
   const lista = await prisma.listaPrecio.findFirst({
     where: { id, tenantId },
@@ -42,6 +44,7 @@ export const getListaPrecioByIdAction = withAction(async (id: string, user: Auth
 });
 
 export const createListaPrecioAction = withAction(async (input: ListaPrecioInput, user: AuthenticatedUser) => {
+  requireFeature(user, 'listas-precios', 'gestionar listas de precios');
   const parsed = listaPrecioSchema.parse(input);
   const tenantId = requireTenant(user);
 
@@ -59,6 +62,7 @@ export const createListaPrecioAction = withAction(async (input: ListaPrecioInput
 });
 
 export const updateListaPrecioAction = withAction(async (input: ListaPrecioUpdateInput, user: AuthenticatedUser) => {
+  requireFeature(user, 'listas-precios', 'gestionar listas de precios');
   const parsed = listaPrecioUpdateSchema.parse(input);
   const { id, ...data } = parsed;
   const tenantId = requireTenant(user);
@@ -85,6 +89,7 @@ export const updateListaPrecioAction = withAction(async (input: ListaPrecioUpdat
 });
 
 export const deleteListaPrecioAction = withAction(async (id: string, user: AuthenticatedUser) => {
+  requireFeature(user, 'listas-precios', 'gestionar listas de precios');
   const tenantId = requireTenant(user);
 
   const existing = await prisma.listaPrecio.findFirst({ where: { id, tenantId }, select: { id: true } });

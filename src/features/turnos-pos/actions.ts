@@ -6,7 +6,7 @@
 import { revalidatePath } from "next/cache";
 import { withAction, ActionError } from "@/lib/server-actions";
 import { prisma } from "@/lib/prisma";
-import { requireTenant } from "@/lib/services/tenant-scope";
+import { requireFeature, requireTenant } from "@/lib/services/tenant-scope";
 import {
 	abrirTurnoSchema,
 	cerrarTurnoSchema,
@@ -42,6 +42,7 @@ const TURNOS_INCLUDE = {
  */
 export const abrirTurnoAction = withAction(
 	async (input: AbrirTurnoInput, user: AuthenticatedUser) => {
+		requireFeature(user, 'turnos-pos', 'gestionar turnos POS');
 		const parsed = abrirTurnoSchema.parse(input);
 		const tenantId = requireTenant(user);
 
@@ -94,6 +95,7 @@ export const abrirTurnoAction = withAction(
  */
 export const getTurnosAction = withAction(
 	async (input: ListarTurnosInput, user: AuthenticatedUser) => {
+		requireFeature(user, 'turnos-pos', 'gestionar turnos POS');
 		const parsed = listarTurnosSchema.parse(input);
 		const tenantId = requireTenant(user);
 
@@ -129,6 +131,7 @@ export const getTurnosAction = withAction(
  */
 export const getTurnoActivoAction = withAction(
 	async (puntoDeVentaId: string, user: AuthenticatedUser) => {
+		requireFeature(user, 'turnos-pos', 'gestionar turnos POS');
 		const tenantId = requireTenant(user);
 
 		const turno = await prisma.turnoPuntoVenta.findFirst({
@@ -156,6 +159,7 @@ export const getTurnoActivoAction = withAction(
  */
 export const cerrarTurnoAction = withAction(
 	async (input: CerrarTurnoInput, user: AuthenticatedUser) => {
+		requireFeature(user, 'turnos-pos', 'gestionar turnos POS');
 		const parsed = cerrarTurnoSchema.parse(input);
 		const tenantId = requireTenant(user);
 
@@ -237,6 +241,7 @@ export const getOrCreateTurnoActivo = withAction(
 		params: { puntoDeVentaId: string; empleadoId?: string | null },
 		user: AuthenticatedUser,
 	) => {
+		requireFeature(user, 'turnos-pos', 'gestionar turnos POS');
 		const parsed = turnoAutomaticoSchema.parse(params);
 		const tenantId = requireTenant(user);
 

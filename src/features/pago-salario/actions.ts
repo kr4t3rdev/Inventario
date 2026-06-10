@@ -8,7 +8,7 @@
 import { revalidatePath } from "next/cache";
 import { withAction, ActionError } from "@/lib/server-actions";
 import { prisma } from "@/lib/prisma";
-import { requireTenant, requireManagerRole } from "@/lib/services/tenant-scope";
+import { requireFeature, requireTenant, requireManagerRole } from "@/lib/services/tenant-scope";
 import { pagoSalarioSchema, pagoSalarioUpdateSchema } from "./schemas";
 import type { PagoSalarioInput, PagoSalarioUpdateInput } from "./schemas";
 import type { AuthenticatedUser } from "@/lib/auth-middleware";
@@ -17,6 +17,7 @@ const PAGO_SALARIO_INCLUDE = { empleado: true } as const;
 
 export const getPagoSalariosAction = withAction(
 	async (_input: void, user: AuthenticatedUser) => {
+		requireFeature(user, 'nomina', 'gestionar nómina');
 		const tenantId = requireTenant(user);
 		return prisma.pagosalario.findMany({
 			where: { tenantId },
@@ -28,6 +29,7 @@ export const getPagoSalariosAction = withAction(
 
 export const getPagoSalarioByIdAction = withAction(
 	async (id: string, user: AuthenticatedUser) => {
+		requireFeature(user, 'nomina', 'gestionar nómina');
 		const tenantId = requireTenant(user);
 		const pago = await prisma.pagosalario.findFirst({
 			where: { pgId: id, tenantId },
@@ -41,6 +43,7 @@ export const getPagoSalarioByIdAction = withAction(
 
 export const createPagoSalarioAction = withAction(
 	async (input: PagoSalarioInput, user: AuthenticatedUser) => {
+		requireFeature(user, 'nomina', 'gestionar nómina');
 		requireManagerRole(user, "crear pagos de salario");
 		const parsed = pagoSalarioSchema.parse(input);
 		const tenantId = requireTenant(user);
@@ -74,6 +77,7 @@ export const createPagoSalarioAction = withAction(
 
 export const updatePagoSalarioAction = withAction(
 	async (input: PagoSalarioUpdateInput, user: AuthenticatedUser) => {
+		requireFeature(user, 'nomina', 'gestionar nómina');
 		requireManagerRole(user, "editar pagos de salario");
 		const parsed = pagoSalarioUpdateSchema.parse(input);
 		const { pgId, ...data } = parsed;
@@ -113,6 +117,7 @@ export const updatePagoSalarioAction = withAction(
 
 export const deletePagoSalarioAction = withAction(
 	async (id: string, user: AuthenticatedUser) => {
+		requireFeature(user, 'nomina', 'gestionar nómina');
 		requireManagerRole(user, "eliminar pagos de salario");
 		const tenantId = requireTenant(user);
 		const existing = await prisma.pagosalario.findFirst({

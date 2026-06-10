@@ -8,7 +8,7 @@
 import { revalidatePath } from 'next/cache';
 import { withAction, ActionError } from '@/lib/server-actions';
 import { prisma } from '@/lib/prisma';
-import { requireTenant } from '@/lib/services/tenant-scope';
+import { requireFeature, requireTenant } from '@/lib/services/tenant-scope';
 import { generarProximoConsecutivo, formatearNumeroContrato } from '@/features/contratos/lib/numeroContratoGenerator';
 import { contratoSchema, contratoUpdateSchema, bulkStatusSchema, bulkDeleteSchema } from './schemas';
 import type { ContratoInput, ContratoUpdateInput, BulkStatusInput, BulkDeleteInput } from './schemas';
@@ -47,6 +47,7 @@ export const getContratosAction = withAction(async (
   input: { page?: number; limit?: number; tipo?: string; estado?: string; fechaInicio?: string; fechaFin?: string } = {},
   user: AuthenticatedUser
 ) => {
+  requireFeature(user, 'contratos', 'gestionar contratos');
   const tenantId = requireTenant(user);
   const page = input.page || 1;
   const limit = input.limit || 10;
@@ -70,6 +71,7 @@ export const getContratosAction = withAction(async (
 });
 
 export const getContratoByIdAction = withAction(async (id: string, user: AuthenticatedUser) => {
+  requireFeature(user, 'contratos', 'gestionar contratos');
   const tenantId = requireTenant(user);
   const contrato = await prisma.contrato.findFirst({
     where: { contratoId: id, tenantId },
@@ -80,6 +82,7 @@ export const getContratoByIdAction = withAction(async (id: string, user: Authent
 });
 
 export const createContratoAction = withAction(async (input: ContratoInput, user: AuthenticatedUser) => {
+  requireFeature(user, 'contratos', 'gestionar contratos');
   const parsed = contratoSchema.parse(input);
   const tenantId = requireTenant(user);
 
@@ -135,6 +138,7 @@ export const createContratoAction = withAction(async (input: ContratoInput, user
 });
 
 export const updateContratoAction = withAction(async (input: ContratoUpdateInput, user: AuthenticatedUser) => {
+  requireFeature(user, 'contratos', 'gestionar contratos');
   const parsed = contratoUpdateSchema.parse(input);
   const { contratoId, ...data } = parsed;
   const tenantId = requireTenant(user);
@@ -183,6 +187,7 @@ export const updateContratoAction = withAction(async (input: ContratoUpdateInput
 });
 
 export const deleteContratoAction = withAction(async (id: string, user: AuthenticatedUser) => {
+  requireFeature(user, 'contratos', 'gestionar contratos');
   const tenantId = requireTenant(user);
   const contrato = await prisma.contrato.findFirst({
     where: { contratoId: id, tenantId },
@@ -203,6 +208,7 @@ export const deleteContratoAction = withAction(async (id: string, user: Authenti
 });
 
 export const bulkUpdateContratoStatusAction = withAction(async (input: BulkStatusInput, user: AuthenticatedUser) => {
+  requireFeature(user, 'contratos', 'gestionar contratos');
   const parsed = bulkStatusSchema.parse(input);
   const tenantId = requireTenant(user);
 
@@ -216,6 +222,7 @@ export const bulkUpdateContratoStatusAction = withAction(async (input: BulkStatu
 });
 
 export const bulkDeleteContratosAction = withAction(async (input: BulkDeleteInput, user: AuthenticatedUser) => {
+  requireFeature(user, 'contratos', 'gestionar contratos');
   const parsed = bulkDeleteSchema.parse(input);
   const tenantId = requireTenant(user);
 

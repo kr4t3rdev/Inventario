@@ -8,7 +8,7 @@
 import { revalidatePath } from "next/cache";
 import { withAction, ActionError } from "@/lib/server-actions";
 import { prisma } from "@/lib/prisma";
-import { requireTenant, requireManagerRole } from "@/lib/services/tenant-scope";
+import { requireFeature, requireTenant, requireManagerRole } from "@/lib/services/tenant-scope";
 import { empleadoSchema, empleadoUpdateSchema } from "./schemas";
 import type { EmpleadoInput, EmpleadoUpdateInput } from "./schemas";
 import type { AuthenticatedUser } from "@/lib/auth-middleware";
@@ -21,6 +21,7 @@ import {
 
 export const getEmpleadosAction = withAction(
 	async (_input: void, user: AuthenticatedUser) => {
+		requireFeature(user, 'empleados', 'gestionar empleados');
 		const tenantId = requireTenant(user);
 		return prisma.empleado.findMany({
 			where: { tenantId },
@@ -31,6 +32,7 @@ export const getEmpleadosAction = withAction(
 
 export const getEmpleadoByIdAction = withAction(
 	async (id: string, user: AuthenticatedUser) => {
+		requireFeature(user, 'empleados', 'gestionar empleados');
 		const tenantId = requireTenant(user);
 		const empleado = await prisma.empleado.findFirst({
 			where: { empleadoId: id, tenantId },
@@ -49,6 +51,7 @@ export const getEmpleadoByIdAction = withAction(
 
 export const createEmpleadoAction = withAction(
 	async (input: EmpleadoInput, user: AuthenticatedUser) => {
+		requireFeature(user, 'empleados', 'gestionar empleados');
 		requireManagerRole(user, "crear empleados");
 		const parsed = empleadoSchema.parse(input);
 		const tenantId = requireTenant(user);
@@ -76,6 +79,7 @@ export const createEmpleadoAction = withAction(
 
 export const updateEmpleadoAction = withAction(
 	async (input: EmpleadoUpdateInput, user: AuthenticatedUser) => {
+		requireFeature(user, 'empleados', 'gestionar empleados');
 		requireManagerRole(user, "editar empleados");
 		const parsed = empleadoUpdateSchema.parse(input);
 		const { empleadoId, ...data } = parsed;
@@ -112,6 +116,7 @@ export const updateEmpleadoAction = withAction(
 
 export const deleteEmpleadoAction = withAction(
 	async (id: string, user: AuthenticatedUser) => {
+		requireFeature(user, 'empleados', 'gestionar empleados');
 		requireManagerRole(user, "eliminar empleados");
 		const tenantId = requireTenant(user);
 		const existing = await prisma.empleado.findFirst({
@@ -139,6 +144,7 @@ export const getAsistenciaAction = withAction(
 		},
 		user: AuthenticatedUser,
 	) => {
+		requireFeature(user, 'empleados', 'gestionar empleados');
 		const tenantId = requireTenant(user);
 		const where: any = { employee: { tenantId } };
 
@@ -223,6 +229,7 @@ export const registerAsistenciaAction = withAction(
 		input: z.infer<typeof registerAsistenciaSchema>,
 		user: AuthenticatedUser,
 	) => {
+		requireFeature(user, 'empleados', 'gestionar empleados');
 		requireManagerRole(user, "registrar asistencia");
 		const tenantId = requireTenant(user);
 		const parsed = registerAsistenciaSchema.parse(input);
@@ -307,6 +314,7 @@ export const updateAsistenciaAction = withAction(
 		input: z.infer<typeof manualAsistenciaSchema>,
 		user: AuthenticatedUser,
 	) => {
+		requireFeature(user, 'empleados', 'gestionar empleados');
 		requireManagerRole(user, "editar asistencia");
 		const tenantId = requireTenant(user);
 		const parsed = manualAsistenciaSchema.parse(input);
@@ -386,6 +394,7 @@ export const getVacacionesAction = withAction(
 		input: { employeeId?: string; status?: string },
 		user: AuthenticatedUser,
 	) => {
+		requireFeature(user, 'empleados', 'gestionar empleados');
 		const tenantId = requireTenant(user);
 		const where: any = { employee: { tenantId } };
 		if (input.employeeId) where.employeeId = input.employeeId;
@@ -427,6 +436,7 @@ export const createVacacionAction = withAction(
 		input: z.infer<typeof createVacacionSchema>,
 		user: AuthenticatedUser,
 	) => {
+		requireFeature(user, 'empleados', 'gestionar empleados');
 		requireManagerRole(user, "crear solicitudes de vacaciones");
 		const tenantId = requireTenant(user);
 		const parsed = createVacacionSchema.parse(input);
@@ -495,6 +505,7 @@ export const createVacacionAction = withAction(
  */
 export const getVacacionAccumulacionAction = withAction(
 	async (input: { employeeId: string }, user: AuthenticatedUser) => {
+		requireFeature(user, 'empleados', 'gestionar empleados');
 		const tenantId = requireTenant(user);
 		const empleado = await prisma.empleado.findFirst({
 			where: { empleadoId: input.employeeId, tenantId },
@@ -525,6 +536,7 @@ export const getNominaAction = withAction(
 		input: { periodo?: string; employeeId?: string } = {},
 		user: AuthenticatedUser,
 	) => {
+		requireFeature(user, 'empleados', 'gestionar empleados');
 		const tenantId = requireTenant(user);
 		return prisma.pagosalario.findMany({
 			where: {
@@ -550,6 +562,7 @@ export const calculateNominaAction = withAction(
 		input: z.infer<typeof calculateNominaSchema>,
 		user: AuthenticatedUser,
 	) => {
+		requireFeature(user, 'empleados', 'gestionar empleados');
 		requireManagerRole(user, "calcular nómina");
 		const tenantId = requireTenant(user);
 		const parsed = calculateNominaSchema.parse(input);
@@ -727,6 +740,7 @@ const workScheduleSchema = z.object({
 
 export const getWorkSchedulesAction = withAction(
 	async (input: { employeeId?: string } = {}, user: AuthenticatedUser) => {
+		requireFeature(user, 'empleados', 'gestionar empleados');
 		const tenantId = requireTenant(user);
 		return prisma.employeeWorkSchedule.findMany({
 			where: {
@@ -748,6 +762,7 @@ export const upsertWorkScheduleAction = withAction(
 		input: z.infer<typeof workScheduleSchema>,
 		user: AuthenticatedUser,
 	) => {
+		requireFeature(user, 'empleados', 'gestionar empleados');
 		requireManagerRole(user, "guardar horarios de trabajo");
 		const tenantId = requireTenant(user);
 		const parsed = workScheduleSchema.parse(input);
@@ -794,6 +809,7 @@ export const upsertWorkScheduleAction = withAction(
 
 export const deleteWorkScheduleAction = withAction(
 	async (input: { scheduleId: string }, user: AuthenticatedUser) => {
+		requireFeature(user, 'empleados', 'gestionar empleados');
 		requireManagerRole(user, "eliminar horarios de trabajo");
 		const tenantId = requireTenant(user);
 		const existing = await prisma.employeeWorkSchedule.findFirst({

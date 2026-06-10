@@ -2,12 +2,13 @@
 import { revalidatePath } from 'next/cache';
 import { withAction, ActionError } from '@/lib/server-actions';
 import { prisma } from '@/lib/prisma';
-import { requireTenant } from '@/lib/services/tenant-scope';
+import { requireFeature, requireTenant } from '@/lib/services/tenant-scope';
 import { serieSchema, serieUpdateSchema } from './schemas';
 import type { SerieInput, SerieUpdateInput } from './schemas';
 import type { AuthenticatedUser } from '@/lib/auth-middleware';
 
 export const getSeriesFacturacionAction = withAction(async (_input: void, user: AuthenticatedUser) => {
+  requireFeature(user, 'series-facturacion', 'gestionar series de facturación');
   const tenantId = requireTenant(user);
   return prisma.serieFacturacion.findMany({
     where: { tenantId },
@@ -17,6 +18,7 @@ export const getSeriesFacturacionAction = withAction(async (_input: void, user: 
 });
 
 export const createSerieFacturacionAction = withAction(async (input: SerieInput, user: AuthenticatedUser) => {
+  requireFeature(user, 'series-facturacion', 'gestionar series de facturación');
   const parsed = serieSchema.parse(input);
   const tenantId = requireTenant(user);
   const exists = await prisma.serieFacturacion.findFirst({ where: { prefijo: parsed.prefijo, tenantId } });
@@ -30,6 +32,7 @@ export const createSerieFacturacionAction = withAction(async (input: SerieInput,
 });
 
 export const updateSerieFacturacionAction = withAction(async (input: SerieUpdateInput, user: AuthenticatedUser) => {
+  requireFeature(user, 'series-facturacion', 'gestionar series de facturación');
   const parsed = serieUpdateSchema.parse(input);
   const { serieId, ...data } = parsed;
   const tenantId = requireTenant(user);
@@ -48,6 +51,7 @@ export const updateSerieFacturacionAction = withAction(async (input: SerieUpdate
 });
 
 export const deleteSerieFacturacionAction = withAction(async (id: string, user: AuthenticatedUser) => {
+  requireFeature(user, 'series-facturacion', 'gestionar series de facturación');
   const tenantId = requireTenant(user);
   const existing = await prisma.serieFacturacion.findFirst({ where: { serieId: id, tenantId } });
   if (!existing) throw new ActionError('Serie no encontrada', 'NOT_FOUND');
