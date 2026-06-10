@@ -17,7 +17,7 @@ export const getGastosDEAction = withAction(async (filters: { periodo?: string; 
   if (filters.periodo) where.periodo = filters.periodo;
   if (filters.conceptoId) where.conceptoId = filters.conceptoId;
   if (filters.elementoId) where.elementoId = filters.elementoId;
-  return prisma.gastosDE.findMany({ where, include: INCLUDE, orderBy: { monto: 'desc' } });
+  return prisma.gastosDE.findMany({ where, include: INCLUDE, orderBy: { createdAt: 'desc' } });
 });
 
 export const getGastoDEByIdAction = withAction(async (id: string, user: AuthenticatedUser) => {
@@ -52,7 +52,11 @@ export const updateGastosDEAction = withAction(async (input: GastosDEUpdateInput
   const tenantId = requireTenant(user);
   const existing = await prisma.gastosDE.findFirst({ where: { gastosDEId, tenantId } });
   if (!existing) throw new ActionError('Gasto no encontrado', 'NOT_FOUND');
-  const g = await prisma.gastosDE.update({ where: { gastosDEId }, data: { ...(data.proveedor!==undefined&&{proveedor:data.proveedor}), ...(data.monto!==undefined&&{monto:data.monto}), ...(data.descripcion!==undefined&&{descripcion:data.descripcion}), ...(data.numeroFactura!==undefined&&{numeroFactura:data.numeroFactura}) } });
+  if (data.conceptoId && data.elementoId) {
+    const elem = await prisma.gastoElemento.findFirst({ where: { elementoId: data.elementoId, conceptoId: data.conceptoId } });
+    if (!elem) throw new ActionError('El elemento no pertenece al concepto', 'VALIDATION_ERROR');
+  }
+  const g = await prisma.gastosDE.update({ where: { gastosDEId }, data: { ...(data.tipo!==undefined&&{tipo:data.tipo}), ...(data.conceptoId!==undefined&&{conceptoId:data.conceptoId}), ...(data.elementoId!==undefined&&{elementoId:data.elementoId}), ...(data.periodo!==undefined&&{periodo:data.periodo}), ...(data.proveedor!==undefined&&{proveedor:data.proveedor}), ...(data.monto!==undefined&&{monto:data.monto}), ...(data.descripcion!==undefined&&{descripcion:data.descripcion}), ...(data.numeroFactura!==undefined&&{numeroFactura:data.numeroFactura}) } });
   revalidatePath('/busy/gastosDE');
   return g;
 });

@@ -112,7 +112,7 @@ export function GastoDEForm({ initialData, initialVendors }: GastosDEFormProps) 
             {[0.1, 0.2, 0.3, 0.4].map((d, i) => (
               <motion.div key={i} initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: d }}><Skeleton className="h-10 w-full" /></motion.div>
             ))}
-            <div className="flex justify-end space-x-4"><Skeleton className="h-10 w-24" /><Skeleton className="h-10 w-24" /></div>CCZXXZ
+            <div className="flex justify-end space-x-4"><Skeleton className="h-10 w-24" /><Skeleton className="h-10 w-24" /></div>
           </div>
         </CardContent></Card>
       </motion.div>
@@ -172,7 +172,7 @@ export function GastoDEForm({ initialData, initialVendors }: GastosDEFormProps) 
                   )} />
                 </motion.div>
               ))}
-              {watchedValues.tipo && watchedValues.monto && (
+              {watchedValues.monto && (watchedValues.tipo || watchedValues.conceptoId || watchedValues.elementoId) && (
                 <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.45 }}>
                   <Card className="bg-muted/50 border-dashed"><CardContent className="pt-4">
                     <div className="flex items-center gap-2 mb-3"><Receipt className="h-4 w-4" /><h3 className="font-medium">Resumen del Gasto</h3></div>
