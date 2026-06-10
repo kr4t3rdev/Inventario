@@ -460,9 +460,3 @@ export async function deleteAsistenciaHandler(
     );
   }
 }
-  if (existingAttendance.employee.tenantId !== tenantId) {
-    return NextResponse.json(
-      { error: "Registro de asistencia no encontrado" },
-      { status: 404 }
-    );
-  }
