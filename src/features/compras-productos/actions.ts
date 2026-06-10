@@ -74,8 +74,8 @@ export const getCompraProductoByIdAction = withAction(async (id: string, user: A
   const compra = await prisma.compraDocumento.findFirst({
     where: { compraDocumentoId: id, tenantId, deletedAt: null },
     include: {
-  // @ts-expect-error
-    ...COMPRA_INCLUDE, pagoGastos: true
+      // @ts-expect-error Prisma include typing omits pagoGastos in this composite helper include.
+      ...COMPRA_INCLUDE, pagoGastos: true
     },
   });
   if (!compra) throw new ActionError('Compra no encontrada', 'NOT_FOUND');
@@ -91,7 +91,7 @@ export const createCompraProductoAction = withAction(async (input: CreateCompraP
   if (!proveedor) throw new ActionError('Proveedor no encontrado', 'NOT_FOUND');
 
   // Validar productos
-  // @ts-expect-error
+  // @ts-expect-error items se infiere como never[] sin anotación explícita en este flujo incremental.
   const items = [];
   for (const item of parsed.items) {
     const producto = await prisma.producto.findFirst({ where: { id: item.productoId, tenantId } });
@@ -130,7 +130,7 @@ export const createCompraProductoAction = withAction(async (input: CreateCompraP
     });
 
     // Actualizar stock y precios
-  // @ts-expect-error
+    // @ts-expect-error item se infiere como any en el array incremental usado para la transacción.
     for (const item of items) {
       const oldPrecioCosto = item.producto.precioCosto;
 
@@ -251,22 +251,40 @@ export const updateCompraProductoAction = withAction(async (input: UpdateCompraP
   const { compraDocumentoId, ...data } = parsed;
   const tenantId = requireTenant(user);
 
-  const existing = await prisma.compraDocumento.findFirst({
-    where: { compraDocumentoId, tenantId },
-    include: { cuentaPorPagar: true },
-  });
-  if (!existing) throw new ActionError('Compra no encontrada', 'NOT_FOUND');
-
-  if (data.formaPago !== undefined && data.formaPago !== existing.formaPago) {
-    await reconcileFormaPago(existing, data.formaPago);
-  }
-
   const updateData: Record<string, any> = {};
   if (data.numeroFactura !== undefined) updateData.numeroFactura = data.numeroFactura;
   if (data.facturaUrl !== undefined) updateData.facturaUrl = data.facturaUrl;
   if (data.descripcion !== undefined) updateData.descripcion = data.descripcion;
   if (data.formaPago !== undefined) updateData.formaPago = data.formaPago;
   if (data.estado !== undefined) updateData.estado = data.estado;
+
+  if (data.formaPago !== undefined) {
+    const updated = await prisma.$transaction(async (tx: any) => {
+      const existing = await tx.compraDocumento.findFirst({
+        where: { compraDocumentoId, tenantId },
+        include: { cuentaPorPagar: true },
+      });
+      if (!existing) throw new ActionError('Compra no encontrada', 'NOT_FOUND');
+
+      if (data.formaPago !== existing.formaPago) {
+        await reconcileFormaPago(tx, existing, data.formaPago);
+      }
+
+      return tx.compraDocumento.update({
+        where: { compraDocumentoId },
+        data: updateData,
+        include: COMPRA_INCLUDE,
+      });
+    });
+
+    revalidatePath('/busy/compras-productos');
+    return updated;
+  }
+
+  const existing = await prisma.compraDocumento.findFirst({
+    where: { compraDocumentoId, tenantId },
+  });
+  if (!existing) throw new ActionError('Compra no encontrada', 'NOT_FOUND');
 
   const updated = await prisma.compraDocumento.update({
     where: { compraDocumentoId },
@@ -282,6 +300,7 @@ export const updateCompraProductoAction = withAction(async (input: UpdateCompraP
  * @description Reconcilia entidades contables al cambiar formaPago de una compra.
  */
 async function reconcileFormaPago(
+  tx: any,
   compra: Awaited<ReturnType<typeof prisma.compraDocumento.findFirst>> & { cuentaPorPagar: any },
   nuevaFormaPago: string,
 ): Promise<void> {
@@ -310,11 +329,11 @@ async function reconcileFormaPago(
       );
     }
 
-    await prisma.cuentaPorPagar.delete({
+    await tx.cuentaPorPagar.delete({
       where: { cuentaPorPagarId: compra.cuentaPorPagarId },
     });
 
-    await prisma.compraDocumento.update({
+    await tx.compraDocumento.update({
       where: { compraDocumentoId: compra.compraDocumentoId },
       data: { cuentaPorPagarId: null },
     });
@@ -328,7 +347,7 @@ async function reconcileFormaPago(
       );
     }
 
-    const cxp = await prisma.cuentaPorPagar.create({
+    const cxp = await tx.cuentaPorPagar.create({
       data: {
         tenantId: compra.tenantId,
         numeroFactura: compra.numeroFactura || '',
@@ -342,7 +361,7 @@ async function reconcileFormaPago(
       },
     });
 
-    await prisma.compraDocumento.update({
+    await tx.compraDocumento.update({
       where: { compraDocumentoId: compra.compraDocumentoId },
       data: { cuentaPorPagarId: cxp.cuentaPorPagarId },
     });
@@ -353,7 +372,10 @@ export const deleteCompraProductoAction = withAction(async (id: string, user: Au
   const tenantId = requireTenant(user);
   const compra = await prisma.compraDocumento.findFirst({
     where: { compraDocumentoId: id, tenantId },
-    include: { cuentaPorPagar: true },
+    include: {
+      cuentaPorPagar: true,
+      items: { select: { compraDocumentoItemId: true } },
+    },
   });
   if (!compra) throw new ActionError('Compra no encontrada', 'NOT_FOUND');
 
@@ -382,6 +404,13 @@ export const deleteCompraProductoAction = withAction(async (id: string, user: Au
     throw new ActionError(
       'No se puede eliminar la compra porque tiene anticipo aplicado. Revierta el anticipo primero.',
       'HAS_IMPACT'
+    );
+  }
+
+  if ((compra.items?.length ?? 0) > 0) {
+    throw new ActionError(
+      'No se puede eliminar la compra porque ya impactó inventario. Use una anulación o reversión en lugar de borrar.',
+      'HAS_INVENTORY_IMPACT'
     );
   }
 
