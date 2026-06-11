@@ -30,8 +30,20 @@ import { useAlmacenes } from "@/features/almacenes/hooks/use-almacenes"
 import { getProductosAction } from "@/features/productos"
 import { getStockPorUbicacionAction } from "@/features/productos/actions"
 import { createTransferenciaAction, updateTransferenciaAction } from "@/features/transferencias/actions"
-import { transferenciaSchema } from "@/features/transferencias/schemas"
+import { transferenciaSchema, TransferenciaFormValues } from "@/features/transferencias/schemas"
 import { ProductoSelector } from "./producto-selector"
+
+interface TransferenciaFormProps {
+  initialData?: {
+    transferenciaId: string
+    productos?: Array<{ productoId: string; cantidad: number }>
+    tipoOrigen?: string
+    origenId?: string
+    tipoDestino?: string
+    destinoId?: string
+    descripcion?: string | null
+  }
+}
 
 const productoTransferenciaSchema = z.object({
   productoId: z.string({
