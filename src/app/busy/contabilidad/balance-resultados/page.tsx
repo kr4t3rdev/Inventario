@@ -66,15 +66,7 @@ export default function BalanceResultadosPage() {
     const fetchData = async () => {
       setLoading(true)
       try {
-        const token = ""
-        const headers: HeadersInit = {}
-        if (token) {
-          headers["Authorization"] = `Bearer ${token}`
-        }
-
-        const res = await fetch(`/api/contabilidad/balance-financiero?year=${year}`, {
-          headers
-        })
+        const res = await fetch(`/api/contabilidad/balance-financiero?year=${year}`)
         
         if (res.ok) {
           const jsonData = await res.json()
