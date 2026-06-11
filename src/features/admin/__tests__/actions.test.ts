@@ -21,7 +21,7 @@ vi.mock('@/lib/prisma', () => ({
       groupBy: vi.fn(),
     },
     tenant: { findMany: vi.fn(), count: vi.fn(), findUnique: vi.fn(), create: vi.fn() },
-    tenantMembership: { create: vi.fn(), findFirst: vi.fn(), findUnique: vi.fn(), update: vi.fn() },
+    tenantMembership: { create: vi.fn(), findFirst: vi.fn(), findUnique: vi.fn(), update: vi.fn(), findMany: vi.fn() },
     moneda: { upsert: vi.fn() },
     plan: { findMany: vi.fn(), findUnique: vi.fn(), create: vi.fn(), update: vi.fn(), delete: vi.fn() },
     userSession: { count: vi.fn() },
@@ -34,6 +34,7 @@ import { prisma } from '@/lib/prisma';
 import {
   getUsersAction, createUserAction, updateUserAction, deleteUserAction,
   lockUserAction, unlockUserAction,
+  getGlobalUsersAction,
   getAdminTenantsAction, getAdminSystemHealthAction,
   getAdminPlanesAction, createAdminPlanAction, approveGlobalUserAction,
 } from '@/features/admin/actions';
@@ -50,8 +51,60 @@ const nonAdmin: AuthenticatedUser = {
   role: 'user', isActive: true, tenantId: 't1', tenantRole: 'user',
 };
 
+const managerUser: AuthenticatedUser = {
+  userId: 'user-manager', name: 'Manager', email: 'manager@test.com',
+  role: 'user', isActive: true, tenantId: 'tenant-A', tenantRole: 'manager',
+};
+
 describe('Admin Server Actions', () => {
   beforeEach(() => { vi.clearAllMocks(); });
+
+  describe('getGlobalUsersAction', () => {
+    it('manager: rechaza cuando input.tenantId !== user.tenantId (cross-tenant leak)', async () => {
+      vi.mocked(getCurrentUser).mockResolvedValue(managerUser);
+      const r = await getGlobalUsersAction({ tenantId: 'tenant-B' });
+      expect(r.success).toBe(false);
+      expect(r.error!.code).toBe('FORBIDDEN');
+      expect(prisma.tenantMembership.findMany).not.toHaveBeenCalled();
+    });
+
+    it('manager: sin input.tenantId, query usa su propio tenantId', async () => {
+      vi.mocked(getCurrentUser).mockResolvedValue(managerUser);
+      vi.mocked(prisma.tenantMembership.findMany).mockResolvedValue([]);
+      const r = await getGlobalUsersAction({ limit: 50 });
+      expect(r.success).toBe(true);
+      expect(prisma.tenantMembership.findMany).toHaveBeenCalledWith(
+        expect.objectContaining({ where: expect.objectContaining({ tenantId: 'tenant-A' }) }),
+      );
+    });
+
+    it('manager: con input.tenantId igual al suyo, query usa su propio tenantId', async () => {
+      vi.mocked(getCurrentUser).mockResolvedValue(managerUser);
+      vi.mocked(prisma.tenantMembership.findMany).mockResolvedValue([]);
+      const r = await getGlobalUsersAction({ tenantId: 'tenant-A' });
+      expect(r.success).toBe(true);
+      expect(prisma.tenantMembership.findMany).toHaveBeenCalledWith(
+        expect.objectContaining({ where: expect.objectContaining({ tenantId: 'tenant-A' }) }),
+      );
+    });
+
+    it('admin: input.tenantId arbitrario se respeta (modo plataforma)', async () => {
+      vi.mocked(getCurrentUser).mockResolvedValue(adminUser);
+      vi.mocked(prisma.tenantMembership.findMany).mockResolvedValue([]);
+      const r = await getGlobalUsersAction({ tenantId: 'tenant-otro' });
+      expect(r.success).toBe(true);
+      expect(prisma.tenantMembership.findMany).toHaveBeenCalledWith(
+        expect.objectContaining({ where: expect.objectContaining({ tenantId: 'tenant-otro' }) }),
+      );
+    });
+
+    it('non-admin (no manager): rechazado', async () => {
+      vi.mocked(getCurrentUser).mockResolvedValue(nonAdmin);
+      const r = await getGlobalUsersAction();
+      expect(r.success).toBe(false);
+      expect(r.error!.code).toBe('FORBIDDEN');
+    });
+  });
 
   describe('getUsersAction', () => {
     it('admin puede listar usuarios', async () => {

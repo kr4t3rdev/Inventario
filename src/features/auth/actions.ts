@@ -383,8 +383,19 @@ export const meAction = withAction(
 /**
  * @description Refresca la sesión del usuario usando refreshToken.
  * Lee refreshToken de la cookie, verifica, y emite nuevos tokens.
+ *
+ * No usa withAction: este endpoint es la vía de recuperación de sesión,
+ * por lo que no debe requerir auth previa.
+ *
+ * Preserva el contexto de tenant del token viejo (tenantId/tenantRole) y lo
+ * re-resuelve contra la DB antes de emitir el nuevo. Si la membresía cambió
+ * o fue desactivada, el nuevo token refleja el estado actual.
  */
-export const refreshSessionAction = withAction(async (_void: void) => {
+export async function refreshSessionAction(_void: void): Promise<{
+	success: true;
+	token: string;
+	refreshToken: string;
+}> {
 	const cookieStore = await cookies();
 	const refreshTokenCookie = cookieStore.get("refreshToken");
 
@@ -392,69 +403,111 @@ export const refreshSessionAction = withAction(async (_void: void) => {
 		throw new ActionError("Sesión expirada", "SESSION_EXPIRED");
 	}
 
+	let payload: {
+		userId: string;
+		email: string;
+		tenantId?: string;
+		tenantRole?: string;
+	};
+
 	try {
-		const payload = jwt.verify(
+		payload = jwt.verify(
 			refreshTokenCookie.value,
 			getRefreshJwtSecret(),
-		) as {
-			userId: string;
-			email: string;
-		};
-
-		const user = await prisma.user.findUnique({
-			where: { userId: payload.userId },
-			select: { userId: true, isActive: true, expiresAt: true },
-		});
-
-		if (!user || !user.isActive) {
-			cookieStore.delete("auth_token");
-			cookieStore.delete("refreshToken");
-			throw new ActionError("Usuario inactivo", "USER_INACTIVE");
-		}
-
-		const newToken = jwt.sign(
-			{ userId: user.userId, email: payload.email },
-			getJwtSecret(),
-			{ expiresIn: "15m" },
-		);
-		const newRefreshToken = jwt.sign(
-			{ userId: user.userId, email: payload.email, refreshId: Date.now() },
-			getRefreshJwtSecret(),
-			{ expiresIn: "30d" },
-		);
-
-		await prisma.userSession.deleteMany({ where: { userId: user.userId } });
-		await prisma.userSession.create({
-			data: {
-				userId: user.userId,
-				token: newToken,
-				isActive: true,
-				expiresAt: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000),
-			},
-		});
-
-		cookieStore.set("auth_token", newToken, {
-			httpOnly: true,
-			secure: process.env.NODE_ENV === "production",
-			sameSite: "lax",
-			path: "/",
-			maxAge: 900,
-		});
-		cookieStore.set("refreshToken", newRefreshToken, {
-			httpOnly: true,
-			secure: process.env.NODE_ENV === "production",
-			sameSite: "lax",
-			path: "/",
-			maxAge: 30 * 24 * 60 * 60,
-		});
-
-		return { success: true };
-	} catch (err) {
+		) as typeof payload;
+	} catch {
 		cookieStore.delete("auth_token");
 		cookieStore.delete("refreshToken");
 		throw new ActionError("Sesión expirada", "SESSION_EXPIRED");
 	}
-});
+
+	const user = await prisma.user.findUnique({
+		where: { userId: payload.userId },
+		select: { userId: true, isActive: true, expiresAt: true },
+	});
+
+	if (!user || !user.isActive) {
+		cookieStore.delete("auth_token");
+		cookieStore.delete("refreshToken");
+		throw new ActionError("Usuario inactivo", "USER_INACTIVE");
+	}
+
+	// Si la licencia del usuario expiró, desactivarlo y rechazar.
+	if (user.expiresAt && new Date(user.expiresAt) < new Date()) {
+		await prisma.user.update({
+			where: { userId: user.userId },
+			data: { isActive: false },
+		});
+		cookieStore.delete("auth_token");
+		cookieStore.delete("refreshToken");
+		throw new ActionError("Licencia expirada", "USER_INACTIVE");
+	}
+
+	// Validar que exista al menos una sesión activa para este usuario.
+	// Esto evita que un refreshToken robado (sin sesión válida) pueda
+	// emitir nuevos tokens.
+	const activeSession = await prisma.userSession.findFirst({
+		where: { userId: user.userId, isActive: true },
+	});
+	if (!activeSession) {
+		cookieStore.delete("auth_token");
+		cookieStore.delete("refreshToken");
+		throw new ActionError("Sesión expirada", "SESSION_EXPIRED");
+	}
+
+	// Re-resolver el contexto de tenant contra la DB.
+	// Pasamos el tenantId del token viejo como hint para mantener
+	// continuidad cuando el usuario pertenece a varios tenants.
+	const tenantContext = await resolveTenantContext(
+		user.userId,
+		payload.tenantId ?? null,
+	);
+
+	const tokenPayload: Record<string, unknown> = {
+		userId: user.userId,
+		email: payload.email,
+	};
+	if (tenantContext) {
+		tokenPayload.tenantId = tenantContext.tenantId;
+		tokenPayload.tenantRole = tenantContext.tenantRole;
+	}
+
+	const newToken = jwt.sign(tokenPayload, getJwtSecret(), {
+		expiresIn: "15m",
+	});
+	const newRefreshToken = jwt.sign(
+		{ ...tokenPayload, refreshId: Date.now() },
+		getRefreshJwtSecret(),
+		{ expiresIn: "30d" },
+	);
+
+	await prisma.userSession.deleteMany({ where: { userId: user.userId } });
+	await prisma.userSession.create({
+		data: {
+			userId: user.userId,
+			token: newToken,
+			isActive: true,
+			expiresAt: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000),
+		},
+	});
+
+	cookieStore.set("auth_token", newToken, {
+		httpOnly: true,
+		secure: process.env.NODE_ENV === "production",
+		sameSite: "lax",
+		path: "/",
+		maxAge: 900,
+	});
+	cookieStore.set("refreshToken", newRefreshToken, {
+		httpOnly: true,
+		secure: process.env.NODE_ENV === "production",
+		sameSite: "lax",
+		path: "/",
+		maxAge: 30 * 24 * 60 * 60,
+	});
+
+	return { success: true, token: newToken, refreshToken: newRefreshToken };
+}
 
 // ─── handleAuthCallback (pública — sin withAction) ───────
 

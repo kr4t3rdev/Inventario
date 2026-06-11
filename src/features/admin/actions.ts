@@ -209,7 +209,18 @@ export const getGlobalUsersAction = withAction(
 			throw new ActionError("Acceso restringido", "FORBIDDEN");
 		}
 
-		const tenantId = input.tenantId || user.tenantId;
+		let tenantId: string | undefined;
+		if (isPlatformAdmin) {
+			tenantId = input.tenantId || user.tenantId;
+		} else {
+			if (input.tenantId && input.tenantId !== user.tenantId) {
+				throw new ActionError(
+					"No tenés permisos para ver usuarios de otra empresa",
+					"FORBIDDEN",
+				);
+			}
+			tenantId = user.tenantId;
+		}
 
 		if (tenantId) {
 			// Modo tenant: buscar membresías activas de esa empresa

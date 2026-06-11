@@ -1,2 +1,2 @@
-export { getMiEmpresaAction, getMiEmpresaPublicAction } from './actions'
-export type { MiEmpresaFormData } from './schemas'
+export { getMiEmpresaAction, updateMiEmpresaAction } from './actions'
+export type { MiEmpresaFormValues, MiEmpresaApiResponse } from './lib/miEmpresaUtils'

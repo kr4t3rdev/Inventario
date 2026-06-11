@@ -32,9 +32,34 @@ vi.mock('jsonwebtoken', () => ({
   },
 }));
 
+vi.mock('@/lib/secrets', () => ({
+  getJwtSecret: vi.fn(() => 'test-secret'),
+  getRefreshJwtSecret: vi.fn(() => 'test-refresh-secret'),
+}));
+
+const cookieMap: Record<string, string> = {};
+vi.mock('next/headers', () => ({
+  cookies: vi.fn(() => ({
+    get: (name: string) => {
+      const value = cookieMap[name];
+      return value ? { name, value } : undefined;
+    },
+    set: (name: string, value: string) => {
+      cookieMap[name] = typeof value === 'object' && value && 'value' in value
+        ? (value as { value: string }).value
+        : (value as string);
+    },
+    delete: (name: string) => {
+      delete cookieMap[name];
+    },
+  })),
+}));
+
 describe('auth refresh route', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    for (const k of Object.keys(cookieMap)) delete cookieMap[k];
+    cookieMap.refreshToken = 'valid';
     vi.mocked(prisma.tenantMembership.findUnique).mockResolvedValue(null as never);
     vi.mocked(prisma.tenantMembership.findFirst).mockResolvedValue(null as never);
     vi.mocked(prisma.tenantLicense.findFirst).mockResolvedValue(null as never);

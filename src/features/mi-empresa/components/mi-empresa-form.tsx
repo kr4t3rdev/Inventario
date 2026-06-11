@@ -5,7 +5,6 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { sileo } from "@/lib/sileo-shim";
-import { getAuthToken } from "@/lib/token";
 import { useAuth } from "@/contexts/auth-context";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -40,6 +39,7 @@ import {
 	AlertDialogHeader,
 	AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
+import { updateMiEmpresaAction } from "../actions";
 import type {
 	CuentaBancariaItem,
 	MiEmpresaFormValues as MiEmpresaFormValuesType,
@@ -105,36 +105,31 @@ type MiEmpresaApiResponse = {
 
 async function saveMiEmpresa(
 	values: MiEmpresaFormValuesType,
-): Promise<MiEmpresaApiResponse> {
-	const token = getAuthToken();
+): Promise<{ data: MiEmpresaApiResponse; message?: string }> {
 	const payload = normalizeMiEmpresaFormValues(values);
+	const result = await updateMiEmpresaAction(payload);
 
-	const res = await fetch("/api/mi-empresa", {
-		method: "PUT",
-		headers: {
-			"Content-Type": "application/json",
-			...(token ? { Authorization: token } : {}),
-		},
-		body: JSON.stringify(payload),
-	});
-
-	if (!res.ok) {
-		const data = await res.json().catch(() => ({}));
-
-		// Si hay errores de validación por campo, lanzar objeto con estructura especial
-		if ((data as any)?.fieldErrors) {
-			const error = new Error("Validation errors") as any;
-			error.fieldErrors = (data as any).fieldErrors;
-			throw error;
+	if (!result.success) {
+		const err: Error & { fieldErrors?: Record<string, string> } = new Error(
+			result.error?.message ?? "Error guardando Mi Empresa",
+		);
+		if (
+			result.error?.code === "VALIDATION_ERROR" &&
+			result.error.details &&
+			typeof result.error.details === "object"
+		) {
+			const details = result.error.details as Record<string, string[]>;
+			err.fieldErrors = Object.fromEntries(
+				Object.entries(details).map(([k, v]) => [k, v[0] ?? ""]),
+			);
 		}
-
-		const message = (data as any)?.error || "Error guardando Mi Empresa";
-		throw new Error(message);
+		throw err;
 	}
-	const json = await res.json().catch(() => null);
-	if (!json) throw new Error("Respuesta inválida al guardar Mi Empresa");
-	const responseData = (json?.data ?? json) as MiEmpresaApiResponse;
-	return responseData;
+
+	return {
+		data: (result.data as { data: MiEmpresaApiResponse }).data,
+		message: (result.data as { message?: string }).message,
+	};
 }
 
 export function MiEmpresaForm({
@@ -172,31 +167,15 @@ export function MiEmpresaForm({
 	 */
 	const handleEan13Toggle = async (checked: boolean) => {
 		if (!checked) {
-			// Desactivando EAN-13 - sin confirmación necesaria
 			setIsSubmitting(true);
 			try {
-				const token = getAuthToken();
-				const res = await fetch("/api/mi-empresa", {
-					method: "PUT",
-					headers: {
-						"Content-Type": "application/json",
-						...(token ? { Authorization: token } : {}),
-					},
-					body: JSON.stringify({ usaCodigoEan13: false }),
-				});
-
-				const data = await res.json().catch(() => ({}));
-				if (!res.ok) {
-					throw new Error(
-						(data as { error?: string }).error ||
-							"Error al actualizar configuración",
-					);
+				const result = await updateMiEmpresaAction({ usaCodigoEan13: false });
+				if (!result.success) {
+					throw new Error(result.error?.message ?? "Error al actualizar");
 				}
-
+				const data = result.data as { data?: MiEmpresaApiResponse; message?: string };
 				sileo.success({
-					title:
-						(data as { message?: string }).message ||
-						"Configuración actualizada",
+					title: data?.message ?? "Configuración actualizada",
 				});
 				form.setValue("usaCodigoEan13", false, {
 					shouldDirty: false,
@@ -212,7 +191,6 @@ export function MiEmpresaForm({
 				setIsSubmitting(false);
 			}
 		} else {
-			// Activando EAN-13 - mostrar diálogo de confirmación
 			setShowEan13Confirmation(true);
 		}
 	};
@@ -224,33 +202,17 @@ export function MiEmpresaForm({
 		setIsSubmitting(true);
 		setShowEan13Confirmation(false);
 		try {
-			const token = getAuthToken();
-			const res = await fetch("/api/mi-empresa", {
-				method: "PUT",
-				headers: {
-					"Content-Type": "application/json",
-					...(token ? { Authorization: token } : {}),
-				},
-				body: JSON.stringify({
-					usaCodigoEan13: true,
-					confirmReset: true,
-				}),
+			const result = await updateMiEmpresaAction({
+				usaCodigoEan13: true,
+				confirmReset: true,
 			});
-
-			const data = await res.json().catch(() => ({}));
-			if (!res.ok) {
-				throw new Error(
-					(data as { error?: string }).error || "Error al activar EAN-13",
-				);
+			if (!result.success) {
+				throw new Error(result.error?.message ?? "Error al activar EAN-13");
 			}
-
-			const responseData = (
-				data as { data?: MiEmpresaApiResponse; message?: string }
-			).data;
+			const data = result.data as { data?: MiEmpresaApiResponse; message?: string };
+			const responseData = data?.data;
 			sileo.success({
-				title:
-					(data as { message?: string }).message ||
-					"EAN-13 activado correctamente",
+				title: data?.message ?? "EAN-13 activado correctamente",
 			});
 			form.setValue("usaCodigoEan13", responseData?.usaCodigoEan13 ?? true, {
 				shouldDirty: false,
@@ -271,7 +233,7 @@ export function MiEmpresaForm({
 	const onSubmit = async (values: MiEmpresaFormValuesType) => {
 		setSaving(true);
 		try {
-			const saved = await saveMiEmpresa(values);
+			const { data: saved, message } = await saveMiEmpresa(values);
 			form.reset({
 				nombre: saved.nombre || "Mi Empresa",
 				propietario: saved.propietario || "",
@@ -285,7 +247,7 @@ export function MiEmpresaForm({
 				cuentaBancariaId: saved.cuentaBancariaId || "none",
 				usaCodigoEan13: saved.usaCodigoEan13 ?? false,
 			});
-			sileo.success({ title: "Mi Empresa actualizada" });
+			sileo.success({ title: message ?? "Mi Empresa actualizada" });
 		} catch (e) {
 			const error = e as any;
 

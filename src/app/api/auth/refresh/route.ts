@@ -10,19 +10,18 @@ export async function POST() {
   try {
     const result = await refreshSessionAction(undefined);
 
-    if (result.success) {
-      return Response.json({ success: true });
-    }
-
-    const statusMap: Record<string, number> = {
-      SESSION_EXPIRED: 401,
-      USER_INACTIVE: 403,
-    };
-
-    const status = statusMap[result.error?.code ?? ''] ?? 401;
-    return Response.json({ error: result.error?.message }, { status });
-  } catch (error) {
+    return Response.json({
+      success: true,
+      token: result.token,
+      refreshToken: result.refreshToken,
+    });
+  } catch (error: any) {
     console.error('Error en refresh route:', error);
-    return Response.json({ error: 'Sesión expirada' }, { status: 401 });
+    const code = error?.code as string | undefined;
+    const status = code === 'USER_INACTIVE' ? 403 : 401;
+    return Response.json(
+      { error: error?.message ?? 'Sesión expirada' },
+      { status },
+    );
   }
 }

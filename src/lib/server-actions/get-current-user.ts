@@ -112,14 +112,21 @@ export async function getCurrentUser(): Promise<AuthenticatedUser | null> {
 
     if (!user || !user.isActive) return null;
 
-    // 5. Resolver contexto de tenant (sin header x-tenant-id en Server Actions)
-    const tenantContext = await resolveTenantContext(user.userId, null);
+    // 5. Resolver contexto de tenant.
+    // Usar el tenantId del JWT como hint para mantener consistencia con
+    // las API routes (auth-middleware) y con el flujo de refresh.
+    // Si la membresía fue desactivada en la DB, resolveTenantContext
+    // devuelve null y el user queda sin tenantContext.
+    const tenantContext = await resolveTenantContext(
+      user.userId,
+      decoded.tenantId ?? null,
+    );
 
     const authenticatedUser: AuthenticatedUser = {
       userId: user.userId,
       name: user.name,
       email: user.email,
-  // @ts-expect-error
+      // @ts-expect-error: user.role is string in DB but UserRole in runtime
       role: user.role,
       isActive: user.isActive,
       ...(tenantContext && {
