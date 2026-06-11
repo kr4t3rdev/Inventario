@@ -52,3 +52,6 @@ export type UpdateTransferenciaInput = z.infer<typeof updateTransferenciaSchema>
 export type AprobarTransferenciaInput = z.infer<typeof aprobarTransferenciaSchema>;
 export type CompletarTransferenciaInput = z.infer<typeof completarTransferenciaSchema>;
 export type RechazarTransferenciaInput = z.infer<typeof rechazarTransferenciaSchema>;
+
+export const transferenciaSchema = createTransferenciaSchema;
+export type TransferenciaFormValues = z.infer<typeof transferenciaSchema>;

@@ -30,6 +30,7 @@ import { useAlmacenes } from "@/features/almacenes/hooks/use-almacenes"
 import { getProductosAction } from "@/features/productos"
 import { getStockPorUbicacionAction } from "@/features/productos/actions"
 import { createTransferenciaAction, updateTransferenciaAction } from "@/features/transferencias/actions"
+import { transferenciaSchema } from "@/features/transferencias/schemas"
 import { ProductoSelector } from "./producto-selector"
 
 const productoTransferenciaSchema = z.object({

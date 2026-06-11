@@ -8,17 +8,17 @@ import type { AuthenticatedUser } from '@/lib/auth-middleware';
 
 export const getReporteFinancieroAction = withAction(async (input: ReporteInput, user: AuthenticatedUser) => {
   requireFeature(user, 'reportes-financieros', 'consultar reportes financieros');
-  requireTenant(user);
+  const tenantId = requireTenant(user);
   const parsed = reporteSchema.parse(input);
   const [year, month] = parsed.periodo.split('-');
   const startDate = new Date(Number(year), Number(month) - 1, 1);
   const endDate = new Date(Number(year), Number(month), 0);
 
   const [ventas, compras, salarios, mermas] = await Promise.all([
-    prisma.venta.findMany({ where: { createdAt: { gte: startDate, lte: endDate } }, select: { cantidad: true, producto: { select: { id: true, nombre: true, precioVenta: true, precioCosto: true } } } }),
-    prisma.gastoCompra.findMany({ where: { createdAt: { gte: startDate, lte: endDate } }, select: { total: true } }),
-    prisma.empleado.findMany({ where: { createdAt: { gte: startDate, lte: endDate } }, select: { empleadoId: true, nombre: true, apellido: true, salarioBases: true } }),
-    prisma.merma.findMany({ where: { createdAt: { gte: startDate, lte: endDate } }, select: { cantidad: true, costoTotal: true } }),
+    prisma.venta.findMany({ where: { tenantId, createdAt: { gte: startDate, lte: endDate } }, select: { cantidad: true, producto: { select: { id: true, nombre: true, precioVenta: true, precioCosto: true } } } }),
+    prisma.gastoCompra.findMany({ where: { tenantId, createdAt: { gte: startDate, lte: endDate } }, select: { total: true } }),
+    prisma.empleado.findMany({ where: { tenantId, createdAt: { gte: startDate, lte: endDate } }, select: { empleadoId: true, nombre: true, apellido: true, salarioBases: true } }),
+    prisma.merma.findMany({ where: { tenantId, createdAt: { gte: startDate, lte: endDate } }, select: { cantidad: true, costoTotal: true } }),
   ]);
 
   // @ts-expect-error
