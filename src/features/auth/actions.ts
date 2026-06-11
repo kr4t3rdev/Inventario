@@ -509,6 +509,109 @@ export async function refreshSessionAction(_void: void): Promise<{
 	return { success: true, token: newToken, refreshToken: newRefreshToken };
 }
 
+// ─── Tenant Switching ─────────────────────────────────────
+
+/**
+ * @description Devuelve los tenants a los que el usuario actual tiene acceso.
+ */
+export const getMyTenantsAction = withAction(
+	async (_void: void, user: AuthenticatedUser) => {
+		const memberships = await prisma.tenantMembership.findMany({
+			where: { userId: user.userId, isActive: true },
+			include: {
+				tenant: { select: { tenantId: true, nombre: true, slug: true } },
+			},
+			orderBy: { createdAt: "asc" },
+		});
+
+		return memberships.map((m) => ({
+			tenantId: m.tenantId,
+			nombre: m.tenant.nombre,
+			slug: m.tenant.slug,
+			tenantRole: m.tenantRole,
+			isCurrent: m.tenantId === user.tenantId,
+		}));
+	},
+);
+
+/**
+ * @description Cambia el tenant activo del usuario.
+ * Re-valida la membresía, emite un nuevo JWT con el tenantId/tenantRole
+ * y refresca las cookies.
+ */
+export const switchActiveTenantAction = withAction(
+	async (tenantId: string, user: AuthenticatedUser) => {
+		const membership = await prisma.tenantMembership.findUnique({
+			where: { tenantId_userId: { tenantId, userId: user.userId } },
+		});
+
+		if (!membership || !membership.isActive) {
+			throw new ActionError(
+				"No tenés acceso a esta empresa",
+				"FORBIDDEN",
+			);
+		}
+
+		// Re-resolver el contexto entero (límites del plan, features, etc.)
+		const tenantContext = await resolveTenantContext(user.userId, tenantId);
+		if (!tenantContext) {
+			throw new ActionError(
+				"El tenant ya no está activo para tu usuario",
+				"FORBIDDEN",
+			);
+		}
+
+		const tokenPayload: Record<string, unknown> = {
+			userId: user.userId,
+			email: user.email,
+			tenantId: tenantContext.tenantId,
+			tenantRole: tenantContext.tenantRole,
+		};
+
+		const newToken = jwt.sign(tokenPayload, getJwtSecret(), {
+			expiresIn: "30d",
+		});
+		const newRefreshToken = jwt.sign(
+			{ ...tokenPayload, refreshId: Date.now() },
+			getRefreshJwtSecret(),
+			{ expiresIn: "30d" },
+		);
+
+		// Reemplazar sesiones activas
+		await prisma.userSession.deleteMany({ where: { userId: user.userId } });
+		await prisma.userSession.create({
+			data: {
+				userId: user.userId,
+				token: newToken,
+				isActive: true,
+				expiresAt: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000),
+			},
+		});
+
+		const cookieStore = await cookies();
+		cookieStore.set("auth_token", newToken, {
+			httpOnly: true,
+			secure: process.env.NODE_ENV === "production",
+			sameSite: "lax",
+			path: "/",
+			maxAge: 30 * 24 * 60 * 60,
+		});
+		cookieStore.set("refreshToken", newRefreshToken, {
+			httpOnly: true,
+			secure: process.env.NODE_ENV === "production",
+			sameSite: "lax",
+			path: "/",
+			maxAge: 30 * 24 * 60 * 60,
+		});
+
+		revalidatePath("/", "layout");
+		return {
+			tenantId: tenantContext.tenantId,
+			tenantRole: tenantContext.tenantRole,
+		};
+	},
+);
+
 // ─── handleAuthCallback (pública — sin withAction) ───────
 
 /**

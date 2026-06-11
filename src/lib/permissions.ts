@@ -28,7 +28,6 @@ export const TENANT_PERMISSIONS: Record<TenantRole, string[]> = {
     'GET /api/ventas',
     'POST /api/ventas',
     'GET /api/productos',
-    'GET /api/mi-empresa',
     'GET /api/facturas/*',
     '/api/restaurante/*',
     '/busy/sales',

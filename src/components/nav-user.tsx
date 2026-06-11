@@ -19,6 +19,7 @@ import { SidebarMenu, SidebarMenuButton, SidebarMenuItem, useSidebar } from "@/c
 import { usePathname } from "next/navigation"
 import Link from "next/link"
 import { useAdminUsers } from '@/features/admin/hooks/use-admin-users'
+import { TenantSwitcher } from "@/components/tenant-switcher"
 
 /**
  * @description Menú de usuario en el footer del sidebar con acciones de perfil, tema y cierre de sesión.
@@ -104,6 +105,9 @@ export function NavUser() {
                 Notificaciones
                 </Link>
               </DropdownMenuItem>
+              <DropdownMenuSeparator />
+              <TenantSwitcher />
+              <DropdownMenuSeparator />
               <DropdownMenuItem onClick={() => setTheme(theme === "dark" ? "light" : "dark")} className="flex items-center gap-2 cursor-pointer">
                 {theme === "dark" ? <SunIcon /> : <MoonIcon />}
                 {theme === "dark" ? "Modo Claro" : "Modo Oscuro"}

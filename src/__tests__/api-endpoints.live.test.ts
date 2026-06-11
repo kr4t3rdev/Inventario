@@ -147,8 +147,7 @@ const protectedGets: string[] = [
   // mermas
   // metrics
   '/api/metrics',
-  // mi-empresa
-  '/api/mi-empresa',
+  // mi-empresa (migrado a Server Action)
   // notificaciones
   // ofertas
   // pago-salario
@@ -304,12 +303,6 @@ describe('Endpoints con autenticación (requiere TEST_EMAIL + TEST_PASSWORD)', (
   it('GET /api/reparaciones/ordenes → 200 con token', async () => {
     if (!authToken) return
     const res = await get('/api/reparaciones/ordenes', authToken)
-    expect([200, 204]).toContain(res.status)
-  })
-
-  it('GET /api/mi-empresa → 200 con token', async () => {
-    if (!authToken) return
-    const res = await get('/api/mi-empresa', authToken)
     expect([200, 204]).toContain(res.status)
   })
 

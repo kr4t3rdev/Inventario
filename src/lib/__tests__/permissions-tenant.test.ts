@@ -48,9 +48,8 @@ describe('hasTenantPermission', () => {
       expect(hasTenantPermission('dependiente', '/api/contabilidad/reportes')).toBe(false)
     })
 
-    it('tiene acceso GET a mi-empresa pero NO PUT', () => {
-      expect(hasTenantPermission('dependiente', '/api/mi-empresa', 'GET')).toBe(true)
-      expect(hasTenantPermission('dependiente', '/api/mi-empresa', 'PUT')).toBe(false)
+    it('tiene acceso GET a productos', () => {
+      expect(hasTenantPermission('dependiente', '/api/productos', 'GET')).toBe(true)
     })
   })
 })
