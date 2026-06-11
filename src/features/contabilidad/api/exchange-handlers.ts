@@ -177,12 +177,18 @@ export async function getBalanceFinanciero(request: NextRequest, user: Authentic
     })
     const totalCuentasPorCobrar = cuentasPorCobrar.reduce((acc: number, c: any) => acc + (Number(c.montoDeuda) - Number(c.montoPagado)), 0)
     const deudasExternas = await prisma.inyeccionCapital.findMany({
-      where: { ...tenantWhere, tipo: "DEUDA_EXTERNA" },
+      where: {
+        ...(tenantId ? { cuentaBancaria: { tenantId } } : {}),
+        tipo: "DEUDA_EXTERNA",
+      },
       select: { saldoPendiente: true, montoTotalDeuda: true },
     })
     const totalPasivos = deudasExternas.reduce((acc: number, d: any) => acc + (d.saldoPendiente ? Number(d.saldoPendiente) : Number(d.montoTotalDeuda)), 0)
     const capitalSocial = await prisma.inyeccionCapital.findMany({
-      where: { ...tenantWhere, tipo: "CAPITAL_SOCIAL" },
+      where: {
+        ...(tenantId ? { cuentaBancaria: { tenantId } } : {}),
+        tipo: "CAPITAL_SOCIAL",
+      },
       select: { montoRecibido: true },
     })
     const totalCapital = capitalSocial.reduce((acc: number, c: any) => acc + Number(c.montoRecibido), 0)

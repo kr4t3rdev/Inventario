@@ -61,21 +61,24 @@ export default function BalanceResultadosPage() {
   const [year, setYear] = useState<string>(new Date().getFullYear().toString())
   const [data, setData] = useState<FinancialData | null>(null)
   const [loading, setLoading] = useState(true)
+  const [errorMsg, setErrorMsg] = useState<string | null>(null)
 
   useEffect(() => {
     const fetchData = async () => {
       setLoading(true)
+      setErrorMsg(null)
       try {
         const res = await fetch(`/api/contabilidad/balance-financiero?year=${year}`)
         
         if (res.ok) {
           const jsonData = await res.json()
           setData(jsonData)
-        } else if (res.status === 401) {
-          console.error("Unauthorized access")
+        } else {
+          const body = await res.json().catch(() => ({}))
+          setErrorMsg((body as any).error || `Error ${res.status}`)
         }
       } catch (error) {
-        console.error("Failed to fetch financial data", error)
+        setErrorMsg("Error de red al conectar con el servidor")
       } finally {
         setLoading(false)
       }
@@ -99,7 +102,9 @@ export default function BalanceResultadosPage() {
   if (!data) {
     return (
           <div className="flex h-screen flex-col items-center justify-center gap-4 bg-background">
-            <p className="text-muted-foreground">No se pudieron cargar los datos financieros.</p>
+            <p className="text-muted-foreground">
+              {errorMsg || "No se pudieron cargar los datos financieros."}
+            </p>
             <button 
               onClick={() => window.location.reload()} 
               className="rounded bg-primary px-4 py-2 text-primary-foreground hover:bg-primary/90 transition-colors"
