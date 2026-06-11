@@ -1,0 +1,4 @@
+.windsurf
+--version
+-print
+_tmp_*
