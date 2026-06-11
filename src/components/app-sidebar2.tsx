@@ -525,6 +525,32 @@ export function AppSidebar2({
 		Reportes: "from-rose-500/15 via-sidebar-accent/45 to-transparent",
 	};
 
+	// ── Mapa de items del sidebar a features del plan ──
+	// Si un item está en este mapa y el plan no tiene el feature, se oculta.
+	const SIDEBAR_FEATURE_MAP: Record<string, string> = {
+		"Listas de Precios": "listas-precios",
+		"Gestión de Facturas": "facturacion",
+		"Gestión de Empleados": "empleados",
+		Asistencia: "empleados",
+		Vacaciones: "empleados",
+		Nómina: "nomina",
+		Empleados: "empleados",
+		Producción: "produccion",
+		Clientes: "clientes",
+		Contratos: "contratos",
+		Ofertas: "ofertas",
+		"Cuentas por Cobrar": "cuentas-cobrar",
+		"Cuentas por Pagar": "cuentas-pagar",
+		Anticipos: "anticipos",
+		"Préstamos en Efectivo": "prestamos-cash",
+		"Deudas en Efectivo": "deudas-cash",
+		Exchange: "multi-moneda",
+		"Cuadre Financiero": "cuadre-diario",
+		Reportes: "reportes-financieros",
+		"Rentabilidad x Compra": "rentabilidad-compra",
+		Notificaciones: "notificaciones",
+	};
+
 	// ── Permisos de sidebar por rol de tenant ──
 	// Define qué items del menú ve cada rol de tenant.
 	// Items sin entrada en el mapa solo los ve manager.
@@ -607,6 +633,10 @@ export function AppSidebar2({
 	function canSeeSidebarItem(itemTitle: string): boolean {
 		// Admin global ve todo
 		if (user?.role === "admin") return true;
+
+		// Verificar feature del plan
+		const featureKey = SIDEBAR_FEATURE_MAP[itemTitle];
+		if (featureKey && user?.planFeatures?.[featureKey] === false) return false;
 
 		// Si no hay tenantRole (usuario sin membresía), mostrar items públicos
 		if (!user?.tenantRole) {
