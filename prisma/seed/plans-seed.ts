@@ -51,6 +51,8 @@ const PLAN_BASICO_FEATURES: Record<string, boolean> = {
 	"prestamos-cash": false,
 	"deudas-cash": false,
 	anticipos: false,
+	"analisis-estado-cuenta": false,
+	"facturas-vencidas": false,
 	// Producción
 	produccion: false,
 	reparaciones: false,
@@ -109,6 +111,8 @@ const PLAN_EMPRESARIAL_FEATURES: Record<string, boolean> = {
 	"prestamos-cash": true,
 	"deudas-cash": true,
 	anticipos: true,
+	"analisis-estado-cuenta": true,
+	"facturas-vencidas": true,
 	// Backups cada hora + restauración point-in-time
 	"backups-diario": false,
 	"backups-tiempo-real": true,

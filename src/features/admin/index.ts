@@ -21,6 +21,7 @@ export {
 	deleteLicenciaAction,
 	generateLicenciasAction,
 	getUserMetricsAction,
+	addTenantMembershipAction,
 } from "./actions";
 
 export { useAdminUsers } from "./hooks/use-admin-users";

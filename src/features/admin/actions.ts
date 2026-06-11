@@ -10,6 +10,7 @@
 import { revalidatePath } from "next/cache";
 import { withAction, ActionError } from "@/lib/server-actions";
 import { createTenantForUser } from "@/lib/services/tenant-factory";
+import { requireFeature } from "@/lib/services/tenant-scope";
 import { prisma } from "@/lib/prisma";
 import bcrypt from "bcryptjs";
 import { sendEmailVerificationLink } from "@/lib/email";
@@ -19,6 +20,7 @@ import {
 	updateUserSchema,
 	lockUnlockSchema,
 	membershipActionSchema,
+	addTenantMembershipSchema,
 	createLicenciaSchema,
 	updateLicenciaSchema,
 	createPlanSchema,
@@ -28,6 +30,7 @@ import {
 import type {
 	CreateUserInput,
 	UpdateUserInput,
+	AddTenantMembershipInput,
 	LockUnlockInput,
 	MembershipActionInput,
 	CreateLicenciaInput,
@@ -240,6 +243,9 @@ export const getGlobalUsersAction = withAction(
 							expiresAt: true,
 							lockedUntil: true,
 							avatar: true,
+							_count: {
+								select: { tenantMemberships: true },
+							},
 						},
 					},
 				},
@@ -251,6 +257,7 @@ export const getGlobalUsersAction = withAction(
 				...m.user,
 				tenantRole: m.tenantRole,
 				membershipId: m.membershipId,
+				membershipCount: (m.user as { _count?: { tenantMemberships: number } })._count?.tenantMemberships ?? 1,
 			}));
 
 			return { users, total: users.length };
@@ -263,7 +270,10 @@ export const getGlobalUsersAction = withAction(
 			include: {
 				tenantMemberships: {
 					include: { tenant: true },
-					take: 1,
+					take: 5,
+				},
+				_count: {
+					select: { tenantMemberships: true },
 				},
 			},
 		});
@@ -286,6 +296,7 @@ export const getGlobalUsersAction = withAction(
 				tenantRole: membership?.tenantRole ?? null,
 				tenantId: membership?.tenantId ?? null,
 				tenantName: membership?.tenant?.nombre ?? null,
+				membershipCount: u._count?.tenantMemberships ?? 0,
 			};
 		});
 
@@ -900,5 +911,62 @@ export const getUserMetricsAction = withAction(
 			throw new ActionError("Acceso restringido", "FORBIDDEN");
 		const months = input.months ?? 6;
 		return getUserMetrics(prisma, months, input.tenantId);
+	},
+);
+
+// ─── Multi-Tenant Membership ──────────────────────────────
+
+/**
+ * @description Asigna un usuario a un tenant adicional.
+ *
+ * Gateada por la feature `multitenantmembership` del plan del admin.
+ * Los admins de plataforma (role=admin) siempre pueden.
+ */
+export const addTenantMembershipAction = withAction(
+	async (input: AddTenantMembershipInput, user: AuthenticatedUser) => {
+		requireFeature(user, "multitenantmembership", "Membresía multi-tenant");
+
+		const parsed = addTenantMembershipSchema.parse(input);
+		const { userId, tenantId, tenantRole } = parsed;
+
+		// Validar que el usuario existe
+		const targetUser = await prisma.user.findUnique({
+			where: { userId },
+			select: { userId: true, name: true, isActive: true },
+		});
+		if (!targetUser)
+			throw new ActionError("Usuario no encontrado", "NOT_FOUND");
+
+		// Validar que el tenant existe
+		const tenant = await prisma.tenant.findUnique({
+			where: { tenantId },
+			select: { tenantId: true, nombre: true },
+		});
+		if (!tenant)
+			throw new ActionError("Empresa no encontrada", "NOT_FOUND");
+
+		// Validar que no exista ya la membresía
+		const existing = await prisma.tenantMembership.findUnique({
+			where: { tenantId_userId: { tenantId, userId } },
+		});
+		if (existing) {
+			throw new ActionError(
+				`${targetUser.name} ya pertenece a ${tenant.nombre}`,
+				"DUPLICATE",
+			);
+		}
+
+		// Crear la membresía
+		const membership = await prisma.tenantMembership.create({
+			data: {
+				tenantId,
+				userId,
+				tenantRole,
+				isActive: true,
+			},
+		});
+
+		revalidatePath("/admin");
+		return { membership, tenantName: tenant.nombre };
 	},
 );

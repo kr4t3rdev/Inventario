@@ -28,6 +28,7 @@ export interface AdminUsersPageData {
 		loginAttempts: number;
 		tenantId: string | null;
 		tenantName: string | null;
+		membershipCount: number;
 		tenants: Array<{
 			tenantId: string;
 			tenantRole: string | null;
@@ -68,6 +69,9 @@ export async function getAdminUsersPageData(): Promise<AdminUsersPageData | null
 				tenantMemberships: {
 					include: { tenant: { select: { nombre: true } } },
 				},
+				_count: {
+					select: { tenantMemberships: true },
+				},
 			},
 		}),
 
@@ -97,6 +101,7 @@ export async function getAdminUsersPageData(): Promise<AdminUsersPageData | null
 				loginAttempts: u.loginAttempts,
 				tenantId: activeMembership?.tenantId ?? null,
 				tenantName: activeMembership?.tenant?.nombre ?? null,
+				membershipCount: u._count?.tenantMemberships ?? 0,
 				tenants: u.tenantMemberships.map((m) => ({
 					tenantId: m.tenantId,
 					tenantRole: m.tenantRole,

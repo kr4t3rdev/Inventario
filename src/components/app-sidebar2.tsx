@@ -549,6 +549,8 @@ export function AppSidebar2({
 		Reportes: "reportes-financieros",
 		"Rentabilidad x Compra": "rentabilidad-compra",
 		Notificaciones: "notificaciones",
+		"Analisis Estado Cuenta": "analisis-estado-cuenta",
+		"Facturas Vencidas": "facturas-vencidas",
 	};
 
 	// ── Permisos de sidebar por rol de tenant ──

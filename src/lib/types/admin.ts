@@ -6,6 +6,7 @@ export interface UsuarioWithTenant extends Usuario {
   tenantName: string | null
   tenantRole: string | null
   membershipId: string | null
+  membershipCount: number
 }
 
 export interface GlobalUsersResponse {

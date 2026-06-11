@@ -9,6 +9,13 @@ export async function GET(request: NextRequest) {
     if ('status' in authResultUser) return authResultUser as Response
     const user = authResultUser.user
 
+    if (user.role !== 'admin' && user.planFeatures?.['facturas-vencidas'] !== true) {
+      return NextResponse.json(
+        { error: 'Tu plan actual no incluye reporte de facturas vencidas.' },
+        { status: 403 },
+      );
+    }
+
     const cuentas = await prisma.cuentaPorCobrar.findMany({
       where: {
         estado: {

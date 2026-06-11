@@ -52,9 +52,11 @@ import {
 	AnimatedCard,
 } from "@/components/ui/animations";
 import { useAuth } from "@/contexts/auth-context";
-import { getGlobalUsersAction, getAdminPlanesAction, approveGlobalUserAction } from "@/features/admin";
+import { getGlobalUsersAction, getAdminPlanesAction, approveGlobalUserAction, addTenantMembershipAction } from "@/features/admin";
+import { getAdminTenantsAction } from "@/features/admin/actions";
 import { LazyMotion, m as motion, type Variants } from "framer-motion";
 import type { AdminUsersPageData } from "../server/data";
+import { getTenantRoleLabel } from "@/lib/auth/roles";
 
 const UserAnalyticsPanel = dynamic(
 	() =>
@@ -136,6 +138,14 @@ export function AdminUsersPageClient({
 	const [selectedPlanId, setSelectedPlanId] = useState<string>("");
 	const [tenantName, setTenantName] = useState<string>("");
 	const [isApproving, setIsApproving] = useState(false);
+
+	// Multi-tenant: diálogo para añadir usuario a otra empresa
+	const [addTenantDialogOpen, setAddTenantDialogOpen] = useState(false);
+	const [addTenantUser, setAddTenantUser] = useState<Usuario | null>(null);
+	const [addTenantId, setAddTenantId] = useState("");
+	const [addTenantRole, setAddTenantRole] = useState("dependiente");
+	const [addTenantSubmitting, setAddTenantSubmitting] = useState(false);
+	const [tenantsList, setTenantsList] = useState<any[]>([]);
 
 	// Estado de datos: arranca con initialData, se actualiza con refresh
 	const [globalUsers, setGlobalUsers] = useState<any>(initialData);
@@ -329,6 +339,40 @@ export function AdminUsersPageClient({
 		refresh();
 	};
 
+	const handleOpenAddTenant = async (u: Usuario): Promise<void> => {
+		setAddTenantUser(u);
+		setAddTenantId("");
+		setAddTenantRole("dependiente");
+		setAddTenantDialogOpen(true);
+		const r = await getAdminTenantsAction();
+		if (r.success && r.data) setTenantsList(r.data);
+	};
+
+	const handleAddTenant = async (): Promise<void> => {
+		if (!addTenantUser || !addTenantId) return;
+		setAddTenantSubmitting(true);
+		try {
+			const r = await addTenantMembershipAction({
+				userId: addTenantUser.userId,
+				tenantId: addTenantId,
+				tenantRole: addTenantRole as "dependiente" | "economico" | "manager",
+			});
+			if (!r.success) throw new Error(r.error?.message ?? "Error");
+			toast.success(`${addTenantUser.name} añadido a la empresa`);
+			setAddTenantDialogOpen(false);
+			setAddTenantUser(null);
+			refresh();
+		} catch (error) {
+			toast.error(
+				error instanceof Error
+					? error.message
+					: "Error al añadir a la empresa",
+			);
+		} finally {
+			setAddTenantSubmitting(false);
+		}
+	};
+
 	return (
 		<PageTransition className="relative min-h-screen w-full">
 			<div className="fixed inset-0 pointer-events-none overflow-hidden -z-10">
@@ -484,6 +528,7 @@ export function AdminUsersPageClient({
 									showTenantColumn={true}
 									onEditUser={handleEditUser}
 									onApproveUser={handleApproveUser}
+									onAddTenantMembership={handleOpenAddTenant}
 									onRefresh={refresh}
 								/>
 							</CardContent>
@@ -583,6 +628,82 @@ export function AdminUsersPageClient({
 							className="bg-linear-to-r from-emerald-600 to-green-600 text-white hover:from-emerald-600/90 hover:to-green-600/90"
 						>
 							{isApproving ? "Aprobando..." : "Aprobar y Crear Empresa"}
+						</Button>
+					</DialogFooter>
+				</DialogContent>
+			</Dialog>
+
+			{/* Diálogo: Añadir a empresa (multitenantmembership) */}
+			<Dialog
+				open={addTenantDialogOpen}
+				onOpenChange={(open) => {
+					if (!open) {
+						setAddTenantDialogOpen(false);
+						setAddTenantUser(null);
+					}
+				}}
+			>
+				<DialogContent className="sm:max-w-[480px]">
+					<DialogHeader>
+						<DialogTitle>Añadir a otra empresa</DialogTitle>
+						<DialogDescription>
+							{addTenantUser?.name} tendrá acceso a la empresa
+							seleccionada con el rol que elijas.
+						</DialogDescription>
+					</DialogHeader>
+					<div className="grid gap-4 py-4">
+						<div className="grid gap-2">
+							<Label htmlFor="addTenantId">Empresa</Label>
+							<Select
+								value={addTenantId}
+								onValueChange={setAddTenantId}
+							>
+								<SelectTrigger id="addTenantId">
+									<SelectValue placeholder="Seleccionar empresa" />
+								</SelectTrigger>
+								<SelectContent>
+									{tenantsList.map((t: any) => (
+										<SelectItem key={t.tenantId} value={t.tenantId}>
+											{t.nombre ?? t.name ?? t.tenantId}
+										</SelectItem>
+									))}
+								</SelectContent>
+							</Select>
+						</div>
+						<div className="grid gap-2">
+							<Label htmlFor="addTenantRole">Rol en la empresa</Label>
+							<Select
+								value={addTenantRole}
+								onValueChange={setAddTenantRole}
+							>
+								<SelectTrigger id="addTenantRole">
+									<SelectValue />
+								</SelectTrigger>
+								<SelectContent>
+									<SelectItem value="manager">Manager</SelectItem>
+									<SelectItem value="economico">Económico</SelectItem>
+									<SelectItem value="dependiente">Dependiente</SelectItem>
+								</SelectContent>
+							</Select>
+						</div>
+					</div>
+					<DialogFooter>
+						<Button
+							variant="outline"
+							onClick={() => {
+								setAddTenantDialogOpen(false);
+								setAddTenantUser(null);
+							}}
+							disabled={addTenantSubmitting}
+						>
+							Cancelar
+						</Button>
+						<Button
+							onClick={handleAddTenant}
+							disabled={addTenantSubmitting || !addTenantId}
+							className="bg-linear-to-r from-violet-600 to-purple-600 text-white hover:from-violet-600/90 hover:to-purple-600/90"
+						>
+							{addTenantSubmitting ? "Añadiendo..." : "Añadir"}
 						</Button>
 					</DialogFooter>
 				</DialogContent>

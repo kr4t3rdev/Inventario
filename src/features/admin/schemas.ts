@@ -45,6 +45,14 @@ export const membershipActionSchema = z.object({
   tenantRole: z.string().min(1),
 });
 
+export const addTenantMembershipSchema = z.object({
+  userId: z.string().min(1),
+  tenantId: z.string().min(1),
+  tenantRole: z.enum(["manager", "economico", "dependiente"]),
+});
+
+export type AddTenantMembershipInput = z.infer<typeof addTenantMembershipSchema>;
+
 // ─── Licencias ─────────────────────────────────────────────
 
 export const createLicenciaSchema = z.object({

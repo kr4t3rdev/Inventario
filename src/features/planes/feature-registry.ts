@@ -251,6 +251,18 @@ export const FEATURE_REGISTRY: FeatureDef[] = [
 		description: "Gestión de anticipos a proveedores",
 		category: "financiero",
 	},
+	{
+		key: "analisis-estado-cuenta",
+		label: "Análisis de Estado de Cuenta",
+		description: "Análisis detallado de cuenta por cliente con antigüedad de saldos",
+		category: "financiero",
+	},
+	{
+		key: "facturas-vencidas",
+		label: "Facturas Vencidas",
+		description: "Reporte de facturas vencidas por antigüedad de deuda",
+		category: "financiero",
+	},
 
 	// ════════════════════════════════════════════
 	// Producción
@@ -328,6 +340,14 @@ export const FEATURE_REGISTRY: FeatureDef[] = [
 		key: "dashboard",
 		label: "Dashboard ejecutivo",
 		description: "Panel principal con indicadores en tiempo real",
+		category: "config",
+	},
+
+	{
+		key: "multitenantmembership",
+		label: "Membresía multi-tenant",
+		description:
+			"Permite que un mismo usuario pertenezca y trabaje en varias empresas simultáneamente",
 		category: "config",
 	},
 

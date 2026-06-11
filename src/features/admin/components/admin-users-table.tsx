@@ -6,11 +6,13 @@ import {
 	ArrowDown,
 	ArrowUp,
 	ArrowUpDown,
+	Building2,
 	CheckCircle,
 	Clock,
 	Download,
 	Edit,
 	Loader2,
+	Plus,
 	Search,
 	Shield,
 	ShieldCheck,
@@ -88,6 +90,7 @@ interface AdminUsersTableProps {
 	onPageChange?: (page: number) => void;
 	onSortChange?: (sortBy: string, sortOrder: "asc" | "desc") => void;
 	onApproveUser?: (user: Usuario) => void;
+	onAddTenantMembership?: (user: Usuario) => void;
 }
 
 type RoleFilter =
@@ -119,6 +122,7 @@ export function AdminUsersTable({
 	onPageChange,
 	onSortChange,
 	onApproveUser,
+	onAddTenantMembership,
 }: AdminUsersTableProps): React.JSX.Element {
 	const shouldReduceMotion = useReducedMotion();
 	const [searchTerm, setSearchTerm] = useState("");
@@ -769,9 +773,22 @@ export function AdminUsersTable({
 										{showTenantColumn && (
 											<TableCell>
 												{isUserWithTenant(candidate) ? (
-													<span className="text-sm">
-														{candidate.tenantName}
-													</span>
+													<div className="flex items-center gap-1.5">
+														<span className="text-sm">
+															{candidate.tenantName}
+														</span>
+														{isUserWithTenant(candidate) &&
+															(candidate as any).membershipCount > 1 && (
+																<Badge
+																	variant="outline"
+																	className="border-violet-200 bg-violet-50 text-violet-700 text-[10px] px-1.5 dark:border-violet-800 dark:bg-violet-900/30 dark:text-violet-300"
+																>
+																	+
+																	{(candidate as any).membershipCount -
+																		1}
+																</Badge>
+															)}
+													</div>
 												) : (
 													<span className="text-sm text-muted-foreground">
 														—
@@ -815,6 +832,17 @@ export function AdminUsersTable({
 															<ShieldCheck className="h-4 w-4" />
 														</Button>
 													)}
+												{onAddTenantMembership && (
+													<Button
+														variant="outline"
+														size="sm"
+														onClick={() => onAddTenantMembership(candidate)}
+														className="border-violet-200 bg-violet-50 text-violet-700 transition-all duration-200 hover:shadow-sm hover:bg-violet-100 dark:border-violet-800 dark:bg-violet-900/40 dark:text-violet-400 dark:hover:bg-violet-900/60"
+														title="Añadir a otra empresa"
+													>
+														<Building2 className="h-4 w-4" />
+													</Button>
+												)}
 												<Button
 													variant="outline"
 													size="sm"
