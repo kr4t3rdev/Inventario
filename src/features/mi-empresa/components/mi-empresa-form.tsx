@@ -138,6 +138,7 @@ export function MiEmpresaForm({
 }: MiEmpresaFormProps) {
 	const { user } = useAuth();
 	const puedeEditar = user?.tenantRole === "manager" || user?.role === "admin";
+	const ean13Habilitado = user?.planFeatures?.["mi-empresa-ean13"] === true;
 	const [saving, setSaving] = useState(false);
 	const [showEan13Confirmation, setShowEan13Confirmation] = useState(false);
 	const [isSubmitting, setIsSubmitting] = useState(false);
@@ -674,34 +675,36 @@ export function MiEmpresaForm({
 									/>
 								</motion.div>
 
-								<motion.div variants={itemVariants}>
-									<FormField
-										control={form.control}
-										name="usaCodigoEan13"
-										render={({ field }) => (
-											<FormItem className="flex items-center justify-between rounded-xl border p-4">
-												<div className="space-y-0.5">
-													<FormLabel className="flex items-center gap-2">
-														<Barcode className="h-4 w-4" />
-														Codificación EAN-13
-													</FormLabel>
-													<FormDescription>
-														Activa para generar códigos de barras EAN-13. Las
-														categorías de productos deben seguir el Clasificador
-														oficial (CLAS).
-													</FormDescription>
-												</div>
-												<FormControl>
-													<Switch
-														checked={field.value ?? false}
-														onCheckedChange={handleEan13Toggle}
-														disabled={saving || isSubmitting}
-													/>
-												</FormControl>
-											</FormItem>
-										)}
-									/>
-								</motion.div>
+								{ean13Habilitado && (
+									<motion.div variants={itemVariants}>
+										<FormField
+											control={form.control}
+											name="usaCodigoEan13"
+											render={({ field }) => (
+												<FormItem className="flex items-center justify-between rounded-xl border p-4">
+													<div className="space-y-0.5">
+														<FormLabel className="flex items-center gap-2">
+															<Barcode className="h-4 w-4" />
+															Codificación EAN-13
+														</FormLabel>
+														<FormDescription>
+															Activa para generar códigos de barras EAN-13. Las
+															categorías de productos deben seguir el Clasificador
+															oficial (CLAS).
+														</FormDescription>
+													</div>
+													<FormControl>
+														<Switch
+															checked={field.value ?? false}
+															onCheckedChange={handleEan13Toggle}
+															disabled={saving || isSubmitting}
+														/>
+													</FormControl>
+												</FormItem>
+											)}
+										/>
+									</motion.div>
+								)}
 
 								<motion.div
 									variants={itemVariants}

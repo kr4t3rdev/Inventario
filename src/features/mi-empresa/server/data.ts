@@ -22,6 +22,10 @@ export interface MiEmpresaPageData {
  * Usa `getCurrentUser()` que lee el token JWT desde la cookie `auth_token`,
  * exactamente la misma cookie que se setea durante el login.
  *
+ * Si no existe un registro de MiEmpresa, genera los datos por defecto usando
+ * el nombre del Tenant (definido en el diálogo de aprobación del admin) en
+ * lugar del genérico "Mi Empresa".
+ *
  * @returns {Promise<MiEmpresaPageData>} Datos de la empresa y lista de cuentas
  */
 export async function getMiEmpresaPageData(): Promise<MiEmpresaPageData> {
@@ -32,8 +36,8 @@ export async function getMiEmpresaPageData(): Promise<MiEmpresaPageData> {
 
   const tenantId = user.tenantId
 
-  // Fetch en paralelo: empresa + cuentas bancarias
-  const [miEmpresa, cuentas] = await Promise.all([
+  // Fetch en paralelo: empresa + cuentas bancarias + tenant (para el nombre)
+  const [miEmpresa, cuentas, tenant] = await Promise.all([
     prisma.miEmpresa.findUnique({
       where: { tenantId },
       select: {
@@ -63,7 +67,14 @@ export async function getMiEmpresaPageData(): Promise<MiEmpresaPageData> {
       },
       orderBy: { createdAt: 'desc' },
     }),
+
+    prisma.tenant.findUnique({
+      where: { tenantId },
+      select: { nombre: true },
+    }),
   ])
+
+  const tenantNombre = tenant?.nombre ?? null
 
   return {
     miEmpresa: miEmpresa
@@ -80,7 +91,22 @@ export async function getMiEmpresaPageData(): Promise<MiEmpresaPageData> {
           cuentaBancariaId: miEmpresa.cuentaBancariaId,
           usaCodigoEan13: miEmpresa.usaCodigoEan13,
         }
-      : null,
+      : // Si no existe MiEmpresa, crear un objeto por defecto con el nombre del Tenant
+        tenantNombre
+        ? {
+            nombre: tenantNombre,
+            propietario: null,
+            direccion: null,
+            telefono: null,
+            email: null,
+            carnetIdentidad: null,
+            nit: null,
+            licenciaOperacion: null,
+            logoUrl: null,
+            cuentaBancariaId: null,
+            usaCodigoEan13: false,
+          }
+        : null,
     cuentas: cuentas.map((c) => ({
       cuentaId: c.cuentaId,
       nombreBanco: c.nombreBanco,

@@ -8,7 +8,7 @@
 import { z } from 'zod';
 import { withAction, ActionError } from '@/lib/server-actions';
 import { prisma } from '@/lib/prisma';
-import { requireTenant } from '@/lib/services/tenant-scope';
+import { requireTenant, requireFeature } from '@/lib/services/tenant-scope';
 import { clearEan13Codes, resetProductsForEan13 } from '@/lib/ean13-reset';
 import type { AuthenticatedUser } from '@/lib/auth-middleware';
 
@@ -95,6 +95,7 @@ export const updateMiEmpresaAction = withAction(
       current?.usaCodigoEan13 && data.usaCodigoEan13 === false;
 
     if (isTogglingOn) {
+      requireFeature(user, 'mi-empresa-ean13', 'generación de códigos EAN-13');
       if (!data.confirmReset) {
         throw new ActionError(
           'Activating EAN-13 will delete all existing products. Please confirm by sending confirmReset: true',
