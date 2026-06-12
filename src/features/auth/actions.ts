@@ -295,6 +295,7 @@ export async function loginAction(
 					...(tenantContext && {
 						tenantId: tenantContext.tenantId,
 						tenantRole: tenantContext.tenantRole,
+						planFeatures: tenantContext.planFeatures,
 					}),
 				},
 			},

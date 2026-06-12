@@ -11,7 +11,7 @@ const prisma = new PrismaClient();
 
 /* ─── Plan 1: Básico — $30/mes ─── */
 
-const PLAN_BASICO_FEATURES: Record<string, boolean> = {
+export const PLAN_BASICO_FEATURES: Record<string, boolean> = {
 	// Inventario
 	productos: true,
 	"productos-stock-masivo": false,
@@ -76,7 +76,7 @@ const PLAN_BASICO_FEATURES: Record<string, boolean> = {
 
 /* ─── Plan 2: Profesional — $70/mes ─── */
 
-const PLAN_PROFESIONAL_FEATURES: Record<string, boolean> = {
+export const PLAN_PROFESIONAL_FEATURES: Record<string, boolean> = {
 	...PLAN_BASICO_FEATURES,
 	// Habilita adicionales
 	"listas-precios": true,
@@ -96,7 +96,7 @@ const PLAN_PROFESIONAL_FEATURES: Record<string, boolean> = {
 
 /* ─── Plan 3: Empresarial — $100/mes ─── */
 
-const PLAN_EMPRESARIAL_FEATURES: Record<string, boolean> = {
+export const PLAN_EMPRESARIAL_FEATURES: Record<string, boolean> = {
 	...PLAN_PROFESIONAL_FEATURES,
 	// Habilita todo excepto reparaciones y api-integraciones
 	"productos-stock-masivo": true,
