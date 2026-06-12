@@ -37,6 +37,7 @@ import {
 } from '@/features/contabilidad/actions-reconciliacion';
 import { useMonedas } from '@/features/contabilidad/hooks/use-monedas';
 import { getTasasActualesAction } from '@/features/contabilidad/actions-exchange';
+import { useAuth } from '@/contexts/auth-context';
 import { cn } from '@/lib/utils';
 import { DeudasCashStatsWidget } from '@/features/contabilidad/components/deudas-cash-stats-widget';
 
@@ -127,6 +128,9 @@ export default function ContabilidadDashboard(): React.JSX.Element {
   const [fechaInicio] = useState('');
   const [fechaFin] = useState('');
   const shouldReduceMotion = useReducedMotion();
+  const { user } = useAuth();
+  const hasPrestamosCash = user?.planFeatures?.['prestamos-cash'] === true;
+  const hasDeudasCash = user?.planFeatures?.['deudas-cash'] === true;
 
   // --- Configuration ---
   const quickActions = [
@@ -186,7 +190,17 @@ export default function ContabilidadDashboard(): React.JSX.Element {
       icon: CreditCard,
       tone: 'orange',
     },
-  ] as const;
+  ].filter((a) => {
+    if (a.title === 'Préstamos en Efectivo' && !hasPrestamosCash) return false;
+    if (a.title === 'Deudas en Efectivo' && !hasDeudasCash) return false;
+    return true;
+  }) as Array<{
+    title: string;
+    description: string;
+    href: string;
+    icon: typeof Building2;
+    tone: 'blue' | 'emerald' | 'purple' | 'amber' | 'orange' | 'slate';
+  }>;
 
   // --- Data Fetching (Summary Stats) ---
   const [responseVentas, setResponseVentas] = useState<any>(null);

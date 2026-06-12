@@ -37,6 +37,7 @@ import { getMonedasAction, getTasasActualesAction } from '@/features/contabilida
 import { getResumenFinancieroAction } from '@/features/contabilidad/actions';
 import { getResumenAnticiposAction } from '@/features/contabilidad/actions-anticipos';
 import { formatCurrency } from '@/features/contabilidad/utils/contabilidadUtils';
+import { useAuth } from '@/contexts/auth-context';
 import { cn } from '@/lib/utils';
 
 import type {
@@ -208,6 +209,9 @@ export function ResumenFinanciero({
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [refreshKey, setRefreshKey] = useState(0);
   const shouldReduceMotion = useReducedMotion();
+  const { user } = useAuth();
+  const hasPrestamosCash = user?.planFeatures?.['prestamos-cash'] === true;
+  const hasAnticipos = user?.planFeatures?.['anticipos'] === true;
 
   // --- Animation Variants ---
   const containerVariants = {
@@ -307,13 +311,21 @@ export function ResumenFinanciero({
 
   const [prestamosStats, setPrestamosStats] = useState<any>(null);
   useEffect(() => {
+    if (!hasPrestamosCash) {
+      setPrestamosStats(null);
+      return;
+    }
     getPrestamosCashStatsAction().then(r => { if (r.success) setPrestamosStats(r.data) })
-  }, [refreshKey]);
+  }, [refreshKey, hasPrestamosCash]);
 
   useEffect(() => {
+    if (!hasAnticipos) {
+      setResumenAnticiposData(null);
+      return;
+    }
     getResumenAnticiposAction({ fechaInicio, fechaFin })
       .then(r => { if (r.success) setResumenAnticiposData(r.data) })
-  }, [fechaInicio, fechaFin, refreshKey])
+  }, [fechaInicio, fechaFin, refreshKey, hasAnticipos])
 
   const monedas = Array.isArray(monedasData) ? monedasData : [];
   const tasasActuales = tasasActualesData?.tasas || [];
@@ -499,7 +511,7 @@ export function ResumenFinanciero({
       title: "Saldo Préstamos",
       subtitle: monedaPrincipal,
       value: Object.values(prestamosStats?.montoPendienteCobro ?? {
-      
+
   // @ts-expect-error - El objeto de préstamos se reduce desde datos dinámicos del API.
       }).reduce((acc, value) => acc + value, 0),
       icon: Calculator,
@@ -514,7 +526,11 @@ export function ResumenFinanciero({
       tone: 'amber' as AccentTone,
       description: "Monto total acumulado de anticipos"
     },
-  ];
+  ].filter((c) => {
+    if (c.title === "Saldo Préstamos" && !hasPrestamosCash) return false;
+    if (c.title === "Monto Anticipos" && !hasAnticipos) return false;
+    return true;
+  });
 
   const reconciliationStats = [
     {
