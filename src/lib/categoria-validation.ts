@@ -111,13 +111,17 @@ export const MAX_HIERARCHY_DEPTH = 3;
 export async function validateCategoryAgainstCLAS(
 	nombre: string,
 	parentId: string | null,
+	tenantId: string,
 	clasSectionId?: string | null,
 	clasSpecificId?: string | null,
 ): Promise<CategoriaValidationResult> {
 	try {
-		// Check if EAN-13 mode is enabled
+		// Check if EAN-13 mode is enabled for the current tenant.
+		// ⚠️ IMPORTANTE: el modelo MiEmpresa es 1:1 por tenant (id siempre vale 1,
+		// pero tenantId es UNIQUE). NUNCA buscar por `id: 1` sin filtrar por tenant,
+		// porque devuelve el flag de un tenant arbitrario.
 		const miEmpresa = await prisma.miEmpresa.findUnique({
-			where: { id: 1 },
+			where: { tenantId },
 			select: { usaCodigoEan13: true },
 		});
 
@@ -702,6 +706,7 @@ export class CategoriaValidator {
 		const clasValidation = await validateCategoryAgainstCLAS(
 			validatedData.nombre,
 			validatedData.parentId ?? null,
+			tenantId,
 			validatedData.clasSectionId ?? null,
 			validatedData.clasSpecificId ?? null,
 		);
@@ -809,6 +814,7 @@ export class CategoriaValidator {
 		const clasValidation = await validateCategoryAgainstCLAS(
 			validatedData.nombre,
 			validatedData.parentId ?? null,
+			tenantId,
 			validatedData.clasSectionId ?? null,
 			validatedData.clasSpecificId ?? null,
 		);

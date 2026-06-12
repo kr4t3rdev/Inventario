@@ -23,10 +23,11 @@ describe('validateCategoryAgainstCLAS', () => {
   it('should allow any name when EAN-13 is disabled', async () => {
     vi.mocked(prisma.miEmpresa.findUnique).mockResolvedValueOnce({
       id: 1,
+      tenantId: 'tenant-1',
       usaCodigoEan13: false
     } as any)
 
-    const result = await validateCategoryAgainstCLAS('InvalidCategoryName', null)
+    const result = await validateCategoryAgainstCLAS('InvalidCategoryName', null, 'tenant-1')
 
     expect(result.success).toBe(true)
     expect(result.errors).toBeUndefined()
@@ -35,10 +36,11 @@ describe('validateCategoryAgainstCLAS', () => {
   it('should reject root category with invalid section name when EAN-13 is enabled', async () => {
     vi.mocked(prisma.miEmpresa.findUnique).mockResolvedValueOnce({
       id: 1,
+      tenantId: 'tenant-1',
       usaCodigoEan13: true
     } as any)
 
-    const result = await validateCategoryAgainstCLAS('InvalidRootCategory', null)
+    const result = await validateCategoryAgainstCLAS('InvalidRootCategory', null, 'tenant-1')
 
     expect(result.success).toBe(false)
     expect(result.errors).toHaveLength(1)
@@ -51,10 +53,11 @@ describe('validateCategoryAgainstCLAS', () => {
   it('should accept valid root category when EAN-13 is enabled', async () => {
     vi.mocked(prisma.miEmpresa.findUnique).mockResolvedValueOnce({
       id: 1,
+      tenantId: 'tenant-1',
       usaCodigoEan13: true
     } as any)
 
-    const result = await validateCategoryAgainstCLAS('CONFECCIONES', null)
+    const result = await validateCategoryAgainstCLAS('CONFECCIONES', null, 'tenant-1')
 
     expect(result.success).toBe(true)
     expect(result.errors).toBeUndefined()
@@ -63,10 +66,11 @@ describe('validateCategoryAgainstCLAS', () => {
   it('should accept valid root category case-insensitively when EAN-13 is enabled', async () => {
     vi.mocked(prisma.miEmpresa.findUnique).mockResolvedValueOnce({
       id: 1,
+      tenantId: 'tenant-1',
       usaCodigoEan13: true
     } as any)
 
-    const result = await validateCategoryAgainstCLAS('confecciones', null)
+    const result = await validateCategoryAgainstCLAS('confecciones', null, 'tenant-1')
 
     expect(result.success).toBe(true)
     expect(result.errors).toBeUndefined()
@@ -75,12 +79,14 @@ describe('validateCategoryAgainstCLAS', () => {
   it('should reject subcategory with invalid specific when EAN-13 is enabled', async () => {
     vi.mocked(prisma.miEmpresa.findUnique).mockResolvedValueOnce({
       id: 1,
+      tenantId: 'tenant-1',
       usaCodigoEan13: true
     } as any)
 
     const result = await validateCategoryAgainstCLAS(
       'InvalidSubcategoryName',
       null,
+      'tenant-1',
       '05',
       '0000'
     )
@@ -96,12 +102,14 @@ describe('validateCategoryAgainstCLAS', () => {
   it('should accept valid subcategory when EAN-13 is enabled', async () => {
     vi.mocked(prisma.miEmpresa.findUnique).mockResolvedValueOnce({
       id: 1,
+      tenantId: 'tenant-1',
       usaCodigoEan13: true
     } as any)
 
     const result = await validateCategoryAgainstCLAS(
       'BLOOMERS P/BEBE',
       'parent-123',
+      'tenant-1',
       '05',
       '0000'
     )
@@ -113,12 +121,14 @@ describe('validateCategoryAgainstCLAS', () => {
   it('should reject a valid specific when it is paired with the wrong section', async () => {
     vi.mocked(prisma.miEmpresa.findUnique).mockResolvedValueOnce({
       id: 1,
+      tenantId: 'tenant-1',
       usaCodigoEan13: true
     } as any)
 
     const result = await validateCategoryAgainstCLAS(
       'BLOOMERS P/BEBE',
       'parent-123',
+      'tenant-1',
       '06',
       '0000'
     )
@@ -133,10 +143,11 @@ describe('validateCategoryAgainstCLAS', () => {
   it('should include correct error message for root category', async () => {
     vi.mocked(prisma.miEmpresa.findUnique).mockResolvedValueOnce({
       id: 1,
+      tenantId: 'tenant-1',
       usaCodigoEan13: true
     } as any)
 
-    const result = await validateCategoryAgainstCLAS('NotAValidCategory', null)
+    const result = await validateCategoryAgainstCLAS('NotAValidCategory', null, 'tenant-1')
 
     expect(result.success).toBe(false)
     expect(result.errors![0].message).toBe(
@@ -147,12 +158,14 @@ describe('validateCategoryAgainstCLAS', () => {
   it('should include correct error message for subcategory', async () => {
     vi.mocked(prisma.miEmpresa.findUnique).mockResolvedValueOnce({
       id: 1,
+      tenantId: 'tenant-1',
       usaCodigoEan13: true
     } as any)
 
     const result = await validateCategoryAgainstCLAS(
       'NotAValidSubcategory',
       'parent-123',
+      'tenant-1',
       '05',
       '0000'
     )
@@ -166,12 +179,14 @@ describe('validateCategoryAgainstCLAS', () => {
   it('should reject a specific without parentId when EAN-13 is enabled', async () => {
     vi.mocked(prisma.miEmpresa.findUnique).mockResolvedValueOnce({
       id: 1,
+      tenantId: 'tenant-1',
       usaCodigoEan13: true
     } as any)
 
     const result = await validateCategoryAgainstCLAS(
       'BLOOMERS P/BEBE',
       null,
+      'tenant-1',
       '05',
       '0000'
     )
