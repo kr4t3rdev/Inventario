@@ -1,8 +1,4 @@
-// dotenv/config se usa solo en desarrollo local para cargar .env
-// En Railway, las variables de entorno ya están disponibles
-if (process.env.NODE_ENV !== 'production') {
-  require('dotenv/config');
-}
+import 'dotenv/config';
 import { defineConfig, env } from 'prisma/config';
 
 const databaseUrl = env('DATABASE_URL');
