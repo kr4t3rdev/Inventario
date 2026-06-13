@@ -215,7 +215,7 @@ export async function seedImplementationData(): Promise<void> {
         nombre: unidad.nombre,
         simbolo: unidad.simbolo
       },
-      create: unidad
+      create: { ...unidad, tenantId: 'demo-tenant' }
     })
   }
 

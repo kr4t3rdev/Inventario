@@ -72,6 +72,7 @@ async function seedProductionCatalog(): Promise<void> {
       unidadId: E2E_FIXTURES.unidadLitroId,
       nombre: 'Litro',
       simbolo: 'L',
+      tenantId: 'e2e-tenant',
     },
   })
 
@@ -85,6 +86,7 @@ async function seedProductionCatalog(): Promise<void> {
       unidadId: E2E_FIXTURES.unidadKgId,
       nombre: 'Kilogramo',
       simbolo: 'kg',
+      tenantId: 'e2e-tenant',
     },
   })
 
