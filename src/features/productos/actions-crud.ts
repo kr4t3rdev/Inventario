@@ -119,7 +119,11 @@ export const createProductoAction = withAction(
 		const tenantId = requireTenant(user);
 
 		// ── Detectar si la empresa usa EAN-13 ──
-		const miEmpresa = await prisma.miEmpresa.findFirst({
+		// ⚠️ MULTI-TENANT: MiEmpresa es 1:1 por tenant (id siempre vale 1,
+		// tenantId es UNIQUE). Sin filtrar por tenantId, leemos el flag de
+		// un tenant arbitrario, lo que rompe toda la lógica EAN-13.
+		const miEmpresa = await prisma.miEmpresa.findUnique({
+			where: { tenantId },
 			select: { usaCodigoEan13: true },
 		});
 		const usaCodigoEan13 = miEmpresa?.usaCodigoEan13 ?? false;

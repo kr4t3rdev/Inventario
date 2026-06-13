@@ -68,7 +68,7 @@ vi.mock("@/lib/prisma", () => {
 			gastoCompra: tx.gastoCompra,
 			categoria: tx.categoria,
 			miEmpresa: {
-				findFirst: vi.fn().mockResolvedValue({ usaCodigoEan13: false }),
+				findUnique: vi.fn().mockResolvedValue({ usaCodigoEan13: false }),
 			},
 			$transaction: vi
 				.fn()
