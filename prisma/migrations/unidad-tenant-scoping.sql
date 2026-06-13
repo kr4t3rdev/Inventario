@@ -2,9 +2,21 @@
 -- Paso 1: Agregar tenantId como nullable
 ALTER TABLE "Unidad" ADD COLUMN IF NOT EXISTS "tenantId" TEXT;
 
--- Paso 2: Eliminar constraints viejos ANTES de insertar duplicados
-ALTER TABLE "Unidad" DROP CONSTRAINT IF EXISTS "Unidad_nombre_key";
-ALTER TABLE "Unidad" DROP CONSTRAINT IF EXISTS "Unidad_simbolo_key";
+-- Paso 2: Eliminar uniques viejos ANTES de insertar duplicados
+DO $$
+BEGIN
+    IF EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'Unidad_nombre_key') THEN
+        EXECUTE 'ALTER TABLE "Unidad" DROP CONSTRAINT "Unidad_nombre_key"';
+    ELSIF EXISTS (SELECT 1 FROM pg_class WHERE relkind = 'i' AND relname = 'Unidad_nombre_key') THEN
+        EXECUTE 'DROP INDEX "Unidad_nombre_key"';
+    END IF;
+
+    IF EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'Unidad_simbolo_key') THEN
+        EXECUTE 'ALTER TABLE "Unidad" DROP CONSTRAINT "Unidad_simbolo_key"';
+    ELSIF EXISTS (SELECT 1 FROM pg_class WHERE relkind = 'i' AND relname = 'Unidad_simbolo_key') THEN
+        EXECUTE 'DROP INDEX "Unidad_simbolo_key"';
+    END IF;
+END $$;
 
 -- Paso 3: Asignar tenantId a unidades existentes (copia a todos los tenants)
 DO $$
