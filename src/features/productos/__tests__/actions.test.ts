@@ -59,6 +59,7 @@ vi.mock("@/lib/prisma", () => {
 		},
 		categoria: {
 			findUnique: vi.fn(),
+			findFirst: vi.fn(),
 		},
 	};
 	return {
