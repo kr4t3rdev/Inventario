@@ -63,6 +63,9 @@ COPY --from=builder /app/public /app/public
 # Copiar schema Prisma para usar en runtime
 COPY --from=builder /app/prisma /app/prisma
 
+# Copiar scripts de migración
+COPY --from=builder /app/scripts /app/scripts
+
 # Copiar el cliente Prisma generado (output en src/generated/prisma según schema)
 COPY --from=builder /app/src/generated/prisma /app/src/generated/prisma
 
