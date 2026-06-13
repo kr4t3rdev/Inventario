@@ -41,12 +41,6 @@ export function LandingFooter(): React.JSX.Element {
 							>
 								Planes
 							</Link>
-							<Link
-								href="/docs"
-								className="hover:text-foreground hover:underline"
-							>
-								Documentación
-							</Link>
 						</div>
 					</div>
 					<div className="space-y-2">
