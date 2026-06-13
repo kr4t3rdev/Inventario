@@ -8,7 +8,7 @@ DECLARE
     tenant_record RECORD;
     unidad_record RECORD;
 BEGIN
-    FOR tenant_record IN SELECT "tenantId" FROM "Tenant" LOOP
+    FOR tenant_record IN SELECT "tenantId" FROM "tenants" LOOP
         FOR unidad_record IN SELECT "unidadId", "nombre", "simbolo", "createdAt", "updatedAt" FROM "Unidad" WHERE "tenantId" IS NULL LOOP
             -- Insertar copia para este tenant si no existe ya
             INSERT INTO "Unidad" ("unidadId", "tenantId", "nombre", "simbolo", "createdAt", "updatedAt")
@@ -44,7 +44,7 @@ ALTER TABLE "Unidad" ADD CONSTRAINT "Unidad_tenantId_simbolo_key" UNIQUE ("tenan
 CREATE INDEX IF NOT EXISTS "Unidad_tenantId_idx" ON "Unidad"("tenantId");
 
 -- Paso 6: Agregar FK a Tenant
-ALTER TABLE "Unidad" ADD CONSTRAINT "Unidad_tenantId_fkey" FOREIGN KEY ("tenantId") REFERENCES "Tenant"("tenantId") ON DELETE CASCADE ON UPDATE CASCADE;
+ALTER TABLE "Unidad" ADD CONSTRAINT "Unidad_tenantId_fkey" FOREIGN KEY ("tenantId") REFERENCES "tenants"("tenantId") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- Paso 7: Cambiar onDelete en Producto.unidad de Cascade a Restrict
 ALTER TABLE "Producto" DROP CONSTRAINT IF EXISTS "Producto_unidadId_fkey";
