@@ -53,7 +53,6 @@ export const NAV_ITEMS = [
 	{ href: "#testimonios", label: "Testimonios" },
 	{ href: "#precios", label: "Planes" },
 	{ href: "#faq", label: "FAQ" },
-	{ href: "/docs", label: "Documentación" },
 	{ href: "#contacto", label: "Contacto" },
 ];
 
