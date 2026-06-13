@@ -33,11 +33,17 @@ model Categoria {
 
 model Unidad {
   unidadId  String     @id @default(cuid())
-  nombre    String     @unique
+  tenantId  String
+  nombre    String
+  simbolo   String
   createdAt DateTime   @default(now())
   updatedAt DateTime   @updatedAt
-  simbolo   String     @unique
   productos Producto[]
+  tenant    Tenant     @relation(fields: [tenantId], references: [tenantId])
+
+  @@unique([tenantId, nombre])
+  @@unique([tenantId, simbolo])
+  @@index([tenantId])
 }
 
 model Vendor {
@@ -204,6 +210,7 @@ model Tenant {
   licencias                  TenantLicense[]
   memberships                TenantMembership[]
   turnosPos                  TurnoPuntoVenta[]
+  unidades                   Unidad[]
   reviews                    Review[]
   reviewPrompts              ReviewPrompt[]
 
@@ -425,7 +432,7 @@ model Producto {
   puntoDeVenta         PuntoDeVenta?             @relation(fields: [puntoDeVentaId], references: [pvId], onDelete: Cascade)
   subcategoria         Categoria?                @relation("ProductoSubcategoria", fields: [subcategoriaId], references: [catId])
   tenant               Tenant                    @relation(fields: [tenantId], references: [tenantId])
-  unidad               Unidad?                   @relation(fields: [unidadId], references: [unidadId], onDelete: Cascade)
+  unidad               Unidad?                   @relation(fields: [unidadId], references: [unidadId], onDelete: Restrict)
   vendor               Vendor?                   @relation(fields: [vendorId], references: [vendorId], onDelete: Cascade)
   costHistory          ProductoCostHistory[]
   Receta               Receta[]

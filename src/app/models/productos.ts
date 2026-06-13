@@ -58,6 +58,7 @@ export interface Producto {
 
 export interface Unidad {
 	unidadId: string;
+	tenantId: string;
 	nombre: string;
 	simbolo: string;
 	createdAt: string;
