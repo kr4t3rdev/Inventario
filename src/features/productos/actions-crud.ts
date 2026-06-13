@@ -181,12 +181,14 @@ export const createProductoAction = withAction(
 			}
 
 			const [categoria, subcategoria] = await Promise.all([
-				prisma.categoria.findUnique({
-					where: { catId: parsed.categoriaId },
+				// ⚠️ MULTI-TENANT: filtrar por tenantId para que un usuario no pueda
+				// referenciar categorías de otros tenants.
+				prisma.categoria.findFirst({
+					where: { tenantId, catId: parsed.categoriaId },
 					select: { catId: true, nombre: true },
 				}),
-				prisma.categoria.findUnique({
-					where: { catId: parsed.subcategoriaId },
+				prisma.categoria.findFirst({
+					where: { tenantId, catId: parsed.subcategoriaId },
 					select: { catId: true, nombre: true, parentId: true },
 				}),
 			]);
@@ -225,6 +227,7 @@ export const createProductoAction = withAction(
 
 				const generatedCode = await generateProductCodeWithRetry(
 					tx,
+					tenantId,
 					{
 						proveedorCodigo,
 						idSeccionCodigo: resolvedSegments.idSeccionCodigo,

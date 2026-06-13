@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server"
 import { prisma } from "@/lib/prisma"
 import { startOfDay, endOfDay, format, subMonths, subDays } from "date-fns"
 import { es } from "date-fns/locale"
+import type { AuthenticatedUser } from "@/lib/auth-middleware"
 import type {
   CacheEntry,
   TransferenciaData,
@@ -38,13 +39,26 @@ function getDailyDataCacheKey(ubicacionId?: string, tipoUbicacion?: string) {
   return `dashboard-daily-data-${ubicacionId || "all"}-${tipoUbicacion || "all"}`
 }
 
-export async function getDashboardStatsHandler(request: NextRequest, _context: any, _user: any) {
+export async function getDashboardStatsHandler(request: NextRequest, _context: any, user: AuthenticatedUser) {
   try {
+    // ⚠️ MULTI-TENANT: el dashboard es 100% per-tenant.
+    // Toda query DEBE filtrar por tenantId. Sin esto, un usuario ve
+    // datos de otros tenants (métricas, ventas, productos, etc.).
+    const tenantId = user.tenantId
+    if (!tenantId) {
+      return NextResponse.json(
+        { error: "Tenant no identificado", code: "TENANT_REQUIRED" },
+        { status: 403 },
+      )
+    }
+
     const { searchParams } = new URL(request.url)
     const ubicacionId = searchParams.get("ubicacionId")
     const tipoUbicacion = searchParams.get("tipoUbicacion")
 
-    const cacheKey = `dashboard-stats-${ubicacionId || "all"}-${tipoUbicacion || "all"}`
+    // ⚠️ MULTI-TENANT: el cache key debe incluir tenantId para que
+    // dos tenants distintos no compartan resultados cacheados.
+    const cacheKey = `dashboard-stats-${tenantId}-${ubicacionId || "all"}-${tipoUbicacion || "all"}`
 
     const cached = cache.get(cacheKey)
     if (cached && Date.now() - cached.timestamp < CACHE_DURATION) {
@@ -65,11 +79,11 @@ export async function getDashboardStatsHandler(request: NextRequest, _context: a
       transferenciasData,
       productosDataRaw,
     ] = await Promise.all([
-      prisma.producto.count(),
-      prisma.almacen.count(),
-      prisma.puntoDeVenta.count(),
+      prisma.producto.count({ where: { tenantId } }),
+      prisma.almacen.count({ where: { tenantId } }),
+      prisma.puntoDeVenta.count({ where: { tenantId } }),
       prisma.venta.findMany({
-        where: { ventaPadreId: null },
+        where: { tenantId, ventaPadreId: null },
         select: {
           productoId: true,
           cantidad: true,
@@ -79,6 +93,7 @@ export async function getDashboardStatsHandler(request: NextRequest, _context: a
         },
       }),
       prisma.ventaItem.findMany({
+        where: { venta: { tenantId } },
         select: {
           productoId: true,
           cantidad: true,
@@ -90,6 +105,7 @@ export async function getDashboardStatsHandler(request: NextRequest, _context: a
       }),
       prisma.venta.findMany({
         where: {
+          tenantId,
           productoId: { not: null },
           ventaPadreId: null,
           items: { none: {} },
@@ -97,10 +113,12 @@ export async function getDashboardStatsHandler(request: NextRequest, _context: a
         select: { productoId: true, cantidad: true },
       }),
       prisma.ventaServicios.findMany({
+        where: { tenantId },
         select: { total: true },
         orderBy: { createdAt: "desc" },
       }),
       prisma.merma.findMany({
+        where: { tenantId },
         select: {
           cantidad: true,
           producto: {
@@ -109,14 +127,17 @@ export async function getDashboardStatsHandler(request: NextRequest, _context: a
         },
       }),
       prisma.gastosDE.findMany({
+        where: { tenantId },
         select: { monto: true },
         orderBy: { periodo: "desc" },
       }),
       prisma.pagosalario.findMany({
+        where: { tenantId },
         select: { salario: true },
         orderBy: { periodo: "desc" },
       }),
       prisma.transferencia.findMany({
+        where: { tenantId },
         select: {
           productoId: true,
           cantidad: true,
@@ -127,6 +148,7 @@ export async function getDashboardStatsHandler(request: NextRequest, _context: a
         },
       }),
       prisma.producto.findMany({
+        where: { tenantId },
         select: { id: true, nombre: true, stock: true, precioCosto: true, precioVenta: true },
       }),
     ])
@@ -286,7 +308,7 @@ export async function getDashboardStatsHandler(request: NextRequest, _context: a
       ventaServiciosDiariosData,
     ] = await Promise.all([
       prisma.venta.findMany({
-        where: { createdAt: { gte: fechaInicio }, ventaPadreId: null },
+        where: { tenantId, createdAt: { gte: fechaInicio }, ventaPadreId: null },
         select: {
           createdAt: true,
           cantidad: true,
@@ -294,11 +316,11 @@ export async function getDashboardStatsHandler(request: NextRequest, _context: a
         },
       }),
       prisma.ventaServicios.findMany({
-        where: { createdAt: { gte: fechaInicio } },
+        where: { tenantId, createdAt: { gte: fechaInicio } },
         select: { createdAt: true, total: true, cantidad: true },
       }),
       prisma.merma.findMany({
-        where: { createdAt: { gte: fechaInicio } },
+        where: { tenantId, createdAt: { gte: fechaInicio } },
         select: {
           createdAt: true,
           cantidad: true,
@@ -306,19 +328,19 @@ export async function getDashboardStatsHandler(request: NextRequest, _context: a
         },
       }),
       prisma.gastosDE.findMany({
-        where: { createdAt: { gte: fechaInicio } },
+        where: { tenantId, createdAt: { gte: fechaInicio } },
         select: { createdAt: true, monto: true },
       }),
       prisma.pagosalario.findMany({
-        where: { createdAt: { gte: fechaInicio } },
+        where: { tenantId, createdAt: { gte: fechaInicio } },
         select: { createdAt: true, salario: true },
       }),
       prisma.gastoCompra.findMany({
-        where: { createdAt: { gte: fechaInicio } },
+        where: { tenantId, createdAt: { gte: fechaInicio } },
         select: { createdAt: true, total: true, cantidad: true },
       }),
       prisma.venta.findMany({
-        where: { createdAt: { gte: fechaInicioDiaria }, ventaPadreId: null },
+        where: { tenantId, createdAt: { gte: fechaInicioDiaria }, ventaPadreId: null },
         select: {
           createdAt: true,
           cantidad: true,
@@ -327,7 +349,7 @@ export async function getDashboardStatsHandler(request: NextRequest, _context: a
         orderBy: { createdAt: "desc" },
       }),
       prisma.ventaServicios.findMany({
-        where: { createdAt: { gte: fechaInicioDiaria } },
+        where: { tenantId, createdAt: { gte: fechaInicioDiaria } },
         select: { createdAt: true, total: true, cantidad: true },
         orderBy: { createdAt: "desc" },
       }),
@@ -498,7 +520,7 @@ export async function getDashboardStatsHandler(request: NextRequest, _context: a
 
     const topProductoIds = productosVentas.map(([productoId]) => productoId)
     const topProductosData = await prisma.producto.findMany({
-      where: { id: { in: topProductoIds } },
+      where: { tenantId, id: { in: topProductoIds } },
       select: {
         id: true,
         nombre: true,
@@ -526,10 +548,10 @@ export async function getDashboardStatsHandler(request: NextRequest, _context: a
 
     const baseWhereCondition =
       tipoUbicacion === "almacen" && ubicacionId
-        ? { almacenId: ubicacionId }
+        ? { tenantId, almacenId: ubicacionId }
         : tipoUbicacion === "puntoDeVenta" && ubicacionId
-          ? { puntoDeVentaId: ubicacionId }
-          : {}
+          ? { tenantId, puntoDeVentaId: ubicacionId }
+          : { tenantId }
 
     const todosLosProductos = await prisma.producto.findMany({
       where: baseWhereCondition,
@@ -630,6 +652,7 @@ export async function getDashboardStatsHandler(request: NextRequest, _context: a
     }
 
     const stockPorCategoria = await prisma.categoria.findMany({
+      where: { tenantId },
       select: {
         nombre: true,
         productos: {
