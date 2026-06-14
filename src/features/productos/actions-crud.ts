@@ -9,6 +9,7 @@ import { withPeriodValidation } from "@/lib/services/with-period-validation";
 import { upsertStockUbicacion } from "@/lib/services/stock-ubicacion-service";
 import { executeProductInstanceCreationWorkflow } from "@/lib/restock-utils";
 import { recordCostChange, CostChangeReason } from "@/lib/cost-history-utils";
+import { PRODUCTO_SELECT, ProductoService } from "./services/producto-service";
 import {
 	productoSchema,
 	productoUpdateSchema,
@@ -38,40 +39,6 @@ import {
 	ValidateAssembledCode,
 } from "@/lib/ean13-utils";
 
-// ─── Select reutilizable ──────────────────────────────────
-
-const PRODUCTO_SELECT = {
-	id: true,
-	nombre: true,
-	descripcion: true,
-	precioCosto: true,
-	precioVenta: true,
-	stock: true,
-	stockMinimo: true,
-	codigoInterno: true,
-	codigoNegocio: true,
-	proveedorCodigo: true,
-	idSeccionCodigo: true,
-	especificoCodigo: true,
-	surtidoCodigo: true,
-	categoriaId: true,
-	subcategoriaId: true,
-	unidadId: true,
-	vendorId: true,
-	almacenId: true,
-	puntoDeVentaId: true,
-	fotos: true,
-	esCompuesto: true,
-	createdAt: true,
-	updatedAt: true,
-	tenantId: true,
-	categoria: { select: { catId: true, nombre: true } },
-	subcategoria: { select: { catId: true, nombre: true, parentId: true } },
-	unidad: { select: { unidadId: true, nombre: true, simbolo: true } },
-	vendor: { select: { vendorId: true, nombre: true } },
-	precios: { select: { listaPrecioId: true, precio: true } },
-} as const;
-
 // ─── Server Actions ────────────────────────────────────────
 
 /**
@@ -80,11 +47,7 @@ const PRODUCTO_SELECT = {
 export const getProductosAction = withAction(
 	async (_input: void, user: AuthenticatedUser) => {
 		const tenantId = requireTenant(user);
-		return prisma.producto.findMany({
-			where: { tenantId },
-			select: PRODUCTO_SELECT,
-			orderBy: { createdAt: "desc" },
-		});
+		return ProductoService.list(tenantId);
 	},
 );
 
@@ -94,17 +57,7 @@ export const getProductosAction = withAction(
 export const getProductoByIdAction = withAction(
 	async (id: string, user: AuthenticatedUser) => {
 		const tenantId = requireTenant(user);
-
-		const producto = await prisma.producto.findFirst({
-			where: { id, tenantId },
-			select: PRODUCTO_SELECT,
-		});
-
-		if (!producto) {
-			throw new ActionError("Producto no encontrado", "NOT_FOUND");
-		}
-
-		return producto;
+		return ProductoService.getById({ tenantId, productId: id });
 	},
 );
 

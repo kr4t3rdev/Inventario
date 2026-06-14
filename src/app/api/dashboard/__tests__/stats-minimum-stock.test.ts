@@ -49,8 +49,11 @@ const mockPrisma = vi.hoisted(() => ({
 	$transaction: vi.fn(),
 }));
 
+const mockUser = { tenantId: 'tenant-1' };
+
 vi.mock("@/lib/auth-middleware", () => ({
-	withAuthGet: (handler: any) => handler,
+	withAuthGet: (handler: any) => (request: any, context?: any) =>
+		handler(request, context, mockUser),
 }));
 
 vi.mock("@/lib/prisma", () => ({
@@ -58,11 +61,13 @@ vi.mock("@/lib/prisma", () => ({
 	prisma: mockPrisma,
 }));
 
+import { invalidateDashboardStatsCache } from "@/features/dashboard/services/dashboard-stats-service";
 import { GET } from "../stats/route";
 
 describe("Dashboard Stats API - Minimum Stock Integration", () => {
 	beforeEach(() => {
 		vi.clearAllMocks();
+		invalidateDashboardStatsCache();
 
 		// Setup default mock responses
 		mockPrisma.producto.count.mockResolvedValue(100);
@@ -268,7 +273,7 @@ describe("Dashboard Stats API - Minimum Stock Integration", () => {
 		// Verify that findMany was called with location filter
 		expect(mockPrisma.producto.findMany).toHaveBeenCalledWith(
 			expect.objectContaining({
-				where: { almacenId: "almacen1" },
+				where: { tenantId: "tenant-1", almacenId: "almacen1" },
 			}),
 		);
 	});
@@ -326,7 +331,7 @@ describe("Dashboard Stats API - Minimum Stock Integration", () => {
 			},
 			{
 				id: "prod2",
-				nome: "Producto B",
+				nombre: "Producto B",
 				stock: 3,
 				stockMinimo: 10,
 				categoria: { nombre: "Categoria 2" },
@@ -334,7 +339,7 @@ describe("Dashboard Stats API - Minimum Stock Integration", () => {
 			},
 			{
 				id: "prod3",
-				nome: "Producto C",
+				nombre: "Producto C",
 				stock: 5,
 				stockMinimo: 10,
 				categoria: { nombre: "Categoria 3" },
