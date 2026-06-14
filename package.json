@@ -167,6 +167,9 @@
     "@types/react": "19.2.14",
     "@types/react-dom": "19.2.3"
   },
+  "pnpm": {
+    "onlyBuiltDependencies": ["@prisma/client", "@prisma/engines", "prisma", "sharp", "esbuild"]
+  },
   "lint-staged": {
     "*.{ts,tsx}": [
       "eslint --fix --quiet"
