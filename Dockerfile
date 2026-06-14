@@ -44,12 +44,16 @@ FROM node:20-slim
 WORKDIR /app
 ENV NODE_ENV=production
 
-# Instalar dependencias del sistema necesarias para Prisma
+# Instalar dependencias del sistema necesarias para Prisma y pnpm
 RUN apt-get update && apt-get install -y \
     openssl \
     libssl-dev \
     curl \
+    ca-certificates \
     && rm -rf /var/lib/apt/lists/*
+
+# Habilitar pnpm via corepack (necesario para `prisma migrate deploy` en runtime)
+RUN corepack enable && corepack prepare pnpm@latest --activate
 
 # Copiar standalone build como base
 COPY --from=builder /app/.next/standalone /app
@@ -66,16 +70,16 @@ COPY --from=builder /app/prisma /app/prisma
 # Copiar el cliente Prisma generado (output en src/generated/prisma según schema)
 COPY --from=builder /app/src/generated/prisma /app/src/generated/prisma
 
-# Copiar runtime de @prisma (necesario para consultas)
-COPY --from=builder /app/node_modules/@prisma /app/node_modules/@prisma
+# Instalar dependencias (incluye el CLI de Prisma y todas sus deps transitivas).
+# Necesario para `prisma migrate deploy` en runtime.
+COPY package.json pnpm-lock.yaml ./
+RUN pnpm install --frozen-lockfile --prefer-offline || \
+    (sleep 5 && pnpm install --frozen-lockfile --prefer-offline) || \
+    (sleep 10 && pnpm install --frozen-lockfile)
 
-# El engine de Prisma ya está incluido en src/generated/prisma (Prisma 6 con prisma.config.ts)
-
-# Crear script de inicio
-RUN printf '#!/bin/sh\nset -e\necho "Iniciando aplicación..."\ncd /app\nexec node server.js\n' > /app/start.sh && chmod +x /app/start.sh
-
-# Copiar prisma.config.ts para Prisma 6 runtime
-COPY --from=builder /app/prisma.config.ts /app/prisma.config.ts
+# Copiar script de inicio (aplica migraciones antes de levantar el server)
+COPY start.sh /app/start.sh
+RUN chmod +x /app/start.sh
 
 EXPOSE 8080
 ENV HOSTNAME="0.0.0.0"
