@@ -1,5 +1,5 @@
 # Builder
-FROM node:20 AS builder
+FROM node:22 AS builder
 ARG DATABASE_URL
 WORKDIR /app
 
@@ -40,7 +40,7 @@ ENV NODE_OPTIONS="--max-http-header-size=80000 --dns-result-order=ipv4first"
 RUN pnpm build
 
 # Runtime
-FROM node:20-slim
+FROM node:22-slim
 WORKDIR /app
 ENV NODE_ENV=production
 
