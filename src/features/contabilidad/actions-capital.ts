@@ -9,6 +9,8 @@ import { withAction, ActionError } from '@/lib/server-actions';
 import { prisma } from '@/lib/prisma';
 import { requireTenant } from '@/lib/services/tenant-scope';
 import { withPeriodValidation } from '@/lib/services/with-period-validation';
+import { AccountingOperationsReadService } from '@/features/contabilidad/services/accounting-operations-read-service';
+import { AccountingOperationsMutationService } from '@/features/contabilidad/services/accounting-operations-mutation-service';
 import type { AuthenticatedUser } from '@/lib/auth-middleware';
 
 const createSchema = z.object({
@@ -29,26 +31,18 @@ const pagoSchema = z.object({
 
 export const getInyeccionesCapitalAction = withAction(async (_input: { tipo?: string } = {}, user: AuthenticatedUser) => {
   const tenantId = requireTenant(user);
-  const inyecciones = await prisma.inyeccionCapital.findMany({
-    where: {
-  // @ts-expect-error
-    tenantId
-    },
-    orderBy: { createdAt: 'desc' },
+  return AccountingOperationsReadService.getCapitalInjections({
+    tenantId,
+    tipo: _input.tipo,
   });
-  return { inyecciones };
 });
 
 export const createInyeccionCapitalAction = withAction(withPeriodValidation(
   () => new Date(),
   async (input: z.infer<typeof createSchema>, user: AuthenticatedUser) => {
-  const parsed = createSchema.parse(input);
-  const tenantId = requireTenant(user);
-  const inyeccion = await prisma.inyeccionCapital.create({
-    data: {
-  // @ts-expect-error
-    monto: parsed.monto, moneda: parsed.moneda, tipo: parsed.tipo, descripcion: parsed.descripcion, cuentaBancariaId: parsed.cuentaBancariaId, tenantId
-    },
+  const inyeccion = await AccountingOperationsMutationService.createCapitalInjection({
+    input,
+    user,
   });
   revalidatePath('/busy/contabilidad/capital');
   return inyeccion;
@@ -57,13 +51,9 @@ export const createInyeccionCapitalAction = withAction(withPeriodValidation(
 export const registrarPagoCapitalAction = withAction(withPeriodValidation(
   () => new Date(),
   async (input: z.infer<typeof pagoSchema>, user: AuthenticatedUser) => {
-  const parsed = pagoSchema.parse(input);
-  const tenantId = requireTenant(user);
-  const pago = await prisma.pagoDeuda.create({
-    data: {
-  // @ts-expect-error
-    inyeccionId: parsed.inyeccionId, monto: parsed.monto, cuentaBancariaId: parsed.cuentaBancariaId, tipoPagoId: parsed.tipoPagoId, observaciones: parsed.observaciones, tenantId
-    },
+  const pago = await AccountingOperationsMutationService.registerCapitalPayment({
+    input,
+    user,
   });
   revalidatePath('/busy/contabilidad/capital');
   return pago;

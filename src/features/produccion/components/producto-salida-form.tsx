@@ -18,7 +18,7 @@ import { useCategorias } from '@/features/categorias/hooks/use-categorias';
 import { useUnidades } from '@/features/unidades/hooks/use-unidades';
 import { useAlmacenes } from '@/features/almacenes/hooks/use-almacenes';
 import { useVendors } from '@/features/vendors/hooks/use-vendors';
-import { getMiEmpresaAction } from '@/features/mi-empresa/actions'
+import { fetchMiEmpresaSettings } from '@/features/mi-empresa/lib/client-mi-empresa'
 
 interface ProductoSalidaFormValues {
   nombre: string;
@@ -101,9 +101,10 @@ export function ProductoSalidaForm({
   const { vendors } = useVendors();
 
   useEffect(() => {
-    getMiEmpresaAction()
+    fetchMiEmpresaSettings(() => setUsaEan13(false))
       .then((r) => {
         if (r.success) setUsaEan13(r.data?.usaCodigoEan13 ?? false)
+        else setUsaEan13(false)
       })
       .catch(() => setUsaEan13(false));
   }, []);
@@ -151,7 +152,7 @@ export function ProductoSalidaForm({
         proveedorCodigo: selectedVendor?.vendorCode ?? null,
       });
 
-  // @ts-expect-error
+  // @ts-expect-error -- createProductoAction returns a wider server-action envelope than this inline form models
       const result = await createProductoAction(payload as any)
       if (!result.success) {
         throw new Error(result.error?.message || 'Error al crear producto')

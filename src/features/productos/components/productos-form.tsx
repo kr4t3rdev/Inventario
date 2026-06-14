@@ -49,7 +49,7 @@ import {
 	createProductoAction,
 	updateProductoAction,
 } from "@/features/productos/actions";
-import { getMiEmpresaAction } from "@/features/mi-empresa/actions";
+import { fetchMiEmpresaSettings } from "@/features/mi-empresa/lib/client-mi-empresa";
 import { SubcategorySelector } from "@/features/categorias/components/subcategory-selector";
 import {
 	buildProductBusinessCodePreview,
@@ -160,11 +160,12 @@ export function ProductoForm({
 	const isTaxonomyLocked = usaEan13 && isEditing;
 
 	useEffect(() => {
-		getMiEmpresaAction()
+		fetchMiEmpresaSettings(() => setUsaEan13(false))
 			.then((r) => {
 				if (r.success) setUsaEan13(r.data?.usaCodigoEan13 ?? false);
+				else setUsaEan13(false);
 			})
-			.catch(() => {});
+			.catch(() => setUsaEan13(false));
 	}, []);
 
 	const [preciosPorLista, setPreciosPorLista] = useState<

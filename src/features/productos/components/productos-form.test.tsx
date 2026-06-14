@@ -42,7 +42,7 @@ vi.mock('./clasificador-info-note', () => ({
   ClasificadorInfoNote: () => null,
 }));
 
-import { buildProductosSchema } from './productos-form';
+import { buildProductosSchema } from './productos-form-schema';
 
 const baseProduct = {
   nombre: 'Producto test',

@@ -45,13 +45,15 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { Textarea } from "@/components/ui/textarea";
 import { Skeleton } from "@/components/ui/skeleton";
 import { usePuntosDeVenta } from "@/features/puntos-venta/hooks/use-puntos-de-venta";
-import { getProductosPorUbicacion } from "@/app/actions/productos-ubicacion";
+import {
+	createVentaPos,
+	fetchAnticiposCobroDisponibles,
+	fetchProductosPuntoVenta,
+	fetchTurnoActivoPuntoVenta,
+} from "@/features/ventas/lib/pv-client";
 import type { ProductoConStock } from "@/lib/api/productos-ubicacion";
-import { ServerActionError } from "@/lib/api/errors";
-import { createVentaAction } from "@/features/ventas/actions";
 import { useClientes } from "@/features/clientes/hooks/use-clientes";
 import { useCategorias } from "@/features/categorias/hooks/use-categorias";
-import { getAnticiposAction } from "@/features/contabilidad/actions-anticipos";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Label } from "@/components/ui/label";
 import {
@@ -75,7 +77,6 @@ import {
 	AperturaTurnoDialog,
 	CierreTurnoDialog,
 } from "@/features/turnos-pos";
-import { getTurnoActivoAction } from "@/features/turnos-pos/actions";
 import { ArqueoForm } from "@/features/arqueo-caja";
 import { VentaInvoiceDialog } from "./pv-invoice-dialog";
 import { useAuth } from "@/contexts/auth-context";
@@ -150,15 +151,18 @@ export function VentaInterface() {
 			setIsLoadingProductos(true);
 			setIsFetchingProductos(true);
 			try {
-				const data = await getProductosPorUbicacion(selectedPuntoVenta);
-				setProductos(data);
-			} catch (err) {
-				if (err instanceof ServerActionError) {
-					toast.error(err.message);
-				} else {
-					console.error("Error al cargar productos:", err);
-					toast.error("Error al cargar productos");
+				const result = await fetchProductosPuntoVenta(selectedPuntoVenta, () =>
+					setProductos([]),
+				);
+				if (!result.success) {
+					toast.error(result.error.message);
+					setProductos([]);
+					return;
 				}
+				setProductos(result.data);
+			} catch (err) {
+				console.error("Error al cargar productos:", err);
+				toast.error("Error al cargar productos");
 				setProductos([]);
 			} finally {
 				setIsLoadingProductos(false);
@@ -177,10 +181,14 @@ export function VentaInterface() {
 		}
 
 		try {
-			const result = await getTurnoActivoAction(selectedPuntoVenta);
-			if (result.success) {
-				setTurnoActivo(result.data);
+			const result = await fetchTurnoActivoPuntoVenta(selectedPuntoVenta, () =>
+				setTurnoActivo(null),
+			);
+			if (!result.success) {
+				setTurnoActivo(null);
+				return;
 			}
+			setTurnoActivo(result.data);
 		} catch {
 			setTurnoActivo(null);
 		}
@@ -209,10 +217,12 @@ export function VentaInterface() {
 
 		let cancelled = false;
 		setIsLoadingAnticiposCobro(true);
-		getAnticiposAction({ clienteId: selectedClienteId, moneda: "CUP" })
+		fetchAnticiposCobroDisponibles(selectedClienteId, () =>
+				setAnticiposCobroDisponibles(undefined),
+			)
 			.then((res) => {
 				if (!cancelled && res.success) {
-					setAnticiposCobroDisponibles(res.data);
+					setAnticiposCobroDisponibles({ anticipos: res.data });
 				}
 			})
 			.finally(() => {
@@ -462,7 +472,7 @@ export function VentaInterface() {
 				precioUnitario: Math.round(item.precioVenta),
 			}));
 
-			const result = await createVentaAction({
+			const result = await createVentaPos({
 				puntoDeVentaId: selectedPuntoVenta,
 				descuento: Math.round(descuento),
 				observaciones,
@@ -471,7 +481,7 @@ export function VentaInterface() {
 
 			if (!result.success) {
 				toast(
-					result.error?.message ||
+					result.error.message ||
 						"Ha ocurrido un error al procesar la venta. Intente nuevamente.",
 				);
 				return;
@@ -513,7 +523,7 @@ export function VentaInterface() {
 				precioUnitario: Math.round(item.precioVenta),
 			}));
 
-			const result = await createVentaAction({
+			const result = await createVentaPos({
 				puntoDeVentaId: selectedPuntoVenta,
 				clienteId: selectedClienteId,
 				descuento: Math.round(descuento),
@@ -528,13 +538,13 @@ export function VentaInterface() {
 
 			if (!result.success) {
 				toast(
-					result.error?.message ||
+					result.error.message ||
 						"Ha ocurrido un error al procesar la venta. Intente nuevamente.",
 				);
 				return;
 			}
 
-			const ventaCreada = result.data;
+			const ventaCreada = result.data as { ventaId?: string } | undefined;
 
 			toast(`Venta registrada y factura generada por $${cartTotal}`);
 			setCart([]);
@@ -1602,7 +1612,9 @@ export function VentaInterface() {
 				onSuccess={() => {
 					// Recargar turno activo
 					if (selectedPuntoVenta) {
-						getTurnoActivoAction(selectedPuntoVenta).then((r) => {
+						fetchTurnoActivoPuntoVenta(selectedPuntoVenta, () =>
+							setTurnoActivo(null),
+						).then((r) => {
 							if (r.success) setTurnoActivo(r.data);
 						});
 					}

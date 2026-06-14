@@ -9,6 +9,7 @@ import { withAction, ActionError } from '@/lib/server-actions';
 import { prisma } from '@/lib/prisma';
 import { requireTenant } from '@/lib/services/tenant-scope';
 import { AuditLogService } from '@/lib/services/audit-log-service';
+import { AccountingConfigReadService } from '@/features/contabilidad/services/accounting-config-read-service';
 import type { AuthenticatedUser } from '@/lib/auth-middleware';
 
 const _countSelect = {
@@ -52,18 +53,7 @@ async function enrichTiposPago(tipos: any[]) {
 }
 
 export const getTiposPagoAction = withAction(async (params: { includeInactive?: boolean; requiereCuenta?: boolean } = {}, _user: AuthenticatedUser) => {
-  const where: any = {};
-  if (params.includeInactive !== true) where.isActive = true;
-  if (params.requiereCuenta !== undefined) where.requiereCuenta = params.requiereCuenta;
-
-  const tipos = await prisma.tipoPago.findMany({
-    where,
-    include: { _count: _countSelect },
-    orderBy: [{ isActive: 'desc' }, { nombre: 'asc' }]
-  });
-
-  const data = await enrichTiposPago(tipos);
-  return { data };
+  return AccountingConfigReadService.getPaymentTypes(params);
 });
 
 export const getTipoPagoAction = withAction(async (id: string, _user: AuthenticatedUser) => {

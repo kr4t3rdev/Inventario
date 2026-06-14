@@ -39,7 +39,7 @@ import {
 	AlertDialogHeader,
 	AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import { updateMiEmpresaAction } from "../actions";
+import { updateMiEmpresaSettings } from "../lib/client-mi-empresa";
 import type {
 	CuentaBancariaItem,
 	MiEmpresaFormValues as MiEmpresaFormValuesType,
@@ -107,7 +107,7 @@ async function saveMiEmpresa(
 	values: MiEmpresaFormValuesType,
 ): Promise<{ data: MiEmpresaApiResponse; message?: string }> {
 	const payload = normalizeMiEmpresaFormValues(values);
-	const result = await updateMiEmpresaAction(payload);
+	const result = await updateMiEmpresaSettings(payload);
 
 	if (!result.success) {
 		const err: Error & { fieldErrors?: Record<string, string> } = new Error(
@@ -170,7 +170,7 @@ export function MiEmpresaForm({
 		if (!checked) {
 			setIsSubmitting(true);
 			try {
-				const result = await updateMiEmpresaAction({ usaCodigoEan13: false });
+				const result = await updateMiEmpresaSettings({ usaCodigoEan13: false });
 				if (!result.success) {
 					throw new Error(result.error?.message ?? "Error al actualizar");
 				}
@@ -203,7 +203,7 @@ export function MiEmpresaForm({
 		setIsSubmitting(true);
 		setShowEan13Confirmation(false);
 		try {
-			const result = await updateMiEmpresaAction({
+			const result = await updateMiEmpresaSettings({
 				usaCodigoEan13: true,
 				confirmReset: true,
 			});

@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect , useRef} from 'react';
+import { useState } from 'react';
 import { LazyMotion, m as motion, useReducedMotion } from 'framer-motion';
 import { BarChart3, FileText, FilterX, LineChart, TrendingUp } from 'lucide-react';
 import { toast } from 'sonner';
@@ -13,7 +13,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { getCuentasBancariasAction } from '@/features/contabilidad/actions-cuentas-bancarias';
+import { useCuentasBancarias } from '@/features/contabilidad/hooks/use-cuentas-bancarias';
 import { getAuthToken } from '@/lib/token';
 import { cn } from '@/lib/utils';
 
@@ -41,17 +41,7 @@ export function ReportesAnalyticsPage() {
     cuentaId: '',
   });
 
-  const [cuentasData, setCuentasData] = useState<{ cuentas: any[] }>({ cuentas: [] });
-  const cuentasLoading = useRef(true);
-
-  useEffect(() => {
-    getCuentasBancariasAction().then(r => {
-      if (r.success) setCuentasData({ cuentas: r.data?.cuentas ?? [] });
-      cuentasLoading.current = false;
-    })
-  }, [])
-
-  const cuentas = cuentasData.cuentas ?? [];
+  const { cuentas } = useCuentasBancarias();
   const cuentaSeleccionada = cuentas.find((cuenta) => cuenta.cuentaId === filtrosGlobales.cuentaId);
 
   const containerVariants = {

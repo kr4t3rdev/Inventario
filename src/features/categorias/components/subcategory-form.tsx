@@ -15,7 +15,7 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { getCategoriasAction } from "@/features/categorias/actions";
-import { getMiEmpresaAction } from '@/features/mi-empresa/actions'
+import { fetchMiEmpresaSettings } from '@/features/mi-empresa/lib/client-mi-empresa'
 import { useCategoryForm } from "@/features/categorias/hooks/use-category-form";
 import { ClasificadorInfoNote } from "@/features/productos/components/clasificador-info-note";
 
@@ -217,9 +217,10 @@ export function SubcategoryForm({ initialData, onSuccess }: SubcategoryFormProps
   }, [clasSectionId]);
 
   useEffect(() => {
-    getMiEmpresaAction()
+    fetchMiEmpresaSettings(() => setUsaEan13(false))
       .then((r) => {
         if (r.success) setUsaEan13(r.data?.usaCodigoEan13 ?? false)
+        else setUsaEan13(false)
       })
       .catch(() => setUsaEan13(false));
   }, []);

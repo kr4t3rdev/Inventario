@@ -24,6 +24,10 @@ Este documento define el primer contrato **mobile-first** del backend para clien
 | Products stock by location | Ready | Refleja la capacidad ya existente de stock por ubicación. |
 | Sales read | Ready | Lista y detalle por tenant bajo mobile v1. |
 | Sales mutations | Ready | Create/update/cancel con servicio compartido y validación explícita. |
+| Accounting config read | Ready | Tipos de pago y cuentas disponibles para mobile. |
+| Bank accounts read | Ready | Lista, detalle e historial reutilizando servicios compartidos. |
+| Accounting operations read | Ready | Transferencias, ajustes bancarios e inyecciones de capital en modo lectura. |
+| Accounting operations mutations | Ready | Crear transferencias, validarlas, registrar ajustes e inyecciones/pagos de capital. |
 | Otros módulos | Pending | Migrar por slices usando servicios compartidos. |
 
 ## Base conventions
@@ -246,6 +250,174 @@ Errores esperables de negocio:
 - `VALIDATION_ERROR` → `400`
 - `NOT_FOUND` → `404`
 - `TENANT_REQUIRED` → `403`
+
+### `GET /api/mobile/v1/accounting/payment-types`
+
+**Headers**
+
+```http
+Authorization: Bearer <accessToken>
+```
+
+Devuelve los tipos de pago configurados para el tenant autenticado.
+
+### `GET /api/mobile/v1/accounting/payment-types/available-accounts`
+
+**Headers**
+
+```http
+Authorization: Bearer <accessToken>
+```
+
+Devuelve las cuentas bancarias utilizables por mobile para operaciones asociadas a tipos de pago.
+
+### `GET /api/mobile/v1/accounting/bank-accounts`
+
+**Headers**
+
+```http
+Authorization: Bearer <accessToken>
+```
+
+Lista las cuentas bancarias del tenant autenticado.
+
+### `GET /api/mobile/v1/accounting/bank-accounts/:id`
+
+**Headers**
+
+```http
+Authorization: Bearer <accessToken>
+```
+
+Devuelve el detalle de una cuenta bancaria del tenant autenticado.
+
+### `GET /api/mobile/v1/accounting/bank-accounts/:id/history`
+
+**Headers**
+
+```http
+Authorization: Bearer <accessToken>
+```
+
+Devuelve el historial de movimientos de la cuenta bancaria, alineado con la lectura ya existente en web.
+
+### `GET /api/mobile/v1/accounting/bank-transfers`
+
+**Headers**
+
+```http
+Authorization: Bearer <accessToken>
+```
+
+**Query params opcionales**
+
+- `fechaInicio`
+- `fechaFin`
+- `cuentaId`
+
+Devuelve transferencias bancarias según la misma lógica de lectura hoy usada por web.
+
+### `POST /api/mobile/v1/accounting/bank-transfers`
+
+**Headers**
+
+```http
+Authorization: Bearer <accessToken>
+```
+
+**Body**
+
+```json
+{
+  "cuentaOrigenId": "cb-1",
+  "cuentaDestinoId": "cb-2",
+  "montoOrigen": 100,
+  "motivo": "Reposición",
+  "descripcion": "Opcional",
+  "tasaCambio": 24
+}
+```
+
+Ejecuta la transferencia reutilizando la misma lógica de negocio que hoy usa web.
+
+### `POST /api/mobile/v1/accounting/bank-transfers/validate`
+
+**Headers**
+
+```http
+Authorization: Bearer <accessToken>
+```
+
+Permite validar saldo y advertencias antes de ejecutar la transferencia, alineado con el flujo actual del formulario web.
+
+### `GET /api/mobile/v1/accounting/bank-transfers/:id`
+
+**Headers**
+
+```http
+Authorization: Bearer <accessToken>
+```
+
+Devuelve el detalle de una transferencia bancaria. Si no existe, responde `404 NOT_FOUND`.
+
+### `GET /api/mobile/v1/accounting/bank-adjustments`
+
+**Headers**
+
+```http
+Authorization: Bearer <accessToken>
+```
+
+**Query params**
+
+- `cuentaId` requerido
+- `page`, `limit`, `fechaInicio`, `fechaFin`, `tipo` opcionales
+
+Devuelve ajustes bancarios paginados para una cuenta, con la misma semántica de lectura de web.
+
+### `POST /api/mobile/v1/accounting/bank-adjustments`
+
+**Headers**
+
+```http
+Authorization: Bearer <accessToken>
+```
+
+Registra un ajuste bancario manual con el mismo efecto de saldo y auditoría ya implementado en web.
+
+### `GET /api/mobile/v1/accounting/capital-injections`
+
+**Headers**
+
+```http
+Authorization: Bearer <accessToken>
+```
+
+**Query params opcionales**
+
+- `tipo`
+
+Devuelve inyecciones de capital del tenant autenticado usando la lógica compartida de contabilidad.
+
+### `POST /api/mobile/v1/accounting/capital-injections`
+
+**Headers**
+
+```http
+Authorization: Bearer <accessToken>
+```
+
+Registra una inyección de capital usando la misma lógica hoy expuesta por las actions web.
+
+### `POST /api/mobile/v1/accounting/capital-injections/:id/payments`
+
+**Headers**
+
+```http
+Authorization: Bearer <accessToken>
+```
+
+Registra un pago asociado a una inyección de capital existente, reutilizando la lógica actual del proyecto.
 
 ## Error model
 

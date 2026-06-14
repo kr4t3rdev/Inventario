@@ -262,6 +262,7 @@ describe('Cuentas Bancarias Actions', () => {
   describe('getCuentaHistorialAction', () => {
     beforeEach(() => {
       vi.mocked(prisma.cuentaBancaria.findUnique).mockResolvedValue(mockCuenta);
+      vi.mocked(prisma.cuentaBancaria.findFirst).mockResolvedValue(mockCuenta);
       vi.mocked(prisma.reconciliacionVenta.findMany).mockResolvedValue([]);
       vi.mocked(prisma.reconciliacionServicio.findMany).mockResolvedValue([]);
       vi.mocked(prisma.reconciliacionGasto.findMany).mockResolvedValue([]);
@@ -281,7 +282,7 @@ describe('Cuentas Bancarias Actions', () => {
     });
 
     it('debe fallar si la cuenta no existe', async () => {
-      vi.mocked(prisma.cuentaBancaria.findUnique).mockResolvedValue(null);
+      vi.mocked(prisma.cuentaBancaria.findFirst).mockResolvedValue(null);
 
       const result = await getCuentaHistorialAction({ cuentaId: 'inexistente' });
 
