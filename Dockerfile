@@ -75,10 +75,15 @@ COPY --from=builder /app/src/generated/prisma /app/src/generated/prisma
 
 # Instalar dependencias (incluye el CLI de Prisma y todas sus deps transitivas).
 # Necesario para `prisma migrate deploy` en runtime.
+# Usamos --ignore-scripts porque el postinstall "prisma generate" falla
+# en runtime (no tenemos prisma.config.ts accesible). El cliente ya fue
+# generado en el builder stage.
 COPY package.json pnpm-lock.yaml ./
-RUN pnpm install --frozen-lockfile --prefer-offline || \
-    (sleep 5 && pnpm install --frozen-lockfile --prefer-offline) || \
-    (sleep 10 && pnpm install --frozen-lockfile)
+# Remover prisma.config.ts si existe para evitar que prisma generate falle
+RUN rm -f /app/prisma.config.ts
+RUN pnpm install --frozen-lockfile --prefer-offline --ignore-scripts || \
+    (sleep 5 && pnpm install --frozen-lockfile --prefer-offline --ignore-scripts) || \
+    (sleep 10 && pnpm install --frozen-lockfile --ignore-scripts)
 
 # Copiar script de inicio (aplica migraciones antes de levantar el server)
 COPY start.sh /app/start.sh
