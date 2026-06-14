@@ -41,7 +41,7 @@ describe('mobile sales route', () => {
     expect(response.status).toBe(401);
   });
 
-  it('returns tenant sales with forwarded filters', async () => {
+  it('returns tenant sales with the legacy unfiltered list behavior', async () => {
     vi.mocked(authenticateUser).mockResolvedValue({ user: mockUser } as never);
     vi.mocked(VentaReadService.list).mockResolvedValue([{ ventaId: 'v-1', total: 100 }] as never);
 
@@ -54,12 +54,6 @@ describe('mobile sales route', () => {
 
     expect(response.status).toBe(200);
     expect(data.items).toHaveLength(1);
-    expect(VentaReadService.list).toHaveBeenCalledWith('tenant-1', {
-      search: 'maria',
-      puntoDeVentaId: 'pv-1',
-      clienteId: 'cliente-1',
-      dateFrom: '2026-01-01',
-      dateTo: '2026-01-31',
-    });
+    expect(VentaReadService.list).toHaveBeenCalledWith('tenant-1');
   });
 });

@@ -21,7 +21,7 @@ Este documento define el primer contrato **mobile-first** del backend para clien
 | Tenant list/switch | Ready | Devuelve contexto actualizado. |
 | Dashboard stats | Ready | Primer dominio no-auth validado para mobile. |
 | Products read | Ready | Lista y detalle por tenant bajo mobile v1. |
-| Products stock/search/filter | Ready | Query params mobile-first reutilizando servicio compartido. |
+| Products stock by location | Ready | Refleja la capacidad ya existente de stock por ubicación. |
 | Sales read | Ready | Lista y detalle por tenant bajo mobile v1. |
 | Sales mutations | Ready | Create/update/cancel con servicio compartido y validación explícita. |
 | Otros módulos | Pending | Migrar por slices usando servicios compartidos. |
@@ -141,18 +141,23 @@ Este endpoint valida el patrón objetivo: **servicio compartido + adapter mobile
 Authorization: Bearer <accessToken>
 ```
 
-Devuelve la lista de productos del tenant autenticado en orden descendente de creación.
+Devuelve la lista base de productos del tenant autenticado en orden descendente de creación, alineada con la lectura general ya implementada en web.
 
-**Query params opcionales**
+### `GET /api/mobile/v1/products/stock`
 
-- `search`
-- `categoryId`
-- `subcategoryId`
+**Headers**
+
+```http
+Authorization: Bearer <accessToken>
+```
+
+**Query params requeridos/opcionales**
+
 - `ubicacionId`
 - `tipoUbicacion` (`almacen` | `punto_venta`)
-- `includeZero` (`true` | `false`)
+- `includeZero` (`true` | `false`, opcional)
 
-Si `ubicacionId` + `tipoUbicacion` están presentes, la respuesta incluye `stockUbicacion` y aplica el filtro sobre esa ubicación específica. Esto cubre el primer slice mobile de **stock + search + filter** para productos.
+Devuelve productos con contexto de stock para una ubicación específica, siguiendo la misma capacidad existente de stock por ubicación del proyecto.
 
 ### `GET /api/mobile/v1/products/:id`
 
@@ -172,15 +177,7 @@ Devuelve el detalle de un producto del tenant autenticado. Si el producto no exi
 Authorization: Bearer <accessToken>
 ```
 
-**Query params opcionales**
-
-- `search`
-- `puntoDeVentaId`
-- `clienteId`
-- `dateFrom`
-- `dateTo`
-
-Devuelve ventas del tenant autenticado, ordenadas por fecha descendente. El filtro `search` cubre `ventaId`, nombre de cliente, nombre del punto de venta y número de factura.
+Devuelve ventas del tenant autenticado, ordenadas por fecha descendente, alineadas con la lectura general ya implementada en web.
 
 ### `GET /api/mobile/v1/sales/:id`
 
@@ -313,7 +310,7 @@ Si eso ya existe, mover luego a NestJS es una migración de adapters e infraestr
 - [x] Dashboard mobile usa el mismo servicio que la ruta web.
 - [x] Tenant switching devuelve nuevo contexto de tokens.
 - [x] Products list/detail ya exponen contrato mobile-first.
-- [x] Products stock/search/filter básico ya expone contrato mobile-first por query params.
+- [x] Products stock por ubicación ya expone contrato mobile-first alineado con la capacidad existente.
 - [x] Sales list/detail ya exponen contrato mobile-first.
 - [x] Sales create/update/cancel reutilizan la misma lógica de negocio desde un servicio compartido.
 - [ ] Documentar más ejemplos por módulo a medida que entren nuevos slices.

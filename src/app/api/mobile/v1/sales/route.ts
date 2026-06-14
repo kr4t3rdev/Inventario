@@ -21,14 +21,7 @@ export async function GET(request: Request) {
   }
 
   try {
-    const { searchParams } = new URL(request.url);
-    const items = await VentaReadService.list(tenantId, {
-      search: searchParams.get('search'),
-      puntoDeVentaId: searchParams.get('puntoDeVentaId'),
-      clienteId: searchParams.get('clienteId'),
-      dateFrom: searchParams.get('dateFrom'),
-      dateTo: searchParams.get('dateTo'),
-    });
+    const items = await VentaReadService.list(tenantId);
 
     return successResponse({ items });
   } catch (error) {

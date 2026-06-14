@@ -4,7 +4,7 @@ import type React from "react";
 import { createContext, useContext, useEffect, useState, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
-import { loginAction, logoutAction } from "@/features/auth/actions";
+import { fetchClientAuthJson } from '@/lib/client-auth-fetch';
 import type { Usuario } from "@/app/models/model";
 
 interface AuthContextType {
@@ -24,34 +24,23 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   /**
    * @description Verifica la sesión actual usando la route estable /api/auth/me.
-   * Evita depender de Server Action IDs en el cliente después de cada deploy.
+   * Mantiene paridad con el payload actual del backend (`Usuario`) y limpia estado
+   * stale cuando el servidor responde 401/403 o códigos equivalentes de auth.
    */
   const checkAuth = useCallback(async () => {
-    try {
-      const response = await fetch("/api/auth/me", {
-        method: "GET",
-        credentials: "include",
-        cache: "no-store",
-        headers: {
-          "cache-control": "no-store",
-        },
-      });
+    const result = await fetchClientAuthJson<Usuario>('/api/auth/me', {
+      method: 'GET',
+      clearState: () => setUser(null),
+      defaultErrorMessage: 'Error al verificar autenticación',
+    });
 
-      if (response.ok) {
-        const userData = await response.json();
-        setUser(userData);
-      } else {
-        // Si auth falla, limpiar estado para no conservar usuario/tenant viejo.
-        if (response.status === 401 || response.status === 403) {
-          setUser(null);
-        }
-      }
-    } catch (error) {
-      console.error("Error checking auth:", error);
-      // Error de red/transitorio: evitamos forzar logout, pero no reciclamos datos acá.
-    } finally {
-      setLoading(false);
+    if (result.success) {
+      setUser(result.data);
+    } else if (result.status === 0) {
+      console.error('Error checking auth:', result.error.message);
     }
+
+    setLoading(false);
   }, []);
 
   useEffect(() => {
@@ -91,41 +80,39 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, [user, checkAuth]);
 
   /**
-   * @description Inicia sesión usando loginAction (Server Action).
+   * @description Inicia sesión usando la route estable /api/auth/login.
    * La cookie httpOnly la setea el servidor.
    * NO guarda el token en sessionStorage.
    */
   const login = async (email: string, password: string): Promise<boolean> => {
     try {
-      const result = await loginAction({ email, password });
+      const response = await fetch('/api/auth/login', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        credentials: 'include',
+        body: JSON.stringify({ email, password }),
+      });
 
-      if (result.success && result.data) {
-        const userData = (result.data as any).user ?? result.data;
-        setUser(userData);
+      const result = await response.json();
 
-        if (userData?.role === "admin") {
-          router.push("/admin");
+      if (response.ok && result.user) {
+        setUser(result.user);
+
+        if (result.user?.role === 'admin') {
+          router.push('/admin');
         } else {
-          router.push("/busy/dashboard");
+          router.push('/busy/dashboard');
         }
         return true;
       }
 
-      // Manejar errores específicos
-      if (result.error?.code === "USER_INACTIVE" || result.error?.code === "LICENSE_EXPIRED") {
-        toast.error(result.error.message);
-      } else if (result.error?.code === "ACCOUNT_LOCKED") {
-        toast.error(result.error.message);
-      } else if (result.error?.code === "INVALID_CREDENTIALS") {
-        toast.error(result.error.message);
-      } else {
-        toast.error(result.error?.message ?? "Error al iniciar sesión");
-      }
-
+      toast.error(result.error ?? 'Error al iniciar sesión');
       return false;
     } catch (error) {
-      console.error("Login error:", error);
-      toast.error("Error al conectar con el servidor");
+      console.error('Login error:', error);
+      toast.error('Error al conectar con el servidor');
       return false;
     }
   };
@@ -165,21 +152,24 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   };
 
   /**
-   * @description Cierra sesión usando logoutAction (Server Action).
+   * @description Cierra sesión usando la route estable /api/auth/logout.
    * El servidor elimina la cookie httpOnly.
    */
   const logout = async () => {
     try {
-      const result = await logoutAction(undefined);
+      await fetch('/api/auth/logout', {
+        method: 'POST',
+        credentials: 'include',
+      });
       setUser(null);
-      router.push("/login");
-      toast("Sesión cerrada correctamente");
+      router.push('/login');
+      toast('Sesión cerrada correctamente');
     } catch (error) {
-      console.error("Error al cerrar sesión:", error);
+      console.error('Error al cerrar sesión:', error);
       // Forzar logout incluso si falla la llamada
       setUser(null);
-      router.push("/login");
-      toast.error("Error al cerrar sesión");
+      router.push('/login');
+      toast.error('Error al cerrar sesión');
     }
   };
 

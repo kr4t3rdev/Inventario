@@ -1,10 +1,18 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { NextRequest, NextResponse } from 'next/server';
 
-vi.mock('@/features/auth/actions', () => ({
-  meAction: vi.fn(),
+vi.mock('@/lib/auth-middleware', () => ({
+  authenticateUser: vi.fn(),
 }));
 
-import { meAction } from '@/features/auth/actions';
+vi.mock('@/features/auth/services/auth-service', () => ({
+  AuthService: {
+    me: vi.fn(),
+  },
+}));
+
+import { authenticateUser } from '@/lib/auth-middleware';
+import { AuthService } from '@/features/auth/services/auth-service';
 import { GET } from '../route';
 
 describe('/api/auth/me', () => {
@@ -12,39 +20,52 @@ describe('/api/auth/me', () => {
     vi.clearAllMocks();
   });
 
-  it('returns the authenticated user payload when the action succeeds', async () => {
-    vi.mocked(meAction).mockResolvedValue({
-      success: true,
-      data: {
-        user: {
-          userId: 'user-1',
-          email: 'test@example.com',
-          tenantId: 'tenant-1',
-        },
+  it('returns the authenticated user payload when the auth context is valid', async () => {
+    vi.mocked(authenticateUser).mockResolvedValue({
+      user: {
+        userId: 'user-1',
+        name: 'Test User',
+        email: 'test@example.com',
+        role: 'admin',
+        isActive: true,
+        tenantId: 'tenant-1',
+        tenantRole: 'manager',
+      },
+    } as never);
+    vi.mocked(AuthService.me).mockResolvedValue({
+      user: {
+        userId: 'user-1',
+        email: 'test@example.com',
+        tenantId: 'tenant-1',
       },
     } as never);
 
-    const response = await GET();
+    const request = new NextRequest('http://localhost/api/auth/me', {
+      headers: { cookie: 'auth_token=token' },
+    });
+
+    const response = await GET(request);
     const data = await response.json();
 
     expect(response.status).toBe(200);
     expect(data.userId).toBe('user-1');
     expect(data.tenantId).toBe('tenant-1');
+    expect(AuthService.me).toHaveBeenCalledWith(
+      expect.objectContaining({ userId: 'user-1', tenantId: 'tenant-1' }),
+    );
   });
 
-  it('maps auth-required errors to 401', async () => {
-    vi.mocked(meAction).mockResolvedValue({
-      success: false,
-      error: {
-        message: 'No autenticado',
-        code: 'AUTH_REQUIRED',
-      },
-    } as never);
+  it('forwards auth failures from authenticateUser', async () => {
+    vi.mocked(authenticateUser).mockResolvedValue(
+      NextResponse.json({ error: 'Token no proporcionado' }, { status: 401 }) as never,
+    );
 
-    const response = await GET();
+    const request = new NextRequest('http://localhost/api/auth/me');
+
+    const response = await GET(request);
     const data = await response.json();
 
     expect(response.status).toBe(401);
-    expect(data.error).toBe('No autenticado');
+    expect(data.error).toBe('Token no proporcionado');
   });
 });

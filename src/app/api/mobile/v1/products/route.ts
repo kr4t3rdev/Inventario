@@ -4,14 +4,6 @@ import { ProductoService } from '@/features/productos/services/producto-service'
 
 export const dynamic = 'force-dynamic';
 
-function parseBooleanParam(value: string | null): boolean | undefined {
-  if (value === null) {
-    return undefined;
-  }
-
-  return value === 'true';
-}
-
 /**
  * @description Mobile product list endpoint using bearer auth.
  * @param {Request} request - Incoming authenticated request.
@@ -29,25 +21,7 @@ export async function GET(request: Request) {
   }
 
   try {
-    const { searchParams } = new URL(request.url);
-    const ubicacionId = searchParams.get('ubicacionId');
-    const tipoUbicacion = searchParams.get('tipoUbicacion');
-    const filters = {
-      search: searchParams.get('search'),
-      categoryId: searchParams.get('categoryId'),
-      subcategoryId: searchParams.get('subcategoryId'),
-    };
-
-    const items =
-      ubicacionId && (tipoUbicacion === 'almacen' || tipoUbicacion === 'punto_venta')
-        ? await ProductoService.listByLocation({
-            tenantId,
-            ubicacionId,
-            tipoUbicacion,
-            includeZero: parseBooleanParam(searchParams.get('includeZero')) ?? true,
-            ...filters,
-          })
-        : await ProductoService.list(tenantId, filters);
+    const items = await ProductoService.list(tenantId);
 
     return successResponse({ items });
   } catch (error) {

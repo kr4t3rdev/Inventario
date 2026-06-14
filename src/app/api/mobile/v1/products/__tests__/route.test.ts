@@ -8,7 +8,6 @@ vi.mock('@/lib/auth-middleware', () => ({
 vi.mock('@/features/productos/services/producto-service', () => ({
   ProductoService: {
     list: vi.fn(),
-    listByLocation: vi.fn(),
   },
 }));
 
@@ -57,17 +56,13 @@ describe('mobile products route', () => {
 
     expect(response.status).toBe(200);
     expect(data.items).toHaveLength(2);
-    expect(ProductoService.list).toHaveBeenCalledWith('tenant-1', {
-      search: null,
-      categoryId: null,
-      subcategoryId: null,
-    });
+    expect(ProductoService.list).toHaveBeenCalledWith('tenant-1');
   });
 
-  it('forwards stock and filter query params to the location-aware service', async () => {
+  it('ignores mobile convenience filters and keeps the legacy list behavior', async () => {
     vi.mocked(authenticateUser).mockResolvedValue({ user: mockUser } as never);
-    vi.mocked(ProductoService.listByLocation).mockResolvedValue([
-      { id: 'prod-1', nombre: 'Harina Integral', stockUbicacion: 8 },
+    vi.mocked(ProductoService.list).mockResolvedValue([
+      { id: 'prod-1', nombre: 'Harina Integral' },
     ] as never);
 
     const request = new NextRequest(
@@ -81,14 +76,6 @@ describe('mobile products route', () => {
 
     expect(response.status).toBe(200);
     expect(data.items).toHaveLength(1);
-    expect(ProductoService.listByLocation).toHaveBeenCalledWith({
-      tenantId: 'tenant-1',
-      ubicacionId: 'alm-1',
-      tipoUbicacion: 'almacen',
-      includeZero: false,
-      search: 'integral',
-      categoryId: 'cat-1',
-      subcategoryId: 'sub-1',
-    });
+    expect(ProductoService.list).toHaveBeenCalledWith('tenant-1');
   });
 });

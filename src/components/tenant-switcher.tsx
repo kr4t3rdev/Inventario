@@ -4,6 +4,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { Building2, Check, ChevronRight, Loader2 } from 'lucide-react';
 import { toast } from 'sonner';
 import { useAuth } from '@/contexts/auth-context';
+import { fetchClientAuthJson } from '@/lib/client-auth-fetch';
 
 interface TenantEntry {
 	tenantId: string;
@@ -16,6 +17,8 @@ interface TenantEntry {
 /**
  * @description Dropdown para cambiar de tenant activo cuando el usuario
  * pertenece a múltiples empresas.
+ * Consume el payload estable `{ items: TenantEntry[] }` de `/api/auth/tenants`
+ * y sólo limpia estado local cuando la respuesta indica auth stale/invalid.
  * @returns {JSX.Element | null} Selector de tenant o null si ≤1 tenant
  */
 export function TenantSwitcher(): JSX.Element | null {
@@ -26,26 +29,17 @@ export function TenantSwitcher(): JSX.Element | null {
 
 	const fetchTenants = useCallback(async () => {
 		setLoading(true);
-		try {
-			const response = await fetch('/api/auth/tenants', {
-				method: 'GET',
-				credentials: 'include',
-				cache: 'no-store',
-				headers: {
-					'cache-control': 'no-store',
-				},
-			});
-			if (!response.ok) {
-				setTenants([]);
-				return;
-			}
-			const payload = await response.json();
-			setTenants((payload.items ?? []) as TenantEntry[]);
-		} catch {
-			setTenants([]);
-		} finally {
-			setLoading(false);
+		const result = await fetchClientAuthJson<{ items?: TenantEntry[] }>('/api/auth/tenants', {
+			method: 'GET',
+			clearState: () => setTenants([]),
+			defaultErrorMessage: 'Error al cargar empresas',
+		});
+
+		if (result.success) {
+			setTenants((result.data.items ?? []) as TenantEntry[]);
 		}
+
+		setLoading(false);
 	}, []);
 
 	useEffect(() => {
@@ -54,26 +48,22 @@ export function TenantSwitcher(): JSX.Element | null {
 
 	const handleSwitch = async (tenantId: string) => {
 		setSwitching(true);
-		try {
-			const response = await fetch('/api/auth/tenants', {
-				method: 'POST',
-				credentials: 'include',
-				headers: {
-					'content-type': 'application/json',
-				},
-				body: JSON.stringify({ tenantId }),
-			});
-			if (response.ok) {
-				window.location.reload();
-			} else {
-				const payload = await response.json().catch(() => null);
-				toast.error(payload?.error ?? 'Error al cambiar de empresa');
-			}
-		} catch {
-			toast.error('Error al cambiar de empresa');
-		} finally {
-			setSwitching(false);
+		const result = await fetchClientAuthJson<{ tenantId: string; tenantRole: string }>('/api/auth/tenants', {
+			method: 'POST',
+			headers: {
+				'content-type': 'application/json',
+			},
+			body: JSON.stringify({ tenantId }),
+			defaultErrorMessage: 'Error al cambiar de empresa',
+		});
+
+		if (result.success) {
+			window.location.reload();
+		} else {
+			toast.error(result.error.message);
 		}
+
+		setSwitching(false);
 	};
 
 	// Si no hay usuario, o hay solo 1 tenant, no mostrar
