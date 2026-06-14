@@ -2,3 +2,8 @@
 --version
 -print
 _tmp_*
+node_modules
+.next
+dist
+build
+.git
