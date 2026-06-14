@@ -50,12 +50,16 @@ export function PtoVentaForm({ initialData }: PtoVentaFormProps) {
   const router = useRouter()
   const [isLoading, setIsLoading] = useState(false)
   const [listasPrecios, setListasPrecios] = useState<ListaPrecioOption[]>([])
+  const [hasListaPreciosFeature, setHasListaPreciosFeature] = useState<boolean | null>(null)
 
-  // Fetch price lists via Server Action
   useEffect(() => {
     getListasPreciosAction().then(result => {
       if (result.success) {
+        setHasListaPreciosFeature(true)
         setListasPrecios(result.data ?? [])
+      } else if (result.error?.code === 'FEATURE_NOT_AVAILABLE') {
+        setHasListaPreciosFeature(false)
+        form.setValue('listaPrecioId', 'default')
       }
     })
   }, [])
@@ -227,41 +231,43 @@ export function PtoVentaForm({ initialData }: PtoVentaFormProps) {
                 />
               </motion.div>
 
-              {/* Lista de Precios Field */}
-              <motion.div
-                initial={{ opacity: 0, x: -20 }}
-                animate={{ opacity: 1, x: 0 }}
-                transition={{ delay: 0.35 }}
-              >
-                <FormField
-                  control={form.control}
-                  name="listaPrecioId"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Lista de precios</FormLabel>
-                      <Select value={field.value || "default"} onValueChange={field.onChange}>
-                        <FormControl>
-                          <SelectTrigger>
-                            <SelectValue placeholder="Usar precio base" />
-                          </SelectTrigger>
-                        </FormControl>
-                        <SelectContent>
-                          <SelectItem value="default">Usar precio base</SelectItem>
-                          {listasPrecios?.map((lista) => (
-                            <SelectItem key={lista.id} value={lista.id}>
-                              {lista.nombre}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                      <FormDescription>
-                        Si no se selecciona, el punto de venta usará precio base del producto.
-                      </FormDescription>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-              </motion.div>
+              {/* Lista de Precios Field — solo visible si el plan incluye el feature */}
+              {hasListaPreciosFeature && (
+                <motion.div
+                  initial={{ opacity: 0, x: -20 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  transition={{ delay: 0.35 }}
+                >
+                  <FormField
+                    control={form.control}
+                    name="listaPrecioId"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Lista de precios</FormLabel>
+                        <Select value={field.value || "default"} onValueChange={field.onChange}>
+                          <FormControl>
+                            <SelectTrigger>
+                              <SelectValue placeholder="Usar precio base" />
+                            </SelectTrigger>
+                          </FormControl>
+                          <SelectContent>
+                            <SelectItem value="default">Usar precio base</SelectItem>
+                            {listasPrecios?.map((lista) => (
+                              <SelectItem key={lista.id} value={lista.id}>
+                                {lista.nombre}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                        <FormDescription>
+                          Si no se selecciona, el punto de venta usará precio base del producto.
+                        </FormDescription>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                </motion.div>
+              )}
               
               <motion.div 
                 className="flex flex-col sm:flex-row justify-end gap-4 pt-4 border-t"
