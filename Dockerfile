@@ -34,6 +34,11 @@ ENV DATABASE_URL=$DATABASE_URL
 # Generar cliente Prisma (output: src/generated/prisma según schema)
 RUN pnpm prisma generate
 
+# Eliminar prisma.config.ts para que no se incluya en el output standalone.
+# En runtime, el CLI de Prisma usa env vars (DATABASE_URL) directamente
+# y el .ts no se puede parsear sin un TS loader.
+RUN rm -f /app/prisma.config.ts
+
 # Build con variables de entorno para estabilidad
 ENV NEXT_TELEMETRY_DISABLED=1
 ENV NODE_OPTIONS="--max-http-header-size=80000 --dns-result-order=ipv4first"
