@@ -21,7 +21,7 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Skeleton } from "@/components/ui/skeleton"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
-import { ArrowUpDown, Download, FileSpreadsheet, PlusCircle, Filter, FileText, Sparkles, Loader2 } from "lucide-react"
+import { ArrowUpDown, Download, FileSpreadsheet, PlusCircle, Filter, FileText, Loader2 } from "lucide-react"
 import { formatCurrency } from "@/lib/utils"
 import type { FacturaRow } from "@/features/facturas/types"
 import { getAuthToken } from "@/lib/token"
@@ -249,9 +249,6 @@ export function FacturasContent({ initialData }: FacturasContentProps) {
               </motion.div>
               <div>
                 <h1 className="text-2xl font-bold bg-linear-to-r from-orange-500 to-red-600 bg-clip-text text-transparent">Facturas</h1>
-                <motion.div animate={{ rotate: 360, scale: [1, 1.2, 1] }} transition={{ rotate: { duration: 20, repeat: Infinity }, scale: { duration: 2, repeat: Infinity } }}>
-                  <Sparkles className="h-4 w-4 text-yellow-500 inline ml-1" />
-                </motion.div>
               </div>
             </motion.div>
             <div className="flex gap-2">

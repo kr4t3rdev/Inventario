@@ -2,7 +2,7 @@
 
 import { useMemo, useState, useEffect, useCallback } from 'react';
 import { LazyMotion, m as motion, useReducedMotion } from 'framer-motion';
-import { ArrowRightLeft, Plus, RefreshCw, Sparkles } from 'lucide-react';
+import { ArrowRightLeft, Plus, RefreshCw } from 'lucide-react';
 import { toast } from 'sonner';
 
 import { Badge } from '@/components/ui/badge';
@@ -175,9 +175,7 @@ export function ExchangeManager() {
             </CardHeader>
             <CardContent className="flex flex-wrap items-center justify-between gap-4">
               <div className="flex items-center gap-4">
-                <div className="rounded-xl bg-blue-100 p-3 text-blue-600 dark:bg-blue-900/10 dark:text-blue-300">
-                  <Sparkles className="h-5 w-5" />
-                </div>
+                <div className="rounded-xl bg-blue-100 p-3 text-blue-600 dark:bg-blue-900/10 dark:text-blue-300" />
                 <div>
                   <div className="text-lg font-semibold text-slate-900 dark:text-slate-100">
                     {monedaPrincipal.nombre}

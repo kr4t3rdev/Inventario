@@ -1,7 +1,7 @@
 'use client'
 
 import { useRef } from "react"
-import { Building2, Sparkles, Users, Package, Archive, RefreshCw, Loader2 } from "lucide-react"
+import { Building2, Users, Package, Archive, RefreshCw, Loader2 } from "lucide-react"
 import { LazyMotion, m as motion } from "framer-motion"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"

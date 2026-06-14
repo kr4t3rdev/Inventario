@@ -34,12 +34,17 @@ export function useUnidades(): UseUnidadesResult {
         if (cancelled) return
         if (result.success) {
           setUnidades((result.data ?? []) as UnidadOption[])
+          setError(undefined)
         } else {
+          setUnidades([])
           setError(result.error)
         }
       })
       .catch((err) => {
-        if (!cancelled) setError(err)
+        if (!cancelled) {
+          setUnidades([])
+          setError(err)
+        }
       })
       .finally(() => {
         if (!cancelled) setIsLoading(false)

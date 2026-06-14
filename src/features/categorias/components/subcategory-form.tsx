@@ -5,7 +5,7 @@ import type { ReactElement } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { LazyMotion, m as motion } from "framer-motion";
-import { AlertCircle, ArrowLeft, ChevronDown, Folder, Layers, Loader2, Search, Sparkles, X } from "lucide-react";
+import { AlertCircle, ArrowLeft, ChevronDown, Folder, Layers, Loader2, Search, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
@@ -379,19 +379,6 @@ export function SubcategoryForm({ initialData, onSuccess }: SubcategoryFormProps
               transition={{ duration: 0.2 }}
             >
               <Folder className="h-5 w-5 text-white" />
-              <motion.div
-                animate={{
-                  rotate: 360,
-                  scale: [1, 1.2, 1],
-                }}
-                transition={{
-                  rotate: { duration: 20, repeat: Infinity, ease: 'linear' },
-                  scale: { duration: 2, repeat: Infinity, ease: 'easeInOut' },
-                }}
-                className="absolute -top-1 -right-1"
-              >
-                <Sparkles className="h-4 w-4 text-yellow-400" />
-              </motion.div>
             </motion.div>
             <div>
               <h2 className="text-xl font-semibold">

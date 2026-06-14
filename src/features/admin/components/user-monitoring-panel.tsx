@@ -20,7 +20,7 @@ import {
 import { useAdminUsers } from '@/features/admin/hooks/use-admin-users'
 import { getExpiringSoonAction, lockUserAction, unlockUserAction } from '@/features/admin/actions'
 import { toast } from "sonner"
-import { Activity, Clock, Shield, Unlock, Lock, Calendar, Sparkles } from "lucide-react"
+import { Activity, Clock, Shield, Unlock, Lock, Calendar } from "lucide-react"
 import { ActivityLogsTab } from "@/features/admin/components/activity-logs-tab"
 import { SessionsTab } from "@/features/admin/components/sessions-tab"
 import { BlockedUsersTab } from "@/features/admin/components/blocked-users-tab"
@@ -86,7 +86,6 @@ export function UserMonitoringPanel() {
             <div className="flex items-center gap-3">
               <div className="relative flex h-10 w-10 items-center justify-center rounded-xl bg-linear-to-br from-primary to-purple-600 shadow-md">
                 <Activity className="h-5 w-5 text-white" />
-                <Sparkles className="absolute -right-1 -top-1 h-4 w-4 text-yellow-400" />
               </div>
               <div>
                 <CardTitle className="bg-linear-to-r from-slate-900 to-slate-600 bg-clip-text text-transparent dark:from-white dark:to-slate-300">

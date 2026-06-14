@@ -4,7 +4,7 @@ import { useState } from "react"
 import { LazyMotion, m as motion } from "framer-motion"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
-import { Settings, Sparkles, Loader2 } from "lucide-react"
+import { Settings, Loader2 } from "lucide-react"
 
 export function BulkStockMinimoManagerSimple() {
   const [isLoading, setIsLoading] = useState(false)
@@ -19,16 +19,6 @@ export function BulkStockMinimoManagerSimple() {
               whileHover={{ scale: 1.05, rotate: 3 }}
             >
               <Settings className="h-5 w-5" />
-              <motion.span
-                className="absolute -right-1 -top-1"
-                animate={{ rotate: 360, scale: [1, 1.15, 1] }}
-                transition={{
-                  rotate: { duration: 16, repeat: Infinity, ease: "linear" },
-                  scale: { duration: 2, repeat: Infinity, ease: "easeInOut" },
-                }}
-              >
-                <Sparkles className="h-3.5 w-3.5 text-yellow-400" />
-              </motion.span>
             </motion.div>
             Gestión Masiva de Stock Mínimo (Simple Test)
           </CardTitle>

@@ -71,7 +71,6 @@ vi.mock('lucide-react', () => ({
   Plus: () => null,
   Trash2: () => null,
   Building2: () => null,
-  Sparkles: () => null,
   AlertCircle: () => null,
   FileText: () => null,
 }));

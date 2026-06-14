@@ -16,7 +16,7 @@ import { Skeleton } from "@/components/ui/skeleton"
 import { Badge } from "@/components/ui/badge"
 import { deleteGastoConceptoAction } from "@/features/gastosDE/actions"
 import type { ColumnDef } from "@tanstack/react-table"
-import { ArrowUp, FolderOpen, Plus, Trash2, Pencil, Layers, Sparkles, Loader2, AlertCircle } from "lucide-react"
+import { ArrowUp, FolderOpen, Plus, Trash2, Pencil, Layers, Loader2, AlertCircle } from "lucide-react"
 import { useState, useTransition } from "react"
 import { toast } from "sonner"
 import { LazyMotion, m as motion } from "framer-motion"
@@ -184,9 +184,6 @@ export function GastoConceptosContent({ initialConceptos }: GastoConceptosConten
                 <h1 className="text-2xl font-bold bg-linear-to-r from-orange-500 to-red-600 bg-clip-text text-transparent">
                   Conceptos de Gastos
                 </h1>
-                <motion.div className="absolute -right-4 -top-1" animate={{ rotate: 360, scale: [1, 1.2, 1] }} transition={{ rotate: { duration: 20, repeat: Infinity, ease: "linear" }, scale: { duration: 2, repeat: Infinity, ease: "easeInOut" } }}>
-                  <Sparkles className="h-4 w-4 text-yellow-500" />
-                </motion.div>
               </div>
             </motion.div>
             <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }} initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: 0.2 }}>

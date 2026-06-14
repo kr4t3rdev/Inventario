@@ -16,7 +16,7 @@ import { Skeleton } from "@/components/ui/skeleton"
 import { deleteGastosDEAction } from "@/features/gastosDE/actions"
 import type { Vendor } from "@/app/models/model"
 import type { ColumnDef } from "@tanstack/react-table"
-import { ArrowUp, ArrowUpDown, Pencil, Plus, Trash2, Receipt, Sparkles, Loader2, AlertCircle, Download } from "lucide-react"
+import { ArrowUp, ArrowUpDown, Pencil, Plus, Trash2, Receipt, Loader2, AlertCircle, Download } from "lucide-react"
 import { Checkbox } from "@/components/ui/checkbox"
 import { useEffect, useState, useTransition } from "react"
 import { toast } from "sonner"
@@ -357,16 +357,6 @@ export function GastosDEContent({ initialGastosDE, initialVendors }: GastosDECon
                 <h1 className="text-2xl font-bold bg-linear-to-r from-orange-500 to-red-600 bg-clip-text text-transparent">
                   Gasto de Explotación
                 </h1>
-                <motion.div
-                  className="absolute -right-4 -top-1"
-                  animate={{ rotate: 360, scale: [1, 1.2, 1] }}
-                  transition={{
-                    rotate: { duration: 20, repeat: Infinity, ease: "linear" },
-                    scale: { duration: 2, repeat: Infinity, ease: "easeInOut" }
-                  }}
-                >
-                  <Sparkles className="h-4 w-4 text-yellow-500" />
-                </motion.div>
               </div>
             </motion.div>
             <div className="flex items-center gap-2">

@@ -342,4 +342,12 @@ Si eso ya existe, mover luego a NestJS es una migración de adapters e infraestr
 
 ## Next step
 
-El próximo slice recomendado es **sales summaries / analytics** o, si querés cerrar operación end-to-end, **payments/cobros mobile-first** sobre el mismo patrón de servicio compartido + adapter mobile.
+El próximo slice recomendado es **sales summaries / analytics** o, si se expone contabilidad para mobile, hacerlo respetando los dominios YA implementados del proyecto:
+
+- **reconciliación de ventas** para cobros completos,
+- **cuentas por cobrar** para cobros parciales,
+- **cuentas por pagar** para pagos parciales,
+- **anticipos** para pagos/cobros anticipados,
+- **préstamos / deudas** para sus flujos contables específicos.
+
+No conviene inventar un dominio genérico `payments` si la lógica real del sistema está distribuida en esos módulos contables.

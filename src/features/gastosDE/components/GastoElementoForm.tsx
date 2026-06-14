@@ -6,7 +6,7 @@ import { zodResolver } from "@hookform/resolvers/zod"
 import { useForm } from "react-hook-form"
 import { z } from "zod"
 import { LazyMotion, m as motion } from "framer-motion"
-import { Layers, Sparkles, ArrowLeft, Loader2 } from "lucide-react"
+import { Layers, ArrowLeft, Loader2 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form"
 import { Input } from "@/components/ui/input"
@@ -64,9 +64,6 @@ export function GastoElementoForm({ conceptoId, conceptoNombre, initialData }: G
           <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }} className="flex items-center gap-3 mb-6">
             <motion.div className="w-10 h-10 bg-linear-to-br from-orange-500 to-red-600 rounded-xl flex items-center justify-center shadow-lg relative" whileHover={{ scale: 1.05, rotate: 5 }} transition={{ duration: 0.2 }}>
               <Layers className="h-5 w-5 text-white" />
-              <motion.div animate={{ rotate: 360, scale: [1, 1.2, 1] }} transition={{ rotate: { duration: 20, repeat: Infinity, ease: "linear" }, scale: { duration: 2, repeat: Infinity, ease: "easeInOut" } }} className="absolute -top-1 -right-1">
-                <Sparkles className="h-4 w-4 text-yellow-400" />
-              </motion.div>
             </motion.div>
             <div>
               <h2 className="text-xl font-semibold">{initialData ? "Editar Elemento" : "Nuevo Elemento"}</h2>

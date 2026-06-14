@@ -3,7 +3,7 @@
 import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar"
 import { VendorForm } from "@/features/vendors/components/vendor-form"
 import { LazyMotion, m as motion } from "framer-motion"
-import { Building2, Sparkles, ArrowLeft, AlertCircle } from "lucide-react"
+import { Building2, ArrowLeft, AlertCircle } from "lucide-react"
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
@@ -91,16 +91,7 @@ export function EditarVendorPageClient({ vendor }: VendorEditPageClientProps) {
                   <h1 className="text-2xl font-bold bg-linear-to-r from-primary to-purple-600 bg-clip-text text-transparent">
                     Editar Proveedor
                   </h1>
-                  <motion.div
-                    className="absolute -right-4 -top-1"
-                    animate={{ rotate: 360, scale: [1, 1.2, 1] }}
-                    transition={{ 
-                      rotate: { duration: 20, repeat: Infinity, ease: "linear" },
-                      scale: { duration: 2, repeat: Infinity, ease: "easeInOut" }
-                    }}
-                  >
-                    <Sparkles className="h-4 w-4 text-yellow-500" />
-                  </motion.div>
+
                 </div>
               </motion.div>
             </div>

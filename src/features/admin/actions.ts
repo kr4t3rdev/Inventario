@@ -359,14 +359,27 @@ export const getAdminTenantsAction = withAction(
 	async (_input: void, user: AuthenticatedUser) => {
 		if (user.role !== "admin")
 			throw new ActionError("Acceso restringido", "FORBIDDEN");
-		return prisma.tenant.findMany({
+		const tenants = await prisma.tenant.findMany({
 			orderBy: { createdAt: "desc" },
 			include: {
 				_count: {
 					select: { memberships: true, productos: true, almacenes: true },
 				},
+				licenses: {
+					where: { activa: true },
+					orderBy: { createdAt: "desc" },
+					take: 1,
+					include: { plan: true },
+				},
 			},
 		});
+		return tenants.map((t) => ({
+			...t,
+			totalUsers: t._count.memberships,
+			plan: t.licenses[0]?.plan?.nombre ?? null,
+			planId: t.licenses[0]?.planId ?? null,
+			licenseActive: t.licenses.length > 0,
+		}));
 	},
 );
 
@@ -374,12 +387,23 @@ export const getAdminSystemHealthAction = withAction(
 	async (_input: void, user: AuthenticatedUser) => {
 		if (user.role !== "admin")
 			throw new ActionError("Acceso restringido", "FORBIDDEN");
-		const [users, tenants, sessions, licenses] = await Promise.all([
-			prisma.user.count(),
-			prisma.tenant.count(),
-			prisma.userSession.count(),
-			prisma.tenantLicense.count(),
-		]);
+		const [users, tenants, sessions, licenses, licensesActive, expiringSoon] =
+			await Promise.all([
+				prisma.user.count(),
+				prisma.tenant.count(),
+				prisma.userSession.count(),
+				prisma.tenantLicense.count(),
+				prisma.tenantLicense.count({ where: { activa: true } }),
+				prisma.tenantLicense.count({
+					where: {
+						activa: true,
+						expiracion: {
+							lte: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000),
+							gte: new Date(),
+						},
+					},
+				}),
+			]);
 		const usersByRole = await prisma.user.groupBy({
 			by: ["role"],
 			_count: true,
@@ -391,7 +415,11 @@ export const getAdminSystemHealthAction = withAction(
 			},
 			tenants: { total: tenants },
 			sessions: { active: sessions },
-			licenses: { total: licenses },
+			licenses: {
+				total: licenses,
+				active: licensesActive,
+				expiringSoon,
+			},
 		};
 	},
 );

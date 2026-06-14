@@ -4,7 +4,7 @@ import dynamic from "next/dynamic";
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import { LazyMotion, m as motion, useReducedMotion } from "framer-motion";
-import { ArrowLeft, BarChart3, Sparkles } from "lucide-react";
+import { ArrowLeft, BarChart3 } from "lucide-react";
 
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -151,7 +151,6 @@ export function ReportesPageClient({
 						</div>
 
 						<Badge className={statusBadgeClass}>
-							<Sparkles className="mr-1 h-3.5 w-3.5" />
 							Visualización mejorada
 						</Badge>
 					</motion.div>

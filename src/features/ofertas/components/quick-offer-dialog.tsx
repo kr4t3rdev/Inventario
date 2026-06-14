@@ -2,7 +2,7 @@
 
 import { useState, type ReactNode } from "react"
 import { LazyMotion, m as motion, AnimatePresence } from "framer-motion"
-import { Loader2, Tag, Sparkles, Receipt, Package } from "lucide-react"
+import { Loader2, Tag, Receipt, Package } from "lucide-react"
 
 import { Button } from "@/components/ui/button"
 import {
@@ -214,16 +214,6 @@ export function QuickOfferDialog({ producto, trigger }: QuickOfferDialogProps) {
               </motion.div>
               <div className="relative">
                 <DialogTitle>Oferta Rápida</DialogTitle>
-                <motion.div
-                  className="absolute -right-4 -top-1"
-                  animate={{ rotate: 360, scale: [1, 1.2, 1] }}
-                  transition={{
-                    rotate: { duration: 20, repeat: Infinity, ease: "linear" },
-                    scale: { duration: 2, repeat: Infinity, ease: "easeInOut" }
-                  }}
-                >
-                  <Sparkles className="h-4 w-4 text-yellow-500" />
-                </motion.div>
               </div>
             </div>
             <DialogDescription>

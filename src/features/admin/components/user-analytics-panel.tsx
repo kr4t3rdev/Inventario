@@ -12,7 +12,6 @@ import {
 	BarChart3,
 	Lock,
 	PieChart as PieChartIcon,
-	Sparkles,
 	Target,
 	TrendingDown,
 	TrendingUp,
@@ -205,7 +204,6 @@ export function UserAnalyticsPanel(): React.JSX.Element {
 				<div className="flex items-center gap-3">
 					<div className="relative flex h-10 w-10 items-center justify-center rounded-xl bg-linear-to-br from-primary to-purple-600 shadow-md">
 						<BarChart3 className="h-5 w-5 text-white" />
-						<Sparkles className="absolute -right-1 -top-1 h-4 w-4 text-yellow-400" />
 					</div>
 					<div>
 						<h3 className="bg-linear-to-r from-slate-900 to-slate-600 bg-clip-text text-lg font-semibold text-transparent dark:from-white dark:to-slate-300">

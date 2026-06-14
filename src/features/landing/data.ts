@@ -12,7 +12,6 @@ import {
 	Package,
 	Shield,
 	ShoppingCart,
-	Sparkles,
 	TrendingUp,
 	Wallet,
 	Wrench,
@@ -198,7 +197,6 @@ export const BENEFIT_ITEMS: BenefitItem[] = [
 		title: "Operación automatizada",
 		description:
 			"Cada venta genera asientos contables, descuenta inventario y actualiza cuentas por cobrar automáticamente. Cero doble ingreso.",
-		icon: Sparkles,
 	},
 	{
 		title: "Multi-sucursal en tiempo real",

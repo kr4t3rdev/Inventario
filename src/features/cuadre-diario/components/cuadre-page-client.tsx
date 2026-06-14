@@ -4,7 +4,7 @@ import dynamic from 'next/dynamic';
 import Link from 'next/link';
 import { useEffect, useState } from 'react';
 import { LazyMotion, m as motion, useReducedMotion } from 'framer-motion';
-import { ArrowLeft, BriefcaseBusiness, Sparkles } from 'lucide-react';
+import { ArrowLeft, BriefcaseBusiness } from 'lucide-react';
 
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -155,7 +155,6 @@ export function CuadrePageClient() {
             </div>
 
             <Badge className={statusBadgeClass}>
-              <Sparkles className='mr-1 h-3.5 w-3.5' />
               Resumen listo para auditoría
             </Badge>
           </motion.div>

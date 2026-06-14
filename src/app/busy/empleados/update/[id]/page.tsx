@@ -8,7 +8,7 @@ import { Button } from "@/components/ui/button"
 import { useParams } from "next/navigation"
 import { useEffect, useState } from "react"
 import { getEmpleadoByIdAction } from "@/features/empleados"
-import { ArrowLeft, Users, Sparkles, AlertCircle, Loader2 } from "lucide-react"
+import { ArrowLeft, Users, AlertCircle, Loader2 } from "lucide-react"
 import Link from "next/link"
 
 export default function EditarEmpleadoPage() {
@@ -76,16 +76,7 @@ export default function EditarEmpleadoPage() {
                   <h1 className="text-2xl font-bold bg-linear-to-r from-primary to-purple-600 bg-clip-text text-transparent">
                     Editar Empleado
                   </h1>
-                  <motion.div
-                    className="absolute -right-4 -top-1"
-                    animate={{ rotate: 360, scale: [1, 1.2, 1] }}
-                    transition={{
-                      rotate: { duration: 20, repeat: Infinity, ease: "linear" },
-                      scale: { duration: 2, repeat: Infinity, ease: "easeInOut" }
-                    }}
-                  >
-                    <Sparkles className="h-4 w-4 text-yellow-500" />
-                  </motion.div>
+
                 </div>
               </motion.div>
 
@@ -144,16 +135,6 @@ export default function EditarEmpleadoPage() {
                 <h1 className="text-2xl font-bold bg-linear-to-r from-primary to-purple-600 bg-clip-text text-transparent">
                   Editar Empleado
                 </h1>
-                <motion.div
-                  className="absolute -right-4 -top-1"
-                  animate={{ rotate: 360, scale: [1, 1.2, 1] }}
-                  transition={{
-                    rotate: { duration: 20, repeat: Infinity, ease: "linear" },
-                    scale: { duration: 2, repeat: Infinity, ease: "easeInOut" }
-                  }}
-                >
-                  <Sparkles className="h-4 w-4 text-yellow-500" />
-                </motion.div>
               </div>
             </motion.div>
             <motion.p

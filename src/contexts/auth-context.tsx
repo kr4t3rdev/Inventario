@@ -4,7 +4,7 @@ import type React from "react";
 import { createContext, useContext, useEffect, useState, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
-import { loginAction, logoutAction, meAction } from "@/features/auth/actions";
+import { loginAction, logoutAction } from "@/features/auth/actions";
 import type { Usuario } from "@/app/models/model";
 
 interface AuthContextType {
@@ -23,28 +23,32 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const router = useRouter();
 
   /**
-   * @description Verifica la sesión actual usando meAction (Server Action).
-   * La cookie httpOnly viaja automáticamente — no necesita Bearer header.
-   * No guarda token en sessionStorage.
+   * @description Verifica la sesión actual usando la route estable /api/auth/me.
+   * Evita depender de Server Action IDs en el cliente después de cada deploy.
    */
   const checkAuth = useCallback(async () => {
     try {
-      const result = await meAction(undefined);
+      const response = await fetch("/api/auth/me", {
+        method: "GET",
+        credentials: "include",
+        cache: "no-store",
+        headers: {
+          "cache-control": "no-store",
+        },
+      });
 
-      if (result.success && result.data) {
-        // MeAction devuelve { user: {...} } o directamente el user
-        const userData = (result.data as any).user ?? result.data;
+      if (response.ok) {
+        const userData = await response.json();
         setUser(userData);
       } else {
-        // Solo invalidar sesión ante error de auth explícito
-        if (result.error?.code === "AUTH_REQUIRED" || result.error?.code === "SESSION_EXPIRED") {
+        // Si auth falla, limpiar estado para no conservar usuario/tenant viejo.
+        if (response.status === 401 || response.status === 403) {
           setUser(null);
         }
-        // Errores de servidor (5xx) no invalidan la sesión
       }
     } catch (error) {
       console.error("Error checking auth:", error);
-      // Error de red o del servidor: no cerrar sesión, puede ser transitorio
+      // Error de red/transitorio: evitamos forzar logout, pero no reciclamos datos acá.
     } finally {
       setLoading(false);
     }

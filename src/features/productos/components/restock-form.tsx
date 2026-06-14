@@ -5,7 +5,7 @@ import { zodResolver } from "@hookform/resolvers/zod"
 import { useForm } from "react-hook-form"
 import { z } from "zod"
 import { LazyMotion, m as motion } from "framer-motion"
-import { Package, Calculator, DollarSign, Sparkles, Loader2, ArrowLeft } from "lucide-react"
+import { Package, Calculator, DollarSign, Loader2, ArrowLeft } from "lucide-react"
 import { sileo } from '@/lib/sileo-shim'
 
 import { Button } from "@/components/ui/button"
@@ -314,23 +314,6 @@ export function RestockForm({ producto, onSuccess, onCancel }: RestockFormProps)
       <Card className="overflow-hidden border-dashed bg-linear-to-br from-primary/[0.05] via-background to-purple-500/[0.08] dark:from-primary/10 dark:to-purple-500/10">
         <CardHeader className="border-b bg-linear-to-r from-primary/[0.04] to-purple-500/[0.08] dark:from-primary/10 dark:to-purple-500/10">
           <CardTitle className="flex items-center gap-3">
-            {/* <motion.div
-              className="relative flex h-10 w-10 items-center justify-center rounded-xl bg-linear-to-br from-primary to-purple-600 text-white shadow-lg"
-              whileHover={{ scale: 1.05, rotate: 4 }}
-              transition={{ duration: 0.2 }}
-            >
-              <Package className="h-5 w-5" />
-              <motion.span
-                className="absolute -right-1 -top-1"
-                animate={{ rotate: 360, scale: [1, 1.15, 1] }}
-                transition={{
-                  rotate: { duration: 16, repeat: Infinity, ease: "linear" },
-                  scale: { duration: 2, repeat: Infinity, ease: "easeInOut" },
-                }}
-              >
-                <Sparkles className="h-3.5 w-3.5 text-yellow-400" />
-              </motion.span>
-            </motion.div> */}
             {/* <div>
               <p className="text-lg font-semibold">Restock de Producto</p>
               <p className="text-xs font-normal text-muted-foreground">
@@ -738,7 +721,6 @@ export function RestockForm({ producto, onSuccess, onCancel }: RestockFormProps)
           <DialogContent className="w-[1300px] max-w-[150vw]">
             <DialogHeader>
               <DialogTitle className="flex items-center gap-2 text-lg">
-                <Sparkles className="h-5 w-5 text-purple-500" />
                 ¿Cómo desea realizar el restock?
               </DialogTitle>
               <DialogDescription className="text-base">

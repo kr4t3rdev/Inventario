@@ -10,7 +10,6 @@ import {
   Wallet,
   AlertTriangle,
   Shield,
-  Sparkles,
   RefreshCw,
   ArrowUpRight,
   ArrowDownRight,
@@ -37,16 +36,6 @@ const headerIconVariants: Variants = {
   hover: {
     scale: 1.05, rotate: 5,
     transition: { type: "spring" as const, stiffness: 400, damping: 10 },
-  },
-}
-
-const sparklesVariants: Variants = {
-  animate: {
-    rotate: 360, scale: [1, 1.2, 1],
-    transition: {
-      rotate: { duration: 18, repeat: Infinity, ease: "linear" },
-      scale: { duration: 2, repeat: Infinity, ease: "easeInOut" },
-    },
   },
 }
 
@@ -192,9 +181,6 @@ export default function AdminDashboardPage(): React.JSX.Element {
               whileHover="hover"
             >
               <Shield className="h-6 w-6 text-white" />
-              <motion.div variants={sparklesVariants} animate="animate" className="absolute -right-1 -top-1">
-                <Sparkles className="h-3.5 w-3.5 text-yellow-400" />
-              </motion.div>
               <motion.div
                 className="absolute inset-0 rounded-xl bg-linear-to-tr from-transparent via-white/20 to-transparent"
                 animate={{ rotate: [0, 360] }}

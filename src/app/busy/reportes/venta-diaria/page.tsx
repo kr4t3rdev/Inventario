@@ -4,7 +4,7 @@ import dynamic from 'next/dynamic';
 import Link from 'next/link';
 import { useEffect, useState } from 'react';
 import { LazyMotion, m as motion, useReducedMotion } from 'framer-motion';
-import { ArrowLeft, CalendarDays, Sparkles } from 'lucide-react';
+import { ArrowLeft, CalendarDays } from 'lucide-react';
 
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -133,7 +133,6 @@ export default function VentaDiariaPage() {
             </div>
 
             <Badge className={statusBadgeClass}>
-              <Sparkles className='mr-1 h-3.5 w-3.5' />
               Monitoreo continuo
             </Badge>
           </motion.div>

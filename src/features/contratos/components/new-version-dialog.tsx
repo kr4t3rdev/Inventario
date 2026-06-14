@@ -15,7 +15,7 @@ import {
 import { Textarea } from "@/components/ui/textarea"
 import { toast } from "sonner"
 import { getAuthToken } from "@/lib/token"
-import { Upload, FileUp, Loader2, AlertTriangle, FileCheck, Sparkles, FileText } from "lucide-react"
+import { Upload, FileUp, Loader2, AlertTriangle, FileCheck, FileText } from "lucide-react"
 import { LazyMotion, m as motion, AnimatePresence } from "framer-motion"
 
 interface NewVersionDialogProps {
@@ -141,16 +141,7 @@ export function NewVersionDialog({ contratoId, onSuccess }: NewVersionDialogProp
                 <FileText className="h-4 w-4 text-white" />
               </motion.div>
               Subir Nueva Versión
-              <motion.div
-                className="absolute right-10 top-4"
-                animate={{ rotate: 360, scale: [1, 1.2, 1] }}
-                transition={{ 
-                  rotate: { duration: 20, repeat: Infinity, ease: "linear" },
-                  scale: { duration: 2, repeat: Infinity, ease: "easeInOut" }
-                }}
-              >
-                <Sparkles className="h-4 w-4 text-yellow-500" />
-              </motion.div>
+
             </DialogTitle>
             <DialogDescription>
               Suba el documento modificado. El sistema verificará si hay cambios respecto a la versión anterior.

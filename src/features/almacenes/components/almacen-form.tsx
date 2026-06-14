@@ -14,7 +14,7 @@ import { createAlmacenAction, updateAlmacenAction } from "@/features/almacenes/a
 import { almacenSchema } from "@/features/almacenes/schemas"
 import type { AlmacenInput } from "@/features/almacenes/schemas"
 import { LazyMotion, m as motion } from "framer-motion"
-import { Warehouse, Sparkles, ArrowLeft, Loader2 } from "lucide-react"
+import { Warehouse, ArrowLeft, Loader2 } from "lucide-react"
 
 
 
@@ -112,19 +112,7 @@ export function AlmacenForm({ initialData }: AlmacenFormProps) {
               transition={{ duration: 0.2 }}
             >
               <Warehouse className="h-5 w-5 text-white" />
-              <motion.div
-                animate={{ 
-                  rotate: 360,
-                  scale: [1, 1.2, 1]
-                }}
-                transition={{ 
-                  rotate: { duration: 20, repeat: Infinity, ease: "linear" },
-                  scale: { duration: 2, repeat: Infinity, ease: "easeInOut" }
-                }}
-                className="absolute -top-1 -right-1"
-              >
-                <Sparkles className="h-4 w-4 text-yellow-400" />
-              </motion.div>
+
             </motion.div>
             <div>
               <h2 className="text-xl font-semibold">

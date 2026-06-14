@@ -19,7 +19,6 @@ import {
   FileText,
   RefreshCw,
   ArrowLeftRight,
-  Sparkles,
   Key,
   CreditCard,
   HardDrive,

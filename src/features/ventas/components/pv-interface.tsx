@@ -9,7 +9,6 @@ import {
 	Package,
 	Search,
 	Loader2,
-	Sparkles,
 	TrendingUp,
 	Filter,
 	CreditCard,

@@ -7,7 +7,7 @@ import { useFieldArray, useForm, useWatch } from 'react-hook-form'
 import { z } from 'zod'
 import { sileo } from '@/lib/sileo-shim'
 import { LazyMotion, m as motion, AnimatePresence } from 'framer-motion'
-import { ShoppingCart, Sparkles, Loader2, Plus, Trash2, Package } from 'lucide-react'
+import { ShoppingCart, Loader2, Plus, Trash2, Package } from 'lucide-react'
 
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
@@ -304,9 +304,6 @@ export function CompraProductoForm({ onSuccess }: CompraProductoFormProps) {
             <div className='relative'>
               <h2 className='text-lg font-semibold'>Datos de la Compra</h2>
               <p className='text-sm text-muted-foreground'>Agregue productos del clasificador y registre la compra múltiple</p>
-              <motion.div className='absolute -right-4 -top-1' animate={{ rotate: 360 }} transition={{ rotate: { duration: 20, repeat: Infinity, ease: 'linear' } }}>
-                <Sparkles className='h-4 w-4 text-yellow-500' />
-              </motion.div>
             </div>
           </motion.div>
 

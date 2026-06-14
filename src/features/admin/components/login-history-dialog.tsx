@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import { LazyMotion, m as motion, useReducedMotion } from 'framer-motion';
 import { format } from 'date-fns';
-import { Lock, Sparkles, Unlock, XCircle } from 'lucide-react';
+import { Lock, Unlock, XCircle } from 'lucide-react';
 
 import { AdminTableLoader } from '@/features/admin/components/animations';
 import { Badge } from '@/components/ui/badge';
@@ -120,7 +120,6 @@ export function LoginHistoryDialog({
                 <span className="bg-linear-to-r from-slate-900 to-slate-600 bg-clip-text text-transparent dark:from-white dark:to-slate-300">
                   Historial de Intentos de Login
                 </span>
-                <Sparkles className="h-4 w-4 text-yellow-400" />
               </DialogTitle>
               <DialogDescription>Usuario: {userName}</DialogDescription>
             </div>

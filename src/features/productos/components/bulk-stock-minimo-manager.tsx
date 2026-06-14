@@ -10,7 +10,6 @@ import {
   Save,
   Search,
   Settings,
-  Sparkles,
 } from 'lucide-react'
 import { toast } from 'sonner'
 
@@ -272,16 +271,6 @@ export function BulkStockMinimoManager(): React.JSX.Element {
               transition={{ duration: 0.2 }}
             >
               <Settings className="h-5 w-5" />
-              <motion.span
-                className="absolute -right-1 -top-1"
-                animate={{ rotate: 360, scale: [1, 1.15, 1] }}
-                transition={{
-                  rotate: { duration: 16, repeat: Infinity, ease: 'linear' },
-                  scale: { duration: 2, repeat: Infinity, ease: 'easeInOut' },
-                }}
-              >
-                <Sparkles className="h-3.5 w-3.5 text-yellow-400" />
-              </motion.span>
             </motion.div>
             Gestión Masiva de Stock Mínimo
           </CardTitle>

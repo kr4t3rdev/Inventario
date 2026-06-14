@@ -8,7 +8,7 @@ import { getVentasAction } from "@/features/ventas/actions"
 import { VentasTable } from "@/features/ventas"
 import { Button } from "@/components/ui/button"
 import { Skeleton } from "@/components/ui/skeleton"
-import { TrendingUp, PlusCircle, Sparkles } from "lucide-react"
+import { TrendingUp, PlusCircle } from "lucide-react"
 import { VentasPageClient } from "@/features/ventas/components/ventas-page-client"
 
 /**

@@ -14,7 +14,7 @@ import { createUnidadAction, updateUnidadAction } from "@/features/unidades/acti
 import { unidadSchema } from "@/features/unidades/schemas"
 import type { UnidadInput } from "@/features/unidades/schemas"
 import { LazyMotion, m as motion } from "framer-motion"
-import { Scale, Sparkles, ArrowLeft, Loader2 } from "lucide-react"
+import { Scale, ArrowLeft, Loader2 } from "lucide-react"
 
 
 
@@ -100,19 +100,7 @@ export function UnidadForm({ initialData }: UnidadFormProps) {
               transition={{ duration: 0.2 }}
             >
               <Scale className="h-5 w-5 text-white" />
-              <motion.div
-                animate={{ 
-                  rotate: 360,
-                  scale: [1, 1.2, 1]
-                }}
-                transition={{ 
-                  rotate: { duration: 20, repeat: Infinity, ease: "linear" },
-                  scale: { duration: 2, repeat: Infinity, ease: "easeInOut" }
-                }}
-                className="absolute -top-1 -right-1"
-              >
-                <Sparkles className="h-4 w-4 text-yellow-400" />
-              </motion.div>
+
             </motion.div>
             <div>
               <h2 className="text-xl font-semibold">

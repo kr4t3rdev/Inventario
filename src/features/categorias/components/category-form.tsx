@@ -9,7 +9,7 @@ import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, For
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Loader2, Folder, ArrowLeft, Sparkles, Layers } from "lucide-react";
+import { Loader2, Folder, ArrowLeft, Layers } from "lucide-react";
 import { LazyMotion, m as motion } from "framer-motion";
 import { ClasificadorInfoNote } from "@/features/productos/components/clasificador-info-note";
 import { getMiEmpresaAction } from "@/features/mi-empresa/actions";
@@ -180,19 +180,6 @@ export function CategoryForm({ initialData, onSuccess }: CategoryFormProps) {
               transition={{ duration: 0.2 }}
             >
               <Folder className="h-5 w-5 text-white" />
-              <motion.div
-                animate={{ 
-                  rotate: 360,
-                  scale: [1, 1.2, 1]
-                }}
-                transition={{ 
-                  rotate: { duration: 20, repeat: Infinity, ease: "linear" },
-                  scale: { duration: 2, repeat: Infinity, ease: "easeInOut" }
-                }}
-                className="absolute -top-1 -right-1"
-              >
-                <Sparkles className="h-4 w-4 text-yellow-400" />
-              </motion.div>
             </motion.div>
             <div>
               <h2 className="text-xl font-semibold">

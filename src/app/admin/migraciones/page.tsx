@@ -3,7 +3,7 @@
 export const dynamic = 'force-dynamic';
 
 import { LazyMotion, m as motion, type Variants } from 'framer-motion';
-import { Sparkles, Shield, Info, Database, ArrowDownToLine } from 'lucide-react';
+import { Shield, Info, Database, ArrowDownToLine } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { MigrateCuentasPorPagarButton } from '@/features/admin/components/migrate-cuentas-por-pagar-button';
@@ -23,17 +23,6 @@ const headerIconVariants: Variants = {
       type: 'spring' as const,
       stiffness: 400,
       damping: 10,
-    },
-  },
-};
-
-const sparklesVariants: Variants = {
-  animate: {
-    rotate: 360,
-    scale: [1, 1.2, 1],
-    transition: {
-      rotate: { duration: 18, repeat: Infinity, ease: 'linear' },
-      scale: { duration: 2, repeat: Infinity, ease: 'easeInOut' },
     },
   },
 };
@@ -87,9 +76,6 @@ export default function MigratePage(): React.JSX.Element {
               whileHover="hover"
             >
               <Database className="h-6 w-6 text-white" />
-              <motion.div variants={sparklesVariants} animate="animate" className="absolute -right-1 -top-1">
-                <Sparkles className="h-3.5 w-3.5 text-yellow-400" />
-              </motion.div>
               <motion.div
                 className="absolute inset-0 rounded-xl bg-linear-to-tr from-transparent via-white/20 to-transparent"
                 animate={{ rotate: [0, 360] }}

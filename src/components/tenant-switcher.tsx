@@ -3,10 +3,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import { Building2, Check, ChevronRight, Loader2 } from 'lucide-react';
 import { toast } from 'sonner';
-import {
-	getMyTenantsAction,
-	switchActiveTenantAction,
-} from '@/features/auth/actions';
 import { useAuth } from '@/contexts/auth-context';
 
 interface TenantEntry {
@@ -31,10 +27,22 @@ export function TenantSwitcher(): JSX.Element | null {
 	const fetchTenants = useCallback(async () => {
 		setLoading(true);
 		try {
-			const r = await getMyTenantsAction();
-			if (r.success && r.data) setTenants(r.data as TenantEntry[]);
+			const response = await fetch('/api/auth/tenants', {
+				method: 'GET',
+				credentials: 'include',
+				cache: 'no-store',
+				headers: {
+					'cache-control': 'no-store',
+				},
+			});
+			if (!response.ok) {
+				setTenants([]);
+				return;
+			}
+			const payload = await response.json();
+			setTenants((payload.items ?? []) as TenantEntry[]);
 		} catch {
-			/* fail silently */
+			setTenants([]);
 		} finally {
 			setLoading(false);
 		}
@@ -47,11 +55,19 @@ export function TenantSwitcher(): JSX.Element | null {
 	const handleSwitch = async (tenantId: string) => {
 		setSwitching(true);
 		try {
-			const r = await switchActiveTenantAction(tenantId);
-			if (r.success) {
+			const response = await fetch('/api/auth/tenants', {
+				method: 'POST',
+				credentials: 'include',
+				headers: {
+					'content-type': 'application/json',
+				},
+				body: JSON.stringify({ tenantId }),
+			});
+			if (response.ok) {
 				window.location.reload();
 			} else {
-				toast.error(r.error?.message ?? 'Error al cambiar de empresa');
+				const payload = await response.json().catch(() => null);
+				toast.error(payload?.error ?? 'Error al cambiar de empresa');
 			}
 		} catch {
 			toast.error('Error al cambiar de empresa');

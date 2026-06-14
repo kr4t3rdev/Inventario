@@ -7,7 +7,6 @@ import { useForm, type FieldErrors } from "react-hook-form";
 import { LazyMotion, m as motion } from "framer-motion";
 import {
 	Boxes,
-	Sparkles,
 	ArrowLeft,
 	Loader2,
 	Info,
@@ -411,16 +410,6 @@ export function ProductoForm({
 							transition={{ duration: 0.2 }}
 						>
 							<Boxes className="h-5 w-5" />
-							<motion.span
-								className="absolute -right-1 -top-1"
-								animate={{ rotate: 360, scale: [1, 1.15, 1] }}
-								transition={{
-									rotate: { duration: 18, repeat: Infinity, ease: "linear" },
-									scale: { duration: 2, repeat: Infinity, ease: "easeInOut" },
-								}}
-							>
-								<Sparkles className="h-3.5 w-3.5 text-yellow-400" />
-							</motion.span>
 						</motion.div>
 						<div>
 							<h2 className="text-xl font-semibold">

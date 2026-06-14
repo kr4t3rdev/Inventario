@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { motion, useReducedMotion } from "framer-motion";
-import { BarChart3, Sparkles } from "lucide-react";
+import { BarChart3 } from "lucide-react";
 
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
@@ -129,7 +129,6 @@ export function ReporteRentabilidadCompra() {
 							Rentabilidad por Compra
 						</h1>
 						<Badge className="border border-emerald-200/80 bg-emerald-50/80 text-emerald-700 dark:border-emerald-900/60 dark:bg-emerald-900/20 dark:text-emerald-300">
-							<Sparkles className="mr-1 h-3.5 w-3.5" />
 							Asignación FIFO
 						</Badge>
 					</div>

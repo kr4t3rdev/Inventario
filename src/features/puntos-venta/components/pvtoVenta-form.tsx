@@ -14,7 +14,7 @@ import { sileo } from '@/lib/sileo-shim'
 import { createPuntoDeVentaAction, updatePuntoDeVentaAction } from "@/features/puntos-venta/actions"
 import { getListasPreciosAction } from "@/features/listas-precios"
 import { LazyMotion, m as motion } from "framer-motion"
-import { Store, MapPin, Sparkles, ArrowLeft, Loader2 } from "lucide-react"
+import { Store, MapPin, ArrowLeft, Loader2 } from "lucide-react"
 import {
   parsePvFormValues,
   ptoVentaFormValuesSchema,
@@ -133,19 +133,7 @@ export function PtoVentaForm({ initialData }: PtoVentaFormProps) {
               transition={{ duration: 0.2 }}
             >
               <Store className="h-5 w-5 text-white" />
-              <motion.div
-                animate={{ 
-                  rotate: 360,
-                  scale: [1, 1.2, 1]
-                }}
-                transition={{ 
-                  rotate: { duration: 20, repeat: Infinity, ease: "linear" },
-                  scale: { duration: 2, repeat: Infinity, ease: "easeInOut" }
-                }}
-                className="absolute -top-1 -right-1"
-              >
-                <Sparkles className="h-4 w-4 text-yellow-400" />
-              </motion.div>
+
             </motion.div>
             <div>
               <h2 className="text-xl font-semibold">

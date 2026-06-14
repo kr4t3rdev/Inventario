@@ -8,7 +8,7 @@
 import Link from "next/link"
 import { OfertasTable } from "@/features/ofertas/components/ofertas-table"
 import { Button } from "@/components/ui/button"
-import { PlusCircle, Tag, Sparkles } from "lucide-react"
+import { PlusCircle, Tag } from "lucide-react"
 import { LazyMotion, m as motion } from "framer-motion"
 import type { Oferta } from "@/app/models/model"
 
@@ -53,16 +53,6 @@ export function OfertasPageContent({ ofertas }: OfertasPageContentProps) {
                 <h1 className="text-2xl font-bold bg-linear-to-r from-orange-500 to-red-600 bg-clip-text text-transparent">
                   Ofertas
                 </h1>
-                <motion.div
-                  className="absolute -right-4 -top-1"
-                  animate={{ rotate: 360, scale: [1, 1.2, 1] }}
-                  transition={{
-                    rotate: { duration: 20, repeat: Infinity, ease: "linear" },
-                    scale: { duration: 2, repeat: Infinity, ease: "easeInOut" }
-                  }}
-                >
-                  <Sparkles className="h-4 w-4 text-yellow-500" />
-                </motion.div>
               </div>
             </motion.div>
             <motion.div

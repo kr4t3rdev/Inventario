@@ -59,7 +59,6 @@ import {
 	Trash2,
 	CreditCard,
 	Users,
-	Sparkles,
 } from "lucide-react";
 import { toast } from "sonner";
 import { useForm } from "react-hook-form";

@@ -3,7 +3,7 @@
 import dynamic from 'next/dynamic';
 import { useState, useEffect } from 'react';
 import { LazyMotion, m as motion, useReducedMotion } from 'framer-motion';
-import { ArrowLeft, Coins, Sparkles } from 'lucide-react';
+import { ArrowLeft, Coins } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import Link from 'next/link';
@@ -143,7 +143,6 @@ export default function ExchangePage() {
             </div>
 
             <Badge className={statusBadgeClass}>
-              <Sparkles className="mr-1 h-3.5 w-3.5" />
               Módulo en tiempo real
             </Badge>
           </motion.div>

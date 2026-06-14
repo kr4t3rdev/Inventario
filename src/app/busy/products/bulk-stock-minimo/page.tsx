@@ -2,7 +2,7 @@
 
 import Link from 'next/link'
 import { LazyMotion, m as motion } from 'framer-motion'
-import { ArrowLeft, Boxes, Sparkles } from 'lucide-react'
+import { ArrowLeft, Boxes } from 'lucide-react'
 
 import { BulkStockMinimoManager } from '@/features/productos/components/bulk-stock-minimo-manager'
 import { Button } from '@/components/ui/button'
@@ -32,16 +32,7 @@ export default function BulkStockMinimoPage(): React.JSX.Element {
                 transition={{ duration: 0.2 }}
               >
                 <Boxes className="h-6 w-6" />
-                <motion.span
-                  className="absolute -right-1 -top-1"
-                  animate={{ rotate: 360, scale: [1, 1.15, 1] }}
-                  transition={{
-                    rotate: { duration: 16, repeat: Infinity, ease: 'linear' },
-                    scale: { duration: 2, repeat: Infinity, ease: 'easeInOut' },
-                  }}
-                >
-                  <Sparkles className="h-4 w-4 text-yellow-400" />
-                </motion.span>
+
               </motion.div>
               <div>
                 <h1 className="text-3xl font-bold bg-linear-to-r from-slate-900 to-slate-600 bg-clip-text text-transparent dark:from-white dark:to-slate-300">

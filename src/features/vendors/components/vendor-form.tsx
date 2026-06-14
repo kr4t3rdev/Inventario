@@ -2,7 +2,7 @@
 
 import { zodResolver } from "@hookform/resolvers/zod";
 import { LazyMotion, m as motion } from "framer-motion";
-import { Building2, Loader2, Sparkles, Copy, Check } from "lucide-react";
+import { Building2, Loader2, Copy, Check } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { useForm } from "react-hook-form";
@@ -137,16 +137,7 @@ export function VendorForm({initialData}: VendorFormProps) {
                             <p className="text-sm text-muted-foreground">
                                 {initialData ? "Modifique los datos del proveedor" : "Ingrese los datos para registrar un nuevo proveedor"}
                             </p>
-                            <motion.div
-                                className="absolute -right-4 -top-1"
-                                animate={{ rotate: 360, scale: [1, 1.2, 1] }}
-                                transition={{ 
-                                    rotate: { duration: 20, repeat: Infinity, ease: "linear" },
-                                    scale: { duration: 2, repeat: Infinity, ease: "easeInOut" }
-                                }}
-                            >
-                                <Sparkles className="h-4 w-4 text-yellow-500" />
-                            </motion.div>
+
                         </div>
                     </motion.div>
 

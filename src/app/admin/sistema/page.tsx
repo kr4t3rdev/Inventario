@@ -1,6 +1,6 @@
 'use client'
 
-import { Activity, Sparkles, Shield, Clock, Loader2, RefreshCw } from "lucide-react"
+import { Activity, Shield, Clock, Loader2, RefreshCw } from "lucide-react"
 import { LazyMotion, m as motion } from "framer-motion"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"

@@ -3,7 +3,7 @@
 import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar"
 import { PtoVentaForm } from "@/features/puntos-venta/components/pvtoVenta-form"
 import { LazyMotion, m as motion } from "framer-motion"
-import { Store, Sparkles } from "lucide-react"
+import { Store } from "lucide-react"
 
 /**
  * @description Componente cliente para la página de creación de puntos de venta.
@@ -32,16 +32,7 @@ export function NuevoPvPageClient() {
                 transition={{ duration: 0.2 }}
               >
                 <Store className="h-6 w-6 text-white" />
-                <motion.div
-                  animate={{ rotate: 360, scale: [1, 1.2, 1] }}
-                  transition={{ 
-                    rotate: { duration: 20, repeat: Infinity, ease: "linear" },
-                    scale: { duration: 2, repeat: Infinity, ease: "easeInOut" }
-                  }}
-                  className="absolute -top-1 -right-1"
-                >
-                  <Sparkles className="h-4 w-4 text-yellow-400" />
-                </motion.div>
+
               </motion.div>
               <div>
                 <h1 className="text-3xl font-bold bg-linear-to-r from-slate-900 to-slate-600 dark:from-white dark:to-slate-300 bg-clip-text text-transparent">

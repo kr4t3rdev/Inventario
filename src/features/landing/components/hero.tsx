@@ -4,7 +4,6 @@ import React, { useEffect, useState } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
 import {
   ArrowRight,
-  Sparkles,
   TrendingUp,
 } from 'lucide-react';
 import Image from 'next/image';
@@ -53,7 +52,6 @@ export function LandingHero({ reduceMotion }: { reduceMotion?: boolean }): React
         <div className="space-y-5">
           {/* Badge */}
           <span className="inline-flex w-fit items-center gap-2 rounded-full border border-primary/20 bg-primary/10 px-3 py-1 text-xs font-semibold uppercase tracking-[0.16em] text-primary font-mono">
-            <Sparkles className="h-3.5 w-3.5" />
             Gestión empresarial todo-en-uno
           </span>
 

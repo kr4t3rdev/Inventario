@@ -4,7 +4,12 @@ import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import { withAction, ActionError } from "@/lib/server-actions";
 import { prisma } from "@/lib/prisma";
-import { requireTenant, requireManagerRole } from "@/lib/services/tenant-scope";
+import {
+	requireTenant,
+	requireManagerRole,
+	requireFeature,
+	validateTenantLimit,
+} from "@/lib/services/tenant-scope";
 import { withPeriodValidation } from "@/lib/services/with-period-validation";
 import { upsertStockUbicacion } from "@/lib/services/stock-ubicacion-service";
 import { executeProductInstanceCreationWorkflow } from "@/lib/restock-utils";
@@ -70,6 +75,14 @@ export const createProductoAction = withAction(
 	async (input: ProductoInput, user: AuthenticatedUser) => {
 		const parsed = productoSchema.parse(input);
 		const tenantId = requireTenant(user);
+
+		requireManagerRole(user, "crear productos");
+		requireFeature(user, "productos", "gestión de productos");
+		await validateTenantLimit(
+			tenantId,
+			"maxProductos",
+			await prisma.producto.count({ where: { tenantId } }),
+		);
 
 		// ── Detectar si la empresa usa EAN-13 ──
 		// ⚠️ MULTI-TENANT: MiEmpresa es 1:1 por tenant (id siempre vale 1,

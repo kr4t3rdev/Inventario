@@ -3,7 +3,6 @@
 import { useState, useEffect, useCallback } from "react";
 import {
 	ShieldCheck,
-	Sparkles,
 	Users,
 	UserPlus,
 	ChevronRight,
@@ -252,13 +251,7 @@ export function TenantUsersPage() {
 					<div className="flex items-center gap-3">
 						<div className="relative flex h-12 w-12 items-center justify-center rounded-xl bg-linear-to-br from-violet-600 to-purple-600 shadow-lg">
 							<Users className="h-6 w-6 text-white" />
-							<motion.div
-								className="absolute -right-1 -top-1"
-								animate={{ rotate: 360 }}
-								transition={{ duration: 18, repeat: Infinity, ease: "linear" }}
-							>
-								<Sparkles className="h-3.5 w-3.5 text-yellow-400" />
-							</motion.div>
+
 						</div>
 						<div>
 							{/* Breadcrumb */}
