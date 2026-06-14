@@ -28,6 +28,7 @@ Este documento define el primer contrato **mobile-first** del backend para clien
 | Bank accounts read | Ready | Lista, detalle e historial reutilizando servicios compartidos. |
 | Accounting operations read | Ready | Transferencias, ajustes bancarios e inyecciones de capital en modo lectura. |
 | Accounting operations mutations | Ready | Crear transferencias, validarlas, registrar ajustes e inyecciones/pagos de capital. |
+| Reconciliation sales/services | Ready | Pendientes, historial y registro de reconciliaciones para ventas y servicios. |
 | Otros módulos | Pending | Migrar por slices usando servicios compartidos. |
 
 ## Base conventions
@@ -418,6 +419,66 @@ Authorization: Bearer <accessToken>
 ```
 
 Registra un pago asociado a una inyección de capital existente, reutilizando la lógica actual del proyecto.
+
+### `GET /api/mobile/v1/accounting/reconciliation/sales`
+
+**Headers**
+
+```http
+Authorization: Bearer <accessToken>
+```
+
+Devuelve ventas con saldo pendiente de reconciliar según la lógica actual de web.
+
+### `POST /api/mobile/v1/accounting/reconciliation/sales`
+
+**Headers**
+
+```http
+Authorization: Bearer <accessToken>
+```
+
+Registra una reconciliación de venta individual, reutilizando la lógica actual que hoy consume el formulario web.
+
+### `GET /api/mobile/v1/accounting/reconciliation/sales/history`
+
+**Headers**
+
+```http
+Authorization: Bearer <accessToken>
+```
+
+Devuelve historial y estadísticas básicas de reconciliaciones de ventas.
+
+### `GET /api/mobile/v1/accounting/reconciliation/services`
+
+**Headers**
+
+```http
+Authorization: Bearer <accessToken>
+```
+
+Devuelve servicios pendientes de reconciliar.
+
+### `POST /api/mobile/v1/accounting/reconciliation/services`
+
+**Headers**
+
+```http
+Authorization: Bearer <accessToken>
+```
+
+Registra la reconciliación de un servicio con distribuciones, alineada con la lógica actual del proyecto.
+
+### `GET /api/mobile/v1/accounting/reconciliation/services/history`
+
+**Headers**
+
+```http
+Authorization: Bearer <accessToken>
+```
+
+Devuelve historial de reconciliaciones de servicios.
 
 ## Error model
 
