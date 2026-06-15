@@ -102,7 +102,10 @@ export function ReconciliacionVentasForm({
   const [montoRestante, setMontoRestante] = useState(0)
   const [forceUpdate, setForceUpdate] = useState(0)
 
-
+  useEffect(() => {
+    getMonedasAction().then(r => { if (r.success) setMonedas(r.data ?? []) })
+    getTiposPagoAction().then(r => { if (r.success) setTiposPago(r.data?.data ?? []) })
+  }, [])
 
   const form = useForm<ReconciliacionVentaFormData>({
     resolver: zodResolver(reconciliacionVentaSchema), 
