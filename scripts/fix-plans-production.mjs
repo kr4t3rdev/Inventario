@@ -25,7 +25,7 @@ const PLAN_BASICO_FEATURES = {
 	mermas: true,
 	"ventas-pos": true,
 	"ventas-factura": false,
-	"turnos-pos": false,
+	"turnos-pos": true,
 	"arqueo-caja": true,
 	"cuadre-diario": false,
 	ofertas: false,
@@ -69,7 +69,6 @@ const PLAN_BASICO_FEATURES = {
 const PLAN_PROFESIONAL_FEATURES = {
 	...PLAN_BASICO_FEATURES,
 	"listas-precios": true,
-	"turnos-pos": true,
 	"cuadre-diario": true,
 	ofertas: true,
 	clientes: true,

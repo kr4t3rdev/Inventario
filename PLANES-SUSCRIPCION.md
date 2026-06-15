@@ -44,7 +44,7 @@ Para negocios que están empezando y necesitan la base operativa completa: produ
   "mermas": true,
   "ventas-pos": true,
   "ventas-factura": false,
-  "turnos-pos": false,
+  "turnos-pos": true,
   "arqueo-caja": true,
   "cuadre-diario": false,
   "ofertas": false,
@@ -101,8 +101,8 @@ Para negocios que están empezando y necesitan la base operativa completa: produ
 
 #### Ventas y POS
 - Ventas POS con múltiples métodos de pago (efectivo, tarjeta, transferencia, mixto)
-- **Arqueo de caja** al cierre de turno
-- (Sin turnos POS, sin cuadre diario, sin ofertas en este plan)
+- **Apertura y cierre de turnos POS** con arqueo automático al cierre
+- (Sin cuadre diario, sin ofertas en este plan)
 
 #### Compras y Proveedores
 - Compras de productos con actualización de stock
@@ -151,7 +151,6 @@ Para negocios que necesitan facturación, multi-moneda, clientes, empleados y he
 {
   // …todo lo del Básico, más:
   "listas-precios": true,
-  "turnos-pos": true,
   "cuadre-diario": true,
   "ofertas": true,
   "clientes": true,
@@ -305,7 +304,7 @@ Para negocios consolidados con producción, manufactura, cuentas por cobrar/paga
 | **Listas de precios** | ❌ | ✅ | ✅ |
 | **POS / Ventas** | ✅ | ✅ | ✅ |
 | **Ventas con factura** | ❌ | ✅ | ✅ |
-| **Turnos POS** | ❌ | ✅ | ✅ |
+| **Turnos POS** | ✅ | ✅ | ✅ |
 | **Arqueo de caja** | ✅ | ✅ | ✅ |
 | **Cuadre diario** | ❌ | ✅ | ✅ |
 | **Ofertas / Promociones** | ❌ | ✅ | ✅ |

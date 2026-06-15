@@ -28,7 +28,7 @@ export const PLAN_BASICO_FEATURES: Record<string, boolean> = {
 	// Ventas
 	"ventas-pos": true,
 	"ventas-factura": false,
-	"turnos-pos": false,
+	"turnos-pos": true,
 	"arqueo-caja": true,
 	"cuadre-diario": false,
 	ofertas: false,
@@ -82,7 +82,6 @@ export const PLAN_PROFESIONAL_FEATURES: Record<string, boolean> = {
 	...PLAN_BASICO_FEATURES,
 	// Habilita adicionales
 	"listas-precios": true,
-	"turnos-pos": true,
 	"cuadre-diario": true,
 	ofertas: true,
 	clientes: true,
