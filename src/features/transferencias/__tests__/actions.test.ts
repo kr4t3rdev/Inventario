@@ -139,6 +139,15 @@ describe("Transferencias Server Actions", () => {
 			});
 
 			expect(result.success).toBe(true);
+			expect(mockTx.transferencia.create).toHaveBeenCalledWith({
+				data: expect.objectContaining({
+					tenantId: "tenant-test",
+					productoId: "prod-1",
+					cantidad: 5,
+					origenId: "alm-1",
+					puntoDeVentaDestinoId: "pv-1",
+				}),
+			});
 			expect(mockTx.producto.update).not.toHaveBeenCalled();
 		});
 

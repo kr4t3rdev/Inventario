@@ -356,9 +356,9 @@ export const createTransferenciaAction = withAction(
 			] of productosValidados.entries()) {
 				const costoTotal = cantidad * producto.precioCosto;
 				const data: any = {
-					producto: { connect: { id: producto.id } },
+					tenantId,
+					productoId: producto.id,
 					cantidad,
-					tenant: { connect: { tenantId } },
 					costoUnitario: producto.precioCosto,
 					costoTotal,
 					descripcion: descripcion || `Transferencia - ${producto.nombre}`,
