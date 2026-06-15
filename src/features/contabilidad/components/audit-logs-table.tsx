@@ -19,6 +19,7 @@ import {
 
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import { DateRangePicker, type DateRange } from '@/components/ui/date-range-picker';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { ScrollArea } from '@/components/ui/scroll-area';
@@ -173,6 +174,7 @@ export function AuditLogsTable() {
   const [limit, setLimit] = useState(20);
   const [entidad, setEntidad] = useState<string>('all');
   const [accion, setAccion] = useState<string>('all');
+  const [dateRange, setDateRange] = useState<DateRange | undefined>();
   const [search, setSearch] = useState('');
 
   const fadeInUp = {
@@ -199,11 +201,10 @@ export function AuditLogsTable() {
       let url = `/api/contabilidad/logs?limit=${limit}&offset=${page * limit}`;
       if (entidad !== 'all') url += `&entidad=${entidad}`;
       if (accion !== 'all') url += `&accion=${accion}`;
+      if (dateRange?.from) url += `&desde=${dateRange.from.toISOString()}`;
+      if (dateRange?.to) url += `&hasta=${dateRange.to.toISOString()}`;
 
-      const token = '';
-      const response = await fetch(url, {
-        headers: token ? { Authorization: `Bearer ${token}` } : {},
-      });
+      const response = await fetch(url);
       const data = await response.json();
 
       if (!response.ok) {
@@ -220,7 +221,7 @@ export function AuditLogsTable() {
     } finally {
       setLoading(false);
     }
-  }, [accion, entidad, limit, page]);
+  }, [accion, entidad, dateRange, limit, page]);
 
   /**
    * @description Maneja el cambio de tamaño de página.
@@ -234,6 +235,10 @@ export function AuditLogsTable() {
   useEffect(() => {
     fetchLogs();
   }, [fetchLogs]);
+
+  useEffect(() => {
+    setPage(0);
+  }, [entidad, accion, dateRange]);
 
   const filteredLogs = useMemo(() => {
     if (!search) return logs;
@@ -299,8 +304,8 @@ export function AuditLogsTable() {
         </div>
       </div>
 
-      <div className="grid gap-3 md:grid-cols-[1fr_auto_auto]">
-        <div className="relative">
+      <div className="flex flex-wrap items-center gap-3">
+        <div className="relative flex-1 min-w-[200px]">
           <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
           <Input
             placeholder="Buscar por usuario, ID o detalles..."
@@ -309,6 +314,7 @@ export function AuditLogsTable() {
             onChange={(event) => setSearch(event.target.value)}
           />
         </div>
+        <DateRangePicker value={dateRange} onChange={setDateRange} />
         <Select value={entidad} onValueChange={setEntidad}>
           <SelectTrigger className="w-full md:w-[200px]">
             <Filter className="mr-2 h-4 w-4" />
