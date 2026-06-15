@@ -115,13 +115,13 @@ export class AperturaPeriodoService {
 		// Cuentas por cobrar
 		const totalCxC = await db.cuentaPorCobrar.aggregate({
 			_sum: { saldoPendiente: true },
-			where: { tenantId, estado: { not: "cancelada" } },
+			where: { tenantId, estado: { not: "PAGADA" } },
 		});
 
 		// Cuentas por pagar
 		const totalCxP = await db.cuentaPorPagar.aggregate({
 			_sum: { saldoPendiente: true },
-			where: { tenantId, estado: { not: "cancelada" } },
+			where: { tenantId, estado: { not: "PAGADA" } },
 		});
 
 		return {
