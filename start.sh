@@ -1,13 +1,13 @@
 #!/bin/sh
 # Script de inicio del contenedor.
-# Aplica migraciones pendientes de Prisma antes de levantar el servidor.
-# Esto evita que el schema de la DB quede desincronizado del schema.prisma
-# (causa raíz de errores PrismaClientValidationError en producción).
+# Sincroniza el schema de Prisma con la DB antes de levantar el servidor.
+# Usa db push en vez de migrate deploy porque la DB existente no tiene
+# el tracking de migraciones (_prisma_migrations).
 
 set -e
 
-echo "[start] Verificando migraciones de Prisma..."
-pnpm exec prisma migrate deploy
+echo "[start] Sincronizando schema de Prisma con la base de datos..."
+pnpm exec prisma db push --accept-data-loss
 
-echo "[start] Migraciones aplicadas. Iniciando servidor Next.js..."
+echo "[start] Schema sincronizado. Iniciando servidor Next.js..."
 exec node server.js
