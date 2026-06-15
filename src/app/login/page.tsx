@@ -2,7 +2,7 @@
 
 import type React from 'react'
 
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { useAuth } from '@/contexts/auth-context'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -10,7 +10,7 @@ import { Label } from '@/components/ui/label'
 import { Alert, AlertDescription } from '@/components/ui/alert'
 import { EyeIcon, EyeOffIcon, LogInIcon, AlertCircleIcon, Loader2Icon } from 'lucide-react'
 import Link from 'next/link'
-import { m as motion, AnimatePresence, useReducedMotion } from 'framer-motion'
+import { motion, AnimatePresence, useReducedMotion } from 'framer-motion'
 import { AuthLayout } from '@/components/auth/auth-layout'
 
 const SPRING_DEFAULT = { type: 'spring' as const, stiffness: 120, damping: 20 }
@@ -28,6 +28,11 @@ export default function LoginPage(): React.ReactElement {
 	const [loading, setLoading] = useState(false)
 	const { login } = useAuth()
 	const reduceMotion = !!useReducedMotion()
+	const [mounted, setMounted] = useState(false)
+
+	useEffect(() => {
+		setMounted(true)
+	}, [])
 
 	const handleSubmit = async (e: React.FormEvent) => {
 		e.preventDefault()
@@ -44,7 +49,7 @@ export default function LoginPage(): React.ReactElement {
 	}
 
 	const fadeUp = (delay: number) =>
-		reduceMotion
+		!mounted || reduceMotion
 			? {}
 			: {
 					initial: { opacity: 0, y: 30 },
@@ -55,7 +60,7 @@ export default function LoginPage(): React.ReactElement {
 	return (
 		<AuthLayout>
 			<motion.div
-				initial={reduceMotion ? { opacity: 1 } : { opacity: 0, y: 30 }}
+				initial={!mounted || reduceMotion ? { opacity: 1, y: 0 } : { opacity: 0, y: 30 }}
 				animate={{ opacity: 1, y: 0 }}
 				transition={SPRING_DEFAULT}
 				className="overflow-hidden rounded-[18px] border border-black/8 bg-white shadow-sm dark:border-white/10 dark:bg-[#272729]"
