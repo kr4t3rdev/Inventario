@@ -290,6 +290,18 @@ export const FEATURE_REGISTRY: FeatureDef[] = [
 		category: "rrhh",
 	},
 	{
+		key: "vacaciones",
+		label: "Vacaciones",
+		description: "Solicitudes, acumulación automática y aprobación de vacaciones",
+		category: "rrhh",
+	},
+	{
+		key: "asistencia",
+		label: "Asistencia",
+		description: "Checkin/checkout de empleados con horarios semanales",
+		category: "rrhh",
+	},
+	{
 		key: "nomina",
 		label: "Nómina y salarios",
 		description: "Pago de salarios, comisiones dinámicas y vacaciones",

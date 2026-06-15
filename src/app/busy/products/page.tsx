@@ -33,10 +33,12 @@ export default async function ProductosPage() {
   // ── Configuración de empresa y rol ──
   let usaEan13 = false
   let tenantRole: string | undefined
+  let planFeatures: Record<string, boolean> | undefined
   try {
     const user = await getCurrentUser()
     if (user) {
       tenantRole = user.tenantRole
+      planFeatures = user.planFeatures
       const empresa = await prisma.miEmpresa.findFirst({
         where: { tenantId: user.tenantId },
         select: { usaCodigoEan13: true },
@@ -58,6 +60,7 @@ export default async function ProductosPage() {
       initialPuntosVenta={initialPuntosVenta}
       usaEan13={usaEan13}
       tenantRole={tenantRole}
+      planFeatures={planFeatures}
     />
   )
 }

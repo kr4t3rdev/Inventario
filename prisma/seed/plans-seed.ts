@@ -57,7 +57,9 @@ export const PLAN_BASICO_FEATURES: Record<string, boolean> = {
 	produccion: false,
 	reparaciones: false,
 	// RRHH
-	empleados: false,
+	empleados: true,
+	vacaciones: false,
+	asistencia: false,
 	nomina: false,
 	// Empresa y Config
 	"mi-empresa": true,
@@ -90,6 +92,7 @@ export const PLAN_PROFESIONAL_FEATURES: Record<string, boolean> = {
 	"reportes-financieros": true,
 	empleados: true,
 	notificaciones: true,
+	"ventas-factura": true,
 	"backups-semanal": false,
 	"backups-diario": true,
 };
@@ -101,9 +104,10 @@ export const PLAN_EMPRESARIAL_FEATURES: Record<string, boolean> = {
 	// Habilita todo excepto reparaciones y api-integraciones
 	"productos-stock-masivo": true,
 	"categorias-ean13": true,
-	"ventas-factura": true,
 	produccion: true,
 	nomina: true,
+	vacaciones: true,
+	asistencia: true,
 	"mi-empresa-ean13": true,
 	contratos: true,
 	"cuentas-cobrar": true,
@@ -113,6 +117,7 @@ export const PLAN_EMPRESARIAL_FEATURES: Record<string, boolean> = {
 	anticipos: true,
 	"analisis-estado-cuenta": true,
 	"facturas-vencidas": true,
+	"multitenantmembership": true,
 	// Backups cada hora + restauración point-in-time
 	"backups-diario": false,
 	"backups-tiempo-real": true,

@@ -153,6 +153,7 @@ interface ProductosContentProps {
 	initialPuntosVenta: Array<{ pvId: string; nombre: string }>;
 	usaEan13: boolean;
 	tenantRole?: string;
+	planFeatures?: Record<string, boolean>;
 }
 
 /**
@@ -165,6 +166,7 @@ export function ProductosContent({
 	initialPuntosVenta,
 	usaEan13: initialUsaEan13,
 	tenantRole,
+	planFeatures,
 }: ProductosContentProps) {
 	const [ubicacionSeleccionada, setUbicacionSeleccionada] =
 		useState<UbicacionSeleccionada | null>(null);
@@ -793,12 +795,14 @@ export function ProductosContent({
 							</div>
 						</div>
 						<div className="flex items-center gap-2">
-							<Link href="/busy/products/bulk-stock-minimo">
-								<Button variant="outline" className="gap-2 border-dashed">
-									<Package className="h-4 w-4" />
-									Stock Mínimo
-								</Button>
-							</Link>
+							{planFeatures?.["productos-stock-masivo"] === true && (
+								<Link href="/busy/products/bulk-stock-minimo">
+									<Button variant="outline" className="gap-2 border-dashed">
+										<Package className="h-4 w-4" />
+										Stock Mínimo
+									</Button>
+								</Link>
+							)}
 							{puedeEditar && (
 								<Link href="/busy/products/new">
 									<Button className="gap-2 bg-linear-to-r from-primary to-purple-600 hover:from-primary/90 hover:to-purple-600/90">
