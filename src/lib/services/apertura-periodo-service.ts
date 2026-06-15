@@ -112,13 +112,15 @@ export class AperturaPeriodoService {
 
 		const totalBancario = cuentas.reduce((sum, c) => sum + Number(c.saldo), 0);
 
-		// Cuentas por cobrar
+		// Cuentas por cobrar — CuentaPorCobrar no tiene saldoPendiente,
+		// se calcula como montoDeuda - montoPagado
 		const totalCxC = await db.cuentaPorCobrar.aggregate({
-			_sum: { saldoPendiente: true },
+			_sum: { montoDeuda: true, montoPagado: true },
 			where: { tenantId, estado: { not: "PAGADA" } },
 		});
+		const saldoPendienteCxC = Number(totalCxC._sum.montoDeuda ?? 0) - Number(totalCxC._sum.montoPagado ?? 0);
 
-		// Cuentas por pagar
+		// Cuentas por pagar — CuentaPorPagar sí tiene saldoPendiente
 		const totalCxP = await db.cuentaPorPagar.aggregate({
 			_sum: { saldoPendiente: true },
 			where: { tenantId, estado: { not: "PAGADA" } },
@@ -127,7 +129,7 @@ export class AperturaPeriodoService {
 		return {
 			saldoCajaInicial: 0,
 			saldoBancoInicial: totalBancario,
-			saldoCuentasCobrarInicial: Number(totalCxC._sum.saldoPendiente ?? 0),
+			saldoCuentasCobrarInicial: saldoPendienteCxC,
 			saldoCuentasPagarInicial: Number(totalCxP._sum.saldoPendiente ?? 0),
 			saldoInventarioInicial: 0,
 			saldoCapitalInicial: 0,
@@ -136,7 +138,7 @@ export class AperturaPeriodoService {
 			detalle: {
 				origen: "datos_vivos",
 				cuentasBancarias: cuentas.length,
-				totalCuentasPorCobrar: Number(totalCxC._sum.saldoPendiente ?? 0),
+				totalCuentasPorCobrar: saldoPendienteCxC,
 				totalCuentasPorPagar: Number(totalCxP._sum.saldoPendiente ?? 0),
 			},
 		};
