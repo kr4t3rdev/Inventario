@@ -29,6 +29,7 @@ Este documento define el primer contrato **mobile-first** del backend para clien
 | Accounting operations read | Ready | Transferencias, ajustes bancarios e inyecciones de capital en modo lectura. |
 | Accounting operations mutations | Ready | Crear transferencias, validarlas, registrar ajustes e inyecciones/pagos de capital. |
 | Reconciliation sales/services | Ready | Pendientes, historial y registro de reconciliaciones para ventas y servicios. |
+| Reconciliation expenses | Ready | Pendientes, historial y registro de reconciliaciones de gastos usando el adapter canónico. |
 | Otros módulos | Pending | Migrar por slices usando servicios compartidos. |
 
 ## Base conventions
@@ -479,6 +480,36 @@ Authorization: Bearer <accessToken>
 ```
 
 Devuelve historial de reconciliaciones de servicios.
+
+### `GET /api/mobile/v1/accounting/reconciliation/expenses`
+
+**Headers**
+
+```http
+Authorization: Bearer <accessToken>
+```
+
+Devuelve gastos pendientes de reconciliar, incluyendo compras, salarios, servicios y costos de venta de servicios según la lógica actual del proyecto.
+
+### `POST /api/mobile/v1/accounting/reconciliation/expenses`
+
+**Headers**
+
+```http
+Authorization: Bearer <accessToken>
+```
+
+Registra una reconciliación de gasto reutilizando el adapter canónico ya existente para web.
+
+### `GET /api/mobile/v1/accounting/reconciliation/expenses/history`
+
+**Headers**
+
+```http
+Authorization: Bearer <accessToken>
+```
+
+Devuelve historial y estadísticas básicas de reconciliaciones de gastos.
 
 ## Error model
 

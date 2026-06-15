@@ -431,4 +431,329 @@ export const AccountingReconciliationService = {
       return { reconciliado: true, distribuciones: input.distribuciones.length };
     });
   },
+
+  async listPendingExpenses(params: {
+    tenantId: string;
+    fechaDesde?: string | null;
+    fechaHasta?: string | null;
+    tipoGasto?: string | null;
+    soloNoReconciliados?: boolean;
+    page?: number;
+    limit?: number;
+  }) {
+    const whereDE: Record<string, any> = { tenantId: params.tenantId };
+    if (params.soloNoReconciliados) whereDE.reconciliaciones = { none: {} };
+    if (params.fechaDesde || params.fechaHasta) {
+      whereDE.createdAt = {};
+      if (params.fechaDesde) whereDE.createdAt.gte = new Date(params.fechaDesde);
+      if (params.fechaHasta) whereDE.createdAt.lte = new Date(params.fechaHasta);
+    }
+
+    const whereGC: Record<string, any> = { tenantId: params.tenantId, deletedAt: null };
+    if (params.soloNoReconciliados) whereGC.reconciliaciones = { none: {} };
+    if (params.fechaDesde || params.fechaHasta) {
+      whereGC.fechaCompra = {};
+      if (params.fechaDesde) whereGC.fechaCompra.gte = new Date(params.fechaDesde);
+      if (params.fechaHasta) whereGC.fechaCompra.lte = new Date(params.fechaHasta);
+    }
+
+    const wherePS: Record<string, any> = { tenantId: params.tenantId };
+    if (params.soloNoReconciliados) wherePS.ReconciliacionGasto = { none: {} };
+    if (params.fechaDesde || params.fechaHasta) {
+      wherePS.createdAt = {};
+      if (params.fechaDesde) wherePS.createdAt.gte = new Date(params.fechaDesde);
+      if (params.fechaHasta) wherePS.createdAt.lte = new Date(params.fechaHasta);
+    }
+
+    const whereCS: Record<string, any> = { tenantId: params.tenantId };
+    if (params.fechaDesde || params.fechaHasta) {
+      whereCS.fechaServicio = {};
+      if (params.fechaDesde) whereCS.fechaServicio.gte = new Date(params.fechaDesde);
+      if (params.fechaHasta) whereCS.fechaServicio.lte = new Date(params.fechaHasta);
+    }
+
+    const whereVS: Record<string, any> = { tenantId: params.tenantId, costo: { gt: 0 } };
+    if (params.fechaDesde || params.fechaHasta) {
+      whereVS.createdAt = {};
+      if (params.fechaDesde) whereVS.createdAt.gte = new Date(params.fechaDesde);
+      if (params.fechaHasta) whereVS.createdAt.lte = new Date(params.fechaHasta);
+    }
+
+    const page = params.page || 1;
+    const limit = params.limit || 50;
+
+    const [
+      gastosDE,
+      gastosCompra,
+      pagosSalario,
+      comprasServicio,
+      ventasServicio,
+      reconciliadosServicioIds,
+      reconciliadosVentaServicioIds,
+    ] = await Promise.all([
+      prisma.gastosDE.findMany({
+        where: whereDE,
+        orderBy: { createdAt: 'desc' },
+        include: { reconciliaciones: { select: { reconciliacionId: true } } },
+      }),
+      prisma.gastoCompra.findMany({
+        where: whereGC,
+        orderBy: { fechaCompra: 'desc' },
+        include: {
+          reconciliaciones: { select: { reconciliacionId: true } },
+          vendor: { select: { nombre: true } },
+          producto: { select: { nombre: true } },
+        },
+      }),
+      prisma.pagosalario.findMany({
+        where: wherePS,
+        orderBy: { createdAt: 'desc' },
+        include: {
+          ReconciliacionGasto: { select: { reconciliacionId: true } },
+          empleado: { select: { nombre: true, apellido: true, cargo: true } },
+        },
+      }),
+      prisma.compraServicio.findMany({
+        where: whereCS,
+        orderBy: { fechaServicio: 'desc' },
+        include: {
+          servicio: { select: { nombre: true } },
+          proveedor: { select: { nombre: true } },
+        },
+      }),
+      prisma.ventaServicios.findMany({
+        where: whereVS,
+        orderBy: { createdAt: 'desc' },
+        include: {
+          servicio: { select: { nombre: true } },
+          cliente: { select: { nombre: true } },
+        },
+      }),
+      params.soloNoReconciliados
+        ? prisma.reconciliacionGasto
+            .findMany({
+              where: { tenantId: params.tenantId, tipoGasto: 'servicio' },
+              select: { referenciaId: true },
+              distinct: ['referenciaId'],
+            })
+            .then((r) => r.map((x) => x.referenciaId))
+        : Promise.resolve([] as string[]),
+      params.soloNoReconciliados
+        ? prisma.reconciliacionGasto
+            .findMany({
+              where: { tenantId: params.tenantId, tipoGasto: 'venta_servicio' },
+              select: { referenciaId: true },
+              distinct: ['referenciaId'],
+            })
+            .then((r) => r.map((x) => x.referenciaId))
+        : Promise.resolve([] as string[]),
+    ]);
+
+    const comprasServicioFiltradas = params.soloNoReconciliados
+      ? comprasServicio.filter((g: any) => !reconciliadosServicioIds.includes(g.compraServicioId))
+      : comprasServicio;
+
+    const ventasServicioFiltradas = params.soloNoReconciliados
+      ? ventasServicio.filter((g: any) => !reconciliadosVentaServicioIds.includes(g.ventaServicioId))
+      : ventasServicio;
+
+    const gastos = [
+      ...gastosDE.map((g: any) => ({
+        tipo: 'gastoDE' as const,
+        referenciaId: g.gastosDEId,
+        descripcion: g.descripcion || `Gasto DE #${g.gastosDEId.slice(0, 8)}`,
+        monto: Number(g.monto || g.total || 0),
+        periodo: g.periodo || undefined,
+        detalles: {
+          proveedor: g.proveedor || undefined,
+          descripcionOriginal: g.descripcion || undefined,
+          isPagado: g.isPagado || undefined,
+        },
+        createdAt: g.createdAt.toISOString(),
+        updatedAt: g.updatedAt.toISOString(),
+      })),
+      ...gastosCompra.map((g: any) => ({
+        tipo: 'compra' as const,
+        referenciaId: g.gastoCompraId,
+        descripcion: g.descripcion || `Compra #${g.gastoCompraId.slice(0, 8)}`,
+        monto: Number(g.total || 0),
+        periodo: g.periodo || undefined,
+        detalles: {
+          vendor: g.vendor?.nombre || undefined,
+          producto: g.producto?.nombre || undefined,
+          cantidad: g.cantidad || undefined,
+          precioUnitario: g.precioUnitario || undefined,
+          fechaCompra: g.fechaCompra?.toISOString() || undefined,
+        },
+        createdAt: g.createdAt.toISOString(),
+        updatedAt: g.updatedAt.toISOString(),
+      })),
+      ...pagosSalario.map((g: any) => ({
+        tipo: 'salario' as const,
+        referenciaId: g.pgId,
+        descripcion:
+          `Salario de ${g.empleado?.nombre || ''} ${g.empleado?.apellido || ''}`.trim() ||
+          `Pago #${g.pgId.slice(0, 8)}`,
+        monto: Number(g.salario || 0),
+        periodo: g.periodo || undefined,
+        detalles: {
+          empleado: g.empleado
+            ? {
+                nombre: g.empleado.nombre,
+                apellido: g.empleado.apellido,
+                cargo: g.empleado.cargo,
+              }
+            : undefined,
+          salarioBases: g.salario || undefined,
+          bonificaciones: g.bonificaciones || undefined,
+          deducciones: g.deducciones || undefined,
+          horasExtras: g.horasExtras || undefined,
+        },
+        createdAt: g.createdAt.toISOString(),
+        updatedAt: g.updatedAt.toISOString(),
+      })),
+      ...comprasServicioFiltradas.map((g: any) => ({
+        tipo: 'servicio' as const,
+        referenciaId: g.compraServicioId,
+        descripcion: `${g.servicio?.nombre || 'Servicio'} - ${g.proveedor?.nombre || 'Sin proveedor'}`,
+        monto: Number(g.total || 0),
+        periodo: undefined,
+        detalles: {
+          servicio: g.servicio?.nombre || undefined,
+          proveedorNombre: g.proveedor?.nombre || undefined,
+          cantidad: g.cantidad || undefined,
+          costoUnitario: g.costoUnitario || undefined,
+          numeroFactura: g.numeroFactura || undefined,
+        },
+        createdAt: g.fechaServicio?.toISOString?.() || g.createdAt?.toISOString?.() || new Date().toISOString(),
+        updatedAt: g.updatedAt?.toISOString?.() || new Date().toISOString(),
+      })),
+      ...ventasServicioFiltradas.map((g: any) => ({
+        tipo: 'venta_servicio' as const,
+        referenciaId: g.ventaServicioId,
+        descripcion: `Costo: ${g.servicio?.nombre || 'Servicio'} - ${g.cliente?.nombre || 'Sin cliente'}`,
+        monto: Number(g.costo * g.cantidad || 0),
+        periodo: g.createdAt?.toISOString?.()?.slice(0, 7) || undefined,
+        detalles: {
+          servicio: g.servicio?.nombre || undefined,
+          clienteNombre: g.cliente?.nombre || undefined,
+          cantidad: g.cantidad || undefined,
+          costoUnitario: g.costo || undefined,
+        },
+        createdAt: g.createdAt?.toISOString?.() || new Date().toISOString(),
+        updatedAt: g.updatedAt?.toISOString?.() || new Date().toISOString(),
+      })),
+    ]
+      .filter((gasto) => !params.tipoGasto || gasto.tipo === params.tipoGasto)
+      .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+
+    const total = gastos.length;
+    const paginated = gastos.slice((page - 1) * limit, page * limit);
+
+    return {
+      gastos: paginated,
+      pagination: { page, limit, total, totalPages: Math.ceil(total / limit) },
+    };
+  },
+
+  async getExpensesHistory(params: {
+    tenantId: string;
+    tipoGasto?: string | null;
+    cuentaId?: string | null;
+    fechaDesde?: string | null;
+    fechaHasta?: string | null;
+    periodo?: string | null;
+    reconciliadoPor?: string | null;
+    page?: number;
+    limit?: number;
+  }) {
+    const whereClause: Record<string, any> = { tenantId: params.tenantId };
+    if (params.tipoGasto) whereClause.tipoGasto = params.tipoGasto;
+    if (params.cuentaId) whereClause.cuentaId = params.cuentaId;
+    if (params.periodo) whereClause.periodo = params.periodo;
+    if (params.reconciliadoPor) whereClause.reconciliadoPor = params.reconciliadoPor;
+    if (params.fechaDesde || params.fechaHasta) {
+      whereClause.fechaReconciliacion = {};
+      if (params.fechaDesde) whereClause.fechaReconciliacion.gte = new Date(params.fechaDesde);
+      if (params.fechaHasta) whereClause.fechaReconciliacion.lte = new Date(params.fechaHasta);
+    }
+
+    const page = params.page || 1;
+    const limit = params.limit || 50;
+    const skip = (page - 1) * limit;
+
+    const [reconciliaciones, total] = await Promise.all([
+      prisma.reconciliacionGasto.findMany({
+        where: whereClause,
+        include: {
+          cuentaBancaria: {
+            select: {
+              cuentaId: true,
+              nombreBanco: true,
+              numeroCuenta: true,
+              tipoCuenta: true,
+              moneda: true,
+            },
+          },
+          tipoPago: {
+            select: { tipoId: true, nombre: true, descripcion: true },
+          },
+          pagoSalario: {
+            include: {
+              empleado: {
+                select: {
+                  empleadoId: true,
+                  nombre: true,
+                  apellido: true,
+                  cargo: true,
+                },
+              },
+            },
+          },
+          gastoDE: {
+            select: {
+              gastosDEId: true,
+              tipo: true,
+              proveedor: true,
+              monto: true,
+              periodo: true,
+            },
+          },
+          gastoCompra: {
+            select: {
+              gastoCompraId: true,
+              cantidad: true,
+              precioUnitario: true,
+              total: true,
+              fechaCompra: true,
+              producto: { select: { nombre: true } },
+              vendor: { select: { nombre: true } },
+            },
+          },
+        },
+        orderBy: { fechaReconciliacion: 'desc' },
+        skip,
+        take: limit,
+      }),
+      prisma.reconciliacionGasto.count({ where: whereClause }),
+    ]);
+
+    const estadisticas = await prisma.reconciliacionGasto.groupBy({
+      by: ['tipoGasto', 'moneda'],
+      where: whereClause,
+      _sum: { monto: true, montoConvertido: true },
+      _count: { reconciliacionId: true },
+    });
+
+    return {
+      reconciliaciones: reconciliaciones.map((r) => ({
+        ...r,
+        monto: Number(r.monto),
+        tasaCambio: r.tasaCambio ? Number(r.tasaCambio) : null,
+        montoConvertido: r.montoConvertido ? Number(r.montoConvertido) : null,
+      })),
+      estadisticas,
+      pagination: { page, limit, total, totalPages: Math.ceil(total / limit) },
+    };
+  },
 };

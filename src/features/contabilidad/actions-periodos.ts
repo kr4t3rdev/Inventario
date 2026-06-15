@@ -23,6 +23,7 @@ import {
 	TipoPeriodo,
 	EstadoPeriodo,
 	CategoriaPeriodo,
+	ModoContable,
 } from "@/lib/services/periodo-contable-types";
 import { isTenantAdminRole } from "@/lib/auth/roles";
 import { prisma } from "@/lib/prisma";
@@ -93,7 +94,7 @@ const abrirPeriodoSchema = z.object({
 		.datetime({ message: "La fecha de fin debe ser una fecha válida" }),
 	observaciones: z.string().max(500).optional(),
 	categoria: z.nativeEnum(CategoriaPeriodo).optional(),
-	modoContable: z.string().optional(),
+	modoContable: z.nativeEnum(ModoContable).optional(),
 });
 
 /**
@@ -333,7 +334,6 @@ export const abrirPeriodoAction = withAction(
 		const fechaInicio = new Date(parsed.fechaInicio);
 		const fechaFin = new Date(parsed.fechaFin);
 
-		// Validar que fechaInicio <= fechaFin
 		if (fechaInicio > fechaFin) {
 			throw new ActionError(
 				"La fecha de inicio no puede ser posterior a la fecha de fin",
@@ -341,29 +341,33 @@ export const abrirPeriodoAction = withAction(
 			);
 		}
 
-		const periodo = await PeriodoContableService.abrirPeriodo(
-			{
+		// Crear período y apertura en una transacción para garantizar atomicidad
+		const { periodo } = await prisma.$transaction(async (tx) => {
+			const p = await PeriodoContableService.abrirPeriodoWithTx(
+				tx,
+				{
+					tenantId,
+					tipo: parsed.tipo,
+					fechaInicio,
+					fechaFin,
+					observaciones: parsed.observaciones,
+					categoria: parsed.categoria,
+					modoContable: parsed.modoContable,
+				},
+				user.userId,
+			);
+
+			await AperturaPeriodoService.createAperturaPeriodoWithTx(
+				tx,
+				p.periodoId,
 				tenantId,
-				tipo: parsed.tipo,
-				fechaInicio,
-				fechaFin,
-				observaciones: parsed.observaciones,
-				categoria: parsed.categoria,
-				modoContable: parsed.modoContable,
-			},
-			user.userId,
-		);
+				user.userId,
+			);
 
-		// Crear asiento de apertura formal con saldos iniciales
-		await AperturaPeriodoService.createAperturaPeriodo(
-			periodo.periodoId,
-			tenantId,
-			user.userId,
-		);
+			return { periodo: p };
+		});
 
-		// Invalidar caché del guard para este tenant
 		await invalidateCache(tenantId);
-
 		revalidatePath("/busy/contabilidad/periodos");
 
 		return { periodo };
