@@ -8,6 +8,7 @@
  */
 
 import { prisma } from "@/lib/prisma";
+import type { Prisma } from "@/generated/prisma";
 import { ActionError } from "@/lib/server-actions/types";
 import {
 	EstadoPeriodo,
@@ -215,11 +216,10 @@ export class PeriodoContableService {
 		tipo: TipoPeriodo,
 		fechaInicio: Date,
 		fechaFin: Date,
+		client?: Prisma.TransactionClient,
 	): Promise<string | null> {
-		// ANUAL no tiene padre en la jerarquía
 		if (tipo === TipoPeriodo.ANUAL) return null;
 
-		// Mapa de tipo hijo → tipo padre
 		const padreTipoMap: Partial<Record<TipoPeriodo, TipoPeriodo>> = {
 			[TipoPeriodo.DIARIO]: TipoPeriodo.MENSUAL,
 			[TipoPeriodo.MENSUAL]: TipoPeriodo.TRIMESTRAL,
@@ -230,7 +230,8 @@ export class PeriodoContableService {
 		const padreTipo = padreTipoMap[tipo];
 		if (!padreTipo) return null;
 
-		const padre = await prisma.periodoContable.findFirst({
+		const db = client ?? prisma;
+		const padre = await db.periodoContable.findFirst({
 			where: {
 				tenantId,
 				tipo: padreTipo,
@@ -253,13 +254,20 @@ export class PeriodoContableService {
 	 * @param {string} actor - ID del usuario que crea.
 	 * @returns {Promise<PeriodoContable>} El período creado.
 	 */
-	static async abrirPeriodo(input: CreatePeriodoInput, actor: string) {
-		// Validar solapamiento
+	static async abrirPeriodo(
+		input: CreatePeriodoInput,
+		actor: string,
+		client?: Prisma.TransactionClient,
+	) {
+		const db = client ?? prisma;
+
 		const solapado = await this.verificarSolapamiento(
 			input.tenantId,
 			input.tipo,
 			input.fechaInicio,
 			input.fechaFin,
+			undefined,
+			client,
 		);
 
 		if (solapado) {
@@ -269,16 +277,16 @@ export class PeriodoContableService {
 			);
 		}
 
-		// Generar codigo y resolver jerarquía
 		const codigo = this.generarCodigoPeriodo(input.tipo, input.fechaInicio);
 		const periodoPadreId = await this.resolverPeriodoPadre(
 			input.tenantId,
 			input.tipo,
 			input.fechaInicio,
 			input.fechaFin,
+			client,
 		);
 
-		const periodo = await prisma.periodoContable.create({
+		const periodo = await db.periodoContable.create({
 			data: {
 				tenantId: input.tenantId,
 				tipo: input.tipo,
@@ -295,13 +303,15 @@ export class PeriodoContableService {
 			},
 		});
 
-		// Registrar auditoría
-		await this._registrarAuditoria({
-			periodoId: periodo.periodoId,
-			tenantId: periodo.tenantId,
-			evento: EventoAuditoria.APERTURA,
-			actor,
-		});
+		await this._registrarAuditoria(
+			{
+				periodoId: periodo.periodoId,
+				tenantId: periodo.tenantId,
+				evento: EventoAuditoria.APERTURA,
+				actor,
+			},
+			client,
+		);
 
 		return periodo;
 	}
@@ -597,11 +607,12 @@ export class PeriodoContableService {
 		fechaInicio: Date,
 		fechaFin: Date,
 		excludePeriodoId?: string,
+		client?: Prisma.TransactionClient,
 	): Promise<boolean> {
+		const db = client ?? prisma;
 		const where: Record<string, unknown> = {
 			tenantId,
 			tipo,
-			// Solapamiento: nuevo inicio <= existente fin AND nuevo fin >= existente inicio
 			AND: [
 				{ fechaInicio: { lte: fechaFin } },
 				{ fechaFin: { gte: fechaInicio } },
@@ -612,7 +623,7 @@ export class PeriodoContableService {
 			where.periodoId = { not: excludePeriodoId };
 		}
 
-		const count = await prisma.periodoContable.count({ where });
+		const count = await db.periodoContable.count({ where });
 		return count > 0;
 	}
 
@@ -685,16 +696,20 @@ export class PeriodoContableService {
 	 * Registra un evento de auditoría en la base de datos.
 	 * Este método será reemplazado por PeriodoAuditService en T3.
 	 */
-	private static async _registrarAuditoria(params: {
-		periodoId: string;
-		tenantId: string;
-		evento: EventoAuditoria;
-		actor: string;
-		motivo?: string;
-		entidadAfectada?: string;
-		payload?: Record<string, unknown>;
-	}): Promise<void> {
-		await prisma.auditoriaPeriodo.create({
+	private static async _registrarAuditoria(
+		params: {
+			periodoId: string;
+			tenantId: string;
+			evento: EventoAuditoria;
+			actor: string;
+			motivo?: string;
+			entidadAfectada?: string;
+			payload?: Record<string, unknown>;
+		},
+		client?: Prisma.TransactionClient,
+	): Promise<void> {
+		const db = client ?? prisma;
+		await db.auditoriaPeriodo.create({
 			data: {
 				periodoId: params.periodoId,
 				tenantId: params.tenantId,

@@ -341,10 +341,9 @@ export const abrirPeriodoAction = withAction(
 			);
 		}
 
-		// Crear período y apertura en una transacción para garantizar atomicidad
+		// Transacción: período + apertura se crean juntos o nada
 		const { periodo } = await prisma.$transaction(async (tx) => {
-			const p = await PeriodoContableService.abrirPeriodoWithTx(
-				tx,
+			const p = await PeriodoContableService.abrirPeriodo(
 				{
 					tenantId,
 					tipo: parsed.tipo,
@@ -355,13 +354,14 @@ export const abrirPeriodoAction = withAction(
 					modoContable: parsed.modoContable,
 				},
 				user.userId,
+				tx,
 			);
 
-			await AperturaPeriodoService.createAperturaPeriodoWithTx(
-				tx,
+			await AperturaPeriodoService.createAperturaPeriodo(
 				p.periodoId,
 				tenantId,
 				user.userId,
+				tx,
 			);
 
 			return { periodo: p };
