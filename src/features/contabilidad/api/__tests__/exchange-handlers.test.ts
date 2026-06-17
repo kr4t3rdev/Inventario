@@ -324,4 +324,62 @@ describe('getBalanceFinanciero', () => {
     const enero = body.estadoResultados.mensual.find((m: any) => m.month === 1)
     expect(enero.ventasCosto).toBe(150)
   })
+
+  it('calcula ingresosVentas sumando items.total en vez de usar v.total (histórico confiable)', async () => {
+    // Venta con 2 items: totales 400 + 100 = 500
+    // venta.total está puesto a 9999 para verificar que se ignora cuando hay items.
+    prismaMock.venta.findMany.mockImplementation(
+      soloEnero([
+        {
+          ventaId: 'v1',
+          total: 9999, // debe IGNORARSE
+          cantidad: 0,
+          producto: { precioCosto: 0, precioVenta: 100 },
+          items: [
+            { id: 'i1', cantidad: 4, precioUnitario: 100, total: 400, producto: { precioCosto: 0 }, allocations: [] },
+            { id: 'i2', cantidad: 1, precioUnitario: 100, total: 100, producto: { precioCosto: 0 }, allocations: [] },
+          ],
+        },
+      ]),
+    )
+    prismaMock.gastoCompra.findMany.mockImplementation(soloEnero([]))
+    prismaMock.pagosalario.findMany.mockImplementation(soloEnero([]))
+    prismaMock.gastosDE.findMany.mockImplementation(soloEnero([]))
+
+    const { getBalanceFinanciero } = await import('@/features/contabilidad/api/exchange-handlers')
+    const request = new NextRequest('http://localhost/api/contabilidad/balance-financiero?year=2025')
+    const response = await getBalanceFinanciero(request, baseUser as any)
+    const body = await response.json()
+
+    const enero = body.estadoResultados.mensual.find((m: any) => m.month === 1)
+    expect(enero.ingresosVentas).toBe(500) // sum(items.total), NO 9999
+  })
+
+  it('NO distorsiona ingresos con precioVenta actual cuando v.total es null y no hay items', async () => {
+    // Venta legacy con total=null, cantidad=10, producto.precioVenta=100
+    // Comportamiento ANTERIOR (buggy): 10 * 100 = 1000
+    // Comportamiento NUEVO: 0 (mejor sub-registrar que inventar)
+    prismaMock.venta.findMany.mockImplementation(
+      soloEnero([
+        {
+          ventaId: 'v1',
+          total: null, // dato faltante
+          cantidad: 10,
+          producto: { precioCosto: 0, precioVenta: 100 },
+          items: [],
+        },
+      ]),
+    )
+    prismaMock.gastoCompra.findMany.mockImplementation(soloEnero([]))
+    prismaMock.pagosalario.findMany.mockImplementation(soloEnero([]))
+    prismaMock.gastosDE.findMany.mockImplementation(soloEnero([]))
+
+    const { getBalanceFinanciero } = await import('@/features/contabilidad/api/exchange-handlers')
+    const request = new NextRequest('http://localhost/api/contabilidad/balance-financiero?year=2025')
+    const response = await getBalanceFinanciero(request, baseUser as any)
+    const body = await response.json()
+
+    const enero = body.estadoResultados.mensual.find((m: any) => m.month === 1)
+    expect(enero.ingresosVentas).toBe(0) // NO 1000 (que era el bug)
+  })
 })

@@ -8,6 +8,7 @@ import { ExchangeRateReadService } from '@/features/contabilidad/services/exchan
 import { exchangeRateProvider } from '@/features/contabilidad/services/exchange-rate-provider';
 import { ExchangeServiceError } from '@/features/contabilidad/services/exchange-types';
 import { calcularCostoVenta, type VentaParaCosto } from '@/features/contabilidad/utils/venta-costo';
+import { calcularIngresoVenta, type VentaParaIngreso } from '@/features/contabilidad/utils/venta-ingreso';
 
 const exchangeReadService = new ExchangeRateReadService(exchangeRateProvider);
 
@@ -224,7 +225,7 @@ export async function getBalanceFinanciero(request: NextRequest, user: Authentic
           },
         },
       })
-      const iv = ventas.reduce((a: number, v: any) => a + (v.total ?? ((v.producto?.precioVenta ?? 0) * v.cantidad)), 0)
+      const iv = calcularIngresoVenta(ventas as unknown as VentaParaIngreso[])
       const vs = (await prisma.ventaServicios.findMany({ where: { ...tenantWhere, createdAt: { gte: sd, lte: ed } } })).reduce((a: number, v: any) => a + v.total, 0)
       const gc = (await prisma.gastoCompra.findMany({ where: { ...tenantWhere, createdAt: { gte: sd, lte: ed } } })).reduce((a: number, c: any) => a + c.total, 0)
       const vc = calcularCostoVenta(ventas as unknown as VentaParaCosto[])
