@@ -127,15 +127,6 @@ export async function getProductosPorUbicacion(
 	const productosConStock = productos.map((producto) => {
 		const stockReg = stockMap.get(producto.id);
 
-		if (stockReg === undefined && producto.stock > 0) {
-			throw new ServerActionError(
-				"getProductosPorUbicacion",
-				"GET",
-				500,
-				`Inconsistencia de stock: producto ${producto.id} (${producto.nombre}) tiene stock=${producto.stock} pero no tiene registro en StockUbicacion para ${tipo} ${ubicacionId}. Ejecute la reconciliación (prisma/scripts/reconcile-stock-ubicacion.ts --fix).`,
-			);
-		}
-
 		const stockEnUbicacion = stockReg !== undefined ? stockReg.cantidad : 0;
 
 		const precioLista = preciosPorListaMap.get(producto.id);
