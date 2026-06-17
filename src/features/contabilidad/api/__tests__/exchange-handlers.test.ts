@@ -223,4 +223,29 @@ describe('getBalanceFinanciero', () => {
     expect(anual.gastosCompras).toBe(500 * 12)
     expect(anual.totalGastos).toBe(500 * 12)
   })
+
+  it('expone la utilidad del ejercicio como patrimonio.utilidadEjercicio (no utilidadAcumulada)', async () => {
+    prismaMock.venta.findMany.mockImplementation(
+      soloEnero([
+        {
+          ventaId: 'v1',
+          total: 1000,
+          cantidad: 10,
+          producto: { precioCosto: 30, precioVenta: 100 },
+        },
+      ]),
+    )
+    prismaMock.gastoCompra.findMany.mockImplementation(soloEnero([{ gastoCompraId: 'gc1', total: 200 }]))
+    prismaMock.pagosalario.findMany.mockImplementation(soloEnero([{ pgId: 's1', salario: 150, bonificaciones: 0, horasExtras: 0 }]))
+    prismaMock.gastosDE.findMany.mockImplementation(soloEnero([{ gastoId: 'g1', monto: 50 }]))
+
+    const { getBalanceFinanciero } = await import('@/features/contabilidad/api/exchange-handlers')
+    const request = new NextRequest('http://localhost/api/contabilidad/balance-financiero?year=2025')
+    const response = await getBalanceFinanciero(request, baseUser as any)
+    const body = await response.json()
+
+    // 1000 ingresos − 700 gastos = 300 utilidad
+    expect(body.balance.patrimonio.utilidadEjercicio).toBe(300)
+    expect(body.balance.patrimonio).not.toHaveProperty('utilidadAcumulada')
+  })
 })

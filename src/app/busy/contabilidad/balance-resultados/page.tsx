@@ -18,7 +18,7 @@ import { Button } from "@/components/ui/button"
 interface BalanceData {
   activos: { efectivo: number; inventario: number; cuentasPorCobrar: number; total: number }
   pasivos: { deudaExterna: number; total: number }
-  patrimonio: { capitalSocial: number; utilidadAcumulada: number; total: number }
+  patrimonio: { capitalSocial: number; utilidadEjercicio: number; total: number }
 }
 
 interface IncomeStatementData {
@@ -266,7 +266,7 @@ export default function BalanceResultadosPage() {
                                 <TableRow className="hover:bg-muted/50 transition-colors">
                                   <TableCell className="font-medium">Utilidad del Ejercicio</TableCell>
                                   <TableCell>Patrimonio</TableCell>
-                                  <TableCell className="text-right">{formatMoney(data?.balance.patrimonio.utilidadAcumulada ?? 0)}</TableCell>
+                                  <TableCell className="text-right">{formatMoney(data?.balance.patrimonio.utilidadEjercicio ?? 0)}</TableCell>
                                 </TableRow>
                                 <TableRow className="bg-green-50/50 dark:bg-green-900/10 font-bold border-t border-green-200 dark:border-green-800">
                                   <TableCell colSpan={2}>Total Patrimonio</TableCell>
