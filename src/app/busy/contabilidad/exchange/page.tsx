@@ -2,12 +2,11 @@
 
 import dynamic from 'next/dynamic';
 import { useState, useEffect } from 'react';
-import { LazyMotion, m as motion, useReducedMotion } from 'framer-motion';
+import { m as motion, useReducedMotion } from 'framer-motion';
 import { ArrowLeft, Coins } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import Link from 'next/link';
-;
 import { Skeleton } from '@/components/ui/skeleton';
 import { cn } from '@/lib/utils';
 

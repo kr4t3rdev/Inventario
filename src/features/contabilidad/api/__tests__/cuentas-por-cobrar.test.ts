@@ -44,6 +44,7 @@ describe('Cuentas por Cobrar — getCuentasPorCobrarAction', () => {
       email: 'test@test.com',
       role: 'ADMIN' as const,
       isActive: true,
+      planFeatures: { 'cuentas-cobrar': true },
     })
 
     prismaMock.cuentaPorCobrar.findMany.mockResolvedValue([
@@ -97,6 +98,7 @@ describe('Cuentas por Cobrar — getCuentasPorCobrarAction', () => {
       email: 'test@test.com',
       role: 'ADMIN' as const,
       isActive: true,
+      planFeatures: { 'cuentas-cobrar': true },
     })
 
     prismaMock.cuentaPorCobrar.findMany.mockResolvedValue([
@@ -139,6 +141,7 @@ describe('Cuentas por Cobrar — getCuentasPorCobrarAction', () => {
       email: 'test@test.com',
       role: 'ADMIN' as const,
       isActive: true,
+      planFeatures: { 'cuentas-cobrar': true },
     })
 
     prismaMock.cuentaPorCobrar.findMany.mockResolvedValue([])

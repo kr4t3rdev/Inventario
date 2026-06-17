@@ -30,6 +30,13 @@ Este documento define el primer contrato **mobile-first** del backend para clien
 | Accounting operations mutations | Ready | Crear transferencias, validarlas, registrar ajustes e inyecciones/pagos de capital. |
 | Reconciliation sales/services | Ready | Pendientes, historial y registro de reconciliaciones para ventas y servicios. |
 | Reconciliation expenses | Ready | Pendientes, historial y registro de reconciliaciones de gastos usando el adapter canónico. |
+| Accounts receivable read | Ready | Lista y métricas CxC con servicio compartido reutilizable. |
+| Accounts payable read | Ready | Lista y métricas CxP alineadas con la lógica web existente. |
+| Cash loans read | Ready | Lista, detalle, historial y stats de préstamos cash bajo contrato mobile-first. |
+| Cash debts read | Ready | Lista, detalle y stats de deudas cash bajo contrato mobile-first. |
+| Cash loans mutations | Ready | Crear, editar y registrar pagos de préstamos cash con la lógica contable real. |
+| Cash debts mutations | Ready | Crear, editar y registrar pagos de deudas cash con la lógica contable real. |
+| Audit logs read | Ready | Logs de auditoría contable para admin, usando la misma fuente de verdad web/mobile. |
 | Otros módulos | Pending | Migrar por slices usando servicios compartidos. |
 
 ## Base conventions
@@ -510,6 +517,331 @@ Authorization: Bearer <accessToken>
 ```
 
 Devuelve historial y estadísticas básicas de reconciliaciones de gastos.
+
+### `GET /api/mobile/v1/accounting/accounts-receivable`
+
+**Headers**
+
+```http
+Authorization: Bearer <accessToken>
+```
+
+**Query params opcionales**
+
+- `search`
+- `estado` (`PENDIENTE` | `PAGADA` | `PARCIAL`)
+- `clienteId`
+- `page`
+- `limit`
+
+Devuelve `{ items, pagination }` para cuentas por cobrar del tenant autenticado.
+
+### `GET /api/mobile/v1/accounting/accounts-receivable/metrics`
+
+**Headers**
+
+```http
+Authorization: Bearer <accessToken>
+```
+
+Devuelve:
+
+- `totalPendiente`
+- `porVencer`
+- `vencidas`
+- `totalCuentas`
+
+### `GET /api/mobile/v1/accounting/accounts-payable`
+
+**Headers**
+
+```http
+Authorization: Bearer <accessToken>
+```
+
+**Query params opcionales**
+
+- `search`
+- `estado` (`PENDIENTE` | `PAGADA` | `PARCIAL`)
+- `tipo` (`compra` | `servicio`)
+- `page`
+- `limit`
+
+Devuelve `{ items, pagination, metricas }` para cuentas por pagar del tenant autenticado.
+
+### `GET /api/mobile/v1/accounting/cash-loans`
+
+**Headers**
+
+```http
+Authorization: Bearer <accessToken>
+```
+
+**Query params opcionales**
+
+- `estado` (`ACTIVO` | `PAGADO` | `VENCIDO` | `CANCELADO`)
+- `clienteId`
+- `moneda`
+- `page`
+- `limit`
+
+Devuelve `{ items, pagination }` para préstamos cash del tenant autenticado.
+
+### `POST /api/mobile/v1/accounting/cash-loans`
+
+**Headers**
+
+```http
+Authorization: Bearer <accessToken>
+```
+
+**Body**
+
+Usa el mismo payload lógico del backend actual:
+
+- `clienteId`
+- `montoCapital`
+- `moneda`
+- `tasaInteres` (opcional)
+- `tasaCambioAlCrear` (opcional)
+- `fechaVencimiento` (opcional)
+- `observaciones` (opcional)
+- `cuentaBancariaId`
+
+### `GET /api/mobile/v1/accounting/cash-loans/:id`
+
+**Headers**
+
+```http
+Authorization: Bearer <accessToken>
+```
+
+Devuelve `{ item }` con el préstamo cash solicitado.
+
+### `PUT /api/mobile/v1/accounting/cash-loans/:id`
+
+**Headers**
+
+```http
+Authorization: Bearer <accessToken>
+```
+
+Permite editar los mismos campos permitidos hoy por el backend real:
+
+- `fechaVencimiento`
+- `tasaInteres`
+- `observaciones`
+
+### `GET /api/mobile/v1/accounting/cash-loans/:id/history`
+
+**Headers**
+
+```http
+Authorization: Bearer <accessToken>
+```
+
+Devuelve `prestamo`, `resumen` e `historial` de pagos reconciliados del préstamo.
+
+### `POST /api/mobile/v1/accounting/cash-loans/:id/payments`
+
+**Headers**
+
+```http
+Authorization: Bearer <accessToken>
+```
+
+**Body**
+
+- `monto`
+- `cuentaId`
+- `tipoPagoId`
+- `moneda` (opcional)
+- `tasaCambio` (opcional)
+- `observaciones` (opcional)
+
+### `GET /api/mobile/v1/accounting/cash-loans/stats`
+
+**Headers**
+
+```http
+Authorization: Bearer <accessToken>
+```
+
+Devuelve métricas agregadas del módulo:
+
+- `totalActivos`
+- `totalPagados`
+- `totalVencidos`
+- `montoTotalPrestado`
+- `montoPendienteCobro`
+- `resumenMovimientos`
+
+### `GET /api/mobile/v1/accounting/cash-debts`
+
+**Headers**
+
+```http
+Authorization: Bearer <accessToken>
+```
+
+**Query params opcionales**
+
+- `estado` (`ACTIVO` | `PAGADO` | `VENCIDO` | `CANCELADO`)
+- `proveedorId`
+- `moneda`
+- `page`
+- `limit`
+
+Devuelve `{ items, pagination }` para deudas cash del tenant autenticado.
+
+### `POST /api/mobile/v1/accounting/cash-debts`
+
+**Headers**
+
+```http
+Authorization: Bearer <accessToken>
+```
+
+**Body**
+
+Usa el mismo payload lógico del backend actual:
+
+- `proveedorId`
+- `montoCapital`
+- `moneda`
+- `tasaInteres` (opcional)
+- `fechaVencimiento` (opcional)
+- `observaciones` (opcional)
+- `comprobanteUrl` (opcional)
+- `cuentaBancariaId`
+
+### `GET /api/mobile/v1/accounting/cash-debts/:id`
+
+**Headers**
+
+```http
+Authorization: Bearer <accessToken>
+```
+
+Devuelve `{ item }` con la deuda cash solicitada.
+
+### `PUT /api/mobile/v1/accounting/cash-debts/:id`
+
+**Headers**
+
+```http
+Authorization: Bearer <accessToken>
+```
+
+Permite editar los mismos campos permitidos hoy por el backend real:
+
+- `fechaVencimiento`
+- `tasaInteres`
+- `observaciones`
+
+### `POST /api/mobile/v1/accounting/cash-debts/:id/payments`
+
+**Headers**
+
+```http
+Authorization: Bearer <accessToken>
+```
+
+**Body**
+
+- `monto`
+- `cuentaId`
+- `tipoPagoId`
+- `moneda` (opcional)
+- `tasaCambio` (opcional)
+- `observaciones` (opcional)
+
+### `GET /api/mobile/v1/accounting/cash-debts/stats`
+
+**Headers**
+
+```http
+Authorization: Bearer <accessToken>
+```
+
+Devuelve métricas agregadas del módulo:
+
+- `totalActivas`
+- `totalPagadas`
+- `totalVencidas`
+- `montoTotalDeuda`
+- `montoPendientePago`
+
+### `GET /api/mobile/v1/accounting/logs`
+
+**Headers**
+
+```http
+Authorization: Bearer <accessToken>
+```
+
+**Query params opcionales**
+
+- `entidad`
+- `limit`
+- `offset`
+
+Devuelve `{ items, pagination }` con logs de auditoría contable.
+
+Importante:
+
+- respeta la misma restricción real del sistema: **solo admin**
+- usa la misma fuente de verdad que web para auditoría
+
+### `GET /api/mobile/v1/accounting/reports/summary`
+
+**Headers**
+
+```http
+Authorization: Bearer <accessToken>
+```
+
+**Query params opcionales**
+
+- `fechaInicio`
+- `fechaFin`
+- `cuentaId`
+- `moneda`
+
+Devuelve el resumen financiero base del módulo, incluyendo:
+
+- `resumenPorMoneda`
+- `cuentasBancarias`
+- `estadisticas`
+- `filtros`
+
+### `GET /api/mobile/v1/accounting/reports/movements`
+
+**Headers**
+
+```http
+Authorization: Bearer <accessToken>
+```
+
+**Query params opcionales**
+
+- `busqueda`
+- `fechaInicio`
+- `fechaFin`
+- `cuentaId`
+- `tipoMovimiento`
+- `moneda`
+- `page`
+- `limit`
+
+Devuelve:
+
+- `items`
+- `totales`
+- `pagination`
+- `filtros`
+
+Este reporte ya contempla los movimientos reales del proyecto, incluyendo ventas, servicios, gastos, transferencias, ajustes, inyecciones, pagos de deuda y los flujos de préstamos/deudas cash.
 
 ## Error model
 

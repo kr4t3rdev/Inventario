@@ -1,6 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { updateCuentaPorCobrarAction } from '@/features/contabilidad/actions-cuentas'
-import { ActionError } from '@/lib/server-actions'
 
 const prismaMock = vi.hoisted(() => ({
   cuentaPorCobrar: {
@@ -44,6 +43,7 @@ describe('Cuentas por Cobrar — updateCuentaPorCobrarAction', () => {
       email: 'test@test.com',
       role: 'ADMIN' as const,
       isActive: true,
+      planFeatures: { 'cuentas-cobrar': true },
     })
 
     prismaMock.cuentaPorCobrar.findFirst.mockResolvedValue(null)
@@ -63,6 +63,7 @@ describe('Cuentas por Cobrar — updateCuentaPorCobrarAction', () => {
       email: 'test@test.com',
       role: 'ADMIN' as const,
       isActive: true,
+      planFeatures: { 'cuentas-cobrar': true },
     })
 
     prismaMock.cuentaPorCobrar.findFirst.mockResolvedValue({
@@ -129,6 +130,7 @@ describe('Cuentas por Cobrar — updateCuentaPorCobrarAction', () => {
       email: 'test@test.com',
       role: 'ADMIN' as const,
       isActive: true,
+      planFeatures: { 'cuentas-cobrar': true },
     })
 
     const result = await updateCuentaPorCobrarAction({ id: '', estado: 'PAGADA' })

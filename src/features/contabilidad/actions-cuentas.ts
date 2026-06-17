@@ -13,6 +13,7 @@ import { prisma } from "@/lib/prisma";
 import { requireFeature, requireTenant } from "@/lib/services/tenant-scope";
 import { revalidatePath } from "next/cache";
 import type { AuthenticatedUser } from "@/lib/auth-middleware";
+import { AccountingAccountsService } from "@/features/contabilidad/services/accounting-accounts-service";
 import {
 	getCuentasPorCobrarSchema,
 	createCuentaPorCobrarSchema,
@@ -390,42 +391,14 @@ export const getCuentasPorCobrarAction = withAction(
 		const tenantId = requireTenant(user);
 		const f = getCuentasPorCobrarSchema.parse(input);
 
-		const where: Record<string, unknown> = { tenantId };
-		if (f.estado) where.estado = f.estado;
-		if (f.clienteId) where.clienteId = f.clienteId;
-		if (f.search) {
-			where.OR = [
-				{ numeroFactura: { contains: f.search, mode: "insensitive" } },
-				{ cliente: { nombre: { contains: f.search, mode: "insensitive" } } },
-			];
-		}
-
-		const skip = (f.page - 1) * f.limit;
-
-		const [cuentasRaw, total] = await Promise.all([
-			prisma.cuentaPorCobrar.findMany({
-				where,
-				include: CXC_INCLUDE,
-				orderBy: { createdAt: "desc" },
-				skip,
-				take: f.limit,
-			}),
-			prisma.cuentaPorCobrar.count({ where }),
-		]);
-
-		const cuentas = cuentasRaw.map((c) =>
-			enriquecerCuentaPorCobrar(c as unknown as Record<string, unknown>),
-		);
-
-		return {
-			cuentas,
-			pagination: {
-				page: f.page,
-				limit: f.limit,
-				total,
-				totalPages: Math.ceil(total / f.limit),
-			},
-		};
+		return AccountingAccountsService.listReceivables({
+			tenantId,
+			estado: f.estado ?? null,
+			clienteId: f.clienteId ?? null,
+			search: f.search ?? null,
+			page: f.page,
+			limit: f.limit,
+		});
 	},
 );
 
@@ -550,30 +523,7 @@ export const getCxcMetricsAction = withAction(
 		requireFeature(user, 'cuentas-cobrar', 'ver métricas de cuentas por cobrar');
 		const tenantId = requireTenant(user);
 
-		const ahora = new Date();
-
-		const pendientesAgg = await prisma.cuentaPorCobrar.aggregate({
-			where: { tenantId, estado: { in: ["PENDIENTE", "PARCIAL"] } },
-			_sum: { montoDeuda: true },
-		});
-
-		const [vencidas, totalCuentas] = await Promise.all([
-			prisma.cuentaPorCobrar.count({
-				where: {
-					tenantId,
-					estado: { not: "PAGADA" },
-					fechaVencimiento: { lt: ahora, not: null },
-				},
-			}),
-			prisma.cuentaPorCobrar.count({ where: { tenantId } }),
-		]);
-
-		return {
-			totalPendiente: Number(pendientesAgg._sum.montoDeuda ?? 0),
-			porVencer: totalCuentas - vencidas,
-			vencidas,
-			totalCuentas,
-		};
+		return AccountingAccountsService.getReceivablesMetrics({ tenantId });
 	},
 );
 
@@ -593,59 +543,14 @@ export const getCuentasPorPagarAction = withAction(
 		const tenantId = requireTenant(user);
 		const f = getCuentasPorPagarSchema.parse(input);
 
-		const where: Record<string, unknown> = { tenantId, deletedAt: null };
-		if (f.estado) where.estado = f.estado;
-		if (f.tipo) where.tipo = f.tipo;
-		if (f.search) {
-			where.OR = [
-				{ numeroFactura: { contains: f.search, mode: "insensitive" } },
-				{ proveedorNombre: { contains: f.search, mode: "insensitive" } },
-			];
-		}
-
-		const skip = (f.page - 1) * f.limit;
-
-		const [cuentasRaw, total, aggregates, pendientes, pagadas] =
-			await Promise.all([
-				prisma.cuentaPorPagar.findMany({
-					where,
-					include: CXP_INCLUDE,
-					orderBy: { createdAt: "desc" },
-					skip,
-					take: f.limit,
-				}),
-				prisma.cuentaPorPagar.count({ where }),
-				prisma.cuentaPorPagar.aggregate({
-					where,
-					_sum: { montoDeuda: true, montoPagado: true, saldoPendiente: true },
-				}),
-				prisma.cuentaPorPagar.count({
-					where: { ...where, estado: "PENDIENTE" },
-				}),
-				prisma.cuentaPorPagar.count({ where: { ...where, estado: "PAGADA" } }),
-			]);
-
-		const cuentas = cuentasRaw.map((c) =>
-			enriquecerCuentaPorPagar(c as unknown as Record<string, unknown>),
-		);
-
-		return {
-			cuentas,
-			pagination: {
-				page: f.page,
-				limit: f.limit,
-				total,
-				totalPages: Math.ceil(total / f.limit),
-			},
-			metricas: {
-				totalCuentas: total,
-				totalFacturado: Number(aggregates._sum.montoDeuda ?? 0),
-				totalPagado: Number(aggregates._sum.montoPagado ?? 0),
-				totalSaldo: Number(aggregates._sum.saldoPendiente ?? 0),
-				cuentasPendientes: pendientes,
-				cuentasPagadas: pagadas,
-			},
-		};
+		return AccountingAccountsService.listPayables({
+			tenantId,
+			estado: f.estado ?? null,
+			tipo: f.tipo ?? null,
+			search: f.search ?? null,
+			page: f.page,
+			limit: f.limit,
+		});
 	},
 );
 
