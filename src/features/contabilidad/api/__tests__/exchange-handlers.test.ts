@@ -248,4 +248,80 @@ describe('getBalanceFinanciero', () => {
     expect(body.balance.patrimonio.utilidadEjercicio).toBe(300)
     expect(body.balance.patrimonio).not.toHaveProperty('utilidadAcumulada')
   })
+
+  it('calcula el costo de venta con las PurchaseAllocations FIFO (precioUnitario histórico)', async () => {
+    // Venta de 10 unidades. El producto tiene precioCosto actual = 9999 (NO debe usarse).
+    // Las allocations dicen: 6 unidades a 20 CUP, 4 unidades a 25 CUP.
+    // Costo histórico esperado: 6*20 + 4*25 = 220.
+    prismaMock.venta.findMany.mockImplementation(
+      soloEnero([
+        {
+          ventaId: 'v1',
+          total: 1000,
+          cantidad: 0, // legacy, ignorado cuando hay items
+          producto: { precioCosto: 9999, precioVenta: 100 },
+          items: [
+            {
+              id: 'vi1',
+              cantidad: 10,
+              precioUnitario: 100,
+              total: 1000,
+              producto: { precioCosto: 9999 },
+              allocations: [
+                { id: 'a1', cantidad: 6, compraDocumentoItem: { precioUnitario: 20 } },
+                { id: 'a2', cantidad: 4, compraDocumentoItem: { precioUnitario: 25 } },
+              ],
+            },
+          ],
+        },
+      ]),
+    )
+    prismaMock.gastoCompra.findMany.mockImplementation(soloEnero([]))
+    prismaMock.pagosalario.findMany.mockImplementation(soloEnero([]))
+    prismaMock.gastosDE.findMany.mockImplementation(soloEnero([]))
+
+    const { getBalanceFinanciero } = await import('@/features/contabilidad/api/exchange-handlers')
+    const request = new NextRequest('http://localhost/api/contabilidad/balance-financiero?year=2025')
+    const response = await getBalanceFinanciero(request, baseUser as any)
+    const body = await response.json()
+
+    const enero = body.estadoResultados.mensual.find((m: any) => m.month === 1)
+    // ventasCosto debe ser 220 (FIFO), no 9999*10 (precioCosto actual)
+    expect(enero.ventasCosto).toBe(220)
+  })
+
+  it('cae al precioCosto actual cuando no hay PurchaseAllocations', async () => {
+    // VentaItem sin allocations: 5 unidades, producto.precioCosto = 30 → costo = 150
+    prismaMock.venta.findMany.mockImplementation(
+      soloEnero([
+        {
+          ventaId: 'v1',
+          total: 500,
+          cantidad: 0,
+          producto: { precioCosto: 0, precioVenta: 100 },
+          items: [
+            {
+              id: 'vi1',
+              cantidad: 5,
+              precioUnitario: 100,
+              total: 500,
+              producto: { precioCosto: 30 },
+              allocations: [],
+            },
+          ],
+        },
+      ]),
+    )
+    prismaMock.gastoCompra.findMany.mockImplementation(soloEnero([]))
+    prismaMock.pagosalario.findMany.mockImplementation(soloEnero([]))
+    prismaMock.gastosDE.findMany.mockImplementation(soloEnero([]))
+
+    const { getBalanceFinanciero } = await import('@/features/contabilidad/api/exchange-handlers')
+    const request = new NextRequest('http://localhost/api/contabilidad/balance-financiero?year=2025')
+    const response = await getBalanceFinanciero(request, baseUser as any)
+    const body = await response.json()
+
+    const enero = body.estadoResultados.mensual.find((m: any) => m.month === 1)
+    expect(enero.ventasCosto).toBe(150)
+  })
 })

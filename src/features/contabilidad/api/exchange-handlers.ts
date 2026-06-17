@@ -7,6 +7,7 @@ import { CurrencyConversionService } from '@/lib/services/currency-conversion-se
 import { ExchangeRateReadService } from '@/features/contabilidad/services/exchange-rate-read-service';
 import { exchangeRateProvider } from '@/features/contabilidad/services/exchange-rate-provider';
 import { ExchangeServiceError } from '@/features/contabilidad/services/exchange-types';
+import { calcularCostoVenta, type VentaParaCosto } from '@/features/contabilidad/utils/venta-costo';
 
 const exchangeReadService = new ExchangeRateReadService(exchangeRateProvider);
 
@@ -209,11 +210,24 @@ export async function getBalanceFinanciero(request: NextRequest, user: Authentic
     const months = Array.from({ length: 12 }, (_, i) => i)
     const monthlyData = await Promise.all(months.map(async (mi) => {
       const sd = new Date(year, mi, 1); const ed = new Date(year, mi + 1, 0)
-      const ventas = await prisma.venta.findMany({ where: { ...tenantWhere, createdAt: { gte: sd, lte: ed } }, include: { producto: true } })
+      const ventas = await prisma.venta.findMany({
+        where: { ...tenantWhere, createdAt: { gte: sd, lte: ed } },
+        include: {
+          producto: { select: { precioCosto: true, precioVenta: true } },
+          items: {
+            include: {
+              producto: { select: { precioCosto: true } },
+              allocations: {
+                include: { compraDocumentoItem: { select: { precioUnitario: true } } },
+              },
+            },
+          },
+        },
+      })
       const iv = ventas.reduce((a: number, v: any) => a + (v.total ?? ((v.producto?.precioVenta ?? 0) * v.cantidad)), 0)
       const vs = (await prisma.ventaServicios.findMany({ where: { ...tenantWhere, createdAt: { gte: sd, lte: ed } } })).reduce((a: number, v: any) => a + v.total, 0)
       const gc = (await prisma.gastoCompra.findMany({ where: { ...tenantWhere, createdAt: { gte: sd, lte: ed } } })).reduce((a: number, c: any) => a + c.total, 0)
-      const vc = ventas.reduce((a: number, v: any) => a + ((v.producto?.precioCosto ?? 0) * v.cantidad), 0)
+      const vc = calcularCostoVenta(ventas as unknown as VentaParaCosto[])
       const gs = (await prisma.pagosalario.findMany({ where: { ...tenantWhere, createdAt: { gte: sd, lte: ed } } })).reduce((a: number, s: any) => a + s.salario + (s.bonificaciones ?? 0) + (s.horasExtras ?? 0), 0)
       const gg = (await prisma.gastosDE.findMany({ where: { ...tenantWhere, createdAt: { gte: sd, lte: ed } } })).reduce((a: number, g: any) => a + g.monto, 0)
       const gm = (await prisma.merma.findMany({ where: { ...tenantWhere, createdAt: { gte: sd, lte: ed } } })).reduce((a: number, m: any) => a + (m.costoTotal ?? 0), 0)
