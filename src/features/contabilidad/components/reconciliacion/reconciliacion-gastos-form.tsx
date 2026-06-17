@@ -438,6 +438,7 @@ export function ReconciliacionGastosForm({
 
       const result = await reconciliarGastoAction({
         pgId: baseData.pgId,
+        gastosDEId: baseData.gastosDEId,
         gastoCompraId: baseData.gastoCompraId,
         compraServicioId: baseData.compraServicioId,
         ventaServicioId: baseData.ventaServicioId,

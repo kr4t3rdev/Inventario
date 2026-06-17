@@ -963,6 +963,7 @@ export const reconciliarGastoAction = withAction(
 				: new Date(),
 		async (
 			input: {
+				gastosDEId?: string;
 				gastoCompraId?: string;
 				pgId?: string;
 				compraServicioId?: string;
@@ -990,6 +991,7 @@ export const reconciliarGastoAction = withAction(
 			const tenantId = requireTenant(user);
 
 			const referenciaId =
+				input.gastosDEId ||
 				input.pgId ||
 				input.gastoCompraId ||
 				input.compraServicioId ||
@@ -997,16 +999,19 @@ export const reconciliarGastoAction = withAction(
 			if (!referenciaId)
 				throw new Error("Se requiere referencia del gasto para pagar");
 
+			const esGastoDE = !!input.gastosDEId;
 			const esVentaServicio = !!input.ventaServicioId;
 			const esServicio = !!input.compraServicioId;
 			const esSalario = !!input.pgId;
-			const tipoGasto = esVentaServicio
-				? ("venta_servicio" as const)
-				: esServicio
-					? ("servicio" as const)
-					: esSalario
-						? ("salario" as const)
-						: ("compra" as const);
+			const tipoGasto = esGastoDE
+				? ("gastoDE" as const)
+				: esVentaServicio
+					? ("venta_servicio" as const)
+					: esServicio
+						? ("servicio" as const)
+						: esSalario
+							? ("salario" as const)
+							: ("compra" as const);
 
 			try {
 				const result = await prisma.$transaction(async (tx) => {
@@ -1037,6 +1042,7 @@ export const reconciliarGastoAction = withAction(
 						numeroTransaccion:
 							input.distribucion?.[0]?.numeroTransaccion,
 						pgId: input.pgId,
+						gastosDEId: input.gastosDEId,
 						gastoCompraId: input.gastoCompraId,
 						tipoPagoId: input.tipoPagoId,
 						distribucion,
