@@ -45,6 +45,7 @@ export const PLAN_BASICO_FEATURES: Record<string, boolean> = {
 	contabilidad: true,
 	"multi-moneda": false,
 	"rentabilidad-compra": true,
+	"inyeccion-capital": false,
 	"reportes-financieros": false,
 	"cuentas-cobrar": false,
 	"cuentas-pagar": false,
@@ -117,6 +118,7 @@ export const PLAN_EMPRESARIAL_FEATURES: Record<string, boolean> = {
 	"analisis-estado-cuenta": true,
 	"facturas-vencidas": true,
 	"multitenantmembership": true,
+	"inyeccion-capital": true,
 	// Backups cada hora + restauración point-in-time
 	"backups-diario": false,
 	"backups-tiempo-real": true,

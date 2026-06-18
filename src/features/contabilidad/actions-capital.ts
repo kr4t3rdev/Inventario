@@ -7,7 +7,7 @@ import { revalidatePath } from 'next/cache';
 import { z } from 'zod';
 import { withAction, ActionError } from '@/lib/server-actions';
 import { prisma } from '@/lib/prisma';
-import { requireTenant } from '@/lib/services/tenant-scope';
+import { requireTenant, requireFeature } from '@/lib/services/tenant-scope';
 import { withPeriodValidation } from '@/lib/services/with-period-validation';
 import { AccountingOperationsReadService } from '@/features/contabilidad/services/accounting-operations-read-service';
 import { AccountingOperationsMutationService } from '@/features/contabilidad/services/accounting-operations-mutation-service';
@@ -31,6 +31,7 @@ const pagoSchema = z.object({
 
 export const getInyeccionesCapitalAction = withAction(async (_input: { tipo?: string } = {}, user: AuthenticatedUser) => {
   const tenantId = requireTenant(user);
+  requireFeature(user, 'inyeccion-capital', 'ver inyecciones de capital');
   return AccountingOperationsReadService.getCapitalInjections({
     tenantId,
     tipo: _input.tipo,
@@ -40,6 +41,7 @@ export const getInyeccionesCapitalAction = withAction(async (_input: { tipo?: st
 export const createInyeccionCapitalAction = withAction(withPeriodValidation(
   () => new Date(),
   async (input: z.infer<typeof createSchema>, user: AuthenticatedUser) => {
+  requireFeature(user, 'inyeccion-capital', 'registrar inyecciones de capital');
   const inyeccion = await AccountingOperationsMutationService.createCapitalInjection({
     input,
     user,
@@ -51,6 +53,7 @@ export const createInyeccionCapitalAction = withAction(withPeriodValidation(
 export const registrarPagoCapitalAction = withAction(withPeriodValidation(
   () => new Date(),
   async (input: z.infer<typeof pagoSchema>, user: AuthenticatedUser) => {
+  requireFeature(user, 'inyeccion-capital', 'registrar pagos de deuda');
   const pago = await AccountingOperationsMutationService.registerCapitalPayment({
     input,
     user,

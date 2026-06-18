@@ -29,7 +29,7 @@ const mockUser = {
   isActive: true,
   tenantId: 'tenant-1',
   tenantRole: 'manager',
-  planFeatures: { contabilidad: true },
+  planFeatures: { contabilidad: true, 'inyeccion-capital': true },
 };
 
 describe('mobile capital payment route', () => {

@@ -1,5 +1,6 @@
 import { ActionError } from '@/lib/server-actions';
 import { authenticateUser } from '@/lib/auth-middleware';
+import { requireFeature } from '@/lib/services/tenant-scope';
 import { errorResponse, successResponse } from '@/lib/api-response';
 import { AccountingOperationsMutationService } from '@/features/contabilidad/services/accounting-operations-mutation-service';
 import { extraerFechaDeBody, validarEscrituraPeriodo } from '@/lib/services/validate-period-write';
@@ -31,6 +32,8 @@ export async function POST(request: Request, context: RouteContext) {
   }
 
   try {
+    requireFeature(authResult.user, 'inyeccion-capital', 'registrar pagos de deuda');
+
     const { id } = await context.params;
     const body = await request.json();
     const fechaOperacion = extraerFechaDeBody(body) ?? new Date();

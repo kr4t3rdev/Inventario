@@ -551,6 +551,7 @@ export function AppSidebar2({
 		Notificaciones: "notificaciones",
 		"Analisis Estado Cuenta": "analisis-estado-cuenta",
 		"Facturas Vencidas": "facturas-vencidas",
+		"Inyección Capital": "inyeccion-capital",
 	};
 
 	// ── Permisos de sidebar por rol de tenant ──

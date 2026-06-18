@@ -3,6 +3,7 @@ import { prisma } from '@/lib/prisma'
 import { z } from 'zod'
 import type { Prisma } from '@/generated/prisma'
 import { authenticateUser } from '@/lib/auth-middleware'
+import { requireFeature } from '@/lib/services/tenant-scope'
 import { AuditLogService } from '@/lib/services/audit-log-service'
 import { executeAnticipo, reverseAnticipo } from '@/lib/services/anticipos-workflow'
 import { crearCierreContable } from '@/lib/services/cierreContableService'
@@ -170,12 +171,14 @@ export async function validarTransferencia(request: NextRequest) {
 const icSchema = z.object({ tipo: z.enum(['CAPITAL_SOCIAL', 'DEUDA_EXTERNA']), montoRecibido: z.number().positive(), moneda: z.string().default('CUP'), cuentaId: z.string().min(1), descripcion: z.string().optional(), socio: z.string().optional(), entidadPrestamista: z.string().optional() })
 
 export async function getInyeccionesCapital(request: NextRequest) {
+  const a = await authenticateUser(request); if ('status' in a) return a as Response; const u = a.user; requireFeature(u, 'inyeccion-capital', 'ver inyecciones de capital');
   const tipo = new URL(request.url).searchParams.get('tipo'); const w: any = {}; if (tipo) w.tipo = tipo
   return NextResponse.json({ inyecciones: await prisma.inyeccionCapital.findMany({ where: w, include: { cuentaBancaria: { select: { nombreBanco: true, numeroCuenta: true, moneda: true } }, pagos: true }, orderBy: { createdAt: 'desc' } }) })
 }
 
 export async function createInyeccionCapital(request: NextRequest) {
-  const a = await authenticateUser(request); if ('status' in a) return a as Response; const u = a.user; const v = icSchema.parse(await request.json())
+  const a = await authenticateUser(request); if ('status' in a) return a as Response; const u = a.user; requireFeature(u, 'inyeccion-capital', 'registrar inyecciones de capital');
+  const v = icSchema.parse(await request.json())
   const r = await prisma.$transaction(async (tx: Prisma.TransactionClient) => {
     const i = await tx.inyeccionCapital.create({ data: { tipo: v.tipo, montoRecibido: v.montoRecibido, moneda: v.moneda, cuentaId: v.cuentaId, descripcion: v.descripcion, socio: v.socio, entidadPrestamista: v.entidadPrestamista, estado: v.tipo === 'DEUDA_EXTERNA' ? 'ACTIVA' : null } })
     await tx.cuentaBancaria.update({ where: { cuentaId: v.cuentaId }, data: { saldo: { increment: v.montoRecibido } } })
@@ -188,7 +191,8 @@ export async function createInyeccionCapital(request: NextRequest) {
 const pdSchema = z.object({ montoPagado: z.number().positive(), cuentaId: z.string().min(1), comprobante: z.string().optional() })
 
 export async function pagarDeudaCapital(request: NextRequest, id: string) {
-  const a = await authenticateUser(request); if ('status' in a) return a as Response; const u = a.user; const v = pdSchema.parse(await request.json())
+  const a = await authenticateUser(request); if ('status' in a) return a as Response; const u = a.user; requireFeature(u, 'inyeccion-capital', 'registrar pagos de deuda');
+  const v = pdSchema.parse(await request.json())
   const iny = await prisma.inyeccionCapital.findUnique({ where: { id }, include: { pagos: true } })
   if (!iny || iny.tipo !== 'DEUDA_EXTERNA') return NextResponse.json({ error: 'Invalida' }, { status: 400 })
   const r = await prisma.$transaction(async (tx: Prisma.TransactionClient) => {

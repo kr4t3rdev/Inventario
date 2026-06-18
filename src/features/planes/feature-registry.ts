@@ -204,6 +204,13 @@ export const FEATURE_REGISTRY: FeatureDef[] = [
 		category: "financiero",
 	},
 	{
+		key: "inyeccion-capital",
+		label: "Inyección de capital",
+		description:
+			"Inyecciones y aportaciones de capital con registro de pagos de deuda",
+		category: "financiero",
+	},
+	{
 		key: "multi-moneda",
 		label: "Multi-moneda (USD)",
 		description: "Operaciones en múltiples monedas con conversión automática",

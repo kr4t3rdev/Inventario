@@ -1,5 +1,6 @@
 import { ActionError } from '@/lib/server-actions';
 import { authenticateUser } from '@/lib/auth-middleware';
+import { requireFeature } from '@/lib/services/tenant-scope';
 import { errorResponse, successResponse } from '@/lib/api-response';
 import { AccountingOperationsReadService } from '@/features/contabilidad/services/accounting-operations-read-service';
 import { AccountingOperationsMutationService } from '@/features/contabilidad/services/accounting-operations-mutation-service';
@@ -32,6 +33,8 @@ export async function GET(request: Request) {
     return errorResponse('Tenant no identificado', 403, 'TENANT_REQUIRED');
   }
 
+  requireFeature(authResult.user, 'inyeccion-capital', 'administrar inyecciones de capital');
+
   try {
     const { searchParams } = new URL(request.url);
     const result = await AccountingOperationsReadService.getCapitalInjections({
@@ -53,6 +56,8 @@ export async function POST(request: Request) {
   }
 
   try {
+    requireFeature(authResult.user, 'inyeccion-capital', 'registrar inyecciones de capital');
+
     const body = await request.json();
     const fechaOperacion = extraerFechaDeBody(body) ?? new Date();
     const validacionPeriodo = await validarEscrituraPeriodo({
