@@ -14,6 +14,11 @@ vi.mock("next/cache", () => ({ revalidatePath: vi.fn() }));
 
 const { mockPrisma } = vi.hoisted(() => ({
 	mockPrisma: {
+		$transaction: vi.fn(
+			(
+				cb: (tx: typeof mockPrisma) => Promise<unknown>,
+			): Promise<unknown> => cb(mockPrisma),
+		),
 		periodoContable: {
 			findFirst: vi.fn(),
 			findUnique: vi.fn(),

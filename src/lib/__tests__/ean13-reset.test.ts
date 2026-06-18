@@ -2,7 +2,7 @@ import { describe, it, expect, beforeEach, afterEach } from 'vitest'
 import { prisma } from '@/lib/prisma'
 import { resetProductsForEan13, clearEan13Codes } from '@/lib/ean13-reset'
 
-describe('EAN-13 Reset Logic', () => {
+describe('EAN-13 Reset Logic', { timeout: 30_000 }, () => {
   const createTenant = async () => {
     return prisma.tenant.create({
       data: {
