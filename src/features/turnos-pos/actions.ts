@@ -243,6 +243,7 @@ export const getOrCreateTurnoActivo = withAction(
 	) => {
 		const parsed = turnoAutomaticoSchema.parse(params);
 		const tenantId = requireTenant(user);
+		requireFeature(user, 'turnos-pos', 'gestionar turnos POS');
 
 		// Buscar turno activo existente
 		const turnoActivo = await prisma.turnoPuntoVenta.findFirst({
