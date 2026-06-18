@@ -35,6 +35,22 @@ interface ProductoDashboard {
   unidad?: { simbolo: string } | null;
 }
 
+interface TopProductoData {
+  id: string;
+  nombre: string;
+  stock: number;
+  categoria: { nombre: string } | null;
+}
+
+interface ProductoStockBajoData {
+  id: string;
+  nombre: string;
+  stock: number;
+  stockMinimo: number;
+  categoria: { nombre: string } | null;
+  unidad: { simbolo: string } | null;
+}
+
 const cache = new Map<string, CacheEntry>();
 const CACHE_DURATION = 30 * 1000;
 
@@ -131,7 +147,7 @@ export async function getDashboardStatsData({
     }),
     prisma.pagosalario.findMany({
       where: { tenantId },
-      select: { salario: true, createdAt: true },
+      select: { salario: true, bonificaciones: true, horasExtras: true, createdAt: true },
       orderBy: { periodo: 'desc' },
     }),
     prisma.transferencia.findMany({
@@ -183,19 +199,28 @@ export async function getDashboardStatsData({
     return acc;
   }, {});
 
+  // Pre-calcular transferencias por producto (O(n) en vez de O(n*m))
+  const transferenciasEntradaPorProducto = new Map<string, number>();
+  const transferenciasSalidaPorProducto = new Map<string, number>();
+
+  for (const t of transferenciasData) {
+    if (t.puntoDeVentaDestinoId) {
+      transferenciasEntradaPorProducto.set(
+        t.productoId,
+        (transferenciasEntradaPorProducto.get(t.productoId) || 0) + t.cantidad
+      );
+    }
+    if (t.puntoDeVentaOrigenId) {
+      transferenciasSalidaPorProducto.set(
+        t.productoId,
+        (transferenciasSalidaPorProducto.get(t.productoId) || 0) + t.cantidad
+      );
+    }
+  }
+
   const valorTotalInventario = productosDataRaw.reduce((sum, producto) => {
-    const transferenciaEntrada = transferenciasData
-      .filter((transferencia) => {
-        return transferencia.productoId === producto.id && transferencia.puntoDeVentaDestinoId !== null;
-      })
-      .reduce((subtotal, transferencia) => subtotal + transferencia.cantidad, 0);
-
-    const transferenciaSalida = transferenciasData
-      .filter((transferencia) => {
-        return transferencia.productoId === producto.id && transferencia.puntoDeVentaOrigenId !== null;
-      })
-      .reduce((subtotal, transferencia) => subtotal + transferencia.cantidad, 0);
-
+    const transferenciaEntrada = transferenciasEntradaPorProducto.get(producto.id) || 0;
+    const transferenciaSalida = transferenciasSalidaPorProducto.get(producto.id) || 0;
     const ventasTotales = getVentasProductoTotal(producto.id);
     const stockTotal = producto.stock + (transferenciaEntrada - transferenciaSalida - ventasTotales);
 
@@ -214,8 +239,16 @@ export async function getDashboardStatsData({
       return sum + Number(venta.cantidad || 0) * (precioCostoPorProducto[venta.productoId] || 0);
     }, 0);
 
+  // Calcular totalIngresos incluyendo ventas legacy correctamente
   const totalIngresos =
-    ventasData.reduce((sum, venta) => sum + Number(venta.total || 0), 0) +
+    // Ingresos de ventas con items (suma de item.total)
+    ventaItemsData.reduce((sum, item) => sum + Number(item.total || 0), 0) +
+    // Ingresos de ventas legacy (cantidad * precioVenta)
+    ventasLegacyData.reduce((sum, venta) => {
+      if (!venta.productoId) return sum;
+      return sum + Number(venta.cantidad || 0) * (precioVentaPorProducto[venta.productoId] || 0);
+    }, 0) +
+    // Ingresos de servicios
     ventaServiciosData.reduce((sum, servicio) => sum + Number(servicio.total || 0), 0);
 
   const totalGastosMermas = mermasData.reduce((sum, merma) => {
@@ -224,8 +257,8 @@ export async function getDashboardStatsData({
 
   const totalGastosDE = gastosDEData.reduce((sum, gasto) => sum + Number(gasto.monto || 0), 0);
   const totalGastosSalarios = salariosData.reduce(
-    (sum, salario) => sum + Number(salario.salario || 0),
-    0,
+    (sum, salario) => sum + Number(salario.salario || 0) + Number(salario.bonificaciones || 0) + Number(salario.horasExtras || 0),
+    0
   );
 
   const totalBeneficio =
@@ -269,7 +302,7 @@ export async function getDashboardStatsData({
     }),
     prisma.pagosalario.findMany({
       where: { tenantId, createdAt: { gte: fechaInicio } },
-      select: { createdAt: true, salario: true },
+      select: { createdAt: true, salario: true, bonificaciones: true, horasExtras: true },
     }),
     prisma.gastoCompra.findMany({
       where: { tenantId, createdAt: { gte: fechaInicio } },
@@ -334,7 +367,7 @@ export async function getDashboardStatsData({
   const gastosSalariosAgrupados = createMonthlyAggregation(
     gastosSalariosPorMesData as GastoSalarioPorMesData[],
     {
-      gastos: (salario) => salario.salario || 0,
+      gastos: (salario) => (salario.salario || 0) + (salario.bonificaciones || 0) + (salario.horasExtras || 0),
       cantidad: () => 0,
     },
   );
@@ -370,7 +403,7 @@ export async function getDashboardStatsData({
       gastosSalarios: gastosSalariosAgrupados[mes]?.gastos || 0,
       gastosSalariosCantidad: gastosSalariosPorMesData.length || 0,
       ventasCantidad: ventasAgrupadas[mes]?.cantidad || 0,
-      ventasServiciosCantidad: serviciosAgrupados[mes]?.cantidad || 0,
+      ventasServiciosCantidad: Number(serviciosAgrupados[mes]?.cantidad) || 0,
       mermasCantidad: mermasAgrupadas[mes]?.cantidad || 0,
     }));
 
@@ -403,7 +436,7 @@ export async function getDashboardStatsData({
         gastosSalarios: gastosSalariosAgrupados[mes]?.gastos || 0,
         gastosSalariosCantidad: gastosSalariosPorMesData.length || 0,
         ventasCantidad: ventasAgrupadas[mes]?.cantidad || 0,
-        ventasServiciosCantidad: serviciosAgrupados[mes]?.cantidad || 0,
+        ventasServiciosCantidad: Number(serviciosAgrupados[mes]?.cantidad) || 0,
         mermasCantidad: mermasAgrupadas[mes]?.cantidad || 0,
       };
     })
@@ -412,7 +445,7 @@ export async function getDashboardStatsData({
 
   const ventasPorProducto: Record<string, number> = { ...ventasItemsPorProducto };
   Object.entries(ventasLegacyPorProducto).forEach(([productoId, cantidad]) => {
-    ventasPorProducto[productoId] = (ventasPorProducto[productoId] || 0) + cantidad;
+    ventasPorProducto[productoId] = (ventasPorProducto[productoId] || 0) + Number(cantidad);
   });
 
   const ingresosItemsPorProducto = ventaItemsData.reduce<Record<string, number>>((acc, item) => {
@@ -448,7 +481,7 @@ export async function getDashboardStatsData({
       stock: true,
       categoria: { select: { nombre: true } },
     },
-  });
+  }) as TopProductoData[];
   const topProductosMap = new Map(topProductosData.map((producto) => [producto.id, producto]));
 
   const productosMasVendidos = productosVentas
@@ -485,13 +518,13 @@ export async function getDashboardStatsData({
       categoria: { select: { nombre: true } },
       unidad: { select: { simbolo: true } },
     },
-  });
+  }) as ProductoStockBajoData[];
 
   type GrupoProducto = {
-    productos: ProductoDashboard[];
+    productos: ProductoStockBajoData[];
     stockTotal: number;
     stockMinimoMin: number;
-    representante: ProductoDashboard;
+    representante: ProductoStockBajoData;
   };
 
   const productosAgrupados = todosLosProductos.reduce<Record<string, GrupoProducto>>((acc, producto) => {
@@ -515,7 +548,7 @@ export async function getDashboardStatsData({
     return acc;
   }, {});
 
-  const productosStockBajo: Array<ProductoDashboard & {
+  const productosStockBajo: Array<ProductoStockBajoData & {
     stockTotal: number;
     stockMinimo: number;
     diferencia: number;
