@@ -76,6 +76,7 @@ import {
 	CabeceraTurno,
 	AperturaTurnoDialog,
 	CierreTurnoDialog,
+	CuadreTurnoDialog,
 } from "@/features/turnos-pos";
 import { ArqueoForm } from "@/features/arqueo-caja";
 import { VentaInvoiceDialog } from "./pv-invoice-dialog";
@@ -134,11 +135,13 @@ export function VentaInterface() {
 	const [isAperturaDialogOpen, setIsAperturaDialogOpen] = useState(false);
 	const [isCierreDialogOpen, setIsCierreDialogOpen] = useState(false);
 	const [isArqueoDialogOpen, setIsArqueoDialogOpen] = useState(false);
+	const [isCuadreDialogOpen, setIsCuadreDialogOpen] = useState(false);
 
 	// Cerrar todo el flujo de turno (cuando el usuario cierra un diálogo manualmente)
 	const resetTurnoFlow = useCallback(() => {
 		setIsCierreDialogOpen(false);
 		setIsArqueoDialogOpen(false);
+		setIsCuadreDialogOpen(false);
 	}, []);
 
 	const { puntosDeVenta, isLoading: isLoadingPuntosVenta } = usePuntosDeVenta();
@@ -880,6 +883,7 @@ export function VentaInterface() {
 								{turnoActivo && (
 									<CabeceraTurno
 										turno={turnoActivo}
+										onCerrarTurno={() => setIsCierreDialogOpen(true)}
 										onArqueo={() => setIsArqueoDialogOpen(true)}
 										onCuadre={() =>
 											router.push(
@@ -1649,9 +1653,27 @@ export function VentaInterface() {
 					submitLabel="Continuar con el Cuadre"
 					onSuccess={() => {
 						setIsArqueoDialogOpen(false);
-						router.push(
-							`/busy/sales/cuadre/${turnoActivo.id}?pvId=${selectedPuntoVenta}`,
-						);
+						setIsCuadreDialogOpen(true);
+					}}
+				/>
+			)}
+
+			{/* Diálogo de cuadre de turno */}
+			{turnoActivo && isCuadreDialogOpen && (
+				<CuadreTurnoDialog
+					open={true}
+					onOpenChange={resetTurnoFlow}
+					turnoId={turnoActivo.id}
+					puntoDeVentaId={selectedPuntoVenta}
+					onRepetirArqueo={() => {
+						setIsCuadreDialogOpen(false);
+						setIsArqueoDialogOpen(true);
+					}}
+					onSuccess={() => {
+						setIsCuadreDialogOpen(false);
+						setTurnoActivo(null);
+						refreshTurno();
+						setProductosRefreshKey((k) => k + 1);
 					}}
 				/>
 			)}

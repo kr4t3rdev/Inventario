@@ -5,6 +5,7 @@
  *
  * @param {object} props - Props del componente
  * @param {object | null} props.turno - Turno activo o null
+ * @param {function} props.onCerrarTurno - Callback para abrir flujo de cierre
  * @param {function} props.onArqueo - Callback para abrir arqueo
  * @param {function} props.onCuadre - Callback para ir al cuadre
  * @returns {JSX.Element} Cabecera de turno
@@ -20,6 +21,7 @@ import {
 	User,
 	DollarSign,
 	ShoppingCart,
+	Lock,
 } from "lucide-react";
 import { formatCurrency, formatCurrencyUsd } from "@/lib/utils";
 
@@ -36,12 +38,14 @@ interface CabeceraTurnoProps {
 	turno: TurnoInfo | null;
 	onArqueo?: () => void;
 	onCuadre?: () => void;
+	onCerrarTurno?: () => void;
 }
 
 export function CabeceraTurno({
 	turno,
 	onCuadre,
 	onArqueo,
+	onCerrarTurno,
 }: CabeceraTurnoProps) {
 	if (!turno) return null;
 
@@ -97,6 +101,17 @@ export function CabeceraTurno({
 
 				{/* Derecha: acciones */}
 				<div className="flex items-center gap-2">
+					{onCerrarTurno && (
+						<Button
+							variant="default"
+							size="sm"
+							onClick={onCerrarTurno}
+							className="gap-1.5 bg-amber-600 hover:bg-amber-700 dark:bg-amber-700 dark:hover:bg-amber-600"
+						>
+							<Lock className="h-3.5 w-3.5" />
+							Cerrar Turno
+						</Button>
+					)}
 					{onArqueo && (
 						<Button
 							variant="outline"
