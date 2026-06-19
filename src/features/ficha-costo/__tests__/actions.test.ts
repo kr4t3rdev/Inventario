@@ -1,0 +1,184 @@
+import { describe, it, expect, beforeEach, vi } from 'vitest'
+
+vi.mock('@/lib/server-actions/get-current-user')
+vi.mock('@/lib/services/tenant-scope', () => ({
+  requireTenant: vi.fn((u: any) => u.tenantId),
+  requireFeature: vi.fn(),
+}))
+vi.mock('@/lib/prisma', () => ({
+  prisma: {
+    producto: { findFirst: vi.fn() },
+    compraDocumento: { findMany: vi.fn() },
+    compraDocumentoItem: { findMany: vi.fn() },
+    gastoCompra: { findMany: vi.fn() },
+    receta: { findFirst: vi.fn() },
+    merma: { aggregate: vi.fn().mockResolvedValue({ _sum: { cantidad: 0 } }) },
+    tasaCambio: { findMany: vi.fn().mockResolvedValue([]) },
+    precioProducto: { findMany: vi.fn().mockResolvedValue([]) },
+  },
+}))
+
+import { getCurrentUser } from '@/lib/server-actions/get-current-user'
+import { prisma } from '@/lib/prisma'
+import { getFichaCostoAction } from '../actions'
+import type { AuthenticatedUser } from '@/lib/auth-middleware'
+
+const mockUser: AuthenticatedUser = {
+  userId: 'u-1',
+  name: 'Tester',
+  email: 't@test.com',
+  role: 'admin' as AuthenticatedUser['role'],
+  isActive: true,
+  tenantId: 'tenant-A',
+  tenantRole: 'manager',
+}
+
+describe('getFichaCostoAction', () => {
+  beforeEach(() => {
+    vi.clearAllMocks()
+  })
+
+  it('devuelve 404 si el producto no pertenece al tenant', async () => {
+    vi.mocked(getCurrentUser).mockResolvedValue(mockUser)
+    vi.mocked(prisma.producto.findFirst).mockResolvedValue(null)
+
+    const result = await getFichaCostoAction('prod-1')
+    expect(result.success).toBe(false)
+    if (!result.success) {
+      expect(result.error.code).toBe('NOT_FOUND')
+    }
+  })
+
+  it('retorna estado vacío para producto simple sin compras', async () => {
+    vi.mocked(getCurrentUser).mockResolvedValue(mockUser)
+    vi.mocked(prisma.producto.findFirst).mockResolvedValue({
+      id: 'prod-1',
+      nombre: 'Harina 50kg',
+      codigoInterno: 'HAR-50',
+      esCompuesto: false,
+      precioCosto: 500,
+      precioVenta: 800,
+      tenantId: 'tenant-A',
+    } as any)
+    vi.mocked(prisma.compraDocumentoItem.findMany).mockResolvedValue([])
+    vi.mocked(prisma.compraDocumento.findMany).mockResolvedValue([])
+    vi.mocked(prisma.gastoCompra.findMany).mockResolvedValue([])
+
+    const result = await getFichaCostoAction('prod-1')
+    expect(result.success).toBe(true)
+    if (result.success) {
+      expect(result.data.costoCalculado.valor).toBe(0)
+      // precioVenta 800 > 0 → margen (800-0)/800 = 100% → SALUDABLE
+      expect(result.data.margen.estado).toBe('SALUDABLE')
+      expect(result.data.advertencias).toContain(
+        'No hay compras registradas en los últimos 12 meses',
+      )
+    }
+  })
+
+  it('calcula CPP y margen para producto simple con compras', async () => {
+    vi.mocked(getCurrentUser).mockResolvedValue(mockUser)
+    vi.mocked(prisma.producto.findFirst).mockImplementation(
+      () =>
+        Promise.resolve({
+          id: 'prod-1',
+          nombre: 'Harina 50kg',
+          codigoInterno: 'HAR-50',
+          esCompuesto: false,
+          precioCosto: 500,
+          precioVenta: 800,
+          tenantId: 'tenant-A',
+          stock: 100,
+        }) as any,
+    )
+    vi.mocked(prisma.compraDocumentoItem.findMany).mockResolvedValue([
+      {
+        compraDocumentoItemId: 'i1',
+        cantidad: 100,
+        precioUnitario: 500,
+        compraDocumento: { fechaCompra: new Date('2026-01-15'), gastoCompraId: null },
+      },
+      {
+        compraDocumentoItemId: 'i2',
+        cantidad: 50,
+        precioUnitario: 480,
+        compraDocumento: { fechaCompra: new Date('2026-02-15'), gastoCompraId: null },
+      },
+    ] as any)
+
+    const result = await getFichaCostoAction('prod-1')
+    expect(result.success).toBe(true)
+    if (result.success) {
+      // (100*500 + 50*480) / 150 = 74000 / 150 ≈ 493.33
+      expect(result.data.costoCalculado.valor).toBeCloseTo(493.33, 2)
+      expect(result.data.costoCalculado.metodo).toBe('CPP')
+      expect(result.data.margen.estado).toBe('SALUDABLE')
+    }
+  })
+
+  it('agrega alerta cuando el margen es bajo', async () => {
+    vi.mocked(getCurrentUser).mockResolvedValue(mockUser)
+    vi.mocked(prisma.producto.findFirst).mockImplementation(
+      () =>
+        Promise.resolve({
+          id: 'prod-1',
+          nombre: 'Prod bajo',
+          codigoInterno: 'PBAJ-1',
+          esCompuesto: false,
+          precioCosto: 500,
+          precioVenta: 510, // margen ~2%
+          tenantId: 'tenant-A',
+          stock: 100,
+        }) as any,
+    )
+    vi.mocked(prisma.compraDocumentoItem.findMany).mockResolvedValue([
+      {
+        compraDocumentoItemId: 'i1',
+        cantidad: 100,
+        precioUnitario: 500,
+        compraDocumento: { fechaCompra: new Date('2026-01-15'), gastoCompraId: null },
+      },
+    ] as any)
+    const result = await getFichaCostoAction('prod-1')
+    expect(result.success).toBe(true)
+    if (result.success) {
+      expect(result.data.margen.estado).toBe('BAJO')
+      expect(
+        result.data.advertencias.some((a) => a.toLowerCase().includes('margen bajo')),
+      ).toBe(true)
+    }
+  })
+
+  it('agrega alerta crítica cuando hay pérdida', async () => {
+    vi.mocked(getCurrentUser).mockResolvedValue(mockUser)
+    vi.mocked(prisma.producto.findFirst).mockImplementation(
+      () =>
+        Promise.resolve({
+          id: 'prod-1',
+          nombre: 'Prod pérdida',
+          codigoInterno: 'PPER-1',
+          esCompuesto: false,
+          precioCosto: 500,
+          precioVenta: 400, // margen negativo
+          tenantId: 'tenant-A',
+          stock: 50,
+        }) as any,
+    )
+    vi.mocked(prisma.compraDocumentoItem.findMany).mockResolvedValue([
+      {
+        compraDocumentoItemId: 'i1',
+        cantidad: 100,
+        precioUnitario: 500,
+        compraDocumento: { fechaCompra: new Date('2026-01-15'), gastoCompraId: null },
+      },
+    ] as any)
+    const result = await getFichaCostoAction('prod-1')
+    expect(result.success).toBe(true)
+    if (result.success) {
+      expect(result.data.margen.estado).toBe('PERDIDA')
+      expect(
+        result.data.advertencias.some((a) => a.toLowerCase().includes('negativo')),
+      ).toBe(true)
+    }
+  })
+})
