@@ -41,6 +41,8 @@ export interface CuadreTurnoData {
 		fondoInicialCup: number;
 		fondoInicialUsd: number;
 		fechaApertura: Date;
+		fechaCierre: Date | null;
+		estado: "ABIERTO" | "CERRADO";
 		tipo: string;
 		empleado: { nombre: string; apellido: string } | null;
 	};
@@ -212,6 +214,8 @@ export const getCuadreTurnoAction = withAction(
 				fondoInicialCup: turno.fondoInicialCup,
 				fondoInicialUsd: turno.fondoInicialUsd,
 				fechaApertura: turno.fechaApertura,
+				fechaCierre: turno.fechaCierre,
+				estado: turno.estado,
 				tipo: turno.tipo,
 				empleado: turno.empleado,
 			},
