@@ -1,9 +1,5 @@
 import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
-import { validateAllSecrets } from '@/lib/secrets'
-
-// Validar secretos al iniciar el proxy (falla rápido si faltan vars de entorno)
-validateAllSecrets()
 
 /**
  * @description Proxy de Next.js que maneja la protección de rutas.
