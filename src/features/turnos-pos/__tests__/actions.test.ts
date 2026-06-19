@@ -59,6 +59,7 @@ import {
 	getTurnosAction,
 	getOrCreateTurnoActivo,
 } from "../actions";
+import { getCuadresCerradosAction } from "../actions-historial";
 
 function buildTurno(overrides: Record<string, unknown> = {}) {
 	return {
@@ -202,6 +203,88 @@ describe("getOrCreateTurnoActivo", () => {
 
 		expect(result.success).toBe(true);
 		expect(mockPrisma.turnoPuntoVenta.create).toHaveBeenCalled();
+	});
+});
+
+// ─── Suite: getCuadresCerradosAction ──────────────────────
+
+describe("getCuadresCerradosAction", () => {
+	beforeEach(() => {
+		vi.clearAllMocks();
+	});
+
+	it("should return only closed shifts with sales and arqueo summary", async () => {
+		mockPrisma.turnoPuntoVenta.findMany.mockResolvedValue([
+			{
+				...buildTurno({
+					id: "turno-cerrado-1",
+					estado: "CERRADO",
+					fechaCierre: new Date("2026-06-19T10:00:00.000Z"),
+					puntoDeVenta: { pvId: "pv-1", nombre: "PV Centro", tipoCaja: "PRINCIPAL" },
+					empleado: { empleadoId: "emp-1", nombre: "Ana", apellido: "Pérez" },
+					arqueos: [{ diferenciaCup: 3500, createdAt: new Date("2026-06-19T10:00:00.000Z") }],
+					ventas: [{ total: 120 }, { total: 80 }],
+					_count: { ventas: 2 },
+				}),
+			},
+		]);
+
+		const result = await getCuadresCerradosAction({ limit: 20 }, mockUser);
+
+		expect(result.success).toBe(true);
+		if (result.success && result.data) {
+			expect(result.data).toHaveLength(1);
+			expect(result.data[0]).toMatchObject({
+				turnoId: "turno-cerrado-1",
+				puntoDeVentaNombre: "PV Centro",
+				empleadoNombre: "Ana Pérez",
+				totalVentas: 200,
+				diferenciaCup: 35,
+				arqueado: true,
+				totalTickets: 2,
+			});
+		}
+
+		expect(mockPrisma.turnoPuntoVenta.findMany).toHaveBeenCalledWith(
+			expect.objectContaining({
+				where: expect.objectContaining({
+					tenantId: "tenant-mock-1",
+					estado: "CERRADO",
+				}),
+				take: 20,
+			}),
+		);
+	});
+
+	it("should keep closed shifts without arqueo or employee as consultable rows", async () => {
+		mockPrisma.turnoPuntoVenta.findMany.mockResolvedValue([
+			{
+				...buildTurno({
+					id: "turno-cerrado-2",
+					estado: "CERRADO",
+					puntoDeVenta: { pvId: "pv-2", nombre: "PV Norte", tipoCaja: "PRINCIPAL" },
+					arqueos: [],
+					empleado: null,
+					ventas: [],
+					_count: { ventas: 0 },
+				}),
+			},
+		]);
+
+		const result = await getCuadresCerradosAction({}, mockUser);
+
+		expect(result.success).toBe(true);
+		if (result.success && result.data) {
+			expect(result.data[0]).toMatchObject({
+				turnoId: "turno-cerrado-2",
+				puntoDeVentaNombre: "PV Norte",
+				empleadoNombre: null,
+				arqueado: false,
+				diferenciaCup: null,
+				totalVentas: 0,
+				totalTickets: 0,
+			});
+		}
 	});
 });
 

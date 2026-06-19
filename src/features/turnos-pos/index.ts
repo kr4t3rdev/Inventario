@@ -7,6 +7,8 @@ export {
 	getTurnosAction,
 	getOrCreateTurnoActivo,
 } from "./actions";
+export { getCuadresCerradosAction } from "./actions-historial";
+export type { CuadreCerradoListItem } from "./actions-historial";
 
 export { getCuadreTurnoAction } from "./actions-cuadre";
 export type { CuadreTurnoData, ProductoCuadre } from "./actions-cuadre";
@@ -14,6 +16,7 @@ export type { CuadreTurnoData, ProductoCuadre } from "./actions-cuadre";
 export { AperturaTurnoDialog } from "./components/apertura-turno-dialog";
 export { CabeceraTurno } from "./components/cabecera-turno";
 export { CierreTurnoDialog } from "./components/cierre-turno-dialog";
+export { CuadresHistoryPageClient } from "./components/cuadres-history-page-client";
 export { CuadreTurnoDialog } from "./components/cuadre-turno-dialog";
 
 export type { TurnoPuntoVenta, EstadoTurno } from "./types";
