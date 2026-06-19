@@ -214,6 +214,9 @@ describe("cerrarTurnoAction", () => {
 
 	it("should close an active turno with valid arqueo", async () => {
 		// Turno con arqueo y puntoDeVenta (include requerido)
+		// fondoInicialCup=50000, totalEfectivoCup=60000 → neto efectivo = 10000 centavos ($100)
+		// totalTarjeta=0, totalTransferencia=0, totalCredito=0
+		// → arqueoTotalPesos = (60000 - 50000 + 0 + 0 + 0) / 100 = 100
 		mockPrisma.turnoPuntoVenta.findFirst.mockResolvedValue({
 			...buildTurno(),
 			arqueos: [
@@ -221,7 +224,7 @@ describe("cerrarTurnoAction", () => {
 					id: "arq-1",
 					totalEfectivoCup: 60000, // $600
 					totalEfectivoUsd: 0,
-					totalTarjeta: 10000, // $100
+					totalTarjeta: 0,
 					totalTransferencia: 0,
 					totalCredito: 0,
 					diferenciaCup: 0,
@@ -230,9 +233,9 @@ describe("cerrarTurnoAction", () => {
 			],
 			puntoDeVenta: { pvId: "pv-1" },
 		});
-		// Ventas del turno: $600 - $500 (fondo) + $100 = $200 => coincide con arqueo
+		// Venta.total está en pesos → $100 coincide con arqueoTotalPesos
 		mockPrisma.venta.aggregate.mockResolvedValue({
-			_sum: { total: 20000 }, // $200 en centavos
+			_sum: { total: 100 },
 		});
 		mockPrisma.turnoPuntoVenta.update.mockResolvedValue(
 			buildTurno({ estado: "CERRADO" }),

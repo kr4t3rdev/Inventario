@@ -189,7 +189,7 @@ export const cerrarTurnoAction = withAction(
 			where: { turnoId: parsed.turnoId, deletedAt: null },
 			_sum: { total: true },
 		});
-		const totalVentaTurno = (ventaAgg._sum.total ?? 0) / 100; // centavos → pesos
+		const totalVentaTurno = ventaAgg._sum.total ?? 0; // Venta.total ya está en pesos
 
 		const fondo = turno.fondoInicialCup;
 		const arqueoTotalPesos =
