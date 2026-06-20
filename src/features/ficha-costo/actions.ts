@@ -282,7 +282,7 @@ export const getHistorialCostosAction = withAction(
       productoId: input.productoId,
       tenantId,
     }
-    const docWhere: Record<string, unknown> = {}
+    const docWhere: Record<string, unknown> = { deletedAt: null }
     if (input.fechaDesde) {
       docWhere.fechaCompra = { ...((docWhere.fechaCompra as object) ?? {}), gte: new Date(input.fechaDesde) }
     }

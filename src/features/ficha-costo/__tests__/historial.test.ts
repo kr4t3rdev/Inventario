@@ -101,6 +101,7 @@ describe('getHistorialCostosAction', () => {
           productoId: 'prod-1',
           tenantId: 'tenant-A',
           compraDocumento: expect.objectContaining({
+            deletedAt: null,
             fechaCompra: expect.objectContaining({
               gte: new Date('2026-03-01'),
               lte: new Date('2026-03-31'),
@@ -110,6 +111,29 @@ describe('getHistorialCostosAction', () => {
         }),
         skip: 10,
         take: 10,
+      }),
+    )
+  })
+
+  it('siempre filtra documentos eliminados (deletedAt: null)', async () => {
+    vi.mocked(getCurrentUser).mockResolvedValue(mockUser)
+    vi.mocked(prisma.producto.findFirst).mockResolvedValue({ id: 'prod-1' } as any)
+    vi.mocked(prisma.compraDocumentoItem.findMany).mockResolvedValue([])
+    vi.mocked(prisma.compraDocumentoItem.count).mockResolvedValue(0)
+
+    await getHistorialCostosAction({ productoId: 'prod-1' })
+    expect(prisma.compraDocumentoItem.findMany).toHaveBeenCalledWith(
+      expect.objectContaining({
+        where: expect.objectContaining({
+          compraDocumento: expect.objectContaining({ deletedAt: null }),
+        }),
+      }),
+    )
+    expect(prisma.compraDocumentoItem.count).toHaveBeenCalledWith(
+      expect.objectContaining({
+        where: expect.objectContaining({
+          compraDocumento: expect.objectContaining({ deletedAt: null }),
+        }),
       }),
     )
   })
