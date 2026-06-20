@@ -257,3 +257,76 @@ export interface GetVentasProductoInput {
   fechaDesde?: string
   fechaHasta?: string
 }
+
+// ─── Tipos de plantilla de ficha de costo ─────────────────
+
+/**
+ * @description Plantilla de ficha de costo versionada para un producto.
+ *   Solo una versión puede estar activa por producto. Los valores de costo
+ *   se almacenan en Float para soportar decimales.
+ */
+export interface PlantillaCosto {
+  id: string
+  tenantId: string
+  productoId: string
+  version: number
+  nombre: string
+  costoMateriales: number
+  costoManoObra: number
+  costoIndirectos: number
+  margenObjetivo: number
+  precioSugerido: number
+  esActiva: boolean
+  notas: string | null
+  createdAt: string
+  updatedAt: string
+  createdById: string
+}
+
+export interface PlantillaCostoInput {
+  productoId: string
+  nombre: string
+  costoMateriales: number
+  costoManoObra: number
+  costoIndirectos: number
+  margenObjetivo: number
+  notas?: string
+}
+
+export interface UpdatePlantillaInput {
+  plantillaId: string
+  nombre?: string
+  costoMateriales?: number
+  costoManoObra?: number
+  costoIndirectos?: number
+  margenObjetivo?: number
+  notas?: string
+}
+
+export interface ActivarPlantillaInput {
+  plantillaId: string
+  productoId: string
+}
+
+export interface AplicarPrecioSugeridoInput {
+  plantillaId: string
+  productoId: string
+}
+
+export interface PlantillaActivaResult {
+  plantilla: PlantillaCosto | null
+  costoTotal: number
+  precioSugerido: number
+  deltaCostoVsActual: number | null
+  deltaPrecioVsVenta: number | null
+}
+
+export interface ComparacionPlantilla {
+  costoPlantilla: number
+  costoActual: number
+  precioVentaActual: number
+  precioSugerido: number
+  margenObjetivo: number
+  margenActual: number | null
+}
+

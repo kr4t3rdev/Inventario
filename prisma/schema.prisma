@@ -2070,6 +2070,32 @@ model ProductoCostHistory {
   @@index([reason])
 }
 
+/// * Plantilla de ficha de costo versionada por producto.
+///   Cada producto puede tener N versiones, pero solo una activa.
+///   Los valores de costo se almacenan en Float para soportar
+///   decimales en materiales, MO e indirectos.
+model ProductoCostSheetTemplate {
+  id              String   @id @default(cuid())
+  tenantId        String
+  productoId      String
+  version         Int      @default(1)
+  nombre          String   @default("")
+  costoMateriales Float    @default(0)
+  costoManoObra   Float    @default(0)
+  costoIndirectos Float    @default(0)
+  margenObjetivo  Float    @default(0.30)
+  precioSugerido  Float    @default(0)
+  esActiva        Boolean  @default(false)
+  notas           String?
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+  createdById     String
+
+  @@unique([productoId, esActiva])
+  @@index([tenantId])
+  @@index([productoId])
+}
+
 model VendorCodeSequence {
   id         Int @id @default(1)
   nextNumber Int @default(1)
