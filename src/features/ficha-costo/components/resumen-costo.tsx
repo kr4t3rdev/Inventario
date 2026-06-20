@@ -1,6 +1,7 @@
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'
 import { IndicadorMargen } from './indicador-margen'
+import { ResumenPlantillaCard } from './resumen-plantilla-card'
 import type { FichaCostoData } from '../actions'
 
 interface ResumenCostoProps {
@@ -78,6 +79,10 @@ export function ResumenCosto({ data }: ResumenCostoProps) {
           }
         />
         <Stat label="Tipo de producto" value={producto.tipo} />
+        <ResumenPlantillaCard
+          productoId={producto.id}
+          precioVenta={producto.precioVenta}
+        />
       </CardContent>
       {advertencias.length > 0 && (
         <CardContent>
