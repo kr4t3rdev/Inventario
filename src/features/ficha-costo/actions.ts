@@ -36,6 +36,10 @@ export {
   deletePlantillaAction,
   aplicarPrecioSugeridoAction,
 } from './actions-plantilla'
+export {
+  bulkApplyPercentageAction,
+  bulkApplyTemplateAction,
+} from './actions-bulk'
 
 export type {
   EstadoMargen,
