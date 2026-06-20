@@ -1062,6 +1062,77 @@ Authorization: Bearer <accessToken>
 
 Crea un anticipo usando el workflow real y validación de período contable.
 
+### `GET /api/mobile/v1/accounting/advances/:id`
+
+**Headers**
+
+```http
+Authorization: Bearer <accessToken>
+```
+
+Devuelve el detalle de un anticipo del tenant autenticado, incluyendo contrato, proveedor, cliente y movimientos.
+
+### `PUT /api/mobile/v1/accounting/advances/:id`
+
+**Headers**
+
+```http
+Authorization: Bearer <accessToken>
+```
+
+Actualiza campos operativos del anticipo: estado, saldo disponible, vigencia y referencia externa.
+
+### `DELETE /api/mobile/v1/accounting/advances/:id`
+
+**Headers**
+
+```http
+Authorization: Bearer <accessToken>
+```
+
+Elimina un anticipo del tenant autenticado.
+
+### `POST /api/mobile/v1/accounting/advances/:id/ejecutar`
+
+**Headers**
+
+```http
+Authorization: Bearer <accessToken>
+```
+
+**Body**
+
+```json
+{
+  "contexto": "COMPRA_PRODUCTO",
+  "documentoDestinoId": "doc-1",
+  "montoObjetivo": 100,
+  "monedaObjetivo": "CUP",
+  "idempotencyKey": "abc-123"
+}
+```
+
+Ejecuta el anticipo usando el flujo real de negocio y validación de período contable.
+
+### `POST /api/mobile/v1/accounting/advances/:id/revertir`
+
+**Headers**
+
+```http
+Authorization: Bearer <accessToken>
+```
+
+**Body**
+
+```json
+{
+  "documentoDestinoId": "doc-1",
+  "montoReverso": 100
+}
+```
+
+Revierte un anticipo usando el flujo real ya existente en web.
+
 ### `GET /api/mobile/v1/accounting/advances/available`
 
 **Headers**
