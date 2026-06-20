@@ -3,9 +3,19 @@
 import { useEffect, useState, useTransition } from 'react'
 import { format } from 'date-fns'
 import { es } from 'date-fns/locale'
-import { ChevronLeft, ChevronRight, Loader2, Filter, X } from 'lucide-react'
+import {
+  ChevronLeft,
+  ChevronRight,
+  Loader2,
+  Filter,
+  X,
+  CheckCircle2,
+  AlertTriangle,
+  Info,
+} from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
+import { Badge } from '@/components/ui/badge'
 import {
   Table,
   TableBody,
@@ -14,7 +24,11 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table'
-import { getHistorialCostosAction, type HistorialCostosData } from '../actions'
+import { getHistorialReconciliadoAction } from '../actions-reconciliacion'
+import type {
+  HistorialReconciliadoData,
+  EstadoCPP,
+} from '../types'
 
 interface HistorialCostosProps {
   productoId: string
@@ -23,15 +37,40 @@ interface HistorialCostosProps {
 
 const LIMIT = 20
 
+function bannerEstadoCPP(estado: EstadoCPP) {
+  if (estado === 'CALCULADO') {
+    return {
+      icono: <CheckCircle2 className="h-4 w-4" />,
+      clase: 'border-green-200 bg-green-50 text-green-800',
+      texto: 'CPP calculado',
+    }
+  }
+  if (estado === 'CON_ADVERTENCIAS') {
+    return {
+      icono: <AlertTriangle className="h-4 w-4" />,
+      clase: 'border-yellow-200 bg-yellow-50 text-yellow-800',
+      texto: 'CPP calculado con advertencias',
+    }
+  }
+  return {
+    icono: <Info className="h-4 w-4" />,
+    clase: 'border-gray-200 bg-gray-50 text-gray-800',
+    texto: 'Sin datos en la ventana CPP',
+  }
+}
+
 /**
- * @description Tabla paginada de líneas de compra del producto con filtros
- *   por rango de fechas. Carga datos vía Server Action.
+ * @description Tabla paginada de líneas de compra del producto con
+ *   reconciliación contra el cálculo del CPP: cada fila muestra si está
+ *   en la ventana de 12 meses y el gasto proporcional asignado. Incluye
+ *   además un resumen por proveedor (calculado sobre el set completo
+ *   en ventana) y un banner con el estado del CPP.
  */
 export function HistorialCostos({ productoId, className }: HistorialCostosProps) {
   const [page, setPage] = useState(1)
   const [fechaDesde, setFechaDesde] = useState('')
   const [fechaHasta, setFechaHasta] = useState('')
-  const [data, setData] = useState<HistorialCostosData | null>(null)
+  const [data, setData] = useState<HistorialReconciliadoData | null>(null)
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [, startTransition] = useTransition()
@@ -41,7 +80,7 @@ export function HistorialCostos({ productoId, className }: HistorialCostosProps)
     async function load() {
       setIsLoading(true)
       setError(null)
-      const res = await getHistorialCostosAction({
+      const res = await getHistorialReconciliadoAction({
         productoId,
         page,
         limit: LIMIT,
@@ -65,6 +104,7 @@ export function HistorialCostos({ productoId, className }: HistorialCostosProps)
 
   const totalPages = data?.pagination.totalPages ?? 1
   const filtersActive = Boolean(fechaDesde || fechaHasta)
+  const mostrarGasto = data?.items.some((it) => it.gastoProporcional > 0) ?? false
 
   function clearFilters() {
     startTransition(() => {
@@ -76,6 +116,31 @@ export function HistorialCostos({ productoId, className }: HistorialCostosProps)
 
   return (
     <div className={`space-y-4 ${className ?? ''}`}>
+      {/* Banner de estado CPP */}
+      {data && (
+        <div
+          role={data.estadoCPP === 'SIN_DATOS' ? 'alert' : 'status'}
+          className={`flex items-start gap-2 rounded-lg border p-3 text-sm ${
+            bannerEstadoCPP(data.estadoCPP).clase
+          }`}
+        >
+          {bannerEstadoCPP(data.estadoCPP).icono}
+          <div className="flex-1">
+            <div className="font-medium">
+              {bannerEstadoCPP(data.estadoCPP).texto}
+            </div>
+            {data.advertencias.length > 0 && (
+              <ul className="mt-1 list-disc pl-4 text-xs">
+                {data.advertencias.map((a, i) => (
+                  <li key={i}>{a}</li>
+                ))}
+              </ul>
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* Filtros */}
       <div className="flex items-center gap-2">
         <Filter className="text-muted-foreground h-4 w-4" aria-hidden="true" />
         <span className="text-sm font-medium">Filtros</span>
@@ -108,6 +173,7 @@ export function HistorialCostos({ productoId, className }: HistorialCostosProps)
         )}
       </div>
 
+      {/* Tabla de items */}
       <div className="rounded-lg border overflow-x-auto">
         {isLoading && (
           <div
@@ -141,6 +207,10 @@ export function HistorialCostos({ productoId, className }: HistorialCostosProps)
                 <TableHead className="text-right">Cantidad</TableHead>
                 <TableHead className="text-right">Precio unitario</TableHead>
                 <TableHead className="text-right">Total</TableHead>
+                {mostrarGasto && (
+                  <TableHead className="text-right">Gasto prop.</TableHead>
+                )}
+                <TableHead>En CPP</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -152,6 +222,24 @@ export function HistorialCostos({ productoId, className }: HistorialCostosProps)
                   <TableCell className="text-right">{it.cantidad}</TableCell>
                   <TableCell className="text-right">{it.precioUnitario}</TableCell>
                   <TableCell className="text-right">{it.totalLinea}</TableCell>
+                  {mostrarGasto && (
+                    <TableCell className="text-right">
+                      {it.gastoProporcional > 0
+                        ? it.gastoProporcional.toFixed(2)
+                        : '—'}
+                    </TableCell>
+                  )}
+                  <TableCell>
+                    {it.enVentanaCPP ? (
+                      <Badge variant="default" className="bg-green-600">
+                        En CPP
+                      </Badge>
+                    ) : (
+                      <Badge variant="outline" className="text-gray-500">
+                        Fuera de ventana
+                      </Badge>
+                    )}
+                  </TableCell>
                 </TableRow>
               ))}
             </TableBody>
@@ -159,6 +247,7 @@ export function HistorialCostos({ productoId, className }: HistorialCostosProps)
         )}
       </div>
 
+      {/* Paginación */}
       {data && data.pagination.total > 0 && (
         <div className="flex items-center justify-between text-sm">
           <span className="text-muted-foreground">
@@ -183,6 +272,47 @@ export function HistorialCostos({ productoId, className }: HistorialCostosProps)
             >
               <ChevronRight className="h-4 w-4" />
             </Button>
+          </div>
+        </div>
+      )}
+
+      {/* Resumen por proveedor */}
+      {data && data.proveedores.length > 0 && (
+        <div className="space-y-2 pt-4">
+          <div>
+            <h3 className="text-sm font-medium">Resumen por proveedor</h3>
+            <p className="text-muted-foreground text-xs">
+              Calculado sobre todas las compras en la ventana CPP (no solo la
+              página actual).
+            </p>
+          </div>
+          <div className="rounded-lg border">
+            <Table aria-label="Resumen de compras por proveedor">
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Proveedor</TableHead>
+                  <TableHead className="text-right">Items</TableHead>
+                  <TableHead className="text-right">Cantidad total</TableHead>
+                  <TableHead className="text-right">Monto total</TableHead>
+                  <TableHead className="text-right">Participación</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {data.proveedores.map((p) => (
+                  <TableRow key={p.proveedorId}>
+                    <TableCell>{p.proveedorNombre}</TableCell>
+                    <TableCell className="text-right">{p.cantidadItems}</TableCell>
+                    <TableCell className="text-right">{p.cantidadTotal}</TableCell>
+                    <TableCell className="text-right">
+                      {p.montoTotal.toFixed(2)}
+                    </TableCell>
+                    <TableCell className="text-right">
+                      {p.participacionPorcentaje.toFixed(1)}%
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
           </div>
         </div>
       )}

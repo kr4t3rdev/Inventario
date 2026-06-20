@@ -9,17 +9,20 @@ vi.mock('../actions', async (importOriginal) => {
   const mod = await importOriginal<typeof import('../actions')>()
   return {
     ...mod,
-    getHistorialCostosAction: vi.fn(),
     getComposicionCostoAction: vi.fn(),
     getListasPreciosProductoAction: vi.fn(),
   }
 })
 
+vi.mock('../actions-reconciliacion', () => ({
+  getHistorialReconciliadoAction: vi.fn(),
+}))
+
 import {
-  getHistorialCostosAction,
   getComposicionCostoAction,
   getListasPreciosProductoAction,
 } from '../actions'
+import { getHistorialReconciliadoAction } from '../actions-reconciliacion'
 
 const baseData: FichaCostoData = {
   producto: {
@@ -60,7 +63,7 @@ describe('FichaCostoView', () => {
   })
 
   it('muestra encabezado con nombre, código y tipo del producto', () => {
-    vi.mocked(getHistorialCostosAction).mockResolvedValue({
+    vi.mocked(getHistorialReconciliadoAction).mockResolvedValue({
       success: true,
       data: {
         items: [],
@@ -78,7 +81,7 @@ describe('FichaCostoView', () => {
   })
 
   it('muestra el margen saludable en el resumen', () => {
-    vi.mocked(getHistorialCostosAction).mockResolvedValue({
+    vi.mocked(getHistorialReconciliadoAction).mockResolvedValue({
       success: true,
       data: {
         items: [],
@@ -94,7 +97,7 @@ describe('FichaCostoView', () => {
   })
 
   it('muestra el indicador accesible de margen (texto + icono)', () => {
-    vi.mocked(getHistorialCostosAction).mockResolvedValue({
+    vi.mocked(getHistorialReconciliadoAction).mockResolvedValue({
       success: true,
       data: {
         items: [],
@@ -111,7 +114,7 @@ describe('FichaCostoView', () => {
   })
 
   it('muestra advertencias cuando las hay', () => {
-    vi.mocked(getHistorialCostosAction).mockResolvedValue({
+    vi.mocked(getHistorialReconciliadoAction).mockResolvedValue({
       success: true,
       data: {
         items: [],
@@ -127,7 +130,7 @@ describe('FichaCostoView', () => {
   })
 
   it('NO muestra la pestaña Composición para producto simple', () => {
-    vi.mocked(getHistorialCostosAction).mockResolvedValue({
+    vi.mocked(getHistorialReconciliadoAction).mockResolvedValue({
       success: true,
       data: {
         items: [],
@@ -143,7 +146,7 @@ describe('FichaCostoView', () => {
   })
 
   it('SÍ muestra la pestaña Composición para producto compuesto', async () => {
-    vi.mocked(getHistorialCostosAction).mockResolvedValue({
+    vi.mocked(getHistorialReconciliadoAction).mockResolvedValue({
       success: true,
       data: {
         items: [],
@@ -182,7 +185,7 @@ describe('FichaCostoView', () => {
   })
 
   it('cambia a la pestaña Historial y dispara la query', async () => {
-    vi.mocked(getHistorialCostosAction).mockResolvedValue({
+    vi.mocked(getHistorialReconciliadoAction).mockResolvedValue({
       success: true,
       data: {
         items: [],
@@ -196,13 +199,13 @@ describe('FichaCostoView', () => {
     render(<FichaCostoView data={baseData} />)
     const user = userEvent.setup()
     await user.click(screen.getByRole('tab', { name: /Historial/i }))
-    expect(getHistorialCostosAction).toHaveBeenCalledWith(
+    expect(getHistorialReconciliadoAction).toHaveBeenCalledWith(
       expect.objectContaining({ productoId: 'prod-1', page: 1, limit: 20 }),
     )
   })
 
   it('muestra error de la action de historial', async () => {
-    vi.mocked(getHistorialCostosAction).mockResolvedValue({
+    vi.mocked(getHistorialReconciliadoAction).mockResolvedValue({
       success: false,
       error: { message: 'Boom', code: 'INTERNAL' },
     } as any)
@@ -218,7 +221,7 @@ describe('FichaCostoView', () => {
   })
 
   it('muestra el botón Exportar PDF', () => {
-    vi.mocked(getHistorialCostosAction).mockResolvedValue({
+    vi.mocked(getHistorialReconciliadoAction).mockResolvedValue({
       success: true,
       data: {
         items: [],
