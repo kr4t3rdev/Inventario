@@ -843,6 +843,243 @@ Devuelve:
 
 Este reporte ya contempla los movimientos reales del proyecto, incluyendo ventas, servicios, gastos, transferencias, ajustes, inyecciones, pagos de deuda y los flujos de préstamos/deudas cash.
 
+### `GET /api/mobile/v1/accounting/reports/exchange`
+
+**Headers**
+
+```http
+Authorization: Bearer <accessToken>
+```
+
+**Query params opcionales**
+
+- `fechaInicio`
+- `fechaFin`
+- `monedaOrigen`
+- `monedaDestino`
+
+Devuelve:
+
+- `historialTasas`
+- `transaccionesConversion`
+- `conversiones`
+- `estadisticasConversion`
+- `filtros`
+
+Este endpoint reutiliza la lógica real ya existente para el reporte de conversiones, incluyendo reconciliaciones, ajustes y transferencias con tasa de cambio.
+
+### `GET /api/mobile/v1/accounting/reports/exchange-impact`
+
+**Headers**
+
+```http
+Authorization: Bearer <accessToken>
+```
+
+**Query params opcionales**
+
+- `fechaInicio`
+- `fechaFin`
+- `monedaBase`
+- `tipoAnalisis`
+
+Devuelve:
+
+- `resumen`
+- `porMoneda`
+- `porCuenta`
+- `recomendaciones`
+- `filtros`
+
+Este endpoint expone para mobile el mismo análisis real de impacto cambiario ya implementado en web sobre ventas, servicios, gastos, ajustes y transferencias.
+
+### `GET /api/mobile/v1/accounting/reports/transfers`
+
+**Headers**
+
+```http
+Authorization: Bearer <accessToken>
+```
+
+**Query params opcionales**
+
+- `fechaInicio`
+- `fechaFin`
+- `cuentaOrigenId`
+- `cuentaDestinoId`
+- `moneda`
+- `page`
+- `limit`
+
+Devuelve:
+
+- `items`
+- `estadisticas`
+- `pagination`
+- `filtros`
+
+Este endpoint reutiliza el reporte real de transferencias bancarias ya implementado en web, incluyendo estadísticas por moneda, cuentas más activas y transferencias con conversión.
+
+### `GET /api/mobile/v1/accounting/reports/overdue-invoices`
+
+**Headers**
+
+```http
+Authorization: Bearer <accessToken>
+```
+
+**Autorización**
+
+- disponible para `admin`
+- o para usuarios con feature flag `facturas-vencidas`
+
+Devuelve:
+
+- `reporte` — agregado por cliente y bucket de antigüedad
+- `facturas` — detalle de facturas pendientes ordenadas por mayor antigüedad
+
+Este endpoint reutiliza la misma fuente real del sistema que hoy consume la pantalla web de Facturas Vencidas (`/api/sugerencias/ingresos-por-edades`), sin inventar lógica paralela.
+
+### `GET /api/mobile/v1/accounting/reports/client-account-analysis`
+
+**Headers**
+
+```http
+Authorization: Bearer <accessToken>
+```
+
+**Query params**
+
+- `clienteId` requerido
+
+**Autorización**
+
+- requiere acceso a `facturacion` para incluir el historial real de facturas del cliente
+
+Devuelve:
+
+- `clienteId`
+- `estadisticas`
+- `cuentasPendientes`
+- `historialFacturas`
+- `ultimaActividad`
+
+Este endpoint replica la construcción real de la pantalla web de Análisis de Estado de Cuenta: combina cuentas por cobrar enriquecidas con el historial de facturas del cliente.
+
+### `GET /api/mobile/v1/accounting/advances/reports/customers`
+
+**Headers**
+
+```http
+Authorization: Bearer <accessToken>
+```
+
+**Query params opcionales**
+
+- `clienteId`
+- `fechaInicio`
+- `fechaFin`
+
+Devuelve:
+
+- `clientes` — grupos por cliente con `anticipos` y `totales`
+
+Este endpoint reutiliza el reporte real de anticipos de cobro por cliente que ya existe en web, incluyendo total original, ejecutado y pendiente por cada agrupación.
+
+### `GET /api/mobile/v1/accounting/advances/reports/providers`
+
+**Headers**
+
+```http
+Authorization: Bearer <accessToken>
+```
+
+**Query params opcionales**
+
+- `proveedorId`
+- `fechaInicio`
+- `fechaFin`
+
+Devuelve:
+
+- `proveedores` — grupos por proveedor con `anticipos` y `totales`
+
+Este endpoint reutiliza el reporte real de anticipos de pago por proveedor que ya existe en web, incluyendo total original, ejecutado y pendiente por cada agrupación.
+
+### `GET /api/mobile/v1/accounting/advances/reports/summary`
+
+**Headers**
+
+```http
+Authorization: Bearer <accessToken>
+```
+
+**Query params opcionales**
+
+- `tipo` (`PAGO` | `COBRO`)
+- `fechaInicio`
+- `fechaFin`
+
+Devuelve:
+
+- `resumen`
+  - `porTipo`
+  - `porEstado`
+  - `porMoneda`
+  - `totalesGenerales`
+
+Este endpoint reutiliza el resumen real de anticipos ya implementado en web para mostrar distribución por tipo, estado, moneda y totales globales.
+
+### `GET /api/mobile/v1/accounting/advances`
+
+**Headers**
+
+```http
+Authorization: Bearer <accessToken>
+```
+
+Lista los anticipos del tenant autenticado con sus relaciones principales.
+
+### `POST /api/mobile/v1/accounting/advances`
+
+**Headers**
+
+```http
+Authorization: Bearer <accessToken>
+```
+
+**Body**
+
+```json
+{
+  "tipo": "COBRO",
+  "contratoId": "ctr-1",
+  "clienteId": "cli-1",
+  "monto": 100,
+  "moneda": "CUP"
+}
+```
+
+Crea un anticipo usando el workflow real y validación de período contable.
+
+### `GET /api/mobile/v1/accounting/advances/available`
+
+**Headers**
+
+```http
+Authorization: Bearer <accessToken>
+```
+
+**Query params opcionales**
+
+- `contexto`
+- `proveedorId`
+- `clienteId`
+- `moneda`
+- `estado`
+
+Devuelve anticipos vigentes con saldo disponible > 0, listos para ser aplicados en compras o facturas.
+
 ## Error model
 
 | Case | Status | Code |

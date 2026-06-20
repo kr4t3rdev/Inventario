@@ -1,67 +1,48 @@
-import { beforeEach, describe, expect, it, vi } from 'vitest'
-import { NextRequest } from 'next/server'
+import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { NextRequest, NextResponse } from 'next/server';
 
-const prismaMock = vi.hoisted(() => ({
-  anticipo: {
-    findMany: vi.fn(),
-  },
-}))
+vi.mock('@/lib/auth-middleware', () => ({ withAuthGet: (handler: any) => handler, authenticateUser: vi.fn() }));
+vi.mock('@/features/contabilidad/services/accounting-reports-service', () => ({
+  AccountingReportsService: { getCustomerAdvancesReport: vi.fn() },
+}));
 
-vi.mock('@/lib/auth-middleware', () => ({
-  withAuthGet: (handler: any) => handler,
-}))
+import { authenticateUser } from '@/lib/auth-middleware';
+import { AccountingReportsService } from '@/features/contabilidad/services/accounting-reports-service';
+import { GET } from '../route';
 
-vi.mock('@/lib/prisma', () => ({
-  prisma: prismaMock,
-  default: prismaMock,
-}))
+const user = {
+  userId: 'u1', name: 'Test User', email: 'test@example.com', role: 'admin', isActive: true,
+  tenantId: 'tenant-1', tenantRole: 'manager', planFeatures: { contabilidad: true },
+};
 
-describe('GET /api/contabilidad/anticipos/reportes/cliente', () => {
-  beforeEach(() => {
-    vi.clearAllMocks()
-  })
+describe('web customer advances report route', () => {
+  beforeEach(() => vi.clearAllMocks());
 
-  it('devuelve reporte agrupado por cliente', async () => {
-    prismaMock.anticipo.findMany.mockResolvedValue([
-      {
-        anticipoId: 'a1',
-        clienteId: 'cli-1',
-        cliente: { clienteId: 'cli-1', nombre: 'Cliente 1' },
-        contrato: { contratoId: 'ctr-1', numeroContrato: 'C-1' },
-        montoOriginal: 100,
-        saldoDisponible: 25,
-        moneda: 'CUP',
-        estado: 'RESERVADO',
-        fechaReserva: new Date('2026-01-01'),
-      },
-      {
-        anticipoId: 'a2',
-        clienteId: 'cli-1',
-        cliente: { clienteId: 'cli-1', nombre: 'Cliente 1' },
-        contrato: { contratoId: 'ctr-2', numeroContrato: 'C-2' },
-        montoOriginal: 50,
-        saldoDisponible: 0,
-        moneda: 'CUP',
-        estado: 'EJECUTADO',
-        fechaReserva: new Date('2026-01-02'),
-      },
-    ])
+  it('returns 401 when auth fails', async () => {
+    vi.mocked(authenticateUser).mockResolvedValue(
+      NextResponse.json({ error: 'Token no proporcionado' }, { status: 401 }) as never,
+    );
 
-    const { GET } = await import('../route')
-    const request = new NextRequest('http://localhost/api/contabilidad/anticipos/reportes/cliente')
+    const response = await GET(new NextRequest('http://localhost/api/contabilidad/anticipos/reportes/cliente'));
+    expect(response.status).toBe(401);
+  });
 
-    const response = await GET(request)
-    const body = await response.json()
+  it('delegates customer advances report to shared service', async () => {
+    vi.mocked(authenticateUser).mockResolvedValue({ user } as never);
+    vi.mocked(AccountingReportsService.getCustomerAdvancesReport).mockResolvedValue({
+      clientes: [{ cliente: { clienteId: 'c1', nombre: 'Cliente 1' }, anticipos: [], totales: { totalOriginal: 100, totalEjecutado: 20, totalPendiente: 80 } }],
+    } as never);
 
-    expect(response.status).toBe(200)
-    expect(body.clientes).toHaveLength(1)
-    expect(body.clientes[0].totales.totalOriginal).toBe(150)
-    expect(body.clientes[0].totales.totalEjecutado).toBe(125)
-    expect(body.clientes[0].totales.totalPendiente).toBe(25)
-    expect(prismaMock.anticipo.findMany).toHaveBeenCalledWith(
-      expect.objectContaining({
-        where: expect.objectContaining({ tipo: 'COBRO' }),
-      })
-    )
-  })
-})
+    const response = await GET(new NextRequest('http://localhost/api/contabilidad/anticipos/reportes/cliente?clienteId=c1&fechaInicio=2026-01-01&fechaFin=2026-01-31'));
+    const data = await response.json();
+
+    expect(response.status).toBe(200);
+    expect(data.clientes).toHaveLength(1);
+    expect(AccountingReportsService.getCustomerAdvancesReport).toHaveBeenCalledWith({
+      tenantId: 'tenant-1',
+      clienteId: 'c1',
+      fechaInicio: '2026-01-01',
+      fechaFin: '2026-01-31',
+    });
+  });
+});
