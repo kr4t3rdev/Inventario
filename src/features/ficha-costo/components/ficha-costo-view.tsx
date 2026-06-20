@@ -6,6 +6,7 @@ import { ResumenCosto } from './resumen-costo'
 import { HistorialCostos } from './historial-costos'
 import { ComposicionCosto } from './composicion-costo'
 import { ListasPrecios } from './listas-precios'
+import { VentasTrazabilidad } from './ventas-trazabilidad'
 import { FichaCostoPdf } from './ficha-costo-pdf'
 import type { FichaCostoData } from '../actions'
 
@@ -54,6 +55,7 @@ export function FichaCostoView({ data, hideHeader = false }: FichaCostoViewProps
           <TabsTrigger value="resumen">Resumen</TabsTrigger>
           {esCompuesto && <TabsTrigger value="composicion">Composición</TabsTrigger>}
           <TabsTrigger value="historial">Historial de compras</TabsTrigger>
+          <TabsTrigger value="ventas">Ventas</TabsTrigger>
           <TabsTrigger value="listas">Listas de precios</TabsTrigger>
         </TabsList>
 
@@ -69,6 +71,13 @@ export function FichaCostoView({ data, hideHeader = false }: FichaCostoViewProps
 
         <TabsContent value="historial" className="mt-4">
           <HistorialCostos productoId={data.producto.id} />
+        </TabsContent>
+
+        <TabsContent value="ventas" className="mt-4">
+          <VentasTrazabilidad
+            productoId={data.producto.id}
+            precioCosto={data.producto.precioCosto}
+          />
         </TabsContent>
 
         <TabsContent value="listas" className="mt-4">
