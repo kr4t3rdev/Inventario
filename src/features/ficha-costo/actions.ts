@@ -8,6 +8,7 @@
  *     - `actions-composicion.ts` — desglose materiales+MO+indirectos
  *     - `actions-producto.ts`    — listar productos y editar precioCosto
  *     - `actions-listas.ts`      — precios en listas del producto
+ *     - `actions-plantilla.ts`   — plantillas de ficha de costo (CRUD)
  *
  *   Este archivo se conserva por compatibilidad con imports existentes
  *   (`from '../actions'`). Las nuevas features pueden importar directo
@@ -26,6 +27,15 @@ export {
   updatePrecioCostoAction,
 } from './actions-producto'
 export { getListasPreciosProductoAction } from './actions-listas'
+export {
+  getPlantillasAction,
+  getPlantillaActivaAction,
+  createPlantillaAction,
+  updatePlantillaAction,
+  activarPlantillaAction,
+  deletePlantillaAction,
+  aplicarPrecioSugeridoAction,
+} from './actions-plantilla'
 
 export type {
   EstadoMargen,
@@ -59,4 +69,10 @@ export type {
   UpdatePrecioCostoResult,
   PrecioEnListaResult,
   GetListasPreciosProductoInput,
+  PlantillaCosto,
+  PlantillaCostoInput,
+  UpdatePlantillaInput,
+  ActivarPlantillaInput,
+  AplicarPrecioSugeridoInput,
+  PlantillaActivaResult,
 } from './types'
