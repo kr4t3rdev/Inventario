@@ -18,6 +18,7 @@
 
 export { getFichaCostoAction } from './actions-ficha'
 export { getHistorialCostosAction } from './actions-historial'
+export { getHistorialReconciliadoAction } from './actions-reconciliacion'
 export { getComposicionCostoAction } from './actions-composicion'
 export {
   listarProductosParaFichaAction,
@@ -42,6 +43,11 @@ export type {
   HistorialCostosPagination,
   HistorialCostosData,
   GetHistorialCostosInput,
+  HistorialReconciliadoItem,
+  HistorialProveedorResumen,
+  EstadoCPP,
+  HistorialReconciliadoData,
+  GetHistorialReconciliadoInput,
   ProductoFichaListItem,
   ListarProductosParaFichaInput,
   UpdatePrecioCostoInput,

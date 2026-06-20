@@ -1,0 +1,269 @@
+'use server'
+
+import { withAction, ActionError } from '@/lib/server-actions'
+import { prisma } from '@/lib/prisma'
+import { requireTenant, requireFeature } from '@/lib/services/tenant-scope'
+import type { AuthenticatedUser } from '@/lib/auth-middleware'
+import { obtenerMonedaBaseTenant } from './lib/cost-calc-server'
+import { lookupFromCache, precargarTasas } from './lib/exchange-lookup'
+import { normalizarMoneda } from './lib/cost-calculator'
+import {
+  reconciliarHistorial,
+  type ItemCompraMaterializado,
+} from './lib/reconciliador-historial'
+import type {
+  HistorialReconciliadoData,
+  HistorialReconciliadoItem,
+  GetHistorialReconciliadoInput,
+} from './types'
+
+const HISTORIAL_DEFAULT_LIMIT = 20
+const MAX_ITEMS_RECONCILIACION = 1000
+const VENTANA_MESES_CPP = 12
+
+/**
+ * @description Devuelve el historial de compras del producto reconciliado
+ *   con el cálculo del CPP. Cada item indica si cae dentro de la ventana
+ *   de 12 meses y el gasto proporcional prorrateado. Incluye además un
+ *   resumen por proveedor (calculado sobre el set completo en ventana)
+ *   y el estado del CPP (CALCULADO / CON_ADVERTENCIAS / SIN_DATOS).
+ *
+ *   Multi-tenant estricto: producto de otro tenant → NOT_FOUND opaco.
+ *   Excluye documentos soft-deleted (deletedAt: null) para alinearse
+ *   con el cálculo del CPP.
+ */
+export const getHistorialReconciliadoAction = withAction(
+  async (
+    input: GetHistorialReconciliadoInput,
+    user: AuthenticatedUser,
+  ): Promise<HistorialReconciliadoData> => {
+    const tenantId = requireTenant(user)
+    requireFeature(user, 'productos', 'ver el historial de costos')
+
+    // 1. Verificar que el producto pertenece al tenant.
+    const producto = await prisma.producto.findFirst({
+      where: { id: input.productoId, tenantId },
+      select: { id: true },
+    })
+    if (!producto) {
+      throw new ActionError('Producto no encontrado', 'NOT_FOUND')
+    }
+
+    // 2. Calcular paginación.
+    const page = input.page && input.page > 0 ? input.page : 1
+    const limit =
+      input.limit && input.limit > 0 && input.limit <= 100
+        ? input.limit
+        : HISTORIAL_DEFAULT_LIMIT
+    const skip = (page - 1) * limit
+
+    // 3. Construir el where con filtros.
+    const baseWhere: Record<string, unknown> = {
+      productoId: input.productoId,
+      tenantId,
+    }
+    const docWhere: Record<string, unknown> = { deletedAt: null }
+    if (input.fechaDesde) {
+      docWhere.fechaCompra = {
+        ...((docWhere.fechaCompra as object) ?? {}),
+        gte: new Date(input.fechaDesde),
+      }
+    }
+    if (input.fechaHasta) {
+      docWhere.fechaCompra = {
+        ...((docWhere.fechaCompra as object) ?? {}),
+        lte: new Date(input.fechaHasta),
+      }
+    }
+    if (input.proveedorId) {
+      docWhere.proveedorId = input.proveedorId
+    }
+    if (Object.keys(docWhere).length > 0) {
+      baseWhere.compraDocumento = docWhere
+    }
+
+    // 4. Query paginada + query completa (para reconciliación) en paralelo.
+    const itemsPaginadosRaw = await prisma.compraDocumentoItem.findMany({
+      where: baseWhere,
+      orderBy: { compraDocumento: { fechaCompra: 'desc' } },
+      skip,
+      take: limit,
+      select: {
+        compraDocumentoItemId: true,
+        cantidad: true,
+        precioUnitario: true,
+        totalLinea: true,
+        compraDocumento: {
+          select: {
+            fechaCompra: true,
+            numeroFactura: true,
+            proveedorId: true,
+            compraDocumentoId: true,
+            proveedor: { select: { nombre: true } },
+          },
+        },
+      },
+    })
+
+    const [itemsCompletosRaw, total] = await Promise.all([
+      prisma.compraDocumentoItem.findMany({
+        where: {
+          productoId: input.productoId,
+          tenantId,
+          compraDocumento: {
+            deletedAt: null,
+            fechaCompra: {
+              gte: new Date(
+                new Date().setMonth(new Date().getMonth() - VENTANA_MESES_CPP),
+              ),
+            },
+          },
+        },
+        take: MAX_ITEMS_RECONCILIACION,
+        select: {
+          compraDocumentoItemId: true,
+          cantidad: true,
+          precioUnitario: true,
+          compraDocumentoId: true,
+          compraDocumento: {
+            select: {
+              fechaCompra: true,
+              numeroFactura: true,
+              proveedorId: true,
+              gastoCompraId: true,
+              proveedor: { select: { nombre: true } },
+            },
+          },
+        },
+      }),
+      prisma.compraDocumentoItem.count({ where: baseWhere }),
+    ])
+
+    // 5. Calcular tasaAproximada por item y armar gastosPorDocumento.
+    const monedaBase = await obtenerMonedaBaseTenant(tenantId)
+    const cache = await precargarTasas(['USD'], monedaBase)
+    const lookup = lookupFromCache(cache)
+
+    const advertencias: string[] = []
+    const gastosPorDocumento = new Map<string, number>()
+    const gastoIds = Array.from(
+      new Set(
+        itemsCompletosRaw
+          .map((c) => c.compraDocumento?.gastoCompraId)
+          .filter((id): id is string => Boolean(id)),
+      ),
+    )
+
+    if (gastoIds.length > 0) {
+      const gastos = await prisma.gastoCompra.findMany({
+        where: { tenantId, gastoCompraId: { in: gastoIds } },
+        select: { gastoCompraId: true, total: true, cantidad: true },
+      })
+      for (const c of itemsCompletosRaw) {
+        const docId = c.compraDocumentoId
+        const gastoId = c.compraDocumento?.gastoCompraId
+        if (!docId || !gastoId) continue
+        if (gastosPorDocumento.has(docId)) continue
+        const g = gastos.find((x) => x.gastoCompraId === gastoId)
+        if (!g || !g.cantidad) continue
+        gastosPorDocumento.set(docId, g.total)
+      }
+    }
+
+    // 6. Materializar items para el reconciliador.
+    const itemsParaReconciliar: ItemCompraMaterializado[] = itemsCompletosRaw.map(
+      (c) => {
+        const fecha = c.compraDocumento?.fechaCompra ?? new Date()
+        const normalizado = normalizarMoneda(
+          c.precioUnitario,
+          'CUP',
+          monedaBase,
+          lookup,
+          fecha,
+        )
+        if (normalizado.nota === 'TASA_APROXIMADA') {
+          advertencias.push(
+            `Tasa de cambio aproximada aplicada a compra ${c.compraDocumentoId ?? ''}`.trim(),
+          )
+        }
+        if (normalizado.nota === 'SIN_TASA') {
+          advertencias.push(
+            `Sin tasa de cambio para la compra ${c.compraDocumentoId ?? ''}; se usa el precio original`.trim(),
+          )
+        }
+        return {
+          compraDocumentoItemId: c.compraDocumentoItemId,
+          productoId: input.productoId,
+          fecha,
+          proveedorId: c.compraDocumento?.proveedorId ?? 'sin-proveedor',
+          proveedorNombre: c.compraDocumento?.proveedor?.nombre ?? 'Sin proveedor',
+          cantidad: c.cantidad,
+          precioUnitario: c.precioUnitario,
+          totalLinea: c.cantidad * c.precioUnitario,
+          compraDocumentoId: c.compraDocumentoId,
+          tasaAproximada: normalizado.nota === 'TASA_APROXIMADA',
+        }
+      },
+    )
+
+    // 7. Llamar al reconciliador puro.
+    const resultado = reconciliarHistorial(itemsParaReconciliar, {
+      ventanaMeses: VENTANA_MESES_CPP,
+      gastosPorDocumento,
+    })
+    for (const a of resultado.advertencias) advertencias.push(a)
+
+    // 8. Determinar estado del CPP.
+    const itemsEnVentana = resultado.items.filter((it) => it.enVentanaCPP)
+    let estadoCPP: HistorialReconciliadoData['estadoCPP']
+    if (itemsEnVentana.length === 0) {
+      estadoCPP = 'SIN_DATOS'
+    } else if (advertencias.length > 0) {
+      estadoCPP = 'CON_ADVERTENCIAS'
+    } else {
+      estadoCPP = 'CALCULADO'
+    }
+
+    // 9. Paginar items reconciliados en memoria (los items reconciliados
+    //    vienen del set completo, no de la query paginada, así que cortamos
+    //    aquí según page/limit).
+    const itemsPaginadosIds = new Set(
+      itemsPaginadosRaw.map((it) => it.compraDocumentoItemId),
+    )
+    const itemsReconciliadosPaginados: HistorialReconciliadoItem[] =
+      resultado.items
+        .filter((it) => itemsPaginadosIds.has(it.compraDocumentoItemId))
+        .map((it) => {
+          // Buscar datos del join para los campos de la fila.
+          const raw = itemsPaginadosRaw.find(
+            (r) => r.compraDocumentoItemId === it.compraDocumentoItemId,
+          )
+          return {
+            compraDocumentoItemId: it.compraDocumentoItemId,
+            fecha: it.fecha.toISOString(),
+            numeroFactura: raw?.compraDocumento.numeroFactura ?? '',
+            proveedor: it.proveedorNombre,
+            proveedorId: it.proveedorId,
+            cantidad: it.cantidad,
+            precioUnitario: it.precioUnitario,
+            totalLinea: it.totalLinea,
+            enVentanaCPP: it.enVentanaCPP,
+            gastoProporcional: it.gastoProporcional,
+            tasaAproximada: it.tasaAproximada,
+          }
+        })
+
+    return {
+      items: itemsReconciliadosPaginados,
+      pagination: {
+        page,
+        limit,
+        total,
+        totalPages: Math.max(1, Math.ceil(total / limit)),
+      },
+      proveedores: resultado.proveedores,
+      estadoCPP,
+      advertencias,
+    }
+  },
+)

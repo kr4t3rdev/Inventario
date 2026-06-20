@@ -169,3 +169,45 @@ export interface PrecioEnListaResult {
 export interface GetListasPreciosProductoInput {
   productoId: string
 }
+
+// ─── Tipos de historial reconciliado ──────────────────────
+
+/**
+ * @description Línea de compra reconciliada con el cálculo del CPP.
+ *   Extiende `HistorialCostosItem` con flags de ventana y gasto asignado.
+ */
+export interface HistorialReconciliadoItem extends HistorialCostosItem {
+  /** True si la fecha cae dentro de la ventana CPP (12 meses). */
+  enVentanaCPP: boolean
+  /** Gasto proporcional prorrateado del GastoCompra del documento. */
+  gastoProporcional: number
+  /** True si la conversión de moneda fue aproximada (tasa con desfase). */
+  tasaAproximada?: boolean
+}
+
+export interface HistorialProveedorResumen {
+  proveedorId: string
+  proveedorNombre: string
+  cantidadTotal: number
+  montoTotal: number
+  participacionPorcentaje: number
+  cantidadItems: number
+}
+
+export type EstadoCPP = 'CALCULADO' | 'CON_ADVERTENCIAS' | 'SIN_DATOS'
+
+/**
+ * @description Respuesta de `getHistorialReconciliadoAction`. Combina
+ *   los items paginados (con flags de ventana y gasto) con el resumen
+ *   por proveedor (calculado sobre el set completo en ventana, no la
+ *   página actual) y el estado del CPP.
+ */
+export interface HistorialReconciliadoData {
+  items: HistorialReconciliadoItem[]
+  pagination: HistorialCostosPagination
+  proveedores: HistorialProveedorResumen[]
+  estadoCPP: EstadoCPP
+  advertencias: string[]
+}
+
+export interface GetHistorialReconciliadoInput extends GetHistorialCostosInput {}
