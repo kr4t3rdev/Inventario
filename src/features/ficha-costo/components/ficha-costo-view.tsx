@@ -85,7 +85,6 @@ export function FichaCostoView({ data, hideHeader = false }: FichaCostoViewProps
         <TabsContent value="plantilla" className="mt-4">
           <PlantillaCostoTab
             productoId={data.producto.id}
-            precioCosto={data.producto.precioCosto}
             precioVenta={data.producto.precioVenta}
           />
         </TabsContent>

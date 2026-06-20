@@ -11,22 +11,37 @@ vi.mock('next/cache', () => ({
   revalidatePath: vi.fn(),
 }))
 
-vi.mock('@/lib/prisma', () => ({
-  prisma: {
-    $transaction: vi.fn((ops: any[]) => Promise.all(ops)),
-    producto: { findFirst: vi.fn(), update: vi.fn(), findUnique: vi.fn() },
+vi.mock('@/lib/prisma', () => {
+  const mockTx = {
     productoCostSheetTemplate: {
-      findMany: vi.fn(),
       findFirst: vi.fn(),
       findFirstOrThrow: vi.fn(),
       create: vi.fn(),
       update: vi.fn(),
       updateMany: vi.fn(),
       delete: vi.fn(),
-      count: vi.fn(),
     },
-  },
-}))
+  }
+  return {
+    prisma: {
+      $transaction: vi.fn((arg: any) => {
+        if (typeof arg === 'function') return arg(mockTx)
+        return Promise.all(arg)
+      }),
+      producto: { findFirst: vi.fn(), update: vi.fn(), findUnique: vi.fn() },
+      productoCostSheetTemplate: {
+        findMany: vi.fn(),
+        findFirst: vi.fn(),
+        findFirstOrThrow: vi.fn(),
+        create: vi.fn(),
+        update: vi.fn(),
+        updateMany: vi.fn(),
+        delete: vi.fn(),
+        count: vi.fn(),
+      },
+    },
+  }
+})
 
 import { getCurrentUser } from '@/lib/server-actions/get-current-user'
 import { prisma } from '@/lib/prisma'
@@ -122,13 +137,24 @@ describe('actions-plantilla', () => {
   it('createPlantillaAction: crea plantilla y calcula precio sugerido', async () => {
     vi.mocked(getCurrentUser).mockResolvedValue(mockUser)
     vi.mocked(prisma.producto.findFirst).mockResolvedValue({ id: 'prod-1' } as any)
-    vi.mocked(prisma.productoCostSheetTemplate.count).mockResolvedValue(2)
-    vi.mocked(prisma.productoCostSheetTemplate.create).mockResolvedValue({
-      ...PLANTILLA_BASE,
-      id: 'tpl-new',
-      version: 3,
-      precioSugerido: 285.71,
-    } as any)
+    // Mock the transaction callback's inner findFirst
+    vi.mocked(prisma.$transaction).mockImplementation(async (arg: any) => {
+      if (typeof arg === 'function') {
+        const tx = {
+          productoCostSheetTemplate: {
+            findFirst: vi.fn().mockResolvedValue({ version: 2 } as any),
+            create: vi.fn().mockResolvedValue({
+              ...PLANTILLA_BASE,
+              id: 'tpl-new',
+              version: 3,
+              precioSugerido: 285.71,
+            } as any),
+          },
+        }
+        return arg(tx)
+      }
+      return Promise.all(arg)
+    })
 
     const result = await createPlantillaAction({
       productoId: 'prod-1',

@@ -168,11 +168,11 @@ export const createPlantillaAction = withAction(
     if (input.margenObjetivo <= 0 || input.margenObjetivo >= 1) {
       throw new ActionError('El margen objetivo debe estar entre 0 y 1', 'VALIDATION_ERROR')
     }
+    if (input.costoMateriales < 0 || input.costoManoObra < 0 || input.costoIndirectos < 0) {
+      throw new ActionError('Los costos no pueden ser negativos', 'VALIDATION_ERROR')
+    }
 
-    const ultimaVersion = await prisma.productoCostSheetTemplate.count({
-      where: { productoId: input.productoId, tenantId },
-    })
-
+    // Calcular precio sugerido antes de la transacción
     const costoTotal = calcularCostoTotalPlantilla(
       input.costoMateriales,
       input.costoManoObra,
@@ -180,21 +180,29 @@ export const createPlantillaAction = withAction(
     )
     const precioSugerido = calcularPrecioSugerido(costoTotal, input.margenObjetivo)
 
-    const row = await prisma.productoCostSheetTemplate.create({
-      data: {
-        tenantId,
-        productoId: input.productoId,
-        version: ultimaVersion + 1,
-        nombre: input.nombre.trim(),
-        costoMateriales: input.costoMateriales,
-        costoManoObra: input.costoManoObra,
-        costoIndirectos: input.costoIndirectos,
-        margenObjetivo: input.margenObjetivo,
-        precioSugerido,
-        esActiva: false,
-        notas: input.notas,
-        createdById: user.userId || 'system',
-      },
+    // Transacción atómica: leer última versión + crear (evita race conditions)
+    const row = await prisma.$transaction(async (tx) => {
+      const ultima = await tx.productoCostSheetTemplate.findFirst({
+        where: { productoId: input.productoId, tenantId },
+        orderBy: { version: 'desc' },
+        select: { version: true },
+      })
+      return tx.productoCostSheetTemplate.create({
+        data: {
+          tenantId,
+          productoId: input.productoId,
+          version: (ultima?.version ?? 0) + 1,
+          nombre: input.nombre.trim(),
+          costoMateriales: input.costoMateriales,
+          costoManoObra: input.costoManoObra,
+          costoIndirectos: input.costoIndirectos,
+          margenObjetivo: input.margenObjetivo,
+          precioSugerido,
+          esActiva: false,
+          notas: input.notas,
+          createdById: user.userId || 'system',
+        },
+      })
     })
 
     return toPlantillaCosto(row)
@@ -226,9 +234,24 @@ export const updatePlantillaAction = withAction(
 
     const data: Record<string, unknown> = {}
     if (input.nombre !== undefined) data.nombre = input.nombre.trim()
-    if (input.costoMateriales !== undefined) data.costoMateriales = input.costoMateriales
-    if (input.costoManoObra !== undefined) data.costoManoObra = input.costoManoObra
-    if (input.costoIndirectos !== undefined) data.costoIndirectos = input.costoIndirectos
+    if (input.costoMateriales !== undefined) {
+      if (input.costoMateriales < 0) {
+        throw new ActionError('El costo de materiales no puede ser negativo', 'VALIDATION_ERROR')
+      }
+      data.costoMateriales = input.costoMateriales
+    }
+    if (input.costoManoObra !== undefined) {
+      if (input.costoManoObra < 0) {
+        throw new ActionError('El costo de mano de obra no puede ser negativo', 'VALIDATION_ERROR')
+      }
+      data.costoManoObra = input.costoManoObra
+    }
+    if (input.costoIndirectos !== undefined) {
+      if (input.costoIndirectos < 0) {
+        throw new ActionError('El costo indirecto no puede ser negativo', 'VALIDATION_ERROR')
+      }
+      data.costoIndirectos = input.costoIndirectos
+    }
     if (input.margenObjetivo !== undefined) {
       if (input.margenObjetivo <= 0 || input.margenObjetivo >= 1) {
         throw new ActionError('El margen objetivo debe estar entre 0 y 1', 'VALIDATION_ERROR')
@@ -297,7 +320,7 @@ export const activarPlantillaAction = withAction(
     ])
 
     const row = await prisma.productoCostSheetTemplate.findFirstOrThrow({
-      where: { id: input.plantillaId },
+      where: { id: input.plantillaId, tenantId },
     })
 
     revalidatePath(`/busy/ficha-costo/${input.productoId}`)

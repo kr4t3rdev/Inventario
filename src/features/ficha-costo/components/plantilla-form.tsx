@@ -19,7 +19,7 @@ interface PlantillaFormProps {
   onOpenChange: (open: boolean) => void
   plantilla?: PlantillaCosto | null
   productoId: string
-  onSubmit: (data: PlantillaCostoInput | UpdatePlantillaInput) => void
+  onSubmit: (data: PlantillaCostoInput | UpdatePlantillaInput) => void | Promise<void>
   isSubmitting: boolean
 }
 

@@ -40,7 +40,6 @@ import { PlantillaForm } from './plantilla-form'
 
 interface PlantillaCostoTabProps {
   productoId: string
-  precioCosto: number
   precioVenta: number
 }
 
@@ -57,7 +56,6 @@ const fmt = (n: number) =>
  */
 export function PlantillaCostoTab({
   productoId,
-  precioCosto,
   precioVenta,
 }: PlantillaCostoTabProps) {
   const [plantillas, setPlantillas] = useState<PlantillaCosto[]>([])
@@ -333,7 +331,7 @@ export function PlantillaCostoTab({
         open={formOpen}
         onOpenChange={setFormOpen}
         productoId={productoId}
-        onSubmit={handleCreate}
+        onSubmit={handleCreate as (data: PlantillaCostoInput | UpdatePlantillaInput) => Promise<void>}
         isSubmitting={isSubmitting}
       />
       <PlantillaForm
@@ -341,7 +339,7 @@ export function PlantillaCostoTab({
         onOpenChange={() => setEditing(null)}
         plantilla={editing}
         productoId={productoId}
-        onSubmit={handleUpdate}
+        onSubmit={handleUpdate as (data: PlantillaCostoInput | UpdatePlantillaInput) => Promise<void>}
         isSubmitting={isSubmitting}
       />
     </div>
