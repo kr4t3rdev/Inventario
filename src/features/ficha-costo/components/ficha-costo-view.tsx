@@ -11,6 +11,8 @@ import type { FichaCostoData } from '../actions'
 
 interface FichaCostoViewProps {
   data: FichaCostoData
+  /** Cuando es true, no muestra el header propio (usado por FichaCostoDetalle). */
+  hideHeader?: boolean
 }
 
 /**
@@ -20,24 +22,31 @@ interface FichaCostoViewProps {
  *   productos compuestos. El botón "Exportar PDF" captura el contenido
  *   de la vista y lo descarga.
  */
-export function FichaCostoView({ data }: FichaCostoViewProps) {
+export function FichaCostoView({ data, hideHeader = false }: FichaCostoViewProps) {
   const esCompuesto = data.producto.tipo === 'COMPUESTO'
   const printableRef = useRef<HTMLDivElement>(null)
 
   return (
     <div className="mx-auto flex w-full max-w-5xl flex-col gap-6 p-4">
-      <header className="flex items-start justify-between gap-4">
-        <div>
-          <h1 className="text-2xl font-semibold tracking-tight">
-            Ficha de costo: {data.producto.nombre}
-          </h1>
-          <p className="text-muted-foreground text-sm">
-            {data.producto.codigoInterno ?? 'sin código interno'} ·{' '}
-            {esCompuesto ? 'Producto compuesto' : 'Producto simple'}
-          </p>
+      {!hideHeader && (
+        <header className="flex items-start justify-between gap-4">
+          <div>
+            <h1 className="text-2xl font-semibold tracking-tight">
+              Ficha de costo: {data.producto.nombre}
+            </h1>
+            <p className="text-muted-foreground text-sm">
+              {data.producto.codigoInterno ?? 'sin código interno'} ·{' '}
+              {esCompuesto ? 'Producto compuesto' : 'Producto simple'}
+            </p>
+          </div>
+          <FichaCostoPdf data={data} targetRef={printableRef} />
+        </header>
+      )}
+      {hideHeader && (
+        <div className="flex justify-end">
+          <FichaCostoPdf data={data} targetRef={printableRef} />
         </div>
-        <FichaCostoPdf data={data} targetRef={printableRef} />
-      </header>
+      )}
 
       <div ref={printableRef} className="space-y-6">
         <Tabs defaultValue="resumen" className="w-full">

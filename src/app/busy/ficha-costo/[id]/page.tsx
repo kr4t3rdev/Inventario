@@ -1,0 +1,37 @@
+import { notFound } from 'next/navigation'
+import { SidebarInset, SidebarProvider } from '@/components/ui/sidebar'
+import { AppSidebar2 } from '@/components/app-sidebar2'
+import { getFichaCostoAction } from '@/features/ficha-costo/actions'
+import { FichaCostoDetalle } from '@/features/ficha-costo/components/ficha-costo-detalle'
+
+interface FichaCostoDetallePageProps {
+  params: Promise<{ id: string }>
+}
+
+/**
+ * @description Página server-first que muestra la ficha de costo de un
+ *   producto específico, con su precio de costo editable.
+ */
+export default async function FichaCostoDetallePage({
+  params,
+}: FichaCostoDetallePageProps): Promise<React.JSX.Element> {
+  const { id } = await params
+  const result = await getFichaCostoAction(id)
+  if (!result.success) {
+    if (result.error?.code === 'NOT_FOUND') notFound()
+    throw new Error(result.error?.message ?? 'Error desconocido')
+  }
+
+  return (
+    <SidebarProvider>
+      <AppSidebar2 variant="floating" />
+      <SidebarInset>
+        <FichaCostoDetalle data={result.data} />
+      </SidebarInset>
+    </SidebarProvider>
+  )
+}
+
+export const metadata = {
+  title: 'Ficha de Costo',
+}

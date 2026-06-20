@@ -487,7 +487,12 @@ export function AppSidebar2({
 					{
 						title: "Rentabilidad x Compra",
 						url: "/busy/reportes/rentabilidad-compra",
-						icon: BarChart3,
+						icon: Calculator,
+					},
+					{
+						title: "Ficha de Costo",
+						url: "/busy/ficha-costo",
+						icon: FileText,
 					},
 					{
 						title: "Cuadre Financiero",

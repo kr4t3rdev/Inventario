@@ -1,8 +1,7 @@
 "use client"
 
-import Link from 'next/link'
 import { LazyMotion, m as motion } from 'framer-motion'
-import { Boxes, AlertCircle, History, Package, Receipt, TrendingUp } from 'lucide-react'
+import { Boxes, AlertCircle, History, Package, TrendingUp } from 'lucide-react'
 
 import { SidebarInset, SidebarProvider } from '@/components/ui/sidebar'
 import { Skeleton } from '@/components/ui/skeleton'
@@ -125,12 +124,6 @@ export function ProductoFormPageClient({
                   productoNombre={producto.nombre}
                   trigger={<Button variant="outline" className="gap-2 border-dashed"><TrendingUp className="h-4 w-4" />Historial de costos</Button>}
                 />
-                <Button asChild variant="default" className="gap-2">
-                  <Link href={`/busy/products/${producto.id}/ficha-costo`}>
-                    <Receipt className="h-4 w-4" />
-                    Ver ficha de costo
-                  </Link>
-                </Button>
               </motion.div>
 
               <motion.div className="mb-6 grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-4" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.22 }}>
