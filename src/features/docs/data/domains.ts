@@ -183,6 +183,10 @@ const MODULE_INFO: Record<string, { title: string; description: string }> = {
     title: "Licencias",
     description: "Licencias individuales (legacy)",
   },
+  "ficha-costo": {
+    title: "Ficha de Costo",
+    description: "Análisis de costo y rentabilidad por producto",
+  },
 }
 
 function mapToModule(slug: string, domainName: string, domainIcon: string): DocModule {
@@ -257,7 +261,7 @@ export const DOC_DOMAINS: DocDomain[] = [
   {
     name: "Producción",
     icon: "🏭",
-    modules: ["produccion", "reparaciones"].map((s) => mapToModule(s, "Producción", "🏭")),
+    modules: ["produccion", "reparaciones", "ficha-costo"].map((s) => mapToModule(s, "Producción", "🏭")),
   },
   {
     name: "Infraestructura",
