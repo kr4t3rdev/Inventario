@@ -3,6 +3,7 @@ import prisma from '@/lib/prisma'
 import { z } from 'zod'
 import type { Prisma } from '@/generated/prisma'
 import { authenticateUser } from "@/lib/auth-middleware"
+import { requireFeature } from '@/lib/services/tenant-scope'
 import { AuditLogService } from "@/lib/services/audit-log-service"
 import { validarEscrituraPeriodo, extraerFechaDeBody } from '@/lib/services/validate-period-write'
 
@@ -20,6 +21,7 @@ const reconciliacionServicioSchema = z.object({
 // GET - Obtener servicios pendientes de reconciliar
 export async function GET(request: NextRequest) {
   try {
+    const a = await authenticateUser(request); if ('status' in a) return a as Response; const u = a.user; requireFeature(u, 'servicios', 'ver reconciliación de servicios');
     const { searchParams } = new URL(request.url)
     const fechaDesde = searchParams.get('fechaDesde')
     const fechaHasta = searchParams.get('fechaHasta')
@@ -93,6 +95,7 @@ export async function POST(request: NextRequest) {
     const authResultUser = await authenticateUser(request)
     if ('status' in authResultUser) return authResultUser as Response
     const user = authResultUser.user
+    requireFeature(user, 'servicios', 'reconciliar servicios');
 
     const body = await request.json()
     const validatedData = reconciliacionServicioSchema.parse(body)

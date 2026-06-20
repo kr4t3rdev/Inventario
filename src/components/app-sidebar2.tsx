@@ -563,6 +563,8 @@ export function AppSidebar2({
 		"Analisis Estado Cuenta": "analisis-estado-cuenta",
 		"Facturas Vencidas": "facturas-vencidas",
 		"Inyección Capital": "inyeccion-capital",
+		Servicios: "servicios",
+		"Reconciliación Servicios": "servicios",
 	};
 
 	// ── Permisos de sidebar por rol de tenant ──

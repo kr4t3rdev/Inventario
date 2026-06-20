@@ -8,7 +8,7 @@
 import { revalidatePath } from 'next/cache';
 import { withAction, ActionError } from '@/lib/server-actions';
 import { prisma } from '@/lib/prisma';
-import { requireTenant } from '@/lib/services/tenant-scope';
+import { requireTenant, requireFeature } from '@/lib/services/tenant-scope';
 import { withPeriodValidation } from '@/lib/services/with-period-validation';
 import { applyAnticipoAllocations } from '@/lib/services/anticipos-workflow';
 import { ventaServicioLegacySchema, ventaMixtaSchema, updateVentaServicioSchema } from './schemas';
@@ -22,6 +22,7 @@ const VENTA_SERVICIO_INCLUDE = {
 
 export const getVentaServiciosAction = withAction(async (_input: void, user: AuthenticatedUser) => {
   const tenantId = requireTenant(user);
+  requireFeature(user, 'servicios', 'ver servicios');
   return prisma.ventaServicios.findMany({
     where: { tenantId },
     include: VENTA_SERVICIO_INCLUDE,
@@ -31,6 +32,7 @@ export const getVentaServiciosAction = withAction(async (_input: void, user: Aut
 
 export const getVentaServicioByIdAction = withAction(async (id: string, user: AuthenticatedUser) => {
   const tenantId = requireTenant(user);
+  requireFeature(user, 'servicios', 'ver servicios');
   const venta = await prisma.ventaServicios.findFirst({
     where: { ventaServicioId: id, tenantId },
     include: VENTA_SERVICIO_INCLUDE,
@@ -43,6 +45,7 @@ export const createVentaServicioAction = withAction(withPeriodValidation(
   () => new Date(),
   async (input: VentaServicioInput | VentaMixtaInput, user: AuthenticatedUser) => {
   const tenantId = requireTenant(user);
+  requireFeature(user, 'servicios', 'crear servicios');
 
   // Detectar modo: mixto (con lineas) vs legacy (single servicio)
   const raw = input as any;
@@ -147,6 +150,7 @@ export const updateVentaServicioAction = withAction(async (input: VentaServicioU
   const parsed = updateVentaServicioSchema.parse(input);
   const { ventaServicioId, ...data } = parsed;
   const tenantId = requireTenant(user);
+  requireFeature(user, 'servicios', 'editar servicios');
 
   const existing = await prisma.ventaServicios.findFirst({
     where: { ventaServicioId, tenantId },
@@ -172,6 +176,7 @@ export const updateVentaServicioAction = withAction(async (input: VentaServicioU
 
 export const deleteVentaServicioAction = withAction(async (id: string, user: AuthenticatedUser) => {
   const tenantId = requireTenant(user);
+  requireFeature(user, 'servicios', 'eliminar servicios');
   const existing = await prisma.ventaServicios.findFirst({
     where: { ventaServicioId: id, tenantId },
     select: { ventaServicioId: true },

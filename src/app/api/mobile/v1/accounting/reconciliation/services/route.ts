@@ -1,5 +1,6 @@
 import { ActionError } from '@/lib/server-actions';
 import { authenticateUser } from '@/lib/auth-middleware';
+import { requireFeature } from '@/lib/services/tenant-scope';
 import { errorResponse, successResponse } from '@/lib/api-response';
 import { AccountingReconciliationService } from '@/features/contabilidad/services/accounting-reconciliation-service';
 import { extraerFechaDeBody, validarEscrituraPeriodo } from '@/lib/services/validate-period-write';
@@ -33,6 +34,7 @@ export async function GET(request: Request) {
   }
 
   try {
+    requireFeature(authResult.user, 'servicios', 'ver reconciliación de servicios');
     const { searchParams } = new URL(request.url);
     const result = await AccountingReconciliationService.listPendingServices({
       tenantId: authResult.user.tenantId ?? '',
@@ -59,6 +61,7 @@ export async function POST(request: Request) {
   }
 
   try {
+    requireFeature(authResult.user, 'servicios', 'realizar reconciliación de servicios');
     const body = await request.json();
     const fechaOperacion = extraerFechaDeBody(body) ?? new Date();
     const validacionPeriodo = await validarEscrituraPeriodo({
