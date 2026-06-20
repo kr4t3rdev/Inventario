@@ -211,3 +211,49 @@ export interface HistorialReconciliadoData {
 }
 
 export interface GetHistorialReconciliadoInput extends GetHistorialCostosInput {}
+
+// ─── Tipos de trazabilidad FIFO en ventas ─────────────────
+
+/**
+ * @description Venta de un producto con trazabilidad FIFO. Incluye el
+ *   costo real calculado desde PurchaseAllocation (o fallback a precioCosto
+ *   para ventas legacy sin allocations) y el margen real.
+ */
+export interface VentaProductoItem {
+  ventaItemId: string
+  ventaId: string
+  fecha: string // ISO
+  clienteNombre: string
+  cantidad: number
+  precioUnitario: number
+  ingresoTotal: number
+  costoReal: number
+  margenReal: number // porcentaje
+  esLegacy: boolean // true si no tiene allocations FIFO
+}
+
+export interface VentasProductoResumen {
+  totalVendido: number
+  costoTotal: number
+  margenPromedio: number // porcentaje
+  cantidadVentas: number
+}
+
+/**
+ * @description Respuesta de `getVentasProductoAction`. Combina las ventas
+ *   paginadas con el resumen de rentabilidad calculado sobre todo el
+ *   dataset filtrado (no solo la página actual).
+ */
+export interface VentasProductoData {
+  items: VentaProductoItem[]
+  pagination: HistorialCostosPagination
+  resumen: VentasProductoResumen
+}
+
+export interface GetVentasProductoInput {
+  productoId: string
+  page?: number
+  limit?: number
+  fechaDesde?: string
+  fechaHasta?: string
+}

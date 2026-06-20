@@ -20,6 +20,7 @@ export { getFichaCostoAction } from './actions-ficha'
 export { getHistorialCostosAction } from './actions-historial'
 export { getHistorialReconciliadoAction } from './actions-reconciliacion'
 export { getComposicionCostoAction } from './actions-composicion'
+export { getVentasProductoAction } from './actions-ventas'
 export {
   listarProductosParaFichaAction,
   updatePrecioCostoAction,
@@ -48,6 +49,10 @@ export type {
   EstadoCPP,
   HistorialReconciliadoData,
   GetHistorialReconciliadoInput,
+  VentaProductoItem,
+  VentasProductoResumen,
+  VentasProductoData,
+  GetVentasProductoInput,
   ProductoFichaListItem,
   ListarProductosParaFichaInput,
   UpdatePrecioCostoInput,
