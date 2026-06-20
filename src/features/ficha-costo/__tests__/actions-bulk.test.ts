@@ -33,10 +33,12 @@ vi.mock('@/lib/server-actions', () => ({
   },
 }))
 
+const mockRequireFeature = vi.fn()
+
 vi.mock('@/lib/services/tenant-scope', () => ({
   requireTenant: vi.fn(() => 'tenant-1'),
   requireManagerRole: vi.fn(() => true),
-  requireFeature: vi.fn(() => true),
+  requireFeature: (...args: any[]) => mockRequireFeature(...args),
 }))
 
 vi.mock('@/lib/cost-history-utils', () => ({
@@ -439,5 +441,59 @@ describe('bulkApplyTemplateAction', () => {
 
     expect(result.updated).toBe(1)
     expect(result.skipped).toBe(1)
+  })
+})
+
+describe('Feature gate: ficha-costo-bulk', () => {
+  beforeEach(() => {
+    vi.clearAllMocks()
+  })
+
+  it('debe invocar requireFeature con ficha-costo-bulk en bulkApplyPercentageAction', async () => {
+    vi.mocked(prisma.producto.findMany).mockResolvedValue([])
+
+    await bulkApplyPercentageAction(
+      { porcentaje: 10, productoIds: ['prod-1'] },
+      mockUser,
+    )
+
+    expect(mockRequireFeature).toHaveBeenCalledWith(
+      mockUser,
+      'ficha-costo-bulk',
+      'ajustar precios masivamente',
+    )
+  })
+
+  it('debe invocar requireFeature con ficha-costo-bulk en bulkApplyTemplateAction', async () => {
+    vi.mocked(prisma.productoCostSheetTemplate.findFirst).mockResolvedValue({
+      id: 'template-1',
+      precioSugerido: 1500,
+      tenantId: 'tenant-1',
+    } as any)
+    vi.mocked(prisma.producto.findMany).mockResolvedValue([])
+
+    await bulkApplyTemplateAction(
+      { plantillaId: 'template-1', productoIds: ['prod-1'] },
+      mockUser,
+    )
+
+    expect(mockRequireFeature).toHaveBeenCalledWith(
+      mockUser,
+      'ficha-costo-bulk',
+      'aplicar plantilla masivamente',
+    )
+  })
+
+  it('debe lanzar error si requireFeature falla', async () => {
+    mockRequireFeature.mockImplementationOnce(() => {
+      throw new Error('Tu plan actual no incluye la funcionalidad')
+    })
+
+    await expect(
+      bulkApplyPercentageAction(
+        { porcentaje: 10, productoIds: ['prod-1'] },
+        mockUser,
+      ),
+    ).rejects.toThrow('plan actual no incluye')
   })
 })

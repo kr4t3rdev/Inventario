@@ -74,6 +74,12 @@ export const FEATURE_REGISTRY: FeatureDef[] = [
 		description: "Listas de precios diferenciadas por producto y cliente",
 		category: "inventario",
 	},
+	{
+		key: "ficha-costo-bulk",
+		label: "Actualización masiva de precios",
+		description: "Ajuste porcentual y aplicación de plantillas a múltiples productos",
+		category: "inventario",
+	},
 
 	// ════════════════════════════════════════════
 	// Operaciones (almacenes, sucursales)
