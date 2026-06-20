@@ -499,6 +499,11 @@ export function AppSidebar2({
 						url: "/busy/caja/arqueos",
 						icon: DollarSign,
 					},
+					{
+						title: "Cuadres POS",
+						url: "/busy/sales/cuadres",
+						icon: ClipboardList,
+					},
 				],
 			},
 			// {
@@ -546,6 +551,7 @@ export function AppSidebar2({
 		"Deudas en Efectivo": "deudas-cash",
 		Exchange: "multi-moneda",
 		"Cuadre Financiero": "cuadre-diario",
+		"Cuadres POS": "turnos-pos",
 		Reportes: "reportes-financieros",
 		"Rentabilidad x Compra": "rentabilidad-compra",
 		Notificaciones: "notificaciones",
@@ -615,6 +621,7 @@ export function AppSidebar2({
 		"Reconciliación Servicios": ["economico", "manager"],
 		"Reconciliación Gastos": ["economico", "manager"],
 		"Cuadre Financiero": ["economico", "manager"],
+		"Cuadres POS": ["dependiente", "economico", "manager"],
 	};
 
 	/**
@@ -630,6 +637,7 @@ export function AppSidebar2({
 		"Venta Diaria",
 		"Mi Empresa",
 		"Cuadre Financiero",
+		"Cuadres POS",
 		"Dashboard",
 	]);
 
