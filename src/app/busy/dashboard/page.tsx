@@ -10,6 +10,7 @@ import {
   TransferenciasStats,
 } from '@/features/dashboard/components'
 import { MargenBajoTable } from '@/features/dashboard/components/margen-bajo-table'
+import { RentabilidadDashboard } from '@/features/dashboard/components/rentabilidad-dashboard'
 
 /**
  * @description Página principal del Dashboard con arquitectura server-first.
@@ -103,6 +104,9 @@ export default async function DashboardPage() {
       </div>
       <div className="px-4 lg:px-6 mt-4">
         <MargenBajoTable />
+      </div>
+      <div className="px-4 lg:px-6 mt-4">
+        <RentabilidadDashboard />
       </div>
     </DashboardShell>
   )

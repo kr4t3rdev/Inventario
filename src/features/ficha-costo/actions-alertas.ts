@@ -35,6 +35,33 @@ export interface VerificarMargenBajoResult {
   notificacionesCreadas: number
 }
 
+export interface DashboardRentabilidadInput {
+  tipo?: 'SIMPLE' | 'COMPUESTO'
+}
+
+export interface CategoriaMargen {
+  categoriaId: string
+  nombre: string
+  margenPromedio: number
+  cantidadProductos: number
+}
+
+export interface ProductoRentabilidad {
+  id: string
+  nombre: string
+  precioVenta: number
+  precioCosto: number
+  margenPorcentaje: number
+  categoria: string
+  tipo: string
+}
+
+export interface DashboardRentabilidadData {
+  porCategoria: CategoriaMargen[]
+  topProductos: ProductoRentabilidad[]
+  bottomProductos: ProductoRentabilidad[]
+}
+
 // ─── getProductosMargenBajoAction ──────────────────────────
 
 /**
@@ -163,5 +190,78 @@ export const verificarMargenBajoAction = withAction(
     }
 
     return { productosMargenBajo: margenBajo.length, notificacionesCreadas }
+  },
+)
+
+// ─── getDashboardRentabilidadAction ────────────────────────
+
+/**
+ * @description Dashboard de rentabilidad: margen promedio por categoría,
+ *   top 5 y bottom 5 productos por margen. Soporta filtro por tipo de
+ *   producto (SIMPLE o COMPUESTO).
+ */
+export const getDashboardRentabilidadAction = withAction(
+  async (
+    input: DashboardRentabilidadInput,
+    user: AuthenticatedUser,
+  ): Promise<DashboardRentabilidadData> => {
+    const tenantId = requireTenant(user)
+    const where: any = {
+      tenantId,
+      precioVenta: { gt: 0 },
+      precioCosto: { gt: 0 },
+    }
+    if (input.tipo) where.tipo = input.tipo
+
+    const productos = await prisma.producto.findMany({
+      where,
+      select: {
+        id: true,
+        nombre: true,
+        precioCosto: true,
+        precioVenta: true,
+        tipo: true,
+        categorias: { select: { id: true, nombre: true } },
+      },
+    })
+
+    // Calcular margen por producto
+    const conMargen: ProductoRentabilidad[] = productos.map((p) => {
+      const margen = ((p.precioVenta - p.precioCosto) / p.precioVenta) * 100
+      const categoria = p.categorias?.[0]?.nombre ?? 'Sin categoría'
+      return {
+        id: p.id,
+        nombre: p.nombre,
+        precioVenta: p.precioVenta,
+        precioCosto: p.precioCosto,
+        margenPorcentaje: Math.round(margen * 100) / 100,
+        categoria,
+        tipo: p.tipo,
+      }
+    })
+
+    // Agrupar por categoría
+    const catMap = new Map<string, { total: number; count: number }>()
+    for (const p of conMargen) {
+      const c = catMap.get(p.categoria) ?? { total: 0, count: 0 }
+      c.total += p.margenPorcentaje
+      c.count++
+      catMap.set(p.categoria, c)
+    }
+    const porCategoria: CategoriaMargen[] = [...catMap.entries()]
+      .map(([nombre, { total, count }]) => ({
+        categoriaId: nombre,
+        nombre,
+        margenPromedio: Math.round((total / count) * 100) / 100,
+        cantidadProductos: count,
+      }))
+      .sort((a, b) => b.margenPromedio - a.margenPromedio)
+
+    // Top y bottom 5
+    const sorted = [...conMargen].sort((a, b) => b.margenPorcentaje - a.margenPorcentaje)
+    const topProductos = sorted.slice(0, 5)
+    const bottomProductos = sorted.slice(-5).reverse()
+
+    return { porCategoria, topProductos, bottomProductos }
   },
 )
