@@ -7,6 +7,7 @@
 import type { Metadata } from "next"
 import { DOC_DOMAINS } from "@/features/docs/data/domains"
 import { DomainGroup } from "@/features/docs/components/domain-group"
+import { DocsIndexHero } from "@/features/docs/components/docs-index-hero"
 
 export const metadata: Metadata = {
   title: "Documentación — FinanceMDM",
@@ -15,19 +16,20 @@ export const metadata: Metadata = {
 
 export default function DocsIndexPage() {
   return (
-    <div className="max-w-4xl">
-      {/* Header */}
-      <div className="mb-8">
-        <h1 className="font-mono text-2xl font-bold tracking-tight mb-2">
-          Documentación del Sistema
-        </h1>
-        <p className="text-sm text-muted-foreground">
-          FinanceMDM — Sistema de Gestión de Inventario, Ventas, Finanzas y Contabilidad
+    <div className="max-w-6xl">
+      <DocsIndexHero />
+
+      <div className="mb-6">
+        <p className="text-xs font-semibold uppercase tracking-[0.24em] text-muted-foreground/60">
+          FinanceMDM
+        </p>
+        <p className="mt-2 max-w-2xl text-sm leading-6 text-muted-foreground">
+          Sistema de Gestión de Inventario, Ventas, Finanzas y Contabilidad.
         </p>
       </div>
 
       {/* Domain groups */}
-      <div className="flex flex-col gap-8">
+      <div id="catalogo" className="flex flex-col gap-10">
         {DOC_DOMAINS.map((domain) => (
           <DomainGroup
             key={domain.name}
