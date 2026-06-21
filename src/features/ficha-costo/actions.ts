@@ -49,6 +49,7 @@ export {
   getSugerenciasPrecioAction,
   aplicarSugerenciaPrecioAction,
 } from './actions-sugerencias'
+export { getHistorialCambiosPrecioAction } from './actions-historial-cambios'
 
 export type {
   EstadoMargen,
