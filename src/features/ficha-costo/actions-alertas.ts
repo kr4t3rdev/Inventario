@@ -5,6 +5,11 @@ import { prisma } from '@/lib/prisma'
 import { requireTenant } from '@/lib/services/tenant-scope'
 import type { AuthenticatedUser } from '@/lib/auth-middleware'
 
+// ─── Constantes ────────────────────────────────────────────
+
+const MARGEN_UMBRAL = 10
+const DEFAULT_LIMIT = 10
+
 // ─── Tipos ─────────────────────────────────────────────────
 
 export interface GetProductosMargenBajoInput {
@@ -21,10 +26,14 @@ export interface ProductoMargenBajoItem {
   estado: 'SALUDABLE' | 'BAJO' | 'PERDIDA'
 }
 
-// ─── Constante ────────────────────────────────────────────
+export interface VerificarMargenBajoInput {
+  dryRun?: boolean
+}
 
-const MARGEN_UMBRAL = 10 // porcentaje
-const DEFAULT_LIMIT = 10
+export interface VerificarMargenBajoResult {
+  productosMargenBajo: number
+  notificacionesCreadas: number
+}
 
 // ─── getProductosMargenBajoAction ──────────────────────────
 
@@ -82,5 +91,77 @@ export const getProductosMargenBajoAction = withAction(
       .slice(0, limit)
 
     return conMargen
+  },
+)
+
+// ─── verificarMargenBajoAction ─────────────────────────────
+
+/**
+ * @description Verifica productos con margen bajo y crea notificaciones
+ *   para los usuarios del tenant. Dedup 24h: no notifica el mismo
+ *   producto dos veces en 24 horas. Soporta dryRun para solo contar.
+ */
+export const verificarMargenBajoAction = withAction(
+  async (
+    input: VerificarMargenBajoInput,
+    user: AuthenticatedUser,
+  ): Promise<VerificarMargenBajoResult> => {
+    const tenantId = requireTenant(user)
+    const { dryRun = false } = input
+
+    const productos = await prisma.producto.findMany({
+      where: {
+        tenantId,
+        precioVenta: { gt: 0 },
+        precioCosto: { gt: 0 },
+      },
+      select: {
+        id: true,
+        nombre: true,
+        precioCosto: true,
+        precioVenta: true,
+      },
+    })
+
+    const margenBajo = productos.filter((p) => {
+      const margen = ((p.precioVenta - p.precioCosto) / p.precioVenta) * 100
+      return margen < MARGEN_UMBRAL
+    })
+
+    if (dryRun || margenBajo.length === 0) {
+      return { productosMargenBajo: margenBajo.length, notificacionesCreadas: 0 }
+    }
+
+    const now = new Date()
+    const hace24h = new Date(now.getTime() - 24 * 60 * 60 * 1000)
+    let notificacionesCreadas = 0
+
+    for (const producto of margenBajo) {
+      const existente = await prisma.notification.findFirst({
+        where: {
+          type: 'margen_bajo',
+          message: { contains: producto.nombre },
+          createdAt: { gte: hace24h },
+        },
+      })
+
+      if (existente) continue
+
+      const margen = ((producto.precioVenta - producto.precioCosto) / producto.precioVenta) * 100
+
+      await prisma.notification.createMany({
+        data: [{
+          title: 'Margen Bajo',
+          message: `El producto "${producto.nombre}" tiene margen bajo (${margen.toFixed(1)}%)`,
+          type: 'margen_bajo',
+          prioridad: 'alta',
+          userId: user.userId,
+        }],
+      })
+
+      notificacionesCreadas++
+    }
+
+    return { productosMargenBajo: margenBajo.length, notificacionesCreadas }
   },
 )
