@@ -45,6 +45,10 @@ export {
   verificarMargenBajoAction,
   getDashboardRentabilidadAction,
 } from './actions-alertas'
+export {
+  getSugerenciasPrecioAction,
+  aplicarSugerenciaPrecioAction,
+} from './actions-sugerencias'
 
 export type {
   EstadoMargen,
