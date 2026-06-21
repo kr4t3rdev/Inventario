@@ -89,7 +89,7 @@ describe('BulkPriceManager', () => {
   it('debe mostrar resultado exitoso después de aplicar', async () => {
     mockBulkApplyPercentage.mockResolvedValue({
       success: true,
-      data: { updated: 5, skipped: 1, errors: [], results: [] },
+      data: { updated: 5, skipped: [], errors: [], results: [] },
     })
 
     render(<BulkPriceManager productoIds={['prod-1', 'prod-2']} />)
@@ -106,7 +106,7 @@ describe('BulkPriceManager', () => {
     await waitFor(() => {
       expect(screen.getByText('Operación completada')).toBeInTheDocument()
       expect(screen.getByText('5')).toBeInTheDocument() // updated
-      expect(screen.getByText('1')).toBeInTheDocument() // skipped
+      expect(screen.getAllByText('0')).toHaveLength(2) // skipped + errors are both 0
     })
   })
 

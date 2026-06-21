@@ -64,10 +64,10 @@ describe('bulkApplyPercentageAction', () => {
     vi.clearAllMocks()
   })
 
-  it('debe validar que porcentaje sea mayor a 0', async () => {
+  it('debe validar que porcentaje sea mayor a -100', async () => {
     await expect(
       bulkApplyPercentageAction(
-        { porcentaje: 0, productoIds: ['prod-1'] },
+        { porcentaje: -101, productoIds: ['prod-1'] },
         mockUser,
       ),
     ).rejects.toThrow('porcentaje')
@@ -90,7 +90,7 @@ describe('bulkApplyPercentageAction', () => {
 
     expect(result).toEqual({
       updated: 0,
-      skipped: 0,
+      skipped: [],
       errors: [],
       results: [],
     })
@@ -149,13 +149,13 @@ describe('bulkApplyPercentageAction', () => {
         id: { in: ['prod-1', 'prod-2'] },
         tenantId: 'tenant-1',
       },
-      select: { id: true, precioVenta: true, precioCosto: true, tenantId: true },
+      select: { id: true, precioVenta: true, precioCosto: true },
     })
   })
 
   it('debe reportar productos no encontrados como skipped', async () => {
     vi.mocked(prisma.producto.findMany).mockResolvedValue([
-      { id: 'prod-1', precioVenta: 1000, precioCosto: 500, tenantId: 'tenant-1' },
+      { id: 'prod-1', precioVenta: 1000, precioCosto: 500 },
     ] as any)
 
     vi.mocked(prisma.$transaction).mockImplementation(async (fn) => {
@@ -174,11 +174,12 @@ describe('bulkApplyPercentageAction', () => {
     )
 
     expect(result.updated).toBe(1)
-    expect(result.skipped).toBe(1)
-    expect(result.errors).toContainEqual({
+    expect(result.skipped).toHaveLength(1)
+    expect(result.skipped[0]).toEqual({
       productoId: 'prod-2',
       message: 'Producto no encontrado o sin permisos',
     })
+    expect(result.errors).toHaveLength(0)
   })
 
   it('debe usar Math.round para precios enteros', async () => {
@@ -274,7 +275,7 @@ describe('bulkApplyTemplateAction', () => {
 
     expect(result).toEqual({
       updated: 0,
-      skipped: 0,
+      skipped: [],
       errors: [],
       results: [],
     })
@@ -421,7 +422,7 @@ describe('bulkApplyTemplateAction', () => {
     } as any)
 
     vi.mocked(prisma.producto.findMany).mockResolvedValue([
-      { id: 'prod-1', precioVenta: 1000, precioCosto: 500, tenantId: 'tenant-1' },
+      { id: 'prod-1', precioVenta: 1000, precioCosto: 500 },
     ] as any)
 
     vi.mocked(prisma.$transaction).mockImplementation(async (fn) => {
@@ -440,7 +441,9 @@ describe('bulkApplyTemplateAction', () => {
     )
 
     expect(result.updated).toBe(1)
-    expect(result.skipped).toBe(1)
+    expect(result.skipped).toHaveLength(1)
+    expect(result.skipped[0].productoId).toBe('prod-2')
+    expect(result.errors).toHaveLength(0)
   })
 })
 

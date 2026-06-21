@@ -15,7 +15,7 @@ import { z } from 'zod'
 // ─── Schemas de validación ─────────────────────────────────
 
 const bulkPercentageSchema = z.object({
-  porcentaje: z.number().positive().lt(1000),
+  porcentaje: z.number().gt(-100).lt(1000),
   productoIds: z.array(z.string()),
 })
 
@@ -49,7 +49,7 @@ export interface BulkPriceError {
 
 export interface BulkPriceResponse {
   updated: number
-  skipped: number
+  skipped: BulkPriceError[]
   errors: BulkPriceError[]
   results: BulkPriceResult[]
 }
@@ -91,7 +91,7 @@ export const bulkApplyPercentageAction = withAction(
 
     // Early return si no hay productos
     if (productoIds.length === 0) {
-      return { updated: 0, skipped: 0, errors: [], results: [] }
+      return { updated: 0, skipped: [], errors: [], results: [] }
     }
 
     // Buscar productos existentes (filtrados por tenantId)
@@ -100,17 +100,18 @@ export const bulkApplyPercentageAction = withAction(
         id: { in: productoIds },
         tenantId,
       },
-      select: { id: true, precioVenta: true, precioCosto: true, tenantId: true },
+      select: { id: true, precioVenta: true, precioCosto: true },
     })
 
     const productoMap = new Map(productos.map((p) => [p.id, p]))
+    const skipped: BulkPriceError[] = []
     const errors: BulkPriceError[] = []
     const results: BulkPriceResult[] = []
 
-    // Identificar productos no encontrados
+    // Identificar productos no encontrados → skipped
     for (const id of productoIds) {
       if (!productoMap.has(id)) {
-        errors.push({ productoId: id, message: 'Producto no encontrado o sin permisos' })
+        skipped.push({ productoId: id, message: 'Producto no encontrado o sin permisos' })
       }
     }
 
@@ -160,7 +161,7 @@ export const bulkApplyPercentageAction = withAction(
     revalidatePath('/busy/ficha-costo')
     return {
       updated: results.length,
-      skipped: errors.length,
+      skipped,
       errors,
       results,
     }
@@ -200,7 +201,7 @@ export const bulkApplyTemplateAction = withAction(
 
     // Early return si no hay productos
     if (productoIds.length === 0) {
-      return { updated: 0, skipped: 0, errors: [], results: [] }
+      return { updated: 0, skipped: [], errors: [], results: [] }
     }
 
     // Buscar plantilla (una sola vez, filtrada por tenantId)
@@ -225,17 +226,18 @@ export const bulkApplyTemplateAction = withAction(
         id: { in: productoIds },
         tenantId,
       },
-      select: { id: true, precioVenta: true, precioCosto: true, tenantId: true },
+      select: { id: true, precioVenta: true, precioCosto: true },
     })
 
     const productoMap = new Map(productos.map((p) => [p.id, p]))
+    const skipped: BulkPriceError[] = []
     const errors: BulkPriceError[] = []
     const results: BulkPriceResult[] = []
 
-    // Identificar productos no encontrados
+    // Identificar productos no encontrados → skipped
     for (const id of productoIds) {
       if (!productoMap.has(id)) {
-        errors.push({ productoId: id, message: 'Producto no encontrado o sin permisos' })
+        skipped.push({ productoId: id, message: 'Producto no encontrado o sin permisos' })
       }
     }
 
@@ -285,7 +287,7 @@ export const bulkApplyTemplateAction = withAction(
     revalidatePath('/busy/ficha-costo')
     return {
       updated: results.length,
-      skipped: errors.length,
+      skipped,
       errors,
       results,
     }

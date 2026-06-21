@@ -116,7 +116,7 @@ export function BulkPriceManager({ productoIds }: BulkPriceManagerProps) {
                 </div>
                 <div>
                   <div className="text-muted-foreground">Saltados</div>
-                  <div className="text-2xl font-bold text-yellow-600">{result.skipped}</div>
+                  <div className="text-2xl font-bold text-yellow-600">{result.skipped.length}</div>
                 </div>
                 <div>
                   <div className="text-muted-foreground">Errores</div>
