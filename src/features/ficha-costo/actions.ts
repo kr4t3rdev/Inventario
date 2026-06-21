@@ -40,6 +40,7 @@ export {
   bulkApplyPercentageAction,
   bulkApplyTemplateAction,
 } from './actions-bulk'
+export { getProductosMargenBajoAction } from './actions-alertas'
 
 export type {
   EstadoMargen,
