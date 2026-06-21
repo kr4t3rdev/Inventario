@@ -12,17 +12,18 @@ vi.mock('@/lib/prisma', () => ({
   prisma: {
     notification: {
       findMany: vi.fn(),
+      findFirst: vi.fn(),
       create: vi.fn(),
       update: vi.fn(),
       delete: vi.fn(),
     },
   },
 }));
-vi.mock('@/lib/notificaciones-utils', () => ({ verificarStockBajo: vi.fn() }));
+vi.mock('@/lib/verificar-stock', () => ({ verificarStockBajo: vi.fn() }));
 
 import { getCurrentUser } from '@/lib/server-actions/get-current-user';
 import { prisma } from '@/lib/prisma';
-import { verificarStockBajo } from '@/lib/notificaciones-utils';
+import { verificarStockBajo } from '@/lib/verificar-stock';
 import {
   getNotificacionesAction,
   createNotificacionAction,
@@ -75,34 +76,56 @@ describe('Notificaciones Server Actions', () => {
   describe('marcarNotificacionLeidaAction', () => {
     it('marca como leída', async () => {
       vi.mocked(getCurrentUser).mockResolvedValue(mockUser);
+      vi.mocked(prisma.notification.findFirst).mockResolvedValue({ id: 'n-1', userId: 'user-1' } as any);
       vi.mocked(prisma.notification.update).mockResolvedValue({} as any);
       const result = await marcarNotificacionLeidaAction('n-1');
       expect(result.success).toBe(true);
+      expect(prisma.notification.update).toHaveBeenCalledWith({ where: { id: 'n-1' }, data: { isRead: true } });
     });
   });
 
   describe('updateNotificacionAction', () => {
     it('actualiza notificación', async () => {
       vi.mocked(getCurrentUser).mockResolvedValue(mockUser);
+      vi.mocked(prisma.notification.findFirst).mockResolvedValue({ id: 'n-1', userId: 'user-1' } as any);
       vi.mocked(prisma.notification.update).mockResolvedValue({} as any);
       const result = await updateNotificacionAction({ id: 'n-1', isRead: true });
       expect(result.success).toBe(true);
+      expect(prisma.notification.update).toHaveBeenCalledWith({
+        where: { id: 'n-1' },
+        data: { isRead: true },
+      });
+    });
+
+    it('retorna NOT_FOUND cuando no existe', async () => {
+      vi.mocked(getCurrentUser).mockResolvedValue(mockUser);
+      vi.mocked(prisma.notification.findFirst).mockResolvedValue(null);
+      const result = await updateNotificacionAction({ id: 'n-404', isRead: true });
+      expect(result.success).toBe(false);
+      expect(result.error!.code).toBe('NOT_FOUND');
     });
   });
 
   describe('deleteNotificacionAction', () => {
     it('elimina notificación', async () => {
       vi.mocked(getCurrentUser).mockResolvedValue(mockUser);
+      vi.mocked(prisma.notification.findFirst).mockResolvedValue({ id: 'n-1', userId: 'user-1' } as any);
       vi.mocked(prisma.notification.delete).mockResolvedValue({} as any);
       const result = await deleteNotificacionAction('n-1');
       expect(result.success).toBe(true);
+      expect(prisma.notification.delete).toHaveBeenCalledWith({ where: { id: 'n-1' } });
     });
   });
 
   describe('verificarStockAction', () => {
     it('verifica stock bajo como admin', async () => {
       vi.mocked(getCurrentUser).mockResolvedValue(mockUser);
-      vi.mocked(verificarStockBajo).mockResolvedValue({ stockBajo: 3, sinStock: 1 } as any);
+      vi.mocked(verificarStockBajo).mockResolvedValue({
+        productosStockBajo: 3,
+        productosSinStock: 1,
+        notificacionesCreadas: 4,
+        errores: [],
+      } as any);
       const result = await verificarStockAction();
       expect(result.success).toBe(true);
     });

@@ -10,7 +10,9 @@ import { LandingFeatures } from '@/features/landing/components/features';
 import { LandingFooter } from '@/features/landing/components/footer';
 import { LandingHeader } from '@/features/landing/components/header';
 import { LandingHero } from '@/features/landing/components/hero';
-import { LandingStatsDynamic, PricingDynamic, RealTestimonials } from '@/features/reviews';
+import { LandingStatsDynamic } from '@/features/reviews/components/landing-stats-dynamic';
+import { PricingDynamic } from '@/features/reviews/components/pricing-dynamic';
+import { RealTestimonials } from '@/features/reviews/components/real-testimonials';
 
 /**
  * @description Contenedor cliente de la home con la composición completa del landing.

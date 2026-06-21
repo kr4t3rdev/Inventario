@@ -33,8 +33,16 @@ export const getNotificacionesAction = withAction(async (_input: void, user: Aut
 
 export const marcarNotificacionLeidaAction = withAction(async (id: string, user: AuthenticatedUser) => {
   requireFeature(user, 'notificaciones', 'gestionar notificaciones');
-  const notificacion = await prisma.notification.update({
+  const existente = await prisma.notification.findFirst({
     where: { id, userId: user.userId },
+  });
+
+  if (!existente) {
+    throw new ActionError('Notificación no encontrada', 'NOT_FOUND');
+  }
+
+  const notificacion = await prisma.notification.update({
+    where: { id: existente.id },
     data: { isRead: true },
   });
   return { success: true, notificacion };
@@ -65,8 +73,16 @@ export const updateNotificacionAction = withAction(async (input: UpdateNotificac
   requireFeature(user, 'notificaciones', 'gestionar notificaciones');
   const parsed = updateNotificacionSchema.parse(input);
 
-  const notificacion = await prisma.notification.update({
+  const existente = await prisma.notification.findFirst({
     where: { id: parsed.id, userId: user.userId },
+  });
+
+  if (!existente) {
+    throw new ActionError('Notificación no encontrada', 'NOT_FOUND');
+  }
+
+  const notificacion = await prisma.notification.update({
+    where: { id: existente.id },
     data: {
       ...(parsed.isRead !== undefined && { isRead: parsed.isRead }),
       ...(parsed.title !== undefined && { title: parsed.title }),
@@ -79,7 +95,16 @@ export const updateNotificacionAction = withAction(async (input: UpdateNotificac
 
 export const deleteNotificacionAction = withAction(async (id: string, user: AuthenticatedUser) => {
   requireFeature(user, 'notificaciones', 'gestionar notificaciones');
-  await prisma.notification.delete({ where: { id, userId: user.userId } });
+
+  const existente = await prisma.notification.findFirst({
+    where: { id, userId: user.userId },
+  });
+
+  if (!existente) {
+    throw new ActionError('Notificación no encontrada', 'NOT_FOUND');
+  }
+
+  await prisma.notification.delete({ where: { id: existente.id } });
   return { success: true };
 });
 

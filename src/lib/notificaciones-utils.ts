@@ -6,14 +6,19 @@ interface NotificationData {
   type: "stock_bajo" | "sin_stock" | "transferencia" | "merma" | "venta"
   prioridad: "alta" | "media" | "baja"
   userId?: string
+  tenantId?: string
 }
 
 export async function crearNotificacion(data: NotificationData) {
   try {
-    // Si no se especifica userId, enviar a todos los usuarios activos
+    // Si no se especifica userId, enviar a todos los usuarios activos del tenant
     if (!data.userId) {
+      if (!data.tenantId) {
+        throw new Error("tenantId is required when creating a broadcast notification")
+      }
+
       const usuarios = await prisma.user.findMany({
-        where: { isActive: true },
+        where: { isActive: true, tenantId: data.tenantId },
         select: { userId: true },
       })
 
@@ -31,9 +36,6 @@ export async function crearNotificacion(data: NotificationData) {
       return notificaciones
     } else {
       const { userId, ...restData } = data
-      if (!userId) {
-        throw new Error("userId is required when creating a notification for a specific user")
-      }
       const notificacion = await prisma.notification.create({
         data: {
           ...restData,
@@ -153,6 +155,7 @@ export async function notificarTransferencia(transferenciaId: string) {
       message: `Se transfirieron ${transferencia.cantidad} unidades de "${transferencia.producto?.nombre}" desde ${transferencia.origen?.nombre} hacia ${transferencia.destino?.nombre}`,
       type: "transferencia",
       prioridad: "baja",
+      tenantId: transferencia.tenantId,
     })
   } catch (error) {
     console.error("Error notificando transferencia:", error)
@@ -178,6 +181,7 @@ export async function notificarMerma(mermaId: string) {
       message: `Se registró una merma de ${merma.cantidad} unidades de "${merma.producto?.nombre}"${merma.motivo ? ` por: ${merma.motivo}` : ""}`,
       type: "merma",
       prioridad,
+      tenantId: merma.tenantId,
     })
   } catch (error) {
     console.error("Error notificando merma:", error)
