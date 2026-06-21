@@ -9,6 +9,7 @@ import {
   StockBajoTable,
   TransferenciasStats,
 } from '@/features/dashboard/components'
+import { MargenBajoTable } from '@/features/dashboard/components/margen-bajo-table'
 
 /**
  * @description Página principal del Dashboard con arquitectura server-first.
@@ -99,6 +100,9 @@ export default async function DashboardPage() {
       {/* Alertas y productos críticos */}
       <div className="px-4 lg:px-6">
         <StockBajoTable productosStockBajo={stats.productosStockBajo as any} />
+      </div>
+      <div className="px-4 lg:px-6 mt-4">
+        <MargenBajoTable />
       </div>
     </DashboardShell>
   )
