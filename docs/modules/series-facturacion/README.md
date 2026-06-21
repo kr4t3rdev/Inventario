@@ -1,72 +1,30 @@
 # Series de Facturación
 
-> **Feature**: `src/features/series-facturacion/`
-> **Modelos Prisma**: `SerieFacturacion`, `Factura`
-> **Ruta**: `/busy/configuracion/series-facturacion`
+> Configura prefijos y numeración para tus facturas.
 
----
+## Qué hace
 
-## Descripción
+Este módulo te ayuda a registrar ventas y hacer seguimiento del cobro sin perder orden en la operación diaria. Configura prefijos y numeración para tus facturas.
 
-Módulo de gestión de series fiscales para facturación. Define prefijos, tipos de documento (factura, NC, ND), numeración automática y estado activo/inactivo. Complementa el módulo de [Facturación](../facturas/README.md).
+## Cuándo usarlo
 
-## Modelos de Datos
+- Cuando registrás una venta, un cobro o una anulación.
+- Cuando querés ver el historial de clientes, facturas o turnos.
+- Cuando necesitás aplicar descuentos o cerrar caja.
 
-```mermaid
-erDiagram
-    SerieFacturacion ||--o{ Factura : "facturas emitidas con esta serie"
+## Cómo se usa
 
-    SerieFacturacion {
-        string serieId PK
-        string tenantId FK
-        string prefijo UK
-        string nombre
-        string tipoDocumento
-        int ultimoNumero
-        boolean activa
-        boolean esPorDefecto
-    }
-```
+1. Entrá al módulo y elegí la operación que querés hacer.
+2. Completá los datos de la venta, factura o turno.
+3. Revisá el resumen antes de confirmar.
+4. Guardá y verificá que el resultado quede registrado.
 
-## Funcionalidades
+## Qué conviene cuidar
 
-### CRUD de Series
+- Confirmá cliente, forma de pago y totales antes de cerrar.
+- Revisá descuentos y numeración antes de emitir.
+- Si algo no cuadra, revisá primero el turno o la caja.
 
-**Descripción**: Creación, consulta, actualización y eliminación de series fiscales.
+## En una frase
 
-**Campos**: prefijo, nombre, tipo de documento (`FACTURA`, `N_CREDITO`, `N_DEBITO`, `RECIBO`), último número, activa, esPorDefecto.
-
-### Serie por Defecto
-
-**Descripción**: Una serie puede marcarse como `esPorDefecto`. Al marcar una nueva, las demás pierden ese estado.
-
-## Server Actions
-
-| Action | Propósito |
-|--------|-----------|
-| `getSeriesFacturacionAction` | Listar series (con _count de facturas) |
-| `createSerieFacturacionAction` | Crear serie (valida prefijo único por tenant) |
-| `updateSerieFacturacionAction` | Actualizar serie |
-| `deleteSerieFacturacionAction` | Eliminar serie |
-
-## Reglas de Negocio
-
-1. **Feature flag**: Requiere `series-facturacion` habilitado.
-2. **Prefijo único**: No puede haber dos series con el mismo prefijo en el mismo tenant.
-3. **Default único**: Solo una serie puede ser `esPorDefecto` por tenant.
-4. **Protección**: No se puede eliminar una serie con facturas asociadas.
-5. **Numeración**: `ultimoNumero` se incrementa automáticamente al emitir cada factura.
-
-## Integraciones
-
-| Módulo | Relación |
-|--------|----------|
-| `facturas` | Toda factura usa una serie |
-| `configuracion` | Vista previa de numeración (`getNextSerieNumberAction`) |
-
-## Permisos
-
-| Acción | Rol |
-|--------|-----|
-| Ver series | `admin`, `manager` |
-| Crear/Editar/Eliminar | `admin`, `manager` |
+Configura prefijos y numeración para tus facturas.

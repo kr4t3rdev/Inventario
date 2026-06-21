@@ -1,108 +1,30 @@
 # Gastos de Distribución y Explotación (Gastos D/E)
 
-> **Feature**: `src/features/gastosDE/`
-> **Modelos Prisma**: `GastosDE`, `GastoConcepto`, `GastoElemento`, `Vendor`
-> **Ruta**: `/busy/gastos`
+> Clasifica gastos operativos para entender mejor tus costos.
 
----
+## Qué hace
 
-## Descripción
+Este módulo te ayuda a seguir el movimiento financiero con más claridad y a cerrar números con menos fricción. Clasifica gastos operativos para entender mejor tus costos.
 
-Módulo de gestión de gastos operativos de la empresa. Los gastos se clasifican por **Concepto** (tipo de gasto: transporte, electricidad, alquiler) y **Elemento** (subclasificación: materiales, mano de obra, servicios públicos).
+## Cuándo usarlo
 
-Son reconciliables contra cuentas bancarias y alimentan los reportes financieros.
+- Cuando cerrás periodos, hacés conciliaciones o revisás balances.
+- Cuando querés entender en qué se fue el dinero y cómo quedó cada cuenta.
+- Cuando necesitás reportes para tomar decisiones con más confianza.
 
-## Modelos de Datos
+## Cómo se usa
 
-```mermaid
-erDiagram
-    GastosDE }o--|| GastoConcepto : "concepto de gasto"
-    GastosDE }o--|| GastoElemento : "elemento de gasto"
-    GastosDE }o--|| Vendor : "proveedor (opcional)"
-    GastosDE ||--o{ ReconciliacionGasto : "reconciliación bancaria"
+1. Abrí el módulo y ubicá el periodo, cuenta o reporte que necesitás.
+2. Revisá los números antes de hacer cambios.
+3. Aplicá ajustes solo cuando estés seguro de la causa.
+4. Guardá y validá el resultado final.
 
-    GastoConcepto ||--o{ GastosDE : "gastos de este concepto"
+## Qué conviene cuidar
 
-    GastoElemento ||--o{ GastosDE : "gastos de este elemento"
+- Trabajá con periodos claros para no mezclar movimientos.
+- Revisá cada ajuste antes de cerrar un periodo.
+- Si hay diferencias, buscá primero la causa antes de corregir.
 
-    GastosDE {
-        string id PK
-        string tenantId FK
-        string conceptoId FK
-        string elementoId FK
-        string vendorId FK
-        decimal monto
-        string moneda
-        string descripcion
-        DateTime fecha
-        string comprobanteUrl
-    }
-```
+## En una frase
 
-| Modelo | Propósito | PK |
-|--------|-----------|----|
-| `GastosDE` | Registro de gasto operativo | `id` |
-| `GastoConcepto` | Clasificación de tipo de gasto | `conceptoId` |
-| `GastoElemento` | Subclasificación del gasto | `elementoId` |
-
-## Funcionalidades
-
-### CRUD de Gastos
-
-**Descripción**: Registro de gastos con concepto, elemento, monto, moneda, proveedor y comprobante.
-
-### Catálogo de Conceptos
-
-**Descripción**: Gestión de conceptos de gasto (ej: "Transporte", "Servicios Públicos", "Alquiler").
-
-### Catálogo de Elementos
-
-**Descripción**: Gestión de elementos de gasto (ej: "Materiales Directos", "Mano de Obra Indirecta").
-
-## Server Actions
-
-| Action | Propósito |
-|--------|-----------|
-| `getGastosDEAction` | Listar gastos |
-| `createGastosDEAction` | Crear gasto |
-| `updateGastosDEAction` | Actualizar gasto |
-| `deleteGastosDEAction` | Eliminar gasto |
-| `getGastoConceptosAction` | Listar conceptos |
-| `createGastoConceptoAction` | Crear concepto |
-| `updateGastoConceptoAction` | Actualizar concepto |
-| `deleteGastoConceptoAction` | Eliminar concepto |
-| `getGastoElementosAction` | Listar elementos |
-| `createGastoElementoAction` | Crear elemento |
-| `updateGastoElementoAction` | Actualizar elemento |
-| `deleteGastoElementoAction` | Eliminar elemento |
-
-## UI y Navegación
-
-| Ruta | Componente | Propósito |
-|------|-----------|-----------|
-| `/busy/gastos` | `GastosDEContent` | Listado y registro de gastos |
-| — | `GastoConceptosContent` | Gestión de conceptos |
-| — | `GastoElementosContent` | Gestión de elementos |
-| — | `GastoDEForm` | Formulario de gasto |
-| — | `VendorCombobox` | Selector de proveedores |
-
-## Integraciones
-
-| Módulo | Relación |
-|--------|----------|
-| `contabilidad` | Reconciliación de gastos contra cuentas bancarias |
-| `vendors` | Proveedor asociado al gasto |
-| `reportes-financieros` | Los gastos alimentan reportes de rentabilidad |
-
-## Permisos y Roles
-
-| Acción | Rol |
-|--------|-----|
-| Ver gastos | `admin`, `manager`, `economico` |
-| Crear/Editar/Eliminar | `admin`, `manager` |
-
-## Tests
-
-```bash
-pnpm test -- src/features/gastosDE/
-```
+Clasifica gastos operativos para entender mejor tus costos.

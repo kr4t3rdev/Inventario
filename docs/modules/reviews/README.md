@@ -1,74 +1,30 @@
 # Reviews (Reseñas del Sistema)
 
-> **Feature**: `src/features/reviews/`
-> **Modelos Prisma**: `Review`, `ReviewPrompt`
-> **Ruta**: Ruta embebida (modal/dialog en el dashboard)
+> Administra revisiones internas para mantener orden y control.
 
----
+## Qué hace
 
-## Descripción
+Este módulo te ayuda a mantener el sistema visible, ordenado y fácil de seguir para el equipo. Administra revisiones internas para mantener orden y control.
 
-Sistema de reseñas y calificaciones del producto. Permite a los usuarios calificar el sistema (rating 1-5) con comentarios opcionales. Incluye un sistema de `ReviewPrompt` que muestra recordatorios periódicos a usuarios que aún no han calificado.
+## Cuándo usarlo
 
-## Modelos de Datos
+- Cuando querés ver el estado general del sistema o de una sección importante.
+- Cuando necesitás revisar avisos, respaldos o elementos de control.
+- Cuando buscás un resumen rápido antes de tomar una acción.
 
-```mermaid
-erDiagram
-    Review }o--|| Tenant : "reseña del tenant"
-    ReviewPrompt }o--|| Tenant : "prompts del tenant"
+## Cómo se usa
 
-    Review {
-        string id PK
-        string tenantId UK
-        string userId UK
-        int rating
-        string comment
-        boolean isPositive
-    }
+1. Entrá al módulo y revisá el resumen general.
+2. Leé los avisos o indicadores más importantes.
+3. Tomá la acción correspondiente si detectás algo pendiente.
+4. Volvé a consultar para confirmar que quedó resuelto.
 
-    ReviewPrompt {
-        string id PK
-        string tenantId FK
-        string userId FK
-        DateTime createdAt
-        DateTime submittedAt
-        DateTime dismissedAt
-    }
-```
+## Qué conviene cuidar
 
-## Funcionalidades
+- Leé primero el resumen general y después bajá al detalle.
+- Atendé los avisos críticos antes que los secundarios.
+- Mantené un hábito de revisar este módulo con frecuencia.
 
-### Calificar Sistema
+## En una frase
 
-**Descripción**: `submitReviewAction` — Crea una reseña con rating (1-5) y comentario. Un usuario solo puede calificar una vez por tenant (unique constraint `tenantId_userId`). Si rating >= 4, se marca como `isPositive`.
-
-### Aprobación/Rechazo de Review Prompt
-
-**Descripción**: Los users pueden aceptar (`approveReviewAction`) o rechazar (`rejectReviewAction`) el prompt de calificación. Si lo aprueban, se abre el formulario de reseña.
-
-### Stats de Reviews
-
-**Descripción**: `getReviewStatsAction` — Métricas agregadas: promedio de rating, total de reseñas, distribución.
-
-## Server Actions
-
-| Action | Propósito |
-|--------|-----------|
-| `submitReviewAction` | Enviar reseña (rating + comentario) |
-| `approveReviewAction` | Aceptar prompt de reseña |
-| `rejectReviewAction` | Rechazar prompt |
-| `getReviewStatsAction` | Estadísticas de reseñas |
-
-## Reglas de Negocio
-
-1. Una reseña por usuario por tenant (unique constraint).
-2. Rating válido: 1-5.
-3. `isPositive` se calcula automáticamente: `rating >= 4`.
-4. Si existe un `ReviewPrompt` activo, se vincula y marca como `submittedAt`.
-
-## Permisos
-
-| Acción | Rol |
-|--------|-----|
-| Calificar | Cualquier autenticado |
-| Ver stats | `admin` |
+Administra revisiones internas para mantener orden y control.

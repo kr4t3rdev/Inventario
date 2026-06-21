@@ -1,90 +1,30 @@
 # Perfil de Usuario (Profile)
 
-> **Feature**: `src/features/profile/`
-> **Modelos Prisma**: `User`
-> **Ruta**: `/busy/perfil`
+> Te permite ver y actualizar tu perfil de usuario.
 
----
+## Qué hace
 
-## Descripción
+Este módulo te ayuda a administrar personas, datos laborales y pagos con una vista clara y simple. Te permite ver y actualizar tu perfil de usuario.
 
-Módulo de perfil del usuario autenticado. Permite consultar y actualizar los datos personales de la cuenta: nombre, email, avatar, contraseña.
+## Cuándo usarlo
 
-## Modelos de Datos
+- Cuando administrás empleados, nómina o datos personales.
+- Cuando querés revisar turnos, vacaciones o pagos.
+- Cuando necesitás mantener el historial laboral en orden.
 
-```mermaid
-erDiagram
-    User {
-        string userId PK
-        string name
-        string email UK
-        string role
-        string avatar
-        boolean isActive
-        DateTime activatedAt
-        DateTime expiresAt
-    }
-```
+## Cómo se usa
 
-| Modelo | Propósito | PK |
-|--------|-----------|----|
-| `User` | Cuenta de usuario del sistema (usada como perfil) | `userId` |
+1. Entrá al módulo y seleccioná la persona o pago.
+2. Revisá los datos laborales o de nómina.
+3. Actualizá lo que cambió y guardalo.
+4. Confirmá que la información quedó visible.
 
-## Funcionalidades
+## Qué conviene cuidar
 
-### Consultar Perfil (`getProfileAction`)
+- Controlá fechas, jornadas y montos con cuidado.
+- Si hay vacaciones o ausencias, registralas a tiempo.
+- Mantené los datos del empleado completos.
 
-**Descripción**: Devuelve los datos del usuario autenticado. No requiere input — usa el `user` inyectado por `withAction`.
+## En una frase
 
-### Actualizar Perfil (`updateProfileAction`)
-
-**Descripción**: Actualiza los datos del perfil del usuario autenticado.
-
-**Campos editables**: name, email, avatar, contraseña.
-
-## Server Actions
-
-| Action | Propósito | Input | Output |
-|--------|-----------|-------|--------|
-| `getProfileAction` | Obtener perfil del usuario actual | `void` | `Profile` |
-| `updateProfileAction` | Actualizar perfil | `{ name?, email?, avatar?, password? }` | `Profile` |
-
-## Reglas de Negocio
-
-1. **Solo el propio usuario**: Cada usuario solo puede ver/editar su propio perfil.
-2. **Validación**: `updateProfileAction` usa `profileUpdateSchema` con Zod para validar inputs.
-3. **Email**: Si se cambia el email, debe ser único en el sistema.
-4. **Contraseña**: Si se actualiza, se hashea con bcrypt antes de guardar.
-
-## UI y Navegación
-
-| Ruta | Componente | Propósito |
-|------|-----------|-----------|
-| `/busy/perfil` | ProfilePage | Vista y edición del perfil |
-
-## Integraciones
-
-| Módulo | Relación |
-|--------|----------|
-| `auth` | Autenticación y datos de sesión |
-| `admin` | Gestión de usuarios (admin puede editar cualquier perfil) |
-
-## Permisos y Roles
-
-| Acción | Rol requerido |
-|--------|---------------|
-| Ver/Editar perfil propio | Cualquier autenticado |
-
-## Tests
-
-- **Archivos**: `src/features/profile/__tests__/`
-
-```bash
-pnpm test -- src/features/profile/
-```
-
-## Notas Técnicas
-
-- Es el feature más simple del sistema: solo 2 acciones, un schema, y select básico.
-- `getProfileAction` usa el `user.userId` del contexto de autenticación, no recibe parámetros.
-- `updateProfileAction` construye el update data dinámicamente para solo incluir campos presentes.
+Te permite ver y actualizar tu perfil de usuario.

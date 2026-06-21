@@ -1,70 +1,30 @@
 # Notificaciones
 
-> **Feature**: `src/features/notificaciones/`
-> **Modelos Prisma**: `Notification`
-> **Ruta**: `/busy/notificaciones`
+> Revisa alertas y avisos generados por el sistema.
 
----
+## Qué hace
 
-## Descripción
+Este módulo te ayuda a mantener el sistema visible, ordenado y fácil de seguir para el equipo. Revisa alertas y avisos generados por el sistema.
 
-Centro de notificaciones del sistema. Las notificaciones se generan automáticamente desde múltiples módulos: stock bajo, intentos fallidos de login, transferencias, mermas, licencias próxima a vencer, etc.
+## Cuándo usarlo
 
-## Modelos de Datos
+- Cuando querés ver el estado general del sistema o de una sección importante.
+- Cuando necesitás revisar avisos, respaldos o elementos de control.
+- Cuando buscás un resumen rápido antes de tomar una acción.
 
-```mermaid
-erDiagram
-    Notification }o--|| User : "usuario destino"
+## Cómo se usa
 
-    Notification {
-        string notifId PK
-        string userId FK
-        string title
-        string message
-        string type
-        string prioridad
-        string link
-        boolean isRead
-        DateTime createdAt
-    }
-```
+1. Entrá al módulo y revisá el resumen general.
+2. Leé los avisos o indicadores más importantes.
+3. Tomá la acción correspondiente si detectás algo pendiente.
+4. Volvé a consultar para confirmar que quedó resuelto.
 
-## Funcionalidades
+## Qué conviene cuidar
 
-### Listado de Notificaciones
+- Leé primero el resumen general y después bajá al detalle.
+- Atendé los avisos críticos antes que los secundarios.
+- Mantené un hábito de revisar este módulo con frecuencia.
 
-**Descripción**: `getNotificacionesAction` retorna las notificaciones del usuario autenticado con resumen de prioridades (alta, media, baja) y conteo de no leídas.
+## En una frase
 
-### Marcar como Leída
-
-**Descripción**: `marcarNotificacionLeidaAction` actualiza `isRead = true`.
-
-### Verificación de Stock Bajo
-
-**Descripción**: `verificarStockBajo()` se ejecuta periódicamente y genera notificaciones cuando productos tienen `stock <= stockMinimo`.
-
-## Server Actions
-
-| Action | Propósito |
-|--------|-----------|
-| `getNotificacionesAction` | Listar notificaciones del usuario |
-| `marcarNotificacionLeidaAction` | Marcar como leída |
-| `createNotificacionAction` | Crear notificación (uso interno) |
-| `deleteNotificacionAction` | Eliminar notificación |
-
-## Integraciones
-
-| Módulo | Genera notificaciones por |
-|--------|--------------------------|
-| `auth` | Intentos fallidos de login, bloqueo de cuenta |
-| `productos` | Stock bajo (vía `verificarStockBajo()`) |
-| `transferencias` | Nueva transferencia solicitada |
-| `mermas` | Merma registrada |
-| `contratos` | Alertas de vencimiento |
-| `planes/licencias` | Licencia próxima a vencer |
-
-## Permisos
-
-| Acción | Rol |
-|--------|-----|
-| Ver notificaciones | Cualquier autenticado (propias) |
+Revisa alertas y avisos generados por el sistema.

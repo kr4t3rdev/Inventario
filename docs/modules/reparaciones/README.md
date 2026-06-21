@@ -1,69 +1,30 @@
 # Taller de Reparaciones
 
-> **Feature**: `src/features/reparaciones/`
-> **Modelos Prisma**: `EquipoReparacion`, `PiezaReparacion`, `OrdenReparacion`, `OrdenReparacionEquipo`, `OrdenReparacionItem`, `OrdenReparacionMaterial`, `CatalogoReparacionConfig`, `DefectacionCatalogo`
-> **Ruta**: `/busy/reparaciones`
+> Gestiona órdenes de reparación, piezas y seguimiento de trabajos.
 
----
+## Qué hace
 
-## Descripción
+Este módulo te ayuda a coordinar trabajo operativo, costos y seguimiento de tareas o incidencias. Gestiona órdenes de reparación, piezas y seguimiento de trabajos.
 
-Módulo de taller de reparaciones. Gestiona equipos de clientes, piezas, órdenes de reparación con seguimiento de estado, materiales utilizados y mano de obra.
+## Cuándo usarlo
 
-## Modelos de Datos
+- Cuando seguís un trabajo operativo, una reparación o un costo.
+- Cuando querés dejar trazabilidad de cambios, insumos o estado del proceso.
+- Cuando necesitás ordenar pendientes antes de avanzar.
 
-```mermaid
-erDiagram
-    EquipoReparacion ||--o{ OrdenReparacionEquipo : "órdenes del equipo"
-    OrdenReparacion ||--o{ OrdenReparacionEquipo : "equipos en la orden"
-    OrdenReparacion ||--o{ OrdenReparacionItem : "items (mano de obra)"
-    OrdenReparacion ||--o{ OrdenReparacionMaterial : "materiales usados"
+## Cómo se usa
 
-    PiezaReparacion }o--|| EquipoReparacion : "piezas del equipo"
+1. Abrí el módulo y ubicá la orden o caso que querés seguir.
+2. Revisá el estado actual y los datos asociados.
+3. Actualizá avances, costos o observaciones si hace falta.
+4. Guardá y confirmá que el seguimiento siga ordenado.
 
-    DefectacionCatalogo ||--o{ OrdenReparacionItem : "defectos diagnosticados"
-```
+## Qué conviene cuidar
 
-| Modelo | Propósito |
-|--------|-----------|
-| `EquipoReparacion` | Equipo/cliente registrado en el taller |
-| `PiezaReparacion` | Piezas/reemplazos del equipo |
-| `OrdenReparacion` | Orden de trabajo de reparación |
-| `OrdenReparacionEquipo` | Equipos incluidos en una orden |
-| `OrdenReparacionItem` | Mano de obra/diagnóstico |
-| `OrdenReparacionMaterial` | Materiales/repuestos usados |
-| `CatalogoReparacionConfig` | Configuración del taller |
-| `DefectacionCatalogo` | Catálogo de defectos predefinidos |
+- Dejá comentarios claros para que cualquiera entienda el estado.
+- No mezcles tareas distintas en un mismo registro.
+- Asegurate de registrar insumos, tiempos o piezas cuando corresponda.
 
-## Funcionalidades
+## En una frase
 
-### Equipos
-
-Registro de equipos de clientes con marca, modelo, número de serie, y piezas asociadas.
-
-### Órdenes de Reparación
-
-Ciclo de vida completo: `PENDIENTE` → `EN_PROCESO` → `COMPLETADO` → `ENTREGADO`. Cada orden puede incluir múltiples equipos, items de diagnóstico y materiales.
-
-### Catálogo de Defectos
-
-Usa `DefectacionCatalogo` para clasificar fallas de forma estandarizada.
-
-## Server Actions
-
-El módulo exporta tipos desde `@/app/models/model`. Las operaciones CRUD se manejan via API routes legacy o componentes cliente.
-
-## Integraciones
-
-| Módulo | Relación |
-|--------|----------|
-| `configuracion` | Catálogo de defectaciones (`DefectacionesEditorPanel`) |
-| `productos` | Materiales/repuestos usados |
-| `clientes` | Equipos de clientes |
-
-## Permisos
-
-| Acción | Rol |
-|--------|-----|
-| Ver | `admin`, `manager` |
-| Crear/Editar | `admin`, `manager` |
+Gestiona órdenes de reparación, piezas y seguimiento de trabajos.

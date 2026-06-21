@@ -1,47 +1,30 @@
 # Dashboard
 
-> **Feature**: `src/features/dashboard/`
-> **Ruta**: `/busy`
+> Ve los indicadores principales de tu negocio en un panel central.
 
----
+## Qué hace
 
-## Descripción
+Este módulo te ayuda a mantener el sistema visible, ordenado y fácil de seguir para el equipo. Ve los indicadores principales de tu negocio en un panel central.
 
-Panel ejecutivo principal del sistema. Muestra indicadores clave en tiempo real: ventas del día, productos con stock bajo, rentabilidad, actividad reciente. Los datos se calculan via `getDashboardStatsQuery()` y se cachean en servidor.
+## Cuándo usarlo
 
-## Funcionalidades
+- Cuando querés ver el estado general del sistema o de una sección importante.
+- Cuando necesitás revisar avisos, respaldos o elementos de control.
+- Cuando buscás un resumen rápido antes de tomar una acción.
 
-### Stats del Dashboard (`getDashboardStatsAction`)
+## Cómo se usa
 
-**Descripción**: Calcula y retorna métricas agregadas del tenant: total de productos, ventas del día, productos con stock bajo, etc.
+1. Entrá al módulo y revisá el resumen general.
+2. Leé los avisos o indicadores más importantes.
+3. Tomá la acción correspondiente si detectás algo pendiente.
+4. Volvé a consultar para confirmar que quedó resuelto.
 
-### Wanda Dashboard
+## Qué conviene cuidar
 
-**Descripción**: Dashboard alternativo con visualizaciones animadas y gráficos. `getWandaDashboardHandler` y `invalidateWandaCacheHandler` manejan la caché específica de Wanda.
+- Leé primero el resumen general y después bajá al detalle.
+- Atendé los avisos críticos antes que los secundarios.
+- Mantené un hábito de revisar este módulo con frecuencia.
 
-### Invalidez de Caché
+## En una frase
 
-**Descripción**: `invalidateDashboardCacheHandler` permite forzar la recarga de datos del dashboard cuando ocurren cambios.
-
-## Server Actions
-
-| Action | Propósito |
-|--------|-----------|
-| `getDashboardStatsAction` | Métricas principales del dashboard |
-| `invalidateDashboardCacheAction` | Invalidar caché del dashboard |
-| `getWandaDashboardAction` | Dashboard Wanda con animaciones |
-| `invalidateWandaCacheAction` | Invalidar caché de Wanda |
-
-## Integraciones
-
-| Módulo | Relación |
-|--------|----------|
-| `productos` | Stock bajo, total de productos |
-| `ventas` | Ventas del día, rentabilidad |
-| `contabilidad` | Resumen financiero |
-
-## Permisos
-
-| Acción | Rol |
-|--------|-----|
-| Ver dashboard | `admin`, `manager`, `economico`, `dependiente` |
+Ve los indicadores principales de tu negocio en un panel central.

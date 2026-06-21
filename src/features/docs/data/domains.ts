@@ -9,183 +9,183 @@ import type { DocDomain, DocModule } from "./types"
 const MODULE_INFO: Record<string, { title: string; description: string }> = {
   auth: {
     title: "Autenticación",
-    description: "Login, registro, onboarding, JWT, Clerk",
+    description: "Te permite iniciar sesión, registrarte y completar el acceso al sistema.",
   },
   admin: {
     title: "Administración",
-    description: "Usuarios, roles, permisos, multi-tenant admin",
+    description: "Te permite administrar usuarios, roles y accesos desde una vista central.",
   },
   "mi-empresa": {
     title: "Mi Empresa",
-    description: "Configuración del negocio, perfil del tenant",
+    description: "Aquí configuras los datos de tu negocio para que el sistema use tu información correcta.",
   },
   configuracion: {
     title: "Configuración",
-    description: "Series fiscales, defectaciones, ajustes globales",
+    description: "Aquí ajustas opciones globales como series, reglas y parámetros generales.",
   },
   planes: {
     title: "Planes y Licencias",
-    description: "Planes de suscripción, feature flags, licenciamiento",
+    description: "Sirve para revisar qué incluye cada plan y qué licencias están activas.",
   },
   categorias: {
     title: "Categorías",
-    description: "Taxonomía jerárquica de productos",
+    description: "Organiza tus productos en grupos para encontrarlos y ordenarlos mejor.",
   },
   unidades: {
     title: "Unidades",
-    description: "Unidades de medida",
+    description: "Define cómo se cuentan los productos: piezas, cajas, kilos o litros.",
   },
   productos: {
     title: "Productos",
-    description: "Catálogo, stock, costos, códigos EAN-13",
+    description: "Administra tu catálogo, precios y stock desde un solo lugar.",
   },
   vendors: {
     title: "Proveedores",
-    description: "Gestión de proveedores",
+    description: "Registra proveedores y mantén sus datos de compra ordenados.",
   },
   "listas-precios": {
     title: "Listas de Precios",
-    description: "Pricing, listas diferenciadas",
+    description: "Crea distintas listas de precios según canal, punto de venta o cliente.",
   },
   almacenes: {
     title: "Almacenes",
-    description: "Almacenes y ubicaciones de stock",
+    description: "Controla tus almacenes y dónde está guardado cada stock.",
   },
   "puntos-venta": {
     title: "Puntos de Venta",
-    description: "Sucursales y puntos de venta",
+    description: "Administra tus sucursales o cajas de venta.",
   },
   transferencias: {
     title: "Transferencias",
-    description: "Movimientos de stock entre almacenes",
+    description: "Mueve stock entre almacenes sin perder trazabilidad.",
   },
   mermas: {
     title: "Mermas",
-    description: "Control de pérdidas y ajustes",
+    description: "Registra pérdidas o ajustes para que tu inventario siga siendo real.",
   },
   ventas: {
     title: "Ventas",
-    description: "Ventas POS, registro, anulación",
+    description: "Registra ventas, cobros y anulaciones de forma rápida.",
   },
   "venta-servicios": {
     title: "Venta de Servicios",
-    description: "Ventas de servicios (simple y mixta)",
+    description: "Te permite vender servicios además de productos cuando lo necesites.",
   },
   facturas: {
     title: "Facturas",
-    description: "Facturación electrónica, cuentas por cobrar",
+    description: "Emite facturas y sigue el estado de cobro de cada cliente.",
   },
   "series-facturacion": {
     title: "Series de Facturación",
-    description: "Series, prefijos y numeración fiscal",
+    description: "Configura prefijos y numeración para tus facturas.",
   },
   ofertas: {
     title: "Ofertas",
-    description: "Ofertas, descuentos y promociones",
+    description: "Crea descuentos y promociones para impulsar tus ventas.",
   },
   clientes: {
     title: "Clientes",
-    description: "Cartera de clientes, historial",
+    description: "Guarda clientes, historial y datos de contacto.",
   },
   "turnos-pos": {
     title: "Turnos POS",
-    description: "Turnos de empleados por punto de venta",
+    description: "Abre y cierra turnos de caja por empleado o punto de venta.",
   },
   "arqueo-caja": {
     title: "Arqueo de Caja",
-    description: "Arqueo y cierre de caja por turno",
+    description: "Cuadra el efectivo y verifica diferencias al cierre.",
   },
   "cuadre-diario": {
     title: "Cuadre Diario",
-    description: "Cuadre diario consolidado",
+    description: "Mira el resumen diario de ventas y caja de un vistazo.",
   },
   "compras-productos": {
     title: "Compras de Productos",
-    description: "Compras, documentos, FIFO, gastos asociados",
+    description: "Registra compras de mercadería y sus documentos asociados.",
   },
   "compras-servicios": {
     title: "Compras de Servicios",
-    description: "Compras de servicios a proveedores",
+    description: "Controla compras de servicios a proveedores.",
   },
   servicios: {
     title: "Servicios",
-    description: "Catálogo de servicios ofrecidos",
+    description: "Mantén el catálogo de servicios que vendes.",
   },
   empleados: {
     title: "Empleados",
-    description: "Gestión de empleados, datos laborales",
+    description: "Administra datos laborales, turnos y estado de tus empleados.",
   },
   "pago-salario": {
     title: "Pago de Salario",
-    description: "Nómina, comisiones, vacaciones",
+    description: "Gestiona nómina, pagos y conceptos asociados.",
   },
   profile: {
     title: "Perfil",
-    description: "Perfil de usuario",
+    description: "Te permite ver y actualizar tu perfil de usuario.",
   },
   contabilidad: {
     title: "Contabilidad",
-    description: "Plan contable, cuentas, asientos, cierres",
+    description: "Agrupa cuentas, asientos y cierres para llevar control financiero.",
   },
   "contabilidad/periodos-contables": {
     title: "Periodos Contables",
-    description: "Apertura, cierre, snapshots",
+    description: "Abre y cierra periodos contables sin perder el orden de tus números.",
   },
   "contabilidad/reconciliacion": {
     title: "Reconciliación Bancaria",
-    description: "Conciliación de cuentas bancarias",
+    description: "Compara tus movimientos con los del banco y detecta diferencias.",
   },
   "contabilidad/ajustes-bancarios": {
     title: "Ajustes Bancarios",
-    description: "Ajustes, anticipos, deudas, préstamos",
+    description: "Registra ajustes, anticipos, deudas y préstamos vinculados a bancos.",
   },
   gastosDE: {
     title: "Gastos D/E",
-    description: "Gastos de distribución y explotación",
+    description: "Clasifica gastos operativos para entender mejor tus costos.",
   },
   "reportes-financieros": {
     title: "Reportes Financieros",
-    description: "Indicadores, balances, reportes exportables",
+    description: "Consulta indicadores y reportes financieros listos para analizar o exportar.",
   },
   produccion: {
     title: "Producción",
-    description: "Órdenes de producción, recetas",
+    description: "Planifica y registra órdenes de producción y recetas.",
   },
   reparaciones: {
     title: "Reparaciones",
-    description: "Taller de reparaciones",
+    description: "Gestiona órdenes de reparación, piezas y seguimiento de trabajos.",
   },
   backups: {
     title: "Backups",
-    description: "Sistema de respaldos automáticos",
+    description: "Consulta y administra respaldos automáticos de tu información.",
   },
   notificaciones: {
     title: "Notificaciones",
-    description: "Centro de notificaciones",
+    description: "Revisa alertas y avisos generados por el sistema.",
   },
   dashboard: {
     title: "Dashboard",
-    description: "Panel ejecutivo e indicadores",
+    description: "Ve los indicadores principales de tu negocio en un panel central.",
   },
   contratos: {
     title: "Contratos",
-    description: "Gestión de contratos",
+    description: "Lleva el control de contratos, su estado y sus versiones.",
   },
   reviews: {
     title: "Reviews",
-    description: "Sistema de revisión de asientos",
+    description: "Administra revisiones internas para mantener orden y control.",
   },
   landing: {
     title: "Landing Page",
-    description: "Página pública de aterrizaje",
+    description: "Es la página pública que presenta tu negocio antes de iniciar sesión.",
   },
   licencias: {
     title: "Licencias",
-    description: "Licencias individuales (legacy)",
+    description: "Te permite ver licencias activas y entender qué puede usar cada usuario o empresa.",
   },
   "ficha-costo": {
     title: "Ficha de Costo",
-    description: "Análisis de costo y rentabilidad por producto",
+    description: "Calcula el costo de cada producto y entiende su rentabilidad.",
   },
 }
 

@@ -1,69 +1,30 @@
 # Reportes Financieros
 
-> **Feature**: `src/features/reportes-financieros/`
-> **Ruta**: `/busy/reportes-financieros`
+> Consulta indicadores y reportes financieros listos para analizar o exportar.
 
----
+## Qué hace
 
-## Descripción
+Este módulo te ayuda a seguir el movimiento financiero con más claridad y a cerrar números con menos fricción. Consulta indicadores y reportes financieros listos para analizar o exportar.
 
-Módulo de reportes financieros. Genera informes de indicadores de rentabilidad, balances y resúmenes financieros por período. Incluye análisis de rentabilidad por compra (margen por lote).
+## Cuándo usarlo
 
-## Funcionalidades
+- Cuando cerrás periodos, hacés conciliaciones o revisás balances.
+- Cuando querés entender en qué se fue el dinero y cómo quedó cada cuenta.
+- Cuando necesitás reportes para tomar decisiones con más confianza.
 
-### Reporte Financiero por Período
+## Cómo se usa
 
-**Descripción**: `getReporteFinancieroAction` genera un informe consolidado para un período específico (formato `YYYY-MM`).
+1. Abrí el módulo y ubicá el periodo, cuenta o reporte que necesitás.
+2. Revisá los números antes de hacer cambios.
+3. Aplicá ajustes solo cuando estés seguro de la causa.
+4. Guardá y validá el resultado final.
 
-**Indicadores calculados**:
-- Total de ventas
-- Total de compras (gastos de compra)
-- Total de salarios (nómina)
-- Total de mermas
-- **Resultado neto** = ventas - compras - salarios - mermas
+## Qué conviene cuidar
 
-### Rentabilidad por Compra
+- Trabajá con periodos claros para no mezclar movimientos.
+- Revisá cada ajuste antes de cerrar un periodo.
+- Si hay diferencias, buscá primero la causa antes de corregir.
 
-**Descripción**: `getRentabilidadCompraAction` analiza la rentabilidad de cada compra realizada, comparando el costo de compra contra el precio de venta de los productos.
+## En una frase
 
-## Server Actions
-
-| Action | Propósito | Input | Output |
-|--------|-----------|-------|--------|
-| `getReporteFinancieroAction` | Reporte financiero del período | `{ periodo: "YYYY-MM" }` | `{ periodo, resumen, detalles }` |
-| `getRentabilidadCompraAction` | Rentabilidad por compra | Filtros varios | Datos de rentabilidad por lote |
-
-## Reglas de Negocio
-
-1. **Feature flag**: Requiere `reportes-financieros` habilitado en el plan.
-2. **Período**: Formato `YYYY-MM`. Toma el mes completo (del día 1 al último del mes).
-3. **Cálculo**: Los totales se calculan en el momento (no hay caché persistente).
-
-## UI y Navegación
-
-| Ruta | Componente | Propósito |
-|------|-----------|-----------|
-| `/busy/reportes-financieros` | ReportesPage | Reportes financieros con selector de período |
-
-## Integraciones
-
-| Módulo | Relación |
-|--------|----------|
-| `contabilidad` | Base para reportes financieros |
-| `ventas` | Datos de ingresos |
-| `compras-productos` | Datos de costos |
-| `empleados` | Datos de nómina |
-| `mermas` | Datos de pérdidas |
-| `gastosDE` | Gastos operativos |
-
-## Permisos y Roles
-
-| Acción | Rol |
-|--------|-----|
-| Ver reportes | `admin`, `manager`, `economico` |
-
-## Tests
-
-```bash
-pnpm test -- src/features/reportes-financieros/
-```
+Consulta indicadores y reportes financieros listos para analizar o exportar.

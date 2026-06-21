@@ -1,56 +1,30 @@
 # Licencias (Individuales)
 
-> **Feature**: `src/features/licencias/`
-> **Modelos Prisma**: `Licencia`, `LicenciaAudit`, `User`, `Plan`
-> **Ruta**: `/busy/admin/licencias`
+> Te permite ver licencias activas y entender qué puede usar cada usuario o empresa.
 
----
+## Qué hace
 
-## Descripción
+Este módulo te ayuda a mantener el acceso, la configuración y la administración básica del sistema en orden. Te permite ver licencias activas y entender qué puede usar cada usuario o empresa.
 
-Módulo de licencias individuales (legacy). Asigna planes de suscripción a usuarios específicos. Está siendo reemplazado progresivamente por `TenantLicense` (licencias por empresa). Ver [Planes y Licencias](planes/README.md) para el modelo actual.
+## Cuándo usarlo
 
-## Modelos de Datos
+- Cuando necesitás entrar al sistema o recuperar el acceso.
+- Cuando querés ajustar permisos, datos de empresa o parámetros generales.
+- Cuando definís qué puede ver o hacer cada usuario.
 
-```mermaid
-erDiagram
-    Licencia }o--|| User : "usuario asignado"
-    Licencia }o--|| Plan : "plan contratado"
-    Licencia ||--o{ LicenciaAudit : "auditoría"
+## Cómo se usa
 
-    Licencia {
-        string licenciaId PK
-        string clave UK
-        string usuarioId FK
-        string planId FK
-        DateTime inicio
-        DateTime expiracion
-        boolean activa
-    }
-```
+1. Abrí el módulo desde el menú principal.
+2. Revisá la información o configuración que necesitás.
+3. Hacé los cambios necesarios y guardalos.
+4. Volvé a entrar para confirmar que quedó aplicado.
 
-## Funcionalidades
+## Qué conviene cuidar
 
-### CRUD de Licencias
+- Evitá duplicar usuarios o permisos.
+- Si no ves algo, revisá tu rol o tu sesión.
+- Mantené los datos de empresa siempre actualizados.
 
-**Descripción**: Creación (con generación automática de clave), activación/desactivación, extensión y eliminación.
+## En una frase
 
-### Generación de Clave
-
-**Descripción**: `generarClave()` genera claves en formato `XXXXX-XXXXX-XXXXX-XXXXX` (4 grupos de 5 caracteres, sin vocales ni dígitos ambiguos).
-
-## Server Actions
-
-| Action | Propósito |
-|--------|-----------|
-| `getLicenciasAction` | Listar licencias (admin) |
-| `createLicenciaAction` | Crear licencia con clave + plan |
-| `updateLicenciaAction` | Extender/desactivar |
-| `deleteLicenciaAction` | Eliminar |
-
-## Reglas de Negocio
-
-1. Solo admin puede gestionar licencias.
-2. Al crear licencia, se actualiza `User.expiresAt`.
-3. La clave se genera automáticamente si no se provee una.
-4. Modelo legacy — las nuevas implementaciones usan `TenantLicense`.
+Te permite ver licencias activas y entender qué puede usar cada usuario o empresa.

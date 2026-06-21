@@ -1,43 +1,30 @@
 # Landing Page
 
-> **Feature**: `src/features/landing/`
-> **Ruta**: `/` (página pública)
+> Es la página pública que presenta tu negocio antes de iniciar sesión.
 
----
+## Qué hace
 
-## Descripción
+Este módulo te ayuda a mantener el sistema visible, ordenado y fácil de seguir para el equipo. Es la página pública que presenta tu negocio antes de iniciar sesión.
 
-Página pública de aterrizaje del sistema. Muestra información institucional, características del producto, beneficios, planes de suscripción y FAQ. No requiere autenticación.
+## Cuándo usarlo
 
-## Funcionalidades
+- Cuando querés ver el estado general del sistema o de una sección importante.
+- Cuando necesitás revisar avisos, respaldos o elementos de control.
+- Cuando buscás un resumen rápido antes de tomar una acción.
 
-### Secciones de la Landing
+## Cómo se usa
 
-| Componente | Propósito |
-|-----------|-----------|
-| `LandingHeader` | Navegación pública |
-| `LandingHero` | Hero principal con CTA |
-| `LandingFeatures` | Grid de características del sistema |
-| `LandingBenefits` | Beneficios del producto |
-| `LandingFaq` | Preguntas frecuentes |
+1. Entrá al módulo y revisá el resumen general.
+2. Leé los avisos o indicadores más importantes.
+3. Tomá la acción correspondiente si detectás algo pendiente.
+4. Volvé a consultar para confirmar que quedó resuelto.
 
-### Planes Públicos
+## Qué conviene cuidar
 
-**Descripción**: La landing consume `getPlansPublicActionV2()` para mostrar los planes de suscripción disponibles con sus features y precios.
+- Leé primero el resumen general y después bajá al detalle.
+- Atendé los avisos críticos antes que los secundarios.
+- Mantené un hábito de revisar este módulo con frecuencia.
 
-## Server Actions
+## En una frase
 
-No tiene Server Actions propias. Consume `getPlansPublicActionV2` del módulo `planes`.
-
-## Integraciones
-
-| Módulo | Relación |
-|--------|----------|
-| `planes` | Muestra planes públicos |
-| `auth` | Links a login/register |
-
-## Permisos
-
-| Acceso | Requisito |
-|--------|-----------|
-| Landing | Público (sin autenticación) |
+Es la página pública que presenta tu negocio antes de iniciar sesión.

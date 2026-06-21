@@ -1,87 +1,30 @@
 # Backups
 
-> **Feature**: `src/features/backups/`
-> **Modelos Prisma**: `BackupLog`, `BackupPlan`, `Tenant`
-> **Ruta**: `/admin/backups`
+> Consulta y administra respaldos automáticos de tu información.
 
----
+## Qué hace
 
-## Descripción
+Este módulo te ayuda a mantener el sistema visible, ordenado y fácil de seguir para el equipo. Consulta y administra respaldos automáticos de tu información.
 
-Sistema de respaldos automáticos de base de datos. Soporta backups completos e incrementales con frecuencia configurable (semanal, diario, horario). La ejecución de backups es asíncrona: la acción retorna inmediatamente con un `backupLogId` y el progreso se consulta via polling.
+## Cuándo usarlo
 
-## Modelos de Datos
+- Cuando querés ver el estado general del sistema o de una sección importante.
+- Cuando necesitás revisar avisos, respaldos o elementos de control.
+- Cuando buscás un resumen rápido antes de tomar una acción.
 
-```mermaid
-erDiagram
-    BackupPlan ||--o{ BackupLog : "ejecuciones"
-    Tenant ||--o{ BackupPlan : "planes de backup"
+## Cómo se usa
 
-    BackupPlan {
-        string planId PK
-        string tenantId FK
-        string frecuencia
-        string tipo
-        int retencionDias
-        boolean activo
-    }
+1. Entrá al módulo y revisá el resumen general.
+2. Leé los avisos o indicadores más importantes.
+3. Tomá la acción correspondiente si detectás algo pendiente.
+4. Volvé a consultar para confirmar que quedó resuelto.
 
-    BackupLog {
-        string logId PK
-        string planId FK
-        string estado
-        string tipo
-        string archivoUrl
-        int tamanoBytes
-        DateTime createdAt
-        DateTime completedAt
-    }
-```
+## Qué conviene cuidar
 
-## Funcionalidades
+- Leé primero el resumen general y después bajá al detalle.
+- Atendé los avisos críticos antes que los secundarios.
+- Mantené un hábito de revisar este módulo con frecuencia.
 
-### Ejecución de Backup
+## En una frase
 
-**Descripción**: Dispara un backup (completo, por tenant, o de configuración). Corre en background — el cliente debe pollear `getBackupStatusAction`.
-
-### Restauración
-
-**Descripción**: Restaura un backup existente. Operación destructiva: reemplaza los datos actuales.
-
-### Planes de Backup
-
-**Descripción**: Define la frecuencia (DIARIO, SEMANAL, HORARIO), tipo (COMPLETO, INCREMENTAL), y retención.
-
-### Importación
-
-**Descripción**: Importa datos desde un archivo SQL externo.
-
-## Server Actions
-
-| Action | Propósito | Acceso |
-|--------|-----------|--------|
-| `createBackupAction` | Ejecutar backup | `admin` |
-| `getBackupStatusAction` | Consultar progreso | `admin` |
-| `restoreBackupAction` | Restaurar backup | `admin` |
-| `importBackupAction` | Importar SQL | `admin` |
-| `deleteBackupAction` | Eliminar backup | `admin` |
-| CRUD planes | Gestión de planes | `admin` |
-
-## Reglas de Negocio
-
-1. Solo `admin` puede ejecutar/restaurar backups.
-2. Los backups corren asincrónicamente (no bloquean el request).
-3. `BackupEngine` y `RestoreEngine` manejan la lógica de ejecución.
-4. El almacenamiento se maneja via `createStorage()` (Railway Volume o S3-compatible).
-
-## Integraciones
-
-| Módulo | Relación |
-|--------|----------|
-| `admin` | Acceso restringido a admin |
-
-## Permisos
-
-| Acción | Rol |
-|--------|-----|
-| Todas las operaciones | `admin` |
+Consulta y administra respaldos automáticos de tu información.

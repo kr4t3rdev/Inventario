@@ -1,61 +1,30 @@
 # Cuadre Diario
 
-> **Feature**: `src/features/cuadre-diario/`
-> **Ruta**: `/busy/cuadre-diario`
+> Mira el resumen diario de ventas y caja de un vistazo.
 
----
+## Qué hace
 
-## Descripción
+Este módulo te ayuda a registrar ventas y hacer seguimiento del cobro sin perder orden en la operación diaria. Mira el resumen diario de ventas y caja de un vistazo.
 
-Módulo de cuadre diario consolidado. Proporciona un resumen financiero del día operativo: total de ventas por método de pago, ingresos, gastos, diferencias de caja, y variación porcentual vs el día anterior. Es el reporte diario que usan los managers para verificar la integridad financiera.
+## Cuándo usarlo
 
-## Funcionalidades
+- Cuando registrás una venta, un cobro o una anulación.
+- Cuando querés ver el historial de clientes, facturas o turnos.
+- Cuando necesitás aplicar descuentos o cerrar caja.
 
-### Resumen Diario (`getCuadreDiarioAction`)
+## Cómo se usa
 
-**Descripción**: Calcula el cuadre del día (fecha actual o especificada). Agrupa ventas por método de pago y calcula totales.
+1. Entrá al módulo y elegí la operación que querés hacer.
+2. Completá los datos de la venta, factura o turno.
+3. Revisá el resumen antes de confirmar.
+4. Guardá y verificá que el resultado quede registrado.
 
-**Indicadores**:
-- Ventas totales del día
-- Desglose por método de pago: efectivo, tarjeta, transferencia, crédito, mixto
-- Total de métodos electrónicos (no efectivo)
-- Variación porcentual vs el día anterior
+## Qué conviene cuidar
 
-### Cuadre Financiero Consolidado
+- Confirmá cliente, forma de pago y totales antes de cerrar.
+- Revisá descuentos y numeración antes de emitir.
+- Si algo no cuadra, revisá primero el turno o la caja.
 
-**Descripción**: `CuadreDiarioFinanciero` es el componente que muestra el cuadre completo: ventas, gastos, saldos y diferencias.
+## En una frase
 
-## Server Actions
-
-| Action | Propósito | Input | Output |
-|--------|-----------|-------|--------|
-| `getCuadreDiarioAction` | Cuadre del día | `{ fecha?: string }` | `{ ventas, metodosPago, variacion }` |
-
-## Reglas de Negocio
-
-1. Los métodos de pago se etiquetan en español: efectivo, tarjeta, transferencia, credito, mixto.
-2. La variación porcentual se calcula contra el día anterior hábil.
-3. Si el día anterior tuvo 0 ventas y hoy tiene > 0, la variación es 100%.
-4. Las ventas con `deletedAt` no null se excluyen del cálculo.
-
-## UI y Navegación
-
-| Ruta | Componente | Propósito |
-|------|-----------|-----------|
-| `/busy/cuadre-diario` | `CuadreDiarioFinanciero` | Cuadre completo del día |
-| — | `CuadrePageClient` | Página cliente del cuadre |
-
-## Integraciones
-
-| Módulo | Relación |
-|--------|----------|
-| `ventas` | Fuente principal de ingresos |
-| `turnos-pos` | Ventas agrupadas por turno |
-| `arqueo-caja` | Diferencias de caja por turno |
-| `contabilidad` | Alimenta el resumen financiero |
-
-## Permisos
-
-| Acción | Rol |
-|--------|-----|
-| Ver cuadre | `admin`, `manager`, `economico` |
+Mira el resumen diario de ventas y caja de un vistazo.

@@ -1,82 +1,30 @@
 # Arqueo de Caja
 
-> **Feature**: `src/features/arqueo-caja/`
-> **Modelos Prisma**: `ArqueoCaja`, `TurnoPuntoVenta`, `Venta`
-> **Ruta**: `/busy/puntosDeVenta`
+> Cuadra el efectivo y verifica diferencias al cierre.
 
----
+## Qué hace
 
-## Descripción
+Este módulo te ayuda a registrar ventas y hacer seguimiento del cobro sin perder orden en la operación diaria. Cuadra el efectivo y verifica diferencias al cierre.
 
-Módulo de arqueo de caja para puntos de venta. Al finalizar un turno POS, se realiza el arqueo para verificar que el efectivo físico (desglosado por denominación de billetes y monedas) coincida con el total de ventas registradas.
+## Cuándo usarlo
 
-## Modelos de Datos
+- Cuando registrás una venta, un cobro o una anulación.
+- Cuando querés ver el historial de clientes, facturas o turnos.
+- Cuando necesitás aplicar descuentos o cerrar caja.
 
-```mermaid
-erDiagram
-    ArqueoCaja }o--|| TurnoPuntoVenta : "turno arqueado"
+## Cómo se usa
 
-    ArqueoCaja {
-        string arqueoId PK
-        string turnoId FK
-        decimal esperadoEfectivoCup
-        decimal contadoEfectivoCup
-        decimal diferencia
-        json detalleBilletes
-        boolean cuadrada
-        DateTime createdAt
-    }
-```
+1. Entrá al módulo y elegí la operación que querés hacer.
+2. Completá los datos de la venta, factura o turno.
+3. Revisá el resumen antes de confirmar.
+4. Guardá y verificá que el resultado quede registrado.
 
-| Modelo | Propósito | PK |
-|--------|-----------|----|
-| `ArqueoCaja` | Registro de arqueo de caja de un turno | `arqueoId` |
+## Qué conviene cuidar
 
-## Funcionalidades
+- Confirmá cliente, forma de pago y totales antes de cerrar.
+- Revisá descuentos y numeración antes de emitir.
+- Si algo no cuadra, revisá primero el turno o la caja.
 
-### Realizar Arqueo (`realizarArqueoAction`)
+## En una frase
 
-**Descripción**: Realiza el arqueo de caja para un turno. Calcula los montos esperados vs contados y registra la diferencia.
-
-**Input**: turnoId, conteo de billetes (1000, 500, 200, 100, 50, 20, 10, 5, 1 CUP), monedas, y otros métodos de pago.
-
-**Reglas**:
-- Calcula automáticamente el total esperado desde las ventas del turno
-- Calcula el total contado desde el desglose de billetes
-- Si la diferencia supera el umbral configurable (`UMBRAL_DIFERENCIA_DEFAULT = $500 CUP`), la caja no cuadra
-- Si no cuadra, se requiere observación obligatoria
-
-### Esperados de Arqueo (`getEsperadosArqueoAction`)
-
-**Descripción**: Calcula los montos esperados para un turno: total de ventas por método de pago, fondo inicial, y saldo esperado en caja.
-
-## Server Actions
-
-| Action | Propósito |
-|--------|-----------|
-| `getEsperadosArqueoAction` | Calcular montos esperados del turno |
-| `realizarArqueoAction` | Realizar arqueo con conteo físico |
-| `getArqueosAction` | Listar arqueos realizados |
-
-## Reglas de Negocio
-
-1. Un turno solo puede arquearse una vez.
-2. Si la diferencia > umbral, la caja se marca como no cuadrada.
-3. Si no cuadra, se debe registrar observación obligatoria.
-4. Los valores de billetes están en centavos (x100).
-5. El arqueo incluye todos los métodos de pago (efectivo, tarjeta, transferencia, crédito).
-
-## Integraciones
-
-| Módulo | Relación |
-|--------|----------|
-| `turnos-pos` | El arqueo se realiza sobre un turno |
-| `ventas` | Las ventas del turno determinan el esperado |
-| `cuadre-diario` | Los arqueos alimentan el cuadre diario |
-
-## Permisos
-
-| Acción | Rol |
-|--------|-----|
-| Ver arqueos | `admin`, `manager`, `economico` |
-| Realizar arqueo | `admin`, `manager`, `dependiente` |
+Cuadra el efectivo y verifica diferencias al cierre.
