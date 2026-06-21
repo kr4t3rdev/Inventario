@@ -4,10 +4,10 @@ import { NextRequest, NextResponse } from 'next/server';
 vi.mock('@/lib/auth-middleware', () => ({ authenticateUser: vi.fn() }));
 vi.mock('@/lib/prisma', () => ({
   prisma: {
-    anticipo: { findUnique: vi.fn(), update: vi.fn(), delete: vi.fn() },
+    anticipo: { findFirst: vi.fn(), update: vi.fn(), delete: vi.fn() },
   },
   default: {
-    anticipo: { findUnique: vi.fn(), update: vi.fn(), delete: vi.fn() },
+    anticipo: { findFirst: vi.fn(), update: vi.fn(), delete: vi.fn() },
   },
 }));
 
@@ -34,19 +34,19 @@ describe('mobile advance by id route', () => {
 
   it('returns anticipo detail scoped by tenant', async () => {
     vi.mocked(authenticateUser).mockResolvedValue({ user } as never);
-    vi.mocked(prisma.anticipo.findUnique).mockResolvedValue({ anticipoId: 'a1' } as never);
+    vi.mocked(prisma.anticipo.findFirst).mockResolvedValue({ anticipoId: 'a1' } as never);
 
     const response = await GET(new NextRequest('http://localhost/api/mobile/v1/accounting/advances/a1'), { params: Promise.resolve({ id: 'a1' }) } as never);
     const data = await response.json();
 
     expect(response.status).toBe(200);
     expect(data.anticipo.anticipoId).toBe('a1');
-    expect(prisma.anticipo.findUnique).toHaveBeenCalled();
+    expect(prisma.anticipo.findFirst).toHaveBeenCalled();
   });
 
   it('updates anticipo', async () => {
     vi.mocked(authenticateUser).mockResolvedValue({ user } as never);
-    vi.mocked(prisma.anticipo.findUnique).mockResolvedValue({ anticipoId: 'a1' } as never);
+    vi.mocked(prisma.anticipo.findFirst).mockResolvedValue({ anticipoId: 'a1' } as never);
     vi.mocked(prisma.anticipo.update).mockResolvedValue({ anticipoId: 'a1' } as never);
 
     const response = await PUT(new NextRequest('http://localhost/api/mobile/v1/accounting/advances/a1', {
@@ -61,7 +61,7 @@ describe('mobile advance by id route', () => {
 
   it('deletes anticipo', async () => {
     vi.mocked(authenticateUser).mockResolvedValue({ user } as never);
-    vi.mocked(prisma.anticipo.findUnique).mockResolvedValue({ anticipoId: 'a1' } as never);
+    vi.mocked(prisma.anticipo.findFirst).mockResolvedValue({ anticipoId: 'a1' } as never);
     vi.mocked(prisma.anticipo.delete).mockResolvedValue({} as never);
 
     const response = await DELETE(new NextRequest('http://localhost/api/mobile/v1/accounting/advances/a1', { method: 'DELETE' }), { params: Promise.resolve({ id: 'a1' }) } as never);

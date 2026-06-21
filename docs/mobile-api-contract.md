@@ -518,6 +518,16 @@ Authorization: Bearer <accessToken>
 
 Devuelve historial y estadísticas básicas de reconciliaciones de gastos.
 
+### `GET /api/mobile/v1/accounting/reconciliation/stats`
+
+**Headers**
+
+```http
+Authorization: Bearer <accessToken>
+```
+
+Devuelve el resumen global de reconciliación con pendientes, completados hoy, actividad reciente y monto reconciliado total, alineado con el panel web actual.
+
 ### `GET /api/mobile/v1/accounting/accounts-receivable`
 
 **Headers**
