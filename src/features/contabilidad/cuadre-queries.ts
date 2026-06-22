@@ -311,11 +311,10 @@ export async function obtenerVentasVsReconciliado(
 						fechaReconciliacion: true,
 						moneda: true,
 					},
+					take: 1,
 				},
 			},
 			orderBy: { createdAt: "desc" },
-			skip,
-			take: pageSize,
 		}),
 		prisma.venta.count({ where: filtroVenta }),
 	]);
@@ -333,21 +332,25 @@ export async function obtenerVentasVsReconciliado(
 						fechaReconciliacion: true,
 						moneda: true,
 					},
+					take: 1,
 				},
 			},
 			orderBy: { createdAt: "desc" },
-			skip,
-			take: pageSize,
 		}),
 		prisma.ventaServicios.count({ where: filtroServicio }),
 	]);
 
-	// ── IDs reconciliados de CompraServicio y VentaServicios.costo ──
+	// ── IDs reconciliados de CompraServicio y VentaServicios.costo (con monto) ──
 	const [reconciliadosCompraServicio, reconciliadosVentaServicio] =
 		await Promise.all([
 			prisma.reconciliacionGasto.findMany({
 				where: { tenantId, tipoGasto: "servicio", fechaReconciliacion: rango },
-				select: { referenciaId: true },
+				select: {
+					referenciaId: true,
+					monto: true,
+					montoConvertido: true,
+					fechaReconciliacion: true,
+				},
 				distinct: ["referenciaId"],
 			}),
 			prisma.reconciliacionGasto.findMany({
@@ -356,7 +359,12 @@ export async function obtenerVentasVsReconciliado(
 					tipoGasto: "venta_servicio",
 					fechaReconciliacion: rango,
 				},
-				select: { referenciaId: true },
+				select: {
+					referenciaId: true,
+					monto: true,
+					montoConvertido: true,
+					fechaReconciliacion: true,
+				},
 				distinct: ["referenciaId"],
 			}),
 		]);
@@ -367,6 +375,23 @@ export async function obtenerVentasVsReconciliado(
 	const idsReconciliadosVS = new Set(
 		reconciliadosVentaServicio.map((r) => r.referenciaId).filter(Boolean),
 	);
+	// Mapas id -> datos de reconciliación (para obtener el monto reconciliado real)
+	const montoReconciliadoCS = new Map<string, { monto: number; fecha: Date | null }>();
+	for (const r of reconciliadosCompraServicio) {
+		if (!r.referenciaId) continue;
+		montoReconciliadoCS.set(r.referenciaId, {
+			monto: Number(r.montoConvertido ?? r.monto ?? 0),
+			fecha: r.fechaReconciliacion ?? null,
+		});
+	}
+	const montoReconciliadoVS = new Map<string, { monto: number; fecha: Date | null }>();
+	for (const r of reconciliadosVentaServicio) {
+		if (!r.referenciaId) continue;
+		montoReconciliadoVS.set(r.referenciaId, {
+			monto: Number(r.montoConvertido ?? r.monto ?? 0),
+			fecha: r.fechaReconciliacion ?? null,
+		});
+	}
 
 	// Arrays para usar con Prisma notIn (los Set no son arrays)
 	const idsReconciliadosCSArr = [...idsReconciliadosCS];
@@ -378,8 +403,6 @@ export async function obtenerVentasVsReconciliado(
 		prisma.compraServicio.findMany({
 			where: filtroCompraServicio,
 			orderBy: { createdAt: "desc" },
-			skip,
-			take: pageSize,
 		}),
 		prisma.compraServicio.count({ where: filtroCompraServicio }),
 	]);
@@ -395,8 +418,6 @@ export async function obtenerVentasVsReconciliado(
 		prisma.ventaServicios.findMany({
 			where: filtroVentaServicioCosto,
 			orderBy: { createdAt: "desc" },
-			skip,
-			take: pageSize,
 		}),
 		prisma.ventaServicios.count({ where: filtroVentaServicioCosto }),
 	]);
@@ -418,8 +439,6 @@ export async function obtenerVentasVsReconciliado(
 				},
 			},
 			orderBy: { createdAt: "desc" },
-			skip,
-			take: pageSize,
 		}),
 		prisma.gastosDE.count({ where: filtroGastosDE }),
 	]);
@@ -441,8 +460,6 @@ export async function obtenerVentasVsReconciliado(
 				},
 			},
 			orderBy: { createdAt: "desc" },
-			skip,
-			take: pageSize,
 		}),
 		prisma.gastoCompra.count({ where: filtroGastoCompra }),
 	]);
@@ -537,8 +554,10 @@ export async function obtenerVentasVsReconciliado(
 	const mapCompraServicio = (
 		g: (typeof comprasServicio)[number],
 	): VentaVsReconciliadoItem => {
-		const estaReconciliado = idsReconciliadosCS.has(g.compraServicioId);
+		const recData = montoReconciliadoCS.get(g.compraServicioId);
+		const estaReconciliado = !!recData;
 		const monto = Number(g.total ?? 0);
+		const montoRec = recData?.monto ?? 0;
 		return {
 			id: g.compraServicioId,
 			tipo: "GASTO",
@@ -549,17 +568,19 @@ export async function obtenerVentasVsReconciliado(
 			metodoPago: null,
 			origen: "Servicio Contratado",
 			estaReconciliado,
-			montoReconciliado: null,
-			diferencia: estaReconciliado ? 0 : monto,
-			fechaReconciliacion: null,
+			montoReconciliado: estaReconciliado ? montoRec : null,
+			diferencia: estaReconciliado ? monto - montoRec : monto,
+			fechaReconciliacion: recData?.fecha ?? null,
 		};
 	};
 
 	const mapVentaServicioCosto = (
 		vs: (typeof ventasServicioCosto)[number],
 	): VentaVsReconciliadoItem => {
-		const estaReconciliado = idsReconciliadosVS.has(vs.ventaServicioId);
+		const recData = montoReconciliadoVS.get(vs.ventaServicioId);
+		const estaReconciliado = !!recData;
 		const monto = Number(vs.costo ?? 0);
+		const montoRec = recData?.monto ?? 0;
 		return {
 			id: `costo-${vs.ventaServicioId}`,
 			tipo: "GASTO",
@@ -570,13 +591,13 @@ export async function obtenerVentasVsReconciliado(
 			metodoPago: null,
 			origen: "Costo de Servicio Vendido",
 			estaReconciliado,
-			montoReconciliado: null,
-			diferencia: estaReconciliado ? 0 : monto,
-			fechaReconciliacion: null,
+			montoReconciliado: estaReconciliado ? montoRec : null,
+			diferencia: estaReconciliado ? monto - montoRec : monto,
+			fechaReconciliacion: recData?.fecha ?? null,
 		};
 	};
 
-	const items = [
+	const allItems = [
 		...ventas.map(mapVenta),
 		...ventasServicios.map(mapServicio),
 		...gastosDE.map(mapGastoDE),
@@ -585,16 +606,13 @@ export async function obtenerVentasVsReconciliado(
 		...ventasServicioCosto.map(mapVentaServicioCosto),
 	].sort((a, b) => b.fecha.getTime() - a.fecha.getTime());
 
-	const reconciliadas = items.filter((i) => i.estaReconciliado).length;
-	const totalCount =
-		totalVentas +
-		totalServicios +
-		totalGastosDE +
-		totalGastosCompra +
-		totalCompraServicio +
-		totalVentaServicioCosto;
+	// Paginar DESPUÉS de combinar — respeta pageSize
+	const totalCount = allItems.length;
+	const items = allItems.slice(skip, skip + pageSize);
 
-	const gastosItems = items.filter((i) => i.tipo === "GASTO");
+	const reconciliadas = allItems.filter((i) => i.estaReconciliado).length;
+
+	const gastosItems = allItems.filter((i) => i.tipo === "GASTO");
 	const gastosReconciliados = gastosItems.filter(
 		(i) => i.estaReconciliado,
 	).length;
@@ -807,8 +825,10 @@ export async function obtenerVentasVsReconciliado(
 	const mapCompraServicioAntiguo = (
 		g: (typeof comprasServicioAntiguos)[number],
 	): VentaVsReconciliadoItem => {
-		const estaReconciliado = idsReconciliadosCS.has(g.compraServicioId);
+		const recData = montoReconciliadoCS.get(g.compraServicioId);
+		const estaReconciliado = !!recData;
 		const monto = Number(g.total ?? 0);
+		const montoRec = recData?.monto ?? 0;
 		return {
 			id: g.compraServicioId,
 			tipo: "GASTO",
@@ -819,17 +839,19 @@ export async function obtenerVentasVsReconciliado(
 			metodoPago: null,
 			origen: "Servicio Contratado",
 			estaReconciliado,
-			montoReconciliado: null,
-			diferencia: estaReconciliado ? 0 : monto,
-			fechaReconciliacion: null,
+			montoReconciliado: estaReconciliado ? montoRec : null,
+			diferencia: estaReconciliado ? monto - montoRec : monto,
+			fechaReconciliacion: recData?.fecha ?? null,
 		};
 	};
 
 	const mapVentaServicioCostoAntiguo = (
 		vs: (typeof ventasServicioCostoAntiguos)[number],
 	): VentaVsReconciliadoItem => {
-		const estaReconciliado = idsReconciliadosVS.has(vs.ventaServicioId);
+		const recData = montoReconciliadoVS.get(vs.ventaServicioId);
+		const estaReconciliado = !!recData;
 		const monto = Number(vs.costo ?? 0);
+		const montoRec = recData?.monto ?? 0;
 		return {
 			id: `costo-${vs.ventaServicioId}`,
 			tipo: "GASTO",
@@ -840,9 +862,9 @@ export async function obtenerVentasVsReconciliado(
 			metodoPago: null,
 			origen: "Costo de Servicio Vendido",
 			estaReconciliado,
-			montoReconciliado: null,
-			diferencia: estaReconciliado ? 0 : monto,
-			fechaReconciliacion: null,
+			montoReconciliado: estaReconciliado ? montoRec : null,
+			diferencia: estaReconciliado ? monto - montoRec : monto,
+			fechaReconciliacion: recData?.fecha ?? null,
 		};
 	};
 
