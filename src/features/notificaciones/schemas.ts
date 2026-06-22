@@ -6,6 +6,7 @@ import { z } from 'zod';
 export const createNotificacionSchema = z.object({
   title: z.string().min(1),
   message: z.string().min(1),
+  link: z.string().min(1).optional(),
   type: z.string().optional().default('info'),
   prioridad: z.enum(['alta', 'media', 'baja']).optional().default('media'),
   userId: z.string().optional(),
@@ -17,6 +18,7 @@ export const updateNotificacionSchema = z.object({
   isRead: z.boolean().optional(),
   title: z.string().optional(),
   message: z.string().optional(),
+  link: z.string().min(1).nullable().optional(),
 });
 
 export type CreateNotificacionInput = z.infer<typeof createNotificacionSchema>;

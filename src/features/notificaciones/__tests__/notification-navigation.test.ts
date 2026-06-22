@@ -6,6 +6,16 @@ import { describe, expect, it } from 'vitest';
 import { getNotificationHref } from '@/features/notificaciones/notification-navigation';
 
 describe('getNotificationHref', () => {
+  it('prioriza el link persistido si existe', () => {
+    expect(
+      getNotificationHref({
+        type: 'info',
+        title: 'Cualquier cosa',
+        link: '/busy/contratos',
+      } as any),
+    ).toBe('/busy/contratos');
+  });
+
   it('envía stock bajo a productos', () => {
     expect(getNotificationHref({ type: 'stock_bajo', title: 'Stock Bajo' } as any)).toBe('/busy/products');
   });

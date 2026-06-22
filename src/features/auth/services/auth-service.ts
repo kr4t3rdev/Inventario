@@ -140,6 +140,7 @@ async function notifyAdminsAboutFailedLogin(user: { name: string; email: string 
         message: shouldLock
           ? `El usuario ${user.name} (${user.email}) ha sido bloqueado tras ${MAX_LOGIN_ATTEMPTS} intentos fallidos.`
           : `El usuario ${user.name} (${user.email}) ha realizado ${attempts} intentos fallidos de inicio de sesión.`,
+        link: '/admin/usuarios',
         type: shouldLock ? 'error' : 'warning',
         prioridad: 'alta',
       },

@@ -53,8 +53,14 @@ interface ProductoData {
   precioCosto: number | null
   precioVenta?: number | null
   almacenId?: string | null
+  puntoDeVentaId?: string | null
   categoria?: { nombre: string } | null
   unidad?: { simbolo: string } | null
+}
+
+export interface DashboardStatsQueryFilters {
+  ubicacionId?: string | null
+  tipoUbicacion?: string | null
 }
 
 interface MermaData {
@@ -77,8 +83,24 @@ interface SalarioData {
 
 interface VentaServicioData {
   total: number
-  cantidad?: number
+  cantidad: number
   createdAt: Date
+}
+
+interface GastoCompraData {
+  total: number
+  createdAt: Date
+}
+
+interface StockUbicacionData {
+  productoId: string
+  cantidad: number
+  producto: {
+    id: string
+    nombre: string
+    precioCosto: number | null
+    categoria: { nombre: string } | null
+  } | null
 }
 
 interface TopProductoData {
@@ -119,17 +141,22 @@ export interface DashboardStats {
  * @param {string} tenantId - Tenant ID from authenticated user
  * @returns {Promise<DashboardStats>} Aggregated dashboard statistics
  */
-export async function getDashboardStatsQuery(tenantId: string): Promise<DashboardStats> {
+export async function getDashboardStatsQuery(
+  tenantId: string,
+  filters: DashboardStatsQueryFilters = {},
+): Promise<DashboardStats> {
+  const { ubicacionId, tipoUbicacion } = filters
+
   const [
     totalProductos, totalAlmacenes, totalPuntosVenta,
     ventasData, ventaItemsData, ventasLegacyData, ventaServiciosData,
     mermasData, gastosDEData, salariosData,
-    transferenciasData, productosDataRaw,
+    transferenciasData, productosDataRaw, gastosCompraData, stockUbicacionesData,
   ]: [
     number, number, number,
     VentaDiariaData[], VentaItemData[], VentaLegacyData[], VentaServicioData[],
     MermaData[], GastoDEData[], SalarioData[],
-    TransferenciaData[], ProductoData[],
+    TransferenciaData[], ProductoData[], GastoCompraData[], StockUbicacionData[],
   ] = await Promise.all([
     prisma.producto.count({ where: { tenantId } }),
     prisma.almacen.count({ where: { tenantId } }),
@@ -153,7 +180,7 @@ export async function getDashboardStatsQuery(tenantId: string): Promise<Dashboar
     }),
     prisma.ventaServicios.findMany({
       where: { tenantId },
-      select: { total: true, createdAt: true },
+      select: { total: true, cantidad: true, createdAt: true },
       orderBy: { createdAt: 'desc' },
     }),
     prisma.merma.findMany({
@@ -184,11 +211,41 @@ export async function getDashboardStatsQuery(tenantId: string): Promise<Dashboar
       select: {
         id: true, nombre: true, stock: true, stockMinimo: true, precioCosto: true,
         almacenId: true,
+        puntoDeVentaId: true,
         categoria: { select: { nombre: true } },
         unidad: { select: { simbolo: true } },
       },
     }),
+    prisma.gastoCompra.findMany({
+      where: { tenantId },
+      select: { total: true, createdAt: true },
+    }),
+    prisma.stockUbicacion.findMany({
+      where: { tenantId },
+      select: {
+        productoId: true,
+        cantidad: true,
+        producto: {
+          select: {
+            id: true,
+            nombre: true,
+            precioCosto: true,
+            categoria: { select: { nombre: true } },
+          },
+        },
+      },
+    }),
   ])
+
+  const precioCostoPorProducto = productosDataRaw.reduce<Record<string, number>>((acc, producto) => {
+    acc[producto.id] = Number(producto.precioCosto || 0)
+    return acc
+  }, {})
+
+  const precioVentaPorProducto = productosDataRaw.reduce<Record<string, number>>((acc, producto) => {
+    acc[producto.id] = Number(producto.precioVenta || 0)
+    return acc
+  }, {})
 
   // Calcular totalIngresos incluyendo ventas legacy correctamente
   const totalIngresos =
@@ -218,44 +275,6 @@ export async function getDashboardStatsQuery(tenantId: string): Promise<Dashboar
     return acc
   }, {})
 
-  /**
-   * @description Obtiene el total de ventas de un producto combinando items y ventas legacy
-   * @param {string} productoId - ID del producto
-   * @returns {number} Cantidad total vendida
-   */
-  const getVentasProductoTotal = (productoId: string): number => {
-    return (ventasItemsPorProducto[productoId] || 0) + (ventasLegacyPorProducto[productoId] || 0)
-  }
-
-  const precioCostoPorProducto = productosDataRaw.reduce<Record<string, number>>((acc, producto) => {
-    acc[producto.id] = Number(producto.precioCosto || 0)
-    return acc
-  }, {})
-
-  const precioVentaPorProducto = productosDataRaw.reduce<Record<string, number>>((acc, producto) => {
-    acc[producto.id] = Number(producto.precioVenta || 0)
-    return acc
-  }, {})
-
-  // Pre-calcular transferencias por producto (O(n) en vez de O(n*m))
-  const transferenciasEntradaPorProducto = new Map<string, number>()
-  const transferenciasSalidaPorProducto = new Map<string, number>()
-
-  for (const t of transferenciasData) {
-    if (t.puntoDeVentaDestinoId) {
-      transferenciasEntradaPorProducto.set(
-        t.productoId,
-        (transferenciasEntradaPorProducto.get(t.productoId) || 0) + t.cantidad
-      )
-    }
-    if (t.puntoDeVentaOrigenId) {
-      transferenciasSalidaPorProducto.set(
-        t.productoId,
-        (transferenciasSalidaPorProducto.get(t.productoId) || 0) + t.cantidad
-      )
-    }
-  }
-
   // Calcular totalCostoVentas incluyendo ventas legacy
   const totalCostoVentas = ventaItemsData.reduce((s: number, i: VentaItemData) => s + i.cantidad * (i.producto?.precioCosto ?? 0), 0)
     + ventasLegacyData.reduce((sum, venta) => {
@@ -263,14 +282,22 @@ export async function getDashboardStatsQuery(tenantId: string): Promise<Dashboar
       return sum + Number(venta.cantidad || 0) * (precioCostoPorProducto[venta.productoId] || 0)
     }, 0)
 
-  // Calcular valorTotalInventario ajustando stock por transferencias y ventas
-  const valorTotalInventario = productosDataRaw.reduce((sum, producto) => {
-    const transferenciaEntrada = transferenciasEntradaPorProducto.get(producto.id) || 0
-    const transferenciaSalida = transferenciasSalidaPorProducto.get(producto.id) || 0
-    const ventasTotales = getVentasProductoTotal(producto.id)
-    const stockTotal = producto.stock + (transferenciaEntrada - transferenciaSalida - ventasTotales)
+  const stockPorProducto = stockUbicacionesData.reduce<Record<string, { cantidad: number; producto: NonNullable<StockUbicacionData['producto']> }>>(
+    (acc, registro) => {
+      if (!registro.producto) return acc
 
-    return sum + Math.max(0, stockTotal) * Number(producto.precioCosto || 0)
+      const producto = registro.producto
+      const existing = acc[producto.id] ?? { cantidad: 0, producto }
+      existing.cantidad += Number(registro.cantidad || 0)
+      acc[producto.id] = existing
+      return acc
+    },
+    {},
+  )
+
+  // Calcular valorTotalInventario desde StockUbicacion (fuente de verdad)
+  const valorTotalInventario = Object.values(stockPorProducto).reduce((sum, item) => {
+    return sum + item.cantidad * Number(item.producto.precioCosto || 0)
   }, 0)
 
   const totalBeneficio = totalIngresos - totalCostoVentas - totalGastosMermas - totalGastos
@@ -333,7 +360,34 @@ export async function getDashboardStatsQuery(tenantId: string): Promise<Dashboar
     representante: typeof productosDataRaw[0]
   }
 
-  const productosAgrupados = productosDataRaw.reduce<Record<string, GrupoProducto>>((acc, producto) => {
+  const productosParaStockBajoWhere = ubicacionId && tipoUbicacion
+    ? {
+        tenantId,
+        ...(tipoUbicacion === 'almacen'
+          ? { almacenId: ubicacionId }
+          : tipoUbicacion === 'puntoDeVenta' || tipoUbicacion === 'punto_venta'
+            ? { puntoDeVentaId: ubicacionId }
+            : {}),
+      }
+    : { tenantId }
+
+  const productosParaStockBajo = await prisma.producto.findMany({
+    where: productosParaStockBajoWhere,
+    select: {
+      id: true,
+      nombre: true,
+      stock: true,
+      stockMinimo: true,
+      precioCosto: true,
+      precioVenta: true,
+      almacenId: true,
+      puntoDeVentaId: true,
+      categoria: { select: { nombre: true } },
+      unidad: { select: { simbolo: true } },
+    },
+  }) as ProductoData[]
+
+  const productosAgrupados = productosParaStockBajo.reduce<Record<string, GrupoProducto>>((acc, producto) => {
     const key = producto.nombre
     if (!acc[key]) {
       acc[key] = {
@@ -391,8 +445,8 @@ export async function getDashboardStatsQuery(tenantId: string): Promise<Dashboar
       gastosMermas: mermasData.filter((m: MermaData) => m.createdAt >= fInicio && m.createdAt <= fFin).reduce((s: number, m: MermaData) => s + (m.cantidad * (m.producto?.precioCosto ?? 0)), 0),
       gastosDeExplotacion: gastosDEData.filter((g: GastoDEData) => g.createdAt >= fInicio && g.createdAt <= fFin).reduce((s: number, g: GastoDEData) => s + g.monto, 0),
       gastosDeExplotacionCantidad: gastosDEData.filter((g: GastoDEData) => g.createdAt >= fInicio && g.createdAt <= fFin).length,
-      gastosCompras: 0,
-      gastosComprasCantidad: 0,
+      gastosCompras: gastosCompraData.filter((c: GastoCompraData) => c.createdAt >= fInicio && c.createdAt <= fFin).reduce((s: number, c: GastoCompraData) => s + c.total, 0),
+      gastosComprasCantidad: gastosCompraData.filter((c: GastoCompraData) => c.createdAt >= fInicio && c.createdAt <= fFin).length,
       gastosSalarios: salariosData.filter((p: SalarioData) => p.createdAt >= fInicio && p.createdAt <= fFin).reduce((s: number, p: SalarioData) => s + p.salario + (p.bonificaciones ?? 0) + (p.horasExtras ?? 0), 0),
       gastosSalariosCantidad: salariosData.filter((p: SalarioData) => p.createdAt >= fInicio && p.createdAt <= fFin).length,
       ventasCantidad: ventasData.filter((v: VentaDiariaData) => v.createdAt >= fInicio && v.createdAt <= fFin).length,
@@ -400,6 +454,103 @@ export async function getDashboardStatsQuery(tenantId: string): Promise<Dashboar
       mermasCantidad: mermasData.filter((m: MermaData) => m.createdAt >= fInicio && m.createdAt <= fFin).length,
     }
   })
+
+  const getWeekKey = (date: Date): string => {
+    const utcDate = new Date(Date.UTC(date.getFullYear(), date.getMonth(), date.getDate()))
+    const dayNum = utcDate.getUTCDay() || 7
+    utcDate.setUTCDate(utcDate.getUTCDate() + 4 - dayNum)
+    const yearStart = new Date(Date.UTC(utcDate.getUTCFullYear(), 0, 1))
+    const weekNum = Math.ceil(((utcDate.getTime() - yearStart.getTime()) / 86400000 + 1) / 7)
+
+    return `${utcDate.getUTCFullYear()}-W${weekNum.toString().padStart(2, '0')}`
+  }
+
+  const createWeeklyAggregation = <T extends { createdAt: Date }>(
+    data: T[],
+    valueFields: Record<string, (item: T) => number>,
+  ): Record<string, Record<string, number>> => {
+    return data.reduce<Record<string, Record<string, number>>>((acc, item) => {
+      const semana = getWeekKey(item.createdAt)
+      if (!acc[semana]) {
+        acc[semana] = {}
+      }
+
+      Object.entries(valueFields).forEach(([key, getter]) => {
+        acc[semana][key] = (acc[semana][key] || 0) + getter(item)
+      })
+
+      return acc
+    }, {})
+  }
+
+  const ventasAgrupadasPorSemana = createWeeklyAggregation(ventasData, {
+    ingresos: (venta) => Number(venta.total || 0),
+    cantidad: (venta) => venta.cantidad,
+  })
+
+  const serviciosAgrupadosPorSemana = createWeeklyAggregation(ventaServiciosData, {
+    ingresos: (servicio) => Number(servicio.total || 0),
+    cantidad: (servicio) => servicio.cantidad,
+  })
+
+  const mermasAgrupadasPorSemana = createWeeklyAggregation(mermasData, {
+    gastos: (merma) => merma.cantidad * Number(merma.producto?.precioCosto || 0),
+    cantidad: (merma) => merma.cantidad,
+  })
+
+  const gastosDEAgrupadosPorSemana = createWeeklyAggregation(gastosDEData, {
+    gastosE: (gasto) => gasto.monto || 0,
+    cantidad: () => 0,
+  })
+
+  const gastosSalariosAgrupadosPorSemana = createWeeklyAggregation(salariosData, {
+    gastos: (salario) => salario.salario + (salario.bonificaciones ?? 0) + (salario.horasExtras ?? 0),
+    cantidad: () => 0,
+  })
+
+  const gastosComprasAgrupadosPorSemana = createWeeklyAggregation(gastosCompraData, {
+    gastos: (compra) => compra.total || 0,
+    cantidad: (compra) => compra.cantidad || 0,
+  })
+
+  const semanasCompletas = Array.from(new Set([
+    ...Object.keys(ventasAgrupadasPorSemana),
+    ...Object.keys(serviciosAgrupadosPorSemana),
+    ...Object.keys(mermasAgrupadasPorSemana),
+    ...Object.keys(gastosDEAgrupadosPorSemana),
+    ...Object.keys(gastosSalariosAgrupadosPorSemana),
+    ...Object.keys(gastosComprasAgrupadosPorSemana),
+  ]))
+    .sort()
+    .slice(-12)
+    .map((semana) => ({
+      semana,
+      ingresosVentas: ventasAgrupadasPorSemana[semana]?.ingresos || 0,
+      ingresosServicios: serviciosAgrupadosPorSemana[semana]?.ingresos || 0,
+      gastosMermas: mermasAgrupadasPorSemana[semana]?.gastos || 0,
+      gastosDeExplotacion: gastosDEAgrupadosPorSemana[semana]?.gastosE || 0,
+      gastosDeExplotacionCantidad: gastosDEAgrupadosPorSemana[semana]?.cantidad || 0,
+      gastosCompras: gastosComprasAgrupadosPorSemana[semana]?.gastos || 0,
+      gastosComprasCantidad: gastosComprasAgrupadosPorSemana[semana]?.cantidad || 0,
+      gastosSalarios: gastosSalariosAgrupadosPorSemana[semana]?.gastos || 0,
+      gastosSalariosCantidad: gastosSalariosAgrupadosPorSemana[semana]?.cantidad || 0,
+      ventasCantidad: ventasAgrupadasPorSemana[semana]?.cantidad || 0,
+      ventasServiciosCantidad: serviciosAgrupadosPorSemana[semana]?.cantidad || 0,
+      mermasCantidad: mermasAgrupadasPorSemana[semana]?.cantidad || 0,
+    }))
+
+  const ventasDiariasData = [
+    ...ventasData.map((venta) => ({
+      createdAt: venta.createdAt,
+      cantidad: venta.cantidad,
+      total: venta.total ?? 0,
+    })),
+    ...ventaServiciosData.map((servicio) => ({
+      createdAt: servicio.createdAt,
+      cantidad: servicio.cantidad,
+      total: servicio.total,
+    })),
+  ]
 
   // Ventas diarias (últimos 30 días)
   const ahora = new Date()
@@ -410,7 +561,7 @@ export async function getDashboardStatsQuery(tenantId: string): Promise<Dashboar
   const datosAyer: DiaVentas = { ingresos: 0, cantidad: 0 }
   const ventasPorDia = new Map<string, DiaVentas>()
 
-  for (const v of ventasData) {
+  for (const v of ventasDiariasData) {
     const f = startOfDay(v.createdAt).getTime()
     const monto = v.total ?? 0
     if (f === hoy.getTime()) { datosHoy.ingresos += monto; datosHoy.cantidad += v.cantidad }
@@ -456,10 +607,12 @@ export async function getDashboardStatsQuery(tenantId: string): Promise<Dashboar
 
   const distribucionStock: { categoria: string; productos: number; stockTotal: number; valorTotal: number }[] = []
   const catMap = new Map<string, { productos: number; stockTotal: number; valorTotal: number }>()
-  for (const p of productosDataRaw) {
-    const cat = p.categoria?.nombre ?? 'Sin categoría'
+  for (const item of Object.values(stockPorProducto)) {
+    const cat = item.producto.categoria?.nombre ?? 'Sin categoría'
     const e = catMap.get(cat) || { productos: 0, stockTotal: 0, valorTotal: 0 }
-    e.productos++; e.stockTotal += p.stock; e.valorTotal += p.stock * (p.precioCosto ?? 0)
+    e.productos++
+    e.stockTotal += item.cantidad
+    e.valorTotal += item.cantidad * Number(item.producto.precioCosto || 0)
     catMap.set(cat, e)
   }
   Array.from(catMap.entries()).forEach(([categoria, d]) => distribucionStock.push({ categoria, ...d }))
@@ -470,7 +623,7 @@ export async function getDashboardStatsQuery(tenantId: string): Promise<Dashboar
     totalMermas: mermasData.length,
     totalTransferencias: transferenciasData.length,
     totalIngresos, totalGastosMermas, totalBeneficio, valorTotalInventario,
-    datosPorMes, datosPorSemana: datosPorMes,
+    datosPorMes, datosPorSemana: semanasCompletas,
     ventasDiarias, productosMasVendidos, productosStockBajo,
     distribucionStock, transferenciasStats,
   }

@@ -31,8 +31,8 @@ export function MargenBajoTable() {
 
   useEffect(() => {
     async function load() {
-      const data = await getProductosMargenBajoAction({ limit: 10 })
-      setProductos(data)
+      const result = await getProductosMargenBajoAction({ limit: 10 })
+      setProductos(result.success ? (result.data ?? []) : [])
       setIsLoading(false)
     }
     load()

@@ -1,6 +1,6 @@
 import type { Notification } from '@/app/models/model';
 
-type NotificationLike = Pick<Notification, 'type' | 'title'>;
+type NotificationLike = Pick<Notification, 'type' | 'title' | 'link'>;
 
 /**
  * @description Resuelve la ruta destino de una notificación según su tipo o título.
@@ -8,6 +8,10 @@ type NotificationLike = Pick<Notification, 'type' | 'title'>;
  * @returns {string | null} Ruta interna destino o null si no aplica navegación.
  */
 export function getNotificationHref(notification: NotificationLike): string | null {
+  if (notification.link) {
+    return notification.link;
+  }
+
   const title = notification.title.toLowerCase();
 
   switch (notification.type) {

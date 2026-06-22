@@ -60,6 +60,7 @@ export const createNotificacionAction = withAction(async (input: CreateNotificac
     data: {
       title: parsed.title,
       message: parsed.message,
+      ...(parsed.link !== undefined && { link: parsed.link }),
       type: parsed.type || 'info',
       prioridad: parsed.prioridad || 'media',
       userId: parsed.userId || user.userId,
@@ -87,6 +88,7 @@ export const updateNotificacionAction = withAction(async (input: UpdateNotificac
       ...(parsed.isRead !== undefined && { isRead: parsed.isRead }),
       ...(parsed.title !== undefined && { title: parsed.title }),
       ...(parsed.message !== undefined && { message: parsed.message }),
+      ...(parsed.link !== undefined && { link: parsed.link }),
     },
   });
 

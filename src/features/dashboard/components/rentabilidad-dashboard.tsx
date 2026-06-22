@@ -19,7 +19,11 @@ export function RentabilidadDashboard() {
   const [isLoading, setIsLoading] = useState(true)
 
   useEffect(() => {
-    getDashboardRentabilidadAction({}).then(setData).finally(() => setIsLoading(false))
+    getDashboardRentabilidadAction({})
+      .then((result) => {
+        setData(result.success ? (result.data ?? null) : null)
+      })
+      .finally(() => setIsLoading(false))
   }, [])
 
   if (isLoading) {

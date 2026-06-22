@@ -26,8 +26,8 @@ const makeProd = (overrides: any = {}) => ({
   nombre: overrides.nombre ?? 'Producto',
   precioCosto: overrides.precioCosto ?? 50,
   precioVenta: overrides.precioVenta ?? 100,
-  tipo: overrides.tipo ?? 'SIMPLE',
-  categorias: overrides.categorias ?? [{ id: 'cat-1', nombre: 'Categoría A' }],
+  esCompuesto: overrides.esCompuesto ?? false,
+  categoria: overrides.categoria ?? { id: 'cat-1', nombre: 'Categoría A' },
 })
 
 describe('getDashboardRentabilidadAction', () => {
@@ -35,9 +35,9 @@ describe('getDashboardRentabilidadAction', () => {
 
   it('retorna margen promedio por categoría', async () => {
     vi.mocked(prisma.producto.findMany).mockResolvedValue([
-      makeProd({ id: 'A', precioVenta: 100, precioCosto: 60, categorias: [{ id: 'c1', nombre: 'Cat A' }] }),
-      makeProd({ id: 'B', precioVenta: 100, precioCosto: 80, categorias: [{ id: 'c1', nombre: 'Cat A' }] }),
-      makeProd({ id: 'C', precioVenta: 100, precioCosto: 50, categorias: [{ id: 'c2', nombre: 'Cat B' }] }),
+      makeProd({ id: 'A', precioVenta: 100, precioCosto: 60, categoria: { id: 'c1', nombre: 'Cat A' } }),
+      makeProd({ id: 'B', precioVenta: 100, precioCosto: 80, categoria: { id: 'c1', nombre: 'Cat A' } }),
+      makeProd({ id: 'C', precioVenta: 100, precioCosto: 50, categoria: { id: 'c2', nombre: 'Cat B' } }),
     ] as any)
 
     const data = await getDashboardRentabilidadAction({}, mockUser)
@@ -82,8 +82,8 @@ describe('getDashboardRentabilidadAction', () => {
     expect(prisma.producto.findMany).toHaveBeenCalledWith({
       where: { tenantId: 'tenant-1', precioVenta: { gt: 0 }, precioCosto: { gt: 0 } },
       select: {
-        id: true, nombre: true, precioCosto: true, precioVenta: true, tipo: true,
-        categorias: { select: { id: true, nombre: true } },
+        id: true, nombre: true, precioCosto: true, precioVenta: true, esCompuesto: true,
+        categoria: { select: { id: true, nombre: true } },
       },
     })
   })
@@ -94,7 +94,7 @@ describe('getDashboardRentabilidadAction', () => {
     await getDashboardRentabilidadAction({ tipo: 'COMPUESTO' }, mockUser)
 
     expect(prisma.producto.findMany).toHaveBeenCalledWith(expect.objectContaining({
-      where: expect.objectContaining({ tipo: 'COMPUESTO' } as any),
+      where: expect.objectContaining({ esCompuesto: true } as any),
     }))
   })
 

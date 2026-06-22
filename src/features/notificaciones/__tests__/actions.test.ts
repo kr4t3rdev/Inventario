@@ -60,8 +60,15 @@ describe('Notificaciones Server Actions', () => {
     it('crea notificación como admin', async () => {
       vi.mocked(getCurrentUser).mockResolvedValue(mockUser);
       vi.mocked(prisma.notification.create).mockResolvedValue({ id: 'n-1' } as any);
-      const result = await createNotificacionAction({ title: 'Test', message: 'Test msg' });
+      const result = await createNotificacionAction({ title: 'Test', message: 'Test msg', link: '/busy/products' } as any);
       expect(result.success).toBe(true);
+      expect(prisma.notification.create).toHaveBeenCalledWith({
+        data: expect.objectContaining({
+          title: 'Test',
+          message: 'Test msg',
+          link: '/busy/products',
+        }),
+      });
     });
 
     it('rechaza si no es admin', async () => {

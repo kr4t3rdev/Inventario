@@ -180,6 +180,7 @@ export const verificarMargenBajoAction = withAction(
         data: [{
           title: 'Margen Bajo',
           message: `El producto "${producto.nombre}" tiene margen bajo (${margen.toFixed(1)}%)`,
+          link: '/busy/ficha-costo',
           type: 'margen_bajo',
           prioridad: 'alta',
           userId: user.userId,
@@ -211,7 +212,7 @@ export const getDashboardRentabilidadAction = withAction(
       precioVenta: { gt: 0 },
       precioCosto: { gt: 0 },
     }
-    if (input.tipo) where.tipo = input.tipo
+    if (input.tipo) where.esCompuesto = input.tipo == "COMPUESTO"
 
     const productos = await prisma.producto.findMany({
       where,
@@ -220,15 +221,15 @@ export const getDashboardRentabilidadAction = withAction(
         nombre: true,
         precioCosto: true,
         precioVenta: true,
-        tipo: true,
-        categorias: { select: { id: true, nombre: true } },
+        esCompuesto: true,
+        categoria: { select: { id: true, nombre: true } },
       },
     })
 
     // Calcular margen por producto
     const conMargen: ProductoRentabilidad[] = productos.map((p) => {
       const margen = ((p.precioVenta - p.precioCosto) / p.precioVenta) * 100
-      const categoria = p.categorias?.[0]?.nombre ?? 'Sin categoría'
+      const categoria = p.categoria?.nombre ?? 'Sin categoría'
       return {
         id: p.id,
         nombre: p.nombre,
@@ -236,7 +237,7 @@ export const getDashboardRentabilidadAction = withAction(
         precioCosto: p.precioCosto,
         margenPorcentaje: Math.round(margen * 100) / 100,
         categoria,
-        tipo: p.tipo,
+        tipo: p.esCompuesto ? "COMPUESTO" : "SIMPLE",
       }
     })
 

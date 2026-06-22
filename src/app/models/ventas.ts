@@ -290,6 +290,7 @@ export interface Notification {
 	id: string;
 	title: string;
 	message: string;
+	link?: string | null;
 	type: TipoNotificacion; // "info" | "warning" | "error" | "success"
 	prioridad: Prioridad;
 	isRead: boolean;

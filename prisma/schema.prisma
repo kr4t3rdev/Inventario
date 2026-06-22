@@ -675,6 +675,7 @@ model Notification {
   id        String   @id @default(cuid())
   title     String
   message   String
+  link      String?
   type      String   @default("info")
   isRead    Boolean  @default(false)
   userId    String

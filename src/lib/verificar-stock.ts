@@ -123,6 +123,7 @@ export async function verificarStockBajo(
 					data: usuariosDelTenant.map((u) => ({
 						title: "Stock Bajo",
 						message: `El producto "${producto.nombre}" tiene stock bajo (${producto.stock} de ${producto.stockMinimo} mínimo) - Almacén: ${almacenNombre}`,
+						link: "/busy/products",
 						type: "stock_bajo",
 						prioridad: "media",
 						userId: u.userId,
@@ -163,6 +164,7 @@ export async function verificarStockBajo(
 					data: usuariosDelTenant.map((u) => ({
 						title: "Sin Stock",
 						message: `El producto "${producto.nombre}" está agotado`,
+						link: "/busy/products",
 						type: "sin_stock",
 						prioridad: "alta",
 						userId: u.userId,

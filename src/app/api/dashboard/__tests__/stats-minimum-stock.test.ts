@@ -40,6 +40,9 @@ const mockPrisma = vi.hoisted(() => ({
 	transferencia: {
 		findMany: vi.fn(),
 	},
+	stockUbicacion: {
+		findMany: vi.fn(),
+	},
 	categoria: {
 		findMany: vi.fn(),
 	},
@@ -83,6 +86,7 @@ describe("Dashboard Stats API - Minimum Stock Integration", () => {
 		mockPrisma.pagosalario.findMany.mockResolvedValue([]);
 		mockPrisma.empleado.findMany.mockResolvedValue([]);
 		mockPrisma.transferencia.findMany.mockResolvedValue([]);
+		mockPrisma.stockUbicacion.findMany.mockResolvedValue([]);
 		mockPrisma.categoria.findMany.mockResolvedValue([]);
 		mockPrisma.producto.findMany.mockResolvedValue([]);
 		mockPrisma.gastoCompra.findMany.mockResolvedValue([]);

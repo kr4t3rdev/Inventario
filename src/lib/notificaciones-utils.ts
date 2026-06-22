@@ -3,6 +3,7 @@ import { prisma } from "@/lib/prisma"
 interface NotificationData {
   title: string
   message: string
+  link?: string
   type: "stock_bajo" | "sin_stock" | "transferencia" | "merma" | "venta"
   prioridad: "alta" | "media" | "baja"
   userId?: string
@@ -97,8 +98,10 @@ export async function verificarStockBajo() {
         await crearNotificacion({
           title: "Stock Bajo",
           message: `El producto "${producto.nombre}" tiene stock bajo (${producto.stock} unidades restantes)`,
+          link: "/busy/products",
           type: "stock_bajo",
           prioridad: "media",
+          tenantId: producto.tenantId,
         })
       }
     }
@@ -121,8 +124,10 @@ export async function verificarStockBajo() {
         await crearNotificacion({
           title: "Sin Stock",
           message: `El producto "${producto.nombre}" está agotado`,
+          link: "/busy/products",
           type: "sin_stock",
           prioridad: "alta",
+          tenantId: producto.tenantId,
         })
       }
     }
@@ -153,6 +158,7 @@ export async function notificarTransferencia(transferenciaId: string) {
     await crearNotificacion({
       title: "Nueva Transferencia",
       message: `Se transfirieron ${transferencia.cantidad} unidades de "${transferencia.producto?.nombre}" desde ${transferencia.origen?.nombre} hacia ${transferencia.destino?.nombre}`,
+      link: "/busy/transferencias",
       type: "transferencia",
       prioridad: "baja",
       tenantId: transferencia.tenantId,
@@ -179,6 +185,7 @@ export async function notificarMerma(mermaId: string) {
     await crearNotificacion({
       title: "Nueva Merma Registrada",
       message: `Se registró una merma de ${merma.cantidad} unidades de "${merma.producto?.nombre}"${merma.motivo ? ` por: ${merma.motivo}` : ""}`,
+      link: "/busy/mermas",
       type: "merma",
       prioridad,
       tenantId: merma.tenantId,
