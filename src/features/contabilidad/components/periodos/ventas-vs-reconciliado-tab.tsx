@@ -17,6 +17,7 @@ import {
 	TableHeader,
 	TableRow,
 } from "@/components/ui/table";
+import { cn } from "@/lib/utils";
 import { format } from "date-fns";
 import { es } from "date-fns/locale";
 import {
@@ -31,8 +32,6 @@ import {
 	History,
 } from "lucide-react";
 import {
-	staggerContainer,
-	slideRow,
 	fadeUp,
 	cardSlideUp,
 	cardHover,
@@ -63,15 +62,15 @@ const METODO_PAGO_COLORS: Record<string, string> = {
 	MIXTO: "bg-indigo-100 text-indigo-800",
 };
 
-/** @description Fila de operación con entrada animada */
+/** @description Fila de operación */
 function OperacionRow({ item }: { item: VentaVsReconciliadoItem }) {
+	const rowClass = cn(
+		"border-b border-border/70 transition-colors hover:bg-accent/40",
+		item.diferencia !== 0 && item.estaReconciliado && "bg-amber-50/50",
+	);
 	return (
-		<motion.tr
-			variants={slideRow}
-			className={
-				item.diferencia !== 0 && item.estaReconciliado ? "bg-amber-50/50" : ""
-			}
-		>
+		<TableRow className={rowClass}>
+
 			<TableCell className="font-mono text-xs">#{item.folio}</TableCell>
 			<TableCell className="text-xs text-muted-foreground">
 				{item.origen ?? "—"}
@@ -145,7 +144,7 @@ function OperacionRow({ item }: { item: VentaVsReconciliadoItem }) {
 					{item.diferencia === 0 ? "✓" : formatMonto(item.diferencia)}
 				</span>
 			</TableCell>
-		</motion.tr>
+		</TableRow>
 	);
 }
 
@@ -177,27 +176,21 @@ function OperacionesTable({
 								<TableHead className="text-right">Diferencia</TableHead>
 							</TableRow>
 						</TableHeader>
-						<TableBody asChild>
-							<motion.tbody
-								variants={staggerContainer}
-								initial="hidden"
-								animate="visible"
-							>
-								{items.length === 0 ? (
-									<TableRow>
-										<TableCell
-											colSpan={9}
-											className="text-center text-muted-foreground py-8"
-										>
-											{emptyMessage}
-										</TableCell>
-									</TableRow>
-								) : (
-									items.map((item) => (
-										<OperacionRow key={item.id} item={item} />
-									))
-								)}
-							</motion.tbody>
+						<TableBody>
+							{items.length === 0 ? (
+								<TableRow>
+									<TableCell
+										colSpan={9}
+										className="text-center text-muted-foreground py-8"
+									>
+										{emptyMessage}
+									</TableCell>
+								</TableRow>
+							) : (
+								items.map((item) => (
+									<OperacionRow key={item.id} item={item} />
+								))
+							)}
 						</TableBody>
 					</Table>
 				</CardContent>
