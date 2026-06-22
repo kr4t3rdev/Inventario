@@ -212,7 +212,7 @@ export const getDashboardRentabilidadAction = withAction(
       precioVenta: { gt: 0 },
       precioCosto: { gt: 0 },
     }
-    if (input.tipo) where.esCompuesto = input.tipo == "COMPUESTO"
+    if (input.tipo) where.esCompuesto = input.tipo === "COMPUESTO"
 
     const productos = await prisma.producto.findMany({
       where,
