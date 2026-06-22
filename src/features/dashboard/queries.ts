@@ -185,7 +185,7 @@ export async function getDashboardStatsQuery(
     }),
     prisma.merma.findMany({
       where: { tenantId },
-      select: { cantidad: true, producto: { select: { precioCosto: true } } },
+      select: { cantidad: true, producto: { select: { precioCosto: true } }, createdAt: true },
     }),
     prisma.gastosDE.findMany({
       where: { tenantId },
