@@ -40,6 +40,7 @@ import {
 	AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { updateMiEmpresaSettings } from "../lib/client-mi-empresa";
+import { uploadToCloudinary } from "@/lib/upload/cloudinary-upload";
 import type {
 	CuentaBancariaItem,
 	MiEmpresaFormValues as MiEmpresaFormValuesType,
@@ -545,50 +546,36 @@ export function MiEmpresaForm({
 																/>
 															</motion.div>
 														)}
-														<div className="flex gap-2 items-center">
-															<Input
-																type="file"
-																accept="image/*"
-																onChange={async (e) => {
-																	const file = e.target.files?.[0];
-																	if (!file) return;
+															<div className="flex gap-2 items-center">
+																<Input
+																	type="file"
+																	accept="image/*"
+																	onChange={async (e) => {
+																		const file = e.target.files?.[0];
+																		if (!file) return;
 
-																	const formData = new FormData();
-																	formData.append("file", file);
-
-																	const loadingToastId = sileo.info({
-																		title: "Subiendo logo...",
-																	});
-
-																	try {
-																		const res = await fetch("/api/upload", {
-																			method: "POST",
-																			headers: {
-																				Authorization: getAuthToken(),
-																			},
-																			body: formData,
+																		const loadingToastId = sileo.info({
+																			title: "Subiendo logo...",
 																		});
 
-																		if (!res.ok)
-																			throw new Error("Error subiendo imagen");
-
-																		const data = await res.json();
-																		field.onChange(data.url);
-																		sileo.success({
-																			title: "Logo subido correctamente",
-																		});
-																	} catch (error) {
-																		console.error(error);
-																		sileo.error({
-																			title: "Error al subir el logo",
-																		});
-																	} finally {
-																		sileo.dismiss(loadingToastId);
-																	}
-																}}
-																disabled={saving}
-																className="cursor-pointer"
-															/>
+																		try {
+																			const url = await uploadToCloudinary(file, "empresa/logo");
+																			field.onChange(url);
+																			sileo.success({
+																				title: "Logo subido correctamente",
+																			});
+																		} catch (error) {
+																			console.error(error);
+																			sileo.error({
+																				title: "Error al subir el logo",
+																			});
+																		} finally {
+																			sileo.dismiss(loadingToastId);
+																		}
+																	}}
+																	disabled={saving}
+																	className="cursor-pointer"
+																/>
 															{field.value && (
 																<motion.div
 																	whileHover={{ scale: 1.1 }}

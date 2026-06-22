@@ -5,7 +5,7 @@ import { useDropzone } from 'react-dropzone'
 import { Upload, X, Image as ImageIcon, Loader2 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { toast } from 'sonner'
-import { getAuthToken } from '@/lib/token'
+import { uploadToCloudinary } from '@/lib/upload/cloudinary-upload'
 
 interface ProductPhotoUploadProps {
   photos: string[]
@@ -52,24 +52,10 @@ export function ProductPhotoUpload({
           continue
         }
 
-        const formData = new FormData()
-        formData.append('file', file)
-
-        // Upload file to existing upload endpoint
-        const uploadRes = await fetch('/api/upload', {
-          method: 'POST',
-          body: formData,
-          headers: {
-            'Authorization': getAuthToken(),
-          },
-        })
-
-        if (!uploadRes.ok) {
-          throw new Error('Failed to upload file')
-        }
-        
-        const uploadData = await uploadRes.json()
-        uploadedUrls.push(uploadData.url)
+        // Upload a Cloudinary (signed upload directo del cliente)
+        // El server antepone el tenantId al folder automaticamente.
+        const url = await uploadToCloudinary(file, 'productos')
+        uploadedUrls.push(url)
         
       } catch (error) {
         console.error('Upload error:', error)

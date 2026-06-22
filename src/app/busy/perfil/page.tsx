@@ -15,7 +15,7 @@ import { useAuth } from "@/contexts/auth-context"
 import { getProfile, updateProfile } from "@/app/actions/profile"
 import { ServerActionError } from "@/lib/api/errors"
 import { toast } from "sonner"
-import { getAuthToken } from "@/lib/token"
+import { uploadToCloudinary } from "@/lib/upload/cloudinary-upload"
 import Loader2 from "@/components/Loaders/hoja/loader"
 import { LazyMotion, m as motion, AnimatePresence, useReducedMotion, Variants } from "framer-motion"
 import { cn } from "@/lib/utils"
@@ -125,39 +125,22 @@ export default function ProfilePage() {
 
   const handleImageUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0]
-    if (!file) return
+    if (!file || !user?.userId) return
 
     setIsUploading(true)
     const loadingToast = toast.loading("Subiendo imagen...")
     
     try {
-      const uploadFormData = new FormData()
-      uploadFormData.append('file', file)
+      const url = await uploadToCloudinary(file, `usuarios/${user.userId}/avatar`)
+      setFormData((prev) => ({ ...prev, avatar: url }))
       
-      const res = await fetch('/api/upload', {
-        method: 'POST',
-        headers: {
-          Authorization: getAuthToken() || '',
-        },
-        body: uploadFormData,
+      const updated = await updateProfile({
+        name: formData.name,
+        avatar: url,
       })
+      setProfile(updated)
       
-      if (!res.ok) throw new Error("Error al subir imagen")
-      
-      const data = await res.json()
-      if (data.url) {
-        setFormData((prev) => ({ ...prev, avatar: data.url }))
-        
-        if (profile?.userId) {
-          const updated = await updateProfile({
-            name: formData.name,
-            avatar: data.url,
-          })
-          setProfile(updated)
-        }
-        
-        toast.success("Foto de perfil actualizada correctamente")
-      }
+      toast.success("Foto de perfil actualizada correctamente")
     } catch (error) {
       console.error(error)
       toast.error("Error al actualizar la imagen")

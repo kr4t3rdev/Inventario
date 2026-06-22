@@ -7,6 +7,7 @@ import { Button } from '@/components/ui/button'
 import { Progress } from '@/components/ui/progress'
 import { toast } from 'sonner'
 import { getAuthToken } from '@/lib/token'
+import { uploadToCloudinary } from '@/lib/upload/cloudinary-upload'
 
 interface FileUploadProps {
   contratoId: string
@@ -35,19 +36,8 @@ export function FileUpload({ contratoId, onUploadComplete }: FileUploadProps) {
         const formData = new FormData()
         formData.append('file', file)
 
-        // 1. Upload file
-        const uploadRes = await fetch('/api/upload', {
-          method: 'POST',
-          body: formData,
-          headers: {
-            'Authorization': getAuthToken(),
-          },
-        })
-
-        if (!uploadRes.ok) throw new Error('Failed to upload file')
-        
-        const uploadData = await uploadRes.json()
-        const fileUrl = uploadData.url
+        // 1. Upload file a Cloudinary (signed upload directo del cliente)
+        const fileUrl = await uploadToCloudinary(file, 'contratos/anexos')
 
         // 2. Link to contract
         const linkRes = await fetch(`/api/contratos/${contratoId}/archivos`, {

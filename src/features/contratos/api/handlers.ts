@@ -5,8 +5,8 @@ import { authenticateUser } from '@/lib/auth-middleware'
 import { generarProximoConsecutivo, formatearNumeroContrato } from '@/features/contratos/lib/numeroContratoGenerator'
 import fs from 'fs'
 import path from 'path'
-import { writeFile } from 'fs/promises'
 import crypto from 'crypto'
+import { v2 as cloudinary } from 'cloudinary'
 
 const contratoSchema = z.object({
   tipo: z.string().min(1, 'El tipo de contrato es requerido'),
@@ -339,15 +339,27 @@ export async function createContratoVersionHandler(req: NextRequest, { params }:
       orderBy: { numeroVersion: 'desc' },
     })
     const nextVersionNum = (latestVersion?.numeroVersion || 0) + 1
+
+    // Subir archivo a Cloudinary (server-side, con SDK directo)
     const bytes = await file.arrayBuffer()
     const buffer = Buffer.from(bytes)
-    const uploadDir = path.join(process.cwd(), 'public', 'uploads')
-    if (!fs.existsSync(uploadDir)) fs.mkdirSync(uploadDir, { recursive: true })
-    const extension = path.extname(file.name || '')
-    const fileName = `${Date.now()}_v${nextVersionNum}_${Math.random().toString(36).substring(7)}${extension}`
-    const savePath = path.join(uploadDir, fileName)
-    await writeFile(savePath, buffer)
-    const fileUrl = `/uploads/${fileName}`
+    const tenantId = user.tenantId ?? 'sin-tenant'
+    const uploadFolder = `${tenantId}/contratos/${id}/versiones`
+
+    const uploadResult = await new Promise<{ secure_url: string; public_id: string }>((resolve, reject) => {
+      cloudinary.uploader.upload_stream(
+        {
+          folder: uploadFolder,
+          resource_type: 'raw',
+          public_id: `v${nextVersionNum}_${Date.now()}`,
+        },
+        (error, result) => {
+          if (error) reject(error)
+          else resolve(result as any)
+        }
+      ).end(buffer)
+    })
+    const fileUrl = uploadResult.secure_url
     const version = await prisma.contratoVersion.create({
       data: {
         contratoId: id,

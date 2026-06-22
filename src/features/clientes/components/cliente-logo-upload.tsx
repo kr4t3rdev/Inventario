@@ -5,7 +5,7 @@ import { useDropzone } from 'react-dropzone'
 import { Upload, X, ImageIcon, Loader2 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { toast } from 'sonner'
-import { getAuthToken } from '@/lib/token'
+import { uploadToCloudinary } from '@/lib/upload/cloudinary-upload'
 
 interface ClienteLogoUploadProps {
   value?: string | null
@@ -37,21 +37,8 @@ export function ClienteLogoUpload({ value, onChange, disabled }: ClienteLogoUplo
     setUploading(true)
 
     try {
-      const formData = new FormData()
-      formData.append('file', file)
-
-      const uploadRes = await fetch('/api/upload', {
-        method: 'POST',
-        body: formData,
-        headers: {
-          'Authorization': getAuthToken(),
-        },
-      })
-
-      if (!uploadRes.ok) throw new Error('Failed to upload file')
-      
-      const uploadData = await uploadRes.json()
-      onChange(uploadData.url)
+      const url = await uploadToCloudinary(file, 'clientes/logo')
+      onChange(url)
       toast.success('Logo subido correctamente')
     } catch (error) {
       console.error('Upload error:', error)

@@ -4,6 +4,7 @@ import { useState, useEffect, use , useRef} from "react"
 import { useRouter } from "next/navigation"
 import { LazyMotion, m as motion } from "framer-motion"
 import { getAuthToken } from "@/lib/token"
+import { uploadToCloudinary } from "@/lib/upload/cloudinary-upload"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from "@/components/ui/card"
@@ -353,27 +354,19 @@ export default function OrdenDetail({ params }: { params: Promise<{ id: string }
     if (!e.target.files || e.target.files.length === 0) return
     
     isUploading.current = true
-    const formData = new FormData()
-    formData.append('file', e.target.files[0])
 
     try {
-      const token = ''
-      const res = await fetch('/api/upload', {
-        method: 'POST',
-        headers: token ? { Authorization: `Bearer ${token}` } : {},
-        body: formData
-      })
-      
-      if (!res.ok) throw new Error('Error subiendo imagen')
-      
-      const data = await res.json()
-      setFotos([...fotos, data.url])
+      const url = await uploadToCloudinary(
+        e.target.files[0],
+        `reparaciones/${ordId}/fotos`
+      )
+      setFotos([...fotos, url])
       toast.success("Foto subida")
     } catch (error) {
       console.error(error)
       toast.error("Error al subir la foto")
     } finally {
-      isUploading.current = false;
+      isUploading.current = false
       // Limpiar input
       e.target.value = ''
     }

@@ -7,6 +7,7 @@ import Link from "next/link"
 import Image from "next/image"
 import { ArrowLeft, Save, Plus, Trash2, Wrench, Upload, X, Camera, FileText, Printer } from "lucide-react"
 import { toast } from "sonner"
+import { uploadToCloudinary } from "@/lib/upload/cloudinary-upload"
 import { Button } from "@/components/ui/button"
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card"
 import { Label } from "@/components/ui/label"
@@ -109,18 +110,11 @@ export default function NewOrdenPage() {
 
     try {
       for (const file of Array.from(files)) {
-        const formData = new FormData()
-        formData.append('file', file)
-
-        const response = await fetch('/api/upload', {
-          method: 'POST',
-          body: formData
-        })
-
-        if (response.ok) {
-          const data = await response.json()
-          uploadedUrls.push(data.url)
-        } else {
+        try {
+          const url = await uploadToCloudinary(file, 'reparaciones/equipos')
+          uploadedUrls.push(url)
+        } catch (error) {
+          console.error(`Error subiendo ${file.name}:`, error)
           toast.error(`Error al subir ${file.name}`)
         }
       }

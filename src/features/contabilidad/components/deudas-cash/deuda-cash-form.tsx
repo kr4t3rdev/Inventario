@@ -15,7 +15,7 @@ import { Badge } from "@/components/ui/badge"
 import { createDeudaCashAction } from "@/features/contabilidad/actions-deudas-cash"
 import { ImageIcon, Loader2, TrendingUp, Upload, X } from "lucide-react"
 import { toast } from "sonner"
-import { getAuthToken } from "@/lib/token"
+import { uploadToCloudinary } from "@/lib/upload/cloudinary-upload"
 import { calcularTotalDeudaConInteres } from "@/lib/utils/deuda-cash"
 
 const deudaSchema = z.object({
@@ -171,20 +171,11 @@ export function DeudaCashForm({ open, onOpenChange, proveedores = [], cuentasBan
 
       if (comprobante) {
         setUploadingImg(true)
-        const fd = new FormData()
-        fd.append('file', comprobante)
-        const uploadRes = await fetch('/api/upload', {
-          method: 'POST',
-          body: fd,
-          headers: { Authorization: getAuthToken() },
-        })
+        comprobanteUrl = await uploadToCloudinary(
+          comprobante,
+          'contabilidad/deudas-cash/comprobantes'
+        )
         setUploadingImg(false)
-        if (!uploadRes.ok) {
-          toast.error('No se pudo subir el comprobante. Intentá de nuevo.')
-          return
-        }
-        const uploadData = await uploadRes.json()
-        comprobanteUrl = uploadData.url
       }
 
       const result = await createDeudaCashAction({
