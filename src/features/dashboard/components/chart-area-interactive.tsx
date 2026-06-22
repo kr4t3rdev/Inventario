@@ -51,6 +51,11 @@ interface ChartAreaInteractiveProps {
   data: DatosPorMes[]
 }
 
+const yAxisTickCompactFormatter = new Intl.NumberFormat('es', {
+  notation: 'compact',
+  maximumFractionDigits: 1,
+})
+
 const chartConfig = {
   ingresos: {
     label: 'Ingresos',
@@ -83,6 +88,17 @@ function transformData(data: DatosPorMes[]): ChartDataPoint[] {
       beneficio: ingresos - gastos,
     }
   })
+}
+
+export function formatYAxisTick(value: number): string {
+  const prefix = value < 0 ? '-' : ''
+  const absoluteValue = Math.abs(value)
+
+  if (absoluteValue < 1000) {
+    return `${prefix}$${absoluteValue.toLocaleString('es')}`
+  }
+
+  return `${prefix}$${yAxisTickCompactFormatter.format(absoluteValue).replace(/\u00a0/g, ' ')}`
 }
 
 /**
@@ -169,7 +185,7 @@ export function ChartAreaInteractive({ data }: ChartAreaInteractiveProps) {
               tickLine={false}
               axisLine={false}
               tickMargin={8}
-              tickFormatter={(value) => `${(value / 1000).toFixed(0)}k`}
+              tickFormatter={formatYAxisTick}
             />
             <ChartTooltip
               cursor={false}
