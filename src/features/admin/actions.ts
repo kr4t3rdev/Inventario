@@ -1272,3 +1272,43 @@ export const addTenantMembershipAction = withAction(
 		return { membership, tenantName: tenant.nombre };
 	},
 );
+
+export const getAuditLogsAction = withAction(
+	async (input: { limit?: number }, user: AuthenticatedUser) => {
+		if (user.role !== "admin")
+			throw new ActionError("Acceso restringido", "FORBIDDEN");
+		
+		const limit = input?.limit || 100;
+		
+		const logs = await prisma.auditLog.findMany({
+			orderBy: { createdAt: "desc" },
+			take: limit,
+		});
+
+		// Obtener nombres de usuarios
+		const userIds = [...new Set(logs.map(log => log.usuarioId))];
+		const users = await prisma.user.findMany({
+			where: { userId: { in: userIds } },
+			select: { userId: true, name: true, email: true },
+		});
+		
+		const userMap = new Map(users.map(u => [u.userId, u]));
+
+		return logs.map((log) => {
+			const user = userMap.get(log.usuarioId);
+			return {
+				id: log.id,
+				userId: log.usuarioId,
+				userName: user?.name || "Sistema",
+				userEmail: user?.email || "",
+				action: log.accion,
+				entityType: log.entidad,
+				entityId: log.entidadId,
+				metadata: log.detalles,
+				ip: log.ip,
+				userAgent: log.userAgent,
+				createdAt: log.createdAt.toISOString(),
+			};
+		});
+	},
+);
