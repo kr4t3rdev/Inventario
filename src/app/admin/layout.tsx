@@ -1,6 +1,6 @@
 export const dynamic = 'force-dynamic'
 
-import { SiteHeader } from "@/components/site-header"
+import { AdminHeader } from "@/components/admin-header"
 import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar"
 import { Toaster } from "sonner"
 import { AdminSidebar } from "@/components/admin-sidebar"
@@ -13,7 +13,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
         <SidebarProvider>
           <AdminSidebar variant="floating" />
           <SidebarInset>
-            <SiteHeader />
+            <AdminHeader />
             {children}
           </SidebarInset>
         </SidebarProvider>
