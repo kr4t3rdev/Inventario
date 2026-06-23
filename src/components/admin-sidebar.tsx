@@ -139,6 +139,11 @@ export function AdminSidebar({
             url: "/admin/backups",
             icon: HardDrive,
           },
+          {
+            title: "Logs de Auditoría",
+            url: "/admin/audit-logs",
+            icon: FileText,
+          },
         ],
       },
     ],
