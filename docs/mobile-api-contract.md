@@ -369,6 +369,16 @@ Authorization: Bearer <accessToken>
 
 Devuelve el detalle de una transferencia bancaria. Si no existe, responde `404 NOT_FOUND`.
 
+### `GET /api/mobile/v1/accounting/bank-transfers/:id/comprobante`
+
+**Headers**
+
+```http
+Authorization: Bearer <accessToken>
+```
+
+Descarga el comprobante PDF de la transferencia bancaria con el mismo nombre de archivo usado por web.
+
 ### `GET /api/mobile/v1/accounting/bank-adjustments`
 
 **Headers**
