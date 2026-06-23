@@ -389,6 +389,30 @@ export const getAdminTenantsAction = withAction(
 	},
 );
 
+
+/**
+ * Helper para agrupar datos por día (últimos 7 días)
+ */
+function groupByLast7Days<T extends { createdAt: Date }>(
+  items: T[],
+  valueExtractor: (item: T) => number
+): Array<{ fecha: string; value: number }> {
+  const sevenDaysAgo = new Date();
+  sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
+  
+  return Array.from({ length: 7 }, (_, i) => {
+    const date = new Date();
+    date.setDate(date.getDate() - (6 - i));
+    const fecha = date.toISOString().split('T')[0];
+    
+    const value = items
+      .filter(item => item.createdAt.toISOString().split('T')[0] === fecha)
+      .reduce((sum, item) => sum + valueExtractor(item), 0);
+    
+    return { fecha, value };
+  });
+}
+
 export const getAdminSystemHealthAction = withAction(
 	async (_input: void, user: AuthenticatedUser) => {
 		if (user.role !== "admin")
@@ -414,6 +438,38 @@ export const getAdminSystemHealthAction = withAction(
 			by: ["role"],
 			_count: true,
 		});
+
+		// Obtener nuevos usuarios de los últimos 7 días
+		const sevenDaysAgo = new Date();
+		sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
+		
+		const usersHistoricos = await prisma.user.findMany({
+			where: {
+				createdAt: { gte: sevenDaysAgo },
+			},
+			select: {
+				createdAt: true,
+			},
+			orderBy: { createdAt: 'asc' },
+			take: 5000, // Límite de seguridad
+		});
+
+		// Agrupar por día
+		const usersTrend = Array.from({ length: 7 }, (_, i) => {
+			const date = new Date();
+			date.setDate(date.getDate() - (6 - i));
+			const fecha = date.toISOString().split('T')[0];
+			
+			const usuariosDia = usersHistoricos.filter(
+				u => u.createdAt.toISOString().split('T')[0] === fecha
+			).length;
+			
+			return {
+				fecha,
+				usuarios: usuariosDia,
+			};
+		});
+
 		return {
 			users: {
 				total: users,
@@ -426,6 +482,7 @@ export const getAdminSystemHealthAction = withAction(
 				active: licensesActive,
 				expiringSoon,
 			},
+			usersTrend,
 		};
 	},
 );
@@ -455,6 +512,54 @@ export const getAdminFinanceAction = withAction(
 			}),
 			prisma.tenant.count(),
 		]);
+		// Obtener ingresos de los últimos 7 días
+		const sevenDaysAgo = new Date();
+		sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
+		
+		const ventasHistoricas = await prisma.venta.findMany({
+			where: {
+				createdAt: { gte: sevenDaysAgo },
+			},
+			select: {
+				createdAt: true,
+				total: true,
+			},
+			orderBy: { createdAt: 'asc' },
+			take: 10000, // Límite de seguridad
+		});
+
+		const serviciosHistoricos = await prisma.ventaServicios.findMany({
+			where: {
+				createdAt: { gte: sevenDaysAgo },
+			},
+			select: {
+				createdAt: true,
+				total: true,
+			},
+			orderBy: { createdAt: 'asc' },
+			take: 10000, // Límite de seguridad
+		});
+
+		// Agrupar por día
+		const revenueTrend = Array.from({ length: 7 }, (_, i) => {
+			const date = new Date();
+			date.setDate(date.getDate() - (6 - i));
+			const fecha = date.toISOString().split('T')[0];
+			
+			const ventasDia = ventasHistoricas
+				.filter(v => v.createdAt.toISOString().split('T')[0] === fecha)
+				.reduce((sum, v) => sum + Number(v.total), 0);
+			
+			const serviciosDia = serviciosHistoricos
+				.filter(s => s.createdAt.toISOString().split('T')[0] === fecha)
+				.reduce((sum, s) => sum + Number(s.total), 0);
+			
+			return {
+				fecha,
+				ingresos: ventasDia + serviciosDia,
+			};
+		});
+
 		return {
 			tenantCount,
 			revenue: {
@@ -480,6 +585,7 @@ export const getAdminFinanceAction = withAction(
 				total: cuentasPorPagar._count || 0,
 				saldoPendiente: cuentasPorPagar._sum.saldoPendiente || 0,
 			},
+			revenueTrend,
 		};
 	},
 );

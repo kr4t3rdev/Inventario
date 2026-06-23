@@ -62,12 +62,34 @@ export default function AdminDashboardPage(): React.JSX.Element {
   const [finance, setFinance] = useState<any>(null)
   const [system, setSystem] = useState<any>(null)
   const [isLoading, setIsLoading] = useState(true)
+  const [lastUpdated, setLastUpdated] = useState<Date | null>(null)
 
-  useEffect(() => { setIsLoading(true); Promise.all([getAdminTenantsAction(), getAdminFinanceAction(), getAdminSystemHealthAction()]).then(([r1,r2,r3]) => { if(r1.success) setTenants(r1.data??[]); if(r2.success) setFinance(r2.data); if(r3.success) setSystem(r3.data); setIsLoading(false) }) }, [])
+  useEffect(() => { setIsLoading(true); Promise.all([getAdminTenantsAction(), getAdminFinanceAction(), getAdminSystemHealthAction()]).then(([r1,r2,r3]) => { if(r1.success) setTenants(r1.data??[]); if(r2.success) setFinance(r2.data); if(r3.success) setSystem(r3.data); setLastUpdated(new Date()); setIsLoading(false) }) }, [])
   const safeTenants = tenants ?? []
   const loading = isLoading
   const safeFinance = finance
-  const safeSystem = system ?? { users: { total: 0, byRole: [] }, tenants: { total: 0 }, sessions: { active: 0 }, licenses: { total: 0, active: 0, expiringSoon: 0 } }
+  const safeSystem = system ?? { users: { total: 0, byRole: [] }, tenants: { total: 0 }, sessions: { active: 0 }, licenses: { total: 0, active: 0, expiringSoon: 0 }, usersTrend: [] }
+  const calculateTrend = (current: number, previous: number) => {
+    if (previous === 0) return null;
+    const change = ((current - previous) / previous) * 100;
+    return {
+      value: Math.abs(Math.round(change)),
+      direction: change > 0 ? 'up' as const : change < 0 ? 'down' as const : 'neutral' as const,
+    };
+  };
+
+  // Calcular tendencias de los últimos 7 días vs 7 días anteriores
+  const revenueTrend = safeFinance?.revenueTrend ?? [];
+  const usersTrend = safeSystem?.usersTrend ?? [];
+  
+  const currentWeekRevenue = revenueTrend.slice(-7).reduce((sum, d) => sum + d.ingresos, 0);
+  const previousWeekRevenue = 0; // TODO: implementar datos de semana anterior
+  const revenueTrendData = calculateTrend(currentWeekRevenue, previousWeekRevenue);
+
+  const currentWeekUsers = usersTrend.slice(-7).reduce((sum, d) => sum + d.usuarios, 0);
+  const previousWeekUsers = 0; // TODO: implementar datos de semana anterior
+  const usersTrendData = calculateTrend(currentWeekUsers, previousWeekUsers);
+
 
   const kpiCards = [
     {
@@ -84,7 +106,7 @@ export default function AdminDashboardPage(): React.JSX.Element {
       title: "Usuarios del Sistema",
       value: safeSystem?.users.total ?? 0,
       loading: isLoading,
-      trend: null,
+      trend: usersTrendData,
       description: "Usuarios registrados",
       icon: Users,
       valueClassName: "text-emerald-600 dark:text-emerald-400",
@@ -213,6 +235,12 @@ export default function AdminDashboardPage(): React.JSX.Element {
               animate={{ opacity: 1, scale: 1 }}
               transition={{ delay: 0.4, type: "spring", stiffness: 200 }}
             >
+              {lastUpdated && (
+                <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                  <Clock className="h-3 w-3" />
+                  <span>Actualizado: {lastUpdated.toLocaleTimeString('es-CU')}</span>
+                </div>
+              )}
               <Button
                 onClick={handleRefresh}
                 variant="outline"
@@ -253,13 +281,120 @@ export default function AdminDashboardPage(): React.JSX.Element {
                         <div className={`text-2xl font-bold ${card.valueClassName}`}>
                           {typeof card.value === "number" ? card.value.toLocaleString() : card.value}
                         </div>
-                        <p className="mt-1 text-xs text-muted-foreground">{card.description}</p>
+                        <div className="flex items-center justify-between mt-1">
+                          <p className="text-xs text-muted-foreground">{card.description}</p>
+                          {card.trend && (
+                            <div className={`flex items-center gap-0.5 text-xs ${
+                              card.trend.direction === 'up' ? 'text-emerald-600 dark:text-emerald-400' :
+                              card.trend.direction === 'down' ? 'text-rose-600 dark:text-rose-400' :
+                              'text-muted-foreground'
+                            }`}>
+                              {card.trend.direction === 'up' && <ArrowUpRight className="h-3 w-3" />}
+                              {card.trend.direction === 'down' && <ArrowDownRight className="h-3 w-3" />}
+                              <span>{card.trend.value}%</span>
+                            </div>
+                          )}
+                        </div>
                       </>
                     )}
                   </CardContent>
                 </AnimatedCard>
               )
             })}
+          </motion.div>
+
+          {/* Trend Charts */}
+          <motion.div
+            className="grid grid-cols-1 gap-4 px-4 lg:grid-cols-2 lg:px-6"
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.5, duration: 0.5 }}
+          >
+            {/* Revenue Trend */}
+            <Card className="rounded-xl border bg-card/80 backdrop-blur-sm shadow-sm">
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2 text-base">
+                  <ArrowUpRight className="h-4 w-4 text-emerald-600" />
+                  Tendencia de Ingresos (Últimos 7 días)
+                </CardTitle>
+                <CardDescription>Evolución diaria de ventas y servicios</CardDescription>
+              </CardHeader>
+              <CardContent>
+                {isLoading ? (
+                  <div className="flex items-center justify-center py-8">
+                    <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+                  </div>
+                ) : (safeFinance?.revenueTrend?.length ?? 0) > 0 ? (
+                  <div className="space-y-2">
+                    <div className="flex items-center justify-between text-xs text-muted-foreground">
+                      <span>Total: ${safeFinance.revenueTrend.reduce((sum, d) => sum + d.ingresos, 0).toLocaleString()}</span>
+                      <span>Promedio: ${Math.round(safeFinance.revenueTrend.reduce((sum, d) => sum + d.ingresos, 0) / safeFinance.revenueTrend.length).toLocaleString()}/día</span>
+                    </div>
+                    <div className="h-32 flex items-end gap-1">
+                      {safeFinance.revenueTrend.map((day, idx) => {
+                        const maxIngresos = Math.max(...safeFinance.revenueTrend.map(d => d.ingresos));
+                        const height = maxIngresos > 0 ? (day.ingresos / maxIngresos) * 100 : 0;
+                        return (
+                          <div key={idx} className="flex-1 flex flex-col items-center gap-1 group">
+                            <div className="w-full bg-emerald-500/20 dark:bg-emerald-500/30 rounded-t-sm relative overflow-hidden" style={{ height: `${height}%` }}>
+                              <div className="absolute inset-0 bg-gradient-to-t from-emerald-500 to-emerald-400 opacity-80 group-hover:opacity-100 transition-opacity" />
+                            </div>
+                            <span className="text-[10px] text-muted-foreground">{day.fecha.slice(5)}</span>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
+                ) : (
+                  <div className="flex items-center justify-center py-8 text-sm text-muted-foreground">
+                    No hay datos de ingresos disponibles
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+
+            {/* Users Trend */}
+            <Card className="rounded-xl border bg-card/80 backdrop-blur-sm shadow-sm">
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2 text-base">
+                  <Users className="h-4 w-4 text-violet-600" />
+                  Nuevos Usuarios (Últimos 7 días)
+                </CardTitle>
+                <CardDescription>Registros diarios de usuarios</CardDescription>
+              </CardHeader>
+              <CardContent>
+                {isLoading ? (
+                  <div className="flex items-center justify-center py-8">
+                    <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+                  </div>
+                ) : (safeSystem?.usersTrend?.length ?? 0) > 0 ? (
+                  <div className="space-y-2">
+                    <div className="flex items-center justify-between text-xs text-muted-foreground">
+                      <span>Total: {safeSystem.usersTrend.reduce((sum, d) => sum + d.usuarios, 0)}</span>
+                      <span>Promedio: {(safeSystem.usersTrend.reduce((sum, d) => sum + d.usuarios, 0) / safeSystem.usersTrend.length).toFixed(1)}/día</span>
+                    </div>
+                    <div className="h-32 flex items-end gap-1">
+                      {safeSystem.usersTrend.map((day, idx) => {
+                        const maxUsers = Math.max(...safeSystem.usersTrend.map(d => d.usuarios));
+                        const height = maxUsers > 0 ? (day.usuarios / maxUsers) * 100 : 0;
+                        return (
+                          <div key={idx} className="flex-1 flex flex-col items-center gap-1 group">
+                            <div className="w-full bg-violet-500/20 dark:bg-violet-500/30 rounded-t-sm relative overflow-hidden" style={{ height: `${height}%` }}>
+                              <div className="absolute inset-0 bg-gradient-to-t from-violet-500 to-violet-400 opacity-80 group-hover:opacity-100 transition-opacity" />
+                            </div>
+                            <span className="text-[10px] text-muted-foreground">{day.fecha.slice(5)}</span>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
+                ) : (
+                  <div className="flex items-center justify-center py-8 text-sm text-muted-foreground">
+                    No hay datos de usuarios disponibles
+                  </div>
+                )}
+              </CardContent>
+            </Card>
           </motion.div>
 
           {/* Two-column layout: Tenant Distribution + Alerts */}

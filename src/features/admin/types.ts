@@ -10,6 +10,7 @@ export interface AdminFinance {
   gastos: { totalGastos: number; totalMonto: number }
   cuentasPorCobrar: { total: number; saldoPendiente: number }
   cuentasPorPagar: { total: number; saldoPendiente: number }
+  revenueTrend: Array<{ fecha: string; ingresos: number }>
 }
 
 export interface AdminFinanceMeta {
@@ -58,6 +59,7 @@ export interface AdminSystemHealth {
   tenants: { total: number }
   sessions: { active: number }
   licenses: { total: number; active: number; expiringSoon: number }
+  usersTrend: Array<{ fecha: string; usuarios: number }>
 }
 
 export interface AdminTenant {
