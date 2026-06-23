@@ -32,6 +32,7 @@ import {
 	History,
 } from "lucide-react";
 import {
+	staggerContainer,
 	fadeUp,
 	cardSlideUp,
 	cardHover,
