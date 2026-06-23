@@ -1,7 +1,7 @@
 'use client'
 
 import { useRef } from "react"
-import { Building2, Users, Package, Archive, RefreshCw, Loader2, Search, MoreVertical, Eye, Edit, Ban, CheckCircle } from "lucide-react"
+import { Building2, Users, Package, Archive, RefreshCw, Loader2, Search, MoreVertical, Eye, Edit, Ban, CheckCircle, Download } from "lucide-react"
 import { LazyMotion, m as motion } from "framer-motion"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
@@ -12,6 +12,7 @@ import { Badge } from "@/components/ui/badge"
 import { PageTransition } from "@/components/ui/animations"
 import { useEffect, useState } from "react"
 import { getAdminTenantsAction, getAdminSystemHealthAction } from "@/features/admin"
+import { exportToCSV } from "@/lib/export-csv"
 
 export const dynamic = 'force-dynamic'
 
@@ -53,6 +54,23 @@ export default function TenantsPage() {
     setIsDetailsOpen(true);
   };
 
+  const handleExport = () => {
+    const columns = [
+      { header: 'Nombre', accessor: (t: any) => t.nombre },
+      { header: 'ID', accessor: (t: any) => t.tenantId },
+      { header: 'Usuarios', accessor: (t: any) => t.totalUsers },
+      { header: 'Productos', accessor: (t: any) => t.totalProductos },
+      { header: 'Almacenes', accessor: (t: any) => t.totalAlmacenes },
+      { header: 'Ventas', accessor: (t: any) => t.totalVentas },
+      { header: 'Plan', accessor: (t: any) => t.plan || 'Sin plan' },
+      { header: 'Licencia Activa', accessor: (t: any) => t.licenseActive },
+      { header: 'Fecha Creación', accessor: (t: any) => new Date(t.createdAt).toLocaleDateString('es-CU') },
+    ];
+    
+    exportToCSV(filteredTenants, columns, `tenants-${new Date().toISOString().split('T')[0]}.csv`);
+  };
+
+
 
   return (
     <PageTransition className="flex flex-1 flex-col gap-4 p-4 lg:p-6">
@@ -64,15 +82,26 @@ export default function TenantsPage() {
           <h1 className="text-2xl font-bold">Tenants</h1>
           <p className="text-muted-foreground text-sm">Gestión de empresas y organizaciones</p>
         </div>
-        <Button
-          onClick={refetch}
-          variant="outline"
-          disabled={isLoading}
-          className="border-slate-200/70 bg-white/70 backdrop-blur-sm dark:border-slate-700/60 dark:bg-slate-900/60"
-        >
-          <RefreshCw className={`mr-2 h-4 w-4 ${isLoading ? "animate-spin" : ""}`} />
-          Actualizar
-        </Button>
+        <div className="flex gap-2">
+          <Button
+            onClick={handleExport}
+            variant="outline"
+            disabled={isLoading || filteredTenants.length === 0}
+            className="border-slate-200/70 bg-white/70 backdrop-blur-sm dark:border-slate-700/60 dark:bg-slate-900/60"
+          >
+            <Download className="mr-2 h-4 w-4" />
+            Exportar CSV
+          </Button>
+          <Button
+            onClick={refetch}
+            variant="outline"
+            disabled={isLoading}
+            className="border-slate-200/70 bg-white/70 backdrop-blur-sm dark:border-slate-700/60 dark:bg-slate-900/60"
+          >
+            <RefreshCw className={`mr-2 h-4 w-4 ${isLoading ? "animate-spin" : ""}`} />
+            Actualizar
+          </Button>
+        </div>
       </div>
 
       {/* Summary cards */}
