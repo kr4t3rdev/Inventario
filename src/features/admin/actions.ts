@@ -1315,12 +1315,26 @@ export const getAuditLogsAction = withAction(
 
 
 export const getAdminSubscriptionRevenueAction = withAction(
-	async (_input: void, user: AuthenticatedUser) => {
+	async (input: { months?: number; startDate?: string; endDate?: string } | void, user: AuthenticatedUser) => {
 		if (user.role !== "admin")
 			throw new ActionError("Acceso restringido", "FORBIDDEN");
 
+		// Determinar rango de fechas
+		const months = input?.months || 6;
+		const endDate = input?.endDate ? new Date(input.endDate) : new Date();
+		const startDate = input?.startDate 
+			? new Date(input.startDate) 
+			: new Date(new Date().setMonth(endDate.getMonth() - months));
+
 		// Obtener todas las licencias con sus planes
 		const allLicenses = await prisma.tenantLicense.findMany({
+			where: {
+				OR: [
+					{ createdAt: { gte: startDate, lte: endDate } },
+					{ updatedAt: { gte: startDate, lte: endDate } },
+					{ activa: true },
+				],
+			},
 			include: {
 				plan: true,
 				tenant: {
@@ -1402,30 +1416,51 @@ export const getAdminSubscriptionRevenueAction = withAction(
 			: avgMonthlyPrice * avgLifetimeMonths;
 
 		// Histórico de pagos (creación/renovación de licencias)
-		const now = new Date();
-		const licenseHistory = Array.from({ length: 6 }, (_, i) => {
-			const monthStart = new Date(now.getFullYear(), now.getMonth() - (5 - i), 1);
-			const monthEnd = new Date(now.getFullYear(), now.getMonth() - (5 - i) + 1, 0, 23, 59, 59);
+		const licenseHistory: Array<{ mes: string; nuevasLicencias: number; renovaciones: number; ingresos: number; mrr: number; licenciasActivas: number }> = [];
+		
+		// Calcular meses entre startDate y endDate
+		const monthsDiff = (endDate.getFullYear() - startDate.getFullYear()) * 12 + (endDate.getMonth() - startDate.getMonth()) + 1;
+		const numMonths = Math.min(Math.max(monthsDiff, 1), 24); // Máximo 24 meses
+		
+		for (let i = 0; i < numMonths; i++) {
+			const monthStart = new Date(endDate.getFullYear(), endDate.getMonth() - (numMonths - 1 - i), 1);
+			const monthEnd = new Date(endDate.getFullYear(), endDate.getMonth() - (numMonths - 1 - i) + 1, 0, 23, 59, 59);
 			
 			const newLicenses = allLicenses.filter(
 				(l) => l.createdAt >= monthStart && l.createdAt <= monthEnd
-			).length;
+			);
 			
 			const renewals = allLicenses.filter(
 				(l) => l.updatedAt >= monthStart && l.updatedAt <= monthEnd && l.createdAt < monthStart
-			).length;
+			);
 			
-			const revenue = allLicenses
-				.filter((l) => l.createdAt >= monthStart && l.createdAt <= monthEnd && l.plan)
+			const revenue = [
+				...newLicenses,
+				...renewals,
+			]
+				.filter((l) => l.plan)
 				.reduce((sum, l) => sum + Number(l.plan!.precio), 0);
 			
-			return {
+			// Calcular MRR al final de ese mes (licencias activas en ese momento)
+			const activeAtMonthEnd = allLicenses.filter(
+				(l) => l.inicio <= monthEnd && l.expiracion >= monthEnd && l.activa
+			);
+			
+			const mrrAtMonthEnd = activeAtMonthEnd.reduce((sum, l) => {
+				if (!l.plan) return sum;
+				const monthlyPrice = Number(l.plan.precio) / (l.plan.duracionDias / 30);
+				return sum + monthlyPrice;
+			}, 0);
+			
+			licenseHistory.push({
 				mes: monthStart.toISOString().slice(0, 7), // YYYY-MM
-				nuevasLicencias: newLicenses,
-				renovaciones: renewals,
+				nuevasLicencias: newLicenses.length,
+				renovaciones: renewals.length,
 				ingresos: revenue,
-			};
-		});
+				mrr: Math.round(mrrAtMonthEnd * 100) / 100,
+				licenciasActivas: activeAtMonthEnd.length,
+			});
+		}
 
 		// Ingresos proyectados
 		const expiringThisMonth = activeLicenses.filter((l) => {
@@ -1442,6 +1477,22 @@ export const getAdminSubscriptionRevenueAction = withAction(
 			(l) => l.createdAt >= new Date(now.getFullYear(), now.getMonth(), 1)
 		).length;
 
+		// Comparación mes a mes
+		const currentMonth = licenseHistory[licenseHistory.length - 1];
+		const previousMonth = licenseHistory[licenseHistory.length - 2];
+		
+		const comparison = previousMonth && currentMonth ? {
+			mrrChange: currentMonth.mrr - previousMonth.mrr,
+			mrrChangePercent: previousMonth.mrr > 0 
+				? Math.round(((currentMonth.mrr - previousMonth.mrr) / previousMonth.mrr) * 10000) / 100
+				: 0,
+			revenueChange: currentMonth.ingresos - previousMonth.ingresos,
+			revenueChangePercent: previousMonth.ingresos > 0
+				? Math.round(((currentMonth.ingresos - previousMonth.ingresos) / previousMonth.ingresos) * 10000) / 100
+				: 0,
+			licensesChange: currentMonth.licenciasActivas - previousMonth.licenciasActivas,
+		} : null;
+
 		return {
 			mrr: Math.round(mrr * 100) / 100,
 			arr: Math.round(arr * 100) / 100,
@@ -1454,6 +1505,12 @@ export const getAdminSubscriptionRevenueAction = withAction(
 			churnRate: Math.round(churnRate * 100) / 100,
 			ltv: Math.round(ltv * 100) / 100,
 			licenseHistory,
+			comparison,
+			dateRange: {
+				start: startDate.toISOString(),
+				end: endDate.toISOString(),
+				months: numMonths,
+			},
 			projectedRevenue: {
 				fromExpiring: Math.round(projectedRevenue * 100) / 100,
 				fromNew: newLicensesThisMonth,

@@ -100,7 +100,21 @@ export interface AdminSubscriptionRevenue {
     nuevasLicencias: number
     renovaciones: number
     ingresos: number
+    mrr: number
+    licenciasActivas: number
   }>
+  comparison: {
+    mrrChange: number
+    mrrChangePercent: number
+    revenueChange: number
+    revenueChangePercent: number
+    licensesChange: number
+  } | null
+  dateRange: {
+    start: string
+    end: string
+    months: number
+  }
   projectedRevenue: {
     fromExpiring: number
     fromNew: number
