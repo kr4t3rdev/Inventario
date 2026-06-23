@@ -379,6 +379,26 @@ Authorization: Bearer <accessToken>
 
 Descarga el comprobante PDF de la transferencia bancaria con el mismo nombre de archivo usado por web.
 
+### `GET /api/mobile/v1/accounting/exchange/monedas`
+
+**Headers**
+
+```http
+Authorization: Bearer <accessToken>
+```
+
+Devuelve el catálogo de monedas ordenado por nombre, con la misma forma base que usa web.
+
+### `GET /api/mobile/v1/accounting/exchange/tasas`
+
+**Headers**
+
+```http
+Authorization: Bearer <accessToken>
+```
+
+Devuelve la moneda principal y las últimas tasas de cambio, alineadas con el contrato web.
+
 ### `GET /api/mobile/v1/accounting/bank-adjustments`
 
 **Headers**
