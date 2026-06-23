@@ -79,3 +79,31 @@ export interface AdminTenant {
   licenseExpiresAt: string | null
   consumption: { usuarios: number; almacenes: number; productos: number }
 }
+
+export interface AdminSubscriptionRevenue {
+  mrr: number
+  arr: number
+  revenueByPlan: Array<{
+    planId: string
+    nombre: string
+    tenants: number
+    mrr: number
+    precio: number
+  }>
+  activeLicenses: number
+  inactiveLicenses: number
+  avgRevenuePerTenant: number
+  churnRate: number
+  ltv: number
+  licenseHistory: Array<{
+    mes: string
+    nuevasLicencias: number
+    renovaciones: number
+    ingresos: number
+  }>
+  projectedRevenue: {
+    fromExpiring: number
+    fromNew: number
+    expiringCount: number
+  }
+}

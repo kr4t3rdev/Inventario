@@ -9,6 +9,7 @@ export {
 	getAdminTenantsAction,
 	getAdminSystemHealthAction,
 	getAdminFinanceAction,
+	getAdminSubscriptionRevenueAction,
 	getGlobalUsersAction,
 	approveGlobalUserAction,
 	getAdminPlanesAction,
@@ -26,4 +27,4 @@ export {
 
 export { useAdminUsers } from "./hooks/use-admin-users";
 
-export type { AdminFinance, AdminSystemHealth, AdminTenant } from "./types";
+export type { AdminFinance, AdminSystemHealth, AdminTenant, AdminSubscriptionRevenue } from "./types";

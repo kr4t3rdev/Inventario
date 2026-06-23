@@ -1312,3 +1312,153 @@ export const getAuditLogsAction = withAction(
 		});
 	},
 );
+
+
+export const getAdminSubscriptionRevenueAction = withAction(
+	async (_input: void, user: AuthenticatedUser) => {
+		if (user.role !== "admin")
+			throw new ActionError("Acceso restringido", "FORBIDDEN");
+
+		// Obtener todas las licencias con sus planes
+		const allLicenses = await prisma.tenantLicense.findMany({
+			include: {
+				plan: true,
+				tenant: {
+					select: {
+						nombre: true,
+						tenantId: true,
+					},
+				},
+			},
+		});
+
+		const activeLicenses = allLicenses.filter((l) => l.activa);
+		const inactiveLicenses = allLicenses.filter((l) => !l.activa);
+
+		// Calcular MRR (Monthly Recurring Revenue)
+		const mrr = activeLicenses.reduce((sum, license) => {
+			if (!license.plan) return sum;
+			const planPrecio = Number(license.plan.precio);
+			// Normalizar a mensual según duración
+			const monthlyPrice = planPrecio / (license.plan.duracionDias / 30);
+			return sum + monthlyPrice;
+		}, 0);
+
+		// Calcular ARR (Annual Recurring Revenue)
+		const arr = mrr * 12;
+
+		// Distribución de ingresos por plan
+		const revenueByPlanMap = new Map<string, { planId: string; nombre: string; tenants: number; mrr: number; precio: number }>();
+		
+		activeLicenses.forEach((license) => {
+			if (!license.plan) return;
+			const planId = license.planId!;
+			const monthlyPrice = Number(license.plan.precio) / (license.plan.duracionDias / 30);
+			
+			if (revenueByPlanMap.has(planId)) {
+				const existing = revenueByPlanMap.get(planId)!;
+				existing.tenants += 1;
+				existing.mrr += monthlyPrice;
+			} else {
+				revenueByPlanMap.set(planId, {
+					planId,
+					nombre: license.plan.nombre,
+					tenants: 1,
+					mrr: monthlyPrice,
+					precio: Number(license.plan.precio),
+				});
+			}
+		});
+
+		const revenueByPlan = Array.from(revenueByPlanMap.values()).sort((a, b) => b.mrr - a.mrr);
+
+		// Calcular Churn Rate (últimos 30 días)
+		const thirtyDaysAgo = new Date();
+		thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+		
+		const canceledLast30Days = inactiveLicenses.filter(
+			(l) => l.updatedAt >= thirtyDaysAgo
+		).length;
+		
+		const totalLicensesLast30Days = activeLicenses.length + canceledLast30Days;
+		const churnRate = totalLicensesLast30Days > 0
+			? (canceledLast30Days / totalLicensesLast30Days) * 100
+			: 0;
+
+		// Calcular LTV (Lifetime Value)
+		// LTV = (Precio promedio mensual / Churn Rate) * 100
+		// Si churn es 0, usar promedio de duración de licencias
+		const avgMonthlyPrice = activeLicenses.length > 0 ? mrr / activeLicenses.length : 0;
+		const avgLicenseDurationDays = activeLicenses.length > 0
+			? activeLicenses.reduce((sum, l) => {
+				const duration = (l.expiracion.getTime() - l.inicio.getTime()) / (1000 * 60 * 60 * 24);
+				return sum + duration;
+			}, 0) / activeLicenses.length
+			: 30;
+		
+		const avgLifetimeMonths = avgLicenseDurationDays / 30;
+		const ltv = churnRate > 0
+			? (avgMonthlyPrice / churnRate) * 100
+			: avgMonthlyPrice * avgLifetimeMonths;
+
+		// Histórico de pagos (creación/renovación de licencias)
+		const now = new Date();
+		const licenseHistory = Array.from({ length: 6 }, (_, i) => {
+			const monthStart = new Date(now.getFullYear(), now.getMonth() - (5 - i), 1);
+			const monthEnd = new Date(now.getFullYear(), now.getMonth() - (5 - i) + 1, 0, 23, 59, 59);
+			
+			const newLicenses = allLicenses.filter(
+				(l) => l.createdAt >= monthStart && l.createdAt <= monthEnd
+			).length;
+			
+			const renewals = allLicenses.filter(
+				(l) => l.updatedAt >= monthStart && l.updatedAt <= monthEnd && l.createdAt < monthStart
+			).length;
+			
+			const revenue = allLicenses
+				.filter((l) => l.createdAt >= monthStart && l.createdAt <= monthEnd && l.plan)
+				.reduce((sum, l) => sum + Number(l.plan!.precio), 0);
+			
+			return {
+				mes: monthStart.toISOString().slice(0, 7), // YYYY-MM
+				nuevasLicencias: newLicenses,
+				renovaciones: renewals,
+				ingresos: revenue,
+			};
+		});
+
+		// Ingresos proyectados
+		const expiringThisMonth = activeLicenses.filter((l) => {
+			const monthEnd = new Date(now.getFullYear(), now.getMonth() + 1, 0, 23, 59, 59);
+			return l.expiracion >= now && l.expiracion <= monthEnd;
+		});
+
+		const projectedRevenue = expiringThisMonth.reduce((sum, l) => {
+			if (!l.plan) return sum;
+			return sum + Number(l.plan.precio);
+		}, 0);
+
+		const newLicensesThisMonth = allLicenses.filter(
+			(l) => l.createdAt >= new Date(now.getFullYear(), now.getMonth(), 1)
+		).length;
+
+		return {
+			mrr: Math.round(mrr * 100) / 100,
+			arr: Math.round(arr * 100) / 100,
+			revenueByPlan,
+			activeLicenses: activeLicenses.length,
+			inactiveLicenses: inactiveLicenses.length,
+			avgRevenuePerTenant: activeLicenses.length > 0 
+				? Math.round((mrr / activeLicenses.length) * 100) / 100 
+				: 0,
+			churnRate: Math.round(churnRate * 100) / 100,
+			ltv: Math.round(ltv * 100) / 100,
+			licenseHistory,
+			projectedRevenue: {
+				fromExpiring: Math.round(projectedRevenue * 100) / 100,
+				fromNew: newLicensesThisMonth,
+				expiringCount: expiringThisMonth.length,
+			},
+		};
+	},
+);
