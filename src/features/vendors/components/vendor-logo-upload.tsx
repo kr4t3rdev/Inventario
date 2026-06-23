@@ -5,18 +5,20 @@ import { useDropzone } from 'react-dropzone'
 import { Upload, X, ImageIcon, Loader2 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { toast } from 'sonner'
+import type { CloudinaryAssetUploadResult } from '@/lib/upload/cloudinary-asset'
 import { uploadToCloudinary } from '@/lib/upload/cloudinary-upload'
 
 interface VendorLogoUploadProps {
   value?: string | null
   onChange: (url: string | null) => void
+  onAssetChange?: (asset: CloudinaryAssetUploadResult | null) => void
   disabled?: boolean
 }
 
 const MAX_FILE_SIZE = 2 * 1024 * 1024 // 2MB
 const ACCEPTED_IMAGE_TYPES = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp']
 
-export function VendorLogoUpload({ value, onChange, disabled }: VendorLogoUploadProps) {
+export function VendorLogoUpload({ value, onChange, onAssetChange, disabled }: VendorLogoUploadProps) {
   const [uploading, setUploading] = useState(false)
 
   const onDrop = useCallback(async (acceptedFiles: File[]) => {
@@ -39,8 +41,11 @@ export function VendorLogoUpload({ value, onChange, disabled }: VendorLogoUpload
     setUploading(true)
 
     try {
-      const url = await uploadToCloudinary(file, 'vendors/logo')
-      onChange(url)
+      const asset = await uploadToCloudinary(file, {
+        uploadKey: 'vendors.logo',
+      })
+      onChange(asset.secureUrl)
+      onAssetChange?.(asset)
       toast.success('Logo subido correctamente')
     } catch (error) {
       console.error('Upload error:', error)
@@ -48,7 +53,7 @@ export function VendorLogoUpload({ value, onChange, disabled }: VendorLogoUpload
     } finally {
       setUploading(false)
     }
-  }, [onChange])
+  }, [onAssetChange, onChange])
 
   const { getRootProps, getInputProps, isDragActive } = useDropzone({
     onDrop,
@@ -63,6 +68,7 @@ export function VendorLogoUpload({ value, onChange, disabled }: VendorLogoUpload
 
   const handleRemove = () => {
     onChange(null)
+    onAssetChange?.(null)
   }
 
   // Si ya hay un logo subido, mostrar preview

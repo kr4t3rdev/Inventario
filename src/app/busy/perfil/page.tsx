@@ -131,12 +131,16 @@ export default function ProfilePage() {
     const loadingToast = toast.loading("Subiendo imagen...")
     
     try {
-      const url = await uploadToCloudinary(file, `usuarios/${user.userId}/avatar`)
-      setFormData((prev) => ({ ...prev, avatar: url }))
+      const asset = await uploadToCloudinary(file, {
+        uploadKey: 'profile.avatar',
+        entityId: user.userId,
+      })
+      setFormData((prev) => ({ ...prev, avatar: asset.secureUrl }))
       
       const updated = await updateProfile({
         name: formData.name,
-        avatar: url,
+        avatar: asset.secureUrl,
+        avatarAsset: asset,
       })
       setProfile(updated)
       

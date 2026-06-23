@@ -30,6 +30,27 @@ export const lockUnlockSchema = z.object({
   reason: z.string().optional(),
 });
 
+export const cloudinaryAssetsQuerySchema = z.object({
+  status: z.enum(['all', 'active', 'replaced', 'deleted']).optional().default('replaced'),
+  ownerType: z.string().optional(),
+  ownerId: z.string().optional(),
+  slot: z.string().optional(),
+  tenantId: z.string().optional(),
+  limit: z.number().int().min(1).max(100).optional().default(20),
+});
+
+export const cloudinaryCleanupSchema = z.object({
+  mode: z.enum(['selected', 'stale']).default('stale'),
+  assetIds: z.array(z.string().min(1)).optional().default([]),
+  olderThanDays: z.number().int().min(0).max(365).optional().default(7),
+  ownerType: z.string().optional(),
+  ownerId: z.string().optional(),
+  slot: z.string().optional(),
+  tenantId: z.string().optional(),
+  limit: z.number().int().min(1).max(100).optional().default(20),
+  dryRun: z.boolean().optional().default(false),
+});
+
 // ─── Tenant User Management ────────────────────────────────
 
 export const updateTenantUserSchema = z.object({
@@ -109,6 +130,8 @@ export const updatePlanSchema = z.object({
 export type CreateUserInput = z.infer<typeof createUserSchema>;
 export type UpdateUserInput = z.infer<typeof updateUserSchema>;
 export type LockUnlockInput = z.infer<typeof lockUnlockSchema>;
+export type CloudinaryAssetsQueryInput = z.infer<typeof cloudinaryAssetsQuerySchema>;
+export type CloudinaryCleanupInput = z.infer<typeof cloudinaryCleanupSchema>;
 export type UpdateTenantUserInput = z.infer<typeof updateTenantUserSchema>;
 export type MembershipActionInput = z.infer<typeof membershipActionSchema>;
 export type CreateLicenciaInput = z.infer<typeof createLicenciaSchema>;

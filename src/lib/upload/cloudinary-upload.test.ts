@@ -11,7 +11,7 @@ describe('uploadToCloudinary', () => {
     vi.resetAllMocks()
   })
 
-  it('uploads file successfully and returns secure_url', async () => {
+  it('uploads file successfully and returns secureUrl + publicId', async () => {
     const mockFile = new File(['test'], 'test.jpg', { type: 'image/jpeg' })
 
     // Mock fetch para firma (server retorna folder prefijado con tenantId)
@@ -23,7 +23,10 @@ describe('uploadToCloudinary', () => {
             timestamp: 123456,
             apiKey: 'test-key',
             cloudName: 'test-cloud',
+            uploadKey: 'productos.photo',
+            resourceType: 'image',
             folder: 'tenant-123/productos',
+            publicId: 'tenant-123/productos/product-1',
           })
         )
       )
@@ -32,18 +35,24 @@ describe('uploadToCloudinary', () => {
         new Response(
           JSON.stringify({
             secure_url: 'https://res.cloudinary.com/test/image.jpg',
-            public_id: 'test-id',
+            public_id: 'tenant-123/productos/product-1',
+            resource_type: 'image',
+            bytes: 4,
+            original_filename: 'test',
           })
         )
       )
 
-    const url = await uploadToCloudinary(mockFile, 'productos')
+    const result = await uploadToCloudinary(mockFile, {
+      uploadKey: 'productos.photo',
+    })
 
-    expect(url).toBe('https://res.cloudinary.com/test/image.jpg')
+    expect(result.secureUrl).toBe('https://res.cloudinary.com/test/image.jpg')
+    expect(result.publicId).toBe('tenant-123/productos/product-1')
     expect(global.fetch).toHaveBeenCalledTimes(2)
   })
 
-  it('envía el folder relativo al endpoint de firma (sin tenantId)', async () => {
+  it('envía el uploadKey y metadata del archivo al endpoint de firma', async () => {
     const mockFile = new File(['test'], 'test.jpg', { type: 'image/jpeg' })
 
     const fetchMock = vi
@@ -55,7 +64,10 @@ describe('uploadToCloudinary', () => {
             timestamp: 123456,
             apiKey: 'test-key',
             cloudName: 'test-cloud',
-            folder: 'tenant-123/clientes/cli-1/logo',
+            uploadKey: 'clientes.logo',
+            resourceType: 'image',
+            folder: 'tenant-123/clientes/logo',
+            publicId: 'tenant-123/clientes/logo/cliente-1',
           })
         )
       )
@@ -63,21 +75,26 @@ describe('uploadToCloudinary', () => {
         new Response(
           JSON.stringify({
             secure_url: 'https://res.cloudinary.com/test/image.jpg',
-            public_id: 'test-id',
+            public_id: 'tenant-123/clientes/logo/cliente-1',
           })
         )
       )
 
-    await uploadToCloudinary(mockFile, 'clientes/cli-1/logo')
+    await uploadToCloudinary(mockFile, {
+      uploadKey: 'clientes.logo',
+      entityId: 'cli-1',
+    })
 
-    // Verificar que el body del POST a /api/upload/sign contiene folder relativo
     const firstCall = fetchMock.mock.calls[0]
     const requestInit = firstCall[1] as RequestInit
     const body = JSON.parse(requestInit.body as string)
-    expect(body.folder).toBe('clientes/cli-1/logo')
+    expect(body.uploadKey).toBe('clientes.logo')
+    expect(body.entityId).toBe('cli-1')
+    expect(body.filename).toBe('test.jpg')
+    expect(body.mimeType).toBe('image/jpeg')
   })
 
-  it('usa el folder prefijado retornado por el server al subir a Cloudinary', async () => {
+  it('usa folder y publicId retornados por el server al subir a Cloudinary', async () => {
     const mockFile = new File(['test'], 'test.jpg', { type: 'image/jpeg' })
 
     const fetchMock = vi
@@ -89,7 +106,10 @@ describe('uploadToCloudinary', () => {
             timestamp: 123456,
             apiKey: 'test-key',
             cloudName: 'test-cloud',
+            uploadKey: 'productos.photo',
+            resourceType: 'image',
             folder: 'tenant-123/productos',
+            publicId: 'tenant-123/productos/product-1',
           })
         )
       )
@@ -97,17 +117,19 @@ describe('uploadToCloudinary', () => {
         new Response(
           JSON.stringify({
             secure_url: 'https://res.cloudinary.com/test/image.jpg',
-            public_id: 'test-id',
+            public_id: 'tenant-123/productos/product-1',
           })
         )
       )
 
-    await uploadToCloudinary(mockFile, 'productos')
+    await uploadToCloudinary(mockFile, {
+      uploadKey: 'productos.photo',
+    })
 
-    // Verificar que el FormData enviado a Cloudinary incluye el folder prefijado
     const secondCall = fetchMock.mock.calls[1]
     const formData = secondCall[1].body as FormData
     expect(formData.get('folder')).toBe('tenant-123/productos')
+    expect(formData.get('public_id')).toBe('tenant-123/productos/product-1')
   })
 
   it('throws error when signature endpoint fails', async () => {
@@ -118,7 +140,7 @@ describe('uploadToCloudinary', () => {
     )
 
     await expect(
-      uploadToCloudinary(mockFile, 'productos')
+      uploadToCloudinary(mockFile, { uploadKey: 'productos.photo' })
     ).rejects.toThrow('Failed to get upload signature')
   })
 
@@ -133,7 +155,10 @@ describe('uploadToCloudinary', () => {
             timestamp: 123456,
             apiKey: 'test-key',
             cloudName: 'test-cloud',
+            uploadKey: 'productos.photo',
+            resourceType: 'image',
             folder: 'tenant-123/productos',
+            publicId: 'tenant-123/productos/product-1',
           })
         )
       )
@@ -145,7 +170,7 @@ describe('uploadToCloudinary', () => {
       )
 
     await expect(
-      uploadToCloudinary(mockFile, 'productos')
+      uploadToCloudinary(mockFile, { uploadKey: 'productos.photo' })
     ).rejects.toThrow('Cloudinary upload failed')
   })
 
@@ -161,7 +186,10 @@ describe('uploadToCloudinary', () => {
             timestamp: 123456,
             apiKey: 'test-key',
             cloudName: 'test-cloud',
+            uploadKey: 'productos.photo',
+            resourceType: 'image',
             folder: 'tenant-123/productos',
+            publicId: 'tenant-123/productos/product-1',
           })
         )
       )
@@ -174,7 +202,10 @@ describe('uploadToCloudinary', () => {
         )
       )
 
-    await uploadToCloudinary(mockFile, 'productos', { onProgress })
+    await uploadToCloudinary(mockFile, {
+      uploadKey: 'productos.photo',
+      onProgress,
+    })
 
     expect(onProgress).toHaveBeenCalledWith(100)
     expect(onProgress).toHaveBeenCalledTimes(1)

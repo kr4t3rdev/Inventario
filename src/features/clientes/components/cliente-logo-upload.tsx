@@ -5,18 +5,20 @@ import { useDropzone } from 'react-dropzone'
 import { Upload, X, ImageIcon, Loader2 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { toast } from 'sonner'
+import type { CloudinaryAssetUploadResult } from '@/lib/upload/cloudinary-asset'
 import { uploadToCloudinary } from '@/lib/upload/cloudinary-upload'
 
 interface ClienteLogoUploadProps {
   value?: string | null
   onChange: (url: string | null) => void
+  onAssetChange?: (asset: CloudinaryAssetUploadResult | null) => void
   disabled?: boolean
 }
 
 const MAX_FILE_SIZE = 2 * 1024 * 1024 // 2MB
 const ACCEPTED_IMAGE_TYPES = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp']
 
-export function ClienteLogoUpload({ value, onChange, disabled }: ClienteLogoUploadProps) {
+export function ClienteLogoUpload({ value, onChange, onAssetChange, disabled }: ClienteLogoUploadProps) {
   const [uploading, setUploading] = useState(false)
 
   const onDrop = useCallback(async (acceptedFiles: File[]) => {
@@ -37,8 +39,11 @@ export function ClienteLogoUpload({ value, onChange, disabled }: ClienteLogoUplo
     setUploading(true)
 
     try {
-      const url = await uploadToCloudinary(file, 'clientes/logo')
-      onChange(url)
+      const asset = await uploadToCloudinary(file, {
+        uploadKey: 'clientes.logo',
+      })
+      onChange(asset.secureUrl)
+      onAssetChange?.(asset)
       toast.success('Logo subido correctamente')
     } catch (error) {
       console.error('Upload error:', error)
@@ -46,7 +51,7 @@ export function ClienteLogoUpload({ value, onChange, disabled }: ClienteLogoUplo
     } finally {
       setUploading(false)
     }
-  }, [onChange])
+  }, [onAssetChange, onChange])
 
   const { getRootProps, getInputProps, isDragActive } = useDropzone({
     onDrop,
@@ -61,6 +66,7 @@ export function ClienteLogoUpload({ value, onChange, disabled }: ClienteLogoUplo
 
   const handleRemove = () => {
     onChange(null)
+    onAssetChange?.(null)
   }
 
   if (value) {

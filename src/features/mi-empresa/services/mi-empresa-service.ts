@@ -3,6 +3,8 @@ import { ActionError } from '@/lib/server-actions';
 import { prisma } from '@/lib/prisma';
 import { clearEan13Codes, resetProductsForEan13 } from '@/lib/ean13-reset';
 import { requireFeature, requireTenant } from '@/lib/services/tenant-scope';
+import { cloudinaryAssetSchema } from '@/lib/upload/cloudinary-asset';
+import { replaceOwnerAsset } from '@/lib/upload/cloudinary-admin';
 import type { AuthenticatedUser } from '@/lib/auth-middleware';
 
 export const miEmpresaUpsertSchema = z.object({
@@ -15,6 +17,7 @@ export const miEmpresaUpsertSchema = z.object({
   nit: z.string().min(1, 'NIT debe tener al menos 1 carácter').optional().nullable(),
   licenciaOperacion: z.string().min(1, 'Licencia debe tener al menos 1 carácter').optional().nullable(),
   logoUrl: z.string().url('URL del logo inválida').optional().nullable(),
+  logoAsset: cloudinaryAssetSchema.optional().nullable(),
   cuentaBancariaId: z.string().min(1, 'ID de cuenta inválido').optional().nullable(),
   usaCodigoEan13: z.boolean().optional(),
   confirmReset: z.boolean().optional(),
@@ -124,6 +127,16 @@ export async function upsertMiEmpresa({
       },
     },
   });
+
+  if (data.logoAsset) {
+    await replaceOwnerAsset({
+      tenantId,
+      ownerType: 'miEmpresa',
+      ownerId: tenantId,
+      slot: 'logo',
+      asset: data.logoAsset,
+    });
+  }
 
   return {
     data: miEmpresa,

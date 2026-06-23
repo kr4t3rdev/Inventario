@@ -12,6 +12,7 @@ import { revalidatePath } from 'next/cache';
 import { withAction, ActionError } from '@/lib/server-actions';
 import { prisma } from '@/lib/prisma';
 import { requireTenant } from '@/lib/services/tenant-scope';
+import { replaceOwnerAsset } from '@/lib/upload/cloudinary-admin';
 import { vendorSchema, vendorUpdateSchema } from './schemas';
 import { getNextVendorCode, initializeVendorCodeSequence, generateVendorEan13 } from '@/lib/vendor-code-utils';
 import type { VendorInput, VendorUpdateInput } from './schemas';
@@ -109,13 +110,23 @@ export const createVendorAction = withAction(async (input: VendorInput, user: Au
     select: VENDOR_SELECT,
   });
 
+  if (parsed.logoAsset) {
+    await replaceOwnerAsset({
+      tenantId,
+      ownerType: 'vendor',
+      ownerId: vendor.vendorId,
+      slot: 'logo',
+      asset: parsed.logoAsset,
+    });
+  }
+
   revalidatePath('/busy/vendor');
   return enrichVendor(vendor);
 });
 
 export const updateVendorAction = withAction(async (input: VendorUpdateInput, user: AuthenticatedUser) => {
   const parsed = vendorUpdateSchema.parse(input);
-  const { vendorId, ...data } = parsed;
+  const { vendorId, logoAsset, ...data } = parsed;
   const tenantId = requireTenant(user);
 
   const existing = await prisma.vendor.findFirst({
@@ -137,6 +148,16 @@ export const updateVendorAction = withAction(async (input: VendorUpdateInput, us
     },
     select: VENDOR_SELECT,
   });
+
+  if (logoAsset) {
+    await replaceOwnerAsset({
+      tenantId,
+      ownerType: 'vendor',
+      ownerId: vendor.vendorId,
+      slot: 'logo',
+      asset: logoAsset,
+    });
+  }
 
   revalidatePath('/busy/vendor');
   return enrichVendor(vendor);

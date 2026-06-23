@@ -7,6 +7,12 @@ import fs from 'fs'
 import path from 'path'
 import crypto from 'crypto'
 import { v2 as cloudinary } from 'cloudinary'
+import {
+  assertContratoAttachmentAsset,
+  assertContratoVersionFile,
+  contratoArchivoCreateSchema,
+} from './contrato-archivo-schema'
+import { recordOwnerAsset } from '@/lib/upload/cloudinary-admin'
 
 const contratoSchema = z.object({
   tipo: z.string().min(1, 'El tipo de contrato es requerido'),
@@ -334,6 +340,7 @@ export async function createContratoVersionHandler(req: NextRequest, { params }:
     const file = formData.get('file') as File | null
     const cambios = formData.get('cambios') as string
     if (!file) return NextResponse.json({ error: 'No file provided' }, { status: 400 })
+    assertContratoVersionFile(file)
     const latestVersion = await prisma.contratoVersion.findFirst({
       where: { contratoId: id },
       orderBy: { numeroVersion: 'desc' },
@@ -379,9 +386,30 @@ export async function createContratoVersionHandler(req: NextRequest, { params }:
         generadoPor: user.userId,
       },
     })
+    await recordOwnerAsset({
+      tenantId,
+      ownerType: 'contratoArchivo',
+      ownerId: version.versionId,
+      slot: 'contract-version',
+      asset: {
+        uploadKey: 'contratos.version',
+        secureUrl: fileUrl,
+        publicId: uploadResult.public_id,
+        resourceType: 'raw',
+        bytes: file.size,
+        mimeType: file.type,
+        originalFilename: file.name,
+      },
+    })
     return NextResponse.json(version)
   } catch (error) {
     console.error('Error creating version:', error)
+    if (error instanceof z.ZodError) {
+      return NextResponse.json({ error: 'Invalid data', details: error.flatten() }, { status: 400 })
+    }
+    if (error instanceof Error && /no permitido|máximo permitido/i.test(error.message)) {
+      return NextResponse.json({ error: error.message }, { status: 400 })
+    }
     return NextResponse.json({ error: 'Error creating version' }, { status: 500 })
   }
 }
@@ -512,7 +540,15 @@ export async function createContratoArchivoHandler(request: NextRequest, { param
     if ('status' in authResultUser) return authResultUser as Response
     const user = authResultUser.user
     const { id } = await params
-    const body = await request.json()
+    const body = contratoArchivoCreateSchema.parse(await request.json())
+    const tenantId = user.tenantId ?? 'sin-tenant'
+    assertContratoAttachmentAsset({
+      tenantId,
+      publicId: body.cloudinaryPublicId,
+      secureUrl: body.rutaArchivo,
+      mimeType: body.mimeType,
+      bytes: body.bytes,
+    })
     const archivo = await prisma.contratoArchivo.create({
       data: {
         contratoId: id,
@@ -524,9 +560,30 @@ export async function createContratoArchivoHandler(request: NextRequest, { param
       },
       include: { generador: { select: { userId: true, name: true, email: true } } },
     })
+    await recordOwnerAsset({
+      tenantId,
+      ownerType: 'contratoArchivo',
+      ownerId: archivo.archivoId,
+      slot: 'attachment',
+      asset: {
+        uploadKey: 'contratos.attachment',
+        secureUrl: body.rutaArchivo,
+        publicId: body.cloudinaryPublicId,
+        resourceType: 'raw',
+        bytes: body.bytes,
+        mimeType: body.mimeType,
+        originalFilename: body.nombreArchivo,
+      },
+    })
     return NextResponse.json(archivo)
   } catch (error) {
     console.error('Error al crear archivo:', error)
+    if (error instanceof z.ZodError) {
+      return NextResponse.json({ error: 'Invalid data', details: error.flatten() }, { status: 400 })
+    }
+    if (error instanceof Error && /Cloudinary|tenant|no permitido|máximo permitido/i.test(error.message)) {
+      return NextResponse.json({ error: error.message }, { status: 400 })
+    }
     return NextResponse.json({ error: 'Error al crear archivo', details: String(error) }, { status: 500 })
   }
 }

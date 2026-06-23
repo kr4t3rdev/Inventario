@@ -54,7 +54,15 @@ describe('ProductPhotoUpload', () => {
   })
 
   it('llama a uploadToCloudinary con folder "productos" al subir un archivo válido', async () => {
-    mockUploadToCloudinary.mockResolvedValue('https://res.cloudinary.com/test/uploaded.jpg')
+    mockUploadToCloudinary.mockResolvedValue({
+      uploadKey: 'productos.photo',
+      secureUrl: 'https://res.cloudinary.com/test/uploaded.jpg',
+      publicId: 'tenant-1/productos/product-1',
+      resourceType: 'image',
+      bytes: 4,
+      mimeType: 'image/jpeg',
+      originalFilename: 'test',
+    })
     const onPhotosChange = vi.fn()
 
     const { container } = render(
@@ -72,7 +80,9 @@ describe('ProductPhotoUpload', () => {
     fireEvent.change(input)
 
     await waitFor(() => {
-      expect(mockUploadToCloudinary).toHaveBeenCalledWith(file, 'productos')
+      expect(mockUploadToCloudinary).toHaveBeenCalledWith(file, {
+        uploadKey: 'productos.photo',
+      })
     })
 
     await waitFor(() => {

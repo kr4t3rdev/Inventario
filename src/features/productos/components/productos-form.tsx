@@ -65,6 +65,7 @@ import {
 } from "./productos-form-schema";
 import { PulseSkeleton } from "./pulse-skeleton";
 import { ProductosPriceListsSection } from "./productos-price-lists";
+import type { CloudinaryAssetUploadResult } from "@/lib/upload/cloudinary-asset";
 
 function getFirstFormErrorMessage(
 	errors: FieldErrors<ProductosFormValues>,
@@ -177,6 +178,7 @@ export function ProductoForm({
 		});
 		return initialMap;
 	});
+	const [photoAssets, setPhotoAssets] = useState<CloudinaryAssetUploadResult[]>([]);
 
 	const form = useForm<ProductosFormValues>({
 		resolver: zodResolver(buildProductosSchema(usaEan13)),
@@ -295,6 +297,10 @@ export function ProductoForm({
 					stock: data.stock,
 					stockMinimo: data.stockMinimo ?? 0,
 					fotos: data.fotos ?? [],
+					...(JSON.stringify(data.fotos ?? []) !==
+					JSON.stringify(initialData.fotos ?? [])
+						? { photoAssets }
+						: {}),
 					categoriaId: data.categoriaId,
 					subcategoriaId: data.subcategoriaId || null,
 					unidadId: data.unidadId,
@@ -343,6 +349,7 @@ export function ProductoForm({
 					stock: data.stock,
 					stockMinimo: data.stockMinimo ?? 0,
 					fotos: data.fotos ?? [],
+					photoAssets,
 					categoriaId: data.categoriaId,
 					subcategoriaId: data.subcategoriaId || null,
 					unidadId: data.unidadId,
@@ -746,6 +753,8 @@ export function ProductoForm({
 													<ProductPhotoUpload
 														photos={field.value || []}
 														onPhotosChange={field.onChange}
+														assets={photoAssets}
+														onAssetsChange={setPhotoAssets}
 														maxPhotos={1}
 													/>
 												</FormControl>

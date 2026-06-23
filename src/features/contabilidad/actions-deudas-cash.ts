@@ -10,6 +10,8 @@ import { withAction, ActionError } from '@/lib/server-actions'
 import { requireFeature, requireTenant } from '@/lib/services/tenant-scope'
 import { AuditLogService } from '@/lib/services/audit-log-service'
 import { withPeriodValidation } from '@/lib/services/with-period-validation'
+import { cloudinaryAssetSchema } from '@/lib/upload/cloudinary-asset'
+import { recordOwnerAsset } from '@/lib/upload/cloudinary-admin'
 import { calcularSaldoPendienteDeuda, calcularTotalDeudaConInteres, normalizarEstadoDeudaCash } from '@/lib/utils/deuda-cash'
 import type { AuthenticatedUser } from '@/lib/auth-middleware'
 import { AccountingCashOperationsService } from '@/features/contabilidad/services/accounting-cash-operations-service'
@@ -25,6 +27,7 @@ const createSchema = z.object({
   fechaVencimiento: z.string().optional(),
   observaciones: z.string().optional(),
   comprobanteUrl: z.string().optional(),
+  comprobanteAsset: cloudinaryAssetSchema.optional().nullable(),
   cuentaBancariaId: z.string().min(1, 'La cuenta bancaria es requerida'),
 })
 
@@ -80,10 +83,20 @@ export const createDeudaCashAction = withAction(withPeriodValidation(
   async (input: z.infer<typeof createSchema>, user: AuthenticatedUser) => {
     requireFeature(user, 'deudas-cash', 'crear deudas cash');
     const body = createSchema.parse(input)
+    const tenantId = requireTenant(user)
     const deuda = await AccountingCashOperationsMutationService.createCashDebt({
       input: body,
       user,
     })
+    if (body.comprobanteAsset) {
+      await recordOwnerAsset({
+        tenantId,
+        ownerType: 'deudaCash',
+        ownerId: deuda.id,
+        slot: 'receipt',
+        asset: body.comprobanteAsset,
+      })
+    }
     revalidatePath('/busy/contabilidad/deudas-cash')
     return deuda
   }

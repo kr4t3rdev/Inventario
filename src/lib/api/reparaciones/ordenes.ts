@@ -2,6 +2,8 @@ import prisma from '@/lib/prisma'
 import type { OrdenReparacion } from '@/app/models/model'
 import { getAuthenticatedContext } from '@/lib/api/client'
 import { ServerActionError } from '@/lib/api/errors'
+import { syncOwnerAssets } from '@/lib/upload/cloudinary-admin'
+import type { CloudinaryAssetInput } from '@/lib/upload/cloudinary-asset'
 
 const db = prisma as any
 
@@ -87,7 +89,8 @@ export async function getOrdenesReparacion(params?: {
 }
 
 export async function getOrdenReparacion(id: string): Promise<OrdenReparacion> {
-  await getAuthenticatedContext()
+  const ctx = await getAuthenticatedContext()
+  const tenantId = requireTenant(ctx)
 
   try {
     const orden = await db.ordenReparacion.findUnique({
@@ -107,7 +110,40 @@ export async function getOrdenReparacion(id: string): Promise<OrdenReparacion> {
       throw new ServerActionError('getOrdenReparacion', 'GET', 404, 'Orden no encontrada')
     }
 
-    return orden as OrdenReparacion
+    const cloudinaryPhotoAssets = await db.cloudinaryAsset.findMany({
+      where: {
+        tenantId,
+        ownerType: 'reparacionOrden',
+        ownerId: id,
+        slot: 'photo',
+        status: 'active',
+      },
+      select: {
+        secureUrl: true,
+        publicId: true,
+        resourceType: true,
+        bytes: true,
+        mimeType: true,
+        originalFilename: true,
+        position: true,
+      },
+      orderBy: {
+        position: 'asc',
+      },
+    })
+
+    return {
+      ...orden,
+      cloudinaryPhotoAssets: cloudinaryPhotoAssets.map((asset: any) => ({
+        uploadKey: 'reparaciones.orden-photo',
+        secureUrl: asset.secureUrl,
+        publicId: asset.publicId,
+        resourceType: asset.resourceType,
+        bytes: asset.bytes ?? 0,
+        mimeType: asset.mimeType ?? 'application/octet-stream',
+        originalFilename: asset.originalFilename ?? asset.publicId,
+      })),
+    } as OrdenReparacion
   } catch (error) {
     if (error instanceof ServerActionError) throw error
     throw new ServerActionError(
@@ -120,7 +156,7 @@ export async function getOrdenReparacion(id: string): Promise<OrdenReparacion> {
 }
 
 export async function addOrdenReparacion(
-  data: Partial<OrdenReparacion> & { equipos?: any[] },
+  data: Partial<OrdenReparacion> & { equipos?: Array<Record<string, unknown>> },
 ): Promise<{ success: boolean; orden: any; recibo: any; message: string }> {
   const ctx = await getAuthenticatedContext()
   const tenantId = requireTenant(ctx)
@@ -136,6 +172,7 @@ export async function addOrdenReparacion(
         accesorios: (data as any).accesorios,
         problemaReportado: (data as any).problemaReportado,
         fotos: (data as any).fotos || [],
+        fotoAssets: [],
       }]
 
   const primaryEquipo = equiposInput[0]
@@ -189,6 +226,13 @@ export async function addOrdenReparacion(
             })),
           },
         },
+        include: {
+          equipos: {
+            select: {
+              id: true,
+            },
+          },
+        },
       })
 
       const equipoInfo = `${equipoTipo?.nombre || 'Equipo'} ${primaryEquipo.marca}${primaryEquipo.modelo ? ` ${primaryEquipo.modelo}` : ''}`
@@ -212,6 +256,27 @@ export async function addOrdenReparacion(
       return { orden: nuevaOrden, recibo }
     })
 
+    await Promise.all(
+      equiposInput.map((equipo: any, index: number) => {
+        const equipoCreado = resultado.orden.equipos[index]
+        const fotoAssets = Array.isArray(equipo.fotoAssets)
+          ? (equipo.fotoAssets as CloudinaryAssetInput[])
+          : []
+
+        if (!equipoCreado || fotoAssets.length === 0) {
+          return Promise.resolve()
+        }
+
+        return syncOwnerAssets({
+          tenantId,
+          ownerType: 'reparacionEquipo',
+          ownerId: equipoCreado.id,
+          slot: 'photo',
+          assets: fotoAssets,
+        })
+      })
+    )
+
     return { success: true, ...resultado, message: 'Orden creada exitosamente. Recibo generado.' }
   } catch (error) {
     if (error instanceof ServerActionError) throw error
@@ -228,9 +293,10 @@ export async function updateOrdenReparacion(
   id: string,
   data: any,
 ): Promise<OrdenReparacion> {
-  await getAuthenticatedContext()
+  const ctx = await getAuthenticatedContext()
+  const tenantId = requireTenant(ctx)
 
-  const { items, materiales, ...generalData } = data
+  const { items, materiales, fotoAssets, ...generalData } = data
 
   try {
     await db.$transaction(async (tx: any) => {
@@ -297,6 +363,16 @@ export async function updateOrdenReparacion(
 
     if (!orden) {
       throw new ServerActionError('updateOrdenReparacion', 'PUT', 404, 'Orden no encontrada')
+    }
+
+    if (Array.isArray(fotoAssets)) {
+      await syncOwnerAssets({
+        tenantId,
+        ownerType: 'reparacionOrden',
+        ownerId: id,
+        slot: 'photo',
+        assets: fotoAssets,
+      })
     }
 
     return orden as OrdenReparacion

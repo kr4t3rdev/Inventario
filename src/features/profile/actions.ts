@@ -7,6 +7,8 @@
 
 import { withAction, ActionError } from '@/lib/server-actions';
 import { prisma } from '@/lib/prisma';
+import { requireTenant } from '@/lib/services/tenant-scope';
+import { replaceOwnerAsset } from '@/lib/upload/cloudinary-admin';
 import { profileUpdateSchema } from './schemas';
 import type { ProfileUpdateInput } from './schemas';
 import type { AuthenticatedUser } from '@/lib/auth-middleware';
@@ -45,6 +47,7 @@ export const getProfileAction = withAction(async (_input: void, user: Authentica
  */
 export const updateProfileAction = withAction(async (input: ProfileUpdateInput, user: AuthenticatedUser) => {
   const parsed = profileUpdateSchema.parse(input);
+  const tenantId = requireTenant(user);
 
   const profile = await prisma.user.update({
     where: { userId: user.userId },
@@ -54,6 +57,16 @@ export const updateProfileAction = withAction(async (input: ProfileUpdateInput, 
     },
     select: PROFILE_SELECT,
   });
+
+  if (parsed.avatarAsset) {
+    await replaceOwnerAsset({
+      tenantId,
+      ownerType: 'user',
+      ownerId: user.userId,
+      slot: 'avatar',
+      asset: parsed.avatarAsset,
+    });
+  }
 
   return profile;
 });

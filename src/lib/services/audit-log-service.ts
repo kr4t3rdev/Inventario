@@ -18,7 +18,8 @@ export type AuditEntity =
   | "CUENTA_POR_PAGAR"
   | "CUENTA_POR_COBRAR"
   | "ESCENARIO_EXCHANGE"
-  | "REPORTE_PROGRAMADO";
+  | "REPORTE_PROGRAMADO"
+  | "CLOUDINARY_ASSET";
 
 export type AuditAction = 
   | "CREATE" 

@@ -41,6 +41,7 @@ import {
 } from "@/components/ui/alert-dialog";
 import { updateMiEmpresaSettings } from "../lib/client-mi-empresa";
 import { uploadToCloudinary } from "@/lib/upload/cloudinary-upload";
+import type { CloudinaryAssetUploadResult } from "@/lib/upload/cloudinary-asset";
 import type {
 	CuentaBancariaItem,
 	MiEmpresaFormValues as MiEmpresaFormValuesType,
@@ -138,6 +139,7 @@ export function MiEmpresaForm({
 	cuentas = [],
 }: MiEmpresaFormProps) {
 	const { user } = useAuth();
+	const [logoAsset, setLogoAsset] = useState<CloudinaryAssetUploadResult | null>(null);
 	const puedeEditar = user?.tenantRole === "manager" || user?.role === "admin";
 	const ean13Habilitado = user?.planFeatures?.["mi-empresa-ean13"] === true;
 	const [saving, setSaving] = useState(false);
@@ -235,7 +237,7 @@ export function MiEmpresaForm({
 	const onSubmit = async (values: MiEmpresaFormValuesType) => {
 		setSaving(true);
 		try {
-			const { data: saved, message } = await saveMiEmpresa(values);
+			const { data: saved, message } = await saveMiEmpresa({ ...values, logoAsset });
 			form.reset({
 				nombre: saved.nombre || "Mi Empresa",
 				propietario: saved.propietario || "",
@@ -559,8 +561,11 @@ export function MiEmpresaForm({
 																		});
 
 																		try {
-																			const url = await uploadToCloudinary(file, "empresa/logo");
-																			field.onChange(url);
+																			const asset = await uploadToCloudinary(file, {
+																				uploadKey: 'miEmpresa.logo',
+																			});
+																			field.onChange(asset.secureUrl);
+																			setLogoAsset(asset);
 																			sileo.success({
 																				title: "Logo subido correctamente",
 																			});
@@ -585,7 +590,10 @@ export function MiEmpresaForm({
 																		type="button"
 																		variant="destructive"
 																		size="icon"
-																		onClick={() => field.onChange("")}
+																			onClick={() => {
+																				field.onChange("");
+																				setLogoAsset(null);
+																			}}
 																		title="Eliminar logo"
 																	>
 																		<span className="sr-only">Eliminar</span>

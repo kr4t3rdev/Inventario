@@ -14,6 +14,7 @@ import { withPeriodValidation } from "@/lib/services/with-period-validation";
 import { upsertStockUbicacion } from "@/lib/services/stock-ubicacion-service";
 import { executeProductInstanceCreationWorkflow } from "@/lib/restock-utils";
 import { recordCostChange, CostChangeReason } from "@/lib/cost-history-utils";
+import { syncOwnerAssets } from "@/lib/upload/cloudinary-admin";
 import { PRODUCTO_SELECT, ProductoService } from "./services/producto-service";
 import {
 	productoSchema,
@@ -294,6 +295,15 @@ export const createProductoAction = withAction(
 			}
 
 			revalidatePath("/busy/products");
+			if (parsed.photoAssets) {
+				await syncOwnerAssets({
+					tenantId,
+					ownerType: "producto",
+					ownerId: resultado.producto.id,
+					slot: "photo",
+					assets: parsed.photoAssets,
+				});
+			}
 			return resultado.producto;
 		}
 
@@ -348,6 +358,16 @@ export const createProductoAction = withAction(
 					valor: parsed.stock,
 				});
 			}
+		}
+
+		if (parsed.photoAssets) {
+			await syncOwnerAssets({
+				tenantId,
+				ownerType: "producto",
+				ownerId: producto.id,
+				slot: "photo",
+				assets: parsed.photoAssets,
+			});
 		}
 
 		revalidatePath("/busy/products");
@@ -513,6 +533,16 @@ export const updateProductoAction = withAction(
 
 			return updated;
 		});
+
+		if (parsed.photoAssets) {
+			await syncOwnerAssets({
+				tenantId,
+				ownerType: "producto",
+				ownerId: producto.id,
+				slot: "photo",
+				assets: parsed.photoAssets,
+			});
+		}
 
 		revalidatePath("/busy/products");
 		return producto;

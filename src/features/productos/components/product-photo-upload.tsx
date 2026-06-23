@@ -5,11 +5,14 @@ import { useDropzone } from 'react-dropzone'
 import { Upload, X, Image as ImageIcon, Loader2 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { toast } from 'sonner'
+import type { CloudinaryAssetUploadResult } from '@/lib/upload/cloudinary-asset'
 import { uploadToCloudinary } from '@/lib/upload/cloudinary-upload'
 
 interface ProductPhotoUploadProps {
   photos: string[]
   onPhotosChange: (photos: string[]) => void
+  assets?: CloudinaryAssetUploadResult[]
+  onAssetsChange?: (assets: CloudinaryAssetUploadResult[]) => void
   maxPhotos?: number
   maxFileSize?: number // Tamaño máximo en bytes
 }
@@ -20,6 +23,8 @@ const DEFAULT_MAX_FILE_SIZE = 2 * 1024 * 1024 // 2MB en bytes
 export function ProductPhotoUpload({ 
   photos, 
   onPhotosChange, 
+  assets = [],
+  onAssetsChange,
   maxPhotos = DEFAULT_MAX_PHOTOS,
   maxFileSize = DEFAULT_MAX_FILE_SIZE 
 }: ProductPhotoUploadProps) {
@@ -37,6 +42,7 @@ export function ProductPhotoUpload({
     setUploading(true)
     
     const uploadedUrls: string[] = []
+    const uploadedAssets: CloudinaryAssetUploadResult[] = []
 
     for (const file of acceptedFiles) {
       try {
@@ -54,8 +60,11 @@ export function ProductPhotoUpload({
 
         // Upload a Cloudinary (signed upload directo del cliente)
         // El server antepone el tenantId al folder automaticamente.
-        const url = await uploadToCloudinary(file, 'productos')
-        uploadedUrls.push(url)
+        const asset = await uploadToCloudinary(file, {
+          uploadKey: 'productos.photo',
+        })
+        uploadedUrls.push(asset.secureUrl)
+        uploadedAssets.push(asset)
         
       } catch (error) {
         console.error('Upload error:', error)
@@ -67,13 +76,16 @@ export function ProductPhotoUpload({
     
     if (uploadedUrls.length > 0) {
       onPhotosChange([...photos, ...uploadedUrls])
+      onAssetsChange?.(uploadedAssets)
       toast.success(`${uploadedUrls.length} foto(s) subida(s) correctamente`)
     }
-  }, [photos, onPhotosChange, maxPhotos, maxFileSize])
+  }, [photos, onPhotosChange, onAssetsChange, maxPhotos, maxFileSize])
 
   const removePhoto = (indexToRemove: number) => {
+    const removedPhoto = photos[indexToRemove]
     const newPhotos = photos.filter((_, index) => index !== indexToRemove)
     onPhotosChange(newPhotos)
+    onAssetsChange?.(assets.filter((asset) => asset.secureUrl !== removedPhoto))
   }
 
   const { getRootProps, getInputProps, isDragActive } = useDropzone({ 

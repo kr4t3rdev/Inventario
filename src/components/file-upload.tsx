@@ -24,20 +24,16 @@ export function FileUpload({ contratoId, onUploadComplete }: FileUploadProps) {
     setUploading(true)
     setProgress(0)
     
-    // Process files one by one or all together.
-    // Current backend allows 1 file per POST to /api/upload.
-    // We will upload to /api/upload first, then create record in /api/contratos/[id]/archivos
-    
     let successCount = 0
     const totalFiles = acceptedFiles.length
 
     for (const file of acceptedFiles) {
       try {
-        const formData = new FormData()
-        formData.append('file', file)
-
         // 1. Upload file a Cloudinary (signed upload directo del cliente)
-        const fileUrl = await uploadToCloudinary(file, 'contratos/anexos')
+        const asset = await uploadToCloudinary(file, {
+          uploadKey: 'contratos.attachment',
+          entityId: contratoId,
+        })
 
         // 2. Link to contract
         const linkRes = await fetch(`/api/contratos/${contratoId}/archivos`, {
@@ -48,7 +44,10 @@ export function FileUpload({ contratoId, onUploadComplete }: FileUploadProps) {
           },
           body: JSON.stringify({
             tipo: 'ANEXO', // Default type
-            rutaArchivo: fileUrl,
+            rutaArchivo: asset.secureUrl,
+            cloudinaryPublicId: asset.publicId,
+            mimeType: asset.mimeType,
+            bytes: asset.bytes,
             nombreArchivo: file.name,
             versionId: null, // Optional
             generadoPor: 'USER', // This should be handled by backend from token actually

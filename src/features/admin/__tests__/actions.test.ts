@@ -7,8 +7,9 @@ vi.mock('@/lib/server-actions/get-current-user');
 vi.mock('next/cache', () => ({ revalidatePath: vi.fn() }));
 vi.mock('bcryptjs', () => ({ default: { hash: vi.fn().mockResolvedValue('hashed'), compare: vi.fn() } }));
 vi.mock('@/lib/email', () => ({ sendEmailVerificationLink: vi.fn() }));
-vi.mock('@/lib/prisma', () => ({
-  prisma: {
+vi.mock('@/lib/cloudinary', () => ({ destroyCloudinaryAsset: vi.fn() }));
+vi.mock('@/lib/prisma', () => {
+  const prismaMock = {
     $transaction: vi.fn((cb: any) => cb({
       tenant: { create: vi.fn().mockResolvedValue({ tenantId: 'tenant-new' }) },
       tenantMembership: { create: vi.fn().mockResolvedValue({ membershipId: 'mem-new' }) },
@@ -24,12 +25,20 @@ vi.mock('@/lib/prisma', () => ({
     tenantMembership: { create: vi.fn(), findFirst: vi.fn(), findUnique: vi.fn(), update: vi.fn(), findMany: vi.fn() },
     moneda: { upsert: vi.fn() },
     plan: { findMany: vi.fn(), findUnique: vi.fn(), create: vi.fn(), update: vi.fn(), delete: vi.fn() },
-    userSession: { count: vi.fn() },
+    userSession: { count: vi.fn(), findMany: vi.fn(), delete: vi.fn() },
+    cloudinaryAsset: { groupBy: vi.fn(), findMany: vi.fn(), update: vi.fn() },
     tenantLicense: { count: vi.fn(), create: vi.fn() },
-  },
-}));
+    auditLog: { create: vi.fn() },
+  };
+
+  return {
+    prisma: prismaMock,
+    default: prismaMock,
+  };
+});
 
 import { getCurrentUser } from '@/lib/server-actions/get-current-user';
+import { destroyCloudinaryAsset } from '@/lib/cloudinary';
 import { prisma } from '@/lib/prisma';
 import {
   getUsersAction, createUserAction, updateUserAction, deleteUserAction,
@@ -37,6 +46,7 @@ import {
   getGlobalUsersAction,
   getAdminTenantsAction, getAdminSystemHealthAction,
   getAdminPlanesAction, createAdminPlanAction, approveGlobalUserAction,
+  getCloudinaryAssetsAction, cleanupCloudinaryAssetsAction,
 } from '@/features/admin/actions';
 import { createTenantForUser } from '@/lib/services/tenant-factory';
 import type { AuthenticatedUser } from '@/lib/auth-middleware';
@@ -194,6 +204,127 @@ describe('Admin Server Actions', () => {
       if (r.success && r.data) {
         expect(Array.isArray(r.data)).toBe(true);
       }
+    });
+  });
+
+  describe('Cloudinary admin actions', () => {
+    it('lista assets y resume estados', async () => {
+      vi.mocked(getCurrentUser).mockResolvedValue(adminUser);
+      vi.mocked(prisma.cloudinaryAsset.groupBy).mockResolvedValue([
+        { status: 'active', _count: { status: 2 } },
+        { status: 'replaced', _count: { status: 3 } },
+      ] as any);
+      vi.mocked(prisma.cloudinaryAsset.findMany).mockResolvedValue([
+        { assetId: 'a1', publicId: 'tenant-1/productos/a1', status: 'replaced' },
+      ] as any);
+
+      const r = await getCloudinaryAssetsAction({ status: 'replaced', limit: 10 });
+      expect(r.success).toBe(true);
+      if (r.success && r.data) {
+        expect((r.data as any).summary.replaced).toBe(3);
+        expect(Array.isArray((r.data as any).assets)).toBe(true);
+      }
+      expect(prisma.cloudinaryAsset.findMany).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: expect.objectContaining({
+            status: 'replaced',
+          }),
+        })
+      );
+    });
+
+    it('aplica filtros finos por tenant, owner y slot', async () => {
+      vi.mocked(getCurrentUser).mockResolvedValue(adminUser);
+      vi.mocked(prisma.cloudinaryAsset.groupBy).mockResolvedValue([] as any);
+      vi.mocked(prisma.cloudinaryAsset.findMany).mockResolvedValue([] as any);
+
+      const r = await getCloudinaryAssetsAction({
+        status: 'active',
+        tenantId: 'tenant-1',
+        ownerType: 'producto',
+        ownerId: 'product-1',
+        slot: 'photo',
+        limit: 10,
+      });
+
+      expect(r.success).toBe(true);
+      expect(prisma.cloudinaryAsset.findMany).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: expect.objectContaining({
+            status: 'active',
+            tenantId: 'tenant-1',
+            ownerType: 'producto',
+            ownerId: 'product-1',
+            slot: 'photo',
+          }),
+        })
+      );
+    });
+
+    it('dry run de cleanup no elimina remoto', async () => {
+      vi.mocked(getCurrentUser).mockResolvedValue(adminUser);
+      vi.mocked(prisma.cloudinaryAsset.findMany).mockResolvedValue([
+        { assetId: 'a1', publicId: 'tenant-1/productos/a1', status: 'replaced', updatedAt: new Date(), createdAt: new Date() },
+      ] as any);
+
+      const r = await cleanupCloudinaryAssetsAction({ mode: 'stale', dryRun: true, olderThanDays: 0, limit: 10 });
+      expect(r.success).toBe(true);
+      expect(destroyCloudinaryAsset).not.toHaveBeenCalled();
+      expect(prisma.auditLog.create).toHaveBeenCalled();
+    });
+
+    it('cleanup remoto marca asset como deleted cuando Cloudinary responde ok', async () => {
+      vi.mocked(getCurrentUser).mockResolvedValue(adminUser);
+      vi.mocked(prisma.cloudinaryAsset.findMany).mockResolvedValue([
+        {
+          assetId: 'a1',
+          publicId: 'tenant-1/productos/a1',
+          resourceType: 'image',
+          status: 'replaced',
+          updatedAt: new Date(),
+          createdAt: new Date(),
+        },
+      ] as any);
+      vi.mocked(destroyCloudinaryAsset).mockResolvedValue({ result: 'ok' });
+      vi.mocked(prisma.cloudinaryAsset.update).mockResolvedValue({} as any);
+
+      const r = await cleanupCloudinaryAssetsAction({ mode: 'selected', assetIds: ['a1'], dryRun: false, limit: 10 });
+      expect(r.success).toBe(true);
+      expect(destroyCloudinaryAsset).toHaveBeenCalledWith({
+        publicId: 'tenant-1/productos/a1',
+        resourceType: 'image',
+      });
+      expect(prisma.cloudinaryAsset.update).toHaveBeenCalled();
+      expect(prisma.auditLog.create).toHaveBeenCalled();
+    });
+
+    it('cleanup stale respeta tenant, owner y slot', async () => {
+      vi.mocked(getCurrentUser).mockResolvedValue(adminUser);
+      vi.mocked(prisma.cloudinaryAsset.findMany).mockResolvedValue([] as any);
+
+      const r = await cleanupCloudinaryAssetsAction({
+        mode: 'stale',
+        dryRun: true,
+        olderThanDays: 30,
+        tenantId: 'tenant-1',
+        ownerType: 'producto',
+        ownerId: 'product-9',
+        slot: 'photo',
+        limit: 25,
+      });
+
+      expect(r.success).toBe(true);
+      expect(prisma.cloudinaryAsset.findMany).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: expect.objectContaining({
+            tenantId: 'tenant-1',
+            ownerType: 'producto',
+            ownerId: 'product-9',
+            slot: 'photo',
+            status: 'replaced',
+          }),
+        })
+      );
     });
   });
 

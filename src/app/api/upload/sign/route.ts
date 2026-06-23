@@ -11,24 +11,21 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server'
+import { z } from 'zod'
 import { getCurrentUser } from '@/lib/server-actions'
 import { generateUploadSignature } from '@/lib/cloudinary'
+import { ActionError } from '@/lib/server-actions/types'
+import { resolveUploadPolicy, type UploadKey } from '@/lib/upload/upload-policy'
 
-/**
- * @description Valida que el folder sea una ruta relativa segura.
- *  Rechaza path traversal, leading slashes y caracteres peligrosos.
- *
- * @param {string} folder - Folder relativo a validar
- * @returns {boolean} true si es válido
- */
-function isValidRelativeFolder(folder: string): boolean {
-  if (!folder || folder.trim() === '') return false
-  if (folder.startsWith('/') || folder.endsWith('/')) return false
-  if (folder.includes('..')) return false
-  if (folder.includes('//')) return false
-  // Solo permitir caracteres seguros: letras, números, guiones, underscores, slashes
-  return /^[a-zA-Z0-9_\-/]+$/.test(folder)
-}
+const uploadIntentSchema = z.object({
+  uploadKey: z.custom<UploadKey>((value) => typeof value === 'string' && value.length > 0, {
+    message: 'uploadKey is required',
+  }),
+  filename: z.string().min(1, 'filename is required'),
+  mimeType: z.string().min(1, 'mimeType is required'),
+  bytes: z.number().int().positive('bytes must be positive'),
+  entityId: z.string().min(1).optional(),
+})
 
 export async function POST(request: NextRequest) {
   try {
@@ -48,42 +45,38 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    // 2. Parsear request
-    const body = await request.json()
-    const { folder, publicId, resourceType = 'image' } = body as {
-      folder?: string
-      publicId?: string
-      resourceType?: string
-    }
+    // 2. Parsear request y resolver policy server-side
+    const body = uploadIntentSchema.parse(await request.json())
+    const policy = resolveUploadPolicy({
+      uploadKey: body.uploadKey,
+      user,
+      input: {
+        filename: body.filename,
+        mimeType: body.mimeType,
+        bytes: body.bytes,
+        entityId: body.entityId,
+      },
+    })
 
-    // 3. Validar folder relativo
-    if (!isValidRelativeFolder(folder ?? '')) {
-      return NextResponse.json(
-        { error: 'Invalid folder: must be a relative path (no leading/trailing slashes, no "..", alphanumeric with -_/ only)' },
-        { status: 400 }
-      )
-    }
-
-    // 4. Validar resourceType
-    if (resourceType !== 'image' && resourceType !== 'raw') {
-      return NextResponse.json(
-        { error: 'Invalid resourceType: must be "image" or "raw"' },
-        { status: 400 }
-      )
-    }
-
-    // 5. Construir folder completo prefijado con tenantId
-    const fullFolder = `${user.tenantId}/${folder}`
-
-    // 6. Generar firma
-    const signature = generateUploadSignature(
-      fullFolder,
-      publicId,
-      resourceType as 'image' | 'raw'
-    )
+    // 3. Generar firma
+    const signature = generateUploadSignature(policy)
 
     return NextResponse.json(signature)
   } catch (error) {
+    if (error instanceof z.ZodError) {
+      return NextResponse.json(
+        { error: error.issues[0]?.message || 'Invalid upload request' },
+        { status: 400 }
+      )
+    }
+
+    if (error instanceof ActionError) {
+      const status = error.code === 'FORBIDDEN' || error.code === 'FEATURE_NOT_AVAILABLE'
+        ? 403
+        : 400
+      return NextResponse.json({ error: error.message, code: error.code }, { status })
+    }
+
     console.error('Error generating upload signature:', error)
     return NextResponse.json(
       { error: 'Failed to generate upload signature' },

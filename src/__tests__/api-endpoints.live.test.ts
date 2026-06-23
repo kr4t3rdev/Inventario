@@ -185,8 +185,6 @@ const protectedGets: string[] = [
   '/api/sugerencias/ingresos-por-edades',
   // transferencias
   // unidades
-  // upload
-  '/api/upload',
   // vendors
   // venta-servicios
   // ventas
@@ -231,6 +229,7 @@ const protectedPosts: Array<{ path: string; body: unknown }> = [
   { path: '/api/reparaciones/ordenes', body: {} },
   { path: '/api/reparaciones/piezas', body: {} },
   { path: '/api/reparaciones/defectaciones', body: {} },
+  { path: '/api/upload/sign', body: {} },
 ]
 
 describe('Protección 401 – POST sin token', () => {

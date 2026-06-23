@@ -40,6 +40,7 @@ export interface MiEmpresaFormValues {
   nit?: string
   licenciaOperacion?: string
   logoUrl?: string
+  logoAsset?: unknown
   cuentaBancariaId?: string
   usaCodigoEan13?: boolean
 }
@@ -69,6 +70,7 @@ export function normalizeMiEmpresaFormValues(
     nit: trimOrNull(values.nit),
     licenciaOperacion: trimOrNull(values.licenciaOperacion),
     logoUrl: trimOrNull(values.logoUrl),
+    ...(values.logoAsset ? { logoAsset: values.logoAsset } : {}),
     cuentaBancariaId:
       !values.cuentaBancariaId || values.cuentaBancariaId === 'none'
         ? null

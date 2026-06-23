@@ -15,10 +15,14 @@ import { prisma } from "@/lib/prisma";
 import bcrypt from "bcryptjs";
 import { sendEmailVerificationLink } from "@/lib/email";
 import { getUserMetrics } from "@/lib/admin/userMetrics";
+import { destroyCloudinaryAsset } from "@/lib/cloudinary";
+import { AuditLogService } from "@/lib/services/audit-log-service";
 import {
 	createUserSchema,
 	updateUserSchema,
 	lockUnlockSchema,
+	cloudinaryAssetsQuerySchema,
+	cloudinaryCleanupSchema,
 	membershipActionSchema,
 	addTenantMembershipSchema,
 	createLicenciaSchema,
@@ -30,6 +34,8 @@ import {
 import type {
 	CreateUserInput,
 	UpdateUserInput,
+	CloudinaryAssetsQueryInput,
+	CloudinaryCleanupInput,
 	AddTenantMembershipInput,
 	LockUnlockInput,
 	MembershipActionInput,
@@ -594,6 +600,168 @@ export const deleteSessionAction = withAction(
 		});
 		revalidatePath("/admin");
 		return { success: true };
+	},
+);
+
+export const getCloudinaryAssetsAction = withAction(
+	async (input: CloudinaryAssetsQueryInput, user: AuthenticatedUser) => {
+		if (user.role !== "admin")
+			throw new ActionError("Acceso restringido", "FORBIDDEN");
+
+		const parsed = cloudinaryAssetsQuerySchema.parse(input ?? {});
+		const where = {
+			...(parsed.status !== "all" ? { status: parsed.status } : {}),
+			...(parsed.ownerType ? { ownerType: parsed.ownerType } : {}),
+			...(parsed.ownerId ? { ownerId: parsed.ownerId } : {}),
+			...(parsed.slot ? { slot: parsed.slot } : {}),
+			...(parsed.tenantId ? { tenantId: parsed.tenantId } : {}),
+		};
+
+		const [counts, assets] = await Promise.all([
+			prisma.cloudinaryAsset.groupBy({
+				by: ["status"],
+				_count: { status: true },
+			}),
+			prisma.cloudinaryAsset.findMany({
+				where,
+				orderBy: [{ updatedAt: "asc" }, { createdAt: "asc" }],
+				take: parsed.limit,
+			}),
+		]);
+
+		const summary = counts.reduce<Record<string, number>>((acc, item) => {
+			acc[item.status] = item._count.status;
+			return acc;
+		}, {});
+
+		return {
+			summary: {
+				active: summary.active ?? 0,
+				replaced: summary.replaced ?? 0,
+				deleted: summary.deleted ?? 0,
+			},
+			assets,
+		};
+	},
+);
+
+export const cleanupCloudinaryAssetsAction = withAction(
+	async (input: CloudinaryCleanupInput, user: AuthenticatedUser) => {
+		if (user.role !== "admin")
+			throw new ActionError("Acceso restringido", "FORBIDDEN");
+
+		const parsed = cloudinaryCleanupSchema.parse(input ?? {});
+		const cutoff = new Date(
+			Date.now() - parsed.olderThanDays * 24 * 60 * 60 * 1000,
+		);
+
+		const where =
+			parsed.mode === "selected"
+				? {
+						assetId: { in: parsed.assetIds },
+					}
+				: {
+						status: "replaced",
+						deletedAt: null,
+						updatedAt: { lte: cutoff },
+						...(parsed.ownerType ? { ownerType: parsed.ownerType } : {}),
+						...(parsed.ownerId ? { ownerId: parsed.ownerId } : {}),
+						...(parsed.slot ? { slot: parsed.slot } : {}),
+						...(parsed.tenantId ? { tenantId: parsed.tenantId } : {}),
+					};
+
+		const assets = await prisma.cloudinaryAsset.findMany({
+			where,
+			orderBy: [{ updatedAt: "asc" }, { createdAt: "asc" }],
+			take: parsed.limit,
+		});
+
+		if (parsed.mode === "selected" && assets.length === 0) {
+			throw new ActionError("No se encontraron assets para limpiar", "NOT_FOUND");
+		}
+
+		if (parsed.dryRun) {
+			await AuditLogService.log({
+				accion: "VALIDATE",
+				entidad: "CLOUDINARY_ASSET",
+				entidadId: parsed.mode === "selected" ? "selected" : "stale",
+				usuarioId: user.userId,
+				detalles: {
+					mode: parsed.mode,
+					matched: assets.length,
+					olderThanDays: parsed.olderThanDays,
+					tenantId: parsed.tenantId ?? null,
+					ownerType: parsed.ownerType ?? null,
+					ownerId: parsed.ownerId ?? null,
+					slot: parsed.slot ?? null,
+					assetIds: parsed.assetIds,
+				},
+			});
+			return {
+				dryRun: true,
+				matched: assets.length,
+				assets,
+			};
+		}
+
+		let deleted = 0;
+		const failed: Array<{ assetId: string; publicId: string; reason: string }> = [];
+
+		for (const asset of assets) {
+			try {
+				const result = await destroyCloudinaryAsset({
+					publicId: asset.publicId,
+					resourceType:
+						asset.resourceType === "raw" ? "raw" : "image",
+				});
+
+				if (result.result !== "ok" && result.result !== "not found") {
+					throw new Error(`Cloudinary respondió ${result.result}`);
+				}
+
+				await prisma.cloudinaryAsset.update({
+					where: { publicId: asset.publicId },
+					data: {
+						status: "deleted",
+						deletedAt: new Date(),
+					},
+				});
+				deleted += 1;
+			} catch (error) {
+				failed.push({
+					assetId: asset.assetId,
+					publicId: asset.publicId,
+					reason: error instanceof Error ? error.message : "Error desconocido",
+				});
+			}
+		}
+
+		revalidatePath("/admin");
+		await AuditLogService.log({
+			accion: "EXECUTE",
+			entidad: "CLOUDINARY_ASSET",
+			entidadId: parsed.mode === "selected" ? "selected" : "stale",
+			usuarioId: user.userId,
+			detalles: {
+				mode: parsed.mode,
+				matched: assets.length,
+				deleted,
+				failed,
+				olderThanDays: parsed.olderThanDays,
+				tenantId: parsed.tenantId ?? null,
+				ownerType: parsed.ownerType ?? null,
+				ownerId: parsed.ownerId ?? null,
+				slot: parsed.slot ?? null,
+				assetIds: parsed.assetIds,
+				publicIds: assets.map((asset) => asset.publicId),
+			},
+		});
+		return {
+			dryRun: false,
+			matched: assets.length,
+			deleted,
+			failed,
+		};
 	},
 );
 

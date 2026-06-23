@@ -1,7 +1,7 @@
 /**
  * @description Tests unitarios para POST /api/upload/sign.
- * Verifica autenticación, validación de folder/resourceType, prefijado de tenantId,
- * y generación de firma.
+ * Verifica autenticación, validación de upload intents/policies,
+ * permisos por módulo y generación de firma.
  */
 
 import { describe, it, expect, beforeEach, vi } from 'vitest'
@@ -50,9 +50,17 @@ describe('POST /api/upload/sign', () => {
       apiKey: 'test-key',
       cloudName: 'test-cloud',
       folder: 'tenant-test-1/productos',
+      uploadKey: 'productos.photo',
+      resourceType: 'image',
+      publicId: 'tenant-test-1/productos/product-photo',
     })
 
-    const request = createRequest({ folder: 'productos' })
+    const request = createRequest({
+      uploadKey: 'productos.photo',
+      filename: 'photo.jpg',
+      mimeType: 'image/jpeg',
+      bytes: 1200,
+    })
     const response = await POST(request)
     const data = await response.json()
 
@@ -60,39 +68,23 @@ describe('POST /api/upload/sign', () => {
     expect(data.signature).toBe('test-signature')
     expect(data.folder).toBe('tenant-test-1/productos')
     expect(generateUploadSignature).toHaveBeenCalledWith(
-      'tenant-test-1/productos',
-      undefined,
-      'image'
-    )
-  })
-
-  it('soporta subcarpetas en el folder relativo', async () => {
-    vi.mocked(getCurrentUser).mockResolvedValue(mockUser)
-    vi.mocked(generateUploadSignature).mockReturnValue({
-      signature: 'test-signature',
-      timestamp: 1234567890,
-      apiKey: 'test-key',
-      cloudName: 'test-cloud',
-      folder: 'tenant-test-1/clientes/cli-1/logo',
-    })
-
-    const request = createRequest({ folder: 'clientes/cli-1/logo' })
-    const response = await POST(request)
-    const data = await response.json()
-
-    expect(response.status).toBe(200)
-    expect(data.folder).toBe('tenant-test-1/clientes/cli-1/logo')
-    expect(generateUploadSignature).toHaveBeenCalledWith(
-      'tenant-test-1/clientes/cli-1/logo',
-      undefined,
-      'image'
+      expect.objectContaining({
+        uploadKey: 'productos.photo',
+        folder: 'tenant-test-1/productos',
+        resourceType: 'image',
+      })
     )
   })
 
   it('retorna 401 cuando no hay usuario autenticado', async () => {
     vi.mocked(getCurrentUser).mockResolvedValue(null)
 
-    const request = createRequest({ folder: 'productos' })
+    const request = createRequest({
+      uploadKey: 'productos.photo',
+      filename: 'photo.jpg',
+      mimeType: 'image/jpeg',
+      bytes: 1200,
+    })
     const response = await POST(request)
 
     expect(response.status).toBe(401)
@@ -106,74 +98,106 @@ describe('POST /api/upload/sign', () => {
       tenantId: undefined,
     })
 
-    const request = createRequest({ folder: 'productos' })
-    const response = await POST(request)
-
-    expect(response.status).toBe(400)
-  })
-
-  it('retorna 400 cuando el folder está vacío', async () => {
-    vi.mocked(getCurrentUser).mockResolvedValue(mockUser)
-
-    const request = createRequest({ folder: '' })
-    const response = await POST(request)
-
-    expect(response.status).toBe(400)
-  })
-
-  it('retorna 400 cuando el folder empieza con slash', async () => {
-    vi.mocked(getCurrentUser).mockResolvedValue(mockUser)
-
-    const request = createRequest({ folder: '/productos' })
-    const response = await POST(request)
-
-    expect(response.status).toBe(400)
-  })
-
-  it('retorna 400 cuando el folder tiene path traversal', async () => {
-    vi.mocked(getCurrentUser).mockResolvedValue(mockUser)
-
-    const request = createRequest({ folder: '../other-tenant/productos' })
-    const response = await POST(request)
-
-    expect(response.status).toBe(400)
-  })
-
-  it('retorna 400 cuando resourceType es inválido', async () => {
-    vi.mocked(getCurrentUser).mockResolvedValue(mockUser)
-
     const request = createRequest({
-      folder: 'productos',
-      resourceType: 'video',
+      uploadKey: 'productos.photo',
+      filename: 'photo.jpg',
+      mimeType: 'image/jpeg',
+      bytes: 1200,
     })
     const response = await POST(request)
 
     expect(response.status).toBe(400)
-    const data = await response.json()
-    expect(data.error).toContain('resourceType')
   })
 
-  it('retorna 200 con resourceType raw', async () => {
+  it('retorna 400 cuando falta el uploadKey', async () => {
+    vi.mocked(getCurrentUser).mockResolvedValue(mockUser)
+
+    const request = createRequest({
+      filename: 'photo.jpg',
+      mimeType: 'image/jpeg',
+      bytes: 1200,
+    })
+    const response = await POST(request)
+
+    expect(response.status).toBe(400)
+  })
+
+  it('retorna 400 cuando el mimeType no es válido para la policy', async () => {
+    vi.mocked(getCurrentUser).mockResolvedValue(mockUser)
+
+    const request = createRequest({
+      uploadKey: 'productos.photo',
+      filename: 'photo.pdf',
+      mimeType: 'application/pdf',
+      bytes: 1200,
+    })
+    const response = await POST(request)
+
+    expect(response.status).toBe(400)
+  })
+
+  it('retorna 400 cuando bytes exceden el máximo permitido', async () => {
+    vi.mocked(getCurrentUser).mockResolvedValue(mockUser)
+
+    const request = createRequest({
+      uploadKey: 'productos.photo',
+      filename: 'big.jpg',
+      mimeType: 'image/jpeg',
+      bytes: 10 * 1024 * 1024,
+    })
+    const response = await POST(request)
+
+    expect(response.status).toBe(400)
+  })
+
+  it('retorna 403 cuando el usuario no tiene el feature requerido', async () => {
+    vi.mocked(getCurrentUser).mockResolvedValue({
+      ...mockUser,
+      role: 'regularUser',
+      planFeatures: { contratos: false },
+    })
+
+    const request = createRequest({
+      uploadKey: 'contratos.attachment',
+      filename: 'contract.pdf',
+      mimeType: 'application/pdf',
+      bytes: 10_000,
+    })
+    const response = await POST(request)
+
+    expect(response.status).toBe(403)
+    const data = await response.json()
+    expect(data.error).toBeDefined()
+  })
+
+  it('retorna 200 con contratos.attachment y resourceType raw', async () => {
     vi.mocked(getCurrentUser).mockResolvedValue(mockUser)
     vi.mocked(generateUploadSignature).mockReturnValue({
       signature: 'test-signature',
       timestamp: 1234567890,
       apiKey: 'test-key',
       cloudName: 'test-cloud',
-      folder: 'tenant-test-1/contratos',
+      folder: 'tenant-test-1/contratos/anexos',
+      uploadKey: 'contratos.attachment',
+      resourceType: 'raw',
+      publicId: 'tenant-test-1/contratos/anexos/contract-file',
     })
 
     const request = createRequest({
-      folder: 'contratos',
-      resourceType: 'raw',
+      uploadKey: 'contratos.attachment',
+      filename: 'contract.pdf',
+      mimeType: 'application/pdf',
+      bytes: 100_000,
     })
     const response = await POST(request)
 
     expect(response.status).toBe(200)
     expect(generateUploadSignature).toHaveBeenCalledWith(
-      'tenant-test-1/contratos',
-      undefined,
-      'raw'
+      expect.objectContaining({
+        uploadKey: 'contratos.attachment',
+        folder: 'tenant-test-1/contratos/anexos',
+        resourceType: 'raw',
+      })
     )
   })
 
@@ -183,7 +207,12 @@ describe('POST /api/upload/sign', () => {
       throw new Error('Unexpected error')
     })
 
-    const request = createRequest({ folder: 'productos' })
+    const request = createRequest({
+      uploadKey: 'productos.photo',
+      filename: 'photo.jpg',
+      mimeType: 'image/jpeg',
+      bytes: 1200,
+    })
     const response = await POST(request)
 
     expect(response.status).toBe(500)

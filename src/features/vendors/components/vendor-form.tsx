@@ -16,6 +16,7 @@ import { vendorSchema } from "@/features/vendors/schemas";
 import type { VendorInput } from "@/features/vendors/schemas";
 import { createVendorAction, updateVendorAction } from "@/features/vendors/actions";
 import { VendorLogoUpload } from "./vendor-logo-upload";
+import type { CloudinaryAssetUploadResult } from "@/lib/upload/cloudinary-asset";
 
 interface VendorFormProps {
     initialData?: {
@@ -44,6 +45,7 @@ export function VendorForm({initialData}: VendorFormProps) {
     const router = useRouter()
     const [isLoading, setIsLoading] = useState(false)
     const [copiedField, setCopiedField] = useState<string | null>(null)
+    const [logoAsset, setLogoAsset] = useState<CloudinaryAssetUploadResult | null>(null)
 
     const copyToClipboard = (text: string, field: string) => {
         navigator.clipboard.writeText(text)
@@ -78,6 +80,7 @@ export function VendorForm({initialData}: VendorFormProps) {
                     cuentaCUP: data.cuentaCUP,
                     cuentaUSD: data.cuentaUSD,
                     logo: data.logo ?? null,
+                    logoAsset,
                 })
                 if (!result.success) {
                     throw new Error(result.error?.message || 'Error al actualizar el proveedor')
@@ -92,6 +95,7 @@ export function VendorForm({initialData}: VendorFormProps) {
                     cuentaCUP: data.cuentaCUP,
                     cuentaUSD: data.cuentaUSD,
                     logo: data.logo ?? null,
+                    logoAsset,
                 })
                 if (!result.success) {
                     throw new Error(result.error?.message || 'Error al crear el proveedor')
@@ -333,6 +337,7 @@ export function VendorForm({initialData}: VendorFormProps) {
                                                 <VendorLogoUpload
                                                     value={field.value}
                                                     onChange={field.onChange}
+                                                    onAssetChange={setLogoAsset}
                                                     disabled={isLoading}
                                                 />
                                             </FormControl>

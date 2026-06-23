@@ -616,6 +616,28 @@ model User {
   reviewPrompts            ReviewPrompt[]
 }
 
+model CloudinaryAsset {
+  assetId           String   @id @default(cuid())
+  tenantId          String
+  ownerType         String
+  ownerId           String
+  slot              String
+  position          Int?
+  resourceType      String
+  publicId          String   @unique
+  secureUrl         String
+  bytes             Int?
+  mimeType          String?
+  originalFilename  String?
+  status            String   @default("active")
+  deletedAt         DateTime?
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  @@index([tenantId, ownerType, ownerId, slot])
+  @@index([tenantId, status])
+}
+
 model Plan {
   planId         String          @id @default(cuid())
   nombre         String

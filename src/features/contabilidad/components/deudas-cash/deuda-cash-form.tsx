@@ -15,6 +15,7 @@ import { Badge } from "@/components/ui/badge"
 import { createDeudaCashAction } from "@/features/contabilidad/actions-deudas-cash"
 import { ImageIcon, Loader2, TrendingUp, Upload, X } from "lucide-react"
 import { toast } from "sonner"
+import type { CloudinaryAssetUploadResult } from "@/lib/upload/cloudinary-asset"
 import { uploadToCloudinary } from "@/lib/upload/cloudinary-upload"
 import { calcularTotalDeudaConInteres } from "@/lib/utils/deuda-cash"
 
@@ -123,6 +124,7 @@ interface DeudaCashFormProps {
 export function DeudaCashForm({ open, onOpenChange, proveedores = [], cuentasBancarias = [], onSuccess }: DeudaCashFormProps) {
   const [isLoading, setIsLoading] = useState(false)
   const [comprobante, setComprobante] = useState<File | null>(null)
+  const [comprobanteAsset, setComprobanteAsset] = useState<CloudinaryAssetUploadResult | null>(null)
   const [comprobantePreview, setComprobantePreview] = useState<string | null>(null)
   const [uploadingImg, setUploadingImg] = useState(false)
   const fileInputRef = useRef<HTMLInputElement>(null)
@@ -144,6 +146,7 @@ export function DeudaCashForm({ open, onOpenChange, proveedores = [], cuentasBan
 
   const clearComprobante = () => {
     setComprobante(null)
+    setComprobanteAsset(null)
     setComprobantePreview(null)
     if (fileInputRef.current) fileInputRef.current.value = ''
   }
@@ -168,13 +171,16 @@ export function DeudaCashForm({ open, onOpenChange, proveedores = [], cuentasBan
   const onSubmit = async (data: DeudaFormValues) => {
     try {
       let comprobanteUrl: string | undefined
+      let uploadedAsset: CloudinaryAssetUploadResult | null = comprobanteAsset
 
       if (comprobante) {
         setUploadingImg(true)
-        comprobanteUrl = await uploadToCloudinary(
-          comprobante,
-          'contabilidad/deudas-cash/comprobantes'
-        )
+        const asset = await uploadToCloudinary(comprobante, {
+          uploadKey: 'deudasCash.receipt',
+        })
+        comprobanteUrl = asset.secureUrl
+        uploadedAsset = asset
+        setComprobanteAsset(asset)
         setUploadingImg(false)
       }
 
@@ -186,6 +192,7 @@ export function DeudaCashForm({ open, onOpenChange, proveedores = [], cuentasBan
         fechaVencimiento: data.fechaVencimiento || undefined,
         observaciones: data.observaciones || undefined,
         comprobanteUrl,
+        comprobanteAsset: uploadedAsset,
         cuentaBancariaId: data.cuentaBancariaId,
       })
 
