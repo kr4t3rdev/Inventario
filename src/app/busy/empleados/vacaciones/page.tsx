@@ -1,18 +1,21 @@
 /**
  * @description Página de gestión de vacaciones de empleados.
  * Gateada por la feature `vacaciones` del plan (solo Empresarial).
- * Si el usuario no tiene la feature, redirige a /busy/empleados.
+ * Si el usuario no tiene el feature, redirige a /busy/empleados.
+ * Admin global bypasses el check de plan (consistente con requireFeature).
  *
- * @returns {Promise<JSX.Element>} Vista de vacaciones o redirect.
+ * @returns {Promise<ReactElement>} Vista de vacaciones o redirect.
  */
 import { redirect } from "next/navigation"
 import { getCurrentUser } from "@/lib/server-actions"
 import { VacacionesClient } from "./vacaciones-client"
+import type { ReactElement } from "react"
 
-export default async function VacacionesPage(): Promise<JSX.Element> {
+export default async function VacacionesPage(): Promise<ReactElement> {
   const user = await getCurrentUser()
 
-  if (user?.planFeatures?.["vacaciones"] !== true) {
+  const isAdmin = user?.role === "admin"
+  if (!isAdmin && user?.planFeatures?.["vacaciones"] !== true) {
     redirect("/busy/empleados")
   }
 

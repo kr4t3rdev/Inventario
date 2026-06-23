@@ -1,9 +1,15 @@
 import { getEmpleadosAction } from '@/features/empleados/actions'
-import { getPagoSalariosAction } from '@/features/pago-salario/actions'
-import { EmpleadosNominaContent } from '@/features/empleados/components'
+import { EmpleadosListContent } from '@/features/empleados/components/empleados-list-content'
+import { getCurrentUser } from '@/lib/server-actions'
 
 /**
- * @description Página principal de empleados y nómina en Server Component.
+ * @description Página principal de empleados en Server Component.
+ *
+ * El feature `empleados` está disponible desde el plan Básico. Esta
+ * página NO depende del feature `nomina` (Fix A del spec). El
+ * historial de pagos vive en la subruta `/busy/empleados/nomina`,
+ * que tiene su propio redirect cuando el feature no está disponible.
+ *
  * @returns {Promise<JSX.Element>} Página de empleados con datos precargados.
  */
 
@@ -14,24 +20,16 @@ export const metadata = {
 export const dynamic = 'force-dynamic'
 
 export default async function EmpleadosPage() {
-  const [empleadosResult, pagosResult] = await Promise.all([
-    getEmpleadosAction(),
-    getPagoSalariosAction(),
-  ])
+  const user = await getCurrentUser()
+  const hasNomina = user?.planFeatures?.['nomina'] === true
 
-  const initialEmpleados = empleadosResult.success ? empleadosResult.data ?? [] : []
-  const initialPagos = pagosResult.success ? pagosResult.data ?? [] : []
+  const result = await getEmpleadosAction()
+  const initialEmpleados = result.success ? result.data ?? [] : []
 
   return (
-    <EmpleadosNominaContent
-  // @ts-expect-error
-      initialEmpleados={
-      initialEmpleados
-      }
-  // @ts-expect-error
-      initialPagos={
-      initialPagos
-      }
+    <EmpleadosListContent
+      initialEmpleados={initialEmpleados}
+      hasNomina={hasNomina}
     />
   )
 }

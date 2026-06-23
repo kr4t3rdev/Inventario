@@ -2,12 +2,25 @@ export interface Empleado {
 	empleadoId: string;
 	nombre: string;
 	apellido: string;
-	telefono?: string;
+	/** Puede ser null en la BD (campo opcional) */
+	telefono?: string | null;
 	cargo: string;
 	salarioBases: number;
 	bonificaciones?: number;
 	deducciones?: number;
 	horasExtras?: number;
+	createdAt: Date;
+	updatedAt: Date;
+}
+
+export interface Vendor {
+	vendorId: string;
+	nombre: string;
+	contacto?: string | null;
+	email?: string | null;
+	telefono?: string | null;
+	direccion?: string | null;
+	notas?: string | null;
 	createdAt: Date;
 	updatedAt: Date;
 }

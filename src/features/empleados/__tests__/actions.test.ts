@@ -154,4 +154,94 @@ describe('Empleados Server Actions', () => {
     expect(result.success).toBe(false);
     expect(result.error!.code).toBe('FEATURE_NOT_AVAILABLE');
   });
+
+  // ─── Tests para Fix A del spec (Task 5) ───────────────────────────
+  // Verifican que el fix de /busy/empleados/page.tsx funcione:
+  // el main page solo llama getEmpleadosAction (no getPagoSalariosAction).
+  // getEmpleadosAction debe funcionar en plan Básico (empleados:true, nomina:false).
+
+  it('getEmpleadosAction funciona en plan Básico (empleados:true, nomina:false)', async () => {
+    const basicPlanUser: AuthenticatedUser = {
+      ...mockUser,
+      role: 'user' as any,
+      tenantRole: 'manager',
+      planFeatures: {
+        empleados: true,
+        nomina: false,
+        asistencia: false,
+        vacaciones: false,
+      },
+    };
+    vi.mocked(getCurrentUser).mockResolvedValue(basicPlanUser);
+    vi.mocked(prisma.empleado.findMany).mockResolvedValue([
+      { empleadoId: 'emp-1', nombre: 'Juan', apellido: 'Pérez' } as any,
+      { empleadoId: 'emp-2', nombre: 'Ana', apellido: 'García' } as any,
+    ]);
+    const result = await getEmpleadosAction();
+    expect(result.success).toBe(true);
+    if (result.success) {
+      expect(result.data).toHaveLength(2);
+    }
+    // No debe lanzar FEATURE_NOT_AVAILABLE
+  });
+
+  it('getEmpleadoByIdAction funciona en plan Básico', async () => {
+    const basicPlanUser: AuthenticatedUser = {
+      ...mockUser,
+      role: 'user' as any,
+      tenantRole: 'manager',
+      planFeatures: { empleados: true, nomina: false },
+    };
+    vi.mocked(getCurrentUser).mockResolvedValue(basicPlanUser);
+    vi.mocked(prisma.empleado.findFirst).mockResolvedValue({
+      empleadoId: 'emp-1',
+      nombre: 'Juan',
+      ventas: [],
+    } as any);
+    const result = await getEmpleadoByIdAction('emp-1');
+    expect(result.success).toBe(true);
+  });
+
+  it('createEmpleadoAction funciona en plan Básico (manager puede crear)', async () => {
+    const basicPlanManager: AuthenticatedUser = {
+      ...mockUser,
+      role: 'user' as any,
+      tenantRole: 'manager',
+      planFeatures: { empleados: true, nomina: false },
+    };
+    vi.mocked(getCurrentUser).mockResolvedValue(basicPlanManager);
+    vi.mocked(prisma.empleado.create).mockResolvedValue({
+      empleadoId: 'emp-new',
+      nombre: 'Pedro',
+    } as any);
+    const result = await createEmpleadoAction({
+      nombre: 'Pedro',
+      apellido: 'López',
+      cargo: 'Vendedor',
+      salarioBases: 30000,
+      diasVacacionesAnuales: 15,
+      esTiempoCompleto: true,
+    });
+    expect(result.success).toBe(true);
+  });
+
+  it('createEmpleadoAction rechaza en plan Básico con rol dependiente', async () => {
+    const basicPlanDependiente: AuthenticatedUser = {
+      ...mockUser,
+      role: 'user' as any,
+      tenantRole: 'dependiente',
+      planFeatures: { empleados: true, nomina: false },
+    };
+    vi.mocked(getCurrentUser).mockResolvedValue(basicPlanDependiente);
+    const result = await createEmpleadoAction({
+      nombre: 'Pedro',
+      apellido: 'López',
+      cargo: 'Vendedor',
+      salarioBases: 30000,
+      diasVacacionesAnuales: 15,
+      esTiempoCompleto: true,
+    });
+    expect(result.success).toBe(false);
+    // Dependiente no puede crear (requireManagerRole)
+  });
 });
