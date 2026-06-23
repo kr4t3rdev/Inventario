@@ -669,6 +669,16 @@ Authorization: Bearer <accessToken>
 - `tasaCambio` (opcional)
 - `observaciones` (opcional)
 
+### `GET /api/mobile/v1/accounting/cash-loans/:id/comprobante`
+
+**Headers**
+
+```http
+Authorization: Bearer <accessToken>
+```
+
+Descarga el comprobante PDF del préstamo cash con el mismo identificador de comprobante usado por web.
+
 ### `GET /api/mobile/v1/accounting/cash-loans/stats`
 
 **Headers**
