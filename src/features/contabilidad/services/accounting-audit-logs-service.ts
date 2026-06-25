@@ -1,5 +1,6 @@
 import { ActionError } from '@/lib/server-actions';
 import { AuditLogService } from '@/lib/services/audit-log-service';
+import { hasTenantPermission, type TenantRole } from '@/lib/permissions';
 import type { AuthenticatedUser } from '@/lib/auth-middleware';
 
 /**
@@ -15,7 +16,16 @@ export const AccountingAuditLogsService = {
     limit?: number;
     offset?: number;
   }) {
-    if (params.user.role !== 'admin') {
+    const isGlobalAdmin = params.user.role === 'admin';
+    const isTenantPrivileged = params.user.tenantRole && 
+      (params.user.tenantRole === 'manager' || params.user.tenantRole === 'economico');
+
+    if (!isGlobalAdmin && !isTenantPrivileged) {
+      throw new ActionError('Prohibido', 'FORBIDDEN');
+    }
+
+    const AUDIT_LOG_PATH = '/api/contabilidad/logs';
+    if (!isGlobalAdmin && !hasTenantPermission(params.user.tenantRole as TenantRole, AUDIT_LOG_PATH, 'GET')) {
       throw new ActionError('Prohibido', 'FORBIDDEN');
     }
 
