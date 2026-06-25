@@ -14,6 +14,7 @@ import { getCurrentUser } from "@/lib/server-actions"
 import { getEmpleadosAction } from "@/features/empleados/actions"
 import { getPagoSalariosAction } from "@/features/pago-salario/actions"
 import { NominaEmpleadoSection } from "@/features/empleados/components"
+import { shouldHideSeparateEmployeeModules } from "@/lib/plan-access"
 import type { ReactElement } from "react"
 
 export default async function NominaPage(): Promise<ReactElement> {
@@ -21,7 +22,8 @@ export default async function NominaPage(): Promise<ReactElement> {
 
   // Admin global bypasses plan check (consistente con requireFeature)
   const isAdmin = user?.role === "admin"
-  if (!isAdmin && user?.planFeatures?.["nomina"] !== true) {
+  const hideSeparateModules = shouldHideSeparateEmployeeModules(user)
+  if (!isAdmin && (hideSeparateModules || user?.planFeatures?.["nomina"] !== true)) {
     redirect("/busy/empleados")
   }
 

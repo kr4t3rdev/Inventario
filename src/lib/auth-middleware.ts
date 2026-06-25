@@ -26,6 +26,7 @@ export interface AuthenticatedUser {
   tenantRole?: TenantRole
   planLimits?: PlanLimits
   planFeatures?: Record<string, boolean>
+  planName?: string
 }
 
 /**
@@ -38,7 +39,7 @@ export interface AuthenticatedUser {
 export async function resolveTenantContext(
   userId: string,
   headerTenantId: string | null,
-): Promise<{ tenantId: string; tenantRole: TenantRole; planLimits?: PlanLimits; planFeatures?: Record<string, boolean>; licenseExpiresAt?: Date } | null> {
+): Promise<{ tenantId: string; tenantRole: TenantRole; planLimits?: PlanLimits; planFeatures?: Record<string, boolean>; planName?: string; licenseExpiresAt?: Date } | null> {
   try {
     const membership = headerTenantId
       ? await prisma.tenantMembership.findUnique({
@@ -58,6 +59,13 @@ export async function resolveTenantContext(
         tenantId: membership.tenantId,
         activa: true,
         expiracion: { gt: new Date() },
+      },
+      include: {
+        plan: {
+          select: {
+            nombre: true,
+          },
+        },
       },
       orderBy: { inicio: 'desc' },
     });
@@ -80,6 +88,7 @@ export async function resolveTenantContext(
       tenantRole: normalizeTenantRole(membership.tenantRole) ?? 'dependiente',
       planLimits,
       planFeatures,
+      planName: license?.plan?.nombre,
       licenseExpiresAt: license?.expiracion,
     };
   } catch (error) {

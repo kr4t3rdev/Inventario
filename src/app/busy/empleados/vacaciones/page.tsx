@@ -8,6 +8,7 @@
  */
 import { redirect } from "next/navigation"
 import { getCurrentUser } from "@/lib/server-actions"
+import { shouldHideSeparateEmployeeModules } from "@/lib/plan-access"
 import { VacacionesClient } from "./vacaciones-client"
 import type { ReactElement } from "react"
 
@@ -15,7 +16,8 @@ export default async function VacacionesPage(): Promise<ReactElement> {
   const user = await getCurrentUser()
 
   const isAdmin = user?.role === "admin"
-  if (!isAdmin && user?.planFeatures?.["vacaciones"] !== true) {
+  const hideSeparateModules = shouldHideSeparateEmployeeModules(user)
+  if (!isAdmin && (hideSeparateModules || user?.planFeatures?.["vacaciones"] !== true)) {
     redirect("/busy/empleados")
   }
 

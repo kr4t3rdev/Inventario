@@ -30,6 +30,7 @@ describe('/api/auth/me', () => {
         isActive: true,
         tenantId: 'tenant-1',
         tenantRole: 'manager',
+        planName: 'Básico',
       },
     } as never);
     vi.mocked(AuthService.me).mockResolvedValue({
@@ -37,6 +38,7 @@ describe('/api/auth/me', () => {
         userId: 'user-1',
         email: 'test@example.com',
         tenantId: 'tenant-1',
+        planName: 'Básico',
       },
     } as never);
 
@@ -50,8 +52,9 @@ describe('/api/auth/me', () => {
     expect(response.status).toBe(200);
     expect(data.userId).toBe('user-1');
     expect(data.tenantId).toBe('tenant-1');
+    expect(data.planName).toBe('Básico');
     expect(AuthService.me).toHaveBeenCalledWith(
-      expect.objectContaining({ userId: 'user-1', tenantId: 'tenant-1' }),
+      expect.objectContaining({ userId: 'user-1', tenantId: 'tenant-1', planName: 'Básico' }),
     );
   });
 

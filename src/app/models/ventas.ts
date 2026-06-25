@@ -251,6 +251,7 @@ export interface Usuario {
 	onboardingStatus?: string | null;
 	onboardingType?: string | null;
 	planFeatures?: Record<string, boolean> | null;
+	planName?: string | null;
 
 	lastModifiedBy: string | null;
 	loginAttempts: number;

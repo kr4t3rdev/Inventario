@@ -118,6 +118,7 @@ function toPublicUser(
       tenantId: tenantContext.tenantId,
       tenantRole: tenantContext.tenantRole,
       planFeatures: tenantContext.planFeatures,
+      planName: tenantContext.planName,
     }),
   };
 }
@@ -420,6 +421,7 @@ export const AuthService = {
         tenantId: user.tenantId,
         tenantRole: user.tenantRole,
         planFeatures: user.planFeatures,
+        planName: user.planName,
       },
     };
   },

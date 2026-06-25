@@ -2,8 +2,8 @@
  * @description Test del Server Component /busy/empleados.
  *              Verifica que la página:
  *              1) Llama getEmpleadosAction
- *              2) NO llama getPagoSalariosAction (Fix A del spec)
- *              3) Renderiza correctamente con lista de empleados
+ *              2) Llama getPagoSalariosAction para integrar pagos en la vista principal
+ *              3) Renderiza correctamente con empleados + pagos
  */
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 
@@ -27,10 +27,16 @@ vi.mock('@/lib/server-actions', async (importOriginal) => {
 })
 
 // Mock del componente cliente para que el test no dependa de framer-motion
-vi.mock('@/features/empleados/components/empleados-list-content', () => ({
-  EmpleadosListContent: ({ initialEmpleados }: { initialEmpleados: unknown[] }) => (
-    <div data-testid="empleados-list-content">
-      {initialEmpleados.length} empleados
+vi.mock('@/features/empleados/components', () => ({
+  NominaEmpleadoSection: ({
+    initialEmpleados,
+    initialPagos,
+  }: {
+    initialEmpleados: unknown[]
+    initialPagos: unknown[]
+  }) => (
+    <div data-testid="nomina-empleado-section">
+      {initialEmpleados.length} empleados / {initialPagos.length} pagos
     </div>
   ),
 }))
@@ -52,7 +58,10 @@ describe('/busy/empleados page (Server Component)', () => {
         { empleadoId: 'e2', nombre: 'Ana', apellido: 'García', cargo: 'Cajera' },
       ],
     })
-    getPagoSalariosActionMock.mockResolvedValue({ success: true, data: [] })
+    getPagoSalariosActionMock.mockResolvedValue({
+      success: true,
+      data: [{ pgId: 'p1', empleadoId: 'e1', salario: 100, periodo: '2026-06' }],
+    })
   })
 
   it('llama getEmpleadosAction una vez', async () => {
@@ -60,9 +69,9 @@ describe('/busy/empleados page (Server Component)', () => {
     expect(getEmpleadosActionMock).toHaveBeenCalledTimes(1)
   })
 
-  it('NO llama getPagoSalariosAction (Fix A)', async () => {
+  it('llama getPagoSalariosAction para integrar pagos en Gestión de Empleados', async () => {
     await EmpleadosPage()
-    expect(getPagoSalariosActionMock).not.toHaveBeenCalled()
+    expect(getPagoSalariosActionMock).toHaveBeenCalledTimes(1)
   })
 
   it('renderiza la lista de empleados correctamente', async () => {
@@ -70,24 +79,22 @@ describe('/busy/empleados page (Server Component)', () => {
     expect(element).toBeDefined()
   })
 
-  it('pasa los empleados al EmpleadosListContent', async () => {
+  it('pasa empleados y pagos al componente integrado', async () => {
     const result = await EmpleadosPage()
-    // Buscamos el prop en el árbol renderizado
     const flat = JSON.stringify(result)
     expect(flat).toContain('Juan')
     expect(flat).toContain('Ana')
+    expect(flat).toContain('p1')
   })
 
   it('funciona aunque el plan no tenga nomina (caso Básico)', async () => {
-    // getPagoSalariosAction NO debe ser llamada nunca,
-    // independientemente de las features del plan
     getCurrentUserMock.mockResolvedValue({
       userId: 'u-1',
       role: 'user',
       planFeatures: { empleados: true, nomina: false, asistencia: false, vacaciones: false },
     })
     await expect(EmpleadosPage()).resolves.toBeDefined()
-    expect(getPagoSalariosActionMock).not.toHaveBeenCalled()
+    expect(getPagoSalariosActionMock).toHaveBeenCalledTimes(1)
   })
 
   it('funciona aunque getEmpleadosAction falle (degraded mode)', async () => {

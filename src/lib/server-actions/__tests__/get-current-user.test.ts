@@ -105,12 +105,19 @@ describe("getCurrentUser", () => {
       tenantRole: "manager",
       isActive: true,
     });
-    mocks.prisma.tenantLicense.findFirst.mockResolvedValue(null);
+    mocks.prisma.tenantLicense.findFirst.mockResolvedValue({
+      plan: { nombre: 'Básico' },
+      features: { empleados: true, nomina: true },
+      maxUsuarios: 3,
+      maxAlmacenes: 2,
+      maxProductos: 500,
+    });
 
     const user = await getCurrentUser();
     expect(user).not.toBeNull();
     expect(user!.tenantId).toBe("tenant-X");
     expect(user!.tenantRole).toBe("manager");
+    expect(user!.planName).toBe('Básico');
     expect(mocks.prisma.tenantMembership.findUnique).toHaveBeenCalled();
     expect(mocks.prisma.tenantMembership.findFirst).not.toHaveBeenCalled();
   });

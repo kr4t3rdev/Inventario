@@ -7,6 +7,8 @@ import { describe, it, expect, vi, beforeEach } from 'vitest'
 
 const getCurrentUserMock = vi.fn()
 const redirectMock = vi.fn()
+const getEmpleadosActionMock = vi.fn()
+const getPagoSalariosActionMock = vi.fn()
 
 vi.mock('@/lib/server-actions', async (importOriginal) => {
   const actual = await importOriginal<typeof import('@/lib/server-actions')>()
@@ -16,6 +18,14 @@ vi.mock('@/lib/server-actions', async (importOriginal) => {
   }
 })
 
+vi.mock('@/features/empleados/actions', () => ({
+  getEmpleadosAction: (...args: unknown[]) => getEmpleadosActionMock(...args),
+}))
+
+vi.mock('@/features/pago-salario/actions', () => ({
+  getPagoSalariosAction: (...args: unknown[]) => getPagoSalariosActionMock(...args),
+}))
+
 vi.mock('next/navigation', () => ({
   redirect: (url: string) => {
     redirectMock(url)
@@ -24,9 +34,10 @@ vi.mock('next/navigation', () => ({
   },
 }))
 
-// Mock del NominaClient para no depender de su implementación
-vi.mock('../nomina-client', () => ({
-  NominaClient: () => <div data-testid="nomina-client">NominaClient</div>,
+vi.mock('@/features/empleados/components', () => ({
+  NominaEmpleadoSection: () => (
+    <div data-testid="nomina-empleado-section">NominaEmpleadoSection</div>
+  ),
 }))
 
 import NominaPage from '../page'
@@ -34,6 +45,8 @@ import NominaPage from '../page'
 describe('/busy/empleados/nomina page (Server Component)', () => {
   beforeEach(() => {
     vi.clearAllMocks()
+    getEmpleadosActionMock.mockResolvedValue({ success: true, data: [] })
+    getPagoSalariosActionMock.mockResolvedValue({ success: true, data: [] })
   })
 
   it('redirige a /busy/empleados cuando el plan no tiene nomina', async () => {
@@ -65,6 +78,17 @@ describe('/busy/empleados/nomina page (Server Component)', () => {
     const result = await NominaPage()
     expect(result).toBeDefined()
     expect(redirectMock).not.toHaveBeenCalled()
+  })
+
+  it('redirige cuando el plan real es Básico aunque planFeatures.nomina siga true', async () => {
+    getCurrentUserMock.mockResolvedValue({
+      userId: 'u-1',
+      role: 'user',
+      planName: 'Básico',
+      planFeatures: { empleados: true, nomina: true, asistencia: true, vacaciones: true },
+    })
+    await expect(NominaPage()).rejects.toThrow('NEXT_REDIRECT:/busy/empleados')
+    expect(redirectMock).toHaveBeenCalledWith('/busy/empleados')
   })
 
   it('admin global puede ver nomina aunque planFeatures.nomina sea false', async () => {

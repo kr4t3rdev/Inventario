@@ -30,16 +30,16 @@ Chain strategy: pending
 
 ## Phase 2: Gestión de Empleados integrada
 
-- [ ] 2.1 Rehacer `src/app/busy/empleados/page.tsx` para cargar empleados + pagos requeridos por la card principal sin depender de un módulo sidebar de Nómina.
+- [x] 2.1 Rehacer `src/app/busy/empleados/page.tsx` para cargar empleados + pagos requeridos por la card principal sin depender de un módulo sidebar de Nómina.
 - [ ] 2.2 Extender `src/features/empleados/components/empleados-list-content.tsx` para incluir historial de pagos, tabs de nómina y botón de pago dentro de Gestión de Empleados.
-- [ ] 2.3 Reutilizar o absorber lógica de `src/features/empleados/components/nomina-empleado-section.tsx` y `historial-pagos.tsx` dentro del flujo principal de `/busy/empleados`.
+- [x] 2.3 Reutilizar o absorber lógica de `src/features/empleados/components/nomina-empleado-section.tsx` y `historial-pagos.tsx` dentro del flujo principal de `/busy/empleados`.
 - [ ] 2.4 Ajustar `src/features/empleados/components/empleado-card.tsx` para que la card del Básico muestre Editar, Eliminar y Pago según el alcance validado.
 
 ## Phase 3: Ocultar módulos separados
 
-- [ ] 3.1 Revisar `src/components/app-sidebar2.tsx` y/o registry de features para que Básico no vea entradas separadas de Nómina, Asistencia ni Vacaciones.
-- [ ] 3.2 Mantener `src/app/busy/empleados/nomina/page.tsx`, `asistencia/page.tsx` y `vacaciones/page.tsx` bloqueadas o redirigidas para Básico.
-- [ ] 3.3 Verificar que el usuario Básico solo entre por `/busy/empleados` y no reciba UI parcial desde rutas premium.
+- [x] 3.1 Revisar `src/components/app-sidebar2.tsx` y/o registry de features para que Básico no vea entradas separadas de Nómina, Asistencia ni Vacaciones.
+- [x] 3.2 Mantener `src/app/busy/empleados/nomina/page.tsx`, `asistencia/page.tsx` y `vacaciones/page.tsx` bloqueadas o redirigidas para Básico.
+- [x] 3.3 Verificar que el usuario Básico solo entre por `/busy/empleados` y no reciba UI parcial desde rutas premium.
 
 ## Phase 4: Actions y permisos
 
@@ -48,7 +48,7 @@ Chain strategy: pending
 
 ## Phase 5: Tests y verificación
 
-- [ ] 5.1 Actualizar tests de `src/app/busy/empleados/__tests__/page.test.tsx` para cubrir Básico con card completa dentro de Gestión de Empleados.
-- [ ] 5.2 Actualizar tests de `src/app/busy/empleados/nomina/__tests__/page.test.tsx` para confirmar que la subruta separada sigue fuera del Básico.
+- [x] 5.1 Actualizar tests de `src/app/busy/empleados/__tests__/page.test.tsx` para cubrir Básico con card completa dentro de Gestión de Empleados.
+- [x] 5.2 Actualizar tests de `src/app/busy/empleados/nomina/__tests__/page.test.tsx` para confirmar que la subruta separada sigue fuera del Básico.
 - [ ] 5.3 Extender `src/features/empleados/__tests__/actions.test.ts` y tests de card para cubrir crear/editar/eliminar/pagar desde el flujo integrado.
 - [ ] 5.4 Ejecutar `pnpm exec vitest run --config vitest.api.config.mjs src/app/busy/empleados/ src/features/empleados/` y corregir regresiones antes de aplicar.

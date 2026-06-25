@@ -90,6 +90,7 @@ describe('auth login route', () => {
     vi.mocked(prisma.tenantLicense.findFirst).mockResolvedValue({
       tenantLicenseId: 'license-1',
       tenantId: 'tenant-1',
+      plan: { nombre: 'Básico' },
       activa: true,
       inicio: new Date(),
       expiracion: new Date(Date.now() + 1000000),
@@ -114,6 +115,7 @@ describe('auth login route', () => {
     expect(data.token).toBe('access-token')
     expect(data.user.tenantId).toBe('tenant-1')
     expect(data.user.tenantRole).toBe('manager')
+    expect(data.user.planName).toBe('Básico')
     expect(prisma.user.update).toHaveBeenCalledWith(
       expect.objectContaining({
         where: { userId: 'u1' },

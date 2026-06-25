@@ -8,6 +8,7 @@
  */
 import { redirect } from "next/navigation"
 import { getCurrentUser } from "@/lib/server-actions"
+import { shouldHideSeparateEmployeeModules } from "@/lib/plan-access"
 import { AsistenciaClient } from "./asistencia-client"
 import type { ReactElement } from "react"
 
@@ -15,7 +16,8 @@ export default async function AsistenciaPage(): Promise<ReactElement> {
   const user = await getCurrentUser()
 
   const isAdmin = user?.role === "admin"
-  if (!isAdmin && user?.planFeatures?.["asistencia"] !== true) {
+  const hideSeparateModules = shouldHideSeparateEmployeeModules(user)
+  if (!isAdmin && (hideSeparateModules || user?.planFeatures?.["asistencia"] !== true)) {
     redirect("/busy/empleados")
   }
 

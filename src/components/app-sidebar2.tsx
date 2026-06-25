@@ -54,6 +54,7 @@ import Link from "next/link";
 import { useAuth } from "@/contexts/auth-context";
 import { useIsMounted } from "@/hooks/use-is-mounted";
 import { isTenantAdminRole, type TenantRole } from "@/lib/auth/roles";
+import { shouldHideSeparateEmployeeModules } from "@/lib/plan-access";
 import { cn } from "@/lib/utils";
 import { NavMain } from "./nav-main";
 import { NavUser } from "./nav-user";
@@ -651,6 +652,15 @@ export function AppSidebar2({
 	function canSeeSidebarItem(itemTitle: string): boolean {
 		// Admin global ve todo
 		if (user?.role === "admin") return true;
+
+		if (
+			(itemTitle === "Asistencia" ||
+				itemTitle === "Vacaciones" ||
+				itemTitle === "Nómina") &&
+			shouldHideSeparateEmployeeModules(user)
+		) {
+			return false;
+		}
 
 		// Verificar feature del plan
 		const featureKey = SIDEBAR_FEATURE_MAP[itemTitle];
