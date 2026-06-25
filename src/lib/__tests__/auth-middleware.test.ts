@@ -115,6 +115,79 @@ describe('authenticateUser', () => {
     expect(result.user).toEqual(mockUser)
   })
 
+  it('preserves planName and planFeatures from the resolved tenant context', async () => {
+    const mockToken = 'valid.jwt.token'
+
+    const mockRequest = new NextRequest(
+      new Request('http://localhost/api/test', {
+        headers: { authorization: `Bearer ${mockToken}` },
+      })
+    )
+
+    vi.mocked(jwt.verify).mockReturnValue({
+      userId: 'user-1',
+      email: 'test@example.com',
+      tenantId: 'tenant-basic',
+    } as any)
+
+    vi.mocked(prisma.userSession.findUnique).mockResolvedValue({
+      isActive: true,
+      expiresAt: new Date(Date.now() + 1000000),
+      userId: 'user-1',
+    } as any)
+
+    vi.mocked(prisma.user.findUnique).mockResolvedValue({
+      userId: 'user-1',
+      name: 'Test User',
+      email: 'test@example.com',
+      role: 'manager',
+      isActive: true,
+    } as any)
+
+    vi.mocked(prisma.tenantMembership.findUnique).mockResolvedValue({
+      tenantId: 'tenant-basic',
+      userId: 'user-1',
+      tenantRole: 'manager',
+      isActive: true,
+    } as any)
+
+    vi.mocked(prisma.tenantLicense.findFirst).mockResolvedValue({
+      maxUsuarios: 3,
+      maxAlmacenes: 2,
+      maxProductos: 500,
+      expiracion: new Date(Date.now() + 1000000),
+      features: {
+        empleados: true,
+        nomina: true,
+        asistencia: true,
+        vacaciones: true,
+      },
+      plan: {
+        nombre: 'Básico',
+      },
+    } as any)
+
+    const result = await authenticateUser(mockRequest)
+
+    if ('status' in result) {
+      throw new Error('Expected user object, got error response')
+    }
+
+    expect(result.user).toEqual(
+      expect.objectContaining({
+        tenantId: 'tenant-basic',
+        tenantRole: 'manager',
+        planName: 'Básico',
+        planFeatures: {
+          empleados: true,
+          nomina: true,
+          asistencia: true,
+          vacaciones: true,
+        },
+      }),
+    )
+  })
+
   it('should return error if session is inactive', async () => {
     const mockToken = 'valid.jwt.token'
 

@@ -261,6 +261,7 @@ export async function authenticateUser(
         tenantRole: tenantContext.tenantRole,
         planLimits: tenantContext.planLimits,
         planFeatures: tenantContext.planFeatures,
+        planName: tenantContext.planName,
       }),
     } as AuthenticatedUser
 
