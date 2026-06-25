@@ -367,6 +367,54 @@ export const FEATURE_REGISTRY: FeatureDef[] = [
 		description: "Panel principal con indicadores en tiempo real",
 		category: "config",
 	},
+	{
+		key: "upload-mi-empresa-logo",
+		label: "Upload logo empresa",
+		description: "Permite subir y reemplazar el logo principal de la empresa",
+		category: "config",
+	},
+	{
+		key: "upload-clientes-logo",
+		label: "Upload logos de clientes",
+		description: "Permite subir logos e imágenes de identidad para clientes",
+		category: "config",
+	},
+	{
+		key: "upload-vendors-logo",
+		label: "Upload logos de proveedores",
+		description: "Permite subir logos e imágenes de identidad para proveedores",
+		category: "config",
+	},
+	{
+		key: "upload-profile-avatar",
+		label: "Upload avatar de usuario",
+		description: "Permite subir avatares de perfil para usuarios del tenant",
+		category: "config",
+	},
+	{
+		key: "upload-deudas-cash-receipt",
+		label: "Upload comprobantes de deudas cash",
+		description: "Permite adjuntar comprobantes visuales en deudas cash",
+		category: "config",
+	},
+	{
+		key: "upload-productos-photo",
+		label: "Upload fotos de productos",
+		description: "Permite subir fotos y galerías de productos",
+		category: "config",
+	},
+	{
+		key: "upload-contratos-attachment",
+		label: "Upload anexos de contratos",
+		description: "Permite adjuntar archivos auxiliares a contratos",
+		category: "config",
+	},
+	{
+		key: "upload-contratos-version",
+		label: "Upload versiones de contratos",
+		description: "Permite subir nuevas versiones de documentos contractuales",
+		category: "config",
+	},
 
 	{
 		key: "multitenantmembership",

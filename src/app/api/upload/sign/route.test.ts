@@ -44,16 +44,6 @@ describe('POST /api/upload/sign', () => {
 
   it('retorna 200 con firma prefijada con tenantId para folder relativo', async () => {
     vi.mocked(getCurrentUser).mockResolvedValue(mockUser)
-    vi.mocked(generateUploadSignature).mockReturnValue({
-      signature: 'test-signature',
-      timestamp: 1234567890,
-      apiKey: 'test-key',
-      cloudName: 'test-cloud',
-      folder: 'tenant-test-1/productos',
-      uploadKey: 'productos.photo',
-      resourceType: 'image',
-      publicId: 'tenant-test-1/productos/product-photo',
-    })
 
     const request = createRequest({
       uploadKey: 'productos.photo',
@@ -65,15 +55,10 @@ describe('POST /api/upload/sign', () => {
     const data = await response.json()
 
     expect(response.status).toBe(200)
-    expect(data.signature).toBe('test-signature')
+    expect(data.provider).toBe('uploadthing')
     expect(data.folder).toBe('tenant-test-1/productos')
-    expect(generateUploadSignature).toHaveBeenCalledWith(
-      expect.objectContaining({
-        uploadKey: 'productos.photo',
-        folder: 'tenant-test-1/productos',
-        resourceType: 'image',
-      })
-    )
+    expect(data.uploadthingRoute).toBe('productPhoto')
+    expect(generateUploadSignature).not.toHaveBeenCalled()
   })
 
   it('retorna 401 cuando no hay usuario autenticado', async () => {
@@ -154,7 +139,10 @@ describe('POST /api/upload/sign', () => {
     vi.mocked(getCurrentUser).mockResolvedValue({
       ...mockUser,
       role: 'regularUser',
-      planFeatures: { contratos: false },
+      planFeatures: {
+        contratos: false,
+        'upload-contratos-attachment': false,
+      },
     })
 
     const request = createRequest({
@@ -170,18 +158,50 @@ describe('POST /api/upload/sign', () => {
     expect(data.error).toBeDefined()
   })
 
-  it('retorna 200 con contratos.attachment y resourceType raw', async () => {
-    vi.mocked(getCurrentUser).mockResolvedValue(mockUser)
+  it('retorna provider cloudinary para logo de empresa', async () => {
+    vi.mocked(getCurrentUser).mockResolvedValue({
+      ...mockUser,
+      role: 'regularUser',
+      tenantRole: 'manager',
+      planFeatures: {
+        'mi-empresa': true,
+        'upload-mi-empresa-logo': true,
+      },
+    })
     vi.mocked(generateUploadSignature).mockReturnValue({
-      signature: 'test-signature',
+      signature: 'logo-signature',
       timestamp: 1234567890,
       apiKey: 'test-key',
       cloudName: 'test-cloud',
-      folder: 'tenant-test-1/contratos/anexos',
-      uploadKey: 'contratos.attachment',
-      resourceType: 'raw',
-      publicId: 'tenant-test-1/contratos/anexos/contract-file',
+      folder: 'tenant-test-1/empresa/logo',
+      uploadKey: 'miEmpresa.logo',
+      resourceType: 'image',
+      publicId: 'tenant-test-1/empresa/logo/logo-file',
     })
+
+    const request = createRequest({
+      uploadKey: 'miEmpresa.logo',
+      filename: 'logo.png',
+      mimeType: 'image/png',
+      bytes: 100_000,
+    })
+    const response = await POST(request)
+    const data = await response.json()
+
+    expect(response.status).toBe(200)
+    expect(data.provider).toBe('cloudinary')
+    expect(data.folder).toBe('tenant-test-1/empresa/logo')
+    expect(generateUploadSignature).toHaveBeenCalledWith(
+      expect.objectContaining({
+        uploadKey: 'miEmpresa.logo',
+        folder: 'tenant-test-1/empresa/logo',
+        resourceType: 'image',
+      })
+    )
+  })
+
+  it('retorna intent de uploadthing para contratos.attachment', async () => {
+    vi.mocked(getCurrentUser).mockResolvedValue(mockUser)
 
     const request = createRequest({
       uploadKey: 'contratos.attachment',
@@ -190,27 +210,33 @@ describe('POST /api/upload/sign', () => {
       bytes: 100_000,
     })
     const response = await POST(request)
+    const data = await response.json()
 
     expect(response.status).toBe(200)
-    expect(generateUploadSignature).toHaveBeenCalledWith(
-      expect.objectContaining({
-        uploadKey: 'contratos.attachment',
-        folder: 'tenant-test-1/contratos/anexos',
-        resourceType: 'raw',
-      })
-    )
+    expect(data.provider).toBe('uploadthing')
+    expect(data.uploadthingRoute).toBe('contractAttachment')
+    expect(data.folder).toBe('tenant-test-1/contratos/anexos')
+    expect(generateUploadSignature).not.toHaveBeenCalled()
   })
 
   it('retorna 500 cuando generateUploadSignature falla', async () => {
-    vi.mocked(getCurrentUser).mockResolvedValue(mockUser)
+    vi.mocked(getCurrentUser).mockResolvedValue({
+      ...mockUser,
+      role: 'regularUser',
+      tenantRole: 'manager',
+      planFeatures: {
+        'mi-empresa': true,
+        'upload-mi-empresa-logo': true,
+      },
+    })
     vi.mocked(generateUploadSignature).mockImplementation(() => {
       throw new Error('Unexpected error')
     })
 
     const request = createRequest({
-      uploadKey: 'productos.photo',
-      filename: 'photo.jpg',
-      mimeType: 'image/jpeg',
+      uploadKey: 'miEmpresa.logo',
+      filename: 'logo.png',
+      mimeType: 'image/png',
       bytes: 1200,
     })
     const response = await POST(request)

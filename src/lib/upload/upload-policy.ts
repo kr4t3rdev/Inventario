@@ -27,8 +27,11 @@ export interface ResolveUploadPolicyInput {
   input: UploadIntentInput
 }
 
+export type UploadProvider = 'cloudinary' | 'uploadthing'
+
 export interface ResolvedUploadPolicy {
   uploadKey: UploadKey
+  provider: UploadProvider
   folder: string
   resourceType: 'image' | 'raw'
   maxBytes: number
@@ -98,6 +101,7 @@ export function resolveUploadPolicy({
   const tenantId = requireTenant(user)
   const { filename, mimeType, bytes, entityId } = input
 
+  let provider: UploadProvider = 'cloudinary'
   let folder = ''
   let resourceType: 'image' | 'raw' = 'image'
   let maxBytes = 2 * 1024 * 1024
@@ -105,21 +109,27 @@ export function resolveUploadPolicy({
 
   switch (uploadKey) {
     case 'productos.photo':
+      requireFeature(user, 'upload-productos-photo', 'subir fotos de productos')
       requireFeature(user, 'productos', 'subir fotos de productos')
+      provider = 'uploadthing'
       folder = `${tenantId}/productos`
       break
     case 'clientes.logo':
+      requireFeature(user, 'upload-clientes-logo', 'subir logos de clientes')
       requireFeature(user, 'clientes', 'subir logos de clientes')
       folder = `${tenantId}/clientes/logo`
       break
     case 'vendors.logo':
+      requireFeature(user, 'upload-vendors-logo', 'subir logos de proveedores')
       folder = `${tenantId}/vendors/logo`
       break
     case 'miEmpresa.logo':
+      requireFeature(user, 'upload-mi-empresa-logo', 'subir el logo de la empresa')
       requireManagerRole(user, 'actualizar el logo de la empresa')
       folder = `${tenantId}/empresa/logo`
       break
     case 'profile.avatar': {
+      requireFeature(user, 'upload-profile-avatar', 'subir avatares de usuario')
       const userId = ensureEntityId(entityId, 'Se requiere el userId para subir el avatar')
       if (userId !== user.userId && user.role !== 'admin') {
         throw new ActionError('No tienes permisos para subir un avatar para otro usuario', 'FORBIDDEN')
@@ -140,14 +150,18 @@ export function resolveUploadPolicy({
       break
     }
     case 'contratos.attachment':
+      requireFeature(user, 'upload-contratos-attachment', 'subir anexos de contratos')
       requireFeature(user, 'contratos', 'subir anexos de contratos')
+      provider = 'uploadthing'
       folder = `${tenantId}/contratos/anexos`
       resourceType = 'raw'
       maxBytes = 10 * 1024 * 1024
       allowedMimeTypes = CONTRACT_MIME_TYPES
       break
     case 'contratos.version': {
+      requireFeature(user, 'upload-contratos-version', 'subir versiones de contratos')
       requireFeature(user, 'contratos', 'subir versiones de contratos')
+      provider = 'uploadthing'
       const contratoId = ensureEntityId(entityId, 'Se requiere el id del contrato para subir versiones')
       folder = `${tenantId}/contratos/${contratoId}/versiones`
       resourceType = 'raw'
@@ -156,6 +170,7 @@ export function resolveUploadPolicy({
       break
     }
     case 'deudasCash.receipt':
+      requireFeature(user, 'upload-deudas-cash-receipt', 'subir comprobantes de deudas cash')
       folder = `${tenantId}/contabilidad/deudas-cash/comprobantes`
       maxBytes = 5 * 1024 * 1024
       break
@@ -167,6 +182,7 @@ export function resolveUploadPolicy({
 
   return {
     uploadKey,
+    provider,
     folder,
     resourceType,
     maxBytes,

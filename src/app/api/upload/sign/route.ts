@@ -58,10 +58,32 @@ export async function POST(request: NextRequest) {
       },
     })
 
-    // 3. Generar firma
+    if (policy.provider === 'uploadthing') {
+      const uploadthingRoute = policy.uploadKey === 'productos.photo'
+        ? 'productPhoto'
+        : policy.uploadKey === 'contratos.attachment'
+          ? 'contractAttachment'
+          : policy.uploadKey === 'contratos.version'
+            ? 'contractVersion'
+            : null
+
+      return NextResponse.json({
+        provider: policy.provider,
+        uploadKey: policy.uploadKey,
+        resourceType: policy.resourceType,
+        folder: policy.folder,
+        publicId: policy.publicId,
+        uploadthingRoute,
+      })
+    }
+
+    // 3. Generar firma Cloudinary
     const signature = generateUploadSignature(policy)
 
-    return NextResponse.json(signature)
+    return NextResponse.json({
+      provider: policy.provider,
+      ...signature,
+    })
   } catch (error) {
     if (error instanceof z.ZodError) {
       return NextResponse.json(

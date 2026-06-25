@@ -71,6 +71,14 @@ export const PLAN_BASICO_FEATURES: Record<string, boolean> = {
 	notificaciones: false,
 	configuracion: true,
 	dashboard: true,
+	"upload-mi-empresa-logo": true,
+	"upload-clientes-logo": false,
+	"upload-vendors-logo": false,
+	"upload-profile-avatar": false,
+	"upload-deudas-cash-receipt": false,
+	"upload-productos-photo": false,
+	"upload-contratos-attachment": false,
+	"upload-contratos-version": false,
 	// Infra
 	"backups-semanal": true,
 	"backups-diario": false,
@@ -97,6 +105,10 @@ export const PLAN_PROFESIONAL_FEATURES: Record<string, boolean> = {
 	"ventas-factura": true,
 	"backups-semanal": false,
 	"backups-diario": true,
+	"upload-clientes-logo": true,
+	"upload-vendors-logo": true,
+	"upload-profile-avatar": true,
+	"upload-deudas-cash-receipt": true,
 };
 
 /* ─── Plan 3: Empresarial — $100/mes ─── */
@@ -125,6 +137,9 @@ export const PLAN_EMPRESARIAL_FEATURES: Record<string, boolean> = {
 	// Backups cada hora + restauración point-in-time
 	"backups-diario": false,
 	"backups-tiempo-real": true,
+	"upload-productos-photo": true,
+	"upload-contratos-attachment": true,
+	"upload-contratos-version": true,
 	// NO incluidos
 	reparaciones: false,
 	"api-integraciones": false,
