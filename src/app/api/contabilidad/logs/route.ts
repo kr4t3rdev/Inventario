@@ -3,6 +3,8 @@ import { authenticateUser } from '@/lib/auth-middleware';
 import { ActionError } from '@/lib/server-actions';
 import { AccountingAuditLogsService } from '@/features/contabilidad/services/accounting-audit-logs-service';
 
+export const dynamic = 'force-dynamic';
+
 function parsePositiveInt(value: string | null, fallback: number): number {
   const parsed = Number.parseInt(value || '', 10);
   return Number.isFinite(parsed) && parsed >= 0 ? parsed : fallback;
