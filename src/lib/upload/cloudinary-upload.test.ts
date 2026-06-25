@@ -23,10 +23,11 @@ describe('uploadToCloudinary', () => {
             timestamp: 123456,
             apiKey: 'test-key',
             cloudName: 'test-cloud',
-            uploadKey: 'productos.photo',
+            provider: 'cloudinary',
+            uploadKey: 'clientes.logo',
             resourceType: 'image',
-            folder: 'tenant-123/productos',
-            publicId: 'tenant-123/productos/product-1',
+            folder: 'tenant-123/clientes/logo',
+            publicId: 'tenant-123/clientes/logo/cliente-1',
           })
         )
       )
@@ -35,7 +36,7 @@ describe('uploadToCloudinary', () => {
         new Response(
           JSON.stringify({
             secure_url: 'https://res.cloudinary.com/test/image.jpg',
-            public_id: 'tenant-123/productos/product-1',
+            public_id: 'tenant-123/clientes/logo/cliente-1',
             resource_type: 'image',
             bytes: 4,
             original_filename: 'test',
@@ -44,11 +45,11 @@ describe('uploadToCloudinary', () => {
       )
 
     const result = await uploadToCloudinary(mockFile, {
-      uploadKey: 'productos.photo',
+      uploadKey: 'clientes.logo',
     })
 
     expect(result.secureUrl).toBe('https://res.cloudinary.com/test/image.jpg')
-    expect(result.publicId).toBe('tenant-123/productos/product-1')
+    expect(result.publicId).toBe('tenant-123/clientes/logo/cliente-1')
     expect(global.fetch).toHaveBeenCalledTimes(2)
   })
 
@@ -64,6 +65,7 @@ describe('uploadToCloudinary', () => {
             timestamp: 123456,
             apiKey: 'test-key',
             cloudName: 'test-cloud',
+            provider: 'cloudinary',
             uploadKey: 'clientes.logo',
             resourceType: 'image',
             folder: 'tenant-123/clientes/logo',
@@ -106,10 +108,11 @@ describe('uploadToCloudinary', () => {
             timestamp: 123456,
             apiKey: 'test-key',
             cloudName: 'test-cloud',
-            uploadKey: 'productos.photo',
+            provider: 'cloudinary',
+            uploadKey: 'clientes.logo',
             resourceType: 'image',
-            folder: 'tenant-123/productos',
-            publicId: 'tenant-123/productos/product-1',
+            folder: 'tenant-123/clientes/logo',
+            publicId: 'tenant-123/clientes/logo/cliente-1',
           })
         )
       )
@@ -117,19 +120,19 @@ describe('uploadToCloudinary', () => {
         new Response(
           JSON.stringify({
             secure_url: 'https://res.cloudinary.com/test/image.jpg',
-            public_id: 'tenant-123/productos/product-1',
+            public_id: 'tenant-123/clientes/logo/cliente-1',
           })
         )
       )
 
     await uploadToCloudinary(mockFile, {
-      uploadKey: 'productos.photo',
+      uploadKey: 'clientes.logo',
     })
 
     const secondCall = fetchMock.mock.calls[1]
     const formData = secondCall[1].body as FormData
-    expect(formData.get('folder')).toBe('tenant-123/productos')
-    expect(formData.get('public_id')).toBe('tenant-123/productos/product-1')
+    expect(formData.get('folder')).toBe('tenant-123/clientes/logo')
+    expect(formData.get('public_id')).toBe('tenant-123/clientes/logo/cliente-1')
   })
 
   it('throws error when signature endpoint fails', async () => {
@@ -155,10 +158,11 @@ describe('uploadToCloudinary', () => {
             timestamp: 123456,
             apiKey: 'test-key',
             cloudName: 'test-cloud',
-            uploadKey: 'productos.photo',
+            provider: 'cloudinary',
+            uploadKey: 'clientes.logo',
             resourceType: 'image',
-            folder: 'tenant-123/productos',
-            publicId: 'tenant-123/productos/product-1',
+            folder: 'tenant-123/clientes/logo',
+            publicId: 'tenant-123/clientes/logo/cliente-1',
           })
         )
       )
@@ -170,7 +174,7 @@ describe('uploadToCloudinary', () => {
       )
 
     await expect(
-      uploadToCloudinary(mockFile, { uploadKey: 'productos.photo' })
+      uploadToCloudinary(mockFile, { uploadKey: 'clientes.logo' })
     ).rejects.toThrow('Cloudinary upload failed')
   })
 
@@ -186,10 +190,11 @@ describe('uploadToCloudinary', () => {
             timestamp: 123456,
             apiKey: 'test-key',
             cloudName: 'test-cloud',
-            uploadKey: 'productos.photo',
+            provider: 'cloudinary',
+            uploadKey: 'clientes.logo',
             resourceType: 'image',
-            folder: 'tenant-123/productos',
-            publicId: 'tenant-123/productos/product-1',
+            folder: 'tenant-123/clientes/logo',
+            publicId: 'tenant-123/clientes/logo/cliente-1',
           })
         )
       )
@@ -203,11 +208,32 @@ describe('uploadToCloudinary', () => {
       )
 
     await uploadToCloudinary(mockFile, {
-      uploadKey: 'productos.photo',
+      uploadKey: 'clientes.logo',
       onProgress,
     })
 
     expect(onProgress).toHaveBeenCalledWith(100)
     expect(onProgress).toHaveBeenCalledTimes(1)
+  })
+
+  it('throws when intent provider is not cloudinary', async () => {
+    const mockFile = new File(['test'], 'test.jpg', { type: 'image/jpeg' })
+
+    vi.spyOn(global, 'fetch').mockResolvedValueOnce(
+      new Response(
+        JSON.stringify({
+          provider: 'uploadthing',
+          uploadKey: 'productos.photo',
+          resourceType: 'image',
+          folder: 'tenant-123/productos',
+          publicId: 'tenant-123/productos/product-1',
+          uploadthingRoute: 'productPhoto',
+        })
+      )
+    )
+
+    await expect(
+      uploadToCloudinary(mockFile, { uploadKey: 'productos.photo' })
+    ).rejects.toThrow(/cloudinary/i)
   })
 })

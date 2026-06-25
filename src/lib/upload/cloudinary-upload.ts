@@ -7,6 +7,7 @@
 
 import type { CloudinaryAssetUploadResult } from './cloudinary-asset'
 import type { UploadKey } from './upload-policy'
+import type { UploadProvider } from './upload-policy'
 
 export interface UploadOptions {
   uploadKey: UploadKey
@@ -14,15 +15,24 @@ export interface UploadOptions {
   onProgress?: (progress: number) => void
 }
 
-interface SignatureResponse {
-  signature: string
-  timestamp: number
-  apiKey: string
-  cloudName: string
+export interface UploadIntentResponse {
+  provider: UploadProvider
   uploadKey: UploadKey
   resourceType: 'image' | 'raw'
   folder: string
   publicId: string
+  signature?: string
+  timestamp?: number
+  apiKey?: string
+  cloudName?: string
+  uploadthingRoute?: string | null
+}
+
+interface SignatureResponse extends UploadIntentResponse {
+  signature: string
+  timestamp: number
+  apiKey: string
+  cloudName: string
 }
 
 interface UploadResponse {
@@ -53,9 +63,22 @@ export async function uploadToCloudinary(
   file: File,
   options: UploadOptions
 ): Promise<CloudinaryAssetUploadResult> {
-  const { uploadKey, entityId, onProgress } = options
+  const { onProgress } = options
+  const intent = await getUploadIntent(file, options)
 
-  // 1. Obtener firma del servidor (server define folder, publicId y resourceType)
+  if (intent.provider !== 'cloudinary') {
+    throw new Error(`Upload intent provider must be cloudinary, got ${intent.provider}`)
+  }
+
+  return uploadToCloudinaryFromIntent(file, intent, onProgress)
+}
+
+export async function getUploadIntent(
+  file: File,
+  options: UploadOptions
+): Promise<UploadIntentResponse> {
+  const { uploadKey, entityId } = options
+
   const signResponse = await fetch('/api/upload/sign', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
@@ -72,15 +95,24 @@ export async function uploadToCloudinary(
     throw new Error('Failed to get upload signature')
   }
 
+  return await signResponse.json() as UploadIntentResponse
+}
+
+export async function uploadToCloudinaryFromIntent(
+  file: File,
+  intent: SignatureResponse,
+  onProgress?: (progress: number) => void
+): Promise<CloudinaryAssetUploadResult> {
   const {
     signature,
     timestamp,
     apiKey,
     cloudName,
+    uploadKey,
     resourceType,
     folder,
     publicId,
-  } = await signResponse.json() as SignatureResponse
+  } = intent
 
   // 2. Preparar FormData para Cloudinary (usar parámetros normalizados por el server)
   const formData = new FormData()

@@ -16,7 +16,10 @@ import { createDeudaCashAction } from "@/features/contabilidad/actions-deudas-ca
 import { ImageIcon, Loader2, TrendingUp, Upload, X } from "lucide-react"
 import { toast } from "sonner"
 import type { CloudinaryAssetUploadResult } from "@/lib/upload/cloudinary-asset"
-import { uploadToCloudinary } from "@/lib/upload/cloudinary-upload"
+import {
+  toCloudinaryAssetUploadResult,
+  uploadAsset,
+} from "@/lib/upload/upload-asset"
 import { calcularTotalDeudaConInteres } from "@/lib/utils/deuda-cash"
 
 const deudaSchema = z.object({
@@ -175,10 +178,11 @@ export function DeudaCashForm({ open, onOpenChange, proveedores = [], cuentasBan
 
       if (comprobante) {
         setUploadingImg(true)
-        const asset = await uploadToCloudinary(comprobante, {
+        const uploaded = await uploadAsset(comprobante, {
           uploadKey: 'deudasCash.receipt',
         })
-        comprobanteUrl = asset.secureUrl
+        const asset = toCloudinaryAssetUploadResult(uploaded)
+        comprobanteUrl = uploaded.url
         uploadedAsset = asset
         setComprobanteAsset(asset)
         setUploadingImg(false)

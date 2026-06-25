@@ -15,7 +15,10 @@ import { useAuth } from "@/contexts/auth-context"
 import { getProfile, updateProfile } from "@/app/actions/profile"
 import { ServerActionError } from "@/lib/api/errors"
 import { toast } from "sonner"
-import { uploadToCloudinary } from "@/lib/upload/cloudinary-upload"
+import {
+  toCloudinaryAssetUploadResult,
+  uploadAsset,
+} from "@/lib/upload/upload-asset"
 import Loader2 from "@/components/Loaders/hoja/loader"
 import { LazyMotion, m as motion, AnimatePresence, useReducedMotion, Variants } from "framer-motion"
 import { cn } from "@/lib/utils"
@@ -131,15 +134,16 @@ export default function ProfilePage() {
     const loadingToast = toast.loading("Subiendo imagen...")
     
     try {
-      const asset = await uploadToCloudinary(file, {
+      const uploaded = await uploadAsset(file, {
         uploadKey: 'profile.avatar',
         entityId: user.userId,
       })
-      setFormData((prev) => ({ ...prev, avatar: asset.secureUrl }))
+      const asset = toCloudinaryAssetUploadResult(uploaded)
+      setFormData((prev) => ({ ...prev, avatar: uploaded.url }))
       
       const updated = await updateProfile({
         name: formData.name,
-        avatar: asset.secureUrl,
+        avatar: uploaded.url,
         avatarAsset: asset,
       })
       setProfile(updated)

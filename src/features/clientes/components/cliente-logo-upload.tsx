@@ -6,7 +6,7 @@ import { Upload, X, ImageIcon, Loader2 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { toast } from 'sonner'
 import type { CloudinaryAssetUploadResult } from '@/lib/upload/cloudinary-asset'
-import { uploadToCloudinary } from '@/lib/upload/cloudinary-upload'
+import { uploadAsset, toCloudinaryAssetUploadResult } from '@/lib/upload/upload-asset'
 
 interface ClienteLogoUploadProps {
   value?: string | null
@@ -39,10 +39,11 @@ export function ClienteLogoUpload({ value, onChange, onAssetChange, disabled }: 
     setUploading(true)
 
     try {
-      const asset = await uploadToCloudinary(file, {
+      const uploaded = await uploadAsset(file, {
         uploadKey: 'clientes.logo',
       })
-      onChange(asset.secureUrl)
+      const asset = toCloudinaryAssetUploadResult(uploaded)
+      onChange(uploaded.url)
       onAssetChange?.(asset)
       toast.success('Logo subido correctamente')
     } catch (error) {

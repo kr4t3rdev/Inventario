@@ -40,7 +40,10 @@ import {
 	AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { updateMiEmpresaSettings } from "../lib/client-mi-empresa";
-import { uploadToCloudinary } from "@/lib/upload/cloudinary-upload";
+import {
+  toCloudinaryAssetUploadResult,
+  uploadAsset,
+} from "@/lib/upload/upload-asset";
 import type { CloudinaryAssetUploadResult } from "@/lib/upload/cloudinary-asset";
 import type {
 	CuentaBancariaItem,
@@ -561,11 +564,13 @@ export function MiEmpresaForm({
 																		});
 
 																		try {
-																			const asset = await uploadToCloudinary(file, {
+																			const uploaded = await uploadAsset(file, {
 																				uploadKey: 'miEmpresa.logo',
 																			});
-																			field.onChange(asset.secureUrl);
-																			setLogoAsset(asset);
+																			field.onChange(uploaded.url);
+																			setLogoAsset(
+																				toCloudinaryAssetUploadResult(uploaded),
+																			);
 																			sileo.success({
 																				title: "Logo subido correctamente",
 																			});
