@@ -18,6 +18,7 @@ import type { AuthenticatedUser } from "@/lib/auth-middleware";
 import { PeriodoContableService } from "@/lib/services/periodo-contable-service";
 import { AperturaPeriodoService } from "@/lib/services/apertura-periodo-service";
 import { SnapshotService } from "@/lib/services/periodo-snapshot-service";
+import { AuditLogService } from "@/lib/services/audit-log-service";
 import { invalidateCache } from "@/lib/services/periodo-contable-guard";
 import {
 	TipoPeriodo,
@@ -367,6 +368,14 @@ export const abrirPeriodoAction = withAction(
 			return { periodo: p };
 		});
 
+		AuditLogService.log({
+			accion: "CREATE",
+			entidad: "CIERRE_CONTABLE",
+			entidadId: periodo.periodoId,
+			usuarioId: user.userId,
+			detalles: { tipo: parsed.tipo, fechaInicio: parsed.fechaInicio, fechaFin: parsed.fechaFin, accion: "ABRIR" },
+		}).catch((err) => console.error("[AuditLog] Error logging abrir periodo:", err));
+
 		await invalidateCache(tenantId);
 		revalidatePath("/busy/contabilidad/periodos");
 
@@ -445,6 +454,14 @@ export const cerrarPeriodoAction = withAction(
 			hashIntegridad,
 		});
 
+		AuditLogService.log({
+			accion: "UPDATE",
+			entidad: "CIERRE_CONTABLE",
+			entidadId: parsed.periodoId,
+			usuarioId: user.userId,
+			detalles: { accion: "CERRAR", snapshotsCount: snapshots.length },
+		}).catch((err) => console.error("[AuditLog] Error logging cerrar periodo:", err));
+
 		// Invalidar caché del guard
 		await invalidateCache(tenantId);
 
@@ -492,6 +509,14 @@ export const reabrirPeriodoAction = withAction(
 			parsed.motivo,
 		);
 
+		AuditLogService.log({
+			accion: "UPDATE",
+			entidad: "CIERRE_CONTABLE",
+			entidadId: parsed.periodoId,
+			usuarioId: user.userId,
+			detalles: { accion: "REABRIR", motivo: parsed.motivo },
+		}).catch((err) => console.error("[AuditLog] Error logging reopen periodo:", err));
+
 		// Invalidar caché del guard
 		await invalidateCache(tenantId);
 
@@ -533,6 +558,14 @@ export const aprobarPeriodoAction = withAction(
 			parsed.periodoId,
 			user.userId,
 		);
+
+		AuditLogService.log({
+			accion: "UPDATE",
+			entidad: "CIERRE_CONTABLE",
+			entidadId: parsed.periodoId,
+			usuarioId: user.userId,
+			detalles: { accion: "APROBAR" },
+		}).catch((err) => console.error("[AuditLog] Error logging approve periodo:", err));
 
 		revalidatePath("/busy/contabilidad/periodos");
 

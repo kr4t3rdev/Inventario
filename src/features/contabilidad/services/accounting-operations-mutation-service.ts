@@ -329,12 +329,22 @@ export const AccountingOperationsMutationService = {
     const parsed = createCapitalInjectionSchema.parse(input);
     const tenantId = requireTenant(user);
 
-    return prisma.inyeccionCapital.create({
+    const inyeccion = await prisma.inyeccionCapital.create({
       data: {
         // @ts-expect-error Prisma typing drift in project for InyeccionCapital create input
         monto: parsed.monto, moneda: parsed.moneda, tipo: parsed.tipo, descripcion: parsed.descripcion, cuentaBancariaId: parsed.cuentaBancariaId, tenantId,
       },
     });
+
+    await AuditLogService.log({
+      accion: 'CREATE',
+      entidad: 'INYECCION_CAPITAL',
+      entidadId: inyeccion.id,
+      usuarioId: user.userId,
+      detalles: { monto: parsed.monto, moneda: parsed.moneda, tipo: parsed.tipo, descripcion: parsed.descripcion },
+    });
+
+    return inyeccion;
   },
 
   async registerCapitalPayment({
@@ -347,11 +357,21 @@ export const AccountingOperationsMutationService = {
     const parsed = registerCapitalPaymentSchema.parse(input);
     const tenantId = requireTenant(user);
 
-    return prisma.pagoDeuda.create({
+    const pago = await prisma.pagoDeuda.create({
       data: {
         // @ts-expect-error Prisma typing drift in project for PagoDeuda create input
         inyeccionId: parsed.inyeccionId, monto: parsed.monto, cuentaBancariaId: parsed.cuentaBancariaId, tipoPagoId: parsed.tipoPagoId, observaciones: parsed.observaciones, tenantId,
       },
     });
+
+    await AuditLogService.log({
+      accion: 'CREATE',
+      entidad: 'PAGO_DEUDA',
+      entidadId: pago.id,
+      usuarioId: user.userId,
+      detalles: { inyeccionId: parsed.inyeccionId, monto: parsed.monto, cuentaBancariaId: parsed.cuentaBancariaId },
+    });
+
+    return pago;
   },
 };

@@ -13,6 +13,7 @@ import {
 	applyPagoGastoWorkflow,
 	isGastoWorkflowError,
 } from "@/lib/services/pago-gastos-workflow";
+import { AuditLogService } from "@/lib/services/audit-log-service";
 import type { AuthenticatedUser } from "@/lib/auth-middleware";
 
 // ─── Stats Hub ────────────────────────────────────────────
@@ -446,6 +447,21 @@ export const reconciliarVentaAction = withAction(
 				return reconciliacion;
 			});
 
+			AuditLogService.log({
+				accion: "CREATE",
+				entidad: "RECONCILIACION",
+				entidadId: result.reconciliacionId,
+				usuarioId: user.userId,
+				detalles: {
+					tipo: "VENTA",
+					ventaId: input.ventaId,
+					cuentaId: input.cuentaId,
+					tipoPagoId: input.tipoPagoId,
+					monto: input.monto,
+					moneda: input.moneda || "CUP",
+				},
+			}).catch((err) => console.error("[AuditLog] Error logging reconciliacion venta:", err));
+
 			revalidatePath("/busy/contabilidad/reconciliacion");
 			revalidatePath("/busy/contabilidad/cuentas-por-cobrar");
 			revalidatePath("/busy/contabilidad");
@@ -642,6 +658,19 @@ export const reconciliarServicioAction = withAction(
 					distribuciones: input.distribuciones.length,
 				};
 			});
+
+			AuditLogService.log({
+				accion: "CREATE",
+				entidad: "RECONCILIACION",
+				entidadId: `SERV-${input.ventaServicioId}`,
+				usuarioId: user.userId,
+				detalles: {
+					tipo: "SERVICIO",
+					ventaServicioId: input.ventaServicioId,
+					distribuciones: input.distribuciones,
+					moneda: "CUP",
+				},
+			}).catch((err) => console.error("[AuditLog] Error logging reconciliacion servicio:", err));
 
 			revalidatePath("/busy/contabilidad/reconciliacion");
 			revalidatePath("/busy/contabilidad");
@@ -1048,6 +1077,28 @@ export const reconciliarGastoAction = withAction(
 						distribucion,
 					});
 				});
+
+				const referenciaId =
+					input.gastosDEId ||
+					input.pgId ||
+					input.gastoCompraId ||
+					input.compraServicioId ||
+					input.ventaServicioId;
+
+				AuditLogService.log({
+					accion: "CREATE",
+					entidad: "RECONCILIACION",
+					entidadId: result?.reconciliacionId || `GASTO-${referenciaId}`,
+					usuarioId: user.userId,
+					detalles: {
+						tipo: tipoGasto,
+						referenciaId,
+						cuentaId: input.cuentaId,
+						tipoPagoId: input.tipoPagoId,
+						monto: input.monto,
+						moneda: input.moneda || "CUP",
+					},
+				}).catch((err) => console.error("[AuditLog] Error logging reconciliacion gasto:", err));
 
 				revalidatePath("/busy/contabilidad/reconciliacion");
 				if (input.cuentaPorPagarId) {

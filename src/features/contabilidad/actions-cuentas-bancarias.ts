@@ -12,6 +12,7 @@ import { withAction, ActionError } from '@/lib/server-actions';
 import { prisma } from '@/lib/prisma';
 import { requireTenant } from '@/lib/services/tenant-scope';
 import { BankAccountReadService } from '@/features/contabilidad/services/bank-account-read-service';
+import { AuditLogService } from '@/lib/services/audit-log-service';
 import type { AuthenticatedUser } from '@/lib/auth-middleware';
 
 // ─── Types ─────────────────────────────────────────────────
@@ -103,6 +104,15 @@ export const createCuentaBancariaAction = withAction(async (input: z.infer<typeo
     },
     select: CUENTA_SELECT,
   });
+
+  AuditLogService.log({
+    accion: 'CREATE',
+    entidad: 'CUENTA_BANCARIA',
+    entidadId: cuenta.cuentaId,
+    usuarioId: user.userId,
+    detalles: { nombreBanco: parsed.nombreBanco, numeroCuenta: parsed.numeroCuenta, tipoCuenta: parsed.tipoCuenta, moneda: parsed.moneda },
+  }).catch((err) => console.error('[AuditLog] Error logging cuenta bancaria:', err));
+
   revalidatePath('/busy/contabilidad/cuentas');
   return cuenta;
 });
@@ -130,6 +140,15 @@ export const updateCuentaBancariaAction = withAction(async (input: z.infer<typeo
     },
     select: CUENTA_SELECT,
   });
+
+  AuditLogService.log({
+    accion: 'UPDATE',
+    entidad: 'CUENTA_BANCARIA',
+    entidadId: cuentaId,
+    usuarioId: user.userId,
+    detalles: { cambios: data },
+  }).catch((err) => console.error('[AuditLog] Error logging cuenta bancaria update:', err));
+
   revalidatePath('/busy/contabilidad/cuentas');
   return cuenta;
 });
@@ -143,6 +162,15 @@ export const deleteCuentaBancariaAction = withAction(async (cuentaId: string, us
   if (!existing) throw new ActionError('Cuenta bancaria no encontrada', 'NOT_FOUND');
 
   await prisma.cuentaBancaria.delete({ where: { cuentaId } });
+
+  AuditLogService.log({
+    accion: 'DELETE',
+    entidad: 'CUENTA_BANCARIA',
+    entidadId: cuentaId,
+    usuarioId: user.userId,
+    detalles: {},
+  }).catch((err) => console.error('[AuditLog] Error logging cuenta bancaria delete:', err));
+
   revalidatePath('/busy/contabilidad/cuentas');
   return { id: cuentaId, eliminado: true };
 });

@@ -14,6 +14,7 @@ import { requireFeature, requireTenant } from "@/lib/services/tenant-scope";
 import { revalidatePath } from "next/cache";
 import type { AuthenticatedUser } from "@/lib/auth-middleware";
 import { AccountingAccountsService } from "@/features/contabilidad/services/accounting-accounts-service";
+import { AuditLogService } from "@/lib/services/audit-log-service";
 import {
 	getCuentasPorCobrarSchema,
 	createCuentaPorCobrarSchema,
@@ -459,6 +460,14 @@ export const createCuentaPorCobrarAction = withAction(
 			include: CXC_INCLUDE,
 		});
 
+		AuditLogService.log({
+			accion: "CREATE",
+			entidad: "CUENTA_POR_COBRAR",
+			entidadId: cuenta.id,
+			usuarioId: user.userId,
+			detalles: { clienteId: p.clienteId, monto: p.monto, moneda: p.moneda, ventaId: p.ventaId },
+		}).catch((err) => console.error("[AuditLog] Error logging cuenta por cobrar:", err));
+
 		revalidatePath("/busy/contabilidad/cuentas-por-cobrar");
 		return enriquecerCuentaPorCobrar(
 			cuenta as unknown as Record<string, unknown>,
@@ -500,6 +509,14 @@ export const updateCuentaPorCobrarAction = withAction(
 			data,
 			include: CXC_INCLUDE,
 		});
+
+		AuditLogService.log({
+			accion: "UPDATE",
+			entidad: "CUENTA_POR_COBRAR",
+			entidadId: p.id,
+			usuarioId: user.userId,
+			detalles: { cambios: data },
+		}).catch((err) => console.error("[AuditLog] Error logging cuenta por cobrar update:", err));
 
 		revalidatePath("/busy/contabilidad/cuentas-por-cobrar");
 		return enriquecerCuentaPorCobrar(
@@ -602,6 +619,14 @@ export const createCuentaPorPagarAction = withAction(
 			},
 			include: CXP_INCLUDE,
 		});
+
+		AuditLogService.log({
+			accion: "CREATE",
+			entidad: "CUENTA_POR_PAGAR",
+			entidadId: cuenta.id,
+			usuarioId: user.userId,
+			detalles: { numeroFactura: p.numeroFactura, proveedorId: p.proveedorId, montoDeuda: p.montoDeuda, moneda: p.moneda },
+		}).catch((err) => console.error("[AuditLog] Error logging cuenta por pagar:", err));
 
 		revalidatePath("/busy/contabilidad/cuentas-por-pagar");
 		return enriquecerCuentaPorPagar(
