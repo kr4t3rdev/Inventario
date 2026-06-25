@@ -1,5 +1,5 @@
 {
   "framework": "nextjs",
   "installCommand": "pnpm install --no-frozen-lockfile",
-  "buildCommand": "pnpm prisma generate && pnpm prisma db push --accept-data-loss && pnpm run build"
+  "buildCommand": "pnpm prisma generate && ./scripts/run-prisma-schema-sync.sh && pnpm run build"
 }
