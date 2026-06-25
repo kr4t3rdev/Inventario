@@ -26,6 +26,10 @@ vi.mock('@/lib/prisma', () => ({
 import { getCurrentUser } from '@/lib/server-actions/get-current-user';
 import { prisma } from '@/lib/prisma';
 import {
+  requireFeature,
+  requireManagerRole,
+} from '@/lib/services/tenant-scope';
+import {
   getPagoSalariosAction,
   getPagoSalarioByIdAction,
   createPagoSalarioAction,
@@ -48,6 +52,11 @@ describe('PagoSalario Server Actions', () => {
       vi.mocked(prisma.pagosalario.findMany).mockResolvedValue([]);
       const result = await getPagoSalariosAction();
       expect(result.success).toBe(true);
+      expect(requireFeature).toHaveBeenCalledWith(
+        mockUser,
+        'empleados',
+        'gestionar pagos de empleados',
+      );
     });
   });
 
@@ -67,6 +76,15 @@ describe('PagoSalario Server Actions', () => {
       vi.mocked(prisma.pagosalario.create).mockResolvedValue({ pgId: 'pg-1' } as any);
       const result = await createPagoSalarioAction({ empleadoId: 'emp-1', salario: 50000 });
       expect(result.success).toBe(true);
+      expect(requireFeature).toHaveBeenCalledWith(
+        mockUser,
+        'empleados',
+        'gestionar pagos de empleados',
+      );
+      expect(requireManagerRole).toHaveBeenCalledWith(
+        mockUser,
+        'crear pagos de salario',
+      );
     });
 
     it('rechaza si empleado no existe', async () => {
@@ -102,6 +120,34 @@ describe('PagoSalario Server Actions', () => {
       vi.mocked(getCurrentUser).mockResolvedValue(null);
       const result = await getPagoSalariosAction();
       expect(result.success).toBe(false);
+    });
+  });
+
+  describe('plan básico integrado en empleados', () => {
+    it('permite pagos con empleados:true aunque nomina:false', async () => {
+      const basicPlanUser: AuthenticatedUser = {
+        ...mockUser,
+        role: 'user',
+        tenantRole: 'manager',
+        planFeatures: {
+          empleados: true,
+          nomina: false,
+          asistencia: false,
+          vacaciones: false,
+        },
+      };
+
+      vi.mocked(getCurrentUser).mockResolvedValue(basicPlanUser);
+      vi.mocked(prisma.pagosalario.findMany).mockResolvedValue([]);
+
+      const result = await getPagoSalariosAction();
+
+      expect(result.success).toBe(true);
+      expect(requireFeature).toHaveBeenCalledWith(
+        basicPlanUser,
+        'empleados',
+        'gestionar pagos de empleados',
+      );
     });
   });
 });

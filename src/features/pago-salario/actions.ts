@@ -17,7 +17,7 @@ const PAGO_SALARIO_INCLUDE = { empleado: true } as const;
 
 export const getPagoSalariosAction = withAction(
 	async (_input: void, user: AuthenticatedUser) => {
-		requireFeature(user, 'nomina', 'gestionar nómina');
+		requireFeature(user, 'empleados', 'gestionar pagos de empleados');
 		const tenantId = requireTenant(user);
 		return prisma.pagosalario.findMany({
 			where: { tenantId },
@@ -29,7 +29,7 @@ export const getPagoSalariosAction = withAction(
 
 export const getPagoSalarioByIdAction = withAction(
 	async (id: string, user: AuthenticatedUser) => {
-		requireFeature(user, 'nomina', 'gestionar nómina');
+		requireFeature(user, 'empleados', 'gestionar pagos de empleados');
 		const tenantId = requireTenant(user);
 		const pago = await prisma.pagosalario.findFirst({
 			where: { pgId: id, tenantId },
@@ -43,7 +43,7 @@ export const getPagoSalarioByIdAction = withAction(
 
 export const createPagoSalarioAction = withAction(
 	async (input: PagoSalarioInput, user: AuthenticatedUser) => {
-		requireFeature(user, 'nomina', 'gestionar nómina');
+		requireFeature(user, 'empleados', 'gestionar pagos de empleados');
 		requireManagerRole(user, "crear pagos de salario");
 		const parsed = pagoSalarioSchema.parse(input);
 		const tenantId = requireTenant(user);
@@ -70,14 +70,14 @@ export const createPagoSalarioAction = withAction(
 			include: PAGO_SALARIO_INCLUDE,
 		});
 
-		revalidatePath("/busy/pago-salario");
+		revalidatePath("/busy/empleados");
 		return pago;
 	},
 );
 
 export const updatePagoSalarioAction = withAction(
 	async (input: PagoSalarioUpdateInput, user: AuthenticatedUser) => {
-		requireFeature(user, 'nomina', 'gestionar nómina');
+		requireFeature(user, 'empleados', 'gestionar pagos de empleados');
 		requireManagerRole(user, "editar pagos de salario");
 		const parsed = pagoSalarioUpdateSchema.parse(input);
 		const { pgId, ...data } = parsed;
@@ -110,14 +110,14 @@ export const updatePagoSalarioAction = withAction(
 			include: PAGO_SALARIO_INCLUDE,
 		});
 
-		revalidatePath("/busy/pago-salario");
+		revalidatePath("/busy/empleados");
 		return pago;
 	},
 );
 
 export const deletePagoSalarioAction = withAction(
 	async (id: string, user: AuthenticatedUser) => {
-		requireFeature(user, 'nomina', 'gestionar nómina');
+		requireFeature(user, 'empleados', 'gestionar pagos de empleados');
 		requireManagerRole(user, "eliminar pagos de salario");
 		const tenantId = requireTenant(user);
 		const existing = await prisma.pagosalario.findFirst({
@@ -127,7 +127,7 @@ export const deletePagoSalarioAction = withAction(
 			throw new ActionError("Pago de salario no encontrado", "NOT_FOUND");
 
 		await prisma.pagosalario.delete({ where: { pgId: id } });
-		revalidatePath("/busy/pago-salario");
+		revalidatePath("/busy/empleados");
 		return { success: true };
 	},
 );

@@ -158,9 +158,9 @@ describe('Empleados Server Actions', () => {
   // ─── Tests para Fix A del spec (Task 5) ───────────────────────────
   // Verifican que el fix de /busy/empleados/page.tsx funcione:
   // el main page solo llama getEmpleadosAction (no getPagoSalariosAction).
-  // getEmpleadosAction debe funcionar en plan Básico (empleados:true, nomina:false).
+  // getEmpleadosAction debe funcionar en plan Básico completo.
 
-  it('getEmpleadosAction funciona en plan Básico (empleados:true, nomina:false)', async () => {
+  it('getEmpleadosAction funciona en plan Básico completo', async () => {
     const basicPlanUser: AuthenticatedUser = {
       ...mockUser,
       role: 'user' as any,
@@ -190,7 +190,7 @@ describe('Empleados Server Actions', () => {
       ...mockUser,
       role: 'user' as any,
       tenantRole: 'manager',
-      planFeatures: { empleados: true, nomina: false },
+      planFeatures: { empleados: true, nomina: false, asistencia: false, vacaciones: false },
     };
     vi.mocked(getCurrentUser).mockResolvedValue(basicPlanUser);
     vi.mocked(prisma.empleado.findFirst).mockResolvedValue({
@@ -207,7 +207,7 @@ describe('Empleados Server Actions', () => {
       ...mockUser,
       role: 'user' as any,
       tenantRole: 'manager',
-      planFeatures: { empleados: true, nomina: false },
+      planFeatures: { empleados: true, nomina: false, asistencia: false, vacaciones: false },
     };
     vi.mocked(getCurrentUser).mockResolvedValue(basicPlanManager);
     vi.mocked(prisma.empleado.create).mockResolvedValue({
@@ -230,7 +230,7 @@ describe('Empleados Server Actions', () => {
       ...mockUser,
       role: 'user' as any,
       tenantRole: 'dependiente',
-      planFeatures: { empleados: true, nomina: false },
+      planFeatures: { empleados: true, nomina: false, asistencia: false, vacaciones: false },
     };
     vi.mocked(getCurrentUser).mockResolvedValue(basicPlanDependiente);
     const result = await createEmpleadoAction({
