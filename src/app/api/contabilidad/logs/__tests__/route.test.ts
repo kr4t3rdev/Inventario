@@ -55,6 +55,9 @@ describe('web accounting logs route', () => {
     expect(AccountingAuditLogsService.getLogs).toHaveBeenCalledWith({
       user: adminUser,
       entidad: 'TRANSFERENCIA',
+      accion: null,
+      desde: null,
+      hasta: null,
       limit: 20,
       offset: 0,
     });
