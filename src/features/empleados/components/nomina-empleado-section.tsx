@@ -21,7 +21,6 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -151,9 +150,8 @@ export function NominaEmpleadoSection({
   };
 
   return (
-    <SidebarProvider>
-      <SidebarInset>
-        <div className="container mx-auto py-6 px-4">
+    <>
+      <div className="container mx-auto py-6 px-4">
           {/* Header */}
           <div className="flex items-center gap-3 mb-6">
             <div className="w-10 h-10 bg-linear-to-br from-orange-500 to-red-600 rounded-xl flex items-center justify-center shadow-lg">
@@ -199,126 +197,125 @@ export function NominaEmpleadoSection({
             </div>
             <HistorialPagos pagos={pagos} />
           </div>
-        </div>
+      </div>
 
-        {/* Dialog de pago */}
-        <Dialog
-          open={isDialogOpen}
-          onOpenChange={(open) => !open && handleClosePagoDialog()}
-        >
-          <DialogContent className="sm:max-w-106.25">
-            <DialogHeader>
-              <DialogTitle className="flex items-center gap-2">
-                <CreditCard className="h-5 w-5 text-primary" />
-                Registrar Pago de Salario
-              </DialogTitle>
-              <DialogDescription>
-                Complete los detalles del pago para {selectedEmpleado?.nombre}{" "}
-                {selectedEmpleado?.apellido}
-              </DialogDescription>
-            </DialogHeader>
-            <form onSubmit={handleSubmit(onSubmitPago)} className="space-y-4">
-              <div className="grid grid-cols-4 items-center gap-4">
-                <Label htmlFor="salario" className="text-right">
-                  Salario Base
-                </Label>
-                <Input
-                  id="salario"
-                  type="number"
-                  className="col-span-3"
-                  {...register("salario", {
-                    required: true,
-                    valueAsNumber: true,
-                  })}
-                />
-              </div>
-              <div className="grid grid-cols-4 items-center gap-4">
-                <Label htmlFor="bonificaciones" className="text-right">
-                  Bonificaciones
-                </Label>
-                <Input
-                  id="bonificaciones"
-                  type="number"
-                  className="col-span-3"
-                  {...register("bonificaciones", { valueAsNumber: true })}
-                />
-              </div>
-              <div className="grid grid-cols-4 items-center gap-4">
-                <Label htmlFor="deducciones" className="text-right">
-                  Deducciones
-                </Label>
-                <Input
-                  id="deducciones"
-                  type="number"
-                  className="col-span-3"
-                  {...register("deducciones", { valueAsNumber: true })}
-                />
-              </div>
-              <div className="grid grid-cols-4 items-center gap-4">
-                <Label htmlFor="horasExtras" className="text-right">
-                  Horas Extras
-                </Label>
-                <Input
-                  id="horasExtras"
-                  type="number"
-                  className="col-span-3"
-                  {...register("horasExtras", { valueAsNumber: true })}
-                />
-              </div>
-              <div className="grid grid-cols-4 items-center gap-4">
-                <Label htmlFor="observaciones" className="text-right">
-                  Observaciones
-                </Label>
-                <Textarea
-                  id="observaciones"
-                  className="col-span-3"
-                  {...register("observaciones")}
-                />
-              </div>
-              <DialogFooter>
-                <Button
-                  type="button"
-                  variant="outline"
-                  onClick={handleClosePagoDialog}
-                >
-                  Cancelar
-                </Button>
-                <Button
-                  type="submit"
-                  className="bg-linear-to-r from-orange-500 to-red-600 text-white"
-                >
-                  Registrar Pago
-                </Button>
-              </DialogFooter>
-            </form>
-          </DialogContent>
-        </Dialog>
-
-        {/* AlertDialog de eliminación */}
-        <AlertDialog
-          open={!!empleadoToDelete}
-          onOpenChange={(open) => !open && setEmpleadoToDelete(null)}
-        >
-          <AlertDialogContent>
-            <AlertDialogHeader>
-              <AlertDialogTitle>¿Está seguro?</AlertDialogTitle>
-              <AlertDialogDescription>
-                Esta acción no se puede deshacer. Esto eliminará permanentemente
-                al empleado.
-              </AlertDialogDescription>
-            </AlertDialogHeader>
-            <AlertDialogFooter>
-              <AlertDialogCancel>Cancelar</AlertDialogCancel>
-              <AlertDialogAction
-                onClick={handleDelete}
-                className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+      {/* Dialog de pago */}
+      <Dialog
+        open={isDialogOpen}
+        onOpenChange={(open) => !open && handleClosePagoDialog()}
+      >
+        <DialogContent className="sm:max-w-106.25">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <CreditCard className="h-5 w-5 text-primary" />
+              Registrar Pago de Salario
+            </DialogTitle>
+            <DialogDescription>
+              Complete los detalles del pago para {selectedEmpleado?.nombre}{" "}
+              {selectedEmpleado?.apellido}
+            </DialogDescription>
+          </DialogHeader>
+          <form onSubmit={handleSubmit(onSubmitPago)} className="space-y-4">
+            <div className="grid grid-cols-4 items-center gap-4">
+              <Label htmlFor="salario" className="text-right">
+                Salario Base
+              </Label>
+              <Input
+                id="salario"
+                type="number"
+                className="col-span-3"
+                {...register("salario", {
+                  required: true,
+                  valueAsNumber: true,
+                })}
+              />
+            </div>
+            <div className="grid grid-cols-4 items-center gap-4">
+              <Label htmlFor="bonificaciones" className="text-right">
+                Bonificaciones
+              </Label>
+              <Input
+                id="bonificaciones"
+                type="number"
+                className="col-span-3"
+                {...register("bonificaciones", { valueAsNumber: true })}
+              />
+            </div>
+            <div className="grid grid-cols-4 items-center gap-4">
+              <Label htmlFor="deducciones" className="text-right">
+                Deducciones
+              </Label>
+              <Input
+                id="deducciones"
+                type="number"
+                className="col-span-3"
+                {...register("deducciones", { valueAsNumber: true })}
+              />
+            </div>
+            <div className="grid grid-cols-4 items-center gap-4">
+              <Label htmlFor="horasExtras" className="text-right">
+                Horas Extras
+              </Label>
+              <Input
+                id="horasExtras"
+                type="number"
+                className="col-span-3"
+                {...register("horasExtras", { valueAsNumber: true })}
+              />
+            </div>
+            <div className="grid grid-cols-4 items-center gap-4">
+              <Label htmlFor="observaciones" className="text-right">
+                Observaciones
+              </Label>
+              <Textarea
+                id="observaciones"
+                className="col-span-3"
+                {...register("observaciones")}
+              />
+            </div>
+            <DialogFooter>
+              <Button
+                type="button"
+                variant="outline"
+                onClick={handleClosePagoDialog}
               >
-                Eliminar
-              </AlertDialogAction>
-            </AlertDialogFooter>
-          </AlertDialogContent>
-        </AlertDialog>
-      </SidebarInset>
-    </SidebarProvider>
+                Cancelar
+              </Button>
+              <Button
+                type="submit"
+                className="bg-linear-to-r from-orange-500 to-red-600 text-white"
+              >
+                Registrar Pago
+              </Button>
+            </DialogFooter>
+          </form>
+        </DialogContent>
+      </Dialog>
+
+      {/* AlertDialog de eliminación */}
+      <AlertDialog
+        open={!!empleadoToDelete}
+        onOpenChange={(open) => !open && setEmpleadoToDelete(null)}
+      >
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>¿Está seguro?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Esta acción no se puede deshacer. Esto eliminará permanentemente
+              al empleado.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleDelete}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              Eliminar
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+    </>
   );
 }
