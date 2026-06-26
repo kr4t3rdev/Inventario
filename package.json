@@ -20,6 +20,7 @@
     "seed:implementacion": "tsx prisma/seed/implementation-seed.ts",
     "seed:qa": "tsx prisma/seed/qa-scenarios-seed.ts",
     "seed:plans": "tsx prisma/seed/plans-seed.ts",
+    "seed:upload-backfill": "tsx prisma/seed/backfill-upload-features.ts",
     "seed:licenses": "tsx prisma/seed/tenant-licenses-seed.ts",
     "report:qa": "tsx prisma/seed/qa-report.ts",
     "testsprite": "npx -y @testsprite/testsprite-mcp",
