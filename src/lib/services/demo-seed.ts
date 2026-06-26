@@ -1,12 +1,22 @@
 /**
  * @description Orquesta el seed de datos demo para un tenant específico.
- *              Reutiliza el seed de implementación actual como baseline y deja
- *              preparado el branching por plan para slices posteriores.
+ *              Según el perfil del plan, ejecuta:
+ *                - Básico:       solo seed base
+ *                - Profesional:  base + extras profesional
+ *                - Empresarial:  base + extras empresarial
+ *
+ *              Cada perfil cuenta una historia distinta:
+ *                - Básico:       "Negocio pequeño listo para operar"
+ *                - Profesional:  "Negocio en crecimiento con más control y volumen"
+ *                - Empresarial:  "Operación robusta multi-sede — empresa real"
  *
  * @module lib/services/demo-seed
  */
 
-import { seedImplementationData } from '../../../prisma/seed/implementation-seed';
+import { prisma } from '@/lib/prisma';
+import { seedBaseDemoData } from '../../../prisma/seed/demo/base-seed';
+import { seedProfessionalExtras } from '../../../prisma/seed/demo/professional-seed';
+import { seedEnterpriseExtras } from '../../../prisma/seed/demo/enterprise-seed';
 
 export interface SeedDemoTenantDataInput {
   tenantId: string;
@@ -21,8 +31,6 @@ export interface SeedDemoTenantDataResult {
 
 /**
  * @description Mapea el nombre comercial del plan a un perfil interno de seed.
- * @param {string} planName - Nombre del plan de la licencia demo.
- * @returns {'basic' | 'professional' | 'enterprise'} Perfil interno.
  */
 function resolveSeedProfile(
   planName: string,
@@ -41,18 +49,28 @@ function resolveSeedProfile(
 }
 
 /**
- * @description Siembra datos base para un tenant demo y deja resuelto el perfil
- *              por plan para extensiones premium futuras.
- * @param {SeedDemoTenantDataInput} input - Tenant y plan destino.
- * @returns {Promise<SeedDemoTenantDataResult>} Resultado del seed ejecutado.
+ * @description Siembra datos demo según el perfil del plan.
+ *              Usa una transacción de Prisma para pasar el cliente a cada seed.
  */
 export async function seedDemoTenantData(
   input: SeedDemoTenantDataInput,
 ): Promise<SeedDemoTenantDataResult> {
   const profile = resolveSeedProfile(input.planName);
 
-  await seedImplementationData({
-    tenantId: input.tenantId,
+  await prisma.$transaction(async (tx) => {
+    // 1. Base común para todos los planes
+    //    Historia: negocio pequeño, 1 almacén, 1 PV, ~20 productos
+    await seedBaseDemoData({ tenantId: input.tenantId }, tx);
+
+    // 2. Extras según perfil
+    if (profile === 'enterprise') {
+      // Incluye profesional + empresarial extras
+      await seedProfessionalExtras({ tenantId: input.tenantId }, tx);
+      await seedEnterpriseExtras({ tenantId: input.tenantId }, tx);
+    } else if (profile === 'professional') {
+      await seedProfessionalExtras({ tenantId: input.tenantId }, tx);
+    }
+    // Básico: solo el base (ya ejecutado arriba)
   });
 
   return {
