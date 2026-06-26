@@ -7,6 +7,13 @@ interface PlanAwareUser {
   planFeatures?: Record<string, boolean> | null;
 }
 
+export function hasPlanFeature(
+  user: PlanAwareUser | null | undefined,
+  featureKey: string,
+): boolean {
+  return user?.planFeatures?.[featureKey] === true;
+}
+
 export function isBasicPlanName(planName?: string | null): boolean {
   return planName === 'Básico';
 }

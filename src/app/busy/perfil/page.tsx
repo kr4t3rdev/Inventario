@@ -22,6 +22,7 @@ import {
 import Loader2 from "@/components/Loaders/hoja/loader"
 import { LazyMotion, m as motion, AnimatePresence, useReducedMotion, Variants } from "framer-motion"
 import { cn } from "@/lib/utils"
+import { hasPlanFeature } from "@/lib/plan-access"
 
 const shouldReduceMotion = typeof window !== 'undefined' 
   ? window.matchMedia('(prefers-reduced-motion: reduce)').matches 
@@ -205,6 +206,7 @@ export default function ProfilePage() {
   }
 
   const accountTime = get_account_time_remaining(profile?.expiresAt)
+  const canUploadAvatar = hasPlanFeature(user, 'upload-profile-avatar')
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -350,33 +352,35 @@ export default function ProfilePage() {
                     </motion.div>
                   </motion.div>
                   
-                  <div className="flex flex-col items-center sm:items-start gap-2">
-                    <motion.div
-                      whileHover={{ scale: 1.02 }}
-                      whileTap={{ scale: 0.98 }}
-                    >
-                      <Button 
-                        type="button" 
-                        variant="outline" 
-                        size="sm"
-                        onClick={() => fileInputRef.current?.click()}
-                        disabled={isUploading}
-                        className="cursor-pointer"
+                  {canUploadAvatar && (
+                    <div className="flex flex-col items-center sm:items-start gap-2">
+                      <motion.div
+                        whileHover={{ scale: 1.02 }}
+                        whileTap={{ scale: 0.98 }}
                       >
-                        <Camera className="mr-2 h-4 w-4" />
-                        Cambiar Foto
-                      </Button>
-                    </motion.div>
-                    <input
-                      ref={fileInputRef}
-                      type="file"
-                      accept="image/*"
-                      onChange={handleImageUpload}
-                      className="hidden"
-                      disabled={isUploading}
-                    />
-                    <p className="text-xs text-muted-foreground">JPG, PNG o GIF. Máx 2MB</p>
-                  </div>
+                        <Button
+                          type="button"
+                          variant="outline"
+                          size="sm"
+                          onClick={() => fileInputRef.current?.click()}
+                          disabled={isUploading}
+                          className="cursor-pointer"
+                        >
+                          <Camera className="mr-2 h-4 w-4" />
+                          Cambiar Foto
+                        </Button>
+                      </motion.div>
+                      <input
+                        ref={fileInputRef}
+                        type="file"
+                        accept="image/*"
+                        onChange={handleImageUpload}
+                        className="hidden"
+                        disabled={isUploading}
+                      />
+                      <p className="text-xs text-muted-foreground">JPG, PNG o GIF. Máx 2MB</p>
+                    </div>
+                  )}
                 </motion.div>
 
                 {/* Form Fields */}

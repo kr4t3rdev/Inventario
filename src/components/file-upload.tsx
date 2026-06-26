@@ -8,6 +8,8 @@ import { Progress } from '@/components/ui/progress'
 import { toast } from 'sonner'
 import { getAuthToken } from '@/lib/token'
 import { toLegacyAssetUploadResult, uploadAsset } from '@/lib/upload/upload-asset'
+import { useAuth } from '@/contexts/auth-context'
+import { hasPlanFeature } from '@/lib/plan-access'
 
 interface FileUploadProps {
   contratoId: string
@@ -15,8 +17,10 @@ interface FileUploadProps {
 }
 
 export function FileUpload({ contratoId, onUploadComplete }: FileUploadProps) {
+  const { user } = useAuth()
   const [uploading, setUploading] = useState(false)
   const [progress, setProgress] = useState(0)
+  const canUploadAttachments = hasPlanFeature(user, 'upload-contratos-attachment')
 
   const onDrop = useCallback(async (acceptedFiles: File[]) => {
     if (acceptedFiles.length === 0) return
@@ -74,6 +78,10 @@ export function FileUpload({ contratoId, onUploadComplete }: FileUploadProps) {
   }, [contratoId, onUploadComplete])
 
   const { getRootProps, getInputProps, isDragActive } = useDropzone({ onDrop })
+
+  if (!canUploadAttachments) {
+    return null
+  }
 
   return (
     <div className="w-full">

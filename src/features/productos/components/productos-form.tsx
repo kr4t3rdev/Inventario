@@ -43,6 +43,8 @@ import {
 } from "@/components/ui/tooltip";
 import { Skeleton } from "@/components/ui/skeleton";
 import { sileo } from "@/lib/sileo-shim";
+import { useAuth } from "@/contexts/auth-context";
+import { hasPlanFeature } from "@/lib/plan-access";
 import type { Almacen, Categoria, Unidad, Vendor } from "@/app/models/model";
 
 import {
@@ -129,6 +131,7 @@ interface ProductosFormProps {
 			precio: number;
 		}>;
 	};
+	planFeatures?: Record<string, boolean>;
 }
 
 /**
@@ -152,7 +155,9 @@ export function ProductoForm({
 	listasPrecios = [],
 	vendors = [],
 	categorias = [],
+	planFeatures,
 }: ProductosFormProps): React.JSX.Element {
+	const { user } = useAuth();
 	const router = useRouter();
 	const [isLoading, setIsLoading] = useState(false);
 	const [usaEan13, setUsaEan13] = useState(false);
@@ -179,6 +184,10 @@ export function ProductoForm({
 		return initialMap;
 	});
 	const [photoAssets, setPhotoAssets] = useState<CloudinaryAssetUploadResult[]>([]);
+	const canUploadProductPhotos = hasPlanFeature(
+		planFeatures ? { planFeatures } : user,
+		"upload-productos-photo",
+	);
 
 	const form = useForm<ProductosFormValues>({
 		resolver: zodResolver(buildProductosSchema(usaEan13)),
@@ -738,34 +747,36 @@ export function ProductoForm({
 									)}
 								</motion.div>
 
-								<motion.div
-									initial={{ opacity: 0, y: 14 }}
-									animate={{ opacity: 1, y: 0 }}
-									transition={{ delay: 0.2 }}
-								>
-									<FormField
-										control={form.control}
-										name="fotos"
-										render={({ field }) => (
-											<FormItem>
-												<FormLabel>Foto del producto</FormLabel>
-												<FormControl>
-													<ProductPhotoUpload
-														photos={field.value || []}
-														onPhotosChange={field.onChange}
-														assets={photoAssets}
-														onAssetsChange={setPhotoAssets}
-														maxPhotos={1}
-													/>
-												</FormControl>
-												<FormDescription>
-													Adjunta una imagen opcional (máximo 2MB).
-												</FormDescription>
-												<FormMessage />
-											</FormItem>
-										)}
-									/>
-								</motion.div>
+								{canUploadProductPhotos && (
+									<motion.div
+										initial={{ opacity: 0, y: 14 }}
+										animate={{ opacity: 1, y: 0 }}
+										transition={{ delay: 0.2 }}
+									>
+										<FormField
+											control={form.control}
+											name="fotos"
+											render={({ field }) => (
+												<FormItem>
+													<FormLabel>Foto del producto</FormLabel>
+													<FormControl>
+														<ProductPhotoUpload
+															photos={field.value || []}
+															onPhotosChange={field.onChange}
+															assets={photoAssets}
+															onAssetsChange={setPhotoAssets}
+															maxPhotos={1}
+														/>
+													</FormControl>
+													<FormDescription>
+														Adjunta una imagen opcional (máximo 2MB).
+													</FormDescription>
+													<FormMessage />
+												</FormItem>
+											)}
+										/>
+									</motion.div>
+								)}
 
 								<motion.div
 									initial={{ opacity: 0, y: 14 }}

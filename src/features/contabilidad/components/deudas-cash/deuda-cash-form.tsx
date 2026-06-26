@@ -21,6 +21,8 @@ import {
   uploadAsset,
 } from "@/lib/upload/upload-asset"
 import { calcularTotalDeudaConInteres } from "@/lib/utils/deuda-cash"
+import { useAuth } from "@/contexts/auth-context"
+import { hasPlanFeature } from "@/lib/plan-access"
 
 const deudaSchema = z.object({
   proveedorId: z.string().min(1, "Seleccione un proveedor"),
@@ -125,6 +127,7 @@ interface DeudaCashFormProps {
  * @returns {JSX.Element} Formulario de deuda cash.
  */
 export function DeudaCashForm({ open, onOpenChange, proveedores = [], cuentasBancarias = [], onSuccess }: DeudaCashFormProps) {
+  const { user } = useAuth()
   const [isLoading, setIsLoading] = useState(false)
   const [comprobante, setComprobante] = useState<File | null>(null)
   const [comprobanteAsset, setComprobanteAsset] = useState<CloudinaryAssetUploadResult | null>(null)
@@ -170,6 +173,7 @@ export function DeudaCashForm({ open, onOpenChange, proveedores = [], cuentasBan
   const montoCapital = useWatch({ control: form.control, name: 'montoCapital' })
   const tasaInteres = useWatch({ control: form.control, name: 'tasaInteres' })
   const saldoPendientePreview = calcularTotalDeudaConInteres(Number(montoCapital) || 0, Number(tasaInteres) || 0)
+  const canUploadReceipt = hasPlanFeature(user, 'upload-deudas-cash-receipt')
 
   const onSubmit = async (data: DeudaFormValues) => {
     try {
@@ -380,54 +384,55 @@ export function DeudaCashForm({ open, onOpenChange, proveedores = [], cuentasBan
               )}
             />
 
-            {/* Comprobante de deuda — opcional */}
-            <div className="space-y-2">
-              <p className="text-sm font-medium leading-none">Comprobante (Opcional)</p>
-              {comprobantePreview ? (
-                <div className="relative w-full rounded-md border overflow-hidden">
-                  {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img
-                    src={comprobantePreview}
-                    alt="Vista previa del comprobante"
-                    className="w-full max-h-48 object-contain bg-muted"
-                  />
-                  <Button
+            {canUploadReceipt && (
+              <div className="space-y-2">
+                <p className="text-sm font-medium leading-none">Comprobante (Opcional)</p>
+                {comprobantePreview ? (
+                  <div className="relative w-full rounded-md border overflow-hidden">
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img
+                      src={comprobantePreview}
+                      alt="Vista previa del comprobante"
+                      className="w-full max-h-48 object-contain bg-muted"
+                    />
+                    <Button
+                      type="button"
+                      variant="destructive"
+                      size="icon"
+                      className="absolute top-2 right-2 h-6 w-6"
+                      onClick={clearComprobante}
+                    >
+                      <X className="h-3 w-3" />
+                    </Button>
+                    <p className="px-2 py-1 text-xs text-muted-foreground truncate bg-muted/50">
+                      {comprobante?.name}
+                    </p>
+                  </div>
+                ) : (
+                  <button
                     type="button"
-                    variant="destructive"
-                    size="icon"
-                    className="absolute top-2 right-2 h-6 w-6"
-                    onClick={clearComprobante}
+                    onClick={() => fileInputRef.current?.click()}
+                    className="flex w-full cursor-pointer flex-col items-center gap-2 rounded-md border-2 border-dashed border-muted-foreground/25 p-4 text-center transition-colors hover:border-primary/50 hover:bg-muted/30"
                   >
-                    <X className="h-3 w-3" />
-                  </Button>
-                  <p className="px-2 py-1 text-xs text-muted-foreground truncate bg-muted/50">
-                    {comprobante?.name}
-                  </p>
-                </div>
-              ) : (
-                <button
-                  type="button"
-                  onClick={() => fileInputRef.current?.click()}
-                  className="flex w-full cursor-pointer flex-col items-center gap-2 rounded-md border-2 border-dashed border-muted-foreground/25 p-4 text-center transition-colors hover:border-primary/50 hover:bg-muted/30"
-                >
-                  <div className="rounded-full bg-muted p-2">
-                    <ImageIcon className="h-5 w-5 text-muted-foreground" />
-                  </div>
-                  <div className="flex items-center gap-1 text-sm text-muted-foreground">
-                    <Upload className="h-3.5 w-3.5" />
-                    <span>Subir foto del comprobante</span>
-                  </div>
-                  <p className="text-xs text-muted-foreground">JPG, PNG, WEBP · Máx. 5 MB</p>
-                </button>
-              )}
-              <input
-                ref={fileInputRef}
-                type="file"
-                accept="image/*"
-                className="hidden"
-                onChange={handleComprobanteChange}
-              />
-            </div>
+                    <div className="rounded-full bg-muted p-2">
+                      <ImageIcon className="h-5 w-5 text-muted-foreground" />
+                    </div>
+                    <div className="flex items-center gap-1 text-sm text-muted-foreground">
+                      <Upload className="h-3.5 w-3.5" />
+                      <span>Subir foto del comprobante</span>
+                    </div>
+                    <p className="text-xs text-muted-foreground">JPG, PNG, WEBP · Máx. 5 MB</p>
+                  </button>
+                )}
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  accept="image/*"
+                  className="hidden"
+                  onChange={handleComprobanteChange}
+                />
+              </div>
+            )}
 
             <DialogFooter>
               <Button type="button" variant="outline" onClick={handleClose}>

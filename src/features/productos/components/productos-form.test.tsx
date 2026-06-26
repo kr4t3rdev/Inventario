@@ -1,12 +1,25 @@
+import { render, screen } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
 
 vi.mock('next/navigation', () => ({
   useRouter: () => ({ push: vi.fn(), refresh: vi.fn() }),
 }));
 
-vi.mock('framer-motion', () => ({
-  motion: { div: 'div' },
-}));
+vi.mock('framer-motion', () => {
+  const primitive = new Proxy(
+    {},
+    {
+      get: () => 'div',
+    },
+  );
+
+  return {
+    motion: primitive,
+    m: primitive,
+    LazyMotion: ({ children }: { children: any }) => children,
+    AnimatePresence: ({ children }: { children: any }) => children,
+  };
+});
 
 vi.mock('@/features/productos/actions', () => ({
   createProductoAction: vi.fn(),
@@ -15,6 +28,16 @@ vi.mock('@/features/productos/actions', () => ({
 
 vi.mock('@/lib/sileo-shim', () => ({
   sileo: { error: vi.fn(), success: vi.fn() },
+}));
+
+vi.mock('@/contexts/auth-context', () => ({
+  useAuth: () => ({
+    user: {
+      planFeatures: {
+        'upload-productos-photo': true,
+      },
+    },
+  }),
 }));
 
 vi.mock('@/lib/token', () => ({
@@ -42,7 +65,17 @@ vi.mock('./clasificador-info-note', () => ({
   ClasificadorInfoNote: () => null,
 }));
 
+vi.mock('@/features/mi-empresa/lib/client-mi-empresa', () => ({
+  fetchMiEmpresaSettings: vi.fn(() =>
+    Promise.resolve({
+      success: true,
+      data: { usaCodigoEan13: false },
+    }),
+  ),
+}));
+
 import { buildProductosSchema } from './productos-form-schema';
+import { ProductoForm } from './productos-form';
 
 const baseProduct = {
   nombre: 'Producto test',
@@ -73,5 +106,20 @@ describe('buildProductosSchema', () => {
     const result = schema.safeParse({ ...baseProduct, codigoInterno: '' });
 
     expect(result.success).toBe(true);
+  });
+});
+
+describe('ProductoForm', () => {
+  it('oculta la sección de foto cuando el plan no permite subir fotos de productos', () => {
+    render(
+      <ProductoForm
+        unidades={[{ unidadId: 'uni-1', nombre: 'Unidad', simbolo: 'u' }]}
+        almacenes={[{ almacenId: 'alm-1', nombre: 'Principal' }]}
+        categorias={[{ catId: 'cat-1', nombre: 'Categoría' }]}
+        planFeatures={{ 'upload-productos-photo': false }}
+      />,
+    );
+
+    expect(screen.queryByText('Foto del producto')).not.toBeInTheDocument();
   });
 });

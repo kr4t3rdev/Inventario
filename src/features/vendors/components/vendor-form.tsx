@@ -17,6 +17,8 @@ import type { VendorInput } from "@/features/vendors/schemas";
 import { createVendorAction, updateVendorAction } from "@/features/vendors/actions";
 import { VendorLogoUpload } from "./vendor-logo-upload";
 import type { CloudinaryAssetUploadResult } from "@/lib/upload/cloudinary-asset";
+import { useAuth } from "@/contexts/auth-context";
+import { hasPlanFeature } from "@/lib/plan-access";
 
 interface VendorFormProps {
     initialData?: {
@@ -42,10 +44,12 @@ interface VendorFormProps {
  * @returns {JSX.Element} Formulario de proveedor.
  */
 export function VendorForm({initialData}: VendorFormProps) {
+    const { user } = useAuth()
     const router = useRouter()
     const [isLoading, setIsLoading] = useState(false)
     const [copiedField, setCopiedField] = useState<string | null>(null)
     const [logoAsset, setLogoAsset] = useState<CloudinaryAssetUploadResult | null>(null)
+    const canUploadVendorLogo = hasPlanFeature(user, 'upload-vendors-logo')
 
     const copyToClipboard = (text: string, field: string) => {
         navigator.clipboard.writeText(text)
@@ -322,33 +326,35 @@ export function VendorForm({initialData}: VendorFormProps) {
                                 />
                             </motion.div>
 
-                            <motion.div
-                                initial={{ opacity: 0, x: -20 }}
-                                animate={{ opacity: 1, x: 0 }}
-                                transition={{ delay: 0.6 }}
-                            >
-                                <FormField
-                                    control={form.control}
-                                    name="logo"
-                                    render={({ field }) => (
-                                        <FormItem>
-                                            <FormLabel>Logo</FormLabel>
-                                            <FormControl>
-                                                <VendorLogoUpload
-                                                    value={field.value}
-                                                    onChange={field.onChange}
-                                                    onAssetChange={setLogoAsset}
-                                                    disabled={isLoading}
-                                                />
-                                            </FormControl>
-                                            <FormDescription>
-                                                Suba un logo opcional para el proveedor (máx. 2MB).
-                                            </FormDescription>
-                                            <FormMessage />
-                                        </FormItem>
-                                    )}
-                                />
-                            </motion.div>
+                            {canUploadVendorLogo && (
+                                <motion.div
+                                    initial={{ opacity: 0, x: -20 }}
+                                    animate={{ opacity: 1, x: 0 }}
+                                    transition={{ delay: 0.6 }}
+                                >
+                                    <FormField
+                                        control={form.control}
+                                        name="logo"
+                                        render={({ field }) => (
+                                            <FormItem>
+                                                <FormLabel>Logo</FormLabel>
+                                                <FormControl>
+                                                    <VendorLogoUpload
+                                                        value={field.value}
+                                                        onChange={field.onChange}
+                                                        onAssetChange={setLogoAsset}
+                                                        disabled={isLoading}
+                                                    />
+                                                </FormControl>
+                                                <FormDescription>
+                                                    Suba un logo opcional para el proveedor (máx. 2MB).
+                                                </FormDescription>
+                                                <FormMessage />
+                                            </FormItem>
+                                        )}
+                                    />
+                                </motion.div>
+                            )}
 
                             <motion.div 
                                 className="flex justify-end space-x-4 pt-4"

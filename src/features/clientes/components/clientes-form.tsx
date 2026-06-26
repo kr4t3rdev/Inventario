@@ -20,6 +20,8 @@ import { useListasPrecios } from "@/features/listas-precios/hooks/use-listas-pre
 import { ClienteLogoUpload } from "./cliente-logo-upload"
 import type { CloudinaryAssetUploadResult } from "@/lib/upload/cloudinary-asset"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { useAuth } from "@/contexts/auth-context"
+import { hasPlanFeature } from "@/lib/plan-access"
 
 const clienteSchema = z
   .object({
@@ -63,12 +65,14 @@ interface ClienteFormProps {
 }
 
 export function ClienteForm({ initialData }: ClienteFormProps) {
+  const { user } = useAuth()
   const router = useRouter()
   const [isLoading, setIsLoading] = useState(false)
   const [logoAsset, setLogoAsset] = useState<CloudinaryAssetUploadResult | null>(null)
 
   const { clientes, isLoading: isLoadingClientes } = useClientes()
   const { listasPrecios, isLoading: isLoadingListas } = useListasPrecios()
+  const canUploadClienteLogo = hasPlanFeature(user, 'upload-clientes-logo')
   
   
   const form = useForm<ClienteFormValues>({
@@ -221,31 +225,33 @@ export function ClienteForm({ initialData }: ClienteFormProps) {
                 />
               </motion.div>
 
-              <motion.div
-                initial={{ opacity: 0, x: -20 }}
-                animate={{ opacity: 1, x: 0 }}
-                transition={{ delay: 0.25 }}
-              >
-                <FormField
-                  control={form.control}
-                  name="logoUrl"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Logo del Cliente</FormLabel>
-                      <FormControl>
-                        <ClienteLogoUpload
-                          value={field.value}
-                          onChange={field.onChange}
-                          onAssetChange={setLogoAsset}
-                          disabled={isLoading}
-                        />
-                      </FormControl>
-                      <FormDescription>Sube un logo o imagen representativa del cliente.</FormDescription>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-              </motion.div>
+              {canUploadClienteLogo && (
+                <motion.div
+                  initial={{ opacity: 0, x: -20 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  transition={{ delay: 0.25 }}
+                >
+                  <FormField
+                    control={form.control}
+                    name="logoUrl"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Logo del Cliente</FormLabel>
+                        <FormControl>
+                          <ClienteLogoUpload
+                            value={field.value}
+                            onChange={field.onChange}
+                            onAssetChange={setLogoAsset}
+                            disabled={isLoading}
+                          />
+                        </FormControl>
+                        <FormDescription>Sube un logo o imagen representativa del cliente.</FormDescription>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                </motion.div>
+              )}
 
               <motion.div
                 initial={{ opacity: 0, x: -20 }}

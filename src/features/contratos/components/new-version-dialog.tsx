@@ -17,6 +17,8 @@ import { toast } from "sonner"
 import { getAuthToken } from "@/lib/token"
 import { Upload, FileUp, Loader2, AlertTriangle, FileCheck, FileText } from "lucide-react"
 import { LazyMotion, m as motion, AnimatePresence } from "framer-motion"
+import { useAuth } from "@/contexts/auth-context"
+import { hasPlanFeature } from "@/lib/plan-access"
 
 interface NewVersionDialogProps {
   contratoId: string
@@ -24,6 +26,7 @@ interface NewVersionDialogProps {
 }
 
 export function NewVersionDialog({ contratoId, onSuccess }: NewVersionDialogProps) {
+  const { user } = useAuth()
   const [open, setOpen] = useState(false)
   const [file, setFile] = useState<File | null>(null)
   const [isChecking, setIsChecking] = useState(false)
@@ -38,6 +41,7 @@ export function NewVersionDialog({ contratoId, onSuccess }: NewVersionDialogProp
   } | null>(null)
 
   const [cambios, setCambios] = useState("")
+  const canUploadVersions = hasPlanFeature(user, 'upload-contratos-version')
 
   const onDrop = useCallback(async (acceptedFiles: File[]) => {
     if (acceptedFiles.length === 0) return
@@ -115,6 +119,10 @@ export function NewVersionDialog({ contratoId, onSuccess }: NewVersionDialogProp
     maxFiles: 1,
     disabled: isChecking || isSubmitting
   })
+
+  if (!canUploadVersions) {
+    return null
+  }
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
