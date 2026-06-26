@@ -30,6 +30,7 @@ import {
 	createLicenciaSchema,
 	createDemoTenantSchema,
 	cleanupExpiredDemoLicenciasSchema,
+	convertDemoToPaidPlanSchema,
 	updateLicenciaSchema,
 	createPlanSchema,
 	updatePlanSchema,
@@ -46,6 +47,7 @@ import type {
 	CreateLicenciaInput,
 	CreateDemoTenantInput,
 	CleanupExpiredDemoLicenciasInput,
+	ConvertDemoToPaidPlanInput,
 	UpdateLicenciaInput,
 	CreatePlanInput,
 	UpdatePlanInput,
@@ -1247,6 +1249,75 @@ export const cleanupExpiredDemoLicenciasAction = withAction(
 			dryRun: parsed.dryRun,
 			count: expiredDemoLicenses.length,
 			licenses: expiredDemoLicenses,
+		};
+	},
+);
+
+export const convertDemoToPaidPlanAction = withAction(
+	async (input: ConvertDemoToPaidPlanInput, user: AuthenticatedUser) => {
+		if (user.role !== "admin")
+			throw new ActionError("Acceso restringido", "FORBIDDEN");
+
+		const parsed = convertDemoToPaidPlanSchema.parse(input);
+		const [license, plan] = await Promise.all([
+			prisma.tenantLicense.findUnique({
+				where: { tenantLicenseId: parsed.tenantLicenseId },
+				include: {
+					tenant: {
+						include: {
+							memberships: {
+								where: { isActive: true },
+								select: { userId: true },
+							},
+						},
+					},
+				},
+			}),
+			prisma.plan.findUnique({ where: { planId: parsed.planId } }),
+		]);
+
+		if (!license)
+			throw new ActionError("Licencia demo no encontrada", "NOT_FOUND");
+		if (!license.isDemo)
+			throw new ActionError("La licencia ya no es demo", "INVALID_STATE");
+		if (!plan)
+			throw new ActionError("Plan no encontrado", "PLAN_NOT_FOUND");
+
+		const now = new Date();
+		const durationDays = parsed.durationDays ?? plan.duracionDias;
+		const expiracion = new Date(now.getTime() + durationDays * 86400000);
+
+		const updatedLicense = await prisma.tenantLicense.update({
+			where: { tenantLicenseId: parsed.tenantLicenseId },
+			data: {
+				planId: plan.planId,
+				isDemo: false,
+				activa: true,
+				inicio: now,
+				expiracion,
+				maxUsuarios: plan.maxUsuarios,
+				maxAlmacenes: plan.maxAlmacenes,
+				maxProductos: plan.maxProductos,
+				features: plan.features as Record<string, boolean>,
+			},
+		});
+
+		const userIds = license.tenant.memberships.map((membership) => membership.userId);
+		if (userIds.length > 0) {
+			await prisma.user.updateMany({
+				where: { userId: { in: userIds } },
+				data: { expiresAt: expiracion, isActive: true },
+			});
+		}
+
+		revalidatePath("/admin/licencias");
+
+		return {
+			tenantId: license.tenantId,
+			tenantLicenseId: updatedLicense.tenantLicenseId,
+			planId: plan.planId,
+			isDemo: false,
+			expiresAt: expiracion,
 		};
 	},
 );

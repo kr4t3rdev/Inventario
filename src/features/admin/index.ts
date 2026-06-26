@@ -20,6 +20,7 @@ export {
 	createLicenciaAction,
 	createDemoTenantAction,
 	cleanupExpiredDemoLicenciasAction,
+	convertDemoToPaidPlanAction,
 	updateLicenciaAction,
 	deleteLicenciaAction,
 	generateLicenciasAction,

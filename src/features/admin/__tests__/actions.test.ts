@@ -24,7 +24,7 @@ vi.mock('@/lib/prisma', () => {
     })),
     user: {
       findMany: vi.fn(), findUnique: vi.fn(), create: vi.fn(),
-      update: vi.fn(), delete: vi.fn(), count: vi.fn(),
+      update: vi.fn(), updateMany: vi.fn(), delete: vi.fn(), count: vi.fn(),
       groupBy: vi.fn(),
     },
     tenant: { findMany: vi.fn(), count: vi.fn(), findUnique: vi.fn(), create: vi.fn() },
@@ -37,6 +37,7 @@ vi.mock('@/lib/prisma', () => {
       count: vi.fn(),
       create: vi.fn(),
       findMany: vi.fn(),
+      findUnique: vi.fn(),
       update: vi.fn(),
       delete: vi.fn(),
       updateMany: vi.fn(),
@@ -63,7 +64,7 @@ import {
   getAdminPlanesAction, createAdminPlanAction, approveGlobalUserAction, createDemoTenantAction,
   cleanupExpiredDemoLicenciasAction,
   getCloudinaryAssetsAction, cleanupCloudinaryAssetsAction,
-  getLicenciasAction, updateLicenciaAction, deleteLicenciaAction,
+  getLicenciasAction, updateLicenciaAction, deleteLicenciaAction, convertDemoToPaidPlanAction,
 } from '@/features/admin/actions';
 import { createTenantForUser } from '@/lib/services/tenant-factory';
 import type { AuthenticatedUser } from '@/lib/auth-middleware';
@@ -596,6 +597,78 @@ describe('Admin Server Actions', () => {
           count: 2,
         }),
       );
+    });
+
+    it('convertDemoToPaidPlanAction convierte la demo sin perder el tenant', async () => {
+      vi.mocked(getCurrentUser).mockResolvedValue(adminUser);
+      vi.mocked(prisma.tenantLicense.findUnique).mockResolvedValue({
+        tenantLicenseId: 'lic-demo',
+        tenantId: 'tenant-demo',
+        isDemo: true,
+        tenant: {
+          memberships: [
+            {
+              userId: 'user-demo',
+              isActive: true,
+            },
+          ],
+        },
+      } as any);
+      vi.mocked(prisma.plan.findUnique).mockResolvedValue({
+        planId: 'plan-pro',
+        duracionDias: 30,
+        maxUsuarios: 10,
+        maxAlmacenes: 4,
+        maxProductos: 1000,
+        features: { empleados: true },
+      } as any);
+      vi.mocked(prisma.tenantLicense.update).mockResolvedValue({
+        tenantLicenseId: 'lic-demo',
+        tenantId: 'tenant-demo',
+        isDemo: false,
+        planId: 'plan-pro',
+      } as any);
+      vi.mocked(prisma.user.updateMany).mockResolvedValue({ count: 1 } as any);
+
+      const r = await convertDemoToPaidPlanAction({
+        tenantLicenseId: 'lic-demo',
+        planId: 'plan-pro',
+      });
+
+      expect(r.success).toBe(true);
+      expect(prisma.tenantLicense.findUnique).toHaveBeenCalledWith({
+        where: { tenantLicenseId: 'lic-demo' },
+        include: {
+          tenant: {
+            include: {
+              memberships: {
+                where: { isActive: true },
+                select: { userId: true },
+              },
+            },
+          },
+        },
+      });
+      expect(prisma.tenantLicense.update).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: { tenantLicenseId: 'lic-demo' },
+          data: expect.objectContaining({
+            isDemo: false,
+            activa: true,
+            planId: 'plan-pro',
+            maxUsuarios: 10,
+            maxAlmacenes: 4,
+            maxProductos: 1000,
+            features: { empleados: true },
+            inicio: expect.any(Date),
+            expiracion: expect.any(Date),
+          }),
+        }),
+      );
+      expect(prisma.user.updateMany).toHaveBeenCalledWith({
+        where: { userId: { in: ['user-demo'] } },
+        data: { expiresAt: expect.any(Date), isActive: true },
+      });
     });
   });
 

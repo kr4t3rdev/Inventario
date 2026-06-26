@@ -67,6 +67,7 @@ import {
   generateLicenciasAction,
   createDemoTenantAction,
   cleanupExpiredDemoLicenciasAction,
+  convertDemoToPaidPlanAction,
   getLicenciasAction,
 } from '@/features/admin'
 
@@ -80,6 +81,8 @@ export default function AdminLicenciasPage() {
   const [copiedKey, setCopiedKey] = useState<string | null>(null)
   const [generarDialogOpen, setGenerarDialogOpen] = useState(false)
   const [demoDialogOpen, setDemoDialogOpen] = useState(false)
+  const [convertDialogOpen, setConvertDialogOpen] = useState(false)
+  const [licenseToConvert, setLicenseToConvert] = useState<any>(null)
   const [selectedLicencias, setSelectedLicencias] = useState<Set<string>>(new Set())
 
   const [data, setData] = useState<any>(null)
@@ -184,6 +187,24 @@ export default function AdminLicenciasPage() {
       if (licenciasResult.success) setData(licenciasResult.data)
     } catch (error) {
       toast.error('No se pudo limpiar demos expiradas')
+    }
+  }
+
+  async function handleConvertDemo(data: { tenantLicenseId: string; planId: string; durationDays?: number }) {
+    try {
+      const result = await convertDemoToPaidPlanAction(data)
+      if (!result.success) {
+        toast.error(result.error?.message || 'No se pudo convertir la demo')
+        return
+      }
+
+      toast.success('Demo convertida a plan pago')
+      setConvertDialogOpen(false)
+      setLicenseToConvert(null)
+      const licenciasResult = await getLicenciasAction()
+      if (licenciasResult.success) setData(licenciasResult.data)
+    } catch (_error) {
+      toast.error('No se pudo convertir la demo')
     }
   }
 
@@ -481,6 +502,18 @@ export default function AdminLicenciasPage() {
                         >
                           {licencia.activa ? 'Revocar' : 'Activar'}
                         </Button>
+                        {licencia.isDemo ? (
+                          <Button
+                            variant="secondary"
+                            size="sm"
+                            onClick={() => {
+                              setLicenseToConvert(licencia)
+                              setConvertDialogOpen(true)
+                            }}
+                          >
+                            Convertir
+                          </Button>
+                        ) : null}
                         <Button
                           variant="ghost"
                           size="sm"
@@ -553,6 +586,17 @@ export default function AdminLicenciasPage() {
         open={demoDialogOpen}
         onClose={() => setDemoDialogOpen(false)}
         planes={planes}
+      />
+
+      <ConvertDemoDialog
+        open={convertDialogOpen}
+        onClose={() => {
+          setConvertDialogOpen(false)
+          setLicenseToConvert(null)
+        }}
+        planes={planes}
+        licencia={licenseToConvert}
+        onConvert={handleConvertDemo}
       />
     </div>
   )
@@ -811,6 +855,109 @@ function CrearDemoDialog({
               {isSubmitting ? 'Creando...' : 'Crear Demo'}
             </Button>
           )}
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  )
+}
+
+function ConvertDemoDialog({
+  open,
+  onClose,
+  planes,
+  licencia,
+  onConvert,
+}: {
+  open: boolean
+  onClose: () => void
+  planes: any[]
+  licencia: any | null
+  onConvert: (data: { tenantLicenseId: string; planId: string; durationDays?: number }) => Promise<void>
+}) {
+  const [planId, setPlanId] = useState('')
+  const [durationDays, setDurationDays] = useState('')
+  const [isSubmitting, setIsSubmitting] = useState(false)
+
+  useEffect(() => {
+    if (!open || !licencia) return
+    setPlanId(licencia.planId ?? '')
+    setDurationDays('')
+  }, [open, licencia])
+
+  const handleClose = () => {
+    if (isSubmitting) return
+    setPlanId('')
+    setDurationDays('')
+    onClose()
+  }
+
+  const handleConvert = async () => {
+    if (!licencia?.tenantLicenseId || !planId) return
+
+    try {
+      setIsSubmitting(true)
+      await onConvert({
+        tenantLicenseId: licencia.tenantLicenseId,
+        planId,
+        ...(durationDays ? { durationDays: Number(durationDays) } : {}),
+      })
+    } finally {
+      setIsSubmitting(false)
+    }
+  }
+
+  return (
+    <Dialog open={open} onOpenChange={handleClose}>
+      <DialogContent className="sm:max-w-[520px]">
+        <DialogHeader>
+          <DialogTitle>Convertir Demo a Plan Pago</DialogTitle>
+          <DialogDescription>
+            Mantiene el mismo tenant y sus datos, pero reemplaza la licencia demo por una comercial.
+          </DialogDescription>
+        </DialogHeader>
+
+        <div className="grid gap-4 py-4">
+          <div className="rounded-md border p-3 text-sm">
+            <div className="text-xs text-muted-foreground">Tenant</div>
+            <div className="font-medium">{licencia?.tenant?.nombre ?? licencia?.tenantId ?? '—'}</div>
+          </div>
+
+          <div className="grid gap-2">
+            <span className="text-sm font-medium">Nuevo plan</span>
+            <Select value={planId} onValueChange={setPlanId}>
+              <SelectTrigger>
+                <SelectValue placeholder="Seleccionar plan" />
+              </SelectTrigger>
+              <SelectContent>
+                {planes.map((plan: any) => (
+                  <SelectItem key={plan.planId} value={plan.planId}>
+                    {plan.nombre} - ${plan.precio}/{plan.duracionDias} días
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+
+          <div className="grid gap-2">
+            <span className="text-sm font-medium">Duración manual (opcional)</span>
+            <Input
+              type="number"
+              min={1}
+              max={3650}
+              value={durationDays}
+              onChange={(e) => setDurationDays(e.target.value)}
+              placeholder="Usar duración del plan"
+            />
+          </div>
+        </div>
+
+        <DialogFooter>
+          <Button variant="outline" onClick={handleClose} disabled={isSubmitting}>
+            Cancelar
+          </Button>
+          <Button onClick={handleConvert} disabled={!planId || isSubmitting}>
+            {isSubmitting ? 'Convirtiendo...' : 'Convertir'}
+          </Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>
