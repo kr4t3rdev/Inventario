@@ -1,4 +1,4 @@
-import { Prisma } from '@/generated/prisma'
+import type { Prisma } from '@/generated/prisma'
 
 /**
  * @description Representa un error funcional del workflow de pago de gastos.
