@@ -241,6 +241,7 @@ model TenantLicense {
   tenantLicenseId String   @id @default(cuid())
   tenantId        String
   planId          String?
+  isDemo          Boolean  @default(false)
   activa          Boolean  @default(true)
   inicio          DateTime @default(now())
   expiracion      DateTime
