@@ -1078,7 +1078,7 @@ export const reconciliarGastoAction = withAction(
 					});
 				});
 
-				const referenciaId =
+				const auditReferenciaId =
 					input.gastosDEId ||
 					input.pgId ||
 					input.gastoCompraId ||
@@ -1088,11 +1088,11 @@ export const reconciliarGastoAction = withAction(
 				AuditLogService.log({
 					accion: "CREATE",
 					entidad: "RECONCILIACION",
-					entidadId: result?.reconciliacionId || `GASTO-${referenciaId}`,
+					entidadId: result?.reconciliacionId || `GASTO-${auditReferenciaId}`,
 					usuarioId: user.userId,
 					detalles: {
 						tipo: tipoGasto,
-						referenciaId,
+						referenciaId: auditReferenciaId,
 						cuentaId: input.cuentaId,
 						tipoPagoId: input.tipoPagoId,
 						monto: input.monto,
