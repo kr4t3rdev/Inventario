@@ -7,7 +7,7 @@ import { Button } from '@/components/ui/button'
 import { Progress } from '@/components/ui/progress'
 import { toast } from 'sonner'
 import { getAuthToken } from '@/lib/token'
-import { uploadToCloudinary } from '@/lib/upload/cloudinary-upload'
+import { toLegacyAssetUploadResult, uploadAsset } from '@/lib/upload/upload-asset'
 
 interface FileUploadProps {
   contratoId: string
@@ -29,11 +29,11 @@ export function FileUpload({ contratoId, onUploadComplete }: FileUploadProps) {
 
     for (const file of acceptedFiles) {
       try {
-        // 1. Upload file a Cloudinary (signed upload directo del cliente)
-        const asset = await uploadToCloudinary(file, {
+        const uploaded = await uploadAsset(file, {
           uploadKey: 'contratos.attachment',
           entityId: contratoId,
         })
+        const asset = toLegacyAssetUploadResult(uploaded)
 
         // 2. Link to contract
         const linkRes = await fetch(`/api/contratos/${contratoId}/archivos`, {
@@ -51,6 +51,7 @@ export function FileUpload({ contratoId, onUploadComplete }: FileUploadProps) {
             nombreArchivo: file.name,
             versionId: null, // Optional
             generadoPor: 'USER', // This should be handled by backend from token actually
+            storageProvider: uploaded.provider,
           })
         })
 

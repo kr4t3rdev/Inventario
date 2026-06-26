@@ -1,15 +1,23 @@
 /**
  * @description Tests unitarios para el componente ProductPhotoUpload.
- * Verifica validación de tipo/tamaño y migración a uploadToCloudinary.
+ * Verifica validación de tipo/tamaño y migración al wrapper uploadAsset.
  */
 
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { render, screen, fireEvent, waitFor } from '@testing-library/react'
 import { ProductPhotoUpload } from './product-photo-upload'
 
-// Mock uploadToCloudinary
-vi.mock('@/lib/upload/cloudinary-upload', () => ({
-  uploadToCloudinary: vi.fn(),
+vi.mock('@/lib/upload/upload-asset', () => ({
+  uploadAsset: vi.fn(),
+  toLegacyAssetUploadResult: vi.fn((asset) => ({
+    uploadKey: asset.uploadKey,
+    secureUrl: asset.url,
+    publicId: asset.publicId ?? asset.key,
+    resourceType: asset.resourceType,
+    bytes: asset.bytes,
+    mimeType: asset.mimeType,
+    originalFilename: asset.originalFilename,
+  })),
 }))
 
 // Mock de toast
@@ -20,10 +28,10 @@ vi.mock('sonner', () => ({
   },
 }))
 
-import { uploadToCloudinary } from '@/lib/upload/cloudinary-upload'
+import { uploadAsset } from '@/lib/upload/upload-asset'
 import { toast } from 'sonner'
 
-const mockUploadToCloudinary = vi.mocked(uploadToCloudinary)
+const mockUploadAsset = vi.mocked(uploadAsset)
 
 describe('ProductPhotoUpload', () => {
   beforeEach(() => {
@@ -53,15 +61,17 @@ describe('ProductPhotoUpload', () => {
     expect(img).toHaveAttribute('src', 'https://res.cloudinary.com/test/image.jpg')
   })
 
-  it('llama a uploadToCloudinary con folder "productos" al subir un archivo válido', async () => {
-    mockUploadToCloudinary.mockResolvedValue({
+  it('llama a uploadAsset al subir un archivo válido', async () => {
+    mockUploadAsset.mockResolvedValue({
+      provider: 'uploadthing',
       uploadKey: 'productos.photo',
-      secureUrl: 'https://res.cloudinary.com/test/uploaded.jpg',
+      url: 'https://inventario-app.ufs.sh/f/product-1',
+      key: 'product-1',
       publicId: 'tenant-1/productos/product-1',
       resourceType: 'image',
       bytes: 4,
       mimeType: 'image/jpeg',
-      originalFilename: 'test',
+      originalFilename: 'test.jpg',
     })
     const onPhotosChange = vi.fn()
 
@@ -80,13 +90,13 @@ describe('ProductPhotoUpload', () => {
     fireEvent.change(input)
 
     await waitFor(() => {
-      expect(mockUploadToCloudinary).toHaveBeenCalledWith(file, {
+      expect(mockUploadAsset).toHaveBeenCalledWith(file, {
         uploadKey: 'productos.photo',
       })
     })
 
     await waitFor(() => {
-      expect(onPhotosChange).toHaveBeenCalledWith(['https://res.cloudinary.com/test/uploaded.jpg'])
+      expect(onPhotosChange).toHaveBeenCalledWith(['https://inventario-app.ufs.sh/f/product-1'])
     })
   })
 
@@ -128,11 +138,11 @@ describe('ProductPhotoUpload', () => {
     await waitFor(() => {
       expect(toast.error).toHaveBeenCalledWith(expect.stringContaining('tamaño máximo'))
     })
-    expect(mockUploadToCloudinary).not.toHaveBeenCalled()
+    expect(mockUploadAsset).not.toHaveBeenCalled()
   })
 
-  it('muestra error cuando uploadToCloudinary falla', async () => {
-    mockUploadToCloudinary.mockRejectedValue(new Error('Cloudinary upload failed'))
+  it('muestra error cuando uploadAsset falla', async () => {
+    mockUploadAsset.mockRejectedValue(new Error('UploadThing upload failed'))
 
     const { container } = render(
       <ProductPhotoUpload
@@ -179,7 +189,7 @@ describe('ProductPhotoUpload', () => {
     await waitFor(() => {
       expect(toast.error).toHaveBeenCalledWith(expect.stringContaining('Máximo'))
     })
-    expect(mockUploadToCloudinary).not.toHaveBeenCalled()
+    expect(mockUploadAsset).not.toHaveBeenCalled()
   })
 
   it('llama a onPhotosChange al eliminar una foto', () => {

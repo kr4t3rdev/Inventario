@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 
-import { uploadAsset } from './upload-asset'
+import { toLegacyAssetUploadResult, uploadAsset } from './upload-asset'
 
 vi.mock('./cloudinary-upload', () => ({
   getUploadIntent: vi.fn(),
@@ -8,10 +8,15 @@ vi.mock('./cloudinary-upload', () => ({
   uploadToCloudinaryFromIntent: vi.fn(),
 }))
 
+vi.mock('./uploadthing-client', () => ({
+  uploadToUploadthing: vi.fn(),
+}))
+
 import {
   getUploadIntent,
   uploadToCloudinaryFromIntent,
 } from './cloudinary-upload'
+import { uploadToUploadthing } from './uploadthing-client'
 
 describe('uploadAsset', () => {
   beforeEach(() => {
@@ -60,7 +65,7 @@ describe('uploadAsset', () => {
     })
   })
 
-  it('rejects uploadthing intents until the uploadthing adapter exists', async () => {
+  it('returns a normalized asset contract for uploadthing intents', async () => {
     const file = new File(['photo'], 'photo.jpg', { type: 'image/jpeg' })
 
     vi.mocked(getUploadIntent).mockResolvedValue({
@@ -72,8 +77,54 @@ describe('uploadAsset', () => {
       uploadthingRoute: 'productPhoto',
     })
 
-    await expect(
-      uploadAsset(file, { uploadKey: 'productos.photo' })
-    ).rejects.toThrow(/uploadthing/i)
+    vi.mocked(uploadToUploadthing).mockResolvedValue({
+      provider: 'uploadthing',
+      uploadKey: 'productos.photo',
+      url: 'https://app.ufs.sh/f/product-photo-key',
+      key: 'product-photo-key',
+      publicId: 'tenant-1/productos/photo-file',
+      resourceType: 'image',
+      bytes: 5,
+      mimeType: 'image/jpeg',
+      originalFilename: 'photo.jpg',
+    })
+
+    const result = await uploadAsset(file, { uploadKey: 'productos.photo' })
+
+    expect(result).toEqual({
+      provider: 'uploadthing',
+      uploadKey: 'productos.photo',
+      url: 'https://app.ufs.sh/f/product-photo-key',
+      key: 'product-photo-key',
+      publicId: 'tenant-1/productos/photo-file',
+      resourceType: 'image',
+      bytes: 5,
+      mimeType: 'image/jpeg',
+      originalFilename: 'photo.jpg',
+    })
+  })
+
+  it('maps uploadthing assets to the legacy persistence shape', () => {
+    expect(
+      toLegacyAssetUploadResult({
+        provider: 'uploadthing',
+        uploadKey: 'productos.photo',
+        url: 'https://app.ufs.sh/f/product-photo-key',
+        key: 'product-photo-key',
+        publicId: 'tenant-1/productos/photo-file',
+        resourceType: 'image',
+        bytes: 5,
+        mimeType: 'image/jpeg',
+        originalFilename: 'photo.jpg',
+      })
+    ).toEqual({
+      uploadKey: 'productos.photo',
+      secureUrl: 'https://app.ufs.sh/f/product-photo-key',
+      publicId: 'tenant-1/productos/photo-file',
+      resourceType: 'image',
+      bytes: 5,
+      mimeType: 'image/jpeg',
+      originalFilename: 'photo.jpg',
+    })
   })
 })

@@ -6,7 +6,7 @@ import { Upload, X, Image as ImageIcon, Loader2 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { toast } from 'sonner'
 import type { CloudinaryAssetUploadResult } from '@/lib/upload/cloudinary-asset'
-import { uploadToCloudinary } from '@/lib/upload/cloudinary-upload'
+import { toLegacyAssetUploadResult, uploadAsset } from '@/lib/upload/upload-asset'
 
 interface ProductPhotoUploadProps {
   photos: string[]
@@ -58,13 +58,11 @@ export function ProductPhotoUpload({
           continue
         }
 
-        // Upload a Cloudinary (signed upload directo del cliente)
-        // El server antepone el tenantId al folder automaticamente.
-        const asset = await uploadToCloudinary(file, {
+        const uploaded = await uploadAsset(file, {
           uploadKey: 'productos.photo',
         })
-        uploadedUrls.push(asset.secureUrl)
-        uploadedAssets.push(asset)
+        uploadedUrls.push(uploaded.url)
+        uploadedAssets.push(toLegacyAssetUploadResult(uploaded))
         
       } catch (error) {
         console.error('Upload error:', error)

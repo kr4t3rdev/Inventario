@@ -542,8 +542,10 @@ export async function createContratoArchivoHandler(request: NextRequest, { param
     const { id } = await params
     const body = contratoArchivoCreateSchema.parse(await request.json())
     const tenantId = user.tenantId ?? 'sin-tenant'
+    const storageProvider = body.storageProvider ?? 'cloudinary'
     assertContratoAttachmentAsset({
       tenantId,
+      provider: storageProvider,
       publicId: body.cloudinaryPublicId,
       secureUrl: body.rutaArchivo,
       mimeType: body.mimeType,

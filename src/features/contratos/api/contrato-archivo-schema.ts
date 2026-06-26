@@ -1,6 +1,8 @@
 import { z } from 'zod'
 
 const CLOUDINARY_HOST = 'res.cloudinary.com'
+const UPLOADTHING_HOST_SUFFIXES = ['.ufs.sh', '.utfs.io']
+const UPLOADTHING_HOSTS = new Set(['ufs.sh', 'utfs.io'])
 const CONTRACT_ATTACHMENT_PREFIX = 'contratos/anexos/'
 const CONTRACT_VERSION_SEGMENT = '/contratos/'
 const MAX_CONTRACT_FILE_BYTES = 10 * 1024 * 1024
@@ -22,6 +24,7 @@ export const contratoArchivoCreateSchema = z.object({
   bytes: z.number().int().positive(),
   nombreArchivo: z.string().min(1),
   versionId: z.string().optional().nullable(),
+  storageProvider: z.enum(['cloudinary', 'uploadthing']).optional(),
 })
 
 export function assertCloudinaryAssetBelongsToTenant(input: {
@@ -47,6 +50,7 @@ export function assertCloudinaryAssetBelongsToTenant(input: {
 
 export function assertContratoAttachmentAsset(input: {
   tenantId: string
+  provider?: 'cloudinary' | 'uploadthing'
   publicId: string
   secureUrl: string
   mimeType: string
@@ -58,6 +62,23 @@ export function assertContratoAttachmentAsset(input: {
 
   if (input.bytes > MAX_CONTRACT_FILE_BYTES) {
     throw new Error('El archivo excede el tamaño máximo permitido para anexos de contrato')
+  }
+
+  if (input.provider === 'uploadthing') {
+    const url = new URL(input.secureUrl)
+    const isAllowedHost =
+      UPLOADTHING_HOSTS.has(url.hostname) ||
+      UPLOADTHING_HOST_SUFFIXES.some((suffix) => url.hostname.endsWith(suffix))
+
+    if (!isAllowedHost) {
+      throw new Error('El archivo debe pertenecer a UploadThing')
+    }
+
+    if (!input.publicId.startsWith(`${input.tenantId}/${CONTRACT_ATTACHMENT_PREFIX}`)) {
+      throw new Error('El asset no pertenece al tenant o carpeta esperada')
+    }
+
+    return
   }
 
   assertCloudinaryAssetBelongsToTenant({

@@ -6,6 +6,7 @@ import {
 } from './cloudinary-upload'
 import type { CloudinaryAssetUploadResult } from './cloudinary-asset'
 import type { UploadKey, UploadProvider } from './upload-policy'
+import { uploadToUploadthing } from './uploadthing-client'
 
 export interface UploadedAsset {
   provider: UploadProvider
@@ -51,7 +52,10 @@ export async function uploadAsset(
     }
   }
 
-  throw new Error(`UploadThing adapter is not implemented yet for ${intent.uploadKey}`)
+  return uploadToUploadthing(file, intent as UploadIntentResponse & {
+    provider: 'uploadthing'
+    uploadthingRoute: 'productPhoto' | 'contractAttachment' | 'contractVersion'
+  }, options.onProgress)
 }
 
 /**
@@ -67,10 +71,27 @@ export function toCloudinaryAssetUploadResult(
     throw new Error('Expected a cloudinary uploaded asset with publicId')
   }
 
+  return toLegacyAssetUploadResult(asset)
+}
+
+/**
+ * @description Adapta un UploadedAsset al contrato legado persistido hoy en Prisma/actions.
+ * @param {UploadedAsset} asset - Asset normalizado de cualquier provider.
+ * @returns {CloudinaryAssetUploadResult} Forma legado compatible para persistencia actual.
+ */
+export function toLegacyAssetUploadResult(
+  asset: UploadedAsset
+): CloudinaryAssetUploadResult {
+  const publicId = asset.publicId ?? asset.key
+
+  if (!publicId) {
+    throw new Error('Expected an uploaded asset with a publicId or key')
+  }
+
   return {
     uploadKey: asset.uploadKey,
     secureUrl: asset.url,
-    publicId: asset.publicId,
+    publicId,
     resourceType: asset.resourceType,
     bytes: asset.bytes,
     mimeType: asset.mimeType,
