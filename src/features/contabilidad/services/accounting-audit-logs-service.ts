@@ -1,6 +1,7 @@
 import { ActionError } from '@/lib/server-actions';
 import { AuditLogService } from '@/lib/services/audit-log-service';
 import { hasTenantPermission, type TenantRole } from '@/lib/permissions';
+import { prisma } from '@/lib/prisma';
 import type { AuthenticatedUser } from '@/lib/auth-middleware';
 
 /**
@@ -40,8 +41,20 @@ export const AccountingAuditLogsService = {
       offset,
     });
 
+    const userIds = [...new Set(result.logs.map((l) => l.usuarioId))];
+    const users = userIds.length > 0
+      ? await prisma.user.findMany({
+          where: { userId: { in: userIds } },
+          select: { userId: true, name: true },
+        })
+      : [];
+    const usuarioMap = Object.fromEntries(users.map((u) => [u.userId, u.name]));
+
     return {
-      logs: result.logs,
+      logs: result.logs.map((l) => ({
+        ...l,
+        usuarioNombre: usuarioMap[l.usuarioId] ?? l.usuarioId,
+      })),
       total: result.total,
       pagination: {
         limit,

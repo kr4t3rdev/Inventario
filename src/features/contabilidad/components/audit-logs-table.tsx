@@ -34,6 +34,7 @@ interface AuditLog {
   entidadId: string;
   accion: string;
   usuarioId: string;
+  usuarioNombre?: string;
   detalles: unknown;
   ip: string | null;
   userAgent: string | null;
@@ -425,7 +426,7 @@ export function AuditLogsTable() {
                   <TableCell>
                     <div className="flex items-center gap-2 text-sm">
                       <User className="h-3.5 w-3.5 text-muted-foreground" />
-                      <span className="truncate">{log.usuarioId}</span>
+                      <span className="truncate">{log.usuarioNombre ?? log.usuarioId}</span>
                     </div>
                   </TableCell>
                   <TableCell>
