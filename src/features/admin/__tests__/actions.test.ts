@@ -33,7 +33,14 @@ vi.mock('@/lib/prisma', () => {
     plan: { findMany: vi.fn(), findUnique: vi.fn(), create: vi.fn(), update: vi.fn(), delete: vi.fn() },
     userSession: { count: vi.fn(), findMany: vi.fn(), delete: vi.fn() },
     cloudinaryAsset: { groupBy: vi.fn(), findMany: vi.fn(), update: vi.fn() },
-    tenantLicense: { count: vi.fn(), create: vi.fn() },
+    tenantLicense: {
+      count: vi.fn(),
+      create: vi.fn(),
+      findMany: vi.fn(),
+      update: vi.fn(),
+      delete: vi.fn(),
+      updateMany: vi.fn(),
+    },
     auditLog: { create: vi.fn() },
   };
 
@@ -54,7 +61,9 @@ import {
   getGlobalUsersAction,
   getAdminTenantsAction, getAdminSystemHealthAction,
   getAdminPlanesAction, createAdminPlanAction, approveGlobalUserAction, createDemoTenantAction,
+  cleanupExpiredDemoLicenciasAction,
   getCloudinaryAssetsAction, cleanupCloudinaryAssetsAction,
+  getLicenciasAction, updateLicenciaAction, deleteLicenciaAction,
 } from '@/features/admin/actions';
 import { createTenantForUser } from '@/lib/services/tenant-factory';
 import type { AuthenticatedUser } from '@/lib/auth-middleware';
@@ -464,6 +473,128 @@ describe('Admin Server Actions', () => {
       });
       expect(r.success).toBe(false);
       expect(r.error!.code).toBe('FORBIDDEN');
+    });
+  });
+
+  describe('tenant license admin actions', () => {
+    it('getLicenciasAction incluye demos y manager del tenant', async () => {
+      vi.mocked(getCurrentUser).mockResolvedValue(adminUser);
+      vi.mocked(prisma.tenantLicense.findMany).mockResolvedValue([
+        {
+          tenantLicenseId: 'lic-demo',
+          isDemo: true,
+          tenant: {
+            tenantId: 'tenant-demo',
+            memberships: [
+              {
+                user: {
+                  userId: 'user-demo',
+                  name: 'Demo User',
+                  email: 'demo@test.com',
+                },
+              },
+            ],
+          },
+        },
+      ] as any);
+
+      const r = await getLicenciasAction();
+
+      expect(r.success).toBe(true);
+      expect(prisma.tenantLicense.findMany).toHaveBeenCalledWith(
+        expect.objectContaining({
+          orderBy: { createdAt: 'desc' },
+          include: expect.objectContaining({
+            plan: true,
+            tenant: expect.objectContaining({
+              include: expect.objectContaining({
+                memberships: expect.objectContaining({
+                  where: { isActive: true, tenantRole: 'manager' },
+                  take: 1,
+                }),
+              }),
+            }),
+          }),
+        }),
+      );
+    });
+
+    it('updateLicenciaAction usa tenantLicenseId', async () => {
+      vi.mocked(getCurrentUser).mockResolvedValue(adminUser);
+      vi.mocked(prisma.tenantLicense.update).mockResolvedValue({
+        tenantLicenseId: 'lic-1',
+      } as any);
+
+      const r = await updateLicenciaAction({ id: 'lic-1', activa: false });
+
+      expect(r.success).toBe(true);
+      expect(prisma.tenantLicense.update).toHaveBeenCalledWith({
+        where: { tenantLicenseId: 'lic-1' },
+        data: { activa: false },
+      });
+    });
+
+    it('deleteLicenciaAction usa tenantLicenseId', async () => {
+      vi.mocked(getCurrentUser).mockResolvedValue(adminUser);
+      vi.mocked(prisma.tenantLicense.delete).mockResolvedValue({
+        tenantLicenseId: 'lic-1',
+      } as any);
+
+      const r = await deleteLicenciaAction('lic-1');
+
+      expect(r.success).toBe(true);
+      expect(prisma.tenantLicense.delete).toHaveBeenCalledWith({
+        where: { tenantLicenseId: 'lic-1' },
+      });
+    });
+
+    it('cleanupExpiredDemoLicenciasAction desactiva solo demos expiradas activas', async () => {
+      vi.mocked(getCurrentUser).mockResolvedValue(adminUser);
+      vi.mocked(prisma.tenantLicense.findMany).mockResolvedValue([
+        {
+          tenantLicenseId: 'lic-exp-1',
+          tenantId: 'tenant-1',
+          expiracion: new Date('2026-01-01T00:00:00.000Z'),
+        },
+        {
+          tenantLicenseId: 'lic-exp-2',
+          tenantId: 'tenant-2',
+          expiracion: new Date('2026-01-02T00:00:00.000Z'),
+        },
+      ] as any);
+      vi.mocked(prisma.tenantLicense.updateMany).mockResolvedValue({ count: 2 } as any);
+
+      const r = await cleanupExpiredDemoLicenciasAction({});
+
+      expect(r.success).toBe(true);
+      expect(prisma.tenantLicense.findMany).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: expect.objectContaining({
+            isDemo: true,
+            activa: true,
+            expiracion: expect.any(Object),
+          }),
+          select: {
+            tenantLicenseId: true,
+            tenantId: true,
+            expiracion: true,
+          },
+        }),
+      );
+      expect(prisma.tenantLicense.updateMany).toHaveBeenCalledWith({
+        where: {
+          tenantLicenseId: {
+            in: ['lic-exp-1', 'lic-exp-2'],
+          },
+        },
+        data: { activa: false },
+      });
+      expect(r.data).toEqual(
+        expect.objectContaining({
+          dryRun: false,
+          count: 2,
+        }),
+      );
     });
   });
 

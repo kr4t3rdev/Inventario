@@ -29,6 +29,7 @@ import {
 	addTenantMembershipSchema,
 	createLicenciaSchema,
 	createDemoTenantSchema,
+	cleanupExpiredDemoLicenciasSchema,
 	updateLicenciaSchema,
 	createPlanSchema,
 	updatePlanSchema,
@@ -44,6 +45,7 @@ import type {
 	MembershipActionInput,
 	CreateLicenciaInput,
 	CreateDemoTenantInput,
+	CleanupExpiredDemoLicenciasInput,
 	UpdateLicenciaInput,
 	CreatePlanInput,
 	UpdatePlanInput,
@@ -1146,7 +1148,6 @@ export const getLicenciasAction = withAction(
 		if (user.role !== "admin")
 			throw new ActionError("Acceso restringido", "FORBIDDEN");
 		return prisma.tenantLicense.findMany({
-			where: { isDemo: false },
 			orderBy: { createdAt: "desc" },
 			include: {
 				plan: true,
@@ -1206,13 +1207,55 @@ export const createDemoTenantAction = withAction(
 	},
 );
 
+export const cleanupExpiredDemoLicenciasAction = withAction(
+	async (
+		input: CleanupExpiredDemoLicenciasInput | undefined,
+		user: AuthenticatedUser,
+	) => {
+		if (user.role !== "admin")
+			throw new ActionError("Acceso restringido", "FORBIDDEN");
+
+		const parsed = cleanupExpiredDemoLicenciasSchema.parse(input ?? {});
+		const now = new Date();
+		const expiredDemoLicenses = await prisma.tenantLicense.findMany({
+			where: {
+				isDemo: true,
+				activa: true,
+				expiracion: { lt: now },
+			},
+			select: {
+				tenantLicenseId: true,
+				tenantId: true,
+				expiracion: true,
+			},
+		});
+
+		if (!parsed.dryRun && expiredDemoLicenses.length > 0) {
+			await prisma.tenantLicense.updateMany({
+				where: {
+					tenantLicenseId: {
+						in: expiredDemoLicenses.map((license) => license.tenantLicenseId),
+					},
+				},
+				data: { activa: false },
+			});
+			revalidatePath("/admin/licencias");
+		}
+
+		return {
+			dryRun: parsed.dryRun,
+			count: expiredDemoLicenses.length,
+			licenses: expiredDemoLicenses,
+		};
+	},
+);
+
 export const updateLicenciaAction = withAction(
 	async ({ id, ...data }: any, user: AuthenticatedUser) => {
 		if (user.role !== "admin")
 			throw new ActionError("Acceso restringido", "FORBIDDEN");
 		const licencia = await prisma.tenantLicense.update({
-			// @ts-expect-error TenantLicense uses id but Prisma client type may differ
-			where: { id },
+			where: { tenantLicenseId: id },
 			data,
 		});
 		revalidatePath("/admin");
@@ -1225,8 +1268,7 @@ export const deleteLicenciaAction = withAction(
 		if (user.role !== "admin")
 			throw new ActionError("Acceso restringido", "FORBIDDEN");
 		await prisma.tenantLicense.delete({
-			// @ts-expect-error TenantLicense uses id but Prisma client type may differ
-			where: { id },
+			where: { tenantLicenseId: id },
 		});
 		revalidatePath("/admin");
 		return { success: true };

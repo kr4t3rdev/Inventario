@@ -20,6 +20,7 @@ import {
   Rocket,
   Building2,
   UserCircle2,
+  RefreshCcw,
 } from 'lucide-react'
 import { format, differenceInDays } from 'date-fns'
 import { toast } from 'sonner'
@@ -58,7 +59,16 @@ import {
   PaginationNext,
   PaginationPrevious,
 } from '@/components/ui/pagination'
-import { getAdminPlanesAction, getGlobalUsersAction, deleteLicenciaAction, updateLicenciaAction, generateLicenciasAction, createDemoTenantAction, getLicenciasAction } from '@/features/admin'
+import {
+  getAdminPlanesAction,
+  getGlobalUsersAction,
+  deleteLicenciaAction,
+  updateLicenciaAction,
+  generateLicenciasAction,
+  createDemoTenantAction,
+  cleanupExpiredDemoLicenciasAction,
+  getLicenciasAction,
+} from '@/features/admin'
 
 export default function AdminLicenciasPage() {
   const [page, setPage] = useState(1)
@@ -126,7 +136,7 @@ export default function AdminLicenciasPage() {
 
   async function handleToggleLicencia(licencia: any) {
     try {
-      const r = await updateLicenciaAction({ id: licencia.licenciaId, activa: !licencia.activa })
+      const r = await updateLicenciaAction({ id: licencia.tenantLicenseId, activa: !licencia.activa })
       if (r.success) {
         toast.success(licencia.activa ? 'Licencia revocada' : 'Licencia activada')
         const licenciasResult = await getLicenciasAction()
@@ -155,6 +165,28 @@ export default function AdminLicenciasPage() {
     }
   }
 
+  async function handleCleanupExpiredDemos() {
+    try {
+      const result = await cleanupExpiredDemoLicenciasAction({})
+      if (!result.success) {
+        toast.error(result.error?.message || 'No se pudo limpiar demos expiradas')
+        return
+      }
+
+      const cleaned = result.data?.count ?? 0
+      toast.success(
+        cleaned > 0
+          ? `Se desactivaron ${cleaned} demos expiradas`
+          : 'No había demos expiradas para limpiar',
+      )
+
+      const licenciasResult = await getLicenciasAction()
+      if (licenciasResult.success) setData(licenciasResult.data)
+    } catch (error) {
+      toast.error('No se pudo limpiar demos expiradas')
+    }
+  }
+
   const toggleSelect = (id: string) => {
     const next = new Set(selectedLicencias)
     if (next.has(id)) next.delete(id)
@@ -166,7 +198,7 @@ export default function AdminLicenciasPage() {
     if (selectedLicencias.size === licencias.length) {
       setSelectedLicencias(new Set())
     } else {
-      setSelectedLicencias(new Set(licencias.map((l: any) => l.licenciaId)))
+      setSelectedLicencias(new Set(licencias.map((l: any) => l.tenantLicenseId)))
     }
   }
 
@@ -182,14 +214,20 @@ export default function AdminLicenciasPage() {
           <h1 className="text-3xl font-bold tracking-tight">Licencias</h1>
           <p className="text-muted-foreground">Gestión de licencias y activaciones</p>
         </div>
-        <Button onClick={() => setGenerarDialogOpen(true)}>
-          <Plus className="mr-2 h-4 w-4" />
-          Generar Licencias
-        </Button>
-        <Button variant="outline" onClick={() => setDemoDialogOpen(true)}>
-          <Rocket className="mr-2 h-4 w-4" />
-          Crear Demo
-        </Button>
+        <div className="flex items-center gap-2">
+          <Button variant="outline" onClick={handleCleanupExpiredDemos}>
+            <RefreshCcw className="mr-2 h-4 w-4" />
+            Limpiar Demos Expiradas
+          </Button>
+          <Button variant="outline" onClick={() => setDemoDialogOpen(true)}>
+            <Rocket className="mr-2 h-4 w-4" />
+            Crear Demo
+          </Button>
+          <Button onClick={() => setGenerarDialogOpen(true)}>
+            <Plus className="mr-2 h-4 w-4" />
+            Generar Licencias
+          </Button>
+        </div>
       </motion.div>
 
       {/* Métricas */}
@@ -306,7 +344,7 @@ export default function AdminLicenciasPage() {
             size="sm"
             onClick={async () => {
               for (const id of selectedLicencias) {
-                const lic = licencias.find((l: any) => l.licenciaId === id)
+                const lic = licencias.find((l: any) => l.tenantLicenseId === id)
                 if (lic) await handleToggleLicencia(lic)
               }
               setSelectedLicencias(new Set())
@@ -363,12 +401,12 @@ export default function AdminLicenciasPage() {
               licencias.map((licencia: any) => {
                 const expirada = new Date(licencia.expiracion) < new Date()
                 const diasRestantes = differenceInDays(new Date(licencia.expiracion), new Date())
-                const isSelected = selectedLicencias.has(licencia.licenciaId)
+                const isSelected = selectedLicencias.has(licencia.tenantLicenseId)
 
                 return (
-                  <TableRow key={licencia.licenciaId} className={isSelected ? 'bg-primary/5' : ''}>
+                  <TableRow key={licencia.tenantLicenseId} className={isSelected ? 'bg-primary/5' : ''}>
                     <TableCell>
-                      <button onClick={() => toggleSelect(licencia.licenciaId)}>
+                      <button onClick={() => toggleSelect(licencia.tenantLicenseId)}>
                         {isSelected ? (
                           <Check className="h-4 w-4 text-primary" />
                         ) : (
@@ -446,7 +484,7 @@ export default function AdminLicenciasPage() {
                         <Button
                           variant="ghost"
                           size="sm"
-                          onClick={() => handleDeleteLicencia(licencia.licenciaId)}
+                          onClick={() => handleDeleteLicencia(licencia.tenantLicenseId)}
                           className="text-rose-500"
                         >
                           <Trash2 className="h-4 w-4" />

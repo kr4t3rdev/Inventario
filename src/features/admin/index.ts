@@ -19,6 +19,7 @@ export {
 	getLicenciasAction,
 	createLicenciaAction,
 	createDemoTenantAction,
+	cleanupExpiredDemoLicenciasAction,
 	updateLicenciaAction,
 	deleteLicenciaAction,
 	generateLicenciasAction,
