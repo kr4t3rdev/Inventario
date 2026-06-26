@@ -431,6 +431,7 @@ export const getAdminSystemHealthAction = withAction(
 				prisma.tenantLicense.count({
 					where: {
 						activa: true,
+						isDemo: false,
 						expiracion: {
 							lte: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000),
 							gte: new Date(),
@@ -1147,7 +1148,26 @@ export const getLicenciasAction = withAction(
 		return prisma.tenantLicense.findMany({
 			where: { isDemo: false },
 			orderBy: { createdAt: "desc" },
-			include: { plan: true, tenant: true },
+			include: {
+				plan: true,
+				tenant: {
+					include: {
+						memberships: {
+							where: { isActive: true, tenantRole: "manager" },
+							take: 1,
+							include: {
+								user: {
+									select: {
+										userId: true,
+										name: true,
+										email: true,
+									},
+								},
+							},
+						},
+					},
+				},
+			},
 		});
 	},
 );
