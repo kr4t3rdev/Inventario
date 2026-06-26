@@ -8,6 +8,12 @@ vi.mock('next/cache', () => ({ revalidatePath: vi.fn() }));
 vi.mock('bcryptjs', () => ({ default: { hash: vi.fn().mockResolvedValue('hashed'), compare: vi.fn() } }));
 vi.mock('@/lib/email', () => ({ sendEmailVerificationLink: vi.fn() }));
 vi.mock('@/lib/cloudinary', () => ({ destroyCloudinaryAsset: vi.fn() }));
+vi.mock('@/lib/services/demo-tenant-factory', () => ({
+  createDemoTenantForPlan: vi.fn(),
+}));
+vi.mock('@/lib/services/demo-seed', () => ({
+  seedDemoTenantData: vi.fn(),
+}));
 vi.mock('@/lib/prisma', () => {
   const prismaMock = {
     $transaction: vi.fn((cb: any) => cb({
@@ -39,13 +45,15 @@ vi.mock('@/lib/prisma', () => {
 
 import { getCurrentUser } from '@/lib/server-actions/get-current-user';
 import { destroyCloudinaryAsset } from '@/lib/cloudinary';
+import { createDemoTenantForPlan } from '@/lib/services/demo-tenant-factory';
+import { seedDemoTenantData } from '@/lib/services/demo-seed';
 import { prisma } from '@/lib/prisma';
 import {
   getUsersAction, createUserAction, updateUserAction, deleteUserAction,
   lockUserAction, unlockUserAction,
   getGlobalUsersAction,
   getAdminTenantsAction, getAdminSystemHealthAction,
-  getAdminPlanesAction, createAdminPlanAction, approveGlobalUserAction,
+  getAdminPlanesAction, createAdminPlanAction, approveGlobalUserAction, createDemoTenantAction,
   getCloudinaryAssetsAction, cleanupCloudinaryAssetsAction,
 } from '@/features/admin/actions';
 import { createTenantForUser } from '@/lib/services/tenant-factory';
@@ -406,6 +414,54 @@ describe('Admin Server Actions', () => {
     it('non-admin rechazado', async () => {
       vi.mocked(getCurrentUser).mockResolvedValue(nonAdmin);
       const r = await approveGlobalUserAction({ userId: 'user-company' });
+      expect(r.success).toBe(false);
+      expect(r.error!.code).toBe('FORBIDDEN');
+    });
+  });
+
+  describe('createDemoTenantAction', () => {
+    it('admin crea demo y dispara el seed parametrizado', async () => {
+      vi.mocked(getCurrentUser).mockResolvedValue(adminUser);
+      vi.mocked(createDemoTenantForPlan).mockResolvedValue({
+        tenantId: 'tenant-demo-1',
+        membershipId: 'membership-demo-1',
+        licenseId: 'license-demo-1',
+        userId: 'user-demo-1',
+        email: 'demo@example.com',
+        password: 'Demo-123456',
+        expiresAt: new Date('2026-07-02T10:00:00.000Z'),
+        planName: 'Profesional',
+        isDemo: true,
+      } as any);
+      vi.mocked(seedDemoTenantData).mockResolvedValue({
+        tenantId: 'tenant-demo-1',
+        planName: 'Profesional',
+        profile: 'professional',
+      } as any);
+
+      const r = await createDemoTenantAction({
+        planId: 'plan-pro',
+        demoName: 'Demo Profesional',
+        durationDays: 6,
+      });
+
+      expect(r.success).toBe(true);
+      expect(createDemoTenantForPlan).toHaveBeenCalledWith({
+        planId: 'plan-pro',
+        demoName: 'Demo Profesional',
+        durationDays: 6,
+      });
+      expect(seedDemoTenantData).toHaveBeenCalledWith({
+        tenantId: 'tenant-demo-1',
+        planName: 'Profesional',
+      });
+    });
+
+    it('non-admin rechazado', async () => {
+      vi.mocked(getCurrentUser).mockResolvedValue(nonAdmin);
+      const r = await createDemoTenantAction({
+        planId: 'plan-pro',
+      });
       expect(r.success).toBe(false);
       expect(r.error!.code).toBe('FORBIDDEN');
     });

@@ -18,6 +18,7 @@ export {
 	deleteAdminPlanAction,
 	getLicenciasAction,
 	createLicenciaAction,
+	createDemoTenantAction,
 	updateLicenciaAction,
 	deleteLicenciaAction,
 	generateLicenciasAction,

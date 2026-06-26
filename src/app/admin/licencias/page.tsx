@@ -17,6 +17,9 @@ import {
   Clock,
   AlertTriangle,
   X,
+  Rocket,
+  Building2,
+  UserCircle2,
 } from 'lucide-react'
 import { format, differenceInDays } from 'date-fns'
 import { toast } from 'sonner'
@@ -56,7 +59,7 @@ import {
   PaginationPrevious,
 } from '@/components/ui/pagination'
 import { getLicenciasAction } from '@/features/licencias'
-import { getAdminPlanesAction, getGlobalUsersAction, deleteLicenciaAction, updateLicenciaAction, generateLicenciasAction } from '@/features/admin'
+import { getAdminPlanesAction, getGlobalUsersAction, deleteLicenciaAction, updateLicenciaAction, generateLicenciasAction, createDemoTenantAction } from '@/features/admin'
 
 export default function AdminLicenciasPage() {
   const [page, setPage] = useState(1)
@@ -66,6 +69,7 @@ export default function AdminLicenciasPage() {
   const [statusFilter, setStatusFilter] = useState('all')
   const [copiedKey, setCopiedKey] = useState<string | null>(null)
   const [generarDialogOpen, setGenerarDialogOpen] = useState(false)
+  const [demoDialogOpen, setDemoDialogOpen] = useState(false)
   const [selectedLicencias, setSelectedLicencias] = useState<Set<string>>(new Set())
 
   const [data, setData] = useState<any>(null)
@@ -157,6 +161,10 @@ export default function AdminLicenciasPage() {
         <Button onClick={() => setGenerarDialogOpen(true)}>
           <Plus className="mr-2 h-4 w-4" />
           Generar Licencias
+        </Button>
+        <Button variant="outline" onClick={() => setDemoDialogOpen(true)}>
+          <Rocket className="mr-2 h-4 w-4" />
+          Crear Demo
         </Button>
       </motion.div>
 
@@ -450,6 +458,12 @@ export default function AdminLicenciasPage() {
           }
         }}
       />
+
+      <CrearDemoDialog
+        open={demoDialogOpen}
+        onClose={() => setDemoDialogOpen(false)}
+        planes={planes}
+      />
     </div>
   )
 }
@@ -545,6 +559,168 @@ function GenerarLicenciasDialog({
           >
             Generar
           </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  )
+}
+
+function CrearDemoDialog({
+  open,
+  onClose,
+  planes,
+}: {
+  open: boolean
+  onClose: () => void
+  planes: any[]
+}) {
+  const [planId, setPlanId] = useState('')
+  const [demoName, setDemoName] = useState('')
+  const [durationDays, setDurationDays] = useState('6')
+  const [isSubmitting, setIsSubmitting] = useState(false)
+  const [createdDemo, setCreatedDemo] = useState<any>(null)
+
+  const handleClose = () => {
+    if (isSubmitting) return
+    setPlanId('')
+    setDemoName('')
+    setDurationDays('6')
+    setCreatedDemo(null)
+    onClose()
+  }
+
+  const copyValue = async (value: string, label: string) => {
+    await navigator.clipboard.writeText(value)
+    toast.success(`${label} copiado`)
+  }
+
+  const handleCreate = async () => {
+    try {
+      setIsSubmitting(true)
+      const result = await createDemoTenantAction({
+        planId,
+        demoName: demoName.trim() || undefined,
+        durationDays: Number(durationDays || 6),
+      })
+
+      if (!result.success) {
+        toast.error(result.error?.message || 'Error creando demo')
+        return
+      }
+
+      setCreatedDemo(result.data)
+      toast.success('Demo creada correctamente')
+    } catch (_error) {
+      toast.error('Error creando demo')
+    } finally {
+      setIsSubmitting(false)
+    }
+  }
+
+  return (
+    <Dialog open={open} onOpenChange={handleClose}>
+      <DialogContent className="sm:max-w-[560px]">
+        <DialogHeader>
+          <DialogTitle>Crear Demo de Plan</DialogTitle>
+          <DialogDescription>
+            Provisiona un tenant demo con licencia corta y credenciales temporales.
+          </DialogDescription>
+        </DialogHeader>
+
+        {!createdDemo ? (
+          <div className="grid gap-4 py-4">
+            <div className="grid gap-2">
+              <span className="text-sm font-medium">Plan</span>
+              <Select value={planId} onValueChange={setPlanId}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Seleccionar plan" />
+                </SelectTrigger>
+                <SelectContent>
+                  {planes.map((plan: any) => (
+                    <SelectItem key={plan.planId} value={plan.planId}>
+                      {plan.nombre} - ${plan.precio}/{plan.duracionDias} días
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div className="grid gap-2">
+              <span className="text-sm font-medium">Nombre demo (opcional)</span>
+              <Input
+                value={demoName}
+                onChange={(e) => setDemoName(e.target.value)}
+                placeholder="Ej: Demo Profesional Caribe"
+              />
+            </div>
+
+            <div className="grid gap-2">
+              <span className="text-sm font-medium">Duración (días)</span>
+              <Input
+                type="number"
+                min={1}
+                max={30}
+                value={durationDays}
+                onChange={(e) => setDurationDays(e.target.value)}
+              />
+            </div>
+          </div>
+        ) : (
+          <div className="grid gap-4 py-4">
+            <Card>
+              <CardHeader className="pb-3">
+                <CardTitle className="text-base">Demo creada</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-3">
+                <div className="flex items-center justify-between gap-3 rounded-md border p-3">
+                  <div>
+                    <div className="text-xs text-muted-foreground">Tenant</div>
+                    <div className="font-medium">{createdDemo.tenantId}</div>
+                  </div>
+                  <Building2 className="h-4 w-4 text-muted-foreground" />
+                </div>
+                <div className="flex items-center justify-between gap-3 rounded-md border p-3">
+                  <div>
+                    <div className="text-xs text-muted-foreground">Usuario</div>
+                    <div className="font-medium">{createdDemo.email}</div>
+                  </div>
+                  <Button size="icon" variant="outline" onClick={() => copyValue(createdDemo.email, 'Usuario')}>
+                    <Copy className="h-4 w-4" />
+                  </Button>
+                </div>
+                <div className="flex items-center justify-between gap-3 rounded-md border p-3">
+                  <div>
+                    <div className="text-xs text-muted-foreground">Contraseña temporal</div>
+                    <div className="font-medium">{createdDemo.password}</div>
+                  </div>
+                  <Button size="icon" variant="outline" onClick={() => copyValue(createdDemo.password, 'Contraseña')}>
+                    <Copy className="h-4 w-4" />
+                  </Button>
+                </div>
+                <div className="flex items-center justify-between gap-3 rounded-md border p-3">
+                  <div>
+                    <div className="text-xs text-muted-foreground">Plan</div>
+                    <div className="font-medium">{createdDemo.planName}</div>
+                  </div>
+                  <UserCircle2 className="h-4 w-4 text-muted-foreground" />
+                </div>
+                <div className="text-xs text-muted-foreground">
+                  Expira el {format(new Date(createdDemo.expiresAt), 'dd/MM/yyyy HH:mm')}
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+        )}
+
+        <DialogFooter>
+          <Button variant="outline" onClick={handleClose} disabled={isSubmitting}>
+            {createdDemo ? 'Cerrar' : 'Cancelar'}
+          </Button>
+          {!createdDemo && (
+            <Button onClick={handleCreate} disabled={!planId || isSubmitting}>
+              {isSubmitting ? 'Creando...' : 'Crear Demo'}
+            </Button>
+          )}
         </DialogFooter>
       </DialogContent>
     </Dialog>

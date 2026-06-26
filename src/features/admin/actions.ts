@@ -10,6 +10,8 @@
 import { revalidatePath } from "next/cache";
 import { withAction, ActionError } from "@/lib/server-actions";
 import { createTenantForUser } from "@/lib/services/tenant-factory";
+import { createDemoTenantForPlan } from "@/lib/services/demo-tenant-factory";
+import { seedDemoTenantData } from "@/lib/services/demo-seed";
 import { requireFeature } from "@/lib/services/tenant-scope";
 import { prisma } from "@/lib/prisma";
 import bcrypt from "bcryptjs";
@@ -26,6 +28,7 @@ import {
 	membershipActionSchema,
 	addTenantMembershipSchema,
 	createLicenciaSchema,
+	createDemoTenantSchema,
 	updateLicenciaSchema,
 	createPlanSchema,
 	updatePlanSchema,
@@ -40,6 +43,7 @@ import type {
 	LockUnlockInput,
 	MembershipActionInput,
 	CreateLicenciaInput,
+	CreateDemoTenantInput,
 	UpdateLicenciaInput,
 	CreatePlanInput,
 	UpdatePlanInput,
@@ -372,7 +376,7 @@ export const getAdminTenantsAction = withAction(
 					select: { memberships: true, productos: true, almacenes: true },
 				},
 				licenses: {
-					where: { activa: true },
+					where: { activa: true, isDemo: false },
 					orderBy: { createdAt: "desc" },
 					take: 1,
 					include: { plan: true },
@@ -422,8 +426,8 @@ export const getAdminSystemHealthAction = withAction(
 				prisma.user.count(),
 				prisma.tenant.count(),
 				prisma.userSession.count(),
-				prisma.tenantLicense.count(),
-				prisma.tenantLicense.count({ where: { activa: true } }),
+				prisma.tenantLicense.count({ where: { isDemo: false } }),
+				prisma.tenantLicense.count({ where: { activa: true, isDemo: false } }),
 				prisma.tenantLicense.count({
 					where: {
 						activa: true,
@@ -1141,6 +1145,7 @@ export const getLicenciasAction = withAction(
 		if (user.role !== "admin")
 			throw new ActionError("Acceso restringido", "FORBIDDEN");
 		return prisma.tenantLicense.findMany({
+			where: { isDemo: false },
 			orderBy: { createdAt: "desc" },
 			include: { plan: true, tenant: true },
 		});
@@ -1154,6 +1159,30 @@ export const createLicenciaAction = withAction(
 		const licencia = await prisma.tenantLicense.create({ data: { ...input } });
 		revalidatePath("/admin");
 		return licencia;
+	},
+);
+
+export const createDemoTenantAction = withAction(
+	async (input: CreateDemoTenantInput, user: AuthenticatedUser) => {
+		if (user.role !== "admin")
+			throw new ActionError("Acceso restringido", "FORBIDDEN");
+
+		const parsed = createDemoTenantSchema.parse(input);
+
+		const demo = await createDemoTenantForPlan({
+			planId: parsed.planId,
+			demoName: parsed.demoName,
+			durationDays: parsed.durationDays,
+		});
+
+		await seedDemoTenantData({
+			tenantId: demo.tenantId,
+			planName: demo.planName,
+		});
+
+		revalidatePath("/admin/licencias");
+
+		return demo;
 	},
 );
 
@@ -1329,6 +1358,7 @@ export const getAdminSubscriptionRevenueAction = withAction(
 		// Obtener todas las licencias con sus planes
 		const allLicenses = await prisma.tenantLicense.findMany({
 			where: {
+				isDemo: false,
 				OR: [
 					{ createdAt: { gte: startDate, lte: endDate } },
 					{ updatedAt: { gte: startDate, lte: endDate } },
