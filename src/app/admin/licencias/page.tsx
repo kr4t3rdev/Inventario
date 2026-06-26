@@ -58,8 +58,7 @@ import {
   PaginationNext,
   PaginationPrevious,
 } from '@/components/ui/pagination'
-import { getLicenciasAction } from '@/features/licencias'
-import { getAdminPlanesAction, getGlobalUsersAction, deleteLicenciaAction, updateLicenciaAction, generateLicenciasAction, createDemoTenantAction } from '@/features/admin'
+import { getAdminPlanesAction, getGlobalUsersAction, deleteLicenciaAction, updateLicenciaAction, generateLicenciasAction, createDemoTenantAction, getLicenciasAction } from '@/features/admin'
 
 export default function AdminLicenciasPage() {
   const [page, setPage] = useState(1)
@@ -67,6 +66,7 @@ export default function AdminLicenciasPage() {
   const [search, setSearch] = useState('')
   const [planFilter, setPlanFilter] = useState('all')
   const [statusFilter, setStatusFilter] = useState('all')
+  const [typeFilter, setTypeFilter] = useState('all')
   const [copiedKey, setCopiedKey] = useState<string | null>(null)
   const [generarDialogOpen, setGenerarDialogOpen] = useState(false)
   const [demoDialogOpen, setDemoDialogOpen] = useState(false)
@@ -76,11 +76,34 @@ export default function AdminLicenciasPage() {
   const [planesData, setPlanesData] = useState<any[]>([])
   const [usersData, setUsersData] = useState<any>(null)
   const [isLoading, setIsLoading] = useState(true)
-  useEffect(() => { setIsLoading(true); Promise.all([getLicenciasAction(), getAdminPlanesAction(), getGlobalUsersAction({limit:100})]).then(([r1,r2,r3]) => { if(r1.success) setData(r1.data); if(r2.success) setPlanesData(r2.data??[]); if(r3.success) setUsersData(r3.data); setIsLoading(false) }) }, [page, search, planFilter, statusFilter])
+  useEffect(() => { setIsLoading(true); Promise.all([getLicenciasAction(), getAdminPlanesAction(), getGlobalUsersAction({limit:100})]).then(([r1,r2,r3]) => { if(r1.success) setData(r1.data); if(r2.success) setPlanesData(r2.data??[]); if(r3.success) setUsersData(r3.data); setIsLoading(false) }) }, [page, search, planFilter, statusFilter, typeFilter])
 
-  const licencias = data?.licencias || data || []
-  const total = (data as any)?.total || licencias.length
-  const pages = (data as any)?.pages || 1
+  const licenciasRaw = data?.licencias || data || []
+  const licencias = licenciasRaw.filter((licencia: any) => {
+    const manager = licencia.tenant?.memberships?.[0]?.user
+    const searchValue = search.trim().toLowerCase()
+    const matchesSearch =
+      !searchValue ||
+      licencia.tenantLicenseId?.toLowerCase().includes(searchValue) ||
+      licencia.tenant?.tenantId?.toLowerCase().includes(searchValue) ||
+      licencia.tenant?.nombre?.toLowerCase().includes(searchValue) ||
+      manager?.email?.toLowerCase().includes(searchValue) ||
+      manager?.name?.toLowerCase().includes(searchValue)
+
+    const matchesPlan = planFilter === 'all' || licencia.planId === planFilter
+    const matchesStatus =
+      statusFilter === 'all' ||
+      (statusFilter === 'true' && licencia.activa) ||
+      (statusFilter === 'false' && !licencia.activa)
+    const matchesType =
+      typeFilter === 'all' ||
+      (typeFilter === 'demo' && licencia.isDemo === true) ||
+      (typeFilter === 'standard' && licencia.isDemo !== true)
+
+    return matchesSearch && matchesPlan && matchesStatus && matchesType
+  })
+  const total = licencias.length
+  const pages = 1
 
   const planes = planesData || []
   const users = (usersData as any)?.users || []
@@ -88,6 +111,7 @@ export default function AdminLicenciasPage() {
   // Métricas
   const activas = licencias.filter((l: any) => l.activa && new Date(l.expiracion) > new Date()).length
   const expiradas = licencias.filter((l: any) => new Date(l.expiracion) < new Date()).length
+  const demos = licencias.filter((l: any) => l.isDemo === true).length
   const porVencer = licencias.filter((l: any) => {
     const dias = differenceInDays(new Date(l.expiracion), new Date())
     return dias <= 7 && dias >= 0
@@ -169,7 +193,7 @@ export default function AdminLicenciasPage() {
       </motion.div>
 
       {/* Métricas */}
-      <div className="grid gap-4 md:grid-cols-4">
+      <div className="grid gap-4 md:grid-cols-5">
         <Card>
           <CardHeader className="pb-2">
             <CardTitle className="text-sm font-medium text-muted-foreground">Total</CardTitle>
@@ -187,6 +211,17 @@ export default function AdminLicenciasPage() {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold text-emerald-600">{activas}</div>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardHeader className="pb-2">
+            <CardTitle className="text-sm font-medium text-muted-foreground flex items-center gap-2">
+              <Rocket className="h-4 w-4 text-sky-500" />
+              Demos
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold text-sky-600">{demos}</div>
           </CardContent>
         </Card>
         <Card>
@@ -246,6 +281,16 @@ export default function AdminLicenciasPage() {
             <SelectItem value="false">Revocadas</SelectItem>
           </SelectContent>
         </Select>
+        <Select value={typeFilter} onValueChange={(v) => { setTypeFilter(v); setPage(1) }}>
+          <SelectTrigger className="w-40">
+            <SelectValue placeholder="Tipo" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">Todos</SelectItem>
+            <SelectItem value="standard">Normales</SelectItem>
+            <SelectItem value="demo">Demos</SelectItem>
+          </SelectContent>
+        </Select>
       </div>
 
       {/* Bulk Actions */}
@@ -295,8 +340,8 @@ export default function AdminLicenciasPage() {
                   )}
                 </button>
               </TableHead>
-              <TableHead>Clave</TableHead>
-              <TableHead>Usuario</TableHead>
+              <TableHead>Licencia</TableHead>
+              <TableHead>Tenant / Admin</TableHead>
               <TableHead>Plan</TableHead>
               <TableHead>Expiración</TableHead>
               <TableHead>Estado</TableHead>
@@ -334,14 +379,14 @@ export default function AdminLicenciasPage() {
                     <TableCell>
                       <div className="flex items-center gap-2 font-mono text-sm">
                         <Key className="h-3 w-3 text-muted-foreground" />
-                        {licencia.clave}
+                        {licencia.tenantLicenseId}
                         <Button
                           variant="ghost"
                           size="icon"
                           className="h-6 w-6"
-                          onClick={() => copyToClipboard(licencia.clave)}
+                          onClick={() => copyToClipboard(licencia.tenantLicenseId)}
                         >
-                          {copiedKey === licencia.clave ? (
+                          {copiedKey === licencia.tenantLicenseId ? (
                             <Check className="h-3 w-3 text-green-500" />
                           ) : (
                             <Copy className="h-3 w-3" />
@@ -350,17 +395,24 @@ export default function AdminLicenciasPage() {
                       </div>
                     </TableCell>
                     <TableCell>
-                      {licencia.usuario ? (
+                      {licencia.tenant ? (
                         <div>
-                          <div className="font-medium">{licencia.usuario.name}</div>
-                          <div className="text-xs text-muted-foreground">{licencia.usuario.email}</div>
+                          <div className="font-medium">{licencia.tenant.nombre}</div>
+                          <div className="text-xs text-muted-foreground">
+                            {licencia.tenant.memberships?.[0]?.user?.email ?? licencia.tenant.tenantId}
+                          </div>
                         </div>
                       ) : (
                         <span className="text-muted-foreground text-sm">Sin asignar</span>
                       )}
                     </TableCell>
                     <TableCell>
-                      <Badge variant="outline">{licencia.plan?.nombre}</Badge>
+                      <div className="flex gap-2">
+                        <Badge variant="outline">{licencia.plan?.nombre}</Badge>
+                        {licencia.isDemo ? (
+                          <Badge className="bg-sky-500">Demo</Badge>
+                        ) : null}
+                      </div>
                     </TableCell>
                     <TableCell>
                       <div className="flex items-center gap-1">
