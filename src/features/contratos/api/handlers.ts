@@ -2,17 +2,20 @@ import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { z } from 'zod'
 import { authenticateUser } from '@/lib/auth-middleware'
+import { ActionError } from '@/lib/server-actions/types'
 import { generarProximoConsecutivo, formatearNumeroContrato } from '@/features/contratos/lib/numeroContratoGenerator'
 import fs from 'fs'
 import path from 'path'
 import crypto from 'crypto'
 import { v2 as cloudinary } from 'cloudinary'
+import { UTApi, UTFile } from 'uploadthing/server'
 import {
   assertContratoAttachmentAsset,
   assertContratoVersionFile,
   contratoArchivoCreateSchema,
 } from './contrato-archivo-schema'
 import { recordOwnerAsset } from '@/lib/upload/cloudinary-admin'
+import { resolveUploadPolicy } from '@/lib/upload/upload-policy'
 
 const contratoSchema = z.object({
   tipo: z.string().min(1, 'El tipo de contrato es requerido'),
@@ -347,41 +350,58 @@ export async function createContratoVersionHandler(req: NextRequest, { params }:
     })
     const nextVersionNum = (latestVersion?.numeroVersion || 0) + 1
 
-    // Subir archivo a Cloudinary (server-side, con SDK directo)
     const bytes = await file.arrayBuffer()
     const buffer = Buffer.from(bytes)
     const tenantId = user.tenantId ?? 'sin-tenant'
-    const uploadFolder = `${tenantId}/contratos/${id}/versiones`
-
-    const uploadResult = await new Promise<{ secure_url: string; public_id: string }>((resolve, reject) => {
-      cloudinary.uploader.upload_stream(
-        {
-          folder: uploadFolder,
-          resource_type: 'raw',
-          public_id: `v${nextVersionNum}_${Date.now()}`,
-        },
-        (error, result) => {
-          if (error) reject(error)
-          else resolve(result as any)
-        }
-      ).end(buffer)
+    const fileHash = getBufferHash(buffer)
+    const uploadPolicy = resolveUploadPolicy({
+      uploadKey: 'contratos.version',
+      user,
+      input: {
+        filename: file.name,
+        mimeType: file.type,
+        bytes: file.size,
+        entityId: id,
+      },
     })
-    const fileUrl = uploadResult.secure_url
+
+    const uploadedAsset = uploadPolicy.provider === 'uploadthing'
+      ? await uploadContratoVersionToUploadthing({
+          buffer,
+          file,
+          publicId: uploadPolicy.publicId,
+        })
+      : await uploadContratoVersionToCloudinary({
+          buffer,
+          file,
+          folder: uploadPolicy.folder,
+          publicId: `${uploadPolicy.publicId}_${Date.now()}`,
+        })
+
     const version = await prisma.contratoVersion.create({
       data: {
         contratoId: id,
         numeroVersion: nextVersionNum,
-        contenido: { originalName: file.name, mimeType: file.type, size: file.size },
+        contenido: {
+          originalName: file.name,
+          mimeType: file.type,
+          size: file.size,
+          fileHash,
+          uploadKey: 'contratos.version',
+          storageProvider: uploadedAsset.provider,
+          publicId: uploadedAsset.publicId,
+          fileUrl: uploadedAsset.secureUrl,
+        },
         cambios: cambios || 'Actualización de documento',
         creadoPor: user.userId,
       },
     })
-    await prisma.contratoArchivo.create({
+    const archivo = await prisma.contratoArchivo.create({
       data: {
         contratoId: id,
         versionId: version.versionId,
         tipo: 'CONTRATO_VERSION',
-        rutaArchivo: fileUrl,
+        rutaArchivo: uploadedAsset.secureUrl,
         nombreArchivo: file.name,
         generadoPor: user.userId,
       },
@@ -389,12 +409,12 @@ export async function createContratoVersionHandler(req: NextRequest, { params }:
     await recordOwnerAsset({
       tenantId,
       ownerType: 'contratoArchivo',
-      ownerId: version.versionId,
+      ownerId: archivo.archivoId,
       slot: 'contract-version',
       asset: {
         uploadKey: 'contratos.version',
-        secureUrl: fileUrl,
-        publicId: uploadResult.public_id,
+        secureUrl: uploadedAsset.secureUrl,
+        publicId: uploadedAsset.publicId,
         resourceType: 'raw',
         bytes: file.size,
         mimeType: file.type,
@@ -406,6 +426,12 @@ export async function createContratoVersionHandler(req: NextRequest, { params }:
     console.error('Error creating version:', error)
     if (error instanceof z.ZodError) {
       return NextResponse.json({ error: 'Invalid data', details: error.flatten() }, { status: 400 })
+    }
+    if (error instanceof ActionError) {
+      const status = error.code === 'FORBIDDEN' || error.code === 'FEATURE_NOT_AVAILABLE'
+        ? 403
+        : 400
+      return NextResponse.json({ error: error.message, code: error.code }, { status })
     }
     if (error instanceof Error && /no permitido|máximo permitido/i.test(error.message)) {
       return NextResponse.json({ error: error.message }, { status: 400 })
@@ -447,6 +473,10 @@ export async function checkContratoVersionDiffHandler(req: NextRequest, { params
     if (!latestVersion || latestVersion.archivos.length === 0) {
       return NextResponse.json({ hasChanges: true, isFirst: true, message: 'Primera versión con archivo.' })
     }
+    const previousMetadata = extractContratoVersionStorageMetadata(latestVersion.contenido)
+    if (previousMetadata?.fileHash && newFileHash === previousMetadata.fileHash) {
+      return NextResponse.json({ hasChanges: false, message: 'El archivo es idéntico a la última versión.' })
+    }
     const prevArchivo = latestVersion.archivos[0]
     const normalizedRelativePath = prevArchivo.rutaArchivo.replace(/^\/+/, '')
     const prevFilePath = path.join(process.cwd(), 'public', normalizedRelativePath)
@@ -472,6 +502,72 @@ export async function checkContratoVersionDiffHandler(req: NextRequest, { params
   } catch (error) {
     console.error('Error checking diff:', error)
     return NextResponse.json({ error: 'Error checking diff' }, { status: 500 })
+  }
+}
+
+function extractContratoVersionStorageMetadata(
+  contenido: unknown
+): { fileHash?: string } | null {
+  if (!contenido || typeof contenido !== 'object' || Array.isArray(contenido)) {
+    return null
+  }
+
+  const candidate = contenido as { fileHash?: unknown }
+  return {
+    fileHash: typeof candidate.fileHash === 'string' ? candidate.fileHash : undefined,
+  }
+}
+
+async function uploadContratoVersionToUploadthing(input: {
+  buffer: Buffer
+  file: File
+  publicId: string
+}): Promise<{ provider: 'uploadthing'; secureUrl: string; publicId: string }> {
+  const utapi = new UTApi()
+  const uploaded = await utapi.uploadFiles(
+    new UTFile([input.buffer], input.file.name, {
+      type: input.file.type,
+      customId: input.publicId,
+    })
+  )
+
+  const uploadResult = Array.isArray(uploaded) ? uploaded[0] : uploaded
+
+  if (!uploadResult || uploadResult.error || !uploadResult.data) {
+    throw new Error('UploadThing upload failed')
+  }
+
+  return {
+    provider: 'uploadthing',
+    secureUrl: uploadResult.data.ufsUrl,
+    publicId: uploadResult.data.customId ?? input.publicId,
+  }
+}
+
+async function uploadContratoVersionToCloudinary(input: {
+  buffer: Buffer
+  file: File
+  folder: string
+  publicId: string
+}): Promise<{ provider: 'cloudinary'; secureUrl: string; publicId: string }> {
+  const uploadResult = await new Promise<{ secure_url: string; public_id: string }>((resolve, reject) => {
+    cloudinary.uploader.upload_stream(
+      {
+        folder: input.folder,
+        resource_type: 'raw',
+        public_id: input.publicId,
+      },
+      (error, result) => {
+        if (error) reject(error)
+        else resolve(result as { secure_url: string; public_id: string })
+      }
+    ).end(input.buffer)
+  })
+
+  return {
+    provider: 'cloudinary',
+    secureUrl: uploadResult.secure_url,
+    publicId: uploadResult.public_id,
   }
 }
 
