@@ -123,3 +123,5 @@ export async function getPlansPublicActionV2(): Promise<PlanDisplay[]> {
     return []
   }
 }
+
+export const getPlansPublicAction = getPlansPublicActionV2

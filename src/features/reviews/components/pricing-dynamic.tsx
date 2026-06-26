@@ -17,9 +17,9 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { SpringSection } from "@/features/landing/utils";
 import {
-  getPlansPublicAction,
   type PlanDisplay,
-} from "@/features/reviews/actions";
+} from "@/features/planes";
+import { getPlansPublicAction } from "@/features/planes";
 
 /** Iconos por categoría de feature */
 const CATEGORY_ICONS: Record<string, string> = {

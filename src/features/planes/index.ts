@@ -9,4 +9,4 @@ export {
   getFeatureByKey,
 } from './feature-registry'
 export type { FeatureDef, FeatureCategory } from './feature-registry'
-export { getPlansAction, getPlansPublicActionV2 } from './actions'
+export { getPlansAction, getPlansPublicActionV2, getPlansPublicAction } from './actions'
