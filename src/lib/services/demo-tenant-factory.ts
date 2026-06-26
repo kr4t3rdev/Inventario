@@ -18,6 +18,7 @@ export interface CreateDemoTenantForPlanInput {
   planId: string;
   demoName?: string;
   durationDays?: number;
+  createdBy?: string;
 }
 
 export interface CreateDemoTenantForPlanResult {
@@ -30,6 +31,7 @@ export interface CreateDemoTenantForPlanResult {
   expiresAt: Date;
   planName: string;
   isDemo: true;
+  createdBy: string | null;
 }
 
 /**
@@ -145,6 +147,7 @@ export async function createDemoTenantForPlan(
         maxAlmacenes: plan.maxAlmacenes,
         maxProductos: plan.maxProductos,
         features: plan.features as Record<string, boolean>,
+        createdBy: input.createdBy ?? null,
       },
     });
 
@@ -158,6 +161,7 @@ export async function createDemoTenantForPlan(
       expiresAt,
       planName: plan.nombre,
       isDemo: true as const,
+      createdBy: input.createdBy ?? null,
     };
   });
 

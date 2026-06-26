@@ -1194,6 +1194,7 @@ export const createDemoTenantAction = withAction(
 			planId: parsed.planId,
 			demoName: parsed.demoName,
 			durationDays: parsed.durationDays,
+			createdBy: user.userId,
 		});
 
 		await seedDemoTenantData({
@@ -1249,6 +1250,8 @@ export const cleanupExpiredDemoLicenciasAction = withAction(
 		};
 	},
 );
+
+
 
 export const updateLicenciaAction = withAction(
 	async ({ id, ...data }: any, user: AuthenticatedUser) => {

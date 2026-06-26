@@ -79,6 +79,7 @@ describe('createDemoTenantForPlan', () => {
         userId: 'user-demo-1',
         planName: 'Profesional',
         isDemo: true,
+        createdBy: null,
       }),
     );
 
@@ -86,6 +87,7 @@ describe('createDemoTenantForPlan', () => {
       data: expect.objectContaining({
         planId: 'plan-pro',
         isDemo: true,
+        createdBy: null,
         maxUsuarios: 5,
         maxAlmacenes: 5,
         maxProductos: 5000,

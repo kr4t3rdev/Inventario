@@ -459,6 +459,7 @@ describe('Admin Server Actions', () => {
         planId: 'plan-pro',
         demoName: 'Demo Profesional',
         durationDays: 6,
+        createdBy: 'user-admin',
       });
       expect(seedDemoTenantData).toHaveBeenCalledWith({
         tenantId: 'tenant-demo-1',
