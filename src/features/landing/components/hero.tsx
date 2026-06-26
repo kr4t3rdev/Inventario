@@ -11,7 +11,7 @@ import Link from 'next/link';
 
 import { Button } from '@/components/ui/button';
 import { WordReveal } from '@/components/ui/word-reveal';
-import { HERO_BADGES, HERO_VALUE_PROPS } from '@/features/landing/data';
+import { HERO_BADGES, HERO_DEFINITION, HERO_VALUE_PROPS } from '@/features/landing/data';
 import { HeroSocialProof } from '@/features/reviews';
 import { ParallaxLayer } from '@/features/landing/utils';
 
@@ -62,8 +62,11 @@ export function LandingHero({ reduceMotion }: { reduceMotion?: boolean }): React
 
           {/* Subtítulo */}
           <p className="max-w-xl text-base text-muted-foreground sm:text-lg">
-            FinanceMDM unifica ventas, inventario, contabilidad y capital humano en una plataforma.
-            Más de 50 PYMES en Latinoamérica ya operan con datos precisos y decisiones más rápidas.
+            {HERO_DEFINITION}
+          </p>
+          <p className="max-w-xl text-sm text-muted-foreground/80 sm:text-base">
+            Equipos de comercio, servicios y operación lo usan para reducir trabajo duplicado,
+            mantener el stock y la contabilidad alineados, y tomar decisiones con mejor visibilidad.
           </p>
 
           {/* Rotating value prop */}

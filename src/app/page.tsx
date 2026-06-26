@@ -1,4 +1,11 @@
+import { JsonLd } from '@/components/seo/json-ld';
 import { LandingPageClient } from '@/features/landing/components/landing-page-client';
+import { FAQ_ITEMS } from '@/features/landing/data';
+import {
+  buildFaqSchema,
+  buildOrganizationSchema,
+  buildSoftwareApplicationSchema,
+} from '@/lib/seo/site';
 
 /**
  * @description Página principal del producto con narrativa visual animada
@@ -7,5 +14,12 @@ import { LandingPageClient } from '@/features/landing/components/landing-page-cl
  * @returns {JSX.Element} Landing page con spring animations y tipografía Chivo Mono.
  */
 export default function Home(): React.JSX.Element {
-  return <LandingPageClient />;
+  return (
+    <>
+      <JsonLd data={buildOrganizationSchema()} />
+      <JsonLd data={buildSoftwareApplicationSchema()} />
+      <JsonLd data={buildFaqSchema(FAQ_ITEMS)} />
+      <LandingPageClient />
+    </>
+  );
 }

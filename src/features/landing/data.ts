@@ -271,6 +271,9 @@ export const FAQ_ITEMS: FaqItem[] = [
 
 /* ─── Hero Value Props (rotating) ─── */
 
+export const HERO_DEFINITION =
+	"FinanceMDM es un sistema de gestión empresarial para pymes que centraliza inventario, ventas, contabilidad, compras y operaciones en una sola plataforma, para que cada movimiento impacte en tiempo real y el equipo trabaje con datos consistentes.";
+
 export const HERO_VALUE_PROPS = [
 	"Control financiero en tiempo real",
 	"Stock inteligente sin quiebres",
@@ -285,21 +288,21 @@ export const HERO_BADGES = [
 	{
 		icon: TrendingUp,
 		label: "Eficiencia",
-		value: "+30%",
+		value: "Flujos conectados",
 		className: "-bottom-7 -left-4 md:-left-8",
 		color: "text-cyan-accent",
 	},
 	{
 		icon: Wallet,
 		label: "Ahorro operativo",
-		value: "-40%",
+		value: "Menos tareas manuales",
 		className: "-top-3 -right-4 md:-right-6",
 		color: "text-emerald-400",
 	},
 	{
 		icon: BarChart3,
 		label: "Tiempo de cierre",
-		value: "3x",
+		value: "Visión en tiempo real",
 		className: "bottom-12 -right-5 md:-right-8",
 		color: "text-primary",
 	},

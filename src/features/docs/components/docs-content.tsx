@@ -13,7 +13,12 @@ import rehypeRaw from "rehype-raw"
 import { motion } from "framer-motion"
 import { MermaidBlock } from "./mermaid-block"
 
-export function DocsContent({ content }: { content: string }) {
+interface DocsContentProps {
+  content: string
+  lastUpdatedLabel?: string | null
+}
+
+export function DocsContent({ content, lastUpdatedLabel }: DocsContentProps) {
   return (
     <motion.article
       initial={{ opacity: 0, y: 14 }}
@@ -21,6 +26,11 @@ export function DocsContent({ content }: { content: string }) {
       transition={{ type: "spring", stiffness: 130, damping: 18, delay: 0.05 }}
       className="rounded-2xl border border-border/60 bg-card/85 p-5 shadow-sm backdrop-blur md:p-8"
     >
+      {lastUpdatedLabel ? (
+        <p className="mb-6 text-xs font-medium uppercase tracking-[0.18em] text-muted-foreground/70">
+          Última actualización: {lastUpdatedLabel}
+        </p>
+      ) : null}
       <div
         className="prose prose-sm prose-zinc max-w-none dark:prose-invert md:prose-base
           prose-headings:font-mono prose-headings:tracking-tight

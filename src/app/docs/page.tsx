@@ -8,10 +8,22 @@ import type { Metadata } from "next"
 import { DOC_DOMAINS } from "@/features/docs/data/domains"
 import { DomainGroup } from "@/features/docs/components/domain-group"
 import { DocsIndexHero } from "@/features/docs/components/docs-index-hero"
+import { buildCanonicalUrl, siteConfig } from '@/lib/seo/site'
 
 export const metadata: Metadata = {
   title: "Documentación — FinanceMDM",
   description: "Guía completa de todos los módulos del sistema FinanceMDM.",
+  alternates: {
+    canonical: buildCanonicalUrl('/docs'),
+  },
+  openGraph: {
+    title: `Documentación — ${siteConfig.name}`,
+    description: 'Guía completa de todos los módulos del sistema FinanceMDM.',
+    url: buildCanonicalUrl('/docs'),
+    siteName: siteConfig.name,
+    locale: 'es_ES',
+    type: 'website',
+  },
 }
 
 export default function DocsIndexPage() {
