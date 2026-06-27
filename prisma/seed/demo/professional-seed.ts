@@ -20,7 +20,10 @@ export interface ProfessionalSeedClient {
   puntoDeVenta: { upsert: (args: any) => Promise<unknown> }
   producto: { upsert: (args: any) => Promise<unknown> }
   precioProducto: { upsert: (args: any) => Promise<unknown> }
-  venta: { create: (args: any) => Promise<unknown> }
+  venta: {
+    create: (args: any) => Promise<unknown>
+    update: (args: any) => Promise<unknown>
+  }
   ventaItem: { createMany: (args: any) => Promise<unknown> }
 }
 
@@ -210,7 +213,13 @@ async function seedVentasDemo(client: ProfessionalSeedClient, tenantId: string):
     ]
     const total = items.reduce((s, i) => s + i.subtotal, 0)
     await client.ventaItem.createMany({ data: items })
-    // Update total (simplificado — en prod se haría con update)
+    await client.venta.update({
+      where: { ventaId: v1.ventaId },
+      data: {
+        subtotal: total,
+        total,
+      },
+    })
   }
   console.log(`   📊 [demo-pro] ${days.length} ventas demo creadas`)
 }

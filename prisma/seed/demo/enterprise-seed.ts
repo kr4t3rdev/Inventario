@@ -21,7 +21,10 @@ export interface EnterpriseSeedClient {
   puntoDeVenta: { upsert: (args: any) => Promise<unknown> }
   producto: { upsert: (args: any) => Promise<unknown> }
   precioProducto: { upsert: (args: any) => Promise<unknown> }
-  venta: { create: (args: any) => Promise<unknown> }
+  venta: {
+    create: (args: any) => Promise<unknown>
+    update: (args: any) => Promise<unknown>
+  }
   ventaItem: { createMany: (args: any) => Promise<unknown> }
   ventaServicios: { create: (args: any) => Promise<unknown> }
   gastoCompra: { create: (args: any) => Promise<unknown> }
@@ -249,6 +252,14 @@ async function seedVentasEmp(client: EnterpriseSeedClient, tenantId: string): Pr
     }) as { ventaId: string }
     await client.ventaItem.createMany({
       data: [{ ventaId: v.ventaId, productoId: prodId, cantidad: 1 + (d % 3), precioUnitario: 500 + d * 100, subtotal: (1 + (d % 3)) * (500 + d * 100) }],
+    })
+    const subtotal = (1 + (d % 3)) * (500 + d * 100)
+    await client.venta.update({
+      where: { ventaId: v.ventaId },
+      data: {
+        subtotal,
+        total: subtotal,
+      },
     })
   }
   console.log(`   📊 [demo-emp] 14 ventas demo multi-PV creadas`)
