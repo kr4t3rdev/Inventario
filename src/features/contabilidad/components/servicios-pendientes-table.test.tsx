@@ -2,12 +2,6 @@ import { describe, expect, it, vi } from 'vitest';
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 
-vi.mock('framer-motion', () => ({
-  LazyMotion: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
-  m: { div: ({ children, ...props }: React.HTMLAttributes<HTMLDivElement>) => <div {...props}>{children}</div> },
-  motion: { div: ({ children, ...props }: React.HTMLAttributes<HTMLDivElement>) => <div {...props}>{children}</div> },
-  useReducedMotion: () => true,
-}));
 
 vi.mock('@/features/contabilidad/actions-reconciliacion', () => ({
   getServiciosPendientesAction: vi.fn(),

@@ -13,14 +13,6 @@ import { render, screen } from '@testing-library/react';
 // Mocks de dependencias pesadas
 vi.mock('next/navigation', () => ({ useRouter: () => ({ refresh: vi.fn(), push: vi.fn() }) }));
 vi.mock('sonner', () => ({ toast: vi.fn() }));
-vi.mock('framer-motion', () => ({
-  LazyMotion: ({ children }: any) => children,
-  m: {
-    div: ({ children, whileHover, whileTap, initial, animate, transition, ...props }: any) => <div {...props}>{children}</div>,
-    span: ({ children, whileHover, whileTap, initial, animate, transition, ...props }: any) => <span {...props}>{children}</span>,
-    img: ({ children, whileHover, whileTap, initial, animate, transition, ...props }: any) => <div {...props}>{children}</div>,
-  },
-}));
 vi.mock('@/components/ui/sidebar', () => ({ SidebarProvider: ({ children }: any) => <>{children}</>, SidebarInset: ({ children }: any) => <>{children}</> }));
 
 // Mock simple del DataTable para evitar dependencias complejas

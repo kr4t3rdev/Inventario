@@ -5,21 +5,6 @@ vi.mock('next/navigation', () => ({
   useRouter: () => ({ push: vi.fn(), refresh: vi.fn() }),
 }));
 
-vi.mock('framer-motion', () => {
-  const primitive = new Proxy(
-    {},
-    {
-      get: () => 'div',
-    },
-  );
-
-  return {
-    motion: primitive,
-    m: primitive,
-    LazyMotion: ({ children }: { children: any }) => children,
-    AnimatePresence: ({ children }: { children: any }) => children,
-  };
-});
 
 vi.mock('@/features/productos/actions', () => ({
   createProductoAction: vi.fn(),
