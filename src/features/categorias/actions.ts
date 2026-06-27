@@ -16,7 +16,7 @@
 import { revalidatePath } from "next/cache";
 import { withAction, ActionError } from "@/lib/server-actions";
 import { prisma } from "@/lib/prisma";
-import { requireTenant } from "@/lib/services/tenant-scope";
+import { requireFeature, requireTenant } from "@/lib/services/tenant-scope";
 import { CategoriaValidator } from "@/lib/categoria-validation";
 import { CategoriaDeletionValidator } from "@/lib/categoria-errors";
 import { categoriaCreateSchema, categoriaUpdateSchema } from "./schemas";
@@ -112,6 +112,7 @@ function buildHierarchy(
  */
 export const getCategoriasAction = withAction(
 	async (_input: void, user: AuthenticatedUser) => {
+		requireFeature(user, "categorias", "gestión de categorías");
 		const tenantId = requireTenant(user);
 		return prisma.categoria.findMany({
 			where: { tenantId },
@@ -130,6 +131,7 @@ export const getCategoriasAction = withAction(
  */
 export const getCategoriaByIdAction = withAction(
 	async (catId: string, user: AuthenticatedUser) => {
+		requireFeature(user, "categorias", "gestión de categorías");
 		const tenantId = requireTenant(user);
 
 		const categoria = await prisma.categoria.findFirst({
@@ -147,6 +149,7 @@ export const getCategoriaByIdAction = withAction(
 
 export const getCategoriaHierarchyAction = withAction(
 	async (_input: void, user: AuthenticatedUser) => {
+		requireFeature(user, "categorias", "gestión de categorías");
 		const tenantId = requireTenant(user);
 		const categorias = await prisma.categoria.findMany({
 			where: { tenantId },
@@ -166,8 +169,11 @@ export const getCategoriaHierarchyAction = withAction(
  */
 export const createCategoriaAction = withAction(
 	async (input: CategoriaCreateInput, user: AuthenticatedUser) => {
+		requireFeature(user, "categorias", "gestión de categorías");
 		// Validación Zod — si falla, withAction atrapa el ZodError
 		const parsed = categoriaCreateSchema.parse(input);
+		const categoriasEan13Habilitado =
+			user.role === "admin" || user.planFeatures?.["categorias-ean13"] === true;
 
 		const tenantId = requireTenant(user);
 
@@ -175,6 +181,7 @@ export const createCategoriaAction = withAction(
 		const validation = await CategoriaValidator.validateCategoryCreation(
 			parsed,
 			tenantId,
+			{ skipEan13Validation: !categoriasEan13Habilitado },
 		);
 		if (!validation.success) {
 			throw new ActionError(
@@ -208,9 +215,12 @@ export const createCategoriaAction = withAction(
  */
 export const updateCategoriaAction = withAction(
 	async (input: CategoriaUpdateInput, user: AuthenticatedUser) => {
+		requireFeature(user, "categorias", "gestión de categorías");
 		// Validación Zod
 		const parsed = categoriaUpdateSchema.parse(input);
 		const { catId, ...updateData } = parsed;
+		const categoriasEan13Habilitado =
+			user.role === "admin" || user.planFeatures?.["categorias-ean13"] === true;
 
 		const tenantId = requireTenant(user);
 
@@ -229,6 +239,7 @@ export const updateCategoriaAction = withAction(
 			catId,
 			updateData,
 			tenantId,
+			{ skipEan13Validation: !categoriasEan13Habilitado },
 		);
 		if (!validation.success) {
 			throw new ActionError(
@@ -264,6 +275,7 @@ export const updateCategoriaAction = withAction(
  */
 export const deleteCategoriaAction = withAction(
 	async (catId: string, user: AuthenticatedUser) => {
+		requireFeature(user, "categorias", "gestión de categorías");
 		const tenantId = requireTenant(user);
 
 		// Verificar existencia con tenant scope

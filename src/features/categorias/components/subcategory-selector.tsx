@@ -23,6 +23,7 @@ interface SubcategorySelectorProps {
   required?: boolean
   showLabels?: boolean
   className?: string
+  usaEan13?: boolean
 }
 
 export function SubcategorySelector({
@@ -34,7 +35,8 @@ export function SubcategorySelector({
   disabled = false,
   required = false,
   showLabels = true,
-  className
+  className,
+  usaEan13 = false
 }: SubcategorySelectorProps) {
   const [internalCategoryId, setInternalCategoryId] = useState(selectedCategoryId || '');
   const [internalSubcategoryId, setInternalSubcategoryId] = useState(selectedSubcategoryId || '');
@@ -96,7 +98,7 @@ export function SubcategorySelector({
       <div className="space-y-2">
         {showLabels && (
           <Label htmlFor="subcategory-select">
-            Subcategoría {required && <span className="text-destructive">*</span>}
+            {usaEan13 ? 'Específico CLAS' : 'Subcategoría'} {required && <span className="text-destructive">*</span>}
           </Label>
         )}
         <Select
@@ -110,15 +112,15 @@ export function SubcategorySelector({
                 !internalCategoryId
                   ? 'Primero seleccioná una categoría'
                   : required
-                    ? 'Seleccionar subcategoría'
-                    : 'Seleccionar subcategoría (opcional)'
+                    ? usaEan13 ? 'Seleccionar específico CLAS' : 'Seleccionar subcategoría'
+                    : usaEan13 ? 'Seleccionar específico CLAS (opcional)' : 'Seleccionar subcategoría (opcional)'
               }
             />
           </SelectTrigger>
           <SelectContent>
             {internalCategoryId && (
               <>
-                {!required && <SelectItem value="none">Sin subcategoría</SelectItem>}
+                {!required && <SelectItem value="none">{usaEan13 ? 'Sin específico CLAS' : 'Sin subcategoría'}</SelectItem>}
                 {subcategories.map((subcategory) => (
                   <SelectItem key={subcategory.catId} value={subcategory.catId}>
                     {subcategory.nombre}

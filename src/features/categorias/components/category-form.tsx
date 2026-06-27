@@ -13,6 +13,7 @@ import { Loader2, Folder, ArrowLeft, Layers } from "lucide-react";
 import { LazyMotion, m as motion } from "framer-motion";
 import { ClasificadorInfoNote } from "@/features/productos/components/clasificador-info-note";
 import { fetchMiEmpresaSettings } from "@/features/mi-empresa/lib/client-mi-empresa";
+import { useAuth } from "@/contexts/auth-context";
 import { 
   CLASClassifierData,
   parseClasClassifierMarkdown,
@@ -54,9 +55,12 @@ function LoadingSpinner({ size = 24 }: { size?: number }) {
  */
 export function CategoryForm({ initialData, onSuccess }: CategoryFormProps) {
   const router = useRouter();
+  const { user } = useAuth();
   const [usaEan13, setUsaEan13] = useState(false)
   const [clasClassifierData, setClasClassifierData] = useState<CLASClassifierData | null>(null)
   const [selectedSection, setSelectedSection] = useState('')
+  const categoriasEan13Habilitado =
+    user?.role === 'admin' || user?.planFeatures?.['categorias-ean13'] === true;
 
   const clasSections = useMemo(() => {
     return clasClassifierData?.sections ?? []
@@ -69,6 +73,20 @@ export function CategoryForm({ initialData, onSuccess }: CategoryFormProps) {
 
     return clasClassifierData.sectionNameById[selectedSection] ?? ''
   }, [clasClassifierData, selectedSection])
+  const title = usaEan13
+    ? initialData
+      ? "Editar Sección CLAS"
+      : "Nueva Sección CLAS"
+    : initialData
+      ? "Editar Categoría"
+      : "Nueva Categoría";
+  const description = usaEan13
+    ? initialData
+      ? "Modifica la sección CLAS existente que estructura la taxonomía EAN-13."
+      : "Crea una nueva sección CLAS para organizar productos bajo EAN-13."
+    : initialData
+      ? "Modifica los datos de la categoría existente"
+      : "Crea una nueva categoría para organizar tus productos";
 
   const {
     form,
@@ -91,11 +109,15 @@ export function CategoryForm({ initialData, onSuccess }: CategoryFormProps) {
   useEffect(() => {
     fetchMiEmpresaSettings(() => setUsaEan13(false))
       .then((r) => {
-        if (r.success) setUsaEan13(r.data?.usaCodigoEan13 ?? false)
+        if (r.success) {
+          setUsaEan13(
+            categoriasEan13Habilitado && r.data?.usaCodigoEan13 === true,
+          )
+        }
         else setUsaEan13(false)
       })
       .catch(() => setUsaEan13(false))
-  }, [])
+  }, [categoriasEan13Habilitado])
 
   useEffect(() => {
     if (!usaEan13) {
@@ -183,15 +205,8 @@ export function CategoryForm({ initialData, onSuccess }: CategoryFormProps) {
               <Folder className="h-5 w-5 text-white" />
             </motion.div>
             <div>
-              <h2 className="text-xl font-semibold">
-                {initialData ? "Editar Categoría" : "Nueva Categoría"}
-              </h2>
-              <p className="text-sm text-muted-foreground">
-                {initialData 
-                  ? "Modifica los datos de la categoría existente" 
-                  : "Crea una nueva categoría para organizar tus productos"
-                }
-              </p>
+              <h2 className="text-xl font-semibold">{title}</h2>
+              <p className="text-sm text-muted-foreground">{description}</p>
             </div>
           </motion.div>
 

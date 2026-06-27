@@ -34,6 +34,8 @@ import { useRouter } from "next/navigation"
 import { toast } from "sonner"
 import type { Categoria, CategoriaHierarchy } from "@/app/models/model"
 import { LazyMotion, m as motion, AnimatePresence } from "framer-motion"
+import { useAuth } from "@/contexts/auth-context"
+import { fetchMiEmpresaSettings } from "@/features/mi-empresa/lib/client-mi-empresa"
 
 interface CategoriaPageClientProps {
   categorias: Categoria[]
@@ -83,18 +85,38 @@ const DataTable = dynamic(() => import("@/components/data-table").then(mod => ({
  * @returns {JSX.Element} Vista completa de gestión de categorías.
  */
 export function CategoriaPageClient({ categorias: initialCategorias, hierarchy: initialHierarchy }: CategoriaPageClientProps) {
+  const { user } = useAuth()
   const [categorias, setCategorias] = useState<Categoria[]>(initialCategorias)
   const [categoriaHierarchy, setCategoriaHierarchy] = useState<CategoriaHierarchy[]>(initialHierarchy)
   const [showTreeView, setShowTreeView] = useState(false)
   const [categoriaToDelete, setCategoriaToDelete] = useState<string | null>(null)
+  const [usaEan13, setUsaEan13] = useState(false)
   const [, startTransition] = useTransition()
   const router = useRouter()
+  const categoriasEan13Habilitado =
+    user?.role === 'admin' || user?.planFeatures?.['categorias-ean13'] === true
+  const categoryCtaLabel = usaEan13 ? 'Nueva Sección CLAS' : 'Nueva Categoría'
+  const subcategoryCtaLabel = usaEan13 ? 'Nuevo Específico CLAS' : 'Nueva Subcategoría'
 
   // Sync state when server re-fetches (e.g., after router.refresh())
   useEffect(() => {
     setCategorias(initialCategorias)
     setCategoriaHierarchy(initialHierarchy)
   }, [initialCategorias, initialHierarchy])
+
+  useEffect(() => {
+    fetchMiEmpresaSettings(() => setUsaEan13(false))
+      .then((r) => {
+        if (r.success) {
+          setUsaEan13(
+            categoriasEan13Habilitado && r.data?.usaCodigoEan13 === true,
+          )
+        } else {
+          setUsaEan13(false)
+        }
+      })
+      .catch(() => setUsaEan13(false))
+  }, [categoriasEan13Habilitado])
 
   const handleDelete = () => {
     if (!categoriaToDelete) return
@@ -138,7 +160,7 @@ export function CategoriaPageClient({ categorias: initialCategorias, hierarchy: 
             <span>{categoria.nombre}</span>
             {hasSubcategorias && categoria.subcategorias && (
               <Badge variant="secondary" className="text-xs">
-                {categoria.subcategorias.length} subcategorías
+                {usaEan13 ? `${categoria.subcategorias.length} específicos CLAS` : `${categoria.subcategorias.length} subcategorías`}
               </Badge>
             )}
           </div>
@@ -386,7 +408,7 @@ export function CategoriaPageClient({ categorias: initialCategorias, hierarchy: 
                     >
                       <Link href="/busy/categoria/new">
                         <Plus className="h-4 w-4" />
-                        Nueva Categoría
+                        {categoryCtaLabel}
                       </Link>
                     </Button>
                   </motion.div>
@@ -405,7 +427,7 @@ export function CategoriaPageClient({ categorias: initialCategorias, hierarchy: 
                     >
                       <Link href="/busy/categoria/subcategoria/new">
                         <Layers className="h-4 w-4" />
-                        Nueva Subcategoría
+                        {subcategoryCtaLabel}
                       </Link>
                     </Button>
                   </motion.div>
