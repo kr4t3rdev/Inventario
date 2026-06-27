@@ -1149,7 +1149,7 @@ export const getLicenciasAction = withAction(
 	async (_input: void, user: AuthenticatedUser) => {
 		if (user.role !== "admin")
 			throw new ActionError("Acceso restringido", "FORBIDDEN");
-		return prisma.tenantLicense.findMany({
+		const licenses = await prisma.tenantLicense.findMany({
 			orderBy: { createdAt: "desc" },
 			include: {
 				plan: true,
@@ -1172,6 +1172,42 @@ export const getLicenciasAction = withAction(
 				},
 			},
 		});
+
+		const createdByIds = Array.from(
+			new Set(
+				licenses
+					.map((license) => license.createdBy)
+					.filter((value): value is string => Boolean(value)),
+			),
+		);
+
+		if (createdByIds.length === 0) {
+			return licenses;
+		}
+
+		const creators = await prisma.user.findMany({
+			where: {
+				userId: {
+					in: createdByIds,
+				},
+			},
+			select: {
+				userId: true,
+				name: true,
+				email: true,
+			},
+		});
+
+		const creatorsById = new Map(
+			creators.map((creator) => [creator.userId, creator]),
+		);
+
+		return licenses.map((license) => ({
+			...license,
+			createdByUser: license.createdBy
+				? creatorsById.get(license.createdBy) ?? null
+				: null,
+		}));
 	},
 );
 

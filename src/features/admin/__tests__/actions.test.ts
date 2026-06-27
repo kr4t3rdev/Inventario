@@ -485,6 +485,8 @@ describe('Admin Server Actions', () => {
         {
           tenantLicenseId: 'lic-demo',
           isDemo: true,
+          createdBy: 'user-admin',
+          createdAt: new Date('2026-06-26T12:00:00.000Z'),
           tenant: {
             tenantId: 'tenant-demo',
             memberships: [
@@ -497,6 +499,13 @@ describe('Admin Server Actions', () => {
               },
             ],
           },
+        },
+      ] as any);
+      vi.mocked(prisma.user.findMany).mockResolvedValue([
+        {
+          userId: 'user-admin',
+          name: 'Admin',
+          email: 'admin@test.com',
         },
       ] as any);
 
@@ -517,6 +526,16 @@ describe('Admin Server Actions', () => {
               }),
             }),
           }),
+        }),
+      );
+      expect(r.data?.[0]).toEqual(
+        expect.objectContaining({
+          createdBy: 'user-admin',
+          createdByUser: {
+            userId: 'user-admin',
+            name: 'Admin',
+            email: 'admin@test.com',
+          },
         }),
       );
     });

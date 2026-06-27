@@ -460,6 +460,12 @@ export default function AdminLicenciasPage() {
                           <div className="text-xs text-muted-foreground">
                             {licencia.tenant.memberships?.[0]?.user?.email ?? licencia.tenant.tenantId}
                           </div>
+                          {licencia.isDemo ? (
+                            <div className="text-xs text-muted-foreground">
+                              Creada por {licencia.createdByUser?.name ?? licencia.createdBy ?? 'sistema'} ·{' '}
+                              {format(new Date(licencia.createdAt), 'dd/MM/yyyy HH:mm')}
+                            </div>
+                          ) : null}
                         </div>
                       ) : (
                         <span className="text-muted-foreground text-sm">Sin asignar</span>
