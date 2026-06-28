@@ -11,6 +11,10 @@ describe('PLAN_BASICO_FEATURES', () => {
     expect(PLAN_BASICO_FEATURES.empleados).toBe(true);
   });
 
+  it('habilita reportes contables en Básico', () => {
+    expect(PLAN_BASICO_FEATURES['reportes-financieros']).toBe(true);
+  });
+
   it('oculta módulos separados de nómina, asistencia y vacaciones en Básico', () => {
     expect(PLAN_BASICO_FEATURES.nomina).toBe(false);
     expect(PLAN_BASICO_FEATURES.asistencia).toBe(false);

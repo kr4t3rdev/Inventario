@@ -39,7 +39,7 @@ const PLAN_BASICO_FEATURES = {
 	contabilidad: true,
 	"multi-moneda": false,
 	"rentabilidad-compra": true,
-	"reportes-financieros": false,
+	"reportes-financieros": true,
 	"cuentas-cobrar": false,
 	"cuentas-pagar": false,
 	"prestamos-cash": false,

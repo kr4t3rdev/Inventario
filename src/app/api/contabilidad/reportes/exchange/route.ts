@@ -7,6 +7,16 @@ export async function GET(request: NextRequest) {
     const authResultUser = await authenticateUser(request);
     if ('status' in authResultUser) return authResultUser as Response;
 
+    if (
+      authResultUser.user.role !== 'admin' &&
+      (
+        authResultUser.user.planFeatures?.['reportes-financieros'] !== true ||
+        authResultUser.user.planFeatures?.['multi-moneda'] !== true
+      )
+    ) {
+      return NextResponse.json({ error: 'Prohibido' }, { status: 403 });
+    }
+
     const { searchParams } = new URL(request.url);
     const result = await AccountingReportsService.getExchangeReport({
       tenantId: authResultUser.user.tenantId ?? '',

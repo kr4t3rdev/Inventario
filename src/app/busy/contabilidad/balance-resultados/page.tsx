@@ -1,6 +1,7 @@
 "use client"
 
 import { useState, useEffect } from "react"
+import { useRouter } from "next/navigation"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
@@ -10,6 +11,8 @@ import { Loader2, TrendingUp, TrendingDown, DollarSign, Wallet, Building2, Landm
 import { PageTransition, StaggerContainer, StaggerItem, AnimatedCard } from "@/components/ui/animations"
 import { cn } from "@/lib/utils"
 import { ContabilidadBreadcrumb } from "@/features/contabilidad/components/contabilidad-breadcrumb"
+import { useAuth } from "@/contexts/auth-context"
+import { shouldHideBasicAccountingItem } from "@/lib/plan-access"
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
 
@@ -58,12 +61,28 @@ interface FinancialData {
 const surfaceCardClass = "bg-white/80 dark:bg-slate-900/10 backdrop-blur-xl border-slate-200/60 dark:border-slate-800/60 shadow-sm"
 
 export default function BalanceResultadosPage() {
+  const router = useRouter()
+  const { user } = useAuth()
   const [year, setYear] = useState<string>(new Date().getFullYear().toString())
   const [data, setData] = useState<FinancialData | null>(null)
   const [loading, setLoading] = useState(true)
   const [errorMsg, setErrorMsg] = useState<string | null>(null)
+  const isBlocked =
+    user?.role !== 'admin' &&
+    (shouldHideBasicAccountingItem(user, 'Balance y Resultados') ||
+      user?.planFeatures?.['reportes-financieros'] !== true)
 
   useEffect(() => {
+    if (isBlocked) {
+      router.replace('/busy/contabilidad')
+    }
+  }, [isBlocked, router])
+
+  useEffect(() => {
+    if (isBlocked) {
+      return
+    }
+
     const fetchData = async () => {
       setLoading(true)
       setErrorMsg(null)
@@ -84,11 +103,15 @@ export default function BalanceResultadosPage() {
       }
     }
     fetchData()
-  }, [year])
+  }, [isBlocked, year])
 
   // Helper for currency formatting
   const formatMoney = (amount: number) => {
     return new Intl.NumberFormat('es-CU', { style: 'currency', currency: 'CUP' }).format(amount)
+  }
+
+  if (isBlocked) {
+    return null
   }
 
   if (loading && !data) {

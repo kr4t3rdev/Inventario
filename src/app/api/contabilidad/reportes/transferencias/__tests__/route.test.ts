@@ -54,4 +54,22 @@ describe('web accounting report transfers route', () => {
       limit: 50,
     });
   });
+
+  it('returns 403 for basic plan users', async () => {
+    vi.mocked(authenticateUser).mockResolvedValue({
+      user: {
+        ...mockUser,
+        role: 'user',
+        planName: 'Básico',
+        planFeatures: { contabilidad: true, 'reportes-financieros': true },
+      },
+    } as never);
+
+    const response = await GET(
+      new NextRequest('http://localhost/api/contabilidad/reportes/transferencias'),
+    );
+
+    expect(response.status).toBe(403);
+    expect(AccountingReportsService.getTransfersReport).not.toHaveBeenCalled();
+  });
 });

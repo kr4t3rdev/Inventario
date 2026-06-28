@@ -1,11 +1,22 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { authenticateUser } from '@/lib/auth-middleware';
 import { AccountingReportsService } from '@/features/contabilidad/services/accounting-reports-service';
+import { shouldHideBasicAccountingItem } from '@/lib/plan-access';
 
 export async function GET(request: NextRequest) {
   try {
     const authResultUser = await authenticateUser(request);
     if ('status' in authResultUser) return authResultUser as Response;
+
+    if (
+      authResultUser.user.role !== 'admin' &&
+      (
+        shouldHideBasicAccountingItem(authResultUser.user, 'Transferencias Bancarias') ||
+        authResultUser.user.planFeatures?.['reportes-financieros'] !== true
+      )
+    ) {
+      return NextResponse.json({ error: 'Prohibido' }, { status: 403 });
+    }
 
     const { searchParams } = new URL(request.url);
     const result = await AccountingReportsService.getTransfersReport({

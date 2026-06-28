@@ -7,6 +7,7 @@ import { CurrencyConversionService } from '@/lib/services/currency-conversion-se
 import { ExchangeRateReadService } from '@/features/contabilidad/services/exchange-rate-read-service';
 import { exchangeRateProvider } from '@/features/contabilidad/services/exchange-rate-provider';
 import { ExchangeServiceError } from '@/features/contabilidad/services/exchange-types';
+import { shouldHideBasicAccountingItem } from '@/lib/plan-access';
 import { calcularCostoVenta, type VentaParaCosto } from '@/features/contabilidad/utils/venta-costo';
 import { calcularIngresoVenta, type VentaParaIngreso } from '@/features/contabilidad/utils/venta-ingreso';
 
@@ -168,6 +169,16 @@ export async function getTasasHistorial(request: NextRequest) {
 
 export async function getBalanceFinanciero(request: NextRequest, user: AuthenticatedUser) {
   try {
+    if (
+      user.role !== 'admin' &&
+      (
+        shouldHideBasicAccountingItem(user, 'Balance y Resultados') ||
+        user.planFeatures?.['reportes-financieros'] !== true
+      )
+    ) {
+      return NextResponse.json({ error: 'Prohibido' }, { status: 403 })
+    }
+
     const year = parseInt(new URL(request.url).searchParams.get("year") || "") || new Date().getFullYear()
     const tenantId = user.tenantId
 

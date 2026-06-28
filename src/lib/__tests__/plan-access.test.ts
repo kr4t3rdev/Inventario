@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 
 import {
   isBasicPlanName,
+  shouldHideBasicAccountingItem,
   shouldHideSeparateEmployeeModules,
 } from '@/lib/plan-access';
 
@@ -27,6 +28,18 @@ describe('plan-access', () => {
         planName: 'Empresarial',
         planFeatures: { empleados: true, nomina: true, asistencia: true, vacaciones: true },
       }),
+    ).toBe(false);
+  });
+
+  it('mantiene visibles los reportes contables en Básico', () => {
+    expect(
+      shouldHideBasicAccountingItem(
+        {
+          planName: 'Básico',
+          planFeatures: { contabilidad: true, 'reportes-financieros': true },
+        },
+        'Reportes Contables',
+      ),
     ).toBe(false);
   });
 });

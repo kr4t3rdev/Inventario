@@ -62,4 +62,23 @@ describe('web accounting logs route', () => {
       offset: 0,
     });
   });
+
+  it('returns 403 for basic plan users even if authentication succeeds', async () => {
+    vi.mocked(authenticateUser).mockResolvedValue({
+      user: {
+        ...adminUser,
+        role: 'user',
+        tenantRole: 'economico',
+        planName: 'Básico',
+        planFeatures: { contabilidad: true, 'reportes-financieros': true },
+      },
+    } as never);
+
+    const response = await GET(new NextRequest('http://localhost/api/contabilidad/logs'));
+    const data = await response.json();
+
+    expect(response.status).toBe(403);
+    expect(data.error).toBeDefined();
+    expect(AccountingAuditLogsService.getLogs).not.toHaveBeenCalled();
+  });
 });

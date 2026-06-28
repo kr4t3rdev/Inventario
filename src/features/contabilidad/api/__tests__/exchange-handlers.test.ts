@@ -176,6 +176,21 @@ describe('getBalanceFinanciero', () => {
     prismaMock.merma.findMany.mockImplementation(emptyQuery)
   })
 
+  it('bloquea balance y resultados para el plan Básico', async () => {
+    const { getBalanceFinanciero } = await import('@/features/contabilidad/api/exchange-handlers')
+    const request = new NextRequest('http://localhost/api/contabilidad/balance-financiero?year=2025')
+    const response = await getBalanceFinanciero(request, {
+      ...baseUser,
+      role: 'user',
+      planName: 'Básico',
+      planFeatures: { contabilidad: true, 'reportes-financieros': true },
+    } as any)
+    const body = await response.json()
+
+    expect(response.status).toBe(403)
+    expect(body.error).toBeDefined()
+  })
+
   it('incluye gastosCompras en totalGastos y en el cálculo de utilidadNeta', async () => {
     prismaMock.venta.findMany.mockImplementation(
       soloEnero([

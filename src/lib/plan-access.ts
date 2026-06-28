@@ -15,7 +15,6 @@ const BASIC_ACCOUNTING_HIDDEN_ITEMS = new Set([
   'Analisis Estado Cuenta',
   'Facturas Vencidas',
   'Balance y Resultados',
-  'Reportes Contables',
   'Períodos Contables',
   'Logs',
   'Reconciliación Servicios',

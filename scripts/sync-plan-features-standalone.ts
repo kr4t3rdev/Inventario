@@ -38,7 +38,7 @@ const PLAN_BASICO_FEATURES: Record<string, boolean> = {
   'multi-moneda': false,
   'rentabilidad-compra': true,
   'inyeccion-capital': false,
-  'reportes-financieros': false,
+  'reportes-financieros': true,
   'cuentas-cobrar': false,
   'cuentas-pagar': false,
   'prestamos-cash': false,

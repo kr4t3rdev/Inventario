@@ -52,4 +52,22 @@ describe('web accounting report exchange route', () => {
       monedaDestino: 'CUP',
     });
   });
+
+  it('returns 403 when tenant has no multi-moneda access', async () => {
+    vi.mocked(authenticateUser).mockResolvedValue({
+      user: {
+        ...mockUser,
+        role: 'user',
+        planName: 'Básico',
+        planFeatures: { contabilidad: true, 'reportes-financieros': true, 'multi-moneda': false },
+      },
+    } as never);
+
+    const response = await GET(
+      new NextRequest('http://localhost/api/contabilidad/reportes/exchange'),
+    );
+
+    expect(response.status).toBe(403);
+    expect(AccountingReportsService.getExchangeReport).not.toHaveBeenCalled();
+  });
 });
