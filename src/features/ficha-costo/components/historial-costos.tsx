@@ -129,9 +129,9 @@ export function HistorialCostos({ productoId, className }: HistorialCostosProps)
             <div className="font-medium">
               {bannerEstadoCPP(data.estadoCPP).texto}
             </div>
-            {data.advertencias.length > 0 && (
+            {data.advertencias?.length > 0 && (
               <ul className="mt-1 list-disc pl-4 text-xs">
-                {data.advertencias.map((a, i) => (
+                {data.advertencias?.map((a, i) => (
                   <li key={i}>{a}</li>
                 ))}
               </ul>
@@ -277,7 +277,7 @@ export function HistorialCostos({ productoId, className }: HistorialCostosProps)
       )}
 
       {/* Resumen por proveedor */}
-      {data && data.proveedores.length > 0 && (
+      {data && data.proveedores?.length > 0 && (
         <div className="space-y-2 pt-4">
           <div>
             <h3 className="text-sm font-medium">Resumen por proveedor</h3>

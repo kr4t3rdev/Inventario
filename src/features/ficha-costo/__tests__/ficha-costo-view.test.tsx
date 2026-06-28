@@ -68,6 +68,9 @@ describe('FichaCostoView', () => {
       data: {
         items: [],
         pagination: { page: 1, limit: 20, total: 0, totalPages: 1 },
+        proveedores: [],
+        estadoCPP: 'SIN_DATOS',
+        advertencias: [],
       },
     } as any)
     vi.mocked(getListasPreciosProductoAction).mockResolvedValue({
@@ -86,6 +89,9 @@ describe('FichaCostoView', () => {
       data: {
         items: [],
         pagination: { page: 1, limit: 20, total: 0, totalPages: 1 },
+        proveedores: [],
+        estadoCPP: 'SIN_DATOS',
+        advertencias: [],
       },
     } as any)
     vi.mocked(getListasPreciosProductoAction).mockResolvedValue({
@@ -102,6 +108,9 @@ describe('FichaCostoView', () => {
       data: {
         items: [],
         pagination: { page: 1, limit: 20, total: 0, totalPages: 1 },
+        proveedores: [],
+        estadoCPP: 'SIN_DATOS',
+        advertencias: [],
       },
     } as any)
     vi.mocked(getListasPreciosProductoAction).mockResolvedValue({
@@ -119,6 +128,9 @@ describe('FichaCostoView', () => {
       data: {
         items: [],
         pagination: { page: 1, limit: 20, total: 0, totalPages: 1 },
+        proveedores: [],
+        estadoCPP: 'SIN_DATOS',
+        advertencias: [],
       },
     } as any)
     vi.mocked(getListasPreciosProductoAction).mockResolvedValue({
@@ -135,6 +147,9 @@ describe('FichaCostoView', () => {
       data: {
         items: [],
         pagination: { page: 1, limit: 20, total: 0, totalPages: 1 },
+        proveedores: [],
+        estadoCPP: 'SIN_DATOS',
+        advertencias: [],
       },
     } as any)
     vi.mocked(getListasPreciosProductoAction).mockResolvedValue({
@@ -151,6 +166,9 @@ describe('FichaCostoView', () => {
       data: {
         items: [],
         pagination: { page: 1, limit: 20, total: 0, totalPages: 1 },
+        proveedores: [],
+        estadoCPP: 'SIN_DATOS',
+        advertencias: [],
       },
     } as any)
     vi.mocked(getComposicionCostoAction).mockResolvedValue({
@@ -190,6 +208,9 @@ describe('FichaCostoView', () => {
       data: {
         items: [],
         pagination: { page: 1, limit: 20, total: 0, totalPages: 1 },
+        proveedores: [],
+        estadoCPP: 'SIN_DATOS',
+        advertencias: [],
       },
     } as any)
     vi.mocked(getListasPreciosProductoAction).mockResolvedValue({
@@ -226,6 +247,9 @@ describe('FichaCostoView', () => {
       data: {
         items: [],
         pagination: { page: 1, limit: 20, total: 0, totalPages: 1 },
+        proveedores: [],
+        estadoCPP: 'SIN_DATOS',
+        advertencias: [],
       },
     } as any)
     vi.mocked(getListasPreciosProductoAction).mockResolvedValue({
