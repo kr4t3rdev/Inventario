@@ -2112,6 +2112,7 @@ model ProductoCostSheetTemplate {
   precioSugerido  Float    @default(0)
   esActiva        Boolean  @default(false)
   notas           String?
+  lineItems       Json     @default("[]")
   createdAt       DateTime @default(now())
   updatedAt       DateTime @updatedAt
   createdById     String

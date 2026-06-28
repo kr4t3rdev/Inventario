@@ -10,6 +10,14 @@ import {
   Play,
   AlertTriangle,
   FileText,
+  Calculator,
+  Package,
+  Truck,
+  Wrench,
+  DollarSign,
+  Receipt,
+  Globe,
+  Handshake,
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
@@ -35,6 +43,14 @@ import type {
   PlantillaActivaResult,
   PlantillaCostoInput,
   UpdatePlantillaInput,
+  LineItem,
+  CategoriaCosto,
+} from '../types'
+import {
+  CATEGORIAS_COSTO,
+  lineItemTotal,
+  calcularTotalLineItems,
+  calcularTotalesPorCategoria,
 } from '../types'
 import { PlantillaForm } from './plantilla-form'
 
@@ -48,6 +64,22 @@ const fmt = (n: number) =>
     minimumFractionDigits: 2,
     maximumFractionDigits: 2,
   }).format(n)
+
+const CATEGORIA_ICONOS: Record<string, React.ReactNode> = {
+  'materiales': <Package className="h-4 w-4" />,
+  'mano-obra': <Wrench className="h-4 w-4" />,
+  'indirectos': <Receipt className="h-4 w-4" />,
+  'transporte': <Truck className="h-4 w-4" />,
+  'comisiones': <Handshake className="h-4 w-4" />,
+  'empaque': <Package className="h-4 w-4" />,
+  'aduana': <Globe className="h-4 w-4" />,
+  'servicios': <DollarSign className="h-4 w-4" />,
+  'otros': <Calculator className="h-4 w-4" />,
+}
+
+const CATEGORIA_LABEL = Object.fromEntries(
+  CATEGORIAS_COSTO.map(c => [c.value, c.label])
+)
 
 /**
  * @description Pestaña de plantillas de ficha de costo. Muestra la plantilla

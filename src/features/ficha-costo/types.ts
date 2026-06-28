@@ -260,6 +260,86 @@ export interface GetVentasProductoInput {
 
 // ─── Tipos de plantilla de ficha de costo ─────────────────
 
+
+// ─── Line items de la ficha de costo ──────────────────────
+
+export type CategoriaCosto = 
+  | 'materiales'
+  | 'mano-obra'
+  | 'indirectos'
+  | 'transporte'
+  | 'comisiones'
+  | 'empaque'
+  | 'aduana'
+  | 'servicios'
+  | 'otros'
+
+export interface LineItem {
+  id: string
+  concepto: string
+  descripcion?: string
+  cantidad: number
+  costoUnitario: number
+  categoria: CategoriaCosto
+}
+
+export const CATEGORIAS_COSTO: { value: CategoriaCosto; label: string }[] = [
+  { value: 'materiales', label: 'Materiales' },
+  { value: 'mano-obra', label: 'Mano de obra' },
+  { value: 'indirectos', label: 'Costos indirectos' },
+  { value: 'transporte', label: 'Transporte' },
+  { value: 'comisiones', label: 'Comisiones' },
+  { value: 'empaque', label: 'Empaque' },
+  { value: 'aduana', label: 'Aduana' },
+  { value: 'servicios', label: 'Servicios contratados' },
+  { value: 'otros', label: 'Otros' },
+]
+
+export function lineItemTotal(item: LineItem): number {
+  return item.cantidad * item.costoUnitario
+}
+
+export function calcularTotalLineItems(items: LineItem[]): number {
+  return items.reduce((sum, item) => sum + lineItemTotal(item), 0)
+}
+
+export function calcularTotalesPorCategoria(items: LineItem[]): Record<CategoriaCosto, number> {
+  const totals: Record<string, number> = {}
+  for (const item of items) {
+    totals[item.categoria] = (totals[item.categoria] ?? 0) + lineItemTotal(item)
+  }
+  return totals as Record<CategoriaCosto, number>
+}
+
+export function lineItemsToLegacyFields(items: LineItem[]): { 
+  costoMateriales: number
+  costoManoObra: number
+  costoIndirectos: number 
+} {
+  const catTotals = calcularTotalesPorCategoria(items)
+  // Map flexible categories to legacy fields
+  return {
+    costoMateriales: (catTotals['materiales'] ?? 0) + (catTotals['empaque'] ?? 0) + (catTotals['aduana'] ?? 0),
+    costoManoObra: (catTotals['mano-obra'] ?? 0),
+    costoIndirectos: (catTotals['indirectos'] ?? 0) + (catTotals['transporte'] ?? 0) + (catTotals['comisiones'] ?? 0) + (catTotals['servicios'] ?? 0) + (catTotals['otros'] ?? 0),
+  }
+}
+
+// Helper to serialize/deserialize line items in the `notas` field
+export function serializeNotas(lineItems: LineItem[], userNotes?: string): string {
+  return JSON.stringify({ _v: 1, lineItems, notas: userNotes || '' })
+}
+
+export function parseNotas(notas: string | null): { lineItems: LineItem[]; userNotes: string } {
+  if (!notas) return { lineItems: [], userNotes: '' }
+  try {
+    const parsed = JSON.parse(notas)
+    if (parsed && typeof parsed === 'object' && Array.isArray(parsed.lineItems)) {
+      return { lineItems: parsed.lineItems, userNotes: parsed.notas || '' }
+    }
+  } catch {}
+  return { lineItems: [], userNotes: notas }
+}
 /**
  * @description Plantilla de ficha de costo versionada para un producto.
  *   Solo una versión puede estar activa por producto. Los valores de costo
@@ -281,16 +361,22 @@ export interface PlantillaCosto {
   createdAt: string
   updatedAt: string
   createdById: string
+  /** Line items deserializados del campo notas */
+  lineItems: LineItem[]
+  userNotes: string
+  /** Total calculado de todos los line items */
+  costeTotal: number
 }
 
 export interface PlantillaCostoInput {
   productoId: string
   nombre: string
-  costoMateriales: number
-  costoManoObra: number
-  costoIndirectos: number
+  costoMateriales?: number
+  costoManoObra?: number
+  costoIndirectos?: number
   margenObjetivo: number
   notas?: string
+  lineItems?: LineItem[]
 }
 
 export interface UpdatePlantillaInput {
@@ -301,6 +387,7 @@ export interface UpdatePlantillaInput {
   costoIndirectos?: number
   margenObjetivo?: number
   notas?: string
+  lineItems?: LineItem[]
 }
 
 export interface ActivarPlantillaInput {

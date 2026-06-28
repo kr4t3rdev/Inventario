@@ -21,6 +21,12 @@ import type {
   ActivarPlantillaInput,
   AplicarPrecioSugeridoInput,
   PlantillaActivaResult,
+  LineItem,
+  CategoriaCosto,
+  serializeNotas,
+  parseNotas,
+  lineItemsToLegacyFields,
+  calcularTotalLineItems,
 } from './types'
 
 // ─── Helpers ──────────────────────────────────────────────
