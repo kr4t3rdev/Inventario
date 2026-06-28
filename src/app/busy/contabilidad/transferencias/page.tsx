@@ -1,7 +1,10 @@
 'use client';
 
 import dynamic from 'next/dynamic';
+import { useRouter } from 'next/navigation';
 import Link from 'next/link';
+import { useAuth } from '@/contexts/auth-context';
+import { shouldHideBasicAccountingItem } from '@/lib/plan-access';
 import { useState, useEffect, useCallback } from 'react';
 import { LazyMotion, m as motion, useReducedMotion } from 'framer-motion';
 import { ArrowLeft, BadgeDollarSign, Plus, RefreshCw, ArrowRightLeft } from 'lucide-react';
@@ -35,6 +38,8 @@ export default function TransferenciasBancariasPage(): React.JSX.Element {
   const [isClient, setIsClient] = useState(false);
   useEffect(() => { setIsClient(true) }, []);
   const shouldReduceMotion = useReducedMotion();
+  const router = useRouter();
+  const { user } = useAuth();
   const [transferenciasList, setTransferenciasList] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
@@ -42,7 +47,7 @@ export default function TransferenciasBancariasPage(): React.JSX.Element {
     setIsLoading(true)
     const res = await getTransferenciasBancariasAction({})
     if (res.success) {
-  // @ts-expect-error
+  // @ts-expect-error filtered payload shape from server action
       setTransferenciasList(res.data.transferencias ?? [])
     }
     setIsLoading(false)

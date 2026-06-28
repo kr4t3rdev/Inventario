@@ -1,12 +1,15 @@
 'use client';
 
 import dynamic from 'next/dynamic';
+import { useRouter } from 'next/navigation';
 import { useState, useEffect } from 'react';
 import { m as motion, useReducedMotion } from 'framer-motion';
 import { ArrowLeft, Coins } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import Link from 'next/link';
+import { useAuth } from '@/contexts/auth-context';
+import { shouldHideBasicAccountingItem } from '@/lib/plan-access';
 import { Skeleton } from '@/components/ui/skeleton';
 import { cn } from '@/lib/utils';
 
@@ -55,11 +58,21 @@ const statusBadgeClass = cn(
  */
 export default function ExchangePage() {
   const shouldReduceMotion = useReducedMotion();
+  const router = useRouter();
+  const { user } = useAuth();
   const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
     setMounted(true);
   }, []);
+
+  const isBlocked = user?.role !== 'admin' && (shouldHideBasicAccountingItem(user, 'Exchange') || user?.planFeatures?.['multi-moneda'] !== true);
+
+  useEffect(() => {
+    if (isBlocked) {
+      router.replace('/busy/contabilidad');
+    }
+  }, [isBlocked, router]);
 
   const fadeIn = {
     hidden: { opacity: 0 },
@@ -92,6 +105,8 @@ export default function ExchangePage() {
       },
     },
   };
+
+  if (isBlocked) return null;
 
   if (!mounted) {
     return (

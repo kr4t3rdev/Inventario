@@ -1,18 +1,34 @@
 "use server";
-import { withAction } from "@/lib/server-actions";
+import { withAction, ActionError } from "@/lib/server-actions";
 import { prisma } from "@/lib/prisma";
 import { requireFeature } from "@/lib/services/tenant-scope";
+import { isBasicPlanName } from '@/lib/plan-access';
 import { withPeriodValidation } from "@/lib/services/with-period-validation";
 import { AccountingOperationsReadService } from "@/features/contabilidad/services/accounting-operations-read-service";
 import { AccountingOperationsMutationService } from "@/features/contabilidad/services/accounting-operations-mutation-service";
 import type { AuthenticatedUser } from "@/lib/auth-middleware";
+
+
+function requireAdvancedAccountingAccess(
+	user: AuthenticatedUser,
+	action: string,
+): void {
+	requireFeature(user, 'contabilidad', action);
+
+	if (user.role !== 'admin' && isBasicPlanName(user.planName)) {
+		throw new ActionError(
+			`Tu plan actual no incluye la funcionalidad de ${action}. Actualiza tu plan para continuar.`,
+			'FEATURE_NOT_AVAILABLE',
+		);
+	}
+}
 
 export const getTransferenciasBancariasAction = withAction(
 	async (
 		params: { fechaInicio?: string; fechaFin?: string; cuentaId?: string } = {},
 		user: AuthenticatedUser,
 	) => {
-		requireFeature(user, 'contabilidad', 'consultar resumen financiero');
+		requireAdvancedAccountingAccess(user, 'consultar transferencias bancarias');
 		return AccountingOperationsReadService.getBankTransfers(params);
 	},
 );
@@ -333,6 +349,7 @@ export const getMovimientosReportAction = withAction(
 		},
 		_user: AuthenticatedUser,
 	) => {
+		requireFeature(_user, 'reportes-financieros', 'consultar reportes financieros');
 		const {
 			busqueda: bq,
 			fechaInicio: fi,
@@ -481,6 +498,7 @@ export const validarTransferenciaAction = withAction(
 		},
 		_user: AuthenticatedUser,
 	) => {
+		requireAdvancedAccountingAccess(_user, 'validar transferencias bancarias');
 		return AccountingOperationsMutationService.validateBankTransfer(input);
 	},
 );
@@ -502,6 +520,7 @@ export const createTransferenciaBancariaAction = withAction(
 			},
 			user: AuthenticatedUser,
 		) => {
+			requireAdvancedAccountingAccess(user, 'registrar transferencias bancarias');
 			return AccountingOperationsMutationService.createBankTransfer({
 				input,
 				user,

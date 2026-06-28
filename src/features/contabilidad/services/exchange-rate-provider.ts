@@ -70,7 +70,24 @@ export class PrismaExchangeRateProvider implements ExchangeRateProvider {
   }
 
   async getPrincipalCurrency(): Promise<ExchangeCurrencyRecord | null> {
-    const moneda = await this.db.moneda.findFirst({ where: { esPrincipal: true } });
+    await this.ensureDefaultCurrencies();
+
+    let moneda = await this.db.moneda.findFirst({ where: { esPrincipal: true } });
+
+    if (!moneda) {
+      moneda = await this.db.moneda.upsert({
+        where: { codigo: 'CUP' },
+        update: { esPrincipal: true, isActive: true },
+        create: {
+          codigo: 'CUP',
+          nombre: 'Peso Cubano',
+          simbolo: '₱',
+          esPrincipal: true,
+          isActive: true,
+        },
+      });
+    }
+
     return moneda ? toCurrencyRecord(moneda) : null;
   }
 
@@ -134,6 +151,8 @@ export class PrismaExchangeRateProvider implements ExchangeRateProvider {
   }
 
   async getCurrentRates(): Promise<ExchangeCurrentRatesResult> {
+    await this.ensureDefaultCurrencies();
+
     const [monedas, tasas] = await Promise.all([
       this.db.moneda.findMany({ orderBy: [{ esPrincipal: 'desc' }, { codigo: 'asc' }] }),
       this.db.tasaCambio.findMany({

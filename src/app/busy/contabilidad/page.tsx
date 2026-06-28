@@ -36,12 +36,11 @@ import {
   getGastosPendientesAction,
 } from '@/features/contabilidad/actions-reconciliacion';
 import { useMonedas } from '@/features/contabilidad/hooks/use-monedas';
-import { getTasasActualesAction } from '@/features/contabilidad/actions-exchange';
 import { useAuth } from '@/contexts/auth-context';
 import { cn } from '@/lib/utils';
+import { shouldHideBasicAccountingItem } from '@/lib/plan-access';
 import { DeudasCashStatsWidget } from '@/features/contabilidad/components/deudas-cash-stats-widget';
 
-import type { Moneda } from '../../models/model';
 
 const ResumenFinanciero = dynamic(() =>
   import('@/features/contabilidad/components/resumen-financiero').then((mod) => ({
@@ -131,6 +130,8 @@ export default function ContabilidadDashboard(): React.JSX.Element {
   const { user } = useAuth();
   const hasPrestamosCash = user?.planFeatures?.['prestamos-cash'] === true;
   const hasDeudasCash = user?.planFeatures?.['deudas-cash'] === true;
+  const hasServicios = user?.planFeatures?.['servicios'] === true;
+  const hideItemForBasic = (title: string) => shouldHideBasicAccountingItem(user, title);
 
   // --- Configuration ---
   const quickActions = [
@@ -193,6 +194,10 @@ export default function ContabilidadDashboard(): React.JSX.Element {
   ].filter((a) => {
     if (a.title === 'Préstamos en Efectivo' && !hasPrestamosCash) return false;
     if (a.title === 'Deudas en Efectivo' && !hasDeudasCash) return false;
+    if (a.title === 'Transferencias' && hideItemForBasic('Transferencias Bancarias')) return false;
+    if (a.title === 'Ajustes Manuales' && hideItemForBasic('Ajustes Bancarios')) return false;
+    if (a.title === 'Tasas de Cambio' && hideItemForBasic('Exchange')) return false;
+    if (a.title === 'Auditoría' && (hideItemForBasic('Logs') || user?.planFeatures?.['reportes-financieros'] !== true)) return false;
     return true;
   }) as Array<{
     title: string;
@@ -206,30 +211,30 @@ export default function ContabilidadDashboard(): React.JSX.Element {
   const [responseVentas, setResponseVentas] = useState<any>(null);
   const [serviciosPendientesData, setServiciosPendientesData] = useState<any>(null);
   const [response, setResponse] = useState<any>(null);
-  const { monedas } = useMonedas();
-
-  useEffect(() => {
-    getTasasActualesAction()
-  }, [])
+  useMonedas();
 
   useEffect(() => {
     getVentasPendientesAction({ fechaInicio, fechaFin }).then(setResponseVentas)
   }, [fechaInicio, fechaFin])
 
   useEffect(() => {
+    if (!hasServicios) {
+      setServiciosPendientesData({ ventaServicios: [] })
+      return
+    }
+
     getServiciosPendientesAction({ fechaDesde: fechaInicio || undefined, fechaHasta: fechaFin || undefined }).then(setServiciosPendientesData)
-  }, [fechaInicio, fechaFin])
+  }, [fechaInicio, fechaFin, hasServicios])
 
   useEffect(() => {
     getGastosPendientesAction({ fechaDesde: fechaInicio, fechaHasta: fechaFin, soloNoReconciliados: true }).then(setResponse)
   }, [fechaInicio, fechaFin])
 
-  const monedasPrincipal = monedas.find((m: any) => m.esPrincipal)?.codigo || 'CUP';
   const ventasPendientes = responseVentas?.ventas?.filter((v: any) => !v.reconciliada) ?? [];
   const cantVentasPendientes = ventasPendientes.length;
   
   const serviciosList = serviciosPendientesData?.ventaServicios;
-  // @ts-expect-error
+  // @ts-expect-error filtered payload shape from server action
   const cantServiciosPendientes = (serviciosList?.filter((s) => !s.reconciliada) ?? []).length;
   
   const gastosVisibles = response?.gastos;
@@ -262,7 +267,7 @@ export default function ContabilidadDashboard(): React.JSX.Element {
       pendingCount: gastosPendientes,
       tone: 'amber',
     },
-  ] as const;
+  ].filter((module) => !hideItemForBasic(`Reconciliación ${module.title}`)) as const;
 
   return (
     <PageTransition className="relative min-h-screen w-full">
@@ -287,16 +292,18 @@ export default function ContabilidadDashboard(): React.JSX.Element {
           </div>
 
           <div className="flex gap-3">
-            <Button
-              asChild
-              variant="outline"
-              className="border-slate-200 hover:bg-slate-100  dark:hover:bg-slate-800"
-            >
-              <Link href="/busy/contabilidad/reportes" className="flex items-center gap-2">
-                <PieChart className="h-4 w-4" />
-                Reportes
-              </Link>
-            </Button>
+            {!hideItemForBasic('Reportes Contables') && user?.planFeatures?.['reportes-financieros'] === true && (
+              <Button
+                asChild
+                variant="outline"
+                className="border-slate-200 hover:bg-slate-100  dark:hover:bg-slate-800"
+              >
+                <Link href="/busy/contabilidad/reportes" className="flex items-center gap-2">
+                  <PieChart className="h-4 w-4" />
+                  Reportes
+                </Link>
+              </Button>
+            )}
             <Button
               asChild
               variant="outline"

@@ -13,7 +13,7 @@
 import { z } from "zod";
 import { revalidatePath } from "next/cache";
 import { withAction, ActionError } from "@/lib/server-actions";
-import { requireTenant } from "@/lib/services/tenant-scope";
+import { requireFeature, requireTenant } from "@/lib/services/tenant-scope";
 import type { AuthenticatedUser } from "@/lib/auth-middleware";
 import { PeriodoContableService } from "@/lib/services/periodo-contable-service";
 import { AperturaPeriodoService } from "@/lib/services/apertura-periodo-service";
@@ -27,6 +27,7 @@ import {
 	ModoContable,
 } from "@/lib/services/periodo-contable-types";
 import { isTenantAdminRole } from "@/lib/auth/roles";
+import { isBasicPlanName } from "@/lib/plan-access";
 import { prisma } from "@/lib/prisma";
 import {
 	obtenerBalanceConVariacion,
@@ -36,6 +37,19 @@ import {
 } from "@/features/contabilidad/cuadre-queries";
 
 // ── Period Lock Check (para bloqueos visuales en UI) ─────────────────────
+
+
+function requirePeriodManagementAccess(user: AuthenticatedUser, action: string): void {
+	requireFeature(user, 'contabilidad', action);
+
+	if (user.role !== 'admin' && isBasicPlanName(user.planName)) {
+		throw new ActionError(
+			`Tu plan actual no incluye la funcionalidad de ${action}. Actualiza tu plan para continuar.`,
+			'FEATURE_NOT_AVAILABLE',
+		);
+	}
+}
+
 
 const checkLockSchema = z.object({
 	fecha: z.string().min(1, "Fecha requerida"),
@@ -144,6 +158,7 @@ export const listarPeriodosAction = withAction(
 		} = {},
 		user: AuthenticatedUser,
 	) => {
+		requirePeriodManagementAccess(user, 'gestionar períodos contables');
 		const tenantId = requireTenant(user);
 		const { tipo, estado, page = 1, limit = 50 } = input;
 
@@ -238,6 +253,8 @@ export const listarPeriodosAction = withAction(
  */
 export const obtenerPeriodoAction = withAction(
 	async (periodoId: string, user: AuthenticatedUser) => {
+		requirePeriodManagementAccess(user, 'consultar períodos contables');
+			requirePeriodManagementAccess(user, 'verificar operaciones pendientes del período');
 		const tenantId = requireTenant(user);
 
 		const periodo = await prisma.periodoContable.findFirst({
@@ -290,6 +307,7 @@ export const obtenerPeriodoAction = withAction(
  */
 export const obtenerTimelineAction = withAction(
 	async (periodoId: string, user: AuthenticatedUser) => {
+			requirePeriodManagementAccess(user, 'consultar el timeline de períodos contables');
 		const tenantId = requireTenant(user);
 
 		// Verificar que el período pertenece al tenant
@@ -330,6 +348,7 @@ export const abrirPeriodoAction = withAction(
 		user: AuthenticatedUser,
 	) => {
 		const tenantId = requireTenant(user);
+		requirePeriodManagementAccess(user, 'abrir períodos contables');
 		const parsed = abrirPeriodoSchema.parse(input);
 
 		const fechaInicio = new Date(parsed.fechaInicio);
@@ -400,6 +419,7 @@ export const cerrarPeriodoAction = withAction(
 		user: AuthenticatedUser,
 	) => {
 		const tenantId = requireTenant(user);
+		requirePeriodManagementAccess(user, 'cerrar períodos contables');
 		const parsed = cerrarPeriodoSchema.parse(input);
 
 		// Verificar ownership del tenant
@@ -492,6 +512,7 @@ export const reabrirPeriodoAction = withAction(
 		user: AuthenticatedUser,
 	) => {
 		const tenantId = requireTenant(user);
+		requirePeriodManagementAccess(user, 'reabrir períodos contables');
 		const parsed = reabrirPeriodoSchema.parse(input);
 
 		// Verificar ownership del tenant
@@ -543,6 +564,7 @@ export const aprobarPeriodoAction = withAction(
 		user: AuthenticatedUser,
 	) => {
 		const tenantId = requireTenant(user);
+		requirePeriodManagementAccess(user, 'aprobar períodos contables');
 		const parsed = aprobarPeriodoSchema.parse(input);
 
 		// Verificar ownership del tenant
@@ -586,6 +608,7 @@ export const aprobarPeriodoAction = withAction(
  */
 export const obtenerDashboardPeriodosAction = withAction(
 	async (_input: Record<string, never> = {}, user: AuthenticatedUser) => {
+			requirePeriodManagementAccess(user, 'consultar períodos contables');
 		const tenantId = requireTenant(user);
 
 		// 1. Conteo por estado
@@ -681,6 +704,7 @@ export const obtenerDashboardPeriodosAction = withAction(
  */
 export const integrarArqueosEnPeriodoAction = withAction(
 	async (periodoId: string, user: AuthenticatedUser) => {
+			requirePeriodManagementAccess(user, 'integrar arqueos en períodos contables');
 		const tenantId = requireTenant(user);
 
 		const periodo = await prisma.periodoContable.findFirst({
@@ -793,6 +817,7 @@ export const obtenerCuadrePeriodoAction = withAction(
 		input: z.infer<typeof obtenerCuadreSchema>,
 		user: AuthenticatedUser,
 	) => {
+			requirePeriodManagementAccess(user, 'consultar el cuadre de períodos contables');
 		const tenantId = requireTenant(user);
 		const parsed = obtenerCuadreSchema.parse(input);
 
@@ -892,6 +917,7 @@ export const obtenerOperacionesDiaAction = withAction(
 		input: z.infer<typeof obtenerOperacionesDiaSchema>,
 		user: AuthenticatedUser,
 	) => {
+			requirePeriodManagementAccess(user, 'consultar operaciones de períodos contables');
 		const tenantId = requireTenant(user);
 		const parsed = obtenerOperacionesDiaSchema.parse(input);
 

@@ -1,7 +1,10 @@
 'use client';
 
 import dynamic from 'next/dynamic';
+import { useRouter } from 'next/navigation';
 import Link from 'next/link';
+import { useAuth } from '@/contexts/auth-context';
+import { shouldHideBasicAccountingItem } from '@/lib/plan-access';
 import { useEffect, useState } from 'react';
 import { LazyMotion, m as motion, useReducedMotion } from 'framer-motion';
 import { ArrowLeft, BarChart3 } from 'lucide-react';
@@ -61,11 +64,21 @@ const statusBadgeClass = cn(
  */
 export default function ReportesPage() {
   const shouldReduceMotion = useReducedMotion();
+  const router = useRouter();
+  const { user } = useAuth();
   const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
     setMounted(true);
   }, []);
+
+  const isBlocked = user?.role !== 'admin' && (shouldHideBasicAccountingItem(user, 'Reportes Contables') || user?.planFeatures?.['reportes-financieros'] !== true);
+
+  useEffect(() => {
+    if (isBlocked) {
+      router.replace('/busy/contabilidad');
+    }
+  }, [isBlocked, router]);
 
   const fadeIn = {
     hidden: { opacity: 0 },
@@ -98,6 +111,8 @@ export default function ReportesPage() {
       },
     },
   };
+
+  if (isBlocked) return null;
 
   if (!mounted) {
     return (

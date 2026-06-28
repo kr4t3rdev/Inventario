@@ -7,7 +7,7 @@ import { revalidatePath } from "next/cache";
 import { withAction, ActionError } from "@/lib/server-actions";
 import { prisma } from "@/lib/prisma";
 import { Prisma } from "@/generated/prisma";
-import { requireTenant } from "@/lib/services/tenant-scope";
+import { requireFeature, requireTenant } from "@/lib/services/tenant-scope";
 import { withPeriodValidation } from "@/lib/services/with-period-validation";
 import {
 	applyPagoGastoWorkflow,
@@ -20,6 +20,7 @@ import type { AuthenticatedUser } from "@/lib/auth-middleware";
 
 export const getReconciliacionStatsAction = withAction(
 	async (_input: void, user: AuthenticatedUser) => {
+			requireFeature(user, 'contabilidad', 'consultar el estado de reconciliación');
 		const tenantId = requireTenant(user);
 		const hoy = new Date();
 		hoy.setHours(0, 0, 0, 0);
@@ -155,6 +156,7 @@ export const getVentasPendientesAction = withAction(
 		} = {},
 		user: AuthenticatedUser,
 	) => {
+		requireFeature(user, 'contabilidad', 'consultar reconciliación de ventas');
 		const tenantId = requireTenant(user);
 		const page = params.page || 1;
 		const limit = Math.min(200, params.limit || 50);
@@ -290,6 +292,7 @@ export const getHistorialReconciliacionVentasAction = withAction(
 		} = {},
 		user: AuthenticatedUser,
 	) => {
+		requireFeature(user, 'contabilidad', 'consultar historial de reconciliación de ventas');
 		const tenantId = requireTenant(user);
 		const where: any = { tenantId };
 		if (params.cuentaId) where.cuentaId = params.cuentaId;
@@ -365,6 +368,7 @@ export const reconciliarVentaAction = withAction(
 			},
 			user: AuthenticatedUser,
 		) => {
+			requireFeature(user, 'contabilidad', 'reconciliar ventas');
 			const tenantId = requireTenant(user);
 
 			const result = await prisma.$transaction(async (tx) => {
@@ -482,6 +486,7 @@ export const getServiciosPendientesAction = withAction(
 		} = {},
 		user: AuthenticatedUser,
 	) => {
+		requireFeature(user, 'servicios', 'consultar reconciliación de servicios');
 		const tenantId = requireTenant(user);
 		const where: any = {
 			tenantId,
@@ -537,6 +542,7 @@ export const getHistorialReconciliacionServiciosAction = withAction(
 		} = {},
 		user: AuthenticatedUser,
 	) => {
+		requireFeature(user, 'servicios', 'consultar historial de reconciliación de servicios');
 		const tenantId = requireTenant(user);
 		const where: any = { tenantId };
 		if (params.cuentaId) where.cuentaId = params.cuentaId;
@@ -590,6 +596,7 @@ export const reconciliarServicioAction = withAction(
 			},
 			user: AuthenticatedUser,
 		) => {
+			requireFeature(user, 'servicios', 'reconciliar servicios');
 			const tenantId = requireTenant(user);
 
 			if (!input.distribuciones?.length) {
@@ -693,6 +700,7 @@ export const getGastosPendientesAction = withAction(
 		} = {},
 		user: AuthenticatedUser,
 	) => {
+		requireFeature(user, 'contabilidad', 'consultar reconciliación de gastos');
 		const tenantId = requireTenant(user);
 
 		// ── Query GastosDE ──
@@ -951,6 +959,7 @@ export const getHistorialReconciliacionGastosAction = withAction(
 		} = {},
 		user: AuthenticatedUser,
 	) => {
+		requireFeature(user, 'contabilidad', 'consultar historial de reconciliación de gastos');
 		const tenantId = requireTenant(user);
 		const where: any = { tenantId };
 		if (params.cuentaId) where.cuentaId = params.cuentaId;
@@ -1017,6 +1026,7 @@ export const reconciliarGastoAction = withAction(
 			},
 			user: AuthenticatedUser,
 		) => {
+			requireFeature(user, 'contabilidad', 'reconciliar gastos');
 			const tenantId = requireTenant(user);
 
 			const referenciaId =

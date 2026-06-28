@@ -8,6 +8,7 @@ import type { AuthenticatedUser } from '@/lib/auth-middleware';
 import { prisma } from '@/lib/prisma';
 import { withAction, ActionError } from '@/lib/server-actions';
 import { AuditLogService } from '@/lib/services/audit-log-service';
+import { requireFeature } from '@/lib/services/tenant-scope';
 
 import { CurrencyConversionService } from '@/lib/services/currency-conversion-service';
 
@@ -18,6 +19,10 @@ import { ExchangeRateReadService } from './services/exchange-rate-read-service';
 import { ExchangeServiceError } from './services/exchange-types';
 
 const exchangeReadService = new ExchangeRateReadService(exchangeRateProvider);
+
+function requireMultiCurrency(user: AuthenticatedUser, action: string): void {
+  requireFeature(user, 'multi-moneda', action);
+}
 
 function mapExchangeError(error: unknown): never {
   if (error instanceof ExchangeServiceError) {
@@ -40,6 +45,7 @@ export const convertMoneyAction = withAction(
     input: { monto: number; monedaOrigen: string; monedaDestino: string; referenciaId?: string },
     user: AuthenticatedUser,
   ) => {
+    requireMultiCurrency(user, 'usar exchange');
 
     try {
       const quote = await CurrencyConversionService.quoteConversion(input, exchangeRateProvider);
@@ -90,6 +96,7 @@ export const createMonedaAction = withAction(
     input: { codigo: string; nombre: string; simbolo: string; esPrincipal?: boolean },
     user: AuthenticatedUser,
   ) => {
+    requireMultiCurrency(user, 'gestionar monedas');
     const existing = await prisma.moneda.findUnique({ where: { codigo: input.codigo.toUpperCase() } });
     if (existing) {
       throw new ActionError('Ya existe una moneda con ese código', 'DUPLICATE');
@@ -127,6 +134,7 @@ export const updateMonedaAction = withAction(
     input: { codigo: string; nombre?: string; simbolo?: string; esPrincipal?: boolean; isActive?: boolean },
     user: AuthenticatedUser,
   ) => {
+    requireMultiCurrency(user, 'gestionar monedas');
     const { codigo, ...data } = input;
     const existing = await prisma.moneda.findUnique({ where: { codigo } });
     if (!existing) {
@@ -166,6 +174,7 @@ export const updateTasaCambioAction = withAction(
     input: { monedaOrigenId: string; monedaDestino: string; tasa: number },
     user: AuthenticatedUser,
   ) => {
+    requireMultiCurrency(user, 'gestionar tasas de cambio');
 
     const monedaOrigen = await exchangeRateProvider.getCurrency(input.monedaOrigenId);
     if (!monedaOrigen) {
@@ -226,6 +235,7 @@ export const getHistorialTasasAction = withAction(
     } = {},
     user: AuthenticatedUser,
   ) => {
+    requireMultiCurrency(user, 'consultar historial de tasas de cambio');
 
     return exchangeReadService.getHistorialTasas({
       monedaOrigen: params.monedaOrigen,

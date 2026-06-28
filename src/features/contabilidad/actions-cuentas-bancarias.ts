@@ -10,7 +10,7 @@ import { revalidatePath } from 'next/cache';
 import { z } from 'zod';
 import { withAction, ActionError } from '@/lib/server-actions';
 import { prisma } from '@/lib/prisma';
-import { requireTenant } from '@/lib/services/tenant-scope';
+import { requireFeature, requireTenant } from '@/lib/services/tenant-scope';
 import { BankAccountReadService } from '@/features/contabilidad/services/bank-account-read-service';
 import { AuditLogService } from '@/lib/services/audit-log-service';
 import type { AuthenticatedUser } from '@/lib/auth-middleware';
@@ -80,16 +80,19 @@ const CUENTA_SELECT = {
 // ─── Server Actions ────────────────────────────────────────
 
 export const getCuentasBancariasAction = withAction(async (_input: void, user: AuthenticatedUser) => {
+  requireFeature(user, 'contabilidad', 'gestionar cuentas bancarias');
   const tenantId = requireTenant(user);
   return BankAccountReadService.list(tenantId);
 });
 
 export const getCuentaBancariaByIdAction = withAction(async (cuentaId: string, user: AuthenticatedUser) => {
+  requireFeature(user, 'contabilidad', 'consultar cuentas bancarias');
   const tenantId = requireTenant(user);
   return BankAccountReadService.getById({ tenantId, cuentaId });
 });
 
 export const createCuentaBancariaAction = withAction(async (input: z.infer<typeof createSchema>, user: AuthenticatedUser) => {
+  requireFeature(user, 'contabilidad', 'crear cuentas bancarias');
   const parsed = createSchema.parse(input);
   const tenantId = requireTenant(user);
   const cuenta = await prisma.cuentaBancaria.create({
@@ -118,6 +121,7 @@ export const createCuentaBancariaAction = withAction(async (input: z.infer<typeo
 });
 
 export const updateCuentaBancariaAction = withAction(async (input: z.infer<typeof updateSchema>, user: AuthenticatedUser) => {
+  requireFeature(user, 'contabilidad', 'editar cuentas bancarias');
   const parsed = updateSchema.parse(input);
   const { cuentaId, ...data } = parsed;
   const tenantId = requireTenant(user);
@@ -154,6 +158,7 @@ export const updateCuentaBancariaAction = withAction(async (input: z.infer<typeo
 });
 
 export const deleteCuentaBancariaAction = withAction(async (cuentaId: string, user: AuthenticatedUser) => {
+  requireFeature(user, 'contabilidad', 'eliminar cuentas bancarias');
   const tenantId = requireTenant(user);
   const existing = await prisma.cuentaBancaria.findFirst({
     where: { cuentaId, tenantId },
@@ -176,6 +181,7 @@ export const deleteCuentaBancariaAction = withAction(async (cuentaId: string, us
 });
 
 export const getCuentaHistorialAction = withAction(async (params: { cuentaId: string; fechaInicio?: string; fechaFin?: string; tipoMovimiento?: string; page?: number; limit?: number }, _user: AuthenticatedUser) => {
+  requireFeature(_user, 'contabilidad', 'consultar el historial de cuentas bancarias');
   const tenantId = requireTenant(_user);
   return BankAccountReadService.getHistory({
     tenantId,

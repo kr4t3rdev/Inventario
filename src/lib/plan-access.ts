@@ -7,6 +7,20 @@ interface PlanAwareUser {
   planFeatures?: Record<string, boolean> | null;
 }
 
+const BASIC_ACCOUNTING_HIDDEN_ITEMS = new Set([
+  'Transferencias Bancarias',
+  'Ajustes Bancarios',
+  'Exchange',
+  'Inyección Capital',
+  'Analisis Estado Cuenta',
+  'Facturas Vencidas',
+  'Balance y Resultados',
+  'Reportes Contables',
+  'Períodos Contables',
+  'Logs',
+  'Reconciliación Servicios',
+]);
+
 export function hasPlanFeature(
   user: PlanAwareUser | null | undefined,
   featureKey: string,
@@ -22,4 +36,11 @@ export function shouldHideSeparateEmployeeModules(
   user?: PlanAwareUser | null,
 ): boolean {
   return isBasicPlanName(user?.planName);
+}
+
+export function shouldHideBasicAccountingItem(
+  user: PlanAwareUser | null | undefined,
+  itemTitle: string,
+): boolean {
+  return isBasicPlanName(user?.planName) && BASIC_ACCOUNTING_HIDDEN_ITEMS.has(itemTitle);
 }
