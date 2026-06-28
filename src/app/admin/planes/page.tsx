@@ -479,7 +479,7 @@ export default function AdminPlanesPage() {
 					}
 				}}
 			>
-				<DialogContent className="max-w-3xl max-h-[90vh]">
+				<DialogContent className="max-w-3xl max-h-[90vh]" onInteractOutside={(e) => e.preventDefault()}>
 					<DialogHeader>
 						<DialogTitle>
 							{editingPlan ? "Editar Plan" : "Nuevo Plan"}
