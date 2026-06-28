@@ -68,4 +68,54 @@ describe('/api/auth/verify-email', () => {
       }),
     })
   })
+
+  it('devuelve 400 cuando el token es inválido', async () => {
+    const { verifyOnboardingToken } = await import('@/lib/auth/onboarding')
+    vi.mocked(verifyOnboardingToken).mockImplementation(() => {
+      throw new Error('jwt malformed')
+    })
+
+    const request = new NextRequest('http://localhost/api/auth/verify-email', {
+      method: 'POST',
+      headers: {
+        'content-type': 'application/json',
+        'x-request-id': '550e8400-e29b-41d4-a716-446655440000',
+        'x-forwarded-for': '1.2.3.4',
+      },
+      body: JSON.stringify({ token: 'bad-token' }),
+    })
+
+    const response = await POST(request)
+    const data = await response.json()
+
+    expect(response.status).toBe(400)
+    expect(data.error).toBe('Token inválido o expirado')
+  })
+
+  it('devuelve 500 cuando falla la base y no acusa token inválido', async () => {
+    const { verifyOnboardingToken } = await import('@/lib/auth/onboarding')
+    vi.mocked(verifyOnboardingToken).mockReturnValue({
+      userId: 'user-1',
+      email: 'test@test.com',
+      purpose: 'email-verification',
+    } as never)
+
+    vi.mocked(prisma.user.findUnique).mockRejectedValueOnce(new Error('db timeout'))
+
+    const request = new NextRequest('http://localhost/api/auth/verify-email', {
+      method: 'POST',
+      headers: {
+        'content-type': 'application/json',
+        'x-request-id': '550e8400-e29b-41d4-a716-446655440000',
+        'x-forwarded-for': '1.2.3.4',
+      },
+      body: JSON.stringify({ token: 'email-token' }),
+    })
+
+    const response = await POST(request)
+    const data = await response.json()
+
+    expect(response.status).toBe(500)
+    expect(data.error).toBe('No se pudo verificar el correo por un problema temporal')
+  })
 })

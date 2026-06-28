@@ -635,7 +635,16 @@ export async function verifyEmail(request: NextRequest) {
 			return NextResponse.json({ error: "Token requerido" }, { status: 400 });
 		}
 
-		const payload = verifyOnboardingToken(token);
+		let payload;
+		try {
+			payload = verifyOnboardingToken(token);
+		} catch {
+			return NextResponse.json(
+				{ error: "Token inválido o expirado" },
+				{ status: 400 },
+			);
+		}
+
 		if (payload.purpose !== "email-verification") {
 			return NextResponse.json({ error: "Token inválido" }, { status: 400 });
 		}
@@ -685,8 +694,8 @@ export async function verifyEmail(request: NextRequest) {
 	} catch (error) {
 		console.error("Error verificando email:", error);
 		return NextResponse.json(
-			{ error: "Token inválido o expirado" },
-			{ status: 400 },
+			{ error: "No se pudo verificar el correo por un problema temporal" },
+			{ status: 500 },
 		);
 	}
 }

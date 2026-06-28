@@ -5,7 +5,6 @@ import {
 	AnimatePresence,
 	LazyMotion,
 	m as motion,
-	useReducedMotion,
 } from "framer-motion";
 import {
 	LayoutDashboard,
@@ -52,9 +51,13 @@ import {
 import Link from "next/link";
 
 import { useAuth } from "@/contexts/auth-context";
+import { useHydrationSafeReducedMotion } from "@/hooks/use-hydration-safe-reduced-motion";
 import { useIsMounted } from "@/hooks/use-is-mounted";
 import { isTenantAdminRole, type TenantRole } from "@/lib/auth/roles";
-import { shouldHideSeparateEmployeeModules } from "@/lib/plan-access";
+import {
+	shouldHideBasicAccountingItem,
+	shouldHideSeparateEmployeeModules,
+} from "@/lib/plan-access";
 import { cn } from "@/lib/utils";
 import { NavMain } from "./nav-main";
 import { NavUser } from "./nav-user";
@@ -81,27 +84,28 @@ export function AppSidebar2({
 }: React.ComponentProps<typeof Sidebar>): React.JSX.Element {
 	const { user } = useAuth();
 	const { state } = useSidebar();
-	const shouldReduceMotion = useReducedMotion();
+	const shouldReduceMotion = useHydrationSafeReducedMotion();
 	const isMounted = useIsMounted();
+	const shouldAnimate = isMounted && !shouldReduceMotion;
 
 	const groupListVariants = {
 		hidden: { opacity: 0 },
 		visible: {
 			opacity: 1,
 			transition: {
-				staggerChildren: shouldReduceMotion ? 0 : 0.05,
-				delayChildren: shouldReduceMotion ? 0 : 0.03,
+				staggerChildren: shouldAnimate ? 0.05 : 0,
+				delayChildren: shouldAnimate ? 0.03 : 0,
 			},
 		},
 	};
 
 	const groupItemVariants = {
-		hidden: { opacity: 0, y: shouldReduceMotion ? 0 : 8 },
+		hidden: { opacity: 0, y: shouldAnimate ? 8 : 0 },
 		visible: {
 			opacity: 1,
 			y: 0,
 			transition: {
-				duration: shouldReduceMotion ? 0 : 0.24,
+				duration: shouldAnimate ? 0.24 : 0,
 				ease: "easeOut" as const,
 			},
 		},
@@ -662,6 +666,10 @@ export function AppSidebar2({
 			return false;
 		}
 
+		if (shouldHideBasicAccountingItem(user, itemTitle)) {
+			return false;
+		}
+
 		// Verificar feature del plan
 		const featureKey = SIDEBAR_FEATURE_MAP[itemTitle];
 		if (featureKey && user?.planFeatures?.[featureKey] === false) return false;
@@ -722,14 +730,10 @@ export function AppSidebar2({
 		>
 			<motion.div
 				className="flex h-full min-h-0 flex-col"
-				initial={
-					isMounted && !shouldReduceMotion
-						? { opacity: 0, x: -10 }
-						: { opacity: 1, x: 0 }
-				}
+				initial={shouldAnimate ? { opacity: 0, x: -10 } : { opacity: 1, x: 0 }}
 				animate={{ opacity: 1, x: 0 }}
 				transition={{
-					duration: shouldReduceMotion ? 0 : 0.26,
+					duration: shouldAnimate ? 0.26 : 0,
 					ease: "easeOut" as const,
 				}}
 			>
@@ -737,19 +741,11 @@ export function AppSidebar2({
 					{state !== "collapsed" && (
 						<motion.div
 							key="sidebar-brand-header"
-							initial={
-								isMounted && !shouldReduceMotion
-									? { opacity: 0, y: -8 }
-									: { opacity: 1, y: 0 }
-							}
+							initial={shouldAnimate ? { opacity: 0, y: -8 } : { opacity: 1, y: 0 }}
 							animate={{ opacity: 1, y: 0 }}
-							exit={
-								isMounted && !shouldReduceMotion
-									? { opacity: 0, y: -8 }
-									: { opacity: 1, y: 0 }
-							}
+							exit={shouldAnimate ? { opacity: 0, y: -8 } : { opacity: 1, y: 0 }}
 							transition={{
-								duration: shouldReduceMotion ? 0 : 0.22,
+								duration: shouldAnimate ? 0.22 : 0,
 								ease: "easeOut" as const,
 							}}
 						>
@@ -760,11 +756,9 @@ export function AppSidebar2({
 								>
 									<motion.span
 										className="flex size-10 shrink-0 items-center justify-center rounded-lg bg-primary/15 text-primary"
-										whileHover={
-											shouldReduceMotion ? undefined : { scale: 1.04 }
-										}
+										whileHover={shouldAnimate ? { scale: 1.04 } : undefined}
 										transition={{
-											duration: shouldReduceMotion ? 0 : 0.2,
+											duration: shouldAnimate ? 0.2 : 0,
 											ease: "easeOut" as const,
 										}}
 									>
@@ -789,14 +783,14 @@ export function AppSidebar2({
 					<motion.div
 						className="flex flex-col gap-2 group-data-[collapsible=icon]:gap-2"
 						variants={groupListVariants}
-						initial={isMounted && !shouldReduceMotion ? "hidden" : "visible"}
+						initial={shouldAnimate ? "hidden" : "visible"}
 						animate="visible"
 					>
 						{filteredGroups.map((group) => (
 							<motion.div
 								key={group.title}
 								variants={groupItemVariants}
-								whileHover={shouldReduceMotion ? undefined : { y: -1 }}
+								whileHover={shouldAnimate ? { y: -1 } : undefined}
 								title={state === "collapsed" ? group.title : undefined}
 							>
 								<SidebarGroup
@@ -818,14 +812,10 @@ export function AppSidebar2({
 				</SidebarContent>
 
 				<motion.div
-					initial={
-						isMounted && !shouldReduceMotion
-							? { opacity: 0, y: 6 }
-							: { opacity: 1, y: 0 }
-					}
+					initial={shouldAnimate ? { opacity: 0, y: 6 } : { opacity: 1, y: 0 }}
 					animate={{ opacity: 1, y: 0 }}
 					transition={{
-						duration: shouldReduceMotion ? 0 : 0.22,
+						duration: shouldAnimate ? 0.22 : 0,
 						ease: "easeOut" as const,
 					}}
 				>

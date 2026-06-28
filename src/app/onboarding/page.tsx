@@ -4,7 +4,7 @@ import type React from "react";
 
 import { useEffect, useMemo, useState, useCallback } from "react";
 import { useRouter } from "next/navigation";
-import { motion, AnimatePresence, useReducedMotion } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
 import {
 	Building2Icon,
 	UsersIcon,
@@ -18,6 +18,8 @@ import {
 	StoreIcon,
 } from "lucide-react";
 import { Alert, AlertDescription } from "@/components/ui/alert";
+import { useIsMounted } from "@/hooks/use-is-mounted";
+import { useHydrationSafeReducedMotion } from "@/hooks/use-hydration-safe-reduced-motion";
 import { cn } from "@/lib/utils";
 
 const SPRING_DEFAULT = { type: "spring" as const, stiffness: 120, damping: 20 };
@@ -151,21 +153,27 @@ type TypeCardProps = {
 	description: string;
 	features: string[];
 	onClick: () => void;
+	shouldAnimate: boolean;
 };
 
-function TypeCard({
+export function TypeCard({
 	icon: Icon,
 	title,
 	description,
 	features,
 	onClick,
+	shouldAnimate,
 }: TypeCardProps) {
 	return (
 		<motion.button
 			type="button"
 			onClick={onClick}
-			whileHover={{ y: -6, scale: 1.02, transition: { type: "spring" as const, stiffness: 200, damping: 12 } }}
-			whileTap={{ scale: 0.97 }}
+			whileHover={
+				shouldAnimate
+					? { y: -6, scale: 1.02, transition: { type: "spring" as const, stiffness: 200, damping: 12 } }
+					: undefined
+			}
+			whileTap={shouldAnimate ? { scale: 0.97 } : undefined}
 			transition={SPRING_DEFAULT}
 			className="group flex flex-col items-start rounded-[18px] border border-[#e0e0e0] bg-white p-6 text-left shadow-sm hover:border-[#0066cc]/40 hover:bg-[#f5f5f7] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#0066cc] dark:border-white/10 dark:bg-[#1d1d1f] dark:hover:border-[#2997ff]/40 dark:hover:bg-white/5"
 		>
@@ -204,15 +212,20 @@ function TypeCard({
 type TenantCardProps = {
 	tenant: TenantItem;
 	onClick: () => void;
+	shouldAnimate: boolean;
 };
 
-function TenantCard({ tenant, onClick }: TenantCardProps) {
+export function TenantCard({ tenant, onClick, shouldAnimate }: TenantCardProps) {
 	return (
 		<motion.button
 			type="button"
 			onClick={onClick}
-			whileHover={{ x: 4, transition: { type: "spring" as const, stiffness: 200, damping: 12 } }}
-			whileTap={{ scale: 0.98 }}
+			whileHover={
+				shouldAnimate
+					? { x: 4, transition: { type: "spring" as const, stiffness: 200, damping: 12 } }
+					: undefined
+			}
+			whileTap={shouldAnimate ? { scale: 0.98 } : undefined}
 			transition={SPRING_DEFAULT}
 			className="group flex w-full items-center gap-4 rounded-xl border border-[#e0e0e0] bg-white p-4 text-left shadow-sm transition-colors hover:border-[#0066cc]/40 hover:bg-[#f5f5f7] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#0066cc] dark:border-white/10 dark:bg-[#1d1d1f] dark:hover:border-[#2997ff]/40 dark:hover:bg-white/5"
 		>
@@ -230,8 +243,8 @@ function TenantCard({ tenant, onClick }: TenantCardProps) {
 			</div>
 
 			<motion.div
-				initial={{ opacity: 0, x: -4 }}
-				whileHover={{ opacity: 1, x: 0 }}
+				initial={shouldAnimate ? { opacity: 0, x: -4 } : { opacity: 1, x: 0 }}
+				whileHover={shouldAnimate ? { opacity: 1, x: 0 } : undefined}
 				transition={{ duration: 0.2 }}
 				className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-[#0066cc]/10 text-[#0066cc]"
 			>
@@ -266,7 +279,9 @@ function OnboardingSkeleton() {
  */
 export default function OnboardingPage(): React.ReactNode {
 	const router = useRouter();
-	const reduceMotion = !!useReducedMotion();
+	const reduceMotion = useHydrationSafeReducedMotion();
+	const isMounted = useIsMounted();
+	const shouldAnimate = isMounted && !reduceMotion;
 
 	const [user, setUser] = useState<OnboardingUser | null>(null);
 	const [tenants, setTenants] = useState<TenantItem[]>([]);
@@ -456,9 +471,9 @@ export default function OnboardingPage(): React.ReactNode {
 					aria-hidden="true"
 					className="absolute -top-24 left-1/2 h-80 w-80 -translate-x-1/2 rounded-full bg-primary/10 blur-3xl"
 					animate={
-						reduceMotion
-							? undefined
-							: { scale: [1, 1.1, 1], x: ["-50%", "-42%", "-50%"] }
+						shouldAnimate
+							? { scale: [1, 1.1, 1], x: ["-50%", "-42%", "-50%"] }
+							: undefined
 					}
 					transition={{ duration: 8, repeat: Infinity, ease: "easeInOut" }}
 				/>
@@ -466,14 +481,14 @@ export default function OnboardingPage(): React.ReactNode {
 					aria-hidden="true"
 					className="absolute bottom-32 right-[-7rem] h-72 w-72 rounded-full bg-cyan-400/10 blur-3xl"
 					animate={
-						reduceMotion ? undefined : { y: [0, -32, 0], x: [0, -22, 0] }
+						shouldAnimate ? { y: [0, -32, 0], x: [0, -22, 0] } : undefined
 					}
 					transition={{ duration: 10, repeat: Infinity, ease: "easeInOut" }}
 				/>
 				<motion.div
 					aria-hidden="true"
 					className="absolute left-[-5rem] top-1/3 h-56 w-56 rounded-full bg-primary/5 blur-3xl"
-					animate={reduceMotion ? undefined : { y: [0, 24, 0], x: [0, 16, 0] }}
+					animate={shouldAnimate ? { y: [0, 24, 0], x: [0, 16, 0] } : undefined}
 					transition={{ duration: 14, repeat: Infinity, ease: "easeInOut" }}
 				/>
 			</div>
@@ -492,9 +507,9 @@ export default function OnboardingPage(): React.ReactNode {
 				{error && (
 					<motion.div
 						key="global-error"
-						initial={{ opacity: 0, y: -8 }}
+						initial={shouldAnimate ? { opacity: 0, y: -8 } : { opacity: 1, y: 0 }}
 						animate={{ opacity: 1, y: 0 }}
-						exit={{ opacity: 0, y: -8 }}
+						exit={shouldAnimate ? { opacity: 0, y: -8 } : { opacity: 1, y: 0 }}
 						transition={{ duration: 0.2 }}
 						className="fixed top-4 z-50 w-full max-w-md px-4"
 					>
@@ -511,7 +526,7 @@ export default function OnboardingPage(): React.ReactNode {
 
 			{/* Main card */}
 			<motion.div
-				initial={reduceMotion ? { opacity: 1 } : { opacity: 0, y: 30 }}
+				initial={shouldAnimate ? { opacity: 0, y: 30 } : { opacity: 1, y: 0 }}
 				animate={{ opacity: 1, y: 0 }}
 				transition={SPRING_DEFAULT}
 				className="w-full max-w-2xl"
@@ -526,9 +541,9 @@ export default function OnboardingPage(): React.ReactNode {
 							{currentStep === "type" && (
 								<motion.div
 									key="step-type"
-									initial={reduceMotion ? { opacity: 1 } : { opacity: 0, x: 20 }}
+									initial={shouldAnimate ? { opacity: 0, x: 20 } : { opacity: 1, x: 0 }}
 									animate={{ opacity: 1, x: 0 }}
-									exit={reduceMotion ? { opacity: 1 } : { opacity: 0, x: -20 }}
+									exit={shouldAnimate ? { opacity: 0, x: -20 } : { opacity: 1, x: 0 }}
 									transition={SPRING_DEFAULT}
 								>
 							
@@ -553,6 +568,7 @@ export default function OnboardingPage(): React.ReactNode {
 											"Reportes asignados por tu manager",
 											"Acceso a puntos de venta",
 										]}
+										shouldAnimate={shouldAnimate}
 										onClick={() => void chooseType("worker")}
 									/>
 									<TypeCard
@@ -564,6 +580,7 @@ export default function OnboardingPage(): React.ReactNode {
 											"Configuración de catálogo",
 											"Reportes financieros avanzados",
 										]}
+										shouldAnimate={shouldAnimate}
 										onClick={() => void chooseType("company")}
 									/>
 								</div>
@@ -583,9 +600,9 @@ export default function OnboardingPage(): React.ReactNode {
 							{currentStep === "tenant" && canSelectTenant && (
 								<motion.div
 								key="step-tenant"
-								initial={reduceMotion ? { opacity: 1 } : { opacity: 0, x: 20 }}
+								initial={shouldAnimate ? { opacity: 0, x: 20 } : { opacity: 1, x: 0 }}
 								animate={{ opacity: 1, x: 0 }}
-								exit={reduceMotion ? { opacity: 1 } : { opacity: 0, x: -20 }}
+								exit={shouldAnimate ? { opacity: 0, x: -20 } : { opacity: 1, x: 0 }}
 								transition={SPRING_DEFAULT}
 							>
 							<LogoIcon icon={Building2Icon} />
@@ -607,6 +624,7 @@ export default function OnboardingPage(): React.ReactNode {
 											<TenantCard
 												key={tenant.tenantId}
 												tenant={tenant}
+												shouldAnimate={shouldAnimate}
 												onClick={() => void chooseTenant(tenant.tenantId)}
 											/>
 										))}
@@ -638,14 +656,14 @@ export default function OnboardingPage(): React.ReactNode {
 							{currentStep === "approval" && (
 								<motion.div
 								key="step-approval"
-								initial={reduceMotion ? { opacity: 1 } : { opacity: 0, scale: 0.95 }}
+								initial={shouldAnimate ? { opacity: 0, scale: 0.95 } : { opacity: 1, scale: 1 }}
 								animate={{ opacity: 1, scale: 1 }}
-								exit={reduceMotion ? { opacity: 1 } : { opacity: 0, scale: 0.95 }}
+								exit={shouldAnimate ? { opacity: 0, scale: 0.95 } : { opacity: 1, scale: 1 }}
 								transition={SPRING_DEFAULT}
 								className="text-center"
 							>
 							<motion.div
-								initial={reduceMotion ? { scale: 1 } : { scale: 0 }}
+								initial={shouldAnimate ? { scale: 0 } : { scale: 1 }}
 								animate={{ scale: 1 }}
 								transition={{ type: "spring", stiffness: 200, damping: 15, delay: 0.15 }}
 								className="mx-auto mb-6 flex h-16 w-16 items-center justify-center rounded-full bg-green-500/10"
@@ -692,9 +710,9 @@ export default function OnboardingPage(): React.ReactNode {
 							{currentStep === "company" && (
 								<motion.div
 								key="step-company"
-								initial={reduceMotion ? { opacity: 1 } : { opacity: 0, scale: 0.95 }}
+								initial={shouldAnimate ? { opacity: 0, scale: 0.95 } : { opacity: 1, scale: 1 }}
 								animate={{ opacity: 1, scale: 1 }}
-								exit={reduceMotion ? { opacity: 1 } : { opacity: 0, scale: 0.95 }}
+								exit={shouldAnimate ? { opacity: 0, scale: 0.95 } : { opacity: 1, scale: 1 }}
 								transition={SPRING_DEFAULT}
 								className="text-center"
 							>
