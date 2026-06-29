@@ -55,6 +55,7 @@ describe('CategoryForm', () => {
     });
 
     expect(screen.queryByText('Sección del Clasificador *')).not.toBeInTheDocument();
+    expect(screen.queryByText('Categoría Padre')).not.toBeInTheDocument();
     expect(global.fetch).not.toHaveBeenCalled();
   });
 

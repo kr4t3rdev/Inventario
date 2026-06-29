@@ -8,8 +8,8 @@ import { Button } from "@/components/ui/button";
 import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Loader2, Folder, ArrowLeft, Layers } from "lucide-react";
+import { Select, SelectContent, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Loader2, Folder, ArrowLeft } from "lucide-react";
 import { LazyMotion, m as motion } from "framer-motion";
 import { ClasificadorInfoNote } from "@/features/productos/components/clasificador-info-note";
 import { fetchMiEmpresaSettings } from "@/features/mi-empresa/lib/client-mi-empresa";
@@ -289,54 +289,6 @@ export function CategoryForm({ initialData, onSuccess }: CategoryFormProps) {
                     <ClasificadorInfoNote />
                   </motion.div>
                 </>
-              )}
-
-              {!usaEan13 && (
-                <motion.div
-                  initial={{ opacity: 0, x: -20 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  transition={{ delay: 0.4 }}
-                >
-                  <FormField
-                    control={form.control}
-                    name="parentId"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel className="flex items-center gap-2">
-                          <Layers className="h-4 w-4 text-muted-foreground" />
-                          Categoría Padre
-                        </FormLabel>
-                        <Select
-                          onValueChange={field.onChange}
-                          value={field.value || (initialData?.parentId ? initialData.parentId : "none")}
-                          disabled={isLoading}
-                        >
-                          <FormControl>
-                            <SelectTrigger className={`transition-all duration-200 ${getFieldError("parentId") ? "border-destructive" : ""}`}>
-                              <SelectValue placeholder="Seleccione una categoría padre (opcional)" />
-                            </SelectTrigger>
-                          </FormControl>
-                          <SelectContent>
-                            <SelectItem value="none">
-                              <div className="flex items-center gap-2">
-                                <Folder className="h-4 w-4 text-primary" />
-                                Sin categoría padre (categoría principal)
-                              </div>
-                            </SelectItem>
-                          </SelectContent>
-                        </Select>
-                        <FormDescription>
-                          Seleccione una categoría padre para crear una subcategoría.
-                          <br />
-                          <span className="text-amber-600 dark:text-amber-400">
-                            Máximo 3 niveles de profundidad permitidos.
-                          </span>
-                        </FormDescription>
-                        <FormMessage>{getFieldError("parentId")}</FormMessage>
-                      </FormItem>
-                    )}
-                  />
-                </motion.div>
               )}
 
               <motion.div
