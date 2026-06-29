@@ -1,6 +1,7 @@
 "use client"
 
 import { useMemo, useEffect, useState } from "react"
+import { useRouter } from "next/navigation"
 import { Download, FileSpreadsheet, FileIcon as FilePdf, ArrowLeft } from "lucide-react"
 import jsPDF from "jspdf"
 import autoTable from "jspdf-autotable"
@@ -24,6 +25,8 @@ import {
 import { PageTransition, StaggerContainer, StaggerItem, AnimatedCard } from "@/components/ui/animations"
 import { cn } from "@/lib/utils"
 import { ContabilidadBreadcrumb } from "@/features/contabilidad/components/contabilidad-breadcrumb"
+import { useAuth } from "@/contexts/auth-context"
+import { shouldHideBasicAccountingItem } from "@/lib/plan-access"
 
 import { getAuthToken } from "@/lib/token"
 import { formatCurrency } from "@/lib/utils"
@@ -34,10 +37,23 @@ import Link from "next/link"
 const surfaceCardClass = "bg-white/80 dark:bg-slate-900/10 backdrop-blur-xl border-slate-200/60 dark:border-slate-800/60 shadow-sm"
 
 export default function FacturasVencidasPage() {
+  const router = useRouter()
+  const { user } = useAuth()
   const [data, setData] = useState<{ facturas: any[] } | null>(null)
   const [isLoading, setIsLoading] = useState(true)
+  const isBlocked =
+    user?.role !== 'admin' &&
+    shouldHideBasicAccountingItem(user, 'Facturas Vencidas')
 
   useEffect(() => {
+    if (isBlocked) {
+      router.replace('/busy/contabilidad')
+    }
+  }, [isBlocked, router])
+
+  useEffect(() => {
+    if (isBlocked) return
+
     const token = getAuthToken()
     fetch('/api/sugerencias/ingresos-por-edades', {
       headers: token ? { Authorization: token } : {},
@@ -45,7 +61,7 @@ export default function FacturasVencidasPage() {
       setData(json)
       setIsLoading(false)
     }).catch(() => setIsLoading(false))
-  }, [])
+  }, [isBlocked])
 
   const facturas = data?.facturas
 
@@ -210,6 +226,10 @@ export default function FacturasVencidasPage() {
 
     const date = new Date().toISOString().split('T')[0]
     doc.save(`facturas_vencidas_${date}.pdf`)
+  }
+
+  if (isBlocked) {
+    return null
   }
 
   return (

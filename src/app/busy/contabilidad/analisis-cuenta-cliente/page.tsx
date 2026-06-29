@@ -1,6 +1,7 @@
 "use client"
 
 import { useState, useMemo, useEffect , useRef} from "react"
+import { useRouter } from "next/navigation"
 import { format } from "date-fns"
 import { 
   Users, 
@@ -35,6 +36,8 @@ import {
   PageTransition
 } from '@/components/ui/animations';
 import { ContabilidadBreadcrumb } from "@/features/contabilidad/components/contabilidad-breadcrumb"
+import { useAuth } from "@/contexts/auth-context"
+import { shouldHideBasicAccountingItem } from "@/lib/plan-access"
 
 import { useClientes } from "@/features/clientes/hooks/use-clientes"
 import { getCuentasPorCobrarAction } from "@/features/contabilidad"
@@ -43,9 +46,20 @@ import { Cliente, CuentaPorCobrar } from "@/app/models/model"
 import Link from "next/link"
 
 export default function AnalisisCuentaClientePage() {
+  const router = useRouter()
+  const { user } = useAuth()
   const [selectedClientId, setSelectedClientId] = useState<string>("")
   const [open, setOpen] = useState(false)
   const [searchTerm, setSearchTerm] = useState("")
+  const isBlocked =
+    user?.role !== 'admin' &&
+    shouldHideBasicAccountingItem(user, 'Analisis Estado Cuenta')
+
+  useEffect(() => {
+    if (isBlocked) {
+      router.replace('/busy/contabilidad')
+    }
+  }, [isBlocked, router])
 
   // Queries
   const { clientes, isLoading: isLoadingClientes } = useClientes()
@@ -53,24 +67,27 @@ export default function AnalisisCuentaClientePage() {
   const isLoadingCuentas = useRef(true)
 
   useEffect(() => {
+    if (isBlocked) return
+
     getCuentasPorCobrarAction({ page: 1, limit: 1000 }).then(r => {
       if (r.success) setCuentas((r.data?.cuentas ?? []) as any)
       isLoadingCuentas.current = false;
     }).catch(() => isLoadingCuentas.current = false)
-  }, [])
+  }, [isBlocked])
   
   // Filter invoices by client if one is selected
   const [facturasData, setFacturasData] = useState<any>(null)
   const [isLoadingFacturas, setIsLoadingFacturas] = useState(false)
 
   useEffect(() => {
-    if (!selectedClientId) return
+    if (isBlocked || !selectedClientId) return
+
     setIsLoadingFacturas(true)
     getFacturasAction({ clienteId: selectedClientId, limit: 100 }).then(r => {
       if (r.success) setFacturasData(r.data)
       setIsLoadingFacturas(false)
     }).catch(() => setIsLoadingFacturas(false))
-  }, [selectedClientId])
+  }, [isBlocked, selectedClientId])
 
   const selectedCliente = useMemo(() => 
     clientes?.find(c => c.clienteId === selectedClientId),
@@ -152,6 +169,10 @@ export default function AnalisisCuentaClientePage() {
     'relative overflow-hidden border-slate-200/60 bg-white/70 shadow-sm backdrop-blur-xl',
     'dark:border-slate-800/60 dark:bg-slate-900/10',
   );
+
+  if (isBlocked) {
+    return null
+  }
 
   return (
         <PageTransition className="flex-1 space-y-8 p-4 md:p-8 pt-6">

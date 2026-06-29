@@ -1,6 +1,7 @@
 "use client"
 
 import React, { useState, Suspense, useEffect } from "react"
+import { useRouter } from "next/navigation"
 import { Plus } from "lucide-react"
 
 import { Button } from "@/components/ui/button"
@@ -15,6 +16,7 @@ import { PrestamosCashTable } from "@/features/contabilidad/components/prestamos
 import { PrestamoCashForm } from "@/features/contabilidad/components/prestamos-cash/prestamo-cash-form"
 import { PagoPrestamoModal } from "@/features/contabilidad/components/prestamos-cash/pago-prestamo-modal"
 import type { PrestamoCash } from "@/app/models/model"
+import { useAuth } from "@/contexts/auth-context"
 
 const featureEnabled = process.env.NEXT_PUBLIC_ENABLE_PRESTAMOS_CASH !== "false"
 
@@ -23,6 +25,8 @@ const featureEnabled = process.env.NEXT_PUBLIC_ENABLE_PRESTAMOS_CASH !== "false"
  * @returns {JSX.Element} Contenido con tabla, form y modal de pago.
  */
 function PrestamosCashContent() {
+  const router = useRouter()
+  const { user } = useAuth()
   const [openForm, setOpenForm] = useState(false)
   const [openPago, setOpenPago] = useState(false)
   const [prestamoSeleccionado, setPrestamoSeleccionado] = useState<PrestamoCash | null>(null)
@@ -45,6 +49,19 @@ function PrestamosCashContent() {
   const [cuentasBancarias, setCuentasBancarias] = useState<any[]>([])
   const [tiposPago, setTiposPago] = useState<any[]>([])
   const [tasasData, setTasasData] = useState<{ monedaPrincipal?: { codigo?: string }; tasas?: Array<{ monedaOrigenId: string; tasa: number }> }>({})
+  const isBlocked =
+    user?.role !== 'admin' &&
+    user?.planFeatures?.['prestamos-cash'] !== true
+
+  useEffect(() => {
+    if (isBlocked) {
+      router.replace('/busy/contabilidad')
+    }
+  }, [isBlocked, router])
+
+  if (isBlocked) {
+    return null
+  }
 
   useEffect(() => {
     getClientesAction().then(r => { if (r.success) setClientes(r.data ?? []) })

@@ -1,6 +1,7 @@
 "use client";
 
 import { useMemo, useState, useCallback, useEffect } from "react";
+import { useRouter } from "next/navigation";
 ;
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -60,6 +61,7 @@ import {
 	useTransform,
 	useReducedMotion,
 } from "framer-motion";
+import { useAuth } from "@/contexts/auth-context";
 import { cn } from "@/lib/utils";
 import { AnimatedNumber } from "@/components/ui/animated-number";
 import {
@@ -205,6 +207,8 @@ function EstadoBadge({ estado }: { estado: string }) {
 }
 
 export default function CuentasPorPagarPage() {
+	const router = useRouter();
+	const { user } = useAuth();
 	const [search, setSearch] = useState("");
 	const [estado, setEstado] = useState<string>("all");
 	const [tipo, setTipo] = useState<string>("all");
@@ -222,6 +226,19 @@ export default function CuentasPorPagarPage() {
 	);
 	const [isLoading, setIsLoading] = useState(true);
 	const [fetchError, setFetchError] = useState<unknown>(null);
+	const isBlocked =
+		user?.role !== "admin" &&
+		user?.planFeatures?.["cuentas-pagar"] !== true;
+
+	useEffect(() => {
+		if (isBlocked) {
+			router.replace("/busy/contabilidad");
+		}
+	}, [isBlocked, router]);
+
+	if (isBlocked) {
+		return null;
+	}
 
 	const loadData = useCallback(
 		async (overrides?: {
