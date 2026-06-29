@@ -2,7 +2,20 @@ import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { NextRequest } from 'next/server'
 
 vi.mock('@/lib/auth-middleware', () => ({
-  authenticateUser: vi.fn().mockResolvedValue({ user: { userId: 'user-test' } }),
+  authenticateUser: vi.fn().mockResolvedValue({
+    user: {
+      userId: 'user-test',
+      role: 'user',
+      planFeatures: {
+        contabilidad: true,
+        'reportes-financieros': true,
+        'prestamos-cash': true,
+        'deudas-cash': true,
+        servicios: true,
+        'inyeccion-capital': true,
+      },
+    },
+  }),
 }))
 
 vi.mock('@/lib/prisma', () => ({

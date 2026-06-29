@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { authenticateUser } from '@/lib/auth-middleware'
+import { shouldHideBasicAccountingItem } from '@/lib/plan-access'
 
 interface CuentaBancariaResumen {
   cuentaId: string
@@ -103,6 +104,11 @@ export async function GET(request: NextRequest) {
     const authResultUser = await authenticateUser(request)
     if ('status' in authResultUser) return authResultUser as Response
     const user = authResultUser.user
+    const canViewServicios = user.planFeatures?.servicios === true
+    const canViewTransfers = !shouldHideBasicAccountingItem(user, 'Transferencias Bancarias')
+    const canViewAdjustments = !shouldHideBasicAccountingItem(user, 'Ajustes Bancarios')
+    const canViewCapital = user.planFeatures?.['inyeccion-capital'] === true
+    const canViewPrestamosCash = user.planFeatures?.['prestamos-cash'] === true
 
     const { searchParams } = new URL(request.url)
     const fechaInicio = searchParams.get('fechaInicio')
@@ -172,7 +178,7 @@ export async function GET(request: NextRequest) {
     })
 
     // Obtener reconciliaciones de servicios
-    const reconciliacionesServicios = await prisma.reconciliacionServicio.findMany({
+    const reconciliacionesServicios = canViewServicios ? await prisma.reconciliacionServicio.findMany({
       where: {
         ...accountFilter,
         ...(Object.keys(dateFilter).length > 0 ? { fechaReconciliacion: dateFilter } : {})
@@ -189,7 +195,7 @@ export async function GET(request: NextRequest) {
           }
         }
       }
-    })
+    }) : []
 
     // Obtener reconciliaciones de gastos
     const reconciliacionesGastos = await prisma.reconciliacionGasto.findMany({
@@ -213,7 +219,7 @@ export async function GET(request: NextRequest) {
     })
 
     // Obtener transferencias bancarias
-    const transferencias = await prisma.transferenciaBancaria.findMany({
+    const transferencias = canViewTransfers ? await prisma.transferenciaBancaria.findMany({
       where: {
         ...(Object.keys(dateFilter).length > 0 ? { fechaTransferencia: dateFilter } : {}),
         ...(cuentaId ? {
@@ -242,10 +248,10 @@ export async function GET(request: NextRequest) {
           }
         }
       }
-    })
+    }) : []
 
     // Obtener ajustes bancarios
-    const ajustesBancarios = await prisma.ajusteBancario.findMany({
+    const ajustesBancarios = canViewAdjustments ? await prisma.ajusteBancario.findMany({
       where: {
         ...accountFilter,
         ...(Object.keys(dateFilter).length > 0 ? { createdAt: dateFilter } : {})
@@ -264,10 +270,10 @@ export async function GET(request: NextRequest) {
           }
         }
       }
-    })
+    }) : []
 
     // Obtener inyecciones de capital
-    const inyeccionesCapital = await prisma.inyeccionCapital.findMany({
+    const inyeccionesCapital = canViewCapital ? await prisma.inyeccionCapital.findMany({
       where: {
         ...accountFilter,
         ...(Object.keys(dateFilter).length > 0 ? { createdAt: dateFilter } : {})
@@ -294,10 +300,10 @@ export async function GET(request: NextRequest) {
         montoTotalDeuda: true,
         saldoPendiente: true,
       }
-    })
+    }) : []
 
     // Obtener pagos de deuda
-    const pagosDeuda = await prisma.pagoDeuda.findMany({
+    const pagosDeuda = canViewCapital ? await prisma.pagoDeuda.findMany({
       where: {
         ...accountFilter,
         ...(Object.keys(dateFilter).length > 0 ? { fechaPago: dateFilter } : {})
@@ -310,9 +316,9 @@ export async function GET(request: NextRequest) {
           }
         }
       }
-    })
+    }) : []
 
-    const movimientosPrestamoCash = await prisma.reconciliacionVenta.findMany({
+    const movimientosPrestamoCash = canViewPrestamosCash ? await prisma.reconciliacionVenta.findMany({
       where: {
         ...accountFilter,
         ...(Object.keys(dateFilter).length > 0 ? { fechaReconciliacion: dateFilter } : {}),
@@ -325,7 +331,7 @@ export async function GET(request: NextRequest) {
           select: { moneda: true }
         }
       }
-    })
+    }) : []
 
     // Calcular totales de ingresos por moneda
     const ingresosVentas = reconciliacionesVentas.reduce((acc: any, rec: any) => {

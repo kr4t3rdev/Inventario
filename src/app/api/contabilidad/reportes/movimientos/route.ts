@@ -1,12 +1,19 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { authenticateUser } from '@/lib/auth-middleware'
+import { shouldHideBasicAccountingItem } from '@/lib/plan-access'
 
 export async function GET(request: NextRequest) {
   try {
     const authResultUser = await authenticateUser(request)
     if ('status' in authResultUser) return authResultUser as Response
     const user = authResultUser.user
+    const canViewServicios = user.planFeatures?.servicios === true
+    const canViewTransfers = !shouldHideBasicAccountingItem(user, 'Transferencias Bancarias')
+    const canViewAdjustments = !shouldHideBasicAccountingItem(user, 'Ajustes Bancarios')
+    const canViewCapital = user.planFeatures?.['inyeccion-capital'] === true
+    const canViewPrestamosCash = user.planFeatures?.['prestamos-cash'] === true
+    const canViewDeudasCash = user.planFeatures?.['deudas-cash'] === true
 
     const { searchParams } = new URL(request.url)
     const busqueda = searchParams.get('busqueda')
@@ -83,7 +90,7 @@ export async function GET(request: NextRequest) {
     })
 
     // Obtener movimientos de servicios
-    const serviciosMovimientos = await prisma.reconciliacionServicio.findMany({
+    const serviciosMovimientos = canViewServicios ? await prisma.reconciliacionServicio.findMany({
       where: {
         ...accountFilter,
         ...(Object.keys(dateFilter).length > 0 ? { fechaReconciliacion: dateFilter } : {}),
@@ -117,7 +124,7 @@ export async function GET(request: NextRequest) {
         }
       },
       orderBy: { fechaReconciliacion: 'desc' }
-    })
+    }) : []
 
     // Obtener movimientos de gastos
     const gastosMovimientos = await prisma.reconciliacionGasto.findMany({
@@ -154,7 +161,7 @@ export async function GET(request: NextRequest) {
     })
 
     // Obtener transferencias bancarias
-    const transferenciasMovimientos = await prisma.transferenciaBancaria.findMany({
+    const transferenciasMovimientos = canViewTransfers ? await prisma.transferenciaBancaria.findMany({
       where: {
         ...(Object.keys(dateFilter).length > 0 ? { fechaTransferencia: dateFilter } : {}),
         ...(cuentaId ? {
@@ -195,10 +202,10 @@ export async function GET(request: NextRequest) {
         }
       },
       orderBy: { fechaTransferencia: 'desc' }
-    })
+    }) : []
 
     // Obtener ajustes bancarios
-    const ajustesMovimientos = await prisma.ajusteBancario.findMany({
+    const ajustesMovimientos = canViewAdjustments ? await prisma.ajusteBancario.findMany({
       where: {
         ...accountFilter,
         ...(Object.keys(dateFilter).length > 0 ? { createdAt: dateFilter } : {}),
@@ -223,10 +230,10 @@ export async function GET(request: NextRequest) {
         }
       },
       orderBy: { createdAt: 'desc' }
-    })
+    }) : []
 
     // Obtener inyecciones de capital
-    const inyeccionesMovimientos = await prisma.inyeccionCapital.findMany({
+    const inyeccionesMovimientos = canViewCapital ? await prisma.inyeccionCapital.findMany({
       where: {
         ...accountFilter,
         ...(Object.keys(dateFilter).length > 0 ? { createdAt: dateFilter } : {}),
@@ -249,10 +256,10 @@ export async function GET(request: NextRequest) {
         }
       },
       orderBy: { createdAt: 'desc' }
-    })
+    }) : []
 
     // Obtener pagos de deuda
-    const pagosDeudaMovimientos = await prisma.pagoDeuda.findMany({
+    const pagosDeudaMovimientos = canViewCapital ? await prisma.pagoDeuda.findMany({
       where: {
         ...accountFilter,
         ...(Object.keys(dateFilter).length > 0 ? { fechaPago: dateFilter } : {}),
@@ -279,11 +286,29 @@ export async function GET(request: NextRequest) {
         }
       },
       orderBy: { fechaPago: 'desc' }
-    })
+    }) : []
 
     // Normalizar todos los movimientos a un formato común
     const movimientos = [
-      ...ventasMovimientos.map((mov: any) => ({
+      ...ventasMovimientos
+      .filter((mov: any) => {
+        if (
+          (mov.tipoReconciliacion === 'PRESTAMO_CASH' || mov.tipoReconciliacion === 'PRESTAMO_CASH_DESEMBOLSO') &&
+          !canViewPrestamosCash
+        ) {
+          return false
+        }
+
+        if (
+          (mov.tipoReconciliacion === 'DEUDA_CASH' || mov.tipoReconciliacion === 'DEUDA_CASH_DESEMBOLSO') &&
+          !canViewDeudasCash
+        ) {
+          return false
+        }
+
+        return true
+      })
+      .map((mov: any) => ({
         id: mov.reconciliacionId,
         tipo: (
           mov.tipoReconciliacion === 'PRESTAMO_CASH'
