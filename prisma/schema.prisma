@@ -2117,7 +2117,7 @@ model ProductoCostSheetTemplate {
   updatedAt       DateTime @updatedAt
   createdById     String
 
-  @@unique([productoId, esActiva])
+  @@unique([productoId, version])
   @@index([tenantId])
   @@index([productoId])
 }

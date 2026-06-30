@@ -19,6 +19,8 @@ const surfaceCardClass = cn(
 export function ReportePorCategoria() {
   const { productos, isLoading: isLoadingProductos } = useProductos()
   const { categorias } = useCategorias()
+  const getTotalStock = (producto: { stock?: number; stockTotal?: number }) =>
+    producto.stockTotal ?? producto.stock ?? 0
 
   // Agrupar productos por categoría
   const productosPorCategoria = categorias?.map((categoria) => {
@@ -28,9 +30,9 @@ export function ReportePorCategoria() {
 
 
     const cantidadProductos = productosCategoria.length
-    const valorTotal = productosCategoria.reduce((sum, producto) => sum + producto.precioCosto * producto.stock, 0)
-    const valorVenta = productosCategoria.reduce((sum, producto) => sum + producto.precioVenta * producto.stock, 0)
-    const stockTotal = productosCategoria.reduce((sum, producto) => sum + producto.stock, 0)
+    const valorTotal = productosCategoria.reduce((sum, producto) => sum + producto.precioCosto * getTotalStock(producto), 0)
+    const valorVenta = productosCategoria.reduce((sum, producto) => sum + producto.precioVenta * getTotalStock(producto), 0)
+    const stockTotal = productosCategoria.reduce((sum, producto) => sum + getTotalStock(producto), 0)
 
     return {
       categoriaId: categoria.catId,

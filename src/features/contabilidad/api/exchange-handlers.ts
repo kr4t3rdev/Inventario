@@ -193,11 +193,22 @@ export async function getBalanceFinanciero(request: NextRequest, user: Authentic
       select: { nombreBanco: true, saldo: true, moneda: true },
     })
     const totalEfectivo = cuentasBancarias.reduce((acc: number, c: any) => acc + c.saldo, 0)
-    const productos = await prisma.producto.findMany({
+    const stockUbicaciones = await prisma.stockUbicacion.findMany({
       where: tenantWhere,
-      select: { stock: true, precioCosto: true },
+      select: {
+        cantidad: true,
+        producto: {
+          select: {
+            precioCosto: true,
+          },
+        },
+      },
     })
-    const totalInventario = productos.reduce((acc: number, p: any) => acc + (p.stock * p.precioCosto), 0)
+    const totalInventario = stockUbicaciones.reduce(
+      (acc: number, registro: any) =>
+        acc + Number(registro.cantidad || 0) * Number(registro.producto?.precioCosto || 0),
+      0,
+    )
     const cuentasPorCobrar = await prisma.cuentaPorCobrar.findMany({
       where: tenantWhere,
       select: { montoDeuda: true, montoPagado: true },

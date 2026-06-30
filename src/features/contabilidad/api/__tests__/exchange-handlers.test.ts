@@ -18,6 +18,7 @@ const prismaMock = vi.hoisted(() => ({
   },
   cuentaBancaria: { findMany: vi.fn() },
   producto: { findMany: vi.fn() },
+  stockUbicacion: { findMany: vi.fn() },
   cuentaPorCobrar: { findMany: vi.fn() },
   inyeccionCapital: { findMany: vi.fn() },
   venta: { findMany: vi.fn() },
@@ -166,6 +167,7 @@ describe('getBalanceFinanciero', () => {
     vi.clearAllMocks()
     prismaMock.cuentaBancaria.findMany.mockImplementation(emptyQuery)
     prismaMock.producto.findMany.mockImplementation(emptyQuery)
+    prismaMock.stockUbicacion.findMany.mockImplementation(emptyQuery)
     prismaMock.cuentaPorCobrar.findMany.mockImplementation(emptyQuery)
     prismaMock.inyeccionCapital.findMany.mockImplementation(emptyQuery)
     prismaMock.venta.findMany.mockImplementation(emptyQuery)
@@ -222,6 +224,23 @@ describe('getBalanceFinanciero', () => {
     expect(body.estadoResultados.anual.gastosCompras).toBe(200)
     expect(body.estadoResultados.anual.totalGastos).toBe(700)
     expect(body.estadoResultados.anual.utilidadNeta).toBe(300)
+  })
+
+  it('calcula inventario del balance desde StockUbicacion y no desde producto.stock', async () => {
+    prismaMock.producto.findMany.mockImplementation(async () => [
+      { stock: 999, precioCosto: 10 },
+    ] as any[])
+    prismaMock.stockUbicacion.findMany.mockImplementation(async () => [
+      { cantidad: 2, producto: { precioCosto: 10 } },
+      { cantidad: 3, producto: { precioCosto: 10 } },
+    ] as any[])
+
+    const { getBalanceFinanciero } = await import('@/features/contabilidad/api/exchange-handlers')
+    const request = new NextRequest('http://localhost/api/contabilidad/balance-financiero?year=2025')
+    const response = await getBalanceFinanciero(request, baseUser as any)
+    const body = await response.json()
+
+    expect(body.balance.activos.inventario).toBe(50)
   })
 
   it('incluye gastosCompras en el totalGastos de cada mes', async () => {

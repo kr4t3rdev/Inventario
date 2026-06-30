@@ -142,10 +142,7 @@ describe("ComprasProductos Server Actions", () => {
 				where: { id: "prod-1" },
 				data: { precioCosto: 450 },
 			});
-			expect(mockTx.producto.update).toHaveBeenCalledWith({
-				where: { id: "prod-1" },
-				data: { stock: { increment: 10 } },
-			});
+			expect(mockTx.producto.update).toHaveBeenCalledTimes(1);
 			expect(upsertStockUbicacion).toHaveBeenCalledWith(
 				mockTx,
 				expect.objectContaining({

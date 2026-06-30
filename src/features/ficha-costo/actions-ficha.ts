@@ -9,7 +9,15 @@ import {
   calcularCostoCompuestoServer,
   calcularCostoSimpleServer,
 } from './lib/cost-calc-server'
-import type { FichaCostoData } from './types'
+import type { FichaCostoData, GetFichaCostoInput } from './types'
+
+function normalizeFichaInput(input: GetFichaCostoInput) {
+  if (typeof input === 'string') {
+    return { entityId: input, entityType: 'PRODUCTO' as const }
+  }
+
+  return input
+}
 
 /**
  * @description Devuelve la ficha de costo consolidada del producto dentro
@@ -19,12 +27,86 @@ import type { FichaCostoData } from './types'
  *   asociada (sin mano de obra ni indirectos, que son inputs manuales en UI).
  */
 export const getFichaCostoAction = withAction(
-  async (productoId: string, user: AuthenticatedUser): Promise<FichaCostoData> => {
+  async (input: GetFichaCostoInput, user: AuthenticatedUser): Promise<FichaCostoData> => {
+    const { entityId, entityType } = normalizeFichaInput(input)
     const tenantId = requireTenant(user)
-    requireFeature(user, 'productos', 'ver la ficha de costo')
+    requireFeature(
+      user,
+      entityType === 'SERVICIO' ? 'servicios' : 'productos',
+      'ver la ficha de costo',
+    )
+
+    if (entityType === 'SERVICIO') {
+      const servicio = await prisma.servicios.findFirst({
+        where: { servicioId: entityId, tenantId },
+        select: {
+          servicioId: true,
+          nombre: true,
+          precio: true,
+          moneda: true,
+        },
+      })
+
+      if (!servicio) {
+        throw new ActionError('Servicio no encontrado', 'NOT_FOUND')
+      }
+
+      const compras = await prisma.compraServicio.findMany({
+        where: { servicioId: entityId, tenantId },
+        select: {
+          compraServicioId: true,
+          costoUnitario: true,
+          cantidad: true,
+          total: true,
+        },
+      })
+
+      const advertencias: string[] = []
+      if (compras.length === 0) {
+        advertencias.push('No hay compras de servicio registradas para estimar el costo')
+      } else {
+        advertencias.push(
+          'No se puede calcular un costo confiable del servicio porque CompraServicio no guarda moneda histórica',
+        )
+      }
+
+      return {
+        producto: {
+          id: servicio.servicioId,
+          entityType: 'SERVICIO',
+          nombre: servicio.nombre,
+          codigoInterno: null,
+          tipo: 'SERVICIO',
+          precioCosto: 0,
+          precioVenta: servicio.precio,
+        },
+        costoCalculado: {
+          valor: 0,
+          metodo: null,
+          moneda: servicio.moneda,
+        },
+        margen: {
+          absoluto: null,
+          porcentaje: null,
+          estado: 'SIN_DATOS',
+        },
+        variacion: {
+          absoluto: null,
+          porcentaje: null,
+          estado: 'SIN_DATOS',
+        },
+        merma: {
+          cantidad30d: 0,
+          porcentajeSobreStock: null,
+          desperdicioEsperadoPromedio: null,
+        },
+        advertencias,
+        ultimaActualizacion: new Date().toISOString(),
+      }
+    }
 
     const producto = await prisma.producto.findFirst({
-      where: { id: productoId, tenantId },
+      where: { id: entityId, tenantId },
       select: {
         id: true,
         nombre: true,
@@ -43,9 +125,9 @@ export const getFichaCostoAction = withAction(
     let costoCalculado: FichaCostoData['costoCalculado']
 
     if (producto.esCompuesto) {
-      costoCalculado = await calcularCostoCompuestoServer(productoId, tenantId, advertencias)
+      costoCalculado = await calcularCostoCompuestoServer(entityId, tenantId, advertencias)
     } else {
-      costoCalculado = await calcularCostoSimpleServer(productoId, tenantId, advertencias)
+      costoCalculado = await calcularCostoSimpleServer(entityId, tenantId, advertencias)
     }
 
     const margen = calcularMargen(costoCalculado.valor, producto.precioVenta)
@@ -69,7 +151,7 @@ export const getFichaCostoAction = withAction(
     hace30Dias.setDate(hace30Dias.getDate() - 30)
     const mermasAgg = await prisma.merma.aggregate({
       where: {
-        productoId,
+        productoId: entityId,
         tenantId,
         createdAt: { gte: hace30Dias },
       },
@@ -81,7 +163,7 @@ export const getFichaCostoAction = withAction(
     let desperdicioEsperadoPromedio: number | null = null
     if (producto.esCompuesto) {
       const receta = await prisma.receta.findFirst({
-        where: { productoId, tenantId },
+        where: { productoId: entityId, tenantId },
         include: { RecetaIngrediente: true },
       })
       if (receta && receta.RecetaIngrediente.length > 0) {
@@ -94,7 +176,7 @@ export const getFichaCostoAction = withAction(
     }
 
     const stockActual = await prisma.producto.findFirst({
-      where: { id: productoId, tenantId },
+      where: { id: entityId, tenantId },
       select: { stock: true },
     })
     const porcentajeSobreStock =
@@ -122,6 +204,7 @@ export const getFichaCostoAction = withAction(
     return {
       producto: {
         id: producto.id,
+        entityType: 'PRODUCTO',
         nombre: producto.nombre,
         codigoInterno: producto.codigoInterno,
         tipo: producto.esCompuesto ? 'COMPUESTO' : 'SIMPLE',

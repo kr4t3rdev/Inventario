@@ -38,6 +38,14 @@ export function IndicadorMargen({
 }
 
 function getConfig(estado: EstadoMargen, porcentaje: number | null) {
+  if (estado === 'SIN_DATOS') {
+    return {
+      classes: 'border-muted-foreground/30 bg-muted text-muted-foreground',
+      icon: Minus,
+      label: 'Margen sin datos',
+      aria: 'Margen no disponible por falta de datos confiables',
+    }
+  }
   if (estado === 'SIN_PRECIO') {
     return {
       classes: 'border-muted-foreground/30 bg-muted text-muted-foreground',

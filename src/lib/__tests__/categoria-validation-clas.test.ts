@@ -33,6 +33,27 @@ describe('validateCategoryAgainstCLAS', () => {
     expect(result.errors).toBeUndefined()
   })
 
+
+  it('should allow normal category names when CLAS validation is explicitly skipped', async () => {
+    vi.mocked(prisma.miEmpresa.findUnique).mockResolvedValueOnce({
+      id: 1,
+      tenantId: 'tenant-1',
+      usaCodigoEan13: true
+    } as any)
+
+    const result = await validateCategoryAgainstCLAS(
+      'Subcategoría libre',
+      'parent-123',
+      'tenant-1',
+      null,
+      null,
+      { skipEan13Validation: true }
+    )
+
+    expect(result.success).toBe(true)
+    expect(result.errors).toBeUndefined()
+  })
+
   it('should reject root category with invalid section name when EAN-13 is enabled', async () => {
     vi.mocked(prisma.miEmpresa.findUnique).mockResolvedValueOnce({
       id: 1,

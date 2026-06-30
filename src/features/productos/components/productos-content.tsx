@@ -261,7 +261,7 @@ export function ProductosContent({
 			result = result.filter((producto) => {
 				const stockValue = ubicacionSeleccionada
 					? producto.stockUbicacion
-					: producto.stock;
+					: (producto.stockTotal ?? producto.stock);
 				return (stockValue ?? 0) > 0;
 			});
 		}
@@ -282,7 +282,7 @@ export function ProductosContent({
 		const getStockValue = (producto: ProductoConStock) => {
 			return ubicacionSeleccionada
 				? (producto.stockUbicacion ?? 0)
-				: (producto.stock ?? 0);
+				: (producto.stockTotal ?? producto.stock ?? 0);
 		};
 
 		const total = datosAMostrar.length;

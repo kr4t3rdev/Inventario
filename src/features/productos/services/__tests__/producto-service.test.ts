@@ -23,25 +23,43 @@ describe('ProductoService', () => {
   });
 
   it('lists tenant-scoped products ordered by creation date desc', async () => {
-    vi.mocked(mockPrisma.producto.findMany).mockResolvedValue([{ id: 'prod-1', nombre: 'Harina' }] as never);
+    vi.mocked(mockPrisma.producto.findMany).mockResolvedValue([
+      { id: 'prod-1', nombre: 'Harina', stock: 999 },
+    ] as never);
+    vi.mocked(mockPrisma.stockUbicacion.findMany).mockResolvedValue([
+      { productoId: 'prod-1', cantidad: 6 },
+      { productoId: 'prod-1', cantidad: 4 },
+    ] as never);
 
     const result = await ProductoService.list('tenant-1');
 
-    expect(result).toEqual([{ id: 'prod-1', nombre: 'Harina' }]);
+    expect(result).toEqual([{ id: 'prod-1', nombre: 'Harina', stock: 10, stockTotal: 10 }]);
     expect(mockPrisma.producto.findMany).toHaveBeenCalledWith(
       expect.objectContaining({
         where: { tenantId: 'tenant-1' },
         orderBy: { createdAt: 'desc' },
       }),
     );
+    expect(mockPrisma.stockUbicacion.findMany).toHaveBeenCalledWith({
+      where: { productoId: { in: ['prod-1'] } },
+      select: { productoId: true, cantidad: true },
+    });
   });
 
   it('returns a tenant-scoped product by id', async () => {
-    vi.mocked(mockPrisma.producto.findFirst).mockResolvedValue({ id: 'prod-2', nombre: 'Azúcar' } as never);
+    vi.mocked(mockPrisma.producto.findFirst).mockResolvedValue({
+      id: 'prod-2',
+      nombre: 'Azúcar',
+      stock: 999,
+    } as never);
+    vi.mocked(mockPrisma.stockUbicacion.findMany).mockResolvedValue([
+      { productoId: 'prod-2', cantidad: 7 },
+      { productoId: 'prod-2', cantidad: 3 },
+    ] as never);
 
     const result = await ProductoService.getById({ tenantId: 'tenant-1', productId: 'prod-2' });
 
-    expect(result).toEqual({ id: 'prod-2', nombre: 'Azúcar' });
+    expect(result).toEqual({ id: 'prod-2', nombre: 'Azúcar', stock: 10, stockTotal: 10 });
     expect(mockPrisma.producto.findFirst).toHaveBeenCalledWith(
       expect.objectContaining({
         where: { id: 'prod-2', tenantId: 'tenant-1' },
@@ -61,19 +79,24 @@ describe('ProductoService', () => {
   });
 
   it('lists products by location including stock filters and text search', async () => {
-    vi.mocked(mockPrisma.stockUbicacion.findMany).mockResolvedValue([
-      {
-        cantidad: 8,
-        producto: {
-          id: 'prod-1',
-          nombre: 'Harina Integral',
-          stock: 20,
-          categoria: { nombre: 'Harinas' },
-          subcategoria: { nombre: 'Integrales' },
-          vendor: { nombre: 'Molino Norte' },
+    vi.mocked(mockPrisma.stockUbicacion.findMany)
+      .mockResolvedValueOnce([
+        {
+          cantidad: 8,
+          producto: {
+            id: 'prod-1',
+            nombre: 'Harina Integral',
+            stock: 20,
+            categoria: { nombre: 'Harinas' },
+            subcategoria: { nombre: 'Integrales' },
+            vendor: { nombre: 'Molino Norte' },
+          },
         },
-      },
-    ] as never);
+      ] as never)
+      .mockResolvedValueOnce([
+        { productoId: 'prod-1', cantidad: 8 },
+        { productoId: 'prod-1', cantidad: 3 },
+      ] as never);
 
     const result = await ProductoService.listByLocation({
       tenantId: 'tenant-1',
@@ -89,7 +112,8 @@ describe('ProductoService', () => {
     expect(result[0]).toMatchObject({
       id: 'prod-1',
       stockUbicacion: 8,
-      stockTotal: 20,
+      stockTotal: 11,
+      stock: 11,
     });
     expect(mockPrisma.stockUbicacion.findMany).toHaveBeenCalledWith(
       expect.objectContaining({

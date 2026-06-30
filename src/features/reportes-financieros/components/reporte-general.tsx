@@ -48,9 +48,12 @@ export function ReporteGeneral() {
   // Determinar si hay datos para mostrar
   const hasData = !isLoadingProductos && productos && productos.length > 0
 
+  const getTotalStock = (producto: { stock?: number; stockTotal?: number }) =>
+    producto.stockTotal ?? producto.stock ?? 0
+
   const totalProductos = productosFiltrados?.length || 0
-  const valorTotal = productosFiltrados?.reduce((sum, producto) => sum + producto.precioCosto * producto.stock, 0) || 0
-  const valorVenta = productosFiltrados?.reduce((sum, producto) => sum + producto.precioVenta * producto.stock, 0) || 0
+  const valorTotal = productosFiltrados?.reduce((sum, producto) => sum + producto.precioCosto * getTotalStock(producto), 0) || 0
+  const valorVenta = productosFiltrados?.reduce((sum, producto) => sum + producto.precioVenta * getTotalStock(producto), 0) || 0
 
   // Paginación
   const totalPages = Math.ceil(productosFiltrados.length / pageSize)
@@ -74,7 +77,7 @@ export function ReporteGeneral() {
     
     productos.forEach(p => {
       const catName = categorias.find(c => c.catId === p.categoriaId || c.catId === p.categoria?.catId)?.nombre || "Sin categoría";
-      const valor = p.precioCosto * p.stock;
+      const valor = p.precioCosto * getTotalStock(p);
       map.set(catName, (map.get(catName) || 0) + valor);
     });
     
@@ -91,12 +94,12 @@ export function ReporteGeneral() {
       Producto: getProductDisplayIdentifier(producto),
       Nombre: producto.nombre,
       Categoría: categorias?.find((c) => c.catId === producto.categoriaId || c.catId === producto.categoria?.catId)?.nombre || "Sin categoría",
-      Stock: producto.stock,
+      Stock: getTotalStock(producto),
       "Stock Mínimo": producto.stockMinimo > 0 ? producto.stockMinimo : "Por defecto (10)",
       "Precio Costo": producto.precioCosto,
       "Precio Venta": producto.precioVenta,
-      "Valor Inventario": producto.precioCosto * producto.stock,
-      "Valor Venta": producto.precioVenta * producto.stock,
+      "Valor Inventario": producto.precioCosto * getTotalStock(producto),
+      "Valor Venta": producto.precioVenta * getTotalStock(producto),
     }))
 
     exportToPdf(data, null, "Reporte General de Inventario")
@@ -111,18 +114,18 @@ export function ReporteGeneral() {
       Nombre: producto.nombre,
       Producto: getProductDisplayIdentifier(producto),
       Categoría: categorias?.find((c) => c.catId === producto.categoriaId || c.catId === producto.categoria?.catId)?.nombre || "",
-      Stock: producto.stock,
+      Stock: getTotalStock(producto),
       "Stock Mínimo": producto.stockMinimo > 0 ? producto.stockMinimo : "Por defecto (10)",
       "Estado Stock": (() => {
         const threshold = producto.stockMinimo > 0 ? producto.stockMinimo : 10
-        if (producto.stock === 0) return "Sin Stock"
-        if (producto.stock <= threshold) return "Stock Bajo"
+        if (getTotalStock(producto) === 0) return "Sin Stock"
+        if (getTotalStock(producto) <= threshold) return "Stock Bajo"
         return "Stock Normal"
       })(),
       "Precio Costo": producto.precioCosto,
       "Precio Venta": producto.precioVenta,
-      "Valor Inventario": producto.precioCosto * producto.stock,
-      "Valor Venta": producto.precioVenta * producto.stock,
+      "Valor Inventario": producto.precioCosto * getTotalStock(producto),
+      "Valor Venta": producto.precioVenta * getTotalStock(producto),
     }))
 
     exportToCsv(data, "Reporte_General_Inventario")
@@ -277,13 +280,14 @@ export function ReporteGeneral() {
                             const threshold = producto.stockMinimo > 0 ? producto.stockMinimo : 10
                             let variant: "default" | "destructive" | "secondary" = "default"
                             
-                            if (producto.stock === 0) {
+                            const totalStock = getTotalStock(producto)
+                            if (totalStock === 0) {
                               variant = "destructive"
-                            } else if (producto.stock <= threshold) {
+                            } else if (totalStock <= threshold) {
                               variant = "secondary"
                             }
                             
-                            return <Badge variant={variant}>{producto.stock}</Badge>
+                            return <Badge variant={variant}>{totalStock}</Badge>
                           })()}
                         </TableCell>
                         <TableCell className="text-right">
@@ -295,8 +299,8 @@ export function ReporteGeneral() {
                         </TableCell>
                         <TableCell className="text-right">${producto.precioCosto.toLocaleString('es-DO', { minimumFractionDigits: 2 })}</TableCell>
                         <TableCell className="text-right">${producto.precioVenta.toLocaleString('es-DO', { minimumFractionDigits: 2 })}</TableCell>
-                        <TableCell className="text-right">${(producto.precioCosto * producto.stock).toLocaleString('es-DO', { minimumFractionDigits: 2 })}</TableCell>
-                        <TableCell className="text-right">${(producto.precioVenta * producto.stock).toLocaleString('es-DO', { minimumFractionDigits: 2 })}</TableCell>
+                        <TableCell className="text-right">${(producto.precioCosto * getTotalStock(producto)).toLocaleString('es-DO', { minimumFractionDigits: 2 })}</TableCell>
+                        <TableCell className="text-right">${(producto.precioVenta * getTotalStock(producto)).toLocaleString('es-DO', { minimumFractionDigits: 2 })}</TableCell>
                       </TableRow>
                     )})}
                   </TableBody>

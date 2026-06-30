@@ -278,8 +278,8 @@ export const restockProductoAction = withAction(
 							productoId,
 							tipoUbicacion: "almacen",
 							ubicacionId: producto.almacenId!,
-							modo: "set",
-							valor: workflowResult.originalProductUpdate.newStock,
+							modo: "increment",
+							delta: cantidad,
 						});
 
 						// Registrar cambio de precio en historial

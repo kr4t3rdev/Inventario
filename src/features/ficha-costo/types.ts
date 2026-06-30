@@ -6,13 +6,21 @@
 
 // ─── Tipos de retorno de la ficha principal ───────────────
 
-export type EstadoMargen = 'SALUDABLE' | 'BAJO' | 'PERDIDA' | 'SIN_PRECIO'
+export type EstadoMargen = 'SALUDABLE' | 'BAJO' | 'PERDIDA' | 'SIN_PRECIO' | 'SIN_DATOS'
+export type CostSheetEntityType = 'PRODUCTO' | 'SERVICIO'
+export type FichaCostoEntityKind = 'SIMPLE' | 'COMPUESTO' | 'SERVICIO'
+
+export interface FichaCostoEntityRef {
+  entityId: string
+  entityType: CostSheetEntityType
+}
 
 export interface FichaCostoProducto {
   id: string
+  entityType: CostSheetEntityType
   nombre: string
   codigoInterno: string | null
-  tipo: 'SIMPLE' | 'COMPUESTO'
+  tipo: FichaCostoEntityKind
   precioCosto: number
   precioVenta: number
 }
@@ -67,6 +75,8 @@ export interface FichaCostoData {
   advertencias: string[]
   ultimaActualizacion: string
 }
+
+export type GetFichaCostoInput = string | FichaCostoEntityRef
 
 // ─── Tipos de composición ─────────────────────────────────
 
@@ -138,11 +148,12 @@ export interface GetHistorialCostosInput {
 
 export interface ProductoFichaListItem {
   id: string
+  entityType: CostSheetEntityType
   nombre: string
   codigoInterno: string | null
   precioCosto: number
   precioVenta: number
-  tipo: 'SIMPLE' | 'COMPUESTO'
+  tipo: FichaCostoEntityKind
 }
 
 export interface ListarProductosParaFichaInput {
@@ -295,6 +306,34 @@ export const CATEGORIAS_COSTO: { value: CategoriaCosto; label: string }[] = [
   { value: 'otros', label: 'Otros' },
 ]
 
+export function isCategoriaCosto(value: unknown): value is CategoriaCosto {
+  return CATEGORIAS_COSTO.some((category) => category.value === value)
+}
+
+export function isValidLineItem(value: unknown): value is LineItem {
+  if (!value || typeof value !== 'object') return false
+
+  const item = value as Partial<LineItem>
+  return (
+    typeof item.id === 'string' &&
+    item.id.trim().length > 0 &&
+    typeof item.concepto === 'string' &&
+    item.concepto.trim().length > 0 &&
+    (item.descripcion === undefined || typeof item.descripcion === 'string') &&
+    typeof item.cantidad === 'number' &&
+    Number.isFinite(item.cantidad) &&
+    item.cantidad >= 0 &&
+    typeof item.costoUnitario === 'number' &&
+    Number.isFinite(item.costoUnitario) &&
+    item.costoUnitario >= 0 &&
+    isCategoriaCosto(item.categoria)
+  )
+}
+
+export function sanitizeLineItems(items: unknown[]): LineItem[] {
+  return items.filter(isValidLineItem)
+}
+
 export function lineItemTotal(item: LineItem): number {
   return item.cantidad * item.costoUnitario
 }
@@ -325,7 +364,39 @@ export function lineItemsToLegacyFields(items: LineItem[]): {
   }
 }
 
-// Helper to serialize/deserialize line items in the `notas` field
+export function legacyFieldsToLineItems(fields: {
+  costoMateriales?: number
+  costoManoObra?: number
+  costoIndirectos?: number
+}): LineItem[] {
+  const normalized = [
+    {
+      id: 'legacy-materiales',
+      concepto: 'Materiales (legacy)',
+      cantidad: 1,
+      costoUnitario: fields.costoMateriales ?? 0,
+      categoria: 'materiales' as const,
+    },
+    {
+      id: 'legacy-mano-obra',
+      concepto: 'Mano de obra (legacy)',
+      cantidad: 1,
+      costoUnitario: fields.costoManoObra ?? 0,
+      categoria: 'mano-obra' as const,
+    },
+    {
+      id: 'legacy-indirectos',
+      concepto: 'Costos indirectos (legacy)',
+      cantidad: 1,
+      costoUnitario: fields.costoIndirectos ?? 0,
+      categoria: 'indirectos' as const,
+    },
+  ]
+
+  return normalized.filter((item) => item.costoUnitario > 0)
+}
+
+// Backward compatibility: legacy rows could still have lineItems serialized inside `notas`
 export function serializeNotas(lineItems: LineItem[], userNotes?: string): string {
   return JSON.stringify({ _v: 1, lineItems, notas: userNotes || '' })
 }
@@ -335,7 +406,10 @@ export function parseNotas(notas: string | null): { lineItems: LineItem[]; userN
   try {
     const parsed = JSON.parse(notas)
     if (parsed && typeof parsed === 'object' && Array.isArray(parsed.lineItems)) {
-      return { lineItems: parsed.lineItems, userNotes: parsed.notas || '' }
+      return {
+        lineItems: sanitizeLineItems(parsed.lineItems),
+        userNotes: typeof parsed.notas === 'string' ? parsed.notas : '',
+      }
     }
   } catch {}
   return { lineItems: [], userNotes: notas }
@@ -361,7 +435,7 @@ export interface PlantillaCosto {
   createdAt: string
   updatedAt: string
   createdById: string
-  /** Line items deserializados del campo notas */
+  /** Line items del documento real o del fallback legacy normalizado */
   lineItems: LineItem[]
   userNotes: string
   /** Total calculado de todos los line items */
@@ -416,4 +490,3 @@ export interface ComparacionPlantilla {
   margenObjetivo: number
   margenActual: number | null
 }
-

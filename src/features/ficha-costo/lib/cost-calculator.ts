@@ -36,7 +36,7 @@ export interface CostoMaterialesResult {
   ingredientesSinCosto: number
 }
 
-export type EstadoMargen = 'SALUDABLE' | 'BAJO' | 'PERDIDA' | 'SIN_PRECIO'
+export type EstadoMargen = 'SALUDABLE' | 'BAJO' | 'PERDIDA' | 'SIN_PRECIO' | 'SIN_DATOS'
 
 export interface MargenResult {
   /** Margen absoluto = precioVenta - costo. Null si no se puede calcular. */
@@ -176,6 +176,9 @@ export function calcularCostoMateriales(
 export function calcularMargen(costo: number, precioVenta: number): MargenResult {
   if (!Number.isFinite(precioVenta) || precioVenta <= 0) {
     return { absoluto: null, porcentaje: null, estado: 'SIN_PRECIO' }
+  }
+  if (!Number.isFinite(costo) || costo < 0) {
+    return { absoluto: null, porcentaje: null, estado: 'SIN_DATOS' }
   }
   const absoluto = precioVenta - costo
   const porcentaje = (absoluto / precioVenta) * 100

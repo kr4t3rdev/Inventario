@@ -185,6 +185,20 @@ describe('getDashboardStatsQuery', () => {
 
   it('respeta el filtro de ubicación para el stock bajo', async () => {
     vi.mocked(mockPrisma.producto.findMany).mockReset()
+    vi.mocked(mockPrisma.stockUbicacion.findMany).mockResolvedValueOnce([
+      {
+        productoId: 'prod-1',
+        cantidad: 4,
+        cantidadReservada: 0,
+        cantidadDisponible: 4,
+        producto: {
+          id: 'prod-1',
+          nombre: 'Harina',
+          precioCosto: 5,
+          categoria: { nombre: 'Básicos' },
+        },
+      },
+    ] as never)
     vi.mocked(mockPrisma.producto.findMany)
       .mockResolvedValueOnce([
         {

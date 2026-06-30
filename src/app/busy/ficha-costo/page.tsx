@@ -6,13 +6,13 @@ import { ListaProductosFicha } from '@/features/ficha-costo/components/lista-pro
 export const metadata: Metadata = {
   title: 'Ficha de Costo',
   description:
-    'Lista de productos del tenant con acceso a la ficha de costo, margen, variación y composición.',
+    'Lista de productos y servicios del tenant con acceso a la ficha de costo y su resumen operativo.',
 }
 
 /**
  * @description Página principal de Ficha de Costo. Muestra el catálogo
- *   de productos del tenant con búsqueda y un enlace directo a la
- *   ficha de cada uno.
+ *   de productos y servicios del tenant con búsqueda y un enlace directo
+ *   a la ficha de cada uno.
  */
 export default function FichaCostoPage(): React.JSX.Element {
   return (
@@ -23,7 +23,7 @@ export default function FichaCostoPage(): React.JSX.Element {
           <header className="mb-6">
             <h1 className="text-3xl font-bold tracking-tight">Ficha de Costo</h1>
             <p className="text-muted-foreground">
-              Análisis de costo, margen y composición de cada producto del catálogo.
+              Análisis de costo y margen para productos y servicios del catálogo.
             </p>
           </header>
 

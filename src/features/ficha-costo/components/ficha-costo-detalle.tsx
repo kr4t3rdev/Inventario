@@ -19,6 +19,7 @@ interface FichaCostoDetalleProps {
  */
 export function FichaCostoDetalle({ data }: FichaCostoDetalleProps) {
   const [precioCosto, setPrecioCosto] = useState(data.producto.precioCosto)
+  const esServicio = data.producto.entityType === 'SERVICIO'
 
   return (
     <div className="mx-auto flex w-full max-w-5xl flex-col gap-6 p-4">
@@ -37,22 +38,28 @@ export function FichaCostoDetalle({ data }: FichaCostoDetalleProps) {
             </h1>
             <p className="text-muted-foreground text-sm">
               {data.producto.codigoInterno ?? 'sin código interno'} ·{' '}
-              {data.producto.tipo === 'SIMPLE' ? 'Producto simple' : 'Producto compuesto'}
+              {esServicio
+                ? 'Servicio'
+                : data.producto.tipo === 'SIMPLE'
+                  ? 'Producto simple'
+                  : 'Producto compuesto'}
             </p>
           </div>
-          <div className="bg-muted/40 rounded-md border p-3">
-            <div className="text-muted-foreground text-xs uppercase tracking-wide">
-              Precio de costo (estándar)
+          {!esServicio && (
+            <div className="bg-muted/40 rounded-md border p-3">
+              <div className="text-muted-foreground text-xs uppercase tracking-wide">
+                Precio de costo (estándar)
+              </div>
+              <div className="mt-1 flex items-center gap-2">
+                <span className="text-xl font-semibold">{precioCosto}</span>
+                <EditarPrecioCosto
+                  productoId={data.producto.id}
+                  precioCostoInicial={precioCosto}
+                  onUpdated={setPrecioCosto}
+                />
+              </div>
             </div>
-            <div className="mt-1 flex items-center gap-2">
-              <span className="text-xl font-semibold">{precioCosto}</span>
-              <EditarPrecioCosto
-                productoId={data.producto.id}
-                precioCostoInicial={precioCosto}
-                onUpdated={setPrecioCosto}
-              />
-            </div>
-          </div>
+          )}
         </div>
       </div>
 

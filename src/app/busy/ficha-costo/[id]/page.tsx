@@ -6,6 +6,7 @@ import { FichaCostoDetalle } from '@/features/ficha-costo/components/ficha-costo
 
 interface FichaCostoDetallePageProps {
   params: Promise<{ id: string }>
+  searchParams: Promise<{ entityType?: string }>
 }
 
 /**
@@ -14,9 +15,15 @@ interface FichaCostoDetallePageProps {
  */
 export default async function FichaCostoDetallePage({
   params,
+  searchParams,
 }: FichaCostoDetallePageProps): Promise<React.JSX.Element> {
   const { id } = await params
-  const result = await getFichaCostoAction(id)
+  const { entityType } = await searchParams
+  const normalizedEntityType = entityType === 'SERVICIO' ? 'SERVICIO' : 'PRODUCTO'
+  const result = await getFichaCostoAction({
+    entityId: id,
+    entityType: normalizedEntityType,
+  })
   if (!result.success) {
     if (result.error?.code === 'NOT_FOUND') notFound()
     throw new Error(result.error?.message ?? 'Error desconocido')

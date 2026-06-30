@@ -23,7 +23,8 @@ const fmt = (n: number, moneda: string) =>
  */
 export function ResumenCosto({ data }: ResumenCostoProps) {
   const { producto, costoCalculado, margen, advertencias } = data
-  const sinDatos = costoCalculado.valor === 0
+  const sinDatos = costoCalculado.valor === 0 || margen.estado === 'SIN_DATOS'
+  const esServicio = producto.entityType === 'SERVICIO'
 
   return (
     <Card>
@@ -39,7 +40,7 @@ export function ResumenCosto({ data }: ResumenCostoProps) {
           value={sinDatos ? 'N/A' : fmt(costoCalculado.valor, costoCalculado.moneda)}
         />
         <Stat
-          label="Precio de costo registrado"
+          label={esServicio ? 'Costo base de referencia' : 'Precio de costo registrado'}
           value={fmt(producto.precioCosto, costoCalculado.moneda)}
         />
         <Stat
@@ -66,23 +67,27 @@ export function ResumenCosto({ data }: ResumenCostoProps) {
               : fmt(data.variacion.absoluto, costoCalculado.moneda)
           }
         />
-        <Stat
-          label={`Mermas (30d, esperado ${data.merma.desperdicioEsperadoPromedio?.toFixed(1) ?? 'N/A'}%)`}
-          value={
-            data.merma.cantidad30d === 0
-              ? 'Sin mermas'
-              : `${data.merma.cantidad30d}${
-                  data.merma.porcentajeSobreStock === null
-                    ? ''
-                    : ` (${data.merma.porcentajeSobreStock.toFixed(1)}% stock)`
-                }`
-          }
-        />
-        <Stat label="Tipo de producto" value={producto.tipo} />
-        <ResumenPlantillaCard
-          productoId={producto.id}
-          precioVenta={producto.precioVenta}
-        />
+        {!esServicio && (
+          <Stat
+            label={`Mermas (30d, esperado ${data.merma.desperdicioEsperadoPromedio?.toFixed(1) ?? 'N/A'}%)`}
+            value={
+              data.merma.cantidad30d === 0
+                ? 'Sin mermas'
+                : `${data.merma.cantidad30d}${
+                    data.merma.porcentajeSobreStock === null
+                      ? ''
+                      : ` (${data.merma.porcentajeSobreStock.toFixed(1)}% stock)`
+                  }`
+            }
+          />
+        )}
+        <Stat label={esServicio ? 'Tipo de entidad' : 'Tipo de producto'} value={producto.tipo} />
+        {!esServicio && (
+          <ResumenPlantillaCard
+            productoId={producto.id}
+            precioVenta={producto.precioVenta}
+          />
+        )}
       </CardContent>
       {advertencias.length > 0 && (
         <CardContent>

@@ -21,17 +21,108 @@ import type {
   ActivarPlantillaInput,
   AplicarPrecioSugeridoInput,
   PlantillaActivaResult,
-  LineItem,
-  CategoriaCosto,
-  serializeNotas,
+} from './types'
+import {
+  isValidLineItem,
   parseNotas,
   lineItemsToLegacyFields,
+  legacyFieldsToLineItems,
   calcularTotalLineItems,
 } from './types'
 
 // ─── Helpers ──────────────────────────────────────────────
 
+function hasLegacyCostInputs(input: {
+  costoMateriales?: number
+  costoManoObra?: number
+  costoIndirectos?: number
+}): boolean {
+  return (
+    input.costoMateriales !== undefined ||
+    input.costoManoObra !== undefined ||
+    input.costoIndirectos !== undefined
+  )
+}
+
+function normalizeLineItemsForPersist(input: {
+  lineItems?: PlantillaCostoInput['lineItems'] | UpdatePlantillaInput['lineItems']
+  costoMateriales?: number
+  costoManoObra?: number
+  costoIndirectos?: number
+}): NonNullable<PlantillaCostoInput['lineItems']> {
+  if (input.lineItems !== undefined) {
+    return input.lineItems
+  }
+
+  if (hasLegacyCostInputs(input)) {
+    return legacyFieldsToLineItems({
+      costoMateriales: input.costoMateriales,
+      costoManoObra: input.costoManoObra,
+      costoIndirectos: input.costoIndirectos,
+    })
+  }
+
+  return []
+}
+
+function hasPersistedJsonLineItems(row: { lineItems?: unknown }): boolean {
+  return Array.isArray(row.lineItems) && row.lineItems.length > 0
+}
+
+function readStoredDocument(row: {
+  lineItems?: unknown
+  notas?: string | null
+  costoMateriales?: number | null
+  costoManoObra?: number | null
+  costoIndirectos?: number | null
+}) {
+  const legacy = parseNotas(row.notas ?? null)
+  const hasJsonLineItems = Array.isArray(row.lineItems)
+  const jsonLineItems = hasJsonLineItems ? row.lineItems : []
+  const hasRealJsonLineItems = jsonLineItems.length > 0
+  const hasLegacySerializedDocument = legacy.lineItems.length > 0
+
+  const lineItems = hasRealJsonLineItems
+    ? jsonLineItems
+    : hasLegacySerializedDocument
+      ? legacy.lineItems
+      : legacyFieldsToLineItems({
+          costoMateriales: row.costoMateriales ?? 0,
+          costoManoObra: row.costoManoObra ?? 0,
+          costoIndirectos: row.costoIndirectos ?? 0,
+        })
+
+  const userNotes = hasRealJsonLineItems
+    ? (row.notas ?? '')
+    : hasLegacySerializedDocument
+      ? legacy.userNotes
+      : (row.notas ?? '')
+
+  const fallbackTotal =
+    (row.costoMateriales ?? 0) +
+    (row.costoManoObra ?? 0) +
+    (row.costoIndirectos ?? 0)
+
+  return {
+    lineItems,
+    userNotes,
+    costeTotal: lineItems.length > 0 ? calcularTotalLineItems(lineItems) : fallbackTotal,
+  }
+}
+
+function assertValidLineItems(
+  lineItems: NonNullable<PlantillaCostoInput['lineItems']>,
+): void {
+  for (const item of lineItems) {
+    if (!isValidLineItem(item)) {
+      throw new ActionError('Cada line item debe tener una estructura válida', 'VALIDATION_ERROR')
+    }
+  }
+}
+
 function toPlantillaCosto(row: any): PlantillaCosto {
+  const document = readStoredDocument(row)
+
   return {
     id: row.id,
     tenantId: row.tenantId,
@@ -48,6 +139,9 @@ function toPlantillaCosto(row: any): PlantillaCosto {
     createdAt: row.createdAt.toISOString(),
     updatedAt: row.updatedAt.toISOString(),
     createdById: row.createdById,
+    lineItems: document.lineItems,
+    userNotes: document.userNotes,
+    costeTotal: document.costeTotal,
   }
 }
 
@@ -127,15 +221,15 @@ export const getPlantillaActivaAction = withAction(
       }
     }
 
-    const costoTotal = calcularCostoTotalPlantilla(
-      row.costoMateriales,
-      row.costoManoObra,
-      row.costoIndirectos,
-    )
+    const plantilla = toPlantillaCosto(row)
+    const costoTotal = plantilla.costeTotal
     const precioSugerido = calcularPrecioSugerido(costoTotal, row.margenObjetivo)
 
     return {
-      plantilla: toPlantillaCosto(row),
+      plantilla: {
+        ...plantilla,
+        precioSugerido,
+      },
       costoTotal,
       precioSugerido,
       deltaCostoVsActual: costoTotal - producto.precioCosto,
@@ -174,15 +268,23 @@ export const createPlantillaAction = withAction(
     if (input.margenObjetivo <= 0 || input.margenObjetivo >= 1) {
       throw new ActionError('El margen objetivo debe estar entre 0 y 1', 'VALIDATION_ERROR')
     }
-    if (input.costoMateriales < 0 || input.costoManoObra < 0 || input.costoIndirectos < 0) {
+    const storedLineItems = normalizeLineItemsForPersist(input)
+    assertValidLineItems(storedLineItems)
+    const legacyCosts = lineItemsToLegacyFields(storedLineItems)
+
+    if (
+      legacyCosts.costoMateriales < 0 ||
+      legacyCosts.costoManoObra < 0 ||
+      legacyCosts.costoIndirectos < 0
+    ) {
       throw new ActionError('Los costos no pueden ser negativos', 'VALIDATION_ERROR')
     }
 
     // Calcular precio sugerido antes de la transacción
     const costoTotal = calcularCostoTotalPlantilla(
-      input.costoMateriales,
-      input.costoManoObra,
-      input.costoIndirectos,
+      legacyCosts.costoMateriales,
+      legacyCosts.costoManoObra,
+      legacyCosts.costoIndirectos,
     )
     const precioSugerido = calcularPrecioSugerido(costoTotal, input.margenObjetivo)
 
@@ -199,13 +301,14 @@ export const createPlantillaAction = withAction(
           productoId: input.productoId,
           version: (ultima?.version ?? 0) + 1,
           nombre: input.nombre.trim(),
-          costoMateriales: input.costoMateriales,
-          costoManoObra: input.costoManoObra,
-          costoIndirectos: input.costoIndirectos,
+          costoMateriales: legacyCosts.costoMateriales,
+          costoManoObra: legacyCosts.costoManoObra,
+          costoIndirectos: legacyCosts.costoIndirectos,
           margenObjetivo: input.margenObjetivo,
           precioSugerido,
           esActiva: false,
-          notas: input.notas,
+          notas: input.notas ?? '',
+          lineItems: storedLineItems,
           createdById: user.userId || 'system',
         },
       })
@@ -240,30 +343,59 @@ export const updatePlantillaAction = withAction(
 
     const data: Record<string, unknown> = {}
     if (input.nombre !== undefined) data.nombre = input.nombre.trim()
-    if (input.costoMateriales !== undefined) {
-      if (input.costoMateriales < 0) {
-        throw new ActionError('El costo de materiales no puede ser negativo', 'VALIDATION_ERROR')
+    const existingDocument = readStoredDocument(existente)
+    const usesPersistedJsonDocument = hasPersistedJsonLineItems(existente)
+    const existingLegacyCosts = lineItemsToLegacyFields(existingDocument.lineItems)
+
+    if (input.lineItems !== undefined) {
+      assertValidLineItems(input.lineItems)
+      const legacyCosts = lineItemsToLegacyFields(input.lineItems)
+      data.lineItems = input.lineItems
+      data.costoMateriales = legacyCosts.costoMateriales
+      data.costoManoObra = legacyCosts.costoManoObra
+      data.costoIndirectos = legacyCosts.costoIndirectos
+      if (input.notas === undefined) data.notas = existingDocument.userNotes
+    } else if (hasLegacyCostInputs(input)) {
+      if (usesPersistedJsonDocument) {
+        throw new ActionError(
+          'No se pueden editar costos legacy mientras la plantilla use line items. Actualice lineItems.',
+          'VALIDATION_ERROR',
+        )
       }
-      data.costoMateriales = input.costoMateriales
+
+      const normalizedLineItems = normalizeLineItemsForPersist({
+        costoMateriales: input.costoMateriales ?? existingLegacyCosts.costoMateriales,
+        costoManoObra: input.costoManoObra ?? existingLegacyCosts.costoManoObra,
+        costoIndirectos: input.costoIndirectos ?? existingLegacyCosts.costoIndirectos,
+      })
+      assertValidLineItems(normalizedLineItems)
+      const legacyCosts = lineItemsToLegacyFields(normalizedLineItems)
+      data.lineItems = normalizedLineItems
+      data.costoMateriales = legacyCosts.costoMateriales
+      data.costoManoObra = legacyCosts.costoManoObra
+      data.costoIndirectos = legacyCosts.costoIndirectos
+      if (input.notas === undefined) data.notas = existingDocument.userNotes
     }
-    if (input.costoManoObra !== undefined) {
-      if (input.costoManoObra < 0) {
-        throw new ActionError('El costo de mano de obra no puede ser negativo', 'VALIDATION_ERROR')
+
+    if (!usesPersistedJsonDocument && existingDocument.lineItems.length > 0) {
+      if (data.lineItems === undefined) {
+        data.lineItems = existingDocument.lineItems
+        data.costoMateriales = existingLegacyCosts.costoMateriales
+        data.costoManoObra = existingLegacyCosts.costoManoObra
+        data.costoIndirectos = existingLegacyCosts.costoIndirectos
       }
-      data.costoManoObra = input.costoManoObra
-    }
-    if (input.costoIndirectos !== undefined) {
-      if (input.costoIndirectos < 0) {
-        throw new ActionError('El costo indirecto no puede ser negativo', 'VALIDATION_ERROR')
+      if (input.notas === undefined) {
+        data.notas = existingDocument.userNotes
       }
-      data.costoIndirectos = input.costoIndirectos
     }
+
     if (input.margenObjetivo !== undefined) {
       if (input.margenObjetivo <= 0 || input.margenObjetivo >= 1) {
         throw new ActionError('El margen objetivo debe estar entre 0 y 1', 'VALIDATION_ERROR')
       }
       data.margenObjetivo = input.margenObjetivo
     }
+
     if (input.notas !== undefined) data.notas = input.notas
 
     // Recalcular precio sugerido si cambiaron costos o margen

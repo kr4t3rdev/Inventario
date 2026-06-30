@@ -45,6 +45,7 @@ vi.mock("@/lib/prisma", () => {
 		producto: {
 			findMany: vi.fn(),
 			findUnique: vi.fn(),
+			count: vi.fn(),
 			create: vi.fn(),
 			update: vi.fn(),
 			delete: vi.fn(),
@@ -57,6 +58,9 @@ vi.mock("@/lib/prisma", () => {
 			count: vi.fn(),
 			create: vi.fn(),
 		},
+		stockUbicacion: {
+			findMany: vi.fn(),
+		},
 		categoria: {
 			findUnique: vi.fn(),
 			findFirst: vi.fn(),
@@ -67,9 +71,13 @@ vi.mock("@/lib/prisma", () => {
 			producto: tx.producto,
 			precioProducto: tx.precioProducto,
 			gastoCompra: tx.gastoCompra,
+			stockUbicacion: tx.stockUbicacion,
 			categoria: tx.categoria,
 			miEmpresa: {
 				findUnique: vi.fn().mockResolvedValue({ usaCodigoEan13: false }),
+			},
+			tenantLicense: {
+				findFirst: vi.fn().mockResolvedValue({ maxProductos: 999 }),
 			},
 			$transaction: vi
 				.fn()
@@ -158,6 +166,10 @@ describe("Productos Server Actions", () => {
 		it("retorna lista de productos del tenant", async () => {
 			vi.mocked(getCurrentUser).mockResolvedValue(mockUser);
 			vi.mocked(prisma.producto.findMany).mockResolvedValue([mockProducto]);
+			vi.mocked(prisma.stockUbicacion.findMany).mockResolvedValue([
+				{ productoId: "prod-1", cantidad: 30 },
+				{ productoId: "prod-1", cantidad: 20 },
+			] as any);
 
 			const result = await getProductosAction();
 
@@ -174,6 +186,7 @@ describe("Productos Server Actions", () => {
 		it("retorna lista vacía si no hay productos", async () => {
 			vi.mocked(getCurrentUser).mockResolvedValue(mockUser);
 			vi.mocked(prisma.producto.findMany).mockResolvedValue([]);
+			vi.mocked(prisma.stockUbicacion.findMany).mockResolvedValue([] as any);
 
 			const result = await getProductosAction();
 
@@ -521,6 +534,31 @@ describe("Productos Server Actions", () => {
 			expect(result.data).toBeDefined();
 			expect(result.data!.producto.stock).toBe(55);
 			expect(result.data!.gastoCompra.cantidad).toBe(5);
+			expect(mockTx.producto.update).toHaveBeenCalledWith({
+				where: { id: "prod-1" },
+				data: { stock: 55 },
+				include: expect.any(Object),
+			});
+			expect(upsertStockUbicacion).toHaveBeenCalledWith(
+				mockTx,
+				expect.objectContaining({
+					productoId: "prod-1",
+					tipoUbicacion: "almacen",
+					ubicacionId: "almacen-1",
+					modo: "increment",
+					delta: 5,
+				}),
+			);
+			expect(upsertStockUbicacion).not.toHaveBeenCalledWith(
+				mockTx,
+				expect.objectContaining({
+					productoId: "prod-1",
+					tipoUbicacion: "almacen",
+					ubicacionId: "almacen-1",
+					modo: "set",
+					valor: 55,
+				}),
+			);
 		});
 
 		// ── 3.3: Restock con PAGO_COMPLETO ──

@@ -13,9 +13,9 @@ import {
 } from '../actions'
 
 /**
- * @description Selector de productos para la página principal de Ficha
- *   de Costo. Lista productos con búsqueda por nombre/código y un
- *   enlace directo a la ficha de cada uno.
+ * @description Selector de entidades para la página principal de Ficha
+ *   de Costo. Lista productos y servicios con búsqueda por nombre/código
+ *   y un enlace directo a la ficha de cada uno.
  */
 export function ListaProductosFicha() {
   const [search, setSearch] = useState('')
@@ -60,7 +60,7 @@ export function ListaProductosFicha() {
           }}
           placeholder="Buscar por nombre o código…"
           className="pl-9"
-          aria-label="Buscar producto"
+          aria-label="Buscar entidad"
         />
       </div>
 
@@ -72,7 +72,7 @@ export function ListaProductosFicha() {
           </span>
         ) : (
           <span>
-            {items.length} producto{items.length === 1 ? '' : 's'}
+            {items.length} elemento{items.length === 1 ? '' : 's'}
           </span>
         )}
       </div>
@@ -86,7 +86,7 @@ export function ListaProductosFicha() {
       {!isLoading && !error && items.length === 0 && (
         <Card>
           <CardContent className="text-muted-foreground py-8 text-center text-sm">
-            No se encontraron productos con el criterio de búsqueda.
+            No se encontraron productos o servicios con el criterio de búsqueda.
           </CardContent>
         </Card>
       )}
@@ -106,8 +106,20 @@ export function ListaProductosFicha() {
                     {it.codigoInterno ?? 'sin código'}
                   </p>
                 </div>
-                <Badge variant={it.tipo === 'COMPUESTO' ? 'default' : 'secondary'}>
-                  {it.tipo === 'COMPUESTO' ? 'Compuesto' : 'Simple'}
+                <Badge
+                  variant={
+                    it.entityType === 'SERVICIO'
+                      ? 'outline'
+                      : it.tipo === 'COMPUESTO'
+                        ? 'default'
+                        : 'secondary'
+                  }
+                >
+                  {it.entityType === 'SERVICIO'
+                    ? 'Servicio'
+                    : it.tipo === 'COMPUESTO'
+                      ? 'Compuesto'
+                      : 'Simple'}
                 </Badge>
               </div>
 
@@ -127,7 +139,7 @@ export function ListaProductosFicha() {
               </dl>
 
               <Button asChild variant="outline" size="sm" className="w-full gap-2">
-                <Link href={`/busy/ficha-costo/${it.id}`}>
+                <Link href={`/busy/ficha-costo/${it.id}?entityType=${it.entityType}`}>
                   <Receipt className="h-4 w-4" />
                   Ver ficha
                 </Link>

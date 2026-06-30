@@ -54,6 +54,8 @@ export { getHistorialCambiosPrecioAction } from './actions-historial-cambios'
 export type {
   EstadoMargen,
   EstadoVariacion,
+  CostSheetEntityType,
+  GetFichaCostoInput,
   FichaCostoProducto,
   FichaCostoCalculado,
   FichaCostoComponentes,

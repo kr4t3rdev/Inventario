@@ -25,13 +25,12 @@ type UpsertStockOpts =
 /**
  * @description Hace upsert del stock materializado por ubicación dentro de una transacción Prisma.
  * Usar modo 'increment' para compras, transferencias y ventas (delta puede ser negativo para decrementar).
- * Usar modo 'set' para restock (que ya calcula el valor absoluto nuevo).
+ * Usar modo 'set' solo en inicialización o correcciones explícitas donde el valor absoluto
+ * de la ubicación ya fue calculado fuera de este helper.
  *
- * @note producto.stock (legacy): se actualiza manualmente en CADA calling action con el mismo delta.
- *   NO depende de este helper. Es un agregado legacy de compatibilidad mantenido en paralelo.
- *   Regla: toda mutación a StockUbicacion DEBE también actualizar producto.stock con el mismo delta,
- *   para mantener consistencia. En el futuro producto.stock será derivado explícitamente de
- *   SUM(StockUbicacion.cantidad) y este mantenimiento manual se eliminará.
+ * @note StockUbicacion es la fuente de verdad operativa del inventario por ubicación.
+ *   `producto.stock` permanece solo como compatibilidad legacy en algunos read models todavía no migrados.
+ *   Las nuevas mutaciones NO deben depender de `producto.stock` ni asumir sincronización manual paralela.
  *
  * @param {any} tx - Cliente de transacción Prisma (o prisma directo)
  * @param {UpsertStockOpts} opts - Opciones de actualización

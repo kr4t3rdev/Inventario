@@ -8,6 +8,7 @@ vi.mock('@/lib/services/tenant-scope', () => ({
 vi.mock('@/lib/prisma', () => ({
   prisma: {
     producto: { findMany: vi.fn() },
+    servicios: { findMany: vi.fn() },
   },
 }))
 
@@ -24,6 +25,10 @@ const mockUser: AuthenticatedUser = {
   isActive: true,
   tenantId: 'tenant-A',
   tenantRole: 'manager',
+  planFeatures: {
+    productos: true,
+    servicios: true,
+  },
 }
 
 describe('listarProductosParaFichaAction', () => {
@@ -51,20 +56,44 @@ describe('listarProductosParaFichaAction', () => {
         esCompuesto: true,
       },
     ] as any)
+    vi.mocked(prisma.servicios.findMany).mockResolvedValue([
+      {
+        servicioId: 'svc-1',
+        nombre: 'Instalación',
+        precio: 350,
+      },
+    ] as any)
 
     const result = await listarProductosParaFichaAction({ search: '' })
     expect(result.success).toBe(true)
     if (result.success) {
-      expect(result.data).toHaveLength(2)
-      expect(result.data[0].nombre).toBe('Harina 50kg')
-      expect(result.data[0].tipo).toBe('SIMPLE')
-      expect(result.data[1].tipo).toBe('COMPUESTO')
+      expect(result.data).toHaveLength(3)
+      expect(result.data).toEqual(
+        expect.arrayContaining([
+          expect.objectContaining({
+            nombre: 'Harina 50kg',
+            entityType: 'PRODUCTO',
+            tipo: 'SIMPLE',
+          }),
+          expect.objectContaining({
+            nombre: 'Cigarrillos',
+            entityType: 'PRODUCTO',
+            tipo: 'COMPUESTO',
+          }),
+          expect.objectContaining({
+            nombre: 'Instalación',
+            entityType: 'SERVICIO',
+            tipo: 'SERVICIO',
+          }),
+        ]),
+      )
     }
   })
 
   it('filtra por search en nombre o codigoInterno', async () => {
     vi.mocked(getCurrentUser).mockResolvedValue(mockUser)
     vi.mocked(prisma.producto.findMany).mockResolvedValue([])
+    vi.mocked(prisma.servicios.findMany).mockResolvedValue([])
     const result = await listarProductosParaFichaAction({ search: 'har' })
     expect(result.success).toBe(true)
     expect(prisma.producto.findMany).toHaveBeenCalledWith(
@@ -75,11 +104,20 @@ describe('listarProductosParaFichaAction', () => {
         }),
       }),
     )
+    expect(prisma.servicios.findMany).toHaveBeenCalledWith(
+      expect.objectContaining({
+        where: expect.objectContaining({
+          tenantId: 'tenant-A',
+          nombre: expect.objectContaining({ contains: 'har' }),
+        }),
+      }),
+    )
   })
 
   it('retorna array vacío si no hay productos', async () => {
     vi.mocked(getCurrentUser).mockResolvedValue(mockUser)
     vi.mocked(prisma.producto.findMany).mockResolvedValue([])
+    vi.mocked(prisma.servicios.findMany).mockResolvedValue([])
     const result = await listarProductosParaFichaAction({ search: '' })
     expect(result.success).toBe(true)
     if (result.success) expect(result.data).toEqual([])

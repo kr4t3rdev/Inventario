@@ -25,6 +25,7 @@ interface FichaCostoViewProps {
  *   de la vista y lo descarga.
  */
 export function FichaCostoView({ data, hideHeader = false }: FichaCostoViewProps) {
+  const esServicio = data.producto.entityType === 'SERVICIO'
   const esCompuesto = data.producto.tipo === 'COMPUESTO'
   const printableRef = useRef<HTMLDivElement>(null)
 
@@ -38,7 +39,11 @@ export function FichaCostoView({ data, hideHeader = false }: FichaCostoViewProps
             </h1>
             <p className="text-muted-foreground text-sm">
               {data.producto.codigoInterno ?? 'sin código interno'} ·{' '}
-              {esCompuesto ? 'Producto compuesto' : 'Producto simple'}
+              {esServicio
+                ? 'Servicio'
+                : esCompuesto
+                  ? 'Producto compuesto'
+                  : 'Producto simple'}
             </p>
           </div>
           <FichaCostoPdf data={data} targetRef={printableRef} />
@@ -54,44 +59,52 @@ export function FichaCostoView({ data, hideHeader = false }: FichaCostoViewProps
         <Tabs defaultValue="resumen" className="w-full">
         <TabsList>
           <TabsTrigger value="resumen">Resumen</TabsTrigger>
-          {esCompuesto && <TabsTrigger value="composicion">Composición</TabsTrigger>}
-          <TabsTrigger value="historial">Historial de compras</TabsTrigger>
-          <TabsTrigger value="ventas">Ventas</TabsTrigger>
-          <TabsTrigger value="plantilla">Plantilla</TabsTrigger>
-          <TabsTrigger value="listas">Listas de precios</TabsTrigger>
+          {!esServicio && esCompuesto && <TabsTrigger value="composicion">Composición</TabsTrigger>}
+          {!esServicio && <TabsTrigger value="historial">Historial de compras</TabsTrigger>}
+          {!esServicio && <TabsTrigger value="ventas">Ventas</TabsTrigger>}
+          {!esServicio && <TabsTrigger value="plantilla">Plantilla</TabsTrigger>}
+          {!esServicio && <TabsTrigger value="listas">Listas de precios</TabsTrigger>}
         </TabsList>
 
         <TabsContent value="resumen" className="mt-4">
           <ResumenCosto data={data} />
         </TabsContent>
 
-        {esCompuesto && (
+        {!esServicio && esCompuesto && (
           <TabsContent value="composicion" className="mt-4">
             <ComposicionCosto productoId={data.producto.id} />
           </TabsContent>
         )}
 
-        <TabsContent value="historial" className="mt-4">
-          <HistorialCostos productoId={data.producto.id} />
-        </TabsContent>
+        {!esServicio && (
+          <TabsContent value="historial" className="mt-4">
+            <HistorialCostos productoId={data.producto.id} />
+          </TabsContent>
+        )}
 
-        <TabsContent value="ventas" className="mt-4">
-          <VentasTrazabilidad
-            productoId={data.producto.id}
-            precioCosto={data.producto.precioCosto}
-          />
-        </TabsContent>
+        {!esServicio && (
+          <TabsContent value="ventas" className="mt-4">
+            <VentasTrazabilidad
+              productoId={data.producto.id}
+              precioCosto={data.producto.precioCosto}
+            />
+          </TabsContent>
+        )}
 
-        <TabsContent value="plantilla" className="mt-4">
-          <PlantillaCostoTab
-            productoId={data.producto.id}
-            precioVenta={data.producto.precioVenta}
-          />
-        </TabsContent>
+        {!esServicio && (
+          <TabsContent value="plantilla" className="mt-4">
+            <PlantillaCostoTab
+              productoId={data.producto.id}
+              precioVenta={data.producto.precioVenta}
+            />
+          </TabsContent>
+        )}
 
-        <TabsContent value="listas" className="mt-4">
-          <ListasPrecios productoId={data.producto.id} />
-        </TabsContent>
+        {!esServicio && (
+          <TabsContent value="listas" className="mt-4">
+            <ListasPrecios productoId={data.producto.id} />
+          </TabsContent>
+        )}
         </Tabs>
       </div>
     </div>

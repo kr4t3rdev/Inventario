@@ -114,8 +114,15 @@ export async function validateCategoryAgainstCLAS(
 	tenantId: string,
 	clasSectionId?: string | null,
 	clasSpecificId?: string | null,
+	options?: {
+		skipEan13Validation?: boolean;
+	},
 ): Promise<CategoriaValidationResult> {
 	try {
+		if (options?.skipEan13Validation) {
+			return { success: true };
+		}
+
 		// Check if EAN-13 mode is enabled for the current tenant.
 		// ⚠️ IMPORTANTE: el modelo MiEmpresa es 1:1 por tenant (id siempre vale 1,
 		// pero tenantId es UNIQUE). NUNCA buscar por `id: 1` sin filtrar por tenant,
@@ -691,6 +698,9 @@ export class CategoriaValidator {
 	static async validateCategoryCreation(
 		data: unknown,
 		tenantId: string,
+		options?: {
+			skipEan13Validation?: boolean;
+		},
 	): Promise<CategoriaValidationResult> {
 		const allErrors: CategoriaValidationError[] = [];
 
@@ -709,6 +719,7 @@ export class CategoriaValidator {
 			tenantId,
 			validatedData.clasSectionId ?? null,
 			validatedData.clasSpecificId ?? null,
+			options,
 		);
 		if (!clasValidation.success) {
 			allErrors.push(...(clasValidation.errors || []));
@@ -756,6 +767,9 @@ export class CategoriaValidator {
 		categoryId: string,
 		data: unknown,
 		tenantId: string,
+		options?: {
+			skipEan13Validation?: boolean;
+		},
 	): Promise<CategoriaValidationResult> {
 		const allErrors: CategoriaValidationError[] = [];
 
@@ -817,6 +831,7 @@ export class CategoriaValidator {
 			tenantId,
 			validatedData.clasSectionId ?? null,
 			validatedData.clasSpecificId ?? null,
+			options,
 		);
 		if (!clasValidation.success) {
 			allErrors.push(...(clasValidation.errors || []));

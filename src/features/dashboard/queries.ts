@@ -221,7 +221,16 @@ export async function getDashboardStatsQuery(
       select: { total: true, createdAt: true },
     }),
     prisma.stockUbicacion.findMany({
-      where: { tenantId },
+      where: {
+        tenantId,
+        ...(ubicacionId && tipoUbicacion
+          ? {
+              ubicacionId,
+              tipoUbicacion:
+                tipoUbicacion === 'puntoDeVenta' ? 'punto_venta' : tipoUbicacion,
+            }
+          : {}),
+      },
       select: {
         productoId: true,
         cantidad: true,
@@ -290,6 +299,14 @@ export async function getDashboardStatsQuery(
       const existing = acc[producto.id] ?? { cantidad: 0, producto }
       existing.cantidad += Number(registro.cantidad || 0)
       acc[producto.id] = existing
+      return acc
+    },
+    {},
+  )
+
+  const stockTotalPorProducto = Object.values(stockPorProducto).reduce<Record<string, number>>(
+    (acc, item) => {
+      acc[item.producto.id] = item.cantidad
       return acc
     },
     {},
@@ -398,7 +415,7 @@ export async function getDashboardStatsQuery(
       }
     }
     acc[key].productos.push(producto)
-    acc[key].stockTotal += producto.stock
+    acc[key].stockTotal += stockTotalPorProducto[producto.id] ?? 0
     if (producto.stockMinimo > 0) {
       acc[key].stockMinimoMin = Math.min(acc[key].stockMinimoMin, producto.stockMinimo)
     }

@@ -70,6 +70,10 @@ import {
 	getFeaturesGrouped,
 } from "@/features/planes";
 import type { FeatureDef, FeatureCategory } from "@/features/planes";
+import {
+	formatPlanPriceLabel,
+	filterAdminPlans,
+} from "@/features/admin/lib/admin-plan-page";
 
 /* ─── Types ─── */
 
@@ -129,6 +133,7 @@ export default function AdminPlanesPage() {
 	}, []);
 
 	const planes = data?.planes || [];
+	const filteredPlanes = filterAdminPlans(planes, search);
 
 	const groupedFeatures = getFeaturesGrouped();
 
@@ -336,17 +341,19 @@ export default function AdminPlanesPage() {
 									Cargando...
 								</TableCell>
 							</TableRow>
-						) : !planes?.length ? (
+						) : !filteredPlanes?.length ? (
 							<TableRow>
 								<TableCell
 									colSpan={7}
 									className="h-24 text-center text-muted-foreground"
 								>
-									No hay planes configurados
+									{planes.length
+										? "No hay planes que coincidan con la búsqueda"
+										: "No hay planes configurados"}
 								</TableCell>
 							</TableRow>
 						) : (
-							planes.map((plan: any) => (
+							filteredPlanes.map((plan: any) => (
 								<TableRow key={plan.planId}>
 									<TableCell>
 										<div>
@@ -362,9 +369,10 @@ export default function AdminPlanesPage() {
 										<Badge
 											variant={plan.precio === 0 ? "secondary" : "default"}
 										>
-											{plan.precio === 0
-												? "Gratis"
-												: `$${Number(plan.precio).toLocaleString()}/mes`}
+											{formatPlanPriceLabel(
+												Number(plan.precio),
+												plan.duracionDias,
+											)}
 										</Badge>
 									</TableCell>
 									<TableCell className="text-sm">

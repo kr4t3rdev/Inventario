@@ -146,13 +146,6 @@ export const createCompraProductoAction = withAction(async (input: CreateCompraP
         ubicacionId: item.producto.almacenId, modo: 'increment', delta: item.cantidad,
       });
 
-      await tx.producto.update({
-        where: { id: item.producto.id },
-        data: {
-          stock: { increment: item.cantidad },
-        },
-      });
-
       // Registrar cambio de costo en historial
       if (item.nuevoPrecioCosto.precioCostoNuevo !== oldPrecioCosto) {
         try {

@@ -27,6 +27,7 @@ import { getHistorialReconciliadoAction } from '../actions-reconciliacion'
 const baseData: FichaCostoData = {
   producto: {
     id: 'prod-1',
+    entityType: 'PRODUCTO',
     nombre: 'Harina 50kg',
     codigoInterno: 'HAR-50',
     tipo: 'SIMPLE',
@@ -258,5 +259,47 @@ describe('FichaCostoView', () => {
     } as any)
     render(<FichaCostoView data={baseData} />)
     expect(screen.getByRole('button', { name: /Exportar PDF/i })).toBeInTheDocument()
+  })
+
+  it('oculta tabs exclusivas de producto cuando la entidad es un servicio', () => {
+    render(
+      <FichaCostoView
+        data={{
+          ...baseData,
+          producto: {
+            ...baseData.producto,
+            id: 'svc-1',
+            entityType: 'SERVICIO',
+            nombre: 'Instalación técnica',
+            codigoInterno: null,
+            tipo: 'SERVICIO',
+            precioCosto: 0,
+            precioVenta: 350,
+          },
+          costoCalculado: {
+            valor: 0,
+            metodo: null,
+            moneda: 'CUP',
+          },
+          margen: {
+            absoluto: null,
+            porcentaje: null,
+            estado: 'SIN_DATOS',
+          },
+          variacion: {
+            absoluto: null,
+            porcentaje: null,
+            estado: 'SIN_DATOS',
+          },
+          advertencias: ['No se puede calcular un costo confiable del servicio'],
+        }}
+      />,
+    )
+
+    expect(screen.queryByRole('tab', { name: /Historial/i })).not.toBeInTheDocument()
+    expect(screen.queryByRole('tab', { name: /Ventas/i })).not.toBeInTheDocument()
+    expect(screen.queryByRole('tab', { name: /Plantilla/i })).not.toBeInTheDocument()
+    expect(screen.queryByRole('tab', { name: /Listas de precios/i })).not.toBeInTheDocument()
+    expect(screen.getByText(/^Servicio$/i)).toBeInTheDocument()
   })
 })

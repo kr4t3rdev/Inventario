@@ -1,5 +1,6 @@
 import { ActionError } from '@/lib/server-actions';
 import { prisma } from '@/lib/prisma';
+import { getStockTotalProducto, getStockTotalProductosBatch } from '@/lib/services/stock-ubicacion-queries';
 
 export const PRODUCTO_SELECT = {
   id: true,
@@ -108,6 +109,17 @@ function buildProductWhere(
   return where;
 }
 
+function withDerivedStock<T extends { id: string; stock: number }>(
+  producto: T,
+  stockTotal: number,
+): T & { stockTotal: number } {
+  return {
+    ...producto,
+    stock: stockTotal,
+    stockTotal,
+  };
+}
+
 /**
  * @description Shared product read service for web and mobile adapters.
  */
@@ -118,11 +130,19 @@ export const ProductoService = {
    * @returns {Promise<unknown[]>} Product list.
    */
   async list(tenantId: string, filters?: ProductListFilters) {
-    return prisma.producto.findMany({
+    const productos = await prisma.producto.findMany({
       where: buildProductWhere(tenantId, filters),
       select: PRODUCTO_SELECT,
       orderBy: { createdAt: 'desc' },
     });
+
+    const stockTotals = await getStockTotalProductosBatch(prisma, {
+      productoIds: productos.map((producto) => producto.id),
+    });
+
+    return productos.map((producto) =>
+      withDerivedStock(producto, stockTotals.get(producto.id) ?? 0),
+    );
   },
 
   /**
@@ -140,7 +160,11 @@ export const ProductoService = {
       throw new ActionError('Producto no encontrado', 'NOT_FOUND');
     }
 
-    return producto;
+    const stockTotal = await getStockTotalProducto(prisma, {
+      productoId: producto.id,
+    });
+
+    return withDerivedStock(producto, stockTotal);
   },
 
   /**
@@ -177,10 +201,16 @@ export const ProductoService = {
         },
       });
 
+      const stockTotals = await getStockTotalProductosBatch(prisma, {
+        productoIds: registros.map((registro) => registro.producto.id),
+      });
+
       return registros.map((registro) => ({
-        ...registro.producto,
+        ...withDerivedStock(
+          registro.producto,
+          stockTotals.get(registro.producto.id) ?? 0,
+        ),
         stockUbicacion: registro.cantidad,
-        stockTotal: registro.producto.stock,
       }));
     }
 
@@ -204,11 +234,13 @@ export const ProductoService = {
     const stockMap = new Map(
       registrosStock.map((registro) => [registro.productoId, registro.cantidad]),
     );
+    const stockTotals = await getStockTotalProductosBatch(prisma, {
+      productoIds: productosBase.map((producto) => producto.id),
+    });
 
     return productosBase.map((producto) => ({
-      ...producto,
+      ...withDerivedStock(producto, stockTotals.get(producto.id) ?? 0),
       stockUbicacion: stockMap.get(producto.id) ?? 0,
-      stockTotal: producto.stock,
     }));
   },
 };

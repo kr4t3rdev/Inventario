@@ -36,6 +36,7 @@ import {
   calcularTotalLineItems,
   calcularTotalesPorCategoria,
 } from '../types'
+import { calcularPrecioSugerido } from '../lib/template-calc'
 
 interface PlantillaFormProps {
   open: boolean
@@ -94,7 +95,14 @@ export function PlantillaForm({
   const [error, setError] = useState<string | null>(null)
 
   const costeTotal = calcularTotalLineItems(lineItems)
-  const precioSugerido = costeTotal * (1 + parseFloat(margenObjetivo) || 0.30)
+  const parsedMargenObjetivo = Number.parseFloat(margenObjetivo)
+  const margenObjetivoPreview =
+    Number.isFinite(parsedMargenObjetivo) &&
+    parsedMargenObjetivo > 0 &&
+    parsedMargenObjetivo < 1
+      ? parsedMargenObjetivo
+      : 0.3
+  const precioSugerido = calcularPrecioSugerido(costeTotal, margenObjetivoPreview)
   const catTotales = calcularTotalesPorCategoria(lineItems)
 
   function addItem() {
@@ -310,7 +318,7 @@ export function PlantillaForm({
                 </span>
               </div>
               <p className="text-[10px] text-muted-foreground">
-                Ej: 0.30 = 30% de margen sobre el costo
+                Ej: 0.30 = 30% de margen sobre precio de venta
               </p>
             </div>
             <div className="grid gap-2">
@@ -319,7 +327,10 @@ export function PlantillaForm({
                 ${fmt(precioSugerido)}
               </div>
               <p className="text-[10px] text-muted-foreground">
-                Costo ${fmt(costeTotal)} + {((parseFloat(margenObjetivo) || 0) * 100).toFixed(0)}%
+                Calculado como costo / (1 - margen). Con {(
+                  margenObjetivoPreview * 100
+                ).toFixed(0)}
+                % de margen objetivo.
               </p>
             </div>
           </div>

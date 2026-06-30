@@ -8,10 +8,13 @@ vi.mock('@/lib/services/tenant-scope', () => ({
 vi.mock('@/lib/prisma', () => ({
   prisma: {
     producto: { findFirst: vi.fn() },
+    servicios: { findFirst: vi.fn() },
     compraDocumento: { findMany: vi.fn() },
     compraDocumentoItem: { findMany: vi.fn() },
+    compraServicio: { findMany: vi.fn() },
     gastoCompra: { findMany: vi.fn() },
     receta: { findFirst: vi.fn() },
+    ventaServicios: { findMany: vi.fn() },
     merma: { aggregate: vi.fn().mockResolvedValue({ _sum: { cantidad: 0 } }) },
     tasaCambio: { findMany: vi.fn().mockResolvedValue([]) },
     precioProducto: { findMany: vi.fn().mockResolvedValue([]) },
@@ -178,6 +181,53 @@ describe('getFichaCostoAction', () => {
       expect(result.data.margen.estado).toBe('PERDIDA')
       expect(
         result.data.advertencias.some((a) => a.toLowerCase().includes('negativo')),
+      ).toBe(true)
+    }
+  })
+
+  it('retorna ficha de costo para servicio con costo promedio de compras', async () => {
+    vi.mocked(getCurrentUser).mockResolvedValue(mockUser)
+    vi.mocked(prisma.servicios.findFirst).mockResolvedValue({
+      servicioId: 'svc-1',
+      nombre: 'Instalación técnica',
+      precio: 350,
+      descripcion: 'Servicio de instalación',
+      moneda: 'CUP',
+      tenantId: 'tenant-A',
+    } as any)
+    vi.mocked(prisma.compraServicio.findMany).mockResolvedValue([
+      {
+        compraServicioId: 'cs-1',
+        costoUnitario: 100,
+        cantidad: 2,
+        total: 200,
+      },
+      {
+        compraServicioId: 'cs-2',
+        costoUnitario: 120,
+        cantidad: 1,
+        total: 120,
+      },
+    ] as any)
+
+    const result = await getFichaCostoAction({
+      entityId: 'svc-1',
+      entityType: 'SERVICIO',
+    })
+
+    expect(result.success).toBe(true)
+    if (result.success) {
+      expect(result.data.producto.id).toBe('svc-1')
+      expect(result.data.producto.entityType).toBe('SERVICIO')
+      expect(result.data.producto.tipo).toBe('SERVICIO')
+      expect(result.data.costoCalculado.valor).toBe(0)
+      expect(result.data.costoCalculado.metodo).toBeNull()
+      expect(result.data.producto.precioVenta).toBe(350)
+      expect(result.data.merma.cantidad30d).toBe(0)
+      expect(
+        result.data.advertencias.some((item) =>
+          item.toLowerCase().includes('moneda'),
+        ),
       ).toBe(true)
     }
   })

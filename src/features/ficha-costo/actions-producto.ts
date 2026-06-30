@@ -28,40 +28,81 @@ export const listarProductosParaFichaAction = withAction(
     user: AuthenticatedUser,
   ): Promise<ProductoFichaListItem[]> => {
     const tenantId = requireTenant(user)
-    requireFeature(user, 'productos', 'ver la ficha de costo')
+    const search = input.search?.trim()
+    const canViewProductos = user.planFeatures?.productos === true
+    const canViewServicios = user.planFeatures?.servicios === true
 
-    const where: Record<string, unknown> = { tenantId }
-    if (input.search && input.search.trim()) {
-      const s = input.search.trim()
-      where.OR = [
-        { nombre: { contains: s, mode: 'insensitive' } },
-        { codigoInterno: { contains: s, mode: 'insensitive' } },
-        { codigoNegocio: { contains: s, mode: 'insensitive' } },
-      ]
+    if (!canViewProductos && !canViewServicios) {
+      throw new ActionError('No tiene acceso a ficha de costo', 'FORBIDDEN')
     }
 
-    const productos = await prisma.producto.findMany({
-      where,
-      select: {
-        id: true,
-        nombre: true,
-        codigoInterno: true,
-        precioCosto: true,
-        precioVenta: true,
-        esCompuesto: true,
-      },
-      orderBy: { nombre: 'asc' },
-      take: input.limit ?? 500,
-    })
+    const take = input.limit ?? 500
+    const [productos, servicios] = await Promise.all([
+      canViewProductos
+        ? prisma.producto.findMany({
+            where: {
+              tenantId,
+              ...(search
+                ? {
+                    OR: [
+                      { nombre: { contains: search, mode: 'insensitive' } },
+                      { codigoInterno: { contains: search, mode: 'insensitive' } },
+                      { codigoNegocio: { contains: search, mode: 'insensitive' } },
+                    ],
+                  }
+                : {}),
+            },
+            select: {
+              id: true,
+              nombre: true,
+              codigoInterno: true,
+              precioCosto: true,
+              precioVenta: true,
+              esCompuesto: true,
+            },
+            orderBy: { nombre: 'asc' },
+            take,
+          })
+        : Promise.resolve([]),
+      canViewServicios
+        ? prisma.servicios.findMany({
+            where: {
+              tenantId,
+              ...(search
+                ? { nombre: { contains: search, mode: 'insensitive' } }
+                : {}),
+            },
+            select: {
+              servicioId: true,
+              nombre: true,
+              precio: true,
+            },
+            orderBy: { nombre: 'asc' },
+            take,
+          })
+        : Promise.resolve([]),
+    ])
 
-    return productos.map((p) => ({
-      id: p.id,
-      nombre: p.nombre,
-      codigoInterno: p.codigoInterno,
-      precioCosto: p.precioCosto,
-      precioVenta: p.precioVenta,
-      tipo: p.esCompuesto ? 'COMPUESTO' : 'SIMPLE',
-    }))
+    return [
+      ...productos.map((p) => ({
+        id: p.id,
+        entityType: 'PRODUCTO' as const,
+        nombre: p.nombre,
+        codigoInterno: p.codigoInterno,
+        precioCosto: p.precioCosto,
+        precioVenta: p.precioVenta,
+        tipo: p.esCompuesto ? 'COMPUESTO' : 'SIMPLE',
+      })),
+      ...servicios.map((s) => ({
+        id: s.servicioId,
+        entityType: 'SERVICIO' as const,
+        nombre: s.nombre,
+        codigoInterno: null,
+        precioCosto: 0,
+        precioVenta: s.precio,
+        tipo: 'SERVICIO' as const,
+      })),
+    ].sort((left, right) => left.nombre.localeCompare(right.nombre))
   },
 )
 
