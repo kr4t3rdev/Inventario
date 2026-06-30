@@ -29,6 +29,28 @@ Stack tecnológico:
 - `.env.local`
 - `prisma/.env`
 
+## Demo Features
+
+- `TenantLicense.isDemo` (Boolean): marca licencias demo, filtradas de KPIs del admin
+- `TenantLicense.createdBy` (String?): ID del admin que creó la demo (auditoría)
+- `createDemoTenantAction`: crea tenant + usuario + licencia demo + seed de datos
+- `cleanupExpiredDemoLicenciasAction`: desactiva demos expiradas (dry-run o real)
+- Cron job cada 1h: `deactivate-expired-demos.sh` via `no_agent=True`
+- **Seed diferenciado por plan**:
+  - `prisma/seed/demo/base-seed.ts` → Básico (~20 productos, 1 almacén)
+  - `prisma/seed/demo/professional-seed.ts` → +25 productos, +1 almacén, ventas
+  - `prisma/seed/demo/enterprise-seed.ts` → +50 productos, +2 almacenes, compras, transferencias
+  - Orquestador: `src/lib/services/demo-seed.ts` (resuelve perfil y ejecuta seeds)
+
+## EAN-13 / CLAS Classifier
+
+- Feature flag: `categorias-ean13` en Plan.features + `usaCodigoEan13` en MiEmpresa
+- CLAS classifier: archivo `public/clasificador.md` parseado en `src/lib/clas-classifier.ts`
+- "Categorías" y "Subcategorías" se renombran a "Secciones CLAS" y "Específicos CLAS" en modo EAN-13
+- Helper `getCategoryLabels(usaEan13)` en `src/features/categorias/lib/category-labels.ts`
+- Validación CLAS: `CategoriaValidator` en `src/lib/categoria-validation.ts`
+
+
 ## Build and Test Commands
 
 ### Desarrollo

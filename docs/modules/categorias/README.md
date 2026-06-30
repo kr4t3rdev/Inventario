@@ -1,30 +1,47 @@
 # Categorías
 
-> Organiza tus productos en grupos para encontrarlos y ordenarlos mejor.
+> Módulo de taxonomía jerárquica de productos con soporte para clasificador CLAS y códigos EAN-13.
 
-## Qué hace
+## Stack
 
-Este módulo te ayuda a mantener el catálogo y el stock bajo control, para que siempre sepas qué tenés y dónde está. Organiza tus productos en grupos para encontrarlos y ordenarlos mejor.
+- **Server Actions**: CRUD completo via `withAction` wrapper + `requireTenant` scope
+- **Validación**: Zod schemas (`categoriaCreateSchema`, `categoriaUpdateSchema`)
+- **Validación de negocio**: `CategoriaValidator` y `CategoriaDeletionValidator`
+- **CLAS Classifier**: Integración con nomenclador oficial cubano (secciones/específicos)
+- **UI**: shadcn/ui DataTable con vista lista/árbol, Framer Motion, React Hook Form
 
-## Cuándo usarlo
+## Operaciones CRUD
 
-- Cuando cargás nuevos productos, categorías o proveedores.
-- Cuando querés revisar stock, precios o movimientos entre almacenes.
-- Cuando necesitás corregir diferencias o mantener el inventario actualizado.
+| Acción | Server Action | Descripción |
+|--------|--------------|-------------|
+| Listar | `getCategoriasAction` | Todas las categorías del tenant |
+| Detalle | `getCategoriaByIdAction` | Una categoría por ID con validación de tenant |
+| Jerarquía | `getCategoriaHierarchyAction` | Árbol completo con conteo de productos |
+| Crear | `createCategoriaAction` | Con validación de unicidad, jerarquía, CLAS |
+| Actualizar | `updateCategoriaAction` | Re-valida según cambios |
+| Eliminar | `deleteCategoriaAction` | Reasigna productos de subcategorías al padre |
 
-## Cómo se usa
+## Modo EAN-13 / CLAS
 
-1. Abrí el módulo y ubicá el registro que querés revisar.
-2. Consultá los datos principales, stock o movimientos.
-3. Agregá o ajustá la información cuando haga falta.
-4. Guardá y verificá que el cambio se refleje bien.
+Cuando el plan incluye el feature `categorias-ean13` y Mi Empresa tiene `usaCodigoEan13=true`:
 
-## Qué conviene cuidar
+- **Categoría → Sección CLAS**: selección desde nomenclador oficial
+- **Subcategoría → Específico CLAS**: filtrado por sección seleccionada
+- **Nombre autocompletado**: según el específico CLAS elegido
+- **CLAS classifier**: archivo `clasificador.md` parseado en `src/lib/clas-classifier.ts`
+- **Labels dinámicos**: toda la UI alterna entre "subcategoría"/"específico CLAS" según modo
 
-- Revisá unidad, categoría y precio antes de guardar.
-- Si un producto ya existe, buscá primero antes de crear otro.
-- No olvides comprobar el almacén correcto.
+## Demo Seeding por Plan
 
-## En una frase
+| Plan | Categorías | Subcategorías |
+|------|-----------|---------------|
+| Básico | Alimentos, Hogar, Bebidas | 1 (Bebidas) |
+| Profesional | + Tecnología | — |
+| Empresarial | + Farmacia, Electrodomésticos, Oficina | — |
 
-Organiza tus productos en grupos para encontrarlos y ordenarlos mejor.
+## Tests
+
+- **25 tests** en `src/features/categorias/__tests__/`
+- Server Actions mockean Prisma
+- Componentes usan mock centralizado de framer-motion
+- Sin warnings de `whileHover`/`whileTap` en output

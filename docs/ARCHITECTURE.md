@@ -42,7 +42,6 @@ graph TD
 
     subgraph Auth
         JWT[JWT + httpOnly cookies]
-        Clerk[Clerk alternativa]
         Bcrypt[bcryptjs]
     end
 
@@ -55,7 +54,6 @@ graph TD
     SA --> Prisma
     API --> Prisma
     SA --> JWT
-    SA --> Clerk
     SA --> Zod
     Prisma --> PG
 ```
@@ -69,7 +67,7 @@ graph TD
 | **Server Actions** | `'use server'` + `withAction` Wrapper | Operaciones CRUD, lógica de negocio |
 | **API (legacy)** | Next.js Route Handlers | Exportación CSV/PDF, webhooks |
 | **ORM** | Prisma ORM | Acceso a base de datos |
-| **Base de datos** | PostgreSQL (Neon) | Persistencia |
+| **Base de datos** | PostgreSQL (Railway) | Persistencia |
 | **Auth** | JWT + httpOnly cookies | Autenticación |
 
 ---
@@ -334,6 +332,47 @@ graph TD
 - El cliente NUNCA almacena el JWT en memoria JS.
 
 ---
+
+
+
+## Server Action Pattern
+
+Todas las operaciones CRUD usan `withAction()` wrapper:
+
+```typescript
+export const getXAction = withAction(async (input, user) => {
+  const tenantId = requireTenant(user)
+  return prisma.x.findMany({ where: { tenantId } })
+})
+```
+
+**Response shape:** `{ success: true, data: T }` | `{ success: false, error: { message, code? } }`
+
+## Demo Seeding
+
+| Plan | Seed | Contenido |
+|------|------|-----------|
+| Básico | `base-seed.ts` | 20 prod, 1 almacén, 1 PV, CUP+USD |
+| Profesional | + `professional-seed.ts` | +25 prod, +1 almacén, EUR, ventas |
+| Empresarial | + `enterprise-seed.ts` | +50 prod, +2 almacenes, MXN, compras/transfers |
+
+Orquestador: `src/lib/services/demo-seed.ts` → resuelve perfil y ejecuta seeds en transacción.
+
+## EAN-13 / CLAS Classifier
+
+Feature flag: `categorias-ean13` en Plan + `usaCodigoEan13` en MiEmpresa.
+- CLAS file: `public/clasificador.md` → parseado en `src/lib/clas-classifier.ts`
+- Labels dinámicos: helper `getCategoryLabels(usaEan13)` alterna subcategoría/específico CLAS
+
+## Cron Jobs
+
+`cleanupExpiredDemoLicenciasAction` → cada 1h desactiva demos expiradas (`isDemo:true AND expiracion < now()`)
+
+## Deploy Flow
+
+1. Push a `codex/upgrade-next-16`
+2. Railway build + deploy automático
+3. Migraciones: `prisma db push` automático en startup
 
 ## Decisiones de Diseño
 

@@ -55,6 +55,12 @@ erDiagram
 | `Licencia` | Licencia individual legacy (en desuso progresivo) |
 | `MiEmpresa` | Datos de configuración del negocio (nombre, NIT, logo, EAN-13) |
 
+**Campos nuevos en TenantLicense (Jun 2026):**
+| Campo | Tipo | Propósito |
+|-------|------|-----------|
+| `isDemo` | `Boolean @default(false)` | Marca licencias demo para filtrar de métricas reales |
+| `createdBy` | `String?` | ID del admin que creó la demo (auditoría) |
+
 ---
 
 ### 2. Inventario (Categorías, Productos, Unidades, Proveedores)
