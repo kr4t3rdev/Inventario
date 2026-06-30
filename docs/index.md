@@ -1,7 +1,7 @@
 # FinanceMDM — Documentación del Sistema
 
 > **Sistema de Gestión de Inventario, Ventas, Finanzas y Contabilidad**
-> Stack: Next.js 15 + TypeScript + Prisma + PostgreSQL
+> Stack: Next.js 16.2 + TypeScript + Prisma + PostgreSQL
 
 ---
 

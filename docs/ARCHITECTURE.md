@@ -1,7 +1,7 @@
 # Arquitectura del Sistema
 
 > **FinanceMDM** — Sistema de Gestión de Inventario, Ventas y Contabilidad
-> Stack: Next.js 15 + TypeScript + Prisma + PostgreSQL
+> Stack: Next.js 16.2 + TypeScript + Prisma + PostgreSQL
 
 ---
 
@@ -25,7 +25,7 @@
 ```mermaid
 graph TD
     subgraph Frontend
-        Next15[Next.js 15 App Router]
+        Next15[Next.js 16.2 App Router]
         React19[React 19]
         TS[TypeScript]
         TW[Tailwind CSS + shadcn/ui]
@@ -63,7 +63,7 @@ graph TD
 | Capa | Tecnología | Propósito |
 |------|-----------|-----------|
 | **UI** | React 19 + Tailwind + shadcn/ui | Componentes de interfaz |
-| **Ruteo** | Next.js 15 App Router | Navegación y layouts |
+| **Ruteo** | Next.js 16.2 App Router | Navegación y layouts |
 | **Server Actions** | `'use server'` + `withAction` Wrapper | Operaciones CRUD, lógica de negocio |
 | **API (legacy)** | Next.js Route Handlers | Exportación CSV/PDF, webhooks |
 | **ORM** | Prisma ORM | Acceso a base de datos |
