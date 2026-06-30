@@ -23,7 +23,8 @@ export const CategoriaSchema = z.object({
 	descripcion: z
 		.string()
 		.max(500, "La descripción no puede exceder 500 caracteres")
-		.optional(),
+		.optional()
+		.nullable(),
 
 	parentId: z.string().optional().nullable(),
 
