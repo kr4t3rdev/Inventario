@@ -13,7 +13,7 @@ RUN apt-get update && apt-get install -y \
     && rm -rf /var/lib/apt/lists/*
 
 # Instalar PNPM primero
-RUN corepack enable && corepack prepare pnpm@latest --activate
+RUN corepack enable && corepack prepare pnpm@10.22.0 --activate
 
 # Copiar solo archivos de dependencias primero (mejor caching)
 COPY package.json pnpm-lock.yaml ./
@@ -53,7 +53,7 @@ RUN apt-get update && apt-get install -y \
     && rm -rf /var/lib/apt/lists/*
 
 # Habilitar pnpm via corepack (necesario para `prisma migrate deploy` en runtime)
-RUN corepack enable && corepack prepare pnpm@latest --activate
+RUN corepack enable && corepack prepare pnpm@10.22.0 --activate
 
 # Copiar standalone build como base
 COPY --from=builder /app/.next/standalone /app
