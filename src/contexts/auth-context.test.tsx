@@ -105,4 +105,38 @@ describe('AuthProvider', () => {
     expect(fetch).toHaveBeenCalledWith('/api/auth/logout', expect.objectContaining({ method: 'POST' }));
     expect(screen.getByTestId('user-email')).toHaveTextContent('anonymous');
   });
+
+  it('hydrates the authenticated user immediately from the server snapshot', async () => {
+    render(
+      <AuthProvider
+        initialUser={{
+          userId: 'user-1',
+          name: 'Test User',
+          email: 'tenant@example.com',
+          password: '',
+          role: 'manager',
+          tenantRole: 'manager',
+          tenantId: 'tenant-1',
+          isActive: true,
+          avatar: null,
+          activatedAt: null,
+          expiresAt: null,
+          createdAt: '',
+          updatedAt: '',
+          lastModifiedBy: null,
+          loginAttempts: 0,
+          lockedUntil: null,
+          lastFailedLogin: null,
+        }}
+      >
+        <Probe />
+      </AuthProvider>,
+    );
+
+    expect(screen.getByTestId('user-email')).toHaveTextContent('tenant@example.com');
+
+    await waitFor(() => {
+      expect(document.body.dataset.loading).toBe('false');
+    });
+  });
 });

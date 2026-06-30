@@ -4,6 +4,7 @@ import { ThemeProvider } from 'next-themes';
 import { LazyMotion, domAnimation } from "framer-motion";
 
 import { AuthProvider } from '@/contexts/auth-context';
+import { getCurrentUser } from '@/lib/server-actions';
 import { buildCanonicalUrl, siteConfig, siteMetadata } from '@/lib/seo/site';
 import { chivoMono, inter } from './fonts';
 
@@ -41,11 +42,13 @@ export const metadata: Metadata = {
   icons: siteMetadata.icons,
 };
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  const initialUser = await getCurrentUser();
+
   return (
     <html lang="es" suppressHydrationWarning>
       <body
@@ -53,7 +56,7 @@ export default function RootLayout({
       >
         <ThemeProvider attribute="class" defaultTheme="system" enableSystem disableTransitionOnChange>
           <LazyMotion features={domAnimation}>
-            <AuthProvider>
+            <AuthProvider initialUser={initialUser as never}>
               {children}
             </AuthProvider>
           </LazyMotion>

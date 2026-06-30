@@ -41,6 +41,9 @@ export function AuthProvider({ children, initialUser }: AuthProviderProps) {
 
     if (result.success) {
       setUser(result.data);
+    } else if (result.status === 0) {
+      console.error('Error checking auth:', result.error.message);
+    }
 
     setLoading(false);
   }, []);
