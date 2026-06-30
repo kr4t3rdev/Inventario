@@ -17,9 +17,14 @@ interface AuthContextType {
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
-export function AuthProvider({ children }: { children: React.ReactNode }) {
-  const [user, setUser] = useState<Usuario | null>(null);
-  const [loading, setLoading] = useState(true);
+interface AuthProviderProps {
+  children: React.ReactNode;
+  initialUser?: Usuario | null;
+}
+
+export function AuthProvider({ children, initialUser }: AuthProviderProps) {
+  const [user, setUser] = useState<Usuario | null>(initialUser ?? null);
+  const [loading, setLoading] = useState(initialUser === undefined);
   const router = useRouter();
 
   /**
@@ -36,21 +41,18 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
     if (result.success) {
       setUser(result.data);
-    } else if (result.status === 0) {
-      console.error('Error checking auth:', result.error.message);
-    }
 
     setLoading(false);
   }, []);
 
   useEffect(() => {
-    checkAuth();
+    void checkAuth();
   }, [checkAuth]);
 
   // Polling cada 30s para verificar sesión activa
   useEffect(() => {
     if (!loading && user) {
-      const interval = setInterval(checkAuth, 30000);
+      const interval = setInterval(checkAuth, 300000);
       return () => clearInterval(interval);
     }
   }, [loading, user, checkAuth]);
