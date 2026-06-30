@@ -1066,6 +1066,7 @@ model CompraServicio {
   costoUnitario    Int
   cantidad         Int
   total            Int
+  moneda           String?
   formaPago        String
   estado           String
   descripcion      String?

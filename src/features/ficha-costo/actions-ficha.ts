@@ -5,6 +5,7 @@ import { prisma } from '@/lib/prisma'
 import { requireTenant, requireFeature } from '@/lib/services/tenant-scope'
 import type { AuthenticatedUser } from '@/lib/auth-middleware'
 import { calcularMargen, calcularVariacion } from './lib/cost-calculator'
+import { calcularCPP } from './lib/cost-calculator'
 import {
   calcularCostoCompuestoServer,
   calcularCostoSimpleServer,
@@ -58,17 +59,98 @@ export const getFichaCostoAction = withAction(
           costoUnitario: true,
           cantidad: true,
           total: true,
+          moneda: true,
         },
       })
 
       const advertencias: string[] = []
       if (compras.length === 0) {
         advertencias.push('No hay compras de servicio registradas para estimar el costo')
-      } else {
-        advertencias.push(
-          'No se puede calcular un costo confiable del servicio porque CompraServicio no guarda moneda histórica',
-        )
+        return {
+          producto: {
+            id: servicio.servicioId,
+            entityType: 'SERVICIO',
+            nombre: servicio.nombre,
+            codigoInterno: null,
+            tipo: 'SERVICIO',
+            precioCosto: 0,
+            precioVenta: servicio.precio,
+          },
+          costoCalculado: {
+            valor: 0,
+            metodo: null,
+            moneda: servicio.moneda,
+          },
+          margen: {
+            absoluto: null,
+            porcentaje: null,
+            estado: 'SIN_DATOS',
+          },
+          variacion: {
+            absoluto: null,
+            porcentaje: null,
+            estado: 'SIN_DATOS',
+          },
+          merma: {
+            cantidad30d: 0,
+            porcentajeSobreStock: null,
+            desperdicioEsperadoPromedio: null,
+          },
+          advertencias,
+          ultimaActualizacion: new Date().toISOString(),
+        }
       }
+
+      const allRowsHaveCurrency = compras.every((compra) => typeof compra.moneda === 'string')
+      const allRowsMatchServiceCurrency = compras.every((compra) => compra.moneda === servicio.moneda)
+
+      if (!allRowsHaveCurrency || !allRowsMatchServiceCurrency) {
+        advertencias.push(
+          'No se puede calcular un costo confiable del servicio porque las compras no tienen moneda histórica consistente',
+        )
+        return {
+          producto: {
+            id: servicio.servicioId,
+            entityType: 'SERVICIO',
+            nombre: servicio.nombre,
+            codigoInterno: null,
+            tipo: 'SERVICIO',
+            precioCosto: 0,
+            precioVenta: servicio.precio,
+          },
+          costoCalculado: {
+            valor: 0,
+            metodo: null,
+            moneda: servicio.moneda,
+          },
+          margen: {
+            absoluto: null,
+            porcentaje: null,
+            estado: 'SIN_DATOS',
+          },
+          variacion: {
+            absoluto: null,
+            porcentaje: null,
+            estado: 'SIN_DATOS',
+          },
+          merma: {
+            cantidad30d: 0,
+            porcentajeSobreStock: null,
+            desperdicioEsperadoPromedio: null,
+          },
+          advertencias,
+          ultimaActualizacion: new Date().toISOString(),
+        }
+      }
+
+      const costoCalculadoValor = calcularCPP(
+        compras.map((compra) => ({
+          cantidad: compra.cantidad,
+          precioUnitario: compra.costoUnitario,
+          gastoProporcional: 0,
+        })),
+      )
+      const margen = calcularMargen(costoCalculadoValor, servicio.precio)
 
       return {
         producto: {
@@ -81,14 +163,14 @@ export const getFichaCostoAction = withAction(
           precioVenta: servicio.precio,
         },
         costoCalculado: {
-          valor: 0,
-          metodo: null,
+          valor: costoCalculadoValor,
+          metodo: 'CPP',
           moneda: servicio.moneda,
         },
         margen: {
-          absoluto: null,
-          porcentaje: null,
-          estado: 'SIN_DATOS',
+          absoluto: margen.absoluto,
+          porcentaje: margen.porcentaje,
+          estado: margen.estado,
         },
         variacion: {
           absoluto: null,

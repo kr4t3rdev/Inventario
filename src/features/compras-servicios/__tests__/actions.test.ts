@@ -53,7 +53,11 @@ const mockUser: AuthenticatedUser = {
 	tenantRole: "admin",
 };
 
-const mockServicio = { servicioId: "sv-1", nombre: "Servicio Test" };
+const mockServicio = {
+	servicioId: "sv-1",
+	nombre: "Servicio Test",
+	moneda: "CUP",
+};
 
 const mockCompraRow = {
 	compraServicioId: "cs-1",
@@ -64,6 +68,7 @@ const mockCompraRow = {
 	costoUnitario: 1000,
 	cantidad: 2,
 	total: 2000,
+	moneda: "CUP",
 	formaPago: "PAGO_COMPLETO",
 	estado: "PAGADA",
 	descripcion: null,
@@ -131,6 +136,13 @@ describe("ComprasServicios Server Actions", () => {
 			expect(result.success).toBe(true);
 			expect(prisma.servicios.findUnique).toHaveBeenCalledWith(
 				expect.objectContaining({ where: { servicioId: "sv-1" } }),
+			);
+			expect(mockTx.compraServicio.create).toHaveBeenCalledWith(
+				expect.objectContaining({
+					data: expect.objectContaining({
+						moneda: "CUP",
+					}),
+				}),
 			);
 		});
 

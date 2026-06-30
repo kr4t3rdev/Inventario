@@ -11,6 +11,17 @@ import { Skeleton } from '@/components/ui/skeleton'
 import type { CompraServicio } from '@/app/models/model'
 import { getComprasServiciosAction } from '@/features/compras-servicios/actions'
 
+function formatCurrency(value: number, currency?: string | null): string {
+  if (!currency) return `${value.toLocaleString('es-AR')} (sin moneda)`
+
+  return new Intl.NumberFormat('es-AR', {
+    style: 'currency',
+    currency,
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  }).format(value)
+}
+
 /**
  * @description Tabla reutilizable para mostrar servicios recibidos.
  * @returns {JSX.Element} Tabla de servicios recibidos.
@@ -49,12 +60,17 @@ export function ServiciosRecibidosTable(): React.JSX.Element {
       {
         accessorKey: 'costoUnitario',
         header: 'Costo Unitario',
-        cell: ({ row }) => `$${row.original.costoUnitario.toLocaleString('es-AR')}`,
+        cell: ({ row }) => formatCurrency(row.original.costoUnitario, row.original.moneda),
       },
       {
         accessorKey: 'total',
         header: 'Total',
-        cell: ({ row }) => `$${row.original.total.toLocaleString('es-AR')}`,
+        cell: ({ row }) => formatCurrency(row.original.total, row.original.moneda),
+      },
+      {
+        accessorKey: 'moneda',
+        header: 'Moneda',
+        cell: ({ row }) => row.original.moneda ?? 'Sin snapshot',
       },
       {
         accessorKey: 'formaPago',

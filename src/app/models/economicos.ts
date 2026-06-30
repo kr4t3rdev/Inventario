@@ -167,6 +167,7 @@ export interface CompraServicio {
 	costoUnitario: number;
 	cantidad: number;
 	total: number;
+	moneda?: string | null;
 	formaPago: "PAGO_PARCIAL" | "PAGO_COMPLETO";
 	estado: "PENDIENTE" | "PAGADA";
 	descripcion?: string | null;

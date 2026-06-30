@@ -18,6 +18,10 @@ vi.mock('../actions-reconciliacion', () => ({
   getHistorialReconciliadoAction: vi.fn(),
 }))
 
+vi.mock('../components/resumen-plantilla-card', () => ({
+  ResumenPlantillaCard: () => <div data-testid="resumen-plantilla-card">Plantilla</div>,
+}))
+
 import {
   getComposicionCostoAction,
   getListasPreciosProductoAction,
@@ -301,5 +305,9 @@ describe('FichaCostoView', () => {
     expect(screen.queryByRole('tab', { name: /Plantilla/i })).not.toBeInTheDocument()
     expect(screen.queryByRole('tab', { name: /Listas de precios/i })).not.toBeInTheDocument()
     expect(screen.getByText(/^Servicio$/i)).toBeInTheDocument()
+    expect(screen.getByText(/Costo del servicio no disponible/i)).toBeInTheDocument()
+    expect(
+      screen.getByText(/compras históricas conservan una moneda snapshot consistente/i),
+    ).toBeInTheDocument()
   })
 })

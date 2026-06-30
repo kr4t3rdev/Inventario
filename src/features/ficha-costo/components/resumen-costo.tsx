@@ -25,6 +25,18 @@ export function ResumenCosto({ data }: ResumenCostoProps) {
   const { producto, costoCalculado, margen, advertencias } = data
   const sinDatos = costoCalculado.valor === 0 || margen.estado === 'SIN_DATOS'
   const esServicio = producto.entityType === 'SERVICIO'
+  const serviceStatusTone =
+    margen.estado === 'SIN_DATOS'
+      ? 'border-amber-500/40 bg-amber-50'
+      : 'border-emerald-500/40 bg-emerald-50'
+  const serviceStatusTitle =
+    margen.estado === 'SIN_DATOS'
+      ? 'Costo del servicio no disponible'
+      : 'Costo del servicio calculado'
+  const serviceStatusMessage =
+    margen.estado === 'SIN_DATOS'
+      ? 'El CPP del servicio solo se calcula cuando todas las compras históricas conservan una moneda snapshot consistente.'
+      : `El CPP del servicio se calculó usando compras históricas con moneda consistente (${costoCalculado.moneda}).`
 
   return (
     <Card>
@@ -100,6 +112,14 @@ export function ResumenCosto({ data }: ResumenCostoProps) {
                 ))}
               </ul>
             </AlertDescription>
+          </Alert>
+        </CardContent>
+      )}
+      {esServicio && (
+        <CardContent>
+          <Alert variant="default" className={serviceStatusTone}>
+            <AlertTitle>{serviceStatusTitle}</AlertTitle>
+            <AlertDescription>{serviceStatusMessage}</AlertDescription>
           </Alert>
         </CardContent>
       )}

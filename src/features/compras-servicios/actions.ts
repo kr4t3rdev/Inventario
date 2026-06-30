@@ -80,6 +80,7 @@ export const createCompraServicioAction = withAction(withPeriodValidation(
         costoUnitario: parsed.costoUnitario,
         cantidad: parsed.cantidad,
         total,
+        moneda: servicio.moneda,
         formaPago: parsed.formaPago,
         estado: parsed.estado,
         descripcion: parsed.descripcion || null,
