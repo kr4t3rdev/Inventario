@@ -150,7 +150,7 @@ vi.mock('./ui/sidebar', () => ({
   }),
 }))
 
-import { AppSidebar2 } from './app-sidebar2'
+import { AppSidebar2, TENANTLESS_PUBLIC_ITEMS } from './app-sidebar2'
 
 describe('AppSidebar2 hydration-safe motion', () => {
   it('keeps the first render motion props stable when reduced-motion changes before mount', () => {
@@ -169,5 +169,12 @@ describe('AppSidebar2 hydration-safe motion', () => {
     const clientInitialSnapshot = motionState.captures.slice(0, serverSnapshot.length)
 
     expect(clientInitialSnapshot).toEqual(serverSnapshot)
+  })
+
+  it('does not expose Clientes or Servicios in tenantless degraded mode allowlist', () => {
+    expect(TENANTLESS_PUBLIC_ITEMS.has('Clientes')).toBe(false)
+    expect(TENANTLESS_PUBLIC_ITEMS.has('Servicios')).toBe(false)
+    expect(TENANTLESS_PUBLIC_ITEMS.has('Productos')).toBe(true)
+    expect(TENANTLESS_PUBLIC_ITEMS.has('Ventas')).toBe(true)
   })
 })

@@ -22,6 +22,32 @@ import { useAdminUsers } from '@/features/admin/hooks/use-admin-users'
 import { TenantSwitcher } from "@/components/tenant-switcher"
 
 /**
+ * @description Resuelve la etiqueta corta del fallback de avatar para el usuario actual.
+ * @param {string} name - Nombre visible del usuario.
+ * @param {string | null | undefined} tenantRole - Rol del usuario en el tenant.
+ * @param {string | null | undefined} role - Rol global de plataforma.
+ * @returns {string} Abreviatura legible para el avatar fallback.
+ */
+export function getNavUserFallbackLabel(
+  name: string,
+  tenantRole?: string | null,
+  role?: string | null,
+): string {
+  if (tenantRole === 'dependiente') return 'DEP'
+  if (tenantRole === 'economico') return 'ECO'
+  if (tenantRole === 'manager') return 'MGR'
+  if (role === 'admin') return 'ADM'
+
+  return name
+    .split(' ')
+    .filter(Boolean)
+    .map((n) => n[0])
+    .join('')
+    .slice(0, 2)
+    .toUpperCase()
+}
+
+/**
  * @description Menú de usuario en el footer del sidebar con acciones de perfil, tema y cierre de sesión.
  * @returns {JSX.Element | null} Menú de usuario o null si no hay usuario autenticado.
  */
@@ -43,11 +69,7 @@ export function NavUser() {
    logout()
   }
 
-  const initials = user.name
-    .split(" ")
-    .map((n) => n[0])
-    .join("")
-    .toUpperCase()
+  const initials = getNavUserFallbackLabel(user.name, user.tenantRole, user.role)
 
   const avatarSrc = profile?.avatar || user.avatar || ''
 

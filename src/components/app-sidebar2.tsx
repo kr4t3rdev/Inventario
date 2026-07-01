@@ -73,6 +73,18 @@ import {
 	useSidebar,
 } from "./ui/sidebar";
 
+/** Items públicos visibles aunque el usuario no tenga rol de tenant (modo degraded). */
+export const TENANTLESS_PUBLIC_ITEMS = new Set([
+	"Productos",
+	"Ventas",
+	"Reportes",
+	"Venta Diaria",
+	"Mi Empresa",
+	"Cuadre Financiero",
+	"Cuadres POS",
+	"Dashboard",
+]);
+
 /**
  * @description Componente de barra lateral de la aplicación que incluye navegación a todas las páginas principales.
  * @param {React.ComponentProps<typeof Sidebar>} props - Propiedades del contenedor Sidebar.
@@ -639,20 +651,6 @@ export function AppSidebar2({
 	/**
 	 * @description Verifica si un item del sidebar es visible para el rol de tenant del usuario.
 	 */
-	/** Items públicos visibles aunque el usuario no tenga rol de tenant (modo degraded) */
-	const TENANTLESS_PUBLIC_ITEMS = new Set([
-		"Productos",
-		"Ventas",
-		"Clientes",
-		"Servicios",
-		"Reportes",
-		"Venta Diaria",
-		"Mi Empresa",
-		"Cuadre Financiero",
-		"Cuadres POS",
-		"Dashboard",
-	]);
-
 	function canSeeSidebarItem(itemTitle: string): boolean {
 		// Admin global ve todo
 		if (user?.role === "admin") return true;
@@ -676,7 +674,8 @@ export function AppSidebar2({
 
 		// Si no hay tenantRole (usuario sin membresía), mostrar items públicos
 		if (!user?.tenantRole) {
-			return TENANTLESS_PUBLIC_ITEMS.has(itemTitle);
+			if (!TENANTLESS_PUBLIC_ITEMS.has(itemTitle)) return false;
+			return !featureKey || user?.planFeatures?.[featureKey] === true;
 		}
 
 		const allowedRoles = SIDEBAR_TENANT_PERMISSIONS[itemTitle];

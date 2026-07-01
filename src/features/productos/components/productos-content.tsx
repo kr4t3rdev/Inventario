@@ -157,6 +157,15 @@ interface ProductosContentProps {
 }
 
 /**
+ * @description Determina si el usuario puede crear/editar productos desde la UI.
+ * @param {string | undefined} tenantRole - Rol del usuario en el tenant actual.
+ * @returns {boolean} True solo para manager.
+ */
+export function canManageProducts(tenantRole?: string): boolean {
+	return tenantRole === "manager";
+}
+
+/**
  * @description Client Component con toda la interactividad de la página de Productos.
  * Recibe datos iniciales desde el Server Component padre.
  */
@@ -187,7 +196,7 @@ export function ProductosContent({
 	const [isPending, startTransition] = useTransition();
 
 	// ─── Permisos ──
-	const puedeEditar = tenantRole === "manager" || !tenantRole;
+	const puedeEditar = canManageProducts(tenantRole);
 
 	// ─── Data fetching: stock por ubicación (Server Action) ──
 	useEffect(() => {
