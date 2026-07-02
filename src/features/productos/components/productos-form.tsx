@@ -1,9 +1,9 @@
 "use client";
 
-import React, { useEffect, useState, useTransition } from "react";
+import React, { useEffect, useMemo, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useForm, type FieldErrors } from "react-hook-form";
+import { useForm, useWatch, type FieldErrors } from "react-hook-form";
 import { LazyMotion, m as motion } from "framer-motion";
 import {
 	Boxes,
@@ -188,9 +188,10 @@ export function ProductoForm({
 		planFeatures ? { planFeatures } : user,
 		"upload-productos-photo",
 	);
+	const schema = useMemo(() => buildProductosSchema(usaEan13), [usaEan13]);
 
 	const form = useForm<ProductosFormValues>({
-		resolver: zodResolver(buildProductosSchema(usaEan13)),
+		resolver: zodResolver(schema),
 		defaultValues: {
 			nombre: initialData?.nombre || "",
 			descripcion: initialData?.descripcion || "",
@@ -199,8 +200,8 @@ export function ProductoForm({
 			vendorId: initialData?.vendorId || "",
 			categoriaId: initialData?.categoriaId || "",
 			subcategoriaId: initialData?.subcategoriaId || "",
-			precioCosto: initialData?.precioCosto,
-			precioVenta: initialData?.precioVenta,
+			precioCosto: initialData?.precioCosto ?? 0,
+			precioVenta: initialData?.precioVenta ?? 0,
 			stock: initialData?.stock ?? 0,
 			stockMinimo: initialData?.stockMinimo ?? 0,
 			fotos: initialData?.fotos || [],
@@ -209,17 +210,45 @@ export function ProductoForm({
 		},
 	});
 
-	const watchedCategoryId = form.watch("categoriaId");
-	const watchedSubcategoryId = form.watch("subcategoriaId");
-	const watchedProveedorCodigo = form.watch("proveedorCodigo");
-	const watchedVendorId = form.watch("vendorId");
+	useEffect(() => {
+		void form.trigger(["codigoInterno", "precioCosto", "precioVenta"]);
+	}, [form, usaEan13]);
+
+	const watchedCategoryId = useWatch({
+		control: form.control,
+		name: "categoriaId",
+	});
+	const watchedSubcategoryId = useWatch({
+		control: form.control,
+		name: "subcategoriaId",
+	});
+	const watchedProveedorCodigo = useWatch({
+		control: form.control,
+		name: "proveedorCodigo",
+	});
+	const watchedVendorId = useWatch({
+		control: form.control,
+		name: "vendorId",
+	});
+	const watchedStock = useWatch({
+		control: form.control,
+		name: "stock",
+	});
+	const watchedStockMinimo = useWatch({
+		control: form.control,
+		name: "stockMinimo",
+	});
+	const watchedPrecioVenta = useWatch({
+		control: form.control,
+		name: "precioVenta",
+	});
 
 	const subcategorias = categorias.filter(
 		(categoria) => categoria.parentId === watchedCategoryId,
 	);
 
-	const stockValue = Number(form.watch("stock") || 0);
-	const stockMinimoValue = Number(form.watch("stockMinimo") || 0);
+	const stockValue = Number(watchedStock || 0);
+	const stockMinimoValue = Number(watchedStockMinimo || 0);
 	const umbral = stockMinimoValue > 0 ? stockMinimoValue : 10;
 	const estadoStock =
 		stockValue === 0
@@ -791,7 +820,7 @@ export function ProductoForm({
 												<SubcategorySelector
 													categories={categorias}
 													selectedCategoryId={field.value}
-													selectedSubcategoryId={form.watch("subcategoriaId")}
+													selectedSubcategoryId={watchedSubcategoryId}
 													onCategoryChange={(categoryId) => {
 														field.onChange(categoryId);
 														form.setValue("subcategoriaId", "");
@@ -1115,7 +1144,7 @@ export function ProductoForm({
 												[listaId]: value,
 											}))
 										}
-										precioBase={Number(form.watch("precioVenta") || 0)}
+										precioBase={Number(watchedPrecioVenta || 0)}
 										isLoading={isLoading}
 									/>
 								)}

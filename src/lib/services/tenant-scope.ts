@@ -1,6 +1,7 @@
 import { prisma } from '@/lib/prisma';
 import { ActionError } from '@/lib/server-actions/types';
 import type { AuthenticatedUser } from '@/lib/auth-middleware';
+import { isTenantEconomicoRole, normalizeTenantRole } from '@/lib/auth/roles';
 
 /**
  * @description Valida que el usuario tenga rol de manager (o superior) en el tenant.
@@ -17,6 +18,54 @@ export function requireManagerRole(user: AuthenticatedUser, action: string = 're
   if (user.tenantRole !== 'manager') {
     throw new ActionError(
       `No tienes permisos para ${action}. Solo el administrador de la empresa puede realizar esta operación.`,
+      'FORBIDDEN',
+    )
+  }
+}
+
+/**
+ * @description Valida que el usuario tenga un rol económico (o superior) en el tenant.
+ * Permite acceso a `economico` y `manager`.
+ *
+ * @example
+ * requireEconomicoRole(user, 'consultar reportes contables')
+ *
+ * @param {AuthenticatedUser} user - Usuario autenticado.
+ * @param {string} [action='realizar esta acción'] - Descripción de la acción para el mensaje de error.
+ * @throws {ActionError} Si el rol no tiene alcance económico.
+ */
+export function requireEconomicoRole(
+  user: AuthenticatedUser,
+  action: string = 'realizar esta acción',
+): void {
+  if (!isTenantEconomicoRole(user.tenantRole)) {
+    throw new ActionError(
+      `No tienes permisos para ${action}. Solo los roles económico o manager pueden realizar esta operación.`,
+      'FORBIDDEN',
+    )
+  }
+}
+
+/**
+ * @description Valida que el usuario tenga cualquier rol operativo válido dentro del tenant.
+ * Permite acceso a `dependiente`, `economico` y `manager`.
+ *
+ * @example
+ * requireDependienteRole(user, 'registrar ventas')
+ *
+ * @param {AuthenticatedUser} user - Usuario autenticado.
+ * @param {string} [action='realizar esta acción'] - Descripción de la acción para el mensaje de error.
+ * @throws {ActionError} Si el usuario no tiene un rol de tenant válido.
+ */
+export function requireDependienteRole(
+  user: AuthenticatedUser,
+  action: string = 'realizar esta acción',
+): void {
+  requireTenant(user)
+
+  if (!normalizeTenantRole(user.tenantRole)) {
+    throw new ActionError(
+      `No tienes permisos para ${action}. Se requiere un rol operativo válido dentro de la empresa.`,
       'FORBIDDEN',
     )
   }
@@ -129,7 +178,7 @@ export function requireTenant(user: AuthenticatedUser): string {
  */
 export async function validateTenantLimit(
   tenantId: string,
-  limitField: 'maxUsuarios' | 'maxAlmacenes' | 'maxProductos',
+  limitField: 'maxUsuarios' | 'maxAlmacenes' | 'maxProductos' | 'maxClientes',
   currentCount: number,
 ): Promise<void> {
   const license = await prisma.tenantLicense.findFirst({
@@ -147,6 +196,7 @@ export async function validateTenantLimit(
       maxUsuarios: 'usuarios',
       maxAlmacenes: 'almacenes',
       maxProductos: 'productos',
+      maxClientes: 'clientes',
     }
     throw new Error(
       `Límite del plan alcanzado: máximo ${limit} ${labels[limitField]}. Contacte al administrador del sistema.`,

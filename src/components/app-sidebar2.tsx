@@ -49,6 +49,7 @@ import {
 	FolderOpen,
 } from "lucide-react";
 import Link from "next/link";
+import { usePathname } from "next/navigation";
 
 import { useAuth } from "@/contexts/auth-context";
 import { useHydrationSafeReducedMotion } from "@/hooks/use-hydration-safe-reduced-motion";
@@ -96,9 +97,11 @@ export function AppSidebar2({
 }: React.ComponentProps<typeof Sidebar>): React.JSX.Element {
 	const { user } = useAuth();
 	const { state } = useSidebar();
+	const pathname = usePathname();
 	const shouldReduceMotion = useHydrationSafeReducedMotion();
 	const isMounted = useIsMounted();
 	const shouldAnimate = isMounted && !shouldReduceMotion;
+	const isBusyRoute = pathname.startsWith("/busy");
 
 	const groupListVariants = {
 		hidden: { opacity: 0 },
@@ -674,6 +677,7 @@ export function AppSidebar2({
 
 		// Si no hay tenantRole (usuario sin membresía), mostrar items públicos
 		if (!user?.tenantRole) {
+			if (isBusyRoute) return false;
 			if (!TENANTLESS_PUBLIC_ITEMS.has(itemTitle)) return false;
 			return !featureKey || user?.planFeatures?.[featureKey] === true;
 		}

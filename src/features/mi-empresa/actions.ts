@@ -6,7 +6,7 @@
 'use server';
 
 import { withAction } from '@/lib/server-actions';
-import { requireTenant } from '@/lib/services/tenant-scope';
+import { requireFeature, requireTenant } from '@/lib/services/tenant-scope';
 import type { AuthenticatedUser } from '@/lib/auth-middleware';
 import {
   getMiEmpresaByTenant,
@@ -14,10 +14,14 @@ import {
 } from '@/features/mi-empresa/services/mi-empresa-service';
 
 export const getMiEmpresaAction = withAction(async (_input: void, user: AuthenticatedUser) => {
+  requireFeature(user, 'mi-empresa', 'gestionar los datos de Mi Empresa');
   const tenantId = requireTenant(user);
   return getMiEmpresaByTenant(tenantId);
 });
 
 export const updateMiEmpresaAction = withAction(
-  async (input: unknown, user: AuthenticatedUser) => upsertMiEmpresa({ input, user }),
+  async (input: unknown, user: AuthenticatedUser) => {
+    requireFeature(user, 'mi-empresa', 'gestionar los datos de Mi Empresa');
+    return upsertMiEmpresa({ input, user });
+  },
 );

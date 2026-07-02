@@ -2,7 +2,7 @@
 import { revalidatePath } from 'next/cache';
 import { withAction, ActionError } from '@/lib/server-actions';
 import { prisma } from '@/lib/prisma';
-import { requireTenant } from '@/lib/services/tenant-scope';
+import { requireFeature, requireTenant } from '@/lib/services/tenant-scope';
 import { gastosDESchema, gastosDEUpdateSchema } from './schemas';
 import type { GastosDEInput, GastosDEUpdateInput } from './schemas';
 import type { AuthenticatedUser } from '@/lib/auth-middleware';
@@ -12,6 +12,7 @@ const INCLUDE = { concepto: true, elemento: true } as const;
 // ─── GastosDE ──────────────────────────────────────────────
 
 export const getGastosDEAction = withAction(async (filters: { periodo?: string; conceptoId?: string; elementoId?: string } = {}, user: AuthenticatedUser) => {
+  requireFeature(user, 'gastos', 'gestionar gastos de empresa');
   const tenantId = requireTenant(user);
   const where: any = { tenantId };
   if (filters.periodo) where.periodo = filters.periodo;
@@ -21,6 +22,7 @@ export const getGastosDEAction = withAction(async (filters: { periodo?: string; 
 });
 
 export const getGastoDEByIdAction = withAction(async (id: string, user: AuthenticatedUser) => {
+  requireFeature(user, 'gastos', 'gestionar gastos de empresa');
   const tenantId = requireTenant(user);
   const g = await prisma.gastosDE.findFirst({ where: { gastosDEId: id, tenantId }, include: INCLUDE });
   if (!g) throw new ActionError('Gasto de explotación no encontrado', 'NOT_FOUND');
@@ -28,6 +30,7 @@ export const getGastoDEByIdAction = withAction(async (id: string, user: Authenti
 });
 
 export const createGastosDEAction = withAction(async (input: GastosDEInput, user: AuthenticatedUser) => {
+  requireFeature(user, 'gastos', 'gestionar gastos de empresa');
   const parsed = gastosDESchema.parse(input);
   const tenantId = requireTenant(user);
   if (parsed.conceptoId && parsed.elementoId) {
@@ -47,6 +50,7 @@ export const createGastosDEAction = withAction(async (input: GastosDEInput, user
 });
 
 export const updateGastosDEAction = withAction(async (input: GastosDEUpdateInput, user: AuthenticatedUser) => {
+  requireFeature(user, 'gastos', 'gestionar gastos de empresa');
   const parsed = gastosDEUpdateSchema.parse(input);
   const { gastosDEId, ...data } = parsed;
   const tenantId = requireTenant(user);
@@ -62,6 +66,7 @@ export const updateGastosDEAction = withAction(async (input: GastosDEUpdateInput
 });
 
 export const deleteGastosDEAction = withAction(async (id: string, user: AuthenticatedUser) => {
+  requireFeature(user, 'gastos', 'gestionar gastos de empresa');
   const tenantId = requireTenant(user);
   const existing = await prisma.gastosDE.findFirst({ where: { gastosDEId: id, tenantId } });
   if (!existing) throw new ActionError('Gasto no encontrado', 'NOT_FOUND');
@@ -72,24 +77,28 @@ export const deleteGastosDEAction = withAction(async (id: string, user: Authenti
 
 // ─── Conceptos ─────────────────────────────────────────────
 
-export const getGastoConceptosAction = withAction(async () => {
+export const getGastoConceptosAction = withAction(async (_input: void, user: AuthenticatedUser) => {
+  requireFeature(user, 'gastos', 'gestionar gastos de empresa');
   return prisma.gastoConcepto.findMany({ include: { _count: { select: { elementos: true, gastosDE: true } }, elementos: { where: { isActive: true }, orderBy: { nombre: 'asc' as const } } }, orderBy: { nombre: 'asc' } });
 });
 
-export const getGastoConceptoByIdAction = withAction(async (id: string) => {
+export const getGastoConceptoByIdAction = withAction(async (id: string, user: AuthenticatedUser) => {
+  requireFeature(user, 'gastos', 'gestionar gastos de empresa');
   const c = await prisma.gastoConcepto.findUnique({ where: { conceptoId: id }, include: { elementos: { orderBy: { nombre: 'asc' as const } }, _count: { select: { gastosDE: true } } } });
   if (!c) throw new ActionError('Concepto no encontrado', 'NOT_FOUND');
   return c;
 });
 
-export const createGastoConceptoAction = withAction(async (input: { nombre: string; descripcion?: string | null }) => {
+export const createGastoConceptoAction = withAction(async (input: { nombre: string; descripcion?: string | null }, user: AuthenticatedUser) => {
+  requireFeature(user, 'gastos', 'gestionar gastos de empresa');
   const ex = await prisma.gastoConcepto.findUnique({ where: { nombre: input.nombre } });
   if (ex) throw new ActionError('Ya existe un concepto con ese nombre', 'DUPLICATE');
   const c = await prisma.gastoConcepto.create({ data: input });
   revalidatePath('/busy/gastosDE/conceptos'); return c;
 });
 
-export const deleteGastoConceptoAction = withAction(async (id: string) => {
+export const deleteGastoConceptoAction = withAction(async (id: string, user: AuthenticatedUser) => {
+  requireFeature(user, 'gastos', 'gestionar gastos de empresa');
   const c = await prisma.gastoConcepto.findUnique({ where: { conceptoId: id }, include: { _count: { select: { gastosDE: true } } } });
   if (!c) throw new ActionError('Concepto no encontrado', 'NOT_FOUND');
   if (c._count.gastosDE > 0) { await prisma.gastoConcepto.update({ where: { conceptoId: id }, data: { isActive: false } }); return { message: 'Concepto desactivado' }; }
@@ -97,7 +106,8 @@ export const deleteGastoConceptoAction = withAction(async (id: string) => {
   revalidatePath('/busy/gastosDE/conceptos'); return { success: true };
 });
 
-export const updateGastoConceptoAction = withAction(async (input: { conceptoId: string; nombre?: string; descripcion?: string | null }) => {
+export const updateGastoConceptoAction = withAction(async (input: { conceptoId: string; nombre?: string; descripcion?: string | null }, user: AuthenticatedUser) => {
+  requireFeature(user, 'gastos', 'gestionar gastos de empresa');
   const { conceptoId, ...data } = input;
   const existing = await prisma.gastoConcepto.findUnique({ where: { conceptoId } });
   if (!existing) throw new ActionError('Concepto no encontrado', 'NOT_FOUND');
@@ -111,18 +121,21 @@ export const updateGastoConceptoAction = withAction(async (input: { conceptoId: 
 
 // ─── Elementos ─────────────────────────────────────────────
 
-export const getGastoElementosAction = withAction(async (conceptoId: string) => {
+export const getGastoElementosAction = withAction(async (conceptoId: string, user: AuthenticatedUser) => {
+  requireFeature(user, 'gastos', 'gestionar gastos de empresa');
   return prisma.gastoElemento.findMany({ where: { conceptoId }, include: { _count: { select: { gastosDE: true } } }, orderBy: { nombre: 'asc' } });
 });
 
-export const createGastoElementoAction = withAction(async (input: { conceptoId: string; nombre: string; descripcion?: string | null }) => {
+export const createGastoElementoAction = withAction(async (input: { conceptoId: string; nombre: string; descripcion?: string | null }, user: AuthenticatedUser) => {
+  requireFeature(user, 'gastos', 'gestionar gastos de empresa');
   const concepto = await prisma.gastoConcepto.findUnique({ where: { conceptoId: input.conceptoId } });
   if (!concepto) throw new ActionError('Concepto no encontrado', 'NOT_FOUND');
   const e = await prisma.gastoElemento.create({ data: input });
   revalidatePath('/busy/gastosDE/conceptos'); return e;
 });
 
-export const deleteGastoElementoAction = withAction(async (id: string) => {
+export const deleteGastoElementoAction = withAction(async (id: string, user: AuthenticatedUser) => {
+  requireFeature(user, 'gastos', 'gestionar gastos de empresa');
   const e = await prisma.gastoElemento.findUnique({ where: { elementoId: id }, include: { _count: { select: { gastosDE: true } } } });
   if (!e) throw new ActionError('Elemento no encontrado', 'NOT_FOUND');
   if (e._count.gastosDE > 0) { await prisma.gastoElemento.update({ where: { elementoId: id }, data: { isActive: false } }); return { message: 'Elemento desactivado' }; }
@@ -130,7 +143,8 @@ export const deleteGastoElementoAction = withAction(async (id: string) => {
   revalidatePath('/busy/gastosDE/conceptos'); return { success: true };
 });
 
-export const updateGastoElementoAction = withAction(async (input: { elementoId: string; nombre?: string; descripcion?: string | null }) => {
+export const updateGastoElementoAction = withAction(async (input: { elementoId: string; nombre?: string; descripcion?: string | null }, user: AuthenticatedUser) => {
+  requireFeature(user, 'gastos', 'gestionar gastos de empresa');
   const { elementoId, ...data } = input;
   const existing = await prisma.gastoElemento.findUnique({ where: { elementoId } });
   if (!existing) throw new ActionError('Elemento no encontrado', 'NOT_FOUND');

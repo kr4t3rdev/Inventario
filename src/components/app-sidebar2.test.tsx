@@ -20,6 +20,27 @@ const motionState = vi.hoisted(() => ({
   captures: [] as MotionCapture[],
 }))
 
+const authState = vi.hoisted(() => ({
+  user: {
+    role: 'admin',
+    tenantRole: 'manager',
+    planFeatures: {
+      empleados: true,
+      nomina: true,
+      asistencia: true,
+      vacaciones: true,
+    },
+  } as Record<string, unknown> | null,
+}))
+
+const pathnameState = vi.hoisted(() => ({
+  pathname: '/busy/dashboard',
+}))
+
+const navMainState = vi.hoisted(() => ({
+  groups: [] as Array<Array<{ title: string }>>,
+}))
+
 vi.mock('framer-motion', () => {
   const motionProxy = new Proxy(
     {},
@@ -69,16 +90,7 @@ vi.mock('framer-motion', () => {
 
 vi.mock('@/contexts/auth-context', () => ({
   useAuth: () => ({
-    user: {
-      role: 'admin',
-      tenantRole: 'manager',
-      planFeatures: {
-        empleados: true,
-        nomina: true,
-        asistencia: true,
-        vacaciones: true,
-      },
-    },
+    user: authState.user,
   }),
 }))
 
@@ -95,8 +107,15 @@ vi.mock('next/link', () => ({
     React.createElement('a', { href, ...props }, children),
 }))
 
+vi.mock('next/navigation', () => ({
+  usePathname: () => pathnameState.pathname,
+}))
+
 vi.mock('./nav-main', () => ({
-  NavMain: () => React.createElement('div', { 'data-testid': 'nav-main' }),
+  NavMain: ({ items }: { items: Array<{ title: string }> }) => {
+    navMainState.groups.push(items)
+    return React.createElement('div', { 'data-testid': 'nav-main' })
+  },
 }))
 
 vi.mock('./nav-user', () => ({
@@ -153,6 +172,22 @@ vi.mock('./ui/sidebar', () => ({
 import { AppSidebar2, TENANTLESS_PUBLIC_ITEMS } from './app-sidebar2'
 
 describe('AppSidebar2 hydration-safe motion', () => {
+  beforeEach(() => {
+    motionState.captures = []
+    navMainState.groups = []
+    pathnameState.pathname = '/busy/dashboard'
+    authState.user = {
+      role: 'admin',
+      tenantRole: 'manager',
+      planFeatures: {
+        empleados: true,
+        nomina: true,
+        asistencia: true,
+        vacaciones: true,
+      },
+    }
+  })
+
   it('keeps the first render motion props stable when reduced-motion changes before mount', () => {
     motionState.reducedMotion = false
     motionState.captures = []
@@ -176,5 +211,23 @@ describe('AppSidebar2 hydration-safe motion', () => {
     expect(TENANTLESS_PUBLIC_ITEMS.has('Servicios')).toBe(false)
     expect(TENANTLESS_PUBLIC_ITEMS.has('Productos')).toBe(true)
     expect(TENANTLESS_PUBLIC_ITEMS.has('Ventas')).toBe(true)
+  })
+
+  it('does not render degraded tenantless items on /busy routes when tenantRole is missing', () => {
+    authState.user = {
+      role: 'regularUser',
+      tenantId: 'tenant-1',
+      tenantRole: undefined,
+      planFeatures: {
+        productos: true,
+        dashboard: true,
+        reportes: true,
+      },
+    }
+
+    render(React.createElement(AppSidebar2))
+
+    const renderedItems = navMainState.groups.flat().map((item) => item.title)
+    expect(renderedItems).toEqual([])
   })
 })

@@ -92,6 +92,27 @@ describe('buildProductosSchema', () => {
 
     expect(result.success).toBe(true);
   });
+
+  it('requiere codigoInterno cuando EAN-13 está activo', () => {
+    const schema = buildProductosSchema(true);
+    const result = schema.safeParse({ ...baseProduct, codigoInterno: '' });
+
+    expect(result.success).toBe(false);
+  });
+
+  it('acepta precioCosto vacío como campo opcional', () => {
+    const schema = buildProductosSchema(false);
+    const result = schema.safeParse({ ...baseProduct, precioCosto: '' });
+
+    expect(result.success).toBe(true);
+  });
+
+  it('rechaza precioVenta vacío aunque el input llegue como string vacío', () => {
+    const schema = buildProductosSchema(false);
+    const result = schema.safeParse({ ...baseProduct, precioVenta: '' });
+
+    expect(result.success).toBe(false);
+  });
 });
 
 describe('ProductoForm', () => {

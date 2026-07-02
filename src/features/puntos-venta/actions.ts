@@ -8,6 +8,7 @@ import type { PvInput, PvUpdateInput } from './schemas';
 import type { AuthenticatedUser } from '@/lib/auth-middleware';
 
 export const getPuntosDeVentaAction = withAction(async (_input: void, user: AuthenticatedUser) => {
+  requireFeature(user, 'puntos-venta', 'gestionar puntos de venta');
   const tenantId = requireTenant(user);
   return prisma.puntoDeVenta.findMany({
     where: { tenantId },
@@ -17,6 +18,7 @@ export const getPuntosDeVentaAction = withAction(async (_input: void, user: Auth
 });
 
 export const getPuntoDeVentaByIdAction = withAction(async (id: string, user: AuthenticatedUser) => {
+  requireFeature(user, 'puntos-venta', 'gestionar puntos de venta');
   const tenantId = requireTenant(user);
   const pv = await prisma.puntoDeVenta.findFirst({
     where: { pvId: id, tenantId },
@@ -27,6 +29,7 @@ export const getPuntoDeVentaByIdAction = withAction(async (id: string, user: Aut
 });
 
 export const createPuntoDeVentaAction = withAction(async (input: PvInput, user: AuthenticatedUser) => {
+  requireFeature(user, 'puntos-venta', 'gestionar puntos de venta');
   const parsed = pvSchema.parse(input);
   const tenantId = requireTenant(user);
   if (parsed.listaPrecioId) {
@@ -45,6 +48,7 @@ export const createPuntoDeVentaAction = withAction(async (input: PvInput, user: 
 });
 
 export const updatePuntoDeVentaAction = withAction(async (input: PvUpdateInput, user: AuthenticatedUser) => {
+  requireFeature(user, 'puntos-venta', 'gestionar puntos de venta');
   const parsed = pvUpdateSchema.parse(input);
   const { pvId, ...data } = parsed;
   const tenantId = requireTenant(user);
@@ -66,6 +70,7 @@ export const updatePuntoDeVentaAction = withAction(async (input: PvUpdateInput, 
 });
 
 export const deletePuntoDeVentaAction = withAction(async (id: string, user: AuthenticatedUser) => {
+  requireFeature(user, 'puntos-venta', 'gestionar puntos de venta');
   const tenantId = requireTenant(user);
   const existing = await prisma.puntoDeVenta.findFirst({ where: { pvId: id, tenantId } });
   if (!existing) throw new ActionError('Punto de venta no encontrado', 'NOT_FOUND');

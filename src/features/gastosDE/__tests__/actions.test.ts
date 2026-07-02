@@ -7,6 +7,16 @@ import { prisma } from '@/lib/prisma';
 import { getGastosDEAction, createGastosDEAction, deleteGastosDEAction, updateGastosDEAction } from '@/features/gastosDE/actions';
 import type { AuthenticatedUser } from '@/lib/auth-middleware';
 const u: AuthenticatedUser = { userId: 'u1', name: 'T', email: 't@t.com', role: 'admin', isActive: true, tenantId: 't1', tenantRole: 'admin' };
+const featureBlockedUser: AuthenticatedUser = {
+  userId: 'u2',
+  name: 'Feature Blocked',
+  email: 'blocked@t.com',
+  role: 'regularUser',
+  isActive: true,
+  tenantId: 't1',
+  tenantRole: 'economico',
+  planFeatures: { gastos: false },
+};
 describe('GastosDE Actions', () => {
   beforeEach(() => vi.clearAllMocks());
   it('lista', async () => { vi.mocked(getCurrentUser).mockResolvedValue(u); vi.mocked(prisma.gastosDE.findMany).mockResolvedValue([]); const r=await getGastosDEAction(); expect(r.success).toBe(true); });
@@ -104,5 +114,15 @@ describe('GastosDE Actions', () => {
     expect(r.success).toBe(false);
     expect(r.error?.code).toBe('NOT_FOUND');
     expect(vi.mocked(prisma.gastosDE.delete)).not.toHaveBeenCalled();
+  });
+
+  it('bloquea acceso cuando el plan no incluye gastos', async () => {
+    vi.mocked(getCurrentUser).mockResolvedValue(featureBlockedUser);
+
+    const r = await getGastosDEAction();
+
+    expect(r.success).toBe(false);
+    expect(r.error?.code).toBe('FEATURE_NOT_AVAILABLE');
+    expect(vi.mocked(prisma.gastosDE.findMany)).not.toHaveBeenCalled();
   });
 });

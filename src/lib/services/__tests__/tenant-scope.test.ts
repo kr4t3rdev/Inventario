@@ -1,5 +1,13 @@
 import { describe, expect, it } from 'vitest';
-import { scopedWhere, assertTenantAccess, requireTenant, requireFeature } from '@/lib/services/tenant-scope'
+import {
+  scopedWhere,
+  assertTenantAccess,
+  requireTenant,
+  requireFeature,
+  requireManagerRole,
+  requireEconomicoRole,
+  requireDependienteRole,
+} from '@/lib/services/tenant-scope'
 import type { AuthenticatedUser } from '@/lib/auth-middleware'
 
 describe('scopedWhere', () => {
@@ -99,3 +107,53 @@ describe('requireFeature', () => {
       .toThrow('Se requiere una membresía de empresa activa para acceder a este recurso');
   });
 })
+
+describe('role gates', () => {
+  const dependienteUser = {
+    userId: 'u-dep',
+    tenantId: 't-1',
+    tenantRole: 'dependiente',
+  } as AuthenticatedUser;
+  const economicoUser = {
+    userId: 'u-eco',
+    tenantId: 't-1',
+    tenantRole: 'economico',
+  } as AuthenticatedUser;
+  const managerUser = {
+    userId: 'u-man',
+    tenantId: 't-1',
+    tenantRole: 'manager',
+  } as AuthenticatedUser;
+  const invalidRoleUser = {
+    userId: 'u-invalid',
+    tenantId: 't-1',
+    tenantRole: 'cajero',
+  } as AuthenticatedUser;
+
+  it('requireManagerRole permite manager y rechaza economico', () => {
+    expect(() => requireManagerRole(managerUser, 'administrar productos')).not.toThrow();
+    expect(() => requireManagerRole(economicoUser, 'administrar productos'))
+      .toThrow(/Solo el administrador de la empresa/);
+  });
+
+  it('requireEconomicoRole permite economico y manager', () => {
+    expect(() => requireEconomicoRole(economicoUser, 'ver reportes')).not.toThrow();
+    expect(() => requireEconomicoRole(managerUser, 'ver reportes')).not.toThrow();
+  });
+
+  it('requireEconomicoRole rechaza dependiente', () => {
+    expect(() => requireEconomicoRole(dependienteUser, 'ver reportes'))
+      .toThrow(/Solo los roles económico o manager/);
+  });
+
+  it('requireDependienteRole permite cualquier rol operativo válido', () => {
+    expect(() => requireDependienteRole(dependienteUser, 'registrar ventas')).not.toThrow();
+    expect(() => requireDependienteRole(economicoUser, 'registrar ventas')).not.toThrow();
+    expect(() => requireDependienteRole(managerUser, 'registrar ventas')).not.toThrow();
+  });
+
+  it('requireDependienteRole rechaza rol de tenant inválido', () => {
+    expect(() => requireDependienteRole(invalidRoleUser, 'registrar ventas'))
+      .toThrow(/rol operativo válido/);
+  });
+});
