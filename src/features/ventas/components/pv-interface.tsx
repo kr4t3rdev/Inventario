@@ -72,13 +72,11 @@ import {
 import { ProductoCard } from "./producto-card";
 import { CartItem } from "./cart-item";
 import { useDebounce } from "@/hooks/use-debounce";
-import {
-	CabeceraTurno,
-	AperturaTurnoDialog,
-	CierreTurnoDialog,
-	CuadreTurnoDialog,
-} from "@/features/turnos-pos";
-import { ArqueoForm } from "@/features/arqueo-caja";
+import { CabeceraTurno } from "@/features/turnos-pos/components/cabecera-turno";
+import { AperturaTurnoDialog } from "@/features/turnos-pos/components/apertura-turno-dialog";
+import { CierreTurnoDialog } from "@/features/turnos-pos/components/cierre-turno-dialog";
+import { CuadreTurnoDialog } from "@/features/turnos-pos/components/cuadre-turno-dialog";
+import { ArqueoForm } from "@/features/arqueo-caja/components/arqueo-form";
 import { VentaInvoiceDialog } from "./pv-invoice-dialog";
 import { useAuth } from "@/contexts/auth-context";
 
