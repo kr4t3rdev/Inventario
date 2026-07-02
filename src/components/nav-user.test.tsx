@@ -16,4 +16,9 @@ describe('getNavUserFallbackLabel', () => {
   it('cae a iniciales del nombre cuando no hay rol especial', () => {
     expect(getNavUserFallbackLabel('Juan Perez')).toBe('JP')
   })
+
+  it('tolera nombres faltantes o vacíos sin romper hidratación', () => {
+    expect(getNavUserFallbackLabel(undefined as unknown as string)).toBe('US')
+    expect(getNavUserFallbackLabel('   ')).toBe('US')
+  })
 })

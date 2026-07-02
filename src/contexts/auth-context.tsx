@@ -24,7 +24,7 @@ interface AuthProviderProps {
 
 export function AuthProvider({ children, initialUser }: AuthProviderProps) {
   const [user, setUser] = useState<Usuario | null>(initialUser ?? null);
-  const [loading, setLoading] = useState(initialUser === undefined);
+  const [loading, setLoading] = useState(initialUser == null);
   const router = useRouter();
 
   /**
@@ -41,8 +41,6 @@ export function AuthProvider({ children, initialUser }: AuthProviderProps) {
 
     if (result.success) {
       setUser(result.data);
-    } else if (result.status === 0) {
-      console.error('Error checking auth:', result.error.message);
     }
 
     setLoading(false);

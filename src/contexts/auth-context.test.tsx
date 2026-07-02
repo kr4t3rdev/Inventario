@@ -41,6 +41,7 @@ function Probe() {
 describe('AuthProvider', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    window.history.pushState({}, '', '/');
     global.fetch = vi.fn(async (input: RequestInfo | URL, init?: RequestInit) => {
       const url = String(input);
       if (url === '/api/auth/me') {
@@ -138,5 +139,67 @@ describe('AuthProvider', () => {
     await waitFor(() => {
       expect(document.body.dataset.loading).toBe('false');
     });
+  });
+
+  it('keeps loading active when initialUser is null and delays busy-route redirect until auth check finishes', async () => {
+    let resolveAuthCheck: ((response: Response) => void) | null = null;
+
+    window.history.pushState({}, '', '/busy/sales/new');
+    global.fetch = vi.fn((input: RequestInfo | URL) => {
+      const url = String(input);
+      if (url === '/api/auth/me') {
+        return new Promise<Response>((resolve) => {
+          resolveAuthCheck = resolve;
+        });
+      }
+      throw new Error(`Unexpected fetch: ${url}`);
+    }) as typeof fetch;
+
+    render(
+      <AuthProvider initialUser={null}>
+        <Probe />
+      </AuthProvider>,
+    );
+
+    await waitFor(() => {
+      expect(document.body.dataset.loading).toBe('true');
+    });
+    expect(push).not.toHaveBeenCalled();
+
+    resolveAuthCheck?.(
+      new Response(JSON.stringify({ error: 'No autenticado' }), { status: 401 }),
+    );
+
+    await waitFor(() => {
+      expect(push).toHaveBeenCalledWith('/login');
+    });
+  });
+
+  it('does not log noisy console errors when auth check fails due to network fetch', async () => {
+    const consoleErrorSpy = vi.spyOn(console, 'error').mockImplementation(() => undefined);
+    global.fetch = vi.fn(async (input: RequestInfo | URL) => {
+      const url = String(input);
+      if (url === '/api/auth/me') {
+        throw new Error('Failed to fetch');
+      }
+      throw new Error(`Unexpected fetch: ${url}`);
+    }) as typeof fetch;
+
+    render(
+      <AuthProvider>
+        <Probe />
+      </AuthProvider>,
+    );
+
+    await waitFor(() => {
+      expect(document.body.dataset.loading).toBe('false');
+    });
+
+    expect(consoleErrorSpy).not.toHaveBeenCalledWith(
+      'Error checking auth:',
+      'Failed to fetch',
+    );
+
+    consoleErrorSpy.mockRestore();
   });
 });
