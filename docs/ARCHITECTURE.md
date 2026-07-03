@@ -1,397 +1,450 @@
 # Arquitectura del Sistema
 
-> **FinanceMDM** — Sistema de Gestión de Inventario, Ventas y Contabilidad
-> Stack: Next.js 16.2 + TypeScript + Prisma + PostgreSQL
+> **FinanceMDM** es un **monolito modular multi-tenant**, **web-first**, con backend compartido para **web, mobile e integraciones HTTP**.  
+> La arquitectura actual usa **Next.js + Server Actions + Route Handlers + Prisma**, con una **evolución progresiva hacia arquitectura hexagonal**.
 
 ---
 
-## Índice
+## Quick path
 
-- [Stack Tecnológico](#stack-tecnológico)
-- [Estructura del Proyecto](#estructura-del-proyecto)
-- [Patrón Arquitectónico](#patrón-arquitectónico)
-- [Multi-tenant](#multi-tenant)
-- [Flujo de Autenticación](#flujo-de-autenticación)
-- [Server Actions vs API Routes](#server-actions-vs-api-routes)
-- [Feature Structure](#feature-structure)
-- [Flujo de Datos](#flujo-de-datos)
-- [Modelo de Seguridad](#modelo-de-seguridad)
-- [Decisiones de Diseño](#decisiones-de-diseño)
+1. **Entender el presente**: hoy el sistema tiene dos superficies de entrada: web y API HTTP.
+2. **Entender la decisión**: Server Actions no reemplazan completamente a Route Handlers; conviven porque atienden consumidores distintos.
+3. **Entender la dirección**: el objetivo es aislar dominio y casos de uso para que Next.js, Prisma y JWT queden en los bordes.
 
 ---
 
-## Stack Tecnológico
+## Resumen ejecutivo
+
+FinanceMDM está construido como una aplicación principal web sobre **Next.js App Router**, organizada por **features** y soportada por una base de datos **PostgreSQL** vía **Prisma**.
+
+La aplicación expone dos superficies de acceso:
+
+- **Web surface**: UI React + Server Actions para la app web principal.
+- **API surface**: Route Handlers HTTP para clientes mobile, integraciones, webhooks, exportaciones y compatibilidad externa.
+
+Ambas superficies comparten el mismo núcleo de reglas de negocio, autenticación, permisos y contexto multi-tenant, aunque ese desacople todavía está en construcción.
+
+La **north star** arquitectónica del proyecto es una **arquitectura hexagonal incremental**: mantener el monolito, pero desacoplando progresivamente el dominio de Next.js, Prisma, JWT y detalles de transporte.
+
+---
+
+## Estado actual vs dirección objetivo
+
+| Tema | Estado actual | Dirección objetivo |
+|------|---------------|-------------------|
+| Forma del sistema | Monolito modular | Monolito modular hexagonal |
+| Entrada web | Server Actions | Adapter de entrada web |
+| Entrada mobile / integraciones | Route Handlers HTTP | Adapter de entrada HTTP |
+| Lógica de negocio | Parcialmente mezclada con transporte | Casos de uso aislados |
+| Persistencia | Prisma cercano a la lógica | Prisma como adapter de salida |
+| Auth / tenant context | Centralizado parcialmente | Fuente única de verdad reusable |
+| Dependencias entre features | Existen acoplamientos cruzados | Contratos explícitos entre módulos |
+
+---
+
+## Stack tecnológico
 
 ```mermaid
 graph TD
-    subgraph Frontend
-        Next15[Next.js 16.2 App Router]
-        React19[React 19]
-        TS[TypeScript]
-        TW[Tailwind CSS + shadcn/ui]
-        Radix[Radix UI]
-        Mermaid[Mermaid]
+    subgraph Clients
+        Web["Web App (Next.js)"]
+        Mobile["Mobile Clients"]
+        Integrations["Integraciones / Webhooks"]
     end
 
-    subgraph Backend
-        SA[Server Actions]
-        API[API Routes legacy]
-        Prisma[Prisma ORM]
-        PG[(PostgreSQL)]
+    subgraph EntryPoints
+        SA["Server Actions"]
+        API["Route Handlers HTTP"]
     end
 
-    subgraph Auth
-        JWT[JWT + httpOnly cookies]
-        Bcrypt[bcryptjs]
+    subgraph Application
+        Services["Services / Casos de uso"]
+        Auth["Auth + Tenant Context + Permissions"]
+        Validation["Zod Validation"]
     end
 
-    subgraph Validation
-        Zod[Zod Schemas]
+    subgraph Infrastructure
+        Prisma["Prisma ORM"]
+        Postgres[("PostgreSQL")]
+        JWT["JWT + Cookies / Tokens"]
     end
 
-    Frontend --> SA
-    Frontend --> API
-    SA --> Prisma
-    API --> Prisma
-    SA --> JWT
-    SA --> Zod
-    Prisma --> PG
+    Web --> SA
+    Mobile --> API
+    Integrations --> API
+
+    SA --> Validation
+    API --> Validation
+    Validation --> Services
+    Services --> Auth
+    Services --> Prisma
+    Auth --> JWT
+    Prisma --> Postgres
 ```
 
-### Capas
+### Capas principales
 
-| Capa | Tecnología | Propósito |
-|------|-----------|-----------|
-| **UI** | React 19 + Tailwind + shadcn/ui | Componentes de interfaz |
-| **Ruteo** | Next.js 16.2 App Router | Navegación y layouts |
-| **Server Actions** | `'use server'` + `withAction` Wrapper | Operaciones CRUD, lógica de negocio |
-| **API (legacy)** | Next.js Route Handlers | Exportación CSV/PDF, webhooks |
-| **ORM** | Prisma ORM | Acceso a base de datos |
-| **Base de datos** | PostgreSQL (Railway) | Persistencia |
-| **Auth** | JWT + httpOnly cookies | Autenticación |
+| Capa | Tecnología | Responsabilidad |
+|------|------------|-----------------|
+| UI | React 19 + Tailwind + shadcn/ui + Radix | Experiencia de usuario web |
+| Routing | Next.js App Router | Navegación, layouts, segmentación de rutas |
+| Web entry | Server Actions | Adaptador de entrada para la app web |
+| HTTP entry | Route Handlers | Adaptador de entrada para mobile e integraciones |
+| Application | Services + validaciones + orquestación | Casos de uso y reglas de aplicación |
+| Persistence | Prisma ORM | Acceso a datos |
+| Database | PostgreSQL | Persistencia relacional |
+| Auth | JWT + sesiones + cookies httpOnly | Identidad, sesión, permisos |
 
 ---
 
-## Estructura del Proyecto
+## Principio central de diseño
 
-```
-TCP/
-├── src/
-│   ├── app/                        # App Router de Next.js
-│   │   ├── api/                    # Route Handlers (legacy — solo exportación y webhooks)
-│   │   ├── busy/                   # Dashboard administrativo (app protegida)
-│   │   ├── login/                  # Página de login
-│   │   ├── register/               # Registro y onboarding
-│   │   └── models/                 # Modelos compartidos TypeScript
-│   │
-│   ├── components/                 # Componentes React globales
-│   │   └── ui/                     # Componentes base shadcn/ui
-│   │
-│   ├── features/                   # Módulos del dominio (feature-based)
-│   │   ├── auth/                   #   Autenticación
-│   │   ├── productos/              #   Productos
-│   │   ├── ventas/                 #   Ventas
-│   │   ├── contabilidad/           #   Contabilidad (multi-archivo)
-│   │   └── ...                     #   38+ features más
-│   │
-│   ├── lib/                        # Utilidades compartidas
-│   │   ├── server-actions/         #   Wrapper `withAction`
-│   │   ├── services/               #   Servicios de dominio (tenant-scope, etc.)
-│   │   ├── auth-middleware.ts      #   Middleware de autenticación
-│   │   └── permissions.ts          #   Permisos por rol
-│   │
-│   ├── hooks/                      # Custom hooks globales
-│   ├── contexts/                   # React contexts
-│   ├── types/                      # Tipos globales
-│   └── generated/                  # Código generado (Prisma client)
-│
-├── prisma/
-│   ├── schema.prisma               # Esquema de base de datos (~80 modelos)
-│   ├── migrations/                 # Migraciones SQL
-│   └── seed/                       # Datos de prueba
-│
-├── docs/                           # Documentación (esta)
-│   ├── modules/                    #   Docs por feature
-│   ├── guides/                     #   Guías operativas
-│   └── assets/                     #   Diagramas e imágenes
-│
-├── openspec/                       # OpenSpec SDD artifacts
-├── scripts/                        # Scripts de utilidad
-├── Dockerfile                      # Despliegue contenedorizado
-└── docker-compose.yml              # Orquestación local
-```
+> **La lógica de negocio no debe vivir en la superficie de entrada.**
+
+Eso significa:
+
+- **Server Actions** orquestan la entrada desde la web.
+- **Route Handlers** adaptan HTTP para mobile e integraciones.
+- **Services / application layer** concentran la lógica reutilizable.
+- **Prisma**, **JWT**, cookies y headers son detalles de infraestructura.
+
+Cuando una capacidad debe ser consumida por **web y mobile**, la regla es:
+
+> **La lógica compartida debe vivir en servicios reutilizables, no duplicada entre Action y Route Handler.**
 
 ---
 
-## Patrón Arquitectónico
+## Superficies de acceso
 
-El sistema sigue una arquitectura **Feature-based Modular** con **Server Actions** como capa principal de comunicación backend-frontend.
+## 1) Web surface
 
-### Principios
+Consumidor principal: **la aplicación web**.
 
-1. **Feature-based organization**: cada módulo de negocio vive en `src/features/<feature>/` con su propia estructura de actions, componentes, tipos y schemas.
-2. **Server Actions como API primaria**: las Server Actions reemplazan a Redux/RTK Query para nuevas features. Se invocan directamente desde componentes cliente.
-3. **withAction wrapper**: toda Server Action se envuelve con `withAction()` que provee autenticación automática, manejo de errores, y retorno consistente `{ success, data?, error? }`.
-4. **Multi-tenant por fila**: todos los modelos de datos tienen `tenantId` para aislamiento por empresa.
-5. **Validación en servidor**: Zod schemas validan toda entrada en las Server Actions.
+### Mecanismo
+- Componentes React
+- Server Components
+- Server Actions con `withAction`
 
-```mermaid
-graph LR
-    subgraph Cliente
-        Comp[Componente React]
-        Hook[Custom Hook]
-    end
+### Cuándo usarlo
+- Flujos exclusivos de la app web
+- CRUD ligado directamente a UI de Next.js
+- Interacciones donde no hace falta un contrato HTTP público
 
-    subgraph Servidor
-        SA[Server Action]
-        Auth[withAction wrapper]
-        Valid[Zod Validation]
-        Biz[Lógica de Negocio]
-        DB[(Prisma)]
-    end
+### Beneficios
+- Menos boilerplate
+- Integración natural con App Router
+- Modelo más directo para formularios, loaders y mutaciones
 
-    Comp -->|invoca| SA
-    SA --> Auth
-    Auth --> Valid
-    Valid --> Biz
-    Biz --> DB
-    DB -->|respuesta| Biz
-    Biz -->|{success, data}| Comp
-```
+---
+
+## 2) API surface
+
+Consumidores principales:
+
+- app mobile
+- integraciones externas
+- webhooks
+- exportaciones
+- automatizaciones
+
+### Mecanismo
+- Route Handlers en `src/app/api/**`
+
+### Cuándo usarlo
+- Cuando existe un consumidor fuera de la app web
+- Cuando hace falta contrato HTTP explícito
+- Cuando se necesita versionado de API
+- Cuando hay integraciones o callbacks externos
+
+### Beneficios
+- Interoperabilidad
+- Reuso de backend
+- Contrato desacoplado del cliente web
 
 ---
 
 ## Multi-tenant
 
-El sistema implementa multi-tenant por fila (*row-level isolation*).
+El sistema implementa **aislamiento por tenant a nivel de fila** (*row-level isolation en aplicación*).
 
 ```mermaid
 erDiagram
-    Tenant ||--o{ User : "tiene miembros"
-    Tenant ||--o{ MiEmpresa : "configuración"
-    Tenant ||--o{ Producto : "posee"
-    Tenant ||--o{ Venta : "registra"
-    Tenant ||--|{ TenantLicense : "licencia activa"
-
-    User }o--|| TenantMembership : "pertenece a"
-    TenantMembership }o--|| Tenant : "membresía"
-
-    TenantLicense }o--|| Plan : "basado en"
+    Tenant ||--o{ TenantMembership : memberships
+    User ||--o{ TenantMembership : belongs_to
+    Tenant ||--o{ TenantLicense : has
+    Tenant ||--o{ Producto : owns
+    Tenant ||--o{ Venta : records
+    Tenant ||--o{ Categoria : owns
+    Tenant ||--o{ Cliente : owns
 ```
 
-### Mecanismo
+### Reglas
 
-1. Cada usuario puede pertenecer a múltiples tenants (`TenantMembership`).
-2. El header `x-tenant-id` opcional permite cambiar de contexto.
-3. `resolveTenantContext()` en `auth-middleware.ts` resuelve el tenant activo.
-4. `requireTenant()` en `tenant-scope.ts` es el guard que asegura que toda operación tenga tenant.
-5. Los límites del plan se leen desde la `TenantLicense` activa y se inyectan en `AuthenticatedUser.planLimits`.
+1. Todo recurso de negocio relevante pertenece a un `tenantId`.
+2. Un usuario puede pertenecer a múltiples tenants mediante `TenantMembership`.
+3. El tenant activo se resuelve desde sesión / token / contexto de request.
+4. Los límites del plan se calculan desde la licencia activa del tenant.
+5. Ninguna operación de negocio debe ejecutarse sin contexto tenant cuando el caso de uso lo requiere.
+
+### Componentes clave
+
+- `resolveTenantContext()`  
+- `requireTenant()`  
+- validaciones de permisos por rol / tenant role  
+- límites y features de plan cargados desde `TenantLicense`
 
 ---
 
-## Flujo de Autenticación
+## Autenticación y autorización
+
+La autenticación actual se basa en:
+
+- **JWT**
+- **sesión persistida**
+- **cookies httpOnly** para la web
+- **headers/tokens** para clientes HTTP
+
+### Flujo general
 
 ```mermaid
 sequenceDiagram
-    participant U as Usuario
-    participant C as Cliente React
-    participant SA as Server Action
-    participant MW as Auth Middleware
-    participant DB as Base de Datos
+    participant Client
+    participant Entry as Action/Route
+    participant Auth as Auth Layer
+    participant DB as Database
 
-    U->>C: Ingresa email + password
-    C->>SA: loginAction({ email, password })
-    SA->>MW: withAction (pública, sin auth)
-    SA->>DB: Busca usuario por email
-    DB-->>SA: User + password hash
-    SA->>SA: bcrypt.compare(password, hash)
-    alt Credenciales válidas
-        SA->>SA: Genera JWT (auth_token)
-        SA->>SA: Genera Refresh Token
-        SA->>SA: Setea cookies httpOnly
-        SA-->>C: { success: true, user }
-        C->>C: Redirige a /busy
-    else Credenciales inválidas
-        SA-->>C: { success: false, error }
-        C->>U: Muestra error
-    end
-
-    Note over SA,MW: Rutas protegidas
-    C->>SA: getXxxAction()
-    SA->>MW: withAction → verifica JWT cookie
-    MW->>MW: jwt.verify(token)
-    MW->>MW: resolveTenantContext()
-    MW-->>SA: AuthenticatedUser { userId, tenantId, planLimits }
+    Client->>Entry: request
+    Entry->>Auth: resolve identity
+    Auth->>DB: validate session + user + tenant
+    DB-->>Auth: session/user/context
+    Auth-->>Entry: authenticated user
+    Entry->>Entry: validate input
+    Entry->>Entry: execute use case
+    Entry-->>Client: response
 ```
 
-### Flujo de Onboarding
+### Riesgo actual
 
-1. Registro → `registerAction()` crea usuario + tenant + asociación
-2. Verificación de email (opcional)
-3. Onboarding multi-paso: `ONBOARDING_MID_FLOW` (pending_email_verification, selecting_user_type, etc.)
-4. Redirección a `/onboarding` hasta completar
+Hoy existe **duplicación parcial** entre mecanismos usados por:
+
+- middleware / auth HTTP
+- resolución de usuario actual para Server Actions
+
+### Dirección objetivo
+
+Una **fuente única de verdad** para:
+
+- validar sesión
+- resolver usuario
+- resolver tenant activo
+- calcular permisos
+- exponer contexto autenticado reutilizable desde cualquier adapter de entrada
 
 ---
 
-## Server Actions vs API Routes
+## Estructura del proyecto
 
-| Aspecto | Server Actions | API Routes (legacy) |
-|---------|---------------|---------------------|
-| **Uso principal** | CRUD, queries, mutations | Exportación CSV/PDF, webhooks |
-| **Autenticación** | Automática via `withAction` | Manual via `withAuth` middleware |
-| **Llamada** | Directa desde componente | fetch() HTTP |
-| **Cache** | `revalidatePath()` | HTTP cache headers |
-| **Multi-tenant** | Automático via `requireTenant()` | Manual via header |
-| **Cuando usar** | Siempre para nuevas features | Solo exportación de archivos |
-
----
-
-## Feature Structure
-
-Cada feature sigue esta estructura estándar:
-
-```
-src/features/<feature>/
-├── actions.ts               # Server Actions principales
-├── actions-<subfeature>.ts  # Server Actions agrupadas (ej: actions-crud.ts)
-├── components/              # Componentes React del feature
-│   ├── <Componente>.tsx
-│   └── ...
-├── hooks/                   # Custom hooks específicos (opcional)
-├── api/                     # API Handlers (solo legacy)
-├── schemas.ts               # Schemas Zod de validación
-├── types.ts                 # Tipos TypeScript locales
-└── index.ts                 # Barrel export
+```text
+TCP/
+├── src/
+│   ├── app/                    # App Router + Route Handlers
+│   ├── components/             # UI global y componentes compartidos
+│   ├── features/               # Organización principal por dominios/feature modules
+│   ├── lib/                    # Infraestructura, auth, server-actions, utilidades
+│   ├── hooks/                  # Hooks compartidos
+│   ├── contexts/               # React contexts
+│   ├── generated/              # Código generado (Prisma client)
+│   └── types/                  # Tipos globales
+├── prisma/
+│   ├── schema.prisma
+│   ├── migrations/
+│   └── seed/
+├── docs/
+├── scripts/
+└── openspec/
 ```
 
 ---
 
-## Flujo de Datos General
+## Organización modular por features
+
+La estructura por features es la base del diseño actual.
+
+Cada módulo idealmente agrupa:
+
+- actions
+- components
+- hooks
+- services
+- schemas
+- types
+
+### Intención
+
+Reducir el acoplamiento por capas técnicas y acercar el código al dominio.
+
+### Riesgo actual
+
+Existen dependencias cruzadas entre features. Eso no es automáticamente incorrecto, pero sí indica que algunos límites de módulo todavía no están maduros.
+
+### Regla deseada
+
+Los módulos deberían colaborar a través de:
+
+- servicios compartidos bien definidos
+- contratos explícitos
+- tipos y adapters controlados
+
+No a través de imports arbitrarios de componentes, hooks o detalles internos de otra feature.
+
+---
+
+## Server Actions vs Route Handlers
+
+| Aspecto | Server Actions | Route Handlers |
+|---------|----------------|----------------|
+| Consumidor principal | Web | Mobile / integraciones |
+| Contrato | Interno a Next.js | HTTP explícito |
+| Ergonomía | Alta para UI web | Alta para clientes externos |
+| Acoplamiento a framework | Alto | Medio |
+| Reuso externo | Bajo | Alto |
+| Caso ideal | Flujos web-only | APIs compartidas o públicas |
+
+### Decisión arquitectónica
+
+La coexistencia entre ambos mecanismos es **intencional**.
+
+No se consideran Route Handlers como “legacy” por defecto.  
+Se consideran:
+
+- **parte activa de la arquitectura** cuando sirven mobile o integraciones;
+- **deuda técnica** cuando duplican innecesariamente lógica ya resuelta en servicios compartidos.
+
+---
+
+## Hacia arquitectura hexagonal
+
+## Objetivo
+
+La meta arquitectónica **no** es fragmentar el sistema en microservicios.
+
+La meta es:
+
+- desacoplar dominio del framework,
+- aislar casos de uso,
+- convertir transporte y persistencia en adapters reemplazables,
+- mantener un monolito modular de alta cohesión.
+
+## Modelo objetivo
 
 ```mermaid
-graph TD
-    Auth[Autenticación] --> Admin[Admin / Mi Empresa]
-    Admin --> Cat[Categorías]
-    Admin --> Uni[Unidades]
-    Admin --> Ven[Proveedores]
-    Admin --> PV[Puntos de Venta]
-    Admin --> Alm[Almacenes]
+flowchart LR
+    Web["Web UI"] --> InWeb["Web Adapter (Server Actions)"]
+    Mobile["Mobile / HTTP"] --> InHttp["HTTP Adapter (Route Handlers)"]
 
-    Cat --> Prod[Productos]
-    Uni --> Prod
-    Ven --> Prod
-    Prod --> LP[Listas de Precios]
+    InWeb --> App["Application / Use Cases"]
+    InHttp --> App
 
-    Prod --> Ventas[Ventas POS]
-    Prod --> Comp[Compras]
-    Prod --> Trans[Transferencias]
-    Prod --> Mermas[Mermas]
-    Prod --> ProdOp[Producción]
+    App --> PortRepo["Repository Ports"]
+    App --> PortAuth["Auth / Tenant Ports"]
+    App --> PortFiles["External Service Ports"]
 
-    Ventas --> Fact[Facturación]
-    Ventas --> Arq[Arqueo de Caja]
-    Ventas --> CD[Cuadre Diario]
-
-    Ventas --> Conta[Contabilidad]
-    Comp --> Conta
-    Fact --> Conta
-    CD --> Conta
-
-    Conta --> RF[Reportes Financieros]
-    Conta --> RB[Reconciliación Bancaria]
-
-    Emp[Empleados] --> PS[Pago Salario]
-    PS --> Conta
+    PortRepo --> PrismaAdapter["Prisma Adapter"]
+    PortAuth --> JwtAdapter["JWT / Session Adapter"]
+    PortFiles --> ExternalAdapters["Storage / Mail / Others"]
 ```
 
----
+## Qué significa “hexagonal” en este proyecto
 
-## Modelo de Seguridad
+1. **Casos de uso primero**  
+   La lógica vive en application/domain, no en Next.js.
 
-### Roles
+2. **Ports explícitos**  
+   Repositorios, auth context y servicios externos se abstraen mediante contratos.
 
-| Rol | Alcance | Descripción |
-|-----|---------|-------------|
-| `superadmin` | Global | Administración del sistema completo |
-| `admin` | Global | Gestión de usuarios, licencias, planes |
-| `manager` | Tenant | Dueño/gerente de la empresa |
-| `economico` | Tenant | Acceso a contabilidad y finanzas |
-| `dependiente` | Tenant | Operador (ventas, inventario) |
+3. **Adapters de entrada**  
+   Server Actions y Route Handlers se limitan a traducir requests a casos de uso.
 
-### Permisos
-
-- Los permisos se verifican en cada Server Action via `user.role`.
-- El tenant scope se resuelve automáticamente y se inyecta en `AuthenticatedUser`.
-- `requireTenant()` lanza `ActionError` si no hay tenant activo.
-- `requireFeature()` verifica que el plan del tenant incluya un feature específico.
-
-### Cookies
-
-- `auth_token`: JWT de acceso (httpOnly, secure, sameSite=strict)
-- `refreshToken`: Refresh token (httpOnly, secure, sameSite=strict)
-- El cliente NUNCA almacena el JWT en memoria JS.
+4. **Adapters de salida**  
+   Prisma, JWT, correo, storage y otros sistemas quedan en infraestructura.
 
 ---
 
+## Plan de migración incremental
 
+## Fase 1 — Alinear documentación y reglas
 
-## Server Action Pattern
+- Documentar formalmente web surface + API surface
+- Dejar de llamar “legacy” a todo `app/api`
+- Declarar criterios de uso para Actions vs Routes
 
-Todas las operaciones CRUD usan `withAction()` wrapper:
+## Fase 2 — Centralizar contexto autenticado
 
-```typescript
-export const getXAction = withAction(async (input, user) => {
-  const tenantId = requireTenant(user)
-  return prisma.x.findMany({ where: { tenantId } })
-})
-```
+- Unificar resolución de usuario, sesión, tenant y permisos
+- Exponer un contrato reusable para Actions y Routes
 
-**Response shape:** `{ success: true, data: T }` | `{ success: false, error: { message, code? } }`
+## Fase 3 — Extraer casos de uso compartidos
 
-## Demo Seeding
+- Mover lógica reutilizable desde entrypoints hacia services / use cases
+- Evitar duplicaciones entre clientes web y mobile
 
-| Plan | Seed | Contenido |
-|------|------|-----------|
-| Básico | `base-seed.ts` | 20 prod, 1 almacén, 1 PV, CUP+USD |
-| Profesional | + `professional-seed.ts` | +25 prod, +1 almacén, EUR, ventas |
-| Empresarial | + `enterprise-seed.ts` | +50 prod, +2 almacenes, MXN, compras/transfers |
+## Fase 4 — Definir puertos
 
-Orquestador: `src/lib/services/demo-seed.ts` → resuelve perfil y ejecuta seeds en transacción.
+- Repositorios
+- auth context
+- servicios externos
+- storage / mensajería / integraciones
 
-## EAN-13 / CLAS Classifier
+## Fase 5 — Endurecer límites modulares
 
-Feature flag: `categorias-ean13` en Plan + `usaCodigoEan13` en MiEmpresa.
-- CLAS file: `public/clasificador.md` → parseado en `src/lib/clas-classifier.ts`
-- Labels dinámicos: helper `getCategoryLabels(usaEan13)` alterna subcategoría/específico CLAS
+- Reducir imports cruzados entre features
+- Favorecer contratos explícitos y composición controlada
 
-## Cron Jobs
+## Fase 6 — Aislar infraestructura
 
-`cleanupExpiredDemoLicenciasAction` → cada 1h desactiva demos expiradas (`isDemo:true AND expiracion < now()`)
-
-## Deploy Flow
-
-1. Push a `codex/upgrade-next-16`
-2. Railway build + deploy automático
-3. Migraciones: `prisma db push` automático en startup
-
-## Decisiones de Diseño
-
-| Decisión | Opción descartada | Motivo |
-|----------|-------------------|--------|
-| Server Actions sobre API Routes | REST API tradicional | Menos boilerplate, tipado automático, cache integrada |
-| `withAction` wrapper | Raw `'use server'` | Manejo consistente de auth, errores y response shape |
-| Feature-based folders | Capas técnicas (controllers/services) | Cohesión de dominio, facilita navegación |
-| Row-level multi-tenant | Base de datos por tenant | Simplicidad operativa, costo compartido |
-| Zod en servidor | Zod en cliente + servidor | Single source of truth, evita duplicación |
-| JWT en cookies | JWT en localStorage | Seguridad (XSS), httpOnly, sameSite |
+- Prisma como adapter
+- JWT/sesión como adapter
+- Next.js como framework de borde, no de núcleo
 
 ---
 
-## Convenciones de Código
+## Riesgos técnicos actuales
 
-- **Nombres de actions**: `getXxxAction`, `createXxxAction`, `updateXxxAction`, `deleteXxxAction`
-- **Response shape**: `{ success: true, data: T }` o `{ success: false, error: { message, code? } }`
-- **IDS**: formato cuid (por defecto) o UUID
-- **Timestamps**: `createdAt`, `updatedAt` automáticos via Prisma
-- **Tenant ID**: columna `tenantId` con índice en todos los modelos multi-tenant
-- **Borrado**: soft delete desaconsejado — se usa `isActive` donde necesario
+| Riesgo | Impacto |
+|-------|---------|
+| Documentación desalineada con el sistema real | Decisiones confusas y expectativas incorrectas |
+| Duplicación parcial de auth / tenant resolution | Drift funcional entre web y mobile |
+| Acoplamiento entre features | Cambios caros y menor mantenibilidad |
+| Archivos demasiado grandes en módulos críticos | Menor testabilidad y revisión más difícil |
+| Frontera difusa entre transporte y negocio | Dificulta la migración a hexagonal |
+
+---
+
+## Reglas arquitectónicas recomendadas
+
+1. **No duplicar reglas de negocio entre Action y Route.**
+2. **Toda capacidad compartida entre web y mobile debe vivir en services/use cases.**
+3. **Toda operación multi-tenant debe validar contexto tenant de forma explícita.**
+4. **Los módulos no deben depender libremente de detalles internos de otros módulos.**
+5. **Prisma no debería convertirse en la API del dominio; debería ser un detalle de persistencia.**
+6. **Next.js no debe definir las reglas del negocio; solo su transporte y rendering.**
+
+---
+
+## Checklist de revisión
+
+- [ ] El lector entiende que el sistema es **web-first**, no web-only.
+- [ ] El lector entiende por qué existen **Server Actions** y **Route Handlers** al mismo tiempo.
+- [ ] El lector entiende que el objetivo es **hexagonal incremental**, no reescritura total.
+- [ ] El lector puede distinguir transporte, aplicación, dominio e infraestructura.
+- [ ] El lector sabe cuáles son las deudas reales y cuáles son decisiones intencionales.
+
+---
+
+## Próximo paso
+
+Después de esta documentación, el siguiente paso recomendado es crear un documento corto de **reglas de frontera arquitectónica** con:
+
+- criterio de uso de Server Actions vs Route Handlers,
+- contrato único de auth/tenant context,
+- y convenciones para colaboración entre features.

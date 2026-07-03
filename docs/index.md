@@ -10,6 +10,7 @@
 | Documento | Propósito |
 |-----------|-----------|
 | [Arquitectura del Sistema](ARCHITECTURE.md) | Stack, patrones, multi-tenant, flujo de datos, estructura del proyecto |
+| [Reglas de Frontera Arquitectónica](ARCHITECTURE-RULES.md) | Cuándo usar Actions, Routes, Services, adapters y cómo avanzar hacia hexagonal |
 | [Modelo de Datos](DATA_MODEL.md) | Diagramas ER, modelos Prisma por dominio, convenciones |
 | [Glosario de Términos](GLOSSARY.md) | Definiciones de términos de negocio y técnicos |
 
