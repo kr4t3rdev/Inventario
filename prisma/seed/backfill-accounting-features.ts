@@ -99,57 +99,15 @@ async function backfillPlanAccountingFeatures(): Promise<number> {
   return updatedPlans;
 }
 
-async function backfillLicenseAccountingFeatures(): Promise<number> {
-  const licenses = await prisma.tenantLicense.findMany({
-    select: {
-      tenantLicenseId: true,
-      features: true,
-      plan: {
-        select: {
-          nombre: true,
-        },
-      },
-    },
-  });
-
-  let updatedLicenses = 0;
-
-  for (const license of licenses) {
-    const planName = license.plan?.nombre;
-    if (!planName) {
-      console.warn(`⚠️ Se omite licencia sin plan asociado: ${license.tenantLicenseId}`);
-      continue;
-    }
-
-    const mergedFeatures = mergeAccountingFeatures(license.features, planName);
-    if (!mergedFeatures) {
-      console.warn(`⚠️ Se omite licencia con plan sin preset conocido: ${planName}`);
-      continue;
-    }
-
-    await prisma.tenantLicense.update({
-      where: { tenantLicenseId: license.tenantLicenseId },
-      data: {
-        features: mergedFeatures as Prisma.InputJsonValue,
-      },
-    });
-
-    updatedLicenses++;
-  }
-
-  return updatedLicenses;
-}
-
 export async function backfillAccountingFeatures(): Promise<{
   updatedPlans: number;
   updatedLicenses: number;
 }> {
   const updatedPlans = await backfillPlanAccountingFeatures();
-  const updatedLicenses = await backfillLicenseAccountingFeatures();
 
   return {
     updatedPlans,
-    updatedLicenses,
+    updatedLicenses: 0,
   };
 }
 

@@ -117,7 +117,9 @@ export async function createTenantForUser(
         maxUsuarios: plan!.maxUsuarios,
         maxAlmacenes: plan!.maxAlmacenes,
         maxProductos: plan!.maxProductos,
-        features: plan!.features as any,
+        maxClientes: plan!.maxClientes,
+        features: null,
+        featureOverrides: {},
       }
     })
 
@@ -134,7 +136,7 @@ export async function createTenantForUser(
     return {
       tenantId: tenant.tenantId,
       membershipId: membership.membershipId,
-      licenseId: license.licenseId,
+      licenseId: license.tenantLicenseId,
     }
   })
 

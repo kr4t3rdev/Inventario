@@ -52,6 +52,7 @@ describe('createDemoTenantForPlan', () => {
       maxUsuarios: 5,
       maxAlmacenes: 5,
       maxProductos: 5000,
+      maxClientes: 800,
       features: { productos: true, clientes: true },
     } as never);
 
@@ -91,7 +92,9 @@ describe('createDemoTenantForPlan', () => {
         maxUsuarios: 5,
         maxAlmacenes: 5,
         maxProductos: 5000,
-        features: { productos: true, clientes: true },
+        maxClientes: 800,
+        features: null,
+        featureOverrides: {},
         expiracion: new Date('2026-07-02T10:00:00.000Z'),
       }),
     });

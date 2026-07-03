@@ -4,11 +4,13 @@ import jwt from 'jsonwebtoken'
 import { getJwtSecret } from './secrets'
 import { checkApiPermission, checkTenantApiPermission, type UserRole } from './permissions'
 import { normalizeTenantRole, type TenantRole } from './auth/roles'
+import { resolveEffectivePlanFeatures } from './plan-features'
 
 export interface PlanLimits {
   maxUsuarios: number
   maxAlmacenes: number
   maxProductos: number
+  maxClientes: number
 }
 
 /**
@@ -64,6 +66,7 @@ export async function resolveTenantContext(
         plan: {
           select: {
             nombre: true,
+            features: true,
           },
         },
       },
@@ -75,13 +78,26 @@ export async function resolveTenantContext(
         maxUsuarios: license.maxUsuarios,
         maxAlmacenes: license.maxAlmacenes,
         maxProductos: license.maxProductos,
+        maxClientes: license.maxClientes,
       };
     }
 
-    let planFeatures: Record<string, boolean> | undefined;
-    if (license?.features && typeof license.features === 'object') {
-      planFeatures = license.features as Record<string, boolean>;
-    }
+    const planFeatures = license
+      ? resolveEffectivePlanFeatures({
+          planFeatures:
+            license.plan?.features && typeof license.plan.features === 'object'
+              ? (license.plan.features as Record<string, boolean>)
+              : undefined,
+          featureOverrides:
+            license.featureOverrides && typeof license.featureOverrides === 'object'
+              ? (license.featureOverrides as Record<string, boolean>)
+              : undefined,
+          legacyLicenseFeatures:
+            license.features && typeof license.features === 'object'
+              ? (license.features as Record<string, boolean>)
+              : undefined,
+        })
+      : undefined;
 
     return {
       tenantId: membership.tenantId,
@@ -311,7 +327,7 @@ export function withAuthGet(
     request: NextRequest,
     context: any,
     user: AuthenticatedUser
-  ) => Promise<NextResponse>
+  ) => Promise<Response>
 ) {
   return async (request: NextRequest, context: any) => {
     const result = await authenticateUser(request)
@@ -332,7 +348,7 @@ export function withAuthPost(
     request: NextRequest,
     context: any,
     user: AuthenticatedUser
-  ) => Promise<NextResponse>
+  ) => Promise<Response>
 ) {
   return async (request: NextRequest, context: any) => {
     const result = await authenticateUser(request)
@@ -353,7 +369,7 @@ export function withAuth(
     request: NextRequest,
     context: any,
     user: AuthenticatedUser
-  ) => Promise<NextResponse>
+  ) => Promise<Response>
 ) {
   return async (request: NextRequest, context: any) => {
     const url = new URL(request.url)

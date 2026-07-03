@@ -82,12 +82,14 @@ export const createLicenciaSchema = z.object({
   inicio: z.string(),
   expiracion: z.string(),
   activa: z.boolean().optional().default(true),
+  featureOverrides: z.record(z.boolean()).optional().default({}),
 });
 
 export const updateLicenciaSchema = z.object({
   id: z.string().min(1),
   activa: z.boolean().optional(),
   expiracion: z.string().optional(),
+  featureOverrides: z.record(z.boolean()).optional(),
 });
 
 export const createDemoTenantSchema = z.object({

@@ -1334,7 +1334,9 @@ export const convertDemoToPaidPlanAction = withAction(
 				maxUsuarios: plan.maxUsuarios,
 				maxAlmacenes: plan.maxAlmacenes,
 				maxProductos: plan.maxProductos,
-				features: plan.features as Record<string, boolean>,
+				maxClientes: plan.maxClientes,
+				features: null,
+				featureOverrides: {},
 			},
 		});
 

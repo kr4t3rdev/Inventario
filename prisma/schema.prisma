@@ -33,11 +33,11 @@ model Categoria {
 
 model Unidad {
   unidadId  String     @id @default(cuid())
-  tenantId  String
   nombre    String
-  simbolo   String
   createdAt DateTime   @default(now())
   updatedAt DateTime   @updatedAt
+  simbolo   String
+  tenantId  String
   productos Producto[]
   tenant    Tenant     @relation(fields: [tenantId], references: [tenantId])
 
@@ -148,6 +148,13 @@ model Tenant {
   createdAt                  DateTime                   @default(now())
   updatedAt                  DateTime                   @updatedAt
   contabilidadTimezone       String                     @default("America/Argentina/Buenos_Aires")
+  affiliateProfile           AffiliateProfile?
+  affiliateCreditBalance     AffiliateCreditBalance?
+  affiliatePerkGrants        AffiliatePerkGrant[]
+  referralPerkRequests       ReferralPerkRequest[]
+  referralsSent              AffiliateReferral[]        @relation("ReferrerAffiliateReferrals")
+  referralsReceived          AffiliateReferral[]        @relation("ReferredAffiliateReferrals")
+  affiliateCommissionEntries AffiliateCommissionLedger[] @relation("ReferrerAffiliateCommissionEntries")
   ajustesBancarios           AjusteBancario[]
   almacenes                  Almacen[]
   anticipos                  Anticipo[]
@@ -184,7 +191,6 @@ model Tenant {
   prestamosCash              PrestamoCash[]
   productos                  Producto[]
   puntosDeVenta              PuntoDeVenta[]
-  purchaseAllocations        PurchaseAllocation[]
   recetas                    Receta[]
   recetasIngredientes        RecetaIngrediente[]
   reconciliacionesGasto      ReconciliacionGasto[]
@@ -194,6 +200,7 @@ model Tenant {
   stockUbicaciones           StockUbicacion[]
   transferencias             Transferencia[]
   transferenciasBancarias    TransferenciaBancaria[]
+  unidades                   Unidad[]
   valesSalida                ValeSalida[]
   valesSalidaItem            ValeSalidaItem[]
   vendors                    Vendor[]
@@ -206,13 +213,13 @@ model Tenant {
   backupPlans                BackupPlan[]
   facturas                   Factura[]
   periodosContables          PeriodoContable[]
+  purchaseAllocations        PurchaseAllocation[]
+  reviewPrompts              ReviewPrompt[]
+  reviews                    Review[]
   seriesFacturacion          SerieFacturacion[]
   licencias                  TenantLicense[]
   memberships                TenantMembership[]
   turnosPos                  TurnoPuntoVenta[]
-  unidades                   Unidad[]
-  reviews                    Review[]
-  reviewPrompts              ReviewPrompt[]
 
   @@index([slug])
   @@map("tenants")
@@ -241,8 +248,6 @@ model TenantLicense {
   tenantLicenseId String   @id @default(cuid())
   tenantId        String
   planId          String?
-  isDemo          Boolean  @default(false)
-  createdBy       String?
   activa          Boolean  @default(true)
   inicio          DateTime @default(now())
   expiracion      DateTime
@@ -251,9 +256,20 @@ model TenantLicense {
   maxUsuarios     Int      @default(1)
   maxAlmacenes    Int      @default(1)
   maxProductos    Int      @default(100)
+  maxClientes     Int      @default(200)
+  listPriceUsd    Decimal? @db.Decimal(10, 2)
+  creditAppliedUsd Decimal? @db.Decimal(10, 2)
+  finalPriceUsd   Decimal? @db.Decimal(10, 2)
+  creditSnapshotUsd Decimal? @db.Decimal(10, 2)
   features        Json?
+  featureOverrides Json?
+  isDemo          Boolean  @default(false)
+  createdBy       String?
   plan            Plan?    @relation(fields: [planId], references: [planId])
   tenant          Tenant   @relation(fields: [tenantId], references: [tenantId], onDelete: Cascade)
+  confirmedAffiliateReferrals AffiliateReferral[] @relation("ConfirmedAffiliateLicense")
+  sourceAffiliateCommissions AffiliateCommissionLedger[] @relation("AffiliateSourceLicense")
+  appliedAffiliateCommissions AffiliateCommissionLedger[] @relation("AffiliateAppliedLicense")
 
   @@index([tenantId])
   @@index([planId])
@@ -356,9 +372,6 @@ model ArqueoCaja {
   billetes100Cup        Int             @default(0)
   billetes50Cup         Int             @default(0)
   billetes20Cup         Int             @default(0)
-  billetes10Cup         Int             @default(0)
-  billetes5Cup          Int             @default(0)
-  billetes1Cup          Int             @default(0)
   monedasCup            Int             @default(0)
   billetes100Usd        Int             @default(0)
   billetes50Usd         Int             @default(0)
@@ -383,6 +396,9 @@ model ArqueoCaja {
   contabilizado         Boolean         @default(false)
   createdAt             DateTime        @default(now())
   updatedAt             DateTime        @updatedAt
+  billetes10Cup         Int             @default(0)
+  billetes1Cup          Int             @default(0)
+  billetes5Cup          Int             @default(0)
   puntoDeVenta          PuntoDeVenta    @relation(fields: [puntoDeVentaId], references: [pvId])
   tenant                Tenant          @relation(fields: [tenantId], references: [tenantId])
   turno                 TurnoPuntoVenta @relation(fields: [turnoId], references: [id], onDelete: Cascade)
@@ -523,9 +539,9 @@ model VentaItem {
   total          Int
   createdAt      DateTime             @default(now())
   updatedAt      DateTime             @updatedAt
+  allocations    PurchaseAllocation[]
   producto       Producto             @relation(fields: [productoId], references: [id], onDelete: Cascade)
   venta          Venta                @relation(fields: [ventaId], references: [ventaId], onDelete: Cascade)
-  allocations    PurchaseAllocation[]
 
   @@map("venta_items")
 }
@@ -613,28 +629,28 @@ model User {
   sessions                 UserSession[]
   backupLogs               BackupLog[]
   backupPlans              BackupPlan[]
-  tenantMemberships        TenantMembership[]
-  reviews                  Review[]
   reviewPrompts            ReviewPrompt[]
+  reviews                  Review[]
+  tenantMemberships        TenantMembership[]
 }
 
 model CloudinaryAsset {
-  assetId           String   @id @default(cuid())
-  tenantId          String
-  ownerType         String
-  ownerId           String
-  slot              String
-  position          Int?
-  resourceType      String
-  publicId          String   @unique
-  secureUrl         String
-  bytes             Int?
-  mimeType          String?
-  originalFilename  String?
-  status            String   @default("active")
-  deletedAt         DateTime?
-  createdAt         DateTime @default(now())
-  updatedAt         DateTime @updatedAt
+  assetId          String    @id @default(cuid())
+  tenantId         String
+  ownerType        String
+  ownerId          String
+  slot             String
+  position         Int?
+  resourceType     String
+  publicId         String    @unique
+  secureUrl        String
+  bytes            Int?
+  mimeType         String?
+  originalFilename String?
+  status           String    @default("active")
+  deletedAt        DateTime?
+  createdAt        DateTime  @default(now())
+  updatedAt        DateTime  @updatedAt
 
   @@index([tenantId, ownerType, ownerId, slot])
   @@index([tenantId, status])
@@ -649,16 +665,129 @@ model Plan {
   maxUsuarios    Int             @default(1)
   maxAlmacenes   Int             @default(1)
   maxProductos   Int             @default(100)
-  maxClientes    Int             @default(200)
-  maxPuntosVenta Int             @default(1)
-  maxFacturasMes Int             @default(200)
-  maxContratos   Int             @default(0)
-  incluyeBackups Boolean         @default(false)
-  features       Json            @default("{}")
   createdAt      DateTime        @default(now())
   updatedAt      DateTime        @updatedAt
+  features       Json            @default("{}")
+  incluyeBackups Boolean         @default(false)
+  maxClientes    Int             @default(200)
+  maxContratos   Int             @default(0)
+  maxFacturasMes Int             @default(200)
+  maxPuntosVenta Int             @default(1)
   licencias      Licencia[]
   tenantLicenses TenantLicense[]
+  affiliateReferrals AffiliateReferral[]
+}
+
+model AffiliateProfile {
+  affiliateProfileId String   @id @default(cuid())
+  tenantId           String   @unique
+  referralCode       String   @unique
+  isEligible         Boolean  @default(true)
+  status             String   @default("active")
+  createdAt          DateTime @default(now())
+  updatedAt          DateTime @updatedAt
+  tenant             Tenant   @relation(fields: [tenantId], references: [tenantId], onDelete: Cascade)
+
+  @@index([referralCode])
+}
+
+model AffiliateReferral {
+  referralId              String         @id @default(cuid())
+  referrerTenantId        String
+  referredTenantId        String         @unique
+  referredPlanId          String?
+  status                  String         @default("registered")
+  firstConfirmedLicenseId String?
+  confirmedAt             DateTime?
+  createdAt               DateTime       @default(now())
+  updatedAt               DateTime       @updatedAt
+  referrerTenant          Tenant         @relation("ReferrerAffiliateReferrals", fields: [referrerTenantId], references: [tenantId], onDelete: Cascade)
+  referredTenant          Tenant         @relation("ReferredAffiliateReferrals", fields: [referredTenantId], references: [tenantId], onDelete: Cascade)
+  referredPlan            Plan?          @relation(fields: [referredPlanId], references: [planId])
+  firstConfirmedLicense   TenantLicense? @relation("ConfirmedAffiliateLicense", fields: [firstConfirmedLicenseId], references: [tenantLicenseId])
+  commissionEntries       AffiliateCommissionLedger[]
+
+  @@index([referrerTenantId])
+  @@index([status])
+}
+
+model AffiliateCommissionLedger {
+  ledgerId                String         @id @default(cuid())
+  referrerTenantId        String
+  referralId              String
+  sourceTenantLicenseId   String
+  appliedToTenantLicenseId String?
+  basePlanPrice           Decimal        @db.Decimal(10, 2)
+  commissionRate          Decimal        @db.Decimal(5, 4)
+  commissionAmount        Decimal        @db.Decimal(10, 2)
+  currency                String         @default("USD")
+  status                  String         @default("available")
+  createdAt               DateTime       @default(now())
+  updatedAt               DateTime       @updatedAt
+  referrerTenant          Tenant         @relation("ReferrerAffiliateCommissionEntries", fields: [referrerTenantId], references: [tenantId], onDelete: Cascade)
+  referral                AffiliateReferral @relation(fields: [referralId], references: [referralId], onDelete: Cascade)
+  sourceTenantLicense     TenantLicense  @relation("AffiliateSourceLicense", fields: [sourceTenantLicenseId], references: [tenantLicenseId], onDelete: Cascade)
+  appliedToTenantLicense  TenantLicense? @relation("AffiliateAppliedLicense", fields: [appliedToTenantLicenseId], references: [tenantLicenseId], onDelete: SetNull)
+
+  @@index([referrerTenantId, status])
+  @@index([referralId])
+}
+
+model AffiliateCreditBalance {
+  affiliateCreditBalanceId String   @id @default(cuid())
+  tenantId                 String   @unique
+  availableCredit          Decimal  @default(0) @db.Decimal(10, 2)
+  appliedCredit            Decimal  @default(0) @db.Decimal(10, 2)
+  carryOverCredit          Decimal  @default(0) @db.Decimal(10, 2)
+  createdAt                DateTime @default(now())
+  updatedAt                DateTime @updatedAt
+  tenant                   Tenant   @relation(fields: [tenantId], references: [tenantId], onDelete: Cascade)
+}
+
+model AffiliatePerkGrant {
+  perkGrantId         String   @id @default(cuid())
+  tenantId            String
+  milestone           String
+  slotIndex           Int
+  grantedSlots        Int
+  status              String   @default("pending_manual_assignment")
+  assignedFeatureKey  String?
+  assignedAt          DateTime?
+  assignedBy          String?
+  grantedAt           DateTime @default(now())
+  createdAt           DateTime @default(now())
+  updatedAt           DateTime @updatedAt
+  tenant              Tenant   @relation(fields: [tenantId], references: [tenantId], onDelete: Cascade)
+
+  @@unique([tenantId, milestone, slotIndex])
+  @@index([tenantId, status])
+}
+
+model ReferralPerkCatalog {
+  referralPerkCatalogId String   @id @default(cuid())
+  key                   String   @unique
+  label                 String
+  description           String
+  isActive              Boolean  @default(true)
+  adminOnly             Boolean  @default(true)
+  createdAt             DateTime @default(now())
+  updatedAt             DateTime @updatedAt
+}
+
+model ReferralPerkRequest {
+  referralPerkRequestId String   @id @default(cuid())
+  tenantId              String
+  title                 String
+  description           String
+  status                String   @default("pending")
+  adminNotes            String?
+  createdAt             DateTime @default(now())
+  updatedAt             DateTime @updatedAt
+  reviewedAt            DateTime?
+  reviewedBy            String?
+  tenant                Tenant   @relation(fields: [tenantId], references: [tenantId], onDelete: Cascade)
+
+  @@index([tenantId, status])
 }
 
 model Licencia {
@@ -699,13 +828,13 @@ model Notification {
   id        String   @id @default(cuid())
   title     String
   message   String
-  link      String?
   type      String   @default("info")
   isRead    Boolean  @default(false)
   userId    String
   prioridad String
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+  link      String?
   user      User     @relation(fields: [userId], references: [userId], onDelete: Cascade)
 }
 
@@ -1002,17 +1131,16 @@ model CompraDocumentoItem {
 /// Cada registro indica que `cantidad` unidades de la venta se asignaron al lote de compra
 /// según la política FIFO (First In, First Out).
 model PurchaseAllocation {
-  id                    String   @id @default(cuid())
+  id                    String              @id @default(cuid())
   tenantId              String
   compraDocumentoItemId String
   ventaItemId           String
   cantidad              Int
-  createdAt             DateTime @default(now())
-  updatedAt             DateTime @updatedAt
-
-  compraDocumentoItem CompraDocumentoItem @relation(fields: [compraDocumentoItemId], references: [compraDocumentoItemId])
-  ventaItem           VentaItem           @relation(fields: [ventaItemId], references: [id])
-  tenant              Tenant              @relation(fields: [tenantId], references: [tenantId])
+  createdAt             DateTime            @default(now())
+  updatedAt             DateTime            @updatedAt
+  compraDocumentoItem   CompraDocumentoItem @relation(fields: [compraDocumentoItemId], references: [compraDocumentoItemId])
+  tenant                Tenant              @relation(fields: [tenantId], references: [tenantId])
+  ventaItem             VentaItem           @relation(fields: [ventaItemId], references: [id])
 
   @@index([compraDocumentoItemId])
   @@index([ventaItemId])
@@ -1066,7 +1194,6 @@ model CompraServicio {
   costoUnitario    Int
   cantidad         Int
   total            Int
-  moneda           String?
   formaPago        String
   estado           String
   descripcion      String?
@@ -1074,6 +1201,7 @@ model CompraServicio {
   fechaVencimiento DateTime?
   createdAt        DateTime  @default(now())
   updatedAt        DateTime  @updatedAt
+  moneda           String?
   proveedor        Vendor?   @relation(fields: [proveedorId], references: [vendorId])
   servicio         Servicios @relation(fields: [servicioId], references: [servicioId], onDelete: Cascade)
   tenant           Tenant    @relation(fields: [tenantId], references: [tenantId])
@@ -2097,9 +2225,9 @@ model ProductoCostHistory {
 }
 
 /// * Plantilla de ficha de costo versionada por producto.
-///   Cada producto puede tener N versiones, pero solo una activa.
-///   Los valores de costo se almacenan en Float para soportar
-///   decimales en materiales, MO e indirectos.
+/// Cada producto puede tener N versiones, pero solo una activa.
+/// Los valores de costo se almacenan en Float para soportar
+/// decimales en materiales, MO e indirectos.
 model ProductoCostSheetTemplate {
   id              String   @id @default(cuid())
   tenantId        String
@@ -2113,10 +2241,10 @@ model ProductoCostSheetTemplate {
   precioSugerido  Float    @default(0)
   esActiva        Boolean  @default(false)
   notas           String?
-  lineItems       Json     @default("[]")
   createdAt       DateTime @default(now())
   updatedAt       DateTime @updatedAt
   createdById     String
+  lineItems       Json     @default("[]")
 
   @@unique([productoId, version])
   @@index([tenantId])
@@ -2378,6 +2506,41 @@ model PeriodoCache {
   @@map("periodo_cache")
 }
 
+/// Reseña de un usuario sobre el sistema.
+model Review {
+  reviewId   String   @id @default(cuid())
+  tenantId   String
+  userId     String
+  rating     Int
+  comment    String?
+  isApproved Boolean  @default(false)
+  isPositive Boolean
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+  tenant     Tenant   @relation(fields: [tenantId], references: [tenantId], onDelete: Cascade)
+  user       User     @relation(fields: [userId], references: [userId], onDelete: Cascade)
+
+  @@unique([tenantId, userId])
+  @@index([tenantId, isApproved])
+  @@index([tenantId, isPositive, isApproved])
+  @@map("reviews")
+}
+
+/// Traza de solicitudes de reseña.
+model ReviewPrompt {
+  promptId    String    @id @default(cuid())
+  tenantId    String
+  userId      String
+  promptedAt  DateTime  @default(now())
+  dismissedAt DateTime?
+  submittedAt DateTime?
+  tenant      Tenant    @relation(fields: [tenantId], references: [tenantId], onDelete: Cascade)
+  user        User      @relation(fields: [userId], references: [userId], onDelete: Cascade)
+
+  @@index([tenantId, userId, promptedAt])
+  @@map("review_prompts")
+}
+
 enum TipoAnticipo {
   PAGO
   COBRO
@@ -2559,41 +2722,4 @@ enum MetodoPagoVenta {
   TRANSFERENCIA
   CREDITO
   MIXTO
-}
-
-/// Reseña de un usuario sobre el sistema.
-model Review {
-  reviewId   String   @id @default(cuid())
-  tenantId   String
-  userId     String
-  rating     Int // 1-5
-  comment    String?
-  isApproved Boolean  @default(false)
-  isPositive Boolean
-  createdAt  DateTime @default(now())
-  updatedAt  DateTime @updatedAt
-
-  tenant Tenant @relation(fields: [tenantId], references: [tenantId], onDelete: Cascade)
-  user   User   @relation(fields: [userId], references: [userId], onDelete: Cascade)
-
-  @@unique([tenantId, userId])
-  @@index([tenantId, isApproved])
-  @@index([tenantId, isPositive, isApproved])
-  @@map("reviews")
-}
-
-/// Traza de solicitudes de reseña.
-model ReviewPrompt {
-  promptId    String    @id @default(cuid())
-  tenantId    String
-  userId      String
-  promptedAt  DateTime  @default(now())
-  dismissedAt DateTime?
-  submittedAt DateTime?
-
-  tenant Tenant @relation(fields: [tenantId], references: [tenantId], onDelete: Cascade)
-  user   User   @relation(fields: [userId], references: [userId], onDelete: Cascade)
-
-  @@index([tenantId, userId, promptedAt])
-  @@map("review_prompts")
 }

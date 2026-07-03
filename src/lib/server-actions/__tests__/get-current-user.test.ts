@@ -111,6 +111,7 @@ describe("getCurrentUser", () => {
       maxUsuarios: 3,
       maxAlmacenes: 2,
       maxProductos: 500,
+      maxClientes: 150,
     });
 
     const user = await getCurrentUser();
@@ -118,8 +119,62 @@ describe("getCurrentUser", () => {
     expect(user!.tenantId).toBe("tenant-X");
     expect(user!.tenantRole).toBe("manager");
     expect(user!.planName).toBe('Básico');
+    expect(user!.planLimits).toEqual({
+      maxUsuarios: 3,
+      maxAlmacenes: 2,
+      maxProductos: 500,
+      maxClientes: 150,
+    });
     expect(mocks.prisma.tenantMembership.findUnique).toHaveBeenCalled();
     expect(mocks.prisma.tenantMembership.findFirst).not.toHaveBeenCalled();
+  });
+
+  it("mergea plan.features con featureOverrides cuando existen", async () => {
+    setValidJwtCookie({
+      userId: "u1",
+      email: "u@test.com",
+      tenantId: "tenant-X",
+      tenantRole: "manager",
+    });
+    mocks.prisma.userSession.findUnique.mockResolvedValue({
+      isActive: true,
+      expiresAt: null,
+      userId: "u1",
+    });
+    mocks.prisma.user.findUnique.mockResolvedValue({
+      userId: "u1",
+      name: "User",
+      email: "u@test.com",
+      role: "user",
+      isActive: true,
+    });
+    mocks.prisma.tenantMembership.findUnique.mockResolvedValue({
+      membershipId: "m1",
+      tenantId: "tenant-X",
+      userId: "u1",
+      tenantRole: "manager",
+      isActive: true,
+    });
+    mocks.prisma.tenantLicense.findFirst.mockResolvedValue({
+      plan: {
+        nombre: "Básico",
+        features: { contabilidad: true, "reportes-financieros": true },
+      },
+      features: { contabilidad: false },
+      featureOverrides: { "reportes-financieros": false },
+      maxUsuarios: 3,
+      maxAlmacenes: 2,
+      maxProductos: 500,
+      maxClientes: 150,
+    });
+
+    const user = await getCurrentUser();
+
+    expect(user).not.toBeNull();
+    expect(user!.planFeatures).toEqual({
+      contabilidad: true,
+      "reportes-financieros": false,
+    });
   });
 
   it("ignora tenantId del JWT si la membresía está inactiva en DB", async () => {
@@ -168,6 +223,25 @@ describe("getCurrentUser", () => {
     expect(user).not.toBeNull();
     expect(user!.role).toBe("admin");
     expect(user!.tenantId).toBeUndefined();
+  });
+
+  it("devuelve null si el rol persistido no se puede normalizar", async () => {
+    setValidJwtCookie({ userId: "u1", email: "u@test.com" });
+    mocks.prisma.userSession.findUnique.mockResolvedValue({
+      isActive: true,
+      expiresAt: null,
+      userId: "u1",
+    });
+    mocks.prisma.user.findUnique.mockResolvedValue({
+      userId: "u1",
+      name: "User",
+      email: "u@test.com",
+      role: "guest",
+      isActive: true,
+    });
+
+    const user = await getCurrentUser();
+    expect(user).toBeNull();
   });
 
   it("devuelve null si la sesión en DB no está activa", async () => {
