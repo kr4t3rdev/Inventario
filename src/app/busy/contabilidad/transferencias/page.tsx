@@ -4,7 +4,7 @@ import dynamic from 'next/dynamic';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { useAuth } from '@/contexts/auth-context';
-import { shouldHideBasicAccountingItem } from '@/lib/plan-access';
+import { canAccessAccountingItem } from '@/lib/plan-access';
 import { useState, useEffect, useCallback } from 'react';
 import { LazyMotion, m as motion, useReducedMotion } from 'framer-motion';
 import { ArrowLeft, BadgeDollarSign, Plus, RefreshCw, ArrowRightLeft } from 'lucide-react';
@@ -39,19 +39,32 @@ export default function TransferenciasBancariasPage(): React.JSX.Element {
   useEffect(() => { setIsClient(true) }, []);
   const shouldReduceMotion = useReducedMotion();
   const router = useRouter();
-  const { user } = useAuth();
+  const { user, loading } = useAuth();
   const [transferenciasList, setTransferenciasList] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const isBlocked =
+    !loading &&
+    user?.role !== 'admin' &&
+    !canAccessAccountingItem(user, 'Transferencias Bancarias');
+
+  useEffect(() => {
+    if (isBlocked) {
+      router.replace('/busy/contabilidad');
+    }
+  }, [isBlocked, router]);
 
   const fetchTransferencias = useCallback(async () => {
+    if (isBlocked) {
+      setIsLoading(false)
+      return
+    }
     setIsLoading(true)
     const res = await getTransferenciasBancariasAction({})
     if (res.success) {
-  // @ts-expect-error filtered payload shape from server action
       setTransferenciasList(res.data.transferencias ?? [])
     }
     setIsLoading(false)
-  }, [])
+  }, [isBlocked])
 
   useEffect(() => {
     fetchTransferencias()
@@ -119,6 +132,8 @@ export default function TransferenciasBancariasPage(): React.JSX.Element {
     'relative overflow-hidden border-slate-200/60 bg-white/70 shadow-sm backdrop-blur-xl',
     'dark:border-slate-800/60 dark:bg-slate-900/10',
   );
+
+  if (isBlocked) return null;
 
   return (
         <motion.div 

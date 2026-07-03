@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import prisma from '@/lib/prisma'
 import { z } from 'zod'
 import { authenticateUser } from '@/lib/auth-middleware'
-import { shouldHideBasicAccountingItem } from '@/lib/plan-access'
+import { canAccessAccountingItem } from '@/lib/plan-access'
 
 // Schema for validating a bank transfer
 const validarTransferenciaSchema = z.object({
@@ -20,10 +20,7 @@ export async function POST(request: NextRequest) {
     if ('status' in authResultUser) return authResultUser as Response
     const user = authResultUser.user
 
-    if (
-      user.role !== 'admin' &&
-      shouldHideBasicAccountingItem(user, 'Transferencias Bancarias')
-    ) {
+    if (user.role !== 'admin' && !canAccessAccountingItem(user, 'Transferencias Bancarias')) {
       return NextResponse.json({ error: 'Prohibido' }, { status: 403 })
     }
 

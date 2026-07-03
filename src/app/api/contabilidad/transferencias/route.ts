@@ -4,7 +4,7 @@ import { z } from 'zod'
 import { authenticateUser } from '@/lib/auth-middleware'
 import { AuditLogService } from '@/lib/services/audit-log-service'
 import { validarEscrituraPeriodo, extraerFechaDeBody } from '@/lib/services/validate-period-write'
-import { shouldHideBasicAccountingItem } from '@/lib/plan-access'
+import { canAccessAccountingItem } from '@/lib/plan-access'
 
 // Schema for creating a bank transfer
 const createTransferenciaSchema = z.object({
@@ -23,10 +23,7 @@ export async function GET(request: NextRequest) {
     if ('status' in authResultUser) return authResultUser as Response
     const user = authResultUser.user
 
-    if (
-      user.role !== 'admin' &&
-      shouldHideBasicAccountingItem(user, 'Transferencias Bancarias')
-    ) {
+    if (user.role !== 'admin' && !canAccessAccountingItem(user, 'Transferencias Bancarias')) {
       return NextResponse.json({ error: 'Prohibido' }, { status: 403 })
     }
 
@@ -139,10 +136,7 @@ export async function POST(request: NextRequest) {
     if ('status' in authResultUser) return authResultUser as Response
     const user = authResultUser.user
 
-    if (
-      user.role !== 'admin' &&
-      shouldHideBasicAccountingItem(user, 'Transferencias Bancarias')
-    ) {
+    if (user.role !== 'admin' && !canAccessAccountingItem(user, 'Transferencias Bancarias')) {
       return NextResponse.json({ error: 'Prohibido' }, { status: 403 })
     }
 

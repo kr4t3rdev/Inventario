@@ -210,6 +210,18 @@ export const FEATURE_REGISTRY: FeatureDef[] = [
 		category: "financiero",
 	},
 	{
+		key: "transferencias-bancarias",
+		label: "Transferencias bancarias",
+		description: "Movimientos entre cuentas bancarias con comprobantes y trazabilidad",
+		category: "financiero",
+	},
+	{
+		key: "ajustes-bancarios",
+		label: "Ajustes bancarios",
+		description: "Ajustes manuales y correcciones sobre cuentas bancarias",
+		category: "financiero",
+	},
+	{
 		key: "inyeccion-capital",
 		label: "Inyección de capital",
 		description:

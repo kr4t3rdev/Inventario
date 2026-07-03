@@ -38,7 +38,7 @@ import {
 import { useMonedas } from '@/features/contabilidad/hooks/use-monedas';
 import { useAuth } from '@/contexts/auth-context';
 import { cn } from '@/lib/utils';
-import { shouldHideBasicAccountingItem } from '@/lib/plan-access';
+import { canAccessAccountingItem } from '@/lib/plan-access';
 import { DeudasCashStatsWidget } from '@/features/contabilidad/components/deudas-cash-stats-widget';
 
 
@@ -133,8 +133,7 @@ export default function ContabilidadDashboard(): React.JSX.Element {
   const hasDeudasCash = user?.planFeatures?.['deudas-cash'] === true;
   const hasServicios = user?.planFeatures?.['servicios'] === true;
   const hasContabilidad = user?.planFeatures?.contabilidad === true;
-  const hasFinancialReports = user?.planFeatures?.['reportes-financieros'] === true;
-  const hideItemForBasic = (title: string) => shouldHideBasicAccountingItem(user, title);
+  const hideItemForBasic = (title: string) => !canAccessAccountingItem(user, title);
 
   // --- Configuration ---
   const quickActionsBase = [
@@ -206,9 +205,9 @@ export default function ContabilidadDashboard(): React.JSX.Element {
     if (a.title === 'Préstamos en Efectivo' && !hasPrestamosCash) return false;
     if (a.title === 'Deudas en Efectivo' && !hasDeudasCash) return false;
     if (a.title === 'Transferencias' && hideItemForBasic('Transferencias Bancarias')) return false;
-    if (a.title === 'Ajustes Manuales' && !hasContabilidad) return false;
+    if (a.title === 'Ajustes Manuales' && hideItemForBasic('Ajustes Bancarios')) return false;
     if (a.title === 'Tasas de Cambio' && hideItemForBasic('Exchange')) return false;
-    if (a.title === 'Auditoría' && !hasFinancialReports) return false;
+    if (a.title === 'Auditoría' && !hasContabilidad) return false;
     return true;
   });
 
@@ -308,7 +307,7 @@ export default function ContabilidadDashboard(): React.JSX.Element {
           </div>
 
           <div className="flex gap-3">
-            {!hideItemForBasic('Reportes Contables') && hasFinancialReports && (
+            {!hideItemForBasic('Reportes Contables') && hasContabilidad && (
               <Button
                 asChild
                 variant="outline"

@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { authenticateUser } from '@/lib/auth-middleware';
 import { AccountingReportsService } from '@/features/contabilidad/services/accounting-reports-service';
-import { shouldHideBasicAccountingItem } from '@/lib/plan-access';
+import { canAccessAccountingItem } from '@/lib/plan-access';
 
 export async function GET(request: NextRequest) {
   try {
@@ -11,7 +11,7 @@ export async function GET(request: NextRequest) {
     if (
       authResultUser.user.role !== 'admin' &&
       (
-        shouldHideBasicAccountingItem(authResultUser.user, 'Transferencias Bancarias') ||
+        !canAccessAccountingItem(authResultUser.user, 'Transferencias Bancarias') ||
         authResultUser.user.planFeatures?.['reportes-financieros'] !== true
       )
     ) {

@@ -9,7 +9,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import Link from 'next/link';
 import { useAuth } from '@/contexts/auth-context';
-;
+import { canAccessAccountingItem } from '@/lib/plan-access';
 import { Skeleton } from '@/components/ui/skeleton';
 import { cn } from '@/lib/utils';
 
@@ -62,7 +62,7 @@ export default function AjustesPage() {
   }, []);
 
   const isBlocked =
-    user?.role !== 'admin' && user?.planFeatures?.contabilidad !== true;
+    user?.role !== 'admin' && !canAccessAccountingItem(user, 'Ajustes Bancarios');
 
   useEffect(() => {
     if (isBlocked) {

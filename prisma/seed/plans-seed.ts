@@ -44,6 +44,8 @@ export const PLAN_BASICO_FEATURES: Record<string, boolean> = {
 	// Financiero
 	gastos: true,
 	contabilidad: true,
+	"transferencias-bancarias": false,
+	"ajustes-bancarios": false,
 	"multi-moneda": false,
 	"rentabilidad-compra": true,
 	"inyeccion-capital": false,
@@ -98,6 +100,8 @@ export const PLAN_PROFESIONAL_FEATURES: Record<string, boolean> = {
 	facturacion: true,
 	"series-facturacion": true,
 	"multi-moneda": true,
+	"transferencias-bancarias": true,
+	"ajustes-bancarios": true,
 	"servicios": true,
 	"reportes-financieros": true,
 	empleados: true,

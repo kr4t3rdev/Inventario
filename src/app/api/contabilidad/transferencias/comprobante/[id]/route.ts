@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import prisma from '@/lib/prisma'
 import { PDFDocument, StandardFonts, rgb } from 'pdf-lib'
 import { authenticateUser } from '@/lib/auth-middleware'
-import { shouldHideBasicAccountingItem } from '@/lib/plan-access'
+import { canAccessAccountingItem } from '@/lib/plan-access'
 
 // Ensure Node.js runtime for compatibility with pdf generation
 export const runtime = 'nodejs'
@@ -17,10 +17,7 @@ export async function GET(
     if ('status' in authResultUser) return authResultUser as Response
     const user = authResultUser.user
 
-    if (
-      user.role !== 'admin' &&
-      shouldHideBasicAccountingItem(user, 'Transferencias Bancarias')
-    ) {
+    if (user.role !== 'admin' && !canAccessAccountingItem(user, 'Transferencias Bancarias')) {
       return NextResponse.json({ error: 'Prohibido' }, { status: 403 })
     }
 

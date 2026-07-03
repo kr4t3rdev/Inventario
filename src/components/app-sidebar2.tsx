@@ -56,6 +56,8 @@ import { useHydrationSafeReducedMotion } from "@/hooks/use-hydration-safe-reduce
 import { useIsMounted } from "@/hooks/use-is-mounted";
 import { isTenantAdminRole, type TenantRole } from "@/lib/auth/roles";
 import {
+	canAccessAccountingItem,
+	getAccountingItemFeatureKey,
 	shouldHideBasicAccountingItem,
 	shouldHideSeparateEmployeeModules,
 } from "@/lib/plan-access";
@@ -574,6 +576,8 @@ export function AppSidebar2({
 		Anticipos: "anticipos",
 		"Préstamos en Efectivo": "prestamos-cash",
 		"Deudas en Efectivo": "deudas-cash",
+		"Transferencias Bancarias": "transferencias-bancarias",
+		"Ajustes Bancarios": "ajustes-bancarios",
 		Exchange: "multi-moneda",
 		"Cuadre Financiero": "cuadre-diario",
 		"Cuadres POS": "turnos-pos",
@@ -638,8 +642,8 @@ export function AppSidebar2({
 		"Balance y Resultados": ["economico", "manager"],
 		"Reportes Contables": ["economico", "manager"],
 		"Configuracion Contable": ["economico", "manager"],
-		"Períodos Contables": ["manager"],
-		Logs: ["manager"],
+		"Períodos Contables": ["economico", "manager"],
+		Logs: ["economico", "manager"],
 		// Reportes
 		Reportes: ["dependiente", "economico", "manager"],
 		"Venta Diaria": ["dependiente", "economico", "manager"],
@@ -668,6 +672,17 @@ export function AppSidebar2({
 		}
 
 		if (shouldHideBasicAccountingItem(user, itemTitle)) {
+			const accountingFeatureKey = getAccountingItemFeatureKey(itemTitle);
+			if (
+				!accountingFeatureKey ||
+				accountingFeatureKey === "transferencias-bancarias" ||
+				accountingFeatureKey === "ajustes-bancarios"
+			) {
+				return false;
+			}
+		}
+
+		if (getAccountingItemFeatureKey(itemTitle) && !canAccessAccountingItem(user, itemTitle)) {
 			return false;
 		}
 
@@ -699,9 +714,9 @@ export function AppSidebar2({
 
 			// Si tiene subitems, filtrarlos también
 			if (item.subItems) {
-				item.subItems = item.subItems.filter((sub) =>
-					canSeeSidebarItem(sub.title),
-				);
+					item.subItems = item.subItems.filter((sub: { title: string }) =>
+						canSeeSidebarItem(sub.title),
+					);
 				if (item.subItems.length === 0) return false;
 			}
 

@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { authenticateUser } from '@/lib/auth-middleware'
-import { shouldHideBasicAccountingItem } from '@/lib/plan-access'
+import { canAccessAccountingItem } from '@/lib/plan-access'
 
 export async function GET(request: NextRequest) {
   try {
@@ -9,8 +9,8 @@ export async function GET(request: NextRequest) {
     if ('status' in authResultUser) return authResultUser as Response
     const user = authResultUser.user
     const canViewServicios = user.planFeatures?.servicios === true
-    const canViewTransfers = !shouldHideBasicAccountingItem(user, 'Transferencias Bancarias')
-    const canViewAdjustments = !shouldHideBasicAccountingItem(user, 'Ajustes Bancarios')
+    const canViewTransfers = canAccessAccountingItem(user, 'Transferencias Bancarias')
+    const canViewAdjustments = canAccessAccountingItem(user, 'Ajustes Bancarios')
     const canViewCapital = user.planFeatures?.['inyeccion-capital'] === true
     const canViewPrestamosCash = user.planFeatures?.['prestamos-cash'] === true
     const canViewDeudasCash = user.planFeatures?.['deudas-cash'] === true
