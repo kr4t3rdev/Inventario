@@ -5,25 +5,17 @@
 
 import { revalidatePath } from 'next/cache';
 import { z } from 'zod';
-import { withAction, ActionError } from '@/lib/server-actions';
+import { withAction } from '@/lib/server-actions';
 import { AuditLogService } from '@/lib/services/audit-log-service';
 import { withPeriodValidation } from '@/lib/services/with-period-validation';
 import { AccountingOperationsReadService } from '@/features/contabilidad/services/accounting-operations-read-service';
 import { AccountingOperationsMutationService } from '@/features/contabilidad/services/accounting-operations-mutation-service';
 import type { AuthenticatedUser } from '@/lib/auth-middleware';
-import { isBasicPlanName } from '@/lib/plan-access';
 import { requireFeature } from '@/lib/services/tenant-scope';
 
 
 function guardAdvancedBasicAccounting(user: AuthenticatedUser, action: string): void {
   requireFeature(user, 'contabilidad', action);
-
-  if (user.role !== 'admin' && isBasicPlanName(user.planName)) {
-    throw new ActionError(
-      `Tu plan actual no incluye la funcionalidad de ${action}. Actualiza tu plan para continuar.`,
-      'FEATURE_NOT_AVAILABLE',
-    );
-  }
 }
 
 const createSchema = z.object({

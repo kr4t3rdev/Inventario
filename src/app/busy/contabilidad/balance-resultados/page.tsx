@@ -12,7 +12,6 @@ import { PageTransition, StaggerContainer, StaggerItem, AnimatedCard } from "@/c
 import { cn } from "@/lib/utils"
 import { ContabilidadBreadcrumb } from "@/features/contabilidad/components/contabilidad-breadcrumb"
 import { useAuth } from "@/contexts/auth-context"
-import { shouldHideBasicAccountingItem } from "@/lib/plan-access"
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
 
@@ -69,8 +68,7 @@ export default function BalanceResultadosPage() {
   const [errorMsg, setErrorMsg] = useState<string | null>(null)
   const isBlocked =
     user?.role !== 'admin' &&
-    (shouldHideBasicAccountingItem(user, 'Balance y Resultados') ||
-      user?.planFeatures?.['reportes-financieros'] !== true)
+    user?.planFeatures?.['reportes-financieros'] !== true
 
   useEffect(() => {
     if (isBlocked) {

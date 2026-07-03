@@ -1,7 +1,10 @@
 import type { Metadata } from 'next';
+import { redirect } from 'next/navigation';
 
 import { getTransferenciasAction } from '@/features/transferencias';
 import { ReportesPageClient } from '@/features/reportes-financieros/components/reportes-page-client';
+import { hasPlanFeature } from '@/lib/plan-access';
+import { getCurrentUser } from '@/lib/server-actions';
 
 export const metadata: Metadata = {
   title: 'Reportes de Inventario',
@@ -15,6 +18,12 @@ export const metadata: Metadata = {
 export const dynamic = 'force-dynamic'
 
 export default async function ReportesPage() {
+  const user = await getCurrentUser();
+
+  if (user?.role !== 'admin' && !hasPlanFeature(user, 'reportes-financieros')) {
+    redirect('/busy');
+  }
+
   const result = await getTransferenciasAction({});
   const initialTransferencias = result.success ? result.data?.transferencias ?? [] : [];
 

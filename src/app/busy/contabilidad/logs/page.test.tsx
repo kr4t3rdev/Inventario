@@ -40,7 +40,7 @@ describe('/busy/contabilidad/logs page', () => {
     vi.clearAllMocks();
   });
 
-  it('redirige al dashboard de contabilidad cuando el plan es Básico', async () => {
+  it('mantiene acceso cuando reportes-financieros está habilitado', async () => {
     useAuthMock.mockReturnValue({
       user: {
         role: 'user',
@@ -52,7 +52,7 @@ describe('/busy/contabilidad/logs page', () => {
     render(<LogsPage />);
 
     await waitFor(() => {
-      expect(mockReplace).toHaveBeenCalledWith('/busy/contabilidad');
+      expect(mockReplace).not.toHaveBeenCalled();
     });
   });
 });

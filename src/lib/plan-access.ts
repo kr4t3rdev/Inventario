@@ -9,14 +9,10 @@ interface PlanAwareUser {
 
 const BASIC_ACCOUNTING_HIDDEN_ITEMS = new Set([
   'Transferencias Bancarias',
-  'Ajustes Bancarios',
   'Exchange',
   'Inyección Capital',
   'Analisis Estado Cuenta',
   'Facturas Vencidas',
-  'Balance y Resultados',
-  'Períodos Contables',
-  'Logs',
   'Reconciliación Servicios',
 ]);
 

@@ -42,4 +42,16 @@ describe('plan-access', () => {
       ),
     ).toBe(false);
   });
+
+  it('mantiene visibles ajustes, períodos, logs y balance cuando el plan real los habilita', () => {
+    const basicUser = {
+      planName: 'Básico',
+      planFeatures: { contabilidad: true, 'reportes-financieros': true },
+    };
+
+    expect(shouldHideBasicAccountingItem(basicUser, 'Ajustes Bancarios')).toBe(false);
+    expect(shouldHideBasicAccountingItem(basicUser, 'Períodos Contables')).toBe(false);
+    expect(shouldHideBasicAccountingItem(basicUser, 'Logs')).toBe(false);
+    expect(shouldHideBasicAccountingItem(basicUser, 'Balance y Resultados')).toBe(false);
+  });
 });

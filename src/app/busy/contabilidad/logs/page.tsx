@@ -12,7 +12,6 @@ import Link from 'next/link';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useAuth } from '@/contexts/auth-context';
 import { ContabilidadBreadcrumb } from '@/features/contabilidad/components/contabilidad-breadcrumb';
-import { shouldHideBasicAccountingItem } from '@/lib/plan-access';
 import { cn } from '@/lib/utils';
 
 /**
@@ -65,8 +64,7 @@ export default function LogsPage() {
 
   const isBlocked =
     user?.role !== 'admin' &&
-    (shouldHideBasicAccountingItem(user, 'Logs') ||
-      user?.planFeatures?.['reportes-financieros'] !== true);
+    user?.planFeatures?.['reportes-financieros'] !== true;
 
   useEffect(() => {
     if (isBlocked) {

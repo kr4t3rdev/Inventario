@@ -2,7 +2,6 @@ import { NextRequest, NextResponse } from 'next/server';
 import { authenticateUser } from '@/lib/auth-middleware';
 import { ActionError } from '@/lib/server-actions';
 import { AccountingAuditLogsService } from '@/features/contabilidad/services/accounting-audit-logs-service';
-import { shouldHideBasicAccountingItem } from '@/lib/plan-access';
 
 export const dynamic = 'force-dynamic';
 
@@ -18,10 +17,7 @@ export async function GET(request: NextRequest) {
   try {
     if (
       authResult.user.role !== 'admin' &&
-      (
-        shouldHideBasicAccountingItem(authResult.user, 'Logs') ||
-        authResult.user.planFeatures?.['reportes-financieros'] !== true
-      )
+      authResult.user.planFeatures?.['reportes-financieros'] !== true
     ) {
       return NextResponse.json({ error: 'Prohibido' }, { status: 403 });
     }

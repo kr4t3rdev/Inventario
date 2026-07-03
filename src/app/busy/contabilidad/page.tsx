@@ -118,6 +118,7 @@ const accentStyles = {
 } as const;
 
 const sectionKickerClass = "text-xs font-bold uppercase tracking-widest text-slate-500 dark:text-slate-400 mb-2";
+type AccentTone = keyof typeof accentStyles;
 
 /**
  * @description Dashboard principal de contabilidad con resumen financiero y módulos clave.
@@ -131,10 +132,12 @@ export default function ContabilidadDashboard(): React.JSX.Element {
   const hasPrestamosCash = user?.planFeatures?.['prestamos-cash'] === true;
   const hasDeudasCash = user?.planFeatures?.['deudas-cash'] === true;
   const hasServicios = user?.planFeatures?.['servicios'] === true;
+  const hasContabilidad = user?.planFeatures?.contabilidad === true;
+  const hasFinancialReports = user?.planFeatures?.['reportes-financieros'] === true;
   const hideItemForBasic = (title: string) => shouldHideBasicAccountingItem(user, title);
 
   // --- Configuration ---
-  const quickActions = [
+  const quickActionsBase = [
     {
       title: 'Cuentas Bancarias',
       description: 'Gestión de saldos y cuentas',
@@ -191,21 +194,23 @@ export default function ContabilidadDashboard(): React.JSX.Element {
       icon: CreditCard,
       tone: 'orange',
     },
-  ].filter((a) => {
-    if (a.title === 'Préstamos en Efectivo' && !hasPrestamosCash) return false;
-    if (a.title === 'Deudas en Efectivo' && !hasDeudasCash) return false;
-    if (a.title === 'Transferencias' && hideItemForBasic('Transferencias Bancarias')) return false;
-    if (a.title === 'Ajustes Manuales' && hideItemForBasic('Ajustes Bancarios')) return false;
-    if (a.title === 'Tasas de Cambio' && hideItemForBasic('Exchange')) return false;
-    if (a.title === 'Auditoría' && (hideItemForBasic('Logs') || user?.planFeatures?.['reportes-financieros'] !== true)) return false;
-    return true;
-  }) as Array<{
+  ] satisfies Array<{
     title: string;
     description: string;
     href: string;
     icon: typeof Building2;
-    tone: 'blue' | 'emerald' | 'purple' | 'amber' | 'orange' | 'slate';
+    tone: AccentTone;
   }>;
+
+  const quickActions = quickActionsBase.filter((a) => {
+    if (a.title === 'Préstamos en Efectivo' && !hasPrestamosCash) return false;
+    if (a.title === 'Deudas en Efectivo' && !hasDeudasCash) return false;
+    if (a.title === 'Transferencias' && hideItemForBasic('Transferencias Bancarias')) return false;
+    if (a.title === 'Ajustes Manuales' && !hasContabilidad) return false;
+    if (a.title === 'Tasas de Cambio' && hideItemForBasic('Exchange')) return false;
+    if (a.title === 'Auditoría' && !hasFinancialReports) return false;
+    return true;
+  });
 
   // --- Data Fetching (Summary Stats) ---
   const [responseVentas, setResponseVentas] = useState<any>(null);
@@ -242,7 +247,7 @@ export default function ContabilidadDashboard(): React.JSX.Element {
   
   const totalPendientes = cantVentasPendientes + cantServiciosPendientes + gastosPendientes;
 
-  const reconciliationModules = [
+  const reconciliationModulesBase = [
     {
       title: 'Ventas',
       description: 'Facturas por conciliar',
@@ -267,7 +272,18 @@ export default function ContabilidadDashboard(): React.JSX.Element {
       pendingCount: gastosPendientes,
       tone: 'amber',
     },
-  ].filter((module) => !hideItemForBasic(`Reconciliación ${module.title}`)) as const;
+  ] satisfies Array<{
+    title: string;
+    description: string;
+    href: string;
+    icon: typeof Receipt;
+    pendingCount: number;
+    tone: AccentTone;
+  }>;
+
+  const reconciliationModules = reconciliationModulesBase.filter(
+    (module) => !hideItemForBasic(`Reconciliación ${module.title}`),
+  );
 
   return (
     <PageTransition className="relative min-h-screen w-full">
@@ -292,7 +308,7 @@ export default function ContabilidadDashboard(): React.JSX.Element {
           </div>
 
           <div className="flex gap-3">
-            {!hideItemForBasic('Reportes Contables') && user?.planFeatures?.['reportes-financieros'] === true && (
+            {!hideItemForBasic('Reportes Contables') && hasFinancialReports && (
               <Button
                 asChild
                 variant="outline"
