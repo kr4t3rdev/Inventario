@@ -101,6 +101,11 @@ export function AdminSidebar({
             url: "/admin/subscriptions",
             icon: DollarSign,
           },
+          {
+            title: "Referidos",
+            url: "/admin/referidos",
+            icon: ArrowLeftRight,
+          },
         ],
       },
       {

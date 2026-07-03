@@ -47,6 +47,7 @@ import {
 	UtensilsCrossed,
 	Monitor,
 	FolderOpen,
+	Gift,
 } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
@@ -347,6 +348,11 @@ export function AppSidebar2({
 						icon: Building2,
 					},
 					{
+						title: "Referidos",
+						url: "/busy/referidos",
+						icon: Gift,
+					},
+					{
 						title: "Usuarios",
 						url: "/busy/configuracion/usuarios",
 						icon: Users,
@@ -624,6 +630,7 @@ export function AppSidebar2({
 		Ofertas: ["manager"],
 		// Configuración
 		"Mi Empresa": ["dependiente", "economico", "manager"],
+		Referidos: ["dependiente", "economico", "manager"],
 		Usuarios: ["manager"],
 		// Contabilidad
 		Dashboard: ["economico", "manager"],

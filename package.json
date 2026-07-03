@@ -21,6 +21,7 @@
     "seed:qa": "tsx prisma/seed/qa-scenarios-seed.ts",
     "seed:plans": "tsx prisma/seed/plans-seed.ts",
     "seed:upload-backfill": "tsx prisma/seed/backfill-upload-features.ts",
+    "ops:baseline-prisma-production": "tsx scripts/ops/baseline-prisma-production.ts --dry-run",
     "seed:licenses": "tsx prisma/seed/tenant-licenses-seed.ts",
     "report:qa": "tsx prisma/seed/qa-report.ts",
     "testsprite": "npx -y @testsprite/testsprite-mcp",
@@ -33,6 +34,7 @@
     "test:e2e:headed": "playwright test --headed",
     "test:e2e:debug": "playwright test --debug",
     "test:e2e:report": "playwright show-report",
+    "test:affiliate:railway": "RUN_AFFILIATE_RAILWAY_TEST=1 vitest run --pool forks src/features/affiliate/actions.integration.test.ts",
     "remotion:preview": "remotion preview remotion/index.ts",
     "remotion:render": "remotion render remotion/index.ts Battle-Short out/battle-short.mp4",
     "remotion:render-404": "remotion render remotion/index.ts NotFoundAnimation out/404-animation.mp4",
@@ -46,7 +48,8 @@
     "depgraph:mermaid": "depcruise src --output-type mermaid > docs/depgraph.mmd",
     "depgraph:mermaid:view": "depcruise src --output-type mermaid > docs/depgraph.mmd && open docs/depgraph.mermaid.html",
     "depgraph:validate": "depcruise src",
-    "prepare": "husky"
+    "prepare": "husky",
+    "seed:referral-perks": "tsx prisma/seed/referral-perks-seed.ts"
   },
   "dependencies": {
     "@clerk/nextjs": "^6.22.0",
