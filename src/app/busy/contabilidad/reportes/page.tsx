@@ -65,14 +65,18 @@ const statusBadgeClass = cn(
 export default function ReportesPage() {
   const shouldReduceMotion = useReducedMotion();
   const router = useRouter();
-  const { user } = useAuth();
+  const { user, loading } = useAuth();
   const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
     setMounted(true);
   }, []);
 
-  const isBlocked = user?.role !== 'admin' && (shouldHideBasicAccountingItem(user, 'Reportes Contables') || user?.planFeatures?.['reportes-financieros'] !== true);
+  const isBlocked =
+    !loading &&
+    user?.role !== 'admin' &&
+    (shouldHideBasicAccountingItem(user, 'Reportes Contables') ||
+      user?.planFeatures?.['reportes-financieros'] !== true);
 
   useEffect(() => {
     if (isBlocked) {
