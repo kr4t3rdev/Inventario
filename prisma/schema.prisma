@@ -597,6 +597,7 @@ model User {
   name                     String
   email                    String               @unique
   password                 String
+  pendingReferralCode      String?
   role                     String               @default("regularUser")
   onboardingType           String?
   onboardingStatus         String?              @default("pending_email_verification")

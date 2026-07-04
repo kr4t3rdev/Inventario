@@ -31,6 +31,8 @@ vi.mock('@/lib/prisma', () => {
     tenantMembership: { create: vi.fn(), findFirst: vi.fn(), findUnique: vi.fn(), update: vi.fn(), findMany: vi.fn() },
     moneda: { upsert: vi.fn() },
     plan: { findMany: vi.fn(), findUnique: vi.fn(), create: vi.fn(), update: vi.fn(), delete: vi.fn() },
+    affiliateProfile: { findUnique: vi.fn() },
+    affiliateReferral: { findUnique: vi.fn(), create: vi.fn() },
     userSession: { count: vi.fn(), findMany: vi.fn(), delete: vi.fn() },
     cloudinaryAsset: { groupBy: vi.fn(), findMany: vi.fn(), update: vi.fn() },
     tenantLicense: {
@@ -718,6 +720,48 @@ describe('Admin Server Actions', () => {
       });
 
       expect(prisma.$transaction).toHaveBeenCalled();
+    });
+
+    it('crea AffiliateReferral cuando el usuario tenía pendingReferralCode válido', async () => {
+      vi.mocked(prisma.user.findUnique).mockResolvedValue({
+        userId: 'user-test',
+        name: 'Test User',
+        onboardingStatus: 'awaiting_global_approval',
+        pendingReferralCode: 'REF-VALID',
+      } as any);
+      vi.mocked(prisma.tenantMembership.findFirst).mockResolvedValue(null);
+      vi.mocked(prisma.tenant.findUnique).mockResolvedValue(null);
+      vi.mocked(prisma.plan.findUnique).mockResolvedValue({
+        planId: 'plan-basico',
+        nombre: 'Básico',
+        precio: 35,
+        maxUsuarios: 3,
+        maxAlmacenes: 2,
+        maxProductos: 500,
+        maxClientes: 100,
+        features: {},
+      } as any);
+      vi.mocked(prisma.affiliateProfile.findUnique).mockResolvedValue({
+        tenantId: 'tenant-referrer',
+        isEligible: true,
+        status: 'active',
+      } as any);
+      vi.mocked(prisma.affiliateReferral.findUnique).mockResolvedValue(null as any);
+
+      await createTenantForUser({
+        userId: 'user-test',
+        planId: 'plan-basico',
+        tenantName: 'Test Corp',
+      });
+
+      expect(prisma.affiliateReferral.create).toHaveBeenCalledWith({
+        data: {
+          referrerTenantId: 'tenant-referrer',
+          referredTenantId: 'tenant-new',
+          referredPlanId: 'plan-basico',
+          status: 'registered',
+        },
+      });
     });
 
     it('error si onboardingStatus incorrecto', async () => {

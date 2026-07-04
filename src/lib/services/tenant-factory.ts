@@ -5,6 +5,7 @@
  * @module lib/services/tenant-factory
  */
 
+import { Prisma } from '@/generated/prisma'
 import { prisma } from '@/lib/prisma'
 import { ActionError } from '@/lib/server-actions'
 
@@ -44,7 +45,12 @@ export async function createTenantForUser(
   // 1. Validar usuario
   const user = await prisma.user.findUnique({
     where: { userId },
-    select: { userId: true, name: true, onboardingStatus: true }
+    select: {
+      userId: true,
+      name: true,
+      onboardingStatus: true,
+      pendingReferralCode: true,
+    }
   })
   if (!user) throw new ActionError('Usuario no encontrado', 'NOT_FOUND')
   if (user.onboardingStatus !== 'awaiting_global_approval') {
@@ -118,7 +124,7 @@ export async function createTenantForUser(
         maxAlmacenes: plan!.maxAlmacenes,
         maxProductos: plan!.maxProductos,
         maxClientes: plan!.maxClientes,
-        features: null,
+        features: Prisma.JsonNull,
         featureOverrides: {},
       }
     })
@@ -130,6 +136,7 @@ export async function createTenantForUser(
         isActive: true,
         expiresAt: license.expiracion,
         onboardingStatus: null,
+        pendingReferralCode: null,
       }
     })
 
@@ -139,6 +146,40 @@ export async function createTenantForUser(
       licenseId: license.tenantLicenseId,
     }
   })
+
+  if (user.pendingReferralCode) {
+    const referralProfile = await prisma.affiliateProfile.findUnique({
+      where: { referralCode: user.pendingReferralCode },
+      select: {
+        tenantId: true,
+        isEligible: true,
+        status: true,
+      },
+    })
+
+    if (
+      referralProfile &&
+      referralProfile.isEligible === true &&
+      referralProfile.status === 'active' &&
+      referralProfile.tenantId !== result.tenantId
+    ) {
+      const existingReferral = await prisma.affiliateReferral.findUnique({
+        where: { referredTenantId: result.tenantId },
+        select: { referralId: true },
+      })
+
+      if (!existingReferral) {
+        await prisma.affiliateReferral.create({
+          data: {
+            referrerTenantId: referralProfile.tenantId,
+            referredTenantId: result.tenantId,
+            referredPlanId: plan!.planId,
+            status: 'registered',
+          },
+        })
+      }
+    }
+  }
 
   return result
 }

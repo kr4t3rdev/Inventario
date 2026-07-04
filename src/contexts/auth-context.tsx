@@ -10,7 +10,12 @@ import type { Usuario } from "@/app/models/model";
 interface AuthContextType {
   user: Usuario | null;
   login: (email: string, password: string) => Promise<boolean>;
-  register: (name: string, email: string, password: string) => Promise<{ success: boolean; message?: string }>;
+  register: (
+    name: string,
+    email: string,
+    password: string,
+    referralCode?: string,
+  ) => Promise<{ success: boolean; message?: string }>;
   logout: () => void;
   loading: boolean;
 }
@@ -128,6 +133,7 @@ export function AuthProvider({ children, initialUser }: AuthProviderProps) {
     name: string,
     email: string,
     password: string,
+    referralCode?: string,
   ): Promise<{ success: boolean; message?: string }> => {
     try {
       const response = await fetch("/api/auth/register", {
@@ -139,7 +145,7 @@ export function AuthProvider({ children, initialUser }: AuthProviderProps) {
               ? crypto.randomUUID()
               : "",
         },
-        body: JSON.stringify({ name, email, password }),
+        body: JSON.stringify({ name, email, password, referralCode }),
       });
 
       const data = await response.json();

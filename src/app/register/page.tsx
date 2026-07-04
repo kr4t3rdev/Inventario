@@ -3,6 +3,7 @@
 import type React from 'react'
 
 import { useEffect, useState } from 'react'
+import { useSearchParams } from 'next/navigation'
 import { useAuth } from '@/contexts/auth-context'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -31,8 +32,10 @@ export default function RegisterPage(): React.ReactElement {
 	const [successMessage, setSuccessMessage] = useState('')
 	const [loading, setLoading] = useState(false)
 	const { register } = useAuth()
+	const searchParams = useSearchParams()
 	const reduceMotion = !!useReducedMotion()
 	const [mounted, setMounted] = useState(false)
+	const referralCode = searchParams.get('ref')?.trim() || ''
 
 	useEffect(() => {
 		setMounted(true)
@@ -55,7 +58,7 @@ export default function RegisterPage(): React.ReactElement {
 
 		setLoading(true)
 
-		const result = await register(name, email, password)
+		const result = await register(name, email, password, referralCode || undefined)
 
 		if (result.success) {
 			setSuccessMessage(result.message || 'Cuenta creada exitosamente')
@@ -106,6 +109,11 @@ export default function RegisterPage(): React.ReactElement {
 					>
 						Completá los datos para comenzar
 					</motion.p>
+					{referralCode ? (
+						<p className="mt-3 text-sm text-[#0066cc] dark:text-[#2997ff]">
+							Código de referido aplicado: {referralCode}
+						</p>
+					) : null}
 				</div>
 
 				{/* Form */}

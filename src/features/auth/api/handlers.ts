@@ -535,7 +535,7 @@ export async function register(request: NextRequest) {
 			);
 		}
 
-		const { name, email, password } = await request.json();
+		const { name, email, password, referralCode } = await request.json();
 
 		if (!name || !email || !password) {
 			return NextResponse.json(
@@ -551,6 +551,11 @@ export async function register(request: NextRequest) {
 			);
 		}
 
+		const normalizedReferralCode =
+			typeof referralCode === "string" && referralCode.trim().length > 0
+				? referralCode.trim()
+				: null;
+
 		const existingUser = await prisma.user.findUnique({ where: { email } });
 
 		if (existingUser) {
@@ -558,6 +563,20 @@ export async function register(request: NextRequest) {
 				{ error: "El usuario ya existe" },
 				{ status: 409 },
 			);
+		}
+
+		if (normalizedReferralCode) {
+			const referralProfile = await prisma.affiliateProfile.findUnique({
+				where: { referralCode: normalizedReferralCode },
+				select: { affiliateProfileId: true, isEligible: true, status: true },
+			});
+
+			if (!referralProfile || referralProfile.isEligible !== true || referralProfile.status !== "active") {
+				return NextResponse.json(
+					{ error: "Código de referido inválido o inactivo" },
+					{ status: 400 },
+				);
+			}
 		}
 
 		const hashedPassword = await bcrypt.hash(password, 12);
@@ -570,6 +589,7 @@ export async function register(request: NextRequest) {
 				role: normalizeUserRole("user")!,
 				isActive: false,
 				onboardingStatus: "pending_email_verification",
+				pendingReferralCode: normalizedReferralCode,
 				emailVerifiedAt: null,
 			},
 		});
