@@ -22,6 +22,7 @@ export {
 	cleanupExpiredDemoLicenciasAction,
 	convertDemoToPaidPlanAction,
 	updateLicenciaAction,
+	updateLicenseAccountingOverridesAction,
 	deleteLicenciaAction,
 	generateLicenciasAction,
 	getUserMetricsAction,

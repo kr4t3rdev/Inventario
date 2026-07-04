@@ -66,7 +66,7 @@ import {
   getAdminPlanesAction, createAdminPlanAction, approveGlobalUserAction, createDemoTenantAction,
   cleanupExpiredDemoLicenciasAction,
   getCloudinaryAssetsAction, cleanupCloudinaryAssetsAction,
-  getLicenciasAction, updateLicenciaAction, deleteLicenciaAction, convertDemoToPaidPlanAction,
+  getLicenciasAction, updateLicenciaAction, updateLicenseAccountingOverridesAction, deleteLicenciaAction, convertDemoToPaidPlanAction,
 } from '@/features/admin/actions';
 import { createTenantForUser } from '@/lib/services/tenant-factory';
 import type { AuthenticatedUser } from '@/lib/auth-middleware';
@@ -554,6 +554,48 @@ describe('Admin Server Actions', () => {
       expect(prisma.tenantLicense.update).toHaveBeenCalledWith({
         where: { tenantLicenseId: 'lic-1' },
         data: { activa: false },
+      });
+    });
+
+    it('updateLicenseAccountingOverridesAction mergea overrides contables preservando otros existentes', async () => {
+      vi.mocked(getCurrentUser).mockResolvedValue(adminUser);
+      vi.mocked(prisma.tenantLicense.findUnique).mockResolvedValue({
+        tenantLicenseId: 'lic-1',
+        featureOverrides: {
+          productos: true,
+          'reportes-financieros': false,
+        },
+      } as any);
+      vi.mocked(prisma.tenantLicense.update).mockResolvedValue({
+        tenantLicenseId: 'lic-1',
+      } as any);
+
+      const r = await updateLicenseAccountingOverridesAction({
+        id: 'lic-1',
+        featureOverrides: {
+          'transferencias-bancarias': true,
+          'ajustes-bancarios': true,
+        },
+      });
+
+      expect(r.success).toBe(true);
+      expect(prisma.tenantLicense.findUnique).toHaveBeenCalledWith({
+        where: { tenantLicenseId: 'lic-1' },
+        select: {
+          tenantLicenseId: true,
+          featureOverrides: true,
+        },
+      });
+      expect(prisma.tenantLicense.update).toHaveBeenCalledWith({
+        where: { tenantLicenseId: 'lic-1' },
+        data: {
+          featureOverrides: {
+            productos: true,
+            'reportes-financieros': false,
+            'transferencias-bancarias': true,
+            'ajustes-bancarios': true,
+          },
+        },
       });
     });
 

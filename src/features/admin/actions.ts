@@ -32,6 +32,7 @@ import {
 	cleanupExpiredDemoLicenciasSchema,
 	convertDemoToPaidPlanSchema,
 	updateLicenciaSchema,
+	updateLicenseAccountingOverridesSchema,
 	createPlanSchema,
 	updatePlanSchema,
 	updateTenantUserSchema,
@@ -49,11 +50,13 @@ import type {
 	CleanupExpiredDemoLicenciasInput,
 	ConvertDemoToPaidPlanInput,
 	UpdateLicenciaInput,
+	UpdateLicenseAccountingOverridesInput,
 	CreatePlanInput,
 	UpdatePlanInput,
 	UpdateTenantUserInput,
 } from "./schemas";
 import type { AuthenticatedUser } from "@/lib/auth-middleware";
+import { mergeAccountingFeatureOverrides } from "./license-feature-overrides";
 
 // ─── User CRUD ─────────────────────────────────────────────
 
@@ -1363,14 +1366,56 @@ export const convertDemoToPaidPlanAction = withAction(
 
 
 export const updateLicenciaAction = withAction(
-	async ({ id, ...data }: any, user: AuthenticatedUser) => {
+	async (input: UpdateLicenciaInput, user: AuthenticatedUser) => {
 		if (user.role !== "admin")
 			throw new ActionError("Acceso restringido", "FORBIDDEN");
+		const parsed = updateLicenciaSchema.parse(input);
+		const { id, ...data } = parsed;
 		const licencia = await prisma.tenantLicense.update({
 			where: { tenantLicenseId: id },
 			data,
 		});
 		revalidatePath("/admin");
+		return licencia;
+	},
+);
+
+export const updateLicenseAccountingOverridesAction = withAction(
+	async (input: UpdateLicenseAccountingOverridesInput, user: AuthenticatedUser) => {
+		if (user.role !== "admin") {
+			throw new ActionError("Acceso restringido", "FORBIDDEN");
+		}
+
+		const parsed = updateLicenseAccountingOverridesSchema.parse(input);
+		const existingLicense = await prisma.tenantLicense.findUnique({
+			where: { tenantLicenseId: parsed.id },
+			select: {
+				tenantLicenseId: true,
+				featureOverrides: true,
+			},
+		});
+
+		if (!existingLicense) {
+			throw new ActionError("Licencia no encontrada", "NOT_FOUND");
+		}
+
+		const mergedOverrides = mergeAccountingFeatureOverrides(
+			existingLicense.featureOverrides &&
+				typeof existingLicense.featureOverrides === "object" &&
+				!Array.isArray(existingLicense.featureOverrides)
+				? (existingLicense.featureOverrides as Record<string, boolean>)
+				: {},
+			parsed.featureOverrides,
+		);
+
+		const licencia = await prisma.tenantLicense.update({
+			where: { tenantLicenseId: parsed.id },
+			data: {
+				featureOverrides: mergedOverrides,
+			},
+		});
+
+		revalidatePath("/admin/licencias");
 		return licencia;
 	},
 );

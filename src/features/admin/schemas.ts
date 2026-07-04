@@ -2,6 +2,7 @@
  * @description Schemas Zod para admin.
  */
 import { z } from 'zod';
+import { ACCOUNTING_OVERRIDE_FEATURE_KEYS } from './license-feature-overrides';
 
 // ─── Users ─────────────────────────────────────────────────
 
@@ -92,6 +93,19 @@ export const updateLicenciaSchema = z.object({
   featureOverrides: z.record(z.boolean()).optional(),
 });
 
+export const updateLicenseAccountingOverridesSchema = z.object({
+  id: z.string().min(1),
+  featureOverrides: z
+    .object(
+      Object.fromEntries(
+        ACCOUNTING_OVERRIDE_FEATURE_KEYS.map((key) => [key, z.boolean().optional()]),
+      ) as Record<string, z.ZodBoolean | z.ZodOptional<z.ZodBoolean>>,
+    )
+    .refine((value) => Object.keys(value).length > 0, {
+      message: 'Debés enviar al menos un override contable',
+    }),
+});
+
 export const createDemoTenantSchema = z.object({
   planId: z.string().min(1),
   demoName: z.string().trim().optional(),
@@ -154,6 +168,9 @@ export type UpdateTenantUserInput = z.infer<typeof updateTenantUserSchema>;
 export type MembershipActionInput = z.infer<typeof membershipActionSchema>;
 export type CreateLicenciaInput = z.infer<typeof createLicenciaSchema>;
 export type UpdateLicenciaInput = z.infer<typeof updateLicenciaSchema>;
+export type UpdateLicenseAccountingOverridesInput = z.infer<
+  typeof updateLicenseAccountingOverridesSchema
+>;
 export type CreateDemoTenantInput = z.infer<typeof createDemoTenantSchema>;
 export type CleanupExpiredDemoLicenciasInput = z.infer<
   typeof cleanupExpiredDemoLicenciasSchema

@@ -21,6 +21,7 @@ import {
   Building2,
   UserCircle2,
   RefreshCcw,
+  Settings2,
 } from 'lucide-react'
 import { format, differenceInDays } from 'date-fns'
 import { toast } from 'sonner'
@@ -28,6 +29,7 @@ import { toast } from 'sonner'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Badge } from '@/components/ui/badge'
+import { Checkbox } from '@/components/ui/checkbox'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import {
   Select,
@@ -69,7 +71,12 @@ import {
   cleanupExpiredDemoLicenciasAction,
   convertDemoToPaidPlanAction,
   getLicenciasAction,
+  updateLicenseAccountingOverridesAction,
 } from '@/features/admin'
+import {
+  ACCOUNTING_OVERRIDE_FEATURES,
+  buildAccountingFeatureToggleStates,
+} from '@/features/admin/license-feature-overrides'
 
 export default function AdminLicenciasPage() {
   const [page, setPage] = useState(1)
@@ -82,7 +89,11 @@ export default function AdminLicenciasPage() {
   const [generarDialogOpen, setGenerarDialogOpen] = useState(false)
   const [demoDialogOpen, setDemoDialogOpen] = useState(false)
   const [convertDialogOpen, setConvertDialogOpen] = useState(false)
+  const [accountingOverridesDialogOpen, setAccountingOverridesDialogOpen] = useState(false)
   const [licenseToConvert, setLicenseToConvert] = useState<any>(null)
+  const [licenseToEditOverrides, setLicenseToEditOverrides] = useState<any>(null)
+  const [accountingOverridesDraft, setAccountingOverridesDraft] = useState<Record<string, boolean>>({})
+  const [isSavingOverrides, setIsSavingOverrides] = useState(false)
   const [selectedLicencias, setSelectedLicencias] = useState<Set<string>>(new Set())
 
   const [data, setData] = useState<any>(null)
@@ -170,7 +181,7 @@ export default function AdminLicenciasPage() {
 
   async function handleCleanupExpiredDemos() {
     try {
-      const result = await cleanupExpiredDemoLicenciasAction({})
+      const result = await cleanupExpiredDemoLicenciasAction({ dryRun: false })
       if (!result.success) {
         toast.error(result.error?.message || 'No se pudo limpiar demos expiradas')
         return
@@ -220,6 +231,57 @@ export default function AdminLicenciasPage() {
       setSelectedLicencias(new Set())
     } else {
       setSelectedLicencias(new Set(licencias.map((l: any) => l.tenantLicenseId)))
+    }
+  }
+
+  const openAccountingOverridesDialog = (licencia: any) => {
+    const toggleStates = buildAccountingFeatureToggleStates(
+      licencia?.plan?.features && typeof licencia.plan.features === 'object'
+        ? licencia.plan.features
+        : {},
+      licencia?.featureOverrides && typeof licencia.featureOverrides === 'object'
+        ? licencia.featureOverrides
+        : {},
+    )
+
+    setLicenseToEditOverrides(licencia)
+    setAccountingOverridesDraft(
+      Object.fromEntries(toggleStates.map((item) => [item.key, item.enabled])),
+    )
+    setAccountingOverridesDialogOpen(true)
+  }
+
+  const closeAccountingOverridesDialog = () => {
+    if (isSavingOverrides) return
+    setAccountingOverridesDialogOpen(false)
+    setLicenseToEditOverrides(null)
+    setAccountingOverridesDraft({})
+  }
+
+  const handleSaveAccountingOverrides = async () => {
+    if (!licenseToEditOverrides) return
+
+    try {
+      setIsSavingOverrides(true)
+      const result = await updateLicenseAccountingOverridesAction({
+        id: licenseToEditOverrides.tenantLicenseId,
+        featureOverrides: accountingOverridesDraft,
+      })
+
+      if (!result.success) {
+        toast.error(result.error?.message || 'No se pudieron guardar los overrides')
+        return
+      }
+
+      setIsSavingOverrides(false)
+      toast.success('Overrides contables actualizados')
+      closeAccountingOverridesDialog()
+      const licenciasResult = await getLicenciasAction()
+      if (licenciasResult.success) setData(licenciasResult.data)
+    } catch (_error) {
+      toast.error('No se pudieron guardar los overrides')
+    } finally {
+      setIsSavingOverrides(false)
     }
   }
 
@@ -477,6 +539,11 @@ export default function AdminLicenciasPage() {
                         {licencia.isDemo ? (
                           <Badge className="bg-sky-500">Demo</Badge>
                         ) : null}
+                        {licencia.featureOverrides &&
+                        typeof licencia.featureOverrides === 'object' &&
+                        Object.keys(licencia.featureOverrides).length > 0 ? (
+                          <Badge variant="secondary">Overrides</Badge>
+                        ) : null}
                       </div>
                     </TableCell>
                     <TableCell>
@@ -501,6 +568,14 @@ export default function AdminLicenciasPage() {
                     </TableCell>
                     <TableCell className="text-right">
                       <div className="flex justify-end gap-2">
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => openAccountingOverridesDialog(licencia)}
+                        >
+                          <Settings2 className="h-4 w-4 mr-1" />
+                          Overrides
+                        </Button>
                         <Button
                           variant="outline"
                           size="sm"
@@ -604,6 +679,21 @@ export default function AdminLicenciasPage() {
         licencia={licenseToConvert}
         onConvert={handleConvertDemo}
       />
+
+      <AccountingOverridesDialog
+        open={accountingOverridesDialogOpen}
+        onClose={closeAccountingOverridesDialog}
+        licencia={licenseToEditOverrides}
+        draft={accountingOverridesDraft}
+        isSaving={isSavingOverrides}
+        onToggle={(key, checked) =>
+          setAccountingOverridesDraft((current) => ({
+            ...current,
+            [key]: checked,
+          }))
+        }
+        onSave={handleSaveAccountingOverrides}
+      />
     </div>
   )
 }
@@ -698,6 +788,100 @@ function GenerarLicenciasDialog({
             disabled={!planId || !usuarioId}
           >
             Generar
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  )
+}
+
+function AccountingOverridesDialog({
+  open,
+  onClose,
+  licencia,
+  draft,
+  isSaving,
+  onToggle,
+  onSave,
+}: {
+  open: boolean
+  onClose: () => void
+  licencia: any
+  draft: Record<string, boolean>
+  isSaving: boolean
+  onToggle: (key: string, checked: boolean) => void
+  onSave: () => void
+}) {
+  const toggleStates = buildAccountingFeatureToggleStates(
+    licencia?.plan?.features && typeof licencia.plan.features === 'object'
+      ? licencia.plan.features
+      : {},
+    licencia?.featureOverrides && typeof licencia.featureOverrides === 'object'
+      ? licencia.featureOverrides
+      : {},
+  )
+
+  const effectiveStates = toggleStates.map((state) => ({
+    ...state,
+    enabled: draft[state.key] ?? state.enabled,
+  }))
+
+  return (
+    <Dialog open={open} onOpenChange={onClose}>
+      <DialogContent className="sm:max-w-2xl">
+        <DialogHeader>
+          <DialogTitle>Overrides contables por tenant</DialogTitle>
+          <DialogDescription>
+            Editá excepciones solo para esta licencia sin tocar el plan base.
+          </DialogDescription>
+        </DialogHeader>
+
+        {licencia ? (
+          <div className="space-y-4">
+            <div className="rounded-lg border bg-muted/30 p-3 text-sm">
+              <div className="font-medium">{licencia.tenant?.nombre ?? 'Tenant sin nombre'}</div>
+              <div className="text-muted-foreground">
+                Plan base: {licencia.plan?.nombre ?? 'Sin plan'}
+              </div>
+            </div>
+
+            <div className="grid gap-3 max-h-[420px] overflow-y-auto pr-1">
+              {ACCOUNTING_OVERRIDE_FEATURES.map((feature) => {
+                const state = effectiveStates.find((item) => item.key === feature.key)
+                const checked = state?.enabled === true
+
+                return (
+                  <label
+                    key={feature.key}
+                    className="flex items-start gap-3 rounded-lg border p-3 cursor-pointer"
+                  >
+                    <Checkbox
+                      checked={checked}
+                      onCheckedChange={(value) => onToggle(feature.key, value === true)}
+                      className="mt-1"
+                    />
+                    <div className="space-y-1">
+                      <div className="flex items-center gap-2">
+                        <span className="font-medium">{feature.label}</span>
+                        <Badge variant={state?.inherited ? 'outline' : 'secondary'}>
+                          {state?.inherited ? 'Plan base' : 'Override'}
+                        </Badge>
+                      </div>
+                      <p className="text-sm text-muted-foreground">{feature.description}</p>
+                    </div>
+                  </label>
+                )
+              })}
+            </div>
+          </div>
+        ) : null}
+
+        <DialogFooter>
+          <Button variant="outline" onClick={onClose} disabled={isSaving}>
+            Cancelar
+          </Button>
+          <Button onClick={onSave} disabled={!licencia || isSaving}>
+            Guardar overrides
           </Button>
         </DialogFooter>
       </DialogContent>
