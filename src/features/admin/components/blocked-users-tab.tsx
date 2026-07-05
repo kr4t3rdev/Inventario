@@ -61,21 +61,7 @@ export function BlockedUsersTab({ onOpenHistory }: BlockedUsersTabProps) {
             <SelectItem value="50">50 por página</SelectItem>
           </SelectContent>
         </Select>
-        {blockedUsers.length > 0 && (
-          <Pagination>
-            <PaginationContent>
-              <PaginationItem>
-                <PaginationPrevious onClick={() => setPage(p => Math.max(1, p - 1))} className={page === 1 ? "pointer-events-none opacity-50" : "cursor-pointer"} />
-              </PaginationItem>
-              <PaginationItem>
-                <span className="flex items-center px-4">Página {page} de {totalPages}</span>
-              </PaginationItem>
-              <PaginationItem>
-                <PaginationNext onClick={() => setPage(p => Math.min(totalPages, p + 1))} className={page === totalPages ? "pointer-events-none opacity-50" : "cursor-pointer"} />
-              </PaginationItem>
-            </PaginationContent>
-          </Pagination>
-        )}
+// Pagination moved below table
       </div>
 
       {isLoading ? (
@@ -141,6 +127,24 @@ export function BlockedUsersTab({ onOpenHistory }: BlockedUsersTabProps) {
               <p className="text-xs text-muted-foreground">Los usuarios bloqueados por intentos fallidos aparecerán aquí.</p>
             </div>
           </div>
+        </div>
+      )}
+
+      {blockedUsers.length > 0 && (
+        <div className="flex justify-center pt-2">
+          <Pagination>
+            <PaginationContent>
+              <PaginationItem>
+                <PaginationPrevious onClick={() => setPage(p => Math.max(1, p - 1))} className={page === 1 ? "pointer-events-none opacity-50" : "cursor-pointer"} />
+              </PaginationItem>
+              <PaginationItem>
+                <span className="flex items-center px-4">Página {page} de {totalPages}</span>
+              </PaginationItem>
+              <PaginationItem>
+                <PaginationNext onClick={() => setPage(p => Math.min(totalPages, p + 1))} className={page === totalPages ? "pointer-events-none opacity-50" : "cursor-pointer"} />
+              </PaginationItem>
+            </PaginationContent>
+          </Pagination>
         </div>
       )}
     </div>

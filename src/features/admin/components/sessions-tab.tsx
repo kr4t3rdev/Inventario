@@ -94,21 +94,7 @@ export function SessionsTab(): JSX.Element {
             </SelectContent>
           </Select>
         </div>
-        {sessions && sessions.length > 0 && (
-          <Pagination>
-            <PaginationContent>
-              <PaginationItem>
-                <PaginationPrevious onClick={() => setPage((current) => Math.max(1, current - 1))} className={page === 1 ? 'pointer-events-none opacity-50' : 'cursor-pointer'} />
-              </PaginationItem>
-              <PaginationItem>
-                <span className="flex items-center px-4">Página {page} de {totalPages}</span>
-              </PaginationItem>
-              <PaginationItem>
-                <PaginationNext onClick={() => setPage((current) => Math.min(totalPages, current + 1))} className={page === totalPages ? 'pointer-events-none opacity-50' : 'cursor-pointer'} />
-              </PaginationItem>
-            </PaginationContent>
-          </Pagination>
-        )}
+        {/* Pagination moved below table */}
       </div>
 
       {isLoading ? (
@@ -174,6 +160,24 @@ export function SessionsTab(): JSX.Element {
               <p className="text-xs text-muted-foreground">Las sesiones de los usuarios aparecerán aquí cuando inicien sesión.</p>
             </div>
           </div>
+        </div>
+      )}
+
+      {sessions.length > 0 && (
+        <div className="flex justify-center pt-2">
+          <Pagination>
+            <PaginationContent>
+              <PaginationItem>
+                <PaginationPrevious onClick={() => setPage((current) => Math.max(1, current - 1))} className={page === 1 ? 'pointer-events-none opacity-50' : 'cursor-pointer'} />
+              </PaginationItem>
+              <PaginationItem>
+                <span className="flex items-center px-4">Página {page} de {totalPages}</span>
+              </PaginationItem>
+              <PaginationItem>
+                <PaginationNext onClick={() => setPage((current) => Math.min(totalPages, current + 1))} className={page === totalPages ? 'pointer-events-none opacity-50' : 'cursor-pointer'} />
+              </PaginationItem>
+            </PaginationContent>
+          </Pagination>
         </div>
       )}
     </div>
