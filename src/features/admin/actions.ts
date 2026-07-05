@@ -891,10 +891,20 @@ export const getExpiringSoonAction = withAction(
 			throw new ActionError("Acceso restringido", "FORBIDDEN");
 		const days = input.days || 7;
 		const limit = new Date(Date.now() + days * 24 * 60 * 60 * 1000);
-		return prisma.user.findMany({
+		const users = await prisma.user.findMany({
 			where: { expiresAt: { not: null, lte: limit }, isActive: true },
 			orderBy: { expiresAt: "asc" },
 		});
+		const usersWithExpiry = users.map((u) => {
+			const daysUntilExpiry = u.expiresAt
+				? Math.ceil(
+							(new Date(u.expiresAt).getTime() - Date.now()) /
+								(1000 * 60 * 60 * 24),
+					)
+				: 0;
+			return { ...u, daysUntilExpiry };
+		});
+		return { users: usersWithExpiry };
 	},
 );
 

@@ -36,7 +36,7 @@ export function ExpiringUsersTab({ onOpenHistory }: ExpiringUsersTabProps) {
     setIsLoading(true)
     try {
       const data = await getExpiringSoonAction({ days: parseInt(days) })
-      setExpiringUsers((data?.success ? data.data : undefined) as unknown as { users: (Usuario & { daysUntilExpiry: number; })[]; } | undefined)
+      setExpiringUsers(data?.success ? (data.data as { users: (Usuario & { daysUntilExpiry: number })[] }) : undefined)
     } catch {
       setExpiringUsers(undefined)
     } finally {
