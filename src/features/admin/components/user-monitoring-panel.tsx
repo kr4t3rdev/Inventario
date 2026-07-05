@@ -96,7 +96,7 @@ export function UserMonitoringPanel() {
                 <CardDescription>Historial de actividad y sesiones activas</CardDescription>
               </div>
             </div>
-            <div className="flex gap-2 flex-wrap">
+            <div className="-mr-4 flex gap-2 overflow-x-auto pb-1 pr-4 scrollbar-hide">
               {tabs.map((tab) => {
                 const Icon = tab.icon
                 const isActive = activeTab === tab.key
@@ -105,12 +105,19 @@ export function UserMonitoringPanel() {
                     key={tab.key}
                     variant={isActive ? "default" : "outline"}
                     onClick={() => setActiveTab(tab.key)}
-                    className="transition-all duration-200 hover:shadow-sm"
+                    className="relative transition-all duration-200 hover:shadow-sm shrink-0"
                   >
-                    <Icon className="mr-2 h-4 w-4" />
-                    {tab.label}
+                    {isActive && (
+                      <motion.div
+                        layoutId="activeTabIndicator"
+                        className="absolute inset-0 rounded-md bg-primary"
+                        transition={{ type: "spring", stiffness: 380, damping: 30 }}
+                      />
+                    )}
+                    <Icon className="mr-2 h-4 w-4 relative z-10" />
+                    <span className="relative z-10">{tab.label}</span>
                     {(tab.count ?? 0) > 0 && (
-                      <Badge variant="destructive" className="ml-2 h-5 px-2 text-xs">
+                      <Badge variant="destructive" className="ml-2 h-5 px-2 text-xs relative z-10">
                         {tab.count}
                       </Badge>
                     )}
