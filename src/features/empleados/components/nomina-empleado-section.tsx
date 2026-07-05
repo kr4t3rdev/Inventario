@@ -42,7 +42,8 @@ import {
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { createPagoSalarioAction } from "@/features/pago-salario/actions";
 import { deleteEmpleadoAction } from "@/features/empleados/actions";
-import { CreditCard, Users } from "lucide-react";
+import { Plus, CreditCard, Users } from "lucide-react";
+import Link from "next/link";
 import { toast } from "sonner";
 import { EmpleadoCard } from "./empleado-card";
 import { HistorialPagos } from "./historial-pagos";
@@ -153,13 +154,25 @@ export function NominaEmpleadoSection({
     <>
       <div className="container mx-auto py-6 px-4">
           {/* Header */}
-          <div className="flex items-center gap-3 mb-6">
-            <div className="w-10 h-10 bg-linear-to-br from-orange-500 to-red-600 rounded-xl flex items-center justify-center shadow-lg">
-              <Users className="h-5 w-5 text-white" />
+          <div className="flex items-center justify-between gap-3 mb-6">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 bg-linear-to-br from-orange-500 to-red-600 rounded-xl flex items-center justify-center shadow-lg">
+                <Users className="h-5 w-5 text-white" />
+              </div>
+              <h1 className="text-2xl font-bold bg-linear-to-r from-orange-500 to-red-600 bg-clip-text text-transparent">
+                Empleados y Nómina
+              </h1>
             </div>
-            <h1 className="text-2xl font-bold bg-linear-to-r from-orange-500 to-red-600 bg-clip-text text-transparent">
-              Empleados y Nómina
-            </h1>
+            {puedeEditar && (
+              <Button
+                asChild
+                className="bg-linear-to-r from-orange-500 to-red-600 text-white shadow-lg hover:shadow-xl transition-shadow"
+              >
+                <Link href="/busy/empleados/new">
+                  <Plus className="mr-2 h-4 w-4" /> Nuevo Empleado
+                </Link>
+              </Button>
+            )}
           </div>
 
           {/* Lista de empleados con botones de pago y delete */}
