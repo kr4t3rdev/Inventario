@@ -342,7 +342,7 @@ export function CategoryForm({ initialData, onSuccess }: CategoryFormProps) {
                 <motion.div whileHover={{ scale: isLoading ? 1 : 1.02 }} whileTap={{ scale: isLoading ? 1 : 0.98 }}>
                   <Button 
                     type="submit" 
-                    disabled={isLoading || !isDirty || !isValid}
+                    disabled={isLoading}
                     className="min-w-40 gap-2 bg-linear-to-r from-primary to-purple-600 hover:from-primary/90 hover:to-purple-600/90 cursor-pointer"
                   >
                     {isLoading ? (

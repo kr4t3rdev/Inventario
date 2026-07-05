@@ -27,7 +27,6 @@ import {
 	ModoContable,
 } from "@/lib/services/periodo-contable-types";
 import { isTenantAdminRole } from "@/lib/auth/roles";
-import { isBasicPlanName } from "@/lib/plan-access";
 import { prisma } from "@/lib/prisma";
 import {
 	obtenerBalanceConVariacion,
@@ -40,15 +39,9 @@ import {
 
 
 function requirePeriodManagementAccess(user: AuthenticatedUser, action: string): void {
-	requireFeature(user, 'contabilidad', action);
-
-	if (user.role !== 'admin' && isBasicPlanName(user.planName)) {
-		throw new ActionError(
-			`Tu plan actual no incluye la funcionalidad de ${action}. Actualiza tu plan para continuar.`,
-			'FEATURE_NOT_AVAILABLE',
-		);
-	}
+  requireFeature(user, 'contabilidad', action);
 }
+ 
 
 
 const checkLockSchema = z.object({

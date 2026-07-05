@@ -32,7 +32,6 @@ export default async function UpdateGastoElementoPage({ params }: Props) {
   }
 
   const concepto = conceptoResult.data
-  // @ts-expect-error
   const elemento = concepto.elementos?.find((e) => e.elementoId === elementoId)
 
   if (!elemento) {
@@ -51,7 +50,6 @@ export default async function UpdateGastoElementoPage({ params }: Props) {
           <GastoElementoForm
             conceptoId={conceptoId}
             conceptoNombre={
-  // @ts-expect-error
             concepto.nombre
             }
             initialData={elemento}

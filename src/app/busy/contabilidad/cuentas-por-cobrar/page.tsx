@@ -88,10 +88,10 @@ export default function CuentasPorCobrarPage() {
     setFetchError(null)
     try {
       const result = await getCuentasPorCobrarAction({ page: pageNum, limit: LIMIT, search: search || undefined })
-      if (result.success && result.data) {
-        setCuentasData(result.data)
+      if (!result.success) {
+        setFetchError(result.error.message ?? 'Error al cargar cuentas')
       } else {
-        setFetchError(result.error?.message ?? 'Error al cargar cuentas')
+        setCuentasData(result.data)
       }
     } catch (err) {
       setFetchError('Error de conexión al cargar cuentas')
@@ -104,7 +104,7 @@ export default function CuentasPorCobrarPage() {
   // ── Load metrics separately ───────────────────────────
   const loadMetrics = useCallback(async () => {
     const result = await getCxcMetricsAction({})
-    if (result.success && result.data) {
+    if (result.success) {
       setMetricas(result.data)
     }
   }, [])

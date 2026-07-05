@@ -1,7 +1,15 @@
-import { createRouteHandler } from 'uploadthing/next'
+import { createRouteHandler } from 'uploadthing/server'
 
 import { uploadRouter } from './core'
 
-export const { GET, POST } = createRouteHandler({
+const handleUploadthingRequest = createRouteHandler({
   router: uploadRouter,
 })
+
+export async function GET(request: Request): Promise<Response> {
+  return handleUploadthingRequest(request)
+}
+
+export async function POST(request: Request): Promise<Response> {
+  return handleUploadthingRequest(request)
+}

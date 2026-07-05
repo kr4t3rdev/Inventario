@@ -17,7 +17,10 @@ export default function EditarVentaPage() {
   const params = useParams()
   const router = useRouter()
   const ventaId = params.id as string
-  const [venta, setVenta] = useState<Awaited<ReturnType<typeof getVentaByIdAction>>['data'] | null>(null)
+  type VentaData = NonNullable<
+    Extract<Awaited<ReturnType<typeof getVentaByIdAction>>, { success: true }>['data']
+  >
+  const [venta, setVenta] = useState<VentaData | null>(null)
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState<unknown>(null)
 
@@ -96,10 +99,11 @@ export default function EditarVentaPage() {
   const items = venta.items || []
   const tieneMultiplesProductos = items.length > 1
   const itemUnico = items.length === 1 ? items[0] : null
-  // @ts-expect-error
-  const productoIdInicial = venta.productoId || itemUnico?.productoId || ""
-  // @ts-expect-error
-  const cantidadInicial = venta.productoId ? venta.cantidad : (itemUnico?.cantidad ?? venta.cantidad ?? 1)
+  const ventaLegacy = venta as VentaData & { productoId?: string; cantidad?: number }
+  const productoIdInicial = ventaLegacy.productoId || itemUnico?.productoId || ""
+  const cantidadInicial = ventaLegacy.productoId
+    ? (ventaLegacy.cantidad ?? 1)
+    : (itemUnico?.cantidad ?? ventaLegacy.cantidad ?? 1)
 
   return (
         <div className="container mx-auto py-4">
@@ -179,7 +183,7 @@ export default function EditarVentaPage() {
                         </TableRow>
                       </TableHeader>
                       <TableBody>
-                        {items.map((item) => (
+                        {items.map((item: NonNullable<VentaData>['items'][number]) => (
                           <TableRow key={item.id}>
                             <TableCell>{item.producto?.nombre || item.productoId}</TableCell>
                             <TableCell className="text-right">{item.cantidad}</TableCell>

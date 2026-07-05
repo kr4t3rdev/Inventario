@@ -5,7 +5,7 @@
  *   pnpm tsx prisma/seed/backfill-upload-features.ts
  */
 
-import { PrismaClient } from '../../src/generated/prisma';
+import { Prisma, PrismaClient } from '../../src/generated/prisma';
 import {
   PLAN_BASICO_FEATURES,
   PLAN_EMPRESARIAL_FEATURES,
@@ -53,7 +53,7 @@ async function backfillUploadFeatures(): Promise<void> {
         features: {
           ...currentFeatures,
           ...uploadFeatures,
-        },
+        } as Prisma.InputJsonValue,
       },
     });
 

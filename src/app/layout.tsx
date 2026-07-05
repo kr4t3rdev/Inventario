@@ -28,7 +28,7 @@ export const metadata: Metadata = {
   },
   openGraph: {
     title: siteConfig.name,
-    description: siteMetadata.description,
+    description: siteMetadata.description ?? undefined,
     url: buildCanonicalUrl('/'),
     siteName: siteConfig.name,
     locale: 'es_ES',
@@ -37,7 +37,7 @@ export const metadata: Metadata = {
   twitter: {
     card: 'summary_large_image',
     title: siteConfig.name,
-    description: siteMetadata.description,
+    description: siteMetadata.description ?? undefined,
   },
   icons: siteMetadata.icons,
 };

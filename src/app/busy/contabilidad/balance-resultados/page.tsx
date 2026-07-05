@@ -61,14 +61,15 @@ const surfaceCardClass = "bg-white/80 dark:bg-slate-900/10 backdrop-blur-xl bord
 
 export default function BalanceResultadosPage() {
   const router = useRouter()
-  const { user } = useAuth()
+  const { user, loading: authLoading } = useAuth()
   const [year, setYear] = useState<string>(new Date().getFullYear().toString())
   const [data, setData] = useState<FinancialData | null>(null)
   const [loading, setLoading] = useState(true)
   const [errorMsg, setErrorMsg] = useState<string | null>(null)
   const isBlocked =
+    !authLoading &&
     user?.role !== 'admin' &&
-    user?.planFeatures?.['reportes-financieros'] !== true
+    user?.planFeatures?.contabilidad !== true
 
   useEffect(() => {
     if (isBlocked) {

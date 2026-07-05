@@ -82,11 +82,17 @@ export default function AdminDashboardPage(): React.JSX.Element {
   const revenueTrend = safeFinance?.revenueTrend ?? [];
   const usersTrend = safeSystem?.usersTrend ?? [];
   
-  const currentWeekRevenue = revenueTrend.slice(-7).reduce((sum, d) => sum + d.ingresos, 0);
+  const currentWeekRevenue = revenueTrend.slice(-7).reduce(
+    (sum: number, d: { ingresos: number }) => sum + d.ingresos,
+    0,
+  );
   const previousWeekRevenue = 0; // TODO: implementar datos de semana anterior
   const revenueTrendData = calculateTrend(currentWeekRevenue, previousWeekRevenue);
 
-  const currentWeekUsers = usersTrend.slice(-7).reduce((sum, d) => sum + d.usuarios, 0);
+  const currentWeekUsers = usersTrend.slice(-7).reduce(
+    (sum: number, d: { usuarios: number }) => sum + d.usuarios,
+    0,
+  );
   const previousWeekUsers = 0; // TODO: implementar datos de semana anterior
   const usersTrendData = calculateTrend(currentWeekUsers, previousWeekUsers);
 
@@ -327,12 +333,12 @@ export default function AdminDashboardPage(): React.JSX.Element {
                 ) : (safeFinance?.revenueTrend?.length ?? 0) > 0 ? (
                   <div className="space-y-2">
                     <div className="flex items-center justify-between text-xs text-muted-foreground">
-                      <span>Total: ${safeFinance.revenueTrend.reduce((sum, d) => sum + d.ingresos, 0).toLocaleString()}</span>
-                      <span>Promedio: ${Math.round(safeFinance.revenueTrend.reduce((sum, d) => sum + d.ingresos, 0) / safeFinance.revenueTrend.length).toLocaleString()}/día</span>
+                      <span>Total: ${safeFinance.revenueTrend.reduce((sum: number, d: { ingresos: number }) => sum + d.ingresos, 0).toLocaleString()}</span>
+                      <span>Promedio: ${Math.round(safeFinance.revenueTrend.reduce((sum: number, d: { ingresos: number }) => sum + d.ingresos, 0) / safeFinance.revenueTrend.length).toLocaleString()}/día</span>
                     </div>
                     <div className="h-32 flex items-end gap-1">
-                      {safeFinance.revenueTrend.map((day, idx) => {
-                        const maxIngresos = Math.max(...safeFinance.revenueTrend.map(d => d.ingresos));
+                      {safeFinance.revenueTrend.map((day: { fecha: string; ingresos: number }, idx: number) => {
+                        const maxIngresos = Math.max(...safeFinance.revenueTrend.map((d: { ingresos: number }) => d.ingresos));
                         const height = maxIngresos > 0 ? (day.ingresos / maxIngresos) * 100 : 0;
                         return (
                           <div key={idx} className="flex-1 flex flex-col items-center gap-1 group">
@@ -370,12 +376,12 @@ export default function AdminDashboardPage(): React.JSX.Element {
                 ) : (safeSystem?.usersTrend?.length ?? 0) > 0 ? (
                   <div className="space-y-2">
                     <div className="flex items-center justify-between text-xs text-muted-foreground">
-                      <span>Total: {safeSystem.usersTrend.reduce((sum, d) => sum + d.usuarios, 0)}</span>
-                      <span>Promedio: {(safeSystem.usersTrend.reduce((sum, d) => sum + d.usuarios, 0) / safeSystem.usersTrend.length).toFixed(1)}/día</span>
+                      <span>Total: {safeSystem.usersTrend.reduce((sum: number, d: { usuarios: number }) => sum + d.usuarios, 0)}</span>
+                      <span>Promedio: {(safeSystem.usersTrend.reduce((sum: number, d: { usuarios: number }) => sum + d.usuarios, 0) / safeSystem.usersTrend.length).toFixed(1)}/día</span>
                     </div>
                     <div className="h-32 flex items-end gap-1">
-                      {safeSystem.usersTrend.map((day, idx) => {
-                        const maxUsers = Math.max(...safeSystem.usersTrend.map(d => d.usuarios));
+                      {safeSystem.usersTrend.map((day: { fecha: string; usuarios: number }, idx: number) => {
+                        const maxUsers = Math.max(...safeSystem.usersTrend.map((d: { usuarios: number }) => d.usuarios));
                         const height = maxUsers > 0 ? (day.usuarios / maxUsers) * 100 : 0;
                         return (
                           <div key={idx} className="flex-1 flex flex-col items-center gap-1 group">

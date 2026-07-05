@@ -19,9 +19,9 @@ interface TenantEntry {
  * pertenece a múltiples empresas.
  * Consume el payload estable `{ items: TenantEntry[] }` de `/api/auth/tenants`
  * y sólo limpia estado local cuando la respuesta indica auth stale/invalid.
- * @returns {JSX.Element | null} Selector de tenant o null si ≤1 tenant
+ * @returns {React.JSX.Element | null} Selector de tenant o null si ≤1 tenant
  */
-export function TenantSwitcher(): JSX.Element | null {
+export function TenantSwitcher(): React.JSX.Element | null {
 	const { user } = useAuth();
 	const [tenants, setTenants] = useState<TenantEntry[]>([]);
 	const [loading, setLoading] = useState(false);

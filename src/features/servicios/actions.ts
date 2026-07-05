@@ -2,7 +2,7 @@
 import { revalidatePath } from 'next/cache';
 import { withAction, ActionError } from '@/lib/server-actions';
 import { prisma } from '@/lib/prisma';
-import { requireTenant, requireManagerRole } from '@/lib/services/tenant-scope';
+import { requireFeature, requireTenant, requireManagerRole } from '@/lib/services/tenant-scope';
 import { servicioSchema, servicioUpdateSchema } from './schemas';
 import type { ServicioInput, ServicioUpdateInput, ServicioResponse } from './types';
 import type { AuthenticatedUser } from '@/lib/auth-middleware';
@@ -31,6 +31,7 @@ function serialize(s: {
  * @returns {Promise<ServicioResponse[]>} Lista de servicios ordenados por nombre.
  */
 export const getServiciosAction = withAction(async (_: void, user: AuthenticatedUser) => {
+  requireFeature(user, 'servicios', 'gestionar servicios');
   const tenantId = requireTenant(user);
   const servicios = await prisma.servicios.findMany({ where: { tenantId }, orderBy: { nombre: 'asc' } });
   return servicios.map(serialize);
@@ -43,6 +44,7 @@ export const getServiciosAction = withAction(async (_: void, user: Authenticated
  * @returns {Promise<ServicioResponse>} Servicio encontrado.
  */
 export const getServicioByIdAction = withAction(async (id: string, user: AuthenticatedUser) => {
+  requireFeature(user, 'servicios', 'gestionar servicios');
   const tenantId = requireTenant(user);
   const s = await prisma.servicios.findFirst({ where: { servicioId: id, tenantId } });
   if (!s) throw new ActionError('Servicio no encontrado', 'NOT_FOUND');
@@ -56,6 +58,7 @@ export const getServicioByIdAction = withAction(async (id: string, user: Authent
  * @returns {Promise<ServicioResponse>} Servicio creado.
  */
 export const createServicioAction = withAction(async (input: ServicioInput, user: AuthenticatedUser) => {
+  requireFeature(user, 'servicios', 'gestionar servicios');
   requireManagerRole(user, 'crear servicios');
   const p = servicioSchema.parse(input);
   const tid = requireTenant(user);
@@ -72,6 +75,7 @@ export const createServicioAction = withAction(async (input: ServicioInput, user
  * @returns {Promise<ServicioResponse>} Servicio actualizado.
  */
 export const updateServicioAction = withAction(async (input: ServicioUpdateInput, user: AuthenticatedUser) => {
+  requireFeature(user, 'servicios', 'gestionar servicios');
   requireManagerRole(user, 'editar servicios');
   const p = servicioUpdateSchema.parse(input);
   const { servicioId, ...data } = p;
@@ -93,6 +97,7 @@ export const updateServicioAction = withAction(async (input: ServicioUpdateInput
  * @returns {Promise<{ id: string; eliminado: boolean }>}
  */
 export const deleteServicioAction = withAction(async (id: string, user: AuthenticatedUser) => {
+  requireFeature(user, 'servicios', 'gestionar servicios');
   requireManagerRole(user, 'eliminar servicios');
   const tid = requireTenant(user);
   const existing = await prisma.servicios.findFirst({ where: { servicioId: id, tenantId: tid } });

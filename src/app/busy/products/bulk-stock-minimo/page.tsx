@@ -9,7 +9,7 @@ import { redirect } from 'next/navigation'
 import { getCurrentUser } from '@/lib/server-actions'
 import { BulkStockMinimoClient } from './bulk-stock-minimo-client'
 
-export default async function BulkStockMinimoPage(): Promise<JSX.Element> {
+export default async function BulkStockMinimoPage() {
   const user = await getCurrentUser()
 
   if (user?.planFeatures?.['productos-stock-masivo'] !== true) {

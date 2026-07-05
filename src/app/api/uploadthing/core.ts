@@ -1,6 +1,6 @@
 import { z } from 'zod'
-import { createUploadthing, type FileRouter, UTFiles } from 'uploadthing/next'
-import type { NextRequest } from 'next/server'
+import { createUploadthing, type FileRouter, UTFiles } from 'uploadthing/server'
+import { NextRequest } from 'next/server'
 
 import { authenticateUser } from '@/lib/auth-middleware'
 import { resolveUploadPolicy, type UploadKey } from '@/lib/upload/upload-policy'
@@ -17,16 +17,16 @@ const uploadthingInputSchema = z.object({
 })
 
 const contractAttachmentConfig = {
-  'application/pdf': { maxFileSize: '10MB', maxFileCount: 10 },
-  'application/msword': { maxFileSize: '10MB', maxFileCount: 10 },
+  'application/pdf': { maxFileSize: '16MB', maxFileCount: 10 },
+  'application/msword': { maxFileSize: '16MB', maxFileCount: 10 },
   'application/vnd.openxmlformats-officedocument.wordprocessingml.document': {
-    maxFileSize: '10MB',
+    maxFileSize: '16MB',
     maxFileCount: 10,
   },
-  'image/jpeg': { maxFileSize: '10MB', maxFileCount: 10 },
-  'image/jpg': { maxFileSize: '10MB', maxFileCount: 10 },
-  'image/png': { maxFileSize: '10MB', maxFileCount: 10 },
-  'image/webp': { maxFileSize: '10MB', maxFileCount: 10 },
+  'image/jpeg': { maxFileSize: '16MB', maxFileCount: 10 },
+  'image/jpg': { maxFileSize: '16MB', maxFileCount: 10 },
+  'image/png': { maxFileSize: '16MB', maxFileCount: 10 },
+  'image/webp': { maxFileSize: '16MB', maxFileCount: 10 },
 } as const
 
 type UploadthingInput = z.infer<typeof uploadthingInputSchema>
@@ -37,11 +37,11 @@ export type UploadthingRoute =
   | 'contractVersion'
 
 async function resolveUploadthingPolicy(
-  req: NextRequest,
+  req: Request,
   input: UploadthingInput,
-  files: Array<{ name: string; size: number; type: string }>
+  files: ReadonlyArray<{ name: string; size: number; type: string }>
 ) {
-  const authResult = await authenticateUser(req)
+  const authResult = await authenticateUser(new NextRequest(req))
   if ('status' in authResult) {
     throw new Error('Unauthorized upload')
   }
@@ -82,7 +82,7 @@ async function resolveUploadthingPolicy(
 }
 
 function withCustomId(
-  files: Array<{ name: string; size: number; type: string }>,
+  files: ReadonlyArray<{ name: string; size: number; type: string }>,
   customId: string
 ) {
   return files.map((file) => ({

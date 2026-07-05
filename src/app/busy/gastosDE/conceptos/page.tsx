@@ -16,7 +16,7 @@ export const metadata = {
 }
 
 export default async function GastoConceptosPage() {
-  const conceptosResult = await getGastoConceptosAction({})
+  const conceptosResult = await getGastoConceptosAction()
   const initialConceptos = conceptosResult.success ? conceptosResult.data ?? [] : []
 
   return (

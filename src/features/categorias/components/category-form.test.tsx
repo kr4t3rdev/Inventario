@@ -1,4 +1,5 @@
-import { render, screen, waitFor } from '@testing-library/react';
+import { fireEvent, render, screen, waitFor } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 let mockPlanFeatures: Record<string, boolean> = {};
@@ -67,6 +68,21 @@ describe('CategoryForm', () => {
 
     await waitFor(() => {
       expect(screen.getByText('Nueva Sección CLAS')).toBeInTheDocument();
+    });
+  });
+
+  it('habilita submit al completar campos requeridos sin necesitar blur extra en descripción', async () => {
+    mockUsaCodigoEan13 = false;
+
+    render(<CategoryForm />);
+
+    const submitButton = await screen.findByRole('button', { name: 'Crear categoría' });
+    const nameInput = screen.getByPlaceholderText('Ingrese el nombre de la categoría');
+
+    fireEvent.change(nameInput, { target: { value: 'Electrónica' } });
+
+    await waitFor(() => {
+      expect(submitButton).toBeEnabled();
     });
   });
 });

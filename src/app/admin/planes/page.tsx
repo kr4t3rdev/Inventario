@@ -207,7 +207,7 @@ export default function AdminPlanesPage() {
 	function buildPayload() {
 		return {
 			nombre: formData.nombre,
-			descripcion: formData.descripcion || null,
+			descripcion: formData.descripcion || undefined,
 			precio: formData.precio ? parseFloat(formData.precio) : 0,
 			duracionDias: parseInt(formData.duracionDias) || 30,
 			maxUsuarios: parseInt(formData.maxUsuarios) || 1,

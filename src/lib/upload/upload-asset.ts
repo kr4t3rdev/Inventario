@@ -6,7 +6,10 @@ import {
 } from './cloudinary-upload'
 import type { CloudinaryAssetUploadResult } from './cloudinary-asset'
 import type { UploadKey, UploadProvider } from './upload-policy'
-import { uploadToUploadthing } from './uploadthing-client'
+import {
+  uploadToUploadthing,
+  type UploadthingIntent,
+} from './uploadthing-client'
 
 export interface UploadedAsset {
   provider: UploadProvider
@@ -52,10 +55,39 @@ export async function uploadAsset(
     }
   }
 
-  return uploadToUploadthing(file, intent as UploadIntentResponse & {
-    provider: 'uploadthing'
-    uploadthingRoute: 'productPhoto' | 'contractAttachment' | 'contractVersion'
-  }, options.onProgress)
+  const uploadthingIntent = toUploadthingIntent(intent)
+  return uploadToUploadthing(file, uploadthingIntent, options.onProgress)
+}
+
+function toUploadthingIntent(intent: UploadIntentResponse): UploadthingIntent {
+  switch (intent.uploadthingRoute) {
+    case 'productPhoto':
+      return {
+        ...intent,
+        provider: 'uploadthing',
+        uploadKey: 'productos.photo',
+        resourceType: 'image',
+        uploadthingRoute: 'productPhoto',
+      }
+    case 'contractAttachment':
+      return {
+        ...intent,
+        provider: 'uploadthing',
+        uploadKey: 'contratos.attachment',
+        resourceType: 'raw',
+        uploadthingRoute: 'contractAttachment',
+      }
+    case 'contractVersion':
+      return {
+        ...intent,
+        provider: 'uploadthing',
+        uploadKey: 'contratos.version',
+        resourceType: 'raw',
+        uploadthingRoute: 'contractVersion',
+      }
+    default:
+      throw new Error('UploadThing intent inválido o incompleto')
+  }
 }
 
 /**

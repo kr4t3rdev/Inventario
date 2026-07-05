@@ -115,7 +115,7 @@ export function StaggerItem({ children, className, ...props }: StaggerItemProps)
   const hasMounted = useHasMounted();
 
   if (!hasMounted) {
-    return <div className={className} {...props}>{children}</div>;
+    return <div className={className}>{children}</div>;
   }
 
   const item: Variants = shouldReduceMotion
@@ -157,7 +157,7 @@ export function AnimatedCard({ children, className, hoverEffect = true, ...props
   const hasMounted = useHasMounted();
 
   if (!hasMounted) {
-    return <div className={className} {...props}>{children}</div>;
+    return <div className={className}>{children}</div>;
   }
 
   return (

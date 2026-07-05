@@ -20,6 +20,7 @@ import { BackupEngine } from '@/features/backups/backup-engine'
 import { createStorage } from '@/features/backups/storage'
 import { pruneBackups } from '@/features/backups/prune'
 import { calculateNextRun } from '@/features/backups/cron-utils'
+import type { BackupType } from '@/generated/prisma'
 
 /**
  * @description Validates the cron request via CRON_SECRET env var.
@@ -61,7 +62,7 @@ export async function GET(request: Request): Promise<NextResponse> {
   const now = new Date()
   let plans: Array<{
     backupPlanId: string
-    type: 'full' | 'tenant' | 'config'
+    type: BackupType
     tenantId: string | null
     schedule: string
     retention: number

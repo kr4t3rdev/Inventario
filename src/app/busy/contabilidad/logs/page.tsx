@@ -55,7 +55,7 @@ const statusBadgeClass = cn(
 export default function LogsPage() {
   const shouldReduceMotion = useReducedMotion();
   const router = useRouter();
-  const { user } = useAuth();
+  const { user, loading } = useAuth();
   const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
@@ -63,8 +63,9 @@ export default function LogsPage() {
   }, []);
 
   const isBlocked =
+    !loading &&
     user?.role !== 'admin' &&
-    user?.planFeatures?.['reportes-financieros'] !== true;
+    user?.planFeatures?.contabilidad !== true;
 
   useEffect(() => {
     if (isBlocked) {

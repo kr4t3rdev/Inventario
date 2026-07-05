@@ -265,10 +265,10 @@ export default function CuentasPorPagarPage() {
 					page: p,
 					limit: l,
 				});
-				if (result.success && result.data) {
-					setDataResult(result.data);
+				if (!result.success) {
+					setFetchError(result.error.message ?? true);
 				} else {
-					setFetchError(result.error?.message ?? true);
+					setDataResult(result.data);
 				}
 			} catch (err) {
 				setFetchError(err);

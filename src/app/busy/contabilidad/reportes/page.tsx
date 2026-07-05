@@ -76,7 +76,7 @@ export default function ReportesPage() {
     !loading &&
     user?.role !== 'admin' &&
     (shouldHideBasicAccountingItem(user, 'Reportes Contables') ||
-      user?.planFeatures?.['reportes-financieros'] !== true);
+      user?.planFeatures?.contabilidad !== true);
 
   useEffect(() => {
     if (isBlocked) {

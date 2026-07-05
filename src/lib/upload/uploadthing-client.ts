@@ -4,10 +4,25 @@ import type { UploadIntentResponse } from './cloudinary-upload'
 import type { UploadedAsset } from './upload-asset'
 import type { UploadRouter, UploadthingRoute } from '@/app/api/uploadthing/core'
 
-interface UploadthingIntent extends UploadIntentResponse {
-  provider: 'uploadthing'
-  uploadthingRoute: UploadthingRoute
-}
+export type UploadthingIntent =
+  | (Omit<UploadIntentResponse, 'provider' | 'uploadKey' | 'uploadthingRoute' | 'resourceType'> & {
+      provider: 'uploadthing'
+      uploadKey: 'productos.photo'
+      resourceType: 'image'
+      uploadthingRoute: 'productPhoto'
+    })
+  | (Omit<UploadIntentResponse, 'provider' | 'uploadKey' | 'uploadthingRoute' | 'resourceType'> & {
+      provider: 'uploadthing'
+      uploadKey: 'contratos.attachment'
+      resourceType: 'raw'
+      uploadthingRoute: 'contractAttachment'
+    })
+  | (Omit<UploadIntentResponse, 'provider' | 'uploadKey' | 'uploadthingRoute' | 'resourceType'> & {
+      provider: 'uploadthing'
+      uploadKey: 'contratos.version'
+      resourceType: 'raw'
+      uploadthingRoute: 'contractVersion'
+    })
 
 /**
  * @description Sube un archivo a UploadThing usando el intent resuelto por el backend.
@@ -25,18 +40,42 @@ export async function uploadToUploadthing(
     url: '/api/uploadthing',
   })
 
-  const [uploaded] = await uploadFiles(intent.uploadthingRoute, {
+  const uploadOptions = {
     files: [file],
-    input: {
-      uploadKey: intent.uploadKey,
-      resourceType: intent.resourceType,
-      folder: intent.folder,
-      publicId: intent.publicId,
-    },
-    onUploadProgress: ({ progress }) => {
+    onUploadProgress: ({ progress }: { progress: number }) => {
       onProgress?.(progress)
     },
-  })
+  }
+
+  const [uploaded] = intent.uploadthingRoute === 'productPhoto'
+    ? await uploadFiles('productPhoto', {
+        ...uploadOptions,
+        input: {
+          uploadKey: 'productos.photo',
+          resourceType: 'image',
+          folder: intent.folder,
+          publicId: intent.publicId,
+        },
+      })
+    : intent.uploadthingRoute === 'contractAttachment'
+      ? await uploadFiles('contractAttachment', {
+          ...uploadOptions,
+          input: {
+            uploadKey: 'contratos.attachment',
+            resourceType: 'raw',
+            folder: intent.folder,
+            publicId: intent.publicId,
+          },
+        })
+      : await uploadFiles('contractVersion', {
+          ...uploadOptions,
+          input: {
+            uploadKey: 'contratos.version',
+            resourceType: 'raw',
+            folder: intent.folder,
+            publicId: intent.publicId,
+          },
+        })
 
   if (!uploaded) {
     throw new Error('UploadThing upload returned no files')

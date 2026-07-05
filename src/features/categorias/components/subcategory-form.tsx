@@ -496,8 +496,6 @@ export function SubcategoryForm({ initialData, onSuccess }: SubcategoryFormProps
                     type="submit"
                     disabled={
                       isLoading ||
-                      !isDirty ||
-                      !isValid ||
                       !form.watch('parentId') ||
                       rootCategories.length === 0
                     }
@@ -816,7 +814,7 @@ export function SubcategoryForm({ initialData, onSuccess }: SubcategoryFormProps
                 </Button>
                 <Button
                   type="submit"
-                  disabled={isLoading || !isDirty || !isValid || !clasSpecificId}
+                  disabled={isLoading || !clasSpecificId}
                   className="min-w-40 gap-2 bg-linear-to-r from-primary to-purple-600 hover:from-primary/90 hover:to-purple-600/90 cursor-pointer"
                 >
                   {isLoading ? (

@@ -1,4 +1,5 @@
 import { prisma } from "@/lib/prisma"
+import { verificarStockBajo as verificarStockBajoDerivado } from "@/lib/verificar-stock"
 
 interface NotificationData {
   title: string
@@ -53,92 +54,10 @@ export async function crearNotificacion(data: NotificationData) {
 }
 
 export async function verificarStockBajo() {
-  try {
-    // Obtener productos con stock bajo (menos de 10 unidades)
-    const productosStockBajo = await prisma.producto.findMany({
-      where: {
-        stock: {
-          lte: 10,
-          gt: 0,
-        },
-      },
-      include: {
-        categoria: true,
-        almacen: true,
-      },
-    })
-
-    // Obtener productos sin stock
-    const productosSinStock = await prisma.producto.findMany({
-      where: {
-        stock: 0,
-      },
-      include: {
-        categoria: true,
-        almacen: true,
-      },
-    })
-
-    // Crear notificaciones para stock bajo
-    for (const producto of productosStockBajo) {
-      // Verificar si ya existe una notificación reciente para este producto
-      const notificacionExistente = await prisma.notification.findFirst({
-        where: {
-          type: "stock_bajo",
-          message: {
-            contains: producto.nombre,
-          },
-          createdAt: {
-            gte: new Date(Date.now() - 24 * 60 * 60 * 1000), // Últimas 24 horas
-          },
-        },
-      })
-
-      if (!notificacionExistente) {
-        await crearNotificacion({
-          title: "Stock Bajo",
-          message: `El producto "${producto.nombre}" tiene stock bajo (${producto.stock} unidades restantes)`,
-          link: "/busy/products",
-          type: "stock_bajo",
-          prioridad: "media",
-          tenantId: producto.tenantId,
-        })
-      }
-    }
-
-    // Crear notificaciones para productos sin stock
-    for (const producto of productosSinStock) {
-      const notificacionExistente = await prisma.notification.findFirst({
-        where: {
-          type: "sin_stock",
-          message: {
-            contains: producto.nombre,
-          },
-          createdAt: {
-            gte: new Date(Date.now() - 24 * 60 * 60 * 1000),
-          },
-        },
-      })
-
-      if (!notificacionExistente) {
-        await crearNotificacion({
-          title: "Sin Stock",
-          message: `El producto "${producto.nombre}" está agotado`,
-          link: "/busy/products",
-          type: "sin_stock",
-          prioridad: "alta",
-          tenantId: producto.tenantId,
-        })
-      }
-    }
-
-    return {
-      stockBajo: productosStockBajo.length,
-      sinStock: productosSinStock.length,
-    }
-  } catch (error) {
-    console.error("Error verificando stock:", error)
-    throw error
+  const resultado = await verificarStockBajoDerivado()
+  return {
+    stockBajo: resultado.productosStockBajo,
+    sinStock: resultado.productosSinStock,
   }
 }
 

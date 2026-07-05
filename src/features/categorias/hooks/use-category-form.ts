@@ -81,7 +81,7 @@ export function useCategoryForm({
       clasSectionId: undefined,
       clasSpecificId: undefined,
     },
-    mode: 'onBlur',
+    mode: 'onChange',
     reValidateMode: 'onChange',
   });
 

@@ -170,7 +170,7 @@ export async function getBalanceFinanciero(request: NextRequest, user: Authentic
   try {
     if (
       user.role !== 'admin' &&
-      user.planFeatures?.['reportes-financieros'] !== true
+      user.planFeatures?.contabilidad !== true
     ) {
       return NextResponse.json({ error: 'Prohibido' }, { status: 403 })
     }

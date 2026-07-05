@@ -17,7 +17,7 @@ export async function GET(request: NextRequest) {
   try {
     if (
       authResult.user.role !== 'admin' &&
-      authResult.user.planFeatures?.['reportes-financieros'] !== true
+      authResult.user.planFeatures?.contabilidad !== true
     ) {
       return NextResponse.json({ error: 'Prohibido' }, { status: 403 });
     }

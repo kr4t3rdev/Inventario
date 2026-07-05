@@ -46,12 +46,12 @@ describe('/busy/contabilidad/reportes page', () => {
     expect(mockReplace).not.toHaveBeenCalled();
   });
 
-  it('redirige al dashboard de contabilidad cuando el plan no incluye reportes financieros', async () => {
+  it('redirige al dashboard de contabilidad cuando el plan no incluye contabilidad', async () => {
     useAuthMock.mockReturnValue({
       user: {
         role: 'user',
         planName: 'Básico',
-        planFeatures: { contabilidad: true, 'reportes-financieros': false },
+        planFeatures: { contabilidad: false, 'reportes-financieros': true },
       },
       loading: false,
     });

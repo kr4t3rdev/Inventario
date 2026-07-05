@@ -39,11 +39,11 @@ export default async function EditarProductosPage({ params }: EditPageProps): Pr
     <ProductoFormPageClient
       mode="edit"
       producto={productoResult.success ? (productoResult.data as unknown as Producto) : undefined}
-      unidades={unidadesResult.data ?? []}
-      almacenes={almacenesResult.data ?? []}
-      listasPrecios={listasPreciosResult.data?.map((l) => ({ id: l.id, nombre: l.nombre })) ?? []}
-      vendors={vendorsResult.data ?? []}
-      categorias={categoriasResult.data ?? []}
+      unidades={unidadesResult.success ? unidadesResult.data : []}
+      almacenes={almacenesResult.success ? almacenesResult.data : []}
+      listasPrecios={listasPreciosResult.success ? listasPreciosResult.data.map((l) => ({ id: l.id, nombre: l.nombre })) : []}
+      vendors={vendorsResult.success ? vendorsResult.data : []}
+      categorias={categoriasResult.success ? categoriasResult.data : []}
     />
   )
 }
