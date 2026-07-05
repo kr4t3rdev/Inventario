@@ -23,6 +23,7 @@ import { toast } from "sonner"
 import { Activity, Clock, Shield, Unlock, Lock, Calendar } from "lucide-react"
 import { ActivityLogsTab } from "@/features/admin/components/activity-logs-tab"
 import { SessionsTab } from "@/features/admin/components/sessions-tab"
+import { CloudinaryCleanupTab } from "@/features/admin/components/cloudinary-cleanup-tab"
 import { BlockedUsersTab } from "@/features/admin/components/blocked-users-tab"
 import { ExpiringUsersTab } from "@/features/admin/components/expiring-users-tab"
 import { LoginHistoryDialog } from "@/features/admin/components/login-history-dialog"
@@ -30,7 +31,7 @@ import type { Usuario } from "@/app/models/model"
 
 export function UserMonitoringPanel() {
   const shouldReduceMotion = useReducedMotion()
-  const [activeTab, setActiveTab] = useState<"logs" | "sessions" | "blocked" | "expiring">("logs")
+  const [activeTab, setActiveTab] = useState<"logs" | "sessions" | "cloudinary" | "blocked" | "expiring">("logs")
   const [historyDialogOpen, setHistoryDialogOpen] = useState(false)
   const [selectedUser, setSelectedUser] = useState<{ userId: string; name: string } | null>(null)
   const [lockDialogOpen, setLockDialogOpen] = useState(false)
@@ -74,6 +75,7 @@ export function UserMonitoringPanel() {
   const tabs = [
     { key: "logs" as const, label: "Logs", icon: Clock },
     { key: "sessions" as const, label: "Sesiones", icon: Shield },
+    { key: "cloudinary" as const, label: "Cloudinary", icon: Shield },
     { key: "blocked" as const, label: "Bloqueados", icon: Unlock, count: blockedUsers.length },
     { key: "expiring" as const, label: "Expiran Pronto", icon: Calendar, count: expiringUsers?.length },
   ]
@@ -129,6 +131,7 @@ export function UserMonitoringPanel() {
             >
               {activeTab === "logs" && <ActivityLogsTab />}
               {activeTab === "sessions" && <SessionsTab />}
+              {activeTab === "cloudinary" && <CloudinaryCleanupTab />}
               {activeTab === "blocked" && <BlockedUsersTab onOpenHistory={openHistoryDialog} />}
               {activeTab === "expiring" && <ExpiringUsersTab onOpenHistory={openHistoryDialog} />}
             </motion.div>
