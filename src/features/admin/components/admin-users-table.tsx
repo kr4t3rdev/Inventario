@@ -23,6 +23,7 @@ import {
 	Square,
 	Unlock,
 	Lock,
+	Eraser,
 } from "lucide-react";
 import { format } from "date-fns";
 import { toast } from "sonner";
@@ -150,6 +151,20 @@ export function AdminUsersTable({
 	}, []);
 
 	const perPage = 25;
+
+	const hasActiveFilters =
+		searchTerm !== "" ||
+		roleFilter !== "all" ||
+		statusFilter !== "all" ||
+		tenantFilter !== "all";
+
+	const handleClearFilters = () => {
+		setSearchTerm("");
+		setRoleFilter("all");
+		setStatusFilter("all");
+		setTenantFilter("all");
+		clearSelection();
+	};
 
 	const isUserWithTenant = (
 		u: Usuario | UsuarioWithTenant,
@@ -672,6 +687,27 @@ export function AdminUsersTable({
 						)}
 						{isExporting ? "Exportando..." : "Exportar"}
 					</Button>
+					<AnimatePresence>
+						{hasActiveFilters && (
+							<motion.div
+								initial={shouldReduceMotion ? { opacity: 1 } : { opacity: 0, y: -4, scale: 0.98 }}
+								animate={{ opacity: 1, y: 0, scale: 1 }}
+								exit={shouldReduceMotion ? { opacity: 1 } : { opacity: 0, y: -4, scale: 0.98 }}
+								transition={{ duration: 0.15 }}
+							>
+								<Button
+									variant="outline"
+									size="sm"
+									onClick={handleClearFilters}
+									className="h-11 border-amber-200/60 bg-amber-50/60 text-amber-700 hover:bg-amber-100 hover:border-amber-300 transition-all duration-200"
+								>
+									<Eraser className="mr-2 h-4 w-4" />
+									Limpiar filtros
+								</Button>
+							</motion.div>
+							)
+						}
+					</AnimatePresence>
 				</div>
 			</motion.div>
 
