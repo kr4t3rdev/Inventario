@@ -27,12 +27,14 @@ import type { AdminSubscriptionRevenue } from "@/features/admin";
 export default function SubscriptionsRevenuePage() {
   const [revenue, setRevenue] = useState<AdminSubscriptionRevenue | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [months, setMonths] = useState(6);
   const [startDate, setStartDate] = useState("");
   const [endDate, setEndDate] = useState("");
 
   const fetchRevenue = async () => {
     setIsLoading(true);
+    setErrorMessage(null);
     try {
       const params: { months?: number; startDate?: string; endDate?: string } = { months };
       if (startDate) params.startDate = startDate;
@@ -41,9 +43,15 @@ export default function SubscriptionsRevenuePage() {
       const result = await getAdminSubscriptionRevenueAction(params);
       if (result.success && result.data) {
         setRevenue(result.data);
+        return;
       }
+
+      setRevenue(null);
+      setErrorMessage(result.error?.message || "No se pudo cargar revenue de suscripciones");
     } catch (error) {
       console.error("Error fetching subscription revenue:", error);
+      setRevenue(null);
+      setErrorMessage("No se pudo cargar revenue de suscripciones");
     } finally {
       setIsLoading(false);
     }
@@ -65,12 +73,34 @@ export default function SubscriptionsRevenuePage() {
     setTimeout(() => fetchRevenue(), 100);
   };
 
-  if (isLoading || !revenue) {
+  if (isLoading) {
     return (
       <PageTransition className="flex flex-1 flex-col gap-4 p-4 lg:p-6">
         <div className="flex items-center justify-center py-20">
           <RefreshCw className="h-8 w-8 animate-spin text-muted-foreground" />
         </div>
+      </PageTransition>
+    );
+  }
+
+  if (errorMessage || !revenue) {
+    return (
+      <PageTransition className="flex flex-1 flex-col gap-4 p-4 lg:p-6">
+        <Card className="rounded-xl border border-rose-200 bg-rose-50/60 shadow-sm dark:border-rose-900/40 dark:bg-rose-950/10">
+          <CardContent className="flex flex-col gap-4 py-6 sm:flex-row sm:items-center sm:justify-between">
+            <div className="space-y-1">
+              <p className="font-semibold text-rose-700 dark:text-rose-300">
+                No se pudo cargar revenue de suscripciones
+              </p>
+              <p className="text-sm text-rose-600/90 dark:text-rose-200/80">
+                {errorMessage || "Ocurrió un error inesperado."}
+              </p>
+            </div>
+            <Button onClick={fetchRevenue} variant="outline">
+              Reintentar
+            </Button>
+          </CardContent>
+        </Card>
       </PageTransition>
     );
   }

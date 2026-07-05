@@ -1712,6 +1712,7 @@ export const getAdminSubscriptionRevenueAction = withAction(
 		}
 
 		// Ingresos proyectados
+		const now = new Date();
 		const expiringThisMonth = activeLicenses.filter((l) => {
 			const monthEnd = new Date(now.getFullYear(), now.getMonth() + 1, 0, 23, 59, 59);
 			return l.expiracion >= now && l.expiracion <= monthEnd;
