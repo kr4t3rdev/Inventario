@@ -9,10 +9,12 @@ function requireTenant(ctx: { tenantId?: string }): string {
 }
 
 export async function getConceptos(): Promise<string[]> {
-  await getAuthenticatedContext()
+  const ctx = await getAuthenticatedContext()
+  const tenantId = requireTenant(ctx)
 
   try {
     const conceptos = await prisma.gastosDE.findMany({
+      where: { tenantId },
       select: { concepto: true },
   // @ts-expect-error
       distinct: ['concepto'],

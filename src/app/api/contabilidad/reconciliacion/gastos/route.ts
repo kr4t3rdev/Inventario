@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import prisma from '@/lib/prisma'
 import { authenticateUser } from "@/lib/auth-middleware"
+import { requireTenant } from '@/lib/services/tenant-scope'
 import { validarEscrituraPeriodo, extraerFechaDeBody } from '@/lib/services/validate-period-write'
 import {
   reconciliarGastoAdapter,
@@ -14,6 +15,7 @@ export async function POST(request: NextRequest) {
     const authResultUser = await authenticateUser(request)
     if ('status' in authResultUser) return authResultUser as Response
     const user = authResultUser.user
+    const tenantId = requireTenant(user)
 
     const body = await request.json()
 
@@ -76,6 +78,7 @@ export async function GET(request: NextRequest) {
     const authResultUser = await authenticateUser(request)
     if ('status' in authResultUser) return authResultUser as Response
     const user = authResultUser.user
+    const tenantId = requireTenant(user)
 
     const { searchParams } = new URL(request.url)
     const tipoGasto = searchParams.get('tipoGasto') // 'salario', 'gastoDE', 'compra'
@@ -97,10 +100,12 @@ export async function GET(request: NextRequest) {
     // Obtener salarios pendientes
     if (!tipoGasto || tipoGasto === 'salario') {
       const whereClauseSalarios: {
+        tenantId: string
         ReconciliacionGasto?: { none: object }
         createdAt?: { gte?: Date; lte?: Date }
         periodo?: string
       } = {
+        tenantId,
         ReconciliacionGasto: { none: {} }
       }
 
@@ -167,11 +172,13 @@ export async function GET(request: NextRequest) {
     // Obtener gastos DE pendientes
     if (!tipoGasto || tipoGasto === 'gastoDE') {
       const whereClauseGastosDE: {
+        tenantId: string
         reconciliaciones?: { none: object }
         createdAt?: { gte?: Date; lte?: Date }
         periodo?: string
        // isPagado?: string | null | { not: string }
       } = {
+        tenantId,
         reconciliaciones: { none: {} }
        // isPagado: { not: 'pagado' }
       }
@@ -228,6 +235,7 @@ export async function GET(request: NextRequest) {
     // Obtener compras pendientes
     if (!tipoGasto || tipoGasto === 'compra') {
       const whereClauseCompras: any = {
+        tenantId,
         reconciliaciones: { none: {} }
       }
 
@@ -314,4 +322,3 @@ export async function GET(request: NextRequest) {
 }
 
 // POST - Reconciliar gasto con cuenta(s) bancaria(s)
-

@@ -30,6 +30,13 @@ function getMonthRange(periodo: string) {
   return { startDate, endDate }
 }
 
+function requireTenant(ctx: { tenantId?: string }): string {
+  if (!ctx.tenantId) {
+    throw new ServerActionError('getRF', 'GET', 403, 'Se requiere un tenant activo')
+  }
+  return ctx.tenantId
+}
+
 /**
  * @description Genera un reporte financiero para el período indicado.
  * Replica la lógica del handler existente usando Prisma directo.
@@ -41,7 +48,8 @@ export async function getRF(
   periodo?: string,
   tipo: string = 'mensual'
 ): Promise<ReporteFinanciero> {
-  await getAuthenticatedContext()
+  const ctx = await getAuthenticatedContext()
+  const tenantId = requireTenant(ctx)
 
   const effectivePeriodo = periodo || getCurrentPeriod()
   const { startDate, endDate } = getMonthRange(effectivePeriodo)
@@ -50,7 +58,7 @@ export async function getRF(
     const [ventasData, comprasData, salariosData, serviciosData, mermasData] =
       await Promise.all([
         prisma.venta.findMany({
-          where: { createdAt: { gte: startDate, lte: endDate } },
+          where: { tenantId, createdAt: { gte: startDate, lte: endDate } },
           select: {
             cantidad: true,
             producto: {
@@ -59,19 +67,19 @@ export async function getRF(
           },
         }),
         prisma.gastoCompra.findMany({
-          where: { createdAt: { gte: startDate, lte: endDate } },
+          where: { tenantId, createdAt: { gte: startDate, lte: endDate } },
           select: { total: true },
         }),
         prisma.empleado.findMany({
-          where: { createdAt: { gte: startDate, lte: endDate } },
+          where: { tenantId, createdAt: { gte: startDate, lte: endDate } },
           select: { empleadoId: true, nombre: true, apellido: true, salarioBases: true },
         }),
         prisma.gastosDE.findMany({
-          where: { createdAt: { gte: startDate, lte: endDate } },
+          where: { tenantId, createdAt: { gte: startDate, lte: endDate } },
           select: { monto: true },
         }),
         prisma.merma.findMany({
-          where: { createdAt: { gte: startDate, lte: endDate } },
+          where: { tenantId, createdAt: { gte: startDate, lte: endDate } },
           select: { cantidad: true, costoTotal: true },
         }),
       ])

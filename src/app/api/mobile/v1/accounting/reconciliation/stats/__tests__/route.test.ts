@@ -37,7 +37,7 @@ describe('mobile accounting reconciliation stats route', () => {
     vi.clearAllMocks();
   });
 
-  it('returns the global reconciliation summary', async () => {
+  it('returns the tenant-scoped reconciliation summary', async () => {
     vi.mocked(authenticateUser).mockResolvedValue({ user: mockUser } as never);
     vi.mocked(prisma.venta.count).mockResolvedValue(2 as never);
     vi.mocked(prisma.reconciliacionVenta.count).mockResolvedValue(1 as never);
@@ -73,7 +73,10 @@ describe('mobile accounting reconciliation stats route', () => {
     expect(data.stats.reconciledAmount).toBe(85);
     expect(data.recentActivity).toHaveLength(1);
     expect(prisma.venta.count).toHaveBeenCalledWith({
-      where: { reconciliaciones: { none: {} } },
+      where: { tenantId: 'tenant-1', reconciliaciones: { none: {} } },
+    });
+    expect(prisma.gastosDE.count).toHaveBeenCalledWith({
+      where: { tenantId: 'tenant-1', reconciliaciones: { none: {} } },
     });
   });
 });

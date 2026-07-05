@@ -22,7 +22,7 @@ import prisma from '@/lib/prisma'
 describe('reportes-financieros fetchers', () => {
   beforeEach(() => {
     vi.clearAllMocks()
-    vi.mocked(getAuthenticatedContext).mockResolvedValue({ userId: 'user-1' })
+    vi.mocked(getAuthenticatedContext).mockResolvedValue({ userId: 'user-1', tenantId: 'tenant-1' })
   })
 
   describe('getRF', () => {
@@ -56,6 +56,11 @@ describe('reportes-financieros fetchers', () => {
       expect(result.totalGastos).toBe(2300)
       expect(result.cantidadVentas).toBe(2)
       expect(result.periodo).toBe(`${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`)
+      expect(prisma.gastosDE.findMany).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: expect.objectContaining({ tenantId: 'tenant-1' }),
+        }),
+      )
     })
 
     it('should return zeroes when no data exists', async () => {

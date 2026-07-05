@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import prisma from '@/lib/prisma'
 import { authenticateUser } from '@/lib/auth-middleware'
+import { requireTenant } from '@/lib/services/tenant-scope'
 
 // GET - Obtener historial de reconciliaciones de gastos
 export async function GET(request: NextRequest) {
@@ -8,6 +9,7 @@ export async function GET(request: NextRequest) {
     const authResultUser = await authenticateUser(request)
     if ('status' in authResultUser) return authResultUser as Response
     const user = authResultUser.user
+    const tenantId = requireTenant(user)
 
     const { searchParams } = new URL(request.url)
     const tipoGasto = searchParams.get('tipoGasto') // 'salario', 'gastoDE', 'compra'
@@ -22,6 +24,7 @@ export async function GET(request: NextRequest) {
 
     // Construir filtros
     const whereClause: {
+      tenantId: string
       tipoGasto?: string
       cuentaId?: string
       periodo?: string
@@ -30,7 +33,7 @@ export async function GET(request: NextRequest) {
         gte?: Date
         lte?: Date
       }
-    } = {}
+    } = { tenantId }
 
     if (tipoGasto) {
       whereClause.tipoGasto = tipoGasto
@@ -140,8 +143,11 @@ export async function GET(request: NextRequest) {
           switch (reconciliacion.tipoGasto) {
             case 'salario':
               if (reconciliacion.pagoSalario?.empleado) {
-                const empleado = await prisma.empleado.findUnique({
-                  where: { empleadoId: reconciliacion.pagoSalario.empleado.empleadoId },
+                const empleado = await prisma.empleado.findFirst({
+                  where: {
+                    empleadoId: reconciliacion.pagoSalario.empleado.empleadoId,
+                    tenantId,
+                  },
                   select: {
                     empleadoId: true,
                     nombre: true,
@@ -159,8 +165,8 @@ export async function GET(request: NextRequest) {
 
             case 'gastoDE':
               if (reconciliacion.gastosDEId) {
-                const gastoDE = await prisma.gastosDE.findUnique({
-                  where: { gastosDEId: reconciliacion.gastosDEId },
+                const gastoDE = await prisma.gastosDE.findFirst({
+                  where: { gastosDEId: reconciliacion.gastosDEId, tenantId },
                   select: {
                     gastosDEId: true,
                     tipo: true,
@@ -177,8 +183,8 @@ export async function GET(request: NextRequest) {
 
             case 'compra':
               if (reconciliacion.gastoCompraId) {
-                const compra = await prisma.gastoCompra.findUnique({
-                  where: { gastoCompraId: reconciliacion.gastoCompraId },
+                const compra = await prisma.gastoCompra.findFirst({
+                  where: { gastoCompraId: reconciliacion.gastoCompraId, tenantId },
                   include: {
                     producto: {
                       select: {
@@ -236,6 +242,7 @@ export async function GET(request: NextRequest) {
     // Obtener información de las cuentas para los totales
     const cuentasInfo = await prisma.cuentaBancaria.findMany({
       where: {
+        tenantId,
         cuentaId: {
           in: totalesPorCuenta.map((t: { cuentaId: string }) => t.cuentaId)
         }

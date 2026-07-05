@@ -4,19 +4,22 @@ import { NextRequest } from 'next/server'
 vi.mock('@/lib/prisma', () => ({
   default: {
     gastosDE: {
-      findUnique: vi.fn()
+      findFirst: vi.fn(),
+      findMany: vi.fn()
     },
     pagosalario: {
-      findUnique: vi.fn()
+      findFirst: vi.fn(),
+      findMany: vi.fn()
     },
     gastoCompra: {
-      findUnique: vi.fn()
+      findFirst: vi.fn(),
+      findMany: vi.fn()
     },
     reconciliacionGasto: {
       findFirst: vi.fn()
     },
     cuentaBancaria: {
-      findUnique: vi.fn(),
+      findFirst: vi.fn(),
       findMany: vi.fn()
     },
     $transaction: vi.fn()
@@ -98,11 +101,11 @@ describe('Reconciliacion gastos API - POST', () => {
 
     vi.mocked(validarEscrituraPeriodo).mockResolvedValue({ permitido: true, modo: 'enforce' })
     vi.mocked(authenticateUser).mockResolvedValue({ user: { userId: 'user-1', tenantId: 't1' } } as any)
-    vi.mocked(prisma.gastosDE.findUnique).mockResolvedValue({
+    vi.mocked(prisma.gastosDE.findFirst).mockResolvedValue({
       gastosDEId: 'gde-1'
     })
     vi.mocked(prisma.reconciliacionGasto.findFirst).mockResolvedValue(null)
-    vi.mocked(prisma.cuentaBancaria.findUnique).mockResolvedValue({
+    vi.mocked(prisma.cuentaBancaria.findFirst).mockResolvedValue({
       cuentaId: 'cb-1',
       moneda: 'CUP'
     })
@@ -179,10 +182,10 @@ describe('Reconciliacion gastos API - POST', () => {
 
     vi.mocked(validarEscrituraPeriodo).mockResolvedValue({ permitido: true, modo: 'enforce' })
     vi.mocked(authenticateUser).mockResolvedValue({ user: { userId: 'user-2', tenantId: 't1' } } as any)
-    vi.mocked(prisma.gastosDE.findUnique).mockResolvedValue({
+    vi.mocked(prisma.gastosDE.findFirst).mockResolvedValue({
       gastosDEId: 'gde-2'
     })
-    vi.mocked(prisma.cuentaBancaria.findUnique).mockResolvedValue({
+    vi.mocked(prisma.cuentaBancaria.findFirst).mockResolvedValue({
       cuentaId: 'cb-2',
       moneda: 'CUP'
     })
@@ -275,10 +278,10 @@ describe('Reconciliacion gastos API - POST', () => {
 
     vi.mocked(validarEscrituraPeriodo).mockResolvedValue({ permitido: true, modo: 'enforce' })
     vi.mocked(authenticateUser).mockResolvedValue({ user: { userId: 'user-3', tenantId: 't1' } } as any)
-    vi.mocked(prisma.gastosDE.findUnique).mockResolvedValue({
+    vi.mocked(prisma.gastosDE.findFirst).mockResolvedValue({
       gastosDEId: 'gde-3'
     })
-    vi.mocked(prisma.cuentaBancaria.findUnique).mockResolvedValue({
+    vi.mocked(prisma.cuentaBancaria.findFirst).mockResolvedValue({
       cuentaId: 'cb-3',
       moneda: 'CUP'
     })
@@ -368,5 +371,36 @@ describe('Reconciliacion gastos API - POST', () => {
     // Verificar que el workflow no se ejecutó
     const prisma = (await import('@/lib/prisma')).default as any
     expect(prisma.$transaction).not.toHaveBeenCalled()
+  })
+
+  it('GET filtra gastos pendientes por tenantId', async () => {
+    const { GET } = await import('../route')
+    const prisma = (await import('@/lib/prisma')).default as any
+    const { authenticateUser } = await import('@/lib/auth-middleware')
+
+    vi.mocked(authenticateUser).mockResolvedValue({ user: { userId: 'user-5', tenantId: 'tenant-abc' } } as any)
+    vi.mocked(prisma.pagosalario.findMany).mockResolvedValue([] as any)
+    vi.mocked(prisma.gastosDE.findMany).mockResolvedValue([] as any)
+    vi.mocked(prisma.gastoCompra.findMany).mockResolvedValue([] as any)
+
+    const request = new NextRequest('http://localhost/api/contabilidad/reconciliacion/gastos')
+    const response = await GET(request)
+
+    expect(response.status).toBe(200)
+    expect(prisma.pagosalario.findMany).toHaveBeenCalledWith(
+      expect.objectContaining({
+        where: expect.objectContaining({ tenantId: 'tenant-abc' }),
+      }),
+    )
+    expect(prisma.gastosDE.findMany).toHaveBeenCalledWith(
+      expect.objectContaining({
+        where: expect.objectContaining({ tenantId: 'tenant-abc' }),
+      }),
+    )
+    expect(prisma.gastoCompra.findMany).toHaveBeenCalledWith(
+      expect.objectContaining({
+        where: expect.objectContaining({ tenantId: 'tenant-abc' }),
+      }),
+    )
   })
 })
