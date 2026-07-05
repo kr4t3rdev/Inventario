@@ -18,6 +18,7 @@ import { getExpiringSoonAction, sendExpiryNotificationsAction } from "@/features
 import { format } from "date-fns"
 import { toast } from "sonner"
 import { Bell, Calendar, History } from "lucide-react"
+import { getUrgencyColor } from "@/features/admin/lib/urgency-colors"
 import type { Usuario } from "@/app/models/model"
 
 interface ExpiringUsersTabProps {
@@ -134,9 +135,7 @@ export function ExpiringUsersTab({ onOpenHistory }: ExpiringUsersTabProps) {
                   <TableCell>{format(new Date(user.expiresAt!), "dd/MM/yyyy")}</TableCell>
                   <TableCell>
                     <Badge variant="outline"
-                      className={user.daysUntilExpiry <= 3 ? "border-rose-500/50 bg-rose-500/10 text-rose-700"
-                        : user.daysUntilExpiry <= 7 ? "border-amber-500/50 bg-amber-500/10 text-amber-700"
-                        : "border-yellow-500/50 bg-yellow-500/10 text-yellow-700"}>
+                      className={getUrgencyColor(user.daysUntilExpiry)}>
                       {user.daysUntilExpiry} días
                     </Badge>
                   </TableCell>
