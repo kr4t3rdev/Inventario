@@ -2,7 +2,7 @@
 
 import { prisma } from '@/lib/prisma';
 import { withAction } from '@/lib/server-actions';
-import type { AuthenticatedUser from '@/lib/auth-middleware';
+import type { AuthenticatedUser } from '@/lib/auth-middleware';
 
 export interface TenantMastersHealth {
   tenantId: string;
@@ -15,6 +15,20 @@ export interface TenantMastersHealth {
     proveedores: number;
     puntosDeVenta: number;
     listasPrecio: number;
+  };
+  planName: string | null;
+}
+
+export interface TenantSalesHealth {
+  tenantId: string;
+  nombre: string;
+  slug: string | null;
+  metrics: {
+    ventasCount: number;
+    ventasTotal: number;
+    facturasCount: number;
+    ofertasCount: number;
+    serviciosCount: number;
   };
   planName: string | null;
 }
@@ -67,6 +81,62 @@ export const getGlobalMastersHealthAction = withAction(async (_, user: Authentic
   }));
 
   return { healthData };
+});
+
+export const getGlobalSalesHealthAction = withAction(async (_, user: AuthenticatedUser) => {
+  const tenants = await prisma.tenant.findMany({
+    select: {
+      tenantId: true,
+      nombre: true,
+      slug: true,
+      _count: {
+        select: {
+          ventas: true,
+          facturas: true,
+          ofertas: true,
+          servicios: true,
+        },
+      },
+      licencias: {
+        select: {
+          plan: {
+            select: {
+              nombre: true,
+            },
+          },
+        },
+        orderBy: {
+          createdAt: 'desc',
+        },
+        take: 1,
+      },
+    },
+  });
+
+  const salesHealth: TenantSalesHealth[] = await Promise.all(tenants.map(async (t) => {
+    const aggregate = await prisma.venta.aggregate({
+      where: { tenantId: t.tenantId },
+      _sum: {
+        total: true,
+      },
+    });
+
+    return {
+      tenantId: t.tenantId,
+      nombre: t.nombre,
+      slug: t.slug,
+      planName: t.licencias[0]?.plan?.nombre || 'Sin Plan',
+      metrics: {
+        ventasCount: t._count.ventas,
+        ventasTotal: Number(aggregate._sum.total || 0),
+        facturasCount: t._count.facturas,
+        ofertasCount: t._count.ofertas,
+        serviciosCount: t._count.servicios,
+      },
+    };
+  }));
+
+  return { salesHealth };
 });
 
 export type MasterFeature = 'productos' | 'categorias' | 'unidades' | 'proveedores' | 'puntosDeVenta' | 'listasPrecio';
