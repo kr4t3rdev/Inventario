@@ -68,7 +68,7 @@ export default function AdminDashboardPage(): React.JSX.Element {
   const safeTenants = tenants ?? []
   const loading = isLoading
   const safeFinance = finance
-  const safeSystem = system ?? { users: { total: 0, byRole: [] }, tenants: { total: 0 }, sessions: { active: 0 }, licenses: { total: 0, active: 0, expiringSoon: 0 }, usersTrend: [] }
+  const safeSystem = system ?? { users: { total: 0, byRole: [] }, tenants: { total: 0 }, sessions: { active: 0 }, licenses: { total: 0, active: 0, expiringSoon: 0 }, usersTrend: [], usersComparison: { current7DaysUsers: 0, previous7DaysUsers: 0 } }
   const calculateTrend = (current: number, previous: number) => {
     if (previous === 0) return null;
     const change = ((current - previous) / previous) * 100;
@@ -81,19 +81,13 @@ export default function AdminDashboardPage(): React.JSX.Element {
   // Calcular tendencias de los últimos 7 días vs 7 días anteriores
   const revenueTrend = safeFinance?.revenueTrend ?? [];
   const usersTrend = safeSystem?.usersTrend ?? [];
-  
-  const currentWeekRevenue = revenueTrend.slice(-7).reduce(
-    (sum: number, d: { ingresos: number }) => sum + d.ingresos,
-    0,
-  );
-  const previousWeekRevenue = 0; // TODO: implementar datos de semana anterior
+
+  const currentWeekRevenue = safeFinance?.revenueComparison.current7DaysRevenue ?? 0;
+  const previousWeekRevenue = safeFinance?.revenueComparison.previous7DaysRevenue ?? 0;
   const revenueTrendData = calculateTrend(currentWeekRevenue, previousWeekRevenue);
 
-  const currentWeekUsers = usersTrend.slice(-7).reduce(
-    (sum: number, d: { usuarios: number }) => sum + d.usuarios,
-    0,
-  );
-  const previousWeekUsers = 0; // TODO: implementar datos de semana anterior
+  const currentWeekUsers = safeSystem?.usersComparison.current7DaysUsers ?? 0;
+  const previousWeekUsers = safeSystem?.usersComparison.previous7DaysUsers ?? 0;
   const usersTrendData = calculateTrend(currentWeekUsers, previousWeekUsers);
 
 
@@ -103,7 +97,7 @@ export default function AdminDashboardPage(): React.JSX.Element {
       value: safeSystem?.tenants.total ?? safeTenants.length,
       loading: isLoading,
       trend: null,
-      description: "Empresas registradas en la plataforma",
+      description: "Empresas reales registradas en la plataforma",
       icon: Building2,
       valueClassName: "text-violet-600 dark:text-violet-400",
       iconBg: "from-violet-600/15 to-purple-600/15",
@@ -132,7 +126,7 @@ export default function AdminDashboardPage(): React.JSX.Element {
       title: "Ingresos Totales",
       value: safeFinance ? `$${Number(safeFinance.revenue.totalIngresos).toLocaleString()}` : "-",
       loading: isLoading,
-      trend: null,
+      trend: revenueTrendData,
       description: "Ventas + servicios consolidados",
       icon: Wallet,
       valueClassName: "text-emerald-600 dark:text-emerald-400",

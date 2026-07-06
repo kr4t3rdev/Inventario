@@ -216,6 +216,7 @@ describe('Admin Server Actions', () => {
       expect(r.success).toBe(true);
       expect(prisma.tenant.findMany).toHaveBeenCalledWith(
         expect.objectContaining({
+          where: { licencias: { some: { isDemo: false } } },
           include: expect.objectContaining({
             licencias: expect.any(Object),
           }),
@@ -244,11 +245,26 @@ describe('Admin Server Actions', () => {
         .mockResolvedValueOnce(2)
         .mockResolvedValueOnce(1);
       vi.mocked(prisma.user.groupBy).mockResolvedValue([] as any);
-      vi.mocked(prisma.user.findMany).mockResolvedValue([] as any);
+      vi.mocked(prisma.user.findMany).mockResolvedValue([
+        { createdAt: new Date('2026-07-05T10:00:00.000Z') },
+        { createdAt: new Date('2026-06-29T10:00:00.000Z') },
+      ] as any);
 
       const r = await getAdminSystemHealthAction();
 
       expect(r.success).toBe(true);
+      expect(prisma.user.count).toHaveBeenCalledWith({
+        where: {
+          tenantMemberships: {
+            some: {
+              tenant: { licencias: { some: { isDemo: false } } },
+            },
+          },
+        },
+      });
+      expect(prisma.tenant.count).toHaveBeenCalledWith({
+        where: { licencias: { some: { isDemo: false } } },
+      });
       expect(prisma.userSession.count).toHaveBeenCalledWith({
         where: {
           isActive: true,
@@ -256,8 +272,47 @@ describe('Admin Server Actions', () => {
             { expiresAt: null },
             { expiresAt: { gte: expect.any(Date) } },
           ],
+          user: {
+            tenantMemberships: {
+              some: {
+                tenant: { licencias: { some: { isDemo: false } } },
+              },
+            },
+          },
         },
       });
+      expect(prisma.user.groupBy).toHaveBeenCalledWith({
+        by: ['role'],
+        where: {
+          tenantMemberships: {
+            some: {
+              tenant: { licencias: { some: { isDemo: false } } },
+            },
+          },
+        },
+        _count: true,
+      });
+      expect(prisma.user.findMany).toHaveBeenCalledWith({
+        where: {
+          createdAt: { gte: expect.any(Date) },
+          tenantMemberships: {
+            some: {
+              tenant: { licencias: { some: { isDemo: false } } },
+            },
+          },
+        },
+        select: {
+          createdAt: true,
+        },
+        orderBy: { createdAt: 'asc' },
+        take: 10000,
+      });
+      if (r.success && r.data) {
+        expect(r.data.usersComparison).toEqual({
+          current7DaysUsers: 1,
+          previous7DaysUsers: 1,
+        });
+      }
     });
   });
 
@@ -270,14 +325,33 @@ describe('Admin Server Actions', () => {
       vi.mocked(prisma.cuentaPorCobrar.aggregate).mockResolvedValue({ _count: 0, _sum: { montoDeuda: 0, montoPagado: 0 } } as any);
       vi.mocked(prisma.cuentaPorPagar.aggregate).mockResolvedValue({ _count: 0, _sum: { saldoPendiente: 0 } } as any);
       vi.mocked(prisma.tenant.count).mockResolvedValue(7);
-      vi.mocked(prisma.venta.findMany).mockResolvedValue([] as any);
-      vi.mocked(prisma.ventaServicios.findMany).mockResolvedValue([] as any);
+      vi.mocked(prisma.venta.findMany).mockResolvedValue([
+        { createdAt: new Date('2026-07-05T10:00:00.000Z'), total: 1000 },
+        { createdAt: new Date('2026-06-29T10:00:00.000Z'), total: 600 },
+      ] as any);
+      vi.mocked(prisma.ventaServicios.findMany).mockResolvedValue([
+        { createdAt: new Date('2026-07-04T10:00:00.000Z'), total: 500 },
+        { createdAt: new Date('2026-06-30T10:00:00.000Z'), total: 200 },
+      ] as any);
 
       const r = await getAdminFinanceAction();
 
       expect(r.success).toBe(true);
+      expect(prisma.tenant.count).toHaveBeenCalledWith({
+        where: { licencias: { some: { isDemo: false } } },
+      });
       expect(prisma.venta.aggregate).toHaveBeenCalledWith({
-        where: { deletedAt: null },
+        where: {
+          deletedAt: null,
+          tenant: { licencias: { some: { isDemo: false } } },
+        },
+        _count: true,
+        _sum: { total: true },
+      });
+      expect(prisma.ventaServicios.aggregate).toHaveBeenCalledWith({
+        where: {
+          tenant: { licencias: { some: { isDemo: false } } },
+        },
         _count: true,
         _sum: { total: true },
       });
@@ -285,6 +359,7 @@ describe('Admin Server Actions', () => {
         where: {
           createdAt: { gte: expect.any(Date) },
           deletedAt: null,
+          tenant: { licencias: { some: { isDemo: false } } },
         },
         select: {
           createdAt: true,
@@ -293,6 +368,24 @@ describe('Admin Server Actions', () => {
         orderBy: { createdAt: 'asc' },
         take: 10000,
       });
+      expect(prisma.ventaServicios.findMany).toHaveBeenCalledWith({
+        where: {
+          createdAt: { gte: expect.any(Date) },
+          tenant: { licencias: { some: { isDemo: false } } },
+        },
+        select: {
+          createdAt: true,
+          total: true,
+        },
+        orderBy: { createdAt: 'asc' },
+        take: 10000,
+      });
+      if (r.success && r.data) {
+        expect(r.data.revenueComparison).toEqual({
+          current7DaysRevenue: 1700,
+          previous7DaysRevenue: 600,
+        });
+      }
     });
   });
 

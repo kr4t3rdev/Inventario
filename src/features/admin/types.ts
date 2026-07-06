@@ -11,6 +11,10 @@ export interface AdminFinance {
   cuentasPorCobrar: { total: number; saldoPendiente: number }
   cuentasPorPagar: { total: number; saldoPendiente: number }
   revenueTrend: Array<{ fecha: string; ingresos: number }>
+  revenueComparison: {
+    current7DaysRevenue: number
+    previous7DaysRevenue: number
+  }
 }
 
 export interface AdminFinanceMeta {
@@ -60,6 +64,10 @@ export interface AdminSystemHealth {
   sessions: { active: number }
   licenses: { total: number; active: number; expiringSoon: number }
   usersTrend: Array<{ fecha: string; usuarios: number }>
+  usersComparison: {
+    current7DaysUsers: number
+    previous7DaysUsers: number
+  }
 }
 
 export interface AdminTenant {

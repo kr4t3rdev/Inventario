@@ -376,7 +376,9 @@ export const getAdminTenantsAction = withAction(
 	async (_input: void, user: AuthenticatedUser) => {
 		if (user.role !== "admin")
 			throw new ActionError("Acceso restringido", "FORBIDDEN");
+		const realTenantWhere = { licencias: { some: { isDemo: false } } };
 		const tenants = await prisma.tenant.findMany({
+			where: realTenantWhere,
 			orderBy: { createdAt: "desc" },
 			include: {
 				_count: {
@@ -402,24 +404,23 @@ export const getAdminTenantsAction = withAction(
 
 
 /**
- * Helper para agrupar datos por día (últimos 7 días)
+ * Helper para agrupar datos por día.
  */
-function groupByLast7Days<T extends { createdAt: Date }>(
+function groupByLastNDays<T extends { createdAt: Date }>(
   items: T[],
-  valueExtractor: (item: T) => number
+  valueExtractor: (item: T) => number,
+  days: number,
+  offsetDays = 0,
 ): Array<{ fecha: string; value: number }> {
-  const sevenDaysAgo = new Date();
-  sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
-  
-  return Array.from({ length: 7 }, (_, i) => {
+  return Array.from({ length: days }, (_, i) => {
     const date = new Date();
-    date.setDate(date.getDate() - (6 - i));
+    date.setDate(date.getDate() - (days - 1 - i + offsetDays));
     const fecha = date.toISOString().split('T')[0];
-    
+
     const value = items
-      .filter(item => item.createdAt.toISOString().split('T')[0] === fecha)
+      .filter((item) => item.createdAt.toISOString().split('T')[0] === fecha)
       .reduce((sum, item) => sum + valueExtractor(item), 0);
-    
+
     return { fecha, value };
   });
 }
@@ -429,14 +430,23 @@ export const getAdminSystemHealthAction = withAction(
 		if (user.role !== "admin")
 			throw new ActionError("Acceso restringido", "FORBIDDEN");
 		const now = new Date();
+		const realTenantWhere = { licencias: { some: { isDemo: false } } };
+		const realUserWhere = {
+			tenantMemberships: {
+				some: {
+					tenant: realTenantWhere,
+				},
+			},
+		};
 		const [users, tenants, sessions, licenses, licensesActive, expiringSoon] =
 			await Promise.all([
-				prisma.user.count(),
-				prisma.tenant.count(),
+				prisma.user.count({ where: realUserWhere }),
+				prisma.tenant.count({ where: realTenantWhere }),
 				prisma.userSession.count({
 					where: {
 						isActive: true,
 						OR: [{ expiresAt: null }, { expiresAt: { gte: now } }],
+						user: realUserWhere,
 					},
 				}),
 				prisma.tenantLicense.count({ where: { isDemo: false } }),
@@ -454,39 +464,40 @@ export const getAdminSystemHealthAction = withAction(
 			]);
 		const usersByRole = await prisma.user.groupBy({
 			by: ["role"],
+			where: realUserWhere,
 			_count: true,
 		});
 
-		// Obtener nuevos usuarios de los últimos 7 días
-		const sevenDaysAgo = new Date();
-		sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
-		
+		// Obtener nuevos usuarios de los últimos 14 días para comparar semanas
+		const fourteenDaysAgo = new Date();
+		fourteenDaysAgo.setDate(fourteenDaysAgo.getDate() - 13);
+
 		const usersHistoricos = await prisma.user.findMany({
 			where: {
-				createdAt: { gte: sevenDaysAgo },
+				createdAt: { gte: fourteenDaysAgo },
+				...realUserWhere,
 			},
 			select: {
 				createdAt: true,
 			},
 			orderBy: { createdAt: 'asc' },
-			take: 5000, // Límite de seguridad
+			take: 10000, // Límite de seguridad
 		});
 
-		// Agrupar por día
-		const usersTrend = Array.from({ length: 7 }, (_, i) => {
-			const date = new Date();
-			date.setDate(date.getDate() - (6 - i));
-			const fecha = date.toISOString().split('T')[0];
-			
-			const usuariosDia = usersHistoricos.filter(
-				u => u.createdAt.toISOString().split('T')[0] === fecha
-			).length;
-			
-			return {
-				fecha,
-				usuarios: usuariosDia,
-			};
-		});
+		const usersTrendSeries = groupByLastNDays(usersHistoricos, () => 1, 14);
+		const previousUsersTrend = usersTrendSeries.slice(0, 7);
+		const usersTrend = usersTrendSeries.slice(-7).map(({ fecha, value }) => ({
+			fecha,
+			usuarios: value,
+		}));
+		const previous7DaysUsers = previousUsersTrend.reduce(
+			(sum, day) => sum + day.value,
+			0,
+		);
+		const current7DaysUsers = usersTrend.reduce(
+			(sum, day) => sum + day.usuarios,
+			0,
+		);
 
 		return {
 			users: {
@@ -501,6 +512,10 @@ export const getAdminSystemHealthAction = withAction(
 				expiringSoon,
 			},
 			usersTrend,
+			usersComparison: {
+				current7DaysUsers,
+				previous7DaysUsers,
+			},
 		};
 	},
 );
@@ -509,6 +524,8 @@ export const getAdminFinanceAction = withAction(
 	async (_input: void, user: AuthenticatedUser) => {
 		if (user.role !== "admin")
 			throw new ActionError("Acceso restringido", "FORBIDDEN");
+		const realTenantWhere = { licencias: { some: { isDemo: false } } };
+		const realTenantRelationWhere = { tenant: realTenantWhere };
 		const [
 			ventas,
 			ventasServicios,
@@ -518,30 +535,41 @@ export const getAdminFinanceAction = withAction(
 			tenantCount,
 		] = await Promise.all([
 			prisma.venta.aggregate({
-				where: { deletedAt: null },
+				where: { deletedAt: null, ...realTenantRelationWhere },
 				_count: true,
 				_sum: { total: true },
 			}),
-			prisma.ventaServicios.aggregate({ _count: true, _sum: { total: true } }),
-			prisma.gastosDE.aggregate({ _count: true, _sum: { monto: true } }),
+			prisma.ventaServicios.aggregate({
+				where: realTenantRelationWhere,
+				_count: true,
+				_sum: { total: true },
+			}),
+			prisma.gastosDE.aggregate({
+				where: realTenantRelationWhere,
+				_count: true,
+				_sum: { monto: true },
+			}),
 			prisma.cuentaPorCobrar.aggregate({
+				where: realTenantRelationWhere,
 				_count: true,
 				_sum: { montoDeuda: true, montoPagado: true },
 			}),
 			prisma.cuentaPorPagar.aggregate({
+				where: realTenantRelationWhere,
 				_count: true,
 				_sum: { saldoPendiente: true },
 			}),
-			prisma.tenant.count(),
+			prisma.tenant.count({ where: realTenantWhere }),
 		]);
-		// Obtener ingresos de los últimos 7 días
-		const sevenDaysAgo = new Date();
-		sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
-		
+		// Obtener ingresos de los últimos 14 días para comparar semanas
+		const fourteenDaysAgo = new Date();
+		fourteenDaysAgo.setDate(fourteenDaysAgo.getDate() - 13);
+
 		const ventasHistoricas = await prisma.venta.findMany({
 			where: {
-				createdAt: { gte: sevenDaysAgo },
+				createdAt: { gte: fourteenDaysAgo },
 				deletedAt: null,
+				...realTenantRelationWhere,
 			},
 			select: {
 				createdAt: true,
@@ -553,7 +581,8 @@ export const getAdminFinanceAction = withAction(
 
 		const serviciosHistoricos = await prisma.ventaServicios.findMany({
 			where: {
-				createdAt: { gte: sevenDaysAgo },
+				createdAt: { gte: fourteenDaysAgo },
+				...realTenantRelationWhere,
 			},
 			select: {
 				createdAt: true,
@@ -563,25 +592,27 @@ export const getAdminFinanceAction = withAction(
 			take: 10000, // Límite de seguridad
 		});
 
-		// Agrupar por día
-		const revenueTrend = Array.from({ length: 7 }, (_, i) => {
-			const date = new Date();
-			date.setDate(date.getDate() - (6 - i));
-			const fecha = date.toISOString().split('T')[0];
-			
-			const ventasDia = ventasHistoricas
-				.filter(v => v.createdAt.toISOString().split('T')[0] === fecha)
-				.reduce((sum, v) => sum + Number(v.total), 0);
-			
-			const serviciosDia = serviciosHistoricos
-				.filter(s => s.createdAt.toISOString().split('T')[0] === fecha)
-				.reduce((sum, s) => sum + Number(s.total), 0);
-			
-			return {
-				fecha,
-				ingresos: ventasDia + serviciosDia,
-			};
-		});
+		const revenueTrendSeries = groupByLastNDays(
+			[
+				...ventasHistoricas,
+				...serviciosHistoricos,
+			],
+			(item) => Number(item.total),
+			14,
+		);
+		const previousRevenueTrend = revenueTrendSeries.slice(0, 7);
+		const revenueTrend = revenueTrendSeries.slice(-7).map(({ fecha, value }) => ({
+			fecha,
+			ingresos: value,
+		}));
+		const previous7DaysRevenue = previousRevenueTrend.reduce(
+			(sum, day) => sum + day.value,
+			0,
+		);
+		const current7DaysRevenue = revenueTrend.reduce(
+			(sum, day) => sum + day.ingresos,
+			0,
+		);
 
 		return {
 			tenantCount,
@@ -609,6 +640,10 @@ export const getAdminFinanceAction = withAction(
 				saldoPendiente: cuentasPorPagar._sum.saldoPendiente || 0,
 			},
 			revenueTrend,
+			revenueComparison: {
+				current7DaysRevenue,
+				previous7DaysRevenue,
+			},
 		};
 	},
 );
