@@ -8,17 +8,13 @@ import {
   Wallet,
   DollarSign,
   Shield,
-  Users,
   Database,
   BarChart3,
   Activity,
   Globe,
   AlertTriangle,
-  Logs,
-  Settings,
   UserCog,
   FileText,
-  RefreshCw,
   ArrowLeftRight,
   Key,
   CreditCard,
@@ -94,7 +90,6 @@ export function AdminSidebar({
             title: "Finanzas Globales",
             url: "/admin/finanzas",
             icon: Wallet,
-  DollarSign,
           },
           {
             title: "Revenue Suscripciones",
@@ -120,6 +115,46 @@ export function AdminSidebar({
             title: "Usuarios",
             url: "/admin/usuarios",
             icon: UserCog,
+          },
+        ],
+      },
+      {
+        title: "Administración Operativa",
+        items: [
+          {
+            title: "Datos Maestros",
+            url: "/admin/operaciones/maestros",
+            icon: BarChart3,
+          },
+          {
+            title: "Ventas",
+            url: "/admin/operaciones/ventas",
+            icon: Activity,
+          },
+          {
+            title: "Compras",
+            url: "/admin/operaciones/compras",
+            icon: Wallet,
+          },
+          {
+            title: "Mermas",
+            url: "/admin/operaciones/mermas",
+            icon: AlertTriangle,
+          },
+          {
+            title: "Facturación",
+            url: "/admin/operaciones/facturacion",
+            icon: FileText,
+          },
+          {
+            title: "Ofertas y Servicios",
+            url: "/admin/operaciones/ofertas-servicios",
+            icon: Globe,
+          },
+          {
+            title: "Gastos",
+            url: "/admin/operaciones/gastos",
+            icon: DollarSign,
           },
         ],
       },
@@ -164,6 +199,7 @@ export function AdminSidebar({
   const groupToneByTitle: Record<string, string> = {
     "Panel de Control": "from-violet-500/15 via-sidebar-accent/45 to-transparent",
     Monitor: "from-amber-500/15 via-sidebar-accent/45 to-transparent",
+    "Administración Operativa": "from-rose-500/15 via-sidebar-accent/45 to-transparent",
     Licencias: "from-emerald-500/15 via-sidebar-accent/45 to-transparent",
     Herramientas: "from-sky-500/15 via-sidebar-accent/45 to-transparent",
   }
