@@ -34,6 +34,11 @@ vi.mock('@/lib/prisma', () => {
     affiliateProfile: { findUnique: vi.fn() },
     affiliateReferral: { findUnique: vi.fn(), create: vi.fn() },
     userSession: { count: vi.fn(), findMany: vi.fn(), delete: vi.fn() },
+    venta: { aggregate: vi.fn(), findMany: vi.fn() },
+    ventaServicios: { aggregate: vi.fn(), findMany: vi.fn() },
+    gastosDE: { aggregate: vi.fn() },
+    cuentaPorCobrar: { aggregate: vi.fn() },
+    cuentaPorPagar: { aggregate: vi.fn() },
     cloudinaryAsset: { groupBy: vi.fn(), findMany: vi.fn(), update: vi.fn() },
     tenantLicense: {
       count: vi.fn(),
@@ -62,7 +67,7 @@ import {
   getUsersAction, createUserAction, updateUserAction, deleteUserAction,
   lockUserAction, unlockUserAction,
   getGlobalUsersAction,
-  getAdminTenantsAction, getAdminSystemHealthAction,
+  getAdminTenantsAction, getAdminSystemHealthAction, getAdminFinanceAction,
   getAdminPlanesAction, createAdminPlanAction, approveGlobalUserAction, createDemoTenantAction,
   cleanupExpiredDemoLicenciasAction,
   getCloudinaryAssetsAction, cleanupCloudinaryAssetsAction,
@@ -194,22 +199,100 @@ describe('Admin Server Actions', () => {
   describe('getAdminTenantsAction', () => {
     it('retorna tenants', async () => {
       vi.mocked(getCurrentUser).mockResolvedValue(adminUser);
-      vi.mocked(prisma.tenant.findMany).mockResolvedValue([]);
+      vi.mocked(prisma.tenant.findMany).mockResolvedValue([
+        {
+          tenantId: 'tenant-1',
+          nombre: 'Tenant Uno',
+          _count: { memberships: 2, productos: 3, almacenes: 1 },
+          licencias: [
+            {
+              planId: 'plan-1',
+              plan: { nombre: 'Pro' },
+            },
+          ],
+        },
+      ] as any);
       const r = await getAdminTenantsAction();
       expect(r.success).toBe(true);
+      expect(prisma.tenant.findMany).toHaveBeenCalledWith(
+        expect.objectContaining({
+          include: expect.objectContaining({
+            licencias: expect.any(Object),
+          }),
+        }),
+      );
+      if (r.success && r.data) {
+        expect(r.data[0]).toMatchObject({
+          tenantId: 'tenant-1',
+          totalUsers: 2,
+          plan: 'Pro',
+          planId: 'plan-1',
+          licenseActive: true,
+        });
+      }
     });
   });
 
   describe('getAdminSystemHealthAction', () => {
-    it('retorna mÃ©tricas', async () => {
+    it('cuenta solo sesiones activas no expiradas', async () => {
       vi.mocked(getCurrentUser).mockResolvedValue(adminUser);
       vi.mocked(prisma.user.count).mockResolvedValue(5);
       vi.mocked(prisma.tenant.count).mockResolvedValue(2);
-      vi.mocked(prisma.userSession.count).mockResolvedValue(10);
-      vi.mocked(prisma.tenantLicense.count).mockResolvedValue(3);
-      vi.mocked(prisma.user.groupBy).mockResolvedValue([]);
+      vi.mocked(prisma.userSession.count).mockResolvedValue(4);
+      vi.mocked(prisma.tenantLicense.count)
+        .mockResolvedValueOnce(3)
+        .mockResolvedValueOnce(2)
+        .mockResolvedValueOnce(1);
+      vi.mocked(prisma.user.groupBy).mockResolvedValue([] as any);
+      vi.mocked(prisma.user.findMany).mockResolvedValue([] as any);
+
       const r = await getAdminSystemHealthAction();
+
       expect(r.success).toBe(true);
+      expect(prisma.userSession.count).toHaveBeenCalledWith({
+        where: {
+          isActive: true,
+          OR: [
+            { expiresAt: null },
+            { expiresAt: { gte: expect.any(Date) } },
+          ],
+        },
+      });
+    });
+  });
+
+  describe('getAdminFinanceAction', () => {
+    it('excluye ventas soft-deleted del total de ingresos', async () => {
+      vi.mocked(getCurrentUser).mockResolvedValue(adminUser);
+      vi.mocked(prisma.venta.aggregate).mockResolvedValue({ _count: 2, _sum: { total: 1500 } } as any);
+      vi.mocked(prisma.ventaServicios.aggregate).mockResolvedValue({ _count: 1, _sum: { total: 500 } } as any);
+      vi.mocked(prisma.gastosDE.aggregate).mockResolvedValue({ _count: 0, _sum: { monto: 0 } } as any);
+      vi.mocked(prisma.cuentaPorCobrar.aggregate).mockResolvedValue({ _count: 0, _sum: { montoDeuda: 0, montoPagado: 0 } } as any);
+      vi.mocked(prisma.cuentaPorPagar.aggregate).mockResolvedValue({ _count: 0, _sum: { saldoPendiente: 0 } } as any);
+      vi.mocked(prisma.tenant.count).mockResolvedValue(7);
+      vi.mocked(prisma.venta.findMany).mockResolvedValue([] as any);
+      vi.mocked(prisma.ventaServicios.findMany).mockResolvedValue([] as any);
+
+      const r = await getAdminFinanceAction();
+
+      expect(r.success).toBe(true);
+      expect(prisma.venta.aggregate).toHaveBeenCalledWith({
+        where: { deletedAt: null },
+        _count: true,
+        _sum: { total: true },
+      });
+      expect(prisma.venta.findMany).toHaveBeenCalledWith({
+        where: {
+          createdAt: { gte: expect.any(Date) },
+          deletedAt: null,
+        },
+        select: {
+          createdAt: true,
+          total: true,
+        },
+        orderBy: { createdAt: 'asc' },
+        take: 10000,
+      });
     });
   });
 

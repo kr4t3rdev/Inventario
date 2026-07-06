@@ -103,7 +103,7 @@ export default function AdminDashboardPage(): React.JSX.Element {
       value: safeSystem?.tenants.total ?? safeTenants.length,
       loading: isLoading,
       trend: null,
-      description: "Empresas activas en la plataforma",
+      description: "Empresas registradas en la plataforma",
       icon: Building2,
       valueClassName: "text-violet-600 dark:text-violet-400",
       iconBg: "from-violet-600/15 to-purple-600/15",

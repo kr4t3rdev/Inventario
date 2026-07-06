@@ -382,7 +382,7 @@ export const getAdminTenantsAction = withAction(
 				_count: {
 					select: { memberships: true, productos: true, almacenes: true },
 				},
-				licenses: {
+				licencias: {
 					where: { activa: true, isDemo: false },
 					orderBy: { createdAt: "desc" },
 					take: 1,
@@ -393,9 +393,9 @@ export const getAdminTenantsAction = withAction(
 		return tenants.map((t) => ({
 			...t,
 			totalUsers: t._count.memberships,
-			plan: t.licenses[0]?.plan?.nombre ?? null,
-			planId: t.licenses[0]?.planId ?? null,
-			licenseActive: t.licenses.length > 0,
+			plan: t.licencias[0]?.plan?.nombre ?? null,
+			planId: t.licencias[0]?.planId ?? null,
+			licenseActive: t.licencias.length > 0,
 		}));
 	},
 );
@@ -428,11 +428,17 @@ export const getAdminSystemHealthAction = withAction(
 	async (_input: void, user: AuthenticatedUser) => {
 		if (user.role !== "admin")
 			throw new ActionError("Acceso restringido", "FORBIDDEN");
+		const now = new Date();
 		const [users, tenants, sessions, licenses, licensesActive, expiringSoon] =
 			await Promise.all([
 				prisma.user.count(),
 				prisma.tenant.count(),
-				prisma.userSession.count(),
+				prisma.userSession.count({
+					where: {
+						isActive: true,
+						OR: [{ expiresAt: null }, { expiresAt: { gte: now } }],
+					},
+				}),
 				prisma.tenantLicense.count({ where: { isDemo: false } }),
 				prisma.tenantLicense.count({ where: { activa: true, isDemo: false } }),
 				prisma.tenantLicense.count({
@@ -511,7 +517,11 @@ export const getAdminFinanceAction = withAction(
 			cuentasPorPagar,
 			tenantCount,
 		] = await Promise.all([
-			prisma.venta.aggregate({ _count: true, _sum: { total: true } }),
+			prisma.venta.aggregate({
+				where: { deletedAt: null },
+				_count: true,
+				_sum: { total: true },
+			}),
 			prisma.ventaServicios.aggregate({ _count: true, _sum: { total: true } }),
 			prisma.gastosDE.aggregate({ _count: true, _sum: { monto: true } }),
 			prisma.cuentaPorCobrar.aggregate({
@@ -531,6 +541,7 @@ export const getAdminFinanceAction = withAction(
 		const ventasHistoricas = await prisma.venta.findMany({
 			where: {
 				createdAt: { gte: sevenDaysAgo },
+				deletedAt: null,
 			},
 			select: {
 				createdAt: true,
