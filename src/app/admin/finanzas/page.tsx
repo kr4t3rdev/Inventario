@@ -54,7 +54,7 @@ export default function FinanzasPage() {
         </div>
         <div className="flex-1">
           <h1 className="text-2xl font-bold">Finanzas Globales</h1>
-          <p className="text-muted-foreground text-sm">Consolidación financiera de la plataforma</p>
+          <p className="text-muted-foreground text-sm">Consolidación financiera de tenants reales</p>
         </div>
         <Button
           onClick={() => { void loadFinance() }}
@@ -125,7 +125,7 @@ export default function FinanzasPage() {
               </CardHeader>
               <CardContent>
                 <p className="text-2xl font-bold">{finance.tenantCount}</p>
-                <p className="text-xs text-muted-foreground mt-1">Empresas activas</p>
+                <p className="text-xs text-muted-foreground mt-1">Empresas reales con licencia paga</p>
               </CardContent>
             </Card>
           </div>
@@ -138,7 +138,7 @@ export default function FinanzasPage() {
                   <TrendingUp className="h-4 w-4 text-emerald-600" />
                   Desglose de Ingresos
                 </CardTitle>
-                <CardDescription>Ventas y servicios por tenant</CardDescription>
+                <CardDescription>Ventas y servicios agregados de tenants reales</CardDescription>
               </CardHeader>
               <CardContent>
                 <div className="space-y-3">
@@ -195,7 +195,7 @@ export default function FinanzasPage() {
         </>
       ) : (
         <div className="flex items-center justify-center py-20">
-          <p className="text-muted-foreground">No hay datos financieros disponibles</p>
+          <p className="text-muted-foreground">No hay datos financieros reales disponibles</p>
         </div>
       )}
     </PageTransition>

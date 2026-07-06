@@ -25,7 +25,7 @@ export default function SistemaPage() {
         </div>
         <div className="flex-1">
           <h1 className="text-2xl font-bold">Salud del Sistema</h1>
-          <p className="text-muted-foreground text-sm">Métricas de infraestructura y sesiones activas</p>
+          <p className="text-muted-foreground text-sm">Métricas de usuarios reales, licencias reales y sesiones activas</p>
         </div>
         <Button
           onClick={refetch}
@@ -65,7 +65,7 @@ export default function SistemaPage() {
             ) : (
               <p className="text-3xl font-bold text-emerald-600 dark:text-emerald-400">{safeSystem.sessions.active}</p>
             )}
-            <p className="text-xs text-muted-foreground mt-1">Usuarios conectados ahora</p>
+            <p className="text-xs text-muted-foreground mt-1">Sesiones reales activas en este momento</p>
           </CardContent>
         </Card>
 
@@ -79,7 +79,7 @@ export default function SistemaPage() {
             ) : (
               <p className="text-3xl font-bold text-sky-600 dark:text-sky-400">{safeSystem.licenses.active}</p>
             )}
-            <p className="text-xs text-muted-foreground mt-1">de {safeSystem.licenses.total} totales</p>
+            <p className="text-xs text-muted-foreground mt-1">de {safeSystem.licenses.total} licencias reales</p>
           </CardContent>
         </Card>
 
@@ -95,7 +95,7 @@ export default function SistemaPage() {
                   {safeSystem.licenses.expiringSoon}
                 </p>
             )}
-            <p className="text-xs text-muted-foreground mt-1">Próximos 30 días</p>
+            <p className="text-xs text-muted-foreground mt-1">Licencias reales en próximos 30 días</p>
           </CardContent>
         </Card>
       </div>
@@ -107,7 +107,7 @@ export default function SistemaPage() {
               <Shield className="h-4 w-4 text-violet-600" />
               Distribución de Roles
             </CardTitle>
-            <CardDescription>Usuarios del sistema por tipo de rol</CardDescription>
+            <CardDescription>Usuarios reales del sistema por tipo de rol</CardDescription>
           </CardHeader>
           <CardContent>
             {isLoading ? (
@@ -151,7 +151,7 @@ export default function SistemaPage() {
               <Clock className="h-4 w-4 text-amber-600" />
               Estado de Licencias
             </CardTitle>
-            <CardDescription>Resumen de licencias en la plataforma</CardDescription>
+            <CardDescription>Resumen de licencias reales en la plataforma</CardDescription>
           </CardHeader>
           <CardContent>
             {isLoading ? (

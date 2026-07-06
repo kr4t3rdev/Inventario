@@ -80,7 +80,7 @@ export default function TenantsPage() {
         </div>
         <div className="flex-1">
           <h1 className="text-2xl font-bold">Tenants</h1>
-          <p className="text-muted-foreground text-sm">Gestión de empresas y organizaciones</p>
+          <p className="text-muted-foreground text-sm">Gestión de empresas reales y organizaciones con licencia paga</p>
         </div>
         <div className="flex gap-2">
           <Button
@@ -118,7 +118,7 @@ export default function TenantsPage() {
         </Card>
         <Card className="rounded-xl border bg-card/80 backdrop-blur-sm shadow-sm">
           <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground">Usuarios Totales</CardTitle>
+            <CardTitle className="text-sm font-medium text-muted-foreground">Usuarios Reales</CardTitle>
           </CardHeader>
           <CardContent>
             <p className="text-3xl font-bold text-emerald-600 dark:text-emerald-400">
@@ -158,7 +158,7 @@ export default function TenantsPage() {
                 onChange={(e) => setFilterByLicense(e.target.value as any)}
                 className="rounded-md border border-input bg-background px-3 py-2 text-sm"
               >
-                <option value="all">Todas las licencias</option>
+                <option value="all">Licencias reales</option>
                 <option value="active">Activas</option>
                 <option value="inactive">Inactivas</option>
               </select>
@@ -180,7 +180,7 @@ export default function TenantsPage() {
       <Card className="rounded-xl border bg-card/80 backdrop-blur-sm shadow-sm">
         <CardHeader>
           <CardTitle>Lista de Empresas</CardTitle>
-          <CardDescription>Todos los tenants registrados en la plataforma</CardDescription>
+          <CardDescription>Empresas reales registradas en la plataforma</CardDescription>
         </CardHeader>
         <CardContent>
           {isLoading ? (
@@ -189,7 +189,7 @@ export default function TenantsPage() {
             </div>
           ) : filteredTenants.length === 0 ? (
             <p className="text-sm text-muted-foreground py-8 text-center">
-              {searchQuery || filterByLicense !== 'all' ? 'No se encontraron tenants con los filtros aplicados' : 'No hay tenants registrados'}
+              {searchQuery || filterByLicense !== 'all' ? 'No se encontraron empresas reales con los filtros aplicados' : 'No hay empresas reales registradas'}
             </p>
           ) : (
             <div className="overflow-x-auto">

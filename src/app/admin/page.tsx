@@ -107,7 +107,7 @@ export default function AdminDashboardPage(): React.JSX.Element {
       value: safeSystem?.users.total ?? 0,
       loading: isLoading,
       trend: usersTrendData,
-      description: "Usuarios registrados",
+      description: "Usuarios reales registrados",
       icon: Users,
       valueClassName: "text-emerald-600 dark:text-emerald-400",
       iconBg: "from-emerald-600/15 to-teal-600/15",
@@ -117,17 +117,17 @@ export default function AdminDashboardPage(): React.JSX.Element {
       value: safeSystem?.sessions.active ?? 0,
       loading: isLoading,
       trend: null,
-      description: "Usuarios con sesión abierta ahora",
+      description: "Sesiones activas no expiradas",
       icon: Activity,
       valueClassName: "text-sky-600 dark:text-sky-400",
       iconBg: "from-sky-600/15 to-blue-600/15",
     },
     {
       title: "Ingresos Totales",
-      value: safeFinance ? `$${Number(safeFinance.revenue.totalIngresos).toLocaleString()}` : "-",
+      value: safeFinance ? `$${Number(safeFinance.revenue.totalIngresos).toLocaleString()}` : "Sin datos",
       loading: isLoading,
       trend: revenueTrendData,
-      description: "Ventas + servicios consolidados",
+      description: "Ventas + servicios de tenants reales",
       icon: Wallet,
       valueClassName: "text-emerald-600 dark:text-emerald-400",
       iconBg: "from-emerald-600/15 to-green-600/15",
@@ -137,7 +137,7 @@ export default function AdminDashboardPage(): React.JSX.Element {
       value: safeSystem?.licenses.expiringSoon ?? 0,
       loading: isLoading,
       trend: null,
-      description: "Próximos 30 días",
+      description: "Licencias reales en próximos 30 días",
       icon: Clock,
       valueClassName: "text-amber-600 dark:text-amber-400",
       iconBg: "from-amber-600/15 to-orange-600/15",
@@ -147,7 +147,7 @@ export default function AdminDashboardPage(): React.JSX.Element {
       value: safeSystem?.licenses.active ?? 0,
       loading: isLoading,
       trend: null,
-      description: `de ${safeSystem?.licenses.total ?? 0} totales`,
+      description: `de ${safeSystem?.licenses.total ?? 0} licencias reales`,
       icon: Shield,
       valueClassName: "text-violet-600 dark:text-violet-400",
       iconBg: "from-violet-600/15 to-purple-600/15",
@@ -317,7 +317,7 @@ export default function AdminDashboardPage(): React.JSX.Element {
                   <ArrowUpRight className="h-4 w-4 text-emerald-600" />
                   Tendencia de Ingresos (Últimos 7 días)
                 </CardTitle>
-                <CardDescription>Evolución diaria de ventas y servicios</CardDescription>
+                <CardDescription>Evolución diaria de ingresos reales por ventas y servicios</CardDescription>
               </CardHeader>
               <CardContent>
                 {isLoading ? (
@@ -360,7 +360,7 @@ export default function AdminDashboardPage(): React.JSX.Element {
                   <Users className="h-4 w-4 text-violet-600" />
                   Nuevos Usuarios (Últimos 7 días)
                 </CardTitle>
-                <CardDescription>Registros diarios de usuarios</CardDescription>
+                <CardDescription>Altas diarias de usuarios en tenants reales</CardDescription>
               </CardHeader>
               <CardContent>
                 {isLoading ? (
@@ -411,14 +411,14 @@ export default function AdminDashboardPage(): React.JSX.Element {
                     <UserCheck className="h-4 w-4 text-violet-600" />
                     Usuarios por Rol
                   </CardTitle>
-                  <CardDescription>Distribución global de roles</CardDescription>
+                  <CardDescription>Distribución de usuarios reales por rol</CardDescription>
                 </CardHeader>
                 <CardContent>
                   {isLoading ? (
                     <div className="flex items-center justify-center py-8">
                       <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
                     </div>
-                  ) : (
+                  ) : safeSystem.users.byRole.length > 0 ? (
                     <div className="space-y-3">
                       {safeSystem.users.byRole.map((r: any) => {
                         const pct = safeSystem.users.total > 0
@@ -444,6 +444,10 @@ export default function AdminDashboardPage(): React.JSX.Element {
                           </div>
                         )
                       })}
+                    </div>
+                  ) : (
+                    <div className="flex items-center justify-center py-8 text-sm text-muted-foreground">
+                      Aún no hay usuarios reales para mostrar por rol
                     </div>
                   )}
                 </CardContent>
@@ -507,24 +511,28 @@ export default function AdminDashboardPage(): React.JSX.Element {
                   <Globe className="h-4 w-4 text-violet-600" />
                   Distribución de Tenants por Plan
                 </CardTitle>
-                <CardDescription>Planes activos por empresa</CardDescription>
+                <CardDescription>Distribución de empresas reales por plan activo</CardDescription>
               </CardHeader>
               <CardContent>
                 {isLoading ? (
                   <div className="flex items-center justify-center py-8">
                     <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
                   </div>
-                ) : (
+                ) : safeTenants.length > 0 ? (
                   <div className="space-y-3">
                     {safeTenants.map((t) => (
                       <div key={t.tenantId} className="flex items-center justify-between rounded-lg border p-2.5 text-sm">
                         <span className="font-medium truncate flex-1">{t.nombre}</span>
-                        <span className="text-xs text-muted-foreground mx-2">{t.totalUsers ?? 0} users</span>
+                        <span className="text-xs text-muted-foreground mx-2">{t.totalUsers ?? 0} usuarios</span>
                         <span className={`text-xs font-medium px-2 py-0.5 rounded-full ${t.licenseActive ? "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400" : "bg-rose-100 text-rose-700 dark:bg-rose-900/30 dark:text-rose-400"}`}>
                           {t.plan || "Sin plan"}
                         </span>
                       </div>
                     ))}
+                  </div>
+                ) : (
+                  <div className="flex items-center justify-center py-8 text-sm text-muted-foreground">
+                    No hay empresas reales con plan activo para mostrar
                   </div>
                 )}
               </CardContent>
@@ -536,7 +544,7 @@ export default function AdminDashboardPage(): React.JSX.Element {
                   <Activity className="h-4 w-4 text-violet-600" />
                   Resumen Financiero
                 </CardTitle>
-                <CardDescription>Métricas consolidadas de la plataforma</CardDescription>
+                <CardDescription>Métricas financieras consolidadas de tenants reales</CardDescription>
               </CardHeader>
               <CardContent>
                 {isLoading ? (
@@ -572,7 +580,7 @@ export default function AdminDashboardPage(): React.JSX.Element {
                   </div>
                 ) : (
                   <div className="flex items-center justify-center py-8 text-sm text-muted-foreground">
-                    No hay datos financieros disponibles
+                    No hay datos financieros reales disponibles
                   </div>
                 )}
               </CardContent>
