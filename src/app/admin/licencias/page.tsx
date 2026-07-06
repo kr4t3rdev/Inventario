@@ -123,6 +123,25 @@ export default function AdminLicenciasPage() {
     return sortOrder === 'asc' ? <ArrowUp className="ml-1 h-3 w-3 inline" /> : <ArrowDown className="ml-1 h-3 w-3 inline" />
   }
 
+  async function refreshLicenciasData(nextPage = page) {
+    const [licenciasResult, statsResult] = await Promise.all([
+      getLicenciasPaginatedAction({
+        page: nextPage,
+        limit,
+        sortBy,
+        sortOrder,
+        search,
+        planFilter,
+        statusFilter,
+        typeFilter,
+      }),
+      getLicenciasStatsAction({ search, planFilter, statusFilter, typeFilter }),
+    ])
+
+    if (licenciasResult.success) setData(licenciasResult.data)
+    if (statsResult.success) setStatsData(statsResult.data)
+  }
+
   useEffect(() => { setIsLoading(true); Promise.all([
     getLicenciasPaginatedAction({ page, limit, sortBy, sortOrder, search, planFilter, statusFilter, typeFilter }),
     getLicenciasStatsAction({ search, planFilter, statusFilter, typeFilter }),
@@ -155,8 +174,7 @@ export default function AdminLicenciasPage() {
       const r = await updateLicenciaAction({ id: licencia.tenantLicenseId, activa: !licencia.activa })
       if (r.success) {
         toast.success(licencia.activa ? 'Licencia revocada' : 'Licencia activada')
-        const licenciasResult = await getLicenciasAction()
-        if (licenciasResult.success) setData(licenciasResult.data)
+        await refreshLicenciasData()
       } else {
         toast.error('Error actualizando licencia')
       }
@@ -171,8 +189,9 @@ export default function AdminLicenciasPage() {
       const r = await deleteLicenciaAction(id)
       if (r.success) {
         toast.success('Licencia eliminada')
-        const licenciasResult = await getLicenciasAction()
-        if (licenciasResult.success) setData(licenciasResult.data)
+        const nextPage = licencias.length === 1 && page > 1 ? page - 1 : page
+        if (nextPage !== page) setPage(nextPage)
+        else await refreshLicenciasData(nextPage)
       } else {
         toast.error('Error eliminando licencia')
       }
@@ -196,8 +215,7 @@ export default function AdminLicenciasPage() {
           : 'No había demos expiradas para limpiar',
       )
 
-      const licenciasResult = await getLicenciasAction()
-      if (licenciasResult.success) setData(licenciasResult.data)
+      await refreshLicenciasData()
     } catch (error) {
       toast.error('No se pudo limpiar demos expiradas')
     }
@@ -214,8 +232,7 @@ export default function AdminLicenciasPage() {
       toast.success('Demo convertida a plan pago')
       setConvertDialogOpen(false)
       setLicenseToConvert(null)
-      const licenciasResult = await getLicenciasAction()
-      if (licenciasResult.success) setData(licenciasResult.data)
+      await refreshLicenciasData()
     } catch (_error) {
       toast.error('No se pudo convertir la demo')
     }
@@ -278,8 +295,7 @@ export default function AdminLicenciasPage() {
       setIsSavingOverrides(false)
       toast.success('Overrides contables actualizados')
       closeAccountingOverridesDialog()
-      const licenciasResult = await getLicenciasAction()
-      if (licenciasResult.success) setData(licenciasResult.data)
+      await refreshLicenciasData()
     } catch (_error) {
       toast.error('No se pudieron guardar los overrides')
     } finally {
@@ -674,8 +690,7 @@ export default function AdminLicenciasPage() {
             if (r.success) {
               toast.success(`${data.cantidad} licencias generadas`)
               setGenerarDialogOpen(false)
-              const licenciasResult = await getLicenciasAction()
-              if (licenciasResult.success) setData(licenciasResult.data)
+              await refreshLicenciasData()
             } else {
               toast.error('Error generando licencias')
             }
@@ -688,6 +703,7 @@ export default function AdminLicenciasPage() {
       <CrearDemoDialog
         open={demoDialogOpen}
         onClose={() => setDemoDialogOpen(false)}
+        onCreated={refreshLicenciasData}
         planes={planes}
       />
 
@@ -914,10 +930,12 @@ function AccountingOverridesDialog({
 function CrearDemoDialog({
   open,
   onClose,
+  onCreated,
   planes,
 }: {
   open: boolean
   onClose: () => void
+  onCreated?: () => Promise<void> | void
   planes: any[]
 }) {
   const [planId, setPlanId] = useState('')
@@ -955,6 +973,7 @@ function CrearDemoDialog({
       }
 
       setCreatedDemo(result.data)
+      await onCreated?.()
       toast.success('Demo creada correctamente')
     } catch (_error) {
       toast.error('Error creando demo')
