@@ -23,9 +23,12 @@ import { VentasPendientesTable } from "../ventas-pendientes-table"
 import { ReconciliacionVentasForm } from "./reconciliacion-ventas-form"
 import { ResumenReconciliacion } from "./resumen-reconciliacion"
 import { getVentasPendientesAction, getHistorialReconciliacionVentasAction } from "@/features/contabilidad/actions-reconciliacion"
-import { getCuentasPorCobrarAction } from "@/features/contabilidad"
+import { createCuentaPorCobrarAction, getCuentasPorCobrarAction } from "@/features/contabilidad"
 import type { VentaPendiente, ReconciliacionVenta } from "@/app/models/model"
 import { cn } from "@/lib/utils"
+import { useAuth } from "@/contexts/auth-context"
+import { toast } from "sonner"
+import { buildCreateCuentaPorCobrarInputFromVenta } from "@/features/contabilidad/lib/cuentas-por-cobrar-flow"
 import {
   PageTransition,
   StaggerContainer,
@@ -49,6 +52,7 @@ interface RecoProps {
 }
 
 export function ReconciliacionVentasPage({cuentaId}: RecoProps) {
+  const { user } = useAuth()
   const shouldReduceMotion = useReducedMotion()
   const [showReconciliacionForm, setShowReconciliacionForm] = useState(false)
   const [ventasToReconcile, setVentasToReconcile] = useState<VentaPendiente[]>([])
@@ -155,6 +159,24 @@ export function ReconciliacionVentasPage({cuentaId}: RecoProps) {
   const handleReconciliarVentas = (ventasSeleccionadas: VentaPendiente[]) => {
     setVentasToReconcile(ventasSeleccionadas)
     setShowReconciliacionForm(true)
+  }
+
+  const handleCreateCuentaPorCobrar = async (venta: VentaPendiente) => {
+    try {
+      const result = await createCuentaPorCobrarAction(
+        buildCreateCuentaPorCobrarInputFromVenta(venta),
+      )
+
+      if (!result.success) {
+        toast.error(result.error?.message || 'No se pudo crear la cuenta por cobrar')
+        return
+      }
+
+      toast.success('Cuenta por cobrar creada')
+      refetch()
+    } catch (_error) {
+      toast.error('No se pudo crear la cuenta por cobrar')
+    }
   }
  
   const handleReconciliacionSuccess = () => {
@@ -388,6 +410,8 @@ export function ReconciliacionVentasPage({cuentaId}: RecoProps) {
         <AnimatedCard>
           <VentasPendientesTable
             onReconciliar={handleReconciliarVentas}
+            onCreateCuentaPorCobrar={handleCreateCuentaPorCobrar}
+            canManageCuentasPorCobrar={user?.planFeatures?.['cuentas-cobrar'] === true}
             saldosPorFactura={saldosPorFactura}
             fechaInicio={fechaInicio}
             fechaFin={fechaFin}

@@ -250,7 +250,7 @@ export const getVentasPendientesAction = withAction(
 		const ventasRaw = await prisma.venta.findMany({
 			where: { ventaId: { in: ventaIds } },
 			include: {
-				cliente: { select: { nombre: true } },
+				cliente: { select: { clienteId: true, nombre: true } },
 				puntoDeVenta: { select: { nombre: true } },
 			},
 		});
