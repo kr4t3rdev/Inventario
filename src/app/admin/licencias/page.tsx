@@ -74,6 +74,7 @@ import {
   cleanupExpiredDemoLicenciasAction,
   convertDemoToPaidPlanAction,
   getLicenciasPaginatedAction,
+  getLicenciasStatsAction,
   updateLicenseAccountingOverridesAction,
 } from '@/features/admin'
 import {
@@ -102,6 +103,7 @@ export default function AdminLicenciasPage() {
   const [selectedLicencias, setSelectedLicencias] = useState<Set<string>>(new Set())
 
   const [data, setData] = useState<any>(null)
+  const [statsData, setStatsData] = useState<any>(null)
   const [planesData, setPlanesData] = useState<any[]>([])
   const [usersData, setUsersData] = useState<any>(null)
   const [isLoading, setIsLoading] = useState(true)
@@ -123,9 +125,10 @@ export default function AdminLicenciasPage() {
 
   useEffect(() => { setIsLoading(true); Promise.all([
     getLicenciasPaginatedAction({ page, limit, sortBy, sortOrder, search, planFilter, statusFilter, typeFilter }),
+    getLicenciasStatsAction({ search, planFilter, statusFilter, typeFilter }),
     getAdminPlanesAction(),
     getGlobalUsersAction({limit:100})
-  ]).then(([r1,r2,r3]) => { if(r1.success) setData(r1.data); if(r2.success) setPlanesData(r2.data??[]); if(r3.success) setUsersData(r3.data); setIsLoading(false) }) }, [page, limit, sortBy, sortOrder, search, planFilter, statusFilter, typeFilter])
+  ]).then(([r1,r2,r3,r4]) => { if(r1.success) setData(r1.data); if(r2.success) setStatsData(r2.data); if(r3.success) setPlanesData(r3.data??[]); if(r4.success) setUsersData(r4.data); setIsLoading(false) }) }, [page, limit, sortBy, sortOrder, search, planFilter, statusFilter, typeFilter])
 
   const licencias = data?.licencias || []
   const total = data?.total || 0
@@ -135,13 +138,10 @@ export default function AdminLicenciasPage() {
   const users = (usersData as any)?.users || []
 
   // Métricas
-  const activas = licencias.filter((l: any) => l.activa && new Date(l.expiracion) > new Date()).length
-  const expiradas = licencias.filter((l: any) => new Date(l.expiracion) < new Date()).length
-  const demos = licencias.filter((l: any) => l.isDemo === true).length
-  const porVencer = licencias.filter((l: any) => {
-    const dias = differenceInDays(new Date(l.expiracion), new Date())
-    return dias <= 7 && dias >= 0
-  }).length
+  const activas = statsData?.activas || 0
+  const expiradas = statsData?.expiradas || 0
+  const demos = statsData?.demos || 0
+  const porVencer = statsData?.porVencer || 0
 
   function copyToClipboard(text: string) {
     navigator.clipboard.writeText(text)

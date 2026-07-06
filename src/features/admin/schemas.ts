@@ -180,3 +180,27 @@ export type ConvertDemoToPaidPlanInput = z.infer<
 >;
 export type CreatePlanInput = z.infer<typeof createPlanSchema>;
 export type UpdatePlanInput = z.infer<typeof updatePlanSchema>;
+
+// ─── Licencias Query ────────────────────────────────────
+
+export const getLicenciasQuerySchema = z.object({
+	page: z.coerce.number().min(1).default(1),
+	limit: z.coerce.number().min(1).max(100).default(25),
+	sortBy: z.enum(['createdAt', 'expiracion', 'activa', 'tenantId', 'planId']).default('createdAt'),
+	sortOrder: z.enum(['asc', 'desc']).default('desc'),
+	search: z.string().default(''),
+	planFilter: z.string().default('all'),
+	statusFilter: z.string().default('all'),
+	typeFilter: z.string().default('all'),
+});
+
+export type GetLicenciasQueryInput = z.infer<typeof getLicenciasQuerySchema>;
+
+export const licenciasStatsQuerySchema = z.object({
+	search: z.string().default(''),
+	planFilter: z.string().default('all'),
+	statusFilter: z.string().default('all'),
+	typeFilter: z.string().default('all'),
+});
+
+export type LicenciasStatsQueryInput = z.infer<typeof licenciasStatsQuerySchema>;
