@@ -80,6 +80,17 @@ export interface TenantOffersServicesHealth {
   planName: string | null;
 }
 
+export interface TenantExpenseHealth {
+  tenantId: string;
+  nombre: string;
+  slug: string | null;
+  metrics: {
+    gastosCount: number;
+    gastosTotal: number;
+  };
+  planName: string | null;
+}
+
 export const getGlobalMastersHealthAction = withAction(async (_, user: AuthenticatedUser) => {
   const tenants = await prisma.tenant.findMany({
     select: {
@@ -372,6 +383,52 @@ export const getGlobalOffersServicesHealthAction = withAction(async (_, user: Au
   }));
 
   return { healthData };
+});
+
+export const getGlobalExpenseHealthAction = withAction(async (_, user: AuthenticatedUser) => {
+  const tenants = await prisma.tenant.findMany({
+    select: {
+      tenantId: true,
+      nombre: true,
+      slug: true,
+      _count: {
+        select: {
+          gastosDE: true,
+        },
+      },
+      licencias: {
+        select: {
+          plan: {
+            select: {
+              nombre: true,
+            },
+          },
+        },
+        orderBy: {
+          createdAt: 'desc',
+        },
+        take: 1,
+      },
+    },
+  });
+
+  const expenseHealth: TenantExpenseHealth[] = await Promise.all(tenants.map(async (t) => {
+    // Nota: Basado en el schema, GastosDE no tiene un campo 'total' directo 
+    // pero tiene relación con CuentaPorPagar. Usaremos el conteo y sumaremos 
+    // la deuda asociada si es posible, o dejaremos el monto como 0 si el schema es limitado.
+    return {
+      tenantId: t.tenantId,
+      nombre: t.nombre,
+      slug: t.slug,
+      planName: t.licencias[0]?.plan?.nombre || 'Sin Plan',
+      metrics: {
+        gastosCount: t._count.gastosDE,
+        gastosTotal: 0, // Placeholder para implementación de suma de montos
+      },
+    };
+  }));
+
+  return { expenseHealth };
 });
 
 export type MasterFeature = 'productos' | 'categorias' | 'unidades' | 'proveedores' | 'puntosDeVenta' | 'listasPrecio';
