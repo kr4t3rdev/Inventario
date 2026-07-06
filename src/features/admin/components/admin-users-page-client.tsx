@@ -512,6 +512,7 @@ export function AdminUsersPageClient({
 									onApproveUser={handleApproveUser}
 									onAddTenantMembership={handleOpenAddTenant}
 									onRefresh={refresh}
+									onCreateUser={() => setCreateDialogOpen(true)}
 								/>
 							</CardContent>
 						</Card>

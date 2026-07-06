@@ -92,6 +92,7 @@ interface AdminUsersTableProps {
 	onSortChange?: (sortBy: string, sortOrder: "asc" | "desc") => void;
 	onApproveUser?: (user: Usuario) => void;
 	onAddTenantMembership?: (user: Usuario) => void;
+	onCreateUser?: () => void;
 }
 
 type RoleFilter =
@@ -124,6 +125,7 @@ export function AdminUsersTable({
 	onSortChange,
 	onApproveUser,
 	onAddTenantMembership,
+	onCreateUser,
 }: AdminUsersTableProps): React.JSX.Element {
 	const shouldReduceMotion = useReducedMotion();
 	const [searchTerm, setSearchTerm] = useState("");
@@ -715,10 +717,11 @@ export function AdminUsersTable({
 				initial={shouldReduceMotion ? { opacity: 1 } : { opacity: 0 }}
 				animate={{ opacity: 1 }}
 				transition={{ duration: shouldReduceMotion ? 0 : 0.3 }}
-				className="overflow-hidden rounded-xl border border-slate-200 bg-card shadow-sm"
-			>
-				<Table>
-					<TableHeader>
+			className="overflow-auto rounded-xl border border-slate-200 bg-card shadow-sm max-h-[70vh]"
+		>
+			<Table>
+				<TableHeader className="sticky top-0 bg-background z-10">
+					<TableRow className="bg-linear-to-r from-primary/10 via-purple-600/5 to-primary/10">
 						<TableRow className="bg-linear-to-r from-primary/10 via-purple-600/5 to-primary/10">
 							<TableHead className="w-12">
 								<button
@@ -1014,6 +1017,16 @@ export function AdminUsersTable({
 								Limpiar filtros
 							</Button>
 						)}
+						{!deferredSearch &&
+							roleFilter === "all" &&
+							statusFilter === "all" &&
+							tenantFilter === "all" &&
+							onCreateUser && (
+								<Button onClick={onCreateUser} className="mt-2">
+									<Plus className="mr-2 h-4 w-4" />
+									Crear usuario
+								</Button>
+							)}
 					</div>
 				</motion.div>
 			)}

@@ -11,6 +11,7 @@ import {
   ShieldCheck,
   Power,
   PowerOff,
+  UserPlus,
 } from 'lucide-react'
 import { formatDistanceToNow } from 'date-fns'
 import { es } from 'date-fns/locale'
@@ -39,6 +40,7 @@ interface TenantUsersTableProps {
   currentUserId?: string
   onRoleChange?: (user: TenantUser) => void
   onToggleActive?: (user: TenantUser) => void
+  onInviteUser?: () => void
 }
 
 /** Genera iniciales a partir del nombre */
@@ -83,6 +85,7 @@ export function TenantUsersTable({
   currentUserId,
   onRoleChange,
   onToggleActive,
+  onInviteUser,
 }: TenantUsersTableProps) {
   const [search, setSearch] = useState('')
   const [page, setPage] = useState(1)
@@ -151,22 +154,30 @@ export function TenantUsersTable({
             <div className="flex h-16 w-16 items-center justify-center rounded-full bg-slate-100 dark:bg-slate-800">
               <Users className="h-8 w-8 text-slate-400" />
             </div>
-            <div className="space-y-1">
-              <p className="text-sm font-medium">
-                {deferredSearch ? 'Sin resultados' : 'No hay usuarios en la empresa'}
-              </p>
-              <p className="text-xs text-muted-foreground">
-                {deferredSearch
-                  ? 'Ningún usuario coincide con tu búsqueda.'
-                  : 'Aún no se han agregado usuarios a esta empresa.'}
-              </p>
+            <div className="space-y-3">
+              <div className="space-y-1">
+                <p className="text-sm font-medium">
+                  {deferredSearch ? 'Sin resultados' : 'No hay usuarios en la empresa'}
+                </p>
+                <p className="text-xs text-muted-foreground">
+                  {deferredSearch
+                    ? 'Ningún usuario coincide con tu búsqueda.'
+                    : 'Aún no se han agregado usuarios a esta empresa.'}
+                </p>
+              </div>
+              {!deferredSearch && onInviteUser && (
+                <Button onClick={onInviteUser} size="sm">
+                  <UserPlus className="mr-1.5 h-4 w-4" />
+                  Invitar usuario
+                </Button>
+              )}
             </div>
           </div>
         ) : (
           <>
-            <div className="overflow-x-auto">
+            <div className="overflow-x-auto max-h-[70vh]">
               <Table>
-                <TableHeader>
+                <TableHeader className="sticky top-0 bg-background z-10">
                   <TableRow className="bg-muted/40 hover:bg-muted/40">
                     <TableHead className="py-3 pl-6">Usuario</TableHead>
                     <TableHead>Rol</TableHead>
