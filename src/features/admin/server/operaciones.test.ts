@@ -195,3 +195,72 @@ describe('operaciones metrics', () => {
     expect(result.data?.expenseHealth[0].metrics.gastosTotal).toBe(780);
   });
 });
+
+describe('operaciones shared behavior', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    vi.mocked(getCurrentUser).mockResolvedValue(adminUser);
+  });
+
+  it('maps tenant master counts and latest plan name correctly', async () => {
+    vi.mocked(prisma.tenant.findMany).mockResolvedValue([
+      {
+        tenantId: 't1',
+        nombre: 'Clinica Norte',
+        slug: 'clinica-norte',
+        _count: {
+          productos: 12,
+          categorias: 4,
+          unidades: 3,
+          vendors: 2,
+          puntosDeVenta: 1,
+          listasPrecio: 2,
+        },
+        licencias: [{ plan: { nombre: 'Enterprise' } }],
+      },
+    ] as never);
+
+    const result = await getGlobalMastersHealthAction(undefined as never);
+
+    expect(result.success).toBe(true);
+    if (!result.success) {
+      throw new Error('Expected masters health success');
+    }
+    expect(result.data?.healthData).toEqual([
+      expect.objectContaining({
+        tenantId: 't1',
+        planName: 'Enterprise',
+        counts: expect.objectContaining({
+          productos: 12,
+          categorias: 4,
+          unidades: 3,
+          proveedores: 2,
+          puntosDeVenta: 1,
+          listasPrecio: 2,
+        }),
+      }),
+    ]);
+  });
+
+  it('loads tenant feature detail for categorias scoped by tenantId', async () => {
+    vi.mocked(prisma.categoria.findMany).mockResolvedValue([
+      { nombre: 'Medicamentos' },
+    ] as never);
+
+    const result = await getTenantFeatureDataAction({
+      tenantId: 'tenant-1',
+      feature: 'categorias',
+    } as never);
+
+    expect(result.success).toBe(true);
+    if (!result.success) {
+      throw new Error('Expected tenant feature detail success');
+    }
+    expect(prisma.categoria.findMany).toHaveBeenCalledWith(
+      expect.objectContaining({
+        where: { tenantId: 'tenant-1' },
+      }),
+    );
+    expect(result.data?.data).toEqual([{ nombre: 'Medicamentos' }]);
+  });
+});
