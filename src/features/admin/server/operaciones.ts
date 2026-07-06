@@ -296,6 +296,13 @@ export const getGlobalWastageHealthAction = withAction(async (_, user: Authentic
   });
 
   const wastageHealth: TenantWastageHealth[] = await Promise.all(tenants.map(async (t) => {
+    const aggregate = await prisma.merma.aggregate({
+      where: { tenantId: t.tenantId },
+      _sum: {
+        costoTotal: true,
+      },
+    });
+
     return {
       tenantId: t.tenantId,
       nombre: t.nombre,
@@ -303,7 +310,7 @@ export const getGlobalWastageHealthAction = withAction(async (_, user: Authentic
       planName: t.licencias[0]?.plan?.nombre || 'Sin Plan',
       metrics: {
         mermasCount: t._count.mermas,
-        mermasTotalValue: 0,
+        mermasTotalValue: Number(aggregate._sum.costoTotal || 0),
       },
     };
   }));
@@ -436,9 +443,13 @@ export const getGlobalExpenseHealthAction = withAction(async (_, user: Authentic
   });
 
   const expenseHealth: TenantExpenseHealth[] = await Promise.all(tenants.map(async (t) => {
-    // Nota: Basado en el schema, GastosDE no tiene un campo 'total' directo 
-    // pero tiene relación con CuentaPorPagar. Usaremos el conteo y sumaremos 
-    // la deuda asociada si es posible, o dejaremos el monto como 0 si el schema es limitado.
+    const aggregate = await prisma.gastosDE.aggregate({
+      where: { tenantId: t.tenantId },
+      _sum: {
+        monto: true,
+      },
+    });
+
     return {
       tenantId: t.tenantId,
       nombre: t.nombre,
@@ -446,7 +457,7 @@ export const getGlobalExpenseHealthAction = withAction(async (_, user: Authentic
       planName: t.licencias[0]?.plan?.nombre || 'Sin Plan',
       metrics: {
         gastosCount: t._count.gastosDE,
-        gastosTotal: 0, // Placeholder para implementación de suma de montos
+        gastosTotal: Number(aggregate._sum.monto || 0),
       },
     };
   }));

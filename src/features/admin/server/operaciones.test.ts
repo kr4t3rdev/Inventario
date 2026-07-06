@@ -9,10 +9,16 @@ vi.mock('@/lib/prisma', () => ({
     tenant: {
       findMany: vi.fn(),
     },
+    merma: {
+      aggregate: vi.fn(),
+    },
     venta: {
       aggregate: vi.fn(),
     },
     compraProducto: {
+      aggregate: vi.fn(),
+    },
+    gastosDE: {
       aggregate: vi.fn(),
     },
     producto: {
@@ -124,5 +130,68 @@ describe('operaciones server actions authorization', () => {
     }
     expect(result.error.code).toBe('FORBIDDEN');
     expect(prisma.tenant.findMany).not.toHaveBeenCalled();
+  });
+});
+
+const adminUser: AuthenticatedUser = {
+  userId: 'user-admin',
+  name: 'Admin',
+  email: 'admin@test.com',
+  role: 'admin',
+  isActive: true,
+  tenantId: 'tenant-A',
+  tenantRole: 'admin',
+};
+
+describe('operaciones metrics', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    vi.mocked(getCurrentUser).mockResolvedValue(adminUser);
+  });
+
+  it('calculates wastage total value from tenant wastage rows', async () => {
+    vi.mocked(prisma.tenant.findMany).mockResolvedValue([
+      {
+        tenantId: 't1',
+        nombre: 'Tenant 1',
+        slug: 'tenant-1',
+        _count: { mermas: 2 },
+        licencias: [{ plan: { nombre: 'Pro' } }],
+      },
+    ] as never);
+    vi.mocked(prisma.merma.aggregate).mockResolvedValue({
+      _sum: { costoTotal: 1250 },
+    } as never);
+
+    const result = await getGlobalWastageHealthAction(undefined as never);
+
+    expect(result.success).toBe(true);
+    if (!result.success) {
+      throw new Error('Expected wastage metrics success');
+    }
+    expect(result.data?.wastageHealth[0].metrics.mermasTotalValue).toBe(1250);
+  });
+
+  it('calculates expense total amount instead of returning zero placeholder', async () => {
+    vi.mocked(prisma.tenant.findMany).mockResolvedValue([
+      {
+        tenantId: 't1',
+        nombre: 'Tenant 1',
+        slug: 'tenant-1',
+        _count: { gastosDE: 3 },
+        licencias: [{ plan: { nombre: 'Pro' } }],
+      },
+    ] as never);
+    vi.mocked(prisma.gastosDE.aggregate).mockResolvedValue({
+      _sum: { monto: 780 },
+    } as never);
+
+    const result = await getGlobalExpenseHealthAction(undefined as never);
+
+    expect(result.success).toBe(true);
+    if (!result.success) {
+      throw new Error('Expected expense metrics success');
+    }
+    expect(result.data?.expenseHealth[0].metrics.gastosTotal).toBe(780);
   });
 });
