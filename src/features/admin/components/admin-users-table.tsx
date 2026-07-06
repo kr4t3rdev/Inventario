@@ -717,11 +717,10 @@ export function AdminUsersTable({
 				initial={shouldReduceMotion ? { opacity: 1 } : { opacity: 0 }}
 				animate={{ opacity: 1 }}
 				transition={{ duration: shouldReduceMotion ? 0 : 0.3 }}
-			className="overflow-auto rounded-xl border border-slate-200 bg-card shadow-sm max-h-[70vh]"
-		>
-			<Table>
-				<TableHeader className="sticky top-0 bg-background z-10">
-					<TableRow className="bg-linear-to-r from-primary/10 via-purple-600/5 to-primary/10">
+				className="overflow-auto rounded-xl border border-slate-200 bg-card shadow-sm max-h-[70vh]"
+			>
+				<Table>
+					<TableHeader className="sticky top-0 bg-background z-10">
 						<TableRow className="bg-linear-to-r from-primary/10 via-purple-600/5 to-primary/10">
 							<TableHead className="w-12">
 								<button
