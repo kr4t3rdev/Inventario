@@ -123,8 +123,8 @@ export default function AdminLicenciasPage() {
     return sortOrder === 'asc' ? <ArrowUp className="ml-1 h-3 w-3 inline" /> : <ArrowDown className="ml-1 h-3 w-3 inline" />
   }
 
-  async function refreshLicenciasData(nextPage = page) {
-    const [licenciasResult, statsResult] = await Promise.all([
+  async function loadLicenciasData(nextPage = page) {
+    return Promise.all([
       getLicenciasPaginatedAction({
         page: nextPage,
         limit,
@@ -137,17 +137,54 @@ export default function AdminLicenciasPage() {
       }),
       getLicenciasStatsAction({ search, planFilter, statusFilter, typeFilter }),
     ])
+  }
+
+  async function refreshLicenciasData(nextPage = page) {
+    const [licenciasResult, statsResult] = await loadLicenciasData(nextPage)
 
     if (licenciasResult.success) setData(licenciasResult.data)
     if (statsResult.success) setStatsData(statsResult.data)
   }
 
-  useEffect(() => { setIsLoading(true); Promise.all([
-    getLicenciasPaginatedAction({ page, limit, sortBy, sortOrder, search, planFilter, statusFilter, typeFilter }),
-    getLicenciasStatsAction({ search, planFilter, statusFilter, typeFilter }),
-    getAdminPlanesAction(),
-    getGlobalUsersAction({limit:100})
-  ]).then(([r1,r2,r3,r4]) => { if(r1.success) setData(r1.data); if(r2.success) setStatsData(r2.data); if(r3.success) setPlanesData(r3.data??[]); if(r4.success) setUsersData(r4.data); setIsLoading(false) }) }, [page, limit, sortBy, sortOrder, search, planFilter, statusFilter, typeFilter])
+  useEffect(() => {
+    let isCancelled = false
+
+    async function fetchPageData() {
+      try {
+        setIsLoading(true)
+        const [[licenciasResult, statsResult], planesResult, usersResult] = await Promise.all([
+          loadLicenciasData(page),
+          getAdminPlanesAction(),
+          getGlobalUsersAction({ limit: 100 }),
+        ])
+
+        if (isCancelled) return
+
+        if (licenciasResult.success) setData(licenciasResult.data)
+        else toast.error(licenciasResult.error?.message || 'No se pudieron cargar las licencias')
+
+        if (statsResult.success) setStatsData(statsResult.data)
+        else toast.error(statsResult.error?.message || 'No se pudieron cargar las métricas')
+
+        if (planesResult.success) setPlanesData(planesResult.data ?? [])
+        if (usersResult.success) setUsersData(usersResult.data)
+      } catch (_error) {
+        if (!isCancelled) toast.error('No se pudieron cargar los datos de licencias')
+      } finally {
+        if (!isCancelled) setIsLoading(false)
+      }
+    }
+
+    void fetchPageData()
+
+    return () => {
+      isCancelled = true
+    }
+  }, [page, limit, sortBy, sortOrder, search, planFilter, statusFilter, typeFilter])
+
+  useEffect(() => {
+    setSelectedLicencias(new Set())
+  }, [page, sortBy, sortOrder, search, planFilter, statusFilter, typeFilter])
 
   const licencias = data?.licencias || []
   const total = data?.total || 0
