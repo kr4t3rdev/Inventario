@@ -20,10 +20,10 @@ function createMockSchema() {
   return {
     tables: [
       {
-        name: 'Tenant',
+        name: 'tenants',
         columns,
         primaryKey: ['id'],
-        indexes: ['CREATE INDEX idx_tenant_slug ON "Tenant"(slug)'],
+        indexes: ['CREATE INDEX idx_tenant_slug ON "tenants"(slug)'],
         foreignKeys: [] as FKDef[],
       },
       {
@@ -37,7 +37,7 @@ function createMockSchema() {
         foreignKeys: [] as FKDef[],
       },
     ],
-    topologicalOrder: ['Tenant', 'User'],
+    topologicalOrder: ['tenants', 'User'],
     tenantScopedTables: [] as string[],
   }
 }
@@ -108,7 +108,7 @@ describe('BackupEngine', () => {
     expect(mockDataExporter.exportTable).toHaveBeenCalledTimes(2)
     expect(mockDataExporter.exportTable).toHaveBeenNthCalledWith(
       1,
-      'Tenant',
+      'tenants',
       expect.any(Array),
       ['id'],
       undefined,
@@ -184,14 +184,28 @@ describe('BackupEngine', () => {
   })
 
   it('should pass tenant filter for tenant backups', async () => {
-    // For tenant backups, we check that tenantId is passed to DataExporter
     mockDataExporter.exportTable.mockImplementation(async function* () {
       yield []
     })
+
     await engine.run({ type: 'tenant', tenantId: 'tnt_001' }, TEST_LOG_ID, undefined, 'user_1')
 
-    // DataExporter should receive tenant filter
-    expect(mockDataExporter.exportTable).toHaveBeenCalled()
+    expect(mockDataExporter.exportTable).toHaveBeenNthCalledWith(
+      1,
+      'tenants',
+      expect.any(Array),
+      ['id'],
+      undefined,
+      { tenantId: 'tnt_001', mode: 'tenant-row' },
+    )
+    expect(mockDataExporter.exportTable).toHaveBeenNthCalledWith(
+      2,
+      'User',
+      expect.any(Array),
+      ['id'],
+      undefined,
+      { tenantId: 'tnt_001', mode: 'user-membership' },
+    )
   })
 
   it('should include CREATE TABLE and INSERT in output SQL', async () => {

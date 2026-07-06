@@ -72,6 +72,7 @@ export const createBackupAction = withAction(
 
     // Instantiate engine and start backup in background
     const engine = new BackupEngine({
+      prisma,
       storage: createStorage(),
     })
 
@@ -84,7 +85,6 @@ export const createBackupAction = withAction(
         undefined,
         user.userId,
       )
-      .then(() => revalidatePath('/admin/backups'))
       .catch((err) => {
         console.error('[createBackupAction] Backup failed:', err)
       })

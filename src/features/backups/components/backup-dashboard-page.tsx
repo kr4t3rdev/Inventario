@@ -37,7 +37,7 @@ import {
 import { createPlanAction, updatePlanAction, deletePlanAction } from '../actions-plans'
 import type { BackupLogRow } from '../hooks/use-backups'
 import type { CreatePlanInput, UpdatePlanInput } from '../schemas'
-import { getAdminTenantsAction } from '@/features/admin'
+import { getAdminTenantsAction } from '@/features/admin/actions'
 import type { AdminTenant } from '@/features/admin'
 import type { BackupTenantOption } from './backup-trigger-dialog'
 
