@@ -57,6 +57,18 @@ export interface TenantWastageHealth {
   planName: string | null;
 }
 
+export interface TenantBillingHealth {
+  tenantId: string;
+  nombre: string;
+  slug: string | null;
+  metrics: {
+    facturasCount: number;
+    ventasCount: number;
+    formalizationRate: number;
+  };
+  planName: string | null;
+}
+
 export const getGlobalMastersHealthAction = withAction(async (_, user: AuthenticatedUser) => {
   const tenants = await prisma.tenant.findMany({
     select: {
@@ -245,9 +257,6 @@ export const getGlobalWastageHealthAction = withAction(async (_, user: Authentic
   });
 
   const wastageHealth: TenantWastageHealth[] = await Promise.all(tenants.map(async (t) => {
-    // El modelo Merma no tiene campo 'total' explícito en el schema resumido, 
-    // pero usualmente se calcula. Como no hay campo de monto en el modelo Merma
-    // (solo relación con Producto), usaremos el conteo como métrica principal.
     return {
       tenantId: t.tenantId,
       nombre: t.nombre,
@@ -255,12 +264,61 @@ export const getGlobalWastageHealthAction = withAction(async (_, user: Authentic
       planName: t.licencias[0]?.plan?.nombre || 'Sin Plan',
       metrics: {
         mermasCount: t._count.mermas,
-        mermasTotalValue: 0, // Placeholder si se implementa cálculo de valor
+        mermasTotalValue: 0,
       },
     };
   }));
 
   return { wastageHealth };
+});
+
+export const getGlobalBillingHealthAction = withAction(async (_, user: AuthenticatedUser) => {
+  const tenants = await prisma.tenant.findMany({
+    select: {
+      tenantId: true,
+      nombre: true,
+      slug: true,
+      _count: {
+        select: {
+          facturas: true,
+          ventas: true,
+        },
+      },
+      licencias: {
+        select: {
+          plan: {
+            select: {
+              nombre: true,
+            },
+          },
+        },
+        orderBy: {
+          createdAt: 'desc',
+        },
+        take: 1,
+      },
+    },
+  });
+
+  const billingHealth: TenantBillingHealth[] = tenants.map((t) => {
+    const rate = t._count.ventas > 0 
+      ? (t._count.facturas / t._count.ventas) * 100 
+      : 0;
+
+    return {
+      tenantId: t.tenantId,
+      nombre: t.nombre,
+      slug: t.slug,
+      planName: t.licencias[0]?.plan?.nombre || 'Sin Plan',
+      metrics: {
+        facturasCount: t._count.facturas,
+        ventasCount: t._count.ventas,
+        formalizationRate: Math.round(rate),
+      },
+    };
+  });
+
+  return { billingHealth };
 });
 
 export type MasterFeature = 'productos' | 'categorias' | 'unidades' | 'proveedores' | 'puntosDeVenta' | 'listasPrecio';
