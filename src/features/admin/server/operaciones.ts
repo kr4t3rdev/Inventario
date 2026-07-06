@@ -69,6 +69,17 @@ export interface TenantBillingHealth {
   planName: string | null;
 }
 
+export interface TenantOffersServicesHealth {
+  tenantId: string;
+  nombre: string;
+  slug: string | null;
+  metrics: {
+    ofertasCount: number;
+    serviciosCount: number;
+  };
+  planName: string | null;
+}
+
 export const getGlobalMastersHealthAction = withAction(async (_, user: AuthenticatedUser) => {
   const tenants = await prisma.tenant.findMany({
     select: {
@@ -319,6 +330,48 @@ export const getGlobalBillingHealthAction = withAction(async (_, user: Authentic
   });
 
   return { billingHealth };
+});
+
+export const getGlobalOffersServicesHealthAction = withAction(async (_, user: AuthenticatedUser) => {
+  const tenants = await prisma.tenant.findMany({
+    select: {
+      tenantId: true,
+      nombre: true,
+      slug: true,
+      _count: {
+        select: {
+          ofertas: true,
+          servicios: true,
+        },
+      },
+      licencias: {
+        select: {
+          plan: {
+            select: {
+              nombre: true,
+            },
+          },
+        },
+        orderBy: {
+          createdAt: 'desc',
+        },
+        take: 1,
+      },
+    },
+  });
+
+  const healthData: TenantOffersServicesHealth[] = tenants.map((t) => ({
+    tenantId: t.tenantId,
+    nombre: t.nombre,
+    slug: t.slug,
+    planName: t.licencias[0]?.plan?.nombre || 'Sin Plan',
+    metrics: {
+      ofertasCount: t._count.ofertas,
+      serviciosCount: t._count.servicios,
+    },
+  }));
+
+  return { healthData };
 });
 
 export type MasterFeature = 'productos' | 'categorias' | 'unidades' | 'proveedores' | 'puntosDeVenta' | 'listasPrecio';
