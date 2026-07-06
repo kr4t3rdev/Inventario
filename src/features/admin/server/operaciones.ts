@@ -46,6 +46,17 @@ export interface TenantPurchaseHealth {
   planName: string | null;
 }
 
+export interface TenantWastageHealth {
+  tenantId: string;
+  nombre: string;
+  slug: string | null;
+  metrics: {
+    mermasCount: number;
+    mermasTotalValue: number;
+  };
+  planName: string | null;
+}
+
 export const getGlobalMastersHealthAction = withAction(async (_, user: AuthenticatedUser) => {
   const tenants = await prisma.tenant.findMany({
     select: {
@@ -182,7 +193,6 @@ export const getGlobalPurchaseHealthAction = withAction(async (_, user: Authenti
   });
 
   const purchaseHealth: TenantPurchaseHealth[] = await Promise.all(tenants.map(async (t) => {
-    // Sumamos el total de las compras de productos (como indicador de gasto)
     const aggregate = await prisma.compraProducto.aggregate({
       where: { tenantId: t.tenantId },
       _sum: {
@@ -205,6 +215,52 @@ export const getGlobalPurchaseHealthAction = withAction(async (_, user: Authenti
   }));
 
   return { purchaseHealth };
+});
+
+export const getGlobalWastageHealthAction = withAction(async (_, user: AuthenticatedUser) => {
+  const tenants = await prisma.tenant.findMany({
+    select: {
+      tenantId: true,
+      nombre: true,
+      slug: true,
+      _count: {
+        select: {
+          mermas: true,
+        },
+      },
+      licencias: {
+        select: {
+          plan: {
+            select: {
+              nombre: true,
+            },
+          },
+        },
+        orderBy: {
+          createdAt: 'desc',
+        },
+        take: 1,
+      },
+    },
+  });
+
+  const wastageHealth: TenantWastageHealth[] = await Promise.all(tenants.map(async (t) => {
+    // El modelo Merma no tiene campo 'total' explícito en el schema resumido, 
+    // pero usualmente se calcula. Como no hay campo de monto en el modelo Merma
+    // (solo relación con Producto), usaremos el conteo como métrica principal.
+    return {
+      tenantId: t.tenantId,
+      nombre: t.nombre,
+      slug: t.slug,
+      planName: t.licencias[0]?.plan?.nombre || 'Sin Plan',
+      metrics: {
+        mermasCount: t._count.mermas,
+        mermasTotalValue: 0, // Placeholder si se implementa cálculo de valor
+      },
+    };
+  }));
+
+  return { wastageHealth };
 });
 
 export type MasterFeature = 'productos' | 'categorias' | 'unidades' | 'proveedores' | 'puntosDeVenta' | 'listasPrecio';
