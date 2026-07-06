@@ -33,6 +33,19 @@ export interface TenantSalesHealth {
   planName: string | null;
 }
 
+export interface TenantPurchaseHealth {
+  tenantId: string;
+  nombre: string;
+  slug: string | null;
+  metrics: {
+    comprasCount: number;
+    comprasTotal: number;
+    itemsCount: number;
+    vendorActiveCount: number;
+  };
+  planName: string | null;
+}
+
 export const getGlobalMastersHealthAction = withAction(async (_, user: AuthenticatedUser) => {
   const tenants = await prisma.tenant.findMany({
     select: {
@@ -137,6 +150,61 @@ export const getGlobalSalesHealthAction = withAction(async (_, user: Authenticat
   }));
 
   return { salesHealth };
+});
+
+export const getGlobalPurchaseHealthAction = withAction(async (_, user: AuthenticatedUser) => {
+  const tenants = await prisma.tenant.findMany({
+    select: {
+      tenantId: true,
+      nombre: true,
+      slug: true,
+      _count: {
+        select: {
+          comprasDocumento: true,
+          comprasProducto: true,
+          vendors: true,
+        },
+      },
+      licencias: {
+        select: {
+          plan: {
+            select: {
+              nombre: true,
+            },
+          },
+        },
+        orderBy: {
+          createdAt: 'desc',
+        },
+        take: 1,
+      },
+    },
+  });
+
+  const purchaseHealth: TenantPurchaseHealth[] = await Promise.all(tenants.map(async (t) => {
+    // Sumamos el total de las compras de productos (como indicador de gasto)
+    const aggregate = await prisma.compraProducto.aggregate({
+      where: { tenantId: t.tenantId },
+      _sum: {
+        total: true,
+      },
+    });
+
+    return {
+      tenantId: t.tenantId,
+      nombre: t.nombre,
+      slug: t.slug,
+      planName: t.licencias[0]?.plan?.nombre || 'Sin Plan',
+      metrics: {
+        comprasCount: t._count.comprasDocumento,
+        comprasTotal: Number(aggregate._sum.total || 0),
+        itemsCount: t._count.comprasProducto,
+        vendorActiveCount: t._count.vendors,
+      },
+    };
+  }));
+
+  return { purchaseHealth };
 });
 
 export type MasterFeature = 'productos' | 'categorias' | 'unidades' | 'proveedores' | 'puntosDeVenta' | 'listasPrecio';
