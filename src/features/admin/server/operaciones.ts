@@ -1,7 +1,7 @@
 'use server';
 
 import { prisma } from '@/lib/prisma';
-import { withAction } from '@/lib/server-actions';
+import { ActionError, withAction } from '@/lib/server-actions';
 import type { AuthenticatedUser } from '@/lib/auth-middleware';
 
 export interface TenantMastersHealth {
@@ -91,7 +91,18 @@ export interface TenantExpenseHealth {
   planName: string | null;
 }
 
+function requireGlobalAdmin(user: AuthenticatedUser): void {
+  if (user.role !== 'admin') {
+    throw new ActionError(
+      'Solo el administrador global puede acceder a la Administración Operativa.',
+      'FORBIDDEN',
+    );
+  }
+}
+
 export const getGlobalMastersHealthAction = withAction(async (_, user: AuthenticatedUser) => {
+  requireGlobalAdmin(user);
+
   const tenants = await prisma.tenant.findMany({
     select: {
       tenantId: true,
@@ -142,6 +153,8 @@ export const getGlobalMastersHealthAction = withAction(async (_, user: Authentic
 });
 
 export const getGlobalSalesHealthAction = withAction(async (_, user: AuthenticatedUser) => {
+  requireGlobalAdmin(user);
+
   const tenants = await prisma.tenant.findMany({
     select: {
       tenantId: true,
@@ -198,6 +211,8 @@ export const getGlobalSalesHealthAction = withAction(async (_, user: Authenticat
 });
 
 export const getGlobalPurchaseHealthAction = withAction(async (_, user: AuthenticatedUser) => {
+  requireGlobalAdmin(user);
+
   const tenants = await prisma.tenant.findMany({
     select: {
       tenantId: true,
@@ -252,6 +267,8 @@ export const getGlobalPurchaseHealthAction = withAction(async (_, user: Authenti
 });
 
 export const getGlobalWastageHealthAction = withAction(async (_, user: AuthenticatedUser) => {
+  requireGlobalAdmin(user);
+
   const tenants = await prisma.tenant.findMany({
     select: {
       tenantId: true,
@@ -295,6 +312,8 @@ export const getGlobalWastageHealthAction = withAction(async (_, user: Authentic
 });
 
 export const getGlobalBillingHealthAction = withAction(async (_, user: AuthenticatedUser) => {
+  requireGlobalAdmin(user);
+
   const tenants = await prisma.tenant.findMany({
     select: {
       tenantId: true,
@@ -344,6 +363,8 @@ export const getGlobalBillingHealthAction = withAction(async (_, user: Authentic
 });
 
 export const getGlobalOffersServicesHealthAction = withAction(async (_, user: AuthenticatedUser) => {
+  requireGlobalAdmin(user);
+
   const tenants = await prisma.tenant.findMany({
     select: {
       tenantId: true,
@@ -386,6 +407,8 @@ export const getGlobalOffersServicesHealthAction = withAction(async (_, user: Au
 });
 
 export const getGlobalExpenseHealthAction = withAction(async (_, user: AuthenticatedUser) => {
+  requireGlobalAdmin(user);
+
   const tenants = await prisma.tenant.findMany({
     select: {
       tenantId: true,
@@ -434,6 +457,8 @@ export const getGlobalExpenseHealthAction = withAction(async (_, user: Authentic
 export type MasterFeature = 'productos' | 'categorias' | 'unidades' | 'proveedores' | 'puntosDeVenta' | 'listasPrecio';
 
 export const getTenantFeatureDataAction = withAction(async (params: { tenantId: string; feature: MasterFeature }, user: AuthenticatedUser) => {
+  requireGlobalAdmin(user);
+
   const { tenantId, feature } = params;
 
   switch (feature) {
