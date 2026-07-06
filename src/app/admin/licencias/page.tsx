@@ -2,7 +2,7 @@
 
 export const dynamic = 'force-dynamic'
 
-import { useState, useEffect } from 'react'
+import { useDeferredValue, useState, useEffect } from 'react'
 import { LazyMotion, m as motion } from 'framer-motion'
 import {
   Key,
@@ -85,7 +85,7 @@ import {
 export default function AdminLicenciasPage() {
   const [page, setPage] = useState(1)
   const [limit] = useState(25)
-  const [search, setSearch] = useState('')
+  const [searchInput, setSearchInput] = useState('')
   const [planFilter, setPlanFilter] = useState('all')
   const [statusFilter, setStatusFilter] = useState('all')
   const [typeFilter, setTypeFilter] = useState('all')
@@ -107,6 +107,7 @@ export default function AdminLicenciasPage() {
   const [planesData, setPlanesData] = useState<any[]>([])
   const [usersData, setUsersData] = useState<any>(null)
   const [isLoading, setIsLoading] = useState(true)
+  const search = useDeferredValue(searchInput)
 
   const handleSort = (column: string) => {
     if (sortBy === column) {
@@ -183,12 +184,17 @@ export default function AdminLicenciasPage() {
   }, [page, limit, sortBy, sortOrder, search, planFilter, statusFilter, typeFilter])
 
   useEffect(() => {
+    setPage(1)
+  }, [search, planFilter, statusFilter, typeFilter, sortBy, sortOrder])
+
+  useEffect(() => {
     setSelectedLicencias(new Set())
   }, [page, sortBy, sortOrder, search, planFilter, statusFilter, typeFilter])
 
   const licencias = data?.licencias || []
   const total = data?.total || 0
   const pages = Math.max(1, Math.ceil(total / limit))
+  const isRefreshing = isLoading && licencias.length > 0
 
   const planes = planesData || []
   const users = (usersData as any)?.users || []
@@ -350,7 +356,10 @@ export default function AdminLicenciasPage() {
       >
         <div>
           <h1 className="text-3xl font-bold tracking-tight">Licencias</h1>
-          <p className="text-muted-foreground">Gestión de licencias y activaciones</p>
+          <div className="flex items-center gap-2 text-muted-foreground">
+            <p>Gestión de licencias y activaciones</p>
+            {isRefreshing ? <span className="text-xs">Actualizando...</span> : null}
+          </div>
         </div>
         <div className="flex items-center gap-2">
           <Button variant="outline" onClick={handleCleanupExpiredDemos}>
@@ -430,8 +439,8 @@ export default function AdminLicenciasPage() {
           <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
           <Input
             placeholder="Buscar por clave o usuario..."
-            value={search}
-            onChange={(e) => { setSearch(e.target.value); setPage(1) }}
+            value={searchInput}
+            onChange={(e) => setSearchInput(e.target.value)}
             className="pl-10"
           />
         </div>
@@ -503,7 +512,7 @@ export default function AdminLicenciasPage() {
       )}
 
       {/* Tabla */}
-      <div className="rounded-xl border overflow-hidden">
+      <div className={`rounded-xl border overflow-hidden transition-opacity ${isRefreshing ? 'opacity-75' : 'opacity-100'}`}>
         <Table>
           <TableHeader>
             <TableRow>
