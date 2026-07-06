@@ -22,6 +22,9 @@ import {
   UserCircle2,
   RefreshCcw,
   Settings2,
+  ArrowUpDown,
+  ArrowUp,
+  ArrowDown,
 } from 'lucide-react'
 import { format, differenceInDays } from 'date-fns'
 import { toast } from 'sonner'
@@ -70,7 +73,7 @@ import {
   createDemoTenantAction,
   cleanupExpiredDemoLicenciasAction,
   convertDemoToPaidPlanAction,
-  getLicenciasAction,
+  getLicenciasPaginatedAction,
   updateLicenseAccountingOverridesAction,
 } from '@/features/admin'
 import {
@@ -85,6 +88,8 @@ export default function AdminLicenciasPage() {
   const [planFilter, setPlanFilter] = useState('all')
   const [statusFilter, setStatusFilter] = useState('all')
   const [typeFilter, setTypeFilter] = useState('all')
+  const [sortBy, setSortBy] = useState('createdAt')
+  const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc')
   const [copiedKey, setCopiedKey] = useState<string | null>(null)
   const [generarDialogOpen, setGenerarDialogOpen] = useState(false)
   const [demoDialogOpen, setDemoDialogOpen] = useState(false)
@@ -100,34 +105,31 @@ export default function AdminLicenciasPage() {
   const [planesData, setPlanesData] = useState<any[]>([])
   const [usersData, setUsersData] = useState<any>(null)
   const [isLoading, setIsLoading] = useState(true)
-  useEffect(() => { setIsLoading(true); Promise.all([getLicenciasAction(), getAdminPlanesAction(), getGlobalUsersAction({limit:100})]).then(([r1,r2,r3]) => { if(r1.success) setData(r1.data); if(r2.success) setPlanesData(r2.data??[]); if(r3.success) setUsersData(r3.data); setIsLoading(false) }) }, [page, search, planFilter, statusFilter, typeFilter])
 
-  const licenciasRaw = data?.licencias || data || []
-  const licencias = licenciasRaw.filter((licencia: any) => {
-    const manager = licencia.tenant?.memberships?.[0]?.user
-    const searchValue = search.trim().toLowerCase()
-    const matchesSearch =
-      !searchValue ||
-      licencia.tenantLicenseId?.toLowerCase().includes(searchValue) ||
-      licencia.tenant?.tenantId?.toLowerCase().includes(searchValue) ||
-      licencia.tenant?.nombre?.toLowerCase().includes(searchValue) ||
-      manager?.email?.toLowerCase().includes(searchValue) ||
-      manager?.name?.toLowerCase().includes(searchValue)
+  const handleSort = (column: string) => {
+    if (sortBy === column) {
+      setSortOrder(prev => prev === 'asc' ? 'desc' : 'asc')
+    } else {
+      setSortBy(column)
+      setSortOrder('asc')
+    }
+    setPage(1)
+  }
 
-    const matchesPlan = planFilter === 'all' || licencia.planId === planFilter
-    const matchesStatus =
-      statusFilter === 'all' ||
-      (statusFilter === 'true' && licencia.activa) ||
-      (statusFilter === 'false' && !licencia.activa)
-    const matchesType =
-      typeFilter === 'all' ||
-      (typeFilter === 'demo' && licencia.isDemo === true) ||
-      (typeFilter === 'standard' && licencia.isDemo !== true)
+  const SortIndicator = ({ column }: { column: string }) => {
+    if (sortBy !== column) return <ArrowUpDown className="ml-1 h-3 w-3 text-muted-foreground opacity-50 inline" />
+    return sortOrder === 'asc' ? <ArrowUp className="ml-1 h-3 w-3 inline" /> : <ArrowDown className="ml-1 h-3 w-3 inline" />
+  }
 
-    return matchesSearch && matchesPlan && matchesStatus && matchesType
-  })
-  const total = licencias.length
-  const pages = 1
+  useEffect(() => { setIsLoading(true); Promise.all([
+    getLicenciasPaginatedAction({ page, limit, sortBy, sortOrder, search, planFilter, statusFilter, typeFilter }),
+    getAdminPlanesAction(),
+    getGlobalUsersAction({limit:100})
+  ]).then(([r1,r2,r3]) => { if(r1.success) setData(r1.data); if(r2.success) setPlanesData(r2.data??[]); if(r3.success) setUsersData(r3.data); setIsLoading(false) }) }, [page, limit, sortBy, sortOrder, search, planFilter, statusFilter, typeFilter])
+
+  const licencias = data?.licencias || []
+  const total = data?.total || 0
+  const pages = Math.max(1, Math.ceil(total / limit))
 
   const planes = planesData || []
   const users = (usersData as any)?.users || []
@@ -461,11 +463,31 @@ export default function AdminLicenciasPage() {
                   )}
                 </button>
               </TableHead>
-              <TableHead>Licencia</TableHead>
-              <TableHead>Tenant / Admin</TableHead>
-              <TableHead>Plan</TableHead>
-              <TableHead>Expiración</TableHead>
-              <TableHead>Estado</TableHead>
+              <TableHead onClick={() => handleSort('createdAt')} className="cursor-pointer select-none">
+                <div className="flex items-center">
+                  Licencia <SortIndicator column="createdAt" />
+                </div>
+              </TableHead>
+              <TableHead onClick={() => handleSort('tenantId')} className="cursor-pointer select-none">
+                <div className="flex items-center">
+                  Tenant / Admin <SortIndicator column="tenantId" />
+                </div>
+              </TableHead>
+              <TableHead onClick={() => handleSort('planId')} className="cursor-pointer select-none">
+                <div className="flex items-center">
+                  Plan <SortIndicator column="planId" />
+                </div>
+              </TableHead>
+              <TableHead onClick={() => handleSort('expiracion')} className="cursor-pointer select-none">
+                <div className="flex items-center">
+                  Expiración <SortIndicator column="expiracion" />
+                </div>
+              </TableHead>
+              <TableHead onClick={() => handleSort('activa')} className="cursor-pointer select-none">
+                <div className="flex items-center">
+                  Estado <SortIndicator column="activa" />
+                </div>
+              </TableHead>
               <TableHead className="text-right">Acciones</TableHead>
             </TableRow>
           </TableHeader>
