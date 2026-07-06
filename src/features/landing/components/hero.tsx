@@ -68,6 +68,10 @@ export function LandingHero({ reduceMotion }: { reduceMotion?: boolean }): React
             Equipos de comercio, servicios y operación lo usan para reducir trabajo duplicado,
             mantener el stock y la contabilidad alineados, y tomar decisiones con mejor visibilidad.
           </p>
+          <p className="max-w-xl text-sm text-cyan-accent/90 sm:text-base">
+            Además, los tenants elegibles pueden activar un programa de referidos con crédito en
+            licencia y perks exclusivos por crecimiento.
+          </p>
 
           {/* Rotating value prop */}
           <div className="h-7 overflow-hidden">
@@ -133,6 +137,8 @@ export function LandingHero({ reduceMotion }: { reduceMotion?: boolean }): React
             <span>Implementación desde 48h</span>
             <span className="hidden sm:inline">·</span>
             <span>Soporte incluido</span>
+            <span className="hidden sm:inline">·</span>
+            <span>Programa de referidos para tenants activos</span>
           </p>
         </div>
 

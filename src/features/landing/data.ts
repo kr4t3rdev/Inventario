@@ -45,6 +45,22 @@ export interface FaqItem {
 	answer: string;
 }
 
+export interface AffiliateHighlightItem {
+	title: string;
+	description: string;
+}
+
+export interface AffiliateTierItem {
+	range: string;
+	commission: string;
+	perks: string;
+}
+
+export interface AffiliateStepItem {
+	title: string;
+	description: string;
+}
+
 /* ─── Navigation ─── */
 
 export const NAV_ITEMS = [
@@ -52,6 +68,7 @@ export const NAV_ITEMS = [
 	{ href: "#beneficios", label: "Beneficios" },
 	{ href: "#testimonios", label: "Testimonios" },
 	{ href: "#precios", label: "Planes" },
+	{ href: "#referidos", label: "Referidos" },
 	{ href: "#faq", label: "FAQ" },
 	{ href: "/docs", label: "Documentación" },
 	{ href: "#contacto", label: "Contacto" },
@@ -234,6 +251,64 @@ export const CONTACT_ITEMS: ContactItem[] = [
 	},
 ];
 
+/* ─── Affiliate Program ─── */
+
+export const AFFILIATE_PROGRAM_HIGHLIGHTS: AffiliateHighlightItem[] = [
+	{
+		title: "Hasta 10% de comisión",
+		description:
+			"Escalá tu beneficio según la cantidad de ventas válidas confirmadas.",
+	},
+	{
+		title: "Crédito en licencia",
+		description:
+			"La comisión se aplica como saldo a tu próxima renovación o licencia.",
+	},
+	{
+		title: "Perks exclusivos",
+		description:
+			"Ganás ventajas nuevas del programa, separadas de los planes comerciales.",
+	},
+	{
+		title: "Ventas reales confirmadas",
+		description:
+			"Solo cuentan compras pagadas y confirmadas manualmente por administración.",
+	},
+];
+
+export const AFFILIATE_PROGRAM_TIERS: AffiliateTierItem[] = [
+	{ range: "1–10 ventas válidas", commission: "5%", perks: "1 perk" },
+	{ range: "11–50 ventas válidas", commission: "7%", perks: "2 perks" },
+	{ range: "51+ ventas válidas", commission: "10%", perks: "3 perks" },
+];
+
+export const AFFILIATE_PROGRAM_STEPS: AffiliateStepItem[] = [
+	{
+		title: "Compartís tu link",
+		description:
+			"Cada tenant activo recibe un código o link de referido para recomendar la plataforma.",
+	},
+	{
+		title: "El referido compra",
+		description:
+			"La referencia cuenta cuando el nuevo tenant realiza su primera compra y el admin confirma el pago.",
+	},
+	{
+		title: "Recibís crédito y perks",
+		description:
+			"Tu comisión se convierte en saldo para la próxima licencia y además ganás perks exclusivos del programa.",
+	},
+];
+
+export const AFFILIATE_PROGRAM_RULES: string[] = [
+	"Disponible solo para tenants activos con licencia vigente.",
+	"La comisión aplica sobre la primera compra del referido.",
+	"El beneficio se entrega como crédito para la próxima licencia.",
+	"Si sobra saldo, se arrastra a ciclos futuros.",
+	"Los perks son acumulativos y exclusivos del programa.",
+	"Los perks no reemplazan features del plan comercial base.",
+];
+
 /* ─── FAQ ─── */
 
 export const FAQ_ITEMS: FaqItem[] = [
@@ -256,6 +331,21 @@ export const FAQ_ITEMS: FaqItem[] = [
 		question: "¿Tiene control de caja y arqueo diario?",
 		answer:
 			"Sí. Cada punto de venta tiene su propio arqueo de caja por turno. El sistema registra apertura, movimientos y cierre con cuadre automático. Podés tener varios turnos por día y conciliar las ventas contra el efectivo declarado.",
+	},
+	{
+		question: "¿Quién puede participar en el programa de referidos?",
+		answer:
+			"Solo tenants activos con licencia vigente pueden acumular beneficios dentro del programa de referidos.",
+	},
+	{
+		question: "¿Cuándo se acredita la comisión de un referido?",
+		answer:
+			"La comisión se acredita cuando el referido realiza su primera compra y el pago es confirmado manualmente por administración.",
+	},
+	{
+		question: "¿Cómo se entrega el beneficio del programa?",
+		answer:
+			"La comisión se transforma en crédito para la próxima licencia, y además se habilitan perks exclusivos del programa según el tramo alcanzado.",
 	},
 	{
 		question: "¿Cómo funcionan las copias de seguridad?",

@@ -3,6 +3,7 @@
 import React from 'react';
 import { useReducedMotion } from 'framer-motion';
 
+import { LandingAffiliateProgram } from '@/features/landing/components/affiliate-program';
 import { LandingBenefits } from '@/features/landing/components/benefits';
 import { LandingContact } from '@/features/landing/components/contact';
 import { LandingFaq } from '@/features/landing/components/faq';
@@ -36,6 +37,7 @@ export function LandingPageClient(): React.JSX.Element {
         <LandingFeatures />
         <LandingBenefits />
         <PricingDynamic />
+        <LandingAffiliateProgram />
         <RealTestimonials />
         <LandingFaq />
         <LandingContact reduceMotion={reduceMotion} />

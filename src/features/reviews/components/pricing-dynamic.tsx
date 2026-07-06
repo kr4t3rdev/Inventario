@@ -66,6 +66,10 @@ export function PricingDynamic(): React.JSX.Element | null {
           Elegí una base sólida para tu negocio y evolucioná sin migraciones
           complejas.
         </p>
+        <p className="text-sm text-cyan-accent/90 sm:text-base">
+          Los tenants elegibles también pueden acumular crédito y perks mediante el programa de
+          referidos.
+        </p>
       </SpringSection>
 
       <div className="grid gap-5 md:grid-cols-2 xl:grid-cols-3">
@@ -100,6 +104,9 @@ export function PricingDynamic(): React.JSX.Element | null {
                     Recomendado
                   </span>
                 ) : null}
+                <span className="w-fit rounded-full border border-cyan-accent/30 bg-cyan-accent/10 px-3 py-1 text-[10px] font-semibold uppercase tracking-wide text-cyan-accent font-mono">
+                  Referidos para tenants elegibles
+                </span>
                 <CardTitle className="text-2xl font-mono">
                   {plan.name}
                 </CardTitle>
