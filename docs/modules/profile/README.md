@@ -1,30 +1,42 @@
 # Perfil de Usuario (Profile)
 
-> Te permite ver y actualizar tu perfil de usuario.
+> Permite que cada usuario revise y actualice su identidad básica dentro del sistema, incluyendo nombre y avatar.
 
 ## Qué hace
 
-Este módulo te ayuda a administrar personas, datos laborales y pagos con una vista clara y simple. Te permite ver y actualizar tu perfil de usuario.
+Este módulo trabaja sobre la cuenta autenticada actual. Expone datos de perfil, estado de cuenta, expiración, avatar y nombre, y ofrece una edición directa sin pasar por paneles administrativos.
+
+## Qué incluye
+
+- lectura del perfil autenticado
+- actualización de nombre
+- actualización de avatar
+- visualización de rol, estado y expiración
+- soporte de upload de avatar según feature del plan
 
 ## Cuándo usarlo
 
-- Cuando administrás empleados, nómina o datos personales.
-- Cuando querés revisar turnos, vacaciones o pagos.
-- Cuando necesitás mantener el historial laboral en orden.
+- Cuando el usuario necesita cambiar su nombre visible.
+- Cuando quiere actualizar foto de perfil.
+- Cuando quiere revisar el estado y vigencia de su cuenta.
 
-## Cómo se usa
+## Reglas importantes
 
-1. Entrá al módulo y seleccioná la persona o pago.
-2. Revisá los datos laborales o de nómina.
-3. Actualizá lo que cambió y guardalo.
-4. Confirmá que la información quedó visible.
+- El perfil que se edita es siempre el del usuario autenticado.
+- El avatar puede depender de la feature `upload-profile-avatar`.
+- La actualización del avatar usa reemplazo de asset en Cloudinary.
+- No es un módulo de administración de usuarios del tenant; eso vive en configuración de usuarios.
 
 ## Qué conviene cuidar
 
-- Controlá fechas, jornadas y montos con cuidado.
-- Si hay vacaciones o ausencias, registralas a tiempo.
-- Mantené los datos del empleado completos.
+- No confundas perfil personal con ficha de empleado o permisos del tenant.
+- Si la cuenta está por expirar, esta vista sirve más para diagnóstico que para resolver licencias.
+
+## Rutas y referencias
+
+- `/busy/perfil`
+- `src/features/profile/actions.ts`
 
 ## En una frase
 
-Te permite ver y actualizar tu perfil de usuario.
+Es la ficha personal del usuario autenticado dentro del sistema.

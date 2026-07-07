@@ -1,30 +1,45 @@
 # Proveedores (Vendors)
 
-> Registra proveedores y mantén sus datos de compra ordenados.
+> Mantiene el catálogo de proveedores y les asigna código secuencial reutilizable en flujos de compra y EAN-13.
 
 ## Qué hace
 
-Este módulo te ayuda a mantener el catálogo y el stock bajo control, para que siempre sepas qué tenés y dónde está. Registra proveedores y mantén sus datos de compra ordenados.
+Este módulo registra proveedores del tenant con datos de contacto, cuentas y branding, pero además les asigna `vendorCode` secuencial. Ese código no es menor: se reutiliza para lógica documental y para generación de EAN-13 en productos cuando aplica.
+
+## Qué incluye
+
+- listado de proveedores
+- alta, edición y borrado
+- código secuencial por proveedor
+- derivación de código EAN-13 por proveedor
+- logo, contacto y cuentas
 
 ## Cuándo usarlo
 
-- Cuando cargás nuevos productos, categorías o proveedores.
-- Cuando querés revisar stock, precios o movimientos entre almacenes.
-- Cuando necesitás corregir diferencias o mantener el inventario actualizado.
+- Cuando necesitás crear o mantener proveedores para compras.
+- Cuando productos EAN-13 requieren proveedor con código válido.
+- Cuando querés ordenar la base de abastecimiento del tenant.
 
-## Cómo se usa
+## Reglas importantes
 
-1. Abrí el módulo y ubicá el registro que querés revisar.
-2. Consultá los datos principales, stock o movimientos.
-3. Agregá o ajustá la información cuando haga falta.
-4. Guardá y verificá que el cambio se refleje bien.
+- Cada proveedor recibe `vendorCode` automáticamente.
+- A partir de ese código se puede generar el código EAN-13 del proveedor.
+- El catálogo es tenant-scoped.
+- El logo puede administrarse como asset externo.
 
 ## Qué conviene cuidar
 
-- Revisá unidad, categoría y precio antes de guardar.
-- Si un producto ya existe, buscá primero antes de crear otro.
-- No olvides comprobar el almacén correcto.
+- Si un proveedor queda mal configurado, el flujo EAN-13 y algunas compras pierden consistencia.
+- Conviene no editar estos datos sin revisar su uso en productos y compras.
+
+## Rutas y referencias
+
+- `/busy/vendor`
+- `/busy/vendor/new`
+- `/busy/vendor/update/[id]`
+- `src/features/vendors/actions.ts`
+- `src/lib/vendor-code-utils.ts`
 
 ## En una frase
 
-Registra proveedores y mantén sus datos de compra ordenados.
+Es la base de abastecimiento del tenant y una pieza clave del modo EAN-13.

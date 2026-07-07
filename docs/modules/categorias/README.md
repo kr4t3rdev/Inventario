@@ -1,47 +1,45 @@
 # Categorías
 
-> Módulo de taxonomía jerárquica de productos con soporte para clasificador CLAS y códigos EAN-13.
+> Organiza la taxonomía del catálogo y soporta modo CLAS/EAN-13 cuando el tenant trabaja con clasificación oficial.
 
-## Stack
+## Qué hace
 
-- **Server Actions**: CRUD completo via `withAction` wrapper + `requireTenant` scope
-- **Validación**: Zod schemas (`categoriaCreateSchema`, `categoriaUpdateSchema`)
-- **Validación de negocio**: `CategoriaValidator` y `CategoriaDeletionValidator`
-- **CLAS Classifier**: Integración con nomenclador oficial cubano (secciones/específicos)
-- **UI**: shadcn/ui DataTable con vista lista/árbol, Framer Motion, React Hook Form
+Este módulo define cómo se agrupan los productos dentro del sistema. En modo normal trabaja con categorías y subcategorías. En modo EAN-13 cambia a secciones y específicos CLAS, alterando labels, validaciones y parte del comportamiento del catálogo.
 
-## Operaciones CRUD
+## Qué incluye
 
-| Acción | Server Action | Descripción |
-|--------|--------------|-------------|
-| Listar | `getCategoriasAction` | Todas las categorías del tenant |
-| Detalle | `getCategoriaByIdAction` | Una categoría por ID con validación de tenant |
-| Jerarquía | `getCategoriaHierarchyAction` | Árbol completo con conteo de productos |
-| Crear | `createCategoriaAction` | Con validación de unicidad, jerarquía, CLAS |
-| Actualizar | `updateCategoriaAction` | Re-valida según cambios |
-| Eliminar | `deleteCategoriaAction` | Reasigna productos de subcategorías al padre |
+- CRUD completo de categorías del tenant
+- vista jerárquica con conteo de productos
+- validación de unicidad, jerarquía y borrado
+- soporte de modo EAN-13 / CLAS
+- labels dinámicos según configuración de empresa
 
-## Modo EAN-13 / CLAS
+## Cuándo usarlo
 
-Cuando el plan incluye el feature `categorias-ean13` y Mi Empresa tiene `usaCodigoEan13=true`:
+- Cuando querés ordenar el catálogo en grupos reutilizables.
+- Cuando el negocio necesita clasificar productos por CLAS y EAN-13.
+- Cuando productos, filtros y formularios dependen de una taxonomía consistente.
 
-- **Categoría → Sección CLAS**: selección desde nomenclador oficial
-- **Subcategoría → Específico CLAS**: filtrado por sección seleccionada
-- **Nombre autocompletado**: según el específico CLAS elegido
-- **CLAS classifier**: archivo `clasificador.md` parseado en `src/lib/clas-classifier.ts`
-- **Labels dinámicos**: toda la UI alterna entre "subcategoría"/"específico CLAS" según modo
+## Reglas importantes
 
-## Demo Seeding por Plan
+- Si el plan incluye `categorias-ean13` y Mi Empresa tiene `usaCodigoEan13=true`, la categoría pasa a representar sección CLAS y la subcategoría pasa a representar específico CLAS.
+- El clasificador oficial se parsea desde `public/clasificador.md`.
+- Los nombres pueden autocompletarse según el específico CLAS seleccionado.
+- La eliminación valida dependencias y puede requerir reasignación dentro del árbol.
 
-| Plan | Categorías | Subcategorías |
-|------|-----------|---------------|
-| Básico | Alimentos, Hogar, Bebidas | 1 (Bebidas) |
-| Profesional | + Tecnología | — |
-| Empresarial | + Farmacia, Electrodomésticos, Oficina | — |
+## Qué conviene cuidar
 
-## Tests
+- Si la taxonomía está mal planteada, productos, EAN-13 y filtros quedan incoherentes.
+- El modo EAN-13 no es solo visual: cambia reglas de negocio reales.
+- Conviene mantener una jerarquía clara antes de cargar grandes volúmenes de productos.
 
-- **25 tests** en `src/features/categorias/__tests__/`
-- Server Actions mockean Prisma
-- Componentes usan mock centralizado de framer-motion
-- Sin warnings de `whileHover`/`whileTap` en output
+## Rutas y referencias
+
+- `src/features/categorias/actions.ts`
+- `src/features/categorias/lib/category-labels.ts`
+- `src/lib/clas-classifier.ts`
+- `src/lib/categoria-validation.ts`
+
+## En una frase
+
+Es la estructura que le da sentido al catálogo, tanto en modo normal como en modo CLAS/EAN-13.

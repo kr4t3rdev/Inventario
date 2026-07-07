@@ -1,30 +1,47 @@
-# Períodos Contables
+# Periodos Contables
 
-> Abre y cierra periodos contables sin perder el orden de tus números.
+> Ordena las escrituras por ventanas de tiempo controladas, con apertura, cierre, reapertura, aprobacion, snapshots y hash de integridad.
 
-## Qué hace
+## Que hace
 
-Este módulo te ayuda a seguir el movimiento financiero con más claridad y a cerrar números con menos fricción. Abre y cierra periodos contables sin perder el orden de tus números.
+Este submodulo gobierna cuando se puede seguir escribiendo en la contabilidad y cuando un tramo temporal queda congelado. Ademas de abrir y cerrar periodos, conserva auditoria, genera snapshots, calcula hash de integridad y permite verificar bloqueos desde otros formularios.
 
-## Cuándo usarlo
+## Operaciones principales
 
-- Cuando cerrás periodos, hacés conciliaciones o revisás balances.
-- Cuando querés entender en qué se fue el dinero y cómo quedó cada cuenta.
-- Cuando necesitás reportes para tomar decisiones con más confianza.
+- abrir un periodo contable
+- listar periodos por estado o tipo
+- consultar detalle y timeline de auditoria
+- cerrar un periodo generando snapshot automatico
+- aprobar un periodo cerrado
+- reabrirlo con motivo explicito
+- verificar desde cliente si una fecha quedo bloqueada
 
-## Cómo se usa
+## Cuando usarlo
 
-1. Abrí el módulo y ubicá el periodo, cuenta o reporte que necesitás.
-2. Revisá los números antes de hacer cambios.
-3. Aplicá ajustes solo cuando estés seguro de la causa.
-4. Guardá y validá el resultado final.
+- Cuando necesitas congelar un mes o tramo operativo para evitar nuevas escrituras.
+- Cuando queres preparar cierres con trazabilidad y evidencia.
+- Cuando un formulario necesita saber si la fecha de negocio ya quedo bloqueada.
 
-## Qué conviene cuidar
+## Reglas importantes
 
-- Trabajá con periodos claros para no mezclar movimientos.
-- Revisá cada ajuste antes de cerrar un periodo.
-- Si hay diferencias, buscá primero la causa antes de corregir.
+- `checkPeriodLockAction` permite bloquear operaciones client-side antes de intentar guardar.
+- El cierre genera snapshots y resumen con hash de integridad.
+- Reabrir requiere motivo, y aprobar agrega una capa de validacion adicional.
+- Muchas mutaciones de contabilidad consultan estos periodos indirectamente via `withPeriodValidation`.
+
+## Que conviene cuidar
+
+- No cierres un periodo si todavia tenes pendientes relevantes por conciliar.
+- Si un periodo cerrado no tiene hash o snapshot esperado, hay que revisarlo antes de confiar en el cierre.
+- Reabrir deberia ser una excepcion, no la norma.
+
+## Referencias utiles
+
+- `src/features/contabilidad/actions-periodos.ts`
+- `src/features/contabilidad/hooks/use-period-lock.ts`
+- `src/app/busy/contabilidad/periodos/page.tsx`
+- `src/app/busy/contabilidad/periodos/[periodoId]/cuadre/page.tsx`
 
 ## En una frase
 
-Abre y cierra periodos contables sin perder el orden de tus números.
+Define cuando la contabilidad sigue abierta y cuando queda sellada con trazabilidad verificable.

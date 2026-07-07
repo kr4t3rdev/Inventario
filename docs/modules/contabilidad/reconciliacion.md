@@ -1,30 +1,44 @@
-# Reconciliación Bancaria
+# Reconciliacion Bancaria
 
-> Compara tus movimientos con los del banco y detecta diferencias.
+> Vincula ventas, servicios y gastos con cobros o pagos reales para que los saldos contables reflejen lo que ya paso por caja o banco.
 
-## Qué hace
+## Que hace
 
-Este módulo te ayuda a seguir el movimiento financiero con más claridad y a cerrar números con menos fricción. Compara tus movimientos con los del banco y detecta diferencias.
+Este submodulo concentra las operaciones pendientes de conciliar y permite registrar movimientos financieros contra ellas. No trabaja solo con extractos bancarios: tambien resuelve pagos parciales, saldos pendientes y trazabilidad por cuenta, moneda y fecha.
 
-## Cuándo usarlo
+## Que concilia
 
-- Cuando cerrás periodos, hacés conciliaciones o revisás balances.
-- Cuando querés entender en qué se fue el dinero y cómo quedó cada cuenta.
-- Cuando necesitás reportes para tomar decisiones con más confianza.
+- **Ventas**: calcula `saldoPendiente` en base a total menos pagos ya reconciliados.
+- **Servicios**: detecta servicios aun no conciliados.
+- **Gastos**: incluye gastos directos, pagos de salario, compras de servicio y costos de venta servicio.
 
-## Cómo se usa
+## Cuando usarlo
 
-1. Abrí el módulo y ubicá el periodo, cuenta o reporte que necesitás.
-2. Revisá los números antes de hacer cambios.
-3. Aplicá ajustes solo cuando estés seguro de la causa.
-4. Guardá y validá el resultado final.
+- Cuando una venta ya fue cobrada, total o parcialmente, y queres reflejarlo.
+- Cuando necesitas registrar el pago real de un gasto pendiente.
+- Cuando queres bajar el volumen de operaciones abiertas antes del cierre del periodo.
 
-## Qué conviene cuidar
+## Reglas importantes
 
-- Trabajá con periodos claros para no mezclar movimientos.
-- Revisá cada ajuste antes de cerrar un periodo.
-- Si hay diferencias, buscá primero la causa antes de corregir.
+- Una venta puede seguir apareciendo pendiente aunque ya tenga conciliaciones, si todavia conserva saldo.
+- El sistema distingue entre operaciones fuente y registros de conciliacion.
+- Los montos pueden normalizarse por moneda o tasa de cambio segun el caso.
+- Reconciliar cambia dashboards, pendientes y reportes posteriores.
+
+## Que conviene cuidar
+
+- Revisa cuenta, monto y moneda antes de confirmar.
+- No asumas que "sin reconciliar" significa "sin pagos previos".
+- Si una operacion parece inconsistente, revisa pagos parciales y tipo de gasto involucrado.
+
+## Referencias utiles
+
+- `src/features/contabilidad/actions-reconciliacion.ts`
+- `src/app/busy/contabilidad/reconciliacion/page.tsx`
+- `src/app/busy/contabilidad/reconciliacion/ventas/page.tsx`
+- `src/app/busy/contabilidad/reconciliacion/servicios/page.tsx`
+- `src/app/busy/contabilidad/reconciliacion/gastos/page.tsx`
 
 ## En una frase
 
-Compara tus movimientos con los del banco y detecta diferencias.
+Convierte operaciones pendientes en movimientos conciliados con trazabilidad real de cobro o pago.

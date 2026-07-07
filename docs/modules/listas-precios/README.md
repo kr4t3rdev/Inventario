@@ -1,30 +1,42 @@
 # Listas de Precios
 
-> Crea distintas listas de precios según canal, punto de venta o cliente.
+> Define listas de precios alternativas por tenant y las vincula con puntos de venta para cambiar el precio aplicado en caja.
 
 ## Qué hace
 
-Este módulo te ayuda a mantener el catálogo y el stock bajo control, para que siempre sepas qué tenés y dónde está. Crea distintas listas de precios según canal, punto de venta o cliente.
+Este módulo permite crear y mantener listas de precios separadas del precio base del producto. Cada lista puede marcarse como predeterminada y además mostrar cuántos puntos de venta y precios específicos la están usando.
+
+## Qué incluye
+
+- listado de listas del tenant
+- alta, edición y borrado
+- una lista por defecto
+- conteo de puntos de venta y precios asociados
+- vínculo operativo con puntos de venta
 
 ## Cuándo usarlo
 
-- Cuando cargás nuevos productos, categorías o proveedores.
-- Cuando querés revisar stock, precios o movimientos entre almacenes.
-- Cuando necesitás corregir diferencias o mantener el inventario actualizado.
+- Cuando necesitás precios distintos según canal o caja.
+- Cuando querés cambiar qué lista usa un punto de venta.
+- Cuando el precio base del producto ya no alcanza para todos los escenarios comerciales.
 
-## Cómo se usa
+## Reglas importantes
 
-1. Abrí el módulo y ubicá el registro que querés revisar.
-2. Consultá los datos principales, stock o movimientos.
-3. Agregá o ajustá la información cuando haga falta.
-4. Guardá y verificá que el cambio se refleje bien.
+- El acceso depende de la feature `listas-precios`.
+- Solo puede existir una lista predeterminada por tenant.
+- No se puede borrar una lista que siga asociada a un punto de venta.
+- El módulo cambia precios aplicados, no stock ni catálogo base.
 
 ## Qué conviene cuidar
 
-- Revisá unidad, categoría y precio antes de guardar.
-- Si un producto ya existe, buscá primero antes de crear otro.
-- No olvides comprobar el almacén correcto.
+- Cambiar la lista por defecto o la lista asociada a un POS impacta ventas nuevas.
+- Conviene distinguir bien listas promocionales, mayoristas o por canal.
+
+## Rutas y referencias
+
+- `/busy/listas-precios`
+- `src/features/listas-precios/actions.ts`
 
 ## En una frase
 
-Crea distintas listas de precios según canal, punto de venta o cliente.
+Te permite separar la estrategia de precios del precio base del producto.

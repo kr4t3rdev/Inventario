@@ -1,30 +1,45 @@
 # Compras de Servicios
 
-> Controla compras de servicios a proveedores.
+> Registra servicios recibidos, su proveedor, costo, vencimiento y conciliación con anticipos o pagos contables.
 
 ## Qué hace
 
-Este módulo te ayuda a registrar compras y mantener la relación con proveedores y servicios en un mismo lugar. Controla compras de servicios a proveedores.
+Este módulo cubre el lado de egresos del catálogo de servicios. Permite registrar servicios que la empresa contrata o recibe, con fechas, factura, forma de pago y proveedor. También puede aplicar anticipos y crear reconciliaciones de gasto vinculadas.
+
+## Qué incluye
+
+- listado de servicios recibidos
+- alta, edición y consulta por ID
+- proveedor opcional
+- número de factura y fecha de vencimiento
+- integración con anticipos
+- conciliación contable del gasto asociado
 
 ## Cuándo usarlo
 
-- Cuando comprás mercadería o contratás un servicio.
-- Cuando querés dejar registro de lo recibido y de quién lo entregó.
-- Cuando necesitás consultar gastos o proveedores asociados.
+- Cuando contratás un servicio externo y querés registrarlo.
+- Cuando el gasto debe quedar enlazado a proveedor, servicio y vencimiento.
+- Cuando querés que el servicio recibido impacte contabilidad sin salir del flujo de negocio.
 
-## Cómo se usa
+## Reglas importantes
 
-1. Entrá al módulo y seleccioná la compra o servicio.
-2. Cargá los datos de proveedor, cantidad o monto.
-3. Revisá el total y cualquier dato pendiente.
-4. Guardá para dejar la compra registrada.
+- Las altas pasan por `withPeriodValidation` usando la fecha del servicio.
+- Si se informa proveedor, debe existir y pertenecer al flujo correcto.
+- Los anticipos pueden crear reconciliaciones de gasto en la misma operación.
+- La moneda sale del servicio contratado, no de un campo libre separado.
 
 ## Qué conviene cuidar
 
 - Verificá proveedor, fecha y monto antes de guardar.
-- Mantené claro qué parte es producto y qué parte es servicio.
 - Guardá comprobantes o referencias cuando corresponda.
+- No mezcles este flujo con compras de productos: ambos impactan costos y contabilidad de forma distinta.
+- Revisá forma de pago y vencimiento porque después condicionan cuentas por pagar y reconciliación.
+
+## Rutas y referencias
+
+- Vista operativa: `/busy/servicios/recibidos`
+- Backend: `src/features/compras-servicios/actions.ts`
 
 ## En una frase
 
-Controla compras de servicios a proveedores.
+Registra el costo real de los servicios que la empresa consume y los conecta con contabilidad.

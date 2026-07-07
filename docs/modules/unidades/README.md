@@ -1,30 +1,39 @@
 # Unidades de Medida
 
-> Define cómo se cuentan los productos: piezas, cajas, kilos o litros.
+> Mantiene el catálogo tenant-scoped de unidades de medida usadas por productos y formularios del inventario.
 
 ## Qué hace
 
-Este módulo te ayuda a mantener el catálogo y el stock bajo control, para que siempre sepas qué tenés y dónde está. Define cómo se cuentan los productos: piezas, cajas, kilos o litros.
+Este módulo define cómo se expresa cantidad dentro del sistema: piezas, cajas, kilos, litros u otras unidades propias del tenant. Aunque parezca pequeño, es un dato estructural de productos, compras, producción y stock.
 
 ## Cuándo usarlo
 
 - Cuando cargás nuevos productos, categorías o proveedores.
 - Cuando querés revisar stock, precios o movimientos entre almacenes.
 - Cuando necesitás corregir diferencias o mantener el inventario actualizado.
+- Cuando el tenant necesita crear una unidad nueva no existente en su catálogo.
 
-## Cómo se usa
+## Reglas importantes
 
-1. Abrí el módulo y ubicá el registro que querés revisar.
-2. Consultá los datos principales, stock o movimientos.
-3. Agregá o ajustá la información cuando haga falta.
-4. Guardá y verificá que el cambio se refleje bien.
+- Las unidades son tenant-scoped en esta versión.
+- Nombre y símbolo deben ser únicos dentro del tenant.
+- El sistema hace pre-check de unicidad y también protege contra race conditions.
+- No se puede eliminar una unidad si todavía está en uso por productos.
 
 ## Qué conviene cuidar
 
-- Revisá unidad, categoría y precio antes de guardar.
-- Si un producto ya existe, buscá primero antes de crear otro.
-- No olvides comprobar el almacén correcto.
+- Cambiar símbolo o nombre de una unidad repercute en formularios y lectura operativa.
+- Antes de borrar, revisá dependencias porque la protección `IN_USE` es esperable.
+- Conviene mantener el catálogo corto y consistente para no ensuciar el inventario.
+
+## Rutas y referencias
+
+- `/busy/unidad`
+- `/busy/unidad/new`
+- `/busy/unidad/update/[id]`
+- `src/features/unidades/actions.ts`
+- `src/features/unidades/validators.ts`
 
 ## En una frase
 
-Define cómo se cuentan los productos: piezas, cajas, kilos o litros.
+Define el idioma cuantitativo del inventario para que productos y movimientos hablen igual.

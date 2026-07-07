@@ -51,6 +51,13 @@ TCP/
 | `pnpm run test:run` | Tests una vez |
 | `pnpm run lint` | ESLint |
 
+## Navegacion de Documentacion
+
+- [Indice general de documentacion](./index.md)
+- [Mapa de modulos del sistema](./modules/INDEX.md)
+
+El indice de modulos agrupa la documentacion funcional por dominio de negocio y sirve como puerta de entrada rapida para `docs/modules/`.
+
 ## Enlaces
 
 - **Sitio en vivo:** https://kr4t3rdev.xyz

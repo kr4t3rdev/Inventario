@@ -1,30 +1,49 @@
-# Licencias (Individuales)
+# Licencias
 
-> Te permite ver licencias activas y entender qué puede usar cada usuario o empresa.
+> Administra licencias por tenant, incluyendo demos, filtros paginados, vencimientos y features habilitadas por plan u override.
 
 ## Qué hace
 
-Este módulo te ayuda a mantener el acceso, la configuración y la administración básica del sistema en orden. Te permite ver licencias activas y entender qué puede usar cada usuario o empresa.
+Este módulo trabaja sobre `tenantLicense`, no sobre licencias sueltas por usuario. Desde acá se controla qué plan tiene cada empresa, si está activa, cuándo vence y qué capacidades reales quedan habilitadas.
+
+## Operaciones principales
+
+- listar licencias con paginación, búsqueda y ordenamiento
+- filtrar por plan, estado y tipo (`demo` o real)
+- ver métricas agregadas: total, activas, expiradas, demos y por vencer
+- activar, revocar o eliminar licencias
+- crear tenants demo con seed automático según plan
+- limpiar demos expiradas
+- convertir una demo en plan pago sin perder el tenant
+- aplicar `featureOverrides` contables sobre una licencia concreta
 
 ## Cuándo usarlo
 
-- Cuando necesitás entrar al sistema o recuperar el acceso.
-- Cuando querés ajustar permisos, datos de empresa o parámetros generales.
-- Cuando definís qué puede ver o hacer cada usuario.
-
-## Cómo se usa
-
-1. Abrí el módulo desde el menú principal.
-2. Revisá la información o configuración que necesitás.
-3. Hacé los cambios necesarios y guardalos.
-4. Volvé a entrar para confirmar que quedó aplicado.
+- Cuando una empresa quedó sin acceso por vencimiento.
+- Cuando querés crear un entorno demo para ventas o soporte.
+- Cuando necesitás pasar una demo a producción real.
+- Cuando un tenant requiere habilitaciones especiales no cubiertas por el plan base.
 
 ## Qué conviene cuidar
 
-- Evitá duplicar usuarios o permisos.
-- Si no ves algo, revisá tu rol o tu sesión.
-- Mantené los datos de empresa siempre actualizados.
+- Las demos usan la misma entidad de licencia, pero con `isDemo=true`.
+- Al convertir una demo a plan pago se actualizan vencimiento, límites y features del tenant.
+- Los overrides contables se fusionan con los existentes; no reemplazan todo ciegamente.
+- Las métricas del admin respetan los mismos filtros de la tabla paginada.
+
+## Relación con otros módulos
+
+- **Admin**: la gestión principal vive en `/admin/licencias`.
+- **Planes**: define límites y features base.
+- **Auth**: una licencia vencida puede bloquear acceso.
+- **Referidos**: los créditos pueden impactar el costo final de una licencia.
+
+## Referencias útiles
+
+- `src/app/admin/licencias/page.tsx`
+- `src/features/admin/actions.ts`
+- `src/features/admin/actions-licencias.ts`
 
 ## En una frase
 
-Te permite ver licencias activas y entender qué puede usar cada usuario o empresa.
+Define qué puede usar cada empresa, por cuánto tiempo y bajo qué reglas especiales.

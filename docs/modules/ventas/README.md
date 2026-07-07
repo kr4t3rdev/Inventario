@@ -1,30 +1,64 @@
 # Ventas
 
-> Registra ventas, cobros y anulaciones de forma rápida.
+> Registra ventas en POS, valida stock por punto de venta, genera factura cuando corresponde y permite anular operaciones.
 
 ## Qué hace
 
-Este módulo te ayuda a registrar ventas y hacer seguimiento del cobro sin perder orden en la operación diaria. Registra ventas, cobros y anulaciones de forma rápida.
+Este módulo maneja la operación comercial diaria en caja. Al crear una venta no solo guarda líneas y totales: también valida features del plan, exige o crea turno según el tipo de POS, descuenta stock en la ubicación correcta y puede generar factura automáticamente.
+
+## Qué incluye
+
+- listado y detalle de ventas
+- creación de ventas con ítems
+- validación de stock por ubicación
+- integración con turno POS
+- generación opcional de factura
+- actualización y anulación
+
+## Flujo principal
+
+1. Se selecciona un punto de venta y los productos.
+2. El sistema valida stock disponible en `StockUbicacion` del POS.
+3. Si no se informó turno, intenta obtener uno activo o crearlo según el tipo de caja.
+4. Se registra la venta y sus ítems.
+5. Si el plan tiene facturación habilitada, se genera la factura asociada.
+6. Se revalidan las pantallas operativas de ventas.
 
 ## Cuándo usarlo
 
-- Cuando registrás una venta, un cobro o una anulación.
-- Cuando querés ver el historial de clientes, facturas o turnos.
-- Cuando necesitás aplicar descuentos o cerrar caja.
+- Cuando necesitás vender desde un punto de venta físico o móvil.
+- Cuando querés consultar ventas por tenant y detalle por operación.
+- Cuando hace falta anular una venta ya registrada.
+- Cuando querés revisar la relación entre venta, factura y turno.
 
-## Cómo se usa
+## Reglas importantes
 
-1. Entrá al módulo y elegí la operación que querés hacer.
-2. Completá los datos de la venta, factura o turno.
-3. Revisá el resumen antes de confirmar.
-4. Guardá y verificá que el resultado quede registrado.
+- El stock se valida contra la ubicación del POS, no contra stock global del producto.
+- Si falta el backfill de `StockUbicacion`, la venta puede bloquearse aunque el producto exista.
+- Un POS principal exige turno abierto antes de vender.
+- Las anulaciones deben contemplar impacto operativo y documental.
 
 ## Qué conviene cuidar
 
-- Confirmá cliente, forma de pago y totales antes de cerrar.
-- Revisá descuentos y numeración antes de emitir.
-- Si algo no cuadra, revisá primero el turno o la caja.
+- Si una venta falla, conviene revisar turno, stock por ubicación y features del plan antes que el formulario.
+- El módulo no trabaja aislado: impacta facturación, caja y arqueo.
+
+## Rutas y referencias
+
+- `/busy/sales`
+- `/busy/sales/new`
+- `/busy/sales/editar/[id]`
+- `src/features/ventas/actions.ts`
+- `src/features/ventas/services/venta-mutation-service.ts`
+- `src/features/ventas/services/facturacion-workflow.ts`
+
+## Relación con otros módulos
+
+- **Turnos POS**: define si se puede operar y en qué turno cae la venta.
+- **Puntos de venta**: define desde qué caja y con qué stock/lista de precios se vende.
+- **Facturas**: se genera automáticamente si el plan lo permite.
+- **Arqueo/Cuadre diario**: usan las ventas del turno para validar cierres.
 
 ## En una frase
 
-Registra ventas, cobros y anulaciones de forma rápida.
+Convierte una operación de caja en una venta consistente con turno, stock y facturación.

@@ -1,30 +1,47 @@
 # Ofertas y Promociones
 
-> Crea descuentos y promociones para impulsar tus ventas.
+> Gestiona cotizaciones comerciales con cliente, vencimiento, items mixtos y facturación posterior.
 
 ## Qué hace
 
-Este módulo te ayuda a registrar ventas y hacer seguimiento del cobro sin perder orden en la operación diaria. Crea descuentos y promociones para impulsar tus ventas.
+Este módulo trabaja como una capa previa a la venta. Permite crear ofertas con productos y servicios, numerarlas secuencialmente por tenant, seguir su estado y convertirlas luego en factura y operación comercial real.
+
+## Qué incluye
+
+- listado y detalle de ofertas
+- creación con cliente e items mixtos
+- numeración secuencial tipo `OF-000001`
+- actualización de estado y observaciones
+- borrado de ofertas
+- facturación de oferta con serie, cuenta, vencimiento y anticipo opcional
 
 ## Cuándo usarlo
 
-- Cuando registrás una venta, un cobro o una anulación.
-- Cuando querés ver el historial de clientes, facturas o turnos.
-- Cuando necesitás aplicar descuentos o cerrar caja.
+- Cuando querés enviar o registrar una propuesta antes de vender.
+- Cuando necesitás cotizar una mezcla de productos y servicios.
+- Cuando una oferta aprobada debe convertirse en factura.
 
-## Cómo se usa
+## Reglas importantes
 
-1. Entrá al módulo y elegí la operación que querés hacer.
-2. Completá los datos de la venta, factura o turno.
-3. Revisá el resumen antes de confirmar.
-4. Guardá y verificá que el resultado quede registrado.
+- El acceso depende de la feature `ofertas`.
+- Cada tenant genera su propio consecutivo de ofertas.
+- Una oferta `RECHAZADA` no puede facturarse, y una `FACTURADA` no debe repetirse.
+- Al facturarla puede crear turno activo, aplicar anticipo y marcar la oferta como facturada.
 
 ## Qué conviene cuidar
 
-- Confirmá cliente, forma de pago y totales antes de cerrar.
-- Revisá descuentos y numeración antes de emitir.
-- Si algo no cuadra, revisá primero el turno o la caja.
+- Revisá vencimiento y estado antes de tomar una oferta vieja como base de facturación.
+- Si la oferta mezcla servicios y productos, después cada parte impacta módulos distintos.
+- La oferta no reemplaza la venta: es un paso previo comercial.
+
+## Rutas y referencias
+
+- `/busy/ofertas`
+- `/busy/ofertas/new`
+- `/busy/ofertas/[id]`
+- `src/features/ofertas/actions.ts`
+- `src/features/ofertas/services/facturar-oferta-workflow.ts`
 
 ## En una frase
 
-Crea descuentos y promociones para impulsar tus ventas.
+Es el puente entre una propuesta comercial y una venta/factura concreta.

@@ -1,26 +1,50 @@
 # [Nombre del Módulo]
 
-> Explicación simple para usuarios: qué resuelve este módulo y cuándo conviene usarlo.
+> Explicación corta y concreta: qué resuelve el módulo y por qué existe.
 
 ## Qué hace
 
-Contá, en lenguaje simple, qué problema resuelve el módulo y qué puede hacer una persona dentro de él.
+Explicá el propósito real del módulo en lenguaje simple, pero conectado con el comportamiento del sistema. Evitá frases genéricas que podrían servir para cualquier feature.
+
+## Qué incluye
+
+- listar las capacidades principales del módulo
+- incluir operaciones o vistas relevantes
+- mencionar si combina catálogo, operación, analytics o configuración
 
 ## Cuándo usarlo
 
 - Cuando necesitás resolver una tarea concreta de este módulo.
-- Cuando querés revisar el estado actual de la información.
-- Cuando hace falta crear, corregir o consultar un registro.
+- Cuando querés consultar o actualizar datos que este dominio controla.
+- Cuando otro módulo depende directamente de esta información.
 
-## Cómo se usa
+## Reglas importantes
 
-1. Entrá al módulo desde el menú.
-2. Revisá la información principal.
-3. Agregá o ajustá datos si hace falta.
-4. Guardá y confirmá que el cambio quedó aplicado.
+- Documentá restricciones reales del sistema.
+- Mencioná features de plan, validaciones, estados o dependencias técnicas si afectan el uso.
+- Si el módulo tiene modos distintos, explicalos acá.
 
 ## Qué conviene cuidar
 
-- Evitá duplicar registros.
-- Revisá siempre los datos antes de guardar.
-- Si algo depende de otro módulo, completalo primero.
+- Señalá errores comunes o decisiones que impactan otros módulos.
+- Aclarar qué revisar primero cuando algo “no cierra”.
+- Explicar si hay efectos en stock, facturación, contabilidad, permisos o documentos.
+
+## Rutas y referencias
+
+- `/ruta/principal`
+- `/ruta/secundaria`
+- `src/features/<modulo>/actions.ts`
+- `src/app/...` o archivos clave que ayuden a ubicar la implementación
+
+## En una frase
+
+Resumen final en una línea, claro y útil.
+
+## Checklist de Calidad
+
+- ¿El texto describe este módulo y no podría pegarse en otro casi sin cambios?
+- ¿Incluye reglas reales del negocio o del sistema?
+- ¿Menciona dependencias con otros módulos cuando son importantes?
+- ¿Apunta a rutas o archivos reales del proyecto?
+- ¿Evita lenguaje puramente técnico cuando no aporta contexto?

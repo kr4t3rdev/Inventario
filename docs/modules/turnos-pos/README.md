@@ -1,30 +1,53 @@
 # Turnos POS
 
-> Abre y cierra turnos de caja por empleado o punto de venta.
+> Controla la apertura y cierre de turnos por punto de venta, con validación estricta de arqueo antes del cierre.
 
 ## Qué hace
 
-Este módulo te ayuda a registrar ventas y hacer seguimiento del cobro sin perder orden en la operación diaria. Abre y cierra turnos de caja por empleado o punto de venta.
+Este módulo ordena quién está operando una caja y en qué estado está cada punto de venta. También evita cierres inconsistentes: un turno no puede cerrarse si no existe arqueo o si el arqueo no coincide con las ventas del turno.
+
+## Operaciones principales
+
+- abrir turno manualmente en un POS
+- listar turnos por fecha, estado o punto de venta
+- consultar el turno activo
+- cerrar turno con validación server-side
+- crear turno automático en POS móviles o secundarios cuando una venta lo necesita
 
 ## Cuándo usarlo
 
-- Cuando registrás una venta, un cobro o una anulación.
-- Cuando querés ver el historial de clientes, facturas o turnos.
-- Cuando necesitás aplicar descuentos o cerrar caja.
+- Cuando una caja empieza a operar y hace falta registrar fondo inicial.
+- Cuando querés revisar qué turno está abierto en un POS.
+- Cuando toca cerrar caja y validar el arqueo.
+- Cuando necesitás diagnosticar por qué una venta no pudo ejecutarse por falta de turno.
 
-## Cómo se usa
+## Reglas importantes
 
-1. Entrá al módulo y elegí la operación que querés hacer.
-2. Completá los datos de la venta, factura o turno.
-3. Revisá el resumen antes de confirmar.
-4. Guardá y verificá que el resultado quede registrado.
+- Un mismo punto de venta no puede tener dos turnos `ABIERTO` al mismo tiempo.
+- Un turno no cierra sin arqueo previo.
+- El arqueo debe coincidir con las ventas dentro de una tolerancia de `0.01`.
+- Los POS `PRINCIPAL` no crean turno automático.
+- Los POS `MOVIL` o `SECUNDARIA` sí pueden autogenerar turno al vender.
 
 ## Qué conviene cuidar
 
-- Confirmá cliente, forma de pago y totales antes de cerrar.
-- Revisá descuentos y numeración antes de emitir.
-- Si algo no cuadra, revisá primero el turno o la caja.
+- Si el cierre falla, primero revisá arqueo, ventas del turno y fondo inicial.
+- El tipo de caja del POS cambia por completo el comportamiento de apertura automática.
+- Turnos y ventas comparten contexto operativo; no conviene analizarlos por separado.
+
+## Relación con otros módulos
+
+- **Ventas**: consume `getOrCreateTurnoActivo` antes de registrar operaciones.
+- **Arqueo de caja**: aporta el arqueo obligatorio para cerrar.
+- **Puntos de venta**: define en qué caja vive el turno y de qué tipo es.
+- **Cuadre diario**: usa los datos del turno para el resumen final.
+
+## Referencias útiles
+
+- `src/features/turnos-pos/actions.ts`
+- `src/features/turnos-pos/actions-cuadre.ts`
+- `src/features/turnos-pos/__tests__/actions-cuadre.test.ts`
 
 ## En una frase
 
-Abre y cierra turnos de caja por empleado o punto de venta.
+Mantiene cada caja en un estado operativo controlado antes, durante y después de vender.

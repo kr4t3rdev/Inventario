@@ -1,30 +1,42 @@
 # Landing Page
 
-> Es la página pública que presenta tu negocio antes de iniciar sesión.
+> Es la cara pública del producto: comunica planes, prueba social, estadísticas y propuesta de valor antes del login.
 
 ## Qué hace
 
-Este módulo te ayuda a mantener el sistema visible, ordenado y fácil de seguir para el equipo. Es la página pública que presenta tu negocio antes de iniciar sesión.
+Este módulo presenta la plataforma a usuarios no autenticados. Reúne pricing, testimonios, estadísticas públicas y componentes de conversión para captar interés comercial antes de que alguien cree cuenta o inicie sesión.
+
+## Qué incluye
+
+- presentación general del producto
+- planes públicos
+- estadísticas públicas del sistema
+- prueba social y testimonios
+- CTA hacia registro, demo o login
 
 ## Cuándo usarlo
 
-- Cuando querés ver el estado general del sistema o de una sección importante.
-- Cuando necesitás revisar avisos, respaldos o elementos de control.
-- Cuando buscás un resumen rápido antes de tomar una acción.
+- Cuando querés revisar cómo se presenta comercialmente la plataforma.
+- Cuando necesitás validar qué datos públicos está mostrando el sitio.
+- Cuando marketing o ventas necesita entender qué promete la página pública.
 
-## Cómo se usa
+## Reglas importantes
 
-1. Entrá al módulo y revisá el resumen general.
-2. Leé los avisos o indicadores más importantes.
-3. Tomá la acción correspondiente si detectás algo pendiente.
-4. Volvé a consultar para confirmar que quedó resuelto.
+- La landing consume parte del dominio de `reviews` y `planes` para mostrar contenido real.
+- No es un dashboard interno: su objetivo es conversión, confianza y adquisición.
+- Los números y testimonios expuestos deberían reflejar datos reales o gobernados por backend.
 
 ## Qué conviene cuidar
 
-- Leé primero el resumen general y después bajá al detalle.
-- Atendé los avisos críticos antes que los secundarios.
-- Mantené un hábito de revisar este módulo con frecuencia.
+- Si la prueba social o los planes quedan desactualizados, el problema es comercial además de técnico.
+- Conviene pensar esta página como parte del producto, no como un simple folleto.
+
+## Rutas y referencias
+
+- `/`
+- `src/features/reviews/actions.ts`
+- `src/features/planes/actions.ts`
 
 ## En una frase
 
-Es la página pública que presenta tu negocio antes de iniciar sesión.
+Es la vitrina pública del producto antes de que el usuario entre al sistema.

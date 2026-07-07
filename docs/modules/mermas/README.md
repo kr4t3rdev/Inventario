@@ -1,30 +1,46 @@
 # Mermas
 
-> Registra pérdidas o ajustes para que tu inventario siga siendo real.
+> Registra pérdidas de inventario por producto y almacén, ajustando stock y costo total de la merma.
 
 ## Qué hace
 
-Este módulo te ayuda a mantener el catálogo y el stock bajo control, para que siempre sepas qué tenés y dónde está. Registra pérdidas o ajustes para que tu inventario siga siendo real.
+Este módulo sirve para llevar el inventario a la realidad cuando hay roturas, vencimientos, pérdidas o desperdicio. Al crear o editar una merma, el sistema valida stock disponible, descuenta la cantidad de la ubicación correcta y deja trazabilidad del costo involucrado.
+
+## Qué incluye
+
+- listado y detalle de mermas
+- alta, edición y eliminación
+- soporte por producto y almacén
+- cálculo de costo total de la merma
+- estadísticas agregadas por período
+- notificaciones al registrar una merma
 
 ## Cuándo usarlo
 
-- Cuando cargás nuevos productos, categorías o proveedores.
-- Cuando querés revisar stock, precios o movimientos entre almacenes.
-- Cuando necesitás corregir diferencias o mantener el inventario actualizado.
+- Cuando necesitás descontar inventario perdido o inutilizable.
+- Cuando querés reflejar desperdicio real de operación.
+- Cuando querés analizar cuánto se está perdiendo por mes.
 
-## Cómo se usa
+## Reglas importantes
 
-1. Abrí el módulo y ubicá el registro que querés revisar.
-2. Consultá los datos principales, stock o movimientos.
-3. Agregá o ajustá la información cuando haga falta.
-4. Guardá y verificá que el cambio se refleje bien.
+- Solo se puede crear una merma si hay stock suficiente en el almacén elegido.
+- Editar una merma puede revertir stock anterior y volver a aplicarlo en otro producto o almacén.
+- El borrado también revierte stock.
+- El costo total se calcula usando el `precioCosto` del producto.
 
 ## Qué conviene cuidar
 
-- Revisá unidad, categoría y precio antes de guardar.
-- Si un producto ya existe, buscá primero antes de crear otro.
-- No olvides comprobar el almacén correcto.
+- Elegí bien el almacén porque la merma no afecta stock global abstracto, afecta una ubicación real.
+- Si editás cantidad o producto, estás tocando stock histórico, no solo metadatos.
+- Mirá las estadísticas de mermas si querés detectar fuga operativa recurrente.
+
+## Rutas y referencias
+
+- `/busy/mermas`
+- `/busy/mermas/new`
+- `/busy/mermas/edit/[id]`
+- `src/features/mermas/actions.ts`
 
 ## En una frase
 
-Registra pérdidas o ajustes para que tu inventario siga siendo real.
+Mantiene el inventario honesto cuando la operación real pierde o deteriora stock.

@@ -1,30 +1,45 @@
 # Ventas de Servicios
 
-> Te permite vender servicios además de productos cuando lo necesites.
+> Registra servicios prestados a clientes y soporta cobros con anticipos, líneas mixtas y conciliación posterior.
 
 ## Qué hace
 
-Este módulo te ayuda a registrar ventas y hacer seguimiento del cobro sin perder orden en la operación diaria. Te permite vender servicios además de productos cuando lo necesites.
+Este módulo cubre el circuito comercial de servicios vendidos. Puede trabajar en modo simple, creando una sola venta de servicio, o en modo mixto con múltiples líneas de servicio. También permite asociar cliente, observaciones y anticipos ya cobrados.
+
+## Qué incluye
+
+- listado de ventas de servicio
+- detalle por ID
+- creación de servicio prestado simple o con líneas
+- asociación opcional a cliente
+- aplicación de anticipos
+- creación de reconciliaciones de servicio para cobros anticipados
 
 ## Cuándo usarlo
 
-- Cuando registrás una venta, un cobro o una anulación.
-- Cuando querés ver el historial de clientes, facturas o turnos.
-- Cuando necesitás aplicar descuentos o cerrar caja.
+- Cuando vendés un servicio sin pasar por venta tradicional de productos.
+- Cuando querés registrar un servicio ya prestado a un cliente.
+- Cuando necesitás aplicar un anticipo cobrado previamente.
 
-## Cómo se usa
+## Reglas importantes
 
-1. Entrá al módulo y elegí la operación que querés hacer.
-2. Completá los datos de la venta, factura o turno.
-3. Revisá el resumen antes de confirmar.
-4. Guardá y verificá que el resultado quede registrado.
+- El acceso depende de la feature `servicios`.
+- El modo mixto rechaza líneas de producto: esas deben ir por ventas de productos.
+- Las altas usan `withPeriodValidation`.
+- Si hay anticipos, puede crear reconciliaciones de servicio automáticamente.
 
 ## Qué conviene cuidar
 
-- Confirmá cliente, forma de pago y totales antes de cerrar.
-- Revisá descuentos y numeración antes de emitir.
-- Si algo no cuadra, revisá primero el turno o la caja.
+- No mezcles este flujo con POS de productos si hay líneas físicas involucradas.
+- Revisá bien cliente, total y anticipos aplicados para no duplicar cobros.
+- Este módulo impacta contabilidad de servicios y dashboard de ingresos.
+
+## Rutas y referencias
+
+- Vista operativa: `/busy/servicios/prestados`
+- Catálogo + historial: `/busy/servicios`
+- Backend: `src/features/venta-servicios/actions.ts`
 
 ## En una frase
 
-Te permite vender servicios además de productos cuando lo necesites.
+Es el flujo liviano para vender servicios y reflejar sus cobros sin mezclarlo con ventas de productos.

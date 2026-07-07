@@ -1,30 +1,45 @@
 # Clientes
 
-> Guarda clientes, historial y datos de contacto.
+> Mantiene el catálogo de clientes del tenant con datos de contacto, cuentas y referencias contractuales.
 
 ## Qué hace
 
-Este módulo te ayuda a registrar ventas y hacer seguimiento del cobro sin perder orden en la operación diaria. Guarda clientes, historial y datos de contacto.
+Este módulo centraliza las contrapartes comerciales del lado cliente. Guarda nombre, dirección, teléfono, logo, cuentas y número de contrato, y luego otros módulos como ventas, facturas, ofertas y contratos reutilizan esos datos.
+
+## Qué incluye
+
+- listado de clientes
+- alta, edición y borrado
+- logo del cliente
+- cuentas CUP y USD
+- número de contrato asociado
+- uso posterior en ventas y documentos
 
 ## Cuándo usarlo
 
-- Cuando registrás una venta, un cobro o una anulación.
-- Cuando querés ver el historial de clientes, facturas o turnos.
-- Cuando necesitás aplicar descuentos o cerrar caja.
+- Cuando necesitás registrar una nueva contraparte comercial.
+- Cuando una venta, oferta o contrato requiere seleccionar cliente.
+- Cuando querés mantener actualizados datos de contacto y cuenta.
 
-## Cómo se usa
+## Reglas importantes
 
-1. Entrá al módulo y elegí la operación que querés hacer.
-2. Completá los datos de la venta, factura o turno.
-3. Revisá el resumen antes de confirmar.
-4. Guardá y verificá que el resultado quede registrado.
+- El acceso depende de la feature `clientes`.
+- El catálogo es tenant-scoped.
+- El logo puede manejarse como asset administrado.
+- El número de contrato puede ser actualizado indirectamente por el módulo de contratos.
 
 ## Qué conviene cuidar
 
-- Confirmá cliente, forma de pago y totales antes de cerrar.
-- Revisá descuentos y numeración antes de emitir.
-- Si algo no cuadra, revisá primero el turno o la caja.
+- Si los datos del cliente están incompletos, después fallan o empobrecen documentos comerciales.
+- No trates este módulo como solo “contactos”: también tiene impacto contractual y documental.
+
+## Rutas y referencias
+
+- `/busy/cliente`
+- `/busy/cliente/new`
+- `/busy/cliente/update/[id]`
+- `src/features/clientes/actions.ts`
 
 ## En una frase
 
-Guarda clientes, historial y datos de contacto.
+Es la libreta comercial del tenant para vender, facturar y contratar con datos consistentes.

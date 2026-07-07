@@ -1,30 +1,43 @@
 # Planes y Licencias
 
-> Sirve para revisar qué incluye cada plan y qué licencias están activas.
+> Define los planes de suscripción y su matriz de features, límites y presentación pública o administrativa.
 
 ## Qué hace
 
-Este módulo te ayuda a mantener el acceso, la configuración y la administración básica del sistema en orden. Sirve para revisar qué incluye cada plan y qué licencias están activas.
+Este módulo describe la oferta comercial del sistema. A nivel de dominio, organiza planes, límites y features mediante un registry central. A nivel operativo, se usa tanto para renderizar planes en la landing como para administrarlos desde el panel global.
+
+## Qué incluye
+
+- lectura de planes desde base de datos
+- presentación pública lista para landing
+- agrupación de features por categoría
+- límites por usuarios, almacenes, productos, clientes y puntos de venta
+- gestión admin de planes desde `/admin/planes`
 
 ## Cuándo usarlo
 
-- Cuando necesitás entrar al sistema o recuperar el acceso.
-- Cuando querés ajustar permisos, datos de empresa o parámetros generales.
-- Cuando definís qué puede ver o hacer cada usuario.
+- Cuando querés revisar qué capacidades incluye cada plan.
+- Cuando necesitás exponer pricing en la landing.
+- Cuando admin debe crear, editar o eliminar planes comerciales.
 
-## Cómo se usa
+## Reglas importantes
 
-1. Abrí el módulo desde el menú principal.
-2. Revisá la información o configuración que necesitás.
-3. Hacé los cambios necesarios y guardalos.
-4. Volvé a entrar para confirmar que quedó aplicado.
+- El feature registry centraliza etiquetas, categorías y agrupación de capacidades.
+- Los límites y features del plan condicionan acceso real a muchos módulos del sistema.
+- La vista pública y la vista admin consumen el mismo dominio, pero con formatos distintos.
+- No es lo mismo plan que licencia: el plan define oferta; la licencia la asigna a un tenant.
 
 ## Qué conviene cuidar
 
-- Evitá duplicar usuarios o permisos.
-- Si no ves algo, revisá tu rol o tu sesión.
-- Mantené los datos de empresa siempre actualizados.
+- Cambiar features de un plan puede alterar acceso real en módulos productivos.
+- Conviene pensar este módulo junto con `licencias`, pero no mezclarlos conceptualmente.
+
+## Rutas y referencias
+
+- `/admin/planes`
+- `src/features/planes/actions.ts`
+- `src/features/planes/feature-registry.ts`
 
 ## En una frase
 
-Sirve para revisar qué incluye cada plan y qué licencias están activas.
+Es la definición comercial y funcional de qué puede hacer cada tipo de cliente en la plataforma.

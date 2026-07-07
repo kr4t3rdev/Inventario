@@ -1,30 +1,44 @@
 # Configuración
 
-> Aquí ajustas opciones globales como series, reglas y parámetros generales.
+> Reúne submódulos de configuración del tenant como Mi Empresa, usuarios, contratos, series de facturación y catálogo técnico.
 
 ## Qué hace
 
-Este módulo te ayuda a mantener el acceso, la configuración y la administración básica del sistema en orden. Aquí ajustas opciones globales como series, reglas y parámetros generales.
+Este módulo no es una única entidad de datos: funciona como paraguas de ajustes operativos del tenant. Desde aquí se accede a configuración contractual, series de facturación, usuarios del tenant, Mi Empresa y catálogos específicos del taller.
+
+## Qué incluye
+
+- `Mi Empresa`
+- `Usuarios`
+- `Series de Facturación`
+- `Configuración de Contratos`
+- `Catálogo de Reparaciones`
 
 ## Cuándo usarlo
 
-- Cuando necesitás entrar al sistema o recuperar el acceso.
-- Cuando querés ajustar permisos, datos de empresa o parámetros generales.
-- Cuando definís qué puede ver o hacer cada usuario.
+- Cuando querés preparar el tenant antes de operar.
+- Cuando necesitás tocar reglas o maestros que impactan varios módulos.
+- Cuando el problema no está en la operación diaria sino en la base configurativa.
 
-## Cómo se usa
+## Reglas importantes
 
-1. Abrí el módulo desde el menú principal.
-2. Revisá la información o configuración que necesitás.
-3. Hacé los cambios necesarios y guardalos.
-4. Volvé a entrar para confirmar que quedó aplicado.
+- Cada subruta de configuración tiene sus propios permisos y features.
+- No todos los cambios son cosméticos: varios afectan ventas, contratos o inventario.
+- El módulo es más un hub de configuración que un formulario único.
 
 ## Qué conviene cuidar
 
-- Evitá duplicar usuarios o permisos.
-- Si no ves algo, revisá tu rol o tu sesión.
-- Mantené los datos de empresa siempre actualizados.
+- Antes de cambiar algo acá, conviene entender qué otro módulo consume esa configuración.
+- Muchos problemas “misteriosos” de operación vienen de parámetros mal configurados aquí.
+
+## Rutas y referencias
+
+- `/busy/configuracion/mi-empresa`
+- `/busy/configuracion/usuarios`
+- `/busy/configuracion/series-facturacion`
+- `/busy/configuracion/contratos`
+- `/busy/configuracion/catalogo`
 
 ## En una frase
 
-Aquí ajustas opciones globales como series, reglas y parámetros generales.
+Es el tablero de ajustes estructurales del tenant para que los demás módulos funcionen como corresponde.

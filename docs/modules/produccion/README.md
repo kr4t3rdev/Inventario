@@ -1,30 +1,45 @@
 # Producción
 
-> Planifica y registra órdenes de producción y recetas.
+> Gestiona recetas y órdenes de producción, validando materiales, rendimiento y estado operativo del proceso.
 
 ## Qué hace
 
-Este módulo te ayuda a coordinar trabajo operativo, costos y seguimiento de tareas o incidencias. Planifica y registra órdenes de producción y recetas.
+Este módulo separa dos piezas del flujo productivo: las recetas y las órdenes. Las recetas definen insumos, rendimiento e instrucciones. Las órdenes consumen esas recetas para programar una producción concreta, calcular costo de materiales y mover el proceso por estados de fabricación.
+
+## Qué incluye
+
+- listado y CRUD de recetas
+- ingredientes por receta con cantidad, unidad y desperdicio
+- listado y CRUD de órdenes de producción
+- validación de disponibilidad de materiales
+- cálculo de costo de materiales
+- transición de estados productivos
 
 ## Cuándo usarlo
 
-- Cuando seguís un trabajo operativo, una reparación o un costo.
-- Cuando querés dejar trazabilidad de cambios, insumos o estado del proceso.
-- Cuando necesitás ordenar pendientes antes de avanzar.
+- Cuando querés estandarizar cómo se fabrica un producto compuesto.
+- Cuando necesitás lanzar una orden concreta de producción.
+- Cuando querés seguir una producción desde pendiente hasta completada.
 
-## Cómo se usa
+## Reglas importantes
 
-1. Abrí el módulo y ubicá la orden o caso que querés seguir.
-2. Revisá el estado actual y los datos asociados.
-3. Actualizá avances, costos o observaciones si hace falta.
-4. Guardá y confirmá que el seguimiento siga ordenado.
+- El acceso depende de la feature `produccion`.
+- Las órdenes nacen desde una receta válida del tenant.
+- Los ingredientes y sus desperdicios son parte central del costo y de la disponibilidad.
+- El módulo usa validaciones de materiales y estados productivos definidos por constantes compartidas.
 
 ## Qué conviene cuidar
 
-- Dejá comentarios claros para que cualquiera entienda el estado.
-- No mezcles tareas distintas en un mismo registro.
-- Asegurate de registrar insumos, tiempos o piezas cuando corresponda.
+- Si la receta está mal armada, toda la orden arrastra mal costo y consumo.
+- Producción impacta stock y composición, así que no conviene tratarla como un simple checklist.
+- Antes de completar una orden, revisá materiales y rendimiento real.
+
+## Referencias útiles
+
+- `src/app/busy/produccion/page.tsx`
+- `src/features/produccion/actions.ts`
+- `src/lib/utils/produccion.ts`
 
 ## En una frase
 
-Planifica y registra órdenes de producción y recetas.
+Convierte recetas en producción ejecutable con control de materiales, costo y estado.
