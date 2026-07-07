@@ -243,6 +243,60 @@ export default function AdminLicenciasPage() {
     }
   }
 
+  const [isBulkProcessing, setIsBulkProcessing] = useState(false)
+
+  async function handleBulkToggleEstado() {
+    if (selectedLicencias.size === 0) return
+    if (!confirm(`¿Cambiar estado de ${selectedLicencias.size} licencias?`)) return
+
+    setIsBulkProcessing(true)
+    let success = 0
+    let errors = 0
+    try {
+      for (const id of selectedLicencias) {
+        const lic = licencias.find((l: any) => l.tenantLicenseId === id)
+        if (!lic) { errors++; continue }
+        const r = await updateLicenciaAction({ id: lic.tenantLicenseId, activa: !lic.activa })
+        if (r.success) success++
+        else errors++
+      }
+      if (errors === 0) toast.success(`${success} licencias actualizadas`)
+      else toast.warning(`${success} actualizadas, ${errors} con error`)
+      setSelectedLicencias(new Set())
+      await refreshLicenciasData()
+    } catch (_error) {
+      toast.error('Error en acción masiva')
+    } finally {
+      setIsBulkProcessing(false)
+    }
+  }
+
+  async function handleBulkDelete() {
+    if (selectedLicencias.size === 0) return
+    if (!confirm(`¿Eliminar ${selectedLicencias.size} licencias? Esta acción no se puede deshacer.`)) return
+
+    setIsBulkProcessing(true)
+    let success = 0
+    let errors = 0
+    try {
+      for (const id of selectedLicencias) {
+        const r = await deleteLicenciaAction(id)
+        if (r.success) success++
+        else errors++
+      }
+      if (errors === 0) toast.success(`${success} licencias eliminadas`)
+      else toast.warning(`${success} eliminadas, ${errors} con error`)
+      setSelectedLicencias(new Set())
+      const nextPage = success === licencias.length && page > 1 ? page - 1 : page
+      if (nextPage !== page) setPage(nextPage)
+      else await refreshLicenciasData(nextPage)
+    } catch (_error) {
+      toast.error('Error en acción masiva')
+    } finally {
+      setIsBulkProcessing(false)
+    }
+  }
+
   async function handleCleanupExpiredDemos() {
     try {
       const result = await cleanupExpiredDemoLicenciasAction({ dryRun: false })
@@ -436,12 +490,13 @@ export default function AdminLicenciasPage() {
       {/* Filtros */}
       <div className="flex gap-3 flex-wrap">
         <div className="relative flex-1 min-w-[200px]">
-          <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+          <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" aria-hidden="true" />
           <Input
             placeholder="Buscar por clave o usuario..."
             value={searchInput}
             onChange={(e) => setSearchInput(e.target.value)}
             className="pl-10"
+            aria-label="Buscar licencias"
           />
         </div>
         <Select value={planFilter} onValueChange={(v) => { setPlanFilter(v); setPage(1) }}>
@@ -484,28 +539,39 @@ export default function AdminLicenciasPage() {
           initial={{ opacity: 0, y: -8 }}
           animate={{ opacity: 1, y: 0 }}
           className="flex items-center gap-2 p-3 rounded-lg border border-primary/30 bg-primary/5"
+          role="region"
+          aria-label="Acciones masivas"
         >
           <span className="text-sm font-medium">{selectedLicencias.size} seleccionadas</span>
           <Button
             variant="outline"
             size="sm"
-            onClick={async () => {
-              for (const id of selectedLicencias) {
-                const lic = licencias.find((l: any) => l.tenantLicenseId === id)
-                if (lic) await handleToggleLicencia(lic)
-              }
-              setSelectedLicencias(new Set())
-            }}
+            onClick={handleBulkToggleEstado}
+            disabled={isBulkProcessing}
+            aria-label={`Cambiar estado de ${selectedLicencias.size} licencias`}
           >
-            <Shield className="h-3 w-3 mr-1" />
-            Toggle Estado
+            <Shield className="h-3 w-3 mr-1" aria-hidden="true" />
+            {isBulkProcessing ? 'Procesando...' : 'Toggle Estado'}
           </Button>
           <Button
             variant="outline"
             size="sm"
-            onClick={() => setSelectedLicencias(new Set())}
+            onClick={handleBulkDelete}
+            disabled={isBulkProcessing}
+            className="text-rose-500"
+            aria-label={`Eliminar ${selectedLicencias.size} licencias`}
           >
-            <X className="h-3 w-3 mr-1" />
+            <Trash2 className="h-3 w-3 mr-1" aria-hidden="true" />
+            Eliminar
+          </Button>
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => setSelectedLicencias(new Set())}
+            disabled={isBulkProcessing}
+            aria-label="Cancelar selección masiva"
+          >
+            <X className="h-3 w-3 mr-1" aria-hidden="true" />
             Cancelar
           </Button>
         </motion.div>
@@ -517,35 +583,40 @@ export default function AdminLicenciasPage() {
           <TableHeader>
             <TableRow>
               <TableHead className="w-12">
-                <button onClick={toggleSelectAll} className="flex items-center justify-center">
+                <button
+                  onClick={toggleSelectAll}
+                  className="flex items-center justify-center"
+                  aria-label={selectedLicencias.size === licencias.length && licencias.length > 0 ? 'Deseleccionar todo' : 'Seleccionar todo'}
+                  aria-pressed={selectedLicencias.size === licencias.length && licencias.length > 0}
+                >
                   {selectedLicencias.size === licencias.length && licencias.length > 0 ? (
-                    <Check className="h-4 w-4 text-primary" />
+                    <Check className="h-4 w-4 text-primary" aria-hidden="true" />
                   ) : (
-                    <div className="h-4 w-4 border rounded" />
+                    <div className="h-4 w-4 border rounded" aria-hidden="true" />
                   )}
                 </button>
               </TableHead>
-              <TableHead onClick={() => handleSort('createdAt')} className="cursor-pointer select-none">
+              <TableHead onClick={() => handleSort('createdAt')} className="cursor-pointer select-none" aria-sort={sortBy === 'createdAt' ? (sortOrder === 'asc' ? 'ascending' : 'descending') : 'none'}>
                 <div className="flex items-center">
                   Licencia <SortIndicator column="createdAt" />
                 </div>
               </TableHead>
-              <TableHead onClick={() => handleSort('tenantId')} className="cursor-pointer select-none">
+              <TableHead onClick={() => handleSort('tenantId')} className="cursor-pointer select-none" aria-sort={sortBy === 'tenantId' ? (sortOrder === 'asc' ? 'ascending' : 'descending') : 'none'}>
                 <div className="flex items-center">
                   Tenant / Admin <SortIndicator column="tenantId" />
                 </div>
               </TableHead>
-              <TableHead onClick={() => handleSort('planId')} className="cursor-pointer select-none">
+              <TableHead onClick={() => handleSort('planId')} className="cursor-pointer select-none" aria-sort={sortBy === 'planId' ? (sortOrder === 'asc' ? 'ascending' : 'descending') : 'none'}>
                 <div className="flex items-center">
                   Plan <SortIndicator column="planId" />
                 </div>
               </TableHead>
-              <TableHead onClick={() => handleSort('expiracion')} className="cursor-pointer select-none">
+              <TableHead onClick={() => handleSort('expiracion')} className="cursor-pointer select-none" aria-sort={sortBy === 'expiracion' ? (sortOrder === 'asc' ? 'ascending' : 'descending') : 'none'}>
                 <div className="flex items-center">
                   Expiración <SortIndicator column="expiracion" />
                 </div>
               </TableHead>
-              <TableHead onClick={() => handleSort('activa')} className="cursor-pointer select-none">
+              <TableHead onClick={() => handleSort('activa')} className="cursor-pointer select-none" aria-sort={sortBy === 'activa' ? (sortOrder === 'asc' ? 'ascending' : 'descending') : 'none'}>
                 <div className="flex items-center">
                   Estado <SortIndicator column="activa" />
                 </div>
@@ -573,11 +644,15 @@ export default function AdminLicenciasPage() {
                 return (
                   <TableRow key={licencia.tenantLicenseId} className={isSelected ? 'bg-primary/5' : ''}>
                     <TableCell>
-                      <button onClick={() => toggleSelect(licencia.tenantLicenseId)}>
+                      <button
+                        onClick={() => toggleSelect(licencia.tenantLicenseId)}
+                        aria-label={isSelected ? `Deseleccionar ${licencia.tenantLicenseId}` : `Seleccionar ${licencia.tenantLicenseId}`}
+                        aria-pressed={isSelected}
+                      >
                         {isSelected ? (
-                          <Check className="h-4 w-4 text-primary" />
+                          <Check className="h-4 w-4 text-primary" aria-hidden="true" />
                         ) : (
-                          <div className="h-4 w-4 border rounded" />
+                          <div className="h-4 w-4 border rounded" aria-hidden="true" />
                         )}
                       </button>
                     </TableCell>
@@ -632,7 +707,7 @@ export default function AdminLicenciasPage() {
                     </TableCell>
                     <TableCell>
                       <div className="flex items-center gap-1">
-                        <Calendar className="h-3 w-3 text-muted-foreground" />
+                        <Calendar className="h-3 w-3 text-muted-foreground" aria-hidden="true" />
                         <span className={expirada ? 'text-rose-500' : diasRestantes <= 7 ? 'text-amber-500' : ''}>
                           {format(new Date(licencia.expiracion), 'dd/MM/yyyy')}
                         </span>
@@ -656,14 +731,16 @@ export default function AdminLicenciasPage() {
                           variant="outline"
                           size="sm"
                           onClick={() => openAccountingOverridesDialog(licencia)}
+                          aria-label={`Editar overrides contables de ${licencia.tenantLicenseId}`}
                         >
-                          <Settings2 className="h-4 w-4 mr-1" />
+                          <Settings2 className="h-4 w-4 mr-1" aria-hidden="true" />
                           Overrides
                         </Button>
                         <Button
                           variant="outline"
                           size="sm"
                           onClick={() => handleToggleLicencia(licencia)}
+                          aria-label={licencia.activa ? `Revocar ${licencia.tenantLicenseId}` : `Activar ${licencia.tenantLicenseId}`}
                         >
                           {licencia.activa ? 'Revocar' : 'Activar'}
                         </Button>
@@ -675,6 +752,7 @@ export default function AdminLicenciasPage() {
                               setLicenseToConvert(licencia)
                               setConvertDialogOpen(true)
                             }}
+                            aria-label={`Convertir demo ${licencia.tenantLicenseId} a plan pago`}
                           >
                             Convertir
                           </Button>
@@ -684,8 +762,9 @@ export default function AdminLicenciasPage() {
                           size="sm"
                           onClick={() => handleDeleteLicencia(licencia.tenantLicenseId)}
                           className="text-rose-500"
+                          aria-label={`Eliminar ${licencia.tenantLicenseId}`}
                         >
-                          <Trash2 className="h-4 w-4" />
+                          <Trash2 className="h-4 w-4" aria-hidden="true" />
                         </Button>
                       </div>
                     </TableCell>
