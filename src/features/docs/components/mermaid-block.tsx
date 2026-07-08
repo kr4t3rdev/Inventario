@@ -40,7 +40,7 @@ export function MermaidBlock({ chart }: { chart: string }) {
   }, [chart])
 
   return (
-    <div className="not-prose my-6 overflow-x-auto rounded-lg border border-border/50 bg-white/50 p-4 dark:bg-black/20">
+    <div className="my-6 overflow-x-auto rounded-lg border border-border/50 bg-white/50 p-4 dark:bg-black/20">
       <div
         ref={ref}
         className="mermaid min-h-[60px]"
