@@ -1,7 +1,12 @@
 "use client";
 
 import { useDeferredValue, useEffect, useMemo, useState } from "react";
-import { LazyMotion, m as motion, useReducedMotion } from "framer-motion";
+import {
+	AnimatePresence,
+	LazyMotion,
+	m as motion,
+	useReducedMotion,
+} from "framer-motion";
 import {
 	ArrowDown,
 	ArrowUp,

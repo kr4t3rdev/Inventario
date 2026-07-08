@@ -51,8 +51,13 @@ import {
 	AnimatedCard,
 } from "@/components/ui/animations";
 import { useAuth } from "@/contexts/auth-context";
-import { getGlobalUsersAction, getAdminPlanesAction, approveGlobalUserAction, addTenantMembershipAction } from "@/features/admin";
-import { getAdminTenantsAction } from "@/features/admin/actions";
+import {
+	addTenantMembershipAction,
+	approveGlobalUserAction,
+	getAdminPlanesAction,
+	getAdminTenantsAction,
+	getGlobalUsersAction,
+} from "@/features/admin/actions";
 import { LazyMotion, m as motion, type Variants } from "framer-motion";
 import type { AdminUsersPageData } from "../server/data";
 import { getTenantRoleLabel } from "@/lib/auth/roles";

@@ -104,6 +104,19 @@ export interface TenantAccountingHealth {
   planName: string | null;
 }
 
+export interface TenantAccountingConfigHealth {
+  tenantId: string;
+  nombre: string;
+  slug: string | null;
+  metrics: {
+    hasMiEmpresa: boolean;
+    bankAccountCount: number;
+    hasMultiCurrency: boolean;
+    timezone: string;
+  };
+  planName: string | null;
+}
+
 function requireGlobalAdmin(user: AuthenticatedUser): void {
   if (user.role !== 'admin') {
     throw new ActionError(
@@ -377,7 +390,7 @@ export const getGlobalBillingHealthAction = withAction(async (_, user: Authentic
         formalizationRate: Math.round(rate),
       },
     };
-  });
+  }));
 
   return { billingHealth };
 });
@@ -542,6 +555,66 @@ export const getGlobalAccountingHealthAction = withAction(async (_, user: Authen
   return { accountingHealth };
 });
 
+export const getGlobalAccountingConfigHealthAction = withAction(async (_, user: AuthenticatedUser) => {
+  requireGlobalAdmin(user);
+
+  const tenants = await prisma.tenant.findMany({
+    select: {
+      tenantId: true,
+      nombre: true,
+      slug: true,
+      contabilidadTimezone: true,
+      _count: {
+        select: {
+          cuentasBancarias: true,
+        },
+      },
+      empresa: {
+        select: {
+          id: true,
+        },
+      },
+      licencias: {
+        select: {
+          plan: {
+            select: {
+              nombre: true,
+            },
+          },
+        },
+        orderBy: {
+          createdAt: 'desc',
+        },
+        take: 1,
+      },
+    },
+  });
+
+  const configHealth: TenantAccountingConfigHealth[] = await Promise.all(tenants.map(async (t) => {
+    const bankAccounts = await prisma.cuentaBancaria.findMany({
+      where: { tenantId: t.tenantId },
+      select: { moneda: true },
+    });
+
+    const currencies = new Set(bankAccounts.map(acc => acc.moneda));
+
+    return {
+      tenantId: t.tenantId,
+      nombre: t.nombre,
+      slug: t.slug,
+      planName: t.licencias[0]?.plan?.nombre || 'Sin Plan',
+      metrics: {
+        hasMiEmpresa: !!t.empresa,
+        bankAccountCount: t._count.cuentasBancarias,
+        hasMultiCurrency: currencies.size > 1,
+        timezone: t.contabilidadTimezone,
+      },
+    };
+  }));
+
+  return { configHealth };
+});
+
 export type MasterFeature = 'productos' | 'categorias' | 'unidades' | 'proveedores' | 'puntosDeVenta' | 'listasPrecio';
 
 export const getTenantFeatureDataAction = withAction(async (params: { tenantId: string; feature: MasterFeature }, user: AuthenticatedUser) => {
@@ -563,6 +636,6 @@ export const getTenantFeatureDataAction = withAction(async (params: { tenantId: 
     case 'listasPrecio':
       return { data: await prisma.listaPrecio.findMany({ where: { tenantId }, take: 100 }) };
     default:
-      throw new Error('Feature no soportada');
+      throw new ActionError('Feature no soportada', 'BAD_REQUEST');
   }
 });
