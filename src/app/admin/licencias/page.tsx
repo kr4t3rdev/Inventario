@@ -2,7 +2,7 @@
 
 export const dynamic = 'force-dynamic'
 
-import { useDeferredValue, useState, useEffect } from 'react'
+import { useCallback, useDeferredValue, useState, useEffect } from 'react'
 import { LazyMotion, m as motion } from 'framer-motion'
 import {
   Key,
@@ -82,6 +82,28 @@ import {
   buildAccountingFeatureToggleStates,
 } from '@/features/admin/license-feature-overrides'
 
+function SortIndicator({
+  column,
+  sortBy,
+  sortOrder,
+}: {
+  column: string
+  sortBy: string
+  sortOrder: 'asc' | 'desc'
+}) {
+  if (sortBy !== column) {
+    return (
+      <ArrowUpDown className="ml-1 h-3 w-3 text-muted-foreground opacity-50 inline" />
+    )
+  }
+
+  return sortOrder === 'asc' ? (
+    <ArrowUp className="ml-1 h-3 w-3 inline" />
+  ) : (
+    <ArrowDown className="ml-1 h-3 w-3 inline" />
+  )
+}
+
 export default function AdminLicenciasPage() {
   const [page, setPage] = useState(1)
   const [limit] = useState(25)
@@ -119,12 +141,7 @@ export default function AdminLicenciasPage() {
     setPage(1)
   }
 
-  const SortIndicator = ({ column }: { column: string }) => {
-    if (sortBy !== column) return <ArrowUpDown className="ml-1 h-3 w-3 text-muted-foreground opacity-50 inline" />
-    return sortOrder === 'asc' ? <ArrowUp className="ml-1 h-3 w-3 inline" /> : <ArrowDown className="ml-1 h-3 w-3 inline" />
-  }
-
-  async function loadLicenciasData(nextPage = page) {
+  const loadLicenciasData = useCallback(async (nextPage = page) => {
     return Promise.all([
       getLicenciasPaginatedAction({
         page: nextPage,
@@ -138,7 +155,7 @@ export default function AdminLicenciasPage() {
       }),
       getLicenciasStatsAction({ search, planFilter, statusFilter, typeFilter }),
     ])
-  }
+  }, [page, limit, sortBy, sortOrder, search, planFilter, statusFilter, typeFilter])
 
   async function refreshLicenciasData(nextPage = page) {
     const [licenciasResult, statsResult] = await loadLicenciasData(nextPage)
@@ -181,7 +198,7 @@ export default function AdminLicenciasPage() {
     return () => {
       isCancelled = true
     }
-  }, [page, limit, sortBy, sortOrder, search, planFilter, statusFilter, typeFilter])
+  }, [page, limit, sortBy, sortOrder, search, planFilter, statusFilter, typeFilter, loadLicenciasData])
 
   useEffect(() => {
     setPage(1)
@@ -203,6 +220,7 @@ export default function AdminLicenciasPage() {
   const activas = statsData?.activas || 0
   const expiradas = statsData?.expiradas || 0
   const demos = statsData?.demos || 0
+  const adminTest = statsData?.adminTest || 0
   const porVencer = statsData?.porVencer || 0
 
   function copyToClipboard(text: string) {
@@ -223,6 +241,29 @@ export default function AdminLicenciasPage() {
       }
     } catch (error) {
       toast.error('Error actualizando licencia')
+    }
+  }
+
+  async function handleToggleAdminTest(licencia: any) {
+    try {
+      const nextValue = !licencia.isAdminTest
+      const r = await updateLicenciaAction({
+        id: licencia.tenantLicenseId,
+        isAdminTest: nextValue,
+      })
+
+      if (r.success) {
+        toast.success(
+          nextValue
+            ? 'Licencia marcada como prueba admin'
+            : 'Licencia removida de prueba admin',
+        )
+        await refreshLicenciasData()
+      } else {
+        toast.error(r.error?.message || 'Error actualizando marca de prueba admin')
+      }
+    } catch (_error) {
+      toast.error('Error actualizando marca de prueba admin')
     }
   }
 
@@ -432,7 +473,7 @@ export default function AdminLicenciasPage() {
       </motion.div>
 
       {/* Métricas */}
-      <div className="grid gap-4 md:grid-cols-5">
+      <div className="grid gap-4 md:grid-cols-6">
         <Card>
           <CardHeader className="pb-2">
             <CardTitle className="text-sm font-medium text-muted-foreground">Total</CardTitle>
@@ -461,6 +502,17 @@ export default function AdminLicenciasPage() {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold text-sky-600">{demos}</div>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardHeader className="pb-2">
+            <CardTitle className="text-sm font-medium text-muted-foreground flex items-center gap-2">
+              <UserCircle2 className="h-4 w-4 text-violet-500" />
+              Prueba Admin
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold text-violet-600">{adminTest}</div>
           </CardContent>
         </Card>
         <Card>
@@ -529,6 +581,7 @@ export default function AdminLicenciasPage() {
             <SelectItem value="all">Todos</SelectItem>
             <SelectItem value="standard">Normales</SelectItem>
             <SelectItem value="demo">Demos</SelectItem>
+            <SelectItem value="admin_test">Prueba admin</SelectItem>
           </SelectContent>
         </Select>
       </div>
@@ -598,27 +651,32 @@ export default function AdminLicenciasPage() {
               </TableHead>
               <TableHead onClick={() => handleSort('createdAt')} className="cursor-pointer select-none" aria-sort={sortBy === 'createdAt' ? (sortOrder === 'asc' ? 'ascending' : 'descending') : 'none'}>
                 <div className="flex items-center">
-                  Licencia <SortIndicator column="createdAt" />
+                  <span>Licencia</span>
+                  <SortIndicator column="createdAt" sortBy={sortBy} sortOrder={sortOrder} />
                 </div>
               </TableHead>
               <TableHead onClick={() => handleSort('tenantId')} className="cursor-pointer select-none" aria-sort={sortBy === 'tenantId' ? (sortOrder === 'asc' ? 'ascending' : 'descending') : 'none'}>
                 <div className="flex items-center">
-                  Tenant / Admin <SortIndicator column="tenantId" />
+                  <span>Tenant / Admin</span>
+                  <SortIndicator column="tenantId" sortBy={sortBy} sortOrder={sortOrder} />
                 </div>
               </TableHead>
               <TableHead onClick={() => handleSort('planId')} className="cursor-pointer select-none" aria-sort={sortBy === 'planId' ? (sortOrder === 'asc' ? 'ascending' : 'descending') : 'none'}>
                 <div className="flex items-center">
-                  Plan <SortIndicator column="planId" />
+                  <span>Plan</span>
+                  <SortIndicator column="planId" sortBy={sortBy} sortOrder={sortOrder} />
                 </div>
               </TableHead>
               <TableHead onClick={() => handleSort('expiracion')} className="cursor-pointer select-none" aria-sort={sortBy === 'expiracion' ? (sortOrder === 'asc' ? 'ascending' : 'descending') : 'none'}>
                 <div className="flex items-center">
-                  Expiración <SortIndicator column="expiracion" />
+                  <span>Expiración</span>
+                  <SortIndicator column="expiracion" sortBy={sortBy} sortOrder={sortOrder} />
                 </div>
               </TableHead>
               <TableHead onClick={() => handleSort('activa')} className="cursor-pointer select-none" aria-sort={sortBy === 'activa' ? (sortOrder === 'asc' ? 'ascending' : 'descending') : 'none'}>
                 <div className="flex items-center">
-                  Estado <SortIndicator column="activa" />
+                  <span>Estado</span>
+                  <SortIndicator column="activa" sortBy={sortBy} sortOrder={sortOrder} />
                 </div>
               </TableHead>
               <TableHead className="text-right">Acciones</TableHead>
@@ -698,6 +756,9 @@ export default function AdminLicenciasPage() {
                         {licencia.isDemo ? (
                           <Badge className="bg-sky-500">Demo</Badge>
                         ) : null}
+                        {licencia.isAdminTest ? (
+                          <Badge className="bg-violet-500">Prueba admin</Badge>
+                        ) : null}
                         {licencia.featureOverrides &&
                         typeof licencia.featureOverrides === 'object' &&
                         Object.keys(licencia.featureOverrides).length > 0 ? (
@@ -757,6 +818,18 @@ export default function AdminLicenciasPage() {
                             Convertir
                           </Button>
                         ) : null}
+                        <Button
+                          variant={licencia.isAdminTest ? 'secondary' : 'outline'}
+                          size="sm"
+                          onClick={() => handleToggleAdminTest(licencia)}
+                          aria-label={
+                            licencia.isAdminTest
+                              ? `Quitar marca de prueba admin a ${licencia.tenantLicenseId}`
+                              : `Marcar ${licencia.tenantLicenseId} como prueba admin`
+                          }
+                        >
+                          {licencia.isAdminTest ? 'Quitar prueba' : 'Marcar prueba'}
+                        </Button>
                         <Button
                           variant="ghost"
                           size="sm"

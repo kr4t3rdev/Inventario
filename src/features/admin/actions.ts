@@ -36,6 +36,7 @@ import {
 	createPlanSchema,
 	updatePlanSchema,
 	updateTenantUserSchema,
+	getLicenciasQuerySchema,
 } from "./schemas";
 import type {
 	CreateUserInput,
@@ -54,6 +55,7 @@ import type {
 	CreatePlanInput,
 	UpdatePlanInput,
 	UpdateTenantUserInput,
+	GetLicenciasQueryInput,
 } from "./schemas";
 import type { AuthenticatedUser } from "@/lib/auth-middleware";
 import { mergeAccountingFeatureOverrides } from "./license-feature-overrides";
@@ -1634,6 +1636,7 @@ export const getAdminSubscriptionRevenueAction = withAction(
 		const allLicenses = await prisma.tenantLicense.findMany({
 			where: {
 				isDemo: false,
+				isAdminTest: false,
 				OR: [
 					{ createdAt: { gte: startDate, lte: endDate } },
 					{ updatedAt: { gte: startDate, lte: endDate } },

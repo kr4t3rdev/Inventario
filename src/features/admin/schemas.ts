@@ -90,6 +90,7 @@ export const updateLicenciaSchema = z.object({
   id: z.string().min(1),
   activa: z.boolean().optional(),
   expiracion: z.string().optional(),
+  isAdminTest: z.boolean().optional(),
   featureOverrides: z.record(z.boolean()).optional(),
 });
 

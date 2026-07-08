@@ -264,6 +264,7 @@ model TenantLicense {
   features        Json?
   featureOverrides Json?
   isDemo          Boolean  @default(false)
+  isAdminTest     Boolean  @default(false)
   createdBy       String?
   plan            Plan?    @relation(fields: [planId], references: [planId])
   tenant          Tenant   @relation(fields: [tenantId], references: [tenantId], onDelete: Cascade)

@@ -72,6 +72,7 @@ import {
   cleanupExpiredDemoLicenciasAction,
   getCloudinaryAssetsAction, cleanupCloudinaryAssetsAction,
   getLicenciasAction, updateLicenciaAction, updateLicenseAccountingOverridesAction, deleteLicenciaAction, convertDemoToPaidPlanAction,
+  getAdminSubscriptionRevenueAction,
 } from '@/features/admin/actions';
 import { createTenantForUser } from '@/lib/services/tenant-factory';
 import type { AuthenticatedUser } from '@/lib/auth-middleware';
@@ -733,6 +734,22 @@ describe('Admin Server Actions', () => {
       });
     });
 
+    it('updateLicenciaAction permite marcar licencias como prueba admin', async () => {
+      vi.mocked(getCurrentUser).mockResolvedValue(adminUser);
+      vi.mocked(prisma.tenantLicense.update).mockResolvedValue({
+        tenantLicenseId: 'lic-1',
+        isAdminTest: true,
+      } as any);
+
+      const r = await updateLicenciaAction({ id: 'lic-1', isAdminTest: true });
+
+      expect(r.success).toBe(true);
+      expect(prisma.tenantLicense.update).toHaveBeenCalledWith({
+        where: { tenantLicenseId: 'lic-1' },
+        data: { isAdminTest: true },
+      });
+    });
+
     it('updateLicenseAccountingOverridesAction mergea overrides contables preservando otros existentes', async () => {
       vi.mocked(getCurrentUser).mockResolvedValue(adminUser);
       vi.mocked(prisma.tenantLicense.findUnique).mockResolvedValue({
@@ -1019,6 +1036,93 @@ describe('Admin Server Actions', () => {
 
       await expect(createTenantForUser({ userId: 'user-test', planId: 'x' }))
         .rejects.toThrow('Plan no encontrado');
+    });
+  });
+
+  describe('getAdminSubscriptionRevenueAction', () => {
+    it('excluye licencias marcadas como prueba admin de los KPIs de revenue', async () => {
+      vi.mocked(getCurrentUser).mockResolvedValue(adminUser);
+
+      const licenses = [
+        {
+          tenantLicenseId: 'lic-real',
+          activa: true,
+          isDemo: false,
+          isAdminTest: false,
+          inicio: new Date('2026-06-01T00:00:00.000Z'),
+          expiracion: new Date('2026-07-31T00:00:00.000Z'),
+          createdAt: new Date('2026-06-01T00:00:00.000Z'),
+          updatedAt: new Date('2026-06-15T00:00:00.000Z'),
+          planId: 'plan-pro',
+          plan: {
+            planId: 'plan-pro',
+            nombre: 'Profesional',
+            precio: 60,
+            duracionDias: 30,
+          },
+          tenant: {
+            tenantId: 'tenant-real',
+            nombre: 'Tenant Real',
+          },
+        },
+        {
+          tenantLicenseId: 'lic-admin-test',
+          activa: true,
+          isDemo: false,
+          isAdminTest: true,
+          inicio: new Date('2026-06-01T00:00:00.000Z'),
+          expiracion: new Date('2026-07-31T00:00:00.000Z'),
+          createdAt: new Date('2026-06-02T00:00:00.000Z'),
+          updatedAt: new Date('2026-06-16T00:00:00.000Z'),
+          planId: 'plan-pro',
+          plan: {
+            planId: 'plan-pro',
+            nombre: 'Profesional',
+            precio: 60,
+            duracionDias: 30,
+          },
+          tenant: {
+            tenantId: 'tenant-test',
+            nombre: 'Tenant Test',
+          },
+        },
+      ] as any[];
+
+      vi.mocked(prisma.tenantLicense.findMany).mockImplementation(async (args: any) => {
+        expect(args.where).toEqual(
+          expect.objectContaining({
+            isDemo: false,
+            isAdminTest: false,
+          }),
+        );
+
+        return licenses.filter((license) => license.isAdminTest === false) as any;
+      });
+
+      const r = await getAdminSubscriptionRevenueAction({
+        startDate: '2026-06-01T00:00:00.000Z',
+        endDate: '2026-06-30T23:59:59.000Z',
+      });
+
+      expect(r.success).toBe(true);
+      expect(r.data).toEqual(
+        expect.objectContaining({
+          mrr: 60,
+          arr: 720,
+        }),
+      );
+      expect(r.data?.revenueByPlan).toEqual([
+        expect.objectContaining({
+          planId: 'plan-pro',
+          tenants: 1,
+          mrr: 60,
+        }),
+      ]);
+      expect(r.data).toEqual(
+        expect.objectContaining({
+          activeLicenses: 1,
+        }),
+      );
     });
   });
 });

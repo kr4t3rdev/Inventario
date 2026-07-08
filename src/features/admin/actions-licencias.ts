@@ -27,7 +27,14 @@ function buildLicenciasWhere(params: {
 		where.activa = statusFilter === 'true';
 	}
 	if (typeFilter && typeFilter !== 'all') {
-		where.isDemo = typeFilter === 'demo';
+		if (typeFilter === 'demo') {
+			where.isDemo = true;
+		} else if (typeFilter === 'admin_test') {
+			where.isAdminTest = true;
+		} else if (typeFilter === 'standard') {
+			where.isDemo = false;
+			where.isAdminTest = false;
+		}
 	}
 
 	if (search && search.trim()) {
@@ -140,7 +147,8 @@ export const getLicenciasPaginatedAction = withAction(
 
 /**
  * @description Obtiene métricas agregadas de licencias respetando los mismos filtros
- * que la tabla paginada. Devuelve total, activas, expiradas, demos y porVencer (7 días).
+ * que la tabla paginada. Devuelve total, activas, expiradas, demos,
+ * adminTest y porVencer (7 días).
  */
 export const getLicenciasStatsAction = withAction(
 	async (input: LicenciasStatsQueryInput, user: AuthenticatedUser) => {
@@ -154,7 +162,7 @@ export const getLicenciasStatsAction = withAction(
 		const now = new Date();
 		const nextWeek = new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000);
 
-		const [total, activas, expiradas, demos, porVencer] = await Promise.all([
+		const [total, activas, expiradas, demos, porVencer, adminTest] = await Promise.all([
 			prisma.tenantLicense.count({ where: baseWhere }),
 			prisma.tenantLicense.count({
 				where: {
@@ -179,8 +187,13 @@ export const getLicenciasStatsAction = withAction(
 					],
 				},
 			}),
+			prisma.tenantLicense.count({
+				where: {
+					AND: [baseWhere, { isAdminTest: true }],
+				},
+			}),
 		]);
 
-		return { total, activas, expiradas, demos, porVencer };
+		return { total, activas, expiradas, demos, porVencer, adminTest };
 	},
 );
