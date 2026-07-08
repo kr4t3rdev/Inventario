@@ -375,8 +375,8 @@ export const getGlobalBillingHealthAction = withAction(async (_, user: Authentic
   });
 
   const billingHealth: TenantBillingHealth[] = tenants.map((t) => {
-    const rate = t._count.ventas > 0 
-      ? (t._count.facturas / t._count.ventas) * 100 
+    const rate = t._count.ventas > 0
+      ? (t._count.facturas / t._count.ventas) * 100
       : 0;
 
     return {
@@ -390,7 +390,7 @@ export const getGlobalBillingHealthAction = withAction(async (_, user: Authentic
         formalizationRate: Math.round(rate),
       },
     };
-  }));
+  });
 
   return { billingHealth };
 });
