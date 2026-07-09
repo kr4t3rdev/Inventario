@@ -20,6 +20,8 @@ export function DocsSidebarMobile({
   onClose: () => void
 }) {
   const ref = useRef<HTMLDivElement>(null)
+  const isDocsIndexActive = !currentSlug
+  const isModulesMapActive = currentSlug === "modules"
 
   useEffect(() => {
     function handleEscape(e: KeyboardEvent) {
@@ -70,17 +72,23 @@ export function DocsSidebarMobile({
             href="/docs"
             onClick={onClose}
             className={`block rounded-md px-3 py-2 text-sm mb-2 transition-colors ${
-              !currentSlug
+              isDocsIndexActive
                 ? "bg-primary/10 font-semibold text-primary"
                 : "text-muted-foreground hover:bg-muted/50"
             }`}
+            aria-current={isDocsIndexActive ? "page" : undefined}
           >
             Índice General
           </Link>
           <Link
             href="/docs/modules"
             onClick={onClose}
-            className="mb-2 block rounded-md px-3 py-2 text-sm text-muted-foreground transition-colors hover:bg-muted/50"
+            className={`mb-2 block rounded-md px-3 py-2 text-sm transition-colors ${
+              isModulesMapActive
+                ? "bg-primary/10 font-semibold text-primary"
+                : "text-muted-foreground hover:bg-muted/50"
+            }`}
+            aria-current={isModulesMapActive ? "page" : undefined}
           >
             Mapa de módulos
           </Link>

@@ -22,16 +22,33 @@ import type { SearchIndexEntry } from "../data/types"
 
 const SPRING_DEFAULT = { type: "spring" as const, stiffness: 140, damping: 18 }
 
+/**
+ * @description Deriva el slug actual de documentación a partir del pathname.
+ * @param {string | null} pathname - Ruta actual del navegador.
+ * @returns {string | undefined} Slug del módulo actual o undefined si es el índice general.
+ */
+function getCurrentSlugFromPathname(pathname: string | null): string | undefined {
+  if (!pathname || pathname === "/docs") {
+    return undefined
+  }
+
+  if (!pathname.startsWith("/docs/")) {
+    return undefined
+  }
+
+  const slug = pathname.replace(/^\/docs\//, "").replace(/\/$/, "")
+  return slug || undefined
+}
+
 export function DocsShell({
-  currentSlug,
   searchIndex,
   children,
 }: {
-  currentSlug?: string
   searchIndex: SearchIndexEntry[]
   children: React.ReactNode
 }) {
   const pathname = usePathname()
+  const currentSlug = getCurrentSlugFromPathname(pathname)
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
 
   return (

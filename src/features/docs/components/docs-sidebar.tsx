@@ -9,22 +9,31 @@ import Link from "next/link"
 import { DOC_DOMAINS } from "../data/domains"
 
 export function DocsSidebar({ currentSlug }: { currentSlug?: string }) {
+  const isDocsIndexActive = !currentSlug
+  const isModulesMapActive = currentSlug === "modules"
+
   return (
     <nav className="w-64 shrink-0 overflow-y-auto border-r border-border/50 py-6 pr-4" aria-label="Módulos">
       <div className="mb-4 px-3">
         <Link
           href="/docs"
           className={`block rounded-md px-3 py-2 text-sm font-mono transition-colors ${
-            !currentSlug
+            isDocsIndexActive
               ? "bg-primary/10 font-semibold text-primary"
               : "text-muted-foreground hover:bg-muted/50 hover:text-foreground"
           }`}
+          aria-current={isDocsIndexActive ? "page" : undefined}
         >
           Índice General
         </Link>
         <Link
           href="/docs/modules"
-          className="mt-1 block rounded-md px-3 py-2 text-sm font-mono text-muted-foreground transition-colors hover:bg-muted/50 hover:text-foreground"
+          className={`mt-1 block rounded-md px-3 py-2 text-sm font-mono transition-colors ${
+            isModulesMapActive
+              ? "bg-primary/10 font-semibold text-primary"
+              : "text-muted-foreground hover:bg-muted/50 hover:text-foreground"
+          }`}
+          aria-current={isModulesMapActive ? "page" : undefined}
         >
           Mapa de módulos
         </Link>
