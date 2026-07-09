@@ -22,11 +22,11 @@ async function main(): Promise<void> {
   if (existingTenant) {
     console.log(`[backfill-tenant-default] Ya existe un tenant (${existingTenant.tenantId}). Verificando consistencia...`);
 
-    const miEmpresa = await prisma.miEmpresa.findUnique({ where: { id: 1 } });
+    const miEmpresa = await prisma.miEmpresa.findFirst({ orderBy: { createdAt: 'asc' } });
     if (miEmpresa && !miEmpresa.tenantId) {
       console.log('[backfill-tenant-default] MiEmpresa no tiene tenantId. Vinculando...');
       await prisma.miEmpresa.update({
-        where: { id: 1 },
+        where: { id: miEmpresa.id },
         data: { tenantId: existingTenant.tenantId },
       });
       console.log(`[backfill-tenant-default] MiEmpresa vinculada a tenant ${existingTenant.tenantId}`);
@@ -37,7 +37,7 @@ async function main(): Promise<void> {
   }
 
   // ── 2. Obtener datos de MiEmpresa para nombrar el tenant ──
-  const miEmpresa = await prisma.miEmpresa.findUnique({ where: { id: 1 } });
+  const miEmpresa = await prisma.miEmpresa.findFirst({ orderBy: { createdAt: 'asc' } });
   const tenantName = miEmpresa?.nombre?.trim() || 'Mi Empresa';
 
   console.log(`[backfill-tenant-default] Creando tenant default: "${tenantName}"`);
@@ -54,7 +54,7 @@ async function main(): Promise<void> {
   // ── 4. Vincular MiEmpresa al tenant ──
   if (miEmpresa) {
     await prisma.miEmpresa.update({
-      where: { id: 1 },
+      where: { id: miEmpresa.id },
       data: { tenantId: tenant.tenantId },
     });
     console.log('[backfill-tenant-default] MiEmpresa vinculada al tenant.');

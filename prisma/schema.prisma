@@ -278,7 +278,7 @@ model TenantLicense {
 }
 
 model MiEmpresa {
-  id                Int             @id @default(1)
+  id                Int             @id @default(autoincrement())
   tenantId          String?         @unique
   nombre            String          @default("Mi Empresa")
   propietario       String?
