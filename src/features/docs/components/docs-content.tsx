@@ -179,6 +179,7 @@ const markdownComponents: Components = {
   // ── Images ────────────────────────────────────────────
   img({ src, alt, ...props }) {
     return (
+      // eslint-disable-next-line @next/next/no-img-element -- markdown docs may contain arbitrary local or remote image sources without static dimensions
       <img
         src={src}
         alt={alt ?? ""}

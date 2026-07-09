@@ -123,7 +123,6 @@
     "react-hook-toast": "^0.0.3",
     "react-markdown": "^10.1.0",
     "recharts": "^2.15.3",
-    "rehype-raw": "^7.0.0",
     "remark-gfm": "^4.0.1",
     "resend": "^6.12.4",
     "shadcn": "^2.7.0",
