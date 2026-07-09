@@ -287,7 +287,7 @@ git commit -m "feat: add crawl metadata"
 - Modify: `src/features/docs/components/docs-content.tsx`
 - Create: `src/features/docs/utils/module-meta.ts`
 - Create: `src/features/docs/utils/module-meta.test.ts`
-- Optional Modify: `docs/modules/**/*.md`
+- Optional Modify: `content/docs/modules/**/*.md`
 
 **Step 1: Write the failing test**
 
