@@ -22,6 +22,12 @@ export function DocsSidebar({ currentSlug }: { currentSlug?: string }) {
         >
           Índice General
         </Link>
+        <Link
+          href="/docs/modules"
+          className="mt-1 block rounded-md px-3 py-2 text-sm font-mono text-muted-foreground transition-colors hover:bg-muted/50 hover:text-foreground"
+        >
+          Mapa de módulos
+        </Link>
       </div>
 
       {DOC_DOMAINS.map((domain) => (

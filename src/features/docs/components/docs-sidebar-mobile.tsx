@@ -77,6 +77,13 @@ export function DocsSidebarMobile({
           >
             Índice General
           </Link>
+          <Link
+            href="/docs/modules"
+            onClick={onClose}
+            className="mb-2 block rounded-md px-3 py-2 text-sm text-muted-foreground transition-colors hover:bg-muted/50"
+          >
+            Mapa de módulos
+          </Link>
 
           {DOC_DOMAINS.map((domain) => (
             <div key={domain.name} className="mb-3">

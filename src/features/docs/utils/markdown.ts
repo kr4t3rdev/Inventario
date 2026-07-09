@@ -7,6 +7,7 @@ import { readFileSync } from "node:fs"
 import { join } from "node:path"
 
 const DOCS_MODULES_DIR = join(process.cwd(), "docs/modules")
+const DOCS_MODULES_INDEX_PATH = join(DOCS_MODULES_DIR, "INDEX.md")
 
 /**
  * @description Lee el contenido de un archivo markdown dado un slug.
@@ -39,6 +40,18 @@ export function readModuleContent(slug: string): string | null {
   }
 
   return null
+}
+
+/**
+ * @description Lee el índice global de módulos (`docs/modules/INDEX.md`).
+ * @returns Contenido del índice o null si no existe.
+ */
+export function readDocsModulesIndexContent(): string | null {
+  try {
+    return readFileSync(DOCS_MODULES_INDEX_PATH, "utf-8")
+  } catch {
+    return null
+  }
 }
 
 /**
