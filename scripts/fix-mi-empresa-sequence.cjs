@@ -18,10 +18,10 @@ async function main() {
 
   try {
     // ── 1. Resetear la sequence ──
-    console.log('[1/3] Reseteando sequence MiEmpresa_id_seq...');
+    console.log('[1/3] Reseteando sequence miempresa_id_seq...');
     await client.query(`
       SELECT setval(
-        '"MiEmpresa_id_seq"',
+        'miempresa_id_seq',
         COALESCE((SELECT MAX(id) FROM "MiEmpresa"), 0) + 1,
         false
       );
