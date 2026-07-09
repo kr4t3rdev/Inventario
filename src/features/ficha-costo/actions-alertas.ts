@@ -222,7 +222,7 @@ export const getDashboardRentabilidadAction = withAction(
         precioCosto: true,
         precioVenta: true,
         esCompuesto: true,
-        categoria: { select: { id: true, nombre: true } },
+        categoria: { select: { catId: true, nombre: true } },
       },
     })
 
