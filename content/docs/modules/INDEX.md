@@ -1,6 +1,6 @@
 # Indice de Modulos
 
-> Mapa rapido de la documentacion funcional y tecnica disponible en `docs/modules/`.
+> Mapa rapido de la documentacion funcional y tecnica disponible en `content/docs/modules/`.
 
 ## Como usar este indice
 

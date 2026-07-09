@@ -1,6 +1,6 @@
 /**
  * @description Página pública que renderiza el mapa markdown de módulos.
- * Expone `docs/modules/INDEX.md` dentro de la UI web de documentación.
+ * Expone `content/docs/modules/INDEX.md` dentro de la UI web de documentación.
  */
 
 import type { Metadata } from "next"

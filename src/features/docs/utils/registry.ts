@@ -4,16 +4,14 @@
  */
 
 import { readdirSync, readFileSync } from "node:fs"
-import { join } from "node:path"
+import { DOCS_MODULES_DIR } from "@/features/docs/utils/content-paths"
 import { getModuleBySlug } from "../data/domains"
-
-const DOCS_MODULES_DIR = join(process.cwd(), "docs/modules")
 
 /** Módulos contables que existen como sub-páginas dentro de contabilidad/ */
 const CONTABILIDAD_SUB_PAGES = ["periodos-contables", "reconciliacion", "ajustes-bancarios"] as const
 
 /**
- * @description Escanea docs/modules/ en build-time y devuelve todos los slugs disponibles.
+ * @description Escanea content/docs/modules/ en build-time y devuelve todos los slugs disponibles.
  * Incluye módulos planos (directorios) y sub-páginas de contabilidad.
  */
 export function buildAllSlugs(): string[] {

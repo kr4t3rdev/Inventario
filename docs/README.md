@@ -54,9 +54,9 @@ TCP/
 ## Navegacion de Documentacion
 
 - [Indice general de documentacion](./index.md)
-- [Mapa de modulos del sistema](./modules/INDEX.md)
+- [Mapa de modulos del sistema](../content/docs/modules/INDEX.md)
 
-El indice de modulos agrupa la documentacion funcional por dominio de negocio y sirve como puerta de entrada rapida para `docs/modules/`.
+El indice de modulos agrupa la documentacion funcional por dominio de negocio y sirve como puerta de entrada rapida para `content/docs/modules/`.
 
 ## Enlaces
 
