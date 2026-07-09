@@ -12,28 +12,13 @@ import ReactMarkdown from "react-markdown"
 import remarkGfm from "remark-gfm"
 import { motion } from "framer-motion"
 import { MermaidBlock } from "./mermaid-block"
+import { resolveDocLink } from "@/features/docs/utils/resolve-doc-link"
 
 import type { Components } from "react-markdown"
 
 interface DocsContentProps {
   content: string
   lastUpdatedLabel?: string | null
-}
-
-/**
- * Convierte links relativos a archivos .md en rutas amigables /docs/.
- * Ej: "./admin/README.md" → "/docs/admin"
- * Ej: "./contabilidad/reconciliacion.md" → "/docs/contabilidad/reconciliacion"
- */
-function resolveDocLink(href: string): string {
-  // Solo procesa links relativos que apunten a .md
-  if (href.startsWith("./") && href.endsWith(".md")) {
-    const stripped = href.replace(/^\.\//, "").replace(/\.md$/, "")
-    // Saca el /README del final si existe
-    const clean = stripped.replace(/\/README$/, "")
-    return `/docs/${clean}`
-  }
-  return href
 }
 
 /**
