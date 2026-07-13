@@ -106,6 +106,36 @@ describe('requireFeature', () => {
     expect(() => requireFeature(userNoTenant, 'clientes'))
       .toThrow('Se requiere una membresía de empresa activa para acceder a este recurso');
   });
+
+  describe('features del plan Profesional', () => {
+    const basicoUser = { userId: 'u-basico', tenantId: 't-1', role: 'user', planFeatures: {} } as AuthenticatedUser;
+    const profesionalUser = { userId: 'u-pro', tenantId: 't-1', role: 'user', planFeatures: {
+      'transferencias-bancarias': true,
+      'ajustes-bancarios': true,
+      'ventas-factura': true,
+      'multi-moneda': true,
+      'facturacion': true,
+    } } as AuthenticatedUser;
+
+    const PROFESIONAL_FEATURES: Array<{ key: string; label: string }> = [
+      { key: 'transferencias-bancarias', label: 'transferencias bancarias' },
+      { key: 'ajustes-bancarios', label: 'ajustes bancarios' },
+      { key: 'ventas-factura', label: 'generar factura desde ventas' },
+      { key: 'multi-moneda', label: 'operaciones multi-moneda' },
+      { key: 'facturacion', label: 'facturación' },
+    ];
+
+    PROFESIONAL_FEATURES.forEach(({ key, label }) => {
+      it(`bloquea '${key}' para usuario sin el feature (plan Básico)`, () => {
+        expect(() => requireFeature(basicoUser, key, label))
+          .toThrowError(`Tu plan actual no incluye la funcionalidad de ${label}`);
+      });
+
+      it(`permite '${key}' para usuario con el feature (plan Profesional)`, () => {
+        expect(() => requireFeature(profesionalUser, key, label)).not.toThrow();
+      });
+    });
+  });
 })
 
 describe('role gates', () => {

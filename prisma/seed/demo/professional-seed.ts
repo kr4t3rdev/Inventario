@@ -11,15 +11,15 @@
 export interface ProfessionalSeedClient {
   moneda: { upsert: (args: any) => Promise<unknown> }
   cuentaBancaria: { upsert: (args: any) => Promise<unknown> }
-  categoria: { upsert: (args: any) => Promise<unknown> }
-  unidad: { upsert: (args: any) => Promise<unknown> }
-  vendor: { upsert: (args: any) => Promise<unknown> }
-  cliente: { upsert: (args: any) => Promise<unknown> }
-  almacen: { upsert: (args: any) => Promise<unknown> }
-  listaPrecio: { upsert: (args: any) => Promise<unknown> }
-  puntoDeVenta: { upsert: (args: any) => Promise<unknown> }
-  producto: { upsert: (args: any) => Promise<unknown> }
-  precioProducto: { upsert: (args: any) => Promise<unknown> }
+  categoria: { upsert: (args: any) => Promise<unknown>; findFirst: (args: any) => Promise<unknown> }
+  unidad: { upsert: (args: any) => Promise<unknown>; findFirst: (args: any) => Promise<unknown> }
+  vendor: { upsert: (args: any) => Promise<unknown>; findFirst: (args: any) => Promise<unknown> }
+  cliente: { upsert: (args: any) => Promise<unknown>; findFirst: (args: any) => Promise<unknown> }
+  almacen: { upsert: (args: any) => Promise<unknown>; findFirst: (args: any) => Promise<unknown> }
+  listaPrecio: { upsert: (args: any) => Promise<unknown>; findFirst: (args: any) => Promise<unknown> }
+  puntoDeVenta: { upsert: (args: any) => Promise<unknown>; findFirst: (args: any) => Promise<unknown> }
+  producto: { upsert: (args: any) => Promise<unknown>; findFirst: (args: any) => Promise<unknown> }
+  precioProducto: { upsert: (args: any) => Promise<unknown>; findFirst: (args: any) => Promise<unknown> }
   venta: {
     create: (args: any) => Promise<unknown>
     update: (args: any) => Promise<unknown>
@@ -183,9 +183,34 @@ async function seedPreciosMayoristas(client: ProfessionalSeedClient): Promise<vo
   }
 }
 
+/* ───── Integridad: verifica que datos base existan ───── */
+
+async function assertBaseSeedExists(client: ProfessionalSeedClient, tenantId: string): Promise<void> {
+  const REQUIRED_PRODUCTS = ['demo_base_arroz', 'demo_base_aceite', 'demo_base_detergente', 'demo_base_jabon'] as const
+  for (const id of REQUIRED_PRODUCTS) {
+    const p = await client.producto.findFirst({ where: { id } })
+    if (!p) {
+      throw new Error(
+        `[demo-pro] Producto base '${id}' no encontrado. ` +
+        'seedProfessionalExtras requiere que seedBaseDemoData se ejecute primero en la misma transacción.'
+      )
+    }
+  }
+  const cliente = await client.cliente.findFirst({ where: { clienteId: 'demo_base_cli_001' } })
+  if (!cliente) {
+    throw new Error('[demo-pro] Cliente base demo_base_cli_001 no encontrado. Ejecute seedBaseDemoData primero.')
+  }
+  const pv = await client.puntoDeVenta.findFirst({ where: { pvId: 'demo_base_pv' } })
+  if (!pv) {
+    throw new Error('[demo-pro] Punto de venta base demo_base_pv no encontrado. Ejecute seedBaseDemoData primero.')
+  }
+  console.log('   ✅ [demo-pro] Datos base verificados, procediendo con ventas...')
+}
+
 /* ───── Ventas demo ───── */
 
 async function seedVentasDemo(client: ProfessionalSeedClient, tenantId: string): Promise<void> {
+  await assertBaseSeedExists(client, tenantId)
   const now = new Date()
   const days = [1, 2, 3, 4, 5, 7, 8, 10]
   for (const d of days) {
