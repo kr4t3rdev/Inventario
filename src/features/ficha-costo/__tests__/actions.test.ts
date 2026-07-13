@@ -119,6 +119,97 @@ describe('getFichaCostoAction', () => {
     }
   })
 
+  it('prorratea los gastos por la cantidad de cada documento al calcular el CPP', async () => {
+    vi.mocked(getCurrentUser).mockResolvedValue(mockUser)
+    vi.mocked(prisma.producto.findFirst).mockResolvedValue({
+      id: 'prod-1',
+      nombre: 'Producto con gastos',
+      codigoInterno: 'PG-1',
+      esCompuesto: false,
+      precioCosto: 100,
+      precioVenta: 200,
+      tenantId: 'tenant-A',
+      stock: 100,
+    } as any)
+    vi.mocked(prisma.compraDocumentoItem.findMany).mockResolvedValue([
+      {
+        compraDocumentoId: 'doc-1',
+        cantidad: 10,
+        precioUnitario: 100,
+        compraDocumento: {
+          fechaCompra: new Date('2026-01-15'),
+          gastoCompraId: 'gasto-1',
+        },
+      },
+      {
+        compraDocumentoId: 'doc-2',
+        cantidad: 90,
+        precioUnitario: 100,
+        compraDocumento: {
+          fechaCompra: new Date('2026-02-15'),
+          gastoCompraId: 'gasto-2',
+        },
+      },
+    ] as any)
+    vi.mocked(prisma.gastoCompra.findMany).mockResolvedValue([
+      { gastoCompraId: 'gasto-1', total: 100, cantidad: 10 },
+      { gastoCompraId: 'gasto-2', total: 900, cantidad: 90 },
+    ] as any)
+
+    const result = await getFichaCostoAction('prod-1')
+
+    expect(result.success).toBe(true)
+    if (result.success) {
+      expect(result.data.costoCalculado.valor).toBe(110)
+    }
+  })
+
+  it('asigna solo la proporción del gasto correspondiente al producto en un documento multiproducto', async () => {
+    vi.mocked(getCurrentUser).mockResolvedValue(mockUser)
+    vi.mocked(prisma.producto.findFirst).mockResolvedValue({
+      id: 'prod-1',
+      nombre: 'Producto parcial',
+      codigoInterno: 'PP-1',
+      esCompuesto: false,
+      precioCosto: 100,
+      precioVenta: 200,
+      tenantId: 'tenant-A',
+      stock: 10,
+    } as any)
+    vi.mocked(prisma.compraDocumentoItem.findMany).mockResolvedValue([
+      {
+        compraDocumentoId: 'doc-multiproducto',
+        cantidad: 10,
+        precioUnitario: 100,
+        compraDocumento: {
+          fechaCompra: new Date('2026-01-15'),
+          gastoCompraId: 'gasto-multiproducto',
+        },
+      },
+    ] as any)
+    vi.mocked(prisma.gastoCompra.findMany).mockResolvedValue([
+      { gastoCompraId: 'gasto-multiproducto', total: 100, cantidad: 100 },
+    ] as any)
+
+    const result = await getFichaCostoAction('prod-1')
+
+    expect(result.success).toBe(true)
+    if (result.success) {
+      expect(result.data.costoCalculado.valor).toBe(101)
+    }
+
+    vi.mocked(prisma.gastoCompra.findMany).mockResolvedValue([
+      { gastoCompraId: 'gasto-multiproducto', total: 100, cantidad: 0 },
+    ] as any)
+
+    const resultConCantidadCero = await getFichaCostoAction('prod-1')
+
+    expect(resultConCantidadCero.success).toBe(true)
+    if (resultConCantidadCero.success) {
+      expect(resultConCantidadCero.data.costoCalculado.valor).toBe(100)
+    }
+  })
+
   it('agrega alerta cuando el margen es bajo', async () => {
     vi.mocked(getCurrentUser).mockResolvedValue(mockUser)
     vi.mocked(prisma.producto.findFirst).mockImplementation(

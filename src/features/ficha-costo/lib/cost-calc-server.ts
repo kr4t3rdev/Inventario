@@ -87,18 +87,17 @@ export async function calcularCostoSimpleInterno(
       })
     : []
 
-  const gastoTotalPorDoc = new Map<string, number>()
+  const gastoPorDoc = new Map<string, { total: number; cantidad: number }>()
   for (const c of compras) {
     const docId = c.compraDocumentoId
     const gastoId = c.compraDocumento?.gastoCompraId
     if (!docId || !gastoId) continue
-    if (gastoTotalPorDoc.has(docId)) continue
+    if (gastoPorDoc.has(docId)) continue
     const g = gastos.find((x) => x.gastoCompraId === gastoId)
     if (!g || !g.cantidad) continue
-    gastoTotalPorDoc.set(docId, g.total)
+    gastoPorDoc.set(docId, { total: g.total, cantidad: g.cantidad })
   }
 
-  const totalCantidad = compras.reduce((s, c) => s + c.cantidad, 0)
   const comprasInput: CompraInput[] = compras.map((c) => {
     // Asumimos CUP por línea hasta que el schema agregue `moneda`.
     const monedaLinea = 'CUP'
@@ -119,8 +118,8 @@ export async function calcularCostoSimpleInterno(
         `Sin tasa de cambio para la compra ${c.compraDocumentoId ?? ''}; se usa el precio original`.trim(),
       )
     }
-    const gastoDoc = c.compraDocumentoId ? (gastoTotalPorDoc.get(c.compraDocumentoId) ?? 0) : 0
-    const gastoProp = totalCantidad > 0 ? (gastoDoc * c.cantidad) / totalCantidad : 0
+    const gastoDoc = c.compraDocumentoId ? gastoPorDoc.get(c.compraDocumentoId) : undefined
+    const gastoProp = gastoDoc ? (gastoDoc.total * c.cantidad) / gastoDoc.cantidad : 0
     return {
       cantidad: c.cantidad,
       precioUnitario: normalizado.valor ?? c.precioUnitario,
