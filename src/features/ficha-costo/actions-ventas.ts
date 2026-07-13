@@ -4,6 +4,7 @@ import { withAction, ActionError } from '@/lib/server-actions'
 import { prisma } from '@/lib/prisma'
 import { requireTenant, requireFeature } from '@/lib/services/tenant-scope'
 import type { AuthenticatedUser } from '@/lib/auth-middleware'
+import { Prisma } from '@/generated/prisma'
 import type {
   VentasProductoData,
   VentaProductoItem,
@@ -12,6 +13,10 @@ import type {
 } from './types'
 
 const VENTAS_DEFAULT_LIMIT = 20
+
+interface CostoGlobalRow {
+  costoTotal: number
+}
 
 /**
  * @description Calcula el costo real de una venta usando las allocations
@@ -97,8 +102,20 @@ export const getVentasProductoAction = withAction(
       baseWhere.venta = { ...(baseWhere.venta as object), ...ventaWhere }
     }
 
-    // 4. Queries en paralelo: items paginados, count, aggregate.
-    const [ventaItemsRaw, total, aggregate] = await Promise.all([
+    const costoWhere: Prisma.Sql[] = [
+      Prisma.sql`v."tenantId" = ${tenantId}`,
+      Prisma.sql`v."deletedAt" IS NULL`,
+      Prisma.sql`vi."productoId" = ${input.productoId}`,
+    ]
+    if (input.fechaDesde) {
+      costoWhere.push(Prisma.sql`v."createdAt" >= ${new Date(input.fechaDesde)}`)
+    }
+    if (input.fechaHasta) {
+      costoWhere.push(Prisma.sql`v."createdAt" <= ${new Date(input.fechaHasta)}`)
+    }
+
+    // 4. Queries en paralelo: items paginados y totales globales exactos.
+    const [ventaItemsRaw, total, aggregate, costoRows] = await Promise.all([
       prisma.ventaItem.findMany({
         where: baseWhere,
         orderBy: { venta: { fecha: 'desc' } },
@@ -123,6 +140,24 @@ export const getVentasProductoAction = withAction(
         where: baseWhere,
         _sum: { cantidad: true, total: true },
       }),
+      prisma.$queryRaw<CostoGlobalRow[]>(Prisma.sql`
+        SELECT COALESCE(SUM(costos."costoItem"), 0)::double precision AS "costoTotal"
+        FROM (
+          SELECT CASE
+            WHEN COUNT(pa."id") = 0 THEN vi."cantidad"::bigint * ${producto.precioCosto}
+            ELSE COALESCE(SUM(pa."cantidad"::bigint * cdi."precioUnitario"), 0)
+          END AS "costoItem"
+          FROM "venta_items" vi
+          INNER JOIN "Venta" v ON v."ventaId" = vi."ventaId"
+          LEFT JOIN "purchase_allocations" pa
+            ON pa."ventaItemId" = vi."id" AND pa."tenantId" = ${tenantId}
+          LEFT JOIN "CompraDocumentoItem" cdi
+            ON cdi."compraDocumentoItemId" = pa."compraDocumentoItemId"
+            AND cdi."tenantId" = ${tenantId}
+          WHERE ${Prisma.join(costoWhere, ' AND ')}
+          GROUP BY vi."id", vi."cantidad"
+        ) costos
+      `),
     ])
 
     // 5. Obtener allocations de los VentaItem de la página.
@@ -186,13 +221,7 @@ export const getVentasProductoAction = withAction(
 
     // 9. Calcular resumen sobre todo el dataset filtrado.
     const totalVendido = aggregate._sum.total ?? 0
-    // Para el costo total, necesitamos calcularlo sobre todas las ventas, no solo la página.
-    // Por simplicidad y performance, usamos el promedio de la página actual.
-    // En un escenario real, se podría hacer una query adicional con todas las allocations.
-    const costoPagina = items.reduce((sum, it) => sum + it.costoReal, 0)
-    const ingresoPagina = items.reduce((sum, it) => sum + it.ingresoTotal, 0)
-    const ratioCosto = ingresoPagina > 0 ? costoPagina / ingresoPagina : 0
-    const costoTotal = totalVendido * ratioCosto
+    const costoTotal = Number(costoRows[0]?.costoTotal ?? 0)
     const margenPromedio = totalVendido > 0 ? ((totalVendido - costoTotal) / totalVendido) * 100 : 0
 
     const resumen: VentasProductoResumen = {

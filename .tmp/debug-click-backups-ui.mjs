@@ -1,0 +1,11 @@
+import { chromium } from '@playwright/test';
+const browser = await chromium.launch({ headless: true });
+const page = await browser.newPage({ viewport: { width: 1440, height: 1400 } });
+await page.goto('http://127.0.0.1:3000/admin/backups', { waitUntil: 'networkidle' });
+await page.waitForTimeout(2000);
+await page.getByRole('button', { name: 'Nueva copia' }).click();
+await page.waitForTimeout(1500);
+const body = await page.textContent('body');
+console.log(JSON.stringify({hasTitle: body?.includes('Nueva copia de seguridad'), snippet: body?.slice(0,1500)}, null, 2));
+await page.screenshot({ path: '.tmp/backups-after-click.png', fullPage: true });
+await browser.close();

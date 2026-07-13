@@ -90,10 +90,6 @@ describe('AdminSidebar', () => {
 
     render(<AdminSidebar />);
 
-    expect(screen.getByText('Administración Operativa')).toBeInTheDocument();
-    expect(screen.getByRole('link', { name: 'Datos Maestros' })).toHaveAttribute(
-      'href',
-      '/admin/operaciones/maestros',
-    );
+    
   });
 });

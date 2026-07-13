@@ -1,0 +1,69 @@
+{
+  "login": {
+    "ok": true,
+    "url": "https://kr4t3rdev.xyz/admin"
+  },
+  "dashboard": {
+    "url": "https://kr4t3rdev.xyz/admin",
+    "kpis": {
+      "totalTenants": "4",
+      "usuariosSistema": "5",
+      "sesionesActivas": "2",
+      "ingresosTotales": "$172,000",
+      "licenciasPorVencer": "0",
+      "licenciasActivas": "4"
+    },
+    "bodySnippet": "Admin Panel\nControl del sistema\nPANEL DE CONTROL\nOverview\nTenants\nFinanzas Globales\nRevenue Suscripciones\nReferidos\nMONITOR\nSalud del Sistema\nUsuarios\nLICENCIAS\nLicencias\nPlanes\nHERRAMIENTAS\nMigraciones\nBackups\nLogs de Auditoría\nIr al Negocio\nADM\nkr4t3rdev\nkr4t3r1@gmail.com\nToggle Sidebar\nPanel de Administración\nToggle theme\nPanel de Control\n\nVisión general del sistema\n\nActualizado: 2:00:15 p.m.\nActualizar\nTotal Tenants\n4\n\nEmpresas reales registradas en la plataforma\n\nUsuarios del Sistema\n5\n\nUsuarios registrados\n\nSesiones Activas\n2\n\nUsuarios con sesión abierta ahora\n\nIngresos Totales\n$172,000\n\nVentas + servicios consolidados\n\nLicencias por Vencer\n0\n\nPróximos 30 días\n\nLicencias Activas\n4\n\nde 4 totales\n\nTendencia de Ingresos (Últimos 7 días)\nEvolución diaria de ventas y servicios\nTotal: $0\nPromedio: $0/día\n06-30\n07-01\n07-02\n07-03\n07-04\n07-05\n07-06\nNuevos Usuarios (Últimos 7 días)\nRegistros diarios de usuarios\nTotal: 2\nPromedio: 0.3/día\n06-30\n07-01\n07-02\n07-03\n07-04\n07-05\n07-06\nUsuarios por Rol\nDistribución global de roles\nRegularUser\n5\nAlertas del Sistema\nProblemas que requieren atención\n\nSin alertas activas\n\nEl sistema funciona con normalidad\n\nDistribución de Tenants por Plan\nPlanes activos por empresa\nEmpresa de ReglayJuan\n2 users\nBásico\nKr4t3rdev\n1 users\nBásico\nTecnología y Electrodomésticos\n1 users\nBásico\nFound\n1 users\nBásico\nResumen Financiero\nMétricas consolidadas de la plataforma\n\nIngresos Totales\n\n$172,000\n\nGastos\n\n$50,000\n\nCuentas por Cobrar\n\n$0\n\nCuentas por Pagar\n\n$0"
+  },
+  "sistema": {
+    "values": {
+      "usuariosTotales": "5",
+      "sesionesActivas": "2",
+      "licenciasActivas": "4",
+      "porVencer": "0"
+    }
+  },
+  "tenants": {
+    "values": {
+      "totalTenants": "4",
+      "usuariosTotales": "5",
+      "licenciasActivas": "4"
+    },
+    "bodySnippet": "Admin Panel\nControl del sistema\nPANEL DE CONTROL\nOverview\nTenants\nFinanzas Globales\nRevenue Suscripciones\nReferidos\nMONITOR\nSalud del Sistema\nUsuarios\nLICENCIAS\nLicencias\nPlanes\nHERRAMIENTAS\nMigraciones\nBackups\nLogs de Auditoría\nIr al Negocio\nADM\nkr4t3rdev\nkr4t3r1@gmail.com\nToggle Sidebar\nPanel de Administración\nToggle theme\nTenants\n\nGestión de empresas y organizaciones\n\nExportar CSV\nActualizar\nTotal Tenants\n\n4\n\nUsuarios Totales\n\n5\n\nLicencias Activas\n\n4\n\nTodas las licencias\nActivas\nInactivas\nOrdenar por nombre\nOrdenar por usuarios\nOrdenar por fecha\nLista de Empresas\nTodos los tenants registrados en la plataforma\nEMPRESA\tUSUARIOS\tPRODUCTOS\tALMACENES\tPLAN\tVENTAS\tESTADO\tACCIONES\nEmpresa de ReglayJuan\t\n/2\n\t\n\t\n\tBásico\t\t\nActivo\t\n\nFound\t\n/1\n\t\n\t\n\tBásico\t\t\nActivo\t\n\nKr4t3rdev\t\n/1\n\t\n\t\n\tBásico\t\t\nActivo\t\n\nTecnología y Electrodomésticos\t\n/1\n\t\n\t\n\tBásico\t\t\nActivo\t"
+  },
+  "finanzas": {
+    "values": {
+      "ingresosTotales": "$172,000",
+      "gastosTotales": "$50,000",
+      "resultadoNeto": "$122,000",
+      "tenants": null
+    },
+    "unauthorized": false,
+    "bodySnippet": "Admin Panel\nControl del sistema\nPANEL DE CONTROL\nOverview\nTenants\nFinanzas Globales\nRevenue Suscripciones\nReferidos\nMONITOR\nSalud del Sistema\nUsuarios\nLICENCIAS\nLicencias\nPlanes\nHERRAMIENTAS\nMigraciones\nBackups\nLogs de Auditoría\nIr al Negocio\nADM\nkr4t3rdev\nkr4t3r1@gmail.com\nToggle Sidebar\nPanel de Administración\nToggle theme\nFinanzas Globales\n\nConsolidación financiera de la plataforma\n\nActualizar\nIngresos Totales\n\n$172,000\n\n10 transacciones\n\nGastos Totales\n\n$50,000\n\n1 registros\n\nResultado Neto\n\n$122,000\n\nGanancia\n\nTenants\n\n4\n\nEmpresas activas\n\nDesglose de Ingresos\nVentas y servicios por tenant\nVentas de Productos\n\n$165,200\n\n7 transacciones\n\nVentas de Servicios\n\n$6,800\n\n3 transacciones\n\nCuentas por Cobrar / Pagar\nSaldo pendiente agregado\nCuentas por Cobrar\n\n$0\n\n0 cuentas\n\nCuentas por Pagar\n\n$0\n\n0 cuentas"
+  },
+  "licencias": {
+    "values": {
+      "total": "5",
+      "activas": "4",
+      "demos": "1",
+      "porVencer": "0",
+      "expiradas": "1"
+    },
+    "bodySnippet": "Admin Panel\nControl del sistema\nPANEL DE CONTROL\nOverview\nTenants\nFinanzas Globales\nRevenue Suscripciones\nReferidos\nMONITOR\nSalud del Sistema\nUsuarios\nLICENCIAS\nLicencias\nPlanes\nHERRAMIENTAS\nMigraciones\nBackups\nLogs de Auditoría\nIr al Negocio\nADM\nkr4t3rdev\nkr4t3r1@gmail.com\nToggle Sidebar\nPanel de Administración\nToggle theme\nLicencias\n\nGestión de licencias y activaciones\n\nLimpiar Demos Expiradas\nCrear Demo\nGenerar Licencias\nTotal\n5\nActivas\n4\nDemos\n1\nPor Vencer\n0\nExpiradas\n1\nTodos los planes\nTodos\nTodos\n\tLICENCIA\tTENANT / ADMIN\tPLAN\tEXPIRACIÓN\tESTADO\tACCIONES\n\n\t\ncmr6stlxs0017p401752yiqy3\n\t\nEmpresa de ReglayJuan\nreglayjuan@gmail.com\n\t\nBásico\nOverrides\n\t\n04/07/2027\n(363d)\n\tActiva\t\nOverrides\nRevocar\n\n\n\t\ncmqxiy3fx000bnq01hpknr5p4\n\t\nBas\ncmqxiy3fn0007nq01ewx24j9d\nCreada por kr4t3rdev · 28/06/2026 04:25\n\t\nBásico\nDemo\n\t\n04/07/2026\n\tExpirada\t\nOverrides\nActivar\nConvertir\n\n\n\t\ncmqcygllo000pqm01c3apfu4u\n\t\nKr4t3rdev\ngarciamichel894@icloud.com\n\t\nBásico\n\t\n13/06/2027\n(342d)\n\tActiva\t\nOverrides\nRevocar\n\n\n\t\ncmq8fidcq0009t1011fak17lm\n\t\nTecnología y Electrodomésticos\ntamayoalejandro362@gmail.com\n\t\nBásico\n\t\n10/06/2027\n(339d)\n\tActiva\t\nOverrides\nRevocar\n\n\n\t\ncmq8f6n0p0004qk019clnxe6q\n\t\nFound\nmigadevv@gmail.com\n\t\nBásico\n\t\n10/06/2027\n(339d)\n\tActiva\t\nOverrides\nRevocar"
+  },
+  "comparisons": {
+    "dashboardVsSistema": {
+      "usuarios": true,
+      "sesiones": true,
+      "licenciasActivas": true,
+      "porVencer": true
+    },
+    "dashboardVsTenants": {
+      "totalTenants": true
+    },
+    "dashboardVsFinanzas": {
+      "ingresos": true,
+      "tenants": false
+    }
+  }
+}

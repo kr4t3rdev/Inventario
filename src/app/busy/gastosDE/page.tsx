@@ -11,6 +11,8 @@
 import { getGastosDEAction } from "@/features/gastosDE/actions"
 import { getVendorsAction } from "@/features/vendors/actions"
 import { GastosDEContent } from "@/features/gastosDE"
+import { ExpenseHealthCard } from "@/features/gastosDE/components/expense-health-card"
+import { getCurrentUser } from "@/lib/server-actions"
 import type { Vendor } from "@/app/models/model"
 
 
@@ -20,21 +22,25 @@ export const metadata = {
 
 export default async function GastosDEPage() {
   // ── Resolver datos en paralelo en el servidor ──
-  const [gastosDEResult, vendorsResult] = await Promise.all([
+  const [gastosDEResult, vendorsResult, user] = await Promise.all([
     getGastosDEAction({}),
     getVendorsAction(),
+    getCurrentUser(),
   ])
 
   const initialGastosDE = gastosDEResult.success ? gastosDEResult.data ?? [] : []
   const initialVendors = vendorsResult.success ? vendorsResult.data ?? [] : []
 
   return (
-    <GastosDEContent
-  // @ts-expect-error
+    <div className="space-y-6">
+      {user?.role === 'admin' ? <ExpenseHealthCard userRole="admin" /> : null}
+      <GastosDEContent
+  // @ts-expect-error -- InitialGastosDE type mismatches GastosDEContent pending migration
       initialGastosDE={
       initialGastosDE
       }
       initialVendors={initialVendors}
     />
+    </div>
   )
 }

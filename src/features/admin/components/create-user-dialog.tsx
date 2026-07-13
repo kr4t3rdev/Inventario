@@ -36,12 +36,14 @@ interface CreateUserFormState {
   daysToExpire: string;
 }
 
+const AUTO_TENANT_ROLE = 'auto';
+
 const INITIAL_FORM_STATE: CreateUserFormState = {
   name: '',
   email: '',
   password: '',
   role: 'regularUser',
-  tenantRole: '',
+  tenantRole: AUTO_TENANT_ROLE,
   daysToExpire: '',
 };
 
@@ -74,7 +76,10 @@ export function CreateUserDialog({ open, onClose }: CreateUserDialogProps): Reac
       email: formData.email.trim(),
       password: formData.password,
       role: formData.role,
-      tenantRole: formData.tenantRole || undefined,
+      tenantRole:
+        formData.tenantRole && formData.tenantRole !== AUTO_TENANT_ROLE
+          ? formData.tenantRole
+          : undefined,
       daysToExpire: Number.isNaN(parsedDays) ? undefined : parsedDays,
     });
 
@@ -210,7 +215,7 @@ export function CreateUserDialog({ open, onClose }: CreateUserDialogProps): Reac
                     <SelectValue placeholder="Auto-asignado" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="">Auto-asignado</SelectItem>
+                    <SelectItem value={AUTO_TENANT_ROLE}>Auto-asignado</SelectItem>
                     <SelectItem value="manager">Manager / Director</SelectItem>
                     <SelectItem value="economico">Económico</SelectItem>
                     <SelectItem value="dependiente">Dependiente</SelectItem>

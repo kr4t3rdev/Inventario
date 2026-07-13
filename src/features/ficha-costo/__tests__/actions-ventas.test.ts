@@ -8,6 +8,7 @@ vi.mock('@/lib/services/tenant-scope', () => ({
 
 vi.mock('@/lib/prisma', () => ({
   prisma: {
+    $queryRaw: vi.fn(),
     producto: { findFirst: vi.fn() },
     ventaItem: { findMany: vi.fn(), count: vi.fn(), aggregate: vi.fn() },
     purchaseAllocation: { findMany: vi.fn() },
@@ -47,6 +48,7 @@ const VENTA_ITEM_BASE = {
 describe('getVentasProductoAction', () => {
   beforeEach(() => {
     vi.clearAllMocks()
+    vi.mocked(prisma.$queryRaw).mockResolvedValue([{ costoTotal: 0 }] as any)
   })
 
   it('happy path: 3 ventas con allocations FIFO → costoReal calculado', async () => {
@@ -76,6 +78,7 @@ describe('getVentasProductoAction', () => {
       { compraDocumentoItemId: 'cdi-2', precioUnitario: 60 },
       { compraDocumentoItemId: 'cdi-3', precioUnitario: 60 },
     ] as any)
+    vi.mocked(prisma.$queryRaw).mockResolvedValue([{ costoTotal: 1800 }] as any)
 
     // Act
     const result = await getVentasProductoAction({ productoId: 'prod-1' })
@@ -369,6 +372,84 @@ describe('getVentasProductoAction', () => {
     if (result.success) {
       expect(result.data.resumen.totalVendido).toBe(25000)
       expect(result.data.resumen.cantidadVentas).toBe(25)
+    }
+  })
+
+  it('mantiene el resumen global al paginar entre mezclas de costo diferentes', async () => {
+    vi.mocked(getCurrentUser).mockResolvedValue(mockUser)
+    vi.mocked(prisma.producto.findFirst).mockResolvedValue({
+      id: 'prod-1',
+      precioCosto: 50,
+    } as any)
+    vi.mocked(prisma.ventaItem.findMany).mockImplementation((args: any) => {
+      return Promise.resolve([
+        {
+          ...VENTA_ITEM_BASE,
+          ventaItemId: args?.skip === 0 ? 'vi-low' : 'vi-high',
+        },
+      ]) as any
+    })
+    vi.mocked(prisma.ventaItem.count).mockResolvedValue(2)
+    vi.mocked(prisma.ventaItem.aggregate).mockResolvedValue({
+      _sum: { cantidad: 20, total: 2000 },
+    } as any)
+    vi.mocked(prisma.purchaseAllocation.findMany).mockImplementation((args: any) => {
+      const ventaItemId = args.where.ventaItemId.in[0]
+      return Promise.resolve([
+        {
+          ventaItemId,
+          compraDocumentoItemId: ventaItemId === 'vi-low' ? 'cdi-low' : 'cdi-high',
+          cantidad: 10,
+        },
+      ]) as any
+    })
+    vi.mocked(prisma.compraDocumentoItem.findMany).mockImplementation((args: any) => {
+      const compraId = args.where.compraDocumentoItemId.in[0]
+      return Promise.resolve([
+        {
+          compraDocumentoItemId: compraId,
+          precioUnitario: compraId === 'cdi-low' ? 10 : 90,
+        },
+      ]) as any
+    })
+    vi.mocked(prisma.$queryRaw).mockResolvedValue([{ costoTotal: 1000 }] as any)
+
+    const paginaUno = await getVentasProductoAction({ productoId: 'prod-1', page: 1, limit: 1 })
+    const paginaDos = await getVentasProductoAction({ productoId: 'prod-1', page: 2, limit: 1 })
+
+    expect(paginaUno.success).toBe(true)
+    expect(paginaDos.success).toBe(true)
+    if (paginaUno.success && paginaDos.success) {
+      expect(paginaUno.data.items[0].costoReal).toBe(100)
+      expect(paginaDos.data.items[0].costoReal).toBe(900)
+      expect(paginaUno.data.resumen.costoTotal).toBe(1000)
+      expect(paginaDos.data.resumen).toEqual(paginaUno.data.resumen)
+      expect(paginaUno.data.resumen.margenPromedio).toBe(50)
+    }
+  })
+
+  it('conserva el costo global cuando la página solicitada está vacía', async () => {
+    vi.mocked(getCurrentUser).mockResolvedValue(mockUser)
+    vi.mocked(prisma.producto.findFirst).mockResolvedValue({
+      id: 'prod-1',
+      precioCosto: 50,
+    } as any)
+    vi.mocked(prisma.ventaItem.findMany).mockResolvedValue([])
+    vi.mocked(prisma.ventaItem.count).mockResolvedValue(2)
+    vi.mocked(prisma.ventaItem.aggregate).mockResolvedValue({
+      _sum: { cantidad: 20, total: 2000 },
+    } as any)
+    vi.mocked(prisma.purchaseAllocation.findMany).mockResolvedValue([])
+    vi.mocked(prisma.compraDocumentoItem.findMany).mockResolvedValue([])
+    vi.mocked(prisma.$queryRaw).mockResolvedValue([{ costoTotal: 1000 }] as any)
+
+    const result = await getVentasProductoAction({ productoId: 'prod-1', page: 3, limit: 1 })
+
+    expect(result.success).toBe(true)
+    if (result.success) {
+      expect(result.data.items).toEqual([])
+      expect(result.data.resumen.costoTotal).toBe(1000)
+      expect(result.data.resumen.margenPromedio).toBe(50)
     }
   })
 })

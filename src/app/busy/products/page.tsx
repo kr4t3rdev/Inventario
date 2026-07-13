@@ -4,6 +4,7 @@ import { getPuntosDeVentaAction } from "@/features/puntos-venta"
 import { prisma } from "@/lib/prisma"
 import { getCurrentUser } from "@/lib/server-actions"
 import { ProductosContent } from "@/features/productos/components/productos-content"
+import { MastersHealthCard } from "@/features/productos/components/masters-health-card"
 import type { Producto } from "@/features/productos/types"
 
 /**
@@ -32,11 +33,13 @@ export default async function ProductosPage() {
 
   // ── Configuración de empresa y rol ──
   let usaEan13 = false
+  let isGlobalAdmin = false
   let tenantRole: string | undefined
   let planFeatures: Record<string, boolean> | undefined
   try {
     const user = await getCurrentUser()
     if (user) {
+      isGlobalAdmin = user.role === 'admin'
       tenantRole = user.tenantRole
       planFeatures = user.planFeatures
       const empresa = await prisma.miEmpresa.findFirst({
@@ -54,13 +57,16 @@ export default async function ProductosPage() {
   const initialPuntosVenta = puntosVentaResult.success ? puntosVentaResult.data ?? [] : []
 
   return (
-    <ProductosContent
-      initialProductos={initialProductos}
-      initialAlmacenes={initialAlmacenes}
-      initialPuntosVenta={initialPuntosVenta}
-      usaEan13={usaEan13}
-      tenantRole={tenantRole}
-      planFeatures={planFeatures}
-    />
+    <div className="space-y-6">
+      {isGlobalAdmin ? <MastersHealthCard userRole="admin" /> : null}
+      <ProductosContent
+        initialProductos={initialProductos}
+        initialAlmacenes={initialAlmacenes}
+        initialPuntosVenta={initialPuntosVenta}
+        usaEan13={usaEan13}
+        tenantRole={tenantRole}
+        planFeatures={planFeatures}
+      />
+    </div>
   )
 }

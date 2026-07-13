@@ -499,34 +499,7 @@ export default function AdminDashboardPage(): React.JSX.Element {
             </motion.div>
           </div>
 
-          <motion.div
-            className="px-4 lg:px-6"
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.58, duration: 0.5 }}
-          >
-            <Card className="rounded-xl border bg-card/80 backdrop-blur-sm shadow-sm">
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2 text-base">
-                  <Activity className="h-4 w-4 text-violet-600" />
-                  Administración Operativa
-                </CardTitle>
-                <CardDescription>
-                  Ir a las matrices globales de salud para maestros, ventas, compras, mermas,
-                  facturación, ofertas y gastos.
-                </CardDescription>
-              </CardHeader>
-              <CardContent className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-                <p className="text-sm text-muted-foreground">
-                  Entrá al espacio operativo para detectar tenants inactivos, baja formalización,
-                  catálogos débiles y gastos sin contexto.
-                </p>
-                <Button asChild>
-                  <Link href="/admin/operaciones/maestros">Abrir matrices operativas</Link>
-                </Button>
-              </CardContent>
-            </Card>
-          </motion.div>
+          
 
           {/* Tenant consumption stats */}
           <motion.div

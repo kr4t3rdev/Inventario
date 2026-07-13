@@ -40,6 +40,7 @@ import { useAuth } from '@/contexts/auth-context';
 import { cn } from '@/lib/utils';
 import { canAccessAccountingItem } from '@/lib/plan-access';
 import { DeudasCashStatsWidget } from '@/features/contabilidad/components/deudas-cash-stats-widget';
+import { AccountingHealthCard } from '@/features/contabilidad/components/accounting-health-card';
 
 
 const ResumenFinanciero = dynamic(() =>
@@ -286,6 +287,7 @@ export default function ContabilidadDashboard(): React.JSX.Element {
 
   return (
     <PageTransition className="relative min-h-screen w-full">
+      {user?.role === 'admin' ? <AccountingHealthCard userRole={user.role} /> : null}
       {/* Background Decor */}
       <div className="fixed inset-0 pointer-events-none overflow-hidden -z-10">
         <div className="absolute top-0 left-1/4 w-96 h-96  rounded-full blur-3xl mix-blend-multiply dark:mix-blend-screen animate-blob" />

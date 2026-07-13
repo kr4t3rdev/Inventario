@@ -13,3 +13,5 @@ export {
 export {
   restockProductoAction,
 } from './actions-restock'
+export { getMastersHealthAction } from './actions-health'
+export type { MastersHealthMetrics } from './actions-health'

@@ -1,0 +1,13 @@
+{
+  "steps": [
+    {
+      "step": "goto-admin",
+      "url": "https://kr4t3rdev.xyz/admin",
+      "title": "FinanceMDM"
+    }
+  ],
+  "bodySnippet": "Admin Panel\nControl del sistema\nPANEL DE CONTROL\nOverview\nTenants\nFinanzas Globales\nRevenue Suscripciones\nReferidos\nMONITOR\nSalud del Sistema\nUsuarios\nLICENCIAS\nLicencias\nPlanes\nHERRAMIENTAS\nMigraciones\nBackups\nLogs de Auditoría\nIr al Negocio\nToggle Sidebar\nPanel de Administración\nToggle theme\nPanel de Control\n\nVisión general del sistema\n\nActualizado: 1:48:04 p.m.\nActualizar\nTotal Tenants\n0\n\nEmpresas reales registradas en la plataforma\n\nUsuarios del Sistema\n0\n\nUsuarios registrados\n\nSesiones Activas\n0\n\nUsuarios con sesión abierta ahora\n\nIngresos Totales\n-\n\nVentas + servicios consolidados\n\nLicencias por Vencer\n0\n\nPróximos 30 días\n\nLicencias Activas\n0\n\nde 0 totales\n\nTendencia de Ingresos (Últimos 7 días)\nEvolución diaria de ventas y servicios\nNo hay datos de ingresos disponibles\nNuevos Usuarios (Últimos 7 días)\nRegistros diarios de usuarios\nNo hay datos de usuarios disponibles\nUsuarios por Rol\nDistribución global de roles\nAlertas del Sistema\nProblemas que requieren atención\n\nSin alertas activas\n\nEl sistema funciona con normalidad\n\nDistribución de Tenants por Plan\nPlanes activos por empresa\nResumen Financiero\nMétricas consolidadas de la plataforma\nNo hay datos financieros disponibles",
+  "loggedIn": true,
+  "loginPage": false,
+  "cardText": []
+}

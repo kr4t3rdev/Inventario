@@ -21,6 +21,16 @@ export default defineConfig({
       '**/*.live.test.ts',
       '**/*.live.test.tsx',
     ],
+    coverage: {
+      provider: 'v8',
+      include: ['src/**/*.{ts,tsx}'],
+      exclude: [
+        'src/generated/**',
+        'src/**/*.d.ts',
+        'src/**/*.test.{ts,tsx}',
+        'src/test/**',
+      ],
+    },
   },
   resolve: {
     alias: {

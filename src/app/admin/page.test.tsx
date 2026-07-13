@@ -100,21 +100,5 @@ describe('/admin page', () => {
     });
   });
 
-  it('shows a discoverability CTA for operational matrices on the admin dashboard', async () => {
-    render(<AdminDashboardPage />);
-
-    await waitFor(() => {
-      expect(screen.getByText('Panel de Control')).toBeInTheDocument();
-    });
-
-    expect(screen.getByText('Administración Operativa')).toBeInTheDocument();
-    expect(
-      screen.getByText(
-        'Ir a las matrices globales de salud para maestros, ventas, compras, mermas, facturación, ofertas y gastos.',
-      ),
-    ).toBeInTheDocument();
-    expect(
-      screen.getByRole('link', { name: 'Abrir matrices operativas' }),
-    ).toHaveAttribute('href', '/admin/operaciones/maestros');
-  });
+  
 });

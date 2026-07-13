@@ -40,12 +40,14 @@ interface EditUserFormState {
   daysToExpire: string;
 }
 
+const NO_TENANT_ROLE = 'none';
+
 const INITIAL_FORM_STATE: EditUserFormState = {
   name: '',
   email: '',
   password: '',
   role: 'regularUser',
-  tenantRole: '',
+  tenantRole: NO_TENANT_ROLE,
   isActive: true,
   daysToExpire: '',
 };
@@ -70,7 +72,7 @@ export function EditUserDialog({ open, onClose, user }: EditUserDialogProps): Re
       email: user.email || '',
       password: '',
       role: (user.role as EditUserFormState['role']) || 'regularUser',
-      tenantRole: user.tenantRole || '',
+      tenantRole: user.tenantRole || NO_TENANT_ROLE,
       isActive: Boolean(user.isActive),
       daysToExpire: '',
     });
@@ -119,7 +121,9 @@ export function EditUserDialog({ open, onClose, user }: EditUserDialogProps): Re
       isActive: formData.isActive,
     };
     if (formData.password) payload.password = formData.password;
-    if (formData.tenantRole) payload.tenantRole = formData.tenantRole;
+    if (formData.tenantRole && formData.tenantRole !== NO_TENANT_ROLE) {
+      payload.tenantRole = formData.tenantRole;
+    }
     if (parsedDays && !Number.isNaN(parsedDays)) payload.daysToExpire = parsedDays;
 
     const validation = updateUserBodySchema.safeParse(payload);
@@ -245,13 +249,14 @@ export function EditUserDialog({ open, onClose, user }: EditUserDialogProps): Re
                 <div className="space-y-2">
                   <Label htmlFor="edit-tenant-role">Rol en el tenant</Label>
                   <Select
-                    value={formData.tenantRole || ''}
+                    value={formData.tenantRole}
                     onValueChange={handleTenantRoleChange}
                   >
                     <SelectTrigger id="edit-tenant-role" className="h-11 border-slate-200 bg-white/60 dark:border-slate-700 dark:bg-slate-800/50">
                       <SelectValue placeholder="Sin cambio" />
                     </SelectTrigger>
                     <SelectContent>
+                      <SelectItem value={NO_TENANT_ROLE}>Sin cambio</SelectItem>
                       <SelectItem value="manager">Manager</SelectItem>
                       <SelectItem value="admin">Administrador</SelectItem>
                       <SelectItem value="economico">Económico</SelectItem>

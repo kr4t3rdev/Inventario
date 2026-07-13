@@ -729,6 +729,7 @@ export function AdminUsersTable({
 						<TableRow className="bg-linear-to-r from-primary/10 via-purple-600/5 to-primary/10">
 							<TableHead className="w-12">
 								<button
+									type="button"
 									onClick={toggleSelectAll}
 									className="flex items-center justify-center w-full h-full hover:opacity-80 transition-opacity"
 									title={
@@ -749,6 +750,7 @@ export function AdminUsersTable({
 							).map((col) => (
 								<TableHead key={col.key}>
 									<button
+										type="button"
 										onClick={() => handleSort(col.key)}
 										className="flex items-center gap-1 font-medium hover:text-foreground/80 transition-colors"
 									>
@@ -762,6 +764,7 @@ export function AdminUsersTable({
 							<TableHead>Estado</TableHead>
 							<TableHead>
 								<button
+									type="button"
 									onClick={() => handleSort("createdAt")}
 									className="flex items-center gap-1 font-medium hover:text-foreground/80 transition-colors"
 								>
@@ -770,6 +773,7 @@ export function AdminUsersTable({
 							</TableHead>
 							<TableHead>
 								<button
+									type="button"
 									onClick={() => handleSort("expiresAt")}
 									className="flex items-center gap-1 font-medium hover:text-foreground/80 transition-colors"
 								>
@@ -798,6 +802,7 @@ export function AdminUsersTable({
 									>
 										<TableCell>
 											<button
+												type="button"
 												onClick={() => toggleSelectUser(candidate.userId)}
 												className="flex items-center justify-center w-full h-full hover:opacity-80 transition-opacity"
 												title={isSelected ? "Deseleccionar" : "Seleccionar"}
@@ -867,6 +872,7 @@ export function AdminUsersTable({
 													candidate.onboardingStatus ===
 														"awaiting_global_approval" && (
 														<Button
+															type="button"
 															variant="outline"
 															size="sm"
 															onClick={() => onApproveUser(candidate)}
@@ -877,6 +883,7 @@ export function AdminUsersTable({
 													)}
 												{onAddTenantMembership && (
 													<Button
+														type="button"
 														variant="outline"
 														size="sm"
 														onClick={() => onAddTenantMembership(candidate)}
@@ -887,6 +894,7 @@ export function AdminUsersTable({
 													</Button>
 												)}
 												<Button
+													type="button"
 													variant="outline"
 													size="sm"
 													onClick={() => onEditUser(candidate)}
@@ -916,8 +924,9 @@ export function AdminUsersTable({
 														</AlertDialogHeader>
 														<AlertDialogFooter>
 															<AlertDialogCancel>Cancelar</AlertDialogCancel>
-															<Button
-																onClick={() =>
+														<Button
+															type="button"
+															onClick={() =>
 																	handleDeleteUser(candidate.userId)
 																}
 																variant="destructive"

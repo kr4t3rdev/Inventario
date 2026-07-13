@@ -90,6 +90,22 @@ function signAuthTokens(
   };
 }
 
+async function updateUserAuthFields(
+  userId: string,
+  data: {
+    loginAttempts?: number;
+    lastFailedLogin?: Date | null;
+    lockedUntil?: Date | null;
+    expiresAt?: Date | null;
+    isActive?: boolean;
+  },
+): Promise<void> {
+  await prisma.user.updateMany({
+    where: { userId },
+    data,
+  });
+}
+
 function toPublicUser(
   user: {
     userId: string;
@@ -211,15 +227,12 @@ export const AuthService = {
       const newAttempts = (user.loginAttempts || 0) + 1;
       const shouldLock = newAttempts >= MAX_LOGIN_ATTEMPTS;
 
-      await prisma.user.update({
-        where: { userId: user.userId },
-        data: {
-          loginAttempts: newAttempts,
-          lastFailedLogin: new Date(),
-          lockedUntil: shouldLock
-            ? new Date(Date.now() + LOCK_TIME_MINUTES * 60 * 1000)
-            : null,
-        },
+      await updateUserAuthFields(user.userId, {
+        loginAttempts: newAttempts,
+        lastFailedLogin: new Date(),
+        lockedUntil: shouldLock
+          ? new Date(Date.now() + LOCK_TIME_MINUTES * 60 * 1000)
+          : null,
       });
 
       await notifyAdminsAboutFailedLogin(user, newAttempts, shouldLock);
@@ -235,9 +248,10 @@ export const AuthService = {
       );
     }
 
-    await prisma.user.update({
-      where: { userId: user.userId },
-      data: { loginAttempts: 0, lockedUntil: null, lastFailedLogin: null },
+    await updateUserAuthFields(user.userId, {
+      loginAttempts: 0,
+      lockedUntil: null,
+      lastFailedLogin: null,
     });
 
     let tenantContext: Awaited<ReturnType<typeof resolveTenantContext>> = null;
@@ -245,9 +259,8 @@ export const AuthService = {
       tenantContext = await resolveTenantContext(user.userId, client.tenantId ?? null);
 
       if (tenantContext) {
-        await prisma.user.update({
-          where: { userId: user.userId },
-          data: { expiresAt: tenantContext.licenseExpiresAt ?? null },
+        await updateUserAuthFields(user.userId, {
+          expiresAt: tenantContext.licenseExpiresAt ?? null,
         });
       } else if (client.tenantId) {
         throw new ActionError(
@@ -329,9 +342,8 @@ export const AuthService = {
     }
 
     if (user.expiresAt && new Date(user.expiresAt) < new Date()) {
-      await prisma.user.update({
-        where: { userId: user.userId },
-        data: { isActive: false },
+      await updateUserAuthFields(user.userId, {
+        isActive: false,
       });
       throw new ActionError('Licencia expirada', 'USER_INACTIVE');
     }

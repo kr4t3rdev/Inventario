@@ -65,9 +65,27 @@ export async function getAdminUsersPageData(): Promise<AdminUsersPageData | null
 		prisma.user.findMany({
 			take: 100,
 			orderBy: { createdAt: "desc" },
-			include: {
+			select: {
+				userId: true,
+				name: true,
+				email: true,
+				role: true,
+				onboardingStatus: true,
+				onboardingType: true,
+				isActive: true,
+				lockedUntil: true,
+				expiresAt: true,
+				createdAt: true,
+				loginAttempts: true,
 				tenantMemberships: {
-					include: { tenant: { select: { nombre: true } } },
+					select: {
+						tenantId: true,
+						tenantRole: true,
+						isActive: true,
+						tenant: {
+							select: { nombre: true },
+						},
+					},
 				},
 				_count: {
 					select: { tenantMemberships: true },

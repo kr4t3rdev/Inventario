@@ -66,7 +66,40 @@ export const getUsersAction = withAction(
 	async (_input: void, user: AuthenticatedUser) => {
 		if (user.role !== "admin")
 			throw new ActionError("Acceso restringido", "FORBIDDEN");
-		return prisma.user.findMany({ orderBy: { createdAt: "desc" } });
+		return prisma.user.findMany({
+			orderBy: { createdAt: "desc" },
+			select: {
+				userId: true,
+				name: true,
+				email: true,
+				role: true,
+				isActive: true,
+				onboardingType: true,
+				onboardingStatus: true,
+				createdAt: true,
+				updatedAt: true,
+				activatedAt: true,
+				expiresAt: true,
+				avatar: true,
+				lastModifiedBy: true,
+				lockedUntil: true,
+				loginAttempts: true,
+				lastFailedLogin: true,
+				tenantMemberships: {
+					where: { isActive: true },
+					select: {
+						tenantId: true,
+						tenantRole: true,
+					},
+					take: 1,
+				},
+			},
+		}).then((users) =>
+			users.map((user) => ({
+				...user,
+				tenantRole: user.tenantMemberships[0]?.tenantRole ?? null,
+			})),
+		);
 	},
 );
 
@@ -144,7 +177,10 @@ export const updateUserAction = withAction(
 		const parsed = updateUserSchema.parse(input);
 		const { userId, ...data } = parsed;
 
-		const existing = await prisma.user.findUnique({ where: { userId } });
+		const existing = await prisma.user.findUnique({
+			where: { userId },
+			select: { userId: true },
+		});
 		if (!existing) throw new ActionError("Usuario no encontrado", "NOT_FOUND");
 
 		const updateData: Record<string, any> = {};
@@ -160,9 +196,30 @@ export const updateUserAction = withAction(
 		if (data.password)
 			updateData.password = await bcrypt.hash(data.password, 12);
 
-		const updated = await prisma.user.update({
+		await prisma.user.updateMany({
 			where: { userId },
 			data: updateData,
+		});
+		const updated = await prisma.user.findUnique({
+			where: { userId },
+			select: {
+				userId: true,
+				name: true,
+				email: true,
+				role: true,
+				isActive: true,
+				onboardingType: true,
+				onboardingStatus: true,
+				createdAt: true,
+				updatedAt: true,
+				activatedAt: true,
+				expiresAt: true,
+				avatar: true,
+				lastModifiedBy: true,
+				lockedUntil: true,
+				loginAttempts: true,
+				lastFailedLogin: true,
+			},
 		});
 		revalidatePath("/admin");
 		return updated;
@@ -173,9 +230,12 @@ export const deleteUserAction = withAction(
 	async (userId: string, user: AuthenticatedUser) => {
 		if (user.role !== "admin")
 			throw new ActionError("Acceso restringido", "FORBIDDEN");
-		const existing = await prisma.user.findUnique({ where: { userId } });
+		const existing = await prisma.user.findUnique({
+			where: { userId },
+			select: { userId: true },
+		});
 		if (!existing) throw new ActionError("Usuario no encontrado", "NOT_FOUND");
-		await prisma.user.delete({ where: { userId } });
+		await prisma.user.deleteMany({ where: { userId } });
 		revalidatePath("/admin");
 		return { success: true, userId };
 	},
@@ -188,11 +248,16 @@ export const lockUserAction = withAction(
 		const parsed = lockUnlockSchema.parse(input);
 		const existing = await prisma.user.findUnique({
 			where: { userId: parsed.userId },
+			select: { userId: true },
 		});
 		if (!existing) throw new ActionError("Usuario no encontrado", "NOT_FOUND");
-		const updated = await prisma.user.update({
+		await prisma.user.updateMany({
 			where: { userId: parsed.userId },
 			data: { lockedUntil: new Date(Date.now() + 24 * 60 * 60 * 1000) },
+		});
+		const updated = await prisma.user.findUnique({
+			where: { userId: parsed.userId },
+			select: { userId: true, lockedUntil: true, loginAttempts: true },
 		});
 		revalidatePath("/admin");
 		return { user: updated, message: "Usuario bloqueado por 24 horas" };
@@ -206,11 +271,16 @@ export const unlockUserAction = withAction(
 		const parsed = lockUnlockSchema.parse(input);
 		const existing = await prisma.user.findUnique({
 			where: { userId: parsed.userId },
+			select: { userId: true },
 		});
 		if (!existing) throw new ActionError("Usuario no encontrado", "NOT_FOUND");
-		const updated = await prisma.user.update({
+		await prisma.user.updateMany({
 			where: { userId: parsed.userId },
 			data: { lockedUntil: null, loginAttempts: 0 },
+		});
+		const updated = await prisma.user.findUnique({
+			where: { userId: parsed.userId },
+			select: { userId: true, lockedUntil: true, loginAttempts: true },
 		});
 		revalidatePath("/admin");
 		return { user: updated, message: "Usuario desbloqueado correctamente" };
@@ -286,9 +356,26 @@ export const getGlobalUsersAction = withAction(
 		const rawUsers = await prisma.user.findMany({
 			take: input.limit || 100,
 			orderBy: { createdAt: "desc" },
-			include: {
+			select: {
+				userId: true,
+				name: true,
+				email: true,
+				role: true,
+				isActive: true,
+				onboardingType: true,
+				onboardingStatus: true,
+				createdAt: true,
+				expiresAt: true,
+				lockedUntil: true,
+				avatar: true,
 				tenantMemberships: {
-					include: { tenant: true },
+					select: {
+						tenantId: true,
+						tenantRole: true,
+						tenant: {
+							select: { nombre: true },
+						},
+					},
 					take: 5,
 				},
 				_count: {
