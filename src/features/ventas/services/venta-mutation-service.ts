@@ -36,6 +36,11 @@ export const VentaMutationService = {
       );
     }
 
+    // ventas-factura: gate específico para ventas que generan factura
+    if (parsed.clienteId) {
+      requireFeature(user, 'ventas-factura', 'generar factura desde ventas');
+    }
+
     let turnoId: string | null = parsed.turnoId ?? null;
     if (!turnoId) {
       const turnoResult = await getOrCreateTurnoActivo({

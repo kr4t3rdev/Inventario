@@ -8,9 +8,6 @@ import { AccountingOperationsMutationService } from "@/features/contabilidad/ser
 import type { AuthenticatedUser } from "@/lib/auth-middleware";
 
 
-function requireAdvancedAccountingAccess(user: AuthenticatedUser, action: string): void {
-  requireFeature(user, 'contabilidad', action);
-}
  
 
 export const getTransferenciasBancariasAction = withAction(
@@ -18,7 +15,7 @@ export const getTransferenciasBancariasAction = withAction(
 		params: { fechaInicio?: string; fechaFin?: string; cuentaId?: string } = {},
 		user: AuthenticatedUser,
 	) => {
-		requireAdvancedAccountingAccess(user, 'consultar transferencias bancarias');
+		requireFeature(user, 'transferencias-bancarias', 'consultar transferencias bancarias');
 		return AccountingOperationsReadService.getBankTransfers(params);
 	},
 );
@@ -488,7 +485,7 @@ export const validarTransferenciaAction = withAction(
 		},
 		_user: AuthenticatedUser,
 	) => {
-		requireAdvancedAccountingAccess(_user, 'validar transferencias bancarias');
+		requireFeature(_user, 'transferencias-bancarias', 'validar transferencias bancarias');
 		return AccountingOperationsMutationService.validateBankTransfer(input);
 	},
 );
@@ -510,7 +507,7 @@ export const createTransferenciaBancariaAction = withAction(
 			},
 			user: AuthenticatedUser,
 		) => {
-			requireAdvancedAccountingAccess(user, 'registrar transferencias bancarias');
+			requireFeature(user, 'transferencias-bancarias', 'registrar transferencias bancarias');
 			return AccountingOperationsMutationService.createBankTransfer({
 				input,
 				user,

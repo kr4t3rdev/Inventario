@@ -14,10 +14,6 @@ import type { AuthenticatedUser } from '@/lib/auth-middleware';
 import { requireFeature } from '@/lib/services/tenant-scope';
 
 
-function guardAdvancedBasicAccounting(user: AuthenticatedUser, action: string): void {
-  requireFeature(user, 'contabilidad', action);
-}
-
 const createSchema = z.object({
   cuentaId: z.string().min(1, 'ID de cuenta es requerido'),
   tipo: z.enum(['ingreso', 'egreso']),
@@ -28,7 +24,7 @@ const createSchema = z.object({
 });
 
 export const getAjustesByCuentaAction = withAction(async (params: { cuentaId: string; page?: number; limit?: number; fechaInicio?: string; fechaFin?: string; tipo?: string }, user: AuthenticatedUser) => {
-  guardAdvancedBasicAccounting(user, 'gestionar ajustes bancarios');
+  requireFeature(user, 'ajustes-bancarios', 'gestionar ajustes bancarios');
   return AccountingOperationsReadService.getBankAdjustments(params);
 });
 
@@ -36,7 +32,7 @@ export const createAjusteBancarioAction = withAction(withPeriodValidation(
   // Ajustes bancarios usan la fecha actual como fecha de negocio
   () => new Date(),
   async (input: z.infer<typeof createSchema>, user: AuthenticatedUser) => {
-    guardAdvancedBasicAccounting(user, 'registrar ajustes bancarios');
+    requireFeature(user, 'ajustes-bancarios', 'registrar ajustes bancarios');
     const result = await AccountingOperationsMutationService.createBankAdjustment({
       input,
       user,
