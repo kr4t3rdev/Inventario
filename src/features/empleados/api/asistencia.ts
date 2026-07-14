@@ -2,7 +2,7 @@ import { type NextRequest, NextResponse } from "next/server"
 import { prisma } from "@/lib/prisma"
 import { z } from "zod"
 import { Decimal } from "@/generated/prisma/runtime/library"
-import { requireManagerRole, requireTenant } from "@/lib/services/tenant-scope"
+import { requireManagerRole, requireTenant, requireFeature } from "@/lib/services/tenant-scope"
 import type { AuthenticatedUser } from "@/lib/auth-middleware"
 
 const asistenciaSchema = z.object({
@@ -96,6 +96,7 @@ export async function getAsistenciaHandler(
   user: AuthenticatedUser,
 ) {
   try {
+    requireFeature(user, 'asistencia', 'gestionar asistencia');
     const tenantId = requireTenant(user);
     const { searchParams } = new URL(request.url);
     const employeeId = searchParams.get("employeeId");
@@ -180,6 +181,7 @@ export async function postAsistenciaHandler(
   user: AuthenticatedUser,
 ) {
   try {
+    requireFeature(user, 'asistencia', 'gestionar asistencia');
     requireManagerRole(user, "registrar asistencia");
     const tenantId = requireTenant(user);
     const body = await request.json();
@@ -323,6 +325,7 @@ export async function getAsistenciaByIdHandler(
   user: AuthenticatedUser,
 ) {
   try {
+    requireFeature(user, 'asistencia', 'gestionar asistencia');
     const tenantId = requireTenant(user);
     const { id } = await params;
 
@@ -362,6 +365,7 @@ export async function updateAsistenciaHandler(
   user: AuthenticatedUser,
 ) {
   try {
+    requireFeature(user, 'asistencia', 'gestionar asistencia');
     requireManagerRole(user, "editar asistencia");
     const tenantId = requireTenant(user);
     const { id } = await params;
@@ -432,6 +436,7 @@ export async function deleteAsistenciaHandler(
   user: AuthenticatedUser,
 ) {
   try {
+    requireFeature(user, 'asistencia', 'gestionar asistencia');
     requireManagerRole(user, "eliminar asistencia");
     const tenantId = requireTenant(user);
     const { id } = await params;

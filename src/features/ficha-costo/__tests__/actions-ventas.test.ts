@@ -32,7 +32,7 @@ const mockUser: AuthenticatedUser = {
 }
 
 const VENTA_ITEM_BASE = {
-  ventaItemId: 'vi-1',
+  id: 'vi-1',
   ventaId: 'v-1',
   productoId: 'prod-1',
   cantidad: 10,
@@ -40,7 +40,7 @@ const VENTA_ITEM_BASE = {
   total: 1000,
   venta: {
     ventaId: 'v-1',
-    fecha: new Date('2026-05-01'),
+    createdAt: new Date('2026-05-01'),
     cliente: { nombre: 'Cliente A' },
   },
 }
@@ -59,9 +59,9 @@ describe('getVentasProductoAction', () => {
       precioCosto: 50,
     } as any)
     vi.mocked(prisma.ventaItem.findMany).mockResolvedValue([
-      { ...VENTA_ITEM_BASE, ventaItemId: 'vi-1', ventaId: 'v-1' },
-      { ...VENTA_ITEM_BASE, ventaItemId: 'vi-2', ventaId: 'v-2' },
-      { ...VENTA_ITEM_BASE, ventaItemId: 'vi-3', ventaId: 'v-3' },
+      { ...VENTA_ITEM_BASE, id: 'vi-1', ventaId: 'v-1' },
+      { ...VENTA_ITEM_BASE, id: 'vi-2', ventaId: 'v-2' },
+      { ...VENTA_ITEM_BASE, id: 'vi-3', ventaId: 'v-3' },
     ] as any)
     vi.mocked(prisma.ventaItem.count).mockResolvedValue(3)
     vi.mocked(prisma.ventaItem.aggregate).mockResolvedValue({
@@ -87,6 +87,8 @@ describe('getVentasProductoAction', () => {
     expect(result.success).toBe(true)
     if (result.success) {
       expect(result.data.items).toHaveLength(3)
+      expect(result.data.items[0].ventaItemId).toBe('vi-1')
+      expect(result.data.items[0].fecha).toBe('2026-05-01T00:00:00.000Z')
       // Cada venta: ingreso 1000, costo 600 (10 * 60), margen 40%
       expect(result.data.items[0].costoReal).toBe(600)
       expect(result.data.items[0].margenReal).toBeCloseTo(40, 1)
@@ -104,7 +106,7 @@ describe('getVentasProductoAction', () => {
       precioCosto: 50,
     } as any)
     vi.mocked(prisma.ventaItem.findMany).mockResolvedValue([
-      { ...VENTA_ITEM_BASE, ventaItemId: 'vi-1' },
+      { ...VENTA_ITEM_BASE, id: 'vi-1' },
     ] as any)
     vi.mocked(prisma.ventaItem.count).mockResolvedValue(1)
     vi.mocked(prisma.ventaItem.aggregate).mockResolvedValue({
@@ -208,12 +210,24 @@ describe('getVentasProductoAction', () => {
       expect.objectContaining({
         where: expect.objectContaining({
           venta: expect.objectContaining({
-            fecha: expect.objectContaining({
+            createdAt: expect.objectContaining({
               gte: new Date('2026-03-01'),
             }),
           }),
         }),
       }),
+    )
+    const costoQuery = vi.mocked(prisma.$queryRaw).mock.calls[0][0] as {
+      sql: string
+      values: unknown[]
+    }
+    expect(costoQuery.sql).toContain('v."createdAt" >=')
+    expect(costoQuery.values).toEqual(
+      expect.arrayContaining([
+        'tenant-A',
+        'prod-1',
+        new Date('2026-03-01'),
+      ]),
     )
   })
 
@@ -243,12 +257,24 @@ describe('getVentasProductoAction', () => {
       expect.objectContaining({
         where: expect.objectContaining({
           venta: expect.objectContaining({
-            fecha: expect.objectContaining({
+            createdAt: expect.objectContaining({
               lte: new Date('2026-03-31'),
             }),
           }),
         }),
       }),
+    )
+    const costoQuery = vi.mocked(prisma.$queryRaw).mock.calls[0][0] as {
+      sql: string
+      values: unknown[]
+    }
+    expect(costoQuery.sql).toContain('v."createdAt" <=')
+    expect(costoQuery.values).toEqual(
+      expect.arrayContaining([
+        'tenant-A',
+        'prod-1',
+        new Date('2026-03-31'),
+      ]),
     )
   })
 
@@ -261,7 +287,7 @@ describe('getVentasProductoAction', () => {
     } as any)
     const itemsPagina2 = Array.from({ length: 10 }, (_, i) => ({
       ...VENTA_ITEM_BASE,
-      ventaItemId: `vi-${i + 11}`,
+      id: `vi-${i + 11}`,
     }))
     vi.mocked(prisma.ventaItem.findMany).mockImplementation((args: any) => {
       if (args?.skip === 10 && args?.take === 10) {
@@ -344,7 +370,7 @@ describe('getVentasProductoAction', () => {
     } as any)
     const itemsPagina1 = Array.from({ length: 10 }, (_, i) => ({
       ...VENTA_ITEM_BASE,
-      ventaItemId: `vi-${i + 1}`,
+      id: `vi-${i + 1}`,
     }))
     vi.mocked(prisma.ventaItem.findMany).mockImplementation((args: any) => {
       if (args?.skip === 0 && args?.take === 10) {
@@ -385,7 +411,7 @@ describe('getVentasProductoAction', () => {
       return Promise.resolve([
         {
           ...VENTA_ITEM_BASE,
-          ventaItemId: args?.skip === 0 ? 'vi-low' : 'vi-high',
+          id: args?.skip === 0 ? 'vi-low' : 'vi-high',
         },
       ]) as any
     })

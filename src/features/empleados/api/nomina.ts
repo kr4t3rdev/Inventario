@@ -3,7 +3,7 @@ import { prisma } from "@/lib/prisma"
 import { z } from "zod"
 import { VacationAccrualService } from "@/lib/vacation-accrual-service"
 import { calculatePayrollFormulas, getPayrollConfig } from "@/lib/payroll-formulas"
-import { requireManagerRole, requireTenant } from "@/lib/services/tenant-scope"
+import { requireManagerRole, requireTenant, requireFeature } from "@/lib/services/tenant-scope"
 import type { AuthenticatedUser } from "@/lib/auth-middleware"
 
 const calculatePayrollSchema = z.object({
@@ -21,6 +21,7 @@ export async function getNominaHandler(
   user: AuthenticatedUser,
 ) {
   try {
+    requireFeature(user, 'nomina', 'gestionar nómina');
     const tenantId = requireTenant(user);
     const { searchParams } = new URL(request.url);
     const periodo = searchParams.get("periodo");
@@ -69,6 +70,7 @@ export async function calculateNominaHandler(
   user: AuthenticatedUser,
 ) {
   try {
+    requireFeature(user, 'nomina', 'gestionar nómina');
     requireManagerRole(user, "calcular nómina");
     const tenantId = requireTenant(user);
     const body = await request.json();
@@ -270,6 +272,7 @@ export async function getNominaByIdHandler(
   user: AuthenticatedUser,
 ) {
   try {
+    requireFeature(user, 'nomina', 'gestionar nómina');
     const tenantId = requireTenant(user);
     const { id } = await params;
 
@@ -310,6 +313,7 @@ export async function updateNominaHandler(
   user: AuthenticatedUser,
 ) {
   try {
+    requireFeature(user, 'nomina', 'gestionar nómina');
     requireManagerRole(user, "editar nómina");
     const tenantId = requireTenant(user);
     const { id } = await params;
@@ -365,6 +369,7 @@ export async function deleteNominaHandler(
   user: AuthenticatedUser,
 ) {
   try {
+    requireFeature(user, 'nomina', 'gestionar nómina');
     requireManagerRole(user, "eliminar nómina");
     const tenantId = requireTenant(user);
     const { id } = await params;

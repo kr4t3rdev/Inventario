@@ -144,7 +144,7 @@ export const getAsistenciaAction = withAction(
 		},
 		user: AuthenticatedUser,
 	) => {
-		requireFeature(user, 'empleados', 'gestionar empleados');
+		requireFeature(user, 'asistencia', 'gestionar asistencia');
 		const tenantId = requireTenant(user);
 		const where: any = { employee: { tenantId } };
 
@@ -229,7 +229,7 @@ export const registerAsistenciaAction = withAction(
 		input: z.infer<typeof registerAsistenciaSchema>,
 		user: AuthenticatedUser,
 	) => {
-		requireFeature(user, 'empleados', 'gestionar empleados');
+		requireFeature(user, 'asistencia', 'gestionar asistencia');
 		requireManagerRole(user, "registrar asistencia");
 		const tenantId = requireTenant(user);
 		const parsed = registerAsistenciaSchema.parse(input);
@@ -314,7 +314,7 @@ export const updateAsistenciaAction = withAction(
 		input: z.infer<typeof manualAsistenciaSchema>,
 		user: AuthenticatedUser,
 	) => {
-		requireFeature(user, 'empleados', 'gestionar empleados');
+		requireFeature(user, 'asistencia', 'gestionar asistencia');
 		requireManagerRole(user, "editar asistencia");
 		const tenantId = requireTenant(user);
 		const parsed = manualAsistenciaSchema.parse(input);
@@ -394,7 +394,7 @@ export const getVacacionesAction = withAction(
 		input: { employeeId?: string; status?: string },
 		user: AuthenticatedUser,
 	) => {
-		requireFeature(user, 'empleados', 'gestionar empleados');
+		requireFeature(user, 'vacaciones', 'gestionar vacaciones');
 		const tenantId = requireTenant(user);
 		const where: any = { employee: { tenantId } };
 		if (input.employeeId) where.employeeId = input.employeeId;
@@ -436,7 +436,7 @@ export const createVacacionAction = withAction(
 		input: z.infer<typeof createVacacionSchema>,
 		user: AuthenticatedUser,
 	) => {
-		requireFeature(user, 'empleados', 'gestionar empleados');
+		requireFeature(user, 'vacaciones', 'gestionar vacaciones');
 		requireManagerRole(user, "crear solicitudes de vacaciones");
 		const tenantId = requireTenant(user);
 		const parsed = createVacacionSchema.parse(input);
@@ -536,7 +536,7 @@ export const getNominaAction = withAction(
 		input: { periodo?: string; employeeId?: string } = {},
 		user: AuthenticatedUser,
 	) => {
-		requireFeature(user, 'empleados', 'gestionar empleados');
+		requireFeature(user, 'nomina', 'gestionar nómina');
 		const tenantId = requireTenant(user);
 		return prisma.pagosalario.findMany({
 			where: {
@@ -562,7 +562,7 @@ export const calculateNominaAction = withAction(
 		input: z.infer<typeof calculateNominaSchema>,
 		user: AuthenticatedUser,
 	) => {
-		requireFeature(user, 'empleados', 'gestionar empleados');
+		requireFeature(user, 'nomina', 'gestionar nómina');
 		requireManagerRole(user, "calcular nómina");
 		const tenantId = requireTenant(user);
 		const parsed = calculateNominaSchema.parse(input);

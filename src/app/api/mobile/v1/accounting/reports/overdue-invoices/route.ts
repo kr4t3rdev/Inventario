@@ -1,4 +1,5 @@
 import { authenticateUser } from '@/lib/auth-middleware';
+import { requireFeature } from '@/lib/services/tenant-scope';
 import { errorResponse, successResponse } from '@/lib/api-response';
 import { AccountingReportsService } from '@/features/contabilidad/services/accounting-reports-service';
 
@@ -11,7 +12,9 @@ export async function GET(request: Request) {
   try {
     const user = authResult.user;
 
-    if (user.role !== 'admin' && user.planFeatures?.['facturas-vencidas'] !== true) {
+    try {
+      requireFeature(user, 'facturas-vencidas', 'reporte de facturas vencidas');
+    } catch {
       return errorResponse('Tu plan actual no incluye reporte de facturas vencidas.', 403, 'FORBIDDEN');
     }
 

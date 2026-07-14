@@ -2,7 +2,7 @@ import { type NextRequest, NextResponse } from "next/server"
 import { prisma } from "@/lib/prisma"
 import { z } from "zod"
 import { VacationAccrualService } from "@/lib/vacation-accrual-service"
-import { requireManagerRole, requireTenant } from "@/lib/services/tenant-scope"
+import { requireManagerRole, requireTenant, requireFeature } from "@/lib/services/tenant-scope"
 import type { AuthenticatedUser } from "@/lib/auth-middleware"
 
 const vacationRequestSchema = z.object({
@@ -18,6 +18,7 @@ export async function getVacacionesHandler(
   user: AuthenticatedUser,
 ) {
   try {
+    requireFeature(user, 'vacaciones', 'gestionar vacaciones');
     const tenantId = requireTenant(user);
     const { searchParams } = new URL(request.url);
     const employeeId = searchParams.get("employeeId");
@@ -69,6 +70,7 @@ export async function createVacacionHandler(
   user: AuthenticatedUser,
 ) {
   try {
+    requireFeature(user, 'vacaciones', 'gestionar vacaciones');
     requireManagerRole(user, "crear solicitudes de vacaciones");
     const tenantId = requireTenant(user);
     const body = await request.json();
@@ -221,6 +223,7 @@ export async function getVacacionByIdHandler(
   user: AuthenticatedUser,
 ) {
   try {
+    requireFeature(user, 'vacaciones', 'gestionar vacaciones');
     const tenantId = requireTenant(user);
     const { id } = await params;
 
@@ -262,6 +265,7 @@ export async function updateVacacionHandler(
   user: AuthenticatedUser,
 ) {
   try {
+    requireFeature(user, 'vacaciones', 'gestionar vacaciones');
     requireManagerRole(user, "aprobar o rechazar vacaciones");
     const tenantId = requireTenant(user);
     const { id } = await params;
@@ -341,6 +345,7 @@ export async function deleteVacacionHandler(
   user: AuthenticatedUser,
 ) {
   try {
+    requireFeature(user, 'vacaciones', 'gestionar vacaciones');
     requireManagerRole(user, "eliminar solicitudes de vacaciones");
     const tenantId = requireTenant(user);
     const { id } = await params;
@@ -391,6 +396,7 @@ export async function getVacacionAccumulacionHandler(
   user: AuthenticatedUser,
 ) {
   try {
+    requireFeature(user, 'vacaciones', 'gestionar vacaciones');
     const tenantId = requireTenant(user);
     const { searchParams } = new URL(request.url);
     const employeeId = searchParams.get("employeeId");
@@ -432,6 +438,7 @@ export async function calculateVacacionAccumulacionHandler(
   user: AuthenticatedUser,
 ) {
   try {
+    requireFeature(user, 'vacaciones', 'gestionar vacaciones');
     requireManagerRole(user, "calcular acumulación de vacaciones");
     const tenantId = requireTenant(user);
     const body = await request.json();
@@ -491,6 +498,7 @@ export async function getMassAccrualHandler(
   user: AuthenticatedUser,
 ) {
   try {
+    requireFeature(user, 'vacaciones', 'gestionar vacaciones');
     const tenantId = requireTenant(user);
     const { searchParams } = new URL(request.url);
     const periodo = searchParams.get("periodo") || new Date().toISOString().slice(0, 7);
@@ -567,6 +575,7 @@ export async function massAccrualHandler(
   user: AuthenticatedUser,
 ) {
   try {
+    requireFeature(user, 'vacaciones', 'gestionar vacaciones');
     requireManagerRole(user, "calcular acumulación masiva de vacaciones");
     const tenantId = requireTenant(user);
     const body = await request.json();

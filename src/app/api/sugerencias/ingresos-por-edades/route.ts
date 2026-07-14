@@ -1,5 +1,6 @@
 import { type NextRequest, NextResponse } from 'next/server';
 import { authenticateUser } from '@/lib/auth-middleware';
+import { requireFeature } from '@/lib/services/tenant-scope';
 import { AccountingReportsService } from '@/features/contabilidad/services/accounting-reports-service';
 
 export async function GET(request: NextRequest) {
@@ -8,7 +9,9 @@ export async function GET(request: NextRequest) {
     if ('status' in authResultUser) return authResultUser as Response;
     const user = authResultUser.user;
 
-    if (user.role !== 'admin' && user.planFeatures?.['facturas-vencidas'] !== true) {
+    try {
+      requireFeature(user, 'facturas-vencidas', 'reporte de facturas vencidas');
+    } catch {
       return NextResponse.json(
         { error: 'Tu plan actual no incluye reporte de facturas vencidas.' },
         { status: 403 },

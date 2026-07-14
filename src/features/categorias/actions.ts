@@ -172,8 +172,9 @@ export const createCategoriaAction = withAction(
 		requireFeature(user, "categorias", "gestión de categorías");
 		// Validación Zod — si falla, withAction atrapa el ZodError
 		const parsed = categoriaCreateSchema.parse(input);
-		const categoriasEan13Habilitado =
-			user.role === "admin" || user.planFeatures?.["categorias-ean13"] === true;
+		if (parsed.clasSectionId || parsed.clasSpecificId) {
+			requireFeature(user, 'categorias-ean13', 'clasificación EAN-13');
+		}
 
 		const tenantId = requireTenant(user);
 
@@ -181,7 +182,7 @@ export const createCategoriaAction = withAction(
 		const validation = await CategoriaValidator.validateCategoryCreation(
 			parsed,
 			tenantId,
-			{ skipEan13Validation: !categoriasEan13Habilitado },
+			{ skipEan13Validation: false },
 		);
 		if (!validation.success) {
 			throw new ActionError(
@@ -219,8 +220,9 @@ export const updateCategoriaAction = withAction(
 		// Validación Zod
 		const parsed = categoriaUpdateSchema.parse(input);
 		const { catId, ...updateData } = parsed;
-		const categoriasEan13Habilitado =
-			user.role === "admin" || user.planFeatures?.["categorias-ean13"] === true;
+		if (updateData.clasSectionId || updateData.clasSpecificId) {
+			requireFeature(user, 'categorias-ean13', 'clasificación EAN-13');
+		}
 
 		const tenantId = requireTenant(user);
 
@@ -239,7 +241,7 @@ export const updateCategoriaAction = withAction(
 			catId,
 			updateData,
 			tenantId,
-			{ skipEan13Validation: !categoriasEan13Habilitado },
+			{ skipEan13Validation: false },
 		);
 		if (!validation.success) {
 			throw new ActionError(

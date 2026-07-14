@@ -93,10 +93,16 @@ export const getVentasProductoAction = withAction(
     }
     const ventaWhere: Record<string, unknown> = {}
     if (input.fechaDesde) {
-      ventaWhere.fecha = { ...((ventaWhere.fecha as object) ?? {}), gte: new Date(input.fechaDesde) }
+      ventaWhere.createdAt = {
+        ...((ventaWhere.createdAt as object) ?? {}),
+        gte: new Date(input.fechaDesde),
+      }
     }
     if (input.fechaHasta) {
-      ventaWhere.fecha = { ...((ventaWhere.fecha as object) ?? {}), lte: new Date(input.fechaHasta) }
+      ventaWhere.createdAt = {
+        ...((ventaWhere.createdAt as object) ?? {}),
+        lte: new Date(input.fechaHasta),
+      }
     }
     if (Object.keys(ventaWhere).length > 0) {
       baseWhere.venta = { ...(baseWhere.venta as object), ...ventaWhere }
@@ -118,18 +124,18 @@ export const getVentasProductoAction = withAction(
     const [ventaItemsRaw, total, aggregate, costoRows] = await Promise.all([
       prisma.ventaItem.findMany({
         where: baseWhere,
-        orderBy: { venta: { fecha: 'desc' } },
+        orderBy: { venta: { createdAt: 'desc' } },
         skip,
         take: limit,
         select: {
-          ventaItemId: true,
+          id: true,
           ventaId: true,
           cantidad: true,
           precioUnitario: true,
           total: true,
           venta: {
             select: {
-              fecha: true,
+              createdAt: true,
               cliente: { select: { nombre: true } },
             },
           },
@@ -161,7 +167,7 @@ export const getVentasProductoAction = withAction(
     ])
 
     // 5. Obtener allocations de los VentaItem de la página.
-    const ventaItemIds = ventaItemsRaw.map((vi) => vi.ventaItemId)
+    const ventaItemIds = ventaItemsRaw.map((vi) => vi.id)
     const allocations =
       ventaItemIds.length > 0
         ? await prisma.purchaseAllocation.findMany({
@@ -194,9 +200,9 @@ export const getVentasProductoAction = withAction(
 
     // 8. Calcular costoReal y margenReal por venta.
     const items: VentaProductoItem[] = ventaItemsRaw.map((vi) => {
-      const allocs = allocationsPorVenta.get(vi.ventaItemId) ?? []
+      const allocs = allocationsPorVenta.get(vi.id) ?? []
       const { costoReal, esLegacy } = calcularCostoFifoItem(
-        vi.ventaItemId,
+        vi.id,
         allocs,
         comprasMap,
         producto.precioCosto,
@@ -206,9 +212,9 @@ export const getVentasProductoAction = withAction(
       const margenReal = ingresoTotal > 0 ? ((ingresoTotal - costoReal) / ingresoTotal) * 100 : 0
 
       return {
-        ventaItemId: vi.ventaItemId,
+        ventaItemId: vi.id,
         ventaId: vi.ventaId,
-        fecha: vi.venta.fecha.toISOString(),
+        fecha: vi.venta.createdAt.toISOString(),
         clienteNombre: vi.venta.cliente?.nombre ?? 'Cliente genérico',
         cantidad: vi.cantidad,
         precioUnitario: vi.precioUnitario,

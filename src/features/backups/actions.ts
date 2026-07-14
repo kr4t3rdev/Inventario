@@ -11,6 +11,7 @@
 
 import { revalidatePath } from 'next/cache'
 import { withAction, ActionError } from '@/lib/server-actions'
+import { requireFeature } from '@/lib/services/tenant-scope'
 import { prisma } from '@/lib/prisma'
 import { BackupEngine, validateBackupFile } from './backup-engine'
 import { RestoreEngine } from './restore-engine'
@@ -42,7 +43,7 @@ import type { AuthenticatedUser } from '@/lib/auth-middleware'
 export const createBackupAction = withAction(
   async (input: CreateBackupInput, user: AuthenticatedUser) => {
     if (user.role !== 'admin') {
-      throw new ActionError('Acceso restringido', 'FORBIDDEN')
+      requireFeature(user, 'backups-tiempo-real', 'gestión de backups');
     }
 
     const parsed = createBackupSchema.parse(input)
@@ -104,7 +105,7 @@ export const createBackupAction = withAction(
 export const getBackupsAction = withAction(
   async (input: GetBackupsInput, user: AuthenticatedUser) => {
     if (user.role !== 'admin') {
-      throw new ActionError('Acceso restringido', 'FORBIDDEN')
+      requireFeature(user, 'backups-tiempo-real', 'gestión de backups');
     }
 
     const parsed = getBackupsSchema.parse(input)
@@ -152,7 +153,7 @@ export const getBackupsAction = withAction(
 export const getBackupAction = withAction(
   async (input: { backupLogId: string }, user: AuthenticatedUser) => {
     if (user.role !== 'admin') {
-      throw new ActionError('Acceso restringido', 'FORBIDDEN')
+      requireFeature(user, 'backups-tiempo-real', 'gestión de backups');
     }
 
     const log = await prisma.backupLog.findUnique({
@@ -192,7 +193,7 @@ export const getBackupAction = withAction(
 export const getBackupStatusAction = withAction(
   async (input: { backupLogId: string }, user: AuthenticatedUser) => {
     if (user.role !== 'admin') {
-      throw new ActionError('Acceso restringido', 'FORBIDDEN')
+      requireFeature(user, 'backups-tiempo-real', 'gestión de backups');
     }
 
     const log = await prisma.backupLog.findUnique({
@@ -228,7 +229,7 @@ export const getBackupStatusAction = withAction(
 export const importBackupAction = withAction(
   async (input: ImportBackupInput, user: AuthenticatedUser) => {
     if (user.role !== 'admin') {
-      throw new ActionError('Acceso restringido', 'FORBIDDEN')
+      requireFeature(user, 'backups-tiempo-real', 'gestión de backups');
     }
 
     const parsed = importBackupSchema.parse(input)
@@ -309,7 +310,7 @@ export const importBackupAction = withAction(
 export const deleteBackupAction = withAction(
   async (input: { backupLogId: string }, user: AuthenticatedUser) => {
     if (user.role !== 'admin') {
-      throw new ActionError('Acceso restringido', 'FORBIDDEN')
+      requireFeature(user, 'backups-tiempo-real', 'gestión de backups');
     }
 
     const parsed = deleteBackupSchema.parse(input)
@@ -355,7 +356,7 @@ export const deleteBackupAction = withAction(
 export const downloadBackupAction = withAction(
   async (input: { backupLogId: string }, user: AuthenticatedUser) => {
     if (user.role !== 'admin') {
-      throw new ActionError('Acceso restringido', 'FORBIDDEN')
+      requireFeature(user, 'backups-tiempo-real', 'gestión de backups');
     }
 
     const log = await prisma.backupLog.findUnique({
@@ -409,7 +410,7 @@ export const downloadBackupAction = withAction(
 export const restoreBackupAction = withAction(
   async (input: RestoreBackupInput, user: AuthenticatedUser) => {
     if (user.role !== 'admin') {
-      throw new ActionError('Acceso restringido', 'FORBIDDEN')
+      requireFeature(user, 'backups-tiempo-real', 'gestión de backups');
     }
 
     const parsed = restoreBackupSchema.parse(input)

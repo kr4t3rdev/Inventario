@@ -10,6 +10,7 @@
 
 import { revalidatePath } from 'next/cache'
 import { withAction, ActionError } from '@/lib/server-actions'
+import { requireFeature } from '@/lib/services/tenant-scope'
 import { prisma } from '@/lib/prisma'
 import { createPlanSchema, updatePlanSchema } from './schemas'
 import { calculateNextRun } from './cron-utils'
@@ -26,7 +27,7 @@ import type { AuthenticatedUser } from '@/lib/auth-middleware'
 export const createPlanAction = withAction(
   async (input: CreatePlanInput, user: AuthenticatedUser) => {
     if (user.role !== 'admin') {
-      throw new ActionError('Acceso restringido', 'FORBIDDEN')
+      requireFeature(user, 'backups-tiempo-real', 'gestión de backups');
     }
 
     const parsed = createPlanSchema.parse(input)
@@ -72,7 +73,7 @@ export const createPlanAction = withAction(
 export const updatePlanAction = withAction(
   async (input: UpdatePlanInput, user: AuthenticatedUser) => {
     if (user.role !== 'admin') {
-      throw new ActionError('Acceso restringido', 'FORBIDDEN')
+      requireFeature(user, 'backups-tiempo-real', 'gestión de backups');
     }
 
     const parsed = updatePlanSchema.parse(input)
@@ -113,7 +114,7 @@ export const updatePlanAction = withAction(
 export const deletePlanAction = withAction(
   async (input: { planId: string }, user: AuthenticatedUser) => {
     if (user.role !== 'admin') {
-      throw new ActionError('Acceso restringido', 'FORBIDDEN')
+      requireFeature(user, 'backups-tiempo-real', 'gestión de backups');
     }
 
     const plan = await prisma.backupPlan.findUnique({
@@ -143,7 +144,7 @@ export const deletePlanAction = withAction(
 export const getPlansAction = withAction(
   async (_input: void, user: AuthenticatedUser) => {
     if (user.role !== 'admin') {
-      throw new ActionError('Acceso restringido', 'FORBIDDEN')
+      requireFeature(user, 'backups-tiempo-real', 'gestión de backups');
     }
 
     const plans = await prisma.backupPlan.findMany({
