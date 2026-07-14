@@ -120,26 +120,13 @@ export function reconciliarHistorial(
     options.ventanaMeses,
   )
 
-  // 1. Marcar enVentanaCPP y calcular gastoProporcional.
-  const reconciliados: ItemReconciliado[] = items.map((it) => {
-    const enVentanaCPP = it.fecha >= fechaInicioVentana
+  // Precalcular asignaciones documentales una sola vez. El mapa permite que
+  // cada línea se procese en O(1), incluso cuando un documento tiene muchas
+  // líneas o el historial contiene miles de filas.
+  const gastoPorDocumento = options.gastosPorDocumento
 
-    let gastoProporcional = 0
-    const gastoDoc = options.gastosPorDocumento?.get(it.compraDocumentoId)
-    if (gastoDoc && gastoDoc.total > 0 && gastoDoc.cantidad > 0) {
-      gastoProporcional = (it.cantidad / gastoDoc.cantidad) * gastoDoc.total
-    }
-
-    return {
-      ...it,
-      enVentanaCPP,
-      gastoProporcional,
-      tasaAproximada: it.tasaAproximada ?? false,
-    }
-  })
-
-  // 2. Agrupar items en ventana por proveedor.
-  const itemsEnVentana = reconciliados.filter((it) => it.enVentanaCPP)
+  // Marcar enVentanaCPP, calcular gastoProporcional y agrupar en una pasada.
+  const reconciliados: ItemReconciliado[] = []
   const grupos = new Map<
     string,
     {
@@ -151,9 +138,25 @@ export function reconciliarHistorial(
     }
   >()
 
-  for (const it of itemsEnVentana) {
-    const monto =
-      it.cantidad * it.precioUnitario + it.gastoProporcional
+  for (const it of items) {
+    const enVentanaCPP = it.fecha >= fechaInicioVentana
+
+    let gastoProporcional = 0
+    const gastoDoc = gastoPorDocumento?.get(it.compraDocumentoId)
+    if (gastoDoc && gastoDoc.total > 0 && gastoDoc.cantidad > 0) {
+      gastoProporcional = (it.cantidad / gastoDoc.cantidad) * gastoDoc.total
+    }
+
+    const reconciliado = {
+      ...it,
+      enVentanaCPP,
+      gastoProporcional,
+      tasaAproximada: it.tasaAproximada ?? false,
+    }
+    reconciliados.push(reconciliado)
+    if (!enVentanaCPP) continue
+
+    const monto = it.cantidad * it.precioUnitario + gastoProporcional
     const existente = grupos.get(it.proveedorId)
     if (existente) {
       existente.cantidadTotal += it.cantidad
@@ -170,7 +173,7 @@ export function reconciliarHistorial(
     }
   }
 
-  // 3. Calcular participacionPorcentaje sobre el monto total general.
+  // Calcular participacionPorcentaje sobre el monto total general.
   const montoTotalGeneral = Array.from(grupos.values()).reduce(
     (s, g) => s + g.montoTotal,
     0,

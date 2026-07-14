@@ -269,14 +269,15 @@ export const getHistorialReconciliadoAction = withAction(
     const itemsPaginadosIds = new Set(
       itemsPaginadosRaw.map((it) => it.compraDocumentoItemId),
     )
+    const itemsPaginadosPorId = new Map(
+      itemsPaginadosRaw.map((item) => [item.compraDocumentoItemId, item]),
+    )
     const itemsReconciliadosPaginados: HistorialReconciliadoItem[] =
       resultado.items
         .filter((it) => itemsPaginadosIds.has(it.compraDocumentoItemId))
         .map((it) => {
           // Buscar datos del join para los campos de la fila.
-          const raw = itemsPaginadosRaw.find(
-            (r) => r.compraDocumentoItemId === it.compraDocumentoItemId,
-          )
+          const raw = itemsPaginadosPorId.get(it.compraDocumentoItemId)
           return {
             compraDocumentoItemId: it.compraDocumentoItemId,
             fecha: it.fecha.toISOString(),
