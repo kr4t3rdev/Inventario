@@ -1,6 +1,15 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { getSugerenciasPrecioAction, aplicarSugerenciaPrecioAction } from '../actions-sugerencias'
 
+const { mockRequireManagerRole, mockRequireFeature } = vi.hoisted(() => ({
+  mockRequireManagerRole: vi.fn((user: { tenantRole?: string }) => {
+    if (user.tenantRole !== 'manager') {
+      throw new Error('No tienes permisos para aplicar precios sugeridos')
+    }
+  }),
+  mockRequireFeature: vi.fn(),
+}))
+
 vi.mock('@/lib/prisma', () => ({
   prisma: {
     producto: { findMany: vi.fn(), update: vi.fn() },
@@ -11,7 +20,8 @@ vi.mock('@/lib/prisma', () => ({
 vi.mock('@/lib/server-actions', () => ({ withAction: (fn: any) => fn }))
 vi.mock('@/lib/services/tenant-scope', () => ({
   requireTenant: vi.fn(() => 'tenant-1'),
-  requireFeature: vi.fn(),
+  requireManagerRole: mockRequireManagerRole,
+  requireFeature: mockRequireFeature,
 }))
 vi.mock('@/lib/cost-history-utils', () => ({
   recordCostChange: vi.fn(() => Promise.resolve({ id: 'h-1', productoId: 'p1' })),
@@ -22,7 +32,11 @@ vi.mock('next/cache', () => ({ revalidatePath: vi.fn() }))
 import { prisma } from '@/lib/prisma'
 import { recordCostChange } from '@/lib/cost-history-utils'
 
-const mockUser = { userId: 'user-1', tenantId: 'tenant-1' } as any
+const mockUser = {
+  userId: 'user-1',
+  tenantId: 'tenant-1',
+  tenantRole: 'manager',
+} as any
 
 describe('getSugerenciasPrecioAction', () => {
   beforeEach(() => {
@@ -89,6 +103,24 @@ describe('aplicarSugerenciaPrecioAction', () => {
     vi.mocked(prisma.productoCostSheetTemplate.findMany).mockResolvedValue([])
   })
 
+  it('rechaza usuarios no-manager antes de modificar precios o registrar auditoría', async () => {
+    const nonManagerUser = { ...mockUser, tenantRole: 'economico' }
+
+    await expect(
+      aplicarSugerenciaPrecioAction({ productoIds: ['p1'] }, nonManagerUser),
+    ).rejects.toThrow('No tienes permisos')
+
+    expect(prisma.producto.findMany).not.toHaveBeenCalled()
+    expect(prisma.$transaction).not.toHaveBeenCalled()
+    expect(prisma.producto.update).not.toHaveBeenCalled()
+    expect(recordCostChange).not.toHaveBeenCalled()
+    expect(mockRequireManagerRole).toHaveBeenCalledWith(
+      nonManagerUser,
+      'aplicar precios sugeridos',
+    )
+    expect(mockRequireFeature).not.toHaveBeenCalled()
+  })
+
   it('aplica precio sugerido y registra auditoría', async () => {
     vi.mocked(prisma.producto.findMany).mockResolvedValue([
       { id: 'p1', nombre: 'A', precioCosto: 100, precioVenta: 120 },
@@ -106,5 +138,34 @@ describe('aplicarSugerenciaPrecioAction', () => {
       expect.anything(),
       expect.objectContaining({ reason: 'MANUAL_EDIT' }),
     )
+    expect(mockRequireManagerRole).toHaveBeenCalledWith(
+      mockUser,
+      'aplicar precios sugeridos',
+    )
+    expect(mockRequireFeature).toHaveBeenCalledWith(
+      mockUser,
+      'ficha-costo-bulk',
+      'aplicar precios sugeridos',
+    )
+  })
+
+  it('no expone detalles internos cuando falla la actualización', async () => {
+    const dbError = new Error('Prisma P2025: tabla Producto detalle sensible')
+    const consoleError = vi.spyOn(console, 'error').mockImplementation(() => undefined)
+    vi.mocked(prisma.producto.findMany).mockResolvedValue([
+      { id: 'p1', precioCosto: 100, precioVenta: 120 },
+    ] as any)
+    vi.mocked(prisma.$transaction).mockRejectedValue(dbError)
+
+    const data = await aplicarSugerenciaPrecioAction({ productoIds: ['p1'] }, mockUser)
+
+    expect(data.errors).toEqual([
+      { productoId: 'p1', message: 'No se pudo aplicar el precio sugerido' },
+    ])
+    expect(consoleError).toHaveBeenCalledWith(
+      'Error aplicando sugerencia de precio',
+      expect.objectContaining({ productoId: 'p1', tenantId: 'tenant-1', error: dbError }),
+    )
+    consoleError.mockRestore()
   })
 })

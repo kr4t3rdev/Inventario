@@ -3,7 +3,11 @@
 import { revalidatePath } from 'next/cache'
 import { withAction } from '@/lib/server-actions'
 import { prisma } from '@/lib/prisma'
-import { requireTenant, requireFeature } from '@/lib/services/tenant-scope'
+import {
+  requireTenant,
+  requireManagerRole,
+  requireFeature,
+} from '@/lib/services/tenant-scope'
 import { recordCostChange, CostChangeReason } from '@/lib/cost-history-utils'
 import type { AuthenticatedUser } from '@/lib/auth-middleware'
 
@@ -104,6 +108,7 @@ export const aplicarSugerenciaPrecioAction = withAction(
     user: AuthenticatedUser,
   ): Promise<AplicarSugerenciaResult> => {
     const tenantId = requireTenant(user)
+    requireManagerRole(user, 'aplicar precios sugeridos')
     requireFeature(user, 'ficha-costo-bulk', 'aplicar precios sugeridos')
 
     const productos = await prisma.producto.findMany({
@@ -144,9 +149,14 @@ export const aplicarSugerenciaPrecioAction = withAction(
 
         updated++
       } catch (err) {
+        console.error('Error aplicando sugerencia de precio', {
+          productoId: p.id,
+          tenantId,
+          error: err,
+        })
         errors.push({
           productoId: p.id,
-          message: err instanceof Error ? err.message : 'Error desconocido',
+          message: 'No se pudo aplicar el precio sugerido',
         })
       }
     }
