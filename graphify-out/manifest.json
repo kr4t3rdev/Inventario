@@ -2980,9 +2980,9 @@
     "semantic_hash": "6b5f79af6f0e6e615b721e029e821881"
   },
   "src/app/api/mobile/v1/accounting/reports/overdue-invoices/route.ts": {
-    "mtime": 1781886704.6690378,
-    "ast_hash": "16251c356957f989561113fedd5a28e3",
-    "semantic_hash": "16251c356957f989561113fedd5a28e3"
+    "mtime": 1783979475.0260715,
+    "ast_hash": "200abc69885c8724c5ea460f59091424",
+    "semantic_hash": ""
   },
   "src/app/api/mobile/v1/accounting/reports/summary/__tests__/route.test.ts": {
     "mtime": 1781522552.6811583,
@@ -3295,9 +3295,9 @@
     "semantic_hash": "4e68f7171c7da3cea80b7928226d5683"
   },
   "src/app/api/sugerencias/ingresos-por-edades/route.ts": {
-    "mtime": 1781886704.663849,
-    "ast_hash": "556b2fef8053927150ed0da546c3dfa2",
-    "semantic_hash": "556b2fef8053927150ed0da546c3dfa2"
+    "mtime": 1783979474.9865031,
+    "ast_hash": "9f62b7bf13f2137d599ca1eb0886f180",
+    "semantic_hash": ""
   },
   "src/app/api/tipos-contratos/[id]/route.ts": {
     "mtime": 1781311529.5383499,
@@ -5490,14 +5490,14 @@
     "semantic_hash": "ab8930cc0c45429ca6c658bac4ee45e4"
   },
   "src/features/backups/actions-plans.ts": {
-    "mtime": 1781311530.0890548,
-    "ast_hash": "d4b3a4ee7928d30e896ea18a7cbd8d84",
-    "semantic_hash": "d4b3a4ee7928d30e896ea18a7cbd8d84"
+    "mtime": 1783979522.9762433,
+    "ast_hash": "713bdb08ffbd77dbf7502b5bce488cdd",
+    "semantic_hash": ""
   },
   "src/features/backups/actions.ts": {
-    "mtime": 1783355318.499331,
-    "ast_hash": "809cc3ab373b1bc0e4c5d7cf0cc8ad60",
-    "semantic_hash": "809cc3ab373b1bc0e4c5d7cf0cc8ad60"
+    "mtime": 1783979518.7434113,
+    "ast_hash": "96a5fccf7f1a99050f715aa6ba3de70a",
+    "semantic_hash": ""
   },
   "src/features/backups/backup-engine.ts": {
     "mtime": 1783360520.2881904,
@@ -5625,9 +5625,9 @@
     "semantic_hash": "188019689b5cda512ab699492bfc0bb0"
   },
   "src/features/categorias/actions.ts": {
-    "mtime": 1782572431.087582,
-    "ast_hash": "f61a1685139d4ced7daef6d9fde9e953",
-    "semantic_hash": "f61a1685139d4ced7daef6d9fde9e953"
+    "mtime": 1783979345.7330558,
+    "ast_hash": "0fc20f23bd3f5825f52ab084aa8020a5",
+    "semantic_hash": ""
   },
   "src/features/categorias/components/categoria-edit-page-client.tsx": {
     "mtime": 1781480541.2204432,
@@ -6995,14 +6995,14 @@
     "semantic_hash": "86dd7271fe429ab7c2173f15229f8617"
   },
   "src/features/empleados/actions.ts": {
-    "mtime": 1781311530.4766903,
-    "ast_hash": "69597883d9816042e8beecf157af5178",
-    "semantic_hash": "69597883d9816042e8beecf157af5178"
+    "mtime": 1783978061.510927,
+    "ast_hash": "65159d0bd4830c3ac59e3f873c1b64b2",
+    "semantic_hash": ""
   },
   "src/features/empleados/api/asistencia.ts": {
-    "mtime": 1781311530.477464,
-    "ast_hash": "1b37a31a61d44563b2104a778dff6e70",
-    "semantic_hash": "1b37a31a61d44563b2104a778dff6e70"
+    "mtime": 1783977999.159003,
+    "ast_hash": "ab7e0724b2d130afaa3e41ad863b6fad",
+    "semantic_hash": ""
   },
   "src/features/empleados/api/empleados.ts": {
     "mtime": 1781311530.477769,
@@ -7015,14 +7015,14 @@
     "semantic_hash": "b2cc61007c2d37e38658da5f48bfb716"
   },
   "src/features/empleados/api/nomina.ts": {
-    "mtime": 1781311530.4782999,
-    "ast_hash": "ac8c7e13bab0f0b8d04febd0c545262c",
-    "semantic_hash": "ac8c7e13bab0f0b8d04febd0c545262c"
+    "mtime": 1783977999.3825462,
+    "ast_hash": "303c22136fa6710f828b7525693a8977",
+    "semantic_hash": ""
   },
   "src/features/empleados/api/vacaciones.ts": {
-    "mtime": 1781311530.479367,
-    "ast_hash": "0edb31cde49d881d0908fe7b6e6341ae",
-    "semantic_hash": "0edb31cde49d881d0908fe7b6e6341ae"
+    "mtime": 1783978001.4910035,
+    "ast_hash": "e2c7fe9d7e9e48883315586026627373",
+    "semantic_hash": ""
   },
   "src/features/empleados/api/work-schedules.ts": {
     "mtime": 1781311530.480029,
@@ -7185,9 +7185,9 @@
     "semantic_hash": "8d9e3a3dc256716b89bb7fe1ec64e8be"
   },
   "src/features/ficha-costo/__tests__/actions-reconciliacion.test.ts": {
-    "mtime": 1781979929.3115644,
-    "ast_hash": "83cfdd84c67dbd7679044330b0ffc944",
-    "semantic_hash": "83cfdd84c67dbd7679044330b0ffc944"
+    "mtime": 1783994992.7467198,
+    "ast_hash": "12236fcb252e4d3e0079639bf02f61c9",
+    "semantic_hash": ""
   },
   "src/features/ficha-costo/__tests__/actions-sugerencias.test.ts": {
     "mtime": 1782040654.6502948,
@@ -7195,9 +7195,9 @@
     "semantic_hash": "19c0947c71dbd87bff4429ee420d6499"
   },
   "src/features/ficha-costo/__tests__/actions-ventas.test.ts": {
-    "mtime": 1781982947.3591032,
-    "ast_hash": "f5afe6f1318ded2ae64d10e8494758f3",
-    "semantic_hash": "f5afe6f1318ded2ae64d10e8494758f3"
+    "mtime": 1783978728.2914824,
+    "ast_hash": "b9194c9ecb45c8ab4c5fcc40b7c44d84",
+    "semantic_hash": ""
   },
   "src/features/ficha-costo/__tests__/actions.test.ts": {
     "mtime": 1783975830.120006,
@@ -7325,9 +7325,9 @@
     "semantic_hash": "343e73a00c229c92b368d17bc3de3d99"
   },
   "src/features/ficha-costo/actions-reconciliacion.ts": {
-    "mtime": 1781979896.7256856,
-    "ast_hash": "4525861083dc79d6f31b88f23828c385",
-    "semantic_hash": "4525861083dc79d6f31b88f23828c385"
+    "mtime": 1783995131.7735052,
+    "ast_hash": "cd04bc45fad1ff9d4433e148634e3627",
+    "semantic_hash": ""
   },
   "src/features/ficha-costo/actions-sugerencias.ts": {
     "mtime": 1782035077.9167147,
@@ -7335,9 +7335,9 @@
     "semantic_hash": "aea22f25de143d6bbdf5bf569c5f2370"
   },
   "src/features/ficha-costo/actions-ventas.ts": {
-    "mtime": 1781983015.3098617,
-    "ast_hash": "611ba1e0932793a81ac92af1556c3936",
-    "semantic_hash": "611ba1e0932793a81ac92af1556c3936"
+    "mtime": 1783978609.3498003,
+    "ast_hash": "91e590c2619b8dd4b61ff23e57a2463e",
+    "semantic_hash": ""
   },
   "src/features/ficha-costo/actions.ts": {
     "mtime": 1782785447.3952856,

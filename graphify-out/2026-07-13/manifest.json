@@ -6995,14 +6995,14 @@
     "semantic_hash": "86dd7271fe429ab7c2173f15229f8617"
   },
   "src/features/empleados/actions.ts": {
-    "mtime": 1781311530.4766903,
-    "ast_hash": "69597883d9816042e8beecf157af5178",
-    "semantic_hash": "69597883d9816042e8beecf157af5178"
+    "mtime": 1783978061.510927,
+    "ast_hash": "65159d0bd4830c3ac59e3f873c1b64b2",
+    "semantic_hash": ""
   },
   "src/features/empleados/api/asistencia.ts": {
-    "mtime": 1781311530.477464,
-    "ast_hash": "1b37a31a61d44563b2104a778dff6e70",
-    "semantic_hash": "1b37a31a61d44563b2104a778dff6e70"
+    "mtime": 1783977999.159003,
+    "ast_hash": "ab7e0724b2d130afaa3e41ad863b6fad",
+    "semantic_hash": ""
   },
   "src/features/empleados/api/empleados.ts": {
     "mtime": 1781311530.477769,
@@ -7015,14 +7015,14 @@
     "semantic_hash": "b2cc61007c2d37e38658da5f48bfb716"
   },
   "src/features/empleados/api/nomina.ts": {
-    "mtime": 1781311530.4782999,
-    "ast_hash": "ac8c7e13bab0f0b8d04febd0c545262c",
-    "semantic_hash": "ac8c7e13bab0f0b8d04febd0c545262c"
+    "mtime": 1783977999.3825462,
+    "ast_hash": "303c22136fa6710f828b7525693a8977",
+    "semantic_hash": ""
   },
   "src/features/empleados/api/vacaciones.ts": {
-    "mtime": 1781311530.479367,
-    "ast_hash": "0edb31cde49d881d0908fe7b6e6341ae",
-    "semantic_hash": "0edb31cde49d881d0908fe7b6e6341ae"
+    "mtime": 1783978001.4910035,
+    "ast_hash": "e2c7fe9d7e9e48883315586026627373",
+    "semantic_hash": ""
   },
   "src/features/empleados/api/work-schedules.ts": {
     "mtime": 1781311530.480029,
@@ -7195,13 +7195,13 @@
     "semantic_hash": "19c0947c71dbd87bff4429ee420d6499"
   },
   "src/features/ficha-costo/__tests__/actions-ventas.test.ts": {
-    "mtime": 1781982947.3591032,
-    "ast_hash": "f5afe6f1318ded2ae64d10e8494758f3",
-    "semantic_hash": "f5afe6f1318ded2ae64d10e8494758f3"
+    "mtime": 1783978393.0881603,
+    "ast_hash": "fcd45e1ff5726f2e9d184c87aae613ff",
+    "semantic_hash": ""
   },
   "src/features/ficha-costo/__tests__/actions.test.ts": {
-    "mtime": 1783975371.761836,
-    "ast_hash": "d9082a65db01a50c25fb2ce5e145d54f",
+    "mtime": 1783975830.120006,
+    "ast_hash": "cbc731a1787d3e2399d3dfb9e82b74ff",
     "semantic_hash": ""
   },
   "src/features/ficha-costo/__tests__/bulk-price-manager.test.tsx": {
@@ -7335,9 +7335,9 @@
     "semantic_hash": "aea22f25de143d6bbdf5bf569c5f2370"
   },
   "src/features/ficha-costo/actions-ventas.ts": {
-    "mtime": 1781983015.3098617,
-    "ast_hash": "611ba1e0932793a81ac92af1556c3936",
-    "semantic_hash": "611ba1e0932793a81ac92af1556c3936"
+    "mtime": 1783976999.4296172,
+    "ast_hash": "047136e10be4af5c25085477eb4435af",
+    "semantic_hash": ""
   },
   "src/features/ficha-costo/actions.ts": {
     "mtime": 1782785447.3952856,
@@ -7425,8 +7425,8 @@
     "semantic_hash": "ab4de9ba98cdcdc004fa0a514498fb32"
   },
   "src/features/ficha-costo/lib/cost-calc-server.ts": {
-    "mtime": 1783975442.9631405,
-    "ast_hash": "0f71d4e8b5467b1618e4afb1367cb26c",
+    "mtime": 1783975821.4452782,
+    "ast_hash": "5dcfca817c304405bb87e55e8542b110",
     "semantic_hash": ""
   },
   "src/features/ficha-costo/lib/cost-calculator.ts": {
