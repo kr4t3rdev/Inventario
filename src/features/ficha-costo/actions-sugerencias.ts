@@ -10,6 +10,7 @@ import {
 } from '@/lib/services/tenant-scope'
 import { recordCostChange, CostChangeReason } from '@/lib/cost-history-utils'
 import type { AuthenticatedUser } from '@/lib/auth-middleware'
+import { validateInput, productIdsSchema } from './lib/input-validation'
 
 // ─── Tipos ─────────────────────────────────────────────────
 
@@ -107,12 +108,13 @@ export const aplicarSugerenciaPrecioAction = withAction(
     input: AplicarSugerenciaInput,
     user: AuthenticatedUser,
   ): Promise<AplicarSugerenciaResult> => {
+    const parsed = validateInput(productIdsSchema, input)
     const tenantId = requireTenant(user)
     requireManagerRole(user, 'aplicar precios sugeridos')
     requireFeature(user, 'ficha-costo-bulk', 'aplicar precios sugeridos')
 
     const productos = await prisma.producto.findMany({
-      where: { id: { in: input.productoIds }, tenantId, precioCosto: { gt: 0 } },
+      where: { id: { in: parsed.productoIds }, tenantId, precioCosto: { gt: 0 } },
       select: { id: true, precioCosto: true, precioVenta: true },
     })
 
@@ -161,7 +163,7 @@ export const aplicarSugerenciaPrecioAction = withAction(
       }
     }
 
-    const skipped = input.productoIds.length - updated - errors.length
+    const skipped = parsed.productoIds.length - updated - errors.length
 
     revalidatePath('/busy/ficha-costo')
     return { updated, skipped, errors }

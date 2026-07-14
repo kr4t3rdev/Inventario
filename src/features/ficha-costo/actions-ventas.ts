@@ -4,6 +4,8 @@ import { withAction, ActionError } from '@/lib/server-actions'
 import { prisma } from '@/lib/prisma'
 import { requireTenant, requireFeature } from '@/lib/services/tenant-scope'
 import type { AuthenticatedUser } from '@/lib/auth-middleware'
+import { validateInput, paginationShape, dateFiltersShape } from './lib/input-validation'
+import { z } from 'zod'
 import { Prisma } from '@/generated/prisma'
 import type {
   VentasProductoData,
@@ -66,12 +68,13 @@ export const getVentasProductoAction = withAction(
     input: GetVentasProductoInput,
     user: AuthenticatedUser,
   ): Promise<VentasProductoData> => {
+    const parsed = validateInput(z.object({ productoId: z.string().min(1) }).extend(paginationShape).extend(dateFiltersShape), input)
     const tenantId = requireTenant(user)
     requireFeature(user, 'productos', 'ver trazabilidad de ventas')
 
     // 1. Verificar que el producto pertenece al tenant.
     const producto = await prisma.producto.findFirst({
-      where: { id: input.productoId, tenantId },
+      where: { id: parsed.productoId, tenantId },
       select: { id: true, precioCosto: true },
     })
     if (!producto) {
@@ -79,29 +82,29 @@ export const getVentasProductoAction = withAction(
     }
 
     // 2. Calcular paginación.
-    const page = input.page && input.page > 0 ? input.page : 1
+    const page = parsed.page && parsed.page > 0 ? parsed.page : 1
     const limit =
-      input.limit && input.limit > 0 && input.limit <= 100
-        ? input.limit
+      parsed.limit && parsed.limit > 0 && parsed.limit <= 100
+        ? parsed.limit
         : VENTAS_DEFAULT_LIMIT
     const skip = (page - 1) * limit
 
     // 3. Construir el where con filtros.
     const baseWhere: Record<string, unknown> = {
-      productoId: input.productoId,
+      productoId: parsed.productoId,
       venta: { tenantId, deletedAt: null },
     }
     const ventaWhere: Record<string, unknown> = {}
-    if (input.fechaDesde) {
+    if (parsed.fechaDesde) {
       ventaWhere.createdAt = {
         ...((ventaWhere.createdAt as object) ?? {}),
-        gte: new Date(input.fechaDesde),
+        gte: new Date(parsed.fechaDesde),
       }
     }
-    if (input.fechaHasta) {
+    if (parsed.fechaHasta) {
       ventaWhere.createdAt = {
         ...((ventaWhere.createdAt as object) ?? {}),
-        lte: new Date(input.fechaHasta),
+        lte: new Date(parsed.fechaHasta),
       }
     }
     if (Object.keys(ventaWhere).length > 0) {
@@ -111,13 +114,13 @@ export const getVentasProductoAction = withAction(
     const costoWhere: Prisma.Sql[] = [
       Prisma.sql`v."tenantId" = ${tenantId}`,
       Prisma.sql`v."deletedAt" IS NULL`,
-      Prisma.sql`vi."productoId" = ${input.productoId}`,
+      Prisma.sql`vi."productoId" = ${parsed.productoId}`,
     ]
-    if (input.fechaDesde) {
-      costoWhere.push(Prisma.sql`v."createdAt" >= ${new Date(input.fechaDesde)}`)
+    if (parsed.fechaDesde) {
+      costoWhere.push(Prisma.sql`v."createdAt" >= ${new Date(parsed.fechaDesde)}`)
     }
-    if (input.fechaHasta) {
-      costoWhere.push(Prisma.sql`v."createdAt" <= ${new Date(input.fechaHasta)}`)
+    if (parsed.fechaHasta) {
+      costoWhere.push(Prisma.sql`v."createdAt" <= ${new Date(parsed.fechaHasta)}`)
     }
 
     // 4. Queries en paralelo: items paginados y totales globales exactos.

@@ -10,6 +10,8 @@ import {
 } from '@/lib/services/tenant-scope'
 import { recordCostChange, CostChangeReason } from '@/lib/cost-history-utils'
 import type { AuthenticatedUser } from '@/lib/auth-middleware'
+import { validateInput } from './lib/input-validation'
+import { z } from 'zod'
 import type {
   ProductoFichaListItem,
   ListarProductosParaFichaInput,
@@ -27,8 +29,9 @@ export const listarProductosParaFichaAction = withAction(
     input: ListarProductosParaFichaInput,
     user: AuthenticatedUser,
   ): Promise<ProductoFichaListItem[]> => {
+    const parsed = validateInput(z.object({ search: z.string().max(200).optional(), limit: z.number().finite().int().min(1).max(500).optional() }), input)
     const tenantId = requireTenant(user)
-    const search = input.search?.trim()
+    const search = parsed.search?.trim()
     const canViewProductos = user.planFeatures?.productos === true
     const canViewServicios = user.planFeatures?.servicios === true
 
@@ -36,7 +39,7 @@ export const listarProductosParaFichaAction = withAction(
       throw new ActionError('No tiene acceso a ficha de costo', 'FORBIDDEN')
     }
 
-    const take = input.limit ?? 500
+    const take = parsed.limit ?? 500
     const [productos, servicios] = await Promise.all([
       canViewProductos
         ? prisma.producto.findMany({
