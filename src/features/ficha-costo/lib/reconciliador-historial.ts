@@ -76,8 +76,30 @@ export interface ReconciliadorResult {
   advertencias: string[]
 }
 
-const MS_POR_DIA = 1000 * 60 * 60 * 24
-const DIAS_POR_MES = 30.5
+/**
+ * @description Resta meses calendario conservando la hora y ajustando el día
+ *   al último válido del mes destino (por ejemplo, 31 de marzo menos un mes
+ *   resulta en 28/29 de febrero).
+ * @param {Date} fechaReferencia - Fecha desde la que se calcula el corte.
+ * @param {number} ventanaMeses - Cantidad de meses calendario a restar.
+ * @returns {Date} Nueva fecha de inicio inclusiva de la ventana.
+ */
+export function calcularInicioVentanaCalendario(
+  fechaReferencia: Date,
+  ventanaMeses: number,
+): Date {
+  const fechaInicio = new Date(fechaReferencia)
+  const diaOriginal = fechaInicio.getDate()
+  fechaInicio.setDate(1)
+  fechaInicio.setMonth(fechaInicio.getMonth() - ventanaMeses)
+  const ultimoDiaMesDestino = new Date(
+    fechaInicio.getFullYear(),
+    fechaInicio.getMonth() + 1,
+    0,
+  ).getDate()
+  fechaInicio.setDate(Math.min(diaOriginal, ultimoDiaMesDestino))
+  return fechaInicio
+}
 
 /**
  * @description Reconcilia el historial de compras de un producto con el
@@ -88,12 +110,14 @@ export function reconciliarHistorial(
   options: ReconciliadorOptions,
 ): ReconciliadorResult {
   const fechaRef = options.fechaReferencia ?? new Date()
-  const ventanaDias = options.ventanaMeses * DIAS_POR_MES
+  const fechaInicioVentana = calcularInicioVentanaCalendario(
+    fechaRef,
+    options.ventanaMeses,
+  )
 
   // 1. Marcar enVentanaCPP y calcular gastoProporcional.
   const reconciliados: ItemReconciliado[] = items.map((it) => {
-    const diasDiff = (fechaRef.getTime() - it.fecha.getTime()) / MS_POR_DIA
-    const enVentanaCPP = diasDiff <= ventanaDias
+    const enVentanaCPP = it.fecha >= fechaInicioVentana
 
     let gastoProporcional = 0
     const gastoDoc = options.gastosPorDocumento?.get(it.compraDocumentoId)

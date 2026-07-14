@@ -54,6 +54,18 @@ describe('reconciliarHistorial', () => {
     expect(result.items[0].enVentanaCPP).toBe(false)
   })
 
+  it('usa meses calendario exactos en años bisiestos', () => {
+    const fechaReferencia = new Date('2025-03-01T12:00:00Z')
+    const fechaItem = new Date('2024-02-29T12:00:00Z')
+
+    const result = reconciliarHistorial([item({ fecha: fechaItem })], {
+      ventanaMeses: 12,
+      fechaReferencia,
+    })
+
+    expect(result.items[0].enVentanaCPP).toBe(false)
+  })
+
   it('marca item dentro de ventana (30 días) como enVentanaCPP true', () => {
     // Arrange
     const fechaItem = new Date('2026-05-21T12:00:00Z') // 30 días antes

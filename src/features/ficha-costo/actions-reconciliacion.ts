@@ -8,6 +8,7 @@ import { obtenerMonedaBaseTenant } from './lib/cost-calc-server'
 import { lookupFromCache, precargarTasas } from './lib/exchange-lookup'
 import { normalizarMoneda } from './lib/cost-calculator'
 import {
+  calcularInicioVentanaCalendario,
   reconciliarHistorial,
   type ItemCompraMaterializado,
 } from './lib/reconciliador-historial'
@@ -18,7 +19,6 @@ import type {
 } from './types'
 
 const HISTORIAL_DEFAULT_LIMIT = 20
-const MAX_ITEMS_RECONCILIACION = 1000
 const VENTANA_MESES_CPP = 12
 
 /**
@@ -99,27 +99,39 @@ export const getHistorialReconciliadoAction = withAction(
             numeroFactura: true,
             proveedorId: true,
             compraDocumentoId: true,
+            gastoCompraId: true,
             proveedor: { select: { nombre: true } },
           },
         },
       },
     })
 
-    const [itemsCompletosRaw, total] = await Promise.all([
-      prisma.compraDocumentoItem.findMany({
-        where: {
-          productoId: input.productoId,
-          tenantId,
-          compraDocumento: {
-            deletedAt: null,
-            fechaCompra: {
-              gte: new Date(
-                new Date().setMonth(new Date().getMonth() - VENTANA_MESES_CPP),
-              ),
-            },
-          },
+    const fechaReferencia = new Date()
+    const fechaInicioVentana = calcularInicioVentanaCalendario(
+      fechaReferencia,
+      VENTANA_MESES_CPP,
+    )
+    const fechaCompraFiltrada = docWhere.fechaCompra as
+      | Record<string, Date>
+      | undefined
+    const whereVentanaCPP = {
+      ...baseWhere,
+      compraDocumento: {
+        ...docWhere,
+        fechaCompra: {
+          ...fechaCompraFiltrada,
+          gte:
+            fechaCompraFiltrada?.gte &&
+            fechaCompraFiltrada.gte > fechaInicioVentana
+              ? fechaCompraFiltrada.gte
+              : fechaInicioVentana,
         },
-        take: MAX_ITEMS_RECONCILIACION,
+      },
+    }
+
+    const [itemsVentanaRaw, total] = await Promise.all([
+      prisma.compraDocumentoItem.findMany({
+        where: whereVentanaCPP,
         select: {
           compraDocumentoItemId: true,
           cantidad: true,
@@ -138,6 +150,24 @@ export const getHistorialReconciliadoAction = withAction(
       }),
       prisma.compraDocumentoItem.count({ where: baseWhere }),
     ])
+
+    // La página puede contener compras fuera de la ventana CPP. Se agregan al
+    // set a reconciliar para proyectar sus flags sin alterar el resumen, que el
+    // reconciliador calcula exclusivamente con filas dentro de la ventana.
+    const itemsPorId = new Map(
+      itemsVentanaRaw.map((item) => [item.compraDocumentoItemId, item]),
+    )
+    for (const item of itemsPaginadosRaw) {
+      if (itemsPorId.has(item.compraDocumentoItemId)) continue
+      itemsPorId.set(item.compraDocumentoItemId, {
+        ...item,
+        compraDocumentoId: item.compraDocumento.compraDocumentoId,
+      })
+    }
+    const itemsCompletosRaw = Array.from(itemsPorId.values())
+    const itemsVentanaIds = new Set(
+      itemsVentanaRaw.map((item) => item.compraDocumentoItemId),
+    )
 
     // 5. Calcular tasaAproximada por item y armar gastosPorDocumento.
     const monedaBase = await obtenerMonedaBaseTenant(tenantId)
@@ -181,12 +211,13 @@ export const getHistorialReconciliadoAction = withAction(
           lookup,
           fecha,
         )
-        if (normalizado.nota === 'TASA_APROXIMADA') {
+        const aportaAlCPP = itemsVentanaIds.has(c.compraDocumentoItemId)
+        if (aportaAlCPP && normalizado.nota === 'TASA_APROXIMADA') {
           advertencias.push(
             `Tasa de cambio aproximada aplicada a compra ${c.compraDocumentoId ?? ''}`.trim(),
           )
         }
-        if (normalizado.nota === 'SIN_TASA') {
+        if (aportaAlCPP && normalizado.nota === 'SIN_TASA') {
           advertencias.push(
             `Sin tasa de cambio para la compra ${c.compraDocumentoId ?? ''}; se usa el precio original`.trim(),
           )
@@ -209,6 +240,7 @@ export const getHistorialReconciliadoAction = withAction(
     // 7. Llamar al reconciliador puro.
     const resultado = reconciliarHistorial(itemsParaReconciliar, {
       ventanaMeses: VENTANA_MESES_CPP,
+      fechaReferencia,
       gastosPorDocumento,
     })
     for (const a of resultado.advertencias) advertencias.push(a)
