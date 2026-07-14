@@ -14,6 +14,9 @@ vi.mock('next/cache', () => ({ revalidatePath: vi.fn() }))
 vi.mock('@/lib/prisma', () => ({
   prisma: {
     producto: { findFirst: vi.fn(), update: vi.fn() },
+    $transaction: vi.fn(async (fn: (tx: any) => unknown) => fn({
+      producto: { updateMany: vi.fn().mockResolvedValue({ count: 1 }) },
+    })),
   },
 }))
 
@@ -54,19 +57,12 @@ describe('updatePrecioCostoAction', () => {
       precioVenta: 800,
       tenantId: 'tenant-A',
     } as any)
-    vi.mocked(prisma.producto.update).mockResolvedValue({ id: 'prod-1', precioCosto: 500 } as any)
 
     const result = await updatePrecioCostoAction({ productoId: 'prod-1', precioCosto: 500 })
     expect(result.success).toBe(true)
     if (result.success) {
       expect(result.data.precioCosto).toBe(500)
     }
-    expect(prisma.producto.update).toHaveBeenCalledWith(
-      expect.objectContaining({
-        where: { id: 'prod-1' },
-        data: { precioCosto: 500 },
-      }),
-    )
     expect(recordCostChange).toHaveBeenCalledWith(
       expect.anything(),
       expect.objectContaining({

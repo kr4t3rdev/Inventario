@@ -132,28 +132,36 @@ export const updatePrecioCostoAction = withAction(
       throw new ActionError('Producto no encontrado', 'NOT_FOUND')
     }
 
-    const actualizado = await prisma.producto.update({
-      where: { id: input.productoId },
-      data: { precioCosto: input.precioCosto },
-      select: { id: true, precioCosto: true },
-    })
-
-    if (producto.precioCosto !== input.precioCosto) {
-      try {
-        await recordCostChange(prisma, {
-          productoId: producto.id,
-          oldPrecioCosto: producto.precioCosto,
-          newPrecioCosto: input.precioCosto,
-          oldPrecioVenta: producto.precioVenta,
-          newPrecioVenta: producto.precioVenta,
-          reason: CostChangeReason.MANUAL_EDIT,
-          changedBy: user.userId || 'system',
-          notes: input.notes ?? 'Edición manual desde ficha de costo',
-        })
-      } catch (err) {
-        console.error('Error registrando cost history (no bloqueante):', err)
-      }
+    if (producto.precioCosto === input.precioCosto) {
+      return { id: producto.id, precioCosto: producto.precioCosto }
     }
+
+    const actualizado = await prisma.$transaction(async (tx) => {
+      const result = await tx.producto.updateMany({
+        where: {
+          id: input.productoId,
+          tenantId,
+          precioCosto: producto.precioCosto,
+        },
+        data: { precioCosto: input.precioCosto },
+      })
+      if (result.count !== 1) {
+        throw new ActionError('El producto fue modificado. Recargá e intentá nuevamente', 'CONFLICT')
+      }
+
+      await recordCostChange(tx, {
+        productoId: producto.id,
+        oldPrecioCosto: producto.precioCosto,
+        newPrecioCosto: input.precioCosto,
+        oldPrecioVenta: producto.precioVenta,
+        newPrecioVenta: producto.precioVenta,
+        reason: CostChangeReason.MANUAL_EDIT,
+        changedBy: user.userId || 'system',
+        notes: input.notes ?? 'Edición manual desde ficha de costo',
+      })
+
+      return { id: producto.id, precioCosto: input.precioCosto }
+    })
 
     revalidatePath(`/busy/ficha-costo/${input.productoId}`)
     revalidatePath('/busy/ficha-costo')
