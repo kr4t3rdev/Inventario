@@ -39,11 +39,16 @@ export interface ReconciliadorOptions {
    */
   fechaReferencia?: Date
   /**
-   * Mapa de `compraDocumentoId` → gasto total (de `GastoCompra`) usado
-   * para prorratear el gasto proporcional entre las líneas del mismo
-   * documento. Si no se provee o no contiene el doc, el item queda en 0.
+   * Mapa de `compraDocumentoId` → gasto y cantidad totales documentales
+   * (de `GastoCompra`). La cantidad incluye todos los productos del
+   * documento, aunque el historial esté filtrado a uno solo.
    */
-  gastosPorDocumento?: Map<string, number>
+  gastosPorDocumento?: Map<string, GastoDocumento>
+}
+
+export interface GastoDocumento {
+  total: number
+  cantidad: number
 }
 
 export interface ItemReconciliado extends ItemCompraMaterializado {
@@ -121,15 +126,8 @@ export function reconciliarHistorial(
 
     let gastoProporcional = 0
     const gastoDoc = options.gastosPorDocumento?.get(it.compraDocumentoId)
-    if (gastoDoc !== undefined && gastoDoc > 0) {
-      // Buscar todos los items del mismo documento para prorratear.
-      const itemsDelDoc = items.filter(
-        (x) => x.compraDocumentoId === it.compraDocumentoId,
-      )
-      const cantTotalDoc = itemsDelDoc.reduce((s, x) => s + x.cantidad, 0)
-      if (cantTotalDoc > 0) {
-        gastoProporcional = (it.cantidad / cantTotalDoc) * gastoDoc
-      }
+    if (gastoDoc && gastoDoc.total > 0 && gastoDoc.cantidad > 0) {
+      gastoProporcional = (it.cantidad / gastoDoc.cantidad) * gastoDoc.total
     }
 
     return {

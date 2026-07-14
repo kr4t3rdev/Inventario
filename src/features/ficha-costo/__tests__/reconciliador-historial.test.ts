@@ -99,7 +99,7 @@ describe('reconciliarHistorial', () => {
       item({ compraDocumentoItemId: 'i-2', cantidad: 10, compraDocumentoId: 'doc-1' }),
       item({ compraDocumentoItemId: 'i-3', cantidad: 10, compraDocumentoId: 'doc-1' }),
     ]
-    const gastos = new Map([['doc-1', 300]])
+    const gastos = new Map([['doc-1', { total: 300, cantidad: 30 }]])
 
     // Act
     const result = reconciliarHistorial(items, {
@@ -120,7 +120,7 @@ describe('reconciliarHistorial', () => {
       item({ compraDocumentoItemId: 'i-1', cantidad: 10, compraDocumentoId: 'doc-1' }),
       item({ compraDocumentoItemId: 'i-2', cantidad: 20, compraDocumentoId: 'doc-1' }),
     ]
-    const gastos = new Map([['doc-1', 300]])
+    const gastos = new Map([['doc-1', { total: 300, cantidad: 30 }]])
 
     // Act
     const result = reconciliarHistorial(items, {
@@ -132,6 +132,28 @@ describe('reconciliarHistorial', () => {
     // Assert: 10/30 * 300 = 100, 20/30 * 300 = 200
     expect(result.items[0].gastoProporcional).toBeCloseTo(100, 2)
     expect(result.items[1].gastoProporcional).toBeCloseTo(200, 2)
+  })
+
+  it('usa la cantidad documental aunque el historial contenga un solo producto', () => {
+    const items = [
+      item({
+        compraDocumentoItemId: 'i-producto-consultado',
+        cantidad: 10,
+        compraDocumentoId: 'doc-multiproducto',
+      }),
+    ]
+    const gastos = new Map([
+      ['doc-multiproducto', { total: 300, cantidad: 30 }],
+    ])
+
+    const result = reconciliarHistorial(items, {
+      ventanaMeses: 12,
+      fechaReferencia: FECHA_FIJA,
+      gastosPorDocumento: gastos,
+    })
+
+    expect(result.items[0].gastoProporcional).toBe(100)
+    expect(result.proveedores[0].montoTotal).toBe(1100)
   })
 
   it('asigna gastoProporcional 0 cuando no hay gastosPorDocumento', () => {
@@ -151,7 +173,7 @@ describe('reconciliarHistorial', () => {
   it('asigna gastoProporcional 0 cuando el documento no está en el mapa', () => {
     // Arrange: item en doc-1, pero mapa solo tiene doc-2
     const items = [item({ compraDocumentoId: 'doc-1' })]
-    const gastos = new Map([['doc-2', 300]])
+    const gastos = new Map([['doc-2', { total: 300, cantidad: 30 }]])
 
     // Act
     const result = reconciliarHistorial(items, {
@@ -173,8 +195,8 @@ describe('reconciliarHistorial', () => {
       item({ compraDocumentoItemId: 'i-4', cantidad: 10, compraDocumentoId: 'doc-2' }),
     ]
     const gastos = new Map([
-      ['doc-1', 100],
-      ['doc-2', 400],
+      ['doc-1', { total: 100, cantidad: 10 }],
+      ['doc-2', { total: 400, cantidad: 20 }],
     ])
 
     // Act
@@ -296,7 +318,9 @@ describe('reconciliarHistorial', () => {
     const options: ReconciliadorOptions = {
       ventanaMeses: 12,
       fechaReferencia: FECHA_FIJA,
-      gastosPorDocumento: new Map([['doc-1', 300]]),
+      gastosPorDocumento: new Map([
+        ['doc-1', { total: 300, cantidad: 30 }],
+      ]),
     }
 
     // Act

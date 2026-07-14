@@ -95,6 +95,34 @@ describe('getHistorialReconciliadoAction', () => {
     }
   })
 
+  it('prorratea el gasto con la cantidad documental en compras multiproducto', async () => {
+    vi.mocked(getCurrentUser).mockResolvedValue(mockUser)
+    vi.mocked(prisma.producto.findFirst).mockResolvedValue({ id: 'prod-1' } as any)
+    const itemProducto = {
+      ...ITEM_BASE,
+      compraDocumento: {
+        ...ITEM_BASE.compraDocumento,
+        compraDocumentoId: 'doc-1',
+        gastoCompraId: 'gasto-1',
+      },
+    }
+    vi.mocked(prisma.compraDocumentoItem.findMany).mockResolvedValue([
+      itemProducto,
+    ] as any)
+    vi.mocked(prisma.compraDocumentoItem.count).mockResolvedValue(1)
+    vi.mocked(prisma.gastoCompra.findMany).mockResolvedValue([
+      { gastoCompraId: 'gasto-1', total: 300, cantidad: 30 },
+    ] as any)
+
+    const result = await getHistorialReconciliadoAction({ productoId: 'prod-1' })
+
+    expect(result.success).toBe(true)
+    if (result.success) {
+      expect(result.data.items[0].gastoProporcional).toBe(100)
+      expect(result.data.proveedores[0].montoTotal).toBe(1100)
+    }
+  })
+
   it('pagina correctamente: page 2 limit 10', async () => {
     // Arrange: 25 items, page 2 limit 10
     vi.mocked(getCurrentUser).mockResolvedValue(mockUser)

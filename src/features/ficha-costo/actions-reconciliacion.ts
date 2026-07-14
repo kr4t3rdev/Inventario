@@ -175,7 +175,10 @@ export const getHistorialReconciliadoAction = withAction(
     const lookup = lookupFromCache(cache)
 
     const advertencias: string[] = []
-    const gastosPorDocumento = new Map<string, number>()
+    const gastosPorDocumento = new Map<
+      string,
+      { total: number; cantidad: number }
+    >()
     const gastoIds = Array.from(
       new Set(
         itemsCompletosRaw
@@ -189,14 +192,18 @@ export const getHistorialReconciliadoAction = withAction(
         where: { tenantId, gastoCompraId: { in: gastoIds } },
         select: { gastoCompraId: true, total: true, cantidad: true },
       })
+      const gastosPorId = new Map(gastos.map((g) => [g.gastoCompraId, g]))
       for (const c of itemsCompletosRaw) {
         const docId = c.compraDocumentoId
         const gastoId = c.compraDocumento?.gastoCompraId
         if (!docId || !gastoId) continue
         if (gastosPorDocumento.has(docId)) continue
-        const g = gastos.find((x) => x.gastoCompraId === gastoId)
+        const g = gastosPorId.get(gastoId)
         if (!g || !g.cantidad) continue
-        gastosPorDocumento.set(docId, g.total)
+        gastosPorDocumento.set(docId, {
+          total: g.total,
+          cantidad: g.cantidad,
+        })
       }
     }
 
