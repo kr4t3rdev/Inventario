@@ -57,14 +57,16 @@ export function FichaCostoView({ data, hideHeader = false }: FichaCostoViewProps
 
       <div ref={printableRef} className="space-y-6">
         <Tabs defaultValue="resumen" className="w-full">
-        <TabsList>
-          <TabsTrigger value="resumen">Resumen</TabsTrigger>
-          {!esServicio && esCompuesto && <TabsTrigger value="composicion">Composición</TabsTrigger>}
-          {!esServicio && <TabsTrigger value="historial">Historial de compras</TabsTrigger>}
-          {!esServicio && <TabsTrigger value="ventas">Ventas</TabsTrigger>}
-          {!esServicio && <TabsTrigger value="plantilla">Plantilla</TabsTrigger>}
-          {!esServicio && <TabsTrigger value="listas">Listas de precios</TabsTrigger>}
-        </TabsList>
+        <div className="w-full overflow-x-auto pb-1">
+          <TabsList className="min-w-max">
+            <TabsTrigger value="resumen">Resumen</TabsTrigger>
+            {!esServicio && esCompuesto && <TabsTrigger value="composicion">Composición</TabsTrigger>}
+            {!esServicio && <TabsTrigger value="historial">Historial de compras</TabsTrigger>}
+            {!esServicio && <TabsTrigger value="ventas">Ventas</TabsTrigger>}
+            {!esServicio && <TabsTrigger value="plantilla">Plantilla</TabsTrigger>}
+            {!esServicio && <TabsTrigger value="listas">Listas de precios</TabsTrigger>}
+          </TabsList>
+        </div>
 
         <TabsContent value="resumen" className="mt-4">
           <ResumenCosto data={data} />
