@@ -57,6 +57,7 @@ export interface BulkPriceResponse {
 // ─── Constantes ────────────────────────────────────────────
 
 const BULK_CHUNK_SIZE = 50
+const BULK_TRANSACTION_CONCURRENCY = 5
 
 // ─── bulkApplyPercentageAction ─────────────────────────────
 
@@ -122,40 +123,63 @@ export const bulkApplyPercentageAction = withAction(
     }
 
     for (const chunk of chunks) {
-      await prisma.$transaction(async (tx) => {
-        for (const producto of chunk) {
-          try {
-            const newPrecio = Math.round(producto.precioVenta * (1 + porcentaje / 100))
+      for (let offset = 0; offset < chunk.length; offset += BULK_TRANSACTION_CONCURRENCY) {
+        const batch = chunk.slice(offset, offset + BULK_TRANSACTION_CONCURRENCY)
+        const outcomes = await Promise.all(
+          batch.map(async (producto) => {
+            const newPrecio = Math.round(
+              producto.precioVenta * (1 + porcentaje / 100),
+            )
 
-            await tx.producto.update({
-              where: { id: producto.id },
-              data: { precioVenta: newPrecio },
+            try {
+              await prisma.$transaction(async (tx) => {
+                const updated = await tx.producto.updateMany({
+                where: {
+                  id: producto.id,
+                  tenantId,
+                  precioVenta: producto.precioVenta,
+                },
+                data: { precioVenta: newPrecio },
+              })
+              if (updated.count !== 1) {
+                throw new Error('El precio cambió durante el ajuste; vuelve a intentarlo')
+              }
+
+              await recordCostChange(tx, {
+                productoId: producto.id,
+                oldPrecioCosto: producto.precioCosto,
+                newPrecioCosto: producto.precioCosto,
+                oldPrecioVenta: producto.precioVenta,
+                newPrecioVenta: newPrecio,
+                reason: CostChangeReason.ADJUSTMENT,
+                changedBy: user.userId || 'system',
+                notes: `Ajuste masivo de ${porcentaje}%`,
+              })
             })
 
-            await recordCostChange(tx, {
-              productoId: producto.id,
-              oldPrecioCosto: producto.precioCosto,
-              newPrecioCosto: producto.precioCosto,
-              oldPrecioVenta: producto.precioVenta,
-              newPrecioVenta: newPrecio,
-              reason: CostChangeReason.ADJUSTMENT,
-              changedBy: user.userId || 'system',
-              notes: `Ajuste masivo de ${porcentaje}%`,
-            })
-
-            results.push({
-              productoId: producto.id,
-              oldPrecio: producto.precioVenta,
-              newPrecio,
-            })
+            return {
+              result: {
+                productoId: producto.id,
+                oldPrecio: producto.precioVenta,
+                newPrecio,
+              },
+            }
           } catch (err) {
-            errors.push({
-              productoId: producto.id,
-              message: err instanceof Error ? err.message : 'Error desconocido',
-            })
+            return {
+              error: {
+                productoId: producto.id,
+                message: err instanceof Error ? err.message : 'Error desconocido',
+              },
+            }
           }
+          }),
+        )
+
+        for (const outcome of outcomes) {
+          if (outcome.result) results.push(outcome.result)
+          if (outcome.error) errors.push(outcome.error)
         }
-      })
+      }
     }
 
     revalidatePath('/busy/ficha-costo')
@@ -248,40 +272,61 @@ export const bulkApplyTemplateAction = withAction(
     }
 
     for (const chunk of chunks) {
-      await prisma.$transaction(async (tx) => {
-        for (const producto of chunk) {
-          try {
+      for (let offset = 0; offset < chunk.length; offset += BULK_TRANSACTION_CONCURRENCY) {
+        const batch = chunk.slice(offset, offset + BULK_TRANSACTION_CONCURRENCY)
+        const outcomes = await Promise.all(
+          batch.map(async (producto) => {
             const newPrecio = Math.round(plantilla.precioSugerido)
 
-            await tx.producto.update({
-              where: { id: producto.id },
-              data: { precioVenta: newPrecio },
+            try {
+              await prisma.$transaction(async (tx) => {
+                const updated = await tx.producto.updateMany({
+                where: {
+                  id: producto.id,
+                  tenantId,
+                  precioVenta: producto.precioVenta,
+                },
+                data: { precioVenta: newPrecio },
+              })
+              if (updated.count !== 1) {
+                throw new Error('El precio cambió durante el ajuste; vuelve a intentarlo')
+              }
+
+              await recordCostChange(tx, {
+                productoId: producto.id,
+                oldPrecioCosto: producto.precioCosto,
+                newPrecioCosto: producto.precioCosto,
+                oldPrecioVenta: producto.precioVenta,
+                newPrecioVenta: newPrecio,
+                reason: CostChangeReason.MANUAL_EDIT,
+                changedBy: user.userId || 'system',
+                notes: 'Plantilla aplicada masivamente',
+              })
             })
 
-            await recordCostChange(tx, {
-              productoId: producto.id,
-              oldPrecioCosto: producto.precioCosto,
-              newPrecioCosto: producto.precioCosto,
-              oldPrecioVenta: producto.precioVenta,
-              newPrecioVenta: newPrecio,
-              reason: CostChangeReason.MANUAL_EDIT,
-              changedBy: user.userId || 'system',
-              notes: 'Plantilla aplicada masivamente',
-            })
-
-            results.push({
-              productoId: producto.id,
-              oldPrecio: producto.precioVenta,
-              newPrecio,
-            })
+            return {
+              result: {
+                productoId: producto.id,
+                oldPrecio: producto.precioVenta,
+                newPrecio,
+              },
+            }
           } catch (err) {
-            errors.push({
-              productoId: producto.id,
-              message: err instanceof Error ? err.message : 'Error desconocido',
-            })
+            return {
+              error: {
+                productoId: producto.id,
+                message: err instanceof Error ? err.message : 'Error desconocido',
+              },
+            }
           }
+          }),
+        )
+
+        for (const outcome of outcomes) {
+          if (outcome.result) results.push(outcome.result)
+          if (outcome.error) errors.push(outcome.error)
         }
-      })
+      }
     }
 
     revalidatePath('/busy/ficha-costo')

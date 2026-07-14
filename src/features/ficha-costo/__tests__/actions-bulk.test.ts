@@ -13,7 +13,7 @@ vi.mock('@/lib/prisma', () => ({
   prisma: {
     producto: {
       findMany: vi.fn(),
-      update: vi.fn(),
+      updateMany: vi.fn(),
     },
     productoCostSheetTemplate: {
       findFirst: vi.fn(),
@@ -108,10 +108,7 @@ describe('bulkApplyPercentageAction', () => {
       return fn
     })
 
-    vi.mocked(prisma.producto.update).mockResolvedValue({
-      id: 'prod-1',
-      precioVenta: 1100,
-    } as any)
+    vi.mocked(prisma.producto.updateMany).mockResolvedValue({ count: 1 } as any)
 
     const result = await bulkApplyPercentageAction(
       { porcentaje: 10, productoIds: ['prod-1', 'prod-2'] },
@@ -134,10 +131,7 @@ describe('bulkApplyPercentageAction', () => {
       return fn
     })
 
-    vi.mocked(prisma.producto.update).mockResolvedValue({
-      id: 'prod-1',
-      precioVenta: 1100,
-    } as any)
+    vi.mocked(prisma.producto.updateMany).mockResolvedValue({ count: 1 } as any)
 
     await bulkApplyPercentageAction(
       { porcentaje: 10, productoIds: ['prod-1', 'prod-2'] },
@@ -163,10 +157,7 @@ describe('bulkApplyPercentageAction', () => {
       return fn
     })
 
-    vi.mocked(prisma.producto.update).mockResolvedValue({
-      id: 'prod-1',
-      precioVenta: 1100,
-    } as any)
+    vi.mocked(prisma.producto.updateMany).mockResolvedValue({ count: 1 } as any)
 
     const result = await bulkApplyPercentageAction(
       { porcentaje: 10, productoIds: ['prod-1', 'prod-2'] },
@@ -192,23 +183,22 @@ describe('bulkApplyPercentageAction', () => {
       return fn
     })
 
-    vi.mocked(prisma.producto.update).mockResolvedValue({
-      id: 'prod-1',
-      precioVenta: 1033,
-    } as any)
+    vi.mocked(prisma.producto.updateMany).mockResolvedValue({ count: 1 } as any)
 
     await bulkApplyPercentageAction(
       { porcentaje: 3.33, productoIds: ['prod-1'] },
       mockUser,
     )
 
-    expect(prisma.producto.update).toHaveBeenCalledWith({
-      where: { id: 'prod-1' },
+    expect(prisma.producto.updateMany).toHaveBeenCalledWith({
+      where: { id: 'prod-1', tenantId: 'tenant-1', precioVenta: 1000 },
       data: { precioVenta: 1033 },
     })
   })
 
-  it('debe procesar en chunks de 50 productos', async () => {
+  it('debe procesar transacciones atómicas por producto en chunks de 50', async () => {
+    let activeTransactions = 0
+    let maxActiveTransactions = 0
     const productoIds = Array.from({ length: 120 }, (_, i) => `prod-${i}`)
     const productos = productoIds.map((id) => ({
       id,
@@ -219,13 +209,17 @@ describe('bulkApplyPercentageAction', () => {
 
     vi.mocked(prisma.producto.findMany).mockResolvedValue(productos as any)
     vi.mocked(prisma.$transaction).mockImplementation(async (fn) => {
-      if (typeof fn === 'function') return fn(prisma)
-      return fn
+      activeTransactions += 1
+      maxActiveTransactions = Math.max(maxActiveTransactions, activeTransactions)
+      try {
+        await new Promise((resolve) => setTimeout(resolve, 1))
+        if (typeof fn === 'function') return await fn(prisma)
+        return fn
+      } finally {
+        activeTransactions -= 1
+      }
     })
-    vi.mocked(prisma.producto.update).mockResolvedValue({
-      id: 'prod-1',
-      precioVenta: 1100,
-    } as any)
+    vi.mocked(prisma.producto.updateMany).mockResolvedValue({ count: 1 } as any)
 
     const result = await bulkApplyPercentageAction(
       { porcentaje: 10, productoIds },
@@ -233,7 +227,8 @@ describe('bulkApplyPercentageAction', () => {
     )
 
     expect(result.updated).toBe(120)
-    expect(prisma.$transaction).toHaveBeenCalledTimes(3) // 50 + 50 + 20
+    expect(prisma.$transaction).toHaveBeenCalledTimes(120)
+    expect(maxActiveTransactions).toBe(5)
   })
 
   it('debe manejar errores parciales sin abortar', async () => {
@@ -247,8 +242,8 @@ describe('bulkApplyPercentageAction', () => {
       return fn
     })
 
-    vi.mocked(prisma.producto.update)
-      .mockResolvedValueOnce({ id: 'prod-1', precioVenta: 1100 } as any)
+    vi.mocked(prisma.producto.updateMany)
+      .mockResolvedValueOnce({ count: 1 } as any)
       .mockRejectedValueOnce(new Error('DB error'))
 
     const result = await bulkApplyPercentageAction(
@@ -259,6 +254,86 @@ describe('bulkApplyPercentageAction', () => {
     expect(result.updated).toBe(1)
     expect(result.errors).toHaveLength(1)
     expect(result.errors[0].productoId).toBe('prod-2')
+  })
+
+  it('debe revertir el precio si falla la auditoría y permitir un reintento limpio', async () => {
+    let persistedPrice = 1000
+    const txClient = {
+      producto: {
+        updateMany: vi.fn(async ({ where, data }) => {
+          if (where.precioVenta !== persistedPrice) return { count: 0 }
+          persistedPrice = data.precioVenta as number
+          return { count: 1 }
+        }),
+      },
+    }
+    vi.mocked(prisma.producto.findMany).mockResolvedValue([
+      { id: 'prod-1', precioVenta: 1000, precioCosto: 500, tenantId: 'tenant-1' },
+    ] as any)
+    vi.mocked(prisma.$transaction).mockImplementation(async (fn) => {
+      const priceBeforeTransaction = persistedPrice
+      try {
+        if (typeof fn === 'function') return await fn(txClient as any)
+        return fn
+      } catch (error) {
+        persistedPrice = priceBeforeTransaction
+        throw error
+      }
+    })
+    vi.mocked(recordCostChange)
+      .mockRejectedValueOnce(new Error('Audit unavailable'))
+      .mockResolvedValueOnce({ id: 'history-1', productoId: 'prod-1' } as any)
+
+    const failedAttempt = await bulkApplyPercentageAction(
+      { porcentaje: 10, productoIds: ['prod-1'] },
+      mockUser,
+    )
+
+    expect(failedAttempt).toEqual(expect.objectContaining({
+      updated: 0,
+      results: [],
+      errors: [{ productoId: 'prod-1', message: 'Audit unavailable' }],
+    }))
+    expect(persistedPrice).toBe(1000)
+    expect(recordCostChange).toHaveBeenCalledWith(txClient, expect.anything())
+    expect(prisma.producto.updateMany).not.toHaveBeenCalled()
+
+    const retry = await bulkApplyPercentageAction(
+      { porcentaje: 10, productoIds: ['prod-1'] },
+      mockUser,
+    )
+
+    expect(retry.updated).toBe(1)
+    expect(persistedPrice).toBe(1100)
+  })
+
+  it('debe rechazar un precio que cambió después de la lectura sin crear historial', async () => {
+    const txClient = {
+      producto: { updateMany: vi.fn().mockResolvedValue({ count: 0 }) },
+    }
+    vi.mocked(prisma.producto.findMany).mockResolvedValue([
+      { id: 'prod-1', precioVenta: 1000, precioCosto: 500, tenantId: 'tenant-1' },
+    ] as any)
+    vi.mocked(prisma.$transaction).mockImplementation(async (fn) => {
+      if (typeof fn === 'function') return fn(txClient as any)
+      return fn
+    })
+
+    const result = await bulkApplyPercentageAction(
+      { porcentaje: 10, productoIds: ['prod-1'] },
+      mockUser,
+    )
+
+    expect(txClient.producto.updateMany).toHaveBeenCalledWith({
+      where: { id: 'prod-1', tenantId: 'tenant-1', precioVenta: 1000 },
+      data: { precioVenta: 1100 },
+    })
+    expect(recordCostChange).not.toHaveBeenCalled()
+    expect(result.updated).toBe(0)
+    expect(result.errors[0]).toEqual({
+      productoId: 'prod-1',
+      message: 'El precio cambió durante el ajuste; vuelve a intentarlo',
+    })
   })
 })
 
@@ -298,10 +373,7 @@ describe('bulkApplyTemplateAction', () => {
       return fn
     })
 
-    vi.mocked(prisma.producto.update).mockResolvedValue({
-      id: 'prod-1',
-      precioVenta: 1500,
-    } as any)
+    vi.mocked(prisma.producto.updateMany).mockResolvedValue({ count: 1 } as any)
 
     await bulkApplyTemplateAction(
       { plantillaId: 'template-1', productoIds: ['prod-1', 'prod-2'] },
@@ -362,10 +434,7 @@ describe('bulkApplyTemplateAction', () => {
       return fn
     })
 
-    vi.mocked(prisma.producto.update).mockResolvedValue({
-      id: 'prod-1',
-      precioVenta: 1500,
-    } as any)
+    vi.mocked(prisma.producto.updateMany).mockResolvedValue({ count: 1 } as any)
 
     const result = await bulkApplyTemplateAction(
       { plantillaId: 'template-1', productoIds: ['prod-1', 'prod-2'] },
@@ -373,8 +442,8 @@ describe('bulkApplyTemplateAction', () => {
     )
 
     expect(result.updated).toBe(2)
-    expect(prisma.producto.update).toHaveBeenCalledWith({
-      where: { id: 'prod-1' },
+    expect(prisma.producto.updateMany).toHaveBeenCalledWith({
+      where: { id: 'prod-1', tenantId: 'tenant-1', precioVenta: 1000 },
       data: { precioVenta: 1500 },
     })
   })
@@ -395,10 +464,7 @@ describe('bulkApplyTemplateAction', () => {
       return fn
     })
 
-    vi.mocked(prisma.producto.update).mockResolvedValue({
-      id: 'prod-1',
-      precioVenta: 1500,
-    } as any)
+    vi.mocked(prisma.producto.updateMany).mockResolvedValue({ count: 1 } as any)
 
     await bulkApplyTemplateAction(
       { plantillaId: 'template-1', productoIds: ['prod-1'] },
@@ -430,10 +496,7 @@ describe('bulkApplyTemplateAction', () => {
       return fn
     })
 
-    vi.mocked(prisma.producto.update).mockResolvedValue({
-      id: 'prod-1',
-      precioVenta: 1500,
-    } as any)
+    vi.mocked(prisma.producto.updateMany).mockResolvedValue({ count: 1 } as any)
 
     const result = await bulkApplyTemplateAction(
       { plantillaId: 'template-1', productoIds: ['prod-1', 'prod-2'] },
@@ -444,6 +507,78 @@ describe('bulkApplyTemplateAction', () => {
     expect(result.skipped).toHaveLength(1)
     expect(result.skipped[0].productoId).toBe('prod-2')
     expect(result.errors).toHaveLength(0)
+  })
+
+  it('debe revertir el precio de plantilla si falla la auditoría', async () => {
+    let persistedPrice = 1000
+    const txClient = {
+      producto: {
+        updateMany: vi.fn(async ({ data }) => {
+          persistedPrice = data.precioVenta as number
+          return { count: 1 }
+        }),
+      },
+    }
+    vi.mocked(prisma.productoCostSheetTemplate.findFirst).mockResolvedValue({
+      id: 'template-1',
+      precioSugerido: 1500,
+      tenantId: 'tenant-1',
+    } as any)
+    vi.mocked(prisma.producto.findMany).mockResolvedValue([
+      { id: 'prod-1', precioVenta: 1000, precioCosto: 500, tenantId: 'tenant-1' },
+    ] as any)
+    vi.mocked(prisma.$transaction).mockImplementation(async (fn) => {
+      const priceBeforeTransaction = persistedPrice
+      try {
+        if (typeof fn === 'function') return await fn(txClient as any)
+        return fn
+      } catch (error) {
+        persistedPrice = priceBeforeTransaction
+        throw error
+      }
+    })
+    vi.mocked(recordCostChange).mockRejectedValueOnce(new Error('Audit unavailable'))
+
+    const result = await bulkApplyTemplateAction(
+      { plantillaId: 'template-1', productoIds: ['prod-1'] },
+      mockUser,
+    )
+
+    expect(result).toEqual(expect.objectContaining({
+      updated: 0,
+      results: [],
+      errors: [{ productoId: 'prod-1', message: 'Audit unavailable' }],
+    }))
+    expect(persistedPrice).toBe(1000)
+    expect(recordCostChange).toHaveBeenCalledWith(txClient, expect.anything())
+    expect(prisma.producto.updateMany).not.toHaveBeenCalled()
+  })
+
+  it('debe rechazar una plantilla si el precio cambió concurrentemente', async () => {
+    const txClient = {
+      producto: { updateMany: vi.fn().mockResolvedValue({ count: 0 }) },
+    }
+    vi.mocked(prisma.productoCostSheetTemplate.findFirst).mockResolvedValue({
+      id: 'template-1',
+      precioSugerido: 1500,
+      tenantId: 'tenant-1',
+    } as any)
+    vi.mocked(prisma.producto.findMany).mockResolvedValue([
+      { id: 'prod-1', precioVenta: 1000, precioCosto: 500, tenantId: 'tenant-1' },
+    ] as any)
+    vi.mocked(prisma.$transaction).mockImplementation(async (fn) => {
+      if (typeof fn === 'function') return fn(txClient as any)
+      return fn
+    })
+
+    const result = await bulkApplyTemplateAction(
+      { plantillaId: 'template-1', productoIds: ['prod-1'] },
+      mockUser,
+    )
+
+    expect(recordCostChange).not.toHaveBeenCalled()
+    expect(result.updated).toBe(0)
+    expect(result.errors[0].message).toContain('precio cambió')
   })
 })
 
