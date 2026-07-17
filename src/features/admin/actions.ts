@@ -31,6 +31,7 @@ import {
 	createDemoTenantSchema,
 	cleanupExpiredDemoLicenciasSchema,
 	convertDemoToPaidPlanSchema,
+	changePlanSchema,
 	updateLicenciaSchema,
 	updateLicenseAccountingOverridesSchema,
 	createPlanSchema,
@@ -50,6 +51,7 @@ import type {
 	CreateDemoTenantInput,
 	CleanupExpiredDemoLicenciasInput,
 	ConvertDemoToPaidPlanInput,
+	ChangePlanInput,
 	UpdateLicenciaInput,
 	UpdateLicenseAccountingOverridesInput,
 	CreatePlanInput,
@@ -1509,6 +1511,48 @@ export const convertDemoToPaidPlanAction = withAction(
 );
 
 
+
+export const changePlanAction = withAction(
+	async (input: ChangePlanInput, user: AuthenticatedUser) => {
+		if (user.role !== "admin")
+			throw new ActionError("Acceso restringido", "FORBIDDEN");
+
+		const parsed = changePlanSchema.parse(input);
+
+		const [license, newPlan] = await Promise.all([
+			prisma.tenantLicense.findUnique({
+				where: { tenantLicenseId: parsed.tenantLicenseId },
+			}),
+			prisma.plan.findUnique({ where: { planId: parsed.planId } }),
+		]);
+
+		if (!license)
+			throw new ActionError("Licencia no encontrada", "NOT_FOUND");
+		if (!newPlan)
+			throw new ActionError("Plan no encontrado", "PLAN_NOT_FOUND");
+
+		const updated = await prisma.tenantLicense.update({
+			where: { tenantLicenseId: parsed.tenantLicenseId },
+			data: {
+				planId: newPlan.planId,
+				maxUsuarios: newPlan.maxUsuarios,
+				maxAlmacenes: newPlan.maxAlmacenes,
+				maxProductos: newPlan.maxProductos,
+				maxClientes: newPlan.maxClientes,
+				features: newPlan.features ?? {},
+				featureOverrides: {},
+			},
+		});
+
+		revalidatePath("/admin/licencias");
+
+		return {
+			tenantLicenseId: updated.tenantLicenseId,
+			planId: updated.planId,
+			planName: newPlan.nombre,
+		};
+	},
+);
 
 export const updateLicenciaAction = withAction(
 	async (input: UpdateLicenciaInput, user: AuthenticatedUser) => {

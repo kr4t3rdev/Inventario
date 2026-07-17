@@ -123,6 +123,11 @@ export const convertDemoToPaidPlanSchema = z.object({
   durationDays: z.number().int().min(1).max(3650).optional(),
 });
 
+export const changePlanSchema = z.object({
+  tenantLicenseId: z.string().min(1),
+  planId: z.string().min(1),
+});
+
 // ─── Planes ────────────────────────────────────────────────
 
 export const createPlanSchema = z.object({
@@ -176,6 +181,7 @@ export type CreateDemoTenantInput = z.infer<typeof createDemoTenantSchema>;
 export type CleanupExpiredDemoLicenciasInput = z.infer<
   typeof cleanupExpiredDemoLicenciasSchema
 >;
+export type ChangePlanInput = z.infer<typeof changePlanSchema>;
 export type ConvertDemoToPaidPlanInput = z.infer<
   typeof convertDemoToPaidPlanSchema
 >;

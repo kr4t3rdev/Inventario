@@ -73,6 +73,7 @@ import {
   createDemoTenantAction,
   cleanupExpiredDemoLicenciasAction,
   convertDemoToPaidPlanAction,
+  changePlanAction,
   getLicenciasPaginatedAction,
   getLicenciasStatsAction,
   updateLicenseAccountingOverridesAction,
@@ -118,6 +119,8 @@ export default function AdminLicenciasPage() {
   const [demoDialogOpen, setDemoDialogOpen] = useState(false)
   const [convertDialogOpen, setConvertDialogOpen] = useState(false)
   const [accountingOverridesDialogOpen, setAccountingOverridesDialogOpen] = useState(false)
+  const [changePlanDialogOpen, setChangePlanDialogOpen] = useState(false)
+  const [licenseToChangePlan, setLicenseToChangePlan] = useState<any>(null)
   const [licenseToConvert, setLicenseToConvert] = useState<any>(null)
   const [licenseToEditOverrides, setLicenseToEditOverrides] = useState<any>(null)
   const [accountingOverridesDraft, setAccountingOverridesDraft] = useState<Record<string, boolean>>({})
@@ -356,6 +359,22 @@ export default function AdminLicenciasPage() {
       await refreshLicenciasData()
     } catch (error) {
       toast.error('No se pudo limpiar demos expiradas')
+    }
+  }
+
+  async function handleChangePlan(tenantLicenseId: string, planId: string) {
+    try {
+      const r = await changePlanAction({ tenantLicenseId, planId })
+      if (r.success) {
+        toast.success(`Plan cambiado a ${r.data?.planName}`)
+        setChangePlanDialogOpen(false)
+        setLicenseToChangePlan(null)
+        await refreshLicenciasData()
+      } else {
+        toast.error(r.error?.message || 'Error al cambiar plan')
+      }
+    } catch (_error) {
+      toast.error('Error al cambiar plan')
     }
   }
 
@@ -791,6 +810,18 @@ export default function AdminLicenciasPage() {
                         <Button
                           variant="outline"
                           size="sm"
+                          onClick={() => {
+                            setLicenseToChangePlan(licencia)
+                            setChangePlanDialogOpen(true)
+                          }}
+                          aria-label={`Cambiar plan de ${licencia.tenantLicenseId}`}
+                        >
+                          <ArrowUpDown className="h-4 w-4 mr-1" aria-hidden="true" />
+                          Cambiar Plan
+                        </Button>
+                        <Button
+                          variant="outline"
+                          size="sm"
                           onClick={() => openAccountingOverridesDialog(licencia)}
                           aria-label={`Editar overrides contables de ${licencia.tenantLicenseId}`}
                         >
@@ -914,6 +945,17 @@ export default function AdminLicenciasPage() {
         planes={planes}
         licencia={licenseToConvert}
         onConvert={handleConvertDemo}
+      />
+
+      <CambiarPlanDialog
+        open={changePlanDialogOpen}
+        onClose={() => {
+          setChangePlanDialogOpen(false)
+          setLicenseToChangePlan(null)
+        }}
+        planes={planes}
+        licencia={licenseToChangePlan}
+        onChangePlan={handleChangePlan}
       />
 
       <AccountingOverridesDialog
@@ -1118,6 +1160,99 @@ function AccountingOverridesDialog({
           </Button>
           <Button onClick={onSave} disabled={!licencia || isSaving}>
             Guardar overrides
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  )
+}
+
+function CambiarPlanDialog({
+  open,
+  onClose,
+  planes,
+  licencia,
+  onChangePlan,
+}: {
+  open: boolean
+  onClose: () => void
+  planes: any[]
+  licencia: any | null
+  onChangePlan: (tenantLicenseId: string, planId: string) => Promise<void>
+}) {
+  const [planId, setPlanId] = useState('')
+  const [isSubmitting, setIsSubmitting] = useState(false)
+
+  useEffect(() => {
+    if (!open || !licencia) return
+    setPlanId(licencia.planId ?? '')
+  }, [open, licencia])
+
+  const handleClose = () => {
+    if (isSubmitting) return
+    setPlanId('')
+    onClose()
+  }
+
+  const handleSubmit = async () => {
+    if (!licencia?.tenantLicenseId || !planId) return
+    if (planId === licencia.planId) {
+      toast.info('La licencia ya tiene ese plan')
+      return
+    }
+
+    try {
+      setIsSubmitting(true)
+      await onChangePlan(licencia.tenantLicenseId, planId)
+    } finally {
+      setIsSubmitting(false)
+    }
+  }
+
+  return (
+    <Dialog open={open} onOpenChange={handleClose}>
+      <DialogContent className="sm:max-w-[520px]">
+        <DialogHeader>
+          <DialogTitle>Cambiar Plan</DialogTitle>
+          <DialogDescription>
+            Cambiá el plan de la licencia. Los límites y features se sincronizarán con el nuevo plan.
+          </DialogDescription>
+        </DialogHeader>
+
+        <div className="grid gap-4 py-4">
+          <div className="rounded-md border p-3 text-sm">
+            <div className="text-xs text-muted-foreground">Tenant</div>
+            <div className="font-medium">{licencia?.tenant?.nombre ?? licencia?.tenantId ?? '—'}</div>
+          </div>
+
+          <div className="rounded-md border p-3 text-sm">
+            <div className="text-xs text-muted-foreground">Plan actual</div>
+            <div className="font-medium">{licencia?.plan?.nombre ?? 'Sin plan'}</div>
+          </div>
+
+          <div className="grid gap-2">
+            <span className="text-sm font-medium">Nuevo plan</span>
+            <Select value={planId} onValueChange={setPlanId}>
+              <SelectTrigger>
+                <SelectValue placeholder="Seleccionar plan" />
+              </SelectTrigger>
+              <SelectContent>
+                {planes.map((plan: any) => (
+                  <SelectItem key={plan.planId} value={plan.planId}>
+                    {plan.nombre} - ${plan.precio}/{plan.duracionDias} días
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+        </div>
+
+        <DialogFooter>
+          <Button variant="outline" onClick={handleClose} disabled={isSubmitting}>
+            Cancelar
+          </Button>
+          <Button onClick={handleSubmit} disabled={!planId || planId === licencia?.planId || isSubmitting}>
+            {isSubmitting ? 'Cambiando...' : 'Cambiar Plan'}
           </Button>
         </DialogFooter>
       </DialogContent>

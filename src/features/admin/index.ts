@@ -21,6 +21,7 @@ export {
 	createDemoTenantAction,
 	cleanupExpiredDemoLicenciasAction,
 	convertDemoToPaidPlanAction,
+	changePlanAction,
 	updateLicenciaAction,
 	updateLicenseAccountingOverridesAction,
 	deleteLicenciaAction,
