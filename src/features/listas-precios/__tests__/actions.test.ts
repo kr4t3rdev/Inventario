@@ -34,7 +34,7 @@ import type { AuthenticatedUser } from '@/lib/auth-middleware';
 
 const mockUser: AuthenticatedUser = {
   userId: 'user-1', name: 'Test', email: 'test@test.com',
-  role: 'admin', isActive: true, tenantId: 'tenant-test', tenantRole: 'admin',
+  role: 'admin', isActive: true, tenantId: 'tenant-test', tenantRole: 'manager',
 };
 
 const mockListaRow = {
@@ -56,6 +56,16 @@ describe('ListasPrecios Server Actions', () => {
       const result = await getListasPreciosAction();
       expect(result.success).toBe(true);
       expect(result.data).toHaveLength(1);
+    });
+
+    it('rechaza usuarios que no sean manager del tenant', async () => {
+      vi.mocked(getCurrentUser).mockResolvedValue({ ...mockUser, role: 'user', tenantRole: 'economico' });
+
+      const result = await getListasPreciosAction();
+
+      expect(result.success).toBe(false);
+      expect(result.error?.code).toBe('FORBIDDEN');
+      expect(prisma.listaPrecio.findMany).not.toHaveBeenCalled();
     });
   });
 

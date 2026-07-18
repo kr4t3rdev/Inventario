@@ -34,6 +34,31 @@ import type {
 	RestockHistoryResponse,
 	RestockHistoryItem,
 } from "./types";
+
+/**
+ * @description Verifica que todas las listas de precios indicadas pertenezcan al tenant activo.
+ * @param {string} tenantId - Identificador del tenant autenticado.
+ * @param {Array<{ listaPrecioId: string }>} precios - Precios asociados al producto.
+ * @returns {Promise<void>} Finaliza cuando todas las listas son válidas.
+ * @throws {ActionError} Si alguna lista no pertenece al tenant.
+ */
+async function validatePriceListsTenant(
+	tenantId: string,
+	precios: Array<{ listaPrecioId: string }>,
+): Promise<void> {
+	const listaIds = [...new Set(precios.map((precio) => precio.listaPrecioId))];
+	if (listaIds.length === 0) return;
+
+	const validListCount = await prisma.listaPrecio.count({
+		where: { id: { in: listaIds }, tenantId },
+	});
+	if (validListCount !== listaIds.length) {
+		throw new ActionError(
+			"Una o más listas de precios no pertenecen a la empresa activa",
+			"INVALID_PRICE_LIST",
+		);
+	}
+}
 // ─── EAN-13: shared utilities ─────────────────────────────
 import {
 	resolveTaxonomySegments,
@@ -78,6 +103,7 @@ export const createProductoAction = withAction(
 		const tenantId = requireTenant(user);
 
 		requireManagerRole(user, "crear productos");
+		await validatePriceListsTenant(tenantId, parsed.precios ?? []);
 		requireFeature(user, "productos", "gestión de productos");
 		await validateTenantLimit(
 			tenantId,
@@ -387,13 +413,14 @@ export const updateProductoAction = withAction(
 		const { id, ...updateData } = parsed;
 
 		const tenantId = requireTenant(user);
+		await validatePriceListsTenant(tenantId, parsed.precios ?? []);
 
 		const existing = await prisma.producto.findUnique({
 			where: { id },
 			select: { id: true, tenantId: true, stock: true, almacenId: true },
 		});
 
-		if (!existing) {
+		if (!existing || existing.tenantId !== tenantId) {
 			throw new ActionError("Producto no encontrado", "NOT_FOUND");
 		}
 
@@ -564,7 +591,7 @@ export const deleteProductoAction = withAction(
 			select: { id: true, tenantId: true },
 		});
 
-		if (!existing) {
+		if (!existing || existing.tenantId !== tenantId) {
 			throw new ActionError("Producto no encontrado", "NOT_FOUND");
 		}
 

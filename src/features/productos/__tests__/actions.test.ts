@@ -65,6 +65,9 @@ vi.mock("@/lib/prisma", () => {
 			findUnique: vi.fn(),
 			findFirst: vi.fn(),
 		},
+		listaPrecio: {
+			count: vi.fn(),
+		},
 	};
 	return {
 		prisma: {
@@ -73,6 +76,7 @@ vi.mock("@/lib/prisma", () => {
 			gastoCompra: tx.gastoCompra,
 			stockUbicacion: tx.stockUbicacion,
 			categoria: tx.categoria,
+			listaPrecio: tx.listaPrecio,
 			miEmpresa: {
 				findUnique: vi.fn().mockResolvedValue({ usaCodigoEan13: false }),
 			},
@@ -253,6 +257,23 @@ describe("Productos Server Actions", () => {
 			expect(result.success).toBe(false);
 			expect(result.error!.code).toBeDefined();
 		});
+
+		it("rechaza precios asociados a listas de otro tenant", async () => {
+			vi.mocked(getCurrentUser).mockResolvedValue(mockUser);
+			vi.mocked(prisma.listaPrecio.count).mockResolvedValue(0);
+
+			const result = await createProductoAction({
+				...validInput,
+				precios: [{ listaPrecioId: "lista-externa", precio: 1250 }],
+			});
+
+			expect(result.success).toBe(false);
+			expect(result.error?.code).toBe("INVALID_PRICE_LIST");
+			expect(prisma.producto.create).not.toHaveBeenCalled();
+			expect(prisma.listaPrecio.count).toHaveBeenCalledWith({
+				where: { id: { in: ["lista-externa"] }, tenantId: "tenant-test" },
+			});
+		});
 	});
 
 	// ─── updateProductoAction ─────────────────────
@@ -287,6 +308,20 @@ describe("Productos Server Actions", () => {
 			expect(result.success).toBe(false);
 			expect(result.error!.message).toContain("no encontrado");
 		});
+
+		it("rechaza actualizar un producto de otro tenant", async () => {
+			vi.mocked(getCurrentUser).mockResolvedValue(mockUser);
+			vi.mocked(prisma.producto.findUnique).mockResolvedValue({
+				...mockProducto,
+				tenantId: "tenant-externo",
+			});
+
+			const result = await updateProductoAction(validUpdate);
+
+			expect(result.success).toBe(false);
+			expect(result.error?.code).toBe("NOT_FOUND");
+			expect(prisma.producto.update).not.toHaveBeenCalled();
+		});
 	});
 
 	// ─── deleteProductoAction ─────────────────────
@@ -313,6 +348,20 @@ describe("Productos Server Actions", () => {
 
 			expect(result.success).toBe(false);
 			expect(result.error!.message).toContain("no encontrado");
+		});
+
+		it("rechaza eliminar un producto de otro tenant", async () => {
+			vi.mocked(getCurrentUser).mockResolvedValue(mockUser);
+			vi.mocked(prisma.producto.findUnique).mockResolvedValue({
+				...mockProducto,
+				tenantId: "tenant-externo",
+			});
+
+			const result = await deleteProductoAction("prod-1");
+
+			expect(result.success).toBe(false);
+			expect(result.error?.code).toBe("NOT_FOUND");
+			expect(prisma.producto.delete).not.toHaveBeenCalled();
 		});
 	});
 
