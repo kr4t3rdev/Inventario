@@ -35,6 +35,7 @@ import { recordCostChange } from '@/lib/cost-history-utils'
 const mockUser = {
   userId: 'user-1',
   tenantId: 'tenant-1',
+  planFeatures: { 'ficha-costo': true, 'ficha-costo-bulk': true },
   tenantRole: 'manager',
 } as any
 
@@ -118,7 +119,20 @@ describe('aplicarSugerenciaPrecioAction', () => {
       nonManagerUser,
       'aplicar precios sugeridos',
     )
-    expect(mockRequireFeature).not.toHaveBeenCalled()
+  })
+
+  it('prioriza el plan bulk sobre el rol y no consulta Prisma', async () => {
+    const nonManagerBasicUser = {
+      ...mockUser,
+      tenantRole: 'economico',
+      planFeatures: { 'ficha-costo': true, 'ficha-costo-bulk': false },
+    }
+
+    await expect(
+      aplicarSugerenciaPrecioAction({ productoIds: ['p1'] }, nonManagerBasicUser),
+    ).rejects.toMatchObject({ code: 'FEATURE_NOT_AVAILABLE' })
+    expect(mockRequireManagerRole).not.toHaveBeenCalled()
+    expect(prisma.producto.findMany).not.toHaveBeenCalled()
   })
 
   it('aplica precio sugerido y registra auditoría', async () => {
@@ -140,11 +154,6 @@ describe('aplicarSugerenciaPrecioAction', () => {
     )
     expect(mockRequireManagerRole).toHaveBeenCalledWith(
       mockUser,
-      'aplicar precios sugeridos',
-    )
-    expect(mockRequireFeature).toHaveBeenCalledWith(
-      mockUser,
-      'ficha-costo-bulk',
       'aplicar precios sugeridos',
     )
   })

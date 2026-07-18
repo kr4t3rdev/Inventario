@@ -75,6 +75,12 @@ export const FEATURE_REGISTRY: FeatureDef[] = [
 		category: "inventario",
 	},
 	{
+		key: "ficha-costo",
+		label: "Ficha de Costo",
+		description: "Análisis detallado de costos, márgenes e historial por producto",
+		category: "inventario",
+	},
+	{
 		key: "ficha-costo-bulk",
 		label: "Actualización masiva de precios",
 		description: "Ajuste porcentual y aplicación de plantillas a múltiples productos",

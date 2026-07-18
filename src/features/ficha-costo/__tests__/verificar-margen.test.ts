@@ -19,6 +19,7 @@ vi.mock('@/lib/server-actions', () => ({
 
 vi.mock('@/lib/services/tenant-scope', () => ({
   requireTenant: vi.fn(() => 'tenant-1'),
+  requireFeature: vi.fn(),
 }))
 
 import { prisma } from '@/lib/prisma'
@@ -26,6 +27,7 @@ import { prisma } from '@/lib/prisma'
 const mockUser = {
   userId: 'user-1',
   tenantId: 'tenant-1',
+  planFeatures: { 'ficha-costo': true, 'ficha-costo-bulk': true },
 } as any
 
 describe('verificarMargenBajoAction', () => {

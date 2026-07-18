@@ -2,8 +2,8 @@
 
 import { withAction } from '@/lib/server-actions'
 import { prisma } from '@/lib/prisma'
-import { requireTenant } from '@/lib/services/tenant-scope'
 import type { AuthenticatedUser } from '@/lib/auth-middleware'
+import { requireFichaCostoFeature } from './lib/require-feature'
 
 // ─── Constantes ────────────────────────────────────────────
 
@@ -76,7 +76,7 @@ export const getProductosMargenBajoAction = withAction(
     input: GetProductosMargenBajoInput,
     user: AuthenticatedUser,
   ): Promise<ProductoMargenBajoItem[]> => {
-    const tenantId = requireTenant(user)
+    const tenantId = requireFichaCostoFeature(user, 'ficha-costo')
     const limit = input.limit ?? DEFAULT_LIMIT
 
     const productos = await prisma.producto.findMany({
@@ -133,7 +133,7 @@ export const verificarMargenBajoAction = withAction(
     input: VerificarMargenBajoInput,
     user: AuthenticatedUser,
   ): Promise<VerificarMargenBajoResult> => {
-    const tenantId = requireTenant(user)
+    const tenantId = requireFichaCostoFeature(user, 'ficha-costo')
     const { dryRun = false } = input
 
     const productos = await prisma.producto.findMany({
@@ -206,7 +206,7 @@ export const getDashboardRentabilidadAction = withAction(
     input: DashboardRentabilidadInput,
     user: AuthenticatedUser,
   ): Promise<DashboardRentabilidadData> => {
-    const tenantId = requireTenant(user)
+    const tenantId = requireFichaCostoFeature(user, 'ficha-costo')
     const where: any = {
       tenantId,
       precioVenta: { gt: 0 },

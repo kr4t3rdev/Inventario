@@ -5,6 +5,7 @@ import { AppSidebar2 } from '@/components/app-sidebar2'
 import { getCurrentUser } from '@/lib/server-actions/get-current-user'
 import { prisma } from '@/lib/prisma'
 import { BulkPriceManager } from '@/features/ficha-costo/components/bulk-price-manager'
+import { canAccessFichaCostoBulk } from '@/features/ficha-costo/lib/access'
 
 export const metadata: Metadata = {
   title: 'Actualización Masiva de Precios',
@@ -19,11 +20,10 @@ export const metadata: Metadata = {
 export default async function BulkPricePage() {
   const user = await getCurrentUser()
   if (!user) redirect('/login')
+  if (user.role === 'admin' && !user.tenantId) redirect('/admin')
 
-  // Verificar feature gate
-  const hasFeature = user.planFeatures?.['ficha-costo-bulk'] === true
-  if (!hasFeature && user.role !== 'admin') {
-    redirect('/busy/ficha-costo')
+  if (!canAccessFichaCostoBulk(user)) {
+    redirect('/busy/dashboard')
   }
 
   // Obtener todos los productos del tenant

@@ -2,8 +2,9 @@
 
 import { withAction, ActionError } from '@/lib/server-actions'
 import { prisma } from '@/lib/prisma'
-import { requireTenant, requireFeature } from '@/lib/services/tenant-scope'
+import { requireFeature } from '@/lib/services/tenant-scope'
 import type { AuthenticatedUser } from '@/lib/auth-middleware'
+import { requireFichaCostoFeature } from './lib/require-feature'
 import { obtenerMonedaBaseTenant } from './lib/cost-calc-server'
 import { lookupFromCache, precargarTasas } from './lib/exchange-lookup'
 import { normalizarMoneda } from './lib/cost-calculator'
@@ -40,7 +41,7 @@ export const getHistorialReconciliadoAction = withAction(
     user: AuthenticatedUser,
   ): Promise<HistorialReconciliadoData> => {
     const parsed = validateInput(z.object({ productoId: z.string().min(1) }).extend(paginationShape).extend(dateFiltersShape).extend({ proveedorId: z.string().min(1).optional() }), input)
-    const tenantId = requireTenant(user)
+    const tenantId = requireFichaCostoFeature(user, 'ficha-costo')
     requireFeature(user, 'productos', 'ver el historial de costos')
 
     // 1. Verificar que el producto pertenece al tenant.

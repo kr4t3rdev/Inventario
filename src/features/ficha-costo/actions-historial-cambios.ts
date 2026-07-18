@@ -2,8 +2,8 @@
 
 import { withAction } from '@/lib/server-actions'
 import { prisma } from '@/lib/prisma'
-import { requireTenant } from '@/lib/services/tenant-scope'
 import type { AuthenticatedUser } from '@/lib/auth-middleware'
+import { requireFichaCostoFeature } from './lib/require-feature'
 
 // ─── Tipos ─────────────────────────────────────────────────
 
@@ -45,7 +45,7 @@ export const getHistorialCambiosPrecioAction = withAction(
     input: GetHistorialCambiosInput,
     user: AuthenticatedUser,
   ): Promise<HistorialCambiosData> => {
-    const tenantId = requireTenant(user)
+    const tenantId = requireFichaCostoFeature(user, 'ficha-costo')
     const { productoId, page = 1, limit = 20 } = input
 
     const where: any = {}

@@ -230,4 +230,53 @@ describe('AppSidebar2 hydration-safe motion', () => {
     const renderedItems = navMainState.groups.flat().map((item) => item.title)
     expect(renderedItems).toEqual([])
   })
+
+  it('hides the operational link for a global admin without active tenant', () => {
+    authState.user = { role: 'admin', tenantId: undefined, tenantRole: undefined, planFeatures: {} }
+    render(React.createElement(AppSidebar2))
+    expect(navMainState.groups.flat().map((item) => item.title)).not.toContain('Ficha de Costo')
+  })
+})
+
+describe('AppSidebar2 Ficha de Costo plan gate', () => {
+  beforeEach(() => {
+    navMainState.groups = []
+    authState.user = {
+      role: 'regularUser',
+      tenantId: 'tenant-1',
+      tenantRole: 'manager',
+      planFeatures: { 'reportes-financieros': true },
+    }
+  })
+
+  it('hides Ficha de Costo when the feature is false or missing', () => {
+    render(React.createElement(AppSidebar2))
+    expect(navMainState.groups.flat().map((item) => item.title)).not.toContain('Ficha de Costo')
+  })
+
+  it('shows Ficha de Costo when the feature is enabled', () => {
+    authState.user = {
+      ...authState.user,
+      planFeatures: { 'reportes-financieros': true, 'ficha-costo': true },
+    }
+    render(React.createElement(AppSidebar2))
+    expect(navMainState.groups.flat().map((item) => item.title)).toContain('Ficha de Costo')
+  })
+
+  it('hides Ficha de Costo from a global admin on a Basic tenant', () => {
+    authState.user = { role: 'admin', tenantId: 'tenant-admin', tenantRole: 'manager', planFeatures: {} }
+    render(React.createElement(AppSidebar2))
+    expect(navMainState.groups.flat().map((item) => item.title)).not.toContain('Ficha de Costo')
+  })
+
+  it('shows Ficha de Costo to a global admin on an Enterprise tenant', () => {
+    authState.user = {
+      role: 'admin',
+      tenantId: 'tenant-admin',
+      tenantRole: 'manager',
+      planFeatures: { 'ficha-costo': true },
+    }
+    render(React.createElement(AppSidebar2))
+    expect(navMainState.groups.flat().map((item) => item.title)).toContain('Ficha de Costo')
+  })
 })

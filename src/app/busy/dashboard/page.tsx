@@ -11,6 +11,7 @@ import {
 } from '@/features/dashboard/components'
 import { MargenBajoTable } from '@/features/dashboard/components/margen-bajo-table'
 import { RentabilidadDashboard } from '@/features/dashboard/components/rentabilidad-dashboard'
+import { canAccessFichaCosto } from '@/features/ficha-costo/lib/access'
 
 /**
  * @description Página principal del Dashboard con arquitectura server-first.
@@ -102,12 +103,16 @@ export default async function DashboardPage() {
       <div className="px-4 lg:px-6">
         <StockBajoTable productosStockBajo={stats.productosStockBajo as any} />
       </div>
-      <div className="px-4 lg:px-6 mt-4">
-        <MargenBajoTable />
-      </div>
-      <div className="px-4 lg:px-6 mt-4">
-        <RentabilidadDashboard />
-      </div>
+      {canAccessFichaCosto(user) ? (
+        <>
+          <div className="px-4 lg:px-6 mt-4">
+            <MargenBajoTable />
+          </div>
+          <div className="px-4 lg:px-6 mt-4">
+            <RentabilidadDashboard />
+          </div>
+        </>
+      ) : null}
     </DashboardShell>
   )
 }

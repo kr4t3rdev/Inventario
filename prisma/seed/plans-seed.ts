@@ -20,6 +20,7 @@ export const PLAN_BASICO_FEATURES: Record<string, boolean> = {
 	"categorias-ean13": false,
 	unidades: true,
 	"listas-precios": false,
+	"ficha-costo": false,
 	"ficha-costo-bulk": false,
 	// Operaciones
 	almacenes: true,
@@ -137,6 +138,7 @@ export const PLAN_EMPRESARIAL_FEATURES: Record<string, boolean> = {
 	"facturas-vencidas": true,
 	"multitenantmembership": true,
 	"inyeccion-capital": true,
+	"ficha-costo": true,
 	"ficha-costo-bulk": true,
 	// Backups cada hora + restauración point-in-time
 	"backups-diario": false,

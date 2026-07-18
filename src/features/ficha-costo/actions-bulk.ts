@@ -4,12 +4,11 @@ import { revalidatePath } from 'next/cache'
 import { withAction, ActionError } from '@/lib/server-actions'
 import { prisma } from '@/lib/prisma'
 import {
-  requireTenant,
   requireManagerRole,
-  requireFeature,
 } from '@/lib/services/tenant-scope'
 import { recordCostChange, CostChangeReason } from '@/lib/cost-history-utils'
 import type { AuthenticatedUser } from '@/lib/auth-middleware'
+import { requireFichaCostoFeature } from './lib/require-feature'
 import { z } from 'zod'
 
 // ─── Schemas de validación ─────────────────────────────────
@@ -75,9 +74,9 @@ export const bulkApplyPercentageAction = withAction(
     input: BulkApplyPercentageInput,
     user: AuthenticatedUser,
   ): Promise<BulkPriceResponse> => {
-    const tenantId = requireTenant(user)
+    const tenantId = requireFichaCostoFeature(user, 'ficha-costo')
+    requireFichaCostoFeature(user, 'ficha-costo-bulk')
     requireManagerRole(user, 'ajustar precios masivamente')
-    requireFeature(user, 'ficha-costo-bulk', 'ajustar precios masivamente')
 
     // Validación
     const parsed = bulkPercentageSchema.safeParse(input)
@@ -208,9 +207,9 @@ export const bulkApplyTemplateAction = withAction(
     input: BulkApplyTemplateInput,
     user: AuthenticatedUser,
   ): Promise<BulkPriceResponse> => {
-    const tenantId = requireTenant(user)
+    const tenantId = requireFichaCostoFeature(user, 'ficha-costo')
+    requireFichaCostoFeature(user, 'ficha-costo-bulk')
     requireManagerRole(user, 'aplicar plantilla masivamente')
-    requireFeature(user, 'ficha-costo-bulk', 'aplicar plantilla masivamente')
 
     // Validación
     const parsed = bulkTemplateSchema.safeParse(input)

@@ -26,6 +26,7 @@ const mockUser: AuthenticatedUser = {
   tenantId: 'tenant-A',
   tenantRole: 'manager',
   planFeatures: {
+    'ficha-costo': true,
     productos: true,
     servicios: true,
   },

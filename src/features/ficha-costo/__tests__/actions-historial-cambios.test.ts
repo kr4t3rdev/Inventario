@@ -10,11 +10,16 @@ vi.mock('@/lib/prisma', () => ({
 vi.mock('@/lib/server-actions', () => ({ withAction: (fn: any) => fn }))
 vi.mock('@/lib/services/tenant-scope', () => ({
   requireTenant: vi.fn(() => 'tenant-1'),
+  requireFeature: vi.fn(),
 }))
 
 import { prisma } from '@/lib/prisma'
 
-const mockUser = { userId: 'u1', tenantId: 'tenant-1' } as any
+const mockUser = {
+  userId: 'u1',
+  tenantId: 'tenant-1',
+  planFeatures: { 'ficha-costo': true, 'ficha-costo-bulk': true },
+} as any
 
 describe('getHistorialCambiosPrecioAction', () => {
   beforeEach(() => vi.clearAllMocks())

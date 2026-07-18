@@ -2,8 +2,9 @@
 
 import { withAction, ActionError } from '@/lib/server-actions'
 import { prisma } from '@/lib/prisma'
-import { requireTenant, requireFeature } from '@/lib/services/tenant-scope'
+import { requireFeature } from '@/lib/services/tenant-scope'
 import type { AuthenticatedUser } from '@/lib/auth-middleware'
+import { requireFichaCostoFeature } from './lib/require-feature'
 import { calcularCostoSimpleInterno, normalizarMontoManual, round2 } from './lib/cost-calc-server'
 import type {
   ComposicionCostoData,
@@ -22,7 +23,7 @@ export const getComposicionCostoAction = withAction(
     input: GetComposicionCostoInput,
     user: AuthenticatedUser,
   ): Promise<ComposicionCostoData> => {
-    const tenantId = requireTenant(user)
+    const tenantId = requireFichaCostoFeature(user, 'ficha-costo')
     requireFeature(user, 'productos', 'ver la composición de costo')
 
     const producto = await prisma.producto.findFirst({

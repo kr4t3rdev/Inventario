@@ -1,5 +1,9 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
-import { getProductosMargenBajoAction } from '../actions-alertas'
+import {
+  getProductosMargenBajoAction,
+  verificarMargenBajoAction,
+  getDashboardRentabilidadAction,
+} from '../actions-alertas'
 
 vi.mock('@/lib/prisma', () => ({
   prisma: {
@@ -13,8 +17,11 @@ vi.mock('@/lib/server-actions', () => ({
   withAction: (fn: any) => fn,
 }))
 
+const { mockRequireFeature } = vi.hoisted(() => ({ mockRequireFeature: vi.fn() }))
+
 vi.mock('@/lib/services/tenant-scope', () => ({
   requireTenant: vi.fn(() => 'tenant-1'),
+  requireFeature: mockRequireFeature,
 }))
 
 import { prisma } from '@/lib/prisma'
@@ -31,11 +38,26 @@ const makeProducto = (overrides: any = {}) => ({
 const mockUser = {
   userId: 'user-1',
   tenantId: 'tenant-1',
+  planFeatures: { 'ficha-costo': true, 'ficha-costo-bulk': true },
 } as any
 
 describe('getProductosMargenBajoAction', () => {
   beforeEach(() => {
     vi.clearAllMocks()
+  })
+
+
+  it.each([
+    ['productos con margen bajo', () => getProductosMargenBajoAction({}, mockUser)],
+    ['verificación de margen', () => verificarMargenBajoAction({}, mockUser)],
+    ['dashboard de rentabilidad', () => getDashboardRentabilidadAction({}, mockUser)],
+  ])('deniega %s antes de consultar Prisma', async (_name, invoke) => {
+    mockUser.planFeatures['ficha-costo'] = false
+
+    await expect(invoke()).rejects.toThrow('plan actual no incluye')
+
+    expect(prisma.producto.findMany).not.toHaveBeenCalled()
+    mockUser.planFeatures['ficha-costo'] = true
   })
 
   it('retorna productos con margen < 10% ordenados ascendentemente', async () => {

@@ -62,6 +62,7 @@ import {
 	shouldHideBasicAccountingItem,
 	shouldHideSeparateEmployeeModules,
 } from "@/lib/plan-access";
+import { canAccessFichaCosto } from "@/features/ficha-costo/lib/access";
 import { cn } from "@/lib/utils";
 import { NavMain } from "./nav-main";
 import { NavUser } from "./nav-user";
@@ -589,6 +590,7 @@ export function AppSidebar2({
 		"Cuadres POS": "turnos-pos",
 		Reportes: "reportes-financieros",
 		"Rentabilidad x Compra": "rentabilidad-compra",
+		"Ficha de Costo": "ficha-costo",
 		Notificaciones: "notificaciones",
 		"Analisis Estado Cuenta": "analisis-estado-cuenta",
 		"Facturas Vencidas": "facturas-vencidas",
@@ -666,8 +668,10 @@ export function AppSidebar2({
 	 * @description Verifica si un item del sidebar es visible para el rol de tenant del usuario.
 	 */
 	function canSeeSidebarItem(itemTitle: string): boolean {
-		// Admin global ve todo
-		if (user?.role === "admin") return true;
+		// Admin global ve todo, excepto módulos operativos sin un tenant activo.
+		if (user?.role === "admin") {
+			return itemTitle !== "Ficha de Costo" || canAccessFichaCosto(user);
+		}
 
 		if (
 			(itemTitle === "Asistencia" ||
@@ -696,6 +700,7 @@ export function AppSidebar2({
 		// Verificar feature del plan
 		const featureKey = SIDEBAR_FEATURE_MAP[itemTitle];
 		if (featureKey && user?.planFeatures?.[featureKey] === false) return false;
+		if (featureKey === "ficha-costo" && !canAccessFichaCosto(user)) return false;
 
 		// Si no hay tenantRole (usuario sin membresía), mostrar items públicos
 		if (!user?.tenantRole) {

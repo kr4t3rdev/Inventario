@@ -2,8 +2,9 @@
 
 import { withAction, ActionError } from '@/lib/server-actions'
 import { prisma } from '@/lib/prisma'
-import { requireTenant, requireFeature } from '@/lib/services/tenant-scope'
+import { requireFeature } from '@/lib/services/tenant-scope'
 import type { AuthenticatedUser } from '@/lib/auth-middleware'
+import { requireFichaCostoFeature } from './lib/require-feature'
 import { validateInput, paginationShape, dateFiltersShape } from './lib/input-validation'
 import { z } from 'zod'
 import { Prisma } from '@/generated/prisma'
@@ -69,7 +70,7 @@ export const getVentasProductoAction = withAction(
     user: AuthenticatedUser,
   ): Promise<VentasProductoData> => {
     const parsed = validateInput(z.object({ productoId: z.string().min(1) }).extend(paginationShape).extend(dateFiltersShape), input)
-    const tenantId = requireTenant(user)
+    const tenantId = requireFichaCostoFeature(user, 'ficha-costo')
     requireFeature(user, 'productos', 'ver trazabilidad de ventas')
 
     // 1. Verificar que el producto pertenece al tenant.

@@ -28,6 +28,7 @@ const mockUser: AuthenticatedUser = {
   role: 'admin' as AuthenticatedUser['role'],
   isActive: true,
   tenantId: 'tenant-A',
+  planFeatures: { 'ficha-costo': true, 'ficha-costo-bulk': true },
   tenantRole: 'manager',
 }
 

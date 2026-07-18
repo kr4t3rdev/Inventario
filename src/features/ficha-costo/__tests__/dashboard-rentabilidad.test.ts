@@ -15,11 +15,16 @@ vi.mock('@/lib/server-actions', () => ({
 
 vi.mock('@/lib/services/tenant-scope', () => ({
   requireTenant: vi.fn(() => 'tenant-1'),
+  requireFeature: vi.fn(),
 }))
 
 import { prisma } from '@/lib/prisma'
 
-const mockUser = { userId: 'user-1', tenantId: 'tenant-1' } as any
+const mockUser = {
+  userId: 'user-1',
+  tenantId: 'tenant-1',
+  planFeatures: { 'ficha-costo': true, 'ficha-costo-bulk': true },
+} as any
 
 const makeProd = (overrides: any = {}) => ({
   id: overrides.id ?? 'p1',
@@ -83,7 +88,7 @@ describe('getDashboardRentabilidadAction', () => {
       where: { tenantId: 'tenant-1', precioVenta: { gt: 0 }, precioCosto: { gt: 0 } },
       select: {
         id: true, nombre: true, precioCosto: true, precioVenta: true, esCompuesto: true,
-        categoria: { select: { id: true, nombre: true } },
+        categoria: { select: { catId: true, nombre: true } },
       },
     })
   })

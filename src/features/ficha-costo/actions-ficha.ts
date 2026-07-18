@@ -2,8 +2,9 @@
 
 import { withAction, ActionError } from '@/lib/server-actions'
 import { prisma } from '@/lib/prisma'
-import { requireTenant, requireFeature } from '@/lib/services/tenant-scope'
+import { requireFeature } from '@/lib/services/tenant-scope'
 import type { AuthenticatedUser } from '@/lib/auth-middleware'
+import { requireFichaCostoFeature } from './lib/require-feature'
 import { calcularMargen, calcularVariacion } from './lib/cost-calculator'
 import { calcularCPP } from './lib/cost-calculator'
 import {
@@ -30,7 +31,7 @@ function normalizeFichaInput(input: GetFichaCostoInput) {
 export const getFichaCostoAction = withAction(
   async (input: GetFichaCostoInput, user: AuthenticatedUser): Promise<FichaCostoData> => {
     const { entityId, entityType } = normalizeFichaInput(input)
-    const tenantId = requireTenant(user)
+    const tenantId = requireFichaCostoFeature(user, 'ficha-costo')
     requireFeature(
       user,
       entityType === 'SERVICIO' ? 'servicios' : 'productos',

@@ -2,8 +2,9 @@
 
 import { withAction, ActionError } from '@/lib/server-actions'
 import { prisma } from '@/lib/prisma'
-import { requireTenant, requireFeature } from '@/lib/services/tenant-scope'
+import { requireFeature } from '@/lib/services/tenant-scope'
 import type { AuthenticatedUser } from '@/lib/auth-middleware'
+import { requireFichaCostoFeature } from './lib/require-feature'
 import type { PrecioEnListaResult, GetListasPreciosProductoInput } from './types'
 
 /**
@@ -15,7 +16,7 @@ export const getListasPreciosProductoAction = withAction(
     input: GetListasPreciosProductoInput,
     user: AuthenticatedUser,
   ): Promise<PrecioEnListaResult[]> => {
-    const tenantId = requireTenant(user)
+    const tenantId = requireFichaCostoFeature(user, 'ficha-costo')
     requireFeature(user, 'productos', 'ver listas de precios')
 
     const producto = await prisma.producto.findFirst({

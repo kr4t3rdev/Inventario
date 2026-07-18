@@ -4,12 +4,12 @@ import { revalidatePath } from 'next/cache'
 import { withAction, ActionError } from '@/lib/server-actions'
 import { prisma } from '@/lib/prisma'
 import {
-  requireTenant,
   requireFeature,
   requireManagerRole,
 } from '@/lib/services/tenant-scope'
 import { recordCostChange, CostChangeReason } from '@/lib/cost-history-utils'
 import type { AuthenticatedUser } from '@/lib/auth-middleware'
+import { requireFichaCostoFeature } from './lib/require-feature'
 import {
   calcularPrecioSugerido,
   calcularCostoTotalPlantilla,
@@ -160,7 +160,7 @@ export const getPlantillasAction = withAction(
     input: GetPlantillasInput,
     user: AuthenticatedUser,
   ): Promise<PlantillaCosto[]> => {
-    const tenantId = requireTenant(user)
+    const tenantId = requireFichaCostoFeature(user, 'ficha-costo')
     requireFeature(user, 'productos', 'ver plantillas de costo')
 
     const producto = await prisma.producto.findFirst({
@@ -196,7 +196,7 @@ export const getPlantillaActivaAction = withAction(
     input: GetPlantillaActivaInput,
     user: AuthenticatedUser,
   ): Promise<PlantillaActivaResult> => {
-    const tenantId = requireTenant(user)
+    const tenantId = requireFichaCostoFeature(user, 'ficha-costo')
     requireFeature(user, 'productos', 'ver plantillas de costo')
 
     const producto = await prisma.producto.findFirst({
@@ -250,7 +250,7 @@ export const createPlantillaAction = withAction(
     input: PlantillaCostoInput,
     user: AuthenticatedUser,
   ): Promise<PlantillaCosto> => {
-    const tenantId = requireTenant(user)
+    const tenantId = requireFichaCostoFeature(user, 'ficha-costo')
     requireManagerRole(user, 'crear plantillas de costo')
     requireFeature(user, 'productos', 'crear plantillas de costo')
 
@@ -330,7 +330,7 @@ export const updatePlantillaAction = withAction(
     input: UpdatePlantillaInput,
     user: AuthenticatedUser,
   ): Promise<PlantillaCosto> => {
-    const tenantId = requireTenant(user)
+    const tenantId = requireFichaCostoFeature(user, 'ficha-costo')
     requireManagerRole(user, 'editar plantillas de costo')
     requireFeature(user, 'productos', 'editar plantillas de costo')
 
@@ -434,7 +434,7 @@ export const activarPlantillaAction = withAction(
     input: ActivarPlantillaInput,
     user: AuthenticatedUser,
   ): Promise<PlantillaCosto> => {
-    const tenantId = requireTenant(user)
+    const tenantId = requireFichaCostoFeature(user, 'ficha-costo')
     requireManagerRole(user, 'activar plantillas de costo')
     requireFeature(user, 'productos', 'activar plantillas de costo')
 
@@ -477,7 +477,7 @@ export const deletePlantillaAction = withAction(
     input: DeletePlantillaInput,
     user: AuthenticatedUser,
   ): Promise<PlantillaCosto> => {
-    const tenantId = requireTenant(user)
+    const tenantId = requireFichaCostoFeature(user, 'ficha-costo')
     requireManagerRole(user, 'eliminar plantillas de costo')
     requireFeature(user, 'productos', 'eliminar plantillas de costo')
 
@@ -514,7 +514,7 @@ export const aplicarPrecioSugeridoAction = withAction(
     input: AplicarPrecioSugeridoInput,
     user: AuthenticatedUser,
   ): Promise<{ id: string; precioVenta: number }> => {
-    const tenantId = requireTenant(user)
+    const tenantId = requireFichaCostoFeature(user, 'ficha-costo')
     requireManagerRole(user, 'aplicar precio sugerido')
     requireFeature(user, 'productos', 'aplicar precio sugerido')
 

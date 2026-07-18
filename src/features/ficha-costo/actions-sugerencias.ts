@@ -4,12 +4,11 @@ import { revalidatePath } from 'next/cache'
 import { withAction } from '@/lib/server-actions'
 import { prisma } from '@/lib/prisma'
 import {
-  requireTenant,
   requireManagerRole,
-  requireFeature,
 } from '@/lib/services/tenant-scope'
 import { recordCostChange, CostChangeReason } from '@/lib/cost-history-utils'
 import type { AuthenticatedUser } from '@/lib/auth-middleware'
+import { requireFichaCostoFeature } from './lib/require-feature'
 import { validateInput, productIdsSchema } from './lib/input-validation'
 
 // ─── Tipos ─────────────────────────────────────────────────
@@ -49,7 +48,7 @@ export interface AplicarSugerenciaResult {
  */
 export const getSugerenciasPrecioAction = withAction(
   async (_input: {}, user: AuthenticatedUser): Promise<SugerenciaPrecioItem[]> => {
-    const tenantId = requireTenant(user)
+    const tenantId = requireFichaCostoFeature(user, 'ficha-costo')
 
     const productos = await prisma.producto.findMany({
       where: { tenantId, precioCosto: { gt: 0 } },
@@ -109,9 +108,9 @@ export const aplicarSugerenciaPrecioAction = withAction(
     user: AuthenticatedUser,
   ): Promise<AplicarSugerenciaResult> => {
     const parsed = validateInput(productIdsSchema, input)
-    const tenantId = requireTenant(user)
+    const tenantId = requireFichaCostoFeature(user, 'ficha-costo')
+    requireFichaCostoFeature(user, 'ficha-costo-bulk')
     requireManagerRole(user, 'aplicar precios sugeridos')
-    requireFeature(user, 'ficha-costo-bulk', 'aplicar precios sugeridos')
 
     const productos = await prisma.producto.findMany({
       where: { id: { in: parsed.productoIds }, tenantId, precioCosto: { gt: 0 } },

@@ -4,12 +4,12 @@ import { revalidatePath } from 'next/cache'
 import { withAction, ActionError } from '@/lib/server-actions'
 import { prisma } from '@/lib/prisma'
 import {
-  requireTenant,
   requireFeature,
   requireManagerRole,
 } from '@/lib/services/tenant-scope'
 import { recordCostChange, CostChangeReason } from '@/lib/cost-history-utils'
 import type { AuthenticatedUser } from '@/lib/auth-middleware'
+import { requireFichaCostoFeature } from './lib/require-feature'
 import { validateInput } from './lib/input-validation'
 import { z } from 'zod'
 import type {
@@ -30,7 +30,7 @@ export const listarProductosParaFichaAction = withAction(
     user: AuthenticatedUser,
   ): Promise<ProductoFichaListItem[]> => {
     const parsed = validateInput(z.object({ search: z.string().max(200).optional(), limit: z.number().finite().int().min(1).max(500).optional() }), input)
-    const tenantId = requireTenant(user)
+    const tenantId = requireFichaCostoFeature(user, 'ficha-costo')
     const search = parsed.search?.trim()
     const canViewProductos = user.planFeatures?.productos === true
     const canViewServicios = user.planFeatures?.servicios === true
@@ -119,7 +119,7 @@ export const updatePrecioCostoAction = withAction(
     input: UpdatePrecioCostoInput,
     user: AuthenticatedUser,
   ): Promise<UpdatePrecioCostoResult> => {
-    const tenantId = requireTenant(user)
+    const tenantId = requireFichaCostoFeature(user, 'ficha-costo')
     requireManagerRole(user, 'editar el precio de costo')
     requireFeature(user, 'productos', 'editar el precio de costo')
 

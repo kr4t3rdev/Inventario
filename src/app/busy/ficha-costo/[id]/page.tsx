@@ -1,4 +1,6 @@
-import { notFound } from 'next/navigation'
+import { notFound, redirect } from 'next/navigation'
+import { getCurrentUser } from '@/lib/server-actions/get-current-user'
+import { canAccessFichaCosto } from '@/features/ficha-costo/lib/access'
 import { SidebarInset, SidebarProvider } from '@/components/ui/sidebar'
 import { AppSidebar2 } from '@/components/app-sidebar2'
 import { getFichaCostoAction } from '@/features/ficha-costo/actions'
@@ -17,6 +19,13 @@ export default async function FichaCostoDetallePage({
   params,
   searchParams,
 }: FichaCostoDetallePageProps): Promise<React.JSX.Element> {
+  const user = await getCurrentUser()
+  if (!user) redirect('/login')
+  if (user.role === 'admin' && !user.tenantId) redirect('/admin')
+  if (!canAccessFichaCosto(user)) {
+    redirect('/busy/dashboard')
+  }
+
   const { id } = await params
   const { entityType } = await searchParams
   const normalizedEntityType = entityType === 'SERVICIO' ? 'SERVICIO' : 'PRODUCTO'
