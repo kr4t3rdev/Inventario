@@ -1,7 +1,8 @@
 /**
  * @description Tests unitarios para Server Actions de admin.
  */
-import { describe, it, expect, beforeEach, vi } from 'vitest';
+import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
+import { Prisma } from '@/generated/prisma';
 
 vi.mock('@/lib/server-actions/get-current-user');
 vi.mock('next/cache', () => ({ revalidatePath: vi.fn() }));
@@ -63,6 +64,7 @@ import { destroyCloudinaryAsset } from '@/lib/cloudinary';
 import { createDemoTenantForPlan } from '@/lib/services/demo-tenant-factory';
 import { seedDemoTenantData } from '@/lib/services/demo-seed';
 import { prisma } from '@/lib/prisma';
+import { AuditLogService } from '@/lib/services/audit-log-service';
 import {
   getUsersAction, createUserAction, updateUserAction, deleteUserAction,
   lockUserAction, unlockUserAction,
@@ -71,7 +73,7 @@ import {
   getAdminPlanesAction, createAdminPlanAction, approveGlobalUserAction, createDemoTenantAction,
   cleanupExpiredDemoLicenciasAction,
   getCloudinaryAssetsAction, cleanupCloudinaryAssetsAction,
-  getLicenciasAction, updateLicenciaAction, updateLicenseAccountingOverridesAction, deleteLicenciaAction, convertDemoToPaidPlanAction,
+  getLicenciasAction, changePlanAction, updateLicenciaAction, updateLicenseAccountingOverridesAction, deleteLicenciaAction, convertDemoToPaidPlanAction,
   getAdminSubscriptionRevenueAction,
 } from '@/features/admin/actions';
 import { createTenantForUser } from '@/lib/services/tenant-factory';
@@ -93,6 +95,10 @@ const managerUser: AuthenticatedUser = {
 };
 
 describe('Admin Server Actions', () => {
+  afterEach(() => {
+    vi.restoreAllMocks();
+  });
+
   beforeEach(() => { vi.clearAllMocks(); });
 
   describe('getGlobalUsersAction', () => {
@@ -155,6 +161,109 @@ describe('Admin Server Actions', () => {
       const r = await getUsersAction();
       expect(r.success).toBe(false);
       expect(r.error!.code).toBe('FORBIDDEN');
+    });
+  });
+
+  describe('changePlanAction', () => {
+    it('sincroniza todos los limites, hereda features y registra auditoria', async () => {
+      vi.mocked(getCurrentUser).mockResolvedValue(adminUser);
+      vi.mocked(prisma.tenantLicense.findUnique).mockResolvedValue({
+        tenantLicenseId: 'lic-1',
+        tenantId: 'tenant-1',
+        planId: 'plan-basic',
+      } as any);
+      vi.mocked(prisma.plan.findUnique).mockResolvedValue({
+        planId: 'plan-pro',
+        nombre: 'Professional',
+        maxUsuarios: 12,
+        maxAlmacenes: 5,
+        maxProductos: 2500,
+        maxClientes: 800,
+        features: { reportes: true },
+      } as any);
+      vi.mocked(prisma.tenantLicense.update).mockResolvedValue({
+        tenantLicenseId: 'lic-1',
+        planId: 'plan-pro',
+      } as any);
+      const auditSpy = vi.spyOn(AuditLogService, 'log').mockResolvedValue({} as any);
+
+      const result = await changePlanAction({
+        tenantLicenseId: 'lic-1',
+        planId: 'plan-pro',
+      });
+
+      expect(result.success).toBe(true);
+      expect(prisma.tenantLicense.update).toHaveBeenCalledWith({
+        where: { tenantLicenseId: 'lic-1' },
+        data: {
+          planId: 'plan-pro',
+          maxUsuarios: 12,
+          maxAlmacenes: 5,
+          maxProductos: 2500,
+          maxClientes: 800,
+          features: Prisma.JsonNull,
+          featureOverrides: {},
+        },
+      });
+      expect(auditSpy).toHaveBeenCalledWith({
+        accion: 'UPDATE',
+        entidad: 'TENANT_LICENSE',
+        entidadId: 'lic-1',
+        usuarioId: 'user-admin',
+        detalles: {
+          tenantId: 'tenant-1',
+          previousPlanId: 'plan-basic',
+          newPlanId: 'plan-pro',
+        },
+      });
+      expect(prisma.tenantLicense.update.mock.invocationCallOrder[0]).toBeLessThan(
+        auditSpy.mock.invocationCallOrder[0],
+      );
+    });
+
+    it('rechaza usuarios no administradores', async () => {
+      vi.mocked(getCurrentUser).mockResolvedValue(nonAdmin);
+
+      const result = await changePlanAction({
+        tenantLicenseId: 'lic-1',
+        planId: 'plan-pro',
+      });
+
+      expect(result.success).toBe(false);
+      expect(result.error?.code).toBe('FORBIDDEN');
+      expect(prisma.tenantLicense.findUnique).not.toHaveBeenCalled();
+    });
+
+    it('retorna NOT_FOUND cuando la licencia no existe', async () => {
+      vi.mocked(getCurrentUser).mockResolvedValue(adminUser);
+      vi.mocked(prisma.tenantLicense.findUnique).mockResolvedValue(null);
+      vi.mocked(prisma.plan.findUnique).mockResolvedValue({ planId: 'plan-pro' } as any);
+
+      const result = await changePlanAction({
+        tenantLicenseId: 'missing-license',
+        planId: 'plan-pro',
+      });
+
+      expect(result.success).toBe(false);
+      expect(result.error?.code).toBe('NOT_FOUND');
+      expect(prisma.tenantLicense.update).not.toHaveBeenCalled();
+    });
+
+    it('retorna PLAN_NOT_FOUND cuando el plan no existe', async () => {
+      vi.mocked(getCurrentUser).mockResolvedValue(adminUser);
+      vi.mocked(prisma.tenantLicense.findUnique).mockResolvedValue({
+        tenantLicenseId: 'lic-1',
+      } as any);
+      vi.mocked(prisma.plan.findUnique).mockResolvedValue(null);
+
+      const result = await changePlanAction({
+        tenantLicenseId: 'lic-1',
+        planId: 'missing-plan',
+      });
+
+      expect(result.success).toBe(false);
+      expect(result.error?.code).toBe('PLAN_NOT_FOUND');
+      expect(prisma.tenantLicense.update).not.toHaveBeenCalled();
     });
   });
 
@@ -915,7 +1024,7 @@ describe('Admin Server Actions', () => {
             maxUsuarios: 10,
             maxAlmacenes: 4,
             maxProductos: 1000,
-            features: null,
+            features: Prisma.JsonNull,
             featureOverrides: {},
             inicio: expect.any(Date),
             expiracion: expect.any(Date),

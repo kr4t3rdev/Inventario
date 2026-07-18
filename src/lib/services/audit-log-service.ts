@@ -19,6 +19,7 @@ export type AuditEntity =
   | "CUENTA_POR_COBRAR"
   | "ESCENARIO_EXCHANGE"
   | "REPORTE_PROGRAMADO"
+  | "TENANT_LICENSE"
   | "CLOUDINARY_ASSET";
 
 export type AuditAction = 

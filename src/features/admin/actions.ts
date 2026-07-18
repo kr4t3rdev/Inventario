@@ -8,6 +8,7 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
+import { Prisma } from "@/generated/prisma";
 import { withAction, ActionError } from "@/lib/server-actions";
 import { createTenantForUser } from "@/lib/services/tenant-factory";
 import { createDemoTenantForPlan } from "@/lib/services/demo-tenant-factory";
@@ -1485,7 +1486,7 @@ export const convertDemoToPaidPlanAction = withAction(
 				maxAlmacenes: plan.maxAlmacenes,
 				maxProductos: plan.maxProductos,
 				maxClientes: plan.maxClientes,
-				features: null,
+				features: Prisma.JsonNull,
 				featureOverrides: {},
 			},
 		});
@@ -1539,8 +1540,20 @@ export const changePlanAction = withAction(
 				maxAlmacenes: newPlan.maxAlmacenes,
 				maxProductos: newPlan.maxProductos,
 				maxClientes: newPlan.maxClientes,
-				features: newPlan.features ?? {},
+				features: Prisma.JsonNull,
 				featureOverrides: {},
+			},
+		});
+
+		await AuditLogService.log({
+			accion: "UPDATE",
+			entidad: "TENANT_LICENSE",
+			entidadId: license.tenantLicenseId,
+			usuarioId: user.userId,
+			detalles: {
+				tenantId: license.tenantId,
+				previousPlanId: license.planId,
+				newPlanId: newPlan.planId,
 			},
 		});
 
