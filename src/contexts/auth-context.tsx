@@ -29,7 +29,11 @@ interface AuthProviderProps {
 
 export function AuthProvider({ children, initialUser }: AuthProviderProps) {
   const [user, setUser] = useState<Usuario | null>(initialUser ?? null);
-  const [loading, setLoading] = useState(initialUser == null);
+  // La sesión queda resuelta si RootLayout (u otro padre RSC) pasó un valor
+  // explícito — sea `Usuario` o `null`. Sólo refetchamos en mount cuando la
+  // prop se omitió por completo (modo "sin snapshot de servidor").
+  const sessionResolvedFromServer = initialUser !== undefined;
+  const [loading, setLoading] = useState(!sessionResolvedFromServer);
   const router = useRouter();
 
   /**
@@ -52,8 +56,14 @@ export function AuthProvider({ children, initialUser }: AuthProviderProps) {
   }, []);
 
   useEffect(() => {
+    // Saltar la revalidación inicial cuando el RSC ya entregó snapshot
+    // (usuario presente o `null` confirmado). Polling + visibilitychange
+    // cubren cualquier divergencia posterior con el servidor.
+    if (sessionResolvedFromServer) {
+      return;
+    }
     void checkAuth();
-  }, [checkAuth]);
+  }, [checkAuth, sessionResolvedFromServer]);
 
   // Polling cada 30s para verificar sesión activa
   useEffect(() => {
@@ -63,8 +73,15 @@ export function AuthProvider({ children, initialUser }: AuthProviderProps) {
     }
   }, [loading, user, checkAuth]);
 
-  // Redirigir si no hay sesión en rutas protegidas
+  // Redirigir si no hay sesión en rutas protegidas.
+  // Sólo aplica cuando NO hubo snapshot de servidor: si el RSC confirmó la
+  // sesión (user o null) y decidió renderizar esta URL, no debemos pujar
+  // un redirect en cliente. El servidor (layouts/middleware) es responsable
+  // de autorizar el render inicial.
   useEffect(() => {
+    if (sessionResolvedFromServer) {
+      return;
+    }
     if (
       !loading &&
       !user &&
@@ -73,7 +90,7 @@ export function AuthProvider({ children, initialUser }: AuthProviderProps) {
     ) {
       router.push("/login");
     }
-  }, [loading, user, router]);
+  }, [sessionResolvedFromServer, loading, user, router]);
 
   // Re-verificar al volver a la pestaña
   useEffect(() => {

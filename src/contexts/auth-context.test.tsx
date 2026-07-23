@@ -141,19 +141,12 @@ describe('AuthProvider', () => {
     });
   });
 
-  it('keeps loading active when initialUser is null and delays busy-route redirect until auth check finishes', async () => {
-    let resolveAuthCheck: ((response: Response) => void) | null = null;
-
+  it('treats initialUser={null} as a resolved SSR snapshot (no fetch, loading=false, no redirect)', async () => {
     window.history.pushState({}, '', '/busy/sales/new');
-    global.fetch = vi.fn((input: RequestInfo | URL) => {
-      const url = String(input);
-      if (url === '/api/auth/me') {
-        return new Promise<Response>((resolve) => {
-          resolveAuthCheck = resolve;
-        });
-      }
-      throw new Error(`Unexpected fetch: ${url}`);
-    }) as typeof fetch;
+    const fetchMock = vi.fn(async () => {
+      throw new Error('fetch should not be called when initialUser is resolved');
+    });
+    global.fetch = fetchMock as typeof fetch;
 
     render(
       <AuthProvider initialUser={null}>
@@ -162,17 +155,11 @@ describe('AuthProvider', () => {
     );
 
     await waitFor(() => {
-      expect(document.body.dataset.loading).toBe('true');
+      expect(document.body.dataset.loading).toBe('false');
     });
+    expect(screen.getByTestId('user-email')).toHaveTextContent('anonymous');
     expect(push).not.toHaveBeenCalled();
-
-    resolveAuthCheck?.(
-      new Response(JSON.stringify({ error: 'No autenticado' }), { status: 401 }),
-    );
-
-    await waitFor(() => {
-      expect(push).toHaveBeenCalledWith('/login');
-    });
+    expect(fetchMock).not.toHaveBeenCalled();
   });
 
   it('does not log noisy console errors when auth check fails due to network fetch', async () => {
@@ -201,5 +188,158 @@ describe('AuthProvider', () => {
     );
 
     consoleErrorSpy.mockRestore();
+  });
+
+  it('does not call /api/auth/me when initialUser was supplied by the server', async () => {
+    render(
+      <AuthProvider
+        initialUser={{
+          userId: 'user-1',
+          name: 'Test User',
+          email: 'tenant@example.com',
+          password: '',
+          role: 'manager',
+          tenantRole: 'manager',
+          tenantId: 'tenant-1',
+          isActive: true,
+          avatar: null,
+          activatedAt: null,
+          expiresAt: null,
+          createdAt: '',
+          updatedAt: '',
+          lastModifiedBy: null,
+          loginAttempts: 0,
+          lockedUntil: null,
+          lastFailedLogin: null,
+        }}
+      >
+        <Probe />
+      </AuthProvider>,
+    );
+
+    await waitFor(() => {
+      expect(document.body.dataset.loading).toBe('false');
+    });
+
+    const meCalls = (fetch as unknown as ReturnType<typeof vi.fn>).mock.calls.filter(
+      ([url]) => String(url) === '/api/auth/me',
+    );
+    expect(meCalls).toHaveLength(0);
+  });
+
+  it('does not call /api/auth/me when initialUser is explicitly null (SSR confirmed no session)', async () => {
+    render(
+      <AuthProvider initialUser={null}>
+        <Probe />
+      </AuthProvider>,
+    );
+
+    await waitFor(() => {
+      expect(document.body.dataset.loading).toBe('false');
+    });
+    expect(screen.getByTestId('user-email')).toHaveTextContent('anonymous');
+
+    const meCalls = (fetch as unknown as ReturnType<typeof vi.fn>).mock.calls.filter(
+      ([url]) => String(url) === '/api/auth/me',
+    );
+    expect(meCalls).toHaveLength(0);
+  });
+
+  it('calls /api/auth/me on mount when the provider is created without initialUser', async () => {
+    render(
+      <AuthProvider>
+        <Probe />
+      </AuthProvider>,
+    );
+
+    await waitFor(() => {
+      expect(document.body.dataset.loading).toBe('false');
+    });
+
+    const meCalls = (fetch as unknown as ReturnType<typeof vi.fn>).mock.calls.filter(
+      ([url]) => String(url) === '/api/auth/me',
+    );
+    expect(meCalls.length).toBeGreaterThanOrEqual(1);
+  });
+
+  it('keeps polling /api/auth/me after the initial skip (visibility revalidation still works)', async () => {
+    const fetchMock = vi.fn(async (input: RequestInfo | URL) => {
+      const url = String(input);
+      if (url === '/api/auth/me') {
+        return new Response(
+          JSON.stringify({
+            userId: 'user-1',
+            name: 'Test User',
+            email: 'tenant@example.com',
+            password: '',
+            role: 'manager',
+            tenantRole: 'manager',
+            tenantId: 'tenant-1',
+            isActive: true,
+            avatar: null,
+            activatedAt: null,
+            expiresAt: null,
+            createdAt: '',
+            updatedAt: '',
+            lastModifiedBy: null,
+            loginAttempts: 0,
+            lockedUntil: null,
+            lastFailedLogin: null,
+          }),
+          { status: 200, headers: { 'Content-Type': 'application/json' } },
+        );
+      }
+      throw new Error(`Unexpected fetch: ${url}`);
+    });
+    global.fetch = fetchMock as typeof fetch;
+
+    render(
+      <AuthProvider
+        initialUser={{
+          userId: 'user-1',
+          name: 'Test User',
+          email: 'tenant@example.com',
+          password: '',
+          role: 'manager',
+          tenantRole: 'manager',
+          tenantId: 'tenant-1',
+          isActive: true,
+          avatar: null,
+          activatedAt: null,
+          expiresAt: null,
+          createdAt: '',
+          updatedAt: '',
+          lastModifiedBy: null,
+          loginAttempts: 0,
+          lockedUntil: null,
+          lastFailedLogin: null,
+        }}
+      >
+        <Probe />
+      </AuthProvider>,
+    );
+
+    // 1) No call on mount thanks to SSR snap.
+    await waitFor(() => {
+      expect(document.body.dataset.loading).toBe('false');
+    });
+    const callsAfterMount = fetchMock.mock.calls.filter(
+      ([url]) => String(url) === '/api/auth/me',
+    ).length;
+    expect(callsAfterMount).toBe(0);
+
+    // 2) visibilitychange === 'visible' should revalidate while there's a user.
+    Object.defineProperty(document, 'visibilityState', {
+      configurable: true,
+      get: () => 'visible',
+    });
+    document.dispatchEvent(new Event('visibilitychange'));
+
+    await waitFor(() => {
+      const calls = fetchMock.mock.calls.filter(
+        ([url]) => String(url) === '/api/auth/me',
+      ).length;
+      expect(calls).toBeGreaterThan(0);
+    });
   });
 });
