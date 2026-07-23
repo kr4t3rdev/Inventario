@@ -57,7 +57,7 @@ export async function handlePostDeudasCash(request: NextRequest, user: Authentic
   if (!proveedor) return NextResponse.json({ error: 'Proveedor no encontrado' }, { status: 404 })
 
   const deuda = await prisma.$transaction(async (tx: any) => {
-    const tp = (await tx.tipoPago.findFirst({ where: { nombre: 'Transferencia', isActive: true } })) || (await tx.tipoPago.findFirst({ where: { nombre: 'Efectivo', isActive: true } }))
+    const tp = (await tx.tipoPago.findFirst({ where: { nombre: 'Transferencia', isActive: true, tenantId } })) || (await tx.tipoPago.findFirst({ where: { nombre: 'Efectivo', isActive: true, tenantId } }))
     if (!tp) throw new Error('No existe un tipo de pago válido para el desembolso de deuda')
     await tx.cuentaBancaria.update({ where: { cuentaId: body.cuentaBancariaId }, data: { saldo: { increment: body.montoCapital } } })
     const lastDeuda = await tx.deudaCash.findFirst({ orderBy: { idNumerico: 'desc' }, select: { idNumerico: true } })

@@ -140,8 +140,8 @@ export async function POST(request: NextRequest) {
     }
 
     // Verificar que el tipo de pago existe y está activo
-    const tipoPago = await prisma.tipoPago.findUnique({
-      where: { tipoId: validatedData.tipoPagoId }
+    const tipoPago = await prisma.tipoPago.findFirst({
+      where: { tipoId: validatedData.tipoPagoId, tenantId: user.tenantId }
     })
 
     if (!tipoPago || !tipoPago.isActive) {
@@ -160,8 +160,8 @@ export async function POST(request: NextRequest) {
     // Si el tipo de pago requiere cuenta, verificar cuenta defecto
     let cuentaOrigen = null
     if (tipoPago.requiereCuenta && tipoPago.cuentaDefecto) {
-      cuentaOrigen = await prisma.cuentaBancaria.findUnique({
-        where: { cuentaId: tipoPago.cuentaDefecto }
+      cuentaOrigen = await prisma.cuentaBancaria.findFirst({
+        where: { cuentaId: tipoPago.cuentaDefecto, tenantId: user.tenantId }
       })
 
       if (!cuentaOrigen || !cuentaOrigen.isActive) {

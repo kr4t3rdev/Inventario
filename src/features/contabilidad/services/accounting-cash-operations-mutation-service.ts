@@ -58,8 +58,8 @@ export const AccountingCashOperationsMutationService = {
     }
 
     const tp =
-      (await prisma.tipoPago.findFirst({ where: { nombre: 'Transferencia', isActive: true } })) ||
-      (await prisma.tipoPago.findFirst({ where: { nombre: 'Efectivo', isActive: true } }));
+      (await prisma.tipoPago.findFirst({ where: { nombre: 'Transferencia', isActive: true, tenantId } })) ||
+      (await prisma.tipoPago.findFirst({ where: { nombre: 'Efectivo', isActive: true, tenantId } }));
     if (!tp) {
       throw new ActionError(
         'No existe un tipo de pago válido para registrar el desembolso',
@@ -285,8 +285,8 @@ export const AccountingCashOperationsMutationService = {
 
     const deuda = await prisma.$transaction(async (tx: any) => {
       const tp =
-        (await tx.tipoPago.findFirst({ where: { nombre: 'Transferencia', isActive: true } })) ||
-        (await tx.tipoPago.findFirst({ where: { nombre: 'Efectivo', isActive: true } }));
+        (await tx.tipoPago.findFirst({ where: { nombre: 'Transferencia', isActive: true, tenantId } })) ||
+        (await tx.tipoPago.findFirst({ where: { nombre: 'Efectivo', isActive: true, tenantId } }));
       if (!tp) {
         throw new ActionError('No existe un tipo de pago válido para el desembolso de deuda', 'VALIDATION_ERROR');
       }

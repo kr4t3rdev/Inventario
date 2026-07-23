@@ -43,7 +43,7 @@ describe('seedImplementationData', () => {
     );
   });
 
-  it('keeps shared master data unscoped while scoping tenant resources', async () => {
+  it('keeps currencies shared while scoping payment types to the tenant', async () => {
     const client = createMockClient();
 
     await seedImplementationData({ tenantId: 'tenant-demo-99' }, client as any);
@@ -58,8 +58,11 @@ describe('seedImplementationData', () => {
     );
 
     expect(client.tipoPago.upsert).toHaveBeenCalledWith(
-      expect.not.objectContaining({
-        create: expect.objectContaining({ tenantId: expect.anything() }),
+      expect.objectContaining({
+        where: expect.objectContaining({
+          tipoId: expect.stringContaining('tenant-demo-99'),
+        }),
+        create: expect.objectContaining({ tenantId: 'tenant-demo-99' }),
       }),
     );
   });

@@ -169,8 +169,8 @@ export const POST = withAuthPost(async (request: NextRequest, _context: unknown,
 
     const deuda = await prisma.$transaction(async (tx) => {
       const tipoPagoDesembolso =
-        (await tx.tipoPago.findFirst({ where: { nombre: 'Transferencia', isActive: true } })) ||
-        (await tx.tipoPago.findFirst({ where: { nombre: 'Efectivo', isActive: true } }))
+        (await tx.tipoPago.findFirst({ where: { nombre: 'Transferencia', isActive: true, tenantId } })) ||
+        (await tx.tipoPago.findFirst({ where: { nombre: 'Efectivo', isActive: true, tenantId } }))
 
       if (!tipoPagoDesembolso) {
         throw new Error('No existe un tipo de pago válido para el desembolso de deuda')

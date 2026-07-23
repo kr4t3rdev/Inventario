@@ -50,19 +50,24 @@ async function seedMonedas(client: ImplementationSeedClient): Promise<void> {
 
 /**
  * @description Crea tipos de pago contables de transferencia y efectivo.
- * @returns {Promise<void>} Promesa resuelta cuando termina el upsert de tipos de pago
+ * @param {ImplementationSeedClient} client - Cliente Prisma o doble de prueba.
+ * @param {string} tenantId - Tenant propietario de los tipos de pago.
+ * @returns {Promise<void>} Promesa resuelta cuando termina el upsert de tipos de pago.
  */
-async function seedTiposPagoContables(client: ImplementationSeedClient): Promise<void> {
+async function seedTiposPagoContables(
+  client: ImplementationSeedClient,
+  tenantId: string,
+): Promise<void> {
   const tiposPago = [
     {
-      tipoId: 'tp_impl_transferencia',
+      tipoId: `tp_impl_transferencia__${tenantId}`,
       nombre: 'Transferencia',
       descripcion: 'Pago por transferencia bancaria',
       requiereCuenta: true,
       isActive: true
     },
     {
-      tipoId: 'tp_impl_efectivo',
+      tipoId: `tp_impl_efectivo__${tenantId}`,
       nombre: 'Efectivo',
       descripcion: 'Pago en efectivo',
       requiereCuenta: false,
@@ -79,7 +84,7 @@ async function seedTiposPagoContables(client: ImplementationSeedClient): Promise
         requiereCuenta: tipoPago.requiereCuenta,
         isActive: tipoPago.isActive
       },
-      create: tipoPago
+      create: { ...tipoPago, tenantId }
     })
   }
 }
@@ -196,7 +201,7 @@ export async function seedImplementationData(
   console.log('🌱 Iniciando seed de implementacion...')
 
   await seedMonedas(client)
-  await seedTiposPagoContables(client)
+  await seedTiposPagoContables(client, tenantId)
   await seedCuentasBancariasPorMoneda(client, tenantId)
 
   const categorias = [

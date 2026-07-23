@@ -7,7 +7,7 @@ import { revalidatePath } from 'next/cache';
 import { z } from 'zod';
 import { withAction, ActionError } from '@/lib/server-actions';
 import { prisma } from '@/lib/prisma';
-import { requireTenant } from '@/lib/services/tenant-scope';
+import { requireManagerRole, requireTenant } from '@/lib/services/tenant-scope';
 import { AuditLogService } from '@/lib/services/audit-log-service';
 import { AccountingConfigReadService } from '@/features/contabilidad/services/accounting-config-read-service';
 import type { AuthenticatedUser } from '@/lib/auth-middleware';
@@ -78,6 +78,7 @@ export const getTipoPagoAction = withAction(async (id: string, user: Authenticat
 });
 
 export const createTipoPagoAction = withAction(async (input: z.infer<typeof createSchema>, user: AuthenticatedUser) => {
+  requireManagerRole(user, 'crear tipos de pago');
   const tenantId = requireTenant(user);
   const parsed = createSchema.parse(input);
 
@@ -111,6 +112,7 @@ export const createTipoPagoAction = withAction(async (input: z.infer<typeof crea
 });
 
 export const updateTipoPagoAction = withAction(async (input: z.infer<typeof updateSchema>, user: AuthenticatedUser) => {
+  requireManagerRole(user, 'actualizar tipos de pago');
   const tenantId = requireTenant(user);
   const parsed = updateSchema.parse(input);
   const { id, ...data } = parsed;
@@ -145,7 +147,9 @@ export const updateTipoPagoAction = withAction(async (input: z.infer<typeof upda
   }
 
   const requiereCuentaFinal = data.requiereCuenta ?? existing.requiereCuenta;
-  const cuentaDefectoFinal = data.cuentaDefecto ?? existing.cuentaDefecto;
+  const cuentaDefectoFinal = Object.prototype.hasOwnProperty.call(data, 'cuentaDefecto')
+    ? data.cuentaDefecto
+    : existing.cuentaDefecto;
   if (requiereCuentaFinal && !cuentaDefectoFinal) {
     throw new ActionError('Si el tipo de pago requiere cuenta, debe especificar una cuenta por defecto', 'ACCOUNT_REQUIRED_BUT_NOT_PROVIDED');
   }
@@ -153,11 +157,19 @@ export const updateTipoPagoAction = withAction(async (input: z.infer<typeof upda
   const toUpdate: any = { ...data };
   if (data.requiereCuenta === false) toUpdate.cuentaDefecto = null;
 
-  const updated = await prisma.tipoPago.update({
-    where: { tipoId: id },
-    data: toUpdate,
+  const updateResult = await prisma.tipoPago.updateMany({
+    where: { tipoId: id, tenantId },
+    data: toUpdate
+  });
+  if (updateResult.count !== 1) {
+    throw new ActionError('Tipo de pago no encontrado', 'PAYMENT_TYPE_NOT_FOUND');
+  }
+
+  const updated = await prisma.tipoPago.findFirst({
+    where: { tipoId: id, tenantId },
     include: { _count: _countSelect }
   });
+  if (!updated) throw new ActionError('Tipo de pago no encontrado', 'PAYMENT_TYPE_NOT_FOUND');
 
   await AuditLogService.log({
     accion: 'UPDATE', entidad: 'TIPO_PAGO', entidadId: id, usuarioId: user.userId,
@@ -177,6 +189,7 @@ export const updateTipoPagoAction = withAction(async (input: z.infer<typeof upda
 });
 
 export const deleteTipoPagoAction = withAction(async (id: string, user: AuthenticatedUser) => {
+  requireManagerRole(user, 'eliminar tipos de pago');
   const tenantId = requireTenant(user);
 
   const existing = await prisma.tipoPago.findFirst({
@@ -188,7 +201,12 @@ export const deleteTipoPagoAction = withAction(async (id: string, user: Authenti
   const total = existing._count.reconciliacionesVenta + existing._count.reconciliacionesServicio + existing._count.reconciliacionesGasto;
   if (total > 0) throw new ActionError('No se puede eliminar un tipo de pago que tiene reconciliaciones asociadas', 'PAYMENT_TYPE_HAS_RECONCILIATIONS');
 
-  await prisma.tipoPago.delete({ where: { tipoId: id } });
+  const deleteResult = await prisma.tipoPago.deleteMany({
+    where: { tipoId: id, tenantId }
+  });
+  if (deleteResult.count !== 1) {
+    throw new ActionError('Tipo de pago no encontrado', 'PAYMENT_TYPE_NOT_FOUND');
+  }
 
   await AuditLogService.log({
     accion: 'DELETE', entidad: 'TIPO_PAGO', entidadId: id, usuarioId: user.userId,

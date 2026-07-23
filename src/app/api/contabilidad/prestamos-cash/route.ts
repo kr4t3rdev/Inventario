@@ -165,8 +165,8 @@ export const POST = withAuthPost(async (request: NextRequest, _context: unknown,
     }
 
     const tipoPagoDesembolso =
-      (await prisma.tipoPago.findFirst({ where: { nombre: 'Transferencia', isActive: true } })) ||
-      (await prisma.tipoPago.findFirst({ where: { nombre: 'Efectivo', isActive: true } }))
+      (await prisma.tipoPago.findFirst({ where: { nombre: 'Transferencia', isActive: true, tenantId } })) ||
+      (await prisma.tipoPago.findFirst({ where: { nombre: 'Efectivo', isActive: true, tenantId } }))
 
     if (!tipoPagoDesembolso) {
       return NextResponse.json({ error: 'No existe un tipo de pago válido para registrar el desembolso' }, { status: 400 })

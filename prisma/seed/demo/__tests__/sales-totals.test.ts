@@ -2,19 +2,30 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { seedProfessionalExtras } from '../professional-seed';
 import { seedEnterpriseExtras } from '../enterprise-seed';
+import { seedBaseDemoData } from '../base-seed';
 
 function createSeedClient() {
   return {
     moneda: { upsert: vi.fn() },
+    tipoPago: { upsert: vi.fn() },
     cuentaBancaria: { upsert: vi.fn() },
     categoria: { upsert: vi.fn() },
     unidad: { upsert: vi.fn() },
     vendor: { upsert: vi.fn() },
-    cliente: { upsert: vi.fn() },
+    cliente: {
+      upsert: vi.fn(),
+      findFirst: vi.fn().mockResolvedValue({ clienteId: 'demo_base_cli_001' }),
+    },
     almacen: { upsert: vi.fn() },
     listaPrecio: { upsert: vi.fn() },
-    puntoDeVenta: { upsert: vi.fn() },
-    producto: { upsert: vi.fn() },
+    puntoDeVenta: {
+      upsert: vi.fn(),
+      findFirst: vi.fn().mockResolvedValue({ pvId: 'demo_base_pv' }),
+    },
+    producto: {
+      upsert: vi.fn(),
+      findFirst: vi.fn().mockResolvedValue({ id: 'base-product' }),
+    },
     precioProducto: { upsert: vi.fn() },
     venta: {
       create: vi
@@ -66,5 +77,20 @@ describe('demo sales totals seed', () => {
         total: 1200,
       },
     });
+  });
+
+  it('base seed creates tenant-scoped payment types with tenant-specific ids', async () => {
+    const client = createSeedClient();
+
+    await seedBaseDemoData({ tenantId: 'tenant-demo' }, client as never);
+
+    expect(client.tipoPago.upsert).toHaveBeenCalledWith(
+      expect.objectContaining({
+        where: expect.objectContaining({
+          tipoId: expect.stringContaining('tenant-demo'),
+        }),
+        create: expect.objectContaining({ tenantId: 'tenant-demo' }),
+      }),
+    );
   });
 });

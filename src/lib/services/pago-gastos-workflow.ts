@@ -148,15 +148,16 @@ function convertMontoToCuentaMoneda(
  */
 async function resolveTipoPago(
   tx: Prisma.TransactionClient,
-  tipoPagoId?: string
+  tipoPagoId?: string,
+  tenantId?: string
 ): Promise<{ tipoId: string; cuentaDefecto: string | null }> {
   const tipoPago = tipoPagoId
     ? await tx.tipoPago.findUnique({
-        where: { tipoId: tipoPagoId },
+        where: { tipoId: tipoPagoId, tenantId },
         select: { tipoId: true, isActive: true, cuentaDefecto: true }
       })
     : await tx.tipoPago.findFirst({
-        where: { isActive: true },
+        where: { isActive: true, tenantId },
         orderBy: { createdAt: 'asc' },
         select: { tipoId: true, isActive: true, cuentaDefecto: true }
       })
@@ -205,7 +206,7 @@ async function resolveCuentaId(
   }
 
   const cuentaFallback = await tx.cuentaBancaria.findFirst({
-    where: { isActive: true },
+    where: { isActive: true, tenantId },
     orderBy: { createdAt: 'asc' },
     select: { cuentaId: true }
   })
@@ -275,7 +276,7 @@ export async function applyPagoGastoWorkflow(
 
   const estadoSolicitado = params.estado || 'PAGADA'
   let estadoReconciliacion: 'PENDIENTE' | 'PAGADA' | 'PARCIAL' = estadoSolicitado
-  const tipoPago = await resolveTipoPago(tx, params.tipoPagoId)
+  const tipoPago = await resolveTipoPago(tx, params.tipoPagoId, params.tenantId)
   const cuentaIdForSimplePago = await resolveCuentaId(tx, params.cuentaId, tipoPago.cuentaDefecto)
   const distribucion = buildDistribucion(params, cuentaIdForSimplePago)
 

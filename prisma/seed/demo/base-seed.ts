@@ -39,13 +39,26 @@ async function seedMonedas(client: DemoSeedClient): Promise<void> {
 
 /* ───── Tipos de pago ───── */
 
-async function seedTiposPago(client: DemoSeedClient): Promise<void> {
+/**
+ * @description Crea tipos de pago base aislados para un tenant demo.
+ * @param {DemoSeedClient} client - Cliente Prisma o doble de prueba.
+ * @param {string} tenantId - Tenant propietario de los tipos de pago.
+ * @returns {Promise<void>} Promesa resuelta al completar los upserts.
+ */
+async function seedTiposPago(
+  client: DemoSeedClient,
+  tenantId: string,
+): Promise<void> {
   const tipos = [
-    { tipoId: 'demo_base_transferencia', nombre: 'Transferencia', descripcion: 'Pago por transferencia', requiereCuenta: true, isActive: true },
-    { tipoId: 'demo_base_efectivo', nombre: 'Efectivo', descripcion: 'Pago en efectivo', requiereCuenta: false, isActive: true },
+    { tipoId: `demo_base_transferencia__${tenantId}`, nombre: 'Transferencia', descripcion: 'Pago por transferencia', requiereCuenta: true, isActive: true },
+    { tipoId: `demo_base_efectivo__${tenantId}`, nombre: 'Efectivo', descripcion: 'Pago en efectivo', requiereCuenta: false, isActive: true },
   ]
   for (const t of tipos) {
-    await client.tipoPago.upsert({ where: { tipoId: t.tipoId }, update: t, create: t })
+    await client.tipoPago.upsert({
+      where: { tipoId: t.tipoId },
+      update: t,
+      create: { ...t, tenantId },
+    })
   }
 }
 
@@ -202,7 +215,7 @@ export async function seedBaseDemoData(
   console.log('🌱 [demo-base] Sembrando datos base (Básico)...')
 
   await seedMonedas(client)
-  await seedTiposPago(client)
+  await seedTiposPago(client, tenantId)
   await seedCuentas(client, tenantId)
   await seedCategorias(client, tenantId)
   await seedUnidades(client, tenantId)

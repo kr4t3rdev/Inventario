@@ -127,7 +127,7 @@ export async function handlePostReconciliacionVentas(request: NextRequest, user:
   const cuentaBancaria = await prisma.cuentaBancaria.findUnique({ where: { cuentaId: validatedData.cuentaId } })
   if (!cuentaBancaria || !cuentaBancaria.isActive) return NextResponse.json({ error: 'Cuenta bancaria no encontrada o inactiva', code: 'CUENTA_NO_ENCONTRADA' }, { status: 404 })
 
-  const tipoPago = await prisma.tipoPago.findUnique({ where: { tipoId: validatedData.tipoPagoId } })
+  const tipoPago = await prisma.tipoPago.findFirst({ where: { tipoId: validatedData.tipoPagoId, tenantId: user.tenantId } })
   if (!tipoPago || !tipoPago.isActive) return NextResponse.json({ error: 'Tipo de pago no encontrado o inactivo', code: 'TIPO_PAGO_INACTIVO' }, { status: 404 })
 
   if ((validatedData.moneda !== cuentaBancaria.moneda || validatedData.moneda !== 'CUP') && !validatedData.tasaCambio) {
@@ -140,7 +140,7 @@ export async function handlePostReconciliacionVentas(request: NextRequest, user:
 
   let cuentaOrigen: any = null
   if (tipoPago.requiereCuenta && tipoPago.cuentaDefecto) {
-    cuentaOrigen = await prisma.cuentaBancaria.findUnique({ where: { cuentaId: tipoPago.cuentaDefecto } })
+    cuentaOrigen = await prisma.cuentaBancaria.findFirst({ where: { cuentaId: tipoPago.cuentaDefecto, tenantId: user.tenantId } })
     if (!cuentaOrigen || !cuentaOrigen.isActive) return NextResponse.json({ error: 'Cuenta bancaria de origen no encontrada o inactiva', code: 'CUENTA_ORIGEN_INACTIVA' }, { status: 404 })
   }
 

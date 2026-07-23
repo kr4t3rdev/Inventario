@@ -56,7 +56,7 @@ export async function handlePostPrestamosCash(request: NextRequest, user: Authen
   if (!cuentaOrigen || !cuentaOrigen.isActive) return NextResponse.json({ error: 'Cuenta bancaria no encontrada o inactiva' }, { status: 400 })
   if (cuentaOrigen.saldo < body.montoCapital) return NextResponse.json({ error: `Saldo insuficiente en la cuenta. Disponible: ${cuentaOrigen.saldo}` }, { status: 400 })
 
-  const tp = (await prisma.tipoPago.findFirst({ where: { nombre: 'Transferencia', isActive: true } })) || (await prisma.tipoPago.findFirst({ where: { nombre: 'Efectivo', isActive: true } }))
+  const tp = (await prisma.tipoPago.findFirst({ where: { nombre: 'Transferencia', isActive: true, tenantId } })) || (await prisma.tipoPago.findFirst({ where: { nombre: 'Efectivo', isActive: true, tenantId } }))
   if (!tp) return NextResponse.json({ error: 'No existe un tipo de pago válido para registrar el desembolso' }, { status: 400 })
 
   const prestamo = await prisma.$transaction(async (tx: any) => {

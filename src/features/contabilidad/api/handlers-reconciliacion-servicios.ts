@@ -41,7 +41,7 @@ export async function handlePostReconciliacionServicios(request: NextRequest, us
   const cuentaBancaria = await prisma.cuentaBancaria.findUnique({ where: { cuentaId: validatedData.cuentaId } })
   if (!cuentaBancaria || !cuentaBancaria.isActive) return NextResponse.json({ error: 'Cuenta bancaria no encontrada o inactiva', code: 'CUENTA_NO_ENCONTRADA' }, { status: 404 })
 
-  const tipoPago = await prisma.tipoPago.findUnique({ where: { tipoId: validatedData.tipoPagoId } })
+  const tipoPago = await prisma.tipoPago.findFirst({ where: { tipoId: validatedData.tipoPagoId, tenantId: user.tenantId } })
   if (!tipoPago || !tipoPago.isActive) return NextResponse.json({ error: 'Tipo de pago no encontrado o inactivo', code: 'TIPO_PAGO_INACTIVO' }, { status: 404 })
 
   let montoConvertido = validatedData.monto
@@ -49,7 +49,7 @@ export async function handlePostReconciliacionServicios(request: NextRequest, us
 
   let cuentaOrigen: any = null
   if (tipoPago.requiereCuenta && tipoPago.cuentaDefecto) {
-    cuentaOrigen = await prisma.cuentaBancaria.findUnique({ where: { cuentaId: tipoPago.cuentaDefecto } })
+    cuentaOrigen = await prisma.cuentaBancaria.findFirst({ where: { cuentaId: tipoPago.cuentaDefecto, tenantId: user.tenantId } })
     if (!cuentaOrigen || !cuentaOrigen.isActive) return NextResponse.json({ error: 'Cuenta bancaria de origen no encontrada o inactiva', code: 'CUENTA_ORIGEN_INACTIVA' }, { status: 404 })
     if (cuentaOrigen.saldo < montoConvertido) return NextResponse.json({ error: 'Saldo insuficiente en la cuenta de origen', code: 'SALDO_INSUFICIENTE' }, { status: 400 })
   }

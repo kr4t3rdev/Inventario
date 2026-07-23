@@ -103,11 +103,11 @@ export const createVentaServicioAction = withAction(withPeriodValidation(
     let allocationsResult: any[] = [];
     if (data.anticipos && data.anticipos.length > 0) {
       const tipoPagoDefault = await tx.tipoPago.findFirst({
-        where: { isActive: true },
+        where: { isActive: true, tenantId },
         orderBy: { createdAt: 'asc' },
       });
       const cuentaDefault = await tx.cuentaBancaria.findFirst({
-        where: { isActive: true },
+        where: { isActive: true, tenantId },
         orderBy: { createdAt: 'asc' },
       });
 

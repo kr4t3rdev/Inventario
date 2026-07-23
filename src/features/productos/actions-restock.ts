@@ -480,7 +480,7 @@ async function handlePaymentInTransaction(
 		// Resolver cuenta por defecto si no se especificó
 		if (!cuentaId) {
 			const tipoPago = await tx.tipoPago.findFirst({
-				where: { isActive: true },
+				where: { isActive: true, tenantId },
 				orderBy: { createdAt: "asc" },
 				select: { tipoId: true, cuentaDefecto: true },
 			});
@@ -518,7 +518,7 @@ async function handlePaymentInTransaction(
 		}
 
 		const tipoPagoData = await tx.tipoPago.findFirst({
-			where: { isActive: true },
+			where: { isActive: true, tenantId },
 			orderBy: { createdAt: "asc" },
 			select: { tipoId: true },
 		});

@@ -2,7 +2,8 @@ import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { z } from 'zod'
 import { authenticateUser, type AuthenticatedUser } from "@/lib/auth-middleware"
-import { requireTenant } from '@/lib/services/tenant-scope'
+import { ActionError } from '@/lib/server-actions'
+import { requireManagerRole, requireTenant } from '@/lib/services/tenant-scope'
 import { validarEscrituraPeriodo, extraerFechaDeBody } from '@/lib/services/validate-period-write'
 import { AuditLogService } from "@/lib/services/audit-log-service"
 
@@ -30,10 +31,14 @@ export async function GET(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const authResultUser = await authenticateUser(request)
+    if ('status' in authResultUser) return authResultUser as Response
+    const user = authResultUser.user as AuthenticatedUser
+    const tenantId = requireTenant(user)
     const { id } = await params
 
-    const tipoPago = await prisma.tipoPago.findUnique({
-      where: { tipoId: id },
+    const tipoPago = await prisma.tipoPago.findFirst({
+      where: { tipoId: id, tenantId },
       include: {
         _count: {
           select: {
@@ -59,8 +64,8 @@ export async function GET(
     // Obtener información de la cuenta por defecto si existe
     let cuentaDefectoInfo = null
     if (tipoPago.cuentaDefecto) {
-      cuentaDefectoInfo = await prisma.cuentaBancaria.findUnique({
-        where: { cuentaId: tipoPago.cuentaDefecto },
+      cuentaDefectoInfo = await prisma.cuentaBancaria.findFirst({
+        where: { cuentaId: tipoPago.cuentaDefecto, tenantId },
         select: {
           cuentaId: true,
           nombreBanco: true,
@@ -103,6 +108,7 @@ export async function PUT(
     if ('status' in authResultUser) return authResultUser as Response
     const user = authResultUser.user as AuthenticatedUser
     const tenantId = requireTenant(user)
+    requireManagerRole(user, 'actualizar tipos de pago')
 
     const { id } = await params
     const body = await request.json()
@@ -124,8 +130,8 @@ export async function PUT(
     }
 
     // Verificar que el tipo de pago existe
-    const tipoPagoExistente = await prisma.tipoPago.findUnique({
-      where: { tipoId: id },
+    const tipoPagoExistente = await prisma.tipoPago.findFirst({
+      where: { tipoId: id, tenantId },
       include: {
         _count: {
           select: {
@@ -173,6 +179,7 @@ export async function PUT(
           nombre: {
             equals: validatedData.nombre
           },
+          tenantId,
           tipoId: { not: id }
         }
       })
@@ -191,8 +198,8 @@ export async function PUT(
 
     // Si se especifica cuenta por defecto, verificar que existe y está activa
     if (validatedData.cuentaDefecto) {
-      const cuenta = await prisma.cuentaBancaria.findUnique({
-        where: { cuentaId: validatedData.cuentaDefecto }
+      const cuenta = await prisma.cuentaBancaria.findFirst({
+        where: { cuentaId: validatedData.cuentaDefecto, tenantId }
       })
 
       if (!cuenta) {
@@ -220,7 +227,9 @@ export async function PUT(
 
     // Validación especial: si se cambia requiereCuenta a true, debe tener cuenta por defecto
     const requiereCuentaFinal = validatedData.requiereCuenta ?? tipoPagoExistente.requiereCuenta
-    const cuentaDefectoFinal = validatedData.cuentaDefecto ?? tipoPagoExistente.cuentaDefecto
+    const cuentaDefectoFinal = Object.prototype.hasOwnProperty.call(validatedData, 'cuentaDefecto')
+      ? validatedData.cuentaDefecto
+      : tipoPagoExistente.cuentaDefecto
 
     if (requiereCuentaFinal && !cuentaDefectoFinal) {
       return NextResponse.json(
@@ -239,9 +248,23 @@ export async function PUT(
       dataToUpdate.cuentaDefecto = null
     }
 
-    const tipoPagoActualizado = await prisma.tipoPago.update({
-      where: { tipoId: id },
+    const updateResult = await prisma.tipoPago.updateMany({
+      where: { tipoId: id, tenantId },
       data: dataToUpdate,
+    })
+    if (updateResult.count !== 1) {
+      return NextResponse.json(
+        {
+          success: false,
+          error: 'Tipo de pago no encontrado',
+          code: 'PAYMENT_TYPE_NOT_FOUND',
+        },
+        { status: 404 },
+      )
+    }
+
+    const tipoPagoActualizado = await prisma.tipoPago.findFirst({
+      where: { tipoId: id, tenantId },
       include: {
         _count: {
           select: {
@@ -252,6 +275,16 @@ export async function PUT(
         }
       }
     })
+    if (!tipoPagoActualizado) {
+      return NextResponse.json(
+        {
+          success: false,
+          error: 'Tipo de pago no encontrado',
+          code: 'PAYMENT_TYPE_NOT_FOUND',
+        },
+        { status: 404 },
+      )
+    }
 
     // Registrar en auditoría
     await AuditLogService.log({
@@ -262,15 +295,16 @@ export async function PUT(
       detalles: {
         cambios: validatedData,
         nombreAnterior: tipoPagoExistente.nombre,
-        nombreNuevo: tipoPagoActualizado.nombre
+        nombreNuevo: tipoPagoActualizado.nombre,
+        tenantId
       }
     });
 
     // Obtener información de la cuenta por defecto actualizada
     let cuentaDefectoInfo = null
     if (tipoPagoActualizado.cuentaDefecto) {
-      cuentaDefectoInfo = await prisma.cuentaBancaria.findUnique({
-        where: { cuentaId: tipoPagoActualizado.cuentaDefecto },
+      cuentaDefectoInfo = await prisma.cuentaBancaria.findFirst({
+        where: { cuentaId: tipoPagoActualizado.cuentaDefecto, tenantId },
         select: {
           cuentaId: true,
           nombreBanco: true,
@@ -292,6 +326,13 @@ export async function PUT(
     })
 
   } catch (error) {
+    if (error instanceof ActionError && error.code === 'FORBIDDEN') {
+      return NextResponse.json(
+        { success: false, error: error.message, code: error.code },
+        { status: 403 },
+      )
+    }
+
     if (error instanceof z.ZodError) {
       return NextResponse.json(
         {
@@ -326,6 +367,7 @@ export async function DELETE(
     if ('status' in authResultUser) return authResultUser as Response
     const user = authResultUser.user as AuthenticatedUser
     const tenantId = requireTenant(user)
+    requireManagerRole(user, 'eliminar tipos de pago')
 
     const { id } = await params
 
@@ -344,8 +386,8 @@ export async function DELETE(
     }
 
     // Verificar que el tipo de pago existe
-    const tipoPagoExistente = await prisma.tipoPago.findUnique({
-      where: { tipoId: id },
+    const tipoPagoExistente = await prisma.tipoPago.findFirst({
+      where: { tipoId: id, tenantId },
       include: {
         _count: {
           select: {
@@ -389,9 +431,19 @@ export async function DELETE(
       )
     }
 
-    await prisma.tipoPago.delete({
-      where: { tipoId: id }
+    const deleteResult = await prisma.tipoPago.deleteMany({
+      where: { tipoId: id, tenantId }
     })
+    if (deleteResult.count !== 1) {
+      return NextResponse.json(
+        {
+          success: false,
+          error: 'Tipo de pago no encontrado',
+          code: 'PAYMENT_TYPE_NOT_FOUND',
+        },
+        { status: 404 },
+      )
+    }
 
     // Registrar en auditoría
     await AuditLogService.log({
@@ -402,7 +454,8 @@ export async function DELETE(
       detalles: {
         nombre: tipoPagoExistente.nombre,
         requiereCuenta: tipoPagoExistente.requiereCuenta,
-        cuentaDefecto: tipoPagoExistente.cuentaDefecto
+        cuentaDefecto: tipoPagoExistente.cuentaDefecto,
+        tenantId
       }
     });
 
@@ -412,6 +465,13 @@ export async function DELETE(
     })
 
   } catch (error) {
+    if (error instanceof ActionError && error.code === 'FORBIDDEN') {
+      return NextResponse.json(
+        { success: false, error: error.message, code: error.code },
+        { status: 403 },
+      )
+    }
+
     console.error('Error deleting payment type:', error)
     return NextResponse.json(
       {

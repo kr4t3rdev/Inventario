@@ -1,5 +1,7 @@
 import { NextRequest, NextResponse } from "next/server"
 import { prisma } from "@/lib/prisma"
+import { authenticateUser } from "@/lib/auth-middleware"
+import { requireTenant } from "@/lib/services/tenant-scope"
 // ===================== WANDA DASHBOARD =====================
 
 const wandaCache = new Map<string, { data: unknown; timestamp: number }>()
@@ -7,6 +9,9 @@ const WANDA_CACHE_DURATION = 60 * 1000
 
 export async function getWandaDashboardHandler(request: NextRequest) {
   try {
+    const authResult = await authenticateUser(request)
+    if ('status' in authResult) return authResult as Response
+    const tenantId = requireTenant(authResult.user)
     const { searchParams } = new URL(request.url)
 
     const fechaDesdeParam = searchParams.get("fechaDesde")
@@ -21,13 +26,14 @@ export async function getWandaDashboardHandler(request: NextRequest) {
       ? startOfDay(new Date(fechaDesdeParam))
       : startOfDay(subDays(new Date(), 30))
 
-    const cacheKey = `wanda-${fechaDesde.toISOString()}-${fechaHasta.toISOString()}-${puntoDeVentaId || "all"}-${empleadoId || "all"}`
+    const cacheKey = `wanda-${tenantId}-${fechaDesde.toISOString()}-${fechaHasta.toISOString()}-${puntoDeVentaId || "all"}-${empleadoId || "all"}`
     const cached = wandaCache.get(cacheKey)
     if (cached && Date.now() - cached.timestamp < WANDA_CACHE_DURATION) {
       return NextResponse.json(cached.data)
     }
 
     const baseWhereVenta = {
+      tenantId,
       createdAt: {
         gte: fechaDesde,
         lte: fechaHasta,
@@ -37,6 +43,7 @@ export async function getWandaDashboardHandler(request: NextRequest) {
     }
 
     const baseWhereServicio = {
+      tenantId,
       createdAt: {
         gte: fechaDesde,
         lte: fechaHasta,
@@ -46,7 +53,7 @@ export async function getWandaDashboardHandler(request: NextRequest) {
     const [tiposPago, monedas, ventas, ventasServicios, reconciliacionesVentas, reconciliacionesServicios, puntosDeVenta, empleados, attendanceRecords] =
       await Promise.all([
         prisma.tipoPago.findMany({
-          where: { isActive: true },
+          where: { isActive: true, tenantId },
           select: {
             tipoId: true,
             nombre: true,
@@ -106,6 +113,7 @@ export async function getWandaDashboardHandler(request: NextRequest) {
         }),
         prisma.reconciliacionVenta.findMany({
           where: {
+            tenantId,
             fechaReconciliacion: {
               gte: fechaDesde,
               lte: fechaHasta,
@@ -125,6 +133,7 @@ export async function getWandaDashboardHandler(request: NextRequest) {
         }),
         prisma.reconciliacionServicio.findMany({
           where: {
+            tenantId,
             fechaReconciliacion: {
               gte: fechaDesde,
               lte: fechaHasta,
@@ -136,9 +145,11 @@ export async function getWandaDashboardHandler(request: NextRequest) {
           },
         }),
         prisma.puntoDeVenta.findMany({
+          where: { tenantId },
           select: { pvId: true, nombre: true, ubicacion: true },
         }),
         prisma.empleado.findMany({
+          where: { tenantId },
           select: {
             empleadoId: true,
             nombre: true,
@@ -148,6 +159,7 @@ export async function getWandaDashboardHandler(request: NextRequest) {
         }),
         prisma.attendance.findMany({
           where: {
+            tenantId,
             date: {
               gte: fechaDesde,
               lte: fechaHasta,
