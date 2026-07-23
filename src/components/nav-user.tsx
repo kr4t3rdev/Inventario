@@ -60,8 +60,8 @@ export function NavUser() {
   const pathname = usePathname()
   const { isMobile } = useSidebar()
   const { setTheme, theme } = useTheme()
-  const { users } = useAdminUsers()
   const { user } = useAuth()
+  const { users } = useAdminUsers({ enabled: user?.role === 'admin' })
   const { logout } = useAuth()
 
   const profile = users?.find((u) => u.userId === user?.userId)
