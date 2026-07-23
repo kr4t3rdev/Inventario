@@ -16,8 +16,14 @@ export async function GET(request: Request) {
   }
 
   try {
+    const user = authResult.user as any;
+    const tenantId = user?.tenantId;
+    if (!tenantId) {
+      return errorResponse('Contexto de tenant no disponible', 403, 'TENANT_REQUIRED');
+    }
+
     const { searchParams } = new URL(request.url);
-    const result = await AccountingConfigReadService.getPaymentTypes({
+    const result = await AccountingConfigReadService.getPaymentTypes(tenantId, {
       includeInactive: parseBooleanParam(searchParams.get('includeInactive')),
       requiereCuenta: parseBooleanParam(searchParams.get('requiereCuenta')),
     });

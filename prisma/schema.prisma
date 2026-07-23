@@ -220,6 +220,7 @@ model Tenant {
   licencias                  TenantLicense[]
   memberships                TenantMembership[]
   turnosPos                  TurnoPuntoVenta[]
+      tiposPago                 TipoPago[]
 
   @@index([slug])
   @@map("tenants")
@@ -1140,9 +1141,9 @@ model PurchaseAllocation {
   cantidad              Int
   createdAt             DateTime            @default(now())
   updatedAt             DateTime            @updatedAt
-  compraDocumentoItem   CompraDocumentoItem @relation(fields: [compraDocumentoItemId], references: [compraDocumentoItemId])
+  compraDocumentoItem   CompraDocumentoItem @relation(fields: [compraDocumentoItemId], references: [compraDocumentoItemId], onDelete: Cascade)
   tenant                Tenant              @relation(fields: [tenantId], references: [tenantId])
-  ventaItem             VentaItem           @relation(fields: [ventaItemId], references: [id])
+  ventaItem             VentaItem           @relation(fields: [ventaItemId], references: [id], onDelete: Cascade)
 
   @@index([compraDocumentoItemId])
   @@index([ventaItemId])
@@ -1334,18 +1335,22 @@ model CuentaBancaria {
 }
 
 model TipoPago {
-  tipoId                   String                   @id @default(cuid())
-  nombre                   String
-  descripcion              String?
-  requiereCuenta           Boolean                  @default(true)
-  cuentaDefecto            String?
-  isActive                 Boolean                  @default(true)
-  createdAt                DateTime                 @default(now())
-  updatedAt                DateTime                 @updatedAt
-  reconciliacionesGasto    ReconciliacionGasto[]
-  reconciliacionesServicio ReconciliacionServicio[]
-  reconciliacionesVenta    ReconciliacionVenta[]
-}
+      tipoId                   String                   @id @default(cuid())
+      tenantId                 String
+      nombre                   String
+      descripcion              String?
+      requiereCuenta           Boolean                  @default(true)
+      cuentaDefecto            String?
+      isActive                 Boolean                  @default(true)
+      createdAt                DateTime                 @default(now())
+      updatedAt                DateTime                 @updatedAt
+      tenant                   Tenant                   @relation(fields: [tenantId], references: [tenantId])
+      reconciliacionesGasto    ReconciliacionGasto[]
+      reconciliacionesServicio ReconciliacionServicio[]
+      reconciliacionesVenta    ReconciliacionVenta[]
+
+      @@index([tenantId])
+    }
 
 model ReconciliacionVenta {
   reconciliacionId            String         @id @default(cuid())

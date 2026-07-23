@@ -56,9 +56,12 @@ describe('mobile accounting payment types route', () => {
 
     expect(response.status).toBe(200);
     expect(data.items).toHaveLength(1);
-    expect(AccountingConfigReadService.getPaymentTypes).toHaveBeenCalledWith({
-      includeInactive: true,
-      requiereCuenta: true,
-    });
+        expect(AccountingConfigReadService.getPaymentTypes).toHaveBeenCalledWith(
+          'tenant-1',
+          {
+            includeInactive: true,
+            requiereCuenta: true,
+          },
+        );
   });
 });

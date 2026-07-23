@@ -18,13 +18,13 @@ const paymentTypeCountSelect = {
   },
 } as const;
 
-async function enrichPaymentTypes(tipos: any[]) {
+async function enrichPaymentTypes(tipos: any[], tenantId: string) {
   return Promise.all(
     tipos.map(async (tipo: any) => {
       let cuentaDefectoInfo = null;
       if (tipo.cuentaDefecto) {
-        cuentaDefectoInfo = await prisma.cuentaBancaria.findUnique({
-          where: { cuentaId: tipo.cuentaDefecto },
+        cuentaDefectoInfo = await prisma.cuentaBancaria.findFirst({
+          where: { cuentaId: tipo.cuentaDefecto, tenantId },
           select: {
             cuentaId: true,
             nombreBanco: true,
@@ -43,13 +43,16 @@ async function enrichPaymentTypes(tipos: any[]) {
 
 /**
  * @description Shared read service for accounting configuration slices.
+ * All public methods require tenantId for proper multi-tenant isolation.
  */
 export const AccountingConfigReadService = {
   /**
-   * @description Lists payment types with the same read logic used by web.
+   * @description Lists payment types scoped to a tenant.
+   * @param tenantId - Tenant ID for isolation
+   * @param filters - Optional filters
    */
-  async getPaymentTypes(filters: PaymentTypeFilters = {}) {
-    const where: Record<string, unknown> = {};
+  async getPaymentTypes(tenantId: string, filters: PaymentTypeFilters = {}) {
+    const where: Record<string, unknown> = { tenantId };
     if (filters.includeInactive !== true) where.isActive = true;
     if (filters.requiereCuenta !== undefined) where.requiereCuenta = filters.requiereCuenta;
 
@@ -59,14 +62,16 @@ export const AccountingConfigReadService = {
       orderBy: [{ isActive: 'desc' }, { nombre: 'asc' }],
     });
 
-    return { data: await enrichPaymentTypes(tipos) };
+    return { data: await enrichPaymentTypes(tipos, tenantId) };
   },
 
   /**
-   * @description Lists active bank accounts available for payment-type configuration.
+   * @description Lists active bank accounts available for payment-type configuration, scoped to a tenant.
+   * @param tenantId - Tenant ID for isolation
+   * @param filters - Optional filters
    */
-  async getAvailableAccounts(filters: AvailableAccountsFilters = {}) {
-    const where: Record<string, unknown> = { isActive: true };
+  async getAvailableAccounts(tenantId: string, filters: AvailableAccountsFilters = {}) {
+    const where: Record<string, unknown> = { isActive: true, tenantId };
     if (filters.moneda) where.moneda = filters.moneda;
     if (filters.tipoCuenta) where.tipoCuenta = filters.tipoCuenta;
 
@@ -90,6 +95,7 @@ export const AccountingConfigReadService = {
           where: {
             cuentaDefecto: cuenta.cuentaId,
             isActive: true,
+            tenantId,
           },
           select: {
             tipoId: true,
@@ -110,12 +116,12 @@ export const AccountingConfigReadService = {
       totalCuentas: cuentas.length,
       cuentasPorMoneda: await prisma.cuentaBancaria.groupBy({
         by: ['moneda'],
-        where: { isActive: true },
+        where: { isActive: true, tenantId },
         _count: { cuentaId: true },
       }),
       cuentasPorTipo: await prisma.cuentaBancaria.groupBy({
         by: ['tipoCuenta'],
-        where: { isActive: true },
+        where: { isActive: true, tenantId },
         _count: { cuentaId: true },
       }),
     };

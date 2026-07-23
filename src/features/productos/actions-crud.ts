@@ -597,6 +597,7 @@ export const deleteProductoAction = withAction(
 
 		await prisma.producto.delete({ where: { id } });
 		revalidatePath("/busy/products");
+		revalidatePath("/busy/dashboard");
 
 		return { id, eliminado: true };
 	},

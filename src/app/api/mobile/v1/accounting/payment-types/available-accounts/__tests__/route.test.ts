@@ -57,9 +57,12 @@ describe('mobile accounting available accounts route', () => {
 
     expect(response.status).toBe(200);
     expect(data.items).toHaveLength(1);
-    expect(AccountingConfigReadService.getAvailableAccounts).toHaveBeenCalledWith({
-      moneda: 'USD',
-      tipoCuenta: 'CORRIENTE',
-    });
+        expect(AccountingConfigReadService.getAvailableAccounts).toHaveBeenCalledWith(
+          'tenant-1',
+          {
+            moneda: 'USD',
+            tipoCuenta: 'CORRIENTE',
+          },
+        );
   });
 });

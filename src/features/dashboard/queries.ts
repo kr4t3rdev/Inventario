@@ -635,7 +635,7 @@ export async function getDashboardStatsQuery(
   Array.from(catMap.entries()).forEach(([categoria, d]) => distribucionStock.push({ categoria, ...d }))
 
   return {
-    totalProductos, totalAlmacenes, totalPuntosVenta,
+    totalProductos: Object.keys(stockPorProducto).length, totalAlmacenes, totalPuntosVenta,
     totalVentas: ventasData.length,
     totalMermas: mermasData.length,
     totalTransferencias: transferenciasData.length,
