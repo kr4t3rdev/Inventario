@@ -280,3 +280,33 @@ describe('AppSidebar2 Ficha de Costo plan gate', () => {
     expect(navMainState.groups.flat().map((item) => item.title)).toContain('Ficha de Costo')
   })
 })
+
+describe('AppSidebar2 entrance animation', () => {
+  beforeEach(() => {
+    motionState.captures = []
+    motionState.reducedMotion = false
+    navMainState.groups = []
+    pathnameState.pathname = '/busy/dashboard'
+    authState.user = {
+      role: 'admin',
+      tenantRole: 'manager',
+      planFeatures: { empleados: true },
+    }
+  })
+
+  it('does not use any stagger or per-item transition variants', () => {
+    render(React.createElement(AppSidebar2))
+    for (const cap of motionState.captures) {
+      if (cap.props.variants && typeof cap.props.variants === 'object') {
+        const variants = cap.props.variants as Record<string, { transition?: Record<string, unknown> }>
+        for (const key of Object.keys(variants)) {
+          const transition = variants[key]?.transition
+          if (transition && typeof transition === 'object') {
+            expect(transition).not.toHaveProperty('staggerChildren')
+            expect(transition).not.toHaveProperty('delayChildren')
+          }
+        }
+      }
+    }
+  })
+})

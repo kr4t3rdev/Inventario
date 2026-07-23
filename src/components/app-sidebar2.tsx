@@ -56,29 +56,6 @@ export function AppSidebar2({
 	const shouldAnimate = isMounted && !shouldReduceMotion;
 	const isBusyRoute = pathname.startsWith("/busy");
 
-	const groupListVariants = {
-		hidden: { opacity: 0 },
-		visible: {
-			opacity: 1,
-			transition: {
-				staggerChildren: shouldAnimate ? 0.05 : 0,
-				delayChildren: shouldAnimate ? 0.03 : 0,
-			},
-		},
-	};
-
-	const groupItemVariants = {
-		hidden: { opacity: 0, y: shouldAnimate ? 8 : 0 },
-		visible: {
-			opacity: 1,
-			y: 0,
-			transition: {
-				duration: shouldAnimate ? 0.24 : 0,
-				ease: "easeOut" as const,
-			},
-		},
-	};
-
 	const accessContext = {
 		role: user?.role ?? null,
 		tenantRole: user?.tenantRole ?? null,
@@ -159,17 +136,10 @@ export function AppSidebar2({
 				</AnimatePresence>
 
 				<SidebarContent className="px-2 pb-2 group-data-[collapsible=icon]:overflow-y-auto group-data-[collapsible=icon]:px-0">
-					<motion.div
-						className="flex flex-col gap-2 group-data-[collapsible=icon]:gap-2"
-						variants={groupListVariants}
-						initial={shouldAnimate ? "hidden" : "visible"}
-						animate="visible"
-					>
+					<div className="flex flex-col gap-2 group-data-[collapsible=icon]:gap-2">
 						{filteredGroups.map((group) => (
-							<motion.div
+							<div
 								key={group.title}
-								variants={groupItemVariants}
-								whileHover={shouldAnimate ? { y: -1 } : undefined}
 								title={state === "collapsed" ? group.title : undefined}
 							>
 								<SidebarGroup
@@ -185,9 +155,9 @@ export function AppSidebar2({
 									</SidebarGroupLabel>
 									<NavMain items={group.items} />
 								</SidebarGroup>
-							</motion.div>
+							</div>
 						))}
-					</motion.div>
+					</div>
 				</SidebarContent>
 
 				<motion.div
