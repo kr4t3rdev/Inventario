@@ -39,6 +39,21 @@ import {
 /** Items públicos visibles aunque el usuario no tenga rol de tenant (modo degraded). */
 export const TENANTLESS_PUBLIC_ITEMS = SIDEBAR_CONFIG.tenantlessPublicItems;
 
+const SIDEBAR_CONTAINER_INITIAL = { opacity: 0, x: -10 };
+const SIDEBAR_VISIBLE_POSITION = { opacity: 1, x: 0 };
+const SIDEBAR_HEADER_INITIAL = { opacity: 0, y: -8 };
+const SIDEBAR_HEADER_POSITION = { opacity: 1, y: 0 };
+const SIDEBAR_HEADER_EXIT = { opacity: 0, y: -8 };
+const SIDEBAR_FOOTER_INITIAL = { opacity: 0, y: 6 };
+const SIDEBAR_FOOTER_POSITION = { opacity: 1, y: 0 };
+const SIDEBAR_LOGO_HOVER = { scale: 1.04 };
+const SIDEBAR_EASE = "easeOut" as const;
+const SIDEBAR_CONTAINER_TRANSITION = { duration: 0.26, ease: SIDEBAR_EASE };
+const SIDEBAR_HEADER_TRANSITION = { duration: 0.22, ease: SIDEBAR_EASE };
+const SIDEBAR_LOGO_TRANSITION = { duration: 0.2, ease: SIDEBAR_EASE };
+const SIDEBAR_FOOTER_TRANSITION = { duration: 0.22, ease: SIDEBAR_EASE };
+const SIDEBAR_NO_MOTION_TRANSITION = { duration: 0 };
+
 /**
  * @description Componente de barra lateral de la aplicación que incluye navegación a todas las páginas principales.
  * @param {React.ComponentProps<typeof Sidebar>} props - Propiedades del contenedor Sidebar.
@@ -55,15 +70,26 @@ export function AppSidebar2({
 	const isMounted = useIsMounted();
 	const shouldAnimate = isMounted && !shouldReduceMotion;
 	const isBusyRoute = pathname.startsWith("/busy");
+	const planFeatures = user?.planFeatures ?? null;
 
-	const accessContext = {
-		role: user?.role ?? null,
-		tenantRole: user?.tenantRole ?? null,
-		tenantId: user?.tenantId ?? null,
-		planFeatures: user?.planFeatures ?? null,
-		planName: user?.planName ?? null,
-		isBusyRoute,
-	};
+	const accessContext = React.useMemo(
+		() => ({
+			role: user?.role ?? null,
+			tenantRole: user?.tenantRole ?? null,
+			tenantId: user?.tenantId ?? null,
+			planFeatures,
+			planName: user?.planName ?? null,
+			isBusyRoute,
+		}),
+		[
+			user?.role,
+			user?.tenantRole,
+			user?.tenantId,
+			user?.planName,
+			planFeatures,
+			isBusyRoute,
+		],
+	);
 
 	const filteredGroups = React.useMemo(
 		() => buildVisibleSidebarGroups(SIDEBAR_CONFIG, accessContext),
@@ -73,8 +99,7 @@ export function AppSidebar2({
 			accessContext.tenantId,
 			accessContext.planName,
 			accessContext.isBusyRoute,
-			// planFeatures requires serialization for reference equality
-			JSON.stringify(accessContext.planFeatures),
+			accessContext.planFeatures,
 		],
 	);
 
@@ -86,24 +111,18 @@ export function AppSidebar2({
 		>
 			<motion.div
 				className="flex h-full min-h-0 flex-col"
-				initial={shouldAnimate ? { opacity: 0, x: -10 } : { opacity: 1, x: 0 }}
-				animate={{ opacity: 1, x: 0 }}
-				transition={{
-					duration: shouldAnimate ? 0.26 : 0,
-					ease: "easeOut" as const,
-				}}
+				initial={shouldAnimate ? SIDEBAR_CONTAINER_INITIAL : SIDEBAR_VISIBLE_POSITION}
+				animate={SIDEBAR_VISIBLE_POSITION}
+				transition={shouldAnimate ? SIDEBAR_CONTAINER_TRANSITION : SIDEBAR_NO_MOTION_TRANSITION}
 			>
 				<AnimatePresence initial={false}>
 					{state !== "collapsed" && (
 						<motion.div
 							key="sidebar-brand-header"
-							initial={shouldAnimate ? { opacity: 0, y: -8 } : { opacity: 1, y: 0 }}
-							animate={{ opacity: 1, y: 0 }}
-							exit={shouldAnimate ? { opacity: 0, y: -8 } : { opacity: 1, y: 0 }}
-							transition={{
-								duration: shouldAnimate ? 0.22 : 0,
-								ease: "easeOut" as const,
-							}}
+							initial={shouldAnimate ? SIDEBAR_HEADER_INITIAL : SIDEBAR_HEADER_POSITION}
+							animate={SIDEBAR_HEADER_POSITION}
+							exit={shouldAnimate ? SIDEBAR_HEADER_EXIT : SIDEBAR_HEADER_POSITION}
+							transition={shouldAnimate ? SIDEBAR_HEADER_TRANSITION : SIDEBAR_NO_MOTION_TRANSITION}
 						>
 							<SidebarHeader className="px-3 pb-2 pt-3">
 								<Link
@@ -112,11 +131,8 @@ export function AppSidebar2({
 								>
 									<motion.span
 										className="flex size-10 shrink-0 items-center justify-center rounded-lg bg-primary/15 text-primary"
-										whileHover={shouldAnimate ? { scale: 1.04 } : undefined}
-										transition={{
-											duration: shouldAnimate ? 0.2 : 0,
-											ease: "easeOut" as const,
-										}}
+										whileHover={shouldAnimate ? SIDEBAR_LOGO_HOVER : undefined}
+										transition={shouldAnimate ? SIDEBAR_LOGO_TRANSITION : SIDEBAR_NO_MOTION_TRANSITION}
 									>
 										<LayoutDashboard className="h-5 w-5 transition-transform duration-200 group-hover/brand:-translate-y-0.5" />
 									</motion.span>
@@ -161,12 +177,9 @@ export function AppSidebar2({
 				</SidebarContent>
 
 				<motion.div
-					initial={shouldAnimate ? { opacity: 0, y: 6 } : { opacity: 1, y: 0 }}
-					animate={{ opacity: 1, y: 0 }}
-					transition={{
-						duration: shouldAnimate ? 0.22 : 0,
-						ease: "easeOut" as const,
-					}}
+					initial={shouldAnimate ? SIDEBAR_FOOTER_INITIAL : SIDEBAR_FOOTER_POSITION}
+					animate={SIDEBAR_FOOTER_POSITION}
+					transition={shouldAnimate ? SIDEBAR_FOOTER_TRANSITION : SIDEBAR_NO_MOTION_TRANSITION}
 				>
 					<SidebarSeparator className="mx-0.5 mt-1" />
 					<SidebarFooter className="flex flex-col gap-2 p-3 pt-2 group-data-[collapsible=icon]:p-1">
