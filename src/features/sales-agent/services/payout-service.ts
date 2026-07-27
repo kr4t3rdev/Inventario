@@ -150,7 +150,11 @@ export async function confirmSalesAgentPayout(input: ConfirmSalesAgentPayoutInpu
       },
       deliveryIds: [deliveryId],
     };
-    }, { isolationLevel: Prisma.TransactionIsolationLevel.Serializable });
+    }, {
+      isolationLevel: Prisma.TransactionIsolationLevel.Serializable,
+      maxWait: 15_000,
+      timeout: 30_000,
+    });
     if ('result' in transactionResult && transactionResult.deliveryIds) {
       await deliverSalesAgentEmails(transactionResult.deliveryIds);
       return transactionResult.result;
