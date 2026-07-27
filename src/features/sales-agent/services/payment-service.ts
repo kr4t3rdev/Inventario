@@ -248,6 +248,9 @@ export async function confirmSalesAgentTenantPayment(
         },
         deliveryIds,
       };
+    }, {
+      maxWait: 15_000,
+      timeout: 30_000,
     });
     if ('result' in transactionResult) {
       await deliverSalesAgentEmails(transactionResult.deliveryIds);
