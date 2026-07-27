@@ -18,6 +18,12 @@ vi.mock('@/lib/prisma', () => {
       count: vi.fn(),
       update: vi.fn(),
     },
+    salesAgentReferral: {
+      findUnique: vi.fn(),
+    },
+    salesAgentProfile: {
+      findUnique: vi.fn(),
+    },
     affiliateCommissionLedger: {
       findFirst: vi.fn(),
       findMany: vi.fn(),
@@ -125,6 +131,58 @@ describe('affiliate actions', () => {
     const selfReferral = await registerReferralFromCodeAction({ referralCode: 'REF-SELF' });
     expect(selfReferral.success).toBe(false);
     expect(selfReferral.error?.code).toBe('SELF_REFERRAL_NOT_ALLOWED');
+  });
+
+  it('blocks affiliate attribution when a sales-agent attribution exists', async () => {
+    vi.mocked(getCurrentUser).mockResolvedValue(tenantUser);
+    vi.mocked(prisma.affiliateProfile.findUnique).mockResolvedValue({
+      tenantId: 'tenant-referrer',
+      referralCode: 'REF-ABC',
+      isEligible: true,
+    } as never);
+    vi.mocked(prisma.affiliateReferral.findUnique).mockResolvedValue(null as never);
+    vi.mocked(prisma.salesAgentReferral.findUnique).mockResolvedValue({
+      salesAgentReferralId: 'sales-ref-1',
+    } as never);
+    vi.mocked(prisma.tenantLicense.findFirst).mockResolvedValue({
+      tenantLicenseId: 'license-self',
+      tenantId: 'tenant-self',
+      planId: 'plan-pro',
+      isDemo: false,
+      tenant: { memberships: [{ user: { isActive: true } }] },
+      plan: { precio: 75 },
+    } as never);
+
+    const result = await registerReferralFromCodeAction({ referralCode: 'REF-ABC' });
+
+    expect(result).toMatchObject({
+      success: false,
+      error: { code: 'REFERRAL_ALREADY_LINKED' },
+    });
+    expect(prisma.affiliateReferral.create).not.toHaveBeenCalled();
+  });
+
+  it('rejects an affiliate code that collides with an active sales-agent code', async () => {
+    vi.mocked(getCurrentUser).mockResolvedValue(tenantUser);
+    vi.mocked(prisma.affiliateProfile.findUnique).mockResolvedValue({
+      tenantId: 'tenant-referrer',
+      referralCode: 'COLLISION',
+      isEligible: true,
+      status: 'active',
+    } as never);
+    vi.mocked(prisma.salesAgentProfile.findUnique).mockResolvedValue({
+      userId: 'sales-agent-1',
+      referralCode: 'COLLISION',
+      status: 'active',
+    } as never);
+
+    const result = await registerReferralFromCodeAction({ referralCode: 'COLLISION' });
+
+    expect(result).toMatchObject({
+      success: false,
+      error: { code: 'REFERRAL_CODE_COLLISION' },
+    });
+    expect(prisma.affiliateReferral.create).not.toHaveBeenCalled();
   });
 
   it('confirms a referred payment, creates commission credit and perk grants', async () => {

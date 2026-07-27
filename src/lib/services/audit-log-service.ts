@@ -1,4 +1,5 @@
 import prisma from "@/lib/prisma";
+import type { Prisma } from "@/generated/prisma";
 
 export type AuditEntity = 
   | "CUENTA_BANCARIA" 
@@ -20,6 +21,9 @@ export type AuditEntity =
   | "ESCENARIO_EXCHANGE"
   | "REPORTE_PROGRAMADO"
   | "TENANT_LICENSE"
+  | "TENANT_LICENSE_PAYMENT"
+  | "SALES_AGENT_PROFILE"
+  | "SALES_AGENT_PAYOUT"
   | "CLOUDINARY_ASSET";
 
 export type AuditAction = 
@@ -35,6 +39,36 @@ export type AuditAction =
  * @description Servicio para gestionar logs de auditoría en el sistema
  */
 export class AuditLogService {
+  /**
+   * @description Registra auditoría durable usando el cliente transaccional recibido.
+   * @param params - Datos tipados del evento.
+   * @param client - Cliente Prisma o transacción activa.
+   */
+  static async logStrict(
+    params: {
+      accion: AuditAction;
+      entidad: AuditEntity;
+      entidadId: string;
+      usuarioId: string;
+      detalles?: Record<string, unknown>;
+      ip?: string;
+      userAgent?: string;
+    },
+    client: Pick<Prisma.TransactionClient, "auditLog"> = prisma,
+  ) {
+    return client.auditLog.create({
+      data: {
+        accion: params.accion,
+        entidad: params.entidad,
+        entidadId: params.entidadId,
+        usuarioId: params.usuarioId,
+        detalles: (params.detalles ?? {}) as Prisma.InputJsonValue,
+        ip: params.ip ?? "internal",
+        userAgent: params.userAgent ?? "system",
+      },
+    });
+  }
+
   /**
    * @description Registra una acción en el log de auditoría
    * @param params - Parámetros del log

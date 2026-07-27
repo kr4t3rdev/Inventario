@@ -155,6 +155,8 @@ model Tenant {
   referralsSent              AffiliateReferral[]        @relation("ReferrerAffiliateReferrals")
   referralsReceived          AffiliateReferral[]        @relation("ReferredAffiliateReferrals")
   affiliateCommissionEntries AffiliateCommissionLedger[] @relation("ReferrerAffiliateCommissionEntries")
+  salesAgentReferral         SalesAgentReferral?
+  tenantLicensePayments     TenantLicensePayment[]
   ajustesBancarios           AjusteBancario[]
   almacenes                  Almacen[]
   anticipos                  Anticipo[]
@@ -272,6 +274,8 @@ model TenantLicense {
   confirmedAffiliateReferrals AffiliateReferral[] @relation("ConfirmedAffiliateLicense")
   sourceAffiliateCommissions AffiliateCommissionLedger[] @relation("AffiliateSourceLicense")
   appliedAffiliateCommissions AffiliateCommissionLedger[] @relation("AffiliateAppliedLicense")
+  salesAgentCommissionEntries SalesAgentCommissionLedger[] @relation("SalesAgentSourceLicense")
+  salesAgentPayments TenantLicensePayment[]
 
   @@index([tenantId])
   @@index([planId])
@@ -635,6 +639,14 @@ model User {
   reviewPrompts            ReviewPrompt[]
   reviews                  Review[]
   tenantMemberships        TenantMembership[]
+  salesAgentProfile        SalesAgentProfile?
+  salesAgentReferrals      SalesAgentReferral[]         @relation("SalesAgentReferralOwner")
+  salesAgentCommissions    SalesAgentCommissionLedger[] @relation("SalesAgentCommissionOwner")
+  salesAgentBalance        SalesAgentBalance?
+  salesAgentPayouts        SalesAgentPayout[]           @relation("SalesAgentPayoutOwner")
+  approvedSalesAgents      SalesAgentProfile[]          @relation("SalesAgentProfileApprover")
+  processedSalesAgentPayouts SalesAgentPayout[]         @relation("SalesAgentPayoutProcessor")
+  confirmedTenantLicensePayments TenantLicensePayment[] @relation("TenantLicensePaymentConfirmer")
 }
 
 model CloudinaryAsset {
@@ -747,6 +759,120 @@ model AffiliateCreditBalance {
   tenant                   Tenant   @relation(fields: [tenantId], references: [tenantId], onDelete: Cascade)
 }
 
+model SalesAgentProfile {
+  salesAgentProfileId String   @id @default(cuid())
+  userId              String   @unique
+  referralCode        String?  @unique
+  phone               String?
+  status              String   @default("pending_approval")
+  approvedAt          DateTime?
+  approvedByAdminId   String?
+  createdAt           DateTime @default(now())
+  updatedAt           DateTime @updatedAt
+  user                 User     @relation(fields: [userId], references: [userId], onDelete: Cascade)
+  approvedByAdmin      User?    @relation("SalesAgentProfileApprover", fields: [approvedByAdminId], references: [userId], onDelete: SetNull)
+
+  @@index([status])
+  @@index([approvedByAdminId])
+}
+
+model SalesAgentReferral {
+  salesAgentReferralId String   @id @default(cuid())
+  salesAgentUserId     String
+  referredTenantId    String   @unique
+  status              String   @default("attributed")
+  attributedAt        DateTime @default(now())
+  createdAt            DateTime @default(now())
+  updatedAt            DateTime @updatedAt
+  salesAgent           User     @relation("SalesAgentReferralOwner", fields: [salesAgentUserId], references: [userId], onDelete: Restrict)
+  referredTenant       Tenant   @relation(fields: [referredTenantId], references: [tenantId], onDelete: Restrict)
+  commissions          SalesAgentCommissionLedger[]
+
+  @@index([salesAgentUserId, status])
+}
+
+model SalesAgentCommissionLedger {
+  salesAgentCommissionLedgerId String   @id @default(cuid())
+  salesAgentUserId             String
+  salesAgentReferralId         String
+  sourceTenantLicenseId        String
+  paymentSource                String
+  paymentSourceId              String   @unique
+  idempotencyKey               String   @unique
+  amountPaidUsd                Decimal  @db.Decimal(12, 2)
+  commissionRate               Decimal  @db.Decimal(5, 4)
+  commissionAmountUsd          Decimal  @db.Decimal(12, 2)
+  status                       String   @default("available")
+  createdAt                    DateTime @default(now())
+  updatedAt                    DateTime @updatedAt
+  salesAgent                   User     @relation("SalesAgentCommissionOwner", fields: [salesAgentUserId], references: [userId], onDelete: Restrict)
+  referral                     SalesAgentReferral @relation(fields: [salesAgentReferralId], references: [salesAgentReferralId], onDelete: Restrict)
+  sourceTenantLicense          TenantLicense @relation("SalesAgentSourceLicense", fields: [sourceTenantLicenseId], references: [tenantLicenseId], onDelete: Restrict)
+  paymentConfirmation          TenantLicensePayment @relation(fields: [paymentSourceId], references: [tenantLicensePaymentId], onDelete: Restrict)
+
+  @@unique([paymentSource, paymentSourceId])
+  @@index([salesAgentUserId, status])
+  @@index([salesAgentReferralId])
+  @@index([sourceTenantLicenseId])
+}
+
+model TenantLicensePayment {
+  tenantLicensePaymentId String   @id @default(cuid())
+  tenantId              String
+  tenantLicenseId       String
+  paymentKind           String
+  expectedAmountUsd     Decimal  @db.Decimal(12, 2)
+  amountPaidUsd         Decimal  @db.Decimal(12, 2)
+  status                String   @default("confirmed")
+  idempotencyKey        String   @unique
+  immutableFingerprint  String
+  paymentCycleEndsAt    DateTime
+  licenseExpirationSnapshot DateTime
+  confirmedAt           DateTime @default(now())
+  confirmedByAdminId    String?
+  createdAt             DateTime @default(now())
+  tenant                Tenant   @relation(fields: [tenantId], references: [tenantId], onDelete: Restrict)
+  tenantLicense         TenantLicense @relation(fields: [tenantLicenseId], references: [tenantLicenseId], onDelete: Restrict)
+  confirmedByAdmin      User?    @relation("TenantLicensePaymentConfirmer", fields: [confirmedByAdminId], references: [userId], onDelete: SetNull)
+  commissionLedger      SalesAgentCommissionLedger?
+
+  @@unique([tenantLicenseId, paymentCycleEndsAt])
+  @@index([tenantId, confirmedAt])
+  @@index([tenantLicenseId])
+  @@index([confirmedByAdminId])
+}
+
+model SalesAgentBalance {
+  salesAgentBalanceId String   @id @default(cuid())
+  userId              String   @unique
+  availableUsd        Decimal  @default(0) @db.Decimal(12, 2)
+  paidUsd             Decimal  @default(0) @db.Decimal(12, 2)
+  createdAt           DateTime @default(now())
+  updatedAt           DateTime @updatedAt
+  user                User     @relation(fields: [userId], references: [userId], onDelete: Restrict)
+}
+
+model SalesAgentPayout {
+  salesAgentPayoutId    String   @id @default(cuid())
+  salesAgentUserId      String
+  amountUsd             Decimal  @db.Decimal(12, 2)
+  exchangeRateCupPerUsd Decimal  @db.Decimal(12, 4)
+  amountCup             Decimal  @db.Decimal(14, 2)
+  status                String   @default("pending")
+  processedAt           DateTime?
+  processedByAdminId    String?
+  adminNotes            String?
+  idempotencyKey        String   @unique
+  immutableFingerprint  String
+  createdAt             DateTime @default(now())
+  updatedAt             DateTime @updatedAt
+  salesAgent            User     @relation("SalesAgentPayoutOwner", fields: [salesAgentUserId], references: [userId], onDelete: Restrict)
+  processedByAdmin      User?    @relation("SalesAgentPayoutProcessor", fields: [processedByAdminId], references: [userId], onDelete: SetNull)
+
+  @@index([salesAgentUserId, status])
+  @@index([processedByAdminId])
+}
+
 model AffiliatePerkGrant {
   perkGrantId         String   @id @default(cuid())
   tenantId            String
@@ -839,6 +965,28 @@ model Notification {
   updatedAt DateTime @updatedAt
   link      String?
   user      User     @relation(fields: [userId], references: [userId], onDelete: Cascade)
+  emailDelivery SalesAgentEmailDelivery?
+
+  @@index([userId, createdAt])
+}
+
+model SalesAgentEmailDelivery {
+  salesAgentEmailDeliveryId String   @id @default(cuid())
+  notificationId           String   @unique
+  eventType                 String
+  payload                   Json
+  status                    String   @default("pending")
+  attempts                  Int      @default(0)
+  messageId                 String?
+  lastError                 String?
+  nextAttemptAt             DateTime @default(now())
+  claimedAt                 DateTime?
+  sentAt                    DateTime?
+  createdAt                 DateTime @default(now())
+  updatedAt                 DateTime @updatedAt
+  notification              Notification @relation(fields: [notificationId], references: [id], onDelete: Cascade)
+
+  @@index([status, nextAttemptAt])
 }
 
 model UserActivityLog {

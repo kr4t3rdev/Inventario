@@ -169,4 +169,69 @@ describe('AuthService.login', () => {
 
     expect(prisma.userSession.create).not.toHaveBeenCalled();
   });
+
+  it('allows an active salesAgent without tenant and returns its safe redirect', async () => {
+    const user = createMockUser({ role: 'salesAgent', isActive: true });
+
+    vi.mocked(prisma.user.findUnique).mockResolvedValue(user as never);
+    vi.mocked(bcrypt.compare).mockResolvedValue(true as never);
+    vi.mocked(prisma.user.updateMany).mockResolvedValue({ count: 1 } as never);
+    vi.mocked(prisma.tenantMembership.findFirst).mockResolvedValue(null as never);
+    vi.mocked(prisma.userSession.create).mockResolvedValue({ id: 'session-agent' } as never);
+    vi.mocked(prisma.userActivityLog.create).mockResolvedValue({} as never);
+
+    const result = await AuthService.login({
+      input: { email: 'test@example.com', password: 'secret123' },
+      client: {},
+    });
+
+    expect(result.user.role).toBe('salesAgent');
+    expect(result.user.tenantId).toBeUndefined();
+    expect(result.redirectTo).toBe('/sales-agent/referidos');
+  });
+
+  it('does not resolve or expose tenant context for an active salesAgent', async () => {
+    const user = createMockUser({ role: 'salesAgent', isActive: true });
+
+    vi.mocked(prisma.user.findUnique).mockResolvedValue(user as never);
+    vi.mocked(bcrypt.compare).mockResolvedValue(true as never);
+    vi.mocked(prisma.user.updateMany).mockResolvedValue({ count: 1 } as never);
+    vi.mocked(prisma.tenantMembership.findFirst).mockResolvedValue({
+      tenantId: 'tenant-stale',
+      tenantRole: 'manager',
+      isActive: true,
+    } as never);
+    vi.mocked(prisma.userSession.create).mockResolvedValue({ id: 'session-agent' } as never);
+    vi.mocked(prisma.userActivityLog.create).mockResolvedValue({} as never);
+
+    const result = await AuthService.login({
+      input: { email: 'test@example.com', password: 'secret123' },
+      client: {},
+    });
+
+    expect(result.user).not.toHaveProperty('tenantId');
+    expect(prisma.tenantMembership.findFirst).not.toHaveBeenCalled();
+  });
+
+  it('keeps a pending salesAgent in onboarding instead of returning an app redirect', async () => {
+    const user = createMockUser({
+      role: 'regularUser',
+      isActive: false,
+      onboardingStatus: 'awaiting_sales_agent_approval',
+    });
+
+    vi.mocked(prisma.user.findUnique).mockResolvedValue(user as never);
+    vi.mocked(bcrypt.compare).mockResolvedValue(true as never);
+    vi.mocked(prisma.user.updateMany).mockResolvedValue({ count: 1 } as never);
+    vi.mocked(prisma.userSession.create).mockResolvedValue({ id: 'session-pending' } as never);
+    vi.mocked(prisma.userActivityLog.create).mockResolvedValue({} as never);
+
+    const result = await AuthService.login({
+      input: { email: 'test@example.com', password: 'secret123' },
+      client: {},
+    });
+
+    expect(result.redirectTo).toBe('/onboarding');
+    expect(prisma.tenantMembership.findFirst).not.toHaveBeenCalled();
+  });
 });

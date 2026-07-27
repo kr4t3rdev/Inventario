@@ -14,6 +14,8 @@ import {
 	verifyOnboardingToken,
 	validateCSRF,
 } from "@/lib/auth/onboarding";
+import { salesAgentPhoneSchema } from "@/features/sales-agent/phone";
+import { getConfiguredPublicAppUrl } from "@/features/sales-agent/public-url";
 import { checkRateLimit } from "@/lib/rate-limit";
 
 const MAX_LOGIN_ATTEMPTS = 5;
@@ -25,6 +27,7 @@ const ONBOARDING_MID_FLOW = new Set([
 	"selecting_tenant",
 	"awaiting_manager_approval",
 	"awaiting_global_approval",
+	"awaiting_sales_agent_approval",
 ]);
 
 function isMidOnboarding(onboardingStatus: string | null): boolean {
@@ -36,6 +39,17 @@ function getBearerToken(request: NextRequest): string | null {
 	const authorization = request.headers.get("authorization") || "";
 	if (!authorization.startsWith("Bearer ")) return null;
 	return authorization.replace("Bearer ", "").trim() || null;
+}
+
+function getVerificationAppUrl(request: NextRequest): string | null {
+	const configuredUrl = getConfiguredPublicAppUrl();
+	if (configuredUrl) return configuredUrl;
+	if (process.env.NODE_ENV === "production") return null;
+
+	const requestUrl = new URL(request.url);
+	return ["localhost", "127.0.0.1", "::1"].includes(requestUrl.hostname)
+		? requestUrl.origin
+		: null;
 }
 
 export async function login(request: NextRequest) {
@@ -566,12 +580,27 @@ export async function register(request: NextRequest) {
 		}
 
 		if (normalizedReferralCode) {
-			const referralProfile = await prisma.affiliateProfile.findUnique({
-				where: { referralCode: normalizedReferralCode },
-				select: { affiliateProfileId: true, isEligible: true, status: true },
-			});
+			const [affiliateProfile, salesAgentProfile] = await Promise.all([
+				prisma.affiliateProfile.findUnique({
+					where: { referralCode: normalizedReferralCode },
+					select: {
+						affiliateProfileId: true,
+						isEligible: true,
+						status: true,
+					},
+				}),
+				prisma.salesAgentProfile.findUnique({
+					where: { referralCode: normalizedReferralCode },
+					select: { salesAgentProfileId: true, status: true },
+				}),
+			]);
+			const activeOwners = [
+				affiliateProfile?.isEligible === true &&
+					affiliateProfile.status === "active",
+				salesAgentProfile?.status === "active",
+			].filter(Boolean).length;
 
-			if (!referralProfile || referralProfile.isEligible !== true || referralProfile.status !== "active") {
+			if (activeOwners !== 1) {
 				return NextResponse.json(
 					{ error: "Código de referido inválido o inactivo" },
 					{ status: 400 },
@@ -600,9 +629,17 @@ export async function register(request: NextRequest) {
 			purpose: "email-verification",
 		});
 
-		const appUrl =
-			process.env.NEXT_PUBLIC_APP_URL || new URL(request.url).origin;
-		const verificationUrl = `${appUrl}/verify-email?token=${encodeURIComponent(verificationToken)}`;
+			const appUrl = getVerificationAppUrl(request);
+			if (!appUrl) {
+				console.error(
+					`[REGISTER] No hay un origen público canónico configurado — usuario: ${createdUser.userId}`,
+				);
+				return NextResponse.json(
+					{ error: "El servicio de verificación no está disponible" },
+					{ status: 503 },
+				);
+			}
+			const verificationUrl = `${appUrl}/verify-email?token=${encodeURIComponent(verificationToken)}`;
 
 		const emailResult = await sendEmailVerificationLink(
 			email,
@@ -614,11 +651,11 @@ export async function register(request: NextRequest) {
 			console.log(
 				`[REGISTER] Email de verificación enviado — usuario: ${createdUser.userId}, email: ${email}, messageId: ${emailResult.messageId}`,
 			);
-		} else {
-			console.error(
-				`[REGISTER] ❌ Fallo el envío del email de verificación — usuario: ${createdUser.userId}, email: ${email}, verificationUrl: ${verificationUrl}`,
-			);
-		}
+			} else {
+				console.error(
+					`[REGISTER] Falló el envío del email de verificación — usuario: ${createdUser.userId}, email: ${email}`,
+				);
+			}
 
 		const res = NextResponse.json({
 			message:
@@ -825,9 +862,14 @@ export async function resendVerification(request: NextRequest) {
 			purpose: "email-verification",
 		});
 
-		const appUrl =
-			process.env.NEXT_PUBLIC_APP_URL || new URL(request.url).origin;
-		const verificationUrl = `${appUrl}/verify-email?token=${encodeURIComponent(verificationToken)}`;
+			const appUrl = getVerificationAppUrl(request);
+			if (!appUrl) {
+				return NextResponse.json(
+					{ error: "El servicio de verificación no está disponible" },
+					{ status: 503 },
+				);
+			}
+			const verificationUrl = `${appUrl}/verify-email?token=${encodeURIComponent(verificationToken)}`;
 
 		await sendEmailVerificationLink(user.email, verificationUrl, user.name);
 
@@ -970,13 +1012,86 @@ export async function onboardingType(request: NextRequest) {
 		}
 
 		const payload = verifyOnboardingToken(token);
-		const { userType } = await request.json();
+		const { userType, phone } = await request.json();
 
-		if (!["worker", "company"].includes(userType)) {
+		if (!["worker", "company", "salesAgent"].includes(userType)) {
 			return NextResponse.json(
 				{ error: "Tipo de usuario inválido" },
 				{ status: 400 },
 			);
+		}
+
+		if (userType === "salesAgent") {
+			const parsedPhone = salesAgentPhoneSchema.safeParse(phone);
+			if (!parsedPhone.success) {
+				return NextResponse.json(
+					{ error: parsedPhone.error.issues[0]?.message ?? "Teléfono inválido" },
+					{ status: 400 },
+				);
+			}
+			const normalizedPhone = parsedPhone.data;
+			const onboardingStatus = "awaiting_sales_agent_approval";
+			const accepted = await prisma.$transaction(async (transaction) => {
+				const currentUser = await transaction.user.findUnique({
+					where: { userId: payload.userId },
+					select: { isActive: true, onboardingStatus: true },
+				});
+				if (
+					!currentUser ||
+					currentUser.isActive ||
+					currentUser.onboardingStatus !== "selecting_user_type"
+				) {
+					return false;
+				}
+
+				const activeMemberships = await transaction.tenantMembership.count({
+					where: { userId: payload.userId, isActive: true },
+				});
+				if (activeMemberships > 0) return false;
+
+				const currentProfile = await transaction.salesAgentProfile.findUnique({
+					where: { userId: payload.userId },
+					select: { status: true },
+				});
+				if (currentProfile?.status === "active") return false;
+
+				if (currentProfile) {
+					const locked = await transaction.salesAgentProfile.updateMany({
+						where: {
+							userId: payload.userId,
+							status: "pending_approval",
+						},
+						data: { phone: normalizedPhone },
+					});
+					if (locked.count === 0) return false;
+				} else {
+					await transaction.salesAgentProfile.create({
+						data: {
+							userId: payload.userId,
+							referralCode: null,
+							phone: normalizedPhone,
+							status: "pending_approval",
+						},
+					});
+				}
+
+				await transaction.tenantMembership.deleteMany({
+					where: { userId: payload.userId, isActive: false },
+				});
+				await transaction.user.update({
+					where: { userId: payload.userId },
+					data: { onboardingType: userType, onboardingStatus },
+				});
+				return true;
+			});
+			if (!accepted) {
+				return NextResponse.json(
+					{ error: "El perfil de Gestor de Ventas ya está activo" },
+					{ status: 409 },
+				);
+			}
+
+			return NextResponse.json({ success: true, onboardingStatus });
 		}
 
 		const onboardingStatus =

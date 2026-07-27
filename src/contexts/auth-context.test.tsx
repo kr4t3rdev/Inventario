@@ -48,7 +48,10 @@ describe('AuthProvider', () => {
         return new Response(JSON.stringify({ error: 'No autenticado' }), { status: 401 });
       }
       if (url === '/api/auth/login') {
-        return new Response(JSON.stringify({ user: { email: 'test@example.com', role: 'admin' } }), {
+        return new Response(JSON.stringify({
+          user: { email: 'test@example.com', role: 'admin' },
+          redirectTo: '/onboarding',
+        }), {
           status: 200,
           headers: { 'Content-Type': 'application/json' },
         });
@@ -75,7 +78,7 @@ describe('AuthProvider', () => {
     await user.click(screen.getByRole('button', { name: 'login' }));
 
     await waitFor(() => {
-      expect(push).toHaveBeenCalledWith('/admin');
+      expect(push).toHaveBeenCalledWith('/onboarding');
     });
 
     expect(fetch).toHaveBeenCalledWith('/api/auth/login', expect.objectContaining({
@@ -83,6 +86,26 @@ describe('AuthProvider', () => {
       headers: expect.objectContaining({ 'Content-Type': 'application/json' }),
     }));
     expect(screen.getByTestId('user-email')).toHaveTextContent('test@example.com');
+  });
+
+  it('falls back safely when login returns a redirect outside the allowlist', async () => {
+    vi.mocked(fetch).mockResolvedValueOnce(new Response(JSON.stringify({
+      user: { email: 'test@example.com', role: 'admin' },
+      redirectTo: 'https://attacker.test/phishing',
+    }), {
+      status: 200,
+      headers: { 'Content-Type': 'application/json' },
+    }));
+    const user = userEvent.setup();
+
+    render(
+      <AuthProvider initialUser={null}>
+        <Probe />
+      </AuthProvider>,
+    );
+    await user.click(screen.getByRole('button', { name: 'login' }));
+
+    await waitFor(() => expect(push).toHaveBeenCalledWith('/admin'));
   });
 
   it('logs out through the stable auth route and clears client auth state', async () => {

@@ -4,6 +4,8 @@ import type React from "react";
 
 import { useEffect, useMemo, useState, useCallback } from "react";
 import { useRouter } from "next/navigation";
+import Link from "next/link";
+import { normalizeSalesAgentPhone } from "@/features/sales-agent/phone";
 import { motion, AnimatePresence } from "framer-motion";
 import {
 	Building2Icon,
@@ -38,7 +40,7 @@ type OnboardingUser = {
 
 type TenantItem = { tenantId: string; nombre: string; slug: string | null };
 
-type OnboardingStep = "type" | "tenant" | "approval" | "company";
+type OnboardingStep = "type" | "tenant" | "approval" | "company" | "salesAgent";
 
 // ─── Step Indicator ───────────────────────────────────────────────────────────
 
@@ -288,6 +290,7 @@ export default function OnboardingPage(): React.ReactNode {
 	const [loading, setLoading] = useState(true);
 	const [submitting, setSubmitting] = useState<string | null>(null);
 	const [error, setError] = useState<string | null>(null);
+	const [phone, setPhone] = useState("");
 
 	const onboardingToken =
 		typeof window !== "undefined"
@@ -340,6 +343,8 @@ export default function OnboardingPage(): React.ReactNode {
 		if (!user) return "type";
 		if (user.onboardingStatus === "awaiting_manager_approval")
 			return "approval";
+		if (user.onboardingStatus === "awaiting_sales_agent_approval")
+			return "salesAgent";
 		if (user.onboardingType === "company") return "company";
 		if (user.onboardingType === "worker") return "tenant";
 		return "type";
@@ -361,8 +366,21 @@ export default function OnboardingPage(): React.ReactNode {
 	// ─── Actions ───────────────────────────────────────────────────────────
 
 	const chooseType = useCallback(
-		async (userType: "worker" | "company"): Promise<void> => {
+		async (userType: "worker" | "company" | "salesAgent"): Promise<void> => {
 			if (!onboardingToken) return;
+			let submittedPhone = phone;
+			if (userType === "salesAgent") {
+				try {
+					submittedPhone = normalizeSalesAgentPhone(phone);
+				} catch (phoneError) {
+					setError(
+						phoneError instanceof Error
+							? phoneError.message
+							: "Ingresá un teléfono válido.",
+					);
+					return;
+				}
+			}
 			setSubmitting(userType);
 			setError(null);
 
@@ -378,7 +396,7 @@ export default function OnboardingPage(): React.ReactNode {
 								? crypto.randomUUID()
 								: "",
 					},
-					body: JSON.stringify({ userType }),
+					body: JSON.stringify({ userType, phone: submittedPhone }),
 				});
 
 				const data = await response.json();
@@ -403,7 +421,7 @@ export default function OnboardingPage(): React.ReactNode {
 				setSubmitting(null);
 			}
 		},
-		[onboardingToken],
+		[onboardingToken, phone],
 	);
 
 	const chooseTenant = useCallback(
@@ -494,13 +512,13 @@ export default function OnboardingPage(): React.ReactNode {
 			</div>
 
 			{/* Back link */}
-			<a
+			<Link
 				href="/"
 				className="absolute left-4 top-4 inline-flex items-center gap-2 text-sm text-[#0066cc] hover:underline dark:text-[#2997ff]"
 			>
 				<ArrowLeftIcon className="h-4 w-4" />
 				Volver al inicio
-			</a>
+			</Link>
 
 			{/* Error banner */}
 			<AnimatePresence>
@@ -558,7 +576,7 @@ export default function OnboardingPage(): React.ReactNode {
 									</p>
 								</div>
 
-								<div className="grid gap-4 sm:grid-cols-2">
+								<div className="grid gap-4 sm:grid-cols-3">
 									<TypeCard
 										icon={BriefcaseIcon}
 										title="Trabajador"
@@ -583,6 +601,38 @@ export default function OnboardingPage(): React.ReactNode {
 										shouldAnimate={shouldAnimate}
 										onClick={() => void chooseType("company")}
 									/>
+									<TypeCard
+										icon={StoreIcon}
+										title="Gestor de Ventas"
+										description="Referí empresas y solicitá tu alta comercial."
+										features={[
+											"Registro independiente",
+											"Aprobación del admin global",
+											"Acceso después de la aprobación",
+										]}
+										shouldAnimate={shouldAnimate}
+										onClick={() => void chooseType("salesAgent")}
+									/>
+								</div>
+
+								<div className="mt-5">
+									<label
+										htmlFor="sales-agent-phone"
+										className="mb-2 block text-sm font-medium text-[#1d1d1f] dark:text-white"
+									>
+										Teléfono
+									</label>
+									<input
+										id="sales-agent-phone"
+										type="tel"
+										value={phone}
+										onChange={(event) => setPhone(event.target.value)}
+										placeholder="+53 555 1234"
+										className="w-full rounded-xl border border-[#e0e0e0] bg-white px-4 py-3 text-sm text-[#1d1d1f] outline-none focus:border-[#0066cc] focus:ring-2 focus:ring-[#0066cc]/20 dark:border-white/10 dark:bg-[#1d1d1f] dark:text-white"
+									/>
+									<p className="mt-2 text-xs text-[#7a7a7a] dark:text-[#cccccc]">
+										Obligatorio para solicitar acceso como Gestor de Ventas.
+									</p>
 								</div>
 
 								{submitting && (
@@ -701,6 +751,35 @@ export default function OnboardingPage(): React.ReactNode {
 								<p className="mt-6 text-xs text-[#7a7a7a]/60 dark:text-[#cccccc]/60">
 									Si tenés dudas, comunicate con soporte.
 								</p>
+								</motion.div>
+							)}
+						</AnimatePresence>
+
+						<AnimatePresence mode="wait">
+							{currentStep === "salesAgent" && (
+								<motion.div
+									key="step-sales-agent"
+									initial={shouldAnimate ? { opacity: 0, scale: 0.95 } : { opacity: 1, scale: 1 }}
+									animate={{ opacity: 1, scale: 1 }}
+									exit={shouldAnimate ? { opacity: 0, scale: 0.95 } : { opacity: 1, scale: 1 }}
+									transition={SPRING_DEFAULT}
+									className="text-center"
+								>
+									<div className="mx-auto mb-6 flex h-16 w-16 items-center justify-center rounded-2xl bg-[#0066cc]/10">
+										<StoreIcon className="h-8 w-8 text-[#0066cc]" />
+									</div>
+									<h2 className="mb-2 text-[24px] font-semibold text-[#1d1d1f] dark:text-white">
+										Solicitud en espera
+									</h2>
+									<p className="mb-6 text-sm leading-relaxed text-[#7a7a7a] dark:text-[#cccccc]">
+										El administrador global debe aprobar tu alta como Gestor de
+										Ventas. Contactalo para continuar.
+									</p>
+									<div className="rounded-xl bg-[#f5f5f7] p-4 dark:bg-white/5">
+										<span className="text-sm text-[#7a7a7a] dark:text-[#cccccc]">
+											Esperando aprobación del administrador...
+										</span>
+									</div>
 								</motion.div>
 							)}
 						</AnimatePresence>

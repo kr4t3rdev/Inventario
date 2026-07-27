@@ -12,6 +12,7 @@ vi.mock('@/lib/prisma', () => ({
     user: {
       findUnique: vi.fn(),
       update: vi.fn(),
+      updateMany: vi.fn(),
       findMany: vi.fn(),
     },
     userSession: {
@@ -64,6 +65,7 @@ describe('auth login route', () => {
     vi.mocked(prisma.tenantMembership.findFirst).mockResolvedValue(null as never)
     vi.mocked(prisma.tenantLicense.findFirst).mockResolvedValue(null as never)
     vi.mocked(prisma.licencia.findFirst).mockResolvedValue(null as never)
+    vi.mocked(prisma.user.updateMany).mockResolvedValue({ count: 1 } as never)
   })
 
   it('firma JWT tenant-aware cuando recibe un tenant válido', async () => {
@@ -112,11 +114,12 @@ describe('auth login route', () => {
     const data = await response.json()
 
     expect(response.status).toBe(200)
-    expect(data.token).toBe('access-token')
+    expect(data).not.toHaveProperty('token')
+    expect(data).not.toHaveProperty('refreshToken')
     expect(data.user.tenantId).toBe('tenant-1')
     expect(data.user.tenantRole).toBe('manager')
     expect(data.user.planName).toBe('Básico')
-    expect(prisma.user.update).toHaveBeenCalledWith(
+    expect(prisma.user.updateMany).toHaveBeenCalledWith(
       expect.objectContaining({
         where: { userId: 'u1' },
         data: expect.objectContaining({ expiresAt: expect.any(Date) }),
@@ -128,6 +131,13 @@ describe('auth login route', () => {
       'jwt-secret',
       { expiresIn: '30d' }
     )
+    expect(response.headers.getSetCookie()).toEqual(
+      expect.arrayContaining([
+        expect.stringContaining('auth_token=access-token'),
+        expect.stringContaining('refreshToken=refresh-token'),
+      ]),
+    )
+    expect(response.headers.getSetCookie().every((cookie) => cookie.includes('HttpOnly'))).toBe(true)
   })
 
   it('rechaza un tenant solicitado que no pertenece al usuario', async () => {

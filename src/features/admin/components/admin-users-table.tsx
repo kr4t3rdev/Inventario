@@ -98,6 +98,7 @@ interface AdminUsersTableProps {
 	onApproveUser?: (user: Usuario) => void;
 	onAddTenantMembership?: (user: Usuario) => void;
 	onCreateUser?: () => void;
+	onConfirmSalesAgentPayout?: (user: Usuario) => void;
 }
 
 type RoleFilter =
@@ -117,6 +118,27 @@ const SORTABLE_COLUMNS: { key: SortableColumn; label: string }[] = [
 	{ key: "expiresAt", label: "Expira" },
 ];
 
+interface SalesAgentPayoutCandidate {
+	role: string;
+	isActive: boolean;
+	salesAgentProfile?: { status?: string | null } | null;
+	salesAgentBalance?: { availableUsd?: unknown } | null;
+}
+
+/**
+ * @description Verifica si un usuario cumple todas las condiciones para iniciar un payout.
+ * @param {SalesAgentPayoutCandidate} candidate - Usuario y estado financiero del gestor.
+ * @returns {boolean} True únicamente para gestores activos con perfil activo y saldo positivo.
+ */
+export function canConfirmSalesAgentPayout(
+	candidate: SalesAgentPayoutCandidate,
+): boolean {
+	return candidate.role === "salesAgent" &&
+		candidate.isActive &&
+		candidate.salesAgentProfile?.status === "active" &&
+		Number(candidate.salesAgentBalance?.availableUsd ?? 0) > 0;
+}
+
 export function AdminUsersTable({
 	users,
 	total,
@@ -131,6 +153,7 @@ export function AdminUsersTable({
 	onApproveUser,
 	onAddTenantMembership,
 	onCreateUser,
+	onConfirmSalesAgentPayout,
 }: AdminUsersTableProps): React.JSX.Element {
 	const shouldReduceMotion = useReducedMotion();
 	const [searchTerm, setSearchTerm] = useState("");
@@ -815,7 +838,14 @@ export function AdminUsersTable({
 											</button>
 										</TableCell>
 										<TableCell className="font-medium">
-											{candidate.name}
+											<div>{candidate.name}</div>
+											{candidate.role === "salesAgent" ? (
+												<div className="text-xs font-normal text-muted-foreground">
+													{(candidate as any).salesAgentProfile?.phone ?? "Sin teléfono"} ·{" "}
+													{(candidate as any).activeReferralCount ?? 0} referidos · USD{" "}
+													{Number((candidate as any).salesAgentBalance?.availableUsd ?? 0).toFixed(2)}
+												</div>
+											) : null}
 										</TableCell>
 										<TableCell>{candidate.email}</TableCell>
 										{showTenantColumn && (
@@ -867,6 +897,13 @@ export function AdminUsersTable({
 										</TableCell>
 										<TableCell className="text-right">
 											<div className="flex justify-end gap-2">
+												{onConfirmSalesAgentPayout &&
+													canConfirmSalesAgentPayout(candidate) && (
+														<Button type="button" size="sm"
+															onClick={() => onConfirmSalesAgentPayout(candidate)}>
+															Confirmar pago
+														</Button>
+													)}
 												{onApproveUser &&
 													candidate.onboardingType === "company" &&
 													candidate.onboardingStatus ===

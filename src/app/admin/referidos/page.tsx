@@ -19,6 +19,8 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { SalesAgentAdminPayoutSection } from '@/features/sales-agent/components/sales-agent-admin-payout-section';
+import { SalesAgentTenantPaymentSection } from '@/features/sales-agent/components/sales-agent-tenant-payment-section';
 
 export default function AdminReferidosPage() {
   const [summary, setSummary] = useState<AffiliateAdminSummaryRow[]>([]);
@@ -129,6 +131,9 @@ export default function AdminReferidosPage() {
         </div>
         <Button variant="outline" onClick={loadData}><RefreshCw className="mr-2 h-4 w-4" />Actualizar</Button>
       </div>
+
+      <SalesAgentAdminPayoutSection />
+      <SalesAgentTenantPaymentSection />
 
       <Card>
         <CardHeader><CardTitle>Resumen por tenant</CardTitle></CardHeader>

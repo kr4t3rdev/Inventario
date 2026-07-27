@@ -61,6 +61,10 @@ import {
 import { LazyMotion, m as motion, type Variants } from "framer-motion";
 import type { AdminUsersPageData } from "../server/data";
 import { getTenantRoleLabel } from "@/lib/auth/roles";
+import {
+	SalesAgentPayoutDialog,
+	type SalesAgentPayoutTarget,
+} from "@/features/sales-agent/components/sales-agent-payout-dialog";
 
 const UserAnalyticsPanel = dynamic(
 	() =>
@@ -130,6 +134,7 @@ export function AdminUsersPageClient({
 	const [selectedPlanId, setSelectedPlanId] = useState<string>("");
 	const [tenantName, setTenantName] = useState<string>("");
 	const [isApproving, setIsApproving] = useState(false);
+	const [payoutTarget, setPayoutTarget] = useState<SalesAgentPayoutTarget | null>(null);
 
 	// Multi-tenant: diálogo para añadir usuario a otra empresa
 	const [addTenantDialogOpen, setAddTenantDialogOpen] = useState(false);
@@ -515,6 +520,12 @@ export function AdminUsersPageClient({
 									onAddTenantMembership={handleOpenAddTenant}
 									onRefresh={refresh}
 									onCreateUser={() => setCreateDialogOpen(true)}
+									onConfirmSalesAgentPayout={(candidate) => setPayoutTarget({
+										userId: candidate.userId,
+										name: candidate.name,
+										phone: (candidate as any).salesAgentProfile?.phone ?? null,
+										availableUsd: Number((candidate as any).salesAgentBalance?.availableUsd ?? 0),
+									})}
 								/>
 							</CardContent>
 						</Card>
@@ -543,6 +554,12 @@ export function AdminUsersPageClient({
 			</StaggerContainer>
 
 			<CreateUserDialog open={createDialogOpen} onClose={handleDialogClose} />
+			<SalesAgentPayoutDialog
+				open={Boolean(payoutTarget)}
+				agent={payoutTarget}
+				onOpenChange={(open) => { if (!open) setPayoutTarget(null); }}
+				onConfirmed={refresh}
+			/>
 			{selectedUser && (
 				<EditUserDialog
 					open={editDialogOpen}

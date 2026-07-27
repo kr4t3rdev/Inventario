@@ -7,6 +7,9 @@ import { SidebarInset, SidebarProvider } from '@/components/ui/sidebar'
 import { Toaster } from 'sonner'
 import { AppSidebar2 } from '@/components/app-sidebar2'
 import { ReviewDialogProvider } from '@/features/reviews'
+import { redirect } from 'next/navigation'
+import { getProtectedRouteIdentity } from '@/lib/auth/server-route-identity'
+import { resolveSalesAgentAccess } from '@/lib/auth/sales-agent-access'
 
 /**
  * @description Layout para rutas /busy - proporciona sidebar, header y layout principal
@@ -16,6 +19,9 @@ import { ReviewDialogProvider } from '@/features/reviews'
  * @returns {JSX.Element} Layout con sidebar
  */
 export default async function BusyLayout({ children }: { children: ReactNode }) {
+  const access = resolveSalesAgentAccess(await getProtectedRouteIdentity(), '/busy')
+  if (!access.allowed) redirect(access.redirectTo)
+
   const h = await headers()
   const isPrintRoute = h.get('x-print-route') === 'true'
 

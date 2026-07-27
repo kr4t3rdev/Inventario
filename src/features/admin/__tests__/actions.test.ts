@@ -8,6 +8,10 @@ vi.mock('@/lib/server-actions/get-current-user');
 vi.mock('next/cache', () => ({ revalidatePath: vi.fn() }));
 vi.mock('bcryptjs', () => ({ default: { hash: vi.fn().mockResolvedValue('hashed'), compare: vi.fn() } }));
 vi.mock('@/lib/email', () => ({ sendEmailVerificationLink: vi.fn() }));
+vi.mock('@/features/sales-agent/services/notification-service', () => ({
+  createSalesAgentEvent: vi.fn().mockResolvedValue('delivery-approval'),
+  deliverSalesAgentEmails: vi.fn().mockResolvedValue(undefined),
+}));
 vi.mock('@/lib/cloudinary', () => ({ destroyCloudinaryAsset: vi.fn() }));
 vi.mock('@/lib/services/demo-tenant-factory', () => ({
   createDemoTenantForPlan: vi.fn(),
@@ -22,6 +26,8 @@ vi.mock('@/lib/prisma', () => {
       tenantMembership: { create: vi.fn().mockResolvedValue({ membershipId: 'mem-new' }) },
       tenantLicense: { create: vi.fn().mockResolvedValue({ tenantLicenseId: 'lic-new', expiracion: new Date(Date.now() + 365 * 86400000) }) },
       user: { update: vi.fn().mockResolvedValue({}) },
+      affiliateReferral: prismaMock.affiliateReferral,
+      salesAgentReferral: prismaMock.salesAgentReferral,
     })),
     user: {
       findMany: vi.fn(), findUnique: vi.fn(), create: vi.fn(),
@@ -29,11 +35,17 @@ vi.mock('@/lib/prisma', () => {
       groupBy: vi.fn(),
     },
     tenant: { findMany: vi.fn(), count: vi.fn(), findUnique: vi.fn(), create: vi.fn() },
-    tenantMembership: { create: vi.fn(), findFirst: vi.fn(), findUnique: vi.fn(), update: vi.fn(), findMany: vi.fn() },
+    tenantMembership: {
+      create: vi.fn(), findFirst: vi.fn(), findUnique: vi.fn(), update: vi.fn(),
+      findMany: vi.fn(), count: vi.fn(), deleteMany: vi.fn(),
+    },
     moneda: { upsert: vi.fn() },
     plan: { findMany: vi.fn(), findUnique: vi.fn(), create: vi.fn(), update: vi.fn(), delete: vi.fn() },
     affiliateProfile: { findUnique: vi.fn() },
     affiliateReferral: { findUnique: vi.fn(), create: vi.fn() },
+    salesAgentReferral: { create: vi.fn() },
+    salesAgentProfile: { findUnique: vi.fn(), updateMany: vi.fn() },
+    salesAgentBalance: { upsert: vi.fn() },
     userSession: { count: vi.fn(), findMany: vi.fn(), delete: vi.fn() },
     venta: { aggregate: vi.fn(), findMany: vi.fn() },
     ventaServicios: { aggregate: vi.fn(), findMany: vi.fn() },
@@ -60,6 +72,10 @@ vi.mock('@/lib/prisma', () => {
 });
 
 import { getCurrentUser } from '@/lib/server-actions/get-current-user';
+import {
+  createSalesAgentEvent,
+  deliverSalesAgentEmails,
+} from '@/features/sales-agent/services/notification-service';
 import { destroyCloudinaryAsset } from '@/lib/cloudinary';
 import { createDemoTenantForPlan } from '@/lib/services/demo-tenant-factory';
 import { seedDemoTenantData } from '@/lib/services/demo-seed';
@@ -145,6 +161,51 @@ describe('Admin Server Actions', () => {
       const r = await getGlobalUsersAction();
       expect(r.success).toBe(false);
       expect(r.error!.code).toBe('FORBIDDEN');
+    });
+
+    it('admin global refresh selects and maps the complete sales-agent DTO', async () => {
+      vi.mocked(getCurrentUser).mockResolvedValue({ ...adminUser, tenantId: null });
+      vi.mocked(prisma.user.findMany).mockResolvedValue([{
+        userId: 'agent-1',
+        name: 'Ana',
+        email: 'ana@test.com',
+        role: 'salesAgent',
+        isActive: true,
+        onboardingType: null,
+        onboardingStatus: null,
+        createdAt: new Date('2026-07-27'),
+        expiresAt: null,
+        lockedUntil: null,
+        avatar: null,
+        tenantMemberships: [],
+        _count: { tenantMemberships: 0 },
+        salesAgentProfile: { phone: '+53 5555', status: 'active' },
+        salesAgentBalance: { availableUsd: 25, paidUsd: 10 },
+        salesAgentReferrals: [{ salesAgentReferralId: 'ref-1' }],
+      }] as never);
+      vi.mocked(prisma.user.count).mockResolvedValue(1);
+
+      const result = await getGlobalUsersAction();
+
+      expect(prisma.user.findMany).toHaveBeenCalledWith(expect.objectContaining({
+        select: expect.objectContaining({
+          salesAgentProfile: { select: { phone: true, status: true } },
+          salesAgentBalance: { select: { availableUsd: true, paidUsd: true } },
+          salesAgentReferrals: expect.objectContaining({
+            where: { status: 'attributed' },
+          }),
+        }),
+      }));
+      expect(result).toMatchObject({
+        success: true,
+        data: {
+          users: [{
+            salesAgentProfile: { phone: '+53 5555', status: 'active' },
+            salesAgentBalance: { availableUsd: 25, paidUsd: 10 },
+            activeReferralCount: 1,
+          }],
+        },
+      });
     });
   });
 
@@ -714,6 +775,226 @@ describe('Admin Server Actions', () => {
       const r = await approveGlobalUserAction({ userId: 'user-company' });
       expect(r.success).toBe(false);
       expect(r.error!.code).toBe('FORBIDDEN');
+    });
+
+    it('salesAgent -> aprueba de forma idempotente sin crear tenant', async () => {
+      vi.mocked(getCurrentUser).mockResolvedValue(adminUser);
+      vi.mocked(createSalesAgentEvent).mockResolvedValue('delivery-approval');
+      vi.mocked(prisma.user.findUnique).mockResolvedValue({
+        userId: 'user-agent',
+        onboardingStatus: 'awaiting_sales_agent_approval',
+        onboardingType: 'salesAgent',
+        role: 'salesAgent',
+        isActive: true,
+      } as any);
+      vi.mocked(prisma.salesAgentProfile.findUnique)
+        .mockResolvedValueOnce({
+        userId: 'user-agent',
+        referralCode: null,
+        status: 'pending_approval',
+        } as any)
+        .mockResolvedValueOnce({
+          userId: 'user-agent',
+          referralCode: 'SA-ABC123',
+          status: 'active',
+        } as any);
+      vi.mocked(prisma.salesAgentProfile.updateMany).mockResolvedValue({
+        count: 1,
+      } as any);
+      vi.mocked(prisma.$transaction).mockImplementation(async (callback: any) =>
+        callback(prisma),
+      );
+      const auditSpy = vi.spyOn(AuditLogService, 'logStrict').mockResolvedValue({} as any);
+
+      const first = await approveGlobalUserAction({ userId: 'user-agent' });
+      const second = await approveGlobalUserAction({ userId: 'user-agent' });
+
+      expect(first.success).toBe(true);
+      expect(second.success).toBe(true);
+      expect(prisma.salesAgentProfile.updateMany).toHaveBeenCalledWith({
+        where: { userId: 'user-agent', status: 'pending_approval' },
+        data: expect.objectContaining({
+          status: 'active',
+          approvedByAdminId: 'user-admin',
+          approvedAt: expect.any(Date),
+          referralCode: expect.stringMatching(/^SA-/),
+        }),
+      });
+      expect(prisma.salesAgentBalance.upsert).toHaveBeenCalledWith({
+        where: { userId: 'user-agent' },
+        create: { userId: 'user-agent' },
+        update: {},
+      });
+      expect(prisma.salesAgentProfile.updateMany).toHaveBeenCalledOnce();
+      expect(prisma.salesAgentBalance.upsert).toHaveBeenCalledOnce();
+      expect(prisma.$transaction).toHaveBeenCalledTimes(2);
+      expect(prisma.user.update).toHaveBeenLastCalledWith({
+        where: { userId: 'user-agent' },
+        data: {
+          role: 'salesAgent',
+          isActive: true,
+          onboardingStatus: null,
+        },
+      });
+      expect(prisma.tenantMembership.deleteMany).toHaveBeenCalledWith({
+        where: { userId: 'user-agent' },
+      });
+      expect(auditSpy).toHaveBeenCalledWith(
+        expect.objectContaining({
+          entidad: 'SALES_AGENT_PROFILE',
+          entidadId: 'user-agent',
+          usuarioId: 'user-admin',
+        }),
+        prisma,
+      );
+      expect(createSalesAgentEvent).toHaveBeenCalledWith(expect.objectContaining({
+        tx: prisma,
+        userId: 'user-agent',
+        eventType: 'sales_agent_approved',
+      }));
+      expect(deliverSalesAgentEmails).toHaveBeenCalledWith(['delivery-approval']);
+    });
+
+    it('salesAgent -> rechaza aprobación fuera de awaiting_sales_agent_approval', async () => {
+      vi.mocked(getCurrentUser).mockResolvedValue(adminUser);
+      vi.mocked(prisma.user.findUnique).mockResolvedValue({
+        userId: 'user-agent',
+        onboardingStatus: 'selecting_user_type',
+        onboardingType: 'salesAgent',
+      } as any);
+      vi.mocked(prisma.salesAgentProfile.findUnique).mockResolvedValue({
+        referralCode: null,
+        status: 'pending_approval',
+      } as any);
+      vi.mocked(prisma.$transaction).mockImplementation(async (callback: any) =>
+        callback(prisma),
+      );
+
+      const result = await approveGlobalUserAction({ userId: 'user-agent' });
+
+      expect(result.success).toBe(false);
+      expect(result.error?.code).toBe('INVALID_ONBOARDING_STATUS');
+      expect(prisma.salesAgentProfile.updateMany).not.toHaveBeenCalled();
+    });
+
+    it('salesAgent -> replay persistido activo retorna éxito aunque onboardingStatus sea null', async () => {
+      vi.mocked(getCurrentUser).mockResolvedValue(adminUser);
+      vi.mocked(prisma.user.findUnique).mockResolvedValue({
+        userId: 'user-agent',
+        onboardingStatus: null,
+        onboardingType: 'salesAgent',
+        role: 'salesAgent',
+        isActive: true,
+      } as any);
+      vi.mocked(prisma.salesAgentProfile.findUnique).mockResolvedValue({
+        referralCode: 'SA-ACTIVE12345678',
+        status: 'active',
+      } as any);
+      vi.mocked(prisma.$transaction).mockImplementation(async (callback: any) =>
+        callback(prisma),
+      );
+
+      const result = await approveGlobalUserAction({ userId: 'user-agent' });
+
+      expect(result).toMatchObject({
+        success: true,
+        data: {
+          referralCode: 'SA-ACTIVE12345678',
+          alreadyApproved: true,
+        },
+      });
+      expect(prisma.salesAgentProfile.updateMany).not.toHaveBeenCalled();
+    });
+
+    it('salesAgent -> rechaza un perfil activo asociado a un usuario no activo del rol', async () => {
+      vi.mocked(getCurrentUser).mockResolvedValue(adminUser);
+      vi.mocked(prisma.user.findUnique).mockResolvedValue({
+        userId: 'user-agent',
+        onboardingStatus: null,
+        onboardingType: 'salesAgent',
+        role: 'user',
+        isActive: true,
+      } as any);
+      vi.mocked(prisma.salesAgentProfile.findUnique).mockResolvedValue({
+        referralCode: 'SA-UNRELATED12345',
+        status: 'active',
+      } as any);
+      vi.mocked(prisma.$transaction).mockImplementation(async (callback: any) =>
+        callback(prisma),
+      );
+
+      const result = await approveGlobalUserAction({ userId: 'user-agent' });
+
+      expect(result.success).toBe(false);
+      expect(result.error?.code).toBe('INVALID_ONBOARDING_STATUS');
+    });
+
+    it('salesAgent -> reintenta P2002 con un código nuevo', async () => {
+      vi.mocked(getCurrentUser).mockResolvedValue(adminUser);
+      vi.mocked(prisma.user.findUnique).mockResolvedValue({
+        userId: 'user-agent',
+        onboardingStatus: 'awaiting_sales_agent_approval',
+        onboardingType: 'salesAgent',
+      } as any);
+      vi.mocked(prisma.salesAgentProfile.findUnique).mockResolvedValue({
+        userId: 'user-agent',
+        referralCode: null,
+        status: 'pending_approval',
+      } as any);
+      vi.mocked(prisma.salesAgentProfile.updateMany)
+        .mockRejectedValueOnce({ code: 'P2002' })
+        .mockResolvedValueOnce({ count: 1 } as any);
+      vi.mocked(prisma.$transaction).mockImplementation(async (callback: any) =>
+        callback(prisma),
+      );
+
+      const result = await approveGlobalUserAction({ userId: 'user-agent' });
+
+      expect(result.success).toBe(true);
+      expect(prisma.$transaction).toHaveBeenCalledTimes(2);
+      const attemptedCodes = vi.mocked(prisma.salesAgentProfile.updateMany).mock.calls.map(
+        ([input]) => input.data.referralCode,
+      );
+      expect(attemptedCodes).toHaveLength(2);
+      expect(attemptedCodes[0]).toMatch(/^SA-[A-F0-9]{16}$/);
+      expect(attemptedCodes[1]).toMatch(/^SA-[A-F0-9]{16}$/);
+      expect(attemptedCodes[1]).not.toBe(attemptedCodes[0]);
+    });
+
+    it('salesAgent -> devuelve el código ganador si otra aprobación gana la carrera', async () => {
+      vi.mocked(getCurrentUser).mockResolvedValue(adminUser);
+      vi.mocked(prisma.user.findUnique).mockResolvedValue({
+        userId: 'user-agent',
+        onboardingStatus: 'awaiting_sales_agent_approval',
+        onboardingType: 'salesAgent',
+      } as any);
+      vi.mocked(prisma.salesAgentProfile.findUnique)
+        .mockResolvedValueOnce({
+          referralCode: null,
+          status: 'pending_approval',
+        } as any)
+        .mockResolvedValueOnce({
+          referralCode: 'SA-WINNER12345678',
+          status: 'active',
+        } as any);
+      vi.mocked(prisma.salesAgentProfile.updateMany).mockResolvedValueOnce({
+        count: 0,
+      } as any);
+      vi.mocked(prisma.$transaction).mockImplementation(async (callback: any) =>
+        callback(prisma),
+      );
+
+      const result = await approveGlobalUserAction({ userId: 'user-agent' });
+
+      expect(result).toMatchObject({
+        success: true,
+        data: {
+          referralCode: 'SA-WINNER12345678',
+          alreadyApproved: true,
+        },
+      });
+      expect(prisma.user.update).not.toHaveBeenCalled();
+      expect(prisma.salesAgentBalance.upsert).not.toHaveBeenCalled();
     });
   });
 

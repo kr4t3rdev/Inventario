@@ -32,9 +32,8 @@ export async function POST(request: Request) {
     });
 
     const response = Response.json({
-      token: result.tokens.accessToken,
-      refreshToken: result.tokens.refreshToken,
       user: result.user,
+      redirectTo: result.redirectTo,
     });
 
     const secure = process.env.NODE_ENV === 'production' ? '; Secure' : '';

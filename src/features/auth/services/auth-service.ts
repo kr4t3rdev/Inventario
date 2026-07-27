@@ -21,6 +21,7 @@ const ONBOARDING_MID_FLOW = new Set([
   'selecting_tenant',
   'awaiting_manager_approval',
   'awaiting_global_approval',
+  'awaiting_sales_agent_approval',
 ]);
 
 const loginSchema = z.object({
@@ -256,7 +257,15 @@ export const AuthService = {
 
     let tenantContext: Awaited<ReturnType<typeof resolveTenantContext>> = null;
     if (!midOnboarding) {
-      tenantContext = await resolveTenantContext(user.userId, client.tenantId ?? null);
+      if (user.role === 'salesAgent' && client.tenantId) {
+        throw new ActionError(
+          'Los Gestores de Ventas no pueden usar contexto de empresa.',
+          'FORBIDDEN',
+        );
+      }
+      if (user.role !== 'salesAgent') {
+        tenantContext = await resolveTenantContext(user.userId, client.tenantId ?? null);
+      }
 
       if (tenantContext) {
         await updateUserAuthFields(user.userId, {
@@ -267,7 +276,7 @@ export const AuthService = {
           'El tenant solicitado no existe, no está activo o no pertenece a tu usuario.',
           'FORBIDDEN',
         );
-      } else if (user.role !== 'admin') {
+      } else if (user.role !== 'admin' && user.role !== 'salesAgent') {
         throw new ActionError('No tenés una empresa activa para iniciar sesión.', 'NO_TENANT');
       }
     }
@@ -306,6 +315,13 @@ export const AuthService = {
     return {
       user: toPublicUser(user, tenantContext),
       tokens,
+      redirectTo: midOnboarding
+        ? '/onboarding'
+        : user.role === 'admin'
+          ? '/admin'
+          : user.role === 'salesAgent'
+            ? '/sales-agent/referidos'
+            : '/busy/dashboard',
     };
   },
 

@@ -35,6 +35,9 @@ export interface AdminUsersPageData {
 			isActive: boolean;
 			tenant: { nombre: string };
 		}>;
+		salesAgentProfile: { phone: string | null; status: string } | null;
+		salesAgentBalance: { availableUsd: unknown; paidUsd: unknown } | null;
+		activeReferralCount: number;
 	}>;
 	total: number;
 	planes: Array<{
@@ -77,6 +80,12 @@ export async function getAdminUsersPageData(): Promise<AdminUsersPageData | null
 				expiresAt: true,
 				createdAt: true,
 				loginAttempts: true,
+				salesAgentProfile: { select: { phone: true, status: true } },
+				salesAgentBalance: { select: { availableUsd: true, paidUsd: true } },
+				salesAgentReferrals: {
+					where: { status: "attributed" },
+					select: { salesAgentReferralId: true },
+				},
 				tenantMemberships: {
 					select: {
 						tenantId: true,
@@ -120,6 +129,9 @@ export async function getAdminUsersPageData(): Promise<AdminUsersPageData | null
 				tenantId: activeMembership?.tenantId ?? null,
 				tenantName: activeMembership?.tenant?.nombre ?? null,
 				membershipCount: u._count?.tenantMemberships ?? 0,
+				salesAgentProfile: u.salesAgentProfile,
+				salesAgentBalance: u.salesAgentBalance,
+				activeReferralCount: u.salesAgentReferrals.length,
 				tenants: u.tenantMemberships.map((m) => ({
 					tenantId: m.tenantId,
 					tenantRole: m.tenantRole,

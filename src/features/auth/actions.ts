@@ -69,7 +69,7 @@ async function deleteAuthCookies(): Promise<void> {
 export async function loginAction(
   input: z.infer<typeof loginSchema>,
 ): Promise<
-  | { success: true; data: { user: Record<string, unknown> } }
+  | { success: true; data: { user: Record<string, unknown>; redirectTo: string } }
   | { success: false; error: { message: string; code: string } }
 > {
   try {
@@ -81,7 +81,10 @@ export async function loginAction(
       result.tokens.refreshTokenMaxAge,
     );
 
-    return { success: true, data: { user: result.user } };
+    return {
+      success: true,
+      data: { user: result.user, redirectTo: result.redirectTo },
+    };
   } catch (error) {
     if (error instanceof z.ZodError) {
       return { success: false, error: { message: 'Datos inválidos', code: 'VALIDATION_ERROR' } };

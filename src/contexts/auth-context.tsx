@@ -27,6 +27,13 @@ interface AuthProviderProps {
   initialUser?: Usuario | null;
 }
 
+const LOGIN_REDIRECTS = new Set([
+  '/admin',
+  '/onboarding',
+  '/sales-agent/referidos',
+  '/busy/dashboard',
+]);
+
 export function AuthProvider({ children, initialUser }: AuthProviderProps) {
   const [user, setUser] = useState<Usuario | null>(initialUser ?? null);
   // La sesión queda resuelta si RootLayout (u otro padre RSC) pasó un valor
@@ -125,11 +132,16 @@ export function AuthProvider({ children, initialUser }: AuthProviderProps) {
       if (response.ok && result.user) {
         setUser(result.user);
 
-        if (result.user?.role === 'admin') {
-          router.push('/admin');
-        } else {
-          router.push('/busy/dashboard');
-        }
+        const fallbackRedirect = result.user?.role === 'admin'
+          ? '/admin'
+          : result.user?.role === 'salesAgent'
+            ? '/sales-agent/referidos'
+            : '/busy/dashboard';
+        const redirectTo = typeof result.redirectTo === 'string'
+          && LOGIN_REDIRECTS.has(result.redirectTo)
+          ? result.redirectTo
+          : fallbackRedirect;
+        router.push(redirectTo);
         return true;
       }
 

@@ -22,6 +22,11 @@ export interface CreateTenantForUserResult {
   licenseId: string
 }
 
+interface ReferralOwner {
+  domain: 'affiliate' | 'salesAgent'
+  ownerId: string
+}
+
 /**
  * @description Crea un Tenant, TenantMembership y TenantLicense para un usuario tipo "company".
  *
@@ -95,6 +100,8 @@ export async function createTenantForUser(
     if (!plan) throw new ActionError('No hay planes disponibles. Creá al menos un plan primero.', 'NO_PLANS')
   }
 
+  const referralOwner = await resolveReferralOwner(user.pendingReferralCode)
+
   // 6. Transacción: crear todo
   const result = await prisma.$transaction(async (tx) => {
     const tenant = await tx.tenant.create({
@@ -129,6 +136,63 @@ export async function createTenantForUser(
       }
     })
 
+    if (referralOwner?.domain === 'salesAgent') {
+      // Restricción cross-table no expresable en Prisma/PostgreSQL con estas dos
+      // tablas. La transacción reduce el riesgo; una carrera entre dominios aún
+      // requiere migrar a una entidad unificada de atribución para garantía absoluta.
+      const [residualMembership, existingAffiliate, existingSalesAgent] =
+        await Promise.all([
+          tx.tenantMembership.findFirst({
+            where: {
+              tenantId: tenant.tenantId,
+              userId: referralOwner.ownerId,
+            },
+            select: { membershipId: true },
+          }),
+          tx.affiliateReferral.findUnique({
+            where: { referredTenantId: tenant.tenantId },
+            select: { referralId: true },
+          }),
+          tx.salesAgentReferral.findUnique({
+            where: { referredTenantId: tenant.tenantId },
+            select: { salesAgentReferralId: true },
+          }),
+        ])
+      if (residualMembership) {
+        throw new ActionError(
+          'El Gestor no puede referir un tenant al que pertenece',
+          'SALES_AGENT_SELF_REFERRAL',
+        )
+      }
+      if (existingAffiliate || existingSalesAgent) {
+        throw new ActionError(
+          'El tenant ya tiene una atribución',
+          'REFERRAL_ALREADY_LINKED',
+        )
+      }
+      await tx.salesAgentReferral.create({
+        data: {
+          salesAgentUserId: referralOwner.ownerId,
+          referredTenantId: tenant.tenantId,
+          status: 'attributed',
+        },
+      })
+    }
+
+    if (
+      referralOwner?.domain === 'affiliate' &&
+      referralOwner.ownerId !== tenant.tenantId
+    ) {
+      await tx.affiliateReferral.create({
+        data: {
+          referrerTenantId: referralOwner.ownerId,
+          referredTenantId: tenant.tenantId,
+          referredPlanId: plan!.planId,
+          status: 'registered',
+        },
+      })
+    }
+
     // Actualizar usuario
     await tx.user.update({
       where: { userId },
@@ -147,39 +211,44 @@ export async function createTenantForUser(
     }
   })
 
-  if (user.pendingReferralCode) {
-    const referralProfile = await prisma.affiliateProfile.findUnique({
-      where: { referralCode: user.pendingReferralCode },
-      select: {
-        tenantId: true,
-        isEligible: true,
-        status: true,
-      },
-    })
-
-    if (
-      referralProfile &&
-      referralProfile.isEligible === true &&
-      referralProfile.status === 'active' &&
-      referralProfile.tenantId !== result.tenantId
-    ) {
-      const existingReferral = await prisma.affiliateReferral.findUnique({
-        where: { referredTenantId: result.tenantId },
-        select: { referralId: true },
-      })
-
-      if (!existingReferral) {
-        await prisma.affiliateReferral.create({
-          data: {
-            referrerTenantId: referralProfile.tenantId,
-            referredTenantId: result.tenantId,
-            referredPlanId: plan!.planId,
-            status: 'registered',
-          },
-        })
-      }
-    }
-  }
-
   return result
+}
+
+/**
+ * @description Resuelve un código activo de exactamente uno de los dos dominios.
+ * @param {string | null} referralCode - Código pendiente capturado en registro.
+ * @returns {Promise<ReferralOwner | null>} Propietario interno sin exponerlo al cliente.
+ */
+async function resolveReferralOwner(
+  referralCode: string | null,
+): Promise<ReferralOwner | null> {
+  if (!referralCode) return null
+
+  const [affiliate, salesAgent] = await Promise.all([
+    prisma.affiliateProfile.findUnique({
+      where: { referralCode },
+      select: { tenantId: true, isEligible: true, status: true },
+    }),
+    prisma.salesAgentProfile.findUnique({
+      where: { referralCode },
+      select: { userId: true, status: true },
+    }),
+  ])
+  const activeAffiliate = affiliate?.isEligible === true &&
+    affiliate.status === 'active'
+  const activeSalesAgent = salesAgent?.status === 'active'
+
+  if (activeAffiliate && activeSalesAgent) {
+    throw new ActionError(
+      'El código de referido no puede atribuirse',
+      'REFERRAL_CODE_COLLISION',
+    )
+  }
+  if (activeSalesAgent) {
+    return { domain: 'salesAgent', ownerId: salesAgent.userId }
+  }
+  if (activeAffiliate) {
+    return { domain: 'affiliate', ownerId: affiliate.tenantId }
+  }
+  return null
 }

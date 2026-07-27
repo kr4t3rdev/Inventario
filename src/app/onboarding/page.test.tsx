@@ -1,5 +1,5 @@
 import React from 'react'
-import { render } from '@testing-library/react'
+import { render, screen } from '@testing-library/react'
 import { renderToString } from 'react-dom/server'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 
@@ -39,8 +39,8 @@ async function loadOnboardingPage() {
       userId: 'u-1',
       name: 'Ada Lovelace',
       email: 'ada@example.com',
-      onboardingType: 'worker',
-      onboardingStatus: 'pending',
+      onboardingType: null,
+      onboardingStatus: 'selecting_user_type',
       emailVerifiedAt: null,
     }
 
@@ -162,5 +162,14 @@ describe('OnboardingPage hydration-safe motion', () => {
     const clientInitialSnapshot = motionState.captures.slice(0, serverSnapshot.length)
 
     expect(clientInitialSnapshot).toEqual(serverSnapshot)
+  })
+
+  it('muestra la opción Gestor de Ventas y solicita teléfono', async () => {
+    const Page = await loadOnboardingPage()
+
+    render(React.createElement(Page))
+
+    expect(screen.getByText('Gestor de Ventas')).toBeInTheDocument()
+    expect(screen.getByLabelText('Teléfono')).toBeInTheDocument()
   })
 })

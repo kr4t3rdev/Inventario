@@ -11,6 +11,14 @@ import { revalidatePath } from "next/cache";
 import { Prisma } from "@/generated/prisma";
 import { withAction, ActionError } from "@/lib/server-actions";
 import { createTenantForUser } from "@/lib/services/tenant-factory";
+import {
+	generateSalesAgentReferralCode,
+	isUniqueConstraintCollision,
+} from "@/features/sales-agent/referral-code";
+import {
+	createSalesAgentEvent,
+	deliverSalesAgentEmails,
+} from "@/features/sales-agent/services/notification-service";
 import { createDemoTenantForPlan } from "@/lib/services/demo-tenant-factory";
 import { seedDemoTenantData } from "@/lib/services/demo-seed";
 import { requireFeature } from "@/lib/services/tenant-scope";
@@ -84,6 +92,12 @@ export const getUsersAction = withAction(
 				activatedAt: true,
 				expiresAt: true,
 				avatar: true,
+				salesAgentProfile: { select: { phone: true, status: true } },
+				salesAgentBalance: { select: { availableUsd: true, paidUsd: true } },
+				salesAgentReferrals: {
+					where: { status: "attributed" },
+					select: { salesAgentReferralId: true },
+				},
 				lastModifiedBy: true,
 				lockedUntil: true,
 				loginAttempts: true,
@@ -371,6 +385,12 @@ export const getGlobalUsersAction = withAction(
 				expiresAt: true,
 				lockedUntil: true,
 				avatar: true,
+				salesAgentProfile: { select: { phone: true, status: true } },
+				salesAgentBalance: { select: { availableUsd: true, paidUsd: true } },
+				salesAgentReferrals: {
+					where: { status: "attributed" },
+					select: { salesAgentReferralId: true },
+				},
 				tenantMemberships: {
 					select: {
 						tenantId: true,
@@ -406,6 +426,9 @@ export const getGlobalUsersAction = withAction(
 				tenantId: membership?.tenantId ?? null,
 				tenantName: membership?.tenant?.nombre ?? null,
 				membershipCount: u._count?.tenantMemberships ?? 0,
+				salesAgentProfile: u.salesAgentProfile,
+				salesAgentBalance: u.salesAgentBalance,
+				activeReferralCount: u.salesAgentReferrals.length,
 			};
 		});
 
@@ -428,10 +451,158 @@ export const approveGlobalUserAction = withAction(
 
 		const targetUser = await prisma.user.findUnique({
 			where: { userId: input.userId },
-			select: { userId: true, onboardingType: true, onboardingStatus: true },
+			select: {
+				userId: true,
+				onboardingType: true,
+				onboardingStatus: true,
+				role: true,
+				isActive: true,
+			},
 		});
 		if (!targetUser)
 			throw new ActionError("Usuario no encontrado", "NOT_FOUND");
+
+		if (targetUser.onboardingType === "salesAgent") {
+			const maxAttempts = 5;
+			let approval:
+				| {
+						referralCode: string;
+						alreadyApproved: boolean;
+						deliveryId?: string;
+				  }
+				| undefined;
+
+			for (let attempt = 0; attempt < maxAttempts; attempt += 1) {
+				try {
+					approval = await prisma.$transaction(async (transaction) => {
+						const profile = await transaction.salesAgentProfile.findUnique({
+							where: { userId: input.userId },
+							select: { referralCode: true, status: true },
+						});
+						if (!profile)
+							throw new ActionError(
+								"Perfil de ventas no encontrado",
+								"NOT_FOUND",
+							);
+
+						if (
+							profile.status === "active" &&
+							profile.referralCode &&
+							targetUser.role === "salesAgent" &&
+							targetUser.isActive
+						) {
+							return {
+								referralCode: profile.referralCode,
+								alreadyApproved: true,
+							};
+						}
+						if (
+							targetUser.onboardingStatus !==
+							"awaiting_sales_agent_approval"
+						) {
+							throw new ActionError(
+								"El usuario no está esperando aprobación como Gestor de Ventas",
+								"INVALID_ONBOARDING_STATUS",
+							);
+						}
+
+						const referralCode = generateSalesAgentReferralCode();
+						const activated = await transaction.salesAgentProfile.updateMany({
+							where: {
+								userId: input.userId,
+								status: "pending_approval",
+							},
+							data: {
+								status: "active",
+								approvedAt: new Date(),
+								approvedByAdminId: user.userId,
+								referralCode,
+							},
+						});
+						if (activated.count === 0) {
+							const winner = await transaction.salesAgentProfile.findUnique({
+								where: { userId: input.userId },
+								select: { referralCode: true, status: true },
+							});
+							if (winner?.status === "active" && winner.referralCode) {
+								return {
+									referralCode: winner.referralCode,
+									alreadyApproved: true,
+								};
+							}
+							throw new ActionError(
+								"No se pudo confirmar la aprobación",
+								"APPROVAL_CONFLICT",
+							);
+						}
+
+						await transaction.salesAgentBalance.upsert({
+							where: { userId: input.userId },
+							create: { userId: input.userId },
+							update: {},
+						});
+						await transaction.tenantMembership.deleteMany({
+							where: { userId: input.userId },
+						});
+						await transaction.user.update({
+							where: { userId: input.userId },
+							data: {
+								role: "salesAgent",
+								isActive: true,
+								onboardingStatus: null,
+							},
+						});
+						await AuditLogService.logStrict(
+							{
+								accion: "UPDATE",
+								entidad: "SALES_AGENT_PROFILE",
+								entidadId: input.userId,
+								usuarioId: user.userId,
+								detalles: {
+									targetUserId: input.userId,
+									referralCode,
+									status: "active",
+								},
+							},
+							transaction,
+						);
+						const deliveryId = await createSalesAgentEvent({
+							tx: transaction,
+							userId: input.userId,
+							eventType: "sales_agent_approved",
+							title: "Tu perfil fue aprobado",
+							message:
+								"Ya podés compartir tu código y gestionar tus referidos.",
+							emailPayload: {},
+						});
+
+						return { referralCode, alreadyApproved: false, deliveryId };
+					});
+					break;
+				} catch (error) {
+					if (!isUniqueConstraintCollision(error) || attempt === maxAttempts - 1) {
+						throw error;
+					}
+				}
+			}
+
+			if (!approval) {
+				throw new ActionError(
+					"No se pudo generar un código de referido único",
+					"REFERRAL_CODE_COLLISION",
+				);
+			}
+			if (approval.deliveryId) {
+				await deliverSalesAgentEmails([approval.deliveryId]);
+			}
+
+			return {
+				success: true,
+				tenantCreated: false,
+				referralCode: approval.referralCode,
+				alreadyApproved: approval.alreadyApproved,
+			};
+		}
 
 		// Si es tipo "company" o en estado await_global_approval → crear tenant completo
 		if (

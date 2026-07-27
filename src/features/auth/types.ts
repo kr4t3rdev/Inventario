@@ -41,6 +41,7 @@ export interface AuthServiceUser extends Record<string, unknown> {
 export interface AuthServiceLoginResult {
   user: AuthServiceUser;
   tokens: AuthTokens;
+  redirectTo: '/admin' | '/busy/dashboard' | '/onboarding' | '/sales-agent/referidos';
 }
 
 export interface TenantEntry {

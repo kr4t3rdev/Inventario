@@ -10,6 +10,9 @@ vi.mock('@/lib/prisma', () => ({
     affiliateProfile: {
       findUnique: vi.fn(),
     },
+    salesAgentProfile: {
+      findUnique: vi.fn(),
+    },
     user: {
       findUnique: vi.fn(),
       create: vi.fn(),
@@ -126,5 +129,72 @@ describe('/api/auth/register', () => {
 
     expect(response.status).toBe(400);
     expect(data.error).toBe('Código de referido inválido o inactivo');
+  });
+
+  it('acepta un código activo de Gestor de Ventas sin revelar su propietario', async () => {
+    vi.mocked(prisma.user.findUnique).mockResolvedValueOnce(null as never);
+    vi.mocked(prisma.affiliateProfile.findUnique).mockResolvedValueOnce(null as never);
+    vi.mocked(prisma.salesAgentProfile.findUnique).mockResolvedValueOnce({
+      salesAgentProfileId: 'sales-profile-1',
+      status: 'active',
+    } as never);
+    vi.mocked(prisma.user.create).mockResolvedValueOnce({ userId: 'user-1' } as never);
+    vi.mocked(sendEmailVerificationLink).mockResolvedValueOnce({ success: true } as never);
+
+    const response = await POST(new NextRequest('http://localhost/api/auth/register', {
+      method: 'POST',
+      headers: {
+        'content-type': 'application/json',
+        'x-request-id': '550e8400-e29b-41d4-a716-446655440000',
+        'x-forwarded-for': '1.2.3.5',
+      },
+      body: JSON.stringify({
+        name: 'Nuevo Usuario',
+        email: 'sales-ref@test.com',
+        password: '123456',
+        referralCode: 'SA-ACTIVE',
+      }),
+    }));
+
+    expect(response.status).toBe(200);
+    expect(prisma.user.create).toHaveBeenCalledWith(
+      expect.objectContaining({
+        data: expect.objectContaining({ pendingReferralCode: 'SA-ACTIVE' }),
+      }),
+    );
+  });
+
+  it('rechaza de forma genérica un código que colisiona entre ambos programas', async () => {
+    vi.mocked(prisma.user.findUnique).mockResolvedValueOnce(null as never);
+    vi.mocked(prisma.affiliateProfile.findUnique).mockResolvedValueOnce({
+      affiliateProfileId: 'affiliate-profile-1',
+      isEligible: true,
+      status: 'active',
+    } as never);
+    vi.mocked(prisma.salesAgentProfile.findUnique).mockResolvedValueOnce({
+      salesAgentProfileId: 'sales-profile-1',
+      status: 'active',
+    } as never);
+
+    const response = await POST(new NextRequest('http://localhost/api/auth/register', {
+      method: 'POST',
+      headers: {
+        'content-type': 'application/json',
+        'x-request-id': '550e8400-e29b-41d4-a716-446655440000',
+        'x-forwarded-for': '1.2.3.6',
+      },
+      body: JSON.stringify({
+        name: 'Nuevo Usuario',
+        email: 'collision@test.com',
+        password: '123456',
+        referralCode: 'COLLISION',
+      }),
+    }));
+
+    expect(response.status).toBe(400);
+    await expect(response.json()).resolves.toEqual({
+      error: 'Código de referido inválido o inactivo',
+    });
+    expect(prisma.user.create).not.toHaveBeenCalled();
   });
 });

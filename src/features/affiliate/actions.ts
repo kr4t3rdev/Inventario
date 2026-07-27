@@ -259,35 +259,53 @@ export const registerReferralFromCodeAction = withAction(
     const tenantId = assertTenantUser(user);
     const parsed = registerReferralFromCodeSchema.parse(input);
 
-    const profile = await prisma.affiliateProfile.findUnique({
-      where: { referralCode: parsed.referralCode },
-    });
+    const [profile, salesAgentProfile] = await Promise.all([
+      prisma.affiliateProfile.findUnique({
+        where: { referralCode: parsed.referralCode },
+      }),
+      prisma.salesAgentProfile.findUnique({
+        where: { referralCode: parsed.referralCode },
+        select: { status: true },
+      }),
+    ]);
 
     if (!profile || profile.isEligible !== true) {
       throw new ActionError('Código de referido inválido o inactivo', 'REFERRAL_CODE_INVALID');
+    }
+    if (salesAgentProfile?.status === 'active') {
+      throw new ActionError(
+        'El código de referido no puede atribuirse',
+        'REFERRAL_CODE_COLLISION',
+      );
     }
 
     if (profile.tenantId === tenantId) {
       throw new ActionError('Un tenant no puede referirse a sí mismo', 'SELF_REFERRAL_NOT_ALLOWED');
     }
 
-    const existing = await prisma.affiliateReferral.findUnique({
-      where: { referredTenantId: tenantId },
-    });
-
-    if (existing) {
-      throw new ActionError('Este tenant ya fue atribuido a un referidor', 'REFERRAL_ALREADY_LINKED');
-    }
-
     const activeLicense = await getActiveTenantLicense(tenantId);
-
-    const referral = await prisma.affiliateReferral.create({
-      data: {
-        referrerTenantId: profile.tenantId,
-        referredTenantId: tenantId,
-        referredPlanId: activeLicense?.planId ?? null,
-        status: 'registered',
-      },
+    // Las tablas legacy no permiten un UNIQUE cross-table. Estas lecturas y la
+    // escritura comparten transacción, pero PostgreSQL no bloquea una inserción
+    // concurrente en la otra tabla; una atribución unificada eliminaría ese riesgo residual.
+    const referral = await prisma.$transaction(async (tx) => {
+      const [existingAffiliate, existingSalesAgent] = await Promise.all([
+        tx.affiliateReferral.findUnique({ where: { referredTenantId: tenantId } }),
+        tx.salesAgentReferral.findUnique({ where: { referredTenantId: tenantId } }),
+      ]);
+      if (existingAffiliate || existingSalesAgent) {
+        throw new ActionError(
+          'Este tenant ya fue atribuido a un referidor',
+          'REFERRAL_ALREADY_LINKED',
+        );
+      }
+      return tx.affiliateReferral.create({
+        data: {
+          referrerTenantId: profile.tenantId,
+          referredTenantId: tenantId,
+          referredPlanId: activeLicense?.planId ?? null,
+          status: 'registered',
+        },
+      });
     });
 
     revalidatePath('/busy/referidos');
