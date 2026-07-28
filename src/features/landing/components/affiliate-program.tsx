@@ -1,282 +1,258 @@
 'use client';
 
 import React from 'react';
-import { Banknote, Gift, Link2, ShieldCheck, TicketPercent, UsersRound } from 'lucide-react';
+import {
+  ArrowRight,
+  Banknote,
+  Building2,
+  Check,
+  Link2,
+  TicketPercent,
+  UsersRound,
+  WalletCards,
+} from 'lucide-react';
 
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import {
-  AFFILIATE_PROGRAM_HIGHLIGHTS,
   AFFILIATE_PROGRAM_RULES,
   AFFILIATE_PROGRAM_STEPS,
   AFFILIATE_PROGRAM_TIERS,
   SALES_AGENT_PROGRAM_RULES,
-  SALES_AGENT_PROGRAM_HIGHLIGHTS,
   SALES_AGENT_PROGRAM_STEPS,
   SALES_AGENT_PROGRAM_TIERS,
 } from '@/features/landing/data';
 import { SpringSection } from '@/features/landing/utils';
 
 /**
- * @description Sección comercial del programa de referidos para la landing.
- * @returns {JSX.Element} Bloque con beneficios, tiers, flujo y reglas del programa.
+ * @description Presenta las dos modalidades de referidos con una navegación comercial y progresiva.
+ * @returns {JSX.Element} Sección interactiva de referidos para la landing.
  */
 export function LandingAffiliateProgram(): React.JSX.Element {
   return (
     <section
       id="referidos"
-      className="space-y-10 scroll-mt-24 rounded-3xl border border-border/60 bg-muted/20 p-6 md:p-10"
+      className="scroll-mt-24 space-y-8 rounded-2xl border border-border/60 bg-muted/20 p-5 md:p-8"
     >
-      <SpringSection className="mx-auto max-w-3xl space-y-3 text-center">
-        <span className="inline-flex rounded-full border border-cyan-accent bg-primary/10 px-4 py-1 text-xs font-semibold uppercase tracking-[0.16em] text-cyan-accent font-mono">
-          Referidos
-        </span>
-        <h2 className="text-4xl font-bold leading-[1.05] tracking-display tracking-tight font-mono sm:text-5xl">
-          Convertí cada recomendación en crédito para tu próxima licencia
-        </h2>
-        <p className="text-muted-foreground sm:text-lg">
-          Elegí cómo participar: como tenant acumulás crédito para tu licencia o como Gestor de
-          Ventas cobrás comisiones recurrentes por tus referidos.
-        </p>
+      <SpringSection className="grid gap-6 lg:grid-cols-[1.15fr_0.85fr] lg:items-end">
+        <div className="max-w-3xl space-y-4">
+          <span className="inline-flex rounded-full border border-cyan-accent px-3 py-1 text-xs font-semibold uppercase tracking-[0.14em] text-cyan-accent font-mono">
+            Programa de crecimiento
+          </span>
+          <h2 className="max-w-2xl text-4xl font-bold leading-[1.05] tracking-display tracking-tight font-mono sm:text-5xl">
+            Ganá por compartir lo que ya usás
+          </h2>
+          <p className="max-w-2xl text-muted-foreground sm:text-lg">
+            Elegí tu camino, compartí FinanceMDM y convertí cada recomendación en un beneficio real.
+          </p>
+        </div>
+        <div className="border-l-2 border-primary pl-4 text-sm text-muted-foreground lg:mb-1">
+          <p className="font-semibold text-foreground">Dos formas de participar</p>
+          <p className="mt-1">Si ya sos cliente, reducís tu licencia. Si lo recomendás, cobrás por cada renovación.</p>
+        </div>
       </SpringSection>
 
-      <div className="grid gap-4 md:grid-cols-2">
-        <SpringSection>
-          <Card className="h-full border-primary/30 bg-primary/5 shadow-sm">
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2 font-mono text-xl">
-                <TicketPercent className="h-5 w-5 text-primary" />
-                Tenant activo
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-2 text-sm text-muted-foreground">
-              <p>Recomendá FinanceMDM desde tu tenant y acumulá crédito para tu próxima licencia.</p>
-              <p>También ganás perks nuevos y acumulativos, separados de las features comerciales.</p>
-            </CardContent>
-          </Card>
-        </SpringSection>
-        <SpringSection delay={0.05}>
-          <Card className="h-full border-cyan-accent/40 bg-cyan-accent/5 shadow-sm">
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2 font-mono text-xl">
-                <UsersRound className="h-5 w-5 text-cyan-accent" />
-                Gestor de Ventas
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-2 text-sm text-muted-foreground">
-              <p>No necesitás trabajar dentro de un tenant para recomendar el sistema.</p>
-              <p>Registrate, compartí tu código y cobrá en CUP por cada ciclo confirmado.</p>
-            </CardContent>
-          </Card>
-        </SpringSection>
-      </div>
+      <Tabs defaultValue="tenant" className="w-full">
+        <TabsList
+          aria-label="Modalidad del programa de referidos"
+          className="grid h-auto w-full max-w-2xl grid-cols-2 rounded-xl border border-border/70 bg-background/70 p-1"
+        >
+          <TabsTrigger
+            value="tenant"
+            className="min-h-11 gap-2 rounded-lg px-3 py-2 text-left data-[state=active]:bg-primary data-[state=active]:text-primary-foreground"
+          >
+            <Building2 className="h-4 w-4" />
+            <span>
+              <span className="block font-semibold">Ya uso FinanceMDM</span>
+              <span className="hidden text-xs opacity-80 sm:block">Crédito para mi licencia</span>
+            </span>
+          </TabsTrigger>
+          <TabsTrigger
+            value="sales-agent"
+            className="min-h-11 gap-2 rounded-lg px-3 py-2 text-left data-[state=active]:bg-cyan-accent data-[state=active]:text-slate-950"
+          >
+            <UsersRound className="h-4 w-4" />
+            <span>
+              <span className="block font-semibold">Quiero recomendarlo</span>
+              <span className="hidden text-xs opacity-80 sm:block">Comisiones en CUP</span>
+            </span>
+          </TabsTrigger>
+        </TabsList>
 
-      <h3 className="text-center font-mono text-2xl font-bold">Beneficios para tenants activos</h3>
-      <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
-        {AFFILIATE_PROGRAM_HIGHLIGHTS.map((item, index) => (
-          <SpringSection key={item.title} delay={index * 0.05}>
-            <Card className="h-full border-border/60 bg-card/85 shadow-sm transition-all duration-300 hover:border-primary/25 hover:shadow-lg">
-              <CardHeader>
-                <CardTitle className="text-lg font-mono">{item.title}</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <p className="text-sm text-muted-foreground">{item.description}</p>
-              </CardContent>
-            </Card>
-          </SpringSection>
-        ))}
-      </div>
-
-      <div className="grid gap-6 xl:grid-cols-[0.9fr_1.1fr]">
-        <SpringSection>
-          <Card className="h-full border-cyan-accent/30 bg-card/85 shadow-sm">
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2 font-mono text-xl">
-                <Banknote className="h-5 w-5 text-cyan-accent" />
-                Beneficios para Gestores de Ventas
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="grid gap-3 sm:grid-cols-2 xl:grid-cols-1">
-              {SALES_AGENT_PROGRAM_HIGHLIGHTS.map((item) => (
-                <div key={item.title} className="rounded-2xl border border-border/60 bg-background/60 p-4">
-                  <h4 className="font-medium">{item.title}</h4>
-                  <p className="mt-1 text-sm text-muted-foreground">{item.description}</p>
-                </div>
-              ))}
-            </CardContent>
-          </Card>
-        </SpringSection>
-
-        <SpringSection delay={0.05}>
-          <Card className="h-full border-cyan-accent/30 bg-card/85 shadow-sm">
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2 font-mono text-xl">
-                <UsersRound className="h-5 w-5 text-cyan-accent" />
-                Tramos del Gestor de Ventas
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-3">
-              {SALES_AGENT_PROGRAM_TIERS.map((tier) => (
-                <div
-                  key={tier.range}
-                  className="grid gap-2 rounded-2xl border border-border/60 bg-background/60 p-4 md:grid-cols-3"
-                >
-                  <div>
-                    <p className="text-xs uppercase tracking-wide text-muted-foreground">Tramo</p>
-                    <p className="font-medium">{tier.range}</p>
-                  </div>
-                  <div>
-                    <p className="text-xs uppercase tracking-wide text-muted-foreground">Comisión</p>
-                    <p className="font-medium text-cyan-accent">{tier.commission}</p>
-                  </div>
-                  <div>
-                    <p className="text-xs uppercase tracking-wide text-muted-foreground">Liquidación</p>
-                    <p className="font-medium">{tier.perks}</p>
-                  </div>
-                </div>
-              ))}
-              <p className="text-sm text-muted-foreground">
-                El tramo se calcula según la cantidad de tenants referidos que continúan activos y
-                con licencia vigente.
+        <TabsContent value="tenant" className="mt-6 space-y-8">
+          <div className="grid gap-8 lg:grid-cols-[1.1fr_0.9fr] lg:items-start">
+            <div className="rounded-xl bg-primary p-6 text-primary-foreground md:p-8">
+              <TicketPercent className="mb-5 h-8 w-8" />
+              <p className="mb-2 text-sm font-semibold uppercase tracking-[0.12em] opacity-80">
+                Para clientes activos
               </p>
-            </CardContent>
-          </Card>
-        </SpringSection>
-      </div>
-
-      <div className="grid gap-6 xl:grid-cols-[1.1fr_0.9fr]">
-        <SpringSection>
-          <Card className="h-full border-border/60 bg-card/85 shadow-sm">
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2 font-mono text-xl">
-                <TicketPercent className="h-5 w-5 text-primary" />
-                Escalá tus beneficios
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-3">
-              {AFFILIATE_PROGRAM_TIERS.map((tier) => (
-                <div
-                  key={tier.range}
-                  className="grid gap-2 rounded-2xl border border-border/60 bg-background/60 p-4 md:grid-cols-3"
-                >
-                  <div>
-                    <p className="text-xs uppercase tracking-wide text-muted-foreground">Tramo</p>
-                    <p className="font-medium">{tier.range}</p>
-                  </div>
-                  <div>
-                    <p className="text-xs uppercase tracking-wide text-muted-foreground">Comisión</p>
-                    <p className="font-medium">{tier.commission}</p>
-                  </div>
-                  <div>
-                    <p className="text-xs uppercase tracking-wide text-muted-foreground">Perks</p>
-                    <p className="font-medium">{tier.perks}</p>
-                  </div>
-                </div>
-              ))}
-              <p className="text-sm text-muted-foreground">
-                Los perks son acumulativos y se asignan manualmente para mantener control y
-                calidad sobre cada beneficio.
+              <h3 className="max-w-xl text-3xl font-bold tracking-tight sm:text-4xl">
+                Tu próxima licencia puede costarte menos
+              </h3>
+              <p className="mt-4 max-w-xl text-sm leading-6 text-primary-foreground/90 sm:text-base">
+                Recomendá el sistema a otra empresa. Cuando administración confirme su pago,
+                recibís crédito y perks nuevos para seguir creciendo.
               </p>
-            </CardContent>
-          </Card>
-        </SpringSection>
+              <Button asChild variant="secondary" size="lg" className="mt-6 min-h-11">
+                <a href="#precios">
+                  Ver planes <ArrowRight className="ml-2 h-4 w-4" />
+                </a>
+              </Button>
+            </div>
 
-        <SpringSection delay={0.05}>
-          <Card className="h-full border-border/60 bg-card/85 shadow-sm">
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2 font-mono text-xl">
-                <Link2 className="h-5 w-5 text-primary" />
-                Cómo funciona
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              {AFFILIATE_PROGRAM_STEPS.map((step, index) => (
-                <div key={step.title} className="rounded-2xl border border-border/60 bg-background/60 p-4">
-                  <p className="mb-1 text-xs font-semibold uppercase tracking-[0.16em] text-cyan-accent font-mono">
-                    Paso {index + 1}
-                  </p>
-                  <h3 className="font-medium">{step.title}</h3>
-                  <p className="mt-1 text-sm text-muted-foreground">{step.description}</p>
-                </div>
-              ))}
-            </CardContent>
-          </Card>
-        </SpringSection>
-      </div>
-
-      <SpringSection>
-        <Card className="border-cyan-accent/30 bg-card/85 shadow-sm">
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2 font-mono text-xl">
-              <Link2 className="h-5 w-5 text-cyan-accent" />
-              Cómo funciona para un Gestor de Ventas
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="grid gap-3 md:grid-cols-2 xl:grid-cols-4">
-            {SALES_AGENT_PROGRAM_STEPS.map((step, index) => (
-              <div key={step.title} className="rounded-2xl border border-border/60 bg-background/60 p-4">
-                <p className="mb-1 text-xs font-semibold uppercase tracking-[0.16em] text-cyan-accent font-mono">
-                  Paso {index + 1}
+            <div className="space-y-5">
+              <div>
+                <p className="text-sm font-semibold text-foreground">Beneficio acumulativo</p>
+                <p className="mt-1 text-sm leading-6 text-muted-foreground">
+                  El crédito que no uses se conserva para tus próximos ciclos. Los perks son nuevos,
+                  exclusivos y no reemplazan las features de tu plan.
                 </p>
-                <h3 className="font-medium">{step.title}</h3>
-                <p className="mt-1 text-sm text-muted-foreground">{step.description}</p>
               </div>
-            ))}
-          </CardContent>
-        </Card>
-      </SpringSection>
-
-      <SpringSection>
-        <Card className="border-border/60 bg-card/85 shadow-sm">
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2 font-mono text-xl">
-              <ShieldCheck className="h-5 w-5 text-primary" />
-              Reglas de cada modalidad
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="grid gap-6 xl:grid-cols-2">
-              <div>
-                <h3 className="mb-3 font-mono font-semibold text-primary">Tenant activo</h3>
-                <ul className="grid gap-3">
-                  {AFFILIATE_PROGRAM_RULES.map((rule) => (
-                    <li
-                      key={rule}
-                      className="flex items-start gap-3 rounded-2xl border border-border/60 bg-background/60 px-4 py-3 text-sm text-muted-foreground"
-                    >
-                      <Gift className="mt-0.5 h-4 w-4 shrink-0 text-primary" />
-                      <span>{rule}</span>
-                    </li>
-                  ))}
-                </ul>
-              </div>
-              <div>
-                <h3 className="mb-3 font-mono font-semibold text-cyan-accent">Gestor de Ventas</h3>
-                <ul className="grid gap-3">
-                  {SALES_AGENT_PROGRAM_RULES.map((rule) => (
-                    <li
-                      key={rule}
-                      className="flex items-start gap-3 rounded-2xl border border-border/60 bg-background/60 px-4 py-3 text-sm text-muted-foreground"
-                    >
-                      <Banknote className="mt-0.5 h-4 w-4 shrink-0 text-cyan-accent" />
-                      <span>{rule}</span>
-                    </li>
-                  ))}
-                </ul>
+              <div className="overflow-hidden rounded-xl border border-border/70">
+                <div className="grid grid-cols-3 bg-background/80 px-4 py-3 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                  <span>Referidos</span>
+                  <span>Beneficio</span>
+                  <span>Perks</span>
+                </div>
+                {AFFILIATE_PROGRAM_TIERS.map((tier) => (
+                  <div key={tier.range} className="grid grid-cols-3 border-t border-border/60 px-4 py-3 text-sm">
+                    <span>{tier.range.replace(' ventas válidas', '')}</span>
+                    <span className="font-semibold text-primary">{tier.commission}</span>
+                    <span>{tier.perks}</span>
+                  </div>
+                ))}
               </div>
             </div>
-          </CardContent>
-        </Card>
-      </SpringSection>
+          </div>
 
-      <SpringSection className="flex flex-col gap-3 sm:flex-row sm:justify-center">
-        <Button asChild size="lg" className="cursor-pointer">
-          <a href="#precios">Ver planes</a>
+          <div className="grid gap-6 lg:grid-cols-[1.1fr_0.9fr]">
+            <div>
+              <h3 className="text-xl font-bold tracking-tight">Tres pasos y listo</h3>
+              <ol className="mt-5 grid gap-4 sm:grid-cols-3">
+                {AFFILIATE_PROGRAM_STEPS.map((step, index) => (
+                  <li key={step.title} className="relative flex gap-3 sm:block">
+                    <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-primary text-sm font-bold text-primary-foreground sm:mb-3">
+                      {index + 1}
+                    </span>
+                    <div>
+                      <h4 className="font-semibold">{step.title}</h4>
+                      <p className="mt-1 text-sm leading-5 text-muted-foreground">{step.description}</p>
+                    </div>
+                  </li>
+                ))}
+              </ol>
+            </div>
+            <details className="group rounded-xl border border-border/70 bg-background/50 p-4">
+              <summary className="flex min-h-11 cursor-pointer list-none items-center justify-between gap-4 font-semibold [&::-webkit-details-marker]:hidden">
+                Reglas para clientes
+                <span className="text-xl text-primary transition-transform group-open:rotate-45">+</span>
+              </summary>
+              <ul className="mt-3 space-y-3 border-t border-border/60 pt-3 text-sm text-muted-foreground">
+                {AFFILIATE_PROGRAM_RULES.map((rule) => (
+                  <li key={rule} className="flex gap-2">
+                    <Check className="mt-0.5 h-4 w-4 shrink-0 text-primary" />
+                    <span>{rule}</span>
+                  </li>
+                ))}
+              </ul>
+            </details>
+          </div>
+        </TabsContent>
+
+        <TabsContent value="sales-agent" className="mt-6 space-y-8">
+          <div className="grid gap-8 lg:grid-cols-[1.1fr_0.9fr] lg:items-start">
+            <div className="rounded-xl bg-foreground p-6 text-background md:p-8 dark:bg-cyan-accent dark:text-slate-950">
+              <Banknote className="mb-5 h-8 w-8 text-background dark:text-slate-950" />
+              <p className="mb-2 text-sm font-semibold uppercase tracking-[0.12em] text-background dark:text-slate-950/70">
+                Para quienes venden el sistema
+              </p>
+              <h3 className="max-w-xl text-3xl font-bold tracking-tight sm:text-4xl">
+                Cobrá por cada renovación confirmada
+              </h3>
+              <p className="mt-4 max-w-xl text-sm leading-6 text-background/70 dark:text-slate-950/75 sm:text-base">
+                Registrate como Gestor de Ventas, compartí tu código y recibí una comisión recurrente
+                por cada tenant referido que siga activo.
+              </p>
+              <Button asChild variant="secondary" size="lg" className="mt-6 min-h-11">
+                <a href="/register">
+                  Registrarme como Gestor <ArrowRight className="ml-2 h-4 w-4" />
+                </a>
+              </Button>
+            </div>
+
+            <div className="space-y-5">
+              <div className="flex items-end gap-3">
+                <span className="font-mono text-6xl font-bold leading-none text-cyan-accent">7%</span>
+                <span className="max-w-[15rem] pb-1 text-sm leading-5 text-muted-foreground">
+                  de comisión máxima por cada renovación presencial confirmada
+                </span>
+              </div>
+              <div className="overflow-hidden rounded-xl border border-border/70">
+                <div className="grid grid-cols-3 bg-background/80 px-4 py-3 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                  <span>Tenants activos</span>
+                  <span>Comisión</span>
+                  <span>Liquidación</span>
+                </div>
+                {SALES_AGENT_PROGRAM_TIERS.map((tier) => (
+                  <div key={tier.range} className="grid grid-cols-3 border-t border-border/60 px-4 py-3 text-sm">
+                    <span>{tier.range.replace(' tenants activos', '')}</span>
+                    <span className="font-semibold text-cyan-accent">{tier.commission}</span>
+                    <span>{tier.perks.replace('Pago por renovación', 'Por ciclo')}</span>
+                  </div>
+                ))}
+              </div>
+              <p className="text-sm leading-5 text-muted-foreground">
+                El tramo depende de tus referidos activos y con licencia vigente. El pago se realiza en CUP con la tasa registrada al liquidar.
+              </p>
+            </div>
+          </div>
+
+          <div className="grid gap-6 lg:grid-cols-[1.1fr_0.9fr]">
+            <div>
+              <h3 className="text-xl font-bold tracking-tight">De la recomendación al cobro</h3>
+              <ol className="mt-5 grid gap-4 sm:grid-cols-2">
+                {SALES_AGENT_PROGRAM_STEPS.map((step, index) => (
+                  <li key={step.title} className="flex gap-3">
+                    <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-cyan-accent text-sm font-bold text-slate-950">
+                      {index + 1}
+                    </span>
+                    <div>
+                      <h4 className="font-semibold">{step.title}</h4>
+                      <p className="mt-1 text-sm leading-5 text-muted-foreground">{step.description}</p>
+                    </div>
+                  </li>
+                ))}
+              </ol>
+            </div>
+            <details className="group rounded-xl border border-border/70 bg-background/50 p-4">
+              <summary className="flex min-h-11 cursor-pointer list-none items-center justify-between gap-4 font-semibold [&::-webkit-details-marker]:hidden">
+                Reglas para Gestores de Ventas
+                <span className="text-xl text-cyan-accent transition-transform group-open:rotate-45">+</span>
+              </summary>
+              <ul className="mt-3 space-y-3 border-t border-border/60 pt-3 text-sm text-muted-foreground">
+                {SALES_AGENT_PROGRAM_RULES.map((rule) => (
+                  <li key={rule} className="flex gap-2">
+                    <WalletCards className="mt-0.5 h-4 w-4 shrink-0 text-cyan-accent" />
+                    <span>{rule}</span>
+                  </li>
+                ))}
+              </ul>
+            </details>
+          </div>
+        </TabsContent>
+      </Tabs>
+
+      <div className="flex flex-col gap-3 border-t border-border/60 pt-6 sm:flex-row sm:items-center sm:justify-between">
+        <div>
+          <p className="font-semibold">¿Querés empezar o tenés una duda?</p>
+          <p className="text-sm text-muted-foreground">Administración te acompaña en el proceso.</p>
+        </div>
+        <Button asChild variant="outline" size="lg" className="min-h-11">
+          <a href="#contacto">
+            Hablar con administración <Link2 className="ml-2 h-4 w-4" />
+          </a>
         </Button>
-        <Button asChild variant="outline" size="lg" className="cursor-pointer">
-          <a href="/register">Registrarme como Gestor</a>
-        </Button>
-      </SpringSection>
+      </div>
     </section>
   );
 }
