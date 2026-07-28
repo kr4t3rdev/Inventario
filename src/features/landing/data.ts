@@ -276,6 +276,29 @@ export const AFFILIATE_PROGRAM_HIGHLIGHTS: AffiliateHighlightItem[] = [
 	},
 ];
 
+export const SALES_AGENT_PROGRAM_HIGHLIGHTS: AffiliateHighlightItem[] = [
+	{
+		title: "Sin tener un tenant",
+		description:
+			"Podés registrarte como Gestor de Ventas aunque no uses FinanceMDM para administrar una empresa.",
+	},
+	{
+		title: "Comisión recurrente",
+		description:
+			"Cobrás por cada renovación futura de los tenants referidos que continúen activos y con licencia vigente.",
+	},
+	{
+		title: "Pagos en CUP",
+		description:
+			"Administración confirma cada pago presencial y liquida tu saldo en CUP usando la tasa del momento.",
+	},
+	{
+		title: "Seguimiento claro",
+		description:
+			"Consultás tenants referidos, comisiones disponibles, pagos realizados y notificaciones desde tu panel.",
+	},
+];
+
 export const AFFILIATE_PROGRAM_TIERS: AffiliateTierItem[] = [
 	{ range: "1–10 ventas válidas", commission: "5%", perks: "1 perk" },
 	{ range: "11–50 ventas válidas", commission: "7%", perks: "2 perks" },
@@ -300,6 +323,35 @@ export const AFFILIATE_PROGRAM_STEPS: AffiliateStepItem[] = [
 	},
 ];
 
+export const SALES_AGENT_PROGRAM_TIERS: AffiliateTierItem[] = [
+	{ range: "1–10 tenants activos", commission: "3%", perks: "Pago por renovación" },
+	{ range: "11–31 tenants activos", commission: "5%", perks: "Pago por renovación" },
+	{ range: "32+ tenants activos", commission: "7%", perks: "Pago por renovación" },
+];
+
+export const SALES_AGENT_PROGRAM_STEPS: AffiliateStepItem[] = [
+	{
+		title: "Te registrás como Gestor de Ventas",
+		description:
+			"Creás tu cuenta, verificás tu correo y completás el onboarding seleccionando este tipo de usuario.",
+	},
+	{
+		title: "Compartís tu código",
+		description:
+			"Usás tu link, código, QR o WhatsApp para invitar empresas y consultar tus referidos desde el panel.",
+	},
+	{
+		title: "Administración confirma el pago",
+		description:
+			"Cada pago presencial y renovación se confirma manualmente para proteger la trazabilidad de la comisión.",
+	},
+	{
+		title: "Cobrás en CUP",
+		description:
+			"Podés solicitar un pago parcial o total. El monto se calcula en CUP con la tasa de cambio registrada.",
+	},
+];
+
 export const AFFILIATE_PROGRAM_RULES: string[] = [
 	"Disponible solo para tenants activos con licencia vigente.",
 	"La comisión aplica sobre la primera compra del referido.",
@@ -307,6 +359,15 @@ export const AFFILIATE_PROGRAM_RULES: string[] = [
 	"Si sobra saldo, se arrastra a ciclos futuros.",
 	"Los perks son acumulativos y exclusivos del programa.",
 	"Los perks no reemplazan features del plan comercial base.",
+];
+
+export const SALES_AGENT_PROGRAM_RULES: string[] = [
+	"Disponible para personas registradas como Gestor de Ventas y con la cuenta aprobada.",
+	"La comisión se genera por cada pago presencial confirmado, incluida cada renovación.",
+	"El porcentaje depende de los tenants referidos activos y con licencia vigente.",
+	"El pago se realiza en CUP con la tasa de cambio registrada al momento de liquidar.",
+	"Se permiten pagos parciales o totales del saldo disponible.",
+	"Para comenzar o resolver dudas, contactá a administración por teléfono.",
 ];
 
 /* ─── FAQ ─── */
