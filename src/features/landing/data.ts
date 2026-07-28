@@ -64,6 +64,7 @@ export interface AffiliateStepItem {
 /* ─── Navigation ─── */
 
 export const NAV_ITEMS = [
+	{ href: "#demo-pos", label: "Demo en vivo" },
 	{ href: "#caracteristicas", label: "Características" },
 	{ href: "#beneficios", label: "Beneficios" },
 	{ href: "#testimonios", label: "Testimonios" },
