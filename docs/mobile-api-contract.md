@@ -280,6 +280,36 @@ Authorization: Bearer <accessToken>
 
 Devuelve las cuentas bancarias utilizables por mobile para operaciones asociadas a tipos de pago.
 
+### `GET /api/mobile/v1/accounting/payment-types/:id`
+
+**Headers**
+
+```http
+Authorization: Bearer <accessToken>
+```
+
+Devuelve el detalle tenant-scoped del tipo de pago y la información de su cuenta por defecto.
+
+### `PUT /api/mobile/v1/accounting/payment-types/:id`
+
+**Headers**
+
+```http
+Authorization: Bearer <accessToken>
+```
+
+Actualiza un tipo de pago reutilizando las validaciones, autorización de manager y auditoría existentes.
+
+### `DELETE /api/mobile/v1/accounting/payment-types/:id`
+
+**Headers**
+
+```http
+Authorization: Bearer <accessToken>
+```
+
+Elimina un tipo de pago respetando las restricciones contables existentes.
+
 ### `GET /api/mobile/v1/accounting/bank-accounts`
 
 **Headers**
