@@ -181,9 +181,9 @@ export const FEATURE_ITEMS: FeatureItem[] = [
 	{
 		title: "Reportes y Analítica",
 		description:
-			"Dashboards ejecutivos e informes operativos con datos consolidados de todos los módulos del sistema.",
+			"Paneles ejecutivos e informes operativos con datos consolidados de todos los módulos del sistema.",
 		bullets: [
-			"Dashboard ejecutivo con KPIs en tiempo real",
+			"Panel ejecutivo con indicadores en tiempo real",
 			"Reportes financieros, de ventas e inventario",
 			"Analítica de rentabilidad por producto y cliente",
 			"Reportes programados y exportación a PDF/CSV",

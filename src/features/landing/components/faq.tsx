@@ -1,7 +1,7 @@
 "use client";
 
 import React from "react";
-import { motion } from "framer-motion";
+import { motion, useReducedMotion } from "framer-motion";
 
 import {
 	Accordion,
@@ -17,9 +17,10 @@ import { SpringSection } from "@/features/landing/utils";
  * @returns {JSX.Element} FAQ accordion
  */
 export function LandingFaq(): React.JSX.Element {
+	const reduceMotion = useReducedMotion();
 	return (
 		<section id="faq" className="space-y-10 scroll-mt-24">
-			<SpringSection className="mx-auto max-w-3xl space-y-3 text-center">
+			<SpringSection reduceMotion={Boolean(reduceMotion)} className="mx-auto max-w-3xl space-y-3 text-center">
 				<span className="inline-flex rounded-full border border-cyan-accent bg-primary/10 px-4 py-1 text-xs font-semibold uppercase tracking-[0.16em] text-cyan-accent font-mono">
 					FAQ
 				</span>
@@ -32,20 +33,20 @@ export function LandingFaq(): React.JSX.Element {
 			</SpringSection>
 
 			<motion.div
-				initial={{ opacity: 0, y: 20 }}
-				whileInView={{ opacity: 1, y: 0 }}
+				initial={reduceMotion ? false : { opacity: 0, y: 20 }}
+				whileInView={reduceMotion ? undefined : { opacity: 1, y: 0 }}
 				viewport={{ once: true, amount: 0.15 }}
-				transition={{ type: "spring", stiffness: 120, damping: 20 }}
+				transition={reduceMotion ? undefined : { type: "spring", stiffness: 120, damping: 20 }}
 				className="mx-auto max-w-3xl"
 			>
 				<Accordion type="single" collapsible className="space-y-3">
 					{FAQ_ITEMS.map((item, index) => (
 						<motion.div
 							key={item.question}
-							initial={{ opacity: 0, y: 12 }}
-							whileInView={{ opacity: 1, y: 0 }}
+							initial={reduceMotion ? false : { opacity: 0, y: 12 }}
+							whileInView={reduceMotion ? undefined : { opacity: 1, y: 0 }}
 							viewport={{ once: true, amount: 0.1 }}
-							transition={{
+							transition={reduceMotion ? undefined : {
 								type: "spring",
 								stiffness: 120,
 								damping: 20,

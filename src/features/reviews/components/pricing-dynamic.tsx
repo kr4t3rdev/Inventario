@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useEffect, useState } from "react";
-import { motion } from "framer-motion";
+import { motion, useReducedMotion } from "framer-motion";
 import {
   ArrowRight,
   CheckCircle2,
@@ -42,20 +42,19 @@ const CATEGORY_ICONS: Record<string, string> = {
 export function PricingDynamic(): React.JSX.Element | null {
   const [plans, setPlans] = useState<PlanDisplay[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [hasError, setHasError] = useState(false);
+  const reduceMotion = useReducedMotion();
 
   useEffect(() => {
-    getPlansPublicAction().then((data) => {
-      setPlans(data);
-      setIsLoading(false);
-    });
+    getPlansPublicAction()
+      .then((data) => setPlans(data))
+      .catch(() => setHasError(true))
+      .finally(() => setIsLoading(false));
   }, []);
-
-  if (isLoading) return null;
-  if (plans.length === 0) return null;
 
   return (
     <section id="precios" className="space-y-10 scroll-mt-24">
-      <SpringSection className="mx-auto max-w-3xl space-y-3 text-center">
+      <SpringSection reduceMotion={Boolean(reduceMotion)} className="mx-auto max-w-3xl space-y-3 text-center">
         <span className="inline-flex rounded-full border border-cyan-accent bg-primary/10 px-4 py-1 text-xs font-semibold uppercase tracking-[0.16em] text-cyan-accent font-mono">
           Planes
         </span>
@@ -72,20 +71,38 @@ export function PricingDynamic(): React.JSX.Element | null {
         </p>
       </SpringSection>
 
+      {isLoading || hasError || plans.length === 0 ? (
+        <div className="mx-auto max-w-2xl rounded-xl border border-border/60 bg-card/70 p-8 text-center">
+          <h3 className="text-xl font-semibold font-mono">
+            {isLoading ? "Cargando planes" : "Conocé la opción adecuada para tu operación"}
+          </h3>
+          <p className="mt-2 text-sm text-muted-foreground">
+            {isLoading
+              ? "Estamos consultando la información comercial actualizada."
+              : "Nuestro equipo puede orientarte con información vigente y una propuesta acorde a tu negocio."}
+          </p>
+          <Button asChild className="mt-5 gap-2">
+            <Link href="#contacto">
+              {isLoading ? "Hablar con el equipo" : "Solicitar orientación"}
+              <ArrowRight className="h-4 w-4" />
+            </Link>
+          </Button>
+        </div>
+      ) : (
       <div className="grid gap-5 md:grid-cols-2 xl:grid-cols-3">
         {plans.map((plan, index) => (
           <motion.div
             key={plan.planId}
-            initial={{ opacity: 0, y: 20 }}
-            whileInView={{ opacity: 1, y: 0 }}
+            initial={reduceMotion ? false : { opacity: 0, y: 20 }}
+            whileInView={reduceMotion ? undefined : { opacity: 1, y: 0 }}
             viewport={{ once: true, amount: 0.15 }}
-            transition={{
+            transition={reduceMotion ? undefined : {
               type: "spring",
               stiffness: 120,
               damping: 20,
               delay: index * 0.1,
             }}
-            whileHover={{
+            whileHover={reduceMotion ? undefined : {
               y: -8,
               scale: plan.featured ? 1.025 : 1.015,
               transition: { type: "spring", stiffness: 200, damping: 12 },
@@ -133,7 +150,7 @@ export function PricingDynamic(): React.JSX.Element | null {
                     <Users className="h-3 w-3" />
                     {plan.limits.maxUsuarios >= 999
                       ? "∞ usuarios"
-                      : `${plan.limits.maxUsuarios} users`}
+                      : `${plan.limits.maxUsuarios} usuarios`}
                   </Badge>
                   <Badge
                     variant="outline"
@@ -192,20 +209,18 @@ export function PricingDynamic(): React.JSX.Element | null {
                 )}
 
                 {/* CTA */}
-                <Link href="#contacto" className="block mt-auto">
-                  <Button
-                    className="w-full cursor-pointer gap-2"
-                    variant={plan.featured ? "default" : "outline"}
-                  >
+                  <Button asChild className="mt-auto w-full gap-2" variant={plan.featured ? "default" : "outline"}>
+                    <Link href="#contacto">
                     {plan.cta}
                     <ArrowRight className="h-4 w-4" />
+                    </Link>
                   </Button>
-                </Link>
               </CardContent>
             </Card>
           </motion.div>
         ))}
       </div>
+      )}
     </section>
   );
 }

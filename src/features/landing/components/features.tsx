@@ -1,72 +1,84 @@
 'use client';
 
 import React from 'react';
-import { motion } from 'framer-motion';
+import { motion, useReducedMotion } from 'framer-motion';
 import { CheckCircle2 } from 'lucide-react';
 
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { FEATURE_ITEMS } from '@/features/landing/data';
 import { SpringSection } from '@/features/landing/utils';
 
 /**
- * @description Sección de características con cards animadas.
- * @returns {JSX.Element} Grid de features
+ * @description Muestra las capacidades principales como una matriz modular con una capacidad destacada.
+ * @returns {JSX.Element} Sección de características
  */
 export function LandingFeatures(): React.JSX.Element {
+  const reduceMotion = useReducedMotion();
+  const [featured, ...supporting] = FEATURE_ITEMS;
+  const FeaturedIcon = featured.icon;
+
   return (
-    <section id="caracteristicas" className="space-y-10 scroll-mt-24">
-      <SpringSection className="mx-auto max-w-3xl space-y-3 text-center">
-        <span className="inline-flex rounded-full border border-cyan-accent bg-primary/10 px-4 py-1 text-xs font-semibold uppercase tracking-[0.16em] text-cyan-accent font-mono">
-          Características
-        </span>
-        <h2 className="text-4xl font-bold tracking-tight sm:text-5xl font-mono leading-[1.05] tracking-display">
+    <section id="caracteristicas" className="space-y-12 scroll-mt-24">
+      <SpringSection className="max-w-3xl space-y-4" reduceMotion={Boolean(reduceMotion)}>
+        <h2 className="max-w-2xl text-4xl font-bold leading-[1.05] tracking-tight sm:text-5xl font-mono tracking-display">
           Todo lo que tu operación necesita en un solo lugar
         </h2>
-        <p className="text-muted-foreground sm:text-lg">
-          Cada módulo está diseñado para reducir fricción operativa y acelerar la toma de
-          decisiones estratégicas.
+        <p className="max-w-2xl text-muted-foreground sm:text-lg">
+          Cada módulo está diseñado para reducir fricción operativa y acelerar la toma de decisiones estratégicas.
         </p>
       </SpringSection>
 
-      <div className="grid gap-5 md:grid-cols-2 xl:grid-cols-3">
-        {FEATURE_ITEMS.map((feature, index) => {
-          const Icon = feature.icon;
+      <div className="grid gap-5 lg:grid-cols-2">
+        <motion.article
+          initial={reduceMotion ? false : { opacity: 0, y: 20 }}
+          whileInView={reduceMotion ? undefined : { opacity: 1, y: 0 }}
+          viewport={{ once: true, amount: 0.15 }}
+          className="rounded-2xl bg-primary p-7 text-primary-foreground sm:p-9"
+        >
+          <FeaturedIcon className="mb-12 h-8 w-8" aria-hidden="true" />
+          <p className="mb-3 text-sm font-semibold uppercase tracking-[0.14em] opacity-75">Base operativa</p>
+          <h3 className="text-2xl font-bold font-mono sm:text-3xl">{featured.title}</h3>
+          <p className="mt-4 max-w-xl text-primary-foreground/80">{featured.description}</p>
+          <ul className="mt-8 grid gap-3 sm:grid-cols-2">
+            {featured.bullets.map((bullet) => (
+              <li key={bullet} className="flex items-start gap-2 text-sm">
+                <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0" aria-hidden="true" />
+                <span>{bullet}</span>
+              </li>
+            ))}
+          </ul>
+        </motion.article>
 
-          return (
-            <motion.article
-              key={feature.title}
-              initial={{ opacity: 0, y: 25 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true, amount: 0.1 }}
-              transition={{ type: 'spring', stiffness: 120, damping: 20, delay: index * 0.08 }}
-              whileHover={{ y: -8, scale: 1.02, transition: { type: 'spring', stiffness: 200, damping: 12 } }}
-              className="group"
-            >
-              <Card className="h-full border-border/60 bg-card/80 shadow-md shadow-black/[0.03] transition-all duration-300 group-hover:border-primary/30 group-hover:shadow-xl group-hover:shadow-primary/5">
-                <CardHeader>
-                  <motion.div
-                    className="mb-3 flex h-12 w-12 items-center justify-center rounded-xl bg-primary/10 group-hover:bg-primary/15"
-                    whileHover={{ rotate: -10, scale: 1.12, transition: { type: 'spring', stiffness: 200, damping: 10 } }}
-                  >
-                    <Icon className="h-6 w-6 text-primary transition-transform duration-300 group-hover:scale-110" />
-                  </motion.div>
-                  <CardTitle className="text-xl font-mono">{feature.title}</CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  <p className="text-sm text-muted-foreground">{feature.description}</p>
-                  <ul className="space-y-2">
+        <div className="divide-y divide-border/70 rounded-2xl border border-border/60 bg-card/50 px-6">
+          {supporting.map((feature, index) => {
+            const Icon = feature.icon;
+            return (
+              <motion.article
+                key={feature.title}
+                initial={reduceMotion ? false : { opacity: 0, x: 16 }}
+                whileInView={reduceMotion ? undefined : { opacity: 1, x: 0 }}
+                viewport={{ once: true, amount: 0.1 }}
+                transition={{ delay: reduceMotion ? 0 : index * 0.04 }}
+                className="grid gap-4 py-5 sm:grid-cols-[auto_1fr] sm:items-start"
+              >
+                <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary/10 text-primary">
+                  <Icon className="h-5 w-5" aria-hidden="true" />
+                </div>
+                <div>
+                  <h3 className="text-lg font-semibold font-mono">{feature.title}</h3>
+                  <p className="mt-1 text-sm leading-relaxed text-muted-foreground">{feature.description}</p>
+                  <ul className="mt-3 grid gap-1.5 text-xs text-foreground/75" aria-label={`Capacidades de ${feature.title}`}>
                     {feature.bullets.map((bullet) => (
-                      <li key={bullet} className="flex items-start gap-2 text-sm">
-                        <CheckCircle2 className="mt-[2px] h-4 w-4 text-primary" />
+                      <li key={bullet} className="flex items-start gap-1.5">
+                        <CheckCircle2 className="mt-0.5 h-3.5 w-3.5 shrink-0 text-primary" aria-hidden="true" />
                         <span>{bullet}</span>
                       </li>
                     ))}
                   </ul>
-                </CardContent>
-              </Card>
-            </motion.article>
-          );
-        })}
+                </div>
+              </motion.article>
+            );
+          })}
+        </div>
       </div>
     </section>
   );

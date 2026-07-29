@@ -52,10 +52,10 @@ export function LandingPosDemoSection({ reduceMotion = false }: { reduceMotion?:
 						3 vistas disponibles
 					</Badge>
 					<Badge variant="outline" className="font-mono text-xs">
-						Sin login
+						Sin iniciar sesión
 					</Badge>
 					<Badge variant="outline" className="font-mono text-xs">
-						Datos mockeados
+						Datos de demostración
 					</Badge>
 				</div>
 			</motion.div>
@@ -97,8 +97,8 @@ export function LandingPosDemoSection({ reduceMotion = false }: { reduceMotion?:
 				className="flex flex-col items-center gap-3 text-center"
 			>
 				<p className="text-sm text-muted-foreground font-mono">
-					Esta demo corre con datos mockeados. Tu propio tenant arranca con seed real
-					vinculado a tu inventario y tu plan.
+					Esta demostración funciona con datos de demostración. La configuración de tu tenant depende
+					del plan aprobado y del alta administrativa.
 				</p>
 				<div className="flex flex-wrap items-center justify-center gap-3">
 					<motion.div
@@ -107,7 +107,7 @@ export function LandingPosDemoSection({ reduceMotion = false }: { reduceMotion?:
 					>
 						<Button asChild size="lg" className="group cursor-pointer gap-2">
 							<Link href="/register">
-								Crear cuenta y acceder al POS real
+								Registrarse
 								<ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1" />
 							</Link>
 						</Button>
@@ -118,7 +118,7 @@ export function LandingPosDemoSection({ reduceMotion = false }: { reduceMotion?:
 					>
 						<Button asChild size="lg" variant="outline" className="cursor-pointer">
 							<Link href="#precios">
-								Ver planes y precios
+								Ver planes
 							</Link>
 						</Button>
 					</motion.div>

@@ -44,20 +44,20 @@ export function LandingHero({ reduceMotion }: { reduceMotion?: boolean }): React
     <section className="grid items-center gap-12 lg:grid-cols-[1.05fr_0.95fr]">
       {/* ─── Left Column: Text + CTAs ─── */}
       <motion.div
-        initial={{ opacity: 0, y: 30 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ type: 'spring', stiffness: 120, damping: 20 }}
+        initial={reduceMotion ? false : { opacity: 0, y: 30 }}
+        animate={reduceMotion ? undefined : { opacity: 1, y: 0 }}
+        transition={reduceMotion ? undefined : { type: 'spring', stiffness: 120, damping: 20 }}
         className="space-y-8"
       >
         <div className="space-y-5">
           {/* Badge */}
           <span className="inline-flex w-fit items-center gap-2 rounded-full border border-primary/20 bg-primary/10 px-3 py-1 text-xs font-semibold uppercase tracking-[0.16em] text-primary font-mono">
-            Gestión empresarial todo-en-uno
+	            Plataforma B2B para operar mejor
           </span>
 
           {/* Headline */}
           <h1 className="max-w-2xl text-5xl font-bold tracking-tight sm:text-6xl lg:text-7xl font-mono leading-[1.05] tracking-display">
-            <WordReveal text="Tu negocio entero en un solo panel. Sin fricción, en tiempo real." />
+            <WordReveal text="Tu negocio entero en un solo panel. Sin fricción, en tiempo real." reduceMotion={reduceMotion} />
           </h1>
 
           {/* Subtítulo */}
@@ -95,38 +95,38 @@ export function LandingHero({ reduceMotion }: { reduceMotion?: boolean }): React
         <div className="space-y-4">
           <div className="flex flex-wrap items-center gap-3">
             <motion.div
-              whileHover={{ scale: 1.03, transition: SPRING_STIFF }}
-              whileTap={{ scale: 0.98, transition: SPRING_STIFF }}
+              whileHover={reduceMotion ? undefined : { scale: 1.03, transition: SPRING_STIFF }}
+              whileTap={reduceMotion ? undefined : { scale: 0.98, transition: SPRING_STIFF }}
             >
-              <Link href="/register">
-                <Button size="lg" className="group cursor-pointer gap-2">
+              <Button asChild size="lg" className="group cursor-pointer gap-2">
+                <Link href="/register">
                   Empezar ahora
                   <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1" />
-                </Button>
-              </Link>
+                </Link>
+              </Button>
             </motion.div>
             <motion.div
-              whileHover={{ scale: 1.03, transition: SPRING_STIFF }}
-              whileTap={{ scale: 0.98, transition: SPRING_STIFF }}
+              whileHover={reduceMotion ? undefined : { scale: 1.03, transition: SPRING_STIFF }}
+              whileTap={reduceMotion ? undefined : { scale: 0.98, transition: SPRING_STIFF }}
             >
-              <Link href="#precios">
-                <Button size="lg" variant="outline" className="cursor-pointer">
+              <Button asChild size="lg" variant="outline" className="cursor-pointer">
+                <Link href="#precios">
                   Ver planes
-                </Button>
-              </Link>
+                </Link>
+              </Button>
             </motion.div>
             <motion.div
-              whileHover={{ scale: 1.03, transition: SPRING_STIFF }}
-              whileTap={{ scale: 0.98, transition: SPRING_STIFF }}
+              whileHover={reduceMotion ? undefined : { scale: 1.03, transition: SPRING_STIFF }}
+              whileTap={reduceMotion ? undefined : { scale: 0.98, transition: SPRING_STIFF }}
             >
-              <Link href="#contacto">
-                <Button size="lg" variant="ghost" className="cursor-pointer gap-2">
+              <Button asChild size="lg" variant="ghost" className="cursor-pointer gap-2">
+                <Link href="#demo-pos">
                   <span className="flex h-6 w-6 items-center justify-center rounded-full bg-primary/10">
                     <span className="text-xs font-bold text-primary">▶</span>
                   </span>
-                  Ver demo
-                </Button>
-              </Link>
+                  Ver demo POS
+                </Link>
+              </Button>
             </motion.div>
           </div>
 
@@ -147,16 +147,16 @@ export function LandingHero({ reduceMotion }: { reduceMotion?: boolean }): React
       </motion.div>
 
       {/* ─── Right Column: Image + Floating Badges ─── */}
-      <ParallaxLayer speed={0.2} className="relative">
+      <ParallaxLayer speed={0.2} className="relative" reduceMotion={reduceMotion}>
         <motion.div
-          initial={{ opacity: 0, y: 30 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ type: 'spring', stiffness: 120, damping: 20, delay: 0.15 }}
+          initial={reduceMotion ? false : { opacity: 0, y: 30 }}
+          animate={reduceMotion ? undefined : { opacity: 1, y: 0 }}
+          transition={reduceMotion ? undefined : { type: 'spring', stiffness: 120, damping: 20, delay: 0.15 }}
         >
           {/* Main image */}
           <motion.div
             className="relative overflow-hidden rounded-asymmetric-tl-br border border-primary/20 bg-card p-2 shadow-xl shadow-primary/10 glow-primary"
-            whileHover={{
+            whileHover={reduceMotion ? undefined : {
               y: -8,
               scale: 1.015,
               transition: { type: 'spring', stiffness: 200, damping: 12 },
