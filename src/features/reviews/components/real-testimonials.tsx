@@ -46,7 +46,7 @@ export function RealTestimonials(): React.JSX.Element | null {
         </div>
       ) : <div className="grid gap-5 lg:grid-cols-[1.15fr_0.85fr]">
         {reviews.map((review, index) => (
-          <motion.div key={review.reviewId} initial={reduceMotion ? false : { opacity: 0, y: 16 }} whileInView={reduceMotion ? undefined : { opacity: 1, y: 0 }} viewport={{ once: true, amount: 0.15 }} transition={reduceMotion ? undefined : { delay: index * 0.06 }} className={index === 0 ? 'lg:row-span-2' : ''}>
+          <motion.div key={review.reviewId} initial={reduceMotion ? false : { y: 16 }} whileInView={reduceMotion ? undefined : { opacity: 1, y: 0 }} viewport={{ once: true, amount: 0.15 }} transition={reduceMotion ? undefined : { delay: index * 0.06 }} className={index === 0 ? 'lg:row-span-2' : ''}>
           <Card
             key={review.reviewId}
             className="h-full border-border/60 bg-card/80 shadow-sm transition-colors hover:bg-muted/20"

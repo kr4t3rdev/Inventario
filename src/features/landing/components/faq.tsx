@@ -33,7 +33,7 @@ export function LandingFaq(): React.JSX.Element {
 			</SpringSection>
 
 			<motion.div
-				initial={reduceMotion ? false : { opacity: 0, y: 20 }}
+				initial={reduceMotion ? false : { y: 20 }}
 				whileInView={reduceMotion ? undefined : { opacity: 1, y: 0 }}
 				viewport={{ once: true, amount: 0.15 }}
 				transition={reduceMotion ? undefined : { type: "spring", stiffness: 120, damping: 20 }}
@@ -43,7 +43,7 @@ export function LandingFaq(): React.JSX.Element {
 					{FAQ_ITEMS.map((item, index) => (
 						<motion.div
 							key={item.question}
-							initial={reduceMotion ? false : { opacity: 0, y: 12 }}
+							initial={reduceMotion ? false : { y: 12 }}
 							whileInView={reduceMotion ? undefined : { opacity: 1, y: 0 }}
 							viewport={{ once: true, amount: 0.1 }}
 							transition={reduceMotion ? undefined : {

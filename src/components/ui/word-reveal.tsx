@@ -27,7 +27,7 @@ export function WordReveal({
         <motion.span
           key={index}
           className="inline-block"
-          initial={reduceMotion ? false : { opacity: 0, y: 20 }}
+          initial={reduceMotion ? false : { y: 20 }}
           animate={reduceMotion ? undefined : { opacity: 1, y: 0 }}
           transition={{
             type: 'spring',

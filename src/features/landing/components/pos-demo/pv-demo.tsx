@@ -369,15 +369,15 @@ export function PvDemoInteractive({ reduceMotion = false }: { reduceMotion?: boo
 		<motion.div
 			key="grid-view"
 			className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4"
-			initial={reduceMotion ? false : { opacity: 0 }}
+			initial={reduceMotion ? false : {}}
 			animate={reduceMotion ? undefined : { opacity: 1 }}
-			exit={reduceMotion ? undefined : { opacity: 0 }}
+			exit={reduceMotion ? undefined : {}}
 			transition={{ duration: 0.2 }}
 		>
 			{filteredProducts.map((producto, index) => (
 				<motion.div
 					key={producto.id}
-					initial={reduceMotion ? false : { opacity: 0, y: 20 }}
+					initial={reduceMotion ? false : { y: 20 }}
 					animate={reduceMotion ? undefined : { opacity: 1, y: 0 }}
 					transition={{ delay: index * 0.03, duration: 0.3 }}
 				>
@@ -413,15 +413,15 @@ export function PvDemoInteractive({ reduceMotion = false }: { reduceMotion?: boo
 		<motion.div
 			key="list-view"
 			className="space-y-2"
-			initial={reduceMotion ? false : { opacity: 0 }}
+			initial={reduceMotion ? false : {}}
 			animate={reduceMotion ? undefined : { opacity: 1 }}
-			exit={reduceMotion ? undefined : { opacity: 0 }}
+			exit={reduceMotion ? undefined : {}}
 			transition={{ duration: 0.2 }}
 		>
 			{filteredProducts.map((producto, index) => (
 				<motion.div
 					key={producto.id}
-					initial={reduceMotion ? false : { opacity: 0, x: -20 }}
+					initial={reduceMotion ? false : { x: -20 }}
 					animate={reduceMotion ? undefined : { opacity: 1, x: 0 }}
 					transition={{ delay: index * 0.02, duration: 0.3 }}
 					whileHover={reduceMotion ? undefined : { scale: 1.005 }}
@@ -487,9 +487,9 @@ export function PvDemoInteractive({ reduceMotion = false }: { reduceMotion?: boo
 		<motion.div
 			key="table-view"
 			className="overflow-x-auto"
-			initial={reduceMotion ? false : { opacity: 0 }}
+			initial={reduceMotion ? false : {}}
 			animate={reduceMotion ? undefined : { opacity: 1 }}
-			exit={reduceMotion ? undefined : { opacity: 0 }}
+			exit={reduceMotion ? undefined : {}}
 			transition={{ duration: 0.2 }}
 		>
 			<table className="w-full">
@@ -506,7 +506,7 @@ export function PvDemoInteractive({ reduceMotion = false }: { reduceMotion?: boo
 					{filteredProducts.map((producto, index) => (
 						<motion.tr
 							key={producto.id}
-							initial={reduceMotion ? false : { opacity: 0, y: 10 }}
+							initial={reduceMotion ? false : { y: 10 }}
 							animate={reduceMotion ? undefined : { opacity: 1, y: 0 }}
 							transition={{ delay: index * 0.02, duration: 0.2 }}
 							className="border-b hover:bg-muted/30 transition-colors"
@@ -581,9 +581,9 @@ export function PvDemoInteractive({ reduceMotion = false }: { reduceMotion?: boo
 				<motion.div
 					key="empty"
 					className="flex flex-col items-center justify-center h-64 text-center"
-					initial={reduceMotion ? false : { opacity: 0, scale: 0.9 }}
+					initial={reduceMotion ? false : { scale: 0.9 }}
 					animate={reduceMotion ? undefined : { opacity: 1, scale: 1 }}
-					exit={reduceMotion ? undefined : { opacity: 0, scale: 0.9 }}
+					exit={reduceMotion ? undefined : { scale: 0.9 }}
 					transition={{ duration: 0.3 }}
 				>
 					<motion.div
@@ -636,7 +636,7 @@ export function PvDemoInteractive({ reduceMotion = false }: { reduceMotion?: boo
 			{/* === Panel izquierdo: Productos === */}
 			<div className="md:col-span-2 space-y-6">
 				<motion.div
-					initial={reduceMotion ? false : { opacity: 0, y: 20 }}
+					initial={reduceMotion ? false : { y: 20 }}
 					animate={reduceMotion ? undefined : { opacity: 1, y: 0 }}
 					transition={{ duration: 0.5 }}
 				>
@@ -707,7 +707,7 @@ export function PvDemoInteractive({ reduceMotion = false }: { reduceMotion?: boo
 
 				{/* === Filtros === */}
 				<motion.div
-					initial={reduceMotion ? false : { opacity: 0, y: 20 }}
+					initial={reduceMotion ? false : { y: 20 }}
 					animate={reduceMotion ? undefined : { opacity: 1, y: 0 }}
 					transition={{ duration: 0.5, delay: 0.1 }}
 				>
@@ -733,9 +733,9 @@ export function PvDemoInteractive({ reduceMotion = false }: { reduceMotion?: boo
 							<AnimatePresence>
 								{showFilters && (
 									<motion.div
-										initial={reduceMotion ? false : { opacity: 0, height: 0 }}
+										initial={reduceMotion ? false : { height: 0 }}
 										animate={reduceMotion ? undefined : { opacity: 1, height: 'auto' }}
-										exit={reduceMotion ? undefined : { opacity: 0, height: 0 }}
+										exit={reduceMotion ? undefined : { height: 0 }}
 										transition={{ duration: 0.3 }}
 												className="space-y-4 pt-4 overflow-hidden"
 												id="demo-pos-filters"
@@ -784,9 +784,9 @@ export function PvDemoInteractive({ reduceMotion = false }: { reduceMotion?: boo
 										<AnimatePresence>
 											{(selectedCategoriaId !== 'all' || soloConStock) && (
 												<motion.div
-													initial={reduceMotion ? false : { opacity: 0, y: -10 }}
+													initial={reduceMotion ? false : { y: -10 }}
 													animate={reduceMotion ? undefined : { opacity: 1, y: 0 }}
-													exit={reduceMotion ? undefined : { opacity: 0, y: -10 }}
+													exit={reduceMotion ? undefined : { y: -10 }}
 												>
 													<Button
 														variant="outline"
@@ -810,7 +810,7 @@ export function PvDemoInteractive({ reduceMotion = false }: { reduceMotion?: boo
 
 				{/* === Productos === */}
 				<motion.div
-					initial={reduceMotion ? false : { opacity: 0, y: 20 }}
+					initial={reduceMotion ? false : { y: 20 }}
 					animate={reduceMotion ? undefined : { opacity: 1, y: 0 }}
 					transition={{ duration: 0.5, delay: 0.2 }}
 				>
@@ -866,9 +866,9 @@ export function PvDemoInteractive({ reduceMotion = false }: { reduceMotion?: boo
 
 								{filteredProducts.length > 0 && (
 									<motion.div
-										initial={reduceMotion ? false : { opacity: 0, scale: 0.9 }}
+										initial={reduceMotion ? false : { scale: 0.9 }}
 										animate={reduceMotion ? undefined : { opacity: 1, scale: 1 }}
-										exit={reduceMotion ? undefined : { opacity: 0, scale: 0.9 }}
+										exit={reduceMotion ? undefined : { scale: 0.9 }}
 										className="flex items-center gap-1 bg-muted/50 p-1 rounded-lg"
 									>
 										<motion.button
@@ -930,7 +930,7 @@ export function PvDemoInteractive({ reduceMotion = false }: { reduceMotion?: boo
 			{/* === Panel derecho: Carrito === */}
 			<div id="demo-pos-cart" ref={cartSectionRef} className="scroll-mt-24">
 				<motion.div
-					initial={reduceMotion ? false : { opacity: 0, x: 20 }}
+					initial={reduceMotion ? false : { x: 20 }}
 					animate={reduceMotion ? undefined : { opacity: 1, x: 0 }}
 					transition={{ duration: 0.5, delay: 0.3 }}
 				>
@@ -965,7 +965,7 @@ export function PvDemoInteractive({ reduceMotion = false }: { reduceMotion?: boo
 							{cart.length === 0 ? (
 								<motion.div
 									className="flex flex-col items-center justify-center h-64 text-center"
-									initial={reduceMotion ? false : { opacity: 0, scale: 0.9 }}
+									initial={reduceMotion ? false : { scale: 0.9 }}
 									animate={reduceMotion ? undefined : { opacity: 1, scale: 1 }}
 									transition={{ duration: 0.3 }}
 								>
@@ -987,7 +987,7 @@ export function PvDemoInteractive({ reduceMotion = false }: { reduceMotion?: boo
 									initial={reduceMotion ? false : 'hidden'}
 									animate={reduceMotion ? undefined : 'visible'}
 									variants={reduceMotion ? undefined : {
-											hidden: { opacity: 0 },
+											hidden: {},
 											visible: {
 												opacity: 1,
 												transition: { staggerChildren: 0.1 },
@@ -999,9 +999,9 @@ export function PvDemoInteractive({ reduceMotion = false }: { reduceMotion?: boo
 												<motion.div
 													key={item.cartId}
 													layout={!reduceMotion}
-													initial={reduceMotion ? false : { opacity: 0, x: -20 }}
+													initial={reduceMotion ? false : { x: -20 }}
 													animate={reduceMotion ? undefined : { opacity: 1, x: 0 }}
-													exit={reduceMotion ? undefined : { opacity: 0, x: 20 }}
+													exit={reduceMotion ? undefined : { x: 20 }}
 													transition={{ delay: index * 0.05 }}
 												>
 													<CartItem
@@ -1021,7 +1021,7 @@ export function PvDemoInteractive({ reduceMotion = false }: { reduceMotion?: boo
 						<CardFooter className="flex flex-col pt-4 space-y-3">
 							<motion.div
 								className="grid grid-cols-1 gap-2 w-full"
-								initial={reduceMotion ? false : { opacity: 0, y: 10 }}
+								initial={reduceMotion ? false : { y: 10 }}
 								animate={reduceMotion ? undefined : { opacity: 1, y: 0 }}
 								transition={{ delay: 0.2 }}
 							>
@@ -1056,7 +1056,7 @@ export function PvDemoInteractive({ reduceMotion = false }: { reduceMotion?: boo
 
 							<motion.div
 								className="space-y-1 w-full"
-								initial={reduceMotion ? false : { opacity: 0 }}
+								initial={reduceMotion ? false : {}}
 								animate={reduceMotion ? undefined : { opacity: 1 }}
 								transition={{ delay: 0.3 }}
 							>

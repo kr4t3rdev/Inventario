@@ -29,7 +29,7 @@ export function LandingFeatures(): React.JSX.Element {
 
       <div className="grid gap-5 lg:grid-cols-2">
         <motion.article
-          initial={reduceMotion ? false : { opacity: 0, y: 20 }}
+          initial={reduceMotion ? false : { y: 20 }}
           whileInView={reduceMotion ? undefined : { opacity: 1, y: 0 }}
           viewport={{ once: true, amount: 0.15 }}
           className="rounded-2xl bg-primary p-7 text-primary-foreground sm:p-9"
@@ -54,7 +54,7 @@ export function LandingFeatures(): React.JSX.Element {
             return (
               <motion.article
                 key={feature.title}
-                initial={reduceMotion ? false : { opacity: 0, x: 16 }}
+                initial={reduceMotion ? false : { x: 16 }}
                 whileInView={reduceMotion ? undefined : { opacity: 1, x: 0 }}
                 viewport={{ once: true, amount: 0.1 }}
                 transition={{ delay: reduceMotion ? 0 : index * 0.04 }}

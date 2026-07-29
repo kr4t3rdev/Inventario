@@ -93,7 +93,7 @@ export function PricingDynamic(): React.JSX.Element | null {
         {plans.map((plan, index) => (
           <motion.div
             key={plan.planId}
-            initial={reduceMotion ? false : { opacity: 0, y: 20 }}
+            initial={reduceMotion ? false : { y: 20 }}
             whileInView={reduceMotion ? undefined : { opacity: 1, y: 0 }}
             viewport={{ once: true, amount: 0.15 }}
             transition={reduceMotion ? undefined : {

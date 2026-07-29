@@ -44,7 +44,7 @@ export function LandingHero({ reduceMotion }: { reduceMotion?: boolean }): React
     <section className="grid items-center gap-12 lg:grid-cols-[1.05fr_0.95fr]">
       {/* ─── Left Column: Text + CTAs ─── */}
       <motion.div
-        initial={reduceMotion ? false : { opacity: 0, y: 30 }}
+        initial={reduceMotion ? false : { y: 30 }}
         animate={reduceMotion ? undefined : { opacity: 1, y: 0 }}
         transition={reduceMotion ? undefined : { type: 'spring', stiffness: 120, damping: 20 }}
         className="space-y-8"
@@ -78,9 +78,9 @@ export function LandingHero({ reduceMotion }: { reduceMotion?: boolean }): React
             <AnimatePresence mode="wait">
               <motion.span
                 key={HERO_VALUE_PROPS[propIndex]}
-                initial={reduceMotion ? { opacity: 1 } : { opacity: 0, y: 20 }}
+                initial={reduceMotion ? { opacity: 1 } : { y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
-                exit={reduceMotion ? { opacity: 1 } : { opacity: 0, y: -20 }}
+                exit={reduceMotion ? { opacity: 1 } : { y: -20 }}
                 transition={{ duration: 0.3 }}
                 className="inline-flex items-center gap-2 text-sm font-semibold text-cyan-accent font-mono"
               >
@@ -149,7 +149,7 @@ export function LandingHero({ reduceMotion }: { reduceMotion?: boolean }): React
       {/* ─── Right Column: Image + Floating Badges ─── */}
       <ParallaxLayer speed={0.2} className="relative" reduceMotion={reduceMotion}>
         <motion.div
-          initial={reduceMotion ? false : { opacity: 0, y: 30 }}
+          initial={reduceMotion ? false : { y: 30 }}
           animate={reduceMotion ? undefined : { opacity: 1, y: 0 }}
           transition={reduceMotion ? undefined : { type: 'spring', stiffness: 120, damping: 20, delay: 0.15 }}
         >

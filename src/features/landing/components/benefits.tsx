@@ -32,7 +32,7 @@ export function LandingBenefits(): React.JSX.Element {
         {BENEFIT_ITEMS.map((benefit, index) => {
           const Icon = benefit.icon;
           return (
-            <motion.li key={benefit.title} initial={reduceMotion ? false : { opacity: 0, y: 16 }} whileInView={reduceMotion ? undefined : { opacity: 1, y: 0 }} viewport={{ once: true, amount: 0.2 }} transition={{ delay: reduceMotion ? 0 : index * 0.05 }} className="grid gap-4 border-b border-border/70 py-6 sm:grid-cols-[3rem_1fr]">
+            <motion.li key={benefit.title} initial={reduceMotion ? false : { y: 16 }} whileInView={reduceMotion ? undefined : { opacity: 1, y: 0 }} viewport={{ once: true, amount: 0.2 }} transition={{ delay: reduceMotion ? 0 : index * 0.05 }} className="grid gap-4 border-b border-border/70 py-6 sm:grid-cols-[3rem_1fr]">
               <span className="text-sm font-semibold text-primary font-mono">0{index + 1}</span>
               <div>
                 <div className="flex items-center gap-3"><Icon className="h-5 w-5 text-primary" aria-hidden="true" /><h3 className="text-xl font-semibold font-mono">{benefit.title}</h3></div>

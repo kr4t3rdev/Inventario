@@ -123,7 +123,7 @@ export function SpringSection({
 }): React.JSX.Element {
   return (
     <motion.div
-      initial={reduceMotion ? false : { opacity: 0, y: 30 }}
+      initial={reduceMotion ? false : { y: 30 }}
       whileInView={reduceMotion ? undefined : { opacity: 1, y: 0 }}
       viewport={{ once: true, amount: 0.15 }}
       transition={reduceMotion ? undefined : { type: 'spring', stiffness: 120, damping: 20, delay }}

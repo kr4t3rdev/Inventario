@@ -21,7 +21,7 @@ export function LandingPosDemoSection({ reduceMotion = false }: { reduceMotion?:
 		<section id="demo-pos" className="flex flex-col gap-10 scroll-mt-24">
 			{/* Header */}
 			<motion.div
-				initial={reduceMotion ? false : { opacity: 0, y: 30 }}
+				initial={reduceMotion ? false : { y: 30 }}
 				whileInView={reduceMotion ? undefined : { opacity: 1, y: 0 }}
 				viewport={{ once: true, amount: 0.3 }}
 				transition={reduceMotion ? undefined : { type: 'spring', stiffness: 120, damping: 20 }}
@@ -62,7 +62,7 @@ export function LandingPosDemoSection({ reduceMotion = false }: { reduceMotion?:
 
 			{/* Device frame con la demo */}
 			<motion.div
-				initial={reduceMotion ? false : { opacity: 0, y: 40 }}
+				initial={reduceMotion ? false : { y: 40 }}
 				whileInView={reduceMotion ? undefined : { opacity: 1, y: 0 }}
 				viewport={{ once: true, amount: 0.15 }}
 				transition={reduceMotion ? undefined : { type: 'spring', stiffness: 120, damping: 20, delay: 0.1 }}
@@ -90,7 +90,7 @@ export function LandingPosDemoSection({ reduceMotion = false }: { reduceMotion?:
 
 			{/* CTA al pie de la sección */}
 			<motion.div
-				initial={reduceMotion ? false : { opacity: 0, y: 20 }}
+				initial={reduceMotion ? false : { y: 20 }}
 				whileInView={reduceMotion ? undefined : { opacity: 1, y: 0 }}
 				viewport={{ once: true, amount: 0.5 }}
 				transition={reduceMotion ? undefined : { duration: 0.4, delay: 0.2 }}

@@ -95,7 +95,7 @@ function AnimatedStatCard({ value, suffix, label, index, reduceMotion }: StatCar
   return (
     <motion.div
       ref={ref}
-      initial={reduceMotion ? false : { opacity: 0, y: 25 }}
+      initial={reduceMotion ? false : { y: 25 }}
       whileInView={reduceMotion ? undefined : { opacity: 1, y: 0 }}
       viewport={{ once: true, amount: 0.1 }}
       transition={reduceMotion ? undefined : { type: 'spring', stiffness: 120, damping: 20, delay: index * 0.1 }}
