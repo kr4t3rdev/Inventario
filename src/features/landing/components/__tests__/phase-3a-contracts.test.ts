@@ -4,22 +4,24 @@ import { describe, expect, it } from 'vitest';
 const read = (path: string) => readFileSync(path, 'utf8');
 
 describe('landing phase 3A composition contracts', () => {
-  it('uses varied composition instead of repeated feature and benefit card grids', () => {
+  it('organizes capabilities as operational layers instead of a dominant oversized card', () => {
     const features = read('src/features/landing/components/features.tsx');
     const benefits = read('src/features/landing/components/benefits.tsx');
 
-    expect(features).toContain('Base operativa');
-    expect(features).toContain('divide-y');
+    expect(features).toContain('Operación diaria');
+    expect(features).toContain('Control financiero');
+    expect(features).toContain('Escala del negocio');
+    expect(features).toContain('CAPABILITY_GROUPS');
+    expect(features).not.toContain('bg-primary p-7');
     expect(benefits).toContain('<ol');
     expect(benefits).not.toContain('<Card');
   });
 
-  it('keeps proof sections compact and reduced-motion aware', () => {
-    const stats = read('src/features/reviews/components/landing-stats-dynamic.tsx');
+  it('removes the standalone statistics strip and keeps testimonials reduced-motion aware', () => {
+    const landing = read('src/features/landing/components/landing-page-client.tsx');
     const testimonials = read('src/features/reviews/components/real-testimonials.tsx');
 
-    expect(stats).toContain('useReducedMotion');
-    expect(stats).toContain('divide-y');
+    expect(landing).not.toContain('LandingStatsDynamic');
     expect(testimonials).toContain('useReducedMotion');
     expect(testimonials).toContain('lg:row-span-2');
     expect(testimonials).toContain('id="testimonios"');
@@ -36,7 +38,6 @@ describe('landing phase 3A composition contracts', () => {
   it('passes reduced motion to every SpringSection used by phase 3A proof sections', () => {
     for (const path of [
       'src/features/landing/components/features.tsx',
-      'src/features/reviews/components/landing-stats-dynamic.tsx',
       'src/features/reviews/components/real-testimonials.tsx',
     ]) {
       expect(read(path)).toMatch(/<SpringSection[\s\S]*reduceMotion=\{Boolean\(reduceMotion\)\}/);

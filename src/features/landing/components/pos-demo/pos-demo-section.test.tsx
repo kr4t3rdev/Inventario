@@ -8,6 +8,7 @@ vi.mock('@/features/landing/components/pos-demo/pv-demo', () => ({
 }));
 
 import { LandingPosDemoSection } from './pos-demo-section';
+import { DEMO_PRODUCTOS } from './mock-data';
 
 describe('LandingPosDemoSection', () => {
 	it('propaga reduced motion y mantiene CTAs como enlaces accesibles', () => {
@@ -17,5 +18,11 @@ describe('LandingPosDemoSection', () => {
 		for (const link of screen.getAllByRole('link')) {
 			expect(link.querySelector('button')).toBeNull();
 		}
+	});
+
+	it('mantiene un catálogo compacto de seis productos para no alargar la landing', () => {
+		expect(DEMO_PRODUCTOS).toHaveLength(6);
+		render(<LandingPosDemoSection />);
+		expect(screen.getByText('6 productos demo')).toBeInTheDocument();
 	});
 });

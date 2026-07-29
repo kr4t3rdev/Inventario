@@ -12,7 +12,6 @@ import { LandingFooter } from '@/features/landing/components/footer';
 import { LandingHeader } from '@/features/landing/components/header';
 import { LandingHero } from '@/features/landing/components/hero';
 import { LandingPosDemoSection } from '@/features/landing/components/pos-demo/pos-demo-section';
-import { LandingStatsDynamic } from '@/features/reviews/components/landing-stats-dynamic';
 import { PricingDynamic } from '@/features/reviews/components/pricing-dynamic';
 import { RealTestimonials } from '@/features/reviews/components/real-testimonials';
 
@@ -35,7 +34,6 @@ export function LandingPageClient(): React.JSX.Element {
       <main className="mx-auto flex w-full max-w-7xl flex-col gap-24 px-4 pb-20 pt-10 md:px-6 md:pt-14">
         <LandingHero reduceMotion={reduceMotion} />
         <LandingPosDemoSection reduceMotion={reduceMotion} />
-        <LandingStatsDynamic />
         <LandingFeatures />
         <LandingBenefits />
         <PricingDynamic />

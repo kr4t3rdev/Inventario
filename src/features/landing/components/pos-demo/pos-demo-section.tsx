@@ -46,7 +46,7 @@ export function LandingPosDemoSection({ reduceMotion = false }: { reduceMotion?:
 
 				<div className="flex flex-wrap justify-center gap-2 pt-1">
 					<Badge variant="outline" className="font-mono text-xs">
-						12 productos demo
+						6 productos demo
 					</Badge>
 					<Badge variant="outline" className="font-mono text-xs">
 						3 vistas disponibles
