@@ -14,7 +14,7 @@ import { PvDemoInteractive } from '@/features/landing/components/pos-demo/pv-dem
  *              Header con eyebrow + título + subtítulo + CTA, y debajo el device-frame
  *              con la demo embebida. Pensada para insertarse entre el hero y los stats.
  * @param {{ reduceMotion?: boolean }} props - Preferencia de movimiento del usuario.
- * @returns {JSX.Element} Sección "Probá el POS en vivo" del landing.
+ * @returns {JSX.Element} Sección "Prueba el POS en vivo" del landing.
  */
 export function LandingPosDemoSection({ reduceMotion = false }: { reduceMotion?: boolean }) {
 	return (
@@ -35,7 +35,7 @@ export function LandingPosDemoSection({ reduceMotion = false }: { reduceMotion?:
 				</div>
 
 				<h2 className="mx-auto max-w-3xl text-4xl font-bold tracking-tight sm:text-5xl font-mono leading-[1.1] tracking-display">
-					Probá el punto de venta antes de registrarte
+					Prueba el punto de venta antes de registrarte
 				</h2>
 
 				<p className="mx-auto max-w-2xl text-base text-muted-foreground sm:text-lg">

@@ -22,10 +22,10 @@ describe('landing referral program copy', () => {
 
   it('explains the admin-confirmed recurring payment flow', () => {
     expect(SALES_AGENT_PROGRAM_STEPS.map((step) => step.title)).toEqual([
-      'Te registrás como Gestor de Ventas',
-      'Compartís tu código',
+      'Te registras como Gestor de Ventas',
+      'Compartes tu código',
       'Administración confirma el pago',
-      'Cobrás en CUP',
+      'Cobras en CUP',
     ]);
   });
 });

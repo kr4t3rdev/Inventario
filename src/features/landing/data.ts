@@ -198,13 +198,13 @@ export const BENEFIT_ITEMS: BenefitItem[] = [
 	{
 		title: "Reportes accionables",
 		description:
-			"Convertí datos de ventas, inventario y contabilidad en decisiones estratégicas en segundos con dashboards ejecutivos.",
+			"Convierte datos de ventas, inventario y contabilidad en decisiones estratégicas en segundos con dashboards ejecutivos.",
 		icon: BarChart3,
 	},
 	{
 		title: "Un solo sistema",
 		description:
-			"Olvidate de las planillas y los sistemas desconectados. Ventas, stock, contabilidad y nómina en una plataforma integrada.",
+			"Olvídate de las planillas y los sistemas desconectados. Ventas, stock, contabilidad y nómina en una plataforma integrada.",
 		icon: Database,
 	},
 	{
@@ -222,7 +222,7 @@ export const BENEFIT_ITEMS: BenefitItem[] = [
 	{
 		title: "Multi-sucursal en tiempo real",
 		description:
-			"Controlá todas tus sucursales desde un panel: stock consolidado, ventas por punto y transferencias auditadas entre almacenes.",
+			"Controla todas tus sucursales desde un panel: stock consolidado, ventas por punto y transferencias auditadas entre almacenes.",
 		icon: Globe,
 	},
 	{
@@ -258,7 +258,7 @@ export const AFFILIATE_PROGRAM_HIGHLIGHTS: AffiliateHighlightItem[] = [
 	{
 		title: "Hasta 10% de comisión",
 		description:
-			"Escalá tu beneficio según la cantidad de ventas válidas confirmadas.",
+			"Escala tu beneficio según la cantidad de ventas válidas confirmadas.",
 	},
 	{
 		title: "Crédito en licencia",
@@ -268,7 +268,7 @@ export const AFFILIATE_PROGRAM_HIGHLIGHTS: AffiliateHighlightItem[] = [
 	{
 		title: "Perks exclusivos",
 		description:
-			"Ganás ventajas nuevas del programa, separadas de los planes comerciales.",
+			"Ganas ventajas nuevas del programa, separadas de los planes comerciales.",
 	},
 	{
 		title: "Ventas reales confirmadas",
@@ -281,12 +281,12 @@ export const SALES_AGENT_PROGRAM_HIGHLIGHTS: AffiliateHighlightItem[] = [
 	{
 		title: "Sin tener un tenant",
 		description:
-			"Podés registrarte como Gestor de Ventas aunque no uses FinanceMDM para administrar una empresa.",
+			"Puedes registrarte como Gestor de Ventas aunque no uses FinanceMDM para administrar una empresa.",
 	},
 	{
 		title: "Comisión recurrente",
 		description:
-			"Cobrás por cada renovación futura de los tenants referidos que continúen activos y con licencia vigente.",
+			"Cobras por cada renovación futura de los tenants referidos que continúen activos y con licencia vigente.",
 	},
 	{
 		title: "Pagos en CUP",
@@ -296,7 +296,7 @@ export const SALES_AGENT_PROGRAM_HIGHLIGHTS: AffiliateHighlightItem[] = [
 	{
 		title: "Seguimiento claro",
 		description:
-			"Consultás tenants referidos, comisiones disponibles, pagos realizados y notificaciones desde tu panel.",
+			"Consultas tenants referidos, comisiones disponibles, pagos realizados y notificaciones desde tu panel.",
 	},
 ];
 
@@ -308,7 +308,7 @@ export const AFFILIATE_PROGRAM_TIERS: AffiliateTierItem[] = [
 
 export const AFFILIATE_PROGRAM_STEPS: AffiliateStepItem[] = [
 	{
-		title: "Compartís tu link",
+		title: "Compartes tu link",
 		description:
 			"Cada tenant activo recibe un código o link de referido para recomendar la plataforma.",
 	},
@@ -318,9 +318,9 @@ export const AFFILIATE_PROGRAM_STEPS: AffiliateStepItem[] = [
 			"La referencia cuenta cuando el nuevo tenant realiza su primera compra y el admin confirma el pago.",
 	},
 	{
-		title: "Recibís crédito y perks",
+		title: "Recibes crédito y perks",
 		description:
-			"Tu comisión se convierte en saldo para la próxima licencia y además ganás perks exclusivos del programa.",
+			"Tu comisión se convierte en saldo para la próxima licencia y además ganas perks exclusivos del programa.",
 	},
 ];
 
@@ -332,14 +332,14 @@ export const SALES_AGENT_PROGRAM_TIERS: AffiliateTierItem[] = [
 
 export const SALES_AGENT_PROGRAM_STEPS: AffiliateStepItem[] = [
 	{
-		title: "Te registrás como Gestor de Ventas",
+		title: "Te registras como Gestor de Ventas",
 		description:
-			"Creás tu cuenta, verificás tu correo y completás el onboarding seleccionando este tipo de usuario.",
+			"Creas tu cuenta, verificas tu correo y completas el onboarding seleccionando este tipo de usuario.",
 	},
 	{
-		title: "Compartís tu código",
+		title: "Compartes tu código",
 		description:
-			"Usás tu link, código, QR o WhatsApp para invitar empresas y consultar tus referidos desde el panel.",
+			"Usas tu link, código, QR o WhatsApp para invitar empresas y consultar tus referidos desde el panel.",
 	},
 	{
 		title: "Administración confirma el pago",
@@ -347,9 +347,9 @@ export const SALES_AGENT_PROGRAM_STEPS: AffiliateStepItem[] = [
 			"Cada pago presencial y renovación se confirma manualmente para proteger la trazabilidad de la comisión.",
 	},
 	{
-		title: "Cobrás en CUP",
+		title: "Cobras en CUP",
 		description:
-			"Podés solicitar un pago parcial o total. El monto se calcula en CUP con la tasa de cambio registrada.",
+			"Puedes solicitar un pago parcial o total. El monto se calcula en CUP con la tasa de cambio registrada.",
 	},
 ];
 
@@ -368,7 +368,7 @@ export const SALES_AGENT_PROGRAM_RULES: string[] = [
 	"El porcentaje depende de los tenants referidos activos y con licencia vigente.",
 	"El pago se realiza en CUP con la tasa de cambio registrada al momento de liquidar.",
 	"Se permiten pagos parciales o totales del saldo disponible.",
-	"Para comenzar o resolver dudas, contactá a administración por teléfono.",
+	"Para comenzar o resolver dudas, contacta a administración por teléfono.",
 ];
 
 /* ─── FAQ ─── */
@@ -382,7 +382,7 @@ export const FAQ_ITEMS: FaqItem[] = [
 	{
 		question: "¿Cómo controla el acceso por roles y sucursales?",
 		answer:
-			"Cada usuario tiene un rol de plataforma (admin o regular) y un rol de tenant que define lo que puede ver y hacer. El sistema aísla los datos por empresa y podés restringir módulos por rol: un dependiente solo accede al POS, mientras que el gerente ve reportes, contabilidad y empleados.",
+			"Cada usuario tiene un rol de plataforma (admin o regular) y un rol de tenant que define lo que puede ver y hacer. El sistema aísla los datos por empresa y puedes restringir módulos por rol: un dependiente solo accede al POS, mientras que el gerente ve reportes, contabilidad y empleados.",
 	},
 	{
 		question: "¿Maneja múltiples monedas y conversión automática?",
@@ -392,7 +392,7 @@ export const FAQ_ITEMS: FaqItem[] = [
 	{
 		question: "¿Tiene control de caja y arqueo diario?",
 		answer:
-			"Sí. Cada punto de venta tiene su propio arqueo de caja por turno. El sistema registra apertura, movimientos y cierre con cuadre automático. Podés tener varios turnos por día y conciliar las ventas contra el efectivo declarado.",
+			"Sí. Cada punto de venta tiene su propio arqueo de caja por turno. El sistema registra apertura, movimientos y cierre con cuadre automático. Puedes tener varios turnos por día y conciliar las ventas contra el efectivo declarado.",
 	},
 	{
 		question: "¿Quién puede participar en el programa de referidos?",
@@ -412,12 +412,12 @@ export const FAQ_ITEMS: FaqItem[] = [
 	{
 		question: "¿Cómo funcionan las copias de seguridad?",
 		answer:
-			"Las copias pueden ser automáticas (programadas por hora o día) o manuales. Se almacenan en la nube (S3) y también podés descargarlas localmente. Hay un historial de respaldos con logs de verificación y la opción de restaurar desde cualquier punto.",
+			"Las copias pueden ser automáticas (programadas por hora o día) o manuales. Se almacenan en la nube (S3) y también puedes descargarlas localmente. Hay un historial de respaldos con logs de verificación y la opción de restaurar desde cualquier punto.",
 	},
 	{
 		question: "¿Se puede facturar con control de series y numeración?",
 		answer:
-			"Sí. El sistema tiene un módulo de series de facturación donde definís prefijos, rangos numéricos y puntos de venta asociados. Cada factura se emite con numeración correlativa automática y queda registrada en el historial del cliente y en la contabilidad. También manejás notas de crédito y anulaciones.",
+			"Sí. El sistema tiene un módulo de series de facturación donde defines prefijos, rangos numéricos y puntos de venta asociados. Cada factura se emite con numeración correlativa automática y queda registrada en el historial del cliente y en la contabilidad. También manejas notas de crédito y anulaciones.",
 	},
 ];
 

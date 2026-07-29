@@ -75,6 +75,19 @@ Stack tecnológico:
 
 ## Code Style Guidelines
 
+### Language and UI Copy
+
+- Todo texto visible para usuarios debe escribirse en **español neutro internacional**.
+- No usar voseo ni conjugaciones rioplatenses en UI, mensajes, validaciones, documentación
+  funcional o datos de demostración.
+- Evitar formas como `vos`, `sos`, `tenés`, `querés`, `podés`, `probá`, `hacé`, `elegí`,
+  `compartí`, `ganá`, `cobrá` o `registrate`.
+- Usar equivalentes neutrales como `tú`, `eres`, `tienes`, `quieres`, `puedes`, `prueba`,
+  `haz`, `elige`, `comparte`, `gana`, `cobra` y `regístrate`.
+- No eliminar tildes gramaticalmente correctas del español neutro (`está`, `será`, `regístrate`).
+- Los cambios de copy en la landing deben mantener aprobado
+  `src/features/landing/__tests__/neutral-spanish-copy.test.ts`.
+
 ### Imports
 
 - Utiliza imports absolutos con el alias `@/` para archivos dentro de `src/`.

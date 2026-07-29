@@ -36,7 +36,7 @@ export function ReviewDialog({
 
   const handleSubmit = async () => {
     if (rating === 0) {
-      toast.error('Seleccioná una calificación');
+      toast.error('Selecciona una calificación');
       return;
     }
 
@@ -75,7 +75,7 @@ export function ReviewDialog({
     <Dialog open={open} onOpenChange={(open) => { if (!open) handleDismiss(); }}>
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
-          <DialogTitle className="font-mono text-xl">¿Cómo calificás tu experiencia?</DialogTitle>
+          <DialogTitle className="font-mono text-xl">¿Cómo calificas tu experiencia?</DialogTitle>
           <DialogDescription className="text-sm text-muted-foreground">
             Tu opinión nos ayuda a mejorar FinanceMDM para todos.
           </DialogDescription>
@@ -90,7 +90,7 @@ export function ReviewDialog({
           />
 
           <Textarea
-            placeholder="Contanos qué te gusta o qué te gustaría mejorar..."
+            placeholder="Cuéntanos qué te gusta o qué te gustaría mejorar..."
             value={comment}
             onChange={(e) => setComment(e.target.value)}
             className="min-h-[80px] resize-none"

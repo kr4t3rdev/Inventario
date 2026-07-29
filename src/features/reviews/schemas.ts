@@ -4,7 +4,7 @@ import { z } from 'zod';
  * @description Esquema de validación para crear/actualizar una reseña.
  */
 export const reviewSchema = z.object({
-  rating: z.number().int().min(1, 'Seleccioná una calificación').max(5),
+  rating: z.number().int().min(1, 'Selecciona una calificación').max(5),
   comment: z
     .string()
     .max(500, 'El comentario no puede superar los 500 caracteres')

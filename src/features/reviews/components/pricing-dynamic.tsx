@@ -59,10 +59,10 @@ export function PricingDynamic(): React.JSX.Element | null {
           Planes
         </span>
         <h2 className="text-4xl font-bold tracking-tight sm:text-5xl font-mono leading-[1.05] tracking-display">
-          Escalá con un plan alineado a tu operación
+          Escala con un plan alineado a tu operación
         </h2>
         <p className="text-muted-foreground sm:text-lg">
-          Elegí una base sólida para tu negocio y evolucioná sin migraciones
+          Elige una base sólida para tu negocio y evoluciona sin migraciones
           complejas.
         </p>
         <p className="text-sm text-cyan-accent/90 sm:text-base">
@@ -74,7 +74,7 @@ export function PricingDynamic(): React.JSX.Element | null {
       {isLoading || hasError || plans.length === 0 ? (
         <div className="mx-auto max-w-2xl rounded-xl border border-border/60 bg-card/70 p-8 text-center">
           <h3 className="text-xl font-semibold font-mono">
-            {isLoading ? "Cargando planes" : "Conocé la opción adecuada para tu operación"}
+            {isLoading ? "Cargando planes" : "Conoce la opción adecuada para tu operación"}
           </h3>
           <p className="mt-2 text-sm text-muted-foreground">
             {isLoading

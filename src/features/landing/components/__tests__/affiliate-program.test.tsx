@@ -22,7 +22,7 @@ describe('LandingAffiliateProgram', () => {
         'aria-selected',
         'true',
       );
-      expect(screen.getByText('Cobrá por cada renovación confirmada')).toBeInTheDocument();
+      expect(screen.getByText('Cobra por cada renovación confirmada')).toBeInTheDocument();
     });
     expect(screen.getByRole('link', { name: /registrarme como gestor/i })).toBeInTheDocument();
   });

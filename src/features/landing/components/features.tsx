@@ -11,17 +11,17 @@ import { cn } from '@/lib/utils';
 const CAPABILITY_GROUPS = [
   {
     label: 'Operación diaria',
-    description: 'Vendé, comprá y mové inventario sin perder el hilo entre áreas.',
+    description: 'Vende, compra y mueve inventario sin perder el hilo entre áreas.',
     featureIndexes: [1, 2, 3, 4],
   },
   {
     label: 'Control financiero',
-    description: 'Convertí cada movimiento operativo en información financiera útil.',
+    description: 'Convierte cada movimiento operativo en información financiera útil.',
     featureIndexes: [0, 5, 8],
   },
   {
     label: 'Escala del negocio',
-    description: 'Coordiná personas, producción y procesos con una misma base de datos.',
+    description: 'Coordina personas, producción y procesos con una misma base de datos.',
     featureIndexes: [6, 7],
   },
 ] as const;

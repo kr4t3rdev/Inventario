@@ -40,15 +40,15 @@ export function LandingAffiliateProgram(): React.JSX.Element {
             Programa de crecimiento
           </span>
           <h2 className="max-w-2xl text-4xl font-bold leading-[1.05] tracking-display tracking-tight font-mono sm:text-5xl">
-            Ganá por compartir lo que ya usás
+            Gana por compartir lo que ya usas
           </h2>
           <p className="max-w-2xl text-muted-foreground sm:text-lg">
-            Elegí tu camino, compartí FinanceMDM y convertí cada recomendación en un beneficio real.
+            Elige tu camino, comparte FinanceMDM y convierte cada recomendación en un beneficio real.
           </p>
         </div>
         <div className="border-l-2 border-primary pl-4 text-sm text-muted-foreground lg:mb-1">
           <p className="font-semibold text-foreground">Dos formas de participar</p>
-          <p className="mt-1">Si ya sos cliente, reducís tu licencia. Si lo recomendás, cobrás por cada renovación.</p>
+          <p className="mt-1">Si ya eres cliente, reduces tu licencia. Si lo recomiendas, cobras por cada renovación.</p>
         </div>
       </SpringSection>
 
@@ -90,8 +90,8 @@ export function LandingAffiliateProgram(): React.JSX.Element {
                 Tu próxima licencia puede costarte menos
               </h3>
               <p className="mt-4 max-w-xl text-sm leading-6 text-primary-foreground/90 sm:text-base">
-                Recomendá el sistema a otra empresa. Cuando administración confirme su pago,
-                recibís crédito y perks nuevos para seguir creciendo.
+                Recomienda el sistema a otra empresa. Cuando administración confirme su pago,
+                recibes crédito y perks nuevos para seguir creciendo.
               </p>
               <Button asChild variant="secondary" size="lg" className="mt-6 min-h-11">
                 <a href="#precios">
@@ -167,10 +167,10 @@ export function LandingAffiliateProgram(): React.JSX.Element {
                 Para quienes venden el sistema
               </p>
               <h3 className="max-w-xl text-3xl font-bold tracking-tight sm:text-4xl">
-                Cobrá por cada renovación confirmada
+                Cobra por cada renovación confirmada
               </h3>
               <p className="mt-4 max-w-xl text-sm leading-6 text-background/70 dark:text-slate-950/75 sm:text-base">
-                Registrate como Gestor de Ventas, compartí tu código y recibí una comisión recurrente
+                Regístrate como Gestor de Ventas, comparte tu código y recibe una comisión recurrente
                 por cada tenant referido que siga activo.
               </p>
               <Button asChild variant="secondary" size="lg" className="mt-6 min-h-11">
@@ -244,7 +244,7 @@ export function LandingAffiliateProgram(): React.JSX.Element {
 
       <div className="flex flex-col gap-3 border-t border-border/60 pt-6 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <p className="font-semibold">¿Querés empezar o tenés una duda?</p>
+          <p className="font-semibold">¿Quieres empezar o tienes una duda?</p>
           <p className="text-sm text-muted-foreground">Administración te acompaña en el proceso.</p>
         </div>
         <Button asChild variant="outline" size="lg" className="min-h-11">

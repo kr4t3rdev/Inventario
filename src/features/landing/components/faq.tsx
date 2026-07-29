@@ -28,7 +28,7 @@ export function LandingFaq(): React.JSX.Element {
 					Preguntas frecuentes
 				</h2>
 				<p className="text-muted-foreground sm:text-lg">
-					Todo lo que necesitás saber antes de dar el próximo paso.
+					Todo lo que necesitas saber antes de dar el próximo paso.
 				</p>
 			</SpringSection>
 
