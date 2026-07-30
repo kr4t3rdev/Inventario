@@ -26,7 +26,7 @@ describe('landing phase 3A composition contracts', () => {
     expect(testimonials).toContain('lg:row-span-2');
     expect(testimonials).toContain('id="testimonios"');
     expect(testimonials).toContain('sr-only');
-    expect(testimonials).toContain('.catch(() => setHasError(true))');
+    expect(testimonials).toContain('reviews.length < MINIMUM_TESTIMONIALS');
   });
 
   it('renders every feature bullet instead of truncating supporting features', () => {

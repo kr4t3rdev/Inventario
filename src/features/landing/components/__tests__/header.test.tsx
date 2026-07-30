@@ -29,6 +29,7 @@ describe('LandingHeader', () => {
 		const mobileNavigation = screen.getByRole('navigation', { name: /móvil/i });
 		expect(mobileNavigation.querySelector('a[href="/login"]')).not.toBeNull();
 		expect(mobileNavigation.querySelector('a[href="/register"]')).not.toBeNull();
+		expect(mobileNavigation.querySelector('a[href="#testimonios"]')).toBeNull();
 
 		const more = screen.getByRole('button', { name: 'Más opciones' });
 		expect(more).toHaveAttribute('aria-haspopup', 'menu');

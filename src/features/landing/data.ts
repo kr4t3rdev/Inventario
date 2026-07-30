@@ -67,7 +67,6 @@ export const NAV_ITEMS = [
 	{ href: "#demo-pos", label: "Demo en vivo" },
 	{ href: "#caracteristicas", label: "Características" },
 	{ href: "#beneficios", label: "Beneficios" },
-	{ href: "#testimonios", label: "Testimonios" },
 	{ href: "#precios", label: "Planes" },
 	{ href: "#referidos", label: "Referidos" },
 	{ href: "#faq", label: "FAQ" },

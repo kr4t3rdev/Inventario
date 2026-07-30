@@ -8,24 +8,29 @@ import { Card, CardContent } from '@/components/ui/card';
 import { SpringSection } from '@/features/landing/utils';
 import { getApprovedReviewsPublicAction, type ReviewWithUser } from '@/features/reviews/actions';
 
+const MINIMUM_TESTIMONIALS = 10;
+const DISPLAYED_TESTIMONIALS = 3;
+
 /**
  * @description Sección de testimonios con reseñas reales aprobadas.
- * Mantiene un fallback visible para que la navegación conserve un destino estable.
- * Versión cliente para usar dentro de page.tsx ('use client').
+ * Solo aparece cuando existen al menos diez testimonios aprobados.
  * @returns {JSX.Element | null} Cards de testimonios o null
  */
 export function RealTestimonials(): React.JSX.Element | null {
   const [reviews, setReviews] = useState<ReviewWithUser[]>([]);
   const [isLoading, setIsLoading] = useState(true);
-  const [hasError, setHasError] = useState(false);
   const reduceMotion = useReducedMotion();
 
   useEffect(() => {
-    getApprovedReviewsPublicAction({ limit: 3 })
+    getApprovedReviewsPublicAction({ limit: MINIMUM_TESTIMONIALS })
       .then((result) => setReviews(result.reviews))
-      .catch(() => setHasError(true))
+      .catch(() => setReviews([]))
       .finally(() => setIsLoading(false));
   }, []);
+
+  if (isLoading || reviews.length < MINIMUM_TESTIMONIALS) return null;
+
+  const displayedReviews = reviews.slice(0, DISPLAYED_TESTIMONIALS);
 
   return (
     <section id="testimonios" className="space-y-10 scroll-mt-24">
@@ -34,18 +39,12 @@ export function RealTestimonials(): React.JSX.Element | null {
           Testimonios de clientes
         </h2>
         <p className="text-muted-foreground sm:text-lg">
-          {reviews.length > 0 && !isLoading && !hasError
-            ? 'Usuarios reales de FinanceMDM comparten su experiencia.'
-            : 'Las reseñas publicadas aparecerán aquí.'}
+          Usuarios reales de FinanceMDM comparten su experiencia.
         </p>
       </SpringSection>
 
-      {isLoading || hasError || reviews.length === 0 ? (
-        <div className="rounded-2xl border border-border/60 bg-card/50 p-6 text-muted-foreground">
-          <p>{isLoading ? 'Cargando testimonios.' : hasError ? 'No pudimos cargar los testimonios en este momento.' : 'Todavía no hay testimonios publicados.'}</p>
-        </div>
-      ) : <div className="grid gap-5 lg:grid-cols-[1.15fr_0.85fr]">
-        {reviews.map((review, index) => (
+      <div className="grid gap-5 lg:grid-cols-[1.15fr_0.85fr]">
+        {displayedReviews.map((review, index) => (
           <motion.div key={review.reviewId} initial={reduceMotion ? false : { y: 16 }} whileInView={reduceMotion ? undefined : { opacity: 1, y: 0 }} viewport={{ once: true, amount: 0.15 }} transition={reduceMotion ? undefined : { delay: index * 0.06 }} className={index === 0 ? 'lg:row-span-2' : ''}>
           <Card
             key={review.reviewId}
@@ -99,7 +98,7 @@ export function RealTestimonials(): React.JSX.Element | null {
           </Card>
           </motion.div>
         ))}
-      </div>}
+      </div>
     </section>
   );
 }
