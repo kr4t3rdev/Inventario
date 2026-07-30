@@ -323,13 +323,41 @@ Para nuevas features, usar Server Actions. Solo usar API Routes cuando sea estri
 - Consultas a base de datos via Prisma con await y manejo de null checks.
 - Params de query via `searchParams` de URL.
 
+## Codebase Knowledge Graph (codebase-memory-mcp)
+
+This project has a knowledge graph via codebase-memory-mcp (95,577 nodes, 121,522 edges) for structural code queries. ALWAYS prefer these tools over grep/glob for code discovery:
+
+### Priority Order
+1. `search_graph` — find functions, classes, routes, variables by name or natural language
+2. `trace_path` — trace who calls a function or what it calls (impact analysis)
+3. `get_code_snippet` — read source code of a specific function/class
+4. `query_graph` — run Cypher queries for complex patterns (hot paths, dead code, etc.)
+5. `get_architecture` — high-level project overview with community clusters
+
+### When to fall back to grep/glob
+- Searching for string literals, error messages, config values
+- Searching non-code files (Dockerfiles, shell scripts, configs)
+- When graph tools return insufficient results
+
+### Examples
+- Find a handler: `search_graph(name_pattern=".*OrderHandler.*")`
+- Who calls it: `trace_path(function_name="OrderHandler", direction="inbound")`
+- Read source: `get_code_snippet(qualified_name="pkg/orders.OrderHandler")`
+
 ## graphify
 
-This project has a knowledge graph at graphify-out/ with god nodes, community structure, and cross-file relationships.
+This project has a complementary knowledge graph at graphify-out/ with god nodes, community structure, and cross-file relationships (AST-level, complementary to codebase-memory-mcp's LSP-level graph).
 
 When the user types `/graphify`, use the installed graphify skill or instructions before doing anything else.
 
-Rules:
+### Combined Workflow
+- **Broad architecture / overview**: `get_architecture(aspects=['all'])` + `graphify query "overview of X"`
+- **Specific function/class discovery**: `search_graph` first → then `graphify explain "<concept>"` for cross-file relationships
+- **Impact analysis**: `trace_path` for direct callers/callees → `graphify path "<A>" "<B>"` for indirect community-level links
+- **Hot path / complexity analysis**: `query_graph` with Cypher for complexity metrics (loop_depth, linear_scan_in_loop, etc.)
+- **After code changes**: `graphify update .` to keep the AST graph current; codebase-memory-mcp updates on next index
+
+### graphify Rules
 - For codebase questions, first run `graphify query "<question>"` when graphify-out/graph.json exists. Use `graphify path "<A>" "<B>"` for relationships and `graphify explain "<concept>"` for focused concepts. These return a scoped subgraph, usually much smaller than GRAPH_REPORT.md or raw grep output.
 - Dirty graphify-out/ files are expected after hooks or incremental updates; dirty graph files are not a reason to skip graphify. Only skip graphify if the task is about stale or incorrect graph output, or the user explicitly says not to use it.
 - If graphify-out/wiki/index.md exists, use it for broad navigation instead of raw source browsing.
