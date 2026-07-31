@@ -1,5 +1,5 @@
-import { render, screen } from '@testing-library/react';
-import { describe, expect, it, vi } from 'vitest';
+import { cleanup, render, screen } from '@testing-library/react';
+import { afterEach, describe, expect, it, vi } from 'vitest';
 
 vi.mock('@/features/landing/components/pos-demo/pv-demo', () => ({
 	PvDemoInteractive: ({ reduceMotion }: { reduceMotion?: boolean }) => (
@@ -8,9 +8,11 @@ vi.mock('@/features/landing/components/pos-demo/pv-demo', () => ({
 }));
 
 import { LandingPosDemoSection } from './pos-demo-section';
-import { DEMO_PRODUCTOS } from './mock-data';
+import { DEMO_CATEGORIAS, DEMO_PRODUCTOS } from './mock-data';
 
 describe('LandingPosDemoSection', () => {
+	afterEach(cleanup);
+
 	it('propaga reduced motion y mantiene CTAs como enlaces accesibles', () => {
 		render(<LandingPosDemoSection reduceMotion />);
 
@@ -20,9 +22,12 @@ describe('LandingPosDemoSection', () => {
 		}
 	});
 
-	it('mantiene un catálogo compacto de seis productos para no alargar la landing', () => {
-		expect(DEMO_PRODUCTOS).toHaveLength(6);
+	it('mantiene un catálogo compacto de tres productos representativos', () => {
+		expect(DEMO_PRODUCTOS).toHaveLength(3);
+		expect(new Set(DEMO_PRODUCTOS.map((producto) => producto.categoriaId))).toEqual(
+			new Set(DEMO_CATEGORIAS.map((categoria) => categoria.catId)),
+		);
 		render(<LandingPosDemoSection />);
-		expect(screen.getByText('6 productos demo')).toBeInTheDocument();
+		expect(screen.getByText('3 productos demo')).toBeInTheDocument();
 	});
 });

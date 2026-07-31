@@ -335,7 +335,7 @@ export function PvDemoInteractive({ reduceMotion = false }: { reduceMotion?: boo
 			total: totalConDescuento,
 			items: cart.reduce((acc, item) => acc + item.cantidad, 0),
 			formaPago,
-			createdAt: new Date().toLocaleString('es-AR', {
+				createdAt: new Date().toLocaleString('es-ES', {
 				dateStyle: 'short',
 				timeStyle: 'short',
 			}),
@@ -368,7 +368,7 @@ export function PvDemoInteractive({ reduceMotion = false }: { reduceMotion?: boo
 	const renderProductosGrid = () => (
 		<motion.div
 			key="grid-view"
-			className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4"
+			className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3"
 			initial={reduceMotion ? false : {}}
 			animate={reduceMotion ? undefined : { opacity: 1 }}
 			exit={reduceMotion ? undefined : {}}
@@ -390,9 +390,10 @@ export function PvDemoInteractive({ reduceMotion = false }: { reduceMotion?: boo
 							stock: producto.stockEnUbicacion,
 							fotos: producto.fotos,
 							unidad: producto.unidad,
-							categoria: producto.categoria,
-						}}
-						onAddToCart={() =>
+										categoria: producto.categoria,
+										}}
+										reduceMotion={reduceMotion}
+										onAddToCart={() =>
 							addToCart({
 								id: producto.id,
 								nombre: producto.nombre,
@@ -460,7 +461,7 @@ export function PvDemoInteractive({ reduceMotion = false }: { reduceMotion?: boo
 						<motion.button
 							whileHover={reduceMotion ? undefined : { scale: 1.1 }}
 							whileTap={reduceMotion ? undefined : { scale: 0.9 }}
-														className="ml-2 p-1.5 rounded-full bg-primary/10 text-primary hover:bg-primary hover:text-white transition-colors"
+														className="ml-1 size-11 rounded-full bg-primary/10 p-2.5 text-primary transition-colors hover:bg-primary hover:text-white sm:ml-2"
 													disabled={producto.stockEnUbicacion === 0}
 													aria-label={`Añadir ${producto.nombre} al carrito`}
 													type="button"
@@ -560,7 +561,7 @@ export function PvDemoInteractive({ reduceMotion = false }: { reduceMotion?: boo
 											unidad: producto.unidad,
 										})
 									}
-											className="p-2 rounded-lg bg-primary/10 text-primary hover:bg-primary hover:text-white transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+											className="size-11 rounded-lg bg-primary/10 p-2.5 text-primary transition-colors hover:bg-primary hover:text-white disabled:cursor-not-allowed disabled:opacity-50"
 										disabled={producto.stockEnUbicacion === 0}
 										aria-label={`Añadir ${producto.nombre} al carrito`}
 										type="button"
@@ -618,10 +619,10 @@ export function PvDemoInteractive({ reduceMotion = false }: { reduceMotion?: boo
 				className="relative"
 			>
 				{cart.length > 0 && (
-					<div className="sticky bottom-2 z-20 mb-4 md:hidden">
+					<div className="sticky bottom-2 z-20 mx-1 mb-3 md:hidden">
 						<Button
 							variant="outline"
-							className="w-full border-primary bg-background/95 shadow-lg backdrop-blur"
+							className="min-h-11 w-full border-primary bg-background/95 px-3 shadow-lg backdrop-blur"
 							onClick={focusCartOnMobile}
 							aria-controls="demo-pos-cart"
 							aria-label={`Ver carrito, ${cart.length} ${cart.length === 1 ? 'producto' : 'productos'}`}
@@ -632,18 +633,18 @@ export function PvDemoInteractive({ reduceMotion = false }: { reduceMotion?: boo
 					</div>
 				)}
 
-			<div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+			<div className="grid grid-cols-1 gap-4 md:grid-cols-3 md:gap-6">
 			{/* === Panel izquierdo: Productos === */}
-			<div className="md:col-span-2 space-y-6">
+			<div className="space-y-4 md:col-span-2 md:space-y-6">
 				<motion.div
 					initial={reduceMotion ? false : { y: 20 }}
 					animate={reduceMotion ? undefined : { opacity: 1, y: 0 }}
 					transition={{ duration: 0.5 }}
 				>
-					<Card className="border-dashed overflow-hidden">
+					<Card className="overflow-hidden border-dashed">
 						<div className="h-1 bg-linear-to-r from-orange-500 to-red-600" />
-						<CardHeader className="pb-3">
-							<div className="flex items-center gap-3 mb-4">
+						<CardHeader className="px-4 pb-3 sm:px-5">
+							<div className="mb-3 flex items-center gap-2 sm:mb-4 sm:gap-3">
 								<motion.div
 									className="w-10 h-10 bg-linear-to-br from-orange-500 to-red-600 rounded-xl flex items-center justify-center shadow-lg"
 									whileHover={reduceMotion ? undefined : { scale: 1.05, rotate: 5 }}
@@ -667,7 +668,7 @@ export function PvDemoInteractive({ reduceMotion = false }: { reduceMotion?: boo
 										</SelectTrigger>
 										<SelectContent>
 											<SelectItem value={selectedPuntoVenta.pvId}>
-												<span className="flex items-center">
+												<span className="flex flex-wrap items-center gap-2">
 													<Store className="mr-2 h-4 w-4" />
 													{selectedPuntoVenta.nombre}
 												</span>
@@ -682,7 +683,7 @@ export function PvDemoInteractive({ reduceMotion = false }: { reduceMotion?: boo
 										type="search"
 										aria-label="Buscar productos"
 										placeholder="Buscar productos..."
-										className="pl-10 pr-10 transition-all duration-200 focus:scale-[1.01]"
+										className="pl-10 pr-10"
 										value={searchTerm}
 										onChange={(e) => setSearchTerm(e.target.value)}
 									/>
@@ -695,7 +696,7 @@ export function PvDemoInteractive({ reduceMotion = false }: { reduceMotion?: boo
 										type="text"
 										aria-label="Escanear código de barras"
 										placeholder="Escanear código de barras y presionar Enter"
-									className="pl-10 transition-all duration-200 focus:scale-[1.01]"
+									className="pl-10"
 									value={barcodeInput}
 									onChange={(e) => setBarcodeInput(e.target.value)}
 									onKeyDown={handleBarcodeScan}
@@ -712,7 +713,7 @@ export function PvDemoInteractive({ reduceMotion = false }: { reduceMotion?: boo
 					transition={{ duration: 0.5, delay: 0.1 }}
 				>
 					<Card className="border-dashed">
-						<CardHeader className="pb-3">
+						<CardHeader className="px-4 pb-3 sm:px-5">
 							<div className="flex items-center justify-between">
 								<CardTitle className="text-lg flex items-center gap-2">
 									<Filter className="h-4 w-4" />
@@ -748,7 +749,7 @@ export function PvDemoInteractive({ reduceMotion = false }: { reduceMotion?: boo
 												value={selectedCategoriaId}
 												onValueChange={setSelectedCategoriaId}
 											>
-												<SelectTrigger className="transition-all duration-200 focus:scale-[1.01]">
+															<SelectTrigger>
 													<SelectValue placeholder="Todas las categorías" />
 												</SelectTrigger>
 												<SelectContent>
@@ -814,10 +815,10 @@ export function PvDemoInteractive({ reduceMotion = false }: { reduceMotion?: boo
 					animate={reduceMotion ? undefined : { opacity: 1, y: 0 }}
 					transition={{ duration: 0.5, delay: 0.2 }}
 				>
-					<Card className="border-dashed overflow-hidden">
+					<Card className="overflow-hidden border-dashed">
 						<div className="h-1 bg-linear-to-r from-orange-500 to-red-600" />
-						<CardHeader className="pb-3">
-							<div className="flex items-center justify-between gap-4 flex-wrap">
+						<CardHeader className="px-4 pb-3 sm:px-5">
+							<div className="flex flex-wrap items-start justify-between gap-2 sm:items-center sm:gap-4">
 								{/* Cabecera de turno activo (mismo componente que el POS real) */}
 								{turnoActivo && (
 									<CabeceraTurno
@@ -852,7 +853,7 @@ export function PvDemoInteractive({ reduceMotion = false }: { reduceMotion?: boo
 									</div>
 								)}
 
-								<div className="flex items-center gap-3">
+								<div className="flex min-w-0 items-center gap-2 sm:gap-3">
 									<motion.div
 										className="w-8 h-8 bg-linear-to-br from-orange-500 to-red-600 rounded-lg flex items-center justify-center"
 										whileHover={reduceMotion ? undefined : { scale: 1.05 }}
@@ -869,13 +870,13 @@ export function PvDemoInteractive({ reduceMotion = false }: { reduceMotion?: boo
 										initial={reduceMotion ? false : { scale: 0.9 }}
 										animate={reduceMotion ? undefined : { opacity: 1, scale: 1 }}
 										exit={reduceMotion ? undefined : { scale: 0.9 }}
-										className="flex items-center gap-1 bg-muted/50 p-1 rounded-lg"
+										className="flex w-full items-center justify-end gap-1 rounded-lg bg-muted/50 p-1 sm:w-auto"
 									>
 										<motion.button
 											whileHover={reduceMotion ? undefined : { scale: 1.05 }}
 											whileTap={reduceMotion ? undefined : { scale: 0.95 }}
 											onClick={() => setViewMode('grid')}
-											className={`p-2 rounded-md transition-all duration-200 cursor-pointer ${
+											className={`size-11 rounded-md p-2.5 transition-all duration-200 ${
 												viewMode === 'grid'
 													? 'bg-primary text-white shadow-md'
 													: 'text-muted-foreground hover:bg-muted'
@@ -890,7 +891,7 @@ export function PvDemoInteractive({ reduceMotion = false }: { reduceMotion?: boo
 											whileHover={reduceMotion ? undefined : { scale: 1.05 }}
 											whileTap={reduceMotion ? undefined : { scale: 0.95 }}
 											onClick={() => setViewMode('list')}
-											className={`p-2 rounded-md transition-all duration-200 cursor-pointer ${
+											className={`size-11 rounded-md p-2.5 transition-all duration-200 ${
 												viewMode === 'list'
 													? 'bg-primary text-white shadow-md'
 													: 'text-muted-foreground hover:bg-muted'
@@ -905,7 +906,7 @@ export function PvDemoInteractive({ reduceMotion = false }: { reduceMotion?: boo
 											whileHover={reduceMotion ? undefined : { scale: 1.05 }}
 											whileTap={reduceMotion ? undefined : { scale: 0.95 }}
 											onClick={() => setViewMode('table')}
-											className={`p-2 rounded-md transition-all duration-200 cursor-pointer ${
+											className={`size-11 rounded-md p-2.5 transition-all duration-200 ${
 												viewMode === 'table'
 													? 'bg-primary text-white shadow-md'
 													: 'text-muted-foreground hover:bg-muted'
@@ -920,7 +921,7 @@ export function PvDemoInteractive({ reduceMotion = false }: { reduceMotion?: boo
 								)}
 							</div>
 						</CardHeader>
-						<CardContent>
+						<CardContent className="px-4 sm:px-5">
 							<AnimatePresence mode="wait">{renderProductosContent()}</AnimatePresence>
 						</CardContent>
 					</Card>
@@ -934,12 +935,12 @@ export function PvDemoInteractive({ reduceMotion = false }: { reduceMotion?: boo
 					animate={reduceMotion ? undefined : { opacity: 1, x: 0 }}
 					transition={{ duration: 0.5, delay: 0.3 }}
 				>
-					<Card className="border-dashed sticky top-20 overflow-hidden">
+						<Card className="overflow-hidden border-dashed md:sticky md:top-20">
 						<div className="h-1 bg-linear-to-r from-orange-500 to-red-600" />
-						<CardHeader className="pb-3">
-							<CardTitle className="flex items-center">
+						<CardHeader className="px-4 pb-3 sm:px-5">
+							<CardTitle className="flex flex-wrap items-center gap-2">
 								<motion.div
-									className="w-8 h-8 bg-linear-to-br from-orange-500 to-red-600 rounded-lg flex items-center justify-center mr-2"
+										className="flex h-8 w-8 items-center justify-center rounded-lg bg-linear-to-br from-orange-500 to-red-600"
 									whileHover={reduceMotion ? undefined : { scale: 1.05 }}
 								>
 									<ShoppingCart className="h-4 w-4 text-white" />
@@ -953,7 +954,7 @@ export function PvDemoInteractive({ reduceMotion = false }: { reduceMotion?: boo
 											exit={reduceMotion ? undefined : { scale: 0 }}
 											transition={{ type: 'spring', stiffness: 500, damping: 15 }}
 										>
-											<Badge variant="secondary" className="ml-2">
+											<Badge variant="secondary" className="ml-0 sm:ml-2">
 												{cart.length} {cart.length === 1 ? 'producto' : 'productos'}
 											</Badge>
 										</motion.div>
@@ -961,7 +962,7 @@ export function PvDemoInteractive({ reduceMotion = false }: { reduceMotion?: boo
 								</AnimatePresence>
 							</CardTitle>
 						</CardHeader>
-						<CardContent>
+						<CardContent className="px-4 sm:px-5">
 							{cart.length === 0 ? (
 								<motion.div
 									className="flex flex-col items-center justify-center h-64 text-center"
@@ -981,7 +982,7 @@ export function PvDemoInteractive({ reduceMotion = false }: { reduceMotion?: boo
 									</p>
 								</motion.div>
 							) : (
-								<ScrollArea className="h-100 pr-4">
+								<ScrollArea className="h-100 pr-1 sm:pr-4">
 									<motion.div
 										className="space-y-4"
 									initial={reduceMotion ? false : 'hidden'}
@@ -1007,9 +1008,10 @@ export function PvDemoInteractive({ reduceMotion = false }: { reduceMotion?: boo
 													<CartItem
 														item={item}
 														onUpdateQuantity={updateQuantity}
-														onUpdatePrice={updatePrice}
-														onRemove={removeFromCart}
-													/>
+													onUpdatePrice={updatePrice}
+													onRemove={removeFromCart}
+													reduceMotion={reduceMotion}
+												/>
 												</motion.div>
 											))}
 										</AnimatePresence>
@@ -1018,7 +1020,7 @@ export function PvDemoInteractive({ reduceMotion = false }: { reduceMotion?: boo
 							)}
 						</CardContent>
 						<Separator />
-						<CardFooter className="flex flex-col pt-4 space-y-3">
+						<CardFooter className="flex flex-col space-y-3 px-4 pt-4 sm:px-5">
 							<motion.div
 								className="grid grid-cols-1 gap-2 w-full"
 								initial={reduceMotion ? false : { y: 10 }}
@@ -1039,7 +1041,6 @@ export function PvDemoInteractive({ reduceMotion = false }: { reduceMotion?: boo
 											setDescuento(Number.isFinite(val) ? Math.max(0, val) : 0);
 										}}
 										placeholder="0"
-										className="transition-all duration-200 focus:scale-[1.01]"
 									/>
 								</div>
 								<div>
@@ -1049,7 +1050,7 @@ export function PvDemoInteractive({ reduceMotion = false }: { reduceMotion?: boo
 										value={observaciones}
 										onChange={(e) => setObservaciones(e.target.value)}
 										placeholder="Notas de la venta, comentarios, condiciones, etc."
-										className="transition-all duration-200 focus:scale-[1.01] min-h-[80px]"
+										className="min-h-[80px]"
 									/>
 								</div>
 							</motion.div>
@@ -1072,7 +1073,7 @@ export function PvDemoInteractive({ reduceMotion = false }: { reduceMotion?: boo
 								<div className="flex justify-between items-center w-full">
 									<span className="text-lg font-medium">Total:</span>
 									<motion.span
-										className="text-xl font-bold bg-linear-to-r from-orange-500 to-red-600 bg-clip-text text-transparent"
+										className="text-xl font-bold text-primary"
 										key={totalConDescuento}
 										initial={reduceMotion ? false : { scale: 1.2 }}
 										animate={reduceMotion ? undefined : { scale: 1 }}
@@ -1136,7 +1137,7 @@ export function PvDemoInteractive({ reduceMotion = false }: { reduceMotion?: boo
 												aria-labelledby="demo-payment-label"
 												value={formaPago}
 												onValueChange={(value) => setFormaPago(value as FormaPago)}
-												className="grid grid-cols-3 gap-2"
+												className="grid grid-cols-1 gap-2 sm:grid-cols-3"
 											>
 												{FORMAS_PAGO.map((fp) => (
 													<RadioGroupItem
@@ -1173,13 +1174,13 @@ export function PvDemoInteractive({ reduceMotion = false }: { reduceMotion?: boo
 										<Separator />
 										<div className="flex justify-between items-center pt-1">
 											<span className="text-base font-medium">Total:</span>
-											<span className="text-lg font-bold bg-linear-to-r from-orange-500 to-red-600 bg-clip-text text-transparent">
+											<span className="text-lg font-bold text-primary">
 												${totalConDescuento.toFixed(2)}
 											</span>
 										</div>
 									</div>
 									{observaciones && (
-										<div className="text-xs text-muted-foreground border-l-2 border-primary/30 pl-2">
+										<div className="rounded-md bg-muted/60 p-2 text-xs text-muted-foreground">
 											<strong>Obs:</strong> {observaciones}
 										</div>
 									)}
@@ -1271,7 +1272,7 @@ export function PvDemoInteractive({ reduceMotion = false }: { reduceMotion?: boo
 									<Separator />
 									<div className="flex justify-between items-center pt-1">
 										<span className="font-medium">Total:</span>
-										<span className="text-xl font-bold bg-linear-to-r from-emerald-500 to-emerald-700 bg-clip-text text-transparent">
+										<span className="text-xl font-bold text-emerald-700 dark:text-emerald-400">
 											${ticket.total.toFixed(2)}
 										</span>
 									</div>

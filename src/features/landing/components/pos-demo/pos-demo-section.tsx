@@ -46,7 +46,7 @@ export function LandingPosDemoSection({ reduceMotion = false }: { reduceMotion?:
 
 				<div className="flex flex-wrap justify-center gap-2 pt-1">
 					<Badge variant="outline" className="font-mono text-xs">
-						6 productos demo
+						3 productos demo
 					</Badge>
 					<Badge variant="outline" className="font-mono text-xs">
 						3 vistas disponibles
@@ -68,9 +68,9 @@ export function LandingPosDemoSection({ reduceMotion = false }: { reduceMotion?:
 				transition={reduceMotion ? undefined : { type: 'spring', stiffness: 120, damping: 20, delay: 0.1 }}
 				className="relative"
 			>
-				<div className="relative rounded-asymmetric-tl-br border border-primary/20 bg-card p-2 shadow-xl shadow-primary/10 glow-primary">
+				<div className="relative rounded-asymmetric-tl-br border border-primary/20 bg-card p-1 shadow-xl shadow-primary/10 glow-primary sm:p-2">
 					{/* Browser chrome bar */}
-					<div className="flex items-center gap-1.5 px-3 py-2 mb-1">
+					<div className="mb-1 flex items-center gap-1.5 px-2 py-2 sm:px-3">
 						<span className="h-3 w-3 rounded-full bg-red-500/70" />
 						<span className="h-3 w-3 rounded-full bg-yellow-500/70" />
 						<span className="h-3 w-3 rounded-full bg-emerald-500/70" />
@@ -82,7 +82,7 @@ export function LandingPosDemoSection({ reduceMotion = false }: { reduceMotion?:
 					</div>
 
 					{/* Demo content */}
-					<div className="rounded-2xl bg-background p-4 md:p-6">
+						<div className="rounded-2xl bg-background p-2 sm:p-4 md:p-6">
 						<PvDemoInteractive reduceMotion={reduceMotion} />
 					</div>
 				</div>

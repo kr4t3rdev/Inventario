@@ -86,11 +86,23 @@ describe('PvDemoInteractive', () => {
 		expect(screen.getByText(/1 producto/)).toBeInTheDocument();
 	});
 
+	it('mantiene targets táctiles amplios y evita escalar inputs en foco', () => {
+		render(<PvDemoInteractive />);
+
+		for (const label of ['Vista de cuadrícula', 'Vista de lista', 'Vista de tabla']) {
+			expect(screen.getByRole('button', { name: label })).toHaveClass('size-11');
+		}
+
+		for (const input of document.querySelectorAll('input, textarea, [role="combobox"]')) {
+			expect(input.className).not.toContain('focus:scale-');
+		}
+	});
+
 	it('abre checkout como dialog con radios de pago y lo cierra con Escape restaurando foco', async () => {
 		const user = userEvent.setup();
 		render(<PvDemoInteractive />);
 
-		await user.click(screen.getAllByRole('button', { name: 'Añadir' })[0]);
+		await user.click(screen.getAllByRole('button', { name: /Añadir .* al carrito/ })[0]);
 		const checkoutButton = screen.getByRole('button', { name: 'Cobrar venta' });
 		await user.click(checkoutButton);
 
@@ -112,7 +124,7 @@ describe('PvDemoInteractive', () => {
 		const user = userEvent.setup();
 		render(<PvDemoInteractive />);
 
-		await user.click(screen.getAllByRole('button', { name: 'Añadir' })[0]);
+		await user.click(screen.getAllByRole('button', { name: /Añadir .* al carrito/ })[0]);
 		await user.click(screen.getByRole('button', { name: 'Cobrar venta' }));
 		await user.click(screen.getByRole('radio', { name: 'Tarjeta' }));
 		await user.click(screen.getByRole('button', { name: 'Confirmar venta' }));
@@ -140,7 +152,7 @@ describe('PvDemoInteractive', () => {
 		const user = userEvent.setup();
 		render(<PvDemoInteractive />);
 
-		await user.click(screen.getAllByRole('button', { name: 'Añadir' })[0]);
+		await user.click(screen.getAllByRole('button', { name: /Añadir .* al carrito/ })[0]);
 		const mobileCartButton = screen.getByRole('button', { name: /ver carrito/i });
 
 		expect(mobileCartButton).toHaveAttribute('aria-controls', 'demo-pos-cart');
