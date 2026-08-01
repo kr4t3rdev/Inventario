@@ -9,6 +9,9 @@ vi.mock("next/cache", () => ({ revalidatePath: vi.fn() }));
 vi.mock("@/lib/services/fifo-allocation", () => ({
 	allocateFifoForSale: vi.fn(),
 }));
+vi.mock("@/lib/services/audit-log-service", () => ({
+	AuditLogService: { logStrict: vi.fn() },
+}));
 
 const { mockTx } = vi.hoisted(() => {
 	const mockTx = {
@@ -23,6 +26,7 @@ const { mockTx } = vi.hoisted(() => {
 		cuentaPorCobrar: { findMany: vi.fn(), updateMany: vi.fn(), deleteMany: vi.fn() },
 		reconciliacionVenta: { deleteMany: vi.fn() },
 		cuentaBancaria: { updateMany: vi.fn(), findFirst: vi.fn() },
+		auditLog: { create: vi.fn() },
 		purchaseAllocation: { deleteMany: vi.fn() },
 		stockUbicacion: {
 			findUnique: vi.fn(),
@@ -56,6 +60,7 @@ vi.mock("@/lib/prisma", () => ({
 
 import { getCurrentUser } from "@/lib/server-actions/get-current-user";
 import { prisma } from "@/lib/prisma";
+import { AuditLogService } from "@/lib/services/audit-log-service";
 import {
 	getVentasAction,
 	createVentaAction,
@@ -441,6 +446,29 @@ describe("Ventas Server Actions", () => {
 				where: { tenantId: "tenant-test", id: { in: ["cxc-1"] } },
 				data: { montoDeuda: 0, montoPagado: 0, estado: "PAGADA", idTransferencia: null },
 			});
+		});
+
+		it("registra auditoría durable de la reversión dentro de la transacción", async () => {
+			vi.mocked(getCurrentUser).mockResolvedValue(mockUser);
+			vi.mocked(prisma.venta.findUnique).mockResolvedValue(mockVenta);
+			mockTx.venta.findUnique.mockResolvedValue(mockVenta);
+
+			const result = await anularVentaAction({ ventaId: "venta-1", motivo: "Venta duplicada" });
+
+			expect(result.success).toBe(true);
+			expect(AuditLogService.logStrict).toHaveBeenCalledWith(
+				expect.objectContaining({
+					accion: "EXECUTE",
+					entidad: "VENTA",
+					entidadId: "venta-1",
+					usuarioId: "user-1",
+					detalles: expect.objectContaining({
+						motivo: "Venta duplicada",
+						reconciliacionesRevertidas: 0,
+					}),
+				}),
+				expect.objectContaining({ auditLog: mockTx.auditLog }),
+			);
 		});
 
 		it("revierte reconciliaciones por cuenta y moneda sin recalcular FX", async () => {

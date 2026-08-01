@@ -7,6 +7,7 @@ import { allocateFifoForSale } from '@/lib/services/fifo-allocation';
 import { createVentaSchema, anularVentaSchema } from '@/features/ventas/schemas';
 import { applyFacturacionCobroWorkflow } from '@/features/ventas/services/facturacion-workflow';
 import { getOrCreateTurnoActivo } from '@/features/turnos-pos';
+import { AuditLogService } from '@/lib/services/audit-log-service';
 import { VENTA_SELECT } from '@/features/ventas/services/venta-read-service';
 import type { AuthenticatedUser } from '@/lib/auth-middleware';
 import type { AnularVentaInput, CreateVentaInput } from '@/features/ventas/schemas';
@@ -472,6 +473,7 @@ export const VentaMutationService = {
         throw new ActionError('La venta ya está anulada', 'VALIDATION_ERROR');
       }
 
+      let cuentasPorCobrarNeutralizadas = 0;
       if (currentVenta.factura?.idFactura) {
         await tx.factura.update({
           where: { idFactura: currentVenta.factura.idFactura },
@@ -487,6 +489,7 @@ export const VentaMutationService = {
         });
 
         if (cuentasPorCobrar.length > 0) {
+          cuentasPorCobrarNeutralizadas = cuentasPorCobrar.length;
           await tx.cuentaPorCobrar.updateMany({
             where: {
               tenantId,
@@ -538,6 +541,23 @@ export const VentaMutationService = {
           ventaItemId: { in: venta.items.map((item) => item.id) },
         },
       });
+
+      await AuditLogService.logStrict(
+        {
+          accion: 'EXECUTE',
+          entidad: 'VENTA',
+          entidadId: parsed.ventaId,
+          usuarioId: user.userId,
+          detalles: {
+            motivo: parsed.motivo ?? null,
+            facturaAnulada: Boolean(currentVenta.factura?.idFactura),
+            cuentasPorCobrarNeutralizadas,
+            reconciliacionesRevertidas: reconciliaciones.length,
+            stockItemsRestored: venta.items.length,
+          },
+        },
+        tx,
+      );
     }, {
       isolationLevel: Prisma.TransactionIsolationLevel.Serializable,
     });
