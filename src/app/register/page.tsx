@@ -107,7 +107,7 @@ export default function RegisterPage(): React.ReactElement {
 						{...fadeUp(0.15)}
 						className="text-[17px] leading-[1.47] tracking-[-0.022em] text-[#7a7a7a] dark:text-[#cccccc]"
 					>
-						Completá los datos para comenzar
+						Completa los datos para comenzar
 					</motion.p>
 					{referralCode ? (
 						<p className="mt-3 text-sm text-[#0066cc] dark:text-[#2997ff]">
@@ -229,7 +229,7 @@ export default function RegisterPage(): React.ReactElement {
 									<Input
 										id="confirmPassword"
 										type={showConfirmPassword ? 'text' : 'password'}
-										placeholder="Repetí tu contraseña"
+										placeholder="Repite tu contraseña"
 										value={confirmPassword}
 										onChange={(e) => setConfirmPassword(e.target.value)}
 										required
@@ -275,12 +275,12 @@ export default function RegisterPage(): React.ReactElement {
 						</motion.div>
 
 						<motion.p {...fadeUp(0.45)} className="text-center text-sm text-[#7a7a7a] dark:text-[#cccccc]">
-							¿Ya tenés una cuenta?{' '}
+							¿Ya tienes una cuenta?{' '}
 							<Link
 								href="/login"
 								className="font-medium text-[#0066cc] hover:underline dark:text-[#2997ff]"
 							>
-								Iniciá sesión aquí
+								Inicia sesión aquí
 							</Link>
 						</motion.p>
 					</div>

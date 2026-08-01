@@ -44,7 +44,7 @@ export default function LoginPage(): React.ReactElement {
 		const success = await login(email, password)
 
 		if (!success) {
-			setError('Credenciales inválidas. Por favor, verificá tu email y contraseña.')
+			setError('Credenciales inválidas. Por favor, verifica tu email y contraseña.')
 		}
 
 		setLoading(false)
@@ -88,7 +88,7 @@ export default function LoginPage(): React.ReactElement {
 						{...fadeUp(0.15)}
 						className="text-[17px] leading-[1.47] tracking-[-0.022em] text-[#7a7a7a] dark:text-[#cccccc]"
 					>
-						Ingresá tus credenciales para continuar
+						Ingresa tus credenciales para continuar
 					</motion.p>
 				</div>
 
@@ -189,7 +189,7 @@ export default function LoginPage(): React.ReactElement {
 							</div>
 							<div className="relative flex justify-center text-xs">
 								<span className="bg-white px-4 text-[#7a7a7a] dark:bg-[#272729] dark:text-[#cccccc]">
-									o continuá con
+									o continúa con
 								</span>
 							</div>
 						</motion.div>
@@ -225,12 +225,12 @@ export default function LoginPage(): React.ReactElement {
 						</motion.div>
 
 						<motion.p {...fadeUp(0.45)} className="text-center text-sm text-[#7a7a7a] dark:text-[#cccccc]">
-							¿No tenés una cuenta?{' '}
+							¿No tienes una cuenta?{' '}
 							<Link
 								href="/register"
 								className="font-medium text-[#0066cc] hover:underline dark:text-[#2997ff]"
 							>
-								Registrate aquí
+								Regístrate aquí
 							</Link>
 						</motion.p>
 					</div>

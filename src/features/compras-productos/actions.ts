@@ -364,7 +364,7 @@ async function reconcileFormaPago(
 export const deleteCompraProductoAction = withAction(async (id: string, user: AuthenticatedUser) => {
   const tenantId = requireTenant(user);
   const compra = await prisma.compraDocumento.findFirst({
-    where: { compraDocumentoId: id, tenantId },
+    where: { compraDocumentoId: id, tenantId, deletedAt: null },
     include: {
       cuentaPorPagar: true,
       items: { select: { compraDocumentoItemId: true } },
@@ -390,6 +390,7 @@ export const deleteCompraProductoAction = withAction(async (id: string, user: Au
     where: {
       documentoDestinoId: id,
       contexto: 'COMPRA_PRODUCTO',
+      anticipo: { tenantId },
     },
   });
 

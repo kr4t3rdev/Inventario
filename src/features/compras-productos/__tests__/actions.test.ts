@@ -370,6 +370,18 @@ describe("ComprasProductos Server Actions", () => {
 
 			const result = await deleteCompraProductoAction("cd-1");
 			expect(result.success).toBe(true);
+			expect(prisma.compraDocumento.findFirst).toHaveBeenCalledWith(
+				expect.objectContaining({
+					where: { compraDocumentoId: "cd-1", tenantId: "tenant-test", deletedAt: null },
+				}),
+			);
+			expect(prisma.anticipoMovimiento.findFirst).toHaveBeenCalledWith({
+				where: {
+					documentoDestinoId: "cd-1",
+					contexto: "COMPRA_PRODUCTO",
+					anticipo: { tenantId: "tenant-test" },
+				},
+			});
 		});
 
 		it("rechaza borrar compra con gastoCompraId", async () => {
