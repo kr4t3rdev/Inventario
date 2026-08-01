@@ -408,10 +408,14 @@ export const deleteCompraProductoAction = withAction(async (id: string, user: Au
     );
   }
 
-  await prisma.compraDocumento.update({
-    where: { compraDocumentoId: id },
+  const deleted = await prisma.compraDocumento.updateMany({
+    where: { compraDocumentoId: id, tenantId, deletedAt: null },
     data: { deletedAt: new Date() },
   });
+
+  if (deleted.count !== 1) {
+    throw new ActionError('La compra ya fue eliminada', 'VALIDATION_ERROR');
+  }
 
   revalidatePath('/busy/compras-productos');
   return { id, eliminado: true };

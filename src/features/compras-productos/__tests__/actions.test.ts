@@ -41,6 +41,7 @@ vi.mock("@/lib/prisma", () => ({
 			findMany: vi.fn(),
 			findFirst: vi.fn(),
 			update: vi.fn(),
+			updateMany: vi.fn().mockResolvedValue({ count: 1 }),
 			count: vi.fn(),
 		},
 		vendor: { findFirst: vi.fn() },
@@ -381,6 +382,10 @@ describe("ComprasProductos Server Actions", () => {
 					contexto: "COMPRA_PRODUCTO",
 					anticipo: { tenantId: "tenant-test" },
 				},
+			});
+			expect(prisma.compraDocumento.updateMany).toHaveBeenCalledWith({
+				where: { compraDocumentoId: "cd-1", tenantId: "tenant-test", deletedAt: null },
+				data: { deletedAt: expect.any(Date) },
 			});
 		});
 
