@@ -13,7 +13,12 @@ vi.mock("@/lib/services/fifo-allocation", () => ({
 const { mockTx } = vi.hoisted(() => {
 	const mockTx = {
 		serieFacturacion: { findFirst: vi.fn(), create: vi.fn(), update: vi.fn() },
-		venta: { create: vi.fn(), update: vi.fn() },
+		venta: {
+			create: vi.fn(),
+			update: vi.fn(),
+			updateMany: vi.fn().mockResolvedValue({ count: 1 }),
+		},
+		purchaseAllocation: { deleteMany: vi.fn() },
 		stockUbicacion: {
 			findUnique: vi.fn(),
 			upsert: vi.fn(),
@@ -83,6 +88,7 @@ const mockVenta = {
 	updatedAt: new Date(),
 	items: [
 		{
+			id: "venta-item-1",
 			productoId: "prod-1",
 			cantidad: 2,
 			producto: { id: "prod-1", almacenId: "alm-1", tenantId: "tenant-test" },
@@ -401,6 +407,34 @@ describe("Ventas Server Actions", () => {
 
 			expect(result.success).toBe(true);
 			expect(mockTx.producto.update).not.toHaveBeenCalled();
+			expect(mockTx.venta.updateMany).toHaveBeenCalledWith({
+				where: {
+					ventaId: "venta-1",
+					tenantId: "tenant-test",
+					deletedAt: null,
+				},
+				data: expect.objectContaining({ deletedAt: expect.any(Date) }),
+			});
+			expect(mockTx.purchaseAllocation.deleteMany).toHaveBeenCalledWith({
+				where: {
+					tenantId: "tenant-test",
+					ventaItemId: { in: ["venta-item-1"] },
+				},
+			});
+		});
+
+		it("no repite efectos si la reclamación transaccional detecta una anulación concurrente", async () => {
+			vi.mocked(getCurrentUser).mockResolvedValue(mockUser);
+			vi.mocked(prisma.venta.findUnique).mockResolvedValue(mockVenta);
+			mockTx.venta.updateMany.mockResolvedValueOnce({ count: 0 });
+
+			const result = await anularVentaAction({ ventaId: "venta-1" });
+
+			expect(result.success).toBe(false);
+			expect(result.error!.message).toContain("ya está anulada");
+			expect(mockTx.stockUbicacion.updateMany).not.toHaveBeenCalled();
+			expect(mockTx.stockUbicacion.upsert).not.toHaveBeenCalled();
+			expect(mockTx.purchaseAllocation.deleteMany).not.toHaveBeenCalled();
 		});
 
 		it("retorna error si la venta no existe", async () => {

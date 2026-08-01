@@ -307,6 +307,7 @@ export const VentaMutationService = {
         deletedAt: true,
         items: {
           select: {
+            id: true,
             productoId: true,
             cantidad: true,
             producto: {
@@ -326,6 +327,25 @@ export const VentaMutationService = {
     }
 
     await prisma.$transaction(async (tx) => {
+      // Claim the cancellation atomically before applying any side effects. If another
+      // request already cancelled this sale, no stock or FIFO effect is applied twice.
+      const cancelledAt = new Date();
+      const marked = await tx.venta.updateMany({
+        where: {
+          ventaId: parsed.ventaId,
+          tenantId,
+          deletedAt: null,
+        },
+        data: {
+          deletedAt: cancelledAt,
+          observaciones: parsed.motivo ? `ANULADA: ${parsed.motivo}` : 'ANULADA',
+        },
+      });
+
+      if (marked.count !== 1) {
+        throw new ActionError('La venta ya está anulada', 'VALIDATION_ERROR');
+      }
+
       for (const item of venta.items) {
         if (venta.puntoDeVentaId) {
           await upsertStockUbicacion(tx, {
@@ -347,11 +367,10 @@ export const VentaMutationService = {
         }
       }
 
-      await tx.venta.update({
-        where: { ventaId: parsed.ventaId },
-        data: {
-          deletedAt: new Date(),
-          observaciones: parsed.motivo ? `ANULADA: ${parsed.motivo}` : 'ANULADA',
+      await tx.purchaseAllocation.deleteMany({
+        where: {
+          tenantId,
+          ventaItemId: { in: venta.items.map((item) => item.id) },
         },
       });
     });
