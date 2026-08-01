@@ -19,6 +19,10 @@ const { mockTx } = vi.hoisted(() => {
 			update: vi.fn(),
 			updateMany: vi.fn().mockResolvedValue({ count: 1 }),
 		},
+		factura: { update: vi.fn(), updateMany: vi.fn() },
+		cuentaPorCobrar: { findMany: vi.fn(), updateMany: vi.fn(), deleteMany: vi.fn() },
+		reconciliacionVenta: { deleteMany: vi.fn() },
+		cuentaBancaria: { updateMany: vi.fn(), findFirst: vi.fn() },
 		purchaseAllocation: { deleteMany: vi.fn() },
 		stockUbicacion: {
 			findUnique: vi.fn(),
@@ -393,8 +397,6 @@ describe("Ventas Server Actions", () => {
 
 	describe("anularVentaAction", () => {
 		it.each([
-			["factura", { factura: { idFactura: "factura-1" } }],
-			["reconciliacion", { reconciliaciones: [{ reconciliacionId: "rec-1" }] }],
 			["turno cerrado", { turno: { estado: "CERRADO", arqueos: [] } }],
 			["turno con arqueo", { turno: { estado: "ABIERTO", arqueos: [{ id: "arqueo-1" }] } }],
 		] as const)("bloquea anulación con %s sin efectos parciales", async (_reason, financial) => {
@@ -414,6 +416,82 @@ describe("Ventas Server Actions", () => {
 			expect(mockTx.venta.updateMany).not.toHaveBeenCalled();
 			expect(mockTx.stockUbicacion.updateMany).not.toHaveBeenCalled();
 			expect(mockTx.stockUbicacion.upsert).not.toHaveBeenCalled();
+		});
+
+		it("anula factura y neutraliza CxC pendiente dentro de la misma transacción", async () => {
+			vi.mocked(getCurrentUser).mockResolvedValue(mockUser);
+			vi.mocked(prisma.venta.findUnique).mockResolvedValue({
+				...mockVenta,
+				factura: { idFactura: "factura-1" },
+			} as any);
+			mockTx.venta.findUnique.mockResolvedValue({
+				...mockVenta,
+				factura: { idFactura: "factura-1" },
+			});
+			mockTx.cuentaPorCobrar.findMany.mockResolvedValue([{ id: "cxc-1" }]);
+
+			const result = await anularVentaAction({ ventaId: "venta-1" });
+
+			expect(result.success).toBe(true);
+			expect(mockTx.factura.update).toHaveBeenCalledWith({
+				where: { idFactura: "factura-1" },
+				data: { estado: "ANULADA" },
+			});
+			expect(mockTx.cuentaPorCobrar.updateMany).toHaveBeenCalledWith({
+				where: { tenantId: "tenant-test", id: { in: ["cxc-1"] } },
+				data: { montoDeuda: 0, montoPagado: 0, estado: "PAGADA", idTransferencia: null },
+			});
+		});
+
+		it("revierte reconciliaciones por cuenta y moneda sin recalcular FX", async () => {
+			vi.mocked(getCurrentUser).mockResolvedValue(mockUser);
+			vi.mocked(prisma.venta.findUnique).mockResolvedValue({
+				...mockVenta,
+				reconciliaciones: [
+					{ reconciliacionId: "rec-1", cuentaId: "bank-1", moneda: "USD", monto: 10, montoConvertido: 250 },
+					{ reconciliacionId: "rec-2", cuentaId: "bank-1", moneda: "USD", monto: 5, montoConvertido: 125 },
+				],
+			} as any);
+			mockTx.venta.findUnique.mockResolvedValue({
+				...mockVenta,
+				reconciliaciones: [
+					{ reconciliacionId: "rec-1", cuentaId: "bank-1", moneda: "USD", monto: 10, montoConvertido: 250 },
+					{ reconciliacionId: "rec-2", cuentaId: "bank-1", moneda: "USD", monto: 5, montoConvertido: 125 },
+				],
+			});
+			mockTx.cuentaBancaria.updateMany.mockResolvedValue({ count: 1 });
+
+			const result = await anularVentaAction({ ventaId: "venta-1" });
+
+			expect(result.success).toBe(true);
+			expect(mockTx.cuentaBancaria.updateMany).toHaveBeenCalledWith({
+				where: { cuentaId: "bank-1", tenantId: "tenant-test", saldo: { gte: 15 } },
+				data: { saldo: { decrement: 15 } },
+			});
+			expect(mockTx.reconciliacionVenta.deleteMany).toHaveBeenCalledWith({
+				where: { tenantId: "tenant-test", ventaId: "venta-1" },
+			});
+		});
+
+		it("rechaza reversión si el saldo bancario es insuficiente y no deja efectos parciales", async () => {
+			vi.mocked(getCurrentUser).mockResolvedValue(mockUser);
+			vi.mocked(prisma.venta.findUnique).mockResolvedValue({
+				...mockVenta,
+				reconciliaciones: [{ reconciliacionId: "rec-1", cuentaId: "bank-1", moneda: "CUP", monto: 100 }],
+			} as any);
+			mockTx.venta.findUnique.mockResolvedValue({
+				...mockVenta,
+				reconciliaciones: [{ reconciliacionId: "rec-1", cuentaId: "bank-1", moneda: "CUP", monto: 100 }],
+			});
+			mockTx.cuentaBancaria.updateMany.mockResolvedValue({ count: 0 });
+
+			const result = await anularVentaAction({ ventaId: "venta-1" });
+
+			expect(result.success).toBe(false);
+			if (!result.success) expect(result.error!.code).toBe("SALDO_INSUFICIENTE");
+			expect(mockTx.reconciliacionVenta.deleteMany).not.toHaveBeenCalled();
+			// The claim happens first; the surrounding transaction rolls it back with the error.
+			expect(mockTx.venta.updateMany).toHaveBeenCalled();
 		});
 
 		it("anula venta existente", async () => {
@@ -453,12 +531,12 @@ describe("Ventas Server Actions", () => {
 			});
 		});
 
-		it("revalida efectos financieros dentro de la transacción", async () => {
+		it("revalida el turno dentro de la transacción", async () => {
 			vi.mocked(getCurrentUser).mockResolvedValue(mockUser);
 			vi.mocked(prisma.venta.findUnique).mockResolvedValue(mockVenta);
 			mockTx.venta.findUnique.mockResolvedValue({
 				...mockVenta,
-				factura: { idFactura: "factura-1" },
+				turno: { estado: "CERRADO", arqueos: [] },
 			});
 
 			const result = await anularVentaAction({ ventaId: "venta-1" });

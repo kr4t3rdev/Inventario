@@ -11,17 +11,68 @@ import { VENTA_SELECT } from '@/features/ventas/services/venta-read-service';
 import type { AuthenticatedUser } from '@/lib/auth-middleware';
 import type { AnularVentaInput, CreateVentaInput } from '@/features/ventas/schemas';
 
-function hasFinancialEffects(venta: {
-  factura?: unknown | null;
-  reconciliaciones?: readonly unknown[];
+function hasClosedPeriodEffects(venta: {
   turno?: { estado: string; arqueos?: readonly unknown[] } | null;
 }): boolean {
   return (
-    venta.factura != null ||
-    (venta.reconciliaciones?.length ?? 0) > 0 ||
     (venta.turno != null && venta.turno.estado !== 'ABIERTO') ||
     (venta.turno?.arqueos?.length ?? 0) > 0
   );
+}
+
+type ReconciliationForReversal = {
+  cuentaId: string;
+  moneda: string;
+  monto: unknown;
+};
+
+/**
+ * @description Reverses bank balances using the amount already persisted by reconciliation.
+ * No exchange-rate conversion is performed during a sale cancellation.
+ */
+async function reverseReconciliations(
+  tx: Prisma.TransactionClient,
+  reconciliaciones: readonly ReconciliationForReversal[],
+  tenantId: string,
+) {
+  const grouped = new Map<string, { cuentaId: string; moneda: string; monto: number }>();
+
+  for (const reconciliacion of reconciliaciones) {
+    // Reverse the exact amount added to the bank balance; do not recalculate FX.
+    const monto = Number(reconciliacion.monto);
+    if (!Number.isFinite(monto) || monto < 0) {
+      throw new ActionError('Monto de reconciliación inválido', 'VALIDATION_ERROR');
+    }
+    if (monto === 0) continue;
+
+    const key = `${reconciliacion.cuentaId}:${reconciliacion.moneda}`;
+    const current = grouped.get(key);
+    grouped.set(key, {
+      cuentaId: reconciliacion.cuentaId,
+      moneda: reconciliacion.moneda,
+      monto: (current?.monto ?? 0) + monto,
+    });
+  }
+
+  for (const reversal of grouped.values()) {
+    // The conditional update is the lock/guard that prevents a concurrent operation
+    // from driving the account below zero. A failed update aborts the whole transaction.
+    const updated = await tx.cuentaBancaria.updateMany({
+      where: {
+        cuentaId: reversal.cuentaId,
+        tenantId,
+        saldo: { gte: reversal.monto },
+      },
+      data: { saldo: { decrement: reversal.monto } },
+    });
+
+    if (updated.count !== 1) {
+      throw new ActionError(
+        `Saldo insuficiente para revertir la reconciliación en ${reversal.cuentaId}`,
+        'SALDO_INSUFICIENTE',
+      );
+    }
+  }
 }
 
 /**
@@ -319,10 +370,14 @@ export const VentaMutationService = {
         tenantId: true,
         puntoDeVentaId: true,
         deletedAt: true,
-        factura: { select: { idFactura: true } },
+        factura: { select: { idFactura: true, tenantId: true } },
         reconciliaciones: {
-          select: { reconciliacionId: true },
-          take: 1,
+          select: {
+            reconciliacionId: true,
+            cuentaId: true,
+            moneda: true,
+            monto: true,
+          },
         },
         turno: {
           select: {
@@ -351,9 +406,9 @@ export const VentaMutationService = {
       throw new ActionError('La venta ya está anulada', 'VALIDATION_ERROR');
     }
 
-    if (hasFinancialEffects(venta)) {
+    if (hasClosedPeriodEffects(venta)) {
       throw new ActionError(
-        'La venta tiene efectos financieros. Requiere una reversión financiera completa antes de anularla.',
+        'No se puede anular una venta de un turno cerrado o con arqueo.',
         'FINANCIAL_REVERSAL_REQUIRED',
       );
     }
@@ -364,10 +419,14 @@ export const VentaMutationService = {
         select: {
           tenantId: true,
           deletedAt: true,
-          factura: { select: { idFactura: true } },
+          factura: { select: { idFactura: true, tenantId: true } },
           reconciliaciones: {
-            select: { reconciliacionId: true },
-            take: 1,
+            select: {
+              reconciliacionId: true,
+              cuentaId: true,
+              moneda: true,
+              monto: true,
+            },
           },
           turno: {
             select: {
@@ -381,12 +440,15 @@ export const VentaMutationService = {
       if (!currentVenta || currentVenta.tenantId !== tenantId) {
         throw new ActionError('Venta no encontrada', 'NOT_FOUND');
       }
+      if (currentVenta.factura?.tenantId && currentVenta.factura.tenantId !== tenantId) {
+        throw new ActionError('Venta no encontrada', 'NOT_FOUND');
+      }
       if (currentVenta.deletedAt) {
         throw new ActionError('La venta ya está anulada', 'VALIDATION_ERROR');
       }
-      if (hasFinancialEffects(currentVenta)) {
+      if (hasClosedPeriodEffects(currentVenta)) {
         throw new ActionError(
-          'La venta tiene efectos financieros. Requiere una reversión financiera completa antes de anularla.',
+          'No se puede anular una venta de un turno cerrado o con arqueo.',
           'FINANCIAL_REVERSAL_REQUIRED',
         );
       }
@@ -408,6 +470,45 @@ export const VentaMutationService = {
 
       if (marked.count !== 1) {
         throw new ActionError('La venta ya está anulada', 'VALIDATION_ERROR');
+      }
+
+      if (currentVenta.factura?.idFactura) {
+        await tx.factura.update({
+          where: { idFactura: currentVenta.factura.idFactura },
+          data: { estado: 'ANULADA' },
+        });
+
+        const cuentasPorCobrar = await tx.cuentaPorCobrar.findMany({
+          where: {
+            tenantId,
+            facturaId: currentVenta.factura.idFactura,
+          },
+          select: { id: true },
+        });
+
+        if (cuentasPorCobrar.length > 0) {
+          await tx.cuentaPorCobrar.updateMany({
+            where: {
+              tenantId,
+              id: { in: cuentasPorCobrar.map((cuenta) => cuenta.id) },
+            },
+            data: {
+              montoDeuda: 0,
+              montoPagado: 0,
+              estado: 'PAGADA',
+              idTransferencia: null,
+            },
+          });
+        }
+      }
+
+      const reconciliaciones = currentVenta.reconciliaciones ?? [];
+      await reverseReconciliations(tx, reconciliaciones, tenantId);
+
+      if (reconciliaciones.length > 0) {
+        await tx.reconciliacionVenta.deleteMany({
+          where: { tenantId, ventaId: parsed.ventaId },
+        });
       }
 
       for (const item of venta.items) {
