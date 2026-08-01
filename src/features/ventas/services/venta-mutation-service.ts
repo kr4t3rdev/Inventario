@@ -1,3 +1,4 @@
+import { Prisma } from '@/generated/prisma';
 import { prisma } from '@/lib/prisma';
 import { ActionError } from '@/lib/server-actions';
 import { requireFeature, requireTenant } from '@/lib/services/tenant-scope';
@@ -9,6 +10,19 @@ import { getOrCreateTurnoActivo } from '@/features/turnos-pos';
 import { VENTA_SELECT } from '@/features/ventas/services/venta-read-service';
 import type { AuthenticatedUser } from '@/lib/auth-middleware';
 import type { AnularVentaInput, CreateVentaInput } from '@/features/ventas/schemas';
+
+function hasFinancialEffects(venta: {
+  factura?: unknown | null;
+  reconciliaciones?: readonly unknown[];
+  turno?: { estado: string; arqueos?: readonly unknown[] } | null;
+}): boolean {
+  return (
+    venta.factura != null ||
+    (venta.reconciliaciones?.length ?? 0) > 0 ||
+    (venta.turno != null && venta.turno.estado !== 'ABIERTO') ||
+    (venta.turno?.arqueos?.length ?? 0) > 0
+  );
+}
 
 /**
  * @description Shared sales mutation service for web and mobile adapters.
@@ -305,6 +319,17 @@ export const VentaMutationService = {
         tenantId: true,
         puntoDeVentaId: true,
         deletedAt: true,
+        factura: { select: { idFactura: true } },
+        reconciliaciones: {
+          select: { reconciliacionId: true },
+          take: 1,
+        },
+        turno: {
+          select: {
+            estado: true,
+            arqueos: { select: { id: true }, take: 1 },
+          },
+        },
         items: {
           select: {
             id: true,
@@ -326,7 +351,46 @@ export const VentaMutationService = {
       throw new ActionError('La venta ya está anulada', 'VALIDATION_ERROR');
     }
 
+    if (hasFinancialEffects(venta)) {
+      throw new ActionError(
+        'La venta tiene efectos financieros. Requiere una reversión financiera completa antes de anularla.',
+        'FINANCIAL_REVERSAL_REQUIRED',
+      );
+    }
+
     await prisma.$transaction(async (tx) => {
+      const currentVenta = await tx.venta.findUnique({
+        where: { ventaId: parsed.ventaId },
+        select: {
+          tenantId: true,
+          deletedAt: true,
+          factura: { select: { idFactura: true } },
+          reconciliaciones: {
+            select: { reconciliacionId: true },
+            take: 1,
+          },
+          turno: {
+            select: {
+              estado: true,
+              arqueos: { select: { id: true }, take: 1 },
+            },
+          },
+        },
+      });
+
+      if (!currentVenta || currentVenta.tenantId !== tenantId) {
+        throw new ActionError('Venta no encontrada', 'NOT_FOUND');
+      }
+      if (currentVenta.deletedAt) {
+        throw new ActionError('La venta ya está anulada', 'VALIDATION_ERROR');
+      }
+      if (hasFinancialEffects(currentVenta)) {
+        throw new ActionError(
+          'La venta tiene efectos financieros. Requiere una reversión financiera completa antes de anularla.',
+          'FINANCIAL_REVERSAL_REQUIRED',
+        );
+      }
+
       // Claim the cancellation atomically before applying any side effects. If another
       // request already cancelled this sale, no stock or FIFO effect is applied twice.
       const cancelledAt = new Date();
@@ -373,6 +437,8 @@ export const VentaMutationService = {
           ventaItemId: { in: venta.items.map((item) => item.id) },
         },
       });
+    }, {
+      isolationLevel: Prisma.TransactionIsolationLevel.Serializable,
     });
 
     return { ventaId: parsed.ventaId, anulada: true };

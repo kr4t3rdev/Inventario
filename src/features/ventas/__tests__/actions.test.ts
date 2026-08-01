@@ -15,6 +15,7 @@ const { mockTx } = vi.hoisted(() => {
 		serieFacturacion: { findFirst: vi.fn(), create: vi.fn(), update: vi.fn() },
 		venta: {
 			create: vi.fn(),
+			findUnique: vi.fn(),
 			update: vi.fn(),
 			updateMany: vi.fn().mockResolvedValue({ count: 1 }),
 		},
@@ -391,9 +392,34 @@ describe("Ventas Server Actions", () => {
 	});
 
 	describe("anularVentaAction", () => {
+		it.each([
+			["factura", { factura: { idFactura: "factura-1" } }],
+			["reconciliacion", { reconciliaciones: [{ reconciliacionId: "rec-1" }] }],
+			["turno cerrado", { turno: { estado: "CERRADO", arqueos: [] } }],
+			["turno con arqueo", { turno: { estado: "ABIERTO", arqueos: [{ id: "arqueo-1" }] } }],
+		] as const)("bloquea anulación con %s sin efectos parciales", async (_reason, financial) => {
+			vi.mocked(getCurrentUser).mockResolvedValue(mockUser);
+			vi.mocked(prisma.venta.findUnique).mockResolvedValue({
+				...mockVenta,
+				...financial,
+			} as any);
+
+			const result = await anularVentaAction({ ventaId: "venta-1" });
+
+			expect(result.success).toBe(false);
+			if (!result.success) {
+				expect(result.error!.code).toBe("FINANCIAL_REVERSAL_REQUIRED");
+			}
+			expect(prisma.$transaction).not.toHaveBeenCalled();
+			expect(mockTx.venta.updateMany).not.toHaveBeenCalled();
+			expect(mockTx.stockUbicacion.updateMany).not.toHaveBeenCalled();
+			expect(mockTx.stockUbicacion.upsert).not.toHaveBeenCalled();
+		});
+
 		it("anula venta existente", async () => {
 			vi.mocked(getCurrentUser).mockResolvedValue(mockUser);
 			vi.mocked(prisma.venta.findUnique).mockResolvedValue(mockVenta);
+			mockTx.venta.findUnique.mockResolvedValue(mockVenta);
 			vi.mocked(prisma.venta.delete).mockResolvedValue(mockVenta);
 			mockTx.stockUbicacion.findUnique.mockResolvedValue({
 				cantidad: 10,
@@ -406,6 +432,10 @@ describe("Ventas Server Actions", () => {
 			const result = await anularVentaAction({ ventaId: "venta-1" });
 
 			expect(result.success).toBe(true);
+			expect(prisma.$transaction).toHaveBeenCalledWith(
+				expect.any(Function),
+				{ isolationLevel: "Serializable" },
+			);
 			expect(mockTx.producto.update).not.toHaveBeenCalled();
 			expect(mockTx.venta.updateMany).toHaveBeenCalledWith({
 				where: {
@@ -423,9 +453,28 @@ describe("Ventas Server Actions", () => {
 			});
 		});
 
+		it("revalida efectos financieros dentro de la transacción", async () => {
+			vi.mocked(getCurrentUser).mockResolvedValue(mockUser);
+			vi.mocked(prisma.venta.findUnique).mockResolvedValue(mockVenta);
+			mockTx.venta.findUnique.mockResolvedValue({
+				...mockVenta,
+				factura: { idFactura: "factura-1" },
+			});
+
+			const result = await anularVentaAction({ ventaId: "venta-1" });
+
+			expect(result.success).toBe(false);
+			if (!result.success) {
+				expect(result.error!.code).toBe("FINANCIAL_REVERSAL_REQUIRED");
+			}
+			expect(mockTx.venta.updateMany).not.toHaveBeenCalled();
+			expect(mockTx.stockUbicacion.upsert).not.toHaveBeenCalled();
+		});
+
 		it("no repite efectos si la reclamación transaccional detecta una anulación concurrente", async () => {
 			vi.mocked(getCurrentUser).mockResolvedValue(mockUser);
 			vi.mocked(prisma.venta.findUnique).mockResolvedValue(mockVenta);
+			mockTx.venta.findUnique.mockResolvedValue(mockVenta);
 			mockTx.venta.updateMany.mockResolvedValueOnce({ count: 0 });
 
 			const result = await anularVentaAction({ ventaId: "venta-1" });

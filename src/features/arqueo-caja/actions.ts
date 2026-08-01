@@ -88,6 +88,7 @@ export const getEsperadosArqueoAction = withAction(
 			where: { id: turnoId, tenantId },
 			include: {
 				ventas: {
+					where: { deletedAt: null },
 					select: {
 						metodoPago: true,
 						montoEfectivo: true,
@@ -150,6 +151,7 @@ export const realizarArqueoAction = withAction(
 			where: { id: parsed.turnoId, tenantId },
 			include: {
 				ventas: {
+					where: { deletedAt: null },
 					select: {
 						metodoPago: true,
 						montoEfectivo: true,
