@@ -3,10 +3,12 @@ import { reconciliarGastoAction } from "@/features/contabilidad/actions-reconcil
 
 const prismaMock = vi.hoisted(() => ({
 	$transaction: vi.fn(),
+	auditLog: { create: vi.fn() },
 }));
 
 vi.mock("@/lib/prisma", () => ({
 	prisma: prismaMock,
+	default: prismaMock,
 }));
 
 const getCurrentUserMock = vi.hoisted(() => vi.fn());
@@ -58,7 +60,8 @@ const AUTH_USER = {
 	tenantId: "tenant-1",
 	name: "Test",
 	email: "test@test.com",
-	role: "ADMIN" as const,
+	role: "admin" as const,
+	tenantRole: "admin" as const,
 	isActive: true,
 };
 
