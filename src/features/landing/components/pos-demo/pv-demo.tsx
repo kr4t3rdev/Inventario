@@ -609,6 +609,10 @@ export function PvDemoInteractive({ reduceMotion = false }: { reduceMotion?: boo
 		}
 		if (viewMode === 'grid') return renderProductosGrid();
 		if (viewMode === 'list') return renderProductosList();
+		// Tabla: forzar vista de lista en mobile (mejor UX que scroll horizontal estrecho)
+		if (typeof window !== 'undefined' && window.innerWidth < 640) {
+			return renderProductosList();
+		}
 		return renderProductosTable();
 	};
 
@@ -853,17 +857,17 @@ export function PvDemoInteractive({ reduceMotion = false }: { reduceMotion?: boo
 									</div>
 								)}
 
-								<div className="flex min-w-0 items-center gap-2 sm:gap-3">
-									<motion.div
-										className="w-8 h-8 bg-linear-to-br from-orange-500 to-red-600 rounded-lg flex items-center justify-center"
-										whileHover={reduceMotion ? undefined : { scale: 1.05 }}
-									>
-										<Package className="h-4 w-4 text-white" />
-									</motion.div>
-									<CardTitle>
-										Productos disponibles en {selectedPuntoVenta.nombre}
-									</CardTitle>
-								</div>
+							<div className="flex min-w-0 items-center gap-2 sm:gap-3">
+								<motion.div
+									className="w-8 h-8 bg-linear-to-br from-orange-500 to-red-600 rounded-lg flex items-center justify-center shrink-0"
+									whileHover={reduceMotion ? undefined : { scale: 1.05 }}
+								>
+									<Package className="h-4 w-4 text-white" />
+								</motion.div>
+								<CardTitle className="min-w-0 truncate">
+									Productos en {selectedPuntoVenta.nombre}
+								</CardTitle>
+							</div>
 
 								{filteredProducts.length > 0 && (
 									<motion.div
@@ -1139,20 +1143,26 @@ export function PvDemoInteractive({ reduceMotion = false }: { reduceMotion?: boo
 												onValueChange={(value) => setFormaPago(value as FormaPago)}
 												className="grid grid-cols-1 gap-2 sm:grid-cols-3"
 											>
-												{FORMAS_PAGO.map((fp) => (
-													<RadioGroupItem
-														key={fp.id}
-														value={fp.id}
-														aria-label={fp.label}
-														className={`h-auto w-full rounded-lg border-2 p-3 text-sm font-medium transition-all duration-200 ${
-															formaPago === fp.id
-																? 'border-primary bg-primary/10 text-primary'
-																: 'border-border hover:border-primary/40'
+												{FORMAS_PAGO.map((fp) => {
+													const selected = formaPago === fp.id;
+													return (
+														<Label
+															key={fp.id}
+															className={`flex min-h-11 cursor-pointer items-center gap-2 rounded-lg border-2 p-3 text-sm font-medium transition-all duration-200 ${
+																selected
+																	? 'border-primary bg-primary/10 text-primary'
+																	: 'border-border hover:border-primary/40'
 															}`}
-													>
-														{fp.label}
-													</RadioGroupItem>
-												))}
+														>
+															<RadioGroupItem
+																value={fp.id}
+																aria-label={fp.label}
+																className="shrink-0"
+															/>
+															{fp.label}
+														</Label>
+													);
+												})}
 											</RadioGroup>
 										</div>
 									<Separator />

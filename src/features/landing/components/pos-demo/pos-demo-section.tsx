@@ -34,7 +34,7 @@ export function LandingPosDemoSection({ reduceMotion = false }: { reduceMotion?:
 					</span>
 				</div>
 
-				<h2 className="mx-auto max-w-3xl text-4xl font-bold tracking-tight sm:text-5xl font-mono leading-[1.1] tracking-display">
+				<h2 className="mx-auto max-w-3xl text-3xl font-bold tracking-tight sm:text-5xl font-mono leading-[1.1] tracking-display">
 					Prueba el punto de venta antes de registrarte
 				</h2>
 
