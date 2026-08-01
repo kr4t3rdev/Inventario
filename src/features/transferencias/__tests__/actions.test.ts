@@ -16,6 +16,7 @@ const mockTx = {
 	transferencia: {
 		create: vi.fn(),
 		update: vi.fn(),
+		updateMany: vi.fn(),
 		findUnique: vi.fn(),
 		count: vi.fn(),
 	},
@@ -43,6 +44,8 @@ vi.mock("@/lib/prisma", () => ({
 }));
 
 import { getCurrentUser } from "@/lib/server-actions/get-current-user";
+import { ActionError } from "@/lib/server-actions";
+import { upsertStockUbicacion } from "@/lib/services/stock-ubicacion-service";
 import { prisma } from "@/lib/prisma";
 import {
 	getTransferenciasAction,
@@ -64,9 +67,27 @@ const mockUser: AuthenticatedUser = {
 	tenantRole: "admin",
 };
 
+function mockCurrentTransfer(overrides: Record<string, unknown> = {}) {
+	mockTx.transferencia.findUnique.mockResolvedValueOnce({
+		transferenciaId: "tr-1",
+		tenantId: "tenant-test",
+		deletedAt: null,
+		estado: "PENDIENTE",
+		productoId: "prod-1",
+		cantidad: 5,
+		origenId: "alm-1",
+		destinoId: "alm-2",
+		puntoDeVentaOrigenId: null,
+		puntoDeVentaDestinoId: null,
+		...overrides,
+	} as any);
+}
+
 describe("Transferencias Server Actions", () => {
 	beforeEach(() => {
 		vi.clearAllMocks();
+		vi.mocked(upsertStockUbicacion).mockReset();
+		mockTx.transferencia.updateMany.mockResolvedValue({ count: 1 });
 	});
 
 	describe("getTransferenciasAction", () => {
@@ -299,6 +320,38 @@ describe("Transferencias Server Actions", () => {
 					delta: 5,
 				}),
 			);
+		});
+
+		it("protege completar contra una carrera con eliminación y no mueve stock", async () => {
+			vi.mocked(getCurrentUser).mockResolvedValue(mockUser);
+			vi.mocked(prisma.transferencia.findFirst).mockResolvedValue({
+				transferenciaId: "tr-1",
+				estado: "APROBADA",
+				cantidad: 5,
+				origenId: "alm-1",
+				destinoId: "alm-2",
+				productoId: "prod-1",
+				tenantId: "tenant-test",
+				deletedAt: null,
+			} as any);
+			mockTx.transferencia.updateMany.mockResolvedValueOnce({ count: 0 });
+			mockTx.transferencia.findUnique.mockResolvedValueOnce({
+				transferenciaId: "tr-1",
+				tenantId: "tenant-test",
+				deletedAt: new Date(),
+				estado: "CANCELADA",
+			} as any);
+
+			const result = await completarTransferenciaAction({
+				transferenciaId: "tr-1",
+			});
+
+			expect(result.success).toBe(false);
+			expect(result.error?.code).toBe("CONFLICT");
+		const { upsertStockUbicacion } = await import(
+				"@/lib/services/stock-ubicacion-service"
+			);
+			expect(upsertStockUbicacion).not.toHaveBeenCalled();
 		});
 	});
 
@@ -660,6 +713,176 @@ describe("Transferencias Server Actions", () => {
 	});
 
 	describe("deleteTransferenciaAction", () => {
+		it("trata una transferencia ya eliminada como éxito idempotente", async () => {
+			vi.mocked(getCurrentUser).mockResolvedValue(mockUser);
+			vi.mocked(prisma.transferencia.findFirst).mockResolvedValue({
+				transferenciaId: "tr-1",
+				estado: "CANCELADA",
+				cantidad: 5,
+				productoId: "prod-1",
+				tenantId: "tenant-test",
+				deletedAt: new Date("2026-01-01T00:00:00.000Z"),
+			} as any);
+
+			const result = await deleteTransferenciaAction("tr-1");
+
+			expect(result.success).toBe(true);
+			expect(result.data?.message).toBe("Transferencia ya cancelada");
+			expect(mockTx.transferencia.updateMany).not.toHaveBeenCalled();
+			const { upsertStockUbicacion } = await import(
+				"@/lib/services/stock-ubicacion-service"
+			);
+			expect(upsertStockUbicacion).not.toHaveBeenCalled();
+		});
+
+		it("mantiene el alcance por tenant al reclamar la eliminación", async () => {
+			vi.mocked(getCurrentUser).mockResolvedValue(mockUser);
+			vi.mocked(prisma.transferencia.findFirst).mockResolvedValue({
+				transferenciaId: "tr-1",
+				estado: "PENDIENTE",
+				cantidad: 5,
+				origenId: "alm-1",
+				destinoId: "alm-2",
+				productoId: "prod-1",
+				tenantId: "tenant-test",
+				deletedAt: null,
+			} as any);
+			mockCurrentTransfer({ estado: "PENDIENTE" });
+
+			const result = await deleteTransferenciaAction("tr-1");
+
+			expect(result.success).toBe(true);
+			expect(mockTx.transferencia.updateMany).toHaveBeenCalledWith({
+				where: {
+					transferenciaId: "tr-1",
+					tenantId: "tenant-test",
+					deletedAt: null,
+					estado: "PENDIENTE",
+				},
+				data: { estado: "CANCELADA", deletedAt: expect.any(Date) },
+			});
+		});
+
+		it("oculta una transferencia legacy CANCELADA que aún no tiene deletedAt", async () => {
+			vi.mocked(getCurrentUser).mockResolvedValue(mockUser);
+			vi.mocked(prisma.transferencia.findFirst).mockResolvedValue({
+				transferenciaId: "tr-1",
+				estado: "CANCELADA",
+				cantidad: 5,
+				productoId: "prod-1",
+				tenantId: "tenant-test",
+				deletedAt: null,
+			} as any);
+
+			const result = await deleteTransferenciaAction("tr-1");
+
+			expect(result.success).toBe(true);
+			expect(mockTx.transferencia.updateMany).toHaveBeenCalledWith({
+				where: {
+					transferenciaId: "tr-1",
+					tenantId: "tenant-test",
+					deletedAt: null,
+					estado: "CANCELADA",
+				},
+				data: { deletedAt: expect.any(Date) },
+			});
+		const { upsertStockUbicacion } = await import(
+				"@/lib/services/stock-ubicacion-service"
+			);
+			expect(upsertStockUbicacion).not.toHaveBeenCalled();
+		});
+
+		it("tolera que otra solicitud haya reclamado primero la transferencia", async () => {
+			vi.mocked(getCurrentUser).mockResolvedValue(mockUser);
+			vi.mocked(prisma.transferencia.findFirst).mockResolvedValue({
+				transferenciaId: "tr-1",
+				estado: "COMPLETADA",
+				cantidad: 5,
+				origenId: "alm-1",
+				destinoId: "alm-2",
+				productoId: "prod-1",
+				tenantId: "tenant-test",
+				deletedAt: null,
+			} as any);
+			mockCurrentTransfer({ estado: "COMPLETADA" });
+			mockTx.transferencia.updateMany.mockResolvedValueOnce({ count: 0 });
+			mockTx.transferencia.findUnique.mockResolvedValueOnce({
+				transferenciaId: "tr-1",
+				tenantId: "tenant-test",
+				deletedAt: new Date(),
+				estado: "CANCELADA",
+			} as any);
+
+			const result = await deleteTransferenciaAction("tr-1");
+
+			expect(result.success).toBe(true);
+			expect(result.data?.message).toBe("Transferencia ya cancelada");
+			const { upsertStockUbicacion } = await import(
+				"@/lib/services/stock-ubicacion-service"
+			);
+			expect(upsertStockUbicacion).not.toHaveBeenCalled();
+		});
+
+		it("rechaza la cancelación si otra solicitud completó la transferencia", async () => {
+			vi.mocked(getCurrentUser).mockResolvedValue(mockUser);
+			vi.mocked(prisma.transferencia.findFirst).mockResolvedValue({
+				transferenciaId: "tr-1",
+				estado: "PENDIENTE",
+				cantidad: 5,
+				origenId: "alm-1",
+				destinoId: "alm-2",
+				productoId: "prod-1",
+				tenantId: "tenant-test",
+				deletedAt: null,
+			} as any);
+			mockCurrentTransfer({ estado: "PENDIENTE" });
+			mockTx.transferencia.updateMany.mockResolvedValueOnce({ count: 0 });
+			mockTx.transferencia.findUnique.mockResolvedValueOnce({
+				transferenciaId: "tr-1",
+				tenantId: "tenant-test",
+				deletedAt: null,
+				estado: "COMPLETADA",
+			} as any);
+
+			const result = await deleteTransferenciaAction("tr-1");
+
+			expect(result.success).toBe(false);
+			expect(result.error?.code).toBe("CONFLICT");
+		});
+
+		it("no cancela si el destino ya consumió todo el stock transferido", async () => {
+			vi.mocked(getCurrentUser).mockResolvedValue(mockUser);
+			vi.mocked(prisma.transferencia.findFirst).mockResolvedValue({
+				transferenciaId: "tr-1",
+				estado: "COMPLETADA",
+				cantidad: 5,
+				origenId: "alm-1",
+				destinoId: "alm-2",
+				productoId: "prod-1",
+				tenantId: "tenant-test",
+				deletedAt: null,
+			} as any);
+			mockCurrentTransfer({ estado: "COMPLETADA" });
+			const { upsertStockUbicacion } = await import(
+				"@/lib/services/stock-ubicacion-service"
+			);
+			vi.mocked(upsertStockUbicacion).mockImplementation(
+				async (_tx, opts: any) => {
+					if (opts.delta < 0) {
+						throw new ActionError(
+							"Stock insuficiente en almacén alm-2",
+							"STOCK_INSUFICIENTE",
+						);
+					}
+				},
+			);
+
+			const result = await deleteTransferenciaAction("tr-1");
+
+			expect(result.success).toBe(false);
+			expect(result.error?.code).toBe("STOCK_INSUFICIENTE");
+			expect(mockTx.transferencia.updateMany).toHaveBeenCalledTimes(1);
+		});
 		it("cancela transferencia exitosamente", async () => {
 			vi.mocked(getCurrentUser).mockResolvedValue(mockUser);
 			vi.mocked(prisma.transferencia.findFirst).mockResolvedValue({
@@ -677,6 +900,7 @@ describe("Transferencias Server Actions", () => {
 				puntoDeVentaOrigen: null,
 				puntoDeVentaDestino: null,
 			});
+			mockCurrentTransfer({ estado: "COMPLETADA", destinoId: null });
 
 			const result = await deleteTransferenciaAction("tr-1");
 			expect(result.success).toBe(true);
@@ -700,6 +924,7 @@ describe("Transferencias Server Actions", () => {
 				puntoDeVentaOrigen: null,
 				puntoDeVentaDestino: null,
 			});
+			mockCurrentTransfer({ estado: "PENDIENTE" });
 
 			const result = await deleteTransferenciaAction("tr-1");
 			expect(result.success).toBe(true);
@@ -731,6 +956,7 @@ describe("Transferencias Server Actions", () => {
 				puntoDeVentaOrigen: null,
 				puntoDeVentaDestino: null,
 			});
+			mockCurrentTransfer({ estado: "COMPLETADA" });
 
 			const result = await deleteTransferenciaAction("tr-1");
 			expect(result.success).toBe(true);
