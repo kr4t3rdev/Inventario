@@ -28,9 +28,9 @@ export const getSalesHealthAction = withAction(async (_input: void, user: Authen
 
   const [ventasCount, ventasAggregate, facturasCount, ofertasCount, serviciosCount] =
     await Promise.all([
-      prisma.venta.count({ where: { tenantId } }),
-      prisma.venta.aggregate({ where: { tenantId }, _sum: { total: true } }),
-      prisma.factura.count({ where: { tenantId } }),
+      prisma.venta.count({ where: { tenantId, deletedAt: null } }),
+      prisma.venta.aggregate({ where: { tenantId, deletedAt: null }, _sum: { total: true } }),
+      prisma.factura.count({ where: { tenantId, estado: { not: 'ANULADA' } } }),
       prisma.oferta.count({ where: { tenantId } }),
       prisma.servicio.count({ where: { tenantId } }),
     ])

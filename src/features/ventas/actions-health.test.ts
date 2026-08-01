@@ -35,7 +35,9 @@ describe('getSalesHealthAction', () => {
       success: true,
       data: { metrics: { ventasCount: 50, ventasTotal: 1250, facturasCount: 20, ofertasCount: 4, serviciosCount: 3 } },
     })
-    expect(prisma.venta.aggregate).toHaveBeenCalledWith({ where: { tenantId: 'tenant-1' }, _sum: { total: true } })
+    expect(prisma.venta.count).toHaveBeenCalledWith({ where: { tenantId: 'tenant-1', deletedAt: null } })
+    expect(prisma.venta.aggregate).toHaveBeenCalledWith({ where: { tenantId: 'tenant-1', deletedAt: null }, _sum: { total: true } })
+    expect(prisma.factura.count).toHaveBeenCalledWith({ where: { tenantId: 'tenant-1', estado: { not: 'ANULADA' } } })
   })
 
   it('rechaza roles no admin sin consultar ventas', async () => {
