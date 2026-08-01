@@ -1,3 +1,5 @@
+import { ActionError } from "@/lib/server-actions/types";
+
 export type TipoUbicacion = "almacen" | "punto_venta";
 
 type UpsertStockOpts =
@@ -60,19 +62,77 @@ export async function upsertStockUbicacion(
 
 	if (opts.modo === "increment") {
 		const { delta, cantidadReservada } = opts;
+		const compositeWhere = {
+			productoId_tipoUbicacion_ubicacionId: {
+				productoId,
+				tipoUbicacion,
+				ubicacionId,
+			},
+		};
+		const scalarWhere = { productoId, tipoUbicacion, ubicacionId };
+
+		if (delta < 0 && cantidadReservada === undefined) {
+			const result = await tx.stockUbicacion.updateMany({
+				where: {
+					...scalarWhere,
+					cantidad: { gte: Math.abs(delta) },
+					cantidadDisponible: { gte: Math.abs(delta) },
+				},
+				data: {
+					cantidad: { increment: delta },
+					cantidadDisponible: { increment: delta },
+				},
+			});
+
+			if (result.count !== 1) {
+				throw new ActionError(
+					`Stock insuficiente en ${tipoUbicacion} ${ubicacionId}`,
+					"STOCK_INSUFICIENTE",
+				);
+			}
+			return;
+		}
 
 		if (cantidadReservada !== undefined) {
 			// Si se provee cantidadReservada, leer registro existente para calcular disponible
 			const existing = await tx.stockUbicacion.findUnique({
-				where: {
-					productoId_tipoUbicacion_ubicacionId: {
-						productoId,
-						tipoUbicacion,
-						ubicacionId,
-					},
-				},
-				select: { cantidad: true },
+				where: compositeWhere,
+				select: { cantidad: true, cantidadDisponible: true },
 			});
+
+			if (delta < 0) {
+				const currentCantidad = existing?.cantidad ?? 0;
+				const currentDisponible = existing?.cantidadDisponible ?? 0;
+				const nextCantidad = currentCantidad + delta;
+				const nextDisponible = nextCantidad - cantidadReservada;
+				if (!existing || nextCantidad < 0 || nextDisponible < 0 || currentDisponible < 0) {
+					throw new ActionError(
+						`Stock insuficiente en ${tipoUbicacion} ${ubicacionId}`,
+						"STOCK_INSUFICIENTE",
+					);
+				}
+
+				const result = await tx.stockUbicacion.updateMany({
+					where: {
+						...scalarWhere,
+						cantidad: currentCantidad,
+						cantidadDisponible: currentDisponible,
+					},
+					data: {
+						cantidad: { increment: delta },
+						cantidadReservada,
+						cantidadDisponible: nextDisponible,
+					},
+				});
+
+				if (result.count !== 1) {
+					throw new ActionError(
+						"El stock cambió mientras se procesaba la operación",
+						"STOCK_CONCURRENCIA",
+					);
+				}
+				return;
+			}
 
 			await tx.stockUbicacion.upsert({
 				where: {

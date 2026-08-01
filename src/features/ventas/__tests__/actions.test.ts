@@ -14,7 +14,11 @@ const { mockTx } = vi.hoisted(() => {
 	const mockTx = {
 		serieFacturacion: { findFirst: vi.fn(), create: vi.fn(), update: vi.fn() },
 		venta: { create: vi.fn(), update: vi.fn() },
-		stockUbicacion: { findUnique: vi.fn(), upsert: vi.fn() },
+		stockUbicacion: {
+			findUnique: vi.fn(),
+			upsert: vi.fn(),
+			updateMany: vi.fn().mockResolvedValue({ count: 1 }),
+		},
 		producto: {
 			update: vi.fn(),
 			findUnique: vi.fn(),
@@ -361,22 +365,20 @@ describe("Ventas Server Actions", () => {
 
 			expect(result.success).toBe(true);
 
-			// upsertStockUbicacion traduce opts a upsert de Prisma.
-			// Buscar en los calls el create con datos esperados.
-			const upsertCalls = mockTx.stockUbicacion.upsert.mock.calls.map(
-				(c: any[]) => c[0],
-			);
-
-			// Solo se descuenta del punto de venta (pv-1), no del almacén
-			expect(upsertCalls).toHaveLength(1);
-			expect(upsertCalls[0]).toEqual(
+			// Solo se descuenta del punto de venta (pv-1), no del almacén.
+			expect(mockTx.stockUbicacion.updateMany).toHaveBeenCalledWith(
 				expect.objectContaining({
-					create: expect.objectContaining({
+					where: {
 						productoId: "prod-1",
 						tipoUbicacion: "punto_venta",
 						ubicacionId: "pv-1",
-						cantidad: -2,
-					}),
+						cantidad: { gte: 2 },
+						cantidadDisponible: { gte: 2 },
+					},
+					data: {
+						cantidad: { increment: -2 },
+						cantidadDisponible: { increment: -2 },
+					},
 				}),
 			);
 		});
