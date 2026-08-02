@@ -4,7 +4,7 @@ import { updateCuentaPorCobrarAction } from '@/features/contabilidad/actions-cue
 const prismaMock = vi.hoisted(() => ({
   cuentaPorCobrar: {
     findFirst: vi.fn(),
-    update: vi.fn(),
+    updateMany: vi.fn(),
   },
 }))
 
@@ -52,7 +52,7 @@ describe('Cuentas por Cobrar — updateCuentaPorCobrarAction', () => {
 
     expect(result.success).toBe(false)
     expect(result.error?.code).toBe('NOT_FOUND')
-    expect(prismaMock.cuentaPorCobrar.update).not.toHaveBeenCalled()
+    expect(prismaMock.cuentaPorCobrar.updateMany).not.toHaveBeenCalled()
   })
 
   it('actualiza estado y monto correctamente con tenant isolation', async () => {
@@ -73,7 +73,13 @@ describe('Cuentas por Cobrar — updateCuentaPorCobrarAction', () => {
       estado: 'PENDIENTE',
     } as any)
 
-    prismaMock.cuentaPorCobrar.update.mockResolvedValue({
+    prismaMock.cuentaPorCobrar.updateMany.mockResolvedValue({ count: 1 })
+    prismaMock.cuentaPorCobrar.findFirst.mockResolvedValueOnce({
+      id: 'cxc-1',
+      tenantId: 'tenant-1',
+      montoPagado: 0,
+      estado: 'PENDIENTE',
+    } as any).mockResolvedValueOnce({
       id: 'cxc-1',
       idCC: 1,
       facturaId: 'fac-1',
@@ -107,9 +113,9 @@ describe('Cuentas por Cobrar — updateCuentaPorCobrarAction', () => {
         where: { id: 'cxc-1', tenantId: 'tenant-1' },
       })
     )
-    expect(prismaMock.cuentaPorCobrar.update).toHaveBeenCalledWith(
+    expect(prismaMock.cuentaPorCobrar.updateMany).toHaveBeenCalledWith(
       expect.objectContaining({
-        where: { id: 'cxc-1' },
+        where: { id: 'cxc-1', tenantId: 'tenant-1', estado: { not: 'ANULADA' } },
         data: expect.objectContaining({
           montoPagado: 450,
           estado: 'PARCIAL',
@@ -137,5 +143,57 @@ describe('Cuentas por Cobrar — updateCuentaPorCobrarAction', () => {
 
     expect(result.success).toBe(false)
     expect(result.error?.code).toBe('VALIDATION_ERROR')
+  })
+
+  it('does not reactivate an annulled receivable through the generic update action', async () => {
+    getCurrentUserMock.mockResolvedValue({
+      userId: 'user-123',
+      tenantId: 'tenant-1',
+      name: 'Test',
+      email: 'test@test.com',
+      role: 'ADMIN' as const,
+      isActive: true,
+      planFeatures: { 'cuentas-cobrar': true },
+    })
+    prismaMock.cuentaPorCobrar.findFirst.mockResolvedValue({
+      id: 'cxc-1',
+      tenantId: 'tenant-1',
+      montoPagado: 250,
+      estado: 'ANULADA',
+    } as any)
+
+    const result = await updateCuentaPorCobrarAction({ id: 'cxc-1', estado: 'PARCIAL' })
+
+    expect(result.success).toBe(false)
+    expect(result.error?.code).toBe('VALIDATION_ERROR')
+    expect(prismaMock.cuentaPorCobrar.updateMany).not.toHaveBeenCalled()
+  })
+
+  it('rejects a concurrent annulment when the atomic update claims no row', async () => {
+    getCurrentUserMock.mockResolvedValue({
+      userId: 'user-123',
+      tenantId: 'tenant-1',
+      name: 'Test',
+      email: 'test@test.com',
+      role: 'ADMIN' as const,
+      isActive: true,
+      planFeatures: { 'cuentas-cobrar': true },
+    })
+    prismaMock.cuentaPorCobrar.findFirst.mockResolvedValue({
+      id: 'cxc-1',
+      tenantId: 'tenant-1',
+      estado: 'PARCIAL',
+    } as any)
+    prismaMock.cuentaPorCobrar.updateMany.mockResolvedValue({ count: 0 })
+
+    const result = await updateCuentaPorCobrarAction({ id: 'cxc-1', estado: 'PAGADA' })
+
+    expect(result.success).toBe(false)
+    expect(result.error?.code).toBe('VALIDATION_ERROR')
+    expect(prismaMock.cuentaPorCobrar.updateMany).toHaveBeenCalledWith(
+      expect.objectContaining({
+        where: { id: 'cxc-1', tenantId: 'tenant-1', estado: { not: 'ANULADA' } },
+      }),
+    )
   })
 })

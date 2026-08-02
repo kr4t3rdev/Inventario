@@ -161,7 +161,7 @@ function enriquecerCuentaPorCobrar(cuenta: Record<string, unknown>) {
     montoDeuda: Number(cuenta.montoDeuda),
     montoPagado: Number(cuenta.montoPagado),
     idTransferencia: cuenta.idTransferencia as string | null,
-    estado: cuenta.estado as 'PENDIENTE' | 'PAGADA' | 'PARCIAL',
+    estado: cuenta.estado as 'PENDIENTE' | 'PAGADA' | 'PARCIAL' | 'ANULADA',
     tipoCuenta: cuenta.tipoCuenta as string | null,
     fechaVencimiento: cuenta.fechaVencimiento as string | null,
     totalFactura,
@@ -261,7 +261,7 @@ export const AccountingAccountsService = {
    */
   async listReceivables(input: {
     tenantId: string;
-    estado?: 'PENDIENTE' | 'PAGADA' | 'PARCIAL' | null;
+    estado?: 'PENDIENTE' | 'PAGADA' | 'PARCIAL' | 'ANULADA' | null;
     clienteId?: string | null;
     search?: string | null;
     page?: number;
@@ -311,9 +311,61 @@ export const AccountingAccountsService = {
   },
 
   /**
+   * @description Marca una CxC como anulada sin alterar sus importes ni los pagos históricos.
+   * El filtro de estado hace la transición idempotente ante solicitudes concurrentes.
+   * @param {{ id: string; tenantId: string }} input - Identificador y tenant de la cuenta.
+   * @returns {Promise<{ cuenta: Record<string, unknown>; changed: boolean } | null>} Cuenta y si hubo transición.
+   */
+  async annulReceivable(input: { id: string; tenantId: string }) {
+    const where = { id: input.id, tenantId: input.tenantId };
+    const existing = await prisma.cuentaPorCobrar.findFirst({
+      where,
+      include: CXC_INCLUDE,
+    });
+    if (!existing) return null;
+    if (existing.estado === 'ANULADA') {
+      return {
+        cuenta: existing as unknown as Record<string, unknown>,
+        changed: false,
+        previousState: 'ANULADA' as const,
+      };
+    }
+
+    const claimed = await prisma.cuentaPorCobrar.updateMany({
+      where: { ...where, estado: { not: 'ANULADA' } },
+      data: { estado: 'ANULADA' },
+    });
+    if (claimed.count === 0) {
+      const current = await prisma.cuentaPorCobrar.findFirst({
+        where,
+        include: CXC_INCLUDE,
+      });
+      return current
+        ? {
+            cuenta: current as unknown as Record<string, unknown>,
+            changed: false,
+            previousState: 'ANULADA' as const,
+          }
+        : null;
+    }
+
+    const updated = await prisma.cuentaPorCobrar.findFirst({
+      where,
+      include: CXC_INCLUDE,
+    });
+    return updated
+      ? {
+          cuenta: updated as unknown as Record<string, unknown>,
+          changed: true,
+          previousState: existing.estado,
+        }
+      : null;
+  },
+
+  /**
    * @description Retorna métricas agregadas de cuentas por cobrar.
    * @param {{ tenantId: string }} input - Tenant de la consulta.
-   * @returns {Promise<{ totalPendiente: number; porVencer: number; vencidas: number; totalCuentas: number }>} Resumen agregado.
+   * @returns {Promise<{ totalPendiente: number; porVencer: number; vencidas: number; cuentasActivas: number; totalCuentas: number }>} Resumen agregado.
    */
   async getReceivablesMetrics(input: { tenantId: string }) {
     const ahora = new Date();
@@ -323,21 +375,25 @@ export const AccountingAccountsService = {
       _sum: { montoDeuda: true },
     });
 
-    const [vencidas, totalCuentas] = await Promise.all([
+    const [vencidas, cuentasActivas, totalCuentas] = await Promise.all([
       prisma.cuentaPorCobrar.count({
         where: {
           tenantId: input.tenantId,
-          estado: { not: 'PAGADA' },
+          estado: { in: ['PENDIENTE', 'PARCIAL'] },
           fechaVencimiento: { lt: ahora, not: null },
         },
+      }),
+      prisma.cuentaPorCobrar.count({
+        where: { tenantId: input.tenantId, estado: { in: ['PENDIENTE', 'PARCIAL'] } },
       }),
       prisma.cuentaPorCobrar.count({ where: { tenantId: input.tenantId } }),
     ]);
 
     return {
       totalPendiente: Number(pendientesAgg._sum.montoDeuda ?? 0),
-      porVencer: totalCuentas - vencidas,
+      porVencer: Math.max(0, cuentasActivas - vencidas),
       vencidas,
+      cuentasActivas,
       totalCuentas,
     };
   },

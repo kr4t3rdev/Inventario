@@ -22,7 +22,7 @@ export interface CuentaPorCobrar {
 	montoDeuda: number;
 	montoPagado: number;
 	idTransferencia?: string;
-	estado: "PENDIENTE" | "PAGADA" | "PARCIAL";
+	estado: "PENDIENTE" | "PAGADA" | "PARCIAL" | "ANULADA";
 	tipoCuenta?: "VENTA" | "PRESTAMO_CASH";
 	fechaVencimiento?: string | null;
 	totalVenta?: number;
@@ -52,4 +52,3 @@ export interface CreateCuentaPorCobrarRequest {
 	fechaVencimiento?: string;
 	estado?: "PENDIENTE" | "PAGADA" | "PARCIAL";
 }
-

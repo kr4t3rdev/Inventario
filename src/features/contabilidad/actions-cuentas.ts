@@ -19,6 +19,7 @@ import {
 	getCuentasPorCobrarSchema,
 	createCuentaPorCobrarSchema,
 	updateCuentaPorCobrarSchema,
+	annulCuentaPorCobrarSchema,
 	getCuentasPorPagarSchema,
 	createCuentaPorPagarSchema,
 } from "./schemas-cuentas";
@@ -26,6 +27,7 @@ import type {
 	GetCuentasPorCobrarInput,
 	CreateCuentaPorCobrarInput,
 	UpdateCuentaPorCobrarInput,
+	AnnulCuentaPorCobrarInput,
 	GetCuentasPorPagarInput,
 	CreateCuentaPorPagarInput,
 } from "./schemas-cuentas";
@@ -44,7 +46,7 @@ export interface CuentaPorCobrarEnriquecida {
 	montoDeuda: number;
 	montoPagado: number;
 	idTransferencia: string | null;
-	estado: "PENDIENTE" | "PAGADA" | "PARCIAL";
+	estado: "PENDIENTE" | "PAGADA" | "PARCIAL" | "ANULADA";
 	tipoCuenta: string | null;
 	fechaVencimiento: string | null;
 	totalFactura: number;
@@ -75,6 +77,7 @@ export interface CxcMetrics {
 	totalPendiente: number;
 	porVencer: number;
 	vencidas: number;
+	cuentasActivas: number;
 	totalCuentas: number;
 }
 
@@ -282,7 +285,7 @@ function enriquecerCuentaPorCobrar(
 		montoDeuda: Number(cuenta.montoDeuda),
 		montoPagado: Number(cuenta.montoPagado),
 		idTransferencia: cuenta.idTransferencia as string | null,
-		estado: cuenta.estado as "PENDIENTE" | "PAGADA" | "PARCIAL",
+		estado: cuenta.estado as "PENDIENTE" | "PAGADA" | "PARCIAL" | "ANULADA",
 		tipoCuenta: cuenta.tipoCuenta as string | null,
 		fechaVencimiento: cuenta.fechaVencimiento as string | null,
 		totalFactura,
@@ -492,6 +495,11 @@ export const updateCuentaPorCobrarAction = withAction(
 		});
 		if (!existente)
 			throw new ActionError("Cuenta por cobrar no encontrada", "NOT_FOUND");
+		if (existente.estado === "ANULADA")
+			throw new ActionError(
+				"Una cuenta por cobrar anulada no puede reactivarse mediante una actualización genérica",
+				"VALIDATION_ERROR",
+			);
 
 		const data: Record<string, unknown> = {};
 		if (p.estado !== undefined) data.estado = p.estado;
@@ -504,11 +512,22 @@ export const updateCuentaPorCobrarAction = withAction(
 				? new Date(p.fechaVencimiento)
 				: null;
 
-		const cuenta = await prisma.cuentaPorCobrar.update({
-			where: { id: p.id },
+		const updated = await prisma.cuentaPorCobrar.updateMany({
+			where: { id: p.id, tenantId, estado: { not: "ANULADA" } },
 			data,
+		});
+		if (updated.count !== 1)
+			throw new ActionError(
+				"La cuenta por cobrar cambió mientras se actualizaba; vuelve a cargarla",
+				"VALIDATION_ERROR",
+			);
+
+		const cuenta = await prisma.cuentaPorCobrar.findFirst({
+			where: { id: p.id, tenantId },
 			include: CXC_INCLUDE,
 		});
+		if (!cuenta)
+			throw new ActionError("Cuenta por cobrar no encontrada", "NOT_FOUND");
 
 		AuditLogService.log({
 			accion: "UPDATE",
@@ -522,6 +541,48 @@ export const updateCuentaPorCobrarAction = withAction(
 		return enriquecerCuentaPorCobrar(
 			cuenta as unknown as Record<string, unknown>,
 		);
+	},
+);
+
+/**
+ * @description Anula una cuenta por cobrar de forma explícita e idempotente.
+ * Conserva el monto de la deuda, pagos y reconciliaciones históricas.
+ * @param {AnnulCuentaPorCobrarInput} input - Cuenta y motivo opcional.
+ * @param {AuthenticatedUser} user - Usuario autenticado.
+ * @returns {Promise<CuentaPorCobrarEnriquecida>} Cuenta anulada.
+ */
+export const anularCuentaPorCobrarAction = withAction(
+	async (
+		input: AnnulCuentaPorCobrarInput,
+		user: AuthenticatedUser,
+	): Promise<CuentaPorCobrarEnriquecida> => {
+		requireFeature(user, 'cuentas-cobrar', 'anular cuentas por cobrar');
+		const tenantId = requireTenant(user);
+		const p = annulCuentaPorCobrarSchema.parse(input);
+		const result = await AccountingAccountsService.annulReceivable({
+			id: p.id,
+			tenantId,
+		});
+		if (!result) {
+			throw new ActionError('Cuenta por cobrar no encontrada', 'NOT_FOUND');
+		}
+
+		if (result.changed) {
+			AuditLogService.log({
+				accion: 'UPDATE',
+				entidad: 'CUENTA_POR_COBRAR',
+				entidadId: p.id,
+				usuarioId: user.userId,
+				detalles: {
+					estadoAnterior: result.previousState,
+					estadoNuevo: 'ANULADA',
+					motivo: p.motivo ?? null,
+				},
+			}).catch((err) => console.error('[AuditLog] Error logging cuenta por cobrar annulment:', err));
+			revalidatePath('/busy/contabilidad/cuentas-por-cobrar');
+		}
+
+		return enriquecerCuentaPorCobrar(result.cuenta);
 	},
 );
 

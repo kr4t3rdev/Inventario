@@ -67,4 +67,35 @@ describe('mobile accounts receivable route', () => {
       limit: 20,
     });
   });
+
+  it('maps a missing CxC feature to a forbidden response', async () => {
+    vi.mocked(authenticateUser).mockResolvedValue({
+      user: { ...mockUser, role: 'user', planFeatures: {} },
+    } as never);
+
+    const response = await GET(new NextRequest(
+      'http://localhost/api/mobile/v1/accounting/accounts-receivable',
+      { headers: { authorization: 'Bearer mobile-access' } },
+    ));
+    const data = await response.json();
+
+    expect(response.status).toBe(403);
+    expect(data.code).toBe('FEATURE_NOT_AVAILABLE');
+    expect(AccountingAccountsService.listReceivables).not.toHaveBeenCalled();
+  });
+
+  it('returns TENANT_REQUIRED when the authenticated user has no tenant', async () => {
+    vi.mocked(authenticateUser).mockResolvedValue({
+      user: { ...mockUser, tenantId: undefined },
+    } as never);
+
+    const response = await GET(new NextRequest(
+      'http://localhost/api/mobile/v1/accounting/accounts-receivable',
+      { headers: { authorization: 'Bearer mobile-access' } },
+    ));
+    const data = await response.json();
+
+    expect(response.status).toBe(403);
+    expect(data.code).toBe('TENANT_REQUIRED');
+  });
 });
