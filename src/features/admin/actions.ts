@@ -1330,10 +1330,10 @@ export const approveMembershipAction = withAction(
 			data: { isActive: true, tenantRole },
 		});
 
-		// Activar usuario
+		// Activar usuario y cerrar el flujo de onboarding del worker
 		await prisma.user.update({
 			where: { userId: membership.userId },
-			data: { isActive: true },
+			data: { isActive: true, onboardingStatus: null },
 		});
 
 		// Crear Empleado
