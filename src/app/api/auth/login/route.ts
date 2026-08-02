@@ -34,6 +34,7 @@ export async function POST(request: Request) {
     const response = Response.json({
       user: result.user,
       redirectTo: result.redirectTo,
+      onboardingToken: result.onboardingToken,
     });
 
     const secure = process.env.NODE_ENV === 'production' ? '; Secure' : '';

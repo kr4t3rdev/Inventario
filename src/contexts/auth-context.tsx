@@ -132,6 +132,13 @@ export function AuthProvider({ children, initialUser }: AuthProviderProps) {
       if (response.ok && result.user) {
         setUser(result.user);
 
+        // Los usuarios mid-onboarding necesitan el onboardingToken en
+        // sessionStorage: la página /onboarding lo lee para autenticar
+        // sus llamadas (mismo contrato que /verify-email).
+        if (typeof result.onboardingToken === 'string') {
+          sessionStorage.setItem('onboardingToken', result.onboardingToken);
+        }
+
         const fallbackRedirect = result.user?.role === 'admin'
           ? '/admin'
           : result.user?.role === 'salesAgent'

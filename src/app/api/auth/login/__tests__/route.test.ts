@@ -140,6 +140,40 @@ describe('auth login route', () => {
     expect(response.headers.getSetCookie().every((cookie) => cookie.includes('HttpOnly'))).toBe(true)
   })
 
+  it('devuelve onboardingToken para un usuario mid-onboarding', async () => {
+    vi.mocked(prisma.user.findUnique).mockResolvedValue({
+      userId: 'u-onb',
+      email: 'onb@test.com',
+      password: 'hash',
+      isActive: false,
+      role: 'regularUser',
+      loginAttempts: 0,
+      lockedUntil: null,
+      lastFailedLogin: null,
+      onboardingStatus: 'selecting_user_type',
+    } as never)
+    vi.mocked(bcrypt.compare).mockResolvedValue(true as never)
+    vi.mocked(prisma.user.updateMany).mockResolvedValue({ count: 1 } as never)
+    vi.mocked(jwt.sign)
+      .mockReturnValueOnce('access-token' as never)
+      .mockReturnValueOnce('refresh-token' as never)
+      .mockReturnValueOnce('onboarding-token' as never)
+
+    const request = new NextRequest('http://localhost/api/auth/login', {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ email: 'onb@test.com', password: 'secret123' }),
+    })
+
+    const response = await POST(request)
+    const data = await response.json()
+
+    expect(response.status).toBe(200)
+    expect(data.redirectTo).toBe('/onboarding')
+    expect(data.onboardingToken).toBe('onboarding-token')
+    expect(prisma.tenantMembership.findUnique).not.toHaveBeenCalled()
+  })
+
   it('rechaza un tenant solicitado que no pertenece al usuario', async () => {
     vi.mocked(prisma.user.findUnique).mockResolvedValue({
       userId: 'u2',

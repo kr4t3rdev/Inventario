@@ -7,6 +7,7 @@ import { getJwtSecret, getRefreshJwtSecret } from '@/lib/secrets';
 import { ActionError } from '@/lib/server-actions';
 import { resolveTenantContext } from '@/lib/auth-middleware';
 import type { AuthenticatedUser } from '@/lib/auth-middleware';
+import { signOnboardingToken } from '@/lib/auth/onboarding';
 import type { AuthClientContext, AuthServiceLoginResult, AuthServiceUser, TenantEntry } from '@/features/auth/types';
 
 const MAX_LOGIN_ATTEMPTS = 5;
@@ -322,6 +323,12 @@ export const AuthService = {
           : user.role === 'salesAgent'
             ? '/sales-agent/referidos'
             : '/busy/dashboard',
+      onboardingToken: midOnboarding
+        ? signOnboardingToken(
+            { userId: user.userId, email: user.email, purpose: 'onboarding' },
+            '48h',
+          )
+        : undefined,
     };
   },
 

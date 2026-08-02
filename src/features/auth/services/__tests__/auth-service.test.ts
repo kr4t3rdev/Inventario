@@ -80,6 +80,9 @@ function createMockUser(overrides: Record<string, unknown> = {}) {
 describe('AuthService.login', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    // clearAllMocks no vacía la cola de mockReturnValueOnce; sin el reset,
+    // valores sin consumir de tests previos se filtran al siguiente test.
+    vi.mocked(jwt.sign).mockReset();
     vi.mocked(jwt.sign)
       .mockReturnValueOnce('access-token' as never)
       .mockReturnValueOnce('refresh-token' as never);
@@ -225,6 +228,7 @@ describe('AuthService.login', () => {
     vi.mocked(prisma.user.updateMany).mockResolvedValue({ count: 1 } as never);
     vi.mocked(prisma.userSession.create).mockResolvedValue({ id: 'session-pending' } as never);
     vi.mocked(prisma.userActivityLog.create).mockResolvedValue({} as never);
+    vi.mocked(jwt.sign).mockReturnValueOnce('onboarding-token' as never);
 
     const result = await AuthService.login({
       input: { email: 'test@example.com', password: 'secret123' },
@@ -232,6 +236,38 @@ describe('AuthService.login', () => {
     });
 
     expect(result.redirectTo).toBe('/onboarding');
+    expect(result.onboardingToken).toBe('onboarding-token');
     expect(prisma.tenantMembership.findFirst).not.toHaveBeenCalled();
+  });
+
+  it('does not expose an onboarding token for users with an active tenant', async () => {
+    const user = createMockUser({ role: 'admin' });
+    const licenseExpiresAt = new Date(Date.now() + 86_400_000);
+
+    vi.mocked(prisma.user.findUnique).mockResolvedValue(user as never);
+    vi.mocked(bcrypt.compare).mockResolvedValue(true as never);
+    vi.mocked(prisma.user.updateMany).mockResolvedValue({ count: 1 } as never);
+    vi.mocked(prisma.tenantMembership.findFirst).mockResolvedValue({
+      tenantId: 'tenant-1',
+      tenantRole: 'admin',
+      isActive: true,
+    } as never);
+    vi.mocked(prisma.tenantLicense.findFirst).mockResolvedValue({
+      maxUsuarios: 10,
+      maxAlmacenes: 5,
+      maxProductos: 500,
+      expiracion: licenseExpiresAt,
+      features: { productos: true },
+    } as never);
+    vi.mocked(prisma.userSession.create).mockResolvedValue({ id: 'session-admin' } as never);
+    vi.mocked(prisma.userActivityLog.create).mockResolvedValue({} as never);
+
+    const result = await AuthService.login({
+      input: { email: 'test@example.com', password: 'secret123' },
+      client: {},
+    });
+
+    expect(result.redirectTo).toBe('/admin');
+    expect(result.onboardingToken).toBeUndefined();
   });
 });
