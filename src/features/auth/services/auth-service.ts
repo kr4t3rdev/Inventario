@@ -196,7 +196,7 @@ export const AuthService = {
       throw new ActionError('Credenciales inválidas', 'INVALID_CREDENTIALS');
     }
 
-    const midOnboarding = isMidOnboarding(user.onboardingStatus);
+    const midOnboarding = user.role !== 'admin' && isMidOnboarding(user.onboardingStatus);
 
     if (!midOnboarding && user.isActive === false) {
       throw new ActionError(
