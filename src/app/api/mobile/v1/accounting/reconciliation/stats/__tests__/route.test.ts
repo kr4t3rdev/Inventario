@@ -73,7 +73,7 @@ describe('mobile accounting reconciliation stats route', () => {
     expect(data.stats.reconciledAmount).toBe(85);
     expect(data.recentActivity).toHaveLength(1);
     expect(prisma.venta.count).toHaveBeenCalledWith({
-      where: { tenantId: 'tenant-1', reconciliaciones: { none: {} } },
+      where: { tenantId: 'tenant-1', deletedAt: null, reconciliaciones: { none: {} } },
     });
     expect(prisma.gastosDE.count).toHaveBeenCalledWith({
       where: { tenantId: 'tenant-1', reconciliaciones: { none: {} } },

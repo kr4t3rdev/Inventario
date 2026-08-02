@@ -7,6 +7,7 @@ vi.mock('@/lib/server-actions/get-current-user');
 vi.mock('next/cache', () => ({ revalidatePath: vi.fn() }));
 vi.mock('@/lib/prisma', () => ({
   prisma: {
+    $transaction: vi.fn(),
     empleado: {
       findMany: vi.fn(),
       findFirst: vi.fn(),
@@ -19,6 +20,12 @@ vi.mock('@/lib/prisma', () => ({
       create: vi.fn(),
       deleteMany: vi.fn(),
     },
+    reconciliacionGasto: {
+      findMany: vi.fn(),
+      deleteMany: vi.fn(),
+    },
+    cuentaBancaria: { findMany: vi.fn(), updateMany: vi.fn() },
+    cuentaPorPagar: { findUnique: vi.fn(), update: vi.fn() },
     employeeWorkSchedule: {
       findMany: vi.fn(),
       findFirst: vi.fn(),
@@ -42,6 +49,7 @@ import {
   getNominaAction,
   getWorkSchedulesAction,
   upsertWorkScheduleAction,
+  calculateNominaAction,
 } from '@/features/empleados/actions';
 import type { AuthenticatedUser } from '@/lib/auth-middleware';
 
@@ -243,5 +251,48 @@ describe('Empleados Server Actions', () => {
     });
     expect(result.success).toBe(false);
     // Dependiente no puede crear (requireManagerRole)
+  });
+
+  it('forceRecalculate revierte movimientos de nómina antes de reemplazar el período', async () => {
+    vi.mocked(getCurrentUser).mockResolvedValue(mockUser);
+    const tx = {
+      $queryRaw: vi.fn().mockResolvedValue([]),
+      pagosalario: {
+        findMany: vi.fn().mockResolvedValue([{ pgId: 'pg-old' }]),
+        deleteMany: vi.fn().mockResolvedValue({ count: 1 }),
+      },
+      reconciliacionGasto: {
+        findMany: vi.fn().mockResolvedValue([
+          {
+            reconciliacionId: 'rec-old',
+            cuentaId: 'account-1',
+            monto: 100,
+            montoConvertido: 300,
+            cuentaPorPagarId: null,
+            moneda: 'USD',
+            tasaCambio: 3,
+          },
+        ]),
+        deleteMany: vi.fn().mockResolvedValue({ count: 1 }),
+      },
+      cuentaBancaria: {
+        findMany: vi.fn().mockResolvedValue([{ cuentaId: 'account-1', moneda: 'CUP' }]),
+        updateMany: vi.fn().mockResolvedValue({ count: 1 }),
+      },
+      cuentaPorPagar: { findUnique: vi.fn(), update: vi.fn() },
+    };
+    vi.mocked(prisma.$transaction).mockImplementation(async (callback: any) => callback(tx));
+    vi.mocked(prisma.empleado.findMany).mockResolvedValue([]);
+
+    const result = await calculateNominaAction({
+      periodo: '2026-08',
+      forceRecalculate: true,
+      includeVacationAccrual: false,
+    });
+
+    expect(result.success).toBe(false);
+    expect(result.error?.code).toBe('NOT_FOUND');
+	expect(tx.cuentaBancaria.updateMany).not.toHaveBeenCalled();
+	expect(tx.reconciliacionGasto.deleteMany).not.toHaveBeenCalled();
   });
 });

@@ -12,14 +12,22 @@ vi.mock('@/lib/services/tenant-scope', () => ({
 }));
 vi.mock('@/lib/prisma', () => ({
   prisma: {
+    $transaction: vi.fn(),
     pagosalario: {
       findMany: vi.fn(),
       findFirst: vi.fn(),
       create: vi.fn(),
       update: vi.fn(),
       delete: vi.fn(),
+      deleteMany: vi.fn(),
     },
     empleado: { findFirst: vi.fn() },
+    reconciliacionGasto: {
+      findMany: vi.fn(),
+      deleteMany: vi.fn(),
+    },
+    cuentaBancaria: { findMany: vi.fn(), updateMany: vi.fn() },
+    cuentaPorPagar: { findUnique: vi.fn(), update: vi.fn() },
   },
 }));
 
@@ -108,10 +116,67 @@ describe('PagoSalario Server Actions', () => {
   describe('deletePagoSalarioAction', () => {
     it('elimina pago exitosamente', async () => {
       vi.mocked(getCurrentUser).mockResolvedValue(mockUser);
-      vi.mocked(prisma.pagosalario.findFirst).mockResolvedValue({ pgId: 'pg-1' });
-      vi.mocked(prisma.pagosalario.delete).mockResolvedValue({} as any);
+      const tx = {
+        $queryRaw: vi.fn().mockResolvedValue([]),
+        pagosalario: {
+          findFirst: vi.fn().mockResolvedValue({ pgId: 'pg-1' }),
+          deleteMany: vi.fn().mockResolvedValue({ count: 1 }),
+        },
+        reconciliacionGasto: {
+          findMany: vi.fn().mockResolvedValue([]),
+          deleteMany: vi.fn().mockResolvedValue({ count: 0 }),
+        },
+        cuentaBancaria: {
+          findMany: vi.fn().mockResolvedValue([{ cuentaId: 'account-1', moneda: 'CUP' }]),
+          updateMany: vi.fn(),
+        },
+        cuentaPorPagar: { findUnique: vi.fn(), update: vi.fn() },
+      };
+      vi.mocked(prisma.$transaction).mockImplementation(async (callback: any) => callback(tx));
       const result = await deletePagoSalarioAction('pg-1');
       expect(result.success).toBe(true);
+      expect(tx.pagosalario.deleteMany).toHaveBeenCalledWith({
+        where: { tenantId: 'tenant-test', pgId: 'pg-1' },
+      });
+    });
+
+    it('revierte el saldo bancario enlazado antes de eliminar', async () => {
+      vi.mocked(getCurrentUser).mockResolvedValue(mockUser);
+      const tx = {
+        $queryRaw: vi.fn().mockResolvedValue([]),
+        pagosalario: {
+          findFirst: vi.fn().mockResolvedValue({ pgId: 'pg-1' }),
+          deleteMany: vi.fn().mockResolvedValue({ count: 1 }),
+        },
+        reconciliacionGasto: {
+          findMany: vi.fn().mockResolvedValue([
+            {
+              reconciliacionId: 'rec-1',
+              cuentaId: 'account-1',
+              monto: 200,
+              montoConvertido: 240,
+              cuentaPorPagarId: null,
+              moneda: 'USD',
+              tasaCambio: 1.2,
+            },
+          ]),
+          deleteMany: vi.fn().mockResolvedValue({ count: 1 }),
+        },
+        cuentaBancaria: {
+          findMany: vi.fn().mockResolvedValue([{ cuentaId: 'account-1', moneda: 'CUP' }]),
+          updateMany: vi.fn().mockResolvedValue({ count: 1 }),
+        },
+        cuentaPorPagar: { findUnique: vi.fn(), update: vi.fn() },
+      };
+      vi.mocked(prisma.$transaction).mockImplementation(async (callback: any) => callback(tx));
+
+      const result = await deletePagoSalarioAction('pg-1');
+
+      expect(result.success).toBe(true);
+      expect(tx.cuentaBancaria.updateMany).toHaveBeenCalledWith({
+        where: { cuentaId: 'account-1', tenantId: 'tenant-test' },
+        data: { saldo: { increment: 240 } },
+      });
     });
   });
 

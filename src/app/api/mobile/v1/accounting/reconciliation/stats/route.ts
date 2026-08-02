@@ -19,7 +19,7 @@ export async function GET(request: Request) {
     const todayEnd = endOfDay(new Date());
 
     const ventasPendientesCount = await prisma.venta.count({
-      where: { tenantId, reconciliaciones: { none: {} } },
+      where: { tenantId, deletedAt: null, reconciliaciones: { none: {} } },
     });
 
     const ventasCompletadasHoyCount = await prisma.reconciliacionVenta.count({

@@ -415,6 +415,11 @@ export const VentaMutationService = {
     }
 
     await prisma.$transaction(async (tx) => {
+      await tx.$queryRaw`
+        SELECT "ventaId" FROM "Venta"
+        WHERE "ventaId" = ${parsed.ventaId} AND "tenantId" = ${tenantId}
+        FOR UPDATE
+      `;
       const currentVenta = await tx.venta.findUnique({
         where: { ventaId: parsed.ventaId },
         select: {
@@ -473,42 +478,48 @@ export const VentaMutationService = {
         throw new ActionError('La venta ya está anulada', 'VALIDATION_ERROR');
       }
 
-      let cuentasPorCobrarNeutralizadas = 0;
+      let cuentasPorCobrarAnuladas = 0;
       if (currentVenta.factura?.idFactura) {
         await tx.factura.update({
           where: { idFactura: currentVenta.factura.idFactura },
           data: { estado: 'ANULADA' },
         });
 
-        const cuentasPorCobrar = await tx.cuentaPorCobrar.findMany({
+      }
+
+      const cuentasPorCobrar = await tx.cuentaPorCobrar.findMany({
+        where: {
+          tenantId,
+          OR: [
+            { facturaId: parsed.ventaId },
+            ...(currentVenta.factura?.idFactura
+              ? [{ facturaId: currentVenta.factura.idFactura }]
+              : []),
+          ],
+        },
+        select: { id: true },
+      });
+
+      if (cuentasPorCobrar.length > 0) {
+        cuentasPorCobrarAnuladas = cuentasPorCobrar.length;
+        await tx.cuentaPorCobrar.updateMany({
           where: {
             tenantId,
-            facturaId: currentVenta.factura.idFactura,
+            id: { in: cuentasPorCobrar.map((cuenta) => cuenta.id) },
           },
-          select: { id: true },
+          // Keep all monetary and transfer fields intact: cancellation is a
+          // historical state transition, not a payment or deletion of debt.
+          data: { estado: 'ANULADA' },
         });
-
-        if (cuentasPorCobrar.length > 0) {
-          cuentasPorCobrarNeutralizadas = cuentasPorCobrar.length;
-          await tx.cuentaPorCobrar.updateMany({
-            where: {
-              tenantId,
-              id: { in: cuentasPorCobrar.map((cuenta) => cuenta.id) },
-            },
-            data: {
-              montoDeuda: 0,
-              montoPagado: 0,
-              estado: 'PAGADA',
-              idTransferencia: null,
-            },
-          });
-        }
       }
 
       const reconciliaciones = currentVenta.reconciliaciones ?? [];
       await reverseReconciliations(tx, reconciliaciones, tenantId);
 
       if (reconciliaciones.length > 0) {
+        // ReconciliacionVenta has no annulled/reversed state. Once the exact bank
+        // amounts are reversed, remove those active payment rows; the linked CxC
+        // and its financial history remain untouched above.
         await tx.reconciliacionVenta.deleteMany({
           where: { tenantId, ventaId: parsed.ventaId },
         });
@@ -551,7 +562,7 @@ export const VentaMutationService = {
           detalles: {
             motivo: parsed.motivo ?? null,
             facturaAnulada: Boolean(currentVenta.factura?.idFactura),
-            cuentasPorCobrarNeutralizadas,
+            cuentasPorCobrarAnuladas,
             reconciliacionesRevertidas: reconciliaciones.length,
             stockItemsRestored: venta.items.length,
           },

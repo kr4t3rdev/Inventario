@@ -57,6 +57,13 @@ export const reconciliacionGastoSchema = z.object({
   )
   .refine(
     (data) => {
+      const explicit = [data.pgId, data.gastosDEId, data.gastoCompraId].filter(Boolean)
+      return explicit.length <= 1 && (!data.referenciaId || explicit.length === 0 || data.referenciaId === explicit[0])
+    },
+    { message: 'Debe proporcionar exactamente una referencia de gasto' },
+  )
+  .refine(
+    (data) => {
       if (data.estado === 'PAGADA') {
         const hasDistribucion =
           Array.isArray(data.distribucion) && data.distribucion.length > 0

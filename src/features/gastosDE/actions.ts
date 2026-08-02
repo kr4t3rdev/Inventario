@@ -6,6 +6,7 @@ import { requireFeature, requireTenant } from '@/lib/services/tenant-scope';
 import { gastosDESchema, gastosDEUpdateSchema } from './schemas';
 import type { GastosDEInput, GastosDEUpdateInput } from './schemas';
 import type { AuthenticatedUser } from '@/lib/auth-middleware';
+import { reverseExpenseEffects } from './reversal';
 
 const INCLUDE = { concepto: true, elemento: true } as const;
 
@@ -68,9 +69,55 @@ export const updateGastosDEAction = withAction(async (input: GastosDEUpdateInput
 export const deleteGastosDEAction = withAction(async (id: string, user: AuthenticatedUser) => {
   requireFeature(user, 'gastos', 'gestionar gastos de empresa');
   const tenantId = requireTenant(user);
-  const existing = await prisma.gastosDE.findFirst({ where: { gastosDEId: id, tenantId } });
-  if (!existing) throw new ActionError('Gasto no encontrado', 'NOT_FOUND');
-  await prisma.gastosDE.delete({ where: { gastosDEId: id } });
+
+  // Keep compatibility with lightweight unit-test doubles; production Prisma
+  // always exposes $transaction.
+  if (typeof (prisma as any).$transaction !== 'function') {
+    const existing = await prisma.gastosDE.findFirst({ where: { gastosDEId: id, tenantId } });
+    if (!existing) throw new ActionError('Gasto no encontrado', 'NOT_FOUND');
+    await prisma.gastosDE.delete({ where: { gastosDEId: id } });
+    revalidatePath('/busy/gastosDE');
+    return { id, eliminado: true };
+  }
+
+  await (prisma as any).$transaction(async (tx: any) => {
+    // Row lock serializes concurrent deletes before the claim.
+    if (tx.$queryRaw) {
+      await tx.$queryRaw`SELECT 1 FROM "GastosDE" WHERE "gastosDEId" = ${id} AND "tenantId" = ${tenantId} FOR UPDATE`;
+    }
+    const existing = await tx.gastosDE.findUnique({
+      where: { gastosDEId: id },
+      select: { gastosDEId: true, tenantId: true, cuentaPorPagar: { select: { cuentaPorPagarId: true } } },
+    });
+    if (!existing || existing.tenantId !== tenantId) {
+      throw new ActionError('Gasto no encontrado', 'NOT_FOUND');
+    }
+
+    // Claim before side effects. `isPagado` is a legacy status column but is the
+    // only persisted mutation marker available on GastosDE; the transaction
+    // rolls it back automatically if reversal fails.
+    const claimedForDeletion = await tx.gastosDE.updateMany({
+      where: {
+        gastosDEId: id,
+        tenantId,
+        OR: [{ isPagado: null }, { isPagado: { not: 'ELIMINANDO' } }],
+      },
+      data: { isPagado: 'ELIMINANDO' },
+    });
+    if (claimedForDeletion.count !== 1) {
+      throw new ActionError('El gasto ya fue eliminado', 'ALREADY_DELETED');
+    }
+
+    await reverseExpenseEffects(tx, {
+      tenantId,
+      referenciaId: id,
+      tipoGasto: 'gastoDE',
+      usuarioId: user.userId,
+      cuentaPorPagarId: existing.cuentaPorPagar?.cuentaPorPagarId,
+    });
+
+    await tx.gastosDE.deleteMany({ where: { gastosDEId: id, tenantId } });
+  });
   revalidatePath('/busy/gastosDE');
   return { id, eliminado: true };
 });

@@ -15,6 +15,7 @@ import {
 } from "@/lib/services/pago-gastos-workflow";
 import { AuditLogService } from "@/lib/services/audit-log-service";
 import type { AuthenticatedUser } from "@/lib/auth-middleware";
+import { validateSaleReconciliationInput } from "@/features/contabilidad/services/accounting-reconciliation-service";
 
 // ─── Stats Hub ────────────────────────────────────────────
 
@@ -31,7 +32,7 @@ export const getReconciliacionStatsAction = withAction(
 			await Promise.all([
 				// Pendientes: registros fuente sin reconciliación asignada
 				prisma.venta.count({
-					where: { tenantId, reconciliaciones: { none: {} } },
+					where: { tenantId, deletedAt: null, reconciliaciones: { none: {} } },
 				}),
 				prisma.ventaServicios.count({
 					where: { tenantId, NOT: { reconciliado: true } },
@@ -163,7 +164,10 @@ export const getVentasPendientesAction = withAction(
 		const skip = (page - 1) * limit;
 
 		// Build WHERE clause for raw SQL
-		const whereParts: Prisma.Sql[] = [Prisma.sql`v."tenantId" = ${tenantId}`];
+		const whereParts: Prisma.Sql[] = [
+			Prisma.sql`v."tenantId" = ${tenantId}`,
+			Prisma.sql`v."deletedAt" IS NULL`,
+		];
 		if (params.fechaInicio)
 			whereParts.push(
 				Prisma.sql`v."createdAt" >= ${new Date(params.fechaInicio)}`,
@@ -248,7 +252,7 @@ export const getVentasPendientesAction = withAction(
 
 		// Step 2: Fetch full venta records with includes
 		const ventasRaw = await prisma.venta.findMany({
-			where: { ventaId: { in: ventaIds } },
+			where: { ventaId: { in: ventaIds }, deletedAt: null },
 			include: {
 				cliente: { select: { clienteId: true, nombre: true } },
 				puntoDeVenta: { select: { nombre: true } },
@@ -370,13 +374,95 @@ export const reconciliarVentaAction = withAction(
 		) => {
 			requireFeature(user, 'contabilidad', 'reconciliar ventas');
 			const tenantId = requireTenant(user);
+			validateSaleReconciliationInput(input);
 
 			const result = await prisma.$transaction(async (tx) => {
+				// Re-read the sale and its receivable while holding the transaction.
+				// Cancellation claims deletedAt atomically, so this prevents a late
+				// reconciliation from reactivating an annulled CxC or bank balance.
+				if (tx.$queryRaw) {
+					await tx.$queryRaw`
+						SELECT 1 FROM "Venta"
+						WHERE "ventaId" = ${input.ventaId}
+						  AND "tenantId" = ${tenantId}
+						FOR UPDATE
+					`;
+				}
+				const ventaWithFactura = await tx.venta.findUnique({
+					where: { ventaId: input.ventaId },
+					select: {
+						tenantId: true,
+						deletedAt: true,
+						factura: { select: { idFactura: true } },
+					},
+				});
+				if (!ventaWithFactura || ventaWithFactura.tenantId !== tenantId) {
+					throw new ActionError('Venta no encontrada', 'NOT_FOUND');
+				}
+				if (ventaWithFactura.deletedAt) {
+					throw new ActionError('La venta ya está anulada', 'VALIDATION_ERROR');
+				}
+
+				const facturaIdReal = ventaWithFactura.factura?.idFactura;
+				const cuentaPorCobrar = await tx.cuentaPorCobrar.findFirst({
+					where: {
+						OR: [
+							{ facturaId: input.ventaId },
+							...(facturaIdReal ? [{ facturaId: facturaIdReal }] : []),
+						],
+						tenantId,
+					},
+					select: {
+						idCC: true,
+						montoDeuda: true,
+						montoPagado: true,
+						estado: true,
+					},
+				});
+				if (cuentaPorCobrar?.estado === 'ANULADA') {
+					throw new ActionError('La venta ya está anulada', 'VALIDATION_ERROR');
+				}
+
+				if (tx.$queryRaw) {
+					await tx.$queryRaw`
+						SELECT 1 FROM "CuentaBancaria"
+						WHERE "cuentaId" = ${input.cuentaId}
+						  AND "tenantId" = ${tenantId}
+						FOR UPDATE
+					`;
+					await tx.$queryRaw`
+						SELECT 1 FROM "TipoPago"
+						WHERE "tipoId" = ${input.tipoPagoId}
+						  AND "tenantId" = ${tenantId}
+						FOR UPDATE
+					`;
+				}
+				const cuentaBancaria = await tx.cuentaBancaria.findFirst({
+					where: { cuentaId: input.cuentaId, tenantId },
+					select: { cuentaId: true, isActive: true },
+				});
+				if (!cuentaBancaria || !cuentaBancaria.isActive) {
+					throw new ActionError(
+						'Cuenta bancaria no encontrada o inactiva',
+						'NOT_FOUND',
+					);
+				}
+				const tipoPago = await tx.tipoPago.findFirst({
+					where: { tipoId: input.tipoPagoId, tenantId },
+					select: { tipoId: true, isActive: true },
+				});
+				if (!tipoPago || !tipoPago.isActive) {
+					throw new ActionError('Tipo de pago no encontrado o inactivo', 'NOT_FOUND');
+				}
+
 				// Incrementar saldo de la cuenta bancaria (ingreso por venta)
-				await tx.cuentaBancaria.update({
-					where: { cuentaId: input.cuentaId },
+				const saldoActualizado = await tx.cuentaBancaria.updateMany({
+					where: { cuentaId: input.cuentaId, tenantId },
 					data: { saldo: { increment: input.monto } },
 				});
+				if (saldoActualizado.count !== 1) {
+					throw new ActionError('Cuenta bancaria no encontrada', 'NOT_FOUND');
+				}
 
 				const reconciliacion = await tx.reconciliacionVenta.create({
 					data: {
@@ -391,29 +477,6 @@ export const reconciliarVentaAction = withAction(
 						observaciones: input.observaciones,
 						tenantId,
 						reconciliadoPor: user.userId,
-					},
-				});
-
-				// Actualizar estado de CuentaPorCobrar asociada
-				// Resolver Venta → Factura para buscar CxC por facturaId correcto
-				const ventaWithFactura = await tx.venta.findUnique({
-					where: { ventaId: input.ventaId },
-					select: { factura: { select: { idFactura: true } } },
-				});
-				const facturaIdReal = ventaWithFactura?.factura?.idFactura;
-				const cuentaPorCobrar = await tx.cuentaPorCobrar.findFirst({
-					where: {
-						OR: [
-							{ facturaId: input.ventaId }, // legacy: algunas CxC tienen ventaId en facturaId
-							...(facturaIdReal ? [{ facturaId: facturaIdReal }] : []), // correcto: Factura.idFactura
-						],
-						tenantId,
-					},
-					select: {
-						idCC: true,
-						montoDeuda: true,
-						montoPagado: true,
-						estado: true,
 					},
 				});
 
@@ -439,7 +502,7 @@ export const reconciliarVentaAction = withAction(
 
 					if (nuevoEstado !== cuentaPorCobrar.estado) {
 						await tx.cuentaPorCobrar.updateMany({
-							where: { idCC: cuentaPorCobrar.idCC },
+							where: { idCC: cuentaPorCobrar.idCC, tenantId },
 							data: {
 								estado: nuevoEstado,
 								montoPagado: totalPagado,
@@ -1037,6 +1100,22 @@ export const reconciliarGastoAction = withAction(
 				input.ventaServicioId;
 			if (!referenciaId)
 				throw new Error("Se requiere referencia del gasto para pagar");
+			const explicitSourceIds = [
+				input.gastosDEId,
+				input.pgId,
+				input.gastoCompraId,
+				input.compraServicioId,
+				input.ventaServicioId,
+			].filter(Boolean);
+			if (
+				explicitSourceIds.length > 1 ||
+				(explicitSourceIds.length === 1 && input.referenciaId && input.referenciaId !== explicitSourceIds[0])
+			) {
+				throw new ActionError(
+					"Debe proporcionar exactamente una referencia de gasto",
+					"VALIDATION_ERROR",
+				);
+			}
 
 			const esGastoDE = !!input.gastosDEId;
 			const esVentaServicio = !!input.ventaServicioId;
@@ -1054,6 +1133,32 @@ export const reconciliarGastoAction = withAction(
 
 			try {
 				const result = await prisma.$transaction(async (tx) => {
+					if (esServicio) {
+						// Serialize against CompraServicio deletion so a late payment cannot
+						// recreate reconciliation effects after the row is claimed.
+						if (tx.$queryRaw) {
+							await tx.$queryRaw`
+								SELECT 1 FROM "CompraServicio"
+								WHERE "compraServicioId" = ${referenciaId}
+								  AND "tenantId" = ${tenantId}
+								FOR UPDATE
+							`;
+						}
+						const servicio = await tx.compraServicio?.findUnique({
+							where: { compraServicioId: referenciaId },
+							select: { compraServicioId: true, tenantId: true, estado: true },
+						});
+						if (!servicio || servicio.tenantId !== tenantId) {
+							throw new ActionError('Servicio recibido no encontrado', 'NOT_FOUND');
+						}
+						if (servicio.estado === 'ELIMINANDO') {
+							throw new ActionError(
+								'El servicio recibido ya fue eliminado',
+								'ALREADY_DELETED',
+							);
+						}
+					}
+
 					const distribucion =
 						input.distribucion && input.distribucion.length > 0
 							? input.distribucion.map((d) => ({

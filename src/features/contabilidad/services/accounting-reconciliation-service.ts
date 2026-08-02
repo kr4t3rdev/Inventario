@@ -12,6 +12,22 @@ function normalizeMontoToCup(monto: number, moneda: string, tasaCambio?: number)
   return monto;
 }
 
+export function validateSaleReconciliationInput(input: {
+  ventaId?: unknown;
+  cuentaId?: unknown;
+  tipoPagoId?: unknown;
+  monto?: unknown;
+}): asserts input is { ventaId: string; cuentaId: string; tipoPagoId: string; monto: number } {
+  if (
+    typeof input.ventaId !== 'string' || input.ventaId.trim() === '' ||
+    typeof input.cuentaId !== 'string' || input.cuentaId.trim() === '' ||
+    typeof input.tipoPagoId !== 'string' || input.tipoPagoId.trim() === '' ||
+    typeof input.monto !== 'number' || !Number.isFinite(input.monto) || input.monto <= 0
+  ) {
+    throw new ActionError('Datos de reconciliación inválidos', 'VALIDATION_ERROR');
+  }
+}
+
 /**
  * @description Shared service for accounting reconciliation flows used by web and mobile adapters.
  */
@@ -28,7 +44,10 @@ export const AccountingReconciliationService = {
     const limit = params.limit || 50;
     const skip = (page - 1) * limit;
 
-    const whereParts: Prisma.Sql[] = [Prisma.sql`v."tenantId" = ${params.tenantId}`];
+    const whereParts: Prisma.Sql[] = [
+      Prisma.sql`v."tenantId" = ${params.tenantId}`,
+      Prisma.sql`v."deletedAt" IS NULL`,
+    ];
     if (params.fechaInicio) {
       whereParts.push(Prisma.sql`v."createdAt" >= ${new Date(params.fechaInicio)}`);
     }
@@ -98,7 +117,7 @@ export const AccountingReconciliationService = {
     }
 
     const ventasRaw = await prisma.venta.findMany({
-      where: { ventaId: { in: ventaIds } },
+      where: { ventaId: { in: ventaIds }, deletedAt: null },
       include: {
         cliente: { select: { nombre: true } },
         puntoDeVenta: { select: { nombre: true } },
@@ -205,12 +224,65 @@ export const AccountingReconciliationService = {
     user: AuthenticatedUser;
   }) {
     const tenantId = requireTenant(user);
+    validateSaleReconciliationInput(input);
 
     return prisma.$transaction(async (tx) => {
-      await tx.cuentaBancaria.update({
-        where: { cuentaId: input.cuentaId },
+      await tx.$queryRaw`
+        SELECT "ventaId" FROM "Venta"
+        WHERE "ventaId" = ${input.ventaId} AND "tenantId" = ${tenantId}
+        FOR UPDATE
+      `;
+      const venta = await tx.venta.findUnique({
+        where: { ventaId: input.ventaId },
+        select: {
+          tenantId: true,
+          deletedAt: true,
+          factura: { select: { idFactura: true } },
+        },
+      });
+      if (!venta || venta.tenantId !== tenantId) {
+        throw new ActionError('Venta no encontrada', 'NOT_FOUND');
+      }
+      if (venta.deletedAt) {
+        throw new ActionError('La venta ya está anulada', 'VALIDATION_ERROR');
+      }
+
+      const cuentaBancaria = await tx.cuentaBancaria.findFirst({
+        where: { cuentaId: input.cuentaId, tenantId },
+        select: { cuentaId: true, isActive: true },
+      });
+      if (!cuentaBancaria || !cuentaBancaria.isActive) {
+        throw new ActionError('Cuenta bancaria no encontrada o inactiva', 'NOT_FOUND');
+      }
+      const tipoPago = await tx.tipoPago.findFirst({
+        where: { tipoId: input.tipoPagoId, tenantId },
+        select: { tipoId: true, isActive: true },
+      });
+      if (!tipoPago || !tipoPago.isActive) {
+        throw new ActionError('Tipo de pago no encontrado o inactivo', 'NOT_FOUND');
+      }
+
+      const cuentaPorCobrar = await tx.cuentaPorCobrar.findFirst({
+        where: {
+          OR: [
+            { facturaId: input.ventaId },
+            ...(venta.factura?.idFactura ? [{ facturaId: venta.factura.idFactura }] : []),
+          ],
+          tenantId,
+        },
+        select: { idCC: true, montoDeuda: true, montoPagado: true, estado: true },
+      });
+      if (cuentaPorCobrar?.estado === 'ANULADA') {
+        throw new ActionError('La venta ya está anulada', 'VALIDATION_ERROR');
+      }
+
+      const saldoActualizado = await tx.cuentaBancaria.updateMany({
+        where: { cuentaId: input.cuentaId, tenantId },
         data: { saldo: { increment: input.monto } },
       });
+      if (saldoActualizado.count !== 1) {
+        throw new ActionError('Cuenta bancaria no encontrada', 'NOT_FOUND');
+      }
 
       const reconciliacion = await tx.reconciliacionVenta.create({
         data: {
@@ -226,22 +298,6 @@ export const AccountingReconciliationService = {
           tenantId,
           reconciliadoPor: user.userId,
         },
-      });
-
-      const ventaWithFactura = await tx.venta.findUnique({
-        where: { ventaId: input.ventaId },
-        select: { factura: { select: { idFactura: true } } },
-      });
-      const facturaIdReal = ventaWithFactura?.factura?.idFactura;
-      const cuentaPorCobrar = await tx.cuentaPorCobrar.findFirst({
-        where: {
-          OR: [
-            { facturaId: input.ventaId },
-            ...(facturaIdReal ? [{ facturaId: facturaIdReal }] : []),
-          ],
-          tenantId,
-        },
-        select: { idCC: true, montoDeuda: true, montoPagado: true, estado: true },
       });
 
       if (cuentaPorCobrar) {
@@ -265,7 +321,7 @@ export const AccountingReconciliationService = {
 
         if (nuevoEstado !== cuentaPorCobrar.estado) {
           await tx.cuentaPorCobrar.updateMany({
-            where: { idCC: cuentaPorCobrar.idCC },
+            where: { idCC: cuentaPorCobrar.idCC, tenantId },
             data: { estado: nuevoEstado, montoPagado: totalPagado },
           });
         }

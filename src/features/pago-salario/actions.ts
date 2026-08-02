@@ -12,6 +12,8 @@ import { requireFeature, requireTenant, requireManagerRole } from "@/lib/service
 import { pagoSalarioSchema, pagoSalarioUpdateSchema } from "./schemas";
 import type { PagoSalarioInput, PagoSalarioUpdateInput } from "./schemas";
 import type { AuthenticatedUser } from "@/lib/auth-middleware";
+import { Prisma } from "@/generated/prisma";
+import { reversePayrollReconciliations } from "@/features/empleados/payroll-reversal";
 
 const PAGO_SALARIO_INCLUDE = { empleado: true } as const;
 
@@ -120,13 +122,44 @@ export const deletePagoSalarioAction = withAction(
 		requireFeature(user, 'empleados', 'gestionar pagos de empleados');
 		requireManagerRole(user, "eliminar pagos de salario");
 		const tenantId = requireTenant(user);
-		const existing = await prisma.pagosalario.findFirst({
-			where: { pgId: id, tenantId },
-		});
-		if (!existing)
-			throw new ActionError("Pago de salario no encontrado", "NOT_FOUND");
+		await prisma.$transaction(async (tx) => {
+			await tx.$queryRaw`
+				SELECT "pgId" FROM "Pagosalario"
+				WHERE "pgId" = ${id} AND "tenantId" = ${tenantId}
+				FOR UPDATE
+			`;
+			const existing = await tx.pagosalario.findFirst({
+				where: { pgId: id, tenantId },
+				select: { pgId: true },
+			});
+			if (!existing)
+				throw new ActionError("Pago de salario no encontrado", "NOT_FOUND");
 
-		await prisma.pagosalario.delete({ where: { pgId: id } });
+			const reconciliaciones = await tx.reconciliacionGasto.findMany({
+				where: { tenantId, pgId: id },
+				select: {
+					reconciliacionId: true,
+					pgId: true,
+					cuentaId: true,
+					monto: true,
+					montoConvertido: true,
+					cuentaPorPagarId: true,
+					estado: true,
+					moneda: true,
+					tasaCambio: true,
+				},
+			});
+			await reversePayrollReconciliations(tx, reconciliaciones, tenantId);
+			await tx.reconciliacionGasto.deleteMany({
+				where: { tenantId, pgId: id },
+			});
+
+			const deleted = await tx.pagosalario.deleteMany({
+				where: { tenantId, pgId: id },
+			});
+			if (deleted.count !== 1)
+				throw new ActionError("Pago de salario no encontrado", "NOT_FOUND");
+		}, { isolationLevel: Prisma.TransactionIsolationLevel.Serializable });
 		revalidatePath("/busy/empleados");
 		return { success: true };
 	},

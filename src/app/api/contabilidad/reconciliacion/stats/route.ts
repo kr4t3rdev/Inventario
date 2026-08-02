@@ -20,6 +20,7 @@ export async function GET(request: NextRequest) {
     const ventasPendientesCount = await prisma.venta.count({
       where: {
         tenantId,
+        deletedAt: null,
         reconciliaciones: { none: {} }
       }
     })

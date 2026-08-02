@@ -15,6 +15,7 @@ vi.mock("@/lib/services/audit-log-service", () => ({
 
 const { mockTx } = vi.hoisted(() => {
 	const mockTx = {
+		$queryRaw: vi.fn(),
 		serieFacturacion: { findFirst: vi.fn(), create: vi.fn(), update: vi.fn() },
 		venta: {
 			create: vi.fn(),
@@ -423,7 +424,7 @@ describe("Ventas Server Actions", () => {
 			expect(mockTx.stockUbicacion.upsert).not.toHaveBeenCalled();
 		});
 
-		it("anula factura y neutraliza CxC pendiente dentro de la misma transacción", async () => {
+		it("anula factura y conserva el historial financiero de la CxC dentro de la misma transacción", async () => {
 			vi.mocked(getCurrentUser).mockResolvedValue(mockUser);
 			vi.mocked(prisma.venta.findUnique).mockResolvedValue({
 				...mockVenta,
@@ -433,7 +434,13 @@ describe("Ventas Server Actions", () => {
 				...mockVenta,
 				factura: { idFactura: "factura-1" },
 			});
-			mockTx.cuentaPorCobrar.findMany.mockResolvedValue([{ id: "cxc-1" }]);
+			mockTx.cuentaPorCobrar.findMany.mockResolvedValue([{
+				id: "cxc-1",
+				montoDeuda: 1000,
+				montoPagado: 250,
+				idTransferencia: "transfer-1",
+				estado: "PARCIAL",
+			}]);
 
 			const result = await anularVentaAction({ ventaId: "venta-1" });
 
@@ -442,10 +449,18 @@ describe("Ventas Server Actions", () => {
 				where: { idFactura: "factura-1" },
 				data: { estado: "ANULADA" },
 			});
+			expect(mockTx.cuentaPorCobrar.findMany).toHaveBeenCalledWith({
+				where: {
+					tenantId: "tenant-test",
+					OR: [{ facturaId: "venta-1" }, { facturaId: "factura-1" }],
+				},
+				select: { id: true },
+			});
 			expect(mockTx.cuentaPorCobrar.updateMany).toHaveBeenCalledWith({
 				where: { tenantId: "tenant-test", id: { in: ["cxc-1"] } },
-				data: { montoDeuda: 0, montoPagado: 0, estado: "PAGADA", idTransferencia: null },
+				data: { estado: "ANULADA" },
 			});
+			expect(mockTx.cuentaPorCobrar.deleteMany).not.toHaveBeenCalled();
 		});
 
 		it("registra auditoría durable de la reversión dentro de la transacción", async () => {

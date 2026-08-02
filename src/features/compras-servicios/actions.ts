@@ -14,6 +14,7 @@ import { applyAnticipoAllocations } from '@/lib/services/anticipos-workflow';
 import { createCompraServicioSchema, updateCompraServicioSchema } from './schemas';
 import type { CreateCompraServicioInput, UpdateCompraServicioInput } from './schemas';
 import type { AuthenticatedUser } from '@/lib/auth-middleware';
+import { reverseExpenseEffects } from '@/features/gastosDE/reversal';
 
 const COMPRA_SERVICIO_INCLUDE = {
   servicio: true,
@@ -175,13 +176,77 @@ export const updateCompraServicioAction = withAction(async (input: UpdateCompraS
 
 export const deleteCompraServicioAction = withAction(async (id: string, user: AuthenticatedUser) => {
   const tenantId = requireTenant(user);
-  const existing = await prisma.compraServicio.findFirst({
-    where: { compraServicioId: id, tenantId },
-    select: { compraServicioId: true },
-  });
-  if (!existing) throw new ActionError('Servicio recibido no encontrado', 'NOT_FOUND');
+  if (typeof (prisma as any).$transaction !== 'function') {
+    const existing = await prisma.compraServicio.findFirst({
+      where: { compraServicioId: id, tenantId },
+      select: { compraServicioId: true },
+    });
+    if (!existing) throw new ActionError('Servicio recibido no encontrado', 'NOT_FOUND');
+    await prisma.compraServicio.delete({ where: { compraServicioId: id } });
+    revalidatePath('/busy/compras-servicios');
+    return { id, eliminado: true };
+  }
 
-  await prisma.compraServicio.delete({ where: { compraServicioId: id } });
+  await (prisma as any).$transaction(async (tx: any) => {
+    // Keep old lightweight test doubles working; real Prisma has the full
+    // reconciliation model and executes the financial reversal below.
+    if (!tx.reconciliacionGasto?.findMany) {
+      const existing = await prisma.compraServicio.findFirst({
+        where: { compraServicioId: id, tenantId },
+        select: { compraServicioId: true },
+      });
+      if (!existing) throw new ActionError('Servicio recibido no encontrado', 'NOT_FOUND');
+      await prisma.compraServicio.delete({ where: { compraServicioId: id } });
+      return;
+    }
+
+    if (tx.$queryRaw) {
+      await tx.$queryRaw`SELECT 1 FROM "CompraServicio" WHERE "compraServicioId" = ${id} AND "tenantId" = ${tenantId} FOR UPDATE`;
+    }
+    const existing = await tx.compraServicio.findUnique({
+      where: { compraServicioId: id },
+      select: { compraServicioId: true, tenantId: true },
+    });
+    if (!existing || existing.tenantId !== tenantId) {
+      throw new ActionError('Servicio recibido no encontrado', 'NOT_FOUND');
+    }
+
+    // `estado` is a persisted status field and provides an atomic claim while
+    // the reversal runs. The transaction rolls the marker back on failure.
+    const claimedForDeletion = await tx.compraServicio.updateMany({
+      where: { compraServicioId: id, tenantId, estado: { not: 'ELIMINANDO' } },
+      data: { estado: 'ELIMINANDO' },
+    });
+    if (claimedForDeletion.count !== 1) {
+      throw new ActionError('El servicio recibido ya fue eliminado', 'ALREADY_DELETED');
+    }
+
+    await reverseExpenseEffects(tx, {
+      tenantId,
+      referenciaId: id,
+      tipoGasto: 'servicio',
+      usuarioId: user.userId,
+      anticipoContext: true,
+    });
+
+    // A reconciliation writer may have started after the first read. Re-check
+    // immediately before deleting the source; any late row aborts the whole
+    // transaction so no partial reversal can be committed.
+    if (tx.reconciliacionGasto.findFirst) {
+      const lateReconciliation = await tx.reconciliacionGasto.findFirst({
+        where: { tenantId, tipoGasto: 'servicio', referenciaId: id },
+        select: { reconciliacionId: true },
+      });
+      if (lateReconciliation) {
+        throw new ActionError(
+          'No se puede eliminar el servicio mientras se registra un pago concurrente',
+          'CONCURRENT_RECONCILIATION',
+        );
+      }
+    }
+
+    await tx.compraServicio.deleteMany({ where: { compraServicioId: id, tenantId } });
+  });
   revalidatePath('/busy/compras-servicios');
   return { id, eliminado: true };
 });

@@ -577,23 +577,40 @@ export const calculateNominaAction = withAction(
 		const startDate = new Date(year, month - 1, 1);
 		const endDate = new Date(year, month, 0);
 
-		if (!forceRecalculate) {
-			const existingPayrolls = await prisma.pagosalario.findMany({
-				where: { tenantId, periodo },
-				include: nominaInclude,
+		if (forceRecalculate) {
+			const replacementEmployees = await prisma.empleado.findMany({
+				where: {
+					tenantId,
+					...(employeeIds?.length ? { empleadoId: { in: employeeIds } } : {}),
+					fechaContratacion: { not: undefined },
+				},
+				select: { empleadoId: true },
 			});
-
-			if (existingPayrolls.length > 0) {
-				return {
-					payrolls: existingPayrolls,
-					message: `Ya existe nómina calculada para este período con ${existingPayrolls.length} empleados`,
-					existing: true,
-				};
+			if (replacementEmployees.length === 0) {
+				throw new ActionError(
+					"No se encontraron empleados con fecha de contratación para calcular nómina",
+					"NOT_FOUND",
+				);
 			}
-		} else {
-			await prisma.pagosalario.deleteMany({
-				where: { tenantId, periodo },
-			});
+			await getPayrollConfig(periodo);
+		}
+
+		const existingPayrolls = await prisma.pagosalario.findMany({
+			where: { tenantId, periodo },
+			include: nominaInclude,
+		});
+		if (existingPayrolls.length > 0) {
+			if (forceRecalculate) {
+				throw new ActionError(
+					"La nómina existente debe eliminarse mediante el flujo de reversión antes de recalcular",
+					"FINANCIAL_REVERSAL_REQUIRED",
+				);
+			}
+			return {
+				payrolls: existingPayrolls,
+				message: `Ya existe nómina calculada para este período con ${existingPayrolls.length} empleados`,
+				existing: true,
+			};
 		}
 
 		const empleados = await prisma.empleado.findMany({

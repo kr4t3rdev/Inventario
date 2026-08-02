@@ -48,7 +48,7 @@ describe('web accounting reconciliation stats route', () => {
 
     expect(response.status).toBe(200);
     expect(prisma.venta.count).toHaveBeenCalledWith({
-      where: { tenantId: 'tenant-web-1', reconciliaciones: { none: {} } },
+      where: { tenantId: 'tenant-web-1', deletedAt: null, reconciliaciones: { none: {} } },
     });
     expect(prisma.reconciliacionGasto.findMany).toHaveBeenCalledWith(
       expect.objectContaining({ where: { tenantId: 'tenant-web-1' } }),

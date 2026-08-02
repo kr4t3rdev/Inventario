@@ -5,7 +5,7 @@ import { startOfDay, endOfDay } from 'date-fns'
 export async function handleGetReconciliacionStats(tenantId: string) {
   const todayStart = startOfDay(new Date()); const todayEnd = endOfDay(new Date())
 
-  const ventasPendientesCount = await prisma.venta.count({ where: { tenantId, reconciliaciones: { none: {} } } })
+  const ventasPendientesCount = await prisma.venta.count({ where: { tenantId, deletedAt: null, reconciliaciones: { none: {} } } })
   const ventasCompletadasHoyCount = await prisma.reconciliacionVenta.count({ where: { tenantId, createdAt: { gte: todayStart, lte: todayEnd } } })
   const serviciosPendientesCount = await prisma.reconciliacionServicio.count({ where: { tenantId, ventasServicio: { tenantId, reconciliaciones: { none: {} } } } })
   const serviciosCompletadosHoyCount = await prisma.reconciliacionServicio.count({ where: { tenantId, createdAt: { gte: todayStart, lte: todayEnd } } })
