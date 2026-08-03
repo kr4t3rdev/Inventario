@@ -70,7 +70,7 @@ export const membershipActionSchema = z.object({
 export const addTenantMembershipSchema = z.object({
   userId: z.string().min(1),
   tenantId: z.string().min(1),
-  tenantRole: z.enum(["manager", "economico", "dependiente"]),
+  tenantRole: z.enum(["manager", "economico", "dependiente", "salesAgent"]),
 });
 
 export type AddTenantMembershipInput = z.infer<typeof addTenantMembershipSchema>;

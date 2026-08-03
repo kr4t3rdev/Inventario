@@ -195,6 +195,7 @@ export function CreateUserDialog({ open, onClose }: CreateUserDialogProps): Reac
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="admin">Administrador</SelectItem>
+                    <SelectItem value="salesAgent">Gestor de Ventas</SelectItem>
                     <SelectItem value="regularUser">Regular User</SelectItem>
                   </SelectContent>
                 </Select>

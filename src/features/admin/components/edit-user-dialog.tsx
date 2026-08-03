@@ -237,6 +237,7 @@ export function EditUserDialog({ open, onClose, user }: EditUserDialogProps): Re
                     </SelectTrigger>
                     <SelectContent>
                       <SelectItem value="admin">Administrador</SelectItem>
+                      <SelectItem value="salesAgent">Gestor de Ventas</SelectItem>
                       <SelectItem value="dependiente">Dependiente</SelectItem>
                       <SelectItem value="regularUser">Usuario legado</SelectItem>
                     </SelectContent>

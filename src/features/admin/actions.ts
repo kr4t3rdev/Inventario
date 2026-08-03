@@ -164,6 +164,35 @@ export const createUserAction = withAction(
 			});
 		}
 
+		// ── Crear perfil de Gestor de Ventas si el rol es salesAgent ──
+		if (parsed.role === "salesAgent") {
+			const referralCode = generateSalesAgentReferralCode();
+			try {
+				await prisma.salesAgentProfile.create({
+					data: {
+						userId: newUser.userId,
+						status: "active",
+						referralCode,
+						approvedAt: new Date(),
+						approvedByAdminId: user.userId,
+					},
+				});
+				await prisma.salesAgentBalance.upsert({
+					where: { userId: newUser.userId },
+					create: { userId: newUser.userId },
+					update: {},
+				});
+			} catch (error) {
+				if (isUniqueConstraintCollision(error)) {
+					throw new ActionError(
+						"El código de referido generado colisionó. Intentá crear el usuario nuevamente",
+						"REFERRAL_CODE_COLLISION",
+					);
+				}
+				throw error;
+			}
+		}
+
 		// ── Crear Empleado si el rol es dependiente ────────────────
 		if (parsed.tenantRole === "dependiente" && adminTenantId) {
 			const nameParts = parsed.name.trim().split(/\s+/);
@@ -217,6 +246,41 @@ export const updateUserAction = withAction(
 			where: { userId },
 			data: updateData,
 		});
+
+		// ── Crear perfil de Gestor de Ventas si se asigna ese rol ──
+		if (data.role === "salesAgent") {
+			const existingProfile = await prisma.salesAgentProfile.findUnique({
+				where: { userId },
+				select: { salesAgentProfileId: true },
+			});
+			if (!existingProfile) {
+				const referralCode = generateSalesAgentReferralCode();
+				try {
+					await prisma.salesAgentProfile.create({
+						data: {
+							userId,
+							status: "active",
+							referralCode,
+							approvedAt: new Date(),
+							approvedByAdminId: user.userId,
+						},
+					});
+					await prisma.salesAgentBalance.upsert({
+						where: { userId },
+						create: { userId },
+						update: {},
+					});
+				} catch (error) {
+					if (isUniqueConstraintCollision(error)) {
+						throw new ActionError(
+							"El código de referido generado colisionó. Intentá guardar nuevamente",
+							"REFERRAL_CODE_COLLISION",
+						);
+					}
+					throw error;
+				}
+			}
+		}
 		const updated = await prisma.user.findUnique({
 			where: { userId },
 			select: {

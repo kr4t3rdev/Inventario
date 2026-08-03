@@ -107,7 +107,8 @@ type RoleFilter =
 	| "admin"
 	| "economico"
 	| "dependiente"
-	| "regularUser";
+	| "regularUser"
+	| "salesAgent";
 type StatusFilter = "all" | "active" | "inactive";
 type SortableColumn = "name" | "email" | "createdAt" | "expiresAt";
 
@@ -447,6 +448,16 @@ export function AdminUsersTable({
 						{getTenantRoleLabel("regularUser")}
 					</Badge>
 				);
+			case "salesAgent":
+				return (
+					<Badge
+						variant="outline"
+						className="border-teal-500/40 bg-teal-500/10 text-teal-700 dark:border-teal-500/40 dark:bg-teal-500/10 dark:text-teal-300"
+					>
+						<User className="mr-1 h-3 w-3" />
+						{getTenantRoleLabel("salesAgent")}
+					</Badge>
+				);
 			default:
 				return (
 					<Badge
@@ -675,6 +686,7 @@ export function AdminUsersTable({
 							<SelectItem value="economico">Económicos</SelectItem>
 							<SelectItem value="dependiente">Dependientes</SelectItem>
 							<SelectItem value="regularUser">Usuarios legados</SelectItem>
+							<SelectItem value="salesAgent">Gestores de Ventas</SelectItem>
 						</SelectContent>
 					</Select>
 					{showTenantColumn && tenants && (
