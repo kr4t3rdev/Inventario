@@ -350,7 +350,7 @@ export function AdminUsersPageClient({
 			const r = await addTenantMembershipAction({
 				userId: addTenantUser.userId,
 				tenantId: addTenantId,
-				tenantRole: addTenantRole as "dependiente" | "economico" | "manager" | "salesAgent",
+				tenantRole: addTenantRole as "dependiente" | "economico" | "manager",
 			});
 			if (!r.success) throw new Error(r.error?.message ?? "Error");
 			toast.success(`${addTenantUser.name} añadido a la empresa`);
@@ -685,7 +685,6 @@ export function AdminUsersPageClient({
 									<SelectItem value="manager">Manager</SelectItem>
 									<SelectItem value="economico">Económico</SelectItem>
 									<SelectItem value="dependiente">Dependiente</SelectItem>
-									<SelectItem value="salesAgent">Gestor de Ventas</SelectItem>
 								</SelectContent>
 							</Select>
 						</div>

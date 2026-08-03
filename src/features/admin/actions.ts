@@ -149,7 +149,7 @@ export const createUserAction = withAction(
 
 		// ── Crear TenantMembership si se especificó tenantRole ──────
 		const adminTenantId = user.tenantId;
-		if (parsed.tenantRole && adminTenantId) {
+		if (parsed.tenantRole && adminTenantId && parsed.role !== "salesAgent") {
 			await prisma.tenantMembership.upsert({
 				where: {
 					tenantId_userId: { tenantId: adminTenantId, userId: newUser.userId },
@@ -249,6 +249,9 @@ export const updateUserAction = withAction(
 
 		// ── Crear perfil de Gestor de Ventas si se asigna ese rol ──
 		if (data.role === "salesAgent") {
+			// El gestor de ventas es tenantless: se limpian membresías previas.
+			await prisma.tenantMembership.deleteMany({ where: { userId } });
+
 			const existingProfile = await prisma.salesAgentProfile.findUnique({
 				where: { userId },
 				select: { salesAgentProfileId: true },

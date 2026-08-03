@@ -187,7 +187,11 @@ export function CreateUserDialog({ open, onClose }: CreateUserDialogProps): Reac
                 <Select
                   value={formData.role}
                   onValueChange={(value) =>
-                    setFormData({ ...formData, role: value as CreateUserFormState['role'] })
+                    setFormData({
+                      ...formData,
+                      role: value as CreateUserFormState['role'],
+                      tenantRole: value === 'salesAgent' ? AUTO_TENANT_ROLE : formData.tenantRole,
+                    })
                   }
                 >
                   <SelectTrigger id="create-role" className="h-11 border-slate-200 bg-white/60 dark:border-slate-700 dark:bg-slate-800/50">
@@ -204,28 +208,30 @@ export function CreateUserDialog({ open, onClose }: CreateUserDialogProps): Reac
                 </p>
               </div>
 
-              <div className="space-y-2">
-                <Label htmlFor="create-tenant-role">Rol en el tenant (opcional)</Label>
-                <Select
-                  value={formData.tenantRole}
-                  onValueChange={(value) =>
-                    setFormData({ ...formData, tenantRole: value })
-                  }
-                >
-                  <SelectTrigger id="create-tenant-role" className="h-11 border-slate-200 bg-white/60 dark:border-slate-700 dark:bg-slate-800/50">
-                    <SelectValue placeholder="Auto-asignado" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value={AUTO_TENANT_ROLE}>Auto-asignado</SelectItem>
-                    <SelectItem value="manager">Manager / Director</SelectItem>
-                    <SelectItem value="economico">Económico</SelectItem>
-                    <SelectItem value="dependiente">Dependiente</SelectItem>
-                  </SelectContent>
-                </Select>
-                <p className="text-xs text-muted-foreground">
-                  Si no se especifica, se asigna según el rol de plataforma.
-                </p>
-              </div>
+              {formData.role !== 'salesAgent' && (
+                <div className="space-y-2">
+                  <Label htmlFor="create-tenant-role">Rol en el tenant (opcional)</Label>
+                  <Select
+                    value={formData.tenantRole}
+                    onValueChange={(value) =>
+                      setFormData({ ...formData, tenantRole: value })
+                    }
+                  >
+                    <SelectTrigger id="create-tenant-role" className="h-11 border-slate-200 bg-white/60 dark:border-slate-700 dark:bg-slate-800/50">
+                      <SelectValue placeholder="Auto-asignado" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value={AUTO_TENANT_ROLE}>Auto-asignado</SelectItem>
+                      <SelectItem value="manager">Manager / Director</SelectItem>
+                      <SelectItem value="economico">Económico</SelectItem>
+                      <SelectItem value="dependiente">Dependiente</SelectItem>
+                    </SelectContent>
+                  </Select>
+                  <p className="text-xs text-muted-foreground">
+                    Si no se especifica, se asigna según el rol de plataforma.
+                  </p>
+                </div>
+              )}
             </div>
 
             <div className="space-y-2 rounded-lg border border-slate-200/70 bg-slate-50/70 p-3 dark:border-slate-700/70 dark:bg-slate-800/40">

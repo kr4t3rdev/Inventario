@@ -91,7 +91,11 @@ export function EditUserDialog({ open, onClose, user }: EditUserDialogProps): Re
   }, []);
 
   const handleRoleChange = useCallback((value: string) => {
-    setFormData((prev) => ({ ...prev, role: value as EditUserFormState['role'] }));
+    setFormData((prev) => ({
+      ...prev,
+      role: value as EditUserFormState['role'],
+      tenantRole: value === 'salesAgent' ? NO_TENANT_ROLE : prev.tenantRole,
+    }));
   }, []);
 
   const handleTenantRoleChange = useCallback((value: string) => {
@@ -121,7 +125,11 @@ export function EditUserDialog({ open, onClose, user }: EditUserDialogProps): Re
       isActive: formData.isActive,
     };
     if (formData.password) payload.password = formData.password;
-    if (formData.tenantRole && formData.tenantRole !== NO_TENANT_ROLE) {
+    if (
+      formData.tenantRole &&
+      formData.tenantRole !== NO_TENANT_ROLE &&
+      formData.role !== 'salesAgent'
+    ) {
       payload.tenantRole = formData.tenantRole;
     }
     if (parsedDays && !Number.isNaN(parsedDays)) payload.daysToExpire = parsedDays;
@@ -247,27 +255,29 @@ export function EditUserDialog({ open, onClose, user }: EditUserDialogProps): Re
                   </p>
                 </div>
 
-                <div className="space-y-2">
-                  <Label htmlFor="edit-tenant-role">Rol en el tenant</Label>
-                  <Select
-                    value={formData.tenantRole}
-                    onValueChange={handleTenantRoleChange}
-                  >
-                    <SelectTrigger id="edit-tenant-role" className="h-11 border-slate-200 bg-white/60 dark:border-slate-700 dark:bg-slate-800/50">
-                      <SelectValue placeholder="Sin cambio" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value={NO_TENANT_ROLE}>Sin cambio</SelectItem>
-                      <SelectItem value="manager">Manager</SelectItem>
-                      <SelectItem value="admin">Administrador</SelectItem>
-                      <SelectItem value="economico">Económico</SelectItem>
-                      <SelectItem value="dependiente">Dependiente</SelectItem>
-                    </SelectContent>
-                  </Select>
-                  <p className="text-xs text-muted-foreground">
-                    Permisos operativos dentro de la empresa.
-                  </p>
-                </div>
+                {formData.role !== 'salesAgent' && (
+                  <div className="space-y-2">
+                    <Label htmlFor="edit-tenant-role">Rol en el tenant</Label>
+                    <Select
+                      value={formData.tenantRole}
+                      onValueChange={handleTenantRoleChange}
+                    >
+                      <SelectTrigger id="edit-tenant-role" className="h-11 border-slate-200 bg-white/60 dark:border-slate-700 dark:bg-slate-800/50">
+                        <SelectValue placeholder="Sin cambio" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value={NO_TENANT_ROLE}>Sin cambio</SelectItem>
+                        <SelectItem value="manager">Manager</SelectItem>
+                        <SelectItem value="admin">Administrador</SelectItem>
+                        <SelectItem value="economico">Económico</SelectItem>
+                        <SelectItem value="dependiente">Dependiente</SelectItem>
+                      </SelectContent>
+                    </Select>
+                    <p className="text-xs text-muted-foreground">
+                      Permisos operativos dentro de la empresa.
+                    </p>
+                  </div>
+                )}
              </div>
 
              <div className="flex items-center justify-between rounded-lg border border-slate-200/70 bg-slate-50/70 p-3 dark:border-slate-700/70 dark:bg-slate-800/40">
