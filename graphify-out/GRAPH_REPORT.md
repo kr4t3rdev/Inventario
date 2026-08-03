@@ -1,16 +1,16 @@
-# Graph Report - TCP  (2026-07-13)
+# Graph Report - TCP  (2026-07-31)
 
 ## Corpus Check
-- 2564 files · ~2,017,525 words
+- 2671 files · ~2,067,540 words
 - Verdict: corpus is large enough that graph structure adds value.
 
 ## Summary
-- 17604 nodes · 33822 edges · 1230 communities (1030 shown, 200 thin omitted)
-- Extraction: 100% EXTRACTED · 0% INFERRED · 0% AMBIGUOUS · INFERRED: 68 edges (avg confidence: 0.59)
+- 18064 nodes · 34927 edges · 1240 communities (1038 shown, 202 thin omitted)
+- Extraction: 100% EXTRACTED · 0% INFERRED · 0% AMBIGUOUS · INFERRED: 70 edges (avg confidence: 0.59)
 - Token cost: 0 input · 0 output
 
 ## Graph Freshness
-- Built from commit: `2c9f0795`
+- Built from commit: `16e95a49`
 - Run `git rev-parse HEAD` and compare to check if the graph is stale.
 - Run `graphify update .` after code changes (no API cost).
 
@@ -218,7 +218,7 @@
 - Community 201
 - Community 202
 - Community 203
-- Community 204
+- cloudinary.ts
 - Community 205
 - Community 206
 - Community 207
@@ -248,11 +248,11 @@
 - Community 231
 - Community 232
 - Community 233
-- Community 234
+- tier-service.ts
 - Community 235
-- Community 236
+- ordenes.ts
 - Community 237
-- Community 238
+- EstadoPeriodo
 - Community 239
 - Community 240
 - Community 241
@@ -277,14 +277,14 @@
 - Community 261
 - Community 262
 - Community 263
-- Community 264
+- reportes-financieros.ts
 - Community 265
 - Community 266
 - Community 267
 - Community 268
 - Community 269
 - Community 270
-- Community 271
+- page.tsx
 - Community 273
 - Community 274
 - Community 275
@@ -298,7 +298,7 @@
 - Community 284
 - Community 285
 - Community 286
-- Community 287
+- VercelBlobStorage
 - Community 288
 - Community 289
 - Community 290
@@ -326,9 +326,9 @@
 - Community 313
 - Community 314
 - Community 315
-- Community 316
+- actions.ts
 - Community 317
-- Community 318
+- EventoAuditoria
 - Community 319
 - Community 320
 - Community 321
@@ -565,7 +565,7 @@
 - ADDED Requirements
 - Tasks: Server-First con Server Actions (Next.js 15+ Nativo)
 - Requirements
-- data.ts
+- AperturaPeriodoService
 - 🧪 CÓMO PROBAR LA SOLUCIÓN
 - Módulo Restaurante - Plan de Implementación
 - StockUbicacion — Plan de Implementación
@@ -582,7 +582,7 @@
 - Design: Cuentas por Pagar — Fixes
 - Requirements
 - Functional Requirements
-- hasPlanFeature
+- setup.ts
 - purchase-health-card.tsx
 - Cambios Realizados
 - Tareas
@@ -598,7 +598,7 @@
 - SDD Proposal: Corrección de stock legacy, reconciliación contable y borrado seguro en compras-productos
 - Spec: Corrección de stock legacy, reconciliación contable y borrado seguro en compras-productos
 - SDD Spec: Reparar sesión tenant para usuarios plan básico
-- PeriodoContableService
+- page.tsx
 - Requirement: Restore from Backup
 - Design: Búsqueda y filtrado de específicos CLAS
 - Requirement: Bulk Price Manager Page
@@ -635,7 +635,7 @@
 - Escenarios (Given/When/Then)
 - Issues
 - SDD Tasks: Rentabilidad por Compra
-- balance-pie-chart.tsx
+- offers-services-health-card.tsx
 - INDEX.md
 - Diseño del Módulo de Restaurante
 - Proposal: Administration Module Specification & Enhancement
@@ -660,8 +660,8 @@
 - SDD Design: Sistema de Reseñas y Valoraciones
 - Item B: Podar dependencias muertas
 - Tasks: Auth unificación — Server Actions + eliminación de sessionStorage
-- productos.ts
-- ventas-trazabilidad.test.tsx
+- audit-logs-table.tsx
+- offers-services-health-card.tsx
 - Autenticación
 - 📋 **Plan de Implementación - Próximas Funcionalidades**
 - Known Build Issue - Next 16 build worker OOM / static generation failure
@@ -685,7 +685,7 @@
 - Tasks: Cuentas por Pagar — Fixes
 - productos-form-schema.ts
 - accordion.tsx
-- page.tsx
+- actions-historial-cambios.ts
 - /sdd-new
 - Módulos del Sistema
 - Diseño técnico — períodos contables mixtos
@@ -733,8 +733,8 @@
 - Tasks: recetas-ingredientes-unidades
 - Design: Retirar `producto.stock` del flujo operativo
 - Design: Auth unificación — Server Actions + eliminación de sessionStorage
-- periodo-badge.tsx
-- index.md
+- SubcategoryForm
+- toggle-group.tsx
 - Mobile API contract (v1)
 - Propuesta: Reconciliación historial ↔ compras reales (Ficha de Costo)
 - Componentes
@@ -776,8 +776,8 @@
 - SDD Proposal: Reporte de Ventas por Grupo
 - Requirement: API Endpoints Specification
 - 2. Fases de Implementación
-- core.ts
-- backfill-ean13-segments.ts
+- ordenes.ts
+- ingredientes.test.ts
 - Indice de Modulos
 - Referidos
 - Ventas
@@ -813,7 +813,7 @@
 - Spec Delta: Sistema inicial de categorías (categorías en 0)
 - 2. Reglas funcionales
 - SDD Tasks: Reparar sesión tenant para usuarios plan básico
-- registry.ts
+- gastos-conceptos-seed.ts
 - Contabilidad
 - Empleados
 - Facturación
@@ -860,7 +860,7 @@
 - Requirement: Filas expandibles con historial de pagos
 - Design: Sistema inicial de categorías (categorías en 0)
 - Requirements
-- route.ts
+- page.tsx
 - TASKS: Tipos de Contratos y Numeración Consecutiva
 - Administración
 - Arqueo de Caja
@@ -958,8 +958,8 @@
 - Proposal: Unificación de Stock por Ubicación
 - Detailed Design
 - ESPECIFICACIÓN: Tipos de Contratos y Numeración Consecutiva
-- Filtros Globales
-- 1. Auditoría de Cambios
+- pv-new-page-client.tsx
+- getAdminSubscriptionRevenueAction
 - 📚 Sistema de Anticipos - Documentación Completa
 - Sistema de Alertas
 - 2. Gestión de Sesiones Activas
@@ -991,10 +991,10 @@
 - Tasks: Remove Sileo Shim
 - Tasks: Separar Préstamos y Deudas de CxC/CxP
 - Requirements
+- Usuario
+- tipo-pago-tenant-migration.test.ts
 - route.ts
-- app-sidebar2.test.tsx
-- ADDED-14: Modelo `GastoElemento`
-- accounting-accounts-service.ts
+- page.tsx
 - 🎨 Frontend (React Components)
 - 🔄 Ciclo de Vida de un Anticipo
 - 🐛 Troubleshooting
@@ -1028,8 +1028,7 @@
 - Tasks: Sistema inicial de categorías (categorías en 0)
 - Affiliate validation scripts
 - page.tsx
-- Requirement: Interfaz de Usuario para Gestión de Recetas
-- page.tsx
+- ArqueosPageClient
 - 🔐 Idempotencia (Crítico)
 - 4. Dashboard de KPIs
 - Mejores Prácticas
@@ -1061,20 +1060,20 @@
 - Requirement: Login History and Activity Tracking
 - Requirement: User Management - Full CRUD Operations
 - route.ts
-- getWastageHealthAction
-- 📊 Modelo de Datos (Base de Datos)
-- Archivos Nuevos/Modificados en Segunda Fase
-- Requirement: Historial y Trazabilidad de Órdenes
-- nav-main.tsx
-- run-seed.js
-- audit-ventas-total-null.ts
+- indicador-margen.tsx
+- use-category-form.ts
+- ADDED-14: Modelo `GastoElemento`
+- page.test.tsx
+- gastos-conceptos-seed.ts
+- tasa-cambio-form.test.tsx
+- production.ts
 - FASE 1: CAMBIOS EN SCHEMA Y DATOS
 - FASE 5: TESTING Y VALIDACIÓN
 - 🔧 Flujo Técnico (Backend)
 - 📝 Ejemplos de Uso
 - ✅ Reglas de Negocio
-- deactivate-expired-demos.ts
-- get-tenant-id.ts
+- Deployment y Monitoreo
+- Actualizaciones Futuras
 - Solución de Problemas
 - Análisis de Costos
 - Configuración Personalizada
@@ -1093,6 +1092,7 @@
 - 6. Reglas de Negocio
 - SDD Phase 6: `sdd-apply`
 - SDD Phase 7: `sdd-verify`
+- createContratoArchivoHandler
 - ADDED-15: Actualización del Modelo `GastosDE` con Relaciones a Concepto y Elemento
 - ADDED-16: CRUD de Conceptos y Elementos
 - 3.5 Fase 5: Contratos
@@ -1106,7 +1106,7 @@
 - Requirement: Monitoring and Reporting
 - Requirement: Performance and Reliability
 - Requirement: Role and Permission System
-- Requirement: Security and Authentication
+- 6. Desbloqueo de Usuarios
 - Requirement: User Access Control - Account Lock/Unlock
 - Requirement: User Expiration Management
 - Requirement: User Notifications
@@ -1114,16 +1114,14 @@
 - 3. CAMBIOS EN EL SCHEMA
 - 6. ESCENARIOS DE PRUEBA
 - 7. ARQUITECTURA Y PATRONES
-- page.test.tsx
-- page.tsx
-- page.tsx
-- page.tsx
-- page.tsx
+- Archivos Modificados/Creados
+- backfill-tipos-pago-tenant.ts
+- use-pago-cuenta-por-pagar.ts
+- actions.ts
 - tasa-cambio-form.test.tsx
 - FASE 2: LÓGICA DE APLICACIÓN
 - 📚 Reconciliación Contable
 - 🧪 Testing
-- Deployment y Monitoreo
 - Performance
 - Filtros Globales
 - Eficiencia de Pagos
@@ -1135,181 +1133,189 @@
 - L
 - N
 - Actualización de la Implementación - Tercera Fase
+- getExpiringSoonAction
+- SubcategorySelector
 - 9. Historial y Trazabilidad
 - 3.3 Fase 3: Logos y avatares
 - 3.4 Fase 4: Fotos de reparaciones
+- ProductosPage
+- route.ts
 - 4. MIGRACIÓN DE DATOS
 - page.test.tsx
 - page.test.tsx
-- ExpenseHealthCard
 - clasificador.md
 - tasks.md
 - clasificador.md
+- Requirement: Panel de Estadísticas Actualizado en Tiempo Real
+- phase-4-copy.test.ts
+- page.tsx
+- ReportesPage
+- page.test.tsx
 
 ## God Nodes (most connected - your core abstractions)
-1. `authenticateUser()` - 338 edges
-2. `cn()` - 312 edges
-3. `Button()` - 301 edges
-4. `Card()` - 191 edges
-5. `CardContent()` - 185 edges
-6. `AuthenticatedUser` - 182 edges
-7. `Badge()` - 181 edges
-8. `requireTenant()` - 160 edges
-9. `ActionError` - 150 edges
-10. `Input()` - 149 edges
+1. `authenticateUser()` - 362 edges
+2. `cn()` - 316 edges
+3. `Button()` - 310 edges
+4. `Card()` - 192 edges
+5. `CardContent()` - 186 edges
+6. `AuthenticatedUser` - 186 edges
+7. `Badge()` - 183 edges
+8. `requireTenant()` - 163 edges
+9. `ActionError` - 157 edges
+10. `Input()` - 153 edges
 
 ## Surprising Connections (you probably didn't know these)
-- `runSeed()` --references--> `@prisma/client`  [EXTRACTED]
-  prisma/seed/run-seed.js → package.json
-- `main()` --references--> `@prisma/client`  [EXTRACTED]
-  scripts/audit-ventas-total-null.ts → package.json
-- `main()` --references--> `@prisma/client`  [EXTRACTED]
-  scripts/deactivate-expired-demos.ts → package.json
-- `main()` --references--> `@prisma/client`  [EXTRACTED]
-  scripts/get-tenant-id.ts → package.json
-- `migrate()` --indirect_call--> `item()`  [INFERRED]
-  scripts/migrate-fifo-allocations.ts → src/features/ficha-costo/__tests__/reconciliador-historial.test.ts
+- `MarqueeText()` --references--> `react`  [EXTRACTED]
+  src/components/ui/marquee-text.tsx → package.json
+- `useDebouncedValue()` --references--> `react`  [EXTRACTED]
+  src/lib/utils/component-optimization.ts → package.json
+- `useLazyComponent()` --references--> `react`  [EXTRACTED]
+  src/lib/utils/component-optimization.ts → package.json
+- `useVirtualScroll()` --references--> `react`  [EXTRACTED]
+  src/lib/utils/component-optimization.ts → package.json
+- `withMemo()` --references--> `react`  [EXTRACTED]
+  src/lib/utils/component-optimization.ts → package.json
 
 ## Import Cycles
 - None detected.
 
-## Communities (1230 total, 200 thin omitted)
+## Communities (1240 total, 202 thin omitted)
 
 ### Community 0 - "Community 0"
-Cohesion: 0.02
-Nodes (267): UpdateFormData, updateSchema, ReciboData, CuentaBancaria, InyeccionCapital, Servicios, Button(), Dialog() (+259 more)
+Cohesion: 0.08
+Nodes (29): mapActionErrorStatus(), POST(), mockUser, mapActionErrorStatus(), POST(), RouteContext, mockUser, mapActionErrorStatus() (+21 more)
 
 ### Community 1 - "Community 1"
-Cohesion: 0.02
-Nodes (197): jspdf, headerIconVariants, titleVariants, headerIconVariants, severityConfig, SystemAlert, titleVariants, Cliente() (+189 more)
+Cohesion: 0.09
+Nodes (25): calculateNominaAction, calculateNominaSchema, createEmpleadoAction, createVacacionAction, createVacacionSchema, deleteWorkScheduleAction, getEmpleadoByIdAction, getNominaAction (+17 more)
 
 ### Community 2 - "Community 2"
-Cohesion: 0.03
-Nodes (148): GET(), GET, GET(), mapActionErrorStatus(), parsePositiveInt(), POST(), mockUser, drawVoucher() (+140 more)
+Cohesion: 0.02
+Nodes (132): BulkStockMinimoClient(), BulkStockMinimoPage(), createSchema, createSchema, executeSchema, reverseSchema, createSchema, pagoSchema (+124 more)
 
 ### Community 3 - "Community 3"
-Cohesion: 0.03
-Nodes (105): metadata, Sheet(), SheetContent(), SheetDescription(), SheetFooter(), SheetHeader(), SheetOverlay(), SheetTitle() (+97 more)
+Cohesion: 0.07
+Nodes (35): POST, POST, GET, createOrdenSchema, GET, POST, createRecetaSchema, GET (+27 more)
 
 ### Community 4 - "Community 4"
-Cohesion: 0.03
-Nodes (99): GET(), querySchema, user, DELETE(), GET(), PUT(), updateSchema, user (+91 more)
+Cohesion: 0.09
+Nodes (30): activarPlantillaAction, aplicarPrecioSugeridoAction, assertValidLineItems(), createPlantillaAction, deletePlantillaAction, DeletePlantillaInput, getPlantillaActivaAction, GetPlantillaActivaInput (+22 more)
 
 ### Community 5 - "Community 5"
-Cohesion: 0.02
-Nodes (110): PATCH(), configSchema, GET(), PUT(), GET(), user, GET(), GET() (+102 more)
+Cohesion: 0.03
+Nodes (121): jspdf, accentStyles, AccentTone, ResumenFinanciero, metadata, downloadFile(), FacturasPage(), formatDate() (+113 more)
 
 ### Community 6 - "Community 6"
-Cohesion: 0.03
-Nodes (147): AuditLog, mockFetch, AnalisisCuentaClientePage(), TransferenciaBancariaForm, TransferenciasBancariasTable, downloadFile(), FacturasPage(), formatDate() (+139 more)
+Cohesion: 0.06
+Nodes (48): metadata, ReportesPage(), metadata, NuevoServicioPage(), metadata, ServiciosPage(), metadata, ServiciosPrestadosPage() (+40 more)
 
 ### Community 7 - "Community 7"
-Cohesion: 0.08
-Nodes (29): mapActionErrorStatus(), POST(), mockUser, mapActionErrorStatus(), POST(), RouteContext, mockUser, GET() (+21 more)
+Cohesion: 0.09
+Nodes (28): metadata, PuntosDeVentaPage(), EditarPuntoVentaPage(), metadata, PuntoDeVenta, createPuntoDeVentaAction, deletePuntoDeVentaAction, getPuntoDeVentaByIdAction (+20 more)
 
 ### Community 8 - "Community 8"
-Cohesion: 0.03
-Nodes (113): DELETE, GET, PUT, UpdateAnticipoSchema, CreateAnticipoSchema, GET, POST, ExecuteAnticipoSchema (+105 more)
+Cohesion: 0.09
+Nodes (30): createDefectacion(), deleteDefectacion(), getDefectaciones(), updateDefectacion(), createEquipoReparacion(), deleteEquipoReparacion(), getEquipoReparacion(), updateEquipoReparacion() (+22 more)
 
 ### Community 9 - "Community 9"
-Cohesion: 0.10
-Nodes (25): GET(), parsePositiveInt(), adminUser, GET(), mapActionErrorStatus(), parsePositiveInt(), adminUser, AccountingAuditLogsService (+17 more)
+Cohesion: 0.13
+Nodes (18): LandingAffiliateProgram(), AFFILIATE_PROGRAM_HIGHLIGHTS, AFFILIATE_PROGRAM_RULES, AFFILIATE_PROGRAM_STEPS, AFFILIATE_PROGRAM_TIERS, AffiliateHighlightItem, AffiliateStepItem, AffiliateTierItem (+10 more)
 
 ### Community 10 - "Community 10"
-Cohesion: 0.05
-Nodes (70): prisma, AdminReferidosPage(), getLicenciasAction, applyAffiliateCreditsToLicensePreviewAction, assignReferralPerkAction, buildAffiliateSummaryForTenant(), confirmReferredTenantPaymentAction, createReferralCode() (+62 more)
+Cohesion: 0.06
+Nodes (65): prisma, AdminReferidosPage(), getLicenciasAction, applyAffiliateCreditsToLicensePreviewAction, buildAffiliateSummaryForTenant(), createReferralCode(), ensureAffiliateProfile(), generateReferralCodeAction (+57 more)
 
 ### Community 11 - "Community 11"
-Cohesion: 0.50
-Nodes (4): 3. Eficiencia de Pagos, Métricas Clave, Recomendaciones, Tabla Comparativa
+Cohesion: 0.05
+Nodes (39): Acceptance criteria, Change, Estructura de tests, Files, Files, Files, Files, Files (+31 more)
 
 ### Community 12 - "Community 12"
-Cohesion: 0.10
-Nodes (25): metadata, CategoryForm(), mockPlanFeatures, SubcategoriaNewPageClient(), mockPlanFeatures, AvailableClasSection, buildAvailableClasSections(), ClasSpecificOption (+17 more)
+Cohesion: 0.04
+Nodes (75): AlmacenPage(), metadata, EditarAlmacenPage(), metadata, ListasPreciosPage(), metadata, EditarProductosPage(), EditPageProps (+67 more)
 
 ### Community 13 - "Community 13"
-Cohesion: 0.04
-Nodes (70): ConfiguracionPage(), outlineButtonClass, surfaceCardClass, TiposPagoConfigPage, TransferenciasBancariasPage(), chartColors, containerVariants, itemVariants (+62 more)
+Cohesion: 0.13
+Nodes (24): calcularCostoCompuestoServer(), calcularCostoSimpleInterno(), calcularCostoSimpleServer(), normalizarMontoManual(), obtenerMonedaBaseTenant(), round2(), calcularCostoMateriales(), calcularCPP() (+16 more)
 
 ### Community 14 - "Community 14"
 Cohesion: 0.03
-Nodes (75): dependencies, bcryptjs, class-variance-authority, @clerk/nextjs, clsx, date-fns, @dnd-kit/utilities, formidable (+67 more)
+Nodes (76): dependencies, bcryptjs, class-variance-authority, @clerk/nextjs, clsx, date-fns, @dnd-kit/utilities, formidable (+68 more)
 
 ### Community 15 - "Community 15"
-Cohesion: 0.09
-Nodes (33): metadata, OnboardingPage(), AdminSidebar(), AppSidebar2(), NavMain(), NavUser(), mockUseAuth, mockUseIsMounted (+25 more)
+Cohesion: 0.04
+Nodes (64): createSchema, GET, POST, querySchema, mapActionErrorStatus(), POST(), mockUser, GET() (+56 more)
 
 ### Community 16 - "Community 16"
-Cohesion: 0.03
-Nodes (137): SPRING_DEFAULT, SPRING_HOVER, Pagosalario, Categoria, Unidad, Vendor, Almacen, Usuario (+129 more)
+Cohesion: 0.23
+Nodes (8): GastosDEPage(), metadata, getGastosDEAction, ExpenseHealthMetrics, getExpenseHealthAction, ExpenseHealthCard(), ExpenseHealthCardProps, { getExpenseHealthAction }
 
 ### Community 17 - "Community 17"
 Cohesion: 0.08
 Nodes (46): WandaDashboardData, chartOpacity, chartPalette, chartTooltipItemStyle, chartTooltipLabelStyle, chartTooltipStyle, formatCount(), formatCurrency() (+38 more)
 
 ### Community 18 - "Community 18"
-Cohesion: 0.17
-Nodes (22): AnimatedTableRow(), DialogAnimation(), HoverScale(), SlideIn(), MotionTokens, backdropVariants, cardVariants, dialogVariants (+14 more)
+Cohesion: 0.06
+Nodes (40): GET, PUT, metadata, CLIENTE_SELECT, createClienteAction, deleteClienteAction, getClienteByIdAction, updateClienteAction (+32 more)
 
 ### Community 19 - "Community 19"
-Cohesion: 0.03
-Nodes (79): `DELETE /api/mobile/v1/accounting/advances/:id`, Endpoints, `GET /api/mobile/v1/accounting/accounts-payable`, `GET /api/mobile/v1/accounting/accounts-receivable`, `GET /api/mobile/v1/accounting/accounts-receivable/metrics`, `GET /api/mobile/v1/accounting/advances`, `GET /api/mobile/v1/accounting/advances/available`, `GET /api/mobile/v1/accounting/advances/:id` (+71 more)
+Cohesion: 0.02
+Nodes (82): `DELETE /api/mobile/v1/accounting/advances/:id`, `DELETE /api/mobile/v1/accounting/payment-types/:id`, Endpoints, `GET /api/mobile/v1/accounting/accounts-payable`, `GET /api/mobile/v1/accounting/accounts-receivable`, `GET /api/mobile/v1/accounting/accounts-receivable/metrics`, `GET /api/mobile/v1/accounting/advances`, `GET /api/mobile/v1/accounting/advances/available` (+74 more)
 
 ### Community 20 - "Community 20"
-Cohesion: 0.08
-Nodes (24): EVENT_ICONS, EVENT_LABELS, EVENT_VARIANTS, PeriodoTimeline(), PeriodoAuditService, AuditEntry, CategoriaPeriodo, CreatePeriodoInput (+16 more)
+Cohesion: 0.06
+Nodes (45): DeudasCashContent(), PrestamosCashContent(), CuentaBancaria, createAjusteBancarioAction, getAjustesByCuentaAction, getCuentasBancariasAction, getDeudasCashAction, registrarPagoDeudaAction (+37 more)
 
 ### Community 21 - "Community 21"
-Cohesion: 0.09
-Nodes (22): POST(), STATUS_MAP, buildLogoutResponse(), POST(), GET(), GET(), POST(), switchTenantSchema (+14 more)
+Cohesion: 0.11
+Nodes (17): POST(), cookieMap, AuthCallbackClient(), metadata, deleteAuthCookies(), getMyTenantsAction, handleAuthCallback(), loginAction() (+9 more)
 
 ### Community 22 - "Community 22"
 Cohesion: 0.06
-Nodes (43): GET, GET, buildInvoiceDataFromFactura(), InvoiceData, InvoiceItem, InvoicePrintContent(), LegacyInvoiceData, MiEmpresaData (+35 more)
+Nodes (42): GET, buildInvoiceDataFromFactura(), InvoiceData, InvoiceItem, InvoicePrintContent(), LegacyInvoiceData, MiEmpresaData, normalizeLegacyInvoiceData() (+34 more)
 
 ### Community 23 - "Community 23"
-Cohesion: 0.06
-Nodes (48): Empleado, calculateNominaAction, calculateNominaSchema, createEmpleadoAction, createVacacionAction, createVacacionSchema, deleteWorkScheduleAction, getAsistenciaAction (+40 more)
+Cohesion: 0.19
+Nodes (18): EnterpriseSeedClient, EnterpriseSeedInput, seedAlmacenesEmp(), seedCategoriasEmp(), seedClientesEmp(), seedComprasEmp(), seedCuentasMxn(), seedEnterpriseExtras() (+10 more)
 
 ### Community 24 - "Community 24"
-Cohesion: 0.11
-Nodes (29): GastoElementosPage(), metadata, Props, GastoConceptosPage(), metadata, GastosDEPage(), metadata, createGastoConceptoAction (+21 more)
+Cohesion: 0.29
+Nodes (9): BalancePieChart(), BalancePieChartProps, chartTooltipItemStyle, chartTooltipLabelStyle, chartTooltipStyle, cuadreChartPalette, formatCurrency(), DailyTrendChart() (+1 more)
 
 ### Community 25 - "Community 25"
-Cohesion: 0.03
-Nodes (106): defaultFormData, PlanFormData, DEFAULT_COMPLEXITY_LIMITS, ItemTemp, MaterialTemp, OrdenEquipoTemp, CuentaPorCobrar, PrestamoCash (+98 more)
+Cohesion: 0.30
+Nodes (8): GET(), parsePositiveInt(), adminUser, GET(), mapActionErrorStatus(), parsePositiveInt(), adminUser, AccountingAuditLogsService
 
 ### Community 26 - "Community 26"
 Cohesion: 0.09
 Nodes (21): BackupEngine, BackupEngineOptions, CONFIG_TABLES, DEFAULT_PRISMA, TENANT_GLOBAL_TABLE_FILTERS, buildCursor(), DataExporter, NUMERIC_TYPES (+13 more)
 
 ### Community 27 - "Community 27"
-Cohesion: 0.12
-Nodes (22): POST(), POST(), GET(), POST(), POST(), POST(), bulkDeleteContratosHandler(), bulkDeleteSchema (+14 more)
+Cohesion: 0.06
+Nodes (46): POST(), POST(), GET(), POST(), GET(), POST(), GET(), POST() (+38 more)
 
 ### Community 28 - "Community 28"
-Cohesion: 0.09
-Nodes (33): ContratoDetailPage(), metadata, PageProps, ContratosPage(), bulkDeleteContratosAction, bulkUpdateContratoStatusAction, CONTRATO_DETAIL_INCLUDE, CONTRATO_LIST_INCLUDE (+25 more)
+Cohesion: 0.15
+Nodes (14): metadata, NewContratoPage(), ContratosPage(), metadata, PageProps, metadata, PageProps, UpdateContratoPage() (+6 more)
 
 ### Community 29 - "Community 29"
-Cohesion: 0.12
-Nodes (25): categoryFormSchema, CategoryFormValues, normalizeParentId(), normalizeSectionId(), normalizeSpecificId(), useCategoryForm(), UseCategoryFormProps, CategoriaInput (+17 more)
+Cohesion: 0.14
+Nodes (17): createCategoriaAction, buildAvailableClasSections(), filterSpecifics(), resolveClasParentCategoryId(), SubcategoryForm(), mockPlanFeatures, categoryFormSchema, CategoryFormValues (+9 more)
 
 ### Community 30 - "Community 30"
-Cohesion: 0.08
-Nodes (28): EditCompraProductoPage(), ComprasProductosPage(), metadata, COMPRA_INCLUDE, createCompraProductoAction, deleteCompraProductoAction, getCompraProductoByIdAction, getComprasProductosAction (+20 more)
+Cohesion: 0.03
+Nodes (152): AuditLog, mockFetch, headerIconVariants, severityConfig, SystemAlert, titleVariants, defaultFormData, PlanFormData (+144 more)
 
 ### Community 31 - "Community 31"
-Cohesion: 0.13
-Nodes (22): metadata, ServiciosPage(), metadata, ServiciosPrestadosPage(), metadata, ServiciosRecibidosPage(), EditarServicioPage(), metadata (+14 more)
+Cohesion: 0.04
+Nodes (60): GET, PUT, updateSchema, createSchema, GET, POST, querySchema, createMoneda() (+52 more)
 
 ### Community 32 - "Community 32"
 Cohesion: 0.05
-Nodes (41): AjusteBancario, AnticipoMovimiento, ContextoAnticipo, ConvertirMonedaRequest, ConvertirMonedaResponse, CreateAjusteBancarioRequest, CreateAnticipoRequest, CreateCuentaBancariaRequest (+33 more)
+Nodes (39): AnticipoMovimiento, ContextoAnticipo, ConvertirMonedaRequest, ConvertirMonedaResponse, CreateAjusteBancarioRequest, CreateAnticipoRequest, CreateCuentaBancariaRequest, CreateInyeccionCapitalRequest (+31 more)
 
 ### Community 33 - "Community 33"
-Cohesion: 0.09
-Nodes (32): WordReveal(), LandingAffiliateProgram(), LandingBenefits(), LandingContact(), LandingFaq(), LandingFeatures(), LandingFooter(), LandingHeader() (+24 more)
+Cohesion: 0.12
+Nodes (19): WordReveal(), LandingBenefits(), LandingContact(), LandingFaq(), CAPABILITY_GROUPS, LandingFeatures(), LandingFooter(), LandingHeader() (+11 more)
 
 ### Community 34 - "Community 34"
 Cohesion: 0.04
@@ -1317,31 +1323,31 @@ Nodes (45): scripts, build, build:fast, depgraph, depgraph:archi, depgraph:full,
 
 ### Community 35 - "Community 35"
 Cohesion: 0.07
-Nodes (41): aprobarOrdenProduccion(), cancelarOrdenProduccion(), completarOrdenProduccion(), createOrdenProduccion(), getOrdenesProduccion(), getOrdenProduccion(), CreateOrdenProduccionPayload, CreateRecetaProduccionPayload (+33 more)
+Nodes (43): CreateRecetaProduccionPayload, EstadoProduccion, EstadoValeSalida, OrdenesPaginationMeta, OrdenProduccionHistorial, PaginatedResponse, PaginationMeta, RecetaProduccion (+35 more)
 
 ### Community 36 - "Community 36"
-Cohesion: 0.11
-Nodes (31): CuadreData, CuadrePeriodoPageClientProps, PAGE_VARIANTS, TIPO_LABELS, BalanceTab(), CuadreData, CuadrePeriodoModalProps, TIPO_LABELS (+23 more)
+Cohesion: 0.08
+Nodes (24): Change, Constraints, Migración de datos, Prisma: Modelo TipoPago, Scenario 10: Cuenta predeterminada validada contra el tenant, Scenario 11: Cuenta predeterminada de OTRO tenant debe fallar, Scenario 12: getAvailableAccounts filtra por tenant, Scenario 13: Mobile endpoint payment-types retorna solo datos del tenant (+16 more)
 
 ### Community 37 - "Community 37"
-Cohesion: 0.09
-Nodes (40): AuditLogsPage(), deleteSessionAction, getAuditLogsAction, getSessionsAction, SessionsTab(), AddTenantMembershipInput, addTenantMembershipSchema, CleanupExpiredDemoLicenciasInput (+32 more)
+Cohesion: 0.08
+Nodes (44): AuditLogsPage(), deleteSessionAction, getAuditLogsAction, getSessionsAction, SessionsTab(), AddTenantMembershipInput, addTenantMembershipSchema, ChangePlanInput (+36 more)
 
 ### Community 38 - "Community 38"
-Cohesion: 0.15
-Nodes (34): getAdminTenantsAction, createBackupAction, deleteBackupAction, downloadBackupAction, getBackupAction, getBackupsAction, getBackupStatusAction, importBackupAction (+26 more)
+Cohesion: 0.13
+Nodes (39): getAdminTenantsAction, createBackupAction, deleteBackupAction, downloadBackupAction, getBackupAction, getBackupsAction, getBackupStatusAction, importBackupAction (+31 more)
 
 ### Community 39 - "Community 39"
-Cohesion: 0.01
-Nodes (118): Discrepancia, AdminUsersPage(), GET, GET, GET, DisponiblesQuerySchema, GET, GET (+110 more)
+Cohesion: 0.02
+Nodes (165): PATCH(), GET(), GET(), POST(), switchTenantSchema, mockUser, configSchema, GET() (+157 more)
 
 ### Community 40 - "Community 40"
-Cohesion: 0.15
-Nodes (14): GET(), RouteContext, mockUser, GET(), GET(), stockQuerySchema, mockUser, mockUser (+6 more)
+Cohesion: 0.11
+Nodes (17): AdminLayout(), { getProtectedRouteIdentity, redirect }, BusyLayout(), SalesAgentLayout(), SalesAgentShell(), AdminLayoutClient(), Probe(), SiteHeader() (+9 more)
 
 ### Community 41 - "Community 41"
-Cohesion: 0.07
-Nodes (39): metadata, ReconciliacionHubPage(), avatarVariants, cardVariants, containerVariants, itemVariants, ProfilePage(), EquipoForm (+31 more)
+Cohesion: 0.17
+Nodes (7): authState, counters, filteredGroupsRefs, motionState, pathnameState, RenderCounters, sidebarState
 
 ### Community 42 - "Community 42"
 Cohesion: 0.21
@@ -1352,226 +1358,220 @@ Cohesion: 0.04
 Nodes (44): devDependencies, dependency-cruiser, eslint, eslint-config-next, @eslint/eslintrc, fast-check, @fast-check/vitest, husky (+36 more)
 
 ### Community 44 - "Community 44"
-Cohesion: 0.13
-Nodes (17): GET(), mockUser, GET(), parseBooleanParam(), mockUser, _countSelect, createSchema, createTipoPagoAction (+9 more)
+Cohesion: 0.09
+Nodes (38): CostoGlobalRow, getVentasProductoAction, PlantillaFormProps, MOCK_DATA, MOCK_DATA_VACIO, ComparacionPlantilla, ComposicionCostoData, ComposicionMaterial (+30 more)
 
 ### Community 45 - "Community 45"
-Cohesion: 0.20
-Nodes (10): cloudinary, POST(), mockUser, uploadIntentSchema, destroyCloudinaryAsset(), DestroyCloudinaryAssetInput, generateUploadSignature(), { apiSignRequestMock, destroyMock, configMock } (+2 more)
+Cohesion: 0.06
+Nodes (36): metadata, PeriodosPage(), CuadrePeriodoPage(), PageProps, abrirPeriodoAction, abrirPeriodoSchema, aprobarPeriodoAction, aprobarPeriodoSchema (+28 more)
 
 ### Community 46 - "Community 46"
 Cohesion: 0.07
-Nodes (39): AdminLicenciasPage(), CrearDemoDialog(), SubscriptionsRevenuePage(), getAdminSubscriptionRevenueActionMock, revenueFixture, addTenantMembershipAction, approveGlobalUserAction, cleanupCloudinaryAssetsAction (+31 more)
+Nodes (40): AdminLicenciasPage(), CrearDemoDialog(), addTenantMembershipAction, approveGlobalUserAction, changePlanAction, cleanupCloudinaryAssetsAction, cleanupExpiredDemoLicenciasAction, convertDemoToPaidPlanAction (+32 more)
 
 ### Community 47 - "Community 47"
-Cohesion: 0.07
-Nodes (27): react, Accordion(), AccordionContent(), AccordionContentProps, AccordionContext, AccordionContextValue, AccordionItem(), AccordionItemContext (+19 more)
+Cohesion: 0.03
+Nodes (77): Cliente(), AnalisisCuentaClientePage(), AnticiposContent(), ContratoAnticipo, CuentasPorCobrarPage(), surfaceCardClass, useHasMounted(), CuentasPorPagarPage() (+69 more)
 
 ### Community 48 - "Community 48"
-Cohesion: 0.09
-Nodes (27): activarPlantillaAction, aplicarPrecioSugeridoAction, createPlantillaAction, deletePlantillaAction, DeletePlantillaInput, getPlantillaActivaAction, GetPlantillaActivaInput, getPlantillasAction (+19 more)
+Cohesion: 0.10
+Nodes (16): POST(), STATUS_MAP, buildLogoutResponse(), POST(), LoginArgs, loginSchema, ONBOARDING_MID_FLOW, RefreshArgs (+8 more)
 
 ### Community 49 - "Community 49"
-Cohesion: 0.07
-Nodes (34): metadata, PeriodosPage(), CuadrePeriodoPage(), PageProps, abrirPeriodoAction, abrirPeriodoSchema, aprobarPeriodoAction, aprobarPeriodoSchema (+26 more)
+Cohesion: 0.09
+Nodes (29): ESTADO_CONFIG, formatPeriodoLabel(), getPeriodoActivoData(), MESES, PeriodoActivoIndicator(), CerrarPeriodoDialogProps, ReabrirPeriodoDialogProps, SaldosApertura (+21 more)
 
 ### Community 50 - "Community 50"
-Cohesion: 0.09
-Nodes (23): metadata, ServiciosReconciliacionPage(), getCurrentUserMock, redirectMock, AsistenciaClient(), AsistenciaPage(), NominaPage(), getCurrentUserMock (+15 more)
+Cohesion: 0.17
+Nodes (9): Convenciones Generales, Enumeraciones, Modelo de Datos, Comandos Principales, Enlaces, Estructura del Proyecto, FinanceMDM — Sistema de Gestión Financiera e Inventario, Navegacion de Documentacion (+1 more)
 
 ### Community 51 - "Community 51"
-Cohesion: 0.15
-Nodes (12): metadata, ProductosPage(), adminUser, {
-  getProductosAction,
-  getAlmacenesAction,
-  getPuntosDeVentaAction,
-  getCurrentUser,
-  findFirst,
-}, getMastersHealthAction, MastersHealthMetrics, adminUser, getHealthStatus() (+4 more)
+Cohesion: 0.14
+Nodes (27): AnimatedTableRow(), DialogAnimation(), FadeIn(), HoverScale(), LoadingDots(), LoadingSpinner(), PulseSkeleton(), SlideIn() (+19 more)
 
 ### Community 52 - "Community 52"
-Cohesion: 0.09
-Nodes (22): baseUser, mockPeriodoAbierto, mockPeriodoCerrado, cachearPeriodoActivo(), cacheKey(), clearCache(), extraerFechaNegocio(), getGuardConfigExtended() (+14 more)
+Cohesion: 0.11
+Nodes (17): CurrencyInput(), CurrencyInputProps, DEFAULTS, DefectacionesEditorPanel(), DefectTariff, ClasificadorInfoNote(), ClasificadorInfoNoteProps, ClasView (+9 more)
 
 ### Community 53 - "Community 53"
-Cohesion: 0.07
-Nodes (42): handleServerActionError(), createRecetaProduccion(), deleteIngredienteRecetaProduccion(), deleteRecetaProduccion(), getRecetaProduccion(), getRecetasProduccion(), setIngredientesRecetaProduccion(), updateRecetaProduccion() (+34 more)
+Cohesion: 0.10
+Nodes (32): handleServerActionError(), aprobarOrdenProduccion(), cancelarOrdenProduccion(), completarOrdenProduccion(), createOrdenProduccion(), getOrdenesProduccion(), getOrdenProduccion(), createRecetaProduccion() (+24 more)
 
 ### Community 54 - "Community 54"
-Cohesion: 0.14
-Nodes (23): calcularCostoCompuestoServer(), calcularCostoSimpleInterno(), calcularCostoSimpleServer(), normalizarMontoManual(), obtenerMonedaBaseTenant(), round2(), calcularCostoMateriales(), calcularCPP() (+15 more)
+Cohesion: 0.16
+Nodes (21): GET(), CleanupDeliveryOptions, cleanupSalesAgentEmailDeliveries(), createSalesAgentEvent(), deliverSalesAgentEmail(), deliverSalesAgentEmails(), escapeHtml(), ProcessDueDeliveryOptions (+13 more)
 
 ### Community 55 - "Community 55"
-Cohesion: 0.09
-Nodes (30): CategoriaPage(), metadata, EditarCategoryPage(), metadata, CategoriaHierarchy, CreateCategoriaRequest, CATEGORIA_SELECT, CategoriaHierarchy (+22 more)
+Cohesion: 0.12
+Nodes (23): CategoriaPage(), metadata, EditarCategoryPage(), metadata, CategoriaHierarchy, deleteCategoriaAction, getCategoriaByIdAction, getCategoriaHierarchyAction (+15 more)
 
 ### Community 56 - "Community 56"
-Cohesion: 0.09
-Nodes (26): EditarProductosPage(), EditPageProps, metadata, metadata, NuevoProductosPage(), redirectMock, metadata, UnidadPage() (+18 more)
+Cohesion: 0.16
+Nodes (14): POST, calcularCantidadRequeridaMaterial(), calcularCostoProduccion(), calcularRendimientoConMerma(), filterProductos(), IngredienteReceta, MaterialFaltante, ProductoAgregado (+6 more)
 
 ### Community 57 - "Community 57"
-Cohesion: 0.11
-Nodes (31): ReviewsPage(), approveReviewAction, canPromptReviewAction, dismissReviewPromptAction, getActiveTenantsCountAction(), getApprovedReviewsAction, getApprovedReviewsPublicAction(), getLandingStatsPublicAction() (+23 more)
+Cohesion: 0.10
+Nodes (33): ReviewsPage(), approveReviewAction, canPromptReviewAction, dismissReviewPromptAction, getActiveTenantsCountAction(), getApprovedReviewsAction, getApprovedReviewsPublicAction(), getLandingStatsPublicAction() (+25 more)
 
 ### Community 58 - "Community 58"
-Cohesion: 0.16
-Nodes (18): createVendorAction, enrichVendor(), updateVendorAction, VENDOR_SELECT, VendorActionItem, VendorRow, VendorInput, vendorSchema (+10 more)
+Cohesion: 0.12
+Nodes (24): metadata, UpdateVendorPage(), createVendorAction, deleteVendorAction, enrichVendor(), getVendorByIdAction, updateVendorAction, VENDOR_SELECT (+16 more)
 
 ### Community 59 - "Community 59"
-Cohesion: 0.13
-Nodes (24): createSchema, getPrestamoCashByIdAction, pagoSchema, PRESTAMO_INCLUDE, updatePrestamoCashAction, updateSchema, formatCurrency(), generateComprobantePDF() (+16 more)
+Cohesion: 0.19
+Nodes (15): LegacyProductoRow, main(), prisma, splitFromEan13(), AssembleEan13Code(), buildEan13Base12(), calculateEan13CheckDigit(), Ean13SegmentsInput (+7 more)
 
 ### Community 60 - "Community 60"
-Cohesion: 0.20
-Nodes (12): GET, PUT, getMiEmpresaAction, featureBlockedUser, updateMiEmpresaAction, getMiEmpresaByTenant(), MI_EMPRESA_SELECT, MiEmpresaUpsertInput (+4 more)
+Cohesion: 0.23
+Nodes (14): NotificationsPage(), createNotificacionAction, deleteNotificacionAction, getNotificacionesAction, marcarNotificacionLeidaAction, updateNotificacionAction, verificarStockAction, BadgeNotificaciones() (+6 more)
 
 ### Community 61 - "Community 61"
-Cohesion: 0.07
-Nodes (32): computeAging(), createCuentaPorPagarAction, CuentaPorCobrarEnriquecida, CuentaPorPagarEnriquecida, CXC_INCLUDE, CxcMetrics, CXP_INCLUDE, enriquecerCuentaPorCobrar() (+24 more)
+Cohesion: 0.20
+Nodes (16): computeAging(), CXC_INCLUDE, CXP_INCLUDE, enriquecerCuentaPorCobrar(), enriquecerCuentaPorPagar(), normalizarMontoReconciliacion(), CreateCuentaPorCobrarInput, createCuentaPorCobrarSchema (+8 more)
 
 ### Community 62 - "Community 62"
-Cohesion: 0.16
-Nodes (15): createMonedaAction, exchangeReadService, requireMultiCurrency(), updateMonedaAction, ConversionResult, MonedaForm(), exchangeRateProvider, ExchangeCurrentRatesResult (+7 more)
+Cohesion: 0.21
+Nodes (3): convertCurrency(), ExchangeRateProvider, CurrencyConversionService
 
 ### Community 63 - "Community 63"
-Cohesion: 0.13
-Nodes (19): checkAuth(), defectacionesReparacion, equiposReparacion, ordenesProduccion, ordenesReparacion, piezasReparacion, recetasProduccion, valesProduccion (+11 more)
+Cohesion: 0.10
+Nodes (24): metadata, getArqueosAction, getEsperadosArqueoAction, realizarArqueoAction, ArqueoForm(), ArqueosPageClient(), Contados, Fila() (+16 more)
 
 ### Community 64 - "Community 64"
 Cohesion: 0.12
 Nodes (21): DocsLayout(), metadata, DocsSearch(), SearchResult, DocsShell(), getCurrentSlugFromPathname(), SPRING_DEFAULT, usePathname (+13 more)
 
 ### Community 65 - "Community 65"
-Cohesion: 0.09
-Nodes (39): getHistorialCostosAction, listarProductosParaFichaAction, updatePrecioCostoAction, PlantillaFormProps, CategoriaCosto, ComparacionPlantilla, ComposicionCostoData, ComposicionMaterial (+31 more)
+Cohesion: 0.08
+Nodes (23): baseUser, mockPeriodoAbierto, mockPeriodoCerrado, cachearPeriodoActivo(), cacheKey(), clearCache(), extraerFechaNegocio(), getGuardConfigExtended() (+15 more)
 
 ### Community 66 - "Community 66"
 Cohesion: 0.12
-Nodes (19): ACCOUNTING_FEATURE_KEYS, backfillAccountingFeatures(), backfillPlanAccountingFeatures(), coerceJsonObject(), JsonObject, mergeAccountingFeatures(), pickAccountingFeatures(), PLAN_ACCOUNTING_FEATURES_BY_NAME (+11 more)
+Nodes (20): ACCOUNTING_FEATURE_KEYS, backfillAccountingFeatures(), backfillPlanAccountingFeatures(), coerceJsonObject(), JsonObject, mergeAccountingFeatures(), pickAccountingFeatures(), PLAN_ACCOUNTING_FEATURES_BY_NAME (+12 more)
 
 ### Community 67 - "Community 67"
-Cohesion: 0.29
-Nodes (8): OFERTA_INCLUDE, FacturarOfertaInput, facturarOfertaSchema, OfertaInput, ofertaItemSchema, ofertaSchema, OfertaUpdateInput, ofertaUpdateSchema
+Cohesion: 0.12
+Nodes (19): confirmPaymentSchema, confirmSalesAgentPaymentAction, ConfirmSalesAgentPaymentDto, confirmSalesAgentPayoutAction, ConfirmSalesAgentPayoutDto, dashboardSchema, getAdminSalesAgentPayoutsAction, getAdminSalesAgentTenantPaymentsAction (+11 more)
 
 ### Community 68 - "Community 68"
-Cohesion: 0.11
-Nodes (21): getComposicionCostoAction, getHistorialReconciliadoAction, ComposicionCosto(), EditarPrecioCosto(), FichaCostoDetalleProps, FichaCostoPdf(), FichaCostoPdfProps, FichaCostoView() (+13 more)
+Cohesion: 0.13
+Nodes (30): EquipoForm, ACCEPTED_IMAGE_TYPES, ClienteLogoUpload(), ClienteLogoUploadProps, createDeudaCashAction, DeudaCashForm(), ProductPhotoUpload(), ProductPhotoUploadProps (+22 more)
 
 ### Community 69 - "Community 69"
-Cohesion: 0.14
-Nodes (21): createSchema, DEUDA_INCLUDE, pagoSchema, updateDeudaCashAction, updateSchema, deudaCashPagoSchema, deudaCashUpdateSchema, deudasCashCreateSchema (+13 more)
+Cohesion: 0.15
+Nodes (14): defectacionesReparacion, equiposReparacion, ordenesProduccion, ordenesReparacion, piezasReparacion, recetasProduccion, valesProduccion, getProfile() (+6 more)
 
 ### Community 70 - "Community 70"
 Cohesion: 0.03
-Nodes (102): CuentasPorCobrarPage(), surfaceCardClass, useHasMounted(), metadata, AuditLog, GastoPendiente, ReconciliacionVenta, ServicioPendiente (+94 more)
+Nodes (106): ContabilidadDashboard(), metadata, AuditLog, AjusteBancario, GastoPendiente, ReconciliacionVenta, ServicioPendiente, TransferenciaBancaria (+98 more)
 
 ### Community 71 - "Community 71"
 Cohesion: 0.04
 Nodes (48): 10. Decisiones Resueltas, 1.1 Primarios, 1.2 Secundarios, 1.3 No objetivos, 1. Objetivos, 2.1 Turno como entidad principal, 2.2 Método de pago en Venta, no solo en ReconciliacionVenta, 2.3 Arqueo opcional pero incentivado (+40 more)
 
 ### Community 72 - "Community 72"
-Cohesion: 0.08
-Nodes (29): GET(), parsePositiveInt(), RouteContext, mockUser, GET(), RouteContext, mockUser, GET() (+21 more)
+Cohesion: 0.50
+Nodes (3): getEstadoBadge(), MargenBajoTable(), mockGetProductosMargenBajoAction
 
 ### Community 73 - "Community 73"
-Cohesion: 0.08
-Nodes (32): GET, mockPrisma, mockUser, GET(), mockUser, getDashboardStatsAction, getDashboardStatsHandler(), invalidateDashboardCacheHandler() (+24 more)
+Cohesion: 0.16
+Nodes (15): CompraDocumento, CompraDocumentoItem, CompraDocumentoResponse, CompraProducto, CompraProductoResponse, CreateCategoriaRequest, MoveCategoriaRequest, Proveedor (+7 more)
 
 ### Community 74 - "Community 74"
-Cohesion: 0.11
-Nodes (19): bulkApplyPercentageAction, BulkApplyPercentageInput, bulkApplyTemplateAction, BulkApplyTemplateInput, bulkPercentageSchema, BulkPriceError, BulkPriceResponse, BulkPriceResult (+11 more)
+Cohesion: 0.25
+Nodes (12): metadata, MiEmpresaConfigPage(), MiEmpresaFormProps, MiEmpresaUpdateResponse, CuentaBancariaItem, filterActiveCuentasBancarias(), mapMiEmpresaApiToFormValues(), MiEmpresaApiResponse (+4 more)
 
 ### Community 75 - "Community 75"
-Cohesion: 0.09
-Nodes (28): EditarMermaPage(), metadata, Props, metadata, MermasPage(), metadata, MermaStats, createMermaAction (+20 more)
+Cohesion: 0.15
+Nodes (17): NominaPage(), getCurrentUserMock, getEmpleadosActionMock, getPagoSalariosActionMock, redirectMock, createPagoSalarioAction, deletePagoSalarioAction, getPagoSalarioByIdAction (+9 more)
 
 ### Community 76 - "Community 76"
-Cohesion: 0.19
-Nodes (12): CuadrePage(), abrirTurnoAction, cerrarTurnoAction, getCuadreTurnoAction, ProductoCuadre, getOrCreateTurnoActivo, getTurnosAction, CuadreTurnoDialog() (+4 more)
+Cohesion: 0.14
+Nodes (20): abrirTurnoAction, cerrarTurnoAction, CuadreTurnoData, ProductoCuadre, getOrCreateTurnoActivo, getTurnoActivoAction, getTurnosAction, TURNOS_INCLUDE (+12 more)
 
 ### Community 77 - "Community 77"
-Cohesion: 0.15
-Nodes (14): CLIENTE_SELECT, ClienteInput, clienteSchema, ClienteUpdateInput, clienteUpdateSchema, getProfileAction, PROFILE_SELECT, updateProfileAction (+6 more)
+Cohesion: 0.12
+Nodes (18): dateFiltersSchema, dateFiltersShape, paginationSchema, paginationShape, productIdsSchema, validateInput(), calcularInicioVentanaCalendario(), GastoDocumento (+10 more)
 
 ### Community 78 - "Community 78"
-Cohesion: 0.13
-Nodes (16): FacturasPage(), metadata, PageProps, SerieFacturacion, TipoDocumento, getBillingHealthAction, BillingHealthCard(), { getBillingHealthAction } (+8 more)
+Cohesion: 0.18
+Nodes (14): Factura, SerieFacturacion, TipoDocumento, updateFacturaAction, ActualizarEstadoFactura(), FacturasContentProps, Cliente, CuentaPorCobrar (+6 more)
 
 ### Community 79 - "Community 79"
-Cohesion: 0.13
-Nodes (16): ListasPreciosPage(), metadata, metadata, createListaPrecioAction, deleteListaPrecioAction, getListaPrecioByIdAction, getListasPreciosAction, updateListaPrecioAction (+8 more)
+Cohesion: 0.10
+Nodes (28): accordionContent, buttonSpring, cardHover, cardSlideFromRight, easeOut, easeOutSlow, fadeDown, fadeIn (+20 more)
 
 ### Community 80 - "Community 80"
-Cohesion: 0.08
-Nodes (31): metadata, ReportesPage(), metadata, TransferenciasPage(), ReportesPageClient(), aprobarTransferenciaAction, completarTransferenciaAction, createTransferenciaAction (+23 more)
+Cohesion: 0.13
+Nodes (21): groupByLastNDays(), CATEGORIA_ICONOS, CATEGORIA_LABEL, fmt(), PlantillaCostoTab(), PlantillaCostoTabProps, fmt(), newLineItem() (+13 more)
 
 ### Community 81 - "Community 81"
-Cohesion: 0.09
-Nodes (27): BackupHistoryTable(), BackupHistoryTableProps, formatDate(), formatSize(), STATUS_BADGES, TYPE_LABELS, BackupTenantOption, BackupTriggerDialog() (+19 more)
+Cohesion: 0.10
+Nodes (26): BackupHistoryTable(), BackupHistoryTableProps, formatDate(), formatSize(), STATUS_BADGES, TYPE_LABELS, BACKUP_TYPES, BackupTenantOption (+18 more)
 
 ### Community 82 - "Community 82"
 Cohesion: 0.09
 Nodes (8): DEFAULT_PRISMA, RestoreEngineOptions, RestoreResult, SqlStatement, SqlStatementType, LocalFSStorage, BackupStorage, mockStorage
 
 ### Community 83 - "Community 83"
-Cohesion: 0.20
-Nodes (9): metadata, SalesSettlementHistoryPage(), CuadreCerradoListItem, getCuadresCerradosAction, CuadresHistoryPageClient(), formatCurrency(), formatSettlementDate(), getDetailHref() (+1 more)
+Cohesion: 0.19
+Nodes (10): OfertasPageContent(), OfertasPageContentProps, metadata, OfertasPage(), Oferta, OfertaItem, getOfertasAction, OfertaDetailContentProps (+2 more)
 
 ### Community 84 - "Community 84"
-Cohesion: 0.15
-Nodes (26): AuthenticatedContext, getAuthenticatedContext(), createRecetaProduccion(), createRecetaSchema, deleteIngredienteRecetaProduccion(), deleteRecetaProduccion(), getRecetaProduccion(), getRecetasProduccion() (+18 more)
+Cohesion: 0.20
+Nodes (16): IngredientValidationError, IngredientValidationResult, IngredientValidationSuccess, setIngredientesSchema, MASS_UNITS, VOLUME_UNITS, categorizeCatalogUnit(), categorizeUnit() (+8 more)
 
 ### Community 85 - "Community 85"
-Cohesion: 0.13
-Nodes (20): AlmacenPage(), metadata, EditarAlmacenPage(), metadata, ALMACEN_SELECT, createAlmacenAction, deleteAlmacenAction, getAlmacenByIdAction (+12 more)
+Cohesion: 0.03
+Nodes (224): UpdateFormData, updateSchema, ReciboData, InyeccionCapital, Servicios, Dialog(), DialogContent(), DialogContentProps (+216 more)
 
 ### Community 86 - "Community 86"
-Cohesion: 0.12
-Nodes (19): accordionContent, buttonSpring, cardSlideFromRight, easeOut, easeOutSlow, fadeDown, fadeIn, fadeInScale (+11 more)
+Cohesion: 0.27
+Nodes (11): buildKey(), checkRateLimit(), defaultConfig, defaults, getConfig(), purgeExpired(), RateLimitConfig, RateLimitResult (+3 more)
 
 ### Community 87 - "Community 87"
-Cohesion: 0.10
-Nodes (21): metadata, approveMembershipAction, getGlobalUsersAction, getPendingMembershipsAction, rejectMembershipAction, updateTenantUserAction, MembershipActionDialog(), getInitials() (+13 more)
+Cohesion: 0.14
+Nodes (11): metadata, approveMembershipAction, getPendingMembershipsAction, rejectMembershipAction, updateTenantUserAction, TenantUsersPage(), mockFetch, mockGetGlobalUsersAction (+3 more)
 
 ### Community 88 - "Community 88"
-Cohesion: 0.12
-Nodes (24): coloresIcono, coloresPrioridad, containerVariants, iconos, itemVariants, NotificationsPage(), statsVariants, Notification (+16 more)
+Cohesion: 0.07
+Nodes (43): metadata, NewGastoElementoPage(), Props, GastoElementosPage(), metadata, Props, metadata, Props (+35 more)
 
 ### Community 89 - "Community 89"
 Cohesion: 0.15
-Nodes (21): generateStaticParams(), Home(), robots(), sitemap(), buildAllSlugs(), LandingPageClient(), AnswerSchema, buildCanonicalUrl() (+13 more)
+Nodes (21): generateStaticParams(), Home(), robots(), sitemap(), buildAllSlugs(), FAQ_ITEMS, AnswerSchema, buildCanonicalUrl() (+13 more)
 
 ### Community 90 - "Community 90"
 Cohesion: 0.11
 Nodes (10): Moneda, TasaCambio, CACHE_CONFIG, CACHE_KEYS, calculateTotalBalanceInMainCurrency(), convertCurrency(), formatCurrency(), getErrorMessage() (+2 more)
 
 ### Community 91 - "Community 91"
-Cohesion: 0.15
-Nodes (15): metadata, NewContratoPage(), metadata, PageProps, UpdateContratoPage(), metadata, VendorPage(), metadata (+7 more)
+Cohesion: 0.03
+Nodes (117): GET(), GET(), GET(), GET(), POST(), ValidacionTipoPagoSchema, DefectacionSchema, POST() (+109 more)
 
 ### Community 92 - "Community 92"
-Cohesion: 0.40
-Nodes (5): FichaCostoDetallePage(), FichaCostoDetallePageProps, metadata, getFichaCostoAction, FichaCostoDetalle()
+Cohesion: 0.09
+Nodes (28): GET(), parsePositiveInt(), RouteContext, mockUser, GET(), RouteContext, mockUser, CuentasBancariasPage() (+20 more)
 
 ### Community 93 - "Community 93"
-Cohesion: 0.11
-Nodes (17): POST(), cookieMap, AuthCallbackClient(), metadata, deleteAuthCookies(), getMyTenantsAction, handleAuthCallback(), loginAction() (+9 more)
+Cohesion: 0.17
+Nodes (16): COMPRA_SERVICIO_INCLUDE, createCompraServicioAction, deleteCompraServicioAction, getCompraServicioByIdAction, getComprasServiciosAction, updateCompraServicioAction, anticipoAllocationSchema, CreateCompraServicioInput (+8 more)
 
 ### Community 94 - "Community 94"
 Cohesion: 0.04
 Nodes (47): ADDED Requirements, Delta for Contabilidad, Requirement: Criterios de Verificación Funcional para Riesgos Críticos, Requirement: Disponibilidad de Cobro Anticipado en Facturación de Venta, Requirement: Disponibilidad de Pago Anticipado en Formas de Pago de Compra, Requirement: Ejecución de Cobro Anticipado desde Oferta Aceptada, Requirement: Ejecución de Cobro Anticipado en Factura Directa, Requirement: Ejecución de Pago Anticipado en Compra con Cobertura Completa (+39 more)
 
 ### Community 95 - "Community 95"
-Cohesion: 0.24
-Nodes (14): getUploadIntent(), SignatureResponse, UploadIntentResponse, UploadOptions, UploadResponse, uploadToCloudinary(), uploadToCloudinaryFromIntent(), uploadToCloudinaryUrl() (+6 more)
+Cohesion: 0.15
+Nodes (16): metadata, OfertaDetailPage(), OfertaDetailPageProps, deleteOfertaAction, facturarOfertaAction, getOfertaByIdAction, OFERTA_INCLUDE, updateOfertaAction (+8 more)
 
 ### Community 96 - "Community 96"
-Cohesion: 0.31
-Nodes (9): getTurnoActivoAction, TURNOS_INCLUDE, AbrirTurnoInput, abrirTurnoSchema, CerrarTurnoInput, cerrarTurnoSchema, ListarTurnosInput, listarTurnosSchema (+1 more)
+Cohesion: 0.19
+Nodes (16): assertBaseSeedExists(), ProfessionalSeedClient, ProfessionalSeedInput, seedAlmacenExtra(), seedCategoriaExtra(), seedClientesExtra(), seedCuentasExtra(), seedListaMayorista() (+8 more)
 
 ### Community 97 - "Community 97"
 Cohesion: 0.08
-Nodes (24): CacheEntry, DiaVentas, GastoCompraData, GastoCompraPorMesData, GastoDEData, GastoDePorMesData, GastoSalarioPorMesData, MermaData (+16 more)
+Nodes (23): DiaVentas, GastoCompraData, GastoCompraPorMesData, GastoDEData, GastoDePorMesData, GastoSalarioPorMesData, MermaData, MermaPorMesData (+15 more)
 
 ### Community 98 - "Community 98"
 Cohesion: 0.18
@@ -1586,92 +1586,92 @@ Cohesion: 0.09
 Nodes (23): compilerOptions, allowJs, allowSyntheticDefaultImports, esModuleInterop, incremental, isolatedModules, jsx, lib (+15 more)
 
 ### Community 101 - "Community 101"
-Cohesion: 0.07
-Nodes (18): @prisma/client, main(), prisma, main(), getReferencingTables(), main(), prisma, main() (+10 more)
+Cohesion: 0.05
+Nodes (26): @prisma/client, main(), prisma, prisma, runSeed(), main(), prisma, main() (+18 more)
 
 ### Community 102 - "Community 102"
 Cohesion: 0.04
 Nodes (46): 1. Modelo Prisma (`prisma/schema.prisma`), 2. Feature Registry (`src/features/planes/feature-registry.ts`), 3. Gating en Server Actions y API Routes, 4. Gating en UI (`src/components/app-sidebar2.tsx`), 5. Carga de features en sesión, 6. Landing dinámica, 7. Seed (`prisma/seed/plans-seed.ts`), 8. Administración desde panel (+38 more)
 
 ### Community 103 - "Community 103"
-Cohesion: 0.06
-Nodes (34): PagosExpandidosProps, FormaPagoAnticipo, CreateCuentaPorPagarRequest, CuentaPorPagar, EstadoTransferencia, Merma, MermaWithDetails, PagarCuentaPorPagarRequest (+26 more)
+Cohesion: 0.07
+Nodes (34): PagosExpandidosProps, FormaPagoAnticipo, CreateCuentaPorPagarRequest, CuentaPorPagar, Merma, MermaWithDetails, PagarCuentaPorPagarRequest, PagoCuentaPorPagar (+26 more)
 
 ### Community 104 - "Community 104"
-Cohesion: 0.21
-Nodes (18): metadata, ProduccionPage(), aprobarOrdenProduccionAction, cancelarOrdenProduccionAction, completarOrdenProduccionAction, createOrdenProduccionAction, createRecetaProduccionAction, deleteRecetaProduccionAction (+10 more)
+Cohesion: 0.13
+Nodes (29): AuthenticatedContext, getAuthenticatedContext(), anularValeSalida(), createValeSalida(), getConceptos(), getValeSalida(), getValesSalida(), requireTenant() (+21 more)
 
 ### Community 105 - "Community 105"
-Cohesion: 0.11
-Nodes (23): DashboardPage(), ChartConfig, ChartContainer(), ChartContext, ChartContextProps, ChartLegendContent(), ChartTooltipContent(), getPayloadConfigFromPayload() (+15 more)
+Cohesion: 0.28
+Nodes (8): args, getAvailableStock(), isDryRun, isForce, migrate(), prisma, processVentaItem(), Stats
 
 ### Community 106 - "Community 106"
-Cohesion: 0.20
-Nodes (12): ConsultaStockBatchOpts, ConsultaStockOpts, ConsultaStockTotalBatchOpts, ConsultaStockTotalOpts, getStockPorUbicacion(), getStockTotalProducto(), getStockTotalProductosBatch(), STOCK_SELECT (+4 more)
+Cohesion: 0.19
+Nodes (18): CuadreData, DailyTrendChartProps, CuadreData, OperacionesTabProps, VentasVsReconciliadoTabProps, BalanceData, calcularCambioNetoCuenta(), fieldReconciliacion() (+10 more)
 
 ### Community 107 - "Community 107"
-Cohesion: 0.14
-Nodes (14): ConversionSchema, exchangeReadService, getBalanceFinanciero(), MonedaSchema, TasaCambioSchema, updateMoneda(), UpdateMonedaSchema, AllocationParaCosto (+6 more)
+Cohesion: 0.13
+Nodes (15): ConversionSchema, createTasa(), exchangeReadService, getBalanceFinanciero(), MonedaSchema, TasaCambioSchema, updateMoneda(), UpdateMonedaSchema (+7 more)
 
 ### Community 108 - "Community 108"
-Cohesion: 0.10
-Nodes (16): RentabilidadDashboard(), mockGetDashboardRentabilidadAction, CategoriaMargen, DashboardRentabilidadData, DashboardRentabilidadInput, getDashboardRentabilidadAction, getProductosMargenBajoAction, GetProductosMargenBajoInput (+8 more)
+Cohesion: 0.18
+Nodes (13): assertMaximum(), assertPositive(), calculateRecurringCommission(), calculateSalesAgentPayout(), DecimalInput, MAX_COMMISSION_RATE, MAX_EXCHANGE_RATE, MAX_PAYOUT_CUP (+5 more)
 
 ### Community 109 - "Community 109"
 Cohesion: 0.17
 Nodes (17): validateForCLAS(), mapCategoryToSection(), mapSubcategoryToSpecific(), buildProductBusinessCodeFromSegments(), buildProductBusinessCodePreview(), ensureBusinessCodeIsUnique(), generateProductCodeWithRetry(), incrementSurtido() (+9 more)
 
 ### Community 110 - "Community 110"
-Cohesion: 0.17
-Nodes (19): DemoSeedClient, DemoSeedInput, seedAlmacen(), seedBaseDemoData(), seedCategorias(), seedClientes(), seedCuentas(), seedListaPrecios() (+11 more)
+Cohesion: 0.11
+Nodes (19): EditCompraProductoPage(), COMPRA_INCLUDE, createCompraProductoAction, updateCompraProductoAction, CreateCompraProductoInput, createCompraProductoSchema, itemSchema, UpdateCompraProductoInput (+11 more)
 
 ### Community 111 - "Community 111"
 Cohesion: 0.04
 Nodes (45): 1) Web surface, 2) API surface, Arquitectura del Sistema, Autenticación y autorización, Beneficios, Beneficios, Capas principales, Checklist de revisión (+37 more)
 
 ### Community 112 - "Community 112"
-Cohesion: 0.19
-Nodes (4): convertCurrency(), ExchangeRateProvider, CurrencyConversionService, toIsoDate()
+Cohesion: 0.21
+Nodes (14): Accordion(), AccordionContent(), AccordionContentProps, AccordionContext, AccordionContextValue, AccordionItem(), AccordionItemContext, AccordionItemContextValue (+6 more)
 
 ### Community 113 - "Community 113"
 Cohesion: 0.20
 Nodes (17): getPlansAction(), getPlansPublicAction, getPlansPublicActionV2(), CATEGORY_LABELS, CATEGORY_ORDER, FEATURE_REGISTRY, FeatureCategory, FeatureDef (+9 more)
 
 ### Community 114 - "Community 114"
-Cohesion: 0.11
-Nodes (19): VentaInterface(), AnticiposPayload, createVentaPos(), fetchAnticiposCobroDisponibles(), fetchProductosPuntoVenta(), fetchTurnoActivoPuntoVenta(), ProductosPayload, TurnoActivoPayload (+11 more)
+Cohesion: 0.10
+Nodes (23): TenantEntry, TenantSwitcher(), { toastError, reloadMock, authUser }, VentaInterface(), AnticiposPayload, createVentaPos(), fetchAnticiposCobroDisponibles(), fetchProductosPuntoVenta() (+15 more)
 
 ### Community 115 - "Community 115"
-Cohesion: 0.18
-Nodes (17): addOrdenReparacion(), buildDateFilter(), db, deleteOrdenReparacion(), facturarOrdenReparacion(), getOrdenesReparacion(), getOrdenReparacion(), getTecnicosStats() (+9 more)
+Cohesion: 0.15
+Nodes (14): DashboardShell(), DashboardShellProps, headerIconVariants, RentabilidadDashboard(), SectionCards(), getStockStatus(), StockBajoTable(), StockDistributionChart() (+6 more)
 
 ### Community 116 - "Community 116"
 Cohesion: 0.22
 Nodes (10): FinanzasPage(), AdminDashboardPage(), SistemaPage(), TenantsPage(), getAdminFinanceAction, getAdminSystemHealthAction, escapeCSV(), ExportColumn (+2 more)
 
 ### Community 117 - "Community 117"
-Cohesion: 0.09
-Nodes (25): POST, POST, POST, GET, GET, { prismaMock, transactionClientMock }, GET, POST (+17 more)
+Cohesion: 0.50
+Nodes (4): 3. Eficiencia de Pagos, Métricas Clave, Recomendaciones, Tabla Comparativa
 
 ### Community 118 - "Community 118"
 Cohesion: 0.04
 Nodes (45): 1. Apertura Diaria, 2. Operaciones del Día, 3. Pre-Cierre (Opcional), 4. Cierre Diario, 5. Aprobación, 6. Reapertura (con auditoría), AccionPeriodo, `AperturaPeriodo` (+37 more)
 
 ### Community 119 - "Community 119"
-Cohesion: 0.27
-Nodes (11): AssembleEan13Code(), buildEan13Base12(), calculateEan13CheckDigit(), Ean13SegmentsInput, Ean13SegmentsNormalized, FindNextAvailableSurtido(), generateEan13BusinessCode(), normalizeEan13Segments() (+3 more)
+Cohesion: 0.07
+Nodes (36): EditarTransferenciaPage(), metadata, Props, metadata, TransferenciasPage(), EstadoTransferencia, aprobarTransferenciaAction, completarTransferenciaAction (+28 more)
 
 ### Community 120 - "Community 120"
-Cohesion: 0.14
-Nodes (13): metadata, NewGastoElementoPage(), Props, metadata, Props, UpdateGastoElementoPage(), metadata, metadata (+5 more)
+Cohesion: 0.21
+Nodes (18): metadata, ProduccionPage(), aprobarOrdenProduccionAction, cancelarOrdenProduccionAction, completarOrdenProduccionAction, createOrdenProduccionAction, createRecetaProduccionAction, deleteRecetaProduccionAction (+10 more)
 
 ### Community 121 - "Community 121"
 Cohesion: 0.04
 Nodes (44): 1. Overview, 2. Functional Requirements, 3. Non-Functional Requirements, 4. Out of Scope (Explícitamente fuera), 5. Acceptance Criteria, 6. Scenarios Summary, Escenario: Acceso directo por URL, Escenario: Compra en CUP con moneda base CUP (+36 more)
 
 ### Community 122 - "Community 122"
-Cohesion: 0.28
-Nodes (6): EditarTransferenciaPage(), metadata, Props, getTransferenciaByIdAction, EditarTransferenciaContent(), EditarTransferenciaContentProps
+Cohesion: 0.11
+Nodes (23): GET(), mockUser, CacheEntry, DashboardStats, DashboardStatsQueryFilters, DiaVentas, GastoCompraData, GastoDEData (+15 more)
 
 ### Community 123 - "Community 123"
 Cohesion: 0.14
@@ -1682,32 +1682,32 @@ Cohesion: 0.11
 Nodes (18): mcp, next-devtools, railway, testsprite, vercel, command, enabled, type (+10 more)
 
 ### Community 125 - "Community 125"
-Cohesion: 0.19
-Nodes (18): EnterpriseSeedClient, EnterpriseSeedInput, seedAlmacenesEmp(), seedCategoriasEmp(), seedClientesEmp(), seedComprasEmp(), seedCuentasMxn(), seedEnterpriseExtras() (+10 more)
+Cohesion: 0.40
+Nodes (5): CierresPage(), metadata, createCierreAction, getCierresAction, CierresManager()
 
 ### Community 126 - "Community 126"
 Cohesion: 0.17
 Nodes (15): ImplementationSeedClient, ImplementationSeedInput, isDirectExecution, prisma, seedCuentasBancariasPorMoneda(), seedImplementationData(), seedMonedas(), seedTiposPagoContables() (+7 more)
 
 ### Community 127 - "Community 127"
-Cohesion: 0.19
-Nodes (8): now, PLAN_BASICO_FEATURES, PLAN_EMPRESARIAL_FEATURES, PLAN_PROFESIONAL_FEATURES, planes, pool, main(), SchemaReader
+Cohesion: 0.21
+Nodes (7): now, PLAN_BASICO_FEATURES, PLAN_EMPRESARIAL_FEATURES, PLAN_PROFESIONAL_FEATURES, planes, pool, SchemaReader
 
 ### Community 128 - "Community 128"
-Cohesion: 0.13
-Nodes (18): metadata, PuntosDeVentaPage(), EditarPuntoVentaPage(), metadata, PuntoDeVenta, createPuntoDeVentaAction, deletePuntoDeVentaAction, getPuntoDeVentaByIdAction (+10 more)
+Cohesion: 0.12
+Nodes (19): DELETE, GET, PUT, Cliente, CreateCuentaPorCobrarRequest, OrdenReparacion, Cliente, errorCache (+11 more)
 
 ### Community 129 - "Community 129"
 Cohesion: 0.20
 Nodes (14): DocsModulePage(), generateMetadata(), Props, JsonLd(), JsonLdProps, DocsBreadcrumb(), getModuleBySlug(), getMarkdownFilePath() (+6 more)
 
 ### Community 130 - "Community 130"
-Cohesion: 0.11
-Nodes (24): getArqueosAction, getEsperadosArqueoAction, realizarArqueoAction, ArqueoForm(), ArqueosPageClient(), Contados, Fila(), FilaDetalle (+16 more)
+Cohesion: 0.15
+Nodes (13): ComprasProductosPage(), metadata, deleteCompraProductoAction, getComprasProductosAction, getPurchaseHealthAction, PurchaseHealthMetrics, ComprasProductosContent(), PurchaseHealthCard() (+5 more)
 
 ### Community 131 - "Community 131"
-Cohesion: 0.21
-Nodes (15): ProductionDialogs(), convertBetweenUnits(), convertFromBase(), convertToBase(), DISCRETE_UNITS, formatCantidad(), formatIngrediente(), formatIngredientesList() (+7 more)
+Cohesion: 0.24
+Nodes (13): buildClasClassifierData(), CLAS_SECTIONS, CLAS_SPECIFICS, CLASClassifierRow, CLASSection, CLASSpecific, getSectionForSpecific(), getSpecificsForSection() (+5 more)
 
 ### Community 132 - "Community 132"
 Cohesion: 0.18
@@ -1718,8 +1718,8 @@ Cohesion: 0.11
 Nodes (17): aliases, components, hooks, lib, ui, utils, iconLibrary, rsc (+9 more)
 
 ### Community 134 - "Community 134"
-Cohesion: 0.19
-Nodes (16): assertBaseSeedExists(), ProfessionalSeedClient, ProfessionalSeedInput, seedAlmacenExtra(), seedCategoriaExtra(), seedClientesExtra(), seedCuentasExtra(), seedListaMayorista() (+8 more)
+Cohesion: 0.17
+Nodes (19): DemoSeedClient, DemoSeedInput, seedAlmacen(), seedBaseDemoData(), seedCategorias(), seedClientes(), seedCuentas(), seedListaPrecios() (+11 more)
 
 ### Community 135 - "Community 135"
 Cohesion: 0.50
@@ -1734,16 +1734,16 @@ Cohesion: 0.16
 Nodes (5): CompanyInfo, generateTransferVoucherPDF(), OptimizedPDFGenerator, PDFGenerator, VoucherData
 
 ### Community 138 - "Community 138"
-Cohesion: 0.16
-Nodes (11): resolveUploadthingPolicy(), buildPublicId(), CONTRACT_MIME_TYPES, ensureEntityId(), ensureMimeAndSize(), IMAGE_MIME_TYPES, resolveUploadPolicy(), ResolveUploadPolicyInput (+3 more)
+Cohesion: 0.10
+Nodes (24): generateCSV(), GET(), generateVoucherPDF(), GET(), metadata, ServiciosReconciliacionPage(), getCurrentUserMock, redirectMock (+16 more)
 
 ### Community 139 - "Community 139"
 Cohesion: 0.05
 Nodes (43): 1. Action gorda, 2. Route Handler gorda, 3. Prisma como caso de uso, 4. Auth duplicada, 5. Feature spaghetti, Anti-patrones, Checklist de decisión rápida, Debe existir una única fuente de verdad para: (+35 more)
 
 ### Community 140 - "Community 140"
-Cohesion: 0.16
-Nodes (16): OrdenesReparacionPage(), ComplejidadReparacion, EstadoOrden, FacturarOrdenResponse, OrdenReparacionEquipo, OrdenReparacionItem, OrdenReparacionMaterial, PiezaReparacion (+8 more)
+Cohesion: 0.11
+Nodes (18): EditarMermaPage(), metadata, Props, metadata, MermasPage(), metadata, MermaStats, deleteMermaAction (+10 more)
 
 ### Community 141 - "Community 141"
 Cohesion: 0.05
@@ -1758,56 +1758,56 @@ Cohesion: 0.12
 Nodes (15): almacenes, categorias, empleados, gastosCompra, gastosServicios, mermas, notifications, productos (+7 more)
 
 ### Community 144 - "Community 144"
-Cohesion: 0.17
-Nodes (12): SiteHeader(), ThemeToggle(), Breadcrumb(), BreadcrumbEllipsis(), BreadcrumbItem(), BreadcrumbLink(), BreadcrumbList(), BreadcrumbPage() (+4 more)
+Cohesion: 0.50
+Nodes (4): Atajos de Teclado, Dashboard General, Navegación, Simulador
 
 ### Community 145 - "Community 145"
-Cohesion: 0.21
-Nodes (9): metadata, createSerieFacturacionAction, deleteSerieFacturacionAction, updateSerieFacturacionAction, SerieInput, serieSchema, SerieUpdateInput, serieUpdateSchema (+1 more)
+Cohesion: 0.29
+Nodes (7): CATEGORIA_SELECT, CategoriaHierarchy, HIERARCHY_SELECT, CategoriaCreateInput, categoriaCreateSchema, CategoriaUpdateInput, categoriaUpdateSchema
 
 ### Community 146 - "Community 146"
-Cohesion: 0.15
-Nodes (17): groupByLastNDays(), assertValidLineItems(), readStoredDocument(), toPlantillaCosto(), fmt(), newLineItem(), PlantillaForm(), item() (+9 more)
+Cohesion: 0.21
+Nodes (13): buildVisibleSidebarGroups(), filterItemWithSubItems(), FULL_FEATURES, GroupCount, GROUP_TONE_BY_TITLE, SIDEBAR_CONFIG, SIDEBAR_FEATURE_MAP, SIDEBAR_TENANT_PERMISSIONS (+5 more)
 
 ### Community 147 - "Community 147"
 Cohesion: 0.05
 Nodes (43): API Endpoints, API Errors, Architecture, Atomic Assignment, Bug Fixes Applied, Business Logic ✅, `calculateEan13CheckDigit(base12: string): string`, Data Integrity Guarantees (+35 more)
 
 ### Community 148 - "Community 148"
-Cohesion: 0.13
-Nodes (15): CierreCajaPos, ComandaRestaurante, ComandaRestauranteItem, EstadoComandaItemRestaurante, EstadoComandaRestaurante, EstadoProduccionRestaurante, KdsComanda, KdsPrioridad (+7 more)
+Cohesion: 0.24
+Nodes (8): GET, mockPrisma, mockUser, getDashboardStatsHandler(), invalidateDashboardCacheHandler(), getWandaDashboardHandler(), invalidateWandaCacheHandler(), invalidateDashboardStatsCache()
 
 ### Community 149 - "Community 149"
-Cohesion: 0.12
-Nodes (12): LogoIcon(), LogoIconProps, OnboardingStep, OnboardingUser, SPRING_DEFAULT, SPRING_HOVER, StepIndicator(), StepIndicatorProps (+4 more)
+Cohesion: 0.08
+Nodes (25): LogoIcon(), LogoIconProps, OnboardingPage(), OnboardingStep, OnboardingUser, SPRING_DEFAULT, SPRING_HOVER, StepIndicator() (+17 more)
 
 ### Community 150 - "Community 150"
 Cohesion: 0.05
 Nodes (42): 1. Integración con `calcularCostoVenta()`, 2. Query Strategy, 3. Fallback para Ventas Legacy, 4. Resumen de Rentabilidad, 5. Estructura de Archivos, 6. Interfaz TypeScript, 7. Algoritmo de Cálculo FIFO, 8. Estrategia de Testing (+34 more)
 
 ### Community 151 - "Community 151"
-Cohesion: 0.19
-Nodes (10): OfertasPageContent(), OfertasPageContentProps, metadata, OfertasPage(), Oferta, OfertaItem, getOfertasAction, OfertaDetailContentProps (+2 more)
+Cohesion: 0.20
+Nodes (10): GET(), handleVerificarStock(), POST(), crearNotificacion(), notificarMerma(), notificarTransferencia(), NotificationData, isMainModule (+2 more)
 
 ### Community 152 - "Community 152"
-Cohesion: 0.14
-Nodes (15): activityLogBodySchema, activityLogQuerySchema, createUserBodySchema, deleteSessionQuerySchema, expiringUsersBodySchema, expiringUsersQuerySchema, globalUsersQuerySchema, lockUserBodySchema (+7 more)
+Cohesion: 0.12
+Nodes (23): activityLogBodySchema, activityLogQuerySchema, createUserBodySchema, deleteSessionQuerySchema, expiringUsersBodySchema, expiringUsersQuerySchema, globalUsersQuerySchema, lockUserBodySchema (+15 more)
 
 ### Community 153 - "Community 153"
 Cohesion: 0.13
 Nodes (14): engines, node, lint-staged, *.{json,css,md}, *.{ts,tsx}, name, overrides, @types/react (+6 more)
 
 ### Community 154 - "Community 154"
-Cohesion: 0.40
-Nodes (7): ALLOWED_CONTRACT_MIME_TYPES, assertCloudinaryAssetBelongsToTenant(), assertContratoAttachmentAsset(), assertContratoVersionFile(), contratoArchivoCreateSchema, UPLOADTHING_HOST_SUFFIXES, UPLOADTHING_HOSTS
+Cohesion: 0.07
+Nodes (37): Anticipo, AdminHeader(), DataTableProps, ThemeToggle(), DropdownMenu(), DropdownMenuCheckboxItem(), DropdownMenuContent(), DropdownMenuGroup() (+29 more)
 
 ### Community 155 - "Community 155"
-Cohesion: 0.13
-Nodes (19): DELETE, IngredientValidationError, IngredientValidationResult, IngredientValidationSuccess, POST, setIngredientesSchema, FIXED_DATE, MASS_UNITS (+11 more)
+Cohesion: 0.16
+Nodes (8): CategoriaInput, CategoriaSchema, CategoriaUpdateInput, CategoriaUpdateSchema, CategoriaValidationResult, CategoriaValidator, validateCategoryAgainstCLAS(), validateCLASSpecific()
 
 ### Community 156 - "Community 156"
-Cohesion: 0.19
-Nodes (10): metadata, VentasPage(), getVentasAction, getSalesHealthAction, SalesHealthCard(), SalesHealthCardProps, { getSalesHealthAction }, VentasPageClient() (+2 more)
+Cohesion: 0.16
+Nodes (14): checkAuth(), getProductosPorUbicacion(), getRF(), GET, ServerActionError, getProductosPorUbicacion(), ProductoConStock, createRF() (+6 more)
 
 ### Community 157 - "Community 157"
 Cohesion: 0.05
@@ -1822,40 +1822,40 @@ Cohesion: 0.14
 Nodes (12): Attendance, CompraServicio, Currency, DatosGrafico, EmployeeWorkSchedule, GastoConcepto, GastoElemento, GastosCompra (+4 more)
 
 ### Community 160 - "Community 160"
-Cohesion: 0.21
-Nodes (8): PrismaExchangeRateProvider, toCurrencyRecord(), toIso(), toRateRecord(), ExchangeCurrencyRecord, ExchangeRateHistoryRow, ExchangeRateRecord, mockPrisma
+Cohesion: 0.01
+Nodes (129): Discrepancia, AdminUsersPage(), GET, POST, GET, GET, DisponiblesQuerySchema, GET (+121 more)
 
 ### Community 161 - "Community 161"
 Cohesion: 0.24
 Nodes (12): applyPagoGastoWorkflow(), ApplyPagoGastoWorkflowParams, ApplyPagoGastoWorkflowResult, buildDistribucion(), convertMontoToCuentaMoneda(), createGastoWorkflowError(), GastoWorkflowDistribucion, GastoWorkflowError (+4 more)
 
 ### Community 162 - "Community 162"
-Cohesion: 0.05
-Nodes (61): generateSecurePassword(), GET(), TODO: Enviar email separado con la contraseña auto-generada, GET, POST, POST, POST, POST (+53 more)
+Cohesion: 0.09
+Nodes (35): generateSecurePassword(), GET(), TODO: Enviar email separado con la contraseña auto-generada, GET, POST, POST, POST, POST (+27 more)
 
 ### Community 163 - "Community 163"
-Cohesion: 0.30
-Nodes (9): POST, GET(), validateCronRequest(), calculateNextRun(), getNextDailyRun(), getNextHourlyRun(), getNextWeeklyRun(), pruneBackups() (+1 more)
+Cohesion: 0.36
+Nodes (8): GET(), validateCronRequest(), calculateNextRun(), getNextDailyRun(), getNextHourlyRun(), getNextWeeklyRun(), pruneBackups(), createStorage()
 
 ### Community 164 - "Community 164"
-Cohesion: 0.24
-Nodes (6): Loader2(), getOffersServicesHealthAction, OffersServicesHealthMetrics, OffersServicesHealthCard(), OffersServicesHealthCardProps, { getOffersServicesHealthAction }
+Cohesion: 0.25
+Nodes (8): authState, FULL_FEATURES, motionState, navMainState, pathnameState, renderForUser(), resetState(), sidebarState
 
 ### Community 165 - "Community 165"
-Cohesion: 0.24
-Nodes (10): deletePagoSalarioAction, getPagoSalarioByIdAction, PAGO_SALARIO_INCLUDE, updatePagoSalarioAction, PagoSalarioInput, pagoSalarioSchema, PagoSalarioUpdateInput, pagoSalarioUpdateSchema (+2 more)
+Cohesion: 0.18
+Nodes (11): AjusteBancarioResumen, CuentaBancariaResumen, EstadisticasResumen, generateResumenCSV(), GET(), InyeccionCapitalResumen, PagoDeudaResumen, ReconciliacionGastoResumen (+3 more)
 
 ### Community 167 - "Community 167"
-Cohesion: 0.22
-Nodes (4): getTasas(), getTasasHistorial(), ExchangeRateReadService, provider
+Cohesion: 0.02
+Nodes (209): react, BalanceResultadosPage(), ConfiguracionPage(), outlineButtonClass, surfaceCardClass, TiposPagoConfigPage, metadata, calculateComplexityLimits() (+201 more)
 
 ### Community 168 - "Community 168"
-Cohesion: 0.14
-Nodes (18): facturarOfertaWorkflow(), FacturarOfertaWorkflowParams, FacturarOfertaWorkflowResult, OfertaProductoItem, resolveSerieFacturacion(), applyFacturacionCobroWorkflow(), CuentaTipoPagoResolucion, FacturacionCobroWorkflowParams (+10 more)
+Cohesion: 0.40
+Nodes (4): InyeccionCapitalPage(), metadata, mockReplace, useAuthMock
 
 ### Community 169 - "Community 169"
-Cohesion: 0.17
-Nodes (9): createProductoAction, deleteProductoAction, updateProductoAction, restockProductoAction, canManageProducts(), ProductosContent(), MockPrismaClientKnownRequestError, mockProducto (+1 more)
+Cohesion: 0.21
+Nodes (15): ProductionDialogs(), convertBetweenUnits(), convertFromBase(), convertToBase(), DISCRETE_UNITS, formatCantidad(), formatIngrediente(), formatIngredientesList() (+7 more)
 
 ### Community 171 - "Community 171"
 Cohesion: 0.05
@@ -1866,8 +1866,8 @@ Cohesion: 0.22
 Nodes (3): CompanyInfo, ContratoData, ContratoPDFGenerator
 
 ### Community 173 - "Community 173"
-Cohesion: 0.30
-Nodes (10): metadata, MiEmpresaConfigPage(), MiEmpresaUpdateResponse, CuentaBancariaItem, filterActiveCuentasBancarias(), mapMiEmpresaApiToFormValues(), MiEmpresaApiResponse, normalizeMiEmpresaFormValues() (+2 more)
+Cohesion: 0.13
+Nodes (18): ChartConfig, ChartContainer(), ChartContext, ChartContextProps, ChartLegendContent(), ChartTooltipContent(), getPayloadConfigFromPayload(), THEMES (+10 more)
 
 ### Community 174 - "Community 174"
 Cohesion: 0.18
@@ -1890,16 +1890,20 @@ Cohesion: 0.05
 Nodes (37): ADDED Requirements, MODIFIED Requirements, Purpose, Requirement: Consistent Validation Across All CRUD Operations (Previously: validation was either present in Server Actions only or absent from REST handlers), Requirement: DELETE Operation HTTP 204 Response (Previously: deleted successfully but returned 200 with JSON body), Requirement: PUT Method for Full Resource Replacement, Requirement: REST HTTP Semantics, Requirement: Unified Error Response Format Across All CRUD Methods (Previously: error messages inconsistent—some English, some Spanish) (+29 more)
 
 ### Community 179 - "Community 179"
-Cohesion: 0.22
-Nodes (8): UNIDAD_SELECT, UnidadRow, UnidadInput, unidadSchema, UnidadUpdateInput, unidadUpdateSchema, checkUnidadUniqueness(), UniquenessCheckParams
+Cohesion: 0.24
+Nodes (7): DARK, getOfertaExcelHandler(), getOfertaPdfHandler(), GRAY, LIGHT_GRAY, ORANGE, WHITE
 
 ### Community 180 - "Community 180"
 Cohesion: 0.05
 Nodes (36): Execution Notes, Phase 2A: productosUbicacionApi Migration, Phase 2A: profileApi Migration, Phase 2A: Simple APIs Infrastructure & Setup, Phase 2B: reparacionesApi Migration, Phase 2B: reportesFinancierosApi Migration, Phase 2C: produccionApi Migration (16 endpoints), Phase 2D: Cleanup & Verification (+28 more)
 
 ### Community 181 - "Community 181"
-Cohesion: 0.08
-Nodes (34): COMPRA_SERVICIO_INCLUDE, createCompraServicioAction, deleteCompraServicioAction, getCompraServicioByIdAction, getComprasServiciosAction, updateCompraServicioAction, anticipoAllocationSchema, CreateCompraServicioInput (+26 more)
+Cohesion: 0.15
+Nodes (6): CODE_SPLIT_CONFIG, componentOptimization, useDebouncedValue(), useLazyComponent(), useVirtualScroll(), withMemo()
+
+### Community 182 - "Community 182"
+Cohesion: 0.18
+Nodes (11): FacturasPage(), metadata, PageProps, getFacturasAction, BillingHealthMetrics, getBillingHealthAction, BillingHealthCard(), BillingHealthCardProps (+3 more)
 
 ### Community 183 - "Community 183"
 Cohesion: 0.18
@@ -1911,7 +1915,7 @@ Nodes (34): Architecture Decisions, Backup Engine, Backup Engine Internals, Cron
 
 ### Community 185 - "Community 185"
 Cohesion: 0.36
-Nodes (7): getRF(), createRF(), getCurrentPeriod(), getMonthRange(), getRF(), ReporteFinanciero, requireTenant()
+Nodes (5): DocsModulesIndexPage(), metadata, DOCS_MODULES_DIR, DOCS_MODULES_INDEX_PATH, readDocsModulesIndexContent()
 
 ### Community 186 - "Community 186"
 Cohesion: 0.24
@@ -1926,8 +1930,8 @@ Cohesion: 0.06
 Nodes (33): ADDED Requirements (12 Total), Before Implementation, Business Risks, Coverage Assessment, ✅ Covered Areas, Data Consistency & Transactions, Document History, Edge Cases & Error Handling (+25 more)
 
 ### Community 189 - "Community 189"
-Cohesion: 0.25
-Nodes (8): parsePvFormValues(), PtoVentaFormValues, ptoVentaFormValuesSchema, toPvInput(), PvInput, pvSchema, PvUpdateInput, pvUpdateSchema
+Cohesion: 0.14
+Nodes (12): getUserMetricsAction, calculateGrowth(), UserAnalyticsPanel(), AdminFinance, AdminFinanceBreakdownEntry, AdminFinanceMeta, AdminFinanceReport, AdminFinanceSummary (+4 more)
 
 ### Community 190 - "Community 190"
 Cohesion: 0.06
@@ -1947,19 +1951,19 @@ Nodes (8): AccountingOverridesDialog(), ACCOUNTING_OVERRIDE_FEATURE_KEYS, ACCOUN
 
 ### Community 194 - "Community 194"
 Cohesion: 0.24
-Nodes (7): DARK, getOfertaExcelHandler(), getOfertaPdfHandler(), GRAY, LIGHT_GRAY, ORANGE, WHITE
+Nodes (9): calculateSalesAgentTier(), ENTRY_RATE, getSalesAgentCommissionRate(), GROWTH_RATE, ReferredTenantLicenseSnapshot, ReferredTenantSnapshot, SalesAgentTierSnapshot, TOP_RATE (+1 more)
 
 ### Community 195 - "Community 195"
-Cohesion: 0.60
-Nodes (4): GET(), POST(), createContratoHandler(), getContratosHandler()
+Cohesion: 0.10
+Nodes (21): GET(), parseBooleanParam(), mockUser, createTipoPagoAction, deleteTipoPagoAction, getTipoPagoAction, updateTipoPagoAction, TiposPagoConfigPage() (+13 more)
 
 ### Community 196 - "Community 196"
 Cohesion: 0.24
 Nodes (9): RestockBusinessError, RestockError, RestockErrorResponse, RestockHistory, RestockHistoryItem, RestockHistoryResponse, RestockRequest, RestockResponse (+1 more)
 
 ### Community 197 - "Community 197"
-Cohesion: 0.43
-Nodes (5): SubcategorySelector(), CategoriaFlat, getParentCategories(), getSubcategoriesForCategory(), categories
+Cohesion: 0.16
+Nodes (10): MembershipActionDialog(), getInitials(), PendingMembershipsTable(), PendingMembership, TenantUsersSkeleton(), StatConfig, TenantUsersStats(), TenantUsersStatsProps (+2 more)
 
 ### Community 198 - "Community 198"
 Cohesion: 0.20
@@ -1970,12 +1974,12 @@ Cohesion: 0.29
 Nodes (5): DocsContent(), DocsContentProps, markdownComponents, MermaidBlock(), resolveDocLink()
 
 ### Community 200 - "Community 200"
-Cohesion: 0.47
-Nodes (8): aprobarOrdenProduccion(), cancelarOrdenProduccion(), completarOrdenProduccion(), createOrdenProduccion(), getOrdenesProduccion(), getOrdenProduccion(), requireTenant(), transitionOrden()
+Cohesion: 0.13
+Nodes (14): Anti-Patterns Verdict, Design Health Score, Impeccable Critique — Referidos, Minor Observations, Overall Impression, [P1] Dos programas compiten dentro de una sola narrativa, [P1] La acción llega demasiado tarde, [P2] El copy usa vocabulario interno (+6 more)
 
 ### Community 201 - "Community 201"
-Cohesion: 0.24
-Nodes (4): CascadeCacheStrategy, clear_local_storage(), get_from_local_storage(), save_to_local_storage()
+Cohesion: 0.32
+Nodes (3): CascadeCacheStrategy, get_from_local_storage(), save_to_local_storage()
 
 ### Community 202 - "Community 202"
 Cohesion: 0.39
@@ -1985,25 +1989,21 @@ Nodes (8): check_db_initialized(), create_admin_user(), NEXTAUTH_URL, run_migrat
 Cohesion: 0.33
 Nodes (8): detectarAlertasMargen(), detectarAlertasStock(), detectarAlertasVencimientoCxC(), detectarAlertasVencimientoCxP(), generateQaReport(), isDirectExecution, prisma, QaAlertasResumen
 
-### Community 204 - "Community 204"
-Cohesion: 0.28
-Nodes (8): args, getAvailableStock(), isDryRun, isForce, migrate(), prisma, processVentaItem(), Stats
+### Community 204 - "cloudinary.ts"
+Cohesion: 0.29
+Nodes (6): cloudinary, destroyCloudinaryAsset(), DestroyCloudinaryAssetInput, { apiSignRequestMock, destroyMock, configMock }, UploadSignature, ResolvedUploadPolicy
 
 ### Community 205 - "Community 205"
 Cohesion: 0.36
 Nodes (8): main(), prisma, validateMiEmpresaLinked(), validateTenantExists(), validateTenantLicenses(), validateUniqueConflicts(), validateUserMemberships(), ValidationResult
 
-### Community 206 - "Community 206"
-Cohesion: 0.20
-Nodes (10): GET(), handleVerificarStock(), POST(), crearNotificacion(), notificarMerma(), notificarTransferencia(), NotificationData, isMainModule (+2 more)
-
 ### Community 207 - "Community 207"
-Cohesion: 0.33
-Nodes (6): convertMontoToCuentaMoneda(), createReconciliacionError(), getNumeroFacturaCandidates(), handlePostReconciliacionVentas(), normalizeMontoToCup(), reconciliacionVentaSchema
+Cohesion: 0.19
+Nodes (9): metadata, createSerieFacturacionAction, deleteSerieFacturacionAction, getSeriesFacturacionAction, updateSerieFacturacionAction, SerieInput, serieSchema, SerieUpdateInput (+1 more)
 
 ### Community 208 - "Community 208"
-Cohesion: 0.31
-Nodes (7): ItemCompraMaterializado, ItemReconciliado, ReconciliadorOptions, ReconciliadorResult, reconciliarHistorial(), ResumenProveedor, FECHA_FIJA
+Cohesion: 0.26
+Nodes (6): PrismaExchangeRateProvider, toCurrencyRecord(), toIso(), toRateRecord(), ExchangeCurrencyRecord, mockPrisma
 
 ### Community 210 - "Community 210"
 Cohesion: 0.33
@@ -2038,28 +2038,28 @@ Cohesion: 0.25
 Nodes (7): generarLicenciasSchema, licenciaQuerySchema, licenciaSchema, planQuerySchema, planSchema, updateLicenciaSchema, updatePlanSchema
 
 ### Community 219 - "Community 219"
-Cohesion: 0.25
-Nodes (4): CACHE_STRATEGY, cacheStrategy, LOCAL_STORAGE_CACHE, CACHE_DURATIONS
+Cohesion: 0.20
+Nodes (5): CACHE_STRATEGY, cacheStrategy, clear_local_storage(), LOCAL_STORAGE_CACHE, CACHE_DURATIONS
 
 ### Community 220 - "Community 220"
 Cohesion: 0.29
 Nodes (5): FEATURES_BY_PLAN_NAME, PLAN_BASICO_FEATURES, PLAN_EMPRESARIAL_FEATURES, PLAN_PROFESIONAL_FEATURES, prisma
 
 ### Community 221 - "Community 221"
-Cohesion: 0.14
-Nodes (10): AdminHeader(), AdminLayoutClient(), Probe(), AuthProvider(), Probe(), { push, toastMock, toastError }, formatTimeAgo(), NotificationsDropdown() (+2 more)
+Cohesion: 0.20
+Nodes (12): ConsultaStockBatchOpts, ConsultaStockOpts, ConsultaStockTotalBatchOpts, ConsultaStockTotalOpts, getStockPorUbicacion(), getStockTotalProducto(), getStockTotalProductosBatch(), STOCK_SELECT (+4 more)
 
 ### Community 222 - "Community 222"
 Cohesion: 0.38
 Nodes (5): chivoMono, inter, metadata, RootLayout(), siteMetadata
 
 ### Community 223 - "Community 223"
-Cohesion: 0.43
-Nodes (5): ToggleGroup(), ToggleGroupContext, ToggleGroupItem(), Toggle(), toggleVariants
+Cohesion: 0.13
+Nodes (15): CierreCajaPos, ComandaRestaurante, ComandaRestauranteItem, EstadoComandaItemRestaurante, EstadoComandaRestaurante, EstadoProduccionRestaurante, KdsComanda, KdsPrioridad (+7 more)
 
 ### Community 224 - "Community 224"
-Cohesion: 0.31
-Nodes (6): metadata, OfertaDetailPage(), OfertaDetailPageProps, deleteOfertaAction, getOfertaByIdAction, OfertasTable()
+Cohesion: 0.50
+Nodes (4): 1. Auditoría de Cambios, API Routes, Implementación en Componentes, Modificaciones en Base de Datos
 
 ### Community 225 - "Community 225"
 Cohesion: 0.33
@@ -2086,32 +2086,28 @@ Cohesion: 0.40
 Nodes (5): E2E_FIXTURES, E2E_USER, main(), prisma, seedProductionCatalog()
 
 ### Community 232 - "Community 232"
-Cohesion: 0.43
-Nodes (5): AdminPlanesPage(), AdminPlanListItem, filterAdminPlans(), formatPlanPriceLabel(), getFeaturesGrouped()
+Cohesion: 0.53
+Nodes (4): AdminPlanesPage(), AdminPlanListItem, filterAdminPlans(), formatPlanPriceLabel()
 
-### Community 233 - "Community 233"
-Cohesion: 0.40
-Nodes (5): CierresPage(), metadata, createCierreAction, getCierresAction, CierresManager()
-
-### Community 234 - "Community 234"
-Cohesion: 0.50
-Nodes (3): getTransferenciasBancariasActionMock, mockReplace, useAuthMock
+### Community 234 - "tier-service.ts"
+Cohesion: 0.18
+Nodes (11): getComposicionCostoAction, getListasPreciosProductoAction, getHistorialReconciliadoAction, EditarPrecioCosto(), FichaCostoDetalle(), FichaCostoDetalleProps, FichaCostoPdf(), FichaCostoPdfProps (+3 more)
 
 ### Community 235 - "Community 235"
-Cohesion: 0.40
-Nodes (5): createStateTuple(), loadOnboardingPage(), MotionCapture, motionState, routerReplaceMock
+Cohesion: 0.33
+Nodes (4): JsonValue, migration, root, schema
 
-### Community 236 - "Community 236"
-Cohesion: 0.18
-Nodes (8): metadata, EditarGastoDEPage(), metadata, Props, PeriodLockState, usePeriodLock(), getGastoDEByIdAction, GastoDEForm()
+### Community 236 - "ordenes.ts"
+Cohesion: 0.09
+Nodes (33): ContratoDetailPage(), metadata, PageProps, bulkDeleteContratosAction, bulkUpdateContratoStatusAction, CONTRATO_DETAIL_INCLUDE, CONTRATO_LIST_INCLUDE, ContratosListResult (+25 more)
 
 ### Community 237 - "Community 237"
-Cohesion: 0.35
-Nodes (9): descontarStock(), incrementarStock(), MovimientoStockOpts, revertirMovimiento(), transferirStock(), TransferirStockOpts, UpsertStockOpts, upsertStockUbicacion() (+1 more)
+Cohesion: 0.32
+Nodes (7): ConversionResult, ExchangeCurrentRate, ExchangeQuote, ExchangeRateHistoryRow, ExchangeRateRecord, ExchangeRoute, ExchangeServiceErrorCode
 
-### Community 238 - "Community 238"
-Cohesion: 0.20
-Nodes (10): reconciliarGastoAction, buildBaseData(), DistribucionPago, usePagoCuentaPorPagar(), UsePagoCuentaPorPagarOptions, UsePagoCuentaPorPagarReturn, AUTH_USER, getCurrentUserMock (+2 more)
+### Community 238 - "EstadoPeriodo"
+Cohesion: 0.13
+Nodes (14): POST(), mockUser, uploadIntentSchema, generateUploadSignature(), buildPublicId(), CONTRACT_MIME_TYPES, ensureEntityId(), ensureMimeAndSize() (+6 more)
 
 ### Community 239 - "Community 239"
 Cohesion: 0.47
@@ -2130,8 +2126,12 @@ Cohesion: 0.50
 Nodes (4): main(), resolverTenantId(), SEED_PATTERN_TENANT, UnidadHuerfana
 
 ### Community 247 - "Community 247"
-Cohesion: 0.60
-Nodes (4): GET(), POST(), createContratoFirmaHandler(), getContratoFirmasHandler()
+Cohesion: 0.13
+Nodes (14): 1. Schema (Prisma Migration), 2. Estrategia de Backfill, 3. Server Actions (`actions-tipos-pago.ts`), 4. Read Service (`accounting-config-read-service.ts`), 5. Enrichment de cuentaDefecto, 6. Endpoints Mobile API, 7. Mobile endpoint: extraer tenantId, Architecture (+6 more)
+
+### Community 248 - "Community 248"
+Cohesion: 0.23
+Nodes (10): facturarOfertaWorkflow(), FacturarOfertaWorkflowParams, FacturarOfertaWorkflowResult, OfertaProductoItem, resolveSerieFacturacion(), TipoVencimientoFactura, allocateFifoForSale(), allocateFifoForVentaItem() (+2 more)
 
 ### Community 249 - "Community 249"
 Cohesion: 0.40
@@ -2142,12 +2142,16 @@ Cohesion: 0.06
 Nodes (32): Purpose, Requirement: Currency and Number Formatting, Requirement: Data Fetching on Mount, Requirement: Date Range Filters, Requirement: Empty State, Requirement: Error State, Requirement: Loading State, Requirement: Pagination Controls (+24 more)
 
 ### Community 251 - "Community 251"
-Cohesion: 0.22
-Nodes (7): EASE_OUT, ReportesAnalyticsPage, ReportesPage(), statusBadgeClass, surfaceCardClass, mockReplace, useAuthMock
+Cohesion: 0.40
+Nodes (3): StockBajoTable(), mockGetDashboardStatsAction, getDashboardStatsAction
+
+### Community 252 - "Community 252"
+Cohesion: 0.40
+Nodes (4): createCuentaPorPagarAction, AUTH_USER, getCurrentUserMock, prismaMock
 
 ### Community 253 - "Community 253"
-Cohesion: 0.40
-Nodes (4): getExpiringSoonActionMock, lockUserActionMock, unlockUserActionMock, useAdminUsersMock
+Cohesion: 0.67
+Nodes (3): fmt(), main(), prisma
 
 ### Community 254 - "Community 254"
 Cohesion: 0.06
@@ -2169,37 +2173,41 @@ Nodes (3): auto-start.sh script, install_autostart(), uninstall_autostart()
 Cohesion: 0.50
 Nodes (3): __dirname, __filename, nextConfig
 
+### Community 261 - "Community 261"
+Cohesion: 0.50
+Nodes (3): createCuentaPorCobrarAction, getCurrentUserMock, prismaMock
+
 ### Community 262 - "Community 262"
-Cohesion: 0.67
-Nodes (3): fmt(), main(), prisma
+Cohesion: 0.50
+Nodes (3): updateCuentaPorCobrarAction, getCurrentUserMock, prismaMock
 
 ### Community 263 - "Community 263"
-Cohesion: 0.83
-Nodes (3): formatCurrency(), generateComprobantePDF(), GET()
-
-### Community 264 - "Community 264"
-Cohesion: 0.50
-Nodes (3): getUserMetricsAction, calculateGrowth(), UserAnalyticsPanel()
+Cohesion: 0.67
+Nodes (3): **Modelo: Anticipo**, **Modelo: AnticipoMovimiento**, 📊 Modelo de Datos (Base de Datos)
 
 ### Community 265 - "Community 265"
-Cohesion: 0.24
-Nodes (3): metadata, MotionCapture, motionState
+Cohesion: 0.19
+Nodes (10): contractAttachmentConfig, f, resolveUploadthingPolicy(), UploadRouter, UploadthingInput, uploadthingInputSchema, UploadthingRoute, GET() (+2 more)
 
 ### Community 266 - "Community 266"
 Cohesion: 0.50
 Nodes (3): mockFetch, mockReplace, useAuthMock
+
+### Community 267 - "Community 267"
+Cohesion: 0.50
+Nodes (3): getAdminFinanceActionMock, getAdminSystemHealthActionMock, getAdminTenantsActionMock
 
 ### Community 268 - "Community 268"
 Cohesion: 0.50
 Nodes (3): exchangeProviderMock, getCurrentUserMock, prismaMock
 
 ### Community 269 - "Community 269"
-Cohesion: 0.50
-Nodes (3): BulkPriceManager(), mockBulkApplyPercentage, mockBulkApplyTemplate
+Cohesion: 0.12
+Nodes (15): DashboardPage(), BulkPricePage(), metadata, FichaCostoPage(), metadata, BulkPriceManager(), ListaProductosFicha(), canAccessFichaCosto() (+7 more)
 
-### Community 271 - "Community 271"
-Cohesion: 0.24
-Nodes (8): createDemoTenantForPlan(), CreateDemoTenantForPlanInput, CreateDemoTenantForPlanResult, createTemporaryPassword(), toSlugBase(), createTenantForUser(), main(), prisma
+### Community 271 - "page.tsx"
+Cohesion: 0.20
+Nodes (9): metadata, SalesSettlementHistoryPage(), CuadreCerradoListItem, getCuadresCerradosAction, CuadresHistoryPageClient(), formatCurrency(), formatSettlementDate(), getDetailHref() (+1 more)
 
 ### Community 273 - "Community 273"
 Cohesion: 0.67
@@ -2217,9 +2225,9 @@ Nodes (3): buildCommand, framework, installCommand
 Cohesion: 0.06
 Nodes (31): 1. **src/lib/validators/production-units.ts** (NEW - 160 lines), 2. **src/lib/validators/production-units.test.ts** (NEW - 320 lines), 3. **src/app/api/produccion/recetas/[id]/ingredientes/route.ts** (MODIFIED), 4. **src/app/busy/produccion/page.tsx** (MODIFIED), 5. **scripts/seed-e2e-user.ts** (MODIFIED), 6. **e2e/global-setup.ts** (NEW), 7. **e2e/production-recipe-validation.spec.ts** (NEW), After (With Validation) (+23 more)
 
-### Community 287 - "Community 287"
-Cohesion: 0.22
-Nodes (8): DARK, GET, getNominaPdfHandler(), GRAY, LIGHT_GRAY, ORANGE, RED, WHITE
+### Community 287 - "VercelBlobStorage"
+Cohesion: 0.33
+Nodes (8): applyFacturacionCobroWorkflow(), CuentaTipoPagoResolucion, FacturacionCobroWorkflowParams, normalizeTipoVencimiento(), ReconciliacionDirectaParams, reconciliarVentaDirecta(), resolveCuentaYTipoPago(), resolveFechaVencimiento()
 
 ### Community 289 - "Community 289"
 Cohesion: 0.06
@@ -2238,8 +2246,8 @@ Cohesion: 0.06
 Nodes (30): 1a. Venta POS: no descontar almacén si hay punto de venta, 1b. Cuadre POS: stock por producto, no fallback global, 1c. Transferencias update/delete: sincronizar StockUbicacion, 2a. Servicio unificado `stock-ubicacion-service`, 2b. `producto.stock` como campo derivado, 2c. Migrar todas las features al nuevo servicio, 2d. Unificar consultas de stock por ubicación, 2e. Usar cantidadDisponible para validaciones (+22 more)
 
 ### Community 356 - "Community 356"
-Cohesion: 0.32
-Nodes (6): EmpleadosPage(), metadata, getCurrentUserMock, getEmpleadosActionMock, getPagoSalariosActionMock, getPagoSalariosAction
+Cohesion: 0.25
+Nodes (7): Affected Modules, Business Requirements, Executive Summary, Non-Goals, Rollback Plan, Status, Tenant Isolation: Configuración Contable (Tipos de Pago y Cuentas Disponibles)
 
 ### Community 360 - "Community 360"
 Cohesion: 0.06
@@ -2294,8 +2302,8 @@ Cohesion: 0.07
 Nodes (28): Accessibility (per ui-ux-pro-max), API Layer, API Request/Response, Architecture Decisions, Base de Datos (Prisma), Data Flow, Database Migration, Decision: Child Product Creation Timing (+20 more)
 
 ### Community 562 - "Guidelines for AI Coding Agents"
-Cohesion: 0.07
-Nodes (27): API Development (Legacy), Architecture, Build and Test Commands, Calidad de Código, Code Style Guidelines, Definir una Server Action, Demo Features, Desarrollo (+19 more)
+Cohesion: 0.06
+Nodes (34): API Development (Legacy), Architecture, Build and Test Commands, Calidad de Código, Code Style Guidelines, Codebase Knowledge Graph (codebase-memory-mcp), Combined Workflow, Definir una Server Action (+26 more)
 
 ### Community 563 - "Rol Económico — Documentación"
 Cohesion: 0.07
@@ -2637,10 +2645,6 @@ Nodes (20): 2A: Server Actions, 2B: Server Component (Listado), 2C: Integración
 Cohesion: 0.10
 Nodes (20): Backup Storage Specification, Purpose, Requirement: Backup Retention, Requirement: File Naming Convention, Requirement: LocalFS Storage Adapter, Requirement: Pluggable Storage Adapter, Requirement: Storage Adapter Interface, Requirement: Vercel Blob Storage Adapter (+12 more)
 
-### Community 648 - "data.ts"
-Cohesion: 0.67
-Nodes (3): Actualizaciones Futuras, Funcionalidades Planeadas, Mejoras Técnicas
-
 ### Community 649 - "🧪 CÓMO PROBAR LA SOLUCIÓN"
 Cohesion: 0.10
 Nodes (19): 1. Asegurate de tener los archivos creados, 2. Inicia el servidor de desarrollo, 3. En el navegador o postman, 4. Probar desde el UI, A) Crear un anticipo (si no tenés uno), B) Ejecutar el anticipo ✨ (NUEVO - ANTES DABA 404), C) Probar idempotencia, ✅ CHECKLIST (+11 more)
@@ -2706,8 +2710,8 @@ Cohesion: 0.10
 Nodes (19): Acceptance Criteria, FR-1: Migrate productosUbicacionApi, FR-2: Migrate profileApi, FR-3: Migrate reparacionesApi (8 endpoints), FR-4: Migrate produccionApi (16 endpoints), FR-5: Migrate reportesFinancierosApi, Functional Requirements, NFR-1: Type Safety (+11 more)
 
 ### Community 666 - "purchase-health-card.tsx"
-Cohesion: 0.32
-Nodes (5): getPurchaseHealthAction, PurchaseHealthMetrics, PurchaseHealthCard(), PurchaseHealthCardProps, { getPurchaseHealthAction }
+Cohesion: 0.08
+Nodes (33): AdminSidebar(), SIDEBAR_CONTAINER_INITIAL, SIDEBAR_CONTAINER_TRANSITION, SIDEBAR_EASE, SIDEBAR_FOOTER_INITIAL, SIDEBAR_FOOTER_POSITION, SIDEBAR_FOOTER_TRANSITION, SIDEBAR_HEADER_EXIT (+25 more)
 
 ### Community 667 - "Cambios Realizados"
 Cohesion: 0.11
@@ -2765,9 +2769,9 @@ Nodes (18): Archivo, Archivo, Archivo, Archivo, Cambios, Cambios, Cambios, Cambi
 Cohesion: 0.11
 Nodes (18): 1. Fix A: `approveGlobalUserAction` — Create Tenant, Membership, License, 2. Fix B: `refreshSessionAction` — Store auth token in UserSession, 3. Fix C: `Usuario` interface — Add `tenantId`, 4. Fix D: `resolveTenantContext` — Better error logging, 5. Fix E: Seed `TenantLicense` for existing tenants, 6. Fix F: Sidebar graceful degradation when `planLimits` is undefined, Acceptance, Dependency Graph (+10 more)
 
-### Community 681 - "PeriodoContableService"
-Cohesion: 0.16
-Nodes (11): ESTADO_CONFIG, formatPeriodoLabel(), getPeriodoActivoData(), MESES, PeriodoActivoIndicator(), CerrarPeriodoDialogProps, ReabrirPeriodoDialogProps, PeriodoContableService (+3 more)
+### Community 681 - "page.tsx"
+Cohesion: 0.22
+Nodes (7): AuditLogsTable, EASE_OUT, LogsPage(), statusBadgeClass, surfaceCardClass, mockReplace, useAuthMock
 
 ### Community 682 - "Requirement: Restore from Backup"
 Cohesion: 0.11
@@ -2913,9 +2917,9 @@ Nodes (16): I-1: Dualidad de flujos de pago (CxP-1), I-2: Distribución múltipl
 Cohesion: 0.12
 Nodes (16): ChartsRentabilidad spec, Dependency Graph, PurchaseSearchBar spec, RentabilidadDetailTable spec, ReporteRentabilidadCompra spec (orquestador), SDD Tasks: Rentabilidad por Compra, SummaryCards spec, Task 1: Schema + Migration Prisma (+8 more)
 
-### Community 718 - "balance-pie-chart.tsx"
-Cohesion: 0.26
-Nodes (10): BalancePieChart(), BalancePieChartProps, chartTooltipItemStyle, chartTooltipLabelStyle, chartTooltipStyle, cuadreChartPalette, formatCurrency(), DailyTrendChart() (+2 more)
+### Community 718 - "offers-services-health-card.tsx"
+Cohesion: 0.24
+Nodes (6): Loader2(), getOffersServicesHealthAction, OffersServicesHealthMetrics, OffersServicesHealthCard(), OffersServicesHealthCardProps, { getOffersServicesHealthAction }
 
 ### Community 719 - "INDEX.md"
 Cohesion: 0.12
@@ -3013,13 +3017,13 @@ Nodes (15): Archivos afectados, Contexto, Contexto, Criterio de éxito, Criterio
 Cohesion: 0.12
 Nodes (15): AuthProvider, Dependencias, loginAction, logoutAction, meAction, T1: Server Actions de auth core (login + logout), T2: Route Handler wrappers login/logout, T3: Server Actions me + refresh (+7 more)
 
-### Community 743 - "productos.ts"
-Cohesion: 0.18
-Nodes (13): CompraDocumento, CompraDocumentoItem, CompraDocumentoResponse, CompraProducto, CompraProductoResponse, MoveCategoriaRequest, Proveedor, StockUbicacion (+5 more)
+### Community 743 - "audit-logs-table.tsx"
+Cohesion: 0.27
+Nodes (8): DateRange, ACTION_BADGE_STYLES, AuditLog, AuditLogsTable(), ENTITY_BADGE_STYLES, formatAuditLabel(), getActionBadgeClass(), getEntityBadgeClass()
 
-### Community 744 - "ventas-trazabilidad.test.tsx"
-Cohesion: 0.29
-Nodes (6): getVentasProductoAction, getMargenBadgeColor(), VentasTrazabilidad(), MOCK_DATA, MOCK_DATA_VACIO, VentasProductoData
+### Community 744 - "offers-services-health-card.tsx"
+Cohesion: 0.20
+Nodes (7): getTasas(), getTasasHistorial(), ExchangeRateReadService, ExchangeCurrentRatesResult, ExchangeRateHistoryFilters, ExchangeRateHistoryResult, provider
 
 ### Community 745 - "Autenticación"
 Cohesion: 0.13
@@ -3109,9 +3113,9 @@ Nodes (14): 2a. Modificar interfaz de entrada, 2b. Cuando `cuentaPorPagarId` est
 Cohesion: 0.43
 Nodes (5): buildProductosSchema(), optionalCoercedNumber(), ProductosFormValues, requiredPositiveCoercedNumber(), baseProduct
 
-### Community 767 - "accordion.tsx"
-Cohesion: 0.40
-Nodes (3): metadata, ClientesPageHeader(), ClientesPageHeaderProps
+### Community 768 - "actions-historial-cambios.ts"
+Cohesion: 0.11
+Nodes (18): executeAnticipoAction, getAnticipoByIdAction, reverseAnticipoAction, createInyeccionCapitalAction, getInyeccionesCapitalAction, registrarPagoCapitalAction, deleteCierreAction, CuentaPorCobrarEnriquecida (+10 more)
 
 ### Community 769 - "/sdd-new"
 Cohesion: 0.13
@@ -3301,13 +3305,9 @@ Nodes (12): 1. Decisión central, 2. Nueva capa de consulta, 3. Estrategia de mi
 Cohesion: 0.15
 Nodes (12): Archivos a crear, Archivos a modificar, Archivos a no tocar, Design: Auth unificación — Server Actions + eliminación de sessionStorage, Estrategia de testing TDD, Fase 1: Server Actions de auth core, Fase 2: Thin wrappers en Route Handlers, Fase 3: AuthProvider sin sessionStorage (+4 more)
 
-### Community 816 - "periodo-badge.tsx"
-Cohesion: 0.33
-Nodes (5): ESTADO_COLORS, ESTADO_ICONS, ESTADO_LABELS, PeriodoBadge(), PeriodoBadgeProps
-
-### Community 817 - "index.md"
-Cohesion: 0.17
-Nodes (9): Convenciones Generales, Enumeraciones, Modelo de Datos, Comandos Principales, Enlaces, Estructura del Proyecto, FinanceMDM — Sistema de Gestión Financiera e Inventario, Navegacion de Documentacion (+1 more)
+### Community 816 - "SubcategoryForm"
+Cohesion: 0.29
+Nodes (7): createTenantForUser(), CreateTenantForUserInput, CreateTenantForUserResult, ReferralOwner, resolveReferralOwner(), main(), prisma
 
 ### Community 818 - "Mobile API contract (v1)"
 Cohesion: 0.17
@@ -3430,8 +3430,8 @@ Cohesion: 0.17
 Nodes (11): Affected Areas, Approach, Dependencies, In Scope, Intent, Out of Scope, Proposal: Comprobante y Detalle de Pagos para Préstamos en Cuentas por Cobrar, Risks (+3 more)
 
 ### Community 848 - "Production Module Specification"
-Cohesion: 0.25
-Nodes (7): Production Module Specification, Purpose, REMOVED Requirements, Restricciones de Transición de Estado, Validaciones y Restricciones, Validación de Datos de Entrada, Índices de Base de Datos Recomendados
+Cohesion: 0.17
+Nodes (11): Production Module Specification, Purpose, REMOVED Requirements, Requirement: Interfaz de Usuario para Gestión de Recetas, Restricciones de Transición de Estado, Scenario: Agregar producto desde área expandida, Scenario: Pantalla de edición de receta con área de búsqueda expandida, Scenario: Tabla de recetas muestra costo unitario (+3 more)
 
 ### Community 849 - "Proposal: Soporte de Nuevos Tipos de Movimiento en Reportes Contables"
 Cohesion: 0.17
@@ -3473,13 +3473,13 @@ Nodes (12): Requirement: API Endpoints Specification, Scenario: DELETE /api/admi
 Cohesion: 0.17
 Nodes (11): 1. Análisis y Diseño, 2. Fases de Implementación, 3. Verificación, Diseño UI/UX (Siguiendo `ui-ux-pro-max`), Fase 1: Backend y Base de Datos, Fase 2: Frontend - Gestión de Listas, Fase 3: Integración en Productos y Puntos de Venta, Fase 4: Lógica de Venta (POS) (+3 more)
 
-### Community 859 - "core.ts"
-Cohesion: 0.21
-Nodes (9): contractAttachmentConfig, f, UploadRouter, UploadthingInput, uploadthingInputSchema, UploadthingRoute, GET(), handleUploadthingRequest (+1 more)
+### Community 859 - "ordenes.ts"
+Cohesion: 0.47
+Nodes (8): aprobarOrdenProduccion(), cancelarOrdenProduccion(), completarOrdenProduccion(), createOrdenProduccion(), getOrdenesProduccion(), getOrdenProduccion(), requireTenant(), transitionOrden()
 
-### Community 860 - "backfill-ean13-segments.ts"
-Cohesion: 0.50
-Nodes (4): LegacyProductoRow, main(), prisma, splitFromEan13()
+### Community 860 - "ingredientes.test.ts"
+Cohesion: 0.25
+Nodes (3): DELETE, POST, FIXED_DATE
 
 ### Community 861 - "Indice de Modulos"
 Cohesion: 0.18
@@ -3595,7 +3595,7 @@ Nodes (10): Affected Areas, Approach, Example Production Flow, In Scope, Intent,
 
 ### Community 889 - "ADDED Requirements"
 Cohesion: 0.18
-Nodes (11): ADDED Requirements, Requirement: Generación de PDF para Vales, Requirement: Panel de Estadísticas Actualizado en Tiempo Real, Requirement: Productos en Receta con Unidades de Medida, Requirement: Transacciones Atómicas en Completación de Orden, Scenario: Agregar producto a receta con unidad específica, Scenario: Búsqueda de producto en área expandida, Scenario: Contar recetas totales (+3 more)
+Nodes (11): ADDED Requirements, Requirement: Generación de PDF para Vales, Requirement: Historial y Trazabilidad de Órdenes, Requirement: Productos en Receta con Unidades de Medida, Requirement: Transacciones Atómicas en Completación de Orden, Scenario: Agregar producto a receta con unidad específica, Scenario: Búsqueda de producto en área expandida, Scenario: Consultar historial de orden específica (+3 more)
 
 ### Community 890 - "ADDED Requirements"
 Cohesion: 0.18
@@ -3621,9 +3621,9 @@ Nodes (10): 1. Objetivo, 2.1 Fuente de verdad, 2.2 Validación de ventas, 2.3 Tr
 Cohesion: 0.18
 Nodes (10): APPROVAL CHECKPOINTS, PREREQUISITES, SDD Tasks: Reparar sesión tenant para usuarios plan básico, SUMMARY, TASK 1: Fix B — refreshSessionAction (token incorrecto) 🟢 Low Risk, TASK 2: Fix C — Usuario interface (agregar tenantId) 🟢 Low Risk, TASK 3: Fix D — resolveTenantContext logging 🟢 Low Risk, TASK 4: Fix A — createTenantForUser factory 🟡 Medium Risk (+2 more)
 
-### Community 896 - "registry.ts"
-Cohesion: 0.36
-Nodes (5): DocsModulesIndexPage(), metadata, DOCS_MODULES_DIR, DOCS_MODULES_INDEX_PATH, readDocsModulesIndexContent()
+### Community 896 - "gastos-conceptos-seed.ts"
+Cohesion: 0.33
+Nodes (6): convertMontoToCuentaMoneda(), createReconciliacionError(), getNumeroFacturaCandidates(), handlePostReconciliacionVentas(), normalizeMontoToCup(), reconciliacionVentaSchema
 
 ### Community 897 - "Contabilidad"
 Cohesion: 0.20
@@ -3809,9 +3809,9 @@ Nodes (9): Architecture Decisions, Data Flow, Design: Sistema inicial de categor
 Cohesion: 0.20
 Nodes (9): Inventory Transfers Specification, Purpose, Requirement: Calculate Total Cost, Requirement: Historical Cost Integrity, Requirement: Record Unit Cost, Requirements, Scenario: Cost Change After Transfer, Scenario: Transfer Creation (Happy Path) (+1 more)
 
-### Community 943 - "route.ts"
-Cohesion: 0.60
-Nodes (4): GET(), POST(), createContratoAprobacionHandler(), getContratoAprobacionesHandler()
+### Community 943 - "page.tsx"
+Cohesion: 0.33
+Nodes (5): EmpleadosPage(), metadata, getCurrentUserMock, getEmpleadosActionMock, getPagoSalariosActionMock
 
 ### Community 944 - "TASKS: Tipos de Contratos y Numeración Consecutiva"
 Cohesion: 0.20
@@ -3951,7 +3951,7 @@ Nodes (8): Cuándo usarlo, En una frase, Qué conviene cuidar, Qué hace, Qué i
 
 ### Community 978 - "Guía de Usuario del Dashboard de Inteligencia Cambiaria"
 Cohesion: 0.22
-Nodes (8): Acceso al Dashboard, Atajos de Teclado, Dashboard General, Guía de Usuario del Dashboard de Inteligencia Cambiaria, Introducción, Navegación, Simulador, Soporte y Contacto
+Nodes (8): Acceso al Dashboard, Filtros Globales, Guía de Usuario del Dashboard de Inteligencia Cambiaria, Introducción, Moneda, Rango de Fechas, Soporte y Contacto, Umbrales Personalizados
 
 ### Community 979 - "Secciones del Dashboard"
 Cohesion: 0.22
@@ -4089,10 +4089,6 @@ Nodes (8): Phase 1: Foundation / Database, Phase 2: API Layer, Phase 3: Redux/St
 Cohesion: 0.22
 Nodes (8): Build & Tests Execution, Coherence (Design), Completeness, Correctness (Static — Structural Evidence), Issues Found, Spec Compliance Matrix, Verdict, Verification Report: Productos Compuestos
 
-### Community 1013 - "sendEmailVerificationLink"
-Cohesion: 0.60
-Nodes (4): getConfig(), IndicadorMargen(), IndicadorMargenProps, EstadoMargen
-
 ### Community 1014 - "Resumen de Cambios: Sistema de Licencias Robustecido"
 Cohesion: 0.25
 Nodes (7): 1. Rate Limiting con Redis (Seguridad), 2. Idempotencia en Generación Masiva (Fiabilidad), 3. Auditoría de Licencias (Trazabilidad), 4. Métricas y Observabilidad (Monitoreo), 5. Mejoras de UI/UX, Archivos Clave Modificados/Creados, Resumen de Cambios: Sistema de Licencias Robustecido
@@ -4201,13 +4197,13 @@ Nodes (7): Design: Corrección de stock legacy, reconciliación contable y borra
 Cohesion: 0.25
 Nodes (6): 10. PRÓXIMOS PASOS, 1. PROPÓSITO, 5. RESTRICCIONES Y VALIDACIONES, 8. DEPENDENCIAS Y RIESGOS, 9. ESTADO DE APROBACIÓN, ESPECIFICACIÓN: Tipos de Contratos y Numeración Consecutiva
 
-### Community 1041 - "Filtros Globales"
-Cohesion: 0.50
-Nodes (4): Filtros Globales, Moneda, Rango de Fechas, Umbrales Personalizados
+### Community 1041 - "pv-new-page-client.tsx"
+Cohesion: 0.40
+Nodes (3): metadata, NuevoPvPageClient(), PtoVentaForm()
 
-### Community 1042 - "1. Auditoría de Cambios"
-Cohesion: 0.50
-Nodes (4): 1. Auditoría de Cambios, API Routes, Implementación en Componentes, Modificaciones en Base de Datos
+### Community 1042 - "getAdminSubscriptionRevenueAction"
+Cohesion: 0.40
+Nodes (4): SubscriptionsRevenuePage(), getAdminSubscriptionRevenueActionMock, revenueFixture, getAdminSubscriptionRevenueAction
 
 ### Community 1043 - "📚 Sistema de Anticipos - Documentación Completa"
 Cohesion: 0.29
@@ -4333,21 +4329,17 @@ Nodes (6): Phase 1: APIs — Includes de datos en tablas dedicadas, Phase 2: API
 Cohesion: 0.29
 Nodes (7): Requirement: Audit and Compliance Logging, Requirement: Data Migration and Utilities, Requirements, Scenario: Generate Report, Scenario: Log Administrative Action, Scenario: Migrate User Data, Scenario: View Audit Trail
 
-### Community 1074 - "route.ts"
-Cohesion: 0.43
-Nodes (6): DELETE(), GET(), PUT(), deleteContratoHandler(), getContratoByIdHandler(), updateContratoHandler()
+### Community 1074 - "Usuario"
+Cohesion: 0.40
+Nodes (5): createStateTuple(), loadOnboardingPage(), MotionCapture, motionState, routerReplaceMock
 
-### Community 1075 - "app-sidebar2.test.tsx"
-Cohesion: 0.29
-Nodes (6): TENANTLESS_PUBLIC_ITEMS, authState, MotionCapture, motionState, navMainState, pathnameState
+### Community 1075 - "tipo-pago-tenant-migration.test.ts"
+Cohesion: 0.40
+Nodes (3): migrationsDirectory, tenantMigrationPath, unsafeNotNullMigrationPath
 
-### Community 1076 - "ADDED-14: Modelo `GastoElemento`"
-Cohesion: 0.50
-Nodes (4): ADDED-14: Modelo `GastoElemento`, Scenario: Crear elemento bajo un concepto, Scenario: Eliminar concepto elimina sus elementos, Scenario: Nombre de elemento puede repetirse en distintos conceptos
-
-### Community 1077 - "accounting-accounts-service.ts"
-Cohesion: 0.18
-Nodes (15): GET(), parsePositiveInt(), mockUser, GET(), mockUser, GET(), parsePositiveInt(), mockUser (+7 more)
+### Community 1077 - "page.tsx"
+Cohesion: 0.02
+Nodes (206): headerIconVariants, titleVariants, metadata, metadata, AjustesBancariosPage, AjustesPage(), EASE_OUT, statusBadgeClass (+198 more)
 
 ### Community 1078 - "🎨 Frontend (React Components)"
 Cohesion: 0.33
@@ -4477,18 +4469,6 @@ Nodes (5): Phase 1: Foundation (configuración global de modo), Phase 2: Core Im
 Cohesion: 0.33
 Nodes (5): Affiliate validation scripts, Dominio / DB, Ejemplos, Producción / Host, Requisitos
 
-### Community 1110 - "page.tsx"
-Cohesion: 0.40
-Nodes (4): InyeccionCapitalPage(), metadata, mockReplace, useAuthMock
-
-### Community 1111 - "Requirement: Interfaz de Usuario para Gestión de Recetas"
-Cohesion: 0.50
-Nodes (4): Requirement: Interfaz de Usuario para Gestión de Recetas, Scenario: Agregar producto desde área expandida, Scenario: Pantalla de edición de receta con área de búsqueda expandida, Scenario: Tabla de recetas muestra costo unitario
-
-### Community 1112 - "page.tsx"
-Cohesion: 0.50
-Nodes (3): metadata, NuevoServicioPage(), ServicioForm()
-
 ### Community 1113 - "🔐 Idempotencia (Crítico)"
 Cohesion: 0.40
 Nodes (5): **¿Cómo funciona?**, **Generación de idempotencyKey en Frontend**, 🔐 Idempotencia (Crítico), **¿Por qué es importante?**, **Validaciones de Idempotencia**
@@ -4611,27 +4591,31 @@ Nodes (5): Requirement: User Management - Full CRUD Operations, Scenario: Crear 
 
 ### Community 1143 - "route.ts"
 Cohesion: 0.60
-Nodes (4): GET(), POST(), createContratoAlertaHandler(), getContratoAlertasHandler()
+Nodes (4): GET(), POST(), createContratoFirmaHandler(), getContratoFirmasHandler()
 
-### Community 1144 - "getWastageHealthAction"
+### Community 1144 - "indicador-margen.tsx"
+Cohesion: 0.60
+Nodes (4): getConfig(), IndicadorMargen(), IndicadorMargenProps, EstadoMargen
+
+### Community 1145 - "use-category-form.ts"
+Cohesion: 0.03
+Nodes (90): DELETE, GET, PUT, UpdateAnticipoSchema, CreateAnticipoSchema, GET, POST, ExecuteAnticipoSchema (+82 more)
+
+### Community 1146 - "ADDED-14: Modelo `GastoElemento`"
 Cohesion: 0.50
-Nodes (3): getWastageHealthAction, { getWastageHealthAction }, WastageHealthCard()
+Nodes (4): ADDED-14: Modelo `GastoElemento`, Scenario: Crear elemento bajo un concepto, Scenario: Eliminar concepto elimina sus elementos, Scenario: Nombre de elemento puede repetirse en distintos conceptos
 
-### Community 1145 - "📊 Modelo de Datos (Base de Datos)"
-Cohesion: 0.67
-Nodes (3): **Modelo: Anticipo**, **Modelo: AnticipoMovimiento**, 📊 Modelo de Datos (Base de Datos)
+### Community 1147 - "page.test.tsx"
+Cohesion: 0.33
+Nodes (5): getTransferenciasBancariasActionMock, mockReplace, useAuthMock, TransferenciasBancariasPage(), getTransferenciasBancariasAction
 
-### Community 1146 - "Archivos Nuevos/Modificados en Segunda Fase"
-Cohesion: 0.67
-Nodes (3): Archivos Modificados, Archivos Nuevos, Archivos Nuevos/Modificados en Segunda Fase
+### Community 1149 - "tasa-cambio-form.test.tsx"
+Cohesion: 0.50
+Nodes (3): mockGetMonedasAction, mockGetTasasActualesAction, mockUpdateTasaCambioAction
 
-### Community 1147 - "Requirement: Historial y Trazabilidad de Órdenes"
-Cohesion: 0.67
-Nodes (3): Requirement: Historial y Trazabilidad de Órdenes, Scenario: Consultar historial de orden específica, Scenario: Registrar cambio de estado con usuario y fecha
-
-### Community 1148 - "nav-main.tsx"
-Cohesion: 0.15
-Nodes (13): getNavUserFallbackLabel(), TenantEntry, TenantSwitcher(), { toastError, reloadMock, authUser }, Collapsible(), CollapsibleContent(), CollapsibleTrigger(), DropdownMenuGroup() (+5 more)
+### Community 1150 - "production.ts"
+Cohesion: 0.50
+Nodes (3): PRODUCTION_STATE_COLORS, PRODUCTION_STATE_LABELS, ProductionState
 
 ### Community 1151 - "FASE 1: CAMBIOS EN SCHEMA Y DATOS"
 Cohesion: 0.40
@@ -4652,6 +4636,14 @@ Nodes (4): **Crear Anticipo de Pago**, **Ejecutar Anticipo Totalmente**, 📝 Ej
 ### Community 1155 - "✅ Reglas de Negocio"
 Cohesion: 0.50
 Nodes (4): **Para CREAR un Anticipo**, **Para EJECUTAR un Anticipo**, **Para REVERTIR una Ejecución**, ✅ Reglas de Negocio
+
+### Community 1156 - "Deployment y Monitoreo"
+Cohesion: 0.67
+Nodes (3): Deployment y Monitoreo, Monitoreo, Variables de Entorno
+
+### Community 1157 - "Actualizaciones Futuras"
+Cohesion: 0.67
+Nodes (3): Actualizaciones Futuras, Funcionalidades Planeadas, Mejoras Técnicas
 
 ### Community 1158 - "Solución de Problemas"
 Cohesion: 0.50
@@ -4725,6 +4717,10 @@ Nodes (4): Memoria, Orden recomendado de implementación, Reglas de ejecución, 
 Cohesion: 0.50
 Nodes (4): Memoria, SDD Phase 7: `sdd-verify`, Tipos de prueba, Verificaciones obligatorias
 
+### Community 1177 - "createContratoArchivoHandler"
+Cohesion: 0.22
+Nodes (8): SalesAgentReferralsPage(), getVerificationAppUrl(), getSalesAgentDashboardAction, SalesAgentDashboard(), data, getConfiguredPublicAppUrl(), buildSalesAgentShareUrl(), buildWhatsAppShareUrl()
+
 ### Community 1178 - "ADDED-15: Actualización del Modelo `GastosDE` con Relaciones a Concepto y Elemento"
 Cohesion: 0.50
 Nodes (4): ADDED-15: Actualización del Modelo `GastosDE` con Relaciones a Concepto y Elemento, Scenario: Crear gasto con concepto y elemento, Scenario: Crear gasto sin concepto (modo legacy), Scenario: Filtrar gastos por concepto
@@ -4777,9 +4773,9 @@ Nodes (4): Requirement: Performance and Reliability, Scenario: Concurrent Admin 
 Cohesion: 0.50
 Nodes (4): Requirement: Role and Permission System, Scenario: Check Role on Protected Route, Scenario: Rol tenant autorizado para gestión, Scenario: Usuario sin rol tenant suficiente
 
-### Community 1191 - "Requirement: Security and Authentication"
-Cohesion: 0.50
-Nodes (4): Requirement: Security and Authentication, Scenario: JWT Token Management, Scenario: Secure Password Handling, Scenario: Session Timeout
+### Community 1191 - "6. Desbloqueo de Usuarios"
+Cohesion: 0.67
+Nodes (3): Archivos Modificados, Archivos Nuevos, Archivos Nuevos/Modificados en Segunda Fase
 
 ### Community 1192 - "Requirement: User Access Control - Account Lock/Unlock"
 Cohesion: 0.50
@@ -4809,17 +4805,21 @@ Nodes (4): 6. ESCENARIOS DE PRUEBA, Escenario 1: Crear Contrato COMPRA_VENTA, Es
 Cohesion: 0.50
 Nodes (4): 7.1 Lógica de Generación de Consecutivo, 7.2 API Route: POST /api/contratos, 7.3 Actualizar Tipos TypeScript, 7. ARQUITECTURA Y PATRONES
 
-### Community 1199 - "page.test.tsx"
-Cohesion: 0.50
-Nodes (3): getAdminFinanceActionMock, getAdminSystemHealthActionMock, getAdminTenantsActionMock
+### Community 1199 - "Archivos Modificados/Creados"
+Cohesion: 0.60
+Nodes (4): metadata, ReconciliacionHubPage(), getReconciliacionStatsAction, ReconciliacionHubClient()
 
-### Community 1201 - "page.tsx"
-Cohesion: 0.40
-Nodes (3): metadata, AlmacenForm(), NuevoAlmacenPageClient()
+### Community 1203 - "use-pago-cuenta-por-pagar.ts"
+Cohesion: 0.20
+Nodes (10): reconciliarGastoAction, buildBaseData(), DistribucionPago, usePagoCuentaPorPagar(), UsePagoCuentaPorPagarOptions, UsePagoCuentaPorPagarReturn, AUTH_USER, getCurrentUserMock (+2 more)
+
+### Community 1205 - "actions.ts"
+Cohesion: 0.21
+Nodes (9): coloresIcono, coloresPrioridad, containerVariants, iconos, itemVariants, statsVariants, Notification, getNotificationHref() (+1 more)
 
 ### Community 1207 - "tasa-cambio-form.test.tsx"
-Cohesion: 0.50
-Nodes (3): mockGetMonedasAction, mockGetTasasActualesAction, mockUpdateTasaCambioAction
+Cohesion: 0.19
+Nodes (9): createMonedaAction, exchangeReadService, requireMultiCurrency(), updateMonedaAction, MonedaForm(), exchangeRateProvider, ExchangeServiceError, toIsoDate() (+1 more)
 
 ### Community 1208 - "FASE 2: LÓGICA DE APLICACIÓN"
 Cohesion: 0.50
@@ -4832,10 +4832,6 @@ Nodes (3): **Al Revertir**, 📚 Reconciliación Contable, **Tipos de Reconcilia
 ### Community 1211 - "🧪 Testing"
 Cohesion: 0.67
 Nodes (3): **Integration Tests**, 🧪 Testing, **Unit Tests**
-
-### Community 1212 - "Deployment y Monitoreo"
-Cohesion: 0.67
-Nodes (3): Deployment y Monitoreo, Monitoreo, Variables de Entorno
 
 ### Community 1213 - "Performance"
 Cohesion: 0.67
@@ -4881,6 +4877,14 @@ Nodes (3): N, Notificación, Nómina
 Cohesion: 0.67
 Nodes (3): Actualización de la Implementación - Tercera Fase, Notificaciones Automáticas para Usuarios que Expiran Pronto, Novedades Implementadas
 
+### Community 1224 - "getExpiringSoonAction"
+Cohesion: 0.12
+Nodes (14): getExpiringSoonAction, getUsersAction, sendExpiryNotificationsAction, unlockUserAction, BlockedUsersTab(), ExpiringUsersTab(), getExpiringSoonActionMock, lockUserActionMock (+6 more)
+
+### Community 1225 - "SubcategorySelector"
+Cohesion: 0.33
+Nodes (7): CategoriaOption, SubcategorySelector(), SubcategorySelectorProps, CategoriaFlat, getParentCategories(), getSubcategoriesForCategory(), categories
+
 ### Community 1226 - "9. Historial y Trazabilidad"
 Cohesion: 0.67
 Nodes (3): 9.1 Registro de Cambios de Estado, 9.2 Auditoría de Vales, 9. Historial y Trazabilidad
@@ -4893,33 +4897,45 @@ Nodes (3): 3.3.1 Folders por dominio, 3.3.2 Patrón de migración, 3.3 Fase 3: L
 Cohesion: 0.67
 Nodes (3): 3.4.1 Folder, 3.4.2 Consideraciones, 3.4 Fase 4: Fotos de reparaciones
 
+### Community 1230 - "ProductosPage"
+Cohesion: 0.50
+Nodes (4): Requirement: Security and Authentication, Scenario: JWT Token Management, Scenario: Secure Password Handling, Scenario: Session Timeout
+
+### Community 1231 - "route.ts"
+Cohesion: 0.83
+Nodes (3): formatCurrency(), generateComprobantePDF(), GET()
+
 ### Community 1232 - "4. MIGRACIÓN DE DATOS"
 Cohesion: 0.67
 Nodes (3): 4.1 Contratos Existentes, 4.2 Conversión de Tipos, 4. MIGRACIÓN DE DATOS
 
-### Community 1236 - "ExpenseHealthCard"
+### Community 1242 - "Requirement: Panel de Estadísticas Actualizado en Tiempo Real"
+Cohesion: 0.67
+Nodes (3): Requirement: Panel de Estadísticas Actualizado en Tiempo Real, Scenario: Contar recetas totales, Scenario: Contar órdenes por estado
+
+### Community 1247 - "ReportesPage"
 Cohesion: 0.50
-Nodes (3): getExpenseHealthAction, ExpenseHealthCard(), { getExpenseHealthAction }
+Nodes (3): ReportesPage(), mockReplace, useAuthMock
 
 ## Knowledge Gaps
-- **9124 isolated node(s):** `husky.sh script`, `husky.sh script`, `pnpm`, `prisma`, `prisma` (+9119 more)
+- **9344 isolated node(s):** `husky.sh script`, `husky.sh script`, `pnpm`, `prisma`, `prisma` (+9339 more)
   These have ≤1 connection - possible missing edges or undocumented components.
-- **200 thin communities (<3 nodes) omitted from report** — run `graphify query` to explore isolated nodes.
+- **202 thin communities (<3 nodes) omitted from report** — run `graphify query` to explore isolated nodes.
 
 ## Suggested Questions
 _Questions this graph is uniquely positioned to answer:_
 
-- **Why does `Button()` connect `Community 0` to `Community 1`, `Community 3`, `Community 6`, `Community 10`, `Community 12`, `Community 13`, `Community 15`, `Community 16`, `Community 17`, `Community 22`, `Community 23`, `Community 151`, `Community 25`, `Community 156`, `Community 28`, `Community 33`, `Community 36`, `Community 38`, `Community 39`, `Community 41`, `Community 47`, `Community 176`, `Community 48`, `Community 57`, `Community 186`, `Community 64`, `Community 68`, `Community 70`, `Community 81`, `Community 88`, `Community 229`, `Community 120`, `Community 251`?**
+- **Why does `Button()` connect `page.tsx` to `Community 0`, `Community 2`, `Community 4`, `Community 5`, `Community 9`, `Community 17`, `Community 20`, `Community 22`, `Community 154`, `Community 30`, `Community 33`, `Community 38`, `Community 167`, `page.tsx`, `Community 47`, `Community 176`, `Community 52`, `actions.ts`, `Community 57`, `Community 186`, `Community 64`, `Community 68`, `Community 70`, `Community 79`, `Community 80`, `Community 81`, `Community 83`, `Community 85`, `Community 88`, `Community 229`, `audit-logs-table.tsx`, `tier-service.ts`, `ordenes.ts`?**
   _High betweenness centrality (0.015) - this node is a cross-community bridge._
-- **Why does `cn()` connect `Community 13` to `Community 0`, `Community 1`, `Community 130`, `Community 3`, `Community 6`, `Community 15`, `Community 16`, `Community 144`, `Community 149`, `Community 25`, `Community 41`, `Community 47`, `Community 69`, `Community 70`, `Community 72`, `Community 76`, `Community 223`, `Community 105`, `sendEmailVerificationLink`, `Community 251`, `nav-main.tsx`?**
-  _High betweenness centrality (0.012) - this node is a cross-community bridge._
-- **Why does `react` connect `Community 47` to `Community 0`, `Community 1`, `Community 3`, `Community 70`, `Community 264`, `Community 105`, `Community 235`, `Community 14`, `Community 15`, `Community 16`, `Community 25`, `Community 223`?**
+- **Why does `cn()` connect `Community 167` to `Community 5`, `Community 20`, `Community 149`, `Community 154`, `purchase-health-card.tsx`, `Community 30`, `Community 31`, `Community 33`, `page.tsx`, `Community 173`, `Community 47`, `Archivos Modificados/Creados`, `Community 51`, `page.tsx`, `Community 63`, `Community 69`, `Community 70`, `Community 85`, `Community 92`, `audit-logs-table.tsx`, `Community 112`, `Community 115`, `indicador-margen.tsx`, `page.test.tsx`?**
   _High betweenness centrality (0.008) - this node is a cross-community bridge._
+- **Why does `AuthenticatedUser` connect `Community 2` to `Community 0`, `Community 1`, `Community 3`, `Community 4`, `Community 6`, `Community 7`, `Community 10`, `Community 12`, `Community 15`, `Community 145`, `Community 18`, `Community 148`, `Community 21`, `Community 22`, `Community 31`, `Community 160`, `Community 37`, `Community 38`, `Community 39`, `Community 42`, `Community 44`, `Community 45`, `Community 46`, `Community 48`, `Community 55`, `tasa-cambio-form.test.tsx`, `Community 58`, `Community 60`, `Community 61`, `Community 63`, `Community 65`, `Community 195`, `Community 75`, `Community 76`, `Community 77`, `Community 207`, `Community 88`, `Community 91`, `Community 92`, `Community 93`, `Community 95`, `Community 107`, `ordenes.ts`, `Community 110`, `EstadoPeriodo`, `Community 119`, `Community 120`, `use-category-form.ts`?**
+  _High betweenness centrality (0.005) - this node is a cross-community bridge._
 - **What connects `husky.sh script`, `husky.sh script`, `pnpm` to the rest of the system?**
-  _9126 weakly-connected nodes found - possible documentation gaps or missing edges._
+  _9346 weakly-connected nodes found - possible documentation gaps or missing edges._
 - **Should `Community 0` be split into smaller, more focused modules?**
-  _Cohesion score 0.024824682514729402 - nodes in this community are weakly interconnected._
+  _Cohesion score 0.0797979797979798 - nodes in this community are weakly interconnected._
 - **Should `Community 1` be split into smaller, more focused modules?**
-  _Cohesion score 0.0157299006824613 - nodes in this community are weakly interconnected._
+  _Cohesion score 0.09462365591397849 - nodes in this community are weakly interconnected._
 - **Should `Community 2` be split into smaller, more focused modules?**
-  _Cohesion score 0.02600664657237808 - nodes in this community are weakly interconnected._
+  _Cohesion score 0.021406727828746176 - nodes in this community are weakly interconnected._
