@@ -40,7 +40,13 @@ type OnboardingUser = {
 
 type TenantItem = { tenantId: string; nombre: string; slug: string | null };
 
-type OnboardingStep = "type" | "tenant" | "approval" | "company" | "salesAgent";
+type OnboardingStep =
+	| "type"
+	| "tenant"
+	| "approval"
+	| "company"
+	| "salesAgent"
+	| "completed";
 
 // ─── Step Indicator ───────────────────────────────────────────────────────────
 
@@ -328,7 +334,7 @@ export default function OnboardingPage(): React.ReactNode {
 				setUser(data.user);
 				setTenants(data.tenants);
 			} catch {
-				setError("Error de conexión. Intentá de nuevo.");
+				setError("Error de conexión. Inténtalo de nuevo.");
 			} finally {
 				setLoading(false);
 			}
@@ -347,6 +353,7 @@ export default function OnboardingPage(): React.ReactNode {
 			return "salesAgent";
 		if (user.onboardingType === "company") return "company";
 		if (user.onboardingType === "worker") return "tenant";
+		if (user.onboardingType === "salesAgent") return "completed";
 		return "type";
 	}, [user]);
 
@@ -376,7 +383,7 @@ export default function OnboardingPage(): React.ReactNode {
 					setError(
 						phoneError instanceof Error
 							? phoneError.message
-							: "Ingresá un teléfono válido.",
+							: "Ingresa un teléfono válido.",
 					);
 					return;
 				}
@@ -416,7 +423,7 @@ export default function OnboardingPage(): React.ReactNode {
 						: current,
 				);
 			} catch {
-				setError("Error de conexión. Intentá de nuevo.");
+				setError("Error de conexión. Inténtalo de nuevo.");
 			} finally {
 				setSubmitting(null);
 			}
@@ -461,7 +468,7 @@ export default function OnboardingPage(): React.ReactNode {
 						: current,
 				);
 			} catch {
-				setError("Error de conexión. Intentá de nuevo.");
+				setError("Error de conexión. Inténtalo de nuevo.");
 			} finally {
 				setSubmitting(null);
 			}
@@ -571,7 +578,7 @@ export default function OnboardingPage(): React.ReactNode {
 										{user?.name ? `, ${user.name.split(" ")[0]}` : ""}
 									</h1>
 									<p className="text-[17px] leading-[1.47] tracking-[-0.022em] text-[#7a7a7a] dark:text-[#cccccc]">
-										Contanos cómo vas a usar FinanceMDM para personalizar tu
+										Cuéntanos cómo vas a usar FinanceMDM para personalizar tu
 										experiencia.
 									</p>
 								</div>
@@ -592,7 +599,7 @@ export default function OnboardingPage(): React.ReactNode {
 									<TypeCard
 										icon={Building2Icon}
 										title="Empresa"
-										description="Configurá tu propia organización como manager o administrador."
+										description="Configura tu propia organización como manager o administrador."
 										features={[
 											"Control total de usuarios y roles",
 											"Configuración de catálogo",
@@ -659,11 +666,11 @@ export default function OnboardingPage(): React.ReactNode {
 
 								<div className="mb-6 text-center">
 									<h2 className="mb-2 text-[24px] font-semibold leading-[1.14] tracking-[-0.01em] text-[#1d1d1f] dark:text-white">
-										Elegí tu organización
+										Elige tu organización
 									</h2>
 									<p className="text-sm text-[#7a7a7a] dark:text-[#cccccc]">
-										Seleccioná la empresa a la que querés asociarte. Si
-										necesitás acceso a más de una, comunicate con el
+										Selecciona la empresa a la que quieres asociarte. Si
+										necesitas acceso a más de una, comunícate con el
 										administrador.
 									</p>
 								</div>
@@ -749,7 +756,7 @@ export default function OnboardingPage(): React.ReactNode {
 								</div>
 
 								<p className="mt-6 text-xs text-[#7a7a7a]/60 dark:text-[#cccccc]/60">
-									Si tenés dudas, comunicate con soporte.
+									Si tienes dudas, comunícate con soporte.
 								</p>
 								</motion.div>
 							)}
@@ -773,7 +780,7 @@ export default function OnboardingPage(): React.ReactNode {
 									</h2>
 									<p className="mb-6 text-sm leading-relaxed text-[#7a7a7a] dark:text-[#cccccc]">
 										El administrador global debe aprobar tu alta como Gestor de
-										Ventas. Contactalo para continuar.
+										Ventas. Contáctalo para continuar.
 									</p>
 									<div className="rounded-xl bg-[#f5f5f7] p-4 dark:bg-white/5">
 										<span className="text-sm text-[#7a7a7a] dark:text-[#cccccc]">
@@ -784,26 +791,59 @@ export default function OnboardingPage(): React.ReactNode {
 							)}
 						</AnimatePresence>
 
+						{/* ═══════ STEP 4: SalesAgent approved (onboarding cerrado) ═══════ */}
+						<AnimatePresence mode="wait">
+							{currentStep === "completed" && (
+								<motion.div
+									key="step-completed"
+									initial={shouldAnimate ? { opacity: 0, scale: 0.95 } : { opacity: 1, scale: 1 }}
+									animate={{ opacity: 1, scale: 1 }}
+									exit={shouldAnimate ? { opacity: 0, scale: 0.95 } : { opacity: 1, scale: 1 }}
+									transition={SPRING_DEFAULT}
+									className="text-center"
+								>
+									<div className="mx-auto mb-6 flex h-16 w-16 items-center justify-center rounded-full bg-green-500/10">
+										<CheckCircle2Icon className="h-8 w-8 text-green-600" />
+									</div>
+									<h2 className="mb-2 text-[24px] font-semibold leading-[1.14] tracking-[-0.01em] text-[#1d1d1f] dark:text-white">
+										Tu solicitud fue aprobada
+									</h2>
+									<p className="mb-6 text-sm leading-relaxed text-[#7a7a7a] dark:text-[#cccccc]">
+										Ya estás listo para operar como Gestor de Ventas. Ingresa a
+										tu espacio para compartir tu código y gestionar tus
+										referidos.
+									</p>
+									<Link
+										href="/sales-agent/referidos"
+										className="inline-flex items-center gap-2 rounded-xl bg-[#0066cc] px-5 py-3 text-sm font-medium text-white transition-colors hover:bg-[#0071e3]"
+									>
+										Ir a mi espacio de ventas
+										<ArrowRightIcon className="h-4 w-4" />
+									</Link>
+								</motion.div>
+							)}
+						</AnimatePresence>
+
 						{/* ═══════ STEP 3 alt: Company account ═══════ */}
 						<AnimatePresence mode="wait">
 							{currentStep === "company" && (
 								<motion.div
-								key="step-company"
-								initial={shouldAnimate ? { opacity: 0, scale: 0.95 } : { opacity: 1, scale: 1 }}
-								animate={{ opacity: 1, scale: 1 }}
-								exit={shouldAnimate ? { opacity: 0, scale: 0.95 } : { opacity: 1, scale: 1 }}
-								transition={SPRING_DEFAULT}
-								className="text-center"
-							>
-							<div className="mx-auto mb-6 flex h-16 w-16 items-center justify-center rounded-2xl bg-[#0066cc]/10">
-									<Building2Icon className="h-8 w-8 text-[#0066cc]" />
-								</div>
+									key="step-company"
+									initial={shouldAnimate ? { opacity: 0, scale: 0.95 } : { opacity: 1, scale: 1 }}
+									animate={{ opacity: 1, scale: 1 }}
+									exit={shouldAnimate ? { opacity: 0, scale: 0.95 } : { opacity: 1, scale: 1 }}
+									transition={SPRING_DEFAULT}
+									className="text-center"
+								>
+									<div className="mx-auto mb-6 flex h-16 w-16 items-center justify-center rounded-2xl bg-[#0066cc]/10">
+										<Building2Icon className="h-8 w-8 text-[#0066cc]" />
+									</div>
 
 								<h2 className="mb-2 text-[24px] font-semibold leading-[1.14] tracking-[-0.01em] text-[#1d1d1f] dark:text-white">
 									Empresa en espera
 								</h2>
 								<p className="mb-6 text-sm leading-relaxed text-[#7a7a7a] dark:text-[#cccccc]">
-									Comunicate con el administrador global para garantizar el
+									Comunícate con el administrador global para garantizar el
 									acceso y comenzar a configurar tu empresa.
 								</p>
 
@@ -811,7 +851,7 @@ export default function OnboardingPage(): React.ReactNode {
 									<div className="flex items-center gap-3 text-sm">
 										<UsersIcon className="h-4 w-4 text-[#0066cc]" />
 										<span className="text-[#7a7a7a] dark:text-[#cccccc]">
-											Contactá al admin global para activar tu organización
+											Contácta al admin global para activar tu organización
 										</span>
 									</div>
 								</div>

@@ -391,7 +391,7 @@ export const getGlobalUsersAction = withAction(
 		} else {
 			if (input.tenantId && input.tenantId !== user.tenantId) {
 				throw new ActionError(
-					"No tenés permisos para ver usuarios de otra empresa",
+					"No tienes permisos para ver usuarios de otra empresa",
 					"FORBIDDEN",
 				);
 			}
@@ -639,7 +639,7 @@ export const approveGlobalUserAction = withAction(
 							eventType: "sales_agent_approved",
 							title: "Tu perfil fue aprobado",
 							message:
-								"Ya podés compartir tu código y gestionar tus referidos.",
+								"Ya puedes compartir tu código y gestionar tus referidos.",
 							emailPayload: {},
 						});
 
@@ -1386,7 +1386,7 @@ export const approveMembershipAction = withAction(
 
 		if (!isPlatformAdmin && !isTenantManager) {
 			throw new ActionError(
-				"No tenés permisos para aprobar esta solicitud",
+				"No tienes permisos para aprobar esta solicitud",
 				"FORBIDDEN",
 			);
 		}
@@ -1488,7 +1488,7 @@ export const updateTenantUserAction = withAction(
 		}
 
 		if (!user.tenantId) {
-			throw new ActionError("No tenés un tenant asignado", "FORBIDDEN");
+			throw new ActionError("No tienes un tenant asignado", "FORBIDDEN");
 		}
 
 		// Verificar que el usuario pertenece al mismo tenant
@@ -1507,7 +1507,7 @@ export const updateTenantUserAction = withAction(
 		// Un manager no puede cambiar su propio rol ni desactivarse
 		if (userId === user.userId) {
 			throw new ActionError(
-				"No podés modificar tu propio usuario desde aquí",
+				"No puedes modificar tu propio usuario desde aquí",
 				"FORBIDDEN",
 			);
 		}
