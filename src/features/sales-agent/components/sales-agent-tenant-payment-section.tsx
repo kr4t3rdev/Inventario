@@ -43,9 +43,15 @@ interface TenantPaymentRow {
 
 /**
  * @description Administra la confirmación de pagos de tenants referidos sin mezclarla con payouts.
+ * @param {object} props - Props del componente.
+ * @param {() => void} [props.onConfirmed] - Callback al confirmar un pago (para refrescar superficies hermanas).
  * @returns {JSX.Element} Tabla de tenants y diálogo de confirmación.
  */
-export function SalesAgentTenantPaymentSection(): React.ReactElement {
+export function SalesAgentTenantPaymentSection({
+  onConfirmed,
+}: {
+  onConfirmed?: () => void;
+}): React.ReactElement {
   const [rows, setRows] = useState<TenantPaymentRow[]>([]);
   const [selected, setSelected] = useState<TenantPaymentRow | null>(null);
   const [loading, setLoading] = useState(true);
@@ -80,6 +86,7 @@ export function SalesAgentTenantPaymentSection(): React.ReactElement {
     toast.success(result.data?.duplicate ? 'El ciclo ya estaba confirmado' : 'Pago confirmado');
     setSelected(null);
     await loadRows();
+    onConfirmed?.();
   };
 
   return (

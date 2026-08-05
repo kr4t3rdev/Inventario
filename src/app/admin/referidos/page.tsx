@@ -29,6 +29,7 @@ export default function AdminReferidosPage() {
   const [licenseByTenant, setLicenseByTenant] = useState<Record<string, string>>({});
   const [featureByTenant, setFeatureByTenant] = useState<Record<string, string>>({});
   const [loading, setLoading] = useState(true);
+  const [payoutsRefreshKey, setPayoutsRefreshKey] = useState(0);
 
   const loadData = async () => {
     setLoading(true);
@@ -132,8 +133,10 @@ export default function AdminReferidosPage() {
         <Button variant="outline" onClick={loadData}><RefreshCw className="mr-2 h-4 w-4" />Actualizar</Button>
       </div>
 
-      <SalesAgentAdminPayoutSection />
-      <SalesAgentTenantPaymentSection />
+      <SalesAgentAdminPayoutSection refreshKey={payoutsRefreshKey} />
+      <SalesAgentTenantPaymentSection
+        onConfirmed={() => setPayoutsRefreshKey((key) => key + 1)}
+      />
 
       <Card>
         <CardHeader><CardTitle>Resumen por tenant</CardTitle></CardHeader>

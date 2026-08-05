@@ -58,4 +58,17 @@ describe('SalesAgentTenantPaymentSection', () => {
       });
     });
   });
+
+  it('notifies the parent so sibling surfaces refresh after a confirmed payment', async () => {
+    const onConfirmed = vi.fn();
+    render(<SalesAgentTenantPaymentSection onConfirmed={onConfirmed} />);
+
+    const openButton = await screen.findByRole('button', {
+      name: /confirmar pago del tenant/i,
+    });
+    fireEvent.click(openButton);
+    fireEvent.click(screen.getByRole('button', { name: /^confirmar$/i }));
+
+    await waitFor(() => expect(onConfirmed).toHaveBeenCalledTimes(1));
+  });
 });

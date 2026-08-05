@@ -26,9 +26,15 @@ type AdminAgentRow = {
 
 /**
  * @description Sección administrativa separada para saldos y payouts de Gestores.
+ * @param {object} props - Props del componente.
+ * @param {number} [props.refreshKey] - Clave que al incrementarse dispara una recarga de la tabla.
  * @returns {React.JSX.Element} Tabla de Gestores con acceso al diálogo compartido.
  */
-export function SalesAgentAdminPayoutSection(): React.JSX.Element {
+export function SalesAgentAdminPayoutSection({
+  refreshKey = 0,
+}: {
+  refreshKey?: number;
+}): React.JSX.Element {
   const [rows, setRows] = useState<AdminAgentRow[]>([]);
   const [target, setTarget] = useState<SalesAgentPayoutTarget | null>(null);
 
@@ -37,7 +43,7 @@ export function SalesAgentAdminPayoutSection(): React.JSX.Element {
     if (result.success) setRows((result.data ?? []) as AdminAgentRow[]);
   };
 
-  useEffect(() => { void load(); }, []);
+  useEffect(() => { void load(); }, [refreshKey]);
 
   return (
     <Card className="border-violet-200 dark:border-violet-900">
