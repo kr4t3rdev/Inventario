@@ -34,7 +34,7 @@ export function SalesAgentShell({
             </Link>
           </div>
           <button
-            className="rounded-md border border-border px-3 py-2 text-sm font-medium hover:bg-muted"
+            className="min-h-11 rounded-md border border-border px-3 py-2 text-sm font-medium hover:bg-muted"
             type="button"
             onClick={() => void logout()}
           >

@@ -158,7 +158,7 @@ export function SalesAgentDashboard({
               <label className="text-sm font-medium" htmlFor="referral-code">Código</label>
               <div className="mt-1 flex gap-2">
                 <Input id="referral-code" readOnly value={data.referralCode} />
-                <Button aria-label="Copiar código" onClick={() => void copy(data.referralCode, 'code')}>
+                <Button aria-label="Copiar código" className="size-11" size="icon" onClick={() => void copy(data.referralCode, 'code')}>
                   {copied === 'code' ? <Check /> : <Copy />}
                 </Button>
               </div>
@@ -167,7 +167,7 @@ export function SalesAgentDashboard({
               <label className="text-sm font-medium" htmlFor="referral-link">Enlace</label>
               <div className="mt-1 flex gap-2">
                 <Input id="referral-link" readOnly value={referralUrl} />
-                <Button aria-label="Copiar enlace" onClick={() => void copy(referralUrl, 'link')}>
+                <Button aria-label="Copiar enlace" className="size-11" size="icon" onClick={() => void copy(referralUrl, 'link')}>
                   {copied === 'link' ? <Check /> : <Copy />}
                 </Button>
               </div>
@@ -184,8 +184,8 @@ export function SalesAgentDashboard({
             <div className="flex flex-wrap gap-2">
               {origin && (
                 <>
-                  <Button onClick={() => void webShare()}><Share2 /> Compartir</Button>
-                  <Button asChild variant="outline">
+                  <Button onClick={() => void webShare()} size="lg"><Share2 /> Compartir</Button>
+                  <Button asChild size="lg" variant="outline">
                     <a href={buildWhatsAppShareUrl(shareText, referralUrl)} rel="noreferrer" target="_blank">
                       WhatsApp <ExternalLink />
                     </a>
