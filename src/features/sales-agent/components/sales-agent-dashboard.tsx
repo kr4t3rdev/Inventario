@@ -78,6 +78,12 @@ export function SalesAgentDashboard({
   );
   const [qrDataUrl, setQrDataUrl] = useState('');
   const [copied, setCopied] = useState<'code' | 'link' | null>(null);
+  const [shareFeedback, setShareFeedback] = useState<string | null>(null);
+
+  const flashFeedback = (message: string): void => {
+    setShareFeedback(message);
+    window.setTimeout(() => setShareFeedback(null), 3000);
+  };
 
   useEffect(() => {
     if (!origin) {
@@ -99,13 +105,14 @@ export function SalesAgentDashboard({
       setCopied(kind);
       window.setTimeout(() => setCopied(null), 1800);
     } catch {
-      setCopied(null);
+      flashFeedback('No se pudo copiar. Revisa los permisos del portapapeles.');
     }
   };
 
   const webShare = async (): Promise<void> => {
     if (!navigator.share) {
       await copy(referralUrl, 'link');
+      flashFeedback('Enlace copiado al portapapeles.');
       return;
     }
     try {
@@ -113,6 +120,7 @@ export function SalesAgentDashboard({
     } catch (error) {
       if (error instanceof DOMException && error.name === 'AbortError') return;
       await copy(referralUrl, 'link');
+      flashFeedback('Enlace copiado al portapapeles.');
     }
   };
 
@@ -193,6 +201,7 @@ export function SalesAgentDashboard({
                 </>
               )}
             </div>
+            {shareFeedback && <p className="text-sm text-muted-foreground" role="status">{shareFeedback}</p>}
           </div>
           <div className="text-center">
             {!origin ? (

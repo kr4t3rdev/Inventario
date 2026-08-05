@@ -9,7 +9,12 @@ import { getConfiguredPublicAppUrl } from '@/features/sales-agent/public-url';
 export default async function SalesAgentReferralsPage(): Promise<React.JSX.Element> {
   const result = await getSalesAgentDashboardAction({});
   if (!result.success || !result.data) {
-    return <p role="alert">No se pudo cargar el panel de referidos.</p>;
+    return (
+      <div className="rounded-xl border border-border/80 bg-card p-8 text-center">
+        <p className="font-semibold" role="alert">No se pudo cargar el panel de referidos.</p>
+        <p className="mt-1 text-sm text-muted-foreground">Vuelve a intentarlo en unos momentos.</p>
+      </div>
+    );
   }
   return (
     <SalesAgentDashboard
