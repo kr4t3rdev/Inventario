@@ -917,9 +917,12 @@ export function AdminUsersTable({
 														</Button>
 													)}
 												{onApproveUser &&
-													candidate.onboardingType === "company" &&
-													candidate.onboardingStatus ===
-														"awaiting_global_approval" && (
+													((candidate.onboardingType === "company" &&
+														candidate.onboardingStatus ===
+															"awaiting_global_approval") ||
+														(candidate.onboardingType === "salesAgent" &&
+															candidate.onboardingStatus ===
+																"awaiting_sales_agent_approval")) && (
 														<Button
 															type="button"
 															variant="outline"

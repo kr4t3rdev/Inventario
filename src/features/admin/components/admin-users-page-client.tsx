@@ -575,41 +575,54 @@ export function AdminUsersPageClient({
 						<DialogDescription>
 							Estás por aprobar a{" "}
 							<span className="font-medium">{approveUser?.name}</span> (
-							{approveUser?.email}). Se creará su empresa y se le asignará una
-							licencia.
+							{approveUser?.email}).
+							{approveUser?.onboardingType === "salesAgent" ? (
+								"Se activará su perfil como Gestor de Ventas y se le asignará un código de referido."
+							) : (
+								"Se creará su empresa y se le asignará una licencia."
+							)}
 						</DialogDescription>
 					</DialogHeader>
 
 					<div className="space-y-4 py-4">
-						<div className="space-y-2">
-							<Label htmlFor="tenantName">Nombre de la empresa</Label>
-							<Input
-								id="tenantName"
-								value={tenantName}
-								onChange={(e) => setTenantName(e.target.value)}
-								placeholder="Ej: Mi Empresa SRL"
-							/>
-						</div>
-						<div className="space-y-2">
-							<span className="text-sm font-medium">
-								Plan de licencia (opcional)
-							</span>
-							<Select value={selectedPlanId} onValueChange={setSelectedPlanId}>
-								<SelectTrigger>
-									<SelectValue placeholder="Seleccionar plan" />
-								</SelectTrigger>
-								<SelectContent>
-									<SelectItem value="none">
-										Sin plan (licencia básica)
-									</SelectItem>
-									{planes.map((plan: any) => (
-										<SelectItem key={plan.planId} value={plan.planId}>
-											{plan.nombre} - ${plan.precio}/{plan.billingCycle}
-										</SelectItem>
-									))}
-								</SelectContent>
-							</Select>
-						</div>
+						{approveUser?.onboardingType === "salesAgent" ? (
+							<div className="rounded-xl border border-indigo-200 bg-indigo-50 p-4 text-sm text-indigo-800 dark:border-indigo-800 dark:bg-indigo-900/30 dark:text-indigo-200">
+								Se generará un código de referido único para {approveUser.name}.
+								El Gestor de Ventas no necesita empresa ni licencia.
+							</div>
+						) : (
+							<>
+								<div className="space-y-2">
+									<Label htmlFor="tenantName">Nombre de la empresa</Label>
+									<Input
+										id="tenantName"
+										value={tenantName}
+										onChange={(e) => setTenantName(e.target.value)}
+										placeholder="Ej: Mi Empresa SRL"
+									/>
+								</div>
+								<div className="space-y-2">
+									<span className="text-sm font-medium">
+										Plan de licencia (opcional)
+									</span>
+									<Select value={selectedPlanId} onValueChange={setSelectedPlanId}>
+										<SelectTrigger>
+											<SelectValue placeholder="Seleccionar plan" />
+										</SelectTrigger>
+										<SelectContent>
+											<SelectItem value="none">
+												Sin plan (licencia básica)
+											</SelectItem>
+											{planes.map((plan: any) => (
+												<SelectItem key={plan.planId} value={plan.planId}>
+													{plan.nombre} - ${plan.precio}/{plan.billingCycle}
+												</SelectItem>
+											))}
+										</SelectContent>
+									</Select>
+								</div>
+							</>
+						)}
 					</div>
 
 					<DialogFooter>
@@ -629,7 +642,7 @@ export function AdminUsersPageClient({
 							disabled={isApproving}
 							className="bg-linear-to-r from-emerald-600 to-green-600 text-white hover:from-emerald-600/90 hover:to-green-600/90"
 						>
-							{isApproving ? "Aprobando..." : "Aprobar y Crear Empresa"}
+							{isApproving ? "Aprobando..." : approveUser?.onboardingType === "salesAgent" ? "Aprobar Gestor de Ventas" : "Aprobar y Crear Empresa"}
 						</Button>
 					</DialogFooter>
 				</DialogContent>
