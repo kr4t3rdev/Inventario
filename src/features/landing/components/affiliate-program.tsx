@@ -93,6 +93,11 @@ export function LandingAffiliateProgram(): React.JSX.Element {
                 Recomienda el sistema a otra empresa. Cuando administración confirme su pago,
                 recibes crédito y perks nuevos para seguir creciendo.
               </p>
+              <p className="mt-3 max-w-xl rounded-lg bg-primary-foreground/10 px-4 py-3 text-xs leading-5 text-primary-foreground/90">
+                Si tu empresa se registra por un link de referido, obtiene un
+                descuento de $5 USD/mes en su suscripción (el precio base se
+                muestra en la sección de planes).
+              </p>
               <Button asChild variant="secondary" size="lg" className="mt-6 min-h-11">
                 <a href="#precios">
                   Ver planes <ArrowRight className="ml-2 h-4 w-4" />

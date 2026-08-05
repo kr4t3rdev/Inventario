@@ -9,7 +9,7 @@ import { PrismaClient } from "../../src/generated/prisma";
 
 const prisma = new PrismaClient();
 
-/* ─── Plan 1: Básico — $35/mes ─── */
+/* ─── Plan 1: Básico — $40/mes (referido: $35/mes) ─── */
 
 export const PLAN_BASICO_FEATURES: Record<string, boolean> = {
 	// Inventario
@@ -89,7 +89,7 @@ export const PLAN_BASICO_FEATURES: Record<string, boolean> = {
 	"api-integraciones": false,
 };
 
-/* ─── Plan 2: Profesional — $75/mes ─── */
+/* ─── Plan 2: Profesional — $80/mes (referido: $75/mes) ─── */
 
 export const PLAN_PROFESIONAL_FEATURES: Record<string, boolean> = {
 	...PLAN_BASICO_FEATURES,
@@ -116,7 +116,7 @@ export const PLAN_PROFESIONAL_FEATURES: Record<string, boolean> = {
 	"upload-deudas-cash-receipt": true,
 };
 
-/* ─── Plan 3: Empresarial — $105/mes ─── */
+/* ─── Plan 3: Empresarial — $110/mes (referido: $105/mes) ─── */
 
 export const PLAN_EMPRESARIAL_FEATURES: Record<string, boolean> = {
 	...PLAN_PROFESIONAL_FEATURES,
@@ -166,7 +166,7 @@ export async function seedPlans() {
 				nombre: "Básico",
 				descripcion:
 					"Base sólida para arrancar tu negocio. Incluye productos con código, almacenes, POS, contabilidad en CUP y backups semanales.",
-				precio: 35,
+				precio: 40,
 				duracionDias: 30,
 				maxUsuarios: 3,
 				maxAlmacenes: 2,
@@ -182,7 +182,7 @@ export async function seedPlans() {
 				nombre: "Profesional",
 				descripcion:
 					"PYME en crecimiento con facturación electrónica, multi-moneda, empleados, clientes y backups diarios.",
-				precio: 75,
+				precio: 80,
 				duracionDias: 30,
 				maxUsuarios: 5,
 				maxAlmacenes: 5,
@@ -198,7 +198,7 @@ export async function seedPlans() {
 				nombre: "Empresarial",
 				descripcion:
 					"Máxima potencia con producción, nómina, generación EAN-13, cuentas por cobrar/pagar y backups cada hora + restauración point-in-time.",
-				precio: 105,
+				precio: 110,
 				duracionDias: 30,
 				maxUsuarios: 10,
 				maxAlmacenes: 999,
@@ -214,7 +214,7 @@ export async function seedPlans() {
 	});
 
 	console.log(
-		"✅ Planes: Básico ($35), Profesional ($75) y Empresarial ($105) creados.",
+		"✅ Planes: Básico ($40), Profesional ($80) y Empresarial ($110) creados. Descuento por referido: $5 USD.",
 	);
 }
 

@@ -5,6 +5,7 @@ import { revalidatePath } from 'next/cache';
 import type { AuthenticatedUser } from '@/lib/auth-middleware';
 import { prisma } from '@/lib/prisma';
 import { AuditLogService } from '@/lib/services/audit-log-service';
+import { getReferralPrice, isTenantReferred } from '@/lib/services/plan-pricing';
 import { ActionError, withAction } from '@/lib/server-actions';
 
 import { AFFILIATE_DEFAULT_CURRENCY, AFFILIATE_TIER_DEFINITIONS } from './constants';
@@ -702,8 +703,12 @@ export const applyAffiliateCreditsToLicensePreviewAction = withAction(
     }
 
     const availableCreditUsd = await getAvailableCreditForTenant(tenantLicense.tenantId);
+    const referred = await isTenantReferred(tenantLicense.tenantId);
+    const listPriceUsd = referred
+      ? getReferralPrice(toNumber(tenantLicense.plan?.precio ?? 0))
+      : toNumber(tenantLicense.plan?.precio ?? 0);
     const snapshot = buildAffiliateCreditSnapshot({
-      listPriceUsd: toNumber(tenantLicense.plan?.precio ?? 0),
+      listPriceUsd,
       availableCreditUsd,
     });
 

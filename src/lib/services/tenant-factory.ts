@@ -8,6 +8,7 @@
 import { Prisma } from '@/generated/prisma'
 import { prisma } from '@/lib/prisma'
 import { ActionError } from '@/lib/server-actions'
+import { resolveLicensePricing } from '@/lib/services/plan-pricing'
 
 export interface CreateTenantForUserInput {
   userId: string
@@ -133,6 +134,10 @@ export async function createTenantForUser(
         maxClientes: plan!.maxClientes,
         features: Prisma.JsonNull,
         featureOverrides: {},
+        ...resolveLicensePricing(
+          Number(plan!.precio),
+          Boolean(referralOwner),
+        ),
       }
     })
 

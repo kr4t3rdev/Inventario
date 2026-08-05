@@ -5,6 +5,7 @@ import { Prisma } from "@prisma/client";
 
 import { prisma } from "@/lib/prisma";
 import { requireTenant } from "@/lib/services/tenant-scope";
+import { getReferralPrice } from "@/lib/services/plan-pricing";
 import { withAction, ActionError } from "@/lib/server-actions";
 import { reviewSchema } from "./schemas";
 
@@ -209,6 +210,8 @@ export interface PlanDisplay {
 	name: string;
 	description: string | null;
 	price: number;
+	/** Precio con descuento por referido (precio base - $5 USD). */
+	referralPrice: number;
 	bullets: string[];
 	featuresByCategory: Record<string, string[]>;
 	featured: boolean;
@@ -295,6 +298,7 @@ export async function getPlansPublicAction(): Promise<PlanDisplay[]> {
 				name: plan.nombre,
 				description: plan.descripcion,
 				price: Number(plan.precio),
+				referralPrice: getReferralPrice(Number(plan.precio)),
 				bullets,
 				featuresByCategory,
 				featured,

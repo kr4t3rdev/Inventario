@@ -15,6 +15,7 @@ import {
   getEnabledFeatureLabels,
 } from './feature-registry'
 import type { PlanDisplay } from './types'
+import { getReferralPrice } from '@/lib/services/plan-pricing'
 
 /**
  * @description Retorna todos los planes ordenados por precio ascendente.
@@ -106,6 +107,7 @@ export async function getPlansPublicActionV2(): Promise<PlanDisplay[]> {
         name: plan.nombre,
         description: plan.descripcion,
         price: Number(plan.precio),
+        referralPrice: getReferralPrice(Number(plan.precio)),
         bullets,
         featuresByCategory,
         featured,

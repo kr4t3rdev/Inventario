@@ -294,6 +294,7 @@ export const getSalesAgentDashboardAction = withAction(
                   activa: true,
                   expiracion: true,
                   finalPriceUsd: true,
+                  listPriceUsd: true,
                   plan: { select: { nombre: true } },
                 },
               },
@@ -388,7 +389,10 @@ export const getSalesAgentDashboardAction = withAction(
                 ? 'inactive'
                 : 'missing',
           licenseExpiration: license?.expiracion ?? null,
-          commissionBaseUsd: license?.finalPriceUsd?.toString() ?? null,
+          commissionBaseUsd:
+            license?.listPriceUsd?.toString() ??
+            license?.finalPriceUsd?.toString() ??
+            null,
         },
       };
     });

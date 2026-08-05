@@ -66,8 +66,9 @@ export function PricingDynamic(): React.JSX.Element | null {
           complejas.
         </p>
         <p className="text-sm text-cyan-accent/90 sm:text-base">
-          Los tenants elegibles también pueden acumular crédito y perks mediante el programa de
-          referidos.
+          Tu empresa obtiene un descuento de $5 USD/mes en la suscripción si se
+          registra por un link de referido. Los tenants elegibles también
+          pueden acumular crédito y perks mediante el programa de referidos.
         </p>
       </SpringSection>
 
@@ -140,6 +141,15 @@ export function PricingDynamic(): React.JSX.Element | null {
                     USD / mes
                   </span>
                 </div>
+
+                {plan.referralPrice < plan.price ? (
+                  <p className="text-xs text-muted-foreground">
+                    <span className="font-semibold text-cyan-accent">
+                      ${plan.referralPrice.toLocaleString()} USD/mes
+                    </span>{" "}
+                    por referido (descuento de $5 USD/mes)
+                  </p>
+                ) : null}
 
                 {/* Límites como badges */}
                 <div className="flex flex-wrap gap-1.5 pt-1">
