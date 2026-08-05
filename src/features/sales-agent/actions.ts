@@ -25,6 +25,8 @@ const dashboardSchema = z.object({
   salesAgentUserId: z.string().min(1).optional(),
 }).strict();
 
+const profileSchema = z.object({}).strict();
+
 const MAX_PAYOUT_USD = 9_999_999_999.99;
 const MAX_EXCHANGE_RATE = 99_999_999.9999;
 const MAX_PAYOUT_CUP = new Decimal('999999999999.99');
@@ -62,6 +64,7 @@ const payoutPreviewSchema = payoutBaseSchema.pick({
 export type ConfirmSalesAgentPaymentDto = z.input<typeof confirmPaymentSchema>;
 export type SalesAgentDashboardDto = z.input<typeof dashboardSchema>;
 export type ConfirmSalesAgentPayoutDto = z.input<typeof payoutSchema>;
+export type SalesAgentProfileDto = z.input<typeof profileSchema>;
 
 /**
  * @description Confirma como admin un pago inicial o renovación de tenant referido.
@@ -406,6 +409,53 @@ export const getSalesAgentDashboardAction = withAction(
         exchangeRateCupPerUsd: payout.exchangeRateCupPerUsd.toString(),
       })),
       notifications,
+    };
+  },
+);
+
+/**
+ * @description Obtiene el perfil público del Gestor propietario (usuario + datos de perfil).
+ * @param {SalesAgentProfileDto} _input - Sin parámetros (ownership derivado de la sesión).
+ * @param {import('@/lib/auth-middleware').AuthenticatedUser} user - Sesión autenticada.
+ * @returns {Promise<object>} Nombre, email y perfil del Gestor.
+ */
+export const getSalesAgentProfileAction = withAction(
+  async (_input: SalesAgentProfileDto, user) => {
+    profileSchema.parse(_input);
+    if (user.role !== 'salesAgent') {
+      throw new ActionError('Acceso restringido', 'FORBIDDEN');
+    }
+
+    const [account, profile] = await Promise.all([
+      prisma.user.findUnique({
+        where: { userId: user.userId },
+        select: { userId: true, name: true, email: true },
+      }),
+      prisma.salesAgentProfile.findUnique({
+        where: { userId: user.userId },
+        select: {
+          referralCode: true,
+          phone: true,
+          status: true,
+          approvedAt: true,
+          createdAt: true,
+        },
+      }),
+    ]);
+
+    if (!account || !profile) {
+      throw new ActionError('Perfil de Gestor no encontrado', 'NOT_FOUND');
+    }
+
+    return {
+      userId: account.userId,
+      name: account.name,
+      email: account.email,
+      referralCode: profile.referralCode,
+      phone: profile.phone,
+      status: profile.status,
+      approvedAt: profile.approvedAt,
+      createdAt: profile.createdAt,
     };
   },
 );

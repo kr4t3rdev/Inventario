@@ -2,8 +2,14 @@ import { redirect } from 'next/navigation';
 
 import { resolveSalesAgentAccess } from '@/lib/auth/sales-agent-access';
 import { getProtectedRouteIdentity } from '@/lib/auth/server-route-identity';
+import { getCurrentUser } from '@/lib/server-actions/get-current-user';
 
 import { SalesAgentShell } from './sales-agent-shell';
+
+interface SalesAgentShellUser {
+  name: string | null;
+  email: string;
+}
 
 /**
  * @description Protege y aísla el namespace global del Gestor de Ventas.
@@ -21,5 +27,10 @@ export default async function SalesAgentLayout({
   );
   if (!access.allowed) redirect(access.redirectTo);
 
-  return <SalesAgentShell>{children}</SalesAgentShell>;
+  const currentUser = await getCurrentUser();
+  const user: SalesAgentShellUser | null = currentUser
+    ? { name: currentUser.name, email: currentUser.email }
+    : null;
+
+  return <SalesAgentShell user={user}>{children}</SalesAgentShell>;
 }
