@@ -31,8 +31,8 @@ vi.mock('@/lib/prisma', () => {
     })),
     user: {
       findMany: vi.fn(), findUnique: vi.fn(), create: vi.fn(),
-      update: vi.fn(), updateMany: vi.fn(), delete: vi.fn(), count: vi.fn(),
-      groupBy: vi.fn(),
+      update: vi.fn(), updateMany: vi.fn(), delete: vi.fn(), deleteMany: vi.fn(),
+      count: vi.fn(), groupBy: vi.fn(),
     },
     tenant: { findMany: vi.fn(), count: vi.fn(), findUnique: vi.fn(), create: vi.fn() },
     tenantMembership: {
@@ -43,7 +43,7 @@ vi.mock('@/lib/prisma', () => {
     plan: { findMany: vi.fn(), findUnique: vi.fn(), create: vi.fn(), update: vi.fn(), delete: vi.fn() },
     affiliateProfile: { findUnique: vi.fn() },
     affiliateReferral: { findUnique: vi.fn(), create: vi.fn() },
-    salesAgentReferral: { create: vi.fn() },
+    salesAgentReferral: { create: vi.fn(), findUnique: vi.fn().mockResolvedValue(null) },
     salesAgentProfile: { findUnique: vi.fn(), updateMany: vi.fn() },
     salesAgentBalance: { upsert: vi.fn() },
     userSession: { count: vi.fn(), findMany: vi.fn(), delete: vi.fn() },
@@ -238,6 +238,7 @@ describe('Admin Server Actions', () => {
       vi.mocked(prisma.plan.findUnique).mockResolvedValue({
         planId: 'plan-pro',
         nombre: 'Professional',
+        precio: 80,
         maxUsuarios: 12,
         maxAlmacenes: 5,
         maxProductos: 2500,
@@ -266,6 +267,8 @@ describe('Admin Server Actions', () => {
           maxClientes: 800,
           features: Prisma.JsonNull,
           featureOverrides: {},
+          listPriceUsd: 80,
+          finalPriceUsd: 80,
         },
       });
       expect(auditSpy).toHaveBeenCalledWith({
@@ -340,12 +343,33 @@ describe('Admin Server Actions', () => {
   });
 
   describe('deleteUserAction', () => {
-    it('admin elimina usuario', async () => {
+    it('admin elimina usuario regular sin registros', async () => {
       vi.mocked(getCurrentUser).mockResolvedValue(adminUser);
-      vi.mocked(prisma.user.findUnique).mockResolvedValue({ userId: 'u1' });
-      vi.mocked(prisma.user.delete).mockResolvedValue({} as any);
+      vi.mocked(prisma.user.findUnique).mockResolvedValue({
+        userId: 'u1',
+        role: 'regularUser',
+        salesAgentBalance: null,
+        _count: { salesAgentReferrals: 0, salesAgentCommissions: 0, salesAgentPayouts: 0 },
+      });
       const r = await deleteUserAction('u1');
       expect(r.success).toBe(true);
+      expect(prisma.user.deleteMany).toHaveBeenCalledWith({ where: { userId: 'u1' } });
+    });
+
+    it('bloquea eliminación de gestor de ventas con registros', async () => {
+      vi.mocked(getCurrentUser).mockResolvedValue(adminUser);
+      vi.mocked(prisma.user.findUnique).mockResolvedValue({
+        userId: 'u1',
+        role: 'salesAgent',
+        salesAgentBalance: { salesAgentBalanceId: 'bal-1' },
+        _count: { salesAgentReferrals: 1, salesAgentCommissions: 1, salesAgentPayouts: 0 },
+      });
+      const r = await deleteUserAction('u1');
+      expect(r.success).toBe(false);
+      if (r.success === false) {
+        expect(r.error.code).toBe('SALES_AGENT_WITH_RECORDS');
+      }
+      expect(prisma.user.deleteMany).not.toHaveBeenCalled();
     });
   });
 

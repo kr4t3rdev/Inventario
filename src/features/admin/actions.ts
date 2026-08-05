@@ -12,6 +12,10 @@ import { Prisma } from "@/generated/prisma";
 import { withAction, ActionError } from "@/lib/server-actions";
 import { createTenantForUser } from "@/lib/services/tenant-factory";
 import {
+	isTenantReferred,
+	resolveLicensePricing,
+} from "@/lib/services/plan-pricing";
+import {
 	generateSalesAgentReferralCode,
 	isUniqueConstraintCollision,
 } from "@/features/sales-agent/referral-code";
@@ -316,9 +320,34 @@ export const deleteUserAction = withAction(
 			throw new ActionError("Acceso restringido", "FORBIDDEN");
 		const existing = await prisma.user.findUnique({
 			where: { userId },
-			select: { userId: true },
+			select: {
+				userId: true,
+				role: true,
+				salesAgentBalance: { select: { salesAgentBalanceId: true } },
+				_count: {
+					select: {
+						salesAgentReferrals: true,
+						salesAgentCommissions: true,
+						salesAgentPayouts: true,
+					},
+				},
+			},
 		});
 		if (!existing) throw new ActionError("Usuario no encontrado", "NOT_FOUND");
+
+		const hasSalesAgentRecords =
+			existing.salesAgentBalance !== null ||
+			existing._count.salesAgentReferrals > 0 ||
+			existing._count.salesAgentCommissions > 0 ||
+			existing._count.salesAgentPayouts > 0;
+
+		if (hasSalesAgentRecords) {
+			throw new ActionError(
+				"No se puede eliminar un Gestor de Ventas con registros asociados (balance, referidos, comisiones o pagos). Desactiva el usuario en su lugar",
+				"SALES_AGENT_WITH_RECORDS",
+			);
+		}
+
 		await prisma.user.deleteMany({ where: { userId } });
 		revalidatePath("/admin");
 		return { success: true, userId };
@@ -1711,6 +1740,7 @@ export const convertDemoToPaidPlanAction = withAction(
 		const now = new Date();
 		const durationDays = parsed.durationDays ?? plan.duracionDias;
 		const expiracion = new Date(now.getTime() + durationDays * 86400000);
+		const referred = await isTenantReferred(license.tenantId);
 
 		const updatedLicense = await prisma.tenantLicense.update({
 			where: { tenantLicenseId: parsed.tenantLicenseId },
@@ -1726,6 +1756,7 @@ export const convertDemoToPaidPlanAction = withAction(
 				maxClientes: plan.maxClientes,
 				features: Prisma.JsonNull,
 				featureOverrides: {},
+				...resolveLicensePricing(Number(plan.precio), referred),
 			},
 		});
 
@@ -1770,6 +1801,8 @@ export const changePlanAction = withAction(
 		if (!newPlan)
 			throw new ActionError("Plan no encontrado", "PLAN_NOT_FOUND");
 
+		const referred = await isTenantReferred(license.tenantId);
+
 		const updated = await prisma.tenantLicense.update({
 			where: { tenantLicenseId: parsed.tenantLicenseId },
 			data: {
@@ -1780,6 +1813,7 @@ export const changePlanAction = withAction(
 				maxClientes: newPlan.maxClientes,
 				features: Prisma.JsonNull,
 				featureOverrides: {},
+				...resolveLicensePricing(Number(newPlan.precio), referred),
 			},
 		});
 

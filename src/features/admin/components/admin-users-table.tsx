@@ -518,12 +518,15 @@ export function AdminUsersTable({
 	const handleDeleteUser = async (userId: string): Promise<void> => {
 		try {
 			const r = await deleteUserAction(userId);
-			if (!r.success) throw new Error(r.error?.message ?? "Error");
+			if (!r.success)
+				throw new Error(r.error?.message ?? "Error al eliminar usuario");
 			toast.success("Usuario eliminado correctamente");
 			await onRefresh();
 		} catch (error) {
 			console.error("Error al eliminar usuario:", error);
-			toast.error("Error al eliminar usuario");
+			toast.error(
+				error instanceof Error ? error.message : "Error al eliminar usuario",
+			);
 		}
 	};
 
