@@ -30,7 +30,7 @@ describe('SalesAgentTenantPaymentSection', () => {
         tenantLicenseId: 'license-1',
         planName: 'Profesional',
         amountUsd: '100.00',
-        cycleEndsAt: new Date('2030-01-01T00:00:00.000Z'),
+        cycleEndsAt: '2030-01-01T00:00:00.000Z',
         paymentStatus: 'pending',
       }],
     } as never);

@@ -37,7 +37,7 @@ interface TenantPaymentRow {
   tenantLicenseId: string | null;
   planName: string | null;
   amountUsd: string | null;
-  cycleEndsAt: Date | null;
+  cycleEndsAt: string | null;
   paymentStatus: string;
 }
 
@@ -70,8 +70,7 @@ export function SalesAgentTenantPaymentSection(): React.ReactElement {
       tenantId: selected.tenantId,
       tenantLicenseId: selected.tenantLicenseId,
       amountPaidUsd: selected.amountUsd ? Number(selected.amountUsd) : undefined,
-      idempotencyKey:
-        `sales-agent:${selected.tenantLicenseId}:${selected.cycleEndsAt.toISOString()}`,
+      idempotencyKey: `sales-agent:${selected.tenantLicenseId}:${selected.cycleEndsAt}`,
     });
     setSubmitting(false);
     if (!result.success) {
