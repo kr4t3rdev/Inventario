@@ -218,7 +218,7 @@ export function SalesAgentDashboard({
                 src={qrDataUrl}
                 width={240}
               />
-            ) : <div aria-label="Generando código QR" className="h-60 animate-pulse rounded-lg bg-muted" role="status" />}
+            ) : <div aria-label="Generando código QR" className="h-60 animate-pulse rounded-lg bg-muted motion-reduce:animate-none" role="status" />}
             <p className="mt-2 text-xs text-muted-foreground">Generado localmente, sin tracking externo.</p>
           </div>
         </CardContent>
