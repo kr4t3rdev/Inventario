@@ -15,6 +15,7 @@ export function buildAffiliateAdminSummaryRow(input: {
   referredTenantsCount: number;
   lastAppliedCreditUsd: number;
   planName: string | null;
+  currentLicenseId: string | null;
   listPriceUsd: number;
   availableLedgerRows: Array<{ commissionAmount: number; status: string }>;
   pendingPerkSlots: number;
@@ -39,6 +40,7 @@ export function buildAffiliateAdminSummaryRow(input: {
     availableCreditUsd,
     lastAppliedCreditUsd: input.lastAppliedCreditUsd,
     planName: input.planName,
+    currentLicenseId: input.currentLicenseId,
     listPriceUsd: creditPreview.listPriceUsd,
     finalPriceUsd: creditPreview.finalPriceUsd,
     pendingPerkSlots: input.pendingPerkSlots,

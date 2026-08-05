@@ -20,7 +20,7 @@ describe('sales-agent payout admin surface wiring', () => {
   it('keeps the Sales Agent section separate from tenant affiliate UI', () => {
     const page = readFileSync('src/app/admin/referidos/page.tsx', 'utf8');
 
-    expect(page).toContain('<SalesAgentAdminPayoutSection />');
+    expect(page).toContain('<SalesAgentAdminPayoutSection refreshKey={payoutsRefreshKey} />');
     expect(page).toContain('getAffiliateAdminSummaryAction');
   });
 });

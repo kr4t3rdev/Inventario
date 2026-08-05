@@ -96,7 +96,7 @@ export async function deliverSalesAgentEmail(
   const publicOrigin = getConfiguredPublicAppUrl();
   const cta = publicOrigin
     ? `<p><a href="${publicOrigin}${DASHBOARD_LINK}">Ver panel de referidos</a></p>`
-    : '<p>Ingresá a tu panel de referidos para ver los detalles.</p>';
+    : '<p>Ingresa a tu panel de referidos para ver los detalles.</p>';
   const html = [
     '<div style="font-family:Arial,sans-serif;max-width:600px;margin:auto">',
     `<h2>${escapeHtml(delivery.notification.title)}</h2>`,

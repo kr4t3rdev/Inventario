@@ -112,7 +112,13 @@ export function SalesAgentTenantPaymentSection({
               </TableRow>
             </TableHeader>
             <TableBody>
-              {rows.map((row) => (
+              {rows.length === 0 ? (
+                <TableRow>
+                  <TableCell colSpan={6} className="text-center text-muted-foreground">
+                    Sin tenants referidos con licencia vigente
+                  </TableCell>
+                </TableRow>
+              ) : rows.map((row) => (
                 <TableRow key={row.referralId}>
                   <TableCell>{row.salesAgentName}</TableCell>
                   <TableCell>{row.tenantName}</TableCell>

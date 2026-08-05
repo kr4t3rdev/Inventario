@@ -730,7 +730,7 @@ model AffiliateCommissionLedger {
   ledgerId                String         @id @default(cuid())
   referrerTenantId        String
   referralId              String
-  sourceTenantLicenseId   String
+  sourceTenantLicenseId   String         @unique
   appliedToTenantLicenseId String?
   basePlanPrice           Decimal        @db.Decimal(10, 2)
   commissionRate          Decimal        @db.Decimal(5, 4)

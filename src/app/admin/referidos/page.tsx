@@ -14,29 +14,40 @@ import {
   type AffiliateLedgerRow,
   type AffiliateReferralRow,
 } from '@/features/affiliate';
-import { getLicenciasAction } from '@/features/admin';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { SalesAgentAdminPayoutSection } from '@/features/sales-agent/components/sales-agent-admin-payout-section';
 import { SalesAgentTenantPaymentSection } from '@/features/sales-agent/components/sales-agent-tenant-payment-section';
 
+type ConfirmAction =
+  | { kind: 'payment'; referral: AffiliateReferralRow }
+  | { kind: 'credit'; row: AffiliateAdminSummaryRow }
+  | null;
+
 export default function AdminReferidosPage() {
   const [summary, setSummary] = useState<AffiliateAdminSummaryRow[]>([]);
   const [referrals, setReferrals] = useState<AffiliateReferralRow[]>([]);
   const [ledger, setLedger] = useState<AffiliateLedgerRow[]>([]);
-  const [licenseByTenant, setLicenseByTenant] = useState<Record<string, string>>({});
   const [featureByTenant, setFeatureByTenant] = useState<Record<string, string>>({});
   const [loading, setLoading] = useState(true);
   const [payoutsRefreshKey, setPayoutsRefreshKey] = useState(0);
+  const [confirmAction, setConfirmAction] = useState<ConfirmAction>(null);
 
   const loadData = async () => {
     setLoading(true);
-    const [summaryResult, ledgerResult, licensesResult] = await Promise.all([
+    const [summaryResult, ledgerResult] = await Promise.all([
       getAffiliateAdminSummaryAction(undefined),
       getAffiliateAdminLedgerAction(undefined),
-      getLicenciasAction(undefined),
     ]);
 
     if (summaryResult.success) setSummary(summaryResult.data ?? []);
@@ -44,24 +55,18 @@ export default function AdminReferidosPage() {
       setReferrals(ledgerResult.data?.referrals ?? []);
       setLedger(ledgerResult.data?.ledger ?? []);
     }
-    if (licensesResult.success) {
-      const data = (licensesResult.data as any[]) ?? [];
-      setLicenseByTenant(
-        Object.fromEntries(data.map((license: any) => [license.tenantId, license.tenantLicenseId])),
-      );
-    }
 
     setLoading(false);
   };
 
   useEffect(() => {
-    loadData();
+    void loadData();
   }, []);
 
-  const handleConfirm = async (referral: AffiliateReferralRow) => {
-    const tenantLicenseId = licenseByTenant[referral.referredTenantId];
+  const handleConfirmPayment = async (referral: AffiliateReferralRow) => {
+    const tenantLicenseId = referral.referredCurrentLicenseId;
     if (!tenantLicenseId) {
-      toast.error('No se encontró licencia activa para el referido');
+      toast.error('No se encontró licencia vigente para el referido');
       return;
     }
 
@@ -76,32 +81,35 @@ export default function AdminReferidosPage() {
     }
 
     toast.success('Pago confirmado y crédito generado');
+    setConfirmAction(null);
     await loadData();
   };
 
-  const handlePreview = async (tenantId: string) => {
-    const tenantLicenseId = licenseByTenant[tenantId];
+  const handleApplyCredit = async (row: AffiliateAdminSummaryRow) => {
+    const tenantLicenseId = row.currentLicenseId;
     if (!tenantLicenseId) {
-      toast.error('No se encontró licencia para previsualizar');
+      toast.error('No se encontró licencia vigente para aplicar el crédito');
       return;
     }
 
     const result = await applyAffiliateCreditsToLicensePreviewAction({ tenantLicenseId });
     if (!result.success) {
-      toast.error(result.error?.message ?? 'No se pudo calcular el descuento');
+      toast.error(result.error?.message ?? 'No se pudo aplicar el crédito');
       return;
     }
 
-    toast.success(`Total final USD ${result.data?.finalPriceUsd?.toFixed?.(2) ?? result.data?.finalPriceUsd}`);
+    toast.success(
+      `Total final USD ${result.data?.finalPriceUsd?.toFixed?.(2) ?? result.data?.finalPriceUsd}`,
+    );
+    setConfirmAction(null);
     await loadData();
   };
 
   const handleAssignPerk = async (row: AffiliateAdminSummaryRow) => {
-    const tenantId = row.tenantId;
-    const tenantLicenseId = licenseByTenant[tenantId];
-    const featureKey = featureByTenant[tenantId];
+    const tenantLicenseId = row.currentLicenseId;
+    const featureKey = featureByTenant[row.tenantId];
     if (!tenantLicenseId || !featureKey || !row.nextPendingPerkGrantId) {
-      toast.error('Seleccioná feature y asegurate de que exista un grant pendiente');
+      toast.error('Selecciona una feature y asegúrate de que exista un grant pendiente');
       return;
     }
 
@@ -170,7 +178,14 @@ export default function AdminReferidosPage() {
                   <TableCell>{row.pendingPerkSlots}</TableCell>
                   <TableCell>
                     <div className="flex flex-col gap-2">
-                      <Button size="sm" variant="outline" onClick={() => handlePreview(row.tenantId)}>Preview</Button>
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        disabled={!row.currentLicenseId}
+                        onClick={() => setConfirmAction({ kind: 'credit', row })}
+                      >
+                        Aplicar crédito
+                      </Button>
                       {row.pendingPerkSlots > 0 ? (
                         <>
                           <Input
@@ -213,7 +228,11 @@ export default function AdminReferidosPage() {
                     <TableCell>{referral.status}</TableCell>
                     <TableCell>
                       {referral.status === 'registered' ? (
-                        <Button size="sm" onClick={() => handleConfirm(referral)}>
+                        <Button
+                          size="sm"
+                          disabled={!referral.referredCurrentLicenseId}
+                          onClick={() => setConfirmAction({ kind: 'payment', referral })}
+                        >
                           <CheckCircle2 className="mr-2 h-4 w-4" /> Confirmar pago
                         </Button>
                       ) : '—'}
@@ -253,6 +272,37 @@ export default function AdminReferidosPage() {
           </CardContent>
         </Card>
       </div>
+
+      <Dialog
+        open={confirmAction !== null}
+        onOpenChange={(open) => { if (!open) setConfirmAction(null); }}
+      >
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>
+              {confirmAction?.kind === 'payment' ? 'Confirmar pago del referido' : 'Aplicar crédito'}
+            </DialogTitle>
+            <DialogDescription>
+              {confirmAction?.kind === 'payment'
+                ? `Se acreditará la comisión del tenant referido ${confirmAction.referral.referredTenantName} a ${confirmAction.referral.referrerTenantName}.`
+                : `Se aplicará el crédito disponible sobre la licencia vigente de ${confirmAction.row.tenantName}. Esta acción modifica el precio final de la licencia.`}
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setConfirmAction(null)}>
+              Cancelar
+            </Button>
+            <Button
+              onClick={() => {
+                if (confirmAction?.kind === 'payment') void handleConfirmPayment(confirmAction.referral);
+                else if (confirmAction?.kind === 'credit') void handleApplyCredit(confirmAction.row);
+              }}
+            >
+              {confirmAction?.kind === 'payment' ? 'Confirmar' : 'Aplicar crédito'}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

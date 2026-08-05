@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import { Loader2 } from 'lucide-react';
 
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -18,10 +19,10 @@ type AdminAgentRow = {
   name: string;
   isActive: boolean;
   salesAgentProfile: { phone: string | null; status: string } | null;
-  salesAgentBalance: { availableUsd: unknown; paidUsd: unknown } | null;
+  salesAgentBalance: { availableUsd: number; paidUsd: number } | null;
   salesAgentReferrals: Array<{ salesAgentReferralId: string }>;
   activeReferralCount: number;
-  commissionRate: unknown;
+  commissionRate: number;
 };
 
 /**
@@ -37,10 +38,13 @@ export function SalesAgentAdminPayoutSection({
 }): React.JSX.Element {
   const [rows, setRows] = useState<AdminAgentRow[]>([]);
   const [target, setTarget] = useState<SalesAgentPayoutTarget | null>(null);
+  const [loading, setLoading] = useState(true);
 
   const load = async () => {
+    setLoading(true);
     const result = await getAdminSalesAgentPayoutsAction(undefined);
     if (result.success) setRows((result.data ?? []) as AdminAgentRow[]);
+    setLoading(false);
   };
 
   useEffect(() => { void load(); }, [refreshKey]);
@@ -63,7 +67,19 @@ export function SalesAgentAdminPayoutSection({
             </TableRow>
           </TableHeader>
           <TableBody>
-            {rows.map((row) => (
+            {loading ? (
+              <TableRow>
+                <TableCell colSpan={6} className="text-center text-muted-foreground">
+                  <Loader2 className="mx-auto h-5 w-5 animate-spin" />
+                </TableCell>
+              </TableRow>
+            ) : rows.length === 0 ? (
+              <TableRow>
+                <TableCell colSpan={6} className="text-center text-muted-foreground">
+                  Sin gestores activos todavía
+                </TableCell>
+              </TableRow>
+            ) : rows.map((row) => (
               <TableRow key={row.userId}>
                 <TableCell>{row.name}</TableCell>
                 <TableCell>{row.salesAgentProfile?.phone ?? '—'}</TableCell>

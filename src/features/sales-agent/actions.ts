@@ -11,7 +11,6 @@ import { confirmSalesAgentPayout } from './services/payout-service';
 import { calculateSalesAgentPayout } from './services/commission-service';
 import {
   calculateSalesAgentTier,
-  getSalesAgentCommissionRate,
 } from './services/tier-service';
 
 const confirmPaymentSchema = z.object({
@@ -113,6 +112,7 @@ export const previewSalesAgentPayoutAction = withAction(
 export const getAdminSalesAgentPayoutsAction = withAction(
   async (_input: undefined, user) => {
     if (user.role !== 'admin') throw new ActionError('Acceso restringido', 'FORBIDDEN');
+    const now = new Date();
     const agents = await prisma.user.findMany({
       where: {
         role: 'salesAgent',
@@ -127,7 +127,22 @@ export const getAdminSalesAgentPayoutsAction = withAction(
         salesAgentBalance: { select: { availableUsd: true, paidUsd: true } },
         salesAgentReferrals: {
           where: { status: 'attributed' },
-          select: { salesAgentReferralId: true },
+          select: {
+            salesAgentReferralId: true,
+            referredTenant: {
+              select: {
+                licencias: {
+                  where: {
+                    activa: true,
+                    expiracion: { gt: now },
+                    isDemo: false,
+                    isAdminTest: false,
+                  },
+                  select: { expiracion: true },
+                },
+              },
+            },
+          },
         },
         salesAgentPayouts: {
           orderBy: { processedAt: 'desc' },
@@ -144,11 +159,24 @@ export const getAdminSalesAgentPayoutsAction = withAction(
         },
       },
     });
-    return agents.map((agent) => ({
-      ...agent,
-      activeReferralCount: agent.salesAgentReferrals.length,
-      commissionRate: getSalesAgentCommissionRate(agent.salesAgentReferrals.length),
-    }));
+    return agents.map((agent) => {
+      const tier = calculateSalesAgentTier(
+        agent.salesAgentReferrals.map((referral) => ({
+          tenantId: referral.salesAgentReferralId,
+          referralIsActive: true,
+          licenses: referral.referredTenant.licencias.map((license) => ({
+            active: true,
+            expiresAt: license.expiracion,
+          })),
+        })),
+        now,
+      );
+      return {
+        ...agent,
+        activeReferralCount: tier.activeReferredTenants,
+        commissionRate: tier.commissionRate,
+      };
+    });
   },
 );
 
@@ -163,6 +191,7 @@ export const getAdminSalesAgentTenantPaymentsAction = withAction(
     const referrals = await prisma.salesAgentReferral.findMany({
       where: { status: 'attributed' },
       orderBy: { attributedAt: 'desc' },
+      take: 200,
       select: {
         salesAgentReferralId: true,
         salesAgent: { select: { userId: true, name: true } },

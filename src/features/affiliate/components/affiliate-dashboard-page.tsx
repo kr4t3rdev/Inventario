@@ -200,7 +200,7 @@ export function AffiliateDashboardPage() {
               <textarea
                 value={requestDescription}
                 onChange={(event) => setRequestDescription(event.target.value)}
-                placeholder="Describí el perk que querés proponer"
+                placeholder="Describe el perk que quieres proponer"
                 className="min-h-28 w-full rounded-md border bg-background px-3 py-2 text-sm"
               />
               <Button onClick={handleRequestPerk} disabled={isSubmitting}>

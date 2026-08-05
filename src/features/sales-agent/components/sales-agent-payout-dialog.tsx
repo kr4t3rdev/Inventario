@@ -44,6 +44,7 @@ export function SalesAgentPayoutDialog({
   const submittingRef = useRef(false);
   const idempotencyKeyRef = useRef<string | null>(null);
   const preview = useMemo(() => Number(amountUsd) * Number(rate) || 0, [amountUsd, rate]);
+  const amountExceedsBalance = Number(amountUsd) > (agent?.availableUsd ?? 0);
 
   useEffect(() => {
     if (open && idempotencyKeyRef.current === null) {
@@ -130,7 +131,7 @@ export function SalesAgentPayoutDialog({
         </div>
         <DialogFooter>
           <Button onClick={submit}
-            disabled={submitting || Number(amountUsd) <= 0 || Number(rate) <= 0}>
+            disabled={submitting || Number(amountUsd) <= 0 || Number(rate) <= 0 || amountExceedsBalance}>
             {submitting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
             Confirmar pago
           </Button>

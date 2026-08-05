@@ -17,6 +17,10 @@ vi.mock('@/lib/prisma', () => {
       findMany: vi.fn(),
       count: vi.fn(),
       update: vi.fn(),
+      updateMany: vi.fn(),
+    },
+    auditLog: {
+      create: vi.fn(),
     },
     salesAgentReferral: {
       findUnique: vi.fn(),
@@ -199,10 +203,13 @@ describe('affiliate actions', () => {
       tenantLicenseId: 'license-referred',
       tenantId: 'tenant-referred',
       isDemo: false,
+      activa: true,
+      expiracion: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000),
       plan: { precio: 75 },
     } as never);
     vi.mocked(prisma.affiliateCommissionLedger.findFirst).mockResolvedValue(null as never);
     vi.mocked(prisma.affiliateReferral.count).mockResolvedValue(10 as never);
+    vi.mocked(prisma.affiliateReferral.updateMany).mockResolvedValue({ count: 1 } as never);
     vi.mocked(prisma.affiliateReferral.update).mockResolvedValue({ referralId: 'ref-1' } as never);
     vi.mocked(prisma.affiliateCommissionLedger.create).mockResolvedValue({ ledgerId: 'ledger-1' } as never);
     vi.mocked(prisma.affiliateCreditBalance.upsert).mockResolvedValue({ tenantId: 'tenant-referrer' } as never);

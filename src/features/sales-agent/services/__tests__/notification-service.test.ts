@@ -71,7 +71,7 @@ describe('sales-agent notification email delivery', () => {
 
     const html = vi.mocked(sendEmail).mock.calls[0][2];
     expect(html).not.toContain('href=');
-    expect(html).toContain('Ingresá a tu panel de referidos');
+    expect(html).toContain('Ingresa a tu panel de referidos');
   });
 
   it('persists an owned notification and durable email row in the caller transaction', async () => {

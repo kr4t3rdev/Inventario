@@ -83,6 +83,7 @@ export interface AffiliateReferralRow {
   referredTenantId: string;
   referredTenantName: string;
   referredPlanName: string | null;
+  referredCurrentLicenseId: string | null;
   status: AffiliateReferralStatus;
   confirmedAt: string | null;
 }
@@ -121,6 +122,7 @@ export interface AffiliateAdminSummaryRow {
   availableCreditUsd: number;
   lastAppliedCreditUsd: number;
   planName: string | null;
+  currentLicenseId: string | null;
   listPriceUsd: number;
   finalPriceUsd: number;
   pendingPerkSlots: number;
