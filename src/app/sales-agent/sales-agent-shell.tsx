@@ -22,11 +22,11 @@ export function SalesAgentShell({
   };
 
   return (
-    <div className="min-h-screen bg-slate-50 text-slate-950">
-      <header className="border-b bg-white">
+    <div className="min-h-screen bg-background text-foreground">
+      <header className="border-b border-border bg-card">
         <div className="mx-auto flex max-w-5xl items-center justify-between px-6 py-4">
           <div>
-            <p className="text-xs font-medium uppercase tracking-wide text-slate-500">
+            <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
               Gestor de Ventas
             </p>
             <Link className="font-semibold" href="/sales-agent/referidos">
@@ -34,7 +34,7 @@ export function SalesAgentShell({
             </Link>
           </div>
           <button
-            className="rounded-md border px-3 py-2 text-sm font-medium hover:bg-slate-50"
+            className="rounded-md border border-border px-3 py-2 text-sm font-medium hover:bg-muted"
             type="button"
             onClick={() => void logout()}
           >

@@ -117,9 +117,9 @@ export function SalesAgentDashboard({
   return (
     <div className="space-y-8">
       <header>
-        <p className="text-sm font-medium text-indigo-700">Gestor de Ventas</p>
+        <p className="text-sm font-medium text-primary">Gestor de Ventas</p>
         <h1 className="text-3xl font-bold tracking-tight">Tus referidos y comisiones</h1>
-        <p className="mt-2 text-slate-600">Nivel actual: {data.summary.tier}</p>
+        <p className="mt-2 text-muted-foreground">Nivel actual: {data.summary.tier}</p>
       </header>
 
       <section aria-label="Resumen" className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
@@ -132,7 +132,7 @@ export function SalesAgentDashboard({
       </section>
 
       {data.summary.estimatedAvailableCup && data.summary.informationalRate && (
-        <p className="rounded-lg bg-amber-50 p-4 text-sm text-amber-900">
+        <p className="rounded-lg bg-amber-50 p-4 text-sm text-amber-900 dark:bg-amber-950/50 dark:text-amber-200">
           Estimado informativo: CUP {data.summary.estimatedAvailableCup} a{' '}
           {data.summary.informationalRate.cupPerUsd} CUP/USD. El pago final usa la tasa
           confirmada por administración.
@@ -185,7 +185,7 @@ export function SalesAgentDashboard({
           </div>
           <div className="text-center">
             {!origin ? (
-              <p className="rounded-lg bg-amber-50 p-4 text-sm text-amber-900">
+              <p className="rounded-lg bg-amber-50 p-4 text-sm text-amber-900 dark:bg-amber-950/50 dark:text-amber-200">
                 Configurá la URL pública para habilitar el QR y compartir el enlace.
               </p>
             ) : qrDataUrl ? (
@@ -198,8 +198,8 @@ export function SalesAgentDashboard({
                 src={qrDataUrl}
                 width={240}
               />
-            ) : <div aria-label="Generando código QR" className="h-60 animate-pulse rounded-lg bg-slate-100" />}
-            <p className="mt-2 text-xs text-slate-500">Generado localmente, sin tracking externo.</p>
+            ) : <div aria-label="Generando código QR" className="h-60 animate-pulse rounded-lg bg-muted" />}
+            <p className="mt-2 text-xs text-muted-foreground">Generado localmente, sin tracking externo.</p>
           </div>
         </CardContent>
       </Card>
@@ -209,7 +209,7 @@ export function SalesAgentDashboard({
           {data.referrals.map((referral) => (
             <li className="rounded-lg border p-3" key={referral.salesAgentReferralId}>
               <p className="font-medium">{referral.tenant.commercialName}</p>
-              <p className="text-sm text-slate-600">
+              <p className="text-sm text-muted-foreground">
                 {referral.tenant.plan ?? 'Sin plan'} · {referral.tenant.licenseStatus}
               </p>
             </li>
@@ -219,15 +219,13 @@ export function SalesAgentDashboard({
           {data.commissionHistory.map((entry) => (
             <li className="rounded-lg border p-3" key={entry.salesAgentCommissionLedgerId}>
               USD {entry.commissionAmountUsd} · {entry.status}
-            </li>
-          ))}
+            </li>          ))}
         </History>
         <History title="Pagos" empty="Todavía no hay pagos">
           {data.paymentHistory.map((entry) => (
             <li className="rounded-lg border p-3" key={entry.salesAgentPayoutId}>
               USD {entry.amountUsd} / CUP {entry.amountCup} · {entry.status}
-            </li>
-          ))}
+            </li>          ))}
         </History>
       </section>
 
@@ -235,7 +233,7 @@ export function SalesAgentDashboard({
         {data.notifications.map((notification) => (
           <li className="rounded-lg border p-4" key={notification.id}>
             <p className="font-medium">{notification.title}</p>
-            <p className="text-sm text-slate-600">{notification.message}</p>
+            <p className="text-sm text-muted-foreground">{notification.message}</p>
           </li>
         ))}
       </History>
@@ -257,7 +255,7 @@ function History({
     <Card>
       <CardHeader><CardTitle>{title}</CardTitle></CardHeader>
       <CardContent>
-        {hasChildren ? <ul className="space-y-3">{children}</ul> : <p className="text-sm text-slate-500">{empty}</p>}
+        {hasChildren ? <ul className="space-y-3">{children}</ul> : <p className="text-sm text-muted-foreground">{empty}</p>}
       </CardContent>
     </Card>
   );
