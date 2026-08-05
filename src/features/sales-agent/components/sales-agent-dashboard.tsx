@@ -74,7 +74,7 @@ export function SalesAgentDashboard({
     [data.referralCode, origin],
   );
   const [shareText, setShareText] = useState(
-    'Conocé Finance MDM y gestioná tu negocio desde un solo lugar.',
+    'Conoce Finance MDM y gestiona tu negocio desde un solo lugar.',
   );
   const [qrDataUrl, setQrDataUrl] = useState('');
   const [copied, setCopied] = useState<'code' | 'link' | null>(null);
@@ -151,7 +151,7 @@ export function SalesAgentDashboard({
       )}
 
       <Card>
-        <CardHeader><CardTitle asChild><h2>Compartí tu enlace</h2></CardTitle></CardHeader>
+        <CardHeader><CardTitle asChild><h2>Comparte tu enlace</h2></CardTitle></CardHeader>
         <CardContent className="grid gap-6 lg:grid-cols-[1fr_260px]">
           <div className="space-y-4">
             <div>
@@ -197,7 +197,7 @@ export function SalesAgentDashboard({
           <div className="text-center">
             {!origin ? (
               <p className="rounded-lg bg-amber-50 p-4 text-sm text-amber-900 dark:bg-amber-950/50 dark:text-amber-200">
-                Configurá la URL pública para habilitar el QR y compartir el enlace.
+                Configura la URL pública para habilitar el QR y compartir el enlace.
               </p>
             ) : qrDataUrl ? (
               // Data URL is generated locally from the first-party referral URL.
@@ -242,7 +242,7 @@ export function SalesAgentDashboard({
         </History>
       </section>
 
-      <History title="Notificaciones" empty="No tenés notificaciones">
+      <History title="Notificaciones" empty="No tienes notificaciones">
         {data.notifications.map((notification) => (
           <li className="rounded-lg border p-4" key={notification.id}>
             <p className="font-medium">{notification.title}</p>
