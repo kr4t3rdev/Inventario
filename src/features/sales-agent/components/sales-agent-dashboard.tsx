@@ -88,21 +88,32 @@ export function SalesAgentDashboard({
       errorCorrectionLevel: 'M',
       margin: 2,
       width: 240,
-    }).then(setQrDataUrl);
+    })
+      .then(setQrDataUrl)
+      .catch(() => setQrDataUrl(''));
   }, [origin, referralUrl]);
 
   const copy = async (value: string, kind: 'code' | 'link'): Promise<void> => {
-    await navigator.clipboard.writeText(value);
-    setCopied(kind);
-    window.setTimeout(() => setCopied(null), 1800);
+    try {
+      await navigator.clipboard.writeText(value);
+      setCopied(kind);
+      window.setTimeout(() => setCopied(null), 1800);
+    } catch {
+      setCopied(null);
+    }
   };
 
   const webShare = async (): Promise<void> => {
-    if (navigator.share) {
-      await navigator.share({ title: 'Finance MDM', text: shareText, url: referralUrl });
+    if (!navigator.share) {
+      await copy(referralUrl, 'link');
       return;
     }
-    await copy(referralUrl, 'link');
+    try {
+      await navigator.share({ title: 'Finance MDM', text: shareText, url: referralUrl });
+    } catch (error) {
+      if (error instanceof DOMException && error.name === 'AbortError') return;
+      await copy(referralUrl, 'link');
+    }
   };
 
   const metrics = [
@@ -125,7 +136,7 @@ export function SalesAgentDashboard({
       <section aria-label="Resumen" className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
         {metrics.map(([label, value]) => (
           <Card key={label}>
-            <CardHeader className="pb-2"><CardTitle className="text-sm">{label}</CardTitle></CardHeader>
+            <CardHeader className="pb-2"><CardTitle asChild className="text-sm"><h2>{label}</h2></CardTitle></CardHeader>
             <CardContent className="text-2xl font-semibold">{value}</CardContent>
           </Card>
         ))}
@@ -140,7 +151,7 @@ export function SalesAgentDashboard({
       )}
 
       <Card>
-        <CardHeader><CardTitle>Compartí tu enlace</CardTitle></CardHeader>
+        <CardHeader><CardTitle asChild><h2>Compartí tu enlace</h2></CardTitle></CardHeader>
         <CardContent className="grid gap-6 lg:grid-cols-[1fr_260px]">
           <div className="space-y-4">
             <div>
@@ -198,7 +209,7 @@ export function SalesAgentDashboard({
                 src={qrDataUrl}
                 width={240}
               />
-            ) : <div aria-label="Generando código QR" className="h-60 animate-pulse rounded-lg bg-muted" />}
+            ) : <div aria-label="Generando código QR" className="h-60 animate-pulse rounded-lg bg-muted" role="status" />}
             <p className="mt-2 text-xs text-muted-foreground">Generado localmente, sin tracking externo.</p>
           </div>
         </CardContent>
@@ -219,13 +230,15 @@ export function SalesAgentDashboard({
           {data.commissionHistory.map((entry) => (
             <li className="rounded-lg border p-3" key={entry.salesAgentCommissionLedgerId}>
               USD {entry.commissionAmountUsd} · {entry.status}
-            </li>          ))}
+            </li>
+          ))}
         </History>
         <History title="Pagos" empty="Todavía no hay pagos">
           {data.paymentHistory.map((entry) => (
             <li className="rounded-lg border p-3" key={entry.salesAgentPayoutId}>
               USD {entry.amountUsd} / CUP {entry.amountCup} · {entry.status}
-            </li>          ))}
+            </li>
+          ))}
         </History>
       </section>
 
@@ -253,7 +266,7 @@ function History({
   const hasChildren = Array.isArray(children) ? children.length > 0 : Boolean(children);
   return (
     <Card>
-      <CardHeader><CardTitle>{title}</CardTitle></CardHeader>
+      <CardHeader><CardTitle asChild><h2>{title}</h2></CardTitle></CardHeader>
       <CardContent>
         {hasChildren ? <ul className="space-y-3">{children}</ul> : <p className="text-sm text-muted-foreground">{empty}</p>}
       </CardContent>
