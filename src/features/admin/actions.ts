@@ -11,6 +11,7 @@ import { revalidatePath } from "next/cache";
 import { Prisma } from "@/generated/prisma";
 import { withAction, ActionError } from "@/lib/server-actions";
 import { createTenantForUser } from "@/lib/services/tenant-factory";
+import { resolveLicenseDurationDays } from "@/lib/services/license-duration";
 import {
 	isTenantReferred,
 	resolveLicensePricing,
@@ -718,15 +719,26 @@ export const approveGlobalUserAction = withAction(
 			return { success: true, tenantCreated: true, ...result };
 		}
 
-		// Tipo "worker" o legacy: solo activar usuario y limpiar onboardingStatus
+		// Tipo "worker" o legacy: solo activar usuario y limpiar onboardingStatus.
+		// Los workers se unen a un tenant existente; su expiración se sincroniza
+		// con la licencia del tenant en renovación/conversión (renewLicenciaAction
+		// y convertDemoToPaidPlanAction). Un override manual se valida y aplica.
+		const workerExpiresAt =
+			input.licenseDurationDays !== undefined
+				? new Date(
+						Date.now() +
+							resolveLicenseDurationDays(
+								undefined,
+								input.licenseDurationDays,
+							)! * 86400000,
+					)
+				: null;
 		await prisma.user.update({
 			where: { userId: input.userId },
 			data: {
 				isActive: true,
 				onboardingStatus: null,
-				expiresAt: input.licenseDurationDays
-					? new Date(Date.now() + input.licenseDurationDays * 86400000)
-					: null,
+				expiresAt: workerExpiresAt,
 			},
 		});
 		return { success: true, tenantCreated: false };
@@ -1742,7 +1754,10 @@ export const convertDemoToPaidPlanAction = withAction(
 			throw new ActionError("Plan no encontrado", "PLAN_NOT_FOUND");
 
 		const now = new Date();
-		const durationDays = parsed.durationDays ?? plan.duracionDias;
+		const durationDays = resolveLicenseDurationDays(
+			plan.duracionDias,
+			parsed.durationDays,
+		)!;
 		const expiracion = new Date(now.getTime() + durationDays * 86400000);
 		const referred = await isTenantReferred(license.tenantId);
 
@@ -1918,8 +1933,11 @@ export const renewLicenciaAction = withAction(
 				license.expiracion.getTime() > now.getTime()
 					? license.expiracion
 					: now;
+			const renewDurationDays = resolveLicenseDurationDays(
+				newPlan.duracionDias,
+			)!;
 			const newExpiracion = new Date(
-				baseExpiracion.getTime() + newPlan.duracionDias * 86400000,
+				baseExpiracion.getTime() + renewDurationDays * 86400000,
 			);
 
 			const samePlan = newPlan.planId === license.planId;

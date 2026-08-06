@@ -8,6 +8,7 @@
 import { Prisma } from '@/generated/prisma'
 import { prisma } from '@/lib/prisma'
 import { ActionError } from '@/lib/server-actions'
+import { resolveLicenseDurationDays } from '@/lib/services/license-duration'
 import { resolveLicensePricing } from '@/lib/services/plan-pricing'
 
 export interface CreateTenantForUserInput {
@@ -102,8 +103,8 @@ export async function createTenantForUser(
   }
 
   // 5b. Resolver duración de la licencia: override explícito o la duración del plan
-  const durationDays = licenseDurationDays ?? plan!.duracionDias
-  if (durationDays <= 0) {
+  const durationDays = resolveLicenseDurationDays(plan!.duracionDias, licenseDurationDays)
+  if (durationDays === undefined) {
     throw new ActionError(
       'La duración de la licencia debe ser mayor que cero',
       'VALIDATION_ERROR',

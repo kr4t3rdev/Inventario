@@ -2,6 +2,7 @@
 import { revalidatePath } from 'next/cache';
 import { withAction, ActionError } from '@/lib/server-actions';
 import { prisma } from '@/lib/prisma';
+import { resolveLicenseDurationDays } from '@/lib/services/license-duration';
 import { createLicenciaSchema, updateLicenciaSchema } from './schemas';
 import type { CreateLicenciaInput, UpdateLicenciaInput } from './schemas';
 import type { AuthenticatedUser } from '@/lib/auth-middleware';
@@ -33,7 +34,10 @@ export const createLicenciaAction = withAction(async (input: CreateLicenciaInput
   const usuario = await prisma.user.findUnique({ where: { userId: parsed.usuarioId } });
   if (!usuario) throw new ActionError('Usuario no encontrado', 'NOT_FOUND');
   const expiracion = new Date();
-  expiracion.setDate(expiracion.getDate() + (parsed.duracionDias || plan.duracionDias));
+  expiracion.setDate(
+    expiracion.getDate() +
+      resolveLicenseDurationDays(plan.duracionDias, parsed.duracionDias)!,
+  );
   const licenseKey = parsed.clave?.trim() || generarClave();
   const licencia = await prisma.$transaction(async (tx: any) => {
     const nueva = await tx.licencia.create({
