@@ -46,7 +46,7 @@ interface ReferralOwner {
 export async function createTenantForUser(
   input: CreateTenantForUserInput
 ): Promise<CreateTenantForUserResult> {
-  const { userId, planId, tenantName, licenseDurationDays = 365 } = input
+  const { userId, planId, tenantName, licenseDurationDays } = input
 
   // 1. Validar usuario
   const user = await prisma.user.findUnique({
@@ -101,6 +101,9 @@ export async function createTenantForUser(
     if (!plan) throw new ActionError('No hay planes disponibles. Creá al menos un plan primero.', 'NO_PLANS')
   }
 
+  // 5b. Resolver duración de la licencia: override explícito o la duración del plan
+  const durationDays = licenseDurationDays ?? plan!.duracionDias
+
   const referralOwner = await resolveReferralOwner(user.pendingReferralCode)
 
   // 6. Transacción: crear todo
@@ -127,7 +130,7 @@ export async function createTenantForUser(
         planId: plan!.planId,
         activa: true,
         inicio: new Date(),
-        expiracion: new Date(Date.now() + licenseDurationDays * 86400000),
+        expiracion: new Date(Date.now() + durationDays * 86400000),
         maxUsuarios: plan!.maxUsuarios,
         maxAlmacenes: plan!.maxAlmacenes,
         maxProductos: plan!.maxProductos,
