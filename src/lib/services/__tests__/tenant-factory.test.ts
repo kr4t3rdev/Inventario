@@ -29,6 +29,7 @@ describe('createTenantForUser referral attribution', () => {
     vi.mocked(prisma.plan.findFirst).mockResolvedValue({
       planId: 'plan-1',
       precio: 40,
+      duracionDias: 30,
       maxUsuarios: 5,
       maxAlmacenes: 2,
       maxProductos: 100,
@@ -164,5 +165,71 @@ describe('createTenantForUser referral attribution', () => {
 
     await expect(createTenantForUser({ userId: 'company-user' }))
       .rejects.toMatchObject({ code: 'REFERRAL_CODE_COLLISION' });
+  });
+});
+
+describe('createTenantForUser duración de licencia', () => {
+  beforeEach(() => {
+    vi.mocked(prisma.affiliateProfile.findUnique).mockResolvedValue(null);
+    vi.mocked(prisma.salesAgentProfile.findUnique).mockResolvedValue(null);
+    vi.mocked(prisma.$transaction).mockReset();
+  });
+
+  const txMocks = (licenseCreate: ReturnType<typeof vi.fn>) =>
+    ({
+      tenant: { create: vi.fn().mockResolvedValue({ tenantId: 'tenant-new' }) },
+      tenantMembership: {
+        create: vi.fn().mockResolvedValue({ membershipId: 'membership-new' }),
+        findFirst: vi.fn().mockResolvedValue(null),
+      },
+      tenantLicense: {
+        create: licenseCreate.mockResolvedValue({
+          tenantLicenseId: 'license-new',
+          expiracion: new Date('2030-01-01'),
+        }),
+      },
+      salesAgentReferral: { create: vi.fn(), findUnique: vi.fn().mockResolvedValue(null) },
+      affiliateReferral: { create: vi.fn(), findUnique: vi.fn().mockResolvedValue(null) },
+      user: { update: vi.fn() },
+    }) as never;
+
+  const captureExpiracion = (licenseCreate: ReturnType<typeof vi.fn>): Date =>
+    licenseCreate.mock.calls[0][0].data.expiracion as Date;
+
+  it('usa la duración del plan (30 días) cuando no se pasa override', async () => {
+    const licenseCreate = vi.fn();
+    vi.mocked(prisma.$transaction).mockImplementationOnce(async (callback) =>
+      callback(txMocks(licenseCreate)),
+    );
+
+    const before = Date.now();
+    await createTenantForUser({ userId: 'company-user' });
+
+    const expiracion = captureExpiracion(licenseCreate).getTime();
+    expect(expiracion).toBeGreaterThanOrEqual(before + 30 * 86400000 - 1000);
+    expect(expiracion).toBeLessThanOrEqual(before + 30 * 86400000 + 1000);
+  });
+
+  it('respeta el override explícito de duración', async () => {
+    const licenseCreate = vi.fn();
+    vi.mocked(prisma.$transaction).mockImplementationOnce(async (callback) =>
+      callback(txMocks(licenseCreate)),
+    );
+
+    const before = Date.now();
+    await createTenantForUser({ userId: 'company-user', licenseDurationDays: 45 });
+
+    const expiracion = captureExpiracion(licenseCreate).getTime();
+    expect(expiracion).toBeGreaterThanOrEqual(before + 45 * 86400000 - 1000);
+    expect(expiracion).toBeLessThanOrEqual(before + 45 * 86400000 + 1000);
+  });
+
+  it('rechaza duración inválida (cero o negativa)', async () => {
+    await expect(
+      createTenantForUser({ userId: 'company-user', licenseDurationDays: 0 }),
+    ).rejects.toMatchObject({ code: 'VALIDATION_ERROR' });
+    await expect(
+      createTenantForUser({ userId: 'company-user', licenseDurationDays: -5 }),
+    ).rejects.toMatchObject({ code: 'VALIDATION_ERROR' });
   });
 });

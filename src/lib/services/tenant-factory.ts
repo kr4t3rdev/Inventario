@@ -103,6 +103,12 @@ export async function createTenantForUser(
 
   // 5b. Resolver duración de la licencia: override explícito o la duración del plan
   const durationDays = licenseDurationDays ?? plan!.duracionDias
+  if (durationDays <= 0) {
+    throw new ActionError(
+      'La duración de la licencia debe ser mayor que cero',
+      'VALIDATION_ERROR',
+    )
+  }
 
   const referralOwner = await resolveReferralOwner(user.pendingReferralCode)
 
