@@ -176,7 +176,9 @@ model Tenant {
   empleados                  Empleado[]
   equiposReparacion          EquipoReparacion[]
   gastosCompra               GastoCompra[]
+  gastosConceptos            GastoConcepto[]
   gastosDE                   GastosDE[]
+  gastosElementos            GastoElemento[]
   listasPrecio               ListaPrecio[]
   mermas                     Merma[]
   empresa                    MiEmpresa?
@@ -1367,25 +1369,35 @@ model CompraServicio {
 
 model GastoConcepto {
   conceptoId  String          @id @default(cuid())
-  nombre      String          @unique
+  tenantId    String
+  nombre      String
   descripcion String?
   isActive    Boolean         @default(true)
   createdAt   DateTime        @default(now())
   updatedAt   DateTime        @updatedAt
+  tenant      Tenant          @relation(fields: [tenantId], references: [tenantId])
   elementos   GastoElemento[]
   gastosDE    GastosDE[]
+
+  @@unique([tenantId, nombre])
+  @@index([tenantId])
 }
 
 model GastoElemento {
   elementoId  String        @id @default(cuid())
+  tenantId    String
   nombre      String
   descripcion String?
   isActive    Boolean       @default(true)
   conceptoId  String
   createdAt   DateTime      @default(now())
   updatedAt   DateTime      @updatedAt
+  tenant      Tenant        @relation(fields: [tenantId], references: [tenantId])
   concepto    GastoConcepto @relation(fields: [conceptoId], references: [conceptoId], onDelete: Cascade)
   gastosDE    GastosDE[]
+
+  @@unique([tenantId, conceptoId, nombre])
+  @@index([tenantId])
 }
 
 model GastosDE {
