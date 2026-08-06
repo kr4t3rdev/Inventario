@@ -112,6 +112,12 @@ const managerUser: AuthenticatedUser = {
   role: 'user', isActive: true, tenantId: 'tenant-A', tenantRole: 'manager',
 };
 
+function daysAgo(n: number): Date {
+  const d = new Date();
+  d.setDate(d.getDate() - n);
+  return d;
+}
+
 describe('Admin Server Actions', () => {
   afterEach(() => {
     vi.restoreAllMocks();
@@ -443,8 +449,8 @@ describe('Admin Server Actions', () => {
         .mockResolvedValueOnce(1);
       vi.mocked(prisma.user.groupBy).mockResolvedValue([] as any);
       vi.mocked(prisma.user.findMany).mockResolvedValue([
-        { createdAt: new Date('2026-07-05T10:00:00.000Z') },
-        { createdAt: new Date('2026-06-29T10:00:00.000Z') },
+        { createdAt: daysAgo(2) },
+        { createdAt: daysAgo(10) },
       ] as any);
 
       const r = await getAdminSystemHealthAction();
@@ -523,12 +529,12 @@ describe('Admin Server Actions', () => {
       vi.mocked(prisma.cuentaPorPagar.aggregate).mockResolvedValue({ _count: 0, _sum: { saldoPendiente: 0 } } as any);
       vi.mocked(prisma.tenant.count).mockResolvedValue(7);
       vi.mocked(prisma.venta.findMany).mockResolvedValue([
-        { createdAt: new Date('2026-07-05T10:00:00.000Z'), total: 1000 },
-        { createdAt: new Date('2026-06-29T10:00:00.000Z'), total: 600 },
+        { createdAt: daysAgo(2), total: 1000 },
+        { createdAt: daysAgo(10), total: 600 },
       ] as any);
       vi.mocked(prisma.ventaServicios.findMany).mockResolvedValue([
-        { createdAt: new Date('2026-07-04T10:00:00.000Z'), total: 500 },
-        { createdAt: new Date('2026-06-30T10:00:00.000Z'), total: 200 },
+        { createdAt: daysAgo(3), total: 500 },
+        { createdAt: daysAgo(9), total: 200 },
       ] as any);
 
       const r = await getAdminFinanceAction();
@@ -579,8 +585,8 @@ describe('Admin Server Actions', () => {
       });
       if (r.success && r.data) {
         expect(r.data.revenueComparison).toEqual({
-          current7DaysRevenue: 1700,
-          previous7DaysRevenue: 600,
+          current7DaysRevenue: 1500,
+          previous7DaysRevenue: 800,
         });
       }
     });

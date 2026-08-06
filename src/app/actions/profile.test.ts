@@ -65,7 +65,7 @@ describe('profile Server Actions', () => {
 
       expect(result).toEqual(mockUpdated)
       expect(fetcher.updateProfile).toHaveBeenCalledWith({ name: 'Updated' })
-      expect(revalidateTag).toHaveBeenCalledWith('Profile')
+      expect(revalidateTag).toHaveBeenCalledWith('Profile', 'max')
     })
 
     it('should throw ServerActionError on update failure', async () => {

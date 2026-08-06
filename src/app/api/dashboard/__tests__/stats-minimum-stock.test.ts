@@ -126,6 +126,25 @@ describe("Dashboard Stats API - Minimum Stock Integration", () => {
 			.mockResolvedValueOnce(mockProductos)
 			.mockResolvedValueOnce(mockProductos);
 
+		// El stock viene de StockUbicacion (fuente de verdad)
+		mockPrisma.stockUbicacion.findMany.mockResolvedValue([
+			{
+				productoId: "prod1",
+				cantidad: 5,
+				producto: { id: "prod1", nombre: "Producto A", precioCosto: 10, categoria: { nombre: "Categoria 1" } },
+			},
+			{
+				productoId: "prod2",
+				cantidad: 15,
+				producto: { id: "prod2", nombre: "Producto B", precioCosto: 10, categoria: { nombre: "Categoria 2" } },
+			},
+			{
+				productoId: "prod3",
+				cantidad: 25,
+				producto: { id: "prod3", nombre: "Producto C", precioCosto: 10, categoria: { nombre: "Categoria 3" } },
+			},
+		] as any);
+
 		const request = new NextRequest(
 			"http://localhost:3000/api/dashboard/stats",
 		);
@@ -185,6 +204,20 @@ describe("Dashboard Stats API - Minimum Stock Integration", () => {
 			.mockResolvedValueOnce(mockProductos)
 			.mockResolvedValueOnce(mockProductos);
 
+		// El stock viene de StockUbicacion (fuente de verdad)
+		mockPrisma.stockUbicacion.findMany.mockResolvedValue([
+			{
+				productoId: "prod1",
+				cantidad: 5,
+				producto: { id: "prod1", nombre: "Producto A", precioCosto: 10, categoria: { nombre: "Categoria 1" } },
+			},
+			{
+				productoId: "prod2",
+				cantidad: 15,
+				producto: { id: "prod2", nombre: "Producto B", precioCosto: 10, categoria: { nombre: "Categoria 2" } },
+			},
+		] as any);
+
 		const request = new NextRequest(
 			"http://localhost:3000/api/dashboard/stats",
 		);
@@ -231,6 +264,20 @@ describe("Dashboard Stats API - Minimum Stock Integration", () => {
 			.mockResolvedValueOnce(mockProductos)
 			.mockResolvedValueOnce(mockProductos)
 			.mockResolvedValueOnce(mockProductos);
+
+		// El stock viene de StockUbicacion (fuente de verdad) — se agrega 3 + 7 = 10
+		mockPrisma.stockUbicacion.findMany.mockResolvedValue([
+			{
+				productoId: "prod1a",
+				cantidad: 3,
+				producto: { id: "prod1a", nombre: "Producto A", precioCosto: 10, categoria: { nombre: "Categoria 1" } },
+			},
+			{
+				productoId: "prod1b",
+				cantidad: 7,
+				producto: { id: "prod1b", nombre: "Producto A", precioCosto: 10, categoria: { nombre: "Categoria 1" } },
+			},
+		] as any);
 
 		const request = new NextRequest(
 			"http://localhost:3000/api/dashboard/stats",
@@ -355,6 +402,25 @@ describe("Dashboard Stats API - Minimum Stock Integration", () => {
 			.mockResolvedValueOnce(mockProductos)
 			.mockResolvedValueOnce(mockProductos)
 			.mockResolvedValueOnce(mockProductos);
+
+		// El stock viene de StockUbicacion (fuente de verdad)
+		mockPrisma.stockUbicacion.findMany.mockResolvedValue([
+			{
+				productoId: "prod1",
+				cantidad: 8,
+				producto: { id: "prod1", nombre: "Producto A", precioCosto: 10, categoria: { nombre: "Categoria 1" } },
+			},
+			{
+				productoId: "prod2",
+				cantidad: 3,
+				producto: { id: "prod2", nombre: "Producto B", precioCosto: 10, categoria: { nombre: "Categoria 2" } },
+			},
+			{
+				productoId: "prod3",
+				cantidad: 5,
+				producto: { id: "prod3", nombre: "Producto C", precioCosto: 10, categoria: { nombre: "Categoria 3" } },
+			},
+		] as any);
 
 		const request = new NextRequest(
 			"http://localhost:3000/api/dashboard/stats",

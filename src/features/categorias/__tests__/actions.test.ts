@@ -292,7 +292,7 @@ describe("Categorias Server Actions", () => {
 			expect(result.error!.code).toBeDefined();
 		});
 
-		it("omite validación CLAS cuando el plan no incluye categorias-ean13", async () => {
+		it("crea categoría sin campos CLAS aunque el plan no incluya categorias-ean13", async () => {
 			vi.mocked(getCurrentUser).mockResolvedValue(
 				mockTenantUserWithoutCategoriasEan13,
 			);
@@ -308,7 +308,7 @@ describe("Categorias Server Actions", () => {
 			expect(CategoriaValidator.validateCategoryCreation).toHaveBeenCalledWith(
 				validInput,
 				"tenant-test",
-				{ skipEan13Validation: true },
+				{ skipEan13Validation: false },
 			);
 		});
 	});

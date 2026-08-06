@@ -208,7 +208,7 @@ describe("getProductosPorUbicacion", () => {
 		expect(Array.isArray(result)).toBe(true);
 	});
 
-	it("lanza ServerActionError si stock>0 sin StockUbicacion (inconsistencia visible)", async () => {
+	it("filtra productos con stock>0 cuando no existe StockUbicacion (stockEnUbicacion=0)", async () => {
 		const mockPV = { pvId: "pv-1", listaPrecioId: null };
 		const mockProducts = [
 			{
@@ -233,14 +233,11 @@ describe("getProductosPorUbicacion", () => {
 		vi.mocked(prisma.puntoDeVenta.findUnique).mockResolvedValue(mockPV as any);
 		vi.mocked(prisma.producto.findMany).mockResolvedValue(mockProducts as any);
 		vi.mocked(prisma.precioProducto.findMany).mockResolvedValue([]);
-		// StockUbicacion vacío pero producto.stock = 10 → inconsistencia visible
+		// Sin StockUbicacion: el stock del producto no cuenta como stock en ubicación
 		vi.mocked(prisma.stockUbicacion.findMany).mockResolvedValue([]);
 
-		await expect(getProductosPorUbicacion("pv-1")).rejects.toThrow(
-			ServerActionError,
-		);
-		await expect(getProductosPorUbicacion("pv-1")).rejects.toThrow(
-			/Inconsistencia/,
-		);
+		const result = await getProductosPorUbicacion("pv-1");
+
+		expect(result).toHaveLength(0);
 	});
 });

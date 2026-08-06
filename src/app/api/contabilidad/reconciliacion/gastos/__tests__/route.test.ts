@@ -49,6 +49,7 @@ vi.mock('@/lib/services/validate-period-write', () => ({
 function createTxMock(overrides: Record<string, unknown> = {}) {
   const baseTx = {
     $queryRaw: vi.fn().mockResolvedValue([]),
+    $queryRawUnsafe: vi.fn().mockResolvedValue([]),
     tipoPago: {
       findUnique: vi.fn(),
       findFirst: vi.fn()
@@ -57,7 +58,8 @@ function createTxMock(overrides: Record<string, unknown> = {}) {
       findUnique: vi.fn(),
       findFirst: vi.fn(),
       findMany: vi.fn(),
-      update: vi.fn()
+      update: vi.fn(),
+      updateMany: vi.fn()
     },
     reconciliacionGasto: {
       findFirst: vi.fn(),
@@ -65,7 +67,9 @@ function createTxMock(overrides: Record<string, unknown> = {}) {
     },
     cuentaPorPagar: {
       findUnique: vi.fn(),
-      update: vi.fn()
+      findFirst: vi.fn(),
+      update: vi.fn(),
+      updateMany: vi.fn()
     },
     pagoCuentaPorPagar: {
       findFirst: vi.fn(),
@@ -78,7 +82,20 @@ function createTxMock(overrides: Record<string, unknown> = {}) {
       updateMany: vi.fn()
     },
     gastosDE: {
+      findFirst: vi.fn(),
       update: vi.fn()
+    },
+    gastoCompra: {
+      findFirst: vi.fn()
+    },
+    compraServicio: {
+      findFirst: vi.fn()
+    },
+    pagosalario: {
+      findFirst: vi.fn()
+    },
+    ventaServicios: {
+      findFirst: vi.fn()
     }
   }
 
@@ -116,7 +133,7 @@ describe('Reconciliacion gastos API - POST', () => {
       isActive: true,
       cuentaDefecto: null
     } as any)
-    vi.mocked(tx.cuentaBancaria.findUnique).mockResolvedValue({
+    vi.mocked(tx.cuentaBancaria.findFirst).mockResolvedValue({
       cuentaId: 'cb-1',
       isActive: true
     } as any)
@@ -132,8 +149,12 @@ describe('Reconciliacion gastos API - POST', () => {
       montoConvertido: 120,
       descripcion: 'Pago directo'
     } as any)
+    vi.mocked(tx.gastosDE.findFirst).mockResolvedValue({
+      tenantId: 't1',
+      isPagado: null,
+    } as any)
     vi.mocked(tx.gastosDE.update).mockResolvedValue({} as any)
-    vi.mocked(tx.cuentaBancaria.update).mockResolvedValue({} as any)
+    vi.mocked(tx.cuentaBancaria.updateMany).mockResolvedValue({ count: 1 } as any)
 
     vi.mocked(prisma.$transaction).mockImplementation(async (callback: any) => callback(tx))
 
@@ -196,9 +217,15 @@ describe('Reconciliacion gastos API - POST', () => {
       isActive: true,
       cuentaDefecto: null
     } as any)
-    vi.mocked(tx.cuentaBancaria.findUnique).mockResolvedValue({
+    vi.mocked(tx.cuentaBancaria.findFirst).mockResolvedValue({
       cuentaId: 'cb-2',
       isActive: true
+    } as any)
+    vi.mocked(tx.cuentaPorPagar.findFirst).mockResolvedValue({
+      cuentaPorPagarId: 'cxp-2',
+      montoDeuda: 100,
+      montoPagado: 0,
+      saldoPendiente: 100
     } as any)
     vi.mocked(tx.cuentaPorPagar.findUnique).mockResolvedValue({
       cuentaPorPagarId: 'cxp-2',
@@ -221,7 +248,12 @@ describe('Reconciliacion gastos API - POST', () => {
       montoConvertido: 40,
       descripcion: 'Pago parcial'
     } as any)
-    vi.mocked(tx.cuentaBancaria.update).mockResolvedValue({} as any)
+    vi.mocked(tx.cuentaBancaria.updateMany).mockResolvedValue({ count: 1 } as any)
+    vi.mocked(tx.gastosDE.findFirst).mockResolvedValue({
+      tenantId: 't1',
+      isPagado: null,
+    } as any)
+    vi.mocked(tx.cuentaPorPagar.updateMany).mockResolvedValue({ count: 1 } as any)
     vi.mocked(tx.cuentaPorPagar.update).mockResolvedValue({
       cuentaPorPagarId: 'cxp-2',
       estado: 'PARCIAL',
@@ -292,9 +324,15 @@ describe('Reconciliacion gastos API - POST', () => {
       isActive: true,
       cuentaDefecto: null
     } as any)
-    vi.mocked(tx.cuentaBancaria.findUnique).mockResolvedValue({
+    vi.mocked(tx.cuentaBancaria.findFirst).mockResolvedValue({
       cuentaId: 'cb-3',
       isActive: true
+    } as any)
+    vi.mocked(tx.cuentaPorPagar.findFirst).mockResolvedValue({
+      cuentaPorPagarId: 'cxp-3',
+      montoDeuda: 100,
+      montoPagado: 0,
+      saldoPendiente: 100
     } as any)
     vi.mocked(tx.cuentaPorPagar.findUnique).mockResolvedValue({
       cuentaPorPagarId: 'cxp-3',
@@ -307,6 +345,10 @@ describe('Reconciliacion gastos API - POST', () => {
     } as any)
     vi.mocked(tx.pagoCuentaPorPagar.findFirst).mockResolvedValue({
       pagoCuentaPorPagarId: 'pago-existente'
+    } as any)
+    vi.mocked(tx.gastosDE.findFirst).mockResolvedValue({
+      tenantId: 't1',
+      isPagado: null,
     } as any)
 
     vi.mocked(prisma.$transaction).mockImplementation(async (callback: any) => callback(tx))

@@ -9,6 +9,7 @@ vi.mock('@/lib/prisma', () => ({
     user: {
       findUnique: vi.fn(),
       update: vi.fn(),
+      updateMany: vi.fn(),
     },
     userSession: {
       findFirst: vi.fn(),
@@ -103,7 +104,7 @@ describe('auth refresh route', () => {
 
     const response = await POST(request);
     expect(response.status).toBe(403);
-    expect(prisma.user.update).toHaveBeenCalledWith({
+    expect(prisma.user.updateMany).toHaveBeenCalledWith({
       where: { userId: 'u2' },
       data: { isActive: false },
     });
