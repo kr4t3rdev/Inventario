@@ -1,6 +1,12 @@
 /**
  * Seed script para crear Conceptos y Elementos de Gastos de Explotación
- * Ejecutar: npx tsx prisma/seed/gastos-conceptos-seed.ts
+ * por tenant (catálogo aislado).
+ *
+ * Uso:
+ *   TENANT_ID=<tenantId> npx tsx prisma/seed/gastos-conceptos-seed.ts
+ *   npx tsx prisma/seed/gastos-conceptos-seed.ts <tenantId>
+ *
+ * Ejecuta sin TENANT_ID solo para propósito de demostración: no escribe nada.
  */
 
 import prisma from '../../src/lib/prisma'
@@ -55,33 +61,49 @@ const conceptosData: ConceptoSeed[] = [
 ]
 
 async function main() {
-  console.log('🌱 Sembrando Conceptos y Elementos de Gastos DE...')
+  const tenantId = process.env.TENANT_ID ?? process.argv[2]
+
+  if (!tenantId) {
+    console.warn('⚠️  Sin TENANT_ID no se puede sembrar el catálogo por tenant.')
+    console.warn('Uso: TENANT_ID=<tenantId> npx tsx prisma/seed/gastos-conceptos-seed.ts')
+    return
+  }
+
+  const tenant = await prisma.tenant.findUnique({ where: { tenantId } })
+  if (!tenant) {
+    console.error(`❌ No existe el tenant "${tenantId}"`)
+    process.exit(1)
+  }
+
+  console.log(`🌱 Sembrando Conceptos y Elementos de Gastos DE para tenant "${tenantId}"...`)
 
   let createdCount = 0
   let skippedCount = 0
 
   for (const concepto of conceptosData) {
-    // Check if concept already exists
-    const existing = await prisma.gastoConcepto.findUnique({
-      where: { nombre: concepto.nombre },
+    // Check if concept already exists for this tenant
+    const existing = await prisma.gastoConcepto.findFirst({
+      where: { tenantId, nombre: concepto.nombre },
     })
 
     if (existing) {
-      console.log(`⏭️  Concepto "${concepto.nombre}" ya existe, saltando...`)
+      console.log(`⏭️  Concepto "${concepto.nombre}" ya existe en este tenant, saltando...`)
       skippedCount++
       continue
     }
 
-    // Create concepto with elementos
+    // Create concepto with elementos (scoped al tenant)
     await prisma.gastoConcepto.create({
       data: {
         nombre: concepto.nombre,
         descripcion: concepto.descripcion,
         isActive: true,
+        tenantId,
         elementos: {
           create: concepto.elementos.map((elem) => ({
             nombre: elem,
             isActive: true,
+            tenantId,
           })),
         },
       },
