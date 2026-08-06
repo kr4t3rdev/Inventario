@@ -116,6 +116,26 @@ describe('confirmSalesAgentTenantPayment', () => {
     expect(deliverSalesAgentEmails).toHaveBeenCalledWith(['delivery-1', 'delivery-1']);
   });
 
+  it('calculates referred Basic commission from list price while recording final paid amount', async () => {
+    tenantLicenseFindFirst.mockResolvedValue({
+      tenantLicenseId: input.tenantLicenseId,
+      tenantId: input.tenantId,
+      activa: true,
+      expiracion: new Date('2030-01-01T00:00:00.000Z'),
+      isDemo: false,
+      isAdminTest: false,
+      finalPriceUsd: '35',
+      listPriceUsd: '40',
+      plan: { precio: '40' },
+    });
+
+    await confirmSalesAgentTenantPayment({ ...input, amountPaidUsd: 35 });
+
+    const ledgerData = ledgerCreate.mock.calls[0][0].data;
+    expect(ledgerData.amountPaidUsd.toString()).toBe('35');
+    expect(ledgerData.commissionAmountUsd.toString()).toBe('1.2');
+  });
+
   it('rejects an amount that differs from the server amount due', async () => {
     await expect(confirmSalesAgentTenantPayment({ ...input, amountPaidUsd: 99 }))
       .rejects.toMatchObject({ code: 'PAYMENT_AMOUNT_MISMATCH' });

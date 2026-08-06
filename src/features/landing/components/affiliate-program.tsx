@@ -114,16 +114,25 @@ export function LandingAffiliateProgram(): React.JSX.Element {
                 </p>
               </div>
               <div className="overflow-hidden rounded-xl border border-border/70">
-                <div className="grid grid-cols-3 bg-background/80 px-4 py-3 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                <div className="hidden grid-cols-3 bg-background/80 px-4 py-3 text-xs font-semibold uppercase tracking-wide text-muted-foreground sm:grid">
                   <span>Referidos</span>
                   <span>Beneficio</span>
                   <span>Perks</span>
                 </div>
                 {AFFILIATE_PROGRAM_TIERS.map((tier) => (
-                  <div key={tier.range} className="grid grid-cols-3 border-t border-border/60 px-4 py-3 text-sm">
-                    <span>{tier.range.replace(' ventas válidas', '')}</span>
-                    <span className="font-semibold text-primary">{tier.commission}</span>
-                    <span>{tier.perks}</span>
+                  <div key={tier.range} className="grid gap-2 border-t border-border/60 px-4 py-3 text-sm sm:grid-cols-3 sm:items-center">
+                    <span>
+                      <span className="mr-2 text-xs font-semibold uppercase tracking-wide text-muted-foreground sm:hidden">Referidos</span>
+                      {tier.range.replace(' ventas válidas', '')}
+                    </span>
+                    <span className="font-semibold text-primary">
+                      <span className="mr-2 text-xs font-semibold uppercase tracking-wide text-muted-foreground sm:hidden">Beneficio</span>
+                      {tier.commission}
+                    </span>
+                    <span>
+                      <span className="mr-2 text-xs font-semibold uppercase tracking-wide text-muted-foreground sm:hidden">Perks</span>
+                      {tier.perks}
+                    </span>
                   </div>
                 ))}
               </div>
@@ -193,16 +202,25 @@ export function LandingAffiliateProgram(): React.JSX.Element {
                 </span>
               </div>
               <div className="overflow-hidden rounded-xl border border-border/70">
-                <div className="grid grid-cols-3 bg-background/80 px-4 py-3 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                <div className="hidden grid-cols-3 bg-background/80 px-4 py-3 text-xs font-semibold uppercase tracking-wide text-muted-foreground sm:grid">
                   <span>Tenants activos</span>
                   <span>Comisión</span>
                   <span>Liquidación</span>
                 </div>
                 {SALES_AGENT_PROGRAM_TIERS.map((tier) => (
-                  <div key={tier.range} className="grid grid-cols-3 border-t border-border/60 px-4 py-3 text-sm">
-                    <span>{tier.range.replace(' tenants activos', '')}</span>
-                    <span className="font-semibold text-cyan-accent">{tier.commission}</span>
-                    <span>{tier.perks.replace('Pago por renovación', 'Por ciclo')}</span>
+                  <div key={tier.range} className="grid gap-2 border-t border-border/60 px-4 py-3 text-sm sm:grid-cols-3 sm:items-center">
+                    <span>
+                      <span className="mr-2 text-xs font-semibold uppercase tracking-wide text-muted-foreground sm:hidden">Tenants activos</span>
+                      {tier.range.replace(' tenants activos', '')}
+                    </span>
+                    <span className="font-semibold text-cyan-accent">
+                      <span className="mr-2 text-xs font-semibold uppercase tracking-wide text-muted-foreground sm:hidden">Comisión</span>
+                      {tier.commission}
+                    </span>
+                    <span>
+                      <span className="mr-2 text-xs font-semibold uppercase tracking-wide text-muted-foreground sm:hidden">Liquidación</span>
+                      {tier.perks.replace('Pago por renovación', 'Por ciclo')}
+                    </span>
                   </div>
                 ))}
               </div>

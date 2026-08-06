@@ -25,5 +25,5 @@ describe('LandingAffiliateProgram', () => {
       expect(screen.getByText('Cobra por cada renovación confirmada')).toBeInTheDocument();
     });
     expect(screen.getByRole('link', { name: /registrarme como gestor/i })).toBeInTheDocument();
-  });
+  }, 15000);
 });

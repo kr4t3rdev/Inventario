@@ -146,7 +146,7 @@ export async function confirmSalesAgentTenantPayment(
         },
       });
       const commission = calculateRecurringCommission({
-        amountPaidUsd: paidAmount,
+        commissionBaseUsd: license.listPriceUsd ?? license.plan?.precio ?? expectedAmount,
         commissionRate: getSalesAgentCommissionRate(activeReferredTenants),
       });
       const previousCommission = await tx.salesAgentCommissionLedger.findFirst({

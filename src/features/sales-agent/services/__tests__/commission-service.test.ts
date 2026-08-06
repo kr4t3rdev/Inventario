@@ -6,23 +6,23 @@ import {
 } from '../commission-service';
 
 describe('calculateRecurringCommission', () => {
-  it('calculates recurring commission from the amount actually paid', () => {
+  it('calculates recurring commission from the standard list-price base', () => {
     const result = calculateRecurringCommission({
-      amountPaidUsd: '80.50',
+      commissionBaseUsd: '80.50',
       commissionRate: '0.05',
     });
 
-    expect(result.amountPaidUsd.toString()).toBe('80.5');
+    expect(result.commissionBaseUsd.toString()).toBe('80.5');
     expect(result.commissionRate.toString()).toBe('0.05');
     expect(result.commissionAmountUsd.toFixed(2)).toBe('4.03');
   });
 
   it.each(['0', '-1'])(
-    'rejects a non-positive amount actually paid: %s',
+    'rejects a non-positive commission base: %s',
     (amountPaidUsd) => {
       expect(() =>
         calculateRecurringCommission({ amountPaidUsd, commissionRate: '0.03' }),
-      ).toThrow('Amount paid in USD must be greater than zero');
+      ).toThrow('Commission base in USD must be greater than zero');
     },
   );
 

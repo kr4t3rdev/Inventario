@@ -1,5 +1,6 @@
 import bcrypt from 'bcryptjs';
 import { PrismaClient } from '../../../src/generated/prisma';
+import { resolveLicensePricing } from '../../../src/lib/services/plan-pricing';
 
 const prisma = new PrismaClient();
 
@@ -10,6 +11,8 @@ async function main() {
 
   const referrerPlan = await prisma.plan.findFirstOrThrow({ where: { nombre: 'Profesional' } });
   const referredPlan = await prisma.plan.findFirstOrThrow({ where: { nombre: 'Básico' } });
+  const referrerPricing = resolveLicensePricing(Number(referrerPlan.precio), false);
+  const referredPricing = resolveLicensePricing(Number(referredPlan.precio), true);
 
   const referrerUser = await prisma.user.create({
     data: {
@@ -42,8 +45,7 @@ async function main() {
       maxProductos: referrerPlan.maxProductos,
       maxClientes: referrerPlan.maxClientes,
       featureOverrides: {},
-      listPriceUsd: referrerPlan.precio,
-      finalPriceUsd: referrerPlan.precio,
+      ...referrerPricing,
     },
   });
 
@@ -90,8 +92,7 @@ async function main() {
       maxProductos: referredPlan.maxProductos,
       maxClientes: referredPlan.maxClientes,
       featureOverrides: {},
-      listPriceUsd: referredPlan.precio,
-      finalPriceUsd: referredPlan.precio,
+      ...referredPricing,
     },
   });
 

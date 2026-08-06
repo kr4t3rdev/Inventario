@@ -7,12 +7,15 @@ const MAX_EXCHANGE_RATE = new Decimal('99999999.9999');
 const MAX_PAYOUT_CUP = new Decimal('999999999999.99');
 
 interface RecurringCommissionInput {
-  amountPaidUsd: DecimalInput;
+  /** Explicit commission base for new callers; this is the license list price. */
+  commissionBaseUsd?: DecimalInput;
+  /** @deprecated Use commissionBaseUsd. Kept for existing direct callers. */
+  amountPaidUsd?: DecimalInput;
   commissionRate: DecimalInput;
 }
 
 interface RecurringCommissionSnapshot {
-  amountPaidUsd: Decimal;
+  commissionBaseUsd: Decimal;
   commissionRate: Decimal;
   commissionAmountUsd: Decimal;
 }
@@ -31,31 +34,35 @@ interface SalesAgentPayoutSnapshot {
 }
 
 /**
- * @description Calculates recurring commission from the amount actually paid.
- * @param {RecurringCommissionInput} input - Paid USD amount and applicable dynamic rate.
+ * @description Calculates recurring commission from the standard license list price.
+ * @param {RecurringCommissionInput} input - Standard list-price base and applicable dynamic rate.
  * @returns {RecurringCommissionSnapshot} Immutable USD commission snapshot.
  */
 export function calculateRecurringCommission(
   input: RecurringCommissionInput,
 ): RecurringCommissionSnapshot {
-  const amountPaidUsd = new Decimal(input.amountPaidUsd);
+  const commissionBaseInput = input.commissionBaseUsd ?? input.amountPaidUsd;
+  if (commissionBaseInput === undefined) {
+    throw new RangeError('Commission base in USD is required');
+  }
+  const commissionBaseUsd = new Decimal(commissionBaseInput);
   const commissionRate = new Decimal(input.commissionRate);
 
-  assertPositive(amountPaidUsd, 'Amount paid in USD must be greater than zero');
+  assertPositive(commissionBaseUsd, 'Commission base in USD must be greater than zero');
   assertPositive(commissionRate, 'Commission rate must be greater than zero');
 
   if (commissionRate.gt(MAX_COMMISSION_RATE)) {
     throw new RangeError('Commission rate cannot exceed 7%');
   }
 
-  const commissionAmountUsd = amountPaidUsd.mul(commissionRate).toDecimalPlaces(2);
+  const commissionAmountUsd = commissionBaseUsd.mul(commissionRate).toDecimalPlaces(2);
   assertPositive(
     commissionAmountUsd,
     'Commission amount must be greater than zero after rounding',
   );
 
   return {
-    amountPaidUsd,
+    commissionBaseUsd,
     commissionRate,
     commissionAmountUsd,
   };
