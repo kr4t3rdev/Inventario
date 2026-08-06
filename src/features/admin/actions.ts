@@ -23,6 +23,8 @@ import {
 	createSalesAgentEvent,
 	deliverSalesAgentEmails,
 } from "@/features/sales-agent/services/notification-service";
+import { confirmSalesAgentTenantPayment } from "@/features/sales-agent/services/payment-service";
+import { confirmReferredTenantPaymentAction } from "@/features/affiliate/actions";
 import { createDemoTenantForPlan } from "@/lib/services/demo-tenant-factory";
 import { seedDemoTenantData } from "@/lib/services/demo-seed";
 import { requireFeature } from "@/lib/services/tenant-scope";
@@ -46,6 +48,7 @@ import {
 	convertDemoToPaidPlanSchema,
 	changePlanSchema,
 	updateLicenciaSchema,
+	renewLicenciaSchema,
 	updateLicenseAccountingOverridesSchema,
 	createPlanSchema,
 	updatePlanSchema,
@@ -66,6 +69,7 @@ import type {
 	ConvertDemoToPaidPlanInput,
 	ChangePlanInput,
 	UpdateLicenciaInput,
+	RenewLicenciaInput,
 	UpdateLicenseAccountingOverridesInput,
 	CreatePlanInput,
 	UpdatePlanInput,
@@ -1839,6 +1843,234 @@ export const changePlanAction = withAction(
 	},
 );
 
+/**
+ * @description Renueva la vigencia de una TenantLicense, sumando los días del
+ * plan a la expiración actual (preserva días pendientes). Puede cambiar de
+ * plan y, opcionalmente, registrar el pago presencial. Si el tenant es
+ * referido por un gestor de ventas, acredita la comisión correspondiente
+ * (idempotente); si es referido por afiliado, registra el pago sin comisión
+ * de renovación. Reactiva licencias inactivas, sincroniza el `expiresAt` de
+ * los usuarios del tenant e inserta un AuditLog transaccional con el diff.
+ * @remarks `updateLicenciaAction` acepta `expiracion` pero no expone renovación
+ * con auditoría ni sincronización de usuarios; esta es la vía canónica.
+ */
+export const renewLicenciaAction = withAction(
+	async (input: RenewLicenciaInput, user: AuthenticatedUser) => {
+		if (user.role !== "admin")
+			throw new ActionError("Acceso restringido", "FORBIDDEN");
+
+		const parsed = renewLicenciaSchema.parse(input);
+
+		let referred = false;
+		let salesAgentReferred = false;
+		let affiliateReferred = false;
+		if (parsed.registerPayment) {
+			const peek = await prisma.tenantLicense.findUnique({
+				where: { tenantLicenseId: parsed.tenantLicenseId },
+				select: { tenantId: true },
+			});
+			if (peek) {
+				const [salesAgentRef, affiliateRef] = await Promise.all([
+					prisma.salesAgentReferral.findUnique({
+						where: { referredTenantId: peek.tenantId },
+						select: { salesAgentReferralId: true },
+					}),
+					prisma.affiliateReferral.findUnique({
+						where: { referredTenantId: peek.tenantId },
+						select: { referralId: true },
+					}),
+				]);
+				salesAgentReferred = Boolean(salesAgentRef);
+				affiliateReferred = Boolean(affiliateRef);
+				referred = salesAgentReferred || affiliateReferred;
+			}
+		}
+
+		const outcome = await prisma.$transaction(async (tx) => {
+			const [license, newPlan, activeMembership] = await Promise.all([
+				tx.tenantLicense.findUnique({
+					where: { tenantLicenseId: parsed.tenantLicenseId },
+					include: { plan: true },
+				}),
+				tx.plan.findUnique({ where: { planId: parsed.planId } }),
+				tx.tenantMembership.findFirst({
+					where: {
+						tenant: { licencias: { some: { tenantLicenseId: parsed.tenantLicenseId } } },
+						isActive: true,
+						user: { isActive: true },
+					},
+					select: { membershipId: true, userId: true, tenantId: true },
+				}),
+			]);
+
+			if (!license)
+				throw new ActionError("Licencia no encontrada", "NOT_FOUND");
+			if (!newPlan)
+				throw new ActionError("Plan no encontrado", "PLAN_NOT_FOUND");
+			if (!activeMembership)
+				throw new ActionError(
+					"El tenant no tiene miembros activos",
+					"TENANT_NOT_ACTIVE",
+				);
+
+			const now = new Date();
+			const baseExpiracion =
+				license.expiracion.getTime() > now.getTime()
+					? license.expiracion
+					: now;
+			const newExpiracion = new Date(
+				baseExpiracion.getTime() + newPlan.duracionDias * 86400000,
+			);
+
+			const samePlan = newPlan.planId === license.planId;
+
+			const updated = await tx.tenantLicense.update({
+				where: { tenantLicenseId: license.tenantLicenseId },
+				data: {
+					planId: newPlan.planId,
+					expiracion: newExpiracion,
+					activa: true,
+					maxUsuarios: newPlan.maxUsuarios,
+					maxAlmacenes: newPlan.maxAlmacenes,
+					maxProductos: newPlan.maxProductos,
+					maxClientes: newPlan.maxClientes,
+					features: samePlan ? license.features : Prisma.JsonNull,
+					featureOverrides: samePlan ? (license.featureOverrides ?? {}) : {},
+					...resolveLicensePricing(Number(newPlan.precio), referred),
+				},
+			});
+
+			await tx.user.updateMany({
+				where: {
+					tenantId: activeMembership.tenantId,
+					isActive: true,
+					tenantMemberships: { some: { isActive: true } },
+				},
+				data: { expiresAt: newExpiracion, isActive: true },
+			});
+
+			let registeredPaymentId: string | null = null;
+			let duplicate = false;
+
+			if (parsed.registerPayment && !salesAgentReferred) {
+				const expectedAmount = new Prisma.Decimal(
+					updated.finalPriceUsd ?? updated.listPriceUsd ?? newPlan.precio ?? 0,
+				).toDecimalPlaces(2);
+				const paidAmount = parsed.amountPaidUsd !== undefined
+					? new Prisma.Decimal(parsed.amountPaidUsd).toDecimalPlaces(2)
+					: expectedAmount;
+				if (!paidAmount.equals(expectedAmount)) {
+					throw new ActionError(
+						"El monto pagado no coincide con el monto exigible",
+						"PAYMENT_AMOUNT_MISMATCH",
+					);
+				}
+				const existingPayment = await tx.tenantLicensePayment.findUnique({
+					where: { idempotencyKey: parsed.idempotencyKey as string },
+					select: { tenantLicensePaymentId: true },
+				});
+				if (existingPayment) {
+					registeredPaymentId = existingPayment.tenantLicensePaymentId;
+					duplicate = true;
+				} else {
+					const payment = await tx.tenantLicensePayment.create({
+						data: {
+							tenantId: activeMembership.tenantId,
+							tenantLicenseId: updated.tenantLicenseId,
+							paymentKind: "renewal",
+							expectedAmountUsd: expectedAmount,
+							amountPaidUsd: paidAmount,
+							idempotencyKey: parsed.idempotencyKey as string,
+							immutableFingerprint: parsed.idempotencyKey as string,
+							paymentCycleEndsAt: newExpiracion,
+							licenseExpirationSnapshot: newExpiracion,
+							confirmedByAdminId: user.userId,
+							status: "confirmed",
+						},
+					});
+					registeredPaymentId = payment.tenantLicensePaymentId;
+				}
+			}
+
+			await AuditLogService.logStrict(
+				{
+					accion: "UPDATE",
+					entidad: "TENANT_LICENSE",
+					entidadId: updated.tenantLicenseId,
+					usuarioId: user.userId,
+					detalles: {
+						tenantId: activeMembership.tenantId,
+						previousExpiracion: license.expiracion.toISOString(),
+						newExpiracion: newExpiracion.toISOString(),
+						previousPlanId: license.planId,
+						newPlanId: newPlan.planId,
+						registerPayment: parsed.registerPayment,
+						registeredPaymentId,
+					},
+				},
+				tx,
+			);
+
+			return {
+				tenantLicenseId: updated.tenantLicenseId,
+				newExpiracion,
+				newPlanId: newPlan.planId,
+				registeredPaymentId,
+				duplicate,
+				previousExpiracion: license.expiracion,
+				previousPlanId: license.planId ?? null,
+			};
+		});
+
+		let commissionCredited = false;
+		let duplicate = false;
+
+		if (parsed.registerPayment && salesAgentReferred) {
+			const license = await prisma.tenantLicense.findUnique({
+				where: { tenantLicenseId: parsed.tenantLicenseId },
+				select: {
+					tenantId: true,
+					finalPriceUsd: true,
+					listPriceUsd: true,
+					plan: { select: { precio: true } },
+				},
+			});
+			const expectedAmount =
+				license?.finalPriceUsd ?? license?.listPriceUsd ?? license?.plan?.precio ?? 0;
+			const paidAmount =
+				parsed.amountPaidUsd !== undefined ? parsed.amountPaidUsd : Number(expectedAmount);
+
+			const paymentResult = await confirmSalesAgentTenantPayment({
+				tenantId: license?.tenantId ?? "",
+				tenantLicenseId: parsed.tenantLicenseId,
+				idempotencyKey: parsed.idempotencyKey as string,
+				amountPaidUsd: paidAmount,
+				confirmedByAdminId: user.userId,
+			});
+			commissionCredited = paymentResult.credited;
+			duplicate = paymentResult.duplicate;
+		}
+
+		revalidatePath("/admin/licencias");
+		revalidatePath("/admin");
+
+		return {
+			...outcome,
+			duplicate: Boolean(outcome.duplicate || duplicate),
+			commissionCredited,
+		};
+	},
+);
+
+/**
+ * @description Actualiza campos puntuales de una licencia de tenant.
+ * @param {UpdateLicenciaInput} input - Datos a actualizar de la licencia.
+ * @param {AuthenticatedUser} user - Usuario autenticado.
+ * @returns {Promise<License>} Licencia actualizada.
+ * @remarks Para renovar una licencia (extender expiración con cambio de plan
+ * y pago opcional), usar `renewLicenciaAction` — que es la vía canónica y
+ * sincroniza la expiración de los usuarios del tenant.
+ */
 export const updateLicenciaAction = withAction(
 	async (input: UpdateLicenciaInput, user: AuthenticatedUser) => {
 		if (user.role !== "admin")

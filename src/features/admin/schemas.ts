@@ -128,6 +128,20 @@ export const changePlanSchema = z.object({
   planId: z.string().min(1),
 });
 
+export const renewLicenciaSchema = z.object({
+  tenantLicenseId: z.string().min(1),
+  planId: z.string().min(1),
+  registerPayment: z.boolean().optional().default(false),
+  amountPaidUsd: z.number().positive().optional(),
+  idempotencyKey: z.string().min(1).optional(),
+}).refine(
+  (v) => (v.registerPayment ? Boolean(v.idempotencyKey) : true),
+  {
+    message: 'idempotencyKey es requerido si registerPayment es true',
+    path: ['idempotencyKey'],
+  },
+);
+
 // ─── Planes ────────────────────────────────────────────────
 
 export const createPlanSchema = z.object({
@@ -182,6 +196,7 @@ export type CleanupExpiredDemoLicenciasInput = z.infer<
   typeof cleanupExpiredDemoLicenciasSchema
 >;
 export type ChangePlanInput = z.infer<typeof changePlanSchema>;
+export type RenewLicenciaInput = z.infer<typeof renewLicenciaSchema>;
 export type ConvertDemoToPaidPlanInput = z.infer<
   typeof convertDemoToPaidPlanSchema
 >;

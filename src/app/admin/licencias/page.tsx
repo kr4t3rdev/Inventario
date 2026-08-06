@@ -25,6 +25,9 @@ import {
   ArrowUpDown,
   ArrowUp,
   ArrowDown,
+  Power,
+  Zap,
+  FlaskConical,
 } from 'lucide-react'
 import { format, differenceInDays } from 'date-fns'
 import { toast } from 'sonner'
@@ -65,6 +68,16 @@ import {
   PaginationPrevious,
 } from '@/components/ui/pagination'
 import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog'
+import {
   getAdminPlanesAction,
   getGlobalUsersAction,
   deleteLicenciaAction,
@@ -74,6 +87,7 @@ import {
   cleanupExpiredDemoLicenciasAction,
   convertDemoToPaidPlanAction,
   changePlanAction,
+  renewLicenciaAction,
   getLicenciasPaginatedAction,
   getLicenciasStatsAction,
   updateLicenseAccountingOverridesAction,
@@ -121,6 +135,16 @@ export default function AdminLicenciasPage() {
   const [accountingOverridesDialogOpen, setAccountingOverridesDialogOpen] = useState(false)
   const [changePlanDialogOpen, setChangePlanDialogOpen] = useState(false)
   const [licenseToChangePlan, setLicenseToChangePlan] = useState<any>(null)
+  const [renewDialogOpen, setRenewDialogOpen] = useState(false)
+  const [renewConfirmOpen, setRenewConfirmOpen] = useState(false)
+  const [licenseToRenew, setLicenseToRenew] = useState<any>(null)
+  const [renewDraft, setRenewDraft] = useState<{
+    planId: string
+    registerPayment: boolean
+    amountPaidUsd?: number
+    idempotencyKey?: string
+  }>({ planId: '', registerPayment: false })
+  const [isRenewing, setIsRenewing] = useState(false)
   const [licenseToConvert, setLicenseToConvert] = useState<any>(null)
   const [licenseToEditOverrides, setLicenseToEditOverrides] = useState<any>(null)
   const [accountingOverridesDraft, setAccountingOverridesDraft] = useState<Record<string, boolean>>({})
@@ -233,6 +257,17 @@ export default function AdminLicenciasPage() {
     toast.success('Clave copiada')
   }
 
+  function handleToggleLicenciaClick(licencia: any) {
+    requestConfirm({
+      title: licencia.activa ? 'Revocar licencia' : 'Activar licencia',
+      description: licencia.activa
+        ? `¿Revocar la licencia ${licencia.tenantLicenseId}? Los usuarios del tenant dejarán de tener acceso.`
+        : `¿Activar la licencia ${licencia.tenantLicenseId}?`,
+      destructive: licencia.activa,
+      onConfirm: () => handleToggleLicencia(licencia),
+    })
+  }
+
   async function handleToggleLicencia(licencia: any) {
     try {
       const r = await updateLicenciaAction({ id: licencia.tenantLicenseId, activa: !licencia.activa })
@@ -271,7 +306,6 @@ export default function AdminLicenciasPage() {
   }
 
   async function handleDeleteLicencia(id: string) {
-    if (!confirm('¿Eliminar esta licencia?')) return
     try {
       const r = await deleteLicenciaAction(id)
       if (r.success) {
@@ -287,12 +321,48 @@ export default function AdminLicenciasPage() {
     }
   }
 
+  function handleDeleteLicenciaClick(licencia: any) {
+    requestConfirm({
+      title: 'Eliminar licencia',
+      description: `¿Eliminar la licencia ${licencia.tenantLicenseId}? Esta acción no se puede deshacer.`,
+      destructive: true,
+      onConfirm: () => handleDeleteLicencia(licencia.tenantLicenseId),
+    })
+  }
+
   const [isBulkProcessing, setIsBulkProcessing] = useState(false)
 
-  async function handleBulkToggleEstado() {
-    if (selectedLicencias.size === 0) return
-    if (!confirm(`¿Cambiar estado de ${selectedLicencias.size} licencias?`)) return
+  const [confirmState, setConfirmState] = useState<{
+    title: string
+    description: string
+    destructive?: boolean
+    onConfirm: () => void
+  } | null>(null)
 
+  function requestConfirm({
+    title,
+    description,
+    destructive = false,
+    onConfirm,
+  }: {
+    title: string
+    description: string
+    destructive?: boolean
+    onConfirm: () => void
+  }) {
+    setConfirmState({ title, description, destructive, onConfirm })
+  }
+
+  function handleBulkToggleClick() {
+    if (selectedLicencias.size === 0) return
+    requestConfirm({
+      title: 'Cambiar estado',
+      description: `¿Cambiar estado de ${selectedLicencias.size} licencias?`,
+      onConfirm: () => handleBulkToggleEstado(),
+    })
+  }
+
+  async function handleBulkToggleEstado() {
     setIsBulkProcessing(true)
     let success = 0
     let errors = 0
@@ -315,10 +385,17 @@ export default function AdminLicenciasPage() {
     }
   }
 
-  async function handleBulkDelete() {
+  function handleBulkDeleteClick() {
     if (selectedLicencias.size === 0) return
-    if (!confirm(`¿Eliminar ${selectedLicencias.size} licencias? Esta acción no se puede deshacer.`)) return
+    requestConfirm({
+      title: 'Eliminar licencias',
+      description: `¿Eliminar ${selectedLicencias.size} licencias? Esta acción no se puede deshacer.`,
+      destructive: true,
+      onConfirm: () => handleBulkDelete(),
+    })
+  }
 
+  async function handleBulkDelete() {
     setIsBulkProcessing(true)
     let success = 0
     let errors = 0
@@ -392,6 +469,78 @@ export default function AdminLicenciasPage() {
       await refreshLicenciasData()
     } catch (_error) {
       toast.error('No se pudo convertir la demo')
+    }
+  }
+
+  function buildRenewalKey(tenantId: string, planId: string) {
+    const ts = new Date().toISOString().slice(0, 10)
+    return `renewal:${tenantId}:${planId}:${ts}`
+  }
+
+  function handleRenew(licencia: any) {
+    setLicenseToRenew(licencia)
+    setRenewDraft({
+      planId: licencia.planId ?? '',
+      registerPayment: false,
+      amountPaidUsd: undefined,
+      idempotencyKey: undefined,
+    })
+    setRenewDialogOpen(true)
+  }
+
+  function handleRenewContinue(draft: {
+    planId: string
+    registerPayment: boolean
+    amountPaidUsd?: number
+    idempotencyKey?: string
+  }) {
+    setRenewDraft(draft)
+    setRenewDialogOpen(false)
+    setRenewConfirmOpen(true)
+  }
+
+  async function handleConfirmRenew() {
+    if (!licenseToRenew) return
+    setIsRenewing(true)
+    try {
+      const result = await renewLicenciaAction({
+        tenantLicenseId: licenseToRenew.tenantLicenseId,
+        planId: renewDraft.planId,
+        registerPayment: renewDraft.registerPayment,
+        ...(renewDraft.amountPaidUsd !== undefined ? { amountPaidUsd: renewDraft.amountPaidUsd } : {}),
+        ...(renewDraft.idempotencyKey ? { idempotencyKey: renewDraft.idempotencyKey } : {}),
+      })
+      if (!result.success) {
+        const code = result.error?.code
+        toast.error(result.error?.message || 'No se pudo renovar la licencia')
+        if (
+          renewDraft.registerPayment &&
+          (code === 'PAYMENT_ALREADY_CONFIRMED' || code === 'IDEMPOTENCY_CONFLICT')
+        ) {
+          toast.warning(
+            `Reintentá solo el pago con la clave: ${renewDraft.idempotencyKey ?? ''}`,
+          )
+        }
+        return
+      }
+      const newExp = (result.data as { newExpiracion?: string | Date } | undefined)
+        ?.newExpiracion
+      const fechaTxt =
+        newExp instanceof Date
+          ? format(newExp, 'dd/MM/yyyy')
+          : newExp
+            ? format(new Date(newExp), 'dd/MM/yyyy')
+            : null
+      toast.success(
+        fechaTxt ? `Licencia renovada hasta el ${fechaTxt}` : 'Licencia renovada',
+      )
+      setRenewConfirmOpen(false)
+      setLicenseToRenew(null)
+      await refreshLicenciasData()
+    } catch (_error) {
+      toast.error('No se pudo renovar la licencia')
+    } finally {
+      setIsRenewing(false)
     }
   }
 
@@ -504,56 +653,56 @@ export default function AdminLicenciasPage() {
         <Card>
           <CardHeader className="pb-2">
             <CardTitle className="text-sm font-medium text-muted-foreground flex items-center gap-2">
-              <Shield className="h-4 w-4 text-emerald-500" />
+              <Shield className="h-4 w-4 text-success" />
               Activas
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-emerald-600">{activas}</div>
+            <div className="text-2xl font-bold text-success">{activas}</div>
           </CardContent>
         </Card>
         <Card>
           <CardHeader className="pb-2">
             <CardTitle className="text-sm font-medium text-muted-foreground flex items-center gap-2">
-              <Rocket className="h-4 w-4 text-sky-500" />
+              <Rocket className="h-4 w-4 text-info" />
               Demos
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-sky-600">{demos}</div>
+            <div className="text-2xl font-bold text-info">{demos}</div>
           </CardContent>
         </Card>
         <Card>
           <CardHeader className="pb-2">
             <CardTitle className="text-sm font-medium text-muted-foreground flex items-center gap-2">
-              <UserCircle2 className="h-4 w-4 text-violet-500" />
+              <UserCircle2 className="h-4 w-4 text-purple" />
               Prueba Admin
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-violet-600">{adminTest}</div>
+            <div className="text-2xl font-bold text-purple">{adminTest}</div>
           </CardContent>
         </Card>
         <Card>
           <CardHeader className="pb-2">
             <CardTitle className="text-sm font-medium text-muted-foreground flex items-center gap-2">
-              <AlertTriangle className="h-4 w-4 text-amber-500" />
+              <AlertTriangle className="h-4 w-4 text-warning" />
               Por Vencer
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-amber-600">{porVencer}</div>
+            <div className="text-2xl font-bold text-warning">{porVencer}</div>
           </CardContent>
         </Card>
         <Card>
           <CardHeader className="pb-2">
             <CardTitle className="text-sm font-medium text-muted-foreground flex items-center gap-2">
-              <Clock className="h-4 w-4 text-rose-500" />
+              <Clock className="h-4 w-4 text-danger" />
               Expiradas
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-rose-600">{expiradas}</div>
+            <div className="text-2xl font-bold text-danger">{expiradas}</div>
           </CardContent>
         </Card>
       </div>
@@ -610,7 +759,7 @@ export default function AdminLicenciasPage() {
         <motion.div
           initial={{ opacity: 0, y: -8 }}
           animate={{ opacity: 1, y: 0 }}
-          className="flex items-center gap-2 p-3 rounded-lg border border-primary/30 bg-primary/5"
+          className="flex flex-wrap items-center gap-2 p-3 rounded-lg border border-primary/30 bg-primary/5"
           role="region"
           aria-label="Acciones masivas"
         >
@@ -618,7 +767,7 @@ export default function AdminLicenciasPage() {
           <Button
             variant="outline"
             size="sm"
-            onClick={handleBulkToggleEstado}
+            onClick={handleBulkToggleClick}
             disabled={isBulkProcessing}
             aria-label={`Cambiar estado de ${selectedLicencias.size} licencias`}
           >
@@ -628,9 +777,9 @@ export default function AdminLicenciasPage() {
           <Button
             variant="outline"
             size="sm"
-            onClick={handleBulkDelete}
+            onClick={handleBulkDeleteClick}
             disabled={isBulkProcessing}
-            className="text-rose-500"
+            className="text-danger"
             aria-label={`Eliminar ${selectedLicencias.size} licencias`}
           >
             <Trash2 className="h-3 w-3 mr-1" aria-hidden="true" />
@@ -744,7 +893,7 @@ export default function AdminLicenciasPage() {
                           onClick={() => copyToClipboard(licencia.tenantLicenseId)}
                         >
                           {copiedKey === licencia.tenantLicenseId ? (
-                            <Check className="h-3 w-3 text-green-500" />
+                            <Check className="h-3 w-3 text-success" />
                           ) : (
                             <Copy className="h-3 w-3" />
                           )}
@@ -773,10 +922,10 @@ export default function AdminLicenciasPage() {
                       <div className="flex gap-2">
                         <Badge variant="outline">{licencia.plan?.nombre}</Badge>
                         {licencia.isDemo ? (
-                          <Badge className="bg-sky-500">Demo</Badge>
+                          <Badge className="bg-info">Demo</Badge>
                         ) : null}
                         {licencia.isAdminTest ? (
-                          <Badge className="bg-violet-500">Prueba admin</Badge>
+                          <Badge className="bg-purple">Prueba admin</Badge>
                         ) : null}
                         {licencia.featureOverrides &&
                         typeof licencia.featureOverrides === 'object' &&
@@ -788,7 +937,7 @@ export default function AdminLicenciasPage() {
                     <TableCell>
                       <div className="flex items-center gap-1">
                         <Calendar className="h-3 w-3 text-muted-foreground" aria-hidden="true" />
-                        <span className={expirada ? 'text-rose-500' : diasRestantes <= 7 ? 'text-amber-500' : ''}>
+                        <span className={expirada ? 'text-danger' : diasRestantes <= 7 ? 'text-warning' : ''}>
                           {format(new Date(licencia.expiracion), 'dd/MM/yyyy')}
                         </span>
                         {!expirada && (
@@ -800,13 +949,13 @@ export default function AdminLicenciasPage() {
                       {expirada ? (
                         <Badge variant="destructive">Expirada</Badge>
                       ) : licencia.activa ? (
-                        <Badge className="bg-emerald-500">Activa</Badge>
+                        <Badge className="bg-success">Activa</Badge>
                       ) : (
                         <Badge variant="secondary">Revocada</Badge>
                       )}
                     </TableCell>
                     <TableCell className="text-right">
-                      <div className="flex justify-end gap-2">
+                      <div className="flex flex-wrap justify-end gap-1 md:gap-2">
                         <Button
                           variant="outline"
                           size="sm"
@@ -816,8 +965,17 @@ export default function AdminLicenciasPage() {
                           }}
                           aria-label={`Cambiar plan de ${licencia.tenantLicenseId}`}
                         >
-                          <ArrowUpDown className="h-4 w-4 mr-1" aria-hidden="true" />
-                          Cambiar Plan
+                          <ArrowUpDown className="h-4 w-4 md:mr-1" aria-hidden="true" />
+                          <span className="hidden md:inline">Cambiar Plan</span>
+                        </Button>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => handleRenew(licencia)}
+                          aria-label={`Renovar licencia ${licencia.tenantLicenseId}`}
+                        >
+                          <RefreshCcw className="h-4 w-4 md:mr-1" aria-hidden="true" />
+                          <span className="hidden md:inline">Renovar</span>
                         </Button>
                         <Button
                           variant="outline"
@@ -825,19 +983,19 @@ export default function AdminLicenciasPage() {
                           onClick={() => openAccountingOverridesDialog(licencia)}
                           aria-label={`Editar overrides contables de ${licencia.tenantLicenseId}`}
                         >
-                          <Settings2 className="h-4 w-4 mr-1" aria-hidden="true" />
-                          Overrides
+                          <Settings2 className="h-4 w-4 md:mr-1" aria-hidden="true" />
+                          <span className="hidden md:inline">Overrides</span>
                         </Button>
                         <Button
                           variant="outline"
                           size="sm"
-                          onClick={() => handleToggleLicencia(licencia)}
+                          onClick={() => handleToggleLicenciaClick(licencia)}
                           aria-label={licencia.activa ? `Revocar ${licencia.tenantLicenseId}` : `Activar ${licencia.tenantLicenseId}`}
                         >
-                          {licencia.activa ? 'Revocar' : 'Activar'}
+                          <Power className="h-4 w-4 md:mr-1" aria-hidden="true" />
+                          <span className="hidden md:inline">{licencia.activa ? 'Revocar' : 'Activar'}</span>
                         </Button>
-                        {licencia.isDemo ? (
-                          <Button
+                        {licencia.isDemo ? (                          <Button
                             variant="secondary"
                             size="sm"
                             onClick={() => {
@@ -846,7 +1004,8 @@ export default function AdminLicenciasPage() {
                             }}
                             aria-label={`Convertir demo ${licencia.tenantLicenseId} a plan pago`}
                           >
-                            Convertir
+                            <Zap className="h-4 w-4 md:mr-1" aria-hidden="true" />
+                            <span className="hidden md:inline">Convertir</span>
                           </Button>
                         ) : null}
                         <Button
@@ -859,13 +1018,16 @@ export default function AdminLicenciasPage() {
                               : `Marcar ${licencia.tenantLicenseId} como prueba admin`
                           }
                         >
-                          {licencia.isAdminTest ? 'Quitar prueba' : 'Marcar prueba'}
+                          <FlaskConical className="h-4 w-4 md:mr-1" aria-hidden="true" />
+                          <span className="hidden md:inline">
+                            {licencia.isAdminTest ? 'Quitar prueba' : 'Marcar prueba'}
+                          </span>
                         </Button>
                         <Button
                           variant="ghost"
                           size="sm"
-                          onClick={() => handleDeleteLicencia(licencia.tenantLicenseId)}
-                          className="text-rose-500"
+                          onClick={() => handleDeleteLicenciaClick(licencia)}
+                          className="text-danger"
                           aria-label={`Eliminar ${licencia.tenantLicenseId}`}
                         >
                           <Trash2 className="h-4 w-4" aria-hidden="true" />
@@ -971,6 +1133,36 @@ export default function AdminLicenciasPage() {
           }))
         }
         onSave={handleSaveAccountingOverrides}
+      />
+
+      <RenewLicenciaDialog
+        open={renewDialogOpen}
+        onClose={() => {
+          if (isRenewing) return
+          setRenewDialogOpen(false)
+        }}
+        onContinue={handleRenewContinue}
+        planes={planes}
+        licencia={licenseToRenew}
+        buildRenewalKey={buildRenewalKey}
+      />
+
+      <RenewConfirmAlertDialog
+        open={renewConfirmOpen}
+        onClose={() => {
+          if (isRenewing) return
+          setRenewConfirmOpen(false)
+        }}
+        licencia={licenseToRenew}
+        planes={planes}
+        draft={renewDraft}
+        isSubmitting={isRenewing}
+        onConfirm={handleConfirmRenew}
+      />
+
+      <ConfirmAlertDialog
+        state={confirmState}
+        onClose={() => setConfirmState(null)}
       />
     </div>
   )
@@ -1525,5 +1717,361 @@ function ConvertDemoDialog({
         </DialogFooter>
       </DialogContent>
     </Dialog>
+  )
+}
+
+function RenewLicenciaDialog({
+  open,
+  onClose,
+  onContinue,
+  planes,
+  licencia,
+  buildRenewalKey,
+}: {
+  open: boolean
+  onClose: () => void
+  onContinue: (draft: {
+    planId: string
+    registerPayment: boolean
+    amountPaidUsd?: number
+    idempotencyKey?: string
+  }) => void
+  planes: any[]
+  licencia: any | null
+  buildRenewalKey: (tenantId: string, planId: string) => string
+}) {
+  const [planId, setPlanId] = useState('')
+  const [registerPayment, setRegisterPayment] = useState(false)
+  const [amountPaidUsd, setAmountPaidUsd] = useState<string>('')
+  const [idempotencyKey, setIdempotencyKey] = useState('')
+
+  useEffect(() => {
+    if (!open || !licencia) return
+    setPlanId(licencia.planId ?? '')
+    setRegisterPayment(false)
+    setAmountPaidUsd('')
+    setIdempotencyKey('')
+  }, [open, licencia])
+
+  const selectedPlan = planes.find((p: any) => p.planId === planId)
+  const newPlanDuration = selectedPlan?.duracionDias ?? licencia?.plan?.duracionDias ?? 0
+
+  const baseExpiracion = (() => {
+    if (!licencia?.expiracion) return new Date()
+    const exp = new Date(licencia.expiracion)
+    return exp.getTime() > Date.now() ? exp : new Date()
+  })()
+  const newExpiracion = new Date(
+    baseExpiracion.getTime() + newPlanDuration * 86400000,
+  )
+
+  const exigible = (() => {
+    const list = Number(licencia?.listPriceUsd ?? selectedPlan?.precio ?? 0)
+    const final = Number(licencia?.finalPriceUsd ?? list)
+    return final || list
+  })()
+
+  const handleClose = () => {
+    onClose()
+  }
+
+  const handleContinue = () => {
+    if (!licencia || !planId) return
+    const finalKey =
+      idempotencyKey ||
+      buildRenewalKey(licencia.tenantId ?? 'tenant', planId)
+    const amount = amountPaidUsd ? Number(amountPaidUsd) : undefined
+    onContinue({
+      planId,
+      registerPayment,
+      ...(amount !== undefined ? { amountPaidUsd: amount } : {}),
+      idempotencyKey: registerPayment ? finalKey : undefined,
+    })
+  }
+
+  const canContinue = Boolean(
+    planId &&
+      (!registerPayment ||
+        !amountPaidUsd ||
+        Number(amountPaidUsd) > 0),
+  )
+
+  return (
+    <Dialog open={open} onOpenChange={(v) => (!v ? handleClose() : undefined)}>
+      <DialogContent className="sm:max-w-[560px]">
+        <DialogHeader>
+          <DialogTitle>Renovar licencia</DialogTitle>
+          <DialogDescription>
+            Suma la duración del plan a la fecha de vencimiento actual, sin
+            penalizar la renovación anticipada.
+          </DialogDescription>
+        </DialogHeader>
+
+        <div className="grid gap-4 py-4">
+          <div className="rounded-md border p-3 text-sm">
+            <div className="text-xs text-muted-foreground">Tenant</div>
+            <div className="font-medium">{licencia?.tenant?.nombre ?? '—'}</div>
+          </div>
+          <div className="rounded-md border p-3 text-sm">
+            <div className="text-xs text-muted-foreground">Plan actual</div>
+            <div className="font-medium">
+              {licencia?.plan?.nombre ?? 'Sin plan'}
+            </div>
+          </div>
+          <div className="rounded-md border p-3 text-sm">
+            <div className="text-xs text-muted-foreground">
+              Vencimiento actual
+            </div>
+            <div className="font-medium">
+              {licencia?.expiracion
+                ? format(new Date(licencia.expiracion), 'dd/MM/yyyy')
+                : '—'}
+            </div>
+          </div>
+
+          <div className="grid gap-2">
+            <span className="text-sm font-medium">Nuevo plan</span>
+            <Select value={planId} onValueChange={setPlanId}>
+              <SelectTrigger>
+                <SelectValue placeholder="Seleccionar plan" />
+              </SelectTrigger>
+              <SelectContent>
+                {planes.map((plan: any) => (
+                  <SelectItem key={plan.planId} value={plan.planId}>
+                    {plan.nombre} · {plan.duracionDias} días · $
+                    {Number(plan.precio)}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+
+          <div className="grid gap-2">
+            <label className="flex items-center gap-2 text-sm font-medium cursor-pointer">
+              <Checkbox
+                checked={registerPayment}
+                onCheckedChange={(v) => setRegisterPayment(v === true)}
+              />
+              Registrar pago de renovación
+            </label>
+          </div>
+
+          {registerPayment && (
+            <div className="grid gap-3 rounded-md border p-3 bg-muted/30">
+              <div className="grid gap-2">
+                <span className="text-xs text-muted-foreground">
+                  Monto exigible
+                </span>
+                <div className="font-medium">${exigible.toFixed(2)}</div>
+              </div>
+              <div className="grid gap-2">
+                <span className="text-xs text-muted-foreground">
+                  Monto pagado (opcional)
+                </span>
+                <Input
+                  type="number"
+                  step="0.01"
+                  min="0"
+                  value={amountPaidUsd}
+                  onChange={(e) => setAmountPaidUsd(e.target.value)}
+                  placeholder={`${exigible.toFixed(2)}`}
+                />
+              </div>
+              <div className="grid gap-2">
+                <span className="text-xs text-muted-foreground">
+                  Clave de idempotencia
+                </span>
+                <Input
+                  value={
+                    idempotencyKey ||
+                    (licencia
+                      ? buildRenewalKey(
+                          licencia.tenantId ?? 'tenant',
+                          planId,
+                        )
+                      : '')
+                  }
+                  onChange={(e) => setIdempotencyKey(e.target.value)}
+                  placeholder="renewal:tenantId:planId:fecha"
+                />
+              </div>
+            </div>
+          )}
+        </div>
+
+        <DialogFooter>
+          <Button variant="outline" onClick={handleClose}>
+            Cancelar
+          </Button>
+          <Button onClick={handleContinue} disabled={!canContinue}>
+            Continuar
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  )
+}
+
+function RenewConfirmAlertDialog({
+  open,
+  onClose,
+  onConfirm,
+  licencia,
+  planes,
+  draft,
+  isSubmitting,
+}: {
+  open: boolean
+  onClose: () => void
+  onConfirm: () => Promise<void> | void
+  licencia: any | null
+  planes: any[]
+  draft: {
+    planId: string
+    registerPayment: boolean
+    amountPaidUsd?: number
+    idempotencyKey?: string
+  }
+  isSubmitting: boolean
+}) {
+  const newPlan = planes.find((p: any) => p.planId === draft.planId)
+  const currentPlan = licencia?.plan
+  const newDuration = newPlan?.duracionDias ?? currentPlan?.duracionDias ?? 0
+
+  const baseExpiracion = (() => {
+    if (!licencia?.expiracion) return new Date()
+    const exp = new Date(licencia.expiracion)
+    return exp.getTime() > Date.now() ? exp : new Date()
+  })()
+  const newExpiracion = new Date(
+    baseExpiracion.getTime() + newDuration * 86400000,
+  )
+
+  const precio = Number(newPlan?.precio ?? currentPlan?.precio ?? 0)
+  const precioFinal = Number(licencia?.finalPriceUsd ?? precio)
+
+  return (
+    <AlertDialog
+      open={open}
+      onOpenChange={(v) => (!v ? onClose() : undefined)}
+    >
+      <AlertDialogContent>
+        <AlertDialogHeader>
+          <AlertDialogTitle>Confirmar renovación</AlertDialogTitle>
+          <AlertDialogDescription>
+            Revisa el resumen antes de aplicar la renovación.
+          </AlertDialogDescription>
+        </AlertDialogHeader>
+
+        <div className="grid gap-3 text-sm">
+          <div className="flex items-center justify-between rounded-md border p-3">
+            <span className="text-muted-foreground">Tenant</span>
+            <span className="font-medium">
+              {licencia?.tenant?.nombre ?? '—'}
+            </span>
+          </div>
+          <div className="flex items-center justify-between rounded-md border p-3">
+            <span className="text-muted-foreground">Plan</span>
+            <span className="font-medium">
+              {currentPlan?.nombre ?? 'Sin plan'}
+              <span className="mx-2 text-muted-foreground">→</span>
+              {newPlan?.nombre ?? currentPlan?.nombre ?? '—'}
+            </span>
+          </div>
+          <div className="flex items-center justify-between rounded-md border p-3">
+            <span className="text-muted-foreground">Duración</span>
+            <span className="font-medium">{newDuration} días</span>
+          </div>
+          <div className="flex items-center justify-between rounded-md border p-3">
+            <span className="text-muted-foreground">Expiración</span>
+            <span className="font-medium">
+              {licencia?.expiracion
+                ? format(new Date(licencia.expiracion), 'dd/MM/yyyy')
+                : '—'}
+              <span className="mx-2 text-muted-foreground">→</span>
+              {format(newExpiracion, 'dd/MM/yyyy')}
+            </span>
+          </div>
+          <div className="flex items-center justify-between rounded-md border p-3">
+            <span className="text-muted-foreground">Precio</span>
+            <span className="font-medium">${precioFinal.toFixed(2)}</span>
+          </div>
+          {draft.registerPayment && (
+            <>
+              <div className="flex items-center justify-between rounded-md border p-3">
+                <span className="text-muted-foreground">Pago a registrar</span>
+                <span className="font-medium">
+                  ${(draft.amountPaidUsd ?? precioFinal).toFixed(2)}
+                </span>
+              </div>
+              <div className="flex items-center justify-between rounded-md border p-3">
+                <span className="text-muted-foreground">
+                  Idempotency key
+                </span>
+                <span className="font-mono text-xs">
+                  {draft.idempotencyKey}
+                </span>
+              </div>
+            </>
+          )}
+        </div>
+
+        <AlertDialogFooter>
+          <AlertDialogCancel disabled={isSubmitting}>
+            Cancelar
+          </AlertDialogCancel>
+          <AlertDialogAction onClick={onConfirm} disabled={isSubmitting}>
+            {isSubmitting ? 'Renovando...' : 'Confirmar renovación'}
+          </AlertDialogAction>
+        </AlertDialogFooter>
+      </AlertDialogContent>
+    </AlertDialog>
+  )
+}
+
+/**
+ * @description Diálogo genérico de confirmación para acciones destructivas o
+ * masivas (reemplaza `window.confirm`).
+ * @param {{ title: string; description: string; destructive?: boolean; onConfirm: () => void } | null} state - Estado de la confirmación o `null` para cerrar.
+ * @param {() => void} onClose - Callback al cerrar el diálogo.
+ * @returns {JSX.Element} AlertDialog de confirmación.
+ */
+function ConfirmAlertDialog({
+  state,
+  onClose,
+}: {
+  state: {
+    title: string
+    description: string
+    destructive?: boolean
+    onConfirm: () => void
+  } | null
+  onClose: () => void
+}) {
+  return (
+    <AlertDialog
+      open={state !== null}
+      onOpenChange={(v) => (!v ? onClose() : undefined)}
+    >
+      <AlertDialogContent>
+        <AlertDialogHeader>
+          <AlertDialogTitle>{state?.title}</AlertDialogTitle>
+          <AlertDialogDescription>{state?.description}</AlertDialogDescription>
+        </AlertDialogHeader>
+        <AlertDialogFooter>
+          <AlertDialogCancel>Cancelar</AlertDialogCancel>
+          <AlertDialogAction
+            onClick={state?.onConfirm}
+            className={
+              state?.destructive
+                ? 'bg-destructive text-destructive-foreground hover:bg-destructive/90'
+                : undefined
+            }
+          >
+            Confirmar
+          </AlertDialogAction>
+        </AlertDialogFooter>
+      </AlertDialogContent>
+    </AlertDialog>
   )
 }
