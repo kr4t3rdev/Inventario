@@ -130,9 +130,17 @@ export default function LoginPage(): React.ReactElement {
 						</motion.div>
 
 						<motion.div {...fadeUp(0.25)} className="space-y-2">
-							<Label htmlFor="password" className="text-sm font-medium text-[#1d1d1f] dark:text-white">
-								Contraseña
-							</Label>
+							<div className="flex items-center justify-between">
+								<Label htmlFor="password" className="text-sm font-medium text-[#1d1d1f] dark:text-white">
+									Contraseña
+								</Label>
+								<Link
+									href="/forgot-password"
+									className="text-sm font-medium text-[#0066cc] hover:underline dark:text-[#2997ff]"
+								>
+									¿Olvidaste tu contraseña?
+								</Link>
+							</div>
 							<div className="relative">
 								<motion.div whileFocus={shouldAnimate ? { scale: 1.01 } : {}} transition={SPRING_DEFAULT}>
 									<Input
