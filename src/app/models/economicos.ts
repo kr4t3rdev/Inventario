@@ -116,6 +116,7 @@ export interface GastosDE {
 
 export interface GastoConcepto {
 	conceptoId: string;
+	tenantId: string;
 	nombre: string;
 	descripcion: string | null;
 	isActive: boolean;
@@ -126,6 +127,7 @@ export interface GastoConcepto {
 
 export interface GastoElemento {
 	elementoId: string;
+	tenantId: string;
 	conceptoId: string;
 	nombre: string;
 	descripcion: string | null;
