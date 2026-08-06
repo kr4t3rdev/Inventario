@@ -614,6 +614,8 @@ model User {
   avatar                   String?
   expiresAt                DateTime?
   isActive                 Boolean              @default(true)
+  resetPasswordToken       String?
+  resetPasswordExpiresAt   DateTime?
   lastFailedLogin          DateTime?
   lastModifiedBy           String?
   lockedUntil              DateTime?
