@@ -10,6 +10,7 @@
 import { revalidatePath } from "next/cache";
 import { Prisma } from "@/generated/prisma";
 import { withAction, ActionError } from "@/lib/server-actions";
+import { addDays } from "@/lib/date-utils";
 import { createTenantForUser } from "@/lib/services/tenant-factory";
 import { resolveLicenseDurationDays } from "@/lib/services/license-duration";
 import {
@@ -725,12 +726,12 @@ export const approveGlobalUserAction = withAction(
 		// y convertDemoToPaidPlanAction). Un override manual se valida y aplica.
 		const workerExpiresAt =
 			input.licenseDurationDays !== undefined
-				? new Date(
-						Date.now() +
-							resolveLicenseDurationDays(
-								undefined,
-								input.licenseDurationDays,
-							)! * 86400000,
+				? addDays(
+						new Date(),
+						resolveLicenseDurationDays(
+							undefined,
+							input.licenseDurationDays,
+						)!,
 					)
 				: null;
 		await prisma.user.update({
@@ -1758,7 +1759,7 @@ export const convertDemoToPaidPlanAction = withAction(
 			plan.duracionDias,
 			parsed.durationDays,
 		)!;
-		const expiracion = new Date(now.getTime() + durationDays * 86400000);
+		const expiracion = addDays(now, durationDays);
 		const referred = await isTenantReferred(license.tenantId);
 
 		const updatedLicense = await prisma.tenantLicense.update({
@@ -1936,9 +1937,7 @@ export const renewLicenciaAction = withAction(
 			const renewDurationDays = resolveLicenseDurationDays(
 				newPlan.duracionDias,
 			)!;
-			const newExpiracion = new Date(
-				baseExpiracion.getTime() + renewDurationDays * 86400000,
-			);
+			const newExpiracion = addDays(baseExpiracion, renewDurationDays);
 
 			const samePlan = newPlan.planId === license.planId;
 

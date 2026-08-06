@@ -8,6 +8,7 @@
 
 import bcrypt from 'bcryptjs';
 import { randomUUID } from 'crypto';
+import { addDays } from '@/lib/date-utils';
 import { prisma } from '@/lib/prisma';
 import { ActionError } from '@/lib/server-actions';
 
@@ -90,7 +91,7 @@ export async function createDemoTenantForPlan(
     const tenantSlug = `${slugBase}-${suffix}`.substring(0, 50);
     const email = `${slugBase}.${suffix}@${DEMO_EMAIL_DOMAIN}`;
     const now = new Date();
-    const expiresAt = new Date(now.getTime() + durationDays * 86400000);
+    const expiresAt = addDays(now, durationDays);
 
     const existingEmail = await tx.user.findUnique({
       where: { email },

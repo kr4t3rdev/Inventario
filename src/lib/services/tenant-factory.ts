@@ -6,6 +6,7 @@
  */
 
 import { Prisma } from '@/generated/prisma'
+import { addDays } from '@/lib/date-utils'
 import { prisma } from '@/lib/prisma'
 import { ActionError } from '@/lib/server-actions'
 import { resolveLicenseDurationDays } from '@/lib/services/license-duration'
@@ -137,7 +138,7 @@ export async function createTenantForUser(
         planId: plan!.planId,
         activa: true,
         inicio: new Date(),
-        expiracion: new Date(Date.now() + durationDays * 86400000),
+        expiracion: addDays(new Date(), durationDays),
         maxUsuarios: plan!.maxUsuarios,
         maxAlmacenes: plan!.maxAlmacenes,
         maxProductos: plan!.maxProductos,

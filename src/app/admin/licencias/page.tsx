@@ -31,6 +31,7 @@ import {
 } from 'lucide-react'
 import { format, differenceInDays } from 'date-fns'
 import { toast } from 'sonner'
+import { addDays } from '@/lib/date-utils'
 
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -1761,9 +1762,7 @@ function RenewLicenciaDialog({
     const exp = new Date(licencia.expiracion)
     return exp.getTime() > Date.now() ? exp : new Date()
   })()
-  const newExpiracion = new Date(
-    baseExpiracion.getTime() + newPlanDuration * 86400000,
-  )
+  const newExpiracion = addDays(baseExpiracion, newPlanDuration)
 
   const exigible = (() => {
     const list = Number(licencia?.listPriceUsd ?? selectedPlan?.precio ?? 0)
@@ -1943,9 +1942,7 @@ function RenewConfirmAlertDialog({
     const exp = new Date(licencia.expiracion)
     return exp.getTime() > Date.now() ? exp : new Date()
   })()
-  const newExpiracion = new Date(
-    baseExpiracion.getTime() + newDuration * 86400000,
-  )
+  const newExpiracion = addDays(baseExpiracion, newDuration)
 
   const precio = Number(newPlan?.precio ?? currentPlan?.precio ?? 0)
   const precioFinal = Number(licencia?.finalPriceUsd ?? precio)
