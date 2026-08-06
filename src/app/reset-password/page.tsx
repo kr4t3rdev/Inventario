@@ -39,7 +39,10 @@ function ResetPasswordContent(): React.ReactElement {
 
 	useEffect(() => {
 		setMounted(true)
-	}, [])
+		if (!tokenFromUrl) {
+			setError('El enlace no es válido. Solicita uno nuevo.')
+		}
+	}, [tokenFromUrl])
 
 	const validateToken = useCallback((): boolean => {
 		if (tokenFromUrl) return true
@@ -100,7 +103,7 @@ function ResetPasswordContent(): React.ReactElement {
 						transition={{ type: 'spring' as const, stiffness: 200, damping: 18, delay: 0.05 }}
 						className="mx-auto mb-6 flex h-14 w-14 items-center justify-center rounded-2xl bg-[#0066cc]/10"
 					>
-						<LockIcon className="h-7 w-7 text-[#0066cc] dark:text-[#2997ff]" />
+						<LockIcon aria-hidden="true" className="h-7 w-7 text-[#0066cc] dark:text-[#2997ff]" />
 					</motion.div>
 
 					<motion.h1
@@ -123,13 +126,15 @@ function ResetPasswordContent(): React.ReactElement {
 						<AnimatePresence>
 							{success && (
 								<motion.div
+									role="status"
+									aria-live="polite"
 									initial={shouldAnimate ? { opacity: 0, height: 0 } : { opacity: 1 }}
 									animate={{ opacity: 1, height: 'auto' }}
 									exit={shouldAnimate ? { opacity: 0, height: 0 } : { opacity: 1 }}
 									transition={{ duration: 0.25, ease: 'easeOut' }}
 								>
 									<Alert className="border-green-300 bg-green-50/80 dark:bg-green-900/20">
-										<CheckCircleIcon className="h-4 w-4 text-green-600" />
+										<CheckCircleIcon aria-hidden="true" className="h-4 w-4 text-green-600" />
 										<AlertDescription className="text-green-800 dark:text-green-200">
 											Contraseña actualizada correctamente.
 										</AlertDescription>
@@ -141,13 +146,15 @@ function ResetPasswordContent(): React.ReactElement {
 						<AnimatePresence>
 							{error && (
 								<motion.div
+									role="alert"
+									aria-live="assertive"
 									initial={shouldAnimate ? { opacity: 0, height: 0 } : { opacity: 1 }}
 									animate={{ opacity: 1, height: 'auto' }}
 									exit={shouldAnimate ? { opacity: 0, height: 0 } : { opacity: 1 }}
 									transition={{ duration: 0.25, ease: 'easeOut' }}
 								>
 									<Alert variant="destructive" className="border-red-300 bg-red-50/80 dark:bg-red-900/20">
-										<AlertCircleIcon className="h-4 w-4" />
+										<AlertCircleIcon aria-hidden="true" className="h-4 w-4" />
 										<AlertDescription>{error}</AlertDescription>
 									</Alert>
 								</motion.div>
@@ -164,7 +171,9 @@ function ResetPasswordContent(): React.ReactElement {
 										<motion.div whileFocus={shouldAnimate ? { scale: 1.01 } : {}} transition={SPRING_DEFAULT}>
 											<Input
 												id="password"
+												name="password"
 												type={showPassword ? 'text' : 'password'}
+												autoComplete="new-password"
 												placeholder="Mínimo 6 caracteres"
 												value={password}
 												onChange={(e) => setPassword(e.target.value)}
@@ -183,7 +192,7 @@ function ResetPasswordContent(): React.ReactElement {
 											aria-label={showPassword ? 'Ocultar contraseña' : 'Mostrar contraseña'}
 											className="absolute right-3 top-1/2 -translate-y-1/2 p-2 text-[#7a7a7a] hover:text-[#1d1d1f] dark:hover:text-white"
 										>
-											{showPassword ? <EyeOffIcon className="h-4 w-4" /> : <EyeIcon className="h-4 w-4" />}
+											{showPassword ? <EyeOffIcon aria-hidden="true" className="h-4 w-4" /> : <EyeIcon aria-hidden="true" className="h-4 w-4" />}
 										</motion.button>
 									</div>
 								</motion.div>
@@ -196,7 +205,9 @@ function ResetPasswordContent(): React.ReactElement {
 										<motion.div whileFocus={shouldAnimate ? { scale: 1.01 } : {}} transition={SPRING_DEFAULT}>
 											<Input
 												id="confirmPassword"
+												name="confirmPassword"
 												type={showConfirmPassword ? 'text' : 'password'}
+												autoComplete="new-password"
 												placeholder="Repite tu contraseña"
 												value={confirmPassword}
 												onChange={(e) => setConfirmPassword(e.target.value)}
@@ -215,7 +226,7 @@ function ResetPasswordContent(): React.ReactElement {
 											aria-label={showConfirmPassword ? 'Ocultar confirmación' : 'Mostrar confirmación'}
 											className="absolute right-3 top-1/2 -translate-y-1/2 p-2 text-[#7a7a7a] hover:text-[#1d1d1f] dark:hover:text-white"
 										>
-											{showConfirmPassword ? <EyeOffIcon className="h-4 w-4" /> : <EyeIcon className="h-4 w-4" />}
+											{showConfirmPassword ? <EyeOffIcon aria-hidden="true" className="h-4 w-4" /> : <EyeIcon aria-hidden="true" className="h-4 w-4" />}
 										</motion.button>
 									</div>
 								</motion.div>
@@ -233,8 +244,8 @@ function ResetPasswordContent(): React.ReactElement {
 										>
 											{loading ? (
 												<span className="flex items-center gap-2">
-													<Loader2Icon className="h-5 w-5 animate-spin" />
-													Guardando...
+													<Loader2Icon aria-hidden="true" className="h-5 w-5 animate-spin" />
+													Guardando…
 												</span>
 											) : (
 												'Guardar nueva contraseña'

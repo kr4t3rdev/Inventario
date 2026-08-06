@@ -82,7 +82,7 @@ export default function ForgotPasswordPage(): React.ReactElement {
 						transition={{ type: 'spring' as const, stiffness: 200, damping: 18, delay: 0.05 }}
 						className="mx-auto mb-6 flex h-14 w-14 items-center justify-center rounded-2xl bg-[#0066cc]/10"
 					>
-						<KeyRoundIcon className="h-7 w-7 text-[#0066cc] dark:text-[#2997ff]" />
+						<KeyRoundIcon aria-hidden="true" className="h-7 w-7 text-[#0066cc] dark:text-[#2997ff]" />
 					</motion.div>
 
 					<motion.h1
@@ -105,13 +105,15 @@ export default function ForgotPasswordPage(): React.ReactElement {
 						<AnimatePresence>
 							{sent && (
 								<motion.div
+									role="status"
+									aria-live="polite"
 									initial={shouldAnimate ? { opacity: 0, height: 0 } : { opacity: 1 }}
 									animate={{ opacity: 1, height: 'auto' }}
 									exit={shouldAnimate ? { opacity: 0, height: 0 } : { opacity: 1 }}
 									transition={{ duration: 0.25, ease: 'easeOut' }}
 								>
 									<Alert className="border-green-300 bg-green-50/80 dark:bg-green-900/20">
-										<CheckCircleIcon className="h-4 w-4 text-green-600" />
+										<CheckCircleIcon aria-hidden="true" className="h-4 w-4 text-green-600" />
 										<AlertDescription className="text-green-800 dark:text-green-200">
 											Si el correo está registrado, recibirás un enlace para restablecer tu
 											contraseña.
@@ -124,13 +126,15 @@ export default function ForgotPasswordPage(): React.ReactElement {
 						<AnimatePresence>
 							{error && (
 								<motion.div
+									role="alert"
+									aria-live="assertive"
 									initial={shouldAnimate ? { opacity: 0, height: 0 } : { opacity: 1 }}
 									animate={{ opacity: 1, height: 'auto' }}
 									exit={shouldAnimate ? { opacity: 0, height: 0 } : { opacity: 1 }}
 									transition={{ duration: 0.25, ease: 'easeOut' }}
 								>
 									<Alert variant="destructive" className="border-red-300 bg-red-50/80 dark:bg-red-900/20">
-										<AlertCircleIcon className="h-4 w-4" />
+										<AlertCircleIcon aria-hidden="true" className="h-4 w-4" />
 										<AlertDescription>{error}</AlertDescription>
 									</Alert>
 								</motion.div>
@@ -144,12 +148,15 @@ export default function ForgotPasswordPage(): React.ReactElement {
 							<motion.div whileFocus={shouldAnimate ? { scale: 1.01 } : {}} transition={SPRING_DEFAULT}>
 								<Input
 									id="email"
+									name="email"
 									type="email"
+									autoComplete="email"
 									placeholder="tu@email.com"
 									value={email}
 									onChange={(e) => setEmail(e.target.value)}
 									required
 									disabled={loading}
+									spellCheck={false}
 									className="h-11 rounded-lg border-[#e0e0e0] bg-white text-[17px] text-[#1d1d1f] placeholder:text-[#7a7a7a] focus:border-[#0066cc] focus:ring-1 focus:ring-[#0066cc] dark:border-white/15 dark:bg-[#1d1d1f] dark:text-white dark:placeholder:text-[#7a7a7a] dark:focus:border-[#2997ff] dark:focus:ring-[#2997ff]"
 								/>
 							</motion.div>
@@ -168,8 +175,8 @@ export default function ForgotPasswordPage(): React.ReactElement {
 								>
 									{loading ? (
 										<span className="flex items-center gap-2">
-											<Loader2Icon className="h-5 w-5 animate-spin" />
-											Enviando...
+											<Loader2Icon aria-hidden="true" className="h-5 w-5 animate-spin" />
+											Enviando…
 										</span>
 									) : (
 										'Enviar enlace de recuperación'
