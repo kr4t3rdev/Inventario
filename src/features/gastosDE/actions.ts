@@ -136,7 +136,7 @@ export const deleteGastosDEAction = withAction(async (id: string, user: Authenti
 
 // ─── Conceptos ─────────────────────────────────────────────
 
-export const getGastoConceptosAction = withAction(async (_input: void, user: AuthenticatedUser) => {
+export const getGastoConceptosAction = withAction(async (_input: object = {}, user: AuthenticatedUser) => {
   requireFeature(user, 'gastos', 'gestionar gastos de empresa');
   const tenantId = requireTenant(user);
   return prisma.gastoConcepto.findMany({ where: { tenantId }, include: { _count: { select: { elementos: true, gastosDE: true } }, elementos: { where: { isActive: true }, orderBy: { nombre: 'asc' as const } } }, orderBy: { nombre: 'asc' } });
