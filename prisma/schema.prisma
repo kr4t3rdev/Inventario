@@ -631,8 +631,6 @@ model User {
   contratoArchivos         ContratoArchivo[]
   contratoFirmas           ContratoFirma[]
   contratoVersiones        ContratoVersion[]
-  licencias                Licencia[]
-  licenciasAudit           LicenciaAudit[]      @relation("LicenciaAuditActor")
   notifications            Notification[]
   tiposContratosCustom     TipoContratoCustom[]
   transferenciasCreadas    Transferencia[]
@@ -692,7 +690,6 @@ model Plan {
   maxContratos   Int             @default(0)
   maxFacturasMes Int             @default(200)
   maxPuntosVenta Int             @default(1)
-  licencias      Licencia[]
   tenantLicenses TenantLicense[]
   affiliateReferrals AffiliateReferral[]
 }
@@ -921,40 +918,6 @@ model ReferralPerkRequest {
   tenant                Tenant   @relation(fields: [tenantId], references: [tenantId], onDelete: Cascade)
 
   @@index([tenantId, status])
-}
-
-model Licencia {
-  licenciaId String          @id @default(cuid())
-  clave      String          @unique
-  usuarioId  String
-  planId     String
-  activa     Boolean         @default(true)
-  inicio     DateTime        @default(now())
-  expiracion DateTime
-  createdAt  DateTime        @default(now())
-  updatedAt  DateTime        @updatedAt
-  plan       Plan            @relation(fields: [planId], references: [planId], onDelete: Cascade)
-  usuario    User            @relation(fields: [usuarioId], references: [userId], onDelete: Cascade)
-  auditoria  LicenciaAudit[]
-
-  @@index([usuarioId])
-  @@index([planId])
-}
-
-model LicenciaAudit {
-  licenciaId      String?
-  accion          String
-  detalles        String?
-  realizadoPor    String?
-  ip              String?
-  userAgent       String?
-  createdAt       DateTime  @default(now())
-  licenciaAuditId String    @id @default(cuid())
-  licencia        Licencia? @relation(fields: [licenciaId], references: [licenciaId], onDelete: Cascade)
-  actor           User?     @relation("LicenciaAuditActor", fields: [realizadoPor], references: [userId])
-
-  @@index([licenciaId])
-  @@index([realizadoPor])
 }
 
 model Notification {

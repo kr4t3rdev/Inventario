@@ -25,9 +25,6 @@ vi.mock('@/lib/prisma', () => ({
     tenantLicense: {
       findFirst: vi.fn(),
     },
-    licencia: {
-      findFirst: vi.fn(),
-    },
     userActivityLog: {
       create: vi.fn(),
     },
@@ -64,7 +61,6 @@ describe('auth login route', () => {
     vi.mocked(prisma.tenantMembership.findUnique).mockResolvedValue(null as never)
     vi.mocked(prisma.tenantMembership.findFirst).mockResolvedValue(null as never)
     vi.mocked(prisma.tenantLicense.findFirst).mockResolvedValue(null as never)
-    vi.mocked(prisma.licencia.findFirst).mockResolvedValue(null as never)
     vi.mocked(prisma.user.updateMany).mockResolvedValue({ count: 1 } as never)
   })
 
@@ -199,7 +195,7 @@ describe('auth login route', () => {
     expect(response.status).toBe(403)
   })
 
-  it('rechaza login sin tenant activo aunque exista licencia legacy', async () => {
+  it('rechaza login sin tenant activo', async () => {
     vi.mocked(prisma.user.findUnique).mockResolvedValue({
       userId: 'u3',
       email: 'u3@test.com',
@@ -211,14 +207,6 @@ describe('auth login route', () => {
       lastFailedLogin: null,
     } as never)
     vi.mocked(bcrypt.compare).mockResolvedValue(true as never)
-    vi.mocked(prisma.licencia.findFirst).mockResolvedValue({
-      licenciaId: 'legacy-license',
-      usuarioId: 'u3',
-      planId: 'plan-1',
-      activa: true,
-      inicio: new Date(),
-      expiracion: new Date(Date.now() + 1000000),
-    } as never)
 
     const request = new NextRequest('http://localhost/api/auth/login', {
       method: 'POST',
@@ -231,6 +219,5 @@ describe('auth login route', () => {
 
     expect(response.status).toBe(403)
     expect(data.error).toContain('empresa activa')
-    expect(prisma.licencia.findFirst).not.toHaveBeenCalled()
   })
 })

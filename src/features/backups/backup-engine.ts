@@ -317,7 +317,5 @@ const CONFIG_TABLES = new Set([
   'tenant_licenses',
   'User',
   'Plan',
-  'Licencia',
-  'LicenciaAudit',
   'MiEmpresa',
 ])
