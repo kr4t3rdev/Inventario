@@ -12,14 +12,13 @@ import dynamic from "next/dynamic"
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog"
 import { Button } from "@/components/ui/button"
 import { SidebarProvider, SidebarInset } from "@/components/ui/sidebar"
-import { Skeleton } from "@/components/ui/skeleton"
 import { Badge } from "@/components/ui/badge"
 import { deleteGastoElementoAction } from "@/features/gastosDE/actions"
 import type { ColumnDef } from "@tanstack/react-table"
 import { ArrowUp, ArrowLeft, Layers, Plus, Trash2, Pencil, AlertCircle } from "lucide-react"
 import { useState, useTransition } from "react"
 import { toast } from "sonner"
-import { LazyMotion, m as motion } from "framer-motion"
+import { MotionConfig, m as motion } from "framer-motion"
 import Link from "next/link"
 
 const DataTable = dynamic(() => import('@/components/data-table').then(mod => ({ default: mod.DataTable })))
@@ -48,8 +47,7 @@ interface GastoElementosContentProps {
 export function GastoElementosContent({ initialConcepto, initialElementos, conceptoId }: GastoElementosContentProps) {
   const [elementos, setElementos] = useState<GastoElemento[]>(initialElementos)
   const [concepto] = useState<GastoConceptoInfo | null>(initialConcepto)
-  const [isLoading, setIsLoading] = useState(false)
-  const [isPending, startTransition] = useTransition()
+  const [, startTransition] = useTransition()
   const [elementoToDelete, setElementoToDelete] = useState<string | null>(null)
 
   const handleDelete = async () => {
@@ -118,7 +116,7 @@ export function GastoElementosContent({ initialConcepto, initialElementos, conce
         return (
           <div className="flex items-center gap-2">
             <Link href={`/busy/gastosDE/conceptos/${conceptoId}/elementos/update/${elemento.elementoId}`}>
-              <Button variant='outline' className='h-8 w-8 p-0 cursor-pointer'>
+              <Button variant='outline' className='h-8 w-8 p-0 cursor-pointer' aria-label="Editar elemento" title="Editar elemento">
                 <Pencil className='h-4 w-4' />
               </Button>
             </Link>
@@ -126,6 +124,8 @@ export function GastoElementosContent({ initialConcepto, initialElementos, conce
               onClick={() => setElementoToDelete(elemento.elementoId)}
               variant='outline'
               className='h-8 w-8 p-0 cursor-pointer hover:bg-destructive hover:text-destructive-foreground transition-colors'
+              aria-label="Eliminar elemento"
+              title="Eliminar elemento"
             >
               <Trash2 className='h-4 w-4' />
             </Button>
@@ -134,24 +134,6 @@ export function GastoElementosContent({ initialConcepto, initialElementos, conce
       }
     }
   ]
-
-  if (isLoading) {
-    return (
-      <SidebarProvider>
-        <SidebarInset>
-          <div className="container mx-auto py-4">
-            <div className="flex items-center gap-3 mb-6">
-              <Skeleton className="h-10 w-10 rounded-xl" />
-              <Skeleton className="h-8 w-48" />
-            </div>
-            <div className="space-y-3">
-              {[...Array(4)].map((_, i) => <Skeleton key={i} className="h-12 w-full" />)}
-            </div>
-          </div>
-        </SidebarInset>
-      </SidebarProvider>
-    )
-  }
 
   if (!concepto) {
     return (
@@ -166,6 +148,7 @@ export function GastoElementosContent({ initialConcepto, initialElementos, conce
   }
 
   return (
+    <MotionConfig reducedMotion="user">
     <SidebarProvider>
       <SidebarInset>
         <div className="container mx-auto py-4">
@@ -233,5 +216,6 @@ export function GastoElementosContent({ initialConcepto, initialElementos, conce
         </AlertDialogContent>
       </AlertDialog>
     </SidebarProvider>
+    </MotionConfig>
   )
 }

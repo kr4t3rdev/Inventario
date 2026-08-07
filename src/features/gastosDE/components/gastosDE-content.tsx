@@ -12,15 +12,14 @@ import dynamic from "next/dynamic"
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog"
 import { Button } from "@/components/ui/button"
 import { SidebarProvider, SidebarInset } from "@/components/ui/sidebar"
-import { Skeleton } from "@/components/ui/skeleton"
-import { deleteGastosDEAction } from "@/features/gastosDE/actions"
+import { deleteGastosDEAction, deleteGastosDEBulkAction } from "@/features/gastosDE/actions"
 import type { Vendor } from "@/app/models/model"
 import type { ColumnDef } from "@tanstack/react-table"
-import { ArrowUp, ArrowUpDown, Pencil, Plus, Trash2, Receipt, Loader2, AlertCircle, Download } from "lucide-react"
+import { ArrowUp, ArrowUpDown, Pencil, Plus, Trash2, Receipt, AlertCircle, Download } from "lucide-react"
 import { Checkbox } from "@/components/ui/checkbox"
-import { useEffect, useState, useTransition } from "react"
+import { useState, useTransition } from "react"
 import { toast } from "sonner"
-import { LazyMotion, m as motion } from "framer-motion"
+import { MotionConfig, m as motion } from "framer-motion"
 import Link from "next/link"
 
 const DataTable = dynamic(() => import('@/components/data-table').then(mod => ({ default: mod.DataTable })))
@@ -47,8 +46,7 @@ interface GastosDEContentProps {
 
 export function GastosDEContent({ initialGastosDE, initialVendors }: GastosDEContentProps) {
   const [gastosDE, setGastosDE] = useState<GastoDE[]>(initialGastosDE)
-  const [isLoading, setIsLoading] = useState(false)
-  const [isPending, startTransition] = useTransition()
+  const [, startTransition] = useTransition()
 
   const [gastosDEToDelete, setGastosDEToDelete] = useState<string | null>(null)
   const [gastosDEToBulkDelete, setGastosDEToBulkDelete] = useState<string[] | null>(null)
@@ -85,12 +83,12 @@ export function GastosDEContent({ initialGastosDE, initialVendors }: GastosDECon
   const handleBulkDelete = async () => {
     if (!gastosDEToBulkDelete || gastosDEToBulkDelete.length === 0) return
     startTransition(async () => {
-      let ok = 0
-      for (const id of gastosDEToBulkDelete) {
-        const r = await deleteGastosDEAction(id)
-        if (r.success) ok++
+      const r = await deleteGastosDEBulkAction(gastosDEToBulkDelete)
+      if (r.success) {
+        toast.success(r.data?.eliminados ? `${r.data.eliminados} gastos eliminados` : 'No se eliminaron gastos')
+      } else {
+        toast.error(r.error?.message || "Error al eliminar los gastos.")
       }
-      toast.success(`${ok} gastos eliminados`)
       const ref = await import('@/features/gastosDE/actions').then(m => m.getGastosDEAction({}))
       if (ref.success) setGastosDE((ref.data ?? []) as unknown as GastoDE[])
       setGastosDEToBulkDelete(null)
@@ -262,7 +260,7 @@ export function GastosDEContent({ initialGastosDE, initialVendors }: GastosDECon
           <div className="flex items-center gap-2">
             <motion.div whileHover={{ scale: 1.1 }} whileTap={{ scale: 0.9 }}>
               <Link href={`/busy/gastosDE/update/${gastoDE.gastosDEId}`}>
-                <Button variant='outline' className='h-8 w-8 p-0 cursor-pointer'>
+                <Button variant='outline' className='h-8 w-8 p-0 cursor-pointer' aria-label="Editar gasto" title="Editar gasto">
                   <Pencil className='h-4 w-4' />
                 </Button>
               </Link>
@@ -272,6 +270,8 @@ export function GastosDEContent({ initialGastosDE, initialVendors }: GastosDECon
                 onClick={() => setGastosDEToDelete(gastoDE.gastosDEId)}
                 variant='outline'
                 className='h-8 w-8 p-0 cursor-pointer hover:bg-destructive hover:text-destructive-foreground transition-colors'
+                aria-label="Eliminar gasto"
+                title="Eliminar gasto"
               >
                 <Trash2 className='h-4 w-4' />
               </Button>
@@ -282,55 +282,8 @@ export function GastosDEContent({ initialGastosDE, initialVendors }: GastosDECon
     }
   ]
 
-  if (isLoading) {
-    return (
-      <SidebarProvider>
-        <SidebarInset>
-          <div className="container mx-auto py-4">
-            <motion.div
-              className="flex justify-between items-center mb-6"
-              initial={{ opacity: 0, y: -20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.5 }}
-            >
-              <div className="flex items-center gap-3">
-                <Skeleton className="h-10 w-10 rounded-xl" />
-                <Skeleton className="h-8 w-48" />
-              </div>
-              <Skeleton className="h-10 w-48" />
-            </motion.div>
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.5, delay: 0.2 }}
-            >
-              <div className="flex items-center justify-center py-12 mb-6">
-                <motion.div
-                  className="w-12 h-12 border-4 border-primary border-t-transparent rounded-full"
-                  animate={{ rotate: 360 }}
-                  transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
-                />
-              </div>
-              <div className="space-y-3">
-                {[...Array(8)].map((_, i) => (
-                  <motion.div
-                    key={i}
-                    initial={{ opacity: 0 }}
-                    animate={{ opacity: 1 }}
-                    transition={{ delay: i * 0.1 }}
-                  >
-                    <Skeleton className="h-12 w-full" />
-                  </motion.div>
-                ))}
-              </div>
-            </motion.div>
-          </div>
-        </SidebarInset>
-      </SidebarProvider>
-    )
-  }
-
   return (
+    <MotionConfig reducedMotion="user">
     <SidebarProvider>
       <SidebarInset>
         <div className="container mx-auto py-4">
@@ -359,7 +312,7 @@ export function GastosDEContent({ initialGastosDE, initialVendors }: GastosDECon
                 </h1>
               </div>
             </motion.div>
-            <div className="flex items-center gap-2">
+            <div className="flex flex-wrap items-center gap-2">
               <motion.div
                 whileHover={{ scale: 1.02 }}
                 whileTap={{ scale: 0.98 }}
@@ -410,10 +363,11 @@ export function GastosDEContent({ initialGastosDE, initialVendors }: GastosDECon
               <select
                 value={filterProveedor}
                 onChange={(e) => setFilterProveedor(e.target.value)}
-                className="h-10 rounded-md border border-slate-200 dark:border-orange-900/20 bg-slate-50 dark:bg-slate-900/10 px-3 focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent transition-all"
+                aria-label="Filtrar por proveedor"
+                className="h-10 rounded-md border border-input bg-background px-3 text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 transition-all"
               >
                 <option value="">Todos los proveedores</option>
-                {Array.from(new Set(gastosDE?.map((g: GastoDE) => g.proveedor))).map((proveedor: any) => (
+                {Array.from(new Set(gastosDE?.map((g: GastoDE) => g.proveedor))).map((proveedor) => (
                   proveedor && (
                     <option key={proveedor} value={proveedor}>
                       {proveedor}
@@ -488,5 +442,6 @@ export function GastosDEContent({ initialGastosDE, initialVendors }: GastosDECon
         </AlertDialogContent>
       </AlertDialog>
     </SidebarProvider>
+    </MotionConfig>
   )
 }

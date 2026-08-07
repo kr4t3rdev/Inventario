@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { useForm } from "react-hook-form"
 import { z } from "zod"
-import { LazyMotion, m as motion } from "framer-motion"
+import { MotionConfig, m as motion } from "framer-motion"
 import { FolderOpen, ArrowLeft, Loader2 } from "lucide-react"
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
@@ -45,7 +45,7 @@ export function GastoConceptoForm({ initialData }: GastoConceptoFormProps) {
         if (!result.success) { sileo.error({ title: result.error?.message || 'Error al actualizar' }); return }
         sileo.success({ title: 'El concepto ha sido actualizado exitosamente.' })
       } else {
-        const result = await createGastoConceptoAction({ ...data, isActive: true } as any)
+        const result = await createGastoConceptoAction({ ...data })
         if (!result.success) { sileo.error({ title: result.error?.message || 'Error al crear' }); return }
         sileo.success({ title: 'El concepto ha sido creado exitosamente.' })
       }
@@ -60,6 +60,7 @@ export function GastoConceptoForm({ initialData }: GastoConceptoFormProps) {
   }
 
   return (
+    <MotionConfig reducedMotion="user">
     <motion.div initial={{ opacity: 0, y: 30 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5 }}>
       <Card className="overflow-hidden border-dashed">
         <CardContent className="pt-6">
@@ -73,7 +74,7 @@ export function GastoConceptoForm({ initialData }: GastoConceptoFormProps) {
             </div>
           </motion.div>
           <Form {...form}>
-            <form onSubmit={form.handleSubmit(onSubmit, () => { sileo.error({ title: 'Completá los campos requeridos antes de continuar.' }) })} className="space-y-6">
+            <form onSubmit={form.handleSubmit(onSubmit, () => { sileo.error({ title: 'Completa los campos requeridos antes de continuar.' }) })} className="space-y-6">
               <motion.div initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: 0.2 }}>
                 <FormField control={form.control} name="nombre" render={({ field }) => (
                   <FormItem>
@@ -105,5 +106,6 @@ export function GastoConceptoForm({ initialData }: GastoConceptoFormProps) {
         </CardContent>
       </Card>
     </motion.div>
+    </MotionConfig>
   )
 }

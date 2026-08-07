@@ -4,7 +4,7 @@ vi.mock('next/cache', () => ({ revalidatePath: vi.fn() }));
 vi.mock('@/lib/prisma', () => ({ prisma: { gastosDE: { findMany: vi.fn(), findFirst: vi.fn(), create: vi.fn(), update: vi.fn(), delete: vi.fn() }, gastoElemento: { findMany: vi.fn(), findFirst: vi.fn(), create: vi.fn(), update: vi.fn(), delete: vi.fn() }, gastoConcepto: { findMany: vi.fn(), findFirst: vi.fn(), create: vi.fn(), update: vi.fn(), delete: vi.fn(), findUnique: vi.fn() } } }));
 import { getCurrentUser } from '@/lib/server-actions/get-current-user';
 import { prisma } from '@/lib/prisma';
-import { getGastosDEAction, createGastosDEAction, deleteGastosDEAction, updateGastosDEAction, getGastoConceptosAction, createGastoConceptoAction, getGastoElementosAction, createGastoElementoAction } from '@/features/gastosDE/actions';
+import { getGastosDEAction, createGastosDEAction, deleteGastosDEAction, deleteGastosDEBulkAction, updateGastosDEAction, getGastoConceptosAction, createGastoConceptoAction, getGastoElementosAction, createGastoElementoAction } from '@/features/gastosDE/actions';
 import type { AuthenticatedUser } from '@/lib/auth-middleware';
 const u: AuthenticatedUser = { userId: 'u1', name: 'T', email: 't@t.com', role: 'admin', isActive: true, tenantId: 't1', tenantRole: 'admin' };
 const featureBlockedUser: AuthenticatedUser = {
@@ -137,6 +137,36 @@ describe('GastosDE Actions', () => {
     expect(r.success).toBe(false);
     expect(r.error?.code).toBe('NOT_FOUND');
     expect(vi.mocked(prisma.gastosDE.delete)).not.toHaveBeenCalled();
+  });
+
+  describe('deleteGastosDEBulkAction', () => {
+    it('rechaza lista vacía con VALIDATION_ERROR', async () => {
+      vi.mocked(getCurrentUser).mockResolvedValue(u);
+      const r = await deleteGastosDEBulkAction([]);
+      expect(r.success).toBe(false);
+      expect(r.error?.code).toBe('VALIDATION_ERROR');
+      expect(vi.mocked(prisma.gastosDE.delete)).not.toHaveBeenCalled();
+    });
+
+    it('elimina los ids existentes del tenant en el fallback sin $transaction', async () => {
+      vi.mocked(getCurrentUser).mockResolvedValue(u);
+      vi.mocked(prisma.gastosDE.findFirst)
+        .mockResolvedValueOnce({ gastosDEId: 'g1' } as any)
+        .mockResolvedValueOnce({ gastosDEId: 'g2' } as any)
+        .mockResolvedValueOnce(null);
+      vi.mocked(prisma.gastosDE.delete).mockResolvedValue({} as any);
+      const r = await deleteGastosDEBulkAction(['g1', 'g2', 'g-otro-tenant']);
+      expect(r.success).toBe(true);
+      expect(vi.mocked(prisma.gastosDE.delete)).toHaveBeenCalledTimes(2);
+      expect(r.data?.eliminados).toBe(2);
+    });
+
+    it('ignora ids no string o vacíos', async () => {
+      vi.mocked(getCurrentUser).mockResolvedValue(u);
+      const r = await deleteGastosDEBulkAction(['', 123 as unknown as string]);
+      expect(r.success).toBe(false);
+      expect(r.error?.code).toBe('VALIDATION_ERROR');
+    });
   });
 
   it('bloquea acceso cuando el plan no incluye gastos', async () => {

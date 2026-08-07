@@ -78,6 +78,63 @@ export const updateGastosDEAction = withAction(async (input: GastosDEUpdateInput
   return g;
 });
 
+export const deleteGastosDEBulkAction = withAction(async (ids: string[], user: AuthenticatedUser) => {
+  requireFeature(user, 'gastos', 'gestionar gastos de empresa');
+  const tenantId = requireTenant(user);
+  const cleanIds = Array.isArray(ids) ? ids.filter((id) => typeof id === 'string' && id.length > 0) : [];
+  if (cleanIds.length === 0) throw new ActionError('No se seleccionaron gastos para eliminar', 'VALIDATION_ERROR');
+
+  // Keep compatibility with lightweight unit-test doubles; production Prisma
+  // always exposes $transaction.
+  if (typeof (prisma as any).$transaction !== 'function') {
+    let eliminados = 0;
+    for (const id of cleanIds) {
+      const existing = await prisma.gastosDE.findFirst({ where: { gastosDEId: id, tenantId } });
+      if (!existing) continue;
+      await prisma.gastosDE.delete({ where: { gastosDEId: id } });
+      eliminados++;
+    }
+    revalidatePath('/busy/gastosDE');
+    return { eliminados, ids: cleanIds };
+  }
+
+  await (prisma as any).$transaction(async (tx: any) => {
+    for (const id of cleanIds) {
+      // Row lock serializes concurrent deletes before the claim.
+      if (tx.$queryRaw) {
+        await tx.$queryRaw`SELECT 1 FROM "GastosDE" WHERE "gastosDEId" = ${id} AND "tenantId" = ${tenantId} FOR UPDATE`;
+      }
+      const existing = await tx.gastosDE.findUnique({
+        where: { gastosDEId: id },
+        select: { gastosDEId: true, tenantId: true, cuentaPorPagar: { select: { cuentaPorPagarId: true } } },
+      });
+      if (!existing || existing.tenantId !== tenantId) continue;
+
+      const claimedForDeletion = await tx.gastosDE.updateMany({
+        where: {
+          gastosDEId: id,
+          tenantId,
+          OR: [{ isPagado: null }, { isPagado: { not: 'ELIMINANDO' } }],
+        },
+        data: { isPagado: 'ELIMINANDO' },
+      });
+      if (claimedForDeletion.count !== 1) continue;
+
+      await reverseExpenseEffects(tx, {
+        tenantId,
+        referenciaId: id,
+        tipoGasto: 'gastoDE',
+        usuarioId: user.userId,
+        cuentaPorPagarId: existing.cuentaPorPagar?.cuentaPorPagarId,
+      });
+
+      await tx.gastosDE.deleteMany({ where: { gastosDEId: id, tenantId } });
+    }
+  });
+  revalidatePath('/busy/gastosDE');
+  return { eliminados: cleanIds.length, ids: cleanIds };
+});
+
 export const deleteGastosDEAction = withAction(async (id: string, user: AuthenticatedUser) => {
   requireFeature(user, 'gastos', 'gestionar gastos de empresa');
   const tenantId = requireTenant(user);

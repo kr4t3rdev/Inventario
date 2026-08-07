@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { useForm } from "react-hook-form"
 import { z } from "zod"
-import { LazyMotion, m as motion } from "framer-motion"
+import { MotionConfig, m as motion } from "framer-motion"
 import { Receipt, Loader2 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form"
@@ -14,13 +14,13 @@ import { Card, CardContent } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { sileo } from '@/lib/sileo-shim'
 import { Skeleton } from "@/components/ui/skeleton"
-import { v4 } from "uuid"
 import { createGastosDEAction, updateGastosDEAction, getGastoConceptosAction, getGastoElementosAction } from "@/features/gastosDE/actions"
 import { useVendors } from "@/features/vendors/hooks/use-vendors"
 import { VendorCombobox } from "./VendorCombobox"
 import { usePeriodLock } from "@/features/contabilidad/hooks/use-period-lock"
 import { PeriodLockBanner } from "@/features/contabilidad/components/periodos/period-lock-banner"
 import type { Vendor } from "@/app/models/model"
+import type { GastoConcepto, GastoElemento } from "@/app/models/economicos"
 
 const gastosDESchema = z.object({
   tipo: z.string().max(100, 'Máximo 100 caracteres').optional(),
@@ -49,8 +49,8 @@ export function GastoDEForm({ initialData, initialVendors }: GastosDEFormProps) 
   const hookVendors = useVendors()
   const vendors = initialVendors ?? hookVendors.vendors
   const isLoadingVendors = initialVendors ? false : hookVendors.isLoading
-  const [conceptos, setConceptos] = useState<any[]>([])
-  const [elementos, setElementos] = useState<any[]>([])
+  const [conceptos, setConceptos] = useState<GastoConcepto[]>([])
+  const [elementos, setElementos] = useState<GastoElemento[]>([])
 
   useEffect(() => {
     getGastoConceptosAction({}).then(r => { if (r.success) setConceptos(r.data ?? []) })
@@ -73,7 +73,6 @@ export function GastoDEForm({ initialData, initialVendors }: GastosDEFormProps) 
   })
 
   const watchedValues = form.watch()
-
   // Verificar si el período está bloqueado (período contable cerrado)
   const watchedPeriodo = form.watch('periodo')
   const { isLocked, message, periodo, checking, error: lockError } = usePeriodLock(watchedPeriodo)
@@ -89,7 +88,7 @@ export function GastoDEForm({ initialData, initialVendors }: GastosDEFormProps) 
         }
         sileo.success({ title: 'El gasto de explotación ha sido actualizado exitosamente.' })
       } else {
-        const result = await createGastosDEAction({ gastosDEId: v4(), ...data } as any)
+        const result = await createGastosDEAction({ ...data, proveedor: data.proveedor ?? '' })
         if (!result.success) {
           sileo.error({ title: result.error?.message || 'Hubo un error al guardar el gasto.' })
           return
@@ -120,6 +119,7 @@ export function GastoDEForm({ initialData, initialVendors }: GastosDEFormProps) 
   }
 
   return (
+    <MotionConfig reducedMotion="user">
     <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5 }}>
       <Card className="border-dashed overflow-hidden">
         <div className="h-1 bg-linear-to-r from-orange-500 to-red-600" />
@@ -134,7 +134,7 @@ export function GastoDEForm({ initialData, initialVendors }: GastosDEFormProps) 
             </div>
           </motion.div>
           <Form {...form}>
-            <form onSubmit={form.handleSubmit(onSubmit, () => { sileo.error({ title: 'Completá los campos requeridos antes de continuar.' }) })} className="space-y-6">
+            <form onSubmit={form.handleSubmit(onSubmit, () => { sileo.error({ title: 'Completa los campos requeridos antes de continuar.' }) })} className="space-y-6">
               {/* Bloqueo visual por período cerrado */}
               {checking && <PeriodLockBanner.Skeleton />}
               {lockError && (
@@ -145,15 +145,15 @@ export function GastoDEForm({ initialData, initialVendors }: GastosDEFormProps) 
               {isLocked && message && periodo && <PeriodLockBanner message={message} periodo={periodo} />}
               {[
                 { name: "conceptoId" as const, label: "Concepto de Gasto", desc: "Categoría principal del gasto.", delay: 0.2, render: (field: any) => (
-                  <select value={field.value} onChange={(e) => { field.onChange(e.target.value); setSelectedConceptoId(e.target.value); form.setValue('elementoId', '') }} className="h-12 w-full rounded-md border border-slate-200 dark:border-orange-900/20 bg-slate-50 dark:bg-slate-900/10 px-3 focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent transition-all duration-200">
+                  <select value={field.value} onChange={(e) => { field.onChange(e.target.value); setSelectedConceptoId(e.target.value); form.setValue('elementoId', '') }} className="h-12 w-full rounded-md border border-input bg-background px-3 text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 transition-all duration-200">
                     <option value="">Seleccionar concepto</option>
-                    {conceptos?.map((c: any) => <option key={c.conceptoId} value={c.conceptoId}>{c.nombre}</option>)}
+                    {conceptos?.map((c) => <option key={c.conceptoId} value={c.conceptoId}>{c.nombre}</option>)}
                   </select>
                 )},
                 { name: "elementoId" as const, label: "Elemento", desc: "Subcategoría del gasto seleccionado.", delay: 0.22, render: (field: any) => (
-                  <select value={field.value} onChange={field.onChange} disabled={!selectedConceptoId} className="h-12 w-full rounded-md border border-slate-200 dark:border-orange-900/20 bg-slate-50 dark:bg-slate-900/10 px-3 focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed">
+                  <select value={field.value} onChange={field.onChange} disabled={!selectedConceptoId} className="h-12 w-full rounded-md border border-input bg-background px-3 text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed">
                     <option value="">Seleccionar elemento</option>
-                    {elementos?.map((e: any) => <option key={e.elementoId} value={e.elementoId}>{e.nombre}</option>)}
+                    {elementos?.map((e) => <option key={e.elementoId} value={e.elementoId}>{e.nombre}</option>)}
                   </select>
                 )},
                 { name: "tipo" as const, label: "Tipo (texto libre, opcional)", desc: "Texto libre alternativo al concepto/elemento.", delay: 0.24, render: (field: any) => <Input type="text" {...field} placeholder="Solo si no usa concepto/elemento" className="transition-all duration-200 focus:scale-[1.01]" /> },
@@ -196,5 +196,6 @@ export function GastoDEForm({ initialData, initialVendors }: GastosDEFormProps) 
         </CardContent>
       </Card>
     </motion.div>
+    </MotionConfig>
   )
 }
