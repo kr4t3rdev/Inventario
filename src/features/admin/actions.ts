@@ -1491,7 +1491,7 @@ export const rejectMembershipAction = withAction(
 	async (input: { membershipId: string }, user: AuthenticatedUser) => {
 		const membership = await prisma.tenantMembership.findUnique({
 			where: { membershipId: input.membershipId },
-			select: { membershipId: true, tenantId: true },
+			select: { membershipId: true, tenantId: true, userId: true },
 		});
 
 		if (!membership)
@@ -1508,7 +1508,15 @@ export const rejectMembershipAction = withAction(
 		await prisma.tenantMembership.delete({
 			where: { membershipId: input.membershipId },
 		});
-		revalidatePath("/admin");
+
+		await prisma.user.updateMany({
+			where: {
+				userId: membership.userId,
+				onboardingStatus: "awaiting_manager_approval",
+			},
+			data: { onboardingStatus: "selecting_tenant" },
+		});
+		revalidatePath("/busy/configuracion/usuarios");
 		return { success: true };
 	},
 );

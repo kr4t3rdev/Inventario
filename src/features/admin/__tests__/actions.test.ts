@@ -1652,18 +1652,29 @@ describe('Admin Server Actions', () => {
   });
 
   describe('rejectMembershipAction', () => {
-    it('manager: elimina la membresía pendiente', async () => {
+    it('manager: elimina la membresía pendiente y reabre el onboarding del worker', async () => {
       vi.mocked(getCurrentUser).mockResolvedValue(managerUser);
       vi.mocked(prisma.tenantMembership.findUnique).mockResolvedValue({
         membershipId: 'mem-1',
         tenantId: 'tenant-A',
+        userId: 'user-worker',
       } as any);
       vi.mocked(prisma.tenantMembership.delete).mockResolvedValue({} as any);
+      vi.mocked(prisma.user.updateMany).mockResolvedValue({ count: 1 } as any);
       const r = await rejectMembershipAction({ membershipId: 'mem-1' });
       expect(r.success).toBe(true);
       expect(prisma.tenantMembership.delete).toHaveBeenCalledWith({
         where: { membershipId: 'mem-1' },
       });
+      expect(prisma.user.updateMany).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: {
+            userId: 'user-worker',
+            onboardingStatus: 'awaiting_manager_approval',
+          },
+          data: { onboardingStatus: 'selecting_tenant' },
+        }),
+      );
     });
 
     it('manager de otro tenant: rechazado', async () => {
@@ -1671,11 +1682,13 @@ describe('Admin Server Actions', () => {
       vi.mocked(prisma.tenantMembership.findUnique).mockResolvedValue({
         membershipId: 'mem-1',
         tenantId: 'tenant-B',
+        userId: 'user-worker',
       } as any);
       const r = await rejectMembershipAction({ membershipId: 'mem-1' });
       expect(r.success).toBe(false);
       expect(r.error!.code).toBe('FORBIDDEN');
       expect(prisma.tenantMembership.delete).not.toHaveBeenCalled();
+      expect(prisma.user.updateMany).not.toHaveBeenCalled();
     });
   });
 });
