@@ -324,9 +324,9 @@ export const AFFILIATE_PROGRAM_STEPS: AffiliateStepItem[] = [
 ];
 
 export const SALES_AGENT_PROGRAM_TIERS: AffiliateTierItem[] = [
-	{ range: "1–10 tenants activos", commission: "3%", perks: "Pago por renovación" },
-	{ range: "11–31 tenants activos", commission: "5%", perks: "Pago por renovación" },
-	{ range: "32+ tenants activos", commission: "7%", perks: "Pago por renovación" },
+	{ range: "1–10 tenants activos", commission: "5%", perks: "Pago por renovación" },
+	{ range: "11–31 tenants activos", commission: "7%", perks: "Pago por renovación" },
+	{ range: "32+ tenants activos", commission: "10%", perks: "Pago por renovación" },
 ];
 
 export const SALES_AGENT_PROGRAM_STEPS: AffiliateStepItem[] = [

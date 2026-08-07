@@ -133,7 +133,7 @@ describe('confirmSalesAgentTenantPayment', () => {
 
     const ledgerData = ledgerCreate.mock.calls[0][0].data;
     expect(ledgerData.amountPaidUsd.toString()).toBe('35');
-    expect(ledgerData.commissionAmountUsd.toString()).toBe('1.2');
+    expect(ledgerData.commissionAmountUsd.toString()).toBe('2');
   });
 
   it('rejects an amount that differs from the server amount due', async () => {
@@ -264,7 +264,7 @@ describe('confirmSalesAgentTenantPayment', () => {
   });
 
   it('creates an additional event when the authoritative commission tier changes', async () => {
-    ledgerFindFirst.mockResolvedValue({ commissionRate: new Decimal('0.05') });
+    ledgerFindFirst.mockResolvedValue({ commissionRate: new Decimal('0.07') });
     vi.mocked(createSalesAgentEvent)
       .mockResolvedValueOnce('delivery-commission')
       .mockResolvedValueOnce('delivery-tier');
@@ -284,7 +284,7 @@ describe('confirmSalesAgentTenantPayment', () => {
     ]);
   });
 
-  it('emits the initial tier change from 0% to 3% on the first qualifying payment', async () => {
+  it('emits the initial tier change from 0% to 5% on the first qualifying payment', async () => {
     ledgerFindFirst.mockResolvedValue(null);
     vi.mocked(createSalesAgentEvent)
       .mockResolvedValueOnce('delivery-commission')
@@ -296,10 +296,10 @@ describe('confirmSalesAgentTenantPayment', () => {
       2,
       expect.objectContaining({
         eventType: 'tier_changed',
-        message: expect.stringContaining('0% a 3%'),
+        message: expect.stringContaining('0% a 5%'),
         emailPayload: {
           previousRate: '0',
-          rate: '0.03',
+          rate: '0.05',
         },
       }),
     );

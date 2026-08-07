@@ -1,7 +1,7 @@
 import { Decimal } from '@/generated/prisma/runtime/library';
 
 type DecimalInput = Decimal.Value;
-const MAX_COMMISSION_RATE = new Decimal('0.07');
+const MAX_COMMISSION_RATE = new Decimal('0.10');
 const MAX_PAYOUT_USD = new Decimal('9999999999.99');
 const MAX_EXCHANGE_RATE = new Decimal('99999999.9999');
 const MAX_PAYOUT_CUP = new Decimal('999999999999.99');
@@ -52,7 +52,7 @@ export function calculateRecurringCommission(
   assertPositive(commissionRate, 'Commission rate must be greater than zero');
 
   if (commissionRate.gt(MAX_COMMISSION_RATE)) {
-    throw new RangeError('Commission rate cannot exceed 7%');
+    throw new RangeError('Commission rate cannot exceed 10%');
   }
 
   const commissionAmountUsd = commissionBaseUsd.mul(commissionRate).toDecimalPlaces(2);

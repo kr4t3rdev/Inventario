@@ -196,7 +196,7 @@ export function LandingAffiliateProgram(): React.JSX.Element {
 
             <div className="space-y-5">
               <div className="flex items-end gap-3">
-                <span className="font-mono text-6xl font-bold leading-none text-cyan-accent">7%</span>
+                <span className="font-mono text-6xl font-bold leading-none text-cyan-accent">10%</span>
                 <span className="max-w-[15rem] pb-1 text-sm leading-5 text-muted-foreground">
                   de comisión máxima por cada renovación presencial confirmada
                 </span>

@@ -14,9 +14,9 @@ describe('landing referral program copy', () => {
       { range: '51+ ventas válidas', commission: '10%', perks: '3 perks' },
     ]);
     expect(SALES_AGENT_PROGRAM_TIERS).toEqual([
-      { range: '1–10 tenants activos', commission: '3%', perks: 'Pago por renovación' },
-      { range: '11–31 tenants activos', commission: '5%', perks: 'Pago por renovación' },
-      { range: '32+ tenants activos', commission: '7%', perks: 'Pago por renovación' },
+      { range: '1–10 tenants activos', commission: '5%', perks: 'Pago por renovación' },
+      { range: '11–31 tenants activos', commission: '7%', perks: 'Pago por renovación' },
+      { range: '32+ tenants activos', commission: '10%', perks: 'Pago por renovación' },
     ]);
   });
 

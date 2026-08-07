@@ -1,9 +1,9 @@
 import { Decimal } from '@/generated/prisma/runtime/library';
 
 const ZERO_RATE = new Decimal(0);
-const ENTRY_RATE = new Decimal('0.03');
-const GROWTH_RATE = new Decimal('0.05');
-const TOP_RATE = new Decimal('0.07');
+const ENTRY_RATE = new Decimal('0.05');
+const GROWTH_RATE = new Decimal('0.07');
+const TOP_RATE = new Decimal('0.10');
 
 /**
  * @description Calculates the current sales-agent rate from active referred tenants with a valid license.

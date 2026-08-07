@@ -39,9 +39,9 @@ describe('calculateRecurringCommission', () => {
     expect(() =>
       calculateRecurringCommission({
         amountPaidUsd: '100',
-        commissionRate: '0.08',
+        commissionRate: '0.11',
       }),
-    ).toThrow('Commission rate cannot exceed 7%');
+    ).toThrow('Commission rate cannot exceed 10%');
   });
 
   it('rejects an amount whose commission rounds to zero', () => {

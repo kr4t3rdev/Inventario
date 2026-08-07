@@ -8,11 +8,11 @@ import {
 describe('getSalesAgentCommissionRate', () => {
   it.each([
     { activeReferredTenants: 0, expectedRate: '0' },
-    { activeReferredTenants: 1, expectedRate: '0.03' },
-    { activeReferredTenants: 10, expectedRate: '0.03' },
-    { activeReferredTenants: 11, expectedRate: '0.05' },
-    { activeReferredTenants: 31, expectedRate: '0.05' },
-    { activeReferredTenants: 32, expectedRate: '0.07' },
+    { activeReferredTenants: 1, expectedRate: '0.05' },
+    { activeReferredTenants: 10, expectedRate: '0.05' },
+    { activeReferredTenants: 11, expectedRate: '0.07' },
+    { activeReferredTenants: 31, expectedRate: '0.07' },
+    { activeReferredTenants: 32, expectedRate: '0.1' },
   ])(
     'returns $expectedRate for $activeReferredTenants active referred tenants',
     ({ activeReferredTenants, expectedRate }) => {
@@ -21,9 +21,9 @@ describe('getSalesAgentCommissionRate', () => {
   );
 
   it('recalculates a lower tier when the active referred tenant count decreases', () => {
-    expect(getSalesAgentCommissionRate(32).toString()).toBe('0.07');
-    expect(getSalesAgentCommissionRate(31).toString()).toBe('0.05');
-    expect(getSalesAgentCommissionRate(10).toString()).toBe('0.03');
+    expect(getSalesAgentCommissionRate(32).toString()).toBe('0.1');
+    expect(getSalesAgentCommissionRate(31).toString()).toBe('0.07');
+    expect(getSalesAgentCommissionRate(10).toString()).toBe('0.05');
     expect(getSalesAgentCommissionRate(0).toString()).toBe('0');
   });
 });
@@ -59,7 +59,7 @@ describe('calculateSalesAgentTier', () => {
     );
 
     expect(result.activeReferredTenants).toBe(1);
-    expect(result.commissionRate.toString()).toBe('0.03');
+    expect(result.commissionRate.toString()).toBe('0.05');
   });
 
   it('drops the tier when a referred tenant license is no longer valid', () => {
@@ -69,7 +69,7 @@ describe('calculateSalesAgentTier', () => {
       licenses: [{ active: true, expiresAt: new Date('2026-07-28T00:00:00.000Z') }],
     }));
 
-    expect(calculateSalesAgentTier(referrals, now).commissionRate.toString()).toBe('0.05');
+    expect(calculateSalesAgentTier(referrals, now).commissionRate.toString()).toBe('0.07');
 
     const afterExpiration = new Date('2026-07-28T00:00:00.001Z');
     expect(
