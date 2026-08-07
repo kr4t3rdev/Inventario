@@ -1275,9 +1275,9 @@
     "semantic_hash": "d41d8cd98f00b204e9800998ecf8427e"
   },
   "prisma/seed/gastos-conceptos-seed.ts": {
-    "mtime": 1781311529.014558,
-    "ast_hash": "d5fc200cc3d9897bd180e24a452bee5f",
-    "semantic_hash": "d5fc200cc3d9897bd180e24a452bee5f"
+    "mtime": 1786057682.8798354,
+    "ast_hash": "b978f4131796fb58a246f3f7986ff1ce",
+    "semantic_hash": ""
   },
   "prisma/seed/historical-data.sql": {
     "mtime": 1778449473.746858,
@@ -1620,9 +1620,9 @@
     "semantic_hash": "73c84c3921ccb8c09cdab55dc56bf0b4"
   },
   "src/app/actions/profile.test.ts": {
-    "mtime": 1781311529.070163,
-    "ast_hash": "2dfe48629709f9232e6a6e3abe2fbf29",
-    "semantic_hash": "2dfe48629709f9232e6a6e3abe2fbf29"
+    "mtime": 1786035013.2076652,
+    "ast_hash": "fd97c42c10350d39e3fdfae63e9b3540",
+    "semantic_hash": ""
   },
   "src/app/actions/profile.ts": {
     "mtime": 1783211084.0157535,
@@ -1680,9 +1680,9 @@
     "semantic_hash": "62b0721646296b913e4dc95b99a316ef"
   },
   "src/app/admin/finanzas/page.test.tsx": {
-    "mtime": 1781311529.0878313,
-    "ast_hash": "3565c7d3f5539d8377378a0d4444503c",
-    "semantic_hash": "3565c7d3f5539d8377378a0d4444503c"
+    "mtime": 1786034941.199127,
+    "ast_hash": "9ecdf94e7d910e385b21cebdb55fe8a3",
+    "semantic_hash": ""
   },
   "src/app/admin/finanzas/page.tsx": {
     "mtime": 1783360879.0641813,
@@ -1695,8 +1695,8 @@
     "semantic_hash": ""
   },
   "src/app/admin/licencias/page.tsx": {
-    "mtime": 1786032311.413959,
-    "ast_hash": "4fc117a07fbb1f22bff14ea8385b3977",
+    "mtime": 1786057006.3376908,
+    "ast_hash": "d443d676fb0148fd4cb8b7c8010f48bb",
     "semantic_hash": ""
   },
   "src/app/admin/migraciones/page.tsx": {
@@ -1795,8 +1795,8 @@
     "semantic_hash": "f62297d836de55d966c780aed995a619"
   },
   "src/app/api/auth/login/__tests__/route.test.ts": {
-    "mtime": 1785702075.1786938,
-    "ast_hash": "cf1c908e93d15e21be039864e9a60afa",
+    "mtime": 1786060447.1163113,
+    "ast_hash": "befe7d73251bb494cc97a75504ed0527",
     "semantic_hash": ""
   },
   "src/app/api/auth/login/route.ts": {
@@ -2350,9 +2350,9 @@
     "semantic_hash": "e51e18ac9d158892743ca46351eb9292"
   },
   "src/app/api/dashboard/__tests__/stats-minimum-stock.test.ts": {
-    "mtime": 1782115592.3957884,
-    "ast_hash": "be572c041db1f84bdb5956b8bd152acb",
-    "semantic_hash": "be572c041db1f84bdb5956b8bd152acb"
+    "mtime": 1786034375.8726408,
+    "ast_hash": "5cb186a2f76dab78d53b410bada6c02e",
+    "semantic_hash": ""
   },
   "src/app/api/dashboard/stats/route.ts": {
     "mtime": 1781311529.4485054,
@@ -3950,9 +3950,9 @@
     "semantic_hash": "255f6090ca273343e29fe560f81b698f"
   },
   "src/app/busy/gastosDE/conceptos/page.tsx": {
-    "mtime": 1783211084.0241635,
-    "ast_hash": "1fa7297f61a839cec8f6df3efd95f24d",
-    "semantic_hash": "1fa7297f61a839cec8f6df3efd95f24d"
+    "mtime": 1786061350.7235363,
+    "ast_hash": "5ab66e23a2dbe7aff1958fed84596009",
+    "semantic_hash": ""
   },
   "src/app/busy/gastosDE/conceptos/update/[id]/page.tsx": {
     "mtime": 1781311529.6692185,
@@ -4440,9 +4440,9 @@
     "semantic_hash": "3a3ab3858236495a3032a0b2e42d1706"
   },
   "src/app/models/economicos.ts": {
-    "mtime": 1782834297.582124,
-    "ast_hash": "478e129396825c67c16b93f2a5613905",
-    "semantic_hash": "478e129396825c67c16b93f2a5613905"
+    "mtime": 1786057521.71054,
+    "ast_hash": "259c46063c799f0b19497a31b0c85a2b",
+    "semantic_hash": ""
   },
   "src/app/models/facturacion.ts": {
     "mtime": 1781311529.8929348,
@@ -5010,8 +5010,8 @@
     "semantic_hash": "33fec2f524a6db7db5d4292716990df0"
   },
   "src/features/admin/__tests__/actions.test.ts": {
-    "mtime": 1785964968.8992922,
-    "ast_hash": "9ae3afc8ec49ba1108dc1c069ddb792a",
+    "mtime": 1786072086.610781,
+    "ast_hash": "00680b4779842daaf193d98352ce1dca",
     "semantic_hash": ""
   },
   "src/features/admin/__tests__/license-feature-overrides.test.ts": {
@@ -5025,8 +5025,8 @@
     "semantic_hash": "b052ada4a82080b82193ff2030ba4308"
   },
   "src/features/admin/actions.ts": {
-    "mtime": 1786027464.3040051,
-    "ast_hash": "aa145ad68000e1dceda8c0deaaefdcff",
+    "mtime": 1786072029.5978885,
+    "ast_hash": "bc29437efa2a10478e2ca4877e53b9e0",
     "semantic_hash": ""
   },
   "src/features/admin/components/activity-logs-tab.tsx": {
@@ -5195,9 +5195,9 @@
     "semantic_hash": ""
   },
   "src/features/admin/server/data.test.ts": {
-    "mtime": 1781311530.0313568,
-    "ast_hash": "4095928ff1bf10066c8fd6e9706eff09",
-    "semantic_hash": "4095928ff1bf10066c8fd6e9706eff09"
+    "mtime": 1786034124.8488176,
+    "ast_hash": "9e67f60906f69e5811d6be3f6f248bd4",
+    "semantic_hash": ""
   },
   "src/features/admin/server/data.ts": {
     "mtime": 1785180505.5599465,
@@ -5495,9 +5495,9 @@
     "semantic_hash": ""
   },
   "src/features/backups/backup-engine.ts": {
-    "mtime": 1783360520.2881904,
-    "ast_hash": "b47c9dc15259d46c9fcd37feb2f9dab6",
-    "semantic_hash": "b47c9dc15259d46c9fcd37feb2f9dab6"
+    "mtime": 1786059204.3180356,
+    "ast_hash": "81b62912ce2942b3ca8cd9fb85a39700",
+    "semantic_hash": ""
   },
   "src/features/backups/components/backup-dashboard-page.tsx": {
     "mtime": 1783317451.348307,
@@ -5610,9 +5610,9 @@
     "semantic_hash": "4e0e47cf1e9eedfaafffe210dde18077"
   },
   "src/features/categorias/__tests__/actions.test.ts": {
-    "mtime": 1782572517.9841208,
-    "ast_hash": "3fbb9f39df56e8b85d57b271be474790",
-    "semantic_hash": "3fbb9f39df56e8b85d57b271be474790"
+    "mtime": 1786034573.2374592,
+    "ast_hash": "c8050670c31cc94ba2ba200b411be7cf",
+    "semantic_hash": ""
   },
   "src/features/categorias/__tests__/index.test.ts": {
     "mtime": 1781311530.2105951,
@@ -5870,9 +5870,9 @@
     "semantic_hash": "27a0ff076a2f7342bff90e00991fe478"
   },
   "src/features/contabilidad/__tests__/actions-periodos-arqueo.test.ts": {
-    "mtime": 1781311530.313619,
-    "ast_hash": "4f074726cd67d20c7768f200e1fcb54d",
-    "semantic_hash": "4f074726cd67d20c7768f200e1fcb54d"
+    "mtime": 1786033844.6132646,
+    "ast_hash": "7a7059cec80432820914c5d58db09c35",
+    "semantic_hash": ""
   },
   "src/features/contabilidad/__tests__/actions-periodos.test.ts": {
     "mtime": 1781794450.275599,
@@ -7450,49 +7450,49 @@
     "semantic_hash": "4c1815b8f7a3f85363374973f46e8237"
   },
   "src/features/gastosDE/__tests__/actions.test.ts": {
-    "mtime": 1782980269.950595,
-    "ast_hash": "1deaaa49e7abde8e674573e20a439df0",
-    "semantic_hash": "1deaaa49e7abde8e674573e20a439df0"
+    "mtime": 1786068204.5562854,
+    "ast_hash": "c86db860000e7406f0f5b6a01f356474",
+    "semantic_hash": ""
   },
   "src/features/gastosDE/actions.ts": {
-    "mtime": 1785642986.2493398,
-    "ast_hash": "9420b9b0708bc623b3682b4c998fe03d",
+    "mtime": 1786066261.8945367,
+    "ast_hash": "2d3166e5e2c9ca269c4f27c243e1d02f",
     "semantic_hash": ""
   },
   "src/features/gastosDE/components/GastoConceptoForm.tsx": {
-    "mtime": 1781480541.2691467,
-    "ast_hash": "ad9440ea59a4e89c24d7bfb04ea3f9f8",
-    "semantic_hash": "ad9440ea59a4e89c24d7bfb04ea3f9f8"
+    "mtime": 1786067429.528585,
+    "ast_hash": "9315b38933011443a73a998d3f175974",
+    "semantic_hash": ""
   },
   "src/features/gastosDE/components/GastoDEForm.tsx": {
-    "mtime": 1781480541.2699928,
-    "ast_hash": "e72a8c4093fa707ec45c36fcde56d757",
-    "semantic_hash": "e72a8c4093fa707ec45c36fcde56d757"
+    "mtime": 1786068491.8932092,
+    "ast_hash": "ba69d8b988f548f6112a0b1479dc6f5e",
+    "semantic_hash": ""
   },
   "src/features/gastosDE/components/GastoElementoForm.tsx": {
-    "mtime": 1781480541.2711737,
-    "ast_hash": "02b45ccfe1a5481864fde8c071ca5bfb",
-    "semantic_hash": "02b45ccfe1a5481864fde8c071ca5bfb"
+    "mtime": 1786067673.711109,
+    "ast_hash": "833884223679baeb97ffb960980be585",
+    "semantic_hash": ""
   },
   "src/features/gastosDE/components/VendorCombobox.tsx": {
-    "mtime": 1781311530.5429664,
-    "ast_hash": "343522c42ee7cc7c582bc1d7b12d8e86",
-    "semantic_hash": "343522c42ee7cc7c582bc1d7b12d8e86"
+    "mtime": 1786066303.7510498,
+    "ast_hash": "ff8864f5afb0f6d51cd85db7d3d57c2e",
+    "semantic_hash": ""
   },
   "src/features/gastosDE/components/gasto-conceptos-content.tsx": {
-    "mtime": 1781480541.2718203,
-    "ast_hash": "d8f2dcc13fe85ba869954fa7df0eef8a",
-    "semantic_hash": "d8f2dcc13fe85ba869954fa7df0eef8a"
+    "mtime": 1786068289.219436,
+    "ast_hash": "c0e3a3acb1cb08eff2dae34ba7562a89",
+    "semantic_hash": ""
   },
   "src/features/gastosDE/components/gasto-elementos-content.tsx": {
-    "mtime": 1781480541.272471,
-    "ast_hash": "5ce5017931fd7c505d921aef109072af",
-    "semantic_hash": "5ce5017931fd7c505d921aef109072af"
+    "mtime": 1786067000.3308778,
+    "ast_hash": "7a297a234b4333d8e1b5bec74f5d3208",
+    "semantic_hash": ""
   },
   "src/features/gastosDE/components/gastosDE-content.tsx": {
-    "mtime": 1781480541.2729676,
-    "ast_hash": "9e9a8e855f84f1fbb5a501ba9bfe478f",
-    "semantic_hash": "9e9a8e855f84f1fbb5a501ba9bfe478f"
+    "mtime": 1786068039.0104806,
+    "ast_hash": "c75c0d0bdb25ef3ee067417a9c563687",
+    "semantic_hash": ""
   },
   "src/features/gastosDE/index.ts": {
     "mtime": 1781311530.5443509,
@@ -7515,8 +7515,8 @@
     "semantic_hash": ""
   },
   "src/features/landing/components/affiliate-program.tsx": {
-    "mtime": 1785976958.8237064,
-    "ast_hash": "e5d04cfa7566329495c49b5138254d92",
+    "mtime": 1786072262.6579974,
+    "ast_hash": "4780ca7abaa3ff7c848c6239efd51d93",
     "semantic_hash": ""
   },
   "src/features/landing/components/benefits.tsx": {
@@ -7560,8 +7560,8 @@
     "semantic_hash": ""
   },
   "src/features/landing/data.ts": {
-    "mtime": 1785427428.3005161,
-    "ast_hash": "6f7b5df3c4b91eef2b459c79b42c267a",
+    "mtime": 1786072262.3529751,
+    "ast_hash": "8377e33035c68515a5c75fcdde136e19",
     "semantic_hash": ""
   },
   "src/features/landing/index.ts": {
@@ -7573,31 +7573,6 @@
     "mtime": 1785292520.223571,
     "ast_hash": "4728b1fc56eb39693016268c994474b6",
     "semantic_hash": ""
-  },
-  "src/features/licencias/__tests__/actions.test.ts": {
-    "mtime": 1781311530.5575733,
-    "ast_hash": "7da89f974653693cac7a75efe707eaf1",
-    "semantic_hash": "7da89f974653693cac7a75efe707eaf1"
-  },
-  "src/features/licencias/actions.ts": {
-    "mtime": 1781311530.5578275,
-    "ast_hash": "6e39b7d2af5d9ebea6211458b7d76d56",
-    "semantic_hash": "6e39b7d2af5d9ebea6211458b7d76d56"
-  },
-  "src/features/licencias/index.ts": {
-    "mtime": 1781311530.5580554,
-    "ast_hash": "df76e98ddfd31c08ae92dbdd168d91a2",
-    "semantic_hash": "df76e98ddfd31c08ae92dbdd168d91a2"
-  },
-  "src/features/licencias/schemas.ts": {
-    "mtime": 1781311530.5583396,
-    "ast_hash": "af5f068b7211450d3fae7ff58f376953",
-    "semantic_hash": "af5f068b7211450d3fae7ff58f376953"
-  },
-  "src/features/licencias/types.ts": {
-    "mtime": 1781311530.5588753,
-    "ast_hash": "3035e6cbb62b6e0a98a3b1c0ce19bd29",
-    "semantic_hash": "3035e6cbb62b6e0a98a3b1c0ce19bd29"
   },
   "src/features/listas-precios/__tests__/actions.test.ts": {
     "mtime": 1784400335.1356466,
@@ -8985,9 +8960,9 @@
     "semantic_hash": "e55067ccbd91239fd05f5c46eb6af17e"
   },
   "src/lib/admin/__tests__/userMetrics.test.ts": {
-    "mtime": 1781311530.9046466,
-    "ast_hash": "73f5c80cd45b31ca3a44ee6e2587c742",
-    "semantic_hash": "73f5c80cd45b31ca3a44ee6e2587c742"
+    "mtime": 1786033794.3278081,
+    "ast_hash": "f5f44114df3ad02d165791ada6c69ecf",
+    "semantic_hash": ""
   },
   "src/lib/admin/csv.ts": {
     "mtime": 1778449474.414082,
@@ -9065,9 +9040,9 @@
     "semantic_hash": "96500a93f9e8cd1caa8e5c447b509c6c"
   },
   "src/lib/api/productos-ubicacion.test.ts": {
-    "mtime": 1781311530.942569,
-    "ast_hash": "0b7e376acaaf40b4cd090a6de43d5b51",
-    "semantic_hash": "0b7e376acaaf40b4cd090a6de43d5b51"
+    "mtime": 1786034238.10613,
+    "ast_hash": "e3297f3735724976763235fab7f9aca8",
+    "semantic_hash": ""
   },
   "src/lib/api/productos-ubicacion.ts": {
     "mtime": 1781673172.1526277,
@@ -9105,9 +9080,9 @@
     "semantic_hash": "279f245ecb2aa02f43649c78e91a14eb"
   },
   "src/lib/api/reparaciones/ordenes.test.ts": {
-    "mtime": 1781311530.9637794,
-    "ast_hash": "b9115c943afb45dac79e43c1f5e3b7c0",
-    "semantic_hash": "b9115c943afb45dac79e43c1f5e3b7c0"
+    "mtime": 1786033964.5298054,
+    "ast_hash": "f8f1fb93f65364eeb42731e3bf5c603a",
+    "semantic_hash": ""
   },
   "src/lib/api/reparaciones/ordenes.ts": {
     "mtime": 1782227021.7957237,
@@ -9585,9 +9560,9 @@
     "semantic_hash": "a44722a25926f7ff697a5e8a111401d4"
   },
   "src/lib/services/demo-tenant-factory.ts": {
-    "mtime": 1783092268.0023715,
-    "ast_hash": "132fec47e3448c3121afa731ec0cbf32",
-    "semantic_hash": "132fec47e3448c3121afa731ec0cbf32"
+    "mtime": 1786056293.9636822,
+    "ast_hash": "db37a5d893c35d8da9b3308786567244",
+    "semantic_hash": ""
   },
   "src/lib/services/export-service.ts": {
     "mtime": 1778449474.4491625,
@@ -9650,8 +9625,8 @@
     "semantic_hash": ""
   },
   "src/lib/services/tenant-factory.ts": {
-    "mtime": 1785964449.402136,
-    "ast_hash": "cc544c6bd597ee668f1a2277a63c72a1",
+    "mtime": 1786056187.43665,
+    "ast_hash": "0ad756d95619ff82613ce6502f92357d",
     "semantic_hash": ""
   },
   "src/lib/services/tenant-scope.ts": {
@@ -13154,11 +13129,6 @@
     "ast_hash": "79dab6f89b7551d1563b33a18fa7b0ff",
     "semantic_hash": ""
   },
-  "prisma/migrations/__tests__/tipo-pago-tenant-migration.test.ts": {
-    "mtime": 1784775976.8532686,
-    "ast_hash": "1bc3ca2df3fd368d8e770ad1d5e2c230",
-    "semantic_hash": ""
-  },
   "prisma/seed/backfill-tipos-pago-tenant.sql": {
     "mtime": 1784772412.6518369,
     "ast_hash": "8a1a2f11624d43c175eef1526212020d",
@@ -13285,23 +13255,23 @@
     "semantic_hash": ""
   },
   "src/features/sales-agent/services/__tests__/commission-service.test.ts": {
-    "mtime": 1785978310.2091699,
-    "ast_hash": "8da46ab0c9f868e2b6fa1701fe4208d1",
+    "mtime": 1786072190.7116625,
+    "ast_hash": "d4f69e8f33b398fa18693c7625567bca",
     "semantic_hash": ""
   },
   "src/features/sales-agent/services/__tests__/tier-service.test.ts": {
-    "mtime": 1785170389.5472255,
-    "ast_hash": "aa32f3c6797ac69a204fb35fd3a629e7",
+    "mtime": 1786072895.8802347,
+    "ast_hash": "572273e1541386a02de8d8cfb4e34e28",
     "semantic_hash": ""
   },
   "src/features/sales-agent/services/commission-service.ts": {
-    "mtime": 1785978309.937121,
-    "ast_hash": "e2d93029d3871cabe3dce6fd91c5484b",
+    "mtime": 1786072112.0704012,
+    "ast_hash": "cca91546504b1c96a2f4df2f1a1e7d4d",
     "semantic_hash": ""
   },
   "src/features/sales-agent/services/tier-service.ts": {
-    "mtime": 1785170389.556285,
-    "ast_hash": "4c3b59cb3ce95929836f562809c7da95",
+    "mtime": 1786072087.6427896,
+    "ast_hash": "a8dcb9aca26dc33481950d057c48593a",
     "semantic_hash": ""
   },
   "src/features/sidebar/build-visible-groups.test.ts": {
@@ -13400,8 +13370,8 @@
     "semantic_hash": ""
   },
   "src/features/sales-agent/services/__tests__/payment-service.test.ts": {
-    "mtime": 1785976781.03835,
-    "ast_hash": "ca06e819df15ac8930343b72fcc6554b",
+    "mtime": 1786072997.8727217,
+    "ast_hash": "bc69026ae49815d0d1d060395630431a",
     "semantic_hash": ""
   },
   "src/features/sales-agent/services/payment-service.ts": {
@@ -13410,8 +13380,8 @@
     "semantic_hash": ""
   },
   "src/lib/services/__tests__/tenant-factory.test.ts": {
-    "mtime": 1785966368.6519718,
-    "ast_hash": "5afc38dfa419405ecb397ba36203a2e2",
+    "mtime": 1786054173.7853377,
+    "ast_hash": "1b7617816a097323d55060a6c7b8630c",
     "semantic_hash": ""
   },
   "src/features/admin/components/admin-users-table.test.ts": {
@@ -13535,8 +13505,8 @@
     "semantic_hash": ""
   },
   "src/features/landing/__tests__/affiliate-program-copy.test.ts": {
-    "mtime": 1785350589.2572863,
-    "ast_hash": "b5e0b944e3e9b05abb1841c825474b69",
+    "mtime": 1786072263.6016362,
+    "ast_hash": "190a0067e069e380e952a0c8288128d4",
     "semantic_hash": ""
   },
   "src/features/landing/components/__tests__/affiliate-program.test.tsx": {
@@ -13654,11 +13624,6 @@
     "ast_hash": "fc2391f2fc545d13a14a36cc266088d2",
     "semantic_hash": ""
   },
-  "prisma/migrations/__tests__/cxc-anulada-migration.test.ts": {
-    "mtime": 1785619099.5675523,
-    "ast_hash": "bb5fbf96c9e62abb63c87074d64e7c07",
-    "semantic_hash": ""
-  },
   "scripts/ops/update-plan-prices.ts": {
     "mtime": 1785964388.7132952,
     "ast_hash": "769ead0b427c2d5d84bcdb172b7732ee",
@@ -13690,8 +13655,8 @@
     "semantic_hash": ""
   },
   "src/features/admin/__tests__/renew-licencia.test.ts": {
-    "mtime": 1786015993.1611664,
-    "ast_hash": "61a290039adc45a4436995ea72cbe45d",
+    "mtime": 1786040753.9358184,
+    "ast_hash": "680d1df3bb75a52a60218d8fb1ac531f",
     "semantic_hash": ""
   },
   "src/features/auth/__tests__/neutral-spanish-password-reset.test.ts": {
@@ -13764,24 +13729,94 @@
     "ast_hash": "58cf60110f048dee2d95877db8e3d8ab",
     "semantic_hash": ""
   },
-  "openspec/changes/renovar-licencia-admin/design.md": {
+  "prisma/__tests__/cxc-anulada-migration.test.ts": {
+    "mtime": 1785619099.5675523,
+    "ast_hash": "bb5fbf96c9e62abb63c87074d64e7c07",
+    "semantic_hash": ""
+  },
+  "prisma/__tests__/tipo-pago-tenant-migration.test.ts": {
+    "mtime": 1784775976.8532686,
+    "ast_hash": "1bc3ca2df3fd368d8e770ad1d5e2c230",
+    "semantic_hash": ""
+  },
+  "prisma/migrations/20260806190000_add_tenant_scope_gastos_conceptos/migration.sql": {
+    "mtime": 1786056213.8775601,
+    "ast_hash": "e4ff12e8096c612888772220d39a48e6",
+    "semantic_hash": ""
+  },
+  "prisma/migrations/20260806210000_remove_legacy_licencia_models/migration.sql": {
+    "mtime": 1786060672.7284572,
+    "ast_hash": "7500cf04b6c966d5e9c2e8030c0bdcd5",
+    "semantic_hash": ""
+  },
+  "src/lib/__tests__/date-utils.test.ts": {
+    "mtime": 1786057077.3804536,
+    "ast_hash": "71452e2358cff33ed6d4c8ea5925c312",
+    "semantic_hash": ""
+  },
+  "src/lib/date-utils.ts": {
+    "mtime": 1786056120.35113,
+    "ast_hash": "e0f47f6a9893dc40e120a2785bafeebb",
+    "semantic_hash": ""
+  },
+  "src/lib/services/__tests__/license-duration.test.ts": {
+    "mtime": 1786055168.5432827,
+    "ast_hash": "39b3f69a51fa4777dfc6fb3a87653a43",
+    "semantic_hash": ""
+  },
+  "src/lib/services/license-duration.ts": {
+    "mtime": 1786054633.33541,
+    "ast_hash": "d3cf5ea7ec71cb25f508c18becfe2f8b",
+    "semantic_hash": ""
+  },
+  "openspec/changes/archive/2026-08-06-fix-25-pre-existing-failing-tests/design.md": {
+    "mtime": 1786051236.328745,
+    "ast_hash": "78395e39c6023d0697d112fb673688e0",
+    "semantic_hash": ""
+  },
+  "openspec/changes/archive/2026-08-06-fix-25-pre-existing-failing-tests/proposal.md": {
+    "mtime": 1786051167.7089942,
+    "ast_hash": "472a9fbefef54f412337c143d8e5a31b",
+    "semantic_hash": ""
+  },
+  "openspec/changes/archive/2026-08-06-fix-25-pre-existing-failing-tests/spec.md": {
+    "mtime": 1786051193.5944455,
+    "ast_hash": "15c860ca3fb84899bb2b6b2c73001a43",
+    "semantic_hash": ""
+  },
+  "openspec/changes/archive/2026-08-06-fix-25-pre-existing-failing-tests/tasks.md": {
+    "mtime": 1786051307.8791633,
+    "ast_hash": "d95f46b8c7fc7909e1d5db805e079aab",
+    "semantic_hash": ""
+  },
+  "openspec/changes/archive/2026-08-06-renovar-licencia-admin/design.md": {
     "mtime": 1785978081.9504132,
     "ast_hash": "6927d068f19c7341b15ad9643550c272",
     "semantic_hash": ""
   },
-  "openspec/changes/renovar-licencia-admin/proposal.md": {
+  "openspec/changes/archive/2026-08-06-renovar-licencia-admin/proposal.md": {
     "mtime": 1785977254.406098,
     "ast_hash": "d5aa4a2c7a0a6d24c31012848279458b",
     "semantic_hash": ""
   },
-  "openspec/changes/renovar-licencia-admin/specs/licencias-admin/spec.md": {
-    "mtime": 1785977675.389949,
-    "ast_hash": "bb8fc519e1bd83e9d70886ad7e79a8af",
+  "openspec/changes/archive/2026-08-06-renovar-licencia-admin/specs/licencias-admin/spec.md": {
+    "mtime": 1786041528.733657,
+    "ast_hash": "77bf25a68015b868e01b23bd55ef2207",
     "semantic_hash": ""
   },
-  "openspec/changes/renovar-licencia-admin/tasks.md": {
-    "mtime": 1785978457.3465707,
-    "ast_hash": "d249496487ce5a4b0d341fc8d0d8f29d",
+  "openspec/changes/archive/2026-08-06-renovar-licencia-admin/tasks.md": {
+    "mtime": 1786039557.3132424,
+    "ast_hash": "8b4bb5420e2748bae1a0b122043907cd",
+    "semantic_hash": ""
+  },
+  "openspec/changes/archive/2026-08-06-renovar-licencia-admin/verify-report.md": {
+    "mtime": 1786051032.0846603,
+    "ast_hash": "97eb99fd82bcd9036a94fcdb3803ef77",
+    "semantic_hash": ""
+  },
+  "openspec/specs/licencias-admin/spec.md": {
+    "mtime": 1786041581.05291,
+    "ast_hash": "77bf25a68015b868e01b23bd55ef2207",
     "semantic_hash": ""
   }
 }

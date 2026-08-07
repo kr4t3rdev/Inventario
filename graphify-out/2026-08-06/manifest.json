@@ -1695,19 +1695,14 @@
     "semantic_hash": ""
   },
   "src/app/admin/licencias/page.tsx": {
-    "mtime": 1786026488.6267073,
-    "ast_hash": "f09111bcf0ca79aadb59309e9f744996",
+    "mtime": 1786032311.413959,
+    "ast_hash": "4fc117a07fbb1f22bff14ea8385b3977",
     "semantic_hash": ""
   },
   "src/app/admin/migraciones/page.tsx": {
     "mtime": 1781480541.1744707,
     "ast_hash": "fb459659148a49b900f50e9bf37f910c",
     "semantic_hash": "fb459659148a49b900f50e9bf37f910c"
-  },
-  "src/app/admin/page.test.tsx": {
-    "mtime": 1783863366.1216886,
-    "ast_hash": "65d3f303ec35a7e4c6ba6501b13acdd5",
-    "semantic_hash": ""
   },
   "src/app/admin/page.tsx": {
     "mtime": 1783862816.463499,
@@ -1875,9 +1870,9 @@
     "semantic_hash": "370f0b9d774a1810144bf8e2d6baf851"
   },
   "src/app/api/auth/refresh/__tests__/route.test.ts": {
-    "mtime": 1781311529.189217,
-    "ast_hash": "5cc1399fe1eaaa3829496b6a4c21d2b0",
-    "semantic_hash": "5cc1399fe1eaaa3829496b6a4c21d2b0"
+    "mtime": 1786031764.8661232,
+    "ast_hash": "6bfab1d17d63e23c96a0f4f8cc23f83f",
+    "semantic_hash": ""
   },
   "src/app/api/auth/refresh/route.ts": {
     "mtime": 1781311529.1908915,
@@ -2115,9 +2110,9 @@
     "semantic_hash": "282fc85943ee4c506874c5feb10ed658"
   },
   "src/app/api/contabilidad/reconciliacion/gastos/__tests__/route.test.ts": {
-    "mtime": 1783211084.016986,
-    "ast_hash": "c544bc1308560fef14f0d9f3a8872488",
-    "semantic_hash": "c544bc1308560fef14f0d9f3a8872488"
+    "mtime": 1786033566.4046283,
+    "ast_hash": "ed5091972d31b598794d6b8d14757b38",
+    "semantic_hash": ""
   },
   "src/app/api/contabilidad/reconciliacion/gastos/historial/__tests__/route.test.ts": {
     "mtime": 1783211084.0173168,
@@ -5400,9 +5395,9 @@
     "semantic_hash": "d4df3821238c90dfd2e20b933e10e822"
   },
   "src/features/auth/__tests__/actions.test.ts": {
-    "mtime": 1781311530.0761158,
-    "ast_hash": "25053ba15d09cf672da046b45228a616",
-    "semantic_hash": "25053ba15d09cf672da046b45228a616"
+    "mtime": 1786031655.1735961,
+    "ast_hash": "e0560ecd75cf5e8916814faa00a77675",
+    "semantic_hash": ""
   },
   "src/features/auth/actions.ts": {
     "mtime": 1785175131.5822506,
