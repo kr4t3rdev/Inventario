@@ -93,6 +93,7 @@ import {
   getLicenciasAction, changePlanAction, updateLicenciaAction, updateLicenseAccountingOverridesAction, deleteLicenciaAction, convertDemoToPaidPlanAction,
   getAdminSubscriptionRevenueAction,
   getPendingMembershipsAction, approveMembershipAction, rejectMembershipAction,
+  updateTenantUserAction,
 } from '@/features/admin/actions';
 import { createTenantForUser } from '@/lib/services/tenant-factory';
 import type { AuthenticatedUser } from '@/lib/auth-middleware';
@@ -1689,6 +1690,56 @@ describe('Admin Server Actions', () => {
       expect(r.error!.code).toBe('FORBIDDEN');
       expect(prisma.tenantMembership.delete).not.toHaveBeenCalled();
       expect(prisma.user.updateMany).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('updateTenantUserAction', () => {
+    it('manager: al activar a un worker cierra su onboarding', async () => {
+      vi.mocked(getCurrentUser).mockResolvedValue(managerUser);
+      vi.mocked(prisma.tenantMembership.findFirst).mockResolvedValue({
+        membershipId: 'mem-1',
+        tenantRole: 'dependiente',
+        isActive: false,
+      } as any);
+      vi.mocked(prisma.tenantMembership.update).mockResolvedValue({} as any);
+      vi.mocked(prisma.user.update).mockResolvedValue({} as any);
+
+      const r = await updateTenantUserAction({
+        userId: 'user-worker',
+        isActive: true,
+      });
+
+      expect(r.success).toBe(true);
+      expect(prisma.tenantMembership.update).toHaveBeenCalledWith({
+        where: { membershipId: 'mem-1' },
+        data: { isActive: true },
+      });
+      expect(prisma.user.update).toHaveBeenCalledWith({
+        where: { userId: 'user-worker' },
+        data: { isActive: true, onboardingStatus: null },
+      });
+    });
+
+    it('manager: al desactivar no toca onboardingStatus', async () => {
+      vi.mocked(getCurrentUser).mockResolvedValue(managerUser);
+      vi.mocked(prisma.tenantMembership.findFirst).mockResolvedValue({
+        membershipId: 'mem-1',
+        tenantRole: 'dependiente',
+        isActive: true,
+      } as any);
+      vi.mocked(prisma.tenantMembership.update).mockResolvedValue({} as any);
+      vi.mocked(prisma.user.update).mockResolvedValue({} as any);
+
+      const r = await updateTenantUserAction({
+        userId: 'user-worker',
+        isActive: false,
+      });
+
+      expect(r.success).toBe(true);
+      expect(prisma.user.update).toHaveBeenCalledWith({
+        where: { userId: 'user-worker' },
+        data: { isActive: false },
+      });
     });
   });
 });

@@ -1579,7 +1579,10 @@ export const updateTenantUserAction = withAction(
 		if (isActive !== undefined) {
 			await prisma.user.update({
 				where: { userId },
-				data: { isActive },
+				data: {
+					isActive,
+					...(isActive ? { onboardingStatus: null } : {}),
+				},
 			});
 		}
 
@@ -2245,6 +2248,12 @@ export const addTenantMembershipAction = withAction(
 				tenantRole,
 				isActive: true,
 			},
+		});
+
+		// El usuario ya tiene acceso: cerrar cualquier onboarding pendiente
+		await prisma.user.updateMany({
+			where: { userId, onboardingStatus: { not: null } },
+			data: { onboardingStatus: null },
 		});
 
 		revalidatePath("/admin");

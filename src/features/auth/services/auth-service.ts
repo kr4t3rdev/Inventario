@@ -196,9 +196,29 @@ export const AuthService = {
       throw new ActionError('Credenciales inválidas', 'INVALID_CREDENTIALS');
     }
 
-    const midOnboarding = user.role !== 'admin' && isMidOnboarding(user.onboardingStatus);
+    const rawMidOnboarding =
+      user.role !== 'admin' && isMidOnboarding(user.onboardingStatus);
+    let midOnboarding = rawMidOnboarding;
 
-    if (!midOnboarding && user.isActive === false) {
+    // Self-heal: un worker aprobado (membership activa) no debe quedar atrapado
+    // en onboarding aunque su onboardingStatus esté desactualizado (p. ej. si fue
+    // activado por updateTenantUserAction o por la API legacy de memberships).
+    if (rawMidOnboarding) {
+      const activeMembership = await prisma.tenantMembership.findFirst({
+        where: { userId: user.userId, isActive: true },
+        select: { membershipId: true },
+      });
+      if (activeMembership) {
+        midOnboarding = false;
+        await prisma.user.updateMany({
+          where: { userId: user.userId, onboardingStatus: { not: null } },
+          data: { onboardingStatus: null },
+        });
+        user.onboardingStatus = null;
+      }
+    }
+
+    if (!rawMidOnboarding && user.isActive === false) {
       throw new ActionError(
         'Su usuario está inactivo, por favor contacte con el administrador.',
         'USER_INACTIVE',

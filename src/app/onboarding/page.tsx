@@ -36,6 +36,7 @@ type OnboardingUser = {
 	onboardingType: string | null;
 	onboardingStatus: string;
 	emailVerifiedAt: string | null;
+	hasActiveMembership: boolean;
 };
 
 type TenantItem = { tenantId: string; nombre: string; slug: string | null };
@@ -44,6 +45,7 @@ type OnboardingStep =
 	| "type"
 	| "tenant"
 	| "approval"
+	| "approved"
 	| "company"
 	| "salesAgent"
 	| "completed";
@@ -347,6 +349,7 @@ export default function OnboardingPage(): React.ReactNode {
 
 	const currentStep = useMemo<OnboardingStep>(() => {
 		if (!user) return "type";
+		if (user.hasActiveMembership) return "approved";
 		if (user.onboardingStatus === "awaiting_manager_approval")
 			return "approval";
 		if (user.onboardingStatus === "awaiting_sales_agent_approval")
@@ -758,6 +761,38 @@ export default function OnboardingPage(): React.ReactNode {
 								<p className="mt-6 text-xs text-[#7a7a7a]/60 dark:text-[#cccccc]/60">
 									Si tienes dudas, comunícate con soporte.
 								</p>
+								</motion.div>
+							)}
+						</AnimatePresence>
+
+						{/* ═══════ STEP 3b: Ya aprobado (onboarding cerrado) ═══════ */}
+						<AnimatePresence mode="wait">
+							{currentStep === "approved" && (
+								<motion.div
+									key="step-approved"
+									initial={shouldAnimate ? { opacity: 0, scale: 0.95 } : { opacity: 1, scale: 1 }}
+									animate={{ opacity: 1, scale: 1 }}
+									exit={shouldAnimate ? { opacity: 0, scale: 0.95 } : { opacity: 1, scale: 1 }}
+									transition={SPRING_DEFAULT}
+									className="text-center"
+								>
+									<div className="mx-auto mb-6 flex h-16 w-16 items-center justify-center rounded-full bg-green-500/10">
+										<CheckCircle2Icon className="h-8 w-8 text-green-600" />
+									</div>
+									<h2 className="mb-2 text-[24px] font-semibold leading-[1.14] tracking-[-0.01em] text-[#1d1d1f] dark:text-white">
+										Tu acceso fue aprobado
+									</h2>
+									<p className="mb-6 text-sm leading-relaxed text-[#7a7a7a] dark:text-[#cccccc]">
+										Ya puedes ingresar a tu espacio de trabajo y comenzar a
+										operar.
+									</p>
+									<Link
+										href="/busy/dashboard"
+										className="inline-flex items-center gap-2 rounded-xl bg-[#0066cc] px-5 py-3 text-sm font-medium text-white transition-colors hover:bg-[#0071e3]"
+									>
+										Ir a mi espacio
+										<ArrowRightIcon className="h-4 w-4" />
+									</Link>
 								</motion.div>
 							)}
 						</AnimatePresence>

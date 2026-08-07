@@ -800,7 +800,15 @@ export async function onboardingMe(request: NextRequest) {
 			orderBy: { nombre: "asc" },
 		});
 
-		return NextResponse.json({ user, tenants });
+		const activeMembershipCount = await prisma.tenantMembership.count({
+			where: { userId: payload.userId, isActive: true },
+		});
+
+		return NextResponse.json({
+			user,
+			tenants,
+			hasActiveMembership: activeMembershipCount > 0,
+		});
 	} catch (error) {
 		console.error("Error obteniendo onboarding:", error);
 		return NextResponse.json(

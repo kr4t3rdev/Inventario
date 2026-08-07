@@ -90,11 +90,12 @@ export async function PATCH(
       },
     })
 
-    // Activar al usuario
+    // Activar al usuario y cerrar el flujo de onboarding del worker
     await prisma.user.update({
       where: { userId: membership.userId },
       data: {
         isActive: true,
+        onboardingStatus: null,
       },
     })
 

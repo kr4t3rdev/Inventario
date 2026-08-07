@@ -226,6 +226,7 @@ describe('AuthService.login', () => {
     vi.mocked(prisma.user.findUnique).mockResolvedValue(user as never);
     vi.mocked(bcrypt.compare).mockResolvedValue(true as never);
     vi.mocked(prisma.user.updateMany).mockResolvedValue({ count: 1 } as never);
+    vi.mocked(prisma.tenantMembership.findFirst).mockResolvedValue(null as never);
     vi.mocked(prisma.userSession.create).mockResolvedValue({ id: 'session-pending' } as never);
     vi.mocked(prisma.userActivityLog.create).mockResolvedValue({} as never);
     vi.mocked(jwt.sign).mockReturnValueOnce('onboarding-token' as never);
@@ -237,7 +238,6 @@ describe('AuthService.login', () => {
 
     expect(result.redirectTo).toBe('/onboarding');
     expect(result.onboardingToken).toBe('onboarding-token');
-    expect(prisma.tenantMembership.findFirst).not.toHaveBeenCalled();
   });
 
   it('sends an admin with a stale mid-onboarding status to /admin, not onboarding', async () => {
@@ -292,5 +292,48 @@ describe('AuthService.login', () => {
 
     expect(result.redirectTo).toBe('/admin');
     expect(result.onboardingToken).toBeUndefined();
+  });
+
+  it('unbounces a worker already approved: active membership self-heals stale onboarding status', async () => {
+    const user = createMockUser({
+      role: 'regularUser',
+      isActive: true,
+      onboardingStatus: 'awaiting_manager_approval',
+    });
+    const licenseExpiresAt = new Date(Date.now() + 86_400_000);
+
+    vi.mocked(prisma.user.findUnique).mockResolvedValue(user as never);
+    vi.mocked(bcrypt.compare).mockResolvedValue(true as never);
+    vi.mocked(prisma.tenantMembership.findFirst).mockResolvedValue({
+      membershipId: 'mem-1',
+      tenantId: 'tenant-1',
+      tenantRole: 'dependiente',
+      isActive: true,
+    } as never);
+    vi.mocked(prisma.tenantLicense.findFirst).mockResolvedValue({
+      maxUsuarios: 10,
+      maxAlmacenes: 5,
+      maxProductos: 500,
+      expiracion: licenseExpiresAt,
+      features: { productos: true },
+    } as never);
+    vi.mocked(prisma.user.updateMany).mockResolvedValue({ count: 1 } as never);
+    vi.mocked(prisma.userSession.create).mockResolvedValue({ id: 'session-worker' } as never);
+    vi.mocked(prisma.userActivityLog.create).mockResolvedValue({} as never);
+
+    const result = await AuthService.login({
+      input: { email: 'test@example.com', password: 'secret123' },
+      client: {},
+    });
+
+    expect(result.redirectTo).toBe('/busy/dashboard');
+    expect(result.onboardingToken).toBeUndefined();
+    expect(result.user.onboardingStatus).toBeNull();
+    expect(prisma.user.updateMany).toHaveBeenCalledWith(
+      expect.objectContaining({
+        where: { userId: 'user-1', onboardingStatus: { not: null } },
+        data: { onboardingStatus: null },
+      }),
+    );
   });
 });
