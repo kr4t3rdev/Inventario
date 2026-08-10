@@ -1,0 +1,48 @@
+
+# BankAccount
+
+
+## Properties
+
+Name | Type
+------------ | -------------
+`cuentaId` | string
+`nombreBanco` | string
+`numeroCuenta` | string
+`tipoCuenta` | string
+`moneda` | string
+`saldo` | number
+`isActive` | boolean
+`pagination` | [Pagination](Pagination.md)
+
+## Example
+
+```typescript
+import type { BankAccount } from '@tcp/mobile-v1-sdk'
+
+// TODO: Update the object below with actual values
+const example = {
+  "cuentaId": null,
+  "nombreBanco": null,
+  "numeroCuenta": null,
+  "tipoCuenta": null,
+  "moneda": null,
+  "saldo": null,
+  "isActive": null,
+  "pagination": null,
+} satisfies BankAccount
+
+console.log(example)
+
+// Convert the instance to a JSON string
+const exampleJSON: string = JSON.stringify(example)
+console.log(exampleJSON)
+
+// Parse the JSON string back to an object
+const exampleParsed = JSON.parse(exampleJSON) as BankAccount
+console.log(exampleParsed)
+```
+
+[[Back to top]](#) [[Back to API list]](../README.md#api-endpoints) [[Back to Model list]](../README.md#models) [[Back to README]](../README.md)
+
+

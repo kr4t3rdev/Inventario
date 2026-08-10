@@ -1,0 +1,8 @@
+generatorName: dart
+inputSpec: docs/openapi/mobile-v1.json
+outputDir: sdks/mobile-v1/dart
+additionalProperties:
+  pubName: tcp_mobile_v1_sdk
+  pubVersion: 1.0.0
+  pubDescription: Typed TCP Mobile API v1 client for Dart and Flutter.
+  hideGenerationTimestamp: true

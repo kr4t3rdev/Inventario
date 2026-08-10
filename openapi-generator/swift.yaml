@@ -1,0 +1,11 @@
+generatorName: swift5
+inputSpec: docs/openapi/mobile-v1.json
+outputDir: sdks/mobile-v1/swift
+library: urlsession
+additionalProperties:
+  projectName: TCPMobileV1SDK
+  moduleName: TCPMobileV1SDK
+  swiftPackagePath: Sources
+  responseAs: AsyncAwait
+  useSPMFileStructure: true
+  hideGenerationTimestamp: true
