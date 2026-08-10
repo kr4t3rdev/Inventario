@@ -89,5 +89,8 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
+      - name: Smoke test committed TypeScript SDK
+        run: pnpm run mobile:smoke
+
       - name: Check OpenAPI contract
-        run: pnpm run openapi:check
+        run: pnpm run openapi:lint && pnpm run openapi:parity && pnpm run openapi:generate:check

@@ -53,9 +53,10 @@
     "seed:referral-perks": "tsx prisma/seed/referral-perks-seed.ts",
     "openapi:lint": "redocly lint mobile-v1",
     "openapi:parity": "vitest run src/lib/openapi/mobile-v1-contract.test.ts src/lib/openapi/mobile-v1-hardening.test.ts src/lib/openapi/mobile-v1-sdks.test.ts",
+    "mobile:smoke": "vitest run src/lib/openapi/mobile-v1-integration-smoke.test.ts",
     "openapi:generate": "node scripts/openapi/generate.mjs",
     "openapi:generate:check": "node scripts/openapi/check-generated.mjs",
-    "openapi:check": "pnpm run openapi:lint && pnpm run openapi:parity && pnpm run openapi:generate:check"
+    "openapi:check": "pnpm run openapi:lint && pnpm run openapi:parity && pnpm run mobile:smoke && pnpm run openapi:generate:check"
   },
   "dependencies": {
     "@clerk/nextjs": "^6.22.0",
