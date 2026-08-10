@@ -7239,24 +7239,6 @@
         "type": "string",
         "minLength": 1
       },
-      "Money": {
-        "type": "number",
-        "description": "Importe monetario en la moneda indicada por el recurso."
-      },
-      "DateRangeQuery": {
-        "type": "object",
-        "properties": {
-          "fechaInicio": {
-            "type": "string",
-            "format": "date-time"
-          },
-          "fechaFin": {
-            "type": "string",
-            "format": "date-time"
-          }
-        },
-        "additionalProperties": false
-      },
       "AccountingAdvancesIdEjecutarPostRequest": {
         "type": "object",
         "properties": {
@@ -7920,42 +7902,6 @@
         },
         "additionalProperties": false
       },
-      "DashboardStats": {
-        "type": "object",
-        "properties": {
-          "ventasHoy": {
-            "type": "number"
-          },
-          "ingresosHoy": {
-            "type": "number"
-          },
-          "productosBajoStock": {
-            "type": "integer"
-          },
-          "totalProductos": {
-            "type": "integer"
-          }
-        },
-        "additionalProperties": false
-      },
-      "AccountingMetrics": {
-        "type": "object",
-        "properties": {
-          "total": {
-            "type": "number"
-          },
-          "pendiente": {
-            "type": "number"
-          },
-          "pagado": {
-            "type": "number"
-          },
-          "vencido": {
-            "type": "number"
-          }
-        },
-        "additionalProperties": false
-      },
       "ReportResult": {
         "type": "object",
         "properties": {
@@ -7976,21 +7922,6 @@
           },
           "filtros": {
             "$ref": "#/components/schemas/ReportFilters"
-          }
-        },
-        "additionalProperties": false
-      },
-      "OperationResult": {
-        "type": "object",
-        "properties": {
-          "success": {
-            "type": "boolean"
-          },
-          "message": {
-            "type": "string"
-          },
-          "id": {
-            "type": "string"
           }
         },
         "additionalProperties": false
@@ -9137,43 +9068,6 @@
         },
         "additionalProperties": false
       },
-      "GetAccountingBankTransfersIdComprobanteResponse": {
-        "type": "object",
-        "description": "Respuesta de GET /accounting/bank-transfers/{id}/comprobante.",
-        "properties": {
-          "transferenciaId": {
-            "type": "string"
-          },
-          "cuentaOrigenId": {
-            "type": "string"
-          },
-          "cuentaDestinoId": {
-            "type": "string"
-          },
-          "montoOrigen": {
-            "type": "number"
-          },
-          "montoDestino": {
-            "type": "number"
-          },
-          "tasaCambio": {
-            "type": [
-              "number",
-              "null"
-            ]
-          },
-          "motivo": {
-            "type": "string"
-          },
-          "descripcion": {
-            "type": [
-              "string",
-              "null"
-            ]
-          }
-        },
-        "additionalProperties": false
-      },
       "GetAccountingCapitalInjectionsResponse": {
         "type": "object",
         "description": "Respuesta de GET /accounting/capital-injections.",
@@ -9510,46 +9404,6 @@
       "PutAccountingCashLoansIdResponse": {
         "type": "object",
         "description": "Respuesta de PUT /accounting/cash-loans/{id}.",
-        "properties": {
-          "id": {
-            "type": "string"
-          },
-          "clienteId": {
-            "type": "string"
-          },
-          "montoCapital": {
-            "type": "number"
-          },
-          "moneda": {
-            "type": "string"
-          },
-          "tasaInteres": {
-            "type": [
-              "number",
-              "null"
-            ]
-          },
-          "fechaVencimiento": {
-            "type": [
-              "string",
-              "null"
-            ]
-          },
-          "estado": {
-            "type": "string"
-          },
-          "cuentaBancariaId": {
-            "type": "string"
-          },
-          "pagination": {
-            "$ref": "#/components/schemas/Pagination"
-          }
-        },
-        "additionalProperties": false
-      },
-      "GetAccountingCashLoansIdComprobanteResponse": {
-        "type": "object",
-        "description": "Respuesta de GET /accounting/cash-loans/{id}/comprobante.",
         "properties": {
           "id": {
             "type": "string"

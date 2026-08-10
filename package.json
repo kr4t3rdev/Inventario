@@ -50,7 +50,10 @@
     "depgraph:mermaid:view": "depcruise src --output-type mermaid > docs/depgraph.mmd && open docs/depgraph.mermaid.html",
     "depgraph:validate": "depcruise src",
     "prepare": "husky",
-    "seed:referral-perks": "tsx prisma/seed/referral-perks-seed.ts"
+    "seed:referral-perks": "tsx prisma/seed/referral-perks-seed.ts",
+    "openapi:lint": "redocly lint mobile-v1",
+    "openapi:parity": "vitest run src/lib/openapi/mobile-v1-contract.test.ts src/lib/openapi/mobile-v1-hardening.test.ts",
+    "openapi:check": "pnpm run openapi:lint && pnpm run openapi:parity"
   },
   "dependencies": {
     "@clerk/nextjs": "^6.22.0",
@@ -138,6 +141,7 @@
     "@fast-check/vitest": "^0.2.4",
     "@playwright/test": "^1.59.1",
     "@prisma/client": "^6.19.0",
+    "@redocly/cli": "2.46.0",
     "@remotion/cli": "^4.0.417",
     "@supabase/supabase-js": "^2.86.2",
     "@tailwindcss/postcss": "^4",
