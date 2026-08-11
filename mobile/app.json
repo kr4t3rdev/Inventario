@@ -1,0 +1,12 @@
+{
+  "expo": {
+    "name": "TCP Mobile Reference",
+    "slug": "tcp-mobile-reference",
+    "version": "0.1.0",
+    "orientation": "portrait",
+    "userInterfaceStyle": "automatic",
+    "splash": {
+      "resizeMode": "contain"
+    }
+  }
+}
