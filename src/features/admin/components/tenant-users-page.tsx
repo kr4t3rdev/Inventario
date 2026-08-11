@@ -100,9 +100,9 @@ export function TenantUsersPage() {
 	}, [fetchUsers, fetchPending]);
 
 	const safeUsers = usersData?.users ?? [];
-	// @ts-expect-error
+	// @ts-expect-error El tipo de la API global no expone isActive en el shape filtrado
 	const activeUsers = safeUsers.filter((u) => u.isActive).length;
-	// @ts-expect-error
+	// @ts-expect-error El tipo de la API global no expone tenantRole en el shape filtrado
 	const adminUsers = safeUsers.filter((u) => {
 		const role = u.tenantRole ?? u.role;
 		return role === "manager";
