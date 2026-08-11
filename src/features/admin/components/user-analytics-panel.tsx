@@ -202,7 +202,7 @@ export function UserAnalyticsPanel(): React.JSX.Element {
 		<AdminReveal>
 			<div className="flex flex-col gap-3 rounded-xl border bg-card p-4 shadow-sm md:flex-row md:items-center md:justify-between">
 				<div className="flex items-center gap-3">
-					<div className="relative flex h-10 w-10 items-center justify-center rounded-xl bg-linear-to-br from-primary to-purple-600 shadow-md">
+					<div className="relative flex h-10 w-10 items-center justify-center rounded-xl bg-linear-to-br from-primary to-purple shadow-md">
 						<BarChart3 className="h-5 w-5 text-white" />
 					</div>
 					<div>

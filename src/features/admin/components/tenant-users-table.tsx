@@ -56,9 +56,9 @@ function getInitials(name: string): string {
 /** Configuración visual por rol */
 const roleStyles: Record<string, { bg: string; text: string; border: string }> = {
   manager: {
-    bg: 'bg-violet-100 dark:bg-violet-900/40',
-    text: 'text-violet-700 dark:text-violet-300',
-    border: 'border-violet-200 dark:border-violet-700',
+    bg: 'bg-purple/15 dark:bg-purple/30',
+    text: 'text-purple',
+    border: 'border-purple/30 dark:border-purple/60',
   },
 
   economico: {
@@ -123,12 +123,12 @@ export function TenantUsersTable({
       <CardHeader className="flex flex-col gap-4 border-b bg-muted/30 sm:flex-row sm:items-center sm:justify-between">
         <div className="flex items-center gap-4">
           <CardTitle>Usuarios de la Empresa</CardTitle>
-          <Button variant="ghost" size="icon" onClick={onRefresh} className="h-8 w-8">
-            <RefreshCw className="h-4 w-4" />
+          <Button variant="ghost" size="icon" onClick={onRefresh} className="h-8 w-8" aria-label="Refrescar usuarios">
+            <RefreshCw className="h-4 w-4" aria-hidden="true" />
           </Button>
         </div>
         <div className="relative w-full sm:w-72">
-          <Search className="text-muted-foreground absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 transition-colors group-focus-within:text-violet-500" />
+          <Search className="text-muted-foreground absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 transition-colors group-focus-within:text-purple" />
           <Input
             placeholder="Buscar usuarios..."
             value={search}
@@ -136,7 +136,7 @@ export function TenantUsersTable({
               setSearch(e.target.value)
               setPage(1)
             }}
-            className="h-10 rounded-xl border-slate-200 bg-slate-50 pl-10 pr-8 text-sm transition-all placeholder:text-muted-foreground/60 focus-visible:border-violet-400 focus-visible:ring-violet-500/30 dark:border-slate-800 dark:bg-slate-900/50"
+            className="h-10 rounded-xl border-slate-200 bg-slate-50 pl-10 pr-8 text-sm transition-all placeholder:text-muted-foreground/60 focus-visible:border-purple/60 focus-visible:ring-purple/30 dark:border-slate-800 dark:bg-slate-900/50"
           />
           {search && (
             <button
@@ -202,12 +202,12 @@ export function TenantUsersTable({
                           animate={{ opacity: 1, x: 0 }}
                           exit={shouldReduceMotion ? { opacity: 1 } : { opacity: 0, x: 8 }}
                           transition={{ delay: shouldReduceMotion ? 0 : index * 0.025, duration: 0.25 }}
-                          className="group border-b border-border/50 transition-colors hover:bg-violet-50/50 dark:hover:bg-violet-950/20"
+                          className="group border-b border-border/50 transition-colors hover:bg-purple/10 dark:hover:bg-purple/20"
                         >
                           <TableCell className="py-3 pl-6">
                             <div className="flex items-center gap-3">
-                              <Avatar className="h-9 w-9 border-2 border-violet-100 dark:border-violet-800">
-                                <AvatarFallback className="bg-violet-100 text-xs font-bold text-violet-700 dark:bg-violet-900 dark:text-violet-200">
+                              <Avatar className="h-9 w-9 border-2 border-purple/20 dark:border-purple/60">
+                                <AvatarFallback className="bg-purple/15 text-xs font-bold text-purple dark:bg-purple/25 dark:text-purple/60">
                                   {getInitials(user.name)}
                                 </AvatarFallback>
                               </Avatar>
@@ -251,7 +251,7 @@ export function TenantUsersTable({
                                   <Button
                                     variant="ghost"
                                     size="sm"
-                                    className="h-8 w-8 p-0 text-muted-foreground hover:text-violet-600"
+                                    className="h-8 w-8 p-0 text-muted-foreground hover:text-purple"
                                     onClick={() => onRoleChange(user)}
                                     title="Cambiar rol"
                                   >

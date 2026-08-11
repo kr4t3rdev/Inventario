@@ -58,7 +58,7 @@ import {
 	getAdminTenantsAction,
 	getGlobalUsersAction,
 } from "@/features/admin/actions";
-import { LazyMotion, m as motion, type Variants } from "framer-motion";
+import { LazyMotion, m as motion, useReducedMotion, type Variants } from "framer-motion";
 import type { AdminUsersPageData } from "../server/data";
 import { getTenantRoleLabel } from "@/lib/auth/roles";
 import {
@@ -126,6 +126,7 @@ export function AdminUsersPageClient({
 	initialData: AdminUsersPageData | null;
 }) {
 	const { user } = useAuth();
+	const shouldReduceMotion = useReducedMotion();
 	const [createDialogOpen, setCreateDialogOpen] = useState(false);
 	const [editDialogOpen, setEditDialogOpen] = useState(false);
 	const [approveDialogOpen, setApproveDialogOpen] = useState(false);
@@ -244,7 +245,7 @@ export function AdminUsersPageClient({
 				value: lockedUsers,
 				description: "Por intentos fallidos",
 				icon: AlertTriangle,
-				valueClassName: "text-violet-600 dark:text-violet-400",
+				valueClassName: "text-purple",
 			},
 			{
 				title: "Expiran Pronto",
@@ -372,13 +373,13 @@ export function AdminUsersPageClient({
 		<PageTransition className="relative min-h-screen w-full">
 			<div className="fixed inset-0 pointer-events-none overflow-hidden -z-10">
 				<motion.div
-					className="absolute top-0 left-1/4 w-96 h-96 bg-violet-500/10 rounded-full blur-3xl dark:bg-violet-500/5"
-					animate={{ scale: [1, 1.1, 1], x: [0, 20, 0], y: [0, -20, 0] }}
-					transition={{ duration: 8, repeat: Infinity, ease: "easeInOut" }}
+					className="absolute top-0 left-1/4 w-96 h-96 bg-primary/10 rounded-full blur-3xl dark:bg-primary/5"
+					animate={shouldReduceMotion ? { opacity: 0.5 } : { scale: [1, 1.1, 1], x: [0, 20, 0], y: [0, -20, 0] }}
+					transition={{ duration: 8, repeat: Infinity, ease: "easeInOut", repeatType: "loop" }}
 				/>
 				<motion.div
-					className="absolute top-0 right-1/4 w-96 h-96 bg-purple-500/10 rounded-full blur-3xl dark:bg-purple-500/5"
-					animate={{ scale: [1, 1.15, 1], x: [0, -30, 0], y: [0, 30, 0] }}
+					className="absolute top-0 right-1/4 w-96 h-96 bg-purple/10 rounded-full blur-3xl dark:bg-purple/5"
+					animate={shouldReduceMotion ? { opacity: 0.5 } : { scale: [1, 1.15, 1], x: [0, -30, 0], y: [0, 30, 0] }}
 					transition={{
 						duration: 10,
 						repeat: Infinity,
@@ -398,7 +399,7 @@ export function AdminUsersPageClient({
 						animate="visible"
 					>
 						<motion.div
-							className="relative flex h-12 w-12 items-center justify-center rounded-xl bg-linear-to-br from-violet-600 to-purple-600 shadow-lg"
+							className="relative flex h-12 w-12 items-center justify-center rounded-xl bg-linear-to-br from-primary to-purple shadow-lg"
 							variants={headerIconVariants}
 							initial="initial"
 							whileHover="hover"
@@ -407,7 +408,7 @@ export function AdminUsersPageClient({
 
 							<motion.div
 								className="absolute inset-0 rounded-xl bg-linear-to-tr from-transparent via-white/20 to-transparent"
-								animate={{ rotate: [0, 360] }}
+								animate={shouldReduceMotion ? { opacity: 0 } : { rotate: [0, 360] }}
 								transition={{ duration: 4, repeat: Infinity, ease: "linear" }}
 								style={{ mixBlendMode: "overlay" }}
 							/>
@@ -450,7 +451,7 @@ export function AdminUsersPageClient({
 							</Button>
 							<Button
 								onClick={() => setCreateDialogOpen(true)}
-								className="bg-linear-to-r from-violet-600 to-purple-600 text-white transition-all duration-200 hover:from-violet-600/90 hover:to-purple-600/90 hover:shadow-sm"
+								className="bg-linear-to-r from-primary to-purple text-white transition-all duration-200 hover:from-primary/90 hover:to-purple/90 hover:shadow-sm"
 							>
 								<Plus className="mr-2 h-4 w-4" />
 								Crear Usuario
@@ -476,8 +477,8 @@ export function AdminUsersPageClient({
 										<CardTitle className="text-sm font-medium">
 											{card.title}
 										</CardTitle>
-										<div className="rounded-md bg-linear-to-br from-violet-600/15 to-purple-600/15 p-2">
-											<Icon className="h-4 w-4 text-violet-600 dark:text-violet-400" />
+										<div className="rounded-md bg-linear-to-br from-primary/15 to-purple/15 p-2">
+											<Icon className="h-4 w-4 text-purple" />
 										</div>
 									</CardHeader>
 									<CardContent className="mb-4">
@@ -586,7 +587,7 @@ export function AdminUsersPageClient({
 
 					<div className="space-y-4 py-4">
 						{approveUser?.onboardingType === "salesAgent" ? (
-							<div className="rounded-xl border border-indigo-200 bg-indigo-50 p-4 text-sm text-indigo-800 dark:border-indigo-800 dark:bg-indigo-900/30 dark:text-indigo-200">
+							<div className="rounded-xl border border-primary/20 bg-primary/5 p-4 text-sm text-primary dark:border-primary/40 dark:bg-primary/10 dark:text-primary">
 								Se generará un código de referido único para {approveUser.name}.
 								El Gestor de Ventas no necesita empresa ni licencia.
 							</div>
@@ -716,7 +717,7 @@ export function AdminUsersPageClient({
 						<Button
 							onClick={handleAddTenant}
 							disabled={addTenantSubmitting || !addTenantId}
-							className="bg-linear-to-r from-violet-600 to-purple-600 text-white hover:from-violet-600/90 hover:to-purple-600/90"
+							className="bg-linear-to-r from-primary to-purple text-white hover:from-primary/90 hover:to-purple/90"
 						>
 							{addTenantSubmitting ? "Añadiendo..." : "Añadir"}
 						</Button>

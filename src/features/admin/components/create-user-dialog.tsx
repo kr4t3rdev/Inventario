@@ -119,10 +119,10 @@ export function CreateUserDialog({ open, onClose }: CreateUserDialogProps): Reac
   return (
     <Dialog open={open} onOpenChange={handleDialogChange}>
       <DialogContent className="overflow-hidden border bg-background sm:max-w-120">
-        <div className="absolute left-0 right-0 top-0 h-1 bg-linear-to-r from-primary via-purple-500 to-primary" />
+        <div className="absolute left-0 right-0 top-0 h-1 bg-linear-to-r from-primary via-purple to-primary" />
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
-            <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-linear-to-br from-primary to-purple-600 shadow-md">
+            <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-linear-to-br from-primary to-purple shadow-md">
               <PlusCircle className="h-4 w-4 text-white" />
             </span>
             <span className="bg-linear-to-r from-slate-900 to-slate-600 bg-clip-text text-transparent dark:from-white dark:to-slate-300">
@@ -266,7 +266,7 @@ export function CreateUserDialog({ open, onClose }: CreateUserDialogProps): Reac
             <Button
               type="submit"
               disabled={loading}
-              className="min-w-36 bg-linear-to-r from-primary to-purple-600 text-white hover:from-primary/90 hover:to-purple-600/90"
+              className="min-w-36 bg-linear-to-r from-primary to-purple text-white hover:from-primary/90 hover:to-purple/90"
             >
               {loading ? (
                 <>

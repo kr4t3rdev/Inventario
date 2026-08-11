@@ -1,7 +1,7 @@
 'use client'
 
 import { useRef } from "react"
-import { Building2, Users, Package, Archive, RefreshCw, Loader2, Search, MoreVertical, Eye, Edit, Ban, CheckCircle, Download } from "lucide-react"
+import { Building2, Users, Package, Archive, RefreshCw, Loader2, Search, MoreVertical, Eye, Download } from "lucide-react"
 import { LazyMotion, m as motion } from "framer-motion"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
@@ -75,7 +75,7 @@ export default function TenantsPage() {
   return (
     <PageTransition className="flex flex-1 flex-col gap-4 p-4 lg:p-6">
       <div className="flex items-center gap-3">
-        <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-linear-to-br from-violet-600 to-purple-600 shadow-lg">
+        <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-linear-to-br from-primary to-purple shadow-lg">
           <Building2 className="h-6 w-6 text-white" />
         </div>
         <div className="flex-1">
@@ -111,7 +111,7 @@ export default function TenantsPage() {
             <CardTitle className="text-sm font-medium text-muted-foreground">Total Tenants</CardTitle>
           </CardHeader>
           <CardContent>
-            <p className="text-3xl font-bold text-violet-600 dark:text-violet-400">
+            <p className="text-3xl font-bold text-purple">
               {isLoading ? "-" : safeTenants.length}
             </p>
           </CardContent>
@@ -150,6 +150,7 @@ export default function TenantsPage() {
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 className="pl-9"
+                aria-label="Buscar tenant"
               />
             </div>
             <div className="flex gap-2">
@@ -157,6 +158,7 @@ export default function TenantsPage() {
                 value={filterByLicense}
                 onChange={(e) => setFilterByLicense(e.target.value as any)}
                 className="rounded-md border border-input bg-background px-3 py-2 text-sm"
+                aria-label="Filtrar por licencia"
               >
                 <option value="all">Licencias reales</option>
                 <option value="active">Activas</option>
@@ -166,6 +168,7 @@ export default function TenantsPage() {
                 value={sortBy}
                 onChange={(e) => setSortBy(e.target.value as any)}
                 className="rounded-md border border-input bg-background px-3 py-2 text-sm"
+                aria-label="Ordenar por"
               >
                 <option value="name">Ordenar por nombre</option>
                 <option value="users">Ordenar por usuarios</option>
@@ -253,22 +256,14 @@ export default function TenantsPage() {
                       <td className="py-3 text-right">
                         <DropdownMenu>
                           <DropdownMenuTrigger asChild>
-                            <Button variant="ghost" size="sm">
-                              <MoreVertical className="h-4 w-4" />
+                            <Button variant="ghost" size="sm" aria-label={`Acciones de ${t.nombre}`}>
+                              <MoreVertical className="h-4 w-4" aria-hidden="true" />
                             </Button>
                           </DropdownMenuTrigger>
                           <DropdownMenuContent align="end">
                             <DropdownMenuItem onClick={() => openDetails(t)}>
-                              <Eye className="mr-2 h-4 w-4" />
+                              <Eye className="mr-2 h-4 w-4" aria-hidden="true" />
                               Ver detalles
-                            </DropdownMenuItem>
-                            <DropdownMenuItem>
-                              <Edit className="mr-2 h-4 w-4" />
-                              Editar
-                            </DropdownMenuItem>
-                            <DropdownMenuItem className="text-rose-600">
-                              <Ban className="mr-2 h-4 w-4" />
-                              Suspender
                             </DropdownMenuItem>
                           </DropdownMenuContent>
                         </DropdownMenu>
@@ -287,7 +282,7 @@ export default function TenantsPage() {
         <DialogContent className="max-w-2xl">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
-              <Building2 className="h-5 w-5 text-violet-600" />
+              <Building2 className="h-5 w-5 text-purple" />
               {selectedTenant?.nombre}
             </DialogTitle>
             <DialogDescription>
@@ -327,7 +322,7 @@ export default function TenantsPage() {
                     <CardTitle className="text-sm font-medium text-muted-foreground">Usuarios</CardTitle>
                   </CardHeader>
                   <CardContent>
-                    <p className="text-2xl font-bold text-violet-600">{selectedTenant.totalUsers}</p>
+                    <p className="text-2xl font-bold text-purple">{selectedTenant.totalUsers}</p>
                     <p className="text-xs text-muted-foreground">{selectedTenant.activeUsers} activos</p>
                   </CardContent>
                 </Card>
@@ -351,7 +346,7 @@ export default function TenantsPage() {
 
               {/* Consumo vs límites */}
               <div>
-                <h4 className="text-sm font-medium mb-2">Consumo de recursos</h4>
+                <h3 className="text-sm font-medium mb-2">Consumo de recursos</h3>
                 <div className="space-y-2">
                   <div className="flex items-center justify-between">
                     <span className="text-sm">Usuarios</span>

@@ -70,7 +70,7 @@ export function MembershipActionDialog({
             Estás por aprobar el acceso de{' '}
             <span className="font-medium">{membership?.user.name}</span> (
             {membership?.user.email}) a la empresa.
-            Seleccioná el rol que se le asignará.
+            Selecciona el rol que se le asignará.
           </DialogDescription>
         </DialogHeader>
 

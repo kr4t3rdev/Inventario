@@ -119,8 +119,8 @@ export default function SubscriptionsRevenuePage() {
       value: `$${revenue.arr.toLocaleString()}`,
       description: "Proyección anual",
       icon: TrendingUp,
-      color: "text-violet-600 dark:text-violet-400",
-      bg: "from-violet-600/15 to-purple-600/15",
+      color: "text-purple",
+      bg: "from-primary/15 to-purple/15",
     },
     {
       title: "Churn Rate",
@@ -143,8 +143,8 @@ export default function SubscriptionsRevenuePage() {
       value: revenue.activeLicenses.toString(),
       description: `${revenue.inactiveLicenses} inactivas`,
       icon: Users,
-      color: "text-violet-600",
-      bg: "from-violet-600/15 to-purple-600/15",
+      color: "text-purple",
+      bg: "from-primary/15 to-purple/15",
     },
     {
       title: "Ingreso Promedio",
@@ -188,7 +188,7 @@ export default function SubscriptionsRevenuePage() {
       <Card className="rounded-xl border bg-card/80 backdrop-blur-sm shadow-sm">
         <CardHeader>
           <CardTitle className="flex items-center gap-2 text-base">
-            <Filter className="h-4 w-4 text-violet-600" />
+            <Filter className="h-4 w-4 text-purple" />
             Filtros
           </CardTitle>
           <CardDescription>Selecciona el rango de fechas a analizar</CardDescription>
@@ -196,8 +196,9 @@ export default function SubscriptionsRevenuePage() {
         <CardContent>
           <div className="flex flex-col gap-4 md:flex-row md:items-end">
             <div className="flex-1">
-              <label className="text-sm font-medium">Período rápido</label>
+              <label htmlFor="periodo-rapido" className="text-sm font-medium">Período rápido</label>
               <select
+                id="periodo-rapido"
                 value={months}
                 onChange={(e) => setMonths(Number(e.target.value))}
                 className="w-full mt-1 rounded-md border border-input bg-background px-3 py-2 text-sm"
@@ -209,8 +210,9 @@ export default function SubscriptionsRevenuePage() {
               </select>
             </div>
             <div className="flex-1">
-              <label className="text-sm font-medium">Fecha inicio</label>
+              <label htmlFor="fecha-inicio" className="text-sm font-medium">Fecha inicio</label>
               <input
+                id="fecha-inicio"
                 type="date"
                 value={startDate}
                 onChange={(e) => setStartDate(e.target.value)}
@@ -218,8 +220,9 @@ export default function SubscriptionsRevenuePage() {
               />
             </div>
             <div className="flex-1">
-              <label className="text-sm font-medium">Fecha fin</label>
+              <label htmlFor="fecha-fin" className="text-sm font-medium">Fecha fin</label>
               <input
+                id="fecha-fin"
                 type="date"
                 value={endDate}
                 onChange={(e) => setEndDate(e.target.value)}
@@ -287,7 +290,7 @@ export default function SubscriptionsRevenuePage() {
         <Card className="rounded-xl border bg-card/80 backdrop-blur-sm shadow-sm">
           <CardHeader>
             <CardTitle className="flex items-center gap-2 text-base">
-              <BarChart3 className="h-4 w-4 text-violet-600" />
+              <BarChart3 className="h-4 w-4 text-purple" />
               Comparación Mes a Mes
             </CardTitle>
             <CardDescription>
@@ -420,7 +423,7 @@ export default function SubscriptionsRevenuePage() {
         <Card className="rounded-xl border bg-card/80 backdrop-blur-sm shadow-sm">
           <CardHeader>
             <CardTitle className="flex items-center gap-2 text-base">
-              <Users className="h-4 w-4 text-violet-600" />
+              <Users className="h-4 w-4 text-purple" />
               Tendencia de Licencias Activas
             </CardTitle>
             <CardDescription>Evolución de licencias activas</CardDescription>
@@ -442,9 +445,9 @@ export default function SubscriptionsRevenuePage() {
                     const height = (mes.licenciasActivas / maxLicenses) * 100;
                     return (
                       <div key={idx} className="flex-1 flex flex-col items-center gap-1 group">
-                        <div className="w-full bg-violet-500/20 dark:bg-violet-500/30 rounded-t-sm relative overflow-hidden" style={{ height: `${height}%`, minHeight: '2px' }}>
-                          <div className="absolute inset-0 bg-gradient-to-t from-violet-500 to-violet-400 opacity-80 group-hover:opacity-100 transition-opacity" />
-                          <div className="absolute -top-6 left-1/2 -translate-x-1/2 opacity-0 group-hover:opacity-100 transition-opacity bg-violet-600 text-white text-xs px-2 py-0.5 rounded whitespace-nowrap">
+                        <div className="w-full bg-purple/20 dark:bg-purple/30 rounded-t-sm relative overflow-hidden" style={{ height: `${height}%`, minHeight: '2px' }}>
+                          <div className="absolute inset-0 bg-gradient-to-t from-primary to-purple opacity-80 group-hover:opacity-100 transition-opacity" />
+                          <div className="absolute -top-6 left-1/2 -translate-x-1/2 opacity-0 group-hover:opacity-100 transition-opacity bg-purple text-white text-xs px-2 py-0.5 rounded whitespace-nowrap">
                             {mes.licenciasActivas}
                           </div>
                         </div>
@@ -465,7 +468,7 @@ export default function SubscriptionsRevenuePage() {
         <Card className="rounded-xl border bg-card/80 backdrop-blur-sm shadow-sm">
           <CardHeader>
             <CardTitle className="flex items-center gap-2 text-base">
-              <Activity className="h-4 w-4 text-violet-600" />
+              <Activity className="h-4 w-4 text-purple" />
               Distribución de Ingresos por Plan
             </CardTitle>
             <CardDescription>Cuánto genera cada plan mensualmente</CardDescription>
@@ -497,7 +500,7 @@ export default function SubscriptionsRevenuePage() {
                       </div>
                       <div className="h-2 overflow-hidden rounded-full bg-muted">
                         <div
-                          className="h-full rounded-full bg-gradient-to-r from-violet-500 to-purple-500"
+                          className="h-full rounded-full bg-gradient-to-r from-primary to-purple"
                           style={{ width: `${percentage}%` }}
                         />
                       </div>
@@ -549,9 +552,9 @@ export default function SubscriptionsRevenuePage() {
                 </div>
               </div>
 
-              <div className="rounded-lg border bg-violet-50/50 dark:bg-violet-950/10 p-4">
+              <div className="rounded-lg border bg-purple/10 dark:bg-purple/10 p-4">
                 <p className="text-xs text-muted-foreground">Ingreso total proyectado</p>
-                <p className="text-3xl font-bold text-violet-600 dark:text-violet-400">
+                <p className="text-3xl font-bold text-purple">
                   ${(revenue.projectedRevenue.fromExpiring + (revenue.projectedRevenue.fromNew * (revenue.mrr / Math.max(revenue.activeLicenses, 1)))).toLocaleString()}
                 </p>
                 <p className="text-xs text-muted-foreground mt-1">
@@ -567,7 +570,7 @@ export default function SubscriptionsRevenuePage() {
       <Card className="rounded-xl border bg-card/80 backdrop-blur-sm shadow-sm">
         <CardHeader>
           <CardTitle className="flex items-center gap-2 text-base">
-            <Calendar className="h-4 w-4 text-violet-600" />
+            <Calendar className="h-4 w-4 text-purple" />
             Histórico de Licencias
           </CardTitle>
           <CardDescription>
@@ -603,7 +606,7 @@ export default function SubscriptionsRevenuePage() {
                     <p className="text-xs text-muted-foreground">Ingresos del mes</p>
                   </div>
                   <div>
-                    <p className="font-bold text-violet-600 dark:text-violet-400">
+                    <p className="font-bold text-purple">
                       ${mes.mrr.toLocaleString()}
                     </p>
                     <p className="text-xs text-muted-foreground">MRR fin de mes</p>

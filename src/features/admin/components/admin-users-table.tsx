@@ -402,7 +402,7 @@ export function AdminUsersTable({
 				return (
 					<Badge
 						variant="outline"
-						className="border-violet-500/40 bg-violet-500/10 text-violet-700"
+						className="border-purple/40 bg-purple/10 text-purple"
 					>
 						<Shield className="mr-1 h-3 w-3" />
 						{getTenantRoleLabel("manager")}
@@ -608,7 +608,7 @@ export function AdminUsersTable({
 								variant="outline"
 								size="sm"
 								onClick={() => handleBulkAction("lock")}
-								className="h-9 border-violet-500/40 bg-violet-500/10 text-violet-700 hover:bg-violet-500/20"
+								className="h-9 border-purple/40 bg-purple/10 text-purple hover:bg-purple/20"
 							>
 								<Lock className="mr-1 h-3 w-3" />
 								Bloquear
@@ -764,13 +764,16 @@ export function AdminUsersTable({
 			>
 				<Table>
 					<TableHeader className="sticky top-0 bg-background z-10">
-						<TableRow className="bg-linear-to-r from-primary/10 via-purple-600/5 to-primary/10">
+						<TableRow className="bg-linear-to-r from-primary/10 via-purple/5 to-primary/10">
 							<TableHead className="w-12">
 								<button
 									type="button"
 									onClick={toggleSelectAll}
 									className="flex items-center justify-center w-full h-full hover:opacity-80 transition-opacity"
 									title={
+										isAllSelected ? "Deseleccionar todos" : "Seleccionar todos"
+									}
+									aria-label={
 										isAllSelected ? "Deseleccionar todos" : "Seleccionar todos"
 									}
 								>
@@ -844,6 +847,11 @@ export function AdminUsersTable({
 												onClick={() => toggleSelectUser(candidate.userId)}
 												className="flex items-center justify-center w-full h-full hover:opacity-80 transition-opacity"
 												title={isSelected ? "Deseleccionar" : "Seleccionar"}
+												aria-label={
+													isSelected
+														? `Deseleccionar ${candidate.name}`
+														: `Seleccionar ${candidate.name}`
+												}
 											>
 												{isSelected ? (
 													<CheckSquare className="h-4 w-4 text-primary" />
@@ -874,7 +882,7 @@ export function AdminUsersTable({
 															(candidate as any).membershipCount > 1 && (
 																<Badge
 																	variant="outline"
-																	className="border-violet-200 bg-violet-50 text-violet-700 text-[10px] px-1.5 dark:border-violet-800 dark:bg-violet-900/30 dark:text-violet-300"
+																	className="border-purple/30 bg-purple/10 text-purple text-[10px] px-1.5 dark:border-purple/60 dark:bg-purple/25 dark:text-purple/80"
 																>
 																	+
 																	{(candidate as any).membershipCount -
@@ -932,8 +940,9 @@ export function AdminUsersTable({
 															size="sm"
 															onClick={() => onApproveUser(candidate)}
 															className="border-emerald-200 bg-emerald-50 text-emerald-700 transition-all duration-200 hover:shadow-sm hover:bg-emerald-100 dark:border-emerald-800 dark:bg-emerald-900/40 dark:text-emerald-400 dark:hover:bg-emerald-900/60"
+															aria-label={`Aprobar usuario ${candidate.name}`}
 														>
-															<ShieldCheck className="h-4 w-4" />
+															<ShieldCheck className="h-4 w-4" aria-hidden="true" />
 														</Button>
 													)}
 												{onAddTenantMembership && (
@@ -942,10 +951,11 @@ export function AdminUsersTable({
 														variant="outline"
 														size="sm"
 														onClick={() => onAddTenantMembership(candidate)}
-														className="border-violet-200 bg-violet-50 text-violet-700 transition-all duration-200 hover:shadow-sm hover:bg-violet-100 dark:border-violet-800 dark:bg-violet-900/40 dark:text-violet-400 dark:hover:bg-violet-900/60"
+														className="border-purple/30 bg-purple/10 text-purple transition-all duration-200 hover:shadow-sm hover:bg-purple/15 dark:border-purple/60 dark:bg-purple/30 dark:text-purple/80 dark:hover:bg-purple/40"
 														title="Añadir a otra empresa"
+														aria-label={`Añadir ${candidate.name} a otra empresa`}
 													>
-														<Building2 className="h-4 w-4" />
+														<Building2 className="h-4 w-4" aria-hidden="true" />
 													</Button>
 												)}
 												<Button
@@ -954,8 +964,9 @@ export function AdminUsersTable({
 													size="sm"
 													onClick={() => onEditUser(candidate)}
 													className="border-slate-200 bg-white/70 transition-all duration-200 hover:shadow-sm dark:border-slate-700 dark:bg-slate-900/60"
+													aria-label={`Editar usuario ${candidate.name}`}
 												>
-													<Edit className="h-4 w-4" />
+													<Edit className="h-4 w-4" aria-hidden="true" />
 												</Button>
 												<AlertDialog>
 													<AlertDialogTrigger asChild>
@@ -963,8 +974,9 @@ export function AdminUsersTable({
 															variant="outline"
 															size="sm"
 															className="border-slate-200 bg-white/70 text-rose-600 transition-all duration-200 hover:text-rose-700 dark:border-slate-700 dark:bg-slate-900/60 dark:text-rose-400 dark:hover:text-rose-300"
+															aria-label={`Eliminar usuario ${candidate.name}`}
 														>
-															<Trash2 className="h-4 w-4" />
+															<Trash2 className="h-4 w-4" aria-hidden="true" />
 														</Button>
 													</AlertDialogTrigger>
 													<AlertDialogContent className="border-slate-200/70 bg-white/90 backdrop-blur-xl dark:border-slate-700/60 dark:bg-slate-900/90">

@@ -519,7 +519,7 @@ export default function AdminLicenciasPage() {
           (code === 'PAYMENT_ALREADY_CONFIRMED' || code === 'IDEMPOTENCY_CONFLICT')
         ) {
           toast.warning(
-            `Reintentá solo el pago con la clave: ${renewDraft.idempotencyKey ?? ''}`,
+            `Reintenta solo el pago con la clave: ${renewDraft.idempotencyKey ?? ''}`,
           )
         }
         return
@@ -892,11 +892,12 @@ export default function AdminLicenciasPage() {
                           size="icon"
                           className="h-6 w-6"
                           onClick={() => copyToClipboard(licencia.tenantLicenseId)}
+                          aria-label={`Copiar clave ${licencia.tenantLicenseId}`}
                         >
                           {copiedKey === licencia.tenantLicenseId ? (
-                            <Check className="h-3 w-3 text-success" />
+                            <Check className="h-3 w-3 text-success" aria-hidden="true" />
                           ) : (
-                            <Copy className="h-3 w-3" />
+                            <Copy className="h-3 w-3" aria-hidden="true" />
                           )}
                         </Button>
                       </div>
@@ -1303,7 +1304,7 @@ function AccountingOverridesDialog({
         <DialogHeader>
           <DialogTitle>Overrides contables por tenant</DialogTitle>
           <DialogDescription>
-            Editá excepciones solo para esta licencia sin tocar el plan base.
+            Edita excepciones solo para esta licencia sin tocar el plan base.
           </DialogDescription>
         </DialogHeader>
 
@@ -1575,8 +1576,8 @@ function CrearDemoDialog({
                     <div className="text-xs text-muted-foreground">Usuario</div>
                     <div className="font-medium">{createdDemo.email}</div>
                   </div>
-                  <Button size="icon" variant="outline" onClick={() => copyValue(createdDemo.email, 'Usuario')}>
-                    <Copy className="h-4 w-4" />
+                  <Button size="icon" variant="outline" onClick={() => copyValue(createdDemo.email, 'Usuario')} aria-label="Copiar usuario de demo">
+                    <Copy className="h-4 w-4" aria-hidden="true" />
                   </Button>
                 </div>
                 <div className="flex items-center justify-between gap-3 rounded-md border p-3">
@@ -1584,8 +1585,8 @@ function CrearDemoDialog({
                     <div className="text-xs text-muted-foreground">Contraseña temporal</div>
                     <div className="font-medium">{createdDemo.password}</div>
                   </div>
-                  <Button size="icon" variant="outline" onClick={() => copyValue(createdDemo.password, 'Contraseña')}>
-                    <Copy className="h-4 w-4" />
+                  <Button size="icon" variant="outline" onClick={() => copyValue(createdDemo.password, 'Contraseña')} aria-label="Copiar contraseña de demo">
+                    <Copy className="h-4 w-4" aria-hidden="true" />
                   </Button>
                 </div>
                 <div className="flex items-center justify-between gap-3 rounded-md border p-3">

@@ -40,7 +40,7 @@ function getActionBadge(action: string) {
     case "delete_user":
       return <Badge variant="destructive">Eliminar</Badge>
     case "role_change":
-      return <Badge variant="outline" className="border-violet-500/40 bg-violet-500/10 text-violet-700">Cambio Rol</Badge>
+      return <Badge variant="outline" className="border-purple/40 bg-purple/10 text-purple">Cambio Rol</Badge>
     case "password_change":
       return <Badge variant="outline" className="border-rose-500/40 bg-rose-500/10 text-rose-700">Contraseña</Badge>
     default:

@@ -80,8 +80,8 @@ export function PendingMembershipsTable({
       <CardHeader className="flex flex-col gap-4 border-b bg-muted/30 sm:flex-row sm:items-center sm:justify-between">
         <div className="flex items-center gap-4">
           <CardTitle>Solicitudes Pendientes</CardTitle>
-          <Button variant="ghost" size="icon" onClick={onRefresh} className="h-8 w-8">
-            <RefreshCw className="h-4 w-4" />
+          <Button variant="ghost" size="icon" onClick={onRefresh} className="h-8 w-8" aria-label="Refrescar solicitudes">
+            <RefreshCw className="h-4 w-4" aria-hidden="true" />
           </Button>
         </div>
       </CardHeader>
@@ -174,7 +174,7 @@ export function PendingMembershipsTable({
                           <Button
                             variant="default"
                             size="sm"
-                            className="h-8 gap-1.5 bg-violet-600 text-white hover:bg-violet-700"
+                            className="h-8 gap-1.5 bg-purple text-white hover:bg-purple/90"
                             onClick={() => onApprove(membership)}
                           >
                             <Check className="h-3.5 w-3.5" />

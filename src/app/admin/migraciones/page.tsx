@@ -2,7 +2,7 @@
 
 export const dynamic = 'force-dynamic';
 
-import { LazyMotion, m as motion, type Variants } from 'framer-motion';
+import { LazyMotion, m as motion, useReducedMotion, type Variants } from 'framer-motion';
 import { Shield, Info, Database, ArrowDownToLine } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
@@ -45,17 +45,18 @@ const titleVariants: Variants = {
  * @returns {JSX.Element} Panel de migración con herramientas técnicas.
  */
 export default function MigratePage(): React.JSX.Element {
+  const shouldReduceMotion = useReducedMotion();
   return (
     <PageTransition className="relative min-h-screen w-full">
       <div className="fixed inset-0 pointer-events-none overflow-hidden -z-10">
         <motion.div
-          className="absolute top-0 left-1/4 w-96 h-96 bg-violet-500/10 rounded-full blur-3xl dark:bg-violet-500/5"
-          animate={{ scale: [1, 1.1, 1], x: [0, 20, 0], y: [0, -20, 0] }}
-          transition={{ duration: 8, repeat: Infinity, ease: 'easeInOut' }}
+          className="absolute top-0 left-1/4 w-96 h-96 bg-primary/10 rounded-full blur-3xl dark:bg-primary/5"
+          animate={shouldReduceMotion ? { opacity: 0.5 } : { scale: [1, 1.1, 1], x: [0, 20, 0], y: [0, -20, 0] }}
+          transition={{ duration: 8, repeat: Infinity, ease: 'easeInOut', repeatType: 'loop' }}
         />
         <motion.div
-          className="absolute top-0 right-1/4 w-96 h-96 bg-purple-500/10 rounded-full blur-3xl dark:bg-purple-500/5"
-          animate={{ scale: [1, 1.15, 1], x: [0, -30, 0], y: [0, 30, 0] }}
+          className="absolute top-0 right-1/4 w-96 h-96 bg-purple/10 rounded-full blur-3xl dark:bg-purple/5"
+          animate={shouldReduceMotion ? { opacity: 0.5 } : { scale: [1, 1.15, 1], x: [0, -30, 0], y: [0, 30, 0] }}
           transition={{ duration: 10, repeat: Infinity, ease: 'easeInOut', delay: 1 }}
         />
       </div>
@@ -70,7 +71,7 @@ export default function MigratePage(): React.JSX.Element {
             animate="visible"
           >
             <motion.div
-              className="relative flex h-12 w-12 items-center justify-center rounded-xl bg-linear-to-br from-violet-600 to-purple-600 shadow-lg"
+              className="relative flex h-12 w-12 items-center justify-center rounded-xl bg-linear-to-br from-primary to-purple shadow-lg"
               variants={headerIconVariants}
               initial="initial"
               whileHover="hover"
@@ -78,7 +79,7 @@ export default function MigratePage(): React.JSX.Element {
               <Database className="h-6 w-6 text-white" />
               <motion.div
                 className="absolute inset-0 rounded-xl bg-linear-to-tr from-transparent via-white/20 to-transparent"
-                animate={{ rotate: [0, 360] }}
+                animate={shouldReduceMotion ? { opacity: 0 } : { rotate: [0, 360] }}
                 transition={{ duration: 4, repeat: Infinity, ease: 'linear' }}
                 style={{ mixBlendMode: 'overlay' }}
               />
@@ -134,7 +135,7 @@ export default function MigratePage(): React.JSX.Element {
             <AnimatedCard className="rounded-xl border bg-card shadow-sm">
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
-                  <Info className="h-5 w-5 text-violet-600 dark:text-violet-400" />
+                  <Info className="h-5 w-5 text-purple" />
                   Información sobre la migración
                 </CardTitle>
                 <CardDescription>
@@ -142,9 +143,9 @@ export default function MigratePage(): React.JSX.Element {
                 </CardDescription>
               </CardHeader>
               <CardContent className="space-y-4 text-sm text-muted-foreground">
-                <div className="rounded-lg border border-violet-500/20 bg-violet-500/5 p-4">
+                <div className="rounded-lg border border-purple/20 bg-purple/5 p-4">
                   <div className="flex items-center gap-2 mb-2">
-                    <ArrowDownToLine className="h-4 w-4 text-violet-600 dark:text-violet-400" />
+                    <ArrowDownToLine className="h-4 w-4 text-purple" />
                     <span className="font-medium text-foreground">¿Qué hace esta migración?</span>
                   </div>
                   <p>

@@ -19,7 +19,7 @@ import {
   Globe,
   Loader2,
 } from "lucide-react"
-import { LazyMotion, m as motion, type Variants } from "framer-motion"
+import { LazyMotion, m as motion, useReducedMotion, type Variants } from "framer-motion"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { PageTransition, StaggerContainer, StaggerItem, AnimatedCard } from "@/components/ui/animations"
@@ -100,8 +100,8 @@ export default function AdminDashboardPage(): React.JSX.Element {
       trend: null,
       description: "Empresas reales registradas en la plataforma",
       icon: Building2,
-      valueClassName: "text-violet-600 dark:text-violet-400",
-      iconBg: "from-violet-600/15 to-purple-600/15",
+      valueClassName: "text-purple",
+      iconBg: "from-primary/15 to-purple/15",
     },
     {
       title: "Usuarios del Sistema",
@@ -150,8 +150,8 @@ export default function AdminDashboardPage(): React.JSX.Element {
       trend: null,
       description: `de ${safeSystem?.licenses.total ?? 0} licencias reales`,
       icon: Shield,
-      valueClassName: "text-violet-600 dark:text-violet-400",
-      iconBg: "from-violet-600/15 to-purple-600/15",
+      valueClassName: "text-purple",
+      iconBg: "from-primary/15 to-purple/15",
     },
   ]
 
@@ -173,17 +173,19 @@ export default function AdminDashboardPage(): React.JSX.Element {
     if(r1.success) setTenants(r1.data??[]); if(r2.success) setFinance(r2.data); if(r3.success) setSystem(r3.data)
   }
 
+  const shouldReduceMotion = useReducedMotion()
+
   return (
     <PageTransition className="relative min-h-screen w-full">
       <div className="fixed inset-0 pointer-events-none overflow-hidden -z-10">
         <motion.div
-          className="absolute top-0 left-1/4 w-96 h-96 bg-violet-500/10 rounded-full blur-3xl dark:bg-violet-500/5"
-          animate={{ scale: [1, 1.1, 1], x: [0, 20, 0], y: [0, -20, 0] }}
-          transition={{ duration: 8, repeat: Infinity, ease: "easeInOut" }}
+          className="absolute top-0 left-1/4 w-96 h-96 bg-primary/10 rounded-full blur-3xl dark:bg-primary/5"
+          animate={shouldReduceMotion ? { opacity: 0.5 } : { scale: [1, 1.1, 1], x: [0, 20, 0], y: [0, -20, 0] }}
+          transition={{ duration: 8, repeat: Infinity, ease: "easeInOut", repeatType: "loop" }}
         />
         <motion.div
-          className="absolute top-0 right-1/4 w-96 h-96 bg-purple-500/10 rounded-full blur-3xl dark:bg-purple-500/5"
-          animate={{ scale: [1, 1.15, 1], x: [0, -30, 0], y: [0, 30, 0] }}
+          className="absolute top-0 right-1/4 w-96 h-96 bg-purple/10 rounded-full blur-3xl dark:bg-purple/5"
+          animate={shouldReduceMotion ? { opacity: 0.5 } : { scale: [1, 1.15, 1], x: [0, -30, 0], y: [0, 30, 0] }}
           transition={{ duration: 10, repeat: Infinity, ease: "easeInOut", delay: 1 }}
         />
       </div>
@@ -198,7 +200,7 @@ export default function AdminDashboardPage(): React.JSX.Element {
             animate="visible"
           >
             <motion.div
-              className="relative flex h-12 w-12 items-center justify-center rounded-xl bg-linear-to-br from-violet-600 to-purple-600 shadow-lg"
+              className="relative flex h-12 w-12 items-center justify-center rounded-xl bg-linear-to-br from-primary to-purple shadow-lg"
               variants={headerIconVariants}
               initial="initial"
               whileHover="hover"
@@ -206,7 +208,7 @@ export default function AdminDashboardPage(): React.JSX.Element {
               <Shield className="h-6 w-6 text-white" />
               <motion.div
                 className="absolute inset-0 rounded-xl bg-linear-to-tr from-transparent via-white/20 to-transparent"
-                animate={{ rotate: [0, 360] }}
+                animate={shouldReduceMotion ? { opacity: 0 } : { rotate: [0, 360] }}
                 transition={{ duration: 4, repeat: Infinity, ease: "linear" }}
                 style={{ mixBlendMode: "overlay" }}
               />
@@ -268,7 +270,7 @@ export default function AdminDashboardPage(): React.JSX.Element {
                   <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 mt-4">
                     <CardTitle className="text-sm font-medium">{card.title}</CardTitle>
                     <div className={`rounded-md bg-linear-to-br ${card.iconBg} p-2`}>
-                      <Icon className="h-4 w-4 text-violet-600 dark:text-violet-400" />
+                      <Icon className="h-4 w-4 text-purple" />
                     </div>
                   </CardHeader>
                   <CardContent className="mb-4">
@@ -358,7 +360,7 @@ export default function AdminDashboardPage(): React.JSX.Element {
             <Card className="rounded-xl border bg-card/80 backdrop-blur-sm shadow-sm">
               <CardHeader>
                 <CardTitle className="flex items-center gap-2 text-base">
-                  <Users className="h-4 w-4 text-violet-600" />
+                  <Users className="h-4 w-4 text-purple" />
                   Nuevos Usuarios (Últimos 7 días)
                 </CardTitle>
                 <CardDescription>Altas diarias de usuarios en tenants reales</CardDescription>
@@ -380,8 +382,8 @@ export default function AdminDashboardPage(): React.JSX.Element {
                         const height = maxUsers > 0 ? (day.usuarios / maxUsers) * 100 : 0;
                         return (
                           <div key={idx} className="flex-1 flex flex-col items-center gap-1 group">
-                            <div className="w-full bg-violet-500/20 dark:bg-violet-500/30 rounded-t-sm relative overflow-hidden" style={{ height: `${height}%` }}>
-                              <div className="absolute inset-0 bg-gradient-to-t from-violet-500 to-violet-400 opacity-80 group-hover:opacity-100 transition-opacity" />
+                            <div className="w-full bg-purple/20 dark:bg-purple/30 rounded-t-sm relative overflow-hidden" style={{ height: `${height}%` }}>
+                              <div className="absolute inset-0 bg-gradient-to-t from-primary to-purple opacity-80 group-hover:opacity-100 transition-opacity" />
                             </div>
                             <span className="text-[10px] text-muted-foreground">{day.fecha.slice(5)}</span>
                           </div>
@@ -409,7 +411,7 @@ export default function AdminDashboardPage(): React.JSX.Element {
               <Card className="rounded-xl border bg-card/80 backdrop-blur-sm shadow-sm h-full">
                 <CardHeader>
                   <CardTitle className="flex items-center gap-2 text-base">
-                    <UserCheck className="h-4 w-4 text-violet-600" />
+                    <UserCheck className="h-4 w-4 text-purple" />
                     Usuarios por Rol
                   </CardTitle>
                   <CardDescription>Distribución de usuarios reales por rol</CardDescription>
@@ -426,7 +428,7 @@ export default function AdminDashboardPage(): React.JSX.Element {
                           ? Math.round((r.count / safeSystem.users.total) * 100)
                           : 0
                         const colors: Record<string, string> = {
-                          admin: "bg-violet-500",
+                          admin: "bg-purple",
                           regularUser: "bg-slate-500",
                           dependiente: "bg-slate-500",
                         }
@@ -511,7 +513,7 @@ export default function AdminDashboardPage(): React.JSX.Element {
             <AnimatedCard className="rounded-xl border bg-card/80 backdrop-blur-sm shadow-sm">
               <CardHeader>
                 <CardTitle className="flex items-center gap-2 text-base">
-                  <Globe className="h-4 w-4 text-violet-600" />
+                  <Globe className="h-4 w-4 text-purple" />
                   Distribución de Tenants por Plan
                 </CardTitle>
                 <CardDescription>Distribución de empresas reales por plan activo</CardDescription>
@@ -544,7 +546,7 @@ export default function AdminDashboardPage(): React.JSX.Element {
             <AnimatedCard className="rounded-xl border bg-card/80 backdrop-blur-sm shadow-sm">
               <CardHeader>
                 <CardTitle className="flex items-center gap-2 text-base">
-                  <Activity className="h-4 w-4 text-violet-600" />
+                  <Activity className="h-4 w-4 text-purple" />
                   Resumen Financiero
                 </CardTitle>
                 <CardDescription>Métricas financieras consolidadas de tenants reales</CardDescription>

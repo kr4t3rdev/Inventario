@@ -49,7 +49,7 @@ export default function FinanzasPage() {
   return (
     <PageTransition className="flex flex-1 flex-col gap-4 p-4 lg:p-6">
       <div className="flex items-center gap-3">
-        <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-linear-to-br from-violet-600 to-purple-600 shadow-lg">
+        <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-linear-to-br from-primary to-purple shadow-lg">
           <Wallet className="h-6 w-6 text-white" />
         </div>
         <div className="flex-1">

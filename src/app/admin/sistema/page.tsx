@@ -20,7 +20,7 @@ export default function SistemaPage() {
   return (
     <PageTransition className="flex flex-1 flex-col gap-4 p-4 lg:p-6">
       <div className="flex items-center gap-3">
-        <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-linear-to-br from-violet-600 to-purple-600 shadow-lg">
+        <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-linear-to-br from-primary to-purple shadow-lg">
           <Activity className="h-6 w-6 text-white" />
         </div>
         <div className="flex-1">
@@ -104,7 +104,7 @@ export default function SistemaPage() {
         <Card className="rounded-xl border bg-card/80 backdrop-blur-sm shadow-sm">
           <CardHeader>
             <CardTitle className="flex items-center gap-2 text-base">
-              <Shield className="h-4 w-4 text-violet-600" />
+              <Shield className="h-4 w-4 text-purple" />
               Distribución de Roles
             </CardTitle>
             <CardDescription>Usuarios reales del sistema por tipo de rol</CardDescription>
@@ -121,7 +121,7 @@ export default function SistemaPage() {
                     ? Math.round((r.count / safeSystem.users.total) * 100)
                     : 0
                   const colors: Record<string, string> = {
-                    admin: "bg-violet-500",
+                    admin: "bg-purple",
                     regularUser: "bg-slate-500",
                     dependiente: "bg-slate-500",
                   }

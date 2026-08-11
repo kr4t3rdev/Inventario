@@ -86,7 +86,7 @@ export function UserMonitoringPanel() {
         <CardHeader>
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
-              <div className="relative flex h-10 w-10 items-center justify-center rounded-xl bg-linear-to-br from-primary to-purple-600 shadow-md">
+              <div className="relative flex h-10 w-10 items-center justify-center rounded-xl bg-linear-to-br from-primary to-purple shadow-md">
                 <Activity className="h-5 w-5 text-white" />
               </div>
               <div>

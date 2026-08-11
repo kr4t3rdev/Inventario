@@ -8,7 +8,7 @@ import {
 	ChevronRight,
 } from "lucide-react";
 import { toast } from "sonner";
-import { LazyMotion, m as motion } from "framer-motion";
+import { LazyMotion, m as motion, useReducedMotion } from "framer-motion";
 import Link from "next/link";
 
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -51,6 +51,7 @@ interface PendingMembership {
  */
 export function TenantUsersPage() {
 	const { user } = useAuth();
+	const shouldReduceMotion = useReducedMotion();
 	const [activeTab, setActiveTab] = useState("usuarios");
 	const [selectedMembership, setSelectedMembership] =
 		useState<PendingMembership | null>(null);
@@ -229,13 +230,13 @@ export function TenantUsersPage() {
 		<div className="relative min-h-screen w-full">
 			<div className="fixed inset-0 pointer-events-none overflow-hidden -z-10">
 				<motion.div
-					className="absolute top-0 left-1/4 w-96 h-96 bg-violet-500/10 rounded-full blur-3xl dark:bg-violet-500/5"
-					animate={{ scale: [1, 1.1, 1], x: [0, 20, 0], y: [0, -20, 0] }}
-					transition={{ duration: 8, repeat: Infinity, ease: "easeInOut" }}
+					className="absolute top-0 left-1/4 w-96 h-96 bg-primary/10 rounded-full blur-3xl dark:bg-primary/5"
+					animate={shouldReduceMotion ? { opacity: 0.5 } : { scale: [1, 1.1, 1], x: [0, 20, 0], y: [0, -20, 0] }}
+					transition={{ duration: 8, repeat: Infinity, ease: "easeInOut", repeatType: "loop" }}
 				/>
 				<motion.div
-					className="absolute top-0 right-1/4 w-96 h-96 bg-purple-500/10 rounded-full blur-3xl dark:bg-purple-500/5"
-					animate={{ scale: [1, 1.15, 1], x: [0, -30, 0], y: [0, 30, 0] }}
+					className="absolute top-0 right-1/4 w-96 h-96 bg-purple/10 rounded-full blur-3xl dark:bg-purple/5"
+					animate={shouldReduceMotion ? { opacity: 0.5 } : { scale: [1, 1.15, 1], x: [0, -30, 0], y: [0, 30, 0] }}
 					transition={{
 						duration: 10,
 						repeat: Infinity,
@@ -249,7 +250,7 @@ export function TenantUsersPage() {
 				{/* Header */}
 				<div className="flex items-center justify-between px-4 lg:px-6">
 					<div className="flex items-center gap-3">
-						<div className="relative flex h-12 w-12 items-center justify-center rounded-xl bg-linear-to-br from-violet-600 to-purple-600 shadow-lg">
+						<div className="relative flex h-12 w-12 items-center justify-center rounded-xl bg-linear-to-br from-primary to-purple shadow-lg">
 							<Users className="h-6 w-6 text-white" />
 
 						</div>

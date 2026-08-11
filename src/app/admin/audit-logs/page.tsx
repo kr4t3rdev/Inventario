@@ -70,7 +70,7 @@ export default function AuditLogsPage() {
     if (actionLower.includes("create") || actionLower.includes("crear")) return "bg-green-500";
     if (actionLower.includes("update") || actionLower.includes("actualizar")) return "bg-blue-500";
     if (actionLower.includes("delete") || actionLower.includes("eliminar")) return "bg-red-500";
-    if (actionLower.includes("login")) return "bg-purple-500";
+    if (actionLower.includes("login")) return "bg-purple";
     return "bg-gray-500";
   };
 
@@ -80,7 +80,7 @@ export default function AuditLogsPage() {
     <PageTransition className="flex flex-1 flex-col gap-4 p-4 lg:p-6">
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-3">
-          <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-gradient-to-br from-violet-600 to-purple-600 shadow-lg">
+          <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-gradient-to-br from-primary to-purple shadow-lg">
             <FileText className="h-6 w-6 text-white" />
           </div>
           <div>
@@ -109,6 +109,7 @@ export default function AuditLogsPage() {
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 className="pl-9"
+                aria-label="Buscar en logs de auditoría"
               />
             </div>
             <div className="flex gap-2">
@@ -116,6 +117,7 @@ export default function AuditLogsPage() {
                 value={filterAction}
                 onChange={(e) => setFilterAction(e.target.value)}
                 className="rounded-md border border-input bg-background px-3 py-2 text-sm"
+                aria-label="Filtrar por acción"
               >
                 <option value="all">Todas las acciones</option>
                 {uniqueActions.map(action => (
