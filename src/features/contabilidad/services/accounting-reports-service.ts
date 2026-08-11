@@ -1,5 +1,6 @@
 import { prisma } from '@/lib/prisma';
 import { AccountingAccountsService } from '@/features/contabilidad/services/accounting-accounts-service';
+import { endOfDay } from '@/lib/date-range';
 
 interface CuentaBancariaResumen {
   cuentaId: string;
@@ -52,7 +53,7 @@ interface ExchangeImpactConversion {
 function buildDateFilter(fechaInicio?: string | null, fechaFin?: string | null): Record<string, Date> {
   const dateFilter: Record<string, Date> = {};
   if (fechaInicio) dateFilter.gte = new Date(fechaInicio);
-  if (fechaFin) dateFilter.lte = new Date(fechaFin);
+  if (fechaFin) dateFilter.lte = endOfDay(fechaFin);
   return dateFilter;
 }
 
@@ -354,6 +355,7 @@ export const AccountingReportsService = {
 
     const cuentasBancarias = await prisma.cuentaBancaria.findMany({
       where: {
+        tenantId: params.tenantId,
         isActive: true,
         ...(cuentaId ? { cuentaId } : {}),
       },
@@ -374,7 +376,14 @@ export const AccountingReportsService = {
       return acc;
     }, {});
 
-    const accountFilter = cuentaId ? { cuentaId } : {};
+    const accountFilter = {
+      tenantId: params.tenantId,
+      ...(cuentaId ? { cuentaId } : {}),
+    };
+    const accountRelationFilter = {
+      cuentaBancaria: { tenantId: params.tenantId },
+      ...(cuentaId ? { cuentaId } : {}),
+    };
 
     const [reconciliacionesVentas, reconciliacionesServicios, reconciliacionesGastos, transferencias, ajustesBancarios, inyeccionesCapital, pagosDeuda] = await Promise.all([
       prisma.reconciliacionVenta.findMany({
@@ -395,6 +404,7 @@ export const AccountingReportsService = {
       }),
       prisma.transferenciaBancaria.findMany({
         where: {
+          tenantId: params.tenantId,
           ...(Object.keys(dateFilter).length > 0 ? { fechaTransferencia: dateFilter } : {}),
           ...(cuentaId ? { OR: [{ cuentaOrigenId: cuentaId }, { cuentaDestinoId: cuentaId }] } : {}),
         },
@@ -404,11 +414,11 @@ export const AccountingReportsService = {
         select: { tipo: true, monto: true, moneda: true, montoConvertido: true },
       }),
       prisma.inyeccionCapital.findMany({
-        where: { ...accountFilter, ...(Object.keys(dateFilter).length > 0 ? { createdAt: dateFilter } : {}) },
+        where: { ...accountRelationFilter, ...(Object.keys(dateFilter).length > 0 ? { createdAt: dateFilter } : {}) },
         select: { tipo: true, montoRecibido: true, moneda: true },
       }),
       prisma.pagoDeuda.findMany({
-        where: { ...accountFilter, ...(Object.keys(dateFilter).length > 0 ? { fechaPago: dateFilter } : {}) },
+        where: { ...accountRelationFilter, ...(Object.keys(dateFilter).length > 0 ? { fechaPago: dateFilter } : {}) },
         select: { montoPagado: true, cuentaBancaria: { select: { moneda: true } } },
       }),
     ]);
@@ -541,7 +551,14 @@ export const AccountingReportsService = {
     const moneda = params.moneda ?? null;
     const page = params.page ?? 1;
     const limit = params.limit ?? 10;
-    const accountFilter = cuentaId ? { cuentaId } : {};
+    const accountFilter = {
+      tenantId: params.tenantId,
+      ...(cuentaId ? { cuentaId } : {}),
+    };
+    const accountRelationFilter = {
+      cuentaBancaria: { tenantId: params.tenantId },
+      ...(cuentaId ? { cuentaId } : {}),
+    };
 
     const [ventasMovimientos, serviciosMovimientos, gastosMovimientos, transferenciasMovimientos, ajustesMovimientos, inyeccionesMovimientos, pagosDeudaMovimientos] = await Promise.all([
       prisma.reconciliacionVenta.findMany({
@@ -565,7 +582,16 @@ export const AccountingReportsService = {
         select: { reconciliacionId: true, monto: true, moneda: true, montoConvertido: true, tasaCambio: true, tipoGasto: true, descripcion: true, periodo: true, fechaReconciliacion: true, observaciones: true, reconciliadoPor: true, cuentaBancaria: { select: { nombreBanco: true, numeroCuenta: true } }, tipoPago: { select: { nombre: true } } }, orderBy: { fechaReconciliacion: 'desc' },
       }),
       prisma.transferenciaBancaria.findMany({
-        where: { ...(Object.keys(dateFilter).length > 0 ? { fechaTransferencia: dateFilter } : {}), ...(cuentaId ? { OR: [{ cuentaOrigenId: cuentaId }, { cuentaDestinoId: cuentaId }] } : {}), ...(moneda ? { OR: [{ monedaOrigen: moneda }, { monedaDestino: moneda }] } : {}) },
+        where: {
+          tenantId: params.tenantId,
+          ...(Object.keys(dateFilter).length > 0 ? { fechaTransferencia: dateFilter } : {}),
+          ...((cuentaId || moneda) ? {
+            AND: [
+              ...(cuentaId ? [{ OR: [{ cuentaOrigenId: cuentaId }, { cuentaDestinoId: cuentaId }] }] : []),
+              ...(moneda ? [{ OR: [{ monedaOrigen: moneda }, { monedaDestino: moneda }] }] : []),
+            ],
+          } : {}),
+        },
         select: { transferenciaId: true, numeroComprobante: true, montoOrigen: true, monedaOrigen: true, montoDestino: true, monedaDestino: true, tasaCambio: true, motivo: true, descripcion: true, fechaTransferencia: true, cuentaOrigen: { select: { nombreBanco: true, numeroCuenta: true } }, cuentaDestino: { select: { nombreBanco: true, numeroCuenta: true } } }, orderBy: { fechaTransferencia: 'desc' },
       }),
       prisma.ajusteBancario.findMany({
@@ -573,11 +599,11 @@ export const AccountingReportsService = {
         select: { ajusteId: true, tipo: true, monto: true, moneda: true, montoConvertido: true, tasaCambio: true, descripcion: true, motivo: true, realizadoPor: true, createdAt: true, cuentaBancaria: { select: { nombreBanco: true, numeroCuenta: true } } }, orderBy: { createdAt: 'desc' },
       }),
       prisma.inyeccionCapital.findMany({
-        where: { ...accountFilter, ...(Object.keys(dateFilter).length > 0 ? { createdAt: dateFilter } : {}), ...(moneda ? { moneda } : {}) },
+        where: { ...accountRelationFilter, ...(Object.keys(dateFilter).length > 0 ? { createdAt: dateFilter } : {}), ...(moneda ? { moneda } : {}) },
         select: { id: true, tipo: true, montoRecibido: true, moneda: true, descripcion: true, socio: true, entidadPrestamista: true, createdAt: true, cuentaBancaria: { select: { nombreBanco: true, numeroCuenta: true } } }, orderBy: { createdAt: 'desc' },
       }),
       prisma.pagoDeuda.findMany({
-        where: { ...accountFilter, ...(Object.keys(dateFilter).length > 0 ? { fechaPago: dateFilter } : {}), ...(moneda ? { cuentaBancaria: { moneda } } : {}) },
+        where: { ...accountRelationFilter, ...(Object.keys(dateFilter).length > 0 ? { fechaPago: dateFilter } : {}), cuentaBancaria: { tenantId: params.tenantId, ...(moneda ? { moneda } : {}) } },
         select: { id: true, montoPagado: true, fechaPago: true, comprobante: true, observaciones: true, cuentaBancaria: { select: { nombreBanco: true, numeroCuenta: true, moneda: true } }, inyeccion: { select: { entidadPrestamista: true, tipo: true } } }, orderBy: { fechaPago: 'desc' },
       }),
     ]);

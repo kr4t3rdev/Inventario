@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { LazyMotion, m as motion, useReducedMotion, AnimatePresence, useSpring, useTransform } from 'framer-motion';
 import {
   AlertCircle,
@@ -33,10 +33,11 @@ import {
   getHistorialReconciliacionGastosAction,
 } from '@/features/contabilidad/actions-reconciliacion';
 import { getPrestamosCashStatsAction } from '@/features/contabilidad/actions-prestamos-cash';
-import { getMonedasAction, getTasasActualesAction } from '@/features/contabilidad/actions-exchange';
+import { getMonedasAction } from '@/features/contabilidad/actions-exchange';
 import { getResumenFinancieroAction } from '@/features/contabilidad/actions';
 import { getResumenAnticiposAction } from '@/features/contabilidad/actions-anticipos';
 import { formatCurrency } from '@/features/contabilidad/utils/contabilidadUtils';
+import { buildGastosPendientesFilters, getSaldoNetoTotal } from '@/features/contabilidad/components/resumen-financiero-utils';
 import { useAuth } from '@/contexts/auth-context';
 import { cn } from '@/lib/utils';
 
@@ -45,7 +46,6 @@ import type {
   GastoPendiente,
   Moneda,
   ReconciliacionVenta,
-  TasaCambio,
   TransferenciaBancaria,
   Venta,
   VentaServicio,
@@ -89,6 +89,7 @@ import {
 
 // --- Animated Number Component ---
 function AnimatedNumber({ value, currency = '', prefix = '', isInteger = false }: { value: number; currency?: string; prefix?: string; isInteger?: boolean }) {
+  const shouldReduceMotion = useReducedMotion();
   const spring = useSpring(0, { stiffness: 50, damping: 15 });
   const display = useTransform(spring, (current) => {
     // Format the number as currency
@@ -100,8 +101,12 @@ function AnimatedNumber({ value, currency = '', prefix = '', isInteger = false }
   });
 
   useEffect(() => {
-    spring.set(value);
-  }, [spring, value]);
+    if (shouldReduceMotion) {
+      spring.jump(value);
+    } else {
+      spring.set(value);
+    }
+  }, [shouldReduceMotion, spring, value]);
 
   return <motion.span>{display}</motion.span>;
 }
@@ -160,6 +165,8 @@ export function CacheRefreshButton({
   isLoading = false,
   className = '',
 }: CacheRefreshButtonProps): React.JSX.Element {
+  const shouldReduceMotion = useReducedMotion();
+
   return (
     <Button
       variant="outline"
@@ -174,14 +181,14 @@ export function CacheRefreshButton({
       )}
     >
       <motion.div
-        animate={isLoading ? { rotate: 360 } : { rotate: 0 }}
-        transition={{ duration: 1, repeat: isLoading ? Infinity : 0, ease: "linear" }}
+        animate={isLoading && !shouldReduceMotion ? { rotate: 360 } : { rotate: 0 }}
+        transition={{ duration: 1, repeat: isLoading && !shouldReduceMotion ? Infinity : 0, ease: "linear" }}
         className="mr-2"
       >
         <RefreshCw className="h-4 w-4" />
       </motion.div>
       <span className="relative z-10">{isLoading ? 'Actualizando...' : 'Actualizar'}</span>
-      {isLoading && (
+      {isLoading && !shouldReduceMotion && (
         <motion.div
           className="absolute inset-0 bg-blue-500/10 dark:bg-blue-400/10"
           initial={{ width: "0%" }}
@@ -208,13 +215,17 @@ export function ResumenFinanciero({
 }: ResumenFinancieroProps): React.JSX.Element | null {
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [refreshKey, setRefreshKey] = useState(0);
+  const refreshRequestRef = useRef(false);
   const shouldReduceMotion = useReducedMotion();
   const { user } = useAuth();
   const hasPrestamosCash = user?.planFeatures?.['prestamos-cash'] === true;
   const hasAnticipos = user?.planFeatures?.['anticipos'] === true;
 
   // --- Animation Variants ---
-  const containerVariants = {
+  const containerVariants = shouldReduceMotion ? {
+    hidden: { opacity: 1 },
+    show: { opacity: 1 },
+  } : {
     hidden: { opacity: 0 },
     show: {
       opacity: 1,
@@ -225,7 +236,10 @@ export function ResumenFinanciero({
     }
   };
 
-  const itemVariants = {
+  const itemVariants = shouldReduceMotion ? {
+    hidden: { opacity: 1, y: 0 },
+    show: { opacity: 1, y: 0 },
+  } : {
     hidden: { opacity: 0, y: 20 },
     show: {
       opacity: 1,
@@ -238,7 +252,9 @@ export function ResumenFinanciero({
     }
   };
 
-  const cardHoverVariants = {
+  const cardHoverVariants = shouldReduceMotion ? {
+    hover: {},
+  } : {
     hover: { 
       y: -5, 
       boxShadow: "0 10px 30px -10px rgba(0,0,0,0.1)",
@@ -251,7 +267,6 @@ export function ResumenFinanciero({
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<any>(null);
   const [monedasData, setMonedasData] = useState<any>(null);
-  const [tasasActualesData, setTasasActualesData] = useState<any>(null);
   const [historyVentas, setHistoryVentas] = useState<any>(null);
   const [ventasData, setVentasData] = useState<any>(null);
   const [serviciosHistoryData, setServiciosHistoryData] = useState<any>(null);
@@ -265,17 +280,36 @@ export function ResumenFinanciero({
     getResumenFinancieroAction({
       fechaInicio, fechaFin, cuentaId
     }).then(r => {
-      if (r.success) { setResumen(r.data); setIsLoading(false) }
-      else { setError(r.error); setIsLoading(false) }
-    }).catch(e => { setError(e); setIsLoading(false) })
+      if (r.success) {
+        setResumen(r.data);
+        setIsLoading(false);
+        if (refreshRequestRef.current) {
+          refreshRequestRef.current = false;
+          setIsRefreshing(false);
+          toast.success('Resumen financiero actualizado');
+        }
+      } else {
+        setError(r.error);
+        setIsLoading(false);
+        if (refreshRequestRef.current) {
+          refreshRequestRef.current = false;
+          setIsRefreshing(false);
+          toast.error('Error al actualizar los datos');
+        }
+      }
+    }).catch(e => {
+      setError(e);
+      setIsLoading(false);
+      if (refreshRequestRef.current) {
+        refreshRequestRef.current = false;
+        setIsRefreshing(false);
+        toast.error('Error al actualizar los datos');
+      }
+    })
   }, [fechaInicio, fechaFin, cuentaId, refreshKey])
 
   useEffect(() => {
     getMonedasAction().then(r => { if (r.success) setMonedasData(r.data) })
-  }, [refreshKey])
-
-  useEffect(() => {
-    getTasasActualesAction().then(r => { if (r.success) setTasasActualesData(r.data) })
   }, [refreshKey])
 
   // --- Helper Data Fetching for Metrics ---
@@ -300,9 +334,16 @@ export function ResumenFinanciero({
   }, [fechaInicio, fechaFin, limit, page, refreshKey])
 
   useEffect(() => {
-    getGastosPendientesAction({ fechaDesde: fechaFin, fechaHasta: fechaFin, tipoGasto, soloNoReconciliados, page, limit })
+    getGastosPendientesAction(buildGastosPendientesFilters({
+      fechaInicio,
+      fechaFin,
+      tipoGasto,
+      soloNoReconciliados,
+      page,
+      limit,
+    }))
       .then(r => { if (r.success) setGastosData(r.data) })
-  }, [fechaFin, tipoGasto, soloNoReconciliados, page, limit, refreshKey])
+  }, [fechaInicio, fechaFin, tipoGasto, soloNoReconciliados, page, limit, refreshKey])
 
   useEffect(() => {
     getHistorialReconciliacionGastosAction({ fechaInicio, fechaFin, cuentaId, tipoGasto })
@@ -328,8 +369,6 @@ export function ResumenFinanciero({
   }, [fechaInicio, fechaFin, refreshKey, hasAnticipos])
 
   const monedas = Array.isArray(monedasData) ? monedasData : [];
-  const tasasActuales = tasasActualesData?.tasas || [];
-
   // --- Calculations ---
   const ventasPend = ventasData?.ventas?.length || 0;
   const ventasCompleted = historyVentas?.reconciliaciones?.length || 0;
@@ -347,16 +386,10 @@ export function ResumenFinanciero({
   const gastosCompleted = gastosHistoryData?.reconciliaciones?.length || 0;
 
   // --- Refresh Handler ---
-  const handleRefresh = async (): Promise<void> => {
-    try {
-      setIsRefreshing(true);
-      setRefreshKey(k => k + 1);
-      toast.success('Datos actualizados correctamente');
-    } catch {
-      toast.error('Error al actualizar los datos');
-    } finally {
-      setIsRefreshing(false);
-    }
+  const handleRefresh = (): void => {
+    refreshRequestRef.current = true;
+    setIsRefreshing(true);
+    setRefreshKey(k => k + 1);
   };
 
   // --- Loading State ---
@@ -422,8 +455,8 @@ export function ResumenFinanciero({
   if (error) {
     return (
       <motion.div 
-        initial={{ opacity: 0, scale: 0.95 }}
-        animate={{ opacity: 1, scale: 1 }}
+        initial={shouldReduceMotion ? false : { opacity: 0, scale: 0.95 }}
+        animate={shouldReduceMotion ? undefined : { opacity: 1, scale: 1 }}
         className="rounded-xl border border-rose-200 bg-rose-50 p-6 text-center dark:border-rose-900/50 dark:bg-rose-950/20"
       >
         <AlertCircle className="mx-auto h-10 w-10 text-rose-500 mb-3" />
@@ -442,37 +475,12 @@ export function ResumenFinanciero({
 
   // --- Data Processing ---
   const monedaPrincipal = (monedas as Moneda[]).find((m: Moneda) => m.esPrincipal)?.codigo || 'CUP';
-  const tasasLookup: { [key: string]: number } = Array.isArray(tasasActuales)
-    ? (tasasActuales as TasaCambio[]).reduce((acc: { [k: string]: number }, t) => {
-        if (t && t.monedaOrigenId && t.monedaDestino) acc[`${t.monedaOrigenId}_${t.monedaDestino}`] = t.tasa;
-        return acc;
-      }, {})
-    : {};
-
-  const saldoNetoEnPrincipal = (resumen.cuentasBancarias || []).reduce((total: any, cuenta: any) => {
-    const saldo = cuenta.saldo ?? 0;
-    if (!cuenta.moneda || cuenta.moneda === monedaPrincipal) return total + saldo;
-    
-    const tasaActual = tasasActuales?.find(
-      (t: TasaCambio) => t.monedaOrigenId === cuenta.moneda && t.monedaDestino === monedaPrincipal,
-    )?.tasa;
-
-    if (tasaActual) return total + saldo * tasaActual;
-    
-    // Fallback logic
-    const directKey = `${cuenta.moneda}_${monedaPrincipal}`;
-    const inverseKey = `${monedaPrincipal}_${cuenta.moneda}`;
-    if (tasasLookup[directKey]) return total + saldo * tasasLookup[directKey];
-    if (tasasLookup[inverseKey]) return total + saldo / tasasLookup[inverseKey];
-    
-    return total; // No conversion found
-  }, 0);
-
   // @ts-expect-error - El resumen por moneda puede venir con forma parcial desde la API.
   const resumenPrincipal = resumen.resumenPorMoneda?.find((m) => m.moneda === monedaPrincipal);
 
   const ingresosTotales = resumenPrincipal?.totalIngresos ?? 0;
   const egresosTotales = resumenPrincipal?.totalEgresos ?? 0;
+  const saldoNetoEnPrincipal = getSaldoNetoTotal(resumen.resumenPorMoneda, monedaPrincipal);
   const totalAnticipos = calculateAnticiposTotal(
     Object.entries(resumenAnticiposData?.resumen?.porMoneda || {}).map(([moneda, value]) => ({
       moneda,
@@ -500,12 +508,12 @@ export function ResumenFinanciero({
       description: "Salidas y gastos registrados"
     },
     {
-      title: "Saldo Neto Global",
-      subtitle: "Consolidado",
+      title: "Saldo Neto Total",
+      subtitle: monedaPrincipal,
       value: saldoNetoEnPrincipal,
       icon: Wallet,
       tone: saldoTone,
-      description: "Balance total en moneda principal"
+      description: "Ingresos menos egresos del período"
     },
     {
       title: "Saldo Préstamos",
@@ -609,8 +617,8 @@ export function ResumenFinanciero({
             return (
               <motion.div
                 key={card.title}
-                variants={itemVariants}
-                whileHover="hover"
+                variants={{ ...itemVariants, ...cardHoverVariants }}
+                whileHover={shouldReduceMotion ? undefined : "hover"}
               >
                 <Tooltip>
                   <TooltipTrigger asChild>
@@ -649,7 +657,7 @@ export function ResumenFinanciero({
                             {card.title}
                           </p>
                           <div className={cn("text-3xl font-bold tracking-tight", style.text)}>
-                            <AnimatedNumber value={card.value} prefix="$ " />
+                            <AnimatedNumber value={card.value} currency={card.subtitle} />
                           </div>
                         </div>
                         
@@ -678,7 +686,11 @@ export function ResumenFinanciero({
           const style = toneStyles[stat.tone];
           
           return (
-            <motion.div key={stat.label} whileHover={{ scale: 1.02 }} className="h-full">
+            <motion.div
+              key={stat.label}
+              whileHover={shouldReduceMotion ? undefined : { scale: 1.02 }}
+              className="h-full"
+            >
               <Card className="h-full border-slate-200/60 bg-white/60 dark:border-slate-800/60 dark:bg-slate-900/20 backdrop-blur-sm">
                 <CardContent className="p-5 flex items-center justify-between">
                   <div className="flex items-center gap-4">

@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { authenticateUser } from '@/lib/auth-middleware'
 import { canAccessAccountingItem } from '@/lib/plan-access'
+import { requireTenant } from '@/lib/services/tenant-scope'
+import { endOfDay } from '@/lib/date-range'
 
 interface CuentaBancariaResumen {
   cuentaId: string
@@ -104,6 +106,7 @@ export async function GET(request: NextRequest) {
     const authResultUser = await authenticateUser(request)
     if ('status' in authResultUser) return authResultUser as Response
     const user = authResultUser.user
+    const tenantId = requireTenant(user)
     const canViewServicios = user.planFeatures?.servicios === true
     const canViewTransfers = canAccessAccountingItem(user, 'Transferencias Bancarias')
     const canViewAdjustments = canAccessAccountingItem(user, 'Ajustes Bancarios')
@@ -123,15 +126,20 @@ export async function GET(request: NextRequest) {
       dateFilter.gte = new Date(fechaInicio)
     }
     if (fechaFin) {
-      dateFilter.lte = new Date(fechaFin)
+      dateFilter.lte = endOfDay(fechaFin)
     }
 
     // Filtro de cuenta específica
-    const accountFilter = cuentaId ? { cuentaId } : {}
+    const accountFilter = { tenantId, ...(cuentaId ? { cuentaId } : {}) }
+    const accountRelationFilter = {
+      cuentaBancaria: { tenantId },
+      ...(cuentaId ? { cuentaId } : {}),
+    }
 
     // Obtener resumen de cuentas bancarias
     const cuentasBancarias = await prisma.cuentaBancaria.findMany({
       where: {
+        tenantId,
         isActive: true,
         ...(cuentaId ? { cuentaId } : {})
       },
@@ -221,6 +229,7 @@ export async function GET(request: NextRequest) {
     // Obtener transferencias bancarias
     const transferencias = canViewTransfers ? await prisma.transferenciaBancaria.findMany({
       where: {
+        tenantId,
         ...(Object.keys(dateFilter).length > 0 ? { fechaTransferencia: dateFilter } : {}),
         ...(cuentaId ? {
           OR: [
@@ -275,7 +284,7 @@ export async function GET(request: NextRequest) {
     // Obtener inyecciones de capital
     const inyeccionesCapital = canViewCapital ? await prisma.inyeccionCapital.findMany({
       where: {
-        ...accountFilter,
+        ...accountRelationFilter,
         ...(Object.keys(dateFilter).length > 0 ? { createdAt: dateFilter } : {})
       },
       select: {
@@ -305,7 +314,7 @@ export async function GET(request: NextRequest) {
     // Obtener pagos de deuda
     const pagosDeuda = canViewCapital ? await prisma.pagoDeuda.findMany({
       where: {
-        ...accountFilter,
+        ...accountRelationFilter,
         ...(Object.keys(dateFilter).length > 0 ? { fechaPago: dateFilter } : {})
       },
       select: {

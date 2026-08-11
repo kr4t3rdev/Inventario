@@ -1,7 +1,8 @@
 "use server";
 import { withAction, ActionError } from "@/lib/server-actions";
 import { prisma } from "@/lib/prisma";
-import { requireFeature } from "@/lib/services/tenant-scope";
+import { requireFeature, requireTenant } from "@/lib/services/tenant-scope";
+import { endOfDay } from "@/lib/date-range";
 import { withPeriodValidation } from "@/lib/services/with-period-validation";
 import { AccountingOperationsReadService } from "@/features/contabilidad/services/accounting-operations-read-service";
 import { AccountingOperationsMutationService } from "@/features/contabilidad/services/accounting-operations-mutation-service";
@@ -23,7 +24,7 @@ export const getTransferenciasBancariasAction = withAction(
 function bdf(fi: string | null, ff: string | null): Record<string, Date> {
 	const r: Record<string, Date> = {};
 	if (fi) r.gte = new Date(fi);
-	if (ff) r.lte = new Date(ff);
+	if (ff) r.lte = endOfDay(ff);
 	return r;
 }
 
@@ -38,6 +39,7 @@ export const getResumenFinancieroAction = withAction(
 		user: AuthenticatedUser,
 	) => {
 		requireFeature(user, 'contabilidad', 'consultar resumen financiero');
+		const tenantId = requireTenant(user);
 		const df = bdf(f.fechaInicio || null, f.fechaFin || null),
 			sf = Object.keys(df).length ? { gte: df.gte, lte: df.lte } : {},
 			af = f.cuentaId ? { cuentaId: f.cuentaId } : {};
@@ -65,7 +67,7 @@ export const getResumenFinancieroAction = withAction(
 			reconServiciosCount,
 		] = await Promise.all([
 			prisma.cuentaBancaria.findMany({
-				where: { isActive: true, ...af },
+				where: { tenantId, isActive: true, ...af },
 				select: {
 					cuentaId: true,
 					nombreBanco: true,
@@ -77,20 +79,21 @@ export const getResumenFinancieroAction = withAction(
 			}),
 			// Ingresos reales por ventas de productos (desde Venta, no desde reconciliación)
 			prisma.venta.findMany({
-				where: { deletedAt: null, ...sfVenta },
+				where: { tenantId, deletedAt: null, ...sfVenta },
 				select: { total: true },
 			}),
 			// Ingresos reales por ventas de servicios
 			prisma.ventaServicios.findMany({
-				where: { ...sfVenta },
+				where: { tenantId, ...sfVenta },
 				select: { total: true },
 			}),
 			prisma.reconciliacionGasto.findMany({
-				where: { ...af, ...wf },
+				where: { tenantId, ...af, ...wf },
 				select: { monto: true, moneda: true, tipoGasto: true },
 			}),
 			prisma.transferenciaBancaria.findMany({
 				where: {
+					tenantId,
 					...(Object.keys(sf).length ? { fechaTransferencia: sf } : {}),
 					...(f.cuentaId
 						? {
@@ -109,15 +112,23 @@ export const getResumenFinancieroAction = withAction(
 				},
 			}),
 			prisma.ajusteBancario.findMany({
-				where: { ...af, ...(Object.keys(sf).length ? { createdAt: sf } : {}) },
+				where: { tenantId, ...af, ...(Object.keys(sf).length ? { createdAt: sf } : {}) },
 				select: { tipo: true, monto: true, moneda: true },
 			}),
 			prisma.inyeccionCapital.findMany({
-				where: { ...af, ...(Object.keys(sf).length ? { createdAt: sf } : {}) },
+				where: {
+					...af,
+					cuentaBancaria: { tenantId },
+					...(Object.keys(sf).length ? { createdAt: sf } : {}),
+				},
 				select: { montoRecibido: true, moneda: true },
 			}),
 			prisma.pagoDeuda.findMany({
-				where: { ...af, ...(Object.keys(sf).length ? { fechaPago: sf } : {}) },
+				where: {
+					...af,
+					cuentaBancaria: { tenantId },
+					...(Object.keys(sf).length ? { fechaPago: sf } : {}),
+				},
 				select: {
 					montoPagado: true,
 					cuentaBancaria: { select: { moneda: true } },
@@ -127,6 +138,7 @@ export const getResumenFinancieroAction = withAction(
 			hasPrestamosCash
 				? prisma.reconciliacionVenta.findMany({
 						where: {
+							tenantId,
 							...af,
 							...wf,
 							tipoReconciliacion: { in: ["PRESTAMO_CASH_DESEMBOLSO"] },
@@ -141,28 +153,34 @@ export const getResumenFinancieroAction = withAction(
 			// Pagos de deudas cash (dinero que sale para pagar deuda con vendor) → egreso
 			hasDeudasCash
 				? prisma.reconciliacionVenta.findMany({
-						where: { ...af, ...wf, tipoReconciliacion: { in: ["DEUDA_CASH"] } },
-						select: { monto: true, moneda: true },
-					})
+					where: {
+						tenantId,
+						...af,
+						...wf,
+						tipoReconciliacion: { in: ["DEUDA_CASH"] },
+					},
+					select: { monto: true, moneda: true },
+				})
 				: [],
 			// Cobros de préstamos cash (ingreso, no egreso)
 			hasPrestamosCash
 				? prisma.reconciliacionVenta.findMany({
-						where: {
-							...af,
-							...wf,
-							tipoReconciliacion: { in: ["PRESTAMO_CASH"] },
-						},
-						select: { monto: true, moneda: true },
-					})
+					where: {
+						tenantId,
+						...af,
+						...wf,
+						tipoReconciliacion: { in: ["PRESTAMO_CASH"] },
+					},
+					select: { monto: true, moneda: true },
+				})
 				: [],
 			// Total de reconciliaciones de ventas para estadísticas
 			prisma.reconciliacionVenta.count({
-				where: { ...af, ...wf },
+				where: { tenantId, ...af, ...wf },
 			}),
 			// Total de reconciliaciones de servicios para estadísticas
 			prisma.reconciliacionServicio.count({
-				where: { ...af, ...wf },
+				where: { tenantId, ...af, ...wf },
 			}),
 		]);
 

@@ -14,6 +14,7 @@ import {
 	isGastoWorkflowError,
 } from "@/lib/services/pago-gastos-workflow";
 import { AuditLogService } from "@/lib/services/audit-log-service";
+import { endOfDay } from "@/lib/date-range";
 import type { AuthenticatedUser } from "@/lib/auth-middleware";
 import { validateSaleReconciliationInput } from "@/features/contabilidad/services/accounting-reconciliation-service";
 
@@ -774,7 +775,7 @@ export const getGastosPendientesAction = withAction(
 			if (params.fechaDesde)
 				whereDE.createdAt.gte = new Date(params.fechaDesde);
 			if (params.fechaHasta)
-				whereDE.createdAt.lte = new Date(params.fechaHasta);
+					whereDE.createdAt.lte = endOfDay(params.fechaHasta);
 		}
 
 		// ── Query GastoCompra (compras de productos) ──
@@ -785,7 +786,7 @@ export const getGastosPendientesAction = withAction(
 			if (params.fechaDesde)
 				whereGC.fechaCompra.gte = new Date(params.fechaDesde);
 			if (params.fechaHasta)
-				whereGC.fechaCompra.lte = new Date(params.fechaHasta);
+					whereGC.fechaCompra.lte = endOfDay(params.fechaHasta);
 		}
 
 		// ── Query PagoSalario (salarios de empleados) ──
@@ -796,7 +797,7 @@ export const getGastosPendientesAction = withAction(
 			if (params.fechaDesde)
 				wherePS.createdAt.gte = new Date(params.fechaDesde);
 			if (params.fechaHasta)
-				wherePS.createdAt.lte = new Date(params.fechaHasta);
+					wherePS.createdAt.lte = endOfDay(params.fechaHasta);
 		}
 
 		// ── Query CompraServicio (servicios recibidos de proveedores) ──
@@ -806,7 +807,7 @@ export const getGastosPendientesAction = withAction(
 			if (params.fechaDesde)
 				whereCS.fechaServicio.gte = new Date(params.fechaDesde);
 			if (params.fechaHasta)
-				whereCS.fechaServicio.lte = new Date(params.fechaHasta);
+					whereCS.fechaServicio.lte = endOfDay(params.fechaHasta);
 		}
 
 		// ── Query VentaServicios (costo de servicios vendidos) ──
@@ -816,7 +817,7 @@ export const getGastosPendientesAction = withAction(
 			if (params.fechaDesde)
 				whereVS.createdAt.gte = new Date(params.fechaDesde);
 			if (params.fechaHasta)
-				whereVS.createdAt.lte = new Date(params.fechaHasta);
+					whereVS.createdAt.lte = endOfDay(params.fechaHasta);
 		}
 
 		const page = params.page || 1;

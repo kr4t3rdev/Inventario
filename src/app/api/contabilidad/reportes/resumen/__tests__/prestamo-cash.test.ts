@@ -20,6 +20,7 @@ vi.mock('@/lib/auth-middleware', () => ({
     user: {
       userId: 'user-test',
       role: 'user',
+      tenantId: 'tenant-test',
       planFeatures: {
         contabilidad: true,
         'reportes-financieros': true,
@@ -72,6 +73,7 @@ describe('API contabilidad/reportes/resumen - préstamos cash', () => {
         userId: 'user-test',
         role: 'user',
         planName: 'Básico',
+        tenantId: 'tenant-test',
         planFeatures: {
           contabilidad: true,
           'reportes-financieros': true,
