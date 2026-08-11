@@ -656,8 +656,9 @@ export function ProductosContent({
 										variant="outline"
 										className="h-8 w-8 p-0 cursor-pointer"
 										title="Crear oferta rápida"
+										aria-label="Crear oferta rápida"
 									>
-										<Tag className="h-4 w-4" />
+										<Tag className="h-4 w-4" aria-hidden="true" />
 									</Button>
 								}
 							/>
@@ -675,8 +676,9 @@ export function ProductosContent({
 										variant="outline"
 										className="h-8 w-8 p-0 cursor-pointer"
 										title="Crear oferta rápida"
+										aria-label="Crear oferta rápida"
 									>
-										<Tag className="h-4 w-4" />
+										<Tag className="h-4 w-4" aria-hidden="true" />
 									</Button>
 								}
 							/>
@@ -687,8 +689,9 @@ export function ProductosContent({
 										variant="outline"
 										className="h-8 w-8 p-0 cursor-pointer"
 										title="Editar producto"
+										aria-label="Editar producto"
 									>
-										<Pencil className="h-4 w-4" />
+										<Pencil className="h-4 w-4" aria-hidden="true" />
 									</Button>
 								</Link>
 
@@ -699,8 +702,9 @@ export function ProductosContent({
 											variant="outline"
 											className="h-8 w-8 p-0 cursor-pointer"
 											title="Restock producto"
+											aria-label="Restock producto"
 										>
-											<Package className="h-4 w-4" />
+											<Package className="h-4 w-4" aria-hidden="true" />
 										</Button>
 									}
 								/>
@@ -715,8 +719,9 @@ export function ProductosContent({
 													variant="outline"
 													className="h-8 w-8 p-0 cursor-pointer"
 													title="Ver historial de restock"
+													aria-label="Ver historial de restock"
 												>
-													<History className="h-4 w-4" />
+													<History className="h-4 w-4" aria-hidden="true" />
 												</Button>
 											</TooltipTrigger>
 											<TooltipContent side="top">
@@ -733,8 +738,9 @@ export function ProductosContent({
 											variant="outline"
 											className="h-8 w-8 p-0 cursor-pointer"
 											title="Crear oferta rápida"
+											aria-label="Crear oferta rápida"
 										>
-											<Tag className="h-4 w-4" />
+											<Tag className="h-4 w-4" aria-hidden="true" />
 										</Button>
 									}
 								/>
@@ -744,8 +750,9 @@ export function ProductosContent({
 									className="h-8 w-8 p-0 cursor-pointer"
 									onClick={() => setProductToDelete(producto.id)}
 									title="Eliminar producto"
+									aria-label="Eliminar producto"
 								>
-									<Trash2 className="h-4 w-4" />
+									<Trash2 className="h-4 w-4" aria-hidden="true" />
 								</Button>
 							</>
 						)}
@@ -791,7 +798,7 @@ export function ProductosContent({
 						transition={{ delay: 0.1, duration: 0.5 }}
 					>
 						<div className="flex items-center gap-3">
-							<motion.div className="relative flex h-10 w-10 items-center justify-center rounded-xl bg-linear-to-br from-primary to-purple-600 shadow-lg">
+							<motion.div className="relative flex h-10 w-10 items-center justify-center rounded-xl bg-linear-to-br from-primary to-purple shadow-lg">
 								<Boxes className="h-5 w-5 text-white" />
 							</motion.div>
 							<div>
@@ -814,7 +821,7 @@ export function ProductosContent({
 							)}
 							{puedeEditar && (
 								<Link href="/busy/products/new">
-									<Button className="gap-2 bg-linear-to-r from-primary to-purple-600 hover:from-primary/90 hover:to-purple-600/90">
+									<Button className="gap-2 bg-linear-to-r from-primary to-purple hover:from-primary/90 hover:to-purple/90">
 										<Plus className="h-4 w-4" />
 										Nuevo Producto
 									</Button>
@@ -892,7 +899,7 @@ export function ProductosContent({
 						animate={{ opacity: 1, y: 0 }}
 						transition={{ delay: 0.3, duration: 0.5 }}
 					>
-						<Card className="mb-4 border-dashed bg-linear-to-br from-primary/5 via-background to-purple-500/8 dark:from-primary/10 dark:to-purple-500/10">
+						<Card className="mb-4 border-dashed bg-linear-to-br from-primary/5 via-background to-purple/8 dark:from-primary/10 dark:to-purple/10">
 							<CardHeader className="pb-3">
 								<div className="flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
 									<CardTitle className="flex items-center gap-2 text-lg">

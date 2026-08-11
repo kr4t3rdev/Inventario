@@ -28,7 +28,7 @@ export function BulkStockMinimoClient(): React.JSX.Element {
       >
         <div className="flex items-start gap-3">
           <motion.div
-            className="relative flex h-12 w-12 items-center justify-center rounded-xl bg-linear-to-br from-primary to-purple-600 text-white shadow-lg"
+            className="relative flex h-12 w-12 items-center justify-center rounded-xl bg-linear-to-br from-primary to-purple text-white shadow-lg"
             whileHover={{ scale: 1.05, rotate: 4 }}
             transition={{ duration: 0.2 }}
           >

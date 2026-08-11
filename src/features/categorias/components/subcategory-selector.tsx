@@ -110,7 +110,7 @@ export function SubcategorySelector({
             <SelectValue
               placeholder={
                 !internalCategoryId
-                  ? 'Primero seleccioná una categoría'
+                  ? 'Primero selecciona una categoría'
                   : required
                     ? usaEan13 ? 'Seleccionar específico CLAS' : 'Seleccionar subcategoría'
                     : usaEan13 ? 'Seleccionar específico CLAS (opcional)' : 'Seleccionar subcategoría (opcional)'

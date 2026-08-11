@@ -102,7 +102,7 @@ export function CategoriaEditPageClient({ category }: CategoriaEditPageClientPro
 
             <div className="flex items-center gap-3 mb-2">
               <motion.div
-                className="w-12 h-12 bg-linear-to-br from-primary to-purple-600 rounded-xl flex items-center justify-center shadow-lg relative"
+                className="w-12 h-12 bg-linear-to-br from-primary to-purple rounded-xl flex items-center justify-center shadow-lg relative"
                 whileHover={{ scale: 1.05, rotate: 5 }}
                 transition={{ duration: 0.2 }}
               >

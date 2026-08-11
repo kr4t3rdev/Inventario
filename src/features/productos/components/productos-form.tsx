@@ -442,7 +442,7 @@ export function ProductoForm({
 			animate={{ opacity: 1, y: 0 }}
 			transition={{ duration: 0.45 }}
 		>
-			<Card className="overflow-hidden border-dashed bg-linear-to-br from-primary/5 via-background to-purple-500/8 dark:from-primary/10 dark:to-purple-500/10">
+			<Card className="overflow-hidden border-dashed bg-linear-to-br from-primary/5 via-background to-purple/8 dark:from-primary/10 dark:to-purple/10">
 				<CardContent className="pt-6">
 					<motion.div
 						className="mb-7 flex items-start gap-3"
@@ -451,7 +451,7 @@ export function ProductoForm({
 						transition={{ delay: 0.1 }}
 					>
 						<motion.div
-							className="relative flex h-11 w-11 items-center justify-center rounded-xl bg-linear-to-br from-primary to-purple-600 text-white shadow-lg"
+							className="relative flex h-11 w-11 items-center justify-center rounded-xl bg-linear-to-br from-primary to-purple text-white shadow-lg"
 							whileHover={{ scale: 1.05, rotate: 4 }}
 							transition={{ duration: 0.2 }}
 						>
@@ -1112,7 +1112,7 @@ export function ProductoForm({
 										)}
 									/>
 
-									<div className="rounded-xl border border-dashed bg-linear-to-br from-primary/5 to-purple-500/8 dark:from-primary/10 dark:to-purple-500/10 p-4">
+									<div className="rounded-xl border border-dashed bg-linear-to-br from-primary/5 to-purple/8 dark:from-primary/10 dark:to-purple/10 p-4">
 										<p className="text-sm font-semibold">
 											Estado de inventario estimado
 										</p>
@@ -1184,7 +1184,7 @@ export function ProductoForm({
 										<Button
 											type="submit"
 											disabled={isLoading || isPending}
-											className="cursor-pointer min-w-42.5 gap-2 bg-linear-to-r from-primary to-purple-600 hover:from-primary/90 hover:to-purple-600/90"
+											className="cursor-pointer min-w-42.5 gap-2 bg-linear-to-r from-primary to-purple hover:from-primary/90 hover:to-purple/90"
 										>
 											{isLoading || isPending ? (
 												<>

@@ -338,7 +338,7 @@ export function SubcategoryForm({ initialData, onSuccess }: SubcategoryFormProps
               className="mb-6 flex items-center gap-2"
             >
             <motion.div
-              className="relative flex h-10 w-10 items-center justify-center rounded-xl bg-linear-to-br from-primary to-purple-600 shadow-lg"
+              className="relative flex h-10 w-10 items-center justify-center rounded-xl bg-linear-to-br from-primary to-purple shadow-lg"
               whileHover={{ scale: 1.05, rotate: 5 }}
               transition={{ duration: 0.2 }}
             >
@@ -499,7 +499,7 @@ export function SubcategoryForm({ initialData, onSuccess }: SubcategoryFormProps
                       !form.watch('parentId') ||
                       rootCategories.length === 0
                     }
-                    className="min-w-40 cursor-pointer gap-2 bg-linear-to-r from-primary to-purple-600 hover:from-primary/90 hover:to-purple-600/90"
+                    className="min-w-40 cursor-pointer gap-2 bg-linear-to-r from-primary to-purple hover:from-primary/90 hover:to-purple/90"
                   >
                     {isLoading ? (
                       <>
@@ -564,7 +564,7 @@ export function SubcategoryForm({ initialData, onSuccess }: SubcategoryFormProps
             className="flex items-center gap-2 mb-6"
           >
             <motion.div
-              className="w-10 h-10 bg-linear-to-br from-primary to-purple-600 rounded-xl flex items-center justify-center shadow-lg relative"
+              className="w-10 h-10 bg-linear-to-br from-primary to-purple rounded-xl flex items-center justify-center shadow-lg relative"
               whileHover={{ scale: 1.05, rotate: 5 }}
               transition={{ duration: 0.2 }}
             >
@@ -815,7 +815,7 @@ export function SubcategoryForm({ initialData, onSuccess }: SubcategoryFormProps
                 <Button
                   type="submit"
                   disabled={isLoading || !clasSpecificId}
-                  className="min-w-40 gap-2 bg-linear-to-r from-primary to-purple-600 hover:from-primary/90 hover:to-purple-600/90 cursor-pointer"
+                  className="min-w-40 gap-2 bg-linear-to-r from-primary to-purple hover:from-primary/90 hover:to-purple/90 cursor-pointer"
                 >
                   {isLoading ? (
                     <>

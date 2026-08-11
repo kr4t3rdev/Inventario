@@ -198,8 +198,8 @@ export function VendorPageClient({ vendors: initialVendors }: VendorPageClientPr
             </motion.div>
             <Link href={`/busy/vendor/update/${vendor.vendorId}`}>
               <motion.div whileHover={{ scale: 1.1 }} whileTap={{ scale: 0.95 }}>
-                <Button variant='outline' className='h-8 w-8 p-0 cursor-pointer'>
-                  <Pencil className='h-4 w-4'/>
+                <Button variant='outline' className='h-8 w-8 p-0 cursor-pointer' aria-label="Editar proveedor">
+                  <Pencil className='h-4 w-4' aria-hidden='true'/>
                 </Button>
               </motion.div>
             </Link>
@@ -232,7 +232,7 @@ export function VendorPageClient({ vendors: initialVendors }: VendorPageClientPr
             >
               <div className="flex items-center gap-3">
                 <motion.div 
-                  className="w-10 h-10 bg-linear-to-br from-primary to-purple-600 rounded-xl flex items-center justify-center shadow-lg relative"
+                  className="w-10 h-10 bg-linear-to-br from-primary to-purple rounded-xl flex items-center justify-center shadow-lg relative"
                   whileHover={{ scale: 1.05, rotate: 5 }}
                   transition={{ duration: 0.2 }}
                 >
@@ -258,7 +258,7 @@ export function VendorPageClient({ vendors: initialVendors }: VendorPageClientPr
               >
                 <Button 
                   asChild 
-                  className="gap-2 bg-linear-to-r from-primary to-purple-600 hover:from-primary/90 hover:to-purple-600/90"
+                  className="gap-2 bg-linear-to-r from-primary to-purple hover:from-primary/90 hover:to-purple/90"
                 >
                   <Link href="/busy/vendor/new">
                     <Plus className="h-4 w-4" /> 

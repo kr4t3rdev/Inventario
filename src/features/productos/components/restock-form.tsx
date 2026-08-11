@@ -311,8 +311,8 @@ export function RestockForm({ producto, onSuccess, onCancel }: RestockFormProps)
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.35 }}
     >
-      <Card className="overflow-hidden border-dashed bg-linear-to-br from-primary/[0.05] via-background to-purple-500/[0.08] dark:from-primary/10 dark:to-purple-500/10">
-        <CardHeader className="border-b bg-linear-to-r from-primary/[0.04] to-purple-500/[0.08] dark:from-primary/10 dark:to-purple-500/10">
+      <Card className="overflow-hidden border-dashed bg-linear-to-br from-primary/[0.05] via-background to-purple/[0.08] dark:from-primary/10 dark:to-purple/10">
+        <CardHeader className="border-b bg-linear-to-r from-primary/[0.04] to-purple/[0.08] dark:from-primary/10 dark:to-purple/10">
           <CardTitle className="flex items-center gap-3">
             {/* <div>
               <p className="text-lg font-semibold">Restock de Producto</p>
@@ -685,7 +685,7 @@ export function RestockForm({ producto, onSuccess, onCancel }: RestockFormProps)
               <Button
                 type="submit"
                 disabled={isLoading || cantidad <= 0}
-                className="gap-2 bg-linear-to-r from-primary to-purple-600 hover:from-primary/90 hover:to-purple-600/90"
+                className="gap-2 bg-linear-to-r from-primary to-purple hover:from-primary/90 hover:to-purple/90"
               >
                 {isLoading ? (
                   <>
@@ -733,11 +733,11 @@ export function RestockForm({ producto, onSuccess, onCancel }: RestockFormProps)
               <button
                 type="button"
                 onClick={() => handleTipoRestockSelect('nueva_instancia')}
-                className="w-full p-3 text-left border rounded-lg hover:border-purple-500 hover:bg-purple-50 dark:hover:bg-purple-950/30 transition-colors group"
+                className="w-full p-3 text-left border rounded-lg hover:border-purple hover:bg-purple/10 dark:hover:bg-purple/30 transition-colors group"
               >
                 <div className="flex items-start gap-3">
-                  <div className="h-10 w-10 rounded-full bg-purple-100 dark:bg-purple-900 flex items-center justify-center flex-shrink-0 group-hover:bg-purple-200 dark:group-hover:bg-purple-800 transition-colors">
-                    <Package className="h-5 w-5 text-purple-600 dark:text-purple-400" />
+                  <div className="h-10 w-10 rounded-full bg-purple/15 dark:bg-purple/25 flex items-center justify-center flex-shrink-0 group-hover:bg-purple/25 dark:group-hover:bg-purple/40 transition-colors">
+                    <Package className="h-5 w-5 text-purple dark:text-purple" />
                   </div>
                   <div className="flex-1">
                     <p className="font-medium text-foreground">Crear nueva instancia</p>

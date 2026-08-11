@@ -8,7 +8,7 @@ import { Badge } from "@/components/ui/badge"
 import { getCategoriaHierarchyAction } from "@/features/categorias/actions"
 import type { CategoriaHierarchy } from "@/app/models/model"
 import { cn } from "@/lib/utils"
-import { LazyMotion, m as motion, AnimatePresence } from "framer-motion"
+import { LazyMotion, m as motion, AnimatePresence, useReducedMotion } from "framer-motion"
 
 interface CategoryHierarchyTreeProps {
   onCategorySelect?: (category: CategoriaHierarchy) => void
@@ -238,6 +238,7 @@ export function CategoryHierarchyTree({
   const [hierarchy, setHierarchy] = useState<CategoriaHierarchy[]>([])
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState(false)
+  const shouldReduceMotion = useReducedMotion()
 
   useEffect(() => {
     getCategoriaHierarchyAction().then(result => {
@@ -256,7 +257,7 @@ export function CategoryHierarchyTree({
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <motion.div
-              animate={{ rotate: 360 }}
+              animate={shouldReduceMotion ? { rotate: 0 } : { rotate: 360 }}
               transition={{ duration: 2, repeat: Infinity, ease: "linear" }}
             >
               <Folder className="h-5 w-5 text-muted-foreground" />
@@ -345,7 +346,7 @@ export function CategoryHierarchyTree({
       <CardHeader>
         <CardTitle className="flex items-center gap-2">
           <motion.div
-            animate={{ rotate: 360 }}
+            animate={shouldReduceMotion ? { rotate: 0 } : { rotate: 360 }}
             transition={{ duration: 2, repeat: Infinity, ease: "linear" }}
           >
             <Folder className="h-5 w-5 text-muted-foreground" />

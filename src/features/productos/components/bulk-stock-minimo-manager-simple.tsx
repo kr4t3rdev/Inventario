@@ -11,11 +11,11 @@ export function BulkStockMinimoManagerSimple() {
 
   return (
     <motion.div initial={{ opacity: 0, y: 14 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.3 }}>
-      <Card className="overflow-hidden border-dashed bg-linear-to-br from-primary/[0.05] via-background to-purple-500/[0.08] dark:from-primary/10 dark:to-purple-500/10">
+      <Card className="overflow-hidden border-dashed bg-linear-to-br from-primary/[0.05] via-background to-purple/[0.08] dark:from-primary/10 dark:to-purple/10">
         <CardHeader>
           <CardTitle className="flex items-center gap-3">
             <motion.div
-              className="relative flex h-10 w-10 items-center justify-center rounded-xl bg-linear-to-br from-primary to-purple-600 text-white shadow-md"
+              className="relative flex h-10 w-10 items-center justify-center rounded-xl bg-linear-to-br from-primary to-purple text-white shadow-md"
               whileHover={{ scale: 1.05, rotate: 3 }}
             >
               <Settings className="h-5 w-5" />
