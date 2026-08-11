@@ -202,15 +202,16 @@ export function VentasTable({ ventas: ventasProp, isLoading, error, onDelete }: 
                   variant='outline'
                   disabled
                   title='Venta con múltiples productos'
+                  aria-label='Editar venta'
                 >
-                  <Pencil className='h-4 w-4'/>
+                  <Pencil className='h-4 w-4' aria-hidden='true'/>
                 </Button>
               </motion.div>
             ) : (
               <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
-                <Button className='h-8 w-8 p-0' variant='outline' asChild>
+                <Button className='h-8 w-8 p-0' variant='outline' asChild aria-label='Editar venta'>
                   <Link href={`/busy/sales/editar/${venta.ventaId}`}>
-                    <Pencil className='h-4 w-4'/>
+                    <Pencil className='h-4 w-4' aria-hidden='true'/>
                   </Link>
                 </Button>
               </motion.div>
@@ -220,8 +221,9 @@ export function VentasTable({ ventas: ventasProp, isLoading, error, onDelete }: 
                 onClick={()=>onDelete(venta.ventaId)} 
                 variant='outline' 
                 className='h-8 w-8 p-0 cursor-pointer hover:bg-destructive hover:text-destructive-foreground'
+                aria-label='Eliminar venta'
               >
-                <Trash2Icon className='h-4 w-4'/>
+                <Trash2Icon className='h-4 w-4' aria-hidden='true'/>
               </Button>
             </motion.div>
           </div>

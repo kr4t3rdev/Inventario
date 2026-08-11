@@ -191,8 +191,8 @@ export function QuickOfferDialog({ producto, trigger }: QuickOfferDialogProps) {
       <DialogTrigger asChild>
         {trigger || (
           <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
-            <Button variant="outline" size="icon" title="Crear oferta rápida">
-              <Tag className="h-4 w-4" />
+            <Button variant="outline" size="icon" title="Crear oferta rápida" aria-label="Crear oferta rápida">
+              <Tag className="h-4 w-4" aria-hidden="true" />
             </Button>
           </motion.div>
         )}
@@ -322,7 +322,7 @@ export function QuickOfferDialog({ producto, trigger }: QuickOfferDialogProps) {
                 </motion.div>
 
                 <motion.div variants={fadeInUp}>
-                  <Card className="mt-4 p-3 border-dashed bg-linear-to-r from-primary/5 to-purple-600/5">
+                  <Card className="mt-4 p-3 border-dashed bg-linear-to-r from-primary/5 to-purple/5">
                     <div className="flex justify-between items-center">
                       <span className="font-medium">Total Estimado:</span>
                       <span className="font-bold text-lg text-primary">{formatCurrency(total)}</span>

@@ -468,7 +468,7 @@ export function VacacionesForm() {
 
 			{/* Stats Cards */}
 			<div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-				<Card className="border-l-4 border-l-primary shadow-sm">
+				<Card className="shadow-sm bg-card/60 border-primary/20">
 					<CardHeader className="pb-2">
 						<CardTitle className="text-sm font-medium text-muted-foreground">
 							Total Solicitudes
@@ -478,7 +478,7 @@ export function VacacionesForm() {
 						<div className="text-2xl font-bold">{vacationRequests.length}</div>
 					</CardContent>
 				</Card>
-				<Card className="border-l-4 border-l-accent shadow-sm">
+				<Card className="shadow-sm bg-card/60 border-accent/30">
 					<CardHeader className="pb-2">
 						<CardTitle className="text-sm font-medium text-muted-foreground">
 							Pendientes
@@ -490,7 +490,7 @@ export function VacacionesForm() {
 						</div>
 					</CardContent>
 				</Card>
-				<Card className="border-l-4 border-l-chart-2 shadow-sm">
+				<Card className="shadow-sm bg-card/60 border-chart-2/30">
 					<CardHeader className="pb-2">
 						<CardTitle className="text-sm font-medium text-muted-foreground">
 							Aprobadas
@@ -542,7 +542,7 @@ export function VacacionesForm() {
 									animate={{ opacity: 1, y: 0 }}
 									transition={{ duration: 0.3 }}
 								>
-									<Card className="overflow-hidden hover:shadow-md transition-shadow border-l-4 border-l-transparent hover:border-l-primary">
+									<Card className="overflow-hidden hover:shadow-md transition-shadow border-transparent hover:border-primary/40">
 										<CardContent className="p-0">
 											<div className="flex flex-col md:flex-row">
 												{/* Fecha y Estado (Left) */}

@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useMemo, useCallback } from "react";
 import { useRouter } from "next/navigation";
-import { LazyMotion, m as motion, AnimatePresence } from "framer-motion";
+import { LazyMotion, m as motion, AnimatePresence, useReducedMotion } from "framer-motion";
 import {
 	ShoppingCart,
 	Store,
@@ -95,6 +95,7 @@ interface CartProduct {
 export function VentaInterface() {
 	const router = useRouter();
 	const { user } = useAuth();
+	const shouldReduceMotion = useReducedMotion();
 	const hasFacturacion = user?.planFeatures?.['facturacion'] === true;
 	const anticiposFeatureEnabled =
 		process.env.NEXT_PUBLIC_ENABLE_ANTICIPOS !== "false";
@@ -661,7 +662,7 @@ export function VentaInterface() {
 									</p>
 									<motion.div
 										className="absolute -right-4 -top-1"
-										animate={{ rotate: 360, scale: [1, 1.2, 1] }}
+										animate={shouldReduceMotion ? { scale: 1 } : { rotate: 360, scale: [1, 1.2, 1] }}
 										transition={{
 											rotate: {
 												duration: 20,
@@ -986,7 +987,7 @@ export function VentaInterface() {
 									transition={{ duration: 0.3 }}
 								>
 									<motion.div
-										animate={{ rotate: [0, -10, 10, 0] }}
+										animate={shouldReduceMotion ? { rotate: 0 } : { rotate: [0, -10, 10, 0] }}
 										transition={{
 											duration: 2,
 											repeat: Infinity,
@@ -1107,7 +1108,7 @@ export function VentaInterface() {
 														</motion.div>
 													) : (
 														<motion.div
-															className="w-12 h-12 bg-linear-to-br from-primary/20 to-purple-600/20 rounded-lg flex items-center justify-center flex-shrink-0"
+															className="w-12 h-12 bg-linear-to-br from-primary/20 to-purple/20 rounded-lg flex items-center justify-center flex-shrink-0"
 															whileHover={{ scale: 1.05, rotate: 5 }}
 														>
 															<Package className="h-5 w-5 text-primary" />
@@ -1233,7 +1234,7 @@ export function VentaInterface() {
 																	</motion.div>
 																) : (
 																	<motion.div
-																		className="w-10 h-10 bg-linear-to-br from-primary/20 to-purple-600/20 rounded-lg flex items-center justify-center"
+																		className="w-10 h-10 bg-linear-to-br from-primary/20 to-purple/20 rounded-lg flex items-center justify-center"
 																		whileHover={{ scale: 1.1, rotate: 5 }}
 																	>
 																		<Package className="h-4 w-4 text-primary" />
@@ -1329,7 +1330,7 @@ export function VentaInterface() {
 									transition={{ duration: 0.3 }}
 								>
 									<motion.div
-										animate={{ rotate: [0, 10, -10, 0] }}
+										animate={shouldReduceMotion ? { rotate: 0 } : { rotate: [0, 10, -10, 0] }}
 										transition={{
 											duration: 2,
 											repeat: Infinity,
@@ -1401,7 +1402,7 @@ export function VentaInterface() {
 									transition={{ duration: 0.3 }}
 								>
 									<motion.div
-										animate={{ rotate: [0, -10, 10, 0] }}
+										animate={shouldReduceMotion ? { rotate: 0 } : { rotate: [0, -10, 10, 0] }}
 										transition={{
 											duration: 2,
 											repeat: Infinity,

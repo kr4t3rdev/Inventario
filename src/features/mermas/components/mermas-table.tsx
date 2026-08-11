@@ -91,9 +91,9 @@ export function MermasTable({ mermas, isLoading, error, onDelete }: MermasTableP
         return (
           <div className="flex items-center gap-2">
             <motion.div whileHover={{ scale: 1.1 }} whileTap={{ scale: 0.9 }}>
-              <Button className='h-8 w-8 p-0 cursor-pointer' variant='outline' asChild>
+              <Button className='h-8 w-8 p-0 cursor-pointer' variant='outline' asChild aria-label='Editar merma'>
                 <Link href={`/busy/mermas/edit/${merma.mermaId}`}>
-                  <Pencil className='h-4 w-4'/>
+                  <Pencil className='h-4 w-4' aria-hidden='true'/>
                 </Link>
               </Button>
             </motion.div>

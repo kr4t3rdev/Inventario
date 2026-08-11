@@ -42,8 +42,8 @@ export function EditarMermaContent({ merma }: EditarMermaContentProps) {
                   whileTap={{ scale: 0.95 }}
                 >
                   <Link href="/busy/mermas">
-                    <Button variant="outline" size="icon" className="h-8 w-8">
-                      <ArrowLeft className="h-4 w-4" />
+                    <Button variant="outline" size="icon" className="h-8 w-8" aria-label="Volver a mermas">
+                      <ArrowLeft className="h-4 w-4" aria-hidden="true" />
                     </Button>
                   </Link>
                 </motion.div>

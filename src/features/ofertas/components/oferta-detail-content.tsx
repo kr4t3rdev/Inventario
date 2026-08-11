@@ -224,9 +224,9 @@ export function OfertaDetailContent({ initialOferta }: OfertaDetailContentProps)
       <SidebarInset>
         <div className="container mx-auto py-4 space-y-4">
           <div className="flex items-center gap-4">
-            <Button variant="outline" size="icon" asChild>
+            <Button variant="outline" size="icon" asChild aria-label="Volver a ofertas">
               <Link href="/busy/ofertas">
-                <ArrowLeft className="h-4 w-4" />
+                <ArrowLeft className="h-4 w-4" aria-hidden="true" />
               </Link>
             </Button>
 

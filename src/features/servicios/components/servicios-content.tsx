@@ -328,8 +328,8 @@ export function ServiciosContent({ initialServicios, initialVentaServicios, tena
                               <div className='flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity duration-200'>
                                 {puedeEditar && (
                                 <Link href={`/busy/servicios/update/${servicio.servicioId}`}>
-                                  <Button variant='ghost' size='icon' className='h-8 w-8'>
-                                    <Pencil className='h-4 w-4' />
+                                  <Button variant='ghost' size='icon' className='h-8 w-8' aria-label='Editar servicio'>
+                                    <Pencil className='h-4 w-4' aria-hidden='true' />
                                   </Button>
                                 </Link>
                                 )}
@@ -442,7 +442,7 @@ export function ServiciosContent({ initialServicios, initialVentaServicios, tena
                   <Card>
                     <CardHeader>
                       <div className='flex items-center gap-3'>
-                        <CheckCircle className='h-6 w-6 text-purple-600' />
+                        <CheckCircle className='h-6 w-6 text-purple' />
                         <div>
                           <CardTitle>Historial de Ventas</CardTitle>
                           <CardDescription>Registro de todos los servicios vendidos</CardDescription>

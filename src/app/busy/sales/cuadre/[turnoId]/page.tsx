@@ -388,7 +388,7 @@ export default function CuadrePage() {
 						value: `${data.resumen.totalVendido} vendidos`,
 						icon: Package,
 						color:
-							"text-purple-600 bg-purple-100 dark:bg-purple-950 dark:text-purple-400",
+							"text-purple bg-purple/15 dark:bg-purple/25 dark:text-purple",
 					},
 				].map((card, i) => {
 					const Icon = card.icon;

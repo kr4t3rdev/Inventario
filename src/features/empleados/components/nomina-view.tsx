@@ -342,7 +342,7 @@ export function NominaView() {
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.1 }}
         >
-          <Card className="border-l-4 border-l-chart-2 shadow-sm bg-linear-to-br from-card to-chart-2/10 dark:to-chart-2/5">
+          <Card className="shadow-sm bg-linear-to-br from-card to-chart-2/10 dark:to-chart-2/5">
             <CardContent className="p-6">
               <div className="flex justify-between items-start">
                 <div>
@@ -364,7 +364,7 @@ export function NominaView() {
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.2 }}
         >
-          <Card className="border-l-4 border-l-primary shadow-sm bg-linear-to-br from-card to-primary/10 dark:to-primary/5">
+          <Card className="shadow-sm bg-linear-to-br from-card to-primary/10 dark:to-primary/5">
             <CardContent className="p-6">
               <div className="flex justify-between items-start">
                 <div>
@@ -386,16 +386,16 @@ export function NominaView() {
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.3 }}
         >
-          <Card className="border-l-4 border-l-chart-3 shadow-sm bg-linear-to-br from-card to-chart-3/10 dark:to-chart-3/5">
+          <Card className="shadow-sm bg-linear-to-br from-card to-chart-3/10 dark:to-chart-3/5">
             <CardContent className="p-6">
               <div className="flex justify-between items-start">
                 <div>
                   <p className="text-sm font-medium text-muted-foreground mb-1">Total Empleados</p>
-                  <h3 className="text-3xl font-bold text-violet-600 dark:text-violet-400">
+                  <h3 className="text-3xl font-bold text-purple">
                     {payrollRecords.length}
                   </h3>
                 </div>
-                <div className="p-3 bg-violet-100 dark:bg-violet-900/30 rounded-lg text-violet-600 dark:text-violet-400">
+                <div className="p-3 bg-purple/15 rounded-lg text-purple">
                   <Users className="w-6 h-6" />
                 </div>
               </div>

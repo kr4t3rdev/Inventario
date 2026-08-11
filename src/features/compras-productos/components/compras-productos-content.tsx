@@ -175,12 +175,12 @@ export function ComprasProductosContent({ initialCompras, initialPagination }: C
       header: 'Acciones',
       cell: ({ row }) => (
         <div className="flex items-center gap-2">
-          <Button variant="ghost" size="icon" onClick={() => handleView(row.original)} title="Ver detalles">
-            <Eye className="h-4 w-4" />
+          <Button variant="ghost" size="icon" onClick={() => handleView(row.original)} title="Ver detalles" aria-label="Ver detalles de la compra">
+            <Eye className="h-4 w-4" aria-hidden="true" />
           </Button>
           <Link href={`/busy/compras-productos/${row.original.compraDocumentoId}/edit`}>
-            <Button variant="ghost" size="icon" title="Editar compra">
-              <Pencil className="h-4 w-4" />
+            <Button variant="ghost" size="icon" title="Editar compra" aria-label="Editar compra">
+              <Pencil className="h-4 w-4" aria-hidden="true" />
             </Button>
           </Link>
           <Button
@@ -188,9 +188,10 @@ export function ComprasProductosContent({ initialCompras, initialPagination }: C
             size="icon"
             onClick={() => handleDelete(row.original)}
             title="Eliminar compra"
+            aria-label="Eliminar compra"
             className="text-destructive hover:text-destructive"
           >
-            <Trash2 className="h-4 w-4" />
+            <Trash2 className="h-4 w-4" aria-hidden="true" />
           </Button>
         </div>
       ),

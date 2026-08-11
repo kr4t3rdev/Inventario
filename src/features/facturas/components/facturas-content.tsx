@@ -203,9 +203,9 @@ export function FacturasContent({ initialData }: FacturasContentProps) {
         const factura = row.original
         return (
           <div className="flex items-center gap-2">
-            <Button variant="ghost" size="icon" asChild>
+            <Button variant="ghost" size="icon" asChild aria-label="Ver factura">
               <Link href={`/busy/invoice/print?id=${factura.facturaId}`}>
-                <FileText className="h-4 w-4" />
+                <FileText className="h-4 w-4" aria-hidden="true" />
               </Link>
             </Button>
             {factura.pdfUrl && (

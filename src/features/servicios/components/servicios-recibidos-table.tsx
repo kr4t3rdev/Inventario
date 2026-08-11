@@ -2,10 +2,8 @@
 
 import { useEffect, useMemo, useState } from 'react'
 import type { ColumnDef } from '@tanstack/react-table'
-import { Trash2 } from 'lucide-react'
 
 import { DataTable } from '@/components/data-table'
-import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Skeleton } from '@/components/ui/skeleton'
 import type { CompraServicio } from '@/app/models/model'
@@ -91,15 +89,6 @@ export function ServiciosRecibidosTable(): React.JSX.Element {
         accessorKey: 'fechaServicio',
         header: 'Fecha Servicio',
         cell: ({ row }) => new Date(row.original.fechaServicio).toLocaleDateString('es-AR'),
-      },
-      {
-        id: 'acciones',
-        header: 'Acciones',
-        cell: ({ row }) => (
-          <Button variant='ghost' size='sm' disabled>
-            <Trash2 className='h-4 w-4 text-red-600' />
-          </Button>
-        ),
       },
     ],
     []
