@@ -156,6 +156,7 @@ export default function LoginPage(): React.ReactElement {
 								</motion.div>
 								<motion.button
 									type="button"
+									aria-label={showPassword ? 'Ocultar contraseña' : 'Mostrar contraseña'}
 									whileHover={shouldAnimate ? { scale: 1.1 } : {}}
 									whileTap={shouldAnimate ? { scale: 0.9 } : {}}
 									transition={SPRING_HOVER}

@@ -164,7 +164,7 @@ export function ReporteGeneral() {
 
       <StaggerItem className="grid gap-4 md:grid-cols-3">
         <AnimatedCard>
-        <Card className={cn(surfaceCardClass, "border-l-4 border-l-primary")}>
+        <Card className={cn(surfaceCardClass)}>
           <CardContent className="p-4">
             <div className="flex items-center justify-between">
               <div>
@@ -178,7 +178,7 @@ export function ReporteGeneral() {
         </AnimatedCard>
         
         <AnimatedCard>
-        <Card className={cn(surfaceCardClass, "border-l-4 border-l-chart-2")}>
+        <Card className={cn(surfaceCardClass)}>
           <CardContent className="p-4">
             <div className="text-2xl font-bold">${valorTotal.toLocaleString('es-DO', { minimumFractionDigits: 2 })}</div>
             <p className="text-xs text-muted-foreground">Valor de inventario (costo)</p>
@@ -187,7 +187,7 @@ export function ReporteGeneral() {
         </AnimatedCard>
         
         <AnimatedCard>
-        <Card className={cn(surfaceCardClass, "border-l-4 border-l-chart-3")}>
+        <Card className={cn(surfaceCardClass)}>
           <CardContent className="p-4">
             <div className="text-2xl font-bold">${valorVenta.toLocaleString('es-DO', { minimumFractionDigits: 2 })}</div>
             <p className="text-xs text-muted-foreground">Valor de inventario (venta)</p>

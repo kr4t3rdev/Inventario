@@ -208,6 +208,7 @@ export default function RegisterPage(): React.ReactElement {
 								</motion.div>
 								<motion.button
 									type="button"
+									aria-label={showPassword ? 'Ocultar contraseña' : 'Mostrar contraseña'}
 									whileHover={reduceMotion ? {} : { scale: 1.1 }}
 									whileTap={reduceMotion ? {} : { scale: 0.9 }}
 									transition={SPRING_HOVER}
@@ -239,6 +240,7 @@ export default function RegisterPage(): React.ReactElement {
 								</motion.div>
 								<motion.button
 									type="button"
+									aria-label={showConfirmPassword ? 'Ocultar contraseña de confirmación' : 'Mostrar contraseña de confirmación'}
 									whileHover={reduceMotion ? {} : { scale: 1.1 }}
 									whileTap={reduceMotion ? {} : { scale: 0.9 }}
 									transition={SPRING_HOVER}

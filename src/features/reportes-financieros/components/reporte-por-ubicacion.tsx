@@ -239,7 +239,7 @@ export function ReportePorUbicacion() {
 				<StaggerItem className="grid gap-4 md:grid-cols-3">
 					<AnimatedCard>
 						<Card
-							className={cn(surfaceCardClass, "border-l-4 border-l-primary")}
+							className={cn(surfaceCardClass)}
 						>
 							<CardContent className="p-4">
 								<div className="text-2xl font-bold">
@@ -254,7 +254,7 @@ export function ReportePorUbicacion() {
 					</AnimatedCard>
 					<AnimatedCard>
 						<Card
-							className={cn(surfaceCardClass, "border-l-4 border-l-chart-2")}
+							className={cn(surfaceCardClass)}
 						>
 							<CardContent className="p-4">
 								<div className="text-2xl font-bold">
@@ -271,7 +271,7 @@ export function ReportePorUbicacion() {
 					</AnimatedCard>
 					<AnimatedCard>
 						<Card
-							className={cn(surfaceCardClass, "border-l-4 border-l-accent")}
+							className={cn(surfaceCardClass)}
 						>
 							<CardContent className="p-4">
 								<div className="text-2xl font-bold">

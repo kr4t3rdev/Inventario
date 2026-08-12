@@ -46,11 +46,11 @@ export default async function DashboardPage() {
     return (
       <DashboardShell>
         <div className="flex flex-col items-center justify-center py-16 px-4 text-center">
-          <div className="text-violet-600 text-lg font-medium mb-2">
+          <div className="text-primary text-lg font-medium mb-2">
             Dashboard global de administrador
           </div>
           <p className="text-muted-foreground text-sm max-w-xl">
-            Tu usuario tiene acceso global al panel de control admin. El dashboard operativo requiere una membresía de empresa, así que usá el panel admin para métricas globales.
+            Tu usuario tiene acceso global al panel de control admin. El dashboard operativo requiere una membresía de empresa, así que usa el panel admin para métricas globales.
           </p>
         </div>
       </DashboardShell>

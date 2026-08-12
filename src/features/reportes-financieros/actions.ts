@@ -21,7 +21,7 @@ export const getReporteFinancieroAction = withAction(async (input: ReporteInput,
     prisma.merma.findMany({ where: { tenantId, createdAt: { gte: startDate, lte: endDate } }, select: { cantidad: true, costoTotal: true } }),
   ]);
 
-  // @ts-expect-error
+  // @ts-expect-error La relación producto de Venta no está tipada en el findMany con select anidado
   const totalVentas = ventas.reduce((s, v) => s + v.cantidad * v.producto.precioVenta, 0);
   const totalCompras = compras.reduce((s, c) => s + c.total, 0);
   const totalSalarios = salarios.reduce((s, e) => s + e.salarioBases, 0);

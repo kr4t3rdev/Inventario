@@ -1,7 +1,7 @@
 'use client'
 
 import type { ReactNode } from 'react'
-import { LazyMotion, m as motion, type Variants } from 'framer-motion'
+import { LazyMotion, m as motion, useReducedMotion, type Variants } from 'framer-motion'
 import { LayoutDashboard } from 'lucide-react'
 
 import {
@@ -34,23 +34,24 @@ interface DashboardShellProps {
  * @returns {JSX.Element} Layout animado del dashboard
  */
 export function DashboardShell({ children }: DashboardShellProps) {
+  const shouldReduceMotion = useReducedMotion()
   return (
     <PageTransition className="relative min-h-screen w-full">
       {/* Background Decor */}
       <div className="fixed inset-0 pointer-events-none overflow-hidden -z-10">
         <motion.div
           className="absolute top-0 left-1/4 w-96 h-96 bg-blue-500/10 rounded-full blur-3xl dark:bg-blue-500/5 mix-blend-multiply dark:mix-blend-screen"
-          animate={{ scale: [1, 1.1, 1], x: [0, 20, 0], y: [0, -20, 0] }}
+          animate={shouldReduceMotion ? { scale: 1 } : { scale: [1, 1.1, 1], x: [0, 20, 0], y: [0, -20, 0] }}
           transition={{ duration: 8, repeat: Infinity, ease: 'easeInOut' }}
         />
         <motion.div
-          className="absolute top-0 right-1/4 w-96 h-96 bg-purple-500/10 rounded-full blur-3xl dark:bg-purple-500/5 mix-blend-multiply dark:mix-blend-screen"
-          animate={{ scale: [1, 1.15, 1], x: [0, -30, 0], y: [0, 30, 0] }}
+          className="absolute top-0 right-1/4 w-96 h-96 bg-primary/10 rounded-full blur-3xl dark:bg-primary/5 mix-blend-multiply dark:mix-blend-screen"
+          animate={shouldReduceMotion ? { scale: 1 } : { scale: [1, 1.15, 1], x: [0, -30, 0], y: [0, 30, 0] }}
           transition={{ duration: 10, repeat: Infinity, ease: 'easeInOut', delay: 1 }}
         />
         <motion.div
           className="absolute -bottom-8 left-1/3 w-96 h-96 bg-emerald-500/10 rounded-full blur-3xl dark:bg-emerald-500/5 mix-blend-multiply dark:mix-blend-screen"
-          animate={{ scale: [1, 1.2, 1], x: [0, 25, 0], y: [0, 15, 0] }}
+          animate={shouldReduceMotion ? { scale: 1 } : { scale: [1, 1.2, 1], x: [0, 25, 0], y: [0, 15, 0] }}
           transition={{ duration: 12, repeat: Infinity, ease: 'easeInOut', delay: 2 }}
         />
       </div>
@@ -61,7 +62,7 @@ export function DashboardShell({ children }: DashboardShellProps) {
             {/* Header */}
             <div className="flex items-center gap-3 px-4 lg:px-6">
               <motion.div
-                className="relative flex h-12 w-12 items-center justify-center rounded-xl bg-linear-to-br from-blue-600 to-purple-600 shadow-lg"
+                className="relative flex h-12 w-12 items-center justify-center rounded-xl bg-linear-to-br from-primary to-purple shadow-lg"
                 variants={headerIconVariants}
                 initial="initial"
                 whileHover="hover"
@@ -69,7 +70,7 @@ export function DashboardShell({ children }: DashboardShellProps) {
                 <LayoutDashboard className="h-6 w-6 text-white" />
                 <motion.div
                   className="absolute inset-0 rounded-xl bg-gradient-to-tr from-transparent via-white/20 to-transparent"
-                  animate={{ rotate: [0, 360] }}
+                  animate={shouldReduceMotion ? { rotate: 0 } : { rotate: [0, 360] }}
                   transition={{ duration: 4, repeat: Infinity, ease: 'linear' }}
                   style={{ mixBlendMode: 'overlay' }}
                 />

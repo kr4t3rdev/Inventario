@@ -47,7 +47,7 @@ export function ReporteVentaDiaria() {
 
    const { ventas, isLoading: isLoadingVentas } = useVentas()
   const { ventaServicios } = useVentaServicios()
-  // @ts-expect-error
+  // @ts-expect-error flattenVentas espera el tipo global de Venta; useVentas expone una variante filtrada
   const ventasLineas = useMemo(() => flattenVentas(ventas), [ventas])
 
   // Helper function para crear fecha local
@@ -492,7 +492,7 @@ export function ReporteVentaDiaria() {
       {/* Tarjetas de estadísticas */}
       <StaggerItem className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
         <AnimatedCard>
-        <Card className={cn(surfaceCardClass, "border-l-4 border-l-primary")}>
+        <Card className={cn(surfaceCardClass)}>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardDescription className="text-sm font-medium">Total de Ventas</CardDescription>
             <Package className="h-4 w-4 text-muted-foreground" />
@@ -507,7 +507,7 @@ export function ReporteVentaDiaria() {
         </AnimatedCard>
 
         <AnimatedCard>
-        <Card className={cn(surfaceCardClass, "border-l-4 border-l-chart-2")}>
+        <Card className={cn(surfaceCardClass)}>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardDescription className="text-sm font-medium">Ingresos Netos</CardDescription>
             <DollarSign className="h-4 w-4 text-muted-foreground" />
@@ -522,7 +522,7 @@ export function ReporteVentaDiaria() {
         </AnimatedCard>
 
         <AnimatedCard>
-        <Card className={cn(surfaceCardClass, "border-l-4 border-l-accent")}>
+        <Card className={cn(surfaceCardClass)}>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardDescription className="text-sm font-medium">Ganancia</CardDescription>
             <TrendingUpIcon className="h-4 w-4 text-muted-foreground" />
@@ -537,7 +537,7 @@ export function ReporteVentaDiaria() {
         </AnimatedCard>
 
         <AnimatedCard>
-        <Card className={cn(surfaceCardClass, "border-l-4 border-l-muted")}>
+        <Card className={cn(surfaceCardClass)}>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardDescription className="text-sm font-medium">Ticket Promedio</CardDescription>
             <Calendar className="h-4 w-4 text-muted-foreground" />

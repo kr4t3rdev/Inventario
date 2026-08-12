@@ -73,7 +73,7 @@ export function RentabilidadDashboard() {
                 <div className="flex-1">
                   <div className="h-6 bg-muted rounded overflow-hidden">
                     <div
-                      className="h-full bg-violet-600 rounded transition-all"
+                      className="h-full bg-primary rounded transition-all"
                       style={{ width: `${Math.min(c.margenPromedio, 100)}%` }}
                     />
                   </div>
