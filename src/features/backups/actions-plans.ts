@@ -91,7 +91,12 @@ export const updatePlanAction = withAction(
       data.schedule = parsed.schedule
       data.nextRunAt = calculateNextRun(parsed.schedule)
     }
-    if (parsed.enabled !== undefined) data.enabled = parsed.enabled
+    if (parsed.enabled !== undefined) {
+      data.enabled = parsed.enabled
+      if (parsed.enabled && !existing.enabled && parsed.schedule === undefined) {
+        data.nextRunAt = calculateNextRun(existing.schedule)
+      }
+    }
     if (parsed.retention !== undefined) data.retention = parsed.retention
 
     const plan = await prisma.backupPlan.update({
@@ -156,4 +161,3 @@ export const getPlansAction = withAction(
 )
 
   // ═══ Cron Helpers — moved to cron-utils.ts ═══
-

@@ -1,5 +1,9 @@
 import { describe, expect, it } from 'vitest'
-import { createBackupSchema, createPlanSchema } from '../schemas'
+import {
+  createBackupSchema,
+  createPlanSchema,
+  updatePlanSchema,
+} from '../schemas'
 
 describe('backup schemas', () => {
   it('rejects tenant backups without tenantId', () => {
@@ -36,5 +40,32 @@ describe('backup schemas', () => {
     })
 
     expect(result.success).toBe(true)
+  })
+
+  it('rejects plans with an invalid cron expression', () => {
+    const result = createPlanSchema.safeParse({
+      type: 'full',
+      schedule: 'not-a-cron',
+    })
+
+    expect(result.success).toBe(false)
+  })
+
+  it('accepts valid custom cron expressions', () => {
+    const result = createPlanSchema.safeParse({
+      type: 'full',
+      schedule: '*/15 * * * *',
+    })
+
+    expect(result.success).toBe(true)
+  })
+
+  it('rejects an invalid schedule when updating a plan', () => {
+    const result = updatePlanSchema.safeParse({
+      planId: 'plan-1',
+      schedule: 'not-a-cron',
+    })
+
+    expect(result.success).toBe(false)
   })
 })

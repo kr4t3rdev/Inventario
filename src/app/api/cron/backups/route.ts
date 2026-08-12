@@ -2,7 +2,7 @@
  * @description Cron endpoint for scheduled backups (Railway Cron / any HTTP cron).
  *
  * Triggered by Railway Cron (GET). Process:
- * 1. Authenticate via CRON_SECRET env var (optional, Railway authenticates via request source)
+ * 1. Authenticate via the required CRON_SECRET env var
  * 2. Query enabled BackupPlans where nextRunAt <= now() or nextRunAt IS NULL
  * 3. For each plan: run backup via BackupEngine, update lastRunAt/nextRunAt, prune old backups
  * 4. Return { executed: number, failed: number }
@@ -10,7 +10,7 @@
  * Railway configuration:
  *   - Create a Railway Cron job pointing to GET /api/cron/backups
  *   - No Docker/VM needed — runs as a serverless function or long-running instance
- *   - Set CRON_SECRET for additional security (optional)
+ *   - Set CRON_SECRET as a required secret for the cron request
  *
  * @module app/api/cron/backups
  */
@@ -28,8 +28,8 @@ import type { BackupType } from '@/generated/prisma'
 function validateCronRequest(request: Request): { valid: boolean; reason?: string } {
   const cronSecret = process.env.CRON_SECRET
 
-  // If CRON_SECRET is not set, skip validation (trust the request source)
-  if (!cronSecret) return { valid: true }
+  // Fail closed: this endpoint mutates backup state and must never be public.
+  if (!cronSecret) return { valid: false, reason: 'Cron secret is not configured' }
 
   // Check Authorization header or x-cron-secret header
   const authHeader = request.headers.get('authorization')
@@ -54,7 +54,7 @@ export async function GET(request: Request): Promise<NextResponse> {
   if (!validation.valid) {
     return NextResponse.json(
       { error: validation.reason },
-      { status: 401 },
+      { status: validation.reason === 'Cron secret is not configured' ? 500 : 401 },
     )
   }
 
