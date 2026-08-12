@@ -1165,6 +1165,7 @@ export function VentaInterface() {
 														<motion.button
 															whileHover={{ scale: 1.1 }}
 															whileTap={{ scale: 0.9 }}
+															aria-label={`Agregar ${producto.nombre} al carrito`}
 															className="mt-1 p-1.5 rounded-full bg-primary/10 text-primary hover:bg-primary hover:text-white transition-colors"
 															disabled={producto.stockEnUbicacion === 0}
 														>

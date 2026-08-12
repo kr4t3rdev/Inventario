@@ -60,7 +60,7 @@ export function PaymentChannelDotPlot({ data }: PaymentChannelDotPlotProps) {
          </div>
          {/* <div className="flex gap-2 text-[10px] text-muted-foreground">
             <span className={`flex items-center transition-all duration-300 ${isHovered ? "text-foreground font-medium" : ""}`}>
-              <span className="w-2 h-2 rounded-full bg-purple-700 mr-1"></span> Máxima
+              <span className="w-2 h-2 rounded-full bg-purple mr-1"></span> Máxima
             </span>
             <span className={`flex items-center transition-all duration-300 ${isHovered ? "text-foreground font-medium" : ""}`}>
               <span className="w-2 h-2 rounded-full bg-red-500 mr-1"></span> Mínima

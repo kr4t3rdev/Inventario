@@ -156,7 +156,7 @@ export function AdminSidebar({
   }
 
   const groupToneByTitle: Record<string, string> = {
-    "Panel de Control": "from-violet-500/15 via-sidebar-accent/45 to-transparent",
+    "Panel de Control": "from-purple/15 via-sidebar-accent/45 to-transparent",
     Monitor: "from-amber-500/15 via-sidebar-accent/45 to-transparent",
     
     Licencias: "from-emerald-500/15 via-sidebar-accent/45 to-transparent",
@@ -193,10 +193,10 @@ export function AdminSidebar({
               <SidebarHeader className="px-3 pb-2 pt-3">
                 <Link
                   href={dashboardUrl}
-                  className="group/brand flex min-h-11 items-center gap-3 rounded-xl border border-sidebar-border/70 bg-linear-to-br from-violet-600/15 via-sidebar-accent/55 to-transparent px-3 py-3 text-sidebar-foreground transition-colors duration-200 hover:border-violet-400/70 hover:from-violet-600/20 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sidebar-ring"
+                  className="group/brand flex min-h-11 items-center gap-3 rounded-xl border border-sidebar-border/70 bg-linear-to-br from-purple/15 via-sidebar-accent/55 to-transparent px-3 py-3 text-sidebar-foreground transition-colors duration-200 hover:border-purple/70 hover:from-purple/20 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sidebar-ring"
                 >
                   <motion.span
-                    className="flex size-10 shrink-0 items-center justify-center rounded-lg bg-violet-600/15 text-violet-600"
+                    className="flex size-10 shrink-0 items-center justify-center rounded-lg bg-purple/15 text-purple"
                     whileHover={shouldReduceMotion ? undefined : { scale: 1.04 }}
                     transition={{ duration: shouldReduceMotion ? 0 : 0.2, ease: "easeOut" as const }}
                   >

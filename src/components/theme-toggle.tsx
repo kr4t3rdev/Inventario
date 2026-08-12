@@ -58,7 +58,7 @@ export function ThemeToggle() {
             >
               <Icon className="mr-2 h-4 w-4" />
               <span className="flex-1">{t.label}</span>
-              {isActive && <Check className="h-4 w-4 text-violet-600" />}
+              {isActive && <Check className="h-4 w-4 text-purple" />}
             </DropdownMenuItem>
           );
         })}

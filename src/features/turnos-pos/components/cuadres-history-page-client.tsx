@@ -67,7 +67,7 @@ export function CuadresHistoryPageClient({
           <div className='space-y-1'>
             <h1 className='text-3xl font-semibold tracking-tight'>Historial de cuadres cerrados</h1>
             <p className='max-w-3xl text-sm text-muted-foreground'>
-              Revisá turnos cerrados, su diferencia contra arqueo y abrí el cuadre existente
+              Revisa turnos cerrados, su diferencia contra arqueo y abre el cuadre existente
               por turno sin reactivar el flujo operativo.
             </p>
           </div>
