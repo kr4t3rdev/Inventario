@@ -318,7 +318,7 @@ export function ProductosContent({
 			if (result.success) {
 				toast.success("El producto ha sido eliminado exitosamente.");
 				const refresh = await getProductosAction();
-				// @ts-expect-error
+				// @ts-expect-error El shape de retorno de getProductosAction no expone success en el tipo filtrado
 				if (refresh.success) setProductos(refresh.data ?? []);
 			} else {
 				toast.error(

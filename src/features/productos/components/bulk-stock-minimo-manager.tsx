@@ -202,7 +202,7 @@ export function BulkStockMinimoManager(): React.JSX.Element {
         setSelectAll(false)
       } else {
         toast.error(`Se actualizaron ${
-  // @ts-expect-error
+  // @ts-expect-error El tipo top-level de withAction no expone updated (vive en data.updated)
         result.updated} de ${updates.length
         } productos. Revisa los errores.`)
       }
