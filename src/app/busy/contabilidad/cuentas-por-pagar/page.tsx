@@ -102,7 +102,7 @@ function PagosExpandidos({ pagos }: PagosExpandidosProps) {
 			initial={{ opacity: 0, height: 0 }}
 			animate={{ opacity: 1, height: "auto" }}
 			exit={{ opacity: 0, height: 0 }}
-			className="p-4 bg-muted/30 rounded-lg border border-l-4 border-l-primary/30 ml-4 mt-2 mb-2"
+			className="p-4 bg-muted/30 rounded-lg border ml-4 mt-2 mb-2"
 		>
 			<h4 className="font-semibold mb-3 text-sm flex items-center gap-2">
 				<CreditCard className="h-4 w-4 text-primary" />
@@ -439,7 +439,7 @@ export default function CuentasPorPagarPage() {
 									<Card
 										className={cn(
 											surfaceCardClass,
-											"border-l-4 border-l-primary hover:shadow-md transition-shadow",
+											"hover:shadow-md transition-shadow",
 										)}
 									>
 										<CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
@@ -466,7 +466,7 @@ export default function CuentasPorPagarPage() {
 									<Card
 										className={cn(
 											surfaceCardClass,
-											"border-l-4 border-l-chart-2 hover:shadow-md transition-shadow",
+											"hover:shadow-md transition-shadow",
 										)}
 									>
 										<CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
@@ -493,7 +493,7 @@ export default function CuentasPorPagarPage() {
 									<Card
 										className={cn(
 											surfaceCardClass,
-											"border-l-4 border-l-destructive hover:shadow-md transition-shadow",
+											"hover:shadow-md transition-shadow",
 										)}
 									>
 										<CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
@@ -520,7 +520,7 @@ export default function CuentasPorPagarPage() {
 									<Card
 										className={cn(
 											surfaceCardClass,
-											"border-l-4 border-l-accent hover:shadow-md transition-shadow",
+											"hover:shadow-md transition-shadow",
 										)}
 									>
 										<CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">

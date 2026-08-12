@@ -287,7 +287,7 @@ export default function AnalisisCuentaClientePage() {
             {selectedClientId && (
               <>
                 <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-                  <Card className={cn(surfaceCardClass, "border-l-4 border-l-primary")}>
+                  <Card className={cn(surfaceCardClass)}>
                     <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                       <CardTitle className="text-sm font-medium">
                         Deuda Total
@@ -301,7 +301,7 @@ export default function AnalisisCuentaClientePage() {
                       </p>
                     </CardContent>
                   </Card>
-                  <Card className={cn(surfaceCardClass, "border-l-4 border-l-destructive")}>
+                  <Card className={cn(surfaceCardClass)}>
                     <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                       <CardTitle className="text-sm font-medium">
                         Deuda Vencida
@@ -315,7 +315,7 @@ export default function AnalisisCuentaClientePage() {
                       </p>
                     </CardContent>
                   </Card>
-                  <Card className={cn(surfaceCardClass, "border-l-4 border-l-accent")}>
+                  <Card className={cn(surfaceCardClass)}>
                     <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                       <CardTitle className="text-sm font-medium">
                         Facturas Pendientes
@@ -329,7 +329,7 @@ export default function AnalisisCuentaClientePage() {
                       </p>
                     </CardContent>
                   </Card>
-                  <Card className={cn(surfaceCardClass, "border-l-4 border-l-chart-2")}>
+                  <Card className={cn(surfaceCardClass)}>
                     <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                       <CardTitle className="text-sm font-medium">
                         Última Actividad

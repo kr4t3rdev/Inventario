@@ -117,7 +117,7 @@ function PagosExpandidos({ row }: { row: Row<DeudaCash> }) {
       animate={shouldReduceMotion ? { opacity: 1 } : { opacity: 1, height: "auto" }}
       exit={shouldReduceMotion ? { opacity: 1 } : { opacity: 0, height: 0 }}
       transition={{ duration: shouldReduceMotion ? 0 : 0.2 }}
-      className="p-4 bg-muted/30 rounded-lg border border-l-4 border-l-primary/30 ml-4 mt-2 mb-2"
+      className="p-4 bg-muted/30 rounded-lg border ml-4 mt-2 mb-2"
     >
       <h4 className="font-semibold mb-3 text-sm flex items-center gap-2">
         <CreditCard className="h-4 w-4 text-primary" />

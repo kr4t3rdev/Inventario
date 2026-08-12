@@ -112,7 +112,7 @@ export function DateRangePicker({ fechaInicio, fechaFin, onChange }: DateRangePi
   const handleClear = () => {
     setTempFechaInicio("")
     setTempFechaFin("")
-    onChange("", "")
+    onChange("")
     setIsOpen(false)
   }
 

@@ -375,7 +375,7 @@ export function AccountTransactionHistory({
         <StaggerItem>
           <AnimatedCard>
             <div className="grid gap-4 md:grid-cols-4">
-              <Card className={cn(surfaceCardClass, 'border-l-4 border-l-chart-2')}>
+              <Card className={cn(surfaceCardClass)}>
                 <CardContent className="pt-4">
                   <div className="flex items-center gap-3">
                     <div className="p-2 rounded-lg bg-green-100 dark:bg-green-900/30">
@@ -391,7 +391,7 @@ export function AccountTransactionHistory({
                 </CardContent>
               </Card>
 
-              <Card className={cn(surfaceCardClass, 'border-l-4 border-l-destructive')}>
+              <Card className={cn(surfaceCardClass)}>
                 <CardContent className="pt-4">
                   <div className="flex items-center gap-3">
                     <div className="p-2 rounded-lg bg-red-100 dark:bg-red-900/30">
@@ -407,7 +407,7 @@ export function AccountTransactionHistory({
                 </CardContent>
               </Card>
 
-              <Card className={cn(surfaceCardClass, 'border-l-4 border-l-primary')}>
+              <Card className={cn(surfaceCardClass)}>
                 <CardContent className="pt-4">
                   <div className="flex items-center gap-3">
                     <div className="p-2 rounded-lg bg-blue-100 dark:bg-blue-900/30">
@@ -423,11 +423,11 @@ export function AccountTransactionHistory({
                 </CardContent>
               </Card>
 
-              <Card className={cn(surfaceCardClass, 'border-l-4 border-l-chart-3')}>
+              <Card className={cn(surfaceCardClass)}>
                 <CardContent className="pt-4">
                   <div className="flex items-center gap-3">
-                    <div className="p-2 rounded-lg bg-purple-100 dark:bg-purple-900/30">
-                      <Calendar className="h-5 w-5 text-purple-600 dark:text-purple-300" />
+                    <div className="p-2 rounded-lg bg-primary/15 dark:bg-primary/20">
+                      <Calendar className="h-5 w-5 text-primary" />
                     </div>
                     <div>
                       <p className="text-sm text-muted-foreground">Movimientos</p>

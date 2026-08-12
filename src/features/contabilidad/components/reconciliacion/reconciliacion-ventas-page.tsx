@@ -362,7 +362,7 @@ export function ReconciliacionVentasPage({cuentaId}: RecoProps) {
       <StaggerItem>
         <AnimatedCard>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <Card className={cn(surfaceCardClass, 'border-l-4 border-l-accent')}>
+            <Card className={cn(surfaceCardClass)}>
               <CardHeader className="pb-2">
                 <div className="flex items-center justify-between">
                   <CardTitle className="text-sm font-medium text-muted-foreground">Monto total sin reconciliar</CardTitle>
@@ -376,7 +376,7 @@ export function ReconciliacionVentasPage({cuentaId}: RecoProps) {
                 </Badge>
               </CardContent>
             </Card>
-            <Card className={cn(surfaceCardClass, 'border-l-4 border-l-chart-2')}>
+            <Card className={cn(surfaceCardClass)}>
               <CardHeader className="pb-2">
                 <div className="flex items-center justify-between">
                   <CardTitle className="text-sm font-medium text-muted-foreground">Ventas Reconciliada</CardTitle>
@@ -390,7 +390,7 @@ export function ReconciliacionVentasPage({cuentaId}: RecoProps) {
                 </Badge>
               </CardContent>
             </Card>
-            <Card className={cn(surfaceCardClass, 'border-l-4 border-l-primary')}>
+            <Card className={cn(surfaceCardClass)}>
               <CardHeader className="pb-2">
                 <div className="flex items-center justify-between">
                   <CardTitle className="text-sm font-medium text-muted-foreground">Monto Convertido</CardTitle>

@@ -99,7 +99,7 @@ export function HistorialAjustesTable({ cuentaId, showAllAccounts = false }: His
       <Card>
         <CardContent className="p-6">
           <div className="flex items-center justify-center">
-            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+            <div className="animate-spin rounded-full h-8 w-8 border-2 border-primary border-t-transparent"></div>
             <span className="ml-2">Cargando historial de ajustes...</span>
           </div>
         </CardContent>

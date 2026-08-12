@@ -213,7 +213,7 @@ export function CuentasPageClient({ cuentas: initialCuentas }: CuentasPageClient
 
           {/* Stats Cards */}
           <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }} className="grid gap-4 md:grid-cols-3">
-            <Card className={cn(surfaceCardClass, "border-l-4 border-l-primary")}>
+            <Card className={cn(surfaceCardClass)}>
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                 <CardTitle className="text-sm font-medium">Total Cuentas</CardTitle>
                 <Wallet className="h-4 w-4 text-blue-500" />
@@ -223,7 +223,7 @@ export function CuentasPageClient({ cuentas: initialCuentas }: CuentasPageClient
                 <p className="text-xs text-muted-foreground">Cuentas registradas</p>
               </CardContent>
             </Card>
-            <Card className={cn(surfaceCardClass, "border-l-4 border-l-chart-2")}>
+            <Card className={cn(surfaceCardClass)}>
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                 <CardTitle className="text-sm font-medium">Cuentas Activas</CardTitle>
                 <CreditCard className="h-4 w-4 text-emerald-500" />
@@ -233,7 +233,7 @@ export function CuentasPageClient({ cuentas: initialCuentas }: CuentasPageClient
                 <p className="text-xs text-muted-foreground">Disponibles para operaciones</p>
               </CardContent>
             </Card>
-            <Card className={cn(surfaceCardClass, "border-l-4 border-l-accent")}>
+            <Card className={cn(surfaceCardClass)}>
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                 <CardTitle className="text-sm font-medium">Saldo Total</CardTitle>
                 <TrendingUp className="h-4 w-4 text-amber-500" />

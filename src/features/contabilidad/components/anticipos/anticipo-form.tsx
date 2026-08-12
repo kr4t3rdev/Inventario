@@ -107,7 +107,7 @@ export function AnticipoForm({
 
   // Resetear contratoId cuando cambia el tipo
   React.useEffect(() => {
-    form.setValue("contratoId", "")
+    form.setValue("contratoId")
   }, [tipoSeleccionado, form])
 
   // Filtrar contratos según el tipo

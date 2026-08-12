@@ -723,7 +723,7 @@ export function ReconciliacionGastosForm({
                                             field.onChange(newValue)
                                           }
                                         }}
-                                        className={`h-9 ${field.value > 0 ? 'border-blue-300 bg-blue-50 dark:bg-gray-800 text-gray-400' : ''}`}
+                                        className={`h-9 ${field.value > 0 ? 'border-blue-300 bg-blue-50 dark:bg-gray-800 text-blue-900 dark:text-blue-100' : ''}`}
                                       />
                                     </FormControl>
                                     {isCuentaPorPagar && (

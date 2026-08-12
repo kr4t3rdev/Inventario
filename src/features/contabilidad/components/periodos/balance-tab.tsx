@@ -38,7 +38,7 @@ function VariacionBadge({ variacion }: { variacion: number }) {
 				variant="outline"
 				className="bg-green-50 text-green-700 border-green-200"
 			>
-				<TrendingUp className="h-3 w-3 mr-1" />+{formatMoneda(variacion, "")}
+				<TrendingUp className="h-3 w-3 mr-1" />+{formatMoneda(variacion)}
 			</Badge>
 		);
 	}
@@ -49,7 +49,7 @@ function VariacionBadge({ variacion }: { variacion: number }) {
 				className="bg-red-50 text-red-700 border-red-200"
 			>
 				<TrendingDown className="h-3 w-3 mr-1" />
-				{formatMoneda(variacion, "")}
+				{formatMoneda(variacion)}
 			</Badge>
 		);
 	}
@@ -113,10 +113,10 @@ export function BalanceTab({
 								</div>
 								<div className="flex gap-4 mt-1 text-xs text-muted-foreground">
 									<span className="text-green-600">
-										Ingresos: {formatMoneda(t.totalIngresos, "")}
+										Ingresos: {formatMoneda(t.totalIngresos)}
 									</span>
 									<span className="text-red-600">
-										Egresos: {formatMoneda(t.totalEgresos, "")}
+										Egresos: {formatMoneda(t.totalEgresos)}
 									</span>
 								</div>
 							</CardContent>
