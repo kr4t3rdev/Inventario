@@ -2,6 +2,8 @@ import { useEffect, useMemo, useState } from 'react';
 import { Button, SafeAreaView, StyleSheet, Text, TextInput, View, useColorScheme } from 'react-native';
 import Constants from 'expo-constants';
 import { createAppSessionManager } from './src/app-session';
+import { BusinessDashboard } from './src/BusinessDashboard';
+import { createGeneratedBusinessApi } from './src/business-api';
 
 const lightTheme = {
   background: '#ffffff',
@@ -23,13 +25,20 @@ const darkTheme = {
  */
 export default function App(): JSX.Element {
   const apiBaseUrl = String(Constants.expoConfig?.extra?.apiBaseUrl ?? '');
-  const manager = useMemo(() => apiBaseUrl ? createAppSessionManager(apiBaseUrl) : null, [apiBaseUrl]);
-  const colorScheme = useColorScheme();
-  const theme = colorScheme === 'dark' ? darkTheme : lightTheme;
   const [status, setStatus] = useState<'loading' | 'signed-out' | 'signed-in' | 'error'>('loading');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [message, setMessage] = useState('');
+  const manager = useMemo(() => apiBaseUrl ? createAppSessionManager(apiBaseUrl) : null, [apiBaseUrl]);
+  const businessApi = useMemo(() => manager && apiBaseUrl
+    ? createGeneratedBusinessApi(apiBaseUrl, () => manager.getAccessToken(), undefined, async () => {
+      await manager.clearLocalSession();
+      setStatus('signed-out');
+      setMessage('La sesión ya no es válida. Inicia sesión nuevamente.');
+    })
+    : null, [apiBaseUrl, manager]);
+  const colorScheme = useColorScheme();
+  const theme = colorScheme === 'dark' ? darkTheme : lightTheme;
 
   useEffect(() => {
     if (!manager) {
@@ -45,9 +54,7 @@ export default function App(): JSX.Element {
 
   if (status === 'loading') return <CenteredText text="Cargando sesión…" theme={theme} />;
   if (status === 'error') return <CenteredText text={message} theme={theme} />;
-  if (status === 'signed-in') {
-    return <CenteredText text="Sesión iniciada. Las pantallas del producto llegarán en la siguiente fase." theme={theme} />;
-  }
+  if (status === 'signed-in' && businessApi) return <BusinessDashboard api={businessApi} />;
 
   return (
     <SafeAreaView style={[styles.container, { backgroundColor: theme.background }]}>

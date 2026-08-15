@@ -4,6 +4,7 @@ import { describe, expect, it } from 'vitest';
 
 const configPath = resolve(dirname(import.meta.filename), '../metro.config.js');
 const appPath = resolve(dirname(import.meta.filename), '../App.tsx');
+const dashboardPath = resolve(dirname(import.meta.filename), './BusinessDashboard.tsx');
 
 describe('Expo Metro boundary', () => {
   it('watches the generated SDK while resolving dependencies from standalone mobile first', () => {
@@ -23,5 +24,21 @@ describe('Expo Metro boundary', () => {
 
     expect(app).toContain("useColorScheme } from 'react-native'");
     expect(app).not.toContain("useColorScheme, useEffect");
+  });
+
+  it('wires unauthorized data responses to local session expiry', () => {
+    const app = readFileSync(appPath, 'utf8');
+    expect(app).toContain('createGeneratedBusinessApi');
+    expect(app).toContain('clearLocalSession');
+    expect(app).toContain("setStatus('signed-out')");
+  });
+
+  it('keeps the business dashboard safe-area and theme-token guarded', () => {
+    const dashboard = readFileSync(dashboardPath, 'utf8');
+    expect(dashboard).toContain('SafeAreaView');
+    expect(dashboard).toContain('useColorScheme');
+    expect(dashboard).toContain('darkTheme');
+    expect(dashboard).not.toContain('Todas las ubicaciones');
+    expect(dashboard).not.toContain('Costo');
   });
 });

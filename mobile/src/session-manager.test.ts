@@ -164,6 +164,18 @@ describe('SessionManager', () => {
     expect(storage.value).toBeUndefined();
   });
 
+  it('clears local session without calling remote logout when data access is unauthorized', async () => {
+    const client = createClient();
+    const manager = new SessionManager({ client, storage });
+    await manager.login('user@example.com', 'password');
+
+    await manager.clearLocalSession();
+
+    expect(client.logout).not.toHaveBeenCalled();
+    expect(manager.getAccessToken()).toBeNull();
+    expect(storage.value).toBeUndefined();
+  });
+
   it('clears local session when remote logout fails', async () => {
     const client = createClient({ logout: vi.fn(async () => { throw new Error('network'); }) });
     const manager = new SessionManager({ client, storage });

@@ -133,6 +133,14 @@ export class SessionManager {
   }
 
   /**
+   * @description Clears local credentials without calling the remote logout endpoint.
+   * @returns {Promise<void>} Resolves after secure local storage is cleared.
+   */
+  async clearLocalSession(): Promise<void> {
+    await this.clearSession('Local session cleared');
+  }
+
+  /**
    * @description Returns the in-memory access token for authorized SDK requests.
    * @returns {string | null} Access token or null when signed out.
    */
