@@ -41,6 +41,8 @@ export async function proxy(request: NextRequest) {
     '/api/auth/google/callback',
     '/api/health',
     '/api/licencias/validar',
+    '/api/mobile/v1/auth/login',
+    '/api/mobile/v1/auth/refresh',
   ]
 
   const publicPathsPrefix = [
