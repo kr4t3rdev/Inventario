@@ -4,7 +4,7 @@ import type {
   GetProductsStockResponse,
   MobileGetProductsStockRequest,
 } from '../../sdks/mobile-v1/typescript/src';
-import type { BusinessApi } from './business-api';
+import type { BusinessApi, RequiredStockRequest } from './business-api';
 
 export interface BusinessSurfaceData {
   dashboard: GetDashboardStatsResponse | null;
@@ -33,12 +33,13 @@ export async function loadBusinessSurface(
   api: BusinessApi,
   stockParams: MobileGetProductsStockRequest = {},
 ): Promise<BusinessSurfaceResult> {
+  const stockLocation: RequiredStockRequest | null = stockParams.ubicacionId && stockParams.tipoUbicacion
+    ? { ubicacionId: stockParams.ubicacionId, tipoUbicacion: stockParams.tipoUbicacion }
+    : null;
   const requests = [
     api.dashboard(stockParams),
     api.products(),
-    ...(stockParams.ubicacionId && stockParams.tipoUbicacion
-      ? [api.stock({ ...stockParams, includeZero: 'false' })]
-      : []),
+    ...(stockLocation ? [api.stock({ ...stockLocation, includeZero: 'false' })] : []),
   ] as const;
   const settled = await Promise.allSettled(requests);
   const stockResult = settled[2];
