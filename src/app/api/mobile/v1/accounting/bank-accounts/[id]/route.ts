@@ -2,6 +2,7 @@ import { ActionError } from '@/lib/server-actions';
 import { authenticateUser } from '@/lib/auth-middleware';
 import { errorResponse, successResponse } from '@/lib/api-response';
 import { BankAccountReadService } from '@/features/contabilidad/services/bank-account-read-service';
+import { requireFeature } from '@/lib/services/tenant-scope';
 
 export const dynamic = 'force-dynamic';
 
@@ -21,12 +22,17 @@ export async function GET(request: Request, context: RouteContext) {
   }
 
   try {
+    requireFeature(authResult.user, 'contabilidad', 'consultar cuentas bancarias');
     const { id } = await context.params;
     const item = await BankAccountReadService.getById({ tenantId, cuentaId: id });
     return successResponse(item);
   } catch (error) {
     if (error instanceof ActionError) {
-      return errorResponse(error.message, error.code === 'NOT_FOUND' ? 404 : 400, error.code);
+      return errorResponse(
+        error.message,
+        error.code === 'NOT_FOUND' ? 404 : error.code === 'FEATURE_NOT_AVAILABLE' ? 403 : 400,
+        error.code,
+      );
     }
     console.error('Error en mobile accounting bank account detail route:', error);
     return errorResponse('Error interno del servidor', 500, 'INTERNAL_ERROR');

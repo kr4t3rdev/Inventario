@@ -11,9 +11,14 @@ vi.mock('@/features/contabilidad/services/bank-account-read-service', () => ({
   },
 }));
 
+vi.mock('@/lib/services/tenant-scope', () => ({
+  requireFeature: vi.fn(),
+}));
+
 import { authenticateUser } from '@/lib/auth-middleware';
 import { ActionError } from '@/lib/server-actions';
 import { BankAccountReadService } from '@/features/contabilidad/services/bank-account-read-service';
+import { requireFeature } from '@/lib/services/tenant-scope';
 import { GET } from '../route';
 
 const mockUser = {
@@ -66,5 +71,20 @@ describe('mobile accounting bank account detail route', () => {
 
     expect(response.status).toBe(404);
     expect(data.error).toBe('Cuenta bancaria no encontrada');
+  });
+
+  it('returns 403 before reading a bank account without accounting access', async () => {
+    vi.mocked(authenticateUser).mockResolvedValue({ user: mockUser } as never);
+    vi.mocked(requireFeature).mockImplementation(() => {
+      throw new ActionError('Feature no disponible', 'FEATURE_NOT_AVAILABLE');
+    });
+
+    const request = new NextRequest('http://localhost/api/mobile/v1/accounting/bank-accounts/cb-1', {
+      headers: { authorization: 'Bearer mobile-access' },
+    });
+    const response = await GET(request, { params: Promise.resolve({ id: 'cb-1' }) } as never);
+
+    expect(response.status).toBe(403);
+    expect(BankAccountReadService.getById).not.toHaveBeenCalled();
   });
 });
