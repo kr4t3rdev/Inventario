@@ -11,7 +11,7 @@ describe('generated accounting API adapter', () => {
         url: String(input),
         authorization: new Headers(init?.headers).get('authorization') ?? undefined,
       });
-      return new Response(JSON.stringify({ items: [] }), {
+      return new Response(JSON.stringify({ items: [], transacciones: [], resumen: {}, pagination: {} }), {
         status: 200,
         headers: { 'content-type': 'application/json' },
       });
@@ -20,9 +20,17 @@ describe('generated accounting API adapter', () => {
 
     await api.listBankAccounts();
     await api.getBankAccount('bank-1');
+    await api.getBankAccountHistory('bank-1', {
+      page: 2,
+      limit: 10,
+      tipoMovimiento: 'venta',
+      fechaInicio: new Date('2026-01-01T00:00:00.000Z'),
+      fechaFin: new Date('2026-01-31T00:00:00.000Z'),
+    });
     expect(requests).toEqual([
       { method: 'GET', url: 'https://example.test/api/mobile/v1/accounting/bank-accounts', authorization: 'Bearer access-token' },
       { method: 'GET', url: 'https://example.test/api/mobile/v1/accounting/bank-accounts/bank-1', authorization: 'Bearer access-token' },
+      { method: 'GET', url: 'https://example.test/api/mobile/v1/accounting/bank-accounts/bank-1/history?fechaInicio=2026-01-01T00%3A00%3A00.000Z&fechaFin=2026-01-31T00%3A00%3A00.000Z&tipoMovimiento=venta&page=2&limit=10', authorization: 'Bearer access-token' },
     ]);
   });
 
@@ -32,6 +40,15 @@ describe('generated accounting API adapter', () => {
     const api = createGeneratedAccountingApi('https://example.test', () => 'access-token', fetchApi, onUnauthorized);
 
     await expect(api.listBankAccounts()).rejects.toMatchObject({ response: { status: 403 } });
+    expect(onUnauthorized).toHaveBeenCalledOnce();
+  });
+
+  it('clears the mobile session on unauthorized history responses', async () => {
+    const onUnauthorized = vi.fn();
+    const fetchApi = vi.fn<FetchAPI>(async () => new Response('{}', { status: 401 }));
+    const api = createGeneratedAccountingApi('https://example.test', () => 'access-token', fetchApi, onUnauthorized);
+
+    await expect(api.getBankAccountHistory('bank-1')).rejects.toMatchObject({ response: { status: 401 } });
     expect(onUnauthorized).toHaveBeenCalledOnce();
   });
 });
