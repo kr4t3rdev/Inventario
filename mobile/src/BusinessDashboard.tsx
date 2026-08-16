@@ -27,6 +27,7 @@ const darkTheme = {
 
 interface BusinessDashboardProps {
   api: BusinessApi;
+  onNavigateToSales?: () => void;
 }
 
 /**
@@ -34,7 +35,7 @@ interface BusinessDashboardProps {
  * @param {BusinessDashboardProps} props - Business API adapter.
  * @returns {JSX.Element} Accessible mobile business surface.
  */
-export function BusinessDashboard({ api }: BusinessDashboardProps): JSX.Element {
+export function BusinessDashboard({ api, onNavigateToSales }: BusinessDashboardProps): JSX.Element {
   const [locationType, setLocationType] = useState<MobileGetProductsStockRequest['tipoUbicacion']>();
   const [locationId, setLocationId] = useState('');
   const colorScheme = useColorScheme();
@@ -49,7 +50,10 @@ export function BusinessDashboard({ api }: BusinessDashboardProps): JSX.Element 
   return (
     <SafeAreaView style={[styles.container, { backgroundColor: theme.background, paddingTop: Platform.OS === 'android' ? StatusBar.currentHeight ?? 0 : 0 }]}>
       <ScrollView contentContainerStyle={styles.content} accessibilityLabel="Panel principal">
-      <Text style={[styles.title, { color: theme.text }]}>Resumen</Text>
+      <View style={styles.headingRow}>
+        <Text style={[styles.title, { color: theme.text }]}>Resumen</Text>
+        {onNavigateToSales ? <Button title="Ventas" onPress={onNavigateToSales} accessibilityLabel="Abrir ventas" /> : null}
+      </View>
       <Section theme={theme} title="Indicadores" error={errors.dashboard} loading={loading && !data.dashboard} onRetry={retry}>
         {data.dashboard ? <View style={styles.metrics}>
           <Metric theme={theme} label="Total" value={data.dashboard.total} />
@@ -108,6 +112,7 @@ const styles = StyleSheet.create({
   container: { flex: 1 },
   content: { gap: 16, padding: 20 },
   title: { fontSize: 28, fontWeight: '700' },
+  headingRow: { alignItems: 'center', flexDirection: 'row', justifyContent: 'space-between' },
   section: { gap: 10, padding: 16, borderWidth: 1, borderColor: '#9ca3af', borderRadius: 12 },
   sectionTitle: { fontSize: 20, fontWeight: '700' },
   metrics: { flexDirection: 'row', flexWrap: 'wrap', gap: 12 },

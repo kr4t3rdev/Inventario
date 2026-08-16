@@ -1,9 +1,12 @@
-import { useEffect, useMemo, useState } from 'react';
-import { Button, SafeAreaView, StyleSheet, Text, TextInput, View, useColorScheme } from 'react-native';
+import { useCallback, useEffect, useMemo, useState } from 'react';
+import { BackHandler, Button, SafeAreaView, StyleSheet, Text, TextInput, View, useColorScheme } from 'react-native';
 import Constants from 'expo-constants';
 import { createAppSessionManager } from './src/app-session';
 import { BusinessDashboard } from './src/BusinessDashboard';
 import { createGeneratedBusinessApi } from './src/business-api';
+import { SalesSurface } from './src/SalesSurface';
+import { createGeneratedSalesApi } from './src/sales-api';
+import { handleMobileBack, type MobileScreen } from './src/mobile-navigation';
 
 const lightTheme = {
   background: '#ffffff',
@@ -29,16 +32,27 @@ export default function App(): JSX.Element {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [message, setMessage] = useState('');
+  const [screen, setScreen] = useState<MobileScreen>('dashboard');
   const manager = useMemo(() => apiBaseUrl ? createAppSessionManager(apiBaseUrl) : null, [apiBaseUrl]);
+  const handleUnauthorized = useCallback(async () => {
+    if (!manager) return;
+    await manager.clearLocalSession();
+    setStatus('signed-out');
+    setMessage('La sesión ya no es válida. Inicia sesión nuevamente.');
+  }, [manager]);
   const businessApi = useMemo(() => manager && apiBaseUrl
-    ? createGeneratedBusinessApi(apiBaseUrl, () => manager.getAccessToken(), undefined, async () => {
-      await manager.clearLocalSession();
-      setStatus('signed-out');
-      setMessage('La sesión ya no es válida. Inicia sesión nuevamente.');
-    })
-    : null, [apiBaseUrl, manager]);
+    ? createGeneratedBusinessApi(apiBaseUrl, () => manager.getAccessToken(), undefined, handleUnauthorized)
+    : null, [apiBaseUrl, handleUnauthorized, manager]);
+  const salesApi = useMemo(() => manager && apiBaseUrl
+    ? createGeneratedSalesApi(apiBaseUrl, () => manager.getAccessToken(), undefined, handleUnauthorized)
+    : null, [apiBaseUrl, handleUnauthorized, manager]);
   const colorScheme = useColorScheme();
   const theme = colorScheme === 'dark' ? darkTheme : lightTheme;
+
+  useEffect(() => {
+    const subscription = BackHandler.addEventListener('hardwareBackPress', () => handleMobileBack(screen, setScreen));
+    return () => subscription.remove();
+  }, [screen]);
 
   useEffect(() => {
     if (!manager) {
@@ -54,7 +68,11 @@ export default function App(): JSX.Element {
 
   if (status === 'loading') return <CenteredText text="Cargando sesión…" theme={theme} />;
   if (status === 'error') return <CenteredText text={message} theme={theme} />;
-  if (status === 'signed-in' && businessApi) return <BusinessDashboard api={businessApi} />;
+  if (status === 'signed-in' && businessApi && salesApi) {
+    return screen === 'sales'
+      ? <SalesSurface api={salesApi} onNavigateToDashboard={() => setScreen('dashboard')} />
+      : <BusinessDashboard api={businessApi} onNavigateToSales={() => setScreen('sales')} />;
+  }
 
   return (
     <SafeAreaView style={[styles.container, { backgroundColor: theme.background }]}>
