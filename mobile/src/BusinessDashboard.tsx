@@ -1,5 +1,5 @@
 import { useMemo, useState, type ReactNode } from 'react';
-import { Button, SafeAreaView, ScrollView, StyleSheet, Text, TextInput, View, useColorScheme } from 'react-native';
+import { Button, Platform, SafeAreaView, ScrollView, StatusBar, StyleSheet, Text, TextInput, View, useColorScheme } from 'react-native';
 import type { MobileGetProductsStockRequest } from '../../sdks/mobile-v1/typescript/src';
 import type { BusinessApi } from './business-api';
 import { useBusinessSurface } from './use-business-surface';
@@ -47,7 +47,7 @@ export function BusinessDashboard({ api }: BusinessDashboardProps): JSX.Element 
   const { data, errors, loading, retry } = useBusinessSurface(api, stockParams);
 
   return (
-    <SafeAreaView style={[styles.container, { backgroundColor: theme.background }]}>
+    <SafeAreaView style={[styles.container, { backgroundColor: theme.background, paddingTop: Platform.OS === 'android' ? StatusBar.currentHeight ?? 0 : 0 }]}>
       <ScrollView contentContainerStyle={styles.content} accessibilityLabel="Panel principal">
       <Text style={[styles.title, { color: theme.text }]}>Resumen</Text>
       <Section theme={theme} title="Indicadores" error={errors.dashboard} loading={loading && !data.dashboard} onRetry={retry}>
@@ -66,7 +66,7 @@ export function BusinessDashboard({ api }: BusinessDashboardProps): JSX.Element 
             {product.codigo ? <Text style={[styles.muted, { color: theme.muted }]}>Código: {product.codigo}</Text> : null}
             {typeof product.precio === 'number' ? <Text style={[styles.muted, { color: theme.muted }]}>Precio: {product.precio}</Text> : null}
           </View>
-        )) : data.products ? <Text style={styles.muted}>No hay productos para mostrar.</Text> : null}
+        )) : data.products ? <Text style={[styles.muted, { color: theme.muted }]}>No hay productos para mostrar.</Text> : null}
       </Section>
 
       <Section theme={theme} title="Existencias" error={errors.stock} loading={loading && !data.stock && stockReady} onRetry={retry}>

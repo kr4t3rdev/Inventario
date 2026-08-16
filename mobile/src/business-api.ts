@@ -14,8 +14,13 @@ import { normalizeBasePath } from './sdk-client';
 export interface BusinessApi {
   dashboard(params?: MobileGetDashboardStatsRequest): Promise<GetDashboardStatsResponse>;
   products(): Promise<GetProductsResponse>;
-  stock(params?: MobileGetProductsStockRequest): Promise<GetProductsStockResponse>;
+  stock(params: RequiredStockRequest): Promise<GetProductsStockResponse>;
 }
+
+export type RequiredStockRequest = MobileGetProductsStockRequest & {
+  ubicacionId: string;
+  tipoUbicacion: NonNullable<MobileGetProductsStockRequest['tipoUbicacion']>;
+};
 
 export type UnauthorizedHandler = () => void | Promise<void>;
 
@@ -53,7 +58,7 @@ export function createGeneratedBusinessApi(
   return {
     dashboard: (params = {}) => safelyCall(dashboardApi.mobileGetDashboardStats(params)),
     products: () => safelyCall(productsApi.mobileGetProducts()),
-    stock: (params = {}) => safelyCall(productsApi.mobileGetProductsStock(params)),
+    stock: (params) => safelyCall(productsApi.mobileGetProductsStock(params)),
   };
 }
 

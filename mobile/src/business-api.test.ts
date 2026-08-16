@@ -20,7 +20,7 @@ describe('generated business API adapter', () => {
 
     await api.dashboard({ ubicacionId: 'location-1', tipoUbicacion: 'almacen' });
     await api.products();
-    await api.stock({ tipoUbicacion: 'punto_venta', includeZero: 'false' });
+    await api.stock({ ubicacionId: 'location-1', tipoUbicacion: 'punto_venta', includeZero: 'false' });
 
     expect(requests).toEqual([
       {
@@ -32,7 +32,7 @@ describe('generated business API adapter', () => {
         authorization: 'Bearer access-token',
       },
       {
-        url: 'https://example.test/api/mobile/v1/products/stock?tipoUbicacion=punto_venta&includeZero=false',
+        url: 'https://example.test/api/mobile/v1/products/stock?ubicacionId=location-1&tipoUbicacion=punto_venta&includeZero=false',
         authorization: 'Bearer access-token',
       },
     ]);
