@@ -1,6 +1,7 @@
 import {
   Configuration,
   SalesApi,
+  type GetSalesIdResponse,
   type GetSalesResponse,
   type PatchSalesIdUpdateResponse,
   type PostSalesCreateResponse,
@@ -12,6 +13,7 @@ import {
 import type { FetchAPI } from '../../sdks/mobile-v1/typescript/src/runtime';
 import type {
   MobilePatchSalesByIdUpdateRequest,
+  MobileGetSalesByIdRequest,
   MobilePostSalesByIdCancelRequest,
   MobilePostSalesCreateRequest,
 } from '../../sdks/mobile-v1/typescript/src/apis/SalesApi';
@@ -20,6 +22,7 @@ import { isUnauthorizedResponse, type UnauthorizedHandler } from './business-api
 
 export interface SalesApiClient {
   list(): Promise<GetSalesResponse>;
+  get(id: string): Promise<GetSalesIdResponse>;
   create(input: SaleCreateRequest): Promise<PostSalesCreateResponse>;
   update(id: string, input: SaleUpdateRequest): Promise<PatchSalesIdUpdateResponse>;
   cancel(id: string, input: SaleCancelRequest): Promise<PostSalesIdCancelResponse>;
@@ -56,6 +59,7 @@ export function createGeneratedSalesApi(
 
   return {
     list: () => safelyCall(salesApi.mobileGetSales()),
+    get: (id) => safelyCall(salesApi.mobileGetSalesById({ id } satisfies MobileGetSalesByIdRequest)),
     create: (input) => safelyCall(salesApi.mobilePostSalesCreate({
       saleCreateRequest: input,
     } satisfies MobilePostSalesCreateRequest)),

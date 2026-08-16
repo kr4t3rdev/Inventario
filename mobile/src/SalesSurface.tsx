@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useState, type JSX } from 'react';
 import {
   Button,
+  Alert,
   Platform,
   SafeAreaView,
   ScrollView,
@@ -11,7 +12,7 @@ import {
   View,
   useColorScheme,
 } from 'react-native';
-import type { Sale } from '../../sdks/mobile-v1/typescript/src';
+import type { GetSalesIdResponse, Sale } from '../../sdks/mobile-v1/typescript/src';
 import type { SalesApiClient } from './sales-api';
 import { buildSaleCreateRequest, type SaleFormState } from './sales-validation';
 
@@ -56,6 +57,12 @@ export function SalesSurface({ api, onNavigateToDashboard }: SalesSurfaceProps):
   const [error, setError] = useState<Error | null>(null);
   const [submitting, setSubmitting] = useState(false);
   const [formError, setFormError] = useState<string | null>(null);
+  const [editingSaleId, setEditingSaleId] = useState<string | null>(null);
+  const [editForm, setEditForm] = useState({ descuento: '', observaciones: '' });
+  const [actionLoading, setActionLoading] = useState(false);
+  const [actionError, setActionError] = useState<string | null>(null);
+  const [detail, setDetail] = useState<GetSalesIdResponse | null>(null);
+  const [detailLoading, setDetailLoading] = useState(false);
   const colorScheme = useColorScheme();
   const theme = colorScheme === 'dark' ? darkTheme : lightTheme;
 
@@ -101,6 +108,73 @@ export function SalesSurface({ api, onNavigateToDashboard }: SalesSurfaceProps):
     }
   };
 
+  const beginEdit = (sale: Sale) => {
+    if (!sale.ventaId) return;
+    setEditingSaleId(sale.ventaId);
+    setEditForm({ descuento: String(sale.descuento ?? 0), observaciones: sale.observaciones ?? '' });
+    setActionError(null);
+  };
+
+  const showDetail = async (sale: Sale) => {
+    if (!sale.ventaId) return;
+    setDetail(null);
+    setDetailLoading(true);
+    setActionError(null);
+    try {
+      setDetail(await api.get(sale.ventaId));
+    } catch {
+      setActionError('No se pudo cargar el detalle de la venta.');
+    } finally {
+      setDetailLoading(false);
+    }
+  };
+
+  const saveUpdate = async () => {
+    if (!editingSaleId) return;
+    const descuento = Number(editForm.descuento);
+    if (!Number.isInteger(descuento) || descuento < 0 || editForm.observaciones.length > 500) {
+      setActionError('El descuento debe ser un entero no negativo y las observaciones no pueden superar 500 caracteres.');
+      return;
+    }
+    setActionLoading(true);
+    setActionError(null);
+    try {
+      await api.update(editingSaleId, { descuento, observaciones: editForm.observaciones.trim() });
+      setEditingSaleId(null);
+      await loadSales();
+    } catch {
+      setActionError('No se pudo actualizar la venta. Verifica su estado y permisos.');
+    } finally {
+      setActionLoading(false);
+    }
+  };
+
+  const confirmCancel = (sale: Sale) => {
+    if (!sale.ventaId) return;
+    Alert.alert(
+      'Anular venta',
+      'La anulación puede revertir inventario y conciliaciones. ¿Deseas continuar?',
+      [
+        { text: 'Cancelar', style: 'cancel' },
+        { text: 'Anular', style: 'destructive', onPress: () => void cancelSale(sale.ventaId as string) },
+      ],
+    );
+  };
+
+  const cancelSale = async (saleId: string) => {
+    setActionLoading(true);
+    setActionError(null);
+    try {
+      await api.cancel(saleId, { motivo: null });
+      setEditingSaleId(null);
+      await loadSales();
+    } catch {
+      setActionError('No se pudo anular la venta. Puede pertenecer a un turno cerrado o tener efectos financieros.');
+    } finally {
+      setActionLoading(false);
+    }
+  };
+
   return (
     <SafeAreaView style={[styles.container, { backgroundColor: theme.background, paddingTop: Platform.OS === 'android' ? StatusBar.currentHeight ?? 0 : 0 }]}>
       <ScrollView contentContainerStyle={styles.content} accessibilityLabel="Ventas">
@@ -126,8 +200,11 @@ export function SalesSurface({ api, onNavigateToDashboard }: SalesSurfaceProps):
           </View>
           {loading ? <Text style={{ color: theme.text }}>Cargando ventas…</Text> : null}
           {error ? <View><Text accessibilityRole="alert" style={[styles.error, { color: theme.text }]}>No se pudieron cargar las ventas.</Text><Button title="Reintentar" onPress={() => void loadSales()} accessibilityLabel="Reintentar carga de ventas" /></View> : null}
+          {actionError ? <Text accessibilityRole="alert" style={[styles.error, { color: theme.text }]}>{actionError}</Text> : null}
+          {detailLoading ? <Text style={{ color: theme.text }}>Cargando detalle…</Text> : null}
+          {detail ? <SaleDetail detail={detail} theme={theme} /> : null}
           {!loading && !error && sales.length === 0 ? <Text style={{ color: theme.muted }}>No hay ventas para mostrar.</Text> : null}
-          {!loading && !error ? sales.map((sale, index) => <SaleRow key={sale.ventaId ?? `venta-${index}`} sale={sale} theme={theme} />) : null}
+          {!loading && !error ? sales.map((sale, index) => <SaleRow key={sale.ventaId ?? `venta-${index}`} sale={sale} theme={theme} editing={editingSaleId === sale.ventaId} editForm={editForm} actionLoading={actionLoading} onDetail={() => void showDetail(sale)} onEdit={() => beginEdit(sale)} onChangeEdit={setEditForm} onSave={() => void saveUpdate()} onCancel={() => confirmCancel(sale)} />) : null}
         </View>
       </ScrollView>
     </SafeAreaView>
@@ -156,8 +233,30 @@ interface FieldProps {
  * @param {{ sale: Sale; theme: typeof lightTheme }} props - Sale and theme.
  * @returns {JSX.Element} Sale summary.
  */
-function SaleRow({ sale, theme }: { sale: Sale; theme: typeof lightTheme }): JSX.Element {
-  return <View accessible accessibilityLabel={`Venta ${sale.ventaId ?? 'sin identificador'}`} style={[styles.row, { borderColor: theme.border }]}><Text style={[styles.rowTitle, { color: theme.text }]}>{sale.ventaId ?? 'Venta sin identificador'}</Text><Text style={{ color: theme.muted }}>Punto de venta: {sale.puntoDeVentaId ?? 'No disponible'}</Text><Text style={{ color: theme.muted }}>Total: {sale.total ?? 'No disponible'}</Text></View>;
+function SaleRow({ sale, theme, editing, editForm, actionLoading, onDetail, onEdit, onChangeEdit, onSave, onCancel }: SaleRowProps): JSX.Element {
+  return <View accessible accessibilityLabel={`Venta ${sale.ventaId ?? 'sin identificador'}`} style={[styles.row, { borderColor: theme.border }]}><Text style={[styles.rowTitle, { color: theme.text }]}>{sale.ventaId ?? 'Venta sin identificador'}</Text><Text style={{ color: theme.muted }}>Punto de venta: {sale.puntoDeVentaId ?? 'No disponible'}</Text><Text style={{ color: theme.muted }}>Total: {sale.total ?? 'No disponible'}</Text>{editing ? <><Field label="Descuento" value={editForm.descuento} onChangeText={(value) => onChangeEdit({ ...editForm, descuento: value })} keyboardType="decimal-pad" theme={theme} /><Field label="Observaciones" value={editForm.observaciones} onChangeText={(value) => onChangeEdit({ ...editForm, observaciones: value })} theme={theme} /><Button title="Guardar cambios" onPress={onSave} disabled={actionLoading} accessibilityLabel="Guardar cambios de venta" /><Button title="Anular venta" onPress={onCancel} disabled={actionLoading} accessibilityLabel="Anular venta" /></> : <><Button title="Ver detalle" onPress={onDetail} disabled={actionLoading} accessibilityLabel={`Ver detalle de venta ${sale.ventaId ?? ''}`} /><Button title="Editar" onPress={onEdit} disabled={actionLoading} accessibilityLabel={`Editar venta ${sale.ventaId ?? ''}`} /></>}</View>;
+}
+
+interface SaleRowProps {
+  sale: Sale;
+  theme: typeof lightTheme;
+  editing: boolean;
+  editForm: { descuento: string; observaciones: string };
+  actionLoading: boolean;
+  onDetail: () => void;
+  onEdit: () => void;
+  onChangeEdit: (form: { descuento: string; observaciones: string }) => void;
+  onSave: () => void;
+  onCancel: () => void;
+}
+
+/**
+ * @description Displays the detail response returned by the existing sales endpoint.
+ * @param {{ detail: GetSalesIdResponse; theme: typeof lightTheme }} props - Sale detail and theme.
+ * @returns {JSX.Element} Sale detail summary.
+ */
+function SaleDetail({ detail, theme }: { detail: GetSalesIdResponse; theme: typeof lightTheme }): JSX.Element {
+  return <View style={[styles.detail, { backgroundColor: theme.background, borderColor: theme.border }]} accessibilityLabel="Detalle de venta"><Text style={[styles.rowTitle, { color: theme.text }]}>Detalle {detail.ventaId ?? ''}</Text><Text style={{ color: theme.muted }}>Cliente: {detail.clienteId ?? 'No disponible'}</Text><Text style={{ color: theme.muted }}>Subtotal: {detail.subtotal ?? 'No disponible'}</Text><Text style={{ color: theme.muted }}>Descuento: {detail.descuento ?? 0}</Text><Text style={{ color: theme.muted }}>Total: {detail.total ?? 'No disponible'}</Text><Text style={{ color: theme.muted }}>Líneas: {detail.items?.length ?? 0}</Text></View>;
 }
 
 const styles = StyleSheet.create({
@@ -172,5 +271,6 @@ const styles = StyleSheet.create({
   input: { borderWidth: 1, borderRadius: 8, minHeight: 44, paddingHorizontal: 12 },
   error: { fontWeight: '600' },
   row: { borderBottomWidth: 1, gap: 4, paddingVertical: 10 },
+  detail: { borderWidth: 1, gap: 4, padding: 12, borderRadius: 8 },
   rowTitle: { fontSize: 16, fontWeight: '600' },
 });
