@@ -4,9 +4,14 @@ import {
   type GetAccountingBankAccountsIdHistoryResponse,
   type GetAccountingBankAccountsIdResponse,
   type GetAccountingBankAccountsResponse,
+  type GetAccountingBankTransfersIdResponse,
+  type GetAccountingBankTransfersResponse,
 } from '../../sdks/mobile-v1/typescript/src';
 import type { FetchAPI } from '../../sdks/mobile-v1/typescript/src/runtime';
-import type { MobileGetAccountingBankAccountsByIdNestedHistoryRequest } from '../../sdks/mobile-v1/typescript/src/apis/AccountingBankingApi';
+import type {
+  MobileGetAccountingBankAccountsByIdNestedHistoryRequest,
+  MobileGetAccountingBankTransfersRequest,
+} from '../../sdks/mobile-v1/typescript/src/apis/AccountingBankingApi';
 import { normalizeBasePath } from './sdk-client';
 import { isUnauthorizedResponse, type UnauthorizedHandler } from './business-api';
 
@@ -14,6 +19,8 @@ export interface AccountingApiClient {
   listBankAccounts(): Promise<GetAccountingBankAccountsResponse>;
   getBankAccount(id: string): Promise<GetAccountingBankAccountsIdResponse>;
   getBankAccountHistory(id: string, params?: Omit<MobileGetAccountingBankAccountsByIdNestedHistoryRequest, 'id'>): Promise<GetAccountingBankAccountsIdHistoryResponse>;
+  listBankTransfers(params?: MobileGetAccountingBankTransfersRequest): Promise<GetAccountingBankTransfersResponse>;
+  getBankTransfer(id: string): Promise<GetAccountingBankTransfersIdResponse>;
 }
 
 /**
@@ -22,7 +29,7 @@ export interface AccountingApiClient {
  * @param {() => string | null} getAccessToken - In-memory access-token provider.
  * @param {FetchAPI} fetchApi - Optional fetch implementation for tests or platform adapters.
  * @param {UnauthorizedHandler} onUnauthorized - Called for generated 401/403 responses.
- * @returns {AccountingApiClient} Authenticated bank-account read operations.
+ * @returns {AccountingApiClient} Authenticated accounting read operations.
  */
 export function createGeneratedAccountingApi(
   baseUrl: string,
@@ -49,5 +56,7 @@ export function createGeneratedAccountingApi(
     listBankAccounts: () => safelyCall(() => accountingApi.mobileGetAccountingBankAccounts()),
     getBankAccount: (id) => safelyCall(() => accountingApi.mobileGetAccountingBankAccountsById({ id })),
     getBankAccountHistory: (id, params = {}) => safelyCall(() => accountingApi.mobileGetAccountingBankAccountsByIdNestedHistory({ id, ...params })),
+    listBankTransfers: (params = {}) => safelyCall(() => accountingApi.mobileGetAccountingBankTransfers(params)),
+    getBankTransfer: (id) => safelyCall(() => accountingApi.mobileGetAccountingBankTransfersById({ id })),
   };
 }

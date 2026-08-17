@@ -107,4 +107,41 @@ describe('generated accounting API adapter', () => {
     });
     expect(response.pagination).toEqual({ page: 1, limit: 20, total: 2, totalPages: 1 });
   });
+
+  it('maps bank-transfer list filters and detail to the existing mobile routes', async () => {
+    const requests: string[] = [];
+    const fetchApi = vi.fn<FetchAPI>(async (input) => {
+      requests.push(String(input));
+      return new Response(JSON.stringify(
+        String(input).includes('/bank-transfers?')
+          ? { items: [], pagination: { page: 1, limit: 50, total: 0, totalPages: 0 } }
+          : { transferenciaId: 'transfer-1' },
+      ), {
+        status: 200,
+        headers: { 'content-type': 'application/json' },
+      });
+    });
+    const api = createGeneratedAccountingApi('https://example.test', () => 'access-token', fetchApi);
+
+    await api.listBankTransfers({
+      fechaInicio: new Date('2026-02-01T00:00:00.000Z'),
+      fechaFin: new Date('2026-02-28T00:00:00.000Z'),
+      cuentaId: 'account-1',
+    });
+    await api.getBankTransfer('transfer-1');
+
+    expect(requests).toEqual([
+      'https://example.test/api/mobile/v1/accounting/bank-transfers?fechaInicio=2026-02-01T00%3A00%3A00.000Z&fechaFin=2026-02-28T00%3A00%3A00.000Z&cuentaId=account-1',
+      'https://example.test/api/mobile/v1/accounting/bank-transfers/transfer-1',
+    ]);
+  });
+
+  it('clears the mobile session on unauthorized bank-transfer detail responses', async () => {
+    const onUnauthorized = vi.fn();
+    const fetchApi = vi.fn<FetchAPI>(async () => new Response('{}', { status: 401 }));
+    const api = createGeneratedAccountingApi('https://example.test', () => 'access-token', fetchApi, onUnauthorized);
+
+    await expect(api.getBankTransfer('transfer-1')).rejects.toMatchObject({ response: { status: 401 } });
+    expect(onUnauthorized).toHaveBeenCalledOnce();
+  });
 });
