@@ -20,6 +20,20 @@ import {
     PaginationToJSON,
     PaginationToJSONTyped,
 } from './Pagination';
+import type { BankAccountTransaction } from './BankAccountTransaction';
+import {
+    BankAccountTransactionFromJSON,
+    BankAccountTransactionFromJSONTyped,
+    BankAccountTransactionToJSON,
+    BankAccountTransactionToJSONTyped,
+} from './BankAccountTransaction';
+import type { BankAccountHistorySummary } from './BankAccountHistorySummary';
+import {
+    BankAccountHistorySummaryFromJSON,
+    BankAccountHistorySummaryFromJSONTyped,
+    BankAccountHistorySummaryToJSON,
+    BankAccountHistorySummaryToJSONTyped,
+} from './BankAccountHistorySummary';
 
 /**
  * Respuesta de GET /accounting/bank-accounts/{id}/history.
@@ -29,58 +43,31 @@ import {
 export interface GetAccountingBankAccountsIdHistoryResponse {
     /**
      * 
-     * @type {string}
+     * @type {Array<BankAccountTransaction>}
      * @memberof GetAccountingBankAccountsIdHistoryResponse
      */
-    cuentaId?: string;
+    transacciones: Array<BankAccountTransaction>;
     /**
      * 
-     * @type {string}
+     * @type {BankAccountHistorySummary}
      * @memberof GetAccountingBankAccountsIdHistoryResponse
      */
-    nombreBanco?: string;
-    /**
-     * 
-     * @type {string}
-     * @memberof GetAccountingBankAccountsIdHistoryResponse
-     */
-    numeroCuenta?: string;
-    /**
-     * 
-     * @type {string}
-     * @memberof GetAccountingBankAccountsIdHistoryResponse
-     */
-    tipoCuenta?: string;
-    /**
-     * 
-     * @type {string}
-     * @memberof GetAccountingBankAccountsIdHistoryResponse
-     */
-    moneda?: string;
-    /**
-     * 
-     * @type {number}
-     * @memberof GetAccountingBankAccountsIdHistoryResponse
-     */
-    saldo?: number;
-    /**
-     * 
-     * @type {boolean}
-     * @memberof GetAccountingBankAccountsIdHistoryResponse
-     */
-    isActive?: boolean;
+    resumen: BankAccountHistorySummary;
     /**
      * 
      * @type {Pagination}
      * @memberof GetAccountingBankAccountsIdHistoryResponse
      */
-    pagination?: Pagination;
+    pagination: Pagination;
 }
 
 /**
  * Check if a given object implements the GetAccountingBankAccountsIdHistoryResponse interface.
  */
 export function instanceOfGetAccountingBankAccountsIdHistoryResponse(value: object): value is GetAccountingBankAccountsIdHistoryResponse {
+    if (!('transacciones' in value) || value['transacciones'] === undefined) return false;
+    if (!('resumen' in value) || value['resumen'] === undefined) return false;
+    if (!('pagination' in value) || value['pagination'] === undefined) return false;
     return true;
 }
 
@@ -94,14 +81,9 @@ export function GetAccountingBankAccountsIdHistoryResponseFromJSONTyped(json: an
     }
     return {
         
-        'cuentaId': json['cuentaId'] == null ? undefined : json['cuentaId'],
-        'nombreBanco': json['nombreBanco'] == null ? undefined : json['nombreBanco'],
-        'numeroCuenta': json['numeroCuenta'] == null ? undefined : json['numeroCuenta'],
-        'tipoCuenta': json['tipoCuenta'] == null ? undefined : json['tipoCuenta'],
-        'moneda': json['moneda'] == null ? undefined : json['moneda'],
-        'saldo': json['saldo'] == null ? undefined : json['saldo'],
-        'isActive': json['isActive'] == null ? undefined : json['isActive'],
-        'pagination': json['pagination'] == null ? undefined : PaginationFromJSON(json['pagination']),
+        'transacciones': ((json['transacciones'] as Array<any>).map(BankAccountTransactionFromJSON)),
+        'resumen': BankAccountHistorySummaryFromJSON(json['resumen']),
+        'pagination': PaginationFromJSON(json['pagination']),
     };
 }
 
@@ -116,13 +98,8 @@ export function GetAccountingBankAccountsIdHistoryResponseToJSONTyped(value?: Ge
 
     return {
         
-        'cuentaId': value['cuentaId'],
-        'nombreBanco': value['nombreBanco'],
-        'numeroCuenta': value['numeroCuenta'],
-        'tipoCuenta': value['tipoCuenta'],
-        'moneda': value['moneda'],
-        'saldo': value['saldo'],
-        'isActive': value['isActive'],
+        'transacciones': ((value['transacciones'] as Array<any>).map(BankAccountTransactionToJSON)),
+        'resumen': BankAccountHistorySummaryToJSON(value['resumen']),
         'pagination': PaginationToJSON(value['pagination']),
     };
 }

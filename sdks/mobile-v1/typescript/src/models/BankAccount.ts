@@ -13,14 +13,6 @@
  */
 
 import { mapValues } from '../runtime';
-import type { Pagination } from './Pagination';
-import {
-    PaginationFromJSON,
-    PaginationFromJSONTyped,
-    PaginationToJSON,
-    PaginationToJSONTyped,
-} from './Pagination';
-
 /**
  * 
  * @export
@@ -69,12 +61,6 @@ export interface BankAccount {
      * @memberof BankAccount
      */
     isActive?: boolean;
-    /**
-     * 
-     * @type {Pagination}
-     * @memberof BankAccount
-     */
-    pagination?: Pagination;
 }
 
 /**
@@ -101,7 +87,6 @@ export function BankAccountFromJSONTyped(json: any, ignoreDiscriminator: boolean
         'moneda': json['moneda'] == null ? undefined : json['moneda'],
         'saldo': json['saldo'] == null ? undefined : json['saldo'],
         'isActive': json['isActive'] == null ? undefined : json['isActive'],
-        'pagination': json['pagination'] == null ? undefined : PaginationFromJSON(json['pagination']),
     };
 }
 
@@ -123,7 +108,6 @@ export function BankAccountToJSONTyped(value?: BankAccount | null, ignoreDiscrim
         'moneda': value['moneda'],
         'saldo': value['saldo'],
         'isActive': value['isActive'],
-        'pagination': PaginationToJSON(value['pagination']),
     };
 }
 

@@ -13,148 +13,38 @@ part of openapi.api;
 class GetAccountingBankAccountsIdHistoryResponse {
   /// Returns a new [GetAccountingBankAccountsIdHistoryResponse] instance.
   GetAccountingBankAccountsIdHistoryResponse({
-    this.cuentaId,
-    this.nombreBanco,
-    this.numeroCuenta,
-    this.tipoCuenta,
-    this.moneda,
-    this.saldo,
-    this.isActive,
-    this.pagination,
+    this.transacciones = const [],
+    required this.resumen,
+    required this.pagination,
   });
 
-  ///
-  /// Please note: This property should have been non-nullable! Since the specification file
-  /// does not include a default value (using the "default:" property), however, the generated
-  /// source code must fall back to having a nullable type.
-  /// Consider adding a "default:" property in the specification file to hide this note.
-  ///
-  String? cuentaId;
+  List<BankAccountTransaction> transacciones;
 
-  ///
-  /// Please note: This property should have been non-nullable! Since the specification file
-  /// does not include a default value (using the "default:" property), however, the generated
-  /// source code must fall back to having a nullable type.
-  /// Consider adding a "default:" property in the specification file to hide this note.
-  ///
-  String? nombreBanco;
+  BankAccountHistorySummary resumen;
 
-  ///
-  /// Please note: This property should have been non-nullable! Since the specification file
-  /// does not include a default value (using the "default:" property), however, the generated
-  /// source code must fall back to having a nullable type.
-  /// Consider adding a "default:" property in the specification file to hide this note.
-  ///
-  String? numeroCuenta;
-
-  ///
-  /// Please note: This property should have been non-nullable! Since the specification file
-  /// does not include a default value (using the "default:" property), however, the generated
-  /// source code must fall back to having a nullable type.
-  /// Consider adding a "default:" property in the specification file to hide this note.
-  ///
-  String? tipoCuenta;
-
-  ///
-  /// Please note: This property should have been non-nullable! Since the specification file
-  /// does not include a default value (using the "default:" property), however, the generated
-  /// source code must fall back to having a nullable type.
-  /// Consider adding a "default:" property in the specification file to hide this note.
-  ///
-  String? moneda;
-
-  ///
-  /// Please note: This property should have been non-nullable! Since the specification file
-  /// does not include a default value (using the "default:" property), however, the generated
-  /// source code must fall back to having a nullable type.
-  /// Consider adding a "default:" property in the specification file to hide this note.
-  ///
-  num? saldo;
-
-  ///
-  /// Please note: This property should have been non-nullable! Since the specification file
-  /// does not include a default value (using the "default:" property), however, the generated
-  /// source code must fall back to having a nullable type.
-  /// Consider adding a "default:" property in the specification file to hide this note.
-  ///
-  bool? isActive;
-
-  ///
-  /// Please note: This property should have been non-nullable! Since the specification file
-  /// does not include a default value (using the "default:" property), however, the generated
-  /// source code must fall back to having a nullable type.
-  /// Consider adding a "default:" property in the specification file to hide this note.
-  ///
-  Pagination? pagination;
+  Pagination pagination;
 
   @override
   bool operator ==(Object other) => identical(this, other) || other is GetAccountingBankAccountsIdHistoryResponse &&
-    other.cuentaId == cuentaId &&
-    other.nombreBanco == nombreBanco &&
-    other.numeroCuenta == numeroCuenta &&
-    other.tipoCuenta == tipoCuenta &&
-    other.moneda == moneda &&
-    other.saldo == saldo &&
-    other.isActive == isActive &&
+    _deepEquality.equals(other.transacciones, transacciones) &&
+    other.resumen == resumen &&
     other.pagination == pagination;
 
   @override
   int get hashCode =>
     // ignore: unnecessary_parenthesis
-    (cuentaId == null ? 0 : cuentaId!.hashCode) +
-    (nombreBanco == null ? 0 : nombreBanco!.hashCode) +
-    (numeroCuenta == null ? 0 : numeroCuenta!.hashCode) +
-    (tipoCuenta == null ? 0 : tipoCuenta!.hashCode) +
-    (moneda == null ? 0 : moneda!.hashCode) +
-    (saldo == null ? 0 : saldo!.hashCode) +
-    (isActive == null ? 0 : isActive!.hashCode) +
-    (pagination == null ? 0 : pagination!.hashCode);
+    (transacciones.hashCode) +
+    (resumen.hashCode) +
+    (pagination.hashCode);
 
   @override
-  String toString() => 'GetAccountingBankAccountsIdHistoryResponse[cuentaId=$cuentaId, nombreBanco=$nombreBanco, numeroCuenta=$numeroCuenta, tipoCuenta=$tipoCuenta, moneda=$moneda, saldo=$saldo, isActive=$isActive, pagination=$pagination]';
+  String toString() => 'GetAccountingBankAccountsIdHistoryResponse[transacciones=$transacciones, resumen=$resumen, pagination=$pagination]';
 
   Map<String, dynamic> toJson() {
     final json = <String, dynamic>{};
-    if (this.cuentaId != null) {
-      json[r'cuentaId'] = this.cuentaId;
-    } else {
-      json[r'cuentaId'] = null;
-    }
-    if (this.nombreBanco != null) {
-      json[r'nombreBanco'] = this.nombreBanco;
-    } else {
-      json[r'nombreBanco'] = null;
-    }
-    if (this.numeroCuenta != null) {
-      json[r'numeroCuenta'] = this.numeroCuenta;
-    } else {
-      json[r'numeroCuenta'] = null;
-    }
-    if (this.tipoCuenta != null) {
-      json[r'tipoCuenta'] = this.tipoCuenta;
-    } else {
-      json[r'tipoCuenta'] = null;
-    }
-    if (this.moneda != null) {
-      json[r'moneda'] = this.moneda;
-    } else {
-      json[r'moneda'] = null;
-    }
-    if (this.saldo != null) {
-      json[r'saldo'] = this.saldo;
-    } else {
-      json[r'saldo'] = null;
-    }
-    if (this.isActive != null) {
-      json[r'isActive'] = this.isActive;
-    } else {
-      json[r'isActive'] = null;
-    }
-    if (this.pagination != null) {
+      json[r'transacciones'] = this.transacciones;
+      json[r'resumen'] = this.resumen;
       json[r'pagination'] = this.pagination;
-    } else {
-      json[r'pagination'] = null;
-    }
     return json;
   }
 
@@ -177,14 +67,9 @@ class GetAccountingBankAccountsIdHistoryResponse {
       }());
 
       return GetAccountingBankAccountsIdHistoryResponse(
-        cuentaId: mapValueOfType<String>(json, r'cuentaId'),
-        nombreBanco: mapValueOfType<String>(json, r'nombreBanco'),
-        numeroCuenta: mapValueOfType<String>(json, r'numeroCuenta'),
-        tipoCuenta: mapValueOfType<String>(json, r'tipoCuenta'),
-        moneda: mapValueOfType<String>(json, r'moneda'),
-        saldo: num.parse('${json[r'saldo']}'),
-        isActive: mapValueOfType<bool>(json, r'isActive'),
-        pagination: Pagination.fromJson(json[r'pagination']),
+        transacciones: BankAccountTransaction.listFromJson(json[r'transacciones']),
+        resumen: BankAccountHistorySummary.fromJson(json[r'resumen'])!,
+        pagination: Pagination.fromJson(json[r'pagination'])!,
       );
     }
     return null;
@@ -232,6 +117,9 @@ class GetAccountingBankAccountsIdHistoryResponse {
 
   /// The list of required keys that must be present in a JSON.
   static const requiredKeys = <String>{
+    'transacciones',
+    'resumen',
+    'pagination',
   };
 }
 

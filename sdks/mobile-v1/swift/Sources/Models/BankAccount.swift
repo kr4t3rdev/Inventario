@@ -19,9 +19,8 @@ public struct BankAccount: Codable, JSONEncodable, Hashable {
     public var moneda: String?
     public var saldo: Double?
     public var isActive: Bool?
-    public var pagination: Pagination?
 
-    public init(cuentaId: String? = nil, nombreBanco: String? = nil, numeroCuenta: String? = nil, tipoCuenta: String? = nil, moneda: String? = nil, saldo: Double? = nil, isActive: Bool? = nil, pagination: Pagination? = nil) {
+    public init(cuentaId: String? = nil, nombreBanco: String? = nil, numeroCuenta: String? = nil, tipoCuenta: String? = nil, moneda: String? = nil, saldo: Double? = nil, isActive: Bool? = nil) {
         self.cuentaId = cuentaId
         self.nombreBanco = nombreBanco
         self.numeroCuenta = numeroCuenta
@@ -29,7 +28,6 @@ public struct BankAccount: Codable, JSONEncodable, Hashable {
         self.moneda = moneda
         self.saldo = saldo
         self.isActive = isActive
-        self.pagination = pagination
     }
 
     public enum CodingKeys: String, CodingKey, CaseIterable {
@@ -40,7 +38,6 @@ public struct BankAccount: Codable, JSONEncodable, Hashable {
         case moneda
         case saldo
         case isActive
-        case pagination
     }
 
     // Encodable protocol methods
@@ -54,7 +51,6 @@ public struct BankAccount: Codable, JSONEncodable, Hashable {
         try container.encodeIfPresent(moneda, forKey: .moneda)
         try container.encodeIfPresent(saldo, forKey: .saldo)
         try container.encodeIfPresent(isActive, forKey: .isActive)
-        try container.encodeIfPresent(pagination, forKey: .pagination)
     }
 }
 

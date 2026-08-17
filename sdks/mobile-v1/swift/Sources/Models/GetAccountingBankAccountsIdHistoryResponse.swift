@@ -13,34 +13,19 @@ import AnyCodable
 /** Respuesta de GET /accounting/bank-accounts/{id}/history. */
 public struct GetAccountingBankAccountsIdHistoryResponse: Codable, JSONEncodable, Hashable {
 
-    public var cuentaId: String?
-    public var nombreBanco: String?
-    public var numeroCuenta: String?
-    public var tipoCuenta: String?
-    public var moneda: String?
-    public var saldo: Double?
-    public var isActive: Bool?
-    public var pagination: Pagination?
+    public var transacciones: [BankAccountTransaction]
+    public var resumen: BankAccountHistorySummary
+    public var pagination: Pagination
 
-    public init(cuentaId: String? = nil, nombreBanco: String? = nil, numeroCuenta: String? = nil, tipoCuenta: String? = nil, moneda: String? = nil, saldo: Double? = nil, isActive: Bool? = nil, pagination: Pagination? = nil) {
-        self.cuentaId = cuentaId
-        self.nombreBanco = nombreBanco
-        self.numeroCuenta = numeroCuenta
-        self.tipoCuenta = tipoCuenta
-        self.moneda = moneda
-        self.saldo = saldo
-        self.isActive = isActive
+    public init(transacciones: [BankAccountTransaction], resumen: BankAccountHistorySummary, pagination: Pagination) {
+        self.transacciones = transacciones
+        self.resumen = resumen
         self.pagination = pagination
     }
 
     public enum CodingKeys: String, CodingKey, CaseIterable {
-        case cuentaId
-        case nombreBanco
-        case numeroCuenta
-        case tipoCuenta
-        case moneda
-        case saldo
-        case isActive
+        case transacciones
+        case resumen
         case pagination
     }
 
@@ -48,14 +33,9 @@ public struct GetAccountingBankAccountsIdHistoryResponse: Codable, JSONEncodable
 
     public func encode(to encoder: Encoder) throws {
         var container = encoder.container(keyedBy: CodingKeys.self)
-        try container.encodeIfPresent(cuentaId, forKey: .cuentaId)
-        try container.encodeIfPresent(nombreBanco, forKey: .nombreBanco)
-        try container.encodeIfPresent(numeroCuenta, forKey: .numeroCuenta)
-        try container.encodeIfPresent(tipoCuenta, forKey: .tipoCuenta)
-        try container.encodeIfPresent(moneda, forKey: .moneda)
-        try container.encodeIfPresent(saldo, forKey: .saldo)
-        try container.encodeIfPresent(isActive, forKey: .isActive)
-        try container.encodeIfPresent(pagination, forKey: .pagination)
+        try container.encode(transacciones, forKey: .transacciones)
+        try container.encode(resumen, forKey: .resumen)
+        try container.encode(pagination, forKey: .pagination)
     }
 }
 

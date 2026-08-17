@@ -4,14 +4,9 @@
 ## Properties
 | Name | Type | Description | Notes |
 | ------------ | ------------- | ------------- | ------------- |
-| **cuentaId** | **kotlin.String** |  |  [optional] |
-| **nombreBanco** | **kotlin.String** |  |  [optional] |
-| **numeroCuenta** | **kotlin.String** |  |  [optional] |
-| **tipoCuenta** | **kotlin.String** |  |  [optional] |
-| **moneda** | **kotlin.String** |  |  [optional] |
-| **saldo** | [**java.math.BigDecimal**](java.math.BigDecimal.md) |  |  [optional] |
-| **isActive** | **kotlin.Boolean** |  |  [optional] |
-| **pagination** | [**Pagination**](Pagination.md) |  |  [optional] |
+| **transacciones** | [**kotlin.collections.List&lt;BankAccountTransaction&gt;**](BankAccountTransaction.md) |  |  |
+| **resumen** | [**BankAccountHistorySummary**](BankAccountHistorySummary.md) |  |  |
+| **pagination** | [**Pagination**](Pagination.md) |  |  |
 
 
 

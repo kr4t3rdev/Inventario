@@ -14,7 +14,6 @@ Name | Type
 `moneda` | string
 `saldo` | number
 `isActive` | boolean
-`pagination` | [Pagination](Pagination.md)
 
 ## Example
 
@@ -30,7 +29,6 @@ const example = {
   "moneda": null,
   "saldo": null,
   "isActive": null,
-  "pagination": null,
 } satisfies GetAccountingBankAccountsIdResponse
 
 console.log(example)

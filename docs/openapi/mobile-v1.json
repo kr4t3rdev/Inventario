@@ -1443,6 +1443,16 @@
               }
             }
           },
+          "404": {
+            "description": "Cuenta bancaria no encontrada",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
           "500": {
             "description": "Error interno",
             "content": {
@@ -7479,11 +7489,35 @@
           },
           "isActive": {
             "type": "boolean"
-          },
-          "pagination": {
-            "$ref": "#/components/schemas/Pagination"
           }
         },
+        "additionalProperties": false
+      },
+      "BankAccountTransaction": {
+        "type": "object",
+        "properties": {
+          "transaccionId": { "type": "string" },
+          "fecha": { "type": "string", "format": "date-time" },
+          "tipoMovimiento": { "type": "string" },
+          "descripcion": { "type": "string" },
+          "montoOriginal": { "type": "number" },
+          "monedaOriginal": { "type": "string" },
+          "tasaCambio": { "type": ["number", "null"] },
+          "montoConvertido": { "type": "number" },
+          "observaciones": { "type": "string" }
+        },
+        "required": ["transaccionId", "fecha", "tipoMovimiento", "descripcion", "montoOriginal", "monedaOriginal", "tasaCambio", "montoConvertido"],
+        "additionalProperties": false
+      },
+      "BankAccountHistorySummary": {
+        "type": "object",
+        "properties": {
+          "saldoActual": { "type": "number" },
+          "totalIngresos": { "type": "number" },
+          "totalEgresos": { "type": "number" },
+          "totalMovimientos": { "type": "integer" }
+        },
+        "required": ["saldoActual", "totalIngresos", "totalEgresos", "totalMovimientos"],
         "additionalProperties": false
       },
       "BankAdjustment": {
@@ -8843,9 +8877,6 @@
           },
           "isActive": {
             "type": "boolean"
-          },
-          "pagination": {
-            "$ref": "#/components/schemas/Pagination"
           }
         },
         "additionalProperties": false
@@ -8854,31 +8885,18 @@
         "type": "object",
         "description": "Respuesta de GET /accounting/bank-accounts/{id}/history.",
         "properties": {
-          "cuentaId": {
-            "type": "string"
+          "transacciones": {
+            "type": "array",
+            "items": { "$ref": "#/components/schemas/BankAccountTransaction" }
           },
-          "nombreBanco": {
-            "type": "string"
-          },
-          "numeroCuenta": {
-            "type": "string"
-          },
-          "tipoCuenta": {
-            "type": "string"
-          },
-          "moneda": {
-            "type": "string"
-          },
-          "saldo": {
-            "type": "number"
-          },
-          "isActive": {
-            "type": "boolean"
+          "resumen": {
+            "$ref": "#/components/schemas/BankAccountHistorySummary"
           },
           "pagination": {
             "$ref": "#/components/schemas/Pagination"
           }
         },
+        "required": ["transacciones", "resumen", "pagination"],
         "additionalProperties": false
       },
       "GetAccountingBankAdjustmentsResponse": {

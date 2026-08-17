@@ -20,7 +20,6 @@ class GetAccountingBankAccountsIdResponse {
     this.moneda,
     this.saldo,
     this.isActive,
-    this.pagination,
   });
 
   ///
@@ -79,14 +78,6 @@ class GetAccountingBankAccountsIdResponse {
   ///
   bool? isActive;
 
-  ///
-  /// Please note: This property should have been non-nullable! Since the specification file
-  /// does not include a default value (using the "default:" property), however, the generated
-  /// source code must fall back to having a nullable type.
-  /// Consider adding a "default:" property in the specification file to hide this note.
-  ///
-  Pagination? pagination;
-
   @override
   bool operator ==(Object other) => identical(this, other) || other is GetAccountingBankAccountsIdResponse &&
     other.cuentaId == cuentaId &&
@@ -95,8 +86,7 @@ class GetAccountingBankAccountsIdResponse {
     other.tipoCuenta == tipoCuenta &&
     other.moneda == moneda &&
     other.saldo == saldo &&
-    other.isActive == isActive &&
-    other.pagination == pagination;
+    other.isActive == isActive;
 
   @override
   int get hashCode =>
@@ -107,11 +97,10 @@ class GetAccountingBankAccountsIdResponse {
     (tipoCuenta == null ? 0 : tipoCuenta!.hashCode) +
     (moneda == null ? 0 : moneda!.hashCode) +
     (saldo == null ? 0 : saldo!.hashCode) +
-    (isActive == null ? 0 : isActive!.hashCode) +
-    (pagination == null ? 0 : pagination!.hashCode);
+    (isActive == null ? 0 : isActive!.hashCode);
 
   @override
-  String toString() => 'GetAccountingBankAccountsIdResponse[cuentaId=$cuentaId, nombreBanco=$nombreBanco, numeroCuenta=$numeroCuenta, tipoCuenta=$tipoCuenta, moneda=$moneda, saldo=$saldo, isActive=$isActive, pagination=$pagination]';
+  String toString() => 'GetAccountingBankAccountsIdResponse[cuentaId=$cuentaId, nombreBanco=$nombreBanco, numeroCuenta=$numeroCuenta, tipoCuenta=$tipoCuenta, moneda=$moneda, saldo=$saldo, isActive=$isActive]';
 
   Map<String, dynamic> toJson() {
     final json = <String, dynamic>{};
@@ -150,11 +139,6 @@ class GetAccountingBankAccountsIdResponse {
     } else {
       json[r'isActive'] = null;
     }
-    if (this.pagination != null) {
-      json[r'pagination'] = this.pagination;
-    } else {
-      json[r'pagination'] = null;
-    }
     return json;
   }
 
@@ -184,7 +168,6 @@ class GetAccountingBankAccountsIdResponse {
         moneda: mapValueOfType<String>(json, r'moneda'),
         saldo: num.parse('${json[r'saldo']}'),
         isActive: mapValueOfType<bool>(json, r'isActive'),
-        pagination: Pagination.fromJson(json[r'pagination']),
       );
     }
     return null;

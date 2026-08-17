@@ -13,14 +13,6 @@
  */
 
 import { mapValues } from '../runtime';
-import type { Pagination } from './Pagination';
-import {
-    PaginationFromJSON,
-    PaginationFromJSONTyped,
-    PaginationToJSON,
-    PaginationToJSONTyped,
-} from './Pagination';
-
 /**
  * Respuesta de GET /accounting/bank-accounts/{id}.
  * @export
@@ -69,12 +61,6 @@ export interface GetAccountingBankAccountsIdResponse {
      * @memberof GetAccountingBankAccountsIdResponse
      */
     isActive?: boolean;
-    /**
-     * 
-     * @type {Pagination}
-     * @memberof GetAccountingBankAccountsIdResponse
-     */
-    pagination?: Pagination;
 }
 
 /**
@@ -101,7 +87,6 @@ export function GetAccountingBankAccountsIdResponseFromJSONTyped(json: any, igno
         'moneda': json['moneda'] == null ? undefined : json['moneda'],
         'saldo': json['saldo'] == null ? undefined : json['saldo'],
         'isActive': json['isActive'] == null ? undefined : json['isActive'],
-        'pagination': json['pagination'] == null ? undefined : PaginationFromJSON(json['pagination']),
     };
 }
 
@@ -123,7 +108,6 @@ export function GetAccountingBankAccountsIdResponseToJSONTyped(value?: GetAccoun
         'moneda': value['moneda'],
         'saldo': value['saldo'],
         'isActive': value['isActive'],
-        'pagination': PaginationToJSON(value['pagination']),
     };
 }
 

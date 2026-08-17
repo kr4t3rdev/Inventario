@@ -51,4 +51,60 @@ describe('generated accounting API adapter', () => {
     await expect(api.getBankAccountHistory('bank-1')).rejects.toMatchObject({ response: { status: 401 } });
     expect(onUnauthorized).toHaveBeenCalledOnce();
   });
+
+  it('encodes bank-account identifiers and clears the session on forbidden history responses', async () => {
+    const onUnauthorized = vi.fn();
+    const requests: string[] = [];
+    const fetchApi = vi.fn<FetchAPI>(async (input) => {
+      requests.push(String(input));
+      return new Response('{}', { status: 403 });
+    });
+    const api = createGeneratedAccountingApi('https://example.test', () => 'access-token', fetchApi, onUnauthorized);
+
+    await expect(api.getBankAccountHistory('bank/id')).rejects.toMatchObject({ response: { status: 403 } });
+    expect(requests).toEqual(['https://example.test/api/mobile/v1/accounting/bank-accounts/bank%2Fid/history']);
+    expect(onUnauthorized).toHaveBeenCalledOnce();
+  });
+
+  it('deserializes the bank-account history contract returned by the backend', async () => {
+    const fetchApi = vi.fn<FetchAPI>(async () => new Response(JSON.stringify({
+      transacciones: [{
+        transaccionId: 'tx-1',
+        fecha: '2026-01-15T12:00:00.000Z',
+        tipoMovimiento: 'venta',
+        descripcion: 'Venta POS',
+        montoOriginal: 100,
+        monedaOriginal: 'USD',
+        tasaCambio: null,
+        montoConvertido: 100,
+      }],
+      resumen: {
+        saldoActual: 500,
+        totalIngresos: 700,
+        totalEgresos: 200,
+        totalMovimientos: 2,
+      },
+      pagination: { page: 1, limit: 20, total: 2, totalPages: 1 },
+    }), {
+      status: 200,
+      headers: { 'content-type': 'application/json' },
+    }));
+    const api = createGeneratedAccountingApi('https://example.test', () => 'access-token', fetchApi);
+
+    const response = await api.getBankAccountHistory('bank-1');
+
+    expect(response.transacciones[0]).toMatchObject({
+      transaccionId: 'tx-1',
+      tipoMovimiento: 'venta',
+      montoConvertido: 100,
+    });
+    expect(response.transacciones[0].fecha).toEqual(new Date('2026-01-15T12:00:00.000Z'));
+    expect(response.resumen).toEqual({
+      saldoActual: 500,
+      totalIngresos: 700,
+      totalEgresos: 200,
+      totalMovimientos: 2,
+    });
+    expect(response.pagination).toEqual({ page: 1, limit: 20, total: 2, totalPages: 1 });
+  });
 });

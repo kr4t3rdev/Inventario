@@ -15,6 +15,8 @@
 
 package com.tcp.mobile.v1.models
 
+import com.tcp.mobile.v1.models.BankAccountHistorySummary
+import com.tcp.mobile.v1.models.BankAccountTransaction
 import com.tcp.mobile.v1.models.Pagination
 
 import com.fasterxml.jackson.annotation.JsonProperty
@@ -22,42 +24,22 @@ import com.fasterxml.jackson.annotation.JsonProperty
 /**
  * Respuesta de GET /accounting/bank-accounts/{id}/history.
  *
- * @param cuentaId 
- * @param nombreBanco 
- * @param numeroCuenta 
- * @param tipoCuenta 
- * @param moneda 
- * @param saldo 
- * @param isActive 
+ * @param transacciones 
+ * @param resumen 
  * @param pagination 
  */
 
 
 data class GetAccountingBankAccountsIdHistoryResponse (
 
-    @get:JsonProperty("cuentaId")
-    val cuentaId: kotlin.String? = null,
+    @get:JsonProperty("transacciones")
+    val transacciones: kotlin.collections.List<BankAccountTransaction>,
 
-    @get:JsonProperty("nombreBanco")
-    val nombreBanco: kotlin.String? = null,
-
-    @get:JsonProperty("numeroCuenta")
-    val numeroCuenta: kotlin.String? = null,
-
-    @get:JsonProperty("tipoCuenta")
-    val tipoCuenta: kotlin.String? = null,
-
-    @get:JsonProperty("moneda")
-    val moneda: kotlin.String? = null,
-
-    @get:JsonProperty("saldo")
-    val saldo: java.math.BigDecimal? = null,
-
-    @get:JsonProperty("isActive")
-    val isActive: kotlin.Boolean? = null,
+    @get:JsonProperty("resumen")
+    val resumen: BankAccountHistorySummary,
 
     @get:JsonProperty("pagination")
-    val pagination: Pagination? = null
+    val pagination: Pagination
 
 ) {
 

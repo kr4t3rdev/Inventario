@@ -7,13 +7,8 @@ Respuesta de GET /accounting/bank-accounts/{id}/history.
 
 Name | Type
 ------------ | -------------
-`cuentaId` | string
-`nombreBanco` | string
-`numeroCuenta` | string
-`tipoCuenta` | string
-`moneda` | string
-`saldo` | number
-`isActive` | boolean
+`transacciones` | [Array&lt;BankAccountTransaction&gt;](BankAccountTransaction.md)
+`resumen` | [BankAccountHistorySummary](BankAccountHistorySummary.md)
 `pagination` | [Pagination](Pagination.md)
 
 ## Example
@@ -23,13 +18,8 @@ import type { GetAccountingBankAccountsIdHistoryResponse } from '@tcp/mobile-v1-
 
 // TODO: Update the object below with actual values
 const example = {
-  "cuentaId": null,
-  "nombreBanco": null,
-  "numeroCuenta": null,
-  "tipoCuenta": null,
-  "moneda": null,
-  "saldo": null,
-  "isActive": null,
+  "transacciones": null,
+  "resumen": null,
   "pagination": null,
 } satisfies GetAccountingBankAccountsIdHistoryResponse
 

@@ -15,7 +15,6 @@
 
 package com.tcp.mobile.v1.models
 
-import com.tcp.mobile.v1.models.Pagination
 
 import com.fasterxml.jackson.annotation.JsonProperty
 
@@ -29,7 +28,6 @@ import com.fasterxml.jackson.annotation.JsonProperty
  * @param moneda 
  * @param saldo 
  * @param isActive 
- * @param pagination 
  */
 
 
@@ -54,10 +52,7 @@ data class BankAccount (
     val saldo: java.math.BigDecimal? = null,
 
     @get:JsonProperty("isActive")
-    val isActive: kotlin.Boolean? = null,
-
-    @get:JsonProperty("pagination")
-    val pagination: Pagination? = null
+    val isActive: kotlin.Boolean? = null
 
 ) {
 

@@ -8,14 +8,9 @@ import 'package:tcp_mobile_v1_sdk/api.dart';
 ## Properties
 Name | Type | Description | Notes
 ------------ | ------------- | ------------- | -------------
-**cuentaId** | **String** |  | [optional] 
-**nombreBanco** | **String** |  | [optional] 
-**numeroCuenta** | **String** |  | [optional] 
-**tipoCuenta** | **String** |  | [optional] 
-**moneda** | **String** |  | [optional] 
-**saldo** | **num** |  | [optional] 
-**isActive** | **bool** |  | [optional] 
-**pagination** | [**Pagination**](Pagination.md) |  | [optional] 
+**transacciones** | [**List<BankAccountTransaction>**](BankAccountTransaction.md) |  | [default to const []]
+**resumen** | [**BankAccountHistorySummary**](BankAccountHistorySummary.md) |  | 
+**pagination** | [**Pagination**](Pagination.md) |  | 
 
 [[Back to Model list]](../README.md#documentation-for-models) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to README]](../README.md)
 

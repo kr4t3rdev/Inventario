@@ -13,6 +13,8 @@ export * from './AuditLog';
 export * from './AuthSession';
 export * from './AuthenticatedUser';
 export * from './BankAccount';
+export * from './BankAccountHistorySummary';
+export * from './BankAccountTransaction';
 export * from './BankAdjustment';
 export * from './BankAdjustmentRequest';
 export * from './BankTransfer';

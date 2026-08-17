@@ -11,7 +11,6 @@
 | **moneda** | **kotlin.String** |  |  [optional] |
 | **saldo** | [**java.math.BigDecimal**](java.math.BigDecimal.md) |  |  [optional] |
 | **isActive** | **kotlin.Boolean** |  |  [optional] |
-| **pagination** | [**Pagination**](Pagination.md) |  |  [optional] |
 
 
 
