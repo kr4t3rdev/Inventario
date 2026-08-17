@@ -208,4 +208,40 @@ describe('generated accounting API adapter', () => {
     })).rejects.toMatchObject({ response: { status: 403 } });
     expect(onUnauthorized).toHaveBeenCalledOnce();
   });
+
+  it('downloads bank-transfer vouchers as binary PDFs', async () => {
+    const requests: Array<{ url: string; method?: string; authorization?: string }> = [];
+    const fetchApi = vi.fn<FetchAPI>(async (input, init) => {
+      requests.push({
+        url: String(input),
+        method: init?.method,
+        authorization: new Headers(init?.headers).get('authorization') ?? undefined,
+      });
+      return new Response(new Uint8Array([37, 80, 68, 70]), {
+        status: 200,
+        headers: { 'content-type': 'application/pdf' },
+      });
+    });
+    const api = createGeneratedAccountingApi('https://example.test', () => 'access-token', fetchApi);
+
+    const response = await api.downloadBankTransferReceipt('transfer/id');
+
+    expect(response).toMatchObject({ size: 4, type: 'application/pdf' });
+    expect(response.type).toBe('application/pdf');
+    expect(await response.arrayBuffer()).toEqual(new Uint8Array([37, 80, 68, 70]).buffer);
+    expect(requests).toEqual([{
+      url: 'https://example.test/api/mobile/v1/accounting/bank-transfers/transfer%2Fid/comprobante',
+      method: 'GET',
+      authorization: 'Bearer access-token',
+    }]);
+  });
+
+  it('clears the mobile session on unauthorized bank-transfer voucher responses', async () => {
+    const onUnauthorized = vi.fn();
+    const fetchApi = vi.fn<FetchAPI>(async () => new Response('{}', { status: 401 }));
+    const api = createGeneratedAccountingApi('https://example.test', () => 'access-token', fetchApi, onUnauthorized);
+
+    await expect(api.downloadBankTransferReceipt('transfer-1')).rejects.toMatchObject({ response: { status: 401 } });
+    expect(onUnauthorized).toHaveBeenCalledOnce();
+  });
 });

@@ -25,6 +25,7 @@ export interface AccountingApiClient {
   getBankAccountHistory(id: string, params?: Omit<MobileGetAccountingBankAccountsByIdNestedHistoryRequest, 'id'>): Promise<GetAccountingBankAccountsIdHistoryResponse>;
   listBankTransfers(params?: MobileGetAccountingBankTransfersRequest): Promise<GetAccountingBankTransfersResponse>;
   getBankTransfer(id: string): Promise<GetAccountingBankTransfersIdResponse>;
+  downloadBankTransferReceipt(id: string): Promise<Blob>;
   validateBankTransfer(input: BankTransferValidationRequest): Promise<PostAccountingBankTransfersValidateResponse>;
   createBankTransfer(input: BankTransferCreateRequest): Promise<PostAccountingBankTransfersResponse>;
 }
@@ -64,6 +65,7 @@ export function createGeneratedAccountingApi(
     getBankAccountHistory: (id, params = {}) => safelyCall(() => accountingApi.mobileGetAccountingBankAccountsByIdNestedHistory({ id, ...params })),
     listBankTransfers: (params = {}) => safelyCall(() => accountingApi.mobileGetAccountingBankTransfers(params)),
     getBankTransfer: (id) => safelyCall(() => accountingApi.mobileGetAccountingBankTransfersById({ id })),
+    downloadBankTransferReceipt: (id) => safelyCall(() => accountingApi.mobileGetAccountingBankTransfersByIdComprobante({ id })),
     validateBankTransfer: (input) => safelyCall(() => accountingApi.mobilePostAccountingBankTransfersValidate({
       bankTransferValidationRequest: input,
     })),
