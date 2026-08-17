@@ -8979,74 +8979,37 @@
         "type": "object",
         "description": "Respuesta de POST /accounting/bank-transfers.",
         "properties": {
-          "transferenciaId": {
+          "transferencia": {
+            "$ref": "#/components/schemas/BankTransfer"
+          },
+          "numeroComprobante": {
             "type": "string"
-          },
-          "cuentaOrigenId": {
-            "type": "string"
-          },
-          "cuentaDestinoId": {
-            "type": "string"
-          },
-          "montoOrigen": {
-            "type": "number"
-          },
-          "montoDestino": {
-            "type": "number"
-          },
-          "tasaCambio": {
-            "type": [
-              "number",
-              "null"
-            ]
-          },
-          "motivo": {
-            "type": "string"
-          },
-          "descripcion": {
-            "type": [
-              "string",
-              "null"
-            ]
           }
         },
+        "required": [
+          "transferencia",
+          "numeroComprobante"
+        ],
         "additionalProperties": false
       },
       "PostAccountingBankTransfersValidateResponse": {
         "type": "object",
         "description": "Respuesta de POST /accounting/bank-transfers/validate.",
         "properties": {
-          "transferenciaId": {
-            "type": "string"
+          "saldoSuficiente": {
+            "type": "boolean"
           },
-          "cuentaOrigenId": {
-            "type": "string"
-          },
-          "cuentaDestinoId": {
-            "type": "string"
-          },
-          "montoOrigen": {
-            "type": "number"
-          },
-          "montoDestino": {
-            "type": "number"
-          },
-          "tasaCambio": {
-            "type": [
-              "number",
-              "null"
-            ]
-          },
-          "motivo": {
-            "type": "string"
-          },
-          "descripcion": {
-            "type": [
-              "string",
-              "null"
-            ]
+          "advertencias": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
           }
         },
+        "required": [
+          "saldoSuficiente",
+          "advertencias"
+        ],
         "additionalProperties": false
       },
       "GetAccountingBankTransfersIdResponse": {

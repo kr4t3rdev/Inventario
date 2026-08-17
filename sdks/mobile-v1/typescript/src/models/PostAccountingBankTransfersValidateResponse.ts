@@ -21,58 +21,24 @@ import { mapValues } from '../runtime';
 export interface PostAccountingBankTransfersValidateResponse {
     /**
      * 
-     * @type {string}
+     * @type {boolean}
      * @memberof PostAccountingBankTransfersValidateResponse
      */
-    transferenciaId?: string;
+    saldoSuficiente: boolean;
     /**
      * 
-     * @type {string}
+     * @type {Array<string>}
      * @memberof PostAccountingBankTransfersValidateResponse
      */
-    cuentaOrigenId?: string;
-    /**
-     * 
-     * @type {string}
-     * @memberof PostAccountingBankTransfersValidateResponse
-     */
-    cuentaDestinoId?: string;
-    /**
-     * 
-     * @type {number}
-     * @memberof PostAccountingBankTransfersValidateResponse
-     */
-    montoOrigen?: number;
-    /**
-     * 
-     * @type {number}
-     * @memberof PostAccountingBankTransfersValidateResponse
-     */
-    montoDestino?: number;
-    /**
-     * 
-     * @type {number}
-     * @memberof PostAccountingBankTransfersValidateResponse
-     */
-    tasaCambio?: number | null;
-    /**
-     * 
-     * @type {string}
-     * @memberof PostAccountingBankTransfersValidateResponse
-     */
-    motivo?: string;
-    /**
-     * 
-     * @type {string}
-     * @memberof PostAccountingBankTransfersValidateResponse
-     */
-    descripcion?: string | null;
+    advertencias: Array<string>;
 }
 
 /**
  * Check if a given object implements the PostAccountingBankTransfersValidateResponse interface.
  */
 export function instanceOfPostAccountingBankTransfersValidateResponse(value: object): value is PostAccountingBankTransfersValidateResponse {
+    if (!('saldoSuficiente' in value) || value['saldoSuficiente'] === undefined) return false;
+    if (!('advertencias' in value) || value['advertencias'] === undefined) return false;
     return true;
 }
 
@@ -86,14 +52,8 @@ export function PostAccountingBankTransfersValidateResponseFromJSONTyped(json: a
     }
     return {
         
-        'transferenciaId': json['transferenciaId'] == null ? undefined : json['transferenciaId'],
-        'cuentaOrigenId': json['cuentaOrigenId'] == null ? undefined : json['cuentaOrigenId'],
-        'cuentaDestinoId': json['cuentaDestinoId'] == null ? undefined : json['cuentaDestinoId'],
-        'montoOrigen': json['montoOrigen'] == null ? undefined : json['montoOrigen'],
-        'montoDestino': json['montoDestino'] == null ? undefined : json['montoDestino'],
-        'tasaCambio': json['tasaCambio'] == null ? undefined : json['tasaCambio'],
-        'motivo': json['motivo'] == null ? undefined : json['motivo'],
-        'descripcion': json['descripcion'] == null ? undefined : json['descripcion'],
+        'saldoSuficiente': json['saldoSuficiente'],
+        'advertencias': ((json['advertencias'] as Array<any>).map((item: any) => item)),
     };
 }
 
@@ -108,14 +68,7 @@ export function PostAccountingBankTransfersValidateResponseToJSONTyped(value?: P
 
     return {
         
-        'transferenciaId': value['transferenciaId'],
-        'cuentaOrigenId': value['cuentaOrigenId'],
-        'cuentaDestinoId': value['cuentaDestinoId'],
-        'montoOrigen': value['montoOrigen'],
-        'montoDestino': value['montoDestino'],
-        'tasaCambio': value['tasaCambio'],
-        'motivo': value['motivo'],
-        'descripcion': value['descripcion'],
+        'saldoSuficiente': value['saldoSuficiente'],
+        'advertencias': value['advertencias'],
     };
 }
-

@@ -13,6 +13,13 @@
  */
 
 import { mapValues } from '../runtime';
+import type { BankTransfer } from './BankTransfer';
+import {
+    BankTransferFromJSON,
+    BankTransferFromJSONTyped,
+    BankTransferToJSON,
+    BankTransferToJSONTyped,
+} from './BankTransfer';
 /**
  * Respuesta de POST /accounting/bank-transfers.
  * @export
@@ -21,58 +28,24 @@ import { mapValues } from '../runtime';
 export interface PostAccountingBankTransfersResponse {
     /**
      * 
-     * @type {string}
+     * @type {BankTransfer}
      * @memberof PostAccountingBankTransfersResponse
      */
-    transferenciaId?: string;
+    transferencia: BankTransfer;
     /**
      * 
      * @type {string}
      * @memberof PostAccountingBankTransfersResponse
      */
-    cuentaOrigenId?: string;
-    /**
-     * 
-     * @type {string}
-     * @memberof PostAccountingBankTransfersResponse
-     */
-    cuentaDestinoId?: string;
-    /**
-     * 
-     * @type {number}
-     * @memberof PostAccountingBankTransfersResponse
-     */
-    montoOrigen?: number;
-    /**
-     * 
-     * @type {number}
-     * @memberof PostAccountingBankTransfersResponse
-     */
-    montoDestino?: number;
-    /**
-     * 
-     * @type {number}
-     * @memberof PostAccountingBankTransfersResponse
-     */
-    tasaCambio?: number | null;
-    /**
-     * 
-     * @type {string}
-     * @memberof PostAccountingBankTransfersResponse
-     */
-    motivo?: string;
-    /**
-     * 
-     * @type {string}
-     * @memberof PostAccountingBankTransfersResponse
-     */
-    descripcion?: string | null;
+    numeroComprobante: string;
 }
 
 /**
  * Check if a given object implements the PostAccountingBankTransfersResponse interface.
  */
 export function instanceOfPostAccountingBankTransfersResponse(value: object): value is PostAccountingBankTransfersResponse {
+    if (!('transferencia' in value) || value['transferencia'] === undefined) return false;
+    if (!('numeroComprobante' in value) || value['numeroComprobante'] === undefined) return false;
     return true;
 }
 
@@ -86,14 +59,8 @@ export function PostAccountingBankTransfersResponseFromJSONTyped(json: any, igno
     }
     return {
         
-        'transferenciaId': json['transferenciaId'] == null ? undefined : json['transferenciaId'],
-        'cuentaOrigenId': json['cuentaOrigenId'] == null ? undefined : json['cuentaOrigenId'],
-        'cuentaDestinoId': json['cuentaDestinoId'] == null ? undefined : json['cuentaDestinoId'],
-        'montoOrigen': json['montoOrigen'] == null ? undefined : json['montoOrigen'],
-        'montoDestino': json['montoDestino'] == null ? undefined : json['montoDestino'],
-        'tasaCambio': json['tasaCambio'] == null ? undefined : json['tasaCambio'],
-        'motivo': json['motivo'] == null ? undefined : json['motivo'],
-        'descripcion': json['descripcion'] == null ? undefined : json['descripcion'],
+        'transferencia': BankTransferFromJSON(json['transferencia']),
+        'numeroComprobante': json['numeroComprobante'],
     };
 }
 
@@ -108,14 +75,7 @@ export function PostAccountingBankTransfersResponseToJSONTyped(value?: PostAccou
 
     return {
         
-        'transferenciaId': value['transferenciaId'],
-        'cuentaOrigenId': value['cuentaOrigenId'],
-        'cuentaDestinoId': value['cuentaDestinoId'],
-        'montoOrigen': value['montoOrigen'],
-        'montoDestino': value['montoDestino'],
-        'tasaCambio': value['tasaCambio'],
-        'motivo': value['motivo'],
-        'descripcion': value['descripcion'],
+        'transferencia': BankTransferToJSON(value['transferencia']),
+        'numeroComprobante': value['numeroComprobante'],
     };
 }
-

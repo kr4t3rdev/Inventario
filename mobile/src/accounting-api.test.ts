@@ -144,4 +144,68 @@ describe('generated accounting API adapter', () => {
     await expect(api.getBankTransfer('transfer-1')).rejects.toMatchObject({ response: { status: 401 } });
     expect(onUnauthorized).toHaveBeenCalledOnce();
   });
+
+  it('validates and creates bank transfers through the generated operations', async () => {
+    const requests: Array<{ url: string; method?: string; body?: string }> = [];
+    const fetchApi = vi.fn<FetchAPI>(async (input, init) => {
+      requests.push({
+        url: String(input),
+        method: init?.method,
+        body: typeof init?.body === 'string' ? init.body : undefined,
+      });
+      const response = String(input).endsWith('/validate')
+        ? { saldoSuficiente: true, advertencias: [] }
+        : {
+            transferencia: { transferenciaId: 'transfer-1', montoOrigen: 100, montoDestino: 100 },
+            numeroComprobante: 'TRF-000001',
+          };
+      return new Response(JSON.stringify(response), {
+        status: 200,
+        headers: { 'content-type': 'application/json' },
+      });
+    });
+    const api = createGeneratedAccountingApi('https://example.test', () => 'access-token', fetchApi);
+
+    const input = {
+      cuentaOrigenId: 'account-1',
+      cuentaDestinoId: 'account-2',
+      montoOrigen: 100,
+      motivo: 'Reposición',
+    };
+    await expect(api.validateBankTransfer({ ...input, monto: input.montoOrigen })).resolves.toEqual({
+      saldoSuficiente: true,
+      advertencias: [],
+    });
+    await expect(api.createBankTransfer(input)).resolves.toMatchObject({
+      transferencia: { transferenciaId: 'transfer-1', montoOrigen: 100, montoDestino: 100 },
+      numeroComprobante: 'TRF-000001',
+    });
+
+    expect(requests).toHaveLength(2);
+    expect(requests[0]).toMatchObject({
+      url: 'https://example.test/api/mobile/v1/accounting/bank-transfers/validate',
+      method: 'POST',
+    });
+    expect(JSON.parse(requests[0].body ?? '{}')).toEqual({
+      cuentaOrigenId: 'account-1',
+      cuentaDestinoId: 'account-2',
+      monto: 100,
+      motivo: 'Reposición',
+    });
+    expect(JSON.parse(requests[1].body ?? '{}')).toEqual(input);
+  });
+
+  it('clears the mobile session on forbidden bank-transfer mutations', async () => {
+    const onUnauthorized = vi.fn();
+    const fetchApi = vi.fn<FetchAPI>(async () => new Response('{}', { status: 403 }));
+    const api = createGeneratedAccountingApi('https://example.test', () => 'access-token', fetchApi, onUnauthorized);
+
+    await expect(api.validateBankTransfer({
+      cuentaOrigenId: 'account-1',
+      cuentaDestinoId: 'account-2',
+      monto: 100,
+      motivo: 'Reposición',
+    })).rejects.toMatchObject({ response: { status: 403 } });
+    expect(onUnauthorized).toHaveBeenCalledOnce();
+  });
 });
