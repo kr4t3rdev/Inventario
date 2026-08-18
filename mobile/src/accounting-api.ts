@@ -1,8 +1,10 @@
 import {
   AccountingBankingApi,
   Configuration,
+  type BankAdjustmentRequest,
   type BankTransferCreateRequest,
   type BankTransferValidationRequest,
+  type GetAccountingBankAdjustmentsResponse,
   type GetAccountingBankAccountsIdHistoryResponse,
   type GetAccountingBankAccountsIdResponse,
   type GetAccountingBankAccountsResponse,
@@ -10,10 +12,12 @@ import {
   type GetAccountingBankTransfersResponse,
   type PostAccountingBankTransfersResponse,
   type PostAccountingBankTransfersValidateResponse,
+  type PostAccountingBankAdjustmentsResponse,
 } from '../../sdks/mobile-v1/typescript/src';
 import type { FetchAPI } from '../../sdks/mobile-v1/typescript/src/runtime';
 import type {
   MobileGetAccountingBankAccountsByIdNestedHistoryRequest,
+  MobileGetAccountingBankAdjustmentsRequest,
   MobileGetAccountingBankTransfersRequest,
 } from '../../sdks/mobile-v1/typescript/src/apis/AccountingBankingApi';
 import { normalizeBasePath } from './sdk-client';
@@ -26,6 +30,8 @@ export interface AccountingApiClient {
   listBankTransfers(params?: MobileGetAccountingBankTransfersRequest): Promise<GetAccountingBankTransfersResponse>;
   getBankTransfer(id: string): Promise<GetAccountingBankTransfersIdResponse>;
   downloadBankTransferReceipt(id: string): Promise<Blob>;
+  listBankAdjustments(params?: MobileGetAccountingBankAdjustmentsRequest): Promise<GetAccountingBankAdjustmentsResponse>;
+  createBankAdjustment(input: BankAdjustmentRequest): Promise<PostAccountingBankAdjustmentsResponse>;
   validateBankTransfer(input: BankTransferValidationRequest): Promise<PostAccountingBankTransfersValidateResponse>;
   createBankTransfer(input: BankTransferCreateRequest): Promise<PostAccountingBankTransfersResponse>;
 }
@@ -66,6 +72,10 @@ export function createGeneratedAccountingApi(
     listBankTransfers: (params = {}) => safelyCall(() => accountingApi.mobileGetAccountingBankTransfers(params)),
     getBankTransfer: (id) => safelyCall(() => accountingApi.mobileGetAccountingBankTransfersById({ id })),
     downloadBankTransferReceipt: (id) => safelyCall(() => accountingApi.mobileGetAccountingBankTransfersByIdComprobante({ id })),
+    listBankAdjustments: (params = {}) => safelyCall(() => accountingApi.mobileGetAccountingBankAdjustments(params)),
+    createBankAdjustment: (input) => safelyCall(() => accountingApi.mobilePostAccountingBankAdjustments({
+      bankAdjustmentRequest: input,
+    })),
     validateBankTransfer: (input) => safelyCall(() => accountingApi.mobilePostAccountingBankTransfersValidate({
       bankTransferValidationRequest: input,
     })),

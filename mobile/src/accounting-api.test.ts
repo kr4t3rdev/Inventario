@@ -244,4 +244,65 @@ describe('generated accounting API adapter', () => {
     await expect(api.downloadBankTransferReceipt('transfer-1')).rejects.toMatchObject({ response: { status: 401 } });
     expect(onUnauthorized).toHaveBeenCalledOnce();
   });
+
+  it('maps bank-adjustment filters and creation to the existing accounting routes', async () => {
+    const requests: Array<{ url: string; method?: string; body?: string }> = [];
+    const fetchApi = vi.fn<FetchAPI>(async (input, init) => {
+      requests.push({
+        url: String(input),
+        method: init?.method,
+        body: typeof init?.body === 'string' ? init.body : undefined,
+      });
+      const response = String(input).includes('/bank-adjustments?')
+        ? { items: [], cuentaBancaria: null, pagination: { page: 2, limit: 10, total: 0, totalPages: 0 } }
+        : { ajusteId: 'adjustment-1', cuentaId: 'bank-1', tipo: 'ingreso', monto: 250 };
+      return new Response(JSON.stringify(response), {
+        status: 200,
+        headers: { 'content-type': 'application/json' },
+      });
+    });
+    const api = createGeneratedAccountingApi('https://example.test', () => 'access-token', fetchApi);
+
+    await expect(api.listBankAdjustments({
+      cuentaId: 'bank-1',
+      tipo: 'ingreso',
+      fechaInicio: new Date('2026-03-01T00:00:00.000Z'),
+      fechaFin: new Date('2026-03-31T00:00:00.000Z'),
+      page: 2,
+      limit: 10,
+    })).resolves.toMatchObject({ pagination: { page: 2, limit: 10 } });
+
+    const input = {
+      cuentaId: 'bank-1',
+      tipo: 'ingreso' as const,
+      monto: 250,
+      moneda: 'CUP',
+      descripcion: 'Ajuste de saldo',
+      motivo: 'Conciliación bancaria',
+    };
+    await expect(api.createBankAdjustment(input)).resolves.toMatchObject({
+      ajusteId: 'adjustment-1',
+      cuentaId: 'bank-1',
+      monto: 250,
+    });
+
+    expect(requests[0]).toEqual({
+      url: 'https://example.test/api/mobile/v1/accounting/bank-adjustments?cuentaId=bank-1&tipo=ingreso&fechaInicio=2026-03-01T00%3A00%3A00.000Z&fechaFin=2026-03-31T00%3A00%3A00.000Z&page=2&limit=10',
+      method: 'GET',
+    });
+    expect(requests[1]).toMatchObject({
+      url: 'https://example.test/api/mobile/v1/accounting/bank-adjustments',
+      method: 'POST',
+    });
+    expect(JSON.parse(requests[1].body ?? '{}')).toEqual(input);
+  });
+
+  it('clears the mobile session on unauthorized bank-adjustment responses', async () => {
+    const onUnauthorized = vi.fn();
+    const fetchApi = vi.fn<FetchAPI>(async () => new Response('{}', { status: 403 }));
+    const api = createGeneratedAccountingApi('https://example.test', () => 'access-token', fetchApi, onUnauthorized);
+
+    await expect(api.listBankAdjustments()).rejects.toMatchObject({ response: { status: 403 } });
+    expect(onUnauthorized).toHaveBeenCalledOnce();
+  });
 });
