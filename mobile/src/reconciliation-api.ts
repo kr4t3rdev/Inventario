@@ -1,6 +1,7 @@
 import {
   AccountingReconciliationApi,
   Configuration,
+  type ExpenseReconciliationRequest,
   type GetAccountingReconciliationExpensesHistoryResponse,
   type GetAccountingReconciliationExpensesResponse,
   type GetAccountingReconciliationSalesHistoryResponse,
@@ -8,6 +9,11 @@ import {
   type GetAccountingReconciliationServicesHistoryResponse,
   type GetAccountingReconciliationServicesResponse,
   type GetAccountingReconciliationStatsResponse,
+  type PostAccountingReconciliationExpensesResponse,
+  type PostAccountingReconciliationSalesResponse,
+  type PostAccountingReconciliationServicesResponse,
+  type SaleReconciliationRequest,
+  type ServiceReconciliationRequest,
 } from '../../sdks/mobile-v1/typescript/src';
 import type { FetchAPI } from '../../sdks/mobile-v1/typescript/src/runtime';
 import type {
@@ -29,6 +35,9 @@ export interface ReconciliationApiClient {
   listExpenses(params?: MobileGetAccountingReconciliationExpensesRequest): Promise<GetAccountingReconciliationExpensesResponse>;
   getExpensesHistory(params?: MobileGetAccountingReconciliationExpensesHistoryRequest): Promise<GetAccountingReconciliationExpensesHistoryResponse>;
   getStats(): Promise<GetAccountingReconciliationStatsResponse>;
+  reconcileSale(input: SaleReconciliationRequest): Promise<PostAccountingReconciliationSalesResponse>;
+  reconcileService(input: ServiceReconciliationRequest): Promise<PostAccountingReconciliationServicesResponse>;
+  reconcileExpense(input: ExpenseReconciliationRequest): Promise<PostAccountingReconciliationExpensesResponse>;
 }
 
 /**
@@ -68,5 +77,14 @@ export function createGeneratedReconciliationApi(
     listExpenses: (params = {}) => safelyCall(() => reconciliationApi.mobileGetAccountingReconciliationExpenses(params)),
     getExpensesHistory: (params = {}) => safelyCall(() => reconciliationApi.mobileGetAccountingReconciliationExpensesHistory(params)),
     getStats: () => safelyCall(() => reconciliationApi.mobileGetAccountingReconciliationStats()),
+    reconcileSale: (input) => safelyCall(() => reconciliationApi.mobilePostAccountingReconciliationSales({
+      saleReconciliationRequest: input,
+    })),
+    reconcileService: (input) => safelyCall(() => reconciliationApi.mobilePostAccountingReconciliationServices({
+      serviceReconciliationRequest: input,
+    })),
+    reconcileExpense: (input) => safelyCall(() => reconciliationApi.mobilePostAccountingReconciliationExpenses({
+      expenseReconciliationRequest: input,
+    })),
   };
 }

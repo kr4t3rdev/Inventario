@@ -74,4 +74,57 @@ describe('generated reconciliation API adapter', () => {
     await expect(api.listExpenses()).rejects.toMatchObject({ response: { status: 401 } });
     expect(onUnauthorized).toHaveBeenCalledOnce();
   });
+
+  it('maps sales, services, and expenses reconciliation mutations', async () => {
+    const requests: Array<{ url: string; method?: string; body?: string }> = [];
+    const fetchApi = vi.fn<FetchAPI>(async (input, init) => {
+      requests.push({
+        url: String(input),
+        method: init?.method,
+        body: typeof init?.body === 'string' ? init.body : undefined,
+      });
+      const url = String(input);
+      const response = url.endsWith('/expenses')
+        ? { reconciliaciones: [], cuentaPorPagar: null, pagoCuentaPorPagar: null, distribucionMultiCuenta: false }
+        : { reconciliacionId: `recon-${requests.length}` };
+      return new Response(JSON.stringify(response), {
+        status: 200,
+        headers: { 'content-type': 'application/json' },
+      });
+    });
+    const api = createGeneratedReconciliationApi('https://example.test', () => 'access-token', fetchApi);
+    const sale = {
+      ventaId: 'sale-1',
+      cuentaId: 'bank-1',
+      tipoPagoId: 'cash',
+      monto: 100,
+      moneda: 'CUP',
+    };
+    const service = {
+      ventaServicioId: 'service-1',
+      distribuciones: [{ cuentaId: 'bank-1', tipoPagoId: 'cash', monto: 100, moneda: 'CUP' }],
+    };
+    const expense = {
+      tipoGasto: 'gastoDE' as const,
+      gastosDEId: 'expense-1',
+      cuentaId: 'bank-1',
+      tipoPagoId: 'cash',
+      monto: 100,
+      moneda: 'CUP',
+      descripcion: 'Compra de suministros',
+    };
+
+    await api.reconcileSale(sale);
+    await api.reconcileService(service);
+    await api.reconcileExpense(expense);
+
+    expect(requests.map(({ url, method }) => ({ url, method }))).toEqual([
+      { url: 'https://example.test/api/mobile/v1/accounting/reconciliation/sales', method: 'POST' },
+      { url: 'https://example.test/api/mobile/v1/accounting/reconciliation/services', method: 'POST' },
+      { url: 'https://example.test/api/mobile/v1/accounting/reconciliation/expenses', method: 'POST' },
+    ]);
+    expect(JSON.parse(requests[0].body ?? '{}')).toEqual(sale);
+    expect(JSON.parse(requests[1].body ?? '{}')).toEqual(service);
+    expect(JSON.parse(requests[2].body ?? '{}')).toEqual(expense);
+  });
 });
