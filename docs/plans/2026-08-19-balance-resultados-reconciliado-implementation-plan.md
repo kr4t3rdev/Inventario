@@ -194,24 +194,27 @@ Resultado RED esperado: los tests fallan contra `getBalanceFinanciero` actual.
 
 **Objetivo**: Separar reglas financieras de Prisma y React.
 
+**Estado**: Completada. La migración de las clasificaciones legacy del reporte se realizará en las
+fases 6 y 9 para no modificar consumidores antes de contar con contratos de servicio y paridad.
+
 ### RED
 
-- [ ] Tests de clasificación de reconciliaciones operativas, financieras y patrimoniales.
-- [ ] Tests de estados `PENDIENTE`, `PARCIAL`, `PAGADA`, anulada y cancelada.
-- [ ] Tests para préstamos, deuda cash, transferencias, capital y ajustes.
-- [ ] Tests de signos para entradas, salidas y reversos.
-- [ ] Tests de cobertura completa, parcial e indeterminada.
+- [x] Tests de clasificación de reconciliaciones operativas, financieras y patrimoniales.
+- [x] Tests de estados `PENDIENTE`, `PARCIAL`, `PAGADA`, anulada y cancelada.
+- [x] Tests para préstamos, deuda cash, transferencias, capital y ajustes.
+- [x] Tests de signos para entradas, salidas y reversos.
+- [x] Tests de cobertura completa, parcial e indeterminada.
 
 ### GREEN
 
-- [ ] Implementar `reconciliation-policy.ts` con constantes y funciones exhaustivas.
-- [ ] Implementar tipos discriminados, evitando strings libres en el dominio nuevo.
-- [ ] Devolver una incidencia explícita ante tipos desconocidos.
+- [x] Implementar `reconciliation-policy.ts` con constantes y funciones exhaustivas.
+- [x] Implementar tipos discriminados, evitando strings libres en el dominio nuevo.
+- [x] Devolver una incidencia explícita ante tipos desconocidos.
 
 ### REFACTOR
 
-- [ ] Eliminar clasificaciones duplicadas del reporte sin modificar todavía otros módulos.
-- [ ] Documentar cada fórmula y clasificación con JSDoc.
+- [x] Centralizar las clasificaciones en una política única sin modificar todavía consumidores.
+- [x] Documentar cada fórmula y clasificación con JSDoc.
 
 ### Salida
 
