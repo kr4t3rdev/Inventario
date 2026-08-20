@@ -178,11 +178,14 @@ export async function getBalanceFinanciero(request: NextRequest, user: Authentic
     const year = parseInt(new URL(request.url).searchParams.get("year") || "") || new Date().getFullYear()
     const tenantId = user.tenantId
 
-    if (!tenantId && user.role !== "admin") {
-      return NextResponse.json({ error: "Sin contexto de empresa" }, { status: 403 })
+    if (!tenantId) {
+      return NextResponse.json(
+        { error: 'Selecciona una empresa para consultar el reporte' },
+        { status: 403 },
+      )
     }
 
-    const tenantWhere = tenantId ? { tenantId } : {}
+    const tenantWhere = { tenantId }
 
     const cuentasBancarias = await prisma.cuentaBancaria.findMany({
       where: { ...tenantWhere, isActive: true },
@@ -212,7 +215,7 @@ export async function getBalanceFinanciero(request: NextRequest, user: Authentic
     const totalCuentasPorCobrar = cuentasPorCobrar.reduce((acc: number, c: any) => acc + (Number(c.montoDeuda) - Number(c.montoPagado)), 0)
     const deudasExternas = await prisma.inyeccionCapital.findMany({
       where: {
-        ...(tenantId ? { cuentaBancaria: { tenantId } } : {}),
+        cuentaBancaria: { tenantId },
         tipo: "DEUDA_EXTERNA",
       },
       select: { saldoPendiente: true, montoTotalDeuda: true },
@@ -220,7 +223,7 @@ export async function getBalanceFinanciero(request: NextRequest, user: Authentic
     const totalPasivos = deudasExternas.reduce((acc: number, d: any) => acc + (d.saldoPendiente ? Number(d.saldoPendiente) : Number(d.montoTotalDeuda)), 0)
     const capitalSocial = await prisma.inyeccionCapital.findMany({
       where: {
-        ...(tenantId ? { cuentaBancaria: { tenantId } } : {}),
+        cuentaBancaria: { tenantId },
         tipo: "CAPITAL_SOCIAL",
       },
       select: { montoRecibido: true },
@@ -228,9 +231,9 @@ export async function getBalanceFinanciero(request: NextRequest, user: Authentic
     const totalCapital = capitalSocial.reduce((acc: number, c: any) => acc + Number(c.montoRecibido), 0)
     const months = Array.from({ length: 12 }, (_, i) => i)
     const monthlyData = await Promise.all(months.map(async (mi) => {
-      const sd = new Date(year, mi, 1); const ed = new Date(year, mi + 1, 0)
+      const sd = new Date(year, mi, 1); const nextMonth = new Date(year, mi + 1, 1)
       const ventas = await prisma.venta.findMany({
-        where: { ...tenantWhere, createdAt: { gte: sd, lte: ed } },
+        where: { ...tenantWhere, createdAt: { gte: sd, lt: nextMonth } },
         include: {
           producto: { select: { precioCosto: true, precioVenta: true } },
           items: {
@@ -244,12 +247,12 @@ export async function getBalanceFinanciero(request: NextRequest, user: Authentic
         },
       })
       const iv = calcularIngresoVenta(ventas as unknown as VentaParaIngreso[])
-      const vs = (await prisma.ventaServicios.findMany({ where: { ...tenantWhere, createdAt: { gte: sd, lte: ed } } })).reduce((a: number, v: any) => a + v.total, 0)
-      const gc = (await prisma.gastoCompra.findMany({ where: { ...tenantWhere, createdAt: { gte: sd, lte: ed } } })).reduce((a: number, c: any) => a + c.total, 0)
+      const vs = (await prisma.ventaServicios.findMany({ where: { ...tenantWhere, createdAt: { gte: sd, lt: nextMonth } } })).reduce((a: number, v: any) => a + v.total, 0)
+      const gc = (await prisma.gastoCompra.findMany({ where: { ...tenantWhere, createdAt: { gte: sd, lt: nextMonth } } })).reduce((a: number, c: any) => a + c.total, 0)
       const vc = calcularCostoVenta(ventas as unknown as VentaParaCosto[])
-      const gs = (await prisma.pagosalario.findMany({ where: { ...tenantWhere, createdAt: { gte: sd, lte: ed } } })).reduce((a: number, s: any) => a + s.salario + (s.bonificaciones ?? 0) + (s.horasExtras ?? 0), 0)
-      const gg = (await prisma.gastosDE.findMany({ where: { ...tenantWhere, createdAt: { gte: sd, lte: ed } } })).reduce((a: number, g: any) => a + g.monto, 0)
-      const gm = (await prisma.merma.findMany({ where: { ...tenantWhere, createdAt: { gte: sd, lte: ed } } })).reduce((a: number, m: any) => a + (m.costoTotal ?? 0), 0)
+      const gs = (await prisma.pagosalario.findMany({ where: { ...tenantWhere, createdAt: { gte: sd, lt: nextMonth } } })).reduce((a: number, s: any) => a + s.salario + (s.bonificaciones ?? 0) + (s.horasExtras ?? 0), 0)
+      const gg = (await prisma.gastosDE.findMany({ where: { ...tenantWhere, createdAt: { gte: sd, lt: nextMonth } } })).reduce((a: number, g: any) => a + g.monto, 0)
+      const gm = (await prisma.merma.findMany({ where: { ...tenantWhere, createdAt: { gte: sd, lt: nextMonth } } })).reduce((a: number, m: any) => a + (m.costoTotal ?? 0), 0)
       const ti = iv + vs; const tg = vc + gc + gs + gg + gm
       return { month: mi + 1, monthName: sd.toLocaleString('es-ES', { month: 'long' }), ingresosVentas: iv, ingresosServicios: vs, totalIngresos: ti, ventasCosto: vc, gastosCompras: gc, gastosSalarios: gs, gastosGenerales: gg, gastosMermas: gm, totalGastos: tg, utilidadNeta: ti - tg }
     }))

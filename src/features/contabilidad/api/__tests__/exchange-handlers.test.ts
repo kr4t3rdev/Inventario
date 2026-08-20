@@ -194,6 +194,34 @@ describe('getBalanceFinanciero', () => {
     expect(body.estadoResultados).toBeDefined()
   })
 
+  it('rechaza administradores sin una empresa seleccionada', async () => {
+    const { getBalanceFinanciero } = await import('@/features/contabilidad/api/exchange-handlers')
+    const request = new NextRequest('http://localhost/api/contabilidad/balance-financiero?year=2025')
+    const response = await getBalanceFinanciero(request, {
+      ...baseUser,
+      tenantId: undefined,
+    } as any)
+    const body = await response.json()
+
+    expect(response.status).toBe(403)
+    expect(body.error).toBe('Selecciona una empresa para consultar el reporte')
+    expect(prismaMock.cuentaBancaria.findMany).not.toHaveBeenCalled()
+  })
+
+  it('usa rangos semiabiertos para incluir el último día completo de cada mes', async () => {
+    const { getBalanceFinanciero } = await import('@/features/contabilidad/api/exchange-handlers')
+    const request = new NextRequest('http://localhost/api/contabilidad/balance-financiero?year=2025')
+    const response = await getBalanceFinanciero(request, baseUser as any)
+
+    expect(response.status).toBe(200)
+    const januaryFilter = prismaMock.venta.findMany.mock.calls[0]?.[0]?.where?.createdAt
+    expect(januaryFilter).toEqual({
+      gte: new Date(2025, 0, 1),
+      lt: new Date(2025, 1, 1),
+    })
+    expect(januaryFilter).not.toHaveProperty('lte')
+  })
+
   it('incluye gastosCompras en totalGastos y en el cálculo de utilidadNeta', async () => {
     prismaMock.venta.findMany.mockImplementation(
       soloEnero([
