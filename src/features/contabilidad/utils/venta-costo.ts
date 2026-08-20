@@ -37,6 +37,48 @@ export interface VentaParaCosto {
   items: VentaItemParaCosto[];
 }
 
+export interface DetalleCostoVenta {
+  historical: number;
+  estimated: number;
+  overAllocatedCost: number;
+}
+
+/**
+ * @description Separa el costo FIFO histórico del fallback basado en el costo actual.
+ * @param {VentaParaCosto} venta - Venta con items y asignaciones de compras.
+ * @returns {DetalleCostoVenta} Costo histórico verificable y costo estimado.
+ */
+export function calcularDetalleCostoVenta(venta: VentaParaCosto): DetalleCostoVenta {
+  if (!venta.items || venta.items.length === 0) {
+    return {
+      historical: 0,
+      estimated: (venta.producto?.precioCosto ?? 0) * venta.cantidad,
+      overAllocatedCost: 0,
+    };
+  }
+
+  return venta.items.reduce<DetalleCostoVenta>((detail, item) => {
+    const allocations = item.allocations ?? [];
+    let remainingQuantity = item.cantidad;
+    let historical = 0;
+    let overAllocatedCost = 0;
+    for (const allocation of allocations) {
+      const usedQuantity = Math.min(Math.max(allocation.cantidad, 0), remainingQuantity);
+      const excessQuantity = Math.max(0, allocation.cantidad - usedQuantity);
+      const unitCost = allocation.compraDocumentoItem?.precioUnitario ?? 0;
+      historical += usedQuantity * unitCost;
+      overAllocatedCost += excessQuantity * unitCost;
+      remainingQuantity -= usedQuantity;
+    }
+
+    return {
+      historical: detail.historical + historical,
+      estimated: detail.estimated + remainingQuantity * (item.producto?.precioCosto ?? 0),
+      overAllocatedCost: detail.overAllocatedCost + overAllocatedCost,
+    };
+  }, { historical: 0, estimated: 0, overAllocatedCost: 0 });
+}
+
 /**
  * @description Suma el costo histórico de venta para un conjunto de ventas.
  *   Usa FIFO allocations cuando existen; cae a `precioCosto` actual como fallback.
@@ -44,30 +86,8 @@ export interface VentaParaCosto {
  * @returns {number} Costo total de venta acumulado.
  */
 export function calcularCostoVenta(ventas: VentaParaCosto[]): number {
-  return ventas.reduce((acc, v) => {
-    // Modelo nuevo: venta con VentaItems
-    if (v.items && v.items.length > 0) {
-      return (
-        acc +
-        v.items.reduce((itemAcc, item) => {
-          const allocations = item.allocations ?? [];
-          if (allocations.length > 0) {
-            const allocatedQty = allocations.reduce((a, x) => a + x.cantidad, 0);
-            const allocatedCost = allocations.reduce(
-              (a, x) => a + x.cantidad * (x.compraDocumentoItem?.precioUnitario ?? 0),
-              0,
-            );
-            // Si las allocations no cubren toda la cantidad, completar con precioCosto actual.
-            const remaining = Math.max(0, item.cantidad - allocatedQty);
-            const fallbackCost = remaining * (item.producto?.precioCosto ?? 0);
-            return itemAcc + allocatedCost + fallbackCost;
-          }
-          // Item sin allocations → fallback a precioCosto actual
-          return itemAcc + item.cantidad * (item.producto?.precioCosto ?? 0);
-        }, 0)
-      );
-    }
-    // Venta legacy: sin items, usar producto directo
-    return acc + (v.producto?.precioCosto ?? 0) * v.cantidad;
+  return ventas.reduce((total, venta) => {
+    const detail = calcularDetalleCostoVenta(venta);
+    return total + detail.historical + detail.estimated;
   }, 0);
 }

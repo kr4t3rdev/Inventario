@@ -7,8 +7,10 @@ import { CurrencyConversionService } from '@/lib/services/currency-conversion-se
 import { ExchangeRateReadService } from '@/features/contabilidad/services/exchange-rate-read-service';
 import { exchangeRateProvider } from '@/features/contabilidad/services/exchange-rate-provider';
 import { ExchangeServiceError } from '@/features/contabilidad/services/exchange-types';
-import { calcularCostoVenta, type VentaParaCosto } from '@/features/contabilidad/utils/venta-costo';
-import { calcularIngresoVenta, type VentaParaIngreso } from '@/features/contabilidad/utils/venta-ingreso';
+import {
+  getReconciledResultForYear,
+  presentReconciledPeriod,
+} from '@/features/contabilidad/services/reconciled-result-service';
 
 const exchangeReadService = new ExchangeRateReadService(exchangeRateProvider);
 
@@ -229,35 +231,8 @@ export async function getBalanceFinanciero(request: NextRequest, user: Authentic
       select: { montoRecibido: true },
     })
     const totalCapital = capitalSocial.reduce((acc: number, c: any) => acc + Number(c.montoRecibido), 0)
-    const months = Array.from({ length: 12 }, (_, i) => i)
-    const monthlyData = await Promise.all(months.map(async (mi) => {
-      const sd = new Date(year, mi, 1); const nextMonth = new Date(year, mi + 1, 1)
-      const ventas = await prisma.venta.findMany({
-        where: { ...tenantWhere, createdAt: { gte: sd, lt: nextMonth } },
-        include: {
-          producto: { select: { precioCosto: true, precioVenta: true } },
-          items: {
-            include: {
-              producto: { select: { precioCosto: true } },
-              allocations: {
-                include: { compraDocumentoItem: { select: { precioUnitario: true } } },
-              },
-            },
-          },
-        },
-      })
-      const iv = calcularIngresoVenta(ventas as unknown as VentaParaIngreso[])
-      const vs = (await prisma.ventaServicios.findMany({ where: { ...tenantWhere, createdAt: { gte: sd, lt: nextMonth } } })).reduce((a: number, v: any) => a + v.total, 0)
-      const gc = (await prisma.gastoCompra.findMany({ where: { ...tenantWhere, createdAt: { gte: sd, lt: nextMonth } } })).reduce((a: number, c: any) => a + c.total, 0)
-      const vc = calcularCostoVenta(ventas as unknown as VentaParaCosto[])
-      const gs = (await prisma.pagosalario.findMany({ where: { ...tenantWhere, createdAt: { gte: sd, lt: nextMonth } } })).reduce((a: number, s: any) => a + s.salario + (s.bonificaciones ?? 0) + (s.horasExtras ?? 0), 0)
-      const gg = (await prisma.gastosDE.findMany({ where: { ...tenantWhere, createdAt: { gte: sd, lt: nextMonth } } })).reduce((a: number, g: any) => a + g.monto, 0)
-      const gm = (await prisma.merma.findMany({ where: { ...tenantWhere, createdAt: { gte: sd, lt: nextMonth } } })).reduce((a: number, m: any) => a + (m.costoTotal ?? 0), 0)
-      const ti = iv + vs; const tg = vc + gc + gs + gg + gm
-      return { month: mi + 1, monthName: sd.toLocaleString('es-ES', { month: 'long' }), ingresosVentas: iv, ingresosServicios: vs, totalIngresos: ti, ventasCosto: vc, gastosCompras: gc, gastosSalarios: gs, gastosGenerales: gg, gastosMermas: gm, totalGastos: tg, utilidadNeta: ti - tg }
-    }))
-    const anual = monthlyData.reduce((acc: any, curr: any) => ({ ingresosVentas: acc.ingresosVentas + curr.ingresosVentas, ingresosServicios: acc.ingresosServicios + curr.ingresosServicios, totalIngresos: acc.totalIngresos + curr.totalIngresos, gastosCompras: acc.gastosCompras + curr.gastosCompras, gastosSalarios: acc.gastosSalarios + curr.gastosSalarios, gastosGenerales: acc.gastosGenerales + curr.gastosGenerales, gastosMermas: acc.gastosMermas + curr.gastosMermas, totalGastos: acc.totalGastos + curr.totalGastos, utilidadNeta: acc.utilidadNeta + curr.utilidadNeta }), { ingresosVentas: 0, ingresosServicios: 0, totalIngresos: 0, gastosCompras: 0, gastosSalarios: 0, gastosGenerales: 0, gastosMermas: 0, totalGastos: 0, utilidadNeta: 0 })
-    return NextResponse.json({ balance: { activos: { efectivo: totalEfectivo, inventario: totalInventario, cuentasPorCobrar: totalCuentasPorCobrar, total: totalEfectivo + totalInventario + totalCuentasPorCobrar }, pasivos: { deudaExterna: totalPasivos, total: totalPasivos }, patrimonio: { capitalSocial: totalCapital, utilidadEjercicio: anual.utilidadNeta, total: totalCapital + anual.utilidadNeta } }, estadoResultados: { mensual: monthlyData, anual } })
+    const result = await getReconciledResultForYear({ tenantId, year })
+    return NextResponse.json({ balance: { activos: { efectivo: totalEfectivo, inventario: totalInventario, cuentasPorCobrar: totalCuentasPorCobrar, total: totalEfectivo + totalInventario + totalCuentasPorCobrar }, pasivos: { deudaExterna: totalPasivos, total: totalPasivos }, patrimonio: { capitalSocial: totalCapital, utilidadEjercicio: result.annual.reconciledResult, total: totalCapital + result.annual.reconciledResult } }, estadoResultados: { mensual: result.monthly.map(presentReconciledPeriod), anual: presentReconciledPeriod(result.annual), incidencias: result.incidents, estimaciones: result.estimates, monedaFuncional: result.functionalCurrency, zonaHoraria: result.timeZone } })
   } catch (error) {
     console.error("Error al obtener balance financiero:", error)
     return NextResponse.json({ error: "Error interno del servidor" }, { status: 500 })

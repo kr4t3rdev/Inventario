@@ -23,10 +23,14 @@ const prismaMock = vi.hoisted(() => ({
   inyeccionCapital: { findMany: vi.fn() },
   venta: { findMany: vi.fn() },
   ventaServicios: { findMany: vi.fn() },
+  compraServicio: { findMany: vi.fn() },
   gastoCompra: { findMany: vi.fn() },
   pagosalario: { findMany: vi.fn() },
   gastosDE: { findMany: vi.fn() },
   merma: { findMany: vi.fn() },
+  reconciliacionVenta: { findMany: vi.fn() },
+  reconciliacionServicio: { findMany: vi.fn() },
+  reconciliacionGasto: { findMany: vi.fn() },
 }))
 
 const exchangeProviderMock = vi.hoisted(() => ({
@@ -153,15 +157,9 @@ describe('getBalanceFinanciero', () => {
   }
 
   const emptyQuery = () => [] as any[]
-
-  // Mock que solo devuelve datos en enero (mes 1), vacío el resto del año.
-  const soloEnero = (rows: any[]) =>
-    vi.fn(async ({ where }: any) => {
-      if (where?.createdAt?.gte instanceof Date && where.createdAt.gte.getMonth() === 0) {
-        return rows
-      }
-      return []
-    })
+  const currentPeriodRows = (rows: any[]) => async ({ where }: any) => {
+    return where?.fechaReconciliacion?.gte ? rows : []
+  }
 
   beforeEach(() => {
     vi.clearAllMocks()
@@ -172,10 +170,21 @@ describe('getBalanceFinanciero', () => {
     prismaMock.inyeccionCapital.findMany.mockImplementation(emptyQuery)
     prismaMock.venta.findMany.mockImplementation(emptyQuery)
     prismaMock.ventaServicios.findMany.mockImplementation(emptyQuery)
+    prismaMock.compraServicio.findMany.mockImplementation(emptyQuery)
     prismaMock.gastoCompra.findMany.mockImplementation(emptyQuery)
     prismaMock.pagosalario.findMany.mockImplementation(emptyQuery)
     prismaMock.gastosDE.findMany.mockImplementation(emptyQuery)
     prismaMock.merma.findMany.mockImplementation(emptyQuery)
+    prismaMock.reconciliacionVenta.findMany.mockImplementation(emptyQuery)
+    prismaMock.reconciliacionServicio.findMany.mockImplementation(emptyQuery)
+    prismaMock.reconciliacionGasto.findMany.mockImplementation(emptyQuery)
+    exchangeProviderMock.exchangeRateProvider.getPrincipalCurrency.mockResolvedValue({
+      codigo: 'CUP',
+      nombre: 'Peso Cubano',
+      simbolo: '$',
+      esPrincipal: true,
+      isActive: true,
+    })
   })
 
   it('permite balance y resultados para el plan Básico cuando contabilidad está habilitada', async () => {
@@ -208,61 +217,240 @@ describe('getBalanceFinanciero', () => {
     expect(prismaMock.cuentaBancaria.findMany).not.toHaveBeenCalled()
   })
 
-  it('usa rangos semiabiertos para incluir el último día completo de cada mes', async () => {
+  it('consulta reconciliaciones una vez por fuente con un rango anual semiabierto', async () => {
     const { getBalanceFinanciero } = await import('@/features/contabilidad/api/exchange-handlers')
     const request = new NextRequest('http://localhost/api/contabilidad/balance-financiero?year=2025')
     const response = await getBalanceFinanciero(request, baseUser as any)
 
     expect(response.status).toBe(200)
-    const januaryFilter = prismaMock.venta.findMany.mock.calls[0]?.[0]?.where?.createdAt
-    expect(januaryFilter).toEqual({
-      gte: new Date(2025, 0, 1),
-      lt: new Date(2025, 1, 1),
+    expect(prismaMock.reconciliacionVenta.findMany).toHaveBeenCalledTimes(1)
+    expect(prismaMock.reconciliacionServicio.findMany).toHaveBeenCalledTimes(1)
+    expect(prismaMock.reconciliacionGasto.findMany).toHaveBeenCalledTimes(1)
+    expect(prismaMock.merma.findMany).toHaveBeenCalledTimes(1)
+    expect(prismaMock.reconciliacionVenta.findMany.mock.calls[0][0].where).toMatchObject({
+      tenantId: 'tenant-1',
+      fechaReconciliacion: {
+        gte: new Date('2025-01-01T05:00:00.000Z'),
+        lt: new Date('2026-01-01T05:00:00.000Z'),
+      },
     })
-    expect(januaryFilter).not.toHaveProperty('lte')
+    expect(prismaMock.venta.findMany).not.toHaveBeenCalled()
+    expect(prismaMock.gastoCompra.findMany).not.toHaveBeenCalled()
   })
 
-  it('incluye gastosCompras en totalGastos y en el cálculo de utilidadNeta', async () => {
-    prismaMock.venta.findMany.mockImplementation(
-      soloEnero([
-        {
-          ventaId: 'v1',
+  it('calcula resultado y flujo desde dinero reconciliado sin doble conteo', async () => {
+    prismaMock.reconciliacionVenta.findMany.mockImplementation(currentPeriodRows([
+      {
+        reconciliacionId: 'rv-sale',
+        monto: 500,
+        moneda: 'CUP',
+        montoConvertido: null,
+        tasaCambio: null,
+        fechaReconciliacion: new Date('2025-01-10T12:00:00Z'),
+        tipoReconciliacion: null,
+        venta: {
+          ventaId: 'sale-1',
           total: 1000,
-          cantidad: 10,
-          producto: { precioCosto: 30, precioVenta: 100 },
+          cantidad: 0,
+          producto: { precioCosto: 0 },
+          items: [{
+            id: 'item-1',
+            cantidad: 10,
+            total: 1000,
+            producto: { precioCosto: 999 },
+            allocations: [
+              { id: 'a1', cantidad: 6, compraDocumentoItem: { precioUnitario: 20 } },
+              { id: 'a2', cantidad: 4, compraDocumentoItem: { precioUnitario: 25 } },
+            ],
+          }],
         },
-      ]),
-    )
-    prismaMock.gastoCompra.findMany.mockImplementation(soloEnero([{ gastoCompraId: 'gc1', total: 200 }]))
-    prismaMock.pagosalario.findMany.mockImplementation(soloEnero([{ pgId: 's1', salario: 150, bonificaciones: 0, horasExtras: 0 }]))
-    prismaMock.gastosDE.findMany.mockImplementation(soloEnero([{ gastoId: 'g1', monto: 50 }]))
+      },
+      {
+        reconciliacionId: 'rv-loan',
+        monto: 200,
+        moneda: 'CUP',
+        montoConvertido: null,
+        tasaCambio: null,
+        fechaReconciliacion: new Date('2025-01-11T12:00:00Z'),
+        tipoReconciliacion: 'PRESTAMO_CASH',
+        venta: null,
+      },
+    ]))
+    prismaMock.reconciliacionServicio.findMany.mockImplementation(currentPeriodRows([{
+      reconciliacionId: 'rs-service',
+      monto: 500,
+      moneda: 'CUP',
+      montoConvertido: null,
+      tasaCambio: null,
+      fechaReconciliacion: new Date('2025-01-12T12:00:00Z'),
+      ventasServicio: {
+        ventaServicioId: 'service-1',
+        total: 500,
+        costo: 30,
+        cantidad: 4,
+      },
+    }]))
+    prismaMock.reconciliacionGasto.findMany.mockImplementation(currentPeriodRows([
+      {
+        reconciliacionId: 'rg-purchase', tipoGasto: 'compra', referenciaId: 'purchase-1',
+        monto: 300, moneda: 'CUP', montoConvertido: null, tasaCambio: null,
+        fechaReconciliacion: new Date('2025-01-13T12:00:00Z'), estado: 'PAGADA',
+        gastoCompra: { total: 300 }, gastoDE: null, pagoSalario: null,
+      },
+      {
+        reconciliacionId: 'rg-salary', tipoGasto: 'salario', referenciaId: 'salary-1',
+        monto: 650, moneda: 'CUP', montoConvertido: null, tasaCambio: null,
+        fechaReconciliacion: new Date('2025-01-14T12:00:00Z'), estado: 'PAGADA',
+        gastoCompra: null, gastoDE: null,
+        pagoSalario: { salario: 500, bonificaciones: 100, horasExtras: 50 },
+      },
+      {
+        reconciliacionId: 'rg-service-cost', tipoGasto: 'venta_servicio',
+        referenciaId: 'service-1', monto: 120, moneda: 'CUP', montoConvertido: null,
+        tasaCambio: null, fechaReconciliacion: new Date('2025-01-15T12:00:00Z'),
+        estado: 'PAGADA', gastoCompra: null, gastoDE: null, pagoSalario: null,
+      },
+    ]))
+    prismaMock.merma.findMany.mockResolvedValue([{
+      mermaId: 'loss-1',
+      costoTotal: 90,
+      createdAt: new Date('2025-01-16T12:00:00Z'),
+    }])
+
+    const { getBalanceFinanciero } = await import('@/features/contabilidad/api/exchange-handlers')
+    const request = new NextRequest('http://localhost/api/contabilidad/balance-financiero?year=2025')
+    const response = await getBalanceFinanciero(request, baseUser as any)
+    const body = await response.json()
+    const annual = body.estadoResultados.anual
+
+    expect(annual.income).toEqual({ sales: 500, services: 500, total: 1000 })
+    expect(annual.costOfSales.total).toBe(230)
+    expect(annual.operatingExpenses.salaries).toBe(650)
+    expect(annual.inventoryPurchases).toBe(300)
+    expect(annual.nonCashAdjustments.shrinkages).toBe(90)
+    expect(annual.reconciledResult).toBe(120)
+    expect(annual.cashFlow).toEqual({ operating: -70, financial: 200, net: 130 })
+    expect(annual.totalGastos).toBe(880)
+    expect(annual.gastosCompras).toBe(300)
+    expect(annual.gastosMermas).toBe(90)
+    expect(annual.utilidadNeta).toBe(120)
+    expect(body.balance.patrimonio.utilidadEjercicio).toBe(120)
+  })
+
+  it('respeta saldo previo, descuento neto y ventas eliminadas', async () => {
+    const activeSale = {
+      ventaId: 'discounted-sale',
+      total: null,
+      descuento: 100,
+      cantidad: 0,
+      deletedAt: null,
+      producto: { precioCosto: 0 },
+      items: [{
+        id: 'item-1',
+        cantidad: 10,
+        total: 1000,
+        producto: { precioCosto: 0 },
+        allocations: [{
+          id: 'allocation-1',
+          cantidad: 10,
+          compraDocumentoItem: { precioUnitario: 20 },
+        }],
+      }],
+    }
+    prismaMock.reconciliacionVenta.findMany.mockImplementation(async ({ where }: any) => {
+      if (where?.fechaReconciliacion?.gte) {
+        return [
+          {
+            reconciliacionId: 'current-payment', monto: 500, moneda: 'CUP',
+            montoConvertido: null, tasaCambio: null,
+            fechaReconciliacion: new Date('2025-02-10T12:00:00Z'),
+            tipoReconciliacion: null, venta: activeSale,
+          },
+          {
+            reconciliacionId: 'deleted-payment', monto: 100, moneda: 'CUP',
+            montoConvertido: null, tasaCambio: null,
+            fechaReconciliacion: new Date('2025-02-11T12:00:00Z'),
+            tipoReconciliacion: null,
+            venta: { ...activeSale, ventaId: 'deleted-sale', deletedAt: new Date() },
+          },
+        ]
+      }
+      return [
+        {
+          reconciliacionId: 'opening-payment', ventaId: 'discounted-sale',
+          tipoReconciliacion: null, monto: 800, moneda: 'CUP', montoConvertido: null,
+          tasaCambio: null, fechaReconciliacion: new Date('2024-12-10T12:00:00Z'),
+        },
+        {
+          reconciliacionId: 'bad-opening', ventaId: 'discounted-sale',
+          tipoReconciliacion: null, monto: 10, moneda: 'USD', montoConvertido: null,
+          tasaCambio: null, fechaReconciliacion: new Date('2024-12-11T12:00:00Z'),
+        },
+      ]
+    })
 
     const { getBalanceFinanciero } = await import('@/features/contabilidad/api/exchange-handlers')
     const request = new NextRequest('http://localhost/api/contabilidad/balance-financiero?year=2025')
     const response = await getBalanceFinanciero(request, baseUser as any)
     const body = await response.json()
 
-    // Enero:
-    //   ingresosVentas   = 1000
-    //   ventasCosto      = 30 * 10 = 300
-    //   gastosCompras    = 200
-    //   gastosSalarios   = 150
-    //   gastosGenerales  = 50
-    //   totalGastos      = 300 + 200 + 150 + 50 = 700
-    //   utilidadNeta     = 1000 - 700 = 300
-    expect(body.estadoResultados.anual.gastosCompras).toBe(200)
-    expect(body.estadoResultados.anual.totalGastos).toBe(700)
-    expect(body.estadoResultados.anual.utilidadNeta).toBe(300)
+    expect(body.estadoResultados.anual.income.sales).toBe(100)
+    expect(body.estadoResultados.anual.costOfSales.total).toBeCloseTo(200 / 9)
+    expect(body.estadoResultados.incidencias).toContainEqual({
+      code: 'PAYMENT_EXCEEDS_DOCUMENT',
+      movementId: 'current-payment',
+      affectedAmount: 400,
+    })
+    expect(body.estadoResultados.incidencias).toContainEqual({
+      code: 'DELETED_DOCUMENT',
+      movementId: 'deleted-payment',
+      affectedAmount: 100,
+    })
+    expect(body.estadoResultados.incidencias).toContainEqual({
+      code: 'MISSING_CONVERSION',
+      movementId: 'bad-opening',
+      affectedAmount: 10,
+    })
+  })
+
+  it('limita servicios comprados en su moneda y reconoce el pago convertido', async () => {
+    prismaMock.reconciliacionGasto.findMany.mockImplementation(currentPeriodRows([{
+      reconciliacionId: 'foreign-service-payment',
+      tipoGasto: 'servicio',
+      referenciaId: 'foreign-service',
+      monto: 50,
+      moneda: 'USD',
+      montoConvertido: 1200,
+      tasaCambio: 24,
+      fechaReconciliacion: new Date('2025-07-10T12:00:00Z'),
+      estado: 'PAGADA',
+      gastoCompra: null,
+      gastoDE: null,
+      pagoSalario: null,
+    }]))
+    prismaMock.compraServicio.findMany.mockResolvedValue([{
+      compraServicioId: 'foreign-service',
+      total: 100,
+      moneda: 'USD',
+    }])
+
+    const { getBalanceFinanciero } = await import('@/features/contabilidad/api/exchange-handlers')
+    const request = new NextRequest('http://localhost/api/contabilidad/balance-financiero?year=2025')
+    const response = await getBalanceFinanciero(request, baseUser as any)
+    const body = await response.json()
+
+    expect(body.estadoResultados.anual.operatingExpenses.purchasedServices).toBe(1200)
+    expect(body.estadoResultados.incidencias).not.toContainEqual(expect.objectContaining({
+      code: 'PAYMENT_EXCEEDS_DOCUMENT',
+    }))
   })
 
   it('calcula inventario del balance desde StockUbicacion y no desde producto.stock', async () => {
-    prismaMock.producto.findMany.mockImplementation(async () => [
-      { stock: 999, precioCosto: 10 },
-    ] as any[])
-    prismaMock.stockUbicacion.findMany.mockImplementation(async () => [
+    prismaMock.producto.findMany.mockResolvedValue([{ stock: 999, precioCosto: 10 }])
+    prismaMock.stockUbicacion.findMany.mockResolvedValue([
       { cantidad: 2, producto: { precioCosto: 10 } },
       { cantidad: 3, producto: { precioCosto: 10 } },
-    ] as any[])
+    ])
 
     const { getBalanceFinanciero } = await import('@/features/contabilidad/api/exchange-handlers')
     const request = new NextRequest('http://localhost/api/contabilidad/balance-financiero?year=2025')
@@ -270,179 +458,5 @@ describe('getBalanceFinanciero', () => {
     const body = await response.json()
 
     expect(body.balance.activos.inventario).toBe(50)
-  })
-
-  it('incluye gastosCompras en el totalGastos de cada mes', async () => {
-    prismaMock.gastoCompra.findMany.mockImplementation(async () => [
-      { gastoCompraId: 'gc1', total: 500 },
-    ] as any[])
-
-    const { getBalanceFinanciero } = await import('@/features/contabilidad/api/exchange-handlers')
-    const request = new NextRequest('http://localhost/api/contabilidad/balance-financiero?year=2025')
-    const response = await getBalanceFinanciero(request, baseUser as any)
-    const body = await response.json()
-
-    const anual = body.estadoResultados.anual
-    expect(anual.gastosCompras).toBe(500 * 12)
-    expect(anual.totalGastos).toBe(500 * 12)
-  })
-
-  it('expone la utilidad del ejercicio como patrimonio.utilidadEjercicio (no utilidadAcumulada)', async () => {
-    prismaMock.venta.findMany.mockImplementation(
-      soloEnero([
-        {
-          ventaId: 'v1',
-          total: 1000,
-          cantidad: 10,
-          producto: { precioCosto: 30, precioVenta: 100 },
-        },
-      ]),
-    )
-    prismaMock.gastoCompra.findMany.mockImplementation(soloEnero([{ gastoCompraId: 'gc1', total: 200 }]))
-    prismaMock.pagosalario.findMany.mockImplementation(soloEnero([{ pgId: 's1', salario: 150, bonificaciones: 0, horasExtras: 0 }]))
-    prismaMock.gastosDE.findMany.mockImplementation(soloEnero([{ gastoId: 'g1', monto: 50 }]))
-
-    const { getBalanceFinanciero } = await import('@/features/contabilidad/api/exchange-handlers')
-    const request = new NextRequest('http://localhost/api/contabilidad/balance-financiero?year=2025')
-    const response = await getBalanceFinanciero(request, baseUser as any)
-    const body = await response.json()
-
-    // 1000 ingresos − 700 gastos = 300 utilidad
-    expect(body.balance.patrimonio.utilidadEjercicio).toBe(300)
-    expect(body.balance.patrimonio).not.toHaveProperty('utilidadAcumulada')
-  })
-
-  it('calcula el costo de venta con las PurchaseAllocations FIFO (precioUnitario histórico)', async () => {
-    // Venta de 10 unidades. El producto tiene precioCosto actual = 9999 (NO debe usarse).
-    // Las allocations dicen: 6 unidades a 20 CUP, 4 unidades a 25 CUP.
-    // Costo histórico esperado: 6*20 + 4*25 = 220.
-    prismaMock.venta.findMany.mockImplementation(
-      soloEnero([
-        {
-          ventaId: 'v1',
-          total: 1000,
-          cantidad: 0, // legacy, ignorado cuando hay items
-          producto: { precioCosto: 9999, precioVenta: 100 },
-          items: [
-            {
-              id: 'vi1',
-              cantidad: 10,
-              precioUnitario: 100,
-              total: 1000,
-              producto: { precioCosto: 9999 },
-              allocations: [
-                { id: 'a1', cantidad: 6, compraDocumentoItem: { precioUnitario: 20 } },
-                { id: 'a2', cantidad: 4, compraDocumentoItem: { precioUnitario: 25 } },
-              ],
-            },
-          ],
-        },
-      ]),
-    )
-    prismaMock.gastoCompra.findMany.mockImplementation(soloEnero([]))
-    prismaMock.pagosalario.findMany.mockImplementation(soloEnero([]))
-    prismaMock.gastosDE.findMany.mockImplementation(soloEnero([]))
-
-    const { getBalanceFinanciero } = await import('@/features/contabilidad/api/exchange-handlers')
-    const request = new NextRequest('http://localhost/api/contabilidad/balance-financiero?year=2025')
-    const response = await getBalanceFinanciero(request, baseUser as any)
-    const body = await response.json()
-
-    const enero = body.estadoResultados.mensual.find((m: any) => m.month === 1)
-    // ventasCosto debe ser 220 (FIFO), no 9999*10 (precioCosto actual)
-    expect(enero.ventasCosto).toBe(220)
-  })
-
-  it('cae al precioCosto actual cuando no hay PurchaseAllocations', async () => {
-    // VentaItem sin allocations: 5 unidades, producto.precioCosto = 30 → costo = 150
-    prismaMock.venta.findMany.mockImplementation(
-      soloEnero([
-        {
-          ventaId: 'v1',
-          total: 500,
-          cantidad: 0,
-          producto: { precioCosto: 0, precioVenta: 100 },
-          items: [
-            {
-              id: 'vi1',
-              cantidad: 5,
-              precioUnitario: 100,
-              total: 500,
-              producto: { precioCosto: 30 },
-              allocations: [],
-            },
-          ],
-        },
-      ]),
-    )
-    prismaMock.gastoCompra.findMany.mockImplementation(soloEnero([]))
-    prismaMock.pagosalario.findMany.mockImplementation(soloEnero([]))
-    prismaMock.gastosDE.findMany.mockImplementation(soloEnero([]))
-
-    const { getBalanceFinanciero } = await import('@/features/contabilidad/api/exchange-handlers')
-    const request = new NextRequest('http://localhost/api/contabilidad/balance-financiero?year=2025')
-    const response = await getBalanceFinanciero(request, baseUser as any)
-    const body = await response.json()
-
-    const enero = body.estadoResultados.mensual.find((m: any) => m.month === 1)
-    expect(enero.ventasCosto).toBe(150)
-  })
-
-  it('calcula ingresosVentas sumando items.total en vez de usar v.total (histórico confiable)', async () => {
-    // Venta con 2 items: totales 400 + 100 = 500
-    // venta.total está puesto a 9999 para verificar que se ignora cuando hay items.
-    prismaMock.venta.findMany.mockImplementation(
-      soloEnero([
-        {
-          ventaId: 'v1',
-          total: 9999, // debe IGNORARSE
-          cantidad: 0,
-          producto: { precioCosto: 0, precioVenta: 100 },
-          items: [
-            { id: 'i1', cantidad: 4, precioUnitario: 100, total: 400, producto: { precioCosto: 0 }, allocations: [] },
-            { id: 'i2', cantidad: 1, precioUnitario: 100, total: 100, producto: { precioCosto: 0 }, allocations: [] },
-          ],
-        },
-      ]),
-    )
-    prismaMock.gastoCompra.findMany.mockImplementation(soloEnero([]))
-    prismaMock.pagosalario.findMany.mockImplementation(soloEnero([]))
-    prismaMock.gastosDE.findMany.mockImplementation(soloEnero([]))
-
-    const { getBalanceFinanciero } = await import('@/features/contabilidad/api/exchange-handlers')
-    const request = new NextRequest('http://localhost/api/contabilidad/balance-financiero?year=2025')
-    const response = await getBalanceFinanciero(request, baseUser as any)
-    const body = await response.json()
-
-    const enero = body.estadoResultados.mensual.find((m: any) => m.month === 1)
-    expect(enero.ingresosVentas).toBe(500) // sum(items.total), NO 9999
-  })
-
-  it('NO distorsiona ingresos con precioVenta actual cuando v.total es null y no hay items', async () => {
-    // Venta legacy con total=null, cantidad=10, producto.precioVenta=100
-    // Comportamiento ANTERIOR (buggy): 10 * 100 = 1000
-    // Comportamiento NUEVO: 0 (mejor sub-registrar que inventar)
-    prismaMock.venta.findMany.mockImplementation(
-      soloEnero([
-        {
-          ventaId: 'v1',
-          total: null, // dato faltante
-          cantidad: 10,
-          producto: { precioCosto: 0, precioVenta: 100 },
-          items: [],
-        },
-      ]),
-    )
-    prismaMock.gastoCompra.findMany.mockImplementation(soloEnero([]))
-    prismaMock.pagosalario.findMany.mockImplementation(soloEnero([]))
-    prismaMock.gastosDE.findMany.mockImplementation(soloEnero([]))
-
-    const { getBalanceFinanciero } = await import('@/features/contabilidad/api/exchange-handlers')
-    const request = new NextRequest('http://localhost/api/contabilidad/balance-financiero?year=2025')
-    const response = await getBalanceFinanciero(request, baseUser as any)
-    const body = await response.json()
-
-    const enero = body.estadoResultados.mensual.find((m: any) => m.month === 1)
-    expect(enero.ingresosVentas).toBe(0) // NO 1000 (que era el bug)
   })
 })

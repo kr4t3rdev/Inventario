@@ -56,6 +56,17 @@ describe('classifyReconciliation', () => {
       });
   });
 
+  it('mantiene el pago del costo de servicio fuera del resultado para evitar duplicarlo', () => {
+    expect(classifyReconciliation({ kind: 'SOLD_SERVICE_COST', status: 'POSTED' }))
+      .toMatchObject({
+        status: 'classified',
+        category: 'operating',
+        direction: 'outflow',
+        affectsOperatingResult: false,
+        affectsCashFlow: true,
+      });
+  });
+
   it.each([
     ['BANK_TRANSFER_IN', 'transfer', 'inflow', 1],
     ['BANK_TRANSFER_OUT', 'transfer', 'outflow', -1],

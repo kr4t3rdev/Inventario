@@ -1,5 +1,9 @@
 import { describe, expect, it } from "vitest";
-import { calcularCostoVenta, type VentaParaCosto } from "@/features/contabilidad/utils/venta-costo";
+import {
+  calcularCostoVenta,
+  calcularDetalleCostoVenta,
+  type VentaParaCosto,
+} from "@/features/contabilidad/utils/venta-costo";
 
 describe("calcularCostoVenta", () => {
   it("usa el precioUnitario histórico de las PurchaseAllocations FIFO cuando existen", () => {
@@ -146,5 +150,69 @@ describe("calcularCostoVenta", () => {
 
   it("devuelve 0 cuando el array de ventas está vacío", () => {
     expect(calcularCostoVenta([])).toBe(0);
+  });
+});
+
+describe('calcularDetalleCostoVenta', () => {
+  it('separa costo FIFO histórico y fallback estimado en una venta parcialmente cubierta', () => {
+    const venta: VentaParaCosto = {
+      ventaId: 'v1',
+      cantidad: 0,
+      producto: { precioCosto: 0 },
+      items: [{
+        id: 'vi1',
+        cantidad: 10,
+        producto: { precioCosto: 50 },
+        allocations: [{
+          id: 'a1',
+          cantidad: 7,
+          compraDocumentoItem: { precioUnitario: 20 },
+        }],
+      }],
+    };
+
+    expect(calcularDetalleCostoVenta(venta)).toEqual({
+      historical: 140,
+      estimated: 150,
+      overAllocatedCost: 0,
+    });
+  });
+
+  it('marca todo el costo legacy como estimado', () => {
+    const venta: VentaParaCosto = {
+      ventaId: 'legacy',
+      cantidad: 4,
+      producto: { precioCosto: 12 },
+      items: [],
+    };
+
+    expect(calcularDetalleCostoVenta(venta)).toEqual({
+      historical: 0,
+      estimated: 48,
+      overAllocatedCost: 0,
+    });
+  });
+
+  it('limita allocations inconsistentes a la cantidad vendida y expone el exceso', () => {
+    const venta: VentaParaCosto = {
+      ventaId: 'over-allocated',
+      cantidad: 0,
+      producto: { precioCosto: 0 },
+      items: [{
+        id: 'item-1',
+        cantidad: 5,
+        producto: { precioCosto: 0 },
+        allocations: [
+          { id: 'a1', cantidad: 4, compraDocumentoItem: { precioUnitario: 10 } },
+          { id: 'a2', cantidad: 3, compraDocumentoItem: { precioUnitario: 20 } },
+        ],
+      }],
+    };
+
+    expect(calcularDetalleCostoVenta(venta)).toEqual({
+      historical: 60,
+      estimated: 0,
+      overAllocatedCost: 40,
+    });
   });
 });

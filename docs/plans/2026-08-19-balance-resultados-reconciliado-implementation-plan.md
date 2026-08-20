@@ -260,31 +260,34 @@ realizará en las fases 6 y 9, junto con sus contratos de servicio y pruebas de 
 
 **Objetivo**: Reemplazar la utilidad defectuosa por indicadores con significado preciso.
 
+**Estado**: Completada. El reporte usa hasta nueve consultas de fuentes contables por ejecución,
+independientemente de la cantidad de meses, incluyendo saldos previos de documentos del período.
+
 ### RED
 
-- [ ] Ingresos solo desde reconciliaciones de venta y servicio contabilizadas.
-- [ ] Cobros de préstamos y deuda no se reconocen como ingreso operativo.
-- [ ] Pagos parciales se distribuyen sin superar el total del documento.
-- [ ] COGS FIFO se reconoce proporcionalmente al ingreso reconciliado.
-- [ ] Fallback de costo actual queda marcado como estimación, no como dato histórico.
-- [ ] Compra de inventario aparece en flujo de caja, no en gasto del resultado.
-- [ ] Costo de servicio `costo * cantidad` se reconoce una sola vez.
-- [ ] Salarios incluyen salario, bonificaciones y horas extra según el importe pagado.
-- [ ] Mermas se muestran como ajuste no monetario separado y no como dinero reconciliado.
-- [ ] Totales mensuales suman exactamente el anual, incluyendo COGS.
-- [ ] Enero y diciembre cubren correctamente límites y zonas horarias.
+- [x] Ingresos solo desde reconciliaciones de venta y servicio contabilizadas.
+- [x] Cobros de préstamos y deuda no se reconocen como ingreso operativo.
+- [x] Pagos parciales se distribuyen sin superar el total del documento.
+- [x] COGS FIFO se reconoce proporcionalmente al ingreso reconciliado.
+- [x] Fallback de costo actual queda marcado como estimación, no como dato histórico.
+- [x] Compra de inventario aparece en flujo de caja, no en gasto del resultado.
+- [x] Costo de servicio `costo * cantidad` se reconoce una sola vez.
+- [x] Salarios incluyen salario, bonificaciones y horas extra según el importe pagado.
+- [x] Mermas se muestran como ajuste no monetario separado y no como dinero reconciliado.
+- [x] Totales mensuales suman exactamente el anual, incluyendo COGS.
+- [x] Enero y diciembre cubren correctamente límites y zonas horarias.
 
 ### GREEN
 
-- [ ] Implementar `reconciled-result-calculator.ts` como función pura.
-- [ ] Consultar reconciliaciones por rango semiabierto en un número acotado de queries.
-- [ ] Calcular ingresos, COGS, margen bruto, gastos operativos, resultado reconciliado y flujo neto.
-- [ ] Exponer estimaciones e incidencias junto al importe afectado.
+- [x] Implementar `reconciled-result-calculator.ts` como función pura.
+- [x] Consultar reconciliaciones por rango semiabierto en un número acotado de queries.
+- [x] Calcular ingresos, COGS, margen bruto, gastos operativos, resultado reconciliado y flujo neto.
+- [x] Exponer estimaciones e incidencias junto al importe afectado.
 
 ### REFACTOR
 
-- [ ] Eliminar del handler la iteración de 12 meses con consultas por categoría.
-- [ ] Agrupar en memoria o base de datos después de una lectura acotada del período.
+- [x] Eliminar del handler la iteración de 12 meses con consultas por categoría.
+- [x] Agrupar en memoria o base de datos después de una lectura acotada del período.
 
 ### Salida
 

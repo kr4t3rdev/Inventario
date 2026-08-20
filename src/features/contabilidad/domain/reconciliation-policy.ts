@@ -120,7 +120,7 @@ export const RECONCILIATION_POLICY: Record<
     category: 'operating',
     direction: 'outflow',
     sign: -1,
-    affectsOperatingResult: true,
+    affectsOperatingResult: false,
   },
   INVENTORY_PURCHASE: {
     category: 'operating',
