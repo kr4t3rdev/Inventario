@@ -4,14 +4,6 @@ import type { AuthenticatedUser } from '@/lib/auth-middleware';
 import { requireTenant } from '@/lib/services/tenant-scope';
 import { Prisma } from '@/generated/prisma';
 
-function normalizeMontoToCup(monto: number, moneda: string, tasaCambio?: number): number {
-  if (moneda === 'CUP') return monto;
-  if (typeof tasaCambio === 'number' && Number.isFinite(tasaCambio) && tasaCambio > 0) {
-    return monto * tasaCambio;
-  }
-  return monto;
-}
-
 export function validateSaleReconciliationInput(input: {
   ventaId?: unknown;
   cuentaId?: unknown;

@@ -222,27 +222,31 @@ Resultado RED esperado: los tests fallan contra `getBalanceFinanciero` actual.
 
 **Objetivo**: Garantizar que cada total se expresa en una sola moneda conocida.
 
+**Estado**: Completada. La integración del dominio con todas las lecturas y escrituras legacy se
+realizará en las fases 6 y 9, junto con sus contratos de servicio y pruebas de paridad.
+
 ### RED
 
-- [ ] CUP sin tasa usa el importe original.
-- [ ] Moneda extranjera usa `montoConvertido` persistido y su tasa histórica.
-- [ ] Moneda extranjera sin conversión queda excluida y genera incidencia de cobertura.
-- [ ] Saldos bancarios en varias monedas se convierten por separado.
-- [ ] La tasa cero, negativa o futura se rechaza.
-- [ ] La misma reconciliación no puede convertirse dos veces.
+- [x] CUP sin tasa usa el importe original.
+- [x] Moneda extranjera usa `montoConvertido` persistido y su tasa histórica.
+- [x] Moneda extranjera sin conversión queda excluida y genera incidencia de cobertura.
+- [x] Saldos bancarios en varias monedas se convierten por separado.
+- [x] La tasa cero, negativa o futura se rechaza.
+- [x] La misma reconciliación no puede convertirse dos veces.
 
 ### GREEN
 
-- [ ] Centralizar `normalizeAccountingAmount`.
-- [ ] Corregir escrituras donde `montoConvertido` no representa moneda funcional.
-- [ ] Añadir diagnóstico histórico en modo dry-run.
-- [ ] Backfill solo cuando exista una tasa histórica determinista.
-- [ ] Mantener pendientes los registros que requieran decisión humana.
+- [x] Centralizar `normalizeAccountingAmount`.
+- [x] Proteger la escritura unificada de pagos de gastos contra conversiones incompletas.
+- [x] Añadir diagnóstico histórico en modo dry-run.
+- [x] Planificar backfill solo cuando exista una tasa histórica determinista.
+- [x] Mantener pendientes los registros que requieran decisión humana.
 
 ### REFACTOR
 
-- [ ] Sustituir multiplicaciones locales por el helper canónico.
-- [ ] Añadir metadatos `monedaFuncional`, `tasaAplicada` y `fechaTasa` al reporte.
+- [x] Sustituir el fallback inseguro del workflow de gastos por el helper canónico.
+- [x] Eliminar el helper duplicado no utilizado en el servicio de reconciliación.
+- [ ] Migrar las demás escrituras y añadir metadatos al contrato del reporte en las fases 6 y 9.
 
 ### Salida
 

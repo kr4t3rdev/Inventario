@@ -1,4 +1,5 @@
 import type { Prisma } from '@/generated/prisma'
+import { normalizeAccountingAmount } from '@/features/contabilidad/domain/accounting-amount'
 
 /**
  * @description Representa un error funcional del workflow de pago de gastos.
@@ -163,20 +164,39 @@ export function isGastoWorkflowError(error: unknown): error is GastoWorkflowErro
 }
 
 /**
- * @description Convierte monto de una moneda a CUP para reportes.
+ * @description Normaliza un monto a CUP y rechaza conversiones incompletas.
  * @param {number} monto - Monto original.
  * @param {string} moneda - Moneda origen.
  * @param {number | undefined} tasaCambio - Tasa opcional.
+ * @param {Date} fechaOperacion - Fecha en que se aplicó la tasa informada.
  * @returns {number} Monto normalizado en CUP.
  */
-function normalizeMontoToCup(monto: number, moneda: string, tasaCambio?: number): number {
-  if (moneda === 'CUP') {
-    return monto
+function normalizeMontoToCup(
+  monto: number,
+  moneda: string,
+  tasaCambio: number | undefined,
+  fechaOperacion: Date,
+): number {
+  const hasValidRate =
+    typeof tasaCambio === 'number' && Number.isFinite(tasaCambio) && tasaCambio > 0
+  const result = normalizeAccountingAmount({
+    amount: monto,
+    currency: moneda,
+    functionalCurrency: 'CUP',
+    convertedAmount: hasValidRate ? monto * tasaCambio : null,
+    exchangeRate: tasaCambio,
+    operationAt: fechaOperacion,
+    rateEffectiveAt: hasValidRate ? fechaOperacion : null,
+  })
+
+  if (result.status === 'unresolved') {
+    throw createGastoWorkflowError(
+      400,
+      'CONVERSION_REQUERIDA',
+      `No se puede expresar el pago en CUP: ${result.issue}`,
+    )
   }
-  if (typeof tasaCambio === 'number' && Number.isFinite(tasaCambio) && tasaCambio > 0) {
-    return monto * tasaCambio
-  }
-  return monto
+  return result.amount
 }
 
 /**
@@ -336,6 +356,13 @@ export async function applyPagoGastoWorkflow(
   if (!Number.isFinite(montoTotal) || montoTotal <= 0) {
     throw createGastoWorkflowError(400, 'MONTO_INVALIDO', 'El monto debe ser mayor que cero')
   }
+  const fechaOperacion = params.fechaPago ? new Date(params.fechaPago) : new Date()
+  const montoTotalConvertido = normalizeMontoToCup(
+    montoTotal,
+    params.moneda,
+    params.tasaCambio,
+    fechaOperacion,
+  )
 
   // Every source reference is a non-composite foreign key. Lock and validate
   // tenant ownership before touching bank/CxP state to close deletion races.
@@ -506,7 +533,12 @@ export async function applyPagoGastoWorkflow(
   const reconciliaciones: ApplyPagoGastoWorkflowResult['reconciliaciones'] = []
   for (const pago of distribucion) {
     const montoPago = Number(pago.monto)
-    const montoConvertido = normalizeMontoToCup(montoPago, params.moneda, params.tasaCambio)
+    const montoConvertido = normalizeMontoToCup(
+      montoPago,
+      params.moneda,
+      params.tasaCambio,
+      fechaOperacion,
+    )
 
     const reconciliacion = await tx.reconciliacionGasto.create({
       data: {
@@ -577,7 +609,7 @@ export async function applyPagoGastoWorkflow(
         monedaId: params.moneda,
         montoOriginal: montoTotal,
         tasaCambio: params.tasaCambio,
-        montoConvertido: normalizeMontoToCup(montoTotal, params.moneda, params.tasaCambio)
+        montoConvertido: montoTotalConvertido
       }
     })
   }

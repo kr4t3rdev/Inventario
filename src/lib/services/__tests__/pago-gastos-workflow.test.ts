@@ -115,6 +115,91 @@ describe('pago-gastos-workflow', () => {
     expect(tx.cuentaPorPagar.update).not.toHaveBeenCalled()
   })
 
+  it('rechaza moneda extranjera sin una conversión válida a CUP', async () => {
+    const tx = createTxMock()
+    tx.tipoPago.findFirst.mockResolvedValue({
+      tipoId: 'tp-1',
+      isActive: true,
+      cuentaDefecto: 'cb-usd'
+    })
+    tx.cuentaBancaria.findFirst.mockResolvedValue({ cuentaId: 'cb-usd', isActive: true })
+    tx.reconciliacionGasto.findFirst.mockResolvedValue(null)
+    tx.cuentaBancaria.findMany.mockResolvedValue([
+      { cuentaId: 'cb-usd', moneda: 'USD', saldo: 1000, isActive: true }
+    ])
+    tx.reconciliacionGasto.create.mockResolvedValue({
+      reconciliacionId: 'rec-usd',
+      cuentaId: 'cb-usd',
+      monto: 100,
+      moneda: 'USD',
+      montoConvertido: 100,
+      descripcion: 'Pago USD'
+    })
+    tx.cuentaBancaria.updateMany.mockResolvedValue({ count: 1 })
+    tx.gastosDE.update.mockResolvedValue({})
+
+    await expect(applyPagoGastoWorkflow(tx as any, {
+      tipoGasto: 'gastoDE',
+      referenciaId: 'gde-usd',
+      gastosDEId: 'gde-usd',
+      reconciliadoPor: 'user-1',
+      tenantId: 'tenant-1',
+      descripcion: 'Pago USD',
+      monto: 100,
+      moneda: 'USD'
+    })).rejects.toMatchObject({ code: 'CONVERSION_REQUERIDA', status: 400 })
+
+    expect(tx.reconciliacionGasto.create).not.toHaveBeenCalled()
+  })
+
+  it('persiste en CUP el importe extranjero convertido una sola vez', async () => {
+    const tx = createTxMock()
+    tx.tipoPago.findFirst.mockResolvedValue({
+      tipoId: 'tp-1',
+      isActive: true,
+      cuentaDefecto: 'cb-usd'
+    })
+    tx.cuentaBancaria.findFirst.mockResolvedValue({ cuentaId: 'cb-usd', isActive: true })
+    tx.reconciliacionGasto.findFirst.mockResolvedValue(null)
+    tx.cuentaBancaria.findMany.mockResolvedValue([
+      { cuentaId: 'cb-usd', moneda: 'USD', saldo: 1000, isActive: true }
+    ])
+    tx.reconciliacionGasto.create.mockResolvedValue({
+      reconciliacionId: 'rec-usd',
+      cuentaId: 'cb-usd',
+      monto: 100,
+      moneda: 'USD',
+      montoConvertido: 2450,
+      descripcion: 'Pago USD'
+    })
+    tx.cuentaBancaria.updateMany.mockResolvedValue({ count: 1 })
+    tx.gastosDE.update.mockResolvedValue({})
+
+    await applyPagoGastoWorkflow(tx as any, {
+      tipoGasto: 'gastoDE',
+      referenciaId: 'gde-usd',
+      gastosDEId: 'gde-usd',
+      reconciliadoPor: 'user-1',
+      tenantId: 'tenant-1',
+      descripcion: 'Pago USD',
+      monto: 100,
+      moneda: 'USD',
+      tasaCambio: 24.5,
+      fechaPago: '2026-08-19T12:00:00.000Z'
+    })
+
+    expect(tx.reconciliacionGasto.create).toHaveBeenCalledWith(
+      expect.objectContaining({
+        data: expect.objectContaining({
+          monto: 100,
+          moneda: 'USD',
+          tasaCambio: 24.5,
+          montoConvertido: 2450
+        })
+      })
+    )
+  })
+
   it('para CxP parcial crea reconciliacion PARCIAL y no marca gasto DE como pagado', async () => {
     const tx = createTxMock()
     tx.tipoPago.findFirst.mockResolvedValue({
