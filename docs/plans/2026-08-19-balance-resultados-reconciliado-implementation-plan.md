@@ -299,28 +299,31 @@ independientemente de la cantidad de meses, incluyendo saldos previos de documen
 
 **Objetivo**: Construir un balance actual completo, consistente y explicable.
 
+**Estado**: Completada. El balance actual usa siete consultas tenant-scoped, costos FIFO
+remanentes, estados activos compartidos y cobertura explícita sin forzar la ecuación.
+
 ### RED
 
-- [ ] Caja y bancos respetan tenant, moneda funcional y cuentas con saldo.
-- [ ] Inventario usa costos históricos remanentes y reporta fallbacks.
-- [ ] CxC incluye solo estados activos y limita saldos negativos.
-- [ ] CxP excluye anuladas/eliminadas e incluye saldos pendientes.
-- [ ] Deuda externa usa saldo pendiente y no mezcla monedas.
-- [ ] Capital respeta fecha de corte y conversión histórica.
-- [ ] Resultados acumulados proceden de cierres aprobados.
-- [ ] La ecuación devuelve estado `CUADRADO`, `DIFERENCIA` o `INCOMPLETO`.
+- [x] Caja y bancos respetan tenant, moneda funcional y cuentas con saldo.
+- [x] Inventario usa costos históricos remanentes y reporta fallbacks.
+- [x] CxC incluye solo estados activos y limita saldos negativos.
+- [x] CxP excluye anuladas/eliminadas e incluye saldos pendientes.
+- [x] Deuda externa usa saldo pendiente y no mezcla monedas.
+- [x] Capital respeta fecha de corte y conversión histórica.
+- [x] Resultados acumulados proceden de cierres aprobados.
+- [x] La ecuación devuelve estado `CUADRADO`, `DIFERENCIA` o `INCOMPLETO`.
 
 ### GREEN
 
-- [ ] Implementar `balance-calculator.ts`.
-- [ ] Incorporar CxP y resultados acumulados.
-- [ ] Sustituir `capital + utilidad anual` como patrimonio total implícito.
-- [ ] Devolver diferencia real y partidas no cubiertas.
+- [x] Implementar `balance-calculator.ts`.
+- [x] Incorporar CxP y resultados acumulados.
+- [x] Sustituir `capital + utilidad anual` como patrimonio total implícito.
+- [x] Devolver diferencia real y partidas no cubiertas.
 
 ### REFACTOR
 
-- [ ] Compartir filtros de estados activos entre servicios de CxC/CxP y reportes.
-- [ ] Evitar revalorizar inventario histórico con el precio actual sin advertencia.
+- [x] Compartir filtros de estados activos entre servicios de CxC/CxP y reportes.
+- [x] Evitar revalorizar inventario histórico con el precio actual sin advertencia.
 
 ### Salida
 

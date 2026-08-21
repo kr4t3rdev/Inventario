@@ -3,6 +3,10 @@ import {
   getCuentasPorCobrarSchema,
   getCuentasPorPagarSchema,
 } from '@/features/contabilidad/schemas-cuentas';
+import {
+  ACTIVE_PAYABLE_STATES,
+  ACTIVE_RECEIVABLE_STATES,
+} from '@/features/contabilidad/domain/balance-calculator';
 
 const CXC_INCLUDE = {
   cliente: { select: { clienteId: true, nombre: true } },
@@ -371,7 +375,7 @@ export const AccountingAccountsService = {
     const ahora = new Date();
 
     const pendientesAgg = await prisma.cuentaPorCobrar.aggregate({
-      where: { tenantId: input.tenantId, estado: { in: ['PENDIENTE', 'PARCIAL'] } },
+      where: { tenantId: input.tenantId, estado: { in: [...ACTIVE_RECEIVABLE_STATES] } },
       _sum: { montoDeuda: true },
     });
 
@@ -379,12 +383,15 @@ export const AccountingAccountsService = {
       prisma.cuentaPorCobrar.count({
         where: {
           tenantId: input.tenantId,
-          estado: { in: ['PENDIENTE', 'PARCIAL'] },
+          estado: { in: [...ACTIVE_RECEIVABLE_STATES] },
           fechaVencimiento: { lt: ahora, not: null },
         },
       }),
       prisma.cuentaPorCobrar.count({
-        where: { tenantId: input.tenantId, estado: { in: ['PENDIENTE', 'PARCIAL'] } },
+        where: {
+          tenantId: input.tenantId,
+          estado: { in: [...ACTIVE_RECEIVABLE_STATES] },
+        },
       }),
       prisma.cuentaPorCobrar.count({ where: { tenantId: input.tenantId } }),
     ]);
@@ -443,7 +450,9 @@ export const AccountingAccountsService = {
         where,
         _sum: { montoDeuda: true, montoPagado: true, saldoPendiente: true },
       }),
-      prisma.cuentaPorPagar.count({ where: { ...where, estado: 'PENDIENTE' } }),
+      prisma.cuentaPorPagar.count({
+        where: { ...where, estado: { in: [...ACTIVE_PAYABLE_STATES] } },
+      }),
       prisma.cuentaPorPagar.count({ where: { ...where, estado: 'PAGADA' } }),
     ]);
 

@@ -11,6 +11,7 @@ import {
   getReconciledResultForYear,
   presentReconciledPeriod,
 } from '@/features/contabilidad/services/reconciled-result-service';
+import { getCurrentBalance } from '@/features/contabilidad/services/current-balance-service';
 
 const exchangeReadService = new ExchangeRateReadService(exchangeRateProvider);
 
@@ -187,52 +188,14 @@ export async function getBalanceFinanciero(request: NextRequest, user: Authentic
       )
     }
 
-    const tenantWhere = { tenantId }
-
-    const cuentasBancarias = await prisma.cuentaBancaria.findMany({
-      where: { ...tenantWhere, isActive: true },
-      select: { nombreBanco: true, saldo: true, moneda: true },
-    })
-    const totalEfectivo = cuentasBancarias.reduce((acc: number, c: any) => acc + c.saldo, 0)
-    const stockUbicaciones = await prisma.stockUbicacion.findMany({
-      where: tenantWhere,
-      select: {
-        cantidad: true,
-        producto: {
-          select: {
-            precioCosto: true,
-          },
-        },
-      },
-    })
-    const totalInventario = stockUbicaciones.reduce(
-      (acc: number, registro: any) =>
-        acc + Number(registro.cantidad || 0) * Number(registro.producto?.precioCosto || 0),
-      0,
-    )
-    const cuentasPorCobrar = await prisma.cuentaPorCobrar.findMany({
-      where: tenantWhere,
-      select: { montoDeuda: true, montoPagado: true },
-    })
-    const totalCuentasPorCobrar = cuentasPorCobrar.reduce((acc: number, c: any) => acc + (Number(c.montoDeuda) - Number(c.montoPagado)), 0)
-    const deudasExternas = await prisma.inyeccionCapital.findMany({
-      where: {
-        cuentaBancaria: { tenantId },
-        tipo: "DEUDA_EXTERNA",
-      },
-      select: { saldoPendiente: true, montoTotalDeuda: true },
-    })
-    const totalPasivos = deudasExternas.reduce((acc: number, d: any) => acc + (d.saldoPendiente ? Number(d.saldoPendiente) : Number(d.montoTotalDeuda)), 0)
-    const capitalSocial = await prisma.inyeccionCapital.findMany({
-      where: {
-        cuentaBancaria: { tenantId },
-        tipo: "CAPITAL_SOCIAL",
-      },
-      select: { montoRecibido: true },
-    })
-    const totalCapital = capitalSocial.reduce((acc: number, c: any) => acc + Number(c.montoRecibido), 0)
     const result = await getReconciledResultForYear({ tenantId, year })
-    return NextResponse.json({ balance: { activos: { efectivo: totalEfectivo, inventario: totalInventario, cuentasPorCobrar: totalCuentasPorCobrar, total: totalEfectivo + totalInventario + totalCuentasPorCobrar }, pasivos: { deudaExterna: totalPasivos, total: totalPasivos }, patrimonio: { capitalSocial: totalCapital, utilidadEjercicio: result.annual.reconciledResult, total: totalCapital + result.annual.reconciledResult } }, estadoResultados: { mensual: result.monthly.map(presentReconciledPeriod), anual: presentReconciledPeriod(result.annual), incidencias: result.incidents, estimaciones: result.estimates, monedaFuncional: result.functionalCurrency, zonaHoraria: result.timeZone } })
+    const currentBalance = await getCurrentBalance({
+      tenantId,
+      asOf: new Date(),
+      currentResult: result.annual.reconciledResult,
+      currentResultYear: year,
+    })
+    return NextResponse.json({ balance: { activos: { efectivo: currentBalance.assets.cashAndBanks, inventario: currentBalance.assets.inventory.total, inventarioDetalle: currentBalance.assets.inventory, cuentasPorCobrar: currentBalance.assets.receivables, total: currentBalance.assets.total }, pasivos: { deudaExterna: currentBalance.liabilities.externalDebt, cuentasPorPagar: currentBalance.liabilities.payables, total: currentBalance.liabilities.total }, patrimonio: { capitalSocial: currentBalance.equity.capital, resultadosAcumulados: currentBalance.equity.retainedEarnings, resultadoPeriodo: currentBalance.equity.currentResult, utilidadEjercicio: currentBalance.equity.currentResult, total: currentBalance.equity.total }, ecuacion: currentBalance.equation, cobertura: currentBalance.coverage, estimaciones: currentBalance.estimates, incidencias: currentBalance.incidents, monedaFuncional: currentBalance.functionalCurrency, fechaCorte: currentBalance.asOf }, estadoResultados: { mensual: result.monthly.map(presentReconciledPeriod), anual: presentReconciledPeriod(result.annual), incidencias: result.incidents, estimaciones: result.estimates, monedaFuncional: result.functionalCurrency, zonaHoraria: result.timeZone } })
   } catch (error) {
     console.error("Error al obtener balance financiero:", error)
     return NextResponse.json({ error: "Error interno del servidor" }, { status: 500 })

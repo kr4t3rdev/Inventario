@@ -19,7 +19,10 @@ const prismaMock = vi.hoisted(() => ({
   cuentaBancaria: { findMany: vi.fn() },
   producto: { findMany: vi.fn() },
   stockUbicacion: { findMany: vi.fn() },
+  compraDocumentoItem: { findMany: vi.fn() },
   cuentaPorCobrar: { findMany: vi.fn() },
+  cuentaPorPagar: { findMany: vi.fn() },
+  cierreContable: { findMany: vi.fn() },
   inyeccionCapital: { findMany: vi.fn() },
   venta: { findMany: vi.fn() },
   ventaServicios: { findMany: vi.fn() },
@@ -166,7 +169,10 @@ describe('getBalanceFinanciero', () => {
     prismaMock.cuentaBancaria.findMany.mockImplementation(emptyQuery)
     prismaMock.producto.findMany.mockImplementation(emptyQuery)
     prismaMock.stockUbicacion.findMany.mockImplementation(emptyQuery)
+    prismaMock.compraDocumentoItem.findMany.mockImplementation(emptyQuery)
     prismaMock.cuentaPorCobrar.findMany.mockImplementation(emptyQuery)
+    prismaMock.cuentaPorPagar.findMany.mockImplementation(emptyQuery)
+    prismaMock.cierreContable.findMany.mockImplementation(emptyQuery)
     prismaMock.inyeccionCapital.findMany.mockImplementation(emptyQuery)
     prismaMock.venta.findMany.mockImplementation(emptyQuery)
     prismaMock.ventaServicios.findMany.mockImplementation(emptyQuery)
@@ -458,5 +464,34 @@ describe('getBalanceFinanciero', () => {
     const body = await response.json()
 
     expect(body.balance.activos.inventario).toBe(50)
+  })
+
+  it('expone CxP, resultados acumulados y la ecuación del balance', async () => {
+    prismaMock.cuentaBancaria.findMany.mockResolvedValue([{
+      cuentaId: 'bank-1', saldo: 100, moneda: 'CUP',
+    }])
+    prismaMock.cuentaPorPagar.findMany.mockResolvedValue([{
+      cuentaPorPagarId: 'ap-1', saldoPendiente: 20, moneda: 'CUP',
+      estado: 'PENDIENTE', deletedAt: null,
+    }])
+    prismaMock.inyeccionCapital.findMany.mockResolvedValue([{
+      id: 'capital-1', tipo: 'CAPITAL_SOCIAL', montoRecibido: 80, moneda: 'CUP',
+      fechaRegistro: new Date('2025-01-01T00:00:00Z'), estado: null, saldoPendiente: null,
+    }])
+
+    const { getBalanceFinanciero } = await import('@/features/contabilidad/api/exchange-handlers')
+    const request = new NextRequest('http://localhost/api/contabilidad/balance-financiero?year=2025')
+    const response = await getBalanceFinanciero(request, baseUser as any)
+    const body = await response.json()
+
+    expect(body.balance.pasivos.cuentasPorPagar).toBe(20)
+    expect(body.balance.patrimonio.resultadosAcumulados).toBe(0)
+    expect(body.balance.ecuacion).toEqual({
+      assets: 100,
+      liabilitiesAndEquity: 100,
+      difference: 0,
+      status: 'CUADRADO',
+    })
+    expect(body.balance.cobertura.complete).toBe(true)
   })
 })
