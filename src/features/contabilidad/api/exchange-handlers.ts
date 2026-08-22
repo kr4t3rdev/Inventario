@@ -8,15 +8,13 @@ import { ExchangeRateReadService } from '@/features/contabilidad/services/exchan
 import { exchangeRateProvider } from '@/features/contabilidad/services/exchange-rate-provider';
 import { ExchangeServiceError } from '@/features/contabilidad/services/exchange-types';
 import {
-  getReconciledResultForYear,
-  presentReconciledPeriod,
-} from '@/features/contabilidad/services/reconciled-result-service';
-import { getCurrentBalance } from '@/features/contabilidad/services/current-balance-service';
-import {
   listAvailableFinancialPeriods,
-  resolveFinancialReport,
 } from '@/features/contabilidad/services/historical-financial-report-service';
-import { getAccountingYear } from '@/lib/services/fecha-operacion-registry';
+import {
+  BalanceResultsReportError,
+  balanceResultsReportQuerySchema,
+  getBalanceResultsReport,
+} from '@/features/contabilidad/services/balance-results-report-service';
 
 const exchangeReadService = new ExchangeRateReadService(exchangeRateProvider);
 
@@ -183,94 +181,50 @@ export async function getBalanceFinanciero(request: NextRequest, user: Authentic
       return NextResponse.json({ error: 'Prohibido' }, { status: 403 })
     }
 
-    const year = parseInt(new URL(request.url).searchParams.get("year") || "") || getAccountingYear(new Date())
-    const tenantId = user.tenantId
-
-    if (!tenantId) {
-      return NextResponse.json(
-        { error: 'Selecciona una empresa para consultar el reporte' },
-        { status: 403 },
-      )
-    }
-
-    const report = await resolveFinancialReport({
-      tenantId,
-      year,
-      now: new Date(),
-      calculateLive: async (cutoffAt) => {
-        const result = await getReconciledResultForYear({ tenantId, year, cutoffAt })
-        const balance = await getCurrentBalance({
-          tenantId,
-          asOf: cutoffAt,
-          currentResult: result.annual.reconciledResult,
-          currentResultYear: year,
-        })
-        return { balance, result }
-      },
+    const searchParams = new URL(request.url).searchParams
+    const query = balanceResultsReportQuerySchema.safeParse({
+      year: searchParams.get('year') ?? undefined,
+      cutoffAt: searchParams.get('cutoffAt') ?? undefined,
+      moneda: searchParams.get('moneda') ?? undefined,
     })
-
-    if (report.status === 'UNAVAILABLE') {
+    if (!query.success) {
       return NextResponse.json({
-        error: 'No existe evidencia histórica suficiente para consultar este período',
-        code: report.reason,
-        periodoId: report.periodId,
-        snapshotVersion: report.snapshotVersion ?? null,
-        provisional: false,
-      }, { status: 409 })
+        error: 'Datos de entrada inválidos',
+        code: 'VALIDATION_ERROR',
+        details: query.error.flatten().fieldErrors,
+      }, { status: 400 })
     }
 
-    const currentBalance = report.balance
-    const result = report.result as Awaited<ReturnType<typeof getReconciledResultForYear>>
-    return NextResponse.json({
-      balance: {
-        activos: {
-          efectivo: currentBalance.assets.cashAndBanks,
-          inventario: currentBalance.assets.inventory.total,
-          inventarioDetalle: currentBalance.assets.inventory,
-          cuentasPorCobrar: currentBalance.assets.receivables,
-          total: currentBalance.assets.total,
-        },
-        pasivos: {
-          deudaExterna: currentBalance.liabilities.externalDebt,
-          cuentasPorPagar: currentBalance.liabilities.payables,
-          total: currentBalance.liabilities.total,
-        },
-        patrimonio: {
-          capitalSocial: currentBalance.equity.capital,
-          resultadosAcumulados: currentBalance.equity.retainedEarnings,
-          resultadoPeriodo: currentBalance.equity.currentResult,
-          utilidadEjercicio: currentBalance.equity.currentResult,
-          total: currentBalance.equity.total,
-        },
-        ecuacion: currentBalance.equation,
-        cobertura: currentBalance.coverage,
-        estimaciones: currentBalance.estimates,
-        incidencias: currentBalance.incidents,
-        monedaFuncional: currentBalance.functionalCurrency,
-        fechaCorte: report.cutoffAt,
-        resultadoHasta: report.origin === 'SNAPSHOT' ? report.resultThrough : null,
-      },
-      estadoResultados: {
-        mensual: result.monthly.map(presentReconciledPeriod),
-        anual: presentReconciledPeriod(result.annual),
-        incidencias: result.incidents,
-        estimaciones: result.estimates,
-        monedaFuncional: result.functionalCurrency,
-        zonaHoraria: result.timeZone,
-      },
-      reporte: {
-        origen: report.origin,
-        provisional: report.provisional,
-        fechaCorte: report.cutoffAt,
-        resultadoHasta: report.origin === 'SNAPSHOT' ? report.resultThrough : null,
-        periodoId: report.periodId,
-        integridad: report.origin === 'SNAPSHOT' ? report.integrity : null,
-        snapshotVersion: report.origin === 'SNAPSHOT' ? report.snapshotVersion : null,
-      },
+    const report = await getBalanceResultsReport({
+      tenantId: user.tenantId ?? '',
+      ...query.data,
     })
+    return NextResponse.json(report)
   } catch (error) {
-    console.error("Error al obtener balance financiero:", error)
-    return NextResponse.json({ error: "Error interno del servidor" }, { status: 500 })
+    if (error instanceof BalanceResultsReportError) {
+      if (error.code === 'TENANT_REQUIRED') {
+        return NextResponse.json({ error: error.message }, { status: error.status })
+      }
+      if (error.status === 409) {
+        return NextResponse.json({
+          error: error.message,
+          code: error.code,
+          periodoId: error.periodId,
+          snapshotVersion: error.snapshotVersion ?? null,
+          provisional: false,
+        }, { status: error.status })
+      }
+      return NextResponse.json({
+        error: error.message,
+        code: error.code,
+      }, { status: error.status })
+    }
+
+    console.error('Error al obtener balance financiero:', {
+      tenantId: user.tenantId,
+      error,
+    })
+    return NextResponse.json({ error: 'Error interno del servidor' }, { status: 500 })
   }
 }
 

@@ -369,28 +369,28 @@ a una fecha pasada; una reconstrucción temporal completa queda fuera de esta fa
 
 ### RED
 
-- [ ] Tests de servicio con tenant obligatorio, permisos y empresa inexistente.
-- [ ] Tests de contrato para éxito, cobertura parcial y error de validación.
-- [ ] Test de API legacy que comprueba paridad con el servicio.
-- [ ] Test de Server Action con `withAction` y `requireTenant`.
-- [ ] Test que limita el número de consultas principales.
+- [x] Tests de servicio con tenant obligatorio, permisos y empresa inexistente.
+- [x] Tests de contrato para éxito, cobertura parcial y error de validación.
+- [x] Test de API legacy que comprueba paridad con el servicio.
+- [x] Test de Server Action con `withAction` y `requireTenant`.
+- [x] Test que limita el número de consultas principales.
 
 ### GREEN
 
-- [ ] Implementar `balance-results-report-service.ts`.
-- [ ] Implementar `actions-balance-results.ts` para la web.
-- [ ] Convertir `getBalanceFinanciero` en adaptador del servicio.
-- [ ] Validar período, fecha de corte y moneda con Zod.
-- [ ] Añadir logs contextuales sin importes sensibles innecesarios.
+- [x] Implementar `balance-results-report-service.ts`.
+- [x] Implementar `actions-balance-results.ts` para la web.
+- [x] Convertir `getBalanceFinanciero` en adaptador del servicio.
+- [x] Validar período, fecha de corte y moneda con Zod.
+- [x] Añadir logs contextuales sin importes sensibles innecesarios.
 
 ### REFACTOR
 
-- [ ] Retirar fórmulas antiguas del handler.
+- [x] Retirar fórmulas antiguas del handler.
 - [ ] Cargar balance y resultados por separado cuando la vista no necesita ambos.
 
 ### Salida
 
-- Una sola implementación de fórmulas para web, API, exportaciones y futuros clientes.
+- [x] Una sola implementación de fórmulas para web, API, exportaciones y futuros clientes.
 
 ## Fase 7: Primera Pantalla Y Correcciones Impeccable
 
@@ -398,38 +398,38 @@ a una fecha pasada; una reconstrucción temporal completa queda fuera de esta fa
 
 ### RED
 
-- [ ] El encabezado muestra título consistente, fecha de corte y moneda funcional.
-- [ ] El filtro tiene etiqueta accesible y cambia según la pestaña.
-- [ ] La cobertura de reconciliación siempre es visible.
-- [ ] La ecuación muestra diferencia y estado textual, no solo color.
-- [ ] Los ceros sin fuentes generan estado vacío, no un balance válido aparente.
-- [ ] Un error al cambiar período no presenta datos anteriores bajo el período nuevo.
-- [ ] Carga y actualización usan `role=status` o región `aria-live` adecuada.
-- [ ] Errores usan alerta accesible y reintento no destructivo.
-- [ ] La tabla tiene caption, encabezados semánticos y cifras tabulares.
-- [ ] La versión móvil no obliga a interpretar una tabla horizontal extensa.
-- [ ] Las acciones tienen targets táctiles de al menos 44 x 44 px.
-- [ ] `prefers-reduced-motion` conserva jerarquía y feedback.
+- [x] El encabezado muestra título consistente, fecha de corte y moneda funcional.
+- [x] El filtro tiene etiqueta accesible y cambia según la pestaña.
+- [x] La cobertura de reconciliación siempre es visible.
+- [x] La ecuación muestra diferencia y estado textual, no solo color.
+- [x] Los ceros sin fuentes generan estado vacío, no un balance válido aparente.
+- [x] Un error al cambiar período no presenta datos anteriores bajo el período nuevo.
+- [x] Carga y actualización usan `role=status` o región `aria-live` adecuada.
+- [x] Errores usan alerta accesible y reintento no destructivo.
+- [x] La tabla tiene caption, encabezados semánticos y cifras tabulares.
+- [x] La versión móvil no obliga a interpretar una tabla horizontal extensa.
+- [x] Las acciones tienen targets táctiles de al menos 44 x 44 px.
+- [x] `prefers-reduced-motion` conserva jerarquía y feedback.
 
 ### GREEN
 
-- [ ] Eliminar breadcrumb y botón Volver duplicados cuando el shell ya navega.
-- [ ] Unificar el nombre en `Balance general y resultados`.
-- [ ] Mostrar `Fecha de corte`, `Moneda funcional`, `Actualizado` y estado del período.
-- [ ] Añadir banda de cobertura y acceso `Revisar pendientes`.
-- [ ] Añadir bloque principal `Activos = Pasivos + Patrimonio`.
-- [ ] Añadir tarjetas de efectivo, inventario, CxC, CxP y patrimonio con procedencia.
-- [ ] Añadir desglose con fuente, estado de calidad y saldo.
-- [ ] Añadir panel de metodología y alertas accionables.
-- [ ] Derivar períodos disponibles desde datos reales, sin años hardcodeados.
-- [ ] Preservar datos anteriores únicamente con etiqueta explícita de obsolescencia.
+- [x] Eliminar breadcrumb y botón Volver duplicados cuando el shell ya navega.
+- [x] Unificar el nombre en `Balance general y resultados`.
+- [x] Mostrar `Fecha de corte`, `Moneda funcional`, `Actualizado` y estado del período.
+- [x] Añadir banda de cobertura y acceso `Revisar pendientes`.
+- [x] Añadir bloque principal `Activos = Pasivos + Patrimonio`.
+- [x] Añadir tarjetas de efectivo, inventario, CxC, CxP y patrimonio con procedencia.
+- [x] Añadir desglose con fuente, estado de calidad y saldo.
+- [x] Añadir panel de metodología y alertas accionables.
+- [x] Derivar períodos disponibles desde datos reales, sin años hardcodeados.
+- [x] Preservar datos anteriores únicamente con etiqueta explícita de obsolescencia.
 
 ### REFACTOR
 
-- [ ] Dividir el componente actual de más de 400 líneas en componentes cohesivos.
-- [ ] Sustituir colores hardcodeados por tokens semánticos y `--chart-*`.
-- [ ] Usar encabezados `h1`, `h2` y `h3` con jerarquía real.
-- [ ] Mantener copy en español neutro internacional.
+- [x] Dividir el componente actual de más de 400 líneas en componentes cohesivos.
+- [x] Sustituir colores hardcodeados por tokens semánticos y `--chart-*`.
+- [x] Usar encabezados `h1`, `h2` y `h3` con jerarquía real.
+- [x] Mantener copy en español neutro internacional.
 
 ### Verificación Impeccable
 
@@ -437,7 +437,7 @@ a una fecha pasada; una reconstrucción temporal completa queda fuera de esta fa
 - [ ] Ejecutar una inspección conjunta desktop y mobile al terminar la edición.
 - [ ] Corregir todos los defectos observados en un único lote.
 - [ ] Ejecutar una sola ronda final de confirmación visual.
-- [ ] Ejecutar el detector una vez sobre los archivos modificados:
+- [x] Ejecutar el detector una vez sobre los archivos modificados:
 
 ```bash
 node /Users/arturo/.agents/skills/impeccable/scripts/detect.mjs --json \
@@ -455,26 +455,28 @@ node /Users/arturo/.agents/skills/impeccable/scripts/detect.mjs --json \
 
 **Objetivo**: Hacer reconstruible y comparable el resultado reconciliado.
 
+**Estado**: Completada. El estado de resultados presenta tabla reconstruible con COGS, gastos operativos y compras separados, gráfico de barras + línea con referencia en cero, carga bajo demanda y moneda funcional visible.
+
 ### RED
 
-- [ ] La tabla permite reconstruir el resultado de cada mes.
-- [ ] COGS, gastos operativos y compras de caja se presentan separados.
-- [ ] Valores negativos tienen texto y posición comprensibles sin depender del color.
-- [ ] La gráfica tiene alternativa textual y tabla equivalente.
-- [ ] El eje y tooltip indican moneda funcional.
-- [ ] La gráfica no se carga antes de activar la pestaña.
+- [x] La tabla permite reconstruir el resultado de cada mes.
+- [x] COGS, gastos operativos y compras de caja se presentan separados.
+- [x] Valores negativos tienen texto y posición comprensibles sin depender del color.
+- [x] La gráfica tiene alternativa textual y tabla equivalente.
+- [x] El eje y tooltip indican moneda funcional.
+- [x] La gráfica no se carga antes de activar la pestaña.
 
 ### GREEN
 
-- [ ] Cambiar a barras de ingresos/gastos y línea de resultado.
-- [ ] Destacar la línea cero y meses con pérdida.
-- [ ] Cargar Recharts y datos mensuales bajo demanda.
+- [x] Cambiar a barras de ingresos/gastos y línea de resultado.
+- [x] Destacar la línea cero y meses con pérdida.
+- [x] Cargar Recharts y datos mensuales bajo demanda.
 - [ ] Añadir comparación contra período anterior cuando exista snapshot comparable.
 
 ### REFACTOR
 
-- [ ] Reutilizar tokens y formatters financieros compartidos.
-- [ ] Evitar estilos inline dependientes del tema.
+- [x] Reutilizar tokens y formatters financieros compartidos.
+- [x] Evitar estilos inline dependientes del tema.
 
 ### Salida
 

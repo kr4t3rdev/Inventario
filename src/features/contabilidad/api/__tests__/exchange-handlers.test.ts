@@ -302,6 +302,20 @@ describe('getBalanceFinanciero', () => {
     expect(prismaMock.cuentaBancaria.findMany).not.toHaveBeenCalled()
   })
 
+  it('valida período y fecha de corte antes de consultar el servicio', async () => {
+    const { getBalanceFinanciero } = await import('@/features/contabilidad/api/exchange-handlers')
+    const request = new NextRequest(
+      'http://localhost/api/contabilidad/balance-financiero?year=no-valido&cutoffAt=no-valido',
+    )
+
+    const response = await getBalanceFinanciero(request, baseUser as any)
+    const body = await response.json()
+
+    expect(response.status).toBe(400)
+    expect(body).toMatchObject({ code: 'VALIDATION_ERROR' })
+    expect(historicalReportMock.resolveFinancialReport).not.toHaveBeenCalled()
+  })
+
   it('consulta reconciliaciones una vez por fuente con un rango anual semiabierto', async () => {
     const { getBalanceFinanciero } = await import('@/features/contabilidad/api/exchange-handlers')
     const request = new NextRequest('http://localhost/api/contabilidad/balance-financiero?year=2025')
