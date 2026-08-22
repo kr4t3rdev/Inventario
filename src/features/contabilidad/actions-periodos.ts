@@ -26,8 +26,13 @@ import {
 	CategoriaPeriodo,
 	ModoContable,
 } from "@/lib/services/periodo-contable-types";
+import { getAccountingYear } from "@/lib/services/fecha-operacion-registry";
 import { isTenantAdminRole } from "@/lib/auth/roles";
 import { prisma } from "@/lib/prisma";
+import type { Prisma } from "@/generated/prisma";
+import { getCurrentBalance } from "@/features/contabilidad/services/current-balance-service";
+import { getReconciledResultForYear } from "@/features/contabilidad/services/reconciled-result-service";
+import { createFinancialSnapshot } from "@/features/contabilidad/services/historical-financial-report-service";
 import {
 	obtenerBalanceConVariacion,
 	obtenerVentasVsReconciliado,
@@ -428,51 +433,93 @@ export const cerrarPeriodoAction = withAction(
 		const modoContable = (periodo.modoContable ?? "CAJA") as "CAJA" | "DEVENGO";
 		const modoSnapshot = modoContable === "CAJA" ? "caja" : "devengo";
 
-		// Generar snapshot ANTES de cerrar (captura el estado mientras está ABIERTO)
 		const snapshotService = new SnapshotService();
-		const snapshots = await snapshotService.generarSnapshot(
-			parsed.periodoId,
-			modoSnapshot,
-			user.userId,
-		);
-
-		// Generar resumen agregado con hash de integridad
-		const { resumenJson, hashIntegridad } =
-			await snapshotService.generarResumenSnapshot(
-				tenantId,
-				periodo.fechaInicio,
-				periodo.fechaFin,
-				modoContable,
+		// Cerrar período y persistir su evidencia en una sola transacción.
+		// Managers y admins del tenant auto-aprueban al cerrar.
+		const esAdminTenant = isTenantAdminRole(user.tenantRole);
+		const { cerrado, snapshotsCount } = await prisma.$transaction(async (tx) => {
+			const snapshots = await snapshotService.generarSnapshot(
+				parsed.periodoId,
+				modoSnapshot,
+				user.userId,
+				tx,
+			);
+			const { resumenJson, hashIntegridad } =
+				await snapshotService.generarResumenSnapshot(
+					tenantId,
+					periodo.fechaInicio,
+					periodo.fechaFin,
+					modoContable,
+					tx,
+				);
+			let persistedResumenJson = resumenJson as Record<string, unknown>;
+			let persistedHash = hashIntegridad;
+			if (periodo.tipo === TipoPeriodo.ANUAL) {
+				// El balance se congela al momento del cierre; el resultado conserva el fin del período.
+				const capturedAt = new Date();
+				const resultCutoffAt = new Date(periodo.fechaFin.getTime() + 1);
+				const year = getAccountingYear(periodo.fechaInicio);
+				const result = await getReconciledResultForYear({
+					tenantId,
+					year,
+					cutoffAt: resultCutoffAt,
+					client: tx,
+				});
+				const balance = await getCurrentBalance({
+					tenantId,
+					asOf: capturedAt,
+					currentResult: result.annual.reconciledResult,
+					currentResultYear: year,
+					client: tx,
+				});
+				const financialSnapshot = await createFinancialSnapshot({
+					cutoffAt: capturedAt,
+					resultThrough: periodo.fechaFin,
+					capturedAt,
+					balance,
+					result,
+					sources: {
+						bankSnapshots: snapshots.length,
+						reconciledPeriods: result.monthly.length,
+					},
+				});
+				persistedResumenJson = financialSnapshot.payload as unknown as Record<string, unknown>;
+				persistedHash = financialSnapshot.hash;
+			}
+			const resultadoCierre = await PeriodoContableService.cerrarPeriodo(
+				parsed.periodoId,
+				user.userId,
+				{ snapshotsCount: snapshots.length },
+				esAdminTenant,
+				tx,
 			);
 
-		// Cerrar período (valida transición e hijos)
-		// Managers y admins del tenant auto-aprueban al cerrar
-		const esAdminTenant = isTenantAdminRole(user.tenantRole);
-		const cerrado = await PeriodoContableService.cerrarPeriodo(
-			parsed.periodoId,
-			user.userId,
-			{ snapshotsCount: snapshots.length },
-			esAdminTenant,
-		);
+			await tx.periodoContable.update({
+				where: { periodoId: parsed.periodoId },
+				data: {
+					resumenJson: persistedResumenJson as unknown as Prisma.InputJsonValue,
+					hashIntegridad: persistedHash,
+				},
+			});
 
-		// Persistir resumen y hash en el período (después del close exitoso)
-		await prisma.periodoContable.update({
-			where: { periodoId: parsed.periodoId },
-			data: { resumenJson, hashIntegridad },
-		});
+			await snapshotService.crearVersionSnapshot(
+				parsed.periodoId,
+				{
+					resumenJson: persistedResumenJson,
+					hashIntegridad: persistedHash,
+				},
+				tx,
+			);
 
-		// Crear versión historificada de SnapshotPeriodo
-		await snapshotService.crearVersionSnapshot(parsed.periodoId, {
-			resumenJson: resumenJson as Record<string, unknown>,
-			hashIntegridad,
-		});
+			return { cerrado: resultadoCierre, snapshotsCount: snapshots.length };
+		}, { isolationLevel: "Serializable" });
 
 		AuditLogService.log({
 			accion: "UPDATE",
 			entidad: "CIERRE_CONTABLE",
 			entidadId: parsed.periodoId,
 			usuarioId: user.userId,
-			detalles: { accion: "CERRAR", snapshotsCount: snapshots.length },
+			detalles: { accion: "CERRAR", snapshotsCount },
 		}).catch((err) => console.error("[AuditLog] Error logging cerrar periodo:", err));
 
 		// Invalidar caché del guard
@@ -482,7 +529,7 @@ export const cerrarPeriodoAction = withAction(
 
 		return {
 			periodo: cerrado,
-			snapshots: snapshots.length,
+			snapshots: snapshotsCount,
 		};
 	},
 );
@@ -760,10 +807,10 @@ export const integrarArqueosEnPeriodoAction = withAction(
 				periodoId,
 				tenantId,
 				saldoCajaInicial: 0,
-				detalleJson: detalle as Record<string, unknown>,
+				detalleJson: detalle as unknown as Prisma.InputJsonValue,
 			},
 			update: {
-				detalleJson: detalle as Record<string, unknown>,
+				detalleJson: detalle as unknown as Prisma.InputJsonValue,
 			},
 		});
 

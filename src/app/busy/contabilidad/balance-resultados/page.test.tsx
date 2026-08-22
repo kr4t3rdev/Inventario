@@ -48,6 +48,15 @@ const balancePayload = {
       utilidadNeta: 0,
     },
   },
+  reporte: {
+    origen: 'LIVE',
+    provisional: true,
+    fechaCorte: '2026-08-21T15:30:00.000Z',
+    resultadoHasta: null,
+    periodoId: null,
+    integridad: null,
+    snapshotVersion: null,
+  },
 };
 
 describe('/busy/contabilidad/balance-resultados page', () => {

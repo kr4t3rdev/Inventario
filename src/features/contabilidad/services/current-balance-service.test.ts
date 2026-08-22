@@ -8,6 +8,7 @@ const prismaMock = vi.hoisted(() => ({
   cuentaPorPagar: { findMany: vi.fn() },
   inyeccionCapital: { findMany: vi.fn() },
   cierreContable: { findMany: vi.fn() },
+  periodoContable: { findMany: vi.fn() },
 }));
 
 const exchangeProviderMock = vi.hoisted(() => ({
@@ -85,6 +86,7 @@ describe('getCurrentBalance', () => {
       ganancias: 100,
       perdidas: 20,
     }]);
+    prismaMock.periodoContable.findMany.mockResolvedValue([]);
   });
 
   it('construye el balance con costos remanentes y cobertura explícita', async () => {
@@ -188,5 +190,87 @@ describe('getCurrentBalance', () => {
       issue: 'MISSING_CONVERSION',
       affectedAmount: 80,
     });
+  });
+
+  it('usa el resultado anual del snapshot aprobado como utilidad retenida', async () => {
+    const { hashFinancialSnapshot } = await import(
+      '@/features/contabilidad/services/historical-financial-report-service'
+    );
+    const snapshotPayload = {
+      version: 2,
+      cutoffAt: '2026-01-02T12:00:00.000Z',
+      resultThrough: '2025-12-31T23:59:59.000Z',
+      capturedAt: '2026-01-02T12:00:00.000Z',
+      functionalCurrency: 'CUP',
+      balance: {},
+      result: { annual: { reconciledResult: 125 } },
+      coverage: {
+        balanceComplete: true,
+        balanceUnresolvedCount: 0,
+        resultIncidentCount: 0,
+        resultEstimateCount: 0,
+      },
+      sources: {},
+    };
+    const snapshotHash = hashFinancialSnapshot(snapshotPayload);
+    prismaMock.cierreContable.findMany.mockResolvedValue([]);
+    prismaMock.periodoContable.findMany.mockResolvedValue([{
+      periodoId: 'period-2025',
+      fechaFin: new Date('2025-12-31T23:59:59Z'),
+      resumenJson: snapshotPayload,
+      hashIntegridad: snapshotHash,
+      snapshotPeriodos: [{
+        version: 1,
+        resumenJson: snapshotPayload,
+        hashIntegridad: snapshotHash,
+      }],
+    }]);
+
+    const { getCurrentBalance } = await import(
+      '@/features/contabilidad/services/current-balance-service'
+    );
+    const result = await getCurrentBalance({
+      tenantId: 'tenant-1',
+      asOf: new Date('2026-08-20T12:00:00Z'),
+      currentResult: 200,
+      currentResultYear: 2026,
+    });
+
+    expect(result.equity.retainedEarnings).toBe(125);
+  });
+
+  it('no usa un cierre legacy cuando existe evidencia v2 aprobada inválida', async () => {
+    prismaMock.cierreContable.findMany.mockResolvedValue([{
+      cierreId: 'legacy-2025',
+      tipo: 'anual',
+      estado: 'aprobado',
+      aprobadoPor: 'user-1',
+      fechaFin: new Date('2025-12-31T23:59:59Z'),
+      ganancias: 300,
+      perdidas: 0,
+    }]);
+    prismaMock.periodoContable.findMany.mockResolvedValue([{
+      periodoId: 'period-2025',
+      fechaFin: new Date('2025-12-31T23:59:59Z'),
+      resumenJson: { version: 2 },
+      hashIntegridad: 'parent-hash',
+      snapshotPeriodos: [{
+        version: 1,
+        resumenJson: { version: 2 },
+        hashIntegridad: 'invalid-hash',
+      }],
+    }]);
+
+    const { getCurrentBalance } = await import(
+      '@/features/contabilidad/services/current-balance-service'
+    );
+    const result = await getCurrentBalance({
+      tenantId: 'tenant-1',
+      asOf: new Date('2026-08-20T12:00:00Z'),
+      currentResult: 200,
+      currentResultYear: 2026,
+    });
+
+    expect(result.equity.retainedEarnings).toBe(0);
   });
 });

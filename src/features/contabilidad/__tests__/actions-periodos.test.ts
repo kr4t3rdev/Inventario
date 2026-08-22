@@ -76,9 +76,19 @@ const { mockPrisma } = vi.hoisted(() => ({
 	},
 }));
 
+const accountingSnapshotMocks = vi.hoisted(() => ({
+	getCurrentBalance: vi.fn(),
+	getReconciledResultForYear: vi.fn(),
+}));
+
 vi.mock("@/lib/prisma", () => ({
 	prisma: mockPrisma,
 }));
+vi.mock("@/features/contabilidad/services/current-balance-service", () => accountingSnapshotMocks);
+vi.mock(
+	"@/features/contabilidad/services/reconciled-result-service",
+	() => accountingSnapshotMocks,
+);
 
 // ── Imports bajo test ─────────────────────────────────────────────────────
 
@@ -543,6 +553,93 @@ describe("abrirPeriodoAction", () => {
 // ── Tests: cerrarPeriodoAction ────────────────────────────────────────────
 
 describe("cerrarPeriodoAction", () => {
+	it("persiste un snapshot financiero v2 al cerrar un período anual", async () => {
+		const periodo = makePeriodo({
+			tipo: TipoPeriodo.ANUAL,
+			estado: EstadoPeriodo.ABIERTO,
+			fechaInicio: new Date("2025-01-01T05:00:00Z"),
+			fechaFin: new Date("2026-01-01T04:59:59Z"),
+		});
+		const result = {
+			year: 2025,
+			timeZone: "America/Havana",
+			functionalCurrency: "CUP",
+			monthly: [],
+			annual: { reconciledResult: 10 },
+			incidents: [],
+			estimates: [],
+		};
+		const balance = {
+			asOf: "2026-01-02T12:00:00.000Z",
+			functionalCurrency: "CUP",
+			assets: {
+				cashAndBanks: 100,
+				inventory: { historical: 0, estimated: 0, total: 0 },
+				receivables: 0,
+				total: 100,
+			},
+			liabilities: { payables: 0, externalDebt: 0, total: 0 },
+			equity: { capital: 90, retainedEarnings: 0, currentResult: 10, total: 100 },
+			equation: {
+				assets: 100,
+				liabilitiesAndEquity: 100,
+				difference: 0,
+				status: "CUADRADO",
+			},
+			coverage: { complete: true, unresolvedCount: 0, unresolvedAmount: 0, parts: [] },
+			estimates: [],
+			incidents: [],
+		};
+		mockPrisma.periodoContable.findFirst.mockResolvedValue(periodo);
+		mockPrisma.periodoContable.findUnique.mockResolvedValue(periodo);
+		mockPrisma.periodoContable.update.mockResolvedValue({
+			...periodo,
+			estado: EstadoPeriodo.CERRADO,
+		});
+		mockPrisma.auditoriaPeriodo.create.mockResolvedValue({});
+		mockPrisma.cuentaBancaria.findMany.mockResolvedValue([]);
+		mockPrisma.reconciliacionVenta.aggregate.mockResolvedValue({ _sum: { montoConvertido: null } });
+		mockPrisma.reconciliacionServicio.aggregate.mockResolvedValue({ _sum: { montoConvertido: null } });
+		mockPrisma.reconciliacionGasto.aggregate.mockResolvedValue({ _sum: { montoConvertido: null } });
+		mockPrisma.snapshotPeriodo.findFirst.mockResolvedValue(null);
+		mockPrisma.snapshotPeriodo.create.mockResolvedValue({ snapshotId: "sp-annual" });
+		mockPrisma.saldoSnapshot.findMany.mockResolvedValue([]);
+		accountingSnapshotMocks.getReconciledResultForYear.mockResolvedValue(result);
+		accountingSnapshotMocks.getCurrentBalance.mockResolvedValue(balance);
+
+  const response = await cerrarPeriodoAction({ periodoId: "p-1" });
+
+  expect(response.success).toBe(true);
+		  expect(mockPrisma.$transaction).toHaveBeenCalledWith(
+		    expect.any(Function),
+		    { isolationLevel: "Serializable" },
+		  );
+		  expect(accountingSnapshotMocks.getCurrentBalance).toHaveBeenCalledWith(
+		    expect.objectContaining({ asOf: expect.any(Date) }),
+		  );
+		  expect(accountingSnapshotMocks.getReconciledResultForYear).toHaveBeenCalledWith(
+		    expect.objectContaining({
+		      cutoffAt: new Date(periodo.fechaFin.getTime() + 1),
+		    }),
+		  );
+		  const snapshotPayload = mockPrisma.periodoContable.update.mock.calls.at(-1)?.[0]
+		    .data.resumenJson;
+		  expect(snapshotPayload.cutoffAt).toBe(snapshotPayload.capturedAt);
+		  expect(snapshotPayload.resultThrough).toBe(periodo.fechaFin.toISOString());
+  expect(mockPrisma.periodoContable.update).toHaveBeenLastCalledWith(expect.objectContaining({
+			data: expect.objectContaining({
+				resumenJson: expect.objectContaining({ version: 2, balance, result }),
+				hashIntegridad: expect.stringMatching(/^[a-f0-9]{64}$/),
+			}),
+		}));
+		expect(mockPrisma.snapshotPeriodo.create).toHaveBeenCalledWith(expect.objectContaining({
+			data: expect.objectContaining({
+				resumenJson: expect.objectContaining({ version: 2, balance, result }),
+				hashIntegridad: expect.stringMatching(/^[a-f0-9]{64}$/),
+			}),
+		}));
+	});
+
 	it("cierra un período exitosamente con snapshot", async () => {
 		const periodo = makePeriodo({
 			tipo: TipoPeriodo.DIARIO,

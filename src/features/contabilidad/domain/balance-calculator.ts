@@ -268,7 +268,7 @@ export function calculateCurrentBalance(
       incidents.push({ code: 'INVALID_DATE', itemId: closure.id, affectedAmount: 0 });
       continue;
     }
-    const year = new Date(endedAt).getUTCFullYear();
+    const year = getAccountingYear(new Date(endedAt));
     const closures = closuresByYear.get(year) ?? [];
     closures.push(closure);
     closuresByYear.set(year, closures);
@@ -353,3 +353,4 @@ export function calculateCurrentBalance(
     incidents,
   };
 }
+import { getAccountingYear } from '@/lib/services/fecha-operacion-registry';

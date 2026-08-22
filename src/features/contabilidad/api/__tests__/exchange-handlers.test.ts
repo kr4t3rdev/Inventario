@@ -23,6 +23,7 @@ const prismaMock = vi.hoisted(() => ({
   cuentaPorCobrar: { findMany: vi.fn() },
   cuentaPorPagar: { findMany: vi.fn() },
   cierreContable: { findMany: vi.fn() },
+  periodoContable: { findMany: vi.fn() },
   inyeccionCapital: { findMany: vi.fn() },
   venta: { findMany: vi.fn() },
   ventaServicios: { findMany: vi.fn() },
@@ -48,12 +49,21 @@ const exchangeProviderMock = vi.hoisted(() => ({
   },
 }))
 
+const historicalReportMock = vi.hoisted(() => ({
+  listAvailableFinancialPeriods: vi.fn(),
+  resolveFinancialReport: vi.fn(),
+}))
+
 vi.mock('@/lib/prisma', () => ({
   prisma: prismaMock,
   default: prismaMock,
 }))
 
 vi.mock('@/features/contabilidad/services/exchange-rate-provider', () => exchangeProviderMock)
+vi.mock(
+  '@/features/contabilidad/services/historical-financial-report-service',
+  () => historicalReportMock,
+)
 
 vi.mock('@/lib/auth-middleware', () => ({
   authenticateUser: vi.fn(async () => ({
@@ -71,6 +81,7 @@ vi.mock('@/lib/auth-middleware', () => ({
 describe('exchange-handlers', () => {
   beforeEach(() => {
     vi.clearAllMocks()
+    prismaMock.periodoContable.findMany.mockResolvedValue([])
   })
 
   it('converts currencies through the shared contract and persists the transaction', async () => {
@@ -191,6 +202,18 @@ describe('getBalanceFinanciero', () => {
       esPrincipal: true,
       isActive: true,
     })
+    historicalReportMock.resolveFinancialReport.mockImplementation(async ({ calculateLive }: any) => {
+      const cutoffAt = new Date('2026-08-21T15:30:00.000Z')
+      return {
+        status: 'AVAILABLE',
+        origin: 'LIVE',
+        provisional: true,
+        cutoffAt: cutoffAt.toISOString(),
+        periodId: 'period-current',
+        ...await calculateLive(cutoffAt),
+      }
+    })
+    historicalReportMock.listAvailableFinancialPeriods.mockResolvedValue([])
   })
 
   it('permite balance y resultados para el plan Básico cuando contabilidad está habilitada', async () => {
@@ -207,6 +230,62 @@ describe('getBalanceFinanciero', () => {
     expect(response.status).toBe(200)
     expect(body.balance).toBeDefined()
     expect(body.estadoResultados).toBeDefined()
+    expect(body.reporte).toEqual({
+      origen: 'LIVE',
+      provisional: true,
+      fechaCorte: '2026-08-21T15:30:00.000Z',
+      resultadoHasta: null,
+      periodoId: 'period-current',
+      integridad: null,
+      snapshotVersion: null,
+    })
+  })
+
+  it('no recalcula un año sin evidencia histórica suficiente', async () => {
+    historicalReportMock.resolveFinancialReport.mockResolvedValue({
+      status: 'UNAVAILABLE',
+      reason: 'NO_HISTORICAL_EVIDENCE',
+      periodId: null,
+    })
+    const { getBalanceFinanciero } = await import('@/features/contabilidad/api/exchange-handlers')
+    const request = new NextRequest(
+      'http://localhost/api/contabilidad/balance-financiero?year=2024',
+    )
+
+    const response = await getBalanceFinanciero(request, baseUser as any)
+    const body = await response.json()
+
+    expect(response.status).toBe(409)
+    expect(body).toMatchObject({
+      code: 'NO_HISTORICAL_EVIDENCE',
+      provisional: false,
+    })
+    expect(prismaMock.cuentaBancaria.findMany).not.toHaveBeenCalled()
+    expect(prismaMock.reconciliacionVenta.findMany).not.toHaveBeenCalled()
+  })
+
+  it('expone solo los períodos históricos disponibles para el tenant', async () => {
+    historicalReportMock.listAvailableFinancialPeriods.mockResolvedValue([{
+      periodId: 'period-2025',
+      code: 'A-2025',
+      year: 2025,
+      cutoffAt: '2026-01-02T12:00:00.000Z',
+      snapshotVersion: 2,
+    }])
+    const { getPeriodosBalanceFinanciero } = await import(
+      '@/features/contabilidad/api/exchange-handlers',
+    )
+    const response = await getPeriodosBalanceFinanciero(
+      new NextRequest('http://localhost/api/contabilidad/balance-financiero/periodos'),
+      baseUser as any,
+    )
+    const body = await response.json()
+
+    expect(response.status).toBe(200)
+    expect(body.periodos).toEqual([
+      expect.objectContaining({ year: 2025, snapshotVersion: 2 }),
+    ])
+    expect(historicalReportMock.listAvailableFinancialPeriods).toHaveBeenCalledWith('tenant-1')
   })
 
   it('rechaza administradores sin una empresa seleccionada', async () => {

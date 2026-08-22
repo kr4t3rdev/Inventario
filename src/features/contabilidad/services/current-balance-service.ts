@@ -9,12 +9,16 @@ import {
 } from '@/features/contabilidad/domain/balance-calculator';
 import { exchangeRateProvider } from '@/features/contabilidad/services/exchange-rate-provider';
 import { prisma } from '@/lib/prisma';
+import type { Prisma } from '@/generated/prisma';
+import { getAccountingYear } from '@/lib/services/fecha-operacion-registry';
+import { hashFinancialSnapshot } from '@/features/contabilidad/services/historical-financial-report-service';
 
 interface CurrentBalanceParams {
   tenantId: string;
   asOf: Date;
   currentResult: number | null;
   currentResultYear: number;
+  client?: Prisma.TransactionClient;
 }
 
 /**
@@ -36,7 +40,8 @@ function isFunctionalCurrency(
  * @returns {Promise<ReturnType<typeof calculateCurrentBalance>>} Balance con cobertura y ecuación.
  */
 export async function getCurrentBalance(params: CurrentBalanceParams) {
-  const principalCurrency = await exchangeRateProvider.getPrincipalCurrency();
+  const db = params.client ?? prisma;
+  const principalCurrency = await exchangeRateProvider.getPrincipalCurrency(params.client);
   if (!principalCurrency) {
     throw new Error('No existe una moneda funcional configurada');
   }
@@ -49,13 +54,14 @@ export async function getCurrentBalance(params: CurrentBalanceParams) {
     receivables,
     payables,
     injections,
-    closures,
+     closures,
+     approvedAccountingPeriods,
   ] = await Promise.all([
-    prisma.cuentaBancaria.findMany({
+    db.cuentaBancaria.findMany({
       where: { tenantId: params.tenantId, isActive: true, saldo: { not: 0 } },
       select: { cuentaId: true, saldo: true, moneda: true },
     }),
-    prisma.stockUbicacion.findMany({
+    db.stockUbicacion.findMany({
       where: { tenantId: params.tenantId, cantidad: { gt: 0 } },
       select: {
         productoId: true,
@@ -63,7 +69,7 @@ export async function getCurrentBalance(params: CurrentBalanceParams) {
         producto: { select: { precioCosto: true } },
       },
     }),
-    prisma.compraDocumentoItem.findMany({
+    db.compraDocumentoItem.findMany({
       where: {
         tenantId: params.tenantId,
         compraDocumento: { deletedAt: null },
@@ -77,7 +83,7 @@ export async function getCurrentBalance(params: CurrentBalanceParams) {
         allocations: { select: { cantidad: true } },
       },
     }),
-    prisma.cuentaPorCobrar.findMany({
+    db.cuentaPorCobrar.findMany({
       where: {
         tenantId: params.tenantId,
         estado: { in: [...ACTIVE_RECEIVABLE_STATES] },
@@ -90,7 +96,7 @@ export async function getCurrentBalance(params: CurrentBalanceParams) {
         prestamoCash: { select: { moneda: true } },
       },
     }),
-    prisma.cuentaPorPagar.findMany({
+    db.cuentaPorPagar.findMany({
       where: {
         tenantId: params.tenantId,
         deletedAt: null,
@@ -104,7 +110,7 @@ export async function getCurrentBalance(params: CurrentBalanceParams) {
         deletedAt: true,
       },
     }),
-    prisma.inyeccionCapital.findMany({
+    db.inyeccionCapital.findMany({
       where: {
         cuentaBancaria: { tenantId: params.tenantId },
         fechaRegistro: { lte: params.asOf },
@@ -119,7 +125,7 @@ export async function getCurrentBalance(params: CurrentBalanceParams) {
         saldoPendiente: true,
       },
     }),
-    prisma.cierreContable.findMany({
+    db.cierreContable.findMany({
       where: {
         tenantId: params.tenantId,
         tipo: { equals: 'anual', mode: 'insensitive' },
@@ -135,6 +141,31 @@ export async function getCurrentBalance(params: CurrentBalanceParams) {
         fechaFin: true,
         ganancias: true,
         perdidas: true,
+      },
+    }),
+    db.periodoContable.findMany({
+      where: {
+        tenantId: params.tenantId,
+        tipo: 'ANUAL',
+        estado: 'APROBADO',
+        aprobadoPor: { not: null },
+        fechaFin: { lte: params.asOf },
+      },
+      orderBy: { fechaFin: 'desc' },
+      select: {
+        periodoId: true,
+        fechaFin: true,
+        resumenJson: true,
+        hashIntegridad: true,
+        snapshotPeriodos: {
+          orderBy: { version: 'desc' },
+          take: 1,
+          select: {
+            version: true,
+            resumenJson: true,
+            hashIntegridad: true,
+          },
+        },
       },
     }),
   ]);
@@ -266,8 +297,49 @@ export async function getCurrentBalance(params: CurrentBalanceParams) {
     });
   }
 
-  const resultYearIsClosed = closures.some((closure) => {
-    return closure.fechaFin.getUTCFullYear() === params.currentResultYear;
+  const snapshotClosures = approvedAccountingPeriods.flatMap((period) => {
+    const snapshot = period.snapshotPeriodos[0];
+    const payload = snapshot?.resumenJson;
+    if (!payload || typeof payload !== 'object' || Array.isArray(payload)) return [];
+    const payloadRecord = payload as Record<string, unknown>;
+    if (
+      payloadRecord.version !== 2 ||
+      !snapshot.hashIntegridad ||
+      hashFinancialSnapshot(payload) !== snapshot.hashIntegridad ||
+      !period.hashIntegridad ||
+      hashFinancialSnapshot(payload) !== period.hashIntegridad
+    ) return [];
+    const annualResult = (payloadRecord as { result?: { annual?: { reconciledResult?: unknown } } })
+      .result?.annual?.reconciledResult;
+    const result = Number(annualResult);
+    if (!Number.isFinite(result)) return [];
+    return [{
+      id: period.periodoId,
+      type: 'anual',
+      state: 'aprobado',
+      approvedBy: 'periodo-contable',
+      endedAt: period.fechaFin,
+      gains: Math.max(0, result),
+      losses: Math.max(0, -result),
+    }];
+  });
+  const accountingPeriodYears = new Set(
+    approvedAccountingPeriods.map((period) => getAccountingYear(period.fechaFin)),
+  );
+  const legacyClosures = closures.filter(
+    (closure) => !accountingPeriodYears.has(getAccountingYear(closure.fechaFin)),
+  );
+  const approvedClosures = [...legacyClosures.map((closure) => ({
+    id: closure.cierreId,
+    type: closure.tipo,
+    state: closure.estado,
+    approvedBy: closure.aprobadoPor,
+    endedAt: closure.fechaFin,
+    gains: Number(closure.ganancias),
+    losses: Number(closure.perdidas),
+  })), ...snapshotClosures];
+  const resultYearIsClosed = approvedClosures.some((closure) => {
+    return getAccountingYear(closure.endedAt) === params.currentResultYear;
   });
   const effectiveCurrentResult = resultYearIsClosed ? 0 : params.currentResult;
 
@@ -302,15 +374,7 @@ export async function getCurrentBalance(params: CurrentBalanceParams) {
     payables: payableRows,
     externalDebts,
     capitalContributions,
-    approvedClosures: closures.map((closure) => ({
-      id: closure.cierreId,
-      type: closure.tipo,
-      state: closure.estado,
-      approvedBy: closure.aprobadoPor,
-      endedAt: closure.fechaFin,
-      gains: Number(closure.ganancias),
-      losses: Number(closure.perdidas),
-    })),
+     approvedClosures,
     currentResult: effectiveCurrentResult ?? 0,
     unresolvedParts,
   });

@@ -12,6 +12,11 @@ import {
   presentReconciledPeriod,
 } from '@/features/contabilidad/services/reconciled-result-service';
 import { getCurrentBalance } from '@/features/contabilidad/services/current-balance-service';
+import {
+  listAvailableFinancialPeriods,
+  resolveFinancialReport,
+} from '@/features/contabilidad/services/historical-financial-report-service';
+import { getAccountingYear } from '@/lib/services/fecha-operacion-registry';
 
 const exchangeReadService = new ExchangeRateReadService(exchangeRateProvider);
 
@@ -178,7 +183,7 @@ export async function getBalanceFinanciero(request: NextRequest, user: Authentic
       return NextResponse.json({ error: 'Prohibido' }, { status: 403 })
     }
 
-    const year = parseInt(new URL(request.url).searchParams.get("year") || "") || new Date().getFullYear()
+    const year = parseInt(new URL(request.url).searchParams.get("year") || "") || getAccountingYear(new Date())
     const tenantId = user.tenantId
 
     if (!tenantId) {
@@ -188,17 +193,115 @@ export async function getBalanceFinanciero(request: NextRequest, user: Authentic
       )
     }
 
-    const result = await getReconciledResultForYear({ tenantId, year })
-    const currentBalance = await getCurrentBalance({
+    const report = await resolveFinancialReport({
       tenantId,
-      asOf: new Date(),
-      currentResult: result.annual.reconciledResult,
-      currentResultYear: year,
+      year,
+      now: new Date(),
+      calculateLive: async (cutoffAt) => {
+        const result = await getReconciledResultForYear({ tenantId, year, cutoffAt })
+        const balance = await getCurrentBalance({
+          tenantId,
+          asOf: cutoffAt,
+          currentResult: result.annual.reconciledResult,
+          currentResultYear: year,
+        })
+        return { balance, result }
+      },
     })
-    return NextResponse.json({ balance: { activos: { efectivo: currentBalance.assets.cashAndBanks, inventario: currentBalance.assets.inventory.total, inventarioDetalle: currentBalance.assets.inventory, cuentasPorCobrar: currentBalance.assets.receivables, total: currentBalance.assets.total }, pasivos: { deudaExterna: currentBalance.liabilities.externalDebt, cuentasPorPagar: currentBalance.liabilities.payables, total: currentBalance.liabilities.total }, patrimonio: { capitalSocial: currentBalance.equity.capital, resultadosAcumulados: currentBalance.equity.retainedEarnings, resultadoPeriodo: currentBalance.equity.currentResult, utilidadEjercicio: currentBalance.equity.currentResult, total: currentBalance.equity.total }, ecuacion: currentBalance.equation, cobertura: currentBalance.coverage, estimaciones: currentBalance.estimates, incidencias: currentBalance.incidents, monedaFuncional: currentBalance.functionalCurrency, fechaCorte: currentBalance.asOf }, estadoResultados: { mensual: result.monthly.map(presentReconciledPeriod), anual: presentReconciledPeriod(result.annual), incidencias: result.incidents, estimaciones: result.estimates, monedaFuncional: result.functionalCurrency, zonaHoraria: result.timeZone } })
+
+    if (report.status === 'UNAVAILABLE') {
+      return NextResponse.json({
+        error: 'No existe evidencia histórica suficiente para consultar este período',
+        code: report.reason,
+        periodoId: report.periodId,
+        snapshotVersion: report.snapshotVersion ?? null,
+        provisional: false,
+      }, { status: 409 })
+    }
+
+    const currentBalance = report.balance
+    const result = report.result as Awaited<ReturnType<typeof getReconciledResultForYear>>
+    return NextResponse.json({
+      balance: {
+        activos: {
+          efectivo: currentBalance.assets.cashAndBanks,
+          inventario: currentBalance.assets.inventory.total,
+          inventarioDetalle: currentBalance.assets.inventory,
+          cuentasPorCobrar: currentBalance.assets.receivables,
+          total: currentBalance.assets.total,
+        },
+        pasivos: {
+          deudaExterna: currentBalance.liabilities.externalDebt,
+          cuentasPorPagar: currentBalance.liabilities.payables,
+          total: currentBalance.liabilities.total,
+        },
+        patrimonio: {
+          capitalSocial: currentBalance.equity.capital,
+          resultadosAcumulados: currentBalance.equity.retainedEarnings,
+          resultadoPeriodo: currentBalance.equity.currentResult,
+          utilidadEjercicio: currentBalance.equity.currentResult,
+          total: currentBalance.equity.total,
+        },
+        ecuacion: currentBalance.equation,
+        cobertura: currentBalance.coverage,
+        estimaciones: currentBalance.estimates,
+        incidencias: currentBalance.incidents,
+        monedaFuncional: currentBalance.functionalCurrency,
+        fechaCorte: report.cutoffAt,
+        resultadoHasta: report.origin === 'SNAPSHOT' ? report.resultThrough : null,
+      },
+      estadoResultados: {
+        mensual: result.monthly.map(presentReconciledPeriod),
+        anual: presentReconciledPeriod(result.annual),
+        incidencias: result.incidents,
+        estimaciones: result.estimates,
+        monedaFuncional: result.functionalCurrency,
+        zonaHoraria: result.timeZone,
+      },
+      reporte: {
+        origen: report.origin,
+        provisional: report.provisional,
+        fechaCorte: report.cutoffAt,
+        resultadoHasta: report.origin === 'SNAPSHOT' ? report.resultThrough : null,
+        periodoId: report.periodId,
+        integridad: report.origin === 'SNAPSHOT' ? report.integrity : null,
+        snapshotVersion: report.origin === 'SNAPSHOT' ? report.snapshotVersion : null,
+      },
+    })
   } catch (error) {
     console.error("Error al obtener balance financiero:", error)
     return NextResponse.json({ error: "Error interno del servidor" }, { status: 500 })
+  }
+}
+
+/**
+ * @description Lista los cierres históricos que pueden consultarse con evidencia íntegra.
+ * @param {NextRequest} _request - Solicitud HTTP entrante.
+ * @param {AuthenticatedUser} user - Usuario autenticado con tenant seleccionado.
+ * @returns {Promise<Response>} Años disponibles sin recalcular saldos actuales.
+ */
+export async function getPeriodosBalanceFinanciero(
+  _request: NextRequest,
+  user: AuthenticatedUser,
+) {
+  try {
+    if (user.role !== 'admin' && user.planFeatures?.contabilidad !== true) {
+      return NextResponse.json({ error: 'Prohibido' }, { status: 403 });
+    }
+    if (!user.tenantId) {
+      return NextResponse.json(
+        { error: 'Selecciona una empresa para consultar el reporte' },
+        { status: 403 },
+      );
+    }
+    const periodos = await listAvailableFinancialPeriods(user.tenantId);
+    return NextResponse.json({ periodos });
+  } catch (error) {
+    console.error('Error al obtener períodos disponibles del balance:', error);
+    return NextResponse.json(
+      { error: 'Error interno del servidor', code: 'AVAILABLE_PERIODS_ERROR' },
+      { status: 500 },
+    );
   }
 }
 

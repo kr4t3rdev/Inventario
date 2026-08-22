@@ -171,6 +171,38 @@ describe('calculateCurrentBalance', () => {
     expect(result.equation.status).toBe('INCOMPLETO');
   });
 
+  it('agrupa cierres usando el año contable de America/Havana', () => {
+    const result = calculateCurrentBalance({
+      ...BASE_INPUT,
+      approvedClosures: [
+        {
+          id: 'closure-local-2025',
+          type: 'anual',
+          state: 'aprobado',
+          approvedBy: 'user-1',
+          endedAt: '2026-01-01T04:30:00Z',
+          gains: 100,
+          losses: 20,
+        },
+        {
+          id: 'closure-utc-2025',
+          type: 'anual',
+          state: 'aprobado',
+          approvedBy: 'user-1',
+          endedAt: '2025-12-31T05:30:00Z',
+          gains: 90,
+          losses: 10,
+        },
+      ],
+    });
+
+    expect(result.equity.retainedEarnings).toBe(0);
+    expect(result.incidents).toContainEqual(expect.objectContaining({
+      code: 'DUPLICATE_ANNUAL_CLOSURE',
+      itemId: '2025',
+    }));
+  });
+
   it('expone el fallback de inventario como estimación', () => {
     const result = calculateCurrentBalance({
       ...BASE_INPUT,

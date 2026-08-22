@@ -334,24 +334,29 @@ remanentes, estados activos compartidos y cobertura explícita sin forzar la ecu
 
 **Objetivo**: Evitar que un año histórico muestre saldos actuales.
 
+**Política de captura**: el balance aprobado se congela al momento del cierre (`cutoffAt`),
+mientras el resultado reconciliado conserva el fin temporal del período (`resultThrough`).
+El esquema actual no conserva historial suficiente para reconstruir todos los saldos auxiliares
+a una fecha pasada; una reconstrucción temporal completa queda fuera de esta fase.
+
 ### RED
 
-- [ ] El balance actual declara explícitamente su fecha y hora de corte.
-- [ ] Un período cerrado devuelve su snapshot aprobado, no datos actuales recalculados.
-- [ ] Un período abierto se identifica como provisional.
-- [ ] Modificaciones posteriores no cambian un snapshot aprobado.
-- [ ] Snapshots legacy v1 continúan siendo legibles o se marcan como incompletos.
+- [x] El balance actual declara explícitamente su fecha y hora de corte.
+- [x] Un período cerrado devuelve su snapshot aprobado, no datos actuales recalculados.
+- [x] Un período abierto se identifica como provisional.
+- [x] Modificaciones posteriores no cambian un snapshot aprobado.
+- [x] Snapshots legacy v1 continúan siendo legibles o se marcan como incompletos.
 
 ### GREEN
 
-- [ ] Versionar el snapshot para incluir balance, resultado, cobertura y moneda funcional.
-- [ ] Guardar hash de integridad y fuentes agregadas.
-- [ ] Permitir consulta histórica solo para cierres disponibles.
-- [ ] No ofrecer años o fechas para los que no existe evidencia histórica suficiente.
+- [x] Versionar el snapshot para incluir balance, resultado, cobertura y moneda funcional.
+- [x] Guardar hash de integridad y fuentes agregadas.
+- [x] Permitir consulta histórica solo para cierres disponibles.
+- [x] No ofrecer años o fechas para los que no existe evidencia histórica suficiente.
 
 ### REFACTOR
 
-- [ ] Reutilizar `fecha-operacion-registry.ts` como única política temporal.
+- [x] Reutilizar `fecha-operacion-registry.ts` como única política temporal.
 - [ ] Añadir fecha de operación específica a ajustes si requiere migración.
 
 ### Salida

@@ -74,7 +74,9 @@ export interface ExchangeRateHistoryResult {
 
 export interface ExchangeRateProvider {
   getCurrency(codigo: string): Promise<ExchangeCurrencyRecord | null>;
-  getPrincipalCurrency(): Promise<ExchangeCurrencyRecord | null>;
+  getPrincipalCurrency(
+    client?: Prisma.TransactionClient,
+  ): Promise<ExchangeCurrencyRecord | null>;
   listCurrencies(): Promise<ExchangeCurrencyRecord[]>;
   getLatestRate(
     monedaOrigenId: string,
@@ -100,3 +102,4 @@ export class ExchangeServiceError extends Error {
     this.code = code;
   }
 }
+import type { Prisma } from '@/generated/prisma';

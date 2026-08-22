@@ -1,4 +1,4 @@
-import type { PrismaClient } from '@/generated/prisma';
+import type { Prisma, PrismaClient } from '@/generated/prisma';
 
 import { prisma as defaultPrisma } from '@/lib/prisma';
 
@@ -69,13 +69,14 @@ export class PrismaExchangeRateProvider implements ExchangeRateProvider {
     return moneda ? toCurrencyRecord(moneda) : null;
   }
 
-  async getPrincipalCurrency(): Promise<ExchangeCurrencyRecord | null> {
-    await this.ensureDefaultCurrencies();
+  async getPrincipalCurrency(client?: Prisma.TransactionClient): Promise<ExchangeCurrencyRecord | null> {
+    const db = client ?? this.db;
+    await this.ensureDefaultCurrencies(db);
 
-    let moneda = await this.db.moneda.findFirst({ where: { esPrincipal: true } });
+    let moneda = await db.moneda.findFirst({ where: { esPrincipal: true } });
 
     if (!moneda) {
-      moneda = await this.db.moneda.upsert({
+      moneda = await db.moneda.upsert({
         where: { codigo: 'CUP' },
         update: { esPrincipal: true, isActive: true },
         create: {
@@ -105,10 +106,12 @@ export class PrismaExchangeRateProvider implements ExchangeRateProvider {
   /**
    * @description Crea las monedas por defecto si no existen (CUP como principal, USD como secundaria).
    */
-  private async ensureDefaultCurrencies(): Promise<void> {
+  private async ensureDefaultCurrencies(
+    db: PrismaClient | Prisma.TransactionClient = this.db,
+  ): Promise<void> {
     try {
       // Crear CUP (moneda principal) si no existe
-      await this.db.moneda.upsert({
+      await db.moneda.upsert({
         where: { codigo: 'CUP' },
         update: {},
         create: {
@@ -121,7 +124,7 @@ export class PrismaExchangeRateProvider implements ExchangeRateProvider {
       });
 
       // Crear USD (moneda secundaria común) si no existe
-      await this.db.moneda.upsert({
+      await db.moneda.upsert({
         where: { codigo: 'USD' },
         update: {},
         create: {

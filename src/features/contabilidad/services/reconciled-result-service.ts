@@ -18,8 +18,9 @@ import {
   type VentaParaCosto,
 } from '@/features/contabilidad/utils/venta-costo';
 import { prisma } from '@/lib/prisma';
+import type { Prisma } from '@/generated/prisma';
+import { ACCOUNTING_TIME_ZONE } from '@/lib/services/fecha-operacion-registry';
 
-const REPORT_TIME_ZONE = 'America/Havana';
 const MONTH_NAMES = [
   'enero',
   'febrero',
@@ -179,15 +180,21 @@ export function presentReconciledPeriod<T extends ReconciledPeriodResult>(period
 export async function getReconciledResultForYear(params: {
   tenantId: string;
   year: number;
+  cutoffAt?: Date;
+  client?: Prisma.TransactionClient;
 }) {
-  const principalCurrency = await exchangeRateProvider.getPrincipalCurrency();
+  const db = params.client ?? prisma;
+  const principalCurrency = await exchangeRateProvider.getPrincipalCurrency(params.client);
   if (!principalCurrency) {
     throw new Error('No existe una moneda funcional configurada');
   }
 
-  const range = getYearRangeInTimeZone(params.year, REPORT_TIME_ZONE);
+  const yearRange = getYearRangeInTimeZone(params.year, ACCOUNTING_TIME_ZONE);
+  const range = params.cutoffAt && params.cutoffAt < yearRange.lt
+    ? { gte: yearRange.gte, lt: params.cutoffAt }
+    : yearRange;
   const [sales, services, expenses, shrinkages] = await Promise.all([
-    prisma.reconciliacionVenta.findMany({
+    db.reconciliacionVenta.findMany({
       where: { tenantId: params.tenantId, fechaReconciliacion: range },
       select: {
         reconciliacionId: true,
@@ -225,7 +232,7 @@ export async function getReconciledResultForYear(params: {
         },
       },
     }),
-    prisma.reconciliacionServicio.findMany({
+    db.reconciliacionServicio.findMany({
       where: { tenantId: params.tenantId, fechaReconciliacion: range },
       select: {
         reconciliacionId: true,
@@ -239,7 +246,7 @@ export async function getReconciledResultForYear(params: {
         },
       },
     }),
-    prisma.reconciliacionGasto.findMany({
+    db.reconciliacionGasto.findMany({
       where: { tenantId: params.tenantId, fechaReconciliacion: range },
       select: {
         reconciliacionId: true,
@@ -258,7 +265,7 @@ export async function getReconciledResultForYear(params: {
         },
       },
     }),
-    prisma.merma.findMany({
+    db.merma.findMany({
       where: { tenantId: params.tenantId, createdAt: range },
       select: { mermaId: true, costoTotal: true, createdAt: true },
     }),
@@ -281,19 +288,19 @@ export async function getReconciledResultForYear(params: {
     previousExpenses,
   ] = await Promise.all([
     purchasedServiceIds.length > 0
-      ? prisma.compraServicio.findMany({
+      ? db.compraServicio.findMany({
           where: { tenantId: params.tenantId, compraServicioId: { in: purchasedServiceIds } },
           select: { compraServicioId: true, total: true, moneda: true },
         })
       : Promise.resolve([]),
     soldServiceIds.length > 0
-      ? prisma.ventaServicios.findMany({
+      ? db.ventaServicios.findMany({
           where: { tenantId: params.tenantId, ventaServicioId: { in: soldServiceIds } },
           select: { ventaServicioId: true, costo: true, cantidad: true },
         })
       : Promise.resolve([]),
     saleDocumentIds.length > 0
-      ? prisma.reconciliacionVenta.findMany({
+      ? db.reconciliacionVenta.findMany({
           where: {
             tenantId: params.tenantId,
             ventaId: { in: saleDocumentIds },
@@ -312,7 +319,7 @@ export async function getReconciledResultForYear(params: {
         })
       : Promise.resolve([]),
     serviceDocumentIds.length > 0
-      ? prisma.reconciliacionServicio.findMany({
+      ? db.reconciliacionServicio.findMany({
           where: {
             tenantId: params.tenantId,
             ventaServicioId: { in: serviceDocumentIds },
@@ -330,7 +337,7 @@ export async function getReconciledResultForYear(params: {
         })
       : Promise.resolve([]),
     expenseDocumentIds.length > 0
-      ? prisma.reconciliacionGasto.findMany({
+      ? db.reconciliacionGasto.findMany({
           where: {
             tenantId: params.tenantId,
             referenciaId: { in: expenseDocumentIds },
@@ -595,7 +602,7 @@ export async function getReconciledResultForYear(params: {
 
   const result = calculateReconciledResult({
     year: params.year,
-    timeZone: REPORT_TIME_ZONE,
+    timeZone: ACCOUNTING_TIME_ZONE,
     functionalCurrency: principalCurrency.codigo,
     movements,
     openingRecognitions,

@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, useRef } from "react"
 import { useRouter } from "next/navigation"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
@@ -14,6 +14,7 @@ import { ContabilidadBreadcrumb } from "@/features/contabilidad/components/conta
 import { useAuth } from "@/contexts/auth-context"
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
+import { ACCOUNTING_TIME_ZONE } from "@/lib/services/fecha-operacion-registry"
 
 // Types (match API response)
 
@@ -54,6 +55,23 @@ interface IncomeStatementData {
 interface FinancialData {
   balance: BalanceData
   estadoResultados: IncomeStatementData
+  reporte: {
+    origen: 'LIVE' | 'SNAPSHOT'
+    provisional: boolean
+    fechaCorte: string
+    resultadoHasta: string | null
+    periodoId: string | null
+    integridad: 'VALID' | null
+    snapshotVersion: number | null
+  }
+}
+
+interface FinancialPeriod {
+  periodId: string
+  code: string | null
+  year: number
+  cutoffAt: string
+  snapshotVersion: 2
 }
 
 // Common styles for "surface" cards to match other pages
@@ -64,8 +82,10 @@ export default function BalanceResultadosPage() {
   const { user, loading: authLoading } = useAuth()
   const [year, setYear] = useState<string>(new Date().getFullYear().toString())
   const [data, setData] = useState<FinancialData | null>(null)
+  const [availablePeriods, setAvailablePeriods] = useState<FinancialPeriod[]>([])
   const [loading, setLoading] = useState(true)
   const [errorMsg, setErrorMsg] = useState<string | null>(null)
+  const latestRequestId = useRef(0)
   const isBlocked =
     !authLoading &&
     user?.role !== 'admin' &&
@@ -82,27 +102,65 @@ export default function BalanceResultadosPage() {
       return
     }
 
+    const requestId = latestRequestId.current + 1
+    latestRequestId.current = requestId
+    const controller = new AbortController()
+
     const fetchData = async () => {
       setLoading(true)
       setErrorMsg(null)
+      setData(null)
       try {
-        const res = await fetch(`/api/contabilidad/balance-financiero?year=${year}`)
-        
+        const [res, periodsRes] = await Promise.all([
+          fetch(`/api/contabilidad/balance-financiero?year=${year}`, { signal: controller.signal }),
+          fetch('/api/contabilidad/balance-financiero/periodos', { signal: controller.signal }),
+        ])
+
+        if (requestId !== latestRequestId.current) {
+          return
+        }
+
+        if (periodsRes.ok) {
+          const periodsData = await periodsRes.json()
+          if (requestId !== latestRequestId.current) {
+            return
+          }
+          setAvailablePeriods(periodsData.periodos ?? [])
+        }
+
         if (res.ok) {
           const jsonData = await res.json()
+          if (requestId !== latestRequestId.current) {
+            return
+          }
           setData(jsonData)
         } else {
           const body = await res.json().catch(() => ({}))
+          if (requestId !== latestRequestId.current) {
+            return
+          }
           setErrorMsg((body as any).error || `Error ${res.status}`)
         }
       } catch (error) {
+        if (controller.signal.aborted || requestId !== latestRequestId.current) {
+          return
+        }
         setErrorMsg("Error de red al conectar con el servidor")
       } finally {
-        setLoading(false)
+        if (requestId === latestRequestId.current) {
+          setLoading(false)
+        }
       }
     }
     fetchData()
+
+    return () => controller.abort()
   }, [isBlocked, year])
+
+  const yearOptions = Array.from(new Set([
+    new Date().getFullYear(),
+    ...availablePeriods.map((period) => period.year),
+  ])).sort((left, right) => right - left)
 
   // Helper for currency formatting
   const formatMoney = (amount: number) => {
@@ -163,13 +221,31 @@ export default function BalanceResultadosPage() {
                   <SelectTrigger className="bg-background/50 backdrop-blur-sm">
                     <SelectValue placeholder="Año" />
                   </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="2023">2023</SelectItem>
-                    <SelectItem value="2024">2024</SelectItem>
-                    <SelectItem value="2025">2025</SelectItem>
-                    <SelectItem value="2026">2026</SelectItem>
-                  </SelectContent>
+                   <SelectContent>
+                     {yearOptions.map((availableYear) => (
+                       <SelectItem key={availableYear} value={String(availableYear)}>
+                         {availableYear}
+                         {availableYear === new Date().getFullYear() ? ' (provisional)' : ''}
+                       </SelectItem>
+                     ))}
+                   </SelectContent>
                 </Select>
+              </div>
+            </StaggerItem>
+
+            <StaggerItem>
+              <div
+                className={cn(
+                  'rounded-lg border px-4 py-3 text-sm',
+                  data.reporte.provisional
+                    ? 'border-amber-300 bg-amber-50 text-amber-950 dark:border-amber-800 dark:bg-amber-950/30 dark:text-amber-100'
+                    : 'border-emerald-300 bg-emerald-50 text-emerald-950 dark:border-emerald-800 dark:bg-emerald-950/30 dark:text-emerald-100',
+                )}
+                role="status"
+              >
+                {data.reporte.provisional
+                  ? `Reporte provisional. Corte: ${new Date(data.reporte.fechaCorte).toLocaleString('es-CU', { timeZone: ACCOUNTING_TIME_ZONE })}.`
+                  : `Snapshot aprobado e íntegro. Balance al ${new Date(data.reporte.fechaCorte).toLocaleString('es-CU', { timeZone: ACCOUNTING_TIME_ZONE })}; resultado hasta ${new Date(data.reporte.resultadoHasta ?? data.reporte.fechaCorte).toLocaleString('es-CU', { timeZone: ACCOUNTING_TIME_ZONE })}.`}
               </div>
             </StaggerItem>
 

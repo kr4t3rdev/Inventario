@@ -27,6 +27,21 @@ export type EntidadContable =
   | 'transferencia_bancaria'
   | 'ajuste_bancario';
 
+/** Zona horaria contable usada para delimitar años y fechas de operación. */
+export const ACCOUNTING_TIME_ZONE = 'America/Havana';
+
+/**
+ * @description Obtiene el año civil de un instante usando la zona contable única.
+ * @param {Date} date - Instante UTC que se convertirá.
+ * @returns {number} Año civil en la zona contable.
+ */
+export function getAccountingYear(date: Date): number {
+  return Number(new Intl.DateTimeFormat('en-US', {
+    timeZone: ACCOUNTING_TIME_ZONE,
+    year: 'numeric',
+  }).format(date));
+}
+
 /**
  * Configuración del campo de fecha para una entidad.
  */

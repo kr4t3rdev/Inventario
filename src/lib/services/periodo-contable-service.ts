@@ -329,8 +329,10 @@ export class PeriodoContableService {
 		actor: string,
 		metadata?: { snapshotsCount?: number; operacionesCount?: number },
 		esManager: boolean = false,
+		client?: Prisma.TransactionClient,
 	) {
-		const periodo = await prisma.periodoContable.findUnique({
+		const db = client ?? prisma;
+		const periodo = await db.periodoContable.findUnique({
 			where: { periodoId },
 		});
 
@@ -358,7 +360,7 @@ export class PeriodoContableService {
 
 		// Validar que no tenga subperíodos abiertos o en cierre
 		// Primero por relación explícita (jerarquía), luego por fechas (legacy compat)
-		const hijosPorRelacion = await prisma.periodoContable.count({
+		const hijosPorRelacion = await db.periodoContable.count({
 			where: {
 				periodoPadreId: periodoId,
 				estado: { in: [EstadoPeriodo.ABIERTO, EstadoPeriodo.EN_CIERRE] },
@@ -378,7 +380,7 @@ export class PeriodoContableService {
 			const tiposDescendientes = this._obtenerTiposDescendientes(
 				periodo.tipo as TipoPeriodo,
 			);
-			const hijosLegacy = await prisma.periodoContable.count({
+			const hijosLegacy = await db.periodoContable.count({
 				where: {
 					tenantId: periodo.tenantId,
 					periodoPadreId: null, // Solo períodos sin padre explícito (legacy)
@@ -411,7 +413,7 @@ export class PeriodoContableService {
 			updateData.aprobadoAt = new Date();
 		}
 
-		const resultado = await prisma.periodoContable.update({
+		const resultado = await db.periodoContable.update({
 			where: { periodoId },
 			data: updateData,
 		});
@@ -431,7 +433,7 @@ export class PeriodoContableService {
 				}),
 				...(esManager && { autoAprobado: true }),
 			},
-		});
+		}, client);
 
 		return resultado;
 	}
