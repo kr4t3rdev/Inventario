@@ -223,6 +223,9 @@ model Tenant {
   seriesFacturacion          SerieFacturacion[]
   licencias                  TenantLicense[]
   memberships                TenantMembership[]
+  accountingPolicy           TenantAccountingPolicy?
+  financialAuxiliaryCheckpoints FinancialAuxiliaryCheckpoint[]
+  snapshotPeriodos           SnapshotPeriodo[]
   turnosPos                  TurnoPuntoVenta[]
       tiposPago                 TipoPago[]
 
@@ -1398,6 +1401,42 @@ model Moneda {
   catalogoReparacionConfig CatalogoReparacionConfig?
   tasasCambio              TasaCambio[]
   transacciones            TransaccionMoneda[]
+  tenantAccountingPolicies TenantAccountingPolicy[]
+  financialAuxiliaryCheckpoints FinancialAuxiliaryCheckpoint[]
+}
+
+model TenantAccountingPolicy {
+  tenantId               String   @id
+  functionalCurrencyCode String
+  createdAt              DateTime @default(now())
+  updatedAt              DateTime @updatedAt
+  updatedBy              String
+  tenant                 Tenant   @relation(fields: [tenantId], references: [tenantId], onDelete: Restrict)
+  functionalCurrency     Moneda   @relation(fields: [functionalCurrencyCode], references: [codigo], onDelete: Restrict)
+
+  @@index([functionalCurrencyCode])
+  @@map("tenant_accounting_policies")
+}
+
+model FinancialAuxiliaryCheckpoint {
+  checkpointId          String   @id @default(cuid())
+  tenantId              String
+  schemaVersion         Int?
+  cutoffAt              DateTime
+  capturedAt            DateTime
+  functionalCurrencyCode String
+  payload               Json
+  hashIntegridad        String
+  capturedBy            String
+  createdAt             DateTime @default(now())
+  tenant                Tenant   @relation(fields: [tenantId], references: [tenantId], onDelete: Restrict)
+  functionalCurrency    Moneda   @relation(fields: [functionalCurrencyCode], references: [codigo], onDelete: Restrict)
+
+  @@unique([tenantId, cutoffAt])
+  @@index([tenantId, schemaVersion, cutoffAt])
+  @@index([tenantId, capturedAt])
+  @@index([functionalCurrencyCode])
+  @@map("financial_auxiliary_checkpoints")
 }
 
 model CatalogoReparacionConfig {
@@ -1487,6 +1526,14 @@ model ReconciliacionVenta {
   moneda                      String         @default("CUP")
   tasaCambio                  Decimal?
   montoConvertido             Decimal?
+  functionalCurrency          String?
+  rateEffectiveAt             DateTime?
+  fxProvenanceKind            String?
+  fxProvenanceSource          String?
+  fxCatalogRateId             String?
+  fxEvidenceJson              Json?
+  fxEvidenceFingerprint       String?
+  fxEvidenceVersion           Int?
   fechaReconciliacion         DateTime       @default(now())
   observaciones               String?
   reconciliadoPor             String
@@ -1505,6 +1552,7 @@ model ReconciliacionVenta {
   venta                       Venta?         @relation(fields: [ventaId], references: [ventaId])
 
   @@index([tenantId])
+  @@index([tenantId, fxProvenanceKind])
 }
 
 model ReconciliacionServicio {
@@ -1516,6 +1564,14 @@ model ReconciliacionServicio {
   moneda              String         @default("CUP")
   tasaCambio          Decimal?
   montoConvertido     Decimal?
+  functionalCurrency          String?
+  rateEffectiveAt             DateTime?
+  fxProvenanceKind            String?
+  fxProvenanceSource          String?
+  fxCatalogRateId             String?
+  fxEvidenceJson              Json?
+  fxEvidenceFingerprint       String?
+  fxEvidenceVersion           Int?
   fechaReconciliacion DateTime       @default(now())
   observaciones       String?
   reconciliadoPor     String
@@ -1528,6 +1584,7 @@ model ReconciliacionServicio {
   ventasServicio      VentaServicios @relation(fields: [ventaServicioId], references: [ventaServicioId])
 
   @@index([tenantId])
+  @@index([tenantId, fxProvenanceKind])
 }
 
 model ReconciliacionGasto {
@@ -1541,6 +1598,14 @@ model ReconciliacionGasto {
   moneda              String          @default("CUP")
   tasaCambio          Decimal?
   montoConvertido     Decimal?
+  functionalCurrency          String?
+  rateEffectiveAt             DateTime?
+  fxProvenanceKind            String?
+  fxProvenanceSource          String?
+  fxCatalogRateId             String?
+  fxEvidenceJson              Json?
+  fxEvidenceFingerprint       String?
+  fxEvidenceVersion           Int?
   descripcion         String
   periodo             String?
   fechaReconciliacion DateTime        @default(now())
@@ -1563,6 +1628,7 @@ model ReconciliacionGasto {
   tipoPago            TipoPago        @relation(fields: [tipoPagoId], references: [tipoId])
 
   @@index([tenantId])
+  @@index([tenantId, fxProvenanceKind])
 }
 
 model AjusteBancario {
@@ -1577,12 +1643,14 @@ model AjusteBancario {
   descripcion     String
   motivo          String
   realizadoPor    String
+  fechaOperacion  DateTime        @default(now())
   createdAt       DateTime       @default(now())
   updatedAt       DateTime       @updatedAt
   cuentaBancaria  CuentaBancaria @relation(fields: [cuentaId], references: [cuentaId])
   tenant          Tenant         @relation(fields: [tenantId], references: [tenantId])
 
   @@index([tenantId])
+  @@index([tenantId, fechaOperacion])
 }
 
 model TransferenciaBancaria {
@@ -2504,6 +2572,15 @@ model SnapshotPeriodo {
   snapshotId      String          @id @default(cuid())
   periodoId       String
   version         Int             @default(1)
+  /// Nullable para conservar filas v2 existentes sin reinterpretarlas como v3.
+  tenantId        String?
+  schemaVersion   Int?
+  status          String?
+  cutoffAt        DateTime?
+  capturedAt      DateTime?
+  approvedAt      DateTime?
+  approvedBy      String?
+  canonicalContractVersion String?
   /// Datos crudos del snapshot en base caja
   baseCajaJson    Json?
   /// Datos crudos del snapshot en base devengo
@@ -2514,8 +2591,10 @@ model SnapshotPeriodo {
   hashIntegridad  String?
   createdAt       DateTime        @default(now())
   periodo         PeriodoContable @relation(fields: [periodoId], references: [periodoId], onDelete: Cascade)
+  tenant          Tenant?         @relation(fields: [tenantId], references: [tenantId], onDelete: Restrict)
 
   @@unique([periodoId, version])
+  @@index([tenantId, status, cutoffAt])
   @@index([periodoId, createdAt])
   @@map("snapshot_periodos")
 }

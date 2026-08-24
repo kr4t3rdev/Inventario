@@ -94,5 +94,5 @@ export interface FinancialPeriod {
   code: string | null;
   year: number;
   cutoffAt: string;
-  snapshotVersion: 2;
+  snapshotVersion: 2 | 3;
 }

@@ -16,7 +16,11 @@ import {
 import { AuditLogService } from "@/lib/services/audit-log-service";
 import { endOfDay } from "@/lib/date-range";
 import type { AuthenticatedUser } from "@/lib/auth-middleware";
-import { validateSaleReconciliationInput } from "@/features/contabilidad/services/accounting-reconciliation-service";
+import {
+	buildPersistedAccountingAmount,
+	validateSaleReconciliationInput,
+} from "@/features/contabilidad/services/accounting-reconciliation-service";
+import { acquireAccountingTenantLock } from "@/features/contabilidad/services/accounting-tenant-lock-service";
 
 // ─── Stats Hub ────────────────────────────────────────────
 
@@ -368,6 +372,7 @@ export const reconciliarVentaAction = withAction(
 				tipoPagoId: string;
 				monto: number;
 				moneda?: string;
+				tasaCambio?: number;
 				fechaReconciliacion?: string;
 				observaciones?: string;
 			},
@@ -376,8 +381,31 @@ export const reconciliarVentaAction = withAction(
 			requireFeature(user, 'contabilidad', 'reconciliar ventas');
 			const tenantId = requireTenant(user);
 			validateSaleReconciliationInput(input);
+			const fechaReconciliacion = input.fechaReconciliacion
+				? new Date(input.fechaReconciliacion)
+				: new Date();
+			let fxCatalogRateId: string | null = null;
+			if ((input.moneda || 'CUP').trim().toUpperCase() !== 'CUP') {
+				try {
+					const rate = await exchangeRateProvider.getRateAsOf({
+						sourceCurrency: input.moneda || 'CUP',
+						boundaryAt: fechaReconciliacion,
+					});
+					fxCatalogRateId = rate?.tasaId ?? null;
+				} catch {
+					fxCatalogRateId = null;
+				}
+			}
+			const conversion = buildPersistedAccountingAmount(
+				input.monto,
+				input.moneda || 'CUP',
+				input.tasaCambio,
+				fechaReconciliacion,
+				fxCatalogRateId,
+			);
 
 			const result = await prisma.$transaction(async (tx) => {
+				await acquireAccountingTenantLock(tx, tenantId);
 				// Re-read the sale and its receivable while holding the transaction.
 				// Cancellation claims deletedAt atomically, so this prevents a late
 				// reconciliation from reactivating an annulled CxC or bank balance.
@@ -472,9 +500,10 @@ export const reconciliarVentaAction = withAction(
 						tipoPagoId: input.tipoPagoId,
 						monto: input.monto,
 						moneda: input.moneda || "CUP",
-						fechaReconciliacion: input.fechaReconciliacion
-							? new Date(input.fechaReconciliacion)
-							: new Date(),
+						montoConvertido: conversion.montoConvertido,
+						tasaCambio: conversion.tasaCambio,
+						fechaReconciliacion,
+						...(conversion.fxEvidence ?? {}),
 						observaciones: input.observaciones,
 						tenantId,
 						reconciliadoPor: user.userId,
@@ -654,6 +683,7 @@ export const reconciliarServicioAction = withAction(
 					tipoPagoId: string;
 					monto: number;
 					moneda?: string;
+					tasaCambio?: number;
 					observaciones?: string;
 				}>;
 				fechaReconciliacion?: string;
@@ -671,6 +701,7 @@ export const reconciliarServicioAction = withAction(
 			}
 
 			const result = await prisma.$transaction(async (tx) => {
+				await acquireAccountingTenantLock(tx, tenantId);
 				// Verificar el total del servicio
 				const servicio = await tx.ventaServicios.findUnique({
 					where: { ventaServicioId: input.ventaServicioId },
@@ -701,6 +732,29 @@ export const reconciliarServicioAction = withAction(
 						data: { saldo: { increment: dist.monto } },
 					});
 
+					const fechaDistribucion = input.fechaReconciliacion
+						? new Date(input.fechaReconciliacion)
+						: new Date();
+					let distRateId: string | null = null;
+					if ((dist.moneda || 'CUP').trim().toUpperCase() !== 'CUP') {
+						try {
+							const rate = await exchangeRateProvider.getRateAsOf({
+								sourceCurrency: dist.moneda || 'CUP',
+								boundaryAt: fechaDistribucion,
+							});
+							distRateId = rate?.tasaId ?? null;
+						} catch {
+							distRateId = null;
+						}
+					}
+					const conversion = buildPersistedAccountingAmount(
+						dist.monto,
+						dist.moneda || 'CUP',
+						dist.tasaCambio,
+						fechaDistribucion,
+						distRateId,
+					);
+
 					await tx.reconciliacionServicio.create({
 						data: {
 							ventaServicioId: input.ventaServicioId,
@@ -708,9 +762,10 @@ export const reconciliarServicioAction = withAction(
 							tipoPagoId: dist.tipoPagoId,
 							monto: dist.monto,
 							moneda: dist.moneda || "CUP",
-							fechaReconciliacion: input.fechaReconciliacion
-								? new Date(input.fechaReconciliacion)
-								: new Date(),
+							montoConvertido: conversion.montoConvertido,
+							tasaCambio: conversion.tasaCambio,
+							fechaReconciliacion: fechaDistribucion,
+							...(conversion.fxEvidence ?? {}),
 							observaciones: dist.observaciones,
 							tenantId,
 							reconciliadoPor: user.userId,
@@ -1134,6 +1189,7 @@ export const reconciliarGastoAction = withAction(
 
 			try {
 				const result = await prisma.$transaction(async (tx) => {
+					await acquireAccountingTenantLock(tx, tenantId);
 					if (esServicio) {
 						// Serialize against CompraServicio deletion so a late payment cannot
 						// recreate reconciliation effects after the row is claimed.

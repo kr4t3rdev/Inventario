@@ -4,6 +4,7 @@ import { ActionError } from '@/lib/server-actions';
 import { AuditLogService } from '@/lib/services/audit-log-service';
 import { requireTenant } from '@/lib/services/tenant-scope';
 import type { AuthenticatedUser } from '@/lib/auth-middleware';
+import { acquireAccountingTenantLock } from './accounting-tenant-lock-service';
 
 const validateBankTransferSchema = z.object({
   cuentaOrigenId: z.string().min(1, 'Cuenta origen es requerida'),
@@ -31,6 +32,8 @@ const createBankAdjustmentSchema = z.object({
   moneda: z.string().min(1, 'Moneda es requerida').default('CUP'),
   descripcion: z.string().min(1, 'Descripción es obligatoria'),
   motivo: z.string().min(1, 'Motivo es obligatorio'),
+  tasaCambio: z.number().positive().optional(),
+  fechaOperacion: z.coerce.date().optional(),
 });
 
 const createCapitalInjectionSchema = z.object({
@@ -185,6 +188,7 @@ export const AccountingOperationsMutationService = {
     const numeroComprobante = `TRF-${nextNumber.toString().padStart(6, '0')}`;
 
     const transferencia = await prisma.$transaction(async (tx: any) => {
+      await acquireAccountingTenantLock(tx, tenantId);
       await tx.cuentaBancaria.update({
         where: { cuentaId: parsed.cuentaOrigenId },
         data: { saldo: { decrement: parsed.montoOrigen } },
@@ -271,15 +275,21 @@ export const AccountingOperationsMutationService = {
     const saldoNegativo = nuevoSaldo < 0;
 
     const resultado = await prisma.$transaction(async (tx: any) => {
+      await acquireAccountingTenantLock(tx, tenantId);
       const ajuste = await tx.ajusteBancario.create({
         data: {
           cuentaBancaria: { connect: { cuentaId: parsed.cuentaId } },
           tipo: parsed.tipo,
-          monto: parsed.monto,
-          moneda: parsed.moneda,
-          descripcion: parsed.descripcion,
+           monto: parsed.monto,
+           moneda: parsed.moneda,
+           tasaCambio: parsed.moneda.toUpperCase() === 'CUP' ? 1 : parsed.tasaCambio,
+           montoConvertido: parsed.moneda.toUpperCase() === 'CUP'
+             ? parsed.monto
+             : parsed.tasaCambio ? parsed.monto * parsed.tasaCambio : null,
+           descripcion: parsed.descripcion,
           motivo: parsed.motivo,
           realizadoPor: user.userId,
+          fechaOperacion: parsed.fechaOperacion ?? new Date(),
           tenant: { connect: { tenantId } },
         },
       });
@@ -329,11 +339,14 @@ export const AccountingOperationsMutationService = {
     const parsed = createCapitalInjectionSchema.parse(input);
     const tenantId = requireTenant(user);
 
-    const inyeccion = await prisma.inyeccionCapital.create({
-      data: {
-        // @ts-expect-error Prisma typing drift in project for InyeccionCapital create input
-        monto: parsed.monto, moneda: parsed.moneda, tipo: parsed.tipo, descripcion: parsed.descripcion, cuentaBancariaId: parsed.cuentaBancariaId, tenantId,
-      },
+    const inyeccion = await prisma.$transaction(async (tx: any) => {
+      await acquireAccountingTenantLock(tx, tenantId);
+      return tx.inyeccionCapital.create({
+        data: {
+          // @ts-expect-error Prisma typing drift in project for InyeccionCapital create input
+          monto: parsed.monto, moneda: parsed.moneda, tipo: parsed.tipo, descripcion: parsed.descripcion, cuentaBancariaId: parsed.cuentaBancariaId, tenantId,
+        },
+      });
     });
 
     await AuditLogService.log({
@@ -357,11 +370,14 @@ export const AccountingOperationsMutationService = {
     const parsed = registerCapitalPaymentSchema.parse(input);
     const tenantId = requireTenant(user);
 
-    const pago = await prisma.pagoDeuda.create({
-      data: {
-        // @ts-expect-error Prisma typing drift in project for PagoDeuda create input
-        inyeccionId: parsed.inyeccionId, monto: parsed.monto, cuentaBancariaId: parsed.cuentaBancariaId, tipoPagoId: parsed.tipoPagoId, observaciones: parsed.observaciones, tenantId,
-      },
+    const pago = await prisma.$transaction(async (tx: any) => {
+      await acquireAccountingTenantLock(tx, tenantId);
+      return tx.pagoDeuda.create({
+        data: {
+          // @ts-expect-error Prisma typing drift in project for PagoDeuda create input
+          inyeccionId: parsed.inyeccionId, monto: parsed.monto, cuentaBancariaId: parsed.cuentaBancariaId, tipoPagoId: parsed.tipoPagoId, observaciones: parsed.observaciones, tenantId,
+        },
+      });
     });
 
     await AuditLogService.log({

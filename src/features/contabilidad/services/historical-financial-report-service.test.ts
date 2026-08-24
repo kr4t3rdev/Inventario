@@ -6,6 +6,7 @@ const prismaMock = vi.hoisted(() => {
     findFirst: vi.fn(),
     findMany: vi.fn(),
     },
+    financialAuxiliaryCheckpoint: { findUnique: vi.fn() },
     $transaction: vi.fn(),
   };
   mock.$transaction.mockImplementation(async (callback) => callback(mock));
@@ -48,6 +49,79 @@ const result = {
 describe('historical financial report service', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    prismaMock.financialAuxiliaryCheckpoint.findUnique.mockResolvedValue(null);
+  });
+
+  it('resuelve un checkpoint tenant-scoped solo cuando coincide el corte exacto', async () => {
+    const cutoffAt = new Date('2026-07-01T04:00:00.000Z');
+    const payload = {
+      version: 1,
+      cutoffAt: cutoffAt.toISOString(),
+      capturedAt: '2026-07-01T04:00:01.000Z',
+      resultThrough: cutoffAt.toISOString(),
+      functionalCurrency: 'CUP',
+      balance,
+      result,
+      sourceFingerprints: {},
+      appliedFxEvidence: [],
+    };
+    const { hashImmutableFinancialEvidence } = await import(
+      './immutable-financial-evidence'
+    );
+    prismaMock.financialAuxiliaryCheckpoint.findUnique.mockResolvedValue({
+      checkpointId: 'checkpoint-1',
+      tenantId: 'tenant-1',
+      cutoffAt,
+      capturedAt: new Date(payload.capturedAt),
+      functionalCurrencyCode: 'CUP',
+      payload,
+      hashIntegridad: hashImmutableFinancialEvidence(payload),
+    });
+    const calculateLive = vi.fn();
+    const { resolveFinancialReport } = await import('./historical-financial-report-service');
+
+    const report = await resolveFinancialReport({
+      tenantId: 'tenant-1',
+      year: 2026,
+      now: new Date('2026-08-23T15:00:00.000Z'),
+      requestedCutoffAt: cutoffAt,
+      calculateLive,
+    });
+
+    expect(report).toMatchObject({
+      status: 'AVAILABLE',
+      origin: 'CHECKPOINT',
+      cutoffAt: cutoffAt.toISOString(),
+      checkpointId: 'checkpoint-1',
+      balance,
+      result,
+    });
+    expect(prismaMock.financialAuxiliaryCheckpoint.findUnique).toHaveBeenCalledWith({
+      where: { tenantId_cutoffAt: { tenantId: 'tenant-1', cutoffAt } },
+    });
+    expect(prismaMock.periodoContable.findFirst).not.toHaveBeenCalled();
+    expect(calculateLive).not.toHaveBeenCalled();
+  });
+
+  it('no usa auxiliares mutables cuando falta el checkpoint del corte solicitado', async () => {
+    prismaMock.financialAuxiliaryCheckpoint.findUnique.mockResolvedValue(null);
+    const calculateLive = vi.fn();
+    const { resolveFinancialReport } = await import('./historical-financial-report-service');
+
+    const report = await resolveFinancialReport({
+      tenantId: 'tenant-1',
+      year: 2026,
+      now: new Date('2026-08-23T15:00:00.000Z'),
+      requestedCutoffAt: new Date('2026-07-01T04:00:00.000Z'),
+      calculateLive,
+    });
+
+    expect(report).toEqual({
+      status: 'UNAVAILABLE',
+      reason: 'NO_HISTORICAL_EVIDENCE',
+      periodId: null,
+    });
+    expect(calculateLive).not.toHaveBeenCalled();
   });
 
   it('declara provisional el período contable actual abierto y conserva el corte exacto', async () => {
@@ -341,5 +415,69 @@ describe('historical financial report service', () => {
       cutoffAt: validSnapshot.payload.cutoffAt,
       snapshotVersion: 2,
     }]);
+  });
+
+  it('resuelve snapshots v3 aprobados con su contrato canónico', async () => {
+    const { createFinancialSnapshotV3, hashFinancialSnapshotV3 } = await import(
+      './financial-snapshot-v3-service'
+    );
+    const cutoffAt = new Date('2025-12-31T23:59:59.999Z');
+    const capturedAt = new Date('2026-01-02T12:00:00.000Z');
+    const snapshot = createFinancialSnapshotV3({
+      tenantId: 'tenant-1',
+      periodoId: 'period-2025',
+      version: 1,
+      cutoffAt,
+      capturedAt,
+      canonicalContractVersion: 'financial-report.v3',
+      range: {
+        gte: '2025-01-01T00:00:00.000Z',
+        lt: cutoffAt.toISOString(),
+      },
+      functionalCurrency: 'CUP',
+      balance,
+      result,
+      cashFlow: { operating: 10 },
+      coverage: { balance: balance.coverage, result: { complete: true } },
+      provenance: { appliedFxEvidence: [], sourceFingerprints: {} },
+    });
+    const approvedPayload = {
+      ...snapshot.payload,
+      approvedAt: '2026-01-02T12:00:01.000Z',
+    };
+    prismaMock.periodoContable.findFirst.mockResolvedValue({
+      periodoId: 'period-2025',
+      estado: 'APROBADO',
+      fechaInicio: new Date('2025-01-01T00:00:00.000Z'),
+      fechaFin: new Date('2026-01-01T00:00:00.000Z'),
+      hashIntegridad: hashFinancialSnapshotV3(approvedPayload),
+      snapshotPeriodos: [{
+        snapshotId: 'snapshot-v3',
+        version: 2,
+        tenantId: 'tenant-1',
+        schemaVersion: 3,
+        status: 'APPROVED',
+        resumenJson: approvedPayload,
+        hashIntegridad: hashFinancialSnapshotV3(approvedPayload),
+        createdAt: capturedAt,
+      }],
+    });
+
+    const { resolveFinancialReport } = await import('./historical-financial-report-service');
+    const report = await resolveFinancialReport({
+      tenantId: 'tenant-1',
+      year: 2025,
+      now: new Date('2026-08-21T15:30:00.000Z'),
+      calculateLive: vi.fn(),
+    });
+
+    expect(report).toMatchObject({
+      status: 'AVAILABLE',
+      origin: 'SNAPSHOT',
+      snapshotId: 'snapshot-v3',
+      snapshotVersion: 3,
+      balance,
+      result,
+    });
   });
 });

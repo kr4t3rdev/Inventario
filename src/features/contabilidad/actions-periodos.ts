@@ -17,7 +17,6 @@ import { requireFeature, requireTenant } from "@/lib/services/tenant-scope";
 import type { AuthenticatedUser } from "@/lib/auth-middleware";
 import { PeriodoContableService } from "@/lib/services/periodo-contable-service";
 import { AperturaPeriodoService } from "@/lib/services/apertura-periodo-service";
-import { SnapshotService } from "@/lib/services/periodo-snapshot-service";
 import { AuditLogService } from "@/lib/services/audit-log-service";
 import { invalidateCache } from "@/lib/services/periodo-contable-guard";
 import {
@@ -32,7 +31,18 @@ import { prisma } from "@/lib/prisma";
 import type { Prisma } from "@/generated/prisma";
 import { getCurrentBalance } from "@/features/contabilidad/services/current-balance-service";
 import { getReconciledResultForYear } from "@/features/contabilidad/services/reconciled-result-service";
-import { createFinancialSnapshot } from "@/features/contabilidad/services/historical-financial-report-service";
+import {
+	captureFinancialAuxiliaryCheckpoint,
+	collectFinancialAuxiliaryEvidence,
+	type FinancialAuxiliaryCheckpointPayload,
+	} from "@/features/contabilidad/services/financial-auxiliary-checkpoint-service";
+import { acquireAccountingTenantLock } from "@/features/contabilidad/services/accounting-tenant-lock-service";
+import {
+	approveFinancialSnapshotV3,
+	captureFinancialSnapshotV3,
+} from "@/features/contabilidad/services/financial-snapshot-v3-service";
+import { hashImmutableFinancialEvidence } from "@/features/contabilidad/services/immutable-financial-evidence";
+import { isFinancialV3CaptureEnabled } from "@/features/contabilidad/config/financial-v3-capture";
 import {
 	obtenerBalanceConVariacion,
 	obtenerVentasVsReconciliado,
@@ -430,89 +440,196 @@ export const cerrarPeriodoAction = withAction(
 		}
 
 		// Usar modo contable del período (CAJA | DEVENGO)
-		const modoContable = (periodo.modoContable ?? "CAJA") as "CAJA" | "DEVENGO";
-		const modoSnapshot = modoContable === "CAJA" ? "caja" : "devengo";
-
-		const snapshotService = new SnapshotService();
+		const esAdminTenant = isTenantAdminRole(user.tenantRole);
+		if (periodo.tipo === TipoPeriodo.ANUAL && !isFinancialV3CaptureEnabled()) {
+			throw new ActionError(
+				"La captura financiera v3 no está habilitada para este entorno",
+				"CUTOFF_EVIDENCE_UNAVAILABLE",
+			);
+		}
+		let snapshotsCount = 0;
 		// Cerrar período y persistir su evidencia en una sola transacción.
 		// Managers y admins del tenant auto-aprueban al cerrar.
-		const esAdminTenant = isTenantAdminRole(user.tenantRole);
-		const { cerrado, snapshotsCount } = await prisma.$transaction(async (tx) => {
-			const snapshots = await snapshotService.generarSnapshot(
-				parsed.periodoId,
-				modoSnapshot,
-				user.userId,
-				tx,
-			);
-			const { resumenJson, hashIntegridad } =
-				await snapshotService.generarResumenSnapshot(
-					tenantId,
-					periodo.fechaInicio,
-					periodo.fechaFin,
-					modoContable,
+			const { cerrado } = await prisma.$transaction(async (tx) => {
+				await acquireAccountingTenantLock(tx, tenantId);
+				let resultadoCierre;
+
+				if (periodo.tipo === TipoPeriodo.ANUAL) {
+					const year = getAccountingYear(periodo.fechaInicio);
+					let collectedResult: Awaited<ReturnType<typeof getReconciledResultForYear>> | undefined;
+					let collectedBalance: Awaited<ReturnType<typeof getCurrentBalance>> | undefined;
+
+					const checkpoint = await captureFinancialAuxiliaryCheckpoint({
+						tenantId,
+						capturedBy: user.userId,
+						schemaVersion: 3,
+						client: tx,
+						collectEvidence: async (checkpointClient, checkpointCutoffAt) => {
+							collectedResult = await getReconciledResultForYear({
+								tenantId,
+								year,
+								cutoffAt: checkpointCutoffAt,
+								client: checkpointClient,
+							});
+							collectedBalance = await getCurrentBalance({
+								tenantId,
+								asOf: checkpointCutoffAt,
+								currentResult: collectedResult.annual.reconciledResult,
+								currentResultYear: year,
+								client: checkpointClient,
+							});
+							const auxiliaries = await collectFinancialAuxiliaryEvidence({
+								client: checkpointClient,
+								tenantId,
+								cutoffAt: checkpointCutoffAt,
+								functionalCurrency: collectedBalance.functionalCurrency,
+							});
+
+							const resultRecord = collectedResult as unknown as Record<string, unknown>;
+							const resultCoverage = resultRecord.coverage as
+								| { complete?: boolean }
+								| undefined;
+							const balanceCoverage = collectedBalance.coverage as
+								{ complete?: boolean } | undefined;
+							const incidents = resultRecord.incidents;
+							const estimates = resultRecord.estimates;
+							if (
+								balanceCoverage?.complete !== true ||
+								resultCoverage?.complete === false ||
+								(Array.isArray(incidents) && incidents.length > 0) ||
+								(Array.isArray(estimates) && estimates.length > 0)
+							) {
+								throw new ActionError(
+									"No existe evidencia canónica completa para capturar el cierre anual",
+									"CUTOFF_EVIDENCE_UNAVAILABLE",
+								);
+							}
+
+							return {
+								functionalCurrency: collectedBalance.functionalCurrency,
+								balance: collectedBalance,
+								result: collectedResult,
+								resultThrough: periodo.fechaFin.toISOString(),
+								sourceFingerprints: {
+									reconciledPeriods: String(collectedResult.monthly.length),
+								},
+								appliedFxEvidence: [],
+								auxiliaries,
+							};
+						},
+					});
+
+					const checkpointPayload = checkpoint.payload as unknown as
+						FinancialAuxiliaryCheckpointPayload;
+					const result = (collectedResult ?? checkpointPayload.result) as Awaited<
+						ReturnType<typeof getReconciledResultForYear>
+					>;
+					const balance = (collectedBalance ?? checkpointPayload.balance) as Awaited<
+						ReturnType<typeof getCurrentBalance>
+					>;
+					const checkpointCutoffAt = new Date(checkpointPayload.cutoffAt);
+					const checkpointCapturedAt = new Date(checkpointPayload.capturedAt);
+					const auxiliaries = checkpointPayload.version === 3
+						? checkpointPayload.auxiliaries
+						: undefined;
+					if (!auxiliaries) {
+						throw new ActionError(
+							"La evidencia auxiliar v3 no está disponible para el cierre anual",
+							"CUTOFF_EVIDENCE_UNAVAILABLE",
+						);
+					}
+					const resultRecord = result as unknown as Record<string, unknown>;
+					const incidents = Array.isArray(resultRecord.incidents)
+						? resultRecord.incidents
+						: [];
+					const estimates = Array.isArray(resultRecord.estimates)
+						? resultRecord.estimates
+						: [];
+					const cashFlow = resultRecord.annual;
+					const annualCashFlow = cashFlow && typeof cashFlow === "object"
+						? (cashFlow as Record<string, unknown>).cashFlow
+						: undefined;
+					if (!annualCashFlow || typeof annualCashFlow !== "object") {
+						throw new ActionError(
+							"El resultado canónico no contiene flujo de caja auditable",
+							"CUTOFF_EVIDENCE_UNAVAILABLE",
+						);
+					}
+					const sourceFingerprints = Object.fromEntries(
+						Object.entries(auxiliaries).map(([source, entries]) => [
+							source,
+							hashImmutableFinancialEvidence(entries),
+						]),
+					);
+					const snapshotPayload = {
+						cutoffAt: checkpointCutoffAt,
+						capturedAt: checkpointCapturedAt,
+						range: {
+							gte: periodo.fechaInicio.toISOString(),
+							lt: checkpointCutoffAt.toISOString(),
+						},
+						functionalCurrency: balance.functionalCurrency,
+						canonicalContractVersion: "financial-report.v3",
+						balance: balance as unknown as Record<string, unknown>,
+						result: result as unknown as Record<string, unknown>,
+						cashFlow: annualCashFlow as Record<string, unknown>,
+						coverage: {
+							balance: balance.coverage,
+							result: {
+								complete: incidents.length === 0 && estimates.length === 0,
+								incidentCount: incidents.length,
+								estimateCount: estimates.length,
+							},
+						},
+						provenance: {
+							appliedFxEvidence: checkpointPayload.appliedFxEvidence,
+							sourceFingerprints,
+						},
+					};
+					let approved: Awaited<ReturnType<typeof approveFinancialSnapshotV3>>;
+					try {
+						const captured = await captureFinancialSnapshotV3({
+							tenantId,
+							periodoId: parsed.periodoId,
+							version: 1,
+							...snapshotPayload,
+						}, tx);
+						approved = captured.status === "APPROVED"
+							? captured
+							: await approveFinancialSnapshotV3({
+								tenantId,
+								snapshotId: captured.snapshotId,
+								approvedAt: new Date(),
+								approvedBy: user.userId,
+							}, tx);
+					} catch (error) {
+						if (error instanceof ActionError) throw error;
+						throw new ActionError(
+							"No fue posible aprobar la evidencia financiera v3",
+							"FINANCIAL_V3_APPROVAL_FAILED",
+						);
+					}
+
+					await tx.periodoContable.update({
+						where: { periodoId: parsed.periodoId },
+						data: {
+							resumenJson: approved.resumenJson as unknown as Prisma.InputJsonValue,
+							hashIntegridad: approved.hashIntegridad,
+						},
+					});
+					snapshotsCount = 1;
+				}
+
+				resultadoCierre = await PeriodoContableService.cerrarPeriodo(
+					parsed.periodoId,
+					user.userId,
+					{ snapshotsCount },
+					esAdminTenant,
 					tx,
 				);
-			let persistedResumenJson = resumenJson as Record<string, unknown>;
-			let persistedHash = hashIntegridad;
-			if (periodo.tipo === TipoPeriodo.ANUAL) {
-				// El balance se congela al momento del cierre; el resultado conserva el fin del período.
-				const capturedAt = new Date();
-				const resultCutoffAt = new Date(periodo.fechaFin.getTime() + 1);
-				const year = getAccountingYear(periodo.fechaInicio);
-				const result = await getReconciledResultForYear({
-					tenantId,
-					year,
-					cutoffAt: resultCutoffAt,
-					client: tx,
-				});
-				const balance = await getCurrentBalance({
-					tenantId,
-					asOf: capturedAt,
-					currentResult: result.annual.reconciledResult,
-					currentResultYear: year,
-					client: tx,
-				});
-				const financialSnapshot = await createFinancialSnapshot({
-					cutoffAt: capturedAt,
-					resultThrough: periodo.fechaFin,
-					capturedAt,
-					balance,
-					result,
-					sources: {
-						bankSnapshots: snapshots.length,
-						reconciledPeriods: result.monthly.length,
-					},
-				});
-				persistedResumenJson = financialSnapshot.payload as unknown as Record<string, unknown>;
-				persistedHash = financialSnapshot.hash;
-			}
-			const resultadoCierre = await PeriodoContableService.cerrarPeriodo(
-				parsed.periodoId,
-				user.userId,
-				{ snapshotsCount: snapshots.length },
-				esAdminTenant,
-				tx,
-			);
 
-			await tx.periodoContable.update({
-				where: { periodoId: parsed.periodoId },
-				data: {
-					resumenJson: persistedResumenJson as unknown as Prisma.InputJsonValue,
-					hashIntegridad: persistedHash,
-				},
-			});
-
-			await snapshotService.crearVersionSnapshot(
-				parsed.periodoId,
-				{
-					resumenJson: persistedResumenJson,
-					hashIntegridad: persistedHash,
-				},
-				tx,
-			);
-
-			return { cerrado: resultadoCierre, snapshotsCount: snapshots.length };
-		}, { isolationLevel: "Serializable" });
+				return { cerrado: resultadoCierre };
+			}, { isolationLevel: "Serializable" });
 
 		AuditLogService.log({
 			accion: "UPDATE",

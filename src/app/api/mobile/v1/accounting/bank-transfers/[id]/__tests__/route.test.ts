@@ -46,7 +46,10 @@ describe('mobile accounting bank transfer detail route', () => {
 
     expect(response.status).toBe(200);
     expect(data.transferenciaId).toBe('tb-1');
-    expect(AccountingOperationsReadService.getBankTransferById).toHaveBeenCalledWith('tb-1');
+    expect(AccountingOperationsReadService.getBankTransferById).toHaveBeenCalledWith(
+      'tb-1',
+      'tenant-1',
+    );
   });
 
   it('maps missing transfer to 404', async () => {

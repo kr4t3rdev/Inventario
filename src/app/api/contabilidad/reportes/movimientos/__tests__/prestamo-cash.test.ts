@@ -5,6 +5,7 @@ vi.mock('@/lib/auth-middleware', () => ({
   authenticateUser: vi.fn().mockResolvedValue({
     user: {
       userId: 'user-test',
+      tenantId: 'tenant-test',
       role: 'user',
       planFeatures: {
         contabilidad: true,

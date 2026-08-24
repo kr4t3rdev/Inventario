@@ -200,6 +200,51 @@ describe('pago-gastos-workflow', () => {
     )
   })
 
+  it('persiste evidencia FX inmutable en reconciliaciones extranjeras', async () => {
+    const tx = createTxMock()
+    tx.tipoPago.findFirst.mockResolvedValue({
+      tipoId: 'tp-1',
+      isActive: true,
+      cuentaDefecto: 'cb-usd'
+    })
+    tx.cuentaBancaria.findFirst.mockResolvedValue({ cuentaId: 'cb-usd', isActive: true })
+    tx.reconciliacionGasto.findFirst.mockResolvedValue(null)
+    tx.cuentaBancaria.findMany.mockResolvedValue([
+      { cuentaId: 'cb-usd', moneda: 'USD', saldo: 1000, isActive: true }
+    ])
+    tx.reconciliacionGasto.create.mockResolvedValue({
+      reconciliacionId: 'rec-usd-fx',
+      cuentaId: 'cb-usd',
+      monto: 100,
+      moneda: 'USD',
+      montoConvertido: 2450,
+      descripcion: 'Pago USD'
+    })
+    tx.cuentaBancaria.updateMany.mockResolvedValue({ count: 1 })
+    tx.gastosDE.update.mockResolvedValue({})
+
+    await applyPagoGastoWorkflow(tx as any, {
+      tipoGasto: 'gastoDE',
+      referenciaId: 'gde-usd',
+      gastosDEId: 'gde-usd',
+      reconciliadoPor: 'user-1',
+      tenantId: 'tenant-1',
+      descripcion: 'Pago USD',
+      monto: 100,
+      moneda: 'USD',
+      tasaCambio: 24.5,
+      fechaPago: '2026-08-19T12:00:00.000Z'
+    })
+
+    const data = tx.reconciliacionGasto.create.mock.calls[0]?.[0]?.data
+    expect(data.functionalCurrency).toBe('CUP')
+    expect(data.fxProvenanceKind).toBe('MANUAL_GOVERNED')
+    expect(data.fxProvenanceSource).toBe('pago-gastos-workflow')
+    expect(data.rateEffectiveAt).toEqual(new Date('2026-08-19T12:00:00.000Z'))
+    expect(data.fxEvidenceVersion).toBe(1)
+    expect(data.fxEvidenceFingerprint).toMatch(/^[a-f0-9]{64}$/)
+  })
+
   it('para CxP parcial crea reconciliacion PARCIAL y no marca gasto DE como pagado', async () => {
     const tx = createTxMock()
     tx.tipoPago.findFirst.mockResolvedValue({

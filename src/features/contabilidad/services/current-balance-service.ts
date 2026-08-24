@@ -7,7 +7,7 @@ import {
   type PayableState,
   type ReceivableState,
 } from '@/features/contabilidad/domain/balance-calculator';
-import { exchangeRateProvider } from '@/features/contabilidad/services/exchange-rate-provider';
+import { getRequiredTenantAccountingPolicy } from './tenant-accounting-policy-service';
 import { prisma } from '@/lib/prisma';
 import type { Prisma } from '@/generated/prisma';
 import { getAccountingYear } from '@/lib/services/fecha-operacion-registry';
@@ -41,11 +41,8 @@ function isFunctionalCurrency(
  */
 export async function getCurrentBalance(params: CurrentBalanceParams) {
   const db = params.client ?? prisma;
-  const principalCurrency = await exchangeRateProvider.getPrincipalCurrency(params.client);
-  if (!principalCurrency) {
-    throw new Error('No existe una moneda funcional configurada');
-  }
-  const functionalCurrency = principalCurrency.codigo.trim().toUpperCase();
+  const policy = await getRequiredTenantAccountingPolicy(params.tenantId, params.client);
+  const functionalCurrency = policy.functionalCurrencyCode.trim().toUpperCase();
 
   const [
     bankAccounts,

@@ -86,13 +86,13 @@ export interface BalanceResultsReport {
     zonaHoraria: string;
   };
   reporte: {
-    origen: 'LIVE' | 'SNAPSHOT';
+    origen: 'LIVE' | 'SNAPSHOT' | 'CHECKPOINT';
     provisional: boolean;
     fechaCorte: string;
     resultadoHasta: string | null;
     periodoId: string | null;
     integridad: 'VALID' | null;
-    snapshotVersion: 2 | null;
+    snapshotVersion: 2 | 3 | null;
   };
 }
 
@@ -176,6 +176,7 @@ function presentBalanceResultsReport(report: AvailableReport): BalanceResultsRep
   const currentBalance = report.balance as CurrentBalance;
   const result = report.result as ReconciledResult;
   const isSnapshot = report.origin === 'SNAPSHOT';
+  const isImmutable = isSnapshot || report.origin === 'CHECKPOINT';
 
   return {
     balance: {
@@ -204,7 +205,7 @@ function presentBalanceResultsReport(report: AvailableReport): BalanceResultsRep
       incidencias: currentBalance.incidents,
       monedaFuncional: currentBalance.functionalCurrency,
       fechaCorte: report.cutoffAt,
-      resultadoHasta: isSnapshot ? report.resultThrough : null,
+      resultadoHasta: isImmutable ? report.resultThrough : null,
     },
     estadoResultados: {
       mensual: result.monthly.map(presentReconciledPeriod),
@@ -218,9 +219,9 @@ function presentBalanceResultsReport(report: AvailableReport): BalanceResultsRep
       origen: report.origin,
       provisional: report.provisional,
       fechaCorte: report.cutoffAt,
-      resultadoHasta: isSnapshot ? report.resultThrough : null,
+      resultadoHasta: isImmutable ? report.resultThrough : null,
       periodoId: report.periodId,
-      integridad: isSnapshot ? report.integrity : null,
+      integridad: isImmutable ? report.integrity : null,
       snapshotVersion: isSnapshot ? report.snapshotVersion : null,
     },
   };
@@ -234,15 +235,18 @@ function presentBalanceResultsReport(report: AvailableReport): BalanceResultsRep
 export async function getBalanceResultsReport(
   params: BalanceResultsReportParams,
 ): Promise<BalanceResultsReport> {
-  const now = params.cutoffAt ?? params.now ?? new Date();
-  validateReportParams(params, now);
-  const year = params.year ?? getAccountingYear(now);
+  const serverNow = params.now ?? new Date();
+  validateReportParams(params, serverNow);
+  const year = params.year ?? getAccountingYear(serverNow);
+  const requestedCutoffAt = params.cutoffAt;
 
   const report = await resolveFinancialReport({
     tenantId: params.tenantId,
     year,
-    now,
-    calculateLive: async (cutoffAt) => {
+    now: serverNow,
+    requestedCutoffAt,
+    calculateLive: async (evaluatedAt) => {
+      const cutoffAt = evaluatedAt;
       const result = await getReconciledResultForYear({
         tenantId: params.tenantId,
         year,

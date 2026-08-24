@@ -140,4 +140,51 @@ describe('balance results report service', () => {
     expect(accountingServicesMock.getCurrentBalance).not.toHaveBeenCalled();
     expect(accountingServicesMock.getReconciledResultForYear).not.toHaveBeenCalled();
   });
+
+  it('no acepta el corte del cliente como reloj del servidor en años históricos', async () => {
+    const { getBalanceResultsReport } = await import('./balance-results-report-service');
+    const clientCutoff = new Date('2025-12-31T23:59:59.000Z');
+
+    await getBalanceResultsReport({
+      tenantId: 'tenant-1',
+      year: 2025,
+      cutoffAt: clientCutoff,
+    }).catch(() => undefined);
+
+    expect(reportResolverMock.resolveFinancialReport).toHaveBeenCalledTimes(1);
+    const resolverArgs = reportResolverMock.resolveFinancialReport.mock.calls[0]?.[0] as {
+      now: Date;
+    };
+    expect(resolverArgs.now.getTime()).not.toBe(clientCutoff.getTime());
+  });
+
+  it('delega el corte exacto al resolver sin leer auxiliares mutables', async () => {
+    const { getBalanceResultsReport } = await import('./balance-results-report-service');
+    const currentYear = new Date().getFullYear();
+    const clientCutoff = new Date(`${currentYear}-08-01T00:00:00.000Z`);
+    reportResolverMock.resolveFinancialReport.mockResolvedValue({
+      status: 'AVAILABLE',
+      origin: 'CHECKPOINT',
+      provisional: false,
+      cutoffAt: clientCutoff.toISOString(),
+      resultThrough: clientCutoff.toISOString(),
+      periodId: null,
+      checkpointId: 'checkpoint-1',
+      integrity: 'VALID',
+      balance,
+      result,
+    });
+
+    await getBalanceResultsReport({
+      tenantId: 'tenant-1',
+      year: currentYear,
+      cutoffAt: clientCutoff,
+    });
+
+    expect(reportResolverMock.resolveFinancialReport).toHaveBeenCalledWith(expect.objectContaining({
+      requestedCutoffAt: clientCutoff,
+    }));
+    expect(accountingServicesMock.getReconciledResultForYear).not.toHaveBeenCalled();
+    expect(accountingServicesMock.getCurrentBalance).not.toHaveBeenCalled();
+  });
 });

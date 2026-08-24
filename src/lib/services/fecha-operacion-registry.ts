@@ -88,10 +88,10 @@ export const FECHA_OPERACION_POR_ENTIDAD: Record<EntidadContable, FechaCampoConf
     notas: 'Fecha en que se ejecutó la transferencia',
   },
   ajuste_bancario: {
-    campo: 'createdAt',
+    campo: 'fechaOperacion',
     modo: 'devengo',
     tabla: 'AjusteBancario',
-    notas: 'No tiene campo específico de operación; se usa createdAt como fallback. TODO: agregar fechaOperacion en futura migración',
+    notas: 'Fecha declarada por el usuario para el ajuste bancario',
   },
 };
 

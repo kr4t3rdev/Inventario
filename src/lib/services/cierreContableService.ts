@@ -1,6 +1,7 @@
-import { PrismaClient } from "@/generated/prisma";
-
-const prisma = new PrismaClient();
+import { prisma } from '@/lib/prisma';
+import { getReconciledResultForYear } from '@/features/contabilidad/services/reconciled-result-service';
+import { getAccountingYear } from '@/lib/services/fecha-operacion-registry';
+import { endOfDay } from '@/lib/date-range';
 
 /**
  * Calcula estadísticas para un cierre contable
@@ -10,62 +11,18 @@ const prisma = new PrismaClient();
  * @returns Estadísticas calculadas
  */
 export async function calcularEstadisticasCierre(tenantId: string, fechaInicio: Date, fechaFin: Date) {
-  // --- FLUJO DE CAJA (CASH BASIS) ---
-  // Basado en reconciliaciones (dinero que realmente entró o salió)
-
-  // Total Ventas Reconciliadas
-  const totalVentasRec = await prisma.reconciliacionVenta.aggregate({
-    _sum: { montoConvertido: true },
-    where: {
-      tenantId,
-      fechaReconciliacion: { gte: fechaInicio, lte: fechaFin },
-    },
+  const canonicalResult = await getReconciledResultForYear({
+    tenantId,
+    year: getAccountingYear(fechaFin),
+    startAt: fechaInicio,
+    cutoffAt: endOfDay(fechaFin.toISOString()),
   });
-
-  // Total Servicios Reconciliados
-  const totalServiciosRec = await prisma.reconciliacionServicio.aggregate({
-    _sum: { montoConvertido: true },
-    where: {
-      tenantId,
-      fechaReconciliacion: { gte: fechaInicio, lte: fechaFin },
-    },
-  });
-
-  const totalIngresosCaja = (Number(totalVentasRec._sum.montoConvertido || 0)) + (Number(totalServiciosRec._sum.montoConvertido || 0));
-
-  // Total Gastos Reconciliados (Pagados)
-  const totalGastosPagados = await prisma.reconciliacionGasto.aggregate({
-    _sum: { montoConvertido: true },
-    where: {
-      tenantId,
-      fechaReconciliacion: { gte: fechaInicio, lte: fechaFin },
-    },
-  });
-
-  const totalEgresosCaja = Number(totalGastosPagados._sum.montoConvertido || 0);
-
-  // --- RENDIMIENTO ECONÓMICO (ACCRUAL BASIS) ---
-  // Basado en registros (lo que se devengó, se haya pagado o no)
-
-  // Ventas Totales
-  const ventasTotalesAccrual = await prisma.venta.aggregate({
-    _sum: { total: true },
-    where: {
-      tenantId,
-      createdAt: { gte: fechaInicio, lte: fechaFin },
-    },
-  });
-
-  // Servicios Totales
-  const serviciosTotalesAccrual = await prisma.ventaServicios.aggregate({
-    _sum: { total: true },
-    where: {
-      tenantId,
-      createdAt: { gte: fechaInicio, lte: fechaFin },
-    },
-  });
-
-  const totalIngresosAccrual = Number(ventasTotalesAccrual._sum.total || 0) + Number(serviciosTotalesAccrual._sum.total || 0);
+  const annual = canonicalResult.annual;
+  // Caja real: ingresos por cobros reconciliados y egresos por pagos operativos más compras.
+  // El COGS es reconocimiento accrual proporcional al ingreso; no es salida de dinero.
+  const totalIngresosCaja = annual.income.total;
+  const totalEgresosCaja = annual.operatingExpenses.total + annual.inventoryPurchases;
+  const totalIngresosAccrual = annual.income.total;
 
   // Gastos Totales (Operativos + Salarios + Compras + Mermas)
   const total_merma = await prisma.merma.aggregate({
@@ -76,39 +33,12 @@ export async function calcularEstadisticasCierre(tenantId: string, fechaInicio: 
     },
   });
 
-  const total_salario = await prisma.pagosalario.aggregate({
-    _sum: { salario: true },
-    where: {
-      tenantId,
-      createdAt: { gte: fechaInicio, lte: fechaFin },
-    }
-  });
-
-  const total_gastos_operacion = await prisma.gastosDE.aggregate({
-    _sum: { monto: true },
-    where: {
-      tenantId,
-      createdAt: { gte: fechaInicio, lte: fechaFin },
-    }
-  });
-
-  const total_compras = await prisma.gastoCompra.aggregate({
-    _sum: { total: true },
-    where: {
-      tenantId,
-      fechaCompra: { gte: fechaInicio, lte: fechaFin },
-    }
-  });
-
-  const totalGastosAccrual = 
-    Number(total_gastos_operacion._sum.monto || 0) + 
-    Number(total_merma._sum.costoTotal || 0) + 
-    Number(total_salario._sum.salario || 0) +
-    Number(total_compras._sum.total || 0);
+  const totalGastosAccrual = annual.costOfSales.total + annual.operatingExpenses.total;
 
   // Ganancias/Perdidas (Usamos Accrual para el rendimiento real del negocio)
-  const ganancias = totalIngresosAccrual > totalGastosAccrual ? totalIngresosAccrual - totalGastosAccrual : 0;
-  const perdidas = totalGastosAccrual > totalIngresosAccrual ? totalGastosAccrual - totalIngresosAccrual : 0;
+  const resultadoPeriodo = annual.reconciledResult;
+  const ganancias = Math.max(resultadoPeriodo, 0);
+  const perdidas = Math.max(-resultadoPeriodo, 0);
 
   // Deudas Clientes: ventas no reconciliadas en el periodo
   const deudasClientes = await prisma.venta.aggregate({

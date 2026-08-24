@@ -3,13 +3,113 @@ import { ActionError } from '@/lib/server-actions';
 import type { AuthenticatedUser } from '@/lib/auth-middleware';
 import { requireTenant } from '@/lib/services/tenant-scope';
 import { Prisma } from '@/generated/prisma';
+import { buildAppliedFxEvidence } from '@/features/contabilidad/domain/fx-evidence';
+import { acquireAccountingTenantLock } from './accounting-tenant-lock-service';
+
+/**
+ * @description Construye los metadatos de conversión y la evidencia FX que se guardan junto a
+ * una reconciliación. Para moneda extranjera exige tasa válida y fecha efectiva explícita;
+ * nunca fabrica evidencia ausente.
+ * @param {number} amount - Importe en la moneda de origen.
+ * @param {string} currency - Moneda del importe.
+ * @param {number | undefined} exchangeRate - Tasa aplicada hacia CUP.
+ * @param {Date | null | undefined} effectiveAt - Fecha en que se aplicó la tasa informada.
+ * @returns {{montoConvertido: number | null; tasaCambio: number | null; fxEvidence: object | null}} Metadatos y evidencia inmutable.
+ */
+export function buildPersistedAccountingAmount(
+  amount: number,
+  currency: string,
+  exchangeRate?: number,
+  effectiveAt?: Date | null,
+  fxCatalogRateId?: string | null,
+): {
+  montoConvertido: number | null;
+  tasaCambio: number | null;
+  fxEvidence:
+    | {
+        functionalCurrency: string;
+        rateEffectiveAt?: Date;
+        fxProvenanceKind: string;
+        fxProvenanceSource: string;
+        fxCatalogRateId: null;
+        fxEvidenceFingerprint: string;
+        fxEvidenceVersion: number;
+      }
+    | null;
+} {
+  const source = 'accounting-reconciliation-service';
+
+  if (currency.trim().toUpperCase() === 'CUP') {
+    const evidence = buildAppliedFxEvidence({
+      originalAmount: amount,
+      originalCurrency: currency,
+      functionalCurrency: 'CUP',
+      source,
+    });
+    return {
+      montoConvertido: amount,
+      tasaCambio: 1,
+      fxEvidence: {
+        functionalCurrency: evidence.functionalCurrency,
+        fxProvenanceKind: evidence.fxProvenanceKind,
+        fxProvenanceSource: evidence.fxProvenanceSource,
+        fxCatalogRateId: evidence.fxCatalogRateId,
+        fxEvidenceFingerprint: evidence.fxEvidenceFingerprint,
+        fxEvidenceVersion: evidence.fxEvidenceVersion,
+      },
+    };
+  }
+
+  if (exchangeRate == null || !Number.isFinite(exchangeRate) || exchangeRate <= 0) {
+    return { montoConvertido: null, tasaCambio: null, fxEvidence: null };
+  }
+
+  if (effectiveAt == null || Number.isNaN(effectiveAt.getTime())) {
+    return { montoConvertido: null, tasaCambio: null, fxEvidence: null };
+  }
+
+  try {
+    const evidence = buildAppliedFxEvidence({
+      originalAmount: amount,
+      originalCurrency: currency,
+      functionalCurrency: 'CUP',
+      exchangeRate,
+      convertedAmount: amount * exchangeRate,
+      rateEffectiveAt: effectiveAt,
+      source,
+      fxCatalogRateId: fxCatalogRateId ?? null,
+    });
+    return {
+      montoConvertido: amount * exchangeRate,
+      tasaCambio: exchangeRate,
+      fxEvidence: {
+        functionalCurrency: evidence.functionalCurrency,
+        rateEffectiveAt: new Date(effectiveAt.getTime()),
+        fxProvenanceKind: evidence.fxProvenanceKind,
+        fxProvenanceSource: evidence.fxProvenanceSource,
+        fxCatalogRateId: evidence.fxCatalogRateId,
+        fxEvidenceFingerprint: evidence.fxEvidenceFingerprint,
+        fxEvidenceVersion: evidence.fxEvidenceVersion,
+      },
+    };
+  } catch {
+    return { montoConvertido: null, tasaCambio: null, fxEvidence: null };
+  }
+}
 
 export function validateSaleReconciliationInput(input: {
   ventaId?: unknown;
   cuentaId?: unknown;
   tipoPagoId?: unknown;
   monto?: unknown;
-}): asserts input is { ventaId: string; cuentaId: string; tipoPagoId: string; monto: number } {
+}): asserts input is {
+  ventaId: string;
+  cuentaId: string;
+  tipoPagoId: string;
+  monto: number;
+  moneda?: string;
+  tasaCambio?: number;
+} {
   if (
     typeof input.ventaId !== 'string' || input.ventaId.trim() === '' ||
     typeof input.cuentaId !== 'string' || input.cuentaId.trim() === '' ||
@@ -210,6 +310,7 @@ export const AccountingReconciliationService = {
       tipoPagoId: string;
       monto: number;
       moneda?: string;
+      tasaCambio?: number;
       fechaReconciliacion?: string;
       observaciones?: string;
     };
@@ -217,8 +318,14 @@ export const AccountingReconciliationService = {
   }) {
     const tenantId = requireTenant(user);
     validateSaleReconciliationInput(input);
+    const conversion = buildPersistedAccountingAmount(
+      input.monto,
+      input.moneda || 'CUP',
+      input.tasaCambio,
+    );
 
     return prisma.$transaction(async (tx) => {
+      await acquireAccountingTenantLock(tx, tenantId);
       await tx.$queryRaw`
         SELECT "ventaId" FROM "Venta"
         WHERE "ventaId" = ${input.ventaId} AND "tenantId" = ${tenantId}
@@ -281,8 +388,10 @@ export const AccountingReconciliationService = {
           ventaId: input.ventaId,
           cuentaId: input.cuentaId,
           tipoPagoId: input.tipoPagoId,
-          monto: input.monto,
-          moneda: input.moneda || 'CUP',
+           monto: input.monto,
+           moneda: input.moneda || 'CUP',
+           montoConvertido: conversion.montoConvertido,
+           tasaCambio: conversion.tasaCambio,
           fechaReconciliacion: input.fechaReconciliacion
             ? new Date(input.fechaReconciliacion)
             : new Date(),
@@ -415,8 +524,9 @@ export const AccountingReconciliationService = {
       distribuciones: Array<{
         cuentaId: string;
         tipoPagoId: string;
-        monto: number;
-        moneda?: string;
+          monto: number;
+          moneda?: string;
+          tasaCambio?: number;
         observaciones?: string;
       }>;
       fechaReconciliacion?: string;
@@ -430,6 +540,7 @@ export const AccountingReconciliationService = {
     }
 
     return prisma.$transaction(async (tx) => {
+      await acquireAccountingTenantLock(tx, tenantId);
       const servicio = await tx.ventaServicios.findUnique({
         where: { ventaServicioId: input.ventaServicioId },
         select: { total: true },
@@ -461,6 +572,7 @@ export const AccountingReconciliationService = {
             tipoPagoId: dist.tipoPagoId,
             monto: dist.monto,
             moneda: dist.moneda || 'CUP',
+            ...buildPersistedAccountingAmount(dist.monto, dist.moneda || 'CUP', dist.tasaCambio),
             fechaReconciliacion: input.fechaReconciliacion
               ? new Date(input.fechaReconciliacion)
               : new Date(),

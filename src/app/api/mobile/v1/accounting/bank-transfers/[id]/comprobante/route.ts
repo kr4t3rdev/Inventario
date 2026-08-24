@@ -75,7 +75,10 @@ export async function GET(
 
   try {
     const { id } = await context.params;
-    const transferencia = await AccountingOperationsReadService.getBankTransferById(id);
+    const transferencia = await AccountingOperationsReadService.getBankTransferById(
+      id,
+      authResult.user.tenantId ?? '',
+    );
 
     const pdfDoc = await PDFDocument.create();
     const page = pdfDoc.addPage([595.28, 841.89]);

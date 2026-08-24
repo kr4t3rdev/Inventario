@@ -1,4 +1,5 @@
 import type { Prisma } from '@/generated/prisma'
+import { buildAppliedFxEvidence } from '@/features/contabilidad/domain/fx-evidence';
 import { normalizeAccountingAmount } from '@/features/contabilidad/domain/accounting-amount'
 
 /**
@@ -539,6 +540,15 @@ export async function applyPagoGastoWorkflow(
       params.tasaCambio,
       fechaOperacion,
     )
+    const fxEvidence = buildAppliedFxEvidence({
+      originalAmount: montoPago,
+      originalCurrency: params.moneda,
+      functionalCurrency: 'CUP',
+      exchangeRate: params.tasaCambio ?? null,
+      convertedAmount: montoConvertido,
+      rateEffectiveAt: params.moneda.trim().toUpperCase() === 'CUP' ? null : fechaOperacion,
+      source: 'pago-gastos-workflow'
+    })
 
     const reconciliacion = await tx.reconciliacionGasto.create({
       data: {
@@ -555,6 +565,15 @@ export async function applyPagoGastoWorkflow(
         moneda: params.moneda,
         tasaCambio: params.tasaCambio,
         montoConvertido,
+        functionalCurrency: fxEvidence.functionalCurrency,
+        fxProvenanceKind: fxEvidence.fxProvenanceKind,
+        fxProvenanceSource: fxEvidence.fxProvenanceSource,
+        fxCatalogRateId: fxEvidence.fxCatalogRateId,
+        fxEvidenceFingerprint: fxEvidence.fxEvidenceFingerprint,
+        fxEvidenceVersion: fxEvidence.fxEvidenceVersion,
+        ...(fxEvidence.rateEffectiveAt
+          ? { rateEffectiveAt: new Date(fxEvidence.rateEffectiveAt) }
+          : {}),
         descripcion:
           typeof pago.porcentaje === 'number'
             ? `${params.descripcion} (${pago.porcentaje}%)`

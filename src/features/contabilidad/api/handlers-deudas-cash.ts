@@ -5,6 +5,7 @@ import type { AuthenticatedUser } from '@/lib/auth-middleware'
 import { AuditLogService } from '@/lib/services/audit-log-service'
 import { requireTenant } from '@/lib/services/tenant-scope'
 import { calcularSaldoPendienteDeuda, calcularTotalDeudaConInteres, normalizarEstadoDeudaCash } from '@/lib/utils/deuda-cash'
+import { buildPersistedAccountingAmount } from '@/features/contabilidad/services/accounting-reconciliation-service'
 
 function deudasCashEnabled(): boolean { return process.env.NEXT_PUBLIC_ENABLE_DEUDAS_CASH !== 'false' }
 
@@ -20,6 +21,7 @@ export const deudasCashCreateSchema = z.object({
   montoCapital: z.coerce.number().positive('El monto debe ser positivo'),
   moneda: z.string().optional().default('CUP'),
   tasaInteres: z.coerce.number().min(0).optional(),
+  tasaCambio: z.coerce.number().positive().optional(),
   fechaVencimiento: z.string().optional(), observaciones: z.string().optional(),
   comprobanteUrl: z.string().url().optional(),
   cuentaBancariaId: z.string().min(1, 'La cuenta bancaria es requerida')
@@ -63,7 +65,7 @@ export async function handlePostDeudasCash(request: NextRequest, user: Authentic
     const lastDeuda = await tx.deudaCash.findFirst({ orderBy: { idNumerico: 'desc' }, select: { idNumerico: true } })
     const nextNum = (lastDeuda?.idNumerico ?? 0) + 1
     const cxp = await tx.cuentaPorPagar.create({ data: { tenantId, numeroFactura: `DC-${nextNum}`, proveedorId: body.proveedorId, proveedorNombre: proveedor.nombre, montoDeuda: totalDeuda, montoPagado: 0, saldoPendiente: totalDeuda, moneda: body.moneda, tipo: 'compra', tipoDeuda: 'DEUDA_CASH', estado: 'PENDIENTE', fechaVencimiento: body.fechaVencimiento ? new Date(body.fechaVencimiento) : undefined } })
-    await tx.reconciliacionVenta.create({ data: { tenantId, cuentaId: body.cuentaBancariaId, tipoPagoId: tp.tipoId, monto: body.montoCapital, moneda: body.moneda, montoConvertido: body.montoCapital, fechaReconciliacion: new Date(), observaciones: body.observaciones || `Desembolso de deuda cash para proveedor ${body.proveedorId}`, reconciliadoPor: user.userId, deudaCashId: null, tipoReconciliacion: 'DEUDA_CASH_DESEMBOLSO' } })
+     await tx.reconciliacionVenta.create({ data: { tenantId, cuentaId: body.cuentaBancariaId, tipoPagoId: tp.tipoId, monto: body.montoCapital, moneda: body.moneda, ...buildPersistedAccountingAmount(body.montoCapital, body.moneda, body.tasaCambio), fechaReconciliacion: new Date(), observaciones: body.observaciones || `Desembolso de deuda cash para proveedor ${body.proveedorId}`, reconciliadoPor: user.userId, deudaCashId: null, tipoReconciliacion: 'DEUDA_CASH_DESEMBOLSO' } })
     return tx.deudaCash.create({ data: { tenantId, proveedorId: body.proveedorId, cuentaPorPagarId: cxp.cuentaPorPagarId, montoCapital: body.montoCapital, montoTotalDeuda: totalDeuda, moneda: body.moneda, tasaInteres: body.tasaInteres, fechaVencimiento: body.fechaVencimiento ? new Date(body.fechaVencimiento) : undefined, observaciones: body.observaciones, comprobanteUrl: body.comprobanteUrl, cuentaBancariaId: body.cuentaBancariaId, createdById: user.userId }, include: { proveedor: { select: { vendorId: true, nombre: true } }, cuentaPorPagar: true } })
   })
 
@@ -111,7 +113,8 @@ export async function handlePostDeudaCashPago(request: NextRequest, context: { p
   if (body.monto > sp) return NextResponse.json({ error: `El monto excede el saldo pendiente de ${sp}` }, { status: 400 })
 
   const resultado = await prisma.$transaction(async (tx: any) => {
-    const r = await tx.reconciliacionVenta.create({ data: { cuentaId: body.cuentaId, tipoPagoId: body.tipoPagoId, monto: body.monto, moneda: body.moneda || deuda.moneda, ...(body.tasaCambio != null && { tasaCambio: body.tasaCambio }), ...(body.observaciones != null && { observaciones: body.observaciones }), reconciliadoPor: user.userId, deudaCashId: deuda.id, tipoReconciliacion: 'DEUDA_CASH' } })
+     const moneda = body.moneda || deuda.moneda
+     const r = await tx.reconciliacionVenta.create({ data: { tenantId: deuda.tenantId, cuentaId: body.cuentaId, tipoPagoId: body.tipoPagoId, monto: body.monto, moneda, ...buildPersistedAccountingAmount(body.monto, moneda, body.tasaCambio), ...(body.observaciones != null && { observaciones: body.observaciones }), reconciliadoPor: user.userId, deudaCashId: deuda.id, tipoReconciliacion: 'DEUDA_CASH' } })
     await tx.cuentaBancaria.update({ where: { cuentaId: body.cuentaId }, data: { saldo: { decrement: body.monto } } })
     const nmp = Number((Number(deuda.cuentaPorPagar.montoPagado) + body.monto).toFixed(2))
     const td = Number(deuda.cuentaPorPagar.montoDeuda); const nsp = calcularSaldoPendienteDeuda(td, nmp); const nec = nsp <= 0.01 ? 'PAGADA' : 'PARCIAL'

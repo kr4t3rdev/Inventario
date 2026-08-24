@@ -2,12 +2,14 @@ import { ActionError } from '@/lib/server-actions';
 import { prisma } from '@/lib/prisma';
 
 interface BankTransferFilters {
+  tenantId: string;
   fechaInicio?: string | null;
   fechaFin?: string | null;
   cuentaId?: string | null;
 }
 
 interface BankAdjustmentFilters {
+  tenantId: string;
   cuentaId: string;
   page?: number;
   limit?: number;
@@ -26,7 +28,7 @@ interface CapitalInjectionFilters {
  */
 export const AccountingOperationsReadService = {
   async getBankTransfers(filters: BankTransferFilters = {}) {
-    const where: Record<string, any> = {};
+    const where: Record<string, any> = { tenantId: filters.tenantId };
 
     if (filters.fechaInicio || filters.fechaFin) {
       where.createdAt = {};
@@ -71,9 +73,9 @@ export const AccountingOperationsReadService = {
     };
   },
 
-  async getBankTransferById(id: string) {
-    const transferencia = await prisma.transferenciaBancaria.findUnique({
-      where: { transferenciaId: id },
+  async getBankTransferById(id: string, tenantId: string) {
+    const transferencia = await prisma.transferenciaBancaria.findFirst({
+      where: { transferenciaId: id, tenantId },
       include: {
         cuentaOrigen: {
           select: {
@@ -118,16 +120,16 @@ export const AccountingOperationsReadService = {
       tipo,
     } = filters;
 
-    const where: Record<string, any> = {};
+    const where: Record<string, any> = { tenantId: filters.tenantId };
     if (cuentaId !== 'all') where.cuentaId = cuentaId;
     if (tipo) where.tipo = tipo;
     if (fechaInicio || fechaFin) {
-      where.createdAt = {};
-      if (fechaInicio) where.createdAt.gte = new Date(fechaInicio);
+      where.fechaOperacion = {};
+      if (fechaInicio) where.fechaOperacion.gte = new Date(fechaInicio);
       if (fechaFin) {
         const fecha = new Date(fechaFin);
         fecha.setHours(23, 59, 59, 999);
-        where.createdAt.lte = fecha;
+        where.fechaOperacion.lte = fecha;
       }
     }
 
@@ -136,7 +138,7 @@ export const AccountingOperationsReadService = {
     const [ajustes, totalCount] = await Promise.all([
       prisma.ajusteBancario.findMany({
         where,
-        orderBy: { createdAt: 'desc' },
+        orderBy: { fechaOperacion: 'desc' },
         skip: offset,
         take: limit,
         include: {
@@ -155,8 +157,8 @@ export const AccountingOperationsReadService = {
 
     let cuentaBancariaInfo = null;
     if (cuentaId !== 'all') {
-      const cuentaBancaria = await prisma.cuentaBancaria.findUnique({
-        where: { cuentaId },
+      const cuentaBancaria = await prisma.cuentaBancaria.findFirst({
+        where: { cuentaId, tenantId: filters.tenantId },
         select: {
           cuentaId: true,
           nombreBanco: true,
@@ -184,12 +186,10 @@ export const AccountingOperationsReadService = {
 
   async getCapitalInjections(filters: CapitalInjectionFilters) {
     const where: Record<string, unknown> = {
-      // @ts-expect-error Prisma typing drift in project
       tenantId: filters.tenantId,
     };
 
     if (filters.tipo) {
-      // @ts-expect-error Prisma typing drift in project
       where.tipo = filters.tipo;
     }
 

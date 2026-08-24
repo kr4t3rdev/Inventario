@@ -17,7 +17,10 @@ export async function GET(request: Request, context: RouteContext) {
 
   try {
     const { id } = await context.params;
-    const item = await AccountingOperationsReadService.getBankTransferById(id);
+    const item = await AccountingOperationsReadService.getBankTransferById(
+      id,
+      authResult.user.tenantId ?? '',
+    );
     return successResponse(item);
   } catch (error) {
     if (error instanceof ActionError) {

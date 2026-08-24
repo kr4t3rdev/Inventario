@@ -92,6 +92,37 @@ export class PrismaExchangeRateProvider implements ExchangeRateProvider {
     return moneda ? toCurrencyRecord(moneda) : null;
   }
 
+  /**
+   * @description Selecciona de forma determinista la tasa vigente más reciente sin exceder
+   * el límite temporal indicado (orden fechaVigencia DESC, createdAt DESC, tasaId DESC).
+   * @param {object} params - Moneda origen/destino y límite temporal de elegibilidad.
+   * @returns {Promise<{tasaId: string; tasa: number; fechaVigencia: Date} | null>} Tasa elegible o null.
+   */
+  async getRateAsOf(params: {
+    sourceCurrency: string;
+    targetCurrency?: string;
+    boundaryAt: Date;
+    client?: Prisma.TransactionClient;
+  }): Promise<{ tasaId: string; tasa: number; fechaVigencia: Date } | null> {
+    const source = params.sourceCurrency?.trim().toUpperCase();
+    if (!source) return null;
+    const target = params.targetCurrency?.trim().toUpperCase() || 'CUP';
+    const db = params.client ?? defaultPrisma;
+
+    const rate = await db.tasaCambio.findFirst({
+      where: {
+        monedaOrigenId: source,
+        monedaDestino: target,
+        fechaVigencia: { lte: params.boundaryAt },
+      },
+      orderBy: [{ fechaVigencia: 'desc' }, { createdAt: 'desc' }, { tasaId: 'desc' }],
+      take: 1,
+      select: { tasaId: true, tasa: true, fechaVigencia: true },
+    });
+    if (!rate) return null;
+    return { tasaId: rate.tasaId, tasa: Number(rate.tasa), fechaVigencia: rate.fechaVigencia };
+  }
+
   async listCurrencies(): Promise<ExchangeCurrencyRecord[]> {
     // Asegurar que existan las monedas por defecto
     await this.ensureDefaultCurrencies();

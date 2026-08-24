@@ -49,7 +49,13 @@ describe('mobile accounting reports summary route', () => {
       fechaInicio: '2026-01-01',
       fechaFin: '2026-01-31',
       cuentaId: 'cb-1',
-      moneda: 'CUP',
+       moneda: 'CUP',
+       includeServicios: false,
+       includeTransfers: true,
+       includeAdjustments: true,
+       includeCapital: false,
+       includePrestamosCash: false,
+       includeDeudasCash: false,
     });
   });
 });

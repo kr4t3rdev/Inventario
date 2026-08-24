@@ -243,6 +243,7 @@ export interface AjusteBancario {
 	descripcion: string;
 	motivo: string;
 	realizadoPor: string;
+	fechaOperacion: string;
 	createdAt: string;
 	updatedAt: string;
 	cuentaBancaria?: CuentaBancaria;
@@ -327,8 +328,10 @@ export interface CreateAjusteBancarioRequest {
 	tipo: string;
 	monto: number;
 	moneda: string;
+	tasaCambio?: number;
 	descripcion: string;
 	motivo: string;
+	fechaOperacion?: string;
 }
 
 export interface CreateMonedaRequest {

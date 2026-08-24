@@ -53,8 +53,14 @@ describe('mobile accounting reports movements route', () => {
       cuentaId: 'cb-1',
       tipoMovimiento: 'venta',
       moneda: 'CUP',
-      page: 1,
-      limit: 10,
+       page: 1,
+       limit: 10,
+       includeServicios: false,
+       includeTransfers: true,
+       includeAdjustments: true,
+       includeCapital: false,
+       includePrestamosCash: false,
+       includeDeudasCash: false,
     });
   });
 });

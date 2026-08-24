@@ -1,4 +1,5 @@
 import { prisma } from '@/lib/prisma';
+import { buildPersistedAccountingAmount } from '@/features/contabilidad/services/accounting-reconciliation-service';
 import { ActionError } from '@/lib/server-actions';
 import { AuditLogService } from '@/lib/services/audit-log-service';
 import { calcularSaldoPendientePrestamo } from '@/lib/utils/prestamo-cash';
@@ -8,6 +9,7 @@ import {
 } from '@/lib/utils/deuda-cash';
 import type { AuthenticatedUser } from '@/lib/auth-middleware';
 import { requireTenant } from '@/lib/services/tenant-scope';
+import { acquireAccountingTenantLock } from './accounting-tenant-lock-service';
 
 function prestamosCashEnabled(): boolean {
   return process.env.NEXT_PUBLIC_ENABLE_PRESTAMOS_CASH !== 'false';
@@ -68,6 +70,7 @@ export const AccountingCashOperationsMutationService = {
     }
 
     const prestamo = await prisma.$transaction(async (tx: any) => {
+      await acquireAccountingTenantLock(tx, tenantId);
       await tx.cuentaBancaria.update({
         where: { cuentaId: input.cuentaBancariaId },
         data: { saldo: { decrement: input.montoCapital } },
@@ -89,23 +92,29 @@ export const AccountingCashOperationsMutationService = {
 
       const cxc = await tx.cuentaPorCobrar.create({ data: cxcData });
 
+      const fechaReconciliacion = new Date();
+      const conversion = buildPersistedAccountingAmount(
+        Number(input.montoCapital),
+        input.moneda || 'CUP',
+        input.tasaCambioAlCrear ?? undefined,
+        fechaReconciliacion,
+      );
       const reconciliacionData: Record<string, unknown> = {
         tenant: { connect: { tenantId } },
         cuentaBancaria: { connect: { cuentaId: input.cuentaBancariaId } },
         tipoPago: { connect: { tipoId: tp.tipoId } },
         monto: input.montoCapital,
         moneda: input.moneda || 'CUP',
-        montoConvertido: input.tasaCambioAlCrear
-          ? input.montoCapital * input.tasaCambioAlCrear
-          : input.montoCapital,
-        fechaReconciliacion: new Date(),
+        montoConvertido: conversion.montoConvertido,
+        fechaReconciliacion,
+        ...(conversion.fxEvidence ?? {}),
         observaciones:
           input.observaciones || `Desembolso de préstamo cash para cliente ${input.clienteId}`,
         reconciliadoPor: user.userId,
         tipoReconciliacion: 'PRESTAMO_CASH_DESEMBOLSO',
       };
-      if (input.tasaCambioAlCrear !== undefined) {
-        reconciliacionData.tasaCambio = input.tasaCambioAlCrear;
+      if (conversion.tasaCambio != null) {
+        reconciliacionData.tasaCambio = conversion.tasaCambio;
       }
 
       await tx.reconciliacionVenta.create({ data: reconciliacionData });
@@ -212,6 +221,14 @@ export const AccountingCashOperationsMutationService = {
     }
 
     const resultado = await prisma.$transaction(async (tx: any) => {
+      await acquireAccountingTenantLock(tx, tenantId);
+      const fechaReconciliacion = new Date();
+      const conversion = buildPersistedAccountingAmount(
+        Number(input.monto),
+        input.moneda || String(prestamo.moneda),
+        input.tasaCambio ?? undefined,
+        fechaReconciliacion,
+      );
       const pagoData: Record<string, unknown> = {
         tenant: { connect: { tenantId } },
         cuentaBancaria: { connect: { cuentaId: input.cuentaId } },
@@ -219,10 +236,15 @@ export const AccountingCashOperationsMutationService = {
         prestamoCash: { connect: { id: prestamo.id } },
         monto: input.monto,
         moneda: input.moneda || prestamo.moneda,
+        ...(conversion.montoConvertido != null
+          ? { montoConvertido: conversion.montoConvertido }
+          : {}),
+        fechaReconciliacion,
+        ...(conversion.fxEvidence ?? {}),
         reconciliadoPor: user.userId,
         tipoReconciliacion: 'PRESTAMO_CASH',
       };
-      if (input.tasaCambio != null) pagoData.tasaCambio = input.tasaCambio;
+      if (conversion.tasaCambio != null) pagoData.tasaCambio = conversion.tasaCambio;
       if (input.observaciones != null) pagoData.observaciones = input.observaciones;
 
       const reconciliacion = await tx.reconciliacionVenta.create({ data: pagoData });
@@ -284,6 +306,7 @@ export const AccountingCashOperationsMutationService = {
     if (!proveedor) throw new ActionError('Proveedor no encontrado', 'NOT_FOUND');
 
     const deuda = await prisma.$transaction(async (tx: any) => {
+      await acquireAccountingTenantLock(tx, tenantId);
       const tp =
         (await tx.tipoPago.findFirst({ where: { nombre: 'Transferencia', isActive: true, tenantId } })) ||
         (await tx.tipoPago.findFirst({ where: { nombre: 'Efectivo', isActive: true, tenantId } }));
@@ -428,6 +451,7 @@ export const AccountingCashOperationsMutationService = {
     }
 
     const resultado = await prisma.$transaction(async (tx: any) => {
+      await acquireAccountingTenantLock(tx, tenantId);
       const reconciliacion = await tx.reconciliacionVenta.create({
         data: {
           tenant: { connect: { tenantId } },

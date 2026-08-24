@@ -48,7 +48,8 @@ const typeColors: Record<string, string> = {
   'ajuste_egreso': 'bg-rose-100 text-rose-800 dark:bg-rose-900/30 dark:text-rose-300 border-rose-200/80',
   'prestamo_cash_pago': 'bg-violet-100 text-violet-800 dark:bg-violet-900/30 dark:text-violet-300 border-violet-200/80',
   'prestamo_cash_desembolso': 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-300 border-red-200/80',
-  'deuda_cash': 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-300 border-red-200/80',
+  'deuda_cash_pago': 'bg-violet-100 text-violet-800 dark:bg-violet-900/30 dark:text-violet-300 border-violet-200/80',
+  'deuda_cash_desembolso': 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-300 border-red-200/80',
 }
 
 export function MovimientosTable({
@@ -172,13 +173,14 @@ export function MovimientosTable({
       case 'ajuste_ingreso':
       case 'transferencia_entrada':
       case 'prestamo_cash_pago':
+      case 'deuda_cash_pago':
         return <TrendingUp className="h-3.5 w-3.5" />
       case 'gasto':
       case 'salario':
       case 'ajuste_egreso':
       case 'transferencia_salida':
       case 'prestamo_cash_desembolso':
-      case 'deuda_cash':
+      case 'deuda_cash_desembolso':
         return <TrendingDown className="h-3.5 w-3.5" />
       default:
         return <ArrowUpDown className="h-3.5 w-3.5" />
@@ -197,7 +199,8 @@ export function MovimientosTable({
       'ajuste_egreso': 'Ajuste Egreso',
       'prestamo_cash_pago': 'Cobro Préstamo Cash',
       'prestamo_cash_desembolso': 'Desembolso Préstamo Cash',
-      'deuda_cash': 'Deuda Cash',
+      'deuda_cash_pago': 'Pago Deuda Cash',
+      'deuda_cash_desembolso': 'Desembolso Deuda Cash',
     }
     return labels[tipo] || tipo
   }

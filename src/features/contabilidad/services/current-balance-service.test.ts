@@ -11,22 +11,19 @@ const prismaMock = vi.hoisted(() => ({
   periodoContable: { findMany: vi.fn() },
 }));
 
-const exchangeProviderMock = vi.hoisted(() => ({
-  exchangeRateProvider: { getPrincipalCurrency: vi.fn() },
+const tenantPolicyMock = vi.hoisted(() => ({
+  getRequiredTenantAccountingPolicy: vi.fn(),
 }));
 
 vi.mock('@/lib/prisma', () => ({ prisma: prismaMock }));
-vi.mock('@/features/contabilidad/services/exchange-rate-provider', () => exchangeProviderMock);
+vi.mock('@/features/contabilidad/services/tenant-accounting-policy-service', () => tenantPolicyMock);
 
 describe('getCurrentBalance', () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    exchangeProviderMock.exchangeRateProvider.getPrincipalCurrency.mockResolvedValue({
-      codigo: 'CUP',
-      nombre: 'Peso Cubano',
-      simbolo: '$',
-      esPrincipal: true,
-      isActive: true,
+    tenantPolicyMock.getRequiredTenantAccountingPolicy.mockResolvedValue({
+      tenantId: 'tenant-1',
+      functionalCurrencyCode: 'CUP',
     });
     prismaMock.cuentaBancaria.findMany.mockResolvedValue([
       { cuentaId: 'cup-bank', saldo: 1000, moneda: 'CUP' },

@@ -11,7 +11,7 @@ import { withPeriodValidation } from '@/lib/services/with-period-validation';
 import { AccountingOperationsReadService } from '@/features/contabilidad/services/accounting-operations-read-service';
 import { AccountingOperationsMutationService } from '@/features/contabilidad/services/accounting-operations-mutation-service';
 import type { AuthenticatedUser } from '@/lib/auth-middleware';
-import { requireFeature } from '@/lib/services/tenant-scope';
+import { requireFeature, requireTenant } from '@/lib/services/tenant-scope';
 
 
 const createSchema = z.object({
@@ -20,17 +20,21 @@ const createSchema = z.object({
   monto: z.number().positive('El monto debe ser mayor a 0'),
   moneda: z.string().min(1, 'Moneda es requerida').default('CUP'),
   descripcion: z.string().min(1, 'Descripción es obligatoria'),
-  motivo: z.string().min(1, 'Motivo es obligatorio')
+  motivo: z.string().min(1, 'Motivo es obligatorio'),
+  tasaCambio: z.number().positive().optional(),
+  fechaOperacion: z.coerce.date().optional(),
 });
 
 export const getAjustesByCuentaAction = withAction(async (params: { cuentaId: string; page?: number; limit?: number; fechaInicio?: string; fechaFin?: string; tipo?: string }, user: AuthenticatedUser) => {
   requireFeature(user, 'ajustes-bancarios', 'gestionar ajustes bancarios');
-  return AccountingOperationsReadService.getBankAdjustments(params);
+  return AccountingOperationsReadService.getBankAdjustments({
+    ...params,
+    tenantId: requireTenant(user),
+  });
 });
 
 export const createAjusteBancarioAction = withAction(withPeriodValidation(
-  // Ajustes bancarios usan la fecha actual como fecha de negocio
-  () => new Date(),
+  (input: z.infer<typeof createSchema>) => input.fechaOperacion ? new Date(input.fechaOperacion) : new Date(),
   async (input: z.infer<typeof createSchema>, user: AuthenticatedUser) => {
     requireFeature(user, 'ajustes-bancarios', 'registrar ajustes bancarios');
     const result = await AccountingOperationsMutationService.createBankAdjustment({

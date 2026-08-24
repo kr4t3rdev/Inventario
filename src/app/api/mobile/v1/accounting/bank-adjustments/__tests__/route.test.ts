@@ -72,7 +72,8 @@ describe('mobile accounting bank adjustments route', () => {
     expect(response.status).toBe(200);
     expect(data.items).toHaveLength(1);
     expect(AccountingOperationsReadService.getBankAdjustments).toHaveBeenCalledWith({
-      cuentaId: 'all',
+       tenantId: 'tenant-1',
+       cuentaId: 'all',
       tipo: 'ingreso',
       fechaInicio: '2026-01-01',
       fechaFin: '2026-01-31',

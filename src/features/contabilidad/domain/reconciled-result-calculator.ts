@@ -21,6 +21,12 @@ export interface SaleResultMovement extends MovementBase {
   source: 'sale';
   kind: 'SALE';
   document: RevenueDocument;
+  purchaseTrace?: Array<{
+    compraDocumentoId: string;
+    cantidad: number;
+    precioUnitario: number;
+    total: number;
+  }>;
 }
 
 export interface ServiceResultMovement extends MovementBase {

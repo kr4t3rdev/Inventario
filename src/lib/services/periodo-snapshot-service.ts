@@ -317,7 +317,7 @@ export class SnapshotService {
 
 		const ajustes = await db.ajusteBancario.aggregate({
 			_sum: { montoConvertido: true },
-			where: { tenantId, cuentaId, createdAt: dateRange },
+			where: { tenantId, cuentaId, fechaOperacion: dateRange },
 		});
 
 		const transSalientes = await db.transferenciaBancaria.aggregate({
@@ -377,7 +377,7 @@ export class SnapshotService {
 			? { fechaReconciliacion: rangoFechas }
 			: { createdAt: rangoFechas };
 
-		// Ajustes siempre usan createdAt (no tienen fechaOperacion aún)
+		// Los ajustes usan la fecha declarada de operación, incluso en modo devengo.
 		// Transferencias siempre usan fechaTransferencia
 
 		// 1. Ingresos por reconciliaciones de venta
@@ -410,13 +410,13 @@ export class SnapshotService {
 			},
 		});
 
-		// 4. Ajustes bancarios — usan createdAt
+		// 4. Ajustes bancarios — usan fechaOperacion
 		const ajustesResult = await db.ajusteBancario.aggregate({
 			_sum: { montoConvertido: true },
 			where: {
 				tenantId,
 				cuentaId,
-				createdAt: rangoFechas,
+				fechaOperacion: rangoFechas,
 			},
 		});
 

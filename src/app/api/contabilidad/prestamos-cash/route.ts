@@ -7,6 +7,7 @@ import { requireTenant } from '@/lib/services/tenant-scope'
 import { AuditLogService } from '@/lib/services/audit-log-service'
 import { validarEscrituraPeriodo, extraerFechaDeBody } from '@/lib/services/validate-period-write'
 import { calcularSaldoPendientePrestamo, normalizarEstadoPrestamoCash } from '@/lib/utils/prestamo-cash'
+import { buildPersistedAccountingAmount } from '@/features/contabilidad/services/accounting-reconciliation-service';
 
 const querySchema = z.object({
   estado: z.enum(['ACTIVO', 'PAGADO', 'VENCIDO', 'CANCELADO']).optional(),
@@ -194,6 +195,13 @@ export const POST = withAuthPost(async (request: NextRequest, _context: unknown,
         }
       })
 
+      const fechaReconciliacion = new Date();
+      const conversion = buildPersistedAccountingAmount(
+        Number(body.montoCapital),
+        body.moneda || 'CUP',
+        body.tasaCambioAlCrear ?? undefined,
+        fechaReconciliacion,
+      );
       await tx.reconciliacionVenta.create({
         data: {
           tenantId,
@@ -201,9 +209,10 @@ export const POST = withAuthPost(async (request: NextRequest, _context: unknown,
           tipoPagoId: tipoPagoDesembolso.tipoId,
           monto: body.montoCapital,
           moneda: body.moneda,
-          montoConvertido: body.tasaCambioAlCrear ? body.montoCapital * body.tasaCambioAlCrear : body.montoCapital,
-          tasaCambio: body.tasaCambioAlCrear,
-          fechaReconciliacion: new Date(),
+          ...(conversion.montoConvertido != null ? { montoConvertido: conversion.montoConvertido } : {}),
+          ...(conversion.tasaCambio != null ? { tasaCambio: conversion.tasaCambio } : {}),
+          fechaReconciliacion,
+          ...(conversion.fxEvidence ?? {}),
           observaciones: body.observaciones || `Desembolso de préstamo cash para cliente ${body.clienteId}`,
           reconciliadoPor: user.userId,
           prestamoCashId: null,

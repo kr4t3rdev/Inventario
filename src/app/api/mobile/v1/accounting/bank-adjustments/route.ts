@@ -2,6 +2,7 @@ import { ActionError } from '@/lib/server-actions';
 import { authenticateUser } from '@/lib/auth-middleware';
 import { errorResponse, successResponse } from '@/lib/api-response';
 import { AccountingOperationsReadService } from '@/features/contabilidad/services/accounting-operations-read-service';
+import { requireTenant } from '@/lib/services/tenant-scope';
 import { AccountingOperationsMutationService } from '@/features/contabilidad/services/accounting-operations-mutation-service';
 import { extraerFechaDeBody, validarEscrituraPeriodo } from '@/lib/services/validate-period-write';
 
@@ -37,6 +38,7 @@ export async function GET(request: Request) {
   try {
     const { searchParams } = new URL(request.url);
     const result = await AccountingOperationsReadService.getBankAdjustments({
+      tenantId: requireTenant(authResult.user),
       cuentaId: searchParams.get('cuentaId') || 'all',
       tipo: searchParams.get('tipo'),
       fechaInicio: searchParams.get('fechaInicio'),

@@ -6,6 +6,7 @@ import { withAuthPost } from '@/lib/auth-middleware'
 import { AuditLogService } from '@/lib/services/audit-log-service'
 import { validarEscrituraPeriodo, extraerFechaDeBody } from '@/lib/services/validate-period-write'
 import { calcularSaldoPendienteDeuda } from '@/lib/utils/deuda-cash'
+import { buildPersistedAccountingAmount } from '@/features/contabilidad/services/accounting-reconciliation-service';
 
 const pagoSchema = z.object({
   monto: z.coerce.number().positive('El monto debe ser positivo'),
@@ -80,6 +81,13 @@ export const POST = withAuthPost(async (request: NextRequest, context: unknown, 
     }
 
     const resultado = await prisma.$transaction(async (tx) => {
+      const fechaReconciliacion = new Date();
+      const conversion = buildPersistedAccountingAmount(
+        Number(body.monto),
+        body.moneda || String(deuda.moneda),
+        body.tasaCambio ?? undefined,
+        fechaReconciliacion,
+      );
       const reconciliacion = await tx.reconciliacionVenta.create({
         data: {
           tenantId: deuda.tenantId,
@@ -87,7 +95,10 @@ export const POST = withAuthPost(async (request: NextRequest, context: unknown, 
           tipoPagoId: body.tipoPagoId,
           monto: body.monto,
           moneda: body.moneda || deuda.moneda,
-          ...(body.tasaCambio != null && { tasaCambio: body.tasaCambio }),
+          ...(conversion.montoConvertido != null ? { montoConvertido: conversion.montoConvertido } : {}),
+          ...(conversion.tasaCambio != null ? { tasaCambio: conversion.tasaCambio } : {}),
+          fechaReconciliacion,
+          ...(conversion.fxEvidence ?? {}),
           ...(body.observaciones != null && { observaciones: body.observaciones }),
           reconciliadoPor: user.userId,
           deudaCashId: deuda.id,

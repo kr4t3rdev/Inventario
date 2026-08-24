@@ -166,7 +166,7 @@ describe('calcularDetalleCostoVenta', () => {
         allocations: [{
           id: 'a1',
           cantidad: 7,
-          compraDocumentoItem: { precioUnitario: 20 },
+          compraDocumentoItem: { precioUnitario: 20, compraDocumentoId: 'cd-1' },
         }],
       }],
     };
@@ -175,6 +175,9 @@ describe('calcularDetalleCostoVenta', () => {
       historical: 140,
       estimated: 150,
       overAllocatedCost: 0,
+      purchaseTrace: [
+        { compraDocumentoId: 'cd-1', cantidad: 7, precioUnitario: 20, total: 140 },
+      ],
     });
   });
 
@@ -190,6 +193,7 @@ describe('calcularDetalleCostoVenta', () => {
       historical: 0,
       estimated: 48,
       overAllocatedCost: 0,
+      purchaseTrace: [],
     });
   });
 
@@ -203,8 +207,8 @@ describe('calcularDetalleCostoVenta', () => {
         cantidad: 5,
         producto: { precioCosto: 0 },
         allocations: [
-          { id: 'a1', cantidad: 4, compraDocumentoItem: { precioUnitario: 10 } },
-          { id: 'a2', cantidad: 3, compraDocumentoItem: { precioUnitario: 20 } },
+          { id: 'a1', cantidad: 4, compraDocumentoItem: { precioUnitario: 10, compraDocumentoId: 'cd-1' } },
+          { id: 'a2', cantidad: 3, compraDocumentoItem: { precioUnitario: 20, compraDocumentoId: 'cd-2' } },
         ],
       }],
     };
@@ -213,6 +217,44 @@ describe('calcularDetalleCostoVenta', () => {
       historical: 60,
       estimated: 0,
       overAllocatedCost: 40,
+      purchaseTrace: [
+        { compraDocumentoId: 'cd-1', cantidad: 4, precioUnitario: 10, total: 40 },
+        { compraDocumentoId: 'cd-2', cantidad: 1, precioUnitario: 20, total: 20 },
+      ],
     });
+  });
+
+  it('expone la trazabilidad FIFO de las compras subyacentes', () => {
+    const venta: VentaParaCosto = {
+      ventaId: 'v-trace',
+      cantidad: 0,
+      producto: { precioCosto: 50 },
+      items: [
+        {
+          id: 'vi1',
+          cantidad: 10,
+          producto: { precioCosto: 50 },
+          allocations: [
+            {
+              id: 'a1',
+              cantidad: 6,
+              compraDocumentoItem: { precioUnitario: 20, compraDocumentoId: 'cd-1' },
+            },
+            {
+              id: 'a2',
+              cantidad: 4,
+              compraDocumentoItem: { precioUnitario: 25, compraDocumentoId: 'cd-2' },
+            },
+          ],
+        },
+      ],
+    };
+
+    const detail = calcularDetalleCostoVenta(venta);
+
+    expect(detail.purchaseTrace).toEqual([
+      { compraDocumentoId: 'cd-1', cantidad: 6, precioUnitario: 20, total: 120 },
+      { compraDocumentoId: 'cd-2', cantidad: 4, precioUnitario: 25, total: 100 },
+    ]);
   });
 });

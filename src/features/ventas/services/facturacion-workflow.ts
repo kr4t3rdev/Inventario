@@ -1,4 +1,5 @@
 import { Prisma } from '@/generated/prisma'
+import { buildPersistedAccountingAmount } from '@/features/contabilidad/services/accounting-reconciliation-service'
 
 export type TipoVencimientoFactura = 'fecha' | 'plazo' | 'contra_pago'
 
@@ -192,6 +193,14 @@ export async function reconciliarVentaDirecta(
   // Para ventas directas sin factura, usamos una referencia genérica
   const referenciaCobro = `AUTO-${params.ventaId.slice(-8)}`
 
+  const fechaReconciliacion = new Date()
+  const conversion = buildPersistedAccountingAmount(
+    montoTotal,
+    cuenta.moneda,
+    undefined,
+    fechaReconciliacion
+  )
+
   const reconciliacion = await tx.reconciliacionVenta.create({
     data: {
       tenantId: params.tenantId,
@@ -200,8 +209,12 @@ export async function reconciliarVentaDirecta(
       tipoPagoId: tipoPago.tipoId,
       monto: montoTotal,
       moneda: cuenta.moneda,
-      tasaCambio: 1,
-      montoConvertido: montoTotal,
+      ...(conversion.tasaCambio != null ? { tasaCambio: conversion.tasaCambio } : {}),
+      ...(conversion.montoConvertido != null
+        ? { montoConvertido: conversion.montoConvertido }
+        : {}),
+      fechaReconciliacion,
+      ...(conversion.fxEvidence ?? {}),
       verificacionTransferenciaId: referenciaCobro,
       idTransferencia: referenciaCobro,
       observaciones: params.observaciones || `Venta directa al contado`,
@@ -243,6 +256,14 @@ export async function applyFacturacionCobroWorkflow(
     const { cuenta, tipoPago } = await resolveCuentaYTipoPago(tx, params.cuentaBancariaId, params.tenantId)
     const referenciaCobro = `AUTO-${params.facturaId.slice(-8)}`
 
+    const fechaReconciliacion = new Date()
+    const conversion = buildPersistedAccountingAmount(
+      montoTotal,
+      cuenta.moneda,
+      undefined,
+      fechaReconciliacion
+    )
+
     const reconciliacion = await tx.reconciliacionVenta.create({
       data: {
         tenantId: params.tenantId,
@@ -251,8 +272,12 @@ export async function applyFacturacionCobroWorkflow(
         tipoPagoId: tipoPago.tipoId,
         monto: montoTotal,
         moneda: cuenta.moneda,
-        tasaCambio: 1,
-        montoConvertido: montoTotal,
+        ...(conversion.tasaCambio != null ? { tasaCambio: conversion.tasaCambio } : {}),
+        ...(conversion.montoConvertido != null
+          ? { montoConvertido: conversion.montoConvertido }
+          : {}),
+        fechaReconciliacion,
+        ...(conversion.fxEvidence ?? {}),
         verificacionTransferenciaId: referenciaCobro,
         idTransferencia: referenciaCobro,
         observaciones: params.observaciones || `Cobro total por contra pago`,

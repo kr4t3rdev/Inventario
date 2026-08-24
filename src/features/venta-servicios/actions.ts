@@ -14,6 +14,7 @@ import { applyAnticipoAllocations } from '@/lib/services/anticipos-workflow';
 import { ventaServicioLegacySchema, ventaMixtaSchema, updateVentaServicioSchema } from './schemas';
 import type { VentaServicioInput, VentaMixtaInput, VentaServicioUpdateInput } from './schemas';
 import type { AuthenticatedUser } from '@/lib/auth-middleware';
+import { buildPersistedAccountingAmount } from '@/features/contabilidad/services/accounting-reconciliation-service';
 
 const VENTA_SERVICIO_INCLUDE = {
   servicio: true,
@@ -132,6 +133,10 @@ export const createVentaServicioAction = withAction(withPeriodValidation(
             tipoPagoId: anticipo?.tipoPagoOrigenId || tipoPagoDefault?.tipoId || '',
             monto: alloc.montoAplicado,
             moneda: anticipo?.tipo === 'COBRO' ? 'CUP' : 'USD',
+            ...buildPersistedAccountingAmount(
+              alloc.montoAplicado,
+              anticipo?.tipo === 'COBRO' ? 'CUP' : 'USD',
+            ),
             observaciones: `Cobro anticipado en servicio ${ventaServicio.ventaServicioId}`,
             reconciliadoPor: data.clienteId || 'system',
           },

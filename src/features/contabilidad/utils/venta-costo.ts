@@ -19,7 +19,7 @@
 export interface AllocationParaCosto {
   id: string;
   cantidad: number;
-  compraDocumentoItem: { precioUnitario: number } | null;
+  compraDocumentoItem: { precioUnitario: number; compraDocumentoId?: string } | null;
 }
 
 export interface VentaItemParaCosto {
@@ -37,10 +37,18 @@ export interface VentaParaCosto {
   items: VentaItemParaCosto[];
 }
 
+export interface PurchaseTraceEntry {
+  compraDocumentoId: string;
+  cantidad: number;
+  precioUnitario: number;
+  total: number;
+}
+
 export interface DetalleCostoVenta {
   historical: number;
   estimated: number;
   overAllocatedCost: number;
+  purchaseTrace: PurchaseTraceEntry[];
 }
 
 /**
@@ -54,6 +62,7 @@ export function calcularDetalleCostoVenta(venta: VentaParaCosto): DetalleCostoVe
       historical: 0,
       estimated: (venta.producto?.precioCosto ?? 0) * venta.cantidad,
       overAllocatedCost: 0,
+      purchaseTrace: [],
     };
   }
 
@@ -62,6 +71,7 @@ export function calcularDetalleCostoVenta(venta: VentaParaCosto): DetalleCostoVe
     let remainingQuantity = item.cantidad;
     let historical = 0;
     let overAllocatedCost = 0;
+    const trace: PurchaseTraceEntry[] = [];
     for (const allocation of allocations) {
       const usedQuantity = Math.min(Math.max(allocation.cantidad, 0), remainingQuantity);
       const excessQuantity = Math.max(0, allocation.cantidad - usedQuantity);
@@ -69,14 +79,23 @@ export function calcularDetalleCostoVenta(venta: VentaParaCosto): DetalleCostoVe
       historical += usedQuantity * unitCost;
       overAllocatedCost += excessQuantity * unitCost;
       remainingQuantity -= usedQuantity;
+      if (usedQuantity > 0 && allocation.compraDocumentoItem?.compraDocumentoId) {
+        trace.push({
+          compraDocumentoId: allocation.compraDocumentoItem.compraDocumentoId,
+          cantidad: usedQuantity,
+          precioUnitario: unitCost,
+          total: usedQuantity * unitCost,
+        });
+      }
     }
 
     return {
       historical: detail.historical + historical,
-      estimated: detail.estimated + remainingQuantity * (item.producto?.precioCosto ?? 0),
+      estimated: detail.estimated + remainingQuantity * (item.producto?. precioCosto ?? 0),
       overAllocatedCost: detail.overAllocatedCost + overAllocatedCost,
+      purchaseTrace: [...detail.purchaseTrace, ...trace],
     };
-  }, { historical: 0, estimated: 0, overAllocatedCost: 0 });
+  }, { historical: 0, estimated: 0, overAllocatedCost: 0, purchaseTrace: [] });
 }
 
 /**

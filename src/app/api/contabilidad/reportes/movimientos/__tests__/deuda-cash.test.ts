@@ -6,6 +6,7 @@ vi.mock('@/lib/auth-middleware', () => ({
   authenticateUser: vi.fn().mockResolvedValue({
     user: {
       userId: 'user-test',
+      tenantId: 'tenant-test',
       role: 'user',
       planFeatures: {
         contabilidad: true,
@@ -76,6 +77,7 @@ describe('API contabilidad/reportes/movimientos - deudas cash', () => {
     vi.mocked(authenticateUser).mockResolvedValue({
       user: {
         userId: 'user-test',
+        tenantId: 'tenant-test',
         role: 'user',
         planName: 'Básico',
         planFeatures: {

@@ -224,10 +224,10 @@ export function HistorialAjustesTable({ cuentaId, showAllAccounts = false }: His
                         <Calendar className="h-4 w-4 text-gray-400" />
                         <div>
                           <div className="font-medium">
-                            {format(new Date(ajuste.createdAt), 'dd/MM/yyyy')}
+                            {format(new Date(ajuste.fechaOperacion), 'dd/MM/yyyy')}
                           </div>
                           <div className="text-xs text-gray-500">
-                            {format(new Date(ajuste.createdAt), 'HH:mm:ss')}
+                            {format(new Date(ajuste.fechaOperacion), 'HH:mm:ss')}
                           </div>
                         </div>
                       </div>

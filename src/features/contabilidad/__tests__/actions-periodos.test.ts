@@ -11,10 +11,14 @@ import { describe, it, expect, beforeEach, vi } from "vitest";
 
 vi.mock("@/lib/server-actions/get-current-user");
 vi.mock("next/cache", () => ({ revalidatePath: vi.fn() }));
+vi.mock("@/lib/services/audit-log-service", () => ({
+	AuditLogService: { log: vi.fn().mockResolvedValue(undefined) },
+}));
 
-const { mockPrisma } = vi.hoisted(() => ({
-	mockPrisma: {
-		$transaction: vi.fn(
+	const { mockPrisma } = vi.hoisted(() => ({
+		mockPrisma: {
+			$executeRaw: vi.fn().mockResolvedValue(1),
+			$transaction: vi.fn(
 			(
 				cb: (tx: typeof mockPrisma) => Promise<unknown>,
 			): Promise<unknown> => cb(mockPrisma),
@@ -36,6 +40,15 @@ const { mockPrisma } = vi.hoisted(() => ({
 			create: vi.fn(),
 		},
 		cuentaBancaria: {
+			findMany: vi.fn(),
+		},
+		stockUbicacion: {
+			findMany: vi.fn(),
+		},
+		compraDocumentoItem: {
+			findMany: vi.fn(),
+		},
+		inyeccionCapital: {
 			findMany: vi.fn(),
 		},
 		reconciliacionVenta: {
@@ -63,9 +76,11 @@ const { mockPrisma } = vi.hoisted(() => ({
 		},
 		cuentaPorCobrar: {
 			aggregate: vi.fn(),
+			findMany: vi.fn(),
 		},
 		cuentaPorPagar: {
 			aggregate: vi.fn(),
+			findMany: vi.fn(),
 		},
 		periodoCache: {
 			findUnique: vi.fn(),
@@ -77,8 +92,18 @@ const { mockPrisma } = vi.hoisted(() => ({
 }));
 
 const accountingSnapshotMocks = vi.hoisted(() => ({
-	getCurrentBalance: vi.fn(),
-	getReconciledResultForYear: vi.fn(),
+  getCurrentBalance: vi.fn(),
+  getReconciledResultForYear: vi.fn(),
+}));
+
+const checkpointMocks = vi.hoisted(() => ({
+	captureFinancialAuxiliaryCheckpoint: vi.fn(),
+	collectFinancialAuxiliaryEvidence: vi.fn(),
+}));
+
+const financialSnapshotV3Mocks = vi.hoisted(() => ({
+	captureFinancialSnapshotV3: vi.fn(),
+	approveFinancialSnapshotV3: vi.fn(),
 }));
 
 vi.mock("@/lib/prisma", () => ({
@@ -88,6 +113,14 @@ vi.mock("@/features/contabilidad/services/current-balance-service", () => accoun
 vi.mock(
 	"@/features/contabilidad/services/reconciled-result-service",
 	() => accountingSnapshotMocks,
+);
+vi.mock(
+	"@/features/contabilidad/services/financial-auxiliary-checkpoint-service",
+	() => checkpointMocks,
+);
+vi.mock(
+	"@/features/contabilidad/services/financial-snapshot-v3-service",
+	() => financialSnapshotV3Mocks,
 );
 
 // ── Imports bajo test ─────────────────────────────────────────────────────
@@ -186,7 +219,86 @@ function resetMocks() {
 
 beforeEach(() => {
 	resetMocks();
+	process.env.FINANCIAL_V3_CAPTURE = "true";
+	mockPrisma.stockUbicacion.findMany.mockResolvedValue([]);
+	mockPrisma.compraDocumentoItem.findMany.mockResolvedValue([]);
+	mockPrisma.cuentaPorCobrar.findMany.mockResolvedValue([]);
+	mockPrisma.cuentaPorPagar.findMany.mockResolvedValue([]);
+	mockPrisma.inyeccionCapital.findMany.mockResolvedValue([]);
+	checkpointMocks.collectFinancialAuxiliaryEvidence.mockResolvedValue({
+		bankAccounts: [],
+		inventory: [],
+		receivables: [],
+		payables: [],
+		debt: [],
+		capital: [],
+	});
 	vi.mocked(getCurrentUser).mockResolvedValue(mockUser);
+	checkpointMocks.captureFinancialAuxiliaryCheckpoint.mockImplementation(
+		async (params: {
+			collectEvidence: (
+				client: typeof mockPrisma,
+				cutoffAt: Date,
+			) => Promise<Record<string, unknown>>;
+		}) => {
+			const evidence = await params.collectEvidence(
+				mockPrisma,
+				new Date("2026-01-02T12:00:00.000Z"),
+			);
+			return {
+				checkpointId: "checkpoint-annual",
+				payload: {
+					...evidence,
+					version: 3,
+					cutoffAt: "2026-01-02T12:00:00.000Z",
+					capturedAt: "2026-01-02T12:00:01.000Z",
+					tenantId: TENANT,
+					auxiliaries: {
+						bankAccounts: [],
+						inventory: [],
+						receivables: [],
+						payables: [],
+						debt: [],
+						capital: [],
+					},
+				},
+			};
+		},
+	);
+	financialSnapshotV3Mocks.captureFinancialSnapshotV3.mockImplementation(
+		async (input: Record<string, unknown>) => ({
+			snapshotId: "snapshot-v3",
+			tenantId: input.tenantId,
+			status: "CAPTURED",
+			resumenJson: {
+				version: 3,
+				cutoffAt: (input.cutoffAt as Date).toISOString(),
+				capturedAt: (input.capturedAt as Date).toISOString(),
+				balance: input.balance,
+				result: input.result,
+				cashFlow: input.cashFlow,
+				coverage: input.coverage,
+				provenance: input.provenance,
+			},
+			hashIntegridad: "v3-capture-hash",
+		}));
+	financialSnapshotV3Mocks.approveFinancialSnapshotV3.mockImplementation(
+		async (params: Record<string, unknown>) => ({
+			snapshotId: params.snapshotId,
+			status: "APPROVED",
+			resumenJson: {
+				version: 3,
+				cutoffAt: "2026-01-02T12:00:00.000Z",
+				capturedAt: "2026-01-02T12:00:01.000Z",
+				approvedAt: (params.approvedAt as Date).toISOString(),
+				balance: {},
+				result: {},
+				cashFlow: {},
+				coverage: {},
+				provenance: {},
+			},
+			hashIntegridad: "v3-approved-hash",
+		}));
 });
 
 // ── Tests: listarPeriodosAction ───────────────────────────────────────────
@@ -552,8 +664,77 @@ describe("abrirPeriodoAction", () => {
 
 // ── Tests: cerrarPeriodoAction ────────────────────────────────────────────
 
-describe("cerrarPeriodoAction", () => {
-	it("persiste un snapshot financiero v2 al cerrar un período anual", async () => {
+	describe("cerrarPeriodoAction", () => {
+	it("no invoca fórmulas legacy de agregación al cerrar un período anual", async () => {
+		const periodo = makePeriodo({
+			tipo: TipoPeriodo.ANUAL,
+			estado: EstadoPeriodo.ABIERTO,
+			fechaInicio: new Date("2025-01-01T05:00:00Z"),
+			fechaFin: new Date("2026-01-01T04:59:59Z"),
+		});
+		mockPrisma.periodoContable.findFirst.mockResolvedValue(periodo);
+		mockPrisma.periodoContable.findUnique.mockResolvedValue(periodo);
+		mockPrisma.periodoContable.update.mockResolvedValue({
+			...periodo,
+			estado: EstadoPeriodo.CERRADO,
+		});
+		mockPrisma.auditoriaPeriodo.create.mockResolvedValue({});
+		mockPrisma.snapshotPeriodo.findFirst.mockResolvedValue(null);
+		mockPrisma.snapshotPeriodo.create.mockResolvedValue({ snapshotId: "sp-red" });
+		mockPrisma.saldoSnapshot.findMany.mockResolvedValue([]);
+		accountingSnapshotMocks.getReconciledResultForYear.mockResolvedValue({
+			year: 2025,
+			timeZone: "America/Havana",
+			functionalCurrency: "CUP",
+			monthly: [],
+			annual: { reconciledResult: 0, cashFlow: { operating: 0, financial: 0, net: 0 } },
+			incidents: [],
+			estimates: [],
+		});
+		accountingSnapshotMocks.getCurrentBalance.mockResolvedValue({
+			asOf: "2026-01-02T12:00:00.000Z",
+			functionalCurrency: "CUP",
+			assets: { cashAndBanks: 0, inventory: { historical: 0, estimated: 0, total: 0 }, receivables: 0, total: 0 },
+			liabilities: { payables: 0, externalDebt: 0, total: 0 },
+			equity: { capital: 0, retainedEarnings: 0, currentResult: 0, total: 0 },
+			equation: { assets: 0, liabilitiesAndEquity: 0, difference: 0, status: "CUADRADO" },
+			coverage: { complete: true, unresolvedCount: 0, unresolvedAmount: 0, parts: [] },
+			estimates: [],
+			incidents: [],
+		});
+
+		const response = await cerrarPeriodoAction({ periodoId: "p-1" });
+
+		expect(response.success).toBe(true);
+		expect(mockPrisma.reconciliacionVenta.aggregate).not.toHaveBeenCalled();
+		expect(mockPrisma.reconciliacionServicio.aggregate).not.toHaveBeenCalled();
+		expect(mockPrisma.reconciliacionGasto.aggregate).not.toHaveBeenCalled();
+	});
+
+	it("no invoca fórmulas legacy de agregación al cerrar un período diario", async () => {
+		const periodo = makePeriodo({
+			tipo: TipoPeriodo.DIARIO,
+			estado: EstadoPeriodo.ABIERTO,
+			fechaInicio: new Date("2026-03-15"),
+			fechaFin: new Date("2026-03-15"),
+		});
+		mockPrisma.periodoContable.findFirst.mockResolvedValue(periodo);
+		mockPrisma.periodoContable.findUnique.mockResolvedValue(periodo);
+		mockPrisma.periodoContable.update.mockResolvedValue({
+			...periodo,
+			estado: EstadoPeriodo.CERRADO,
+		});
+		mockPrisma.auditoriaPeriodo.create.mockResolvedValue({});
+
+		const result = await cerrarPeriodoAction({ periodoId: "p-1" });
+
+		expect(result.success).toBe(true);
+		expect(mockPrisma.reconciliacionVenta.aggregate).not.toHaveBeenCalled();
+		expect(mockPrisma.reconciliacionServicio.aggregate).not.toHaveBeenCalled();
+		expect(mockPrisma.reconciliacionGasto.aggregate).not.toHaveBeenCalled();
+	});
+
+	it("persiste un snapshot financiero v3 al cerrar un período anual", async () => {
 		const periodo = makePeriodo({
 			tipo: TipoPeriodo.ANUAL,
 			estado: EstadoPeriodo.ABIERTO,
@@ -565,7 +746,7 @@ describe("cerrarPeriodoAction", () => {
 			timeZone: "America/Havana",
 			functionalCurrency: "CUP",
 			monthly: [],
-			annual: { reconciledResult: 10 },
+			annual: { reconciledResult: 10, cashFlow: { operating: 10, financial: 0, net: 10 } },
 			incidents: [],
 			estimates: [],
 		};
@@ -619,25 +800,312 @@ describe("cerrarPeriodoAction", () => {
 		  );
 		  expect(accountingSnapshotMocks.getReconciledResultForYear).toHaveBeenCalledWith(
 		    expect.objectContaining({
-		      cutoffAt: new Date(periodo.fechaFin.getTime() + 1),
+		      cutoffAt: new Date("2026-01-02T12:00:00.000Z"),
 		    }),
 		  );
-		  const snapshotPayload = mockPrisma.periodoContable.update.mock.calls.at(-1)?.[0]
-		    .data.resumenJson;
-		  expect(snapshotPayload.cutoffAt).toBe(snapshotPayload.capturedAt);
-		  expect(snapshotPayload.resultThrough).toBe(periodo.fechaFin.toISOString());
-  expect(mockPrisma.periodoContable.update).toHaveBeenLastCalledWith(expect.objectContaining({
+  const snapshotUpdate = mockPrisma.periodoContable.update.mock.calls.find(
+    (call) => call[0].data?.resumenJson,
+  );
+  const snapshotPayload = snapshotUpdate?.[0].data.resumenJson;
+    expect(snapshotPayload.cutoffAt).not.toBe(snapshotPayload.capturedAt);
+    const capturedInput = financialSnapshotV3Mocks.captureFinancialSnapshotV3.mock.calls[0][0];
+    expect(capturedInput.range.lt).toBe(capturedInput.cutoffAt.toISOString());
+  expect(mockPrisma.periodoContable.update).toHaveBeenCalledWith(expect.objectContaining({
 			data: expect.objectContaining({
-				resumenJson: expect.objectContaining({ version: 2, balance, result }),
-				hashIntegridad: expect.stringMatching(/^[a-f0-9]{64}$/),
+				resumenJson: expect.objectContaining({ version: 3 }),
+				hashIntegridad: "v3-approved-hash",
 			}),
 		}));
-		expect(mockPrisma.snapshotPeriodo.create).toHaveBeenCalledWith(expect.objectContaining({
-			data: expect.objectContaining({
-				resumenJson: expect.objectContaining({ version: 2, balance, result }),
-				hashIntegridad: expect.stringMatching(/^[a-f0-9]{64}$/),
-			}),
-		}));
+	});
+
+	it("captura el checkpoint una sola vez en el flujo anual completo", async () => {
+		const periodo = makePeriodo({
+			tipo: TipoPeriodo.ANUAL,
+			estado: EstadoPeriodo.ABIERTO,
+			fechaInicio: new Date("2025-01-01T05:00:00Z"),
+			fechaFin: new Date("2026-01-01T04:59:59Z"),
+		});
+		mockPrisma.periodoContable.findFirst.mockResolvedValue(periodo);
+		mockPrisma.periodoContable.findUnique.mockResolvedValue(periodo);
+		mockPrisma.periodoContable.update.mockResolvedValue({
+			...periodo,
+			estado: EstadoPeriodo.CERRADO,
+		});
+		mockPrisma.auditoriaPeriodo.create.mockResolvedValue({});
+		mockPrisma.snapshotPeriodo.findFirst.mockResolvedValue(null);
+		mockPrisma.snapshotPeriodo.create.mockResolvedValue({ snapshotId: "sp-annual" });
+		mockPrisma.saldoSnapshot.findMany.mockResolvedValue([]);
+		accountingSnapshotMocks.getReconciledResultForYear.mockResolvedValue({
+			year: 2025,
+			timeZone: "America/Havana",
+			functionalCurrency: "CUP",
+			monthly: [],
+			annual: { reconciledResult: 10, cashFlow: { operating: 10, financial: 0, net: 10 } },
+			incidents: [],
+			estimates: [],
+		});
+		accountingSnapshotMocks.getCurrentBalance.mockResolvedValue({
+			asOf: "2026-01-02T12:00:00.000Z",
+			functionalCurrency: "CUP",
+			assets: { cashAndBanks: 100, inventory: { historical: 0, estimated: 0, total: 0 }, receivables: 0, total: 100 },
+			liabilities: { payables: 0, externalDebt: 0, total: 0 },
+			equity: { capital: 90, retainedEarnings: 0, currentResult: 10, total: 100 },
+			equation: { assets: 100, liabilitiesAndEquity: 100, difference: 0, status: "CUADRADO" },
+			coverage: { complete: true, unresolvedCount: 0, unresolvedAmount: 0, parts: [] },
+			estimates: [],
+			incidents: [],
+		});
+
+		const response = await cerrarPeriodoAction({ periodoId: "p-1" });
+
+		expect(response.success).toBe(true);
+		expect(checkpointMocks.captureFinancialAuxiliaryCheckpoint).toHaveBeenCalledTimes(1);
+	});
+
+	it("captura y aprueba v3 después de la proyección canónica bajo el mismo lock", async () => {
+		const periodo = makePeriodo({
+			tipo: TipoPeriodo.ANUAL,
+			estado: EstadoPeriodo.ABIERTO,
+			fechaInicio: new Date("2025-01-01T05:00:00Z"),
+			fechaFin: new Date("2026-01-01T04:59:59Z"),
+		});
+		const events: string[] = [];
+		mockPrisma.periodoContable.findFirst.mockResolvedValue(periodo);
+		mockPrisma.periodoContable.findUnique.mockResolvedValue(periodo);
+		mockPrisma.periodoContable.update.mockImplementation(async (args) => {
+			events.push("period-close");
+			return { ...periodo, ...args.data, estado: EstadoPeriodo.CERRADO };
+		});
+		mockPrisma.auditoriaPeriodo.create.mockResolvedValue({});
+		accountingSnapshotMocks.getReconciledResultForYear.mockImplementation(async () => {
+			events.push("canonical-result");
+			return {
+				year: 2025,
+				timeZone: "America/Havana",
+				functionalCurrency: "CUP",
+				monthly: [],
+				annual: {
+					reconciledResult: 10,
+					cashFlow: { operating: 10, financial: 0, net: 10 },
+				},
+				incidents: [],
+				estimates: [],
+			};
+		});
+		accountingSnapshotMocks.getCurrentBalance.mockImplementation(async () => {
+			events.push("canonical-balance");
+			return {
+				functionalCurrency: "CUP",
+				coverage: { complete: true, unresolvedCount: 0, unresolvedAmount: 0, parts: [] },
+				equation: { status: "CUADRADO" },
+				estimates: [],
+				incidents: [],
+			};
+		});
+		checkpointMocks.captureFinancialAuxiliaryCheckpoint.mockImplementation(
+			async (params: {
+				collectEvidence: (client: typeof mockPrisma, cutoffAt: Date) => Promise<unknown>;
+			}) => {
+				events.push("checkpoint");
+				await params.collectEvidence(mockPrisma, new Date("2026-01-02T12:00:00.000Z"));
+				return {
+					checkpointId: "checkpoint-v3",
+					payload: {
+						version: 3,
+						cutoffAt: "2026-01-02T12:00:00.000Z",
+						capturedAt: "2026-01-02T12:00:01.000Z",
+						functionalCurrency: "CUP",
+						balance: {},
+						result: {},
+						auxiliaries: {
+							bankAccounts: [],
+							inventory: [],
+							receivables: [],
+							payables: [],
+							debt: [],
+							capital: [],
+						},
+					},
+				};
+			},
+		);
+		financialSnapshotV3Mocks.captureFinancialSnapshotV3.mockImplementationOnce(
+			async (input: Record<string, unknown>) => {
+				events.push("v3-capture");
+				expect(input.tenantId).toBe(TENANT);
+				expect(input.range).toEqual({
+					gte: periodo.fechaInicio.toISOString(),
+					lt: "2026-01-02T12:00:00.000Z",
+				});
+				return {
+					snapshotId: "snapshot-v3",
+					status: "CAPTURED",
+					resumenJson: { version: 3 },
+					hashIntegridad: "capture-hash",
+				};
+			},
+		);
+		financialSnapshotV3Mocks.approveFinancialSnapshotV3.mockImplementationOnce(async () => {
+			events.push("v3-approve");
+			return {
+				snapshotId: "snapshot-v3",
+				status: "APPROVED",
+				resumenJson: { version: 3, approvedAt: "2026-01-02T12:00:02.000Z" },
+				hashIntegridad: "approved-hash",
+			};
+		});
+
+		const response = await cerrarPeriodoAction({ periodoId: "p-1" });
+
+		expect(response.success).toBe(true);
+		expect(events).toEqual([
+			"checkpoint",
+			"canonical-result",
+			"canonical-balance",
+			"v3-capture",
+			"v3-approve",
+			"period-close",
+			"period-close",
+		]);
+		expect(financialSnapshotV3Mocks.captureFinancialSnapshotV3).toHaveBeenCalledTimes(1);
+		expect(financialSnapshotV3Mocks.approveFinancialSnapshotV3).toHaveBeenCalledTimes(1);
+	});
+
+	it("no cierra el período ni aprueba v3 si la aprobación falla", async () => {
+		const periodo = makePeriodo({
+			tipo: TipoPeriodo.ANUAL,
+			estado: EstadoPeriodo.ABIERTO,
+			fechaInicio: new Date("2025-01-01T05:00:00Z"),
+			fechaFin: new Date("2026-01-01T04:59:59Z"),
+		});
+		mockPrisma.periodoContable.findFirst.mockResolvedValue(periodo);
+		mockPrisma.periodoContable.findUnique.mockResolvedValue(periodo);
+		mockPrisma.periodoContable.update.mockResolvedValue({ ...periodo, estado: EstadoPeriodo.CERRADO });
+		mockPrisma.auditoriaPeriodo.create.mockResolvedValue({});
+		accountingSnapshotMocks.getReconciledResultForYear.mockResolvedValue({
+			year: 2025,
+			functionalCurrency: "CUP",
+			monthly: [],
+			annual: { reconciledResult: 10, cashFlow: { operating: 10, financial: 0, net: 10 } },
+			incidents: [],
+			estimates: [],
+		});
+		accountingSnapshotMocks.getCurrentBalance.mockResolvedValue({
+			functionalCurrency: "CUP",
+			coverage: { complete: true, unresolvedCount: 0, unresolvedAmount: 0, parts: [] },
+			estimates: [],
+			incidents: [],
+		});
+		financialSnapshotV3Mocks.approveFinancialSnapshotV3.mockRejectedValueOnce(
+			new Error("approval unavailable"),
+		);
+
+		const response = await cerrarPeriodoAction({ periodoId: "p-1" });
+
+		expect(response.success).toBe(false);
+		expect(mockPrisma.periodoContable.update).not.toHaveBeenCalled();
+		expect(response.error?.code).not.toBe("INTERNAL_ERROR");
+	});
+
+	it("recolecta resultado y balance dentro de la captura protegida", async () => {
+		const periodo = makePeriodo({
+			tipo: TipoPeriodo.ANUAL,
+			estado: EstadoPeriodo.ABIERTO,
+			fechaInicio: new Date("2025-01-01T05:00:00Z"),
+			fechaFin: new Date("2026-01-01T04:59:59Z"),
+		});
+		const events: string[] = [];
+		const result = {
+			year: 2025,
+			timeZone: "America/Havana",
+			functionalCurrency: "CUP",
+			monthly: [],
+			annual: { reconciledResult: 10, cashFlow: { operating: 10, financial: 0, net: 10 } },
+			incidents: [],
+			estimates: [],
+		};
+		const balance = {
+			functionalCurrency: "CUP",
+			coverage: { complete: true, unresolvedCount: 0, unresolvedAmount: 0, parts: [] },
+			estimates: [],
+			incidents: [],
+		};
+
+		mockPrisma.periodoContable.findFirst.mockResolvedValue(periodo);
+		mockPrisma.periodoContable.findUnique.mockResolvedValue(periodo);
+		mockPrisma.periodoContable.update.mockResolvedValue({
+			...periodo,
+			estado: EstadoPeriodo.CERRADO,
+		});
+		mockPrisma.auditoriaPeriodo.create.mockResolvedValue({});
+		mockPrisma.snapshotPeriodo.findFirst.mockResolvedValue(null);
+		mockPrisma.snapshotPeriodo.create.mockResolvedValue({ snapshotId: "sp-annual" });
+		mockPrisma.saldoSnapshot.findMany.mockResolvedValue([]);
+		accountingSnapshotMocks.getReconciledResultForYear.mockImplementation(async () => {
+			events.push("result");
+			return result;
+		});
+		accountingSnapshotMocks.getCurrentBalance.mockImplementation(async () => {
+			events.push("balance");
+			return balance;
+		});
+		checkpointMocks.captureFinancialAuxiliaryCheckpoint.mockImplementation(
+			async (params: {
+				collectEvidence: (
+					client: typeof mockPrisma,
+					cutoffAt: Date,
+				) => Promise<unknown>;
+			}) => {
+				events.push("capture");
+				const evidence = await params.collectEvidence(
+					mockPrisma,
+					new Date("2026-01-02T12:00:00.000Z"),
+				);
+				return {
+					checkpointId: "checkpoint-annual",
+					payload: {
+						...(evidence as Record<string, unknown>),
+					version: 3,
+						cutoffAt: "2026-01-02T12:00:00.000Z",
+						capturedAt: "2026-01-02T12:00:01.000Z",
+					},
+				};
+			},
+		);
+
+		const response = await cerrarPeriodoAction({ periodoId: "p-1" });
+
+		expect(response.success).toBe(true);
+		expect(events).toEqual(["capture", "result", "balance"]);
+	});
+
+	it("no captura checkpoint cuando el resultado canónico queda incompleto", async () => {
+		const periodo = makePeriodo({
+			tipo: TipoPeriodo.ANUAL,
+			estado: EstadoPeriodo.ABIERTO,
+			fechaInicio: new Date("2025-01-01T05:00:00Z"),
+			fechaFin: new Date("2026-01-01T04:59:59Z"),
+		});
+		mockPrisma.periodoContable.findFirst.mockResolvedValue(periodo);
+		mockPrisma.periodoContable.findUnique.mockResolvedValue(periodo);
+		mockPrisma.periodoContable.update.mockResolvedValue({ ...periodo, estado: EstadoPeriodo.CERRADO });
+		accountingSnapshotMocks.getReconciledResultForYear.mockResolvedValue({
+			year: 2025,
+			monthly: [],
+			annual: { reconciledResult: 10 },
+			incidents: [{ code: "MISSING_EVIDENCE" }],
+			estimates: [],
+		});
+		accountingSnapshotMocks.getCurrentBalance.mockResolvedValue({
+			functionalCurrency: "CUP",
+			coverage: { complete: true },
+		});
+
+		const response = await cerrarPeriodoAction({ periodoId: "p-1" });
+
+		expect(response.success).toBe(false);
+		expect(response.error?.code).toBe("CUTOFF_EVIDENCE_UNAVAILABLE");
+		expect(checkpointMocks.captureFinancialAuxiliaryCheckpoint).toHaveBeenCalledTimes(1);
 	});
 
 	it("cierra un período exitosamente con snapshot", async () => {

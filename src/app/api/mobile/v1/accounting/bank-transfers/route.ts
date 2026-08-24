@@ -28,9 +28,10 @@ export async function GET(request: Request) {
   }
 
   try {
-    const { searchParams } = new URL(request.url);
-    const result = await AccountingOperationsReadService.getBankTransfers({
-      fechaInicio: searchParams.get('fechaInicio'),
+      const { searchParams } = new URL(request.url);
+      const result = await AccountingOperationsReadService.getBankTransfers({
+        tenantId: authResult.user.tenantId ?? '',
+        fechaInicio: searchParams.get('fechaInicio'),
       fechaFin: searchParams.get('fechaFin'),
       cuentaId: searchParams.get('cuentaId'),
     });

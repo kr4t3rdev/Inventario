@@ -249,7 +249,7 @@ realizará en las fases 6 y 9, junto con sus contratos de servicio y pruebas de 
 
 - [x] Sustituir el fallback inseguro del workflow de gastos por el helper canónico.
 - [x] Eliminar el helper duplicado no utilizado en el servicio de reconciliación.
-- [ ] Migrar las demás escrituras y añadir metadatos al contrato del reporte en las fases 6 y 9.
+- [x] Migrar las demás escrituras y añadir metadatos al contrato del reporte en las fases 6 y 9.
 
 ### Salida
 
@@ -357,7 +357,7 @@ a una fecha pasada; una reconstrucción temporal completa queda fuera de esta fa
 ### REFACTOR
 
 - [x] Reutilizar `fecha-operacion-registry.ts` como única política temporal.
-- [ ] Añadir fecha de operación específica a ajustes si requiere migración.
+- [x] Añadir fecha de operación específica a ajustes si requiere migración.
 
 ### Salida
 
@@ -489,22 +489,36 @@ node /Users/arturo/.agents/skills/impeccable/scripts/detect.mjs --json \
 
 ### RED
 
-- [ ] Tests de paridad entre pantalla, CSV/PDF, resumen y cierre contable.
-- [ ] Tests que detectan agregaciones directas de documentos no reconciliados.
-- [ ] Tests de filtros de tenant, período, moneda y estado contabilizable.
-- [ ] Tests de exclusión de préstamos y transferencias de ingresos operativos.
+- [x] Tests de paridad entre pantalla, CSV, resumen y cierre contable.
+- [x] Tests que detectan agregaciones directas de documentos no reconciliados.
+- [x] Tests de filtros de tenant, período, moneda y estado contabilizable.
+- [x] Tests de exclusión de préstamos y transferencias de ingresos operativos.
 
 ### GREEN
 
-- [ ] Migrar `AccountingReportsService` a la política canónica.
-- [ ] Migrar `SnapshotService` y `cierreContableService` al mismo dominio.
-- [ ] Migrar reportes de resumen, movimientos, flujo de caja y analítica.
-- [ ] Incluir metadatos de cobertura y moneda en todas las exportaciones.
+- [x] Migrar `AccountingReportsService` a la política canónica.
+- [x] Migrar `SnapshotService` y `cierreContableService` al mismo dominio.
+- [x] Migrar reportes de resumen, movimientos, flujo de caja y analítica.
+- [x] Incluir metadatos de cobertura y moneda en las exportaciones de resumen y movimientos.
 
 ### REFACTOR
 
-- [ ] Eliminar cálculos duplicados y adaptadores obsoletos después de verificar consumidores.
-- [ ] Documentar qué reportes son caja reconciliada y cuáles contienen saldos auxiliares.
+- [x] Eliminar cálculos duplicados de las rutas web de resumen y movimientos después de verificar consumidores.
+- [x] Documentar qué reportes son caja reconciliada y cuáles contienen saldos auxiliares.
+
+### Clasificación De Reportes
+
+- **Caja reconciliada**: `AccountingReportsService.getSummaryReport`,
+  `AccountingReportsService.getMovementsReport`, `getReconciledResultForYear` y los
+  snapshots financieros. Solo agregan reconciliaciones y exponen cobertura de conversión.
+- **Resultado operativo**: `balance-results-report-service` y el dominio de resultado
+  reconciliado. Ventas y servicios contabilizados forman ingresos; préstamos, deudas,
+  transferencias y capital permanecen fuera del resultado operativo.
+- **Saldos auxiliares**: el cierre contable conserva deudas de clientes/proveedores,
+  inventario vendido, mermas y stock final como métricas auxiliares; no deben mezclarse con
+  ingresos o egresos operativos reconciliados.
+- **Transferencias y ajustes**: se muestran como movimientos de caja y estadísticas, pero
+  no se clasifican como ingresos operativos.
 
 ### Salida
 
@@ -516,19 +530,23 @@ node /Users/arturo/.agents/skills/impeccable/scripts/detect.mjs --json \
 
 ### RED
 
-- [ ] E2E con empresa sin datos.
-- [ ] E2E con cobertura parcial y acceso a pendientes.
-- [ ] E2E con balance cuadrado.
-- [ ] E2E con diferencia contable.
-- [ ] E2E con dos monedas y una conversión faltante.
-- [ ] E2E al cambiar período con respuesta tardía y error de red.
-- [ ] E2E mobile para navegación, tablas y metodología.
+- [x] E2E con empresa sin datos.
+- [x] E2E con cobertura parcial y acceso a pendientes.
+- [x] E2E con balance cuadrado.
+- [x] E2E con diferencia contable.
+- [x] E2E con dos monedas y una conversión faltante.
+- [x] E2E al cambiar período con respuesta tardía y error de red.
+- [x] E2E mobile para navegación, tablas y metodología.
 
 ### GREEN
 
-- [ ] Crear fixtures deterministas sin depender de producción.
-- [ ] Añadir trazabilidad desde cada cifra hasta movimientos fuente.
+- [x] Crear fixtures deterministas sin depender de producción.
+- [x] Añadir trazabilidad desde cada cifra hasta movimientos fuente.
 - [ ] Añadir telemetría de incidencias de cobertura sin registrar información sensible.
+
+> Los escenarios están implementados en `e2e/contabilidad/balance-resultados.spec.ts` con
+> respuestas HTTP deterministas. La ejecución requiere que la base de datos E2E configurada
+> esté disponible para sembrar/autenticar el usuario de pruebas.
 
 ### Verificación Final
 
@@ -538,7 +556,7 @@ CI=1 pnpm exec vitest run \
   src/features/contabilidad/services/__tests__/balance-results-report-service.test.ts \
   src/features/contabilidad/api/__tests__/exchange-handlers.test.ts \
   src/app/busy/contabilidad/balance-resultados/page.test.tsx
-pnpm exec playwright test e2e/contabilidad/balance-resultados.spec.ts
+pnpm exec playwright test e2e/contabilidad/balance-resultados.spec.ts --project=chromium
 pnpm run typecheck
 pnpm run lint
 pnpm run build

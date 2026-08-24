@@ -67,6 +67,9 @@ describe('mobile bank transfer comprobante route', () => {
     expect(response.status).toBe(200);
     expect(response.headers.get('content-type')).toContain('application/pdf');
     expect(response.headers.get('content-disposition')).toContain('comprobante-TR-0001.pdf');
-    expect(AccountingOperationsReadService.getBankTransferById).toHaveBeenCalledWith('t-1');
+    expect(AccountingOperationsReadService.getBankTransferById).toHaveBeenCalledWith(
+      't-1',
+      'tenant-1',
+    );
   });
 });

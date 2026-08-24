@@ -1,5 +1,3 @@
-import { createHash } from 'node:crypto';
-
 import { getYearRangeInTimeZone } from '@/features/contabilidad/domain/reconciled-result-calculator';
 import type { CurrentBalanceResult } from '@/features/contabilidad/domain/balance-calculator';
 import { prisma } from '@/lib/prisma';
@@ -8,6 +6,12 @@ import {
   ACCOUNTING_TIME_ZONE,
   getAccountingYear,
 } from '@/lib/services/fecha-operacion-registry';
+import { findFinancialAuxiliaryCheckpoint } from './financial-auxiliary-checkpoint-service';
+import {
+  hashFinancialSnapshotV3,
+  validateFinancialSnapshotV3Payload,
+} from './financial-snapshot-v3-service';
+import { hashImmutableFinancialEvidence } from './immutable-financial-evidence';
 
 export interface FinancialSnapshotPayload<TResult = unknown> {
   version: 2;
@@ -41,6 +45,7 @@ interface ResolveFinancialReportParams<TLive> {
   tenantId: string;
   year: number;
   now: Date;
+  requestedCutoffAt?: Date;
   calculateLive: (cutoffAt: Date) => Promise<TLive>;
 }
 
@@ -61,12 +66,24 @@ export type FinancialReportResolution<TLive = unknown> =
       resultThrough: string;
       periodId: string;
       snapshotId: string;
-      snapshotVersion: 2;
+      snapshotVersion: 2 | 3;
       integrity: 'VALID';
       balance: CurrentBalanceResult;
       result: unknown;
-      coverage: FinancialSnapshotPayload['coverage'];
-      sources: Record<string, number>;
+      coverage: FinancialSnapshotPayload['coverage'] | Record<string, unknown>;
+      sources: Record<string, number> | Record<string, string>;
+    }
+  | {
+      status: 'AVAILABLE';
+      origin: 'CHECKPOINT';
+      provisional: false;
+      cutoffAt: string;
+      resultThrough: string;
+      periodId: null;
+      checkpointId: string;
+      integrity: 'VALID';
+      balance: CurrentBalanceResult;
+      result: unknown;
     }
   | {
       status: 'UNAVAILABLE';
@@ -82,6 +99,9 @@ export type FinancialReportResolution<TLive = unknown> =
 interface PersistedSnapshot {
   snapshotId: string;
   version: number;
+  tenantId?: string | null;
+  schemaVersion?: number | null;
+  status?: string | null;
   resumenJson: unknown;
   hashIntegridad: string | null;
   createdAt: Date;
@@ -90,31 +110,12 @@ interface PersistedSnapshot {
 const LIVE_PERIOD_STATES = new Set(['ABIERTO', 'REABIERTO']);
 
 /**
- * @description Serializa valores JSON con claves ordenadas para producir hashes estables.
- * @param {unknown} value - Valor JSON que se normalizará.
- * @returns {string} Representación canónica del valor.
- */
-function canonicalJson(value: unknown): string {
-  if (value === null || typeof value !== 'object') {
-    return JSON.stringify(value);
-  }
-  if (Array.isArray(value)) {
-    return `[${value.map(canonicalJson).join(',')}]`;
-  }
-  const record = value as Record<string, unknown>;
-  return `{${Object.keys(record)
-    .sort()
-    .map((key) => `${JSON.stringify(key)}:${canonicalJson(record[key])}`)
-    .join(',')}}`;
-}
-
-/**
  * @description Calcula el SHA256 canónico de un payload de snapshot.
  * @param {unknown} payload - Payload persistido que se verificará.
  * @returns {string} Hash hexadecimal SHA256.
  */
 export function hashFinancialSnapshot(payload: unknown): string {
-  return createHash('sha256').update(canonicalJson(payload)).digest('hex');
+  return hashImmutableFinancialEvidence(payload);
 }
 
 /**
@@ -176,9 +177,13 @@ function resolveApprovedSnapshot(
   periodId: string,
   snapshot: PersistedSnapshot | undefined,
   periodHashIntegridad: string | null,
+  tenantId: string,
 ): FinancialReportResolution {
   if (!snapshot) {
     return { status: 'UNAVAILABLE', reason: 'NO_HISTORICAL_EVIDENCE', periodId };
+  }
+  if (snapshot.schemaVersion === 3) {
+    return resolveApprovedSnapshotV3(periodId, snapshot, periodHashIntegridad, tenantId);
   }
   if (!isFinancialSnapshotV2(snapshot.resumenJson)) {
     return {
@@ -220,6 +225,71 @@ function resolveApprovedSnapshot(
 }
 
 /**
+ * @description Verifica y presenta un snapshot financiero v3 aprobado.
+ * @param {string} periodId - Período propietario del snapshot.
+ * @param {PersistedSnapshot} snapshot - Fila v3 persistida.
+ * @param {string | null} periodHashIntegridad - Hash copiado al período aprobado.
+ * @param {string} tenantId - Tenant esperado para reforzar aislamiento.
+ * @returns {FinancialReportResolution} Reporte disponible o causa explícita.
+ */
+function resolveApprovedSnapshotV3(
+  periodId: string,
+  snapshot: PersistedSnapshot,
+  periodHashIntegridad: string | null,
+  tenantId: string,
+): FinancialReportResolution {
+  if (snapshot.status !== 'APPROVED' || snapshot.tenantId !== tenantId) {
+    return {
+      status: 'UNAVAILABLE',
+      reason: 'NO_HISTORICAL_EVIDENCE',
+      periodId,
+      snapshotVersion: 3,
+    };
+  }
+
+  try {
+    const payload = validateFinancialSnapshotV3Payload(snapshot.resumenJson, tenantId);
+    const hash = hashFinancialSnapshotV3(payload);
+    if (
+      !snapshot.hashIntegridad ||
+      hash !== snapshot.hashIntegridad ||
+      !periodHashIntegridad ||
+      hash !== periodHashIntegridad
+    ) {
+      return {
+        status: 'UNAVAILABLE',
+        reason: 'INTEGRITY_FAILED',
+        periodId,
+        snapshotVersion: 3,
+      };
+    }
+
+    return {
+      status: 'AVAILABLE',
+      origin: 'SNAPSHOT',
+      provisional: false,
+      cutoffAt: payload.cutoffAt,
+      resultThrough: payload.cutoffAt,
+      periodId,
+      snapshotId: snapshot.snapshotId,
+      snapshotVersion: 3,
+      integrity: 'VALID',
+      balance: payload.balance as unknown as CurrentBalanceResult,
+      result: payload.result,
+      coverage: payload.coverage,
+      sources: payload.provenance.sourceFingerprints,
+    };
+  } catch {
+    return {
+      status: 'UNAVAILABLE',
+      reason: 'INTEGRITY_FAILED',
+      periodId,
+      snapshotVersion: 3,
+    };
+  }
+}
+
+/**
  * @description Resuelve un reporte actual provisional o un snapshot histórico aprobado.
  * @param {ResolveFinancialReportParams<TLive>} params - Tenant, año, corte y cálculo live diferido.
  * @returns {Promise<FinancialReportResolution<TLive>>} Resolución discriminada del reporte.
@@ -227,6 +297,26 @@ function resolveApprovedSnapshot(
 export async function resolveFinancialReport<TLive extends object>(
   params: ResolveFinancialReportParams<TLive>,
 ): Promise<FinancialReportResolution<TLive>> {
+  if (params.requestedCutoffAt) {
+    const checkpoint = await findFinancialAuxiliaryCheckpoint({
+      tenantId: params.tenantId,
+      cutoffAt: params.requestedCutoffAt,
+    });
+    if (checkpoint) {
+      return {
+        status: 'AVAILABLE',
+        origin: 'CHECKPOINT',
+        provisional: false,
+        cutoffAt: checkpoint.payload.cutoffAt,
+        resultThrough: checkpoint.payload.resultThrough,
+        periodId: null,
+        checkpointId: checkpoint.checkpointId,
+        integrity: 'VALID',
+        balance: checkpoint.payload.balance as CurrentBalanceResult,
+        result: checkpoint.payload.result,
+      };
+    }
+  }
   const range = getYearRangeInTimeZone(params.year, ACCOUNTING_TIME_ZONE);
   // Periodos legacy suelen guardar el fin a precisión de segundos.
   const endInclusive = new Date(range.lt.getTime() - 1_000);
@@ -251,6 +341,9 @@ export async function resolveFinancialReport<TLive extends object>(
           select: {
             snapshotId: true,
             version: true,
+            tenantId: true,
+            schemaVersion: true,
+            status: true,
             resumenJson: true,
             hashIntegridad: true,
             createdAt: true,
@@ -261,12 +354,27 @@ export async function resolveFinancialReport<TLive extends object>(
   }, { isolationLevel: 'Serializable' });
 
   if (period?.estado === 'APROBADO') {
-    return resolveApprovedSnapshot(
+    const resolution = resolveApprovedSnapshot(
       period.periodoId,
       period.snapshotPeriodos[0],
       period.hashIntegridad,
-    ) as
-      FinancialReportResolution<TLive>;
+      params.tenantId,
+    ) as FinancialReportResolution<TLive>;
+    if (
+      !params.requestedCutoffAt ||
+      (resolution.status === 'AVAILABLE' &&
+        resolution.cutoffAt === params.requestedCutoffAt.toISOString())
+    ) {
+      return resolution;
+    }
+  }
+
+  if (params.requestedCutoffAt) {
+    return {
+      status: 'UNAVAILABLE',
+      reason: 'NO_HISTORICAL_EVIDENCE',
+      periodId: period?.periodoId ?? null,
+    };
   }
 
   const canCalculateLive = !period || LIVE_PERIOD_STATES.has(period.estado);
@@ -291,7 +399,7 @@ export async function resolveFinancialReport<TLive extends object>(
 }
 
 /**
- * @description Lista solo períodos anuales aprobados con snapshot v2 íntegro.
+ * @description Lista solo períodos anuales aprobados con snapshot v2 o v3 íntegro.
  * @param {string} tenantId - Empresa propietaria de los períodos.
  * @returns {Promise<object[]>} Años que pueden consultarse sin recalcular datos actuales.
  */
@@ -300,7 +408,7 @@ export async function listAvailableFinancialPeriods(tenantId: string): Promise<A
   code: string | null;
   year: number;
   cutoffAt: string;
-  snapshotVersion: 2;
+  snapshotVersion: 2 | 3;
 }>> {
   const periods = await prisma.$transaction(async (tx: Prisma.TransactionClient) => {
     return tx.periodoContable.findMany({
@@ -324,6 +432,9 @@ export async function listAvailableFinancialPeriods(tenantId: string): Promise<A
           select: {
             snapshotId: true,
             version: true,
+            tenantId: true,
+            schemaVersion: true,
+            status: true,
             resumenJson: true,
             hashIntegridad: true,
             createdAt: true,
@@ -338,6 +449,7 @@ export async function listAvailableFinancialPeriods(tenantId: string): Promise<A
       period.periodoId,
       period.snapshotPeriodos[0],
       period.hashIntegridad,
+      tenantId,
     );
     if (resolution.status !== 'AVAILABLE' || resolution.origin !== 'SNAPSHOT') return [];
     return [{
@@ -345,7 +457,7 @@ export async function listAvailableFinancialPeriods(tenantId: string): Promise<A
       code: period.codigo,
       year: getAccountingYear(period.fechaInicio),
       cutoffAt: resolution.cutoffAt,
-      snapshotVersion: 2 as const,
+      snapshotVersion: resolution.snapshotVersion,
     }];
   });
 }

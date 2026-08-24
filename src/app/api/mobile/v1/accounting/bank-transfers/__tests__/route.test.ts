@@ -72,6 +72,7 @@ describe('mobile accounting bank transfers route', () => {
     expect(response.status).toBe(200);
     expect(data.items).toHaveLength(1);
     expect(AccountingOperationsReadService.getBankTransfers).toHaveBeenCalledWith({
+      tenantId: 'tenant-1',
       fechaInicio: '2026-01-01',
       fechaFin: '2026-01-31',
       cuentaId: 'cb-1',

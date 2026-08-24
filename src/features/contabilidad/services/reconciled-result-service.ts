@@ -12,7 +12,7 @@ import {
   classifyLegacyReconciliation,
   type ReconciliationKind,
 } from '@/features/contabilidad/domain/reconciliation-policy';
-import { exchangeRateProvider } from '@/features/contabilidad/services/exchange-rate-provider';
+import { getRequiredTenantAccountingPolicy } from './tenant-accounting-policy-service';
 import {
   calcularDetalleCostoVenta,
   type VentaParaCosto,
@@ -20,6 +20,7 @@ import {
 import { prisma } from '@/lib/prisma';
 import type { Prisma } from '@/generated/prisma';
 import { ACCOUNTING_TIME_ZONE } from '@/lib/services/fecha-operacion-registry';
+import { isStrictFxReader } from '@/features/contabilidad/config/fx-strict-readers';
 
 const MONTH_NAMES = [
   'enero',
@@ -43,6 +44,7 @@ interface PersistedAccountingAmount {
   montoConvertido: unknown;
   tasaCambio: unknown;
   fechaReconciliacion: Date;
+  rateEffectiveAt?: Date | null;
 }
 
 interface ReadIncident {
@@ -94,8 +96,10 @@ function isExpenseKind(kind: ReconciliationKind): kind is ExpenseResultMovement[
 function normalizePersistedAmount(
   record: PersistedAccountingAmount,
   functionalCurrency: string,
-): { amount: number } | { issue: ReadIncident } {
+): { amount: number; provenanceLegacy?: boolean } | { issue: ReadIncident } {
   const originalAmount = Number(record.monto);
+  const hasPersistedEvidence = record.rateEffectiveAt != null;
+  const effectiveAt = hasPersistedEvidence ? record.rateEffectiveAt : record.fechaReconciliacion;
   const result = normalizeAccountingAmount({
     amount: originalAmount,
     currency: record.moneda,
@@ -103,7 +107,7 @@ function normalizePersistedAmount(
     convertedAmount: record.montoConvertido == null ? null : Number(record.montoConvertido),
     exchangeRate: record.tasaCambio == null ? null : Number(record.tasaCambio),
     operationAt: record.fechaReconciliacion,
-    rateEffectiveAt: record.fechaReconciliacion,
+    rateEffectiveAt: effectiveAt,
   });
 
   if (result.status === 'unresolved') {
@@ -116,7 +120,42 @@ function normalizePersistedAmount(
     };
   }
 
+  const isForeignConversion =
+    result.source !== 'same_currency' &&
+    record.moneda.trim().toUpperCase() !== functionalCurrency.toUpperCase();
+  if (isForeignConversion && !hasPersistedEvidence) {
+    // Lectura estricta: la evidencia ausente excluye la fila de los totales.
+    if (isStrictFxReader('result')) {
+      return {
+        issue: {
+          code: 'FX_PROVENANCE_LEGACY',
+          movementId: record.reconciliacionId,
+          affectedAmount: result.amount,
+        },
+      };
+    }
+    return { amount: result.amount, provenanceLegacy: true };
+  }
   return { amount: result.amount };
+}
+
+/**
+ * @description Obtiene el factor multiplicador hacia la moneda funcional a partir de la
+ * conversión persistida de una reconciliación. Devuelve 1 para la moneda funcional.
+ * @param {PersistedAccountingAmount} record - Reconciliación con importe y conversión persistidos.
+ * @param {string} functionalCurrency - Moneda funcional del reporte.
+ * @returns {number} Factor demostrable montoConvertido/monto; NaN si no puede demostrarse.
+ */
+function getPersistedConversionFactor(
+  record: PersistedAccountingAmount,
+  functionalCurrency: string,
+): number {
+  const currency = record.moneda?.trim().toUpperCase();
+  if (!currency || currency === functionalCurrency.toUpperCase()) return 1;
+  const original = Number(record.monto);
+  const converted = record.montoConvertido == null ? NaN : Number(record.montoConvertido);
+  if (!Number.isFinite(original) || original <= 0 || !Number.isFinite(converted)) return NaN;
+  return converted / original;
 }
 
 /**
@@ -180,19 +219,21 @@ export function presentReconciledPeriod<T extends ReconciledPeriodResult>(period
 export async function getReconciledResultForYear(params: {
   tenantId: string;
   year: number;
+  startAt?: Date;
   cutoffAt?: Date;
   client?: Prisma.TransactionClient;
 }) {
   const db = params.client ?? prisma;
-  const principalCurrency = await exchangeRateProvider.getPrincipalCurrency(params.client);
-  if (!principalCurrency) {
-    throw new Error('No existe una moneda funcional configurada');
-  }
+  const tenantPolicy = await getRequiredTenantAccountingPolicy(params.tenantId, params.client);
+  const principalCurrency = { codigo: tenantPolicy.functionalCurrencyCode };
 
   const yearRange = getYearRangeInTimeZone(params.year, ACCOUNTING_TIME_ZONE);
+  const rangeStart = params.startAt && params.startAt > yearRange.gte
+    ? params.startAt
+    : yearRange.gte;
   const range = params.cutoffAt && params.cutoffAt < yearRange.lt
-    ? { gte: yearRange.gte, lt: params.cutoffAt }
-    : yearRange;
+    ? { gte: rangeStart, lt: params.cutoffAt }
+    : { gte: rangeStart, lt: yearRange.lt };
   const [sales, services, expenses, shrinkages] = await Promise.all([
     db.reconciliacionVenta.findMany({
       where: { tenantId: params.tenantId, fechaReconciliacion: range },
@@ -202,6 +243,7 @@ export async function getReconciledResultForYear(params: {
         moneda: true,
         montoConvertido: true,
         tasaCambio: true,
+        rateEffectiveAt: true,
         fechaReconciliacion: true,
         tipoReconciliacion: true,
         venta: {
@@ -223,7 +265,9 @@ export async function getReconciledResultForYear(params: {
                   select: {
                     id: true,
                     cantidad: true,
-                    compraDocumentoItem: { select: { precioUnitario: true } },
+                    compraDocumentoItem: {
+                      select: { precioUnitario: true, compraDocumentoId: true },
+                    },
                   },
                 },
               },
@@ -240,6 +284,7 @@ export async function getReconciledResultForYear(params: {
         moneda: true,
         montoConvertido: true,
         tasaCambio: true,
+        rateEffectiveAt: true,
         fechaReconciliacion: true,
         ventasServicio: {
           select: { ventaServicioId: true, total: true, costo: true, cantidad: true },
@@ -256,6 +301,7 @@ export async function getReconciledResultForYear(params: {
         moneda: true,
         montoConvertido: true,
         tasaCambio: true,
+        rateEffectiveAt: true,
         fechaReconciliacion: true,
         estado: true,
         gastoCompra: { select: { total: true } },
@@ -314,6 +360,7 @@ export async function getReconciledResultForYear(params: {
             moneda: true,
             montoConvertido: true,
             tasaCambio: true,
+            rateEffectiveAt: true,
             fechaReconciliacion: true,
           },
         })
@@ -332,6 +379,7 @@ export async function getReconciledResultForYear(params: {
             moneda: true,
             montoConvertido: true,
             tasaCambio: true,
+            rateEffectiveAt: true,
             fechaReconciliacion: true,
           },
         })
@@ -352,6 +400,7 @@ export async function getReconciledResultForYear(params: {
             moneda: true,
             montoConvertido: true,
             tasaCambio: true,
+            rateEffectiveAt: true,
             fechaReconciliacion: true,
           },
         })
@@ -379,6 +428,13 @@ export async function getReconciledResultForYear(params: {
       readIncidents.push(amount.issue);
       continue;
     }
+    if ('provenanceLegacy' in amount) {
+      readIncidents.push({
+        code: 'FX_PROVENANCE_LEGACY',
+        movementId: sale.reconciliacionId,
+        affectedAmount: amount.amount,
+      });
+    }
     const classification = classifyLegacyReconciliation({
       source: 'sale',
       kind: sale.tipoReconciliacion,
@@ -402,6 +458,13 @@ export async function getReconciledResultForYear(params: {
       readIncidents.push(amount.issue);
       continue;
     }
+    if ('provenanceLegacy' in amount) {
+      readIncidents.push({
+        code: 'FX_PROVENANCE_LEGACY',
+        movementId: service.reconciliacionId,
+        affectedAmount: amount.amount,
+      });
+    }
     openingRecognitions.push({
       source: 'service',
       documentId: service.ventaServicioId,
@@ -413,6 +476,13 @@ export async function getReconciledResultForYear(params: {
     if ('issue' in amount) {
       readIncidents.push(amount.issue);
       continue;
+    }
+    if ('provenanceLegacy' in amount) {
+      readIncidents.push({
+        code: 'FX_PROVENANCE_LEGACY',
+        movementId: expense.reconciliacionId,
+        affectedAmount: amount.amount,
+      });
     }
     const classification = classifyLegacyReconciliation({
       source: 'expense',
@@ -428,10 +498,7 @@ export async function getReconciledResultForYear(params: {
         source: 'expense',
         kind: classification.kind,
         documentId: expense.referenciaId,
-        amount: purchasedServiceDocuments.get(expense.referenciaId)?.currency ===
-          expense.moneda.trim().toUpperCase()
-          ? Number(expense.monto)
-          : amount.amount,
+        amount: amount.amount,
       });
     }
   }
@@ -441,6 +508,13 @@ export async function getReconciledResultForYear(params: {
     if ('issue' in amount) {
       readIncidents.push(amount.issue);
       continue;
+    }
+    if ('provenanceLegacy' in amount) {
+      readIncidents.push({
+        code: 'FX_PROVENANCE_LEGACY',
+        movementId: sale.reconciliacionId,
+        affectedAmount: amount.amount,
+      });
     }
     const classification = classifyLegacyReconciliation({
       source: 'sale',
@@ -490,11 +564,20 @@ export async function getReconciledResultForYear(params: {
       continue;
     }
     const cost = calcularDetalleCostoVenta(sale.venta as VentaParaCosto);
+    const conversionFactor = getPersistedConversionFactor(sale, principalCurrency.codigo);
+    if (!Number.isFinite(conversionFactor)) {
+      readIncidents.push({
+        code: 'MISSING_CONVERSION',
+        movementId: sale.reconciliacionId,
+        affectedAmount: amount.amount,
+      });
+      continue;
+    }
     if (cost.overAllocatedCost > 0) {
       readIncidents.push({
         code: 'FIFO_OVER_ALLOCATION',
         movementId: sale.reconciliacionId,
-        affectedAmount: cost.overAllocatedCost,
+        affectedAmount: cost.overAllocatedCost * conversionFactor,
       });
     }
     movements.push({
@@ -506,10 +589,11 @@ export async function getReconciledResultForYear(params: {
       amount: amount.amount,
       document: {
         id: sale.venta.ventaId,
-        revenue: getSaleRevenue(sale.venta),
-        historicalCost: cost.historical,
-        estimatedCost: cost.estimated,
+        revenue: getSaleRevenue(sale.venta) * conversionFactor,
+        historicalCost: cost.historical * conversionFactor,
+        estimatedCost: cost.estimated * conversionFactor,
       },
+      ...(cost.purchaseTrace.length > 0 && { purchaseTrace: cost.purchaseTrace }),
     });
   }
 
@@ -517,6 +601,22 @@ export async function getReconciledResultForYear(params: {
     const amount = normalizePersistedAmount(service, principalCurrency.codigo);
     if ('issue' in amount) {
       readIncidents.push(amount.issue);
+      continue;
+    }
+    if ('provenanceLegacy' in amount) {
+      readIncidents.push({
+        code: 'FX_PROVENANCE_LEGACY',
+        movementId: service.reconciliacionId,
+        affectedAmount: amount.amount,
+      });
+    }
+    const conversionFactor = getPersistedConversionFactor(service, principalCurrency.codigo);
+    if (!Number.isFinite(conversionFactor)) {
+      readIncidents.push({
+        code: 'MISSING_CONVERSION',
+        movementId: service.reconciliacionId,
+        affectedAmount: amount.amount,
+      });
       continue;
     }
     movements.push({
@@ -528,9 +628,9 @@ export async function getReconciledResultForYear(params: {
       amount: amount.amount,
       document: {
         id: service.ventasServicio.ventaServicioId,
-        revenue: Number(service.ventasServicio.total),
+        revenue: Number(service.ventasServicio.total) * conversionFactor,
         historicalCost: Number(service.ventasServicio.costo) *
-          Number(service.ventasServicio.cantidad),
+          Number(service.ventasServicio.cantidad) * conversionFactor,
         estimatedCost: 0,
       },
     });
@@ -541,6 +641,13 @@ export async function getReconciledResultForYear(params: {
     if ('issue' in amount) {
       readIncidents.push(amount.issue);
       continue;
+    }
+    if ('provenanceLegacy' in amount) {
+      readIncidents.push({
+        code: 'FX_PROVENANCE_LEGACY',
+        movementId: expense.reconciliacionId,
+        affectedAmount: amount.amount,
+      });
     }
     const classification = classifyLegacyReconciliation({
       source: 'expense',
@@ -568,24 +675,29 @@ export async function getReconciledResultForYear(params: {
         Number(expense.pagoSalario.horasExtras ?? 0)
       : null;
     const purchasedServiceDocument = purchasedServiceDocuments.get(expense.referenciaId);
-    const capInOriginalCurrency = purchasedServiceDocument != null &&
-      purchasedServiceDocument.currency !== principalCurrency.codigo &&
-      purchasedServiceDocument.currency === expense.moneda.trim().toUpperCase();
-    const documentAmount = expense.gastoCompra?.total ?? expense.gastoDE?.monto ?? salaryTotal ??
+    const documentTotal = expense.gastoCompra?.total ?? expense.gastoDE?.monto ?? salaryTotal ??
       purchasedServiceDocument?.total ??
-      soldServiceTotals.get(expense.referenciaId) ?? amount.amount;
-    if (
-      !expense.gastoCompra &&
-      !expense.gastoDE &&
-      salaryTotal == null &&
-      !purchasedServiceDocuments.has(expense.referenciaId) &&
-      !soldServiceTotals.has(expense.referenciaId)
-    ) {
+      soldServiceTotals.get(expense.referenciaId) ?? null;
+    const hasDocumentTotal = expense.gastoCompra != null ||
+      expense.gastoDE != null ||
+      salaryTotal != null ||
+      purchasedServiceDocument != null ||
+      soldServiceTotals.has(expense.referenciaId);
+    if (!hasDocumentTotal) {
       readIncidents.push({
         code: 'MISSING_DOCUMENT_TOTAL',
         movementId: expense.reconciliacionId,
         affectedAmount: amount.amount,
       });
+    }
+    const conversionFactor = getPersistedConversionFactor(expense, principalCurrency.codigo);
+    if (!Number.isFinite(conversionFactor)) {
+      readIncidents.push({
+        code: 'MISSING_CONVERSION',
+        movementId: expense.reconciliacionId,
+        affectedAmount: amount.amount,
+      });
+      continue;
     }
     movements.push({
       source: 'expense',
@@ -595,8 +707,9 @@ export async function getReconciledResultForYear(params: {
       occurredAt: expense.fechaReconciliacion,
       amount: amount.amount,
       documentId: expense.referenciaId,
-      documentAmount: Number(documentAmount),
-      ...(capInOriginalCurrency ? { capAmount: Number(expense.monto) } : {}),
+      documentAmount: hasDocumentTotal
+        ? Number(documentTotal) * conversionFactor
+        : amount.amount,
     });
   }
 
