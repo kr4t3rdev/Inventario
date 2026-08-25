@@ -1,3 +1,6 @@
+import type { Producto } from './productos';
+import type { GastosCompra } from './economicos';
+
 export interface RestockRequest {
 	productoId: string;
 	cantidad: number;

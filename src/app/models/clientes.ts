@@ -1,3 +1,5 @@
+import type { Factura } from './facturacion';
+
 export interface Cliente {
 	clienteId: string;
 	nombre: string;

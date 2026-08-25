@@ -131,7 +131,7 @@ export function PurchaseSearchBar({
                     <span>{compra.itemsCount} producto(s)</span>
                   </div>
                   <div className="mt-1 flex flex-wrap gap-1">
-                    {compra.productos.slice(0, 3).map((p) => (
+                    {(compra as any).productos?.slice(0, 3).map((p: string) => (
                       <span
                         key={p}
                         className="inline-flex items-center rounded-md border px-1.5 py-0.5 text-[10px] font-medium text-muted-foreground"
@@ -139,9 +139,9 @@ export function PurchaseSearchBar({
                         {p}
                       </span>
                     ))}
-                    {compra.productos.length > 3 && (
+                    {(compra as any).productos?.length > 3 && (
                       <span className="text-[10px] text-muted-foreground">
-                        +{compra.productos.length - 3} más
+                        +{(compra as any).productos.length - 3} más
                       </span>
                     )}
                   </div>

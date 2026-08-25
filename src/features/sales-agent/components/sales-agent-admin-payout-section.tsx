@@ -43,7 +43,7 @@ export function SalesAgentAdminPayoutSection({
   const load = async () => {
     setLoading(true);
     const result = await getAdminSalesAgentPayoutsAction(undefined);
-    if (result.success) setRows((result.data ?? []) as AdminAgentRow[]);
+    if (result.success) setRows((result.data ?? []) as unknown as AdminAgentRow[]);
     setLoading(false);
   };
 

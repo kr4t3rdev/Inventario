@@ -127,7 +127,7 @@ export default function AdminLicenciasPage() {
   const [planFilter, setPlanFilter] = useState('all')
   const [statusFilter, setStatusFilter] = useState('all')
   const [typeFilter, setTypeFilter] = useState('all')
-  const [sortBy, setSortBy] = useState('createdAt')
+  const [sortBy, setSortBy] = useState<'tenantId' | 'createdAt' | 'activa' | 'planId' | 'expiracion'>('createdAt')
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc')
   const [copiedKey, setCopiedKey] = useState<string | null>(null)
   const [generarDialogOpen, setGenerarDialogOpen] = useState(false)
@@ -163,7 +163,7 @@ export default function AdminLicenciasPage() {
     if (sortBy === column) {
       setSortOrder(prev => prev === 'asc' ? 'desc' : 'asc')
     } else {
-      setSortBy(column)
+      setSortBy(column as typeof sortBy)
       setSortOrder('asc')
     }
     setPage(1)

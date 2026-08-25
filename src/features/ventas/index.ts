@@ -5,7 +5,8 @@ export { useVentas } from './hooks/use-ventas';
 // Components
 export { VentasTable } from './components/ventas-table';
 export { VentaForm } from './components/venta-form';
-export { VentaInterface, VentaInvoiceDialog } from './components/pv-interface';
+export { VentaInterface } from './components/pv-interface';
+export { VentaInvoiceDialog } from './components/pv-invoice-dialog';
 export { ProductoCard } from './components/producto-card';
 export { CartItem } from './components/cart-item';
 export { EnhancedVentaForm } from './components/enhanced-venta-form';

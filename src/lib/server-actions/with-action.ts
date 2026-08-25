@@ -41,7 +41,7 @@ const PRISMA_ERROR_MESSAGES: Record<string, string> = {
 export function withAction<TInput, TOutput>(
 	action: (input: TInput, user: AuthenticatedUser) => Promise<TOutput>,
 ): ServerAction<TInput, TOutput> {
-	return async (input: TInput): Promise<ActionResponse<TOutput>> => {
+	return async (input?: TInput): Promise<ActionResponse<TOutput>> => {
 		try {
 			const user = await getCurrentUser();
 			if (!user) {
@@ -51,7 +51,7 @@ export function withAction<TInput, TOutput>(
 				};
 			}
 
-			const data = await action(input, user);
+			const data = await action(input! as TInput, user);
 			return { success: true, data: serializePrismaData(data) };
 		} catch (error) {
 			if (error instanceof ZodError) {
@@ -100,7 +100,7 @@ export function withAction<TInput, TOutput>(
 					error: {
 						message: "Error de validación en la base de datos",
 						code: "PRISMA_VALIDATION_ERROR",
-						details: detail,
+						details: { general: [detail] },
 					},
 				};
 			}

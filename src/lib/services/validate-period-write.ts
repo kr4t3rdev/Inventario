@@ -70,7 +70,7 @@ export async function validarEscrituraPeriodo(
     const result = await PeriodoContableService.validarEscritura(
       params.fecha,
       params.tenantId,
-      params.tipoOperacion
+      params.tipoOperacion as any
     )
 
     if (result.error) {
@@ -114,7 +114,7 @@ export async function validarEscrituraPeriodo(
         modo: 'enforce',
         error: {
           message: err instanceof Error ? err.message : 'Error validando período',
-          code: 'INTERNAL_ERROR',
+          code: 'INTERNAL_ERROR' as any,
         },
       }
     }

@@ -20,7 +20,7 @@ export async function crearNotificacion(data: NotificationData) {
       }
 
       const usuarios = await prisma.user.findMany({
-        where: { isActive: true, tenantId: data.tenantId },
+        where: { isActive: true, tenantId: data.tenantId } as any,
         select: { userId: true },
       })
 

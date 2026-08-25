@@ -35,6 +35,7 @@ const prismaMock = vi.hoisted(() => ({
   reconciliacionVenta: { findMany: vi.fn() },
   reconciliacionServicio: { findMany: vi.fn() },
   reconciliacionGasto: { findMany: vi.fn() },
+  tenantAccountingPolicy: { findUnique: vi.fn() },
 }))
 
 const exchangeProviderMock = vi.hoisted(() => ({
@@ -82,6 +83,13 @@ describe('exchange-handlers', () => {
   beforeEach(() => {
     vi.clearAllMocks()
     prismaMock.periodoContable.findMany.mockResolvedValue([])
+    prismaMock.tenantAccountingPolicy.findUnique.mockResolvedValue({
+      tenantId: 'tenant-1',
+      functionalCurrencyCode: 'CUP',
+      createdAt: new Date('2026-01-01T00:00:00.000Z'),
+      updatedAt: new Date('2026-01-01T00:00:00.000Z'),
+      updatedBy: 'user-1',
+    })
   })
 
   it('converts currencies through the shared contract and persists the transaction', async () => {
@@ -195,6 +203,13 @@ describe('getBalanceFinanciero', () => {
     prismaMock.reconciliacionVenta.findMany.mockImplementation(emptyQuery)
     prismaMock.reconciliacionServicio.findMany.mockImplementation(emptyQuery)
     prismaMock.reconciliacionGasto.findMany.mockImplementation(emptyQuery)
+    prismaMock.tenantAccountingPolicy.findUnique.mockResolvedValue({
+      tenantId: 'tenant-1',
+      functionalCurrencyCode: 'CUP',
+      createdAt: new Date('2026-01-01T00:00:00.000Z'),
+      updatedAt: new Date('2026-01-01T00:00:00.000Z'),
+      updatedBy: 'user-1',
+    })
     exchangeProviderMock.exchangeRateProvider.getPrincipalCurrency.mockResolvedValue({
       codigo: 'CUP',
       nombre: 'Peso Cubano',
@@ -238,6 +253,29 @@ describe('getBalanceFinanciero', () => {
       periodoId: 'period-current',
       integridad: null,
       snapshotVersion: null,
+    })
+  })
+
+  it('devuelve indisponibilidad explícita cuando falta la política monetaria del tenant', async () => {
+    prismaMock.tenantAccountingPolicy.findUnique.mockResolvedValue(null)
+    historicalReportMock.resolveFinancialReport.mockImplementation(async ({ calculateLive }: any) => ({
+      status: 'AVAILABLE',
+      origin: 'LIVE',
+      provisional: true,
+      cutoffAt: '2026-08-21T15:30:00.000Z',
+      periodId: 'period-current',
+      ...await calculateLive(new Date('2026-08-21T15:30:00.000Z')),
+    }))
+    const { getBalanceFinanciero } = await import('@/features/contabilidad/api/exchange-handlers')
+    const request = new NextRequest('http://localhost/api/contabilidad/balance-financiero?year=2026')
+
+    const response = await getBalanceFinanciero(request, baseUser as any)
+    const body = await response.json()
+
+    expect(response.status).toBe(409)
+    expect(body).toMatchObject({
+      error: 'La empresa no tiene una moneda funcional contable configurada',
+      code: 'TENANT_ACCOUNTING_POLICY_REQUIRED',
     })
   })
 

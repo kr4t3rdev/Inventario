@@ -1,9 +1,11 @@
 "use client"
 
+import type React from "react"
+
 /**
  * @description Encabezado principal de la página de documentación.
  * Presenta el propósito de la guía y ofrece acceso directo al inicio del producto.
- * @returns {JSX.Element} Hero de documentación
+ * @returns {React.JSX.Element} Hero de documentación
  */
 import Link from "next/link"
 import { ArrowRight, Home } from "lucide-react"
@@ -15,9 +17,9 @@ const SPRING_DEFAULT = { type: "spring" as const, stiffness: 140, damping: 18 }
 
 /**
  * @description Hero principal para el índice de documentación.
- * @returns {JSX.Element} Bloque introductorio con CTA hacia el inicio
+ * @returns {React.JSX.Element} Bloque introductorio con CTA hacia el inicio
  */
-export function DocsIndexHero(): JSX.Element {
+export function DocsIndexHero(): React.JSX.Element {
   return (
     <motion.section
       initial={{ opacity: 0, y: 16 }}

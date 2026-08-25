@@ -49,11 +49,10 @@ export async function getProfile(): Promise<Usuario[]> {
  */
 export async function updateProfile(
   data: { name?: string; avatar?: string; avatarAsset?: CloudinaryAssetInput | null }
-): Promise<Usuario> {
+): Promise<any> {
   const { userId, tenantId } = await getAuthenticatedContext()
 
   try {
-  // @ts-expect-error -- generated Prisma types in this project lag behind the selected shape
     const profile = await prisma.user.update({
       where: { userId },
       data: {

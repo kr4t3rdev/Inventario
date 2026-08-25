@@ -60,7 +60,7 @@ export function SalesAgentTenantPaymentSection({
   const loadRows = async () => {
     setLoading(true);
     const result = await getAdminSalesAgentTenantPaymentsAction(undefined);
-    if (result.success) setRows(result.data ?? []);
+    if (result.success) setRows((result.data as any) ?? []);
     else toast.error(result.error?.message ?? 'No se pudieron cargar los tenants referidos');
     setLoading(false);
   };

@@ -129,7 +129,7 @@ export const restockProductoAction = withAction(
 			// ── 3. Transacción: stock + gastos + pagos ──
 			const result = await prisma.$transaction(
 				async (tx) => {
-					let updatedProducto: typeof producto;
+					let updatedProducto: any = null;
 					let newProductInstance: typeof producto | null = null;
 					let gastoCompra: Awaited<ReturnType<typeof tx.gastoCompra.create>>;
 					let compraProducto: Awaited<
@@ -286,8 +286,7 @@ export const restockProductoAction = withAction(
 						if (precioCosto !== undefined || precioVenta !== undefined) {
 							try {
 								await recordCostChange(
-									// @ts-expect-error - tx es compatible con PrismaClient
-									tx,
+									tx as any,
 									{
 										productoId: producto.id,
 										oldPrecioCosto: producto.precioCosto,
@@ -296,7 +295,7 @@ export const restockProductoAction = withAction(
 										newPrecioVenta: updatedProducto.precioVenta,
 										reason: CostChangeReason.RESTOCK,
 										changedBy:
-											((user as Record<string, unknown>).userId as string) ||
+											((user as unknown as Record<string, unknown>).userId as string) ||
 											"system",
 										notes: `Restock x${cantidad} - ${descripcion || ""}`.trim(),
 									},
@@ -374,7 +373,7 @@ export const restockProductoAction = withAction(
 					}
 
 					return {
-						producto: (updatedProducto ?? newProductInstance)!,
+						producto: (updatedProducto as any ?? newProductInstance)!,
 						gastoCompra,
 						newProductInstance,
 						compraProducto,

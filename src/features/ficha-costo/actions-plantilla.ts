@@ -21,6 +21,7 @@ import type {
   ActivarPlantillaInput,
   AplicarPrecioSugeridoInput,
   PlantillaActivaResult,
+  LineItem,
 } from './types'
 import {
   isValidLineItem,
@@ -78,7 +79,7 @@ function readStoredDocument(row: {
 }) {
   const legacy = parseNotas(row.notas ?? null)
   const hasJsonLineItems = Array.isArray(row.lineItems)
-  const jsonLineItems = hasJsonLineItems ? row.lineItems : []
+  const jsonLineItems = hasJsonLineItems ? (row.lineItems as LineItem[]) : []
   const hasRealJsonLineItems = jsonLineItems.length > 0
   const hasLegacySerializedDocument = legacy.lineItems.length > 0
 
@@ -104,9 +105,9 @@ function readStoredDocument(row: {
     (row.costoIndirectos ?? 0)
 
   return {
-    lineItems,
+    lineItems: lineItems as LineItem[],
     userNotes,
-    costeTotal: lineItems.length > 0 ? calcularTotalLineItems(lineItems) : fallbackTotal,
+    costeTotal: lineItems.length > 0 ? calcularTotalLineItems(lineItems as LineItem[]) : fallbackTotal,
   }
 }
 
@@ -139,7 +140,7 @@ function toPlantillaCosto(row: any): PlantillaCosto {
     createdAt: row.createdAt.toISOString(),
     updatedAt: row.updatedAt.toISOString(),
     createdById: row.createdById,
-    lineItems: document.lineItems,
+    lineItems: document.lineItems as LineItem[],
     userNotes: document.userNotes,
     costeTotal: document.costeTotal,
   }
@@ -308,7 +309,7 @@ export const createPlantillaAction = withAction(
           precioSugerido,
           esActiva: false,
           notas: input.notas ?? '',
-          lineItems: storedLineItems,
+          lineItems: storedLineItems as any,
           createdById: user.userId || 'system',
         },
       })
@@ -345,7 +346,7 @@ export const updatePlantillaAction = withAction(
     if (input.nombre !== undefined) data.nombre = input.nombre.trim()
     const existingDocument = readStoredDocument(existente)
     const usesPersistedJsonDocument = hasPersistedJsonLineItems(existente)
-    const existingLegacyCosts = lineItemsToLegacyFields(existingDocument.lineItems)
+    const existingLegacyCosts = lineItemsToLegacyFields(existingDocument.lineItems as LineItem[])
 
     if (input.lineItems !== undefined) {
       assertValidLineItems(input.lineItems)
@@ -377,7 +378,7 @@ export const updatePlantillaAction = withAction(
       if (input.notas === undefined) data.notas = existingDocument.userNotes
     }
 
-    if (!usesPersistedJsonDocument && existingDocument.lineItems.length > 0) {
+    if (!usesPersistedJsonDocument && (existingDocument.lineItems as LineItem[]).length > 0) {
       if (data.lineItems === undefined) {
         data.lineItems = existingDocument.lineItems
         data.costoMateriales = existingLegacyCosts.costoMateriales

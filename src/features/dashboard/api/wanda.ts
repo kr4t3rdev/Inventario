@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from "next/server"
 import { prisma } from "@/lib/prisma"
 import { authenticateUser } from "@/lib/auth-middleware"
 import { requireTenant } from "@/lib/services/tenant-scope"
+import { endOfDay, startOfDay, subDays, subMonths, format } from "date-fns"
+import { es } from "date-fns/locale"
 // ===================== WANDA DASHBOARD =====================
 
 const wandaCache = new Map<string, { data: unknown; timestamp: number }>()
@@ -159,7 +161,7 @@ export async function getWandaDashboardHandler(request: NextRequest) {
         }),
         prisma.attendance.findMany({
           where: {
-            tenantId,
+            employee: { tenantId },
             date: {
               gte: fechaDesde,
               lte: fechaHasta,

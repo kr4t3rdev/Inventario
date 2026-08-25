@@ -27,7 +27,7 @@ interface CapitalInjectionFilters {
  * @description Shared read service for accounting operations slices.
  */
 export const AccountingOperationsReadService = {
-  async getBankTransfers(filters: BankTransferFilters = {}) {
+  async getBankTransfers(filters: BankTransferFilters) {
     const where: Record<string, any> = { tenantId: filters.tenantId };
 
     if (filters.fechaInicio || filters.fechaFin) {

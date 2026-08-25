@@ -80,7 +80,7 @@ export function VentaForm({ initialData }: VentaFormProps) {
         sileo.success({ title: 'La venta ha sido actualizada exitosamente' })
       } else {
         const producto = productos.find(p => p.id === data.productoId)
-  // @ts-expect-error
+  // @ts-expect-error TODO: fix createVentaAction type
         const result = await createVentaAction({
           puntoDeVentaId: data.puntoDeVentaId,
           items: [{

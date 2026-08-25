@@ -38,16 +38,6 @@ function AnticiposContent() {
     user?.role !== 'admin' &&
     user?.planFeatures?.anticipos !== true
 
-  useEffect(() => {
-    if (isBlocked) {
-      router.replace('/busy/contabilidad')
-    }
-  }, [isBlocked, router])
-
-  if (isBlocked) {
-    return null
-  }
-  
   // Estados para modals/dialogs
   const [openForm, setOpenForm] = useState(false)
   const [openDetail, setOpenDetail] = useState(false)
@@ -77,6 +67,12 @@ function AnticiposContent() {
     if (r.success) setAnticipos(r.data?.anticipos ?? [])
     setLoadingAnticipos(false)
   }
+
+  useEffect(() => {
+    if (isBlocked) {
+      router.replace('/busy/contabilidad')
+    }
+  }, [isBlocked, router])
 
   useEffect(() => {
     loadAnticipos()
@@ -126,6 +122,10 @@ function AnticiposContent() {
 
     fetchContratos()
   }, [])
+
+  if (isBlocked) {
+    return null
+  }
 
   // Handlers
   const handleVerDetalle = (anticipo: Anticipo) => {

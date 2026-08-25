@@ -168,12 +168,13 @@ export async function generatePdfHandler(
         }
       })
     } else if (venta?.producto) {
+      const producto = venta.producto as any
       const cantidad = Number(venta.cantidad ?? 0)
-      const precioUnitario = Number(venta.producto.precioVenta ?? 0)
+      const precioUnitario = Number(producto.precioVenta ?? 0)
       const total = Number(venta.total ?? precioUnitario * cantidad)
       items = [{
-        codigo: venta.producto.id,
-        nombre: venta.producto.nombre,
+        codigo: producto.id,
+        nombre: producto.nombre,
         cantidad,
         precioUnitario,
         total,
@@ -348,7 +349,7 @@ export async function generatePdfHandler(
       if (align === 'center') {
         txt(page, h, textX - fontBold.widthOfTextAtSize(h, 7) / 2, y - rowH + 4, 7, fontBold, BLACK)
       } else {
-        txt(page, h, textX, y - rowH + 4, 7, fontBold, align as 'left' | 'right')
+        txt(page, h, textX, y - rowH + 4, 7, fontBold, BLACK)
       }
     })
     y -= rowH

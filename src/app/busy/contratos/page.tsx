@@ -58,7 +58,7 @@ export default async function ContratosPage(props: PageProps) {
 
   return (
     <ContratosContent
-  // @ts-expect-error
+  // @ts-expect-error TODO: fix type cast for initialData
       initialData={
       initialData.data
       }

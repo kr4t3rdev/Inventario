@@ -3,6 +3,7 @@
  */
 'use client';
 
+import type React from 'react';
 import { AlertTriangle, ArrowLeft, Loader2, Lock } from 'lucide-react';
 
 import { Badge } from '@/components/ui/badge';
@@ -12,13 +13,13 @@ import { cn } from '@/lib/utils';
 /**
  * @description Advertencia contextual para cuadres consultados en modo histórico.
  * @param {{ isReadOnly: boolean }} props - Controla si la advertencia se renderiza.
- * @returns {JSX.Element | null} Badge y advertencia o null.
+ * @returns {React.JSX.Element | null} Badge y advertencia o null.
  */
 export function CuadreDetailReadonlyNotice({
   isReadOnly,
 }: {
   isReadOnly: boolean;
-}): JSX.Element | null {
+}): React.JSX.Element | null {
   if (!isReadOnly) return null;
 
   return (
@@ -65,7 +66,7 @@ export function CuadreDetailActions({
   onCerrarTurno: () => void;
   onRepetirArqueo: () => void;
   tieneDiferencia: boolean;
-}): JSX.Element {
+}): React.JSX.Element {
   return (
     <div className='container mx-auto flex max-w-6xl items-center justify-between gap-3'>
       <Button variant='outline' onClick={onBack} className='gap-1.5'>

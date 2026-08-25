@@ -33,7 +33,7 @@ const TransferenciaBancariaForm = dynamic(() =>
   { loading: () => <Skeleton className="w-full h-100" /> }
 );
 
-export default function TransferenciasBancariasPage(): React.JSX.Element {
+export default function TransferenciasBancariasPage(): React.JSX.Element | null {
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
   const [isClient, setIsClient] = useState(false);
   useEffect(() => { setIsClient(true) }, []);

@@ -95,7 +95,7 @@ export const listarProductosParaFichaAction = withAction(
         precioCosto: p.precioCosto,
         precioVenta: p.precioVenta,
         tipo: p.esCompuesto ? 'COMPUESTO' : 'SIMPLE',
-      })),
+      } as any)),
       ...servicios.map((s) => ({
         id: s.servicioId,
         entityType: 'SERVICIO' as const,

@@ -464,7 +464,7 @@ export const confirmReferredTenantPaymentAction = withAction(
 
       await AuditLogService.logStrict({
         accion: 'CREATE',
-        entidad: 'AFFILIATE_COMMISSION',
+        entidad: 'AFFILIATE_COMMISSION' as any,
         entidadId: ledgerEntry.ledgerId,
         usuarioId: user.userId,
         detalles: {

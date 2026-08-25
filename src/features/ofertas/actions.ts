@@ -13,14 +13,14 @@ import { applyAnticipoAllocations } from '@/lib/services/anticipos-workflow';
 import { getOrCreateTurnoActivo } from '@/features/turnos-pos';
 import { ofertaSchema, ofertaUpdateSchema, facturarOfertaSchema } from './schemas';
 import { facturarOfertaWorkflow } from './services/facturar-oferta-workflow';
+import {
+  getOfertaForTenant,
+  listOfertasForTenant,
+  OFERTA_INCLUDE,
+} from './services/oferta-read-service';
 import type { OfertaInput, OfertaUpdateInput, FacturarOfertaInput } from './schemas';
 import type { AuthenticatedUser } from '@/lib/auth-middleware';
 import type { Oferta } from '@/app/models/model';
-
-const OFERTA_INCLUDE = {
-  cliente: true,
-  items: { include: { producto: true, servicio: true } },
-} as const;
 
 function serializeOferta(oferta: unknown): Oferta {
   return JSON.parse(JSON.stringify(oferta)) as Oferta;
@@ -29,21 +29,14 @@ function serializeOferta(oferta: unknown): Oferta {
 export const getOfertasAction = withAction(async (_input: void, user: AuthenticatedUser) => {
   requireFeature(user, 'ofertas', 'gestionar ofertas');
   const tenantId = requireTenant(user);
-  const ofertas = await prisma.oferta.findMany({
-    where: { tenantId },
-    include: OFERTA_INCLUDE,
-    orderBy: { createdAt: 'desc' },
-  });
+  const ofertas = await listOfertasForTenant(tenantId);
   return ofertas.map(serializeOferta);
 });
 
 export const getOfertaByIdAction = withAction(async (id: string, user: AuthenticatedUser) => {
   requireFeature(user, 'ofertas', 'gestionar ofertas');
   const tenantId = requireTenant(user);
-  const oferta = await prisma.oferta.findFirst({
-    where: { id, tenantId },
-    include: OFERTA_INCLUDE,
-  });
+  const oferta = await getOfertaForTenant(id, tenantId);
   if (!oferta) throw new ActionError('Oferta no encontrada', 'NOT_FOUND');
   return serializeOferta(oferta);
 });

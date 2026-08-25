@@ -71,7 +71,7 @@ export function extractDescription(markdownContent: string, maxLen = 200): strin
   const clean = withoutTitle.replace(/^>.*$/gm, "").trim()
 
   // Get first paragraph
-  const firstPara = clean.match(/^(.+?)(\n\n|$)/s)
+  const firstPara = clean.match(new RegExp("^(.+?)(\\n\\n|$)", "s"))
   const desc = firstPara?.[1]?.trim() ?? ""
 
   return desc.length > maxLen ? desc.slice(0, maxLen) + "..." : desc

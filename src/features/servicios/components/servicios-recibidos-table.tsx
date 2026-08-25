@@ -31,7 +31,7 @@ export function ServiciosRecibidosTable(): React.JSX.Element {
 
   useEffect(() => {
     getComprasServiciosAction().then(r => {
-      if (r.success) setServicios((r.data ?? []) as CompraServicio[])
+      if (r.success) setServicios((r.data ?? []) as unknown as CompraServicio[])
       setIsLoading(false)
     }).catch(() => {
       setError('Error al cargar los servicios recibidos')

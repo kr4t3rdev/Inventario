@@ -17,7 +17,11 @@ function canSeeItem(
     role: ctx.role,
     tenantRole: ctx.tenantRole,
     tenantId: ctx.tenantId,
-    planFeatures: ctx.planFeatures ?? null,
+    planFeatures: ctx.planFeatures
+      ? Object.fromEntries(
+          Object.entries(ctx.planFeatures).filter(([, v]) => v !== undefined) as [string, boolean][]
+        ) as Record<string, boolean> | null
+      : null,
     planName: ctx.planName ?? null,
   }
 

@@ -134,7 +134,7 @@ export function useThrottledCallback<T extends (...args: any[]) => any>(
   delay: number
 ): (...args: Parameters<T>) => void {
   const lastRunRef = useRef<number>(0);
-  const timeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   return useCallback(
     (...args: Parameters<T>) => {
@@ -214,11 +214,11 @@ export function createMemoizedSelector<T, R>(
 export const CODE_SPLIT_CONFIG = {
   /** Componentes que deben ser lazy loaded */
   LAZY_COMPONENTS: {
-  // @ts-expect-error
+  // @ts-expect-error TODO: fix dynamic import type
     ExchangeCharts: () => import('@/components/contabilidad/exchange-intelligence/exchange-charts'),
-  // @ts-expect-error
+  // @ts-expect-error TODO: fix dynamic import type
     ScenarioSimulator: () => import('@/components/contabilidad/exchange-intelligence/scenario-simulator'),
-  // @ts-expect-error
+  // @ts-expect-error TODO: fix dynamic import type
     KPIDashboard: () => import('@/components/contabilidad/exchange-intelligence/kpi-dashboard'),
   },
   /** Tamaño máximo de chunk antes de split (bytes) */

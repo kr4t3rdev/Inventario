@@ -639,7 +639,7 @@ export async function applyPagoGastoWorkflow(
   if (cuentaPorPagarActual && params.cuentaPorPagarId) {
     const montoPagadoActual = Number(cuentaPorPagarActual.montoPagado || 0)
     const saldoPendienteActual = Number(cuentaPorPagarActual.saldoPendiente || 0)
-    const montoDeudaActual = Number(cuentaPorPagarActual.montoDeuda || 0)
+    const montoDeudaActual = Number((cuentaPorPagarActual as any).montoDeuda || 0)
     const nuevoMontoPagado = montoPagadoActual + montoTotal
     const nuevoSaldoPendiente = Math.max(0, saldoPendienteActual - montoTotal)
     const nuevoEstado = estadoReconciliacion === 'PAGADA' ? 'PAGADA' : 'PARCIAL'

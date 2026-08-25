@@ -56,7 +56,7 @@ export function CuadresHistoryPageClient({
   items,
 }: {
   items: CuadreCerradoListItem[];
-}): JSX.Element {
+}): React.JSX.Element {
   const arqueados = items.filter((item) => item.arqueado).length;
 
   return (

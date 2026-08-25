@@ -79,13 +79,11 @@ function DialogContent({
         {...(props as any)}
       >
         {!hasExplicitDescription && (
-          // @ts-expect-error -- Radix primitive types omit children but they're accepted at runtime
           <DialogPrimitive.Description className='sr-only'>
             Dialog content
           </DialogPrimitive.Description>
         )}
         {children}
-        {/* @ts-expect-error -- Radix primitive types omit children but they're accepted at runtime */}
         <DialogPrimitive.Close className="ring-offset-background focus:ring-ring data-[state=open]:bg-muted data-[state=open]:text-muted-foreground absolute top-4 right-4 rounded-md border border-transparent p-1 opacity-70 transition-opacity hover:opacity-100 focus:ring-2 focus:ring-offset-2 focus:outline-hidden disabled:pointer-events-none [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4">
           <XIcon />
           <span className='sr-only'>Close</span>

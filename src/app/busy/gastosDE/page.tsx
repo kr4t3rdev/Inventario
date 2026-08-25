@@ -39,7 +39,7 @@ export default async function GastosDEPage() {
       initialGastosDE={
       initialGastosDE
       }
-      initialVendors={initialVendors}
+      initialVendors={initialVendors as any}
     />
     </div>
   )

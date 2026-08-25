@@ -41,7 +41,7 @@ export const getRecetasProduccionAction = withAction(
 			prisma.receta.findMany({
 				where,
 				include: {
-					// @ts-expect-error
+					// @ts-expect-error TODO: fix prisma include type
 					producto: true,
 					RecetaIngrediente: { include: { Producto: true } },
 				},
@@ -71,8 +71,8 @@ export const getRecetaProduccionByIdAction = withAction(
 		const receta = await prisma.receta.findFirst({
 			where: { recetaId: id, tenantId },
 			include: {
-				// @ts-expect-error
-				producto: true,
+				// @ts-expect-error TODO: fix prisma include type
+					producto: true,
 				RecetaIngrediente: { include: { Producto: true } },
 			},
 		});
@@ -95,7 +95,7 @@ export const createRecetaProduccionAction = withAction(
 		requireFeature(user, 'produccion', 'gestionar producción');
 		const tenantId = requireTenant(user);
 		const receta = await prisma.receta.create({
-			// @ts-expect-error
+			// @ts-expect-error TODO: fix prisma create data type
 			data: {
 				nombre: input.nombre,
 				rendimiento: input.rendimiento ?? 1,
@@ -185,10 +185,10 @@ export const setIngredientesRecetaProduccionAction = withAction(
 		});
 
 		// Create new ingredients
-		// @ts-expect-error
+		// @ts-expect-error TODO: fix input.ingredientes type
 		if (input.ingredientes.length > 0) {
 			await prisma.recetaIngrediente.createMany({
-				// @ts-expect-error
+				// @ts-expect-error TODO: fix prisma createMany data type
 				data: input.ingredientes.map((ing: any) => ({
 					recetaId: input.recetaId,
 					productoId: ing.productoId,
@@ -232,7 +232,7 @@ export const getOrdenesProduccionAction = withAction(
 			prisma.ordenProduccion.findMany({
 				where,
 				include: {
-					// @ts-expect-error
+					// @ts-expect-error TODO: fix prisma include type
 					receta: {
 						include: {
 							Producto: true,
@@ -266,7 +266,7 @@ export const getOrdenProduccionByIdAction = withAction(
 		const orden = await prisma.ordenProduccion.findFirst({
 			where: { ordenProduccionId: id, tenantId },
 			include: {
-				// @ts-expect-error
+				// @ts-expect-error TODO: fix prisma include type
 				receta: {
 					include: {
 						Producto: true,
@@ -307,13 +307,13 @@ export const createOrdenProduccionAction = withAction(
 		});
 
 		const costoMateriales = ingredientes.reduce((total, ing) => {
-			// @ts-expect-error
+			// @ts-expect-error TODO: fix ing.producto type
 			const costoProducto = ing.producto?.precioVenta ?? 0;
 			return total + costoProducto * ing.cantidad;
 		}, 0);
 
 		const orden = await prisma.ordenProduccion.create({
-			// @ts-expect-error
+			// @ts-expect-error TODO: fix prisma create data type
 			data: {
 				recetaId: input.recetaId,
 				cantidad: input.cantidad,
@@ -388,7 +388,7 @@ export const aprobarOrdenProduccionAction = withAction(
 						productoId_tipoUbicacion_ubicacionId: {
 							productoId: ingrediente.productoId,
 							tipoUbicacion: "almacen",
-							ubicacionId: producto?.almacenId,
+							ubicacionId: producto?.almacenId ?? '',
 						},
 					},
 					select: { cantidadDisponible: true },

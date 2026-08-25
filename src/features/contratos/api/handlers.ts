@@ -339,7 +339,7 @@ export async function createContratoVersionHandler(req: NextRequest, { params }:
     if ('status' in authResultReq1) return authResultReq1 as Response
     const user = authResultReq1.user
     const { id } = await params
-    const formData = await req.formData()
+    const formData = await req.formData() as any
     const file = formData.get('file') as File | null
     const cambios = formData.get('cambios') as string
     if (!file) return NextResponse.json({ error: 'No file provided' }, { status: 400 })
@@ -459,7 +459,7 @@ export async function checkContratoVersionDiffHandler(req: NextRequest, { params
     const authResultReq1 = await authenticateUser(req)
     if ('status' in authResultReq1) return authResultReq1 as Response
     const { id } = await params
-    const formData = await req.formData()
+    const formData = await req.formData() as any
     const file = formData.get('file') as File | null
     if (!file) return NextResponse.json({ error: 'No file provided' }, { status: 400 })
     const bytes = await file.arrayBuffer()
@@ -525,7 +525,7 @@ async function uploadContratoVersionToUploadthing(input: {
 }): Promise<{ provider: 'uploadthing'; secureUrl: string; publicId: string }> {
   const utapi = new UTApi()
   const uploaded = await utapi.uploadFiles(
-    new UTFile([input.buffer], input.file.name, {
+    new UTFile([new Uint8Array(input.buffer)], input.file.name, {
       type: input.file.type,
       customId: input.publicId,
     })

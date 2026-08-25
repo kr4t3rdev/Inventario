@@ -86,7 +86,7 @@ export function TenantUsersPage() {
 		setPendingLoading(true);
 		try {
 			const data = await getPendingMembershipsAction();
-			setPendingMemberships((data?.success ? data.data : []) ?? []);
+			setPendingMemberships((data?.success ? (data.data as any) : []) ?? []);
 		} catch {
 			setPendingMemberships([]);
 		} finally {

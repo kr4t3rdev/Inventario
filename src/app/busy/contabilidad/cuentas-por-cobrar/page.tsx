@@ -59,16 +59,6 @@ export default function CuentasPorCobrarPage() {
     user?.role !== 'admin' &&
     user?.planFeatures?.['cuentas-cobrar'] !== true
 
-  useEffect(() => {
-    if (isBlocked) {
-      router.replace('/busy/contabilidad')
-    }
-  }, [isBlocked, router])
-
-  if (isBlocked) {
-    return null
-  }
-
   // ── Debounce search ───────────────────────────────────
   useEffect(() => {
     const t = setTimeout(() => setDebouncedSearch(searchTerm), 400)
@@ -217,23 +207,6 @@ export default function CuentasPorCobrarPage() {
     setIsTimeOut(false)
   }, [showReconciliacion, ventaParaReconciliar])
 
-  const isLoadingData = showReconciliacion && !ventaParaReconciliar && (isResolvingFactura || isResolvingVenta || (!isTimeOut && (!!facturaId || !!numeroFactura)))
-  const dataMissing = showReconciliacion && !ventaParaReconciliar && !isLoadingData
-
-  const handlePagarCuenta = (cuenta: CuentaPorCobrar) => {
-    if (cuenta.tipoCuenta === 'PRESTAMO_CASH') return
-    setCuentaSeleccionada(cuenta)
-    setShowReconciliacion(true)
-    setIsTimeOut(false)
-  }
-
-  const handleCloseReconciliacion = () => {
-    setShowReconciliacion(false)
-    setCuentaSeleccionada(null)
-    setIsTimeOut(false)
-    loadCuentas(page, debouncedSearch)
-  }
-
   // ── Procesamiento de Datos ────────────────────────────
   const cuentasParaMostrar = useMemo(() => {
     const list = cuentas || []
@@ -252,6 +225,33 @@ export default function CuentasPorCobrarPage() {
     }
     return Array.from(byKey.values())
   }, [cuentas])
+
+  useEffect(() => {
+    if (isBlocked) {
+      router.replace('/busy/contabilidad')
+    }
+  }, [isBlocked, router])
+
+  if (isBlocked) {
+    return null
+  }
+
+  const isLoadingData = showReconciliacion && !ventaParaReconciliar && (isResolvingFactura || isResolvingVenta || (!isTimeOut && (!!facturaId || !!numeroFactura)))
+  const dataMissing = showReconciliacion && !ventaParaReconciliar && !isLoadingData
+
+  const handlePagarCuenta = (cuenta: CuentaPorCobrar) => {
+    if (cuenta.tipoCuenta === 'PRESTAMO_CASH') return
+    setCuentaSeleccionada(cuenta)
+    setShowReconciliacion(true)
+    setIsTimeOut(false)
+  }
+
+  const handleCloseReconciliacion = () => {
+    setShowReconciliacion(false)
+    setCuentaSeleccionada(null)
+    setIsTimeOut(false)
+    loadCuentas(page, debouncedSearch)
+  }
 
   // ── Variantes de Animación ────────────────────────────
   const containerVariants = {

@@ -1,5 +1,6 @@
 'use client'
 
+import type React from 'react'
 import { useCallback, useEffect, useState } from 'react'
 import { format } from 'date-fns'
 import { CheckSquare, Download, Eraser, RefreshCw, Square, Trash2 } from 'lucide-react'
@@ -67,9 +68,9 @@ function downloadCsv(content: string, filename: string): void {
 
 /**
  * @description Panel de mantenimiento remoto para assets de Cloudinary.
- * @returns {JSX.Element} Herramientas de inspección y cleanup de assets.
+ * @returns {React.JSX.Element} Herramientas de inspección y cleanup de assets.
  */
-export function CloudinaryCleanupTab(): JSX.Element {
+export function CloudinaryCleanupTab(): React.JSX.Element {
   const [assets, setAssets] = useState<CloudinaryAssetRow[]>([])
   const [assetsSummary, setAssetsSummary] = useState({ active: 0, replaced: 0, deleted: 0 })
   const [assetsLoading, setAssetsLoading] = useState(true)

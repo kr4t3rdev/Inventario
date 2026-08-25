@@ -91,8 +91,7 @@ export const createCompraProductoAction = withAction(async (input: CreateCompraP
   if (!proveedor) throw new ActionError('Proveedor no encontrado', 'NOT_FOUND');
 
   // Validar productos
-  // @ts-expect-error items se infiere como never[] sin anotación explícita en este flujo incremental.
-  const items = [];
+  const items: any[] = [];
   for (const item of parsed.items) {
     const producto = await prisma.producto.findFirst({ where: { id: item.productoId, tenantId } });
     if (!producto) throw new ActionError(`Producto ${item.productoId} no encontrado`, 'NOT_FOUND');
@@ -130,7 +129,6 @@ export const createCompraProductoAction = withAction(async (input: CreateCompraP
     });
 
     // Actualizar stock y precios
-    // @ts-expect-error item se infiere como any en el array incremental usado para la transacción.
     for (const item of items) {
       const oldPrecioCosto = item.producto.precioCosto;
 
@@ -150,8 +148,7 @@ export const createCompraProductoAction = withAction(async (input: CreateCompraP
       if (item.nuevoPrecioCosto.precioCostoNuevo !== oldPrecioCosto) {
         try {
           await recordCostChange(
-            // @ts-expect-error - tx es compatible con PrismaClient
-            tx,
+            tx as any,
             {
               productoId: item.producto.id,
               oldPrecioCosto,
@@ -260,7 +257,7 @@ export const updateCompraProductoAction = withAction(async (input: UpdateCompraP
       if (!existing) throw new ActionError('Compra no encontrada', 'NOT_FOUND');
 
       if (data.formaPago !== existing.formaPago) {
-        await reconcileFormaPago(tx, existing, data.formaPago);
+        await reconcileFormaPago(tx, existing, data.formaPago ?? '');
       }
 
       return tx.compraDocumento.update({

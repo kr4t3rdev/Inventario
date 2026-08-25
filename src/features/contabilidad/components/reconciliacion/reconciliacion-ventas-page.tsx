@@ -111,7 +111,7 @@ export function ReconciliacionVentasPage({cuentaId}: RecoProps) {
   const allVentasMerged = useMemo(() => {
     const apiVentas = Array.isArray(allVentasData?.ventas) ? allVentasData.ventas : [];
     // API now returns saldoPendiente calculated server-side
-    const apiVentaKeys = new Set(apiVentas.map(v => v.ordenId || v.ventaId));
+    const apiVentaKeys = new Set(apiVentas.map((v: any) => v.ordenId || v.ventaId));
 
     const arVentas = cuentasPorCobrar
       .filter(cuenta => {

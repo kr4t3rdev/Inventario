@@ -42,7 +42,7 @@ export function UserMonitoringPanel() {
 
   useEffect(() => {
     let cancelled = false
-    getExpiringSoonAction({ days: 7 }).then((r) => { if (!cancelled && r.success) setExpiringUsers(r.data ?? []) })
+    getExpiringSoonAction({ days: 7 }).then((r) => { if (!cancelled && r.success) setExpiringUsers((r.data as any) ?? []) })
     return () => { cancelled = true }
   }, [])
 

@@ -96,7 +96,8 @@ export function CuadrePeriodoModal({
 					periodoId,
 					pageVentas: overrides?.pageVentas ?? 1,
 					pageOperaciones: overrides?.pageOperaciones ?? 1,
-					filtroOperacion: overrides?.filtroOperacion ?? "todas",
+					pageSize: 20,
+					filtroOperacion: (overrides?.filtroOperacion ?? "todas") as any,
 				});
 				if (!result.success) {
 					setError(result.error?.message ?? "Error al cargar cuadre");

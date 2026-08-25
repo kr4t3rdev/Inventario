@@ -14,7 +14,7 @@ export function getNotificationHref(notification: NotificationLike): string | nu
 
   const title = notification.title.toLowerCase();
 
-  switch (notification.type) {
+  switch (notification.type as string) {
     case 'stock_bajo':
     case 'sin_stock':
       return '/busy/products';

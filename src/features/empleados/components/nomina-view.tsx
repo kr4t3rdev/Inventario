@@ -217,7 +217,7 @@ export function NominaView() {
         periodoFilter ? { periodo: periodoFilter } : {},
       );
       if (result.success) {
-        setPayrollRecords((result.data ?? []) as PayrollRecord[]);
+        setPayrollRecords((result.data ?? []) as unknown as PayrollRecord[]);
       } else {
         toast.error(result.error?.message || "Error al cargar registros de nómina");
       }
@@ -243,6 +243,7 @@ export function NominaView() {
       const result = await calculateNominaAction({
           periodo,
           forceRecalculate,
+          includeVacationAccrual: false,
       });
       if (result.success) {
         const data = result.data;
@@ -251,11 +252,11 @@ export function NominaView() {
         
         if (data.existing) {
           // Si ya existía nómina, reemplazar los registros actuales
-          setPayrollRecords(newPayrolls);
+          setPayrollRecords(newPayrolls as any);
           toast.info(data.message || `Nómina existente cargada para ${newPayrolls.length} empleados`);
         } else {
           // Si es nueva nómina, agregar a los registros existentes
-          setPayrollRecords(prev => [...newPayrolls, ...prev]);
+          setPayrollRecords(prev => [...(newPayrolls as any), ...prev]);
           toast.success(`Nómina calculada para ${newPayrolls.length} empleados`);
         }
         
@@ -321,10 +322,10 @@ export function NominaView() {
         horasExtras: updates.horasExtras,
       });
       if (result.success && result.data) {
-        const updatedRecord = result.data as PayrollRecord;
+        const updatedRecord = result.data as unknown as PayrollRecord;
         setPayrollRecords(prev => prev.map(r => r.pgId === id ? { ...r, ...updatedRecord } : r));
         toast.success("Registro actualizado");
-      } else {
+      } else if (!result.success) {
         toast.error(result.error?.message || "Error al actualizar");
       }
     } catch (error) {

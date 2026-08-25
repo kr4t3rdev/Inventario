@@ -56,7 +56,7 @@ export function buildPersistedAccountingAmount(
         fxCatalogRateId: evidence.fxCatalogRateId,
         fxEvidenceFingerprint: evidence.fxEvidenceFingerprint,
         fxEvidenceVersion: evidence.fxEvidenceVersion,
-      },
+      } as any,
     };
   }
 
@@ -90,7 +90,7 @@ export function buildPersistedAccountingAmount(
         fxCatalogRateId: evidence.fxCatalogRateId,
         fxEvidenceFingerprint: evidence.fxEvidenceFingerprint,
         fxEvidenceVersion: evidence.fxEvidenceVersion,
-      },
+      } as any,
     };
   } catch {
     return { montoConvertido: null, tasaCambio: null, fxEvidence: null };

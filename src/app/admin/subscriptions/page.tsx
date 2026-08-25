@@ -47,7 +47,7 @@ export default function SubscriptionsRevenuePage() {
       }
 
       setRevenue(null);
-      setErrorMessage(result.error?.message || "No se pudo cargar revenue de suscripciones");
+      setErrorMessage(!result.success ? result.error.message : "No se pudo cargar revenue de suscripciones");
     } catch (error) {
       console.error("Error fetching subscription revenue:", error);
       setRevenue(null);

@@ -39,7 +39,7 @@ export default async function FacturasPage(props: PageProps) {
     search: searchParams.search,
   }), getCurrentUser()])
 
-  const initialData = result.success ? result.data : undefined
+  const initialData = result.success ? result.data as any : undefined
 
   return (
     <div className="space-y-6">

@@ -317,7 +317,7 @@ export function VentaInterface() {
 							activa: true,
 							esPorDefecto: true,
 						}).then((cr) => {
-							if (cr.success) data = [cr.data];
+							if (cr.success) data = [cr.data as any];
 						});
 					}
 

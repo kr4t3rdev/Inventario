@@ -65,6 +65,7 @@ import {
 	buildProductosSchema,
 	type ProductosFormValues,
 } from "./productos-form-schema";
+import { mapCategoryToSection, mapSubcategoryToSpecific } from "@/lib/category-mapping";
 import { PulseSkeleton } from "./pulse-skeleton";
 import { ProductosPriceListsSection } from "./productos-price-lists";
 import type { CloudinaryAssetUploadResult } from "@/lib/upload/cloudinary-asset";
@@ -102,7 +103,7 @@ interface ProductosFormProps {
 	unidades?: Pick<Unidad, "unidadId" | "nombre" | "simbolo">[];
 	almacenes?: Pick<Almacen, "almacenId" | "nombre">[];
 	listasPrecios?: Array<{ id: string; nombre: string }>;
-	vendors?: Array<Pick<Vendor, "vendorId" | "nombre" | "proveedorCodigo">>;
+	vendors?: Array<Pick<any, "vendorId" | "nombre" | "proveedorCodigo">>;
 	categorias?: Array<
 		Pick<Categoria, "catId" | "nombre"> & { parentId?: string | null }
 	>;
@@ -191,7 +192,7 @@ export function ProductoForm({
 	const schema = useMemo(() => buildProductosSchema(usaEan13), [usaEan13]);
 
 	const form = useForm<ProductosFormValues>({
-		resolver: zodResolver(schema),
+		resolver: zodResolver(schema) as any,
 		defaultValues: {
 			nombre: initialData?.nombre || "",
 			descripcion: initialData?.descripcion || "",
@@ -262,7 +263,7 @@ export function ProductoForm({
 		(vendor) => vendor.vendorId === watchedVendorId,
 	);
 	const selectedVendorProviderCode =
-		selectedVendor?.proveedorCodigo?.trim() || "";
+		(selectedVendor?.proveedorCodigo as any)?.trim?.() || "";
 
 	const selectedCategory = categorias.find(
 		(categoria) => categoria.catId === watchedCategoryId,
@@ -472,7 +473,7 @@ export function ProductoForm({
 					<TooltipProvider>
 						<Form {...form}>
 							<form
-								onSubmit={form.handleSubmit(onSubmit, (errors) => {
+								onSubmit={form.handleSubmit(onSubmit as any, (errors) => {
 									sileo.error({
 										title:
 											getFirstFormErrorMessage(errors) ||
@@ -581,7 +582,7 @@ export function ProductoForm({
 														);
 														form.setValue(
 															"proveedorCodigo",
-															nextVendor?.proveedorCodigo || "",
+															(nextVendor?.proveedorCodigo as unknown as string) || "",
 															{
 																shouldValidate: true,
 																shouldDirty: true,

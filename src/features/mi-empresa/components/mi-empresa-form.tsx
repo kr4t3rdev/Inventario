@@ -120,10 +120,10 @@ async function saveMiEmpresa(
 		);
 		if (
 			result.error?.code === "VALIDATION_ERROR" &&
-			result.error.details &&
-			typeof result.error.details === "object"
+			(result.error as any).details &&
+			typeof (result.error as any).details === "object"
 		) {
-			const details = result.error.details as Record<string, string[]>;
+			const details = (result.error as any).details as Record<string, string[]>;
 			err.fieldErrors = Object.fromEntries(
 				Object.entries(details).map(([k, v]) => [k, v[0] ?? ""]),
 			);

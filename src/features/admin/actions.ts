@@ -80,6 +80,17 @@ import type {
 } from "./schemas";
 import type { AuthenticatedUser } from "@/lib/auth-middleware";
 import { mergeAccountingFeatureOverrides } from "./license-feature-overrides";
+import {
+	approveAdminMembership,
+	getAdminHealth,
+	getAdminPendingMemberships,
+	getAdminTenants,
+	getAdminUsers,
+	groupByLastNDays,
+	lockAdminUser,
+	rejectAdminMembership,
+	unlockAdminUser,
+} from "./server/admin-global-queries";
 
 // ─── User CRUD ─────────────────────────────────────────────
 
@@ -360,183 +371,13 @@ export const deleteUserAction = withAction(
 	},
 );
 
-export const lockUserAction = withAction(
-	async (input: LockUnlockInput, user: AuthenticatedUser) => {
-		if (user.role !== "admin")
-			throw new ActionError("Acceso restringido", "FORBIDDEN");
-		const parsed = lockUnlockSchema.parse(input);
-		const existing = await prisma.user.findUnique({
-			where: { userId: parsed.userId },
-			select: { userId: true },
-		});
-		if (!existing) throw new ActionError("Usuario no encontrado", "NOT_FOUND");
-		await prisma.user.updateMany({
-			where: { userId: parsed.userId },
-			data: { lockedUntil: new Date(Date.now() + 24 * 60 * 60 * 1000) },
-		});
-		const updated = await prisma.user.findUnique({
-			where: { userId: parsed.userId },
-			select: { userId: true, lockedUntil: true, loginAttempts: true },
-		});
-		revalidatePath("/admin");
-		return { user: updated, message: "Usuario bloqueado por 24 horas" };
-	},
-);
+export const lockUserAction = withAction(lockAdminUser);
 
-export const unlockUserAction = withAction(
-	async (input: LockUnlockInput, user: AuthenticatedUser) => {
-		if (user.role !== "admin")
-			throw new ActionError("Acceso restringido", "FORBIDDEN");
-		const parsed = lockUnlockSchema.parse(input);
-		const existing = await prisma.user.findUnique({
-			where: { userId: parsed.userId },
-			select: { userId: true },
-		});
-		if (!existing) throw new ActionError("Usuario no encontrado", "NOT_FOUND");
-		await prisma.user.updateMany({
-			where: { userId: parsed.userId },
-			data: { lockedUntil: null, loginAttempts: 0 },
-		});
-		const updated = await prisma.user.findUnique({
-			where: { userId: parsed.userId },
-			select: { userId: true, lockedUntil: true, loginAttempts: true },
-		});
-		revalidatePath("/admin");
-		return { user: updated, message: "Usuario desbloqueado correctamente" };
-	},
-);
+export const unlockUserAction = withAction(unlockAdminUser);
 
 // ─── Global Users ─────────────────────────────────────────
 
-export const getGlobalUsersAction = withAction(
-	async (
-		input: { tenantId?: string; limit?: number } = {},
-		user: AuthenticatedUser,
-	) => {
-		const isPlatformAdmin = user.role === "admin";
-		const isTenantManager = user.tenantRole === "manager";
-
-		if (!isPlatformAdmin && !isTenantManager) {
-			throw new ActionError("Acceso restringido", "FORBIDDEN");
-		}
-
-		let tenantId: string | undefined;
-		if (isPlatformAdmin) {
-			tenantId = input.tenantId || user.tenantId;
-		} else {
-			if (input.tenantId && input.tenantId !== user.tenantId) {
-				throw new ActionError(
-					"No tienes permisos para ver usuarios de otra empresa",
-					"FORBIDDEN",
-				);
-			}
-			tenantId = user.tenantId;
-		}
-
-		if (tenantId) {
-			// Modo tenant: buscar membresías activas de esa empresa
-			const memberships = await prisma.tenantMembership.findMany({
-				where: { tenantId, isActive: true },
-				include: {
-					user: {
-						select: {
-							userId: true,
-							name: true,
-							email: true,
-							role: true,
-							isActive: true,
-							onboardingType: true,
-							onboardingStatus: true,
-							createdAt: true,
-							expiresAt: true,
-							lockedUntil: true,
-							avatar: true,
-							_count: {
-								select: { tenantMemberships: true },
-							},
-						},
-					},
-				},
-				orderBy: { createdAt: "desc" },
-				take: input.limit || 100,
-			});
-
-			const users = memberships.map((m) => ({
-				...m.user,
-				tenantRole: m.tenantRole,
-				membershipId: m.membershipId,
-				membershipCount: (m.user as { _count?: { tenantMemberships: number } })._count?.tenantMemberships ?? 1,
-			}));
-
-			return { users, total: users.length };
-		}
-
-		// Modo global: solo admin ve todos los usuarios
-		const rawUsers = await prisma.user.findMany({
-			take: input.limit || 100,
-			orderBy: { createdAt: "desc" },
-			select: {
-				userId: true,
-				name: true,
-				email: true,
-				role: true,
-				isActive: true,
-				onboardingType: true,
-				onboardingStatus: true,
-				createdAt: true,
-				expiresAt: true,
-				lockedUntil: true,
-				avatar: true,
-				salesAgentProfile: { select: { phone: true, status: true } },
-				salesAgentBalance: { select: { availableUsd: true, paidUsd: true } },
-				salesAgentReferrals: {
-					where: { status: "attributed" },
-					select: { salesAgentReferralId: true },
-				},
-				tenantMemberships: {
-					select: {
-						tenantId: true,
-						tenantRole: true,
-						tenant: {
-							select: { nombre: true },
-						},
-					},
-					take: 5,
-				},
-				_count: {
-					select: { tenantMemberships: true },
-				},
-			},
-		});
-		const total = await prisma.user.count();
-
-		const users = rawUsers.map((u) => {
-			const membership = u.tenantMemberships?.[0] ?? null;
-			return {
-				userId: u.userId,
-				name: u.name,
-				email: u.email,
-				role: u.role,
-				isActive: u.isActive,
-				onboardingType: u.onboardingType,
-				onboardingStatus: u.onboardingStatus,
-				createdAt: u.createdAt,
-				expiresAt: u.expiresAt,
-				lockedUntil: u.lockedUntil,
-				avatar: u.avatar,
-				tenantRole: membership?.tenantRole ?? null,
-				tenantId: membership?.tenantId ?? null,
-				tenantName: membership?.tenant?.nombre ?? null,
-				membershipCount: u._count?.tenantMemberships ?? 0,
-				salesAgentProfile: u.salesAgentProfile,
-				salesAgentBalance: u.salesAgentBalance,
-				activeReferralCount: u.salesAgentReferrals.length,
-			};
-		});
-
-		return { users, total };
-	},
-);
+export const getGlobalUsersAction = withAction(getAdminUsers);
 
 export const approveGlobalUserAction = withAction(
 	async (
@@ -748,153 +589,10 @@ export const approveGlobalUserAction = withAction(
 
 // ─── Admin Dashboard Data ──────────────────────────────────
 
-export const getAdminTenantsAction = withAction(
-	async (_input: void, user: AuthenticatedUser) => {
-		if (user.role !== "admin")
-			throw new ActionError("Acceso restringido", "FORBIDDEN");
-		const realTenantWhere = { licencias: { some: { isDemo: false } } };
-		const tenants = await prisma.tenant.findMany({
-			where: realTenantWhere,
-			orderBy: { createdAt: "desc" },
-			include: {
-				_count: {
-					select: { memberships: true, productos: true, almacenes: true },
-				},
-				licencias: {
-					where: { activa: true, isDemo: false },
-					orderBy: { createdAt: "desc" },
-					take: 1,
-					include: { plan: true },
-				},
-			},
-		});
-		return tenants.map((t) => ({
-			...t,
-			totalUsers: t._count.memberships,
-			plan: t.licencias[0]?.plan?.nombre ?? null,
-			planId: t.licencias[0]?.planId ?? null,
-			licenseActive: t.licencias.length > 0,
-		}));
-	},
-);
+export const getAdminTenantsAction = withAction(getAdminTenants);
 
 
-/**
- * Helper para agrupar datos por día.
- */
-function groupByLastNDays<T extends { createdAt: Date }>(
-  items: T[],
-  valueExtractor: (item: T) => number,
-  days: number,
-  offsetDays = 0,
-): Array<{ fecha: string; value: number }> {
-  return Array.from({ length: days }, (_, i) => {
-    const date = new Date();
-    date.setDate(date.getDate() - (days - 1 - i + offsetDays));
-    const fecha = date.toISOString().split('T')[0];
-
-    const value = items
-      .filter((item) => item.createdAt.toISOString().split('T')[0] === fecha)
-      .reduce((sum, item) => sum + valueExtractor(item), 0);
-
-    return { fecha, value };
-  });
-}
-
-export const getAdminSystemHealthAction = withAction(
-	async (_input: void, user: AuthenticatedUser) => {
-		if (user.role !== "admin")
-			throw new ActionError("Acceso restringido", "FORBIDDEN");
-		const now = new Date();
-		const realTenantWhere = { licencias: { some: { isDemo: false } } };
-		const realUserWhere = {
-			tenantMemberships: {
-				some: {
-					tenant: realTenantWhere,
-				},
-			},
-		};
-		const [users, tenants, sessions, licenses, licensesActive, expiringSoon] =
-			await Promise.all([
-				prisma.user.count({ where: realUserWhere }),
-				prisma.tenant.count({ where: realTenantWhere }),
-				prisma.userSession.count({
-					where: {
-						isActive: true,
-						OR: [{ expiresAt: null }, { expiresAt: { gte: now } }],
-						user: realUserWhere,
-					},
-				}),
-				prisma.tenantLicense.count({ where: { isDemo: false } }),
-				prisma.tenantLicense.count({ where: { activa: true, isDemo: false } }),
-				prisma.tenantLicense.count({
-					where: {
-						activa: true,
-						isDemo: false,
-						expiracion: {
-							lte: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000),
-							gte: new Date(),
-						},
-					},
-				}),
-			]);
-		const usersByRole = await prisma.user.groupBy({
-			by: ["role"],
-			where: realUserWhere,
-			_count: true,
-		});
-
-		// Obtener nuevos usuarios de los últimos 14 días para comparar semanas
-		const fourteenDaysAgo = new Date();
-		fourteenDaysAgo.setDate(fourteenDaysAgo.getDate() - 13);
-
-		const usersHistoricos = await prisma.user.findMany({
-			where: {
-				createdAt: { gte: fourteenDaysAgo },
-				...realUserWhere,
-			},
-			select: {
-				createdAt: true,
-			},
-			orderBy: { createdAt: 'asc' },
-			take: 10000, // Límite de seguridad
-		});
-
-		const usersTrendSeries = groupByLastNDays(usersHistoricos, () => 1, 14);
-		const previousUsersTrend = usersTrendSeries.slice(0, 7);
-		const usersTrend = usersTrendSeries.slice(-7).map(({ fecha, value }) => ({
-			fecha,
-			usuarios: value,
-		}));
-		const previous7DaysUsers = previousUsersTrend.reduce(
-			(sum, day) => sum + day.value,
-			0,
-		);
-		const current7DaysUsers = usersTrend.reduce(
-			(sum, day) => sum + day.usuarios,
-			0,
-		);
-
-		return {
-			users: {
-				total: users,
-				byRole: usersByRole.map((r) => ({ role: r.role, count: r._count })),
-			},
-			tenants: { total: tenants },
-			sessions: { active: sessions },
-			licenses: {
-				total: licenses,
-				active: licensesActive,
-				expiringSoon,
-			},
-			usersTrend,
-			usersComparison: {
-				current7DaysUsers,
-				previous7DaysUsers,
-			},
-		};
-	},
-);
+export const getAdminSystemHealthAction = withAction(getAdminHealth);
 
 export const getAdminFinanceAction = withAction(
 	async (_input: void, user: AuthenticatedUser) => {
@@ -1352,174 +1050,11 @@ export const sendExpiryNotificationsAction = withAction(
 
 // ─── Pending Memberships ────────────────────────────────────
 
-export const getPendingMembershipsAction = withAction(
-	async (_input: void, user: AuthenticatedUser) => {
-		const isPlatformAdmin = user.role === "admin";
-		const isTenantManager = user.tenantRole === "manager";
+export const getPendingMembershipsAction = withAction(getAdminPendingMemberships);
 
-		if (!isPlatformAdmin && !isTenantManager) {
-			throw new ActionError("Acceso restringido", "FORBIDDEN");
-		}
+export const approveMembershipAction = withAction(approveAdminMembership);
 
-		const where = isPlatformAdmin
-			? { isActive: false }
-			: { isActive: false, tenantId: user.tenantId };
-
-		return prisma.tenantMembership.findMany({
-			where,
-			include: {
-				user: {
-					select: {
-						userId: true,
-						name: true,
-						email: true,
-						onboardingType: true,
-						onboardingStatus: true,
-						createdAt: true,
-					},
-				},
-				tenant: { select: { tenantId: true, nombre: true } },
-			},
-			orderBy: { createdAt: "desc" },
-		});
-	},
-);
-
-export const approveMembershipAction = withAction(
-	async (
-		input: { membershipId: string; tenantRole: string },
-		user: AuthenticatedUser,
-	) => {
-		const { membershipId, tenantRole } = input;
-
-		if (!tenantRole || typeof tenantRole !== "string") {
-			throw new ActionError("El rol del tenant es requerido", "VALIDATION");
-		}
-
-		const validRoles = ["manager", "economico", "dependiente", "admin"];
-		if (!validRoles.includes(tenantRole)) {
-			throw new ActionError(
-				`Rol inválido: ${tenantRole}. Roles válidos: ${validRoles.join(", ")}`,
-				"VALIDATION",
-			);
-		}
-
-		const membership = await prisma.tenantMembership.findUnique({
-			where: { membershipId },
-			select: {
-				membershipId: true,
-				tenantId: true,
-				userId: true,
-				isActive: true,
-				user: { select: { userId: true, name: true, email: true } },
-			},
-		});
-
-		if (!membership) {
-			throw new ActionError(
-				"Solicitud de membresía no encontrada",
-				"NOT_FOUND",
-			);
-		}
-
-		if (membership.isActive) {
-			throw new ActionError("Esta membresía ya está activa", "CONFLICT");
-		}
-
-		const isPlatformAdmin = user.role === "admin";
-		const isTenantManager =
-			user.tenantRole === "manager" && user.tenantId === membership.tenantId;
-
-		if (!isPlatformAdmin && !isTenantManager) {
-			throw new ActionError(
-				"No tienes permisos para aprobar esta solicitud",
-				"FORBIDDEN",
-			);
-		}
-
-		// Activar membresía
-		await prisma.tenantMembership.update({
-			where: { membershipId },
-			data: { isActive: true, tenantRole },
-		});
-
-		// Activar usuario y cerrar el flujo de onboarding del worker
-		await prisma.user.update({
-			where: { userId: membership.userId },
-			data: { isActive: true, onboardingStatus: null },
-		});
-
-		// Crear Empleado
-		const nameParts = membership.user.name.trim().split(" ");
-		const nombre = nameParts[0];
-		const apellido = nameParts.slice(1).join(" ") || nombre;
-
-		const cargoMap: Record<string, string> = {
-			manager: "Director / Manager",
-			economico: "Económico",
-			dependiente: "Dependiente",
-			admin: "Administrador",
-		};
-
-		let empleadoCreado = false;
-
-		const existingEmpleado = await prisma.empleado.findFirst({
-			where: { tenantId: membership.tenantId, nombre, apellido },
-		});
-
-		if (!existingEmpleado) {
-			const cargo = cargoMap[tenantRole] || tenantRole;
-			await prisma.empleado.create({
-				data: {
-					tenantId: membership.tenantId,
-					nombre,
-					apellido,
-					cargo,
-					salarioBases: 0,
-					fechaContratacion: new Date(),
-				},
-			});
-			empleadoCreado = true;
-		}
-
-		revalidatePath("/busy/configuracion/usuarios");
-		return { success: true, empleadoCreado };
-	},
-);
-
-export const rejectMembershipAction = withAction(
-	async (input: { membershipId: string }, user: AuthenticatedUser) => {
-		const membership = await prisma.tenantMembership.findUnique({
-			where: { membershipId: input.membershipId },
-			select: { membershipId: true, tenantId: true, userId: true },
-		});
-
-		if (!membership)
-			throw new ActionError("Solicitud no encontrada", "NOT_FOUND");
-
-		const isPlatformAdmin = user.role === "admin";
-		const isTenantManager =
-			user.tenantRole === "manager" && user.tenantId === membership.tenantId;
-
-		if (!isPlatformAdmin && !isTenantManager) {
-			throw new ActionError("Acceso restringido", "FORBIDDEN");
-		}
-
-		await prisma.tenantMembership.delete({
-			where: { membershipId: input.membershipId },
-		});
-
-		await prisma.user.updateMany({
-			where: {
-				userId: membership.userId,
-				onboardingStatus: "awaiting_manager_approval",
-			},
-			data: { onboardingStatus: "selecting_tenant" },
-		});
-		revalidatePath("/busy/configuracion/usuarios");
-		return { success: true };
-	},
-);
+export const rejectMembershipAction = withAction(rejectAdminMembership);
 
 export const updateTenantUserAction = withAction(
 	async (input: UpdateTenantUserInput, user: AuthenticatedUser) => {
@@ -1962,7 +1497,7 @@ export const renewLicenciaAction = withAction(
 					maxAlmacenes: newPlan.maxAlmacenes,
 					maxProductos: newPlan.maxProductos,
 					maxClientes: newPlan.maxClientes,
-					features: samePlan ? license.features : Prisma.JsonNull,
+					features: samePlan ? (license.features as Prisma.InputJsonValue) : Prisma.JsonNull,
 					featureOverrides: samePlan ? (license.featureOverrides ?? {}) : {},
 					...resolveLicensePricing(Number(newPlan.precio), referred),
 				},
@@ -1970,10 +1505,9 @@ export const renewLicenciaAction = withAction(
 
 			await tx.user.updateMany({
 				where: {
-					tenantId: activeMembership.tenantId,
+					tenantMemberships: { some: { tenantId: activeMembership.tenantId, isActive: true } },
 					isActive: true,
-					tenantMemberships: { some: { isActive: true } },
-				},
+				} as any,
 				data: { expiresAt: newExpiracion, isActive: true },
 			});
 

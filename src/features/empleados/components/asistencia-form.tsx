@@ -70,7 +70,7 @@ export function AsistenciaForm() {
       getAsistenciaAction({ employeeId: selectedEmpleado, date: today })
         .then((r) => {
           if (r.success && r.data) {
-            setAsistenciaHoy(r.data.length > 0 ? r.data[0] : null);
+            setAsistenciaHoy(r.data.length > 0 ? (r.data[0] as unknown as Asistencia) : null);
           }
         })
         .catch((error) => console.error("Error cargando asistencia de hoy:", error));
@@ -82,7 +82,7 @@ export function AsistenciaForm() {
         endDate: today,
       })
         .then((r) => {
-          if (r.success) setHistorialAsistencia(r.data ?? []);
+          if (r.success) setHistorialAsistencia((r.data ?? []) as unknown as Asistencia[]);
         })
         .catch((error) => console.error("Error cargando historial de asistencia:", error));
     }
@@ -151,7 +151,7 @@ export function AsistenciaForm() {
         // Update the record in the history
         setHistorialAsistencia(prev =>
           prev.map(record =>
-            record.attendanceId === editingRecord.attendanceId ? data : record
+            record.attendanceId === editingRecord.attendanceId ? (data as any) : record
           )
         );
 

@@ -70,7 +70,7 @@ export async function uploadToCloudinary(
     throw new Error(`Upload intent provider must be cloudinary, got ${intent.provider}`)
   }
 
-  return uploadToCloudinaryFromIntent(file, intent, onProgress)
+  return uploadToCloudinaryFromIntent(file, intent as SignatureResponse, onProgress)
 }
 
 export async function getUploadIntent(

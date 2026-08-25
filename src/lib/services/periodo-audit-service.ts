@@ -38,11 +38,11 @@ export class PeriodoAuditService {
       data: {
         periodoId: params.periodoId,
         tenantId: params.tenantId,
-        evento: params.evento,
+        evento: params.evento as any,
         actor: params.actor,
         entidadAfectada: params.entidadAfectada,
         motivo: params.motivo,
-        payload: params.payload as Record<string, unknown> | undefined,
+        payload: params.payload as any,
       },
     });
   }

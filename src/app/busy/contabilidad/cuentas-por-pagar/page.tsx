@@ -230,16 +230,6 @@ export default function CuentasPorPagarPage() {
 		user?.role !== "admin" &&
 		user?.planFeatures?.["cuentas-pagar"] !== true;
 
-	useEffect(() => {
-		if (isBlocked) {
-			router.replace("/busy/contabilidad");
-		}
-	}, [isBlocked, router]);
-
-	if (isBlocked) {
-		return null;
-	}
-
 	const loadData = useCallback(
 		async (overrides?: {
 			search?: string;
@@ -321,6 +311,16 @@ export default function CuentasPorPagarPage() {
 				m.totalFacturado > 0 ? (m.totalPagado / m.totalFacturado) * 100 : 0,
 		};
 	}, [dataResult?.metricas]);
+
+	useEffect(() => {
+		if (isBlocked) {
+			router.replace("/busy/contabilidad");
+		}
+	}, [isBlocked, router]);
+
+	if (isBlocked) {
+		return null;
+	}
 
 	const toggleExpanded = (cuentaId: string) => {
 		const newExpanded = new Set(expandedRows);

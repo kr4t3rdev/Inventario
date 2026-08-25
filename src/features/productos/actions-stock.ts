@@ -9,6 +9,7 @@ import { ProductoService } from "./services/producto-service";
 import { stockUbicacionQuerySchema } from "./schemas";
 import type { StockUbicacionQuery } from "./schemas";
 import type { AuthenticatedUser } from "@/lib/auth-middleware";
+import type { RestockHistoryQueryInput, RestockHistoryResponse, RestockHistoryItem } from "./types";
 /**
  * @description Obtiene productos con su stock en una ubicación específica
  *   (almacén o punto de venta).

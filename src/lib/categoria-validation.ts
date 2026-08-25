@@ -806,22 +806,22 @@ export class CategoriaValidator {
 		}
 
 		const validatedData: CategoriaInput = {
-			nombre: inputValidation.data.nombre ?? existingCategory.nombre,
+			nombre: inputValidation.data!.nombre ?? existingCategory.nombre,
 			descripcion:
-				inputValidation.data.descripcion !== undefined
-					? inputValidation.data.descripcion
+				inputValidation.data!.descripcion !== undefined
+					? inputValidation.data!.descripcion
 					: existingCategory.descripcion ?? undefined,
 			parentId:
-				inputValidation.data.parentId !== undefined
-					? inputValidation.data.parentId
+				inputValidation.data!.parentId !== undefined
+					? inputValidation.data!.parentId
 					: existingCategory.parentId,
 			clasSectionId:
-				inputValidation.data.clasSectionId !== undefined
-					? inputValidation.data.clasSectionId
+				inputValidation.data!.clasSectionId !== undefined
+					? inputValidation.data!.clasSectionId
 					: existingCategory.clasSectionId,
 			clasSpecificId:
-				inputValidation.data.clasSpecificId !== undefined
-					? inputValidation.data.clasSpecificId
+				inputValidation.data!.clasSpecificId !== undefined
+					? inputValidation.data!.clasSpecificId
 					: existingCategory.clasSpecificId,
 		};
 

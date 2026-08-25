@@ -64,7 +64,7 @@ export class PeriodoContableService {
 			const periodo = await prisma.periodoContable.findFirst({
 				where: {
 					tenantId,
-					tipo: t,
+					tipo: t as any,
 					fechaInicio: { lte: fecha },
 					fechaFin: { gte: fecha },
 				},
@@ -234,7 +234,7 @@ export class PeriodoContableService {
 		const padre = await db.periodoContable.findFirst({
 			where: {
 				tenantId,
-				tipo: padreTipo,
+				tipo: padreTipo as any,
 				fechaInicio: { lte: fechaInicio },
 				fechaFin: { gte: fechaFin },
 			},
@@ -289,14 +289,14 @@ export class PeriodoContableService {
 		const periodo = await db.periodoContable.create({
 			data: {
 				tenantId: input.tenantId,
-				tipo: input.tipo,
+				tipo: input.tipo as any,
 				codigo,
 				fechaInicio: input.fechaInicio,
 				fechaFin: input.fechaFin,
 				estado: EstadoPeriodo.ABIERTO,
 				periodoPadreId,
-				categoria: input.categoria ?? CategoriaPeriodo.ORDINARIO,
-				modoContable: input.modoContable ?? "CAJA",
+				categoria: (input.categoria as any) ?? CategoriaPeriodo.ORDINARIO,
+				modoContable: (input.modoContable ?? "CAJA") as any,
 				abiertoPorId: actor,
 				fechaApertura: new Date(),
 				observaciones: input.observaciones,
@@ -384,7 +384,7 @@ export class PeriodoContableService {
 				where: {
 					tenantId: periodo.tenantId,
 					periodoPadreId: null, // Solo períodos sin padre explícito (legacy)
-					tipo: { in: tiposDescendientes },
+					tipo: { in: tiposDescendientes as any },
 					fechaInicio: { gte: periodo.fechaInicio },
 					fechaFin: { lte: periodo.fechaFin },
 					estado: { in: [EstadoPeriodo.ABIERTO, EstadoPeriodo.EN_CIERRE] },
@@ -715,7 +715,7 @@ export class PeriodoContableService {
 			data: {
 				periodoId: params.periodoId,
 				tenantId: params.tenantId,
-				evento: params.evento,
+				evento: params.evento as any,
 				actor: params.actor,
 				motivo: params.motivo,
 				entidadAfectada: params.entidadAfectada,

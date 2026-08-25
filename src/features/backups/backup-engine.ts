@@ -172,7 +172,7 @@ export class BackupEngine {
           table.columns,
           table.primaryKey,
           signal,
-          tenantFilter,
+          tenantFilter ?? undefined,
         )) {
       if (signal?.aborted) throw Object.assign(new Error('Backup cancelled'), { code: 'ABORT_ERR' })
 

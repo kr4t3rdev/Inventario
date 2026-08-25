@@ -343,7 +343,6 @@ export const AccountingOperationsMutationService = {
       await acquireAccountingTenantLock(tx, tenantId);
       return tx.inyeccionCapital.create({
         data: {
-          // @ts-expect-error Prisma typing drift in project for InyeccionCapital create input
           monto: parsed.monto, moneda: parsed.moneda, tipo: parsed.tipo, descripcion: parsed.descripcion, cuentaBancariaId: parsed.cuentaBancariaId, tenantId,
         },
       });
@@ -374,7 +373,6 @@ export const AccountingOperationsMutationService = {
       await acquireAccountingTenantLock(tx, tenantId);
       return tx.pagoDeuda.create({
         data: {
-          // @ts-expect-error Prisma typing drift in project for PagoDeuda create input
           inyeccionId: parsed.inyeccionId, monto: parsed.monto, cuentaBancariaId: parsed.cuentaBancariaId, tipoPagoId: parsed.tipoPagoId, observaciones: parsed.observaciones, tenantId,
         },
       });

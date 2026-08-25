@@ -28,7 +28,7 @@ export function SugerenciasPrecioTable() {
 
   useEffect(() => {
     getSugerenciasPrecioAction({}).then((d) => {
-      setItems(d)
+      if (d.success) setItems(d.data ?? [])
       setIsLoading(false)
     })
   }, [])

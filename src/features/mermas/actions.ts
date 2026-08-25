@@ -136,7 +136,7 @@ export const updateMermaAction = withAction(
 		const productoId = data.productoId ?? mermaActual.productoId;
 		const cantidad = data.cantidad ?? mermaActual.cantidad;
 		const nuevoAlmacenId = data.almacenId ?? mermaActual.almacenId;
-		const oldAlmacenId = mermaActual.almacenId;
+		const oldAlmacenId = mermaActual.almacenId as string;
 
 		const productoCambia = productoId !== mermaActual.productoId;
 		const cantidadCambia = cantidad !== mermaActual.cantidad;
@@ -144,7 +144,7 @@ export const updateMermaAction = withAction(
 
 		if (productoCambia || cantidadCambia || almacenCambia) {
 			// Resolver almacén destino: si cambia producto, puede venir del producto nuevo
-			let resolvedAlmacenId = nuevoAlmacenId;
+			let resolvedAlmacenId = nuevoAlmacenId as string;
 			if (productoCambia) {
 				const productoNuevo = await prisma.producto.findFirst({
 					where: { id: productoId, tenantId },

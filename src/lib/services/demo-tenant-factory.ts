@@ -148,7 +148,7 @@ export async function createDemoTenantForPlan(
         maxAlmacenes: plan.maxAlmacenes,
         maxProductos: plan.maxProductos,
         maxClientes: plan.maxClientes,
-        features: null,
+        features: undefined,
         featureOverrides: {},
         createdBy: input.createdBy ?? null,
       },

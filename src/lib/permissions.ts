@@ -1,4 +1,5 @@
 import { normalizeUserRole, isTenantAdminRole, type AppUserRole, type TenantRole } from '@/lib/auth/roles';
+export type { TenantRole };
 
 /**
  * Sistema de permisos basado en roles para el sistema de inventario

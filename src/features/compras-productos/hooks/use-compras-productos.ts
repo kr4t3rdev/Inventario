@@ -41,7 +41,7 @@ export function useComprasProductos(): UseComprasProductosResult {
         if (result.success && result.data) {
           setCompras((result.data.compras ?? []) as unknown as CompraBasica[])
           setPagination(result.data.pagination ?? null)
-        } else {
+        } else if (!result.success) {
           setError(result.error)
         }
       })

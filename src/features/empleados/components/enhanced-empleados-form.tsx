@@ -126,7 +126,7 @@ export function EnhancedEmpleadoForm({ initialData }: EnhancedEmpleadoFormProps)
         toast.success('El empleado ha sido actualizado exitosamente.')
       } else {
         const result = await createEmpleadoAction({
-  // @ts-expect-error
+  // @ts-expect-error TODO: fix type for empleadoId
           empleadoId: v4(),
           ...empleadoData
         })

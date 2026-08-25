@@ -60,7 +60,7 @@ export function MermasContent({ initialMermas, isLoading: initialIsLoading, erro
       if (r.success) {
         toast.success("Merma eliminada exitosamente.")
         const ref = await import('@/features/mermas/actions').then(m => m.getMermasAction())
-  // @ts-expect-error
+  // @ts-expect-error TODO: fix type for ref.success
         if (ref.success) setMermas(ref.data ?? [])
       } else {
         toast.error(r.error?.message || "Error al eliminar la merma.")
@@ -122,7 +122,7 @@ export function MermasContent({ initialMermas, isLoading: initialIsLoading, erro
             transition={{ delay: 0.2, duration: 0.5 }}
           >
             <MermasTable 
-  // @ts-expect-error
+  // @ts-expect-error TODO: fix type for mermas prop
               mermas={
               mermas
               }

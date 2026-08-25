@@ -55,7 +55,7 @@ export function ServiciosPrestadosForm({ initialServicios }: ServiciosPrestadosF
   const servicios = initialServicios ?? []
   const { clientes, isLoading: isLoadingClientes } = useClientes()
   const form = useForm<FormValues>({
-    resolver: zodResolver(schema),
+    resolver: zodResolver(schema) as any,
     defaultValues: {
       servicioId: '',
       clienteId: '',
@@ -174,7 +174,7 @@ export function ServiciosPrestadosForm({ initialServicios }: ServiciosPrestadosF
           
           <CardContent className='pt-8'>
             <Form {...form}>
-              <form className='space-y-6' onSubmit={form.handleSubmit(onSubmit, () => { sileo.error({ title: 'Completá los campos requeridos antes de continuar.' }) })}>
+              <form className='space-y-6' onSubmit={form.handleSubmit(onSubmit as any, () => { sileo.error({ title: 'Completá los campos requeridos antes de continuar.' }) })}>
                 <motion.div
                   initial={{ opacity: 0, x: -20 }}
                   animate={{ opacity: 1, x: 0 }}

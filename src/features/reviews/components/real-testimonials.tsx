@@ -23,7 +23,7 @@ export function RealTestimonials(): React.JSX.Element | null {
 
   useEffect(() => {
     getApprovedReviewsPublicAction({ limit: MINIMUM_TESTIMONIALS })
-      .then((result) => setReviews(result.reviews))
+      .then((result) => setReviews(result.reviews as any))
       .catch(() => setReviews([]))
       .finally(() => setIsLoading(false));
   }, []);
@@ -84,14 +84,14 @@ export function RealTestimonials(): React.JSX.Element | null {
 
               <div className="mt-auto flex items-center gap-3 pt-2">
                 <div className="flex h-10 w-10 items-center justify-center rounded-full bg-primary/15 text-sm font-bold text-primary font-mono">
-                  {review.user.name
-                    .split(' ')
+                  {(review.user as any)?.name
+                    ?.split(' ')
                     .map((n: string) => n[0])
                     .join('')
                     .slice(0, 2)}
                 </div>
                 <div>
-                  <p className="text-sm font-semibold font-mono">{review.user.name}</p>
+                  <p className="text-sm font-semibold font-mono">{(review.user as any)?.name}</p>
                 </div>
               </div>
             </CardContent>

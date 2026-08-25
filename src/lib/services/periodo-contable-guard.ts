@@ -79,11 +79,11 @@ export async function cachearPeriodoActivo(
 			cacheKey: key,
 			tenantId,
 			fecha,
-			resultadoJson: resultado as Record<string, unknown>,
+			resultadoJson: resultado as any,
 			expiresAt: new Date(Date.now() + CACHE_TTL_MS),
 		},
 		update: {
-			resultadoJson: resultado as Record<string, unknown>,
+			resultadoJson: resultado as any,
 			expiresAt: new Date(Date.now() + CACHE_TTL_MS),
 		},
 	});

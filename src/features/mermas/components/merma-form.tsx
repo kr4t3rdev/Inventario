@@ -36,8 +36,6 @@ const mermaFormSchema = createMermaSchema.extend({
 
 type MermaFormValues = z.infer<typeof mermaFormSchema>
 
-type MermaFormValues = z.infer<typeof mermaSchema>
-
 interface MermaFormProps {
   initialData?: {
     mermaId: string

@@ -12,6 +12,7 @@ import {
 import {
   getAccountingYear,
 } from '@/lib/services/fecha-operacion-registry';
+import { TenantAccountingPolicyError } from './tenant-accounting-policy-service';
 
 const MIN_ACCOUNTING_YEAR = 1900;
 const MAX_ACCOUNTING_YEAR = 2200;
@@ -98,6 +99,7 @@ export interface BalanceResultsReport {
 
 type BalanceResultsReportErrorCode =
   | 'TENANT_REQUIRED'
+  | 'TENANT_ACCOUNTING_POLICY_REQUIRED'
   | 'INVALID_YEAR'
   | 'INVALID_CUTOFF'
   | 'CURRENCY_NOT_SUPPORTED'
@@ -240,27 +242,42 @@ export async function getBalanceResultsReport(
   const year = params.year ?? getAccountingYear(serverNow);
   const requestedCutoffAt = params.cutoffAt;
 
-  const report = await resolveFinancialReport({
-    tenantId: params.tenantId,
-    year,
-    now: serverNow,
-    requestedCutoffAt,
-    calculateLive: async (evaluatedAt) => {
-      const cutoffAt = evaluatedAt;
-      const result = await getReconciledResultForYear({
-        tenantId: params.tenantId,
-        year,
-        cutoffAt,
-      });
-      const balance = await getCurrentBalance({
-        tenantId: params.tenantId,
-        asOf: cutoffAt,
-        currentResult: result.annual.reconciledResult,
-        currentResultYear: year,
-      });
-      return { balance, result };
-    },
-  });
+  let report: FinancialReportResolution<{ balance: CurrentBalance; result: ReconciledResult }>;
+  try {
+    report = await resolveFinancialReport({
+      tenantId: params.tenantId,
+      year,
+      now: serverNow,
+      requestedCutoffAt,
+      calculateLive: async (evaluatedAt) => {
+        const cutoffAt = evaluatedAt;
+        const result = await getReconciledResultForYear({
+          tenantId: params.tenantId,
+          year,
+          cutoffAt,
+        });
+        const balance = await getCurrentBalance({
+          tenantId: params.tenantId,
+          asOf: cutoffAt,
+          currentResult: result.annual.reconciledResult,
+          currentResultYear: year,
+        });
+        return { balance, result };
+      },
+    });
+  } catch (error) {
+    if (
+      error instanceof TenantAccountingPolicyError &&
+      error.code === 'TENANT_ACCOUNTING_POLICY_REQUIRED'
+    ) {
+      throw new BalanceResultsReportError(
+        error.message,
+        'TENANT_ACCOUNTING_POLICY_REQUIRED',
+        409,
+      );
+    }
+    throw error;
+  }
 
   if (report.status === 'UNAVAILABLE') {
     throw new BalanceResultsReportError(

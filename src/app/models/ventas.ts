@@ -1,3 +1,14 @@
+import type { Vendor, GastosDE, GastosCompra } from './economicos';
+import type { Producto } from './productos';
+import type { Oferta } from './ofertas';
+import type { Factura } from './facturacion';
+import type { ReconciliacionVenta } from './contabilidad';
+import type { PuntoDeVenta } from './punto-venta';
+import type { DeudaCash } from './prestamos-cash';
+
+export type TipoNotificacion = "info" | "warning" | "error" | "success";
+export type Prioridad = "baja" | "media" | "alta" | "urgente";
+
 export interface CuentaPorPagar {
 	cuentaPorPagarId: string;
 	numeroFactura: string;
@@ -180,11 +191,11 @@ export interface Transferencia {
 	tipoTransferencia: string;
 }
 
-export interface TransferenciaWithDetails extends Transferencia {
+export type TransferenciaWithDetails = Omit<Transferencia, 'origen' | 'destino' | 'producto'> & {
 	producto: Producto;
 	origen: PuntoDeVenta;
 	destino: PuntoDeVenta;
-}
+};
 
 // Nuevos tipos para transferencias múltiples
 export interface ProductoTransferencia {

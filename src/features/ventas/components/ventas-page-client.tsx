@@ -5,7 +5,7 @@ import { LazyMotion, m as motion } from 'framer-motion';
 import { Button } from '@/components/ui/button';
 import { TrendingUp, PlusCircle } from 'lucide-react';
 import { VentasTable } from './ventas-table';
-import type { Venta } from '@/app/models';
+import type { Venta } from '../types';
 
 interface VentasPageClientProps {
   ventas: Venta[];
@@ -69,8 +69,7 @@ export function VentasPageClient({ ventas }: VentasPageClientProps) {
         transition={{ duration: 0.5, delay: 0.3 }}
       >
         <VentasTable
-          // @ts-expect-error
-          ventas={ventas}
+          ventas={ventas as any}
           isLoading={false}
           error={null}
           onDelete={() => {}}

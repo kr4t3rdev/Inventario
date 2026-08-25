@@ -77,7 +77,7 @@ export function BackupDashboardPage() {
         return
       }
 
-      const options = (response.data as AdminTenant[]).map((tenant) => ({
+      const options = (response.data as unknown as AdminTenant[]).map((tenant) => ({
         tenantId: tenant.tenantId,
         nombre: tenant.nombre,
       }))
@@ -139,8 +139,12 @@ export function BackupDashboardPage() {
     async (backupLogId: string) => {
       try {
         const res = await downloadBackupAction({ backupLogId })
-        if (!res.success || !res.data?.downloadUrl) {
+        if (!res.success) {
           toast.error(res.error?.message ?? 'No se pudo descargar la copia')
+          return
+        }
+        if (!res.data?.downloadUrl) {
+          toast.error('No se pudo descargar la copia')
           return
         }
 

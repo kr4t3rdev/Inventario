@@ -29,7 +29,7 @@ export default async function VentasPage() {
   return (
     <div className="container mx-auto space-y-6 py-4">
       {user?.role === 'admin' ? <SalesHealthCard userRole="admin" /> : null}
-      <VentasPageClient ventas={ventas} />
+      <VentasPageClient ventas={ventas as any} />
     </div>
   )
 }

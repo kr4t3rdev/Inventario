@@ -9,6 +9,7 @@ import prisma from '@/lib/prisma'
 import type { Prisma } from '@/generated/prisma'
 import { AuditLogService } from '@/lib/services/audit-log-service'
 import { requireTenant } from '@/lib/services/tenant-scope'
+import type { AuthenticatedUser } from '@/lib/auth-middleware'
 import {
   applyPagoGastoWorkflow,
   isGastoWorkflowError,
@@ -120,10 +121,10 @@ export interface ReconciliacionGastoResult {
  */
 export async function reconciliarGastoAdapter(
   body: unknown,
-  user: { userId: string; tenantId?: string },
+  user: AuthenticatedUser,
 ): Promise<ReconciliacionGastoResult> {
   const validatedData = reconciliacionGastoSchema.parse(body)
-  const tenantId = requireTenant(user as { tenantId?: string } & { userId: string })
+  const tenantId = requireTenant(user)
 
   // ── Verificar que la referencia existe según el tipo de gasto ──
   let referenciaExiste = false

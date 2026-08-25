@@ -71,7 +71,7 @@ describe('AccountingConfigReadService.getPaymentTypes — tenant isolation', () 
     // ASSERT: El where enviado a Prisma debe incluir tenantId
     const callWhere = vi.mocked(prisma.tipoPago.findMany).mock.calls[0][0]?.where;
     expect(callWhere).toHaveProperty('tenantId');
-    // @ts-expect-error
+    // @ts-expect-error TODO: fix type for mock call args
     expect(callWhere.tenantId).toBe('tenant-a');
   });
 
@@ -82,10 +82,10 @@ describe('AccountingConfigReadService.getPaymentTypes — tenant isolation', () 
 
     const callWhere = vi.mocked(prisma.tipoPago.findMany).mock.calls[0][0]?.where;
     expect(callWhere).toHaveProperty('tenantId');
-    // @ts-expect-error
+    // @ts-expect-error TODO: fix type for mock call args
     expect(callWhere.tenantId).toBe('tenant-a');
     expect(callWhere).toHaveProperty('requiereCuenta');
-    // @ts-expect-error
+    // @ts-expect-error TODO: fix type for mock call args
     expect(callWhere.requiereCuenta).toBe(true);
   });
 });
@@ -110,13 +110,13 @@ describe('AccountingConfigReadService.getAvailableAccounts — tenant isolation'
     // El findMany de cuentas debe incluir tenantId
     const callWhere = vi.mocked(prisma.cuentaBancaria.findMany).mock.calls[0][0]?.where;
     expect(callWhere).toHaveProperty('tenantId');
-    // @ts-expect-error
+    // @ts-expect-error TODO: fix type for mock call args
     expect(callWhere.tenantId).toBe('tenant-a');
 
     // El groupBy de estadísticas también debe incluir tenantId
     const groupByWhere = vi.mocked(prisma.cuentaBancaria.groupBy).mock.calls[0][0]?.where;
     expect(groupByWhere).toHaveProperty('tenantId');
-    // @ts-expect-error
+    // @ts-expect-error TODO: fix type for mock call args
     expect(groupByWhere.tenantId).toBe('tenant-a');
   });
 

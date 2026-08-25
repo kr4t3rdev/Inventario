@@ -35,7 +35,7 @@ export interface CuadreCerradoListItem {
  */
 export const getCuadresCerradosAction = withAction(
   async (
-    input: z.infer<typeof getCuadresCerradosSchema> = {},
+    input: z.infer<typeof getCuadresCerradosSchema> = { limit: 50 },
     user: AuthenticatedUser,
   ) => {
     requireFeature(user, 'turnos-pos', 'consultar historial de cuadres POS');
@@ -101,7 +101,7 @@ export const getCuadresCerradosAction = withAction(
         empleadoNombre,
         fechaApertura: turno.fechaApertura,
         fechaCierre: turno.fechaCierre,
-        totalVentas: turno.ventas.reduce((sum, venta) => sum + venta.total, 0),
+        totalVentas: turno.ventas.reduce((sum, venta) => sum + (venta.total ?? 0), 0),
         diferenciaCup:
           ultimoArqueo && typeof ultimoArqueo.diferenciaCup === 'number'
             ? ultimoArqueo.diferenciaCup / 100

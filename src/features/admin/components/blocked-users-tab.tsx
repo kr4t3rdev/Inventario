@@ -61,7 +61,7 @@ export function BlockedUsersTab({ onOpenHistory }: BlockedUsersTabProps) {
             <SelectItem value="50">50 por página</SelectItem>
           </SelectContent>
         </Select>
-// Pagination moved below table
+        {/* Pagination moved below table */}
       </div>
 
       {isLoading ? (

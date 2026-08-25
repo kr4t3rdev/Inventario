@@ -24,7 +24,7 @@ interface BalanceTabProps {
 	totalesPorMoneda: TotalesMoneda[];
 }
 
-function formatMoneda(monto: number, moneda: string): string {
+function formatMoneda(monto: number, moneda: string = "CUP"): string {
 	return `${moneda} ${Math.abs(monto).toLocaleString("es-CU", {
 		minimumFractionDigits: 2,
 		maximumFractionDigits: 2,

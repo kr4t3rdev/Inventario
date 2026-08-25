@@ -285,7 +285,7 @@ export default function AdminReferidosPage() {
             <DialogDescription>
               {confirmAction?.kind === 'payment'
                 ? `Se acreditará la comisión del tenant referido ${confirmAction.referral.referredTenantName} a ${confirmAction.referral.referrerTenantName}.`
-                : `Se aplicará el crédito disponible sobre la licencia vigente de ${confirmAction.row.tenantName}. Esta acción modifica el precio final de la licencia.`}
+                : `Se aplicará el crédito disponible sobre la licencia vigente de ${confirmAction?.row.tenantName}. Esta acción modifica el precio final de la licencia.`}
             </DialogDescription>
           </DialogHeader>
           <DialogFooter>

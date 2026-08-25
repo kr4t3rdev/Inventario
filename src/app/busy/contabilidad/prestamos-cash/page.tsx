@@ -59,10 +59,6 @@ function PrestamosCashContent() {
     }
   }, [isBlocked, router])
 
-  if (isBlocked) {
-    return null
-  }
-
   useEffect(() => {
     getClientesAction().then(r => { if (r.success) setClientes(r.data ?? []) })
     getCuentasBancariasAction().then(r => { if (r.success) setCuentasBancarias(r.data?.cuentas ?? []) })
@@ -74,6 +70,10 @@ function PrestamosCashContent() {
       }
     })
   }, [])
+
+  if (isBlocked) {
+    return null
+  }
 
   const handlePagar = (prestamo: PrestamoCash) => {
     setPrestamoSeleccionado(prestamo)

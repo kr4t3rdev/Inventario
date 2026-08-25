@@ -37,16 +37,6 @@ function DeudasCashContent() {
     user?.role !== 'admin' &&
     user?.planFeatures?.['deudas-cash'] !== true
 
-  useEffect(() => {
-    if (isBlocked) {
-      router.replace('/busy/contabilidad')
-    }
-  }, [isBlocked, router])
-
-  if (isBlocked) {
-    return null
-  }
-
   const loadDeudas = async () => {
     setIsLoading(true)
     const r = await getDeudasCashAction({})
@@ -54,6 +44,12 @@ function DeudasCashContent() {
     else setError(r.error)
     setIsLoading(false)
   }
+
+  useEffect(() => {
+    if (isBlocked) {
+      router.replace('/busy/contabilidad')
+    }
+  }, [isBlocked, router])
 
   useEffect(() => { loadDeudas() }, [])
 
@@ -65,6 +61,10 @@ function DeudasCashContent() {
     getCuentasBancariasAction().then(r => { if (r.success) setCuentasBancarias(r.data?.cuentas ?? []) })
     getTiposPagoAction({}).then(r => { if (r.success) setTiposPago(r.data?.data ?? []) })
   }, [])
+
+  if (isBlocked) {
+    return null
+  }
 
   const proveedores = dataProveedores || []
 

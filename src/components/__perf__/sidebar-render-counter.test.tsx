@@ -170,7 +170,7 @@ function reportDelta(label: string, before: ReturnType<typeof Snapshot>, after: 
     filteredGroupsIdentities: after.filteredGroupsIdentities - before.filteredGroupsIdentities,
     motionCaptures: after.motionCaptures - before.motionCaptures,
   }
-  // eslint-disable-next-line no-console
+   
   console.log(`[perf] ${label}:`, delta)
   return delta
 }
@@ -196,7 +196,7 @@ describe('sidebar perf: Fase 5 post-optimizacion', () => {
     const snap = Snapshot()
 
     expect(snap.NavMainRenders).toBeGreaterThan(0)
-    // eslint-disable-next-line no-console
+     
     console.log('[perf] BASELINE mount:', snap)
   })
 
@@ -254,7 +254,7 @@ describe('sidebar perf: Fase 5 post-optimizacion', () => {
     let setExternal = (_v: number) => undefined as void
     const Parent = () => {
       const [n, setN] = React.useState(0)
-      setExternal = setN
+      React.useEffect(() => { setExternal = setN }, [])
       return React.createElement(
         'div',
         null,
@@ -287,7 +287,7 @@ describe('sidebar perf: Fase 5 post-optimizacion', () => {
     render(React.createElement(AppSidebar2))
     const clientSnap = Snapshot()
 
-    // eslint-disable-next-line no-console
+     
     console.log('[perf] SSR vs initial client motion captures:', {
       ssrMotion: ssrSnap.motionCaptures,
       clientMotion: clientSnap.motionCaptures,

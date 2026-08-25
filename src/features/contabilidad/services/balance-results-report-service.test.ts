@@ -141,6 +141,38 @@ describe('balance results report service', () => {
     expect(accountingServicesMock.getReconciledResultForYear).not.toHaveBeenCalled();
   });
 
+  it('reports missing tenant currency policy as expected unavailability', async () => {
+    const { TenantAccountingPolicyError } = await import(
+      './tenant-accounting-policy-service'
+    );
+    accountingServicesMock.getReconciledResultForYear.mockRejectedValue(
+      new TenantAccountingPolicyError(
+        'La empresa no tiene una moneda funcional contable configurada',
+        'TENANT_ACCOUNTING_POLICY_REQUIRED',
+      ),
+    );
+    const { getBalanceResultsReport } = await import('./balance-results-report-service');
+
+    await expect(getBalanceResultsReport({ tenantId: 'tenant-1', year: 2026 })).rejects.toMatchObject({
+      code: 'TENANT_ACCOUNTING_POLICY_REQUIRED',
+      status: 409,
+    });
+  });
+
+  it('does not misclassify unrelated tenant accounting policy errors', async () => {
+    const { TenantAccountingPolicyError } = await import(
+      './tenant-accounting-policy-service'
+    );
+    const policyError = new TenantAccountingPolicyError(
+      'La moneda funcional no puede cambiar después de registrar evidencia contable',
+      'FUNCTIONAL_CURRENCY_IMMUTABLE',
+    );
+    accountingServicesMock.getReconciledResultForYear.mockRejectedValue(policyError);
+    const { getBalanceResultsReport } = await import('./balance-results-report-service');
+
+    await expect(getBalanceResultsReport({ tenantId: 'tenant-1', year: 2026 })).rejects.toBe(policyError);
+  });
+
   it('no acepta el corte del cliente como reloj del servidor en años históricos', async () => {
     const { getBalanceResultsReport } = await import('./balance-results-report-service');
     const clientCutoff = new Date('2025-12-31T23:59:59.000Z');

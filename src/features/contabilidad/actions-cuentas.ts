@@ -684,7 +684,7 @@ export const createCuentaPorPagarAction = withAction(
 		AuditLogService.log({
 			accion: "CREATE",
 			entidad: "CUENTA_POR_PAGAR",
-			entidadId: cuenta.id,
+			entidadId: cuenta.cuentaPorPagarId,
 			usuarioId: user.userId,
 			detalles: { numeroFactura: p.numeroFactura, proveedorId: p.proveedorId, montoDeuda: p.montoDeuda, moneda: p.moneda },
 		}).catch((err) => console.error("[AuditLog] Error logging cuenta por pagar:", err));

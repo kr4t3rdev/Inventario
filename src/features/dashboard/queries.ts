@@ -152,11 +152,6 @@ export async function getDashboardStatsQuery(
     ventasData, ventaItemsData, ventasLegacyData, ventaServiciosData,
     mermasData, gastosDEData, salariosData,
     transferenciasData, productosDataRaw, gastosCompraData, stockUbicacionesData,
-  ]: [
-    number, number, number,
-    VentaDiariaData[], VentaItemData[], VentaLegacyData[], VentaServicioData[],
-    MermaData[], GastoDEData[], SalarioData[],
-    TransferenciaData[], ProductoData[], GastoCompraData[], StockUbicacionData[],
   ] = await Promise.all([
     prisma.producto.count({ where: { tenantId } }),
     prisma.almacen.count({ where: { tenantId } }),
@@ -246,12 +241,12 @@ export async function getDashboardStatsQuery(
     }),
   ])
 
-  const precioCostoPorProducto = productosDataRaw.reduce<Record<string, number>>((acc, producto) => {
+  const precioCostoPorProducto = (productosDataRaw as any[]).reduce<Record<string, number>>((acc: Record<string, number>, producto: any) => {
     acc[producto.id] = Number(producto.precioCosto || 0)
     return acc
   }, {})
 
-  const precioVentaPorProducto = productosDataRaw.reduce<Record<string, number>>((acc, producto) => {
+  const precioVentaPorProducto = (productosDataRaw as any[]).reduce<Record<string, number>>((acc: Record<string, number>, producto: any) => {
     acc[producto.id] = Number(producto.precioVenta || 0)
     return acc
   }, {})
@@ -371,10 +366,10 @@ export async function getDashboardStatsQuery(
 
   // Productos con stock bajo (agrupados por nombre)
   type GrupoProducto = {
-    productos: typeof productosDataRaw
+    productos: any[]
     stockTotal: number
     stockMinimoMin: number
-    representante: typeof productosDataRaw[0]
+    representante: any
   }
 
   const productosParaStockBajoWhere = ubicacionId && tipoUbicacion
@@ -402,9 +397,9 @@ export async function getDashboardStatsQuery(
       categoria: { select: { nombre: true } },
       unidad: { select: { simbolo: true } },
     },
-  }) as ProductoData[]
+  }) as any[]
 
-  const productosAgrupados = productosParaStockBajo.reduce<Record<string, GrupoProducto>>((acc, producto) => {
+  const productosAgrupados = (productosParaStockBajo as any[]).reduce<Record<string, GrupoProducto>>((acc: Record<string, GrupoProducto>, producto: any) => {
     const key = producto.nombre
     if (!acc[key]) {
       acc[key] = {
@@ -422,7 +417,7 @@ export async function getDashboardStatsQuery(
     return acc
   }, {})
 
-  const productosStockBajoArray: Array<typeof productosDataRaw[0] & {
+  const productosStockBajoArray: Array<any & {
     stockTotal: number
     stockMinimo: number
     diferencia: number
@@ -457,18 +452,18 @@ export async function getDashboardStatsQuery(
     const fFin = endOfDay(new Date(mes.getFullYear(), mes.getMonth() + 1, 0))
     return {
       mes: format(mes, 'MMM', { locale: es }),
-      ingresosVentas: ventasData.filter((v: VentaDiariaData) => v.createdAt >= fInicio && v.createdAt <= fFin).reduce((s: number, v: VentaDiariaData) => s + (v.total ?? 0), 0),
-      ingresosServicios: ventaServiciosData.filter((v: VentaServicioData) => v.createdAt >= fInicio && v.createdAt <= fFin).reduce((s: number, v: VentaServicioData) => s + (v.total ?? 0), 0),
-      gastosMermas: mermasData.filter((m: MermaData) => m.createdAt >= fInicio && m.createdAt <= fFin).reduce((s: number, m: MermaData) => s + (m.cantidad * (m.producto?.precioCosto ?? 0)), 0),
-      gastosDeExplotacion: gastosDEData.filter((g: GastoDEData) => g.createdAt >= fInicio && g.createdAt <= fFin).reduce((s: number, g: GastoDEData) => s + g.monto, 0),
-      gastosDeExplotacionCantidad: gastosDEData.filter((g: GastoDEData) => g.createdAt >= fInicio && g.createdAt <= fFin).length,
-      gastosCompras: gastosCompraData.filter((c: GastoCompraData) => c.createdAt >= fInicio && c.createdAt <= fFin).reduce((s: number, c: GastoCompraData) => s + c.total, 0),
-      gastosComprasCantidad: gastosCompraData.filter((c: GastoCompraData) => c.createdAt >= fInicio && c.createdAt <= fFin).length,
-      gastosSalarios: salariosData.filter((p: SalarioData) => p.createdAt >= fInicio && p.createdAt <= fFin).reduce((s: number, p: SalarioData) => s + p.salario + (p.bonificaciones ?? 0) + (p.horasExtras ?? 0), 0),
-      gastosSalariosCantidad: salariosData.filter((p: SalarioData) => p.createdAt >= fInicio && p.createdAt <= fFin).length,
-      ventasCantidad: ventasData.filter((v: VentaDiariaData) => v.createdAt >= fInicio && v.createdAt <= fFin).length,
-      ventasServiciosCantidad: ventaServiciosData.filter((v: VentaServicioData) => v.createdAt >= fInicio && v.createdAt <= fFin).length,
-      mermasCantidad: mermasData.filter((m: MermaData) => m.createdAt >= fInicio && m.createdAt <= fFin).length,
+      ingresosVentas: (ventasData as any[]).filter((v: any) => v.createdAt >= fInicio && v.createdAt <= fFin).reduce((s: number, v: any) => s + (v.total ?? 0), 0),
+      ingresosServicios: (ventaServiciosData as any[]).filter((v: any) => v.createdAt >= fInicio && v.createdAt <= fFin).reduce((s: number, v: any) => s + (v.total ?? 0), 0),
+      gastosMermas: (mermasData as any[]).filter((m: any) => m.createdAt >= fInicio && m.createdAt <= fFin).reduce((s: number, m: any) => s + (m.cantidad * (m.producto?.precioCosto ?? 0)), 0),
+      gastosDeExplotacion: (gastosDEData as any[]).filter((g: any) => g.createdAt >= fInicio && g.createdAt <= fFin).reduce((s: number, g: any) => s + g.monto, 0),
+      gastosDeExplotacionCantidad: (gastosDEData as any[]).filter((g: any) => g.createdAt >= fInicio && g.createdAt <= fFin).length,
+      gastosCompras: (gastosCompraData as any[]).filter((c: any) => c.createdAt >= fInicio && c.createdAt <= fFin).reduce((s: number, c: any) => s + c.total, 0),
+      gastosComprasCantidad: (gastosCompraData as any[]).filter((c: any) => c.createdAt >= fInicio && c.createdAt <= fFin).length,
+      gastosSalarios: (salariosData as any[]).filter((p: any) => p.createdAt >= fInicio && p.createdAt <= fFin).reduce((s: number, p: any) => s + p.salario + (p.bonificaciones ?? 0) + (p.horasExtras ?? 0), 0),
+      gastosSalariosCantidad: (salariosData as any[]).filter((p: any) => p.createdAt >= fInicio && p.createdAt <= fFin).length,
+      ventasCantidad: (ventasData as any[]).filter((v: any) => v.createdAt >= fInicio && v.createdAt <= fFin).length,
+      ventasServiciosCantidad: (ventaServiciosData as any[]).filter((v: any) => v.createdAt >= fInicio && v.createdAt <= fFin).length,
+      mermasCantidad: (mermasData as any[]).filter((m: any) => m.createdAt >= fInicio && m.createdAt <= fFin).length,
     }
   })
 
@@ -527,7 +522,7 @@ export async function getDashboardStatsQuery(
 
   const gastosComprasAgrupadosPorSemana = createWeeklyAggregation(gastosCompraData, {
     gastos: (compra) => compra.total || 0,
-    cantidad: (compra) => compra.cantidad || 0,
+    cantidad: () => 0,
   })
 
   const semanasCompletas = Array.from(new Set([

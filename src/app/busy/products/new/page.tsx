@@ -39,7 +39,7 @@ export default async function NuevoProductosPage(): Promise<React.JSX.Element> {
       unidades={unidadesResult.success ? unidadesResult.data : []}
       almacenes={almacenesResult.success ? almacenesResult.data : []}
       listasPrecios={listasPreciosResult.success ? listasPreciosResult.data.map((l) => ({ id: l.id, nombre: l.nombre })) : []}
-      vendors={vendorsResult.success ? vendorsResult.data : []}
+      vendors={vendorsResult.success ? vendorsResult.data as any : []}
       categorias={categoriasResult.success ? categoriasResult.data : []}
     />
   )

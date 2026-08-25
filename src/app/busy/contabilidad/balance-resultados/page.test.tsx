@@ -176,6 +176,29 @@ describe('/busy/contabilidad/balance-resultados page', () => {
     expect(screen.getByRole('button', { name: /Reintentar consulta/i })).toBeInTheDocument();
   });
 
+  it('muestra la configuración pendiente cuando el tenant no tiene moneda funcional', async () => {
+    useAuthMock.mockReturnValue({
+      user: { role: 'admin', planFeatures: { contabilidad: true } },
+      loading: false,
+    });
+    mockFetch.mockImplementation(async (url: string) => url.includes('/periodos')
+      ? { ok: true, json: async () => ({ periodos: [] }) }
+      : {
+        ok: false,
+        status: 409,
+        json: async () => ({
+          error: 'La empresa no tiene una moneda funcional contable configurada',
+          code: 'TENANT_ACCOUNTING_POLICY_REQUIRED',
+        }),
+      });
+
+    render(<BalanceResultadosPage />);
+
+    await waitFor(() => expect(screen.getByRole('alert')).toBeInTheDocument());
+
+    expect(screen.getByText('La empresa no tiene una moneda funcional contable configurada')).toBeInTheDocument();
+  });
+
   it('redirige a contabilidad cuando el plan no incluye la funcionalidad', async () => {
     useAuthMock.mockReturnValue({
       user: { role: 'user', planFeatures: { contabilidad: false } },

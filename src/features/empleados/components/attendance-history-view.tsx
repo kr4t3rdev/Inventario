@@ -88,10 +88,10 @@ export function AttendanceHistoryView() {
 
         // Aplicar filtro de estado si está seleccionado
         if (filters.status && filters.status !== "all") {
-          data = data.filter((record: Asistencia) => record.status === filters.status);
+          data = data.filter((record: any) => record.status === filters.status);
         }
 
-        setHistorialAsistencia(data);
+        setHistorialAsistencia(data as any);
       }
     } catch (error) {
       console.error("Error cargando historial de asistencia:", error);
@@ -136,14 +136,9 @@ export function AttendanceHistoryView() {
         // Update the record in the history
         setHistorialAsistencia(prev =>
           prev.map(record =>
-            record.attendanceId === editingRecord.attendanceId ? data : record
+            record.attendanceId === editingRecord.attendanceId ? (data as any) : record
           )
         );
-
-        // Update today's record if it's the same
-        if (asistenciaHoy?.attendanceId === editingRecord.attendanceId) {
-          setAsistenciaHoy(data as any);
-        }
 
         setEditingRecord(null);
         toast.success('Registro actualizado correctamente');

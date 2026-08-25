@@ -81,7 +81,7 @@ export function CuadreTurnoDialog({
 				const result = await getCuadreTurnoAction(turnoId);
 				if (result.success && result.data) {
 					setData(result.data);
-				} else {
+				} else if (!result.success) {
 					setError(result.error?.message ?? "Error al cargar cuadre");
 				}
 			} catch (err) {

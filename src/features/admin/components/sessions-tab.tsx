@@ -1,5 +1,6 @@
 'use client'
 
+import type React from 'react'
 import { useCallback, useEffect, useState } from 'react'
 import { useReducedMotion } from 'framer-motion'
 import { format } from 'date-fns'
@@ -38,9 +39,9 @@ interface SessionWithUser extends UserSession {
 
 /**
  * @description Tab de sesiones activas para monitoreo administrativo.
- * @returns {JSX.Element} Tabla paginada de sesiones con acción de cierre.
+ * @returns {React.JSX.Element} Tabla paginada de sesiones con acción de cierre.
  */
-export function SessionsTab(): JSX.Element {
+export function SessionsTab(): React.JSX.Element {
   const shouldReduceMotion = useReducedMotion()
   const [page, setPage] = useState(1)
   const [perPage, setPerPage] = useState(10)

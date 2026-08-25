@@ -49,7 +49,9 @@ type VendorRow = {
   updatedAt: Date;
 };
 
-type VendorActionItem = Vendor & {
+type VendorActionItem = Omit<Vendor, 'createdAt' | 'updatedAt'> & {
+  createdAt: string;
+  updatedAt: string;
   vendorCode?: string | null;
   ean13Code?: string | null;
   proveedorCodigo?: string | null;

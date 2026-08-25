@@ -13,6 +13,7 @@ import {
 	applyPagoGastoWorkflow,
 	isGastoWorkflowError,
 } from "@/lib/services/pago-gastos-workflow";
+import { exchangeRateProvider } from "./services/exchange-rate-provider";
 import { AuditLogService } from "@/lib/services/audit-log-service";
 import { endOfDay } from "@/lib/date-range";
 import type { AuthenticatedUser } from "@/lib/auth-middleware";
@@ -1165,7 +1166,7 @@ export const reconciliarGastoAction = withAction(
 			].filter(Boolean);
 			if (
 				explicitSourceIds.length > 1 ||
-				(explicitSourceIds.length === 1 && input.referenciaId && input.referenciaId !== explicitSourceIds[0])
+				(explicitSourceIds.length === 1 && (input as any).referenciaId && (input as any).referenciaId !== explicitSourceIds[0])
 			) {
 				throw new ActionError(
 					"Debe proporcionar exactamente una referencia de gasto",
@@ -1260,7 +1261,7 @@ export const reconciliarGastoAction = withAction(
 				AuditLogService.log({
 					accion: "CREATE",
 					entidad: "RECONCILIACION",
-					entidadId: result?.reconciliacionId || `GASTO-${auditReferenciaId}`,
+					entidadId: (result as any)?.reconciliacionId || `GASTO-${auditReferenciaId}`,
 					usuarioId: user.userId,
 					detalles: {
 						tipo: tipoGasto,

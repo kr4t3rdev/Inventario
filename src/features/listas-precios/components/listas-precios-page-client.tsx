@@ -52,7 +52,7 @@ type ListFilter = 'all' | 'default' | 'used';
 export function ListasPreciosPageClient({
   listas: initialListas,
   initialError,
-}: ListasPreciosPageClientProps): JSX.Element {
+}: ListasPreciosPageClientProps) {
   const router = useRouter();
   const [listas, setListas] = useState(initialListas);
   const [query, setQuery] = useState('');
@@ -86,14 +86,15 @@ export function ListasPreciosPageClient({
 
   /** Crea una lista con los valores del formulario. */
   async function handleCreate(): Promise<void> {
-    if (!nombre.trim()) return sileo.error({ title: 'El nombre es obligatorio' });
+    if (!nombre.trim()) { sileo.error({ title: 'El nombre es obligatorio' }); return; }
     setPendingAction('create');
     try {
       const result = await createListaPrecioAction({
         nombre: nombre.trim(),
         descripcion: descripcion.trim() || undefined,
+        esDefault: false,
       });
-      if (!result.success) return sileo.error({ title: result.error.message });
+      if (!result.success) { sileo.error({ title: result.error.message }); return; }
       setNombre('');
       setDescripcion('');
       sileo.success({ title: 'Lista creada' });
@@ -114,7 +115,7 @@ export function ListasPreciosPageClient({
     setPendingAction(`edit:${lista.id}`);
     try {
       const result = await updateListaPrecioAction({ id: lista.id, nombre: nextName });
-      if (!result.success) return sileo.error({ title: result.error.message });
+      if (!result.success) { sileo.error({ title: result.error.message }); return; }
       setListas((current) => current.map((item) => (
         item.id === lista.id ? { ...item, nombre: result.data.nombre, updatedAt: result.data.updatedAt } : item
       )));
@@ -134,7 +135,7 @@ export function ListasPreciosPageClient({
     setPendingAction(`default:${lista.id}`);
     try {
       const result = await updateListaPrecioAction({ id: lista.id, esDefault: true });
-      if (!result.success) return sileo.error({ title: result.error.message });
+      if (!result.success) { sileo.error({ title: result.error.message }); return; }
       setListas((current) => current.map((item) => ({ ...item, esDefault: item.id === lista.id })));
       sileo.success({ title: 'Lista predeterminada actualizada' });
     } catch (error) {
@@ -154,7 +155,7 @@ export function ListasPreciosPageClient({
         const title = result.error.code === 'LISTA_PRECIO_IN_USE'
           ? 'La lista está asociada a un punto de venta y no puede eliminarse'
           : result.error.message;
-        return sileo.error({ title });
+        sileo.error({ title }); return;
       }
       setListas((current) => current.filter((item) => item.id !== lista.id));
       sileo.success({ title: 'Lista eliminada' });

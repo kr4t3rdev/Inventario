@@ -28,7 +28,7 @@ export interface RecordCostChangeParams {
  * @returns {Promise<{ id: string; productoId: string } | null>} Record creado o null si no hay cambio
  */
 export async function recordCostChange(
-  prisma: PrismaClient,
+  prisma: PrismaClient | any,
   params: RecordCostChangeParams
 ): Promise<{ id: string; productoId: string } | null> {
   const {

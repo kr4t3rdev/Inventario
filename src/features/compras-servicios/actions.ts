@@ -15,6 +15,7 @@ import { createCompraServicioSchema, updateCompraServicioSchema } from './schema
 import type { CreateCompraServicioInput, UpdateCompraServicioInput } from './schemas';
 import type { AuthenticatedUser } from '@/lib/auth-middleware';
 import { reverseExpenseEffects } from '@/features/gastosDE/reversal';
+import { buildPersistedAccountingAmount } from '@/features/contabilidad/services/accounting-reconciliation-service';
 
 const COMPRA_SERVICIO_INCLUDE = {
   servicio: true,
@@ -124,6 +125,10 @@ export const createCompraServicioAction = withAction(withPeriodValidation(
             tipoPagoId: anticipo?.tipoPagoOrigenId || tipoPagoDefault?.tipoId || '',
             monto: alloc.montoAplicado,
             moneda: anticipo?.tipo === 'PAGO' ? 'CUP' : 'USD',
+            ...buildPersistedAccountingAmount(
+              alloc.montoAplicado,
+              anticipo?.tipo === 'PAGO' ? 'CUP' : 'USD',
+            ),
             descripcion: `Pago anticipado de servicio ${compraServicio.compraServicioId}`,
             reconciliadoPor: user.userId || 'system',
           },

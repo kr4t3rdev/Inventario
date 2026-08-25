@@ -292,7 +292,7 @@ export function ExchangeManager() {
             </div>
 
             <div className="grid gap-4">
-              {tasasActualesList.map((tasa, index) => {
+              {tasasActualesList.map((tasa: any, index) => {
                 const id = tasa?.tasaId ?? `${tasa?.monedaOrigenId ?? tasa?.monedaOrigen}-${tasa?.monedaDestino ?? 'na'}`;
                 const monedaOrigen = tasa?.monedaOrigenId ?? tasa?.monedaOrigen ?? 'N/A';
                 const monedaDestino = tasa?.monedaDestino ?? tasa?.monedaDestinoId ?? 'N/A';

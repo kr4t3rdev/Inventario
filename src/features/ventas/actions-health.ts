@@ -32,7 +32,7 @@ export const getSalesHealthAction = withAction(async (_input: void, user: Authen
       prisma.venta.aggregate({ where: { tenantId, deletedAt: null }, _sum: { total: true } }),
       prisma.factura.count({ where: { tenantId, estado: { not: 'ANULADA' } } }),
       prisma.oferta.count({ where: { tenantId } }),
-      prisma.servicio.count({ where: { tenantId } }),
+      prisma.servicios.count({ where: { tenantId } }),
     ])
 
   return {

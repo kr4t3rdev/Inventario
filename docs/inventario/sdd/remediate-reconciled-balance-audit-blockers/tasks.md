@@ -33,6 +33,14 @@ Requirement numbers follow their order in each specification. Scenario names bel
 
 ## Implementation work units
 
+### Apply hotfix and deployment preparation
+
+- [x] **APPLY-01 — Map a missing tenant accounting policy to an explicit HTTP 409.** <!-- sdd-owner: implementation -->
+  - Files: `src/features/contabilidad/services/balance-results-report-service.ts`, its focused test, `src/features/contabilidad/api/__tests__/exchange-handlers.test.ts`, `src/app/busy/contabilidad/balance-resultados/page.test.tsx`, and `docs/inventario/accounting-audit/balance-resultados-rollout.md`.
+  - RED: cover the missing-policy error, preserve unrelated policy errors, assert the API response is `409 TENANT_ACCOUNTING_POLICY_REQUIRED`, and verify the UI displays the safe message.
+  - GREEN: translate only `TenantAccountingPolicyError` with code `TENANT_ACCOUNTING_POLICY_REQUIRED`; do not infer a currency or catch unrelated policy failures.
+  - REFACTOR: remove the empty duplicate migration directory after confirming the tracked v3 migration is `20260824121000_add_financial_snapshot_v3`; document the commands and approval gates for a later deployment.
+
 ### Foundation and fail-closed contracts
 
 - [ ] **WU-01 — Reconcile the shared FX contract and make the verification harness enforceable.** <!-- sdd-owner: implementation -->
@@ -67,8 +75,8 @@ Requirement numbers follow their order in each specification. Scenario names bel
 
 ### Tenant policy and immutable FX evidence
 
-- [x] **WU-04 — Add nullable tenant accounting policy and guarded service access.** <!-- sdd-owner: implementation -->
-  - Files: `prisma/schema.prisma`, `prisma/migrations/20260824090000_add_tenant_accounting_policy/migration.sql` (planned), `src/features/contabilidad/services/{tenant-accounting-policy-service.ts,tenant-accounting-policy-service.test.ts}` (new), and `docs/inventario/accounting-audit/tenant-policy-rollout.md` (planned).
+- [ ] **WU-04 — Add nullable tenant accounting policy and guarded service access.** <!-- sdd-owner: implementation -->
+  - Files: `prisma/schema.prisma`, `prisma/migrations/20260824120000_add_accounting_policy_and_auxiliary_checkpoints/migration.sql`, `src/features/contabilidad/services/{tenant-accounting-policy-service.ts,tenant-accounting-policy-service.test.ts}` (new), and `docs/inventario/accounting-audit/tenant-policy-rollout.md` (planned).
   - Satisfies: FX R1 both scenarios; ATS R1 “Catalog application ownership”; AAR R1 “Nullable foundation deployment”.
   - Prerequisites/unlocks: WU-01 and WU-02; nullable migration deployment hold; unlocks WU-07 through WU-10 and WU-14.
   - RED: add service/schema tests for different tenant currencies, absent independently proven policy, cross-tenant denial, global default non-inference, and blocked policy mutation after evidence/snapshot use; run `pnpm run test:run -- src/features/contabilidad/services/tenant-accounting-policy-service.test.ts`.
@@ -261,8 +269,8 @@ Requirement numbers follow their order in each specification. Scenario names bel
 
 ### V3 snapshots and immutable checkpoints
 
-- [x] **WU-23 — Add nullable v3 snapshot schema, chronology, hashing, and approved immutability.** <!-- sdd-owner: implementation -->
-  - Files: `prisma/schema.prisma`, `prisma/migrations/20260824110000_add_financial_snapshot_v3/migration.sql` (planned), `src/features/contabilidad/services/{financial-snapshot-v3-service.ts,financial-snapshot-v3-service.test.ts}` (planned), and `docs/inventario/accounting-audit/snapshot-v3-rollback.md`.
+- [ ] **WU-23 — Add nullable v3 snapshot schema, chronology, hashing, and approved immutability.** <!-- sdd-owner: implementation -->
+  - Files: `prisma/schema.prisma`, `prisma/migrations/20260824121000_add_financial_snapshot_v3/migration.sql`, `src/features/contabilidad/services/{financial-snapshot-v3-service.ts,financial-snapshot-v3-service.test.ts}` (planned), and `docs/inventario/accounting-audit/snapshot-v3-rollback.md`.
   - Satisfies: FRA R2 both scenarios; FRA R4 “Attempt to mutate approved snapshot” and “Rollback after v3 failure”; AAR R1 nullable foundation; AAR R3 rollback.
   - Prerequisites/unlocks: WU-02 and nullable migration hold; unlocks WU-24 and WU-25.
   - RED: add chronology, final canonical JSON/hash, capture-versus-approval, approved update/delete, retry, v2 byte-hash, and rollback tests; run the snapshot v3 test file.
@@ -272,7 +280,7 @@ Requirement numbers follow their order in each specification. Scenario names bel
   - Finish/rollback: stop new approvals on failure; never down-migrate approved evidence. Estimate: production 60, tests 100, schema/generated 210, documentation/configuration 20.
 
 - [ ] **WU-24 — Capture immutable tenant auxiliary checkpoints under the shared accounting lock.** <!-- sdd-owner: implementation -->
-  - Files: `prisma/schema.prisma`, `prisma/migrations/20260824120000_add_financial_auxiliary_checkpoint/migration.sql` (planned), `src/features/contabilidad/services/{financial-auxiliary-checkpoint-service.ts,financial-auxiliary-checkpoint-service.test.ts}` (planned), and `src/features/contabilidad/services/accounting-cash-operations-mutation-service.ts`.
+  - Files: `prisma/schema.prisma`, `prisma/migrations/20260824120000_add_accounting_policy_and_auxiliary_checkpoints/migration.sql`, `src/features/contabilidad/services/{financial-auxiliary-checkpoint-service.ts,financial-auxiliary-checkpoint-service.test.ts}` (planned), and `src/features/contabilidad/services/accounting-cash-operations-mutation-service.ts`.
   - Satisfies: FRA R3 both scenarios; FRA R2 “Capture then approval”; FX R4 “Catalog changes during report generation”; ATS R1 tenant ownership.
   - Prerequisites/unlocks: WU-14, WU-15, and WU-23; unlocks WU-25 and v3 activation gate.
   - RED: add shared advisory-lock race, post-cutoff mutation exclusion, missed boundary, tenant-negative, transaction rollback, native/FX evidence fingerprint, and immutable hash tests; run the checkpoint test file.

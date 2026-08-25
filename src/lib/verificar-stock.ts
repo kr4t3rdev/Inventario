@@ -92,10 +92,10 @@ export async function verificarStockBajo(
 		if (dryRun) return result;
 
 		// ── Obtener usuarios activos ──
-		const usuarios = await prisma.user.findMany({
+		const usuarios = (await prisma.user.findMany({
 			where: { isActive: true },
-			select: { userId: true, tenantId: true },
-		});
+			select: { userId: true, tenantId: true } as any,
+		})) as unknown as Array<{ userId: string; tenantId: string }>;
 
 		const now = new Date();
 		const hace24h = new Date(now.getTime() - 24 * 60 * 60 * 1000);

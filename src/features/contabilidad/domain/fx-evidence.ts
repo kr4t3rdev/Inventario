@@ -9,7 +9,7 @@ export interface AppliedFxEvidence {
   rateEffectiveAt: string;
   fxProvenanceKind: FxProvenanceKind;
   fxProvenanceSource: string;
-  fxCatalogRateId: null;
+  fxCatalogRateId: string | null;
   fxEvidenceFingerprint: string;
   fxEvidenceVersion: number;
 }

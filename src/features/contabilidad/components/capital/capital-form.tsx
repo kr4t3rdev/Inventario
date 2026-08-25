@@ -97,7 +97,7 @@ export function CapitalForm({ onSuccess, onCancel }: CapitalFormProps) {
 
   const onSubmit = async (data: CapitalFormData) => {
     try {
-  // @ts-expect-error
+  // @ts-expect-error TODO: fix type for createInyeccionCapitalAction
       const result = await createInyeccionCapitalAction(data)
       if (!result.success) throw new Error(result.error?.message || 'Error al crear')
       toast.success('Inyección de capital registrada exitosamente')

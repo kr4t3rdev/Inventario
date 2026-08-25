@@ -13,7 +13,7 @@ export const getOffersServicesHealthAction = withAction(async (_input: void, use
   if (user.role !== 'admin') throw new ActionError('No tienes permisos para consultar la salud operativa.', 'FORBIDDEN')
   const [ofertasCount, serviciosCount] = await Promise.all([
     prisma.oferta.count({ where: { tenantId } }),
-    prisma.servicio.count({ where: { tenantId } }),
+    prisma.servicios.count({ where: { tenantId } }),
   ])
   return { metrics: { ofertasCount, serviciosCount } }
 })

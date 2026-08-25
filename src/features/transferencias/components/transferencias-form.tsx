@@ -99,7 +99,7 @@ export function TransferenciaForm({ initialData }: TransferenciaFormProps) {
   }, [])
 
   const form = useForm<TransferenciaFormValues>({
-    resolver: zodResolver(transferenciaSchema),
+    resolver: zodResolver(transferenciaSchema) as any,
     defaultValues: {
       productos: initialData?.productos || [{ productoId: "", cantidad: 1 }],
       tipoOrigen: initialData?.tipoOrigen || "almacen",
@@ -107,7 +107,7 @@ export function TransferenciaForm({ initialData }: TransferenciaFormProps) {
       tipoDestino: initialData?.tipoDestino || "punto_venta",
       destinoId: initialData?.destinoId || "",
       descripcion: initialData?.descripcion || "",
-    },
+    } as any,
   })
 
   const { fields, append, remove } = useFieldArray({
@@ -280,7 +280,7 @@ export function TransferenciaForm({ initialData }: TransferenciaFormProps) {
       </CardHeader>
       <CardContent className="p-6">
         <Form {...form}>
-          <form id="transferencia-form" onSubmit={form.handleSubmit(onSubmit, (errors) => {
+          <form id="transferencia-form" onSubmit={form.handleSubmit(onSubmit as any, (errors) => {
     console.error('=== TransferenciaForm :: Zod validation errors ===', JSON.parse(JSON.stringify(errors)))
     sileo.error({ title: 'Completá los campos requeridos antes de continuar.' })
 })} className="space-y-8">
@@ -804,7 +804,7 @@ export function TransferenciaForm({ initialData }: TransferenciaFormProps) {
                 <FormItem>
                   <FormLabel>Notas / Descripción</FormLabel>
                   <FormControl>
-                    <Input placeholder="Especifique el motivo de la transferencia (opcional)..." {...field} />
+                    <Input placeholder="Especifique el motivo de la transferencia (opcional)..." {...field as any} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>

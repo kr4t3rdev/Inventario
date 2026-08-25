@@ -246,7 +246,7 @@ export function VendorForm({initialData}: VendorFormProps) {
                                         <FormItem>
                                             <FormLabel>Dirección</FormLabel>
                                             <FormControl>
-                                                <Input type="text" {...field} className="transition-all duration-200 focus:scale-[1.01]" />
+                                                <Input type="text" {...field as any} className="transition-all duration-200 focus:scale-[1.01]" />
                                             </FormControl>
                                             <FormDescription>Ingrese la dirección del proveedor</FormDescription>
                                             <FormMessage />
@@ -260,7 +260,7 @@ export function VendorForm({initialData}: VendorFormProps) {
                                         <FormItem>
                                             <FormLabel>Teléfono</FormLabel>
                                             <FormControl>
-                                                <Input type="text" {...field} className="transition-all duration-200 focus:scale-[1.01]" />
+                                                <Input type="text" {...field as any} className="transition-all duration-200 focus:scale-[1.01]" />
                                             </FormControl>
                                             <FormDescription>Ingrese el teléfono del proveedor</FormDescription>
                                             <FormMessage />
@@ -282,7 +282,7 @@ export function VendorForm({initialData}: VendorFormProps) {
                                         <FormItem>
                                             <FormLabel>Cuenta CUP</FormLabel>
                                             <FormControl>
-                                                <Input type="text" {...field} className="transition-all duration-200 focus:scale-[1.01]" />
+                                                <Input type="text" {...field as any} className="transition-all duration-200 focus:scale-[1.01]" />
                                             </FormControl>
                                             <FormDescription>Ingrese la cuenta en CUP</FormDescription>
                                             <FormMessage />
@@ -296,7 +296,7 @@ export function VendorForm({initialData}: VendorFormProps) {
                                         <FormItem>
                                             <FormLabel>Cuenta USD</FormLabel>
                                             <FormControl>
-                                                <Input type="text" {...field} className="transition-all duration-200 focus:scale-[1.01]" />
+                                                <Input type="text" {...field as any} className="transition-all duration-200 focus:scale-[1.01]" />
                                             </FormControl>
                                             <FormDescription>Ingrese la cuenta en USD</FormDescription>
                                             <FormMessage />
@@ -317,7 +317,7 @@ export function VendorForm({initialData}: VendorFormProps) {
                                         <FormItem>
                                             <FormLabel>Persona de contacto</FormLabel>
                                             <FormControl>
-                                                <Input type="text" {...field} className="transition-all duration-200 focus:scale-[1.01]" />
+                                                <Input type="text" {...field as any} className="transition-all duration-200 focus:scale-[1.01]" />
                                             </FormControl>
                                             <FormDescription>Ingrese el nombre de la persona de contacto</FormDescription>
                                             <FormMessage />

@@ -76,7 +76,7 @@ export function ReporteRentabilidadCompra() {
 					setCompra(r.data.compra as CompraInfo);
 					setProductos(r.data.productos);
 					setResumen(r.data.resumen);
-				} else {
+				} else if (!r.success) {
 					setError(r.error?.message ?? "Error al cargar el análisis");
 				}
 			})
@@ -118,7 +118,7 @@ export function ReporteRentabilidadCompra() {
 			</div>
 
 			{/* Header */}
-			<motion.div variants={fadeInUp} initial="hidden" animate="show">
+			<motion.div variants={fadeInUp as any} initial="hidden" animate="show">
 				<div className="space-y-1">
 					<Badge variant="outline">Reporte operativo</Badge>
 					<div className="flex items-center gap-3 mt-2">
@@ -159,7 +159,7 @@ export function ReporteRentabilidadCompra() {
 			</StaggerContainer>
 
 			{/* Purchase Selector */}
-			<motion.div variants={fadeInUp} initial="hidden" animate="show">
+			<motion.div variants={fadeInUp as any} initial="hidden" animate="show">
 				<Card className={cn(surfaceCardClass, "border-dashed")}>
 					<CardContent className="p-4">
 						<PurchaseSearchBar
@@ -179,7 +179,7 @@ export function ReporteRentabilidadCompra() {
 
 			{/* Empty State */}
 			{!selectedCompraId && (
-				<motion.div variants={fadeInUp} initial="hidden" animate="show">
+				<motion.div variants={fadeInUp as any} initial="hidden" animate="show">
 					<Card className={cn(surfaceCardClass, "border-dashed")}>
 						<CardContent className="pt-6">
 							<div className="flex flex-col items-center justify-center py-12 text-center">
@@ -200,7 +200,7 @@ export function ReporteRentabilidadCompra() {
 
 			{/* Error State */}
 			{error && (
-				<motion.div variants={fadeInUp} initial="hidden" animate="show">
+				<motion.div variants={fadeInUp as any} initial="hidden" animate="show">
 					<Card
 						className={cn(
 							surfaceCardClass,

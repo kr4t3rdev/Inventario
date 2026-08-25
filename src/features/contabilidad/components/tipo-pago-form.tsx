@@ -76,7 +76,7 @@ export function TipoPagoForm({ tipoPago, onSubmit, onCancel, isLoading = false, 
   // Limpiar cuenta por defecto si no requiere cuenta
   useEffect(() => {
     if (!requiereCuenta) {
-      form.setValue("cuentaDefecto")
+      form.setValue("cuentaDefecto", "" as any)
       setShowAccountWarning(false)
     }
   }, [requiereCuenta, form])

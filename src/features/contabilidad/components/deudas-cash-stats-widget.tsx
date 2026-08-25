@@ -113,7 +113,7 @@ export function DeudasCashStatsWidget() {
                 <span className="text-slate-600 dark:text-slate-400 font-medium">{moneda}</span>
                 <span className="font-semibold text-orange-600 dark:text-orange-400">
                   {
-  // @ts-expect-error
+  // @ts-expect-error TODO: fix type for formatAmount
                   formatAmount(monto)
                   }
                 </span>

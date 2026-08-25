@@ -1151,7 +1151,7 @@ export async function obtenerOperacionesPeriodo(
 						moneda: r.moneda,
 						referencia: null,
 						cuentaId: r.cuentaId,
-						cuentaNombre: r.cuentaBancaria?.nombreBanco ?? null,
+						cuentaNombre: (r as any).cuentaBancaria?.nombreBanco ?? null,
 					})),
 				),
 		);

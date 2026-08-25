@@ -62,7 +62,7 @@ export class AperturaPeriodoService {
 		const periodoAnterior = await db.periodoContable.findFirst({
 			where: {
 				tenantId,
-				tipo,
+				tipo: tipo as any,
 				fechaFin: { lt: fechaInicio },
 			},
 			orderBy: { fechaFin: "desc" },

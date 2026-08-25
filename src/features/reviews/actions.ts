@@ -1,13 +1,13 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { Prisma } from "@prisma/client";
 
 import { prisma } from "@/lib/prisma";
 import { requireTenant } from "@/lib/services/tenant-scope";
 import { getReferralPrice } from "@/lib/services/plan-pricing";
 import { withAction, ActionError } from "@/lib/server-actions";
 import { reviewSchema } from "./schemas";
+import type { AuthenticatedUser } from "@/lib/auth-middleware";
 
 /* ─── submitReviewAction ─── */
 
@@ -19,7 +19,7 @@ import { reviewSchema } from "./schemas";
 export const submitReviewAction = withAction(
 	async (
 		input: { rating: number; comment?: string },
-		user: { userId: string; role: string },
+		user: AuthenticatedUser,
 	) => {
 		const parsed = reviewSchema.parse(input);
 		const tenantId = requireTenant(user);
@@ -64,14 +64,14 @@ export const submitReviewAction = withAction(
  * Solo accesible para admin/manager del mismo tenant.
  */
 export const approveReviewAction = withAction(
-	async (reviewId: string, user: { userId: string; role: string }) => {
+	async (reviewId: string, user: AuthenticatedUser) => {
 		const tenantId = requireTenant(user);
 
 		const review = await prisma.review.findFirst({
 			where: { reviewId, tenantId },
 		});
 		if (!review) throw new ActionError("Reseña no encontrada", "NOT_FOUND");
-		if (user.role !== "admin" && user.role !== "manager") {
+		if (user.role !== "admin" && (user as any).role !== "manager") {
 			throw new ActionError("No autorizado", "FORBIDDEN");
 		}
 
@@ -93,14 +93,14 @@ export const approveReviewAction = withAction(
  * Solo accesible para admin/manager del mismo tenant.
  */
 export const rejectReviewAction = withAction(
-	async (reviewId: string, user: { userId: string; role: string }) => {
+	async (reviewId: string, user: AuthenticatedUser) => {
 		const tenantId = requireTenant(user);
 
 		const review = await prisma.review.findFirst({
 			where: { reviewId, tenantId },
 		});
 		if (!review) throw new ActionError("Reseña no encontrada", "NOT_FOUND");
-		if (user.role !== "admin" && user.role !== "manager") {
+		if (user.role !== "admin" && (user as any).role !== "manager") {
 			throw new ActionError("No autorizado", "FORBIDDEN");
 		}
 
@@ -119,7 +119,7 @@ export const rejectReviewAction = withAction(
  * para el tenant del usuario autenticado.
  */
 export const getReviewStatsAction = withAction(
-	async (_: unknown, user: { userId: string }) => {
+	async (_: unknown, user: AuthenticatedUser) => {
 		const tenantId = requireTenant(user);
 
 		const [totalApproved, positiveApproved, ratingAgg] = await Promise.all([
@@ -348,9 +348,23 @@ export async function getReviewStatsPublicAction() {
 
 /* ─── getApprovedReviewsAction ─── */
 
-export type ReviewWithUser = Prisma.ReviewGetPayload<{
-	include: { user: { select: { name: true; email: true; avatar: true } } };
-}>;
+export type ReviewWithUser = {
+	reviewId: string;
+	tenantId: string;
+	userId: string;
+	rating: number;
+	comment: string | null;
+	isPositive: boolean;
+	isApproved: boolean;
+	helpfulCount: number;
+	createdAt: Date;
+	updatedAt: Date;
+	user?: {
+		name: string;
+		email: string;
+		avatar: string | null;
+	} | null;
+};
 
 /**
  * @description Lista reseñas aprobadas para el tenant autenticado.
@@ -358,12 +372,12 @@ export type ReviewWithUser = Prisma.ReviewGetPayload<{
 export const getApprovedReviewsAction = withAction(
 	async (
 		input: { limit?: number; orderBy?: "rating_desc" | "newest" } = {},
-		user: { userId: string },
+		user: AuthenticatedUser,
 	) => {
 		const tenantId = requireTenant(user);
 		const { limit = 3, orderBy = "rating_desc" } = input ?? {};
 
-		const order: Prisma.ReviewOrderByWithRelationInput =
+		const order: { rating?: 'desc' | 'asc'; createdAt?: 'desc' | 'asc' } =
 			orderBy === "newest" ? { createdAt: "desc" } : { rating: "desc" };
 
 		const reviews = await prisma.review.findMany({
@@ -412,7 +426,7 @@ export async function getApprovedReviewsPublicAction(input?: {
  * Retorna true solo si: no tiene reseña, no tuvo prompt hoy, y sesión activa < 24h.
  */
 export const canPromptReviewAction = withAction(
-	async (_: unknown, user: { userId: string }) => {
+	async (_: unknown, user: AuthenticatedUser) => {
 		const tenantId = requireTenant(user);
 
 		const todayStart = new Date();
@@ -455,7 +469,7 @@ export const canPromptReviewAction = withAction(
  * @description Registra que el usuario cerró el dialog de reseña sin enviar.
  */
 export const dismissReviewPromptAction = withAction(
-	async (_: unknown, user: { userId: string }) => {
+	async (_: unknown, user: AuthenticatedUser) => {
 		const tenantId = requireTenant(user);
 
 		await prisma.reviewPrompt.create({
@@ -472,9 +486,9 @@ export const dismissReviewPromptAction = withAction(
  * @description Lista reseñas pendientes de aprobación (admin/manager).
  */
 export const getPendingReviewsAction = withAction(
-	async (_: unknown, user: { userId: string; role: string }) => {
+	async (_: unknown, user: AuthenticatedUser) => {
 		const tenantId = requireTenant(user);
-		if (user.role !== "admin" && user.role !== "manager") {
+		if (user.role !== "admin" && (user as any).role !== "manager") {
 			throw new ActionError("No autorizado", "FORBIDDEN");
 		}
 

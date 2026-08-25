@@ -109,7 +109,7 @@ export function VacacionesForm() {
 	useEffect(() => {
 		getVacacionesAction({})
 			.then((r) => {
-				if (r.success) setVacationRequests(r.data ?? []);
+				if (r.success) setVacationRequests((r.data ?? []) as unknown as VacationRequest[]);
 			})
 			.catch((error) =>
 				console.error("Error cargando solicitudes de vacaciones:", error),
@@ -203,7 +203,7 @@ export function VacacionesForm() {
 			});
 
 			if (r.success) {
-				setVacationRequests((prev) => [r.data, ...prev]);
+				setVacationRequests((prev) => [(r.data as any), ...prev]);
 				setIsDialogOpen(false);
 				setStartDate("");
 				setEndDate("");
