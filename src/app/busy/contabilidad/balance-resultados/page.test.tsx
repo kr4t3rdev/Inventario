@@ -189,14 +189,21 @@ describe('/busy/contabilidad/balance-resultados page', () => {
         json: async () => ({
           error: 'La empresa no tiene una moneda funcional contable configurada',
           code: 'TENANT_ACCOUNTING_POLICY_REQUIRED',
+          resolution: {
+            canManage: true,
+            configurationHref: '/busy/contabilidad/configuracion',
+          },
         }),
       });
 
     render(<BalanceResultadosPage />);
 
-    await waitFor(() => expect(screen.getByRole('alert')).toBeInTheDocument());
+    await waitFor(() => expect(screen.getByRole('status', {
+      name: 'Define la moneda funcional para consultar este reporte',
+    })).toBeInTheDocument());
 
-    expect(screen.getByText('La empresa no tiene una moneda funcional contable configurada')).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: 'Configurar moneda funcional' })).toBeInTheDocument();
+    expect(screen.queryByText('CUP')).not.toBeInTheDocument();
   });
 
   it('redirige a contabilidad cuando el plan no incluye la funcionalidad', async () => {

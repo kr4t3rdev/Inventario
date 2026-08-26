@@ -1,5 +1,15 @@
 import Link from 'next/link';
-import { AlertCircle, ArrowUpRight, ChevronDown, CircleCheck, FileSearch, Loader2, RefreshCw } from 'lucide-react';
+import {
+  AlertCircle,
+  ArrowRight,
+  ArrowUpRight,
+  ChevronDown,
+  CircleCheck,
+  FileSearch,
+  Landmark,
+  Loader2,
+  RefreshCw,
+} from 'lucide-react';
 import type { JSX } from 'react';
 
 import { Button } from '@/components/ui/button';
@@ -15,6 +25,104 @@ interface ReportStatusBandProps {
 
 interface MethodologyPanelProps {
   data: FinancialData;
+}
+
+interface AccountingPolicyRequiredStateProps {
+  canManage: boolean;
+  configurationHref: string | null;
+  onRetry: () => void;
+}
+
+/**
+ * @description Presenta el checkpoint de integridad cuando falta la moneda funcional.
+ * @param {AccountingPolicyRequiredStateProps} props - Capacidad confirmada y recuperación.
+ * @returns {JSX.Element} Estado accesible de configuración requerida.
+ */
+export function AccountingPolicyRequiredState({
+  canManage,
+  configurationHref,
+  onRetry,
+}: AccountingPolicyRequiredStateProps): JSX.Element {
+  return (
+    <section
+      role="status"
+      aria-label="Configuración requerida"
+      aria-labelledby="accounting-policy-required-title"
+      className="overflow-hidden rounded-2xl border border-amber-300/80 bg-[oklch(0.97_0.035_82)] text-amber-950 shadow-[0_14px_36px_-28px_rgba(120,73,10,0.65)] motion-safe:animate-in motion-safe:fade-in motion-safe:slide-in-from-bottom-1 motion-safe:duration-150 dark:border-amber-800 dark:bg-[oklch(0.19_0.025_72)] dark:text-amber-50"
+    >
+      <div className="grid lg:grid-cols-12">
+        <div className="min-w-0 px-5 py-7 sm:px-8 sm:py-9 lg:col-span-7">
+          <p className="font-mono text-xs font-semibold uppercase tracking-[0.16em] text-amber-800 dark:text-amber-300">
+            Configuración requerida
+          </p>
+          <h2
+            id="accounting-policy-required-title"
+            tabIndex={-1}
+            className="mt-3 max-w-2xl text-balance text-2xl font-semibold tracking-[-0.025em] sm:text-3xl"
+          >
+            Define la moneda funcional para consultar este reporte
+          </h2>
+          <p className="mt-4 max-w-2xl text-base leading-7 text-amber-900/85 dark:text-amber-100/80">
+            Balance y Resultados necesita una moneda funcional contable confirmada para
+            presentar importes comparables. No se calculó ni se mostró información parcial.
+          </p>
+          <p className="mt-3 max-w-2xl text-sm font-medium leading-6 text-amber-900 dark:text-amber-100">
+            Esta decisión es independiente de la moneda principal del catálogo.
+          </p>
+
+          {!canManage && (
+            <p className="mt-5 max-w-2xl rounded-xl bg-amber-100/75 px-4 py-3 text-sm leading-6 dark:bg-amber-950/45">
+              Solicita a un administrador de esta empresa que configure la moneda funcional
+              contable.
+            </p>
+          )}
+
+          <div className="mt-7 flex flex-col gap-3 sm:flex-row">
+            {canManage && configurationHref && (
+              <Button asChild className="min-h-11 w-full sm:w-auto">
+                <Link href={configurationHref}>
+                  Configurar moneda funcional
+                  <ArrowRight className="ml-2 h-4 w-4" aria-hidden="true" />
+                </Link>
+              </Button>
+            )}
+            <Button
+              type="button"
+              variant="outline"
+              onClick={onRetry}
+              className="min-h-11 w-full border-amber-400/70 bg-transparent sm:w-auto dark:border-amber-700"
+            >
+              <RefreshCw className="mr-2 h-4 w-4" aria-hidden="true" />
+              Reintentar consulta
+            </Button>
+          </div>
+          {canManage && (
+            <p className="mt-3 text-xs leading-5 text-amber-800 dark:text-amber-300">
+              La configuración se aplicará solo a esta empresa y quedará registrada en
+              auditoría.
+            </p>
+          )}
+          <span className="sr-only" aria-live="polite" />
+        </div>
+
+        <div className="flex min-w-0 flex-col justify-between border-t border-amber-300/70 bg-amber-100/45 px-5 py-7 sm:px-8 lg:col-span-5 lg:border-l lg:border-t-0 dark:border-amber-800 dark:bg-amber-950/25">
+          <div className="flex h-24 w-24 items-center justify-center rounded-full border-[10px] border-amber-500 border-r-transparent text-amber-800 dark:border-amber-400 dark:border-r-transparent dark:text-amber-200">
+            <Landmark className="h-9 w-9" aria-hidden="true" />
+          </div>
+          <ol className="mt-8 grid gap-3 font-mono text-xs font-semibold uppercase tracking-[0.1em] sm:grid-cols-3 lg:grid-cols-1">
+            {['Configurar', 'Verificar', 'Consultar'].map((step, index) => (
+              <li key={step} className="flex min-h-11 items-center gap-3 border-b border-amber-300/70 py-2 last:border-b-0 dark:border-amber-800">
+                <span aria-hidden="true" className="text-amber-700 dark:text-amber-300">
+                  {String(index + 1).padStart(2, '0')}
+                </span>
+                {step}
+              </li>
+            ))}
+          </ol>
+        </div>
+      </div>
+    </section>
+  );
 }
 
 /**

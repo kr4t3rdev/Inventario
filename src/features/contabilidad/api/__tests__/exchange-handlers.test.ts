@@ -55,6 +55,8 @@ const historicalReportMock = vi.hoisted(() => ({
   resolveFinancialReport: vi.fn(),
 }))
 
+const accountingPolicyCapabilityMock = vi.hoisted(() => vi.fn())
+
 vi.mock('@/lib/prisma', () => ({
   prisma: prismaMock,
   default: prismaMock,
@@ -65,6 +67,9 @@ vi.mock(
   '@/features/contabilidad/services/historical-financial-report-service',
   () => historicalReportMock,
 )
+vi.mock('@/lib/auth/accounting-policy-capabilities', () => ({
+  canManageAccountingPolicy: accountingPolicyCapabilityMock,
+}))
 
 vi.mock('@/lib/auth-middleware', () => ({
   authenticateUser: vi.fn(async () => ({
@@ -229,6 +234,7 @@ describe('getBalanceFinanciero', () => {
       }
     })
     historicalReportMock.listAvailableFinancialPeriods.mockResolvedValue([])
+    accountingPolicyCapabilityMock.mockResolvedValue(false)
   })
 
   it('permite balance y resultados para el plan Básico cuando contabilidad está habilitada', async () => {
@@ -276,6 +282,60 @@ describe('getBalanceFinanciero', () => {
     expect(body).toMatchObject({
       error: 'La empresa no tiene una moneda funcional contable configurada',
       code: 'TENANT_ACCOUNTING_POLICY_REQUIRED',
+      resolution: {
+        canManage: false,
+        configurationHref: null,
+      },
+    })
+    expect(body).not.toHaveProperty('functionalCurrencyCode')
+    expect(body).not.toHaveProperty('evidence')
+  })
+
+  it('incluye CTA seguro solo cuando el servidor confirma capacidad efectiva', async () => {
+    prismaMock.tenantAccountingPolicy.findUnique.mockResolvedValue(null)
+    accountingPolicyCapabilityMock.mockResolvedValue(true)
+    historicalReportMock.resolveFinancialReport.mockImplementation(async ({ calculateLive }: any) => ({
+      status: 'AVAILABLE',
+      origin: 'LIVE',
+      provisional: true,
+      cutoffAt: '2026-08-21T15:30:00.000Z',
+      periodId: 'period-current',
+      ...await calculateLive(new Date('2026-08-21T15:30:00.000Z')),
+    }))
+    const { getBalanceFinanciero } = await import('@/features/contabilidad/api/exchange-handlers')
+    const request = new NextRequest('http://localhost/api/contabilidad/balance-financiero?year=2026')
+
+    const response = await getBalanceFinanciero(request, baseUser as any)
+    const body = await response.json()
+
+    expect(response.status).toBe(409)
+    expect(body.resolution).toEqual({
+      canManage: true,
+      configurationHref: '/busy/contabilidad/configuracion?returnTo=%2Fbusy%2Fcontabilidad%2Fbalance-resultados%23moneda-funcional',
+    })
+  })
+
+  it('mantiene 409 y oculta el CTA si falla la consulta de capacidad', async () => {
+    prismaMock.tenantAccountingPolicy.findUnique.mockResolvedValue(null)
+    accountingPolicyCapabilityMock.mockRejectedValue(new Error('capability lookup unavailable'))
+    historicalReportMock.resolveFinancialReport.mockImplementation(async ({ calculateLive }: any) => ({
+      status: 'AVAILABLE',
+      origin: 'LIVE',
+      provisional: true,
+      cutoffAt: '2026-08-21T15:30:00.000Z',
+      periodId: 'period-current',
+      ...await calculateLive(new Date('2026-08-21T15:30:00.000Z')),
+    }))
+    const { getBalanceFinanciero } = await import('@/features/contabilidad/api/exchange-handlers')
+    const request = new NextRequest('http://localhost/api/contabilidad/balance-financiero?year=2026')
+
+    const response = await getBalanceFinanciero(request, baseUser as any)
+    const body = await response.json()
+
+    expect(response.status).toBe(409)
+    expect(body).toMatchObject({
+      code: 'TENANT_ACCOUNTING_POLICY_REQUIRED',
+      resolution: { canManage: false, configurationHref: null },
     })
   })
 

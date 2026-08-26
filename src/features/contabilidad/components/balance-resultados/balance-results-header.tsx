@@ -47,8 +47,10 @@ export function BalanceResultsHeader({
   onYearChange,
   onRetry,
 }: BalanceResultsHeaderProps): JSX.Element {
-  const currency = getFunctionalCurrency(data?.balance.monedaFuncional);
+  const currency = data ? getFunctionalCurrency(data.balance.monedaFuncional) : 'Sin configurar';
   const isSnapshot = data?.reporte.origen === 'SNAPSHOT';
+  const calculationState = data ? (isSnapshot ? 'Snapshot aprobado' : 'Corte provisional') : 'Pendiente';
+  const reportDate = data ? formatAccountingDate(data.reporte.fechaCorte, true) : 'Sin cálculo';
 
   return (
     <header
@@ -111,7 +113,7 @@ export function BalanceResultsHeader({
               ) : (
                 <Clock3 className="h-3.5 w-3.5 text-amber-300" aria-hidden="true" />
               )}
-              {isSnapshot ? 'Snapshot aprobado' : 'Corte provisional'}
+              {calculationState}
             </span>
             <Button
               type="button"
@@ -139,19 +141,19 @@ export function BalanceResultsHeader({
         <div className="flex items-center gap-2">
           <Clock3 className="h-4 w-4 text-cyan-300" aria-hidden="true" />
           <span>
-            Corte <strong className="ml-1 font-semibold text-slate-100">{formatAccountingDate(data?.reporte.fechaCorte, true)}</strong>
+            Corte <strong className="ml-1 font-semibold text-slate-100">{reportDate}</strong>
           </span>
         </div>
         <div className="flex items-center gap-2">
           <RefreshCw className="h-4 w-4 text-cyan-300" aria-hidden="true" />
           <span>
-            Actualizado <strong className="ml-1 font-semibold text-slate-100">{formatAccountingDate(data?.reporte.fechaCorte, true)}</strong>
+            Actualizado <strong className="ml-1 font-semibold text-slate-100">{reportDate}</strong>
           </span>
         </div>
         <div className="flex items-center gap-2 sm:justify-end">
           <ShieldCheck className="h-4 w-4 text-cyan-300" aria-hidden="true" />
           <span>
-            Evidencia <strong className="ml-1 font-semibold text-slate-100">{data?.reporte.integridad === 'VALID' ? 'íntegra' : 'en revisión'}</strong>
+            Evidencia <strong className="ml-1 font-semibold text-slate-100">{data ? (data.reporte.integridad === 'VALID' ? 'íntegra' : 'en revisión') : 'Pendiente'}</strong>
           </span>
         </div>
       </div>

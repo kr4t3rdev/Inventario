@@ -3,6 +3,7 @@ import { prisma } from '@/lib/prisma';
 import { z } from 'zod';
 import { authenticateUser, type AuthenticatedUser } from '@/lib/auth-middleware';
 import { AuditLogService } from '@/lib/services/audit-log-service';
+import { canManageAccountingPolicy } from '@/lib/auth/accounting-policy-capabilities';
 import { CurrencyConversionService } from '@/lib/services/currency-conversion-service';
 import { ExchangeRateReadService } from '@/features/contabilidad/services/exchange-rate-read-service';
 import { exchangeRateProvider } from '@/features/contabilidad/services/exchange-rate-provider';
@@ -206,6 +207,33 @@ export async function getBalanceFinanciero(request: NextRequest, user: Authentic
         return NextResponse.json({ error: error.message }, { status: error.status })
       }
       if (error.status === 409) {
+        if (error.code === 'TENANT_ACCOUNTING_POLICY_REQUIRED') {
+          let canManage = false;
+          if (user.tenantId) {
+            try {
+              canManage = await canManageAccountingPolicy(user.userId, user.tenantId);
+            } catch (capabilityError) {
+              console.error('Error al resolver la capacidad de política contable:', {
+                tenantId: user.tenantId,
+                userId: user.userId,
+                error: capabilityError,
+              });
+            }
+          }
+          return NextResponse.json({
+            error: error.message,
+            code: error.code,
+            resolution: {
+              canManage,
+              configurationHref: canManage
+                ? '/busy/contabilidad/configuracion?returnTo=%2Fbusy%2Fcontabilidad%2Fbalance-resultados%23moneda-funcional'
+                : null,
+            },
+            periodoId: null,
+            snapshotVersion: null,
+            provisional: false,
+          }, { status: error.status });
+        }
         return NextResponse.json({
           error: error.message,
           code: error.code,

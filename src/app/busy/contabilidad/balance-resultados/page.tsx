@@ -8,6 +8,7 @@ import { BalanceResultsHeader } from '@/features/contabilidad/components/balance
 import { BalanceResultsView } from '@/features/contabilidad/components/balance-resultados/balance-results-view';
 import {
   EmptyReportState,
+  AccountingPolicyRequiredState,
   ReportErrorState,
   ReportLoadingState,
   ReportStatusBand,
@@ -24,6 +25,21 @@ import type {
 
 interface ApiErrorBody {
   error?: string;
+  code?: string;
+  resolution?: {
+    canManage?: boolean;
+    configurationHref?: string | null;
+  };
+}
+
+interface ReportError {
+  status: number;
+  code: string | null;
+  message: string;
+  resolution: {
+    canManage: boolean;
+    configurationHref: string | null;
+  } | null;
 }
 
 /**
@@ -42,6 +58,28 @@ function getApiErrorMessage(body: unknown, status: number): string {
 }
 
 /**
+ * @description Conserva el contrato estructurado de un error seguro del reporte.
+ * @param {unknown} body - JSON recibido del servidor.
+ * @param {number} status - Estado HTTP.
+ * @returns {ReportError} Error tipado para seleccionar el estado visual correcto.
+ */
+function parseReportError(body: unknown, status: number): ReportError {
+  const payload = body && typeof body === 'object' ? body as ApiErrorBody : {};
+  const resolution = payload.resolution;
+  return {
+    status,
+    code: typeof payload.code === 'string' ? payload.code : null,
+    message: getApiErrorMessage(body, status),
+    resolution: resolution ? {
+      canManage: resolution.canManage === true,
+      configurationHref: typeof resolution.configurationHref === 'string'
+        ? resolution.configurationHref
+        : null,
+    } : null,
+  };
+}
+
+/**
  * @description Pantalla operativa para revisar el balance general y el estado de resultados.
  * @returns {JSX.Element | null} Pantalla financiera o nada cuando el plan no tiene acceso.
  */
@@ -54,6 +92,7 @@ export default function BalanceResultadosPage(): JSX.Element | null {
   const [availablePeriods, setAvailablePeriods] = useState<FinancialPeriod[]>([]);
   const [loading, setLoading] = useState(true);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
+  const [reportError, setReportError] = useState<ReportError | null>(null);
   const [retryKey, setRetryKey] = useState(0);
   const [activeView, setActiveView] = useState<'balance' | 'resultados'>('balance');
   const latestRequestId = useRef(0);
@@ -79,6 +118,7 @@ export default function BalanceResultadosPage(): JSX.Element | null {
     const fetchData = async (): Promise<void> => {
       setLoading(true);
       setErrorMsg(null);
+      setReportError(null);
       setData(null);
 
       try {
@@ -98,7 +138,9 @@ export default function BalanceResultadosPage(): JSX.Element | null {
         if (!reportResponse.ok) {
           const body = await reportResponse.json().catch(() => ({}));
           if (requestId !== latestRequestId.current) return;
-          setErrorMsg(getApiErrorMessage(body, reportResponse.status));
+          const parsedError = parseReportError(body, reportResponse.status);
+          setReportError(parsedError);
+          setErrorMsg(parsedError.message);
           return;
         }
 
@@ -154,6 +196,12 @@ export default function BalanceResultadosPage(): JSX.Element | null {
           ) : (
             <BalanceResultsView data={data} activeTab={activeView} onTabChange={setActiveView} />
           )
+        ) : reportError?.code === 'TENANT_ACCOUNTING_POLICY_REQUIRED' ? (
+          <AccountingPolicyRequiredState
+            canManage={reportError.resolution?.canManage === true}
+            configurationHref={reportError.resolution?.configurationHref ?? null}
+            onRetry={handleRetry}
+          />
         ) : (
           <ReportErrorState message={errorMsg} onRetry={handleRetry} />
         )}
