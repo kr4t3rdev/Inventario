@@ -93,4 +93,43 @@ describe('demo sales totals seed', () => {
       }),
     );
   });
+
+  it('base seed derives every tenant-owned identifier and reference from tenantId', async () => {
+    const first = createSeedClient();
+    const second = createSeedClient();
+
+    await seedBaseDemoData({ tenantId: 'tenant-a' }, first as never);
+    await seedBaseDemoData({ tenantId: 'tenant-b' }, second as never);
+
+    const firstCalls = [
+      ...first.cuentaBancaria.upsert.mock.calls,
+      ...first.categoria.upsert.mock.calls,
+      ...first.unidad.upsert.mock.calls,
+      ...first.vendor.upsert.mock.calls,
+      ...first.cliente.upsert.mock.calls,
+      ...first.almacen.upsert.mock.calls,
+      ...first.listaPrecio.upsert.mock.calls,
+      ...first.puntoDeVenta.upsert.mock.calls,
+      ...first.producto.upsert.mock.calls,
+      ...first.precioProducto.upsert.mock.calls,
+    ];
+    const secondCalls = [
+      ...second.cuentaBancaria.upsert.mock.calls,
+      ...second.categoria.upsert.mock.calls,
+      ...second.unidad.upsert.mock.calls,
+      ...second.vendor.upsert.mock.calls,
+      ...second.cliente.upsert.mock.calls,
+      ...second.almacen.upsert.mock.calls,
+      ...second.listaPrecio.upsert.mock.calls,
+      ...second.puntoDeVenta.upsert.mock.calls,
+      ...second.producto.upsert.mock.calls,
+      ...second.precioProducto.upsert.mock.calls,
+    ];
+
+    expect(firstCalls).not.toEqual(secondCalls);
+    expect(JSON.stringify(firstCalls)).toContain('tenant-a');
+    expect(JSON.stringify(secondCalls)).toContain('tenant-b');
+    expect(JSON.stringify(firstCalls)).not.toContain('tenant-b');
+    expect(JSON.stringify(secondCalls)).not.toContain('tenant-a');
+  });
 });

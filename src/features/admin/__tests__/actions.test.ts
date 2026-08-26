@@ -19,6 +19,12 @@ vi.mock('@/lib/services/demo-tenant-factory', () => ({
 vi.mock('@/lib/services/demo-seed', () => ({
   seedDemoTenantData: vi.fn(),
 }));
+vi.mock('@/features/contabilidad/services/tenant-accounting-policy-service', () => ({
+  provisionTenantAccountingPolicyInTransaction: vi.fn().mockResolvedValue({
+    result: 'CREATED',
+    functionalCurrencyCode: 'CUP',
+  }),
+}));
 vi.mock('@/lib/prisma', () => {
   const prismaMock = {
     $transaction: vi.fn((cb: any) => cb({
@@ -79,9 +85,9 @@ import {
 } from '@/features/sales-agent/services/notification-service';
 import { destroyCloudinaryAsset } from '@/lib/cloudinary';
 import { createDemoTenantForPlan } from '@/lib/services/demo-tenant-factory';
-import { seedDemoTenantData } from '@/lib/services/demo-seed';
 import { prisma } from '@/lib/prisma';
 import { AuditLogService } from '@/lib/services/audit-log-service';
+import { provisionTenantAccountingPolicyInTransaction } from '@/features/contabilidad/services/tenant-accounting-policy-service';
 import {
   getUsersAction, createUserAction, updateUserAction, deleteUserAction,
   lockUserAction, unlockUserAction,
@@ -124,7 +130,13 @@ describe('Admin Server Actions', () => {
     vi.restoreAllMocks();
   });
 
-  beforeEach(() => { vi.clearAllMocks(); });
+  beforeEach(() => {
+    vi.clearAllMocks();
+    vi.mocked(provisionTenantAccountingPolicyInTransaction).mockResolvedValue({
+      result: 'CREATED',
+      functionalCurrencyCode: 'CUP',
+    });
+  });
 
   describe('getGlobalUsersAction', () => {
     it('manager: rechaza cuando input.tenantId !== user.tenantId (cross-tenant leak)', async () => {
@@ -754,6 +766,7 @@ describe('Admin Server Actions', () => {
         email: 'empresa@test.com',
         onboardingStatus: 'awaiting_global_approval',
         onboardingType: 'company',
+        pendingFunctionalCurrencyCode: 'CUP',
       } as any);
       vi.mocked(prisma.tenantMembership.findFirst).mockResolvedValue(null);
       vi.mocked(prisma.plan.findUnique).mockResolvedValue({
@@ -782,6 +795,28 @@ describe('Admin Server Actions', () => {
         expect(data.membershipId).toBe('mem-new');
       }
       expect(prisma.$transaction).toHaveBeenCalled();
+    });
+
+    it('company user -> rechaza la aprobación sin moneda funcional confirmada', async () => {
+      vi.mocked(getCurrentUser).mockResolvedValue(adminUser);
+      vi.mocked(prisma.user.findUnique).mockResolvedValue({
+        userId: 'user-company',
+        name: 'Empresa Demo',
+        email: 'empresa@test.com',
+        onboardingStatus: 'awaiting_global_approval',
+        onboardingType: 'company',
+      } as any);
+      vi.mocked(prisma.tenantMembership.findFirst).mockResolvedValue(null);
+
+      const r = await approveGlobalUserAction({
+        userId: 'user-company',
+        tenantName: 'Mi Empresa SRL',
+        planId: 'plan-basico',
+      });
+
+      expect(r.success).toBe(false);
+      expect(r.error!.code).toBe('ACCOUNTING_POLICY_REQUIRED');
+      expect(prisma.$transaction).not.toHaveBeenCalled();
     });
 
     it('worker user -> legacy activation (solo activar)', async () => {
@@ -1033,7 +1068,7 @@ describe('Admin Server Actions', () => {
   });
 
   describe('createDemoTenantAction', () => {
-    it('admin crea demo y dispara el seed parametrizado', async () => {
+    it('admin delega la creación demo transaccional al factory', async () => {
       vi.mocked(getCurrentUser).mockResolvedValue(adminUser);
       vi.mocked(createDemoTenantForPlan).mockResolvedValue({
         tenantId: 'tenant-demo-1',
@@ -1046,12 +1081,6 @@ describe('Admin Server Actions', () => {
         planName: 'Profesional',
         isDemo: true,
       } as any);
-      vi.mocked(seedDemoTenantData).mockResolvedValue({
-        tenantId: 'tenant-demo-1',
-        planName: 'Profesional',
-        profile: 'professional',
-      } as any);
-
       const r = await createDemoTenantAction({
         planId: 'plan-pro',
         demoName: 'Demo Profesional',
@@ -1064,10 +1093,6 @@ describe('Admin Server Actions', () => {
         demoName: 'Demo Profesional',
         durationDays: 6,
         createdBy: 'user-admin',
-      });
-      expect(seedDemoTenantData).toHaveBeenCalledWith({
-        tenantId: 'tenant-demo-1',
-        planName: 'Profesional',
       });
     });
 
@@ -1359,6 +1384,7 @@ describe('Admin Server Actions', () => {
         userId: 'user-test',
         name: 'Test User',
         onboardingStatus: 'awaiting_global_approval',
+        pendingFunctionalCurrencyCode: 'CUP',
       } as any);
       vi.mocked(prisma.tenantMembership.findFirst).mockResolvedValue(null);
       vi.mocked(prisma.tenant.findUnique).mockResolvedValue(null);
@@ -1388,6 +1414,7 @@ describe('Admin Server Actions', () => {
         name: 'Test User',
         onboardingStatus: 'awaiting_global_approval',
         pendingReferralCode: 'REF-VALID',
+        pendingFunctionalCurrencyCode: 'CUP',
       } as any);
       vi.mocked(prisma.tenantMembership.findFirst).mockResolvedValue(null);
       vi.mocked(prisma.tenant.findUnique).mockResolvedValue(null);
@@ -1441,6 +1468,7 @@ describe('Admin Server Actions', () => {
         userId: 'user-test',
         name: 'Test',
         onboardingStatus: 'awaiting_global_approval',
+        pendingFunctionalCurrencyCode: 'CUP',
       } as any);
       vi.mocked(prisma.tenantMembership.findFirst).mockResolvedValue({
         membershipId: 'existing',
@@ -1456,6 +1484,7 @@ describe('Admin Server Actions', () => {
         userId: 'user-test',
         name: 'Test',
         onboardingStatus: 'awaiting_global_approval',
+        pendingFunctionalCurrencyCode: 'CUP',
       } as any);
       vi.mocked(prisma.tenantMembership.findFirst).mockResolvedValue(null);
       vi.mocked(prisma.plan.findUnique).mockResolvedValue(null);

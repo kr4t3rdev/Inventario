@@ -1,7 +1,17 @@
 /**
  * @description Provisiona un tenant demo usando un plan real y una licencia demo
- *              con duración corta. Crea usuario demo, tenant, membership manager
- *              y `TenantLicense` marcada como demo.
+ *              con duración corta. Crea usuario demo, tenant, membership manager,
+ *              `TenantLicense` marcada como demo, la política contable con la
+ *              moneda funcional CUP explícita y los datos sembrados del plan.
+ *
+ *              Unidad transaccional única: usuario, tenant, membership, licencia,
+ *              política, auditoría y seed comparten una sola transacción
+ *              serializable protegida por el advisory lock contable del tenant.
+ *              El tamaño está acotado por el volumen conocido de los seeds demo
+ *              (~20-95 productos según perfil); nunca se degrada a activación
+ *              parcial. Si un futuro perfil superara el límite práctico de la
+ *              transacción, la migración correcta es staging inactivo más un
+ *              compensador probado, no activación parcial.
  *
  * @module lib/services/demo-tenant-factory
  */
@@ -11,9 +21,13 @@ import { randomUUID } from 'crypto';
 import { addDays } from '@/lib/date-utils';
 import { prisma } from '@/lib/prisma';
 import { ActionError } from '@/lib/server-actions';
+import { recordAccountingPolicyProvisioningCommitted } from '@/lib/metrics';
+import { provisionTenantAccountingPolicyInTransaction } from '@/features/contabilidad/services/tenant-accounting-policy-service';
+import { seedDemoTenantData } from '@/lib/services/demo-seed';
 
 const DEFAULT_DEMO_DURATION_DAYS = 6;
 const DEMO_EMAIL_DOMAIN = 'demo.local';
+export const DEMO_FUNCTIONAL_CURRENCY_CODE = 'CUP';
 
 export interface CreateDemoTenantForPlanInput {
   planId: string;
@@ -136,6 +150,21 @@ export async function createDemoTenantForPlan(
       },
     });
 
+    const policyResult = await provisionTenantAccountingPolicyInTransaction(tx, {
+      tenantId: tenant.tenantId,
+      functionalCurrencyCode: DEMO_FUNCTIONAL_CURRENCY_CODE,
+      actorUserId: input.createdBy ?? user.userId,
+      origin: 'DEMO',
+      reason: 'Perfil demo versionado con moneda funcional CUP explícita',
+      correlationId: `demo-${tenant.tenantId}`,
+    });
+    if (!policyResult || !['CREATED', 'NO_OP'].includes(policyResult.result)) {
+      throw new ActionError(
+        'No se pudo establecer la política contable de la demo',
+        'ACCOUNTING_POLICY_REQUIRED',
+      );
+    }
+
     const license = await tx.tenantLicense.create({
       data: {
         tenantId: tenant.tenantId,
@@ -154,6 +183,12 @@ export async function createDemoTenantForPlan(
       },
     });
 
+    await seedDemoTenantData({
+      tenantId: tenant.tenantId,
+      planName: plan.nombre,
+      client: tx,
+    });
+
     return {
       tenantId: tenant.tenantId,
       membershipId: membership.membershipId,
@@ -165,8 +200,19 @@ export async function createDemoTenantForPlan(
       planName: plan.nombre,
       isDemo: true as const,
       createdBy: input.createdBy ?? null,
+      policyResult,
     };
-  });
+  }, { isolationLevel: 'Serializable' });
 
-  return result;
+  try {
+    recordAccountingPolicyProvisioningCommitted('DEMO', result.policyResult.result);
+  } catch (error) {
+    console.error('No se pudo registrar la métrica de provisioning de demo después del commit', {
+      origin: 'DEMO',
+      result: result.policyResult.result,
+      error: error instanceof Error ? error.message : 'Error de telemetría desconocido',
+    });
+  }
+  const { policyResult: _policyResult, ...createdDemo } = result;
+  return createdDemo;
 }

@@ -34,6 +34,18 @@ vi.mock('bcryptjs', () => ({
   },
 }));
 
+const provisionMock = vi.hoisted(() => vi.fn());
+const seedMock = vi.hoisted(() => vi.fn());
+const metricsMock = vi.hoisted(() => ({
+  recordAccountingPolicyProvisioningCommitted: vi.fn(),
+}));
+
+vi.mock('@/features/contabilidad/services/tenant-accounting-policy-service', () => ({
+  provisionTenantAccountingPolicyInTransaction: provisionMock,
+}));
+vi.mock('../demo-seed', () => ({ seedDemoTenantData: seedMock }));
+vi.mock('@/lib/metrics', () => metricsMock);
+
 import bcrypt from 'bcryptjs';
 import { prisma, __tx } from '@/lib/prisma';
 import { ActionError } from '@/lib/server-actions';
@@ -42,6 +54,7 @@ import { createDemoTenantForPlan } from '../demo-tenant-factory';
 describe('createDemoTenantForPlan', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    metricsMock.recordAccountingPolicyProvisioningCommitted.mockReset();
     vi.useFakeTimers();
     vi.setSystemTime(new Date('2026-06-26T10:00:00.000Z'));
 
@@ -65,6 +78,8 @@ describe('createDemoTenantForPlan', () => {
     vi.mocked(__tx.tenantLicense.create).mockResolvedValue({
       tenantLicenseId: 'license-demo-1',
     } as never);
+    provisionMock.mockResolvedValue({ result: 'CREATED', functionalCurrencyCode: 'CUP' });
+    seedMock.mockResolvedValue({ profile: 'professional' });
   });
 
   it('creates a demo tenant with isDemo=true and a 6-day license by default', async () => {
@@ -93,7 +108,7 @@ describe('createDemoTenantForPlan', () => {
         maxAlmacenes: 5,
         maxProductos: 5000,
         maxClientes: 800,
-        features: null,
+        features: undefined,
         featureOverrides: {},
         expiracion: new Date('2026-07-02T10:00:00.000Z'),
       }),
@@ -112,6 +127,54 @@ describe('createDemoTenantForPlan', () => {
         expiracion: new Date('2026-06-29T10:00:00.000Z'),
       }),
     });
+  });
+
+  it('provisiona CUP literal y seed dentro de la misma unidad transaccional', async () => {
+    await createDemoTenantForPlan({ planId: 'plan-pro', createdBy: 'admin-a' });
+
+    expect(provisionMock).toHaveBeenCalledWith(__tx, expect.objectContaining({
+      tenantId: 'tenant-demo-1',
+      functionalCurrencyCode: 'CUP',
+      origin: 'DEMO',
+      actorUserId: 'admin-a',
+    }));
+    expect(seedMock).toHaveBeenCalledWith({
+      tenantId: 'tenant-demo-1',
+      planName: 'Profesional',
+      client: __tx,
+    });
+  });
+
+  it('falla cerrado si la política devuelve BLOCKED y no activa la demo ni siembra datos', async () => {
+    provisionMock.mockResolvedValue({
+      result: 'BLOCKED',
+      functionalCurrencyCode: 'CUP',
+      existingCurrencyCode: null,
+      evidence: 'REVIEW_REQUIRED',
+    });
+
+    await expect(createDemoTenantForPlan({ planId: 'plan-pro' }))
+      .rejects.toMatchObject({ code: 'ACCOUNTING_POLICY_REQUIRED' });
+    expect(__tx.tenantLicense.create).not.toHaveBeenCalled();
+    expect(seedMock).not.toHaveBeenCalled();
+  });
+
+  it('abre la demo con aislamiento serializable', async () => {
+    await createDemoTenantForPlan({ planId: 'plan-pro' });
+
+    expect(prisma.$transaction).toHaveBeenCalledWith(
+      expect.any(Function),
+      { isolationLevel: 'Serializable' },
+    );
+  });
+
+  it('no convierte un fallo de métrica post-commit en un fallo de creación', async () => {
+    metricsMock.recordAccountingPolicyProvisioningCommitted.mockImplementationOnce(() => {
+      throw new Error('metrics unavailable');
+    });
+
+    await expect(createDemoTenantForPlan({ planId: 'plan-pro' }))
+      .resolves.toMatchObject({ tenantId: 'tenant-demo-1' });
   });
 
   it('throws PLAN_NOT_FOUND when the plan does not exist', async () => {

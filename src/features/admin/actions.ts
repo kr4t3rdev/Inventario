@@ -28,7 +28,6 @@ import {
 import { confirmSalesAgentTenantPayment } from "@/features/sales-agent/services/payment-service";
 import { confirmReferredTenantPaymentAction } from "@/features/affiliate/actions";
 import { createDemoTenantForPlan } from "@/lib/services/demo-tenant-factory";
-import { seedDemoTenantData } from "@/lib/services/demo-seed";
 import { requireFeature } from "@/lib/services/tenant-scope";
 import { prisma } from "@/lib/prisma";
 import bcrypt from "bcryptjs";
@@ -1214,11 +1213,6 @@ export const createDemoTenantAction = withAction(
 			demoName: parsed.demoName,
 			durationDays: parsed.durationDays,
 			createdBy: user.userId,
-		});
-
-		await seedDemoTenantData({
-			tenantId: demo.tenantId,
-			planName: demo.planName,
 		});
 
 		revalidatePath("/admin/licencias");

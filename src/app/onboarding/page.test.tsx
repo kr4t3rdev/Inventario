@@ -51,6 +51,10 @@ async function loadOnboardingPage() {
         slug: 'acme',
       },
     ]
+    const currencies = [
+      { codigo: 'CUP', nombre: 'Peso cubano', simbolo: '$' },
+      { codigo: 'USD', nombre: 'Dólar estadounidense', simbolo: 'US$' },
+    ]
 
     return {
       ...actual,
@@ -59,15 +63,17 @@ async function loadOnboardingPage() {
 
         switch (callIndex) {
           case 1:
-            return createStateTuple(user) as [T, React.Dispatch<React.SetStateAction<T>>]
+            return createStateTuple(user) as unknown as [T, React.Dispatch<React.SetStateAction<T>>]
           case 2:
-            return createStateTuple(tenants) as [T, React.Dispatch<React.SetStateAction<T>>]
+            return createStateTuple(tenants) as unknown as [T, React.Dispatch<React.SetStateAction<T>>]
           case 3:
-            return createStateTuple(false) as [T, React.Dispatch<React.SetStateAction<T>>]
+            return createStateTuple(false) as unknown as [T, React.Dispatch<React.SetStateAction<T>>]
           case 4:
-            return createStateTuple<string | null>(null) as [T, React.Dispatch<React.SetStateAction<T>>]
+            return createStateTuple<string | null>(null) as unknown as [T, React.Dispatch<React.SetStateAction<T>>]
           case 5:
-            return createStateTuple<string | null>(null) as [T, React.Dispatch<React.SetStateAction<T>>]
+            return createStateTuple<string | null>(null) as unknown as [T, React.Dispatch<React.SetStateAction<T>>]
+          case 7:
+            return createStateTuple(currencies) as unknown as [T, React.Dispatch<React.SetStateAction<T>>]
           default:
             return createStateTuple(initial)
         }
@@ -171,5 +177,16 @@ describe('OnboardingPage hydration-safe motion', () => {
 
     expect(screen.getByText('Gestor de Ventas')).toBeInTheDocument()
     expect(screen.getByLabelText('Teléfono')).toBeInTheDocument()
+  })
+
+  it('solicita confirmar la moneda funcional antes del alta de una empresa', async () => {
+    const Page = await loadOnboardingPage()
+
+    render(React.createElement(Page))
+
+    expect(screen.getByRole('combobox', {
+      name: 'Moneda funcional contable de la empresa',
+    })).toBeRequired()
+    expect(screen.getByRole('option', { name: 'Peso cubano (CUP)' })).toBeInTheDocument()
   })
 })

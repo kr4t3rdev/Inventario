@@ -795,18 +795,25 @@ export async function onboardingMe(request: NextRequest) {
 			);
 		}
 
-		const tenants = await prisma.tenant.findMany({
-			select: { tenantId: true, nombre: true, slug: true },
-			orderBy: { nombre: "asc" },
-		});
-
-		const activeMembershipCount = await prisma.tenantMembership.count({
-			where: { userId: payload.userId, isActive: true },
-		});
+		const [tenants, activeMembershipCount, currencies] = await Promise.all([
+			prisma.tenant.findMany({
+				select: { tenantId: true, nombre: true, slug: true },
+				orderBy: { nombre: "asc" },
+			}),
+			prisma.tenantMembership.count({
+				where: { userId: payload.userId, isActive: true },
+			}),
+			prisma.moneda.findMany({
+				where: { isActive: true },
+				select: { codigo: true, nombre: true, simbolo: true },
+				orderBy: { codigo: "asc" },
+			}),
+		]);
 
 		return NextResponse.json({
 			user,
 			tenants,
+			currencies,
 			hasActiveMembership: activeMembershipCount > 0,
 		});
 	} catch (error) {
@@ -1020,7 +1027,7 @@ export async function onboardingType(request: NextRequest) {
 		}
 
 		const payload = verifyOnboardingToken(token);
-		const { userType, phone } = await request.json();
+		const { userType, phone, functionalCurrencyCode } = await request.json();
 
 		if (!["worker", "company", "salesAgent"].includes(userType)) {
 			return NextResponse.json(
@@ -1102,12 +1109,43 @@ export async function onboardingType(request: NextRequest) {
 			return NextResponse.json({ success: true, onboardingStatus });
 		}
 
+		let confirmedFunctionalCurrencyCode: string | undefined;
+		if (userType === "company") {
+			if (
+				typeof functionalCurrencyCode !== "string" ||
+				!/^[A-Z]{3}$/.test(functionalCurrencyCode.trim().toUpperCase())
+			) {
+				return NextResponse.json(
+					{ error: "Debes confirmar una moneda funcional contable válida" },
+					{ status: 400 },
+				);
+			}
+
+			confirmedFunctionalCurrencyCode = functionalCurrencyCode.trim().toUpperCase();
+			const currency = await prisma.moneda.findUnique({
+				where: { codigo: confirmedFunctionalCurrencyCode },
+				select: { codigo: true, isActive: true },
+			});
+			if (!currency?.isActive) {
+				return NextResponse.json(
+					{ error: "La moneda funcional seleccionada no está activa" },
+					{ status: 400 },
+				);
+			}
+		}
+
 		const onboardingStatus =
 			userType === "worker" ? "selecting_tenant" : "awaiting_global_approval";
 
 		await prisma.user.update({
 			where: { userId: payload.userId },
-			data: { onboardingType: userType, onboardingStatus },
+			data: {
+				onboardingType: userType,
+				onboardingStatus,
+				...(confirmedFunctionalCurrencyCode
+					? { pendingFunctionalCurrencyCode: confirmedFunctionalCurrencyCode }
+					: {}),
+			},
 		});
 
 		return NextResponse.json({ success: true, onboardingStatus });

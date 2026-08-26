@@ -14,6 +14,7 @@
  */
 
 import { prisma } from '@/lib/prisma';
+import type { Prisma } from '@/generated/prisma';
 import { seedBaseDemoData } from '../../../prisma/seed/demo/base-seed';
 import { seedProfessionalExtras } from '../../../prisma/seed/demo/professional-seed';
 import { seedEnterpriseExtras } from '../../../prisma/seed/demo/enterprise-seed';
@@ -21,6 +22,7 @@ import { seedEnterpriseExtras } from '../../../prisma/seed/demo/enterprise-seed'
 export interface SeedDemoTenantDataInput {
   tenantId: string;
   planName: string;
+  client?: Prisma.TransactionClient;
 }
 
 export interface SeedDemoTenantDataResult {
@@ -57,7 +59,7 @@ export async function seedDemoTenantData(
 ): Promise<SeedDemoTenantDataResult> {
   const profile = resolveSeedProfile(input.planName);
 
-  await prisma.$transaction(async (tx) => {
+  const runSeeds = async (tx: Prisma.TransactionClient): Promise<void> => {
     // 1. Base común para todos los planes
     //    Historia: negocio pequeño, 1 almacén, 1 PV, ~20 productos
     await seedBaseDemoData({ tenantId: input.tenantId }, tx);
@@ -71,7 +73,13 @@ export async function seedDemoTenantData(
       await seedProfessionalExtras({ tenantId: input.tenantId }, tx);
     }
     // Básico: solo el base (ya ejecutado arriba)
-  });
+  };
+
+  if (input.client) {
+    await runSeeds(input.client);
+  } else {
+    await prisma.$transaction(runSeeds);
+  }
 
   return {
     tenantId: input.tenantId,

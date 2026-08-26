@@ -15,6 +15,9 @@ vi.mock('@/lib/prisma', () => ({
     tenantMembership: {
       count: vi.fn(),
     },
+    moneda: {
+      findMany: vi.fn(),
+    },
   },
 }))
 
@@ -51,6 +54,10 @@ describe('/api/auth/onboarding/me', () => {
       { tenantId: 'tenant-1', nombre: 'Empresa 1', slug: 'empresa-1' },
     ] as never)
     vi.mocked(prisma.tenantMembership.count).mockResolvedValueOnce(0)
+    vi.mocked(prisma.moneda.findMany).mockResolvedValueOnce([
+      { codigo: 'CUP', nombre: 'Peso cubano', simbolo: '$' },
+      { codigo: 'USD', nombre: 'Dólar estadounidense', simbolo: 'US$' },
+    ] as never)
 
     const request = new NextRequest('http://localhost/api/auth/onboarding/me', {
       method: 'GET',
@@ -67,6 +74,15 @@ describe('/api/auth/onboarding/me', () => {
     expect(data.user.onboardingStatus).toBe('selecting_user_type')
     expect(data.tenants).toHaveLength(1)
     expect(data.hasActiveMembership).toBe(false)
+    expect(data.currencies).toEqual([
+      { codigo: 'CUP', nombre: 'Peso cubano', simbolo: '$' },
+      { codigo: 'USD', nombre: 'Dólar estadounidense', simbolo: 'US$' },
+    ])
+    expect(prisma.moneda.findMany).toHaveBeenCalledWith({
+      where: { isActive: true },
+      select: { codigo: true, nombre: true, simbolo: true },
+      orderBy: { codigo: 'asc' },
+    })
   })
 
   it('reporta hasActiveMembership=true cuando el worker ya fue aprobado', async () => {
@@ -89,6 +105,7 @@ describe('/api/auth/onboarding/me', () => {
     } as never)
     vi.mocked(prisma.tenant.findMany).mockResolvedValueOnce([])
     vi.mocked(prisma.tenantMembership.count).mockResolvedValueOnce(1)
+    vi.mocked(prisma.moneda.findMany).mockResolvedValueOnce([])
 
     const request = new NextRequest('http://localhost/api/auth/onboarding/me', {
       method: 'GET',

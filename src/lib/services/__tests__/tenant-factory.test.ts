@@ -3,6 +3,16 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { prisma } from '@/lib/prisma';
 import { createTenantForUser } from '../tenant-factory';
 
+const provisionMock = vi.hoisted(() => vi.fn());
+const metricsMock = vi.hoisted(() => ({
+  recordAccountingPolicyProvisioningCommitted: vi.fn(),
+}));
+
+vi.mock('@/features/contabilidad/services/tenant-accounting-policy-service', () => ({
+  provisionTenantAccountingPolicyInTransaction: provisionMock,
+}));
+vi.mock('@/lib/metrics', () => metricsMock);
+
 vi.mock('@/lib/prisma', () => ({
   prisma: {
     user: { findUnique: vi.fn() },
@@ -18,11 +28,13 @@ vi.mock('@/lib/prisma', () => ({
 describe('createTenantForUser referral attribution', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    metricsMock.recordAccountingPolicyProvisioningCommitted.mockReset();
     vi.mocked(prisma.user.findUnique).mockResolvedValue({
       userId: 'company-user',
       name: 'Company',
       onboardingStatus: 'awaiting_global_approval',
       pendingReferralCode: 'SA-CODE',
+      pendingFunctionalCurrencyCode: 'CUP',
     } as never);
     vi.mocked(prisma.tenantMembership.findFirst).mockResolvedValue(null);
     vi.mocked(prisma.tenant.findUnique).mockResolvedValue(null);
@@ -40,6 +52,7 @@ describe('createTenantForUser referral attribution', () => {
       userId: 'agent-1',
       status: 'active',
     } as never);
+    provisionMock.mockResolvedValue({ result: 'CREATED', functionalCurrencyCode: 'CUP' });
   });
 
   it('atribuye el tenant al Gestor activo dentro de la transacción', async () => {
@@ -113,6 +126,136 @@ describe('createTenantForUser referral attribution', () => {
         finalPriceUsd: 40,
       }),
     });
+  });
+
+  it('provisiona la política explícita antes de activar al usuario', async () => {
+    vi.mocked(prisma.salesAgentProfile.findUnique).mockResolvedValue(null);
+    const userUpdate = vi.fn();
+    vi.mocked(prisma.$transaction).mockImplementationOnce(async (callback) =>
+      callback({
+        tenant: { create: vi.fn().mockResolvedValue({ tenantId: 'tenant-new' }) },
+        tenantMembership: { create: vi.fn().mockResolvedValue({ membershipId: 'membership-new' }) },
+        tenantLicense: { create: vi.fn().mockResolvedValue({
+          tenantLicenseId: 'license-new',
+          expiracion: new Date('2030-01-01'),
+        }) },
+        salesAgentReferral: { create: vi.fn(), findUnique: vi.fn().mockResolvedValue(null) },
+        affiliateReferral: { create: vi.fn(), findUnique: vi.fn().mockResolvedValue(null) },
+        user: { update: userUpdate },
+      } as never),
+    );
+
+    await createTenantForUser({ userId: 'company-user' });
+
+    expect(provisionMock).toHaveBeenCalledWith(expect.anything(), expect.objectContaining({
+      tenantId: 'tenant-new',
+      functionalCurrencyCode: 'CUP',
+      actorUserId: 'company-user',
+      origin: 'ONBOARDING',
+    }));
+    expect(userUpdate).toHaveBeenCalledWith(expect.objectContaining({
+      data: expect.objectContaining({ pendingFunctionalCurrencyCode: null }),
+    }));
+  });
+
+  it('falla cerrado si la política devuelve BLOCKED y no crea licencia ni activa usuario', async () => {
+    vi.mocked(prisma.salesAgentProfile.findUnique).mockResolvedValue(null);
+    provisionMock.mockResolvedValue({
+      result: 'BLOCKED',
+      functionalCurrencyCode: 'CUP',
+      existingCurrencyCode: null,
+      evidence: 'REVIEW_REQUIRED',
+    });
+    const licenseCreate = vi.fn();
+    const userUpdate = vi.fn();
+    vi.mocked(prisma.$transaction).mockImplementationOnce(async (callback) =>
+      callback({
+        tenant: { create: vi.fn().mockResolvedValue({ tenantId: 'tenant-blocked' }) },
+        tenantMembership: { create: vi.fn().mockResolvedValue({ membershipId: 'membership-blocked' }) },
+        tenantLicense: { create: licenseCreate },
+        salesAgentReferral: { create: vi.fn(), findUnique: vi.fn().mockResolvedValue(null) },
+        affiliateReferral: { create: vi.fn(), findUnique: vi.fn().mockResolvedValue(null) },
+        user: { update: userUpdate },
+      } as never),
+    );
+
+    await expect(createTenantForUser({ userId: 'company-user' }))
+      .rejects.toMatchObject({ code: 'ACCOUNTING_POLICY_REQUIRED' });
+    expect(licenseCreate).not.toHaveBeenCalled();
+    expect(userUpdate).not.toHaveBeenCalled();
+  });
+
+  it('abre el alta con aislamiento serializable', async () => {
+    vi.mocked(prisma.salesAgentProfile.findUnique).mockResolvedValue(null);
+    vi.mocked(prisma.$transaction).mockImplementationOnce(async (callback) =>
+      callback({
+        tenant: { create: vi.fn().mockResolvedValue({ tenantId: 'tenant-new' }) },
+        tenantMembership: { create: vi.fn().mockResolvedValue({ membershipId: 'membership-new' }) },
+        tenantLicense: { create: vi.fn().mockResolvedValue({
+          tenantLicenseId: 'license-new',
+          expiracion: new Date('2030-01-01'),
+        }) },
+        salesAgentReferral: { create: vi.fn(), findUnique: vi.fn().mockResolvedValue(null) },
+        affiliateReferral: { create: vi.fn(), findUnique: vi.fn().mockResolvedValue(null) },
+        user: { update: vi.fn() },
+      } as never),
+    );
+
+    await createTenantForUser({ userId: 'company-user' });
+
+    expect(prisma.$transaction).toHaveBeenCalledWith(
+      expect.any(Function),
+      { isolationLevel: 'Serializable' },
+    );
+  });
+
+  it('impide completar el alta sin moneda funcional confirmada', async () => {
+    vi.mocked(prisma.user.findUnique).mockResolvedValue({
+      userId: 'company-user',
+      name: 'Company',
+      onboardingStatus: 'awaiting_global_approval',
+      pendingReferralCode: null,
+      pendingFunctionalCurrencyCode: null,
+    } as never);
+
+    await expect(createTenantForUser({ userId: 'company-user' }))
+      .rejects.toMatchObject({ code: 'ACCOUNTING_POLICY_REQUIRED' });
+    expect(prisma.$transaction).not.toHaveBeenCalled();
+  });
+
+  it('publica la métrica solo después del commit del alta exterior', async () => {
+    vi.mocked(prisma.$transaction).mockRejectedValueOnce(new Error('outer rollback'));
+
+    await expect(createTenantForUser({ userId: 'company-user' }))
+      .rejects.toThrow('outer rollback');
+
+    expect(metricsMock.recordAccountingPolicyProvisioningCommitted).not.toHaveBeenCalled();
+  });
+
+  it('devuelve el alta ya confirmada al reintentar sin duplicar recursos', async () => {
+    vi.mocked(prisma.user.findUnique).mockResolvedValue({
+      userId: 'company-user',
+      name: 'Company',
+      onboardingStatus: null,
+      pendingReferralCode: null,
+      pendingFunctionalCurrencyCode: null,
+    } as never);
+    vi.mocked(prisma.tenantMembership.findFirst).mockResolvedValue({
+      membershipId: 'membership-existing',
+      tenantId: 'tenant-existing',
+      tenant: {
+        accountingPolicy: { tenantId: 'tenant-existing' },
+        licencias: [{ tenantLicenseId: 'license-existing' }],
+      },
+    } as never);
+
+    await expect(createTenantForUser({ userId: 'company-user' })).resolves.toEqual({
+      tenantId: 'tenant-existing',
+      membershipId: 'membership-existing',
+      licenseId: 'license-existing',
+    });
+    expect(prisma.$transaction).not.toHaveBeenCalled();
+    expect(provisionMock).not.toHaveBeenCalled();
   });
 
   it('bloquea atribución si el Gestor conserva membership residual del referido', async () => {

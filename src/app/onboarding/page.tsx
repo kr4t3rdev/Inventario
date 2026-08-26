@@ -2,7 +2,7 @@
 
 import type React from "react";
 
-import { useEffect, useMemo, useState, useCallback } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { normalizeSalesAgentPhone } from "@/features/sales-agent/phone";
@@ -40,6 +40,7 @@ type OnboardingUser = {
 };
 
 type TenantItem = { tenantId: string; nombre: string; slug: string | null };
+type CurrencyItem = { codigo: string; nombre: string; simbolo: string };
 
 type OnboardingStep =
 	| "type"
@@ -299,6 +300,8 @@ export default function OnboardingPage(): React.ReactNode {
 	const [submitting, setSubmitting] = useState<string | null>(null);
 	const [error, setError] = useState<string | null>(null);
 	const [phone, setPhone] = useState("");
+	const [currencies, setCurrencies] = useState<CurrencyItem[]>([]);
+	const functionalCurrencyRef = useRef<HTMLSelectElement>(null);
 
 	const onboardingToken =
 		typeof window !== "undefined"
@@ -335,6 +338,7 @@ export default function OnboardingPage(): React.ReactNode {
 
 				setUser(data.user);
 				setTenants(data.tenants);
+				setCurrencies(data.currencies ?? []);
 			} catch {
 				setError("Error de conexión. Inténtalo de nuevo.");
 			} finally {
@@ -379,6 +383,12 @@ export default function OnboardingPage(): React.ReactNode {
 		async (userType: "worker" | "company" | "salesAgent"): Promise<void> => {
 			if (!onboardingToken) return;
 			let submittedPhone = phone;
+			const functionalCurrencyCode = functionalCurrencyRef.current?.value ?? "";
+			if (userType === "company" && !functionalCurrencyCode) {
+				setError("Selecciona la moneda funcional contable de la empresa.");
+				functionalCurrencyRef.current?.focus();
+				return;
+			}
 			if (userType === "salesAgent") {
 				try {
 					submittedPhone = normalizeSalesAgentPhone(phone);
@@ -406,7 +416,11 @@ export default function OnboardingPage(): React.ReactNode {
 								? crypto.randomUUID()
 								: "",
 					},
-					body: JSON.stringify({ userType, phone: submittedPhone }),
+					body: JSON.stringify({
+						userType,
+						phone: submittedPhone,
+						...(userType === "company" ? { functionalCurrencyCode } : {}),
+					}),
 				});
 
 				const data = await response.json();
@@ -623,6 +637,36 @@ export default function OnboardingPage(): React.ReactNode {
 										shouldAnimate={shouldAnimate}
 										onClick={() => void chooseType("salesAgent")}
 									/>
+								</div>
+
+								<div className="mt-5">
+									<label
+										htmlFor="company-functional-currency"
+										className="mb-2 block text-sm font-medium text-[#1d1d1f] dark:text-white"
+									>
+										Moneda funcional contable de la empresa
+									</label>
+									<select
+										id="company-functional-currency"
+										ref={functionalCurrencyRef}
+										required
+										defaultValue=""
+										className="w-full rounded-xl border border-[#e0e0e0] bg-white px-4 py-3 text-sm text-[#1d1d1f] outline-none focus:border-[#0066cc] focus:ring-2 focus:ring-[#0066cc]/20 dark:border-white/10 dark:bg-[#1d1d1f] dark:text-white"
+									>
+										<option value="" disabled>
+											{currencies.length > 0
+												? "Selecciona una moneda"
+												: "No hay monedas activas disponibles"}
+										</option>
+										{currencies.map((currency) => (
+											<option key={currency.codigo} value={currency.codigo}>
+												{currency.nombre} ({currency.codigo})
+											</option>
+										))}
+									</select>
+									<p className="mt-2 text-xs text-[#7a7a7a] dark:text-[#cccccc]">
+										Esta elección define la base de los reportes contables.
+									</p>
 								</div>
 
 								<div className="mt-5">

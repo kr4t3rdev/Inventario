@@ -11,6 +11,8 @@ import { prisma } from '@/lib/prisma'
 import { ActionError } from '@/lib/server-actions'
 import { resolveLicenseDurationDays } from '@/lib/services/license-duration'
 import { resolveLicensePricing } from '@/lib/services/plan-pricing'
+import { recordAccountingPolicyProvisioningCommitted } from '@/lib/metrics'
+import { provisionTenantAccountingPolicyInTransaction } from '@/features/contabilidad/services/tenant-accounting-policy-service'
 
 export interface CreateTenantForUserInput {
   userId: string
@@ -58,20 +60,54 @@ export async function createTenantForUser(
       name: true,
       onboardingStatus: true,
       pendingReferralCode: true,
+      pendingFunctionalCurrencyCode: true,
     }
   })
   if (!user) throw new ActionError('Usuario no encontrado', 'NOT_FOUND')
+
+  // Un retry posterior a un commit exitoso debe converger al mismo resultado.
+  const existingMembership = await prisma.tenantMembership.findFirst({
+    where: { userId, isActive: true },
+    select: {
+      membershipId: true,
+      tenantId: true,
+      tenant: {
+        select: {
+          accountingPolicy: { select: { tenantId: true } },
+          licencias: {
+            where: { activa: true },
+            orderBy: { createdAt: 'desc' },
+            take: 1,
+            select: { tenantLicenseId: true },
+          },
+        },
+      },
+    },
+  })
+  const existingLicense = existingMembership?.tenant?.licencias[0]
+  if (existingMembership?.tenant?.accountingPolicy && existingLicense) {
+    return {
+      tenantId: existingMembership.tenantId,
+      membershipId: existingMembership.membershipId,
+      licenseId: existingLicense.tenantLicenseId,
+    }
+  }
+
   if (user.onboardingStatus !== 'awaiting_global_approval') {
     throw new ActionError(
       'El usuario no está en estado de aprobación global',
       'INVALID_ONBOARDING_STATUS'
     )
   }
+  const functionalCurrencyCode = user.pendingFunctionalCurrencyCode
+  if (!functionalCurrencyCode) {
+    throw new ActionError(
+      'La empresa debe confirmar su moneda funcional contable antes de la aprobación',
+      'ACCOUNTING_POLICY_REQUIRED',
+    )
+  }
 
-  // 2. Validar que no tenga membership activa ya
-  const existingMembership = await prisma.tenantMembership.findFirst({
-    where: { userId, isActive: true }
-  })
+  // 2. Rechazar membresías parciales o ajenas al alta actual.
   if (existingMembership) {
     throw new ActionError('El usuario ya tiene una empresa activa', 'ALREADY_MEMBER')
   }
@@ -131,6 +167,21 @@ export async function createTenantForUser(
         isActive: true,
       }
     })
+
+    const policyResult = await provisionTenantAccountingPolicyInTransaction(tx, {
+      tenantId: tenant.tenantId,
+      functionalCurrencyCode,
+      actorUserId: userId,
+      origin: 'ONBOARDING',
+      reason: 'Moneda funcional confirmada durante el alta de la empresa',
+      correlationId: `onboarding-${userId}`,
+    })
+    if (!policyResult || !['CREATED', 'NO_OP'].includes(policyResult.result)) {
+      throw new ActionError(
+        'No se pudo establecer la política contable de la empresa',
+        'ACCOUNTING_POLICY_REQUIRED',
+      )
+    }
 
     const license = await tx.tenantLicense.create({
       data: {
@@ -217,6 +268,7 @@ export async function createTenantForUser(
         expiresAt: license.expiracion,
         onboardingStatus: null,
         pendingReferralCode: null,
+        pendingFunctionalCurrencyCode: null,
       }
     })
 
@@ -224,10 +276,21 @@ export async function createTenantForUser(
       tenantId: tenant.tenantId,
       membershipId: membership.membershipId,
       licenseId: license.tenantLicenseId,
+      policyResult,
     }
-  })
+  }, { isolationLevel: 'Serializable' })
 
-  return result
+  try {
+    recordAccountingPolicyProvisioningCommitted('ONBOARDING', result.policyResult.result)
+  } catch (error) {
+    console.error('No se pudo registrar la métrica de provisioning después del commit', {
+      origin: 'ONBOARDING',
+      result: result.policyResult.result,
+      error: error instanceof Error ? error.message : 'Error de telemetría desconocido',
+    })
+  }
+  const { policyResult: _policyResult, ...createdTenant } = result
+  return createdTenant
 }
 
 /**

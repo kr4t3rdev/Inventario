@@ -23,6 +23,7 @@ vi.mock('@/lib/prisma', () => ({
       create: vi.fn(),
     },
     tenantLicense: { create: vi.fn() },
+    moneda: { findUnique: vi.fn() },
   },
 }))
 
@@ -41,6 +42,10 @@ describe('/api/auth/onboarding/type', () => {
       onboardingStatus: 'selecting_user_type',
     } as never)
     vi.mocked(prisma.tenantMembership.count).mockResolvedValue(0 as never)
+    vi.mocked(prisma.moneda.findUnique).mockResolvedValue({
+      codigo: 'CUP',
+      isActive: true,
+    } as never)
   })
 
   it('guarda el tipo worker y avanza a selecting_tenant', async () => {
@@ -94,7 +99,7 @@ describe('/api/auth/onboarding/type', () => {
         'authorization': 'Bearer onboarding-token',
         'x-request-id': '550e8400-e29b-41d4-a716-446655440000',
       },
-      body: JSON.stringify({ userType: 'company' }),
+      body: JSON.stringify({ userType: 'company', functionalCurrencyCode: 'CUP' }),
     })
 
     const response = await POST(request)
@@ -102,6 +107,39 @@ describe('/api/auth/onboarding/type', () => {
 
     expect(response.status).toBe(200)
     expect(data.onboardingStatus).toBe('awaiting_global_approval')
+    expect(prisma.user.update).toHaveBeenCalledWith({
+      where: { userId: 'user-2' },
+      data: {
+        onboardingType: 'company',
+        onboardingStatus: 'awaiting_global_approval',
+        pendingFunctionalCurrencyCode: 'CUP',
+      },
+    })
+  })
+
+  it('rechaza el alta company sin una moneda funcional activa confirmada', async () => {
+    const { verifyOnboardingToken } = await import('@/lib/auth/onboarding')
+    vi.mocked(verifyOnboardingToken).mockReturnValue({
+      userId: 'user-2',
+      email: 'company@test.com',
+      purpose: 'onboarding',
+    } as never)
+    vi.mocked(prisma.moneda.findUnique).mockResolvedValue(null)
+
+    const request = new NextRequest('http://localhost/api/auth/onboarding/type', {
+      method: 'POST',
+      headers: {
+        'content-type': 'application/json',
+        authorization: 'Bearer onboarding-token',
+        'x-request-id': '550e8400-e29b-41d4-a716-446655440000',
+      },
+      body: JSON.stringify({ userType: 'company', functionalCurrencyCode: 'USD' }),
+    })
+
+    const response = await POST(request)
+
+    expect(response.status).toBe(400)
+    expect(prisma.user.update).not.toHaveBeenCalled()
   })
 
   it('rechaza salesAgent sin teléfono', async () => {
