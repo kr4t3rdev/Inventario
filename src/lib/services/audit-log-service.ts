@@ -25,7 +25,9 @@ export type AuditEntity =
   | "TENANT_LICENSE_PAYMENT"
   | "SALES_AGENT_PROFILE"
   | "SALES_AGENT_PAYOUT"
-  | "CLOUDINARY_ASSET";
+  | "CLOUDINARY_ASSET"
+  | "TENANT_ACCOUNTING_POLICY"
+  | "ACCOUNTING_POLICY_ROLLOUT";
 
 export type AuditAction = 
   | "CREATE" 
@@ -147,4 +149,17 @@ export class AuditLogService {
 
     return { logs, total };
   }
+}
+
+const REQUIRED_ACCOUNTING_POLICY_AUDIT_RETENTION_DAYS = 3650;
+
+/**
+ * @description Comprueba la retención configurada por el servidor para auditoría contable.
+ *              La ausencia de configuración es un bloqueo explícito, nunca una aprobación.
+ * @returns {Promise<boolean>} True solo si la retención vigente cubre la vida requerida.
+ */
+export async function verifyAccountingPolicyAuditRetention(): Promise<boolean> {
+  const configuredDays = Number(process.env.ACCOUNTING_POLICY_AUDIT_RETENTION_DAYS);
+  return Number.isInteger(configuredDays)
+    && configuredDays >= REQUIRED_ACCOUNTING_POLICY_AUDIT_RETENTION_DAYS;
 }

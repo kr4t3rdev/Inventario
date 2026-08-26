@@ -223,7 +223,9 @@ model Tenant {
   seriesFacturacion          SerieFacturacion[]
   licencias                  TenantLicense[]
   memberships                TenantMembership[]
-  accountingPolicy           TenantAccountingPolicy?
+  accountingPolicy               TenantAccountingPolicy?
+  accountingPolicyRolloutEntries AccountingPolicyRolloutEntry[]
+  accountingPolicyApprovals      AccountingPolicyTenantApproval[]
   financialAuxiliaryCheckpoints FinancialAuxiliaryCheckpoint[]
   snapshotPeriodos           SnapshotPeriodo[]
   turnosPos                  TurnoPuntoVenta[]
@@ -609,6 +611,7 @@ model User {
   email                    String               @unique
   password                 String
   pendingReferralCode      String?
+  pendingFunctionalCurrencyCode String?
   role                     String               @default("regularUser")
   onboardingType           String?
   onboardingStatus         String?              @default("pending_email_verification")
@@ -2934,4 +2937,66 @@ enum MetodoPagoVenta {
   TRANSFERENCIA
   CREDITO
   MIXTO
+}
+
+
+model AccountingPolicyRolloutRun {
+  runId          String                         @id @default(cuid())
+  mode           String
+  manifestHash   String?
+  status         String
+  executorUserId String
+  approverUserId String?
+  reason         String
+  summary        Json?
+  createdAt      DateTime                       @default(now())
+  completedAt    DateTime?
+  entries        AccountingPolicyRolloutEntry[]
+
+  @@index([mode, status, createdAt])
+  @@index([manifestHash, mode, status])
+  @@map("accounting_policy_rollout_runs")
+}
+
+
+model AccountingPolicyRolloutEntry {
+  entryId                String                     @id @default(cuid())
+  runId                  String
+  tenantId               String
+  functionalCurrencyCode String?
+  expectedClassification String?
+  observedClassification String
+  projectedResult        String?
+  finalResult            String?
+  existingCurrencyCode   String?
+  tenantApprovalId       String?
+  safeError              String?
+  createdAt              DateTime                   @default(now())
+  updatedAt              DateTime                   @updatedAt
+  run                    AccountingPolicyRolloutRun @relation(fields: [runId], references: [runId], onDelete: Cascade)
+  tenant                 Tenant                     @relation(fields: [tenantId], references: [tenantId], onDelete: Restrict)
+
+  @@unique([runId, tenantId])
+  @@index([tenantId, createdAt])
+  @@map("accounting_policy_rollout_entries")
+}
+
+
+model AccountingPolicyTenantApproval {
+  approvalId             String    @id @default(cuid())
+  tenantId               String
+  functionalCurrencyCode String
+  actorUserId            String
+  reason                 String
+  status                 String    @default("ACTIVE")
+  correlationId          String
+  approvalHash           String
+  expiresAt              DateTime
+  consumedAt             DateTime?
+  createdAt              DateTime  @default(now())
+  tenant                 Tenant    @relation(fields: [tenantId], references: [tenantId], onDelete: Restrict)
+
+  @@unique([tenantId, functionalCurrencyCode, approvalHash])
+  @@index([tenantId, status, expiresAt])
+  @@map("accounting_policy_tenant_approvals")
 }
