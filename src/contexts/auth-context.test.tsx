@@ -3,14 +3,16 @@ import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-const { push, toastMock, toastError } = vi.hoisted(() => ({
+const { push, replace, refresh, toastMock, toastError } = vi.hoisted(() => ({
   push: vi.fn(),
+  replace: vi.fn(),
+  refresh: vi.fn(),
   toastMock: vi.fn(),
   toastError: vi.fn(),
 }));
 
 vi.mock('next/navigation', () => ({
-  useRouter: () => ({ push }),
+  useRouter: () => ({ push, replace, refresh }),
 }));
 
 vi.mock('sonner', () => ({
@@ -147,7 +149,7 @@ describe('AuthProvider', () => {
     await waitFor(() => expect(push).toHaveBeenCalledWith('/admin'));
   });
 
-  it('logs out through the stable auth route and clears client auth state', async () => {
+  it('logs out with a cache-invalidating redirect and clears client auth state', async () => {
     const user = userEvent.setup();
 
     render(
@@ -162,10 +164,11 @@ describe('AuthProvider', () => {
     await user.click(screen.getByRole('button', { name: 'logout' }));
 
     await waitFor(() => {
-      expect(push).toHaveBeenCalledWith('/login');
+      expect(replace).toHaveBeenCalledWith('/login');
     });
 
     expect(fetch).toHaveBeenCalledWith('/api/auth/logout', expect.objectContaining({ method: 'POST' }));
+    expect(refresh).toHaveBeenCalledOnce();
     expect(screen.getByTestId('user-email')).toHaveTextContent('anonymous');
   });
 

@@ -207,13 +207,15 @@ export function AuthProvider({ children, initialUser }: AuthProviderProps) {
         credentials: 'include',
       });
       setUser(null);
-      router.push('/login');
+      router.replace('/login');
+      router.refresh();
       toast('Sesión cerrada correctamente');
     } catch (error) {
       console.error('Error al cerrar sesión:', error);
       // Forzar logout incluso si falla la llamada
       setUser(null);
-      router.push('/login');
+      router.replace('/login');
+      router.refresh();
       toast.error('Error al cerrar sesión');
     }
   };
