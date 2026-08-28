@@ -2,10 +2,27 @@
  * @description Tests para las Server Actions de Cuentas Bancarias.
  */
 import { describe, it, expect, beforeEach, vi } from 'vitest';
+const periodGuardState = vi.hoisted(() => ({ blocked: false }));
 vi.mock('@/lib/server-actions/get-current-user');
 vi.mock('next/cache', () => ({ revalidatePath: vi.fn() }));
+vi.mock('@/lib/services/with-period-validation', async () => {
+  const { ActionError } = await import('@/lib/server-actions/types');
+  return {
+    withPeriodValidation: (extractDate: (input: { saldo?: number }) => Date | null, handler: Function) =>
+      async (input: { saldo?: number }, user: AuthenticatedUser) => {
+        if (extractDate(input) && periodGuardState.blocked) {
+          throw new ActionError('El período está cerrado', 'PERIODO_CERRADO');
+        }
+        return handler(input, user);
+      },
+  };
+});
+vi.mock('@/lib/services/audit-log-service', () => ({
+  AuditLogService: { log: vi.fn(), logStrict: vi.fn() },
+}));
 vi.mock('@/lib/prisma', () => ({
   prisma: {
+    $transaction: vi.fn(),
     cuentaBancaria: {
       findMany: vi.fn(),
       findFirst: vi.fn(),
@@ -19,13 +36,14 @@ vi.mock('@/lib/prisma', () => ({
     reconciliacionGasto: { findMany: vi.fn() },
     ajusteBancario: { findMany: vi.fn() },
     transferenciaBancaria: { findMany: vi.fn() },
-    inyeccionCapital: { findMany: vi.fn() },
+    inyeccionCapital: { findMany: vi.fn(), create: vi.fn() },
     pagoDeuda: { findMany: vi.fn() },
   },
 }));
 
 import { getCurrentUser } from '@/lib/server-actions/get-current-user';
 import { prisma } from '@/lib/prisma';
+import { AuditLogService } from '@/lib/services/audit-log-service';
 import {
   getCuentasBancariasAction,
   getCuentaBancariaByIdAction,
@@ -35,6 +53,12 @@ import {
   getCuentaHistorialAction,
 } from '@/features/contabilidad/actions-cuentas-bancarias';
 import type { AuthenticatedUser } from '@/lib/auth-middleware';
+
+const txClient = {
+  cuentaBancaria: { create: vi.fn() },
+  inyeccionCapital: { create: vi.fn() },
+  auditLog: { create: vi.fn() },
+};
 
 const mockUser: AuthenticatedUser = {
   userId: 'u1',
@@ -62,6 +86,13 @@ describe('Cuentas Bancarias Actions', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     vi.mocked(getCurrentUser).mockResolvedValue(mockUser);
+    vi.mocked(AuditLogService.log).mockResolvedValue(null);
+    vi.mocked(AuditLogService.logStrict).mockResolvedValue({} as never);
+    periodGuardState.blocked = false;
+    vi.mocked(prisma.$transaction).mockImplementation(async (callback) => callback(txClient as never));
+    txClient.cuentaBancaria.create.mockReset();
+    txClient.inyeccionCapital.create.mockReset();
+    txClient.auditLog.create.mockReset();
   });
 
   describe('getCuentasBancariasAction', () => {
@@ -125,7 +156,7 @@ describe('Cuentas Bancarias Actions', () => {
       moneda: 'USD',
     };
 
-    it('debe crear una cuenta exitosamente', async () => {
+    it('crea una cuenta con saldo cero sin contrapartida', async () => {
       const created = {
         ...mockCuenta,
         cuentaId: 'c2',
@@ -135,12 +166,12 @@ describe('Cuentas Bancarias Actions', () => {
         moneda: validInput.moneda,
         saldo: 0,
       };
-      vi.mocked(prisma.cuentaBancaria.create).mockResolvedValue(created);
+      txClient.cuentaBancaria.create.mockResolvedValue(created);
 
       const result = await createCuentaBancariaAction(validInput);
 
       expect(result.success).toBe(true);
-      expect(prisma.cuentaBancaria.create).toHaveBeenCalledWith(
+      expect(txClient.cuentaBancaria.create).toHaveBeenCalledWith(
         expect.objectContaining({
           data: expect.objectContaining({
             nombreBanco: 'Nuevo Banco',
@@ -149,6 +180,123 @@ describe('Cuentas Bancarias Actions', () => {
           }),
         })
       );
+      expect(txClient.inyeccionCapital.create).not.toHaveBeenCalled();
+      expect(prisma.cuentaBancaria.create).not.toHaveBeenCalled();
+    });
+
+    it('rechaza un saldo inicial positivo sin fuente contable', async () => {
+      const result = await createCuentaBancariaAction({ ...validInput, saldo: 1000 });
+
+      expect(result.success).toBe(false);
+      expect(result.error?.code).toBe('VALIDATION_ERROR');
+      expect(prisma.$transaction).not.toHaveBeenCalled();
+    });
+
+    it('rechaza un saldo inicial negativo', async () => {
+      const result = await createCuentaBancariaAction({ ...validInput, saldo: -1 });
+
+      expect(result.success).toBe(false);
+      expect(result.error?.code).toBe('VALIDATION_ERROR');
+      expect(prisma.$transaction).not.toHaveBeenCalled();
+    });
+
+    it('bloquea el saldo positivo cuando el período contable está cerrado', async () => {
+      periodGuardState.blocked = true;
+
+      const result = await createCuentaBancariaAction({
+        ...validInput,
+        saldo: 1000,
+        fuenteSaldoInicial: 'CAPITAL_SOCIAL',
+        socio: 'Socio fundador',
+      });
+
+      expect(result.success).toBe(false);
+      expect(result.error?.code).toBe('PERIODO_CERRADO');
+      expect(prisma.$transaction).not.toHaveBeenCalled();
+    });
+
+    it('crea la contrapartida de capital social dentro de la transacción', async () => {
+      const created = { ...mockCuenta, cuentaId: 'capital-account', saldo: 1000 };
+      txClient.cuentaBancaria.create.mockResolvedValue(created);
+      txClient.inyeccionCapital.create.mockResolvedValue({ id: 'capital-1' });
+
+      const result = await createCuentaBancariaAction({
+        ...validInput,
+        saldo: 1000,
+        fuenteSaldoInicial: 'CAPITAL_SOCIAL',
+        socio: 'Socio fundador',
+      });
+
+      expect(result.success).toBe(true);
+      expect(txClient.inyeccionCapital.create).toHaveBeenCalledWith({
+        data: expect.objectContaining({
+          tipo: 'CAPITAL_SOCIAL',
+          montoRecibido: 1000,
+          cuentaId: 'capital-account',
+          socio: 'Socio fundador',
+        }),
+      });
+      expect(AuditLogService.logStrict).toHaveBeenCalledWith(
+        expect.objectContaining({ entidadId: 'capital-account' }),
+        txClient,
+      );
+      expect(AuditLogService.logStrict).toHaveBeenCalledWith(
+        expect.objectContaining({ entidadId: 'capital-1' }),
+        txClient,
+      );
+      expect(AuditLogService.logStrict).toHaveBeenCalledTimes(2);
+      expect(prisma.cuentaBancaria.create).not.toHaveBeenCalled();
+      expect(prisma.inyeccionCapital.create).not.toHaveBeenCalled();
+    });
+
+    it('crea la contrapartida de deuda externa dentro de la transacción', async () => {
+      const created = { ...mockCuenta, cuentaId: 'debt-account', saldo: 2500 };
+      txClient.cuentaBancaria.create.mockResolvedValue(created);
+      txClient.inyeccionCapital.create.mockResolvedValue({ id: 'debt-1' });
+
+      const result = await createCuentaBancariaAction({
+        ...validInput,
+        saldo: 2500,
+        fuenteSaldoInicial: 'DEUDA_EXTERNA',
+        entidadPrestamista: 'Financiera externa',
+      });
+
+      expect(result.success).toBe(true);
+      expect(txClient.inyeccionCapital.create).toHaveBeenCalledWith({
+        data: expect.objectContaining({
+          tipo: 'DEUDA_EXTERNA',
+          montoRecibido: 2500,
+          saldoPendiente: 2500,
+          montoTotalDeuda: 2500,
+          cuentaId: 'debt-account',
+          entidadPrestamista: 'Financiera externa',
+          estado: 'ACTIVA',
+        }),
+      });
+    });
+
+    it('no deja una cuenta huérfana si falla la contrapartida', async () => {
+      txClient.cuentaBancaria.create.mockResolvedValue({
+        ...mockCuenta,
+        cuentaId: 'rolled-back-account',
+        saldo: 1000,
+      });
+      txClient.inyeccionCapital.create.mockRejectedValue(
+        new Error('counterpart failed'),
+      );
+
+      const result = await createCuentaBancariaAction({
+        ...validInput,
+        saldo: 1000,
+        fuenteSaldoInicial: 'CAPITAL_SOCIAL',
+        socio: 'Socio fundador',
+      });
+
+      expect(result.success).toBe(false);
+      expect(prisma.$transaction).toHaveBeenCalledTimes(1);
+      expect(txClient.cuentaBancaria.create).toHaveBeenCalledTimes(1);
+      expect(AuditLogService.log).not.toHaveBeenCalled();
+      expect(AuditLogService.logStrict).not.toHaveBeenCalled();
     });
 
     it('debe crear una cuenta con isActive por defecto', async () => {
@@ -159,7 +307,7 @@ describe('Cuentas Bancarias Actions', () => {
         numeroCuenta: validInput.numeroCuenta,
         isActive: true,
       };
-      vi.mocked(prisma.cuentaBancaria.create).mockResolvedValue(created);
+      txClient.cuentaBancaria.create.mockResolvedValue(created);
 
       const result = await createCuentaBancariaAction(validInput);
 
@@ -181,6 +329,17 @@ describe('Cuentas Bancarias Actions', () => {
   });
 
   describe('updateCuentaBancariaAction', () => {
+    it('rechaza un intento manipulado de actualizar el saldo directamente', async () => {
+      const result = await updateCuentaBancariaAction({
+        cuentaId: 'c1',
+        saldo: 9999,
+      } as never);
+
+      expect(result.success).toBe(false);
+      expect(result.error?.code).toBe('VALIDATION_ERROR');
+      expect(prisma.cuentaBancaria.update).not.toHaveBeenCalled();
+    });
+
     it('debe actualizar solo los campos enviados', async () => {
       vi.mocked(prisma.cuentaBancaria.findFirst).mockResolvedValue(mockCuenta);
       vi.mocked(prisma.cuentaBancaria.update).mockResolvedValue({
@@ -219,6 +378,79 @@ describe('Cuentas Bancarias Actions', () => {
         expect.objectContaining({
           data: { isActive: false },
         })
+      );
+    });
+
+    it('rechaza cambiar moneda cuando la cuenta tiene saldo', async () => {
+      vi.mocked(prisma.cuentaBancaria.findFirst).mockResolvedValue({
+        ...mockCuenta,
+      } as never);
+
+      const result = await updateCuentaBancariaAction({ cuentaId: 'c1', moneda: 'USD' });
+
+      expect(result.success).toBe(false);
+      expect(result.error?.code).toBe('VALIDATION_ERROR');
+      expect(prisma.cuentaBancaria.update).not.toHaveBeenCalled();
+    });
+
+    it('rechaza cambiar moneda cuando existe una contrapartida con monto', async () => {
+      vi.mocked(prisma.cuentaBancaria.findFirst)
+        .mockResolvedValueOnce({ ...mockCuenta, saldo: 0 } as never)
+        .mockResolvedValueOnce({ cuentaId: 'c1' } as never);
+
+      const result = await updateCuentaBancariaAction({ cuentaId: 'c1', moneda: 'USD' });
+
+      expect(result.success).toBe(false);
+      expect(result.error?.code).toBe('VALIDATION_ERROR');
+      expect(prisma.cuentaBancaria.update).not.toHaveBeenCalled();
+    });
+
+    it('rechaza cambiar moneda con saldo cero cuando existe movimiento histórico', async () => {
+      vi.mocked(prisma.cuentaBancaria.findFirst)
+        .mockResolvedValueOnce({ ...mockCuenta, saldo: 0 } as never)
+        .mockResolvedValueOnce({ cuentaId: 'c1' } as never);
+
+      const result = await updateCuentaBancariaAction({ cuentaId: 'c1', moneda: 'USD' });
+
+      expect(result.success).toBe(false);
+      expect(result.error?.code).toBe('VALIDATION_ERROR');
+      expect(prisma.cuentaBancaria.update).not.toHaveBeenCalled();
+      expect(prisma.cuentaBancaria.findFirst).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: expect.objectContaining({
+            cuentaId: 'c1',
+            tenantId: 't1',
+            OR: expect.arrayContaining([
+              { ajustes: { some: {} } },
+              { transferenciasOrigen: { some: {} } },
+              { transferenciasDestino: { some: {} } },
+              { reconciliacionesVenta: { some: {} } },
+              { reconciliacionesServicio: { some: {} } },
+              { reconciliacionesGasto: { some: {} } },
+              { pagosDeuda: { some: {} } },
+              { facturas: { some: {} } },
+            ]),
+          }),
+          select: { cuentaId: true },
+        }),
+      );
+    });
+
+    it('permite cambiar moneda cuando cuenta y contrapartidas están en cero', async () => {
+      vi.mocked(prisma.cuentaBancaria.findFirst)
+        .mockResolvedValueOnce({ ...mockCuenta, saldo: 0 } as never)
+        .mockResolvedValueOnce(null);
+      vi.mocked(prisma.cuentaBancaria.update).mockResolvedValue({
+        ...mockCuenta,
+        saldo: 0,
+        moneda: 'USD',
+      });
+
+      const result = await updateCuentaBancariaAction({ cuentaId: 'c1', moneda: 'USD' });
+
+      expect(result.success).toBe(true);
+      expect(prisma.cuentaBancaria.update).toHaveBeenCalledWith(
+        expect.objectContaining({ data: { moneda: 'USD' } }),
       );
     });
 
