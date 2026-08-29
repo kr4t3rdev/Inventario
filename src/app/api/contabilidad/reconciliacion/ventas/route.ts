@@ -5,6 +5,7 @@ import { z } from "zod";
 import { Prisma } from "@/generated/prisma";
 import { authenticateUser } from "@/lib/auth-middleware";
 import { AuditLogService } from "@/lib/services/audit-log-service";
+import { requireTenant } from "@/lib/services/tenant-scope";
 import {
 	validarEscrituraPeriodo,
 	extraerFechaDeBody,
@@ -123,6 +124,7 @@ export async function GET(request: NextRequest) {
 		const authResultUser = await authenticateUser(request);
 		if ("status" in authResultUser) return authResultUser as Response;
 		const user = authResultUser.user;
+		const tenantId = requireTenant(user);
 
 		const { searchParams } = new URL(request.url);
 		const fechaDesde =
@@ -138,7 +140,35 @@ export async function GET(request: NextRequest) {
 		const limit = Math.min(200, normalizedLimit);
 		const skip = (page - 1) * limit;
 
-		const whereParts: Prisma.Sql[] = [];
+		const whereParts: Prisma.Sql[] = [
+			Prisma.sql`v."tenantId" = ${tenantId}`,
+			Prisma.sql`EXISTS (
+        SELECT 1 FROM "PuntoDeVenta" pv_scope
+        WHERE pv_scope."pvId" = v."puntoDeVentaId"
+          AND pv_scope."tenantId" = v."tenantId"
+      )`,
+			Prisma.sql`(
+        v."productoId" IS NULL OR EXISTS (
+          SELECT 1 FROM "Producto" producto_scope
+          WHERE producto_scope."id" = v."productoId"
+            AND producto_scope."tenantId" = v."tenantId"
+        )
+      )`,
+			Prisma.sql`(
+        v."empleadoId" IS NULL OR EXISTS (
+          SELECT 1 FROM "Empleado" empleado_scope
+          WHERE empleado_scope."empleadoId" = v."empleadoId"
+            AND empleado_scope."tenantId" = v."tenantId"
+        )
+      )`,
+			Prisma.sql`(
+        v."clienteId" IS NULL OR EXISTS (
+          SELECT 1 FROM "Cliente" cliente_scope
+          WHERE cliente_scope."clienteId" = v."clienteId"
+            AND cliente_scope."tenantId" = v."tenantId"
+        )
+      )`,
+		];
 
 		if (fechaDesde) {
 			whereParts.push(Prisma.sql`v."createdAt" >= ${new Date(fechaDesde)}`);
@@ -180,7 +210,9 @@ export async function GET(request: NextRequest) {
           0
         )::double precision AS "totalPagado"
       FROM "Venta" v
-      LEFT JOIN "ReconciliacionVenta" rv ON rv."ventaId" = v."ventaId"
+      LEFT JOIN "ReconciliacionVenta" rv
+        ON rv."ventaId" = v."ventaId"
+        AND rv."tenantId" = v."tenantId"
       ${whereSql}
       GROUP BY v."ventaId", v."total", v."createdAt"
       HAVING (
@@ -208,7 +240,9 @@ export async function GET(request: NextRequest) {
       FROM (
         SELECT v."ventaId"
         FROM "Venta" v
-        LEFT JOIN "ReconciliacionVenta" rv ON rv."ventaId" = v."ventaId"
+        LEFT JOIN "ReconciliacionVenta" rv
+          ON rv."ventaId" = v."ventaId"
+          AND rv."tenantId" = v."tenantId"
         ${whereSql}
         GROUP BY v."ventaId", v."total"
         HAVING (
@@ -244,9 +278,16 @@ export async function GET(request: NextRequest) {
 
 		const ventasRaw = await prisma.venta.findMany({
 			where: {
+				tenantId,
 				ventaId: {
 					in: ventaIds,
 				},
+				puntoDeVenta: { is: { tenantId } },
+				AND: [
+					{ OR: [{ productoId: null }, { producto: { is: { tenantId } } }] },
+					{ OR: [{ empleadoId: null }, { empleado: { is: { tenantId } } }] },
+					{ OR: [{ clienteId: null }, { cliente: { is: { tenantId } } }] },
+				],
 			},
 			include: {
 				producto: {
@@ -272,6 +313,7 @@ export async function GET(request: NextRequest) {
 					},
 				},
 				reconciliaciones: {
+					where: { tenantId },
 					select: {
 						monto: true,
 					},
@@ -329,6 +371,7 @@ export async function POST(request: NextRequest) {
 		const authResultUser = await authenticateUser(request);
 		if ("status" in authResultUser) return authResultUser as Response;
 		const user = authResultUser.user;
+		const tenantId = requireTenant(user);
 
 		const body = await request.json();
 		const validatedData = reconciliacionVentaSchema.parse(body);
@@ -337,7 +380,7 @@ export async function POST(request: NextRequest) {
 		const fechaOperacion = extraerFechaDeBody(body) ?? new Date();
 		const validacionPeriodo = await validarEscrituraPeriodo({
 			fecha: fechaOperacion,
-			tenantId: user.tenantId ?? "",
+			tenantId,
 			tipoOperacion: "reconciliacion_ventas",
 			actor: user.userId,
 		});
@@ -358,8 +401,18 @@ export async function POST(request: NextRequest) {
 			referenciaTransferenciaRaw?.trim() || undefined;
 
 		// Verificar que la venta existe
-		const venta = await prisma.venta.findUnique({
-			where: { ventaId: validatedData.ventaId },
+		const venta = await prisma.venta.findFirst({
+			where: {
+				ventaId: validatedData.ventaId,
+				tenantId,
+				AND: [
+					{ OR: [{ productoId: null }, { producto: { is: { tenantId } } }] },
+					{ puntoDeVenta: { is: { tenantId } } },
+					{ OR: [{ empleadoId: null }, { empleado: { is: { tenantId } } }] },
+					{ OR: [{ clienteId: null }, { cliente: { is: { tenantId } } }] },
+					{ OR: [{ factura: null }, { factura: { is: { tenantId } } }] },
+				],
+			},
 			include: {
 				factura: true,
 				cliente: true,
@@ -374,8 +427,8 @@ export async function POST(request: NextRequest) {
 		}
 
 		// Verificar que la cuenta bancaria existe y está activa
-		const cuentaBancaria = await prisma.cuentaBancaria.findUnique({
-			where: { cuentaId: validatedData.cuentaId },
+		const cuentaBancaria = await prisma.cuentaBancaria.findFirst({
+			where: { cuentaId: validatedData.cuentaId, tenantId },
 		});
 
 		if (!cuentaBancaria || !cuentaBancaria.isActive) {
@@ -390,7 +443,7 @@ export async function POST(request: NextRequest) {
 
 		// Verificar que el tipo de pago existe y está activo
 		const tipoPago = await prisma.tipoPago.findFirst({
-			where: { tipoId: validatedData.tipoPagoId, tenantId: user.tenantId },
+			where: { tipoId: validatedData.tipoPagoId, tenantId },
 		});
 
 		if (!tipoPago || !tipoPago.isActive) {
@@ -436,7 +489,7 @@ export async function POST(request: NextRequest) {
 		let cuentaOrigen = null;
 		if (tipoPago.requiereCuenta && tipoPago.cuentaDefecto) {
 			cuentaOrigen = await prisma.cuentaBancaria.findFirst({
-				where: { cuentaId: tipoPago.cuentaDefecto, tenantId: user.tenantId },
+				where: { cuentaId: tipoPago.cuentaDefecto, tenantId },
 			});
 
 			if (!cuentaOrigen || !cuentaOrigen.isActive) {
@@ -457,6 +510,7 @@ export async function POST(request: NextRequest) {
 				if (referenciaTransferencia) {
 					const existingByReference = await tx.reconciliacionVenta.findFirst({
 						where: {
+							tenantId,
 							ventaId: validatedData.ventaId,
 							idTransferencia: referenciaTransferencia,
 						},
@@ -484,23 +538,26 @@ export async function POST(request: NextRequest) {
 				await tx.$queryRaw`
         SELECT 1 FROM "Venta"
         WHERE "ventaId" = ${validatedData.ventaId}
+          AND "tenantId" = ${tenantId}
         FOR UPDATE
       `;
 				await tx.$queryRaw`
         SELECT 1 FROM "CuentaBancaria"
         WHERE "cuentaId" = ${validatedData.cuentaId}
+          AND "tenantId" = ${tenantId}
         FOR UPDATE
       `;
 				if (cuentaOrigen) {
 					await tx.$queryRaw`
           SELECT 1 FROM "CuentaBancaria"
           WHERE "cuentaId" = ${cuentaOrigen.cuentaId}
+            AND "tenantId" = ${tenantId}
           FOR UPDATE
         `;
 				}
 
-				const cuentaDestinoLocked = await tx.cuentaBancaria.findUnique({
-					where: { cuentaId: validatedData.cuentaId },
+				const cuentaDestinoLocked = await tx.cuentaBancaria.findFirst({
+					where: { cuentaId: validatedData.cuentaId, tenantId },
 				});
 
 				if (!cuentaDestinoLocked || !cuentaDestinoLocked.isActive) {
@@ -524,8 +581,8 @@ export async function POST(request: NextRequest) {
 					moneda: string;
 				} | null = null;
 				if (cuentaOrigen) {
-					cuentaOrigenLocked = await tx.cuentaBancaria.findUnique({
-						where: { cuentaId: cuentaOrigen.cuentaId },
+					cuentaOrigenLocked = await tx.cuentaBancaria.findFirst({
+						where: { cuentaId: cuentaOrigen.cuentaId, tenantId },
 						select: {
 							cuentaId: true,
 							saldo: true,
@@ -558,7 +615,7 @@ export async function POST(request: NextRequest) {
 				}
 
 				const reconciliacionesPrevias = await tx.reconciliacionVenta.findMany({
-					where: { ventaId: validatedData.ventaId },
+					where: { ventaId: validatedData.ventaId, tenantId },
 					select: {
 						monto: true,
 						moneda: true,
@@ -637,33 +694,54 @@ export async function POST(request: NextRequest) {
 					const saldoDecrementoOrigen = parseFloat(montoOrigen.toString());
 
 					// Transferir: decrementar de cuenta origen e incrementar en cuenta destino
-					await tx.cuentaBancaria.update({
-						where: { cuentaId: tipoPago.cuentaDefecto! },
+					const cuentaOrigenUpdate = await tx.cuentaBancaria.updateMany({
+						where: { cuentaId: tipoPago.cuentaDefecto!, tenantId },
 						data: {
 							saldo: {
 								decrement: saldoDecrementoOrigen,
 							},
 						},
 					});
+					if (cuentaOrigenUpdate.count !== 1) {
+						throw createReconciliacionError(
+							404,
+							"CUENTA_ORIGEN_INACTIVA",
+							"Cuenta bancaria de origen no encontrada o inactiva",
+						);
+					}
 
-					await tx.cuentaBancaria.update({
-						where: { cuentaId: validatedData.cuentaId },
+					const cuentaDestinoUpdate = await tx.cuentaBancaria.updateMany({
+						where: { cuentaId: validatedData.cuentaId, tenantId },
 						data: {
 							saldo: {
 								increment: saldoIncrementoDestino,
 							},
 						},
 					});
+					if (cuentaDestinoUpdate.count !== 1) {
+						throw createReconciliacionError(
+							404,
+							"CUENTA_NO_ENCONTRADA",
+							"Cuenta bancaria no encontrada o inactiva",
+						);
+					}
 				} else {
 					// Solo incrementar en la cuenta destino
-					await tx.cuentaBancaria.update({
-						where: { cuentaId: validatedData.cuentaId },
+					const cuentaDestinoUpdate = await tx.cuentaBancaria.updateMany({
+						where: { cuentaId: validatedData.cuentaId, tenantId },
 						data: {
 							saldo: {
 								increment: saldoIncrementoDestino,
 							},
 						},
 					});
+					if (cuentaDestinoUpdate.count !== 1) {
+						throw createReconciliacionError(
+							404,
+							"CUENTA_NO_ENCONTRADA",
+							"Cuenta bancaria no encontrada o inactiva",
+						);
+					}
 				}
 
 				// Registrar la transacción de moneda si hubo tasa de cambio
@@ -709,8 +787,8 @@ export async function POST(request: NextRequest) {
 
 					// 1) Prioridad a facturaId (clave única en CxC)
 					if (facturaId) {
-						existingCxC = await tx.cuentaPorCobrar.findUnique({
-							where: { facturaId },
+						existingCxC = await tx.cuentaPorCobrar.findFirst({
+							where: { facturaId, tenantId },
 						});
 					}
 
@@ -723,6 +801,7 @@ export async function POST(request: NextRequest) {
 						if (numeroFacturaCandidates.length > 0) {
 							existingCxC = await tx.cuentaPorCobrar.findFirst({
 								where: {
+									tenantId,
 									numeroFactura: {
 										in: numeroFacturaCandidates,
 									},

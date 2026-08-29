@@ -898,23 +898,6 @@ export const AccountingReportsService = {
       orderBy: { fechaVigencia: 'desc' },
     });
 
-    const transaccionesConversion = await prisma.transaccionMoneda.findMany({
-      where: {
-        ...(Object.keys(dateFilter).length > 0 ? { createdAt: dateFilter } : {}),
-        ...(params.monedaOrigen ? { monedaId: params.monedaOrigen } : {}),
-      },
-      include: {
-        moneda: {
-          select: {
-            codigo: true,
-            nombre: true,
-            simbolo: true,
-          },
-        },
-      },
-      orderBy: { createdAt: 'desc' },
-    });
-
     const [
       reconciliacionesVentas,
       reconciliacionesServicios,
@@ -924,6 +907,7 @@ export const AccountingReportsService = {
     ] = await Promise.all([
       prisma.reconciliacionVenta.findMany({
         where: {
+          tenantId: params.tenantId,
           tasaCambio: { not: null },
           ...(Object.keys(dateFilter).length > 0 ? { fechaReconciliacion: dateFilter } : {}),
           ...(params.monedaOrigen ? { moneda: params.monedaOrigen } : {}),
@@ -941,6 +925,7 @@ export const AccountingReportsService = {
       }),
       prisma.reconciliacionServicio.findMany({
         where: {
+          tenantId: params.tenantId,
           tasaCambio: { not: null },
           ...(Object.keys(dateFilter).length > 0 ? { fechaReconciliacion: dateFilter } : {}),
           ...(params.monedaOrigen ? { moneda: params.monedaOrigen } : {}),
@@ -958,6 +943,7 @@ export const AccountingReportsService = {
       }),
       prisma.reconciliacionGasto.findMany({
         where: {
+          tenantId: params.tenantId,
           tasaCambio: { not: null },
           ...(Object.keys(dateFilter).length > 0 ? { fechaReconciliacion: dateFilter } : {}),
           ...(params.monedaOrigen ? { moneda: params.monedaOrigen } : {}),
@@ -969,6 +955,7 @@ export const AccountingReportsService = {
           montoConvertido: true,
           tasaCambio: true,
           rateEffectiveAt: true,
+          referenciaId: true,
           tipoGasto: true,
           descripcion: true,
           fechaReconciliacion: true,
@@ -976,6 +963,7 @@ export const AccountingReportsService = {
       }),
       prisma.ajusteBancario.findMany({
         where: {
+          tenantId: params.tenantId,
           tasaCambio: { not: null },
           ...(Object.keys(dateFilter).length > 0 ? { fechaOperacion: dateFilter } : {}),
           ...(params.monedaOrigen ? { moneda: params.monedaOrigen } : {}),
@@ -993,6 +981,7 @@ export const AccountingReportsService = {
       }),
       prisma.transferenciaBancaria.findMany({
         where: {
+          tenantId: params.tenantId,
           tasaCambio: { not: null },
           ...(Object.keys(dateFilter).length > 0 ? { fechaTransferencia: dateFilter } : {}),
           ...(params.monedaOrigen ? { monedaOrigen: params.monedaOrigen } : {}),
@@ -1010,6 +999,40 @@ export const AccountingReportsService = {
         },
       }),
     ]);
+
+    const transactionReferenceFilters = [
+      {
+        tipoTransaccion: 'venta',
+        referenciaId: { in: reconciliacionesVentas.map((rec: any) => rec.venta?.ventaId).filter(Boolean) },
+      },
+      {
+        tipoTransaccion: 'servicio',
+        referenciaId: {
+          in: reconciliacionesServicios.map((rec: any) => rec.ventasServicio?.ventaServicioId).filter(Boolean),
+        },
+      },
+      {
+        tipoTransaccion: 'gasto',
+        referenciaId: { in: reconciliacionesGastos.map((rec: any) => rec.referenciaId).filter(Boolean) },
+      },
+    ];
+    const transaccionesConversion = await prisma.transaccionMoneda.findMany({
+      where: {
+        ...(Object.keys(dateFilter).length > 0 ? { createdAt: dateFilter } : {}),
+        ...(params.monedaOrigen ? { monedaId: params.monedaOrigen } : {}),
+        OR: transactionReferenceFilters,
+      },
+      include: {
+        moneda: {
+          select: {
+            codigo: true,
+            nombre: true,
+            simbolo: true,
+          },
+        },
+      },
+      orderBy: { createdAt: 'desc' },
+    });
 
     const conversiones: ExchangeConversion[] = [
       ...reconciliacionesVentas.map((rec: any) => ({
@@ -1156,6 +1179,7 @@ export const AccountingReportsService = {
     ] = await Promise.all([
       prisma.reconciliacionVenta.findMany({
         where: {
+          tenantId: params.tenantId,
           ...(Object.keys(fechaFiltros).length > 0 ? { fechaReconciliacion: fechaFiltros } : {}),
           tasaCambio: { not: null },
           moneda: { not: monedaBase },
@@ -1169,6 +1193,7 @@ export const AccountingReportsService = {
       }),
       prisma.reconciliacionServicio.findMany({
         where: {
+          tenantId: params.tenantId,
           ...(Object.keys(fechaFiltros).length > 0 ? { fechaReconciliacion: fechaFiltros } : {}),
           tasaCambio: { not: null },
           moneda: { not: monedaBase },
@@ -1181,6 +1206,7 @@ export const AccountingReportsService = {
       }),
       prisma.reconciliacionGasto.findMany({
         where: {
+          tenantId: params.tenantId,
           ...(Object.keys(fechaFiltros).length > 0 ? { fechaReconciliacion: fechaFiltros } : {}),
           tasaCambio: { not: null },
           moneda: { not: monedaBase },
@@ -1196,6 +1222,7 @@ export const AccountingReportsService = {
       }),
       prisma.ajusteBancario.findMany({
         where: {
+          tenantId: params.tenantId,
           ...(Object.keys(fechaFiltros).length > 0 ? { fechaOperacion: fechaFiltros } : {}),
           tasaCambio: { not: null },
           moneda: { not: monedaBase },
@@ -1207,6 +1234,7 @@ export const AccountingReportsService = {
       }),
       prisma.transferenciaBancaria.findMany({
         where: {
+          tenantId: params.tenantId,
           ...(Object.keys(fechaFiltros).length > 0 ? { fechaTransferencia: fechaFiltros } : {}),
           tasaCambio: { not: null },
           OR: [
