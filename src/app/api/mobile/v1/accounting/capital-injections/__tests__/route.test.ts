@@ -1,5 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { NextRequest, NextResponse } from 'next/server';
+import { z } from 'zod';
 
 vi.mock('@/lib/auth-middleware', () => ({
   authenticateUser: vi.fn(),
@@ -75,7 +76,7 @@ describe('mobile accounting capital injections route', () => {
     });
   });
 
-  it('creates a capital injection for the authenticated tenant', async () => {
+  it('creates a capital injection for the authenticated tenant using the canonical contract', async () => {
     vi.mocked(authenticateUser).mockResolvedValue({ user: mockUser } as never);
     vi.mocked(AccountingOperationsMutationService.createCapitalInjection).mockResolvedValue({
       inyeccionCapitalId: 'ic-1',
@@ -86,11 +87,12 @@ describe('mobile accounting capital injections route', () => {
       method: 'POST',
       headers: { authorization: 'Bearer mobile-access', 'content-type': 'application/json' },
       body: JSON.stringify({
-        monto: 500,
+        montoRecibido: 500,
         moneda: 'CUP',
-        tipo: 'APORTE',
+        tipo: 'CAPITAL_SOCIAL',
         descripcion: 'Capital inicial',
-        cuentaBancariaId: 'cb-1',
+        cuentaId: 'cb-1',
+        socio: 'Socio fundador',
       }),
     });
 
@@ -101,13 +103,39 @@ describe('mobile accounting capital injections route', () => {
     expect(data.inyeccionCapitalId).toBe('ic-1');
     expect(AccountingOperationsMutationService.createCapitalInjection).toHaveBeenCalledWith({
       input: {
-        monto: 500,
+        montoRecibido: 500,
         moneda: 'CUP',
-        tipo: 'APORTE',
+        tipo: 'CAPITAL_SOCIAL',
         descripcion: 'Capital inicial',
-        cuentaBancariaId: 'cb-1',
+        cuentaId: 'cb-1',
+        socio: 'Socio fundador',
       },
       user: mockUser,
     });
+  });
+
+  it('maps service validation failures to a client error', async () => {
+    vi.mocked(authenticateUser).mockResolvedValue({ user: mockUser } as never);
+    vi.mocked(AccountingOperationsMutationService.createCapitalInjection).mockRejectedValueOnce(
+      new z.ZodError([]),
+    );
+
+    const request = new NextRequest('http://localhost/api/mobile/v1/accounting/capital-injections', {
+      method: 'POST',
+      headers: { authorization: 'Bearer mobile-access', 'content-type': 'application/json' },
+      body: JSON.stringify({
+        monto: 500,
+        moneda: 'CUP',
+        tipo: 'APORTE',
+        cuentaBancariaId: 'cb-1',
+      }),
+    });
+
+    const response = await POST(request);
+    const data = await response.json();
+
+    expect(response.status).toBe(400);
+    expect(data.code).toBe('VALIDATION_ERROR');
+    expect(AccountingOperationsMutationService.createCapitalInjection).toHaveBeenCalledOnce();
   });
 });

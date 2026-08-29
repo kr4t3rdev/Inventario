@@ -186,7 +186,7 @@ export const AccountingOperationsReadService = {
 
   async getCapitalInjections(filters: CapitalInjectionFilters) {
     const where: Record<string, unknown> = {
-      tenantId: filters.tenantId,
+      cuentaBancaria: { tenantId: filters.tenantId },
     };
 
     if (filters.tipo) {

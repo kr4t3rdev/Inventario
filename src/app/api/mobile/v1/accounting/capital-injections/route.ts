@@ -1,3 +1,4 @@
+import { z } from 'zod';
 import { ActionError } from '@/lib/server-actions';
 import { authenticateUser } from '@/lib/auth-middleware';
 import { requireFeature } from '@/lib/services/tenant-scope';
@@ -83,6 +84,9 @@ export async function POST(request: Request) {
   } catch (error) {
     if (error instanceof ActionError) {
       return errorResponse(error.message, mapActionErrorStatus(error.code), error.code);
+    }
+    if (error instanceof z.ZodError) {
+      return errorResponse('Los datos de la inyección de capital no son válidos', 400, 'VALIDATION_ERROR');
     }
     console.error('Error en mobile accounting capital injections route:', error);
     return errorResponse('Error interno del servidor', 500, 'INTERNAL_ERROR');

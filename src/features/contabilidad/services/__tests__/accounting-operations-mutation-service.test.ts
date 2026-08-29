@@ -3,12 +3,15 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 const create = vi.fn();
 const update = vi.fn();
 const findUnique = vi.fn();
+const findFirst = vi.fn();
 const transaction = vi.fn();
 const acquireAccountingTenantLock = vi.fn();
+const capitalCreate = vi.fn();
+const auditLogCreate = vi.fn();
 
 vi.mock('@/lib/prisma', () => ({
   prisma: {
-    cuentaBancaria: { findUnique },
+    cuentaBancaria: { findUnique, findFirst },
     $transaction: transaction,
   },
 }));
@@ -18,7 +21,7 @@ vi.mock('@/lib/services/tenant-scope', () => ({
 }));
 
 vi.mock('@/lib/services/audit-log-service', () => ({
-  AuditLogService: { log: vi.fn() },
+  AuditLogService: { log: vi.fn(), logStrict: auditLogCreate },
 }));
 
 vi.mock('../accounting-tenant-lock-service', () => ({
@@ -35,11 +38,29 @@ describe('AccountingOperationsMutationService', () => {
       saldo: 1000,
       nombreBanco: 'Banco',
     });
+    findFirst.mockResolvedValue({
+      cuentaId: 'account-1',
+      tenantId: 'tenant-1',
+      isActive: true,
+      saldo: 1000,
+      moneda: 'CUP',
+      nombreBanco: 'Banco',
+    });
     create.mockResolvedValue({ ajusteId: 'adjustment-1' });
     update.mockResolvedValue({ count: 1 });
+    capitalCreate.mockResolvedValue({
+      id: 'capital-1',
+      tipo: 'CAPITAL_SOCIAL',
+      montoRecibido: 250,
+      moneda: 'CUP',
+      cuentaId: 'account-1',
+    });
+    auditLogCreate.mockResolvedValue({ id: 'audit-1' });
     transaction.mockImplementation(async (callback: (tx: unknown) => Promise<unknown>) => callback({
       ajusteBancario: { create },
-      cuentaBancaria: { update },
+      cuentaBancaria: { findFirst, update },
+      inyeccionCapital: { create: capitalCreate },
+      auditLog: { create: auditLogCreate },
     }));
   });
 
@@ -102,5 +123,165 @@ describe('AccountingOperationsMutationService', () => {
       expect.anything(),
       'tenant-1',
     );
+  });
+
+  it('crea una inyección con los campos Prisma y aumenta el saldo una sola vez', async () => {
+    const { AccountingOperationsMutationService } = await import('../accounting-operations-mutation-service');
+
+    await AccountingOperationsMutationService.createCapitalInjection({
+      input: {
+        montoRecibido: 250,
+        moneda: 'CUP',
+        tipo: 'CAPITAL_SOCIAL',
+        cuentaId: 'account-1',
+        socio: 'Socio fundador',
+        descripcion: 'Aporte inicial adicional',
+      },
+      user: { userId: 'user-1', tenantId: 'tenant-1' } as never,
+    });
+
+    expect(findFirst).toHaveBeenCalledWith({
+      where: { cuentaId: 'account-1', tenantId: 'tenant-1' },
+      select: expect.objectContaining({
+        cuentaId: true,
+        saldo: true,
+        moneda: true,
+        isActive: true,
+      }),
+    });
+    expect(capitalCreate).toHaveBeenCalledWith({
+      data: expect.objectContaining({
+        tipo: 'CAPITAL_SOCIAL',
+        montoRecibido: 250,
+        moneda: 'CUP',
+        cuentaId: 'account-1',
+        socio: 'Socio fundador',
+        entidadPrestamista: null,
+      }),
+    });
+    expect(capitalCreate.mock.calls[0][0].data).not.toHaveProperty('monto');
+    expect(capitalCreate.mock.calls[0][0].data).not.toHaveProperty('cuentaBancariaId');
+    expect(update).toHaveBeenCalledTimes(1);
+    expect(update).toHaveBeenCalledWith({
+      where: { cuentaId: 'account-1' },
+      data: { saldo: { increment: 250 } },
+    });
+    expect(auditLogCreate).toHaveBeenCalledWith(
+      expect.objectContaining({ entidad: 'INYECCION_CAPITAL' }),
+      expect.objectContaining({ inyeccionCapital: { create: capitalCreate } }),
+    );
+  });
+
+  it('persiste los datos específicos de una deuda externa', async () => {
+    const { AccountingOperationsMutationService } = await import('../accounting-operations-mutation-service');
+
+    await AccountingOperationsMutationService.createCapitalInjection({
+      input: {
+        montoRecibido: 1000,
+        moneda: 'CUP',
+        tipo: 'DEUDA_EXTERNA',
+        cuentaId: 'account-1',
+        entidadPrestamista: 'Financiera externa',
+        tasaInteres: 10,
+        plazoMeses: 12,
+      },
+      user: { userId: 'user-1', tenantId: 'tenant-1' } as never,
+    });
+
+    expect(capitalCreate).toHaveBeenCalledWith({
+      data: expect.objectContaining({
+        tipo: 'DEUDA_EXTERNA',
+        montoRecibido: 1000,
+        tasaInteres: 10,
+        montoInteres: 100,
+        montoTotalDeuda: 1100,
+        saldoPendiente: 1100,
+        plazoMeses: 12,
+        entidadPrestamista: 'Financiera externa',
+        socio: null,
+        estado: 'ACTIVA',
+      }),
+    });
+  });
+
+  it('rechaza una cuenta inexistente o de otro tenant sin abrir escrituras', async () => {
+    findFirst.mockResolvedValueOnce(null);
+    const { AccountingOperationsMutationService } = await import('../accounting-operations-mutation-service');
+
+    await expect(AccountingOperationsMutationService.createCapitalInjection({
+      input: {
+        montoRecibido: 250,
+        moneda: 'CUP',
+        tipo: 'CAPITAL_SOCIAL',
+        cuentaId: 'foreign-account',
+        socio: 'Socio fundador',
+      },
+      user: { userId: 'user-1', tenantId: 'tenant-1' } as never,
+    })).rejects.toMatchObject({ code: 'NOT_FOUND' });
+
+    expect(capitalCreate).not.toHaveBeenCalled();
+    expect(update).not.toHaveBeenCalled();
+  });
+
+  it('rechaza una cuenta inactiva o con moneda distinta', async () => {
+    const { AccountingOperationsMutationService } = await import('../accounting-operations-mutation-service');
+
+    findFirst.mockResolvedValueOnce({
+      cuentaId: 'account-1',
+      tenantId: 'tenant-1',
+      isActive: false,
+      saldo: 1000,
+      moneda: 'CUP',
+    });
+    await expect(AccountingOperationsMutationService.createCapitalInjection({
+      input: {
+        montoRecibido: 250,
+        moneda: 'CUP',
+        tipo: 'CAPITAL_SOCIAL',
+        cuentaId: 'account-1',
+        socio: 'Socio fundador',
+      },
+      user: { userId: 'user-1', tenantId: 'tenant-1' } as never,
+    })).rejects.toMatchObject({ code: 'VALIDATION_ERROR' });
+
+    findFirst.mockResolvedValueOnce({
+      cuentaId: 'account-1',
+      tenantId: 'tenant-1',
+      isActive: true,
+      saldo: 1000,
+      moneda: 'USD',
+    });
+    await expect(AccountingOperationsMutationService.createCapitalInjection({
+      input: {
+        montoRecibido: 250,
+        moneda: 'CUP',
+        tipo: 'CAPITAL_SOCIAL',
+        cuentaId: 'account-1',
+        socio: 'Socio fundador',
+      },
+      user: { userId: 'user-1', tenantId: 'tenant-1' } as never,
+    })).rejects.toMatchObject({ code: 'VALIDATION_ERROR' });
+
+    expect(capitalCreate).not.toHaveBeenCalled();
+    expect(update).not.toHaveBeenCalled();
+  });
+
+  it('mantiene inyección, saldo y auditoría dentro de la transacción', async () => {
+    const { AccountingOperationsMutationService } = await import('../accounting-operations-mutation-service');
+    auditLogCreate.mockRejectedValueOnce(new Error('audit failed'));
+
+    await expect(AccountingOperationsMutationService.createCapitalInjection({
+      input: {
+        montoRecibido: 250,
+        moneda: 'CUP',
+        tipo: 'CAPITAL_SOCIAL',
+        cuentaId: 'account-1',
+        socio: 'Socio fundador',
+      },
+      user: { userId: 'user-1', tenantId: 'tenant-1' } as never,
+    })).rejects.toThrow('audit failed');
+
+    expect(transaction).toHaveBeenCalledTimes(1);
+    expect(auditLogCreate).toHaveBeenCalled();
   });
 });

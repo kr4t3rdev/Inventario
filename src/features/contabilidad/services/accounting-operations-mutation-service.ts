@@ -36,12 +36,37 @@ const createBankAdjustmentSchema = z.object({
   fechaOperacion: z.coerce.date().optional(),
 });
 
-const createCapitalInjectionSchema = z.object({
-  monto: z.coerce.number().positive(),
-  moneda: z.string().optional().default('CUP'),
-  tipo: z.string().optional().default('APORTE'),
-  descripcion: z.string().optional(),
-  cuentaBancariaId: z.string().optional(),
+const optionalText = z.preprocess(
+  (value) => (typeof value === 'string' && value.trim() === '' ? undefined : value),
+  z.string().trim().min(1).optional(),
+);
+
+export const createCapitalInjectionSchema = z.object({
+  montoRecibido: z.coerce.number().positive(),
+  moneda: z.string().trim().min(1).default('CUP').transform((value) => value.toUpperCase()),
+  tipo: z.enum(['CAPITAL_SOCIAL', 'DEUDA_EXTERNA']),
+  cuentaId: z.string().min(1),
+  descripcion: optionalText,
+  socio: optionalText,
+  entidadPrestamista: optionalText,
+  tasaInteres: z.coerce.number().min(0).optional(),
+  plazoMeses: z.coerce.number().int().positive().optional(),
+  fechaInicioPago: z.coerce.date().optional(),
+}).superRefine((input, ctx) => {
+  if (input.tipo === 'CAPITAL_SOCIAL' && !input.socio) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      path: ['socio'],
+      message: 'El nombre del socio es requerido para Capital Social',
+    });
+  }
+  if (input.tipo === 'DEUDA_EXTERNA' && !input.entidadPrestamista) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      path: ['entidadPrestamista'],
+      message: 'La entidad prestamista es requerida para Deuda Externa',
+    });
+  }
 });
 
 const registerCapitalPaymentSchema = z.object({
@@ -333,7 +358,7 @@ export const AccountingOperationsMutationService = {
     input,
     user,
   }: {
-    input: z.infer<typeof createCapitalInjectionSchema>;
+    input: z.input<typeof createCapitalInjectionSchema>;
     user: AuthenticatedUser;
   }) {
     const parsed = createCapitalInjectionSchema.parse(input);
@@ -341,19 +366,74 @@ export const AccountingOperationsMutationService = {
 
     const inyeccion = await prisma.$transaction(async (tx: any) => {
       await acquireAccountingTenantLock(tx, tenantId);
-      return tx.inyeccionCapital.create({
-        data: {
-          monto: parsed.monto, moneda: parsed.moneda, tipo: parsed.tipo, descripcion: parsed.descripcion, cuentaBancariaId: parsed.cuentaBancariaId, tenantId,
+
+      const cuenta = await tx.cuentaBancaria.findFirst({
+        where: { cuentaId: parsed.cuentaId, tenantId },
+        select: {
+          cuentaId: true,
+          saldo: true,
+          moneda: true,
+          isActive: true,
         },
       });
-    });
 
-    await AuditLogService.log({
-      accion: 'CREATE',
-      entidad: 'INYECCION_CAPITAL',
-      entidadId: inyeccion.id,
-      usuarioId: user.userId,
-      detalles: { monto: parsed.monto, moneda: parsed.moneda, tipo: parsed.tipo, descripcion: parsed.descripcion },
+      if (!cuenta) {
+        throw new ActionError('Cuenta bancaria no encontrada', 'NOT_FOUND');
+      }
+      if (!cuenta.isActive) {
+        throw new ActionError('La cuenta bancaria está inactiva', 'VALIDATION_ERROR');
+      }
+      if (cuenta.moneda.toUpperCase() !== parsed.moneda) {
+        throw new ActionError(
+          'La moneda de la inyección debe coincidir con la moneda de la cuenta',
+          'VALIDATION_ERROR',
+        );
+      }
+
+      const isDebt = parsed.tipo === 'DEUDA_EXTERNA';
+      const montoInteres = isDebt
+        ? parsed.montoRecibido * ((parsed.tasaInteres ?? 0) / 100)
+        : null;
+      const montoTotalDeuda = isDebt ? parsed.montoRecibido + (montoInteres ?? 0) : null;
+
+      const created = await tx.inyeccionCapital.create({
+        data: {
+          montoRecibido: parsed.montoRecibido,
+          moneda: parsed.moneda,
+          tipo: parsed.tipo,
+          cuentaId: parsed.cuentaId,
+          descripcion: parsed.descripcion,
+          socio: isDebt ? null : parsed.socio,
+          entidadPrestamista: isDebt ? parsed.entidadPrestamista : null,
+          tasaInteres: isDebt ? parsed.tasaInteres ?? 0 : null,
+          montoInteres,
+          montoTotalDeuda,
+          saldoPendiente: montoTotalDeuda,
+          plazoMeses: isDebt ? parsed.plazoMeses : null,
+          fechaInicioPago: isDebt ? parsed.fechaInicioPago : null,
+          estado: isDebt ? 'ACTIVA' : null,
+        },
+      });
+
+      await tx.cuentaBancaria.update({
+        where: { cuentaId: parsed.cuentaId },
+        data: { saldo: { increment: parsed.montoRecibido } },
+      });
+
+      await AuditLogService.logStrict({
+        accion: 'CREATE',
+        entidad: 'INYECCION_CAPITAL',
+        entidadId: created.id,
+        usuarioId: user.userId,
+        detalles: {
+          montoRecibido: parsed.montoRecibido,
+          moneda: parsed.moneda,
+          tipo: parsed.tipo,
+          cuentaId: parsed.cuentaId,
+        },
+      }, tx);
+
+      return created;
     });
 
     return inyeccion;

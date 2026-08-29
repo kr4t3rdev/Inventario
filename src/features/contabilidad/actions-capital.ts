@@ -10,16 +10,13 @@ import { prisma } from '@/lib/prisma';
 import { requireTenant, requireFeature } from '@/lib/services/tenant-scope';
 import { withPeriodValidation } from '@/lib/services/with-period-validation';
 import { AccountingOperationsReadService } from '@/features/contabilidad/services/accounting-operations-read-service';
-import { AccountingOperationsMutationService } from '@/features/contabilidad/services/accounting-operations-mutation-service';
+import {
+  AccountingOperationsMutationService,
+  createCapitalInjectionSchema,
+} from '@/features/contabilidad/services/accounting-operations-mutation-service';
 import type { AuthenticatedUser } from '@/lib/auth-middleware';
 
-const createSchema = z.object({
-  monto: z.coerce.number().positive(),
-  moneda: z.string().optional().default('CUP'),
-  tipo: z.string().optional().default('APORTE'),
-  descripcion: z.string().optional(),
-  cuentaBancariaId: z.string().optional(),
-});
+const createSchema = createCapitalInjectionSchema;
 
 const pagoSchema = z.object({
   inyeccionId: z.string().min(1),
@@ -40,7 +37,7 @@ export const getInyeccionesCapitalAction = withAction(async (_input: { tipo?: st
 
 export const createInyeccionCapitalAction = withAction(withPeriodValidation(
   () => new Date(),
-  async (input: z.infer<typeof createSchema>, user: AuthenticatedUser) => {
+  async (input: z.input<typeof createSchema>, user: AuthenticatedUser) => {
   requireFeature(user, 'inyeccion-capital', 'registrar inyecciones de capital');
   const inyeccion = await AccountingOperationsMutationService.createCapitalInjection({
     input,
