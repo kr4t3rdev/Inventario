@@ -36,7 +36,7 @@ export const getInyeccionesCapitalAction = withAction(async (_input: { tipo?: st
 });
 
 export const createInyeccionCapitalAction = withAction(withPeriodValidation(
-  () => new Date(),
+  (input) => createSchema.safeParse(input).data?.fechaOperacion ?? new Date(),
   async (input: z.input<typeof createSchema>, user: AuthenticatedUser) => {
   requireFeature(user, 'inyeccion-capital', 'registrar inyecciones de capital');
   const inyeccion = await AccountingOperationsMutationService.createCapitalInjection({

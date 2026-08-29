@@ -284,4 +284,27 @@ describe('AccountingOperationsMutationService', () => {
     expect(transaction).toHaveBeenCalledTimes(1);
     expect(auditLogCreate).toHaveBeenCalled();
   });
+
+  it('persiste la fecha de operación que fue validada por el período', async () => {
+    const { AccountingOperationsMutationService } = await import('../accounting-operations-mutation-service');
+    const fechaOperacion = '2026-01-15T12:00:00.000Z';
+
+    await AccountingOperationsMutationService.createCapitalInjection({
+      input: {
+        montoRecibido: 250,
+        moneda: 'CUP',
+        tipo: 'CAPITAL_SOCIAL',
+        cuentaId: 'account-1',
+        socio: 'Socio fundador',
+        fechaOperacion,
+      },
+      user: { userId: 'user-1', tenantId: 'tenant-1' } as never,
+    });
+
+    expect(capitalCreate).toHaveBeenCalledWith({
+      data: expect.objectContaining({
+        fechaRegistro: new Date(fechaOperacion),
+      }),
+    });
+  });
 });

@@ -52,6 +52,7 @@ export const createCapitalInjectionSchema = z.object({
   tasaInteres: z.coerce.number().min(0).optional(),
   plazoMeses: z.coerce.number().int().positive().optional(),
   fechaInicioPago: z.coerce.date().optional(),
+  fechaOperacion: z.coerce.date().optional(),
 }).superRefine((input, ctx) => {
   if (input.tipo === 'CAPITAL_SOCIAL' && !input.socio) {
     ctx.addIssue({
@@ -411,6 +412,7 @@ export const AccountingOperationsMutationService = {
           saldoPendiente: montoTotalDeuda,
           plazoMeses: isDebt ? parsed.plazoMeses : null,
           fechaInicioPago: isDebt ? parsed.fechaInicioPago : null,
+          fechaRegistro: parsed.fechaOperacion ?? new Date(),
           estado: isDebt ? 'ACTIVA' : null,
         },
       });

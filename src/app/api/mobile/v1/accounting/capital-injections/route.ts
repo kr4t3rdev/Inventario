@@ -9,12 +9,15 @@ import { extraerFechaDeBody, validarEscrituraPeriodo } from '@/lib/services/vali
 
 export const dynamic = 'force-dynamic';
 
+const capitalInjectionTypeSchema = z.enum(['CAPITAL_SOCIAL', 'DEUDA_EXTERNA']);
+
 function mapActionErrorStatus(code: string): number {
   switch (code) {
     case 'NOT_FOUND':
       return 404;
     case 'FORBIDDEN':
     case 'TENANT_REQUIRED':
+    case 'FEATURE_NOT_AVAILABLE':
       return 403;
     case 'VALIDATION_ERROR':
       return 400;
@@ -34,17 +37,26 @@ export async function GET(request: Request) {
     return errorResponse('Tenant no identificado', 403, 'TENANT_REQUIRED');
   }
 
-  requireFeature(authResult.user, 'inyeccion-capital', 'administrar inyecciones de capital');
-
   try {
+    requireFeature(authResult.user, 'inyeccion-capital', 'administrar inyecciones de capital');
     const { searchParams } = new URL(request.url);
+    const rawTipo = searchParams.get('tipo');
+    const tipo = rawTipo
+      ? capitalInjectionTypeSchema.safeParse(rawTipo)
+      : { success: true as const, data: null };
+    if (!tipo.success) {
+      throw new ActionError('El tipo de inyección no es válido', 'VALIDATION_ERROR');
+    }
     const result = await AccountingOperationsReadService.getCapitalInjections({
       tenantId,
-      tipo: searchParams.get('tipo'),
+      tipo: tipo.data,
     });
 
     return successResponse({ items: result.inyecciones });
   } catch (error) {
+    if (error instanceof ActionError) {
+      return errorResponse(error.message, mapActionErrorStatus(error.code), error.code);
+    }
     console.error('Error en mobile accounting capital injections route:', error);
     return errorResponse('Error interno del servidor', 500, 'INTERNAL_ERROR');
   }
