@@ -126,7 +126,8 @@ export const VentaMutationService = {
     }));
 
     const subtotalVenta = itemsData.reduce((sum, item) => sum + item.total, 0);
-    const totalVenta = subtotalVenta - (parsed.descuento ?? 0);
+    const cargoTransporte = parsed.cargoTransporte ?? 0;
+    const totalVenta = subtotalVenta - (parsed.descuento ?? 0) + cargoTransporte;
     const totalCantidad = itemsData.reduce((sum, item) => sum + item.cantidad, 0);
 
     return prisma.$transaction(async (tx) => {
@@ -292,7 +293,7 @@ export const VentaMutationService = {
             clienteId: parsed.clienteId,
             subtotal: subtotalVenta,
             descuento: parsed.descuento ?? 0,
-            cargoTransporte: 0,
+            cargoTransporte,
             total: Math.max(totalVenta, 0),
             estado: 'PENDIENTE',
             creadoPor: user.userId || 'sistema',

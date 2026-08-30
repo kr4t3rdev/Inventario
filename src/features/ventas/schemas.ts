@@ -17,6 +17,7 @@ export const createVentaSchema = z.object({
   clienteId: z.string().optional().nullable(),
   empleadoId: z.string().optional().nullable(),
   descuento: z.coerce.number().int().min(0).optional().default(0),
+  cargoTransporte: z.coerce.number().int().min(0).optional().default(0),
   observaciones: z.string().max(500).optional().nullable(),
   items: z.array(ventaItemSchema).min(1, 'Debe tener al menos un producto'),
   // Turno de punto de venta

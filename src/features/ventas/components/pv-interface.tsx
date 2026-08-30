@@ -534,6 +534,7 @@ export function VentaInterface() {
 				tipoVencimiento,
 				fechaVencimiento:
 					tipoVencimiento === "fecha" ? fechaVencimiento : undefined,
+				cargoTransporte: Math.round(cargoTransporte),
 			});
 
 			if (!result.success) {
