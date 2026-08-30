@@ -534,8 +534,6 @@ export function VentaInterface() {
 				tipoVencimiento,
 				fechaVencimiento:
 					tipoVencimiento === "fecha" ? fechaVencimiento : undefined,
-				cuentaBancariaId:
-					tipoVencimiento === "contra_pago" ? selectedSerieId : undefined,
 			});
 
 			if (!result.success) {
