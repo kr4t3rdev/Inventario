@@ -9,6 +9,7 @@ const prismaMock = vi.hoisted(() => ({
   inyeccionCapital: { findMany: vi.fn() },
   cierreContable: { findMany: vi.fn() },
   periodoContable: { findMany: vi.fn() },
+  fxEvidence: { findMany: vi.fn() },
 }));
 
 const tenantPolicyMock = vi.hoisted(() => ({
@@ -84,6 +85,7 @@ describe('getCurrentBalance', () => {
       perdidas: 20,
     }]);
     prismaMock.periodoContable.findMany.mockResolvedValue([]);
+    prismaMock.fxEvidence.findMany.mockResolvedValue([]);
   });
 
   it('construye el balance con costos remanentes y cobertura explícita', async () => {
@@ -187,6 +189,108 @@ describe('getCurrentBalance', () => {
       issue: 'MISSING_CONVERSION',
       affectedAmount: 80,
     });
+  });
+
+  it('usa la última evidencia FX válida del corte para bancos y capital extranjero', async () => {
+    prismaMock.fxEvidence.findMany.mockResolvedValue([
+      {
+        fxEvidenceId: 'evidence-capital',
+        tenantId: 'tenant-1',
+        sourceType: 'CAPITAL_INJECTION',
+        sourceId: 'capital-usd',
+        originalAmount: 200,
+        originalCurrency: 'USD',
+        functionalAmount: 4800,
+        functionalCurrency: 'CUP',
+        exchangeRate: 24,
+        rateEffectiveAt: new Date('2026-01-01T00:00:00Z'),
+        fxCatalogRateId: 'rate-24',
+        provenance: 'MANUAL_GOVERNED',
+        source: 'current-balance-fx-capture',
+        evidence: {},
+        evidenceFingerprint: 'fingerprint-capital',
+        evidenceVersion: 1,
+        capturedAt: new Date('2026-01-01T00:00:00Z'),
+      },
+      {
+        fxEvidenceId: 'evidence-bank',
+        tenantId: 'tenant-1',
+        sourceType: 'BANK_ACCOUNT',
+        sourceId: 'usd-bank',
+        originalAmount: 100,
+        originalCurrency: 'USD',
+        functionalAmount: 2400,
+        functionalCurrency: 'CUP',
+        exchangeRate: 24,
+        rateEffectiveAt: new Date('2026-01-01T00:00:00Z'),
+        fxCatalogRateId: 'rate-24',
+        provenance: 'MANUAL_GOVERNED',
+        source: 'current-balance-fx-capture',
+        evidence: {},
+        evidenceFingerprint: 'fingerprint-bank',
+        evidenceVersion: 1,
+        capturedAt: new Date('2026-01-01T00:00:00Z'),
+      },
+    ]);
+
+    const { getCurrentBalance } = await import(
+      '@/features/contabilidad/services/current-balance-service'
+    );
+    const result = await getCurrentBalance({
+      tenantId: 'tenant-1',
+      asOf: new Date('2026-08-20T12:00:00Z'),
+      currentResult: 394,
+      currentResultYear: 2026,
+    });
+
+    expect(result.assets.cashAndBanks).toBe(3400);
+    expect(result.equity.capital).toBe(5300);
+    expect(result.coverage.parts).not.toEqual(expect.arrayContaining([
+      expect.objectContaining({ itemId: 'usd-bank' }),
+      expect.objectContaining({ itemId: 'capital-usd' }),
+    ]));
+    expect(prismaMock.fxEvidence.findMany).toHaveBeenCalledWith(expect.objectContaining({
+      where: expect.objectContaining({ tenantId: 'tenant-1', cutoffAt: { lte: expect.any(Date) } }),
+    }));
+  });
+
+  it('conserva unresolvedParts cuando la evidencia no coincide con el saldo actual', async () => {
+    prismaMock.fxEvidence.findMany.mockResolvedValue([{
+      fxEvidenceId: 'stale-bank-evidence',
+      tenantId: 'tenant-1',
+      sourceType: 'BANK_ACCOUNT',
+      sourceId: 'usd-bank',
+      originalAmount: 99,
+      originalCurrency: 'USD',
+      functionalAmount: 2376,
+      functionalCurrency: 'CUP',
+      exchangeRate: 24,
+      rateEffectiveAt: new Date('2026-01-01T00:00:00Z'),
+      fxCatalogRateId: 'rate-24',
+      provenance: 'MANUAL_GOVERNED',
+      source: 'current-balance-fx-capture',
+      evidence: {},
+      evidenceFingerprint: 'stale-bank',
+      evidenceVersion: 1,
+      capturedAt: new Date('2026-01-01T00:00:00Z'),
+    }]);
+
+    const { getCurrentBalance } = await import(
+      '@/features/contabilidad/services/current-balance-service'
+    );
+    const result = await getCurrentBalance({
+      tenantId: 'tenant-1',
+      asOf: new Date('2026-08-20T12:00:00Z'),
+      currentResult: 0,
+      currentResultYear: 2026,
+    });
+
+    expect(result.coverage.parts).toContainEqual(expect.objectContaining({
+      source: 'bank',
+      itemId: 'usd-bank',
+      issue: 'INCONSISTENT_CONVERSION_EVIDENCE',
+    }));
+    expect(result.assets.cashAndBanks).toBe(1000);
   });
 
   it('usa el resultado anual del snapshot aprobado como utilidad retenida', async () => {

@@ -226,6 +226,7 @@ model Tenant {
   accountingPolicy               TenantAccountingPolicy?
   accountingPolicyRolloutEntries AccountingPolicyRolloutEntry[]
   accountingPolicyApprovals      AccountingPolicyTenantApproval[]
+  fxEvidence                    FxEvidence[]
   financialAuxiliaryCheckpoints FinancialAuxiliaryCheckpoint[]
   snapshotPeriodos           SnapshotPeriodo[]
   turnosPos                  TurnoPuntoVenta[]
@@ -1440,6 +1441,34 @@ model FinancialAuxiliaryCheckpoint {
   @@index([tenantId, capturedAt])
   @@index([functionalCurrencyCode])
   @@map("financial_auxiliary_checkpoints")
+}
+
+model FxEvidence {
+  fxEvidenceId        String   @id @default(cuid())
+  tenantId            String
+  sourceType          String
+  sourceId            String
+  originalAmount      Decimal  @db.Decimal(20, 8)
+  originalCurrency    String
+  functionalAmount    Decimal  @db.Decimal(20, 8)
+  functionalCurrency  String
+  exchangeRate        Decimal  @db.Decimal(20, 10)
+  rateEffectiveAt     DateTime
+  cutoffAt            DateTime
+  fxCatalogRateId     String?
+  provenance          String
+  source              String
+  evidence            Json
+  evidenceFingerprint String
+  evidenceVersion     Int
+  capturedAt          DateTime @default(now())
+  createdAt           DateTime @default(now())
+  tenant              Tenant   @relation(fields: [tenantId], references: [tenantId], onDelete: Restrict)
+
+  @@unique([tenantId, sourceType, sourceId, evidenceFingerprint])
+  @@index([tenantId, sourceType, sourceId, cutoffAt])
+  @@index([tenantId, sourceType, sourceId, capturedAt])
+  @@map("fx_evidence")
 }
 
 model CatalogoReparacionConfig {

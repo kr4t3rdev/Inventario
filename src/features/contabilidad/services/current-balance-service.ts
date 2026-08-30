@@ -12,6 +12,7 @@ import { prisma } from '@/lib/prisma';
 import type { Prisma } from '@/generated/prisma';
 import { getAccountingYear } from '@/lib/services/fecha-operacion-registry';
 import { hashFinancialSnapshot } from '@/features/contabilidad/services/historical-financial-report-service';
+import { FX_EVIDENCE_SOURCE_TYPES } from './fx-evidence-service';
 
 interface CurrentBalanceParams {
   tenantId: string;
@@ -34,6 +35,50 @@ function isFunctionalCurrency(
   return (currency?.trim().toUpperCase() || functionalCurrency) === functionalCurrency;
 }
 
+interface BalanceFxEvidenceRow {
+  sourceType: string;
+  sourceId: string;
+  originalAmount: number | string;
+  originalCurrency: string;
+  functionalAmount: number | string;
+  functionalCurrency: string;
+  exchangeRate: number | string;
+  rateEffectiveAt: Date;
+  cutoffAt?: Date;
+}
+
+function amountsMatch(left: number, right: number): boolean {
+  return Number.isFinite(left) && Number.isFinite(right)
+    && Math.abs(left - right) <= Math.max(0.01, Math.abs(right) * 0.000001);
+}
+
+function resolveFxEvidence(
+  rows: BalanceFxEvidenceRow[],
+  sourceType: string,
+  sourceId: string,
+  amount: number,
+  currency: string,
+  functionalCurrency: string,
+  asOf: Date,
+): { amount: number } | { issue: 'MISSING_CONVERSION' | 'INCONSISTENT_CONVERSION_EVIDENCE' } {
+  const normalizedCurrency = currency.trim().toUpperCase();
+  const evidence = rows.find((row) => row.sourceType === sourceType && row.sourceId === sourceId);
+  if (!evidence) return { issue: 'MISSING_CONVERSION' };
+  const rate = Number(evidence.exchangeRate);
+  const originalAmount = Number(evidence.originalAmount);
+  const functionalAmount = Number(evidence.functionalAmount);
+  const valid = evidence.originalCurrency.trim().toUpperCase() === normalizedCurrency
+    && evidence.functionalCurrency.trim().toUpperCase() === functionalCurrency
+    && (evidence.cutoffAt ?? evidence.rateEffectiveAt).getTime() <= asOf.getTime()
+    && amountsMatch(originalAmount, amount)
+    && Number.isFinite(rate)
+    && rate > 0
+    && amountsMatch(functionalAmount, originalAmount * rate);
+  return valid && functionalAmount >= 0
+    ? { amount: functionalAmount }
+    : { issue: 'INCONSISTENT_CONVERSION_EVIDENCE' };
+}
+
 /**
  * @description Construye el balance actual desde partidas tenant-scoped y costos FIFO remanentes.
  * @param {CurrentBalanceParams} params - Tenant, corte y resultado del período abierto.
@@ -51,6 +96,7 @@ export async function getCurrentBalance(params: CurrentBalanceParams) {
     receivables,
     payables,
     injections,
+    fxEvidence,
      closures,
      approvedAccountingPeriods,
   ] = await Promise.all([
@@ -122,6 +168,29 @@ export async function getCurrentBalance(params: CurrentBalanceParams) {
         saldoPendiente: true,
       },
     }),
+    db.fxEvidence.findMany({
+      where: {
+        tenantId: params.tenantId,
+        cutoffAt: { lte: params.asOf },
+      },
+      orderBy: [
+        { sourceType: 'asc' },
+        { sourceId: 'asc' },
+        { rateEffectiveAt: 'desc' },
+        { capturedAt: 'desc' },
+      ],
+      select: {
+        sourceType: true,
+        sourceId: true,
+        originalAmount: true,
+        originalCurrency: true,
+        functionalAmount: true,
+        functionalCurrency: true,
+        exchangeRate: true,
+        rateEffectiveAt: true,
+        cutoffAt: true,
+      },
+    }),
     db.cierreContable.findMany({
       where: {
         tenantId: params.tenantId,
@@ -171,10 +240,22 @@ export async function getCurrentBalance(params: CurrentBalanceParams) {
   const bankBalances = bankAccounts.flatMap((account) => {
     const amount = Number(account.saldo);
     if (!isFunctionalCurrency(account.moneda, functionalCurrency)) {
+      const converted = resolveFxEvidence(
+        fxEvidence,
+        FX_EVIDENCE_SOURCE_TYPES.BANK_ACCOUNT,
+        account.cuentaId,
+        amount,
+        account.moneda,
+        functionalCurrency,
+        params.asOf,
+      );
+      if ('amount' in converted) {
+        return [{ id: account.cuentaId, amount: converted.amount }];
+      }
       unresolvedParts.push({
         source: 'bank',
         itemId: account.cuentaId,
-        issue: 'MISSING_CONVERSION',
+        issue: converted.issue,
         affectedAmount: Math.abs(amount),
       });
       return [];
@@ -253,10 +334,46 @@ export async function getCurrentBalance(params: CurrentBalanceParams) {
       ? Number(injection.montoRecibido)
       : Number(injection.saldoPendiente);
     if (!isFunctionalCurrency(injection.moneda, functionalCurrency)) {
+      const converted = resolveFxEvidence(
+        fxEvidence,
+        FX_EVIDENCE_SOURCE_TYPES.CAPITAL_INJECTION,
+        injection.id,
+        rawAmount,
+        injection.moneda,
+        functionalCurrency,
+        params.asOf,
+      );
+      if ('amount' in converted) {
+        if (injection.tipo === 'CAPITAL_SOCIAL') {
+          capitalContributions.push({
+            id: injection.id,
+            amount: converted.amount,
+            registeredAt: injection.fechaRegistro,
+          });
+          continue;
+        }
+        if (injection.saldoPendiente == null) {
+          unresolvedParts.push({
+            source: 'externalDebt',
+            itemId: injection.id,
+            issue: 'MISSING_PENDING_BALANCE',
+            affectedAmount: Number(injection.montoRecibido),
+          });
+          continue;
+        }
+        externalDebts.push({
+          id: injection.id,
+          pendingBalance: converted.amount,
+          state: injection.estado as ExternalDebtState,
+        });
+        continue;
+      }
       unresolvedParts.push({
         source,
         itemId: injection.id,
-        issue: 'MISSING_HISTORICAL_CONVERSION',
+        issue: converted.issue === 'MISSING_CONVERSION'
+          ? 'MISSING_HISTORICAL_CONVERSION'
+          : 'INCONSISTENT_CONVERSION_EVIDENCE',
         affectedAmount: Number.isFinite(rawAmount) ? Math.abs(rawAmount) : 0,
       });
       continue;
