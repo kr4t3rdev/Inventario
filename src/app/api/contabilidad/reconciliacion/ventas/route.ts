@@ -142,6 +142,14 @@ export async function GET(request: NextRequest) {
 
 		const whereParts: Prisma.Sql[] = [
 			Prisma.sql`v."tenantId" = ${tenantId}`,
+			Prisma.sql`NOT EXISTS (
+				SELECT 1
+				FROM "facturas" f
+				JOIN "CuentaPorCobrar" cxc ON cxc."facturaId" = f."idFactura"
+				WHERE f."ventaId" = v."ventaId"
+					AND cxc."tenantId" = ${tenantId}
+					AND cxc."estado" IN (${`PENDIENTE`}, ${`PARCIAL`})
+			)`,
 			Prisma.sql`EXISTS (
         SELECT 1 FROM "PuntoDeVenta" pv_scope
         WHERE pv_scope."pvId" = v."puntoDeVentaId"
