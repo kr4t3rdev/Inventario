@@ -5,6 +5,7 @@ import {
   mergeAccountingFeatures,
   pickAccountingFeatures,
   PLAN_ACCOUNTING_FEATURES_BY_NAME,
+  PLAN_DESCRIPTIONS_BY_NAME,
 } from '../backfill-accounting-features';
 import {
   PLAN_BASICO_FEATURES,
@@ -78,5 +79,9 @@ describe('backfill-accounting-features', () => {
       'analisis-estado-cuenta',
       'facturas-vencidas',
     ]);
+  });
+
+  it('sincroniza la descripción comercial del Profesional con CxC y CxP', () => {
+    expect(PLAN_DESCRIPTIONS_BY_NAME.Profesional).toContain('cuentas por cobrar y pagar');
   });
 });

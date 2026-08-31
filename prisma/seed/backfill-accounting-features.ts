@@ -38,6 +38,13 @@ const PLAN_ACCOUNTING_FEATURES_BY_NAME: Record<string, Record<string, boolean>> 
   Empresarial: pickAccountingFeatures(PLAN_EMPRESARIAL_FEATURES),
 };
 
+export const PLAN_DESCRIPTIONS_BY_NAME: Record<string, string> = {
+  Profesional:
+    'PYME en crecimiento con facturación, multi-moneda, cuentas por cobrar y pagar, empleados, clientes y backups diarios.',
+  Empresarial:
+    'Máxima potencia con producción, nómina, generación EAN-13 y backups cada hora + restauración point-in-time.',
+};
+
 type JsonObject = Record<string, unknown>;
 
 function pickAccountingFeatures(features: Record<string, boolean>): Record<string, boolean> {
@@ -89,6 +96,9 @@ async function backfillPlanAccountingFeatures(): Promise<number> {
       where: { planId: plan.planId },
       data: {
         features: mergedFeatures as Prisma.InputJsonValue,
+        ...(PLAN_DESCRIPTIONS_BY_NAME[plan.nombre] && {
+          descripcion: PLAN_DESCRIPTIONS_BY_NAME[plan.nombre],
+        }),
       },
     });
 
