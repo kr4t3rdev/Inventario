@@ -96,6 +96,20 @@ describe('Reconciliación — ventas anuladas y carreras de servicios', () => {
 		expect(totalQuery.sql).toContain('v."deletedAt" IS NULL');
 	});
 
+	it('excluye de pendientes las ventas administradas por CxC activa', async () => {
+		prismaMock.$queryRaw
+			.mockResolvedValueOnce([])
+			.mockResolvedValueOnce([{ total: BigInt(0) }]);
+
+		await getVentasPendientesAction();
+
+		for (const [query] of prismaMock.$queryRaw.mock.calls.slice(0, 2)) {
+			expect(query.sql).toContain('NOT EXISTS');
+			expect(query.sql).toContain('"CuentaPorCobrar"');
+			expect(query.values).toEqual(expect.arrayContaining(['PENDIENTE', 'PARCIAL']));
+		}
+	});
+
 	it('excluye ventas anuladas del KPI de pendientes', async () => {
 		const result = await getReconciliacionStatsAction();
 

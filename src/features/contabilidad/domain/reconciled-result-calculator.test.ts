@@ -308,6 +308,39 @@ describe('calculateReconciledResult', () => {
       { code: 'INVALID_AMOUNT', movementId: 'bad-loss-amount', affectedAmount: 0 },
     ]);
   });
+
+  it('separa el devengo de una venta CxC de su cobro posterior', () => {
+    const document = {
+      id: 'sale-cxc',
+      revenue: 4300,
+      historicalCost: 2300,
+      estimatedCost: 0,
+    };
+    const result = calculateReconciledResult({
+      ...DEFAULT_INPUT,
+      movements: [
+        {
+          source: 'sale', id: 'accrual', kind: 'SALE', status: 'POSTED',
+          occurredAt: '2025-02-01T12:00:00Z', amount: 4300,
+          cashAmount: 0,
+          document,
+        },
+        {
+          source: 'sale', id: 'collection', kind: 'SALE', status: 'POSTED',
+          occurredAt: '2025-03-01T12:00:00Z', amount: 1000,
+          recognitionAmount: 0,
+          document,
+        },
+      ],
+    });
+
+    expect(result.monthly[1].income.sales).toBe(4300);
+    expect(result.monthly[1].costOfSales.productsHistorical).toBe(2300);
+    expect(result.monthly[1].cashFlow.operating).toBe(0);
+    expect(result.monthly[2].income.sales).toBe(0);
+    expect(result.monthly[2].cashFlow.operating).toBe(1000);
+    expect(result.annual.reconciledResult).toBe(2000);
+  });
 });
 
 describe('getYearRangeInTimeZone', () => {

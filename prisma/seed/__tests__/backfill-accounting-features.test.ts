@@ -31,6 +31,10 @@ describe('backfill-accounting-features', () => {
     expect(PLAN_ACCOUNTING_FEATURES_BY_NAME.Empresarial).toEqual(
       pickAccountingFeatures(PLAN_EMPRESARIAL_FEATURES),
     );
+    expect(PLAN_ACCOUNTING_FEATURES_BY_NAME.Profesional).toMatchObject({
+      'cuentas-cobrar': true,
+      'cuentas-pagar': true,
+    });
   });
 
   it('mergea los flags financieros sin borrar features no relacionadas', () => {

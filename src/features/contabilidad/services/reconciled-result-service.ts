@@ -326,6 +326,58 @@ export async function getReconciledResultForYear(params: {
   const saleDocumentIds = sales.flatMap((sale) => sale.venta ? [sale.venta.ventaId] : []);
   const serviceDocumentIds = services.map((service) => service.ventasServicio.ventaServicioId);
   const expenseDocumentIds = expenses.map((expense) => expense.referenciaId);
+  const accruedReceivables = await db.cuentaPorCobrar.findMany({
+    where: {
+      tenantId: params.tenantId,
+      estado: { not: 'ANULADA' },
+      factura: {
+        is: {
+          venta: {
+            is: {
+              deletedAt: null,
+              OR: [
+                { createdAt: range },
+                ...(saleDocumentIds.length > 0
+                  ? [{ ventaId: { in: saleDocumentIds } }]
+                  : []),
+              ],
+            },
+          },
+        },
+      },
+    },
+    select: {
+      id: true,
+      factura: {
+        select: {
+          idFactura: true,
+          tasaCambio: true,
+          venta: {
+            select: {
+              ventaId: true, total: true, descuento: true, cantidad: true,
+              createdAt: true, deletedAt: true,
+              producto: { select: { precioCosto: true } },
+              items: {
+                select: {
+                  id: true, cantidad: true, total: true,
+                  producto: { select: { precioCosto: true } },
+                  allocations: {
+                    orderBy: { createdAt: 'asc' },
+                    select: {
+                      id: true, cantidad: true,
+                      compraDocumentoItem: {
+                        select: { precioUnitario: true, compraDocumentoId: true },
+                      },
+                    },
+                  },
+                },
+              },
+            },
+          },
+        },
+      },
+    },
+  });
   const [
     purchasedServices,
     soldServices,
@@ -421,6 +473,39 @@ export async function getReconciledResultForYear(params: {
   const movements: ReconciledResultMovement[] = [];
   const openingRecognitions: OpeningRecognition[] = [];
   const readIncidents: ReadIncident[] = [];
+  const accruedSaleIds = new Set<string>();
+
+  for (const receivable of accruedReceivables) {
+    const sale = receivable.factura?.venta;
+    if (!sale || sale.deletedAt) continue;
+    const conversionFactor = Number(receivable.factura?.tasaCambio ?? 1);
+    if (!Number.isFinite(conversionFactor) || conversionFactor <= 0) {
+      readIncidents.push({
+        code: 'MISSING_CONVERSION',
+        movementId: receivable.id,
+        affectedAmount: getSaleRevenue(sale),
+      });
+      continue;
+    }
+    const cost = calcularDetalleCostoVenta(sale as VentaParaCosto);
+    accruedSaleIds.add(sale.ventaId);
+    movements.push({
+      source: 'sale',
+      id: `ACCRUAL:${receivable.id}`,
+      kind: 'SALE',
+      status: 'POSTED',
+      occurredAt: sale.createdAt,
+      amount: getSaleRevenue(sale) * conversionFactor,
+      cashAmount: 0,
+      document: {
+        id: sale.ventaId,
+        revenue: getSaleRevenue(sale) * conversionFactor,
+        historicalCost: cost.historical * conversionFactor,
+        estimatedCost: cost.estimated * conversionFactor,
+      },
+      ...(cost.purchaseTrace.length > 0 && { purchaseTrace: cost.purchaseTrace }),
+    });
+  }
 
   for (const sale of previousSales) {
     const amount = normalizePersistedAmount(sale, principalCurrency.codigo);
@@ -587,6 +672,7 @@ export async function getReconciledResultForYear(params: {
       status: classification.reconciliationStatus,
       occurredAt: sale.fechaReconciliacion,
       amount: amount.amount,
+      ...(accruedSaleIds.has(sale.venta.ventaId) && { recognitionAmount: 0 }),
       document: {
         id: sale.venta.ventaId,
         revenue: getSaleRevenue(sale.venta) * conversionFactor,

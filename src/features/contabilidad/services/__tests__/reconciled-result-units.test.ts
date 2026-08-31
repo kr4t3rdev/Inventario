@@ -7,6 +7,7 @@ const prismaMock = vi.hoisted(() => ({
   merma: { findMany: vi.fn() },
   compraServicio: { findMany: vi.fn() },
   ventaServicios: { findMany: vi.fn() },
+  cuentaPorCobrar: { findMany: vi.fn() },
 }));
 
 const tenantPolicyMock = vi.hoisted(() => ({
@@ -66,6 +67,7 @@ describe('getReconciledResultForYear unidades monetarias', () => {
     prismaMock.merma.findMany.mockResolvedValue([]);
     prismaMock.compraServicio.findMany.mockResolvedValue([]);
     prismaMock.ventaServicios.findMany.mockResolvedValue([]);
+    prismaMock.cuentaPorCobrar.findMany.mockResolvedValue([]);
     costoMock.calcularDetalleCostoVenta.mockReturnValue({
       historical: 0,
       estimated: 0,
@@ -102,6 +104,87 @@ describe('getReconciledResultForYear unidades monetarias', () => {
     expect(result.annual.costOfSales.productsHistorical).toBe(960);
     expect(result.annual.cashFlow.operating).toBe(2400);
     expect(result.annual.reconciledResult).toBe(1440);
+  });
+
+  it('devenga una venta CxC al emitirla y deja su cobro solo en flujo de caja', async () => {
+    prismaMock.cuentaPorCobrar.findMany.mockResolvedValue([{
+      id: 'cxc-1',
+      estado: 'PARCIAL',
+      factura: {
+        idFactura: 'f-1',
+        tasaCambio: 1,
+        venta: {
+          ventaId: 'v-cxc',
+          total: 4300,
+          descuento: 0,
+          cantidad: 1,
+          createdAt: new Date('2026-02-01T12:00:00.000Z'),
+          deletedAt: null,
+          producto: { precioCosto: 2300 },
+          items: [],
+        },
+      },
+    }]);
+    scopeInYear(prismaMock.reconciliacionVenta, [
+      baseRec({
+        reconciliacionId: 'cobro-1',
+        monto: 1000,
+        moneda: 'CUP',
+        montoConvertido: 1000,
+        tasaCambio: 1,
+        fechaReconciliacion: new Date('2026-03-01T12:00:00.000Z'),
+        tipoReconciliacion: 'VENTA',
+        venta: {
+          ventaId: 'v-cxc', total: 4300, descuento: 0, cantidad: 1,
+          deletedAt: null, producto: { precioCosto: 2300 }, items: [],
+        },
+      }),
+    ]);
+    costoMock.calcularDetalleCostoVenta.mockReturnValue({
+      historical: 2300,
+      estimated: 0,
+      overAllocatedCost: 0,
+      purchaseTrace: [],
+    });
+
+    const result = await getReconciledResultForYear({ tenantId: 'tenant-a', year: YEAR });
+
+    expect(result.monthly[1].income.sales).toBe(4300);
+    expect(result.monthly[1].costOfSales.productsHistorical).toBe(2300);
+    expect(result.monthly[2].income.sales).toBe(0);
+    expect(result.monthly[2].cashFlow.operating).toBe(1000);
+    expect(result.annual.reconciledResult).toBe(2000);
+  });
+
+  it('no vuelve a reconocer una CxC de un año anterior cuando se cobra', async () => {
+    prismaMock.cuentaPorCobrar.findMany.mockResolvedValue([{
+      id: 'cxc-previa',
+      estado: 'PAGADA',
+      factura: {
+        idFactura: 'f-previa',
+        tasaCambio: 1,
+        venta: {
+          ventaId: 'v-previa', total: 500, descuento: 0, cantidad: 1,
+          createdAt: new Date('2025-12-01T12:00:00.000Z'), deletedAt: null,
+          producto: { precioCosto: 200 }, items: [],
+        },
+      },
+    }]);
+    scopeInYear(prismaMock.reconciliacionVenta, [baseRec({
+      reconciliacionId: 'cobro-previo', monto: 500, moneda: 'CUP',
+      montoConvertido: 500, tasaCambio: 1,
+      tipoReconciliacion: 'VENTA',
+      venta: {
+        ventaId: 'v-previa', total: 500, descuento: 0, cantidad: 1,
+        deletedAt: null, producto: { precioCosto: 200 }, items: [],
+      },
+    })]);
+
+    const result = await getReconciledResultForYear({ tenantId: 'tenant-a', year: YEAR });
+
+    expect(result.annual.income.sales).toBe(0);
+    expect(result.annual.costOfSales.total).toBe(0);
+    expect(result.annual.cashFlow.operating).toBe(500);
   });
 
   it('reparte dos cobros parciales extranjeros sin exceder el documento convertido', async () => {

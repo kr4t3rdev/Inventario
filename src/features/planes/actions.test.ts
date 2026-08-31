@@ -55,4 +55,33 @@ describe('getPlansPublicActionV2', () => {
       ]),
     );
   });
+
+  it('muestra CxC y CxP dentro de la configuración financiera del Profesional', async () => {
+    vi.mocked(prisma.plan.findMany).mockResolvedValue([
+      {
+        planId: 'plan-pro',
+        nombre: 'Profesional',
+        descripcion: 'Plan profesional',
+        precio: 80,
+        duracionDias: 30,
+        maxUsuarios: 5,
+        maxAlmacenes: 5,
+        maxProductos: 5000,
+        maxClientes: 0,
+        maxPuntosVenta: 5,
+        maxFacturasMes: 0,
+        maxContratos: 50,
+        incluyeBackups: true,
+        createdAt: new Date('2026-01-01'),
+        updatedAt: new Date('2026-01-01'),
+        features: { 'cuentas-cobrar': true, 'cuentas-pagar': true },
+      },
+    ] as any);
+
+    const [plan] = await getPlansPublicActionV2();
+
+    expect(plan.featuresByCategory.Financiero).toEqual(
+      expect.arrayContaining(['Cuentas por cobrar', 'Cuentas por pagar']),
+    );
+  });
 });

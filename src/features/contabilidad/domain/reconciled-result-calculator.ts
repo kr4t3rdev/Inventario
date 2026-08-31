@@ -15,6 +15,10 @@ interface MovementBase {
   occurredAt: Date | string;
   amount: number;
   status: ReconciliationStatus;
+  /** Importe que afecta caja; permite separar devengo de cobro/pago. */
+  cashAmount?: number;
+  /** Importe que afecta resultados; permite registrar cobros sin duplicar ingresos. */
+  recognitionAmount?: number;
 }
 
 export interface SaleResultMovement extends MovementBase {
@@ -391,8 +395,14 @@ export function calculateReconciledResult(
 
     if (movement.source === 'sale' || movement.source === 'service') {
       const progressKey = `${movement.source}:${movement.document.id}`;
+      const cashAmount = movement.cashAmount ?? movement.amount;
+      const recognitionAmount = movement.recognitionAmount ?? movement.amount;
+      if (Number.isFinite(cashAmount) && cashAmount > 0) {
+        period.cashFlow.operating += cashAmount;
+      }
+      if (!Number.isFinite(recognitionAmount) || recognitionAmount <= 0) continue;
       const capped = capToDocument(
-        movement,
+        { ...movement, amount: recognitionAmount },
         progressKey,
         movement.document.revenue,
         revenueProgress,
@@ -400,7 +410,6 @@ export function calculateReconciledResult(
       );
       if (!capped) continue;
       const recognized = capped.amount;
-      period.cashFlow.operating += recognized;
       if (movement.source === 'sale') period.income.sales += recognized;
       else period.income.services += recognized;
 

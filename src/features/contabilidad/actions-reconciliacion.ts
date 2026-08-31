@@ -173,6 +173,14 @@ export const getVentasPendientesAction = withAction(
 		const whereParts: Prisma.Sql[] = [
 			Prisma.sql`v."tenantId" = ${tenantId}`,
 			Prisma.sql`v."deletedAt" IS NULL`,
+			Prisma.sql`NOT EXISTS (
+				SELECT 1
+				FROM "facturas" f
+				JOIN "CuentaPorCobrar" cxc ON cxc."facturaId" = f."idFactura"
+				WHERE f."ventaId" = v."ventaId"
+					AND cxc."tenantId" = ${tenantId}
+					AND cxc."estado" IN (${`PENDIENTE`}, ${`PARCIAL`})
+			)`,
 		];
 		if (params.fechaInicio)
 			whereParts.push(
@@ -835,7 +843,15 @@ export const getGastosPendientesAction = withAction(
 		}
 
 		// ── Query GastoCompra (compras de productos) ──
-		const whereGC: any = { tenantId, deletedAt: null };
+		const whereGC: any = {
+			tenantId,
+			deletedAt: null,
+			NOT: {
+				cuentaPorPagar: {
+					is: { estado: { in: ['PENDIENTE', 'PARCIAL'] } },
+				},
+			},
+		};
 		if (params.soloNoReconciliados) whereGC.reconciliaciones = { none: {} };
 		if (params.fechaDesde || params.fechaHasta) {
 			whereGC.fechaCompra = {};

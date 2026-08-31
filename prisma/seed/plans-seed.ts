@@ -105,6 +105,8 @@ export const PLAN_PROFESIONAL_FEATURES: Record<string, boolean> = {
 	"ajustes-bancarios": true,
 	"servicios": true,
 	"reportes-financieros": true,
+	"cuentas-cobrar": true,
+	"cuentas-pagar": true,
 	empleados: true,
 	notificaciones: true,
 	"ventas-factura": true,
@@ -181,7 +183,7 @@ export async function seedPlans() {
 			{
 				nombre: "Profesional",
 				descripcion:
-					"PYME en crecimiento con facturación electrónica, multi-moneda, empleados, clientes y backups diarios.",
+					"PYME en crecimiento con facturación, multi-moneda, cuentas por cobrar y pagar, empleados, clientes y backups diarios.",
 				precio: 80,
 				duracionDias: 30,
 				maxUsuarios: 5,
@@ -197,7 +199,7 @@ export async function seedPlans() {
 			{
 				nombre: "Empresarial",
 				descripcion:
-					"Máxima potencia con producción, nómina, generación EAN-13, cuentas por cobrar/pagar y backups cada hora + restauración point-in-time.",
+					"Máxima potencia con producción, nómina, generación EAN-13 y backups cada hora + restauración point-in-time.",
 				precio: 110,
 				duracionDias: 30,
 				maxUsuarios: 10,

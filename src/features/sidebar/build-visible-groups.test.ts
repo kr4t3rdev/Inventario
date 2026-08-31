@@ -224,6 +224,25 @@ describe('buildVisibleSidebarGroups', () => {
   })
 
   describe('plan feature gating', () => {
+    it('muestra CxC y CxP cuando el plan Profesional las habilita', () => {
+      const ctx = makeCtx({
+        role: 'regularUser',
+        tenantRole: 'manager',
+        tenantId: 't1',
+        planName: 'Profesional',
+        planFeatures: {
+          contabilidad: true,
+          'cuentas-cobrar': true,
+          'cuentas-pagar': true,
+        },
+      })
+      const result = buildVisibleSidebarGroups(SIDEBAR_CONFIG, ctx)
+      const titles = result.flatMap((group) => group.items.map((item) => item.title))
+
+      expect(titles).toContain('Cuentas por Cobrar')
+      expect(titles).toContain('Cuentas por Pagar')
+    })
+
     it('hides items whose plan feature is explicitly false', () => {
       const ctx = makeCtx({
         role: 'regularUser',
