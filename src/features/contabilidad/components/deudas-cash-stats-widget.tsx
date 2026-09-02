@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react'
 import { TrendingDown, AlertCircle, CheckCircle2, Clock } from 'lucide-react'
 
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import { Skeleton } from '@/components/ui/skeleton'
+import { PanelError, PanelSkeleton } from '@/features/contabilidad/components/panel-states'
 import { getDeudasCashStatsAction } from '@/features/contabilidad/actions-deudas-cash'
 
 /**
@@ -13,7 +13,7 @@ import { getDeudasCashStatsAction } from '@/features/contabilidad/actions-deudas
  * @returns {string} Monto formateado
  */
 function formatAmount(amount: number): string {
-  return amount.toLocaleString('es-CU', { minimumFractionDigits: 2, maximumFractionDigits: 2 })
+  return amount.toLocaleString('es-ES', { minimumFractionDigits: 2, maximumFractionDigits: 2 })
 }
 
 /**
@@ -25,43 +25,37 @@ export function DeudasCashStatsWidget() {
   const [stats, setStats] = useState<any>(null)
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState<any>(null)
+  const [retryKey, setRetryKey] = useState(0)
 
   useEffect(() => {
-    getDeudasCashStatsAction().then(r => {
-      if (r.success) setStats(r.data)
-      else setError(r.error)
-      setIsLoading(false)
-    })
-  }, [])
+    let isActive = true
+    setIsLoading(true)
+    setError(null)
+    getDeudasCashStatsAction()
+      .then(r => {
+        if (!isActive) return
+        if (r.success) setStats(r.data)
+        else setError(r.error)
+        setIsLoading(false)
+      })
+      .catch((e) => {
+        if (!isActive) return
+        setError(e)
+        setIsLoading(false)
+      })
+    return () => { isActive = false }
+  }, [retryKey])
 
   if (isLoading) {
-    return (
-      <Card className="border-slate-200 dark:border-slate-800">
-        <CardHeader className="pb-3">
-          <Skeleton className="h-5 w-40" />
-        </CardHeader>
-        <CardContent className="space-y-3">
-          <Skeleton className="h-4 w-full" />
-          <Skeleton className="h-4 w-3/4" />
-          <Skeleton className="h-4 w-1/2" />
-        </CardContent>
-      </Card>
-    )
+    return <PanelSkeleton title="Deudas en Efectivo" rows={3} />
   }
 
   if (error || !stats) {
     return (
-      <Card className="border-slate-200 dark:border-slate-800">
-        <CardHeader className="pb-3">
-          <CardTitle className="text-base font-semibold flex items-center gap-2 text-slate-700 dark:text-slate-300">
-            <TrendingDown className="h-4 w-4 text-orange-500" />
-            Deudas en Efectivo
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <p className="text-sm text-muted-foreground">No se pudieron cargar las estadísticas.</p>
-        </CardContent>
-      </Card>
+      <PanelError
+        message="No se pudieron cargar las estadísticas."
+        onRetry={() => setRetryKey((k) => k + 1)}
+      />
     )
   }
 
@@ -106,16 +100,13 @@ export function DeudasCashStatsWidget() {
         {hayPendientes ? (
           <div className="space-y-1.5">
             <p className="text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wide">
-              Pendiente por cobrar
+              Pendiente por pagar
             </p>
             {pendientePorMoneda.map(([moneda, monto]) => (
               <div key={moneda} className="flex justify-between items-center text-sm">
                 <span className="text-slate-600 dark:text-slate-400 font-medium">{moneda}</span>
                 <span className="font-semibold text-orange-600 dark:text-orange-400">
-                  {
-  // @ts-expect-error TODO: fix type for formatAmount
-                  formatAmount(monto)
-                  }
+                  {formatAmount(Number(monto))}
                 </span>
               </div>
             ))}
