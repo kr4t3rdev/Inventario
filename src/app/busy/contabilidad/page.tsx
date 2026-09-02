@@ -243,7 +243,7 @@ export default function ContabilidadDashboard(): React.JSX.Element {
 
         {/* Resumen Financiero Component */}
         <StaggerItem>
-          <ResumenFinanciero periodo="Este mes" page={1} limit={10} />
+          <ResumenFinanciero periodo="Este mes" page={1} limit={10} showPeriodSelector />
         </StaggerItem>
 
         {/* Deudas Cash Stats Widget */}

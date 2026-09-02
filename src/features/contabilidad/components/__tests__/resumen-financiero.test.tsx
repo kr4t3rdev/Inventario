@@ -404,3 +404,75 @@ describe('ResumenFinanciero — loading, empty, error', () => {
     expect(gridElements.length).toBeGreaterThanOrEqual(1);
   });
 });
+
+describe('ResumenFinanciero — selector de período (opt-in)', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    mocks.getResumenFinancieroAction.mockResolvedValue({
+      success: true,
+      data: {
+        resumenPorMoneda: [{ moneda: 'CUP', saldoActual: 100, totalIngresos: 100, totalEgresos: 0 }],
+        metadatos: { coberturaConversion: { unresolved: 0 }, clasificacionNoReconocida: 0 },
+      },
+    });
+    mocks.getMonedasAction.mockResolvedValue({ success: true, data: [] });
+    mocks.getVentasPendientesAction.mockResolvedValue({ success: true, data: { ventas: [] } });
+    mocks.getServiciosPendientesAction.mockResolvedValue({ success: true, data: { ventaServicios: [] } });
+    mocks.getGastosPendientesAction.mockResolvedValue({ success: true, data: { gastos: [] } });
+    mocks.getHistorialReconciliacionVentasAction.mockResolvedValue({ success: true, data: null });
+    mocks.getHistorialReconciliacionServiciosAction.mockResolvedValue({ success: true, data: null });
+    mocks.getHistorialReconciliacionGastosAction.mockResolvedValue({ success: true, data: null });
+    mocks.getPrestamosCashStatsAction.mockResolvedValue({ success: true, data: null });
+    mocks.getResumenAnticiposAction.mockResolvedValue({ success: true, data: null });
+  });
+
+  it('sin showPeriodSelector no se renderiza el selector (regresión consumidores legacy)', async () => {
+    const { ResumenFinanciero } = await import('../resumen-financiero');
+    render(<ResumenFinanciero periodo="Período completo" page={1} limit={10} />);
+
+    await screen.findByText(/Flujo Neto del Período/i);
+    expect(screen.queryByRole('radiogroup')).not.toBeInTheDocument();
+    expect(mocks.getResumenFinancieroAction).toHaveBeenCalledWith(
+      expect.objectContaining({ fechaInicio: undefined, fechaFin: undefined }),
+    );
+  });
+
+  it('con showPeriodSelector muestra el control y filtra por el mes actual por defecto', async () => {
+    const { ResumenFinanciero } = await import('../resumen-financiero');
+    render(<ResumenFinanciero periodo="Este mes" page={1} limit={10} showPeriodSelector />);
+
+    await screen.findByRole('radiogroup', { name: /seleccionar período/i });
+    await screen.findByText(/Flujo Neto del Período/i);
+    expect(screen.getByText('Período: Este mes')).toBeInTheDocument();
+
+    const hoy = new Date();
+    const pad = (n: number) => String(n).padStart(2, '0');
+    const hoyStr = `${hoy.getFullYear()}-${pad(hoy.getMonth() + 1)}-${pad(hoy.getDate())}`;
+    const inicioMes = `${hoy.getFullYear()}-${pad(hoy.getMonth() + 1)}-01`;
+
+    await waitFor(() => {
+      expect(mocks.getResumenFinancieroAction).toHaveBeenCalledWith(
+        expect.objectContaining({ fechaInicio: inicioMes, fechaFin: hoyStr }),
+      );
+    });
+  });
+
+  it('al elegir Hoy se reconsulta con fechaInicio igual a fechaFin del día actual', async () => {
+    const { ResumenFinanciero } = await import('../resumen-financiero');
+    render(<ResumenFinanciero periodo="Este mes" page={1} limit={10} showPeriodSelector />);
+
+    await screen.findByText(/Flujo Neto del Período/i);
+    await userEvent.click(screen.getByRole('radio', { name: 'Hoy' }));
+
+    const hoy = new Date();
+    const pad = (n: number) => String(n).padStart(2, '0');
+    const hoyStr = `${hoy.getFullYear()}-${pad(hoy.getMonth() + 1)}-${pad(hoy.getDate())}`;
+
+    await waitFor(() => {
+      expect(mocks.getResumenFinancieroAction).toHaveBeenCalledWith(
+        expect.objectContaining({ fechaInicio: hoyStr, fechaFin: hoyStr }),
+      );
+    });
+    expect(screen.getByText('Período: Hoy')).toBeInTheDocument();
+  });
+});

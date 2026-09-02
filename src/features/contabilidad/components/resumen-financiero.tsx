@@ -26,6 +26,12 @@ import { FinancialStatePanel } from './reportes/FinancialStatePanel';
 import { AccountingAttentionPanel } from './reportes/AccountingAttentionPanel';
 import { CurrencySummaryTable } from './reportes/CurrencySummaryTable';
 import { AccountingDetailsDisclosure } from './reportes/AccountingDetailsDisclosure';
+import { PeriodSelector } from './reportes/period-selector';
+import {
+  getRangoPeriodo,
+  type PeriodoClave,
+  type RangoPeriodo,
+} from '@/features/contabilidad/lib/periodo-presets';
 
 interface ResumenFinancieroProps {
   fechaInicio?: string;
@@ -37,22 +43,34 @@ interface ResumenFinancieroProps {
   page: number;
   limit: number;
   refreshToken?: number;
+  showPeriodSelector?: boolean;
 }
 
 export function ResumenFinanciero({
-  fechaInicio,
-  fechaFin,
+  fechaInicio: fechaInicioProp,
+  fechaFin: fechaFinProp,
   cuentaId,
   tipoGasto,
-  periodo,
+  periodo: periodoProp,
   soloNoReconciliados,
   page,
   limit,
   refreshToken = 0,
+  showPeriodSelector = false,
 }: ResumenFinancieroProps): React.JSX.Element | null {
   const { user } = useAuth();
   const hasPrestamosCash = user?.planFeatures?.['prestamos-cash'] === true;
   const hasAnticipos = user?.planFeatures?.['anticipos'] === true;
+
+  const [periodoClave, setPeriodoClave] = useState<PeriodoClave>('mes');
+
+  const rango: RangoPeriodo | null = showPeriodSelector
+    ? getRangoPeriodo(periodoClave, new Date())
+    : null;
+
+  const fechaInicio = rango?.fechaInicio ?? fechaInicioProp;
+  const fechaFin = rango?.fechaFin ?? fechaFinProp;
+  const periodo = rango?.etiqueta ?? periodoProp;
 
   const [retryKey, setRetryKey] = useState(0);
 
@@ -238,9 +256,14 @@ export function ResumenFinanciero({
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
     >
-      <p className="text-sm text-muted-foreground" aria-label="Período del reporte">
-        Período: {periodo}
-      </p>
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <p className="text-sm text-muted-foreground" aria-label="Período del reporte">
+          Período: {periodo}
+        </p>
+        {showPeriodSelector && (
+          <PeriodSelector value={periodoClave} onChange={setPeriodoClave} />
+        )}
+      </div>
       <FinancialStatePanel
         monedaPrincipal={monedaPrincipal}
         flujoNeto={saldoNetoEnPrincipal}
