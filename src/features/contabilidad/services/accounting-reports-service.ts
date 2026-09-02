@@ -2,6 +2,11 @@ import { prisma } from '@/lib/prisma';
 import { AccountingAccountsService } from '@/features/contabilidad/services/accounting-accounts-service';
 import { classifyLegacyReconciliation } from '@/features/contabilidad/domain/reconciliation-policy';
 import { buildMovementsReportQuery } from '@/features/contabilidad/services/movements-report-query';
+import {
+  aggregateCashFlow,
+  computeFlowTotals,
+  computePreviousPeriodRange,
+} from '@/features/contabilidad/services/cash-flow-aggregation';
 
 interface MovementsReadModelRow {
   data: Array<Record<string, unknown>>;
@@ -504,93 +509,31 @@ export const AccountingReportsService = {
       }) : Promise.resolve([]),
     ]);
 
-    const ingresosVentas: Record<string, number> = {};
-    const ingresosPrestamosCash: Record<string, number> = {};
-    const ingresosDeudasCash: Record<string, number> = {};
-    const egresosPrestamosCash: Record<string, number> = {};
-    const egresosDeudasCash: Record<string, number> = {};
-    let clasificacionNoReconocida = 0;
-
-    reconciliacionesVentas.forEach((r: any) => {
-      const m = r.moneda || 'CUP';
-      const classification = classifyLegacyReconciliation({
-        source: 'sale',
-        kind: r.tipoReconciliacion,
-      });
-      if (classification.status === 'unclassified' || !classification.affectsCashFlow) {
-        if (classification.status === 'unclassified') clasificacionNoReconocida += 1;
-        return;
-      }
-      switch (classification.kind) {
-        case 'SALE':
-          ingresosVentas[m] = (ingresosVentas[m] || 0) + Number(r.monto);
-          break;
-        case 'CASH_LOAN_PAYMENT':
-          if (includePrestamosCash) {
-            ingresosPrestamosCash[m] = (ingresosPrestamosCash[m] || 0) + Number(r.monto);
-          }
-          break;
-        case 'CASH_LOAN_DISBURSEMENT':
-          if (includePrestamosCash) {
-            egresosPrestamosCash[m] = (egresosPrestamosCash[m] || 0) + Number(r.monto);
-          }
-          break;
-        case 'CASH_DEBT_PAYMENT':
-          if (includeDeudasCash) {
-            egresosDeudasCash[m] = (egresosDeudasCash[m] || 0) + Number(r.monto);
-          }
-          break;
-        case 'CASH_DEBT_DISBURSEMENT':
-          if (includeDeudasCash) {
-            ingresosDeudasCash[m] = (ingresosDeudasCash[m] || 0) + Number(r.monto);
-          }
-          break;
-        default:
-          clasificacionNoReconocida += 1;
-      }
-    });
-
-    const ingresosServicios: Record<string, number> = {};
-    reconciliacionesServicios.forEach((r: any) => {
-      const m = r.moneda || 'CUP';
-      ingresosServicios[m] = (ingresosServicios[m] || 0) + Number(r.monto);
-    });
-
-    const egresosGastos: Record<string, number> = {};
-    reconciliacionesGastos.forEach((r: any) => {
-      const classification = classifyLegacyReconciliation({
-        source: 'expense',
-        kind: r.tipoGasto,
-        status: r.estado,
-      });
-      if (classification.status === 'unclassified') {
-        clasificacionNoReconocida += 1;
-        return;
-      }
-      if (!classification.affectsCashFlow) return;
-      const m = r.moneda || 'CUP';
-      egresosGastos[m] = (egresosGastos[m] || 0) + Number(r.monto);
-    });
-
-    const ingresosAjustes: Record<string, number> = {};
-    const egresosAjustes: Record<string, number> = {};
-    ajustesBancarios.forEach((r: any) => {
-      const m = r.moneda || 'CUP';
-      if (r.tipo === 'ingreso') ingresosAjustes[m] = (ingresosAjustes[m] || 0) + Number(r.monto);
-      else egresosAjustes[m] = (egresosAjustes[m] || 0) + Number(r.monto);
-    });
-
-    const ingresosInyecciones: Record<string, number> = {};
-    inyeccionesCapital.forEach((r: any) => {
-      const m = r.moneda || 'CUP';
-      ingresosInyecciones[m] = (ingresosInyecciones[m] || 0) + Number(r.montoRecibido);
-    });
-
-    const egresosPagosDeuda: Record<string, number> = {};
-    pagosDeuda.forEach((r: any) => {
-      const m = r.cuentaBancaria.moneda || 'CUP';
-      egresosPagosDeuda[m] = (egresosPagosDeuda[m] || 0) + Number(r.montoPagado);
-    });
+    const buckets = aggregateCashFlow(
+      {
+        reconciliacionesVentas,
+        reconciliacionesServicios,
+        reconciliacionesGastos,
+        ajustesBancarios,
+        inyeccionesCapital,
+        pagosDeuda,
+      },
+      { includePrestamosCash, includeDeudasCash },
+    );
+    const {
+      ingresosVentas,
+      ingresosServicios,
+      egresosGastos,
+      ingresosAjustes,
+      egresosAjustes,
+      ingresosInyecciones,
+      egresosPagosDeuda,
+      ingresosPrestamosCash,
+      egresosPrestamosCash,
+      ingresosDeudasCash,
+      egresosDeudasCash,
+      clasificacionNoReconocida,
+    } = buckets;
 
     const todasLasMonedas = Array.from(new Set([
       ...Object.keys(saldosPorMoneda),
@@ -657,6 +600,76 @@ export const AccountingReportsService = {
       ...reconciliacionesGastos,
     ]);
 
+    // Ventana previa de igual duración: solo cuando el reporte tiene rango explícito.
+    // Reutiliza la política de agregación canónica para garantizar paridad con el período actual.
+    let periodoAnterior: {
+      fechaInicio: string;
+      fechaFin: string;
+      porMoneda: Record<string, { totalIngresos: number; totalEgresos: number; saldoNeto: number }>;
+    } | null = null;
+    if (params.fechaInicio && params.fechaFin) {
+      const rangoAnterior = computePreviousPeriodRange(params.fechaInicio, params.fechaFin);
+      const previousDateFilter = buildDateFilter(rangoAnterior.fechaInicio, rangoAnterior.fechaFin);
+      const [
+        prevVentas,
+        prevServicios,
+        prevGastos,
+        prevAjustes,
+        prevCapital,
+        prevPagosDeuda,
+      ] = await Promise.all([
+        prisma.reconciliacionVenta.findMany({
+          where: { ...accountFilter, fechaReconciliacion: previousDateFilter },
+          select: { monto: true, moneda: true, tipoReconciliacion: true },
+        }),
+        includeServicios
+          ? prisma.reconciliacionServicio.findMany({
+              where: { ...accountFilter, fechaReconciliacion: previousDateFilter },
+              select: { monto: true, moneda: true },
+            })
+          : Promise.resolve([]),
+        prisma.reconciliacionGasto.findMany({
+          where: { ...accountFilter, fechaReconciliacion: previousDateFilter },
+          select: { monto: true, moneda: true, tipoGasto: true, estado: true },
+        }),
+        includeAdjustments
+          ? prisma.ajusteBancario.findMany({
+              where: { ...accountFilter, fechaOperacion: previousDateFilter },
+              select: { tipo: true, monto: true, moneda: true },
+            })
+          : Promise.resolve([]),
+        includeCapital
+          ? prisma.inyeccionCapital.findMany({
+              where: { ...accountRelationFilter, createdAt: previousDateFilter },
+              select: { tipo: true, montoRecibido: true, moneda: true },
+            })
+          : Promise.resolve([]),
+        includeDeudasCash
+          ? prisma.pagoDeuda.findMany({
+              where: { ...accountRelationFilter, fechaPago: previousDateFilter },
+              select: { montoPagado: true, cuentaBancaria: { select: { moneda: true } } },
+            })
+          : Promise.resolve([]),
+      ]);
+
+      const bucketsPrevios = aggregateCashFlow(
+        {
+          reconciliacionesVentas: prevVentas,
+          reconciliacionesServicios: prevServicios,
+          reconciliacionesGastos: prevGastos,
+          ajustesBancarios: prevAjustes,
+          inyeccionesCapital: prevCapital,
+          pagosDeuda: prevPagosDeuda,
+        },
+        { includePrestamosCash, includeDeudasCash },
+      );
+      periodoAnterior = {
+        ...rangoAnterior,
+        porMoneda: computeFlowTotals(bucketsPrevios),
+      };
+    }
+
+
     return {
       resumenPorMoneda,
       cuentasBancarias,
@@ -668,6 +681,7 @@ export const AccountingReportsService = {
         moneda: params.moneda || null,
       },
       exportContent: exportFormat === 'csv' ? generateResumenCSV(resumenPorMoneda, cuentasBancarias as any, estadisticas, { coberturaConversion, monedasIncluidas: monedas }) : null,
+      periodoAnterior,
       metadatos: {
         tipoReporte: 'flujo_reconciliado',
         monedaSolicitada: params.moneda || null,
