@@ -11,8 +11,20 @@ const mocks = vi.hoisted(() => ({
 
 vi.mock('@/contexts/auth-context', () => ({
   useAuth: () => ({
-    user: { role: 'user', planFeatures: { contabilidad: true } },
+    user: {
+      role: 'user',
+      planFeatures: {
+        contabilidad: true,
+        'prestamos-cash': true,
+        'deudas-cash': true,
+      },
+    },
   }),
+}));
+
+vi.mock('@/lib/plan-access', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('@/lib/plan-access')>()),
+  canAccessAccountingItem: () => true,
 }));
 
 vi.mock('@/features/contabilidad/actions-reconciliacion', () => ({
@@ -66,5 +78,28 @@ describe('ContabilidadDashboard', () => {
     render(<ContabilidadDashboard />);
     await screen.findByTestId('resumen-financiero');
     expect(mocks.getReconciliacionStatsAction).not.toHaveBeenCalled();
+  });
+
+  it('ordena los accesos rápidos por frecuencia de uso esperada', async () => {
+    render(<ContabilidadDashboard />);
+    await screen.findByTestId('resumen-financiero');
+
+    const accionesEsperadas = [
+      'Cuentas Bancarias',
+      'Reconciliación',
+      'Transferencias',
+      'Préstamos en Efectivo',
+      'Deudas en Efectivo',
+      'Tasas de Cambio',
+      'Ajustes Manuales',
+      'Auditoría',
+    ];
+    const títulosVisibles = screen
+      .getAllByRole('link')
+      .map((el) => el.textContent ?? '')
+      .map((texto) => accionesEsperadas.find((a) => texto.startsWith(a)))
+      .filter((t): t is string => Boolean(t));
+
+    expect(títulosVisibles).toEqual(accionesEsperadas);
   });
 });

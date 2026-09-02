@@ -146,27 +146,6 @@ export default function ContabilidadDashboard(): React.JSX.Element {
       tone: 'purple',
     },
     {
-      title: 'Ajustes Manuales',
-      description: 'Correcciones y notas de débito/crédito',
-      href: '/busy/contabilidad/ajustes',
-      icon: SlidersHorizontal,
-      tone: 'amber',
-    },
-    {
-      title: 'Tasas de Cambio',
-      description: 'Configurar valores de monedas',
-      href: '/busy/contabilidad/exchange',
-      icon: Banknote,
-      tone: 'orange',
-    },
-    {
-      title: 'Auditoría',
-      description: 'Historial de operaciones',
-      href: '/busy/contabilidad/logs',
-      icon: FileText,
-      tone: 'slate',
-    },
-    {
       title: 'Préstamos en Efectivo',
       description: 'Préstamos cash a clientes',
       href: '/busy/contabilidad/prestamos-cash',
@@ -179,6 +158,27 @@ export default function ContabilidadDashboard(): React.JSX.Element {
       href: '/busy/contabilidad/deudas-cash',
       icon: CreditCard,
       tone: 'orange',
+    },
+    {
+      title: 'Tasas de Cambio',
+      description: 'Configurar valores de monedas',
+      href: '/busy/contabilidad/exchange',
+      icon: Banknote,
+      tone: 'orange',
+    },
+    {
+      title: 'Ajustes Manuales',
+      description: 'Correcciones y notas de débito/crédito',
+      href: '/busy/contabilidad/ajustes',
+      icon: SlidersHorizontal,
+      tone: 'amber',
+    },
+    {
+      title: 'Auditoría',
+      description: 'Historial de operaciones',
+      href: '/busy/contabilidad/logs',
+      icon: FileText,
+      tone: 'slate',
     },
   ] satisfies Array<{
     title: string;
