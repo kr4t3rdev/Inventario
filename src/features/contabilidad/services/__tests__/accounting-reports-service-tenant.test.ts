@@ -18,6 +18,7 @@ import { prisma } from '@/lib/prisma';
 describe('AccountingReportsService tenant isolation', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    delete (prisma as typeof prisma & { $queryRaw?: unknown }).$queryRaw;
     for (const model of [
       prisma.cuentaBancaria,
       prisma.reconciliacionVenta,
@@ -30,6 +31,36 @@ describe('AccountingReportsService tenant isolation', () => {
     ]) {
       vi.mocked(model.findMany).mockResolvedValue([] as never);
     }
+  });
+
+  it('usa el read model SQL paginado para el reporte JSON sin filtros posprocesados', async () => {
+    const queryRaw = vi.fn().mockResolvedValue([{
+      data: [{
+        id: 'movement-1', tipo: 'venta', fecha: '2026-01-01T12:00:00.000Z',
+        monto: 25, moneda: 'CUP', montoConvertido: 25, tasaCambio: 1,
+        descripcion: 'Venta V-1', cuenta: 'Banco - 1', tipoPago: 'Efectivo',
+        observaciones: null, realizadoPor: 'user-1', referencia: 'V-1', detalles: {},
+      }],
+      total: 1,
+      totales: { CUP: { ingresos: 25, egresos: 0, neto: 25 } },
+      coberturaConversion: {
+        total: 1, normalized: 1, legacyUnproven: 0, unresolved: 0, percentage: 100,
+      },
+    }]);
+    (prisma as typeof prisma & { $queryRaw: typeof queryRaw }).$queryRaw = queryRaw;
+
+    const { AccountingReportsService } = await import('../accounting-reports-service');
+    const result = await AccountingReportsService.getMovementsReport({
+      tenantId: 'tenant-a',
+      page: 1,
+      limit: 10,
+    });
+
+    expect(queryRaw).toHaveBeenCalledTimes(1);
+    expect(result.data[0]?.id).toBe('movement-1');
+    expect(result.pagination).toEqual({ page: 1, limit: 10, total: 1, totalPages: 1 });
+    expect(result.metadatos.coberturaConversion.percentage).toBe(100);
+    expect(prisma.reconciliacionVenta.findMany).not.toHaveBeenCalled();
   });
 
   it('scopes every summary query to the authenticated tenant', async () => {
@@ -91,6 +122,98 @@ describe('AccountingReportsService tenant isolation', () => {
         }),
       );
     }
+  });
+
+  it('solo consulta la fuente necesaria cuando se filtra por tipo de movimiento', async () => {
+    const { AccountingReportsService } = await import('../accounting-reports-service');
+
+    await AccountingReportsService.getMovementsReport({
+      tenantId: 'tenant-a',
+      tipoMovimiento: 'gasto',
+    });
+
+    expect(prisma.reconciliacionGasto.findMany).toHaveBeenCalledTimes(1);
+    expect(prisma.reconciliacionVenta.findMany).not.toHaveBeenCalled();
+    expect(prisma.reconciliacionServicio.findMany).not.toHaveBeenCalled();
+    expect(prisma.transferenciaBancaria.findMany).not.toHaveBeenCalled();
+    expect(prisma.ajusteBancario.findMany).not.toHaveBeenCalled();
+    expect(prisma.inyeccionCapital.findMany).not.toHaveBeenCalled();
+    expect(prisma.pagoDeuda.findMany).not.toHaveBeenCalled();
+  });
+
+  it('consulta pagos de deuda con la capacidad de deudas, no con la de capital', async () => {
+    const { AccountingReportsService } = await import('../accounting-reports-service');
+
+    await AccountingReportsService.getMovementsReport({
+      tenantId: 'tenant-a',
+      tipoMovimiento: 'pago_deuda',
+      includeCapital: false,
+      includeDeudasCash: true,
+    });
+
+    expect(prisma.pagoDeuda.findMany).toHaveBeenCalledTimes(1);
+  });
+
+  it('aplica la misma separación de capacidades en el resumen', async () => {
+    const { AccountingReportsService } = await import('../accounting-reports-service');
+
+    await AccountingReportsService.getSummaryReport({
+      tenantId: 'tenant-a',
+      includeCapital: false,
+      includeDeudasCash: true,
+    });
+
+    expect(prisma.inyeccionCapital.findMany).not.toHaveBeenCalled();
+    expect(prisma.pagoDeuda.findMany).toHaveBeenCalledTimes(1);
+  });
+
+  it('devuelve solo la fila de transferencia asociada a la cuenta filtrada', async () => {
+    vi.mocked(prisma.transferenciaBancaria.findMany).mockResolvedValue([
+      {
+        transferenciaId: 'transfer-1', numeroComprobante: 'T-1', montoOrigen: 100,
+        monedaOrigen: 'CUP', montoDestino: 100, monedaDestino: 'CUP', tasaCambio: 1,
+        motivo: 'Traspaso', descripcion: 'Movimiento interno', fechaTransferencia: new Date('2026-01-01T12:00:00Z'),
+        cuentaOrigenId: 'cuenta-a', cuentaDestinoId: 'cuenta-b',
+        cuentaOrigen: { nombreBanco: 'Banco A', numeroCuenta: '1' },
+        cuentaDestino: { nombreBanco: 'Banco B', numeroCuenta: '2' },
+      },
+    ] as never);
+
+    const { AccountingReportsService } = await import('../accounting-reports-service');
+    const result = await AccountingReportsService.getMovementsReport({
+      tenantId: 'tenant-a',
+      cuentaId: 'cuenta-a',
+    });
+
+    expect(result.data.map((movement) => movement.tipo)).toEqual(['transferencia_salida']);
+  });
+
+  it.each([
+    { formato: 'csv' as const },
+    { busqueda: 'T-USD' },
+    { tipoMovimiento: 'transferencia_entrada' },
+  ])('filtra por moneda cada pata de una transferencia en fallback (%o)', async (filters) => {
+    vi.mocked(prisma.transferenciaBancaria.findMany).mockResolvedValue([
+      {
+        transferenciaId: 'transfer-fx', numeroComprobante: 'T-USD', montoOrigen: 100,
+        monedaOrigen: 'CUP', montoDestino: 4, monedaDestino: 'USD', tasaCambio: 25,
+        motivo: 'Conversión', descripcion: 'Transferencia CUP a USD',
+        fechaTransferencia: new Date('2026-01-01T12:00:00Z'),
+        cuentaOrigenId: 'cuenta-cup', cuentaDestinoId: 'cuenta-usd',
+        cuentaOrigen: { nombreBanco: 'Banco CUP', numeroCuenta: '1' },
+        cuentaDestino: { nombreBanco: 'Banco USD', numeroCuenta: '2' },
+      },
+    ] as never);
+
+    const { AccountingReportsService } = await import('../accounting-reports-service');
+    const result = await AccountingReportsService.getMovementsReport({
+      tenantId: 'tenant-a', moneda: 'USD', ...filters,
+    });
+
+    expect(result.data).toHaveLength(1);
+    expect(result.data[0]).toMatchObject({
+      id: 'transfer-fx-destino', tipo: 'transferencia_entrada', moneda: 'USD',
+    });
   });
 
   it('cubre el día completo de cierre con límite exclusivo en resumen y movimientos', async () => {
@@ -246,6 +369,33 @@ describe('AccountingReportsService tenant isolation', () => {
     expect(result.data[0]?.id).toBe('posted');
   });
 
+  it('limita el contenido CSV al límite solicitado', async () => {
+    vi.mocked(prisma.reconciliacionGasto.findMany).mockResolvedValue([
+      {
+        reconciliacionId: 'expense-1', tipoGasto: 'GASTODE', estado: 'PAGADA', monto: 10,
+        moneda: 'CUP', descripcion: 'Primera fila', fechaReconciliacion: new Date('2026-01-02T12:00:00Z'),
+        cuentaBancaria: { nombreBanco: 'Banco', numeroCuenta: '1' },
+        tipoPago: { nombre: 'Efectivo' },
+      },
+      {
+        reconciliacionId: 'expense-2', tipoGasto: 'GASTODE', estado: 'PAGADA', monto: 20,
+        moneda: 'CUP', descripcion: 'Segunda fila', fechaReconciliacion: new Date('2026-01-01T12:00:00Z'),
+        cuentaBancaria: { nombreBanco: 'Banco', numeroCuenta: '1' },
+        tipoPago: { nombre: 'Efectivo' },
+      },
+    ] as never);
+
+    const { AccountingReportsService } = await import('../accounting-reports-service');
+    const result = await AccountingReportsService.getMovementsReport({
+      tenantId: 'tenant-a',
+      formato: 'csv',
+      limit: 1,
+    });
+
+    expect(result.exportContent).toContain('Primera fila');
+    expect(result.exportContent).not.toContain('Segunda fila');
+  });
+
   it('usa rangos semiabiertos [gte, lt) en resumen y movimientos', async () => {
     const { AccountingReportsService } = await import('../accounting-reports-service');
     const expectedGte = new Date('2026-01-01T00:00:00.000Z');
@@ -377,5 +527,88 @@ describe('AccountingReportsService tenant isolation', () => {
       unresolved: 1,
       percentage: 50,
     });
+  });
+
+  it('filtra por cuenta y moneda simultáneamente en el resumen', async () => {
+    vi.mocked(prisma.cuentaBancaria.findMany).mockResolvedValue([
+      { cuentaId: 'c1', saldo: 100, moneda: 'CUP' },
+      { cuentaId: 'c2', saldo: 200, moneda: 'USD' },
+    ] as never);
+    vi.mocked(prisma.reconciliacionVenta.findMany).mockResolvedValue([
+      { tipoReconciliacion: 'VENTA', monto: 50, moneda: 'CUP', montoConvertido: 50 },
+      { tipoReconciliacion: 'VENTA', monto: 75, moneda: 'USD', montoConvertido: 75 },
+    ] as never);
+
+    const { AccountingReportsService } = await import('../accounting-reports-service');
+    const result = await AccountingReportsService.getSummaryReport({
+      tenantId: 'tenant-a',
+      cuentaId: 'c1',
+      moneda: 'CUP',
+    });
+
+    expect(result.resumenPorMoneda).toHaveLength(1);
+    expect(result.resumenPorMoneda[0].moneda).toBe('CUP');
+    expect(result.resumenPorMoneda[0].totalIngresos).toBe(50);
+  });
+
+  it('el resumen por moneda no mezcla ingresos de diferentes monedas', async () => {
+    vi.mocked(prisma.cuentaBancaria.findMany).mockResolvedValue([
+      { cuentaId: 'c1', saldo: 0, moneda: 'CUP' },
+    ] as never);
+    vi.mocked(prisma.reconciliacionVenta.findMany).mockResolvedValue([
+      { tipoReconciliacion: 'VENTA', monto: 100, moneda: 'CUP', montoConvertido: 100 },
+      { tipoReconciliacion: 'VENTA', monto: 50, moneda: 'USD', montoConvertido: 1200 },
+      { tipoReconciliacion: 'VENTA', monto: 30, moneda: 'EUR', montoConvertido: 900 },
+    ] as never);
+
+    const { AccountingReportsService } = await import('../accounting-reports-service');
+    const result = await AccountingReportsService.getSummaryReport({ tenantId: 'tenant-a' });
+
+    const cup = result.resumenPorMoneda.find((r) => r.moneda === 'CUP');
+    const usd = result.resumenPorMoneda.find((r) => r.moneda === 'USD');
+    const eur = result.resumenPorMoneda.find((r) => r.moneda === 'EUR');
+
+    expect(cup?.totalIngresos).toBe(100);
+    expect(usd?.totalIngresos).toBe(50);
+    expect(eur?.totalIngresos).toBe(30);
+
+    expect(result.resumenPorMoneda.length).toBeGreaterThanOrEqual(3);
+  });
+
+  it('los totales del resumen representan todo el período, no una página', async () => {
+    vi.mocked(prisma.reconciliacionVenta.findMany).mockResolvedValue(
+      Array.from({ length: 25 }, (_, i) => ({
+        tipoReconciliacion: 'VENTA',
+        monto: 10,
+        moneda: 'CUP',
+        montoConvertido: 10,
+      })),
+    );
+
+    const { AccountingReportsService } = await import('../accounting-reports-service');
+    const result = await AccountingReportsService.getSummaryReport({ tenantId: 'tenant-a' });
+    const cup = result.resumenPorMoneda.find((r) => r.moneda === 'CUP');
+
+    expect(cup?.totalIngresos).toBe(250);
+  });
+
+  it('rango de fechas inclusivo: incluye el último día completo', async () => {
+    const { AccountingReportsService } = await import('../accounting-reports-service');
+    const expectedGte = new Date('2026-03-01T00:00:00.000Z');
+    const expectedLt = new Date('2026-04-01T00:00:00.000Z');
+
+    await AccountingReportsService.getSummaryReport({
+      tenantId: 'tenant-a',
+      fechaInicio: '2026-03-01',
+      fechaFin: '2026-03-31',
+    });
+
+    expect(prisma.reconciliacionVenta.findMany).toHaveBeenCalledWith(
+      expect.objectContaining({
+        where: expect.objectContaining({
+          fechaReconciliacion: { gte: expectedGte, lt: expectedLt },
+        }),
+      }),
+    );
   });
 });

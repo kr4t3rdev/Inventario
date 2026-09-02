@@ -97,6 +97,7 @@ model InyeccionCapital {
   updatedAt          DateTime       @updatedAt
   cuentaBancaria     CuentaBancaria @relation(fields: [cuentaId], references: [cuentaId])
   pagos              PagoDeuda[]
+  @@index([cuentaId, createdAt])
 }
 
 model PagoDeuda {
@@ -112,6 +113,7 @@ model PagoDeuda {
   updatedAt      DateTime         @updatedAt
   cuentaBancaria CuentaBancaria   @relation(fields: [cuentaId], references: [cuentaId])
   inyeccion      InyeccionCapital @relation(fields: [inyeccionId], references: [id], onDelete: Cascade)
+  @@index([cuentaId, fechaPago])
 }
 
 model Cliente {
@@ -1585,6 +1587,8 @@ model ReconciliacionVenta {
 
   @@index([tenantId])
   @@index([tenantId, fxProvenanceKind])
+  @@index([tenantId, fechaReconciliacion])
+  @@index([tenantId, cuentaId, fechaReconciliacion])
 }
 
 model ReconciliacionServicio {
@@ -1617,6 +1621,8 @@ model ReconciliacionServicio {
 
   @@index([tenantId])
   @@index([tenantId, fxProvenanceKind])
+  @@index([tenantId, fechaReconciliacion])
+  @@index([tenantId, cuentaId, fechaReconciliacion])
 }
 
 model ReconciliacionGasto {
@@ -1661,6 +1667,8 @@ model ReconciliacionGasto {
 
   @@index([tenantId])
   @@index([tenantId, fxProvenanceKind])
+  @@index([tenantId, fechaReconciliacion])
+  @@index([tenantId, cuentaId, fechaReconciliacion])
 }
 
 model AjusteBancario {
@@ -1683,6 +1691,7 @@ model AjusteBancario {
 
   @@index([tenantId])
   @@index([tenantId, fechaOperacion])
+  @@index([tenantId, cuentaId, fechaOperacion])
 }
 
 model TransferenciaBancaria {
@@ -1710,6 +1719,9 @@ model TransferenciaBancaria {
 
   @@unique([tenantId, numeroComprobante])
   @@index([tenantId])
+  @@index([tenantId, fechaTransferencia])
+  @@index([tenantId, cuentaOrigenId, fechaTransferencia])
+  @@index([tenantId, cuentaDestinoId, fechaTransferencia])
 }
 
 model AlertHistory {

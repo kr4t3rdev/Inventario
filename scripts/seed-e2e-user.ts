@@ -5,6 +5,7 @@
  */
 import { PrismaClient } from '../src/generated/prisma'
 import bcrypt from 'bcryptjs'
+import { E2E_TENANT_ID, ensureE2eTenant } from './e2e-fixtures'
 
 if (process.env.NODE_ENV === 'production') {
   console.error('ERROR: Este script no puede ejecutarse en producción.')
@@ -42,7 +43,7 @@ async function seedProductionCatalog(): Promise<void> {
     create: {
       almacenId: E2E_FIXTURES.almacenId,
       nombre: 'Almacén E2E Producción',
-      tenant: { connect: { tenantId: 'e2e-tenant' } },
+      tenant: { connect: { tenantId: E2E_TENANT_ID } },
     },
   })
 
@@ -58,7 +59,7 @@ async function seedProductionCatalog(): Promise<void> {
       nombre: 'Categoría E2E Producción',
       descripcion: 'Catálogo dedicado para pruebas E2E de producción',
       parentId: null,
-      tenantId: 'e2e-tenant',
+      tenantId: E2E_TENANT_ID,
     },
   })
 
@@ -72,7 +73,7 @@ async function seedProductionCatalog(): Promise<void> {
       unidadId: E2E_FIXTURES.unidadLitroId,
       nombre: 'Litro',
       simbolo: 'L',
-      tenantId: 'e2e-tenant',
+      tenantId: E2E_TENANT_ID,
     },
   })
 
@@ -86,7 +87,7 @@ async function seedProductionCatalog(): Promise<void> {
       unidadId: E2E_FIXTURES.unidadKgId,
       nombre: 'Kilogramo',
       simbolo: 'kg',
-      tenantId: 'e2e-tenant',
+      tenantId: E2E_TENANT_ID,
     },
   })
 
@@ -118,7 +119,7 @@ async function seedProductionCatalog(): Promise<void> {
       categoriaId: E2E_FIXTURES.categoriaId,
       almacenId: E2E_FIXTURES.almacenId,
       unidadId: E2E_FIXTURES.unidadLitroId,
-      tenantId: 'e2e-tenant',
+      tenantId: E2E_TENANT_ID,
       fotos: [],
     },
   })
@@ -151,7 +152,7 @@ async function seedProductionCatalog(): Promise<void> {
       categoriaId: E2E_FIXTURES.categoriaId,
       almacenId: E2E_FIXTURES.almacenId,
       unidadId: E2E_FIXTURES.unidadKgId,
-      tenantId: 'e2e-tenant',
+      tenantId: E2E_TENANT_ID,
       fotos: [],
     },
   })
@@ -164,7 +165,9 @@ async function seedProductionCatalog(): Promise<void> {
 async function main() {
   const hashedPassword = await bcrypt.hash(E2E_USER.password, 10)
 
-  await prisma.user.upsert({
+  await ensureE2eTenant(prisma)
+
+  const user = await prisma.user.upsert({
     where: { email: E2E_USER.email },
     update: {
       password: hashedPassword,
@@ -178,6 +181,44 @@ async function main() {
       password: hashedPassword,
       role: E2E_USER.role,
       isActive: true,
+    },
+  })
+
+  await prisma.tenantMembership.upsert({
+    where: {
+      tenantId_userId: {
+        tenantId: E2E_TENANT_ID,
+        userId: user.userId,
+      },
+    },
+    update: {
+      tenantRole: 'manager',
+      isActive: true,
+    },
+    create: {
+      tenantId: E2E_TENANT_ID,
+      userId: user.userId,
+      tenantRole: 'manager',
+      isActive: true,
+    },
+  })
+
+  await prisma.review.upsert({
+    where: {
+      tenantId_userId: {
+        tenantId: E2E_TENANT_ID,
+        userId: user.userId,
+      },
+    },
+    update: {},
+    create: {
+      reviewId: 'e2e-review-suppress-prompt',
+      tenantId: E2E_TENANT_ID,
+      userId: user.userId,
+      rating: 5,
+      comment: 'Fixture para mantener las pruebas E2E deterministas.',
+      isApproved: false,
+      isPositive: true,
     },
   })
 

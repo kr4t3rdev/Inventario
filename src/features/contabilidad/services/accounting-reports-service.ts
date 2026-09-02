@@ -1,6 +1,20 @@
 import { prisma } from '@/lib/prisma';
 import { AccountingAccountsService } from '@/features/contabilidad/services/accounting-accounts-service';
 import { classifyLegacyReconciliation } from '@/features/contabilidad/domain/reconciliation-policy';
+import { buildMovementsReportQuery } from '@/features/contabilidad/services/movements-report-query';
+
+interface MovementsReadModelRow {
+  data: Array<Record<string, unknown>>;
+  total: number;
+  totales: Record<string, { ingresos: number; egresos: number; neto: number }>;
+  coberturaConversion: {
+    total: number;
+    normalized: number;
+    legacyUnproven: number;
+    unresolved: number;
+    percentage: number;
+  };
+}
 
 interface CuentaBancariaResumen {
   cuentaId: string;
@@ -484,7 +498,7 @@ export const AccountingReportsService = {
         where: { ...accountRelationFilter, ...(Object.keys(dateFilter).length > 0 ? { createdAt: dateFilter } : {}) },
         select: { tipo: true, montoRecibido: true, moneda: true },
       }) : Promise.resolve([]),
-      includeCapital ? prisma.pagoDeuda.findMany({
+      includeDeudasCash ? prisma.pagoDeuda.findMany({
         where: { ...accountRelationFilter, ...(Object.keys(dateFilter).length > 0 ? { fechaPago: dateFilter } : {}) },
         select: { montoPagado: true, cuentaBancaria: { select: { moneda: true } } },
       }) : Promise.resolve([]),
@@ -682,6 +696,53 @@ export const AccountingReportsService = {
     includePrestamosCash?: boolean;
     includeDeudasCash?: boolean;
   }) {
+    const requestedMovementType = params.tipoMovimiento && params.tipoMovimiento !== 'all'
+      ? params.tipoMovimiento
+      : null;
+    const queryRaw = (prisma as typeof prisma & {
+      $queryRaw?: (query: ReturnType<typeof buildMovementsReportQuery>) => Promise<MovementsReadModelRow[]>;
+    }).$queryRaw;
+    const usePaginatedReadModel = typeof queryRaw === 'function'
+      && params.formato == null
+      && !params.busqueda?.trim()
+      && requestedMovementType === null;
+
+    if (usePaginatedReadModel) {
+      const page = Math.max(1, Math.trunc(params.page ?? 1));
+      const limit = Math.min(100, Math.max(1, Math.trunc(params.limit ?? 10)));
+      const rows = await queryRaw.call(
+        prisma,
+        buildMovementsReportQuery({ ...params, page, limit }),
+      );
+      const [row] = rows as MovementsReadModelRow[];
+      if (!row) throw new Error('El read model de movimientos no devolvió su fila agregada');
+
+      return {
+        data: row.data,
+        totales: row.totales,
+        pagination: {
+          page,
+          limit,
+          total: row.total,
+          totalPages: Math.ceil(row.total / limit),
+        },
+        filtros: {
+          busqueda: params.busqueda ?? null,
+          fechaInicio: params.fechaInicio || null,
+          fechaFin: params.fechaFin || null,
+          cuentaId: params.cuentaId ?? null,
+          tipoMovimiento: params.tipoMovimiento ?? null,
+          moneda: params.moneda ?? null,
+        },
+        exportContent: null,
+        metadatos: {
+          tipoReporte: 'movimientos_reconciliados',
+          monedaSolicitada: params.moneda ?? null,
+          coberturaConversion: row.coberturaConversion,
+        },
+      };
+    }
+
     const dateFilter = buildDateFilter(params.fechaInicio, params.fechaFin);
     const cuentaId = params.cuentaId ?? null;
     const busqueda = params.busqueda ?? null;
@@ -695,6 +756,32 @@ export const AccountingReportsService = {
     const includeCapital = params.includeCapital !== false;
     const includePrestamosCash = params.includePrestamosCash !== false;
     const includeDeudasCash = params.includeDeudasCash !== false;
+    const selectedSource = requestedMovementType
+      ? ({
+          venta: 'sales',
+          prestamo_cash_pago: 'sales',
+          prestamo_cash_desembolso: 'sales',
+          deuda_cash_pago: 'sales',
+          deuda_cash_desembolso: 'sales',
+          servicio: 'services',
+          gasto: 'expenses',
+          salario: 'expenses',
+          transferencia_salida: 'transfers',
+          transferencia_entrada: 'transfers',
+          ajuste_ingreso: 'adjustments',
+          ajuste_egreso: 'adjustments',
+          inyeccion_capital: 'capital',
+          pago_deuda: 'debt',
+        } as Record<string, string>)[requestedMovementType] ?? null
+      : null;
+    /**
+     * @description Evita consultas de fuentes que no pueden producir el tipo solicitado.
+     * @param {string} source - Familia normalizada de movimientos.
+     * @param {boolean} enabled - Indica si la capacidad está habilitada por el plan.
+     * @returns {boolean} Verdadero cuando la fuente debe consultarse.
+     */
+    const shouldLoadSource = (source: string, enabled = true) =>
+      enabled && (selectedSource === null || selectedSource === source);
     const accountFilter = {
       tenantId: params.tenantId,
       ...(cuentaId ? { cuentaId } : {}),
@@ -705,7 +792,7 @@ export const AccountingReportsService = {
     };
 
     const [ventasMovimientos, serviciosMovimientos, gastosMovimientos, transferenciasMovimientos, ajustesMovimientos, inyeccionesMovimientos, pagosDeudaMovimientos] = await Promise.all([
-      prisma.reconciliacionVenta.findMany({
+      shouldLoadSource('sales') ? prisma.reconciliacionVenta.findMany({
         where: { ...accountFilter, ...(Object.keys(dateFilter).length > 0 ? { fechaReconciliacion: dateFilter } : {}), ...(moneda ? { moneda } : {}) },
         select: {
           reconciliacionId: true, monto: true, moneda: true, montoConvertido: true, tasaCambio: true,
@@ -717,18 +804,18 @@ export const AccountingReportsService = {
           cuentaBancaria: { select: { nombreBanco: true, numeroCuenta: true } },
           tipoPago: { select: { nombre: true } },
         }, orderBy: { fechaReconciliacion: 'desc' },
-      }),
-      includeServicios ? prisma.reconciliacionServicio.findMany({
+      }) : Promise.resolve([]),
+      shouldLoadSource('services', includeServicios) ? prisma.reconciliacionServicio.findMany({
         where: { ...accountFilter, ...(Object.keys(dateFilter).length > 0 ? { fechaReconciliacion: dateFilter } : {}), ...(moneda ? { moneda } : {}) },
         select: { reconciliacionId: true, monto: true, moneda: true, montoConvertido: true, tasaCambio: true,
           rateEffectiveAt: true, fechaReconciliacion: true, observaciones: true, reconciliadoPor: true, ventasServicio: { select: { ventaServicioId: true } }, cuentaBancaria: { select: { nombreBanco: true, numeroCuenta: true } }, tipoPago: { select: { nombre: true } } }, orderBy: { fechaReconciliacion: 'desc' },
       }) : Promise.resolve([]),
-      prisma.reconciliacionGasto.findMany({
+      shouldLoadSource('expenses') ? prisma.reconciliacionGasto.findMany({
         where: { ...accountFilter, ...(Object.keys(dateFilter).length > 0 ? { fechaReconciliacion: dateFilter } : {}), ...(moneda ? { moneda } : {}) },
        select: { reconciliacionId: true, monto: true, moneda: true, montoConvertido: true, tasaCambio: true,
          rateEffectiveAt: true, tipoGasto: true, estado: true, descripcion: true, periodo: true, fechaReconciliacion: true, observaciones: true, reconciliadoPor: true, cuentaBancaria: { select: { nombreBanco: true, numeroCuenta: true } }, tipoPago: { select: { nombre: true } } }, orderBy: { fechaReconciliacion: 'desc' },
-      }),
-      includeTransfers ? prisma.transferenciaBancaria.findMany({
+      }) : Promise.resolve([]),
+      shouldLoadSource('transfers', includeTransfers) ? prisma.transferenciaBancaria.findMany({
         where: {
           tenantId: params.tenantId,
           ...(Object.keys(dateFilter).length > 0 ? { fechaTransferencia: dateFilter } : {}),
@@ -739,19 +826,19 @@ export const AccountingReportsService = {
             ],
           } : {}),
         },
-        select: { transferenciaId: true, numeroComprobante: true, montoOrigen: true, monedaOrigen: true, montoDestino: true, monedaDestino: true, tasaCambio: true,
+        select: { transferenciaId: true, cuentaOrigenId: true, cuentaDestinoId: true, numeroComprobante: true, montoOrigen: true, monedaOrigen: true, montoDestino: true, monedaDestino: true, tasaCambio: true,
           motivo: true, descripcion: true, fechaTransferencia: true, cuentaOrigen: { select: { nombreBanco: true, numeroCuenta: true } }, cuentaDestino: { select: { nombreBanco: true, numeroCuenta: true } } }, orderBy: { fechaTransferencia: 'desc' },
       }) : Promise.resolve([]),
-      includeAdjustments ? prisma.ajusteBancario.findMany({
+      shouldLoadSource('adjustments', includeAdjustments) ? prisma.ajusteBancario.findMany({
         where: { ...accountFilter, ...(Object.keys(dateFilter).length > 0 ? { fechaOperacion: dateFilter } : {}), ...(moneda ? { moneda } : {}) },
         select: { ajusteId: true, tipo: true, monto: true, moneda: true, montoConvertido: true, tasaCambio: true,
           descripcion: true, motivo: true, realizadoPor: true, fechaOperacion: true, cuentaBancaria: { select: { nombreBanco: true, numeroCuenta: true } } }, orderBy: { fechaOperacion: 'desc' },
       }) : Promise.resolve([]),
-      includeCapital ? prisma.inyeccionCapital.findMany({
+      shouldLoadSource('capital', includeCapital) ? prisma.inyeccionCapital.findMany({
         where: { ...accountRelationFilter, ...(Object.keys(dateFilter).length > 0 ? { createdAt: dateFilter } : {}), ...(moneda ? { moneda } : {}) },
         select: { id: true, tipo: true, montoRecibido: true, moneda: true, descripcion: true, socio: true, entidadPrestamista: true, createdAt: true, cuentaBancaria: { select: { nombreBanco: true, numeroCuenta: true } } }, orderBy: { createdAt: 'desc' },
       }) : Promise.resolve([]),
-      includeCapital ? prisma.pagoDeuda.findMany({
+      shouldLoadSource('debt', includeDeudasCash) ? prisma.pagoDeuda.findMany({
         where: { ...accountRelationFilter, ...(Object.keys(dateFilter).length > 0 ? { fechaPago: dateFilter } : {}), cuentaBancaria: { tenantId: params.tenantId, ...(moneda ? { moneda } : {}) } },
         select: { id: true, montoPagado: true, fechaPago: true, comprobante: true, observaciones: true, cuentaBancaria: { select: { nombreBanco: true, numeroCuenta: true, moneda: true } }, inyeccion: { select: { entidadPrestamista: true, tipo: true } } }, orderBy: { fechaPago: 'desc' },
       }) : Promise.resolve([]),
@@ -779,13 +866,15 @@ export const AccountingReportsService = {
           }
           return true;
         })
-        .map((mov: any) => ({
+        .map((mov: any) => {
+        const esDesembolso = mov.tipoReconciliacion === 'PRESTAMO_CASH_DESEMBOLSO' || mov.tipoReconciliacion === 'DEUDA_CASH_DESEMBOLSO';
+        return {
         id: mov.reconciliacionId,
         tipo: mov.tipoReconciliacion === 'PRESTAMO_CASH' ? 'prestamo_cash_pago' : mov.tipoReconciliacion === 'PRESTAMO_CASH_DESEMBOLSO' ? 'prestamo_cash_desembolso' : mov.tipoReconciliacion === 'DEUDA_CASH' ? 'deuda_cash_pago' : mov.tipoReconciliacion === 'DEUDA_CASH_DESEMBOLSO' ? 'deuda_cash_desembolso' : 'venta',
         fecha: mov.fechaReconciliacion,
-        monto: Number(mov.monto),
+        monto: esDesembolso ? -Math.abs(Number(mov.monto)) : Number(mov.monto),
         moneda: mov.moneda || 'CUP',
-         montoConvertido: mov.montoConvertido != null ? Number(mov.montoConvertido) : null,
+         montoConvertido: mov.montoConvertido != null ? (esDesembolso ? -Math.abs(Number(mov.montoConvertido)) : Number(mov.montoConvertido)) : null,
         tasaCambio: mov.tasaCambio ? Number(mov.tasaCambio) : null,
         descripcion: mov.tipoReconciliacion === 'PRESTAMO_CASH' ? 'Cobro Prestamo Cash' : mov.tipoReconciliacion === 'PRESTAMO_CASH_DESEMBOLSO' ? 'Desembolso Prestamo Cash' : mov.tipoReconciliacion === 'DEUDA_CASH' ? 'Pago Deuda Cash' : mov.tipoReconciliacion === 'DEUDA_CASH_DESEMBOLSO' ? 'Desembolso de Deuda Cash' : mov.venta ? `Venta ${mov.venta.ventaId}` : `Cobro ${mov.reconciliacionId}`,
         cuenta: `${mov.cuentaBancaria.nombreBanco} - ${mov.cuentaBancaria.numeroCuenta}`,
@@ -794,15 +883,22 @@ export const AccountingReportsService = {
         realizadoPor: mov.reconciliadoPor,
         referencia: mov.venta?.ventaId || mov.prestamoCash?.id || mov.deudaCash?.id || mov.reconciliacionId,
         detalles: { tipoReconciliacion: mov.tipoReconciliacion },
-      })),
+      };
+      }),
       serviciosMovimientos.map((mov: any) => ({ id: mov.reconciliacionId, tipo: 'servicio', fecha: mov.fechaReconciliacion, monto: Number(mov.monto), moneda: mov.moneda || 'CUP', montoConvertido: mov.montoConvertido != null ? Number(mov.montoConvertido) : null, tasaCambio: mov.tasaCambio ? Number(mov.tasaCambio) : null, descripcion: `Servicio ${mov.ventasServicio.ventaServicioId}`, cuenta: `${mov.cuentaBancaria.nombreBanco} - ${mov.cuentaBancaria.numeroCuenta}`, tipoPago: mov.tipoPago.nombre, observaciones: mov.observaciones, realizadoPor: mov.reconciliadoPor, referencia: mov.ventasServicio.ventaServicioId, detalles: {} })),
        gastosMovimientos
          .filter((mov: any) => !['PENDIENTE', 'ANULADA', 'CANCELADA'].includes(String(mov.estado || 'PAGADA').toUpperCase()))
          .map((mov: any) => ({ id: mov.reconciliacionId, tipo: mov.tipoGasto === 'salario' ? 'salario' : 'gasto', fecha: mov.fechaReconciliacion, monto: -Number(mov.monto), moneda: mov.moneda || 'CUP', montoConvertido: mov.montoConvertido != null ? -Number(mov.montoConvertido) : null, tasaCambio: mov.tasaCambio ? Number(mov.tasaCambio) : null, descripcion: mov.descripcion, cuenta: `${mov.cuentaBancaria.nombreBanco} - ${mov.cuentaBancaria.numeroCuenta}`, tipoPago: mov.tipoPago.nombre, observaciones: mov.observaciones, realizadoPor: mov.reconciliadoPor, referencia: mov.reconciliacionId, detalles: { periodo: mov.periodo } })),
       transferenciasMovimientos.flatMap((mov: any) => {
         const rows = [] as any[];
-        rows.push({ id: `${mov.transferenciaId}-origen`, tipo: 'transferencia_salida', fecha: mov.fechaTransferencia, monto: -Number(mov.montoOrigen), moneda: mov.monedaOrigen || 'CUP', montoConvertido: null, tasaCambio: mov.tasaCambio ? Number(mov.tasaCambio) : null, descripcion: `Transf a ${mov.cuentaDestino.nombreBanco}`, cuenta: `${mov.cuentaOrigen.nombreBanco} - ${mov.cuentaOrigen.numeroCuenta}`, tipoPago: 'Transferencia', observaciones: mov.descripcion, realizadoPor: 'Sistema', referencia: mov.numeroComprobante, detalles: { motivo: mov.motivo } });
-        rows.push({ id: `${mov.transferenciaId}-destino`, tipo: 'transferencia_entrada', fecha: mov.fechaTransferencia, monto: Number(mov.montoDestino), moneda: mov.monedaDestino || 'CUP', montoConvertido: null, tasaCambio: mov.tasaCambio ? Number(mov.tasaCambio) : null, descripcion: `Transf desde ${mov.cuentaOrigen.nombreBanco}`, cuenta: `${mov.cuentaDestino.nombreBanco} - ${mov.cuentaDestino.numeroCuenta}`, tipoPago: 'Transferencia', observaciones: mov.descripcion, realizadoPor: 'Sistema', referencia: mov.numeroComprobante, detalles: { motivo: mov.motivo } });
+        const monedaOrigen = mov.monedaOrigen || 'CUP';
+        const monedaDestino = mov.monedaDestino || 'CUP';
+        if ((!cuentaId || mov.cuentaOrigenId === cuentaId) && (!moneda || monedaOrigen === moneda)) {
+          rows.push({ id: `${mov.transferenciaId}-origen`, tipo: 'transferencia_salida', fecha: mov.fechaTransferencia, monto: -Number(mov.montoOrigen), moneda: monedaOrigen, montoConvertido: null, tasaCambio: mov.tasaCambio ? Number(mov.tasaCambio) : null, descripcion: `Transf a ${mov.cuentaDestino.nombreBanco}`, cuenta: `${mov.cuentaOrigen.nombreBanco} - ${mov.cuentaOrigen.numeroCuenta}`, tipoPago: 'Transferencia', observaciones: mov.descripcion, realizadoPor: 'Sistema', referencia: mov.numeroComprobante, detalles: { motivo: mov.motivo } });
+        }
+        if ((!cuentaId || mov.cuentaDestinoId === cuentaId) && (!moneda || monedaDestino === moneda)) {
+          rows.push({ id: `${mov.transferenciaId}-destino`, tipo: 'transferencia_entrada', fecha: mov.fechaTransferencia, monto: Number(mov.montoDestino), moneda: monedaDestino, montoConvertido: null, tasaCambio: mov.tasaCambio ? Number(mov.tasaCambio) : null, descripcion: `Transf desde ${mov.cuentaOrigen.nombreBanco}`, cuenta: `${mov.cuentaDestino.nombreBanco} - ${mov.cuentaDestino.numeroCuenta}`, tipoPago: 'Transferencia', observaciones: mov.descripcion, realizadoPor: 'Sistema', referencia: mov.numeroComprobante, detalles: { motivo: mov.motivo } });
+        }
         return rows;
       }),
       ajustesMovimientos.map((mov: any) => ({ id: mov.ajusteId, tipo: mov.tipo === 'ingreso' ? 'ajuste_ingreso' : 'ajuste_egreso', fecha: mov.fechaOperacion, monto: mov.tipo === 'ingreso' ? Number(mov.monto) : -Number(mov.monto), moneda: mov.moneda || 'CUP', montoConvertido: mov.montoConvertido != null ? (mov.tipo === 'ingreso' ? Number(mov.montoConvertido) : -Number(mov.montoConvertido)) : null, tasaCambio: mov.tasaCambio ? Number(mov.tasaCambio) : null, descripcion: mov.descripcion, cuenta: `${mov.cuentaBancaria.nombreBanco} - ${mov.cuentaBancaria.numeroCuenta}`, tipoPago: mov.tipo === 'ingreso' ? 'Ajuste Ingreso' : 'Ajuste Egreso', observaciones: mov.motivo, realizadoPor: mov.realizadoPor, referencia: mov.ajusteId, detalles: { tipoAjuste: mov.tipo, motivo: mov.motivo } })),
@@ -817,7 +913,7 @@ export const AccountingReportsService = {
     if (busqueda) {
       const q = busqueda.toLowerCase();
       movimientosFiltrados = movimientosFiltrados.filter((mov) =>
-        mov.descripcion.toLowerCase().includes(q) ||
+        mov.descripcion?.toLowerCase().includes(q) ||
         mov.referencia?.toLowerCase().includes(q) ||
         mov.observaciones?.toLowerCase().includes(q),
       );
@@ -826,6 +922,7 @@ export const AccountingReportsService = {
     movimientosFiltrados.sort((a, b) => new Date(b.fecha).getTime() - new Date(a.fecha).getTime());
     const offset = (page - 1) * limit;
     const movimientosPaginados = movimientosFiltrados.slice(offset, offset + limit);
+    const movimientosParaExportar = movimientosFiltrados.slice(0, limit);
 
     const totalesPorMoneda = movimientosFiltrados.reduce((acc, mov) => {
       const m = mov.moneda;
@@ -853,7 +950,7 @@ export const AccountingReportsService = {
         tipoMovimiento,
         moneda,
       },
-      exportContent: params.formato === 'csv' ? generateCSV(movimientosFiltrados, { coberturaConversion: getConversionCoverage([
+      exportContent: params.formato === 'csv' ? generateCSV(movimientosParaExportar, { coberturaConversion: getConversionCoverage([
         ...ventasMovimientos,
         ...serviciosMovimientos,
         ...gastosMovimientos,
