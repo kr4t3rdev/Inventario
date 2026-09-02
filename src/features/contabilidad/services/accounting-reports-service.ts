@@ -121,6 +121,26 @@ function getConversionCoverage(
   };
 }
 
+/**
+ * @description Escapa un valor para una celda CSV y evita la ejecución de fórmulas en hojas de cálculo.
+ * @param {unknown} value - Valor que se serializará.
+ * @param {boolean} protectFormula - Indica si el valor proviene de texto controlado por el usuario.
+ * @returns {string} Celda CSV entrecomillada según RFC 4180.
+ */
+function escapeMovementsCsvField(value: unknown, protectFormula = false): string {
+  let text = value == null ? '' : String(value);
+  if (protectFormula && /^[\t\r\n ]*[=+\-@]/.test(text)) {
+    text = `'${text}`;
+  }
+  return `"${text.replace(/"/g, '""')}"`;
+}
+
+/**
+ * @description Genera el CSV de movimientos reconciliados con campos seguros para hojas de cálculo.
+ * @param {unknown[]} movimientos - Movimientos que se exportarán.
+ * @param {{ coberturaConversion: ReturnType<typeof getConversionCoverage> }} metadata - Metadatos del reporte.
+ * @returns {string} Contenido CSV.
+ */
 function generateCSV(
   movimientos: unknown[],
   metadata: { coberturaConversion: ReturnType<typeof getConversionCoverage> },
@@ -131,22 +151,33 @@ function generateCSV(
   ];
 
   const rows = movimientos.map((mov: any) => [
-    new Date(mov.fecha).toLocaleDateString(),
-    mov.tipo,
-    mov.descripcion,
-    mov.cuenta,
-    mov.tipoPago,
-    mov.monto.toString(),
-    mov.moneda,
-    mov.montoConvertido?.toString() || '',
-    mov.tasaCambio?.toString() || '',
-    mov.realizadoPor,
-    mov.referencia,
-    mov.observaciones || '',
+    escapeMovementsCsvField(new Date(mov.fecha).toLocaleDateString()),
+    escapeMovementsCsvField(mov.tipo, true),
+    escapeMovementsCsvField(mov.descripcion, true),
+    escapeMovementsCsvField(mov.cuenta, true),
+    escapeMovementsCsvField(mov.tipoPago, true),
+    escapeMovementsCsvField(mov.monto),
+    escapeMovementsCsvField(mov.moneda, true),
+    escapeMovementsCsvField(mov.montoConvertido?.toString() || ''),
+    escapeMovementsCsvField(mov.tasaCambio?.toString() || ''),
+    escapeMovementsCsvField(mov.realizadoPor, true),
+    escapeMovementsCsvField(mov.referencia, true),
+    escapeMovementsCsvField(mov.observaciones || '', true),
   ]);
 
-  return [headers, ...rows, [], ['METADATOS', 'Valor'], ['Tipo reporte', 'movimientos_reconciliados'], ['Cobertura normalizada', metadata.coberturaConversion.percentage], ['Importes sin conversión', metadata.coberturaConversion.unresolved], ['Legado sin procedencia', (metadata.coberturaConversion as { legacyUnproven?: number }).legacyUnproven ?? 0]]
-    .map((row) => row.map((field) => `"${field}"`).join(','))
+  return [
+    headers.map((field) => escapeMovementsCsvField(field)).join(','),
+    ...rows.map((row) => row.join(',')),
+    '',
+    ['METADATOS', 'Valor'].map((field) => escapeMovementsCsvField(field)).join(','),
+    ['Tipo reporte', 'movimientos_reconciliados'].map((field) => escapeMovementsCsvField(field)).join(','),
+    ['Cobertura normalizada', metadata.coberturaConversion.percentage]
+      .map((field) => escapeMovementsCsvField(field)).join(','),
+    ['Importes sin conversión', metadata.coberturaConversion.unresolved]
+      .map((field) => escapeMovementsCsvField(field)).join(','),
+    ['Legado sin procedencia', (metadata.coberturaConversion as { legacyUnproven?: number }).legacyUnproven ?? 0]
+      .map((field) => escapeMovementsCsvField(field)).join(','),
+  ]
     .join('\n');
 }
 

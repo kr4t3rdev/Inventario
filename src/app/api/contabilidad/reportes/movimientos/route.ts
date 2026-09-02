@@ -44,7 +44,14 @@ export async function GET(request: NextRequest) {
     const user = authResult.user;
     const tenantId = requireTenant(user);
     const searchParams = request.nextUrl.searchParams;
-    const formato = searchParams.get('formato') ?? searchParams.get('export');
+    const requestedFormat = searchParams.get('formato') ?? searchParams.get('export');
+    if (requestedFormat !== null && requestedFormat !== 'csv' && requestedFormat !== 'pdf') {
+      return NextResponse.json(
+        { error: 'Formato de exportación no soportado' },
+        { status: 400 },
+      );
+    }
+    const formato = requestedFormat;
     const report = await AccountingReportsService.getMovementsReport({
       tenantId,
       busqueda: searchParams.get('busqueda'),

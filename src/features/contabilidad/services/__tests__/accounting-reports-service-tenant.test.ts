@@ -92,6 +92,34 @@ describe('AccountingReportsService tenant isolation', () => {
     expect(prisma.reconciliacionVenta.findMany).not.toHaveBeenCalled();
   });
 
+  it('escapa CSV según RFC 4180 y neutraliza fórmulas en campos de texto', async () => {
+    const queryRaw = vi.fn().mockResolvedValue([{
+      data: [{
+        id: 'movement-export-unsafe', tipo: 'venta', fecha: '2026-01-01T12:00:00.000Z',
+        monto: 100, moneda: 'CUP', montoConvertido: 100, tasaCambio: 1,
+        descripcion: '=SUM(A1:A2), "demo"', cuenta: '+cmd', tipoPago: '@pay',
+        realizadoPor: '-operator', referencia: 'ref-1', observaciones: 'linea 1\nlinea "2"',
+      }],
+      total: 1,
+      totales: { CUP: { ingresos: 100, egresos: 0, neto: 100 } },
+      coberturaConversion: {
+        total: 1, normalized: 1, legacyUnproven: 0, unresolved: 0, percentage: 100,
+      },
+    }]);
+    (prisma as typeof prisma & { $queryRaw: typeof queryRaw }).$queryRaw = queryRaw;
+
+    const { AccountingReportsService } = await import('../accounting-reports-service');
+    const result = await AccountingReportsService.getMovementsReport({
+      tenantId: 'tenant-a', formato: 'csv', limit: 10,
+    });
+
+    expect(result.exportContent).toContain('"\'=SUM(A1:A2), ""demo"""');
+    expect(result.exportContent).toContain('"\'+cmd"');
+    expect(result.exportContent).toContain('"\'@pay"');
+    expect(result.exportContent).toContain('"\'-operator"');
+    expect(result.exportContent).toContain('"linea 1\nlinea ""2"""');
+  });
+
   it('usa el read model paginado para exportaciones PDF y conserva los filtros', async () => {
     const queryRaw = vi.fn().mockResolvedValue([{
       data: [{ id: 'movement-pdf-1', tipo: 'gasto', fecha: '2026-01-01T12:00:00.000Z', monto: -10 }],
