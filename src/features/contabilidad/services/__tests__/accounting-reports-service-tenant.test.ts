@@ -63,6 +63,62 @@ describe('AccountingReportsService tenant isolation', () => {
     expect(prisma.reconciliacionVenta.findMany).not.toHaveBeenCalled();
   });
 
+  it('usa el read model paginado y limita a 10.000 filas para exportaciones CSV', async () => {
+    const queryRaw = vi.fn().mockResolvedValue([{
+      data: [{
+        id: 'movement-export-1', tipo: 'venta', fecha: '2026-01-01T12:00:00.000Z',
+        monto: 25, moneda: 'CUP', descripcion: 'Venta exportada', referencia: 'V-1',
+      }],
+      total: 12_000,
+      totales: { CUP: { ingresos: 30_000, egresos: 5_000, neto: 25_000 } },
+      coberturaConversion: {
+        total: 12_000, normalized: 12_000, legacyUnproven: 0, unresolved: 0, percentage: 100,
+      },
+    }]);
+    (prisma as typeof prisma & { $queryRaw: typeof queryRaw }).$queryRaw = queryRaw;
+
+    const { AccountingReportsService } = await import('../accounting-reports-service');
+    const result = await AccountingReportsService.getMovementsReport({
+      tenantId: 'tenant-a', formato: 'csv', page: 99, limit: 50_000,
+    });
+
+    expect(queryRaw).toHaveBeenCalledTimes(1);
+    const sql = queryRaw.mock.calls[0]?.[0] as { values?: unknown[] };
+    expect(sql.values).toContain(10_000);
+    expect(result.data).toHaveLength(1);
+    expect(result.pagination).toEqual({ page: 1, limit: 10_000, total: 12_000, totalPages: 2 });
+    expect(result.totales).toEqual({ CUP: { ingresos: 30_000, egresos: 5_000, neto: 25_000 } });
+    expect(result.exportContent).toContain('Venta exportada');
+    expect(prisma.reconciliacionVenta.findMany).not.toHaveBeenCalled();
+  });
+
+  it('usa el read model paginado para exportaciones PDF y conserva los filtros', async () => {
+    const queryRaw = vi.fn().mockResolvedValue([{
+      data: [{ id: 'movement-pdf-1', tipo: 'gasto', fecha: '2026-01-01T12:00:00.000Z', monto: -10 }],
+      total: 1,
+      totales: { CUP: { ingresos: 0, egresos: 10, neto: -10 } },
+      coberturaConversion: {
+        total: 1, normalized: 1, legacyUnproven: 0, unresolved: 0, percentage: 100,
+      },
+    }]);
+    (prisma as typeof prisma & { $queryRaw: typeof queryRaw }).$queryRaw = queryRaw;
+
+    const { AccountingReportsService } = await import('../accounting-reports-service');
+    const result = await AccountingReportsService.getMovementsReport({
+      tenantId: 'tenant-a', formato: 'pdf', fechaInicio: '2026-01-01', fechaFin: '2026-01-31',
+      busqueda: 'gasto', tipoMovimiento: 'gasto', moneda: 'CUP', cuentaId: 'account-1', limit: 25,
+    });
+
+    expect(queryRaw).toHaveBeenCalledTimes(1);
+    expect(result.data[0]?.id).toBe('movement-pdf-1');
+    expect(result.pagination).toEqual({ page: 1, limit: 25, total: 1, totalPages: 1 });
+    expect(result.filtros).toMatchObject({
+      busqueda: 'gasto', fechaInicio: '2026-01-01', fechaFin: '2026-01-31',
+      cuentaId: 'account-1', tipoMovimiento: 'gasto', moneda: 'CUP',
+    });
+    expect(prisma.reconciliacionGasto.findMany).not.toHaveBeenCalled();
+  });
+
   it('scopes every summary query to the authenticated tenant', async () => {
     const { AccountingReportsService } = await import('../accounting-reports-service');
 

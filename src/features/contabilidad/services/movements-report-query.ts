@@ -1,6 +1,7 @@
 import { Prisma } from '@/generated/prisma';
 
 const MAX_PAGE_SIZE = 100;
+export const MAX_EXPORT_SIZE = 10_000;
 const DAY_MS = 86_400_000;
 
 export interface MovementsReportQueryParams {
@@ -13,6 +14,7 @@ export interface MovementsReportQueryParams {
   moneda?: string | null;
   page?: number;
   limit?: number;
+  formato?: string | null;
   includeServicios?: boolean;
   includeTransfers?: boolean;
   includeAdjustments?: boolean;
@@ -291,7 +293,9 @@ export function buildMovementsReportQuery(params: MovementsReportQueryParams): P
     : Prisma.empty;
 
   const page = Math.max(1, Math.trunc(params.page ?? 1));
-  const limit = Math.min(MAX_PAGE_SIZE, Math.max(1, Math.trunc(params.limit ?? 10)));
+  const isExport = params.formato === 'csv' || params.formato === 'pdf';
+  const maxPageSize = isExport ? MAX_EXPORT_SIZE : MAX_PAGE_SIZE;
+  const limit = Math.min(maxPageSize, Math.max(1, Math.trunc(params.limit ?? (isExport ? MAX_EXPORT_SIZE : 10))));
   const offset = (page - 1) * limit;
 
   return Prisma.sql`

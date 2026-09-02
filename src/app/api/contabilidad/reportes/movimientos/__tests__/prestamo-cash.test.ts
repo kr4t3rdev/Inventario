@@ -148,4 +148,31 @@ describe('API contabilidad/reportes/movimientos - préstamos cash', () => {
     expect(body.data[0].tipo).toBe('prestamo_cash_pago')
     expect(body.data[0].detalles.tipoReconciliacion).toBe('PRESTAMO_CASH')
   })
+
+  it('devuelve un PDF real cuando se solicita el formato PDF', async () => {
+    const prisma = (await import('@/lib/prisma')).prisma as any
+    for (const model of [
+      prisma.reconciliacionVenta,
+      prisma.reconciliacionServicio,
+      prisma.reconciliacionGasto,
+      prisma.transferenciaBancaria,
+      prisma.ajusteBancario,
+      prisma.inyeccionCapital,
+      prisma.pagoDeuda,
+    ]) {
+      model.findMany.mockResolvedValue([])
+    }
+
+    const { GET } = await import('../route')
+    const request = new NextRequest(
+      'http://localhost/api/contabilidad/reportes/movimientos?formato=pdf',
+    )
+    const response = await GET(request)
+    const bytes = new Uint8Array(await response.arrayBuffer())
+
+    expect(response.status).toBe(200)
+    expect(response.headers.get('content-type')).toContain('application/pdf')
+    expect(response.headers.get('content-disposition')).toContain('.pdf')
+    expect(new TextDecoder().decode(bytes.slice(0, 5))).toBe('%PDF-')
+  })
 })

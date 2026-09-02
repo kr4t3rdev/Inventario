@@ -1,7 +1,10 @@
 import { prisma } from '@/lib/prisma';
 import { AccountingAccountsService } from '@/features/contabilidad/services/accounting-accounts-service';
 import { classifyLegacyReconciliation } from '@/features/contabilidad/domain/reconciliation-policy';
-import { buildMovementsReportQuery } from '@/features/contabilidad/services/movements-report-query';
+import {
+  buildMovementsReportQuery,
+  MAX_EXPORT_SIZE,
+} from '@/features/contabilidad/services/movements-report-query';
 import {
   aggregateCashFlow,
   computeFlowTotals,
@@ -716,17 +719,22 @@ export const AccountingReportsService = {
     const queryRaw = (prisma as typeof prisma & {
       $queryRaw?: (query: ReturnType<typeof buildMovementsReportQuery>) => Promise<MovementsReadModelRow[]>;
     }).$queryRaw;
+    const isExport = params.formato === 'csv' || params.formato === 'pdf';
     const usePaginatedReadModel = typeof queryRaw === 'function'
-      && params.formato == null
-      && !params.busqueda?.trim()
-      && requestedMovementType === null;
+      && (isExport || (
+        params.formato == null
+        && !params.busqueda?.trim()
+        && requestedMovementType === null
+      ));
 
     if (usePaginatedReadModel) {
-      const page = Math.max(1, Math.trunc(params.page ?? 1));
-      const limit = Math.min(100, Math.max(1, Math.trunc(params.limit ?? 10)));
+      const page = isExport ? 1 : Math.max(1, Math.trunc(params.page ?? 1));
+      const limit = isExport
+        ? Math.min(MAX_EXPORT_SIZE, Math.max(1, Math.trunc(params.limit ?? MAX_EXPORT_SIZE)))
+        : Math.min(100, Math.max(1, Math.trunc(params.limit ?? 10)));
       const rows = await queryRaw.call(
         prisma,
-        buildMovementsReportQuery({ ...params, page, limit }),
+        buildMovementsReportQuery({ ...params, page, limit, formato: params.formato }),
       );
       const [row] = rows as MovementsReadModelRow[];
       if (!row) throw new Error('El read model de movimientos no devolvió su fila agregada');
@@ -748,7 +756,9 @@ export const AccountingReportsService = {
           tipoMovimiento: params.tipoMovimiento ?? null,
           moneda: params.moneda ?? null,
         },
-        exportContent: null,
+        exportContent: params.formato === 'csv'
+          ? generateCSV(row.data, { coberturaConversion: row.coberturaConversion })
+          : null,
         metadatos: {
           tipoReporte: 'movimientos_reconciliados',
           monedaSolicitada: params.moneda ?? null,
