@@ -1,10 +1,11 @@
 'use client'
 
-import { useEffect, useState } from 'react'
-import { TrendingDown, AlertCircle, CheckCircle2, Clock } from 'lucide-react'
+import { useCallback, useEffect, useState } from 'react'
+import { RefreshCw, TrendingDown, AlertCircle, CheckCircle2, Clock } from 'lucide-react'
 
+import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import { PanelError, PanelSkeleton } from '@/features/contabilidad/components/panel-states'
+import { LastUpdatedLabel, PanelError, PanelSkeleton, StaleBanner } from '@/features/contabilidad/components/panel-states'
 import { getDeudasCashStatsAction } from '@/features/contabilidad/actions-deudas-cash'
 
 /**
@@ -25,7 +26,10 @@ export function DeudasCashStatsWidget() {
   const [stats, setStats] = useState<any>(null)
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState<any>(null)
+  const [actualizadoEn, setActualizadoEn] = useState<Date | null>(null)
   const [retryKey, setRetryKey] = useState(0)
+
+  const refetch = useCallback(() => setRetryKey((k) => k + 1), [])
 
   useEffect(() => {
     let isActive = true
@@ -34,8 +38,12 @@ export function DeudasCashStatsWidget() {
     getDeudasCashStatsAction()
       .then(r => {
         if (!isActive) return
-        if (r.success) setStats(r.data)
-        else setError(r.error)
+        if (r.success) {
+          setStats(r.data)
+          setActualizadoEn(new Date())
+        } else {
+          setError(r.error)
+        }
         setIsLoading(false)
       })
       .catch((e) => {
@@ -46,15 +54,15 @@ export function DeudasCashStatsWidget() {
     return () => { isActive = false }
   }, [retryKey])
 
-  if (isLoading) {
+  if (isLoading && !stats) {
     return <PanelSkeleton title="Deudas en Efectivo" rows={3} />
   }
 
-  if (error || !stats) {
+  if (!stats) {
     return (
       <PanelError
         message="No se pudieron cargar las estadísticas."
-        onRetry={() => setRetryKey((k) => k + 1)}
+        onRetry={refetch}
       />
     )
   }
@@ -116,6 +124,21 @@ export function DeudasCashStatsWidget() {
             Sin deudas pendientes
           </p>
         )}
+
+        {error && <StaleBanner onRetry={refetch} />}
+        <div className="flex items-center justify-between pt-1">
+          {actualizadoEn && <LastUpdatedLabel date={actualizadoEn} />}
+          <Button
+            variant="ghost"
+            size="icon"
+            aria-label="Actualizar datos"
+            disabled={isLoading}
+            onClick={refetch}
+            className="h-7 w-7 ml-auto"
+          >
+            <RefreshCw className={`h-3.5 w-3.5 ${isLoading ? 'animate-spin' : ''}`} aria-hidden="true" />
+          </Button>
+        </div>
       </CardContent>
     </Card>
   )

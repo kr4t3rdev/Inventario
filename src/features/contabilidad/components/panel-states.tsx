@@ -84,3 +84,47 @@ export function PanelError({ message, onRetry }: PanelErrorProps): React.JSX.Ele
     </Card>
   );
 }
+
+import { formatHoraCorta } from '@/features/contabilidad/lib/timestamps';
+
+interface LastUpdatedLabelProps {
+  /** Momento de la última carga exitosa. */
+  date: Date;
+}
+
+/**
+ * @description Indicador de frescura con hora absoluta de última actualización.
+ * @param {LastUpdatedLabelProps} props - Fecha de la última carga exitosa.
+ * @returns {JSX.Element} Leyenda discreta con la hora de actualización.
+ */
+export function LastUpdatedLabel({ date }: LastUpdatedLabelProps): React.JSX.Element {
+  return (
+    <p className="text-xs text-slate-400 dark:text-slate-500">
+      Actualizado a las {formatHoraCorta(date)}
+    </p>
+  );
+}
+
+interface StaleBannerProps {
+  /** Reintenta la actualización fallida. */
+  onRetry: () => void;
+}
+
+/**
+ * @description Aviso ámbar cuando un refetch falla pero se conservan datos anteriores.
+ * @param {StaleBannerProps} props - Callback de reintento.
+ * @returns {JSX.Element} Banner inline accesible con acción de reintento.
+ */
+export function StaleBanner({ onRetry }: StaleBannerProps): React.JSX.Element {
+  return (
+    <div
+      role="alert"
+      className="flex flex-wrap items-center justify-between gap-2 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-800 dark:border-amber-900/50 dark:bg-amber-950/30 dark:text-amber-300"
+    >
+      <span>No se pudo actualizar. Mostrando los datos anteriores.</span>
+      <Button variant="outline" size="sm" onClick={onRetry} className="h-7 px-2 text-xs">
+        Intentar nuevamente
+      </Button>
+    </div>
+  );
+}

@@ -49,3 +49,12 @@ describe('PanelError', () => {
     expect(screen.queryByRole('button')).not.toBeInTheDocument();
   });
 });
+
+describe('LastUpdatedLabel', () => {
+  it('muestra la hora de actualización en formato corto', async () => {
+    const { LastUpdatedLabel } = await import('../panel-states');
+    render(<LastUpdatedLabel date={new Date(2026, 7, 12, 14, 32)} />);
+
+    expect(screen.getByText('Actualizado a las 14:32')).toBeInTheDocument();
+  });
+});

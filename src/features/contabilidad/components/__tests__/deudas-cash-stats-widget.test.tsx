@@ -65,3 +65,31 @@ describe('DeudasCashStatsWidget', () => {
     expect(mocks.getDeudasCashStatsAction).toHaveBeenCalledTimes(2);
   });
 });
+
+describe('DeudasCashStatsWidget - frescura y actualización', () => {
+  beforeEach(() => {
+    mocks.getDeudasCashStatsAction.mockReset();
+  });
+
+  it('muestra la hora de actualización tras una carga exitosa', async () => {
+    mocks.getDeudasCashStatsAction.mockResolvedValue({ success: true, data: statsBase });
+    render(<DeudasCashStatsWidget />);
+
+    await screen.findByText('Pendiente por pagar');
+    expect(screen.getByText(/Actualizado a las \d{2}:\d{2}/)).toBeInTheDocument();
+  });
+
+  it('mantiene datos con aviso cuando falla la actualización manual', async () => {
+    mocks.getDeudasCashStatsAction
+      .mockResolvedValueOnce({ success: true, data: statsBase })
+      .mockResolvedValueOnce({ success: false, error: { message: 'fallo' } });
+    render(<DeudasCashStatsWidget />);
+
+    await screen.findByText('Pendiente por pagar');
+    await userEvent.click(screen.getByRole('button', { name: /actualizar datos/i }));
+
+    expect(await screen.findByText(/no se pudo actualizar/i)).toBeInTheDocument();
+    expect(screen.getByText('Pendiente por pagar')).toBeInTheDocument();
+    expect(mocks.getDeudasCashStatsAction).toHaveBeenCalledTimes(2);
+  });
+});

@@ -68,3 +68,33 @@ describe('deriveHealthStatus', () => {
     expect(deriveHealthStatus({ hasActivePeriod: true, currentPeriodStatus: 'ABIERTO', lastClosedPeriod: 'M-2026-07', totalPeriods: 2 }).label).toBe('Operativo')
   })
 })
+describe('AccountingHealthCard - frescura y actualización', () => {
+  const metricsOk = { hasActivePeriod: true, currentPeriodStatus: 'ABIERTO', lastClosedPeriod: 'M-2026-07', totalPeriods: 5 }
+
+  beforeEach(() => {
+    getAccountingHealthAction.mockReset()
+  })
+
+  it('muestra la hora de actualización tras una carga exitosa', async () => {
+    getAccountingHealthAction.mockResolvedValue({ success: true, data: { metrics: metricsOk } })
+    render(<AccountingHealthCard userRole="admin" />)
+
+    await screen.findByText('Operativo')
+    expect(screen.getByText(/Actualizado a las \d{2}:\d{2}/)).toBeInTheDocument()
+  })
+
+  it('permite actualizar manualmente y mantiene datos con aviso si falla el refetch', async () => {
+    getAccountingHealthAction
+      .mockResolvedValueOnce({ success: true, data: { metrics: metricsOk } })
+      .mockResolvedValueOnce({ success: false, error: { message: 'fallo' } })
+    render(<AccountingHealthCard userRole="admin" />)
+
+    await screen.findByText('Operativo')
+    await userEvent.click(screen.getByRole('button', { name: /actualizar datos/i }))
+
+    expect(await screen.findByText(/no se pudo actualizar/i)).toBeInTheDocument()
+    expect(screen.getByText('Operativo')).toBeInTheDocument()
+    expect(screen.getByText(/Actualizado a las \d{2}:\d{2}/)).toBeInTheDocument()
+    expect(getAccountingHealthAction).toHaveBeenCalledTimes(2)
+  })
+})
