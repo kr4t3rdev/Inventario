@@ -24,7 +24,7 @@ import { deleteCompraServicioAction } from '@/features/compras-servicios/actions
 
 const user = {
   userId: 'u1', name: 'Test', email: 'test@example.com', role: 'admin', isActive: true,
-  tenantId: 'tenant-1', tenantRole: 'admin',
+  tenantId: 'tenant-1', tenantRole: 'manager',
 } as any;
 
 beforeEach(() => {

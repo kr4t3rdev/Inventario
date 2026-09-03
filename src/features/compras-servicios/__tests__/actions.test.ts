@@ -50,7 +50,7 @@ const mockUser: AuthenticatedUser = {
 	role: "admin",
 	isActive: true,
 	tenantId: "tenant-test",
-	tenantRole: "admin",
+	tenantRole: "manager",
 };
 
 const mockServicio = {
@@ -233,6 +233,52 @@ describe("ComprasServicios Server Actions", () => {
 
 			const result = await deleteCompraServicioAction("cs-1");
 			expect(result.success).toBe(true);
+		});
+	});
+
+	describe("autorización", () => {
+		it("getComprasServiciosAction requiere feature del plan", async () => {
+			vi.mocked(getCurrentUser).mockResolvedValue({
+				...mockUser,
+				role: "user" as any,
+				planFeatures: {},
+			} as any);
+			vi.mocked(prisma.compraServicio.findMany).mockResolvedValue([]);
+
+			const result = await getComprasServiciosAction();
+
+			expect(result.success).toBe(false);
+			expect(result.error!.code).toBe("FEATURE_NOT_AVAILABLE");
+		});
+
+		it("createCompraServicioAction requiere rol manager", async () => {
+			vi.mocked(getCurrentUser).mockResolvedValue({
+				...mockUser,
+				tenantRole: "dependiente",
+			});
+
+			const result = await createCompraServicioAction({
+				servicioId: "sv-1",
+				costoUnitario: 1000,
+				cantidad: 1,
+				formaPago: "PAGO_COMPLETO",
+				estado: "PAGADA",
+			});
+
+			expect(result.success).toBe(false);
+			expect(result.error!.code).toBe("FORBIDDEN");
+		});
+
+		it("deleteCompraServicioAction requiere rol manager", async () => {
+			vi.mocked(getCurrentUser).mockResolvedValue({
+				...mockUser,
+				tenantRole: "dependiente",
+			});
+
+			const result = await deleteCompraServicioAction("cs-1");
+
+			expect(result.success).toBe(false);
+			expect(result.error!.code).toBe("FORBIDDEN");
 		});
 	});
 

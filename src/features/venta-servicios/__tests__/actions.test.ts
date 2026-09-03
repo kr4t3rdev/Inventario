@@ -59,7 +59,7 @@ const mockUser: AuthenticatedUser = {
 	role: "admin",
 	isActive: true,
 	tenantId: "tenant-test",
-	tenantRole: "admin",
+	tenantRole: "manager",
 };
 
 const mockVentaRow = {
@@ -390,6 +390,42 @@ describe("VentaServicios Server Actions", () => {
 			expect(result.success).toBe(false);
 			expect(result.error!.code).toBe("HAS_REFERENCES");
 			expect(prisma.ventaServicios.delete).not.toHaveBeenCalled();
+		});
+	});
+
+	describe("autorización", () => {
+		it("updateVentaServicioAction requiere rol manager", async () => {
+			vi.mocked(getCurrentUser).mockResolvedValue({
+				...mockUser,
+				tenantRole: "dependiente",
+			});
+			vi.mocked(prisma.ventaServicios.findFirst).mockResolvedValue(
+				mockVentaRow,
+			);
+
+			const result = await updateVentaServicioAction({
+				ventaServicioId: "vs-1",
+				cantidad: 2,
+			});
+
+			expect(result.success).toBe(false);
+			expect(result.error!.code).toBe("FORBIDDEN");
+		});
+
+		it("deleteVentaServicioAction requiere rol manager", async () => {
+			vi.mocked(getCurrentUser).mockResolvedValue({
+				...mockUser,
+				tenantRole: "dependiente",
+			});
+			vi.mocked(prisma.ventaServicios.findFirst).mockResolvedValue(
+				mockVentaRow,
+			);
+			vi.mocked(prisma.reconciliacionServicio.count).mockResolvedValue(0);
+
+			const result = await deleteVentaServicioAction("vs-1");
+
+			expect(result.success).toBe(false);
+			expect(result.error!.code).toBe("FORBIDDEN");
 		});
 	});
 

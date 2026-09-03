@@ -24,6 +24,10 @@ export default async function EditarServicioPage({ params }: Props) {
     redirect('/busy')
   }
 
+  if (user?.role !== 'admin' && user?.tenantRole !== 'manager') {
+    redirect('/busy/servicios')
+  }
+
   const { id: servicioId } = await params
 
   const servicioResult = await getServicioByIdAction(servicioId)

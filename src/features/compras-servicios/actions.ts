@@ -8,7 +8,7 @@
 import { revalidatePath } from 'next/cache';
 import { withAction, ActionError } from '@/lib/server-actions';
 import { prisma } from '@/lib/prisma';
-import { requireTenant } from '@/lib/services/tenant-scope';
+import { requireTenant, requireFeature, requireManagerRole } from '@/lib/services/tenant-scope';
 import { withPeriodValidation } from '@/lib/services/with-period-validation';
 import { applyAnticipoAllocations } from '@/lib/services/anticipos-workflow';
 import { createCompraServicioSchema, updateCompraServicioSchema } from './schemas';
@@ -24,6 +24,7 @@ const COMPRA_SERVICIO_INCLUDE = {
 
 export const getComprasServiciosAction = withAction(async (_input: void, user: AuthenticatedUser) => {
   const tenantId = requireTenant(user);
+  requireFeature(user, 'servicios', 'ver servicios recibidos');
   return prisma.compraServicio.findMany({
     where: { tenantId },
     orderBy: { createdAt: 'desc' },
@@ -33,6 +34,7 @@ export const getComprasServiciosAction = withAction(async (_input: void, user: A
 
 export const getCompraServicioByIdAction = withAction(async (id: string, user: AuthenticatedUser) => {
   const tenantId = requireTenant(user);
+  requireFeature(user, 'servicios', 'ver servicios recibidos');
   const compra = await prisma.compraServicio.findFirst({
     where: { compraServicioId: id, tenantId },
     include: COMPRA_SERVICIO_INCLUDE,
@@ -44,6 +46,8 @@ export const getCompraServicioByIdAction = withAction(async (id: string, user: A
 export const createCompraServicioAction = withAction(withPeriodValidation(
   (input) => (input as any).fechaServicio ? new Date((input as any).fechaServicio) : new Date(),
   async (input: CreateCompraServicioInput, user: AuthenticatedUser) => {
+  requireFeature(user, 'servicios', 'registrar servicios recibidos');
+  requireManagerRole(user, 'registrar servicios recibidos');
   const parsed = createCompraServicioSchema.parse(input);
   const tenantId = requireTenant(user);
 
@@ -144,6 +148,8 @@ export const createCompraServicioAction = withAction(withPeriodValidation(
 }));
 
 export const updateCompraServicioAction = withAction(async (input: UpdateCompraServicioInput, user: AuthenticatedUser) => {
+  requireFeature(user, 'servicios', 'editar servicios recibidos');
+  requireManagerRole(user, 'editar servicios recibidos');
   const parsed = updateCompraServicioSchema.parse(input);
   const { compraServicioId, ...data } = parsed;
   const tenantId = requireTenant(user);
@@ -181,6 +187,8 @@ export const updateCompraServicioAction = withAction(async (input: UpdateCompraS
 
 export const deleteCompraServicioAction = withAction(async (id: string, user: AuthenticatedUser) => {
   const tenantId = requireTenant(user);
+  requireFeature(user, 'servicios', 'eliminar servicios recibidos');
+  requireManagerRole(user, 'eliminar servicios recibidos');
   if (typeof (prisma as any).$transaction !== 'function') {
     const existing = await prisma.compraServicio.findFirst({
       where: { compraServicioId: id, tenantId },

@@ -21,6 +21,10 @@ export default async function ServiciosRecibidosPage() {
     redirect('/busy')
   }
 
+  if (user?.role !== 'admin' && user?.tenantRole !== 'manager') {
+    redirect('/busy/servicios')
+  }
+
   const serviciosResult = await getServiciosAction()
   const initialServicios = serviciosResult.success ? serviciosResult.data ?? [] : []
 

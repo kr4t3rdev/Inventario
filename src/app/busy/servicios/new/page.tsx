@@ -15,6 +15,9 @@ export default async function NuevoServicioPage() {
   if (user?.role !== 'admin' && !hasPlanFeature(user, 'servicios')) {
     redirect('/busy')
   }
+  if (user?.role !== 'admin' && user?.tenantRole !== 'manager') {
+    redirect('/busy/servicios')
+  }
 
   return (
     <div className="container mx-auto py-4">
