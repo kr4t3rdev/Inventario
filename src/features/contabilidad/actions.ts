@@ -3,7 +3,7 @@
 import { withAction } from '@/lib/server-actions';
 import { requireFeature, requireTenant } from '@/lib/services/tenant-scope';
 import { withPeriodValidation } from '@/lib/services/with-period-validation';
-import { canAccessAccountingItem } from '@/lib/plan-access';
+import { getReportCapabilities } from '@/features/contabilidad/lib/report-capabilities';
 import { AccountingOperationsMutationService } from '@/features/contabilidad/services/accounting-operations-mutation-service';
 import { AccountingOperationsReadService } from '@/features/contabilidad/services/accounting-operations-read-service';
 import { AccountingReportsService } from '@/features/contabilidad/services/accounting-reports-service';
@@ -18,17 +18,6 @@ interface ReportFilters {
   moneda?: string;
   page?: number;
   limit?: number;
-}
-
-export function getReportCapabilities(user: AuthenticatedUser) {
-  return {
-    includeServicios: user.planFeatures?.servicios === true,
-    includeTransfers: canAccessAccountingItem(user, 'Transferencias Bancarias'),
-    includeAdjustments: canAccessAccountingItem(user, 'Ajustes Bancarios'),
-    includeCapital: user.planFeatures?.['inyeccion-capital'] === true,
-    includePrestamosCash: user.planFeatures?.['prestamos-cash'] === true,
-    includeDeudasCash: user.planFeatures?.['deudas-cash'] === true,
-  };
 }
 
 /**
