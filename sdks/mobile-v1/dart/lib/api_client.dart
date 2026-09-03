@@ -198,6 +198,16 @@ class ApiClient {
           return Advance.fromJson(value);
         case 'AdvanceWorkflowResult':
           return AdvanceWorkflowResult.fromJson(value);
+        case 'Almacen':
+          return Almacen.fromJson(value);
+        case 'AlmacenCreateRequest':
+          return AlmacenCreateRequest.fromJson(value);
+        case 'AlmacenDeleteResponse':
+          return AlmacenDeleteResponse.fromJson(value);
+        case 'AlmacenListResponse':
+          return AlmacenListResponse.fromJson(value);
+        case 'AlmacenUpdateRequest':
+          return AlmacenUpdateRequest.fromJson(value);
         case 'ApiError':
           return ApiError.fromJson(value);
         case 'AuditLog':

@@ -18,6 +18,11 @@ docs/AccountingReconciliationApi.md
 docs/AccountingReportsApi.md
 docs/Advance.md
 docs/AdvanceWorkflowResult.md
+docs/Almacen.md
+docs/AlmacenCreateRequest.md
+docs/AlmacenDeleteResponse.md
+docs/AlmacenListResponse.md
+docs/AlmacenUpdateRequest.md
 docs/ApiError.md
 docs/AuditLog.md
 docs/AuthApi.md
@@ -168,6 +173,7 @@ docs/TenantListResponse.md
 docs/TenantSummary.md
 docs/Token.md
 docs/TokenPair.md
+docs/WarehousesApi.md
 package.json
 src/apis/AccountingAdvancesApi.ts
 src/apis/AccountingBankingApi.ts
@@ -183,6 +189,7 @@ src/apis/DashboardApi.ts
 src/apis/ProductsApi.ts
 src/apis/ProvidersApi.ts
 src/apis/SalesApi.ts
+src/apis/WarehousesApi.ts
 src/apis/index.ts
 src/index.ts
 src/models/AccountPayable.ts
@@ -193,6 +200,11 @@ src/models/AccountingAdvancesIdRevertirPostRequest.ts
 src/models/AccountingAdvancesPostRequest.ts
 src/models/Advance.ts
 src/models/AdvanceWorkflowResult.ts
+src/models/Almacen.ts
+src/models/AlmacenCreateRequest.ts
+src/models/AlmacenDeleteResponse.ts
+src/models/AlmacenListResponse.ts
+src/models/AlmacenUpdateRequest.ts
 src/models/ApiError.ts
 src/models/AuditLog.ts
 src/models/AuthSession.ts

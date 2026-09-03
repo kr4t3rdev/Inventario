@@ -20,6 +20,7 @@ Sources/APIs/DashboardAPI.swift
 Sources/APIs/ProductsAPI.swift
 Sources/APIs/ProvidersAPI.swift
 Sources/APIs/SalesAPI.swift
+Sources/APIs/WarehousesAPI.swift
 Sources/CodableHelper.swift
 Sources/Configuration.swift
 Sources/Extensions.swift
@@ -34,6 +35,11 @@ Sources/Models/AccountingAdvancesIdRevertirPostRequest.swift
 Sources/Models/AccountingAdvancesPostRequest.swift
 Sources/Models/Advance.swift
 Sources/Models/AdvanceWorkflowResult.swift
+Sources/Models/Almacen.swift
+Sources/Models/AlmacenCreateRequest.swift
+Sources/Models/AlmacenDeleteResponse.swift
+Sources/Models/AlmacenListResponse.swift
+Sources/Models/AlmacenUpdateRequest.swift
 Sources/Models/ApiError.swift
 Sources/Models/AuditLog.swift
 Sources/Models/AuthSession.swift
@@ -199,6 +205,11 @@ docs/AccountingReconciliationAPI.md
 docs/AccountingReportsAPI.md
 docs/Advance.md
 docs/AdvanceWorkflowResult.md
+docs/Almacen.md
+docs/AlmacenCreateRequest.md
+docs/AlmacenDeleteResponse.md
+docs/AlmacenListResponse.md
+docs/AlmacenUpdateRequest.md
 docs/ApiError.md
 docs/AuditLog.md
 docs/AuthAPI.md
@@ -349,4 +360,5 @@ docs/TenantListResponse.md
 docs/TenantSummary.md
 docs/Token.md
 docs/TokenPair.md
+docs/WarehousesAPI.md
 project.yml

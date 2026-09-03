@@ -160,6 +160,11 @@ Class | Method | HTTP request | Description
 *SalesApi* | [**mobilePatchSalesByIdUpdate**](doc//SalesApi.md#mobilepatchsalesbyidupdate) | **PATCH** /sales/{id}/update | Actualizar datos de venta
 *SalesApi* | [**mobilePostSalesByIdCancel**](doc//SalesApi.md#mobilepostsalesbyidcancel) | **POST** /sales/{id}/cancel | Anular venta
 *SalesApi* | [**mobilePostSalesCreate**](doc//SalesApi.md#mobilepostsalescreate) | **POST** /sales/create | Registrar venta
+*WarehousesApi* | [**mobileDeleteWarehousesById**](doc//WarehousesApi.md#mobiledeletewarehousesbyid) | **DELETE** /warehouses/{id} | Eliminar almacén
+*WarehousesApi* | [**mobileGetWarehouses**](doc//WarehousesApi.md#mobilegetwarehouses) | **GET** /warehouses | Listar almacenes
+*WarehousesApi* | [**mobileGetWarehousesById**](doc//WarehousesApi.md#mobilegetwarehousesbyid) | **GET** /warehouses/{id} | Consultar almacén
+*WarehousesApi* | [**mobilePostWarehousesCreate**](doc//WarehousesApi.md#mobilepostwarehousescreate) | **POST** /warehouses/create | Crear almacén
+*WarehousesApi* | [**mobilePutWarehousesById**](doc//WarehousesApi.md#mobileputwarehousesbyid) | **PUT** /warehouses/{id} | Editar almacén
 
 
 ## Documentation For Models
@@ -172,6 +177,11 @@ Class | Method | HTTP request | Description
  - [AccountingAdvancesPostRequest](doc//AccountingAdvancesPostRequest.md)
  - [Advance](doc//Advance.md)
  - [AdvanceWorkflowResult](doc//AdvanceWorkflowResult.md)
+ - [Almacen](doc//Almacen.md)
+ - [AlmacenCreateRequest](doc//AlmacenCreateRequest.md)
+ - [AlmacenDeleteResponse](doc//AlmacenDeleteResponse.md)
+ - [AlmacenListResponse](doc//AlmacenListResponse.md)
+ - [AlmacenUpdateRequest](doc//AlmacenUpdateRequest.md)
  - [ApiError](doc//ApiError.md)
  - [AuditLog](doc//AuditLog.md)
  - [AuthSession](doc//AuthSession.md)

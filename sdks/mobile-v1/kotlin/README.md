@@ -140,6 +140,11 @@ All URIs are relative to */api/mobile/v1*
 | *SalesApi* | [**mobilePatchSalesByIdUpdate**](docs/SalesApi.md#mobilepatchsalesbyidupdate) | **PATCH** /sales/{id}/update | Actualizar datos de venta |
 | *SalesApi* | [**mobilePostSalesByIdCancel**](docs/SalesApi.md#mobilepostsalesbyidcancel) | **POST** /sales/{id}/cancel | Anular venta |
 | *SalesApi* | [**mobilePostSalesCreate**](docs/SalesApi.md#mobilepostsalescreate) | **POST** /sales/create | Registrar venta |
+| *WarehousesApi* | [**mobileDeleteWarehousesById**](docs/WarehousesApi.md#mobiledeletewarehousesbyid) | **DELETE** /warehouses/{id} | Eliminar almacén |
+| *WarehousesApi* | [**mobileGetWarehouses**](docs/WarehousesApi.md#mobilegetwarehouses) | **GET** /warehouses | Listar almacenes |
+| *WarehousesApi* | [**mobileGetWarehousesById**](docs/WarehousesApi.md#mobilegetwarehousesbyid) | **GET** /warehouses/{id} | Consultar almacén |
+| *WarehousesApi* | [**mobilePostWarehousesCreate**](docs/WarehousesApi.md#mobilepostwarehousescreate) | **POST** /warehouses/create | Crear almacén |
+| *WarehousesApi* | [**mobilePutWarehousesById**](docs/WarehousesApi.md#mobileputwarehousesbyid) | **PUT** /warehouses/{id} | Editar almacén |
 
 
 <a id="documentation-for-models"></a>
@@ -153,6 +158,11 @@ All URIs are relative to */api/mobile/v1*
  - [com.tcp.mobile.v1.models.AccountingAdvancesPostRequest](docs/AccountingAdvancesPostRequest.md)
  - [com.tcp.mobile.v1.models.Advance](docs/Advance.md)
  - [com.tcp.mobile.v1.models.AdvanceWorkflowResult](docs/AdvanceWorkflowResult.md)
+ - [com.tcp.mobile.v1.models.Almacen](docs/Almacen.md)
+ - [com.tcp.mobile.v1.models.AlmacenCreateRequest](docs/AlmacenCreateRequest.md)
+ - [com.tcp.mobile.v1.models.AlmacenDeleteResponse](docs/AlmacenDeleteResponse.md)
+ - [com.tcp.mobile.v1.models.AlmacenListResponse](docs/AlmacenListResponse.md)
+ - [com.tcp.mobile.v1.models.AlmacenUpdateRequest](docs/AlmacenUpdateRequest.md)
  - [com.tcp.mobile.v1.models.ApiError](docs/ApiError.md)
  - [com.tcp.mobile.v1.models.AuditLog](docs/AuditLog.md)
  - [com.tcp.mobile.v1.models.AuthSession](docs/AuthSession.md)

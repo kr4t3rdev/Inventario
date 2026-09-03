@@ -19,6 +19,11 @@ doc/AccountingReconciliationApi.md
 doc/AccountingReportsApi.md
 doc/Advance.md
 doc/AdvanceWorkflowResult.md
+doc/Almacen.md
+doc/AlmacenCreateRequest.md
+doc/AlmacenDeleteResponse.md
+doc/AlmacenListResponse.md
+doc/AlmacenUpdateRequest.md
 doc/ApiError.md
 doc/AuditLog.md
 doc/AuthApi.md
@@ -169,6 +174,7 @@ doc/TenantListResponse.md
 doc/TenantSummary.md
 doc/Token.md
 doc/TokenPair.md
+doc/WarehousesApi.md
 lib/api.dart
 lib/api/accounting_advances_api.dart
 lib/api/accounting_banking_api.dart
@@ -184,6 +190,7 @@ lib/api/dashboard_api.dart
 lib/api/products_api.dart
 lib/api/providers_api.dart
 lib/api/sales_api.dart
+lib/api/warehouses_api.dart
 lib/api_client.dart
 lib/api_exception.dart
 lib/api_helper.dart
@@ -200,6 +207,11 @@ lib/model/accounting_advances_id_revertir_post_request.dart
 lib/model/accounting_advances_post_request.dart
 lib/model/advance.dart
 lib/model/advance_workflow_result.dart
+lib/model/almacen.dart
+lib/model/almacen_create_request.dart
+lib/model/almacen_delete_response.dart
+lib/model/almacen_list_response.dart
+lib/model/almacen_update_request.dart
 lib/model/api_error.dart
 lib/model/audit_log.dart
 lib/model/auth_session.dart
@@ -361,6 +373,11 @@ test/accounting_reconciliation_api_test.dart
 test/accounting_reports_api_test.dart
 test/advance_test.dart
 test/advance_workflow_result_test.dart
+test/almacen_create_request_test.dart
+test/almacen_delete_response_test.dart
+test/almacen_list_response_test.dart
+test/almacen_test.dart
+test/almacen_update_request_test.dart
 test/api_error_test.dart
 test/audit_log_test.dart
 test/auth_api_test.dart
@@ -511,3 +528,4 @@ test/tenant_list_response_test.dart
 test/tenant_summary_test.dart
 test/token_pair_test.dart
 test/token_test.dart
+test/warehouses_api_test.dart

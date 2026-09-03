@@ -14,3 +14,4 @@ export * from './DashboardApi';
 export * from './ProductsApi';
 export * from './ProvidersApi';
 export * from './SalesApi';
+export * from './WarehousesApi';

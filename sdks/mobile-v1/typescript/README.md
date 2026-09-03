@@ -149,6 +149,11 @@ All URIs are relative to */api/mobile/v1*
 *SalesApi* | [**mobilePatchSalesByIdUpdate**](docs/SalesApi.md#mobilepatchsalesbyidupdate) | **PATCH** /sales/{id}/update | Actualizar datos de venta
 *SalesApi* | [**mobilePostSalesByIdCancel**](docs/SalesApi.md#mobilepostsalesbyidcancel) | **POST** /sales/{id}/cancel | Anular venta
 *SalesApi* | [**mobilePostSalesCreate**](docs/SalesApi.md#mobilepostsalescreate) | **POST** /sales/create | Registrar venta
+*WarehousesApi* | [**mobileDeleteWarehousesById**](docs/WarehousesApi.md#mobiledeletewarehousesbyid) | **DELETE** /warehouses/{id} | Eliminar almacén
+*WarehousesApi* | [**mobileGetWarehouses**](docs/WarehousesApi.md#mobilegetwarehouses) | **GET** /warehouses | Listar almacenes
+*WarehousesApi* | [**mobileGetWarehousesById**](docs/WarehousesApi.md#mobilegetwarehousesbyid) | **GET** /warehouses/{id} | Consultar almacén
+*WarehousesApi* | [**mobilePostWarehousesCreate**](docs/WarehousesApi.md#mobilepostwarehousescreate) | **POST** /warehouses/create | Crear almacén
+*WarehousesApi* | [**mobilePutWarehousesById**](docs/WarehousesApi.md#mobileputwarehousesbyid) | **PUT** /warehouses/{id} | Editar almacén
 
 
 ### Models
@@ -161,6 +166,11 @@ All URIs are relative to */api/mobile/v1*
 - [AccountingAdvancesPostRequest](docs/AccountingAdvancesPostRequest.md)
 - [Advance](docs/Advance.md)
 - [AdvanceWorkflowResult](docs/AdvanceWorkflowResult.md)
+- [Almacen](docs/Almacen.md)
+- [AlmacenCreateRequest](docs/AlmacenCreateRequest.md)
+- [AlmacenDeleteResponse](docs/AlmacenDeleteResponse.md)
+- [AlmacenListResponse](docs/AlmacenListResponse.md)
+- [AlmacenUpdateRequest](docs/AlmacenUpdateRequest.md)
 - [ApiError](docs/ApiError.md)
 - [AuditLog](docs/AuditLog.md)
 - [AuthSession](docs/AuthSession.md)

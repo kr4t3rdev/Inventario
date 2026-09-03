@@ -17,6 +17,11 @@ docs/AccountingReconciliationApi.md
 docs/AccountingReportsApi.md
 docs/Advance.md
 docs/AdvanceWorkflowResult.md
+docs/Almacen.md
+docs/AlmacenCreateRequest.md
+docs/AlmacenDeleteResponse.md
+docs/AlmacenListResponse.md
+docs/AlmacenUpdateRequest.md
 docs/ApiError.md
 docs/AuditLog.md
 docs/AuthApi.md
@@ -167,6 +172,7 @@ docs/TenantListResponse.md
 docs/TenantSummary.md
 docs/Token.md
 docs/TokenPair.md
+docs/WarehousesApi.md
 gradle/wrapper/gradle-wrapper.jar
 gradle/wrapper/gradle-wrapper.properties
 gradlew
@@ -186,6 +192,7 @@ src/main/kotlin/com/tcp/mobile/v1/apis/DashboardApi.kt
 src/main/kotlin/com/tcp/mobile/v1/apis/ProductsApi.kt
 src/main/kotlin/com/tcp/mobile/v1/apis/ProvidersApi.kt
 src/main/kotlin/com/tcp/mobile/v1/apis/SalesApi.kt
+src/main/kotlin/com/tcp/mobile/v1/apis/WarehousesApi.kt
 src/main/kotlin/com/tcp/mobile/v1/infrastructure/ApiAbstractions.kt
 src/main/kotlin/com/tcp/mobile/v1/infrastructure/ApiClient.kt
 src/main/kotlin/com/tcp/mobile/v1/infrastructure/ApiResponse.kt
@@ -203,6 +210,11 @@ src/main/kotlin/com/tcp/mobile/v1/models/AccountingAdvancesIdRevertirPostRequest
 src/main/kotlin/com/tcp/mobile/v1/models/AccountingAdvancesPostRequest.kt
 src/main/kotlin/com/tcp/mobile/v1/models/Advance.kt
 src/main/kotlin/com/tcp/mobile/v1/models/AdvanceWorkflowResult.kt
+src/main/kotlin/com/tcp/mobile/v1/models/Almacen.kt
+src/main/kotlin/com/tcp/mobile/v1/models/AlmacenCreateRequest.kt
+src/main/kotlin/com/tcp/mobile/v1/models/AlmacenDeleteResponse.kt
+src/main/kotlin/com/tcp/mobile/v1/models/AlmacenListResponse.kt
+src/main/kotlin/com/tcp/mobile/v1/models/AlmacenUpdateRequest.kt
 src/main/kotlin/com/tcp/mobile/v1/models/ApiError.kt
 src/main/kotlin/com/tcp/mobile/v1/models/AuditLog.kt
 src/main/kotlin/com/tcp/mobile/v1/models/AuthSession.kt
@@ -361,6 +373,7 @@ src/test/kotlin/com/tcp/mobile/v1/apis/DashboardApiTest.kt
 src/test/kotlin/com/tcp/mobile/v1/apis/ProductsApiTest.kt
 src/test/kotlin/com/tcp/mobile/v1/apis/ProvidersApiTest.kt
 src/test/kotlin/com/tcp/mobile/v1/apis/SalesApiTest.kt
+src/test/kotlin/com/tcp/mobile/v1/apis/WarehousesApiTest.kt
 src/test/kotlin/com/tcp/mobile/v1/models/AccountPayableTest.kt
 src/test/kotlin/com/tcp/mobile/v1/models/AccountReceivableTest.kt
 src/test/kotlin/com/tcp/mobile/v1/models/AccountingAdvancesIdEjecutarPostRequestTest.kt
@@ -369,6 +382,11 @@ src/test/kotlin/com/tcp/mobile/v1/models/AccountingAdvancesIdRevertirPostRequest
 src/test/kotlin/com/tcp/mobile/v1/models/AccountingAdvancesPostRequestTest.kt
 src/test/kotlin/com/tcp/mobile/v1/models/AdvanceTest.kt
 src/test/kotlin/com/tcp/mobile/v1/models/AdvanceWorkflowResultTest.kt
+src/test/kotlin/com/tcp/mobile/v1/models/AlmacenCreateRequestTest.kt
+src/test/kotlin/com/tcp/mobile/v1/models/AlmacenDeleteResponseTest.kt
+src/test/kotlin/com/tcp/mobile/v1/models/AlmacenListResponseTest.kt
+src/test/kotlin/com/tcp/mobile/v1/models/AlmacenTest.kt
+src/test/kotlin/com/tcp/mobile/v1/models/AlmacenUpdateRequestTest.kt
 src/test/kotlin/com/tcp/mobile/v1/models/ApiErrorTest.kt
 src/test/kotlin/com/tcp/mobile/v1/models/AuditLogTest.kt
 src/test/kotlin/com/tcp/mobile/v1/models/AuthSessionTest.kt
