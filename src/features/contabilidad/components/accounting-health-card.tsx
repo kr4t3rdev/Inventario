@@ -1,6 +1,6 @@
 'use client'
 
-import { useCallback, useEffect, useState } from 'react'
+import { startTransition, useCallback, useEffect, useState } from 'react'
 import { AlertCircle, CheckCircle2, Clock, RefreshCw } from 'lucide-react'
 
 import { Badge } from '@/components/ui/badge'
@@ -52,24 +52,30 @@ export function AccountingHealthCard({ userRole }: AccountingHealthCardProps): R
     let isActive = true
     setIsLoading(true)
     setError(false)
-    void getAccountingHealthAction()
-      .then((r) => {
-        if (!isActive) return
-        if (r.success && r.data) {
-          setMetrics(r.data.metrics)
-          setActualizadoEn(new Date())
-          setError(false)
-        } else {
-          setError(true)
-        }
-        setIsLoading(false)
+    const timer = setTimeout(() => {
+      // startTransition: evita el re-suspense global del árbol RSC al ejecutar
+      // server actions desde componentes cliente de esta página.
+      startTransition(() => {
+        void getAccountingHealthAction()
+          .then((r) => {
+            if (!isActive) return
+            if (r.success && r.data) {
+              setMetrics(r.data.metrics)
+              setActualizadoEn(new Date())
+              setError(false)
+            } else {
+              setError(true)
+            }
+            setIsLoading(false)
+          })
+          .catch(() => {
+            if (!isActive) return
+            setError(true)
+            setIsLoading(false)
+          })
       })
-      .catch(() => {
-        if (!isActive) return
-        setError(true)
-        setIsLoading(false)
-      })
-    return () => { isActive = false }
+    }, 0)
+    return () => { isActive = false; clearTimeout(timer) }
   }, [userRole, retryKey])
 
   if (userRole !== 'admin') return null

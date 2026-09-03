@@ -1,6 +1,6 @@
 'use client'
 
-import { useCallback, useEffect, useState } from 'react'
+import { startTransition, useCallback, useEffect, useState } from 'react'
 import { RefreshCw, TrendingDown, AlertCircle, CheckCircle2, Clock } from 'lucide-react'
 
 import { Button } from '@/components/ui/button'
@@ -35,23 +35,29 @@ export function DeudasCashStatsWidget() {
     let isActive = true
     setIsLoading(true)
     setError(null)
-    getDeudasCashStatsAction()
-      .then(r => {
-        if (!isActive) return
-        if (r.success) {
-          setStats(r.data)
-          setActualizadoEn(new Date())
-        } else {
-          setError(r.error)
-        }
-        setIsLoading(false)
+    const timer = setTimeout(() => {
+      // startTransition evita que el POST de la acción bloquee el árbol RSC,
+      // que mostraría los skeletons de Suspense otra vez en toda la página.
+      startTransition(() => {
+        void getDeudasCashStatsAction()
+          .then(r => {
+            if (!isActive) return
+            if (r.success) {
+              setStats(r.data)
+              setActualizadoEn(new Date())
+            } else {
+              setError(r.error)
+            }
+            setIsLoading(false)
+          })
+          .catch((e) => {
+            if (!isActive) return
+            setError(e)
+            setIsLoading(false)
+          })
       })
-      .catch((e) => {
-        if (!isActive) return
-        setError(e)
-        setIsLoading(false)
-      })
-    return () => { isActive = false }
+    }, 0)
+    return () => { isActive = false; clearTimeout(timer) }
   }, [retryKey])
 
   if (isLoading && !stats) {

@@ -76,8 +76,10 @@ describe('ResumenFinanciero — Rediseño Fase 4', () => {
     cleanup();
   });
 
-  beforeEach(() => {
+  beforeEach(async () => {
     vi.clearAllMocks();
+    const { __clearResumenCacheForTests } = await import('./resumen-financiero');
+    __clearResumenCacheForTests();
     getResumenCompletoAction.mockResolvedValue(payloadBase());
   });
 

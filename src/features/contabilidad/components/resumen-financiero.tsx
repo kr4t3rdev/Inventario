@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, startTransition } from 'react';
 import { m as motion } from 'framer-motion';
 import { Wallet, DollarSign } from 'lucide-react';
 
@@ -20,6 +20,18 @@ import {
   type PeriodoClave,
   type RangoPeriodo,
 } from '@/features/contabilidad/lib/periodo-presets';
+
+/** Cache por sesión del último payload por filtro, para sobrevivir a remounts por refresh RSC. */
+const resumenPayloadCache = new Map<string, unknown>();
+
+function cacheKeyFor(fechaInicio?: string, fechaFin?: string, cuentaId?: string): string {
+  return `${fechaInicio ?? ''}|${fechaFin ?? ''}|${cuentaId ?? ''}`;
+}
+
+/** Limpia la caché de resúmenes. Solo para tests. */
+export function __clearResumenCacheForTests(): void {
+  resumenPayloadCache.clear();
+}
 
 interface ResumenFinancieroProps {
   fechaInicio?: string;
@@ -57,11 +69,14 @@ export function ResumenFinanciero({
 
   const [retryKey, setRetryKey] = useState(0);
 
-  const [payload, setPayload] = useState<any>(initialData ?? null);
-  const [isLoading, setIsLoading] = useState(!initialData);
+  const cacheKey = cacheKeyFor(fechaInicio, fechaFin, cuentaId);
+  const payloadInicial = initialData ?? resumenPayloadCache.get(cacheKey) ?? null;
+
+  const [payload, setPayload] = useState<any>(payloadInicial);
+  const [isLoading, setIsLoading] = useState(!payloadInicial);
   const [error, setError] = useState<any>(null);
   const dataRequestRef = useRef(0);
-  const skipInitialFetchRef = useRef(Boolean(initialData));
+  const skipInitialFetchRef = useRef(Boolean(payloadInicial));
 
   useEffect(() => {
     if (skipInitialFetchRef.current) {
@@ -72,21 +87,26 @@ export function ResumenFinanciero({
     let isActive = true;
     setIsLoading(true);
     setError(null);
-    getResumenCompletoAction({ fechaInicio, fechaFin, cuentaId })
-      .then(r => {
-        if (!isActive || requestId !== dataRequestRef.current) return;
-        if (r.success) {
-          setPayload(r.data);
-        } else {
-          setError(r.error);
-        }
-        setIsLoading(false);
-      })
-      .catch(e => {
-        if (!isActive || requestId !== dataRequestRef.current) return;
-        setError(e);
-        setIsLoading(false);
-      });
+    // startTransition: el refetch no debe derribar el UI actual a skeleton;
+    // el travesaño previo se mantiene mientras el servidor responde.
+    startTransition(() => {
+      getResumenCompletoAction({ fechaInicio, fechaFin, cuentaId })
+        .then(r => {
+          if (!isActive || requestId !== dataRequestRef.current) return;
+          if (r.success) {
+            resumenPayloadCache.set(cacheKey, r.data);
+            setPayload(r.data);
+          } else {
+            setError(r.error);
+          }
+          setIsLoading(false);
+        })
+        .catch(e => {
+          if (!isActive || requestId !== dataRequestRef.current) return;
+          setError(e);
+          setIsLoading(false);
+        });
+    });
     return () => { isActive = false; };
   }, [fechaInicio, fechaFin, cuentaId, retryKey, refreshToken]);
 

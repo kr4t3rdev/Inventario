@@ -330,8 +330,10 @@ describe('AccountingDetailsDisclosure', () => {
 });
 
 describe('ResumenFinanciero — loading, empty, error', () => {
-  beforeEach(() => {
+  beforeEach(async () => {
     vi.clearAllMocks();
+    const { __clearResumenCacheForTests } = await import('../resumen-financiero');
+    __clearResumenCacheForTests();
     mocks.getResumenCompletoAction.mockReturnValue(new Promise(() => {}));
   });
 
@@ -384,8 +386,10 @@ describe('ResumenFinanciero — loading, empty, error', () => {
 });
 
 describe('ResumenFinanciero — selector de período (opt-in)', () => {
-  beforeEach(() => {
+  beforeEach(async () => {
     vi.clearAllMocks();
+    const { __clearResumenCacheForTests } = await import('../resumen-financiero');
+    __clearResumenCacheForTests();
     mocks.getResumenCompletoAction.mockResolvedValue(payloadResumen());
   });
 
@@ -471,8 +475,10 @@ describe('Cifras tabulares (anti-shifting numerals)', () => {
 });
 
 describe('ResumenFinanciero — cifras tabulares en disclosures', () => {
-  beforeEach(() => {
+  beforeEach(async () => {
     vi.clearAllMocks();
+    const { __clearResumenCacheForTests } = await import('../resumen-financiero');
+    __clearResumenCacheForTests();
     mocks.authUser = { planFeatures: { 'prestamos-cash': true } };
   });
 
@@ -493,5 +499,30 @@ describe('ResumenFinanciero — cifras tabulares en disclosures', () => {
 
     const monto = await screen.findByText(/1.?234,50/);
     expect(monto.closest('[class*="tabular-nums"]')).not.toBeNull();
+  });
+});
+
+describe('ResumenFinanciero — caché de último payload cálido', () => {
+  beforeEach(async () => {
+    vi.clearAllMocks();
+    const { __clearResumenCacheForTests } = await import('../resumen-financiero');
+    __clearResumenCacheForTests();
+    mocks.getResumenCompletoAction.mockResolvedValue(payloadResumen());
+  });
+
+  it('un remount sin initialData reutiliza el último payload (sin skeleton)', async () => {
+    const { ResumenFinanciero } = await import('../resumen-financiero');
+
+    // Primera montura: carga y guarda en caché
+    const first = render(<ResumenFinanciero periodo="Este mes" page={1} limit={10} />);
+    await screen.findByText(/Flujo Neto del Período/i);
+    first.unmount();
+
+    // Segunda montura: sin initialData ni fetch pendiente → no debe ir a skeleton
+    mocks.getResumenCompletoAction.mockReturnValue(new Promise(() => {}));
+    const { container } = render(<ResumenFinanciero periodo="Este mes" page={1} limit={10} />);
+
+    expect(container.querySelector('[aria-busy="true"]')).toBeNull();
+    expect(await screen.findByText(/Flujo Neto del Período/i)).toBeInTheDocument();
   });
 });

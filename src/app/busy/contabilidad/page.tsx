@@ -1,5 +1,4 @@
 import Link from 'next/link';
-import { Suspense } from 'react';
 import {
   ArrowUpDown,
   Banknote,
@@ -119,7 +118,7 @@ const quickActionsBase = [
 /**
  * @description Dashboard principal de contabilidad. Server Component: el encabezado,
  * la navegación y los accesos rápidos se renderizan en el servidor; el resumen
- * financiero se precarga en streaming con Suspense y queda interactivo en cliente.
+ * financiero se precarga server-side y queda interactivo en cliente.
  * @returns {Promise<JSX.Element>} Vista del dashboard de contabilidad.
  */
 export default async function ContabilidadDashboard(): Promise<React.JSX.Element> {
@@ -181,11 +180,11 @@ export default async function ContabilidadDashboard(): Promise<React.JSX.Element
           </div>
         </StaggerItem>
 
-        {/* Resumen Financiero — prefetch en el servidor, interactivo en cliente */}
+        {/* Resumen Financiero — prefetch en el servidor, interactivo en cliente.
+            Sin Suspense: un boundary aquí re-muestra el skeleton cada vez que un
+            widget cliente ejecuta una server action (Next re-renderiza la ruta). */}
         <StaggerItem>
-          <Suspense fallback={<ResumenSkeleton />}>
-            <ResumenFinancieroServer />
-          </Suspense>
+          <ResumenFinancieroServer />
         </StaggerItem>
 
         {/* Deudas Cash Stats Widget */}
