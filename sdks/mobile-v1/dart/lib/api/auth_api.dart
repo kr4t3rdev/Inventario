@@ -282,6 +282,62 @@ class AuthApi {
     return null;
   }
 
+  /// Registrar cuenta móvil
+  ///
+  /// Crea un usuario inactivo pendiente de verificación de correo y envía el enlace de verificación. Espejo del registro web: no devuelve sesión; la cuenta debe completar onboarding y aprobación antes de iniciar sesión en el móvil.
+  ///
+  /// Note: This method returns the HTTP [Response].
+  ///
+  /// Parameters:
+  ///
+  /// * [RegisterRequest] registerRequest (required):
+  Future<Response> mobilePostAuthRegisterWithHttpInfo(RegisterRequest registerRequest,) async {
+    // ignore: prefer_const_declarations
+    final path = r'/auth/register';
+
+    // ignore: prefer_final_locals
+    Object? postBody = registerRequest;
+
+    final queryParams = <QueryParam>[];
+    final headerParams = <String, String>{};
+    final formParams = <String, String>{};
+
+    const contentTypes = <String>['application/json'];
+
+
+    return apiClient.invokeAPI(
+      path,
+      'POST',
+      queryParams,
+      postBody,
+      headerParams,
+      formParams,
+      contentTypes.isEmpty ? null : contentTypes.first,
+    );
+  }
+
+  /// Registrar cuenta móvil
+  ///
+  /// Crea un usuario inactivo pendiente de verificación de correo y envía el enlace de verificación. Espejo del registro web: no devuelve sesión; la cuenta debe completar onboarding y aprobación antes de iniciar sesión en el móvil.
+  ///
+  /// Parameters:
+  ///
+  /// * [RegisterRequest] registerRequest (required):
+  Future<RegisterResponse?> mobilePostAuthRegister(RegisterRequest registerRequest,) async {
+    final response = await mobilePostAuthRegisterWithHttpInfo(registerRequest,);
+    if (response.statusCode >= HttpStatus.badRequest) {
+      throw ApiException(response.statusCode, await _decodeBodyBytes(response));
+    }
+    // When a remote server returns no body with a status of 204, we shall not decode it.
+    // At the time of writing this, `dart:convert` will throw an "Unexpected end of input"
+    // FormatException when trying to decode an empty string.
+    if (response.body.isNotEmpty && response.statusCode != HttpStatus.noContent) {
+      return await apiClient.deserializeAsync(await _decodeBodyBytes(response), 'RegisterResponse',) as RegisterResponse;
+    
+    }
+    return null;
+  }
+
   /// Cambiar tenant activo
   ///
   /// Cambia el contexto de tenant y entrega tokens nuevos asociados a la membresía seleccionada.

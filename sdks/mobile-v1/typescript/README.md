@@ -128,6 +128,7 @@ All URIs are relative to */api/mobile/v1*
 *AuthApi* | [**mobilePostAuthLogin**](docs/AuthApi.md#mobilepostauthlogin) | **POST** /auth/login | Iniciar sesión móvil
 *AuthApi* | [**mobilePostAuthLogout**](docs/AuthApi.md#mobilepostauthlogout) | **POST** /auth/logout | Cerrar sesión actual
 *AuthApi* | [**mobilePostAuthRefresh**](docs/AuthApi.md#mobilepostauthrefresh) | **POST** /auth/refresh | Renovar tokens de sesión
+*AuthApi* | [**mobilePostAuthRegister**](docs/AuthApi.md#mobilepostauthregister) | **POST** /auth/register | Registrar cuenta móvil
 *AuthApi* | [**mobilePostAuthTenants**](docs/AuthApi.md#mobilepostauthtenants) | **POST** /auth/tenants | Cambiar tenant activo
 *DashboardApi* | [**mobileGetDashboardStats**](docs/DashboardApi.md#mobilegetdashboardstats) | **GET** /dashboard/stats | Consultar indicadores del panel principal
 *ProductsApi* | [**mobileGetProducts**](docs/ProductsApi.md#mobilegetproducts) | **GET** /products | Consultar productos
@@ -155,6 +156,8 @@ All URIs are relative to */api/mobile/v1*
 - [AuthSession](docs/AuthSession.md)
 - [AuthenticatedUser](docs/AuthenticatedUser.md)
 - [BankAccount](docs/BankAccount.md)
+- [BankAccountHistorySummary](docs/BankAccountHistorySummary.md)
+- [BankAccountTransaction](docs/BankAccountTransaction.md)
 - [BankAdjustment](docs/BankAdjustment.md)
 - [BankAdjustmentRequest](docs/BankAdjustmentRequest.md)
 - [BankTransfer](docs/BankTransfer.md)
@@ -260,6 +263,8 @@ All URIs are relative to */api/mobile/v1*
 - [ReconciliationModules](docs/ReconciliationModules.md)
 - [ReconciliationOverviewStats](docs/ReconciliationOverviewStats.md)
 - [RefreshRequest](docs/RefreshRequest.md)
+- [RegisterRequest](docs/RegisterRequest.md)
+- [RegisterResponse](docs/RegisterResponse.md)
 - [ReportFilters](docs/ReportFilters.md)
 - [ReportResult](docs/ReportResult.md)
 - [ReportStatistics](docs/ReportStatistics.md)

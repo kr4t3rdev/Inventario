@@ -16,38 +16,13 @@ void main() {
   // final instance = GetAccountingBankAccountsIdHistoryResponse();
 
   group('test GetAccountingBankAccountsIdHistoryResponse', () {
-    // String cuentaId
-    test('to test the property `cuentaId`', () async {
+    // List<BankAccountTransaction> transacciones (default value: const [])
+    test('to test the property `transacciones`', () async {
       // TODO
     });
 
-    // String nombreBanco
-    test('to test the property `nombreBanco`', () async {
-      // TODO
-    });
-
-    // String numeroCuenta
-    test('to test the property `numeroCuenta`', () async {
-      // TODO
-    });
-
-    // String tipoCuenta
-    test('to test the property `tipoCuenta`', () async {
-      // TODO
-    });
-
-    // String moneda
-    test('to test the property `moneda`', () async {
-      // TODO
-    });
-
-    // num saldo
-    test('to test the property `saldo`', () async {
-      // TODO
-    });
-
-    // bool isActive
-    test('to test the property `isActive`', () async {
+    // BankAccountHistorySummary resumen
+    test('to test the property `resumen`', () async {
       // TODO
     });
 

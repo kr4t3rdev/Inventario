@@ -120,6 +120,8 @@ export * from './ReconciliationModuleStats';
 export * from './ReconciliationModules';
 export * from './ReconciliationOverviewStats';
 export * from './RefreshRequest';
+export * from './RegisterRequest';
+export * from './RegisterResponse';
 export * from './ReportFilters';
 export * from './ReportResult';
 export * from './ReportStatistics';

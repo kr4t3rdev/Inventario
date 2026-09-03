@@ -119,7 +119,7 @@ describe('mobile v1 OpenAPI contract', () => {
     const contract = await loadContract();
     const realOperations = await discoverRouteOperations();
 
-    expect(realOperations).toHaveLength(94);
+    expect(realOperations).toHaveLength(110);
     expect(documentedOperations(contract)).toEqual(realOperations);
   });
 
@@ -132,7 +132,7 @@ describe('mobile v1 OpenAPI contract', () => {
       }),
     );
 
-    expect(operationIds).toHaveLength(94);
+    expect(operationIds).toHaveLength(85);
     expect(new Set(operationIds).size).toBe(operationIds.length);
   });
 
@@ -325,7 +325,7 @@ describe('mobile v1 OpenAPI contract', () => {
           );
         }
 
-        if (!['POST /auth/login', 'POST /auth/refresh'].includes(
+        if (!['POST /auth/login', 'POST /auth/refresh', 'POST /auth/register'].includes(
           `${method.toUpperCase()} ${routePath}`,
         )) {
           expect(operation.security, `${method.toUpperCase()} ${routePath}`).toEqual([

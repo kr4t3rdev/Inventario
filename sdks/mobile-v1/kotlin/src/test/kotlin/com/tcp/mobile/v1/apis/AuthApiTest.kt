@@ -24,6 +24,8 @@ import com.tcp.mobile.v1.models.AuthSession
 import com.tcp.mobile.v1.models.AuthenticatedUser
 import com.tcp.mobile.v1.models.LoginRequest
 import com.tcp.mobile.v1.models.RefreshRequest
+import com.tcp.mobile.v1.models.RegisterRequest
+import com.tcp.mobile.v1.models.RegisterResponse
 import com.tcp.mobile.v1.models.SuccessResponse
 import com.tcp.mobile.v1.models.SwitchTenantRequest
 import com.tcp.mobile.v1.models.SwitchTenantResponse
@@ -70,6 +72,14 @@ class AuthApiTest : ShouldSpec() {
             // uncomment below to test mobilePostAuthRefresh
             //val refreshRequest : RefreshRequest =  // RefreshRequest | 
             //val result : TokenPair = apiInstance.mobilePostAuthRefresh(refreshRequest)
+            //result shouldBe ("TODO")
+        }
+
+        // to test mobilePostAuthRegister
+        should("test mobilePostAuthRegister") {
+            // uncomment below to test mobilePostAuthRegister
+            //val registerRequest : RegisterRequest =  // RegisterRequest | 
+            //val result : RegisterResponse = apiInstance.mobilePostAuthRegister(registerRequest)
             //result shouldBe ("TODO")
         }
 

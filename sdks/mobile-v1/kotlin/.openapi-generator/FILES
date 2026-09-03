@@ -23,6 +23,8 @@ docs/AuthApi.md
 docs/AuthSession.md
 docs/AuthenticatedUser.md
 docs/BankAccount.md
+docs/BankAccountHistorySummary.md
+docs/BankAccountTransaction.md
 docs/BankAdjustment.md
 docs/BankAdjustmentRequest.md
 docs/BankTransfer.md
@@ -130,6 +132,8 @@ docs/ReconciliationModuleStats.md
 docs/ReconciliationModules.md
 docs/ReconciliationOverviewStats.md
 docs/RefreshRequest.md
+docs/RegisterRequest.md
+docs/RegisterResponse.md
 docs/ReportFilters.md
 docs/ReportResult.md
 docs/ReportStatistics.md
@@ -190,6 +194,8 @@ src/main/kotlin/com/tcp/mobile/v1/models/AuditLog.kt
 src/main/kotlin/com/tcp/mobile/v1/models/AuthSession.kt
 src/main/kotlin/com/tcp/mobile/v1/models/AuthenticatedUser.kt
 src/main/kotlin/com/tcp/mobile/v1/models/BankAccount.kt
+src/main/kotlin/com/tcp/mobile/v1/models/BankAccountHistorySummary.kt
+src/main/kotlin/com/tcp/mobile/v1/models/BankAccountTransaction.kt
 src/main/kotlin/com/tcp/mobile/v1/models/BankAdjustment.kt
 src/main/kotlin/com/tcp/mobile/v1/models/BankAdjustmentRequest.kt
 src/main/kotlin/com/tcp/mobile/v1/models/BankTransfer.kt
@@ -295,6 +301,8 @@ src/main/kotlin/com/tcp/mobile/v1/models/ReconciliationModuleStats.kt
 src/main/kotlin/com/tcp/mobile/v1/models/ReconciliationModules.kt
 src/main/kotlin/com/tcp/mobile/v1/models/ReconciliationOverviewStats.kt
 src/main/kotlin/com/tcp/mobile/v1/models/RefreshRequest.kt
+src/main/kotlin/com/tcp/mobile/v1/models/RegisterRequest.kt
+src/main/kotlin/com/tcp/mobile/v1/models/RegisterResponse.kt
 src/main/kotlin/com/tcp/mobile/v1/models/ReportFilters.kt
 src/main/kotlin/com/tcp/mobile/v1/models/ReportResult.kt
 src/main/kotlin/com/tcp/mobile/v1/models/ReportStatistics.kt
@@ -339,7 +347,9 @@ src/test/kotlin/com/tcp/mobile/v1/models/ApiErrorTest.kt
 src/test/kotlin/com/tcp/mobile/v1/models/AuditLogTest.kt
 src/test/kotlin/com/tcp/mobile/v1/models/AuthSessionTest.kt
 src/test/kotlin/com/tcp/mobile/v1/models/AuthenticatedUserTest.kt
+src/test/kotlin/com/tcp/mobile/v1/models/BankAccountHistorySummaryTest.kt
 src/test/kotlin/com/tcp/mobile/v1/models/BankAccountTest.kt
+src/test/kotlin/com/tcp/mobile/v1/models/BankAccountTransactionTest.kt
 src/test/kotlin/com/tcp/mobile/v1/models/BankAdjustmentRequestTest.kt
 src/test/kotlin/com/tcp/mobile/v1/models/BankAdjustmentTest.kt
 src/test/kotlin/com/tcp/mobile/v1/models/BankTransferCreateRequestTest.kt
@@ -445,6 +455,8 @@ src/test/kotlin/com/tcp/mobile/v1/models/ReconciliationModulesTest.kt
 src/test/kotlin/com/tcp/mobile/v1/models/ReconciliationOverviewStatsTest.kt
 src/test/kotlin/com/tcp/mobile/v1/models/ReconciliationTest.kt
 src/test/kotlin/com/tcp/mobile/v1/models/RefreshRequestTest.kt
+src/test/kotlin/com/tcp/mobile/v1/models/RegisterRequestTest.kt
+src/test/kotlin/com/tcp/mobile/v1/models/RegisterResponseTest.kt
 src/test/kotlin/com/tcp/mobile/v1/models/ReportFiltersTest.kt
 src/test/kotlin/com/tcp/mobile/v1/models/ReportResultTest.kt
 src/test/kotlin/com/tcp/mobile/v1/models/ReportStatisticsTest.kt

@@ -24,6 +24,8 @@ docs/AuthApi.md
 docs/AuthSession.md
 docs/AuthenticatedUser.md
 docs/BankAccount.md
+docs/BankAccountHistorySummary.md
+docs/BankAccountTransaction.md
 docs/BankAdjustment.md
 docs/BankAdjustmentRequest.md
 docs/BankTransfer.md
@@ -131,6 +133,8 @@ docs/ReconciliationModuleStats.md
 docs/ReconciliationModules.md
 docs/ReconciliationOverviewStats.md
 docs/RefreshRequest.md
+docs/RegisterRequest.md
+docs/RegisterResponse.md
 docs/ReportFilters.md
 docs/ReportResult.md
 docs/ReportStatistics.md
@@ -180,6 +184,8 @@ src/models/AuditLog.ts
 src/models/AuthSession.ts
 src/models/AuthenticatedUser.ts
 src/models/BankAccount.ts
+src/models/BankAccountHistorySummary.ts
+src/models/BankAccountTransaction.ts
 src/models/BankAdjustment.ts
 src/models/BankAdjustmentRequest.ts
 src/models/BankTransfer.ts
@@ -285,6 +291,8 @@ src/models/ReconciliationModuleStats.ts
 src/models/ReconciliationModules.ts
 src/models/ReconciliationOverviewStats.ts
 src/models/RefreshRequest.ts
+src/models/RegisterRequest.ts
+src/models/RegisterResponse.ts
 src/models/ReportFilters.ts
 src/models/ReportResult.ts
 src/models/ReportStatistics.ts

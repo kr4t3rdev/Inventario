@@ -19,6 +19,8 @@ import io.kotlintest.shouldBe
 import io.kotlintest.specs.ShouldSpec
 
 import com.tcp.mobile.v1.models.GetAccountingBankAccountsIdHistoryResponse
+import com.tcp.mobile.v1.models.BankAccountHistorySummary
+import com.tcp.mobile.v1.models.BankAccountTransaction
 import com.tcp.mobile.v1.models.Pagination
 
 class GetAccountingBankAccountsIdHistoryResponseTest : ShouldSpec() {
@@ -26,46 +28,16 @@ class GetAccountingBankAccountsIdHistoryResponseTest : ShouldSpec() {
         // uncomment below to create an instance of GetAccountingBankAccountsIdHistoryResponse
         //val modelInstance = GetAccountingBankAccountsIdHistoryResponse()
 
-        // to test the property `cuentaId`
-        should("test cuentaId") {
+        // to test the property `transacciones`
+        should("test transacciones") {
             // uncomment below to test the property
-            //modelInstance.cuentaId shouldBe ("TODO")
+            //modelInstance.transacciones shouldBe ("TODO")
         }
 
-        // to test the property `nombreBanco`
-        should("test nombreBanco") {
+        // to test the property `resumen`
+        should("test resumen") {
             // uncomment below to test the property
-            //modelInstance.nombreBanco shouldBe ("TODO")
-        }
-
-        // to test the property `numeroCuenta`
-        should("test numeroCuenta") {
-            // uncomment below to test the property
-            //modelInstance.numeroCuenta shouldBe ("TODO")
-        }
-
-        // to test the property `tipoCuenta`
-        should("test tipoCuenta") {
-            // uncomment below to test the property
-            //modelInstance.tipoCuenta shouldBe ("TODO")
-        }
-
-        // to test the property `moneda`
-        should("test moneda") {
-            // uncomment below to test the property
-            //modelInstance.moneda shouldBe ("TODO")
-        }
-
-        // to test the property `saldo`
-        should("test saldo") {
-            // uncomment below to test the property
-            //modelInstance.saldo shouldBe ("TODO")
-        }
-
-        // to test the property `isActive`
-        should("test isActive") {
-            // uncomment below to test the property
-            //modelInstance.isActive shouldBe ("TODO")
+            //modelInstance.resumen shouldBe ("TODO")
         }
 
         // to test the property `pagination`

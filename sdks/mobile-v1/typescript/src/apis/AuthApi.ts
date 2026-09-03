@@ -20,6 +20,8 @@ import type {
   AuthenticatedUser,
   LoginRequest,
   RefreshRequest,
+  RegisterRequest,
+  RegisterResponse,
   SuccessResponse,
   SwitchTenantRequest,
   SwitchTenantResponse,
@@ -37,6 +39,10 @@ import {
     LoginRequestToJSON,
     RefreshRequestFromJSON,
     RefreshRequestToJSON,
+    RegisterRequestFromJSON,
+    RegisterRequestToJSON,
+    RegisterResponseFromJSON,
+    RegisterResponseToJSON,
     SuccessResponseFromJSON,
     SuccessResponseToJSON,
     SwitchTenantRequestFromJSON,
@@ -56,6 +62,10 @@ export interface MobilePostAuthLoginRequest {
 
 export interface MobilePostAuthRefreshRequest {
     refreshRequest: RefreshRequest;
+}
+
+export interface MobilePostAuthRegisterRequest {
+    registerRequest: RegisterRequest;
 }
 
 export interface MobilePostAuthTenantsRequest {
@@ -146,6 +156,22 @@ export interface AuthApiInterface {
      * Renovar tokens de sesión
      */
     mobilePostAuthRefresh(requestParameters: MobilePostAuthRefreshRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<TokenPair>;
+
+    /**
+     * Crea un usuario inactivo pendiente de verificación de correo y envía el enlace de verificación. Espejo del registro web: no devuelve sesión; la cuenta debe completar onboarding y aprobación antes de iniciar sesión en el móvil.
+     * @summary Registrar cuenta móvil
+     * @param {RegisterRequest} registerRequest 
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof AuthApiInterface
+     */
+    mobilePostAuthRegisterRaw(requestParameters: MobilePostAuthRegisterRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<RegisterResponse>>;
+
+    /**
+     * Crea un usuario inactivo pendiente de verificación de correo y envía el enlace de verificación. Espejo del registro web: no devuelve sesión; la cuenta debe completar onboarding y aprobación antes de iniciar sesión en el móvil.
+     * Registrar cuenta móvil
+     */
+    mobilePostAuthRegister(requestParameters: MobilePostAuthRegisterRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<RegisterResponse>;
 
     /**
      * Cambia el contexto de tenant y entrega tokens nuevos asociados a la membresía seleccionada.
@@ -370,6 +396,47 @@ export class AuthApi extends runtime.BaseAPI implements AuthApiInterface {
      */
     async mobilePostAuthRefresh(requestParameters: MobilePostAuthRefreshRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<TokenPair> {
         const response = await this.mobilePostAuthRefreshRaw(requestParameters, initOverrides);
+        return await response.value();
+    }
+
+    /**
+     * Crea un usuario inactivo pendiente de verificación de correo y envía el enlace de verificación. Espejo del registro web: no devuelve sesión; la cuenta debe completar onboarding y aprobación antes de iniciar sesión en el móvil.
+     * Registrar cuenta móvil
+     */
+    async mobilePostAuthRegisterRaw(requestParameters: MobilePostAuthRegisterRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<RegisterResponse>> {
+        if (requestParameters['registerRequest'] == null) {
+            throw new runtime.RequiredError(
+                'registerRequest',
+                'Required parameter "registerRequest" was null or undefined when calling mobilePostAuthRegister().'
+            );
+        }
+
+        const queryParameters: any = {};
+
+        const headerParameters: runtime.HTTPHeaders = {};
+
+        headerParameters['Content-Type'] = 'application/json';
+
+
+        let urlPath = `/auth/register`;
+
+        const response = await this.request({
+            path: urlPath,
+            method: 'POST',
+            headers: headerParameters,
+            query: queryParameters,
+            body: RegisterRequestToJSON(requestParameters['registerRequest']),
+        }, initOverrides);
+
+        return new runtime.JSONApiResponse(response, (jsonValue) => RegisterResponseFromJSON(jsonValue));
+    }
+
+    /**
+     * Crea un usuario inactivo pendiente de verificación de correo y envía el enlace de verificación. Espejo del registro web: no devuelve sesión; la cuenta debe completar onboarding y aprobación antes de iniciar sesión en el móvil.
+     * Registrar cuenta móvil
+     */
+    async mobilePostAuthRegister(requestParameters: MobilePostAuthRegisterRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<RegisterResponse> {
+        const response = await this.mobilePostAuthRegisterRaw(requestParameters, initOverrides);
         return await response.value();
     }
 

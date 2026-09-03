@@ -9,6 +9,7 @@ All URIs are relative to */api/mobile/v1*
 | [**mobilePostAuthLogin**](AuthApi.md#mobilepostauthlogin) | **POST** /auth/login | Iniciar sesión móvil |
 | [**mobilePostAuthLogout**](AuthApi.md#mobilepostauthlogout) | **POST** /auth/logout | Cerrar sesión actual |
 | [**mobilePostAuthRefresh**](AuthApi.md#mobilepostauthrefresh) | **POST** /auth/refresh | Renovar tokens de sesión |
+| [**mobilePostAuthRegister**](AuthApi.md#mobilepostauthregister) | **POST** /auth/register | Registrar cuenta móvil |
 | [**mobilePostAuthTenants**](AuthApi.md#mobilepostauthtenants) | **POST** /auth/tenants | Cambiar tenant activo |
 
 
@@ -348,6 +349,78 @@ No authorization required
 | **401** | No autenticado |  -  |
 | **403** | No autorizado |  -  |
 | **500** | Error interno |  -  |
+
+[[Back to top]](#) [[Back to API list]](../README.md#api-endpoints) [[Back to Model list]](../README.md#models) [[Back to README]](../README.md)
+
+
+## mobilePostAuthRegister
+
+> RegisterResponse mobilePostAuthRegister(registerRequest)
+
+Registrar cuenta móvil
+
+Crea un usuario inactivo pendiente de verificación de correo y envía el enlace de verificación. Espejo del registro web: no devuelve sesión; la cuenta debe completar onboarding y aprobación antes de iniciar sesión en el móvil.
+
+### Example
+
+```ts
+import {
+  Configuration,
+  AuthApi,
+} from '@tcp/mobile-v1-sdk';
+import type { MobilePostAuthRegisterRequest } from '@tcp/mobile-v1-sdk';
+
+async function example() {
+  console.log("🚀 Testing @tcp/mobile-v1-sdk SDK...");
+  const api = new AuthApi();
+
+  const body = {
+    // RegisterRequest
+    registerRequest: ...,
+  } satisfies MobilePostAuthRegisterRequest;
+
+  try {
+    const data = await api.mobilePostAuthRegister(body);
+    console.log(data);
+  } catch (error) {
+    console.error(error);
+  }
+}
+
+// Run the test
+example().catch(console.error);
+```
+
+### Parameters
+
+
+| Name | Type | Description  | Notes |
+|------------- | ------------- | ------------- | -------------|
+| **registerRequest** | [RegisterRequest](RegisterRequest.md) |  | |
+
+### Return type
+
+[**RegisterResponse**](RegisterResponse.md)
+
+### Authorization
+
+No authorization required
+
+### HTTP request headers
+
+- **Content-Type**: `application/json`
+- **Accept**: `application/json`
+
+
+### HTTP response details
+| Status code | Description | Response headers |
+|-------------|-------------|------------------|
+| **201** | Cuenta creada, verificación enviada |  -  |
+| **400** | Solicitud inválida |  -  |
+| **409** | El usuario ya existe |  -  |
+| **429** | Demasiados intentos |  -  |
+| **500** | Error interno |  -  |
+| **503** | Verificación no disponible |  -  |
 
 [[Back to top]](#) [[Back to API list]](../README.md#api-endpoints) [[Back to Model list]](../README.md#models) [[Back to README]](../README.md)
 

@@ -14,6 +14,7 @@ Method | HTTP request | Description
 [**mobilePostAuthLogin**](AuthApi.md#mobilepostauthlogin) | **POST** /auth/login | Iniciar sesión móvil
 [**mobilePostAuthLogout**](AuthApi.md#mobilepostauthlogout) | **POST** /auth/logout | Cerrar sesión actual
 [**mobilePostAuthRefresh**](AuthApi.md#mobilepostauthrefresh) | **POST** /auth/refresh | Renovar tokens de sesión
+[**mobilePostAuthRegister**](AuthApi.md#mobilepostauthregister) | **POST** /auth/register | Registrar cuenta móvil
 [**mobilePostAuthTenants**](AuthApi.md#mobilepostauthtenants) | **POST** /auth/tenants | Cambiar tenant activo
 
 
@@ -228,6 +229,49 @@ Name | Type | Description  | Notes
 ### Return type
 
 [**TokenPair**](TokenPair.md)
+
+### Authorization
+
+No authorization required
+
+### HTTP request headers
+
+ - **Content-Type**: application/json
+ - **Accept**: application/json
+
+[[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to Model list]](../README.md#documentation-for-models) [[Back to README]](../README.md)
+
+# **mobilePostAuthRegister**
+> RegisterResponse mobilePostAuthRegister(registerRequest)
+
+Registrar cuenta móvil
+
+Crea un usuario inactivo pendiente de verificación de correo y envía el enlace de verificación. Espejo del registro web: no devuelve sesión; la cuenta debe completar onboarding y aprobación antes de iniciar sesión en el móvil.
+
+### Example
+```dart
+import 'package:tcp_mobile_v1_sdk/api.dart';
+
+final api_instance = AuthApi();
+final registerRequest = RegisterRequest(); // RegisterRequest | 
+
+try {
+    final result = api_instance.mobilePostAuthRegister(registerRequest);
+    print(result);
+} catch (e) {
+    print('Exception when calling AuthApi->mobilePostAuthRegister: $e\n');
+}
+```
+
+### Parameters
+
+Name | Type | Description  | Notes
+------------- | ------------- | ------------- | -------------
+ **registerRequest** | [**RegisterRequest**](RegisterRequest.md)|  | 
+
+### Return type
+
+[**RegisterResponse**](RegisterResponse.md)
 
 ### Authorization
 

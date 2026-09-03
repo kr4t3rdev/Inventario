@@ -199,6 +199,42 @@ open class AuthAPI {
     }
 
     /**
+     Registrar cuenta móvil
+     
+     - parameter registerRequest: (body)  
+     - returns: RegisterResponse
+     */
+    @available(macOS 10.15, iOS 13.0, tvOS 13.0, watchOS 6.0, *)
+    open class func mobilePostAuthRegister(registerRequest: RegisterRequest) async throws -> RegisterResponse {
+        return try await mobilePostAuthRegisterWithRequestBuilder(registerRequest: registerRequest).execute().body
+    }
+
+    /**
+     Registrar cuenta móvil
+     - POST /auth/register
+     - Crea un usuario inactivo pendiente de verificación de correo y envía el enlace de verificación. Espejo del registro web: no devuelve sesión; la cuenta debe completar onboarding y aprobación antes de iniciar sesión en el móvil.
+     - parameter registerRequest: (body)  
+     - returns: RequestBuilder<RegisterResponse> 
+     */
+    open class func mobilePostAuthRegisterWithRequestBuilder(registerRequest: RegisterRequest) -> RequestBuilder<RegisterResponse> {
+        let localVariablePath = "/auth/register"
+        let localVariableURLString = TCPMobileV1SDKAPI.basePath + localVariablePath
+        let localVariableParameters = JSONEncodingHelper.encodingParameters(forEncodableObject: registerRequest)
+
+        let localVariableUrlComponents = URLComponents(string: localVariableURLString)
+
+        let localVariableNillableHeaders: [String: Any?] = [
+            "Content-Type": "application/json",
+        ]
+
+        let localVariableHeaderParameters = APIHelper.rejectNilHeaders(localVariableNillableHeaders)
+
+        let localVariableRequestBuilder: RequestBuilder<RegisterResponse>.Type = TCPMobileV1SDKAPI.requestBuilderFactory.getBuilder()
+
+        return localVariableRequestBuilder.init(method: "POST", URLString: (localVariableUrlComponents?.string ?? localVariableURLString), parameters: localVariableParameters, headers: localVariableHeaderParameters, requiresAuthentication: false)
+    }
+
+    /**
      Cambiar tenant activo
      
      - parameter switchTenantRequest: (body)  

@@ -139,6 +139,7 @@ Class | Method | HTTP request | Description
 *AuthApi* | [**mobilePostAuthLogin**](doc//AuthApi.md#mobilepostauthlogin) | **POST** /auth/login | Iniciar sesión móvil
 *AuthApi* | [**mobilePostAuthLogout**](doc//AuthApi.md#mobilepostauthlogout) | **POST** /auth/logout | Cerrar sesión actual
 *AuthApi* | [**mobilePostAuthRefresh**](doc//AuthApi.md#mobilepostauthrefresh) | **POST** /auth/refresh | Renovar tokens de sesión
+*AuthApi* | [**mobilePostAuthRegister**](doc//AuthApi.md#mobilepostauthregister) | **POST** /auth/register | Registrar cuenta móvil
 *AuthApi* | [**mobilePostAuthTenants**](doc//AuthApi.md#mobilepostauthtenants) | **POST** /auth/tenants | Cambiar tenant activo
 *DashboardApi* | [**mobileGetDashboardStats**](doc//DashboardApi.md#mobilegetdashboardstats) | **GET** /dashboard/stats | Consultar indicadores del panel principal
 *ProductsApi* | [**mobileGetProducts**](doc//ProductsApi.md#mobilegetproducts) | **GET** /products | Consultar productos
@@ -166,6 +167,8 @@ Class | Method | HTTP request | Description
  - [AuthSession](doc//AuthSession.md)
  - [AuthenticatedUser](doc//AuthenticatedUser.md)
  - [BankAccount](doc//BankAccount.md)
+ - [BankAccountHistorySummary](doc//BankAccountHistorySummary.md)
+ - [BankAccountTransaction](doc//BankAccountTransaction.md)
  - [BankAdjustment](doc//BankAdjustment.md)
  - [BankAdjustmentRequest](doc//BankAdjustmentRequest.md)
  - [BankTransfer](doc//BankTransfer.md)
@@ -271,6 +274,8 @@ Class | Method | HTTP request | Description
  - [ReconciliationModules](doc//ReconciliationModules.md)
  - [ReconciliationOverviewStats](doc//ReconciliationOverviewStats.md)
  - [RefreshRequest](doc//RefreshRequest.md)
+ - [RegisterRequest](doc//RegisterRequest.md)
+ - [RegisterResponse](doc//RegisterResponse.md)
  - [ReportFilters](doc//ReportFilters.md)
  - [ReportResult](doc//ReportResult.md)
  - [ReportStatistics](doc//ReportStatistics.md)

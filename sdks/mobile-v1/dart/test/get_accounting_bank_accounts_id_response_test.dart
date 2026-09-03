@@ -51,11 +51,6 @@ void main() {
       // TODO
     });
 
-    // Pagination pagination
-    test('to test the property `pagination`', () async {
-      // TODO
-    });
-
 
   });
 

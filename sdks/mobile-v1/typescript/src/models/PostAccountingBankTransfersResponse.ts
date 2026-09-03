@@ -20,6 +20,7 @@ import {
     BankTransferToJSON,
     BankTransferToJSONTyped,
 } from './BankTransfer';
+
 /**
  * Respuesta de POST /accounting/bank-transfers.
  * @export
@@ -79,3 +80,4 @@ export function PostAccountingBankTransfersResponseToJSONTyped(value?: PostAccou
         'numeroComprobante': value['numeroComprobante'],
     };
 }
+

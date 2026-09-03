@@ -7,14 +7,8 @@ Respuesta de POST /accounting/bank-transfers/validate.
 
 Name | Type
 ------------ | -------------
-`transferenciaId` | string
-`cuentaOrigenId` | string
-`cuentaDestinoId` | string
-`montoOrigen` | number
-`montoDestino` | number
-`tasaCambio` | number
-`motivo` | string
-`descripcion` | string
+`saldoSuficiente` | boolean
+`advertencias` | Array&lt;string&gt;
 
 ## Example
 
@@ -23,14 +17,8 @@ import type { PostAccountingBankTransfersValidateResponse } from '@tcp/mobile-v1
 
 // TODO: Update the object below with actual values
 const example = {
-  "transferenciaId": null,
-  "cuentaOrigenId": null,
-  "cuentaDestinoId": null,
-  "montoOrigen": null,
-  "montoDestino": null,
-  "tasaCambio": null,
-  "motivo": null,
-  "descripcion": null,
+  "saldoSuficiente": null,
+  "advertencias": null,
 } satisfies PostAccountingBankTransfersValidateResponse
 
 console.log(example)

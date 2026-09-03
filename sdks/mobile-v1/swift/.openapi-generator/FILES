@@ -37,6 +37,8 @@ Sources/Models/AuditLog.swift
 Sources/Models/AuthSession.swift
 Sources/Models/AuthenticatedUser.swift
 Sources/Models/BankAccount.swift
+Sources/Models/BankAccountHistorySummary.swift
+Sources/Models/BankAccountTransaction.swift
 Sources/Models/BankAdjustment.swift
 Sources/Models/BankAdjustmentRequest.swift
 Sources/Models/BankTransfer.swift
@@ -142,6 +144,8 @@ Sources/Models/ReconciliationModuleStats.swift
 Sources/Models/ReconciliationModules.swift
 Sources/Models/ReconciliationOverviewStats.swift
 Sources/Models/RefreshRequest.swift
+Sources/Models/RegisterRequest.swift
+Sources/Models/RegisterResponse.swift
 Sources/Models/ReportFilters.swift
 Sources/Models/ReportResult.swift
 Sources/Models/ReportStatistics.swift
@@ -189,6 +193,8 @@ docs/AuthAPI.md
 docs/AuthSession.md
 docs/AuthenticatedUser.md
 docs/BankAccount.md
+docs/BankAccountHistorySummary.md
+docs/BankAccountTransaction.md
 docs/BankAdjustment.md
 docs/BankAdjustmentRequest.md
 docs/BankTransfer.md
@@ -296,6 +302,8 @@ docs/ReconciliationModuleStats.md
 docs/ReconciliationModules.md
 docs/ReconciliationOverviewStats.md
 docs/RefreshRequest.md
+docs/RegisterRequest.md
+docs/RegisterResponse.md
 docs/ReportFilters.md
 docs/ReportResult.md
 docs/ReportStatistics.md

@@ -9,6 +9,7 @@ All URIs are relative to */api/mobile/v1*
 | [**mobilePostAuthLogin**](AuthApi.md#mobilePostAuthLogin) | **POST** /auth/login | Iniciar sesión móvil |
 | [**mobilePostAuthLogout**](AuthApi.md#mobilePostAuthLogout) | **POST** /auth/logout | Cerrar sesión actual |
 | [**mobilePostAuthRefresh**](AuthApi.md#mobilePostAuthRefresh) | **POST** /auth/refresh | Renovar tokens de sesión |
+| [**mobilePostAuthRegister**](AuthApi.md#mobilePostAuthRegister) | **POST** /auth/register | Registrar cuenta móvil |
 | [**mobilePostAuthTenants**](AuthApi.md#mobilePostAuthTenants) | **POST** /auth/tenants | Cambiar tenant activo |
 
 
@@ -231,6 +232,52 @@ try {
 ### Return type
 
 [**TokenPair**](TokenPair.md)
+
+### Authorization
+
+No authorization required
+
+### HTTP request headers
+
+ - **Content-Type**: application/json
+ - **Accept**: application/json
+
+<a id="mobilePostAuthRegister"></a>
+# **mobilePostAuthRegister**
+> RegisterResponse mobilePostAuthRegister(registerRequest)
+
+Registrar cuenta móvil
+
+Crea un usuario inactivo pendiente de verificación de correo y envía el enlace de verificación. Espejo del registro web: no devuelve sesión; la cuenta debe completar onboarding y aprobación antes de iniciar sesión en el móvil.
+
+### Example
+```kotlin
+// Import classes:
+//import com.tcp.mobile.v1.infrastructure.*
+//import com.tcp.mobile.v1.models.*
+
+val apiInstance = AuthApi()
+val registerRequest : RegisterRequest =  // RegisterRequest | 
+try {
+    val result : RegisterResponse = apiInstance.mobilePostAuthRegister(registerRequest)
+    println(result)
+} catch (e: ClientException) {
+    println("4xx response calling AuthApi#mobilePostAuthRegister")
+    e.printStackTrace()
+} catch (e: ServerException) {
+    println("5xx response calling AuthApi#mobilePostAuthRegister")
+    e.printStackTrace()
+}
+```
+
+### Parameters
+| Name | Type | Description  | Notes |
+| ------------- | ------------- | ------------- | ------------- |
+| **registerRequest** | [**RegisterRequest**](RegisterRequest.md)|  | |
+
+### Return type
+
+[**RegisterResponse**](RegisterResponse.md)
 
 ### Authorization
 

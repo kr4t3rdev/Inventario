@@ -208,6 +208,10 @@ class ApiClient {
           return AuthenticatedUser.fromJson(value);
         case 'BankAccount':
           return BankAccount.fromJson(value);
+        case 'BankAccountHistorySummary':
+          return BankAccountHistorySummary.fromJson(value);
+        case 'BankAccountTransaction':
+          return BankAccountTransaction.fromJson(value);
         case 'BankAdjustment':
           return BankAdjustment.fromJson(value);
         case 'BankAdjustmentRequest':
@@ -418,6 +422,10 @@ class ApiClient {
           return ReconciliationOverviewStats.fromJson(value);
         case 'RefreshRequest':
           return RefreshRequest.fromJson(value);
+        case 'RegisterRequest':
+          return RegisterRequest.fromJson(value);
+        case 'RegisterResponse':
+          return RegisterResponse.fromJson(value);
         case 'ReportFilters':
           return ReportFilters.fromJson(value);
         case 'ReportResult':

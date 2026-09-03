@@ -7,14 +7,8 @@ Respuesta de POST /accounting/bank-transfers.
 
 Name | Type
 ------------ | -------------
-`transferenciaId` | string
-`cuentaOrigenId` | string
-`cuentaDestinoId` | string
-`montoOrigen` | number
-`montoDestino` | number
-`tasaCambio` | number
-`motivo` | string
-`descripcion` | string
+`transferencia` | [BankTransfer](BankTransfer.md)
+`numeroComprobante` | string
 
 ## Example
 
@@ -23,14 +17,8 @@ import type { PostAccountingBankTransfersResponse } from '@tcp/mobile-v1-sdk'
 
 // TODO: Update the object below with actual values
 const example = {
-  "transferenciaId": null,
-  "cuentaOrigenId": null,
-  "cuentaDestinoId": null,
-  "montoOrigen": null,
-  "montoDestino": null,
-  "tasaCambio": null,
-  "motivo": null,
-  "descripcion": null,
+  "transferencia": null,
+  "numeroComprobante": null,
 } satisfies PostAccountingBankTransfersResponse
 
 console.log(example)

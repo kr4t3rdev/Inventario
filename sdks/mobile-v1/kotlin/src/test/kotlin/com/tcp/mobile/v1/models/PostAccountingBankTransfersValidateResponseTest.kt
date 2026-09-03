@@ -25,52 +25,16 @@ class PostAccountingBankTransfersValidateResponseTest : ShouldSpec() {
         // uncomment below to create an instance of PostAccountingBankTransfersValidateResponse
         //val modelInstance = PostAccountingBankTransfersValidateResponse()
 
-        // to test the property `transferenciaId`
-        should("test transferenciaId") {
+        // to test the property `saldoSuficiente`
+        should("test saldoSuficiente") {
             // uncomment below to test the property
-            //modelInstance.transferenciaId shouldBe ("TODO")
+            //modelInstance.saldoSuficiente shouldBe ("TODO")
         }
 
-        // to test the property `cuentaOrigenId`
-        should("test cuentaOrigenId") {
+        // to test the property `advertencias`
+        should("test advertencias") {
             // uncomment below to test the property
-            //modelInstance.cuentaOrigenId shouldBe ("TODO")
-        }
-
-        // to test the property `cuentaDestinoId`
-        should("test cuentaDestinoId") {
-            // uncomment below to test the property
-            //modelInstance.cuentaDestinoId shouldBe ("TODO")
-        }
-
-        // to test the property `montoOrigen`
-        should("test montoOrigen") {
-            // uncomment below to test the property
-            //modelInstance.montoOrigen shouldBe ("TODO")
-        }
-
-        // to test the property `montoDestino`
-        should("test montoDestino") {
-            // uncomment below to test the property
-            //modelInstance.montoDestino shouldBe ("TODO")
-        }
-
-        // to test the property `tasaCambio`
-        should("test tasaCambio") {
-            // uncomment below to test the property
-            //modelInstance.tasaCambio shouldBe ("TODO")
-        }
-
-        // to test the property `motivo`
-        should("test motivo") {
-            // uncomment below to test the property
-            //modelInstance.motivo shouldBe ("TODO")
-        }
-
-        // to test the property `descripcion`
-        should("test descripcion") {
-            // uncomment below to test the property
-            //modelInstance.descripcion shouldBe ("TODO")
+            //modelInstance.advertencias shouldBe ("TODO")
         }
 
     }

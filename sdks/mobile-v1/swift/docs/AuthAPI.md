@@ -9,6 +9,7 @@ Method | HTTP request | Description
 [**mobilePostAuthLogin**](AuthAPI.md#mobilepostauthlogin) | **POST** /auth/login | Iniciar sesión móvil
 [**mobilePostAuthLogout**](AuthAPI.md#mobilepostauthlogout) | **POST** /auth/logout | Cerrar sesión actual
 [**mobilePostAuthRefresh**](AuthAPI.md#mobilepostauthrefresh) | **POST** /auth/refresh | Renovar tokens de sesión
+[**mobilePostAuthRegister**](AuthAPI.md#mobilepostauthregister) | **POST** /auth/register | Registrar cuenta móvil
 [**mobilePostAuthTenants**](AuthAPI.md#mobilepostauthtenants) | **POST** /auth/tenants | Cambiar tenant activo
 
 
@@ -240,6 +241,56 @@ Name | Type | Description  | Notes
 ### Return type
 
 [**TokenPair**](TokenPair.md)
+
+### Authorization
+
+No authorization required
+
+### HTTP request headers
+
+ - **Content-Type**: application/json
+ - **Accept**: application/json
+
+[[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to Model list]](../README.md#documentation-for-models) [[Back to README]](../README.md)
+
+# **mobilePostAuthRegister**
+```swift
+    open class func mobilePostAuthRegister(registerRequest: RegisterRequest, completion: @escaping (_ data: RegisterResponse?, _ error: Error?) -> Void)
+```
+
+Registrar cuenta móvil
+
+Crea un usuario inactivo pendiente de verificación de correo y envía el enlace de verificación. Espejo del registro web: no devuelve sesión; la cuenta debe completar onboarding y aprobación antes de iniciar sesión en el móvil.
+
+### Example
+```swift
+// The following code samples are still beta. For any issue, please report via http://github.com/OpenAPITools/openapi-generator/issues/new
+import TCPMobileV1SDK
+
+let registerRequest = RegisterRequest(name: "name_example", email: "email_example", password: "password_example") // RegisterRequest | 
+
+// Registrar cuenta móvil
+AuthAPI.mobilePostAuthRegister(registerRequest: registerRequest) { (response, error) in
+    guard error == nil else {
+        print(error)
+        return
+    }
+
+    if (response) {
+        dump(response)
+    }
+}
+```
+
+### Parameters
+
+Name | Type | Description  | Notes
+------------- | ------------- | ------------- | -------------
+ **registerRequest** | [**RegisterRequest**](RegisterRequest.md) |  | 
+
+### Return type
+
+[**RegisterResponse**](RegisterResponse.md)
 
 ### Authorization
 

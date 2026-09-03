@@ -19,7 +19,6 @@ import io.kotlintest.shouldBe
 import io.kotlintest.specs.ShouldSpec
 
 import com.tcp.mobile.v1.models.GetAccountingBankAccountsIdResponse
-import com.tcp.mobile.v1.models.Pagination
 
 class GetAccountingBankAccountsIdResponseTest : ShouldSpec() {
     init {
@@ -66,12 +65,6 @@ class GetAccountingBankAccountsIdResponseTest : ShouldSpec() {
         should("test isActive") {
             // uncomment below to test the property
             //modelInstance.isActive shouldBe ("TODO")
-        }
-
-        // to test the property `pagination`
-        should("test pagination") {
-            // uncomment below to test the property
-            //modelInstance.pagination shouldBe ("TODO")
         }
 
     }

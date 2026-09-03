@@ -119,6 +119,7 @@ All URIs are relative to */api/mobile/v1*
 | *AuthApi* | [**mobilePostAuthLogin**](docs/AuthApi.md#mobilepostauthlogin) | **POST** /auth/login | Iniciar sesión móvil |
 | *AuthApi* | [**mobilePostAuthLogout**](docs/AuthApi.md#mobilepostauthlogout) | **POST** /auth/logout | Cerrar sesión actual |
 | *AuthApi* | [**mobilePostAuthRefresh**](docs/AuthApi.md#mobilepostauthrefresh) | **POST** /auth/refresh | Renovar tokens de sesión |
+| *AuthApi* | [**mobilePostAuthRegister**](docs/AuthApi.md#mobilepostauthregister) | **POST** /auth/register | Registrar cuenta móvil |
 | *AuthApi* | [**mobilePostAuthTenants**](docs/AuthApi.md#mobilepostauthtenants) | **POST** /auth/tenants | Cambiar tenant activo |
 | *DashboardApi* | [**mobileGetDashboardStats**](docs/DashboardApi.md#mobilegetdashboardstats) | **GET** /dashboard/stats | Consultar indicadores del panel principal |
 | *ProductsApi* | [**mobileGetProducts**](docs/ProductsApi.md#mobilegetproducts) | **GET** /products | Consultar productos |
@@ -147,6 +148,8 @@ All URIs are relative to */api/mobile/v1*
  - [com.tcp.mobile.v1.models.AuthSession](docs/AuthSession.md)
  - [com.tcp.mobile.v1.models.AuthenticatedUser](docs/AuthenticatedUser.md)
  - [com.tcp.mobile.v1.models.BankAccount](docs/BankAccount.md)
+ - [com.tcp.mobile.v1.models.BankAccountHistorySummary](docs/BankAccountHistorySummary.md)
+ - [com.tcp.mobile.v1.models.BankAccountTransaction](docs/BankAccountTransaction.md)
  - [com.tcp.mobile.v1.models.BankAdjustment](docs/BankAdjustment.md)
  - [com.tcp.mobile.v1.models.BankAdjustmentRequest](docs/BankAdjustmentRequest.md)
  - [com.tcp.mobile.v1.models.BankTransfer](docs/BankTransfer.md)
@@ -252,6 +255,8 @@ All URIs are relative to */api/mobile/v1*
  - [com.tcp.mobile.v1.models.ReconciliationModules](docs/ReconciliationModules.md)
  - [com.tcp.mobile.v1.models.ReconciliationOverviewStats](docs/ReconciliationOverviewStats.md)
  - [com.tcp.mobile.v1.models.RefreshRequest](docs/RefreshRequest.md)
+ - [com.tcp.mobile.v1.models.RegisterRequest](docs/RegisterRequest.md)
+ - [com.tcp.mobile.v1.models.RegisterResponse](docs/RegisterResponse.md)
  - [com.tcp.mobile.v1.models.ReportFilters](docs/ReportFilters.md)
  - [com.tcp.mobile.v1.models.ReportResult](docs/ReportResult.md)
  - [com.tcp.mobile.v1.models.ReportStatistics](docs/ReportStatistics.md)

@@ -24,6 +24,8 @@ import com.tcp.mobile.v1.models.AuthSession
 import com.tcp.mobile.v1.models.AuthenticatedUser
 import com.tcp.mobile.v1.models.LoginRequest
 import com.tcp.mobile.v1.models.RefreshRequest
+import com.tcp.mobile.v1.models.RegisterRequest
+import com.tcp.mobile.v1.models.RegisterResponse
 import com.tcp.mobile.v1.models.SuccessResponse
 import com.tcp.mobile.v1.models.SwitchTenantRequest
 import com.tcp.mobile.v1.models.SwitchTenantResponse
@@ -409,6 +411,80 @@ class AuthApi(basePath: kotlin.String = defaultBasePath, client: Call.Factory = 
         return RequestConfig(
             method = RequestMethod.POST,
             path = "/auth/refresh",
+            query = localVariableQuery,
+            headers = localVariableHeaders,
+            requiresAuthentication = false,
+            body = localVariableBody
+        )
+    }
+
+    /**
+     * POST /auth/register
+     * Registrar cuenta móvil
+     * Crea un usuario inactivo pendiente de verificación de correo y envía el enlace de verificación. Espejo del registro web: no devuelve sesión; la cuenta debe completar onboarding y aprobación antes de iniciar sesión en el móvil.
+     * @param registerRequest 
+     * @return RegisterResponse
+     * @throws IllegalStateException If the request is not correctly configured
+     * @throws IOException Rethrows the OkHttp execute method exception
+     * @throws UnsupportedOperationException If the API returns an informational or redirection response
+     * @throws ClientException If the API returns a client error response
+     * @throws ServerException If the API returns a server error response
+     */
+    @Suppress("UNCHECKED_CAST")
+    @Throws(IllegalStateException::class, IOException::class, UnsupportedOperationException::class, ClientException::class, ServerException::class)
+    fun mobilePostAuthRegister(registerRequest: RegisterRequest) : RegisterResponse {
+        val localVarResponse = mobilePostAuthRegisterWithHttpInfo(registerRequest = registerRequest)
+
+        return when (localVarResponse.responseType) {
+            ResponseType.Success -> (localVarResponse as Success<*>).data as RegisterResponse
+            ResponseType.Informational -> throw UnsupportedOperationException("Client does not support Informational responses.")
+            ResponseType.Redirection -> throw UnsupportedOperationException("Client does not support Redirection responses.")
+            ResponseType.ClientError -> {
+                val localVarError = localVarResponse as ClientError<*>
+                throw ClientException("Client error : ${localVarError.statusCode} ${localVarError.message.orEmpty()}", localVarError.statusCode, localVarResponse)
+            }
+            ResponseType.ServerError -> {
+                val localVarError = localVarResponse as ServerError<*>
+                throw ServerException("Server error : ${localVarError.statusCode} ${localVarError.message.orEmpty()} ${localVarError.body}", localVarError.statusCode, localVarResponse)
+            }
+        }
+    }
+
+    /**
+     * POST /auth/register
+     * Registrar cuenta móvil
+     * Crea un usuario inactivo pendiente de verificación de correo y envía el enlace de verificación. Espejo del registro web: no devuelve sesión; la cuenta debe completar onboarding y aprobación antes de iniciar sesión en el móvil.
+     * @param registerRequest 
+     * @return ApiResponse<RegisterResponse?>
+     * @throws IllegalStateException If the request is not correctly configured
+     * @throws IOException Rethrows the OkHttp execute method exception
+     */
+    @Suppress("UNCHECKED_CAST")
+    @Throws(IllegalStateException::class, IOException::class)
+    fun mobilePostAuthRegisterWithHttpInfo(registerRequest: RegisterRequest) : ApiResponse<RegisterResponse?> {
+        val localVariableConfig = mobilePostAuthRegisterRequestConfig(registerRequest = registerRequest)
+
+        return request<RegisterRequest, RegisterResponse>(
+            localVariableConfig
+        )
+    }
+
+    /**
+     * To obtain the request config of the operation mobilePostAuthRegister
+     *
+     * @param registerRequest 
+     * @return RequestConfig
+     */
+    fun mobilePostAuthRegisterRequestConfig(registerRequest: RegisterRequest) : RequestConfig<RegisterRequest> {
+        val localVariableBody = registerRequest
+        val localVariableQuery: MultiValueMap = mutableMapOf()
+        val localVariableHeaders: MutableMap<String, String> = mutableMapOf()
+        localVariableHeaders["Content-Type"] = "application/json"
+        localVariableHeaders["Accept"] = "application/json"
+
+        return RequestConfig(
+            method = RequestMethod.POST,
+            path = "/auth/register",
             query = localVariableQuery,
             headers = localVariableHeaders,
             requiresAuthentication = false,

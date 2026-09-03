@@ -16,43 +16,13 @@ void main() {
   // final instance = PostAccountingBankTransfersResponse();
 
   group('test PostAccountingBankTransfersResponse', () {
-    // String transferenciaId
-    test('to test the property `transferenciaId`', () async {
+    // BankTransfer transferencia
+    test('to test the property `transferencia`', () async {
       // TODO
     });
 
-    // String cuentaOrigenId
-    test('to test the property `cuentaOrigenId`', () async {
-      // TODO
-    });
-
-    // String cuentaDestinoId
-    test('to test the property `cuentaDestinoId`', () async {
-      // TODO
-    });
-
-    // num montoOrigen
-    test('to test the property `montoOrigen`', () async {
-      // TODO
-    });
-
-    // num montoDestino
-    test('to test the property `montoDestino`', () async {
-      // TODO
-    });
-
-    // num tasaCambio
-    test('to test the property `tasaCambio`', () async {
-      // TODO
-    });
-
-    // String motivo
-    test('to test the property `motivo`', () async {
-      // TODO
-    });
-
-    // String descripcion
-    test('to test the property `descripcion`', () async {
+    // String numeroComprobante
+    test('to test the property `numeroComprobante`', () async {
       // TODO
     });
 

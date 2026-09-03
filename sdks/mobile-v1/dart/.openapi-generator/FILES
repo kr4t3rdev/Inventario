@@ -25,6 +25,8 @@ doc/AuthApi.md
 doc/AuthSession.md
 doc/AuthenticatedUser.md
 doc/BankAccount.md
+doc/BankAccountHistorySummary.md
+doc/BankAccountTransaction.md
 doc/BankAdjustment.md
 doc/BankAdjustmentRequest.md
 doc/BankTransfer.md
@@ -132,6 +134,8 @@ doc/ReconciliationModuleStats.md
 doc/ReconciliationModules.md
 doc/ReconciliationOverviewStats.md
 doc/RefreshRequest.md
+doc/RegisterRequest.md
+doc/RegisterResponse.md
 doc/ReportFilters.md
 doc/ReportResult.md
 doc/ReportStatistics.md
@@ -187,6 +191,8 @@ lib/model/audit_log.dart
 lib/model/auth_session.dart
 lib/model/authenticated_user.dart
 lib/model/bank_account.dart
+lib/model/bank_account_history_summary.dart
+lib/model/bank_account_transaction.dart
 lib/model/bank_adjustment.dart
 lib/model/bank_adjustment_request.dart
 lib/model/bank_transfer.dart
@@ -292,6 +298,8 @@ lib/model/reconciliation_module_stats.dart
 lib/model/reconciliation_modules.dart
 lib/model/reconciliation_overview_stats.dart
 lib/model/refresh_request.dart
+lib/model/register_request.dart
+lib/model/register_response.dart
 lib/model/report_filters.dart
 lib/model/report_result.dart
 lib/model/report_statistics.dart
@@ -334,7 +342,9 @@ test/audit_log_test.dart
 test/auth_api_test.dart
 test/auth_session_test.dart
 test/authenticated_user_test.dart
+test/bank_account_history_summary_test.dart
 test/bank_account_test.dart
+test/bank_account_transaction_test.dart
 test/bank_adjustment_request_test.dart
 test/bank_adjustment_test.dart
 test/bank_transfer_create_request_test.dart
@@ -442,6 +452,8 @@ test/reconciliation_modules_test.dart
 test/reconciliation_overview_stats_test.dart
 test/reconciliation_test.dart
 test/refresh_request_test.dart
+test/register_request_test.dart
+test/register_response_test.dart
 test/report_filters_test.dart
 test/report_result_test.dart
 test/report_statistics_test.dart

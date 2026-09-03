@@ -62,6 +62,15 @@ void main() {
       // TODO
     });
 
+    // Registrar cuenta móvil
+    //
+    // Crea un usuario inactivo pendiente de verificación de correo y envía el enlace de verificación. Espejo del registro web: no devuelve sesión; la cuenta debe completar onboarding y aprobación antes de iniciar sesión en el móvil.
+    //
+    //Future<RegisterResponse> mobilePostAuthRegister(RegisterRequest registerRequest) async
+    test('test mobilePostAuthRegister', () async {
+      // TODO
+    });
+
     // Cambiar tenant activo
     //
     // Cambia el contexto de tenant y entrega tokens nuevos asociados a la membresía seleccionada.

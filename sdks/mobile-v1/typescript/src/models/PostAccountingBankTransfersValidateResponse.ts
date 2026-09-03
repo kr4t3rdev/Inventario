@@ -53,7 +53,7 @@ export function PostAccountingBankTransfersValidateResponseFromJSONTyped(json: a
     return {
         
         'saldoSuficiente': json['saldoSuficiente'],
-        'advertencias': ((json['advertencias'] as Array<any>).map((item: any) => item)),
+        'advertencias': json['advertencias'],
     };
 }
 
@@ -72,3 +72,4 @@ export function PostAccountingBankTransfersValidateResponseToJSONTyped(value?: P
         'advertencias': value['advertencias'],
     };
 }
+

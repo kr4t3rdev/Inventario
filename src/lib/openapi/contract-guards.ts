@@ -8,7 +8,7 @@ export interface OpenApiContract {
 }
 
 const HTTP_METHODS = ['get', 'post', 'put', 'patch', 'delete'] as const;
-const PUBLIC_OPERATIONS = new Set(['POST /auth/login', 'POST /auth/refresh']);
+const PUBLIC_OPERATIONS = new Set(['POST /auth/login', 'POST /auth/refresh', 'POST /auth/register']);
 
 /**
  * @description Carga el contrato OpenAPI mobile v1 desde su ubicación canónica.
