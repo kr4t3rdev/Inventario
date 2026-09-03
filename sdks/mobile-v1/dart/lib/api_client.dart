@@ -240,6 +240,16 @@ class ApiClient {
           return CashOperationUpdateRequest.fromJson(value);
         case 'CashPaymentRequest':
           return CashPaymentRequest.fromJson(value);
+        case 'Cliente':
+          return Cliente.fromJson(value);
+        case 'ClienteCreateRequest':
+          return ClienteCreateRequest.fromJson(value);
+        case 'ClienteDeleteResponse':
+          return ClienteDeleteResponse.fromJson(value);
+        case 'ClienteListResponse':
+          return ClienteListResponse.fromJson(value);
+        case 'ClienteUpdateRequest':
+          return ClienteUpdateRequest.fromJson(value);
         case 'Currency':
           return Currency.fromJson(value);
         case 'DeleteAccountingAdvancesIdResponse':

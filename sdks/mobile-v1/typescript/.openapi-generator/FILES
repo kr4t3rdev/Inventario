@@ -40,6 +40,12 @@ docs/CashLoan.md
 docs/CashLoanCreateRequest.md
 docs/CashOperationUpdateRequest.md
 docs/CashPaymentRequest.md
+docs/Cliente.md
+docs/ClienteCreateRequest.md
+docs/ClienteDeleteResponse.md
+docs/ClienteListResponse.md
+docs/ClienteUpdateRequest.md
+docs/ClientsApi.md
 docs/Currency.md
 docs/DashboardApi.md
 docs/DeleteAccountingAdvancesIdResponse.md
@@ -166,6 +172,7 @@ src/apis/AccountingReceivablesAndPayablesApi.ts
 src/apis/AccountingReconciliationApi.ts
 src/apis/AccountingReportsApi.ts
 src/apis/AuthApi.ts
+src/apis/ClientsApi.ts
 src/apis/DashboardApi.ts
 src/apis/ProductsApi.ts
 src/apis/SalesApi.ts
@@ -200,6 +207,11 @@ src/models/CashLoan.ts
 src/models/CashLoanCreateRequest.ts
 src/models/CashOperationUpdateRequest.ts
 src/models/CashPaymentRequest.ts
+src/models/Cliente.ts
+src/models/ClienteCreateRequest.ts
+src/models/ClienteDeleteResponse.ts
+src/models/ClienteListResponse.ts
+src/models/ClienteUpdateRequest.ts
 src/models/Currency.ts
 src/models/DeleteAccountingAdvancesIdResponse.ts
 src/models/DeleteAccountingPaymentTypesIdResponse.ts

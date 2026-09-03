@@ -15,6 +15,7 @@ Sources/APIs/AccountingReceivablesAndPayablesAPI.swift
 Sources/APIs/AccountingReconciliationAPI.swift
 Sources/APIs/AccountingReportsAPI.swift
 Sources/APIs/AuthAPI.swift
+Sources/APIs/ClientsAPI.swift
 Sources/APIs/DashboardAPI.swift
 Sources/APIs/ProductsAPI.swift
 Sources/APIs/SalesAPI.swift
@@ -53,6 +54,11 @@ Sources/Models/CashLoan.swift
 Sources/Models/CashLoanCreateRequest.swift
 Sources/Models/CashOperationUpdateRequest.swift
 Sources/Models/CashPaymentRequest.swift
+Sources/Models/Cliente.swift
+Sources/Models/ClienteCreateRequest.swift
+Sources/Models/ClienteDeleteResponse.swift
+Sources/Models/ClienteListResponse.swift
+Sources/Models/ClienteUpdateRequest.swift
 Sources/Models/Currency.swift
 Sources/Models/DeleteAccountingAdvancesIdResponse.swift
 Sources/Models/DeleteAccountingPaymentTypesIdResponse.swift
@@ -209,6 +215,12 @@ docs/CashLoan.md
 docs/CashLoanCreateRequest.md
 docs/CashOperationUpdateRequest.md
 docs/CashPaymentRequest.md
+docs/Cliente.md
+docs/ClienteCreateRequest.md
+docs/ClienteDeleteResponse.md
+docs/ClienteListResponse.md
+docs/ClienteUpdateRequest.md
+docs/ClientsAPI.md
 docs/Currency.md
 docs/DashboardAPI.md
 docs/DeleteAccountingAdvancesIdResponse.md

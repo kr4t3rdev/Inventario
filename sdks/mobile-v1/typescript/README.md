@@ -130,6 +130,11 @@ All URIs are relative to */api/mobile/v1*
 *AuthApi* | [**mobilePostAuthRefresh**](docs/AuthApi.md#mobilepostauthrefresh) | **POST** /auth/refresh | Renovar tokens de sesión
 *AuthApi* | [**mobilePostAuthRegister**](docs/AuthApi.md#mobilepostauthregister) | **POST** /auth/register | Registrar cuenta móvil
 *AuthApi* | [**mobilePostAuthTenants**](docs/AuthApi.md#mobilepostauthtenants) | **POST** /auth/tenants | Cambiar tenant activo
+*ClientsApi* | [**mobileDeleteClientsById**](docs/ClientsApi.md#mobiledeleteclientsbyid) | **DELETE** /clients/{id} | Eliminar cliente
+*ClientsApi* | [**mobileGetClients**](docs/ClientsApi.md#mobilegetclients) | **GET** /clients | Listar clientes
+*ClientsApi* | [**mobileGetClientsById**](docs/ClientsApi.md#mobilegetclientsbyid) | **GET** /clients/{id} | Consultar cliente
+*ClientsApi* | [**mobilePostClientsCreate**](docs/ClientsApi.md#mobilepostclientscreate) | **POST** /clients/create | Crear cliente
+*ClientsApi* | [**mobilePutClientsById**](docs/ClientsApi.md#mobileputclientsbyid) | **PUT** /clients/{id} | Editar cliente
 *DashboardApi* | [**mobileGetDashboardStats**](docs/DashboardApi.md#mobilegetdashboardstats) | **GET** /dashboard/stats | Consultar indicadores del panel principal
 *ProductsApi* | [**mobileGetProducts**](docs/ProductsApi.md#mobilegetproducts) | **GET** /products | Consultar productos
 *ProductsApi* | [**mobileGetProductsById**](docs/ProductsApi.md#mobilegetproductsbyid) | **GET** /products/{id} | Consultar producto
@@ -172,6 +177,11 @@ All URIs are relative to */api/mobile/v1*
 - [CashLoanCreateRequest](docs/CashLoanCreateRequest.md)
 - [CashOperationUpdateRequest](docs/CashOperationUpdateRequest.md)
 - [CashPaymentRequest](docs/CashPaymentRequest.md)
+- [Cliente](docs/Cliente.md)
+- [ClienteCreateRequest](docs/ClienteCreateRequest.md)
+- [ClienteDeleteResponse](docs/ClienteDeleteResponse.md)
+- [ClienteListResponse](docs/ClienteListResponse.md)
+- [ClienteUpdateRequest](docs/ClienteUpdateRequest.md)
 - [Currency](docs/Currency.md)
 - [DeleteAccountingAdvancesIdResponse](docs/DeleteAccountingAdvancesIdResponse.md)
 - [DeleteAccountingPaymentTypesIdResponse](docs/DeleteAccountingPaymentTypesIdResponse.md)

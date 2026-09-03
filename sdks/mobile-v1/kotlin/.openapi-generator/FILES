@@ -39,6 +39,12 @@ docs/CashLoan.md
 docs/CashLoanCreateRequest.md
 docs/CashOperationUpdateRequest.md
 docs/CashPaymentRequest.md
+docs/Cliente.md
+docs/ClienteCreateRequest.md
+docs/ClienteDeleteResponse.md
+docs/ClienteListResponse.md
+docs/ClienteUpdateRequest.md
+docs/ClientsApi.md
 docs/Currency.md
 docs/DashboardApi.md
 docs/DeleteAccountingAdvancesIdResponse.md
@@ -169,6 +175,7 @@ src/main/kotlin/com/tcp/mobile/v1/apis/AccountingReceivablesAndPayablesApi.kt
 src/main/kotlin/com/tcp/mobile/v1/apis/AccountingReconciliationApi.kt
 src/main/kotlin/com/tcp/mobile/v1/apis/AccountingReportsApi.kt
 src/main/kotlin/com/tcp/mobile/v1/apis/AuthApi.kt
+src/main/kotlin/com/tcp/mobile/v1/apis/ClientsApi.kt
 src/main/kotlin/com/tcp/mobile/v1/apis/DashboardApi.kt
 src/main/kotlin/com/tcp/mobile/v1/apis/ProductsApi.kt
 src/main/kotlin/com/tcp/mobile/v1/apis/SalesApi.kt
@@ -210,6 +217,11 @@ src/main/kotlin/com/tcp/mobile/v1/models/CashLoan.kt
 src/main/kotlin/com/tcp/mobile/v1/models/CashLoanCreateRequest.kt
 src/main/kotlin/com/tcp/mobile/v1/models/CashOperationUpdateRequest.kt
 src/main/kotlin/com/tcp/mobile/v1/models/CashPaymentRequest.kt
+src/main/kotlin/com/tcp/mobile/v1/models/Cliente.kt
+src/main/kotlin/com/tcp/mobile/v1/models/ClienteCreateRequest.kt
+src/main/kotlin/com/tcp/mobile/v1/models/ClienteDeleteResponse.kt
+src/main/kotlin/com/tcp/mobile/v1/models/ClienteListResponse.kt
+src/main/kotlin/com/tcp/mobile/v1/models/ClienteUpdateRequest.kt
 src/main/kotlin/com/tcp/mobile/v1/models/Currency.kt
 src/main/kotlin/com/tcp/mobile/v1/models/DeleteAccountingAdvancesIdResponse.kt
 src/main/kotlin/com/tcp/mobile/v1/models/DeleteAccountingPaymentTypesIdResponse.kt
@@ -332,6 +344,7 @@ src/test/kotlin/com/tcp/mobile/v1/apis/AccountingReceivablesAndPayablesApiTest.k
 src/test/kotlin/com/tcp/mobile/v1/apis/AccountingReconciliationApiTest.kt
 src/test/kotlin/com/tcp/mobile/v1/apis/AccountingReportsApiTest.kt
 src/test/kotlin/com/tcp/mobile/v1/apis/AuthApiTest.kt
+src/test/kotlin/com/tcp/mobile/v1/apis/ClientsApiTest.kt
 src/test/kotlin/com/tcp/mobile/v1/apis/DashboardApiTest.kt
 src/test/kotlin/com/tcp/mobile/v1/apis/ProductsApiTest.kt
 src/test/kotlin/com/tcp/mobile/v1/apis/SalesApiTest.kt
@@ -364,6 +377,11 @@ src/test/kotlin/com/tcp/mobile/v1/models/CashLoanCreateRequestTest.kt
 src/test/kotlin/com/tcp/mobile/v1/models/CashLoanTest.kt
 src/test/kotlin/com/tcp/mobile/v1/models/CashOperationUpdateRequestTest.kt
 src/test/kotlin/com/tcp/mobile/v1/models/CashPaymentRequestTest.kt
+src/test/kotlin/com/tcp/mobile/v1/models/ClienteCreateRequestTest.kt
+src/test/kotlin/com/tcp/mobile/v1/models/ClienteDeleteResponseTest.kt
+src/test/kotlin/com/tcp/mobile/v1/models/ClienteListResponseTest.kt
+src/test/kotlin/com/tcp/mobile/v1/models/ClienteTest.kt
+src/test/kotlin/com/tcp/mobile/v1/models/ClienteUpdateRequestTest.kt
 src/test/kotlin/com/tcp/mobile/v1/models/CurrencyTest.kt
 src/test/kotlin/com/tcp/mobile/v1/models/DeleteAccountingAdvancesIdResponseTest.kt
 src/test/kotlin/com/tcp/mobile/v1/models/DeleteAccountingPaymentTypesIdResponseTest.kt

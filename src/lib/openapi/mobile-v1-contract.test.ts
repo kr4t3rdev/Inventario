@@ -132,7 +132,7 @@ describe('mobile v1 OpenAPI contract', () => {
       }),
     );
 
-    expect(operationIds).toHaveLength(85);
+    expect(operationIds).toHaveLength(90);
     expect(new Set(operationIds).size).toBe(operationIds.length);
   });
 

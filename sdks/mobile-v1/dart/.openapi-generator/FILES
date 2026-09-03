@@ -41,6 +41,12 @@ doc/CashLoan.md
 doc/CashLoanCreateRequest.md
 doc/CashOperationUpdateRequest.md
 doc/CashPaymentRequest.md
+doc/Cliente.md
+doc/ClienteCreateRequest.md
+doc/ClienteDeleteResponse.md
+doc/ClienteListResponse.md
+doc/ClienteUpdateRequest.md
+doc/ClientsApi.md
 doc/Currency.md
 doc/DashboardApi.md
 doc/DeleteAccountingAdvancesIdResponse.md
@@ -167,6 +173,7 @@ lib/api/accounting_receivables_and_payables_api.dart
 lib/api/accounting_reconciliation_api.dart
 lib/api/accounting_reports_api.dart
 lib/api/auth_api.dart
+lib/api/clients_api.dart
 lib/api/dashboard_api.dart
 lib/api/products_api.dart
 lib/api/sales_api.dart
@@ -207,6 +214,11 @@ lib/model/cash_loan.dart
 lib/model/cash_loan_create_request.dart
 lib/model/cash_operation_update_request.dart
 lib/model/cash_payment_request.dart
+lib/model/cliente.dart
+lib/model/cliente_create_request.dart
+lib/model/cliente_delete_response.dart
+lib/model/cliente_list_response.dart
+lib/model/cliente_update_request.dart
 lib/model/currency.dart
 lib/model/delete_accounting_advances_id_response.dart
 lib/model/delete_accounting_payment_types_id_response.dart
@@ -359,6 +371,12 @@ test/cash_loan_create_request_test.dart
 test/cash_loan_test.dart
 test/cash_operation_update_request_test.dart
 test/cash_payment_request_test.dart
+test/cliente_create_request_test.dart
+test/cliente_delete_response_test.dart
+test/cliente_list_response_test.dart
+test/cliente_test.dart
+test/cliente_update_request_test.dart
+test/clients_api_test.dart
 test/currency_test.dart
 test/dashboard_api_test.dart
 test/delete_accounting_advances_id_response_test.dart
