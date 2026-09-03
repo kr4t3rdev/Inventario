@@ -378,6 +378,7 @@ export default function CuentasPorCobrarPage() {
                 page={page}
                 totalPages={totalPages}
                 onPageChange={setPage}
+                onRetry={() => loadCuentas(page, debouncedSearch)}
             />
           </motion.div>
 
