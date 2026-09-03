@@ -10,9 +10,9 @@ import type { CompraServicio } from '@/app/models/model'
 import { getComprasServiciosAction } from '@/features/compras-servicios/actions'
 
 function formatCurrency(value: number, currency?: string | null): string {
-  if (!currency) return `${value.toLocaleString('es-AR')} (sin moneda)`
+  if (!currency) return `${value.toLocaleString('es')} (sin moneda)`
 
-  return new Intl.NumberFormat('es-AR', {
+  return new Intl.NumberFormat('es', {
     style: 'currency',
     currency,
     minimumFractionDigits: 2,
@@ -88,7 +88,7 @@ export function ServiciosRecibidosTable(): React.JSX.Element {
       {
         accessorKey: 'fechaServicio',
         header: 'Fecha Servicio',
-        cell: ({ row }) => new Date(row.original.fechaServicio).toLocaleDateString('es-AR'),
+        cell: ({ row }) => new Date(row.original.fechaServicio).toLocaleDateString('es'),
       },
     ],
     []

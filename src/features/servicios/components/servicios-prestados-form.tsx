@@ -174,7 +174,7 @@ export function ServiciosPrestadosForm({ initialServicios }: ServiciosPrestadosF
           
           <CardContent className='pt-8'>
             <Form {...form}>
-              <form className='space-y-6' onSubmit={form.handleSubmit(onSubmit as any, () => { sileo.error({ title: 'Completá los campos requeridos antes de continuar.' }) })}>
+              <form className='space-y-6' onSubmit={form.handleSubmit(onSubmit as any, () => { sileo.error({ title: 'Completa los campos requeridos antes de continuar.' }) })}>
                 <motion.div
                   initial={{ opacity: 0, x: -20 }}
                   animate={{ opacity: 1, x: 0 }}
@@ -407,11 +407,10 @@ export function ServiciosPrestadosForm({ initialServicios }: ServiciosPrestadosF
                   transition={{ delay: 0.5 }}
                 >
                   <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}>
-                    <Button 
-                      type='button' 
-                      variant='destructive' 
+                    <Button
+                      type='button'
+                      variant='destructive'
                       onClick={() => router.back()}
-                      className='border-slate-200 dark:border-slate-700 hover:bg-red-150 dark:hover:bg-orange-700'
                     >
                       Cancelar
                     </Button>

@@ -38,8 +38,8 @@ export default async function EditarServicioPage({ params }: Props) {
   return (
     <div className="container mx-auto py-4">
       <div className="mb-6">
-        <h1 className="text-2xl font-bold">Editar Servicios</h1>
-        <p className="text-muted-foreground">Modifique los datos de los Servicios</p>
+        <h1 className="text-2xl font-bold">Editar servicio</h1>
+        <p className="text-muted-foreground">Modifica los datos del servicio</p>
       </div>
       <ServicioForm initialData={servicioResult.data} />
     </div>

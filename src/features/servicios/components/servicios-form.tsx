@@ -119,7 +119,7 @@ export function ServicioForm({ initialData }: ServicioFormProps) {
           
           <CardContent className='pt-8'>
             <Form {...form}>
-              <form onSubmit={form.handleSubmit(onSubmit, () => { sileo.error({ title: 'Completá los campos requeridos antes de continuar.' }) })} className='space-y-6'>
+              <form onSubmit={form.handleSubmit(onSubmit, () => { sileo.error({ title: 'Completa los campos requeridos antes de continuar.' }) })} className='space-y-6'>
                 <motion.div
                   initial={{ opacity: 0, x: -20 }}
                   animate={{ opacity: 1, x: 0 }}
@@ -190,10 +190,12 @@ export function ServicioForm({ initialData }: ServicioFormProps) {
                         <FormControl>
                           <div className='relative'>
                             <span className='absolute left-4 top-1/2 transform -translate-y-1/2 text-slate-400 dark:text-slate-500 text-lg'>$</span>
-                            <Input 
-                              type='number' 
-                              {...field} 
-                              placeholder='0.00'
+                            <Input
+                              type='number'
+                              min={1}
+                              step={1}
+                              {...field}
+                              placeholder='0'
                               className={`${servicioInputClassName} pl-8`}
                             />
                           </div>
@@ -249,11 +251,10 @@ export function ServicioForm({ initialData }: ServicioFormProps) {
                   transition={{ delay: 0.5 }}
                 >
                   <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}>
-                    <Button 
-                      type='button' 
-                      variant='destructive' 
+                    <Button
+                      type='button'
+                      variant='destructive'
                       onClick={() => router.back()}
-                      className='border-slate-200 dark:border-slate-700 hover:bg-red-150 dark:hover:bg-orange-700'
                     >
                       Cancelar
                     </Button>

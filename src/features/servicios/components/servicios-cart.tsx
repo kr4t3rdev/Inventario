@@ -33,6 +33,7 @@ interface ServicioItem {
 	costo: number;
 	descripcion: string;
 	cantidad: number;
+	moneda?: string;
 }
 
 interface ServiciosCartProps {
@@ -108,12 +109,12 @@ export default function ServiciosCart({
 	// Procesar venta de servicios (batch atómico via transactional mixed-line)
 	const processVenta = async () => {
 		if (cart.length === 0) {
-			toast("Añada servicios al carrito para realizar una venta");
+			toast.error("Añada servicios al carrito para realizar una venta");
 			return;
 		}
 
 		if (!selectedClienteId) {
-			toast("Seleccione un cliente para continuar");
+			toast.error("Seleccione un cliente para continuar");
 			return;
 		}
 
@@ -135,14 +136,14 @@ export default function ServiciosCart({
 				throw new Error(result.error?.message ?? "Error desconocido");
 			}
 
-			toast("Venta de servicios procesada exitosamente");
+			toast.success("Venta de servicios procesada exitosamente");
 			setCart([]);
 			setSelectedClienteId("");
 			setObservaciones("");
 			onOpenChange(false);
 		} catch (error) {
 			console.error("Error al procesar la venta:", error);
-			toast("Hubo un error al procesar la venta. El carrito se ha preservado para reintentar.");
+			toast.error("Hubo un error al procesar la venta. El carrito se ha preservado para reintentar.");
 		} finally {
 			setIsProcessing(false);
 		}
@@ -206,6 +207,8 @@ export default function ServiciosCart({
 												<Input
 													type="number"
 													min={0}
+													step={1}
+													aria-label={`Precio de ${item.nombre}`}
 													value={item.precio}
 													onChange={(e) =>
 														updatePrice(item.cartItemId, Number(e.target.value))
@@ -222,6 +225,8 @@ export default function ServiciosCart({
 												<Input
 													type="number"
 													min={0}
+													step={1}
+													aria-label={`Costo de ${item.nombre}`}
 													value={item.costo}
 													onChange={(e) =>
 														updateCosto(item.cartItemId, Number(e.target.value))
@@ -235,6 +240,7 @@ export default function ServiciosCart({
 												variant="outline"
 												size="icon"
 												className="h-7 w-7"
+												aria-label={`Restar una unidad de ${item.nombre}`}
 												onClick={() =>
 													updateQuantity(item.cartItemId, item.cantidad - 1)
 												}
@@ -249,6 +255,7 @@ export default function ServiciosCart({
 												variant="outline"
 												size="icon"
 												className="h-7 w-7"
+												aria-label={`Sumar una unidad de ${item.nombre}`}
 												onClick={() =>
 													updateQuantity(item.cartItemId, item.cantidad + 1)
 												}
@@ -257,12 +264,13 @@ export default function ServiciosCart({
 											</Button>
 										</div>
 										<div className="col-span-2 text-center font-medium text-sm">
-											{formatCurrency(item.precio * item.cantidad)}
+											{formatCurrency(item.precio * item.cantidad, item.moneda)}
 										</div>
 										<div className="col-span-1 text-right">
 											<Button
 												variant="ghost"
 												size="icon"
+												aria-label={`Quitar ${item.nombre} del carrito`}
 												onClick={() => removeFromCart(item.cartItemId)}
 												className="text-destructive hover:text-destructive"
 											>
@@ -313,15 +321,17 @@ export default function ServiciosCart({
 								<h4 className="font-medium mb-3">Resumen de la Venta</h4>
 								<div className="space-y-2">
 									{cart.map((item) => (
-										<div
-											key={item.cartItemId}
-											className="flex justify-between text-sm"
-										>
-											<span>
-												{item.nombre} x{item.cantidad}
-											</span>
-											<span>{formatCurrency(item.precio * item.cantidad)}</span>
-										</div>
+									<div
+										key={item.cartItemId}
+										className="flex justify-between text-sm"
+									>
+										<span>
+											{item.nombre} x{item.cantidad}
+										</span>
+										<span>
+											{formatCurrency(item.precio * item.cantidad, item.moneda)}
+										</span>
+									</div>
 									))}
 									<Separator className="my-2" />
 									<div className="flex justify-between text-sm">
