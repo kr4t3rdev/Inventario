@@ -33,6 +33,7 @@ const mockTx = {
 	tenantAccountingPolicy: {
 		findUnique: vi.fn(),
 	},
+	transaccionMoneda: { create: vi.fn() },
 	$queryRaw: vi.fn(),
 };
 
@@ -249,6 +250,54 @@ describe("ComprasServicios Server Actions", () => {
 			expect(mockTx.reconciliacionGasto.create).toHaveBeenCalledWith(
 				expect.objectContaining({
 					data: expect.objectContaining({ moneda: "USD" }),
+				}),
+			);
+		});
+
+		it("escribe transaccionMoneda de espejo para anticipo extranjero", async () => {
+			vi.mocked(getCurrentUser).mockResolvedValue(mockUser);
+			vi.mocked(prisma.servicios.findFirst).mockResolvedValue(
+				mockServicio as any,
+			);
+			mockTx.tenantAccountingPolicy.findUnique.mockResolvedValue({
+				functionalCurrencyCode: "CUP",
+			} as any);
+			mockTx.compraServicio.create.mockResolvedValue(mockCompraRow);
+			vi.mocked(applyAnticipoAllocations).mockResolvedValue([
+				{ anticipoId: "a1", montoAplicado: 100 },
+			] as any);
+			mockTx.anticipo.findUnique.mockResolvedValue({
+				tipo: "PAGO",
+				moneda: "USD",
+				cuentaOrigenId: "cb-1",
+				tipoPagoOrigenId: "tp-1",
+			} as any);
+			mockTx.tipoPago.findFirst.mockResolvedValue({ tipoId: "tp-1" } as any);
+			mockTx.cuentaBancaria.findFirst.mockResolvedValue({
+				cuentaId: "cb-1",
+			} as any);
+			vi.mocked(exchangeRateProvider.getRateAsOf).mockResolvedValue({
+				tasaId: "tasa-1",
+				tasa: 24.5,
+				fechaVigencia: new Date("2026-09-03"),
+			});
+
+			const result = await createCompraServicioAction({
+				...validInput,
+				anticipos: [{ anticipoId: "a1", montoAplicado: 100 }],
+			});
+
+			expect(result.success).toBe(true);
+			expect(mockTx.transaccionMoneda.create).toHaveBeenCalledWith(
+				expect.objectContaining({
+					data: expect.objectContaining({
+						tipoTransaccion: "servicio_egreso",
+						referenciaId: mockCompraRow.compraServicioId,
+						monedaId: "USD",
+						montoOriginal: 100,
+						tasaCambio: 24.5,
+						montoConvertido: 2450,
+					}),
 				}),
 			);
 		});

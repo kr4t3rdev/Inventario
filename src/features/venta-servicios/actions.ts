@@ -235,6 +235,20 @@ export const createVentaServicioAction = withAction(withPeriodValidation(
             reconciliadoPor: user.userId || 'system',
           },
         });
+
+        // Espejo del flujo manual: tracking de conversión para la moneda extranjera.
+        if (tasaCambio !== undefined) {
+          await tx.transaccionMoneda.create({
+            data: {
+              tipoTransaccion: 'servicio',
+              referenciaId: ventaServicio.ventaServicioId,
+              monedaId: monedaAnticipo,
+              montoOriginal: alloc.montoAplicado,
+              tasaCambio,
+              montoConvertido: alloc.montoAplicado * tasaCambio,
+            },
+          });
+        }
       }
     }
 
