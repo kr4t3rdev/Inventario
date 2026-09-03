@@ -33,6 +33,7 @@ import {
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog'
 import { formatCurrency } from '@/lib/utils'
+import { formatearTotalVenta } from '@/features/servicios/lib/moneda-servicio'
 import dynamic from 'next/dynamic'
 
 const DataTable = dynamic(() => import('@/components/data-table').then(mod => ({ default: mod.DataTable })))
@@ -132,10 +133,21 @@ export function ServiciosContent({ initialServicios, initialVentaServicios, tena
     {
       accessorKey: 'total',
       header: 'Total',
+      cell: ({ row }) => {
+        const venta = row.original as VentaServicio
+        return (
+          <span className='font-semibold text-green-600'>
+            {formatearTotalVenta(venta.total, venta.moneda)}
+          </span>
+        )
+      }
+    },
+    {
+      id: 'moneda',
+      accessorFn: (row: unknown) => (row as VentaServicio).moneda ?? 'CUP',
+      header: 'Moneda',
       cell: ({ row }) => (
-        <span className='font-semibold text-green-600'>
-          {formatCurrency(row.getValue('total'))}
-        </span>
+        <Badge variant='secondary'>{row.getValue('moneda')}</Badge>
       )
     },
     {

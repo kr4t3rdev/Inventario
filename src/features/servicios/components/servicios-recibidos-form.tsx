@@ -19,6 +19,7 @@ import { createCompraServicioAction } from '@/features/compras-servicios/actions
 import { useVendors } from '@/features/vendors/hooks/use-vendors'
 import { AnticipoSelector } from '@/features/contabilidad/components/anticipos/anticipo-selector'
 import type { AnticipoAllocation } from '@/features/contabilidad/components/anticipos/anticipo-selector'
+import { resolverMonedaServicio } from '@/features/servicios/lib/moneda-servicio'
 import { ArrowLeft, Truck, Save, Loader2 } from 'lucide-react'
 import Link from 'next/link'
 import type { Servicios } from '@/app/models/model'
@@ -72,9 +73,11 @@ export function ServiciosRecibidosForm({ initialServicios }: ServiciosRecibidosF
 
   const formaPago = useWatch({ control: form.control, name: 'formaPago' })
   const proveedorId = useWatch({ control: form.control, name: 'proveedorId' })
+  const servicioId = useWatch({ control: form.control, name: 'servicioId' })
   const costoUnitario = useWatch({ control: form.control, name: 'costoUnitario' }) || 0
   const cantidad = useWatch({ control: form.control, name: 'cantidad' }) || 1
   const costoTotal = costoUnitario * cantidad
+  const monedaServicio = resolverMonedaServicio(servicios, servicioId)
 
   /**
    * @description Registra un servicio recibido.
@@ -369,7 +372,7 @@ export function ServiciosRecibidosForm({ initialServicios }: ServiciosRecibidosF
                     entidadId={proveedorId}
                     montoTotal={costoTotal}
                     onSelectionChange={setAnticipoAllocations}
-                    moneda="CUP"
+                    moneda={monedaServicio}
                     disabled={isLoading}
                   />
                 )}

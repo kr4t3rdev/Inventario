@@ -381,6 +381,7 @@ export interface ServicioPendiente extends VentaServicio {
 
 export interface VentaServicio {
 	ventaServicioId?: string;
+	moneda?: string;
 	servicio: {
 		servicioId: string;
 		descripcion: string;

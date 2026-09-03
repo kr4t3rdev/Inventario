@@ -19,6 +19,7 @@ import { useClientes } from '@/features/clientes/hooks/use-clientes'
 import { createVentaServicioAction } from '@/features/venta-servicios/actions'
 import { AnticipoSelector } from '@/features/contabilidad/components/anticipos/anticipo-selector'
 import type { AnticipoAllocation } from '@/features/contabilidad/components/anticipos/anticipo-selector'
+import { resolverMonedaServicio } from '@/features/servicios/lib/moneda-servicio'
 import { ArrowLeft, Handshake, Save, Loader2 } from 'lucide-react'
 import Link from 'next/link'
 import type { Servicios } from '@/app/models/model'
@@ -368,7 +369,7 @@ export function ServiciosPrestadosForm({ initialServicios }: ServiciosPrestadosF
                     entidadId={clienteId}
                     montoTotal={totalServicio}
                     onSelectionChange={setAnticipoAllocations}
-                    moneda="CUP"
+                    moneda={resolverMonedaServicio(servicios, servicioId)}
                     disabled={isLoading}
                   />
                 )}
