@@ -56,7 +56,8 @@
     "mobile:smoke": "vitest run src/lib/openapi/mobile-v1-integration-smoke.test.ts",
     "openapi:generate": "node scripts/openapi/generate.mjs",
     "openapi:generate:check": "node scripts/openapi/check-generated.mjs",
-    "openapi:check": "pnpm run openapi:lint && pnpm run openapi:parity && pnpm run mobile:smoke && pnpm run openapi:generate:check"
+    "openapi:check": "pnpm run openapi:lint && pnpm run openapi:parity && pnpm run mobile:smoke && pnpm run openapi:generate:check",
+    "ops:monitor:accounting-reports": "tsx scripts/ops/accounting-reports-monitor.ts"
   },
   "dependencies": {
     "@clerk/nextjs": "^6.22.0",
