@@ -102,3 +102,4 @@ worktrees
 
 # Mobile app lives in its own repository (kr4t3rdev/tcp-mobile)
 /mobile/
+.env*
