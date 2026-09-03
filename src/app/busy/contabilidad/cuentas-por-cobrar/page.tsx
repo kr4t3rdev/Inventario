@@ -99,10 +99,14 @@ export default function CuentasPorCobrarPage() {
     }
   }, [])
 
+  // Las métricas agregadas no cambian al paginar o filtrar: se cargan una sola vez.
+  useEffect(() => {
+    loadMetrics()
+  }, [loadMetrics])
+
   useEffect(() => {
     loadCuentas(page, debouncedSearch)
-    loadMetrics()
-  }, [page, debouncedSearch, loadCuentas, loadMetrics])
+  }, [page, debouncedSearch, loadCuentas])
 
   const cuentas = useMemo(() =>
     (cuentasData?.cuentas ?? []) as unknown as CuentaPorCobrar[],
