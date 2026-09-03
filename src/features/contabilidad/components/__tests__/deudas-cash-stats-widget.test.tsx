@@ -93,3 +93,13 @@ describe('DeudasCashStatsWidget - frescura y actualización', () => {
     expect(mocks.getDeudasCashStatsAction).toHaveBeenCalledTimes(2);
   });
 });
+
+describe('DeudasCashStatsWidget - cifras tabulares', () => {
+  it('los montos y contadores usan cifras tabulares', async () => {
+    mocks.getDeudasCashStatsAction.mockResolvedValue({ success: true, data: statsBase });
+    render(<DeudasCashStatsWidget />);
+
+    const monto = await screen.findByText(/1.?200,50/);
+    expect(monto.closest('[class*="tabular-nums"]')).not.toBeNull();
+  });
+});

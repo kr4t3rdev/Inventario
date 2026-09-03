@@ -43,17 +43,17 @@ export function CurrencySummaryTable({ data, monedaPrincipal }: CurrencySummaryT
                     {isPrincipal && <span className="text-[10px] uppercase text-slate-400 font-bold">Principal</span>}
                   </div>
                 </TableCell>
-                <TableCell className="text-right font-mono">
+                <TableCell className="text-right font-mono tabular-nums">
                   {(row.saldoActual ?? 0).toLocaleString('es-ES', { minimumFractionDigits: 2 })}
                 </TableCell>
-                <TableCell className="text-right font-mono text-emerald-600 dark:text-emerald-400">
+                <TableCell className="text-right font-mono tabular-nums text-emerald-600 dark:text-emerald-400">
                   {(row.totalIngresos ?? 0).toLocaleString('es-ES', { minimumFractionDigits: 2 })}
                 </TableCell>
-                <TableCell className="text-right font-mono text-rose-600 dark:text-rose-400">
+                <TableCell className="text-right font-mono tabular-nums text-rose-600 dark:text-rose-400">
                   {(row.totalEgresos ?? 0).toLocaleString('es-ES', { minimumFractionDigits: 2 })}
                 </TableCell>
                 <TableCell className={cn(
-                  "text-right font-mono font-semibold",
+                  "text-right font-mono tabular-nums font-semibold",
                   netFlow >= 0 ? "text-emerald-600 dark:text-emerald-400" : "text-rose-600 dark:text-rose-400"
                 )}>
                   <div className="flex items-center justify-end gap-1">

@@ -83,21 +83,21 @@ export function DeudasCashStatsWidget() {
         <div className="grid grid-cols-3 gap-3">
           <div className="flex flex-col items-center gap-1 rounded-lg bg-blue-50 dark:bg-blue-900/20 p-2">
             <Clock className="h-4 w-4 text-blue-500" />
-            <span className="text-xl font-bold text-blue-700 dark:text-blue-300">
+            <span className="text-xl font-bold tabular-nums text-blue-700 dark:text-blue-300">
               {stats.totalActivas}
             </span>
             <span className="text-xs text-blue-600 dark:text-blue-400">Activas</span>
           </div>
           <div className="flex flex-col items-center gap-1 rounded-lg bg-red-50 dark:bg-red-900/20 p-2">
             <AlertCircle className="h-4 w-4 text-red-500" />
-            <span className="text-xl font-bold text-red-700 dark:text-red-300">
+            <span className="text-xl font-bold tabular-nums text-red-700 dark:text-red-300">
               {stats.totalVencidas}
             </span>
             <span className="text-xs text-red-600 dark:text-red-400">Vencidas</span>
           </div>
           <div className="flex flex-col items-center gap-1 rounded-lg bg-emerald-50 dark:bg-emerald-900/20 p-2">
             <CheckCircle2 className="h-4 w-4 text-emerald-500" />
-            <span className="text-xl font-bold text-emerald-700 dark:text-emerald-300">
+            <span className="text-xl font-bold tabular-nums text-emerald-700 dark:text-emerald-300">
               {stats.totalPagadas}
             </span>
             <span className="text-xs text-emerald-600 dark:text-emerald-400">Pagadas</span>
@@ -113,7 +113,7 @@ export function DeudasCashStatsWidget() {
             {pendientePorMoneda.map(([moneda, monto]) => (
               <div key={moneda} className="flex justify-between items-center text-sm">
                 <span className="text-slate-600 dark:text-slate-400 font-medium">{moneda}</span>
-                <span className="font-semibold text-orange-600 dark:text-orange-400">
+                <span className="font-semibold tabular-nums text-orange-600 dark:text-orange-400">
                   {formatAmount(Number(monto))}
                 </span>
               </div>

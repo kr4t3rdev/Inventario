@@ -51,7 +51,7 @@ export function FinancialStatePanel({
             </span>
           </div>
           <div className={cn(
-            "text-4xl font-bold tracking-tighter",
+            "text-4xl font-bold tracking-tighter tabular-nums",
             isPositive ? "text-emerald-600 dark:text-emerald-400" : "text-rose-600 dark:text-rose-400"
           )}>
             {isPositive ? '+' : ''}
@@ -97,7 +97,7 @@ export function FinancialStatePanel({
             </div>
             <div>
               <p className="text-sm font-medium text-slate-500 dark:text-slate-400">Ingresos Totales</p>
-              <p className="text-2xl font-bold text-slate-900 dark:text-white">
+              <p className="text-2xl font-bold text-slate-900 dark:text-white tabular-nums">
                 {monedaPrincipal} {ingresosTotales.toLocaleString('es-ES', { minimumFractionDigits: 2 })}
               </p>
             </div>
@@ -111,7 +111,7 @@ export function FinancialStatePanel({
             </div>
             <div>
               <p className="text-sm font-medium text-slate-500 dark:text-slate-400">Egresos Totales</p>
-              <p className="text-2xl font-bold text-slate-900 dark:text-white">
+              <p className="text-2xl font-bold text-slate-900 dark:text-white tabular-nums">
                 {monedaPrincipal} {egresosTotales.toLocaleString('es-ES', { minimumFractionDigits: 2 })}
               </p>
             </div>

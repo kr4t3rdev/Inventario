@@ -301,9 +301,9 @@ export function ResumenFinanciero({
             icon: <Wallet className="h-4 w-4" />,
             content: prestamosCashData ? (
               <div className="grid gap-3 text-sm sm:grid-cols-3">
-                <span>Activos: <strong>{prestamosCashData.totalActivos ?? 0}</strong></span>
-                <span>Vencidos: <strong>{prestamosCashData.totalVencidos ?? 0}</strong></span>
-                <span>Pendiente: <strong>{Object.values(prestamosCashData.montoPendienteCobro ?? {}).reduce((sum: number, value) => sum + Number(value), 0).toLocaleString('es-ES', { minimumFractionDigits: 2 })}</strong></span>
+                <span>Activos: <strong className="tabular-nums">{prestamosCashData.totalActivos ?? 0}</strong></span>
+                <span>Vencidos: <strong className="tabular-nums">{prestamosCashData.totalVencidos ?? 0}</strong></span>
+                <span>Pendiente: <strong className="tabular-nums">{Object.values(prestamosCashData.montoPendienteCobro ?? {}).reduce((sum: number, value) => sum + Number(value), 0).toLocaleString('es-ES', { minimumFractionDigits: 2 })}</strong></span>
               </div>
             ) : <div className="text-sm text-muted-foreground">Sin datos de préstamos en este período.</div>
           },
@@ -313,9 +313,9 @@ export function ResumenFinanciero({
             icon: <DollarSign className="h-4 w-4" />,
             content: resumenAnticiposData?.resumen ? (
               <div className="grid gap-3 text-sm sm:grid-cols-3">
-                <span>Total: <strong>{Number(resumenAnticiposData.resumen.totalesGenerales?.totalAnticipos ?? Object.values(resumenAnticiposData.resumen.porMoneda ?? {}).reduce((sum: number, value: any) => sum + Number(value?.total ?? 0), 0)).toLocaleString('es-ES', { minimumFractionDigits: 2 })}</strong></span>
-                <span>Ejecutado: <strong>{Number(resumenAnticiposData.resumen.totalesGenerales?.totalEjecutado ?? 0).toLocaleString('es-ES', { minimumFractionDigits: 2 })}</strong></span>
-                <span>Pendiente: <strong>{Number(resumenAnticiposData.resumen.totalesGenerales?.totalPendiente ?? 0).toLocaleString('es-ES', { minimumFractionDigits: 2 })}</strong></span>
+                <span>Total: <strong className="tabular-nums">{Number(resumenAnticiposData.resumen.totalesGenerales?.totalAnticipos ?? Object.values(resumenAnticiposData.resumen.porMoneda ?? {}).reduce((sum: number, value: any) => sum + Number(value?.total ?? 0), 0)).toLocaleString('es-ES', { minimumFractionDigits: 2 })}</strong></span>
+                <span>Ejecutado: <strong className="tabular-nums">{Number(resumenAnticiposData.resumen.totalesGenerales?.totalEjecutado ?? 0).toLocaleString('es-ES', { minimumFractionDigits: 2 })}</strong></span>
+                <span>Pendiente: <strong className="tabular-nums">{Number(resumenAnticiposData.resumen.totalesGenerales?.totalPendiente ?? 0).toLocaleString('es-ES', { minimumFractionDigits: 2 })}</strong></span>
               </div>
             ) : <div className="text-sm text-muted-foreground">Sin datos de anticipos en este período.</div>
           },

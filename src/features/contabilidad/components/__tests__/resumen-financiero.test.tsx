@@ -14,6 +14,7 @@ const mocks = vi.hoisted(() => ({
   getHistorialReconciliacionGastosAction: vi.fn(),
   getPrestamosCashStatsAction: vi.fn(),
   getResumenAnticiposAction: vi.fn(),
+  authUser: undefined as { planFeatures: Record<string, boolean> } | undefined,
 }));
 
 vi.mock('@/features/contabilidad/actions', () => ({
@@ -37,7 +38,7 @@ vi.mock('@/features/contabilidad/actions-anticipos', () => ({
   getResumenAnticiposAction: mocks.getResumenAnticiposAction,
 }));
 vi.mock('@/contexts/auth-context', () => ({
-  useAuth: () => ({ user: { planFeatures: {} } }),
+  useAuth: () => ({ user: mocks.authUser ?? { planFeatures: {} } }),
 }));
 vi.mock('sonner', () => ({
   toast: { success: vi.fn(), error: vi.fn() },
@@ -474,5 +475,77 @@ describe('ResumenFinanciero — selector de período (opt-in)', () => {
       );
     });
     expect(screen.getByText('Período: Hoy')).toBeInTheDocument();
+  });
+});
+
+describe('Cifras tabulares (anti-shifting numerals)', () => {
+  it('FinancialStatePanel usa cifras tabulares en KPI principal y secundarios', () => {
+    render(
+      <FinancialStatePanel
+        monedaPrincipal="CUP"
+        flujoNeto={5000}
+        ingresosTotales={10000}
+        egresosTotales={5000}
+        balances={[{ moneda: 'CUP', saldo: 5000, ingresos: 10000, egresos: 5000 }]}
+      />,
+    );
+
+    const kpi = screen.getAllByText(/5.?000,00/)[0];
+    expect(kpi.closest('[class*="tabular-nums"]')).not.toBeNull();
+  });
+
+  it('CurrencySummaryTable usa cifras tabulares en todas las columnas numéricas', () => {
+    render(
+      <CurrencySummaryTable
+        data={[{ moneda: 'CUP', saldoActual: 5000, totalIngresos: 10000, totalEgresos: 5000 }]}
+        monedaPrincipal="CUP"
+      />,
+    );
+
+    const celda = screen.getAllByText(/5.?000,00/)[0];
+    const celdaTabular = celda.closest('[class*="tabular-nums"]');
+    expect(celdaTabular).not.toBeNull();
+  });
+});
+
+describe('ResumenFinanciero — cifras tabulares en disclosures', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    mocks.authUser = { planFeatures: { 'prestamos-cash': true } };
+  });
+
+  afterEach(() => {
+    mocks.authUser = undefined;
+  });
+
+  it('los montos de préstamos cash usan cifras tabulares', async () => {
+    mocks.getResumenFinancieroAction.mockResolvedValue({
+      success: true,
+      data: {
+        resumenPorMoneda: [{ moneda: 'CUP', saldoActual: 100, totalIngresos: 100, totalEgresos: 0 }],
+        metadatos: { coberturaConversion: { unresolved: 0 }, clasificacionNoReconocida: 0 },
+      },
+    });
+    mocks.getMonedasAction.mockResolvedValue({ success: true, data: [] });
+    mocks.getVentasPendientesAction.mockResolvedValue({ success: true, data: { ventas: [] } });
+    mocks.getServiciosPendientesAction.mockResolvedValue({ success: true, data: { ventaServicios: [] } });
+    mocks.getGastosPendientesAction.mockResolvedValue({ success: true, data: { gastos: [] } });
+    mocks.getHistorialReconciliacionVentasAction.mockResolvedValue({ success: true, data: null });
+    mocks.getHistorialReconciliacionServiciosAction.mockResolvedValue({ success: true, data: null });
+    mocks.getHistorialReconciliacionGastosAction.mockResolvedValue({ success: true, data: null });
+    mocks.getPrestamosCashStatsAction.mockResolvedValue({
+      success: true,
+      data: { totalActivos: 2, totalVencidos: 0, montoPendienteCobro: { CUP: 1234.5 } },
+    });
+    mocks.getResumenAnticiposAction.mockResolvedValue({ success: true, data: null });
+
+    const { ResumenFinanciero } = await import('../resumen-financiero');
+    render(<ResumenFinanciero periodo="Este mes" page={1} limit={10} />);
+
+    await screen.findByText(/Flujo Neto del Período/i);
+    await userEvent.click(screen.getByText('Préstamos Cash'));
+
+    const monto = await screen.findByText(/1.?234,50/);
+    expect(monto.closest('[class*="tabular-nums"]')).not.toBeNull();
   });
 });
