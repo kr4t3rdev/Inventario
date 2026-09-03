@@ -222,6 +222,27 @@ describe("ComprasServicios Server Actions", () => {
 			expect(result.success).toBe(true);
 		});
 
+		it("recalcula el total al cambiar cantidad o costo", async () => {
+			vi.mocked(getCurrentUser).mockResolvedValue(mockUser);
+			vi.mocked(prisma.compraServicio.findFirst).mockResolvedValue(
+				mockCompraRow,
+			);
+			vi.mocked(prisma.compraServicio.update).mockResolvedValue(mockCompraRow);
+
+			const result = await updateCompraServicioAction({
+				compraServicioId: "cs-1",
+				cantidad: 3,
+			});
+
+			expect(result.success).toBe(true);
+			// mockCompraRow tiene costoUnitario 1000 → total 3000
+			expect(prisma.compraServicio.update).toHaveBeenCalledWith(
+				expect.objectContaining({
+					data: expect.objectContaining({ cantidad: 3, total: 3000 }),
+				}),
+			);
+		});
+
 		it("retorna NOT_FOUND si no existe", async () => {
 			vi.mocked(getCurrentUser).mockResolvedValue(mockUser);
 			vi.mocked(prisma.compraServicio.findFirst).mockResolvedValue(null);

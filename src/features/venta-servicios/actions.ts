@@ -22,20 +22,26 @@ const VENTA_SERVICIO_INCLUDE = {
 } as const;
 
 /**
- * @description Valida que todos los servicios referenciados pertenezcan al tenant.
+ * @description Valida que todos los servicios referenciados pertenezcan al tenant
+ * y devuelve su snapshot de moneda para persistirlo en la venta.
  * @param {string} tenantId - Tenant del usuario autenticado.
  * @param {string[]} servicioIds - IDs de servicios a validar.
  * @throws {ActionError} NOT_FOUND si algún servicio no pertenece al tenant.
+ * @returns {Promise<Map<string, { moneda: string }>>} Moneda por servicioId.
  */
-async function assertServiciosDelTenant(tenantId: string, servicioIds: string[]): Promise<void> {
+async function assertServiciosDelTenant(
+  tenantId: string,
+  servicioIds: string[],
+): Promise<Map<string, { moneda: string }>> {
   const uniqueIds = [...new Set(servicioIds)];
   const found = await prisma.servicios.findMany({
     where: { tenantId, servicioId: { in: uniqueIds } },
-    select: { servicioId: true },
+    select: { servicioId: true, moneda: true },
   });
   if (found.length !== uniqueIds.length) {
     throw new ActionError('Servicio no encontrado', 'NOT_FOUND');
   }
+  return new Map(found.map((s) => [s.servicioId, { moneda: s.moneda }]));
 }
 
 /**
@@ -91,7 +97,7 @@ export const createVentaServicioAction = withAction(withPeriodValidation(
       throw new ActionError('Las líneas de producto deben registrarse por /api/ventas', 'PRODUCT_LINE_NOT_SUPPORTED_IN_THIS_ENDPOINT');
     }
 
-    await assertServiciosDelTenant(tenantId, lineasServicio.map((l) => l.servicioId!));
+    const serviciosMonedas = await assertServiciosDelTenant(tenantId, lineasServicio.map((l) => l.servicioId!));
     await assertClienteDelTenant(tenantId, payload.clienteId);
 
     const created = await prisma.$transaction(
@@ -103,6 +109,8 @@ export const createVentaServicioAction = withAction(withPeriodValidation(
             cantidad: linea.cantidad,
             costo: linea.costo ?? 0,
             total: linea.cantidad * linea.precioUnitario,
+            moneda: serviciosMonedas.get(linea.servicioId!)!.moneda,
+            precioUnitario: linea.precioUnitario,
             observaciones: linea.observaciones ?? payload.observaciones ?? null,
             clienteId: payload.clienteId ?? null,
           },
@@ -122,7 +130,8 @@ export const createVentaServicioAction = withAction(withPeriodValidation(
   // Legacy mode (single servicio)
   const data = ventaServicioLegacySchema.parse(input);
 
-  await assertServiciosDelTenant(tenantId, [data.servicioId]);
+  const serviciosMonedas = await assertServiciosDelTenant(tenantId, [data.servicioId]);
+  const monedaServicio = serviciosMonedas.get(data.servicioId)!.moneda;
   await assertClienteDelTenant(tenantId, data.clienteId);
 
   const resultado = await prisma.$transaction(async (tx) => {
@@ -133,6 +142,8 @@ export const createVentaServicioAction = withAction(withPeriodValidation(
         cantidad: data.cantidad,
         costo: data.costo ?? 0,
         total: data.cantidad * data.precioUnitario,
+        moneda: monedaServicio,
+        precioUnitario: data.precioUnitario,
         observaciones: data.observaciones ?? null,
         clienteId: data.clienteId ?? null,
       },
@@ -206,7 +217,7 @@ export const updateVentaServicioAction = withAction(async (input: VentaServicioU
 
   const existing = await prisma.ventaServicios.findFirst({
     where: { ventaServicioId, tenantId },
-    select: { ventaServicioId: true, cantidad: true, total: true },
+    select: { ventaServicioId: true, cantidad: true, total: true, precioUnitario: true },
   });
   if (!existing) throw new ActionError('Venta de servicio no encontrada', 'NOT_FOUND');
 
@@ -214,9 +225,10 @@ export const updateVentaServicioAction = withAction(async (input: VentaServicioU
   if (data.cantidad !== undefined) {
     updateData.cantidad = data.cantidad;
     // El total no se acepta del cliente: al cambiar la cantidad se recalcula
-    // con el precio unitario implícito del registro original.
-    if (data.cantidad !== existing.cantidad && existing.cantidad > 0) {
-      const precioUnitario = Math.round(existing.total / existing.cantidad);
+    // con el precio unitario persistido (o derivado del registro legacy).
+    if (data.cantidad !== existing.cantidad) {
+      const precioUnitario = existing.precioUnitario
+        ?? (existing.cantidad > 0 ? Math.round(existing.total / existing.cantidad) : 0);
       updateData.total = precioUnitario * data.cantidad;
     }
   }

@@ -156,7 +156,7 @@ export const updateCompraServicioAction = withAction(async (input: UpdateCompraS
 
   const existing = await prisma.compraServicio.findFirst({
     where: { compraServicioId, tenantId },
-    select: { compraServicioId: true },
+    select: { compraServicioId: true, costoUnitario: true, cantidad: true },
   });
   if (!existing) throw new ActionError('Servicio recibido no encontrado', 'NOT_FOUND');
 
@@ -170,6 +170,14 @@ export const updateCompraServicioAction = withAction(async (input: UpdateCompraS
   if (typeof data.proveedorId !== 'undefined') updateData.proveedorId = data.proveedorId || null;
   if (typeof data.fechaServicio !== 'undefined') updateData.fechaServicio = data.fechaServicio ? new Date(data.fechaServicio) : undefined;
   if (typeof data.fechaVencimiento !== 'undefined') updateData.fechaVencimiento = data.fechaVencimiento ? new Date(data.fechaVencimiento) : null;
+
+  // Si cambian cantidad o costo unitario, el total debe recalcularse para no
+  // dejar inconsistencias contables.
+  if (typeof data.costoUnitario !== 'undefined' || typeof data.cantidad !== 'undefined') {
+    const costo = typeof data.costoUnitario !== 'undefined' ? Number(data.costoUnitario) : existing.costoUnitario;
+    const cantidad = typeof data.cantidad !== 'undefined' ? Number(data.cantidad) : existing.cantidad;
+    updateData.total = costo * cantidad;
+  }
 
   if (Object.keys(updateData).length === 0) {
     throw new ActionError('No hay campos para actualizar', 'VALIDATION_ERROR');

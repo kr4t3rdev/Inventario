@@ -119,7 +119,7 @@ describe("VentaServicios Server Actions", () => {
 		it("crea venta legacy exitosamente", async () => {
 			vi.mocked(getCurrentUser).mockResolvedValue(mockUser);
 			vi.mocked(prisma.servicios.findMany).mockResolvedValue([
-				{ servicioId: "sv-1" },
+				{ servicioId: "sv-1", moneda: "CUP" },
 			] as any);
 			mockTx.ventaServicios.create.mockResolvedValue(mockVentaRow);
 
@@ -130,6 +130,30 @@ describe("VentaServicios Server Actions", () => {
 			});
 
 			expect(result.success).toBe(true);
+		});
+
+		it("persiste snapshot de moneda y precioUnitario en modo legacy", async () => {
+			vi.mocked(getCurrentUser).mockResolvedValue(mockUser);
+			vi.mocked(prisma.servicios.findMany).mockResolvedValue([
+				{ servicioId: "sv-1", moneda: "USD" },
+			] as any);
+			mockTx.ventaServicios.create.mockResolvedValue(mockVentaRow);
+
+			const result = await createVentaServicioAction({
+				servicioId: "sv-1",
+				cantidad: 2,
+				precioUnitario: 5000,
+			});
+
+			expect(result.success).toBe(true);
+			expect(mockTx.ventaServicios.create).toHaveBeenCalledWith(
+				expect.objectContaining({
+					data: expect.objectContaining({
+						moneda: "USD",
+						precioUnitario: 5000,
+					}),
+				}),
+			);
 		});
 
 		it("calcula el total en el servidor e ignora el total del cliente", async () => {
@@ -169,8 +193,63 @@ describe("VentaServicios Server Actions", () => {
 			expect(result.success).toBe(false);
 		});
 
-		it("ajusta el total al actualizar cantidad (precio unitario derivado del registro)", async () => {
+		it("persiste la moneda de cada línea en modo mixto", async () => {
 			vi.mocked(getCurrentUser).mockResolvedValue(mockUser);
+			vi.mocked(prisma.servicios.findMany).mockResolvedValue([
+				{ servicioId: "sv-1", moneda: "USD" },
+			] as any);
+			vi.mocked(prisma.$transaction).mockImplementation((args: any) => {
+				if (Array.isArray(args)) return Promise.all(args);
+				return args(mockTx);
+			});
+			vi.mocked(prisma.ventaServicios.create).mockResolvedValue(mockVentaRow);
+
+			const result = await createVentaServicioAction({
+				lineas: [
+					{
+						tipoLinea: "SERVICIO",
+						servicioId: "sv-1",
+						cantidad: 1,
+						precioUnitario: 5000,
+					},
+				],
+			} as any);
+
+			expect(result.success).toBe(true);
+			expect(prisma.ventaServicios.create).toHaveBeenCalledWith(
+				expect.objectContaining({
+					data: expect.objectContaining({
+						moneda: "USD",
+						precioUnitario: 5000,
+					}),
+				}),
+			);
+		});
+
+		it("usa el precioUnitario persistido al recalcular el total en update", async () => {
+			vi.mocked(getCurrentUser).mockResolvedValue(mockUser);
+			vi.mocked(prisma.ventaServicios.findFirst).mockResolvedValue({
+				...mockVentaRow,
+				precioUnitario: 6000,
+				cantidad: 1,
+				total: 5000,
+			});
+			vi.mocked(prisma.ventaServicios.update).mockResolvedValue(mockVentaRow);
+
+			const result = await updateVentaServicioAction({
+				ventaServicioId: "vs-1",
+				cantidad: 3,
+			});
+
+			expect(result.success).toBe(true);
+			expect(prisma.ventaServicios.update).toHaveBeenCalledWith(
+				expect.objectContaining({
+					data: expect.objectContaining({ cantidad: 3, total: 18000 }),
+				}),
+			);
+			});
+			it("recurre al precio derivado cuando el registro no tiene snapshot de precio", async () => {
+				vi.mocked(getCurrentUser).mockResolvedValue(mockUser);
 			vi.mocked(prisma.ventaServicios.findFirst).mockResolvedValue(
 				mockVentaRow,
 			);

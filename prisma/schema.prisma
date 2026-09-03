@@ -1299,6 +1299,8 @@ model VentaServicios {
   cantidad         Int
   costo            Int                      @default(0)
   total            Int
+  moneda           String                   @default("CUP")
+  precioUnitario   Int?
   observaciones    String?
   reconciliado     Boolean?
   clienteId        String?
