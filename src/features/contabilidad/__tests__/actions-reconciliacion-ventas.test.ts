@@ -3,6 +3,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 const getCurrentUserMock = vi.hoisted(() => vi.fn());
 const txMock = vi.hoisted(() => ({
 	$queryRaw: vi.fn(),
+	$executeRaw: vi.fn(),
 	venta: { findUnique: vi.fn() },
 	cuentaPorCobrar: { findFirst: vi.fn(), updateMany: vi.fn() },
 	cuentaBancaria: { update: vi.fn(), updateMany: vi.fn(), findFirst: vi.fn() },
@@ -106,6 +107,7 @@ describe('Reconciliación — ventas anuladas y carreras de servicios', () => {
 		for (const [query] of prismaMock.$queryRaw.mock.calls.slice(0, 2)) {
 			expect(query.sql).toContain('NOT EXISTS');
 			expect(query.sql).toContain('"CuentaPorCobrar"');
+			expect(query.sql).toContain('::"EstadoCuentaPorCobrar"');
 			expect(query.values).toEqual(expect.arrayContaining(['PENDIENTE', 'PARCIAL']));
 		}
 	});

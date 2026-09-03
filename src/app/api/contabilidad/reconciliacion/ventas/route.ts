@@ -148,7 +148,10 @@ export async function GET(request: NextRequest) {
 				JOIN "CuentaPorCobrar" cxc ON cxc."facturaId" = f."idFactura"
 				WHERE f."ventaId" = v."ventaId"
 					AND cxc."tenantId" = ${tenantId}
-					AND cxc."estado" IN (${`PENDIENTE`}, ${`PARCIAL`})
+					AND cxc."estado" IN (
+						${`PENDIENTE`}::"EstadoCuentaPorCobrar",
+						${`PARCIAL`}::"EstadoCuentaPorCobrar"
+					)
 			)`,
 			Prisma.sql`EXISTS (
         SELECT 1 FROM "PuntoDeVenta" pv_scope

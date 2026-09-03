@@ -110,14 +110,19 @@ describe('web accounting reconciliation sales route - GET', () => {
     expect(getSqlText(pendingRowsQuery)).toContain('v."tenantId" = ');
     expect(getSqlText(pendingRowsQuery)).toContain('NOT EXISTS');
     expect(getSqlText(pendingRowsQuery)).toContain('"CuentaPorCobrar"');
-    expect((pendingRowsQuery as RawSqlArg).values).toEqual(
-      expect.arrayContaining(['PENDIENTE', 'PARCIAL']),
-    );
+		expect(getSqlText(pendingRowsQuery)).toContain('::"EstadoCuentaPorCobrar"');
+		expect((pendingRowsQuery as RawSqlArg).values).toEqual(
+			expect.arrayContaining(['PENDIENTE', 'PARCIAL']),
+		);
     expect(getSqlText(pendingRowsQuery)).toContain('"PuntoDeVenta"');
     expect(getSqlText(pendingRowsQuery)).toContain('"Producto"');
     expect((pendingRowsQuery as RawSqlArg).values).toContain('tenant-user');
     expect(getSqlText(totalRowsQuery)).toContain('v."tenantId" = ');
     expect(getSqlText(totalRowsQuery)).toContain('"CuentaPorCobrar"');
+		expect(getSqlText(totalRowsQuery)).toContain('::"EstadoCuentaPorCobrar"');
+		expect((totalRowsQuery as RawSqlArg).values).toEqual(
+			expect.arrayContaining(['PENDIENTE', 'PARCIAL']),
+		);
     expect(getSqlText(totalRowsQuery)).toContain('"PuntoDeVenta"');
     expect((totalRowsQuery as RawSqlArg).values).toContain('tenant-user');
     expect(prisma.venta.findMany).toHaveBeenCalledWith(

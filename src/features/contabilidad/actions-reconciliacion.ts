@@ -179,7 +179,10 @@ export const getVentasPendientesAction = withAction(
 				JOIN "CuentaPorCobrar" cxc ON cxc."facturaId" = f."idFactura"
 				WHERE f."ventaId" = v."ventaId"
 					AND cxc."tenantId" = ${tenantId}
-					AND cxc."estado" IN (${`PENDIENTE`}, ${`PARCIAL`})
+					AND cxc."estado" IN (
+						${`PENDIENTE`}::"EstadoCuentaPorCobrar",
+						${`PARCIAL`}::"EstadoCuentaPorCobrar"
+					)
 			)`,
 		];
 		if (params.fechaInicio)
