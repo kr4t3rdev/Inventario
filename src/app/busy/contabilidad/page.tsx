@@ -1,8 +1,5 @@
-'use client';
-
-import dynamic from 'next/dynamic';
 import Link from 'next/link';
-import React from 'react';
+import { Suspense } from 'react';
 import {
   ArrowUpDown,
   Banknote,
@@ -26,23 +23,14 @@ import {
   StaggerItem,
   AnimatedCard
 } from '@/components/ui/animations';
-import { useAuth } from '@/contexts/auth-context';
 import { cn } from '@/lib/utils';
 import { canAccessAccountingItem } from '@/lib/plan-access';
+import { getCurrentUser } from '@/lib/server-actions/get-current-user';
 import { DeudasCashStatsWidget } from '@/features/contabilidad/components/deudas-cash-stats-widget';
 import { AccountingHealthCard } from '@/features/contabilidad/components/accounting-health-card';
+import { ResumenFinancieroServer } from './resumen-financiero-server';
 
-
-const ResumenFinanciero = dynamic(() =>
-  import('@/features/contabilidad/components/resumen-financiero').then((mod) => ({
-    default: mod.ResumenFinanciero,
-  })),
-  { 
-    loading: () => <ResumenSkeleton />
-  }
-);
-
-/** @description Skeleton del resumen financiero mientras se carga el chunk dinámico. */
+/** @description Skeleton del resumen financiero mientras el servidor resuelve el panel. */
 export function ResumenSkeleton() {
   return (
     <div className="space-y-8">
@@ -111,82 +99,35 @@ const accentStyles = {
 
 type AccentTone = keyof typeof accentStyles;
 
+const quickActionsBase = [
+  { title: 'Cuentas Bancarias', description: 'Gestión de saldos y cuentas', href: '/busy/contabilidad/cuentas', icon: Building2, tone: 'blue' },
+  { title: 'Reconciliación', description: 'Conciliar movimientos pendientes', href: '/busy/contabilidad/reconciliacion', icon: Receipt, tone: 'emerald' },
+  { title: 'Transferencias', description: 'Mover fondos entre cuentas', href: '/busy/contabilidad/transferencias', icon: ArrowUpDown, tone: 'purple' },
+  { title: 'Préstamos en Efectivo', description: 'Préstamos cash a clientes', href: '/busy/contabilidad/prestamos-cash', icon: DollarSign, tone: 'emerald' },
+  { title: 'Deudas en Efectivo', description: 'Deudas cash con proveedores', href: '/busy/contabilidad/deudas-cash', icon: CreditCard, tone: 'orange' },
+  { title: 'Tasas de Cambio', description: 'Configurar valores de monedas', href: '/busy/contabilidad/exchange', icon: Banknote, tone: 'orange' },
+  { title: 'Ajustes Manuales', description: 'Correcciones y notas de débito/crédito', href: '/busy/contabilidad/ajustes', icon: SlidersHorizontal, tone: 'amber' },
+  { title: 'Auditoría', description: 'Historial de operaciones', href: '/busy/contabilidad/logs', icon: FileText, tone: 'slate' },
+] satisfies Array<{
+  title: string;
+  description: string;
+  href: string;
+  icon: typeof Building2;
+  tone: AccentTone;
+}>;
+
 /**
- * @description Dashboard principal de contabilidad con resumen financiero y módulos clave.
- * @returns {JSX.Element} Vista del dashboard de contabilidad.
+ * @description Dashboard principal de contabilidad. Server Component: el encabezado,
+ * la navegación y los accesos rápidos se renderizan en el servidor; el resumen
+ * financiero se precarga en streaming con Suspense y queda interactivo en cliente.
+ * @returns {Promise<JSX.Element>} Vista del dashboard de contabilidad.
  */
-export default function ContabilidadDashboard(): React.JSX.Element {
-  const { user } = useAuth();
+export default async function ContabilidadDashboard(): Promise<React.JSX.Element> {
+  const user = await getCurrentUser();
   const hasPrestamosCash = user?.planFeatures?.['prestamos-cash'] === true;
   const hasDeudasCash = user?.planFeatures?.['deudas-cash'] === true;
   const hasContabilidad = user?.planFeatures?.contabilidad === true;
   const hideItemForBasic = (title: string) => !canAccessAccountingItem(user, title);
-
-  // --- Configuration ---
-  const quickActionsBase = [
-    {
-      title: 'Cuentas Bancarias',
-      description: 'Gestión de saldos y cuentas',
-      href: '/busy/contabilidad/cuentas',
-      icon: Building2,
-      tone: 'blue',
-    },
-    {
-      title: 'Reconciliación',
-      description: 'Conciliar movimientos pendientes',
-      href: '/busy/contabilidad/reconciliacion',
-      icon: Receipt,
-      tone: 'emerald',
-    },
-    {
-      title: 'Transferencias',
-      description: 'Mover fondos entre cuentas',
-      href: '/busy/contabilidad/transferencias',
-      icon: ArrowUpDown,
-      tone: 'purple',
-    },
-    {
-      title: 'Préstamos en Efectivo',
-      description: 'Préstamos cash a clientes',
-      href: '/busy/contabilidad/prestamos-cash',
-      icon: DollarSign,
-      tone: 'emerald',
-    },
-    {
-      title: 'Deudas en Efectivo',
-      description: 'Deudas cash con proveedores',
-      href: '/busy/contabilidad/deudas-cash',
-      icon: CreditCard,
-      tone: 'orange',
-    },
-    {
-      title: 'Tasas de Cambio',
-      description: 'Configurar valores de monedas',
-      href: '/busy/contabilidad/exchange',
-      icon: Banknote,
-      tone: 'orange',
-    },
-    {
-      title: 'Ajustes Manuales',
-      description: 'Correcciones y notas de débito/crédito',
-      href: '/busy/contabilidad/ajustes',
-      icon: SlidersHorizontal,
-      tone: 'amber',
-    },
-    {
-      title: 'Auditoría',
-      description: 'Historial de operaciones',
-      href: '/busy/contabilidad/logs',
-      icon: FileText,
-      tone: 'slate',
-    },
-  ] satisfies Array<{
-    title: string;
-    description: string;
-    href: string;
-    icon: typeof Building2;
-    tone: AccentTone;
-  }>;
 
   const quickActions = quickActionsBase.filter((a) => {
     if (a.title === 'Préstamos en Efectivo' && !hasPrestamosCash) return false;
@@ -203,7 +144,6 @@ export default function ContabilidadDashboard(): React.JSX.Element {
       {user?.role === 'admin' ? <AccountingHealthCard userRole={user.role} /> : null}
 
       <StaggerContainer className="container mx-auto p-6 space-y-10">
-        
         {/* Header */}
         <StaggerItem className="flex flex-col gap-6 lg:flex-row lg:items-end lg:justify-between">
           <div className="space-y-2">
@@ -241,9 +181,11 @@ export default function ContabilidadDashboard(): React.JSX.Element {
           </div>
         </StaggerItem>
 
-        {/* Resumen Financiero Component */}
+        {/* Resumen Financiero — prefetch en el servidor, interactivo en cliente */}
         <StaggerItem>
-          <ResumenFinanciero periodo="Este mes" page={1} limit={10} showPeriodSelector />
+          <Suspense fallback={<ResumenSkeleton />}>
+            <ResumenFinancieroServer />
+          </Suspense>
         </StaggerItem>
 
         {/* Deudas Cash Stats Widget */}

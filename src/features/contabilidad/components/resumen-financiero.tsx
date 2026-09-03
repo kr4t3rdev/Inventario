@@ -32,6 +32,8 @@ interface ResumenFinancieroProps {
   limit: number;
   refreshToken?: number;
   showPeriodSelector?: boolean;
+  /** Datos precargados en el servidor; si existen, el primer render no hace fetch. */
+  initialData?: unknown;
 }
 
 export function ResumenFinanciero({
@@ -41,6 +43,7 @@ export function ResumenFinanciero({
   periodo: periodoProp,
   refreshToken = 0,
   showPeriodSelector = false,
+  initialData,
 }: ResumenFinancieroProps): React.JSX.Element | null {
   const [periodoClave, setPeriodoClave] = useState<PeriodoClave>('mes');
 
@@ -54,12 +57,17 @@ export function ResumenFinanciero({
 
   const [retryKey, setRetryKey] = useState(0);
 
-  const [payload, setPayload] = useState<any>(null);
-  const [isLoading, setIsLoading] = useState(true);
+  const [payload, setPayload] = useState<any>(initialData ?? null);
+  const [isLoading, setIsLoading] = useState(!initialData);
   const [error, setError] = useState<any>(null);
   const dataRequestRef = useRef(0);
+  const skipInitialFetchRef = useRef(Boolean(initialData));
 
   useEffect(() => {
+    if (skipInitialFetchRef.current) {
+      skipInitialFetchRef.current = false;
+      return;
+    }
     const requestId = ++dataRequestRef.current;
     let isActive = true;
     setIsLoading(true);
