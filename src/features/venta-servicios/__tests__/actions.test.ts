@@ -26,6 +26,13 @@ vi.mock("@/lib/prisma", () => ({
 			update: vi.fn(),
 			delete: vi.fn(),
 		},
+		servicios: {
+			findFirst: vi.fn(),
+			findMany: vi.fn(),
+		},
+		cliente: {
+			findFirst: vi.fn(),
+		},
 		$transaction: vi.fn((cb: any) => cb(mockTx)),
 	},
 }));
@@ -107,6 +114,9 @@ describe("VentaServicios Server Actions", () => {
 	describe("createVentaServicioAction", () => {
 		it("crea venta legacy exitosamente", async () => {
 			vi.mocked(getCurrentUser).mockResolvedValue(mockUser);
+			vi.mocked(prisma.servicios.findMany).mockResolvedValue([
+				{ servicioId: "sv-1" },
+			] as any);
 			mockTx.ventaServicios.create.mockResolvedValue(mockVentaRow);
 
 			const result = await createVentaServicioAction({
@@ -118,8 +128,62 @@ describe("VentaServicios Server Actions", () => {
 			expect(result.success).toBe(true);
 		});
 
+		it("rechaza servicio de otro tenant en modo legacy", async () => {
+			vi.mocked(getCurrentUser).mockResolvedValue(mockUser);
+			vi.mocked(prisma.servicios.findMany).mockResolvedValue([] as any);
+
+			const result = await createVentaServicioAction({
+				servicioId: "sv-otro-tenant",
+				cantidad: 1,
+				total: 5000,
+			});
+
+			expect(result.success).toBe(false);
+			expect(result.error!.code).toBe("NOT_FOUND");
+		});
+
+		it("rechaza servicio de otro tenant en modo mixto", async () => {
+			vi.mocked(getCurrentUser).mockResolvedValue(mockUser);
+			vi.mocked(prisma.servicios.findMany).mockResolvedValue([] as any);
+
+			const result = await createVentaServicioAction({
+				lineas: [
+					{
+						tipoLinea: "SERVICIO",
+						servicioId: "sv-otro-tenant",
+						cantidad: 1,
+						precioUnitario: 5000,
+					},
+				],
+			} as any);
+
+			expect(result.success).toBe(false);
+			expect(result.error!.code).toBe("NOT_FOUND");
+		});
+
+		it("rechaza cliente de otro tenant", async () => {
+			vi.mocked(getCurrentUser).mockResolvedValue(mockUser);
+			vi.mocked(prisma.servicios.findMany).mockResolvedValue([
+				{ servicioId: "sv-1" },
+			] as any);
+			vi.mocked(prisma.cliente.findFirst).mockResolvedValue(null);
+
+			const result = await createVentaServicioAction({
+				servicioId: "sv-1",
+				cantidad: 1,
+				total: 5000,
+				clienteId: "cliente-otro-tenant",
+			});
+
+			expect(result.success).toBe(false);
+			expect(result.error!.code).toBe("NOT_FOUND");
+		});
+
 		it("crea venta mixta exitosamente", async () => {
 			vi.mocked(getCurrentUser).mockResolvedValue(mockUser);
+			vi.mocked(prisma.servicios.findMany).mockResolvedValue([
+				{ servicioId: "sv-1" },
+			] as any);
 			// Modo mixto usa $transaction(array) no callback
 			vi.mocked(prisma.$transaction).mockImplementation((args: any) => {
 				if (Array.isArray(args)) return Promise.all(args);

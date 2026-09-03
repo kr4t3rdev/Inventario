@@ -21,6 +21,38 @@ const VENTA_SERVICIO_INCLUDE = {
   cliente: true,
 } as const;
 
+/**
+ * @description Valida que todos los servicios referenciados pertenezcan al tenant.
+ * @param {string} tenantId - Tenant del usuario autenticado.
+ * @param {string[]} servicioIds - IDs de servicios a validar.
+ * @throws {ActionError} NOT_FOUND si algún servicio no pertenece al tenant.
+ */
+async function assertServiciosDelTenant(tenantId: string, servicioIds: string[]): Promise<void> {
+  const uniqueIds = [...new Set(servicioIds)];
+  const found = await prisma.servicios.findMany({
+    where: { tenantId, servicioId: { in: uniqueIds } },
+    select: { servicioId: true },
+  });
+  if (found.length !== uniqueIds.length) {
+    throw new ActionError('Servicio no encontrado', 'NOT_FOUND');
+  }
+}
+
+/**
+ * @description Valida que el cliente referenciado pertenezca al tenant.
+ * @param {string} tenantId - Tenant del usuario autenticado.
+ * @param {string | null | undefined} clienteId - ID del cliente (opcional).
+ * @throws {ActionError} NOT_FOUND si el cliente no pertenece al tenant.
+ */
+async function assertClienteDelTenant(tenantId: string, clienteId?: string | null): Promise<void> {
+  if (!clienteId) return;
+  const cliente = await prisma.cliente.findFirst({
+    where: { clienteId, tenantId },
+    select: { clienteId: true },
+  });
+  if (!cliente) throw new ActionError('Cliente no encontrado', 'NOT_FOUND');
+}
+
 export const getVentaServiciosAction = withAction(async (_input: void, user: AuthenticatedUser) => {
   const tenantId = requireTenant(user);
   requireFeature(user, 'servicios', 'ver servicios');
@@ -60,6 +92,9 @@ export const createVentaServicioAction = withAction(withPeriodValidation(
       throw new ActionError('Las líneas de producto deben registrarse por /api/ventas', 'PRODUCT_LINE_NOT_SUPPORTED_IN_THIS_ENDPOINT');
     }
 
+    await assertServiciosDelTenant(tenantId, lineasServicio.map((l: any) => l.servicioId!));
+    await assertClienteDelTenant(tenantId, payload.clienteId);
+
     const created = await prisma.$transaction(
       lineasServicio.map((linea: any) =>
         prisma.ventaServicios.create({
@@ -87,6 +122,9 @@ export const createVentaServicioAction = withAction(withPeriodValidation(
 
   // Legacy mode (single servicio)
   const data = ventaServicioLegacySchema.parse(raw);
+
+  await assertServiciosDelTenant(tenantId, [data.servicioId]);
+  await assertClienteDelTenant(tenantId, data.clienteId);
 
   const resultado = await prisma.$transaction(async (tx) => {
     const ventaServicio = await tx.ventaServicios.create({

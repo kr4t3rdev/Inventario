@@ -47,16 +47,16 @@ export const createCompraServicioAction = withAction(withPeriodValidation(
   const parsed = createCompraServicioSchema.parse(input);
   const tenantId = requireTenant(user);
 
-  // Verificar servicio
-  const servicio = await prisma.servicios.findUnique({
-    where: { servicioId: parsed.servicioId },
+  // Verificar servicio (scoped al tenant)
+  const servicio = await prisma.servicios.findFirst({
+    where: { servicioId: parsed.servicioId, tenantId },
   });
   if (!servicio) throw new ActionError('Servicio no encontrado', 'NOT_FOUND');
 
-  // Verificar proveedor si se especificó
+  // Verificar proveedor si se especificó (scoped al tenant)
   if (parsed.proveedorId) {
-    const proveedor = await prisma.vendor.findUnique({
-      where: { vendorId: parsed.proveedorId },
+    const proveedor = await prisma.vendor.findFirst({
+      where: { vendorId: parsed.proveedorId, tenantId },
     });
     if (!proveedor) throw new ActionError('Proveedor no encontrado', 'NOT_FOUND');
   }

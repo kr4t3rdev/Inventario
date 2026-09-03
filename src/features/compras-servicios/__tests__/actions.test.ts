@@ -25,8 +25,8 @@ vi.mock("@/lib/prisma", () => ({
 			update: vi.fn(),
 			delete: vi.fn(),
 		},
-		servicios: { findUnique: vi.fn() },
-		vendor: { findUnique: vi.fn() },
+		servicios: { findUnique: vi.fn(), findFirst: vi.fn() },
+		vendor: { findUnique: vi.fn(), findFirst: vi.fn() },
 		$transaction: vi.fn((cb: any) => cb(mockTx)),
 	},
 }));
@@ -128,14 +128,21 @@ describe("ComprasServicios Server Actions", () => {
 
 		it("crea compra de servicio exitosamente", async () => {
 			vi.mocked(getCurrentUser).mockResolvedValue(mockUser);
-			vi.mocked(prisma.servicios.findUnique).mockResolvedValue(mockServicio);
+			vi.mocked(prisma.servicios.findFirst).mockResolvedValue(
+				mockServicio as any,
+			);
 			mockTx.compraServicio.create.mockResolvedValue(mockCompraRow);
 
 			const result = await createCompraServicioAction(validInput);
 
 			expect(result.success).toBe(true);
-			expect(prisma.servicios.findUnique).toHaveBeenCalledWith(
-				expect.objectContaining({ where: { servicioId: "sv-1" } }),
+			expect(prisma.servicios.findFirst).toHaveBeenCalledWith(
+				expect.objectContaining({
+					where: expect.objectContaining({
+						servicioId: "sv-1",
+						tenantId: "tenant-test",
+					}),
+				}),
 			);
 			expect(mockTx.compraServicio.create).toHaveBeenCalledWith(
 				expect.objectContaining({
@@ -148,12 +155,41 @@ describe("ComprasServicios Server Actions", () => {
 
 		it("retorna error si el servicio no existe", async () => {
 			vi.mocked(getCurrentUser).mockResolvedValue(mockUser);
-			vi.mocked(prisma.servicios.findUnique).mockResolvedValue(null);
+			vi.mocked(prisma.servicios.findFirst).mockResolvedValue(null);
 
 			const result = await createCompraServicioAction(validInput);
 
 			expect(result.success).toBe(false);
 			expect(result.error!.message).toContain("Servicio no encontrado");
+		});
+
+		it("rechaza servicio de otro tenant", async () => {
+			vi.mocked(getCurrentUser).mockResolvedValue(mockUser);
+			vi.mocked(prisma.servicios.findFirst).mockResolvedValue(null);
+
+			const result = await createCompraServicioAction({
+				...validInput,
+				servicioId: "sv-otro-tenant",
+			});
+
+			expect(result.success).toBe(false);
+			expect(result.error!.code).toBe("NOT_FOUND");
+		});
+
+		it("rechaza proveedor de otro tenant", async () => {
+			vi.mocked(getCurrentUser).mockResolvedValue(mockUser);
+			vi.mocked(prisma.servicios.findFirst).mockResolvedValue(
+				mockServicio as any,
+			);
+			vi.mocked(prisma.vendor.findFirst).mockResolvedValue(null);
+
+			const result = await createCompraServicioAction({
+				...validInput,
+				proveedorId: "vendor-otro-tenant",
+			});
+
+			expect(result.success).toBe(false);
+			expect(result.error!.message).toContain("Proveedor no encontrado");
 		});
 	});
 
