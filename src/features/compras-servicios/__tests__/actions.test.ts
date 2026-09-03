@@ -8,13 +8,26 @@ vi.mock("next/cache", () => ({ revalidatePath: vi.fn() }));
 vi.mock("@/lib/services/anticipos-workflow", () => ({
 	applyAnticipoAllocations: vi.fn(),
 }));
+vi.mock("@/features/gastosDE/reversal", () => ({
+	reverseExpenseEffects: vi.fn(),
+}));
 
 const mockTx = {
-	compraServicio: { create: vi.fn() },
+	compraServicio: {
+		create: vi.fn(),
+		findUnique: vi.fn(),
+		updateMany: vi.fn(),
+		deleteMany: vi.fn(),
+	},
 	tipoPago: { findFirst: vi.fn() },
 	cuentaBancaria: { findFirst: vi.fn() },
 	anticipo: { findUnique: vi.fn() },
-	reconciliacionGasto: { create: vi.fn() },
+	reconciliacionGasto: {
+		create: vi.fn(),
+		findMany: vi.fn(),
+		findFirst: vi.fn(),
+	},
+	$queryRaw: vi.fn(),
 };
 
 vi.mock("@/lib/prisma", () => ({
@@ -224,15 +237,30 @@ describe("ComprasServicios Server Actions", () => {
 	});
 
 	describe("deleteCompraServicioAction", () => {
-		it("elimina compra exitosamente", async () => {
+		it("elimina compra vía transacción con claim de estado ELIMINANDO", async () => {
 			vi.mocked(getCurrentUser).mockResolvedValue(mockUser);
-			vi.mocked(prisma.compraServicio.findFirst).mockResolvedValue(
-				mockCompraRow,
-			);
-			vi.mocked(prisma.compraServicio.delete).mockResolvedValue(mockCompraRow);
+			mockTx.compraServicio.findUnique.mockResolvedValue({
+				compraServicioId: "cs-1",
+				tenantId: "tenant-test",
+			});
+			mockTx.compraServicio.updateMany.mockResolvedValue({ count: 1 });
+			mockTx.compraServicio.deleteMany.mockResolvedValue({ count: 1 });
+			mockTx.reconciliacionGasto.findMany.mockResolvedValue([]);
+			mockTx.reconciliacionGasto.findFirst.mockResolvedValue(undefined);
 
 			const result = await deleteCompraServicioAction("cs-1");
+
 			expect(result.success).toBe(true);
+			expect(mockTx.compraServicio.updateMany).toHaveBeenCalledWith(
+				expect.objectContaining({
+					data: expect.objectContaining({ estado: "ELIMINANDO" }),
+				}),
+			);
+			expect(mockTx.compraServicio.deleteMany).toHaveBeenCalledWith(
+				expect.objectContaining({
+					where: expect.objectContaining({ compraServicioId: "cs-1" }),
+				}),
+			);
 		});
 	});
 

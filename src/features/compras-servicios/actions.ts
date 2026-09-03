@@ -189,33 +189,9 @@ export const deleteCompraServicioAction = withAction(async (id: string, user: Au
   const tenantId = requireTenant(user);
   requireFeature(user, 'servicios', 'eliminar servicios recibidos');
   requireManagerRole(user, 'eliminar servicios recibidos');
-  if (typeof (prisma as any).$transaction !== 'function') {
-    const existing = await prisma.compraServicio.findFirst({
-      where: { compraServicioId: id, tenantId },
-      select: { compraServicioId: true },
-    });
-    if (!existing) throw new ActionError('Servicio recibido no encontrado', 'NOT_FOUND');
-    await prisma.compraServicio.delete({ where: { compraServicioId: id } });
-    revalidatePath('/busy/compras-servicios');
-    return { id, eliminado: true };
-  }
 
-  await (prisma as any).$transaction(async (tx: any) => {
-    // Keep old lightweight test doubles working; real Prisma has the full
-    // reconciliation model and executes the financial reversal below.
-    if (!tx.reconciliacionGasto?.findMany) {
-      const existing = await prisma.compraServicio.findFirst({
-        where: { compraServicioId: id, tenantId },
-        select: { compraServicioId: true },
-      });
-      if (!existing) throw new ActionError('Servicio recibido no encontrado', 'NOT_FOUND');
-      await prisma.compraServicio.delete({ where: { compraServicioId: id } });
-      return;
-    }
-
-    if (tx.$queryRaw) {
-      await tx.$queryRaw`SELECT 1 FROM "CompraServicio" WHERE "compraServicioId" = ${id} AND "tenantId" = ${tenantId} FOR UPDATE`;
-    }
+  await prisma.$transaction(async (tx) => {
+    await tx.$queryRaw`SELECT 1 FROM "CompraServicio" WHERE "compraServicioId" = ${id} AND "tenantId" = ${tenantId} FOR UPDATE`;
     const existing = await tx.compraServicio.findUnique({
       where: { compraServicioId: id },
       select: { compraServicioId: true, tenantId: true },
@@ -224,8 +200,8 @@ export const deleteCompraServicioAction = withAction(async (id: string, user: Au
       throw new ActionError('Servicio recibido no encontrado', 'NOT_FOUND');
     }
 
-    // `estado` is a persisted status field and provides an atomic claim while
-    // the reversal runs. The transaction rolls the marker back on failure.
+    // `estado` es un campo de estado persistido que provee un claim atómico
+    // mientras corre la reversión. La transacción revierte el marcador ante fallo.
     const claimedForDeletion = await tx.compraServicio.updateMany({
       where: { compraServicioId: id, tenantId, estado: { not: 'ELIMINANDO' } },
       data: { estado: 'ELIMINANDO' },
@@ -242,20 +218,18 @@ export const deleteCompraServicioAction = withAction(async (id: string, user: Au
       anticipoContext: true,
     });
 
-    // A reconciliation writer may have started after the first read. Re-check
-    // immediately before deleting the source; any late row aborts the whole
-    // transaction so no partial reversal can be committed.
-    if (tx.reconciliacionGasto.findFirst) {
-      const lateReconciliation = await tx.reconciliacionGasto.findFirst({
-        where: { tenantId, tipoGasto: 'servicio', referenciaId: id },
-        select: { reconciliacionId: true },
-      });
-      if (lateReconciliation) {
-        throw new ActionError(
-          'No se puede eliminar el servicio mientras se registra un pago concurrente',
-          'CONCURRENT_RECONCILIATION',
-        );
-      }
+    // Un escritor de reconciliación pudo iniciar tras la primera lectura.
+    // Re-verificar justo antes de borrar la fuente; cualquier fila tardía aborta
+    // la transacción completa para que no se confirme una reversión parcial.
+    const lateReconciliation = await tx.reconciliacionGasto.findFirst({
+      where: { tenantId, tipoGasto: 'servicio', referenciaId: id },
+      select: { reconciliacionId: true },
+    });
+    if (lateReconciliation) {
+      throw new ActionError(
+        'No se puede eliminar el servicio mientras se registra un pago concurrente',
+        'CONCURRENT_RECONCILIATION',
+      );
     }
 
     await tx.compraServicio.deleteMany({ where: { compraServicioId: id, tenantId } });

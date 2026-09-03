@@ -81,22 +81,21 @@ export const createVentaServicioAction = withAction(withPeriodValidation(
   requireFeature(user, 'servicios', 'crear servicios');
 
   // Detectar modo: mixto (con lineas) vs legacy (single servicio)
-  const raw = input as any;
-  if (raw.lineas && Array.isArray(raw.lineas)) {
-    const payload = ventaMixtaSchema.parse(raw);
+  if ('lineas' in input && Array.isArray(input.lineas)) {
+    const payload = ventaMixtaSchema.parse(input);
 
-    const lineasServicio = payload.lineas.filter((l: any) => l.tipoLinea === 'SERVICIO');
-    const lineasProducto = payload.lineas.filter((l: any) => l.tipoLinea === 'PRODUCTO');
+    const lineasServicio = payload.lineas.filter((l) => l.tipoLinea === 'SERVICIO');
+    const lineasProducto = payload.lineas.filter((l) => l.tipoLinea === 'PRODUCTO');
 
     if (lineasProducto.length > 0) {
       throw new ActionError('Las líneas de producto deben registrarse por /api/ventas', 'PRODUCT_LINE_NOT_SUPPORTED_IN_THIS_ENDPOINT');
     }
 
-    await assertServiciosDelTenant(tenantId, lineasServicio.map((l: any) => l.servicioId!));
+    await assertServiciosDelTenant(tenantId, lineasServicio.map((l) => l.servicioId!));
     await assertClienteDelTenant(tenantId, payload.clienteId);
 
     const created = await prisma.$transaction(
-      lineasServicio.map((linea: any) =>
+      lineasServicio.map((linea) =>
         prisma.ventaServicios.create({
           data: {
             tenantId,
@@ -121,7 +120,7 @@ export const createVentaServicioAction = withAction(withPeriodValidation(
   }
 
   // Legacy mode (single servicio)
-  const data = ventaServicioLegacySchema.parse(raw);
+  const data = ventaServicioLegacySchema.parse(input);
 
   await assertServiciosDelTenant(tenantId, [data.servicioId]);
   await assertClienteDelTenant(tenantId, data.clienteId);
