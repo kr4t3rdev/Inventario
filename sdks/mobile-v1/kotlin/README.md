@@ -114,12 +114,16 @@ All URIs are relative to */api/mobile/v1*
 | *AccountingReportsApi* | [**mobileGetAccountingReportsOverdueInvoices**](docs/AccountingReportsApi.md#mobilegetaccountingreportsoverdueinvoices) | **GET** /accounting/reports/overdue-invoices | Consultar facturas vencidas |
 | *AccountingReportsApi* | [**mobileGetAccountingReportsSummary**](docs/AccountingReportsApi.md#mobilegetaccountingreportssummary) | **GET** /accounting/reports/summary | Consultar resumen financiero |
 | *AccountingReportsApi* | [**mobileGetAccountingReportsTransfers**](docs/AccountingReportsApi.md#mobilegetaccountingreportstransfers) | **GET** /accounting/reports/transfers | Consultar reporte de transferencias |
+| *AdminApi* | [**mobileApproveAdminMembership**](docs/AdminApi.md#mobileapproveadminmembership) | **POST** /admin/memberships/approve | Aprobar solicitud de membresía |
 | *AdminApi* | [**mobileGetAdminHealth**](docs/AdminApi.md#mobilegetadminhealth) | **GET** /admin/health | Consultar salud del sistema |
 | *AdminApi* | [**mobileGetAdminLicenseStats**](docs/AdminApi.md#mobilegetadminlicensestats) | **GET** /admin/licenses/stats | Consultar métricas de licencias |
 | *AdminApi* | [**mobileGetAdminLicenses**](docs/AdminApi.md#mobilegetadminlicenses) | **GET** /admin/licenses | Listar licencias con filtros |
 | *AdminApi* | [**mobileGetAdminPendingMemberships**](docs/AdminApi.md#mobilegetadminpendingmemberships) | **GET** /admin/memberships/pending | Listar solicitudes de membresía pendientes |
 | *AdminApi* | [**mobileGetAdminTenants**](docs/AdminApi.md#mobilegetadmintenants) | **GET** /admin/tenants | Listar empresas de la plataforma |
 | *AdminApi* | [**mobileGetAdminUsers**](docs/AdminApi.md#mobilegetadminusers) | **GET** /admin/users | Listar usuarios de la plataforma |
+| *AdminApi* | [**mobileLockAdminUser**](docs/AdminApi.md#mobilelockadminuser) | **POST** /admin/users/lock | Bloquear usuario por 24 horas |
+| *AdminApi* | [**mobileRejectAdminMembership**](docs/AdminApi.md#mobilerejectadminmembership) | **POST** /admin/memberships/reject | Rechazar solicitud de membresía |
+| *AdminApi* | [**mobileUnlockAdminUser**](docs/AdminApi.md#mobileunlockadminuser) | **POST** /admin/users/unlock | Desbloquear usuario |
 | *AuthApi* | [**mobileGetAuthMe**](docs/AuthApi.md#mobilegetauthme) | **GET** /auth/me | Consultar perfil autenticado |
 | *AuthApi* | [**mobileGetAuthTenants**](docs/AuthApi.md#mobilegetauthtenants) | **GET** /auth/tenants | Listar tenants accesibles |
 | *AuthApi* | [**mobilePostAuthLogin**](docs/AuthApi.md#mobilepostauthlogin) | **POST** /auth/login | Iniciar sesión móvil |
@@ -192,6 +196,7 @@ All URIs are relative to */api/mobile/v1*
  - [com.tcp.mobile.v1.models.AlmacenListResponse](docs/AlmacenListResponse.md)
  - [com.tcp.mobile.v1.models.AlmacenUpdateRequest](docs/AlmacenUpdateRequest.md)
  - [com.tcp.mobile.v1.models.ApiError](docs/ApiError.md)
+ - [com.tcp.mobile.v1.models.ApproveAdminMembershipRequest](docs/ApproveAdminMembershipRequest.md)
  - [com.tcp.mobile.v1.models.AuditLog](docs/AuditLog.md)
  - [com.tcp.mobile.v1.models.AuthSession](docs/AuthSession.md)
  - [com.tcp.mobile.v1.models.AuthenticatedUser](docs/AuthenticatedUser.md)
@@ -276,6 +281,7 @@ All URIs are relative to */api/mobile/v1*
  - [com.tcp.mobile.v1.models.GetSalesIdResponse](docs/GetSalesIdResponse.md)
  - [com.tcp.mobile.v1.models.GetSalesResponse](docs/GetSalesResponse.md)
  - [com.tcp.mobile.v1.models.JsonValue](docs/JsonValue.md)
+ - [com.tcp.mobile.v1.models.LockAdminUserRequest](docs/LockAdminUserRequest.md)
  - [com.tcp.mobile.v1.models.LoginRequest](docs/LoginRequest.md)
  - [com.tcp.mobile.v1.models.Pagination](docs/Pagination.md)
  - [com.tcp.mobile.v1.models.PatchSalesIdUpdateResponse](docs/PatchSalesIdUpdateResponse.md)
@@ -299,6 +305,10 @@ All URIs are relative to */api/mobile/v1*
  - [com.tcp.mobile.v1.models.PostAccountingReconciliationExpensesResponse](docs/PostAccountingReconciliationExpensesResponse.md)
  - [com.tcp.mobile.v1.models.PostAccountingReconciliationSalesResponse](docs/PostAccountingReconciliationSalesResponse.md)
  - [com.tcp.mobile.v1.models.PostAccountingReconciliationServicesResponse](docs/PostAccountingReconciliationServicesResponse.md)
+ - [com.tcp.mobile.v1.models.PostAdminMembershipsApproveResponse](docs/PostAdminMembershipsApproveResponse.md)
+ - [com.tcp.mobile.v1.models.PostAdminMembershipsRejectResponse](docs/PostAdminMembershipsRejectResponse.md)
+ - [com.tcp.mobile.v1.models.PostAdminUsersLockResponse](docs/PostAdminUsersLockResponse.md)
+ - [com.tcp.mobile.v1.models.PostAdminUsersLockResponseUser](docs/PostAdminUsersLockResponseUser.md)
  - [com.tcp.mobile.v1.models.PostSalesCreateResponse](docs/PostSalesCreateResponse.md)
  - [com.tcp.mobile.v1.models.PostSalesIdCancelResponse](docs/PostSalesIdCancelResponse.md)
  - [com.tcp.mobile.v1.models.Product](docs/Product.md)
@@ -319,6 +329,7 @@ All URIs are relative to */api/mobile/v1*
  - [com.tcp.mobile.v1.models.RefreshRequest](docs/RefreshRequest.md)
  - [com.tcp.mobile.v1.models.RegisterRequest](docs/RegisterRequest.md)
  - [com.tcp.mobile.v1.models.RegisterResponse](docs/RegisterResponse.md)
+ - [com.tcp.mobile.v1.models.RejectAdminMembershipRequest](docs/RejectAdminMembershipRequest.md)
  - [com.tcp.mobile.v1.models.ReportFilters](docs/ReportFilters.md)
  - [com.tcp.mobile.v1.models.ReportResult](docs/ReportResult.md)
  - [com.tcp.mobile.v1.models.ReportStatistics](docs/ReportStatistics.md)
@@ -339,6 +350,7 @@ All URIs are relative to */api/mobile/v1*
  - [com.tcp.mobile.v1.models.TenantSummary](docs/TenantSummary.md)
  - [com.tcp.mobile.v1.models.Token](docs/Token.md)
  - [com.tcp.mobile.v1.models.TokenPair](docs/TokenPair.md)
+ - [com.tcp.mobile.v1.models.UnlockAdminUserRequest](docs/UnlockAdminUserRequest.md)
 
 
 <a id="documentation-for-authorization"></a>

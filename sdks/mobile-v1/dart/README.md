@@ -134,12 +134,16 @@ Class | Method | HTTP request | Description
 *AccountingReportsApi* | [**mobileGetAccountingReportsOverdueInvoices**](doc//AccountingReportsApi.md#mobilegetaccountingreportsoverdueinvoices) | **GET** /accounting/reports/overdue-invoices | Consultar facturas vencidas
 *AccountingReportsApi* | [**mobileGetAccountingReportsSummary**](doc//AccountingReportsApi.md#mobilegetaccountingreportssummary) | **GET** /accounting/reports/summary | Consultar resumen financiero
 *AccountingReportsApi* | [**mobileGetAccountingReportsTransfers**](doc//AccountingReportsApi.md#mobilegetaccountingreportstransfers) | **GET** /accounting/reports/transfers | Consultar reporte de transferencias
+*AdminApi* | [**mobileApproveAdminMembership**](doc//AdminApi.md#mobileapproveadminmembership) | **POST** /admin/memberships/approve | Aprobar solicitud de membresía
 *AdminApi* | [**mobileGetAdminHealth**](doc//AdminApi.md#mobilegetadminhealth) | **GET** /admin/health | Consultar salud del sistema
 *AdminApi* | [**mobileGetAdminLicenseStats**](doc//AdminApi.md#mobilegetadminlicensestats) | **GET** /admin/licenses/stats | Consultar métricas de licencias
 *AdminApi* | [**mobileGetAdminLicenses**](doc//AdminApi.md#mobilegetadminlicenses) | **GET** /admin/licenses | Listar licencias con filtros
 *AdminApi* | [**mobileGetAdminPendingMemberships**](doc//AdminApi.md#mobilegetadminpendingmemberships) | **GET** /admin/memberships/pending | Listar solicitudes de membresía pendientes
 *AdminApi* | [**mobileGetAdminTenants**](doc//AdminApi.md#mobilegetadmintenants) | **GET** /admin/tenants | Listar empresas de la plataforma
 *AdminApi* | [**mobileGetAdminUsers**](doc//AdminApi.md#mobilegetadminusers) | **GET** /admin/users | Listar usuarios de la plataforma
+*AdminApi* | [**mobileLockAdminUser**](doc//AdminApi.md#mobilelockadminuser) | **POST** /admin/users/lock | Bloquear usuario por 24 horas
+*AdminApi* | [**mobileRejectAdminMembership**](doc//AdminApi.md#mobilerejectadminmembership) | **POST** /admin/memberships/reject | Rechazar solicitud de membresía
+*AdminApi* | [**mobileUnlockAdminUser**](doc//AdminApi.md#mobileunlockadminuser) | **POST** /admin/users/unlock | Desbloquear usuario
 *AuthApi* | [**mobileGetAuthMe**](doc//AuthApi.md#mobilegetauthme) | **GET** /auth/me | Consultar perfil autenticado
 *AuthApi* | [**mobileGetAuthTenants**](doc//AuthApi.md#mobilegetauthtenants) | **GET** /auth/tenants | Listar tenants accesibles
 *AuthApi* | [**mobilePostAuthLogin**](doc//AuthApi.md#mobilepostauthlogin) | **POST** /auth/login | Iniciar sesión móvil
@@ -211,6 +215,7 @@ Class | Method | HTTP request | Description
  - [AlmacenListResponse](doc//AlmacenListResponse.md)
  - [AlmacenUpdateRequest](doc//AlmacenUpdateRequest.md)
  - [ApiError](doc//ApiError.md)
+ - [ApproveAdminMembershipRequest](doc//ApproveAdminMembershipRequest.md)
  - [AuditLog](doc//AuditLog.md)
  - [AuthSession](doc//AuthSession.md)
  - [AuthenticatedUser](doc//AuthenticatedUser.md)
@@ -295,6 +300,7 @@ Class | Method | HTTP request | Description
  - [GetSalesIdResponse](doc//GetSalesIdResponse.md)
  - [GetSalesResponse](doc//GetSalesResponse.md)
  - [JsonValue](doc//JsonValue.md)
+ - [LockAdminUserRequest](doc//LockAdminUserRequest.md)
  - [LoginRequest](doc//LoginRequest.md)
  - [Pagination](doc//Pagination.md)
  - [PatchSalesIdUpdateResponse](doc//PatchSalesIdUpdateResponse.md)
@@ -318,6 +324,10 @@ Class | Method | HTTP request | Description
  - [PostAccountingReconciliationExpensesResponse](doc//PostAccountingReconciliationExpensesResponse.md)
  - [PostAccountingReconciliationSalesResponse](doc//PostAccountingReconciliationSalesResponse.md)
  - [PostAccountingReconciliationServicesResponse](doc//PostAccountingReconciliationServicesResponse.md)
+ - [PostAdminMembershipsApproveResponse](doc//PostAdminMembershipsApproveResponse.md)
+ - [PostAdminMembershipsRejectResponse](doc//PostAdminMembershipsRejectResponse.md)
+ - [PostAdminUsersLockResponse](doc//PostAdminUsersLockResponse.md)
+ - [PostAdminUsersLockResponseUser](doc//PostAdminUsersLockResponseUser.md)
  - [PostSalesCreateResponse](doc//PostSalesCreateResponse.md)
  - [PostSalesIdCancelResponse](doc//PostSalesIdCancelResponse.md)
  - [Product](doc//Product.md)
@@ -338,6 +348,7 @@ Class | Method | HTTP request | Description
  - [RefreshRequest](doc//RefreshRequest.md)
  - [RegisterRequest](doc//RegisterRequest.md)
  - [RegisterResponse](doc//RegisterResponse.md)
+ - [RejectAdminMembershipRequest](doc//RejectAdminMembershipRequest.md)
  - [ReportFilters](doc//ReportFilters.md)
  - [ReportResult](doc//ReportResult.md)
  - [ReportStatistics](doc//ReportStatistics.md)
@@ -358,6 +369,7 @@ Class | Method | HTTP request | Description
  - [TenantSummary](doc//TenantSummary.md)
  - [Token](doc//Token.md)
  - [TokenPair](doc//TokenPair.md)
+ - [UnlockAdminUserRequest](doc//UnlockAdminUserRequest.md)
 
 
 ## Documentation For Authorization

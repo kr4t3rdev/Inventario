@@ -18,10 +18,17 @@ import type {
   AdminHealthResponse,
   AdminTenantItem,
   ApiError,
+  ApproveAdminMembershipRequest,
   GetAdminLicenseStatsResponse,
   GetAdminLicensesResponse,
   GetAdminUsersResponse,
+  LockAdminUserRequest,
   PendingMembershipItem,
+  PostAdminMembershipsApproveResponse,
+  PostAdminMembershipsRejectResponse,
+  PostAdminUsersLockResponse,
+  RejectAdminMembershipRequest,
+  UnlockAdminUserRequest,
 } from '../models/index';
 import {
     AdminHealthResponseFromJSON,
@@ -30,15 +37,33 @@ import {
     AdminTenantItemToJSON,
     ApiErrorFromJSON,
     ApiErrorToJSON,
+    ApproveAdminMembershipRequestFromJSON,
+    ApproveAdminMembershipRequestToJSON,
     GetAdminLicenseStatsResponseFromJSON,
     GetAdminLicenseStatsResponseToJSON,
     GetAdminLicensesResponseFromJSON,
     GetAdminLicensesResponseToJSON,
     GetAdminUsersResponseFromJSON,
     GetAdminUsersResponseToJSON,
+    LockAdminUserRequestFromJSON,
+    LockAdminUserRequestToJSON,
     PendingMembershipItemFromJSON,
     PendingMembershipItemToJSON,
+    PostAdminMembershipsApproveResponseFromJSON,
+    PostAdminMembershipsApproveResponseToJSON,
+    PostAdminMembershipsRejectResponseFromJSON,
+    PostAdminMembershipsRejectResponseToJSON,
+    PostAdminUsersLockResponseFromJSON,
+    PostAdminUsersLockResponseToJSON,
+    RejectAdminMembershipRequestFromJSON,
+    RejectAdminMembershipRequestToJSON,
+    UnlockAdminUserRequestFromJSON,
+    UnlockAdminUserRequestToJSON,
 } from '../models/index';
+
+export interface MobileApproveAdminMembershipRequest {
+    approveAdminMembershipRequest: ApproveAdminMembershipRequest;
+}
 
 export interface MobileGetAdminLicenseStatsRequest {
     search?: string;
@@ -63,6 +88,18 @@ export interface MobileGetAdminUsersRequest {
     limit?: number;
 }
 
+export interface MobileLockAdminUserRequest {
+    lockAdminUserRequest: LockAdminUserRequest;
+}
+
+export interface MobileRejectAdminMembershipRequest {
+    rejectAdminMembershipRequest: RejectAdminMembershipRequest;
+}
+
+export interface MobileUnlockAdminUserRequest {
+    unlockAdminUserRequest: UnlockAdminUserRequest;
+}
+
 /**
  * AdminApi - interface
  * 
@@ -70,6 +107,22 @@ export interface MobileGetAdminUsersRequest {
  * @interface AdminApiInterface
  */
 export interface AdminApiInterface {
+    /**
+     * Aprueba una solicitud de membresía pendiente, activa al usuario, cierra su flujo de incorporación y crea su registro de empleado en la empresa cuando aún no existe.
+     * @summary Aprobar solicitud de membresía
+     * @param {ApproveAdminMembershipRequest} approveAdminMembershipRequest 
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof AdminApiInterface
+     */
+    mobileApproveAdminMembershipRaw(requestParameters: MobileApproveAdminMembershipRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<PostAdminMembershipsApproveResponse>>;
+
+    /**
+     * Aprueba una solicitud de membresía pendiente, activa al usuario, cierra su flujo de incorporación y crea su registro de empleado en la empresa cuando aún no existe.
+     * Aprobar solicitud de membresía
+     */
+    mobileApproveAdminMembership(requestParameters: MobileApproveAdminMembershipRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<PostAdminMembershipsApproveResponse>;
+
     /**
      * Devuelve métricas globales de la plataforma: total de usuarios reales por rol, empresas activas, sesiones vigentes y licencias con su estado de expiración. Incluye la tendencia de nuevos usuarios de los últimos 14 días con comparación entre semanas.
      * @summary Consultar salud del sistema
@@ -174,12 +227,109 @@ export interface AdminApiInterface {
      */
     mobileGetAdminUsers(requestParameters: MobileGetAdminUsersRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<GetAdminUsersResponse>;
 
+    /**
+     * Bloquea temporalmente a un usuario de la plataforma durante 24 horas, previniendo nuevos inicios de sesión. Devuelve el estado actualizado del bloqueo y su mensaje de confirmación.
+     * @summary Bloquear usuario por 24 horas
+     * @param {LockAdminUserRequest} lockAdminUserRequest 
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof AdminApiInterface
+     */
+    mobileLockAdminUserRaw(requestParameters: MobileLockAdminUserRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<PostAdminUsersLockResponse>>;
+
+    /**
+     * Bloquea temporalmente a un usuario de la plataforma durante 24 horas, previniendo nuevos inicios de sesión. Devuelve el estado actualizado del bloqueo y su mensaje de confirmación.
+     * Bloquear usuario por 24 horas
+     */
+    mobileLockAdminUser(requestParameters: MobileLockAdminUserRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<PostAdminUsersLockResponse>;
+
+    /**
+     * Rechaza una solicitud de membresía pendiente, elimina la solicitud y devuelve al solicitante a la etapa de selección de empresa para que pueda volver a elegir.
+     * @summary Rechazar solicitud de membresía
+     * @param {RejectAdminMembershipRequest} rejectAdminMembershipRequest 
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof AdminApiInterface
+     */
+    mobileRejectAdminMembershipRaw(requestParameters: MobileRejectAdminMembershipRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<PostAdminMembershipsRejectResponse>>;
+
+    /**
+     * Rechaza una solicitud de membresía pendiente, elimina la solicitud y devuelve al solicitante a la etapa de selección de empresa para que pueda volver a elegir.
+     * Rechazar solicitud de membresía
+     */
+    mobileRejectAdminMembership(requestParameters: MobileRejectAdminMembershipRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<PostAdminMembershipsRejectResponse>;
+
+    /**
+     * Desbloquea a un usuario de la plataforma y reinicia sus intentos de inicio de sesión. Devuelve el estado actualizado y su mensaje de confirmación.
+     * @summary Desbloquear usuario
+     * @param {UnlockAdminUserRequest} unlockAdminUserRequest 
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof AdminApiInterface
+     */
+    mobileUnlockAdminUserRaw(requestParameters: MobileUnlockAdminUserRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<PostAdminUsersLockResponse>>;
+
+    /**
+     * Desbloquea a un usuario de la plataforma y reinicia sus intentos de inicio de sesión. Devuelve el estado actualizado y su mensaje de confirmación.
+     * Desbloquear usuario
+     */
+    mobileUnlockAdminUser(requestParameters: MobileUnlockAdminUserRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<PostAdminUsersLockResponse>;
+
 }
 
 /**
  * 
  */
 export class AdminApi extends runtime.BaseAPI implements AdminApiInterface {
+
+    /**
+     * Aprueba una solicitud de membresía pendiente, activa al usuario, cierra su flujo de incorporación y crea su registro de empleado en la empresa cuando aún no existe.
+     * Aprobar solicitud de membresía
+     */
+    async mobileApproveAdminMembershipRaw(requestParameters: MobileApproveAdminMembershipRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<PostAdminMembershipsApproveResponse>> {
+        if (requestParameters['approveAdminMembershipRequest'] == null) {
+            throw new runtime.RequiredError(
+                'approveAdminMembershipRequest',
+                'Required parameter "approveAdminMembershipRequest" was null or undefined when calling mobileApproveAdminMembership().'
+            );
+        }
+
+        const queryParameters: any = {};
+
+        const headerParameters: runtime.HTTPHeaders = {};
+
+        headerParameters['Content-Type'] = 'application/json';
+
+        if (this.configuration && this.configuration.accessToken) {
+            const token = this.configuration.accessToken;
+            const tokenString = await token("bearerAuth", []);
+
+            if (tokenString) {
+                headerParameters["Authorization"] = `Bearer ${tokenString}`;
+            }
+        }
+
+        let urlPath = `/admin/memberships/approve`;
+
+        const response = await this.request({
+            path: urlPath,
+            method: 'POST',
+            headers: headerParameters,
+            query: queryParameters,
+            body: ApproveAdminMembershipRequestToJSON(requestParameters['approveAdminMembershipRequest']),
+        }, initOverrides);
+
+        return new runtime.JSONApiResponse(response, (jsonValue) => PostAdminMembershipsApproveResponseFromJSON(jsonValue));
+    }
+
+    /**
+     * Aprueba una solicitud de membresía pendiente, activa al usuario, cierra su flujo de incorporación y crea su registro de empleado en la empresa cuando aún no existe.
+     * Aprobar solicitud de membresía
+     */
+    async mobileApproveAdminMembership(requestParameters: MobileApproveAdminMembershipRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<PostAdminMembershipsApproveResponse> {
+        const response = await this.mobileApproveAdminMembershipRaw(requestParameters, initOverrides);
+        return await response.value();
+    }
 
     /**
      * Devuelve métricas globales de la plataforma: total de usuarios reales por rol, empresas activas, sesiones vigentes y licencias con su estado de expiración. Incluye la tendencia de nuevos usuarios de los últimos 14 días con comparación entre semanas.
@@ -468,6 +618,153 @@ export class AdminApi extends runtime.BaseAPI implements AdminApiInterface {
      */
     async mobileGetAdminUsers(requestParameters: MobileGetAdminUsersRequest = {}, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<GetAdminUsersResponse> {
         const response = await this.mobileGetAdminUsersRaw(requestParameters, initOverrides);
+        return await response.value();
+    }
+
+    /**
+     * Bloquea temporalmente a un usuario de la plataforma durante 24 horas, previniendo nuevos inicios de sesión. Devuelve el estado actualizado del bloqueo y su mensaje de confirmación.
+     * Bloquear usuario por 24 horas
+     */
+    async mobileLockAdminUserRaw(requestParameters: MobileLockAdminUserRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<PostAdminUsersLockResponse>> {
+        if (requestParameters['lockAdminUserRequest'] == null) {
+            throw new runtime.RequiredError(
+                'lockAdminUserRequest',
+                'Required parameter "lockAdminUserRequest" was null or undefined when calling mobileLockAdminUser().'
+            );
+        }
+
+        const queryParameters: any = {};
+
+        const headerParameters: runtime.HTTPHeaders = {};
+
+        headerParameters['Content-Type'] = 'application/json';
+
+        if (this.configuration && this.configuration.accessToken) {
+            const token = this.configuration.accessToken;
+            const tokenString = await token("bearerAuth", []);
+
+            if (tokenString) {
+                headerParameters["Authorization"] = `Bearer ${tokenString}`;
+            }
+        }
+
+        let urlPath = `/admin/users/lock`;
+
+        const response = await this.request({
+            path: urlPath,
+            method: 'POST',
+            headers: headerParameters,
+            query: queryParameters,
+            body: LockAdminUserRequestToJSON(requestParameters['lockAdminUserRequest']),
+        }, initOverrides);
+
+        return new runtime.JSONApiResponse(response, (jsonValue) => PostAdminUsersLockResponseFromJSON(jsonValue));
+    }
+
+    /**
+     * Bloquea temporalmente a un usuario de la plataforma durante 24 horas, previniendo nuevos inicios de sesión. Devuelve el estado actualizado del bloqueo y su mensaje de confirmación.
+     * Bloquear usuario por 24 horas
+     */
+    async mobileLockAdminUser(requestParameters: MobileLockAdminUserRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<PostAdminUsersLockResponse> {
+        const response = await this.mobileLockAdminUserRaw(requestParameters, initOverrides);
+        return await response.value();
+    }
+
+    /**
+     * Rechaza una solicitud de membresía pendiente, elimina la solicitud y devuelve al solicitante a la etapa de selección de empresa para que pueda volver a elegir.
+     * Rechazar solicitud de membresía
+     */
+    async mobileRejectAdminMembershipRaw(requestParameters: MobileRejectAdminMembershipRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<PostAdminMembershipsRejectResponse>> {
+        if (requestParameters['rejectAdminMembershipRequest'] == null) {
+            throw new runtime.RequiredError(
+                'rejectAdminMembershipRequest',
+                'Required parameter "rejectAdminMembershipRequest" was null or undefined when calling mobileRejectAdminMembership().'
+            );
+        }
+
+        const queryParameters: any = {};
+
+        const headerParameters: runtime.HTTPHeaders = {};
+
+        headerParameters['Content-Type'] = 'application/json';
+
+        if (this.configuration && this.configuration.accessToken) {
+            const token = this.configuration.accessToken;
+            const tokenString = await token("bearerAuth", []);
+
+            if (tokenString) {
+                headerParameters["Authorization"] = `Bearer ${tokenString}`;
+            }
+        }
+
+        let urlPath = `/admin/memberships/reject`;
+
+        const response = await this.request({
+            path: urlPath,
+            method: 'POST',
+            headers: headerParameters,
+            query: queryParameters,
+            body: RejectAdminMembershipRequestToJSON(requestParameters['rejectAdminMembershipRequest']),
+        }, initOverrides);
+
+        return new runtime.JSONApiResponse(response, (jsonValue) => PostAdminMembershipsRejectResponseFromJSON(jsonValue));
+    }
+
+    /**
+     * Rechaza una solicitud de membresía pendiente, elimina la solicitud y devuelve al solicitante a la etapa de selección de empresa para que pueda volver a elegir.
+     * Rechazar solicitud de membresía
+     */
+    async mobileRejectAdminMembership(requestParameters: MobileRejectAdminMembershipRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<PostAdminMembershipsRejectResponse> {
+        const response = await this.mobileRejectAdminMembershipRaw(requestParameters, initOverrides);
+        return await response.value();
+    }
+
+    /**
+     * Desbloquea a un usuario de la plataforma y reinicia sus intentos de inicio de sesión. Devuelve el estado actualizado y su mensaje de confirmación.
+     * Desbloquear usuario
+     */
+    async mobileUnlockAdminUserRaw(requestParameters: MobileUnlockAdminUserRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<PostAdminUsersLockResponse>> {
+        if (requestParameters['unlockAdminUserRequest'] == null) {
+            throw new runtime.RequiredError(
+                'unlockAdminUserRequest',
+                'Required parameter "unlockAdminUserRequest" was null or undefined when calling mobileUnlockAdminUser().'
+            );
+        }
+
+        const queryParameters: any = {};
+
+        const headerParameters: runtime.HTTPHeaders = {};
+
+        headerParameters['Content-Type'] = 'application/json';
+
+        if (this.configuration && this.configuration.accessToken) {
+            const token = this.configuration.accessToken;
+            const tokenString = await token("bearerAuth", []);
+
+            if (tokenString) {
+                headerParameters["Authorization"] = `Bearer ${tokenString}`;
+            }
+        }
+
+        let urlPath = `/admin/users/unlock`;
+
+        const response = await this.request({
+            path: urlPath,
+            method: 'POST',
+            headers: headerParameters,
+            query: queryParameters,
+            body: UnlockAdminUserRequestToJSON(requestParameters['unlockAdminUserRequest']),
+        }, initOverrides);
+
+        return new runtime.JSONApiResponse(response, (jsonValue) => PostAdminUsersLockResponseFromJSON(jsonValue));
+    }
+
+    /**
+     * Desbloquea a un usuario de la plataforma y reinicia sus intentos de inicio de sesión. Devuelve el estado actualizado y su mensaje de confirmación.
+     * Desbloquear usuario
+     */
+    async mobileUnlockAdminUser(requestParameters: MobileUnlockAdminUserRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<PostAdminUsersLockResponse> {
+        const response = await this.mobileUnlockAdminUserRaw(requestParameters, initOverrides);
         return await response.value();
     }
 

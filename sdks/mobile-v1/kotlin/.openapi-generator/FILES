@@ -46,6 +46,7 @@ docs/AlmacenDeleteResponse.md
 docs/AlmacenListResponse.md
 docs/AlmacenUpdateRequest.md
 docs/ApiError.md
+docs/ApproveAdminMembershipRequest.md
 docs/AuditLog.md
 docs/AuthApi.md
 docs/AuthSession.md
@@ -133,6 +134,7 @@ docs/GetProductsStockResponse.md
 docs/GetSalesIdResponse.md
 docs/GetSalesResponse.md
 docs/JsonValue.md
+docs/LockAdminUserRequest.md
 docs/LoginRequest.md
 docs/Pagination.md
 docs/PatchSalesIdUpdateResponse.md
@@ -156,6 +158,10 @@ docs/PostAccountingCashLoansResponse.md
 docs/PostAccountingReconciliationExpensesResponse.md
 docs/PostAccountingReconciliationSalesResponse.md
 docs/PostAccountingReconciliationServicesResponse.md
+docs/PostAdminMembershipsApproveResponse.md
+docs/PostAdminMembershipsRejectResponse.md
+docs/PostAdminUsersLockResponse.md
+docs/PostAdminUsersLockResponseUser.md
 docs/PostSalesCreateResponse.md
 docs/PostSalesIdCancelResponse.md
 docs/Product.md
@@ -178,6 +184,7 @@ docs/ReconciliationOverviewStats.md
 docs/RefreshRequest.md
 docs/RegisterRequest.md
 docs/RegisterResponse.md
+docs/RejectAdminMembershipRequest.md
 docs/ReportFilters.md
 docs/ReportResult.md
 docs/ReportStatistics.md
@@ -199,6 +206,7 @@ docs/TenantListResponse.md
 docs/TenantSummary.md
 docs/Token.md
 docs/TokenPair.md
+docs/UnlockAdminUserRequest.md
 docs/WarehousesApi.md
 gradle/wrapper/gradle-wrapper.jar
 gradle/wrapper/gradle-wrapper.properties
@@ -266,6 +274,7 @@ src/main/kotlin/com/tcp/mobile/v1/models/AlmacenDeleteResponse.kt
 src/main/kotlin/com/tcp/mobile/v1/models/AlmacenListResponse.kt
 src/main/kotlin/com/tcp/mobile/v1/models/AlmacenUpdateRequest.kt
 src/main/kotlin/com/tcp/mobile/v1/models/ApiError.kt
+src/main/kotlin/com/tcp/mobile/v1/models/ApproveAdminMembershipRequest.kt
 src/main/kotlin/com/tcp/mobile/v1/models/AuditLog.kt
 src/main/kotlin/com/tcp/mobile/v1/models/AuthSession.kt
 src/main/kotlin/com/tcp/mobile/v1/models/AuthenticatedUser.kt
@@ -350,6 +359,7 @@ src/main/kotlin/com/tcp/mobile/v1/models/GetProductsStockResponse.kt
 src/main/kotlin/com/tcp/mobile/v1/models/GetSalesIdResponse.kt
 src/main/kotlin/com/tcp/mobile/v1/models/GetSalesResponse.kt
 src/main/kotlin/com/tcp/mobile/v1/models/JsonValue.kt
+src/main/kotlin/com/tcp/mobile/v1/models/LockAdminUserRequest.kt
 src/main/kotlin/com/tcp/mobile/v1/models/LoginRequest.kt
 src/main/kotlin/com/tcp/mobile/v1/models/Pagination.kt
 src/main/kotlin/com/tcp/mobile/v1/models/PatchSalesIdUpdateResponse.kt
@@ -373,6 +383,10 @@ src/main/kotlin/com/tcp/mobile/v1/models/PostAccountingCashLoansResponse.kt
 src/main/kotlin/com/tcp/mobile/v1/models/PostAccountingReconciliationExpensesResponse.kt
 src/main/kotlin/com/tcp/mobile/v1/models/PostAccountingReconciliationSalesResponse.kt
 src/main/kotlin/com/tcp/mobile/v1/models/PostAccountingReconciliationServicesResponse.kt
+src/main/kotlin/com/tcp/mobile/v1/models/PostAdminMembershipsApproveResponse.kt
+src/main/kotlin/com/tcp/mobile/v1/models/PostAdminMembershipsRejectResponse.kt
+src/main/kotlin/com/tcp/mobile/v1/models/PostAdminUsersLockResponse.kt
+src/main/kotlin/com/tcp/mobile/v1/models/PostAdminUsersLockResponseUser.kt
 src/main/kotlin/com/tcp/mobile/v1/models/PostSalesCreateResponse.kt
 src/main/kotlin/com/tcp/mobile/v1/models/PostSalesIdCancelResponse.kt
 src/main/kotlin/com/tcp/mobile/v1/models/Product.kt
@@ -393,6 +407,7 @@ src/main/kotlin/com/tcp/mobile/v1/models/ReconciliationOverviewStats.kt
 src/main/kotlin/com/tcp/mobile/v1/models/RefreshRequest.kt
 src/main/kotlin/com/tcp/mobile/v1/models/RegisterRequest.kt
 src/main/kotlin/com/tcp/mobile/v1/models/RegisterResponse.kt
+src/main/kotlin/com/tcp/mobile/v1/models/RejectAdminMembershipRequest.kt
 src/main/kotlin/com/tcp/mobile/v1/models/ReportFilters.kt
 src/main/kotlin/com/tcp/mobile/v1/models/ReportResult.kt
 src/main/kotlin/com/tcp/mobile/v1/models/ReportStatistics.kt
@@ -413,6 +428,7 @@ src/main/kotlin/com/tcp/mobile/v1/models/TenantListResponse.kt
 src/main/kotlin/com/tcp/mobile/v1/models/TenantSummary.kt
 src/main/kotlin/com/tcp/mobile/v1/models/Token.kt
 src/main/kotlin/com/tcp/mobile/v1/models/TokenPair.kt
+src/main/kotlin/com/tcp/mobile/v1/models/UnlockAdminUserRequest.kt
 src/test/kotlin/com/tcp/mobile/v1/apis/AccountingAdvancesApiTest.kt
 src/test/kotlin/com/tcp/mobile/v1/apis/AccountingBankingApiTest.kt
 src/test/kotlin/com/tcp/mobile/v1/apis/AccountingCapitalApiTest.kt
@@ -465,6 +481,7 @@ src/test/kotlin/com/tcp/mobile/v1/models/AlmacenListResponseTest.kt
 src/test/kotlin/com/tcp/mobile/v1/models/AlmacenTest.kt
 src/test/kotlin/com/tcp/mobile/v1/models/AlmacenUpdateRequestTest.kt
 src/test/kotlin/com/tcp/mobile/v1/models/ApiErrorTest.kt
+src/test/kotlin/com/tcp/mobile/v1/models/ApproveAdminMembershipRequestTest.kt
 src/test/kotlin/com/tcp/mobile/v1/models/AuditLogTest.kt
 src/test/kotlin/com/tcp/mobile/v1/models/AuthSessionTest.kt
 src/test/kotlin/com/tcp/mobile/v1/models/AuthenticatedUserTest.kt
@@ -549,6 +566,7 @@ src/test/kotlin/com/tcp/mobile/v1/models/GetProductsStockResponseTest.kt
 src/test/kotlin/com/tcp/mobile/v1/models/GetSalesIdResponseTest.kt
 src/test/kotlin/com/tcp/mobile/v1/models/GetSalesResponseTest.kt
 src/test/kotlin/com/tcp/mobile/v1/models/JsonValueTest.kt
+src/test/kotlin/com/tcp/mobile/v1/models/LockAdminUserRequestTest.kt
 src/test/kotlin/com/tcp/mobile/v1/models/LoginRequestTest.kt
 src/test/kotlin/com/tcp/mobile/v1/models/PaginationTest.kt
 src/test/kotlin/com/tcp/mobile/v1/models/PatchSalesIdUpdateResponseTest.kt
@@ -572,6 +590,10 @@ src/test/kotlin/com/tcp/mobile/v1/models/PostAccountingCashLoansResponseTest.kt
 src/test/kotlin/com/tcp/mobile/v1/models/PostAccountingReconciliationExpensesResponseTest.kt
 src/test/kotlin/com/tcp/mobile/v1/models/PostAccountingReconciliationSalesResponseTest.kt
 src/test/kotlin/com/tcp/mobile/v1/models/PostAccountingReconciliationServicesResponseTest.kt
+src/test/kotlin/com/tcp/mobile/v1/models/PostAdminMembershipsApproveResponseTest.kt
+src/test/kotlin/com/tcp/mobile/v1/models/PostAdminMembershipsRejectResponseTest.kt
+src/test/kotlin/com/tcp/mobile/v1/models/PostAdminUsersLockResponseTest.kt
+src/test/kotlin/com/tcp/mobile/v1/models/PostAdminUsersLockResponseUserTest.kt
 src/test/kotlin/com/tcp/mobile/v1/models/PostSalesCreateResponseTest.kt
 src/test/kotlin/com/tcp/mobile/v1/models/PostSalesIdCancelResponseTest.kt
 src/test/kotlin/com/tcp/mobile/v1/models/ProductTest.kt
@@ -592,6 +614,7 @@ src/test/kotlin/com/tcp/mobile/v1/models/ReconciliationTest.kt
 src/test/kotlin/com/tcp/mobile/v1/models/RefreshRequestTest.kt
 src/test/kotlin/com/tcp/mobile/v1/models/RegisterRequestTest.kt
 src/test/kotlin/com/tcp/mobile/v1/models/RegisterResponseTest.kt
+src/test/kotlin/com/tcp/mobile/v1/models/RejectAdminMembershipRequestTest.kt
 src/test/kotlin/com/tcp/mobile/v1/models/ReportFiltersTest.kt
 src/test/kotlin/com/tcp/mobile/v1/models/ReportResultTest.kt
 src/test/kotlin/com/tcp/mobile/v1/models/ReportStatisticsTest.kt
@@ -612,3 +635,4 @@ src/test/kotlin/com/tcp/mobile/v1/models/TenantListResponseTest.kt
 src/test/kotlin/com/tcp/mobile/v1/models/TenantSummaryTest.kt
 src/test/kotlin/com/tcp/mobile/v1/models/TokenPairTest.kt
 src/test/kotlin/com/tcp/mobile/v1/models/TokenTest.kt
+src/test/kotlin/com/tcp/mobile/v1/models/UnlockAdminUserRequestTest.kt

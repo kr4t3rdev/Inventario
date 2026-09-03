@@ -254,6 +254,8 @@ class ApiClient {
           return AlmacenUpdateRequest.fromJson(value);
         case 'ApiError':
           return ApiError.fromJson(value);
+        case 'ApproveAdminMembershipRequest':
+          return ApproveAdminMembershipRequest.fromJson(value);
         case 'AuditLog':
           return AuditLog.fromJson(value);
         case 'AuthSession':
@@ -422,6 +424,8 @@ class ApiClient {
           return GetSalesResponse.fromJson(value);
         case 'JsonValue':
           return JsonValue.fromJson(value);
+        case 'LockAdminUserRequest':
+          return LockAdminUserRequest.fromJson(value);
         case 'LoginRequest':
           return LoginRequest.fromJson(value);
         case 'Pagination':
@@ -468,6 +472,14 @@ class ApiClient {
           return PostAccountingReconciliationSalesResponse.fromJson(value);
         case 'PostAccountingReconciliationServicesResponse':
           return PostAccountingReconciliationServicesResponse.fromJson(value);
+        case 'PostAdminMembershipsApproveResponse':
+          return PostAdminMembershipsApproveResponse.fromJson(value);
+        case 'PostAdminMembershipsRejectResponse':
+          return PostAdminMembershipsRejectResponse.fromJson(value);
+        case 'PostAdminUsersLockResponse':
+          return PostAdminUsersLockResponse.fromJson(value);
+        case 'PostAdminUsersLockResponseUser':
+          return PostAdminUsersLockResponseUser.fromJson(value);
         case 'PostSalesCreateResponse':
           return PostSalesCreateResponse.fromJson(value);
         case 'PostSalesIdCancelResponse':
@@ -508,6 +520,8 @@ class ApiClient {
           return RegisterRequest.fromJson(value);
         case 'RegisterResponse':
           return RegisterResponse.fromJson(value);
+        case 'RejectAdminMembershipRequest':
+          return RejectAdminMembershipRequest.fromJson(value);
         case 'ReportFilters':
           return ReportFilters.fromJson(value);
         case 'ReportResult':
@@ -548,6 +562,8 @@ class ApiClient {
           return Token.fromJson(value);
         case 'TokenPair':
           return TokenPair.fromJson(value);
+        case 'UnlockAdminUserRequest':
+          return UnlockAdminUserRequest.fromJson(value);
         default:
           dynamic match;
           if (value is List && (match = _regList.firstMatch(targetType)?.group(1)) != null) {

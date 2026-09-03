@@ -48,6 +48,7 @@ doc/AlmacenDeleteResponse.md
 doc/AlmacenListResponse.md
 doc/AlmacenUpdateRequest.md
 doc/ApiError.md
+doc/ApproveAdminMembershipRequest.md
 doc/AuditLog.md
 doc/AuthApi.md
 doc/AuthSession.md
@@ -135,6 +136,7 @@ doc/GetProductsStockResponse.md
 doc/GetSalesIdResponse.md
 doc/GetSalesResponse.md
 doc/JsonValue.md
+doc/LockAdminUserRequest.md
 doc/LoginRequest.md
 doc/Pagination.md
 doc/PatchSalesIdUpdateResponse.md
@@ -158,6 +160,10 @@ doc/PostAccountingCashLoansResponse.md
 doc/PostAccountingReconciliationExpensesResponse.md
 doc/PostAccountingReconciliationSalesResponse.md
 doc/PostAccountingReconciliationServicesResponse.md
+doc/PostAdminMembershipsApproveResponse.md
+doc/PostAdminMembershipsRejectResponse.md
+doc/PostAdminUsersLockResponse.md
+doc/PostAdminUsersLockResponseUser.md
 doc/PostSalesCreateResponse.md
 doc/PostSalesIdCancelResponse.md
 doc/Product.md
@@ -180,6 +186,7 @@ doc/ReconciliationOverviewStats.md
 doc/RefreshRequest.md
 doc/RegisterRequest.md
 doc/RegisterResponse.md
+doc/RejectAdminMembershipRequest.md
 doc/ReportFilters.md
 doc/ReportResult.md
 doc/ReportStatistics.md
@@ -201,6 +208,7 @@ doc/TenantListResponse.md
 doc/TenantSummary.md
 doc/Token.md
 doc/TokenPair.md
+doc/UnlockAdminUserRequest.md
 doc/WarehousesApi.md
 lib/api.dart
 lib/api/accounting_advances_api.dart
@@ -263,6 +271,7 @@ lib/model/almacen_delete_response.dart
 lib/model/almacen_list_response.dart
 lib/model/almacen_update_request.dart
 lib/model/api_error.dart
+lib/model/approve_admin_membership_request.dart
 lib/model/audit_log.dart
 lib/model/auth_session.dart
 lib/model/authenticated_user.dart
@@ -347,6 +356,7 @@ lib/model/get_products_stock_response.dart
 lib/model/get_sales_id_response.dart
 lib/model/get_sales_response.dart
 lib/model/json_value.dart
+lib/model/lock_admin_user_request.dart
 lib/model/login_request.dart
 lib/model/pagination.dart
 lib/model/patch_sales_id_update_response.dart
@@ -370,6 +380,10 @@ lib/model/post_accounting_cash_loans_response.dart
 lib/model/post_accounting_reconciliation_expenses_response.dart
 lib/model/post_accounting_reconciliation_sales_response.dart
 lib/model/post_accounting_reconciliation_services_response.dart
+lib/model/post_admin_memberships_approve_response.dart
+lib/model/post_admin_memberships_reject_response.dart
+lib/model/post_admin_users_lock_response.dart
+lib/model/post_admin_users_lock_response_user.dart
 lib/model/post_sales_create_response.dart
 lib/model/post_sales_id_cancel_response.dart
 lib/model/product.dart
@@ -390,6 +404,7 @@ lib/model/reconciliation_overview_stats.dart
 lib/model/refresh_request.dart
 lib/model/register_request.dart
 lib/model/register_response.dart
+lib/model/reject_admin_membership_request.dart
 lib/model/report_filters.dart
 lib/model/report_result.dart
 lib/model/report_statistics.dart
@@ -410,6 +425,7 @@ lib/model/tenant_list_response.dart
 lib/model/tenant_summary.dart
 lib/model/token.dart
 lib/model/token_pair.dart
+lib/model/unlock_admin_user_request.dart
 pubspec.yaml
 test/account_payable_test.dart
 test/account_receivable_test.dart
@@ -456,6 +472,7 @@ test/almacen_list_response_test.dart
 test/almacen_test.dart
 test/almacen_update_request_test.dart
 test/api_error_test.dart
+test/approve_admin_membership_request_test.dart
 test/audit_log_test.dart
 test/auth_api_test.dart
 test/auth_session_test.dart
@@ -543,6 +560,7 @@ test/get_products_stock_response_test.dart
 test/get_sales_id_response_test.dart
 test/get_sales_response_test.dart
 test/json_value_test.dart
+test/lock_admin_user_request_test.dart
 test/login_request_test.dart
 test/pagination_test.dart
 test/patch_sales_id_update_response_test.dart
@@ -566,6 +584,10 @@ test/post_accounting_cash_loans_response_test.dart
 test/post_accounting_reconciliation_expenses_response_test.dart
 test/post_accounting_reconciliation_sales_response_test.dart
 test/post_accounting_reconciliation_services_response_test.dart
+test/post_admin_memberships_approve_response_test.dart
+test/post_admin_memberships_reject_response_test.dart
+test/post_admin_users_lock_response_test.dart
+test/post_admin_users_lock_response_user_test.dart
 test/post_sales_create_response_test.dart
 test/post_sales_id_cancel_response_test.dart
 test/product_test.dart
@@ -588,6 +610,7 @@ test/reconciliation_test.dart
 test/refresh_request_test.dart
 test/register_request_test.dart
 test/register_response_test.dart
+test/reject_admin_membership_request_test.dart
 test/report_filters_test.dart
 test/report_result_test.dart
 test/report_statistics_test.dart
@@ -609,4 +632,5 @@ test/tenant_list_response_test.dart
 test/tenant_summary_test.dart
 test/token_pair_test.dart
 test/token_test.dart
+test/unlock_admin_user_request_test.dart
 test/warehouses_api_test.dart

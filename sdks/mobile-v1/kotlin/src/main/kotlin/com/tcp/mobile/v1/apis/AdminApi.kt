@@ -22,10 +22,17 @@ import okhttp3.HttpUrl
 import com.tcp.mobile.v1.models.AdminHealthResponse
 import com.tcp.mobile.v1.models.AdminTenantItem
 import com.tcp.mobile.v1.models.ApiError
+import com.tcp.mobile.v1.models.ApproveAdminMembershipRequest
 import com.tcp.mobile.v1.models.GetAdminLicenseStatsResponse
 import com.tcp.mobile.v1.models.GetAdminLicensesResponse
 import com.tcp.mobile.v1.models.GetAdminUsersResponse
+import com.tcp.mobile.v1.models.LockAdminUserRequest
 import com.tcp.mobile.v1.models.PendingMembershipItem
+import com.tcp.mobile.v1.models.PostAdminMembershipsApproveResponse
+import com.tcp.mobile.v1.models.PostAdminMembershipsRejectResponse
+import com.tcp.mobile.v1.models.PostAdminUsersLockResponse
+import com.tcp.mobile.v1.models.RejectAdminMembershipRequest
+import com.tcp.mobile.v1.models.UnlockAdminUserRequest
 
 import com.fasterxml.jackson.annotation.JsonProperty
 
@@ -49,6 +56,80 @@ class AdminApi(basePath: kotlin.String = defaultBasePath, client: Call.Factory =
         val defaultBasePath: String by lazy {
             System.getProperties().getProperty(ApiClient.baseUrlKey, "/api/mobile/v1")
         }
+    }
+
+    /**
+     * POST /admin/memberships/approve
+     * Aprobar solicitud de membresía
+     * Aprueba una solicitud de membresía pendiente, activa al usuario, cierra su flujo de incorporación y crea su registro de empleado en la empresa cuando aún no existe.
+     * @param approveAdminMembershipRequest 
+     * @return PostAdminMembershipsApproveResponse
+     * @throws IllegalStateException If the request is not correctly configured
+     * @throws IOException Rethrows the OkHttp execute method exception
+     * @throws UnsupportedOperationException If the API returns an informational or redirection response
+     * @throws ClientException If the API returns a client error response
+     * @throws ServerException If the API returns a server error response
+     */
+    @Suppress("UNCHECKED_CAST")
+    @Throws(IllegalStateException::class, IOException::class, UnsupportedOperationException::class, ClientException::class, ServerException::class)
+    fun mobileApproveAdminMembership(approveAdminMembershipRequest: ApproveAdminMembershipRequest) : PostAdminMembershipsApproveResponse {
+        val localVarResponse = mobileApproveAdminMembershipWithHttpInfo(approveAdminMembershipRequest = approveAdminMembershipRequest)
+
+        return when (localVarResponse.responseType) {
+            ResponseType.Success -> (localVarResponse as Success<*>).data as PostAdminMembershipsApproveResponse
+            ResponseType.Informational -> throw UnsupportedOperationException("Client does not support Informational responses.")
+            ResponseType.Redirection -> throw UnsupportedOperationException("Client does not support Redirection responses.")
+            ResponseType.ClientError -> {
+                val localVarError = localVarResponse as ClientError<*>
+                throw ClientException("Client error : ${localVarError.statusCode} ${localVarError.message.orEmpty()}", localVarError.statusCode, localVarResponse)
+            }
+            ResponseType.ServerError -> {
+                val localVarError = localVarResponse as ServerError<*>
+                throw ServerException("Server error : ${localVarError.statusCode} ${localVarError.message.orEmpty()} ${localVarError.body}", localVarError.statusCode, localVarResponse)
+            }
+        }
+    }
+
+    /**
+     * POST /admin/memberships/approve
+     * Aprobar solicitud de membresía
+     * Aprueba una solicitud de membresía pendiente, activa al usuario, cierra su flujo de incorporación y crea su registro de empleado en la empresa cuando aún no existe.
+     * @param approveAdminMembershipRequest 
+     * @return ApiResponse<PostAdminMembershipsApproveResponse?>
+     * @throws IllegalStateException If the request is not correctly configured
+     * @throws IOException Rethrows the OkHttp execute method exception
+     */
+    @Suppress("UNCHECKED_CAST")
+    @Throws(IllegalStateException::class, IOException::class)
+    fun mobileApproveAdminMembershipWithHttpInfo(approveAdminMembershipRequest: ApproveAdminMembershipRequest) : ApiResponse<PostAdminMembershipsApproveResponse?> {
+        val localVariableConfig = mobileApproveAdminMembershipRequestConfig(approveAdminMembershipRequest = approveAdminMembershipRequest)
+
+        return request<ApproveAdminMembershipRequest, PostAdminMembershipsApproveResponse>(
+            localVariableConfig
+        )
+    }
+
+    /**
+     * To obtain the request config of the operation mobileApproveAdminMembership
+     *
+     * @param approveAdminMembershipRequest 
+     * @return RequestConfig
+     */
+    fun mobileApproveAdminMembershipRequestConfig(approveAdminMembershipRequest: ApproveAdminMembershipRequest) : RequestConfig<ApproveAdminMembershipRequest> {
+        val localVariableBody = approveAdminMembershipRequest
+        val localVariableQuery: MultiValueMap = mutableMapOf()
+        val localVariableHeaders: MutableMap<String, String> = mutableMapOf()
+        localVariableHeaders["Content-Type"] = "application/json"
+        localVariableHeaders["Accept"] = "application/json"
+
+        return RequestConfig(
+            method = RequestMethod.POST,
+            path = "/admin/memberships/approve",
+            query = localVariableQuery,
+            headers = localVariableHeaders,
+            requiresAuthentication = true,
+            body = localVariableBody
+        )
     }
 
     /**
@@ -591,6 +672,228 @@ class AdminApi(basePath: kotlin.String = defaultBasePath, client: Call.Factory =
         return RequestConfig(
             method = RequestMethod.GET,
             path = "/admin/users",
+            query = localVariableQuery,
+            headers = localVariableHeaders,
+            requiresAuthentication = true,
+            body = localVariableBody
+        )
+    }
+
+    /**
+     * POST /admin/users/lock
+     * Bloquear usuario por 24 horas
+     * Bloquea temporalmente a un usuario de la plataforma durante 24 horas, previniendo nuevos inicios de sesión. Devuelve el estado actualizado del bloqueo y su mensaje de confirmación.
+     * @param lockAdminUserRequest 
+     * @return PostAdminUsersLockResponse
+     * @throws IllegalStateException If the request is not correctly configured
+     * @throws IOException Rethrows the OkHttp execute method exception
+     * @throws UnsupportedOperationException If the API returns an informational or redirection response
+     * @throws ClientException If the API returns a client error response
+     * @throws ServerException If the API returns a server error response
+     */
+    @Suppress("UNCHECKED_CAST")
+    @Throws(IllegalStateException::class, IOException::class, UnsupportedOperationException::class, ClientException::class, ServerException::class)
+    fun mobileLockAdminUser(lockAdminUserRequest: LockAdminUserRequest) : PostAdminUsersLockResponse {
+        val localVarResponse = mobileLockAdminUserWithHttpInfo(lockAdminUserRequest = lockAdminUserRequest)
+
+        return when (localVarResponse.responseType) {
+            ResponseType.Success -> (localVarResponse as Success<*>).data as PostAdminUsersLockResponse
+            ResponseType.Informational -> throw UnsupportedOperationException("Client does not support Informational responses.")
+            ResponseType.Redirection -> throw UnsupportedOperationException("Client does not support Redirection responses.")
+            ResponseType.ClientError -> {
+                val localVarError = localVarResponse as ClientError<*>
+                throw ClientException("Client error : ${localVarError.statusCode} ${localVarError.message.orEmpty()}", localVarError.statusCode, localVarResponse)
+            }
+            ResponseType.ServerError -> {
+                val localVarError = localVarResponse as ServerError<*>
+                throw ServerException("Server error : ${localVarError.statusCode} ${localVarError.message.orEmpty()} ${localVarError.body}", localVarError.statusCode, localVarResponse)
+            }
+        }
+    }
+
+    /**
+     * POST /admin/users/lock
+     * Bloquear usuario por 24 horas
+     * Bloquea temporalmente a un usuario de la plataforma durante 24 horas, previniendo nuevos inicios de sesión. Devuelve el estado actualizado del bloqueo y su mensaje de confirmación.
+     * @param lockAdminUserRequest 
+     * @return ApiResponse<PostAdminUsersLockResponse?>
+     * @throws IllegalStateException If the request is not correctly configured
+     * @throws IOException Rethrows the OkHttp execute method exception
+     */
+    @Suppress("UNCHECKED_CAST")
+    @Throws(IllegalStateException::class, IOException::class)
+    fun mobileLockAdminUserWithHttpInfo(lockAdminUserRequest: LockAdminUserRequest) : ApiResponse<PostAdminUsersLockResponse?> {
+        val localVariableConfig = mobileLockAdminUserRequestConfig(lockAdminUserRequest = lockAdminUserRequest)
+
+        return request<LockAdminUserRequest, PostAdminUsersLockResponse>(
+            localVariableConfig
+        )
+    }
+
+    /**
+     * To obtain the request config of the operation mobileLockAdminUser
+     *
+     * @param lockAdminUserRequest 
+     * @return RequestConfig
+     */
+    fun mobileLockAdminUserRequestConfig(lockAdminUserRequest: LockAdminUserRequest) : RequestConfig<LockAdminUserRequest> {
+        val localVariableBody = lockAdminUserRequest
+        val localVariableQuery: MultiValueMap = mutableMapOf()
+        val localVariableHeaders: MutableMap<String, String> = mutableMapOf()
+        localVariableHeaders["Content-Type"] = "application/json"
+        localVariableHeaders["Accept"] = "application/json"
+
+        return RequestConfig(
+            method = RequestMethod.POST,
+            path = "/admin/users/lock",
+            query = localVariableQuery,
+            headers = localVariableHeaders,
+            requiresAuthentication = true,
+            body = localVariableBody
+        )
+    }
+
+    /**
+     * POST /admin/memberships/reject
+     * Rechazar solicitud de membresía
+     * Rechaza una solicitud de membresía pendiente, elimina la solicitud y devuelve al solicitante a la etapa de selección de empresa para que pueda volver a elegir.
+     * @param rejectAdminMembershipRequest 
+     * @return PostAdminMembershipsRejectResponse
+     * @throws IllegalStateException If the request is not correctly configured
+     * @throws IOException Rethrows the OkHttp execute method exception
+     * @throws UnsupportedOperationException If the API returns an informational or redirection response
+     * @throws ClientException If the API returns a client error response
+     * @throws ServerException If the API returns a server error response
+     */
+    @Suppress("UNCHECKED_CAST")
+    @Throws(IllegalStateException::class, IOException::class, UnsupportedOperationException::class, ClientException::class, ServerException::class)
+    fun mobileRejectAdminMembership(rejectAdminMembershipRequest: RejectAdminMembershipRequest) : PostAdminMembershipsRejectResponse {
+        val localVarResponse = mobileRejectAdminMembershipWithHttpInfo(rejectAdminMembershipRequest = rejectAdminMembershipRequest)
+
+        return when (localVarResponse.responseType) {
+            ResponseType.Success -> (localVarResponse as Success<*>).data as PostAdminMembershipsRejectResponse
+            ResponseType.Informational -> throw UnsupportedOperationException("Client does not support Informational responses.")
+            ResponseType.Redirection -> throw UnsupportedOperationException("Client does not support Redirection responses.")
+            ResponseType.ClientError -> {
+                val localVarError = localVarResponse as ClientError<*>
+                throw ClientException("Client error : ${localVarError.statusCode} ${localVarError.message.orEmpty()}", localVarError.statusCode, localVarResponse)
+            }
+            ResponseType.ServerError -> {
+                val localVarError = localVarResponse as ServerError<*>
+                throw ServerException("Server error : ${localVarError.statusCode} ${localVarError.message.orEmpty()} ${localVarError.body}", localVarError.statusCode, localVarResponse)
+            }
+        }
+    }
+
+    /**
+     * POST /admin/memberships/reject
+     * Rechazar solicitud de membresía
+     * Rechaza una solicitud de membresía pendiente, elimina la solicitud y devuelve al solicitante a la etapa de selección de empresa para que pueda volver a elegir.
+     * @param rejectAdminMembershipRequest 
+     * @return ApiResponse<PostAdminMembershipsRejectResponse?>
+     * @throws IllegalStateException If the request is not correctly configured
+     * @throws IOException Rethrows the OkHttp execute method exception
+     */
+    @Suppress("UNCHECKED_CAST")
+    @Throws(IllegalStateException::class, IOException::class)
+    fun mobileRejectAdminMembershipWithHttpInfo(rejectAdminMembershipRequest: RejectAdminMembershipRequest) : ApiResponse<PostAdminMembershipsRejectResponse?> {
+        val localVariableConfig = mobileRejectAdminMembershipRequestConfig(rejectAdminMembershipRequest = rejectAdminMembershipRequest)
+
+        return request<RejectAdminMembershipRequest, PostAdminMembershipsRejectResponse>(
+            localVariableConfig
+        )
+    }
+
+    /**
+     * To obtain the request config of the operation mobileRejectAdminMembership
+     *
+     * @param rejectAdminMembershipRequest 
+     * @return RequestConfig
+     */
+    fun mobileRejectAdminMembershipRequestConfig(rejectAdminMembershipRequest: RejectAdminMembershipRequest) : RequestConfig<RejectAdminMembershipRequest> {
+        val localVariableBody = rejectAdminMembershipRequest
+        val localVariableQuery: MultiValueMap = mutableMapOf()
+        val localVariableHeaders: MutableMap<String, String> = mutableMapOf()
+        localVariableHeaders["Content-Type"] = "application/json"
+        localVariableHeaders["Accept"] = "application/json"
+
+        return RequestConfig(
+            method = RequestMethod.POST,
+            path = "/admin/memberships/reject",
+            query = localVariableQuery,
+            headers = localVariableHeaders,
+            requiresAuthentication = true,
+            body = localVariableBody
+        )
+    }
+
+    /**
+     * POST /admin/users/unlock
+     * Desbloquear usuario
+     * Desbloquea a un usuario de la plataforma y reinicia sus intentos de inicio de sesión. Devuelve el estado actualizado y su mensaje de confirmación.
+     * @param unlockAdminUserRequest 
+     * @return PostAdminUsersLockResponse
+     * @throws IllegalStateException If the request is not correctly configured
+     * @throws IOException Rethrows the OkHttp execute method exception
+     * @throws UnsupportedOperationException If the API returns an informational or redirection response
+     * @throws ClientException If the API returns a client error response
+     * @throws ServerException If the API returns a server error response
+     */
+    @Suppress("UNCHECKED_CAST")
+    @Throws(IllegalStateException::class, IOException::class, UnsupportedOperationException::class, ClientException::class, ServerException::class)
+    fun mobileUnlockAdminUser(unlockAdminUserRequest: UnlockAdminUserRequest) : PostAdminUsersLockResponse {
+        val localVarResponse = mobileUnlockAdminUserWithHttpInfo(unlockAdminUserRequest = unlockAdminUserRequest)
+
+        return when (localVarResponse.responseType) {
+            ResponseType.Success -> (localVarResponse as Success<*>).data as PostAdminUsersLockResponse
+            ResponseType.Informational -> throw UnsupportedOperationException("Client does not support Informational responses.")
+            ResponseType.Redirection -> throw UnsupportedOperationException("Client does not support Redirection responses.")
+            ResponseType.ClientError -> {
+                val localVarError = localVarResponse as ClientError<*>
+                throw ClientException("Client error : ${localVarError.statusCode} ${localVarError.message.orEmpty()}", localVarError.statusCode, localVarResponse)
+            }
+            ResponseType.ServerError -> {
+                val localVarError = localVarResponse as ServerError<*>
+                throw ServerException("Server error : ${localVarError.statusCode} ${localVarError.message.orEmpty()} ${localVarError.body}", localVarError.statusCode, localVarResponse)
+            }
+        }
+    }
+
+    /**
+     * POST /admin/users/unlock
+     * Desbloquear usuario
+     * Desbloquea a un usuario de la plataforma y reinicia sus intentos de inicio de sesión. Devuelve el estado actualizado y su mensaje de confirmación.
+     * @param unlockAdminUserRequest 
+     * @return ApiResponse<PostAdminUsersLockResponse?>
+     * @throws IllegalStateException If the request is not correctly configured
+     * @throws IOException Rethrows the OkHttp execute method exception
+     */
+    @Suppress("UNCHECKED_CAST")
+    @Throws(IllegalStateException::class, IOException::class)
+    fun mobileUnlockAdminUserWithHttpInfo(unlockAdminUserRequest: UnlockAdminUserRequest) : ApiResponse<PostAdminUsersLockResponse?> {
+        val localVariableConfig = mobileUnlockAdminUserRequestConfig(unlockAdminUserRequest = unlockAdminUserRequest)
+
+        return request<UnlockAdminUserRequest, PostAdminUsersLockResponse>(
+            localVariableConfig
+        )
+    }
+
+    /**
+     * To obtain the request config of the operation mobileUnlockAdminUser
+     *
+     * @param unlockAdminUserRequest 
+     * @return RequestConfig
+     */
+    fun mobileUnlockAdminUserRequestConfig(unlockAdminUserRequest: UnlockAdminUserRequest) : RequestConfig<UnlockAdminUserRequest> {
+        val localVariableBody = unlockAdminUserRequest
+        val localVariableQuery: MultiValueMap = mutableMapOf()
+        val localVariableHeaders: MutableMap<String, String> = mutableMapOf()
+        localVariableHeaders["Content-Type"] = "application/json"
+        localVariableHeaders["Accept"] = "application/json"
+
+        return RequestConfig(
+            method = RequestMethod.POST,
+            path = "/admin/users/unlock",
             query = localVariableQuery,
             headers = localVariableHeaders,
             requiresAuthentication = true,

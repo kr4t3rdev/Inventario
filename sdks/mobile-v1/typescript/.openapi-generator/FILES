@@ -47,6 +47,7 @@ docs/AlmacenDeleteResponse.md
 docs/AlmacenListResponse.md
 docs/AlmacenUpdateRequest.md
 docs/ApiError.md
+docs/ApproveAdminMembershipRequest.md
 docs/AuditLog.md
 docs/AuthApi.md
 docs/AuthSession.md
@@ -134,6 +135,7 @@ docs/GetProductsStockResponse.md
 docs/GetSalesIdResponse.md
 docs/GetSalesResponse.md
 docs/JsonValue.md
+docs/LockAdminUserRequest.md
 docs/LoginRequest.md
 docs/Pagination.md
 docs/PatchSalesIdUpdateResponse.md
@@ -157,6 +159,10 @@ docs/PostAccountingCashLoansResponse.md
 docs/PostAccountingReconciliationExpensesResponse.md
 docs/PostAccountingReconciliationSalesResponse.md
 docs/PostAccountingReconciliationServicesResponse.md
+docs/PostAdminMembershipsApproveResponse.md
+docs/PostAdminMembershipsRejectResponse.md
+docs/PostAdminUsersLockResponse.md
+docs/PostAdminUsersLockResponseUser.md
 docs/PostSalesCreateResponse.md
 docs/PostSalesIdCancelResponse.md
 docs/Product.md
@@ -179,6 +185,7 @@ docs/ReconciliationOverviewStats.md
 docs/RefreshRequest.md
 docs/RegisterRequest.md
 docs/RegisterResponse.md
+docs/RejectAdminMembershipRequest.md
 docs/ReportFilters.md
 docs/ReportResult.md
 docs/ReportStatistics.md
@@ -200,6 +207,7 @@ docs/TenantListResponse.md
 docs/TenantSummary.md
 docs/Token.md
 docs/TokenPair.md
+docs/UnlockAdminUserRequest.md
 docs/WarehousesApi.md
 package.json
 src/apis/AccountingAdvancesApi.ts
@@ -256,6 +264,7 @@ src/models/AlmacenDeleteResponse.ts
 src/models/AlmacenListResponse.ts
 src/models/AlmacenUpdateRequest.ts
 src/models/ApiError.ts
+src/models/ApproveAdminMembershipRequest.ts
 src/models/AuditLog.ts
 src/models/AuthSession.ts
 src/models/AuthenticatedUser.ts
@@ -340,6 +349,7 @@ src/models/GetProductsStockResponse.ts
 src/models/GetSalesIdResponse.ts
 src/models/GetSalesResponse.ts
 src/models/JsonValue.ts
+src/models/LockAdminUserRequest.ts
 src/models/LoginRequest.ts
 src/models/Pagination.ts
 src/models/PatchSalesIdUpdateResponse.ts
@@ -363,6 +373,10 @@ src/models/PostAccountingCashLoansResponse.ts
 src/models/PostAccountingReconciliationExpensesResponse.ts
 src/models/PostAccountingReconciliationSalesResponse.ts
 src/models/PostAccountingReconciliationServicesResponse.ts
+src/models/PostAdminMembershipsApproveResponse.ts
+src/models/PostAdminMembershipsRejectResponse.ts
+src/models/PostAdminUsersLockResponse.ts
+src/models/PostAdminUsersLockResponseUser.ts
 src/models/PostSalesCreateResponse.ts
 src/models/PostSalesIdCancelResponse.ts
 src/models/Product.ts
@@ -383,6 +397,7 @@ src/models/ReconciliationOverviewStats.ts
 src/models/RefreshRequest.ts
 src/models/RegisterRequest.ts
 src/models/RegisterResponse.ts
+src/models/RejectAdminMembershipRequest.ts
 src/models/ReportFilters.ts
 src/models/ReportResult.ts
 src/models/ReportStatistics.ts
@@ -403,6 +418,7 @@ src/models/TenantListResponse.ts
 src/models/TenantSummary.ts
 src/models/Token.ts
 src/models/TokenPair.ts
+src/models/UnlockAdminUserRequest.ts
 src/models/index.ts
 src/runtime.ts
 tsconfig.esm.json

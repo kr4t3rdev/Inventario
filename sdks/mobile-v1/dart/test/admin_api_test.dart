@@ -17,6 +17,15 @@ void main() {
   // final instance = AdminApi();
 
   group('tests for AdminApi', () {
+    // Aprobar solicitud de membresía
+    //
+    // Aprueba una solicitud de membresía pendiente, activa al usuario, cierra su flujo de incorporación y crea su registro de empleado en la empresa cuando aún no existe.
+    //
+    //Future<PostAdminMembershipsApproveResponse> mobileApproveAdminMembership(ApproveAdminMembershipRequest approveAdminMembershipRequest) async
+    test('test mobileApproveAdminMembership', () async {
+      // TODO
+    });
+
     // Consultar salud del sistema
     //
     // Devuelve métricas globales de la plataforma: total de usuarios reales por rol, empresas activas, sesiones vigentes y licencias con su estado de expiración. Incluye la tendencia de nuevos usuarios de los últimos 14 días con comparación entre semanas.
@@ -68,6 +77,33 @@ void main() {
     //
     //Future<GetAdminUsersResponse> mobileGetAdminUsers({ String tenantId, int limit }) async
     test('test mobileGetAdminUsers', () async {
+      // TODO
+    });
+
+    // Bloquear usuario por 24 horas
+    //
+    // Bloquea temporalmente a un usuario de la plataforma durante 24 horas, previniendo nuevos inicios de sesión. Devuelve el estado actualizado del bloqueo y su mensaje de confirmación.
+    //
+    //Future<PostAdminUsersLockResponse> mobileLockAdminUser(LockAdminUserRequest lockAdminUserRequest) async
+    test('test mobileLockAdminUser', () async {
+      // TODO
+    });
+
+    // Rechazar solicitud de membresía
+    //
+    // Rechaza una solicitud de membresía pendiente, elimina la solicitud y devuelve al solicitante a la etapa de selección de empresa para que pueda volver a elegir.
+    //
+    //Future<PostAdminMembershipsRejectResponse> mobileRejectAdminMembership(RejectAdminMembershipRequest rejectAdminMembershipRequest) async
+    test('test mobileRejectAdminMembership', () async {
+      // TODO
+    });
+
+    // Desbloquear usuario
+    //
+    // Desbloquea a un usuario de la plataforma y reinicia sus intentos de inicio de sesión. Devuelve el estado actualizado y su mensaje de confirmación.
+    //
+    //Future<PostAdminUsersLockResponse> mobileUnlockAdminUser(UnlockAdminUserRequest unlockAdminUserRequest) async
+    test('test mobileUnlockAdminUser', () async {
       // TODO
     });
 

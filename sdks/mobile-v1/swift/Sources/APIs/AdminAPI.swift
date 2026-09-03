@@ -13,6 +13,45 @@ import AnyCodable
 open class AdminAPI {
 
     /**
+     Aprobar solicitud de membresía
+     
+     - parameter approveAdminMembershipRequest: (body)  
+     - returns: PostAdminMembershipsApproveResponse
+     */
+    @available(macOS 10.15, iOS 13.0, tvOS 13.0, watchOS 6.0, *)
+    open class func mobileApproveAdminMembership(approveAdminMembershipRequest: ApproveAdminMembershipRequest) async throws -> PostAdminMembershipsApproveResponse {
+        return try await mobileApproveAdminMembershipWithRequestBuilder(approveAdminMembershipRequest: approveAdminMembershipRequest).execute().body
+    }
+
+    /**
+     Aprobar solicitud de membresía
+     - POST /admin/memberships/approve
+     - Aprueba una solicitud de membresía pendiente, activa al usuario, cierra su flujo de incorporación y crea su registro de empleado en la empresa cuando aún no existe.
+     - Bearer Token:
+       - type: http
+       - name: bearerAuth
+     - parameter approveAdminMembershipRequest: (body)  
+     - returns: RequestBuilder<PostAdminMembershipsApproveResponse> 
+     */
+    open class func mobileApproveAdminMembershipWithRequestBuilder(approveAdminMembershipRequest: ApproveAdminMembershipRequest) -> RequestBuilder<PostAdminMembershipsApproveResponse> {
+        let localVariablePath = "/admin/memberships/approve"
+        let localVariableURLString = TCPMobileV1SDKAPI.basePath + localVariablePath
+        let localVariableParameters = JSONEncodingHelper.encodingParameters(forEncodableObject: approveAdminMembershipRequest)
+
+        let localVariableUrlComponents = URLComponents(string: localVariableURLString)
+
+        let localVariableNillableHeaders: [String: Any?] = [
+            "Content-Type": "application/json",
+        ]
+
+        let localVariableHeaderParameters = APIHelper.rejectNilHeaders(localVariableNillableHeaders)
+
+        let localVariableRequestBuilder: RequestBuilder<PostAdminMembershipsApproveResponse>.Type = TCPMobileV1SDKAPI.requestBuilderFactory.getBuilder()
+
+        return localVariableRequestBuilder.init(method: "POST", URLString: (localVariableUrlComponents?.string ?? localVariableURLString), parameters: localVariableParameters, headers: localVariableHeaderParameters, requiresAuthentication: true)
+    }
+
+    /**
      Consultar salud del sistema
      
      - returns: AdminHealthResponse
@@ -299,5 +338,122 @@ open class AdminAPI {
         let localVariableRequestBuilder: RequestBuilder<GetAdminUsersResponse>.Type = TCPMobileV1SDKAPI.requestBuilderFactory.getBuilder()
 
         return localVariableRequestBuilder.init(method: "GET", URLString: (localVariableUrlComponents?.string ?? localVariableURLString), parameters: localVariableParameters, headers: localVariableHeaderParameters, requiresAuthentication: true)
+    }
+
+    /**
+     Bloquear usuario por 24 horas
+     
+     - parameter lockAdminUserRequest: (body)  
+     - returns: PostAdminUsersLockResponse
+     */
+    @available(macOS 10.15, iOS 13.0, tvOS 13.0, watchOS 6.0, *)
+    open class func mobileLockAdminUser(lockAdminUserRequest: LockAdminUserRequest) async throws -> PostAdminUsersLockResponse {
+        return try await mobileLockAdminUserWithRequestBuilder(lockAdminUserRequest: lockAdminUserRequest).execute().body
+    }
+
+    /**
+     Bloquear usuario por 24 horas
+     - POST /admin/users/lock
+     - Bloquea temporalmente a un usuario de la plataforma durante 24 horas, previniendo nuevos inicios de sesión. Devuelve el estado actualizado del bloqueo y su mensaje de confirmación.
+     - Bearer Token:
+       - type: http
+       - name: bearerAuth
+     - parameter lockAdminUserRequest: (body)  
+     - returns: RequestBuilder<PostAdminUsersLockResponse> 
+     */
+    open class func mobileLockAdminUserWithRequestBuilder(lockAdminUserRequest: LockAdminUserRequest) -> RequestBuilder<PostAdminUsersLockResponse> {
+        let localVariablePath = "/admin/users/lock"
+        let localVariableURLString = TCPMobileV1SDKAPI.basePath + localVariablePath
+        let localVariableParameters = JSONEncodingHelper.encodingParameters(forEncodableObject: lockAdminUserRequest)
+
+        let localVariableUrlComponents = URLComponents(string: localVariableURLString)
+
+        let localVariableNillableHeaders: [String: Any?] = [
+            "Content-Type": "application/json",
+        ]
+
+        let localVariableHeaderParameters = APIHelper.rejectNilHeaders(localVariableNillableHeaders)
+
+        let localVariableRequestBuilder: RequestBuilder<PostAdminUsersLockResponse>.Type = TCPMobileV1SDKAPI.requestBuilderFactory.getBuilder()
+
+        return localVariableRequestBuilder.init(method: "POST", URLString: (localVariableUrlComponents?.string ?? localVariableURLString), parameters: localVariableParameters, headers: localVariableHeaderParameters, requiresAuthentication: true)
+    }
+
+    /**
+     Rechazar solicitud de membresía
+     
+     - parameter rejectAdminMembershipRequest: (body)  
+     - returns: PostAdminMembershipsRejectResponse
+     */
+    @available(macOS 10.15, iOS 13.0, tvOS 13.0, watchOS 6.0, *)
+    open class func mobileRejectAdminMembership(rejectAdminMembershipRequest: RejectAdminMembershipRequest) async throws -> PostAdminMembershipsRejectResponse {
+        return try await mobileRejectAdminMembershipWithRequestBuilder(rejectAdminMembershipRequest: rejectAdminMembershipRequest).execute().body
+    }
+
+    /**
+     Rechazar solicitud de membresía
+     - POST /admin/memberships/reject
+     - Rechaza una solicitud de membresía pendiente, elimina la solicitud y devuelve al solicitante a la etapa de selección de empresa para que pueda volver a elegir.
+     - Bearer Token:
+       - type: http
+       - name: bearerAuth
+     - parameter rejectAdminMembershipRequest: (body)  
+     - returns: RequestBuilder<PostAdminMembershipsRejectResponse> 
+     */
+    open class func mobileRejectAdminMembershipWithRequestBuilder(rejectAdminMembershipRequest: RejectAdminMembershipRequest) -> RequestBuilder<PostAdminMembershipsRejectResponse> {
+        let localVariablePath = "/admin/memberships/reject"
+        let localVariableURLString = TCPMobileV1SDKAPI.basePath + localVariablePath
+        let localVariableParameters = JSONEncodingHelper.encodingParameters(forEncodableObject: rejectAdminMembershipRequest)
+
+        let localVariableUrlComponents = URLComponents(string: localVariableURLString)
+
+        let localVariableNillableHeaders: [String: Any?] = [
+            "Content-Type": "application/json",
+        ]
+
+        let localVariableHeaderParameters = APIHelper.rejectNilHeaders(localVariableNillableHeaders)
+
+        let localVariableRequestBuilder: RequestBuilder<PostAdminMembershipsRejectResponse>.Type = TCPMobileV1SDKAPI.requestBuilderFactory.getBuilder()
+
+        return localVariableRequestBuilder.init(method: "POST", URLString: (localVariableUrlComponents?.string ?? localVariableURLString), parameters: localVariableParameters, headers: localVariableHeaderParameters, requiresAuthentication: true)
+    }
+
+    /**
+     Desbloquear usuario
+     
+     - parameter unlockAdminUserRequest: (body)  
+     - returns: PostAdminUsersLockResponse
+     */
+    @available(macOS 10.15, iOS 13.0, tvOS 13.0, watchOS 6.0, *)
+    open class func mobileUnlockAdminUser(unlockAdminUserRequest: UnlockAdminUserRequest) async throws -> PostAdminUsersLockResponse {
+        return try await mobileUnlockAdminUserWithRequestBuilder(unlockAdminUserRequest: unlockAdminUserRequest).execute().body
+    }
+
+    /**
+     Desbloquear usuario
+     - POST /admin/users/unlock
+     - Desbloquea a un usuario de la plataforma y reinicia sus intentos de inicio de sesión. Devuelve el estado actualizado y su mensaje de confirmación.
+     - Bearer Token:
+       - type: http
+       - name: bearerAuth
+     - parameter unlockAdminUserRequest: (body)  
+     - returns: RequestBuilder<PostAdminUsersLockResponse> 
+     */
+    open class func mobileUnlockAdminUserWithRequestBuilder(unlockAdminUserRequest: UnlockAdminUserRequest) -> RequestBuilder<PostAdminUsersLockResponse> {
+        let localVariablePath = "/admin/users/unlock"
+        let localVariableURLString = TCPMobileV1SDKAPI.basePath + localVariablePath
+        let localVariableParameters = JSONEncodingHelper.encodingParameters(forEncodableObject: unlockAdminUserRequest)
+
+        let localVariableUrlComponents = URLComponents(string: localVariableURLString)
+
+        let localVariableNillableHeaders: [String: Any?] = [
+            "Content-Type": "application/json",
+        ]
+
+        let localVariableHeaderParameters = APIHelper.rejectNilHeaders(localVariableNillableHeaders)
+
+        let localVariableRequestBuilder: RequestBuilder<PostAdminUsersLockResponse>.Type = TCPMobileV1SDKAPI.requestBuilderFactory.getBuilder()
+
+        return localVariableRequestBuilder.init(method: "POST", URLString: (localVariableUrlComponents?.string ?? localVariableURLString), parameters: localVariableParameters, headers: localVariableHeaderParameters, requiresAuthentication: true)
     }
 }

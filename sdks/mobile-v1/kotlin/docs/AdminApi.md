@@ -4,13 +4,65 @@ All URIs are relative to */api/mobile/v1*
 
 | Method | HTTP request | Description |
 | ------------- | ------------- | ------------- |
+| [**mobileApproveAdminMembership**](AdminApi.md#mobileApproveAdminMembership) | **POST** /admin/memberships/approve | Aprobar solicitud de membresía |
 | [**mobileGetAdminHealth**](AdminApi.md#mobileGetAdminHealth) | **GET** /admin/health | Consultar salud del sistema |
 | [**mobileGetAdminLicenseStats**](AdminApi.md#mobileGetAdminLicenseStats) | **GET** /admin/licenses/stats | Consultar métricas de licencias |
 | [**mobileGetAdminLicenses**](AdminApi.md#mobileGetAdminLicenses) | **GET** /admin/licenses | Listar licencias con filtros |
 | [**mobileGetAdminPendingMemberships**](AdminApi.md#mobileGetAdminPendingMemberships) | **GET** /admin/memberships/pending | Listar solicitudes de membresía pendientes |
 | [**mobileGetAdminTenants**](AdminApi.md#mobileGetAdminTenants) | **GET** /admin/tenants | Listar empresas de la plataforma |
 | [**mobileGetAdminUsers**](AdminApi.md#mobileGetAdminUsers) | **GET** /admin/users | Listar usuarios de la plataforma |
+| [**mobileLockAdminUser**](AdminApi.md#mobileLockAdminUser) | **POST** /admin/users/lock | Bloquear usuario por 24 horas |
+| [**mobileRejectAdminMembership**](AdminApi.md#mobileRejectAdminMembership) | **POST** /admin/memberships/reject | Rechazar solicitud de membresía |
+| [**mobileUnlockAdminUser**](AdminApi.md#mobileUnlockAdminUser) | **POST** /admin/users/unlock | Desbloquear usuario |
 
+
+<a id="mobileApproveAdminMembership"></a>
+# **mobileApproveAdminMembership**
+> PostAdminMembershipsApproveResponse mobileApproveAdminMembership(approveAdminMembershipRequest)
+
+Aprobar solicitud de membresía
+
+Aprueba una solicitud de membresía pendiente, activa al usuario, cierra su flujo de incorporación y crea su registro de empleado en la empresa cuando aún no existe.
+
+### Example
+```kotlin
+// Import classes:
+//import com.tcp.mobile.v1.infrastructure.*
+//import com.tcp.mobile.v1.models.*
+
+val apiInstance = AdminApi()
+val approveAdminMembershipRequest : ApproveAdminMembershipRequest =  // ApproveAdminMembershipRequest | 
+try {
+    val result : PostAdminMembershipsApproveResponse = apiInstance.mobileApproveAdminMembership(approveAdminMembershipRequest)
+    println(result)
+} catch (e: ClientException) {
+    println("4xx response calling AdminApi#mobileApproveAdminMembership")
+    e.printStackTrace()
+} catch (e: ServerException) {
+    println("5xx response calling AdminApi#mobileApproveAdminMembership")
+    e.printStackTrace()
+}
+```
+
+### Parameters
+| Name | Type | Description  | Notes |
+| ------------- | ------------- | ------------- | ------------- |
+| **approveAdminMembershipRequest** | [**ApproveAdminMembershipRequest**](ApproveAdminMembershipRequest.md)|  | |
+
+### Return type
+
+[**PostAdminMembershipsApproveResponse**](PostAdminMembershipsApproveResponse.md)
+
+### Authorization
+
+
+Configure bearerAuth:
+    ApiClient.accessToken = ""
+
+### HTTP request headers
+
+ - **Content-Type**: application/json
+ - **Accept**: application/json
 
 <a id="mobileGetAdminHealth"></a>
 # **mobileGetAdminHealth**
@@ -311,5 +363,149 @@ Configure bearerAuth:
 ### HTTP request headers
 
  - **Content-Type**: Not defined
+ - **Accept**: application/json
+
+<a id="mobileLockAdminUser"></a>
+# **mobileLockAdminUser**
+> PostAdminUsersLockResponse mobileLockAdminUser(lockAdminUserRequest)
+
+Bloquear usuario por 24 horas
+
+Bloquea temporalmente a un usuario de la plataforma durante 24 horas, previniendo nuevos inicios de sesión. Devuelve el estado actualizado del bloqueo y su mensaje de confirmación.
+
+### Example
+```kotlin
+// Import classes:
+//import com.tcp.mobile.v1.infrastructure.*
+//import com.tcp.mobile.v1.models.*
+
+val apiInstance = AdminApi()
+val lockAdminUserRequest : LockAdminUserRequest =  // LockAdminUserRequest | 
+try {
+    val result : PostAdminUsersLockResponse = apiInstance.mobileLockAdminUser(lockAdminUserRequest)
+    println(result)
+} catch (e: ClientException) {
+    println("4xx response calling AdminApi#mobileLockAdminUser")
+    e.printStackTrace()
+} catch (e: ServerException) {
+    println("5xx response calling AdminApi#mobileLockAdminUser")
+    e.printStackTrace()
+}
+```
+
+### Parameters
+| Name | Type | Description  | Notes |
+| ------------- | ------------- | ------------- | ------------- |
+| **lockAdminUserRequest** | [**LockAdminUserRequest**](LockAdminUserRequest.md)|  | |
+
+### Return type
+
+[**PostAdminUsersLockResponse**](PostAdminUsersLockResponse.md)
+
+### Authorization
+
+
+Configure bearerAuth:
+    ApiClient.accessToken = ""
+
+### HTTP request headers
+
+ - **Content-Type**: application/json
+ - **Accept**: application/json
+
+<a id="mobileRejectAdminMembership"></a>
+# **mobileRejectAdminMembership**
+> PostAdminMembershipsRejectResponse mobileRejectAdminMembership(rejectAdminMembershipRequest)
+
+Rechazar solicitud de membresía
+
+Rechaza una solicitud de membresía pendiente, elimina la solicitud y devuelve al solicitante a la etapa de selección de empresa para que pueda volver a elegir.
+
+### Example
+```kotlin
+// Import classes:
+//import com.tcp.mobile.v1.infrastructure.*
+//import com.tcp.mobile.v1.models.*
+
+val apiInstance = AdminApi()
+val rejectAdminMembershipRequest : RejectAdminMembershipRequest =  // RejectAdminMembershipRequest | 
+try {
+    val result : PostAdminMembershipsRejectResponse = apiInstance.mobileRejectAdminMembership(rejectAdminMembershipRequest)
+    println(result)
+} catch (e: ClientException) {
+    println("4xx response calling AdminApi#mobileRejectAdminMembership")
+    e.printStackTrace()
+} catch (e: ServerException) {
+    println("5xx response calling AdminApi#mobileRejectAdminMembership")
+    e.printStackTrace()
+}
+```
+
+### Parameters
+| Name | Type | Description  | Notes |
+| ------------- | ------------- | ------------- | ------------- |
+| **rejectAdminMembershipRequest** | [**RejectAdminMembershipRequest**](RejectAdminMembershipRequest.md)|  | |
+
+### Return type
+
+[**PostAdminMembershipsRejectResponse**](PostAdminMembershipsRejectResponse.md)
+
+### Authorization
+
+
+Configure bearerAuth:
+    ApiClient.accessToken = ""
+
+### HTTP request headers
+
+ - **Content-Type**: application/json
+ - **Accept**: application/json
+
+<a id="mobileUnlockAdminUser"></a>
+# **mobileUnlockAdminUser**
+> PostAdminUsersLockResponse mobileUnlockAdminUser(unlockAdminUserRequest)
+
+Desbloquear usuario
+
+Desbloquea a un usuario de la plataforma y reinicia sus intentos de inicio de sesión. Devuelve el estado actualizado y su mensaje de confirmación.
+
+### Example
+```kotlin
+// Import classes:
+//import com.tcp.mobile.v1.infrastructure.*
+//import com.tcp.mobile.v1.models.*
+
+val apiInstance = AdminApi()
+val unlockAdminUserRequest : UnlockAdminUserRequest =  // UnlockAdminUserRequest | 
+try {
+    val result : PostAdminUsersLockResponse = apiInstance.mobileUnlockAdminUser(unlockAdminUserRequest)
+    println(result)
+} catch (e: ClientException) {
+    println("4xx response calling AdminApi#mobileUnlockAdminUser")
+    e.printStackTrace()
+} catch (e: ServerException) {
+    println("5xx response calling AdminApi#mobileUnlockAdminUser")
+    e.printStackTrace()
+}
+```
+
+### Parameters
+| Name | Type | Description  | Notes |
+| ------------- | ------------- | ------------- | ------------- |
+| **unlockAdminUserRequest** | [**UnlockAdminUserRequest**](UnlockAdminUserRequest.md)|  | |
+
+### Return type
+
+[**PostAdminUsersLockResponse**](PostAdminUsersLockResponse.md)
+
+### Authorization
+
+
+Configure bearerAuth:
+    ApiClient.accessToken = ""
+
+### HTTP request headers
+
+ - **Content-Type**: application/json
  - **Accept**: application/json
 

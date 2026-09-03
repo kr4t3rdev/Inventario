@@ -4,13 +4,94 @@ All URIs are relative to */api/mobile/v1*
 
 | Method | HTTP request | Description |
 |------------- | ------------- | -------------|
+| [**mobileApproveAdminMembership**](AdminApi.md#mobileapproveadminmembership) | **POST** /admin/memberships/approve | Aprobar solicitud de membresía |
 | [**mobileGetAdminHealth**](AdminApi.md#mobilegetadminhealth) | **GET** /admin/health | Consultar salud del sistema |
 | [**mobileGetAdminLicenseStats**](AdminApi.md#mobilegetadminlicensestats) | **GET** /admin/licenses/stats | Consultar métricas de licencias |
 | [**mobileGetAdminLicenses**](AdminApi.md#mobilegetadminlicenses) | **GET** /admin/licenses | Listar licencias con filtros |
 | [**mobileGetAdminPendingMemberships**](AdminApi.md#mobilegetadminpendingmemberships) | **GET** /admin/memberships/pending | Listar solicitudes de membresía pendientes |
 | [**mobileGetAdminTenants**](AdminApi.md#mobilegetadmintenants) | **GET** /admin/tenants | Listar empresas de la plataforma |
 | [**mobileGetAdminUsers**](AdminApi.md#mobilegetadminusers) | **GET** /admin/users | Listar usuarios de la plataforma |
+| [**mobileLockAdminUser**](AdminApi.md#mobilelockadminuser) | **POST** /admin/users/lock | Bloquear usuario por 24 horas |
+| [**mobileRejectAdminMembership**](AdminApi.md#mobilerejectadminmembership) | **POST** /admin/memberships/reject | Rechazar solicitud de membresía |
+| [**mobileUnlockAdminUser**](AdminApi.md#mobileunlockadminuser) | **POST** /admin/users/unlock | Desbloquear usuario |
 
+
+
+## mobileApproveAdminMembership
+
+> PostAdminMembershipsApproveResponse mobileApproveAdminMembership(approveAdminMembershipRequest)
+
+Aprobar solicitud de membresía
+
+Aprueba una solicitud de membresía pendiente, activa al usuario, cierra su flujo de incorporación y crea su registro de empleado en la empresa cuando aún no existe.
+
+### Example
+
+```ts
+import {
+  Configuration,
+  AdminApi,
+} from '@tcp/mobile-v1-sdk';
+import type { MobileApproveAdminMembershipRequest } from '@tcp/mobile-v1-sdk';
+
+async function example() {
+  console.log("🚀 Testing @tcp/mobile-v1-sdk SDK...");
+  const config = new Configuration({ 
+    // Configure HTTP bearer authorization: bearerAuth
+    accessToken: "YOUR BEARER TOKEN",
+  });
+  const api = new AdminApi(config);
+
+  const body = {
+    // ApproveAdminMembershipRequest
+    approveAdminMembershipRequest: ...,
+  } satisfies MobileApproveAdminMembershipRequest;
+
+  try {
+    const data = await api.mobileApproveAdminMembership(body);
+    console.log(data);
+  } catch (error) {
+    console.error(error);
+  }
+}
+
+// Run the test
+example().catch(console.error);
+```
+
+### Parameters
+
+
+| Name | Type | Description  | Notes |
+|------------- | ------------- | ------------- | -------------|
+| **approveAdminMembershipRequest** | [ApproveAdminMembershipRequest](ApproveAdminMembershipRequest.md) |  | |
+
+### Return type
+
+[**PostAdminMembershipsApproveResponse**](PostAdminMembershipsApproveResponse.md)
+
+### Authorization
+
+[bearerAuth](../README.md#bearerAuth)
+
+### HTTP request headers
+
+- **Content-Type**: `application/json`
+- **Accept**: `application/json`
+
+
+### HTTP response details
+| Status code | Description | Response headers |
+|-------------|-------------|------------------|
+| **200** | Operación completada |  -  |
+| **400** | Solicitud inválida |  -  |
+| **401** | No autenticado |  -  |
+| **403** | No autorizado |  -  |
+| **404** | No encontrado |  -  |
+| **409** | La membresía ya está activa |  -  |
+| **500** | Error interno |  -  |
+
+[[Back to top]](#) [[Back to API list]](../README.md#api-endpoints) [[Back to Model list]](../README.md#models) [[Back to README]](../README.md)
 
 
 ## mobileGetAdminHealth
@@ -463,6 +544,233 @@ example().catch(console.error);
 | **200** | Operación completada |  -  |
 | **401** | No autenticado |  -  |
 | **403** | No autorizado |  -  |
+| **500** | Error interno |  -  |
+
+[[Back to top]](#) [[Back to API list]](../README.md#api-endpoints) [[Back to Model list]](../README.md#models) [[Back to README]](../README.md)
+
+
+## mobileLockAdminUser
+
+> PostAdminUsersLockResponse mobileLockAdminUser(lockAdminUserRequest)
+
+Bloquear usuario por 24 horas
+
+Bloquea temporalmente a un usuario de la plataforma durante 24 horas, previniendo nuevos inicios de sesión. Devuelve el estado actualizado del bloqueo y su mensaje de confirmación.
+
+### Example
+
+```ts
+import {
+  Configuration,
+  AdminApi,
+} from '@tcp/mobile-v1-sdk';
+import type { MobileLockAdminUserRequest } from '@tcp/mobile-v1-sdk';
+
+async function example() {
+  console.log("🚀 Testing @tcp/mobile-v1-sdk SDK...");
+  const config = new Configuration({ 
+    // Configure HTTP bearer authorization: bearerAuth
+    accessToken: "YOUR BEARER TOKEN",
+  });
+  const api = new AdminApi(config);
+
+  const body = {
+    // LockAdminUserRequest
+    lockAdminUserRequest: ...,
+  } satisfies MobileLockAdminUserRequest;
+
+  try {
+    const data = await api.mobileLockAdminUser(body);
+    console.log(data);
+  } catch (error) {
+    console.error(error);
+  }
+}
+
+// Run the test
+example().catch(console.error);
+```
+
+### Parameters
+
+
+| Name | Type | Description  | Notes |
+|------------- | ------------- | ------------- | -------------|
+| **lockAdminUserRequest** | [LockAdminUserRequest](LockAdminUserRequest.md) |  | |
+
+### Return type
+
+[**PostAdminUsersLockResponse**](PostAdminUsersLockResponse.md)
+
+### Authorization
+
+[bearerAuth](../README.md#bearerAuth)
+
+### HTTP request headers
+
+- **Content-Type**: `application/json`
+- **Accept**: `application/json`
+
+
+### HTTP response details
+| Status code | Description | Response headers |
+|-------------|-------------|------------------|
+| **200** | Operación completada |  -  |
+| **400** | Solicitud inválida |  -  |
+| **401** | No autenticado |  -  |
+| **403** | No autorizado |  -  |
+| **404** | No encontrado |  -  |
+| **500** | Error interno |  -  |
+
+[[Back to top]](#) [[Back to API list]](../README.md#api-endpoints) [[Back to Model list]](../README.md#models) [[Back to README]](../README.md)
+
+
+## mobileRejectAdminMembership
+
+> PostAdminMembershipsRejectResponse mobileRejectAdminMembership(rejectAdminMembershipRequest)
+
+Rechazar solicitud de membresía
+
+Rechaza una solicitud de membresía pendiente, elimina la solicitud y devuelve al solicitante a la etapa de selección de empresa para que pueda volver a elegir.
+
+### Example
+
+```ts
+import {
+  Configuration,
+  AdminApi,
+} from '@tcp/mobile-v1-sdk';
+import type { MobileRejectAdminMembershipRequest } from '@tcp/mobile-v1-sdk';
+
+async function example() {
+  console.log("🚀 Testing @tcp/mobile-v1-sdk SDK...");
+  const config = new Configuration({ 
+    // Configure HTTP bearer authorization: bearerAuth
+    accessToken: "YOUR BEARER TOKEN",
+  });
+  const api = new AdminApi(config);
+
+  const body = {
+    // RejectAdminMembershipRequest
+    rejectAdminMembershipRequest: ...,
+  } satisfies MobileRejectAdminMembershipRequest;
+
+  try {
+    const data = await api.mobileRejectAdminMembership(body);
+    console.log(data);
+  } catch (error) {
+    console.error(error);
+  }
+}
+
+// Run the test
+example().catch(console.error);
+```
+
+### Parameters
+
+
+| Name | Type | Description  | Notes |
+|------------- | ------------- | ------------- | -------------|
+| **rejectAdminMembershipRequest** | [RejectAdminMembershipRequest](RejectAdminMembershipRequest.md) |  | |
+
+### Return type
+
+[**PostAdminMembershipsRejectResponse**](PostAdminMembershipsRejectResponse.md)
+
+### Authorization
+
+[bearerAuth](../README.md#bearerAuth)
+
+### HTTP request headers
+
+- **Content-Type**: `application/json`
+- **Accept**: `application/json`
+
+
+### HTTP response details
+| Status code | Description | Response headers |
+|-------------|-------------|------------------|
+| **200** | Operación completada |  -  |
+| **401** | No autenticado |  -  |
+| **403** | No autorizado |  -  |
+| **404** | No encontrado |  -  |
+| **500** | Error interno |  -  |
+
+[[Back to top]](#) [[Back to API list]](../README.md#api-endpoints) [[Back to Model list]](../README.md#models) [[Back to README]](../README.md)
+
+
+## mobileUnlockAdminUser
+
+> PostAdminUsersLockResponse mobileUnlockAdminUser(unlockAdminUserRequest)
+
+Desbloquear usuario
+
+Desbloquea a un usuario de la plataforma y reinicia sus intentos de inicio de sesión. Devuelve el estado actualizado y su mensaje de confirmación.
+
+### Example
+
+```ts
+import {
+  Configuration,
+  AdminApi,
+} from '@tcp/mobile-v1-sdk';
+import type { MobileUnlockAdminUserRequest } from '@tcp/mobile-v1-sdk';
+
+async function example() {
+  console.log("🚀 Testing @tcp/mobile-v1-sdk SDK...");
+  const config = new Configuration({ 
+    // Configure HTTP bearer authorization: bearerAuth
+    accessToken: "YOUR BEARER TOKEN",
+  });
+  const api = new AdminApi(config);
+
+  const body = {
+    // UnlockAdminUserRequest
+    unlockAdminUserRequest: ...,
+  } satisfies MobileUnlockAdminUserRequest;
+
+  try {
+    const data = await api.mobileUnlockAdminUser(body);
+    console.log(data);
+  } catch (error) {
+    console.error(error);
+  }
+}
+
+// Run the test
+example().catch(console.error);
+```
+
+### Parameters
+
+
+| Name | Type | Description  | Notes |
+|------------- | ------------- | ------------- | -------------|
+| **unlockAdminUserRequest** | [UnlockAdminUserRequest](UnlockAdminUserRequest.md) |  | |
+
+### Return type
+
+[**PostAdminUsersLockResponse**](PostAdminUsersLockResponse.md)
+
+### Authorization
+
+[bearerAuth](../README.md#bearerAuth)
+
+### HTTP request headers
+
+- **Content-Type**: `application/json`
+- **Accept**: `application/json`
+
+
+### HTTP response details
+| Status code | Description | Response headers |
+|-------------|-------------|------------------|
+| **200** | Operación completada |  -  |
+| **400** | Solicitud inválida |  -  |
+| **401** | No autenticado |  -  |
+| **403** | No autorizado |  -  |
+| **404** | No encontrado |  -  |
 | **500** | Error interno |  -  |
 
 [[Back to top]](#) [[Back to API list]](../README.md#api-endpoints) [[Back to Model list]](../README.md#models) [[Back to README]](../README.md)

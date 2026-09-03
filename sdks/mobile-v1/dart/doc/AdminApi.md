@@ -9,13 +9,66 @@ All URIs are relative to */api/mobile/v1*
 
 Method | HTTP request | Description
 ------------- | ------------- | -------------
+[**mobileApproveAdminMembership**](AdminApi.md#mobileapproveadminmembership) | **POST** /admin/memberships/approve | Aprobar solicitud de membresía
 [**mobileGetAdminHealth**](AdminApi.md#mobilegetadminhealth) | **GET** /admin/health | Consultar salud del sistema
 [**mobileGetAdminLicenseStats**](AdminApi.md#mobilegetadminlicensestats) | **GET** /admin/licenses/stats | Consultar métricas de licencias
 [**mobileGetAdminLicenses**](AdminApi.md#mobilegetadminlicenses) | **GET** /admin/licenses | Listar licencias con filtros
 [**mobileGetAdminPendingMemberships**](AdminApi.md#mobilegetadminpendingmemberships) | **GET** /admin/memberships/pending | Listar solicitudes de membresía pendientes
 [**mobileGetAdminTenants**](AdminApi.md#mobilegetadmintenants) | **GET** /admin/tenants | Listar empresas de la plataforma
 [**mobileGetAdminUsers**](AdminApi.md#mobilegetadminusers) | **GET** /admin/users | Listar usuarios de la plataforma
+[**mobileLockAdminUser**](AdminApi.md#mobilelockadminuser) | **POST** /admin/users/lock | Bloquear usuario por 24 horas
+[**mobileRejectAdminMembership**](AdminApi.md#mobilerejectadminmembership) | **POST** /admin/memberships/reject | Rechazar solicitud de membresía
+[**mobileUnlockAdminUser**](AdminApi.md#mobileunlockadminuser) | **POST** /admin/users/unlock | Desbloquear usuario
 
+
+# **mobileApproveAdminMembership**
+> PostAdminMembershipsApproveResponse mobileApproveAdminMembership(approveAdminMembershipRequest)
+
+Aprobar solicitud de membresía
+
+Aprueba una solicitud de membresía pendiente, activa al usuario, cierra su flujo de incorporación y crea su registro de empleado en la empresa cuando aún no existe.
+
+### Example
+```dart
+import 'package:tcp_mobile_v1_sdk/api.dart';
+// TODO Configure HTTP Bearer authorization: bearerAuth
+// Case 1. Use String Token
+//defaultApiClient.getAuthentication<HttpBearerAuth>('bearerAuth').setAccessToken('YOUR_ACCESS_TOKEN');
+// Case 2. Use Function which generate token.
+// String yourTokenGeneratorFunction() { ... }
+//defaultApiClient.getAuthentication<HttpBearerAuth>('bearerAuth').setAccessToken(yourTokenGeneratorFunction);
+
+final api_instance = AdminApi();
+final approveAdminMembershipRequest = ApproveAdminMembershipRequest(); // ApproveAdminMembershipRequest | 
+
+try {
+    final result = api_instance.mobileApproveAdminMembership(approveAdminMembershipRequest);
+    print(result);
+} catch (e) {
+    print('Exception when calling AdminApi->mobileApproveAdminMembership: $e\n');
+}
+```
+
+### Parameters
+
+Name | Type | Description  | Notes
+------------- | ------------- | ------------- | -------------
+ **approveAdminMembershipRequest** | [**ApproveAdminMembershipRequest**](ApproveAdminMembershipRequest.md)|  | 
+
+### Return type
+
+[**PostAdminMembershipsApproveResponse**](PostAdminMembershipsApproveResponse.md)
+
+### Authorization
+
+[bearerAuth](../README.md#bearerAuth)
+
+### HTTP request headers
+
+ - **Content-Type**: application/json
+ - **Accept**: application/json
+
+[[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to Model list]](../README.md#documentation-for-models) [[Back to README]](../README.md)
 
 # **mobileGetAdminHealth**
 > AdminHealthResponse mobileGetAdminHealth()
@@ -317,6 +370,153 @@ Name | Type | Description  | Notes
 ### HTTP request headers
 
  - **Content-Type**: Not defined
+ - **Accept**: application/json
+
+[[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to Model list]](../README.md#documentation-for-models) [[Back to README]](../README.md)
+
+# **mobileLockAdminUser**
+> PostAdminUsersLockResponse mobileLockAdminUser(lockAdminUserRequest)
+
+Bloquear usuario por 24 horas
+
+Bloquea temporalmente a un usuario de la plataforma durante 24 horas, previniendo nuevos inicios de sesión. Devuelve el estado actualizado del bloqueo y su mensaje de confirmación.
+
+### Example
+```dart
+import 'package:tcp_mobile_v1_sdk/api.dart';
+// TODO Configure HTTP Bearer authorization: bearerAuth
+// Case 1. Use String Token
+//defaultApiClient.getAuthentication<HttpBearerAuth>('bearerAuth').setAccessToken('YOUR_ACCESS_TOKEN');
+// Case 2. Use Function which generate token.
+// String yourTokenGeneratorFunction() { ... }
+//defaultApiClient.getAuthentication<HttpBearerAuth>('bearerAuth').setAccessToken(yourTokenGeneratorFunction);
+
+final api_instance = AdminApi();
+final lockAdminUserRequest = LockAdminUserRequest(); // LockAdminUserRequest | 
+
+try {
+    final result = api_instance.mobileLockAdminUser(lockAdminUserRequest);
+    print(result);
+} catch (e) {
+    print('Exception when calling AdminApi->mobileLockAdminUser: $e\n');
+}
+```
+
+### Parameters
+
+Name | Type | Description  | Notes
+------------- | ------------- | ------------- | -------------
+ **lockAdminUserRequest** | [**LockAdminUserRequest**](LockAdminUserRequest.md)|  | 
+
+### Return type
+
+[**PostAdminUsersLockResponse**](PostAdminUsersLockResponse.md)
+
+### Authorization
+
+[bearerAuth](../README.md#bearerAuth)
+
+### HTTP request headers
+
+ - **Content-Type**: application/json
+ - **Accept**: application/json
+
+[[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to Model list]](../README.md#documentation-for-models) [[Back to README]](../README.md)
+
+# **mobileRejectAdminMembership**
+> PostAdminMembershipsRejectResponse mobileRejectAdminMembership(rejectAdminMembershipRequest)
+
+Rechazar solicitud de membresía
+
+Rechaza una solicitud de membresía pendiente, elimina la solicitud y devuelve al solicitante a la etapa de selección de empresa para que pueda volver a elegir.
+
+### Example
+```dart
+import 'package:tcp_mobile_v1_sdk/api.dart';
+// TODO Configure HTTP Bearer authorization: bearerAuth
+// Case 1. Use String Token
+//defaultApiClient.getAuthentication<HttpBearerAuth>('bearerAuth').setAccessToken('YOUR_ACCESS_TOKEN');
+// Case 2. Use Function which generate token.
+// String yourTokenGeneratorFunction() { ... }
+//defaultApiClient.getAuthentication<HttpBearerAuth>('bearerAuth').setAccessToken(yourTokenGeneratorFunction);
+
+final api_instance = AdminApi();
+final rejectAdminMembershipRequest = RejectAdminMembershipRequest(); // RejectAdminMembershipRequest | 
+
+try {
+    final result = api_instance.mobileRejectAdminMembership(rejectAdminMembershipRequest);
+    print(result);
+} catch (e) {
+    print('Exception when calling AdminApi->mobileRejectAdminMembership: $e\n');
+}
+```
+
+### Parameters
+
+Name | Type | Description  | Notes
+------------- | ------------- | ------------- | -------------
+ **rejectAdminMembershipRequest** | [**RejectAdminMembershipRequest**](RejectAdminMembershipRequest.md)|  | 
+
+### Return type
+
+[**PostAdminMembershipsRejectResponse**](PostAdminMembershipsRejectResponse.md)
+
+### Authorization
+
+[bearerAuth](../README.md#bearerAuth)
+
+### HTTP request headers
+
+ - **Content-Type**: application/json
+ - **Accept**: application/json
+
+[[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to Model list]](../README.md#documentation-for-models) [[Back to README]](../README.md)
+
+# **mobileUnlockAdminUser**
+> PostAdminUsersLockResponse mobileUnlockAdminUser(unlockAdminUserRequest)
+
+Desbloquear usuario
+
+Desbloquea a un usuario de la plataforma y reinicia sus intentos de inicio de sesión. Devuelve el estado actualizado y su mensaje de confirmación.
+
+### Example
+```dart
+import 'package:tcp_mobile_v1_sdk/api.dart';
+// TODO Configure HTTP Bearer authorization: bearerAuth
+// Case 1. Use String Token
+//defaultApiClient.getAuthentication<HttpBearerAuth>('bearerAuth').setAccessToken('YOUR_ACCESS_TOKEN');
+// Case 2. Use Function which generate token.
+// String yourTokenGeneratorFunction() { ... }
+//defaultApiClient.getAuthentication<HttpBearerAuth>('bearerAuth').setAccessToken(yourTokenGeneratorFunction);
+
+final api_instance = AdminApi();
+final unlockAdminUserRequest = UnlockAdminUserRequest(); // UnlockAdminUserRequest | 
+
+try {
+    final result = api_instance.mobileUnlockAdminUser(unlockAdminUserRequest);
+    print(result);
+} catch (e) {
+    print('Exception when calling AdminApi->mobileUnlockAdminUser: $e\n');
+}
+```
+
+### Parameters
+
+Name | Type | Description  | Notes
+------------- | ------------- | ------------- | -------------
+ **unlockAdminUserRequest** | [**UnlockAdminUserRequest**](UnlockAdminUserRequest.md)|  | 
+
+### Return type
+
+[**PostAdminUsersLockResponse**](PostAdminUsersLockResponse.md)
+
+### Authorization
+
+[bearerAuth](../README.md#bearerAuth)
+
+### HTTP request headers
+
+ - **Content-Type**: application/json
  - **Accept**: application/json
 
 [[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to Model list]](../README.md#documentation-for-models) [[Back to README]](../README.md)

@@ -64,6 +64,7 @@ Sources/Models/AlmacenDeleteResponse.swift
 Sources/Models/AlmacenListResponse.swift
 Sources/Models/AlmacenUpdateRequest.swift
 Sources/Models/ApiError.swift
+Sources/Models/ApproveAdminMembershipRequest.swift
 Sources/Models/AuditLog.swift
 Sources/Models/AuthSession.swift
 Sources/Models/AuthenticatedUser.swift
@@ -148,6 +149,7 @@ Sources/Models/GetProductsStockResponse.swift
 Sources/Models/GetSalesIdResponse.swift
 Sources/Models/GetSalesResponse.swift
 Sources/Models/JsonValue.swift
+Sources/Models/LockAdminUserRequest.swift
 Sources/Models/LoginRequest.swift
 Sources/Models/Pagination.swift
 Sources/Models/PatchSalesIdUpdateResponse.swift
@@ -171,6 +173,10 @@ Sources/Models/PostAccountingCashLoansResponse.swift
 Sources/Models/PostAccountingReconciliationExpensesResponse.swift
 Sources/Models/PostAccountingReconciliationSalesResponse.swift
 Sources/Models/PostAccountingReconciliationServicesResponse.swift
+Sources/Models/PostAdminMembershipsApproveResponse.swift
+Sources/Models/PostAdminMembershipsRejectResponse.swift
+Sources/Models/PostAdminUsersLockResponse.swift
+Sources/Models/PostAdminUsersLockResponseUser.swift
 Sources/Models/PostSalesCreateResponse.swift
 Sources/Models/PostSalesIdCancelResponse.swift
 Sources/Models/Product.swift
@@ -191,6 +197,7 @@ Sources/Models/ReconciliationOverviewStats.swift
 Sources/Models/RefreshRequest.swift
 Sources/Models/RegisterRequest.swift
 Sources/Models/RegisterResponse.swift
+Sources/Models/RejectAdminMembershipRequest.swift
 Sources/Models/ReportFilters.swift
 Sources/Models/ReportResult.swift
 Sources/Models/ReportStatistics.swift
@@ -211,6 +218,7 @@ Sources/Models/TenantListResponse.swift
 Sources/Models/TenantSummary.swift
 Sources/Models/Token.swift
 Sources/Models/TokenPair.swift
+Sources/Models/UnlockAdminUserRequest.swift
 Sources/OpenISO8601DateFormatter.swift
 Sources/SynchronizedDictionary.swift
 Sources/URLSessionImplementations.swift
@@ -261,6 +269,7 @@ docs/AlmacenDeleteResponse.md
 docs/AlmacenListResponse.md
 docs/AlmacenUpdateRequest.md
 docs/ApiError.md
+docs/ApproveAdminMembershipRequest.md
 docs/AuditLog.md
 docs/AuthAPI.md
 docs/AuthSession.md
@@ -348,6 +357,7 @@ docs/GetProductsStockResponse.md
 docs/GetSalesIdResponse.md
 docs/GetSalesResponse.md
 docs/JsonValue.md
+docs/LockAdminUserRequest.md
 docs/LoginRequest.md
 docs/Pagination.md
 docs/PatchSalesIdUpdateResponse.md
@@ -371,6 +381,10 @@ docs/PostAccountingCashLoansResponse.md
 docs/PostAccountingReconciliationExpensesResponse.md
 docs/PostAccountingReconciliationSalesResponse.md
 docs/PostAccountingReconciliationServicesResponse.md
+docs/PostAdminMembershipsApproveResponse.md
+docs/PostAdminMembershipsRejectResponse.md
+docs/PostAdminUsersLockResponse.md
+docs/PostAdminUsersLockResponseUser.md
 docs/PostSalesCreateResponse.md
 docs/PostSalesIdCancelResponse.md
 docs/Product.md
@@ -393,6 +407,7 @@ docs/ReconciliationOverviewStats.md
 docs/RefreshRequest.md
 docs/RegisterRequest.md
 docs/RegisterResponse.md
+docs/RejectAdminMembershipRequest.md
 docs/ReportFilters.md
 docs/ReportResult.md
 docs/ReportStatistics.md
@@ -414,5 +429,6 @@ docs/TenantListResponse.md
 docs/TenantSummary.md
 docs/Token.md
 docs/TokenPair.md
+docs/UnlockAdminUserRequest.md
 docs/WarehousesAPI.md
 project.yml
