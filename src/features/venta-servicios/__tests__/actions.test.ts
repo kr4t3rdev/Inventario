@@ -8,6 +8,9 @@ vi.mock("next/cache", () => ({ revalidatePath: vi.fn() }));
 vi.mock("@/lib/services/anticipos-workflow", () => ({
 	applyAnticipoAllocations: vi.fn(),
 }));
+vi.mock("@/features/contabilidad/services/exchange-rate-provider", () => ({
+	exchangeRateProvider: { getRateAsOf: vi.fn() },
+}));
 
 const mockTx = {
 	ventaServicios: { create: vi.fn() },
@@ -15,6 +18,7 @@ const mockTx = {
 	cuentaBancaria: { findFirst: vi.fn() },
 	anticipo: { findUnique: vi.fn() },
 	reconciliacionServicio: { create: vi.fn() },
+	tenantAccountingPolicy: { findUnique: vi.fn() },
 };
 
 vi.mock("@/lib/prisma", () => ({
@@ -43,6 +47,7 @@ vi.mock("@/lib/prisma", () => ({
 import { getCurrentUser } from "@/lib/server-actions/get-current-user";
 import { prisma } from "@/lib/prisma";
 import { applyAnticipoAllocations } from "@/lib/services/anticipos-workflow";
+import { exchangeRateProvider } from "@/features/contabilidad/services/exchange-rate-provider";
 import {
 	getVentaServiciosAction,
 	getVentaServicioByIdAction,
@@ -364,16 +369,18 @@ describe("VentaServicios Server Actions", () => {
 				"PRODUCT_LINE_NOT_SUPPORTED_IN_THIS_ENDPOINT",
 			);
 		});
-		it("etiqueta la reconciliación con la moneda del anticipo, no hardcodeada", async () => {
+		it("convierte anticipo en moneda extranjera con tasa del catálogo", async () => {
 			vi.mocked(getCurrentUser).mockResolvedValue(mockUser);
 			vi.mocked(prisma.servicios.findMany).mockResolvedValue([
 				{ servicioId: "sv-1", moneda: "CUP" },
 			] as any);
+			mockTx.tenantAccountingPolicy.findUnique.mockResolvedValue({
+				functionalCurrencyCode: "CUP",
+			} as any);
 			mockTx.ventaServicios.create.mockResolvedValue(mockVentaRow);
 			vi.mocked(applyAnticipoAllocations).mockResolvedValue([
 				{ anticipoId: "a1", montoAplicado: 100 },
 			] as any);
-			// Anticipo de COBRO en USD: hoy el hardcode lo etiquetaría CUP
 			mockTx.anticipo.findUnique.mockResolvedValue({
 				tipo: "COBRO",
 				moneda: "USD",
@@ -384,6 +391,96 @@ describe("VentaServicios Server Actions", () => {
 			mockTx.cuentaBancaria.findFirst.mockResolvedValue({
 				cuentaId: "cb-1",
 			} as any);
+			vi.mocked(exchangeRateProvider.getRateAsOf).mockResolvedValue({
+				tasaId: "tasa-1",
+				tasa: 24.5,
+				fechaVigencia: new Date("2026-09-03"),
+			});
+
+			const result = await createVentaServicioAction({
+				servicioId: "sv-1",
+				cantidad: 1,
+				precioUnitario: 5000,
+				anticipos: [{ anticipoId: "a1", montoAplicado: 100 }],
+			});
+
+			expect(result.success).toBe(true);
+			expect(mockTx.reconciliacionServicio.create).toHaveBeenCalledWith(
+				expect.objectContaining({
+					data: expect.objectContaining({
+						moneda: "USD",
+						tasaCambio: expect.anything(),
+						montoConvertido: expect.anything(),
+					}),
+				}),
+			);
+		});
+
+		it("rechaza anticipo extranjero sin tasa disponible (evita fila invisible)", async () => {
+			vi.mocked(getCurrentUser).mockResolvedValue(mockUser);
+			vi.mocked(prisma.servicios.findMany).mockResolvedValue([
+				{ servicioId: "sv-1", moneda: "CUP" },
+			] as any);
+			mockTx.tenantAccountingPolicy.findUnique.mockResolvedValue({
+				functionalCurrencyCode: "CUP",
+			} as any);
+			mockTx.ventaServicios.create.mockResolvedValue(mockVentaRow);
+			vi.mocked(applyAnticipoAllocations).mockResolvedValue([
+				{ anticipoId: "a1", montoAplicado: 100 },
+			] as any);
+			mockTx.anticipo.findUnique.mockResolvedValue({
+				tipo: "COBRO",
+				moneda: "USD",
+				cuentaOrigenId: "cb-1",
+				tipoPagoOrigenId: "tp-1",
+			} as any);
+			mockTx.tipoPago.findFirst.mockResolvedValue({ tipoId: "tp-1" } as any);
+			mockTx.cuentaBancaria.findFirst.mockResolvedValue({
+				cuentaId: "cb-1",
+			} as any);
+			vi.mocked(exchangeRateProvider.getRateAsOf).mockResolvedValue(null);
+
+			const result = await createVentaServicioAction({
+				servicioId: "sv-1",
+				cantidad: 1,
+				precioUnitario: 5000,
+				anticipos: [{ anticipoId: "a1", montoAplicado: 100 }],
+			});
+
+			expect(result.success).toBe(false);
+			expect(result.error!.code).toBe("VALIDATION_ERROR");
+			expect(mockTx.reconciliacionServicio.create).not.toHaveBeenCalled();
+		});
+
+		it("etiqueta la reconciliación con la moneda del anticipo, no hardcodeada", async () => {
+			vi.mocked(getCurrentUser).mockResolvedValue(mockUser);
+			vi.mocked(prisma.servicios.findMany).mockResolvedValue([
+				{ servicioId: "sv-1", moneda: "CUP" },
+			] as any);
+			mockTx.tenantAccountingPolicy.findUnique.mockResolvedValue({
+				functionalCurrencyCode: "CUP",
+			} as any);
+			mockTx.ventaServicios.create.mockResolvedValue(mockVentaRow);
+			vi.mocked(applyAnticipoAllocations).mockResolvedValue([
+				{ anticipoId: "a1", montoAplicado: 100 },
+			] as any);
+			// Anticipo de COBRO en USD con tasa disponible: la etiqueta es USD
+			// y se persisten montoConvertido/tasa de la evidencia.
+			mockTx.anticipo.findUnique.mockResolvedValue({
+				tipo: "COBRO",
+				moneda: "USD",
+				cuentaOrigenId: "cb-1",
+				tipoPagoOrigenId: "tp-1",
+			} as any);
+			mockTx.tipoPago.findFirst.mockResolvedValue({ tipoId: "tp-1" } as any);
+			mockTx.cuentaBancaria.findFirst.mockResolvedValue({
+				cuentaId: "cb-1",
+			} as any);
+			vi.mocked(exchangeRateProvider.getRateAsOf).mockResolvedValue({
+				tasaId: "tasa-1",
+				tasa: 24.5,
+				fechaVigencia: new Date("2026-09-03"),
+			});
 
 			const result = await createVentaServicioAction({
 				servicioId: "sv-1",

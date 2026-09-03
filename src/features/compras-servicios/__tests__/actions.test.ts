@@ -11,6 +11,9 @@ vi.mock("@/lib/services/anticipos-workflow", () => ({
 vi.mock("@/features/gastosDE/reversal", () => ({
 	reverseExpenseEffects: vi.fn(),
 }));
+vi.mock("@/features/contabilidad/services/exchange-rate-provider", () => ({
+	exchangeRateProvider: { getRateAsOf: vi.fn() },
+}));
 
 const mockTx = {
 	compraServicio: {
@@ -26,6 +29,9 @@ const mockTx = {
 		create: vi.fn(),
 		findMany: vi.fn(),
 		findFirst: vi.fn(),
+	},
+	tenantAccountingPolicy: {
+		findUnique: vi.fn(),
 	},
 	$queryRaw: vi.fn(),
 };
@@ -47,6 +53,7 @@ vi.mock("@/lib/prisma", () => ({
 import { getCurrentUser } from "@/lib/server-actions/get-current-user";
 import { prisma } from "@/lib/prisma";
 import { applyAnticipoAllocations } from "@/lib/services/anticipos-workflow";
+import { exchangeRateProvider } from "@/features/contabilidad/services/exchange-rate-provider";
 import {
 	getComprasServiciosAction,
 	getCompraServicioByIdAction,
@@ -214,6 +221,9 @@ describe("ComprasServicios Server Actions", () => {
 				{ anticipoId: "a1", montoAplicado: 100 },
 			] as any);
 			// Anticipo de PAGO en USD: hoy el hardcode lo etiquetaría CUP
+			mockTx.tenantAccountingPolicy.findUnique.mockResolvedValue({
+				functionalCurrencyCode: "CUP",
+			} as any);
 			mockTx.anticipo.findUnique.mockResolvedValue({
 				tipo: "PAGO",
 				moneda: "USD",
@@ -224,6 +234,11 @@ describe("ComprasServicios Server Actions", () => {
 			mockTx.cuentaBancaria.findFirst.mockResolvedValue({
 				cuentaId: "cb-1",
 			} as any);
+			vi.mocked(exchangeRateProvider.getRateAsOf).mockResolvedValue({
+				tasaId: "tasa-1",
+				tasa: 24.5,
+				fechaVigencia: new Date("2026-09-03"),
+			});
 
 			const result = await createCompraServicioAction({
 				...validInput,

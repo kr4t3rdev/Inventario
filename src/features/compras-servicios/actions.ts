@@ -16,6 +16,7 @@ import type { CreateCompraServicioInput, UpdateCompraServicioInput } from './sch
 import type { AuthenticatedUser } from '@/lib/auth-middleware';
 import { reverseExpenseEffects } from '@/features/gastosDE/reversal';
 import { buildPersistedAccountingAmount } from '@/features/contabilidad/services/accounting-reconciliation-service';
+import { exchangeRateProvider } from '@/features/contabilidad/services/exchange-rate-provider';
 
 const COMPRA_SERVICIO_INCLUDE = {
   servicio: true,
@@ -132,6 +133,34 @@ export const createCompraServicioAction = withAction(withPeriodValidation(
         // La fila refleja la moneda real del dinero movido (la del anticipo).
         const monedaAnticipo = anticipo?.moneda ?? servicio.moneda;
 
+        // Si la moneda difiere de la funcional del tenant, se exige una tasa
+        // publicada; sin ella la fila quedaría invisible para el reporting.
+        const policy = await tx.tenantAccountingPolicy.findUnique({
+          where: { tenantId },
+          select: { functionalCurrencyCode: true },
+        });
+        const monedaFuncional = policy?.functionalCurrencyCode?.trim().toUpperCase() ?? 'CUP';
+
+        let tasaCambio: number | undefined;
+        let tasaEffectiveAt: Date | undefined;
+        let tasaFxCatalogId: string | undefined;
+        if (monedaAnticipo.trim().toUpperCase() !== monedaFuncional) {
+          const tasa = await exchangeRateProvider.getRateAsOf({
+            sourceCurrency: monedaAnticipo.trim().toUpperCase(),
+            targetCurrency: monedaFuncional,
+            boundaryAt: new Date(),
+          });
+          if (!tasa) {
+            throw new ActionError(
+              `No hay tasa de cambio publicada para ${monedaAnticipo} → ${monedaFuncional}; no se puede registrar la reconciliación`,
+              'VALIDATION_ERROR',
+            );
+          }
+          tasaCambio = tasa.tasa;
+          tasaEffectiveAt = tasa.fechaVigencia;
+          tasaFxCatalogId = tasa.tasaId;
+        }
+
         await tx.reconciliacionGasto.create({
           data: {
             tenantId,
@@ -144,6 +173,9 @@ export const createCompraServicioAction = withAction(withPeriodValidation(
             ...buildPersistedAccountingAmount(
               alloc.montoAplicado,
               monedaAnticipo,
+              tasaCambio,
+              tasaEffectiveAt,
+              tasaFxCatalogId,
             ),
             descripcion: `Pago anticipado de servicio ${compraServicio.compraServicioId}`,
             reconciliadoPor: user.userId || 'system',

@@ -15,6 +15,7 @@ import { ventaServicioLegacySchema, ventaMixtaSchema, updateVentaServicioSchema 
 import type { VentaServicioInput, VentaMixtaInput, VentaServicioUpdateInput } from './schemas';
 import type { AuthenticatedUser } from '@/lib/auth-middleware';
 import { buildPersistedAccountingAmount } from '@/features/contabilidad/services/accounting-reconciliation-service';
+import { exchangeRateProvider } from '@/features/contabilidad/services/exchange-rate-provider';
 
 const VENTA_SERVICIO_INCLUDE = {
   servicio: true,
@@ -186,6 +187,35 @@ export const createVentaServicioAction = withAction(withPeriodValidation(
         // no la del servicio: el dinero del anticipo vive en anticipo.moneda.
         const monedaAnticipo = anticipo?.moneda ?? monedaServicio;
 
+        // Para moneda distinta de la funcional del tenant hay que resolver la
+        // tasa de cambio; si no hay, la fila queda invisible a los lectores
+        // (provenanceLegacy/excluded), así que se rechaza antes de escribir.
+        const policy = await tx.tenantAccountingPolicy.findUnique({
+          where: { tenantId },
+          select: { functionalCurrencyCode: true },
+        });
+        const monedaFuncional = policy?.functionalCurrencyCode?.trim().toUpperCase() ?? 'CUP';
+
+        let tasaCambio: number | undefined;
+        let tasaEffectiveAt: Date | undefined;
+        let tasaFxCatalogId: string | undefined;
+        if (monedaAnticipo.trim().toUpperCase() !== monedaFuncional) {
+          const tasa = await exchangeRateProvider.getRateAsOf({
+            sourceCurrency: monedaAnticipo.trim().toUpperCase(),
+            targetCurrency: monedaFuncional,
+            boundaryAt: new Date(),
+          });
+          if (!tasa) {
+            throw new ActionError(
+              `No hay tasa de cambio publicada para ${monedaAnticipo} → ${monedaFuncional}; no se puede registrar la reconciliación`,
+              'VALIDATION_ERROR',
+            );
+          }
+          tasaCambio = tasa.tasa;
+          tasaEffectiveAt = tasa.fechaVigencia;
+          tasaFxCatalogId = tasa.tasaId;
+        }
+
         await tx.reconciliacionServicio.create({
           data: {
             tenantId,
@@ -197,6 +227,9 @@ export const createVentaServicioAction = withAction(withPeriodValidation(
             ...buildPersistedAccountingAmount(
               alloc.montoAplicado,
               monedaAnticipo,
+              tasaCambio,
+              tasaEffectiveAt,
+              tasaFxCatalogId,
             ),
             observaciones: `Cobro anticipado en servicio ${ventaServicio.ventaServicioId}`,
             reconciliadoPor: user.userId || 'system',
