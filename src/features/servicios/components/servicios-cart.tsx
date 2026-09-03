@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import { Input } from "@/components/ui/input";
@@ -20,6 +20,7 @@ import {
 	SelectValue,
 } from "@/components/ui/select";
 import { formatCurrency } from "@/lib/utils";
+import { resumirCarritoPorMoneda, monedasOrdenadas } from "@/features/servicios/lib/carrito-resumen";
 import { createVentaServicioAction } from "@/features/venta-servicios/actions";
 import { useClientes } from "@/features/clientes/hooks/use-clientes";
 import { toast } from "sonner";
@@ -54,17 +55,9 @@ export default function ServiciosCart({
 	const [observaciones, setObservaciones] = useState<string>("");
 	const [isProcessing, setIsProcessing] = useState(false);
 
-	// Calcular total del carrito
-	const cartTotal = cart.reduce(
-		(total, item) => total + item.precio * item.cantidad,
-		0,
-	);
-
-	// Calcular costo total del carrito
-	const cartCostoTotal = cart.reduce(
-		(total, item) => total + item.costo * item.cantidad,
-		0,
-	);
+	// El carrito puede mezclar monedas: los totales se calculan agrupados por
+	// moneda y nunca se suman importes cruzados.
+	const resumen = useMemo(() => resumirCarritoPorMoneda(cart), [cart]);
 
 	// Remover servicio del carrito
 	const removeFromCart = (cartItemId: string) => {
@@ -316,38 +309,48 @@ export default function ServiciosCart({
 								</div>
 							</div>
 
-							{/* Resumen de la venta */}
-							<div className="rounded-md border p-4 bg-muted/50">
-								<h4 className="font-medium mb-3">Resumen de la Venta</h4>
-								<div className="space-y-2">
-									{cart.map((item) => (
-									<div
-										key={item.cartItemId}
-										className="flex justify-between text-sm"
-									>
-										<span>
-											{item.nombre} x{item.cantidad}
-										</span>
-										<span>
-											{formatCurrency(item.precio * item.cantidad, item.moneda)}
-										</span>
-									</div>
-									))}
-									<Separator className="my-2" />
-									<div className="flex justify-between text-sm">
-										<span className="text-muted-foreground">Costo Total</span>
-										<span>{formatCurrency(cartCostoTotal)}</span>
-									</div>
-									<div className="flex justify-between text-sm font-medium">
-										<span className="text-muted-foreground">Margen</span>
-										<span>{formatCurrency(cartTotal - cartCostoTotal)}</span>
-									</div>
-									<Separator className="my-2" />
-									<div className="flex justify-between font-bold text-lg">
-										<span>Total</span>
-										<span>{formatCurrency(cartTotal)}</span>
-									</div>
-								</div>
+							{/* Resumen de la venta, agrupado por moneda */}
+							<div className="space-y-4">
+								{monedasOrdenadas(resumen.monedas).map((moneda) => {
+									const g = resumen.grupos[moneda];
+									const itemsMoneda = cart.filter(
+										(i) => (i.moneda ?? 'CUP').trim().toUpperCase() === moneda,
+									);
+									return (
+										<div key={moneda} className="rounded-md border p-4 bg-muted/50">
+											<h4 className="font-medium mb-3">
+												Resumen de la Venta{resumen.esMultiMoneda ? ` (${moneda})` : ''}
+											</h4>
+											<div className="space-y-2">
+												{itemsMoneda.map((item) => (
+													<div
+														key={item.cartItemId}
+														className="flex justify-between text-sm"
+													>
+														<span>
+															{item.nombre} x{item.cantidad}
+														</span>
+														<span>{formatCurrency(item.precio * item.cantidad, moneda)}</span>
+													</div>
+												))}
+												<Separator className="my-2" />
+												<div className="flex justify-between text-sm">
+													<span className="text-muted-foreground">Costo Total</span>
+													<span>{formatCurrency(g.costoTotal, moneda)}</span>
+												</div>
+												<div className="flex justify-between text-sm font-medium">
+													<span className="text-muted-foreground">Margen</span>
+													<span>{formatCurrency(g.margen, moneda)}</span>
+												</div>
+												<Separator className="my-2" />
+												<div className="flex justify-between font-bold text-lg">
+													<span>Total</span>
+													<span>{formatCurrency(g.total, moneda)}</span>
+												</div>
+											</div>
+										</div>
+									);
+								})}
 							</div>
 						</div>
 					)}
