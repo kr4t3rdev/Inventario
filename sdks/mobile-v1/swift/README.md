@@ -95,6 +95,12 @@ Class | Method | HTTP request | Description
 *AccountingReportsAPI* | [**mobileGetAccountingReportsOverdueInvoices**](docs/AccountingReportsAPI.md#mobilegetaccountingreportsoverdueinvoices) | **GET** /accounting/reports/overdue-invoices | Consultar facturas vencidas
 *AccountingReportsAPI* | [**mobileGetAccountingReportsSummary**](docs/AccountingReportsAPI.md#mobilegetaccountingreportssummary) | **GET** /accounting/reports/summary | Consultar resumen financiero
 *AccountingReportsAPI* | [**mobileGetAccountingReportsTransfers**](docs/AccountingReportsAPI.md#mobilegetaccountingreportstransfers) | **GET** /accounting/reports/transfers | Consultar reporte de transferencias
+*AdminAPI* | [**mobileGetAdminHealth**](docs/AdminAPI.md#mobilegetadminhealth) | **GET** /admin/health | Consultar salud del sistema
+*AdminAPI* | [**mobileGetAdminLicenseStats**](docs/AdminAPI.md#mobilegetadminlicensestats) | **GET** /admin/licenses/stats | Consultar métricas de licencias
+*AdminAPI* | [**mobileGetAdminLicenses**](docs/AdminAPI.md#mobilegetadminlicenses) | **GET** /admin/licenses | Listar licencias con filtros
+*AdminAPI* | [**mobileGetAdminPendingMemberships**](docs/AdminAPI.md#mobilegetadminpendingmemberships) | **GET** /admin/memberships/pending | Listar solicitudes de membresía pendientes
+*AdminAPI* | [**mobileGetAdminTenants**](docs/AdminAPI.md#mobilegetadmintenants) | **GET** /admin/tenants | Listar empresas de la plataforma
+*AdminAPI* | [**mobileGetAdminUsers**](docs/AdminAPI.md#mobilegetadminusers) | **GET** /admin/users | Listar usuarios de la plataforma
 *AuthAPI* | [**mobileGetAuthMe**](docs/AuthAPI.md#mobilegetauthme) | **GET** /auth/me | Consultar perfil autenticado
 *AuthAPI* | [**mobileGetAuthTenants**](docs/AuthAPI.md#mobilegetauthtenants) | **GET** /auth/tenants | Listar tenants accesibles
 *AuthAPI* | [**mobilePostAuthLogin**](docs/AuthAPI.md#mobilepostauthlogin) | **POST** /auth/login | Iniciar sesión móvil
@@ -136,6 +142,28 @@ Class | Method | HTTP request | Description
  - [AccountingAdvancesIdPutRequest](docs/AccountingAdvancesIdPutRequest.md)
  - [AccountingAdvancesIdRevertirPostRequest](docs/AccountingAdvancesIdRevertirPostRequest.md)
  - [AccountingAdvancesPostRequest](docs/AccountingAdvancesPostRequest.md)
+ - [AdminHealthResponse](docs/AdminHealthResponse.md)
+ - [AdminHealthResponseLicenses](docs/AdminHealthResponseLicenses.md)
+ - [AdminHealthResponseSessions](docs/AdminHealthResponseSessions.md)
+ - [AdminHealthResponseTenants](docs/AdminHealthResponseTenants.md)
+ - [AdminHealthResponseUsers](docs/AdminHealthResponseUsers.md)
+ - [AdminHealthResponseUsersByRoleInner](docs/AdminHealthResponseUsersByRoleInner.md)
+ - [AdminHealthResponseUsersComparison](docs/AdminHealthResponseUsersComparison.md)
+ - [AdminHealthResponseUsersTrendInner](docs/AdminHealthResponseUsersTrendInner.md)
+ - [AdminLicenseItem](docs/AdminLicenseItem.md)
+ - [AdminLicenseItemCreatedByUser](docs/AdminLicenseItemCreatedByUser.md)
+ - [AdminLicenseItemTenant](docs/AdminLicenseItemTenant.md)
+ - [AdminLicenseManagerItem](docs/AdminLicenseManagerItem.md)
+ - [AdminPendingUserItem](docs/AdminPendingUserItem.md)
+ - [AdminTenantItem](docs/AdminTenantItem.md)
+ - [AdminTenantItemCount](docs/AdminTenantItemCount.md)
+ - [AdminTenantLicenseItem](docs/AdminTenantLicenseItem.md)
+ - [AdminTenantLicenseItemPlan](docs/AdminTenantLicenseItemPlan.md)
+ - [AdminTenantLite](docs/AdminTenantLite.md)
+ - [AdminUserItem](docs/AdminUserItem.md)
+ - [AdminUserItemSalesAgentBalance](docs/AdminUserItemSalesAgentBalance.md)
+ - [AdminUserItemSalesAgentProfile](docs/AdminUserItemSalesAgentProfile.md)
+ - [AdminUserLite](docs/AdminUserLite.md)
  - [Advance](docs/Advance.md)
  - [AdvanceWorkflowResult](docs/AdvanceWorkflowResult.md)
  - [Almacen](docs/Almacen.md)
@@ -218,6 +246,9 @@ Class | Method | HTTP request | Description
  - [GetAccountingReportsOverdueInvoicesResponse](docs/GetAccountingReportsOverdueInvoicesResponse.md)
  - [GetAccountingReportsSummaryResponse](docs/GetAccountingReportsSummaryResponse.md)
  - [GetAccountingReportsTransfersResponse](docs/GetAccountingReportsTransfersResponse.md)
+ - [GetAdminLicenseStatsResponse](docs/GetAdminLicenseStatsResponse.md)
+ - [GetAdminLicensesResponse](docs/GetAdminLicensesResponse.md)
+ - [GetAdminUsersResponse](docs/GetAdminUsersResponse.md)
  - [GetDashboardStatsResponse](docs/GetDashboardStatsResponse.md)
  - [GetProductsIdResponse](docs/GetProductsIdResponse.md)
  - [GetProductsResponse](docs/GetProductsResponse.md)
@@ -232,6 +263,7 @@ Class | Method | HTTP request | Description
  - [PayablePaymentSummary](docs/PayablePaymentSummary.md)
  - [PaymentType](docs/PaymentType.md)
  - [PaymentTypeUpdateRequest](docs/PaymentTypeUpdateRequest.md)
+ - [PendingMembershipItem](docs/PendingMembershipItem.md)
  - [PostAccountingAdvancesIdEjecutarResponse](docs/PostAccountingAdvancesIdEjecutarResponse.md)
  - [PostAccountingAdvancesIdRevertirResponse](docs/PostAccountingAdvancesIdRevertirResponse.md)
  - [PostAccountingAdvancesResponse](docs/PostAccountingAdvancesResponse.md)

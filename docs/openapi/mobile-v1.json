@@ -45,6 +45,10 @@
       "description": "Análisis financiero, movimientos, transferencias, anticipos, vencimientos e impacto cambiario."
     },
     {
+      "name": "Admin",
+      "description": "Administración global de la plataforma: salud del sistema, usuarios, empresas, licencias y aprobación de membresías."
+    },
+    {
       "name": "Auth",
       "description": "Inicio, renovación y cierre de sesión, identidad autenticada y selección de tenant."
     },
@@ -6008,6 +6012,522 @@
         "description": "Analiza transferencias por cuentas, monedas y responsable, con exportación opcional. Permite precisar la consulta mediante fecha inicial, fecha final, cuenta de origen, cuenta de destino, moneda, página, límite por página, usuario responsable, formato de exportación."
       }
     },
+    "/admin/health": {
+      "get": {
+        "tags": [
+          "Admin"
+        ],
+        "summary": "Consultar salud del sistema",
+        "description": "Devuelve métricas globales de la plataforma: total de usuarios reales por rol, empresas activas, sesiones vigentes y licencias con su estado de expiración. Incluye la tendencia de nuevos usuarios de los últimos 14 días con comparación entre semanas.",
+        "operationId": "mobileGetAdminHealth",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Operación completada",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AdminHealthResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "No autenticado",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "No autorizado",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Error interno",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/admin/licenses": {
+      "get": {
+        "tags": [
+          "Admin"
+        ],
+        "summary": "Listar licencias con filtros",
+        "description": "Consulta paginada de licencias con búsqueda por identificador, empresa o responsable, y filtros por plan, estado y tipo. Permite ordenar por fecha, expiración, actividad, empresa o plan.",
+        "operationId": "mobileGetAdminLicenses",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "page",
+            "in": "query",
+            "required": false,
+            "description": "Número de página.",
+            "schema": {
+              "type": "integer",
+              "minimum": 1
+            }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "description": "Elementos por página.",
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 100
+            }
+          },
+          {
+            "name": "sortBy",
+            "in": "query",
+            "required": false,
+            "description": "Campo de ordenamiento.",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "createdAt",
+                "expiracion",
+                "activa",
+                "tenantId",
+                "planId"
+              ]
+            }
+          },
+          {
+            "name": "sortOrder",
+            "in": "query",
+            "required": false,
+            "description": "Dirección del ordenamiento.",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "asc",
+                "desc"
+              ]
+            }
+          },
+          {
+            "name": "search",
+            "in": "query",
+            "required": false,
+            "description": "Búsqueda por identificador, empresa o responsable.",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "planFilter",
+            "in": "query",
+            "required": false,
+            "description": "Filtro por plan.",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "statusFilter",
+            "in": "query",
+            "required": false,
+            "description": "Filtro por estado.",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "typeFilter",
+            "in": "query",
+            "required": false,
+            "description": "Filtro por tipo.",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Operación completada",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GetAdminLicensesResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Solicitud inválida",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "No autenticado",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "No autorizado",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Error interno",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/admin/licenses/stats": {
+      "get": {
+        "tags": [
+          "Admin"
+        ],
+        "summary": "Consultar métricas de licencias",
+        "description": "Resume las licencias totales, activas, expiradas, de demostración, de prueba de administración y las próximas a vencer en los próximos siete días, respetando los filtros de la lista paginada.",
+        "operationId": "mobileGetAdminLicenseStats",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "search",
+            "in": "query",
+            "required": false,
+            "description": "Búsqueda por identificador, empresa o responsable.",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "planFilter",
+            "in": "query",
+            "required": false,
+            "description": "Filtro por plan.",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "statusFilter",
+            "in": "query",
+            "required": false,
+            "description": "Filtro por estado.",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "typeFilter",
+            "in": "query",
+            "required": false,
+            "description": "Filtro por tipo.",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Operación completada",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GetAdminLicenseStatsResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Solicitud inválida",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "No autenticado",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "No autorizado",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Error interno",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/admin/memberships/pending": {
+      "get": {
+        "tags": [
+          "Admin"
+        ],
+        "summary": "Listar solicitudes de membresía pendientes",
+        "description": "Enumerar las solicitudes de membresía que aguardan aprobación, con los datos del solicitante y la empresa destino, ordenadas de la más reciente a la más antigua.",
+        "operationId": "mobileGetAdminPendingMemberships",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Operación completada",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/PendingMembershipItem"
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "No autenticado",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "No autorizado",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Error interno",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/admin/tenants": {
+      "get": {
+        "tags": [
+          "Admin"
+        ],
+        "summary": "Listar empresas de la plataforma",
+        "description": "Enumera las empresas reales de la plataforma, excluyendo las cuentas de demostración, con su plan vigente, estado de licencia y conteo de usuarios, productos y almacenes.",
+        "operationId": "mobileGetAdminTenants",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Operación completada",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/AdminTenantItem"
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "No autenticado",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "No autorizado",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Error interno",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/admin/users": {
+      "get": {
+        "tags": [
+          "Admin"
+        ],
+        "summary": "Listar usuarios de la plataforma",
+        "description": "Lista los usuarios globales para el administrador de la plataforma o los integrantes de una empresa para un gestor. Permite acotar la consulta a una empresa mediante el identificador opcional.",
+        "operationId": "mobileGetAdminUsers",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "tenantId",
+            "in": "query",
+            "required": false,
+            "description": "Identificador de la empresa para acotar la consulta.",
+            "schema": {
+              "type": "string",
+              "minLength": 1
+            }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "description": "Cantidad máxima de usuarios.",
+            "schema": {
+              "type": "integer",
+              "minimum": 1
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Operación completada",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GetAdminUsersResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "No autenticado",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "No autorizado",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Error interno",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/auth/login": {
       "post": {
         "tags": [
@@ -8890,6 +9410,831 @@
           },
           "eliminado": {
             "type": "boolean"
+          }
+        }
+      },
+      "AdminHealthResponse": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "users",
+          "tenants",
+          "sessions",
+          "licenses",
+          "usersTrend",
+          "usersComparison"
+        ],
+        "properties": {
+          "users": {
+            "$ref": "#/components/schemas/AdminHealthResponseUsers"
+          },
+          "tenants": {
+            "$ref": "#/components/schemas/AdminHealthResponseTenants"
+          },
+          "sessions": {
+            "$ref": "#/components/schemas/AdminHealthResponseSessions"
+          },
+          "licenses": {
+            "$ref": "#/components/schemas/AdminHealthResponseLicenses"
+          },
+          "usersTrend": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/AdminHealthResponseUsersTrendInner"
+            }
+          },
+          "usersComparison": {
+            "$ref": "#/components/schemas/AdminHealthResponseUsersComparison"
+          }
+        }
+      },
+      "AdminHealthResponseUsers": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "total",
+          "byRole"
+        ],
+        "properties": {
+          "total": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "byRole": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/AdminHealthResponseUsersByRoleInner"
+            }
+          }
+        }
+      },
+      "AdminHealthResponseUsersByRoleInner": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "role",
+          "count"
+        ],
+        "properties": {
+          "role": {
+            "type": "string"
+          },
+          "count": {
+            "type": "integer",
+            "minimum": 0
+          }
+        }
+      },
+      "AdminHealthResponseTenants": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "total"
+        ],
+        "properties": {
+          "total": {
+            "type": "integer",
+            "minimum": 0
+          }
+        }
+      },
+      "AdminHealthResponseSessions": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "active"
+        ],
+        "properties": {
+          "active": {
+            "type": "integer",
+            "minimum": 0
+          }
+        }
+      },
+      "AdminHealthResponseLicenses": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "total",
+          "active",
+          "expiringSoon"
+        ],
+        "properties": {
+          "total": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "active": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "expiringSoon": {
+            "type": "integer",
+            "minimum": 0
+          }
+        }
+      },
+      "AdminHealthResponseUsersTrendInner": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "fecha",
+          "usuarios"
+        ],
+        "properties": {
+          "fecha": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "usuarios": {
+            "type": "integer",
+            "minimum": 0
+          }
+        }
+      },
+      "AdminHealthResponseUsersComparison": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "current7DaysUsers",
+          "previous7DaysUsers"
+        ],
+        "properties": {
+          "current7DaysUsers": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "previous7DaysUsers": {
+            "type": "integer",
+            "minimum": 0
+          }
+        }
+      },
+      "GetAdminUsersResponse": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "users",
+          "total"
+        ],
+        "properties": {
+          "users": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/AdminUserItem"
+            }
+          },
+          "total": {
+            "type": "integer",
+            "minimum": 0
+          }
+        }
+      },
+      "AdminUserItem": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "userId",
+          "name",
+          "email",
+          "role",
+          "isActive"
+        ],
+        "properties": {
+          "userId": {
+            "type": "string",
+            "minLength": 1
+          },
+          "name": {
+            "type": "string"
+          },
+          "email": {
+            "type": "string",
+            "format": "email"
+          },
+          "role": {
+            "type": "string"
+          },
+          "isActive": {
+            "type": "boolean"
+          },
+          "onboardingType": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "onboardingStatus": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "expiresAt": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "date-time"
+          },
+          "lockedUntil": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "date-time"
+          },
+          "avatar": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "tenantRole": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "tenantId": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "tenantName": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "membershipId": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "membershipCount": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "salesAgentProfile": {
+            "$ref": "#/components/schemas/AdminUserItemSalesAgentProfile"
+          },
+          "salesAgentBalance": {
+            "$ref": "#/components/schemas/AdminUserItemSalesAgentBalance"
+          },
+          "activeReferralCount": {
+            "type": "integer",
+            "minimum": 0
+          }
+        }
+      },
+      "AdminUserItemSalesAgentProfile": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "phone",
+          "status"
+        ],
+        "properties": {
+          "phone": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "status": {
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        }
+      },
+      "AdminUserItemSalesAgentBalance": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "availableUsd",
+          "paidUsd"
+        ],
+        "properties": {
+          "availableUsd": {
+            "type": "number"
+          },
+          "paidUsd": {
+            "type": "number"
+          }
+        }
+      },
+      "AdminTenantItem": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "tenantId",
+          "nombre"
+        ],
+        "properties": {
+          "tenantId": {
+            "type": "string",
+            "minLength": 1
+          },
+          "nombre": {
+            "type": "string"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "updatedAt": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "date-time"
+          },
+          "totalUsers": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "plan": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "planId": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "licenseActive": {
+            "type": "boolean"
+          },
+          "count": {
+            "$ref": "#/components/schemas/AdminTenantItemCount"
+          },
+          "licencias": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/AdminTenantLicenseItem"
+            }
+          }
+        }
+      },
+      "AdminTenantItemCount": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "memberships",
+          "productos",
+          "almacenes"
+        ],
+        "properties": {
+          "memberships": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "productos": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "almacenes": {
+            "type": "integer",
+            "minimum": 0
+          }
+        }
+      },
+      "AdminTenantLicenseItem": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "tenantLicenseId"
+        ],
+        "properties": {
+          "tenantLicenseId": {
+            "type": "string",
+            "minLength": 1
+          },
+          "tenantId": {
+            "type": "string"
+          },
+          "planId": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "activa": {
+            "type": "boolean"
+          },
+          "inicio": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "date-time"
+          },
+          "expiracion": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "date-time"
+          },
+          "isDemo": {
+            "type": "boolean"
+          },
+          "isAdminTest": {
+            "type": "boolean"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "plan": {
+            "$ref": "#/components/schemas/AdminTenantLicenseItemPlan"
+          }
+        }
+      },
+      "AdminTenantLicenseItemPlan": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "planId",
+          "nombre"
+        ],
+        "properties": {
+          "planId": {
+            "type": "string",
+            "minLength": 1
+          },
+          "nombre": {
+            "type": "string"
+          },
+          "descripcion": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "precio": {
+            "type": [
+              "number",
+              "null"
+            ]
+          },
+          "billingCycle": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "isActive": {
+            "type": [
+              "boolean",
+              "null"
+            ]
+          }
+        }
+      },
+      "GetAdminLicensesResponse": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "licencias",
+          "total",
+          "page",
+          "limit"
+        ],
+        "properties": {
+          "licencias": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/AdminLicenseItem"
+            }
+          },
+          "total": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "page": {
+            "type": "integer",
+            "minimum": 1
+          },
+          "limit": {
+            "type": "integer",
+            "minimum": 1
+          }
+        }
+      },
+      "AdminLicenseItem": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "tenantLicenseId"
+        ],
+        "properties": {
+          "tenantLicenseId": {
+            "type": "string",
+            "minLength": 1
+          },
+          "tenantId": {
+            "type": "string"
+          },
+          "planId": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "activa": {
+            "type": "boolean"
+          },
+          "inicio": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "date-time"
+          },
+          "expiracion": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "date-time"
+          },
+          "maxUsuarios": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "maxAlmacenes": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "maxProductos": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "maxClientes": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "isDemo": {
+            "type": "boolean"
+          },
+          "isAdminTest": {
+            "type": "boolean"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "createdBy": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "createdByUser": {
+            "$ref": "#/components/schemas/AdminLicenseItemCreatedByUser"
+          },
+          "plan": {
+            "$ref": "#/components/schemas/AdminTenantLicenseItemPlan"
+          },
+          "tenant": {
+            "$ref": "#/components/schemas/AdminLicenseItemTenant"
+          }
+        }
+      },
+      "AdminLicenseItemCreatedByUser": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "userId",
+          "name",
+          "email"
+        ],
+        "properties": {
+          "userId": {
+            "type": "string",
+            "minLength": 1
+          },
+          "name": {
+            "type": "string"
+          },
+          "email": {
+            "type": "string",
+            "format": "email"
+          }
+        }
+      },
+      "AdminLicenseItemTenant": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "tenantId",
+          "nombre"
+        ],
+        "properties": {
+          "tenantId": {
+            "type": "string",
+            "minLength": 1
+          },
+          "nombre": {
+            "type": "string"
+          },
+          "memberships": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/AdminLicenseManagerItem"
+            }
+          }
+        }
+      },
+      "AdminLicenseManagerItem": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "tenantRole",
+          "user"
+        ],
+        "properties": {
+          "membershipId": {
+            "type": "string"
+          },
+          "tenantId": {
+            "type": "string"
+          },
+          "tenantRole": {
+            "type": "string"
+          },
+          "user": {
+            "$ref": "#/components/schemas/AdminUserLite"
+          }
+        }
+      },
+      "AdminUserLite": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "userId",
+          "name",
+          "email"
+        ],
+        "properties": {
+          "userId": {
+            "type": "string",
+            "minLength": 1
+          },
+          "name": {
+            "type": "string"
+          },
+          "email": {
+            "type": "string",
+            "format": "email"
+          }
+        }
+      },
+      "GetAdminLicenseStatsResponse": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "total",
+          "activas",
+          "expiradas",
+          "demos",
+          "porVencer",
+          "adminTest"
+        ],
+        "properties": {
+          "total": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "activas": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "expiradas": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "demos": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "porVencer": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "adminTest": {
+            "type": "integer",
+            "minimum": 0
+          }
+        }
+      },
+      "PendingMembershipItem": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "membershipId",
+          "tenantId",
+          "userId"
+        ],
+        "properties": {
+          "membershipId": {
+            "type": "string",
+            "minLength": 1
+          },
+          "tenantId": {
+            "type": "string",
+            "minLength": 1
+          },
+          "userId": {
+            "type": "string",
+            "minLength": 1
+          },
+          "isActive": {
+            "type": "boolean"
+          },
+          "tenantRole": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "user": {
+            "$ref": "#/components/schemas/AdminPendingUserItem"
+          },
+          "tenant": {
+            "$ref": "#/components/schemas/AdminTenantLite"
+          }
+        }
+      },
+      "AdminPendingUserItem": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "userId",
+          "name",
+          "email"
+        ],
+        "properties": {
+          "userId": {
+            "type": "string",
+            "minLength": 1
+          },
+          "name": {
+            "type": "string"
+          },
+          "email": {
+            "type": "string",
+            "format": "email"
+          },
+          "onboardingType": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "onboardingStatus": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      },
+      "AdminTenantLite": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "tenantId",
+          "nombre"
+        ],
+        "properties": {
+          "tenantId": {
+            "type": "string",
+            "minLength": 1
+          },
+          "nombre": {
+            "type": "string"
           }
         }
       },

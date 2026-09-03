@@ -114,6 +114,12 @@ All URIs are relative to */api/mobile/v1*
 | *AccountingReportsApi* | [**mobileGetAccountingReportsOverdueInvoices**](docs/AccountingReportsApi.md#mobilegetaccountingreportsoverdueinvoices) | **GET** /accounting/reports/overdue-invoices | Consultar facturas vencidas |
 | *AccountingReportsApi* | [**mobileGetAccountingReportsSummary**](docs/AccountingReportsApi.md#mobilegetaccountingreportssummary) | **GET** /accounting/reports/summary | Consultar resumen financiero |
 | *AccountingReportsApi* | [**mobileGetAccountingReportsTransfers**](docs/AccountingReportsApi.md#mobilegetaccountingreportstransfers) | **GET** /accounting/reports/transfers | Consultar reporte de transferencias |
+| *AdminApi* | [**mobileGetAdminHealth**](docs/AdminApi.md#mobilegetadminhealth) | **GET** /admin/health | Consultar salud del sistema |
+| *AdminApi* | [**mobileGetAdminLicenseStats**](docs/AdminApi.md#mobilegetadminlicensestats) | **GET** /admin/licenses/stats | Consultar métricas de licencias |
+| *AdminApi* | [**mobileGetAdminLicenses**](docs/AdminApi.md#mobilegetadminlicenses) | **GET** /admin/licenses | Listar licencias con filtros |
+| *AdminApi* | [**mobileGetAdminPendingMemberships**](docs/AdminApi.md#mobilegetadminpendingmemberships) | **GET** /admin/memberships/pending | Listar solicitudes de membresía pendientes |
+| *AdminApi* | [**mobileGetAdminTenants**](docs/AdminApi.md#mobilegetadmintenants) | **GET** /admin/tenants | Listar empresas de la plataforma |
+| *AdminApi* | [**mobileGetAdminUsers**](docs/AdminApi.md#mobilegetadminusers) | **GET** /admin/users | Listar usuarios de la plataforma |
 | *AuthApi* | [**mobileGetAuthMe**](docs/AuthApi.md#mobilegetauthme) | **GET** /auth/me | Consultar perfil autenticado |
 | *AuthApi* | [**mobileGetAuthTenants**](docs/AuthApi.md#mobilegetauthtenants) | **GET** /auth/tenants | Listar tenants accesibles |
 | *AuthApi* | [**mobilePostAuthLogin**](docs/AuthApi.md#mobilepostauthlogin) | **POST** /auth/login | Iniciar sesión móvil |
@@ -156,6 +162,28 @@ All URIs are relative to */api/mobile/v1*
  - [com.tcp.mobile.v1.models.AccountingAdvancesIdPutRequest](docs/AccountingAdvancesIdPutRequest.md)
  - [com.tcp.mobile.v1.models.AccountingAdvancesIdRevertirPostRequest](docs/AccountingAdvancesIdRevertirPostRequest.md)
  - [com.tcp.mobile.v1.models.AccountingAdvancesPostRequest](docs/AccountingAdvancesPostRequest.md)
+ - [com.tcp.mobile.v1.models.AdminHealthResponse](docs/AdminHealthResponse.md)
+ - [com.tcp.mobile.v1.models.AdminHealthResponseLicenses](docs/AdminHealthResponseLicenses.md)
+ - [com.tcp.mobile.v1.models.AdminHealthResponseSessions](docs/AdminHealthResponseSessions.md)
+ - [com.tcp.mobile.v1.models.AdminHealthResponseTenants](docs/AdminHealthResponseTenants.md)
+ - [com.tcp.mobile.v1.models.AdminHealthResponseUsers](docs/AdminHealthResponseUsers.md)
+ - [com.tcp.mobile.v1.models.AdminHealthResponseUsersByRoleInner](docs/AdminHealthResponseUsersByRoleInner.md)
+ - [com.tcp.mobile.v1.models.AdminHealthResponseUsersComparison](docs/AdminHealthResponseUsersComparison.md)
+ - [com.tcp.mobile.v1.models.AdminHealthResponseUsersTrendInner](docs/AdminHealthResponseUsersTrendInner.md)
+ - [com.tcp.mobile.v1.models.AdminLicenseItem](docs/AdminLicenseItem.md)
+ - [com.tcp.mobile.v1.models.AdminLicenseItemCreatedByUser](docs/AdminLicenseItemCreatedByUser.md)
+ - [com.tcp.mobile.v1.models.AdminLicenseItemTenant](docs/AdminLicenseItemTenant.md)
+ - [com.tcp.mobile.v1.models.AdminLicenseManagerItem](docs/AdminLicenseManagerItem.md)
+ - [com.tcp.mobile.v1.models.AdminPendingUserItem](docs/AdminPendingUserItem.md)
+ - [com.tcp.mobile.v1.models.AdminTenantItem](docs/AdminTenantItem.md)
+ - [com.tcp.mobile.v1.models.AdminTenantItemCount](docs/AdminTenantItemCount.md)
+ - [com.tcp.mobile.v1.models.AdminTenantLicenseItem](docs/AdminTenantLicenseItem.md)
+ - [com.tcp.mobile.v1.models.AdminTenantLicenseItemPlan](docs/AdminTenantLicenseItemPlan.md)
+ - [com.tcp.mobile.v1.models.AdminTenantLite](docs/AdminTenantLite.md)
+ - [com.tcp.mobile.v1.models.AdminUserItem](docs/AdminUserItem.md)
+ - [com.tcp.mobile.v1.models.AdminUserItemSalesAgentBalance](docs/AdminUserItemSalesAgentBalance.md)
+ - [com.tcp.mobile.v1.models.AdminUserItemSalesAgentProfile](docs/AdminUserItemSalesAgentProfile.md)
+ - [com.tcp.mobile.v1.models.AdminUserLite](docs/AdminUserLite.md)
  - [com.tcp.mobile.v1.models.Advance](docs/Advance.md)
  - [com.tcp.mobile.v1.models.AdvanceWorkflowResult](docs/AdvanceWorkflowResult.md)
  - [com.tcp.mobile.v1.models.Almacen](docs/Almacen.md)
@@ -238,6 +266,9 @@ All URIs are relative to */api/mobile/v1*
  - [com.tcp.mobile.v1.models.GetAccountingReportsOverdueInvoicesResponse](docs/GetAccountingReportsOverdueInvoicesResponse.md)
  - [com.tcp.mobile.v1.models.GetAccountingReportsSummaryResponse](docs/GetAccountingReportsSummaryResponse.md)
  - [com.tcp.mobile.v1.models.GetAccountingReportsTransfersResponse](docs/GetAccountingReportsTransfersResponse.md)
+ - [com.tcp.mobile.v1.models.GetAdminLicenseStatsResponse](docs/GetAdminLicenseStatsResponse.md)
+ - [com.tcp.mobile.v1.models.GetAdminLicensesResponse](docs/GetAdminLicensesResponse.md)
+ - [com.tcp.mobile.v1.models.GetAdminUsersResponse](docs/GetAdminUsersResponse.md)
  - [com.tcp.mobile.v1.models.GetDashboardStatsResponse](docs/GetDashboardStatsResponse.md)
  - [com.tcp.mobile.v1.models.GetProductsIdResponse](docs/GetProductsIdResponse.md)
  - [com.tcp.mobile.v1.models.GetProductsResponse](docs/GetProductsResponse.md)
@@ -252,6 +283,7 @@ All URIs are relative to */api/mobile/v1*
  - [com.tcp.mobile.v1.models.PayablePaymentSummary](docs/PayablePaymentSummary.md)
  - [com.tcp.mobile.v1.models.PaymentType](docs/PaymentType.md)
  - [com.tcp.mobile.v1.models.PaymentTypeUpdateRequest](docs/PaymentTypeUpdateRequest.md)
+ - [com.tcp.mobile.v1.models.PendingMembershipItem](docs/PendingMembershipItem.md)
  - [com.tcp.mobile.v1.models.PostAccountingAdvancesIdEjecutarResponse](docs/PostAccountingAdvancesIdEjecutarResponse.md)
  - [com.tcp.mobile.v1.models.PostAccountingAdvancesIdRevertirResponse](docs/PostAccountingAdvancesIdRevertirResponse.md)
  - [com.tcp.mobile.v1.models.PostAccountingAdvancesResponse](docs/PostAccountingAdvancesResponse.md)

@@ -8,6 +8,7 @@ export * from './AccountingConfigurationApi';
 export * from './AccountingReceivablesAndPayablesApi';
 export * from './AccountingReconciliationApi';
 export * from './AccountingReportsApi';
+export * from './AdminApi';
 export * from './AuthApi';
 export * from './ClientsApi';
 export * from './DashboardApi';

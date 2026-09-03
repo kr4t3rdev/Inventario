@@ -194,6 +194,50 @@ class ApiClient {
           return AccountingAdvancesIdRevertirPostRequest.fromJson(value);
         case 'AccountingAdvancesPostRequest':
           return AccountingAdvancesPostRequest.fromJson(value);
+        case 'AdminHealthResponse':
+          return AdminHealthResponse.fromJson(value);
+        case 'AdminHealthResponseLicenses':
+          return AdminHealthResponseLicenses.fromJson(value);
+        case 'AdminHealthResponseSessions':
+          return AdminHealthResponseSessions.fromJson(value);
+        case 'AdminHealthResponseTenants':
+          return AdminHealthResponseTenants.fromJson(value);
+        case 'AdminHealthResponseUsers':
+          return AdminHealthResponseUsers.fromJson(value);
+        case 'AdminHealthResponseUsersByRoleInner':
+          return AdminHealthResponseUsersByRoleInner.fromJson(value);
+        case 'AdminHealthResponseUsersComparison':
+          return AdminHealthResponseUsersComparison.fromJson(value);
+        case 'AdminHealthResponseUsersTrendInner':
+          return AdminHealthResponseUsersTrendInner.fromJson(value);
+        case 'AdminLicenseItem':
+          return AdminLicenseItem.fromJson(value);
+        case 'AdminLicenseItemCreatedByUser':
+          return AdminLicenseItemCreatedByUser.fromJson(value);
+        case 'AdminLicenseItemTenant':
+          return AdminLicenseItemTenant.fromJson(value);
+        case 'AdminLicenseManagerItem':
+          return AdminLicenseManagerItem.fromJson(value);
+        case 'AdminPendingUserItem':
+          return AdminPendingUserItem.fromJson(value);
+        case 'AdminTenantItem':
+          return AdminTenantItem.fromJson(value);
+        case 'AdminTenantItemCount':
+          return AdminTenantItemCount.fromJson(value);
+        case 'AdminTenantLicenseItem':
+          return AdminTenantLicenseItem.fromJson(value);
+        case 'AdminTenantLicenseItemPlan':
+          return AdminTenantLicenseItemPlan.fromJson(value);
+        case 'AdminTenantLite':
+          return AdminTenantLite.fromJson(value);
+        case 'AdminUserItem':
+          return AdminUserItem.fromJson(value);
+        case 'AdminUserItemSalesAgentBalance':
+          return AdminUserItemSalesAgentBalance.fromJson(value);
+        case 'AdminUserItemSalesAgentProfile':
+          return AdminUserItemSalesAgentProfile.fromJson(value);
+        case 'AdminUserLite':
+          return AdminUserLite.fromJson(value);
         case 'Advance':
           return Advance.fromJson(value);
         case 'AdvanceWorkflowResult':
@@ -358,6 +402,12 @@ class ApiClient {
           return GetAccountingReportsSummaryResponse.fromJson(value);
         case 'GetAccountingReportsTransfersResponse':
           return GetAccountingReportsTransfersResponse.fromJson(value);
+        case 'GetAdminLicenseStatsResponse':
+          return GetAdminLicenseStatsResponse.fromJson(value);
+        case 'GetAdminLicensesResponse':
+          return GetAdminLicensesResponse.fromJson(value);
+        case 'GetAdminUsersResponse':
+          return GetAdminUsersResponse.fromJson(value);
         case 'GetDashboardStatsResponse':
           return GetDashboardStatsResponse.fromJson(value);
         case 'GetProductsIdResponse':
@@ -386,6 +436,8 @@ class ApiClient {
           return PaymentType.fromJson(value);
         case 'PaymentTypeUpdateRequest':
           return PaymentTypeUpdateRequest.fromJson(value);
+        case 'PendingMembershipItem':
+          return PendingMembershipItem.fromJson(value);
         case 'PostAccountingAdvancesIdEjecutarResponse':
           return PostAccountingAdvancesIdEjecutarResponse.fromJson(value);
         case 'PostAccountingAdvancesIdRevertirResponse':
