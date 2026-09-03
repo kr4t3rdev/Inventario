@@ -6,20 +6,8 @@ import { Wallet, DollarSign } from 'lucide-react';
 
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
-import {
-  getVentasPendientesAction,
-  getHistorialReconciliacionVentasAction,
-  getServiciosPendientesAction,
-  getHistorialReconciliacionServiciosAction,
-  getGastosPendientesAction,
-  getHistorialReconciliacionGastosAction,
-} from '@/features/contabilidad/actions-reconciliacion';
-import { getPrestamosCashStatsAction } from '@/features/contabilidad/actions-prestamos-cash';
-import { getMonedasAction } from '@/features/contabilidad/actions-exchange';
-import { getResumenFinancieroAction } from '@/features/contabilidad/actions';
-import { getResumenAnticiposAction } from '@/features/contabilidad/actions-anticipos';
+import { getResumenCompletoAction } from '@/features/contabilidad/actions-resumen';
 import { getSaldoNetoTotal } from '@/features/contabilidad/components/resumen-financiero-utils';
-import { useAuth } from '@/contexts/auth-context';
 import { cn } from '@/lib/utils';
 
 import { FinancialStatePanel } from './reportes/FinancialStatePanel';
@@ -50,18 +38,10 @@ export function ResumenFinanciero({
   fechaInicio: fechaInicioProp,
   fechaFin: fechaFinProp,
   cuentaId,
-  tipoGasto,
   periodo: periodoProp,
-  soloNoReconciliados,
-  page,
-  limit,
   refreshToken = 0,
   showPeriodSelector = false,
 }: ResumenFinancieroProps): React.JSX.Element | null {
-  const { user } = useAuth();
-  const hasPrestamosCash = user?.planFeatures?.['prestamos-cash'] === true;
-  const hasAnticipos = user?.planFeatures?.['anticipos'] === true;
-
   const [periodoClave, setPeriodoClave] = useState<PeriodoClave>('mes');
 
   const rango: RangoPeriodo | null = showPeriodSelector
@@ -74,18 +54,9 @@ export function ResumenFinanciero({
 
   const [retryKey, setRetryKey] = useState(0);
 
-  const [resumen, setResumen] = useState<any>(null);
+  const [payload, setPayload] = useState<any>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<any>(null);
-  const [monedasData, setMonedasData] = useState<any>(null);
-  const [historyVentas, setHistoryVentas] = useState<any>(null);
-  const [ventasData, setVentasData] = useState<any>(null);
-  const [serviciosHistoryData, setServiciosHistoryData] = useState<any>(null);
-  const [serviciosData, setServiciosData] = useState<any>(null);
-  const [gastosData, setGastosData] = useState<any>(null);
-  const [gastosHistoryData, setGastosHistoryData] = useState<any>(null);
-  const [resumenAnticiposData, setResumenAnticiposData] = useState<any>(null);
-  const [prestamosCashData, setPrestamosCashData] = useState<any>(null);
   const dataRequestRef = useRef(0);
 
   useEffect(() => {
@@ -93,16 +64,15 @@ export function ResumenFinanciero({
     let isActive = true;
     setIsLoading(true);
     setError(null);
-    getResumenFinancieroAction({ fechaInicio, fechaFin, cuentaId })
+    getResumenCompletoAction({ fechaInicio, fechaFin, cuentaId })
       .then(r => {
         if (!isActive || requestId !== dataRequestRef.current) return;
         if (r.success) {
-          setResumen(r.data);
-          setIsLoading(false);
+          setPayload(r.data);
         } else {
           setError(r.error);
-          setIsLoading(false);
         }
+        setIsLoading(false);
       })
       .catch(e => {
         if (!isActive || requestId !== dataRequestRef.current) return;
@@ -112,72 +82,11 @@ export function ResumenFinanciero({
     return () => { isActive = false; };
   }, [fechaInicio, fechaFin, cuentaId, retryKey, refreshToken]);
 
-  useEffect(() => {
-    let isActive = true;
-    getMonedasAction().then(r => { if (isActive && r.success) setMonedasData(r.data); });
-    return () => { isActive = false; };
-  }, [retryKey, refreshToken]);
-
-  useEffect(() => {
-    if (!hasPrestamosCash) return;
-    let isActive = true;
-    getPrestamosCashStatsAction().then(r => {
-      if (isActive && r.success) setPrestamosCashData(r.data);
-    }).catch(() => undefined);
-    return () => { isActive = false; };
-  }, [hasPrestamosCash, retryKey, refreshToken]);
-
-  useEffect(() => {
-    if (!hasAnticipos) return;
-    let isActive = true;
-    getResumenAnticiposAction({ fechaInicio, fechaFin }).then(r => {
-      if (isActive && r.success) setResumenAnticiposData(r.data);
-    }).catch(() => undefined);
-    return () => { isActive = false; };
-  }, [fechaInicio, fechaFin, hasAnticipos, retryKey, refreshToken]);
-
-  useEffect(() => {
-    getHistorialReconciliacionVentasAction({ fechaInicio, fechaFin, cuentaId })
-      .then(r => { if (r.success) setHistoryVentas(r.data) })
-      .catch(() => undefined);
-  }, [fechaInicio, fechaFin, cuentaId, retryKey, refreshToken]);
-
-  useEffect(() => {
-    getVentasPendientesAction({ fechaInicio, fechaFin, page, limit })
-      .then(r => { if (r.success) setVentasData(r.data) })
-      .catch(() => undefined);
-  }, [fechaInicio, fechaFin, page, limit, retryKey, refreshToken]);
-
-  useEffect(() => {
-    getHistorialReconciliacionServiciosAction({ fechaDesde: fechaInicio, fechaHasta: fechaFin, cuentaId })
-      .then(r => { if (r.success) setServiciosHistoryData(r.data) })
-      .catch(() => undefined);
-  }, [fechaInicio, fechaFin, cuentaId, retryKey, refreshToken]);
-
-  useEffect(() => {
-    getServiciosPendientesAction({ fechaDesde: fechaInicio, fechaHasta: fechaFin, limit, page })
-      .then(r => { if (r.success) setServiciosData(r.data) })
-      .catch(() => undefined);
-  }, [fechaInicio, fechaFin, limit, page, retryKey, refreshToken]);
-
-  useEffect(() => {
-    getGastosPendientesAction({
-      fechaDesde: fechaInicio,
-      fechaHasta: fechaFin,
-      tipoGasto,
-      soloNoReconciliados,
-      page,
-      limit,
-    })
-      .then(r => { if (r.success) setGastosData(r.data) })
-      .catch(() => undefined);
-  }, [fechaInicio, fechaFin, tipoGasto, soloNoReconciliados, page, limit, retryKey, refreshToken]);
-
-  useEffect(() => {
-    getHistorialReconciliacionGastosAction({ fechaInicio, fechaFin, cuentaId, tipoGasto })
-      .then(r => { if (r.success) setGastosHistoryData(r.data) })
-      .catch(() => undefined);
-  }, [fechaInicio, fechaFin, cuentaId, tipoGasto, retryKey, refreshToken]);
+  const resumen = payload?.resumen ?? null;
+  const monedasData = payload?.monedas ?? null;
+  const prestamosCashData = payload?.prestamosStats ?? null;
+  const resumenAnticiposData = payload?.resumenAnticipos ?? null;
+  const conteos = payload?.conteos ?? null;
 
   if (isLoading) {
     return (
@@ -244,12 +153,6 @@ export function ResumenFinanciero({
     egresos: m.totalEgresos,
   })) || [];
 
-  const serviciosList = (serviciosData?.ventaServicios || []).filter((servicio: any) => {
-    if (!servicio.reconciliaciones || servicio.reconciliaciones.length === 0) return true;
-    const totalReconciliado = servicio.reconciliaciones.reduce((sum: number, rec: any) => sum + (rec.montoConvertido || 0), 0);
-    return totalReconciliado < (servicio.total || 0);
-  });
-
   return (
     <motion.div
       className="space-y-8"
@@ -276,9 +179,9 @@ export function ResumenFinanciero({
       />
 
       <AccountingAttentionPanel
-        ventasPend={ventasData?.pagination?.total ?? ventasData?.ventas?.length ?? 0}
-        serviciosPend={serviciosData?.pagination?.total ?? serviciosList.length}
-        gastosPend={gastosData?.pagination?.total ?? gastosData?.gastos?.length ?? 0}
+        ventasPend={conteos?.ventas?.pending ?? 0}
+        serviciosPend={conteos?.servicios?.pending ?? 0}
+        gastosPend={conteos?.gastos?.pending ?? 0}
         conversionesSinCobertura={resumen.metadatos?.coberturaConversion?.unresolved || 0}
         clasificacionesNoReconocidas={resumen.metadatos?.clasificacionNoReconocida || 0}
       />

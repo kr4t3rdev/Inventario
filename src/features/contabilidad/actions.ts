@@ -20,7 +20,7 @@ interface ReportFilters {
   limit?: number;
 }
 
-function getReportCapabilities(user: AuthenticatedUser) {
+export function getReportCapabilities(user: AuthenticatedUser) {
   return {
     includeServicios: user.planFeatures?.servicios === true,
     includeTransfers: canAccessAccountingItem(user, 'Transferencias Bancarias'),

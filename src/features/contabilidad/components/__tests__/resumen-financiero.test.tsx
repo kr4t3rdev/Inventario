@@ -4,38 +4,12 @@ import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 
 const mocks = vi.hoisted(() => ({
-  getResumenFinancieroAction: vi.fn(),
-  getMonedasAction: vi.fn(),
-  getVentasPendientesAction: vi.fn(),
-  getServiciosPendientesAction: vi.fn(),
-  getGastosPendientesAction: vi.fn(),
-  getHistorialReconciliacionVentasAction: vi.fn(),
-  getHistorialReconciliacionServiciosAction: vi.fn(),
-  getHistorialReconciliacionGastosAction: vi.fn(),
-  getPrestamosCashStatsAction: vi.fn(),
-  getResumenAnticiposAction: vi.fn(),
+  getResumenCompletoAction: vi.fn(),
   authUser: undefined as { planFeatures: Record<string, boolean> } | undefined,
 }));
 
-vi.mock('@/features/contabilidad/actions', () => ({
-  getResumenFinancieroAction: mocks.getResumenFinancieroAction,
-}));
-vi.mock('@/features/contabilidad/actions-exchange', () => ({
-  getMonedasAction: mocks.getMonedasAction,
-}));
-vi.mock('@/features/contabilidad/actions-reconciliacion', () => ({
-  getVentasPendientesAction: mocks.getVentasPendientesAction,
-  getServiciosPendientesAction: mocks.getServiciosPendientesAction,
-  getGastosPendientesAction: mocks.getGastosPendientesAction,
-  getHistorialReconciliacionVentasAction: mocks.getHistorialReconciliacionVentasAction,
-  getHistorialReconciliacionServiciosAction: mocks.getHistorialReconciliacionServiciosAction,
-  getHistorialReconciliacionGastosAction: mocks.getHistorialReconciliacionGastosAction,
-}));
-vi.mock('@/features/contabilidad/actions-prestamos-cash', () => ({
-  getPrestamosCashStatsAction: mocks.getPrestamosCashStatsAction,
-}));
-vi.mock('@/features/contabilidad/actions-anticipos', () => ({
-  getResumenAnticiposAction: mocks.getResumenAnticiposAction,
+vi.mock('@/features/contabilidad/actions-resumen', () => ({
+  getResumenCompletoAction: mocks.getResumenCompletoAction,
 }));
 vi.mock('@/contexts/auth-context', () => ({
   useAuth: () => ({ user: mocks.authUser ?? { planFeatures: {} } }),
@@ -48,6 +22,24 @@ vi.mock('@/components/ui/animations', () => ({
   StaggerContainer: ({ children }: { children: React.ReactNode }) => <>{children}</>,
   StaggerItem: ({ children }: { children: React.ReactNode }) => <>{children}</>,
 }));
+
+
+function payloadResumen(overrides: Record<string, unknown> = {}) {
+  return {
+    success: true,
+    data: {
+      resumen: {
+        resumenPorMoneda: [{ moneda: 'CUP', saldoActual: 5000, totalIngresos: 10000, totalEgresos: 5000 }],
+        metadatos: { coberturaConversion: { unresolved: 0 }, clasificacionNoReconocida: 0 },
+      },
+      monedas: [] as Array<Record<string, unknown>>,
+      prestamosStats: null as unknown,
+      resumenAnticipos: null as unknown,
+      conteos: { ventas: { pending: 0 }, servicios: { pending: 0 }, gastos: { pending: 0 } },
+      ...overrides,
+    },
+  };
+}
 
 import { FinancialStatePanel } from '../reportes/FinancialStatePanel';
 import { AccountingAttentionPanel } from '../reportes/AccountingAttentionPanel';
@@ -340,16 +332,7 @@ describe('AccountingDetailsDisclosure', () => {
 describe('ResumenFinanciero — loading, empty, error', () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    mocks.getResumenFinancieroAction.mockReturnValue(new Promise(() => {}));
-    mocks.getMonedasAction.mockResolvedValue({ success: true, data: [] });
-    mocks.getVentasPendientesAction.mockResolvedValue({ success: true, data: { ventas: [] } });
-    mocks.getServiciosPendientesAction.mockResolvedValue({ success: true, data: { ventaServicios: [] } });
-    mocks.getGastosPendientesAction.mockResolvedValue({ success: true, data: { gastos: [] } });
-    mocks.getHistorialReconciliacionVentasAction.mockResolvedValue({ success: true, data: null });
-    mocks.getHistorialReconciliacionServiciosAction.mockResolvedValue({ success: true, data: null });
-    mocks.getHistorialReconciliacionGastosAction.mockResolvedValue({ success: true, data: null });
-    mocks.getPrestamosCashStatsAction.mockResolvedValue({ success: true, data: null });
-    mocks.getResumenAnticiposAction.mockResolvedValue({ success: true, data: null });
+    mocks.getResumenCompletoAction.mockReturnValue(new Promise(() => {}));
   });
 
   it('muestra estado de loading', async () => {
@@ -366,7 +349,7 @@ describe('ResumenFinanciero — loading, empty, error', () => {
   });
 
   it('muestra error con botón de reintento', async () => {
-    mocks.getResumenFinancieroAction.mockResolvedValueOnce({
+    mocks.getResumenCompletoAction.mockResolvedValueOnce({
       success: false,
       error: { message: 'Error de prueba' },
     });
@@ -383,13 +366,7 @@ describe('ResumenFinanciero — loading, empty, error', () => {
   });
 
   it('jerarquía se mantiene en estructura de grid', async () => {
-    mocks.getResumenFinancieroAction.mockResolvedValueOnce({
-      success: true,
-      data: {
-        resumenPorMoneda: [{ moneda: 'CUP', saldoActual: 5000, totalIngresos: 10000, totalEgresos: 5000 }],
-        metadatos: { coberturaConversion: { unresolved: 0 }, clasificacionNoReconocida: 0 },
-      },
-    });
+    mocks.getResumenCompletoAction.mockResolvedValueOnce(payloadResumen());
 
     const { ResumenFinanciero } = await import('../resumen-financiero');
 
@@ -409,22 +386,7 @@ describe('ResumenFinanciero — loading, empty, error', () => {
 describe('ResumenFinanciero — selector de período (opt-in)', () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    mocks.getResumenFinancieroAction.mockResolvedValue({
-      success: true,
-      data: {
-        resumenPorMoneda: [{ moneda: 'CUP', saldoActual: 100, totalIngresos: 100, totalEgresos: 0 }],
-        metadatos: { coberturaConversion: { unresolved: 0 }, clasificacionNoReconocida: 0 },
-      },
-    });
-    mocks.getMonedasAction.mockResolvedValue({ success: true, data: [] });
-    mocks.getVentasPendientesAction.mockResolvedValue({ success: true, data: { ventas: [] } });
-    mocks.getServiciosPendientesAction.mockResolvedValue({ success: true, data: { ventaServicios: [] } });
-    mocks.getGastosPendientesAction.mockResolvedValue({ success: true, data: { gastos: [] } });
-    mocks.getHistorialReconciliacionVentasAction.mockResolvedValue({ success: true, data: null });
-    mocks.getHistorialReconciliacionServiciosAction.mockResolvedValue({ success: true, data: null });
-    mocks.getHistorialReconciliacionGastosAction.mockResolvedValue({ success: true, data: null });
-    mocks.getPrestamosCashStatsAction.mockResolvedValue({ success: true, data: null });
-    mocks.getResumenAnticiposAction.mockResolvedValue({ success: true, data: null });
+    mocks.getResumenCompletoAction.mockResolvedValue(payloadResumen());
   });
 
   it('sin showPeriodSelector no se renderiza el selector (regresión consumidores legacy)', async () => {
@@ -433,7 +395,7 @@ describe('ResumenFinanciero — selector de período (opt-in)', () => {
 
     await screen.findByText(/Flujo Neto del Período/i);
     expect(screen.queryByRole('radiogroup')).not.toBeInTheDocument();
-    expect(mocks.getResumenFinancieroAction).toHaveBeenCalledWith(
+    expect(mocks.getResumenCompletoAction).toHaveBeenCalledWith(
       expect.objectContaining({ fechaInicio: undefined, fechaFin: undefined }),
     );
   });
@@ -452,7 +414,7 @@ describe('ResumenFinanciero — selector de período (opt-in)', () => {
     const inicioMes = `${hoy.getFullYear()}-${pad(hoy.getMonth() + 1)}-01`;
 
     await waitFor(() => {
-      expect(mocks.getResumenFinancieroAction).toHaveBeenCalledWith(
+      expect(mocks.getResumenCompletoAction).toHaveBeenCalledWith(
         expect.objectContaining({ fechaInicio: inicioMes, fechaFin: hoyStr }),
       );
     });
@@ -470,7 +432,7 @@ describe('ResumenFinanciero — selector de período (opt-in)', () => {
     const hoyStr = `${hoy.getFullYear()}-${pad(hoy.getMonth() + 1)}-${pad(hoy.getDate())}`;
 
     await waitFor(() => {
-      expect(mocks.getResumenFinancieroAction).toHaveBeenCalledWith(
+      expect(mocks.getResumenCompletoAction).toHaveBeenCalledWith(
         expect.objectContaining({ fechaInicio: hoyStr, fechaFin: hoyStr }),
       );
     });
@@ -519,25 +481,9 @@ describe('ResumenFinanciero — cifras tabulares en disclosures', () => {
   });
 
   it('los montos de préstamos cash usan cifras tabulares', async () => {
-    mocks.getResumenFinancieroAction.mockResolvedValue({
-      success: true,
-      data: {
-        resumenPorMoneda: [{ moneda: 'CUP', saldoActual: 100, totalIngresos: 100, totalEgresos: 0 }],
-        metadatos: { coberturaConversion: { unresolved: 0 }, clasificacionNoReconocida: 0 },
-      },
-    });
-    mocks.getMonedasAction.mockResolvedValue({ success: true, data: [] });
-    mocks.getVentasPendientesAction.mockResolvedValue({ success: true, data: { ventas: [] } });
-    mocks.getServiciosPendientesAction.mockResolvedValue({ success: true, data: { ventaServicios: [] } });
-    mocks.getGastosPendientesAction.mockResolvedValue({ success: true, data: { gastos: [] } });
-    mocks.getHistorialReconciliacionVentasAction.mockResolvedValue({ success: true, data: null });
-    mocks.getHistorialReconciliacionServiciosAction.mockResolvedValue({ success: true, data: null });
-    mocks.getHistorialReconciliacionGastosAction.mockResolvedValue({ success: true, data: null });
-    mocks.getPrestamosCashStatsAction.mockResolvedValue({
-      success: true,
-      data: { totalActivos: 2, totalVencidos: 0, montoPendienteCobro: { CUP: 1234.5 } },
-    });
-    mocks.getResumenAnticiposAction.mockResolvedValue({ success: true, data: null });
+    mocks.getResumenCompletoAction.mockResolvedValue(payloadResumen({
+      prestamosStats: { totalActivos: 2, totalVencidos: 0, montoPendienteCobro: { CUP: 1234.5 } },
+    }));
 
     const { ResumenFinanciero } = await import('../resumen-financiero');
     render(<ResumenFinanciero periodo="Este mes" page={1} limit={10} />);
