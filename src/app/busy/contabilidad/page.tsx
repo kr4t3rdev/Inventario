@@ -42,32 +42,33 @@ const ResumenFinanciero = dynamic(() =>
   }
 );
 
-function ResumenSkeleton() {
+/** @description Skeleton del resumen financiero mientras se carga el chunk dinámico. */
+export function ResumenSkeleton() {
   return (
     <div className="space-y-8">
       {/* Header Skeleton */}
       <div className="flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
         <div className="space-y-2">
-           <div className="h-4 w-32 bg-slate-100 dark:bg-slate-800/5 rounded animate-pulse" />
-           <div className="h-8 w-64 bg-slate-100 dark:bg-slate-800/5 rounded animate-pulse" />
-           <div className="h-4 w-96 bg-slate-100 dark:bg-slate-800/5 rounded animate-pulse" />
+           <div className="h-4 w-32 bg-slate-100 dark:bg-slate-800/50 rounded animate-pulse" />
+           <div className="h-8 w-64 bg-slate-100 dark:bg-slate-800/50 rounded animate-pulse" />
+           <div className="h-4 w-96 bg-slate-100 dark:bg-slate-800/50 rounded animate-pulse" />
         </div>
         <div className="flex gap-2">
-           <div className="h-9 w-24 bg-slate-100 dark:bg-slate-800/5 rounded animate-pulse" />
-           <div className="h-9 w-24 bg-slate-100 dark:bg-slate-800/5 rounded animate-pulse" />
+           <div className="h-9 w-24 bg-slate-100 dark:bg-slate-800/50 rounded animate-pulse" />
+           <div className="h-9 w-24 bg-slate-100 dark:bg-slate-800/50 rounded animate-pulse" />
         </div>
       </div>
 
       {/* Cards Skeleton */}
       <div className="grid gap-6 md:grid-cols-3">
         {[1, 2, 3].map((i) => (
-          <div key={i} className="h-40 rounded-xl bg-slate-100 dark:bg-slate-800/5 animate-pulse" />
+          <div key={i} className="h-40 rounded-xl bg-slate-100 dark:bg-slate-800/50 animate-pulse" />
         ))}
       </div>
        {/* Secondary Cards Skeleton */}
       <div className="grid gap-6 md:grid-cols-3">
         {[1, 2, 3].map((i) => (
-          <div key={i} className="h-24 rounded-xl bg-slate-100 dark:bg-slate-800/5 animate-pulse" />
+          <div key={i} className="h-24 rounded-xl bg-slate-100 dark:bg-slate-800/50 animate-pulse" />
         ))}
       </div>
     </div>
@@ -108,7 +109,6 @@ const accentStyles = {
   },
 } as const;
 
-const sectionKickerClass = "text-xs font-bold uppercase tracking-widest text-slate-500 dark:text-slate-400 mb-2";
 type AccentTone = keyof typeof accentStyles;
 
 /**
@@ -274,12 +274,9 @@ export default function ContabilidadDashboard(): React.JSX.Element {
 
         {/* Quick Actions Grid */}
         <StaggerItem className="space-y-6">
-          <div>
-            <p className={sectionKickerClass}>Accesos Directos</p>
-            <h2 className="text-2xl font-semibold text-slate-900 dark:text-white">
-              Gestión General
-            </h2>
-          </div>
+          <h2 className="text-2xl font-semibold text-slate-900 dark:text-white">
+            Gestión General
+          </h2>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
             {quickActions.map((action) => {
@@ -293,7 +290,7 @@ export default function ContabilidadDashboard(): React.JSX.Element {
                       "hover:shadow-md dark:hover:shadow-slate-900/20"
                     )}>
                       <CardContent className="p-4 flex items-center gap-4">
-                        <div className={cn("p-2.5 rounded-lg shrink-0 transition-transform group-hover:scale-110 duration-300", styles.icon)}>
+                        <div className={cn("p-2.5 rounded-lg shrink-0", styles.icon)}>
                           <action.icon className="h-5 w-5" />
                         </div>
                         <div className="overflow-hidden">

@@ -103,3 +103,34 @@ describe('ContabilidadDashboard', () => {
     expect(títulosVisibles).toEqual(accionesEsperadas);
   });
 });
+
+describe('ContabilidadDashboard - hover quieto', () => {
+  it('los accesos rápidos no amplifican el icono en hover (no scale-110)', async () => {
+    const { container } = render(<ContabilidadDashboard />);
+    await screen.findByTestId('resumen-financiero');
+
+    expect(container.querySelector('[class*="group-hover:scale-110"]')).toBeNull();
+  });
+});
+
+describe('ContabilidadDashboard - sin kickers ni opacidades fantasma', () => {
+  it('no muestra el eyebrow "Accesos Directos"; el H2 se sostiene solo', async () => {
+    render(<ContabilidadDashboard />);
+    await screen.findByTestId('resumen-financiero');
+
+    expect(screen.queryByText('Accesos Directos')).not.toBeInTheDocument();
+    expect(
+      screen.getByRole('heading', { name: 'Gestión General' }),
+    ).toBeInTheDocument();
+  });
+
+  it('el skeleton del resumen no usa opacidades casi invisibles (/5)', async () => {
+    const { ResumenSkeleton } = await import('./page');
+    const { container } = render(<ResumenSkeleton />);
+
+    const allClasses = Array.from(container.querySelectorAll('[class]')).flatMap((el) =>
+      Array.from(el.classList),
+    );
+    expect(allClasses).not.toContain('dark:bg-slate-800/5');
+  });
+});
