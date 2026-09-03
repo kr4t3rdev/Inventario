@@ -204,6 +204,39 @@ describe("ComprasServicios Server Actions", () => {
 			expect(result.success).toBe(false);
 			expect(result.error!.message).toContain("Proveedor no encontrado");
 		});
+		it("etiqueta la reconciliación con la moneda del anticipo, no hardcodeada", async () => {
+			vi.mocked(getCurrentUser).mockResolvedValue(mockUser);
+			vi.mocked(prisma.servicios.findFirst).mockResolvedValue(
+				mockServicio as any,
+			);
+			mockTx.compraServicio.create.mockResolvedValue(mockCompraRow);
+			vi.mocked(applyAnticipoAllocations).mockResolvedValue([
+				{ anticipoId: "a1", montoAplicado: 100 },
+			] as any);
+			// Anticipo de PAGO en USD: hoy el hardcode lo etiquetaría CUP
+			mockTx.anticipo.findUnique.mockResolvedValue({
+				tipo: "PAGO",
+				moneda: "USD",
+				cuentaOrigenId: "cb-1",
+				tipoPagoOrigenId: "tp-1",
+			} as any);
+			mockTx.tipoPago.findFirst.mockResolvedValue({ tipoId: "tp-1" } as any);
+			mockTx.cuentaBancaria.findFirst.mockResolvedValue({
+				cuentaId: "cb-1",
+			} as any);
+
+			const result = await createCompraServicioAction({
+				...validInput,
+				anticipos: [{ anticipoId: "a1", montoAplicado: 100 }],
+			});
+
+			expect(result.success).toBe(true);
+			expect(mockTx.reconciliacionGasto.create).toHaveBeenCalledWith(
+				expect.objectContaining({
+					data: expect.objectContaining({ moneda: "USD" }),
+				}),
+			);
+		});
 	});
 
 	describe("updateCompraServicioAction", () => {

@@ -159,7 +159,7 @@ describe("VentaServicios Server Actions", () => {
 		it("calcula el total en el servidor e ignora el total del cliente", async () => {
 			vi.mocked(getCurrentUser).mockResolvedValue(mockUser);
 			vi.mocked(prisma.servicios.findMany).mockResolvedValue([
-				{ servicioId: "sv-1" },
+				{ servicioId: "sv-1", moneda: "CUP" },
 			] as any);
 			mockTx.ventaServicios.create.mockResolvedValue(mockVentaRow);
 
@@ -181,7 +181,7 @@ describe("VentaServicios Server Actions", () => {
 		it("rechaza venta legacy sin precioUnitario", async () => {
 			vi.mocked(getCurrentUser).mockResolvedValue(mockUser);
 			vi.mocked(prisma.servicios.findMany).mockResolvedValue([
-				{ servicioId: "sv-1" },
+				{ servicioId: "sv-1", moneda: "CUP" },
 			] as any);
 
 			const result = await createVentaServicioAction({
@@ -304,7 +304,7 @@ describe("VentaServicios Server Actions", () => {
 		it("rechaza cliente de otro tenant", async () => {
 			vi.mocked(getCurrentUser).mockResolvedValue(mockUser);
 			vi.mocked(prisma.servicios.findMany).mockResolvedValue([
-				{ servicioId: "sv-1" },
+				{ servicioId: "sv-1", moneda: "CUP" },
 			] as any);
 			vi.mocked(prisma.cliente.findFirst).mockResolvedValue(null);
 
@@ -322,7 +322,7 @@ describe("VentaServicios Server Actions", () => {
 		it("crea venta mixta exitosamente", async () => {
 			vi.mocked(getCurrentUser).mockResolvedValue(mockUser);
 			vi.mocked(prisma.servicios.findMany).mockResolvedValue([
-				{ servicioId: "sv-1" },
+				{ servicioId: "sv-1", moneda: "CUP" },
 			] as any);
 			// Modo mixto usa $transaction(array) no callback
 			vi.mocked(prisma.$transaction).mockImplementation((args: any) => {
@@ -364,10 +364,46 @@ describe("VentaServicios Server Actions", () => {
 				"PRODUCT_LINE_NOT_SUPPORTED_IN_THIS_ENDPOINT",
 			);
 		});
+		it("etiqueta la reconciliación con la moneda del anticipo, no hardcodeada", async () => {
+			vi.mocked(getCurrentUser).mockResolvedValue(mockUser);
+			vi.mocked(prisma.servicios.findMany).mockResolvedValue([
+				{ servicioId: "sv-1", moneda: "CUP" },
+			] as any);
+			mockTx.ventaServicios.create.mockResolvedValue(mockVentaRow);
+			vi.mocked(applyAnticipoAllocations).mockResolvedValue([
+				{ anticipoId: "a1", montoAplicado: 100 },
+			] as any);
+			// Anticipo de COBRO en USD: hoy el hardcode lo etiquetaría CUP
+			mockTx.anticipo.findUnique.mockResolvedValue({
+				tipo: "COBRO",
+				moneda: "USD",
+				cuentaOrigenId: "cb-1",
+				tipoPagoOrigenId: "tp-1",
+			} as any);
+			mockTx.tipoPago.findFirst.mockResolvedValue({ tipoId: "tp-1" } as any);
+			mockTx.cuentaBancaria.findFirst.mockResolvedValue({
+				cuentaId: "cb-1",
+			} as any);
+
+			const result = await createVentaServicioAction({
+				servicioId: "sv-1",
+				cantidad: 1,
+				precioUnitario: 5000,
+				anticipos: [{ anticipoId: "a1", montoAplicado: 100 }],
+			});
+
+			expect(result.success).toBe(true);
+			expect(mockTx.reconciliacionServicio.create).toHaveBeenCalledWith(
+				expect.objectContaining({
+					data: expect.objectContaining({ moneda: "USD" }),
+				}),
+			);
+		});
+
 		it("usa el usuario autenticado como reconciliadoPor al aplicar anticipos", async () => {
 			vi.mocked(getCurrentUser).mockResolvedValue(mockUser);
 			vi.mocked(prisma.servicios.findMany).mockResolvedValue([
-				{ servicioId: "sv-1" },
+				{ servicioId: "sv-1", moneda: "CUP" },
 			] as any);
 			mockTx.ventaServicios.create.mockResolvedValue(mockVentaRow);
 			vi.mocked(applyAnticipoAllocations).mockResolvedValue([
@@ -402,7 +438,7 @@ describe("VentaServicios Server Actions", () => {
 		it("rechaza anticipo sin cuenta ni tipo de pago configurados", async () => {
 			vi.mocked(getCurrentUser).mockResolvedValue(mockUser);
 			vi.mocked(prisma.servicios.findMany).mockResolvedValue([
-				{ servicioId: "sv-1" },
+				{ servicioId: "sv-1", moneda: "CUP" },
 			] as any);
 			mockTx.ventaServicios.create.mockResolvedValue(mockVentaRow);
 			vi.mocked(applyAnticipoAllocations).mockResolvedValue([

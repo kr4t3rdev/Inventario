@@ -170,7 +170,7 @@ export const createVentaServicioAction = withAction(withPeriodValidation(
       for (const alloc of allocationsResult) {
         const anticipo = await tx.anticipo.findUnique({
           where: { anticipoId: alloc.anticipoId },
-          select: { tipo: true, cuentaOrigenId: true, tipoPagoOrigenId: true, clienteId: true },
+          select: { tipo: true, moneda: true, cuentaOrigenId: true, tipoPagoOrigenId: true, clienteId: true },
         });
 
         const cuentaId = anticipo?.cuentaOrigenId || cuentaDefault?.cuentaId;
@@ -182,6 +182,10 @@ export const createVentaServicioAction = withAction(withPeriodValidation(
           );
         }
 
+        // La fila refleja la moneda real del dinero movido (la del anticipo),
+        // no la del servicio: el dinero del anticipo vive en anticipo.moneda.
+        const monedaAnticipo = anticipo?.moneda ?? monedaServicio;
+
         await tx.reconciliacionServicio.create({
           data: {
             tenantId,
@@ -189,10 +193,10 @@ export const createVentaServicioAction = withAction(withPeriodValidation(
             cuentaId,
             tipoPagoId,
             monto: alloc.montoAplicado,
-            moneda: anticipo?.tipo === 'COBRO' ? 'CUP' : 'USD',
+            moneda: monedaAnticipo,
             ...buildPersistedAccountingAmount(
               alloc.montoAplicado,
-              anticipo?.tipo === 'COBRO' ? 'CUP' : 'USD',
+              monedaAnticipo,
             ),
             observaciones: `Cobro anticipado en servicio ${ventaServicio.ventaServicioId}`,
             reconciliadoPor: user.userId || 'system',
