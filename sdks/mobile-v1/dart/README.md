@@ -150,6 +150,11 @@ Class | Method | HTTP request | Description
 *ProductsApi* | [**mobileGetProducts**](doc//ProductsApi.md#mobilegetproducts) | **GET** /products | Consultar productos
 *ProductsApi* | [**mobileGetProductsById**](doc//ProductsApi.md#mobilegetproductsbyid) | **GET** /products/{id} | Consultar producto
 *ProductsApi* | [**mobileGetProductsStock**](doc//ProductsApi.md#mobilegetproductsstock) | **GET** /products/stock | Consultar existencias por ubicación
+*ProvidersApi* | [**mobileDeleteProvidersById**](doc//ProvidersApi.md#mobiledeleteprovidersbyid) | **DELETE** /providers/{id} | Eliminar proveedor
+*ProvidersApi* | [**mobileGetProviders**](doc//ProvidersApi.md#mobilegetproviders) | **GET** /providers | Listar proveedores
+*ProvidersApi* | [**mobileGetProvidersById**](doc//ProvidersApi.md#mobilegetprovidersbyid) | **GET** /providers/{id} | Consultar proveedor
+*ProvidersApi* | [**mobilePostProvidersCreate**](doc//ProvidersApi.md#mobilepostproviderscreate) | **POST** /providers/create | Crear proveedor
+*ProvidersApi* | [**mobilePutProvidersById**](doc//ProvidersApi.md#mobileputprovidersbyid) | **PUT** /providers/{id} | Editar proveedor
 *SalesApi* | [**mobileGetSales**](doc//SalesApi.md#mobilegetsales) | **GET** /sales | Consultar ventas
 *SalesApi* | [**mobileGetSalesById**](doc//SalesApi.md#mobilegetsalesbyid) | **GET** /sales/{id} | Consultar venta
 *SalesApi* | [**mobilePatchSalesByIdUpdate**](doc//SalesApi.md#mobilepatchsalesbyidupdate) | **PATCH** /sales/{id}/update | Actualizar datos de venta
@@ -274,6 +279,11 @@ Class | Method | HTTP request | Description
  - [PostSalesCreateResponse](doc//PostSalesCreateResponse.md)
  - [PostSalesIdCancelResponse](doc//PostSalesIdCancelResponse.md)
  - [Product](doc//Product.md)
+ - [Proveedor](doc//Proveedor.md)
+ - [ProveedorCreateRequest](doc//ProveedorCreateRequest.md)
+ - [ProveedorDeleteResponse](doc//ProveedorDeleteResponse.md)
+ - [ProveedorListResponse](doc//ProveedorListResponse.md)
+ - [ProveedorUpdateRequest](doc//ProveedorUpdateRequest.md)
  - [PutAccountingAdvancesIdResponse](doc//PutAccountingAdvancesIdResponse.md)
  - [PutAccountingCashDebtsIdResponse](doc//PutAccountingCashDebtsIdResponse.md)
  - [PutAccountingCashLoansIdResponse](doc//PutAccountingCashLoansIdResponse.md)

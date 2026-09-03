@@ -129,6 +129,12 @@ docs/PostSalesCreateResponse.md
 docs/PostSalesIdCancelResponse.md
 docs/Product.md
 docs/ProductsApi.md
+docs/Proveedor.md
+docs/ProveedorCreateRequest.md
+docs/ProveedorDeleteResponse.md
+docs/ProveedorListResponse.md
+docs/ProveedorUpdateRequest.md
+docs/ProvidersApi.md
 docs/PutAccountingAdvancesIdResponse.md
 docs/PutAccountingCashDebtsIdResponse.md
 docs/PutAccountingCashLoansIdResponse.md
@@ -175,6 +181,7 @@ src/apis/AuthApi.ts
 src/apis/ClientsApi.ts
 src/apis/DashboardApi.ts
 src/apis/ProductsApi.ts
+src/apis/ProvidersApi.ts
 src/apis/SalesApi.ts
 src/apis/index.ts
 src/index.ts
@@ -293,6 +300,11 @@ src/models/PostAccountingReconciliationServicesResponse.ts
 src/models/PostSalesCreateResponse.ts
 src/models/PostSalesIdCancelResponse.ts
 src/models/Product.ts
+src/models/Proveedor.ts
+src/models/ProveedorCreateRequest.ts
+src/models/ProveedorDeleteResponse.ts
+src/models/ProveedorListResponse.ts
+src/models/ProveedorUpdateRequest.ts
 src/models/PutAccountingAdvancesIdResponse.ts
 src/models/PutAccountingCashDebtsIdResponse.ts
 src/models/PutAccountingCashLoansIdResponse.ts

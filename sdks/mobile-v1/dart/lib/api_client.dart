@@ -412,6 +412,16 @@ class ApiClient {
           return PostSalesIdCancelResponse.fromJson(value);
         case 'Product':
           return Product.fromJson(value);
+        case 'Proveedor':
+          return Proveedor.fromJson(value);
+        case 'ProveedorCreateRequest':
+          return ProveedorCreateRequest.fromJson(value);
+        case 'ProveedorDeleteResponse':
+          return ProveedorDeleteResponse.fromJson(value);
+        case 'ProveedorListResponse':
+          return ProveedorListResponse.fromJson(value);
+        case 'ProveedorUpdateRequest':
+          return ProveedorUpdateRequest.fromJson(value);
         case 'PutAccountingAdvancesIdResponse':
           return PutAccountingAdvancesIdResponse.fromJson(value);
         case 'PutAccountingCashDebtsIdResponse':

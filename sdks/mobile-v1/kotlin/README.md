@@ -130,6 +130,11 @@ All URIs are relative to */api/mobile/v1*
 | *ProductsApi* | [**mobileGetProducts**](docs/ProductsApi.md#mobilegetproducts) | **GET** /products | Consultar productos |
 | *ProductsApi* | [**mobileGetProductsById**](docs/ProductsApi.md#mobilegetproductsbyid) | **GET** /products/{id} | Consultar producto |
 | *ProductsApi* | [**mobileGetProductsStock**](docs/ProductsApi.md#mobilegetproductsstock) | **GET** /products/stock | Consultar existencias por ubicación |
+| *ProvidersApi* | [**mobileDeleteProvidersById**](docs/ProvidersApi.md#mobiledeleteprovidersbyid) | **DELETE** /providers/{id} | Eliminar proveedor |
+| *ProvidersApi* | [**mobileGetProviders**](docs/ProvidersApi.md#mobilegetproviders) | **GET** /providers | Listar proveedores |
+| *ProvidersApi* | [**mobileGetProvidersById**](docs/ProvidersApi.md#mobilegetprovidersbyid) | **GET** /providers/{id} | Consultar proveedor |
+| *ProvidersApi* | [**mobilePostProvidersCreate**](docs/ProvidersApi.md#mobilepostproviderscreate) | **POST** /providers/create | Crear proveedor |
+| *ProvidersApi* | [**mobilePutProvidersById**](docs/ProvidersApi.md#mobileputprovidersbyid) | **PUT** /providers/{id} | Editar proveedor |
 | *SalesApi* | [**mobileGetSales**](docs/SalesApi.md#mobilegetsales) | **GET** /sales | Consultar ventas |
 | *SalesApi* | [**mobileGetSalesById**](docs/SalesApi.md#mobilegetsalesbyid) | **GET** /sales/{id} | Consultar venta |
 | *SalesApi* | [**mobilePatchSalesByIdUpdate**](docs/SalesApi.md#mobilepatchsalesbyidupdate) | **PATCH** /sales/{id}/update | Actualizar datos de venta |
@@ -255,6 +260,11 @@ All URIs are relative to */api/mobile/v1*
  - [com.tcp.mobile.v1.models.PostSalesCreateResponse](docs/PostSalesCreateResponse.md)
  - [com.tcp.mobile.v1.models.PostSalesIdCancelResponse](docs/PostSalesIdCancelResponse.md)
  - [com.tcp.mobile.v1.models.Product](docs/Product.md)
+ - [com.tcp.mobile.v1.models.Proveedor](docs/Proveedor.md)
+ - [com.tcp.mobile.v1.models.ProveedorCreateRequest](docs/ProveedorCreateRequest.md)
+ - [com.tcp.mobile.v1.models.ProveedorDeleteResponse](docs/ProveedorDeleteResponse.md)
+ - [com.tcp.mobile.v1.models.ProveedorListResponse](docs/ProveedorListResponse.md)
+ - [com.tcp.mobile.v1.models.ProveedorUpdateRequest](docs/ProveedorUpdateRequest.md)
  - [com.tcp.mobile.v1.models.PutAccountingAdvancesIdResponse](docs/PutAccountingAdvancesIdResponse.md)
  - [com.tcp.mobile.v1.models.PutAccountingCashDebtsIdResponse](docs/PutAccountingCashDebtsIdResponse.md)
  - [com.tcp.mobile.v1.models.PutAccountingCashLoansIdResponse](docs/PutAccountingCashLoansIdResponse.md)

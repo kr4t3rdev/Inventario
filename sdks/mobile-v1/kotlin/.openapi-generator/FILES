@@ -128,6 +128,12 @@ docs/PostSalesCreateResponse.md
 docs/PostSalesIdCancelResponse.md
 docs/Product.md
 docs/ProductsApi.md
+docs/Proveedor.md
+docs/ProveedorCreateRequest.md
+docs/ProveedorDeleteResponse.md
+docs/ProveedorListResponse.md
+docs/ProveedorUpdateRequest.md
+docs/ProvidersApi.md
 docs/PutAccountingAdvancesIdResponse.md
 docs/PutAccountingCashDebtsIdResponse.md
 docs/PutAccountingCashLoansIdResponse.md
@@ -178,6 +184,7 @@ src/main/kotlin/com/tcp/mobile/v1/apis/AuthApi.kt
 src/main/kotlin/com/tcp/mobile/v1/apis/ClientsApi.kt
 src/main/kotlin/com/tcp/mobile/v1/apis/DashboardApi.kt
 src/main/kotlin/com/tcp/mobile/v1/apis/ProductsApi.kt
+src/main/kotlin/com/tcp/mobile/v1/apis/ProvidersApi.kt
 src/main/kotlin/com/tcp/mobile/v1/apis/SalesApi.kt
 src/main/kotlin/com/tcp/mobile/v1/infrastructure/ApiAbstractions.kt
 src/main/kotlin/com/tcp/mobile/v1/infrastructure/ApiClient.kt
@@ -303,6 +310,11 @@ src/main/kotlin/com/tcp/mobile/v1/models/PostAccountingReconciliationServicesRes
 src/main/kotlin/com/tcp/mobile/v1/models/PostSalesCreateResponse.kt
 src/main/kotlin/com/tcp/mobile/v1/models/PostSalesIdCancelResponse.kt
 src/main/kotlin/com/tcp/mobile/v1/models/Product.kt
+src/main/kotlin/com/tcp/mobile/v1/models/Proveedor.kt
+src/main/kotlin/com/tcp/mobile/v1/models/ProveedorCreateRequest.kt
+src/main/kotlin/com/tcp/mobile/v1/models/ProveedorDeleteResponse.kt
+src/main/kotlin/com/tcp/mobile/v1/models/ProveedorListResponse.kt
+src/main/kotlin/com/tcp/mobile/v1/models/ProveedorUpdateRequest.kt
 src/main/kotlin/com/tcp/mobile/v1/models/PutAccountingAdvancesIdResponse.kt
 src/main/kotlin/com/tcp/mobile/v1/models/PutAccountingCashDebtsIdResponse.kt
 src/main/kotlin/com/tcp/mobile/v1/models/PutAccountingCashLoansIdResponse.kt
@@ -347,6 +359,7 @@ src/test/kotlin/com/tcp/mobile/v1/apis/AuthApiTest.kt
 src/test/kotlin/com/tcp/mobile/v1/apis/ClientsApiTest.kt
 src/test/kotlin/com/tcp/mobile/v1/apis/DashboardApiTest.kt
 src/test/kotlin/com/tcp/mobile/v1/apis/ProductsApiTest.kt
+src/test/kotlin/com/tcp/mobile/v1/apis/ProvidersApiTest.kt
 src/test/kotlin/com/tcp/mobile/v1/apis/SalesApiTest.kt
 src/test/kotlin/com/tcp/mobile/v1/models/AccountPayableTest.kt
 src/test/kotlin/com/tcp/mobile/v1/models/AccountReceivableTest.kt
@@ -463,6 +476,11 @@ src/test/kotlin/com/tcp/mobile/v1/models/PostAccountingReconciliationServicesRes
 src/test/kotlin/com/tcp/mobile/v1/models/PostSalesCreateResponseTest.kt
 src/test/kotlin/com/tcp/mobile/v1/models/PostSalesIdCancelResponseTest.kt
 src/test/kotlin/com/tcp/mobile/v1/models/ProductTest.kt
+src/test/kotlin/com/tcp/mobile/v1/models/ProveedorCreateRequestTest.kt
+src/test/kotlin/com/tcp/mobile/v1/models/ProveedorDeleteResponseTest.kt
+src/test/kotlin/com/tcp/mobile/v1/models/ProveedorListResponseTest.kt
+src/test/kotlin/com/tcp/mobile/v1/models/ProveedorTest.kt
+src/test/kotlin/com/tcp/mobile/v1/models/ProveedorUpdateRequestTest.kt
 src/test/kotlin/com/tcp/mobile/v1/models/PutAccountingAdvancesIdResponseTest.kt
 src/test/kotlin/com/tcp/mobile/v1/models/PutAccountingCashDebtsIdResponseTest.kt
 src/test/kotlin/com/tcp/mobile/v1/models/PutAccountingCashLoansIdResponseTest.kt

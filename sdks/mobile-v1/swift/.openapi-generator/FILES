@@ -18,6 +18,7 @@ Sources/APIs/AuthAPI.swift
 Sources/APIs/ClientsAPI.swift
 Sources/APIs/DashboardAPI.swift
 Sources/APIs/ProductsAPI.swift
+Sources/APIs/ProvidersAPI.swift
 Sources/APIs/SalesAPI.swift
 Sources/CodableHelper.swift
 Sources/Configuration.swift
@@ -140,6 +141,11 @@ Sources/Models/PostAccountingReconciliationServicesResponse.swift
 Sources/Models/PostSalesCreateResponse.swift
 Sources/Models/PostSalesIdCancelResponse.swift
 Sources/Models/Product.swift
+Sources/Models/Proveedor.swift
+Sources/Models/ProveedorCreateRequest.swift
+Sources/Models/ProveedorDeleteResponse.swift
+Sources/Models/ProveedorListResponse.swift
+Sources/Models/ProveedorUpdateRequest.swift
 Sources/Models/PutAccountingAdvancesIdResponse.swift
 Sources/Models/PutAccountingCashDebtsIdResponse.swift
 Sources/Models/PutAccountingCashLoansIdResponse.swift
@@ -304,6 +310,12 @@ docs/PostSalesCreateResponse.md
 docs/PostSalesIdCancelResponse.md
 docs/Product.md
 docs/ProductsAPI.md
+docs/Proveedor.md
+docs/ProveedorCreateRequest.md
+docs/ProveedorDeleteResponse.md
+docs/ProveedorListResponse.md
+docs/ProveedorUpdateRequest.md
+docs/ProvidersAPI.md
 docs/PutAccountingAdvancesIdResponse.md
 docs/PutAccountingCashDebtsIdResponse.md
 docs/PutAccountingCashLoansIdResponse.md

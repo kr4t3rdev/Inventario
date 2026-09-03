@@ -12,4 +12,5 @@ export * from './AuthApi';
 export * from './ClientsApi';
 export * from './DashboardApi';
 export * from './ProductsApi';
+export * from './ProvidersApi';
 export * from './SalesApi';
