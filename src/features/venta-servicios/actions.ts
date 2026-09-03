@@ -133,7 +133,7 @@ export const createVentaServicioAction = withAction(withPeriodValidation(
         servicioId: data.servicioId,
         cantidad: data.cantidad,
         costo: data.costo ?? 0,
-        total: data.total,
+        total: data.cantidad * data.precioUnitario,
         observaciones: data.observaciones ?? null,
         clienteId: data.clienteId ?? null,
       },
@@ -153,7 +153,7 @@ export const createVentaServicioAction = withAction(withPeriodValidation(
       allocationsResult = await applyAnticipoAllocations(tx, data.anticipos, {
         documentoDestinoId: ventaServicio.ventaServicioId,
         contexto: 'FACTURA_DIRECTA',
-        usuarioId: data.clienteId || 'system',
+        usuarioId: user.userId || 'system',
         observaciones: `Anticipo aplicado a venta de servicio ${ventaServicio.ventaServicioId}`,
       });
 
@@ -163,12 +163,21 @@ export const createVentaServicioAction = withAction(withPeriodValidation(
           select: { tipo: true, cuentaOrigenId: true, tipoPagoOrigenId: true, clienteId: true },
         });
 
+        const cuentaId = anticipo?.cuentaOrigenId || cuentaDefault?.cuentaId;
+        const tipoPagoId = anticipo?.tipoPagoOrigenId || tipoPagoDefault?.tipoId;
+        if (!cuentaId || !tipoPagoId) {
+          throw new ActionError(
+            'Configura una cuenta bancaria y un tipo de pago antes de aplicar anticipos',
+            'VALIDATION_ERROR',
+          );
+        }
+
         await tx.reconciliacionServicio.create({
           data: {
             tenantId,
             ventaServicioId: ventaServicio.ventaServicioId,
-            cuentaId: anticipo?.cuentaOrigenId || cuentaDefault?.cuentaId || '',
-            tipoPagoId: anticipo?.tipoPagoOrigenId || tipoPagoDefault?.tipoId || '',
+            cuentaId,
+            tipoPagoId,
             monto: alloc.montoAplicado,
             moneda: anticipo?.tipo === 'COBRO' ? 'CUP' : 'USD',
             ...buildPersistedAccountingAmount(
@@ -176,7 +185,7 @@ export const createVentaServicioAction = withAction(withPeriodValidation(
               anticipo?.tipo === 'COBRO' ? 'CUP' : 'USD',
             ),
             observaciones: `Cobro anticipado en servicio ${ventaServicio.ventaServicioId}`,
-            reconciliadoPor: data.clienteId || 'system',
+            reconciliadoPor: user.userId || 'system',
           },
         });
       }
@@ -197,14 +206,21 @@ export const updateVentaServicioAction = withAction(async (input: VentaServicioU
 
   const existing = await prisma.ventaServicios.findFirst({
     where: { ventaServicioId, tenantId },
-    select: { ventaServicioId: true },
+    select: { ventaServicioId: true, cantidad: true, total: true },
   });
   if (!existing) throw new ActionError('Venta de servicio no encontrada', 'NOT_FOUND');
 
   const updateData: Record<string, unknown> = {};
-  if (data.cantidad !== undefined) updateData.cantidad = data.cantidad;
+  if (data.cantidad !== undefined) {
+    updateData.cantidad = data.cantidad;
+    // El total no se acepta del cliente: al cambiar la cantidad se recalcula
+    // con el precio unitario implícito del registro original.
+    if (data.cantidad !== existing.cantidad && existing.cantidad > 0) {
+      const precioUnitario = Math.round(existing.total / existing.cantidad);
+      updateData.total = precioUnitario * data.cantidad;
+    }
+  }
   if (data.costo !== undefined) updateData.costo = data.costo;
-  if (data.total !== undefined) updateData.total = data.total;
   if (data.observaciones !== undefined) updateData.observaciones = data.observaciones;
   if (data.clienteId !== undefined) updateData.clienteId = data.clienteId;
 
@@ -225,6 +241,18 @@ export const deleteVentaServicioAction = withAction(async (id: string, user: Aut
     select: { ventaServicioId: true },
   });
   if (!existing) throw new ActionError('Venta de servicio no encontrada', 'NOT_FOUND');
+
+  // Guarded deletion: las reconciliaciones contables referencian la venta con
+  // FK restrict; bloquear antes de intentar el delete.
+  const reconciliacionesCount = await prisma.reconciliacionServicio.count({
+    where: { ventaServicioId: id },
+  });
+  if (reconciliacionesCount > 0) {
+    throw new ActionError(
+      `No se puede eliminar la venta: tiene ${reconciliacionesCount} reconciliación(es) asociada(s)`,
+      'HAS_REFERENCES',
+    );
+  }
 
   await prisma.ventaServicios.delete({ where: { ventaServicioId: id } });
   revalidatePath('/busy/venta-servicios');

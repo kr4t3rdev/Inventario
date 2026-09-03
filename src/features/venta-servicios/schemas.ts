@@ -34,20 +34,23 @@ export const ventaMixtaSchema = z.object({
 export const ventaServicioLegacySchema = z.object({
   servicioId: z.string().min(1),
   cantidad: z.coerce.number().int().positive(),
+  precioUnitario: z.coerce.number().int().positive(),
   costo: z.coerce.number().int().optional().default(0),
-  total: z.coerce.number().int().positive(),
   observaciones: z.string().optional().nullable(),
   clienteId: z.string().optional().nullable(),
   anticipos: z.array(anticipoAllocationSchema).optional(),
+  // Nota: `total` se calcula en el servidor (cantidad × precioUnitario);
+  // el valor enviado por el cliente se ignora.
 });
 
 export const updateVentaServicioSchema = z.object({
   ventaServicioId: z.string().min(1),
   cantidad: z.coerce.number().int().positive().optional(),
   costo: z.coerce.number().int().optional(),
-  total: z.coerce.number().int().positive().optional(),
   observaciones: z.string().optional().nullable(),
   clienteId: z.string().optional().nullable(),
+  // Nota: `total` no se acepta del cliente; al cambiar `cantidad` el servidor
+  // recalcula el total con el precio unitario derivado del registro.
 });
 
 export type VentaServicioInput = z.infer<typeof ventaServicioLegacySchema>;

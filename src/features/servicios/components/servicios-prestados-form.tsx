@@ -86,8 +86,8 @@ export function ServiciosPrestadosForm({ initialServicios }: ServiciosPrestadosF
         servicioId: values.servicioId,
         clienteId: values.clienteId || undefined,
         cantidad: values.cantidad,
+        precioUnitario: values.precioUnitario,
         costo: values.costo ?? 0,
-        total: values.cantidad * values.precioUnitario,
         observaciones: values.observaciones,
         anticipos: values.formaCobro === FORMA_COBRO_ANTICIPO ? anticipoAllocations : undefined,
       })
