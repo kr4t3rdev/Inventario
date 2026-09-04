@@ -140,10 +140,12 @@ describe('renewLicenciaAction', () => {
     expect(updateArgs.data.expiracion).toEqual(new Date('2026-04-11T00:00:00.000Z'));
     expect(tx.user.updateMany).toHaveBeenCalled();
     const userArgs = tx.user.updateMany.mock.calls[0][0] as {
-      where: { tenantId: string };
+      where: { tenantMemberships: { some: { tenantId: string; isActive: boolean } } };
       data: { expiresAt: Date; isActive: boolean };
     };
-    expect(userArgs.where.tenantId).toBe('tenant-1');
+    // La implementación realiza el update scoping sobre memberships activas,
+    // no sobre un where directo por tenantId (fase del fix de afiliación).
+    expect(userArgs.where.tenantMemberships.some.tenantId).toBe('tenant-1');
     expect(userArgs.data.expiresAt).toEqual(new Date('2026-04-11T00:00:00.000Z'));
     expect(userArgs.data.isActive).toBe(true);
     expect(tx.auditLog.create).toHaveBeenCalledOnce();

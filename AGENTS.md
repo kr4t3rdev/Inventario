@@ -363,3 +363,27 @@ When the user types `/graphify`, use the installed graphify skill or instruction
 - If graphify-out/wiki/index.md exists, use it for broad navigation instead of raw source browsing.
 - Read graphify-out/GRAPH_REPORT.md only for broad architecture review or when query/path/explain do not surface enough context.
 - After modifying code, run `graphify update .` to keep the graph current (AST-only, no API cost).
+
+## Test isolation (MM-B barrier)
+
+- Los tests unitarios corren con `DATABASE_URL` sobrescrita a una dirección local
+  inalcanzable (`127.0.0.1:5114`). Cualquier test que intente usar prisma real
+  falla inmediatamente con `Can't reach database server at 127.0.0.1:5114`.
+- La regla es: **todo test unitario debe mockear `@/lib/prisma` o mockear el
+  servicio accedido por prisma**. Nunca importar prisma directamente en un test
+  sin mockearlo.
+- El contrato se valida automáticamente por `src/lib/__tests__/test-isolation-contract.test.ts`
+  (0 offenders entre los tests del repositorio).
+- Los tests que sí necesitan base de datos real (con fixtures creados, consultas
+  entre tablas, etc.) viven bajo `src/**/__integration__/` y se ejecutan solo
+  con la config dedicada:
+
+```bash
+DATABASE_URL_TEST=postgresql://postgres:test@localhost:5433/test_db pnpm test:integration
+```
+
+- Ese directorio está excluido de la corrida unitaria por defecto (`vitest
+  config exclude: '**/__integration__/**'`), por lo que no pueden romper el
+  pool ni interferir con las pruebas de UI/contabilidad.
+- Casos de uso actuales: `src/lib/__integration__/ean13-reset.test.ts`
+  (yo creé este test como ejemplo del flujo).

@@ -1,7 +1,7 @@
 import { describe, expect, it, vi } from 'vitest'
 
 vi.mock('@/lib/server-actions/get-current-user')
-vi.mock('@/lib/prisma', () => ({ prisma: { oferta: { count: vi.fn() }, servicio: { count: vi.fn() } } }))
+vi.mock('@/lib/prisma', () => ({ prisma: { oferta: { count: vi.fn() }, servicios: { count: vi.fn() } } }))
 
 import { getCurrentUser } from '@/lib/server-actions/get-current-user'
 import { prisma } from '@/lib/prisma'
@@ -13,7 +13,7 @@ describe('getOffersServicesHealthAction', () => {
   it('retorna counts de ofertas y servicios del tenant', async () => {
     vi.mocked(getCurrentUser).mockResolvedValue(admin)
     vi.mocked(prisma.oferta.count).mockResolvedValue(4)
-    vi.mocked(prisma.servicio.count).mockResolvedValue(3)
+    vi.mocked(prisma.servicios.count).mockResolvedValue(3)
     await expect(getOffersServicesHealthAction()).resolves.toEqual({ success: true, data: { metrics: { ofertasCount: 4, serviciosCount: 3 } } })
   })
 })

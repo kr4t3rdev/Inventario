@@ -6,9 +6,12 @@ export default defineConfig({
     environment: 'jsdom',
     globals: true,
     setupFiles: [
+      './vitest.setup.ts',
       './src/test/setup.ts',
       './src/test/jest-dom-setup.ts',
     ],
+    // Los tests de integración real (contra DB de test) viven en __integration__
+    // y usan vitest.integration.config.mjs con DATABASE_URL_TEST.
     exclude: [
       '**/node_modules/**',
       '**/.next/**',
@@ -17,6 +20,7 @@ export default defineConfig({
       '**/.opencode/**',
       'mobile/**',
       'dist',
+      '**/__integration__/**',
       '**/*.spec.ts', // Exclude Playwright E2E tests
       '**/*.spec.tsx',
       '**/*.live.test.ts',

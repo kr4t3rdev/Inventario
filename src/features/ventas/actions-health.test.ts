@@ -6,7 +6,7 @@ vi.mock('@/lib/prisma', () => ({
     venta: { count: vi.fn(), aggregate: vi.fn() },
     factura: { count: vi.fn() },
     oferta: { count: vi.fn() },
-    servicio: { count: vi.fn() },
+    servicios: { count: vi.fn() },
   },
 }))
 
@@ -29,7 +29,7 @@ describe('getSalesHealthAction', () => {
     vi.mocked(prisma.venta.aggregate).mockResolvedValue({ _sum: { total: 1250 } } as never)
     vi.mocked(prisma.factura.count).mockResolvedValue(20)
     vi.mocked(prisma.oferta.count).mockResolvedValue(4)
-    vi.mocked(prisma.servicio.count).mockResolvedValue(3)
+    vi.mocked(prisma.servicios.count).mockResolvedValue(3)
 
     await expect(getSalesHealthAction()).resolves.toEqual({
       success: true,
@@ -53,7 +53,7 @@ describe('getSalesHealthAction', () => {
     vi.mocked(prisma.venta.aggregate).mockResolvedValue({ _sum: { total: null } } as never)
     vi.mocked(prisma.factura.count).mockResolvedValue(0)
     vi.mocked(prisma.oferta.count).mockResolvedValue(0)
-    vi.mocked(prisma.servicio.count).mockResolvedValue(0)
+    vi.mocked(prisma.servicios.count).mockResolvedValue(0)
 
     const result = await getSalesHealthAction()
     expect(result.success && result.data?.metrics.ventasTotal).toBe(0)
