@@ -19,10 +19,18 @@ import {
 	SelectTrigger,
 	SelectValue,
 } from "@/components/ui/select";
+import {
+	Tabs,
+	TabsContent,
+	TabsList,
+	TabsTrigger,
+} from "@/components/ui/tabs";
 import { formatCurrency } from "@/lib/utils";
 import { resumirCarritoPorMoneda, monedasOrdenadas } from "@/features/servicios/lib/carrito-resumen";
 import { createVentaServicioAction } from "@/features/venta-servicios/actions";
+import { createCompraServicioAction } from "@/features/compras-servicios/actions";
 import { useClientes } from "@/features/clientes/hooks/use-clientes";
+import { useVendors } from "@/features/vendors/hooks/use-vendors";
 import { toast } from "sonner";
 import { CreditCard, Plus, Minus, X, ShoppingCart } from "lucide-react";
 
@@ -51,9 +59,17 @@ export default function ServiciosCart({
 	onOpenChange,
 }: ServiciosCartProps) {
 	const { clientes } = useClientes();
+	const { vendors } = useVendors();
 	const [selectedClienteId, setSelectedClienteId] = useState<string>("");
 	const [observaciones, setObservaciones] = useState<string>("");
 	const [isProcessing, setIsProcessing] = useState(false);
+	// Modo: venta (registra VentaServicio) o compra (registra CompraServicio).
+	const [mode, setMode] = useState<"VENTA" | "COMPRA">("VENTA");
+	const [selectedProveedorId, setSelectedProveedorId] = useState<string>("");
+	const [numeroFactura, setNumeroFactura] = useState<string>("");
+	const [formaPago, setFormaPago] = useState<"PAGO_COMPLETO" | "PAGO_PARCIAL">(
+		"PAGO_COMPLETO",
+	);
 
 	// El carrito puede mezclar monedas: los totales se calculan agrupados por
 	// moneda y nunca se suman importes cruzados.
@@ -99,44 +115,78 @@ export default function ServiciosCart({
 		);
 	};
 
-	// Procesar venta de servicios (batch atómico via transactional mixed-line)
-	const processVenta = async () => {
+	// Procesar venta o compra de servicios (batch por modo)
+	const processCarrito = async () => {
 		if (cart.length === 0) {
-			toast.error("Añada servicios al carrito para realizar una venta");
+			toast.error("Añada servicios al carrito para continuar");
 			return;
 		}
 
-		if (!selectedClienteId) {
+		if (mode === "VENTA" && !selectedClienteId) {
 			toast.error("Seleccione un cliente para continuar");
+			return;
+		}
+		if (mode === "COMPRA" && !selectedProveedorId) {
+			toast.error("Seleccione un proveedor para continuar");
 			return;
 		}
 
 		setIsProcessing(true);
 		try {
-			const result = await createVentaServicioAction({
-				clienteId: selectedClienteId,
-				observaciones: observaciones || undefined,
-				lineas: cart.map((item) => ({
-					tipoLinea: 'SERVICIO' as const,
-					servicioId: item.servicioId,
-					cantidad: item.cantidad,
-					precioUnitario: Math.round(item.precio),
-					costo: Math.round(item.costo),
-				})),
-			});
-
-			if (!result.success) {
-				throw new Error(result.error?.message ?? "Error desconocido");
+			if (mode === "VENTA") {
+				const result = await createVentaServicioAction({
+					clienteId: selectedClienteId,
+					observaciones: observaciones || undefined,
+					lineas: cart.map((item) => ({
+						tipoLinea: 'SERVICIO' as const,
+						servicioId: item.servicioId,
+						cantidad: item.cantidad,
+						precioUnitario: Math.round(item.precio),
+						costo: Math.round(item.costo),
+					})),
+				});
+				if (!result.success) {
+					throw new Error(result.error?.message ?? "Error desconocido");
+				}
+			} else {
+				// Compra: cada línea del carrito se vuelve un registro CompraServicio.
+				await Promise.all(
+					cart.map((item) =>
+						createCompraServicioAction({
+							servicioId: item.servicioId,
+							cantidad: item.cantidad,
+							costoUnitario: Math.round(item.costo),
+							proveedorId: selectedProveedorId || null,
+							numeroFactura: numeroFactura || null,
+							formaPago,
+							estado: formaPago === "PAGO_COMPLETO" ? "PAGADA" : "PENDIENTE",
+							anticipos: undefined,
+						}).then((r) => {
+							if (!r.success) {
+								throw new Error(r.error?.message ?? "Error desconocido");
+							}
+						}),
+					),
+				);
 			}
 
-			toast.success("Venta de servicios procesada exitosamente");
+			toast.success(
+				mode === "VENTA"
+					? "Venta de servicios procesada exitosamente"
+					: "Compra de servicios registrada exitosamente",
+			);
 			setCart([]);
 			setSelectedClienteId("");
+			setSelectedProveedorId("");
+			setNumeroFactura("");
 			setObservaciones("");
+			setMode("VENTA");
 			onOpenChange(false);
 		} catch (error) {
-			console.error("Error al procesar la venta:", error);
-			toast.error("Hubo un error al procesar la venta. El carrito se ha preservado para reintentar.");
+			console.error("Error al procesar el carrito:", error);
+			toast.error(
+				"Hubo un error al procesar. El carrito se ha preservado para reintentar.",
+			);
 		} finally {
 			setIsProcessing(false);
 		}
@@ -152,9 +202,11 @@ export default function ServiciosCart({
 						<ShoppingCart className="h-5 w-5" />
 						Carrito de Servicios ({cart.length})
 					</DialogTitle>
-					<DialogDescription>
-						Revise y procese la venta de servicios
-					</DialogDescription>
+								<DialogDescription>
+									{mode === "VENTA"
+										? "Revise y procese la venta de servicios"
+										: "Registre servicios recibidos (egresos)"}
+								</DialogDescription>
 				</DialogHeader>
 
 				<div className="flex-1 overflow-y-auto">
@@ -275,41 +327,141 @@ export default function ServiciosCart({
 								))}
 							</div>
 
-							{/* Información del cliente */}
-							<div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-								<div className="space-y-2">
-									<h4 className="font-medium">Cliente *</h4>
-									<Select
-										value={selectedClienteId}
-										onValueChange={setSelectedClienteId}
-									>
-										<SelectTrigger>
-											<SelectValue placeholder="Seleccione un cliente" />
-										</SelectTrigger>
-										<SelectContent>
-											{clientes?.map((cliente) => (
-												<SelectItem
-													key={cliente.clienteId}
-													value={cliente.clienteId}
+									<div className="rounded-md border p-4">
+										<div className="mb-2 text-xs font-semibold uppercase text-muted-foreground tracking-wider">
+											Tipo de operación
+										</div>
+										<Tabs
+											value={mode}
+											onValueChange={(v) => setMode(v as "VENTA" | "COMPRA")}
+										>
+											<TabsList className="w-full">
+												<TabsTrigger value="VENTA" className="flex-1">
+													Venta
+												</TabsTrigger>
+												<TabsTrigger value="COMPRA" className="flex-1">
+													Compra (servicio recibido)
+												</TabsTrigger>
+											</TabsList>
+										</Tabs>
+									</div>
+
+									{/* Venta: cliente + observaciones */}
+									{mode === "VENTA" && (
+										<div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+											<div className="space-y-2">
+												<h4 className="font-medium">Cliente *</h4>
+												<Select
+													value={selectedClienteId}
+													onValueChange={setSelectedClienteId}
 												>
-													{cliente.nombre}
-												</SelectItem>
-											))}
-										</SelectContent>
-									</Select>
-								</div>
+													<SelectTrigger>
+														<SelectValue placeholder="Seleccione un cliente" />
+													</SelectTrigger>
+													<SelectContent>
+														{clientes?.map((cliente) => (
+															<SelectItem
+																key={cliente.clienteId}
+																value={cliente.clienteId}
+															>
+																{cliente.nombre}
+															</SelectItem>
+														))}
+													</SelectContent>
+												</Select>
+											</div>
 
-								<div className="space-y-2">
-									<h4 className="font-medium">Observaciones</h4>
-									<Input
-										placeholder="Observaciones adicionales"
-										value={observaciones}
-										onChange={(e) => setObservaciones(e.target.value)}
-									/>
-								</div>
-							</div>
+											<div className="space-y-2">
+												<h4 className="font-medium">Observaciones</h4>
+												<Input
+													placeholder="Observaciones adicionales"
+													value={observaciones}
+													onChange={(e) => setObservaciones(e.target.value)}
+												/>
+											</div>
+										</div>
+									)}
 
-							{/* Resumen de la venta, agrupado por moneda */}
+									{/* Compra: proveedor, factura y forma de pago */}
+									{mode === "COMPRA" && (
+										<div className="space-y-4">
+											<div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+												<div className="space-y-2">
+													<h4 className="font-medium">Proveedor *</h4>
+													<Select
+														value={selectedProveedorId}
+														onValueChange={setSelectedProveedorId}
+													>
+														<SelectTrigger>
+															<SelectValue placeholder="Seleccione un proveedor" />
+														</SelectTrigger>
+														<SelectContent>
+															{vendors?.map((vendor: any) =>
+																vendor.vendorId ? (
+																	<SelectItem
+																		key={vendor.vendorId}
+																		value={vendor.vendorId}
+																	>
+																		{vendor.nombre}
+																	</SelectItem>
+																) : null,
+															)}
+														</SelectContent>
+													</Select>
+												</div>
+
+												<div className="space-y-2">
+													<h4 className="font-medium">No. de factura</h4>
+													<Input
+														placeholder="Ej: F-2026-001 (opcional)"
+														value={numeroFactura}
+														onChange={(e) =>
+															setNumeroFactura(e.target.value)
+														}
+													/>
+												</div>
+											</div>
+
+											<div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+												<div className="space-y-2">
+													<h4 className="font-medium">Forma de pago</h4>
+													<Select
+														value={formaPago}
+														onValueChange={(v) =>
+															setFormaPago(
+																v as "PAGO_COMPLETO" | "PAGO_PARCIAL",
+															)
+														}
+													>
+														<SelectTrigger>
+															<SelectValue />
+														</SelectTrigger>
+														<SelectContent>
+															<SelectItem value="PAGO_COMPLETO">
+																Pago completo
+															</SelectItem>
+															<SelectItem value="PAGO_PARCIAL">
+																Pago parcial
+															</SelectItem>
+														</SelectContent>
+													</Select>
+												</div>
+
+												<div className="space-y-2">
+													<h4 className="font-medium text-muted-foreground text-sm">
+														Precio unitario = costo actual del ítem
+													</h4>
+													<p className="text-sm text-muted-foreground">
+														El costo del carrito del servicio marca el
+														costoUnitario de la compra. Cantidad viene
+														de la línea.
+													</p>
+												</div>
+											</div>
+										</div>
+									)}
+
+									{/* Resumen de la venta, agrupado por moneda */}
 							<div className="space-y-4">
 								{monedasOrdenadas(resumen.monedas).map((moneda) => {
 									const g = resumen.grupos[moneda];
@@ -319,7 +471,7 @@ export default function ServiciosCart({
 									return (
 										<div key={moneda} className="rounded-md border p-4 bg-muted/50">
 											<h4 className="font-medium mb-3">
-												Resumen de la Venta{resumen.esMultiMoneda ? ` (${moneda})` : ''}
+												Resumen de {mode === 'VENTA' ? 'la Venta' : 'la Compra'}{resumen.esMultiMoneda ? ` (${moneda})` : ''}
 											</h4>
 											<div className="space-y-2">
 												{itemsMoneda.map((item) => (
