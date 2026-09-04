@@ -26,7 +26,7 @@ export default async function BusyLayout({ children }: { children: ReactNode }) 
   const isPrintRoute = h.get('x-print-route') === 'true'
 
   return (
-    <main>
+    <div>
       <SidebarProvider>
         <AppSidebar2 variant="floating" />
         <SidebarInset>
@@ -36,6 +36,6 @@ export default async function BusyLayout({ children }: { children: ReactNode }) 
       </SidebarProvider>
       <Toaster />
       <ReviewDialogProvider />
-    </main>
+    </div>
   )
 }

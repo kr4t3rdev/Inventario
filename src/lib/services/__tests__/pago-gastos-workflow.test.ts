@@ -101,7 +101,9 @@ describe('pago-gastos-workflow', () => {
       tenantId: 'tenant-1',
       descripcion: 'Pago servicio',
       monto: 120,
-      moneda: 'CUP'
+      moneda: 'CUP',
+      periodo: '2026-08',
+      fechaPago: '2026-08-31T18:00:00.000Z'
     })
 
     expect(result.cuentaPorPagar).toBeNull()
@@ -113,6 +115,14 @@ describe('pago-gastos-workflow', () => {
       })
     )
     expect(tx.cuentaPorPagar.update).not.toHaveBeenCalled()
+    expect(tx.reconciliacionGasto.create).toHaveBeenCalledWith(
+      expect.objectContaining({
+        data: expect.objectContaining({
+          periodo: '2026-08',
+          fechaReconciliacion: new Date('2026-08-31T18:00:00.000Z'),
+        }),
+      }),
+    )
   })
 
   it('rechaza moneda extranjera sin una conversión válida a CUP', async () => {

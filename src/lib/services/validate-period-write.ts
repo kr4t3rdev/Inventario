@@ -151,5 +151,13 @@ export function extraerFechaDeBody(body: Record<string, unknown>): Date | null {
     }
   }
 
+  const periodo = body.periodo
+  if (typeof periodo === 'string' && /^\d{4}-\d{2}$/.test(periodo)) {
+    const [year, month] = periodo.split('-').map(Number)
+    if (month >= 1 && month <= 12) {
+      return new Date(Date.UTC(year, month - 1, 1))
+    }
+  }
+
   return null
 }

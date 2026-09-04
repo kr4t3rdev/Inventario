@@ -97,6 +97,7 @@ model InyeccionCapital {
   updatedAt          DateTime       @updatedAt
   cuentaBancaria     CuentaBancaria @relation(fields: [cuentaId], references: [cuentaId])
   pagos              PagoDeuda[]
+
   @@index([cuentaId, createdAt])
 }
 
@@ -113,6 +114,7 @@ model PagoDeuda {
   updatedAt      DateTime         @updatedAt
   cuentaBancaria CuentaBancaria   @relation(fields: [cuentaId], references: [cuentaId])
   inyeccion      InyeccionCapital @relation(fields: [inyeccionId], references: [id], onDelete: Cascade)
+
   @@index([cuentaId, fechaPago])
 }
 
@@ -144,95 +146,95 @@ model Cliente {
 
 /// * Modelo base de multi-tenant. Cada empresa/organización es un Tenant.
 model Tenant {
-  tenantId                   String                     @id @default(cuid())
-  nombre                     String
-  slug                       String?                    @unique
-  createdAt                  DateTime                   @default(now())
-  updatedAt                  DateTime                   @updatedAt
-  contabilidadTimezone       String                     @default("America/Argentina/Buenos_Aires")
-  affiliateProfile           AffiliateProfile?
-  affiliateCreditBalance     AffiliateCreditBalance?
-  affiliatePerkGrants        AffiliatePerkGrant[]
-  referralPerkRequests       ReferralPerkRequest[]
-  referralsSent              AffiliateReferral[]        @relation("ReferrerAffiliateReferrals")
-  referralsReceived          AffiliateReferral[]        @relation("ReferredAffiliateReferrals")
-  affiliateCommissionEntries AffiliateCommissionLedger[] @relation("ReferrerAffiliateCommissionEntries")
-  salesAgentReferral         SalesAgentReferral?
-  tenantLicensePayments     TenantLicensePayment[]
-  ajustesBancarios           AjusteBancario[]
-  almacenes                  Almacen[]
-  anticipos                  Anticipo[]
-  categorias                 Categoria[]
-  cierresContables           CierreContable[]
-  clientes                   Cliente[]
-  comprasDocumento           CompraDocumento[]
-  comprasDocumentoItem       CompraDocumentoItem[]
-  comprasProducto            CompraProducto[]
-  comprasServicio            CompraServicio[]
-  contratos                  Contrato[]
-  cuentasBancarias           CuentaBancaria[]
-  cuentasPorCobrar           CuentaPorCobrar[]
-  cuentasPorPagar            CuentaPorPagar[]
-  defectacionesCatalogo      DefectacionCatalogo[]
-  deudasCash                 DeudaCash[]
-  empleados                  Empleado[]
-  equiposReparacion          EquipoReparacion[]
-  gastosCompra               GastoCompra[]
-  gastosConceptos            GastoConcepto[]
-  gastosDE                   GastosDE[]
-  gastosElementos            GastoElemento[]
-  listasPrecio               ListaPrecio[]
-  mermas                     Merma[]
-  empresa                    MiEmpresa?
-  ofertas                    Oferta[]
-  ordenesProduccion          OrdenProduccion[]
-  ordenesProduccionHistorial OrdenProduccionHistorial[]
-  ordenesReparacion          OrdenReparacion[]
-  ordenesReparacionEquipo    OrdenReparacionEquipo[]
-  ordenesReparacionItem      OrdenReparacionItem[]
-  ordenesReparacionMaterial  OrdenReparacionMaterial[]
-  pagosCuentaPorPagar        PagoCuentaPorPagar[]
-  pagosSalario               Pagosalario[]
-  piezasReparacion           PiezaReparacion[]
-  prestamosCash              PrestamoCash[]
-  productos                  Producto[]
-  puntosDeVenta              PuntoDeVenta[]
-  recetas                    Receta[]
-  recetasIngredientes        RecetaIngrediente[]
-  reconciliacionesGasto      ReconciliacionGasto[]
-  reconciliacionesServicio   ReconciliacionServicio[]
-  reconciliacionesVenta      ReconciliacionVenta[]
-  servicios                  Servicios[]
-  stockUbicaciones           StockUbicacion[]
-  transferencias             Transferencia[]
-  transferenciasBancarias    TransferenciaBancaria[]
-  unidades                   Unidad[]
-  valesSalida                ValeSalida[]
-  valesSalidaItem            ValeSalidaItem[]
-  vendors                    Vendor[]
-  ventas                     Venta[]
-  ventasServicios            VentaServicios[]
-  aperturaPeriodos           AperturaPeriodo[]
-  arqueosCaja                ArqueoCaja[]
-  auditoriaPeriodos          AuditoriaPeriodo[]
-  backupLogs                 BackupLog[]
-  backupPlans                BackupPlan[]
-  facturas                   Factura[]
-  periodosContables          PeriodoContable[]
-  purchaseAllocations        PurchaseAllocation[]
-  reviewPrompts              ReviewPrompt[]
-  reviews                    Review[]
-  seriesFacturacion          SerieFacturacion[]
-  licencias                  TenantLicense[]
-  memberships                TenantMembership[]
+  tenantId                       String                           @id @default(cuid())
+  nombre                         String
+  slug                           String?                          @unique
+  createdAt                      DateTime                         @default(now())
+  updatedAt                      DateTime                         @updatedAt
+  contabilidadTimezone           String                           @default("America/Argentina/Buenos_Aires")
+  affiliateProfile               AffiliateProfile?
+  affiliateCreditBalance         AffiliateCreditBalance?
+  affiliatePerkGrants            AffiliatePerkGrant[]
+  referralPerkRequests           ReferralPerkRequest[]
+  referralsSent                  AffiliateReferral[]              @relation("ReferrerAffiliateReferrals")
+  referralsReceived              AffiliateReferral[]              @relation("ReferredAffiliateReferrals")
+  affiliateCommissionEntries     AffiliateCommissionLedger[]      @relation("ReferrerAffiliateCommissionEntries")
+  salesAgentReferral             SalesAgentReferral?
+  tenantLicensePayments          TenantLicensePayment[]
+  ajustesBancarios               AjusteBancario[]
+  almacenes                      Almacen[]
+  anticipos                      Anticipo[]
+  categorias                     Categoria[]
+  cierresContables               CierreContable[]
+  clientes                       Cliente[]
+  comprasDocumento               CompraDocumento[]
+  comprasDocumentoItem           CompraDocumentoItem[]
+  comprasProducto                CompraProducto[]
+  comprasServicio                CompraServicio[]
+  contratos                      Contrato[]
+  cuentasBancarias               CuentaBancaria[]
+  cuentasPorCobrar               CuentaPorCobrar[]
+  cuentasPorPagar                CuentaPorPagar[]
+  defectacionesCatalogo          DefectacionCatalogo[]
+  deudasCash                     DeudaCash[]
+  empleados                      Empleado[]
+  equiposReparacion              EquipoReparacion[]
+  gastosCompra                   GastoCompra[]
+  gastosConceptos                GastoConcepto[]
+  gastosDE                       GastosDE[]
+  gastosElementos                GastoElemento[]
+  listasPrecio                   ListaPrecio[]
+  mermas                         Merma[]
+  empresa                        MiEmpresa?
+  ofertas                        Oferta[]
+  ordenesProduccion              OrdenProduccion[]
+  ordenesProduccionHistorial     OrdenProduccionHistorial[]
+  ordenesReparacion              OrdenReparacion[]
+  ordenesReparacionEquipo        OrdenReparacionEquipo[]
+  ordenesReparacionItem          OrdenReparacionItem[]
+  ordenesReparacionMaterial      OrdenReparacionMaterial[]
+  pagosCuentaPorPagar            PagoCuentaPorPagar[]
+  pagosSalario                   Pagosalario[]
+  piezasReparacion               PiezaReparacion[]
+  prestamosCash                  PrestamoCash[]
+  productos                      Producto[]
+  puntosDeVenta                  PuntoDeVenta[]
+  recetas                        Receta[]
+  recetasIngredientes            RecetaIngrediente[]
+  reconciliacionesGasto          ReconciliacionGasto[]
+  reconciliacionesServicio       ReconciliacionServicio[]
+  reconciliacionesVenta          ReconciliacionVenta[]
+  servicios                      Servicios[]
+  stockUbicaciones               StockUbicacion[]
+  transferencias                 Transferencia[]
+  transferenciasBancarias        TransferenciaBancaria[]
+  unidades                       Unidad[]
+  valesSalida                    ValeSalida[]
+  valesSalidaItem                ValeSalidaItem[]
+  vendors                        Vendor[]
+  ventas                         Venta[]
+  ventasServicios                VentaServicios[]
+  aperturaPeriodos               AperturaPeriodo[]
+  arqueosCaja                    ArqueoCaja[]
+  auditoriaPeriodos              AuditoriaPeriodo[]
+  backupLogs                     BackupLog[]
+  backupPlans                    BackupPlan[]
+  facturas                       Factura[]
+  periodosContables              PeriodoContable[]
+  purchaseAllocations            PurchaseAllocation[]
+  reviewPrompts                  ReviewPrompt[]
+  reviews                        Review[]
+  seriesFacturacion              SerieFacturacion[]
+  licencias                      TenantLicense[]
+  memberships                    TenantMembership[]
   accountingPolicy               TenantAccountingPolicy?
   accountingPolicyRolloutEntries AccountingPolicyRolloutEntry[]
   accountingPolicyApprovals      AccountingPolicyTenantApproval[]
   fxEvidence                    FxEvidence[]
-  financialAuxiliaryCheckpoints FinancialAuxiliaryCheckpoint[]
-  snapshotPeriodos           SnapshotPeriodo[]
-  turnosPos                  TurnoPuntoVenta[]
-      tiposPago                 TipoPago[]
+  financialAuxiliaryCheckpoints  FinancialAuxiliaryCheckpoint[]
+  snapshotPeriodos               SnapshotPeriodo[]
+  turnosPos                      TurnoPuntoVenta[]
+  tiposPago                      TipoPago[]
 
   @@index([slug])
   @@map("tenants")
@@ -258,34 +260,34 @@ model TenantMembership {
 
 /// * Licencia/plan activo de un tenant. Reemplaza la relación actual Licencia→User.
 model TenantLicense {
-  tenantLicenseId String   @id @default(cuid())
-  tenantId        String
-  planId          String?
-  activa          Boolean  @default(true)
-  inicio          DateTime @default(now())
-  expiracion      DateTime
-  createdAt       DateTime @default(now())
-  updatedAt       DateTime @updatedAt
-  maxUsuarios     Int      @default(1)
-  maxAlmacenes    Int      @default(1)
-  maxProductos    Int      @default(100)
-  maxClientes     Int      @default(200)
-  listPriceUsd    Decimal? @db.Decimal(10, 2)
-  creditAppliedUsd Decimal? @db.Decimal(10, 2)
-  finalPriceUsd   Decimal? @db.Decimal(10, 2)
-  creditSnapshotUsd Decimal? @db.Decimal(10, 2)
-  features        Json?
-  featureOverrides Json?
-  isDemo          Boolean  @default(false)
-  isAdminTest     Boolean  @default(false)
-  createdBy       String?
-  plan            Plan?    @relation(fields: [planId], references: [planId])
-  tenant          Tenant   @relation(fields: [tenantId], references: [tenantId], onDelete: Cascade)
-  confirmedAffiliateReferrals AffiliateReferral[] @relation("ConfirmedAffiliateLicense")
-  sourceAffiliateCommissions AffiliateCommissionLedger[] @relation("AffiliateSourceLicense")
-  appliedAffiliateCommissions AffiliateCommissionLedger[] @relation("AffiliateAppliedLicense")
+  tenantLicenseId             String                       @id @default(cuid())
+  tenantId                    String
+  planId                      String?
+  activa                      Boolean                      @default(true)
+  inicio                      DateTime                     @default(now())
+  expiracion                  DateTime
+  createdAt                   DateTime                     @default(now())
+  updatedAt                   DateTime                     @updatedAt
+  maxUsuarios                 Int                          @default(1)
+  maxAlmacenes                Int                          @default(1)
+  maxProductos                Int                          @default(100)
+  maxClientes                 Int                          @default(200)
+  listPriceUsd                Decimal?                     @db.Decimal(10, 2)
+  creditAppliedUsd            Decimal?                     @db.Decimal(10, 2)
+  finalPriceUsd               Decimal?                     @db.Decimal(10, 2)
+  creditSnapshotUsd           Decimal?                     @db.Decimal(10, 2)
+  features                    Json?
+  featureOverrides            Json?
+  isDemo                      Boolean                      @default(false)
+  isAdminTest                 Boolean                      @default(false)
+  createdBy                   String?
+  plan                        Plan?                        @relation(fields: [planId], references: [planId])
+  tenant                      Tenant                       @relation(fields: [tenantId], references: [tenantId], onDelete: Cascade)
+  confirmedAffiliateReferrals AffiliateReferral[]          @relation("ConfirmedAffiliateLicense")
+  sourceAffiliateCommissions  AffiliateCommissionLedger[]  @relation("AffiliateSourceLicense")
+  appliedAffiliateCommissions AffiliateCommissionLedger[]  @relation("AffiliateAppliedLicense")
   salesAgentCommissionEntries SalesAgentCommissionLedger[] @relation("SalesAgentSourceLicense")
-  salesAgentPayments TenantLicensePayment[]
+  salesAgentPayments          TenantLicensePayment[]
 
   @@index([tenantId])
   @@index([planId])
@@ -609,55 +611,55 @@ model Transferencia {
 }
 
 model User {
-  userId                   String               @id @default(cuid())
-  name                     String
-  email                    String               @unique
-  password                 String
-  pendingReferralCode      String?
-  pendingFunctionalCurrencyCode String?
-  role                     String               @default("regularUser")
-  onboardingType           String?
-  onboardingStatus         String?              @default("pending_email_verification")
-  emailVerifiedAt          DateTime?
-  createdAt                DateTime             @default(now())
-  updatedAt                DateTime             @updatedAt
-  activatedAt              DateTime?
-  avatar                   String?
-  expiresAt                DateTime?
-  isActive                 Boolean              @default(true)
-  resetPasswordToken       String?
-  resetPasswordExpiresAt   DateTime?
-  lastFailedLogin          DateTime?
-  lastModifiedBy           String?
-  lockedUntil              DateTime?
-  loginAttempts            Int                  @default(0)
-  googleId                 String?              @unique
-  anticiposCreados         Anticipo[]
-  compraDocumentosEditados CompraDocumento[]    @relation("CompraDocumentoActualizado")
-  contratosAprobados       Contrato[]           @relation("AprobadorContrato")
-  contratosCreados         Contrato[]           @relation("CreadorContrato")
-  contratoAprobaciones     ContratoAprobacion[]
-  contratoArchivos         ContratoArchivo[]
-  contratoFirmas           ContratoFirma[]
-  contratoVersiones        ContratoVersion[]
-  notifications            Notification[]
-  tiposContratosCustom     TipoContratoCustom[]
-  transferenciasCreadas    Transferencia[]
-  activityLogs             UserActivityLog[]
-  sessions                 UserSession[]
-  backupLogs               BackupLog[]
-  backupPlans              BackupPlan[]
-  reviewPrompts            ReviewPrompt[]
-  reviews                  Review[]
-  tenantMemberships        TenantMembership[]
-  salesAgentProfile        SalesAgentProfile?
-  salesAgentReferrals      SalesAgentReferral[]         @relation("SalesAgentReferralOwner")
-  salesAgentCommissions    SalesAgentCommissionLedger[] @relation("SalesAgentCommissionOwner")
-  salesAgentBalance        SalesAgentBalance?
-  salesAgentPayouts        SalesAgentPayout[]           @relation("SalesAgentPayoutOwner")
-  approvedSalesAgents      SalesAgentProfile[]          @relation("SalesAgentProfileApprover")
-  processedSalesAgentPayouts SalesAgentPayout[]         @relation("SalesAgentPayoutProcessor")
-  confirmedTenantLicensePayments TenantLicensePayment[] @relation("TenantLicensePaymentConfirmer")
+  userId                         String                       @id @default(cuid())
+  name                           String
+  email                          String                       @unique
+  password                       String
+  pendingReferralCode            String?
+  pendingFunctionalCurrencyCode  String?
+  role                           String                       @default("regularUser")
+  onboardingType                 String?
+  onboardingStatus               String?                      @default("pending_email_verification")
+  emailVerifiedAt                DateTime?
+  createdAt                      DateTime                     @default(now())
+  updatedAt                      DateTime                     @updatedAt
+  activatedAt                    DateTime?
+  avatar                         String?
+  expiresAt                      DateTime?
+  isActive                       Boolean                      @default(true)
+  resetPasswordToken             String?
+  resetPasswordExpiresAt         DateTime?
+  lastFailedLogin                DateTime?
+  lastModifiedBy                 String?
+  lockedUntil                    DateTime?
+  loginAttempts                  Int                          @default(0)
+  googleId                       String?                      @unique
+  anticiposCreados               Anticipo[]
+  compraDocumentosEditados       CompraDocumento[]            @relation("CompraDocumentoActualizado")
+  contratosAprobados             Contrato[]                   @relation("AprobadorContrato")
+  contratosCreados               Contrato[]                   @relation("CreadorContrato")
+  contratoAprobaciones           ContratoAprobacion[]
+  contratoArchivos               ContratoArchivo[]
+  contratoFirmas                 ContratoFirma[]
+  contratoVersiones              ContratoVersion[]
+  notifications                  Notification[]
+  tiposContratosCustom           TipoContratoCustom[]
+  transferenciasCreadas          Transferencia[]
+  activityLogs                   UserActivityLog[]
+  sessions                       UserSession[]
+  backupLogs                     BackupLog[]
+  backupPlans                    BackupPlan[]
+  reviewPrompts                  ReviewPrompt[]
+  reviews                        Review[]
+  tenantMemberships              TenantMembership[]
+  salesAgentProfile              SalesAgentProfile?
+  salesAgentReferrals            SalesAgentReferral[]         @relation("SalesAgentReferralOwner")
+  salesAgentCommissions          SalesAgentCommissionLedger[] @relation("SalesAgentCommissionOwner")
+  salesAgentBalance              SalesAgentBalance?
+  salesAgentPayouts              SalesAgentPayout[]           @relation("SalesAgentPayoutOwner")
+  approvedSalesAgents            SalesAgentProfile[]          @relation("SalesAgentProfileApprover")
+  processedSalesAgentPayouts     SalesAgentPayout[]           @relation("SalesAgentPayoutProcessor")
+  confirmedTenantLicensePayments TenantLicensePayment[]       @relation("TenantLicensePaymentConfirmer")
 }
 
 model CloudinaryAsset {
@@ -683,23 +685,23 @@ model CloudinaryAsset {
 }
 
 model Plan {
-  planId         String          @id @default(cuid())
-  nombre         String
-  descripcion    String?
-  precio         Decimal         @default(0)
-  duracionDias   Int
-  maxUsuarios    Int             @default(1)
-  maxAlmacenes   Int             @default(1)
-  maxProductos   Int             @default(100)
-  createdAt      DateTime        @default(now())
-  updatedAt      DateTime        @updatedAt
-  features       Json            @default("{}")
-  incluyeBackups Boolean         @default(false)
-  maxClientes    Int             @default(200)
-  maxContratos   Int             @default(0)
-  maxFacturasMes Int             @default(200)
-  maxPuntosVenta Int             @default(1)
-  tenantLicenses TenantLicense[]
+  planId             String              @id @default(cuid())
+  nombre             String
+  descripcion        String?
+  precio             Decimal             @default(0)
+  duracionDias       Int
+  maxUsuarios        Int                 @default(1)
+  maxAlmacenes       Int                 @default(1)
+  maxProductos       Int                 @default(100)
+  createdAt          DateTime            @default(now())
+  updatedAt          DateTime            @updatedAt
+  features           Json                @default("{}")
+  incluyeBackups     Boolean             @default(false)
+  maxClientes        Int                 @default(200)
+  maxContratos       Int                 @default(0)
+  maxFacturasMes     Int                 @default(200)
+  maxPuntosVenta     Int                 @default(1)
+  tenantLicenses     TenantLicense[]
   affiliateReferrals AffiliateReferral[]
 }
 
@@ -717,19 +719,19 @@ model AffiliateProfile {
 }
 
 model AffiliateReferral {
-  referralId              String         @id @default(cuid())
+  referralId              String                      @id @default(cuid())
   referrerTenantId        String
-  referredTenantId        String         @unique
+  referredTenantId        String                      @unique
   referredPlanId          String?
-  status                  String         @default("registered")
+  status                  String                      @default("registered")
   firstConfirmedLicenseId String?
   confirmedAt             DateTime?
-  createdAt               DateTime       @default(now())
-  updatedAt               DateTime       @updatedAt
-  referrerTenant          Tenant         @relation("ReferrerAffiliateReferrals", fields: [referrerTenantId], references: [tenantId], onDelete: Cascade)
-  referredTenant          Tenant         @relation("ReferredAffiliateReferrals", fields: [referredTenantId], references: [tenantId], onDelete: Cascade)
-  referredPlan            Plan?          @relation(fields: [referredPlanId], references: [planId])
-  firstConfirmedLicense   TenantLicense? @relation("ConfirmedAffiliateLicense", fields: [firstConfirmedLicenseId], references: [tenantLicenseId])
+  createdAt               DateTime                    @default(now())
+  updatedAt               DateTime                    @updatedAt
+  referrerTenant          Tenant                      @relation("ReferrerAffiliateReferrals", fields: [referrerTenantId], references: [tenantId], onDelete: Cascade)
+  referredTenant          Tenant                      @relation("ReferredAffiliateReferrals", fields: [referredTenantId], references: [tenantId], onDelete: Cascade)
+  referredPlan            Plan?                       @relation(fields: [referredPlanId], references: [planId])
+  firstConfirmedLicense   TenantLicense?              @relation("ConfirmedAffiliateLicense", fields: [firstConfirmedLicenseId], references: [tenantLicenseId])
   commissionEntries       AffiliateCommissionLedger[]
 
   @@index([referrerTenantId])
@@ -737,22 +739,22 @@ model AffiliateReferral {
 }
 
 model AffiliateCommissionLedger {
-  ledgerId                String         @id @default(cuid())
-  referrerTenantId        String
-  referralId              String
-  sourceTenantLicenseId   String         @unique
+  ledgerId                 String            @id @default(cuid())
+  referrerTenantId         String
+  referralId               String
+  sourceTenantLicenseId    String            @unique
   appliedToTenantLicenseId String?
-  basePlanPrice           Decimal        @db.Decimal(10, 2)
-  commissionRate          Decimal        @db.Decimal(5, 4)
-  commissionAmount        Decimal        @db.Decimal(10, 2)
-  currency                String         @default("USD")
-  status                  String         @default("available")
-  createdAt               DateTime       @default(now())
-  updatedAt               DateTime       @updatedAt
-  referrerTenant          Tenant         @relation("ReferrerAffiliateCommissionEntries", fields: [referrerTenantId], references: [tenantId], onDelete: Cascade)
-  referral                AffiliateReferral @relation(fields: [referralId], references: [referralId], onDelete: Cascade)
-  sourceTenantLicense     TenantLicense  @relation("AffiliateSourceLicense", fields: [sourceTenantLicenseId], references: [tenantLicenseId], onDelete: Cascade)
-  appliedToTenantLicense  TenantLicense? @relation("AffiliateAppliedLicense", fields: [appliedToTenantLicenseId], references: [tenantLicenseId], onDelete: SetNull)
+  basePlanPrice            Decimal           @db.Decimal(10, 2)
+  commissionRate           Decimal           @db.Decimal(5, 4)
+  commissionAmount         Decimal           @db.Decimal(10, 2)
+  currency                 String            @default("USD")
+  status                   String            @default("available")
+  createdAt                DateTime          @default(now())
+  updatedAt                DateTime          @updatedAt
+  referrerTenant           Tenant            @relation("ReferrerAffiliateCommissionEntries", fields: [referrerTenantId], references: [tenantId], onDelete: Cascade)
+  referral                 AffiliateReferral @relation(fields: [referralId], references: [referralId], onDelete: Cascade)
+  sourceTenantLicense      TenantLicense     @relation("AffiliateSourceLicense", fields: [sourceTenantLicenseId], references: [tenantLicenseId], onDelete: Cascade)
+  appliedToTenantLicense   TenantLicense?    @relation("AffiliateAppliedLicense", fields: [appliedToTenantLicenseId], references: [tenantLicenseId], onDelete: SetNull)
 
   @@index([referrerTenantId, status])
   @@index([referralId])
@@ -770,54 +772,54 @@ model AffiliateCreditBalance {
 }
 
 model SalesAgentProfile {
-  salesAgentProfileId String   @id @default(cuid())
-  userId              String   @unique
-  referralCode        String?  @unique
+  salesAgentProfileId String    @id @default(cuid())
+  userId              String    @unique
+  referralCode        String?   @unique
   phone               String?
-  status              String   @default("pending_approval")
+  status              String    @default("pending_approval")
   approvedAt          DateTime?
   approvedByAdminId   String?
-  createdAt           DateTime @default(now())
-  updatedAt           DateTime @updatedAt
-  user                 User     @relation(fields: [userId], references: [userId], onDelete: Cascade)
-  approvedByAdmin      User?    @relation("SalesAgentProfileApprover", fields: [approvedByAdminId], references: [userId], onDelete: SetNull)
+  createdAt           DateTime  @default(now())
+  updatedAt           DateTime  @updatedAt
+  user                User      @relation(fields: [userId], references: [userId], onDelete: Cascade)
+  approvedByAdmin     User?     @relation("SalesAgentProfileApprover", fields: [approvedByAdminId], references: [userId], onDelete: SetNull)
 
   @@index([status])
   @@index([approvedByAdminId])
 }
 
 model SalesAgentReferral {
-  salesAgentReferralId String   @id @default(cuid())
+  salesAgentReferralId String                       @id @default(cuid())
   salesAgentUserId     String
-  referredTenantId    String   @unique
-  status              String   @default("attributed")
-  attributedAt        DateTime @default(now())
-  createdAt            DateTime @default(now())
-  updatedAt            DateTime @updatedAt
-  salesAgent           User     @relation("SalesAgentReferralOwner", fields: [salesAgentUserId], references: [userId], onDelete: Restrict)
-  referredTenant       Tenant   @relation(fields: [referredTenantId], references: [tenantId], onDelete: Restrict)
+  referredTenantId     String                       @unique
+  status               String                       @default("attributed")
+  attributedAt         DateTime                     @default(now())
+  createdAt            DateTime                     @default(now())
+  updatedAt            DateTime                     @updatedAt
+  salesAgent           User                         @relation("SalesAgentReferralOwner", fields: [salesAgentUserId], references: [userId], onDelete: Restrict)
+  referredTenant       Tenant                       @relation(fields: [referredTenantId], references: [tenantId], onDelete: Restrict)
   commissions          SalesAgentCommissionLedger[]
 
   @@index([salesAgentUserId, status])
 }
 
 model SalesAgentCommissionLedger {
-  salesAgentCommissionLedgerId String   @id @default(cuid())
+  salesAgentCommissionLedgerId String               @id @default(cuid())
   salesAgentUserId             String
   salesAgentReferralId         String
   sourceTenantLicenseId        String
   paymentSource                String
-  paymentSourceId              String   @unique
-  idempotencyKey               String   @unique
-  amountPaidUsd                Decimal  @db.Decimal(12, 2)
-  commissionRate               Decimal  @db.Decimal(5, 4)
-  commissionAmountUsd          Decimal  @db.Decimal(12, 2)
-  status                       String   @default("available")
-  createdAt                    DateTime @default(now())
-  updatedAt                    DateTime @updatedAt
-  salesAgent                   User     @relation("SalesAgentCommissionOwner", fields: [salesAgentUserId], references: [userId], onDelete: Restrict)
-  referral                     SalesAgentReferral @relation(fields: [salesAgentReferralId], references: [salesAgentReferralId], onDelete: Restrict)
-  sourceTenantLicense          TenantLicense @relation("SalesAgentSourceLicense", fields: [sourceTenantLicenseId], references: [tenantLicenseId], onDelete: Restrict)
+  paymentSourceId              String               @unique
+  idempotencyKey               String               @unique
+  amountPaidUsd                Decimal              @db.Decimal(12, 2)
+  commissionRate               Decimal              @db.Decimal(5, 4)
+  commissionAmountUsd          Decimal              @db.Decimal(12, 2)
+  status                       String               @default("available")
+  createdAt                    DateTime             @default(now())
+  updatedAt                    DateTime             @updatedAt
+  salesAgent                   User                 @relation("SalesAgentCommissionOwner", fields: [salesAgentUserId], references: [userId], onDelete: Restrict)
+  referral                     SalesAgentReferral   @relation(fields: [salesAgentReferralId], references: [salesAgentReferralId], onDelete: Restrict)
+  sourceTenantLicense          TenantLicense        @relation("SalesAgentSourceLicense", fields: [sourceTenantLicenseId], references: [tenantLicenseId], onDelete: Restrict)
   paymentConfirmation          TenantLicensePayment @relation(fields: [paymentSourceId], references: [tenantLicensePaymentId], onDelete: Restrict)
 
   @@unique([paymentSource, paymentSourceId])
@@ -827,24 +829,24 @@ model SalesAgentCommissionLedger {
 }
 
 model TenantLicensePayment {
-  tenantLicensePaymentId String   @id @default(cuid())
-  tenantId              String
-  tenantLicenseId       String
-  paymentKind           String
-  expectedAmountUsd     Decimal  @db.Decimal(12, 2)
-  amountPaidUsd         Decimal  @db.Decimal(12, 2)
-  status                String   @default("confirmed")
-  idempotencyKey        String   @unique
-  immutableFingerprint  String
-  paymentCycleEndsAt    DateTime
+  tenantLicensePaymentId    String                      @id @default(cuid())
+  tenantId                  String
+  tenantLicenseId           String
+  paymentKind               String
+  expectedAmountUsd         Decimal                     @db.Decimal(12, 2)
+  amountPaidUsd             Decimal                     @db.Decimal(12, 2)
+  status                    String                      @default("confirmed")
+  idempotencyKey            String                      @unique
+  immutableFingerprint      String
+  paymentCycleEndsAt        DateTime
   licenseExpirationSnapshot DateTime
-  confirmedAt           DateTime @default(now())
-  confirmedByAdminId    String?
-  createdAt             DateTime @default(now())
-  tenant                Tenant   @relation(fields: [tenantId], references: [tenantId], onDelete: Restrict)
-  tenantLicense         TenantLicense @relation(fields: [tenantLicenseId], references: [tenantLicenseId], onDelete: Restrict)
-  confirmedByAdmin      User?    @relation("TenantLicensePaymentConfirmer", fields: [confirmedByAdminId], references: [userId], onDelete: SetNull)
-  commissionLedger      SalesAgentCommissionLedger?
+  confirmedAt               DateTime                    @default(now())
+  confirmedByAdminId        String?
+  createdAt                 DateTime                    @default(now())
+  tenant                    Tenant                      @relation(fields: [tenantId], references: [tenantId], onDelete: Restrict)
+  tenantLicense             TenantLicense               @relation(fields: [tenantLicenseId], references: [tenantLicenseId], onDelete: Restrict)
+  confirmedByAdmin          User?                       @relation("TenantLicensePaymentConfirmer", fields: [confirmedByAdminId], references: [userId], onDelete: SetNull)
+  commissionLedger          SalesAgentCommissionLedger?
 
   @@unique([tenantLicenseId, paymentCycleEndsAt])
   @@index([tenantId, confirmedAt])
@@ -863,40 +865,40 @@ model SalesAgentBalance {
 }
 
 model SalesAgentPayout {
-  salesAgentPayoutId    String   @id @default(cuid())
+  salesAgentPayoutId    String    @id @default(cuid())
   salesAgentUserId      String
-  amountUsd             Decimal  @db.Decimal(12, 2)
-  exchangeRateCupPerUsd Decimal  @db.Decimal(12, 4)
-  amountCup             Decimal  @db.Decimal(14, 2)
-  status                String   @default("pending")
+  amountUsd             Decimal   @db.Decimal(12, 2)
+  exchangeRateCupPerUsd Decimal   @db.Decimal(12, 4)
+  amountCup             Decimal   @db.Decimal(14, 2)
+  status                String    @default("pending")
   processedAt           DateTime?
   processedByAdminId    String?
   adminNotes            String?
-  idempotencyKey        String   @unique
+  idempotencyKey        String    @unique
   immutableFingerprint  String
-  createdAt             DateTime @default(now())
-  updatedAt             DateTime @updatedAt
-  salesAgent            User     @relation("SalesAgentPayoutOwner", fields: [salesAgentUserId], references: [userId], onDelete: Restrict)
-  processedByAdmin      User?    @relation("SalesAgentPayoutProcessor", fields: [processedByAdminId], references: [userId], onDelete: SetNull)
+  createdAt             DateTime  @default(now())
+  updatedAt             DateTime  @updatedAt
+  salesAgent            User      @relation("SalesAgentPayoutOwner", fields: [salesAgentUserId], references: [userId], onDelete: Restrict)
+  processedByAdmin      User?     @relation("SalesAgentPayoutProcessor", fields: [processedByAdminId], references: [userId], onDelete: SetNull)
 
   @@index([salesAgentUserId, status])
   @@index([processedByAdminId])
 }
 
 model AffiliatePerkGrant {
-  perkGrantId         String   @id @default(cuid())
-  tenantId            String
-  milestone           String
-  slotIndex           Int
-  grantedSlots        Int
-  status              String   @default("pending_manual_assignment")
-  assignedFeatureKey  String?
-  assignedAt          DateTime?
-  assignedBy          String?
-  grantedAt           DateTime @default(now())
-  createdAt           DateTime @default(now())
-  updatedAt           DateTime @updatedAt
-  tenant              Tenant   @relation(fields: [tenantId], references: [tenantId], onDelete: Cascade)
+  perkGrantId        String    @id @default(cuid())
+  tenantId           String
+  milestone          String
+  slotIndex          Int
+  grantedSlots       Int
+  status             String    @default("pending_manual_assignment")
+  assignedFeatureKey String?
+  assignedAt         DateTime?
+  assignedBy         String?
+  grantedAt          DateTime  @default(now())
+  createdAt          DateTime  @default(now())
+  updatedAt          DateTime  @updatedAt
+  tenant             Tenant    @relation(fields: [tenantId], references: [tenantId], onDelete: Cascade)
 
   @@unique([tenantId, milestone, slotIndex])
   @@index([tenantId, status])
@@ -914,52 +916,52 @@ model ReferralPerkCatalog {
 }
 
 model ReferralPerkRequest {
-  referralPerkRequestId String   @id @default(cuid())
+  referralPerkRequestId String    @id @default(cuid())
   tenantId              String
   title                 String
   description           String
-  status                String   @default("pending")
+  status                String    @default("pending")
   adminNotes            String?
-  createdAt             DateTime @default(now())
-  updatedAt             DateTime @updatedAt
+  createdAt             DateTime  @default(now())
+  updatedAt             DateTime  @updatedAt
   reviewedAt            DateTime?
   reviewedBy            String?
-  tenant                Tenant   @relation(fields: [tenantId], references: [tenantId], onDelete: Cascade)
+  tenant                Tenant    @relation(fields: [tenantId], references: [tenantId], onDelete: Cascade)
 
   @@index([tenantId, status])
 }
 
 model Notification {
-  id        String   @id @default(cuid())
-  title     String
-  message   String
-  type      String   @default("info")
-  isRead    Boolean  @default(false)
-  userId    String
-  prioridad String
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-  link      String?
-  user      User     @relation(fields: [userId], references: [userId], onDelete: Cascade)
+  id            String                   @id @default(cuid())
+  title         String
+  message       String
+  type          String                   @default("info")
+  isRead        Boolean                  @default(false)
+  userId        String
+  prioridad     String
+  createdAt     DateTime                 @default(now())
+  updatedAt     DateTime                 @updatedAt
+  link          String?
+  user          User                     @relation(fields: [userId], references: [userId], onDelete: Cascade)
   emailDelivery SalesAgentEmailDelivery?
 
   @@index([userId, createdAt])
 }
 
 model SalesAgentEmailDelivery {
-  salesAgentEmailDeliveryId String   @id @default(cuid())
-  notificationId           String   @unique
+  salesAgentEmailDeliveryId String       @id @default(cuid())
+  notificationId            String       @unique
   eventType                 String
   payload                   Json
-  status                    String   @default("pending")
-  attempts                  Int      @default(0)
+  status                    String       @default("pending")
+  attempts                  Int          @default(0)
   messageId                 String?
   lastError                 String?
-  nextAttemptAt             DateTime @default(now())
+  nextAttemptAt             DateTime     @default(now())
   claimedAt                 DateTime?
   sentAt                    DateTime?
-  createdAt                 DateTime @default(now())
-  updatedAt                 DateTime @updatedAt
+  createdAt                 DateTime     @default(now())
+  updatedAt                 DateTime     @updatedAt
   notification              Notification @relation(fields: [notificationId], references: [id], onDelete: Cascade)
 
   @@index([status, nextAttemptAt])
@@ -1399,17 +1401,17 @@ model GastosDE {
 }
 
 model Moneda {
-  codigo                   String                    @id
-  nombre                   String
-  simbolo                  String
-  esPrincipal              Boolean                   @default(false)
-  isActive                 Boolean                   @default(true)
-  createdAt                DateTime                  @default(now())
-  updatedAt                DateTime                  @updatedAt
-  catalogoReparacionConfig CatalogoReparacionConfig?
-  tasasCambio              TasaCambio[]
-  transacciones            TransaccionMoneda[]
-  tenantAccountingPolicies TenantAccountingPolicy[]
+  codigo                        String                         @id
+  nombre                        String
+  simbolo                       String
+  esPrincipal                   Boolean                        @default(false)
+  isActive                      Boolean                        @default(true)
+  createdAt                     DateTime                       @default(now())
+  updatedAt                     DateTime                       @updatedAt
+  catalogoReparacionConfig      CatalogoReparacionConfig?
+  tasasCambio                   TasaCambio[]
+  transacciones                 TransaccionMoneda[]
+  tenantAccountingPolicies      TenantAccountingPolicy[]
   financialAuxiliaryCheckpoints FinancialAuxiliaryCheckpoint[]
 }
 
@@ -1426,19 +1428,78 @@ model TenantAccountingPolicy {
   @@map("tenant_accounting_policies")
 }
 
-model FinancialAuxiliaryCheckpoint {
-  checkpointId          String   @id @default(cuid())
-  tenantId              String
-  schemaVersion         Int?
-  cutoffAt              DateTime
-  capturedAt            DateTime
+model AccountingPolicyRolloutRun {
+  runId          String                         @id @default(cuid())
+  mode           String
+  manifestHash   String?
+  status         String
+  executorUserId String
+  approverUserId String?
+  reason         String
+  summary        Json?
+  createdAt      DateTime                       @default(now())
+  completedAt    DateTime?
+  entries        AccountingPolicyRolloutEntry[]
+
+  @@index([mode, status, createdAt])
+  @@index([manifestHash, mode, status])
+  @@map("accounting_policy_rollout_runs")
+}
+
+model AccountingPolicyRolloutEntry {
+  entryId                String                     @id @default(cuid())
+  runId                  String
+  tenantId               String
+  functionalCurrencyCode String?
+  expectedClassification String?
+  observedClassification String
+  projectedResult        String?
+  finalResult            String?
+  existingCurrencyCode   String?
+  tenantApprovalId       String?
+  safeError              String?
+  createdAt              DateTime                   @default(now())
+  updatedAt              DateTime                   @updatedAt
+  run                    AccountingPolicyRolloutRun @relation(fields: [runId], references: [runId], onDelete: Cascade)
+  tenant                 Tenant                     @relation(fields: [tenantId], references: [tenantId], onDelete: Restrict)
+
+  @@unique([runId, tenantId])
+  @@index([tenantId, createdAt])
+  @@map("accounting_policy_rollout_entries")
+}
+
+model AccountingPolicyTenantApproval {
+  approvalId             String    @id @default(cuid())
+  tenantId               String
   functionalCurrencyCode String
-  payload               Json
-  hashIntegridad        String
-  capturedBy            String
-  createdAt             DateTime @default(now())
-  tenant                Tenant   @relation(fields: [tenantId], references: [tenantId], onDelete: Restrict)
-  functionalCurrency    Moneda   @relation(fields: [functionalCurrencyCode], references: [codigo], onDelete: Restrict)
+  actorUserId            String
+  reason                 String
+  status                 String    @default("ACTIVE")
+  correlationId          String
+  approvalHash           String
+  expiresAt              DateTime
+  consumedAt             DateTime?
+  createdAt              DateTime  @default(now())
+  tenant                 Tenant    @relation(fields: [tenantId], references: [tenantId], onDelete: Restrict)
+
+  @@unique([tenantId, functionalCurrencyCode, approvalHash])
+  @@index([tenantId, status, expiresAt])
+  @@map("accounting_policy_tenant_approvals")
+}
+
+model FinancialAuxiliaryCheckpoint {
+  checkpointId           String   @id @default(cuid())
+  tenantId               String
+  schemaVersion          Int?
+  cutoffAt               DateTime
+  capturedAt             DateTime
+  functionalCurrencyCode String
+  payload                Json
+  hashIntegridad         String
+  capturedBy             String
+  createdAt              DateTime @default(now())
+  tenant                 Tenant   @relation(fields: [tenantId], references: [tenantId], onDelete: Restrict)
+  functionalCurrency     Moneda   @relation(fields: [functionalCurrencyCode], references: [codigo], onDelete: Restrict)
 
   @@unique([tenantId, cutoffAt])
   @@index([tenantId, schemaVersion, cutoffAt])
@@ -1447,6 +1508,7 @@ model FinancialAuxiliaryCheckpoint {
   @@map("financial_auxiliary_checkpoints")
 }
 
+/// Evidencia histórica inmutable de una conversión FX aplicada a una partida.
 model FxEvidence {
   fxEvidenceId        String   @id @default(cuid())
   tenantId            String
@@ -1535,22 +1597,22 @@ model CuentaBancaria {
 }
 
 model TipoPago {
-      tipoId                   String                   @id @default(cuid())
-      tenantId                 String
-      nombre                   String
-      descripcion              String?
-      requiereCuenta           Boolean                  @default(true)
-      cuentaDefecto            String?
-      isActive                 Boolean                  @default(true)
-      createdAt                DateTime                 @default(now())
-      updatedAt                DateTime                 @updatedAt
-      tenant                   Tenant                   @relation(fields: [tenantId], references: [tenantId])
-      reconciliacionesGasto    ReconciliacionGasto[]
-      reconciliacionesServicio ReconciliacionServicio[]
-      reconciliacionesVenta    ReconciliacionVenta[]
+  tipoId                   String                   @id @default(cuid())
+  tenantId                 String
+  nombre                   String
+  descripcion              String?
+  requiereCuenta           Boolean                  @default(true)
+  cuentaDefecto            String?
+  isActive                 Boolean                  @default(true)
+  createdAt                DateTime                 @default(now())
+  updatedAt                DateTime                 @updatedAt
+  tenant                   Tenant                   @relation(fields: [tenantId], references: [tenantId])
+  reconciliacionesGasto    ReconciliacionGasto[]
+  reconciliacionesServicio ReconciliacionServicio[]
+  reconciliacionesVenta    ReconciliacionVenta[]
 
-      @@index([tenantId])
-    }
+  @@index([tenantId])
+}
 
 model ReconciliacionVenta {
   reconciliacionId            String         @id @default(cuid())
@@ -1594,81 +1656,83 @@ model ReconciliacionVenta {
 }
 
 model ReconciliacionServicio {
-  reconciliacionId    String         @id @default(cuid())
-  tenantId            String
-  cuentaId            String
-  tipoPagoId          String
-  monto               Decimal
-  moneda              String         @default("CUP")
-  tasaCambio          Decimal?
-  montoConvertido     Decimal?
-  functionalCurrency          String?
-  rateEffectiveAt             DateTime?
-  fxProvenanceKind            String?
-  fxProvenanceSource          String?
-  fxCatalogRateId             String?
-  fxEvidenceJson              Json?
-  fxEvidenceFingerprint       String?
-  fxEvidenceVersion           Int?
-  fechaReconciliacion DateTime       @default(now())
-  observaciones       String?
-  reconciliadoPor     String
-  createdAt           DateTime       @default(now())
-  updatedAt           DateTime       @updatedAt
-  ventaServicioId     String
-  cuentaBancaria      CuentaBancaria @relation(fields: [cuentaId], references: [cuentaId])
-  tenant              Tenant         @relation(fields: [tenantId], references: [tenantId])
-  tipoPago            TipoPago       @relation(fields: [tipoPagoId], references: [tipoId])
-  ventasServicio      VentaServicios @relation(fields: [ventaServicioId], references: [ventaServicioId])
+  reconciliacionId      String         @id @default(cuid())
+  tenantId              String
+  cuentaId              String
+  tipoPagoId            String
+  monto                 Decimal
+  moneda                String         @default("CUP")
+  tasaCambio            Decimal?
+  montoConvertido       Decimal?
+  functionalCurrency    String?
+  rateEffectiveAt       DateTime?
+  fxProvenanceKind      String?
+  fxProvenanceSource    String?
+  fxCatalogRateId       String?
+  fxEvidenceJson        Json?
+  fxEvidenceFingerprint String?
+  fxEvidenceVersion     Int?
+  fechaReconciliacion   DateTime       @default(now())
+  observaciones         String?
+  reconciliadoPor       String
+  createdAt             DateTime       @default(now())
+  updatedAt             DateTime       @updatedAt
+  ventaServicioId       String
+  cuentaBancaria        CuentaBancaria @relation(fields: [cuentaId], references: [cuentaId])
+  tenant                Tenant         @relation(fields: [tenantId], references: [tenantId])
+  tipoPago              TipoPago       @relation(fields: [tipoPagoId], references: [tipoId])
+  ventasServicio        VentaServicios @relation(fields: [ventaServicioId], references: [ventaServicioId])
 
   @@index([tenantId])
   @@index([tenantId, fxProvenanceKind])
+
   @@index([tenantId, fechaReconciliacion])
   @@index([tenantId, cuentaId, fechaReconciliacion])
 }
 
 model ReconciliacionGasto {
-  reconciliacionId    String          @id @default(cuid())
-  tenantId            String
-  tipoGasto           String
-  referenciaId        String
-  cuentaId            String
-  tipoPagoId          String
-  monto               Decimal
-  moneda              String          @default("CUP")
-  tasaCambio          Decimal?
-  montoConvertido     Decimal?
-  functionalCurrency          String?
-  rateEffectiveAt             DateTime?
-  fxProvenanceKind            String?
-  fxProvenanceSource          String?
-  fxCatalogRateId             String?
-  fxEvidenceJson              Json?
-  fxEvidenceFingerprint       String?
-  fxEvidenceVersion           Int?
-  descripcion         String
-  periodo             String?
-  fechaReconciliacion DateTime        @default(now())
-  observaciones       String?
-  reconciliadoPor     String
-  createdAt           DateTime        @default(now())
-  updatedAt           DateTime        @updatedAt
-  cuentaPorPagarId    String?
-  estado              String          @default("PENDIENTE")
-  gastoCompraId       String?
-  gastosDEId          String?
-  isReconciliada      Boolean?        @default(false)
-  pgId                String?
-  cuentaBancaria      CuentaBancaria  @relation(fields: [cuentaId], references: [cuentaId])
-  cuentaPorPagar      CuentaPorPagar? @relation(fields: [cuentaPorPagarId], references: [cuentaPorPagarId])
-  gastoCompra         GastoCompra?    @relation(fields: [gastoCompraId], references: [gastoCompraId])
-  gastoDE             GastosDE?       @relation(fields: [gastosDEId], references: [gastosDEId])
-  pagoSalario         Pagosalario?    @relation(fields: [pgId], references: [pgId])
-  tenant              Tenant          @relation(fields: [tenantId], references: [tenantId])
-  tipoPago            TipoPago        @relation(fields: [tipoPagoId], references: [tipoId])
+  reconciliacionId      String          @id @default(cuid())
+  tenantId              String
+  tipoGasto             String
+  referenciaId          String
+  cuentaId              String
+  tipoPagoId            String
+  monto                 Decimal
+  moneda                String          @default("CUP")
+  tasaCambio            Decimal?
+  montoConvertido       Decimal?
+  functionalCurrency    String?
+  rateEffectiveAt       DateTime?
+  fxProvenanceKind      String?
+  fxProvenanceSource    String?
+  fxCatalogRateId       String?
+  fxEvidenceJson        Json?
+  fxEvidenceFingerprint String?
+  fxEvidenceVersion     Int?
+  descripcion           String
+  periodo               String?
+  fechaReconciliacion   DateTime        @default(now())
+  observaciones         String?
+  reconciliadoPor       String
+  createdAt             DateTime        @default(now())
+  updatedAt             DateTime        @updatedAt
+  cuentaPorPagarId      String?
+  estado                String          @default("PENDIENTE")
+  gastoCompraId         String?
+  gastosDEId            String?
+  isReconciliada        Boolean?        @default(false)
+  pgId                  String?
+  cuentaBancaria        CuentaBancaria  @relation(fields: [cuentaId], references: [cuentaId])
+  cuentaPorPagar        CuentaPorPagar? @relation(fields: [cuentaPorPagarId], references: [cuentaPorPagarId])
+  gastoCompra           GastoCompra?    @relation(fields: [gastoCompraId], references: [gastoCompraId])
+  gastoDE               GastosDE?       @relation(fields: [gastosDEId], references: [gastosDEId])
+  pagoSalario           Pagosalario?    @relation(fields: [pgId], references: [pgId])
+  tenant                Tenant          @relation(fields: [tenantId], references: [tenantId])
+  tipoPago              TipoPago        @relation(fields: [tipoPagoId], references: [tipoId])
 
   @@index([tenantId])
   @@index([tenantId, fxProvenanceKind])
+
   @@index([tenantId, fechaReconciliacion])
   @@index([tenantId, cuentaId, fechaReconciliacion])
 }
@@ -1685,7 +1749,7 @@ model AjusteBancario {
   descripcion     String
   motivo          String
   realizadoPor    String
-  fechaOperacion  DateTime        @default(now())
+  fechaOperacion  DateTime       @default(now())
   createdAt       DateTime       @default(now())
   updatedAt       DateTime       @updatedAt
   cuentaBancaria  CuentaBancaria @relation(fields: [cuentaId], references: [cuentaId])
@@ -1693,6 +1757,7 @@ model AjusteBancario {
 
   @@index([tenantId])
   @@index([tenantId, fechaOperacion])
+
   @@index([tenantId, cuentaId, fechaOperacion])
 }
 
@@ -1721,6 +1786,7 @@ model TransferenciaBancaria {
 
   @@unique([tenantId, numeroComprobante])
   @@index([tenantId])
+
   @@index([tenantId, fechaTransferencia])
   @@index([tenantId, cuentaOrigenId, fechaTransferencia])
   @@index([tenantId, cuentaDestinoId, fechaTransferencia])
@@ -2615,29 +2681,29 @@ model PeriodoContable {
 }
 
 model SnapshotPeriodo {
-  snapshotId      String          @id @default(cuid())
-  periodoId       String
-  version         Int             @default(1)
+  snapshotId               String          @id @default(cuid())
+  periodoId                String
+  version                  Int             @default(1)
   /// Nullable para conservar filas v2 existentes sin reinterpretarlas como v3.
-  tenantId        String?
-  schemaVersion   Int?
-  status          String?
-  cutoffAt        DateTime?
-  capturedAt      DateTime?
-  approvedAt      DateTime?
-  approvedBy      String?
+  tenantId                 String?
+  schemaVersion            Int?
+  status                   String?
+  cutoffAt                 DateTime?
+  capturedAt               DateTime?
+  approvedAt               DateTime?
+  approvedBy               String?
   canonicalContractVersion String?
   /// Datos crudos del snapshot en base caja
-  baseCajaJson    Json?
+  baseCajaJson             Json?
   /// Datos crudos del snapshot en base devengo
-  baseDevengoJson Json?
+  baseDevengoJson          Json?
   /// Resumen agregado (mismo que PeriodoContable.resumenJson)
-  resumenJson     Json?
+  resumenJson              Json?
   /// SHA256 del resumenJson
-  hashIntegridad  String?
-  createdAt       DateTime        @default(now())
-  periodo         PeriodoContable @relation(fields: [periodoId], references: [periodoId], onDelete: Cascade)
-  tenant          Tenant?         @relation(fields: [tenantId], references: [tenantId], onDelete: Restrict)
+  hashIntegridad           String?
+  createdAt                DateTime        @default(now())
+  periodo                  PeriodoContable @relation(fields: [periodoId], references: [periodoId], onDelete: Cascade)
+  tenant                   Tenant?         @relation(fields: [tenantId], references: [tenantId], onDelete: Restrict)
 
   @@unique([periodoId, version])
   @@index([tenantId, status, cutoffAt])
@@ -2980,66 +3046,4 @@ enum MetodoPagoVenta {
   TRANSFERENCIA
   CREDITO
   MIXTO
-}
-
-
-model AccountingPolicyRolloutRun {
-  runId          String                         @id @default(cuid())
-  mode           String
-  manifestHash   String?
-  status         String
-  executorUserId String
-  approverUserId String?
-  reason         String
-  summary        Json?
-  createdAt      DateTime                       @default(now())
-  completedAt    DateTime?
-  entries        AccountingPolicyRolloutEntry[]
-
-  @@index([mode, status, createdAt])
-  @@index([manifestHash, mode, status])
-  @@map("accounting_policy_rollout_runs")
-}
-
-
-model AccountingPolicyRolloutEntry {
-  entryId                String                     @id @default(cuid())
-  runId                  String
-  tenantId               String
-  functionalCurrencyCode String?
-  expectedClassification String?
-  observedClassification String
-  projectedResult        String?
-  finalResult            String?
-  existingCurrencyCode   String?
-  tenantApprovalId       String?
-  safeError              String?
-  createdAt              DateTime                   @default(now())
-  updatedAt              DateTime                   @updatedAt
-  run                    AccountingPolicyRolloutRun @relation(fields: [runId], references: [runId], onDelete: Cascade)
-  tenant                 Tenant                     @relation(fields: [tenantId], references: [tenantId], onDelete: Restrict)
-
-  @@unique([runId, tenantId])
-  @@index([tenantId, createdAt])
-  @@map("accounting_policy_rollout_entries")
-}
-
-
-model AccountingPolicyTenantApproval {
-  approvalId             String    @id @default(cuid())
-  tenantId               String
-  functionalCurrencyCode String
-  actorUserId            String
-  reason                 String
-  status                 String    @default("ACTIVE")
-  correlationId          String
-  approvalHash           String
-  expiresAt              DateTime
-  consumedAt             DateTime?
-  createdAt              DateTime  @default(now())
-  tenant                 Tenant    @relation(fields: [tenantId], references: [tenantId], onDelete: Restrict)
-
-  @@unique([tenantId, functionalCurrencyCode, approvalHash])
-  @@index([tenantId, status, expiresAt])
-  @@map("accounting_policy_tenant_approvals")
 }

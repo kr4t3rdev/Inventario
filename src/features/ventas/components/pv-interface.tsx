@@ -478,6 +478,7 @@ export function VentaInterface() {
 				puntoDeVentaId: selectedPuntoVenta,
 				descuento: Math.round(descuento),
 				observaciones,
+				cargoTransporte: 0,
 				items,
 			});
 

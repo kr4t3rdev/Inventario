@@ -447,6 +447,8 @@ export function ReconciliacionGastosForm({
         monto: baseData.monto,
         moneda: baseData.moneda,
         descripcion: baseData.descripcion,
+        periodo: baseData.periodo,
+        fechaReconciliacion: baseData.fechaReconciliacion,
         cuentaPorPagarId: baseData.cuentaPorPagarId,
         // Pasar distribución completa para multi-cuenta (CxP)
         distribucion: baseData.distribucion,

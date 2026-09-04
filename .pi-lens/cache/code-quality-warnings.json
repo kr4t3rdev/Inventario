@@ -1,15 +1,20 @@
 {
-  "generatedAt": "2026-06-23T20:43:19.287Z",
+  "generatedAt": "2026-08-23T15:03:02.993Z",
   "scope": "turn_delta",
-  "sessionId": "019ef573-3113-754e-839a-853aba7b2746",
-  "turnIndex": 395,
-  "projectSeqStart": 226,
-  "projectSeqEnd": 227,
+  "sessionId": "01a02cb7-fec9-733f-9a9a-f100a629a74f",
+  "turnIndex": 152,
+  "projectSeqStart": 227,
+  "projectSeqEnd": 228,
   "deltaOnly": true,
   "files": [],
   "summary": {
     "warnings": 0,
     "files": 0,
+    "byTier": {
+      "warning": 0,
+      "info": 0,
+      "hint": 0
+    },
     "topRules": []
   }
 }

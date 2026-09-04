@@ -7,6 +7,9 @@ vi.mock('@/lib/prisma', () => ({
       count: vi.fn(),
       findFirst: vi.fn(),
     },
+    inyeccionCapital: {
+      findMany: vi.fn(),
+    },
   },
 }));
 
@@ -45,5 +48,16 @@ describe('AccountingOperationsReadService', () => {
         where: { transferenciaId: 'transfer-1', tenantId: 'tenant-a' },
       }),
     );
+  });
+
+  it('scopes capital injections through the owning bank account tenant', async () => {
+    vi.mocked(prisma.inyeccionCapital.findMany).mockResolvedValue([] as never);
+
+    await AccountingOperationsReadService.getCapitalInjections({ tenantId: 'tenant-a' });
+
+    expect(prisma.inyeccionCapital.findMany).toHaveBeenCalledWith({
+      where: { cuentaBancaria: { tenantId: 'tenant-a' } },
+      orderBy: { createdAt: 'desc' },
+    });
   });
 });

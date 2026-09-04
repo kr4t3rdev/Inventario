@@ -1,24 +1,21 @@
 "use client"
 
-import { useMemo, useState, useEffect } from "react"
-import { LazyMotion, m as motion, useReducedMotion } from "framer-motion"
+import { useState, useEffect, useRef } from "react"
+import { m as motion, useReducedMotion } from "framer-motion"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { Skeleton } from "@/components/ui/skeleton"
-import { TrendingUp, TrendingDown, ArrowUpDown, Calendar, DollarSign, Info, Wallet, CreditCard, FileText, Filter, Download } from "lucide-react"
+import { TrendingUp, TrendingDown, ArrowUpDown, Calendar, DollarSign, Info, Wallet, CreditCard, FileText, Filter } from "lucide-react"
 import { formatCurrency, formatDate, convertCurrency } from "@/features/contabilidad/utils/contabilidadUtils"
 import { getMonedasAction } from "@/features/contabilidad/actions-exchange"
 import { getPrestamoCashHistorialAction } from "@/features/contabilidad/actions-prestamos-cash"
 import { getCuentaHistorialAction } from "@/features/contabilidad/actions-cuentas-bancarias"
 import { getTasasActualesAction } from "@/features/contabilidad/actions-exchange"
-import { DateRangePicker } from "./date-range-picker"
-import { ExportDialog } from "./export-dialog"
 import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle } from "@/components/ui/sheet"
 import { cn } from "@/lib/utils"
-import { getAuthToken } from "@/lib/token"
 import {
   StaggerContainer,
   StaggerItem,
@@ -30,6 +27,8 @@ interface AccountTransactionHistoryProps {
   nombreCuenta: string
   numeroCuenta: string
   monedaCuenta: string
+  fechaInicio?: string
+  fechaFin?: string
 }
 
 const surfaceCardClass = cn(
@@ -48,18 +47,32 @@ const typeColors: Record<string, string> = {
   'ajuste_egreso': 'bg-rose-100 text-rose-800 dark:bg-rose-900/30 dark:text-rose-300 border-rose-200/80',
   'prestamo_cash': 'bg-violet-100 text-violet-800 dark:bg-violet-900/30 dark:text-violet-300 border-violet-200/80',
   'deuda_cash': 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-300 border-red-200/80',
+  'deuda_cash_pago': 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-300 border-red-200/80',
+  'deuda_cash_desembolso': 'bg-violet-100 text-violet-800 dark:bg-violet-900/30 dark:text-violet-300 border-violet-200/80',
 }
+
+const incomeMovementTypes = new Set([
+  'venta',
+  'servicio',
+  'transferencia_entrada',
+  'ajuste_ingreso',
+  'inyeccion_capital',
+  'prestamo_cash_pago',
+  'deuda_cash_desembolso',
+])
 
 export function AccountTransactionHistory({
   cuentaId,
   nombreCuenta,
   numeroCuenta,
-  monedaCuenta
+  monedaCuenta,
+  fechaInicio: fechaInicioGlobal,
+  fechaFin: fechaFinGlobal,
 }: AccountTransactionHistoryProps) {
   const shouldReduceMotion = useReducedMotion()
   const [filtros, setFiltros] = useState({
-    fechaInicio: "",
-    fechaFin: "",
+    fechaInicio: fechaInicioGlobal ?? "",
+    fechaFin: fechaFinGlobal ?? "",
     tipoMovimiento: "",
     page: 1,
     limit: 10
@@ -68,8 +81,18 @@ export function AccountTransactionHistory({
   const [exchangeRates, setExchangeRates] = useState<{ [key: string]: number }>({})
 
   useEffect(() => {
+    setFiltros(prev => ({
+      ...prev,
+      fechaInicio: fechaInicioGlobal ?? '',
+      fechaFin: fechaFinGlobal ?? '',
+      page: 1,
+    }))
+  }, [fechaInicioGlobal, fechaFinGlobal])
+
+  useEffect(() => {
+    let isActive = true
     getTasasActualesAction().then(r => {
-      if (r.success && r.data) {
+      if (isActive && r.success && r.data) {
         const rates: { [key: string]: number } = {}
         r.data.tasas.forEach((tasa: any) => {
           rates[`${tasa.monedaOrigenId}_${tasa.monedaDestino}`] = tasa.tasa
@@ -77,13 +100,17 @@ export function AccountTransactionHistory({
         setExchangeRates(rates)
       }
     }).catch(error => console.error('Error fetching exchange rates:', error))
+    return () => { isActive = false }
   }, [])
 
   const [historial, setHistorial] = useState<any>(null)
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState<any>(null)
+  const historyRequestRef = useRef(0)
 
   useEffect(() => {
+    const requestId = ++historyRequestRef.current
+    let isActive = true
     setIsLoading(true)
     setError(null)
     getCuentaHistorialAction({
@@ -94,42 +121,49 @@ export function AccountTransactionHistory({
       page: filtros.page,
       limit: filtros.limit
     }).then(r => {
+      if (!isActive || requestId !== historyRequestRef.current) return
       if (r.success) { setHistorial(r.data); setIsLoading(false) }
       else { setError(r.error); setIsLoading(false) }
-    }).catch(err => { setError(err); setIsLoading(false) })
+    }).catch(err => {
+      if (!isActive || requestId !== historyRequestRef.current) return
+      setError(err); setIsLoading(false)
+    })
+    return () => { isActive = false }
   }, [cuentaId, filtros.fechaInicio, filtros.fechaFin, filtros.tipoMovimiento, filtros.page, filtros.limit])
-  const prestamoCashId = useMemo(() => {
-    const prestamo = historial?.transacciones?.find((tx: any) => tx.tipoMovimiento === 'prestamo_cash')
-    return (prestamo as any)?.prestamoCashId ?? (prestamo as any)?.detalles?.prestamoCashId ?? null
-  }, [historial?.transacciones])
   const [prestamoSheetOpen, setPrestamoSheetOpen] = useState(false)
+  const [selectedPrestamoCashId, setSelectedPrestamoCashId] = useState<string | null>(null)
   const [prestamoHistorial, setPrestamoHistorial] = useState<any>(null)
 
   useEffect(() => {
-    if (prestamoCashId && prestamoSheetOpen) {
-      getPrestamoCashHistorialAction(prestamoCashId).then(r => {
-        if (r.success) setPrestamoHistorial(r.data)
+    if (selectedPrestamoCashId && prestamoSheetOpen) {
+      let isActive = true
+      getPrestamoCashHistorialAction(selectedPrestamoCashId).then(r => {
+        if (isActive && r.success) setPrestamoHistorial(r.data)
+      }).catch((requestError) => {
+        if (isActive) console.error('Error al cargar el detalle del préstamo:', requestError)
       })
+      return () => { isActive = false }
     }
-  }, [prestamoCashId, prestamoSheetOpen])
+  }, [selectedPrestamoCashId, prestamoSheetOpen])
   const [monedas, setMonedas] = useState<any[]>([])
 
   useEffect(() => {
+    let isActive = true
     getMonedasAction().then(r => {
-      if (r.success) setMonedas(r.data ?? [])
-    })
+      if (isActive && r.success) setMonedas(r.data ?? [])
+    }).catch((requestError) => console.error('Error al cargar monedas:', requestError))
+    return () => { isActive = false }
   }, [])
   
-  const convertAmount = (amount: number, fromCurrency: string, toCurrency: string): number => {
+  const convertAmount = (amount: number, fromCurrency: string, toCurrency: string): number | null => {
     if (fromCurrency === toCurrency) {
       return amount
     }
     
-    const converted = convertCurrency(amount, fromCurrency, toCurrency, exchangeRates)
-    return converted !== null ? converted : amount
+    return convertCurrency(amount, fromCurrency, toCurrency, exchangeRates)
   }
 
-  const getConvertedAmount = (transaccion: any): number => {
+  const getConvertedAmount = (transaccion: any): number | null => {
     if (transaccion.monedaOriginal === monedaCuenta) {
       return transaccion.montoOriginal
     }
@@ -142,28 +176,10 @@ export function AccountTransactionHistory({
   }
 
   const calculateTotals = () => {
-    if (!historial?.transacciones) {
-      return { totalIngresos: historial?.resumen?.totalIngresos || 0, totalEgresos: historial?.resumen?.totalEgresos || 0 }
+    return {
+      totalIngresos: historial?.resumen?.totalIngresos ?? 0,
+      totalEgresos: historial?.resumen?.totalEgresos ?? 0
     }
-
-    const totals = historial.transacciones.reduce((acc: { totalIngresos: number; totalEgresos: number }, t: any) => {
-      const isIncome = t.tipoMovimiento.includes('ingreso') || 
-        t.tipoMovimiento === 'venta' || 
-        t.tipoMovimiento === 'servicio' || 
-        t.tipoMovimiento === 'transferencia_entrada' ||
-        t.tipoMovimiento === 'prestamo_cash'
-      const convertedAmount = getConvertedAmount(t)
-      
-      if (isIncome) {
-        acc.totalIngresos += convertedAmount
-      } else {
-        acc.totalEgresos += convertedAmount
-      }
-      
-      return acc
-    }, { totalIngresos: 0, totalEgresos: 0 })
-
-    return totals
   }
 
   const totals = calculateTotals()
@@ -188,46 +204,6 @@ export function AccountTransactionHistory({
     }))
   }
 
-  const handleDateRangeChange = (fechaInicio: string, fechaFin: string) => {
-    setFiltros(prev => ({
-      ...prev,
-      fechaInicio,
-      fechaFin,
-      page: 1
-    }))
-  }
-
-  const handleExport = async (config: { formato: string; fechaInicio?: string; fechaFin?: string; incluirDetalles: boolean; incluirConversiones: boolean }) => {
-    const params = new URLSearchParams({
-      cuentaId,
-      formato: config.formato,
-      ...(config.fechaInicio && { fechaInicio: config.fechaInicio }),
-      ...(config.fechaFin && { fechaFin: config.fechaFin }),
-      incluirDetalles: config.incluirDetalles.toString(),
-      incluirConversiones: config.incluirConversiones.toString()
-    })
-
-    const token = getAuthToken();
-    const response = await fetch(`/api/contabilidad/cuentas/${cuentaId}/historial?${params}`, {
-      headers: token ? { Authorization: token } : {},
-      credentials: 'include'
-    })
-
-    if (!response.ok) {
-      throw new Error('Error al exportar')
-    }
-
-    const blob = await response.blob()
-    const url = window.URL.createObjectURL(blob)
-    const a = document.createElement('a')
-    a.href = url
-    a.download = `historial-${numeroCuenta}-${new Date().toISOString().split('T')[0]}.${config.formato}`
-    document.body.appendChild(a)
-    a.click()
-    window.URL.revokeObjectURL(url)
-    document.body.removeChild(a)
-  }
-
   const getTipoMovimientoColor = (tipo: string) => {
     return typeColors[tipo] || 'bg-gray-100 text-gray-800 dark:bg-gray-900/30 dark:text-gray-300 border-gray-200/80'
   }
@@ -242,15 +218,21 @@ export function AccountTransactionHistory({
       'transferencia_salida': 'Transferencia Salida',
       'ajuste_ingreso': 'Ajuste Ingreso',
       'ajuste_egreso': 'Ajuste Egreso',
+      'inyeccion_capital': 'Inyección de capital',
       'prestamo_cash_pago': 'Cobro Préstamo Cash',
       'prestamo_cash_desembolso': 'Desembolso Préstamo Cash',
       'deuda_cash': 'Deuda Cash',
+      'deuda_cash_pago': 'Pago Deuda Cash',
+      'deuda_cash_desembolso': 'Desembolso Deuda Cash',
     }
     return labels[tipo] || tipo
   }
 
   const openPrestamoDetalle = (transaccion: any): void => {
-    if (transaccion.tipoMovimiento !== 'prestamo_cash_desembolso') return
+    const transactionId = transaccion.prestamoCashId ?? transaccion.detalles?.prestamoCashId ?? null
+    if (!['prestamo_cash', 'prestamo_cash_desembolso'].includes(transaccion.tipoMovimiento) || !transactionId) return
+    setSelectedPrestamoCashId(transactionId)
+    setPrestamoHistorial(null)
     setPrestamoSheetOpen(true)
   }
 
@@ -260,15 +242,18 @@ export function AccountTransactionHistory({
       case 'servicio':
       case 'ajuste_ingreso':
       case 'transferencia_entrada':
+      case 'inyeccion_capital':
       case 'prestamo_cash_pago':
+      case 'deuda_cash_desembolso':
         return <TrendingUp className="h-3.5 w-3.5" />
       case 'prestamo_cash_desembolso':
-        return <TrendingUp className="h-3.5 w-3.5" />
+        return <TrendingDown className="h-3.5 w-3.5" />
       case 'gasto':
       case 'salario':
       case 'ajuste_egreso':
       case 'transferencia_salida':
       case 'deuda_cash':
+      case 'deuda_cash_pago':
         return <TrendingDown className="h-3.5 w-3.5" />
       default:
         return <ArrowUpDown className="h-3.5 w-3.5" />
@@ -302,7 +287,7 @@ export function AccountTransactionHistory({
       <AnimatedCard>
         <Card className={cn(surfaceCardClass, 'border-red-200 dark:border-red-800')}>
           <CardContent className="pt-6">
-            <div className="flex flex-col items-center justify-center py-8">
+            <div role="alert" className="flex flex-col items-center justify-center py-8">
               <div className="w-12 h-12 rounded-full bg-red-100 dark:bg-red-900/20 flex items-center justify-center mb-4">
                 <Wallet className="h-6 w-6 text-red-500" />
               </div>
@@ -329,7 +314,7 @@ export function AccountTransactionHistory({
                   </div>
                   {nombreCuenta}
                 </CardTitle>
-                {historial?.resumen?.saldoActual && (
+                {historial?.resumen?.saldoActual != null && (
                   <Badge variant="outline" className="bg-emerald-50 dark:bg-emerald-900/20 text-emerald-700 dark:text-emerald-300">
                     Saldo: {formatCurrencySimple(historial.resumen.saldoActual, monedaCuenta)}
                   </Badge>
@@ -357,7 +342,7 @@ export function AccountTransactionHistory({
                   <div>
                     <p className="text-sm text-muted-foreground">Saldo actual</p>
                     <p className="font-medium text-lg text-emerald-600 dark:text-emerald-400">
-                      {historial?.resumen?.saldoActual ?
+                      {historial?.resumen?.saldoActual != null ?
                         formatCurrencySimple(historial.resumen.saldoActual, monedaCuenta):
                         'Cargando...'
                       }
@@ -455,27 +440,16 @@ export function AccountTransactionHistory({
                   </div>
                   Historial de Transacciones
                 </CardTitle>
-                {/* <ExportDialog
-                  tipoReporte="movimientos"
-                  cuentaId={cuentaId}
-                  onExport={handleExport}
-                /> */}
               </div>
             </CardHeader>
             <CardContent className="space-y-4">
               {/* Filtros */}
               <div className="flex flex-col sm:flex-row gap-4 p-4 rounded-xl bg-slate-50/80 dark:bg-slate-900/50">
-                <DateRangePicker
-                  fechaInicio={filtros.fechaInicio}
-                  fechaFin={filtros.fechaFin}
-                  onChange={handleDateRangeChange}
-                />
-
                 <Select
                   value={filtros.tipoMovimiento}
                   onValueChange={(value) => handleFiltroChange('tipoMovimiento', value === 'all' ? '' : value)}
                 >
-                  <SelectTrigger className="w-full sm:w-[200px] bg-white/80 dark:bg-slate-800/50">
+                  <SelectTrigger aria-label="Filtrar por tipo de movimiento" className="w-full sm:w-[200px] bg-white/80 dark:bg-slate-800/50">
                     <SelectValue placeholder="Tipo de movimiento" />
                   </SelectTrigger>
                   <SelectContent>
@@ -488,16 +462,19 @@ export function AccountTransactionHistory({
                     <SelectItem value="transferencia_salida">Transferencias Salida</SelectItem>
                     <SelectItem value="ajuste_ingreso">Ajustes Ingreso</SelectItem>
                     <SelectItem value="ajuste_egreso">Ajustes Egreso</SelectItem>
+                    <SelectItem value="inyeccion_capital">Inyecciones de capital</SelectItem>
                     <SelectItem value="prestamo_cash_pago">Préstamos Cash (cobros)</SelectItem>
                     <SelectItem value="prestamo_cash_desembolso">Préstamos Cash (desembolsos)</SelectItem>
+                    <SelectItem value="deuda_cash_pago">Deudas Cash (pagos)</SelectItem>
+                    <SelectItem value="deuda_cash_desembolso">Deudas Cash (desembolsos)</SelectItem>
                     <SelectItem value="deuda_cash">Deudas Cash</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
 
               {/* Tabla de transacciones */}
-              <div className="rounded-xl border border-slate-200/60 dark:border-slate-800 overflow-hidden">
-                <Table>
+              <div className="overflow-x-auto rounded-xl border border-slate-200/60 dark:border-slate-800">
+                <Table className="min-w-[760px]">
                   <TableHeader>
                     <TableRow className="bg-slate-50/80 dark:bg-slate-900/50 hover:bg-slate-50/80 dark:hover:bg-slate-900/50">
                       <TableHead className="font-semibold">Fecha</TableHead>
@@ -536,15 +513,26 @@ export function AccountTransactionHistory({
                           </div>
                         </TableCell>
                       </TableRow>
-                    ) : (
-                      historial?.transacciones?.map((transaccion: any) => (
+                      ) : (
+                      historial?.transacciones?.map((transaccion: any) => {
+                        const isLoanDisbursement = ['prestamo_cash', 'prestamo_cash_desembolso'].includes(transaccion.tipoMovimiento);
+                        return (
                           <TableRow
                           key={transaccion.transaccionId}
                           className={cn(
                             "hover:bg-slate-50/50 dark:hover:bg-slate-900/30",
-                            transaccion.tipoMovimiento === 'prestamo_cash_desembolso' && 'cursor-pointer'
+                            isLoanDisbursement && 'cursor-pointer'
                           )}
-                          onClick={() => openPrestamoDetalle(transaccion)}
+                          tabIndex={isLoanDisbursement ? 0 : undefined}
+                          role={isLoanDisbursement ? 'button' : undefined}
+                          aria-label={isLoanDisbursement ? 'Abrir detalle del préstamo' : undefined}
+                          onKeyDown={isLoanDisbursement ? (e) => {
+                            if (e.key === 'Enter' || e.key === ' ') {
+                              e.preventDefault();
+                              openPrestamoDetalle(transaccion);
+                            }
+                          } : undefined}
+                          onClick={isLoanDisbursement ? () => openPrestamoDetalle(transaccion) : undefined}
                         >
                           <TableCell>
                             <div className="flex items-center gap-2">
@@ -586,26 +574,23 @@ export function AccountTransactionHistory({
                             ) : '-'}
                           </TableCell>
                           <TableCell className="text-right">
-                            <span className={cn(
-                              "font-mono font-semibold",
-                              transaccion?.tipoMovimiento?.includes('ingreso') ||
-                                transaccion.tipoMovimiento === 'venta' ||
-                                transaccion.tipoMovimiento === 'servicio' ||
-                                transaccion.tipoMovimiento === 'transferencia_entrada' ||
-                                transaccion.tipoMovimiento === 'prestamo_cash_desembolso'
-                                ? 'text-green-600 dark:text-green-400'
-                                : 'text-red-600 dark:text-red-400'
-                            )}>
-                              {transaccion?.tipoMovimiento?.includes('ingreso') ||
-                                transaccion.tipoMovimiento === 'venta' ||
-                                transaccion.tipoMovimiento === 'servicio' ||
-                                transaccion.tipoMovimiento === 'transferencia_entrada' ||
-                                transaccion.tipoMovimiento === 'prestamo_cash_desembolso' ? '+' : '-'}
-                              {formatCurrencySimple(Math.abs(getConvertedAmount(transaccion)), monedaCuenta)}
-                            </span>
+                            {getConvertedAmount(transaccion) != null ? (
+                              <span className={cn(
+                                "font-mono font-semibold",
+                                incomeMovementTypes.has(transaccion.tipoMovimiento)
+                                  ? 'text-green-600 dark:text-green-400'
+                                  : 'text-red-600 dark:text-red-400'
+                              )}>
+                                {incomeMovementTypes.has(transaccion.tipoMovimiento) ? '+' : '-'}
+                                {formatCurrencySimple(Math.abs(getConvertedAmount(transaccion)!), monedaCuenta)}
+                              </span>
+                            ) : (
+                              <span className="text-muted-foreground text-xs italic">Sin conversión</span>
+                            )}
                           </TableCell>
                         </TableRow>
-                      ))
+                        );
+                      })
                     )}
                   </TableBody>
                 </Table>
@@ -615,8 +600,8 @@ export function AccountTransactionHistory({
               {historial?.pagination && (
                 <div className="flex items-center justify-between px-2 py-4 border-t border-slate-200/60 dark:border-slate-800">
                   <p className="text-sm text-muted-foreground">
-                    Mostrando {((historial.pagination.page - 1) * historial.pagination.limit) + 1} a{' '}
-                    {Math.min(historial.pagination.page * historial.pagination.limit, historial.pagination.total)} de{' '}
+                    Mostrando {historial.pagination.total === 0 ? 0 : ((historial.pagination.page - 1) * historial.pagination.limit) + 1} a{' '}
+                    {historial.pagination.total === 0 ? 0 : Math.min(historial.pagination.page * historial.pagination.limit, historial.pagination.total)} de{' '}
                     {historial.pagination.total} transacciones
                   </p>
                   <div className="flex gap-2">
@@ -677,7 +662,7 @@ export function AccountTransactionHistory({
               </div>
             </div>
           ) : (
-            <div className="p-4 text-sm text-muted-foreground">Seleccioná un préstamo para ver el detalle.</div>
+            <div className="p-4 text-sm text-muted-foreground">Seleccione un préstamo para ver el detalle.</div>
           )}
         </SheetContent>
       </Sheet>

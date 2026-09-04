@@ -86,6 +86,10 @@ function formatNotificacionDate(dateValue: unknown): string {
   }
 }
 
+/**
+ * @description Muestra las notificaciones del usuario y sus acciones disponibles.
+ * @returns {React.JSX.Element} Panel lateral de notificaciones.
+ */
 export function PanelNotificaciones() {
   const [open, setOpen] = useState(false)
   const [data, setData] = useState<any>(null)
@@ -139,14 +143,13 @@ export function PanelNotificaciones() {
   return (
     <Sheet open={open} onOpenChange={setOpen}>
       <SheetTrigger asChild>
-        <Button variant="ghost" size="sm" className="relative">
-          <motion.div
-            whileHover={{ scale: 1.1 }}
-            whileTap={{ scale: 0.95 }}
-            transition={{ type: "spring", stiffness: 400, damping: 17 }}
-          >
-            <Bell className="h-4 w-4" />
-          </motion.div>
+        <Button
+          aria-label="Abrir notificaciones"
+          variant="ghost"
+          size="icon"
+          className="relative size-11"
+        >
+          <Bell aria-hidden="true" className="h-4 w-4" />
           <AnimatePresence>
             {notificacionesNoLeidas > 0 && (
               <motion.div
@@ -322,12 +325,13 @@ export function PanelNotificaciones() {
                                 whileTap={{ scale: 0.9 }}
                               >
                                 <Button
+                                  aria-label={`Eliminar notificación: ${notificacion.title}`}
                                   variant="ghost"
                                   size="icon"
-                                  className="h-6 w-6 opacity-0 group-hover:opacity-100 hover:bg-red-100 hover:text-red-600 transition-opacity"
+                                  className="size-11 opacity-0 transition-opacity group-hover:opacity-100 focus-visible:opacity-100 hover:bg-red-100 hover:text-red-600"
                                   onClick={(e) => handleEliminarClick(notificacion.id, e)}
                                 >
-                                  <X className="h-4 w-4" />
+                                  <X aria-hidden="true" className="h-4 w-4" />
                                 </Button>
                               </motion.div>
                             </div>

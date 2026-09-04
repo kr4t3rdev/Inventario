@@ -565,6 +565,7 @@ export async function applyPagoGastoWorkflow(
         moneda: params.moneda,
         tasaCambio: params.tasaCambio,
         montoConvertido,
+        fechaReconciliacion: fechaOperacion,
         functionalCurrency: fxEvidence.functionalCurrency,
         fxProvenanceKind: fxEvidence.fxProvenanceKind,
         fxProvenanceSource: fxEvidence.fxProvenanceSource,

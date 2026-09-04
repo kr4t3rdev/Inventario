@@ -190,7 +190,12 @@ export async function getCurrentBalance(params: CurrentBalanceParams) {
         rateEffectiveAt: true,
         cutoffAt: true,
       },
-    }),
+    }).then((rows) => rows.map((row) => ({
+      ...row,
+      originalAmount: Number(row.originalAmount),
+      functionalAmount: Number(row.functionalAmount),
+      exchangeRate: Number(row.exchangeRate),
+    }))),
     db.cierreContable.findMany({
       where: {
         tenantId: params.tenantId,

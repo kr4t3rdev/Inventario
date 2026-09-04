@@ -2098,14 +2098,14 @@
     },
     "src/features/contabilidad/actions-periodos.ts": {
       "latest": {
-        "commit": "f470172",
-        "timestamp": "2026-06-02T20:13:58.697Z",
-        "mi": 21.2,
-        "cognitive": 56,
+        "commit": "4bce171b",
+        "timestamp": "2026-08-23T04:30:20.225Z",
+        "mi": 44.7,
+        "cognitive": 99,
         "nesting": 3,
-        "lines": 597,
-        "maxCyclomatic": 22,
-        "entropy": 6.97
+        "lines": 954,
+        "maxCyclomatic": 13,
+        "entropy": 7.3
       },
       "history": [
         {
@@ -2137,9 +2137,19 @@
           "lines": 597,
           "maxCyclomatic": 22,
           "entropy": 6.97
+        },
+        {
+          "commit": "4bce171b",
+          "timestamp": "2026-08-23T04:30:20.225Z",
+          "mi": 44.7,
+          "cognitive": 99,
+          "nesting": 3,
+          "lines": 954,
+          "maxCyclomatic": 13,
+          "entropy": 7.3
         }
       ],
-      "trend": "stable"
+      "trend": "improving"
     },
     "src/test/setup.ts": {
       "latest": {
@@ -2248,14 +2258,14 @@
     },
     "vitest.config.mjs": {
       "latest": {
-        "commit": "5f6f302",
-        "timestamp": "2026-06-04T15:05:13.588Z",
-        "mi": 61.7,
+        "commit": "4bce171b",
+        "timestamp": "2026-08-23T04:36:56.387Z",
+        "mi": 66.2,
         "cognitive": 0,
         "nesting": 0,
-        "lines": 30,
+        "lines": 40,
         "maxCyclomatic": 1,
-        "entropy": 3.44
+        "entropy": 3.3
       },
       "history": [
         {
@@ -2277,9 +2287,19 @@
           "lines": 30,
           "maxCyclomatic": 1,
           "entropy": 3.44
+        },
+        {
+          "commit": "4bce171b",
+          "timestamp": "2026-08-23T04:36:56.387Z",
+          "mi": 66.2,
+          "cognitive": 0,
+          "nesting": 0,
+          "lines": 40,
+          "maxCyclomatic": 1,
+          "entropy": 3.3
         }
       ],
-      "trend": "stable"
+      "trend": "improving"
     },
     "src/features/puntos-venta/components/pvtoVenta-form.tsx": {
       "latest": {
@@ -2938,14 +2958,14 @@
     },
     "src/features/venta-servicios/actions.ts": {
       "latest": {
-        "commit": "b3502d7",
-        "timestamp": "2026-06-08T20:24:57.355Z",
-        "mi": 28.7,
-        "cognitive": 41,
+        "commit": "4bce171b",
+        "timestamp": "2026-08-23T13:52:11.836Z",
+        "mi": 52.9,
+        "cognitive": 53,
         "nesting": 4,
-        "lines": 157,
-        "maxCyclomatic": 35,
-        "entropy": 6.48
+        "lines": 167,
+        "maxCyclomatic": 21,
+        "entropy": 6.41
       },
       "history": [
         {
@@ -2967,9 +2987,19 @@
           "lines": 157,
           "maxCyclomatic": 35,
           "entropy": 6.48
+        },
+        {
+          "commit": "4bce171b",
+          "timestamp": "2026-08-23T13:52:11.836Z",
+          "mi": 52.9,
+          "cognitive": 53,
+          "nesting": 4,
+          "lines": 167,
+          "maxCyclomatic": 21,
+          "entropy": 6.41
         }
       ],
-      "trend": "stable"
+      "trend": "improving"
     },
     "src/features/compras-productos/__tests__/actions.test.ts": {
       "latest": {
@@ -4358,14 +4388,14 @@
     },
     "src/lib/auth/roles.ts": {
       "latest": {
-        "commit": "9b295be",
-        "timestamp": "2026-06-09T14:05:48.834Z",
-        "mi": 45.2,
-        "cognitive": 34,
+        "commit": "4bce171b",
+        "timestamp": "2026-08-23T13:35:02.142Z",
+        "mi": 65.3,
+        "cognitive": 38,
         "nesting": 2,
-        "lines": 107,
-        "maxCyclomatic": 10,
-        "entropy": 4.75
+        "lines": 109,
+        "maxCyclomatic": 6,
+        "entropy": 4.71
       },
       "history": [
         {
@@ -4417,9 +4447,19 @@
           "lines": 107,
           "maxCyclomatic": 10,
           "entropy": 4.75
+        },
+        {
+          "commit": "4bce171b",
+          "timestamp": "2026-08-23T13:35:02.142Z",
+          "mi": 65.3,
+          "cognitive": 38,
+          "nesting": 2,
+          "lines": 109,
+          "maxCyclomatic": 6,
+          "entropy": 4.71
         }
       ],
-      "trend": "stable"
+      "trend": "improving"
     },
     "src/features/dashboard/queries.ts": {
       "latest": {
@@ -4448,13 +4488,13 @@
     },
     "src/lib/permissions.ts": {
       "latest": {
-        "commit": "ef53195",
-        "timestamp": "2026-05-31T23:07:20.758Z",
-        "mi": 36,
+        "commit": "4bce171b",
+        "timestamp": "2026-08-23T13:35:02.015Z",
+        "mi": 58.9,
         "cognitive": 70,
         "nesting": 4,
         "lines": 208,
-        "maxCyclomatic": 21,
+        "maxCyclomatic": 12,
         "entropy": 5.85
       },
       "history": [
@@ -4487,9 +4527,19 @@
           "lines": 208,
           "maxCyclomatic": 21,
           "entropy": 5.85
+        },
+        {
+          "commit": "4bce171b",
+          "timestamp": "2026-08-23T13:35:02.015Z",
+          "mi": 58.9,
+          "cognitive": 70,
+          "nesting": 4,
+          "lines": 208,
+          "maxCyclomatic": 12,
+          "entropy": 5.85
         }
       ],
-      "trend": "stable"
+      "trend": "improving"
     },
     "src/app/busy/products/page.tsx": {
       "latest": {
@@ -4553,14 +4603,14 @@
     },
     "src/lib/services/tenant-scope.ts": {
       "latest": {
-        "commit": "24f19548",
-        "timestamp": "2026-06-23T17:15:18.793Z",
-        "mi": 42.3,
-        "cognitive": 18,
+        "commit": "4bce171b",
+        "timestamp": "2026-08-23T04:25:55.159Z",
+        "mi": 59.8,
+        "cognitive": 23,
         "nesting": 2,
-        "lines": 147,
-        "maxCyclomatic": 4,
-        "entropy": 5.28
+        "lines": 194,
+        "maxCyclomatic": 3,
+        "entropy": 5.27
       },
       "history": [
         {
@@ -4612,9 +4662,19 @@
           "lines": 147,
           "maxCyclomatic": 4,
           "entropy": 5.28
+        },
+        {
+          "commit": "4bce171b",
+          "timestamp": "2026-08-23T04:25:55.159Z",
+          "mi": 59.8,
+          "cognitive": 23,
+          "nesting": 2,
+          "lines": 194,
+          "maxCyclomatic": 3,
+          "entropy": 5.27
         }
       ],
-      "trend": "regressing"
+      "trend": "improving"
     },
     "src/features/reportes-financieros/components/reporte-por-ubicacion.tsx": {
       "latest": {
@@ -7393,14 +7453,14 @@
     },
     "src/lib/services/periodo-snapshot-service.ts": {
       "latest": {
-        "commit": "f470172",
-        "timestamp": "2026-06-02T20:14:08.328Z",
-        "mi": 23.4,
-        "cognitive": 67,
+        "commit": "4bce171b",
+        "timestamp": "2026-08-23T04:26:32.967Z",
+        "mi": 49.8,
+        "cognitive": 96,
         "nesting": 4,
-        "lines": 513,
-        "maxCyclomatic": 15,
-        "entropy": 6.73
+        "lines": 541,
+        "maxCyclomatic": 10,
+        "entropy": 6.77
       },
       "history": [
         {
@@ -7412,20 +7472,30 @@
           "lines": 513,
           "maxCyclomatic": 15,
           "entropy": 6.73
+        },
+        {
+          "commit": "4bce171b",
+          "timestamp": "2026-08-23T04:26:32.967Z",
+          "mi": 49.8,
+          "cognitive": 96,
+          "nesting": 4,
+          "lines": 541,
+          "maxCyclomatic": 10,
+          "entropy": 6.77
         }
       ],
-      "trend": "stable"
+      "trend": "improving"
     },
     "src/features/contabilidad/actions.ts": {
       "latest": {
-        "commit": "f470172",
-        "timestamp": "2026-06-02T20:14:08.374Z",
-        "mi": 8.7,
-        "cognitive": 180,
-        "nesting": 3,
-        "lines": 648,
-        "maxCyclomatic": 150,
-        "entropy": 7.26
+        "commit": "4bce171b",
+        "timestamp": "2026-08-23T04:32:25.282Z",
+        "mi": 63.4,
+        "cognitive": 0,
+        "nesting": 1,
+        "lines": 135,
+        "maxCyclomatic": 1,
+        "entropy": 5.32
       },
       "history": [
         {
@@ -7437,9 +7507,19 @@
           "lines": 648,
           "maxCyclomatic": 150,
           "entropy": 7.26
+        },
+        {
+          "commit": "4bce171b",
+          "timestamp": "2026-08-23T04:32:25.282Z",
+          "mi": 63.4,
+          "cognitive": 0,
+          "nesting": 1,
+          "lines": 135,
+          "maxCyclomatic": 1,
+          "entropy": 5.32
         }
       ],
-      "trend": "stable"
+      "trend": "improving"
     },
     "src/features/contabilidad/cuadre-queries.ts": {
       "latest": {
@@ -7718,14 +7798,14 @@
     },
     "src/features/contabilidad/components/reportes-analytics-page.tsx": {
       "latest": {
-        "commit": "2d44509",
-        "timestamp": "2026-06-03T11:34:11.163Z",
-        "mi": 25.7,
-        "cognitive": 43,
+        "commit": "4bce171b",
+        "timestamp": "2026-08-23T04:31:48.548Z",
+        "mi": 52,
+        "cognitive": 39,
         "nesting": 4,
-        "lines": 251,
-        "maxCyclomatic": 29,
-        "entropy": 6.5
+        "lines": 243,
+        "maxCyclomatic": 17,
+        "entropy": 6.38
       },
       "history": [
         {
@@ -7737,9 +7817,19 @@
           "lines": 251,
           "maxCyclomatic": 29,
           "entropy": 6.5
+        },
+        {
+          "commit": "4bce171b",
+          "timestamp": "2026-08-23T04:31:48.548Z",
+          "mi": 52,
+          "cognitive": 39,
+          "nesting": 4,
+          "lines": 243,
+          "maxCyclomatic": 17,
+          "entropy": 6.38
         }
       ],
-      "trend": "stable"
+      "trend": "improving"
     },
     "src/features/turnos-pos/types.ts": {
       "latest": {
@@ -11115,7 +11205,1257 @@
         }
       ],
       "trend": "stable"
+    },
+    "e2e/contabilidad/balance-resultados.spec.ts": {
+      "latest": {
+        "commit": "4bce171b",
+        "timestamp": "2026-08-23T04:25:45.942Z",
+        "mi": 48.5,
+        "cognitive": 9,
+        "nesting": 3,
+        "lines": 227,
+        "maxCyclomatic": 3,
+        "entropy": 6.86
+      },
+      "history": [
+        {
+          "commit": "4bce171b",
+          "timestamp": "2026-08-23T04:25:45.942Z",
+          "mi": 48.5,
+          "cognitive": 9,
+          "nesting": 3,
+          "lines": 227,
+          "maxCyclomatic": 3,
+          "entropy": 6.86
+        }
+      ],
+      "trend": "stable"
+    },
+    "src/features/contabilidad/domain/reconciliation-policy.ts": {
+      "latest": {
+        "commit": "4bce171b",
+        "timestamp": "2026-08-23T04:25:54.909Z",
+        "mi": 46.3,
+        "cognitive": 26,
+        "nesting": 2,
+        "lines": 307,
+        "maxCyclomatic": 9,
+        "entropy": 5.27
+      },
+      "history": [
+        {
+          "commit": "4bce171b",
+          "timestamp": "2026-08-23T04:25:54.909Z",
+          "mi": 46.3,
+          "cognitive": 26,
+          "nesting": 2,
+          "lines": 307,
+          "maxCyclomatic": 9,
+          "entropy": 5.27
+        }
+      ],
+      "trend": "stable"
+    },
+    "src/features/contabilidad/domain/accounting-amount.ts": {
+      "latest": {
+        "commit": "4bce171b",
+        "timestamp": "2026-08-23T04:25:54.952Z",
+        "mi": 49.7,
+        "cognitive": 51,
+        "nesting": 3,
+        "lines": 243,
+        "maxCyclomatic": 15,
+        "entropy": 5.84
+      },
+      "history": [
+        {
+          "commit": "4bce171b",
+          "timestamp": "2026-08-23T04:25:54.952Z",
+          "mi": 49.7,
+          "cognitive": 51,
+          "nesting": 3,
+          "lines": 243,
+          "maxCyclomatic": 15,
+          "entropy": 5.84
+        }
+      ],
+      "trend": "stable"
+    },
+    "src/features/contabilidad/domain/reconciled-result-calculator.ts": {
+      "latest": {
+        "commit": "4bce171b",
+        "timestamp": "2026-08-23T04:25:55.030Z",
+        "mi": 47.1,
+        "cognitive": 110,
+        "nesting": 6,
+        "lines": 451,
+        "maxCyclomatic": 33,
+        "entropy": 7.04
+      },
+      "history": [
+        {
+          "commit": "4bce171b",
+          "timestamp": "2026-08-23T04:25:55.030Z",
+          "mi": 47.1,
+          "cognitive": 110,
+          "nesting": 6,
+          "lines": 451,
+          "maxCyclomatic": 33,
+          "entropy": 7.04
+        }
+      ],
+      "trend": "stable"
+    },
+    "src/features/contabilidad/domain/balance-calculator.ts": {
+      "latest": {
+        "commit": "4bce171b",
+        "timestamp": "2026-08-23T04:25:55.107Z",
+        "mi": 46.5,
+        "cognitive": 114,
+        "nesting": 4,
+        "lines": 340,
+        "maxCyclomatic": 47,
+        "entropy": 6.58
+      },
+      "history": [
+        {
+          "commit": "4bce171b",
+          "timestamp": "2026-08-23T04:25:55.107Z",
+          "mi": 46.5,
+          "cognitive": 114,
+          "nesting": 4,
+          "lines": 340,
+          "maxCyclomatic": 47,
+          "entropy": 6.58
+        }
+      ],
+      "trend": "stable"
+    },
+    "src/lib/services/fecha-operacion-registry.ts": {
+      "latest": {
+        "commit": "4bce171b",
+        "timestamp": "2026-08-23T04:25:55.196Z",
+        "mi": 64.8,
+        "cognitive": 4,
+        "nesting": 2,
+        "lines": 116,
+        "maxCyclomatic": 1,
+        "entropy": 4.66
+      },
+      "history": [
+        {
+          "commit": "4bce171b",
+          "timestamp": "2026-08-23T04:25:55.196Z",
+          "mi": 64.8,
+          "cognitive": 4,
+          "nesting": 2,
+          "lines": 116,
+          "maxCyclomatic": 1,
+          "entropy": 4.66
+        }
+      ],
+      "trend": "stable"
+    },
+    "src/features/contabilidad/services/reconciled-result-service.ts": {
+      "latest": {
+        "commit": "4bce171b",
+        "timestamp": "2026-08-23T04:26:04.427Z",
+        "mi": 41.4,
+        "cognitive": 134,
+        "nesting": 4,
+        "lines": 600,
+        "maxCyclomatic": 58,
+        "entropy": 7.24
+      },
+      "history": [
+        {
+          "commit": "4bce171b",
+          "timestamp": "2026-08-23T04:26:04.427Z",
+          "mi": 41.4,
+          "cognitive": 134,
+          "nesting": 4,
+          "lines": 600,
+          "maxCyclomatic": 58,
+          "entropy": 7.24
+        }
+      ],
+      "trend": "stable"
+    },
+    "src/features/contabilidad/services/current-balance-service.ts": {
+      "latest": {
+        "commit": "4bce171b",
+        "timestamp": "2026-08-23T04:26:04.539Z",
+        "mi": 44.8,
+        "cognitive": 76,
+        "nesting": 3,
+        "lines": 369,
+        "maxCyclomatic": 37,
+        "entropy": 7.18
+      },
+      "history": [
+        {
+          "commit": "4bce171b",
+          "timestamp": "2026-08-23T04:26:04.539Z",
+          "mi": 44.8,
+          "cognitive": 76,
+          "nesting": 3,
+          "lines": 369,
+          "maxCyclomatic": 37,
+          "entropy": 7.18
+        }
+      ],
+      "trend": "stable"
+    },
+    "src/features/contabilidad/services/balance-results-report-service.ts": {
+      "latest": {
+        "commit": "4bce171b",
+        "timestamp": "2026-08-23T04:26:04.626Z",
+        "mi": 50.8,
+        "cognitive": 30,
+        "nesting": 3,
+        "lines": 262,
+        "maxCyclomatic": 6,
+        "entropy": 6.85
+      },
+      "history": [
+        {
+          "commit": "4bce171b",
+          "timestamp": "2026-08-23T04:26:04.626Z",
+          "mi": 50.8,
+          "cognitive": 30,
+          "nesting": 3,
+          "lines": 262,
+          "maxCyclomatic": 6,
+          "entropy": 6.85
+        }
+      ],
+      "trend": "stable"
+    },
+    "src/features/contabilidad/services/historical-financial-report-service.ts": {
+      "latest": {
+        "commit": "4bce171b",
+        "timestamp": "2026-08-23T04:26:32.826Z",
+        "mi": 50.6,
+        "cognitive": 49,
+        "nesting": 3,
+        "lines": 330,
+        "maxCyclomatic": 15,
+        "entropy": 6.66
+      },
+      "history": [
+        {
+          "commit": "4bce171b",
+          "timestamp": "2026-08-23T04:26:32.826Z",
+          "mi": 50.6,
+          "cognitive": 49,
+          "nesting": 3,
+          "lines": 330,
+          "maxCyclomatic": 15,
+          "entropy": 6.66
+        }
+      ],
+      "trend": "stable"
+    },
+    "src/lib/services/cierreContableService.ts": {
+      "latest": {
+        "commit": "4bce171b",
+        "timestamp": "2026-08-23T04:26:33.050Z",
+        "mi": 62.5,
+        "cognitive": 14,
+        "nesting": 1,
+        "lines": 131,
+        "maxCyclomatic": 11,
+        "entropy": 5.83
+      },
+      "history": [
+        {
+          "commit": "4bce171b",
+          "timestamp": "2026-08-23T04:26:33.050Z",
+          "mi": 62.5,
+          "cognitive": 14,
+          "nesting": 1,
+          "lines": 131,
+          "maxCyclomatic": 11,
+          "entropy": 5.83
+        }
+      ],
+      "trend": "stable"
+    },
+    "src/features/contabilidad/services/accounting-reports-service.ts": {
+      "latest": {
+        "commit": "4bce171b",
+        "timestamp": "2026-08-23T04:30:19.666Z",
+        "mi": 28.5,
+        "cognitive": 636,
+        "nesting": 6,
+        "lines": 1788,
+        "maxCyclomatic": 91,
+        "entropy": 7.94
+      },
+      "history": [
+        {
+          "commit": "4bce171b",
+          "timestamp": "2026-08-23T04:30:19.666Z",
+          "mi": 28.5,
+          "cognitive": 636,
+          "nesting": 6,
+          "lines": 1788,
+          "maxCyclomatic": 91,
+          "entropy": 7.94
+        }
+      ],
+      "trend": "stable"
+    },
+    "src/app/api/contabilidad/reportes/resumen/route.ts": {
+      "latest": {
+        "commit": "4bce171b",
+        "timestamp": "2026-08-23T04:31:07.572Z",
+        "mi": 67.8,
+        "cognitive": 10,
+        "nesting": 3,
+        "lines": 49,
+        "maxCyclomatic": 3,
+        "entropy": 5.24
+      },
+      "history": [
+        {
+          "commit": "4bce171b",
+          "timestamp": "2026-08-23T04:31:07.572Z",
+          "mi": 67.8,
+          "cognitive": 10,
+          "nesting": 3,
+          "lines": 49,
+          "maxCyclomatic": 3,
+          "entropy": 5.24
+        }
+      ],
+      "trend": "stable"
+    },
+    "src/app/api/contabilidad/reportes/movimientos/route.ts": {
+      "latest": {
+        "commit": "4bce171b",
+        "timestamp": "2026-08-23T04:31:08.816Z",
+        "mi": 66.3,
+        "cognitive": 13,
+        "nesting": 3,
+        "lines": 53,
+        "maxCyclomatic": 6,
+        "entropy": 5.24
+      },
+      "history": [
+        {
+          "commit": "4bce171b",
+          "timestamp": "2026-08-23T04:31:08.816Z",
+          "mi": 66.3,
+          "cognitive": 13,
+          "nesting": 3,
+          "lines": 53,
+          "maxCyclomatic": 6,
+          "entropy": 5.24
+        }
+      ],
+      "trend": "stable"
+    },
+    "src/features/contabilidad/services/__tests__/accounting-reports-service.test.ts": {
+      "latest": {
+        "commit": "4bce171b",
+        "timestamp": "2026-08-23T04:31:09.646Z",
+        "mi": 67.3,
+        "cognitive": 0,
+        "nesting": 2,
+        "lines": 31,
+        "maxCyclomatic": 1,
+        "entropy": 4.31
+      },
+      "history": [
+        {
+          "commit": "4bce171b",
+          "timestamp": "2026-08-23T04:31:09.646Z",
+          "mi": 67.3,
+          "cognitive": 0,
+          "nesting": 2,
+          "lines": 31,
+          "maxCyclomatic": 1,
+          "entropy": 4.31
+        }
+      ],
+      "trend": "stable"
+    },
+    "src/features/contabilidad/services/__tests__/accounting-reports-service-tenant.test.ts": {
+      "latest": {
+        "commit": "4bce171b",
+        "timestamp": "2026-08-23T04:31:10.315Z",
+        "mi": 49,
+        "cognitive": 12,
+        "nesting": 3,
+        "lines": 214,
+        "maxCyclomatic": 4,
+        "entropy": 5.62
+      },
+      "history": [
+        {
+          "commit": "4bce171b",
+          "timestamp": "2026-08-23T04:31:10.315Z",
+          "mi": 49,
+          "cognitive": 12,
+          "nesting": 3,
+          "lines": 214,
+          "maxCyclomatic": 4,
+          "entropy": 5.62
+        }
+      ],
+      "trend": "stable"
+    },
+    "src/features/contabilidad/api/handlers.ts": {
+      "latest": {
+        "commit": "4bce171b",
+        "timestamp": "2026-08-23T04:31:48.286Z",
+        "mi": 46.3,
+        "cognitive": 374,
+        "nesting": 3,
+        "lines": 279,
+        "maxCyclomatic": 69,
+        "entropy": 7.77
+      },
+      "history": [
+        {
+          "commit": "4bce171b",
+          "timestamp": "2026-08-23T04:31:48.286Z",
+          "mi": 46.3,
+          "cognitive": 374,
+          "nesting": 3,
+          "lines": 279,
+          "maxCyclomatic": 69,
+          "entropy": 7.77
+        }
+      ],
+      "trend": "stable"
+    },
+    "src/app/api/mobile/v1/accounting/reports/summary/route.ts": {
+      "latest": {
+        "commit": "4bce171b",
+        "timestamp": "2026-08-23T04:32:25.315Z",
+        "mi": 66.9,
+        "cognitive": 8,
+        "nesting": 3,
+        "lines": 32,
+        "maxCyclomatic": 2,
+        "entropy": 5.18
+      },
+      "history": [
+        {
+          "commit": "4bce171b",
+          "timestamp": "2026-08-23T04:32:25.315Z",
+          "mi": 66.9,
+          "cognitive": 8,
+          "nesting": 3,
+          "lines": 32,
+          "maxCyclomatic": 2,
+          "entropy": 5.18
+        }
+      ],
+      "trend": "stable"
+    },
+    "src/app/api/mobile/v1/accounting/reports/movements/route.ts": {
+      "latest": {
+        "commit": "4bce171b",
+        "timestamp": "2026-08-23T04:32:25.348Z",
+        "mi": 63.3,
+        "cognitive": 12,
+        "nesting": 3,
+        "lines": 46,
+        "maxCyclomatic": 3,
+        "entropy": 5.63
+      },
+      "history": [
+        {
+          "commit": "4bce171b",
+          "timestamp": "2026-08-23T04:32:25.348Z",
+          "mi": 63.3,
+          "cognitive": 12,
+          "nesting": 3,
+          "lines": 46,
+          "maxCyclomatic": 3,
+          "entropy": 5.63
+        }
+      ],
+      "trend": "stable"
+    },
+    "src/features/contabilidad/components/resumen-financiero.tsx": {
+      "latest": {
+        "commit": "4bce171b",
+        "timestamp": "2026-08-23T04:32:25.415Z",
+        "mi": 40.6,
+        "cognitive": 148,
+        "nesting": 5,
+        "lines": 655,
+        "maxCyclomatic": 52,
+        "entropy": 6.94
+      },
+      "history": [
+        {
+          "commit": "4bce171b",
+          "timestamp": "2026-08-23T04:32:25.415Z",
+          "mi": 40.6,
+          "cognitive": 148,
+          "nesting": 5,
+          "lines": 655,
+          "maxCyclomatic": 52,
+          "entropy": 6.94
+        }
+      ],
+      "trend": "stable"
+    },
+    "src/features/contabilidad/components/movimientos-table.tsx": {
+      "latest": {
+        "commit": "4bce171b",
+        "timestamp": "2026-08-23T04:32:25.463Z",
+        "mi": 38.8,
+        "cognitive": 157,
+        "nesting": 5,
+        "lines": 628,
+        "maxCyclomatic": 70,
+        "entropy": 6.63
+      },
+      "history": [
+        {
+          "commit": "4bce171b",
+          "timestamp": "2026-08-23T04:32:25.463Z",
+          "mi": 38.8,
+          "cognitive": 157,
+          "nesting": 5,
+          "lines": 628,
+          "maxCyclomatic": 70,
+          "entropy": 6.63
+        }
+      ],
+      "trend": "stable"
+    },
+    "vitest.api.config.mjs": {
+      "latest": {
+        "commit": "4bce171b",
+        "timestamp": "2026-08-23T04:36:56.418Z",
+        "mi": 82.5,
+        "cognitive": 0,
+        "nesting": 0,
+        "lines": 18,
+        "maxCyclomatic": 1,
+        "entropy": 3.85
+      },
+      "history": [
+        {
+          "commit": "4bce171b",
+          "timestamp": "2026-08-23T04:36:56.418Z",
+          "mi": 82.5,
+          "cognitive": 0,
+          "nesting": 0,
+          "lines": 18,
+          "maxCyclomatic": 1,
+          "entropy": 3.85
+        }
+      ],
+      "trend": "stable"
+    },
+    "vitest.live.config.mjs": {
+      "latest": {
+        "commit": "4bce171b",
+        "timestamp": "2026-08-23T04:36:56.441Z",
+        "mi": 67.6,
+        "cognitive": 0,
+        "nesting": 0,
+        "lines": 30,
+        "maxCyclomatic": 1,
+        "entropy": 3.53
+      },
+      "history": [
+        {
+          "commit": "4bce171b",
+          "timestamp": "2026-08-23T04:36:56.441Z",
+          "mi": 67.6,
+          "cognitive": 0,
+          "nesting": 0,
+          "lines": 30,
+          "maxCyclomatic": 1,
+          "entropy": 3.53
+        }
+      ],
+      "trend": "stable"
+    },
+    "playwright.config.ts": {
+      "latest": {
+        "commit": "4bce171b",
+        "timestamp": "2026-08-23T04:36:56.486Z",
+        "mi": 65.9,
+        "cognitive": 1,
+        "nesting": 0,
+        "lines": 36,
+        "maxCyclomatic": 1,
+        "entropy": 4.69
+      },
+      "history": [
+        {
+          "commit": "4bce171b",
+          "timestamp": "2026-08-23T04:36:56.486Z",
+          "mi": 65.9,
+          "cognitive": 1,
+          "nesting": 0,
+          "lines": 36,
+          "maxCyclomatic": 1,
+          "entropy": 4.69
+        }
+      ],
+      "trend": "stable"
+    },
+    "src/features/contabilidad/domain/reconciliation-policy.test.ts": {
+      "latest": {
+        "commit": "4bce171b",
+        "timestamp": "2026-08-23T04:37:10.059Z",
+        "mi": 51.1,
+        "cognitive": 0,
+        "nesting": 2,
+        "lines": 172,
+        "maxCyclomatic": 1,
+        "entropy": 3.85
+      },
+      "history": [
+        {
+          "commit": "4bce171b",
+          "timestamp": "2026-08-23T04:37:10.059Z",
+          "mi": 51.1,
+          "cognitive": 0,
+          "nesting": 2,
+          "lines": 172,
+          "maxCyclomatic": 1,
+          "entropy": 3.85
+        }
+      ],
+      "trend": "stable"
+    },
+    "src/features/contabilidad/domain/accounting-amount.test.ts": {
+      "latest": {
+        "commit": "4bce171b",
+        "timestamp": "2026-08-23T04:37:10.138Z",
+        "mi": 49.2,
+        "cognitive": 0,
+        "nesting": 3,
+        "lines": 210,
+        "maxCyclomatic": 1,
+        "entropy": 4.56
+      },
+      "history": [
+        {
+          "commit": "4bce171b",
+          "timestamp": "2026-08-23T04:37:10.138Z",
+          "mi": 49.2,
+          "cognitive": 0,
+          "nesting": 3,
+          "lines": 210,
+          "maxCyclomatic": 1,
+          "entropy": 4.56
+        }
+      ],
+      "trend": "stable"
+    },
+    "src/features/contabilidad/domain/reconciled-result-calculator.test.ts": {
+      "latest": {
+        "commit": "4bce171b",
+        "timestamp": "2026-08-23T04:37:10.225Z",
+        "mi": 46,
+        "cognitive": 0,
+        "nesting": 3,
+        "lines": 295,
+        "maxCyclomatic": 1,
+        "entropy": 4.67
+      },
+      "history": [
+        {
+          "commit": "4bce171b",
+          "timestamp": "2026-08-23T04:37:10.225Z",
+          "mi": 46,
+          "cognitive": 0,
+          "nesting": 3,
+          "lines": 295,
+          "maxCyclomatic": 1,
+          "entropy": 4.67
+        }
+      ],
+      "trend": "stable"
+    },
+    "src/features/contabilidad/domain/balance-calculator.test.ts": {
+      "latest": {
+        "commit": "4bce171b",
+        "timestamp": "2026-08-23T04:37:10.316Z",
+        "mi": 46.3,
+        "cognitive": 0,
+        "nesting": 3,
+        "lines": 284,
+        "maxCyclomatic": 1,
+        "entropy": 5.02
+      },
+      "history": [
+        {
+          "commit": "4bce171b",
+          "timestamp": "2026-08-23T04:37:10.316Z",
+          "mi": 46.3,
+          "cognitive": 0,
+          "nesting": 3,
+          "lines": 284,
+          "maxCyclomatic": 1,
+          "entropy": 5.02
+        }
+      ],
+      "trend": "stable"
+    },
+    "src/features/contabilidad/services/balance-results-report-service.test.ts": {
+      "latest": {
+        "commit": "4bce171b",
+        "timestamp": "2026-08-23T04:38:08.081Z",
+        "mi": 54,
+        "cognitive": 0,
+        "nesting": 4,
+        "lines": 127,
+        "maxCyclomatic": 1,
+        "entropy": 5.73
+      },
+      "history": [
+        {
+          "commit": "4bce171b",
+          "timestamp": "2026-08-23T04:38:08.081Z",
+          "mi": 54,
+          "cognitive": 0,
+          "nesting": 4,
+          "lines": 127,
+          "maxCyclomatic": 1,
+          "entropy": 5.73
+        }
+      ],
+      "trend": "stable"
+    },
+    "src/features/contabilidad/services/current-balance-service.test.ts": {
+      "latest": {
+        "commit": "4bce171b",
+        "timestamp": "2026-08-23T04:38:08.114Z",
+        "mi": 47.2,
+        "cognitive": 0,
+        "nesting": 2,
+        "lines": 259,
+        "maxCyclomatic": 1,
+        "entropy": 5.75
+      },
+      "history": [
+        {
+          "commit": "4bce171b",
+          "timestamp": "2026-08-23T04:38:08.114Z",
+          "mi": 47.2,
+          "cognitive": 0,
+          "nesting": 2,
+          "lines": 259,
+          "maxCyclomatic": 1,
+          "entropy": 5.75
+        }
+      ],
+      "trend": "stable"
+    },
+    "src/features/contabilidad/services/historical-financial-report-service.test.ts": {
+      "latest": {
+        "commit": "4bce171b",
+        "timestamp": "2026-08-23T04:38:08.145Z",
+        "mi": 45.3,
+        "cognitive": 0,
+        "nesting": 2,
+        "lines": 316,
+        "maxCyclomatic": 1,
+        "entropy": 5.47
+      },
+      "history": [
+        {
+          "commit": "4bce171b",
+          "timestamp": "2026-08-23T04:38:08.145Z",
+          "mi": 45.3,
+          "cognitive": 0,
+          "nesting": 2,
+          "lines": 316,
+          "maxCyclomatic": 1,
+          "entropy": 5.47
+        }
+      ],
+      "trend": "stable"
+    },
+    "src/features/contabilidad/actions-balance-results.test.ts": {
+      "latest": {
+        "commit": "4bce171b",
+        "timestamp": "2026-08-23T04:38:08.169Z",
+        "mi": 58.2,
+        "cognitive": 0,
+        "nesting": 2,
+        "lines": 81,
+        "maxCyclomatic": 1,
+        "entropy": 5.23
+      },
+      "history": [
+        {
+          "commit": "4bce171b",
+          "timestamp": "2026-08-23T04:38:08.169Z",
+          "mi": 58.2,
+          "cognitive": 0,
+          "nesting": 2,
+          "lines": 81,
+          "maxCyclomatic": 1,
+          "entropy": 5.23
+        }
+      ],
+      "trend": "stable"
+    },
+    "src/features/contabilidad/api/__tests__/exchange-handlers.test.ts": {
+      "latest": {
+        "commit": "4bce171b",
+        "timestamp": "2026-08-23T04:38:08.223Z",
+        "mi": 40.2,
+        "cognitive": 8,
+        "nesting": 4,
+        "lines": 545,
+        "maxCyclomatic": 2,
+        "entropy": 6.75
+      },
+      "history": [
+        {
+          "commit": "4bce171b",
+          "timestamp": "2026-08-23T04:38:08.223Z",
+          "mi": 40.2,
+          "cognitive": 8,
+          "nesting": 4,
+          "lines": 545,
+          "maxCyclomatic": 2,
+          "entropy": 6.75
+        }
+      ],
+      "trend": "stable"
+    },
+    "src/lib/services/__tests__/periodo-snapshot-service.test.ts": {
+      "latest": {
+        "commit": "4bce171b",
+        "timestamp": "2026-08-23T04:38:25.038Z",
+        "mi": 50.9,
+        "cognitive": 0,
+        "nesting": 2,
+        "lines": 292,
+        "maxCyclomatic": 1,
+        "entropy": 5.87
+      },
+      "history": [
+        {
+          "commit": "4bce171b",
+          "timestamp": "2026-08-23T04:38:25.038Z",
+          "mi": 50.9,
+          "cognitive": 0,
+          "nesting": 2,
+          "lines": 292,
+          "maxCyclomatic": 1,
+          "entropy": 5.87
+        }
+      ],
+      "trend": "stable"
+    },
+    "src/lib/services/__tests__/cierre-contable-service.test.ts": {
+      "latest": {
+        "commit": "4bce171b",
+        "timestamp": "2026-08-23T04:38:25.059Z",
+        "mi": 63.6,
+        "cognitive": 0,
+        "nesting": 2,
+        "lines": 46,
+        "maxCyclomatic": 1,
+        "entropy": 5.31
+      },
+      "history": [
+        {
+          "commit": "4bce171b",
+          "timestamp": "2026-08-23T04:38:25.059Z",
+          "mi": 63.6,
+          "cognitive": 0,
+          "nesting": 2,
+          "lines": 46,
+          "maxCyclomatic": 1,
+          "entropy": 5.31
+        }
+      ],
+      "trend": "stable"
+    },
+    "src/features/reportes-financieros/__tests__/actions.test.ts": {
+      "latest": {
+        "commit": "4bce171b",
+        "timestamp": "2026-08-23T04:38:25.139Z",
+        "mi": 71,
+        "cognitive": 0,
+        "nesting": 2,
+        "lines": 21,
+        "maxCyclomatic": 1,
+        "entropy": 5.01
+      },
+      "history": [
+        {
+          "commit": "4bce171b",
+          "timestamp": "2026-08-23T04:38:25.139Z",
+          "mi": 71,
+          "cognitive": 0,
+          "nesting": 2,
+          "lines": 21,
+          "maxCyclomatic": 1,
+          "entropy": 5.01
+        }
+      ],
+      "trend": "stable"
+    },
+    "src/app/busy/contabilidad/balance-resultados/page.test.tsx": {
+      "latest": {
+        "commit": "4bce171b",
+        "timestamp": "2026-08-23T04:39:10.501Z",
+        "mi": 51.8,
+        "cognitive": 8,
+        "nesting": 4,
+        "lines": 160,
+        "maxCyclomatic": 2,
+        "entropy": 6.07
+      },
+      "history": [
+        {
+          "commit": "4bce171b",
+          "timestamp": "2026-08-23T04:39:10.501Z",
+          "mi": 51.8,
+          "cognitive": 8,
+          "nesting": 4,
+          "lines": 160,
+          "maxCyclomatic": 2,
+          "entropy": 6.07
+        }
+      ],
+      "trend": "stable"
+    },
+    "src/features/contabilidad/components/balance-resultados/income-statement.test.tsx": {
+      "latest": {
+        "commit": "4bce171b",
+        "timestamp": "2026-08-23T04:39:10.546Z",
+        "mi": 51.9,
+        "cognitive": 0,
+        "nesting": 4,
+        "lines": 158,
+        "maxCyclomatic": 1,
+        "entropy": 5.6
+      },
+      "history": [
+        {
+          "commit": "4bce171b",
+          "timestamp": "2026-08-23T04:39:10.546Z",
+          "mi": 51.9,
+          "cognitive": 0,
+          "nesting": 4,
+          "lines": 158,
+          "maxCyclomatic": 1,
+          "entropy": 5.6
+        }
+      ],
+      "trend": "stable"
+    },
+    "src/features/__tests__/contabilidad-ui-audit.test.ts": {
+      "latest": {
+        "commit": "4bce171b",
+        "timestamp": "2026-08-23T04:39:10.572Z",
+        "mi": 63.2,
+        "cognitive": 27,
+        "nesting": 4,
+        "lines": 62,
+        "maxCyclomatic": 5,
+        "entropy": 5.83
+      },
+      "history": [
+        {
+          "commit": "4bce171b",
+          "timestamp": "2026-08-23T04:39:10.572Z",
+          "mi": 63.2,
+          "cognitive": 27,
+          "nesting": 4,
+          "lines": 62,
+          "maxCyclomatic": 5,
+          "entropy": 5.83
+        }
+      ],
+      "trend": "stable"
+    },
+    "e2e/global-setup.ts": {
+      "latest": {
+        "commit": "4bce171b",
+        "timestamp": "2026-08-23T04:39:10.597Z",
+        "mi": 84.9,
+        "cognitive": 0,
+        "nesting": 1,
+        "lines": 14,
+        "maxCyclomatic": 1,
+        "entropy": 3.92
+      },
+      "history": [
+        {
+          "commit": "4bce171b",
+          "timestamp": "2026-08-23T04:39:10.597Z",
+          "mi": 84.9,
+          "cognitive": 0,
+          "nesting": 1,
+          "lines": 14,
+          "maxCyclomatic": 1,
+          "entropy": 3.92
+        }
+      ],
+      "trend": "stable"
+    },
+    "e2e/auth.setup.ts": {
+      "latest": {
+        "commit": "4bce171b",
+        "timestamp": "2026-08-23T04:39:10.618Z",
+        "mi": 78.9,
+        "cognitive": 3,
+        "nesting": 2,
+        "lines": 26,
+        "maxCyclomatic": 3,
+        "entropy": 4.73
+      },
+      "history": [
+        {
+          "commit": "4bce171b",
+          "timestamp": "2026-08-23T04:39:10.618Z",
+          "mi": 78.9,
+          "cognitive": 3,
+          "nesting": 2,
+          "lines": 26,
+          "maxCyclomatic": 3,
+          "entropy": 4.73
+        }
+      ],
+      "trend": "stable"
+    },
+    "eslint.config.mjs": {
+      "latest": {
+        "commit": "4bce171b",
+        "timestamp": "2026-08-23T04:43:37.873Z",
+        "mi": 61.7,
+        "cognitive": 0,
+        "nesting": 0,
+        "lines": 56,
+        "maxCyclomatic": 1,
+        "entropy": 2.2
+      },
+      "history": [
+        {
+          "commit": "4bce171b",
+          "timestamp": "2026-08-23T04:43:37.873Z",
+          "mi": 61.7,
+          "cognitive": 0,
+          "nesting": 0,
+          "lines": 56,
+          "maxCyclomatic": 1,
+          "entropy": 2.2
+        }
+      ],
+      "trend": "stable"
+    },
+    "src/features/contabilidad/services/exchange-rate-provider.ts": {
+      "latest": {
+        "commit": "4bce171b",
+        "timestamp": "2026-08-23T12:58:43.902Z",
+        "mi": 50.4,
+        "cognitive": 53,
+        "nesting": 4,
+        "lines": 216,
+        "maxCyclomatic": 10,
+        "entropy": 6.56
+      },
+      "history": [
+        {
+          "commit": "4bce171b",
+          "timestamp": "2026-08-23T12:58:43.902Z",
+          "mi": 50.4,
+          "cognitive": 53,
+          "nesting": 4,
+          "lines": 216,
+          "maxCyclomatic": 10,
+          "entropy": 6.56
+        }
+      ],
+      "trend": "stable"
+    },
+    "src/features/contabilidad/actions-balance-results.ts": {
+      "latest": {
+        "commit": "4bce171b",
+        "timestamp": "2026-08-23T13:51:42.890Z",
+        "mi": 71.2,
+        "cognitive": 6,
+        "nesting": 3,
+        "lines": 43,
+        "maxCyclomatic": 2,
+        "entropy": 5.61
+      },
+      "history": [
+        {
+          "commit": "4bce171b",
+          "timestamp": "2026-08-23T13:51:42.890Z",
+          "mi": 71.2,
+          "cognitive": 6,
+          "nesting": 3,
+          "lines": 43,
+          "maxCyclomatic": 2,
+          "entropy": 5.61
+        }
+      ],
+      "trend": "stable"
+    },
+    "src/features/contabilidad/services/accounting-reconciliation-service.ts": {
+      "latest": {
+        "commit": "4bce171b",
+        "timestamp": "2026-08-23T13:52:56.007Z",
+        "mi": 36.5,
+        "cognitive": 288,
+        "nesting": 4,
+        "lines": 788,
+        "maxCyclomatic": 76,
+        "entropy": 7.46
+      },
+      "history": [
+        {
+          "commit": "4bce171b",
+          "timestamp": "2026-08-23T13:52:56.007Z",
+          "mi": 36.5,
+          "cognitive": 288,
+          "nesting": 4,
+          "lines": 788,
+          "maxCyclomatic": 76,
+          "entropy": 7.46
+        }
+      ],
+      "trend": "stable"
+    },
+    "src/features/contabilidad/services/exchange-types.ts": {
+      "latest": {
+        "commit": "4bce171b",
+        "timestamp": "2026-08-23T13:52:56.219Z",
+        "mi": 56.9,
+        "cognitive": 0,
+        "nesting": 2,
+        "lines": 93,
+        "maxCyclomatic": 1,
+        "entropy": 5.47
+      },
+      "history": [
+        {
+          "commit": "4bce171b",
+          "timestamp": "2026-08-23T13:52:56.219Z",
+          "mi": 56.9,
+          "cognitive": 0,
+          "nesting": 2,
+          "lines": 93,
+          "maxCyclomatic": 1,
+          "entropy": 5.47
+        }
+      ],
+      "trend": "stable"
+    },
+    "src/lib/services/periodo-contable-service.ts": {
+      "latest": {
+        "commit": "4bce171b",
+        "timestamp": "2026-08-23T13:52:56.341Z",
+        "mi": 48.2,
+        "cognitive": 171,
+        "nesting": 4,
+        "lines": 642,
+        "maxCyclomatic": 13,
+        "entropy": 7.01
+      },
+      "history": [
+        {
+          "commit": "4bce171b",
+          "timestamp": "2026-08-23T13:52:56.341Z",
+          "mi": 48.2,
+          "cognitive": 171,
+          "nesting": 4,
+          "lines": 642,
+          "maxCyclomatic": 13,
+          "entropy": 7.01
+        }
+      ],
+      "trend": "stable"
+    },
+    "src/features/contabilidad/components/balance-resultados/balance-results-view.tsx": {
+      "latest": {
+        "commit": "4bce171b",
+        "timestamp": "2026-08-23T13:52:56.791Z",
+        "mi": 68.1,
+        "cognitive": 0,
+        "nesting": 2,
+        "lines": 49,
+        "maxCyclomatic": 1,
+        "entropy": 4.9
+      },
+      "history": [
+        {
+          "commit": "4bce171b",
+          "timestamp": "2026-08-23T13:52:56.791Z",
+          "mi": 68.1,
+          "cognitive": 0,
+          "nesting": 2,
+          "lines": 49,
+          "maxCyclomatic": 1,
+          "entropy": 4.9
+        }
+      ],
+      "trend": "stable"
+    },
+    "src/features/contabilidad/components/balance-resultados/types.ts": {
+      "latest": {
+        "commit": "4bce171b",
+        "timestamp": "2026-08-23T13:52:56.918Z",
+        "mi": 61.9,
+        "cognitive": 0,
+        "nesting": 0,
+        "lines": 85,
+        "maxCyclomatic": 1,
+        "entropy": 5.15
+      },
+      "history": [
+        {
+          "commit": "4bce171b",
+          "timestamp": "2026-08-23T13:52:56.918Z",
+          "mi": 61.9,
+          "cognitive": 0,
+          "nesting": 0,
+          "lines": 85,
+          "maxCyclomatic": 1,
+          "entropy": 5.15
+        }
+      ],
+      "trend": "stable"
+    },
+    "src/features/contabilidad/components/balance-resultados/report-states.tsx": {
+      "latest": {
+        "commit": "4bce171b",
+        "timestamp": "2026-08-23T13:52:57.109Z",
+        "mi": 59.4,
+        "cognitive": 17,
+        "nesting": 2,
+        "lines": 161,
+        "maxCyclomatic": 9,
+        "entropy": 5.81
+      },
+      "history": [
+        {
+          "commit": "4bce171b",
+          "timestamp": "2026-08-23T13:52:57.109Z",
+          "mi": 59.4,
+          "cognitive": 17,
+          "nesting": 2,
+          "lines": 161,
+          "maxCyclomatic": 9,
+          "entropy": 5.81
+        }
+      ],
+      "trend": "stable"
     }
   },
-  "capturedAt": "2026-06-23T20:37:46.513Z"
+  "capturedAt": "2026-08-23T13:53:02.114Z"
 }

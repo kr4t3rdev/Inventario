@@ -32,6 +32,7 @@ export const reconciliacionGastoSchema = z.object({
   tasaCambio: z.number().positive().optional(),
   descripcion: z.string().min(1, 'Descripción es requerida'),
   periodo: z.string().optional(),
+  fechaReconciliacion: z.string().optional(),
   observaciones: z.string().optional(),
   estado: z.enum(['PENDIENTE', 'PAGADA', 'PARCIAL']).default('PAGADA'),
   cuentaPorPagarId: z.string().optional(),
@@ -125,6 +126,9 @@ export async function reconciliarGastoAdapter(
 ): Promise<ReconciliacionGastoResult> {
   const validatedData = reconciliacionGastoSchema.parse(body)
   const tenantId = requireTenant(user)
+
+  const fechaPago = validatedData.fechaReconciliacion ??
+    (validatedData.periodo ? `${validatedData.periodo}-01T00:00:00.000Z` : undefined)
 
   // ── Verificar que la referencia existe según el tipo de gasto ──
   let referenciaExiste = false
@@ -249,6 +253,7 @@ export async function reconciliarGastoAdapter(
       tenantId,
       tasaCambio: validatedData.tasaCambio,
       periodo: validatedData.periodo,
+      fechaPago,
       observaciones: validatedData.observaciones,
       estado: validatedData.estado,
       cuentaPorPagarId: validatedData.cuentaPorPagarId,

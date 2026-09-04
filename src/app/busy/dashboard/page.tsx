@@ -88,13 +88,13 @@ export default async function DashboardPage() {
       />
 
       {/* Gráficos principales */}
-      <div className="grid grid-cols-1 gap-4 px-4 lg:grid-cols-2 lg:px-6">
+      <div className="grid min-w-0 grid-cols-1 gap-4 px-4 lg:grid-cols-2 lg:px-6 [&>*]:min-w-0">
         <ChartAreaInteractive data={stats.datosPorMes as any} />
         <TopProductsTable productosMasVendidos={stats.productosMasVendidos as any} />
       </div>
 
       {/* Distribución y análisis */}
-      <div className="grid grid-cols-1 gap-4 px-4 lg:grid-cols-2 lg:px-6">
+      <div className="grid min-w-0 grid-cols-1 gap-4 px-4 lg:grid-cols-2 lg:px-6 [&>*]:min-w-0">
         <StockDistributionChart data={stats.distribucionStock as any} />
         <TransferenciasStats transferenciasStats={stats.transferenciasStats} />
       </div>

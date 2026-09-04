@@ -98,6 +98,7 @@ export default function VentaInter() {
         const result = await createVentaAction({
             puntoDeVentaId: puntoVenta,
             descuento: 0,
+            cargoTransporte: 0,
             observaciones: `Venta única con ${carrito.length} productos`,
             items,
         })

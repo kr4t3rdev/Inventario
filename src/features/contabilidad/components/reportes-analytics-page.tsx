@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { LazyMotion, m as motion, useReducedMotion } from 'framer-motion';
 import { BarChart3, FileText, FilterX, LineChart, TrendingUp } from 'lucide-react';
 import { toast } from 'sonner';
@@ -9,11 +9,15 @@ import { AccountTransactionHistory } from './account-transaction-history';
 import { DateRangePicker } from './date-range-picker';
 import { MovimientosTable } from './movimientos-table';
 import { ResumenFinanciero } from './resumen-financiero';
+import { ReportFiltersToolbar } from './reportes/ReportFiltersToolbar';
+
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useCuentasBancarias } from '@/features/contabilidad/hooks/use-cuentas-bancarias';
+import { getMonedasAction } from '@/features/contabilidad/actions-exchange';
+import { buildMovimientosExportParams } from '@/features/contabilidad/lib/reportes-filters';
 import { getAuthToken } from '@/lib/token';
 import { cn } from '@/lib/utils';
 
@@ -23,15 +27,40 @@ interface FiltrosGlobales {
   cuentaId: string;
 }
 
+function derivePeriodLabel(fechaInicio?: string, fechaFin?: string): string {
+  if (!fechaInicio || !fechaFin) return 'Período completo';
+  const start = new Date(fechaInicio);
+  const end = new Date(fechaFin);
+  const diffDays = Math.ceil((end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24));
+  if (diffDays <= 1) return 'Un día';
+  if (diffDays <= 7) return 'Una semana';
+  if (diffDays <= 31) return 'Un mes';
+  if (diffDays <= 92) return 'Un trimestre';
+  if (diffDays <= 366) return 'Un año';
+  return `${diffDays} días`;
+}
+
+interface FiltrosLocalesMovimientos {
+  busqueda: string;
+  tipoMovimiento: string;
+  moneda: string;
+  page: number;
+  limit: number;
+}
+
+const FILTROS_LOCALES_INICIALES: FiltrosLocalesMovimientos = {
+  busqueda: '',
+  tipoMovimiento: '',
+  moneda: '',
+  page: 1,
+  limit: 10,
+};
+
 const surfaceCardClass = cn(
   'relative overflow-hidden border-slate-200/60 bg-white/70 shadow-sm backdrop-blur-xl',
   'dark:border-slate-800/60 dark:bg-slate-900/10',
 );
 
-/**
- * @description Dashboard de reportes contables con filtros globales y vistas por pestañas.
- * @returns {JSX.Element} Contenido analítico de reportes financieros.
- */
 export function ReportesAnalyticsPage() {
   const shouldReduceMotion = useReducedMotion();
   const [tabActiva, setTabActiva] = useState('resumen');
@@ -40,9 +69,21 @@ export function ReportesAnalyticsPage() {
     fechaFin: '',
     cuentaId: '',
   });
+  const [filtrosLocalesMovimientos, setFiltrosLocalesMovimientos] = useState<FiltrosLocalesMovimientos>(
+    FILTROS_LOCALES_INICIALES,
+  );
+  const [resetMovimientosKey, setResetMovimientosKey] = useState(0);
+  const [refreshKey, setRefreshKey] = useState(0);
+  const [monedas, setMonedas] = useState<Array<{ codigo: string; esPrincipal?: boolean }>>([]);
 
   const { cuentas } = useCuentasBancarias();
   const cuentaSeleccionada = cuentas.find((cuenta) => cuenta.cuentaId === filtrosGlobales.cuentaId);
+
+  useEffect(() => {
+    getMonedasAction().then((result) => {
+      if (result.success && Array.isArray(result.data)) setMonedas(result.data);
+    }).catch((error) => console.error('Error al cargar monedas del reporte:', error));
+  }, []);
 
   const containerVariants = {
     hidden: { opacity: 0 },
@@ -66,49 +107,34 @@ export function ReportesAnalyticsPage() {
     },
   };
 
-  /**
-   * @description Actualiza un filtro global de reportes.
-   * @param {keyof FiltrosGlobales} key - Campo de filtro a actualizar.
-   * @param {string} value - Nuevo valor del filtro.
-   * @returns {void} Sin retorno.
-   */
   const handleFiltroGlobalChange = (key: keyof FiltrosGlobales, value: string): void => {
     setFiltrosGlobales((prev) => ({ ...prev, [key]: value }));
   };
 
-  /**
-   * @description Aplica un rango de fecha global para todas las pestañas.
-   * @param {string} fechaInicio - Fecha inicial.
-   * @param {string} fechaFin - Fecha final.
-   * @returns {void} Sin retorno.
-   */
   const handleDateRangeChange = (fechaInicio: string, fechaFin: string): void => {
     setFiltrosGlobales((prev) => ({ ...prev, fechaInicio, fechaFin }));
   };
 
-  /**
-   * @description Exporta movimientos filtrados en formato CSV o PDF.
-   * @param {'csv' | 'pdf'} tipo - Formato de exportación.
-   * @returns {Promise<void>} Promesa de ejecución de descarga.
-   */
+  const handleLimpiarFiltros = (): void => {
+    setFiltrosGlobales({ fechaInicio: '', fechaFin: '', cuentaId: '' });
+    setFiltrosLocalesMovimientos(FILTROS_LOCALES_INICIALES);
+    setResetMovimientosKey((prev) => prev + 1);
+  };
+
+  const handleLocalFiltersChange = (cambios: Partial<FiltrosLocalesMovimientos>): void => {
+    setFiltrosLocalesMovimientos((prev) => ({ ...prev, ...cambios }));
+  };
+
   const handleExportMovimientos = async (tipo: 'csv' | 'pdf'): Promise<void> => {
     try {
-      const params = new URLSearchParams({
-        formato: tipo,
-        ...(filtrosGlobales.fechaInicio && { fechaInicio: filtrosGlobales.fechaInicio }),
-        ...(filtrosGlobales.fechaFin && { fechaFin: filtrosGlobales.fechaFin }),
-        ...(filtrosGlobales.cuentaId && { cuentaId: filtrosGlobales.cuentaId }),
-      });
-
+      const params = buildMovimientosExportParams(tipo, filtrosGlobales, filtrosLocalesMovimientos);
       const token = getAuthToken();
       const response = await fetch(`/api/contabilidad/reportes/movimientos?${params}`, {
         headers: token ? { Authorization: token } : {},
         credentials: 'include',
       });
 
-      if (!response.ok) {
-        throw new Error('Error al exportar movimientos');
-      }
+      if (!response.ok) throw new Error('Error al exportar movimientos');
 
       const blob = await response.blob();
       const url = window.URL.createObjectURL(blob);
@@ -119,7 +145,6 @@ export function ReportesAnalyticsPage() {
       anchor.click();
       window.URL.revokeObjectURL(url);
       document.body.removeChild(anchor);
-
       toast.success(`Movimientos exportados en formato ${tipo.toUpperCase()}`);
     } catch (error) {
       console.error('Error al exportar movimientos:', error);
@@ -127,26 +152,29 @@ export function ReportesAnalyticsPage() {
     }
   };
 
+  const periodoString = filtrosGlobales.fechaInicio && filtrosGlobales.fechaFin
+    ? `${filtrosGlobales.fechaInicio} al ${filtrosGlobales.fechaFin}`
+    : 'Período no seleccionado';
+
+  const monedaPrincipal = monedas.find((moneda) => moneda.esPrincipal)?.codigo
+    || monedas[0]?.codigo
+    || cuentas[0]?.moneda
+    || 'CUP';
+  const hasActiveFilters = !!(filtrosGlobales.fechaInicio || filtrosGlobales.fechaFin || filtrosGlobales.cuentaId);
+
   return (
     <motion.div className="space-y-6 p-6" variants={containerVariants} initial="hidden" animate="show">
-
       <motion.div variants={itemVariants}>
-        <Card className={surfaceCardClass}>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2 text-lg">
-              <LineChart className="h-5 w-5 text-blue-600 dark:text-blue-300" />
-              Filtros globales
-            </CardTitle>
-            <CardDescription>Se aplican automáticamente en todas las pestañas.</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="grid gap-4 md:grid-cols-3">
+        <div className="flex flex-col gap-6">
+          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4 items-center">
+            <div className="md:col-span-1">
               <DateRangePicker
                 fechaInicio={filtrosGlobales.fechaInicio}
                 fechaFin={filtrosGlobales.fechaFin}
                 onChange={handleDateRangeChange}
               />
-
+            </div>
+            <div className="md:col-span-1">
               <Select
                 value={filtrosGlobales.cuentaId || 'all'}
                 onValueChange={(value) =>
@@ -165,17 +193,19 @@ export function ReportesAnalyticsPage() {
                   ))}
                 </SelectContent>
               </Select>
-
-              <Button
-                variant="outline"
-                onClick={() => setFiltrosGlobales({ fechaInicio: '', fechaFin: '', cuentaId: '' })}
-              >
-                <FilterX className="mr-2 h-4 w-4" />
-                Limpiar filtros
-              </Button>
             </div>
-          </CardContent>
-        </Card>
+            <div className="md:col-span-2">
+              <ReportFiltersToolbar
+                periodo={periodoString}
+                cuentaActiva={cuentaSeleccionada?.nombreBanco || 'Todas las cuentas'}
+                monedaPrincipal={monedaPrincipal}
+                onRefresh={() => setRefreshKey((previous) => previous + 1)}
+                onClear={handleLimpiarFiltros}
+                hasActiveFilters={hasActiveFilters}
+              />
+            </div>
+          </div>
+        </div>
       </motion.div>
 
       <motion.div variants={itemVariants}>
@@ -202,12 +232,14 @@ export function ReportesAnalyticsPage() {
               transition={{ duration: shouldReduceMotion ? 0 : 0.22 }}
             >
               <ResumenFinanciero
+                key={refreshKey}
                 fechaInicio={filtrosGlobales.fechaInicio}
                 fechaFin={filtrosGlobales.fechaFin}
                 cuentaId={filtrosGlobales.cuentaId}
-                periodo="mes"
+                periodo={derivePeriodLabel(filtrosGlobales.fechaInicio, filtrosGlobales.fechaFin)}
                 page={1}
                 limit={10}
+                refreshToken={refreshKey}
               />
             </motion.div>
           </TabsContent>
@@ -219,10 +251,13 @@ export function ReportesAnalyticsPage() {
               transition={{ duration: shouldReduceMotion ? 0 : 0.22 }}
             >
               <MovimientosTable
+                key={refreshKey}
                 cuentaId={filtrosGlobales.cuentaId}
                 fechaInicio={filtrosGlobales.fechaInicio}
                 fechaFin={filtrosGlobales.fechaFin}
+                resetKey={resetMovimientosKey}
                 onExport={handleExportMovimientos}
+                onLocalFiltersChange={handleLocalFiltersChange}
               />
             </motion.div>
           </TabsContent>
@@ -235,10 +270,13 @@ export function ReportesAnalyticsPage() {
             >
               {cuentaSeleccionada ? (
                 <AccountTransactionHistory
+                  key={refreshKey}
                   cuentaId={cuentaSeleccionada.cuentaId}
                   nombreCuenta={cuentaSeleccionada.nombreBanco}
                   numeroCuenta={cuentaSeleccionada.numeroCuenta}
                   monedaCuenta={cuentaSeleccionada.moneda}
+                  fechaInicio={filtrosGlobales.fechaInicio}
+                  fechaFin={filtrosGlobales.fechaFin}
                 />
               ) : (
                 <Card className={cn(surfaceCardClass, 'border-dashed')}>

@@ -7,6 +7,7 @@
 import { prisma } from '@/lib/prisma'
 import { startOfDay, endOfDay, format, subMonths, subDays } from 'date-fns'
 import { es } from 'date-fns/locale'
+import { getPayrollPaymentAmount } from '@/features/pago-salario/payroll-amounts'
 
 const ULTIMOS_DIAS = 60
 const STOCK_BAJO_UMBRAL_POR_DEFECTO = 10
@@ -77,6 +78,7 @@ interface GastoDEData {
 interface SalarioData {
   salario: number
   bonificaciones: number | null
+  deducciones: number | null
   horasExtras: number | null
   createdAt: Date
 }
@@ -188,7 +190,7 @@ export async function getDashboardStatsQuery(
     }),
     prisma.pagosalario.findMany({
       where: { tenantId },
-      select: { salario: true, bonificaciones: true, horasExtras: true, createdAt: true },
+      select: { salario: true, bonificaciones: true, deducciones: true, horasExtras: true, createdAt: true },
     }),
     prisma.transferencia.findMany({
       where: { tenantId },
@@ -264,7 +266,7 @@ export async function getDashboardStatsQuery(
     ventaServiciosData.reduce((sum, servicio) => sum + Number(servicio.total || 0), 0)
   const totalGastosMermas = mermasData.reduce((s: number, m: MermaData) => s + (m.cantidad * (m.producto?.precioCosto ?? 0)), 0)
   const totalGastos = gastosDEData.reduce((s: number, g: GastoDEData) => s + g.monto, 0)
-    + salariosData.reduce((s: number, p: SalarioData) => s + p.salario + (p.bonificaciones ?? 0) + (p.horasExtras ?? 0), 0)
+    + salariosData.reduce((s: number, p: SalarioData) => s + getPayrollPaymentAmount(p), 0)
 
   // Agrupar ventas por producto (items + legacy)
   const ventasItemsPorProducto = ventaItemsData.reduce<Record<string, number>>((acc, item) => {
@@ -459,7 +461,7 @@ export async function getDashboardStatsQuery(
       gastosDeExplotacionCantidad: (gastosDEData as any[]).filter((g: any) => g.createdAt >= fInicio && g.createdAt <= fFin).length,
       gastosCompras: (gastosCompraData as any[]).filter((c: any) => c.createdAt >= fInicio && c.createdAt <= fFin).reduce((s: number, c: any) => s + c.total, 0),
       gastosComprasCantidad: (gastosCompraData as any[]).filter((c: any) => c.createdAt >= fInicio && c.createdAt <= fFin).length,
-      gastosSalarios: (salariosData as any[]).filter((p: any) => p.createdAt >= fInicio && p.createdAt <= fFin).reduce((s: number, p: any) => s + p.salario + (p.bonificaciones ?? 0) + (p.horasExtras ?? 0), 0),
+      gastosSalarios: (salariosData as any[]).filter((p: any) => p.createdAt >= fInicio && p.createdAt <= fFin).reduce((s: number, p: any) => s + getPayrollPaymentAmount(p), 0),
       gastosSalariosCantidad: (salariosData as any[]).filter((p: any) => p.createdAt >= fInicio && p.createdAt <= fFin).length,
       ventasCantidad: (ventasData as any[]).filter((v: any) => v.createdAt >= fInicio && v.createdAt <= fFin).length,
       ventasServiciosCantidad: (ventaServiciosData as any[]).filter((v: any) => v.createdAt >= fInicio && v.createdAt <= fFin).length,
@@ -516,7 +518,7 @@ export async function getDashboardStatsQuery(
   })
 
   const gastosSalariosAgrupadosPorSemana = createWeeklyAggregation(salariosData, {
-    gastos: (salario) => salario.salario + (salario.bonificaciones ?? 0) + (salario.horasExtras ?? 0),
+    gastos: (salario) => getPayrollPaymentAmount(salario),
     cantidad: () => 0,
   })
 

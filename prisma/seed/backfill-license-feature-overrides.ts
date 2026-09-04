@@ -54,7 +54,7 @@ export async function backfillLicenseFeatureOverrides(): Promise<number> {
     await prisma.tenantLicense.update({
       where: { tenantLicenseId: license.tenantLicenseId },
       data: {
-        features: backfillData.features,
+        features: Prisma.DbNull,
         featureOverrides: backfillData.featureOverrides as Prisma.InputJsonValue,
       },
     });

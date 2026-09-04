@@ -242,7 +242,7 @@ export function AdminSidebar({
                   <SidebarGroupLabel className="h-auto px-2 py-1 text-[0.67rem] font-semibold uppercase tracking-widest text-sidebar-foreground/70">
                     {group.title}
                   </SidebarGroupLabel>
-                  <NavMain items={group.items} />
+                  <NavMain items={group.items} label={group.title} />
                 </SidebarGroup>
               </motion.div>
             ))}

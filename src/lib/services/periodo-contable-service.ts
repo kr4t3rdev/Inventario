@@ -60,13 +60,18 @@ export class PeriodoContableService {
 					TipoPeriodo.ANUAL,
 				];
 
+		const inicioDiaFinal = new Date(fecha);
+		inicioDiaFinal.setUTCHours(0, 0, 0, 0);
+
 		for (const t of tiposBusqueda) {
 			const periodo = await prisma.periodoContable.findFirst({
 				where: {
 					tenantId,
 					tipo: t as any,
 					fechaInicio: { lte: fecha },
-					fechaFin: { gte: fecha },
+					// fechaFin es una fecha civil y algunas filas históricas se guardaron a medianoche.
+					// Comparar contra el inicio del día permite todo el día final sin ampliar el período.
+					fechaFin: { gte: inicioDiaFinal },
 				},
 				orderBy: { fechaInicio: "desc" },
 			});

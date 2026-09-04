@@ -74,6 +74,15 @@ export interface ExchangeRateHistoryResult {
 
 export interface ExchangeRateProvider {
   getCurrency(codigo: string): Promise<ExchangeCurrencyRecord | null>;
+  /**
+   * Returns the most recent exchange rate effective on or before the boundary.
+   */
+  getRateAsOf(params: {
+    sourceCurrency: string;
+    targetCurrency?: string;
+    boundaryAt: Date;
+    client?: Prisma.TransactionClient;
+  }): Promise<{ tasaId: string; tasa: number; fechaVigencia: Date } | null>;
   getPrincipalCurrency(
     client?: Prisma.TransactionClient,
   ): Promise<ExchangeCurrencyRecord | null>;

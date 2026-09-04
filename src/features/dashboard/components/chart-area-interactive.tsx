@@ -111,7 +111,7 @@ export function ChartAreaInteractive({ data }: ChartAreaInteractiveProps) {
 
   if (!data || data.length === 0) {
     return (
-      <Card>
+      <Card className='min-w-0'>
         <CardHeader>
           <CardTitle>Ingresos vs Gastos</CardTitle>
           <CardDescription>Evolución mensual</CardDescription>
@@ -128,15 +128,15 @@ export function ChartAreaInteractive({ data }: ChartAreaInteractiveProps) {
   const chartData = transformData(data)
 
   return (
-    <Card>
+    <Card className='min-w-0'>
       <CardHeader>
         <CardTitle>Ingresos vs Gastos</CardTitle>
         <CardDescription>Evolución mensual de ingresos y gastos</CardDescription>
       </CardHeader>
-      <CardContent>
+      <CardContent className='min-w-0'>
         <ChartContainer
           config={chartConfig}
-          className='aspect-auto h-[350px] w-full'
+          className='aspect-auto h-[350px] min-w-0 max-w-full'
         >
           <AreaChart
             data={chartData}

@@ -108,6 +108,7 @@ export const PLAN_PROFESIONAL_FEATURES: Record<string, boolean> = {
 	"cuentas-cobrar": true,
 	"cuentas-pagar": true,
 	empleados: true,
+	nomina: true,
 	notificaciones: true,
 	"ventas-factura": true,
 	"backups-semanal": false,

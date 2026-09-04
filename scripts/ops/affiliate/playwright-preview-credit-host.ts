@@ -1,3 +1,4 @@
+// @ts-nocheck
 import { chromium } from 'playwright';
 
 const adminEmail = process.env.ADMIN_EMAIL!;

@@ -21,6 +21,7 @@ import { prisma } from '@/lib/prisma';
 import type { Prisma } from '@/generated/prisma';
 import { ACCOUNTING_TIME_ZONE } from '@/lib/services/fecha-operacion-registry';
 import { isStrictFxReader } from '@/features/contabilidad/config/fx-strict-readers';
+import { getPayrollPaymentAmount } from '@/features/pago-salario/payroll-amounts';
 
 const MONTH_NAMES = [
   'enero',
@@ -307,7 +308,7 @@ export async function getReconciledResultForYear(params: {
         gastoCompra: { select: { total: true } },
         gastoDE: { select: { monto: true } },
         pagoSalario: {
-          select: { salario: true, bonificaciones: true, horasExtras: true },
+          select: { salario: true, bonificaciones: true, deducciones: true, horasExtras: true },
         },
       },
     }),
@@ -757,8 +758,12 @@ export async function getReconciledResultForYear(params: {
       continue;
     }
     const salaryTotal = expense.pagoSalario
-      ? Number(expense.pagoSalario.salario) + Number(expense.pagoSalario.bonificaciones ?? 0) +
-        Number(expense.pagoSalario.horasExtras ?? 0)
+      ? getPayrollPaymentAmount({
+          salario: Number(expense.pagoSalario.salario),
+          bonificaciones: Number(expense.pagoSalario.bonificaciones ?? 0),
+          deducciones: Number(expense.pagoSalario.deducciones ?? 0),
+          horasExtras: Number(expense.pagoSalario.horasExtras ?? 0),
+        })
       : null;
     const purchasedServiceDocument = purchasedServiceDocuments.get(expense.referenciaId);
     const documentTotal = expense.gastoCompra?.total ?? expense.gastoDE?.monto ?? salaryTotal ??

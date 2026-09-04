@@ -22,6 +22,7 @@ import {
 	validateSaleReconciliationInput,
 } from "@/features/contabilidad/services/accounting-reconciliation-service";
 import { acquireAccountingTenantLock } from "@/features/contabilidad/services/accounting-tenant-lock-service";
+import { getPayrollPaymentAmount } from "@/features/pago-salario/payroll-amounts";
 
 // ─── Stats Hub ────────────────────────────────────────────
 
@@ -1018,7 +1019,12 @@ export const getGastosPendientesAction = withAction(
 				descripcion:
 					`Salario de ${g.empleado?.nombre || ""} ${g.empleado?.apellido || ""}`.trim() ||
 					`Pago #${g.pgId.slice(0, 8)}`,
-				monto: Number(g.salario || 0),
+				monto: getPayrollPaymentAmount({
+					salario: Number(g.salario || 0),
+					bonificaciones: Number(g.bonificaciones || 0),
+					deducciones: Number(g.deducciones || 0),
+					horasExtras: Number(g.horasExtras || 0),
+				}),
 				periodo: g.periodo || undefined,
 				detalles: {
 					empleado: g.empleado
@@ -1134,10 +1140,14 @@ export const getHistorialReconciliacionGastosAction = withAction(
 
 export const reconciliarGastoAction = withAction(
 	withPeriodValidation(
-		(input) =>
-			input.fechaReconciliacion
-				? new Date(input.fechaReconciliacion)
-				: new Date(),
+		(input) => {
+			if (input.fechaReconciliacion) return new Date(input.fechaReconciliacion);
+			if (input.periodo && /^\d{4}-\d{2}$/.test(input.periodo)) {
+				const [year, month] = input.periodo.split("-").map(Number);
+				if (month >= 1 && month <= 12) return new Date(Date.UTC(year, month - 1, 1));
+			}
+			return new Date();
+		},
 		async (
 			input: {
 				gastosDEId?: string;
@@ -1150,6 +1160,7 @@ export const reconciliarGastoAction = withAction(
 				monto: number;
 				moneda?: string;
 				fechaReconciliacion?: string;
+				periodo?: string;
 				descripcion?: string;
 				cuentaPorPagarId?: string;
 				distribucion?: Array<{
@@ -1167,6 +1178,10 @@ export const reconciliarGastoAction = withAction(
 		) => {
 			requireFeature(user, 'contabilidad', 'reconciliar gastos');
 			const tenantId = requireTenant(user);
+			const fechaPago = input.fechaReconciliacion ??
+				(input.periodo && /^\d{4}-\d{2}$/.test(input.periodo)
+					? `${input.periodo}-01T00:00:00.000Z`
+					: undefined);
 
 			const referenciaId =
 				input.gastosDEId ||
@@ -1258,6 +1273,8 @@ export const reconciliarGastoAction = withAction(
 						tasaCambio: input.distribucion?.[0]?.tasaCambio,
 						observaciones:
 							input.distribucion?.[0]?.observaciones || input.descripcion,
+						periodo: input.periodo,
+						fechaPago,
 						estado: "PAGADA",
 						cuentaPorPagarId: input.cuentaPorPagarId,
 						numeroTransaccion:

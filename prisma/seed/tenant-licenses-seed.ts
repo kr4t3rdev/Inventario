@@ -7,7 +7,7 @@
  * @module prisma/seed/tenant-licenses-seed
  */
 
-import { PrismaClient } from "../../src/generated/prisma";
+import { Prisma, PrismaClient } from "../../src/generated/prisma";
 
 const prisma = new PrismaClient();
 
@@ -41,7 +41,7 @@ export function buildTenantLicenseSeedData(
     maxAlmacenes: defaultPlan.maxAlmacenes,
     maxProductos: defaultPlan.maxProductos,
     maxClientes: defaultPlan.maxClientes,
-    features: null,
+    features: Prisma.DbNull,
     featureOverrides: {},
   };
 }

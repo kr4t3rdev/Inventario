@@ -521,5 +521,129 @@ describe('Cuentas Bancarias Actions', () => {
       expect(result.success).toBe(false);
       expect(result.error?.code).toBe('NOT_FOUND');
     });
+
+    it('el resumen de período completo usa todas las transacciones, no solo la página', async () => {
+      const ventas = Array.from({ length: 15 }, (_, i) => ({
+        reconciliacionId: `v-${i}`,
+        monto: 100,
+        moneda: 'CUP',
+        montoConvertido: 100,
+        tasaCambio: null,
+        fechaReconciliacion: new Date(`2026-05-${String(i + 1).padStart(2, '0')}T12:00:00.000Z`),
+        observaciones: null,
+        tipoReconciliacion: 'VENTA',
+      }));
+      vi.mocked(prisma.reconciliacionVenta.findMany).mockResolvedValue(ventas as never);
+
+      const result = await getCuentaHistorialAction({
+        cuentaId: 'c1',
+        page: 1,
+        limit: 10,
+      });
+
+      expect(result.success).toBe(true);
+      expect(result.data?.transacciones).toHaveLength(10);
+      expect(result.data?.resumen.totalIngresos).toBe(1500);
+      expect(result.data?.resumen.totalMovimientos).toBe(15);
+      expect(result.data?.pagination.total).toBe(15);
+      expect(result.data?.pagination.totalPages).toBe(2);
+    });
+
+    it('no suma monedas heterogéneas sin evidencia hacia la moneda de la cuenta', async () => {
+      vi.mocked(prisma.reconciliacionVenta.findMany).mockResolvedValue([
+        { reconciliacionId: 'v1', monto: 500, moneda: 'CUP', montoConvertido: 500, tasaCambio: null, fechaReconciliacion: new Date('2026-05-01T12:00:00.000Z'), observaciones: null, tipoReconciliacion: 'VENTA' },
+        { reconciliacionId: 'v2', monto: 100, moneda: 'USD', montoConvertido: null, tasaCambio: null, fechaReconciliacion: new Date('2026-05-02T12:00:00.000Z'), observaciones: null, tipoReconciliacion: 'VENTA' },
+      ] as never);
+      vi.mocked(prisma.reconciliacionGasto.findMany).mockResolvedValue([
+        { reconciliacionId: 'g1', monto: 200, moneda: 'CUP', montoConvertido: 200, tasaCambio: null, fechaReconciliacion: new Date('2026-05-03T12:00:00.000Z'), descripcion: null, observaciones: null },
+      ] as never);
+
+      const result = await getCuentaHistorialAction({ cuentaId: 'c1' });
+
+      expect(result.success).toBe(true);
+      expect(result.data?.resumen.totalIngresos).toBe(500);
+      expect(result.data?.resumen.totalEgresos).toBe(200);
+      expect(result.data?.resumen.monedasNoConvertidas).toEqual(['USD']);
+      expect(result.data?.transacciones.find((t) => t.monedaOriginal === 'USD')?.montoConvertido).toBeNull();
+    });
+
+    it('usa montoConvertido cuando existe evidencia FX hacia CUP', async () => {
+      vi.mocked(prisma.reconciliacionVenta.findMany).mockResolvedValue([
+        { reconciliacionId: 'v-usd', monto: 100, moneda: 'USD', montoConvertido: 2450, tasaCambio: 24.5, fechaReconciliacion: new Date('2026-05-01T12:00:00.000Z'), observaciones: null, tipoReconciliacion: 'VENTA' },
+      ] as never);
+
+      const result = await getCuentaHistorialAction({ cuentaId: 'c1' });
+
+      expect(result.success).toBe(true);
+      expect(result.data?.resumen.totalIngresos).toBe(2450);
+      expect(result.data?.resumen.monedasNoConvertidas).toEqual([]);
+    });
+
+    it('filtra por tipo de movimiento y mantiene resumen y paginación consistentes', async () => {
+      vi.mocked(prisma.reconciliacionVenta.findMany).mockResolvedValue([
+        { reconciliacionId: 'v1', monto: 100, moneda: 'CUP', montoConvertido: 100, tasaCambio: null, fechaReconciliacion: new Date('2026-05-01T12:00:00.000Z'), observaciones: null, tipoReconciliacion: 'VENTA' },
+        { reconciliacionId: 'v2', monto: 200, moneda: 'CUP', montoConvertido: 200, tasaCambio: null, fechaReconciliacion: new Date('2026-05-02T12:00:00.000Z'), observaciones: null, tipoReconciliacion: 'VENTA' },
+      ] as never);
+      vi.mocked(prisma.reconciliacionGasto.findMany).mockResolvedValue([
+        { reconciliacionId: 'g1', monto: 50, moneda: 'CUP', montoConvertido: 50, tasaCambio: null, fechaReconciliacion: new Date('2026-05-03T12:00:00.000Z'), descripcion: null, observaciones: null },
+      ] as never);
+
+      const result = await getCuentaHistorialAction({
+        cuentaId: 'c1',
+        tipoMovimiento: 'venta',
+      });
+
+      expect(result.success).toBe(true);
+      expect(result.data?.transacciones.every((t) => t.tipoMovimiento === 'venta')).toBe(true);
+      expect(result.data?.resumen.totalMovimientos).toBe(2);
+      expect(result.data?.resumen.totalIngresos).toBe(300);
+      expect(result.data?.resumen.totalEgresos).toBe(0);
+      expect(result.data?.pagination.total).toBe(2);
+    });
+
+    it('trata fechaFin como inclusiva hasta el final del día', async () => {
+      await getCuentaHistorialAction({
+        cuentaId: 'c1',
+        fechaInicio: '2026-05-01',
+        fechaFin: '2026-05-31',
+      });
+
+      expect(prisma.reconciliacionVenta.findMany).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: expect.objectContaining({
+            fechaReconciliacion: {
+              gte: new Date('2026-05-01T00:00:00.000Z'),
+              lt: new Date('2026-06-01T00:00:00.000Z'),
+            },
+          }),
+        }),
+      );
+      expect(prisma.ajusteBancario.findMany).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: expect.objectContaining({
+            fechaOperacion: {
+              gte: new Date('2026-05-01T00:00:00.000Z'),
+              lt: new Date('2026-06-01T00:00:00.000Z'),
+            },
+          }),
+        }),
+      );
+    });
+
+    it('clasifica préstamos y deudas cash según su efecto de caja', async () => {
+      vi.mocked(prisma.reconciliacionVenta.findMany).mockResolvedValue([
+        { reconciliacionId: 'loan-payment', monto: 100, moneda: 'CUP', montoConvertido: 100, tasaCambio: null, fechaReconciliacion: new Date('2026-05-01T12:00:00.000Z'), observaciones: null, tipoReconciliacion: 'PRESTAMO_CASH' },
+        { reconciliacionId: 'loan-disbursement', monto: 200, moneda: 'CUP', montoConvertido: 200, tasaCambio: null, fechaReconciliacion: new Date('2026-05-02T12:00:00.000Z'), observaciones: null, tipoReconciliacion: 'PRESTAMO_CASH_DESEMBOLSO' },
+        { reconciliacionId: 'debt-payment', monto: 300, moneda: 'CUP', montoConvertido: 300, tasaCambio: null, fechaReconciliacion: new Date('2026-05-03T12:00:00.000Z'), observaciones: null, tipoReconciliacion: 'DEUDA_CASH' },
+        { reconciliacionId: 'debt-disbursement', monto: 400, moneda: 'CUP', montoConvertido: 400, tasaCambio: null, fechaReconciliacion: new Date('2026-05-04T12:00:00.000Z'), observaciones: null, tipoReconciliacion: 'DEUDA_CASH_DESEMBOLSO' },
+      ] as never);
+
+      const result = await getCuentaHistorialAction({ cuentaId: 'c1' });
+
+      expect(result.success).toBe(true);
+      expect(result.data?.resumen.totalIngresos).toBe(500);
+      expect(result.data?.resumen.totalEgresos).toBe(500);
+      expect(result.data?.resumen.totalMovimientos).toBe(4);
+    });
   });
 });

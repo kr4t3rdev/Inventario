@@ -14,6 +14,7 @@ import { PrismaClient } from '../../src/generated/prisma';
 import {
   classifyBackfillRow,
   type BackfillDisposition,
+  type BackfillRowInput,
   type CatalogCandidate,
 } from '../../src/features/contabilidad/domain/fx-backfill';
 
@@ -88,7 +89,7 @@ async function diagnoseTable(
   args: CliArgs,
   catalogByCurrency: Map<string, CatalogCandidate[]>,
 ) {
-  const model = table === 'venta'
+  const model: any = table === 'venta'
     ? prisma.reconciliacionVenta
     : table === 'servicio'
       ? prisma.reconciliacionServicio

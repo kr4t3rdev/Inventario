@@ -2,7 +2,8 @@ import { Prisma, type PrismaClient } from '@/generated/prisma';
 import { prisma as defaultPrisma } from '@/lib/prisma';
 import { buildAppliedFxEvidence } from '@/features/contabilidad/domain/fx-evidence';
 import { getRequiredTenantAccountingPolicy } from './tenant-accounting-policy-service';
-import { exchangeRateProvider, type ExchangeRateProvider } from './exchange-rate-provider';
+import { exchangeRateProvider } from './exchange-rate-provider';
+import type { ExchangeRateProvider } from './exchange-types';
 
 export const FX_EVIDENCE_SOURCE_TYPES = {
   BANK_ACCOUNT: 'BANK_ACCOUNT',
@@ -190,7 +191,7 @@ export class FxEvidenceService {
           fxCatalogRateId: rate.tasaId,
           provenance: evidence.fxProvenanceKind,
           source: evidence.fxProvenanceSource,
-          evidence,
+          evidence: evidence as unknown as Prisma.InputJsonValue,
           evidenceFingerprint: evidence.fxEvidenceFingerprint,
           evidenceVersion: evidence.fxEvidenceVersion,
             capturedAt,

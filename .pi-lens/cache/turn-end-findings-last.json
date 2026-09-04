@@ -1,6 +1,6 @@
 {
-  "signature": "src/features/empleados/__tests__/actions.test.ts::Unresolved from this turn — src/features/empleados/__tests__/actions.test.ts:\n🔴 STOP — 4 issue(s) must be fixed:\n  L73: Argument of type '{ nombre: string; apellido: string; cargo: string; salarioBases: number; }' is not assignable to parameter of type '{ nombre: string; apellido: string; cargo: string; salarioBases: number; diasVacacionesAnuales: number; esTiempoCompleto: boolean; telefono?: string | null | undefined; fechaContratacion?: string | undefined; }'.\n    Type '{ nombre: string; apellido: string; cargo: string; salarioBases: number; }' is missing the following properties from type '{ nombre: string; apellido: string; cargo: string; salarioBases: number; diasVacacionesAnuales: number; esTiempoCompleto: boolean; telefono?: string | null | undefined; fechaContratacion?: string | undefined; }': diasVacacionesAnuales, esTiempoCompleto [💡 Add missing properties]\n    💡 Fix: Add missing properties\n  L142: Property 'error' does not exist on type 'ActionResponse<{ tenantId: string;\n... (truncated)",
-  "sessionId": "019ef573-3113-754e-839a-853aba7b2746",
-  "projectSeqStart": 224,
-  "projectSeqEnd": 225
+  "signature": "openspec/changes/remediate-reconciled-balance-audit-blockers/tasks.md::ℹ️ Advisory — no action required this turn:\nCode-quality warnings introduced/touched this turn: 1 across 1 file(s).\nTop rules: pi-lens×1\nDetails written to .pi-lens/cache/code-quality-warnings.json\nNo action required unless you are already refactoring these areas.",
+  "sessionId": "01a02f04-003b-7a70-bfab-b05a3921a515",
+  "projectSeqStart": 244,
+  "projectSeqEnd": 245
 }

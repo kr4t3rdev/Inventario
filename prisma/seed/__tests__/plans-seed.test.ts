@@ -38,6 +38,10 @@ describe('upload entitlements by paid plan', () => {
     expect(PLAN_PROFESIONAL_FEATURES['cuentas-pagar']).toBe(true);
   });
 
+  it('incluye nómina desde el plan Profesional', () => {
+    expect(PLAN_PROFESIONAL_FEATURES.nomina).toBe(true);
+  });
+
   it('habilita uploads Cloudinary operativos en Profesional', () => {
     expect(PLAN_PROFESIONAL_FEATURES['upload-clientes-logo']).toBe(true);
     expect(PLAN_PROFESIONAL_FEATURES['upload-vendors-logo']).toBe(true);

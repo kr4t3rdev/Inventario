@@ -1,7 +1,7 @@
 "use client"
 
-import { useState, useEffect } from "react"
-import { LazyMotion, m as motion, useReducedMotion } from "framer-motion"
+import { useState, useEffect, useRef, useCallback } from "react"
+import { m as motion, useReducedMotion } from "framer-motion"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
@@ -10,15 +10,13 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { Skeleton } from "@/components/ui/skeleton"
 import { Search, Filter, Download, ArrowUpDown, TrendingUp, TrendingDown, Wallet, Receipt, FileText, Calendar, Eye } from "lucide-react"
-import { getCuentasBancariasAction } from "@/features/contabilidad/actions-cuentas-bancarias"
 import { getPrestamoCashHistorialAction } from "@/features/contabilidad/actions-prestamos-cash"
 import { getDeudaCashByIdAction } from "@/features/contabilidad/actions-deudas-cash"
 import { getMovimientosReportAction } from "@/features/contabilidad/actions"
+import { getMonedasAction } from "@/features/contabilidad/actions-exchange"
 import { formatCurrencySimple, formatDate } from "@/features/contabilidad/utils/contabilidadUtils"
-import { DateRangePicker } from "./date-range-picker"
 import { cn } from "@/lib/utils"
 import {
-  PageTransition,
   StaggerContainer,
   StaggerItem,
   AnimatedCard
@@ -29,7 +27,15 @@ interface MovimientosTableProps {
   cuentaId?: string
   fechaInicio?: string
   fechaFin?: string
-  onExport?: (tipo: 'csv' | 'pdf') => void
+  resetKey?: number
+  onExport?: (tipo: 'csv' | 'pdf') => void | Promise<void>
+  onLocalFiltersChange?: (cambios: {
+    busqueda?: string
+    tipoMovimiento?: string
+    moneda?: string
+    page?: number
+    limit?: number
+  }) => void
 }
 
 const surfaceCardClass = cn(
@@ -56,7 +62,9 @@ export function MovimientosTable({
   cuentaId: initialCuentaId,
   fechaInicio: initialFechaInicio,
   fechaFin: initialFechaFin,
+  resetKey = 0,
   onExport,
+  onLocalFiltersChange,
 }: MovimientosTableProps) {
   const shouldReduceMotion = useReducedMotion()
   const [prestamoSheetOpen, setPrestamoSheetOpen] = useState(false)
@@ -81,12 +89,70 @@ export function MovimientosTable({
   const [error, setError] = useState<any>(null)
   const [prestamoHistorial, setPrestamoHistorial] = useState<any>(null)
   const [deudaHistorial, setDeudaHistorial] = useState<any>(null)
+  const [monedas, setMonedas] = useState<Array<{ id?: string; codigo: string; nombre: string; isActive?: boolean }>>([])
+  const [isExporting, setIsExporting] = useState(false)
+  const [debouncedBusqueda, setDebouncedBusqueda] = useState("")
+  const requestSequenceRef = useRef(0)
+  const exportingRef = useRef(false)
+  const globalFiltersRef = useRef({
+    cuentaId: initialCuentaId,
+    fechaInicio: initialFechaInicio,
+    fechaFin: initialFechaFin,
+  })
+  globalFiltersRef.current = {
+    cuentaId: initialCuentaId,
+    fechaInicio: initialFechaInicio,
+    fechaFin: initialFechaFin,
+  }
 
   useEffect(() => {
+    setFiltros(prev => ({
+      ...prev,
+      cuentaId: initialCuentaId || 'all',
+      fechaInicio: initialFechaInicio || '',
+      fechaFin: initialFechaFin || '',
+      page: 1,
+    }))
+  }, [initialCuentaId, initialFechaInicio, initialFechaFin])
+
+  useEffect(() => {
+    if (resetKey === 0) return
+    setFiltros({
+      busqueda: '',
+      cuentaId: globalFiltersRef.current.cuentaId || 'all',
+      tipoMovimiento: 'all',
+      fechaInicio: globalFiltersRef.current.fechaInicio || '',
+      fechaFin: globalFiltersRef.current.fechaFin || '',
+      moneda: 'all',
+      page: 1,
+      limit: 10,
+    })
+  }, [resetKey])
+
+  const onLocalFiltersChangeRef = useRef(onLocalFiltersChange)
+  onLocalFiltersChangeRef.current = onLocalFiltersChange
+
+  useEffect(() => {
+    onLocalFiltersChangeRef.current?.({
+      busqueda: filtros.busqueda,
+      tipoMovimiento: filtros.tipoMovimiento,
+      moneda: filtros.moneda,
+      page: filtros.page,
+      limit: filtros.limit,
+    })
+  }, [filtros.busqueda, filtros.tipoMovimiento, filtros.moneda, filtros.page, filtros.limit])
+
+  useEffect(() => {
+    const t = setTimeout(() => setDebouncedBusqueda(filtros.busqueda), 300);
+    return () => clearTimeout(t);
+  }, [filtros.busqueda])
+
+  useEffect(() => {
+    const requestSequence = ++requestSequenceRef.current
     setIsLoading(true)
     setError(null)
     getMovimientosReportAction({
-      busqueda: filtros.busqueda || undefined,
+      busqueda: debouncedBusqueda || undefined,
       cuentaId: filtros.cuentaId !== 'all' ? filtros.cuentaId : undefined,
       tipoMovimiento: filtros.tipoMovimiento !== 'all' ? filtros.tipoMovimiento : undefined,
       fechaInicio: filtros.fechaInicio || undefined,
@@ -95,11 +161,15 @@ export function MovimientosTable({
       page: filtros.page,
       limit: filtros.limit
     }).then(r => {
+      if (requestSequence !== requestSequenceRef.current) return
       if (r.success) { setMovimientos(r.data); setIsLoading(false) }
       else { setError(r.error); setIsLoading(false) }
-    }).catch(err => { setError(err); setIsLoading(false) })
+    }).catch(err => {
+      if (requestSequence !== requestSequenceRef.current) return
+      setError(err); setIsLoading(false)
+    })
   }, [
-    filtros.busqueda,
+    debouncedBusqueda,
     filtros.cuentaId,
     filtros.tipoMovimiento,
     filtros.fechaInicio,
@@ -108,6 +178,16 @@ export function MovimientosTable({
     filtros.page,
     filtros.limit,
   ])
+
+  useEffect(() => {
+    getMonedasAction().then(r => {
+      if (r.success && Array.isArray(r.data)) {
+        setMonedas(r.data.filter(currency => currency.isActive !== false));
+      }
+    }).catch(error => {
+      console.error('Error al cargar el catálogo de monedas:', error);
+    });
+  }, []);
 
   useEffect(() => {
     if (selectedPrestamoCashId && prestamoSheetOpen) {
@@ -124,14 +204,6 @@ export function MovimientosTable({
       })
     }
   }, [selectedDeudaCashId, deudaSheetOpen])
-  const [cuentas, setCuentas] = useState<any[]>([])
-
-  useEffect(() => {
-    getCuentasBancariasAction().then(r => {
-      if (r.success) setCuentas(r.data?.cuentas ?? [])
-    })
-  }, [])
-  
   const handleFiltroChange = (key: string, value: string) => {
     setFiltros(prev => ({
       ...prev,
@@ -140,14 +212,19 @@ export function MovimientosTable({
     }))
   }
 
-  const handleDateRangeChange = (fechaInicio: string, fechaFin: string) => {
-    setFiltros(prev => ({
-      ...prev,
-      fechaInicio,
-      fechaFin,
-      page: 1
-    }))
-  }
+  const handleExport = useCallback((tipo: 'csv' | 'pdf') => {
+    if (exportingRef.current) return;
+    exportingRef.current = true;
+    setIsExporting(true);
+    Promise.resolve(onExport?.(tipo))
+      .catch(error => {
+        console.error('Error al exportar movimientos:', error);
+      })
+      .finally(() => {
+        exportingRef.current = false;
+        setIsExporting(false);
+      });
+  }, [onExport]);
 
   const limpiarFiltros = () => {
     setFiltros({
@@ -309,6 +386,7 @@ export function MovimientosTable({
                     <div className="relative">
                       <Search className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
                       <Input
+                        aria-label="Buscar movimientos"
                         placeholder="Buscar por descripción..."
                         value={filtros.busqueda}
                         onChange={(e) => handleFiltroChange('busqueda', e.target.value)}
@@ -317,27 +395,10 @@ export function MovimientosTable({
                     </div>
 
                     <Select
-                      value={filtros.cuentaId || 'all'}
-                      onValueChange={(value) => handleFiltroChange('cuentaId', value)}
-                    >
-                      <SelectTrigger className="bg-white/80 dark:bg-slate-900/50">
-                        <SelectValue placeholder="Todas las cuentas" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="all">Todas las cuentas</SelectItem>
-                        {cuentas.map((cuenta: any) => (
-                          <SelectItem key={cuenta.cuentaId} value={cuenta.cuentaId}>
-                            {cuenta.nombreBanco} - {cuenta.numeroCuenta}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-
-                    <Select
                       value={filtros.tipoMovimiento}
                       onValueChange={(value) => handleFiltroChange('tipoMovimiento', value)}
                     >
-                      <SelectTrigger className="bg-white/80 dark:bg-slate-900/50">
+                      <SelectTrigger aria-label="Filtrar por tipo de movimiento" className="bg-white/80 dark:bg-slate-900/50">
                         <SelectValue placeholder="Tipo de movimiento" />
                       </SelectTrigger>
                       <SelectContent>
@@ -350,8 +411,10 @@ export function MovimientosTable({
                         <SelectItem value="ajuste_egreso">Ajustes de Egreso</SelectItem>
                         <SelectItem value="transferencia_entrada">Transferencias Entrada</SelectItem>
                         <SelectItem value="transferencia_salida">Transferencias Salida</SelectItem>
-                        <SelectItem value="prestamo_cash">Préstamos Cash</SelectItem>
-                        <SelectItem value="deuda_cash">Deudas Cash</SelectItem>
+                        <SelectItem value="prestamo_cash_pago">Cobro Préstamo Cash</SelectItem>
+                        <SelectItem value="prestamo_cash_desembolso">Desembolso Préstamo Cash</SelectItem>
+                        <SelectItem value="deuda_cash_pago">Pago Deuda Cash</SelectItem>
+                        <SelectItem value="deuda_cash_desembolso">Desembolso Deuda Cash</SelectItem>
                       </SelectContent>
                     </Select>
 
@@ -359,14 +422,14 @@ export function MovimientosTable({
                       value={filtros.moneda}
                       onValueChange={(value) => handleFiltroChange('moneda', value)}
                     >
-                      <SelectTrigger className="bg-white/80 dark:bg-slate-900/50">
+                      <SelectTrigger aria-label="Filtrar por moneda" className="bg-white/80 dark:bg-slate-900/50">
                         <SelectValue placeholder="Moneda" />
                       </SelectTrigger>
                       <SelectContent>
                         <SelectItem value="all">Todas las monedas</SelectItem>
-                        <SelectItem value="CUP">CUP</SelectItem>
-                        <SelectItem value="USD">USD</SelectItem>
-                        <SelectItem value="EUR">EUR</SelectItem>
+                        {monedas.map(m => (
+                          <SelectItem key={m.id} value={m.codigo}>{m.codigo}</SelectItem>
+                        ))}
                       </SelectContent>
                     </Select>
                   </div>
@@ -374,12 +437,6 @@ export function MovimientosTable({
 
                 <StaggerItem>
                   <div className="flex flex-col sm:flex-row gap-4 justify-between">
-                    <DateRangePicker
-                      fechaInicio={filtros.fechaInicio}
-                      fechaFin={filtros.fechaFin}
-                      onChange={handleDateRangeChange}
-                    />
-
                     <div className="flex gap-2">
                       <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}>
                         <Button variant="outline" onClick={limpiarFiltros} className="gap-2">
@@ -390,13 +447,13 @@ export function MovimientosTable({
                       {onExport && (
                         <>
                           <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}>
-                            <Button variant="outline" onClick={() => onExport('csv')} className="gap-2">
+                            <Button variant="outline" onClick={() => handleExport('csv')} disabled={isExporting} className="gap-2">
                               <Download className="h-4 w-4" />
                               CSV
                             </Button>
                           </motion.div>
                           <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}>
-                            <Button variant="outline" onClick={() => onExport('pdf')} className="gap-2">
+                            <Button variant="outline" onClick={() => handleExport('pdf')} disabled={isExporting} className="gap-2">
                               <Download className="h-4 w-4" />
                               PDF
                             </Button>
@@ -418,7 +475,8 @@ export function MovimientosTable({
           <Card className={surfaceCardClass}>
             <CardContent className="p-0">
               {/* Tabla */}
-              <div className="rounded-xl border border-slate-200/60 dark:border-slate-800 overflow-hidden">
+              <div className="overflow-x-auto">
+              <div className="rounded-xl border border-slate-200/60 dark:border-slate-800 overflow-hidden min-w-[800px]">
                 <Table>
                   <TableHeader>
                     <TableRow className="bg-slate-50/80 dark:bg-slate-900/50 hover:bg-slate-50/80 dark:hover:bg-slate-900/50">
@@ -430,7 +488,7 @@ export function MovimientosTable({
                       <TableHead className="font-semibold">Moneda</TableHead>
                       <TableHead className="font-semibold">Monto Original</TableHead>
                       <TableHead className="font-semibold">Tasa</TableHead>
-                      <TableHead className="text-right font-semibold">Monto</TableHead>
+                      <TableHead className="text-right font-semibold">Monto Convertido</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
@@ -445,11 +503,12 @@ export function MovimientosTable({
                           <TableCell><Skeleton className="h-4 w-20" /></TableCell>
                           <TableCell><Skeleton className="h-4 w-16" /></TableCell>
                           <TableCell><Skeleton className="h-4 w-20" /></TableCell>
+                          <TableCell><Skeleton className="h-4 w-16 text-right" /></TableCell>
                         </TableRow>
                       ))
                     ) : movimientos?.data?.length === 0 ? (
                       <TableRow>
-                        <TableCell colSpan={8} className="text-center py-12">
+                        <TableCell colSpan={9} className="text-center py-12">
                           <div className="flex flex-col items-center gap-3">
                             <div className="w-12 h-12 rounded-full bg-slate-100 dark:bg-slate-800 flex items-center justify-center">
                               <FileText className="h-6 w-6 text-muted-foreground" />
@@ -537,18 +596,22 @@ export function MovimientosTable({
                             </span>
                           </TableCell>
                           <TableCell className="text-right">
-                              <span className={cn(
-                                "font-mono font-semibold",
-                                movimiento.tipo.includes('ingreso') ||
-                                  movimiento.tipo === 'venta' ||
-                                  movimiento.tipo === 'servicio' ||
-                                  movimiento.tipo === 'transferencia_entrada' ||
-                                  movimiento.tipo === 'prestamo_cash_pago'
-                                  ? 'text-green-600 dark:text-green-400'
-                                  : 'text-red-600 dark:text-red-400'
-                              )}>
-                              {formatCurrencySimple(movimiento.montoConvertido ?? 0, movimiento.moneda)}
-                            </span>
+                              {movimiento.montoConvertido != null ? (
+                                <span className={cn(
+                                  "font-mono font-semibold",
+                                  movimiento.tipo.includes('ingreso') ||
+                                    movimiento.tipo === 'venta' ||
+                                    movimiento.tipo === 'servicio' ||
+                                    movimiento.tipo === 'transferencia_entrada' ||
+                                    movimiento.tipo === 'prestamo_cash_pago'
+                                    ? 'text-green-600 dark:text-green-400'
+                                    : 'text-red-600 dark:text-red-400'
+                                )}>
+                                  {formatCurrencySimple(movimiento.montoConvertido, movimiento.moneda)}
+                                </span>
+                              ) : (
+                                <span className="text-muted-foreground text-xs italic">Sin conversión</span>
+                              )}
                           </TableCell>
                         </TableRow>
                       ))
@@ -556,14 +619,15 @@ export function MovimientosTable({
                   </TableBody>
                 </Table>
               </div>
+              </div>
 
               {/* Paginación */}
               {movimientos?.pagination && (
                 <div className="flex items-center justify-between px-6 py-4 border-t border-slate-200/60 dark:border-slate-800">
                   <p className="text-sm text-muted-foreground">
-                    Mostrando {((movimientos.pagination.page - 1) * movimientos.pagination.limit) + 1} a{' '}
+                    {movimientos.pagination.total === 0 ? 'Mostrando 0 a 0 de 0 movimientos' : <>Mostrando {((movimientos.pagination.page - 1) * movimientos.pagination.limit) + 1} a{' '}
                     {Math.min(movimientos.pagination.page * movimientos.pagination.limit, movimientos.pagination.total)} de{' '}
-                    {movimientos.pagination.total} movimientos
+                    {movimientos.pagination.total} movimientos</>}
                   </p>
                   <div className="flex gap-2">
                     <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}>
@@ -627,7 +691,7 @@ export function MovimientosTable({
               </div>
             </div>
           ) : (
-            <div className="p-4 text-sm text-muted-foreground">Seleccioná un préstamo para ver el detalle.</div>
+            <div className="p-4 text-sm text-muted-foreground">Seleccione un préstamo para ver el detalle.</div>
           )}
         </SheetContent>
       </Sheet>
@@ -655,7 +719,7 @@ export function MovimientosTable({
               </div>
             </div>
           ) : (
-            <div className="p-4 text-sm text-muted-foreground">Seleccioná una deuda para ver el detalle.</div>
+            <div className="p-4 text-sm text-muted-foreground">Seleccione una deuda para ver el detalle.</div>
           )}
         </SheetContent>
       </Sheet>
