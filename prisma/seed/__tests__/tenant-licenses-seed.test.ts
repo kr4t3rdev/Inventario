@@ -1,4 +1,5 @@
 import { describe, expect, it, vi } from 'vitest';
+import { Prisma } from '@/generated/prisma';
 
 import { buildTenantLicenseSeedData } from '../tenant-licenses-seed';
 
@@ -23,7 +24,7 @@ describe('buildTenantLicenseSeedData', () => {
       maxAlmacenes: 2,
       maxProductos: 500,
       maxClientes: 0,
-      features: null,
+      features: Prisma.DbNull,
       featureOverrides: {},
     });
 

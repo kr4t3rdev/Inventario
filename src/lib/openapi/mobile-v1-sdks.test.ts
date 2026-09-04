@@ -223,8 +223,10 @@ describe('mobile v1 generated SDKs', () => {
       process.env.JAVA_BIN = failingJava;
       process.env.OPENAPI_GENERATOR_JAR = '/tmp/openapi-generator-cli-7.17.0.jar';
 
+      // El runtime ahora valida la presencia del JAR antes de spawnar Java:
+      // el fallo determinista es "JAR not found", y aún así no debe tocar la salida previa.
       expect(() => generateSdk('typescript', outputDirectory)).toThrow(
-        'OpenAPI Generator failed for typescript with status 23.',
+        'OpenAPI Generator JAR not found',
       );
       await expect(readFile(sentinel, 'utf8')).resolves.toBe('preserve me');
     } finally {
