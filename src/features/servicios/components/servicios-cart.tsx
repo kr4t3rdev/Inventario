@@ -517,8 +517,13 @@ export default function ServiciosCart({
 						Cerrar
 					</Button>
 					<Button
-						onClick={processVenta}
-						disabled={!selectedClienteId || isCartEmpty || isProcessing}
+						onClick={processCarrito}
+						disabled={
+							isCartEmpty ||
+							isProcessing ||
+							(mode === "VENTA" && !selectedClienteId) ||
+							(mode === "COMPRA" && !selectedProveedorId)
+						}
 						className="min-w-35"
 					>
 						{isProcessing ? (
@@ -526,7 +531,7 @@ export default function ServiciosCart({
 						) : (
 							<>
 								<CreditCard className="mr-2 h-4 w-4" />
-								Confirmar Venta
+								{mode === "VENTA" ? "Confirmar Venta" : "Registrar Compra"}
 							</>
 						)}
 					</Button>
