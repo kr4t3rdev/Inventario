@@ -139,7 +139,7 @@ describe('financial auxiliary checkpoint v3', () => {
       'prisma/migrations/20260824121000_add_financial_snapshot_v3/migration.sql',
       'utf8',
     );
-    expect(schema).toContain('schemaVersion         Int?');
+    expect(schema).toMatch(/schemaVersion\s+Int\?/);
     expect(migration).toContain(
       'financial_auxiliary_checkpoints_tenantId_schemaVersion_cutoffAt_idx',
     );
