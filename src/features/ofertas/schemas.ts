@@ -7,8 +7,11 @@ const ofertaItemSchema = z.object({
   productoId: z.string().optional(),
   servicioId: z.string().optional(),
   cantidad: z.number().int().positive(),
-  precioUnitario: z.number().nonnegative(),
-  total: z.number().nonnegative(),
+  // Se aceptan por compatibilidad con clientes antiguos, pero nunca son autoridad.
+  precioUnitario: z.number().nonnegative().optional(),
+  total: z.number().nonnegative().optional(),
+}).refine((item) => Boolean(item.productoId) !== Boolean(item.servicioId), {
+  message: 'Cada línea debe referir un producto o un servicio',
 });
 
 export const ofertaSchema = z.object({

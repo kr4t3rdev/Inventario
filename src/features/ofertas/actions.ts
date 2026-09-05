@@ -21,6 +21,7 @@ import {
 import type { OfertaInput, OfertaUpdateInput, FacturarOfertaInput } from './schemas';
 import type { AuthenticatedUser } from '@/lib/auth-middleware';
 import type { Oferta } from '@/app/models/model';
+import { getPrecioEfectivo } from '@/lib/types/pricing';
 
 function serializeOferta(oferta: unknown): Oferta {
   return JSON.parse(JSON.stringify(oferta)) as Oferta;
@@ -50,6 +51,26 @@ export const createOfertaAction = withAction(async (input: OfertaInput, user: Au
   const cliente = await prisma.cliente.findFirst({ where: { clienteId: parsed.clienteId, tenantId } });
   if (!cliente) throw new ActionError('Cliente no encontrado', 'NOT_FOUND');
 
+  const resolvedItems = await Promise.all(parsed.items.map(async (item) => {
+    if (item.productoId) {
+      const producto = await prisma.producto.findFirst({
+        where: { id: item.productoId, tenantId },
+        include: { precios: true },
+      });
+      if (!producto) throw new ActionError('Producto no encontrado', 'NOT_FOUND');
+      const precioUnitario = getPrecioEfectivo(producto, cliente.listaPrecioId);
+      return { ...item, precioUnitario, total: item.cantidad * precioUnitario };
+    }
+
+    const servicio = await prisma.servicios.findFirst({
+      where: { servicioId: item.servicioId, tenantId },
+    });
+    if (!servicio) throw new ActionError('Servicio no encontrado', 'NOT_FOUND');
+    return { ...item, precioUnitario: servicio.precio, total: item.cantidad * servicio.precio };
+  }));
+  const subtotal = resolvedItems.reduce((sum, item) => sum + item.total, 0);
+  const impuestos = parsed.impuestos ?? 0;
+
   // Generar número de oferta secuencial por tenant
   const ultimaOferta = await prisma.oferta.findFirst({
     where: { tenantId },
@@ -68,12 +89,12 @@ export const createOfertaAction = withAction(async (input: OfertaInput, user: Au
       clienteId: parsed.clienteId,
       fechaVencimiento: parsed.fechaVencimiento ? new Date(parsed.fechaVencimiento) : null,
       estado: 'PENDIENTE',
-      subtotal: parsed.subtotal,
-      impuestos: parsed.impuestos,
-      total: parsed.total,
+      subtotal,
+      impuestos,
+      total: subtotal + impuestos,
       observaciones: parsed.observaciones || null,
       items: {
-        create: parsed.items.map((item) => ({
+        create: resolvedItems.map((item) => ({
           productoId: item.productoId || null,
           servicioId: item.servicioId || null,
           cantidad: item.cantidad,
@@ -153,12 +174,19 @@ export const facturarOfertaAction = withAction(async (input: FacturarOfertaInput
       clienteId: oferta.clienteId,
       puntoDeVentaId: parsed.puntoDeVentaId,
       turnoId,
-      items: oferta.items.map((item) => ({
+       items: oferta.items.filter((item) => item.productoId).map((item) => ({
         productoId: item.productoId,
         cantidad: item.cantidad,
         precioUnitario: item.precioUnitario,
         total: item.total,
-      })),
+       })),
+       servicios: oferta.items.filter((item) => item.servicioId).map((item) => ({
+         servicioId: item.servicioId,
+         cantidad: item.cantidad,
+         precioUnitario: item.precioUnitario,
+         total: item.total,
+         moneda: item.servicio?.moneda ?? 'CUP',
+       })),
       subtotal: oferta.subtotal,
       impuestos: oferta.impuestos,
       total: oferta.total,

@@ -14,6 +14,14 @@ interface OfertaProductoItem {
   total: Prisma.Decimal | number;
 }
 
+interface OfertaServicioItem {
+  servicioId: string | null;
+  cantidad: number;
+  precioUnitario: Prisma.Decimal | number;
+  total: Prisma.Decimal | number;
+  moneda: string;
+}
+
 interface FacturarOfertaWorkflowParams {
   tenantId: string;
   ofertaId: string;
@@ -32,6 +40,7 @@ interface FacturarOfertaWorkflowParams {
   impuestos: Prisma.Decimal | number;
   total: Prisma.Decimal | number;
   items: OfertaProductoItem[];
+  servicios?: OfertaServicioItem[];
 }
 
 export interface FacturarOfertaWorkflowResult {
@@ -129,9 +138,32 @@ export async function facturarOfertaWorkflow(
       cantidad: totalCantidad,
       esVentaUnica: true,
       ofertaId: params.ofertaId,
+      items: {
+        create: params.items.map((item) => ({
+          productoId: item.productoId as string,
+          cantidad: item.cantidad,
+          precioUnitario: Number(item.precioUnitario),
+          total: Number(item.total),
+        })),
+      },
     },
     select: { ventaId: true },
   });
+
+  for (const item of params.servicios ?? []) {
+    if (!item.servicioId) continue;
+    await tx.ventaServicios.create({
+      data: {
+        tenantId: params.tenantId,
+        servicioId: item.servicioId,
+        clienteId: params.clienteId,
+        cantidad: item.cantidad,
+        precioUnitario: Number(item.precioUnitario),
+        total: Number(item.total),
+        moneda: item.moneda,
+      },
+    });
+  }
 
   for (const item of params.items) {
     if (!item.productoId) {
