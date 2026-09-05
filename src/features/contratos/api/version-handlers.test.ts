@@ -2,6 +2,9 @@ import { beforeEach, describe, expect, it, vi } from 'vitest'
 
 vi.mock('@/lib/prisma', () => ({
   prisma: {
+    contrato: {
+      findFirst: vi.fn(),
+    },
     contratoVersion: {
       findFirst: vi.fn(),
       create: vi.fn(),
@@ -98,6 +101,7 @@ describe('contract version handlers', () => {
     } as never)
 
     vi.mocked(prisma.contratoVersion.findFirst).mockResolvedValue(null as never)
+    vi.mocked(prisma.contrato.findFirst).mockResolvedValue({ contratoId: 'contract-1', tenantId: 'tenant-1' } as never)
     vi.mocked(prisma.contratoVersion.create).mockResolvedValue({
       versionId: 'version-1',
       numeroVersion: 1,
@@ -186,6 +190,7 @@ describe('contract version handlers', () => {
 
     const expectedHash = 'cae1b3faaa5e4ac7c3306bd164b36dcfdff98294b8024c9c949639b4c480bf6b'
 
+    vi.mocked(prisma.contrato.findFirst).mockResolvedValue({ contratoId: 'contract-1', tenantId: 'tenant-1' } as never)
     vi.mocked(prisma.contratoVersion.findFirst).mockResolvedValue({
       versionId: 'version-1',
       numeroVersion: 1,

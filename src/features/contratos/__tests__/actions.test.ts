@@ -106,7 +106,7 @@ describe('Contratos Server Actions', () => {
       const result = await createContratoAction(validInput as any);
 
       expect(result.success).toBe(true);
-      expect(generarProximoConsecutivo).toHaveBeenCalledWith('COMPRA_VENTA');
+      expect(generarProximoConsecutivo).toHaveBeenCalledWith('tenant-test', 'COMPRA_VENTA');
     });
 
     it('rechaza si faltan datos requeridos', async () => {

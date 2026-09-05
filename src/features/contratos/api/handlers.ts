@@ -73,10 +73,31 @@ const bulkDeleteSchema = z.object({
   ids: z.array(z.string()),
 })
 
+const contratoFirmaSchema = z.object({
+  firmanteId: z.string().min(1, 'El firmante es requerido'),
+  tipoFirma: z.enum(['CLIENTE', 'PROVEEDOR', 'INTERNO']),
+  estado: z.string().optional(),
+  firmaDigital: z.string().nullable().optional(),
+  fechaFirma: z.string().datetime().nullable().optional(),
+  comentarios: z.string().nullable().optional(),
+})
+
+/**
+ * @description Busca un contrato verificando que pertenezca al tenant autenticado.
+ * @param {string} contratoId - Identificador público del contrato.
+ * @param {string} tenantId - Tenant del usuario autenticado (del servidor).
+ * @returns {Promise<object | null>} Contrato si pertenece al tenant, null en otro caso.
+ */
+export async function findContratoDelTenant(contratoId: string, tenantId: string) {
+  return prisma.contrato.findFirst({ where: { contratoId, tenantId } })
+}
+
 export async function getContratosHandler(request: NextRequest): Promise<Response> {
   try {
     const authResultUser = await authenticateUser(request)
     if ('status' in authResultUser) return authResultUser as Response
+    const user = authResultUser.user
+    const tenantId = user.tenantId ?? ''
     const searchParams = request.nextUrl.searchParams
     const page = parseInt(searchParams.get('page') || '1')
     const limit = parseInt(searchParams.get('limit') || '10')
@@ -85,7 +106,7 @@ export async function getContratosHandler(request: NextRequest): Promise<Respons
     const estado = searchParams.get('estado')
     const fechaInicioStr = searchParams.get('fechaInicio')
     const fechaFinStr = searchParams.get('fechaFin')
-    const where: any = {}
+    const where: any = { tenantId }
     if (tipo && tipo !== 'ALL') where.tipo = tipo
     if (estado && estado !== 'ALL') where.estado = estado
     if (fechaInicioStr || fechaFinStr) {
@@ -130,7 +151,21 @@ export async function createContratoHandler(request: NextRequest): Promise<Respo
     const user = authResultUser.user
     const body = await request.json()
     const data = contratoSchema.parse(body)
-    const numeroConsecutivo = await generarProximoConsecutivo(data.tipo)
+    if (!user.tenantId) return NextResponse.json({ error: 'Se requiere una membresía de empresa activa' }, { status: 403 })
+    const tenantId = user.tenantId ?? ''
+    if (data.clienteId) {
+      const cliente = await prisma.cliente.findFirst({
+        where: { clienteId: data.clienteId, tenantId },
+      })
+      if (!cliente) return NextResponse.json({ error: 'Contrato no encontrado' }, { status: 404 })
+    }
+    if (data.vendorId) {
+      const vendor = await prisma.vendor.findFirst({
+        where: { vendorId: data.vendorId, tenantId },
+      })
+      if (!vendor) return NextResponse.json({ error: 'Contrato no encontrado' }, { status: 404 })
+    }
+    const numeroConsecutivo = await generarProximoConsecutivo(tenantId, data.tipo)
     const numeroContrato = formatearNumeroContrato(data.tipo, numeroConsecutivo)
     const contrato = await prisma.contrato.create({
       data: {
@@ -178,9 +213,10 @@ export async function getContratoByIdHandler(req: NextRequest, context: { params
   try {
     const authResultReq1 = await authenticateUser(req)
     if ('status' in authResultReq1) return authResultReq1 as Response
+    const tenantId = authResultReq1.user.tenantId ?? ''
     const { id } = await context.params
-    const contrato = await prisma.contrato.findUnique({
-      where: { contratoId: id },
+    const contrato = await prisma.contrato.findFirst({
+      where: { contratoId: id, tenantId },
       include: {
         cliente: true,
         vendor: true,
@@ -206,10 +242,11 @@ export async function updateContratoHandler(request: NextRequest, { params }: { 
     const authResultUser = await authenticateUser(request)
     if ('status' in authResultUser) return authResultUser as Response
     const user = authResultUser.user
+    const tenantId = user.tenantId ?? ''
     const { id } = await params
     const body = await request.json()
     const validatedBody = contratoUpdateSchema.parse(body)
-    const existingContrato = await prisma.contrato.findUnique({ where: { contratoId: id } })
+    const existingContrato = await findContratoDelTenant(id, tenantId)
     if (!existingContrato) return NextResponse.json({ error: 'Contrato no encontrado' }, { status: 404 })
     const tipoActual = validatedBody.tipo || existingContrato.tipo
     if ((tipoActual === 'COMPRA_VENTA' || tipoActual === 'SERVICIO')) {
@@ -266,11 +303,13 @@ export async function deleteContratoHandler(request: NextRequest, { params }: { 
   try {
     const authResultUser = await authenticateUser(request)
     if ('status' in authResultUser) return authResultUser as Response
+    const tenantId = authResultUser.user.tenantId ?? ''
     const { id } = await params
-    const contrato = await prisma.contrato.findUnique({
-      where: { contratoId: id },
+    const contrato = await prisma.contrato.findFirst({
+      where: { contratoId: id, tenantId },
       select: { clienteId: true, numeroContrato: true },
     })
+    if (!contrato) return NextResponse.json({ error: 'Contrato no encontrado' }, { status: 404 })
     if (contrato?.clienteId) {
       await prisma.cliente.update({
         where: { clienteId: contrato.clienteId },
@@ -289,11 +328,12 @@ export async function bulkUpdateContratoStatusHandler(req: NextRequest): Promise
   try {
     const authResultReq1 = await authenticateUser(req)
     if ('status' in authResultReq1) return authResultReq1 as Response
+    const tenantId = authResultReq1.user.tenantId ?? ''
     const body = await req.json()
     const { ids, estado } = bulkStatusSchema.parse(body)
     if (ids.length === 0) return NextResponse.json({ message: 'No IDs provided' }, { status: 400 })
     const result = await prisma.contrato.updateMany({
-      where: { contratoId: { in: ids } },
+      where: { contratoId: { in: ids }, tenantId },
       data: { estado },
     })
     return NextResponse.json({ success: true, count: result.count, message: `${result.count} contratos actualizados a ${estado}` })
@@ -308,11 +348,12 @@ export async function bulkDeleteContratosHandler(req: NextRequest): Promise<Resp
   try {
     const authResultReq1 = await authenticateUser(req)
     if ('status' in authResultReq1) return authResultReq1 as Response
+    const tenantIdBulk = authResultReq1.user.tenantId ?? ''
     const body = await req.json()
     const { ids } = bulkDeleteSchema.parse(body)
     if (ids.length === 0) return NextResponse.json({ message: 'No IDs provided' }, { status: 400 })
     const contractsToDelete = await prisma.contrato.findMany({
-      where: { contratoId: { in: ids } },
+      where: { contratoId: { in: ids }, tenantId: tenantIdBulk },
       select: { contratoId: true, clienteId: true },
     })
     const clientIds = contractsToDelete.map((c) => c.clienteId).filter((id): id is string => id !== null)
@@ -322,8 +363,9 @@ export async function bulkDeleteContratosHandler(req: NextRequest): Promise<Resp
         data: { numeroContrato: null },
       })
     }
+    const ownedIds = contractsToDelete.map((c) => c.contratoId)
     const result = await prisma.contrato.deleteMany({
-      where: { contratoId: { in: ids } },
+      where: { contratoId: { in: ownedIds.length > 0 ? ownedIds : ['__none__'] } },
     })
     return NextResponse.json({ success: true, count: result.count, message: `${result.count} contratos eliminados` })
   } catch (error) {
@@ -339,6 +381,9 @@ export async function createContratoVersionHandler(req: NextRequest, { params }:
     if ('status' in authResultReq1) return authResultReq1 as Response
     const user = authResultReq1.user
     const { id } = await params
+    const tenantId = user.tenantId ?? 'sin-tenant'
+    const owner = await findContratoDelTenant(id, user.tenantId ?? '')
+    if (!owner) return NextResponse.json({ error: 'Contrato no encontrado' }, { status: 404 })
     const formData = await req.formData() as any
     const file = formData.get('file') as File | null
     const cambios = formData.get('cambios') as string
@@ -352,7 +397,6 @@ export async function createContratoVersionHandler(req: NextRequest, { params }:
 
     const bytes = await file.arrayBuffer()
     const buffer = Buffer.from(bytes)
-    const tenantId = user.tenantId ?? 'sin-tenant'
     const fileHash = getBufferHash(buffer)
     const uploadPolicy = resolveUploadPolicy({
       uploadKey: 'contratos.version',
@@ -459,6 +503,8 @@ export async function checkContratoVersionDiffHandler(req: NextRequest, { params
     const authResultReq1 = await authenticateUser(req)
     if ('status' in authResultReq1) return authResultReq1 as Response
     const { id } = await params
+    const ownerDiff = await findContratoDelTenant(id, authResultReq1.user.tenantId ?? '')
+    if (!ownerDiff) return NextResponse.json({ error: 'Contrato no encontrado' }, { status: 404 })
     const formData = await req.formData() as any
     const file = formData.get('file') as File | null
     if (!file) return NextResponse.json({ error: 'No file provided' }, { status: 400 })
@@ -576,6 +622,8 @@ export async function getContratoFirmasHandler(req: NextRequest, context: { para
     const authResultReq1 = await authenticateUser(req)
     if ('status' in authResultReq1) return authResultReq1 as Response
     const { id } = await context.params
+    const owner = await findContratoDelTenant(id, authResultReq1.user.tenantId ?? '')
+    if (!owner) return NextResponse.json({ error: 'Contrato no encontrado' }, { status: 404 })
     const firmas = await prisma.contratoFirma.findMany({
       where: { contratoId: id },
       include: { firmante: { select: { userId: true, name: true, email: true } } },
@@ -593,22 +641,36 @@ export async function createContratoFirmaHandler(request: NextRequest, { params 
     const authResultUser = await authenticateUser(request)
     if ('status' in authResultUser) return authResultUser as Response
     const { id } = await params
-    const body = await request.json()
+    const owner = await findContratoDelTenant(id, authResultUser.user.tenantId ?? '')
+    if (!owner) return NextResponse.json({ error: 'Contrato no encontrado' }, { status: 404 })
+    let body: unknown
+    try {
+      body = contratoFirmaSchema.parse(await request.json())
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        return NextResponse.json({ error: 'Validation error', details: error.errors }, { status: 400 })
+      }
+      throw error
+    }
+    const parsed = body as z.infer<typeof contratoFirmaSchema>
     const firma = await prisma.contratoFirma.create({
       data: {
         contratoId: id,
-        firmanteId: body.firmanteId,
-        tipoFirma: body.tipoFirma,
-        estado: body.estado || 'PENDIENTE',
-        firmaDigital: body.firmaDigital,
-        fechaFirma: body.fechaFirma ? new Date(body.fechaFirma) : null,
-        comentarios: body.comentarios,
+        firmanteId: parsed.firmanteId,
+        tipoFirma: parsed.tipoFirma,
+        estado: parsed.estado || 'PENDIENTE',
+        firmaDigital: parsed.firmaDigital,
+        fechaFirma: parsed.fechaFirma ? new Date(parsed.fechaFirma) : null,
+        comentarios: parsed.comentarios,
       },
       include: { firmante: { select: { userId: true, name: true, email: true } } },
     })
     return NextResponse.json(firma)
   } catch (error) {
     console.error('Error al crear firma:', error)
+    if (error instanceof z.ZodError) {
+      return NextResponse.json({ error: 'Validation error', details: error.errors }, { status: 400 })
+    }
     return NextResponse.json({ error: 'Error al crear firma' }, { status: 500 })
   }
 }
@@ -618,6 +680,8 @@ export async function getContratoArchivosHandler(req: NextRequest, context: { pa
     const authResultReq1 = await authenticateUser(req)
     if ('status' in authResultReq1) return authResultReq1 as Response
     const { id } = await context.params
+    const owner = await findContratoDelTenant(id, authResultReq1.user.tenantId ?? '')
+    if (!owner) return NextResponse.json({ error: 'Contrato no encontrado' }, { status: 404 })
     const archivos = await prisma.contratoArchivo.findMany({
       where: { contratoId: id },
       include: { version: true, generador: { select: { userId: true, name: true, email: true } } },
@@ -636,6 +700,8 @@ export async function createContratoArchivoHandler(request: NextRequest, { param
     if ('status' in authResultUser) return authResultUser as Response
     const user = authResultUser.user
     const { id } = await params
+    const ownerArchivo = await findContratoDelTenant(id, user.tenantId ?? '')
+    if (!ownerArchivo) return NextResponse.json({ error: 'Contrato no encontrado' }, { status: 404 })
     const body = contratoArchivoCreateSchema.parse(await request.json())
     const tenantId = user.tenantId ?? 'sin-tenant'
     const storageProvider = body.storageProvider ?? 'cloudinary'
@@ -691,6 +757,8 @@ export async function getContratoAprobacionesHandler(req: NextRequest, context: 
     const authResultReq1 = await authenticateUser(req)
     if ('status' in authResultReq1) return authResultReq1 as Response
     const { id } = await context.params
+    const owner = await findContratoDelTenant(id, authResultReq1.user.tenantId ?? '')
+    if (!owner) return NextResponse.json({ error: 'Contrato no encontrado' }, { status: 404 })
     const aprobaciones = await prisma.contratoAprobacion.findMany({
       where: { contratoId: id },
       include: { aprobador: { select: { userId: true, name: true, email: true } } },
@@ -708,6 +776,8 @@ export async function createContratoAprobacionHandler(request: NextRequest, { pa
     const authResultUser = await authenticateUser(request)
     if ('status' in authResultUser) return authResultUser as Response
     const { id } = await params
+    const owner = await findContratoDelTenant(id, authResultUser.user.tenantId ?? '')
+    if (!owner) return NextResponse.json({ error: 'Contrato no encontrado' }, { status: 404 })
     const body = await request.json()
     const aprobacion = await prisma.contratoAprobacion.create({
       data: {
@@ -738,6 +808,8 @@ export async function getContratoAlertasHandler(req: NextRequest, context: { par
     const authResultReq1 = await authenticateUser(req)
     if ('status' in authResultReq1) return authResultReq1 as Response
     const { id } = await context.params
+    const owner = await findContratoDelTenant(id, authResultReq1.user.tenantId ?? '')
+    if (!owner) return NextResponse.json({ error: 'Contrato no encontrado' }, { status: 404 })
     const searchParams = req.nextUrl.searchParams
     const noLeidas = searchParams.get('noLeidas')
     const where: any = { contratoId: id }
@@ -758,6 +830,8 @@ export async function createContratoAlertaHandler(request: NextRequest, { params
     const authResultUser = await authenticateUser(request)
     if ('status' in authResultUser) return authResultUser as Response
     const { id } = await params
+    const owner = await findContratoDelTenant(id, authResultUser.user.tenantId ?? '')
+    if (!owner) return NextResponse.json({ error: 'Contrato no encontrado' }, { status: 404 })
     const body = await request.json()
     const alerta = await prisma.contratoAlerta.create({
       data: {

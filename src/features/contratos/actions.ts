@@ -86,7 +86,7 @@ export const createContratoAction = withAction(async (input: ContratoInput, user
   const parsed = contratoSchema.parse(input);
   const tenantId = requireTenant(user);
 
-  const numeroConsecutivo = await generarProximoConsecutivo(parsed.tipo);
+  const numeroConsecutivo = await generarProximoConsecutivo(tenantId, parsed.tipo);
   const numeroContrato = formatearNumeroContrato(parsed.tipo, numeroConsecutivo);
 
   const contrato = await prisma.contrato.create({
