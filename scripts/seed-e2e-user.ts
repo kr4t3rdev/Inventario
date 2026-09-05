@@ -159,6 +159,101 @@ async function seedProductionCatalog(): Promise<void> {
 }
 
 /**
+ * @description Garantiza la licencia activa del tenant E2E con los features de
+ * servicios habilitados (sin ellos el plan Básico no expone /busy/servicios).
+ * @returns {Promise<void>} Licencia activa con featureOverrides de servicios.
+ */
+async function seedLicenseE2E(): Promise<void> {
+  const plan = await prisma.plan.findFirst({ orderBy: { precio: 'asc' } })
+  if (!plan) throw new Error('No hay planes en la DB — ejecuta pnpm run seed:plans primero')
+
+  const now = new Date()
+  const expiry = new Date(now.getFullYear() + 1, now.getMonth(), now.getDate())
+  await prisma.tenantLicense.upsert({
+    where: { tenantLicenseId: 'e2e-license-1' },
+    update: {
+      planId: plan.planId,
+      activa: true,
+      expiracion: expiry,
+      featureOverrides: {
+        servicios: true,
+        'venta-servicios': true,
+        'compras-servicios': true,
+      },
+    },
+    create: {
+      tenantLicenseId: 'e2e-license-1',
+      tenantId: E2E_TENANT_ID,
+      planId: plan.planId,
+      activa: true,
+      inicio: now,
+      expiracion: expiry,
+      maxUsuarios: 100,
+      maxAlmacenes: 10,
+      maxProductos: 90000,
+      maxClientes: 90000,
+      featureOverrides: {
+        servicios: true,
+        'venta-servicios': true,
+        'compras-servicios': true,
+      },
+      listPriceUsd: 0,
+      finalPriceUsd: 0,
+    },
+  })
+}
+
+/**
+ * @description Garantiza el catálogo mínimo de servicios/vendors/clientes para
+ * probar el carrito con toggle Venta/Compra.
+ * @returns {Promise<void>} Catálogo de servicios y contrapartes del tenant E2E.
+ */
+async function seedServiciosCatalog(): Promise<void> {
+  await prisma.servicios.upsert({
+    where: { servicioId: 'e2e-servicio-1' },
+    update: {},
+    create: {
+      servicioId: 'e2e-servicio-1',
+      tenantId: E2E_TENANT_ID,
+      nombre: 'Reparación general',
+      descripcion: 'Servicio de reparación general',
+      precio: 500,
+      moneda: 'CUP',
+    },
+  })
+  await prisma.servicios.upsert({
+    where: { servicioId: 'e2e-servicio-2' },
+    update: {},
+    create: {
+      servicioId: 'e2e-servicio-2',
+      tenantId: E2E_TENANT_ID,
+      nombre: 'Instalación',
+      descripcion: 'Instalación de equipo',
+      precio: 1500,
+      moneda: 'CUP',
+    },
+  })
+  await prisma.vendor.upsert({
+    where: { vendorId: 'e2e-proveedor-1' },
+    update: {},
+    create: {
+      vendorId: 'e2e-proveedor-1',
+      tenantId: E2E_TENANT_ID,
+      nombre: 'Proveedor Demo',
+    },
+  })
+  await prisma.cliente.upsert({
+    where: { clienteId: 'e2e-cliente-1' },
+    update: {},
+    create: {
+      clienteId: 'e2e-cliente-1',
+      tenantId: E2E_TENANT_ID,
+      nombre: 'Cliente Demo',
+    },
+  })
+}
+
+/**
  * @description Ejecuta la siembra del usuario y del catálogo E2E.
  * @returns {Promise<void>} Promesa resuelta cuando todas las fixtures quedan listas.
  */
@@ -223,9 +318,12 @@ async function main() {
   })
 
   await seedProductionCatalog()
+  await seedLicenseE2E()
+  await seedServiciosCatalog()
 
   console.log(`[E2E Seed] Usuario listo: ${E2E_USER.email} / ${E2E_USER.password}`)
   console.log('[E2E Seed] Catálogo listo: E2E Aceite Volumen 1L, E2E Arroz Masa 1kg')
+  console.log('[E2E Seed] Licencia E2E con features servicios activados y catálogo de servicios')
 }
 
 main()

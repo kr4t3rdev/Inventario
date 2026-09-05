@@ -58,7 +58,10 @@
     "openapi:generate:check": "node scripts/openapi/check-generated.mjs",
     "openapi:check": "pnpm run openapi:lint && pnpm run openapi:parity && pnpm run mobile:smoke && pnpm run openapi:generate:check",
     "ops:monitor:accounting-reports": "tsx scripts/ops/accounting-reports-monitor.ts",
-    "test:integration": "vitest run --config vitest.integration.config.mjs"
+    "test:integration": "vitest run --config vitest.integration.config.mjs",
+    "seed:e2e": "tsx scripts/seed-e2e-user.ts",
+    "e2e:prep": "playwright test --config playwright.cart.config.ts e2e/prep-auth.spec.ts",
+    "test:e2e:prod": "pnpm run seed:e2e && pnpm run e2e:prep && playwright test --config playwright.cart.config.ts e2e/servicios-cart.spec.ts"
   },
   "dependencies": {
     "@clerk/nextjs": "^6.22.0",
