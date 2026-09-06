@@ -62,9 +62,9 @@ async function validatePriceListsTenant(
 // ─── EAN-13: shared utilities ─────────────────────────────
 import {
 	resolveTaxonomySegments,
-	generateProductCodeWithRetry,
 	normalizeProveedorCodigo,
 } from "@/lib/product-business-code";
+import { generateProductCodeWithRetry } from "@/lib/product-business-code.server";
 import {
 	FindNextAvailableSurtido,
 	ValidateAssembledCode,
