@@ -9,7 +9,7 @@ import { revalidatePath } from 'next/cache';
 import { withAction, ActionError } from '@/lib/server-actions';
 import { prisma } from '@/lib/prisma';
 import { requireFeature, requireTenant } from '@/lib/services/tenant-scope';
-import { generarProximoConsecutivo, formatearNumeroContrato } from '@/features/contratos/lib/numeroContratoGenerator';
+import { generarProximoConsecutivo, formatearNumeroContrato, crearContratoConConsecutivo } from '@/features/contratos/lib/numeroContratoGenerator';
 import { contratoSchema, contratoUpdateSchema, bulkStatusSchema, bulkDeleteSchema } from './schemas';
 import type { ContratoInput, ContratoUpdateInput, BulkStatusInput, BulkDeleteInput } from './schemas';
 import type { AuthenticatedUser } from '@/lib/auth-middleware';
@@ -86,11 +86,20 @@ export const createContratoAction = withAction(async (input: ContratoInput, user
   const parsed = contratoSchema.parse(input);
   const tenantId = requireTenant(user);
 
-  const numeroConsecutivo = await generarProximoConsecutivo(tenantId, parsed.tipo);
-  const numeroContrato = formatearNumeroContrato(parsed.tipo, numeroConsecutivo);
+  // Validar pertenencia al tenant de cliente y vendor antes de crear
+  if (parsed.clienteId) {
+    const cliente = await prisma.cliente.findFirst({ where: { clienteId: parsed.clienteId, tenantId } });
+    if (!cliente) throw new ActionError('Cliente no encontrado', 'NOT_FOUND');
+  }
+  if (parsed.vendorId) {
+    const vendor = await prisma.vendor.findFirst({ where: { vendorId: parsed.vendorId, tenantId } });
+    if (!vendor) throw new ActionError('Vendor no encontrado', 'NOT_FOUND');
+  }
 
-  const contrato = await prisma.contrato.create({
-    data: {
+  const contrato = await crearContratoConConsecutivo({
+    tenantId,
+    tipo: parsed.tipo,
+    buildData: (numeroConsecutivo, numeroContrato) => ({
       tipo: parsed.tipo,
       tenantId,
       creadoPor: user.userId,
@@ -106,32 +115,32 @@ export const createContratoAction = withAction(async (input: ContratoInput, user
       observaciones: parsed.observaciones || null,
       clienteId: parsed.clienteId || null,
       vendorId: parsed.vendorId || null,
-    },
-    include: {
-      cliente: true,
-      vendor: true,
-      creador: { select: { userId: true, name: true, email: true } },
+    }),
+    create: async (data) => {
+      const c = await prisma.contrato.create({
+        data,
+        include: { cliente: true, vendor: true, creador: { select: { userId: true, name: true, email: true } } },
+      });
+      // Crear versión inicial
+      await prisma.contratoVersion.create({
+        data: {
+          contratoId: c.contratoId,
+          numeroVersion: 1,
+          contenido: { condiciones: parsed.condiciones },
+          cambios: 'Versión inicial',
+          creadoPor: user.userId,
+        },
+      });
+      // Actualizar número de contrato en el cliente
+      if (parsed.clienteId) {
+        await prisma.cliente.update({
+          where: { clienteId: parsed.clienteId },
+          data: { numeroContrato: c.numeroContrato },
+        });
+      }
+      return c;
     },
   });
-
-  // Crear versión inicial
-  await prisma.contratoVersion.create({
-    data: {
-      contratoId: contrato.contratoId,
-      numeroVersion: 1,
-      contenido: { condiciones: parsed.condiciones },
-      cambios: 'Versión inicial',
-      creadoPor: user.userId,
-    },
-  });
-
-  // Actualizar número de contrato en el cliente
-  if (parsed.clienteId) {
-    await prisma.cliente.update({
-      where: { clienteId: parsed.clienteId },
-      data: { numeroContrato: contrato.numeroContrato },
-    });
-  }
 
   revalidatePath('/busy/contratos');
   return contrato;

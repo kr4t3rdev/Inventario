@@ -161,14 +161,14 @@ export const facturarOfertaAction = withAction(async (input: FacturarOfertaInput
   if (oferta.estado === 'FACTURADA') throw new ActionError('La oferta ya fue facturada', 'VALIDATION_ERROR');
   if (oferta.estado === 'RECHAZADA') throw new ActionError('No se puede facturar una oferta rechazada', 'VALIDATION_ERROR');
 
-  let turnoId: string | null = null;
   const turnoResult = await getOrCreateTurnoActivo({
     puntoDeVentaId: parsed.puntoDeVentaId,
     empleadoId: parsed.empleadoId,
   });
-  if (turnoResult.success) {
-    turnoId = turnoResult.data.turnoId;
+  if (!turnoResult.success) {
+    throw new ActionError(turnoResult.error.message, turnoResult.error.code ?? 'VALIDATION_ERROR');
   }
+  const turnoId = turnoResult.data.turnoId;
 
   const resultado = await prisma.$transaction(async (tx: any) => {
     const workflow = await facturarOfertaWorkflow(tx, {

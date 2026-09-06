@@ -152,6 +152,11 @@ export async function facturarOfertaWorkflow(
 
   for (const item of params.servicios ?? []) {
     if (!item.servicioId) continue;
+    const servicio = await tx.servicios.findFirst({
+      where: { servicioId: item.servicioId, tenantId: params.tenantId },
+      select: { servicioId: true, moneda: true, nombre: true },
+    });
+    if (!servicio) throw new ActionError('Servicio no encontrado', 'NOT_FOUND');
     await tx.ventaServicios.create({
       data: {
         tenantId: params.tenantId,
@@ -160,7 +165,8 @@ export async function facturarOfertaWorkflow(
         cantidad: item.cantidad,
         precioUnitario: Number(item.precioUnitario),
         total: Number(item.total),
-        moneda: item.moneda,
+        moneda: servicio.moneda ?? item.moneda,
+        ventaId: venta.ventaId,
       },
     });
   }

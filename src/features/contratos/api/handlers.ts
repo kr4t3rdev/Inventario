@@ -3,7 +3,7 @@ import { prisma } from '@/lib/prisma'
 import { z } from 'zod'
 import { authenticateUser } from '@/lib/auth-middleware'
 import { ActionError } from '@/lib/server-actions/types'
-import { generarProximoConsecutivo, formatearNumeroContrato } from '@/features/contratos/lib/numeroContratoGenerator'
+import { generarProximoConsecutivo, formatearNumeroContrato, crearContratoConConsecutivo } from '@/features/contratos/lib/numeroContratoGenerator'
 import fs from 'fs'
 import path from 'path'
 import crypto from 'crypto'
@@ -92,6 +92,15 @@ export async function findContratoDelTenant(contratoId: string, tenantId: string
   return prisma.contrato.findFirst({ where: { contratoId, tenantId } })
 }
 
+/**
+ * @description Valida que un userId sea miembro del tenant (para firmantes/aprobadores).
+ * @returns {Promise<boolean>} true si el usuario es miembro del tenant.
+ */
+async function usuarioEsMiembroDelTenant(userId: string, tenantId: string): Promise<boolean> {
+  const m = await prisma.tenantMembership.findFirst({ where: { userId, tenantId }, select: { membershipId: true } })
+  return Boolean(m)
+}
+
 export async function getContratosHandler(request: NextRequest): Promise<Response> {
   try {
     const authResultUser = await authenticateUser(request)
@@ -165,41 +174,47 @@ export async function createContratoHandler(request: NextRequest): Promise<Respo
       })
       if (!vendor) return NextResponse.json({ error: 'Contrato no encontrado' }, { status: 404 })
     }
-    const numeroConsecutivo = await generarProximoConsecutivo(tenantId, data.tipo)
-    const numeroContrato = formatearNumeroContrato(data.tipo, numeroConsecutivo)
-    const contrato = await prisma.contrato.create({
-      data: {
+    const contratoAcc = await crearContratoConConsecutivo({
+      tenantId: tenantId,
+      tipo: data.tipo,
+      buildData: (numeroConsecutivo, numeroContrato) => ({
         ...data,
-        tenantId: user.tenantId ?? '',
+        tenantId: tenantId,
         creadoPor: user.userId,
         numeroContrato,
         numeroConsecutivo,
         numeroContratoClienteProveedor: data.numeroContratoClienteProveedor || null,
         fechaInicio: new Date(data.fechaInicio),
         fechaFin: data.fechaFin ? new Date(data.fechaFin) : null,
-      },
-      include: {
-        cliente: true,
-        vendor: true,
-        creador: { select: { userId: true, name: true, email: true } },
+      }),
+      create: async (payload) => {
+        const c = await prisma.contrato.create({
+          data: payload,
+          include: {
+            cliente: true,
+            vendor: true,
+            creador: { select: { userId: true, name: true, email: true } },
+          },
+        })
+        const version = await prisma.contratoVersion.create({
+          data: {
+            contratoId: c.contratoId,
+            numeroVersion: 1,
+            contenido: { condiciones: data.condiciones },
+            cambios: 'Versión inicial',
+            creadoPor: user.userId,
+          },
+        })
+        if (data.clienteId) {
+          await prisma.cliente.update({
+            where: { clienteId: data.clienteId },
+            data: { numeroContrato: c.numeroContrato },
+          })
+        }
+        return { ...c, versionActual: version }
       },
     })
-    const version = await prisma.contratoVersion.create({
-      data: {
-        contratoId: contrato.contratoId,
-        numeroVersion: 1,
-        contenido: { condiciones: data.condiciones },
-        cambios: 'Versión inicial',
-        creadoPor: user.userId,
-      },
-    })
-    if (data.clienteId) {
-      await prisma.cliente.update({
-        where: { clienteId: data.clienteId },
-        data: { numeroContrato: contrato.numeroContrato },
-      })
-    }
-    return NextResponse.json({ ...contrato, versionActual: version })
+    return NextResponse.json(contratoAcc)
   } catch (error) {
     console.error('Error al crear contrato:', error)
     if (error instanceof z.ZodError) {
@@ -257,6 +272,20 @@ export async function updateContratoHandler(request: NextRequest, { params }: { 
       const vendorId = validatedBody.vendorId !== undefined ? validatedBody.vendorId : existingContrato.vendorId
       if (!vendorId) return NextResponse.json({ error: 'El campo Proveedor es requerido para contratos de tipo SUMINISTROS' }, { status: 400 })
     }
+    // Validar IDs de relaciones externas al contrato pertenecer al tenant
+    if (validatedBody.clienteId !== undefined && validatedBody.clienteId !== null) {
+      const c = await prisma.cliente.findFirst({ where: { clienteId: validatedBody.clienteId, tenantId } })
+      if (!c) return NextResponse.json({ error: 'Contrato no encontrado' }, { status: 404 })
+    }
+    if (validatedBody.vendorId !== undefined && validatedBody.vendorId !== null) {
+      const v = await prisma.vendor.findFirst({ where: { vendorId: validatedBody.vendorId, tenantId } })
+      if (!v) return NextResponse.json({ error: 'Contrato no encontrado' }, { status: 404 })
+    }
+    if (validatedBody.aprobadoPor !== undefined && validatedBody.aprobadoPor !== null) {
+      const validMiembro = await usuarioEsMiembroDelTenant(validatedBody.aprobadoPor, tenantId)
+      if (!validMiembro) return NextResponse.json({ error: 'Contrato no encontrado' }, { status: 404 })
+    }
+
     const data: any = {}
     if (validatedBody.numeroContrato !== undefined) data.numeroContrato = validatedBody.numeroContrato
     if (validatedBody.tipo !== undefined) data.tipo = validatedBody.tipo
@@ -641,7 +670,8 @@ export async function createContratoFirmaHandler(request: NextRequest, { params 
     const authResultUser = await authenticateUser(request)
     if ('status' in authResultUser) return authResultUser as Response
     const { id } = await params
-    const owner = await findContratoDelTenant(id, authResultUser.user.tenantId ?? '')
+    const tenantId = authResultUser.user.tenantId ?? ''
+    const owner = await findContratoDelTenant(id, tenantId)
     if (!owner) return NextResponse.json({ error: 'Contrato no encontrado' }, { status: 404 })
     let body: unknown
     try {
@@ -653,6 +683,11 @@ export async function createContratoFirmaHandler(request: NextRequest, { params 
       throw error
     }
     const parsed = body as z.infer<typeof contratoFirmaSchema>
+    // Validar que el firmante es miembro del tenant (prevención IDOR en relaciones)
+    const firmanteValido = await usuarioEsMiembroDelTenant(parsed.firmanteId, tenantId)
+    if (!firmanteValido) {
+      return NextResponse.json({ error: 'Contrato no encontrado' }, { status: 404 })
+    }
     const firma = await prisma.contratoFirma.create({
       data: {
         contratoId: id,
@@ -703,6 +738,15 @@ export async function createContratoArchivoHandler(request: NextRequest, { param
     const ownerArchivo = await findContratoDelTenant(id, user.tenantId ?? '')
     if (!ownerArchivo) return NextResponse.json({ error: 'Contrato no encontrado' }, { status: 404 })
     const body = contratoArchivoCreateSchema.parse(await request.json())
+    // Validar que la versión referenciada pertenece al contrato (prevención IDOR en relaciones)
+    if (body.versionId) {
+      const versionDelContrato = await prisma.contratoVersion.findFirst({
+        where: { versionId: body.versionId, contratoId: id },
+      })
+      if (!versionDelContrato) {
+        return NextResponse.json({ error: 'Contrato no encontrado' }, { status: 404 })
+      }
+    }
     const tenantId = user.tenantId ?? 'sin-tenant'
     const storageProvider = body.storageProvider ?? 'cloudinary'
     assertContratoAttachmentAsset({
@@ -776,9 +820,15 @@ export async function createContratoAprobacionHandler(request: NextRequest, { pa
     const authResultUser = await authenticateUser(request)
     if ('status' in authResultUser) return authResultUser as Response
     const { id } = await params
-    const owner = await findContratoDelTenant(id, authResultUser.user.tenantId ?? '')
+    const tenantId = authResultUser.user.tenantId ?? ''
+    const owner = await findContratoDelTenant(id, tenantId)
     if (!owner) return NextResponse.json({ error: 'Contrato no encontrado' }, { status: 404 })
     const body = await request.json()
+    // Validar que el aprobador es miembro del tenant (prevención IDOR en relaciones)
+    const aprobadorValido = await usuarioEsMiembroDelTenant(body.aprobadorId, tenantId)
+    if (!aprobadorValido) {
+      return NextResponse.json({ error: 'Contrato no encontrado' }, { status: 404 })
+    }
     const aprobacion = await prisma.contratoAprobacion.create({
       data: {
         contratoId: id,

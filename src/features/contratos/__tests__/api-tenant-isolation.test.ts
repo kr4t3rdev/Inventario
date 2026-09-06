@@ -23,6 +23,7 @@ vi.mock('@/lib/prisma', () => ({
     contratoAprobacion: { findMany: vi.fn(), create: vi.fn() },
     contratoArchivo: { findMany: vi.fn(), create: vi.fn() },
     contratoAlerta: { findMany: vi.fn(), create: vi.fn() },
+    tenantMembership: { findFirst: vi.fn() },
     cliente: { update: vi.fn(), updateMany: vi.fn(), findFirst: vi.fn() },
     vendor: { findFirst: vi.fn() },
   },
@@ -259,5 +260,119 @@ describe('CU-01 aislamiento tenant API contratos (RED)', () => {
       params('ct-b'),
     )) as Response;
     expect(res.status).toBe(404);
+  });
+
+  // ─── Relaciones externas: deben validar pertenencia al tenant (fix F-05) ───
+
+  it('POST firma con firmante de otro tenant devuelve 404', async () => {
+    vi.mocked(prisma.contrato.findFirst).mockResolvedValue({ contratoId: 'ct-a', tenantId: 'tenant-A' } as never);
+    vi.mocked(prisma.tenantMembership.findFirst).mockResolvedValue(null as never);
+    const res = (await createContratoFirmaHandler(
+      req('http://localhost/api/contratos/ct-a/firmas', {
+        method: 'POST',
+        body: JSON.stringify({ firmanteId: 'user-B', tipoFirma: 'INTERNO' }),
+      }) as never,
+      params('ct-a'),
+    )) as Response;
+    expect(res.status).toBe(404);
+    expect(prisma.contratoFirma.create).not.toHaveBeenCalled();
+    expect(prisma.tenantMembership.findFirst).toHaveBeenCalledWith(
+      expect.objectContaining({ where: expect.objectContaining({ tenantId: 'tenant-A', userId: 'user-B' }) }),
+    );
+  });
+
+  it('POST firma con firmante del mismo tenant es aceptada', async () => {
+    vi.mocked(prisma.contrato.findFirst).mockResolvedValue({ contratoId: 'ct-a', tenantId: 'tenant-A' } as never);
+    vi.mocked(prisma.tenantMembership.findFirst).mockResolvedValue({ userId: 'user-a' } as never);
+    vi.mocked(prisma.contratoFirma.create).mockResolvedValue({ firmaId: 'f1' } as never);
+    const res = (await createContratoFirmaHandler(
+      req('http://localhost/api/contratos/ct-a/firmas', {
+        method: 'POST',
+        body: JSON.stringify({ firmanteId: 'user-a', tipoFirma: 'INTERNO' }),
+      }) as never,
+      params('ct-a'),
+    )) as Response;
+    expect(res.status).toBe(200);
+  });
+
+  it('POST aprobación con aprobador de otro tenant devuelve 404', async () => {
+    vi.mocked(prisma.contrato.findFirst).mockResolvedValue({ contratoId: 'ct-a', tenantId: 'tenant-A' } as never);
+    vi.mocked(prisma.tenantMembership.findFirst).mockResolvedValue(null as never);
+    const res = (await createContratoAprobacionHandler(
+      req('http://localhost/api/contratos/ct-a/aprobaciones', {
+        method: 'POST',
+        body: JSON.stringify({ nivel: 1, aprobadorId: 'user-B' }),
+      }) as never,
+      params('ct-a'),
+    )) as Response;
+    expect(res.status).toBe(404);
+    expect(prisma.contratoAprobacion.create).not.toHaveBeenCalled();
+  });
+
+  it('POST archivo con versión de otro contrato devuelve 404', async () => {
+    vi.mocked(prisma.contrato.findFirst).mockResolvedValue({ contratoId: 'ct-a', tenantId: 'tenant-A' } as never);
+    vi.mocked(prisma.contratoVersion.findFirst).mockResolvedValue(null as never);
+    const res = (await createContratoArchivoHandler(
+      req('http://localhost/api/contratos/ct-a/archivos', {
+        method: 'POST',
+        body: JSON.stringify({
+          versionId: 'v-externa',
+          tipo: 'DOCUMENTO',
+          rutaArchivo: 'https://res.cloudinary.com/demo/raw/x.pdf',
+          nombreArchivo: 'x.pdf',
+          cloudinaryPublicId: 'pub-id-1',
+          mimeType: 'application/pdf',
+          bytes: 3,
+        }),
+      }) as never,
+      params('ct-a'),
+    )) as Response;
+    expect(res.status).toBe(404);
+    expect(prisma.contratoArchivo.create).not.toHaveBeenCalled();
+    expect(prisma.contratoVersion.findFirst).toHaveBeenCalledWith(
+      expect.objectContaining({ where: expect.objectContaining({ versionId: 'v-externa', contratoId: 'ct-a' }) }),
+    );
+  });
+
+  it('PUT contrato con clienteId de otro tenant devuelve 404', async () => {
+    vi.mocked(prisma.contrato.findFirst).mockResolvedValue({ contratoId: 'ct-a', tenantId: 'tenant-A', tipo: 'OTRO' } as never);
+    vi.mocked(prisma.cliente.findFirst).mockResolvedValue(null as never);
+    const res = (await updateContratoHandler(
+      req('http://localhost/api/contratos/ct-a', {
+        method: 'PUT',
+        body: JSON.stringify({ clienteId: 'cli-B' }),
+      }) as never,
+      params('ct-a'),
+    )) as Response;
+    expect(res.status).toBe(404);
+    expect(prisma.contrato.update).not.toHaveBeenCalled();
+  });
+
+  it('PUT contrato con vendorId de otro tenant devuelve 404', async () => {
+    vi.mocked(prisma.contrato.findFirst).mockResolvedValue({ contratoId: 'ct-a', tenantId: 'tenant-A', tipo: 'OTRO' } as never);
+    vi.mocked(prisma.vendor.findFirst).mockResolvedValue(null as never);
+    const res = (await updateContratoHandler(
+      req('http://localhost/api/contratos/ct-a', {
+        method: 'PUT',
+        body: JSON.stringify({ vendorId: 'ven-B' }),
+      }) as never,
+      params('ct-a'),
+    )) as Response;
+    expect(res.status).toBe(404);
+    expect(prisma.contrato.update).not.toHaveBeenCalled();
+  });
+
+  it('PUT contrato con aprobadoPor de otro tenant devuelve 404', async () => {
+    vi.mocked(prisma.contrato.findFirst).mockResolvedValue({ contratoId: 'ct-a', tenantId: 'tenant-A', tipo: 'OTRO' } as never);
+    vi.mocked(prisma.tenantMembership.findFirst).mockResolvedValue(null as never);
+    const res = (await updateContratoHandler(
+      req('http://localhost/api/contratos/ct-a', {
+        method: 'PUT',
+        body: JSON.stringify({ aprobadoPor: 'user-B' }),
+      }) as never,
+      params('ct-a'),
+    )) as Response;
+    expect(res.status).toBe(404);
+    expect(prisma.contrato.update).not.toHaveBeenCalled();
   });
 });

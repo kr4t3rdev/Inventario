@@ -144,6 +144,7 @@ model Cliente {
   facturas          Factura[]
 
   @@index([tenantId])
+  @@index([listaPrecioId])
 }
 
 /// * Modelo base de multi-tenant. Cada empresa/organización es un Tenant.
@@ -544,6 +545,7 @@ model Venta {
   turno              TurnoPuntoVenta?      @relation(fields: [turnoId], references: [id])
   factura            Factura?
   items              VentaItem[]
+  VentaServicios     VentaServicios[]
 
   @@index([tenantId])
   @@index([tenantId, createdAt])
@@ -1312,14 +1314,17 @@ model VentaServicios {
   observaciones    String?
   reconciliado     Boolean?
   clienteId        String?
+  ventaId          String?
   createdAt        DateTime                 @default(now())
   updatedAt        DateTime                 @updatedAt
   reconciliaciones ReconciliacionServicio[]
   cliente          Cliente?                 @relation(fields: [clienteId], references: [clienteId], onDelete: Cascade)
   servicio         Servicios                @relation(fields: [servicioId], references: [servicioId], onDelete: Cascade)
+  venta            Venta?                   @relation(fields: [ventaId], references: [ventaId], onDelete: SetNull)
   tenant           Tenant                   @relation(fields: [tenantId], references: [tenantId])
 
   @@index([tenantId])
+  @@index([ventaId])
 }
 
 model CompraServicio {

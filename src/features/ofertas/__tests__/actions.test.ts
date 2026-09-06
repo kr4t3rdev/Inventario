@@ -15,6 +15,7 @@ const mockTx = {
   oferta: { update: vi.fn() },
   venta: { create: vi.fn() },
   ventaServicios: { create: vi.fn() },
+  servicios: { findFirst: vi.fn() },
   factura: { create: vi.fn() },
   serieFacturacion: { findFirst: vi.fn(), create: vi.fn(), update: vi.fn() },
   producto: { findUnique: vi.fn() },
@@ -236,6 +237,7 @@ describe('Ofertas Server Actions', () => {
       mockTx.serieFacturacion.findFirst.mockResolvedValue({ serieId: 'serie-1', prefijo: 'FV', consecutivo: 1 });
       mockTx.serieFacturacion.update.mockResolvedValue({ consecutivo: 2 });
       mockTx.venta.create.mockResolvedValue({ ventaId: 'ven-mix' });
+      mockTx.servicios.findFirst.mockResolvedValue({ servicioId: 'srv-1', moneda: 'CUP', nombre: 'Srv' });
       mockTx.ventaServicios.create.mockResolvedValue({ ventaServicioId: 'vs-1' });
       mockTx.factura.create.mockResolvedValue({ idFactura: 'fac-mix' });
       mockTx.producto.findUnique.mockResolvedValue({ id: 'prod-1', nombre: 'P', tenantId: 'tenant-test' });
@@ -245,6 +247,10 @@ describe('Ofertas Server Actions', () => {
       const result = await facturarOfertaAction({ ofertaId: 'of-mix', puntoDeVentaId: 'pv-1' });
 
       expect(result.success).toBe(true);
+      expect(mockTx.servicios.findFirst).toHaveBeenCalledWith({
+        where: { servicioId: 'srv-1', tenantId: 'tenant-test' },
+        select: { servicioId: true, moneda: true, nombre: true },
+      });
       expect(mockTx.venta.create).toHaveBeenCalledWith(expect.objectContaining({
         data: expect.objectContaining({
           items: { create: [{ productoId: 'prod-1', cantidad: 2, precioUnitario: 100, total: 200 }] },

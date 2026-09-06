@@ -320,7 +320,9 @@ export async function obtenerVentasVsReconciliado(
 	]);
 
 	// ── Ventas de servicios ──
-	const filtroServicio = { tenantId, createdAt: rango };
+	// VS con ventaId ya están contabilizadas dentro de la Venta vinculada:
+	// se excluyen para evitar duplicar ingresos de ofertas mixtas.
+	const filtroServicio = { tenantId, createdAt: rango, ventaId: null };
 	const [ventasServicios, totalServicios] = await Promise.all([
 		prisma.ventaServicios.findMany({
 			where: filtroServicio,
