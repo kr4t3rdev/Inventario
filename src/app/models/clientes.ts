@@ -10,6 +10,7 @@ export interface Cliente {
 	numeroCuentaUSD?: string;
 	numeroContrato?: string;
 	logoUrl?: string | null;
+	listaPrecioId?: string | null;
 	createdAt?: string;
 	updatedAt?: string;
 }

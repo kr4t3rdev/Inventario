@@ -90,6 +90,7 @@ export function ClienteForm({ initialData }: ClienteFormProps) {
 
   async function onSubmit(data: ClienteFormValues) {
     setIsLoading(true)
+    const listaPrecioId = data.listaPrecioId && data.listaPrecioId !== 'none' ? data.listaPrecioId : null
 
     try {
       if (initialData) {
@@ -102,6 +103,7 @@ export function ClienteForm({ initialData }: ClienteFormProps) {
           logoAsset,
           numeroCuentaCUP: data.numeroCuentaCUP,
           numeroCuentaUSD: data.numeroCuentaUSD,
+          listaPrecioId,
         } as any)
         if (!result.success) throw new Error(result.error?.message ?? 'Error al actualizar')
         sileo.success({ title: 'El cliente ha sido actualizado exitosamente.' })
@@ -114,6 +116,7 @@ export function ClienteForm({ initialData }: ClienteFormProps) {
           logoAsset,
           numeroCuentaCUP: data.numeroCuentaCUP,
           numeroCuentaUSD: data.numeroCuentaUSD,
+          listaPrecioId,
         } as any)
         if (!result.success) throw new Error(result.error?.message ?? 'Error al crear')
         sileo.success({ title: 'El cliente ha sido registrado exitosamente.' })

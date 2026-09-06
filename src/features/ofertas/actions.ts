@@ -48,7 +48,10 @@ export const createOfertaAction = withAction(async (input: OfertaInput, user: Au
   const tenantId = requireTenant(user);
 
   // Validar cliente
-  const cliente = await prisma.cliente.findFirst({ where: { clienteId: parsed.clienteId, tenantId } });
+  const cliente = await prisma.cliente.findFirst({
+    where: { clienteId: parsed.clienteId, tenantId },
+    select: { clienteId: true, listaPrecioId: true },
+  });
   if (!cliente) throw new ActionError('Cliente no encontrado', 'NOT_FOUND');
 
   const resolvedItems = await Promise.all(parsed.items.map(async (item) => {

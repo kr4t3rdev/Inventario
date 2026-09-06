@@ -13,6 +13,7 @@ export const clienteSchema = z.object({
   numeroCuentaCUP: z.string().optional().nullable(),
   numeroCuentaUSD: z.string().optional().nullable(),
   numeroContrato: z.string().optional().nullable(),
+  listaPrecioId: z.string().min(1).optional().nullable(),
 });
 
 export const clienteUpdateSchema = z.object({
@@ -25,6 +26,7 @@ export const clienteUpdateSchema = z.object({
   numeroCuentaCUP: z.string().optional().nullable(),
   numeroCuentaUSD: z.string().optional().nullable(),
   numeroContrato: z.string().optional().nullable(),
+  listaPrecioId: z.string().min(1).optional().nullable(),
 });
 
 export type ClienteInput = z.infer<typeof clienteSchema>;

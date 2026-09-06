@@ -130,8 +130,10 @@ model Cliente {
   numeroCuentaCUP   String?
   numeroCuentaUSD   String?
   telefono          String?
+  listaPrecioId     String?
   anticipos         Anticipo[]
   tenant            Tenant            @relation(fields: [tenantId], references: [tenantId])
+  listaPrecio       ListaPrecio?      @relation(fields: [listaPrecioId], references: [id], onDelete: SetNull)
   contratos         Contrato[]        @relation("ContratoCliente")
   cuentasPorCobrar  CuentaPorCobrar[]
   ofertas           Oferta[]
@@ -2504,6 +2506,7 @@ model ListaPrecio {
   tenant        Tenant           @relation(fields: [tenantId], references: [tenantId])
   precios       PrecioProducto[]
   puntosDeVenta PuntoDeVenta[]
+  clientes      Cliente[]
 
   @@index([tenantId])
 }

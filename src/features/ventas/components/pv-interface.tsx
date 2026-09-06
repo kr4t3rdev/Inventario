@@ -355,8 +355,10 @@ export function VentaInterface() {
 	// Obtener listaPrecioId del cliente seleccionado
 	const clienteListaPrecioId = useMemo(() => {
 		if (!selectedClienteId || !clientes) return null;
-		const cliente = clientes.find((c) => c.clienteId === selectedClienteId);
-		return (cliente as any)?.listaPrecioId || null;
+		const cliente = clientes.find((c) => c.clienteId === selectedClienteId) as
+			| { listaPrecioId?: string | null }
+			| undefined;
+		return cliente?.listaPrecioId || null;
 	}, [selectedClienteId, clientes]);
 
 	// Recalcular carrito cuando cambia el cliente (y su lista de precios)
