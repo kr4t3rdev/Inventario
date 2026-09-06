@@ -8,7 +8,7 @@
 import { revalidatePath } from 'next/cache';
 import { withAction, ActionError } from '@/lib/server-actions';
 import { prisma } from '@/lib/prisma';
-import { requireTenant, requireFeature, requireManagerRole } from '@/lib/services/tenant-scope';
+import { requireTenant, requireFeature, requirePermission } from '@/lib/services/tenant-scope';
 import { withPeriodValidation } from '@/lib/services/with-period-validation';
 import { applyAnticipoAllocations } from '@/lib/services/anticipos-workflow';
 import { ventaServicioLegacySchema, ventaMixtaSchema, updateVentaServicioSchema } from './schemas';
@@ -268,7 +268,7 @@ export const updateVentaServicioAction = withAction(async (input: VentaServicioU
   const { ventaServicioId, ...data } = parsed;
   const tenantId = requireTenant(user);
   requireFeature(user, 'servicios', 'editar servicios');
-  requireManagerRole(user, 'editar ventas de servicios');
+  requirePermission(user, 'ventas.servicios.editar', 'editar ventas de servicios');
 
   const existing = await prisma.ventaServicios.findFirst({
     where: { ventaServicioId, tenantId },
@@ -303,7 +303,7 @@ export const updateVentaServicioAction = withAction(async (input: VentaServicioU
 export const deleteVentaServicioAction = withAction(async (id: string, user: AuthenticatedUser) => {
   const tenantId = requireTenant(user);
   requireFeature(user, 'servicios', 'eliminar servicios');
-  requireManagerRole(user, 'eliminar ventas de servicios');
+  requirePermission(user, 'ventas.servicios.eliminar', 'eliminar ventas de servicios');
   const existing = await prisma.ventaServicios.findFirst({
     where: { ventaServicioId: id, tenantId },
     select: { ventaServicioId: true },

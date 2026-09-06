@@ -675,6 +675,8 @@ describe("VentaServicios Server Actions", () => {
 		it("updateVentaServicioAction requiere rol manager", async () => {
 			vi.mocked(getCurrentUser).mockResolvedValue({
 				...mockUser,
+				role: "regularUser",
+				planFeatures: { servicios: true },
 				tenantRole: "dependiente",
 			});
 			vi.mocked(prisma.ventaServicios.findFirst).mockResolvedValue(
@@ -693,6 +695,8 @@ describe("VentaServicios Server Actions", () => {
 		it("deleteVentaServicioAction requiere rol manager", async () => {
 			vi.mocked(getCurrentUser).mockResolvedValue({
 				...mockUser,
+				role: "regularUser",
+				planFeatures: { servicios: true },
 				tenantRole: "dependiente",
 			});
 			vi.mocked(prisma.ventaServicios.findFirst).mockResolvedValue(

@@ -400,6 +400,8 @@ describe("ComprasServicios Server Actions", () => {
 		it("createCompraServicioAction requiere rol manager", async () => {
 			vi.mocked(getCurrentUser).mockResolvedValue({
 				...mockUser,
+				role: "regularUser",
+				planFeatures: { servicios: true },
 				tenantRole: "dependiente",
 			});
 
@@ -418,6 +420,8 @@ describe("ComprasServicios Server Actions", () => {
 		it("deleteCompraServicioAction requiere rol manager", async () => {
 			vi.mocked(getCurrentUser).mockResolvedValue({
 				...mockUser,
+				role: "regularUser",
+				planFeatures: { servicios: true },
 				tenantRole: "dependiente",
 			});
 

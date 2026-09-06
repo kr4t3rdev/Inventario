@@ -2,7 +2,7 @@
 import { revalidatePath } from 'next/cache';
 import { withAction, ActionError } from '@/lib/server-actions';
 import { prisma } from '@/lib/prisma';
-import { requireFeature, requireTenant, requireManagerRole } from '@/lib/services/tenant-scope';
+import { requireFeature, requireTenant, requirePermission } from '@/lib/services/tenant-scope';
 import { servicioSchema, servicioUpdateSchema } from './schemas';
 import type { ServicioInput, ServicioUpdateInput, ServicioResponse } from './types';
 import type { AuthenticatedUser } from '@/lib/auth-middleware';
@@ -59,7 +59,7 @@ export const getServicioByIdAction = withAction(async (id: string, user: Authent
  */
 export const createServicioAction = withAction(async (input: ServicioInput, user: AuthenticatedUser) => {
   requireFeature(user, 'servicios', 'gestionar servicios');
-  requireManagerRole(user, 'crear servicios');
+  requirePermission(user, 'operaciones.servicios.crear', 'crear servicios');
   const p = servicioSchema.parse(input);
   const tid = requireTenant(user);
   const s = await prisma.servicios.create({ data: { ...p, tenantId: tid } });
@@ -76,7 +76,7 @@ export const createServicioAction = withAction(async (input: ServicioInput, user
  */
 export const updateServicioAction = withAction(async (input: ServicioUpdateInput, user: AuthenticatedUser) => {
   requireFeature(user, 'servicios', 'gestionar servicios');
-  requireManagerRole(user, 'editar servicios');
+  requirePermission(user, 'operaciones.servicios.editar', 'editar servicios');
   const p = servicioUpdateSchema.parse(input);
   const { servicioId, ...data } = p;
   const tid = requireTenant(user);
@@ -98,7 +98,7 @@ export const updateServicioAction = withAction(async (input: ServicioUpdateInput
  */
 export const deleteServicioAction = withAction(async (id: string, user: AuthenticatedUser) => {
   requireFeature(user, 'servicios', 'gestionar servicios');
-  requireManagerRole(user, 'eliminar servicios');
+  requirePermission(user, 'operaciones.servicios.eliminar', 'eliminar servicios');
   const tid = requireTenant(user);
   const existing = await prisma.servicios.findFirst({ where: { servicioId: id, tenantId: tid } });
   if (!existing) throw new ActionError('Servicio no encontrado', 'NOT_FOUND');

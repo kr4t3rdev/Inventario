@@ -8,7 +8,7 @@
 import { revalidatePath } from 'next/cache';
 import { withAction, ActionError } from '@/lib/server-actions';
 import { prisma } from '@/lib/prisma';
-import { requireTenant, requireFeature, requireManagerRole } from '@/lib/services/tenant-scope';
+import { requireTenant, requireFeature, requirePermission } from '@/lib/services/tenant-scope';
 import { withPeriodValidation } from '@/lib/services/with-period-validation';
 import { applyAnticipoAllocations } from '@/lib/services/anticipos-workflow';
 import { createCompraServicioSchema, updateCompraServicioSchema } from './schemas';
@@ -48,7 +48,7 @@ export const createCompraServicioAction = withAction(withPeriodValidation(
   (input) => (input as any).fechaServicio ? new Date((input as any).fechaServicio) : new Date(),
   async (input: CreateCompraServicioInput, user: AuthenticatedUser) => {
   requireFeature(user, 'servicios', 'registrar servicios recibidos');
-  requireManagerRole(user, 'registrar servicios recibidos');
+  requirePermission(user, 'compras.servicios.crear', 'registrar servicios recibidos');
   const parsed = createCompraServicioSchema.parse(input);
   const tenantId = requireTenant(user);
 
@@ -207,7 +207,7 @@ export const createCompraServicioAction = withAction(withPeriodValidation(
 
 export const updateCompraServicioAction = withAction(async (input: UpdateCompraServicioInput, user: AuthenticatedUser) => {
   requireFeature(user, 'servicios', 'editar servicios recibidos');
-  requireManagerRole(user, 'editar servicios recibidos');
+  requirePermission(user, 'compras.servicios.editar', 'editar servicios recibidos');
   const parsed = updateCompraServicioSchema.parse(input);
   const { compraServicioId, ...data } = parsed;
   const tenantId = requireTenant(user);
@@ -254,7 +254,7 @@ export const updateCompraServicioAction = withAction(async (input: UpdateCompraS
 export const deleteCompraServicioAction = withAction(async (id: string, user: AuthenticatedUser) => {
   const tenantId = requireTenant(user);
   requireFeature(user, 'servicios', 'eliminar servicios recibidos');
-  requireManagerRole(user, 'eliminar servicios recibidos');
+  requirePermission(user, 'compras.servicios.eliminar', 'eliminar servicios recibidos');
 
   await prisma.$transaction(async (tx) => {
     await tx.$queryRaw`SELECT 1 FROM "CompraServicio" WHERE "compraServicioId" = ${id} AND "tenantId" = ${tenantId} FOR UPDATE`;
