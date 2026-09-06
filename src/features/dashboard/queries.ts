@@ -152,8 +152,8 @@ export async function getDashboardStatsQuery(
   const [
     totalProductos, totalAlmacenes, totalPuntosVenta,
     ventasData, ventaItemsData, ventasLegacyData, ventaServiciosData,
-    mermasData, gastosDEData, salariosData,
-    transferenciasData, productosDataRaw, gastosCompraData, stockUbicacionesData,
+    mermasData, gastosDERecords, salariosData,
+    transferenciasData, productosDataRaw, gastosCompraData, stockUbicacionesData, compraServiciosData,
   ] = await Promise.all([
     prisma.producto.count({ where: { tenantId } }),
     prisma.almacen.count({ where: { tenantId } }),
@@ -241,7 +241,21 @@ export async function getDashboardStatsQuery(
         },
       },
     }),
+    prisma.compraServicio.findMany({
+      where: { tenantId },
+      select: { total: true, createdAt: true },
+    }),
   ])
+
+  // El dashboard operativo agrupa por fecha de registro, no por período contable.
+  // Los servicios comprados son gastos de explotación, no compras de inventario.
+  const gastosDEData: GastoDEData[] = [
+    ...gastosDERecords,
+    ...compraServiciosData.map((servicio) => ({
+      monto: servicio.total,
+      createdAt: servicio.createdAt,
+    })),
+  ]
 
   const precioCostoPorProducto = (productosDataRaw as any[]).reduce<Record<string, number>>((acc: Record<string, number>, producto: any) => {
     acc[producto.id] = Number(producto.precioCosto || 0)

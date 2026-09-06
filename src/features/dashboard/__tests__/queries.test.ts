@@ -32,6 +32,7 @@ const mockPrisma = vi.hoisted(() => ({
   transferencia: {
     findMany: vi.fn(),
   },
+  compraServicio: { findMany: vi.fn() },
   gastoCompra: {
     findMany: vi.fn(),
   },
@@ -65,6 +66,7 @@ describe('getDashboardStatsQuery', () => {
       { total: 20, cantidad: 1, createdAt: new Date('2026-06-21T10:00:00.000Z') },
     ] as never)
     vi.mocked(mockPrisma.merma.findMany).mockResolvedValue([])
+    vi.mocked(mockPrisma.compraServicio.findMany).mockResolvedValue([])
     vi.mocked(mockPrisma.gastosDE.findMany).mockResolvedValue([])
     vi.mocked(mockPrisma.pagosalario.findMany).mockResolvedValue([])
     vi.mocked(mockPrisma.transferencia.findMany).mockResolvedValue([])
