@@ -40,28 +40,26 @@
 * [ ] 1.6 UI lectura: `src/app/busy/inventario/kardex/page.tsx` + tabla
   + exportación CSV (flag `kardex`).
 
-## Fase 2 — P0 Ajuste unificado + Conteo
+## Fase 2 — P0 Ajuste unificado + Conteo ✅ (7d633cfd)
 
-* [ ] 2.1 Migración: `AjusteInventario` + `ConteoInventario` +
-  `ConteoLinea`.
-* [ ] 2.2 Schemas Zod en `src/features/inventario/schemas.ts`:
-  `createAjusteSchema` (motivo de catálogo, teorica/contada,
-  valorización), `createConteoSchema`, `conciliarConteoSchema`.
-* [ ] 2.3 `src/features/inventario/actions-ajustes.ts`:
-  `createAjusteAction`, `anularAjusteAction` (compensatorio, nunca
-  borra). Valoriza con CPP/FIFO vigente.
-  - RED: `actions-ajustes.test.ts`: sobrante +2 genera línea; motivo
-    libre rechazado por Zod; anulación crea compensatorio.
-* [ ] 2.4 Puente legacy: al crear `Merma` o `ValeSalidaItem`, crear
-  `AjusteInventario` equivalente en la misma transacción.
-  - RED: test verifica ajuste espejo por cada merma/vale.
-* [ ] 2.5 `src/features/inventario/actions-conteos.ts`:
-  `iniciarConteo`, `registrarConteo1/2` (usuarios distintos),
-  `conciliarConteo` (genera ajuste), `cancelarConteo`.
-  - RED: `actions-conteos.test.ts`: conteos 10 vs 12 concilian en 12;
-    ajuste manual bloqueado con conteo activo.
-* [ ] 2.6 UI: `src/app/busy/inventario/conteos/*` (crear, doble captura
-  ciega, conciliación, varianzas) + ajustes en kardex.
+* [x] 2.1 Migración `20260906090000_ajuste_conteo_inventario`:
+  `AjusteInventario` + `ConteoInventario` + `ConteoLinea`.
+* [x] 2.2 Schemas Zod en `src/features/inventario/schemas.ts`
+  (motivo catálogo, doble captura, conciliación).
+* [x] 2.3 `actions-ajustes.ts`: `createAjusteAction` (teórico de
+  `StockUbicacion`, valoriza a CPP, kardex AJUSTE, bloquea con conteo
+  activo), `anularAjusteAction` (compensa con costo histórico),
+  `getAjustesAction`.
+* [x] 2.4 Puente legacy: `createMermaAction` crea su ajuste espejo con
+  `mapearMotivoLegacy`; `updateMermaAction` anula y recrea;
+  `deleteMermaAction` anula el espejo. Vales de salida siguen sin
+  mover stock (entran al ajuste unificado en una fase posterior).
+* [x] 2.5 `actions-conteos.ts`: iniciar (líneas desde StockUbicacion),
+  registrar captura 1/2 (usuario distinto en la segunda), conciliar
+  (ajustes con motivo ERROR_CONTEO + kardex + stock por varianza),
+  cancelar (solo estados pre-ajuste) + `getConteosAction`.
+* [x] 2.6 UI: `/busy/inventario/ajustes` y `/busy/inventario/conteos` +
+  sidebar (`SIDEBAR_FEATURE_MAP` + permisos), con tests de componente.
 
 ## Fase 3 — P1 Compras y reabastecimiento (Profesional)
 
