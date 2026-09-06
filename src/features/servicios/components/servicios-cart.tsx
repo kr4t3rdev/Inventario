@@ -93,16 +93,9 @@ export default function ServiciosCart({
 		);
 	};
 
-	// Actualizar precio de servicio en carrito
-	const updatePrice = (cartItemId: string, newPrice: number) => {
-		if (newPrice < 0) return;
-
-		setCart(
-			cart.map((item) =>
-				item.cartItemId === cartItemId ? { ...item, precio: newPrice } : item,
-			),
-		);
-	};
+	// El precio se muestra como lectura desde el catálogo: el servidor
+	// resuelve el precio unitario al procesar la venta y no acepta
+	// importes del cliente.
 
 	// Actualizar costo de servicio en carrito
 	const updateCosto = (cartItemId: string, newCosto: number) => {
@@ -141,7 +134,6 @@ export default function ServiciosCart({
 						tipoLinea: 'SERVICIO' as const,
 						servicioId: item.servicioId,
 						cantidad: item.cantidad,
-						precioUnitario: Math.round(item.precio),
 						costo: Math.round(item.costo),
 					})),
 				});
@@ -244,24 +236,14 @@ export default function ServiciosCart({
 												{item.descripcion}
 											</div>
 										</div>
-										<div className="col-span-2 flex justify-center">
-											<div className="relative w-24">
-												<span className="absolute left-2 top-1/2 -translate-y-1/2 text-muted-foreground text-sm">
-													$
-												</span>
-												<Input
-													type="number"
-													min={0}
-													step={1}
-													aria-label={`Precio de ${item.nombre}`}
-													value={item.precio}
-													onChange={(e) =>
-														updatePrice(item.cartItemId, Number(e.target.value))
-													}
-													className="pl-6 h-8 text-center text-sm"
-												/>
-											</div>
-										</div>
+									<div className="col-span-2 flex justify-center">
+										<span
+											aria-label={`Precio de ${item.nombre}`}
+											className="h-8 text-center text-sm inline-flex items-center font-medium"
+										>
+											{formatCurrency(item.precio, item.moneda)}
+										</span>
+									</div>
 										<div className="col-span-2 flex justify-center">
 											<div className="relative w-24">
 												<span className="absolute left-2 top-1/2 -translate-y-1/2 text-muted-foreground text-sm">

@@ -24,25 +24,25 @@ const VENTA_SERVICIO_INCLUDE = {
 
 /**
  * @description Valida que todos los servicios referenciados pertenezcan al tenant
- * y devuelve su snapshot de moneda para persistirlo en la venta.
+ * y devuelve su snapshot de moneda y precio para persistirlo en la venta.
  * @param {string} tenantId - Tenant del usuario autenticado.
  * @param {string[]} servicioIds - IDs de servicios a validar.
  * @throws {ActionError} NOT_FOUND si algún servicio no pertenece al tenant.
- * @returns {Promise<Map<string, { moneda: string }>>} Moneda por servicioId.
+ * @returns {Promise<Map<string, { moneda: string; precio: number }>>} Moneda y precio por servicioId.
  */
 async function assertServiciosDelTenant(
   tenantId: string,
   servicioIds: string[],
-): Promise<Map<string, { moneda: string }>> {
+): Promise<Map<string, { moneda: string; precio: number }>> {
   const uniqueIds = [...new Set(servicioIds)];
   const found = await prisma.servicios.findMany({
     where: { tenantId, servicioId: { in: uniqueIds } },
-    select: { servicioId: true, moneda: true },
+    select: { servicioId: true, moneda: true, precio: true },
   });
   if (found.length !== uniqueIds.length) {
     throw new ActionError('Servicio no encontrado', 'NOT_FOUND');
   }
-  return new Map(found.map((s) => [s.servicioId, { moneda: s.moneda }]));
+  return new Map(found.map((s) => [s.servicioId, { moneda: s.moneda, precio: s.precio }]));
 }
 
 /**
@@ -102,21 +102,23 @@ export const createVentaServicioAction = withAction(withPeriodValidation(
     await assertClienteDelTenant(tenantId, payload.clienteId);
 
     const created = await prisma.$transaction(
-      lineasServicio.map((linea) =>
-        prisma.ventaServicios.create({
+      lineasServicio.map((linea) => {
+        const catalogo = serviciosMonedas.get(linea.servicioId!)!;
+        const precioUnitario = catalogo.precio;
+        return prisma.ventaServicios.create({
           data: {
             tenantId,
             servicioId: linea.servicioId!,
             cantidad: linea.cantidad,
             costo: linea.costo ?? 0,
-            total: linea.cantidad * linea.precioUnitario,
-            moneda: serviciosMonedas.get(linea.servicioId!)!.moneda,
-            precioUnitario: linea.precioUnitario,
+            total: linea.cantidad * precioUnitario,
+            moneda: catalogo.moneda,
+            precioUnitario,
             observaciones: linea.observaciones ?? payload.observaciones ?? null,
             clienteId: payload.clienteId ?? null,
           },
-        })
-      )
+        });
+      })
     );
 
     revalidatePath('/busy/venta-servicios');
@@ -132,7 +134,9 @@ export const createVentaServicioAction = withAction(withPeriodValidation(
   const data = ventaServicioLegacySchema.parse(input);
 
   const serviciosMonedas = await assertServiciosDelTenant(tenantId, [data.servicioId]);
-  const monedaServicio = serviciosMonedas.get(data.servicioId)!.moneda;
+  const catalogoServicio = serviciosMonedas.get(data.servicioId)!;
+  const monedaServicio = catalogoServicio.moneda;
+  const precioUnitario = catalogoServicio.precio;
   await assertClienteDelTenant(tenantId, data.clienteId);
 
   const resultado = await prisma.$transaction(async (tx) => {
@@ -142,9 +146,9 @@ export const createVentaServicioAction = withAction(withPeriodValidation(
         servicioId: data.servicioId,
         cantidad: data.cantidad,
         costo: data.costo ?? 0,
-        total: data.cantidad * data.precioUnitario,
+        total: data.cantidad * precioUnitario,
         moneda: monedaServicio,
-        precioUnitario: data.precioUnitario,
+        precioUnitario,
         observaciones: data.observaciones ?? null,
         clienteId: data.clienteId ?? null,
       },

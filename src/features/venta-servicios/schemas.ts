@@ -13,10 +13,11 @@ export const lineaMixtaSchema = z.object({
   servicioId: z.string().optional(),
   productoId: z.string().optional(),
   cantidad: z.coerce.number().int().positive(),
-  precioUnitario: z.coerce.number().int().positive(),
   costo: z.coerce.number().int().optional().default(0),
   observaciones: z.string().optional().nullable(),
-}).superRefine((linea, ctx) => {
+  // Nota: el precio unitario lo resuelve el servidor desde el catálogo;
+  // no se acepta del cliente.
+}).strict().superRefine((linea, ctx) => {
   if (linea.tipoLinea === 'SERVICIO' && !linea.servicioId) {
     ctx.addIssue({ code: z.ZodIssueCode.custom, message: 'servicioId requerido para línea de servicio' });
   }
@@ -29,19 +30,18 @@ export const ventaMixtaSchema = z.object({
   clienteId: z.string().optional().nullable(),
   observaciones: z.string().optional().nullable(),
   lineas: z.array(lineaMixtaSchema).min(1),
-});
+}).strict();
 
 export const ventaServicioLegacySchema = z.object({
   servicioId: z.string().min(1),
   cantidad: z.coerce.number().int().positive(),
-  precioUnitario: z.coerce.number().int().positive(),
   costo: z.coerce.number().int().optional().default(0),
   observaciones: z.string().optional().nullable(),
   clienteId: z.string().optional().nullable(),
   anticipos: z.array(anticipoAllocationSchema).optional(),
-  // Nota: `total` se calcula en el servidor (cantidad × precioUnitario);
-  // el valor enviado por el cliente se ignora.
-});
+  // Nota: `precioUnitario` y `total` se resuelven en el servidor desde el
+  // catálogo (cantidad × precio); no se aceptan del cliente.
+}).strict();
 
 export const updateVentaServicioSchema = z.object({
   ventaServicioId: z.string().min(1),

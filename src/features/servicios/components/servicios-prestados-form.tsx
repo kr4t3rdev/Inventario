@@ -30,7 +30,6 @@ const schema = z.object({
   servicioId: z.string().min(1, 'Seleccione un servicio'),
   clienteId: z.string().optional(),
   cantidad: z.coerce.number().int().positive(),
-  precioUnitario: z.coerce.number().int().positive(),
   costo: z.coerce.number().int().optional().default(0),
   formaCobro: z.enum(['COBRO_DIRECTO', FORMA_COBRO_ANTICIPO]),
   observaciones: z.string().optional(),
@@ -61,7 +60,6 @@ export function ServiciosPrestadosForm({ initialServicios }: ServiciosPrestadosF
       servicioId: '',
       clienteId: '',
       cantidad: 1,
-      precioUnitario: 0,
       costo: 0,
       formaCobro: 'COBRO_DIRECTO',
       observaciones: '',
@@ -71,7 +69,8 @@ export function ServiciosPrestadosForm({ initialServicios }: ServiciosPrestadosF
   const servicioId = useWatch({ control: form.control, name: 'servicioId' })
   const clienteId = useWatch({ control: form.control, name: 'clienteId' })
   const cantidad = useWatch({ control: form.control, name: 'cantidad' }) || 1
-  const precioUnitario = useWatch({ control: form.control, name: 'precioUnitario' }) || 0
+  // Precio de solo lectura desde el catálogo; el servidor lo resuelve al guardar.
+  const precioUnitario = servicios.find((s) => s.servicioId === servicioId)?.precio ?? 0
   const totalServicio = cantidad * precioUnitario
   const formaCobro = useWatch({ control: form.control, name: 'formaCobro' })
 
@@ -87,7 +86,6 @@ export function ServiciosPrestadosForm({ initialServicios }: ServiciosPrestadosF
         servicioId: values.servicioId,
         clienteId: values.clienteId || undefined,
         cantidad: values.cantidad,
-        precioUnitario: values.precioUnitario,
         costo: values.costo ?? 0,
         observaciones: values.observaciones,
         anticipos: values.formaCobro === FORMA_COBRO_ANTICIPO ? anticipoAllocations : undefined,
@@ -275,27 +273,25 @@ export function ServiciosPrestadosForm({ initialServicios }: ServiciosPrestadosF
                     animate={{ opacity: 1, x: 0 }}
                     transition={{ delay: 0.35 }}
                   >
-                    <FormField
-                      control={form.control}
-                      name='precioUnitario'
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel className='text-slate-700 dark:text-slate-300 text-base'>Precio unitario</FormLabel>
-                          <FormControl>
-                            <div className='relative'>
-                              <span className='absolute left-4 top-1/2 transform -translate-y-1/2 text-slate-400 dark:text-slate-500 text-lg'>$</span>
-                              <Input 
-                                min={1} 
-                                type='number' 
-                                {...field} 
-                                className={`${servicioInputClassName} pl-8`}
-                              />
-                            </div>
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
+                    <FormItem>
+                      <FormLabel className='text-slate-700 dark:text-slate-300 text-base'>Precio unitario (catálogo)</FormLabel>
+                      <FormControl>
+                        <div className='relative'>
+                          <span className='absolute left-4 top-1/2 transform -translate-y-1/2 text-slate-400 dark:text-slate-500 text-lg'>$</span>
+                          <Input
+                            type='number'
+                            value={precioUnitario}
+                            readOnly
+                            disabled
+                            aria-label='Precio unitario del catálogo'
+                            className={`${servicioInputClassName} pl-8 opacity-80`}
+                          />
+                        </div>
+                      </FormControl>
+                      <FormDescription className='text-slate-500 dark:text-slate-500'>
+                        Precio fijado por el catálogo; no es editable.
+                      </FormDescription>
+                    </FormItem>
                   </motion.div>
                 </div>
 
