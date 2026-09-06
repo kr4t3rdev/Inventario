@@ -277,14 +277,15 @@ describe('requirePermission / hasPermission (PG-03)', () => {
     expect(() => requirePermission(adminUser, KEY)).not.toThrow();
   });
 
-  it('usuario sin permissions resueltos (legacy) cae en FORBIDDEN, no en crash', () => {
-    const legacyUser = {
+  it('usuario sin permissions resueltos (legacy) conserva los defaults de su rol (paridad)', () => {
+    const legacyManager = {
       userId: 'u-3',
       role: 'regularUser',
       tenantId: 't-1',
       tenantRole: 'manager',
     } as unknown as AuthenticatedUser;
-    expect(() => requirePermission(legacyUser, KEY)).toThrow(/No tienes permisos/);
+    // manager tiene todas las claves por defecto → paridad con requireManagerRole
+    expect(() => requirePermission(legacyManager, KEY)).not.toThrow();
   });
 
   it('hasPermission refleja el set de permisos y el bypass admin', () => {
@@ -293,6 +294,38 @@ describe('requirePermission / hasPermission (PG-03)', () => {
     expect(hasPermission(adminUser, KEY)).toBe(true);
     expect(hasPermission({ ...userWith, permissions: undefined } as AuthenticatedUser, KEY)).toBe(false);
   });
+
+  it('lazy fallback: usuario sin permissions resueltos usa defaults de su rol fijo', () => {
+    const legacyManager = {
+      userId: 'u-legacy-m',
+      role: 'regularUser',
+      tenantId: 't-1',
+      tenantRole: 'manager',
+    } as unknown as AuthenticatedUser;
+    const legacyDependiente = {
+      userId: 'u-legacy-d',
+      role: 'regularUser',
+      tenantId: 't-1',
+      tenantRole: 'dependiente',
+    } as unknown as AuthenticatedUser;
+    // rrhh.nomina.calcular es manager-only por defaults
+    expect(hasPermission(legacyManager, 'rrhh.nomina.calcular')).toBe(true);
+    expect(hasPermission(legacyDependiente, 'rrhh.nomina.calcular')).toBe(false);
+    expect(() => requirePermission(legacyManager, 'rrhh.nomina.calcular')).not.toThrow();
+    expect(() => requirePermission(legacyDependiente, 'rrhh.nomina.calcular')).toThrow(/No tienes permisos/);
+  });
+
+  it('lazy fallback con rol desconocido es fail-closed (conjunto vacío)', () => {
+    const raro = {
+      userId: 'u-raro',
+      role: 'regularUser',
+      tenantId: 't-1',
+      tenantRole: 'invitado',
+    } as unknown as AuthenticatedUser;
+    expect(hasPermission(raro, KEY)).toBe(false);
+    expect(() => requirePermission(raro, KEY)).toThrow(/No tienes permisos/);
+  });
+
 
   it('orden con requireFeature: FEATURE_NOT_AVAILABLE precede a FORBIDDEN', () => {
     const offPlanNoPerm = {

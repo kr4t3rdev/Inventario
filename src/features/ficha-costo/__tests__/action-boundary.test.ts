@@ -25,24 +25,24 @@ describe('Ficha de Costo action boundary', () => {
     },
   )
 
-  it('requires base before bulk subfeature in both bulk actions', () => {
+  it('requires permission after features in both bulk actions', () => {
     const source = actionFiles.find((file) => file.name === 'actions-bulk.ts')?.source ?? ''
     const basePositions = [...source.matchAll(/requireFichaCostoFeature\(user, 'ficha-costo'\)/g)].map((m) => m.index)
     const bulkPositions = [...source.matchAll(/requireFichaCostoFeature\(user, 'ficha-costo-bulk'\)/g)].map((m) => m.index)
     expect(basePositions).toHaveLength(2)
     expect(bulkPositions).toHaveLength(2)
     expect(basePositions.every((position, index) => position < bulkPositions[index])).toBe(true)
-    const managerPositions = [...source.matchAll(/requireManagerRole\(user,/g)].map((m) => m.index)
+    const managerPositions = [...source.matchAll(/requirePermission\(user,/g)].map((m) => m.index)
     expect(managerPositions).toHaveLength(2)
     expect(bulkPositions.every((position, index) => position < managerPositions[index])).toBe(true)
   })
 
-  it('requires both exact features before manager role in suggestion mutation', () => {
+  it('requires both exact features before permission in suggestion mutation', () => {
     const source = actionFiles.find((file) => file.name === 'actions-sugerencias.ts')?.source ?? ''
     const mutation = source.slice(source.indexOf('export const aplicarSugerenciaPrecioAction'))
     const basePosition = mutation.indexOf("requireFichaCostoFeature(user, 'ficha-costo')")
     const bulkPosition = mutation.indexOf("requireFichaCostoFeature(user, 'ficha-costo-bulk')")
-    const managerPosition = mutation.indexOf('requireManagerRole(user,')
+    const managerPosition = mutation.indexOf('requirePermission(user,')
     expect(basePosition).toBeGreaterThanOrEqual(0)
     expect(basePosition).toBeLessThan(bulkPosition)
     expect(bulkPosition).toBeLessThan(managerPosition)

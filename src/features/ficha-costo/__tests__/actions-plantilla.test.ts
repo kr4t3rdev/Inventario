@@ -5,6 +5,7 @@ vi.mock('@/lib/services/tenant-scope', () => ({
   requireTenant: vi.fn((u: any) => u.tenantId),
   requireFeature: vi.fn(),
   requireManagerRole: vi.fn(),
+  requirePermission: vi.fn(),
 }))
 
 vi.mock('next/cache', () => ({

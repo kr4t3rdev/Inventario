@@ -38,6 +38,7 @@ const mockRequireFeature = vi.fn()
 vi.mock('@/lib/services/tenant-scope', () => ({
   requireTenant: vi.fn(() => 'tenant-1'),
   requireManagerRole: vi.fn(() => true),
+  requirePermission: vi.fn(() => true),
   requireFeature: (...args: any[]) => mockRequireFeature(...args),
 }))
 

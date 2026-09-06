@@ -5,7 +5,7 @@ import { withAction, ActionError } from '@/lib/server-actions'
 import { prisma } from '@/lib/prisma'
 import {
   requireFeature,
-  requireManagerRole,
+  requirePermission,
 } from '@/lib/services/tenant-scope'
 import { recordCostChange, CostChangeReason } from '@/lib/cost-history-utils'
 import type { AuthenticatedUser } from '@/lib/auth-middleware'
@@ -252,7 +252,7 @@ export const createPlantillaAction = withAction(
     user: AuthenticatedUser,
   ): Promise<PlantillaCosto> => {
     const tenantId = requireFichaCostoFeature(user, 'ficha-costo')
-    requireManagerRole(user, 'crear plantillas de costo')
+    requirePermission(user, 'inventario.ficha-costo.plantillas', 'crear plantillas de costo')
     requireFeature(user, 'productos', 'crear plantillas de costo')
 
     const producto = await prisma.producto.findFirst({
@@ -332,7 +332,7 @@ export const updatePlantillaAction = withAction(
     user: AuthenticatedUser,
   ): Promise<PlantillaCosto> => {
     const tenantId = requireFichaCostoFeature(user, 'ficha-costo')
-    requireManagerRole(user, 'editar plantillas de costo')
+    requirePermission(user, 'inventario.ficha-costo.plantillas', 'editar plantillas de costo')
     requireFeature(user, 'productos', 'editar plantillas de costo')
 
     const existente = await prisma.productoCostSheetTemplate.findFirst({
@@ -436,7 +436,7 @@ export const activarPlantillaAction = withAction(
     user: AuthenticatedUser,
   ): Promise<PlantillaCosto> => {
     const tenantId = requireFichaCostoFeature(user, 'ficha-costo')
-    requireManagerRole(user, 'activar plantillas de costo')
+    requirePermission(user, 'inventario.ficha-costo.plantillas', 'activar plantillas de costo')
     requireFeature(user, 'productos', 'activar plantillas de costo')
 
     const plantilla = await prisma.productoCostSheetTemplate.findFirst({
@@ -479,7 +479,7 @@ export const deletePlantillaAction = withAction(
     user: AuthenticatedUser,
   ): Promise<PlantillaCosto> => {
     const tenantId = requireFichaCostoFeature(user, 'ficha-costo')
-    requireManagerRole(user, 'eliminar plantillas de costo')
+    requirePermission(user, 'inventario.ficha-costo.plantillas', 'eliminar plantillas de costo')
     requireFeature(user, 'productos', 'eliminar plantillas de costo')
 
     const plantilla = await prisma.productoCostSheetTemplate.findFirst({
@@ -516,7 +516,7 @@ export const aplicarPrecioSugeridoAction = withAction(
     user: AuthenticatedUser,
   ): Promise<{ id: string; precioVenta: number }> => {
     const tenantId = requireFichaCostoFeature(user, 'ficha-costo')
-    requireManagerRole(user, 'aplicar precio sugerido')
+    requirePermission(user, 'inventario.ficha-costo.aplicar-precios', 'aplicar precio sugerido')
     requireFeature(user, 'productos', 'aplicar precio sugerido')
 
     const plantilla = await prisma.productoCostSheetTemplate.findFirst({

@@ -8,7 +8,7 @@
 import { revalidatePath } from 'next/cache';
 import { withAction, ActionError } from '@/lib/server-actions';
 import { prisma } from '@/lib/prisma';
-import { requireFeature, requireManagerRole, requireTenant } from '@/lib/services/tenant-scope';
+import { requireFeature, requirePermission, requireTenant } from '@/lib/services/tenant-scope';
 import { listaPrecioSchema, listaPrecioUpdateSchema } from './schemas';
 import type { ListaPrecioInput, ListaPrecioUpdateInput } from './schemas';
 import type { AuthenticatedUser } from '@/lib/auth-middleware';
@@ -28,7 +28,7 @@ const LISTA_SELECT = {
  * @returns {string} Identificador del tenant activo.
  */
 function requireListasPreciosManager(user: AuthenticatedUser): string {
-  requireManagerRole(user, 'gestionar listas de precios');
+  requirePermission(user, 'inventario.listas-precios.gestionar', 'gestionar listas de precios');
   requireFeature(user, 'listas-precios', 'gestionar listas de precios');
   return requireTenant(user);
 }

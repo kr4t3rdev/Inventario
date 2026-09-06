@@ -5,7 +5,7 @@ import { withAction, ActionError } from '@/lib/server-actions'
 import { prisma } from '@/lib/prisma'
 import {
   requireFeature,
-  requireManagerRole,
+  requirePermission,
 } from '@/lib/services/tenant-scope'
 import { recordCostChange, CostChangeReason } from '@/lib/cost-history-utils'
 import type { AuthenticatedUser } from '@/lib/auth-middleware'
@@ -120,7 +120,7 @@ export const updatePrecioCostoAction = withAction(
     user: AuthenticatedUser,
   ): Promise<UpdatePrecioCostoResult> => {
     const tenantId = requireFichaCostoFeature(user, 'ficha-costo')
-    requireManagerRole(user, 'editar el precio de costo')
+    requirePermission(user, 'inventario.ficha-costo.editar-costo', 'editar el precio de costo')
     requireFeature(user, 'productos', 'editar el precio de costo')
 
     if (!Number.isFinite(input.precioCosto) || input.precioCosto < 0) {

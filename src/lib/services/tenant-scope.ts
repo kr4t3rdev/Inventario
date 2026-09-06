@@ -2,6 +2,21 @@ import { prisma } from '@/lib/prisma';
 import { ActionError } from '@/lib/server-actions/types';
 import type { AuthenticatedUser } from '@/lib/auth-middleware';
 import { isTenantEconomicoRole, normalizeTenantRole } from '@/lib/auth/roles';
+import { getDefaultPermissionsForRole } from '@/lib/auth/permission-registry';
+
+/**
+ * @description Resuelve los permisos efectivos del usuario.
+ * En producción llegan resueltos por `resolveTenantContext` (rol custom o
+ * defaults). Si vienen crudos (tests/seeds sin pasar por autenticación),
+ * aplica los defaults del rol fijo — regla de paridad día-1.
+ */
+function effectivePermissions(user: AuthenticatedUser): ReadonlySet<string> {
+  if (user.permissions) return user.permissions;
+  const role = normalizeTenantRole(user.tenantRole);
+  if (!role) return new Set<string>();
+  return getDefaultPermissionsForRole(role);
+}
+
 
 /**
  * @description Valida que el usuario tenga rol de manager (o superior) en el tenant.
@@ -91,7 +106,7 @@ export function requirePermission(
 ): void {
   if (user.role === 'admin') return;
   requireTenant(user);
-  if (!user.permissions?.has(key)) {
+  if (!effectivePermissions(user).has(key)) {
     throw new ActionError(
       `No tienes permisos para ${action}.`,
       'FORBIDDEN',
@@ -109,7 +124,7 @@ export function requirePermission(
  */
 export function hasPermission(user: AuthenticatedUser, key: string): boolean {
   if (user.role === 'admin') return true;
-  return user.permissions?.has(key) === true;
+  return effectivePermissions(user).has(key);
 }
 
 /**

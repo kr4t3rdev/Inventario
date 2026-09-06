@@ -4,7 +4,7 @@ import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import { withAction, ActionError } from "@/lib/server-actions";
 import { prisma } from "@/lib/prisma";
-import { requireTenant, requireManagerRole } from "@/lib/services/tenant-scope";
+import { requireTenant, requirePermission } from "@/lib/services/tenant-scope";
 import { withPeriodValidation } from "@/lib/services/with-period-validation";
 import { upsertStockUbicacion } from "@/lib/services/stock-ubicacion-service";
 import { executeProductInstanceCreationWorkflow } from "@/lib/restock-utils";
@@ -60,7 +60,7 @@ export const restockProductoAction = withAction(
 	withPeriodValidation(
 		() => new Date(),
 		async (input: RestockInput, user: AuthenticatedUser) => {
-			requireManagerRole(user, 'hacer restock de productos');
+			requirePermission(user, 'inventario.productos.restock', 'hacer restock de productos');
 			const parsed = restockSchema.parse(input);
 			const {
 				productoId,

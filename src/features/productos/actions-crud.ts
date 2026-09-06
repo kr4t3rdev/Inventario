@@ -6,7 +6,7 @@ import { withAction, ActionError } from "@/lib/server-actions";
 import { prisma } from "@/lib/prisma";
 import {
 	requireTenant,
-	requireManagerRole,
+	requirePermission,
 	requireFeature,
 	validateTenantLimit,
 } from "@/lib/services/tenant-scope";
@@ -102,7 +102,7 @@ export const createProductoAction = withAction(
 		const parsed = productoSchema.parse(input);
 		const tenantId = requireTenant(user);
 
-		requireManagerRole(user, "crear productos");
+		requirePermission(user, "inventario.productos.crear", "crear productos");
 		await validatePriceListsTenant(tenantId, parsed.precios ?? []);
 		requireFeature(user, "productos", "gestión de productos");
 		await validateTenantLimit(
@@ -408,7 +408,7 @@ export const createProductoAction = withAction(
  */
 export const updateProductoAction = withAction(
 	async (input: ProductoUpdateInput, user: AuthenticatedUser) => {
-		requireManagerRole(user, "editar productos");
+		requirePermission(user, "inventario.productos.editar", "editar productos");
 		const parsed = productoUpdateSchema.parse(input);
 		const { id, ...updateData } = parsed;
 
@@ -583,7 +583,7 @@ export const updateProductoAction = withAction(
  */
 export const deleteProductoAction = withAction(
 	async (id: string, user: AuthenticatedUser) => {
-		requireManagerRole(user, "eliminar productos");
+		requirePermission(user, "inventario.productos.eliminar", "eliminar productos");
 		const tenantId = requireTenant(user);
 
 		const existing = await prisma.producto.findUnique({

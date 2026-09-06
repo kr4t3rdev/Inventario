@@ -1,12 +1,15 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { getSugerenciasPrecioAction, aplicarSugerenciaPrecioAction } from '../actions-sugerencias'
 
-const { mockRequireManagerRole, mockRequireFeature } = vi.hoisted(() => ({
-  mockRequireManagerRole: vi.fn((user: { tenantRole?: string }) => {
-    if (user.tenantRole !== 'manager') {
-      throw new Error('No tienes permisos para aplicar precios sugeridos')
-    }
-  }),
+const { mockRequirePermission, mockRequireFeature } = vi.hoisted(() => ({
+  mockRequirePermission: vi.fn(
+    (user: { tenantRole?: string }, _key: string, action?: string) => {
+      if (user.tenantRole !== 'manager') {
+        throw new Error(`No tienes permisos para ${action ?? 'realizar esta acción'}`)
+      }
+      return true
+    },
+  ),
   mockRequireFeature: vi.fn(),
 }))
 
@@ -20,7 +23,7 @@ vi.mock('@/lib/prisma', () => ({
 vi.mock('@/lib/server-actions', () => ({ withAction: (fn: any) => fn }))
 vi.mock('@/lib/services/tenant-scope', () => ({
   requireTenant: vi.fn(() => 'tenant-1'),
-  requireManagerRole: mockRequireManagerRole,
+  requirePermission: mockRequirePermission,
   requireFeature: mockRequireFeature,
 }))
 vi.mock('@/lib/cost-history-utils', () => ({
@@ -115,8 +118,9 @@ describe('aplicarSugerenciaPrecioAction', () => {
     expect(prisma.$transaction).not.toHaveBeenCalled()
     expect(prisma.producto.update).not.toHaveBeenCalled()
     expect(recordCostChange).not.toHaveBeenCalled()
-    expect(mockRequireManagerRole).toHaveBeenCalledWith(
+    expect(mockRequirePermission).toHaveBeenCalledWith(
       nonManagerUser,
+      'inventario.ficha-costo.aplicar-precios',
       'aplicar precios sugeridos',
     )
   })
@@ -131,7 +135,7 @@ describe('aplicarSugerenciaPrecioAction', () => {
     await expect(
       aplicarSugerenciaPrecioAction({ productoIds: ['p1'] }, nonManagerBasicUser),
     ).rejects.toMatchObject({ code: 'FEATURE_NOT_AVAILABLE' })
-    expect(mockRequireManagerRole).not.toHaveBeenCalled()
+    expect(mockRequirePermission).not.toHaveBeenCalled()
     expect(prisma.producto.findMany).not.toHaveBeenCalled()
   })
 
@@ -152,8 +156,9 @@ describe('aplicarSugerenciaPrecioAction', () => {
       expect.anything(),
       expect.objectContaining({ reason: 'MANUAL_EDIT' }),
     )
-    expect(mockRequireManagerRole).toHaveBeenCalledWith(
+    expect(mockRequirePermission).toHaveBeenCalledWith(
       mockUser,
+      'inventario.ficha-costo.aplicar-precios',
       'aplicar precios sugeridos',
     )
   })

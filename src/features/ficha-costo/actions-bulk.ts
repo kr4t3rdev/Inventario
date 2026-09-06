@@ -4,7 +4,7 @@ import { revalidatePath } from 'next/cache'
 import { withAction, ActionError } from '@/lib/server-actions'
 import { prisma } from '@/lib/prisma'
 import {
-  requireManagerRole,
+  requirePermission,
 } from '@/lib/services/tenant-scope'
 import { recordCostChange, CostChangeReason } from '@/lib/cost-history-utils'
 import type { AuthenticatedUser } from '@/lib/auth-middleware'
@@ -76,7 +76,7 @@ export const bulkApplyPercentageAction = withAction(
   ): Promise<BulkPriceResponse> => {
     const tenantId = requireFichaCostoFeature(user, 'ficha-costo')
     requireFichaCostoFeature(user, 'ficha-costo-bulk')
-    requireManagerRole(user, 'ajustar precios masivamente')
+    requirePermission(user, 'inventario.ficha-costo.bulk', 'ajustar precios masivamente')
 
     // Validación
     const parsed = bulkPercentageSchema.safeParse(input)
@@ -209,7 +209,7 @@ export const bulkApplyTemplateAction = withAction(
   ): Promise<BulkPriceResponse> => {
     const tenantId = requireFichaCostoFeature(user, 'ficha-costo')
     requireFichaCostoFeature(user, 'ficha-costo-bulk')
-    requireManagerRole(user, 'aplicar plantilla masivamente')
+    requirePermission(user, 'inventario.ficha-costo.bulk', 'aplicar plantilla masivamente')
 
     // Validación
     const parsed = bulkTemplateSchema.safeParse(input)

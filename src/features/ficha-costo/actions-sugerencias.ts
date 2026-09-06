@@ -4,7 +4,7 @@ import { revalidatePath } from 'next/cache'
 import { withAction } from '@/lib/server-actions'
 import { prisma } from '@/lib/prisma'
 import {
-  requireManagerRole,
+  requirePermission,
 } from '@/lib/services/tenant-scope'
 import { recordCostChange, CostChangeReason } from '@/lib/cost-history-utils'
 import type { AuthenticatedUser } from '@/lib/auth-middleware'
@@ -110,7 +110,7 @@ export const aplicarSugerenciaPrecioAction = withAction(
     const parsed = validateInput(productIdsSchema, input)
     const tenantId = requireFichaCostoFeature(user, 'ficha-costo')
     requireFichaCostoFeature(user, 'ficha-costo-bulk')
-    requireManagerRole(user, 'aplicar precios sugeridos')
+    requirePermission(user, 'inventario.ficha-costo.aplicar-precios', 'aplicar precios sugeridos')
 
     const productos = await prisma.producto.findMany({
       where: { id: { in: parsed.productoIds }, tenantId, precioCosto: { gt: 0 } },
