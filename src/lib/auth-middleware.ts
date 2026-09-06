@@ -5,6 +5,7 @@ import { getJwtSecret } from './secrets'
 import { checkApiPermission, checkTenantApiPermission, type UserRole } from './permissions'
 import { normalizeTenantRole, type TenantRole } from './auth/roles'
 import { resolveEffectivePlanFeatures } from './plan-features'
+import { getDefaultPermissionsForRole } from './auth/permission-registry'
 
 export interface PlanLimits {
   maxUsuarios: number
@@ -29,6 +30,22 @@ export interface AuthenticatedUser {
   planLimits?: PlanLimits
   planFeatures?: Record<string, boolean>
   planName?: string
+  // Permisos efectivos del usuario en el tenant (resueltos en autenticación)
+  permissions?: ReadonlySet<string>
+}
+
+/**
+ * @description Resultado de la resolución de contexto de tenant.
+ * Incluye los permisos efectivos resueltos (rol custom o defaults del rol fijo).
+ */
+export interface TenantContext {
+  tenantId: string
+  tenantRole: TenantRole
+  planLimits?: PlanLimits
+  planFeatures?: Record<string, boolean>
+  planName?: string
+  licenseExpiresAt?: Date
+  permissions: ReadonlySet<string>
 }
 
 /**
@@ -36,12 +53,12 @@ export interface AuthenticatedUser {
  * Busca membresía activa; si el request incluye x-tenant-id usa ese, sino el primero activo.
  * @param {string} userId - ID del usuario autenticado.
  * @param {string | null} headerTenantId - Tenant solicitado via header (opcional).
- * @returns {Promise<{ tenantId: string; tenantRole: TenantRole; planLimits?: PlanLimits } | null>}
+ * @returns {Promise<TenantContext | null>}
  */
 export async function resolveTenantContext(
   userId: string,
   headerTenantId: string | null,
-): Promise<{ tenantId: string; tenantRole: TenantRole; planLimits?: PlanLimits; planFeatures?: Record<string, boolean>; planName?: string; licenseExpiresAt?: Date } | null> {
+): Promise<TenantContext | null> {
   try {
     const membership = headerTenantId
       ? await prisma.tenantMembership.findUnique({
@@ -99,13 +116,38 @@ export async function resolveTenantContext(
         })
       : undefined;
 
+    const normalizedRole = normalizeTenantRole(membership.tenantRole) ?? 'dependiente';
+
+    // Resolución de permisos efectivos (PG-03): rol custom validado por tenant
+    // y estado; si no existe/se invalidó → defaults del rol fijo (fail-safe).
+    // Sin customRoleId no se hace ninguna query extra.
+    let permissions: ReadonlySet<string>;
+    if (membership.customRoleId) {
+      const customRole = await prisma.tenantRole.findFirst({
+        where: {
+          roleId: membership.customRoleId,
+          tenantId: membership.tenantId,
+          isActive: true,
+        },
+      });
+      const rolePermissions = Array.isArray(customRole?.permissions)
+        ? (customRole.permissions as string[])
+        : null;
+      permissions = rolePermissions
+        ? new Set(rolePermissions)
+        : getDefaultPermissionsForRole(normalizedRole);
+    } else {
+      permissions = getDefaultPermissionsForRole(normalizedRole);
+    }
+
     return {
       tenantId: membership.tenantId,
-      tenantRole: normalizeTenantRole(membership.tenantRole) ?? 'dependiente',
+      tenantRole: normalizedRole,
       planLimits,
       planFeatures,
       planName: license?.plan?.nombre,
       licenseExpiresAt: license?.expiracion,
+      permissions,
     };
   } catch (error) {
     console.error('[Auth] Error resolviendo contexto tenant:', {
@@ -278,6 +320,7 @@ export async function authenticateUser(
         planLimits: tenantContext.planLimits,
         planFeatures: tenantContext.planFeatures,
         planName: tenantContext.planName,
+        permissions: tenantContext.permissions,
       }),
     } as AuthenticatedUser
 

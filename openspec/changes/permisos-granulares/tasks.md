@@ -26,10 +26,10 @@ Leyenda: `- [ ]` pendiente · `- [x]` hecho.
 
 ## PG-03 — Resolución efectiva y guard único
 
-- [ ] **PG03-T1 — RED resolución.** Tests: membresía sin customRole → defaults del rol fijo; con customRole válido → Set del rol; customRole inexistente/isActive=false/de otro tenant → **fallback a defaults** (fail-safe); admin → bypass. Incluir chequeo de que la resolución no añade queries cuando no hay customRoleId (spy sobre prisma).
+- [x] **PG03-T1 — RED resolución.** Tests: membresía sin customRole → defaults del rol fijo; con customRole válido → Set del rol; customRole inexistente/isActive=false/de otro tenant → **fallback a defaults** (fail-safe); admin → bypass. Incluir chequeo de que la resolución no añade queries cuando no hay customRoleId (spy sobre prisma).
   `pnpm exec vitest run src/lib/__tests__ src/lib/auth`
-- [ ] **PG03-T2 — GREEN resolución.** Extender `resolveTenantContext` (auth-middleware) con carga condicional del rol custom; añadir `permissions` a `AuthenticatedUser`. Verificar que rutas existentes siguen verdes sin tocar nada más.
-- [ ] **PG03-T3 — RED+GREEN guard.** `requirePermission(user, key, action?)` + `hasPermission(user, key)` en `tenant-scope.ts` con tests: sin permiso → FORBIDDEN neutro; con permiso → pasa; sin tenant → error de contexto; admin → pasa; orden con `requireFeature` demostrado en un action de muestra.
+- [x] **PG03-T2 — GREEN resolución.** Extender `resolveTenantContext` (auth-middleware) con carga condicional del rol custom; añadir `permissions` a `AuthenticatedUser`. Verificar que rutas existentes siguen verdes sin tocar nada más.
+- [x] **PG03-T3 — RED+GREEN guard.** `requirePermission(user, key, action?)` + `hasPermission(user, key)` en `tenant-scope.ts` con tests: sin permiso → FORBIDDEN neutro; con permiso → pasa; sin tenant → error de contexto; admin → pasa; orden con `requireFeature` demostrado en un action de muestra.
 - Commit: `feat(auth): resolución de permisos efectivos y guard único requirePermission (PG-03)`
 
 ## PG-04 — Motor lógico del dominio + acciones de gestión de roles

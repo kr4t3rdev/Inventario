@@ -72,6 +72,47 @@ export function requireDependienteRole(
 }
 
 /**
+ * @description Valida que el usuario posea el permiso nombrado dentro del tenant.
+ * Admin global hace bypass; sin tenant lanza error de contexto (fail-closed);
+ * sin el permiso lanza FORBIDDEN con mensaje neutro.
+ *
+ * @example
+ * requirePermission(user, 'rrhh.nomina.calcular', 'calcular nómina')
+ *
+ * @param {AuthenticatedUser} user - Usuario autenticado.
+ * @param {string} key - Clave del permission-registry (`<cat>.<recurso>.<accion>`).
+ * @param {string} [action='realizar esta acción'] - Descripción de la acción para el mensaje de error.
+ * @throws {ActionError} Si el usuario no tiene el permiso.
+ */
+export function requirePermission(
+  user: AuthenticatedUser,
+  key: string,
+  action: string = 'realizar esta acción',
+): void {
+  if (user.role === 'admin') return;
+  requireTenant(user);
+  if (!user.permissions?.has(key)) {
+    throw new ActionError(
+      `No tienes permisos para ${action}.`,
+      'FORBIDDEN',
+    );
+  }
+}
+
+/**
+ * @description Consulta booleana de permiso (para UI/condicionales).
+ * NUNCA sustituye a requirePermission server-side.
+ *
+ * @param {AuthenticatedUser} user - Usuario autenticado.
+ * @param {string} key - Clave del permission-registry.
+ * @returns {boolean} true si admin o posee el permiso.
+ */
+export function hasPermission(user: AuthenticatedUser, key: string): boolean {
+  if (user.role === 'admin') return true;
+  return user.permissions?.has(key) === true;
+}
+
+/**
  * @description Valida que el plan del tenant incluya el feature requerido.
  * Los usuarios admin globales bypass this check.
  *
