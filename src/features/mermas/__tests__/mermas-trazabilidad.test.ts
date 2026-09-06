@@ -11,7 +11,10 @@ vi.mock('@/lib/notificaciones-utils', () => ({ notificarMerma: vi.fn() }));
 vi.mock('@/lib/services/stock-ubicacion-service', () => ({ upsertStockUbicacion: vi.fn() }));
 
 const { mockTx } = vi.hoisted(() => ({
-  mockTx: { merma: { create: vi.fn(), update: vi.fn(), delete: vi.fn() } },
+  mockTx: {
+    merma: { create: vi.fn(), update: vi.fn(), delete: vi.fn() },
+    stockMoveLine: { upsert: vi.fn(), findMany: vi.fn().mockResolvedValue([]), count: vi.fn(), aggregate: vi.fn() },
+  },
 }));
 
 vi.mock('@/lib/prisma', () => ({

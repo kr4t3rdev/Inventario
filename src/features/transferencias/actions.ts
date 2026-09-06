@@ -12,6 +12,11 @@ import { requireTenant } from "@/lib/services/tenant-scope";
 import { notificarTransferencia } from "@/lib/notificaciones-utils";
 import { upsertStockUbicacion } from "@/lib/services/stock-ubicacion-service";
 import {
+	getMovimientosDeOrigen,
+	registrarMovimiento,
+	revertirMovimientosDeOrigen,
+} from "@/features/inventario/movimientos";
+import {
 	createTransferenciaSchema,
 	updateTransferenciaSchema,
 	aprobarTransferenciaSchema,
@@ -303,15 +308,19 @@ export const createTransferenciaAction = withAction(
 			productosValidados.push({ producto, cantidad: item.cantidad });
 		}
 
-		// Validar origen/destino
+		// Validar origen/destino (siempre con aislamiento por tenant)
 		console.log("=== createTransferenciaAction :: validando origen ===", {
 			tipoOrigen,
 			origenId,
 		});
 		const origenValido =
 			tipoOrigen === "almacen"
-				? await prisma.almacen.findUnique({ where: { almacenId: origenId } })
-				: await prisma.puntoDeVenta.findUnique({ where: { pvId: origenId } });
+				? await prisma.almacen.findFirst({
+						where: { almacenId: origenId, tenantId },
+					})
+				: await prisma.puntoDeVenta.findFirst({
+						where: { pvId: origenId, tenantId },
+					});
 		if (!origenValido) {
 			console.error(
 				"=== createTransferenciaAction :: origen no encontrado ===",
@@ -326,8 +335,12 @@ export const createTransferenciaAction = withAction(
 		});
 		const destinoValido =
 			tipoDestino === "almacen"
-				? await prisma.almacen.findUnique({ where: { almacenId: destinoId } })
-				: await prisma.puntoDeVenta.findUnique({ where: { pvId: destinoId } });
+				? await prisma.almacen.findFirst({
+						where: { almacenId: destinoId, tenantId },
+					})
+				: await prisma.puntoDeVenta.findFirst({
+						where: { pvId: destinoId, tenantId },
+					});
 		if (!destinoValido) {
 			console.error(
 				"=== createTransferenciaAction :: destino no encontrado ===",
@@ -400,6 +413,30 @@ export const createTransferenciaAction = withAction(
 						modo: "increment",
 						delta: cantidad,
 					});
+					await registrarMovimiento(tx, {
+						tenantId,
+						productoId: producto.id,
+						tipoOrigen: "TRANSFERENCIA",
+						origenId: transferencia.transferenciaId,
+						tipoUbicacion: tipoOrigen,
+						ubicacionId: origenId,
+						cantidad: -cantidad,
+						costoUnitario: producto.precioCosto,
+						secuencia: `SALIDA-${idx}`,
+						creadoPorId: user.userId,
+					});
+					await registrarMovimiento(tx, {
+						tenantId,
+						productoId: producto.id,
+						tipoOrigen: "TRANSFERENCIA",
+						origenId: transferencia.transferenciaId,
+						tipoUbicacion: tipoDestino,
+						ubicacionId: destinoId,
+						cantidad,
+						costoUnitario: producto.precioCosto,
+						secuencia: `ENTRADA-${idx}`,
+						creadoPorId: user.userId,
+					});
 				}
 
 				transferenciasCreadas.push(transferencia);
@@ -455,6 +492,7 @@ export const updateTransferenciaAction = withAction(
 			select: {
 				productoId: true,
 				cantidad: true,
+				costoUnitario: true,
 				origenId: true,
 				destinoId: true,
 				puntoDeVentaOrigenId: true,
@@ -552,6 +590,50 @@ export const updateTransferenciaAction = withAction(
 						ubicacionId: destinoId,
 						modo: "increment",
 						delta: cantidad,
+					});
+				}
+
+				// Kardex: compensar el documento original y registrar la nueva versión.
+				const originales = await getMovimientosDeOrigen(tx, {
+					tenantId,
+					tipoOrigen: "TRANSFERENCIA",
+					origenId: transferenciaId,
+				});
+				const costoKardex =
+					originales.find((m) => m.secuencia.startsWith("SALIDA"))
+						?.costoUnitario ?? existing.costoUnitario ?? 0;
+
+				await revertirMovimientosDeOrigen(tx, {
+					tenantId,
+					tipoOrigen: "TRANSFERENCIA",
+					origenId: transferenciaId,
+					creadoPorId: user.userId,
+				});
+
+				if (costoKardex > 0) {
+					await registrarMovimiento(tx, {
+						tenantId,
+						productoId,
+						tipoOrigen: "TRANSFERENCIA",
+						origenId: transferenciaId,
+						tipoUbicacion: tipoOrigen,
+						ubicacionId: origenId,
+						cantidad: -cantidad,
+						costoUnitario: costoKardex,
+						secuencia: "SALIDA-1",
+						creadoPorId: user.userId,
+					});
+					await registrarMovimiento(tx, {
+						tenantId,
+						productoId,
+						tipoOrigen: "TRANSFERENCIA",
+						origenId: transferenciaId,
+						tipoUbicacion: tipoDestino,
+						ubicacionId: destinoId,
+						cantidad,
+						costoUnitario: costoKardex,
+						secuencia: "ENTRADA-1",
+						creadoPorId: user.userId,
 					});
 				}
 			}
@@ -680,6 +762,14 @@ export const deleteTransferenciaAction = withAction(
 					ubicacionId: destinoUbicacionId,
 					modo: "increment",
 					delta: -current.cantidad,
+				});
+
+				// Kardex: compensación de las líneas originales con su costo histórico.
+				await revertirMovimientosDeOrigen(tx, {
+					tenantId,
+					tipoOrigen: "TRANSFERENCIA",
+					origenId: id,
+					creadoPorId: user.userId,
 				});
 			}
 			return { claimed: true as const };
@@ -822,6 +912,31 @@ export const completarTransferenciaAction = withAction(
 				ubicacionId: destinoUbicacionId,
 				modo: "increment",
 				delta: cantidad,
+			});
+			const costoUnitario = transferencia.costoUnitario ?? transferencia.producto.precioCosto;
+			await registrarMovimiento(tx, {
+				tenantId,
+				productoId,
+				tipoOrigen: "TRANSFERENCIA",
+				origenId: transferencia.transferenciaId,
+				tipoUbicacion: tipoOrigen,
+				ubicacionId: origenUbicacionId,
+				cantidad: -cantidad,
+				costoUnitario,
+				secuencia: "SALIDA-0",
+				creadoPorId: user.userId,
+			});
+			await registrarMovimiento(tx, {
+				tenantId,
+				productoId,
+				tipoOrigen: "TRANSFERENCIA",
+				origenId: transferencia.transferenciaId,
+				tipoUbicacion: tipoDestino,
+				ubicacionId: destinoUbicacionId,
+				cantidad,
+				costoUnitario,
+				secuencia: "ENTRADA-0",
+				creadoPorId: user.userId,
 			});
 			return { alreadyCompleted: false as const };
 		});

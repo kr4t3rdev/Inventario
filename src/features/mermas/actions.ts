@@ -11,6 +11,11 @@ import { prisma } from "@/lib/prisma";
 import { requireTenant } from "@/lib/services/tenant-scope";
 import { notificarMerma } from "@/lib/notificaciones-utils";
 import { upsertStockUbicacion } from "@/lib/services/stock-ubicacion-service";
+import {
+	getMovimientosDeOrigen,
+	registrarMovimiento,
+	revertirMovimientosDeOrigen,
+} from "@/features/inventario/movimientos";
 import { createMermaSchema, updateMermaSchema } from "./schemas";
 import type { CreateMermaInput, UpdateMermaInput } from "./schemas";
 import type { AuthenticatedUser } from "@/lib/auth-middleware";
@@ -105,6 +110,19 @@ export const createMermaAction = withAction(
 				delta: -parsed.cantidad,
 			});
 
+			await registrarMovimiento(tx, {
+				tenantId,
+				productoId: parsed.productoId,
+				tipoOrigen: "MERMA",
+				origenId: creada.mermaId,
+				tipoUbicacion: "almacen",
+				ubicacionId: almacenIdEfectivo,
+				cantidad: -parsed.cantidad,
+				costoUnitario: producto.precioCosto,
+				secuencia: "SALIDA-0",
+				creadoPorId: user.userId,
+			});
+
 			return creada;
 		});
 
@@ -194,39 +212,73 @@ export const updateMermaAction = withAction(
 			}
 
 			const merma = await prisma.$transaction(async (tx: any) => {
-				const updated = await tx.merma.update({
-					where: { mermaId },
-					data: {
-						productoId,
-						cantidad,
-						motivo: data.motivo ?? undefined,
-						almacenId: resolvedAlmacenId,
-						...(precioCostoVigente !== null && {
-							costoTotal: precioCostoVigente * cantidad,
-						}),
-					},
-					include: MERMA_INCLUDE,
-				});
-
-				// Revertir stock del producto/almacén anterior
-				await upsertStockUbicacion(tx, {
-					productoId: mermaActual.productoId,
-					tipoUbicacion: "almacen",
-					ubicacionId: oldAlmacenId,
-					modo: "increment",
-					delta: mermaActual.cantidad,
-				});
-				// Aplicar stock al nuevo producto/almacén
-				await upsertStockUbicacion(tx, {
+			const updated = await tx.merma.update({
+				where: { mermaId },
+				data: {
 					productoId,
+					cantidad,
+					motivo: data.motivo ?? undefined,
+					almacenId: resolvedAlmacenId,
+					...(precioCostoVigente !== null && {
+						costoTotal: precioCostoVigente * cantidad,
+					}),
+				},
+				include: MERMA_INCLUDE,
+			});
+
+			// Revertir stock del producto/almacén anterior
+			await upsertStockUbicacion(tx, {
+				productoId: mermaActual.productoId,
+				tipoUbicacion: "almacen",
+				ubicacionId: oldAlmacenId,
+				modo: "increment",
+				delta: mermaActual.cantidad,
+			});
+			// Compensar kardex de la merma original con su costo histórico
+			const movimientosOriginales = await getMovimientosDeOrigen(tx, {
+				tenantId,
+				tipoOrigen: "MERMA",
+				origenId: mermaId,
+			});
+			await revertirMovimientosDeOrigen(tx, {
+				tenantId,
+				tipoOrigen: "MERMA",
+				origenId: mermaId,
+				creadoPorId: user.userId,
+			});
+
+			// Aplicar stock al nuevo producto/almacén
+			await upsertStockUbicacion(tx, {
+				productoId,
+				tipoUbicacion: "almacen",
+				ubicacionId: resolvedAlmacenId,
+				modo: "increment",
+				delta: -cantidad,
+			});
+
+			// Kardex de la merma editada: costo vigente si se recalculó,
+			// si no, el costo histórico del movimiento original.
+			const costoUnitarioNuevo =
+				precioCostoVigente ??
+				movimientosOriginales.find((m) => m.secuencia === "SALIDA-0")
+					?.costoUnitario;
+			if (costoUnitarioNuevo !== undefined && costoUnitarioNuevo !== null) {
+				await registrarMovimiento(tx, {
+					tenantId,
+					productoId,
+					tipoOrigen: "MERMA",
+					origenId: mermaId,
 					tipoUbicacion: "almacen",
 					ubicacionId: resolvedAlmacenId,
-					modo: "increment",
-					delta: -cantidad,
+					cantidad: -cantidad,
+					costoUnitario: costoUnitarioNuevo,
+					secuencia: "SALIDA-1",
+					creadoPorId: user.userId,
 				});
+			}
 
-				return updated;
-			});
+			return updated;
+		});
 
 			revalidatePath("/busy/mermas");
 			return merma;
@@ -259,6 +311,12 @@ export const deleteMermaAction = withAction(
 		if (!merma) throw new ActionError("Merma no encontrada", "NOT_FOUND");
 
 		await prisma.$transaction(async (tx: any) => {
+			await revertirMovimientosDeOrigen(tx, {
+				tenantId,
+				tipoOrigen: "MERMA",
+				origenId: merma.mermaId,
+				creadoPorId: user.userId,
+			});
 			await tx.merma.delete({ where: { mermaId: id } });
 			await upsertStockUbicacion(tx, {
 				productoId: merma.productoId,

@@ -3,6 +3,7 @@ import { prisma } from '@/lib/prisma';
 import { ActionError } from '@/lib/server-actions';
 import { requireFeature, requireTenant } from '@/lib/services/tenant-scope';
 import { upsertStockUbicacion } from '@/lib/services/stock-ubicacion-service';
+import { registrarMovimiento, revertirMovimientosDeOrigen } from '@/features/inventario/movimientos';
 import { allocateFifoForSale } from '@/lib/services/fifo-allocation';
 import { createVentaSchema, anularVentaSchema } from '@/features/ventas/schemas';
 import { applyFacturacionCobroWorkflow } from '@/features/ventas/services/facturacion-workflow';
@@ -191,13 +192,14 @@ export const VentaMutationService = {
         },
       });
 
-      for (const item of itemsData) {
+      for (const [itemIdx, item] of itemsData.entries()) {
         const producto = await tx.producto.findUnique({
           where: { id: item.productoId },
           select: {
             id: true,
             nombre: true,
             stock: true,
+            precioCosto: true,
             almacenId: true,
             tenantId: true,
           },
@@ -268,6 +270,18 @@ export const VentaMutationService = {
             modo: 'increment',
             delta: -item.cantidad,
           });
+          await registrarMovimiento(tx, {
+            tenantId,
+            productoId: item.productoId,
+            tipoOrigen: 'VENTA',
+            origenId: venta.ventaId,
+            tipoUbicacion: 'punto_venta',
+            ubicacionId: parsed.puntoDeVentaId,
+            cantidad: -item.cantidad,
+            costoUnitario: producto.precioCosto,
+            secuencia: `ITEM-${itemIdx}`,
+            creadoPorId: user.userId,
+          });
         } else if (producto.almacenId) {
           await upsertStockUbicacion(tx, {
             productoId: item.productoId,
@@ -275,6 +289,18 @@ export const VentaMutationService = {
             ubicacionId: producto.almacenId,
             modo: 'increment',
             delta: -item.cantidad,
+          });
+          await registrarMovimiento(tx, {
+            tenantId,
+            productoId: item.productoId,
+            tipoOrigen: 'VENTA',
+            origenId: venta.ventaId,
+            tipoUbicacion: 'almacen',
+            ubicacionId: producto.almacenId,
+            cantidad: -item.cantidad,
+            costoUnitario: producto.precioCosto,
+            secuencia: `ITEM-${itemIdx}`,
+            creadoPorId: user.userId,
           });
         }
       }
@@ -393,7 +419,7 @@ export const VentaMutationService = {
             productoId: true,
             cantidad: true,
             producto: {
-              select: { id: true, almacenId: true, tenantId: true },
+              select: { id: true, almacenId: true, tenantId: true, precioCosto: true },
             },
           },
         },
@@ -543,6 +569,40 @@ export const VentaMutationService = {
             ubicacionId: item.producto.almacenId,
             modo: 'increment',
             delta: item.cantidad,
+          });
+        }
+      }
+
+      // Revierte el kardex con el costo histórico de las líneas originales
+      // (no el precio de costo actual del producto).
+      const compensadas = await revertirMovimientosDeOrigen(tx, {
+        tenantId,
+        tipoOrigen: 'VENTA',
+        origenId: venta.ventaId,
+        creadoPorId: user.userId,
+      });
+
+      // Ventas legacy (anteriores al kardex) no tienen líneas originales:
+      // compensar con el costo actual como último recurso.
+      if (compensadas.length === 0) {
+        for (const [itemIdx, item] of venta.items.entries()) {
+          const ubicacion = venta.puntoDeVentaId
+            ? { tipoUbicacion: 'punto_venta', ubicacionId: venta.puntoDeVentaId }
+            : item.producto?.almacenId
+              ? { tipoUbicacion: 'almacen', ubicacionId: item.producto.almacenId }
+              : null;
+          if (!ubicacion) continue;
+          await registrarMovimiento(tx, {
+            tenantId,
+            productoId: item.productoId,
+            tipoOrigen: 'VENTA',
+            origenId: venta.ventaId,
+            tipoUbicacion: ubicacion.tipoUbicacion,
+            ubicacionId: ubicacion.ubicacionId,
+            cantidad: item.cantidad,
+            costoUnitario: item.producto.precioCosto,
+            secuencia: `REV-ITEM-${itemIdx}`,
+            creadoPorId: user.userId,
           });
         }
       }

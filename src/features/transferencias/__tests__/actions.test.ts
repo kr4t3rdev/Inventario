@@ -21,6 +21,12 @@ const mockTx = {
 		count: vi.fn(),
 	},
 	producto: { update: vi.fn() },
+	stockMoveLine: {
+		upsert: vi.fn(),
+		findMany: vi.fn().mockResolvedValue([]),
+		count: vi.fn(),
+		aggregate: vi.fn(),
+	},
 };
 
 vi.mock("@/lib/prisma", () => ({
@@ -35,8 +41,8 @@ vi.mock("@/lib/prisma", () => ({
 		},
 		producto: { findUnique: vi.fn() },
 		stockUbicacion: { findUnique: vi.fn() },
-		almacen: { findUnique: vi.fn() },
-		puntoDeVenta: { findUnique: vi.fn() },
+		almacen: { findUnique: vi.fn(), findFirst: vi.fn() },
+		puntoDeVenta: { findUnique: vi.fn(), findFirst: vi.fn() },
 		ventaItem: { aggregate: vi.fn() },
 		venta: { aggregate: vi.fn() },
 		$transaction: vi.fn((cb: any) => cb(mockTx)),
@@ -138,17 +144,20 @@ describe("Transferencias Server Actions", () => {
 			vi.mocked(prisma.stockUbicacion.findUnique).mockResolvedValue({
 				cantidadDisponible: 100,
 			} as any);
-			vi.mocked(prisma.almacen.findUnique).mockResolvedValue({
+			vi.mocked(prisma.almacen.findFirst).mockResolvedValue({
 				almacenId: "alm-1",
 				nombre: "Almacén 1",
 			});
-			vi.mocked(prisma.puntoDeVenta.findUnique).mockResolvedValue({
+			vi.mocked(prisma.puntoDeVenta.findFirst).mockResolvedValue({
 				pvId: "pv-1",
 				nombre: "PV 1",
 			});
 			mockTx.transferencia.count.mockResolvedValue(0);
 			mockTx.transferencia.create.mockResolvedValue({
 				transferenciaId: "tr-1",
+			});
+			mockTx.stockMoveLine.upsert.mockResolvedValue({
+				id: "move-1",
 			});
 
 			const result = await createTransferenciaAction({
@@ -170,6 +179,25 @@ describe("Transferencias Server Actions", () => {
 				}),
 			});
 			expect(mockTx.producto.update).not.toHaveBeenCalled();
+			expect(mockTx.stockMoveLine.upsert).toHaveBeenCalledTimes(2);
+			expect(mockTx.stockMoveLine.upsert).toHaveBeenNthCalledWith(1,
+				expect.objectContaining({
+					where: { eventoKey: expect.objectContaining({ secuencia: "SALIDA-0" }) },
+					create: expect.objectContaining({
+						tipoOrigen: "TRANSFERENCIA",
+						origenId: "tr-1",
+						cantidad: -5,
+						ubicacionId: "alm-1",
+					}),
+					update: {},
+				}),
+			);
+			expect(mockTx.stockMoveLine.upsert).toHaveBeenNthCalledWith(2,
+				expect.objectContaining({
+					where: { eventoKey: expect.objectContaining({ secuencia: "ENTRADA-0" }) },
+					create: expect.objectContaining({ cantidad: 5, ubicacionId: "pv-1" }),
+				}),
+			);
 		});
 
 		it("rechaza origen=destino", async () => {
@@ -196,11 +224,11 @@ describe("Transferencias Server Actions", () => {
 			vi.mocked(prisma.stockUbicacion.findUnique).mockResolvedValue({
 				cantidadDisponible: 2,
 			} as any);
-			vi.mocked(prisma.almacen.findUnique).mockResolvedValue({
+			vi.mocked(prisma.almacen.findFirst).mockResolvedValue({
 				almacenId: "alm-1",
 				nombre: "Almacén 1",
 			});
-			vi.mocked(prisma.puntoDeVenta.findUnique).mockResolvedValue({
+			vi.mocked(prisma.puntoDeVenta.findFirst).mockResolvedValue({
 				pvId: "pv-1",
 				nombre: "PV 1",
 			});
@@ -230,11 +258,11 @@ describe("Transferencias Server Actions", () => {
 			vi.mocked(prisma.stockUbicacion.findUnique).mockResolvedValue({
 				cantidadDisponible: 8,
 			} as any);
-			vi.mocked(prisma.almacen.findUnique).mockResolvedValue({
+			vi.mocked(prisma.almacen.findFirst).mockResolvedValue({
 				almacenId: "alm-1",
 				nombre: "Almacén 1",
 			});
-			vi.mocked(prisma.puntoDeVenta.findUnique).mockResolvedValue({
+			vi.mocked(prisma.puntoDeVenta.findFirst).mockResolvedValue({
 				pvId: "pv-1",
 				nombre: "PV 1",
 			});
@@ -283,6 +311,7 @@ describe("Transferencias Server Actions", () => {
 					id: "prod-1",
 					nombre: "Test",
 					stock: 100,
+					precioCosto: 1000,
 					tenantId: "tenant-test",
 				} as any,
 			} as any);
@@ -995,5 +1024,147 @@ describe("Transferencias Server Actions", () => {
 			expect(result.success).toBe(false);
 			expect(result.error!.code).toBe("AUTH_REQUIRED");
 		});
+	});
+});
+
+describe("Kardex en ciclo de vida de transferencias", () => {
+	beforeEach(() => {
+		vi.clearAllMocks();
+		mockTx.stockMoveLine.findMany.mockResolvedValue([]);
+		mockTx.transferencia.updateMany.mockResolvedValue({ count: 1 });
+	});
+	const movOriginal = (overrides: Record<string, unknown> = {}) => ([
+		{
+			id: "m-out",
+			productoId: "prod-1",
+			tipoUbicacion: "almacen",
+			ubicacionId: "alm-1",
+			cantidad: -5,
+			costoUnitario: 1200,
+			secuencia: "SALIDA-0",
+			createdAt: new Date("2026-01-01"),
+			...overrides,
+		},
+		{
+			id: "m-in",
+			productoId: "prod-1",
+			tipoUbicacion: "punto_venta",
+			ubicacionId: "pv-1",
+			cantidad: 5,
+			costoUnitario: 1200,
+			secuencia: "ENTRADA-0",
+			createdAt: new Date("2026-01-01"),
+			...overrides,
+		},
+	]);
+
+	it("editar una transferencia completada revierte kardex y registra la nueva versión", async () => {
+		vi.mocked(getCurrentUser).mockResolvedValue(mockUser);
+		vi.mocked(prisma.transferencia.findFirst).mockResolvedValue({
+			transferenciaId: "tr-1",
+			productoId: "prod-1",
+			cantidad: 5,
+			costoUnitario: 1200,
+			origenId: "alm-1",
+			destinoId: null,
+			puntoDeVentaOrigenId: null,
+			puntoDeVentaDestinoId: "pv-1",
+			estado: "COMPLETADA",
+			tenantId: "tenant-test",
+			deletedAt: null,
+		} as any);
+		mockTx.stockMoveLine.findMany.mockResolvedValue(movOriginal());
+
+		const result = await updateTransferenciaAction({
+			transferenciaId: "tr-1",
+			productoId: "prod-1",
+			cantidad: 7,
+			tipoOrigen: "almacen",
+			origenId: "alm-1",
+			tipoDestino: "punto_venta",
+			destinoId: "pv-1",
+		});
+
+		expect(result.success).toBe(true);
+		const secuencias = mockTx.stockMoveLine.upsert.mock.calls.map(
+			(c: any) => c[0].where.eventoKey.secuencia,
+		);
+		expect(secuencias).toEqual([
+			"REV-SALIDA-0",
+			"REV-ENTRADA-0",
+			"SALIDA-1",
+			"ENTRADA-1",
+		]);
+		const salidaNueva = mockTx.stockMoveLine.upsert.mock.calls.find(
+			(c: any) => c[0].where.eventoKey.secuencia === "SALIDA-1",
+		);
+		expect(salidaNueva![0].create.cantidad).toBe(-7);
+		// Mantiene el costo histórico del documento, no el precio actual
+		expect(salidaNueva![0].create.costoUnitario).toBe(1200);
+	});
+
+	it("eliminar una transferencia completada compensa su kardex", async () => {
+		vi.mocked(getCurrentUser).mockResolvedValue(mockUser);
+		vi.mocked(prisma.transferencia.findFirst).mockResolvedValue({
+			transferenciaId: "tr-1",
+			productoId: "prod-1",
+			cantidad: 5,
+			origenId: "alm-1",
+			destinoId: null,
+			puntoDeVentaOrigenId: null,
+			puntoDeVentaDestinoId: "pv-1",
+			estado: "COMPLETADA",
+			tenantId: "tenant-test",
+			deletedAt: null,
+		} as any);
+		mockTx.transferencia.findUnique.mockResolvedValue({
+			transferenciaId: "tr-1",
+			tenantId: "tenant-test",
+			deletedAt: null,
+			estado: "COMPLETADA",
+			productoId: "prod-1",
+			cantidad: 5,
+			origenId: "alm-1",
+			destinoId: null,
+			puntoDeVentaOrigenId: null,
+			puntoDeVentaDestinoId: "pv-1",
+		} as any);
+		mockTx.transferencia.updateMany.mockResolvedValue({ count: 1 });
+		mockTx.stockMoveLine.findMany.mockResolvedValue(movOriginal());
+
+		const result = await deleteTransferenciaAction("tr-1");
+
+		expect(result.success).toBe(true);
+		const secuencias = mockTx.stockMoveLine.upsert.mock.calls.map(
+			(c: any) => c[0].where.eventoKey.secuencia,
+		);
+		expect(secuencias).toEqual(["REV-SALIDA-0", "REV-ENTRADA-0"]);
+	});
+
+	it("eliminar una transferencia PENDIENTE no genera compensaciones", async () => {
+		vi.mocked(getCurrentUser).mockResolvedValue(mockUser);
+		vi.mocked(prisma.transferencia.findFirst).mockResolvedValue({
+			transferenciaId: "tr-1",
+			estado: "PENDIENTE",
+			tenantId: "tenant-test",
+			deletedAt: null,
+		} as any);
+		mockTx.transferencia.findUnique.mockResolvedValue({
+			transferenciaId: "tr-1",
+			tenantId: "tenant-test",
+			deletedAt: null,
+			estado: "PENDIENTE",
+			productoId: "prod-1",
+			cantidad: 5,
+			origenId: "alm-1",
+			destinoId: "alm-2",
+		} as any);
+		mockTx.transferencia.updateMany.mockResolvedValue({ count: 1 });
+
+		const result = await deleteTransferenciaAction("tr-1");
+
+		expect(result.success).toBe(true);
+		expect(mockTx.stockMoveLine.upsert).not.toHaveBeenCalled();
+		expect(mockTx.stockMoveLine.findMany).not.toHaveBeenCalled();
 	});
 });

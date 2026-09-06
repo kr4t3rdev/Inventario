@@ -12,6 +12,7 @@ import { requireTenant } from '@/lib/services/tenant-scope';
 import { calcularPrecioCostoCompra } from '@/lib/inventory-cost-utils';
 import { applyAnticipoAllocations } from '@/lib/services/anticipos-workflow';
 import { upsertStockUbicacion } from '@/lib/services/stock-ubicacion-service';
+import { registrarMovimiento } from '@/features/inventario/movimientos';
 import { getStockTotalProducto } from '@/lib/services/stock-ubicacion-queries';
 import { recordCostChange, CostChangeReason } from '@/lib/cost-history-utils';
 import { hasUnrevertedAnticipoExecution } from '@/lib/services/anticipos-guards';
@@ -129,7 +130,7 @@ export const createCompraProductoAction = withAction(async (input: CreateCompraP
     });
 
     // Actualizar stock y precios
-    for (const item of items) {
+    for (const [idx, item] of items.entries()) {
       const oldPrecioCosto = item.producto.precioCosto;
 
       await tx.producto.update({
@@ -142,6 +143,19 @@ export const createCompraProductoAction = withAction(async (input: CreateCompraP
       await upsertStockUbicacion(tx, {
         tenantId, productoId: item.producto.id, tipoUbicacion: 'almacen',
         ubicacionId: item.producto.almacenId, modo: 'increment', delta: item.cantidad,
+      });
+
+      await registrarMovimiento(tx, {
+        tenantId,
+        productoId: item.producto.id,
+        tipoOrigen: 'COMPRA',
+        origenId: compra.compraDocumentoId,
+        tipoUbicacion: 'almacen',
+        ubicacionId: item.producto.almacenId,
+        cantidad: item.cantidad,
+        costoUnitario: item.precioCosto,
+        secuencia: `ITEM-${idx}`,
+        creadoPorId: user.userId,
       });
 
       // Registrar cambio de costo en historial

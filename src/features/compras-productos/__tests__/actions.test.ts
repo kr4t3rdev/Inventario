@@ -33,6 +33,7 @@ const mockTx = {
 	producto: { update: vi.fn() },
 	gastoCompra: { create: vi.fn() },
 	cuentaPorPagar: { create: vi.fn(), delete: vi.fn() },
+	stockMoveLine: { upsert: vi.fn(), findMany: vi.fn(), count: vi.fn(), aggregate: vi.fn() },
 };
 
 vi.mock("@/lib/prisma", () => ({
@@ -144,16 +145,34 @@ describe("ComprasProductos Server Actions", () => {
 				data: { precioCosto: 450 },
 			});
 			expect(mockTx.producto.update).toHaveBeenCalledTimes(1);
-			expect(upsertStockUbicacion).toHaveBeenCalledWith(
-				mockTx,
-				expect.objectContaining({
+		expect(upsertStockUbicacion).toHaveBeenCalledWith(
+			mockTx,
+			expect.objectContaining({
+				productoId: "prod-1",
+				tipoUbicacion: "almacen",
+				ubicacionId: "alm-1",
+				delta: 10,
+			}),
+		);
+		expect(mockTx.stockMoveLine.upsert).toHaveBeenCalledWith(
+			expect.objectContaining({
+				where: {
+					eventoKey: expect.objectContaining({
+						tipoOrigen: "COMPRA",
+						origenId: "cd-1",
+					}),
+				},
+				create: expect.objectContaining({
+					tenantId: "tenant-test",
 					productoId: "prod-1",
-					tipoUbicacion: "almacen",
-					ubicacionId: "alm-1",
-					delta: 10,
+					cantidad: 10,
+					costoUnitario: 400,
+					secuencia: "ITEM-0",
 				}),
-			);
-		});
+				update: {},
+			}),
+		);
+	});
 
 		it("rechaza si proveedor no existe", async () => {
 			vi.mocked(getCurrentUser).mockResolvedValue(mockUser);

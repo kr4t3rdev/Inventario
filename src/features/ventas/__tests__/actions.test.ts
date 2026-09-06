@@ -34,6 +34,13 @@ const { mockTx } = vi.hoisted(() => {
 			upsert: vi.fn(),
 			updateMany: vi.fn().mockResolvedValue({ count: 1 }),
 		},
+		stockMoveLine: {
+			create: vi.fn().mockResolvedValue({ id: "move-1" }),
+			upsert: vi.fn().mockResolvedValue({ id: "move-1" }),
+			findMany: vi.fn().mockResolvedValue([]),
+			count: vi.fn(),
+			aggregate: vi.fn(),
+		},
 		producto: {
 			update: vi.fn(),
 			findUnique: vi.fn(),
@@ -102,7 +109,7 @@ const mockVenta = {
 			id: "venta-item-1",
 			productoId: "prod-1",
 			cantidad: 2,
-			producto: { id: "prod-1", almacenId: "alm-1", tenantId: "tenant-test" },
+			producto: { id: "prod-1", almacenId: "alm-1", tenantId: "tenant-test", precioCosto: 400 },
 		},
 	],
 };
@@ -143,34 +150,51 @@ describe("Ventas Server Actions", () => {
 				...mockSerie,
 				consecutivo: 6,
 			});
-			mockTx.venta.create.mockResolvedValue(mockVenta);
-			mockTx.stockUbicacion.findUnique.mockResolvedValue({ cantidad: 10 });
-			mockTx.producto.findUnique.mockResolvedValue({
-				id: "prod-1",
-				stock: 10,
-				almacenId: "alm-1",
-				tenantId: "tenant-test",
-			} as any);
-			mockTx.producto.findUniqueOrThrow.mockResolvedValue({
-				tenantId: "tenant-test",
-			} as any);
-			prisma.turnoPuntoVenta.findFirst.mockResolvedValue({
-				id: "turno-1",
-			} as any);
+		mockTx.venta.create.mockResolvedValue(mockVenta);
+		mockTx.stockUbicacion.findUnique.mockResolvedValue({ cantidad: 10 });
+		mockTx.producto.findUnique.mockResolvedValue({
+			id: "prod-1",
+			stock: 10,
+			almacenId: "alm-1",
+			tenantId: "tenant-test",
+			precioCosto: 400,
+		} as any);
+		mockTx.producto.findUniqueOrThrow.mockResolvedValue({
+			tenantId: "tenant-test",
+		} as any);
+		prisma.turnoPuntoVenta.findFirst.mockResolvedValue({
+			id: "turno-1",
+		} as any);
 
-			const result = await createVentaAction(validInput);
+		const result = await createVentaAction(validInput);
 
-			expect(result.success).toBe(true);
-			expect(mockTx.venta.create).toHaveBeenCalledWith(
-				expect.objectContaining({
-					data: expect.objectContaining({
-						tenantId: "tenant-test",
-						puntoDeVentaId: "pv-1",
-					}),
+		expect(result.success).toBe(true);
+		expect(mockTx.venta.create).toHaveBeenCalledWith(
+			expect.objectContaining({
+				data: expect.objectContaining({
+					tenantId: "tenant-test",
+					puntoDeVentaId: "pv-1",
 				}),
-			);
-			expect(mockTx.producto.update).not.toHaveBeenCalled();
-		});
+			}),
+		);
+		expect(mockTx.producto.update).not.toHaveBeenCalled();
+		expect(mockTx.stockMoveLine.upsert).toHaveBeenCalledWith(
+			expect.objectContaining({
+				where: {
+					eventoKey: expect.objectContaining({
+						tipoOrigen: "VENTA",
+						origenId: "venta-1",
+						secuencia: "ITEM-0",
+					}),
+				},
+				create: expect.objectContaining({
+					tenantId: "tenant-test",
+					productoId: "prod-1",
+					cantidad: -2,
+				}),
+			}),
+		);
+	});
 
 		it("retorna error si no tiene items", async () => {
 			vi.mocked(getCurrentUser).mockResolvedValue(mockUser);
@@ -192,24 +216,25 @@ describe("Ventas Server Actions", () => {
 				...mockSerie,
 				consecutivo: 6,
 			});
-			mockTx.venta.create.mockResolvedValue(mockVenta);
-			mockTx.producto.findUnique.mockResolvedValue({
-				id: "prod-1",
-				stock: 10,
-				almacenId: "alm-1",
-				tenantId: "tenant-test",
-			} as any);
-			mockTx.producto.findUniqueOrThrow.mockResolvedValue({
-				tenantId: "tenant-test",
-			} as any);
-			prisma.turnoPuntoVenta.findFirst.mockResolvedValue({
-				id: "turno-1",
-			} as any);
+		mockTx.venta.create.mockResolvedValue(mockVenta);
+		mockTx.producto.findUnique.mockResolvedValue({
+			id: "prod-1",
+			stock: 10,
+			almacenId: "alm-1",
+			tenantId: "tenant-test",
+			precioCosto: 400,
+		} as any);
+		mockTx.producto.findUniqueOrThrow.mockResolvedValue({
+			tenantId: "tenant-test",
+		} as any);
+		prisma.turnoPuntoVenta.findFirst.mockResolvedValue({
+			id: "turno-1",
+		} as any);
 
-			// StockUbicacion del PV con cantidad suficiente
-			mockTx.stockUbicacion.findUnique.mockResolvedValue({
-				cantidad: 5,
-			});
+		// StockUbicacion del PV con cantidad suficiente
+		mockTx.stockUbicacion.findUnique.mockResolvedValue({
+			cantidad: 5,
+		});
 
 			const result = await createVentaAction({
 				puntoDeVentaId: "pv-1",
@@ -358,16 +383,17 @@ describe("Ventas Server Actions", () => {
 				...mockSerie,
 				consecutivo: 6,
 			});
-			mockTx.venta.create.mockResolvedValue(mockVenta);
-			mockTx.stockUbicacion.findUnique.mockResolvedValue({
-				cantidadDisponible: 10,
-			});
-			mockTx.producto.findUnique.mockResolvedValue({
-				id: "prod-1",
-				stock: 10,
-				almacenId: "alm-1",
-				tenantId: "tenant-test",
-			} as any);
+		mockTx.venta.create.mockResolvedValue(mockVenta);
+		mockTx.stockUbicacion.findUnique.mockResolvedValue({
+			cantidadDisponible: 10,
+		});
+		mockTx.producto.findUnique.mockResolvedValue({
+			id: "prod-1",
+			stock: 10,
+			almacenId: "alm-1",
+			tenantId: "tenant-test",
+			precioCosto: 400,
+		} as any);
 			mockTx.producto.findUniqueOrThrow.mockResolvedValue({
 				tenantId: "tenant-test",
 			} as any);
@@ -566,13 +592,55 @@ describe("Ventas Server Actions", () => {
 				},
 				data: expect.objectContaining({ deletedAt: expect.any(Date) }),
 			});
-			expect(mockTx.purchaseAllocation.deleteMany).toHaveBeenCalledWith({
-				where: {
-					tenantId: "tenant-test",
-					ventaItemId: { in: ["venta-item-1"] },
-				},
-			});
+		expect(mockTx.purchaseAllocation.deleteMany).toHaveBeenCalledWith({
+			where: {
+				tenantId: "tenant-test",
+				ventaItemId: { in: ["venta-item-1"] },
+			},
 		});
+		// La anulación compensa con el costo histórico del kardex (800), no el actual (400)
+		expect(mockTx.stockMoveLine.findMany).toHaveBeenCalledWith({
+			where: { tenantId: "tenant-test", tipoOrigen: "VENTA", origenId: "venta-1" },
+			orderBy: [{ createdAt: "asc" }, { id: "asc" }],
+		});
+	});
+
+	it("anula con costo histórico del kardex, no con el precio actual", async () => {
+		vi.mocked(getCurrentUser).mockResolvedValue(mockUser);
+		vi.mocked(prisma.venta.findUnique).mockResolvedValue(mockVenta);
+		mockTx.venta.findUnique.mockResolvedValue(mockVenta);
+		vi.mocked(prisma.venta.delete).mockResolvedValue(mockVenta);
+		mockTx.stockUbicacion.findUnique.mockResolvedValue({
+			cantidad: 10,
+			cantidadDisponible: 10,
+		});
+		mockTx.producto.findUniqueOrThrow.mockResolvedValue({
+			tenantId: "tenant-test",
+		} as any);
+		// El movimiento original de venta tenía costo 900; el precioCosto actual del producto es 400
+		mockTx.stockMoveLine.findMany.mockResolvedValue([
+			{
+				id: "m-venta-1",
+				productoId: "prod-1",
+				tipoUbicacion: "punto_venta",
+				ubicacionId: "pv-1",
+				cantidad: -2,
+				costoUnitario: 900,
+				secuencia: "ITEM-0",
+				createdAt: new Date("2026-01-01"),
+			},
+		] as any);
+
+		const result = await anularVentaAction({ ventaId: "venta-1" });
+
+		expect(result.success).toBe(true);
+		const compensacion = mockTx.stockMoveLine.upsert.mock.calls.find(
+			(c: any) => c[0].where.eventoKey.secuencia === "REV-ITEM-0",
+		);
+		expect(compensacion).toBeDefined();
+		expect(compensacion![0].create.cantidad).toBe(2);
+		expect(compensacion![0].create.costoUnitario).toBe(900);
+	});
 
 		it("revalida el turno dentro de la transacción", async () => {
 			vi.mocked(getCurrentUser).mockResolvedValue(mockUser);

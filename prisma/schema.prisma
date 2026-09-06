@@ -234,9 +234,10 @@ model Tenant {
   accountingPolicy               TenantAccountingPolicy?
   accountingPolicyRolloutEntries AccountingPolicyRolloutEntry[]
   accountingPolicyApprovals      AccountingPolicyTenantApproval[]
-  fxEvidence                    FxEvidence[]
+  fxEvidence                     FxEvidence[]
   financialAuxiliaryCheckpoints  FinancialAuxiliaryCheckpoint[]
   snapshotPeriodos               SnapshotPeriodo[]
+  stockMoveLines                 StockMoveLine[]
   turnosPos                      TurnoPuntoVenta[]
   tiposPago                      TipoPago[]
 
@@ -501,6 +502,7 @@ model Producto {
   Receta               Receta[]
   RecetaIngrediente    RecetaIngrediente[]
   stockUbicaciones     StockUbicacion[]
+  stockMoveLines       StockMoveLine[]
   transferencias       Transferencia[]
   ValeSalidaItem       ValeSalidaItem[]
   ventas               Venta[]
@@ -508,6 +510,7 @@ model Producto {
 
   @@unique([tenantId, codigoInterno])
   @@unique([tenantId, codigoNegocio])
+  @@unique([tenantId, id])
   @@index([tenantId])
   @@index([tenantId, categoriaId])
   @@index([tenantId, vendorId])
@@ -532,6 +535,35 @@ model StockUbicacion {
   @@index([tenantId])
   @@index([ubicacionId, tipoUbicacion])
   @@index([productoId])
+}
+
+/// Movimiento apendicular del kardex. Las correcciones se representan
+/// con un movimiento compensatorio, nunca editando este registro.
+/// La clave `eventoKey` hace idempotente la escritura (upsert): un retry
+/// del mismo evento de negocio no duplica la línea.
+model StockMoveLine {
+  id               String               @id @default(cuid())
+  tenantId         String
+  productoTenantId String
+  productoId       String
+  tipoOrigen       TipoOrigenMovimiento
+  origenId         String
+  tipoUbicacion    String
+  ubicacionId      String
+  cantidad         Int
+  costoUnitario    Int
+  costoTotal       Int
+  secuencia        String               @default("0")
+  creadoPorId      String?
+  createdAt        DateTime             @default(now())
+  tenant           Tenant               @relation(fields: [tenantId], references: [tenantId])
+  producto         Producto             @relation(fields: [productoTenantId, productoId], references: [tenantId, id], onDelete: Restrict)
+  creadoPor        User?                @relation(fields: [creadoPorId], references: [userId], onDelete: SetNull)
+
+  @@unique([tenantId, tipoOrigen, origenId, productoId, tipoUbicacion, ubicacionId, secuencia], name: "eventoKey")
+  @@index([tenantId, productoId, createdAt])
+  @@index([tenantId, tipoOrigen, origenId])
+  @@index([tenantId, ubicacionId, createdAt, id])
 }
 
 model Venta {
@@ -692,6 +724,7 @@ model User {
   approvedSalesAgents            SalesAgentProfile[]          @relation("SalesAgentProfileApprover")
   processedSalesAgentPayouts     SalesAgentPayout[]           @relation("SalesAgentPayoutProcessor")
   confirmedTenantLicensePayments TenantLicensePayment[]       @relation("TenantLicensePaymentConfirmer")
+  stockMoveLinesCreadas          StockMoveLine[]
 }
 
 model CloudinaryAsset {
@@ -1720,7 +1753,6 @@ model ReconciliacionServicio {
 
   @@index([tenantId])
   @@index([tenantId, fxProvenanceKind])
-
   @@index([tenantId, fechaReconciliacion])
   @@index([tenantId, cuentaId, fechaReconciliacion])
 }
@@ -1767,7 +1799,6 @@ model ReconciliacionGasto {
 
   @@index([tenantId])
   @@index([tenantId, fxProvenanceKind])
-
   @@index([tenantId, fechaReconciliacion])
   @@index([tenantId, cuentaId, fechaReconciliacion])
 }
@@ -1792,7 +1823,6 @@ model AjusteBancario {
 
   @@index([tenantId])
   @@index([tenantId, fechaOperacion])
-
   @@index([tenantId, cuentaId, fechaOperacion])
 }
 
@@ -1821,7 +1851,6 @@ model TransferenciaBancaria {
 
   @@unique([tenantId, numeroComprobante])
   @@index([tenantId])
-
   @@index([tenantId, fechaTransferencia])
   @@index([tenantId, cuentaOrigenId, fechaTransferencia])
   @@index([tenantId, cuentaDestinoId, fechaTransferencia])
@@ -3082,4 +3111,14 @@ enum MetodoPagoVenta {
   TRANSFERENCIA
   CREDITO
   MIXTO
+}
+
+enum TipoOrigenMovimiento {
+  VENTA
+  COMPRA
+  TRANSFERENCIA
+  MERMA
+  AJUSTE
+  PRODUCCION
+  CONTEO
 }

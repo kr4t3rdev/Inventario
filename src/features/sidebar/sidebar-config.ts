@@ -96,6 +96,16 @@ export const SIDEBAR_FEATURE_MAP: Record<string, string> = {
   "Inyección Capital": "inyeccion-capital",
   Servicios: "servicios",
   "Reconciliación Servicios": "servicios",
+  Kardex: "kardex",
+  "Ajustes de Inventario": "ajustes-inventario",
+  "Conteo Físico": "conteo-fisico",
+  "Órdenes de Compra": "ordenes-compra",
+  Recepciones: "recepciones",
+  Reabastecimiento: "reabastecimiento",
+  Lotes: "lotes-series",
+  Variantes: "variantes",
+  "Ubicaciones Avanzadas": "ubicaciones-avanzadas",
+  "MRP Avanzado": "mrp-avanzado",
 }
 
 export const SIDEBAR_TENANT_PERMISSIONS: Record<string, TenantRole[]> = {

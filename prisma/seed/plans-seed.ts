@@ -22,11 +22,19 @@ export const PLAN_BASICO_FEATURES: Record<string, boolean> = {
 	"listas-precios": false,
 	"ficha-costo": false,
 	"ficha-costo-bulk": false,
+	// Paridad Odoo: núcleo auditable en Básico
+	kardex: true,
+	"ajustes-inventario": true,
+	"conteo-fisico": true,
+	"unidades-conversion": false,
+	"lotes-series": false,
+	variantes: false,
 	// Operaciones
 	almacenes: true,
 	"puntos-venta": true,
 	transferencias: true,
 	mermas: true,
+	"ubicaciones-avanzadas": false,
 	// Ventas
 	"ventas-pos": true,
 	"ventas-factura": false,
@@ -42,6 +50,9 @@ export const PLAN_BASICO_FEATURES: Record<string, boolean> = {
 	proveedores: true,
 	compras: true,
 	servicios: false,
+	"ordenes-compra": false,
+	recepciones: false,
+	reabastecimiento: false,
 	// Financiero
 	gastos: true,
 	contabilidad: true,
@@ -61,6 +72,7 @@ export const PLAN_BASICO_FEATURES: Record<string, boolean> = {
 	// Producción
 	produccion: false,
 	reparaciones: false,
+	"mrp-avanzado": false,
 	// RRHH
 	empleados: true,
 	vacaciones: false,
@@ -117,6 +129,15 @@ export const PLAN_PROFESIONAL_FEATURES: Record<string, boolean> = {
 	"upload-vendors-logo": true,
 	"upload-profile-avatar": true,
 	"upload-deudas-cash-receipt": true,
+	// Paridad Odoo P1 Profesional
+	"ordenes-compra": true,
+	recepciones: true,
+	reabastecimiento: true,
+	"unidades-conversion": true,
+	"lotes-series": true,
+	variantes: true,
+	"ubicaciones-avanzadas": true,
+	"mrp-avanzado": false,
 };
 
 /* ─── Plan 3: Empresarial — $110/mes (referido: $105/mes) ─── */
@@ -149,6 +170,7 @@ export const PLAN_EMPRESARIAL_FEATURES: Record<string, boolean> = {
 	"upload-productos-photo": true,
 	"upload-contratos-attachment": true,
 	"upload-contratos-version": true,
+	"mrp-avanzado": true,
 	// NO incluidos
 	reparaciones: false,
 	"api-integraciones": false,
@@ -159,7 +181,7 @@ export const PLAN_EMPRESARIAL_FEATURES: Record<string, boolean> = {
 export async function seedPlans() {
 	const existing = await prisma.plan.count();
 	if (existing > 0) {
-		console.log(`Ya existen ${existing} planes. Se omite seed.`);
+		console.log(`Ya existen ${existing} planes. Se omite seed (los flags de inventario en planes existentes los propaga la migración 20260905130001).`);
 		return;
 	}
 

@@ -20,6 +20,12 @@ const { mockTx } = vi.hoisted(() => ({
 		producto: {
 			update: vi.fn(),
 		},
+		stockMoveLine: {
+			upsert: vi.fn(),
+			findMany: vi.fn().mockResolvedValue([]),
+			count: vi.fn(),
+			aggregate: vi.fn(),
+		},
 	},
 }));
 
@@ -125,6 +131,23 @@ describe('Mermas Server Actions', () => {
           productoId: 'prod-1',
           tipoUbicacion: 'almacen',
           delta: -5,
+        }),
+      );
+      expect(mockTx.stockMoveLine.upsert).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: expect.objectContaining({
+            eventoKey: expect.objectContaining({
+              tenantId: 'tenant-test',
+              tipoOrigen: 'MERMA',
+              origenId: 'mer-1',
+            }),
+          }),
+          create: expect.objectContaining({
+            cantidad: -5,
+            costoUnitario: 1000,
+            secuencia: 'SALIDA-0',
+          }),
+          update: {},
         }),
       );
     });
@@ -359,5 +382,60 @@ describe('Mermas Server Actions', () => {
       expect(result.success).toBe(false);
       expect(result.error!.code).toBe('AUTH_REQUIRED');
     });
+  });
+});
+
+describe('Mermas: compensación kardex en ciclo de vida', () => {
+  beforeEach(() => { vi.clearAllMocks(); });
+
+  it('editar cantidad revierte el movimiento original y registra el nuevo en kardex', async () => {
+    vi.mocked(getCurrentUser).mockResolvedValue(mockUser);
+    vi.mocked(prisma.merma.findFirst).mockResolvedValue({
+      mermaId: 'mer-1', tenantId: 'tenant-test', productoId: 'prod-1',
+      cantidad: 3, almacenId: 'alm-1',
+    } as any);
+    vi.mocked(prisma.producto.findFirst).mockResolvedValue({ precioCosto: 1000 } as any);
+    vi.mocked(prisma.stockUbicacion.findUnique).mockResolvedValue({ cantidadDisponible: 50 } as any);
+    mockTx.merma.update.mockResolvedValue({});
+    mockTx.stockMoveLine.findMany.mockResolvedValue([
+      { id: 'm-1', productoId: 'prod-1', tipoUbicacion: 'almacen', ubicacionId: 'alm-1', cantidad: -3, costoUnitario: 1000, secuencia: 'SALIDA-0', createdAt: new Date() },
+    ]);
+
+    const result = await updateMermaAction({ mermaId: 'mer-1', cantidad: 8 } as any);
+
+    expect(result.success).toBe(true);
+    const secuencias = mockTx.stockMoveLine.upsert.mock.calls.map(
+      (c: any) => c[0].where.eventoKey.secuencia,
+    );
+    expect(secuencias).toContain('REV-SALIDA-0');
+    expect(secuencias).toContain('SALIDA-1');
+    const compensacion = mockTx.stockMoveLine.upsert.mock.calls.find(
+      (c: any) => c[0].where.eventoKey.secuencia === 'REV-SALIDA-0',
+    );
+    expect(compensacion![0].create.cantidad).toBe(3);
+    const nueva = mockTx.stockMoveLine.upsert.mock.calls.find(
+      (c: any) => c[0].where.eventoKey.secuencia === 'SALIDA-1',
+    );
+    expect(nueva![0].create.cantidad).toBe(-8);
+  });
+
+  it('eliminar merma revierte kardex antes de borrar', async () => {
+    vi.mocked(getCurrentUser).mockResolvedValue(mockUser);
+    vi.mocked(prisma.merma.findFirst).mockResolvedValue({
+      mermaId: 'mer-1', tenantId: 'tenant-test', productoId: 'prod-1',
+      cantidad: 5, almacenId: 'alm-1',
+    } as any);
+    mockTx.stockMoveLine.findMany.mockResolvedValue([
+      { id: 'm-1', productoId: 'prod-1', tipoUbicacion: 'almacen', ubicacionId: 'alm-1', cantidad: -5, costoUnitario: 1000, secuencia: 'SALIDA-0', createdAt: new Date() },
+    ]);
+
+    const result = await deleteMermaAction('mer-1');
+
+    expect(result.success).toBe(true);
+    expect(mockTx.merma.delete).toHaveBeenCalledWith({ where: { mermaId: 'mer-1' } });
+    const secuencias = mockTx.stockMoveLine.upsert.mock.calls.map(
+      (c: any) => c[0].where.eventoKey.secuencia,
+    );
+    expect(secuencias).toContain('REV-SALIDA-0');
   });
 });

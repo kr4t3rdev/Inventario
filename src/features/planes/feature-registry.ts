@@ -114,6 +114,72 @@ export const FEATURE_REGISTRY: FeatureDef[] = [
 		description: "Registro y control de mermas y ajustes de inventario",
 		category: "operaciones",
 	},
+	{
+		key: "kardex",
+		label: "Kardex de inventario",
+		description: "Historial auditable de movimientos con saldo y costo",
+		category: "inventario",
+	},
+	{
+		key: "ajustes-inventario",
+		label: "Ajustes de inventario",
+		description: "Ajustes unificados con motivo de catálogo y valorización",
+		category: "inventario",
+	},
+	{
+		key: "conteo-fisico",
+		label: "Conteo físico",
+		description: "Toma de inventario con doble conteo ciego y varianzas",
+		category: "inventario",
+	},
+	{
+		key: "unidades-conversion",
+		label: "Conversión de unidades",
+		description: "Compra en caja y venta en unidad con factor a stock",
+		category: "inventario",
+	},
+	{
+		key: "lotes-series",
+		label: "Lotes y vencimientos",
+		description: "Trazabilidad por lote con FEFO y alertas de caducidad",
+		category: "inventario",
+	},
+	{
+		key: "variantes",
+		label: "Variantes de producto",
+		description: "Talla y color con SKU, precio y stock propios",
+		category: "inventario",
+	},
+	{
+		key: "ubicaciones-avanzadas",
+		label: "Ubicaciones anidadas",
+		description: "Zonas, pasillos y estantes dentro del almacén",
+		category: "operaciones",
+	},
+	{
+		key: "ordenes-compra",
+		label: "Órdenes de compra",
+		description: "Pedidos a proveedor previos a la recepción y factura",
+		category: "compras",
+	},
+	{
+		key: "recepciones",
+		label: "Recepciones parciales",
+		description: "Entradas parciales con backorder contra la orden",
+		category: "compras",
+	},
+	{
+		key: "reabastecimiento",
+		label: "Reabastecimiento",
+		description: "Reglas min/max con sugerencia de compra o fabricación",
+		category: "compras",
+	},
+	{
+		key: "mrp-avanzado",
+		label: "MRP avanzado",
+		description: "BOM multinivel con explosión de necesidades",
+		category: "produccion",
+	},
 
 	// ════════════════════════════════════════════
 	// Ventas
