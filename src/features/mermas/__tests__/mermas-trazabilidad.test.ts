@@ -9,7 +9,6 @@ vi.mock('@/lib/server-actions/get-current-user');
 vi.mock('next/cache', () => ({ revalidatePath: vi.fn() }));
 vi.mock('@/lib/notificaciones-utils', () => ({ notificarMerma: vi.fn() }));
 vi.mock('@/lib/services/stock-ubicacion-service', () => ({ upsertStockUbicacion: vi.fn() }));
-vi.mock('@/features/inventario/movimientos', () => ({ registrarMovimiento: vi.fn() }));
 
 const { mockTx } = vi.hoisted(() => ({
   mockTx: { merma: { create: vi.fn(), update: vi.fn(), delete: vi.fn() } },

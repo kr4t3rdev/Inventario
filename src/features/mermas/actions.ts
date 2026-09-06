@@ -11,7 +11,6 @@ import { prisma } from "@/lib/prisma";
 import { requireTenant } from "@/lib/services/tenant-scope";
 import { notificarMerma } from "@/lib/notificaciones-utils";
 import { upsertStockUbicacion } from "@/lib/services/stock-ubicacion-service";
-import { registrarMovimiento } from "@/features/inventario/movimientos";
 import { createMermaSchema, updateMermaSchema } from "./schemas";
 import type { CreateMermaInput, UpdateMermaInput } from "./schemas";
 import type { AuthenticatedUser } from "@/lib/auth-middleware";
@@ -104,18 +103,6 @@ export const createMermaAction = withAction(
 				ubicacionId: almacenIdEfectivo,
 				modo: "increment",
 				delta: -parsed.cantidad,
-			});
-
-			await registrarMovimiento(tx, {
-				tenantId,
-				productoId: parsed.productoId,
-				tipoOrigen: "MERMA",
-				origenId: creada.mermaId,
-				tipoUbicacion: "almacen",
-				ubicacionId: almacenIdEfectivo,
-				cantidad: -parsed.cantidad,
-				costoUnitario: producto.precioCosto,
-				creadoPorId: user.userId,
 			});
 
 			return creada;

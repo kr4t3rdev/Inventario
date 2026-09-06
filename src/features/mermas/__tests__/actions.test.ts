@@ -119,6 +119,14 @@ describe('Mermas Server Actions', () => {
 
       expect(result.success).toBe(true);
       expect(notificarMerma).toHaveBeenCalled();
+      expect(upsertStockUbicacion).toHaveBeenCalledWith(
+        mockTx,
+        expect.objectContaining({
+          productoId: 'prod-1',
+          tipoUbicacion: 'almacen',
+          delta: -5,
+        }),
+      );
     });
 
     it('rechaza si el producto no existe', async () => {
