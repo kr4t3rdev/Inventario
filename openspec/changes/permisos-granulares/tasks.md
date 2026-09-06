@@ -17,9 +17,11 @@ Leyenda: `- [ ]` pendiente · `- [x]` hecho.
 
 ## PG-02 — Schema: TenantRole + Membership.customRoleId
 
-- [ ] **PG02-T1 — Migración.** `prisma migrate dev --create-only --name tenant_custom_roles`: modelo `TenantRole` (`@@unique([tenantId, nombre])`, índice tenant) + `TenantMembership.customRoleId` (nullable, `onDelete: Restrict`) + relación en `Tenant`. Revisar SQL; aplicar en local. Deploy a prod queda para el gate final (Railway aplica en arranque).
-- [ ] **PG02-T2 — Tests de modelo.** Crear rol, unicidad por tenant (mismos nombres en tenants distintos OK), borrado bloqueado con miembros asignados (Restrict), cascada al borrar tenant.
+- [x] **PG02-T1 — Migración.** `prisma migrate dev --create-only --name tenant_custom_roles`: modelo `TenantRole` (`@@unique([tenantId, nombre])`, índice tenant) + `TenantMembership.customRoleId` (nullable, `onDelete: Restrict`) + relación en `Tenant`. Revisar SQL; aplicar en local. Deploy a prod queda para el gate final (Railway aplica en arranque).
+  - Nota de ejecución: SQL generado offline con `prisma migrate diff` (misma engine que `migrate dev`, sin tocar la dev DB) y revisado a mano — aditivo, sin DROP. El `deploy` contra la dev DB local falla con P3005 (la dev DB no está baselineada bajo migrate); la cadena completa además **no replay-iza en fresco** desde `20260418000000_add_stock_ubicacion` (CREATE duplicado de StockUbicacion, preexistente a este change).
+- [x] **PG02-T2 — Tests de modelo.** Crear rol, unicidad por tenant (mismos nombres en tenants distintos OK), borrado bloqueado con miembros asignados (Restrict), cascada al borrar tenant.
   `pnpm exec vitest run src/lib/auth/__tests__`
+  - Nota: contrato estático en unidad `src/lib/auth/__tests__/tenant-role-schema.test.ts` (7/7 ✅) + comportamiento real en `src/lib/auth/__integration__/tenant-role-model.test.ts` (4/4 ✅ contra Postgres 17 desechable; suite de integración completa 11/11).
 - Commit: `feat(auth): schema TenantRole y Membership.customRoleId (PG-02)`
 
 ## PG-03 — Resolución efectiva y guard único

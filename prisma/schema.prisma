@@ -230,6 +230,7 @@ model Tenant {
   seriesFacturacion              SerieFacturacion[]
   licencias                      TenantLicense[]
   memberships                    TenantMembership[]
+  tenantRoles                    TenantRole[]
   accountingPolicy               TenantAccountingPolicy?
   accountingPolicyRolloutEntries AccountingPolicyRolloutEntry[]
   accountingPolicyApprovals      AccountingPolicyTenantApproval[]
@@ -245,20 +246,43 @@ model Tenant {
 
 /// * Membresía de un usuario en un tenant. Desacopla identidad global de rol operativo.
 model TenantMembership {
-  membershipId String   @id @default(cuid())
+  membershipId String      @id @default(cuid())
   tenantId     String
   userId       String
-  tenantRole   String   @default("dependiente")
-  isActive     Boolean  @default(true)
-  createdAt    DateTime @default(now())
-  updatedAt    DateTime @updatedAt
-  tenant       Tenant   @relation(fields: [tenantId], references: [tenantId], onDelete: Cascade)
-  user         User     @relation(fields: [userId], references: [userId], onDelete: Cascade)
+  tenantRole   String      @default("dependiente")
+  customRoleId String?
+  isActive     Boolean     @default(true)
+  createdAt    DateTime    @default(now())
+  updatedAt    DateTime    @updatedAt
+  tenant       Tenant      @relation(fields: [tenantId], references: [tenantId], onDelete: Cascade)
+  user         User        @relation(fields: [userId], references: [userId], onDelete: Cascade)
+  customRole   TenantRole? @relation(fields: [customRoleId], references: [roleId], onDelete: Restrict)
 
   @@unique([tenantId, userId])
   @@index([userId])
   @@index([tenantId])
+  @@index([customRoleId])
   @@map("tenant_memberships")
+}
+
+/// * Rol personalizado de tenant: conjunto de permisos nombrados asignable a membresías.
+/// `permissions` es un string[] validado contra permission-registry al escribir.
+/// Sin filas, el sistema opera 100% por defaults del registry (customRoleId = null).
+model TenantRole {
+  roleId      String            @id @default(cuid())
+  tenantId    String
+  nombre      String
+  descripcion String?
+  permissions Json
+  isActive    Boolean           @default(true)
+  createdAt   DateTime          @default(now())
+  updatedAt   DateTime          @updatedAt
+  tenant      Tenant            @relation(fields: [tenantId], references: [tenantId], onDelete: Cascade)
+  memberships TenantMembership[]
+
+  @@unique([tenantId, nombre])
+  @@index([tenantId])
+  @@map("tenant_roles")
 }
 
 /// * Licencia/plan activo de un tenant. Reemplaza la relación actual Licencia→User.
