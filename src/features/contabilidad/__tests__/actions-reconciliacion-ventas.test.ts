@@ -1,6 +1,7 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 const getCurrentUserMock = vi.hoisted(() => vi.fn());
+const getReconciliationStatsMock = vi.hoisted(() => vi.fn());
 const txMock = vi.hoisted(() => ({
 	$queryRaw: vi.fn(),
 	$executeRaw: vi.fn(),
@@ -14,7 +15,7 @@ const txMock = vi.hoisted(() => ({
 const prismaMock = vi.hoisted(() => ({
 	$queryRaw: vi.fn(),
 	$transaction: vi.fn((callback: (tx: typeof txMock) => unknown) => callback(txMock)),
-	venta: { findMany: vi.fn(), count: vi.fn() },
+	venta: { findMany: vi.fn() },
 	ventaServicios: { count: vi.fn() },
 	gastosDE: { count: vi.fn() },
 	 pagosalario: { count: vi.fn() },
@@ -29,6 +30,9 @@ vi.mock('@/lib/server-actions/get-current-user', () => ({
 	getCurrentUser: getCurrentUserMock,
 }));
 vi.mock('@/lib/prisma', () => ({ prisma: prismaMock, default: prismaMock }));
+vi.mock('@/features/contabilidad/services/reconciliation-stats-service', () => ({
+	getReconciliationStats: getReconciliationStatsMock,
+}));
 vi.mock('@/lib/services/with-period-validation', () => ({
 	withPeriodValidation: (_extractor: unknown, handler: unknown) => handler,
 }));
@@ -67,7 +71,6 @@ describe('Reconciliación — ventas anuladas y carreras de servicios', () => {
 	beforeEach(() => {
 		vi.clearAllMocks();
 		getCurrentUserMock.mockResolvedValue(user);
-		prismaMock.venta.count.mockResolvedValue(0);
 		prismaMock.ventaServicios.count.mockResolvedValue(0);
 		prismaMock.gastosDE.count.mockResolvedValue(0);
 		prismaMock.pagosalario.count.mockResolvedValue(0);
@@ -113,12 +116,26 @@ describe('Reconciliación — ventas anuladas y carreras de servicios', () => {
 	});
 
 	it('excluye ventas anuladas del KPI de pendientes', async () => {
+		const snapshot = {
+			modules: {
+				ventas: { pending: 0, completedToday: 0, totalToday: 0 },
+				servicios: { pending: 0, completedToday: 0, totalToday: 0 },
+				gastos: { pending: 0, completedToday: 0, totalToday: 0 },
+			},
+			stats: {
+				totalPending: 0,
+				completedToday: 0,
+				reconciledAmount: 0,
+				efficiency: 0,
+			},
+			recentActivity: [],
+		};
+		getReconciliationStatsMock.mockResolvedValue(snapshot);
+
 		const result = await getReconciliacionStatsAction();
 
-		expect(result.success).toBe(true);
-		expect(prismaMock.venta.count).toHaveBeenCalledWith({
-			where: { tenantId: 'tenant-1', deletedAt: null, reconciliaciones: { none: {} } },
-		});
+		expect(result).toEqual({ success: true, data: snapshot });
+		expect(getReconciliationStatsMock).toHaveBeenCalledWith({ tenantId: 'tenant-1' });
 	});
 
 	it('rechaza reconciliar una venta cuya CxC está ANULADA antes de tocar el banco', async () => {

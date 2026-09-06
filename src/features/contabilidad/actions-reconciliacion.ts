@@ -21,6 +21,9 @@ import {
 	buildPersistedAccountingAmount,
 	validateSaleReconciliationInput,
 } from "@/features/contabilidad/services/accounting-reconciliation-service";
+import {
+	getReconciliationStats,
+} from "@/features/contabilidad/services/reconciliation-stats-service";
 import { acquireAccountingTenantLock } from "@/features/contabilidad/services/accounting-tenant-lock-service";
 import { getPayrollPaymentAmount } from "@/features/pago-salario/payroll-amounts";
 
@@ -28,126 +31,9 @@ import { getPayrollPaymentAmount } from "@/features/pago-salario/payroll-amounts
 
 export const getReconciliacionStatsAction = withAction(
 	async (_input: void, user: AuthenticatedUser) => {
-			requireFeature(user, 'contabilidad', 'consultar el estado de reconciliación');
+		requireFeature(user, 'contabilidad', 'consultar el estado de reconciliación');
 		const tenantId = requireTenant(user);
-		const hoy = new Date();
-		hoy.setHours(0, 0, 0, 0);
-		const manana = new Date(hoy);
-		manana.setDate(manana.getDate() + 1);
-
-		const [vp, sp, gp, gs, gc, gvs, vh, sh, gh, montoHoy, act] =
-			await Promise.all([
-				// Pendientes: registros fuente sin reconciliación asignada
-				prisma.venta.count({
-					where: { tenantId, deletedAt: null, reconciliaciones: { none: {} } },
-				}),
-				prisma.ventaServicios.count({
-					where: { tenantId, NOT: { reconciliado: true } },
-				}),
-				prisma.gastosDE.count({
-					where: { tenantId, reconciliaciones: { none: {} } },
-				}),
-				prisma.pagosalario.count({
-					where: { tenantId, ReconciliacionGasto: { none: {} } },
-				}),
-				// CompraServicio sin reconciliar - obtener IDs reconciliados primero
-				(async () => {
-					const reconciliados = await prisma.reconciliacionGasto.findMany({
-						where: { tenantId, tipoGasto: "servicio" },
-						select: { referenciaId: true },
-						distinct: ["referenciaId"],
-					});
-					const idsReconciliados = reconciliados
-						.map((r) => r.referenciaId)
-						.filter(Boolean);
-					return prisma.compraServicio.count({
-						where: {
-							tenantId,
-							compraServicioId:
-								idsReconciliados.length > 0
-									? { notIn: idsReconciliados }
-									: undefined,
-						},
-					});
-				})(),
-				// VentaServicios con costo > 0 sin reconciliar en ReconciliacionGasto (venta_servicio)
-				(async () => {
-					const reconciliados = await prisma.reconciliacionGasto.findMany({
-						where: { tenantId, tipoGasto: "venta_servicio" },
-						select: { referenciaId: true },
-						distinct: ["referenciaId"],
-					});
-					const idsReconciliados = reconciliados
-						.map((r) => r.referenciaId)
-						.filter(Boolean);
-					return prisma.ventaServicios.count({
-						where: {
-							tenantId,
-							costo: { gt: 0 },
-							ventaServicioId:
-								idsReconciliados.length > 0
-									? { notIn: idsReconciliados }
-									: undefined,
-						},
-					});
-				})(),
-				prisma.reconciliacionVenta.count({
-					where: { fechaReconciliacion: { gte: hoy, lt: manana }, tenantId },
-				}),
-				prisma.reconciliacionServicio.count({
-					where: { fechaReconciliacion: { gte: hoy, lt: manana }, tenantId },
-				}),
-				prisma.reconciliacionGasto.count({
-					where: { fechaReconciliacion: { gte: hoy, lt: manana }, tenantId },
-				}),
-				prisma.reconciliacionVenta.aggregate({
-					where: { fechaReconciliacion: { gte: hoy, lt: manana }, tenantId },
-					_sum: { monto: true },
-				}),
-				prisma.reconciliacionVenta.findMany({
-					where: { tenantId },
-					orderBy: { fechaReconciliacion: "desc" },
-					take: 10,
-					select: {
-						reconciliacionId: true,
-						monto: true,
-						moneda: true,
-						fechaReconciliacion: true,
-						observaciones: true,
-						cuentaBancaria: { select: { nombreBanco: true } },
-					},
-				}),
-			]);
-
-		const gastosPendientes = gp + gs + gc + gvs;
-
-		const totalHoy = Math.max(vh + vp, sh + sp, gh + gastosPendientes, 1);
-		return {
-			modules: {
-				ventas: { pending: vp, completedToday: vh, totalToday: vh + vp },
-				servicios: { pending: sp, completedToday: sh, totalToday: sh + sp },
-				gastos: {
-					pending: gastosPendientes,
-					completedToday: gh,
-					totalToday: gh + gastosPendientes,
-				},
-			},
-			stats: {
-				totalPending: vp + sp + gastosPendientes,
-				completedToday: vh + sh + gh,
-				reconciledAmount: Number(montoHoy._sum.monto ?? 0),
-				efficiency: Math.round(((vh + sh + gh) / totalHoy) * 100),
-			},
-			recentActivity: act.map((a: any) => ({
-				id: a.reconciliacionId,
-				type: "venta",
-				reference: a.reconciliacionId.slice(0, 8),
-				description: a.observaciones || "Venta reconciliada",
-				accountName: a.cuentaBancaria?.nombreBanco || "Sin cuenta",
-				amount: Number(a.monto),
-				date: a.fechaReconciliacion.toISOString(),
-			})),
-		};
+		return getReconciliationStats({ tenantId });
 	},
 );
 
