@@ -121,6 +121,8 @@ export const SIDEBAR_TENANT_PERMISSIONS: Record<string, TenantRole[]> = {
   "Gestión de Facturas": ["manager"],
   Mermas: ["manager"],
   Kardex: ["economico", "manager"],
+  "Ajustes de Inventario": ["manager"],
+  "Conteo Físico": ["manager"],
   Transferencias: ["manager"],
   Empleados: ["economico", "manager"],
   "Gestión de Empleados": ["economico", "manager"],
@@ -193,6 +195,8 @@ export const SIDEBAR_CONFIG: SidebarConfig = {
         { title: "Gestión de Facturas", url: "/busy/facturas", icon: FileText as LucideIcon },
         { title: "Mermas", url: "/busy/mermas", icon: AlertTriangle as LucideIcon },
         { title: "Kardex", url: "/busy/inventario/kardex", icon: History as LucideIcon },
+        { title: "Ajustes de Inventario", url: "/busy/inventario/ajustes", icon: SlidersHorizontal as LucideIcon },
+        { title: "Conteo Físico", url: "/busy/inventario/conteos", icon: ClipboardList as LucideIcon },
         { title: "Transferencias", url: "/busy/transferencias", icon: ArrowRightLeft as LucideIcon },
         {
           title: "Empleados",

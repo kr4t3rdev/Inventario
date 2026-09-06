@@ -12,6 +12,7 @@ import { requireTenant } from "@/lib/services/tenant-scope";
 import { notificarMerma } from "@/lib/notificaciones-utils";
 import { upsertStockUbicacion } from "@/lib/services/stock-ubicacion-service";
 import {
+	mapearMotivoLegacy,
 	getMovimientosDeOrigen,
 	registrarMovimiento,
 	revertirMovimientosDeOrigen,
@@ -121,6 +122,27 @@ export const createMermaAction = withAction(
 				costoUnitario: producto.precioCosto,
 				secuencia: "SALIDA-0",
 				creadoPorId: user.userId,
+			});
+
+			// Puente legacy: la merma produce su AjusteInventario espejo
+			// (documento unificado de valorización; no duplica kardex).
+			await tx.ajusteInventario.create({
+				data: {
+					tenantId,
+					productoId: parsed.productoId,
+					tipoUbicacion: "almacen",
+					ubicacionId: almacenIdEfectivo,
+					motivo: mapearMotivoLegacy(parsed.motivo),
+					cantidadTeorica: stockUbicacion.cantidadDisponible,
+					cantidadContada:
+						stockUbicacion.cantidadDisponible - parsed.cantidad,
+					diferencia: -parsed.cantidad,
+					costoUnitario: producto.precioCosto,
+					costoTotal: -parsed.cantidad * producto.precioCosto,
+					estado: "APLICADO",
+					origenMermaId: creada.mermaId,
+					creadoPorId: user.userId,
+				},
 			});
 
 			return creada;
@@ -277,6 +299,43 @@ export const updateMermaAction = withAction(
 				});
 			}
 
+			// Espejo: los ajustes previos de la merma quedan anulados y se
+			// registra la nueva versión con los valores editados.
+			await tx.ajusteInventario.updateMany({
+				where: { tenantId, origenMermaId: mermaId },
+				data: { estado: "ANULADO" },
+			});
+
+			const teoricoPrevio =
+				(await tx.stockUbicacion.findUnique({
+					where: {
+						productoId_tipoUbicacion_ubicacionId: {
+							productoId,
+							tipoUbicacion: "almacen",
+							ubicacionId: resolvedAlmacenId,
+						},
+					},
+					select: { cantidad: true },
+				}))?.cantidad ?? 0;
+
+			await tx.ajusteInventario.create({
+				data: {
+					tenantId,
+					productoId,
+					tipoUbicacion: "almacen",
+					ubicacionId: resolvedAlmacenId,
+					motivo: mapearMotivoLegacy(data.motivo),
+					cantidadTeorica: teoricoPrevio,
+					cantidadContada: teoricoPrevio - cantidad,
+					diferencia: -cantidad,
+					costoUnitario: costoUnitarioNuevo ?? 0,
+					costoTotal: -cantidad * (costoUnitarioNuevo ?? 0),
+					estado: "APLICADO",
+					origenMermaId: mermaId,
+					creadoPorId: user.userId,
+				},
+			});
+
 			return updated;
 		});
 
@@ -316,6 +375,10 @@ export const deleteMermaAction = withAction(
 				tipoOrigen: "MERMA",
 				origenId: merma.mermaId,
 				creadoPorId: user.userId,
+			});
+			await tx.ajusteInventario.updateMany({
+				where: { tenantId, origenMermaId: merma.mermaId },
+				data: { estado: "ANULADO" },
 			});
 			await tx.merma.delete({ where: { mermaId: id } });
 			await upsertStockUbicacion(tx, {

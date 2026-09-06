@@ -238,6 +238,8 @@ model Tenant {
   financialAuxiliaryCheckpoints  FinancialAuxiliaryCheckpoint[]
   snapshotPeriodos               SnapshotPeriodo[]
   stockMoveLines                 StockMoveLine[]
+  ajustesInventario              AjusteInventario[]
+  conteosInventario              ConteoInventario[]
   turnosPos                      TurnoPuntoVenta[]
   tiposPago                      TipoPago[]
 
@@ -270,15 +272,15 @@ model TenantMembership {
 /// `permissions` es un string[] validado contra permission-registry al escribir.
 /// Sin filas, el sistema opera 100% por defaults del registry (customRoleId = null).
 model TenantRole {
-  roleId      String            @id @default(cuid())
+  roleId      String             @id @default(cuid())
   tenantId    String
   nombre      String
   descripcion String?
   permissions Json
-  isActive    Boolean           @default(true)
-  createdAt   DateTime          @default(now())
-  updatedAt   DateTime          @updatedAt
-  tenant      Tenant            @relation(fields: [tenantId], references: [tenantId], onDelete: Cascade)
+  isActive    Boolean            @default(true)
+  createdAt   DateTime           @default(now())
+  updatedAt   DateTime           @updatedAt
+  tenant      Tenant             @relation(fields: [tenantId], references: [tenantId], onDelete: Cascade)
   memberships TenantMembership[]
 
   @@unique([tenantId, nombre])
@@ -535,6 +537,78 @@ model StockUbicacion {
   @@index([tenantId])
   @@index([ubicacionId, tipoUbicacion])
   @@index([productoId])
+}
+
+/// Ajuste unificado de inventario con motivo de catálogo y valorización.
+/// Reemplaza lógicamente a Merma/ValeSalida; ambos crean un ajuste equivalente
+/// para mantener trazabilidad contable y proponer compensación en kardex.
+model AjusteInventario {
+  id                   String        @id @default(cuid())
+  tenantId             String
+  productoId           String
+  tipoUbicacion        String
+  ubicacionId          String
+  motivo               String
+  cantidadTeorica      Int
+  cantidadContada      Int
+  diferencia           Int
+  costoUnitario        Int
+  costoTotal           Int
+  estado               String        @default("APLICADO")
+  origenMermaId        String?
+  origenValeId         String?
+  origenConteoId       String?
+  compensaMovimientoId String?
+  creadoPorId          String?
+  createdAt            DateTime      @default(now())
+  tenant               Tenant        @relation(fields: [tenantId], references: [tenantId])
+  conteoLineas         ConteoLinea[]
+
+  @@index([tenantId, estado])
+  @@index([tenantId, productoId])
+  @@index([tenantId, origenConteoId])
+}
+
+/// Conteo físico de una ubicación con doble pasada ciega y conciliación.
+model ConteoInventario {
+  id              String        @id @default(cuid())
+  tenantId        String
+  tipoUbicacion   String
+  ubicacionId     String
+  estado          String        @default("BORRADOR")
+  observaciones   String?
+  iniciadoPorId   String?
+  conciliadoPorId String?
+  conciliadoAt    DateTime?
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
+  tenant          Tenant        @relation(fields: [tenantId], references: [tenantId])
+  lineas          ConteoLinea[]
+
+  @@index([tenantId, estado])
+  @@index([tenantId, ubicacionId])
+}
+
+/// Línea de producto dentro de un conteo ciego en dos pasadas.
+model ConteoLinea {
+  id           String            @id @default(cuid())
+  conteoId     String
+  tenantId     String
+  productoId   String
+  teorico      Int
+  conteo1      Int?
+  conteo2      Int?
+  contadoFinal Int?
+  usuario1Id   String?
+  usuario2Id   String?
+  ajusteId     String?
+  createdAt    DateTime          @default(now())
+  updatedAt    DateTime          @updatedAt
+  conteo       ConteoInventario  @relation(fields: [conteoId], references: [id], onDelete: Cascade)
+  ajuste       AjusteInventario? @relation(fields: [ajusteId], references: [id], onDelete: SetNull)
+
+  @@unique([conteoId, productoId])
+  @@index([tenantId])
 }
 
 /// Movimiento apendicular del kardex. Las correcciones se representan

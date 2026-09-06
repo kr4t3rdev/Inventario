@@ -26,6 +26,13 @@ const { mockTx } = vi.hoisted(() => ({
 			count: vi.fn(),
 			aggregate: vi.fn(),
 		},
+		ajusteInventario: {
+			create: vi.fn(),
+			updateMany: vi.fn().mockResolvedValue({ count: 1 }),
+		},
+		stockUbicacion: {
+			findUnique: vi.fn().mockResolvedValue({ cantidad: 50 }),
+		},
 	},
 }));
 
@@ -150,6 +157,17 @@ describe('Mermas Server Actions', () => {
           update: {},
         }),
       );
+      // Puente legacy: la merma crea su ajuste espejo con motivo de catálogo
+      expect(mockTx.ajusteInventario.create).toHaveBeenCalledWith({
+        data: expect.objectContaining({
+          tenantId: 'tenant-test',
+          productoId: 'prod-1',
+          motivo: 'DANO',
+          diferencia: -5,
+          origenMermaId: 'mer-1',
+          estado: 'APLICADO',
+        }),
+      });
     });
 
     it('rechaza si el producto no existe', async () => {
@@ -437,5 +455,26 @@ describe('Mermas: compensación kardex en ciclo de vida', () => {
       (c: any) => c[0].where.eventoKey.secuencia,
     );
     expect(secuencias).toContain('REV-SALIDA-0');
+  });
+});
+
+describe('Mermas: espejo en AjusteInventario', () => {
+  beforeEach(() => { vi.clearAllMocks(); });
+
+  it('eliminar merma anula su ajuste espejo', async () => {
+    vi.mocked(getCurrentUser).mockResolvedValue(mockUser);
+    vi.mocked(prisma.merma.findFirst).mockResolvedValue({
+      mermaId: 'mer-1', tenantId: 'tenant-test', productoId: 'prod-1',
+      cantidad: 5, almacenId: 'alm-1',
+    } as any);
+    mockTx.stockMoveLine.findMany.mockResolvedValue([]);
+
+    const result = await deleteMermaAction('mer-1');
+
+    expect(result.success).toBe(true);
+    expect(mockTx.ajusteInventario.updateMany).toHaveBeenCalledWith({
+      where: { tenantId: 'tenant-test', origenMermaId: 'mer-1' },
+      data: { estado: 'ANULADO' },
+    });
   });
 });

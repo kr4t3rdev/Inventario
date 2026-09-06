@@ -14,6 +14,8 @@ const { mockTx } = vi.hoisted(() => ({
   mockTx: {
     merma: { create: vi.fn(), update: vi.fn(), delete: vi.fn() },
     stockMoveLine: { upsert: vi.fn(), findMany: vi.fn().mockResolvedValue([]), count: vi.fn(), aggregate: vi.fn() },
+    ajusteInventario: { create: vi.fn(), updateMany: vi.fn().mockResolvedValue({ count: 1 }) },
+    stockUbicacion: { findUnique: vi.fn().mockResolvedValue({ cantidad: 50 }) },
   },
 }));
 

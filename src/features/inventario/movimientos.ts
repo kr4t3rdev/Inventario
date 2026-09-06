@@ -1,5 +1,23 @@
 import { ActionError } from '@/lib/server-actions/types';
 
+export const MOTIVOS_AJUSTE_DEFAULT = 'PERDIDA' as const;
+
+/**
+ * @description Mapea un motivo libre legacy (merma) al catálogo de ajustes.
+ * @param {string | null | undefined} motivo - Texto libre del documento legacy.
+ * @returns {string} Motivo del catálogo (default PERDIDA).
+ */
+export function mapearMotivoLegacy(motivo: string | null | undefined): string {
+  if (!motivo) return MOTIVOS_AJUSTE_DEFAULT;
+  const texto = motivo.toUpperCase();
+  if (/DAÑ|DANO/.test(texto)) return 'DANO';
+  if (/CADUC|VENC|EXPIR/.test(texto)) return 'CADUCIDAD';
+  if (/SOBRANTE|EXCEDENTE/.test(texto)) return 'SOBRANTE';
+  if (/CONSUMO|INTERNO/.test(texto)) return 'CONSUMO_INTERNO';
+  if (/CONTEO|RECUENTO/.test(texto)) return 'ERROR_CONTEO';
+  return MOTIVOS_AJUSTE_DEFAULT;
+}
+
 export const TIPOS_MOVIMIENTO_INVENTARIO = [
   'VENTA',
   'COMPRA',
