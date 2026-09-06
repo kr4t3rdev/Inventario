@@ -1,10 +1,8 @@
 import { prisma } from '@/lib/prisma'
+import { formatearNumeroContrato, generarPrefijo } from './numeroContratoUtils'
+export { derivarPrefijoCustom, generarPrefijo, formatearNumeroContrato, validarFormatoNumeroContrato, extraerTipoDelNumero } from './numeroContratoUtils'
 
-const PREFIJOS_BASE: Record<string, string> = {
-  COMPRA_VENTA: 'CV',
-  SERVICIO: 'SER',
-  SUMINISTROS: 'SUM',
-}
+const PREFIJOS_BASE: Record<string, string> = { COMPRA_VENTA: 'CV', SERVICIO: 'SER', SUMINISTROS: 'SUM' }
 
 function assertTipoContratoValido(tipo: string): asserts tipo is keyof typeof PREFIJOS_BASE {
   if (!(tipo in PREFIJOS_BASE)) {
@@ -17,23 +15,6 @@ function assertTipoContratoValido(tipo: string): asserts tipo is keyof typeof PR
  * @param {string} tipo - Nombre del tipo custom.
  * @returns {string} Prefijo determinista en mayúsculas o CUS como fallback.
  */
-export function derivarPrefijoCustom(tipo: string): string {
-  const normalizado = tipo
-    .normalize('NFD')
-    .replace(/[\u0300-\u036f]/g, '')
-    .replace(/[^a-zA-Z0-9]/g, '')
-    .slice(0, 3)
-    .toUpperCase()
-  return normalizado.length === 3 ? normalizado : 'CUS'
-}
-
-export function generarPrefijo(tipo: string): string {
-  if (tipo in PREFIJOS_BASE) {
-    return PREFIJOS_BASE[tipo]
-  }
-  return derivarPrefijoCustom(tipo)
-}
-
 /**
  * @description Calcula el próximo consecutivo de contrato scoped por tenant y tipo.
  * Con reintento ante colisión P2002 (máx. 3 intentos) para creaciones concurrentes.
@@ -76,31 +57,6 @@ export async function crearContratoConConsecutivo<T>(input: {
     }
   }
   throw ultimoError
-}
-
-export function formatearNumeroContrato(tipo: string, consecutivo: number): string {
-  const prefijo = generarPrefijo(tipo)
-  const numeroFormateado = String(consecutivo).padStart(4, '0')
-  return `${prefijo}-${numeroFormateado}`
-}
-
-export function validarFormatoNumeroContrato(numeroContrato: string): boolean {
-  const partes = numeroContrato.split('-')
-  if (partes.length !== 2) return false
-  const [prefijo, numero] = partes
-  if (!/^\d{4}$/.test(numero)) return false
-  if (['CV', 'SER', 'SUM'].includes(prefijo)) return true
-  return /^[A-Z0-9]{3}$/.test(prefijo)
-}
-
-export function extraerTipoDelNumero(numeroContrato: string): string | null {
-  const prefijo = numeroContrato.split('-')[0]
-  const mapeo: Record<string, string> = {
-    CV: 'COMPRA_VENTA',
-    SER: 'SERVICIO',
-    SUM: 'SUMINISTROS',
-  }
-  return mapeo[prefijo] || null
 }
 
 export { assertTipoContratoValido }
