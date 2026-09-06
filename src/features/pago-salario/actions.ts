@@ -8,7 +8,7 @@
 import { revalidatePath } from "next/cache";
 import { withAction, ActionError } from "@/lib/server-actions";
 import { prisma } from "@/lib/prisma";
-import { requireFeature, requireTenant, requireManagerRole } from "@/lib/services/tenant-scope";
+import { requireFeature, requireTenant, requirePermission } from "@/lib/services/tenant-scope";
 import { pagoSalarioSchema, pagoSalarioUpdateSchema } from "./schemas";
 import type { PagoSalarioInput, PagoSalarioUpdateInput } from "./schemas";
 import type { AuthenticatedUser } from "@/lib/auth-middleware";
@@ -46,7 +46,7 @@ export const getPagoSalarioByIdAction = withAction(
 export const createPagoSalarioAction = withAction(
 	async (input: PagoSalarioInput, user: AuthenticatedUser) => {
 		requireFeature(user, 'empleados', 'gestionar pagos de empleados');
-		requireManagerRole(user, "crear pagos de salario");
+		requirePermission(user, "rrhh.salarios.crear", "crear pagos de salario");
 		const parsed = pagoSalarioSchema.parse(input);
 		const tenantId = requireTenant(user);
 
@@ -80,7 +80,7 @@ export const createPagoSalarioAction = withAction(
 export const updatePagoSalarioAction = withAction(
 	async (input: PagoSalarioUpdateInput, user: AuthenticatedUser) => {
 		requireFeature(user, 'empleados', 'gestionar pagos de empleados');
-		requireManagerRole(user, "editar pagos de salario");
+		requirePermission(user, "rrhh.salarios.editar", "editar pagos de salario");
 		const parsed = pagoSalarioUpdateSchema.parse(input);
 		const { pgId, ...data } = parsed;
 		const tenantId = requireTenant(user);
@@ -120,7 +120,7 @@ export const updatePagoSalarioAction = withAction(
 export const deletePagoSalarioAction = withAction(
 	async (id: string, user: AuthenticatedUser) => {
 		requireFeature(user, 'empleados', 'gestionar pagos de empleados');
-		requireManagerRole(user, "eliminar pagos de salario");
+		requirePermission(user, "rrhh.salarios.eliminar", "eliminar pagos de salario");
 		const tenantId = requireTenant(user);
 		await prisma.$transaction(async (tx) => {
 			await tx.$queryRaw`

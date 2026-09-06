@@ -1,7 +1,7 @@
 import { type NextRequest, NextResponse } from "next/server"
 import { prisma } from "@/lib/prisma"
 import { z } from "zod"
-import { requireManagerRole, requireTenant } from "@/lib/services/tenant-scope"
+import { requirePermission, requireTenant } from "@/lib/services/tenant-scope"
 import type { AuthenticatedUser } from "@/lib/auth-middleware"
 
 const workScheduleSchema = z.object({
@@ -67,7 +67,7 @@ export async function upsertWorkScheduleHandler(
   user: AuthenticatedUser,
 ) {
   try {
-    requireManagerRole(user, "guardar horarios de trabajo");
+    requirePermission(user, "rrhh.horarios.gestionar", "guardar horarios de trabajo");
     const tenantId = requireTenant(user);
     const body = await request.json();
     const validatedData = workScheduleSchema.parse(body);
@@ -153,7 +153,7 @@ export async function deleteWorkScheduleHandler(
   user: AuthenticatedUser,
 ) {
   try {
-    requireManagerRole(user, "eliminar horarios de trabajo");
+    requirePermission(user, "rrhh.horarios.eliminar", "eliminar horarios de trabajo");
     const tenantId = requireTenant(user);
     const { searchParams } = new URL(request.url);
     const scheduleId = searchParams.get("scheduleId");

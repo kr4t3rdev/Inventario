@@ -8,7 +8,7 @@ vi.mock('next/cache', () => ({ revalidatePath: vi.fn() }));
 vi.mock('@/lib/services/tenant-scope', () => ({
   requireTenant: vi.fn(() => 'tenant-test'),
   requireFeature: vi.fn(),
-  requireManagerRole: vi.fn(),
+  requirePermission: vi.fn(),
 }));
 vi.mock('@/lib/prisma', () => ({
   prisma: {
@@ -35,7 +35,7 @@ import { getCurrentUser } from '@/lib/server-actions/get-current-user';
 import { prisma } from '@/lib/prisma';
 import {
   requireFeature,
-  requireManagerRole,
+  requirePermission,
 } from '@/lib/services/tenant-scope';
 import {
   getPagoSalariosAction,
@@ -89,8 +89,9 @@ describe('PagoSalario Server Actions', () => {
         'empleados',
         'gestionar pagos de empleados',
       );
-      expect(requireManagerRole).toHaveBeenCalledWith(
+      expect(requirePermission).toHaveBeenCalledWith(
         mockUser,
+        'rrhh.salarios.crear',
         'crear pagos de salario',
       );
     });

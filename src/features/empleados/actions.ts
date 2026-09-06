@@ -8,7 +8,7 @@
 import { revalidatePath } from "next/cache";
 import { withAction, ActionError } from "@/lib/server-actions";
 import { prisma } from "@/lib/prisma";
-import { requireFeature, requireTenant, requireManagerRole } from "@/lib/services/tenant-scope";
+import { requireFeature, requireTenant, requirePermission } from "@/lib/services/tenant-scope";
 import { empleadoSchema, empleadoUpdateSchema } from "./schemas";
 import type { EmpleadoInput, EmpleadoUpdateInput } from "./schemas";
 import type { AuthenticatedUser } from "@/lib/auth-middleware";
@@ -52,7 +52,7 @@ export const getEmpleadoByIdAction = withAction(
 export const createEmpleadoAction = withAction(
 	async (input: EmpleadoInput, user: AuthenticatedUser) => {
 		requireFeature(user, 'empleados', 'gestionar empleados');
-		requireManagerRole(user, "crear empleados");
+		requirePermission(user, "rrhh.empleados.crear", "crear empleados");
 		const parsed = empleadoSchema.parse(input);
 		const tenantId = requireTenant(user);
 
@@ -80,7 +80,7 @@ export const createEmpleadoAction = withAction(
 export const updateEmpleadoAction = withAction(
 	async (input: EmpleadoUpdateInput, user: AuthenticatedUser) => {
 		requireFeature(user, 'empleados', 'gestionar empleados');
-		requireManagerRole(user, "editar empleados");
+		requirePermission(user, "rrhh.empleados.editar", "editar empleados");
 		const parsed = empleadoUpdateSchema.parse(input);
 		const { empleadoId, ...data } = parsed;
 		const tenantId = requireTenant(user);
@@ -117,7 +117,7 @@ export const updateEmpleadoAction = withAction(
 export const deleteEmpleadoAction = withAction(
 	async (id: string, user: AuthenticatedUser) => {
 		requireFeature(user, 'empleados', 'gestionar empleados');
-		requireManagerRole(user, "eliminar empleados");
+		requirePermission(user, "rrhh.empleados.eliminar", "eliminar empleados");
 		const tenantId = requireTenant(user);
 		const existing = await prisma.empleado.findFirst({
 			where: { empleadoId: id, tenantId },
@@ -230,7 +230,7 @@ export const registerAsistenciaAction = withAction(
 		user: AuthenticatedUser,
 	) => {
 		requireFeature(user, 'asistencia', 'gestionar asistencia');
-		requireManagerRole(user, "registrar asistencia");
+		requirePermission(user, "rrhh.asistencia.registrar", "registrar asistencia");
 		const tenantId = requireTenant(user);
 		const parsed = registerAsistenciaSchema.parse(input);
 
@@ -315,7 +315,7 @@ export const updateAsistenciaAction = withAction(
 		user: AuthenticatedUser,
 	) => {
 		requireFeature(user, 'asistencia', 'gestionar asistencia');
-		requireManagerRole(user, "editar asistencia");
+		requirePermission(user, "rrhh.asistencia.editar", "editar asistencia");
 		const tenantId = requireTenant(user);
 		const parsed = manualAsistenciaSchema.parse(input);
 
@@ -437,7 +437,7 @@ export const createVacacionAction = withAction(
 		user: AuthenticatedUser,
 	) => {
 		requireFeature(user, 'vacaciones', 'gestionar vacaciones');
-		requireManagerRole(user, "crear solicitudes de vacaciones");
+		requirePermission(user, "rrhh.vacaciones.solicitar", "crear solicitudes de vacaciones");
 		const tenantId = requireTenant(user);
 		const parsed = createVacacionSchema.parse(input);
 
@@ -563,7 +563,7 @@ export const calculateNominaAction = withAction(
 		user: AuthenticatedUser,
 	) => {
 		requireFeature(user, 'nomina', 'gestionar nómina');
-		requireManagerRole(user, "calcular nómina");
+		requirePermission(user, "rrhh.nomina.calcular", "calcular nómina");
 		const tenantId = requireTenant(user);
 		const parsed = calculateNominaSchema.parse(input);
 		const {
@@ -780,7 +780,7 @@ export const upsertWorkScheduleAction = withAction(
 		user: AuthenticatedUser,
 	) => {
 		requireFeature(user, 'empleados', 'gestionar empleados');
-		requireManagerRole(user, "guardar horarios de trabajo");
+		requirePermission(user, "rrhh.horarios.gestionar", "guardar horarios de trabajo");
 		const tenantId = requireTenant(user);
 		const parsed = workScheduleSchema.parse(input);
 
@@ -827,7 +827,7 @@ export const upsertWorkScheduleAction = withAction(
 export const deleteWorkScheduleAction = withAction(
 	async (input: { scheduleId: string }, user: AuthenticatedUser) => {
 		requireFeature(user, 'empleados', 'gestionar empleados');
-		requireManagerRole(user, "eliminar horarios de trabajo");
+		requirePermission(user, "rrhh.horarios.eliminar", "eliminar horarios de trabajo");
 		const tenantId = requireTenant(user);
 		const existing = await prisma.employeeWorkSchedule.findFirst({
 			where: {

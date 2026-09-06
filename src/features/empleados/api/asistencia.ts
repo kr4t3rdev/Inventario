@@ -2,7 +2,7 @@ import { type NextRequest, NextResponse } from "next/server"
 import { prisma } from "@/lib/prisma"
 import { z } from "zod"
 import { Decimal } from "@/generated/prisma/runtime/library"
-import { requireManagerRole, requireTenant, requireFeature } from "@/lib/services/tenant-scope"
+import { requirePermission, requireTenant, requireFeature } from "@/lib/services/tenant-scope"
 import type { AuthenticatedUser } from "@/lib/auth-middleware"
 
 const asistenciaSchema = z.object({
@@ -182,7 +182,7 @@ export async function postAsistenciaHandler(
 ) {
   try {
     requireFeature(user, 'asistencia', 'gestionar asistencia');
-    requireManagerRole(user, "registrar asistencia");
+    requirePermission(user, "rrhh.asistencia.registrar", "registrar asistencia");
     const tenantId = requireTenant(user);
     const body = await request.json();
 
@@ -366,7 +366,7 @@ export async function updateAsistenciaHandler(
 ) {
   try {
     requireFeature(user, 'asistencia', 'gestionar asistencia');
-    requireManagerRole(user, "editar asistencia");
+    requirePermission(user, "rrhh.asistencia.editar", "editar asistencia");
     const tenantId = requireTenant(user);
     const { id } = await params;
     const body = await request.json();
@@ -437,7 +437,7 @@ export async function deleteAsistenciaHandler(
 ) {
   try {
     requireFeature(user, 'asistencia', 'gestionar asistencia');
-    requireManagerRole(user, "eliminar asistencia");
+    requirePermission(user, "rrhh.asistencia.eliminar", "eliminar asistencia");
     const tenantId = requireTenant(user);
     const { id } = await params;
 
