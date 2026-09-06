@@ -11,6 +11,7 @@
  */
 import { ZodError } from "zod";
 import { getCurrentUser } from "./get-current-user";
+import { runWithTenantContext } from "@/lib/db/tenant-context";
 import { ActionError, type ActionResponse, type ServerAction } from "./types";
 import type { AuthenticatedUser } from "@/lib/auth-middleware";
 import { serializePrismaData } from "@/lib/prisma-utils";
@@ -51,8 +52,10 @@ export function withAction<TInput, TOutput>(
 				};
 			}
 
-			const data = await action(input! as TInput, user);
-			return { success: true, data: serializePrismaData(data) };
+		const data = user.tenantId
+			? await runWithTenantContext(user.tenantId, () => action(input! as TInput, user))
+			: await action(input! as TInput, user);
+		return { success: true, data: serializePrismaData(data) };
 		} catch (error) {
 			if (error instanceof ZodError) {
 				return {

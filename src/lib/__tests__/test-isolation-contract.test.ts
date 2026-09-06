@@ -85,4 +85,39 @@ describe('MM-B barrera de tests de integración', () => {
       `Tests que importan actions de escritura sin mock de prisma ni de dominio:\n${offenders.join('\n')}`,
     ).toEqual([]);
   });
+
+  it('ningún test unitario importa platform-prisma (escape hatch auditado)', () => {
+    // platform-prisma es el cliente SIN enforcement: solo auth, admin,
+    // seeds, scripts, afiliados y cron (verificado en AS-03). Ningún test
+    // unitario debe tocarlo; la integración usa @/lib/prisma (escopado).
+    const rd = (dir: string): string[] => {
+      const out: string[] = [];
+      if (!existsSync(dir)) return out;
+      for (const entry of readdirSync(dir, { withFileTypes: true })) {
+        const p = join(dir, entry.name);
+        if (entry.isDirectory()) out.push(...rd(p));
+        else if (/\.test\.tsx?$/.test(p) && !p.includes('__integration__')) out.push(p);
+      }
+      return out;
+    };
+
+    const offenders = rd(join(process.cwd(), 'src')).filter((f) => {
+      if (f.endsWith('test-isolation-contract.test.ts')) return false;
+      return /(?:import|from)\s+["']@\/lib\/db\/platform-prisma["']/.test(
+        readFileSync(f, 'utf-8'),
+      );
+    });
+    expect(
+      offenders,
+      `Tests unitarios que importan platform-prisma:\n${offenders.join('\n')}`,
+    ).toEqual([]);
+  });
+
+  it('el helper withTestTenant está disponible para escopar tests', async () => {
+    // Import dinámico para no cargar Prisma en el contrato.
+    const { withTestTenant, getTenantContext } = await import('@/lib/db/tenant-context');
+    const seen = withTestTenant('tenant-contrato', () => getTenantContext()?.tenantId);
+    expect(seen).toBe('tenant-contrato');
+    expect(getTenantContext()).toBeUndefined();
+  });
 });

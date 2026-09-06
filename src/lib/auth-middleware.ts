@@ -4,6 +4,7 @@ import jwt from 'jsonwebtoken'
 import { getJwtSecret } from './secrets'
 import { checkApiPermission, checkTenantApiPermission, type UserRole } from './permissions'
 import { normalizeTenantRole, type TenantRole } from './auth/roles'
+import { runWithTenantContext, enterTenantContext } from './db/tenant-context'
 import { resolveEffectivePlanFeatures } from './plan-features'
 import { getDefaultPermissionsForRole } from './auth/permission-registry'
 
@@ -336,6 +337,13 @@ export async function authenticateUser(
       }
     }
 
+    // 11. Fijar el contexto tenant de la cadena async actual (AS-02): los
+    // handlers que llaman a authenticateUser directamente quedan escopados.
+    // Los wrappers withAuth* además envuelven el handler con run (doble capa).
+    if (authenticatedUser.tenantId) {
+      enterTenantContext(authenticatedUser.tenantId)
+    }
+
     return { user: authenticatedUser }
   } catch (error) {
     if (error instanceof jwt.JsonWebTokenError) {
@@ -363,6 +371,29 @@ export async function authenticateUser(
 }
 
 /**
+ * @description Ejecuta el handler con el contexto tenant fijado (AS-02).
+ * @param handler - Handler de ruta autenticado.
+ * @param request - Request de Next.js.
+ * @param context - Contexto de ruta.
+ * @param user - Usuario autenticado.
+ */
+function runHandlerWithTenant(
+  handler: (
+    request: NextRequest,
+    context: any,
+    user: AuthenticatedUser
+  ) => Promise<Response>,
+  request: NextRequest,
+  context: any,
+  user: AuthenticatedUser
+): Promise<Response> {
+  if (user.tenantId) {
+    return runWithTenantContext(user.tenantId, () => handler(request, context, user))
+  }
+  return handler(request, context, user)
+}
+
+/**
  * @description Wrapper para rutas GET protegidas
  */
 export function withAuthGet(
@@ -379,7 +410,7 @@ export function withAuthGet(
       return result as Response
     }
 
-    return handler(request, context, result.user)
+    return runHandlerWithTenant(handler, request, context, result.user)
   }
 }
 
@@ -400,7 +431,7 @@ export function withAuthPost(
       return result as Response
     }
 
-    return handler(request, context, result.user)
+    return runHandlerWithTenant(handler, request, context, result.user)
   }
 }
 
@@ -425,7 +456,7 @@ export function withAuth(
       return result as Response
     }
 
-    return handler(request, context, result.user)
+    return runHandlerWithTenant(handler, request, context, result.user)
   }
 }
 
