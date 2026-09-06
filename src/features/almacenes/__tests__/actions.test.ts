@@ -25,6 +25,11 @@ vi.mock('@/lib/prisma', () => ({
       update: vi.fn(),
       delete: vi.fn(),
     },
+    producto: { count: vi.fn() },
+    stockUbicacion: { count: vi.fn() },
+    transferencia: { count: vi.fn() },
+    merma: { count: vi.fn() },
+    puntoDeVenta: { count: vi.fn() },
   },
 }));
 
@@ -196,6 +201,11 @@ describe('Almacenes Server Actions', () => {
     it('elimina almacén exitosamente', async () => {
       vi.mocked(getCurrentUser).mockResolvedValue(mockUser);
       vi.mocked(prisma.almacen.findFirst).mockResolvedValue(mockAlmacenRow);
+      vi.mocked(prisma.producto.count).mockResolvedValue(0);
+      vi.mocked(prisma.stockUbicacion.count).mockResolvedValue(0);
+      vi.mocked(prisma.transferencia.count).mockResolvedValue(0);
+      vi.mocked(prisma.merma.count).mockResolvedValue(0);
+      vi.mocked(prisma.puntoDeVenta.count).mockResolvedValue(0);
       vi.mocked(prisma.almacen.delete).mockResolvedValue(mockAlmacenRow);
 
       const result = await deleteAlmacenAction('alm-1');

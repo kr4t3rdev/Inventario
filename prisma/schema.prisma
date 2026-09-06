@@ -342,7 +342,7 @@ model PuntoDeVenta {
   cuentaContableId      String?
   tipoCaja              String?           @default("PRINCIPAL")
   productos             Producto[]
-  almacen               Almacen?          @relation(fields: [almacenId], references: [almacenId])
+  almacen               Almacen?          @relation(fields: [almacenId], references: [almacenId], onDelete: Restrict)
   listaPrecio           ListaPrecio?      @relation(fields: [listaPrecioId], references: [id])
   tenant                Tenant            @relation(fields: [tenantId], references: [tenantId])
   transferenciasDestino Transferencia[]   @relation("TransferenciasDestino")
@@ -461,7 +461,7 @@ model Producto {
   ofertaItems          OfertaItem[]
   ordenMateriales      OrdenReparacionMaterial[]
   precios              PrecioProducto[]
-  almacen              Almacen                   @relation(fields: [almacenId], references: [almacenId], onDelete: Cascade)
+  almacen              Almacen                   @relation(fields: [almacenId], references: [almacenId], onDelete: Restrict)
   categoria            Categoria                 @relation(fields: [categoriaId], references: [catId], onDelete: Cascade)
   productoPadre        Producto?                 @relation("ProductoCompuesto", fields: [productoPadreId], references: [id])
   productosHijos       Producto[]                @relation("ProductoCompuesto")
@@ -574,7 +574,7 @@ model Merma {
   updatedAt  DateTime @updatedAt
   costoTotal Int?
   almacenId  String?
-  almacen    Almacen? @relation(fields: [almacenId], references: [almacenId])
+  almacen    Almacen? @relation(fields: [almacenId], references: [almacenId], onDelete: Restrict)
   producto   Producto @relation(fields: [productoId], references: [id], onDelete: Cascade)
   tenant     Tenant   @relation(fields: [tenantId], references: [tenantId])
 
@@ -600,8 +600,8 @@ model Transferencia {
   puntoDeVentaDestinoId String?
   puntoDeVentaOrigenId  String?
   creadoPor             User?         @relation(fields: [creadoPorId], references: [userId])
-  destino               Almacen?      @relation("TransferenciasDestino", fields: [destinoId], references: [almacenId])
-  origen                Almacen?      @relation("TransferenciasOrigen", fields: [origenId], references: [almacenId])
+  destino               Almacen?      @relation("TransferenciasDestino", fields: [destinoId], references: [almacenId], onDelete: Restrict)
+  origen                Almacen?      @relation("TransferenciasOrigen", fields: [origenId], references: [almacenId], onDelete: Restrict)
   producto              Producto      @relation(fields: [productoId], references: [id], onDelete: Cascade)
   puntoDeVentaDestino   PuntoDeVenta? @relation("TransferenciasDestino", fields: [puntoDeVentaDestinoId], references: [pvId])
   puntoDeVentaOrigen    PuntoDeVenta? @relation("TransferenciasOrigen", fields: [puntoDeVentaOrigenId], references: [pvId])

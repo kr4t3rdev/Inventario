@@ -80,6 +80,8 @@ export function AlmacenPageClient({ almacenes: initialAlmacenes }: AlmacenPageCl
       if (result.success) {
         toast("El almacén ha sido eliminado exitosamente.")
         router.refresh()
+      } else if (result.error?.code === 'ALMACEN_EN_USO') {
+        toast(`No se puede eliminar: ${result.error.message}`)
       } else {
         toast(result.error?.message || "Hubo un error al eliminar el almacén.")
       }

@@ -115,9 +115,11 @@ export const updateAlmacenAction = withAction(async (input: AlmacenUpdateInput, 
 });
 
 /**
- * @description Elimina un almacén por ID.
+ * @description Elimina un almacén por ID, bloqueando el borrado si tiene dependencias.
  *
  * @throws ActionError si el almacén no existe
+ * @throws ActionError con código ALMACEN_EN_USO si tiene productos, stock,
+ * transferencias, mermas o puntos de venta asociados
  */
 export const deleteAlmacenAction = withAction(async (almacenId: string, user: AuthenticatedUser) => {
   const tenantId = requireTenant(user);
@@ -129,6 +131,21 @@ export const deleteAlmacenAction = withAction(async (almacenId: string, user: Au
 
   if (!existing) {
     throw new ActionError('Almacén no encontrado', 'NOT_FOUND');
+  }
+
+  const [productos, stock, transferencias, mermas, puntosVenta] = await Promise.all([
+    prisma.producto.count({ where: { almacenId, tenantId } }),
+    prisma.stockUbicacion.count({ where: { ubicacionId: almacenId, tipoUbicacion: 'almacen', tenantId } }),
+    prisma.transferencia.count({ where: { tenantId, OR: [{ origenId: almacenId }, { destinoId: almacenId }] } }),
+    prisma.merma.count({ where: { almacenId, tenantId } }),
+    prisma.puntoDeVenta.count({ where: { almacenId, tenantId } }),
+  ]);
+
+  if (productos + stock + transferencias + mermas + puntosVenta > 0) {
+    throw new ActionError(
+      `No se puede eliminar el almacén porque tiene registros asociados: ${productos} producto(s), ${stock} registro(s) de stock, ${transferencias} transferencia(s), ${mermas} merma(s), ${puntosVenta} punto(s) de venta.`,
+      'ALMACEN_EN_USO',
+    );
   }
 
   await prisma.almacen.delete({ where: { almacenId } });
