@@ -7,7 +7,7 @@
  */
 import { getAlmacenesAction } from '@/features/almacenes';
 import { getPuntosDeVentaAction } from '@/features/puntos-venta';
-import { getProductosAction } from '@/features/productos';
+import { getProductosAction } from '@/features/productos/actions';
 import { KardexPageClient } from '@/features/inventario/components/kardex-page-client';
 
 export const metadata = {

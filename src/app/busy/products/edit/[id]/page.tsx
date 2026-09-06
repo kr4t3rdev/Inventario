@@ -7,7 +7,7 @@
 import { getAlmacenesAction } from '@/features/almacenes'
 import { getCategoriasAction } from '@/features/categorias'
 import { getListasPreciosAction } from '@/features/listas-precios'
-import { getProductoByIdAction } from '@/features/productos'
+import { getProductoByIdAction } from '@/features/productos/actions'
 import { getUnidadesAction } from '@/features/unidades'
 import type { Producto } from '@/features/productos/types'
 import { getVendorsAction } from '@/features/vendors'

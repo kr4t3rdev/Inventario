@@ -16,7 +16,7 @@ import { sileo } from '@/lib/sileo-shim'
 import { Skeleton } from "@/components/ui/skeleton"
 import { DollarSign, Calculator } from "lucide-react"
 
-import { getProductosAction } from "@/features/productos"
+import { getProductosAction } from "@/features/productos/actions"
 import { usePuntosDeVenta } from "@/features/puntos-venta/hooks/use-puntos-de-venta"
 import { createVentaAction, updateVentaAction } from "@/features/ventas/actions"
 import { useMonedas } from "@/features/contabilidad/hooks/use-monedas"

@@ -3,7 +3,7 @@
 import { useMemo, useState, useEffect } from "react"
 import { useVentas } from "@/features/ventas/hooks/use-ventas"
 import { useMermas } from "@/features/mermas/hooks/use-mermas"
-import { getProductosAction } from "@/features/productos"
+import { getProductosAction } from "@/features/productos/actions"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"

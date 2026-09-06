@@ -1,5 +1,5 @@
 'use client'
-import { getProductosAction } from "@/features/productos"
+import { getProductosAction } from "@/features/productos/actions"
 import { usePuntosDeVenta } from "@/features/puntos-venta/hooks/use-puntos-de-venta";
 import { useState, useEffect, useCallback , useRef} from "react";
 import { Producto } from "@/app/models/model";

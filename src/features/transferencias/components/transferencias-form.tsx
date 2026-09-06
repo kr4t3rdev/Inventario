@@ -27,7 +27,7 @@ import { cn } from "@/lib/utils"
 
 import { usePuntosDeVenta } from "@/features/puntos-venta/hooks/use-puntos-de-venta"
 import { useAlmacenes } from "@/features/almacenes/hooks/use-almacenes"
-import { getProductosAction } from "@/features/productos"
+import { getProductosAction } from "@/features/productos/actions"
 import { getStockPorUbicacionAction } from "@/features/productos/actions"
 import { createTransferenciaAction, updateTransferenciaAction } from "@/features/transferencias/actions"
 import { transferenciaSchema, TransferenciaFormValues } from "@/features/transferencias/schemas"
