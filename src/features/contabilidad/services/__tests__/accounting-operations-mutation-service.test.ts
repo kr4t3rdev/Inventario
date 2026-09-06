@@ -7,6 +7,9 @@ const findFirst = vi.fn();
 const transaction = vi.fn();
 const acquireAccountingTenantLock = vi.fn();
 const capitalCreate = vi.fn();
+const inyeccionFindFirst = vi.fn();
+const inyeccionUpdate = vi.fn();
+const pagoCreate = vi.fn();
 const auditLogCreate = vi.fn();
 
 vi.mock('@/lib/prisma', () => ({
@@ -56,10 +59,20 @@ describe('AccountingOperationsMutationService', () => {
       cuentaId: 'account-1',
     });
     auditLogCreate.mockResolvedValue({ id: 'audit-1' });
+    inyeccionFindFirst.mockResolvedValue({
+      id: 'inyeccion-1',
+      tipo: 'DEUDA_EXTERNA',
+      saldoPendiente: 1100,
+      cuentaId: 'account-1',
+      pagos: [],
+    });
+    inyeccionUpdate.mockResolvedValue({ id: 'inyeccion-1' });
+    pagoCreate.mockResolvedValue({ id: 'pago-1' });
     transaction.mockImplementation(async (callback: (tx: unknown) => Promise<unknown>) => callback({
       ajusteBancario: { create },
       cuentaBancaria: { findFirst, update },
-      inyeccionCapital: { create: capitalCreate },
+      inyeccionCapital: { create: capitalCreate, findFirst: inyeccionFindFirst, update: inyeccionUpdate },
+      pagoDeuda: { create: pagoCreate },
       auditLog: { create: auditLogCreate },
     }));
   });
@@ -168,7 +181,7 @@ describe('AccountingOperationsMutationService', () => {
     });
     expect(auditLogCreate).toHaveBeenCalledWith(
       expect.objectContaining({ entidad: 'INYECCION_CAPITAL' }),
-      expect.objectContaining({ inyeccionCapital: { create: capitalCreate } }),
+      expect.objectContaining({ inyeccionCapital: expect.objectContaining({ create: capitalCreate }) }),
     );
   });
 
@@ -306,5 +319,68 @@ describe('AccountingOperationsMutationService', () => {
         fechaRegistro: new Date(fechaOperacion),
       }),
     });
+  });
+
+  it('registra un pago de deuda con campos reales y descuenta saldo y pendiente', async () => {
+    const { AccountingOperationsMutationService } = await import('../accounting-operations-mutation-service');
+
+    const result = await AccountingOperationsMutationService.registerCapitalPayment({
+      input: {
+        inyeccionId: 'inyeccion-1',
+        monto: 300,
+        cuentaBancariaId: 'account-1',
+        tipoPagoId: 'tipo-1',
+        observaciones: 'Primera cuota',
+      },
+      user: { userId: 'user-1', tenantId: 'tenant-1' } as never,
+    });
+
+    expect(result).toEqual({ id: 'pago-1' });
+    // La inyección se escopa por la cuenta bancaria referenciada (no tiene tenantId propio).
+    expect(inyeccionFindFirst).toHaveBeenCalledWith({
+      where: { id: 'inyeccion-1', cuentaBancaria: { tenantId: 'tenant-1' } },
+      select: { id: true, tipo: true, saldoPendiente: true, pagos: { select: { id: true } } },
+    });
+    // Escribe solo columnas reales del modelo PagoDeuda.
+    const pagoData = pagoCreate.mock.calls[0][0].data as Record<string, unknown>;
+    expect(pagoData).toMatchObject({
+      inyeccionId: 'inyeccion-1',
+      montoPagado: 300,
+      cuentaId: 'account-1',
+      numeroCuota: 1,
+      observaciones: 'Primera cuota',
+    });
+    expect(pagoData).not.toHaveProperty('monto');
+    expect(pagoData).not.toHaveProperty('cuentaBancariaId');
+    expect(pagoData).not.toHaveProperty('tipoPagoId');
+    expect(pagoData).not.toHaveProperty('tenantId');
+    // Descuenta saldo de cuenta y saldo pendiente de la deuda.
+    expect(update).toHaveBeenCalledWith({
+      where: { cuentaId: 'account-1' },
+      data: { saldo: { decrement: 300 } },
+    });
+    expect(inyeccionUpdate).toHaveBeenCalledWith({
+      where: { id: 'inyeccion-1' },
+      data: expect.objectContaining({ saldoPendiente: { decrement: 300 } }),
+    });
+  });
+
+  it('rechaza un pago sobre una inyección de otro tenant sin abrir escrituras', async () => {
+    inyeccionFindFirst.mockResolvedValueOnce(null);
+    const { AccountingOperationsMutationService } = await import('../accounting-operations-mutation-service');
+
+    await expect(AccountingOperationsMutationService.registerCapitalPayment({
+      input: {
+        inyeccionId: 'foreign-1',
+        monto: 100,
+        cuentaBancariaId: 'account-1',
+        tipoPagoId: 'tipo-1',
+      },
+      user: { userId: 'user-1', tenantId: 'tenant-1' } as never,
+    })).rejects.toMatchObject({ code: 'NOT_FOUND' });
+
+    expect(pagoCreate).not.toHaveBeenCalled();
+    expect(update).not.toHaveBeenCalled();
+    expect(inyeccionUpdate).not.toHaveBeenCalled();
   });
 });

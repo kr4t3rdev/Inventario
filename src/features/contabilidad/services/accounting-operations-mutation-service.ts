@@ -453,19 +453,70 @@ export const AccountingOperationsMutationService = {
 
     const pago = await prisma.$transaction(async (tx: any) => {
       await acquireAccountingTenantLock(tx, tenantId);
-      return tx.pagoDeuda.create({
+
+      // InyeccionCapital no tiene tenantId: se escopa por la cuenta bancaria referenciada.
+      const inyeccion = await tx.inyeccionCapital.findFirst({
+        where: { id: parsed.inyeccionId, cuentaBancaria: { tenantId } },
+        select: { id: true, tipo: true, saldoPendiente: true, pagos: { select: { id: true } } },
+      });
+
+      if (!inyeccion) {
+        throw new ActionError('Inyección de capital no encontrada', 'NOT_FOUND');
+      }
+      if (inyeccion.tipo !== 'DEUDA_EXTERNA') {
+        throw new ActionError('Solo las deudas externas admiten pagos', 'VALIDATION_ERROR');
+      }
+
+      const cuenta = await tx.cuentaBancaria.findFirst({
+        where: { cuentaId: parsed.cuentaBancariaId, tenantId },
+        select: { cuentaId: true, isActive: true },
+      });
+      if (!cuenta) {
+        throw new ActionError('Cuenta bancaria no encontrada', 'NOT_FOUND');
+      }
+      if (!cuenta.isActive) {
+        throw new ActionError('La cuenta bancaria está inactiva', 'VALIDATION_ERROR');
+      }
+
+      const saldoPendiente = Number(inyeccion.saldoPendiente ?? 0);
+      if (parsed.monto > saldoPendiente) {
+        throw new ActionError('El pago excede el saldo pendiente de la deuda', 'VALIDATION_ERROR');
+      }
+
+      // PagoDeuda no tiene columna de tipo de pago: se acepta `tipoPagoId` para
+      // mantener el contrato web/móvil, pero sólo se persisten las columnas reales.
+      const created = await tx.pagoDeuda.create({
         data: {
-          inyeccionId: parsed.inyeccionId, monto: parsed.monto, cuentaBancariaId: parsed.cuentaBancariaId, tipoPagoId: parsed.tipoPagoId, observaciones: parsed.observaciones, tenantId,
+          inyeccionId: parsed.inyeccionId,
+          montoPagado: parsed.monto,
+          cuentaId: parsed.cuentaBancariaId,
+          numeroCuota: inyeccion.pagos.length + 1,
+          observaciones: parsed.observaciones,
         },
       });
-    });
 
-    await AuditLogService.log({
-      accion: 'CREATE',
-      entidad: 'PAGO_DEUDA',
-      entidadId: pago.id,
-      usuarioId: user.userId,
-      detalles: { inyeccionId: parsed.inyeccionId, monto: parsed.monto, cuentaBancariaId: parsed.cuentaBancariaId },
+      await tx.cuentaBancaria.update({
+        where: { cuentaId: parsed.cuentaBancariaId },
+        data: { saldo: { decrement: parsed.monto } },
+      });
+
+      await tx.inyeccionCapital.update({
+        where: { id: parsed.inyeccionId },
+        data: {
+          saldoPendiente: { decrement: parsed.monto },
+          ...(parsed.monto >= saldoPendiente ? { estado: 'PAGADA' as const } : {}),
+        },
+      });
+
+      await AuditLogService.logStrict({
+        accion: 'CREATE',
+        entidad: 'PAGO_DEUDA',
+        entidadId: created.id,
+        usuarioId: user.userId,
+        detalles: { inyeccionId: parsed.inyeccionId, monto: parsed.monto, cuentaId: parsed.cuentaBancariaId },
+      }, tx);
+
+      return created;
     });
 
     return pago;
