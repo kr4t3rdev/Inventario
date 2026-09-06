@@ -27,7 +27,7 @@ export const VENTA_SELECT = {
       cantidad: true,
       precioUnitario: true,
       total: true,
-      producto: { select: { id: true, nombre: true } },
+      producto: { select: { id: true, nombre: true, precioCosto: true } },
     },
   },
   puntoDeVenta: { select: { pvId: true, nombre: true } },

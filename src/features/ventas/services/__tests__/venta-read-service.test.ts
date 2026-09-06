@@ -61,6 +61,17 @@ describe('VentaReadService', () => {
     );
   });
 
+  it('incluye precioCosto del producto en los items para calcular rentabilidad', async () => {
+    vi.mocked(mockPrisma.venta.findMany).mockResolvedValue([] as never);
+
+    await VentaReadService.list('tenant-1');
+
+    const select = vi.mocked(mockPrisma.venta.findMany).mock.calls[0][0].select as {
+      items: { select: { producto: { select: Record<string, unknown> } } };
+    };
+    expect(select.items.select.producto.select.precioCosto).toBe(true);
+  });
+
   it('returns a tenant sale by id', async () => {
     vi.mocked(mockPrisma.venta.findFirst).mockResolvedValue({ ventaId: 'v-3', total: 300 } as never);
 
