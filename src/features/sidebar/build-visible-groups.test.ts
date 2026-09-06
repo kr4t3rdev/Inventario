@@ -68,7 +68,7 @@ describe('buildVisibleSidebarGroups', () => {
       const summary = toSummary(buildVisibleSidebarGroups(SIDEBAR_CONFIG, ctx))
 
       expect(summary).toContainEqual({ title: 'Gestión', itemCount: 7 })
-      expect(summary).toContainEqual({ title: 'Acciones', itemCount: 12 })
+      expect(summary).toContainEqual({ title: 'Acciones', itemCount: 13 })
       expect(summary).toContainEqual({ title: 'Configuración', itemCount: 6 })
       expect(summary).toContainEqual({ title: 'Contabilidad', itemCount: 19 })
       expect(summary).toContainEqual({ title: 'Reportes', itemCount: 7 })

@@ -120,6 +120,7 @@ export const SIDEBAR_TENANT_PERMISSIONS: Record<string, TenantRole[]> = {
   Ventas: ["dependiente", "manager"],
   "Gestión de Facturas": ["manager"],
   Mermas: ["manager"],
+  Kardex: ["economico", "manager"],
   Transferencias: ["manager"],
   Empleados: ["economico", "manager"],
   "Gestión de Empleados": ["economico", "manager"],
@@ -191,6 +192,7 @@ export const SIDEBAR_CONFIG: SidebarConfig = {
         { title: "Ventas", url: "/busy/sales", icon: ShoppingCart as LucideIcon },
         { title: "Gestión de Facturas", url: "/busy/facturas", icon: FileText as LucideIcon },
         { title: "Mermas", url: "/busy/mermas", icon: AlertTriangle as LucideIcon },
+        { title: "Kardex", url: "/busy/inventario/kardex", icon: History as LucideIcon },
         { title: "Transferencias", url: "/busy/transferencias", icon: ArrowRightLeft as LucideIcon },
         {
           title: "Empleados",
