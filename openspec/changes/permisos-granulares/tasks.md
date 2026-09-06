@@ -1,0 +1,80 @@
+# Tasks — Permisos granulares por rol
+
+Plan SDD/TDD. Reglas de trabajo (memorias del proyecto): TDD estricto (RED con fallo registrado → GREEN → REFACTOR), tests con rutas explícitas (`pnpm exec vitest run <rutas>`), code review por fase, commit por fase con **stage selectivo** (worktree compartido), migraciones con `prisma migrate dev --create-only` + revisión de SQL, y **coordinación**: los archivos de Contratos/Ofertas/Mermas no se tocan hasta que la ventana "Correcciones Urgentes" commitee F-01/F-02/F-05.
+
+Leyenda: `- [ ]` pendiente · `- [x]` hecho.
+
+---
+
+## PG-01 — Catálogo de permisos y defaults por rol
+
+- [x] **PG01-T1 — Extracción (sin tests aún).** Inventariar los 33 call sites de `requireManagerRole`, 2 de `requireEconomicoRole`, 2 de `requireDependienteRole`, 16 checks `tenantRole ===` y las listas `TENANT_PERMISSIONS`/`requireDependienteAccess`; producir la tabla clave↔guard↔archivo en `openspec/changes/permisos-granulares/impact-map.md`.
+- [x] **PG01-T2 — RED registry.** Test del registry: claves únicas, formato `<cat>.<recurso>.<accion>`, categorías válidas, `defaultRoles ⊆ TENANT_ROLES`, labels/descriptions no vacíos, claves `sensitive` marcadas.
+  `pnpm exec vitest run src/lib/auth/__tests__/permission-registry.test.ts`
+- [x] **PG01-T3 — GREEN registry.** Crear `src/lib/auth/permission-registry.ts` con las ~45-60 claves extraídas y `defaultRoles` que reproduzcan la matriz actual (manager=*, economico=su lista, dependiente=su lista).
+- [x] **PG01-T4 — Snapshot de paridad (RED→GREEN).** Test que captura, para cada rol fijo, el conjunto de capacidades actual según las allowlists/guards existentes, y prueba que el resolutor de defaults del registry produce **el mismo conjunto**. Guardar el snapshot como fixture versionado.
+- Commit: `feat(auth): catálogo de permisos nombrados con defaults equivalentes (PG-01)`
+
+## PG-02 — Schema: TenantRole + Membership.customRoleId
+
+- [ ] **PG02-T1 — Migración.** `prisma migrate dev --create-only --name tenant_custom_roles`: modelo `TenantRole` (`@@unique([tenantId, nombre])`, índice tenant) + `TenantMembership.customRoleId` (nullable, `onDelete: Restrict`) + relación en `Tenant`. Revisar SQL; aplicar en local. Deploy a prod queda para el gate final (Railway aplica en arranque).
+- [ ] **PG02-T2 — Tests de modelo.** Crear rol, unicidad por tenant (mismos nombres en tenants distintos OK), borrado bloqueado con miembros asignados (Restrict), cascada al borrar tenant.
+  `pnpm exec vitest run src/lib/auth/__tests__`
+- Commit: `feat(auth): schema TenantRole y Membership.customRoleId (PG-02)`
+
+## PG-03 — Resolución efectiva y guard único
+
+- [ ] **PG03-T1 — RED resolución.** Tests: membresía sin customRole → defaults del rol fijo; con customRole válido → Set del rol; customRole inexistente/isActive=false/de otro tenant → **fallback a defaults** (fail-safe); admin → bypass. Incluir chequeo de que la resolución no añade queries cuando no hay customRoleId (spy sobre prisma).
+  `pnpm exec vitest run src/lib/__tests__ src/lib/auth`
+- [ ] **PG03-T2 — GREEN resolución.** Extender `resolveTenantContext` (auth-middleware) con carga condicional del rol custom; añadir `permissions` a `AuthenticatedUser`. Verificar que rutas existentes siguen verdes sin tocar nada más.
+- [ ] **PG03-T3 — RED+GREEN guard.** `requirePermission(user, key, action?)` + `hasPermission(user, key)` en `tenant-scope.ts` con tests: sin permiso → FORBIDDEN neutro; con permiso → pasa; sin tenant → error de contexto; admin → pasa; orden con `requireFeature` demostrado en un action de muestra.
+- Commit: `feat(auth): resolución de permisos efectivos y guard único requirePermission (PG-03)`
+
+## PG-04 — Motor lógico del dominio + acciones de gestión de roles
+
+- [ ] **PG04-T1 — RED acciones CRUD.** Tests tenant-safe para `createTenantRoleAction`, `updateTenantRoleAction`, `deleteTenantRoleAction`, `assignCustomRoleAction` (en `src/features/configuracion/` o feature nueva `src/features/roles/`): validación Zod strict, claves permisos contra registry (rechaza desconocidas), unicidad de nombre por tenant, delete bloqueado con miembros (conteo en mensaje), asignación valida membresía del mismo tenant, **auditoría registrada** (spy de AuditLogService), manager-only (`config.usuarios.gestionar`).
+- [ ] **PG04-T2 — GREEN acciones.** Implementar con `withAction` + `requirePermission(config.usuarios.gestionar)` + `requireTenant`; transacciones donde aplique.
+- [ ] **PG04-T3 — Guarda último manager.** Test + implementación: no se puede degradar/eliminar el último manager activo del tenant.
+- Commit: `feat(roles): CRUD de roles personalizados con auditoría y guardas (PG-04)`
+
+## PG-05 — Migración de call sites por dominio (el grueso)
+
+Orden sugerido (de menor a mayor acoplamiento); cada dominio = sub-fase con RED (test de comportamiento del endpoint/action antes de tocarlo) → GREEN (sustituir guard) → verde de regresión:
+
+- [ ] **PG05-T1 — inventario:** productos (3), listas-precios (1), ficha-costo (9) → claves `inventario.*`, `precios.*`.
+- [ ] **PG05-T2 — ventas/servicios:** venta-servicios (1), servicios (1) → `servicios.*`. (Ofertas/Contratos solo si Correcciones Urgentes ya hizo merge; si no, difeir.)
+- [ ] **PG05-T3 — rrhh:** empleados (6), pago-salario (2) → `rrhh.*` (incl. `rrhh.nomina.calcular` sensitive).
+- [ ] **PG05-T4 — financiero/config/lib:** contabilidad (1), app (5), lib (3), checks sueltos (16) → `contabilidad.*`, `config.*`.
+- [ ] **PG05-T5 — rutas REST + mobile:** crear `src/lib/auth/route-permissions.ts`; `checkTenantApiPermission` lee el mapa; rutas mobile importan el mismo mapa; log `UNMAPPED_ROUTE` para pendientes. Conservar comportamiento legacy en rutas no mapeadas **solo** durante esta fase.
+- [ ] **PG05-T6 — Retiro de allowlists.** Cuando el listado `UNMAPPED` sea 0 (o lista blanca firmada): borrar `TENANT_PERMISSIONS`, `ROLE_PERMISSIONS`, `requireDependienteAccess` y sus tests; añadir test de drift "no existen dos fuentes de permisos" (búsqueda estática en CI).
+- Commit por dominio: `refactor(auth): migrar <dominio> a permisos nombrados (PG-05.x)` + `refactor(auth): eliminar allowlists legacy, fuente única de permisos (PG-05)`
+
+## PG-06 — UI: matriz de roles y filtrado por permisos
+
+- [ ] **PG06-T1 — RED componentes.** Tests de la página de roles (matriz por categoría, estados loading/error, guardas visibles: no borrar con miembros, no editar sistema) y del hook de menú (oculta entradas sin permiso; no rompe admin).
+- [ ] **PG06-T2 — GREEN UI.** Página en `config` del tenant; integración en gestión de usuarios del manager (asignar customRole); sidebar/topbar filtrado por `permissions` (server-provided). Copy en español neutro; estados accesibles (ARIA).
+- [ ] **PG06-T3 — A11y + copy.** vitest-axe en la matriz; verificación del test de copy neutro si aplica (`neutral-spanish-copy`).
+- Commit: `feat(roles): UI de matriz de permisos, asignación y menú filtrado (PG-06)`
+
+## PG-07 — Cierre: drift, regresión y evidencia
+
+- [ ] **PG07-T1 — Gate de drift estático.** Script/test que falla si existe `requirePermission("clave-inexistente")` o una ruta sensible no mapeada; conectar a `pnpm test`/CI.
+- [ ] **PG07-T2 — Regresión acotada.** Re-correr todos los paths tocados (los 33+2+2+16 originales y sus features):
+  `pnpm exec vitest run src/lib/auth src/lib/services src/features/configuracion src/features/empleados src/features/productos src/features/ficha-costo src/features/pago-salario src/features/contabilidad src/features/venta-servicios src/features/servicios`
+- [ ] **PG07-T3 — E2E de permisos (manual/prod-smoke).** Crear rol "Cajero" en demo, asignar, verificar: vender ✅, anular ❌ (403), reportes ❌; restaurar. Documentar en el change.
+- [ ] **PG07-T4 — Archivar.** Mover change a `openspec/changes/archive/2026-09-XX-permisos-granulares/`; actualizar memoria `tcp-vs-odoo-multitenant-audit` (gap cerrado).
+- Commit: `chore(openspec): archivar permisos-granulares completado (PG-07)`
+
+## Estimación (referencial, líneas cambiadas)
+
+| Fase | Producción | Tests | Schema |
+|---|---|---|---|
+| PG-01 | ~450 (registry) | ~200 | 0 |
+| PG-02 | ~20 | ~120 | ~80 |
+| PG-03 | ~120 | ~220 | 0 |
+| PG-04 | ~260 | ~300 | 0 |
+| PG-05 | ~400 (56 call sites + mapa) | ~500 | 0 |
+| PG-06 | ~350 | ~250 | 0 |
+| PG-07 | ~40 | ~120 | 0 |
+
+Total aprox.: 1.6k producción + 1.7k tests. Riesgo principal: PG-05 (se mitiga con sub-fases por dominio y paridad snapshot de PG-01-T4 compartiéndose en todos los PRs).
