@@ -22,6 +22,7 @@ import type { Producto, Vendor } from '@/app/models/model'
 import { useVendors } from '@/features/vendors/hooks/use-vendors'
 import { useProductos } from '@/features/productos/hooks/use-productos'
 import { createCompraProductoAction } from '@/features/compras-productos/actions'
+import { getOrdenesCompraAction } from '@/features/compras-productos/actions-oc'
 import { getAnticiposAction } from '@/features/contabilidad/actions-anticipos'
 import { FORMA_PAGO_ANTICIPO_PAGO } from '@/lib/constants/anticipos'
 
@@ -33,6 +34,7 @@ const itemSchema = z.object({
 
 const compraDocumentoSchema = z.object({
   proveedorId: z.string().min(1, 'Seleccione un proveedor'),
+  ordenCompraId: z.string().optional().default(''),
   numeroFactura: z.string().optional().default(''),
   facturaUrl: z.string().optional().default(''),
   formaPago: z.enum(['PAGO_PARCIAL', 'PAGO_COMPLETO', FORMA_PAGO_ANTICIPO_PAGO]),
@@ -88,6 +90,7 @@ export function CompraProductoForm({ onSuccess }: CompraProductoFormProps) {
     resolver: zodResolver(compraDocumentoSchema),
     defaultValues: {
       proveedorId: '',
+      ordenCompraId: '',
       numeroFactura: '',
       facturaUrl: '',
       formaPago: 'PAGO_COMPLETO',
@@ -129,6 +132,8 @@ export function CompraProductoForm({ onSuccess }: CompraProductoFormProps) {
     return map
   }, [productosCatalogo])
 
+  const [ordenesDisponibles, setOrdenesDisponibles] = useState<any[]>([])
+
   const [anticiposDisponibles, setAnticiposDisponibles] = useState<{ anticipos: any[] } | undefined>(undefined)
   const [isLoadingAnticipos, setIsLoadingAnticipos] = useState(false)
 
@@ -149,6 +154,18 @@ export function CompraProductoForm({ onSuccess }: CompraProductoFormProps) {
     })
     return () => { cancelled = true }
   }, [anticiposFeatureEnabled, formaPagoSeleccionada, proveedorSeleccionado])
+
+  useEffect(() => {
+    let cancelled = false
+    getOrdenesCompraAction({ page: 1, limit: 100 }).then((result) => {
+      if (!cancelled && result.success) {
+        setOrdenesDisponibles(
+          (result.data?.items ?? []).filter((item: any) => ['PARCIAL', 'RECIBIDA'].includes(item.estado)),
+        )
+      }
+    })
+    return () => { cancelled = true }
+  }, [])
 
   // Calcular monto total estimado (con parsing robusto)
   const montoEstimadoCompra = useMemo(() => {
@@ -200,6 +217,18 @@ export function CompraProductoForm({ onSuccess }: CompraProductoFormProps) {
     }
   }, [productoLookup, form])
 
+  function handleOrdenCompraChange(ordenCompraId: string) {
+    form.setValue('ordenCompraId', ordenCompraId === 'directa' ? '' : ordenCompraId)
+    if (ordenCompraId === 'directa') return
+    const orden = ordenesDisponibles.find((item) => item.id === ordenCompraId)
+    const item = orden?.items?.find((line: any) => line.cantidadRecibida > 0)
+    if (!orden || !item) return
+    form.setValue('proveedorId', orden.proveedorId)
+    form.setValue('items.0.productoId', item.productoId)
+    form.setValue('items.0.cantidad', item.cantidadRecibida)
+    form.setValue('items.0.precioCosto', item.precioUnitario)
+  }
+
   const addItem = useCallback(() => {
     append({ productoId: '', precioCosto: '' as unknown as number, cantidad: 1 })
   }, [append])
@@ -227,6 +256,7 @@ export function CompraProductoForm({ onSuccess }: CompraProductoFormProps) {
             ? 'PAGADA'
             : 'PENDIENTE',
         fechaVencimiento: data.fechaVencimiento || undefined,
+        ordenCompraId: data.ordenCompraId || undefined,
         anticipoPagoId: data.formaPago === FORMA_PAGO_ANTICIPO_PAGO ? data.anticipoPagoId : undefined,
         idempotencyKey: data.formaPago === FORMA_PAGO_ANTICIPO_PAGO ? idempotencyKey : undefined
       })
@@ -319,7 +349,7 @@ export function CompraProductoForm({ onSuccess }: CompraProductoFormProps) {
                       <FormLabel>Proveedor</FormLabel>
                       <Select onValueChange={field.onChange} value={field.value}>
                         <FormControl>
-                          <SelectTrigger>
+                          <SelectTrigger aria-label='Proveedor'>
                             <SelectValue placeholder='Seleccione un proveedor' />
                           </SelectTrigger>
                         </FormControl>
@@ -338,12 +368,39 @@ export function CompraProductoForm({ onSuccess }: CompraProductoFormProps) {
 
                 <FormField
                   control={form.control}
+                  name='ordenCompraId'
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Orden de compra (opcional)</FormLabel>
+                      <Select onValueChange={handleOrdenCompraChange} value={field.value}>
+                        <FormControl>
+                          <SelectTrigger aria-label='Orden de compra (opcional)'>
+                            <SelectValue placeholder='Compra directa' />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          <SelectItem value='directa'>Compra directa</SelectItem>
+                          {ordenesDisponibles.map((orden) => (
+                            <SelectItem key={orden.id} value={orden.id}>
+                              {orden.id} · {orden.proveedor?.nombre ?? orden.proveedorId}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                      <FormDescription>Solo muestra órdenes con recepción pendiente de facturar.</FormDescription>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                <FormField
+                  control={form.control}
                   name='numeroFactura'
                   render={({ field }) => (
                     <FormItem>
                       <FormLabel>Nro. Factura</FormLabel>
                       <FormControl>
-                        <Input type='text' placeholder='Ej: F-2024-0012' {...field} />
+                         <Input aria-label='Nro. Factura' type='text' placeholder='Ej: F-2024-0012' {...field} />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -378,7 +435,7 @@ export function CompraProductoForm({ onSuccess }: CompraProductoFormProps) {
                       <FormLabel>Forma de Pago</FormLabel>
                       <Select onValueChange={field.onChange} value={field.value}>
                         <FormControl>
-                          <SelectTrigger>
+                          <SelectTrigger aria-label='Forma de Pago'>
                             <SelectValue placeholder='Seleccione la forma de pago' />
                           </SelectTrigger>
                         </FormControl>
@@ -402,7 +459,7 @@ export function CompraProductoForm({ onSuccess }: CompraProductoFormProps) {
                       <FormLabel>Estado</FormLabel>
                       <Select value={field.value} onValueChange={field.onChange} disabled>
                         <FormControl>
-                          <SelectTrigger>
+                                       <SelectTrigger aria-label={`Producto ${index + 1}`}>
                             <SelectValue placeholder='Estado' />
                           </SelectTrigger>
                         </FormControl>

@@ -80,7 +80,11 @@
 * [x] 3.5 UI: `/busy/compras/ordenes`, `/busy/compras/recepciones` y
   `/busy/compras/reabastecimiento`; backorder visible en líneas y sidebar.
 * [ ] 3.6 E2E Playwright (plan Profesional): OC → recepción parcial →
-  recepción total → factura → kardex cuadra.
+  recepción total → factura → kardex cuadra. Spec escrito en
+  `e2e/purchase-order-flow.spec.ts` (gitignored, local-only) + selector
+  de OC en el formulario de compra. La ejecución corre
+  `pnpm exec playwright test e2e/purchase-order-flow.spec.ts` y requiere
+  `DATABASE_URL` accesible.
 
 <!-- Diseño original de Fase 3:
 * [ ] 3.1 Migración: `OrdenCompra`, `OrdenCompraItem`,

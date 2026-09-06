@@ -29,7 +29,7 @@ export default defineConfig({
     }
   ],
   webServer: {
-    command: 'pnpm run dev',
+    command: 'PORT=3001 pnpm run dev',
     url: 'http://localhost:3001',
     reuseExistingServer: true,
     timeout: 120000
