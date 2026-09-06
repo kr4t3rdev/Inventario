@@ -47,6 +47,7 @@ vi.mock("@/lib/prisma", () => ({
 		},
 		vendor: { findFirst: vi.fn() },
 		producto: { findFirst: vi.fn() },
+		ordenCompra: { findFirst: vi.fn() },
 		anticipoMovimiento: { findFirst: vi.fn() },
 		cuentaPorPagar: { create: vi.fn(), delete: vi.fn() },
 		$transaction: vi.fn((cb: any) => cb(mockTx)),
@@ -187,6 +188,47 @@ describe("ComprasProductos Server Actions", () => {
 
 			expect(result.success).toBe(false);
 			expect(result.error!.message).toContain("Proveedor no encontrado");
+		});
+
+		it("factura una recepción sin duplicar stock ni kardex", async () => {
+			vi.mocked(getCurrentUser).mockResolvedValue(mockUser);
+			vi.mocked(prisma.vendor.findFirst).mockResolvedValue({
+				vendorId: "ven-1",
+				nombre: "Proveedor",
+			});
+			vi.mocked(prisma.ordenCompra.findFirst).mockResolvedValue({
+				id: "oc-1",
+				proveedorId: "ven-1",
+				estado: "RECIBIDA",
+				items: [{ productoId: "prod-1", recepciones: [{ cantidad: 10 }] }],
+			} as any);
+			vi.mocked(prisma.producto.findFirst).mockResolvedValue({
+				id: "prod-1",
+				stock: 10,
+				precioCosto: 500,
+				almacenId: "alm-1",
+				tenantId: "tenant-test",
+			});
+			mockTx.compraDocumento.create.mockResolvedValue({ compraDocumentoId: "cd-oc-1" });
+			mockTx.gastoCompra.create.mockResolvedValue({ gastoCompraId: "gc-oc-1" });
+			mockTx.compraDocumento.update.mockResolvedValue({} as any);
+			vi.mocked(getStockTotalProducto).mockResolvedValue(10);
+			vi.mocked(calcularPrecioCostoCompra).mockReturnValue({
+				precioCostoNuevo: 500,
+				metodoCosto: "PONDERADO",
+			} as any);
+
+			const result = await createCompraProductoAction({
+				proveedorId: "ven-1",
+				ordenCompraId: "oc-1",
+				formaPago: "PAGO_COMPLETO",
+				estado: "PAGADA",
+				items: [{ productoId: "prod-1", precioCosto: 500, cantidad: 10 }],
+			});
+
+			expect(result.success).toBe(true);
+			expect(upsertStockUbicacion).not.toHaveBeenCalled();
+			expect(mockTx.stockMoveLine.upsert).not.toHaveBeenCalled();
 		});
 	});
 

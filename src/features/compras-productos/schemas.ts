@@ -11,6 +11,7 @@ const itemSchema = z.object({
 
 export const createCompraProductoSchema = z.object({
   proveedorId: z.string().min(1, 'Seleccione un proveedor'),
+  ordenCompraId: z.string().optional(),
   numeroFactura: z.string().optional().default(''),
   facturaUrl: z.string().optional().default(''),
   formaPago: z.enum(['PAGO_PARCIAL', 'PAGO_COMPLETO', 'ANTICIPO_PAGO']),

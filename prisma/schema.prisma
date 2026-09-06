@@ -62,6 +62,7 @@ model Vendor {
   vendorCode       String?           @db.VarChar(2)
   anticipos        Anticipo[]
   compraDocumentos CompraDocumento[]
+  ordenesCompra    OrdenCompra[]
   compras          CompraProducto[]
   compraServicios  CompraServicio[]
   contratos        Contrato[]        @relation("ContratoVendor")
@@ -173,6 +174,11 @@ model Tenant {
   comprasDocumento               CompraDocumento[]
   comprasDocumentoItem           CompraDocumentoItem[]
   comprasProducto                CompraProducto[]
+  ordenesCompra                  OrdenCompra[]
+  ordenesCompraItems             OrdenCompraItem[]
+  recepcionesCompra              Recepcion[]
+  recepcionesCompraItems         RecepcionItem[]
+  reglasReabastecimiento         ReglaReabastecimiento[]
   comprasServicio                CompraServicio[]
   contratos                      Contrato[]
   cuentasBancarias               CuentaBancaria[]
@@ -485,6 +491,9 @@ model Producto {
   dcCodigo             String?
   fotos                String[]                  @default([])
   compraDocumentoItems CompraDocumentoItem[]
+  ordenCompraItems     OrdenCompraItem[]
+  recepcionItems       RecepcionItem[]
+  reglasReabastecimiento ReglaReabastecimiento[]
   compras              CompraProducto[]
   gastoCompras         GastoCompra[]
   mermas               Merma[]
@@ -1356,6 +1365,7 @@ model CompraDocumento {
   total             Int                   @default(0)
   gastoCompraId     String?               @unique
   cuentaPorPagarId  String?               @unique
+  ordenCompraId     String?
   deletedAt         DateTime?
   updatedById       String?
   createdAt         DateTime              @default(now())
@@ -1366,12 +1376,14 @@ model CompraDocumento {
   tenant            Tenant                @relation(fields: [tenantId], references: [tenantId])
   updatedBy         User?                 @relation("CompraDocumentoActualizado", fields: [updatedById], references: [userId])
   items             CompraDocumentoItem[]
+  ordenCompra       OrdenCompra?           @relation(fields: [ordenCompraId], references: [id], onDelete: SetNull)
 
   @@index([tenantId])
   @@index([estado])
   @@index([proveedorId])
   @@index([fechaCompra])
   @@index([deletedAt])
+  @@index([tenantId, ordenCompraId])
 }
 
 /// * Línea de detalle de una compra múltiple.
@@ -1393,6 +1405,94 @@ model CompraDocumentoItem {
   @@index([tenantId])
   @@index([compraDocumentoId])
   @@index([productoId])
+}
+
+/// Pedido a proveedor antes de recibir la mercancía.
+model OrdenCompra {
+  id          String             @id @default(cuid())
+  tenantId    String
+  proveedorId String
+  estado      String             @default("BORRADOR")
+  total       Int                @default(0)
+  createdAt   DateTime           @default(now())
+  updatedAt   DateTime           @updatedAt
+  tenant      Tenant             @relation(fields: [tenantId], references: [tenantId])
+  proveedor   Vendor             @relation(fields: [proveedorId], references: [vendorId], onDelete: Restrict)
+  items       OrdenCompraItem[]
+  recepciones Recepcion[]
+  facturas    CompraDocumento[]
+
+  @@index([tenantId, estado])
+  @@index([tenantId, proveedorId])
+}
+
+/// Línea de OC con cantidades pedidas y recibidas acumuladas.
+model OrdenCompraItem {
+  id               String          @id @default(cuid())
+  ordenId          String
+  tenantId         String
+  productoId       String
+  cantidadPedida   Int
+  cantidadRecibida Int             @default(0)
+  precioUnitario   Int
+  createdAt        DateTime        @default(now())
+  updatedAt        DateTime        @updatedAt
+  orden            OrdenCompra     @relation(fields: [ordenId], references: [id], onDelete: Cascade)
+  producto         Producto        @relation(fields: [productoId], references: [id], onDelete: Restrict)
+  tenant           Tenant          @relation(fields: [tenantId], references: [tenantId])
+  recepciones      RecepcionItem[]
+
+  @@index([tenantId, ordenId])
+  @@index([tenantId, productoId])
+}
+
+/// Recepción física de una OC; puede ser parcial y dejar backorder.
+model Recepcion {
+  id          String          @id @default(cuid())
+  ordenId     String
+  tenantId    String
+  fecha       DateTime        @default(now())
+  creadoPorId String?
+  orden       OrdenCompra     @relation(fields: [ordenId], references: [id], onDelete: Cascade)
+  tenant      Tenant          @relation(fields: [tenantId], references: [tenantId])
+  items       RecepcionItem[]
+
+  @@index([tenantId, ordenId])
+}
+
+/// Cantidad recibida para una línea concreta de la OC.
+model RecepcionItem {
+  id          String          @id @default(cuid())
+  recepcionId String
+  ordenItemId String
+  productoId  String
+  tenantId    String
+  cantidad    Int
+  recepcion   Recepcion       @relation(fields: [recepcionId], references: [id], onDelete: Cascade)
+  ordenItem   OrdenCompraItem @relation(fields: [ordenItemId], references: [id], onDelete: Restrict)
+  producto    Producto        @relation(fields: [productoId], references: [id], onDelete: Restrict)
+  tenant      Tenant          @relation(fields: [tenantId], references: [tenantId])
+
+  @@index([tenantId, recepcionId])
+  @@index([tenantId, ordenItemId])
+}
+
+/// Regla min/max por producto y ubicación para sugerir compra o fabricación.
+model ReglaReabastecimiento {
+  id            String   @id @default(cuid())
+  tenantId      String
+  productoId    String
+  tipoUbicacion String   @default("almacen")
+  ubicacionId   String
+  min           Int
+  max           Int
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+  tenant        Tenant   @relation(fields: [tenantId], references: [tenantId])
+  producto      Producto @relation(fields: [productoId], references: [id], onDelete: Cascade)
+
+  @@unique([tenantId, productoId, tipoUbicacion, ubicacionId])
+  @@index([tenantId, ubicacionId])
 }
 
 /// Asignación FIFO: vincula unidades vendidas (VentaItem) con su compra de origen (CompraDocumentoItem).

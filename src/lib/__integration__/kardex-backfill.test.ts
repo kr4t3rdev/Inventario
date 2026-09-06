@@ -1,6 +1,6 @@
 import { describe, it, expect, afterEach } from 'vitest'
 import { prisma } from '@/lib/prisma'
-import { backfillStockMoves } from '../../prisma/scripts/backfill-stock-move'
+import { backfillStockMoves } from '../../../prisma/scripts/backfill-stock-move'
 
 /**
  * @description Integración real del backfill del kardex contra PostgreSQL.
@@ -13,7 +13,7 @@ describe('Backfill de kardex (integración)', { timeout: 60_000 }, () => {
 
   afterEach(async () => {
     if (!tenantId) return
-    await prisma.$executeRaw`DELETE FROM "StockMoveLine" WHERE "tenantId" = ${tenantId}` // @ts-ignore
+    await prisma.$executeRaw`DELETE FROM "StockMoveLine" WHERE "tenantId" = ${tenantId}` // @ts-expect-error Prisma raw query typing is narrower in integration tests.
     await prisma.$executeRaw`DELETE FROM "StockUbicacion" WHERE "tenantId" = ${tenantId}`
     await prisma.$executeRaw`DELETE FROM "VentaItem" WHERE "productoId" IN (SELECT id FROM "Producto" WHERE "tenantId" = ${tenantId})`
     await prisma.$executeRaw`DELETE FROM "Venta" WHERE "tenantId" = ${tenantId}`

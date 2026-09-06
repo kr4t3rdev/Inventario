@@ -37,7 +37,7 @@
   (incluye paridad kardex↔StockUbicacion e inmutabilidad; requiere PG).
 * [x] 1.5b Scoping por tenant en validación de origen/destino de
   transferencias (`findFirst` con tenantId).
-* [ ] 1.6 UI lectura: `src/app/busy/inventario/kardex/page.tsx` + tabla
+* [x] 1.6 UI lectura: `src/app/busy/inventario/kardex/page.tsx` + tabla
   + exportación CSV (flag `kardex`).
 
 ## Fase 2 — P0 Ajuste unificado + Conteo ✅ (7d633cfd)
@@ -61,8 +61,28 @@
 * [x] 2.6 UI: `/busy/inventario/ajustes` y `/busy/inventario/conteos` +
   sidebar (`SIDEBAR_FEATURE_MAP` + permisos), con tests de componente.
 
-## Fase 3 — P1 Compras y reabastecimiento (Profesional)
+## Fase 3 — P1 Compras y reabastecimiento (Profesional) ✅ Backend/UI (E2E pendiente)
 
+* [x] 3.1 Migración `20260906120000_ordenes_compra_recepciones_reabastecimiento`:
+  `OrdenCompra`, `OrdenCompraItem`, `Recepcion`, `RecepcionItem`,
+  `ReglaReabastecimiento`; `CompraDocumento.ordenCompraId?` nullable.
+* [x] 3.2 `src/features/compras-productos/actions-oc.ts`:
+  crear/confirmar OC, registrar recepción (descuenta pendiente,
+  transiciona `PARCIAL/RECIBIDA`), cancelar con validación.
+  - RED/GREEN: recepción 60/100 deja `PARCIAL`; 40 restantes cierran;
+    exceso rechazado.
+* [x] 3.3 Vincular factura: `createCompraProductoAction` valida proveedor,
+  estado y cantidades contra recepciones; genera movimiento solo para
+  compra directa, nunca duplica el `StockMoveLine` ya creado por recepción.
+* [x] 3.4 `sugerirReabastecimientoAction` (flag `reabastecimiento`):
+  disponible < min propone `max - disponible`; con receta propone
+  fabricación, sin receta propone OC. Incluye CRUD de reglas.
+* [x] 3.5 UI: `/busy/compras/ordenes`, `/busy/compras/recepciones` y
+  `/busy/compras/reabastecimiento`; backorder visible en líneas y sidebar.
+* [ ] 3.6 E2E Playwright (plan Profesional): OC → recepción parcial →
+  recepción total → factura → kardex cuadra.
+
+<!-- Diseño original de Fase 3:
 * [ ] 3.1 Migración: `OrdenCompra`, `OrdenCompraItem`,
   `Recepcion`, `RecepcionItem`, `ReglaReabastecimiento`.
   `CompraDocumento.ordenCompraId?` nullable.
@@ -82,6 +102,7 @@
   backorder visible; compra directa intacta.
 * [ ] 3.6 E2E Playwright (plan Profesional): OC → recepción parcial →
   recepción total → factura → kardex cuadra.
+-->
 
 ## Fase 4 — P1 UdM con factor (Profesional)
 

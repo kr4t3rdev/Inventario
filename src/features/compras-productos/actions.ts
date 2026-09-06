@@ -8,7 +8,7 @@
 import { revalidatePath } from 'next/cache';
 import { withAction, ActionError } from '@/lib/server-actions';
 import { prisma } from '@/lib/prisma';
-import { requireTenant } from '@/lib/services/tenant-scope';
+import { requireFeature, requireTenant } from '@/lib/services/tenant-scope';
 import { calcularPrecioCostoCompra } from '@/lib/inventory-cost-utils';
 import { applyAnticipoAllocations } from '@/lib/services/anticipos-workflow';
 import { upsertStockUbicacion } from '@/lib/services/stock-ubicacion-service';
@@ -91,11 +91,47 @@ export const createCompraProductoAction = withAction(async (input: CreateCompraP
   const proveedor = await prisma.vendor.findFirst({ where: { vendorId: parsed.proveedorId, tenantId } });
   if (!proveedor) throw new ActionError('Proveedor no encontrado', 'NOT_FOUND');
 
+  let ordenVinculada: any = null;
+  if (parsed.ordenCompraId) {
+    requireFeature(user, 'ordenes-compra', 'facturar órdenes de compra');
+    ordenVinculada = await prisma.ordenCompra.findFirst({
+      where: { id: parsed.ordenCompraId, tenantId },
+      include: { items: { include: { recepciones: true } } },
+    });
+    if (!ordenVinculada) throw new ActionError('Orden de compra no encontrada', 'NOT_FOUND');
+    if (!['PARCIAL', 'RECIBIDA'].includes(ordenVinculada.estado)) {
+      throw new ActionError(
+        'La orden debe tener al menos una recepción antes de facturarse',
+        'ORDEN_SIN_RECEPCION',
+      );
+    }
+    if (ordenVinculada.proveedorId !== parsed.proveedorId) {
+      throw new ActionError('El proveedor no coincide con la orden de compra', 'VALIDATION_ERROR');
+    }
+  }
+
   // Validar productos
   const items: any[] = [];
   for (const item of parsed.items) {
     const producto = await prisma.producto.findFirst({ where: { id: item.productoId, tenantId } });
     if (!producto) throw new ActionError(`Producto ${item.productoId} no encontrado`, 'NOT_FOUND');
+
+    if (ordenVinculada) {
+      const ordenItems = ordenVinculada.items.filter((orderItem: any) => orderItem.productoId === item.productoId);
+      const recibido = ordenItems.reduce(
+        (sum: number, orderItem: any) => sum + orderItem.recepciones.reduce(
+          (lineSum: number, reception: any) => lineSum + reception.cantidad,
+          0,
+        ),
+        0,
+      );
+      if (ordenItems.length === 0 || item.cantidad > recibido) {
+        throw new ActionError(
+          `La factura excede la cantidad recibida para el producto ${item.productoId}`,
+          'FACTURA_EXCEDE_RECEPCION',
+        );
+      }
+    }
     const stockAntes = await getStockTotalProducto(prisma, {
       productoId: item.productoId,
     });
@@ -118,6 +154,7 @@ export const createCompraProductoAction = withAction(async (input: CreateCompraP
         tenantId, proveedorId: parsed.proveedorId, numeroFactura: parsed.numeroFactura || '',
         facturaUrl: parsed.facturaUrl || '', formaPago: parsed.formaPago,
         estado: parsed.estado, total, descripcion: parsed.descripcionCompra || null,
+        ordenCompraId: parsed.ordenCompraId,
         fechaCompra: new Date(),
         tipoOperacion: 'REGULAR',
         items: {
@@ -140,23 +177,27 @@ export const createCompraProductoAction = withAction(async (input: CreateCompraP
         },
       });
 
-      await upsertStockUbicacion(tx, {
-        tenantId, productoId: item.producto.id, tipoUbicacion: 'almacen',
-        ubicacionId: item.producto.almacenId, modo: 'increment', delta: item.cantidad,
-      });
+      // Una recepción ya incrementó stock y kardex. La factura vinculada solo
+      // documenta la entrada y nunca debe duplicar el movimiento físico.
+      if (!parsed.ordenCompraId) {
+        await upsertStockUbicacion(tx, {
+          tenantId, productoId: item.producto.id, tipoUbicacion: 'almacen',
+          ubicacionId: item.producto.almacenId, modo: 'increment', delta: item.cantidad,
+        });
 
-      await registrarMovimiento(tx, {
-        tenantId,
-        productoId: item.producto.id,
-        tipoOrigen: 'COMPRA',
-        origenId: compra.compraDocumentoId,
-        tipoUbicacion: 'almacen',
-        ubicacionId: item.producto.almacenId,
-        cantidad: item.cantidad,
-        costoUnitario: item.precioCosto,
-        secuencia: `ITEM-${idx}`,
-        creadoPorId: user.userId,
-      });
+        await registrarMovimiento(tx, {
+          tenantId,
+          productoId: item.producto.id,
+          tipoOrigen: 'COMPRA',
+          origenId: compra.compraDocumentoId,
+          tipoUbicacion: 'almacen',
+          ubicacionId: item.producto.almacenId,
+          cantidad: item.cantidad,
+          costoUnitario: item.precioCosto,
+          secuencia: `ITEM-${idx}`,
+          creadoPorId: user.userId,
+        });
+      }
 
       // Registrar cambio de costo en historial
       if (item.nuevoPrecioCosto.precioCostoNuevo !== oldPrecioCosto) {
