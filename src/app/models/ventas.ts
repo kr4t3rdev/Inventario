@@ -131,6 +131,11 @@ export interface Merma {
 	motivo: string | null;
 	createdAt: string;
 	updatedAt: string;
+	creadoPorId?: string | null;
+	creadoPor?: {
+		userId: string;
+		name: string | null;
+	} | null;
 	producto?: {
 		id: string;
 		nombre: string;

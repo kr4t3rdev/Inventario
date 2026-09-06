@@ -83,6 +83,12 @@ export function MermasTable({ mermas, isLoading, error, onDelete }: MermasTableP
       cell: ({ row }) => <div>{row.getValue("motivo")}</div>,
     },
     {
+      id: "registradoPor",
+      accessorFn: (row) => row.creadoPor?.name || "",
+      header: "Registrado por",
+      cell: ({ row }) => <div>{row.original.creadoPor?.name || "—"}</div>,
+    },
+    {
       header: "Acciones",
       enableHiding: false,
       cell: ({ row }) => {

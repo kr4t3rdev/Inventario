@@ -565,20 +565,23 @@ model VentaItem {
 }
 
 model Merma {
-  mermaId    String   @id @default(cuid())
-  tenantId   String
-  productoId String
-  cantidad   Int
-  motivo     String?
-  createdAt  DateTime @default(now())
-  updatedAt  DateTime @updatedAt
-  costoTotal Int?
-  almacenId  String?
-  almacen    Almacen? @relation(fields: [almacenId], references: [almacenId], onDelete: Restrict)
-  producto   Producto @relation(fields: [productoId], references: [id], onDelete: Cascade)
-  tenant     Tenant   @relation(fields: [tenantId], references: [tenantId])
+  mermaId     String   @id @default(cuid())
+  tenantId    String
+  productoId  String
+  cantidad    Int
+  motivo      String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  costoTotal  Int?
+  almacenId   String?
+  creadoPorId String?
+  almacen     Almacen? @relation(fields: [almacenId], references: [almacenId], onDelete: Restrict)
+  producto    Producto @relation(fields: [productoId], references: [id], onDelete: Cascade)
+  tenant      Tenant   @relation(fields: [tenantId], references: [tenantId])
+  creadoPor   User?    @relation("MermaCreador", fields: [creadoPorId], references: [userId])
 
   @@index([tenantId])
+  @@index([tenantId, createdAt])
 }
 
 model Transferencia {
@@ -642,6 +645,7 @@ model User {
   contratoArchivos               ContratoArchivo[]
   contratoFirmas                 ContratoFirma[]
   contratoVersiones              ContratoVersion[]
+  mermasCreadas                  Merma[]                      @relation("MermaCreador")
   notifications                  Notification[]
   tiposContratosCustom           TipoContratoCustom[]
   transferenciasCreadas          Transferencia[]

@@ -11,11 +11,15 @@ import { prisma } from "@/lib/prisma";
 import { requireTenant } from "@/lib/services/tenant-scope";
 import { notificarMerma } from "@/lib/notificaciones-utils";
 import { upsertStockUbicacion } from "@/lib/services/stock-ubicacion-service";
+import { registrarMovimiento } from "@/features/inventario/movimientos";
 import { createMermaSchema, updateMermaSchema } from "./schemas";
 import type { CreateMermaInput, UpdateMermaInput } from "./schemas";
 import type { AuthenticatedUser } from "@/lib/auth-middleware";
 
-const MERMA_INCLUDE = { producto: true } as const;
+const MERMA_INCLUDE = {
+  producto: true,
+  creadoPor: { select: { userId: true, name: true } },
+} as const;
 
 export const getMermasAction = withAction(
 	async (_input: void, user: AuthenticatedUser) => {
@@ -89,6 +93,7 @@ export const createMermaAction = withAction(
 					costoTotal,
 					tenantId,
 					almacenId: almacenIdEfectivo,
+					creadoPorId: user.userId,
 				},
 				include: MERMA_INCLUDE,
 			});
@@ -99,6 +104,18 @@ export const createMermaAction = withAction(
 				ubicacionId: almacenIdEfectivo,
 				modo: "increment",
 				delta: -parsed.cantidad,
+			});
+
+			await registrarMovimiento(tx, {
+				tenantId,
+				productoId: parsed.productoId,
+				tipoOrigen: "MERMA",
+				origenId: creada.mermaId,
+				tipoUbicacion: "almacen",
+				ubicacionId: almacenIdEfectivo,
+				cantidad: -parsed.cantidad,
+				costoUnitario: producto.precioCosto,
+				creadoPorId: user.userId,
 			});
 
 			return creada;
@@ -145,16 +162,27 @@ export const updateMermaAction = withAction(
 		if (productoCambia || cantidadCambia || almacenCambia) {
 			// Resolver almacén destino: si cambia producto, puede venir del producto nuevo
 			let resolvedAlmacenId = nuevoAlmacenId as string;
+			// Precio de costo vigente al momento de la edición para recalcular el costo.
+			let precioCostoVigente: number | null = null;
 			if (productoCambia) {
 				const productoNuevo = await prisma.producto.findFirst({
 					where: { id: productoId, tenantId },
-					select: { id: true, almacenId: true },
+					select: { id: true, almacenId: true, precioCosto: true },
 				});
 				if (!productoNuevo)
 					throw new ActionError("Producto no encontrado", "NOT_FOUND");
 				if (data.almacenId === undefined) {
 					resolvedAlmacenId = productoNuevo.almacenId;
 				}
+				precioCostoVigente = productoNuevo.precioCosto;
+			} else if (cantidadCambia) {
+				const productoActual = await prisma.producto.findFirst({
+					where: { id: productoId, tenantId },
+					select: { precioCosto: true },
+				});
+				if (!productoActual)
+					throw new ActionError("Producto no encontrado", "NOT_FOUND");
+				precioCostoVigente = productoActual.precioCosto;
 			}
 
 			const cantidadAdicional =
@@ -186,6 +214,9 @@ export const updateMermaAction = withAction(
 						cantidad,
 						motivo: data.motivo ?? undefined,
 						almacenId: resolvedAlmacenId,
+						...(precioCostoVigente !== null && {
+							costoTotal: precioCostoVigente * cantidad,
+						}),
 					},
 					include: MERMA_INCLUDE,
 				});
