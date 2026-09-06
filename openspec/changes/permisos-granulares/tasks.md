@@ -34,9 +34,9 @@ Leyenda: `- [ ]` pendiente · `- [x]` hecho.
 
 ## PG-04 — Motor lógico del dominio + acciones de gestión de roles
 
-- [ ] **PG04-T1 — RED acciones CRUD.** Tests tenant-safe para `createTenantRoleAction`, `updateTenantRoleAction`, `deleteTenantRoleAction`, `assignCustomRoleAction` (en `src/features/configuracion/` o feature nueva `src/features/roles/`): validación Zod strict, claves permisos contra registry (rechaza desconocidas), unicidad de nombre por tenant, delete bloqueado con miembros (conteo en mensaje), asignación valida membresía del mismo tenant, **auditoría registrada** (spy de AuditLogService), manager-only (`config.usuarios.gestionar`).
-- [ ] **PG04-T2 — GREEN acciones.** Implementar con `withAction` + `requirePermission(config.usuarios.gestionar)` + `requireTenant`; transacciones donde aplique.
-- [ ] **PG04-T3 — Guarda último manager.** Test + implementación: no se puede degradar/eliminar el último manager activo del tenant.
+- [x] **PG04-T1 — RED acciones CRUD.** Tests tenant-safe para `createTenantRoleAction`, `updateTenantRoleAction`, `deleteTenantRoleAction`, `assignCustomRoleAction` (en `src/features/configuracion/` o feature nueva `src/features/roles/`): validación Zod strict, claves permisos contra registry (rechaza desconocidas), unicidad de nombre por tenant, delete bloqueado con miembros (conteo en mensaje), asignación valida membresía del mismo tenant, **auditoría registrada** (spy de AuditLogService), manager-only (`config.usuarios.gestionar`).
+- [x] **PG04-T2 — GREEN acciones.** Implementar con `withAction` + `requirePermission(config.usuarios.gestionar)` + `requireTenant`; transacciones donde aplique.
+- [x] **PG04-T3 — Guarda último manager.** Test + implementación: no se puede degradar/eliminar el último manager activo del tenant.
 - Commit: `feat(roles): CRUD de roles personalizados con auditoría y guardas (PG-04)`
 
 ## PG-05 — Migración de call sites por dominio (el grueso)

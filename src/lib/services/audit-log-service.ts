@@ -27,7 +27,8 @@ export type AuditEntity =
   | "SALES_AGENT_PAYOUT"
   | "CLOUDINARY_ASSET"
   | "TENANT_ACCOUNTING_POLICY"
-  | "ACCOUNTING_POLICY_ROLLOUT";
+  | "ACCOUNTING_POLICY_ROLLOUT"
+  | "TENANT_ROLE";
 
 export type AuditAction = 
   | "CREATE" 
