@@ -12,10 +12,8 @@ import { StaggerContainer, StaggerItem, AnimatedCard } from "@/components/ui/ani
 import { ReportErrorState } from "./report-error-state"
 import { cn, formatCurrency } from "@/lib/utils"
 
-const surfaceCardClass = cn(
-  "relative overflow-hidden border-slate-200/60 bg-white/70 shadow-sm backdrop-blur-xl",
-  "dark:border-slate-800/60 dark:bg-slate-900/10",
-)
+
+import { SURFACE_CARD_CLASS } from "@/features/reportes-financieros/lib/reporte-styles"
 
 export function ReportePorCategoria() {
   const { productos, isLoading: isLoadingProductos, error: productosError } = useProductos()
@@ -127,7 +125,7 @@ export function ReportePorCategoria() {
 
       <StaggerItem className="grid gap-4 md:grid-cols-2">
         <AnimatedCard>
-        <Card className={surfaceCardClass}>
+        <Card className={SURFACE_CARD_CLASS}>
           <CardContent className="p-4">
             <h3 className="mb-4 text-lg font-medium">Distribución por Categoría</h3>
             {isLoadingProductos ? (
@@ -158,7 +156,7 @@ export function ReportePorCategoria() {
         </AnimatedCard>
 
         <AnimatedCard>
-        <Card className={surfaceCardClass}>
+        <Card className={SURFACE_CARD_CLASS}>
           <CardContent className="p-4">
             <h3 className="mb-4 text-lg font-medium">Resumen por Categoría</h3>
             {isLoadingProductos ? (
@@ -166,7 +164,7 @@ export function ReportePorCategoria() {
             ) : (
               <div className="rounded-md border">
                 <Table >
-                  <TableHeader className={surfaceCardClass}>
+                  <TableHeader className={SURFACE_CARD_CLASS}>
                     <TableRow>
                       <TableHead>Categoría</TableHead>
                       <TableHead className="text-right">Productos</TableHead>
@@ -194,7 +192,7 @@ export function ReportePorCategoria() {
 
       <StaggerItem>
         <AnimatedCard>
-        <Card className={surfaceCardClass}>
+        <Card className={SURFACE_CARD_CLASS}>
           <CardContent className="p-0">
             <div className="rounded-md border-0">
               <Table>

@@ -45,10 +45,8 @@ import { cn, formatCurrency } from "@/lib/utils";
 import { getStockPorUbicacionAction } from "@/features/productos/actions";
 import { getProductDisplayIdentifier } from "@/lib/product-display-utils";
 
-const surfaceCardClass = cn(
-	"relative overflow-hidden border-slate-200/60 bg-white/70 shadow-sm backdrop-blur-xl",
-	"dark:border-slate-800/60 dark:bg-slate-900/10",
-);
+
+import { SURFACE_CARD_CLASS } from "@/features/reportes-financieros/lib/reporte-styles"
 
 export function ReportePorUbicacion() {
 	const [ubicacionId, setUbicacionId] = useState<string>("");
@@ -239,7 +237,7 @@ export function ReportePorUbicacion() {
 				<StaggerItem className="grid gap-4 md:grid-cols-3">
 					<AnimatedCard>
 						<Card
-							className={cn(surfaceCardClass)}
+							className={cn(SURFACE_CARD_CLASS)}
 						>
 							<CardContent className="p-4">
 								<div className="text-2xl font-bold">
@@ -254,7 +252,7 @@ export function ReportePorUbicacion() {
 					</AnimatedCard>
 					<AnimatedCard>
 						<Card
-							className={cn(surfaceCardClass)}
+							className={cn(SURFACE_CARD_CLASS)}
 						>
 							<CardContent className="p-4">
 								<div className="text-2xl font-bold">
@@ -271,7 +269,7 @@ export function ReportePorUbicacion() {
 					</AnimatedCard>
 					<AnimatedCard>
 						<Card
-							className={cn(surfaceCardClass)}
+							className={cn(SURFACE_CARD_CLASS)}
 						>
 								<CardContent className="p-4">
 									<div className="text-2xl font-bold">
@@ -294,7 +292,7 @@ export function ReportePorUbicacion() {
 				<>
 					<StaggerItem>
 						<AnimatedCard>
-							<Card className={surfaceCardClass}>
+							<Card className={SURFACE_CARD_CLASS}>
 								<CardContent className="p-4">
 									<h3 className="mb-4 text-lg font-medium">
 										Top 10 Productos por Stock
@@ -332,7 +330,7 @@ export function ReportePorUbicacion() {
 
 					<StaggerItem>
 						<AnimatedCard>
-							<Card className={surfaceCardClass}>
+							<Card className={SURFACE_CARD_CLASS}>
 								<CardContent className="p-0">
 									<div className="rounded-md border-0">
 										<Table>

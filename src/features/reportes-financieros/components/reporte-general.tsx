@@ -26,12 +26,10 @@ import { StaggerContainer, StaggerItem, AnimatedCard } from "@/components/ui/ani
 import { cn, formatCurrency } from "@/lib/utils"
 import { getProductDisplayIdentifier } from "@/lib/product-display-utils"
 
-const surfaceCardClass = cn(
-  "relative overflow-hidden border-slate-200/60 shadow-sm backdrop-blur-xl",
-  "dark:border-slate-800/20 dark:bg-slate-900/10",
-)
 
 const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042', '#8884d8', '#82ca9d', '#ffc658', '#8dd1e1', '#a4de6c', '#d0ed57'];
+
+import { SURFACE_CARD_CLASS } from "@/features/reportes-financieros/lib/reporte-styles"
 
 export function ReporteGeneral() {
   const { productos, isLoading: isLoadingProductos, error: productosError } = useProductos()
@@ -174,7 +172,7 @@ export function ReporteGeneral() {
 
       <StaggerItem className="grid gap-4 md:grid-cols-3">
         <AnimatedCard>
-        <Card className={cn(surfaceCardClass)}>
+        <Card className={cn(SURFACE_CARD_CLASS)}>
           <CardContent className="p-4">
             <div className="flex items-center justify-between">
               <div>
@@ -188,7 +186,7 @@ export function ReporteGeneral() {
         </AnimatedCard>
         
         <AnimatedCard>
-        <Card className={cn(surfaceCardClass)}>
+        <Card className={cn(SURFACE_CARD_CLASS)}>
           <CardContent className="p-4">
             <div className="text-2xl font-bold">{formatCurrency(valorTotal)}</div>
             <p className="text-xs text-muted-foreground">Valor de inventario (costo)</p>
@@ -197,7 +195,7 @@ export function ReporteGeneral() {
         </AnimatedCard>
         
         <AnimatedCard>
-        <Card className={cn(surfaceCardClass)}>
+        <Card className={cn(SURFACE_CARD_CLASS)}>
           <CardContent className="p-4">
             <div className="text-2xl font-bold">{formatCurrency(valorVenta)}</div>
             <p className="text-xs text-muted-foreground">Valor de inventario (venta)</p>
@@ -209,7 +207,7 @@ export function ReporteGeneral() {
       {/* Chart Section */}
       <StaggerItem>
         <AnimatedCard>
-          <Card className={surfaceCardClass}>
+          <Card className={SURFACE_CARD_CLASS}>
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
                 <PieChartIcon className="h-5 w-5" />
@@ -253,7 +251,7 @@ export function ReporteGeneral() {
 
       <StaggerItem>
         <AnimatedCard>
-        <Card className={surfaceCardClass}>
+        <Card className={SURFACE_CARD_CLASS}>
           <CardContent className="p-0">
             <div className="rounded-md border-0">
               {!hasData ? (
@@ -265,9 +263,9 @@ export function ReporteGeneral() {
                   )}
                 </div>
               ) : (
-                <Table className={surfaceCardClass}>
+                <Table className={SURFACE_CARD_CLASS}>
                   <TableHeader className="bg-muted/50">
-                    <TableRow className={surfaceCardClass}>
+                    <TableRow className={SURFACE_CARD_CLASS}>
                       <TableHead>Producto</TableHead>
                       <TableHead>Categoría</TableHead>
                       <TableHead className="text-right">Stock</TableHead>
@@ -278,7 +276,7 @@ export function ReporteGeneral() {
                       <TableHead className="text-right">Valor Venta</TableHead>
                     </TableRow>
                   </TableHeader>
-                  <TableBody className={surfaceCardClass}>
+                  <TableBody className={SURFACE_CARD_CLASS}>
                     {productosPaginados?.map((producto) => {
                       const categoriaNombre = categorias?.find((c) => c.catId === producto.categoriaId || c.catId === producto.categoria?.catId)?.nombre || "Sin categoría"
                       return (

@@ -18,10 +18,6 @@ import { cn, formatCurrency } from "@/lib/utils";
 import { AnimatedCard } from "@/components/ui/animations";
 import type { ResumenAnalisis } from "@/features/reportes-financieros/actions-rentabilidad-compra";
 
-const surfaceCardClass = cn(
-	"relative overflow-hidden border-slate-200/60 bg-white/70 shadow-sm backdrop-blur-xl",
-	"dark:border-slate-800/60 dark:bg-slate-900/10",
-);
 
 interface SummaryCardsProps {
 	resumen: ResumenAnalisis;
@@ -33,6 +29,8 @@ interface SummaryCardsProps {
  * @param {SummaryCardsProps} props - Datos del resumen.
  * @returns {JSX.Element} Grid de 5 tarjetas con métricas.
  */
+import { SURFACE_CARD_CLASS } from "@/features/reportes-financieros/lib/reporte-styles"
+
 export function SummaryCards({ resumen }: SummaryCardsProps) {
 	const cards = [
 		{
@@ -84,7 +82,7 @@ export function SummaryCards({ resumen }: SummaryCardsProps) {
 		<div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5">
 			{cards.map((card) => (
 				<AnimatedCard key={card.label}>
-					<Card className={cn(surfaceCardClass, card.borderColor)}>
+					<Card className={cn(SURFACE_CARD_CLASS, card.borderColor)}>
 						<CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
 							<CardDescription className="text-sm font-medium">
 								{card.label}

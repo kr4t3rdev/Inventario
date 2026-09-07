@@ -33,10 +33,6 @@ import { cn, formatCurrency } from "@/lib/utils";
 import { exportToPdf, exportToCsv } from "@/lib/export-utils";
 import type { ProductoAnalisis } from "@/features/reportes-financieros/actions-rentabilidad-compra";
 
-const surfaceCardClass = cn(
-	"relative overflow-hidden border-slate-200/60 bg-white/70 shadow-sm backdrop-blur-xl",
-	"dark:border-slate-800/60 dark:bg-slate-900/10",
-);
 
 interface DetailTableProps {
 	productos: ProductoAnalisis[];
@@ -59,6 +55,8 @@ type SortDir = "asc" | "desc";
  * @param {DetailTableProps} props - Productos del análisis.
  * @returns {JSX.Element} Tabla paginada y ordenable con exportación.
  */
+import { SURFACE_CARD_CLASS } from "@/features/reportes-financieros/lib/reporte-styles"
+
 export function RentabilidadDetailTable({
 	productos,
 	numeroFactura,

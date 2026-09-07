@@ -27,10 +27,8 @@ interface ReporteMovimientosProps {
   initialTransferencias?: TransferenciaMovimientos[]
 }
 
-const surfaceCardClass = cn(
-  "relative overflow-hidden border-slate-200/60 bg-white/70 shadow-sm backdrop-blur-xl",
-  "dark:border-slate-800/60 dark:bg-slate-900/10",
-)
+
+import { SURFACE_CARD_CLASS } from "@/features/reportes-financieros/lib/reporte-styles"
 
 export function ReporteMovimientos({ initialTransferencias = [] }: ReporteMovimientosProps) {
   const [tipoMovimiento, setTipoMovimiento] = useState<string>("ventas")
@@ -292,7 +290,7 @@ export function ReporteMovimientos({ initialTransferencias = [] }: ReporteMovimi
 
       <StaggerItem>
         <AnimatedCard>
-        <Card className={surfaceCardClass}>
+        <Card className={SURFACE_CARD_CLASS}>
           <CardContent className="p-4">
             <h3 className="mb-4 text-lg font-medium">
               {tipoMovimiento === "ventas"
@@ -322,7 +320,7 @@ export function ReporteMovimientos({ initialTransferencias = [] }: ReporteMovimi
 
       <StaggerItem>
         <AnimatedCard>
-        <Card className={surfaceCardClass}>
+        <Card className={SURFACE_CARD_CLASS}>
           <CardContent className="p-0">
             <div className="rounded-md border-0">
               {isLoading ? (

@@ -23,10 +23,6 @@ import {
 } from "recharts";
 import type { ProductoAnalisis } from "@/features/reportes-financieros/actions-rentabilidad-compra";
 
-const surfaceCardClass = cn(
-	"relative overflow-hidden border-slate-200/60 bg-white/70 shadow-sm backdrop-blur-xl",
-	"dark:border-slate-800/60 dark:bg-slate-900/10",
-);
 
 const COLORS = [
 	"#10b981",
@@ -54,6 +50,8 @@ function shortName(name: string, max = 18): string {
  * @param {ChartsRentabilidadProps} props - Productos del análisis.
  * @returns {JSX.Element} Grid de 3 charts + pie chart de distribución.
  */
+import { SURFACE_CARD_CLASS } from "@/features/reportes-financieros/lib/reporte-styles"
+
 export function ChartsRentabilidad({ productos }: ChartsRentabilidadProps) {
 	const hasSales = productos.some((p) => p.unidadesVendidas > 0);
 
@@ -95,7 +93,7 @@ export function ChartsRentabilidad({ productos }: ChartsRentabilidadProps) {
 	return (
 		<div className="grid gap-6 lg:grid-cols-2">
 			{/* Ingresos vs Costo */}
-			<Card className={surfaceCardClass}>
+			<Card className={SURFACE_CARD_CLASS}>
 				<CardHeader>
 					<CardTitle className="text-base">Ingresos vs Costo</CardTitle>
 					<CardDescription>Comparación por producto</CardDescription>
@@ -126,7 +124,7 @@ export function ChartsRentabilidad({ productos }: ChartsRentabilidadProps) {
 			</Card>
 
 			{/* Ganancia por producto */}
-			<Card className={surfaceCardClass}>
+			<Card className={SURFACE_CARD_CLASS}>
 				<CardHeader>
 					<CardTitle className="text-base">Ganancia por Producto</CardTitle>
 					<CardDescription>Resultado neto por producto</CardDescription>
@@ -177,7 +175,7 @@ export function ChartsRentabilidad({ productos }: ChartsRentabilidadProps) {
 			</Card>
 
 			{/* Días para vender */}
-			<Card className={surfaceCardClass}>
+			<Card className={SURFACE_CARD_CLASS}>
 				<CardHeader>
 					<CardTitle className="text-base">Días para Vender</CardTitle>
 					<CardDescription>
@@ -218,7 +216,7 @@ export function ChartsRentabilidad({ productos }: ChartsRentabilidadProps) {
 			</Card>
 
 			{/* Distribución de Ingresos */}
-			<Card className={surfaceCardClass}>
+			<Card className={SURFACE_CARD_CLASS}>
 				<CardHeader>
 					<CardTitle className="text-base">Distribución de Ingresos</CardTitle>
 					<CardDescription>Participación por producto</CardDescription>

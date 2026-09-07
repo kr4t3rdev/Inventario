@@ -25,10 +25,6 @@ import type {
 	CompraResult,
 } from "@/features/reportes-financieros/actions-rentabilidad-compra";
 
-const surfaceCardClass = cn(
-	"relative overflow-hidden rounded-2xl border border-slate-200/60 bg-white/75 shadow-sm backdrop-blur-xl",
-	"dark:border-slate-800/60 dark:bg-slate-900/10",
-);
 
 interface CompraInfo {
 	compraDocumentoId: string;
@@ -49,7 +45,13 @@ interface CompraInfo {
  *   ChartsRentabilidad y RentabilidadDetailTable.
  *
  * @returns {JSX.Element} Vista completa del reporte.
- */
+ */import { SURFACE_CARD_CLASS as BASE_SURFACE_CARD_CLASS } from "@/features/reportes-financieros/lib/reporte-styles"
+
+const SURFACE_CARD_CLASS = cn(
+  BASE_SURFACE_CARD_CLASS,
+  "rounded-2xl border bg-white/75",
+)
+
 export function ReporteRentabilidadCompra() {
 	const shouldReduceMotion = useReducedMotion();
 
@@ -160,7 +162,7 @@ export function ReporteRentabilidadCompra() {
 
 			{/* Purchase Selector */}
 			<motion.div variants={fadeInUp as any} initial="hidden" animate="show">
-				<Card className={cn(surfaceCardClass, "border-dashed")}>
+				<Card className={cn(SURFACE_CARD_CLASS, "border-dashed")}>
 					<CardContent className="p-4">
 						<PurchaseSearchBar
 							onSelect={handleSelectCompra}
@@ -180,7 +182,7 @@ export function ReporteRentabilidadCompra() {
 			{/* Empty State */}
 			{!selectedCompraId && (
 				<motion.div variants={fadeInUp as any} initial="hidden" animate="show">
-					<Card className={cn(surfaceCardClass, "border-dashed")}>
+					<Card className={cn(SURFACE_CARD_CLASS, "border-dashed")}>
 						<CardContent className="pt-6">
 							<div className="flex flex-col items-center justify-center py-12 text-center">
 								<BarChart3 className="mb-4 h-12 w-12 text-muted-foreground/50" />
@@ -203,7 +205,7 @@ export function ReporteRentabilidadCompra() {
 				<motion.div variants={fadeInUp as any} initial="hidden" animate="show">
 					<Card
 						className={cn(
-							surfaceCardClass,
+							SURFACE_CARD_CLASS,
 							"border-destructive/30 bg-destructive/5",
 						)}
 					>
@@ -240,7 +242,7 @@ export function ReporteRentabilidadCompra() {
 
 					<StaggerItem>
 						<AnimatedCard>
-							<Card className={surfaceCardClass}>
+							<Card className={SURFACE_CARD_CLASS}>
 								<CardContent className="p-4 sm:p-5">
 									<RentabilidadDetailTable
 										productos={productos}

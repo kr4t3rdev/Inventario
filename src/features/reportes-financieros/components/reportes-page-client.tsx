@@ -11,6 +11,7 @@ import { Button } from "@/components/ui/button";
 import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar";
 import { Skeleton } from "@/components/ui/skeleton";
 import { cn } from "@/lib/utils";
+import { SURFACE_CARD_CLASS as BASE_SURFACE_CARD_CLASS } from "@/features/reportes-financieros/lib/reporte-styles"
 import {
 	PageTransition,
 	StaggerContainer,
@@ -52,10 +53,6 @@ const ReportesInventario = dynamic(
 );
 
 const EASE_OUT = [0.16, 1, 0.3, 1] as const;
-const surfaceCardClass = cn(
-	"relative overflow-hidden rounded-2xl border border-slate-200/60 bg-white/75 shadow-sm backdrop-blur-xl",
-	"dark:border-slate-800/60 dark:bg-slate-900/10",
-);
 const statusBadgeClass = cn(
 	"border border-rose-200/80 bg-rose-50/80 text-rose-700",
 	"dark:border-rose-900/60 dark:bg-rose-900/20 dark:text-rose-300",
@@ -69,6 +66,11 @@ interface ReportesPageClientProps {
  * @description Shell de diseño para la página de reportes de inventario.
  * @returns {JSX.Element} Vista animada con header, estados y contenido.
  */
+const SURFACE_CARD_CLASS = cn(
+  BASE_SURFACE_CARD_CLASS,
+  "rounded-2xl border bg-white/75",
+)
+
 export function ReportesPageClient({
 	initialTransferencias,
 }: ReportesPageClientProps) {
@@ -185,7 +187,7 @@ export function ReportesPageClient({
 					</StaggerContainer>
 
 					<motion.div variants={fadeInUp} initial="hidden" animate="show">
-						<div className={surfaceCardClass}>
+						<div className={SURFACE_CARD_CLASS}>
 							<ReportesInventario
 								initialTransferencias={
 									initialTransferencias as TransferenciaMovimientos[]
