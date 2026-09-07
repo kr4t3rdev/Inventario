@@ -18,6 +18,7 @@ const recepcionItemSchema = z.object({
 
 export const registrarRecepcionSchema = z.object({
   ordenId: z.string().min(1),
+  claveIdempotencia: z.string().min(8).max(128).optional(),
   items: z.array(recepcionItemSchema).min(1, 'La recepción debe incluir al menos una línea'),
 }).superRefine((value, context) => {
   const ids = value.items.map((item) => item.ordenItemId);

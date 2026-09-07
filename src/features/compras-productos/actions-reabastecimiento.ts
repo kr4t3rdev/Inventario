@@ -28,24 +28,39 @@ export const upsertReglaReabastecimientoAction = withAction(
     if (!input.productoId || !input.ubicacionId || input.min < 0 || input.max < input.min) {
       throw new ActionError('Los umbrales min/max no son válidos', 'VALIDATION_ERROR');
     }
+    const tipoUbicacion = input.tipoUbicacion ?? 'almacen';
+    if (tipoUbicacion !== 'almacen' && tipoUbicacion !== 'punto_venta') {
+      throw new ActionError('Tipo de ubicación no soportado', 'VALIDATION_ERROR');
+    }
     const producto = await prisma.producto.findFirst({
       where: { id: input.productoId, tenantId },
       select: { id: true },
     });
     if (!producto) throw new ActionError('Producto no encontrado', 'NOT_FOUND');
+    const ubicacion =
+      tipoUbicacion === 'almacen'
+        ? await prisma.almacen.findFirst({
+            where: { almacenId: input.ubicacionId, tenantId },
+            select: { almacenId: true },
+          })
+        : await prisma.puntoDeVenta.findFirst({
+            where: { pvId: input.ubicacionId, tenantId },
+            select: { pvId: true },
+          });
+    if (!ubicacion) throw new ActionError('Ubicación no encontrada', 'NOT_FOUND');
     return prisma.reglaReabastecimiento.upsert({
       where: {
         tenantId_productoId_tipoUbicacion_ubicacionId: {
           tenantId,
           productoId: input.productoId,
-          tipoUbicacion: input.tipoUbicacion ?? 'almacen',
+          tipoUbicacion,
           ubicacionId: input.ubicacionId,
         },
       },
       create: {
         tenantId,
         productoId: input.productoId,
-        tipoUbicacion: input.tipoUbicacion ?? 'almacen',
+        tipoUbicacion,
         ubicacionId: input.ubicacionId,
         min: input.min,
         max: input.max,

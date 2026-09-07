@@ -152,6 +152,19 @@ export function requireFeature(
 }
 
 /**
+ * @description Consulta booleana de feature de plan para condicionales de UI.
+ * NUNCA sustituye a `requireFeature` server-side.
+ *
+ * @param {AuthenticatedUser} user - Usuario autenticado.
+ * @param {string} featureKey - Clave del feature en el registro del plan.
+ * @returns {boolean} true si admin global o el plan incluye el feature.
+ */
+export function hasFeature(user: AuthenticatedUser, featureKey: string): boolean {
+  if (user.role === 'admin') return true;
+  return user.planFeatures?.[featureKey] === true;
+}
+
+/**
  * @description Extiende un where de Prisma con filtro por tenantId.
  * Úsalo en cada query de negocio para garantizar aislamiento entre tenants.
  *

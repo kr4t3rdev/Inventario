@@ -1376,7 +1376,7 @@ model CompraDocumento {
   tenant            Tenant                @relation(fields: [tenantId], references: [tenantId])
   updatedBy         User?                 @relation("CompraDocumentoActualizado", fields: [updatedById], references: [userId])
   items             CompraDocumentoItem[]
-  ordenCompra       OrdenCompra?           @relation(fields: [ordenCompraId], references: [id], onDelete: SetNull)
+  ordenCompra       OrdenCompra?           @relation(fields: [tenantId, ordenCompraId], references: [tenantId, id], onDelete: NoAction, onUpdate: Cascade)
 
   @@index([tenantId])
   @@index([estado])
@@ -1422,6 +1422,7 @@ model OrdenCompra {
   recepciones Recepcion[]
   facturas    CompraDocumento[]
 
+  @@unique([tenantId, id])
   @@index([tenantId, estado])
   @@index([tenantId, proveedorId])
 }
@@ -1437,26 +1438,29 @@ model OrdenCompraItem {
   precioUnitario   Int
   createdAt        DateTime        @default(now())
   updatedAt        DateTime        @updatedAt
-  orden            OrdenCompra     @relation(fields: [ordenId], references: [id], onDelete: Cascade)
-  producto         Producto        @relation(fields: [productoId], references: [id], onDelete: Restrict)
+  orden            OrdenCompra     @relation(fields: [tenantId, ordenId], references: [tenantId, id], onDelete: Cascade)
+  producto         Producto        @relation(fields: [tenantId, productoId], references: [tenantId, id], onDelete: Restrict)
   tenant           Tenant          @relation(fields: [tenantId], references: [tenantId])
   recepciones      RecepcionItem[]
 
+  @@unique([tenantId, id])
   @@index([tenantId, ordenId])
   @@index([tenantId, productoId])
 }
 
 /// Recepción física de una OC; puede ser parcial y dejar backorder.
 model Recepcion {
-  id          String          @id @default(cuid())
-  ordenId     String
-  tenantId    String
-  fecha       DateTime        @default(now())
-  creadoPorId String?
-  orden       OrdenCompra     @relation(fields: [ordenId], references: [id], onDelete: Cascade)
+  id                String          @id @default(cuid())
+  ordenId           String
+  tenantId          String
+  fecha             DateTime        @default(now())
+  creadoPorId       String?
+  claveIdempotencia String?         @unique
+  orden       OrdenCompra     @relation(fields: [tenantId, ordenId], references: [tenantId, id], onDelete: Cascade)
   tenant      Tenant          @relation(fields: [tenantId], references: [tenantId])
   items       RecepcionItem[]
 
+  @@unique([tenantId, id])
   @@index([tenantId, ordenId])
 }
 
@@ -1468,9 +1472,9 @@ model RecepcionItem {
   productoId  String
   tenantId    String
   cantidad    Int
-  recepcion   Recepcion       @relation(fields: [recepcionId], references: [id], onDelete: Cascade)
-  ordenItem   OrdenCompraItem @relation(fields: [ordenItemId], references: [id], onDelete: Restrict)
-  producto    Producto        @relation(fields: [productoId], references: [id], onDelete: Restrict)
+  recepcion   Recepcion       @relation(fields: [tenantId, recepcionId], references: [tenantId, id], onDelete: Cascade)
+  ordenItem   OrdenCompraItem @relation(fields: [tenantId, ordenItemId], references: [tenantId, id], onDelete: Restrict)
+  producto    Producto        @relation(fields: [tenantId, productoId], references: [tenantId, id], onDelete: Restrict)
   tenant      Tenant          @relation(fields: [tenantId], references: [tenantId])
 
   @@index([tenantId, recepcionId])
@@ -1489,7 +1493,7 @@ model ReglaReabastecimiento {
   createdAt     DateTime @default(now())
   updatedAt     DateTime @updatedAt
   tenant        Tenant   @relation(fields: [tenantId], references: [tenantId])
-  producto      Producto @relation(fields: [productoId], references: [id], onDelete: Cascade)
+  producto      Producto @relation(fields: [tenantId, productoId], references: [tenantId, id], onDelete: Cascade)
 
   @@unique([tenantId, productoId, tipoUbicacion, ubicacionId])
   @@index([tenantId, ubicacionId])

@@ -133,9 +133,17 @@ export const confirmarOrdenCompraAction = withAction(
     if (orden.items.length === 0) {
       throw new ActionError('La orden debe incluir al menos una línea', 'SIN_LINEAS');
     }
-    const updated = await prisma.ordenCompra.update({
-      where: { id: orden.id },
+    // Compare-and-set: evita que confirmaciones/cancelaciones concurrentes
+    // se pisen entre sí; solo una transición puede ganar.
+    const claimed = await prisma.ordenCompra.updateMany({
+      where: { id: orden.id, tenantId, estado: 'BORRADOR' },
       data: { estado: 'CONFIRMADA' },
+    });
+    if (claimed.count === 0) {
+      throw new ActionError('La orden ya no está en BORRADOR', 'ESTADO_INVALIDO');
+    }
+    const updated = await prisma.ordenCompra.findFirst({
+      where: { id: orden.id, tenantId },
       include: ORDEN_INCLUDE,
     });
     revalidatePath('/busy/compras/ordenes');
@@ -156,7 +164,26 @@ export const registrarRecepcionAction = withAction(
     const tenantId = requireTenant(user);
     requireFeature(user, 'recepciones', 'recepciones de compra');
 
-    const result = await prisma.$transaction(async (tx: any) => {
+    // Idempotencia de negocio: un reintento con la misma clave devuelve la
+    // recepción ya registrada sin duplicar stock ni kardex.
+    if (parsed.claveIdempotencia) {
+      const existente = await prisma.recepcion.findFirst({
+        where: { tenantId, claveIdempotencia: parsed.claveIdempotencia },
+        include: { orden: true },
+      });
+      if (existente) {
+        return {
+          recepcion: existente,
+          orden: existente.orden,
+          estado: existente.orden.estado,
+          yaRegistrada: true,
+        };
+      }
+    }
+
+    let result;
+    try {
+      result = await prisma.$transaction(async (tx: any) => {
       const orden = await tx.ordenCompra.findFirst({
         where: { id: parsed.ordenId, tenantId },
         include: {
@@ -189,6 +216,7 @@ export const registrarRecepcionAction = withAction(
           tenantId,
           ordenId: orden.id,
           creadoPorId: user.userId,
+          claveIdempotencia: parsed.claveIdempotencia || null,
           items: {
             create: parsed.items.map((inputItem) => {
               const orderItem = orderItems.get(inputItem.ordenItemId);
@@ -203,6 +231,10 @@ export const registrarRecepcionAction = withAction(
         },
       });
 
+      // Los incrementos se serializan por lock de fila en PostgreSQL; tras
+      // cada incremento se relee la línea dentro de la transacción y, si el
+      // acumulado excede lo pedido, se revierte todo el lote.
+      const recibidasActualizadas = new Map<string, number>();
       for (const [index, inputItem] of parsed.items.entries()) {
         const orderItem = orderItems.get(inputItem.ordenItemId);
         const producto = orderItem.producto;
@@ -210,6 +242,17 @@ export const registrarRecepcionAction = withAction(
           where: { id: orderItem.id },
           data: { cantidadRecibida: { increment: inputItem.cantidad } },
         });
+        const linea = await tx.ordenCompraItem.findFirst({
+          where: { id: orderItem.id, tenantId },
+          select: { cantidadPedida: true, cantidadRecibida: true },
+        });
+        if (!linea || linea.cantidadRecibida > linea.cantidadPedida) {
+          throw new ActionError(
+            `La recepción excede el pendiente (${orderItem.cantidadPedida - orderItem.cantidadRecibida})`,
+            'RECEPCION_EXCEDENTE',
+          );
+        }
+        recibidasActualizadas.set(orderItem.id, linea.cantidadRecibida);
         await upsertStockUbicacion(tx, {
           tenantId,
           productoId: orderItem.productoId,
@@ -233,16 +276,46 @@ export const registrarRecepcionAction = withAction(
       }
 
       const finalizado = orden.items.every((item: any) => {
-        const recibida = parsed.items.find((line) => line.ordenItemId === item.id)?.cantidad ?? 0;
-        return item.cantidadRecibida + recibida >= item.cantidadPedida;
+        const recibida = recibidasActualizadas.get(item.id) ?? item.cantidadRecibida;
+        return recibida >= item.cantidadPedida;
       });
       const estado = finalizado ? 'RECIBIDA' : 'PARCIAL';
-      const updated = await tx.ordenCompra.update({
-        where: { id: orden.id },
+      // CAS: si la orden fue cancelada concurrentemente, se revierte la
+      // recepción completa en lugar de dejar stock sin orden válida.
+      const claimed = await tx.ordenCompra.updateMany({
+        where: { id: orden.id, tenantId, estado: { in: ['CONFIRMADA', 'PARCIAL'] } },
         data: { estado },
+      });
+      if (claimed.count === 0) {
+        throw new ActionError(
+          'La orden cambió de estado mientras se registraba la recepción',
+          'ESTADO_INVALIDO',
+        );
+      }
+      const updated = await tx.ordenCompra.findFirst({
+        where: { id: orden.id, tenantId },
       });
       return { recepcion, orden: updated, estado };
     });
+    } catch (error: unknown) {
+      // Concurrencia extrema: otro request con la misma clave ganó el UNIQUE.
+      const code = (error as { code?: string })?.code;
+      if (code === 'P2002' && parsed.claveIdempotencia) {
+        const existente = await prisma.recepcion.findFirst({
+          where: { tenantId, claveIdempotencia: parsed.claveIdempotencia },
+          include: { orden: true },
+        });
+        if (existente) {
+          return {
+            recepcion: existente,
+            orden: existente.orden,
+            estado: existente.orden.estado,
+            yaRegistrada: true,
+          };
+        }
+      }
+      throw error;
+    }
 
     revalidatePath('/busy/compras/ordenes');
     revalidatePath('/busy/compras/recepciones');
@@ -269,9 +342,16 @@ export const cancelarOrdenCompraAction = withAction(
     if (['RECIBIDA', 'CANCELADA'].includes(orden.estado)) {
       throw new ActionError('La orden ya no tiene cantidades pendientes', 'ESTADO_INVALIDO');
     }
-    const updated = await prisma.ordenCompra.update({
-      where: { id: orden.id },
+    // Compare-and-set: solo gana si el estado sigue siendo uno cancelable.
+    const claimed = await prisma.ordenCompra.updateMany({
+      where: { id: orden.id, tenantId, estado: { in: ['BORRADOR', 'CONFIRMADA', 'PARCIAL'] } },
       data: { estado: 'CANCELADA' },
+    });
+    if (claimed.count === 0) {
+      throw new ActionError('La orden ya no tiene cantidades pendientes', 'ESTADO_INVALIDO');
+    }
+    const updated = await prisma.ordenCompra.findFirst({
+      where: { id: orden.id, tenantId },
       include: ORDEN_INCLUDE,
     });
     revalidatePath('/busy/compras/ordenes');

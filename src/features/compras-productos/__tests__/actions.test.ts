@@ -202,6 +202,7 @@ describe("ComprasProductos Server Actions", () => {
 				estado: "RECIBIDA",
 				items: [{ productoId: "prod-1", recepciones: [{ cantidad: 10 }] }],
 			} as any);
+			vi.mocked(prisma.compraDocumento.findMany).mockResolvedValue([]);
 			vi.mocked(prisma.producto.findFirst).mockResolvedValue({
 				id: "prod-1",
 				stock: 10,
@@ -229,6 +230,99 @@ describe("ComprasProductos Server Actions", () => {
 			expect(result.success).toBe(true);
 			expect(upsertStockUbicacion).not.toHaveBeenCalled();
 			expect(mockTx.stockMoveLine.upsert).not.toHaveBeenCalled();
+		});
+
+		it("rechaza facturar cantidades ya facturadas de la misma orden", async () => {
+			vi.mocked(getCurrentUser).mockResolvedValue(mockUser);
+			vi.mocked(prisma.vendor.findFirst).mockResolvedValue({ vendorId: "ven-1" });
+			vi.mocked(prisma.ordenCompra.findFirst).mockResolvedValue({
+				id: "oc-1",
+				proveedorId: "ven-1",
+				estado: "RECIBIDA",
+				items: [{ productoId: "prod-1", recepciones: [{ cantidad: 10 }] }],
+			} as any);
+			vi.mocked(prisma.compraDocumento.findMany).mockResolvedValue([
+				{ items: [{ productoId: "prod-1", cantidad: 10 }] },
+			] as any);
+			vi.mocked(prisma.producto.findFirst).mockResolvedValue({
+				id: "prod-1", precioCosto: 500, almacenId: "alm-1", tenantId: "tenant-test",
+			});
+
+			const result = await createCompraProductoAction({
+				proveedorId: "ven-1",
+				ordenCompraId: "oc-1",
+				formaPago: "PAGO_COMPLETO",
+				estado: "PAGADA",
+				items: [{ productoId: "prod-1", precioCosto: 500, cantidad: 1 }],
+			});
+
+			expect(result.success).toBe(false);
+			expect(result.error?.code).toBe("FACTURA_EXCEDE_RECEPCION");
+		});
+
+		it("agrega líneas repetidas del mismo producto contra lo pendiente de facturar", async () => {
+			vi.mocked(getCurrentUser).mockResolvedValue(mockUser);
+			vi.mocked(prisma.vendor.findFirst).mockResolvedValue({ vendorId: "ven-1" });
+			vi.mocked(prisma.ordenCompra.findFirst).mockResolvedValue({
+				id: "oc-1",
+				proveedorId: "ven-1",
+				estado: "PARCIAL",
+				items: [{ productoId: "prod-1", recepciones: [{ cantidad: 10 }] }],
+			} as any);
+			vi.mocked(prisma.compraDocumento.findMany).mockResolvedValue([]);
+			vi.mocked(prisma.producto.findFirst).mockResolvedValue({
+				id: "prod-1", precioCosto: 500, almacenId: "alm-1", tenantId: "tenant-test",
+			});
+
+			const result = await createCompraProductoAction({
+				proveedorId: "ven-1",
+				ordenCompraId: "oc-1",
+				formaPago: "PAGO_COMPLETO",
+				estado: "PAGADA",
+				items: [
+					{ productoId: "prod-1", precioCosto: 500, cantidad: 8 },
+					{ productoId: "prod-1", precioCosto: 500, cantidad: 8 },
+				],
+			});
+
+			expect(result.success).toBe(false);
+			expect(result.error?.code).toBe("FACTURA_EXCEDE_RECEPCION");
+		});
+
+		it("valoriza la factura vinculada solo sobre el stock restante, sin doble entrada", async () => {
+			vi.mocked(getCurrentUser).mockResolvedValue(mockUser);
+			vi.mocked(prisma.vendor.findFirst).mockResolvedValue({ vendorId: "ven-1" });
+			vi.mocked(prisma.ordenCompra.findFirst).mockResolvedValue({
+				id: "oc-1",
+				proveedorId: "ven-1",
+				estado: "RECIBIDA",
+				items: [{ productoId: "prod-1", recepciones: [{ cantidad: 10 }] }],
+			} as any);
+			vi.mocked(prisma.compraDocumento.findMany).mockResolvedValue([]);
+			vi.mocked(prisma.producto.findFirst).mockResolvedValue({
+				id: "prod-1", precioCosto: 50, almacenId: "alm-1", tenantId: "tenant-test",
+			});
+			mockTx.compraDocumento.create.mockResolvedValue({ compraDocumentoId: "cd-oc-2" });
+			mockTx.gastoCompra.create.mockResolvedValue({ gastoCompraId: "gc-2" });
+			mockTx.compraDocumento.update.mockResolvedValue({} as any);
+			// La recepción ya dejó las 10 unidades en stock a costo 50.
+			vi.mocked(getStockTotalProducto).mockResolvedValue(10);
+
+			const result = await createCompraProductoAction({
+				proveedorId: "ven-1",
+				ordenCompraId: "oc-1",
+				formaPago: "PAGO_COMPLETO",
+				estado: "PAGADA",
+				items: [{ productoId: "prod-1", precioCosto: 100, cantidad: 10 }],
+			});
+
+			expect(result.success).toBe(true);
+			// CPP = 50 + (100-50) * 10/10 = 100; no debe contarse como segunda entrada.
+			expect(mockTx.producto.update).toHaveBeenCalledWith({
+				where: { id: "prod-1" },
+				data: { precioCosto: 100 },
+			});
+			expect(calcularPrecioCostoCompra).not.toHaveBeenCalled();
 		});
 	});
 

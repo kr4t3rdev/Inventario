@@ -15,6 +15,11 @@ export default async function ReabastecimientoPage() {
     <div className="space-y-4 p-6">
       <h1 className="text-2xl font-semibold">Reabastecimiento</h1>
       <p className="text-sm text-muted-foreground">Sugerencias para recuperar el stock hasta el máximo configurado.</p>
+      {!result.success && (
+        <p role="alert" className="text-sm text-destructive">
+          {result.error?.message ?? 'No se pudieron cargar las sugerencias de reabastecimiento.'}
+        </p>
+      )}
       <div className="overflow-x-auto rounded-md border">
         <table className="w-full text-sm">
           <thead><tr className="border-b text-left"><th className="p-3">Producto</th><th className="p-3">Disponible</th><th className="p-3">Mínimo</th><th className="p-3">Máximo</th><th className="p-3">Sugerencia</th></tr></thead>

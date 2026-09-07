@@ -102,7 +102,7 @@ export function CompraProductoForm({ onSuccess }: CompraProductoFormProps) {
     }
   })
 
-  const { fields, append, remove } = useFieldArray({
+  const { fields, append, remove, replace } = useFieldArray({
     control: form.control,
     name: 'items',
   })
@@ -218,15 +218,27 @@ export function CompraProductoForm({ onSuccess }: CompraProductoFormProps) {
   }, [productoLookup, form])
 
   function handleOrdenCompraChange(ordenCompraId: string) {
-    form.setValue('ordenCompraId', ordenCompraId === 'directa' ? '' : ordenCompraId)
-    if (ordenCompraId === 'directa') return
+    if (ordenCompraId === 'directa') {
+      // Volver a compra directa descarta las líneas de la OC.
+      form.setValue('ordenCompraId', '')
+      replace([{ productoId: '', precioCosto: '' as unknown as number, cantidad: 1 }])
+      return
+    }
+    form.setValue('ordenCompraId', ordenCompraId)
     const orden = ordenesDisponibles.find((item) => item.id === ordenCompraId)
-    const item = orden?.items?.find((line: any) => line.cantidadRecibida > 0)
-    if (!orden || !item) return
-    form.setValue('proveedorId', orden.proveedorId)
-    form.setValue('items.0.productoId', item.productoId)
-    form.setValue('items.0.cantidad', item.cantidadRecibida)
-    form.setValue('items.0.precioCosto', item.precioUnitario)
+    if (!orden) return
+    form.setValue('proveedorId', orden.proveedorId, { shouldValidate: true })
+    // Carga TODAS las líneas recepcionadas de la OC para facturarlas.
+    const lineasRecibidas = (orden.items ?? [])
+      .filter((line: any) => Number(line.cantidadRecibida) > 0)
+      .map((line: any) => ({
+        productoId: line.productoId,
+        cantidad: line.cantidadRecibida,
+        precioCosto: line.precioUnitario,
+      }))
+    if (lineasRecibidas.length > 0) {
+      replace(lineasRecibidas)
+    }
   }
 
   const addItem = useCallback(() => {
@@ -288,7 +300,7 @@ export function CompraProductoForm({ onSuccess }: CompraProductoFormProps) {
       router.push('/busy/compras-productos')
     } catch (error: any) {
       console.error('Error al registrar compra:', error)
-      const errorMessage = error?.data?.error || 'Hubo un error al registrar la compra.'
+      const errorMessage = error?.message || error?.data?.error || 'Hubo un error al registrar la compra.'
       sileo.error({ title: errorMessage })
     } finally {
       setIsLoading(false)
@@ -338,7 +350,7 @@ export function CompraProductoForm({ onSuccess }: CompraProductoFormProps) {
           </motion.div>
 
           <Form {...form}>
-            <form onSubmit={form.handleSubmit(onSubmit, () => { sileo.error({ title: 'Completá los campos requeridos antes de continuar.' }) })} className='space-y-6'>
+            <form onSubmit={form.handleSubmit(onSubmit, () => { sileo.error({ title: 'Completa los campos requeridos antes de continuar.' }) })} className='space-y-6'>
               {/* Cabecera: Proveedor y Factura */}
               <div className='grid grid-cols-1 md:grid-cols-2 gap-4'>
                 <FormField
@@ -387,7 +399,7 @@ export function CompraProductoForm({ onSuccess }: CompraProductoFormProps) {
                           ))}
                         </SelectContent>
                       </Select>
-                      <FormDescription>Solo muestra órdenes con recepción pendiente de facturar.</FormDescription>
+                      <FormDescription>Órdenes con mercancía recibida. El sistema valida que no se facture dos veces lo ya cobrado.</FormDescription>
                       <FormMessage />
                     </FormItem>
                   )}
@@ -459,7 +471,7 @@ export function CompraProductoForm({ onSuccess }: CompraProductoFormProps) {
                       <FormLabel>Estado</FormLabel>
                       <Select value={field.value} onValueChange={field.onChange} disabled>
                         <FormControl>
-                                       <SelectTrigger aria-label={`Producto ${index + 1}`}>
+                                       <SelectTrigger aria-label='Estado'>
                             <SelectValue placeholder='Estado' />
                           </SelectTrigger>
                         </FormControl>

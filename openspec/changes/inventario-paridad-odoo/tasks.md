@@ -79,6 +79,15 @@
   fabricación, sin receta propone OC. Incluye CRUD de reglas.
 * [x] 3.5 UI: `/busy/compras/ordenes`, `/busy/compras/recepciones` y
   `/busy/compras/reabastecimiento`; backorder visible en líneas y sidebar.
+* [x] 3.5b Endurecimiento post-auditoría: recepción idempotente
+  (`Recepcion.claveIdempotencia` única), verificación post-incremento contra
+  sobre-recepción concurrente, confirmación/cancelación/cierre con
+  compare-and-set, factura vinculada que descuenta cantidades ya facturadas,
+  agrega líneas repetidas por producto y ajusta CPP solo por diferencia de
+  precio (sin doble entrada física), validación de ubicación en reglas
+  min/max, FKs compuestas `(tenantId, id)` en tablas de OC/recepción, UI
+  multilínea con selector de línea pendiente, gating por feature en páginas
+  y corrección del render del formulario de compra (`index` fuera de scope).
 * [ ] 3.6 E2E Playwright (plan Profesional): OC → recepción parcial →
   recepción total → factura → kardex cuadra. Spec escrito en
   `e2e/purchase-order-flow.spec.ts` (gitignored, local-only) + selector

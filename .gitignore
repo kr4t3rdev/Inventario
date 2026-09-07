@@ -27,7 +27,9 @@
 /.kiro
 /.opencode
 /.trae
-/e2e
+/e2e/.auth
+/e2e/artifacts
+!e2e/**/*.spec.ts
 /sistema_inventario_tcp
 /onprem
 /plans

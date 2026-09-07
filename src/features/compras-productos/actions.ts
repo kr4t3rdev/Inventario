@@ -92,6 +92,7 @@ export const createCompraProductoAction = withAction(async (input: CreateCompraP
   if (!proveedor) throw new ActionError('Proveedor no encontrado', 'NOT_FOUND');
 
   let ordenVinculada: any = null;
+  const facturadoPorProducto = new Map<string, number>();
   if (parsed.ordenCompraId) {
     requireFeature(user, 'ordenes-compra', 'facturar órdenes de compra');
     ordenVinculada = await prisma.ordenCompra.findFirst({
@@ -108,6 +109,48 @@ export const createCompraProductoAction = withAction(async (input: CreateCompraP
     if (ordenVinculada.proveedorId !== parsed.proveedorId) {
       throw new ActionError('El proveedor no coincide con la orden de compra', 'VALIDATION_ERROR');
     }
+    // Cantidades ya facturadas de esta OC (facturas no eliminadas).
+    const facturasPrevias = await prisma.compraDocumento.findMany({
+      where: { ordenCompraId: parsed.ordenCompraId, tenantId, deletedAt: null },
+      select: { items: { select: { productoId: true, cantidad: true } } },
+    });
+    for (const factura of facturasPrevias) {
+      for (const linea of factura.items) {
+        facturadoPorProducto.set(
+          linea.productoId,
+          (facturadoPorProducto.get(linea.productoId) ?? 0) + linea.cantidad,
+        );
+      }
+    }
+  }
+
+  // Cantidades solicitadas en esta factura, agregadas por producto para que
+  // líneas repetidas no eludan el límite recibido.
+  const solicitadoPorProducto = new Map<string, number>();
+  for (const item of parsed.items) {
+    solicitadoPorProducto.set(
+      item.productoId,
+      (solicitadoPorProducto.get(item.productoId) ?? 0) + item.cantidad,
+    );
+  }
+  if (ordenVinculada) {
+    for (const [productoId, solicitado] of solicitadoPorProducto) {
+      const ordenItems = ordenVinculada.items.filter((orderItem: any) => orderItem.productoId === productoId);
+      const recibido = ordenItems.reduce(
+        (sum: number, orderItem: any) => sum + orderItem.recepciones.reduce(
+          (lineSum: number, reception: any) => lineSum + reception.cantidad,
+          0,
+        ),
+        0,
+      );
+      const disponibleAFacturar = recibido - (facturadoPorProducto.get(productoId) ?? 0);
+      if (ordenItems.length === 0 || solicitado > disponibleAFacturar) {
+        throw new ActionError(
+          `La factura excede la cantidad pendiente de facturar para el producto ${productoId} (disponible: ${Math.max(disponibleAFacturar, 0)})`,
+          'FACTURA_EXCEDE_RECEPCION',
+        );
+      }
+    }
   }
 
   // Validar productos
@@ -116,32 +159,30 @@ export const createCompraProductoAction = withAction(async (input: CreateCompraP
     const producto = await prisma.producto.findFirst({ where: { id: item.productoId, tenantId } });
     if (!producto) throw new ActionError(`Producto ${item.productoId} no encontrado`, 'NOT_FOUND');
 
-    if (ordenVinculada) {
-      const ordenItems = ordenVinculada.items.filter((orderItem: any) => orderItem.productoId === item.productoId);
-      const recibido = ordenItems.reduce(
-        (sum: number, orderItem: any) => sum + orderItem.recepciones.reduce(
-          (lineSum: number, reception: any) => lineSum + reception.cantidad,
-          0,
-        ),
-        0,
-      );
-      if (ordenItems.length === 0 || item.cantidad > recibido) {
-        throw new ActionError(
-          `La factura excede la cantidad recibida para el producto ${item.productoId}`,
-          'FACTURA_EXCEDE_RECEPCION',
-        );
-      }
-    }
     const stockAntes = await getStockTotalProducto(prisma, {
       productoId: item.productoId,
     });
 
-    const nuevoPrecioCosto = calcularPrecioCostoCompra({
-      stockAntes,
-      precioCostoActual: producto.precioCosto,
-      cantidadCompra: item.cantidad,
-      costoUnitario: item.precioCosto,
-    });
+    // Factura vinculada: la recepción ya incorporó estas unidades al stock.
+    // Solo se ajusta el CPP por la diferencia de precio, prorrateado sobre el
+    // stock restante; si ya se vendió todo, el costo se mantiene.
+    const nuevoPrecioCosto = ordenVinculada
+      ? {
+          precioCostoNuevo:
+            stockAntes > 0
+              ? Math.round(
+                  producto.precioCosto +
+                    ((item.precioCosto - producto.precioCosto) * item.cantidad) / stockAntes,
+                )
+              : producto.precioCosto,
+          metodoCosto: 'AJUSTE_FACTURA',
+        }
+      : calcularPrecioCostoCompra({
+          stockAntes,
+          precioCostoActual: producto.precioCosto,
+          cantidadCompra: item.cantidad,
+          costoUnitario: item.precioCosto,
+        });
 
     items.push({ producto, cantidad: item.cantidad, precioCosto: item.precioCosto, nuevoPrecioCosto });
   }
