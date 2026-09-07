@@ -6,7 +6,7 @@
  */
 import { getAlmacenesAction } from '@/features/almacenes';
 import { getPuntosDeVentaAction } from '@/features/puntos-venta';
-import { getProductosAction } from '@/features/productos';
+import { getProductosAction } from '@/features/productos/actions';
 import { getAjustesAction } from '@/features/inventario/actions-ajustes';
 import { AjustesPageClient } from '@/features/inventario/components/ajustes-page-client';
 
