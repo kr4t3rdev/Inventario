@@ -257,6 +257,32 @@ export function getYearRangeInTimeZone(
 }
 
 /**
+ * @description Construye el rango semiabierto [gte, lt) de fechas civiles en una
+ * zona IANA. El límite inferior es la medianoche civil de `fechaInicio` y el
+ * superior la medianoche del día siguiente a `fechaFin`, ambos expresados en UTC.
+ * @param {string | null | undefined} fechaInicio - Fecha civil inicial (YYYY-MM-DD).
+ * @param {string | null | undefined} fechaFin - Fecha civil final (YYYY-MM-DD, exclusiva).
+ * @param {string} timeZone - Zona horaria IANA del negocio.
+ * @returns {Record<string, Date>} Filtro Prisma `gte`/`lt` determinista en la zona dada.
+ */
+export function getCivilDateRangeInTimeZone(
+  fechaInicio: string | null | undefined,
+  fechaFin: string | null | undefined,
+  timeZone: string,
+): Record<string, Date> {
+  const range: Record<string, Date> = {};
+  if (fechaInicio) {
+    const [y, m, d] = fechaInicio.slice(0, 10).split('-').map(Number);
+    range.gte = zonedMidnightToUtc(y, m, d, timeZone);
+  }
+  if (fechaFin) {
+    const [y, m, d] = fechaFin.slice(0, 10).split('-').map(Number);
+    range.lt = zonedMidnightToUtc(y, m, d + 1, timeZone);
+  }
+  return range;
+}
+
+/**
  * @description Limita un cobro o pago al saldo pendiente de su documento.
  * @param {ReconciledResultMovement} movement - Movimiento que se reconocerá.
  * @param {string} documentId - Documento que acumula los pagos.

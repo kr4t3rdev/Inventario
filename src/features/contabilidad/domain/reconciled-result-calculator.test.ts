@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 
 import {
   calculateReconciledResult,
+  getCivilDateRangeInTimeZone,
   getYearRangeInTimeZone,
   type ReconciledResultMovement,
 } from '@/features/contabilidad/domain/reconciled-result-calculator';
@@ -348,6 +349,21 @@ describe('getYearRangeInTimeZone', () => {
     expect(getYearRangeInTimeZone(2025, 'America/Havana')).toEqual({
       gte: new Date('2025-01-01T05:00:00.000Z'),
       lt: new Date('2026-01-01T05:00:00.000Z'),
+    });
+  });
+});
+
+describe('getCivilDateRangeInTimeZone', () => {
+  it('cierra el día en la zona contable en vez de en medianoche UTC', () => {
+    expect(getCivilDateRangeInTimeZone('2026-01-15', '2026-01-31', 'America/Havana')).toEqual({
+      gte: new Date('2026-01-15T05:00:00.000Z'),
+      lt: new Date('2026-02-01T05:00:00.000Z'),
+    });
+  });
+
+  it('devuelve solo el límite inferior si no hay fechaFin', () => {
+    expect(getCivilDateRangeInTimeZone('2026-01-15', null, 'America/Havana')).toEqual({
+      gte: new Date('2026-01-15T05:00:00.000Z'),
     });
   });
 });

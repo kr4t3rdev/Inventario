@@ -1,6 +1,8 @@
 import { prisma } from '@/lib/prisma';
 import { AccountingAccountsService } from '@/features/contabilidad/services/accounting-accounts-service';
 import { classifyLegacyReconciliation } from '@/features/contabilidad/domain/reconciliation-policy';
+import { getCivilDateRangeInTimeZone } from '@/features/contabilidad/domain/reconciled-result-calculator';
+import { ACCOUNTING_TIME_ZONE } from '@/lib/services/fecha-operacion-registry';
 import {
   buildMovementsReportQuery,
   MAX_EXPORT_SIZE,
@@ -76,20 +78,10 @@ interface ExchangeImpactConversion {
  * @description Construye el filtro temporal semiabierto [gte, lt) a partir de fechas civiles.
  * @param {string | null} fechaInicio - Fecha civil inicial (inclusive), formato YYYY-MM-DD.
  * @param {string | null} fechaFin - Fecha civil final (exclusiva al cierre del día), YYYY-MM-DD.
- * @returns {Record<string, Date>} Filtro Prisma con límites UTC deterministas.
+ * @returns {Record<string, Date>} Filtro Prisma con límites en la zona contable (America/Havana).
  */
 function buildDateFilter(fechaInicio?: string | null, fechaFin?: string | null): Record<string, Date> {
-  const dateFilter: Record<string, Date> = {};
-  const DAY_MS = 86_400_000;
-  if (fechaInicio) {
-    dateFilter.gte = new Date(`${fechaInicio.slice(0, 10)}T00:00:00.000Z`);
-  }
-  if (fechaFin) {
-    dateFilter.lt = new Date(
-      new Date(`${fechaFin.slice(0, 10)}T00:00:00.000Z`).getTime() + DAY_MS,
-    );
-  }
-  return dateFilter;
+  return getCivilDateRangeInTimeZone(fechaInicio, fechaFin, ACCOUNTING_TIME_ZONE);
 }
 
 function getConversionCoverage(

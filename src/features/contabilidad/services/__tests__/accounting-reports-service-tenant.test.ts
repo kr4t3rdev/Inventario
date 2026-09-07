@@ -302,7 +302,7 @@ describe('AccountingReportsService tenant isolation', () => {
 
   it('cubre el día completo de cierre con límite exclusivo en resumen y movimientos', async () => {
     const { AccountingReportsService } = await import('../accounting-reports-service');
-    const expectedLt = new Date('2026-02-01T00:00:00.000Z');
+    const expectedLt = new Date('2026-02-01T05:00:00.000Z');
 
     await AccountingReportsService.getSummaryReport({
       tenantId: 'tenant-a',
@@ -482,8 +482,8 @@ describe('AccountingReportsService tenant isolation', () => {
 
   it('usa rangos semiabiertos [gte, lt) en resumen y movimientos', async () => {
     const { AccountingReportsService } = await import('../accounting-reports-service');
-    const expectedGte = new Date('2026-01-01T00:00:00.000Z');
-    const expectedLt = new Date('2026-02-01T00:00:00.000Z');
+    const expectedGte = new Date('2026-01-01T05:00:00.000Z');
+    const expectedLt = new Date('2026-02-01T05:00:00.000Z');
 
     await AccountingReportsService.getSummaryReport({
       tenantId: 'tenant-a',
@@ -678,13 +678,13 @@ describe('AccountingReportsService tenant isolation', () => {
 
   it('rango de fechas inclusivo: incluye el último día completo', async () => {
     const { AccountingReportsService } = await import('../accounting-reports-service');
-    const expectedGte = new Date('2026-03-01T00:00:00.000Z');
-    const expectedLt = new Date('2026-04-01T00:00:00.000Z');
+    const expectedGte = new Date('2026-02-01T05:00:00.000Z');
+    const expectedLt = new Date('2026-03-01T05:00:00.000Z');
 
     await AccountingReportsService.getSummaryReport({
       tenantId: 'tenant-a',
-      fechaInicio: '2026-03-01',
-      fechaFin: '2026-03-31',
+      fechaInicio: '2026-02-01',
+      fechaFin: '2026-02-28',
     });
 
     expect(prisma.reconciliacionVenta.findMany).toHaveBeenCalledWith(
