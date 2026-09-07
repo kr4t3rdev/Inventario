@@ -27,19 +27,19 @@ vi.mock("@/generated/prisma", () => {
 		APROBADO: "APROBADO",
 		REABIERTO: "REABIERTO",
 	} as const;
-	return {
-		EstadoPeriodo,
-		Prisma: {
-			PrismaClientKnownRequestError: MockPrismaClientKnownRequestError,
-			PrismaClientValidationError: class extends Error {
-				constructor(message: string, clientVersion: string) {
-					super(message);
-					this.name = "PrismaClientValidationError";
-				}
+return {
+			EstadoPeriodo,
+			Prisma: {
+				PrismaClientKnownRequestError: MockPrismaClientKnownRequestError,
+				PrismaClientValidationError: class extends Error {
+					constructor(message: string, clientVersion: string) {
+						super(message);
+						this.name = "PrismaClientValidationError";
+					}
+				},
 			},
-		},
-	};
-});
+		};
+	});
 vi.mock("@/lib/prisma", () => {
 	const tx = {
 		producto: {
@@ -93,6 +93,12 @@ vi.mock("@/lib/prisma", () => {
 });
 vi.mock("@/lib/services/stock-ubicacion-service", () => ({
 	upsertStockUbicacion: vi.fn(),
+}));
+// auth-middleware importa platform-prisma (cliente sin escope) y ejecuta
+// buildPlatformClient al cargar; lo mockeamos para que no instancie el cliente base.
+vi.mock("@/lib/db/platform-prisma", () => ({
+	prismaPlatform: {} as unknown,
+	default: {} as unknown,
 }));
 vi.mock("@/lib/cost-history-utils", () => ({
 	recordCostChange: vi.fn(),
@@ -273,6 +279,33 @@ describe("Productos Server Actions", () => {
 			expect(prisma.listaPrecio.count).toHaveBeenCalledWith({
 				where: { id: { in: ["lista-externa"] }, tenantId: "tenant-test" },
 			});
+		});
+
+		it("no duplica el stock inicial entre almacén y punto de venta", async () => {
+			vi.mocked(getCurrentUser).mockResolvedValue(mockUser);
+			vi.mocked(prisma.producto.create).mockResolvedValue(mockProducto);
+
+			const result = await createProductoAction({
+				...validInput,
+				puntoDeVentaId: "punto-venta-1",
+			});
+
+			expect(result.success).toBe(true);
+			// El stock inicial va completo al almacén; el punto de venta NO recibe stock.
+			expect(upsertStockUbicacion).toHaveBeenCalledTimes(1);
+			expect(upsertStockUbicacion).toHaveBeenCalledWith(
+				expect.anything(),
+				expect.objectContaining({
+					tipoUbicacion: "almacen",
+					ubicacionId: "almacen-1",
+					modo: "set",
+					valor: 100,
+				}),
+			);
+			expect(upsertStockUbicacion).not.toHaveBeenCalledWith(
+				expect.anything(),
+				expect.objectContaining({ tipoUbicacion: "punto_venta" }),
+			);
 		});
 	});
 

@@ -286,16 +286,6 @@ export const createProductoAction = withAction(
 						modo: "set",
 						valor: parsed.stock,
 					});
-
-					if (parsed.puntoDeVentaId) {
-						await upsertStockUbicacion(tx, {
-							productoId: producto.id,
-							tipoUbicacion: "punto_venta",
-							ubicacionId: parsed.puntoDeVentaId,
-							modo: "set",
-							valor: parsed.stock,
-						});
-					}
 				}
 
 				return { producto, generatedCode };
@@ -374,16 +364,6 @@ export const createProductoAction = withAction(
 				modo: "set",
 				valor: parsed.stock,
 			});
-
-			if (parsed.puntoDeVentaId) {
-				await upsertStockUbicacion(prisma, {
-					productoId: producto.id,
-					tipoUbicacion: "punto_venta",
-					ubicacionId: parsed.puntoDeVentaId,
-					modo: "set",
-					valor: parsed.stock,
-				});
-			}
 		}
 
 		if (parsed.photoAssets) {
