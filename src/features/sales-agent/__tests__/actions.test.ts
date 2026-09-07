@@ -20,6 +20,11 @@ vi.mock('@/lib/prisma', () => ({
   },
 }));
 
+vi.mock('@/lib/db/platform-prisma', async () => {
+  const { prisma } = await import('@/lib/prisma');
+  return { prismaPlatform: prisma, default: prisma };
+});
+
 import { getCurrentUser } from '@/lib/server-actions/get-current-user';
 import { confirmSalesAgentTenantPayment } from '@/features/sales-agent/services/payment-service';
 import { confirmSalesAgentPayout } from '@/features/sales-agent/services/payout-service';

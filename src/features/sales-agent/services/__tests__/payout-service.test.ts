@@ -15,6 +15,11 @@ vi.mock('@/lib/prisma', () => ({
   prisma: { $transaction: vi.fn(), salesAgentPayout: { findUnique: vi.fn() } },
 }));
 
+vi.mock('@/lib/db/platform-prisma', async () => {
+  const { prisma } = await import('@/lib/prisma');
+  return { prismaPlatform: prisma, default: prisma };
+});
+
 describe('confirmSalesAgentPayout', () => {
   const findAgent = vi.fn();
   const findPayout = vi.fn();

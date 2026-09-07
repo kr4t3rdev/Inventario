@@ -12,7 +12,7 @@
 
 import { NextResponse } from 'next/server';
 
-import { prisma } from '@/lib/prisma';
+import { prismaPlatform as prisma } from '@/lib/db/platform-prisma';
 
 /**
  * @description Validates the cron request via CRON_SECRET env var.

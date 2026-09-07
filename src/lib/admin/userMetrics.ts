@@ -46,10 +46,28 @@ interface UserMetricsResponse {
 }
 
 /**
+ * @description IDs de tenant aceptados para interpolación SQL segura.
+ * Los tenantId son cuid(): alfanuméricos con guiones; cualquier otro
+ * formato se rechaza antes de tocar SQL (fail-closed anti-inyección).
+ */
+const SAFE_TENANT_ID = /^[A-Za-z0-9_-]{1,64}$/;
+
+/**
+ * @description Valida un tenantId opcional para uso en SQL interpolado.
+ * @param {string} [tenantId] - Tenant a filtrar.
+ * @throws {Error} Si el formato no es un ID de tenant válido.
+ */
+function assertSafeTenantId(tenantId?: string): void {
+  if (tenantId !== undefined && !SAFE_TENANT_ID.test(tenantId)) {
+    throw new Error('tenantId con formato inválido para métricas');
+  }
+}
+
+/**
  * @description Formatea una fecha como string ISO para usarla en SQL.
  */
 function fmt(d: Date): string {
-	return d.toISOString().replace("T", " ").replace("Z", "");
+  return d.toISOString().replace("T", " ").replace("Z", "");
 }
 
 /**
@@ -57,7 +75,9 @@ function fmt(d: Date): string {
  *
  * NOTA: Usa $queryRawUnsafe porque Prisma.sql + Date objects + CTEs con
  * generate_series genera un error de sintaxis en la parametrización ($N).
- * Los valores son generados internamente (fechas), no hay riesgo de inyección.
+ * Las fechas son generadas internamente y el tenantId se valida con
+ * assertSafeTenantId (formato cuid) antes de interpolar: cualquier otro
+ * formato falla cerrado sin ejecutar SQL.
  *
  * @param {PrismaClient} prismaClient - Cliente de Prisma.
  * @param {number} months - Cantidad de meses a incluir.
@@ -69,6 +89,7 @@ export async function getUserMetrics(
 	months: number,
 	tenantId?: string,
 ): Promise<UserMetricsResponse> {
+	assertSafeTenantId(tenantId);
 	const now = new Date();
 	const startDate = new Date(now);
 	startDate.setMonth(startDate.getMonth() - months + 1);

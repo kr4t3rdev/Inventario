@@ -1,5 +1,5 @@
 import { Prisma } from '@/generated/prisma';
-import { prisma } from '@/lib/prisma';
+import { prismaPlatform as prisma } from '@/lib/db/platform-prisma';
 import { ActionError } from '@/lib/server-actions';
 import { AuditLogService } from '@/lib/services/audit-log-service';
 

@@ -22,6 +22,11 @@ vi.mock('@/lib/prisma', () => ({
   },
 }));
 
+vi.mock('@/lib/db/platform-prisma', async () => {
+  const { prisma } = await import('@/lib/prisma');
+  return { prismaPlatform: prisma, default: prisma };
+});
+
 const input: ConfirmSalesAgentTenantPaymentInput = {
   tenantId: 'tenant-referred',
   tenantLicenseId: 'license-current',

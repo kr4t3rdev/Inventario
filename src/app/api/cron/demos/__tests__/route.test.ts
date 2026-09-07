@@ -13,6 +13,11 @@ vi.mock('@/lib/prisma', () => ({
   },
 }));
 
+vi.mock('@/lib/db/platform-prisma', async () => {
+  const { prisma } = await import('@/lib/prisma');
+  return { prismaPlatform: prisma, default: prisma };
+});
+
 describe('cron demos route', () => {
   const previousCronSecret = process.env.CRON_SECRET;
 

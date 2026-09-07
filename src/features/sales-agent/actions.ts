@@ -3,7 +3,7 @@
 import { z } from 'zod';
 import { Decimal } from '@/generated/prisma/runtime/library';
 
-import { prisma } from '@/lib/prisma';
+import { prismaPlatform as prisma } from '@/lib/db/platform-prisma';
 import { ActionError, withAction } from '@/lib/server-actions';
 
 import { confirmSalesAgentTenantPayment } from './services/payment-service';

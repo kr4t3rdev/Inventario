@@ -8,6 +8,7 @@
  */
 import { gzipSync, gunzipSync } from 'zlib'
 import { PrismaClient } from '@/generated/prisma'
+import { prismaPlatform } from '@/lib/db/platform-prisma'
 import type { BackupStorage } from './storage/types'
 import { SchemaReader } from './schema-reader'
 import { DataExporter } from './data-exporter'
@@ -59,7 +60,7 @@ export function validateBackupFile(buffer: Buffer): {
 	}
 }
 
-const DEFAULT_PRISMA = new PrismaClient()
+const DEFAULT_PRISMA = prismaPlatform
 const TENANT_GLOBAL_TABLE_FILTERS: Record<string, TenantTableFilter['mode']> = {
   tenants: 'tenant-row',
   User: 'user-membership',

@@ -12,7 +12,7 @@ import { revalidatePath } from "next/cache";
 import { Prisma } from "@/generated/prisma";
 import { ActionError } from "@/lib/server-actions";
 import type { AuthenticatedUser } from "@/lib/auth-middleware";
-import { prisma } from "@/lib/prisma";
+import { prismaPlatform as prisma } from "@/lib/db/platform-prisma";
 import {
 	lockUnlockSchema,
 	getLicenciasQuerySchema,

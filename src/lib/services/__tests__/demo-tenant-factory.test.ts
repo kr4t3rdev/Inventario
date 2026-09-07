@@ -28,6 +28,11 @@ vi.mock('@/lib/prisma', () => {
   };
 });
 
+vi.mock('@/lib/db/platform-prisma', async () => {
+  const mocked = await import('@/lib/prisma');
+  return { prismaPlatform: mocked.prisma, default: mocked.prisma, __tx: mocked.__tx };
+});
+
 vi.mock('bcryptjs', () => ({
   default: {
     hash: vi.fn(),

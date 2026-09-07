@@ -7,7 +7,7 @@
  *
  * @usage pnpm exec tsx scripts/accounting/fx-contamination-report.ts [--tenant <id>]
  */
-import { prisma } from '@/lib/prisma';
+import { prismaPlatform as prisma } from '@/lib/db/platform-prisma';
 import { detectContaminatedReconciliaciones, type ReconciliacionSnapshot } from './fx-contamination-detector';
 
 async function extractSnapshots(tenantId?: string): Promise<ReconciliacionSnapshot[]> {

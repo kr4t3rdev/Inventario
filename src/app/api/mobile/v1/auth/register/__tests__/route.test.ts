@@ -10,6 +10,11 @@ vi.mock('@/lib/prisma', () => ({
   },
 }));
 
+vi.mock('@/lib/db/platform-prisma', async () => {
+  const { prisma } = await import('@/lib/prisma');
+  return { prismaPlatform: prisma, default: prisma };
+});
+
 vi.mock('@/lib/email', () => ({
   sendEmailVerificationLink: vi.fn(),
 }));

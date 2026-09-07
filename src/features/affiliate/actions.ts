@@ -3,7 +3,7 @@
 import { revalidatePath } from 'next/cache';
 
 import type { AuthenticatedUser } from '@/lib/auth-middleware';
-import { prisma } from '@/lib/prisma';
+import { prismaPlatform as prisma } from '@/lib/db/platform-prisma';
 import { AuditLogService } from '@/lib/services/audit-log-service';
 import { getReferralPrice, isTenantReferred } from '@/lib/services/plan-pricing';
 import { ActionError, withAction } from '@/lib/server-actions';

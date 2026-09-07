@@ -1,6 +1,6 @@
 import type { Prisma } from '@/generated/prisma';
 import { sendEmail } from '@/lib/email';
-import { prisma } from '@/lib/prisma';
+import { prismaPlatform as prisma } from '@/lib/db/platform-prisma';
 import { getConfiguredPublicAppUrl } from '../public-url';
 
 const DASHBOARD_LINK = '/sales-agent/referidos';

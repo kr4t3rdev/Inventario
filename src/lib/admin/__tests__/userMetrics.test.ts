@@ -44,4 +44,13 @@ describe('getUserMetrics', () => {
     expect(result.summary.totalUsers).toBe(12);
     expect(result.summary.totalLogins).toBe(13);
   });
+
+  it('rechaza tenantId con formato inválido antes de tocar SQL', async () => {
+    const prisma = { $queryRawUnsafe: vi.fn() } as any;
+
+    await expect(getUserMetrics(prisma, 6, "x' OR '1'='1")).rejects.toThrow(
+      /formato inválido/,
+    );
+    expect(prisma.$queryRawUnsafe).not.toHaveBeenCalled();
+  });
 });

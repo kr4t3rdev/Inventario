@@ -1,6 +1,6 @@
 import { z } from 'zod';
 import bcrypt from 'bcryptjs';
-import { prisma } from '@/lib/prisma';
+import { prismaPlatform as prisma } from '@/lib/db/platform-prisma';
 import { sendEmailVerificationLink } from '@/lib/email';
 import { normalizeUserRole } from '@/lib/auth/roles';
 import { signOnboardingToken } from '@/lib/auth/onboarding';

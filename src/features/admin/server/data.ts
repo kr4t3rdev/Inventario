@@ -10,7 +10,7 @@
  */
 
 import { getCurrentUser } from "@/lib/server-actions/get-current-user";
-import { prisma } from "@/lib/prisma";
+import { prismaPlatform as prisma } from "@/lib/db/platform-prisma";
 
 export interface AdminUsersPageData {
 	users: Array<{

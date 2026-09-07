@@ -5,7 +5,7 @@ import {
 } from '@/features/contabilidad/services/accounting-policy-preflight-service';
 import { provisionTenantAccountingPolicy } from
   '@/features/contabilidad/services/tenant-accounting-policy-service';
-import { prisma } from '@/lib/prisma';
+import { prismaPlatform as prisma } from '@/lib/db/platform-prisma';
 import { ActionError } from '@/lib/server-actions';
 import { verifyAccountingPolicyAuditRetention } from '@/lib/services/audit-log-service';
 import {

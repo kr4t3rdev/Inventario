@@ -28,8 +28,7 @@ import {
 import { confirmSalesAgentTenantPayment } from "@/features/sales-agent/services/payment-service";
 import { confirmReferredTenantPaymentAction } from "@/features/affiliate/actions";
 import { createDemoTenantForPlan } from "@/lib/services/demo-tenant-factory";
-import { requireFeature } from "@/lib/services/tenant-scope";
-import { prisma } from "@/lib/prisma";
+import { prismaPlatform as prisma } from "@/lib/db/platform-prisma";
 import bcrypt from "bcryptjs";
 import { sendEmailVerificationLink } from "@/lib/email";
 import { getUserMetrics } from "@/lib/admin/userMetrics";
@@ -1731,12 +1730,14 @@ export const getUserMetricsAction = withAction(
 /**
  * @description Asigna un usuario a un tenant adicional.
  *
- * Gateada por la feature `multitenantmembership` del plan del admin.
- * Los admins de plataforma (role=admin) siempre pueden.
+ * Solo admins de plataforma (role=admin): otorga acceso a un tenant
+ * arbitrario, por lo que ningún usuario de tenant puede auto-otorgarse
+ * membresías aunque su plan incluya la feature `multitenantmembership`.
  */
 export const addTenantMembershipAction = withAction(
 	async (input: AddTenantMembershipInput, user: AuthenticatedUser) => {
-		requireFeature(user, "multitenantmembership", "Membresía multi-tenant");
+		if (user.role !== "admin")
+			throw new ActionError("Acceso restringido", "FORBIDDEN");
 
 		const parsed = addTenantMembershipSchema.parse(input);
 		const { userId, tenantId, tenantRole } = parsed;

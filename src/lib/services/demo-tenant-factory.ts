@@ -19,7 +19,7 @@
 import bcrypt from 'bcryptjs';
 import { randomUUID } from 'crypto';
 import { addDays } from '@/lib/date-utils';
-import { prisma } from '@/lib/prisma';
+import { prismaPlatform as prisma } from '@/lib/db/platform-prisma';
 import { ActionError } from '@/lib/server-actions';
 import { recordAccountingPolicyProvisioningCommitted } from '@/lib/metrics';
 import { provisionTenantAccountingPolicyInTransaction } from '@/features/contabilidad/services/tenant-accounting-policy-service';

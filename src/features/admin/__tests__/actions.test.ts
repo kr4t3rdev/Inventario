@@ -78,6 +78,11 @@ vi.mock('@/lib/prisma', () => {
   };
 });
 
+vi.mock('@/lib/db/platform-prisma', async () => {
+  const { prisma } = await import('@/lib/prisma');
+  return { prismaPlatform: prisma, default: prisma };
+});
+
 import { getCurrentUser } from '@/lib/server-actions/get-current-user';
 import {
   createSalesAgentEvent,
@@ -99,7 +104,7 @@ import {
   getLicenciasAction, changePlanAction, updateLicenciaAction, updateLicenseAccountingOverridesAction, deleteLicenciaAction, convertDemoToPaidPlanAction,
   getAdminSubscriptionRevenueAction,
   getPendingMembershipsAction, approveMembershipAction, rejectMembershipAction,
-  updateTenantUserAction,
+  updateTenantUserAction, addTenantMembershipAction,
 } from '@/features/admin/actions';
 import { createTenantForUser } from '@/lib/services/tenant-factory';
 import type { AuthenticatedUser } from '@/lib/auth-middleware';
@@ -1769,6 +1774,44 @@ describe('Admin Server Actions', () => {
         where: { userId: 'user-worker' },
         data: { isActive: false },
       });
+    });
+  });
+
+  describe('addTenantMembershipAction', () => {
+    it('manager con feature del plan no puede auto-otorgarse membresía en otro tenant', async () => {
+      vi.mocked(getCurrentUser).mockResolvedValue({
+        ...managerUser,
+        planFeatures: { multitenantmembership: true },
+      });
+
+      const r = await addTenantMembershipAction({
+        userId: 'user-manager',
+        tenantId: 'tenant-B',
+        tenantRole: 'manager',
+      });
+
+      expect(r.success).toBe(false);
+      if (!r.success) expect(r.error.code).toBe('FORBIDDEN');
+      expect(prisma.tenantMembership.create).not.toHaveBeenCalled();
+    });
+
+    it('admin de plataforma sí puede otorgar membresía cross-tenant', async () => {
+      vi.mocked(getCurrentUser).mockResolvedValue(adminUser);
+      vi.mocked(prisma.user.findUnique).mockResolvedValue({
+        userId: 'user-new', name: 'Nuevo', isActive: true,
+      } as any);
+      vi.mocked(prisma.tenant.findUnique).mockResolvedValue({
+        tenantId: 'tenant-B', nombre: 'Empresa B',
+      } as any);
+      vi.mocked(prisma.tenantMembership.findUnique).mockResolvedValue(null);
+
+      const r = await addTenantMembershipAction({
+        userId: 'user-new',
+        tenantId: 'tenant-B',
+        tenantRole: 'dependiente',
+      });
+
+      expect(r.success).toBe(true);
     });
   });
 });

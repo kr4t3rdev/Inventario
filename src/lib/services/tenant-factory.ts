@@ -7,7 +7,7 @@
 
 import { Prisma } from '@/generated/prisma'
 import { addDays } from '@/lib/date-utils'
-import { prisma } from '@/lib/prisma'
+import { prismaPlatform as prisma } from '@/lib/db/platform-prisma'
 import { ActionError } from '@/lib/server-actions'
 import { resolveLicenseDurationDays } from '@/lib/services/license-duration'
 import { resolveLicensePricing } from '@/lib/services/plan-pricing'

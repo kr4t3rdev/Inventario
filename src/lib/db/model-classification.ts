@@ -1,6 +1,6 @@
 /**
  * @description Clasificación formal de los modelos Prisma por scope tenant (AS-01 T1).
- * Cada uno de los 129 modelos del schema queda en una categoría: scoped (con
+ * Cada modelo del schema queda en una categoría: scoped (con
  * columna tenantId, enforcement directo), global (plataforma, nunca lleva
  * tenant), child (hereda el tenant del padre vía relación) o pending-scope
  * (lógicamente por tenant pero aún sin columna; backlog de AS-05).
@@ -48,17 +48,18 @@ const CHILD = (
 const PENDING = (reason: string): ModelClassificationEntry => ({ scope: 'pending-scope', reason });
 
 /**
- * @description Clasificación total de los 129 modelos del schema. El test de
+ * @description Clasificación total de los modelos del schema. El test de
  * contrato (model-classification.test.ts) falla si un modelo del DMMF falta
  * aquí o si sobra una entrada que ya no existe en el schema.
  */
 export const MODEL_CLASSIFICATION: Record<string, ModelClassificationEntry> = {
-  // ---- scoped (84): tienen columna tenantId ----
+  // ---- scoped: tienen columna tenantId ----
   AccountingPolicyRolloutEntry: SCOPED('Entrada de rollout por tenant (run global, fila por tenant).'),
   AccountingPolicyTenantApproval: SCOPED(),
   AffiliateCreditBalance: SCOPED('Saldo de crédito de afiliado por tenant.'),
   AffiliatePerkGrant: SCOPED('Beneficio otorgado al tenant referido.'),
   AffiliateProfile: SCOPED('Perfil de afiliado del tenant (1:1 por tenant).'),
+  AjusteInventario: SCOPED('Ajuste físico/contable de inventario por tenant.'),
   AjusteBancario: SCOPED(),
   Almacen: SCOPED(),
   Anticipo: SCOPED(),
@@ -75,6 +76,8 @@ export const MODEL_CLASSIFICATION: Record<string, ModelClassificationEntry> = {
   CompraDocumentoItem: SCOPED('Ítem con tenantId propio denormalizado.'),
   CompraProducto: SCOPED(),
   CompraServicio: SCOPED(),
+  ConteoInventario: SCOPED('Cabecera de conteo físico por tenant.'),
+  ConteoLinea: SCOPED('Línea de conteo con tenantId propio denormalizado.'),
   Contrato: SCOPED(),
   CuentaBancaria: SCOPED(),
   CuentaPorCobrar: SCOPED(),
@@ -94,6 +97,8 @@ export const MODEL_CLASSIFICATION: Record<string, ModelClassificationEntry> = {
   Merma: SCOPED(),
   MiEmpresa: SCOPED('Ficha de empresa del tenant (1:1 por tenant).'),
   Oferta: SCOPED(),
+  OrdenCompra: SCOPED('Orden de compra por tenant.'),
+  OrdenCompraItem: SCOPED('Ítem de orden con tenantId propio denormalizado.'),
   OrdenProduccion: SCOPED(),
   OrdenProduccionHistorial: SCOPED(),
   OrdenReparacion: SCOPED(),
@@ -112,12 +117,15 @@ export const MODEL_CLASSIFICATION: Record<string, ModelClassificationEntry> = {
   PurchaseAllocation: SCOPED('Asignación compra→venta dentro del tenant.'),
   Receta: SCOPED(),
   RecetaIngrediente: SCOPED('Ingrediente con tenantId propio denormalizado.'),
+  Recepcion: SCOPED('Recepción de orden de compra por tenant.'),
+  RecepcionItem: SCOPED('Ítem de recepción con tenantId propio denormalizado.'),
   ReconciliacionGasto: SCOPED(),
   ReconciliacionServicio: SCOPED(),
   ReconciliacionVenta: SCOPED(),
   ReferralPerkRequest: SCOPED('Solicitud de beneficio del tenant referido.'),
   Review: SCOPED('Reseña del tenant.'),
   ReviewPrompt: SCOPED('Solicitud de reseña del tenant.'),
+  ReglaReabastecimiento: SCOPED('Regla min/max de inventario por tenant y ubicación.'),
   SerieFacturacion: SCOPED('Serie de facturación por tenant (numeración aislada).'),
   Servicios: SCOPED(),
   SnapshotPeriodo: SCOPED(),

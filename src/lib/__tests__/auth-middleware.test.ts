@@ -23,6 +23,11 @@ vi.mock('../prisma', () => ({
   },
 }))
 
+vi.mock('@/lib/db/platform-prisma', async () => {
+  const { prisma } = await import('../prisma')
+  return { prismaPlatform: prisma, default: prisma }
+})
+
 vi.mock('jsonwebtoken')
 
 describe('authenticateUser', () => {

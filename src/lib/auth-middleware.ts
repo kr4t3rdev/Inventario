@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { prisma } from './prisma'
+import { prismaPlatform as prisma } from './db/platform-prisma'
 import jwt from 'jsonwebtoken'
 import { getJwtSecret } from './secrets'
 import { checkApiPermission, checkTenantApiPermission, type UserRole } from './permissions'

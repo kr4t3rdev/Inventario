@@ -1,4 +1,4 @@
-import { prismaPlatform } from './db/platform-prisma'
+import { basePrisma } from './db/base-prisma'
 import { buildScopedClient } from './db/scoped-prisma'
 
 /**
@@ -8,7 +8,7 @@ import { buildScopedClient } from './db/scoped-prisma'
  * `@/lib/prisma` siguen funcionando. El cliente sin escopar vive en
  * `./db/platform-prisma` (uso restringido a la allowlist).
  */
-const prisma = buildScopedClient(prismaPlatform)
+const prisma = buildScopedClient(basePrisma)
 
 export { prisma }
 export default prisma

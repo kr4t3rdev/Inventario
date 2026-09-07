@@ -15,7 +15,7 @@
  * @module app/api/cron/backups
  */
 import { NextResponse } from 'next/server'
-import { prisma } from '@/lib/prisma'
+import { prismaPlatform as prisma } from '@/lib/db/platform-prisma'
 import { BackupEngine } from '@/features/backups/backup-engine'
 import { createStorage } from '@/features/backups/storage'
 import { pruneBackups } from '@/features/backups/prune'
