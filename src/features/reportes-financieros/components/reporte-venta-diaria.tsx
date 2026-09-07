@@ -17,7 +17,7 @@ import { exportToCsv } from "@/lib/export-utils"
 import { flattenVentas } from "@/lib/ventas-utils"
 import { cn } from "@/lib/utils"
 import { getProductDisplayIdentifier } from "@/lib/product-display-utils"
-import { sumarServiciosPorMoneda } from "@/features/reportes-financieros/lib/venta-servicios-moneda"
+import { ingresosServiciosFuncional, sumarServiciosPorMoneda } from "@/features/reportes-financieros/lib/venta-servicios-moneda"
 import jsPDF from 'jspdf'
 import 'jspdf-autotable'
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, AreaChart, Area } from "recharts"
@@ -170,7 +170,7 @@ export function ReporteVentaDiaria() {
       0,
     )
 
-    const ingresosActualServicios = serviciosPeriodoActual.reduce((sum, servicio) => sum + servicio.total, 0)
+    const ingresosActualServicios = ingresosServiciosFuncional(serviciosPeriodoActual)
     const ingresosActual = ingresosActualVentas + ingresosActualServicios
 
     const ingresosAnteriorVentas = ventasPeriodoAnterior.reduce(
@@ -178,7 +178,7 @@ export function ReporteVentaDiaria() {
       0,
     )
 
-    const ingresosAnteriorServicios = serviciosPeriodoAnterior.reduce((sum, servicio) => sum + servicio.total, 0)
+    const ingresosAnteriorServicios = ingresosServiciosFuncional(serviciosPeriodoAnterior)
     const ingresosAnterior = ingresosAnteriorVentas + ingresosAnteriorServicios
 
     const productosActual = ventasPeriodoActual.reduce((sum, venta) => sum + venta.cantidad, 0)
@@ -223,7 +223,7 @@ export function ReporteVentaDiaria() {
         0,
       )
 
-      const ingresosServicios = serviciosDia.reduce((sum, servicio) => sum + servicio.total, 0)
+      const ingresosServicios = ingresosServiciosFuncional(serviciosDia)
       const ingresos = ingresosVentas + ingresosServicios
 
       const productosVendidos = ventasDia.reduce((sum, venta) => sum + venta.cantidad, 0)
@@ -320,6 +320,7 @@ export function ReporteVentaDiaria() {
         precioUnitario: venta.precioUnitario || 0,
         descuento: venta.descuento || 0,
         total: (venta.totalLinea || 0) - (venta.descuento || 0),
+        moneda: 'CUP',
         puntoVenta: venta.puntoDeVenta?.nombre || 'N/A',
         cliente: venta.cliente?.nombre || 'Cliente general'
       })),
@@ -331,6 +332,7 @@ export function ReporteVentaDiaria() {
         precioUnitario: servicio.servicio?.precio || 0,
         descuento: 0,
         total: servicio.total,
+        moneda: servicio.moneda || 'CUP',
         puntoVenta: 'N/A',
         cliente: servicio.cliente?.clienteId || 'Cliente general'
       }))
@@ -356,10 +358,18 @@ export function ReporteVentaDiaria() {
     doc.text(`Total de transacciones: ${detallesDia.length}`, 20, 40)
     
     const totalProductos = detallesDia.reduce((sum, item) => sum + item.cantidad, 0)
-    const totalVentas = detallesDia.reduce((sum, item) => sum + item.total, 0)
-    
+    const totalesPorMoneda = detallesDia.reduce<Record<string, number>>((acc, item) => {
+      acc[item.moneda] = (acc[item.moneda] ?? 0) + item.total
+      return acc
+    }, {})
+
     doc.text(`Total productos vendidos: ${totalProductos}`, 20, 50)
-    doc.text(`Total ventas: ${totalVentas.toLocaleString()}`, 20, 60)
+    // Mostrar un total por moneda para no sumar importes en divisas distintas
+    let yTotales = 60
+    for (const [moneda, total] of Object.entries(totalesPorMoneda)) {
+      doc.text(`Total en ${moneda}: ${total.toLocaleString()}`, 20, yTotales)
+      yTotales += 10
+    }
     
     // Headers de la tabla
     const headers = ['Hora', 'Tipo', 'Descripción', 'Cant.', 'P. Unit.', 'Total']

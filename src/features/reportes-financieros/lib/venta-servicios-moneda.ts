@@ -28,3 +28,20 @@ export function sumarServiciosPorMoneda(
 
   return porMoneda;
 }
+
+/**
+ * @description Suma de los ingresos de servicios en la moneda funcional del
+ * negocio (CUP por defecto), sin mezclar las ventas en USD/MLC. Usarla en
+ * totales agregados (KPIs, comparaciones, tendencias) con productos cuyo
+ * precio ya va en moneda funcional.
+ * @param {ServicioConMoneda[]} servicios - Ventas de servicio del período.
+ * @param {string} monedaFuncional - Moneda funcional del negocio (por defecto CUP).
+ * @returns {number} Total de ingresos de servicios en moneda funcional.
+ */
+export function ingresosServiciosFuncional(
+  servicios: ServicioConMoneda[],
+  monedaFuncional = 'CUP',
+): number {
+  const porMoneda = sumarServiciosPorMoneda(servicios, monedaFuncional);
+  return porMoneda[monedaFuncional.trim().toUpperCase()] ?? 0;
+}
