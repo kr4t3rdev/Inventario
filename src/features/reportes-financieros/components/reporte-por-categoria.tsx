@@ -9,7 +9,7 @@ import { FileIcon as FilePdf, FileText } from "lucide-react"
 import { exportToPdf, exportToCsv } from "@/lib/export-utils"
 import { PieChart, Pie, Cell, ResponsiveContainer, Legend, Tooltip } from "recharts"
 import { StaggerContainer, StaggerItem, AnimatedCard } from "@/components/ui/animations"
-import { cn } from "@/lib/utils"
+import { cn, formatCurrency } from "@/lib/utils"
 
 const surfaceCardClass = cn(
   "relative overflow-hidden border-slate-200/60 bg-white/70 shadow-sm backdrop-blur-xl",
@@ -138,7 +138,7 @@ export function ReportePorCategoria() {
                       <Cell key={entry.name || `cell-${index}`} fill={COLORS[index % COLORS.length]} />
                     ))}
                   </Pie>
-                  <Tooltip formatter={(value) => `$${Number(value).toLocaleString('es-DO', { minimumFractionDigits: 2 })}`} />
+                  <Tooltip formatter={(value: number) => formatCurrency(value)} />
                   <Legend content={renderCustomLegend} />
                 </PieChart>
               </ResponsiveContainer>
@@ -170,7 +170,7 @@ export function ReportePorCategoria() {
                         <TableCell className="font-medium">{categoria.nombre}</TableCell>
                         <TableCell className="text-right">{categoria.cantidadProductos}</TableCell>
                         <TableCell className="text-right">{categoria.stockTotal}</TableCell>
-                        <TableCell className="text-right">${categoria.valorTotal.toFixed(2)}</TableCell>
+                        <TableCell className="text-right">{formatCurrency(categoria.valorTotal)}</TableCell>
                       </TableRow>
                     ))}
                   </TableBody>
@@ -204,8 +204,8 @@ export function ReportePorCategoria() {
                       <TableCell className="font-medium">{categoria.nombre}</TableCell>
                       <TableCell className="text-right">{categoria.cantidadProductos}</TableCell>
                       <TableCell className="text-right">{categoria.stockTotal}</TableCell>
-                      <TableCell className="text-right">${categoria.valorTotal.toFixed(2)}</TableCell>
-                      <TableCell className="text-right">${categoria.valorVenta.toFixed(2)}</TableCell>
+                      <TableCell className="text-right">{formatCurrency(categoria.valorTotal)}</TableCell>
+                      <TableCell className="text-right">{formatCurrency(categoria.valorVenta)}</TableCell>
                       <TableCell className="text-right">
                         {categoria.valorTotal > 0
                           ? `${(((categoria.valorVenta - categoria.valorTotal) / categoria.valorTotal) * 100).toFixed(2)}%`

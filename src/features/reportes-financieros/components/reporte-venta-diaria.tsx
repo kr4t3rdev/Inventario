@@ -15,7 +15,7 @@ import { CalendarIcon, TrendingUpIcon, TrendingDownIcon, FileIcon as FilePdf, Fi
 import { format, subDays, startOfDay, endOfDay } from "date-fns"
 import { exportToCsv } from "@/lib/export-utils"
 import { flattenVentas } from "@/lib/ventas-utils"
-import { cn } from "@/lib/utils"
+import { cn, formatCurrency } from "@/lib/utils"
 import { getProductDisplayIdentifier } from "@/lib/product-display-utils"
 import { ingresosServiciosFuncional, sumarServiciosPorMoneda } from "@/features/reportes-financieros/lib/venta-servicios-moneda"
 import jsPDF from 'jspdf'
@@ -367,7 +367,7 @@ export function ReporteVentaDiaria() {
     // Mostrar un total por moneda para no sumar importes en divisas distintas
     let yTotales = 60
     for (const [moneda, total] of Object.entries(totalesPorMoneda)) {
-      doc.text(`Total en ${moneda}: ${total.toLocaleString()}`, 20, yTotales)
+      doc.text(`Total: ${formatCurrency(total, moneda)}`, 20, yTotales)
       yTotales += 10
     }
     
@@ -404,8 +404,8 @@ export function ReporteVentaDiaria() {
         item.tipo,
         item.descripcion.substring(0, 30) + (item.descripcion.length > 30 ? '...' : ''),
         item.cantidad.toString(),
-        `${item.precioUnitario.toFixed(2)}`,
-        `${item.total.toFixed(2)}`
+        formatCurrency(item.precioUnitario, item.moneda),
+        formatCurrency(item.total, item.moneda)
       ]
       
       row.forEach((cell, i) => {
@@ -416,10 +416,13 @@ export function ReporteVentaDiaria() {
       y += 10
     })
     
-    // Total final
+    // Totales finales por moneda
     y += 10
     doc.setFont('helvetica', 'bold')
-    doc.text(`TOTAL: ${totalVentas.toLocaleString()}`, 20, y)
+    for (const [moneda, total] of Object.entries(totalesPorMoneda)) {
+      doc.text(`TOTAL ${moneda}: ${formatCurrency(total, moneda)}`, 20, y)
+      y += 10
+    }
     
     doc.save(`Desglose_Ventas_${fechaDetalle.replace(/\//g, '-')}.pdf`)
   }
@@ -531,14 +534,14 @@ export function ReporteVentaDiaria() {
             <DollarSign className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">${estadisticasDelDia.ingresosNetos.toLocaleString()}</div>
+            <div className="text-2xl font-bold">{formatCurrency(estadisticasDelDia.ingresosNetos)}</div>
             <p className="text-xs text-muted-foreground">
-              Bruto: ${estadisticasDelDia.ingresosBrutos.toLocaleString()}
+              Bruto: {formatCurrency(estadisticasDelDia.ingresosBrutos)}
             </p>
             {Object.keys(estadisticasDelDia.ingresosServiciosExtranjeros).length > 0 && (
               <p className="text-xs text-muted-foreground">
                 Servicios en {Object.entries(estadisticasDelDia.ingresosServiciosExtranjeros)
-                  .map(([moneda, total]) => `${moneda}: $${total.toLocaleString()}`)
+                  .map(([moneda, total]) => formatCurrency(total, moneda))
                   .join(' · ')}{' '}
                 (no incluidos)
               </p>
@@ -554,7 +557,7 @@ export function ReporteVentaDiaria() {
             <TrendingUpIcon className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-green-600">${estadisticasDelDia.ganancia.toLocaleString()}</div>
+            <div className={cn("text-2xl font-bold", estadisticasDelDia.ganancia >= 0 ? "text-green-600" : "text-destructive")}>{formatCurrency(estadisticasDelDia.ganancia)}</div>
             <p className="text-xs text-muted-foreground">
               Margen: {estadisticasDelDia.margenGanancia.toFixed(1)}%
             </p>
@@ -570,7 +573,7 @@ export function ReporteVentaDiaria() {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">
-              ${(estadisticasDelDia.totalVentas + estadisticasDelDia.totalServicios) > 0 ? (estadisticasDelDia.ingresosNetos / (estadisticasDelDia.totalVentas + estadisticasDelDia.totalServicios)).toFixed(2) : '0.00'}
+              {(estadisticasDelDia.totalVentas + estadisticasDelDia.totalServicios) > 0 ? formatCurrency(estadisticasDelDia.ingresosNetos / (estadisticasDelDia.totalVentas + estadisticasDelDia.totalServicios)) : formatCurrency(0)}
             </div>
             <p className="text-xs text-muted-foreground">
               Por venta/servicio realizado
@@ -607,7 +610,7 @@ export function ReporteVentaDiaria() {
                 <YAxis />
                 <CartesianGrid strokeDasharray="3 3" vertical={false} opacity={0.3} />
                 <Tooltip 
-                  formatter={(value: number) => [`$${value.toLocaleString()}`, 'Ingresos']}
+                  formatter={(value: number) => [formatCurrency(value), 'Ingresos']}
                   labelFormatter={(label) => `Fecha: ${label}`}
                   contentStyle={{ borderRadius: '8px', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }}
                 />
@@ -655,7 +658,7 @@ export function ReporteVentaDiaria() {
                     <p className="text-sm text-muted-foreground">{datosComparacion.label}</p>
                   </div>
                   <div className="text-right">
-                    <p className="font-bold">${datosComparacion.ingresosActual.toLocaleString()}</p>
+                    <p className="font-bold">{formatCurrency(datosComparacion.ingresosActual)}</p>
                     <div className={`text-xs flex items-center gap-1 ${
                       datosComparacion.porcentajeCambioIngresos >= 0 ? 'text-green-600' : 'text-red-600'
                     }`}>
@@ -751,16 +754,16 @@ export function ReporteVentaDiaria() {
                             })}
                           </TableCell>
                           <TableCell className="text-right">{venta.cantidad}</TableCell>
-                          <TableCell className="text-right">${(venta.precioUnitario || 0).toFixed(2)}</TableCell>
-                          <TableCell className="text-right">${totalBruto.toFixed(2)}</TableCell>
+                          <TableCell className="text-right">{formatCurrency(venta.precioUnitario || 0)}</TableCell>
+                          <TableCell className="text-right">{formatCurrency(totalBruto)}</TableCell>
                           <TableCell className="text-right">
                             {venta.descuento ? (
-                              <Badge variant="destructive">${venta.descuento.toFixed(2)}</Badge>
+                              <Badge variant="destructive">{formatCurrency(venta.descuento)}</Badge>
                             ) : (
                               <span className="text-muted-foreground">-</span>
                             )}
                           </TableCell>
-                          <TableCell className="text-right font-medium">${totalNeto.toFixed(2)}</TableCell>
+                          <TableCell className="text-right font-medium">{formatCurrency(totalNeto)}</TableCell>
                           <TableCell>{venta.puntoDeVenta?.nombre || 'N/A'}</TableCell>
                           <TableCell>{venta.cliente?.nombre || 'Cliente general'}</TableCell>
                         </TableRow>
@@ -776,12 +779,12 @@ export function ReporteVentaDiaria() {
                         </TableCell>
                         <TableCell>{servicio.servicio?.descripcion || 'Servicio no especificado'}</TableCell>
                         <TableCell className="text-right">{servicio.cantidad}</TableCell>
-                        <TableCell className="text-right">${(servicio.servicio?.precio || 0).toFixed(2)}</TableCell>
-                        <TableCell className="text-right">${servicio.total.toFixed(2)}</TableCell>
+                        <TableCell className="text-right">{formatCurrency(servicio.servicio?.precio || 0, servicio.moneda || 'CUP')}</TableCell>
+                        <TableCell className="text-right">{formatCurrency(servicio.total, servicio.moneda || 'CUP')}</TableCell>
                         <TableCell className="text-right">
                           <span className="text-muted-foreground">-</span>
                         </TableCell>
-                        <TableCell className="text-right font-medium">${servicio.total.toFixed(2)}</TableCell>
+                        <TableCell className="text-right font-medium">{formatCurrency(servicio.total, servicio.moneda || 'CUP')}</TableCell>
                         <TableCell>N/A</TableCell>
                         <TableCell>{servicio.cliente?.clienteId || 'Cliente general'}</TableCell>
                       </TableRow>
@@ -841,7 +844,14 @@ export function ReporteVentaDiaria() {
               <CardContent className="p-4">
                 <div className="text-center">
                   <div className="text-2xl font-bold text-sky-600">
-                    ${detallesDia.reduce((sum, item) => sum + item.total, 0).toLocaleString()}
+                    {Object.entries(
+                      detallesDia.reduce<Record<string, number>>((acc, item) => {
+                        acc[item.moneda] = (acc[item.moneda] ?? 0) + item.total
+                        return acc
+                      }, {})
+                    )
+                      .map(([moneda, total]) => formatCurrency(total, moneda))
+                      .join(' · ')}
                   </div>
                   <div className="text-sm text-muted-foreground">Total de Ventas</div>
                 </div>
@@ -886,15 +896,15 @@ export function ReporteVentaDiaria() {
                           {item.descripcion}
                         </TableCell>
                         <TableCell className="text-right">{item.cantidad}</TableCell>
-                        <TableCell className="text-right">${item.precioUnitario.toFixed(2)}</TableCell>
+                        <TableCell className="text-right">{formatCurrency(item.precioUnitario, item.moneda)}</TableCell>
                         <TableCell className="text-right">
                           {item.descuento > 0 ? (
-                            <Badge variant="destructive">${item.descuento.toFixed(2)}</Badge>
+                            <Badge variant="destructive">{formatCurrency(item.descuento, item.moneda)}</Badge>
                           ) : (
                             <span className="text-muted-foreground">-</span>
                           )}
                         </TableCell>
-                        <TableCell className="text-right font-medium">${item.total.toFixed(2)}</TableCell>
+                        <TableCell className="text-right font-medium">{formatCurrency(item.total, item.moneda)}</TableCell>
                         <TableCell className="text-sm">{item.puntoVenta}</TableCell>
                         <TableCell className="text-sm max-w-xs truncate" title={item.cliente}>
                           {item.cliente}
@@ -918,7 +928,14 @@ export function ReporteVentaDiaria() {
                   </div>
                   <div className="text-lg font-bold text-green-600">
                     <span>Total de ventas:</span>{" "}
-                    ${detallesDia.reduce((sum, item) => sum + item.total, 0).toLocaleString()}
+                    {Object.entries(
+                      detallesDia.reduce<Record<string, number>>((acc, item) => {
+                        acc[item.moneda] = (acc[item.moneda] ?? 0) + item.total
+                        return acc
+                      }, {})
+                    )
+                      .map(([moneda, total]) => formatCurrency(total, moneda))
+                      .join(' · ')}
                   </div>
                 </div>
               </div>

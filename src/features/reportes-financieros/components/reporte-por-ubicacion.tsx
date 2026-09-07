@@ -41,7 +41,7 @@ import {
 	StaggerItem,
 	AnimatedCard,
 } from "@/components/ui/animations";
-import { cn } from "@/lib/utils";
+import { cn, formatCurrency } from "@/lib/utils";
 import { getStockPorUbicacionAction } from "@/features/productos/actions";
 import { getProductDisplayIdentifier } from "@/lib/product-display-utils";
 
@@ -273,19 +273,18 @@ export function ReportePorUbicacion() {
 						<Card
 							className={cn(surfaceCardClass)}
 						>
-							<CardContent className="p-4">
-								<div className="text-2xl font-bold">
-									$
-									{productosUbicacion?.reduce(
-										(sum: any, p: any) =>
-											sum + p.stockUbicacion * p.precioCosto,
-										0,
-									) || "0.00"}
-								</div>
-								<p className="text-xs text-muted-foreground">
-									Valor del inventario
-								</p>
-							</CardContent>
+								<CardContent className="p-4">
+									<div className="text-2xl font-bold">
+										{formatCurrency(productosUbicacion?.reduce(
+											(sum: any, p: any) =>
+												sum + p.stockUbicacion * p.precioCosto,
+											0,
+										) ?? 0)}
+									</div>
+									<p className="text-xs text-muted-foreground">
+										Valor del inventario
+									</p>
+								</CardContent>
 						</Card>
 					</AnimatedCard>
 				</StaggerItem>
@@ -307,8 +306,8 @@ export function ReportePorUbicacion() {
 											<YAxis />
 											<Tooltip
 												formatter={(value, name) => [
-													name === "stock" ? value : `${Number(value)}`,
-													name === "Stock" ? "Stock" : "Valor ($)",
+													name === "Stock" ? value : formatCurrency(Number(value)),
+													name,
 												]}
 											/>
 											<Legend />
@@ -391,11 +390,10 @@ export function ReportePorUbicacion() {
 																</Badge>
 															</TableCell>
 															<TableCell className="text-right">
-																${producto.precioCosto}
+																{formatCurrency(producto.precioCosto)}
 															</TableCell>
 															<TableCell className="text-right">
-																$
-																{producto.stockUbicacion * producto.precioCosto}
+																{formatCurrency(producto.stockUbicacion * producto.precioCosto)}
 															</TableCell>
 														</TableRow>
 													))

@@ -7,7 +7,7 @@ import { BarChart3 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
-import { cn } from "@/lib/utils";
+import { cn, formatCurrency } from "@/lib/utils";
 import {
 	PageTransition,
 	StaggerContainer,
@@ -169,7 +169,7 @@ export function ReporteRentabilidadCompra() {
 								selectedLabel
 									? undefined // We'll set this after data loads
 									: compra
-										? `${compra.proveedor?.nombre ?? "Sin proveedor"} · ${compra.numeroFactura || "S/N"} · $${compra.total.toLocaleString()}`
+										? `${compra.proveedor?.nombre ?? "Sin proveedor"} · ${compra.numeroFactura || "S/N"} · {formatCurrency(compra.total)}`
 										: undefined
 							}
 						/>

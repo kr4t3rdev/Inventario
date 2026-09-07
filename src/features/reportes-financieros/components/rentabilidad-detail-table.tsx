@@ -29,7 +29,7 @@ import {
 	TableHeader,
 	TableRow,
 } from "@/components/ui/table";
-import { cn } from "@/lib/utils";
+import { cn, formatCurrency } from "@/lib/utils";
 import { exportToPdf, exportToCsv } from "@/lib/export-utils";
 import type { ProductoAnalisis } from "@/features/reportes-financieros/actions-rentabilidad-compra";
 
@@ -244,7 +244,7 @@ export function RentabilidadDetailTable({
 										{p.cantidadComprada}
 									</TableCell>
 									<TableCell className="text-right font-mono text-xs">
-										${p.costoUnitario.toLocaleString()}
+										{formatCurrency(p.costoUnitario)}
 									</TableCell>
 									<TableCell className="text-right">
 										<Badge
@@ -254,7 +254,7 @@ export function RentabilidadDetailTable({
 										</Badge>
 									</TableCell>
 									<TableCell className="text-right font-mono text-xs">
-										${p.ingresos.toLocaleString()}
+										{formatCurrency(p.ingresos)}
 									</TableCell>
 									<TableCell
 										className={cn(
@@ -262,7 +262,7 @@ export function RentabilidadDetailTable({
 											p.ganancia >= 0 ? "text-green-600" : "text-red-600",
 										)}
 									>
-										${p.ganancia.toLocaleString()}
+										{formatCurrency(p.ganancia)}
 									</TableCell>
 									<TableCell className="text-right">
 										<Badge

@@ -7,7 +7,7 @@ import {
 	CardHeader,
 	CardTitle,
 } from "@/components/ui/card";
-import { cn } from "@/lib/utils";
+import { cn, formatCurrency } from "@/lib/utils";
 import {
 	BarChart,
 	Bar,
@@ -88,7 +88,7 @@ export function ChartsRentabilidad({ productos }: ChartsRentabilidadProps) {
 		}));
 
 	const formatterDollar = (value: number) => [
-		`$${value.toLocaleString()}`,
+		formatCurrency(value),
 		undefined,
 	];
 

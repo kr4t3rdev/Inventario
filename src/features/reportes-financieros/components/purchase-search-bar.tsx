@@ -11,7 +11,7 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from '@/components/ui/popover';
-import { cn } from '@/lib/utils';
+import { cn, formatCurrency } from '@/lib/utils';
 import { searchComprasAction } from '@/features/reportes-financieros/actions-rentabilidad-compra';
 import type { CompraResult } from '@/features/reportes-financieros/actions-rentabilidad-compra';
 
@@ -120,7 +120,7 @@ export function PurchaseSearchBar({
                       {compra.proveedorNombre ?? 'Sin proveedor'}
                     </span>
                     <span className="ml-2 whitespace-nowrap font-mono text-xs text-muted-foreground">
-                      ${compra.total.toLocaleString()}
+                      {formatCurrency(compra.total)}
                     </span>
                   </div>
                   <div className="mt-0.5 flex items-center gap-2 text-xs text-muted-foreground">

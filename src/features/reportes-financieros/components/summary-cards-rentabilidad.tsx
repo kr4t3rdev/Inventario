@@ -14,7 +14,7 @@ import {
 	CardHeader,
 	CardDescription,
 } from "@/components/ui/card";
-import { cn } from "@/lib/utils";
+import { cn, formatCurrency } from "@/lib/utils";
 import { AnimatedCard } from "@/components/ui/animations";
 import type { ResumenAnalisis } from "@/features/reportes-financieros/actions-rentabilidad-compra";
 
@@ -37,21 +37,21 @@ export function SummaryCards({ resumen }: SummaryCardsProps) {
 	const cards = [
 		{
 			label: "Costo Total",
-			value: `$${resumen.totalComprado.toLocaleString()}`,
+			value: formatCurrency(resumen.totalComprado),
 			sublabel: "Total pagado en la compra",
 			icon: DollarSign,
 			borderColor: "border-l-primary",
 		},
 		{
 			label: "Total Vendido",
-			value: `$${resumen.totalVendido.toLocaleString()}`,
+			value: formatCurrency(resumen.totalVendido),
 			sublabel: "Ingresos generados",
 			icon: TrendingUp,
 			borderColor: "border-l-chart-2",
 		},
 		{
 			label: "Ganancia Neta",
-			value: `$${resumen.gananciaTotal.toLocaleString()}`,
+			value: formatCurrency(resumen.gananciaTotal),
 			sublabel: `Margen: ${resumen.margenPromedio.toFixed(1)}%`,
 			icon: Landmark,
 			borderColor:

@@ -22,7 +22,7 @@ import { FileIcon as FilePdf, FileText, PieChart as PieChartIcon, Package } from
 import {  exportToPdf, exportToCsv } from "@/lib/export-utils"
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip, Legend } from "recharts"
 import { StaggerContainer, StaggerItem, AnimatedCard } from "@/components/ui/animations"
-import { cn } from "@/lib/utils"
+import { cn, formatCurrency } from "@/lib/utils"
 import { getProductDisplayIdentifier } from "@/lib/product-display-utils"
 
 const surfaceCardClass = cn(
@@ -180,7 +180,7 @@ export function ReporteGeneral() {
         <AnimatedCard>
         <Card className={cn(surfaceCardClass)}>
           <CardContent className="p-4">
-            <div className="text-2xl font-bold">${valorTotal.toLocaleString('es-DO', { minimumFractionDigits: 2 })}</div>
+            <div className="text-2xl font-bold">{formatCurrency(valorTotal)}</div>
             <p className="text-xs text-muted-foreground">Valor de inventario (costo)</p>
           </CardContent>
         </Card>
@@ -189,7 +189,7 @@ export function ReporteGeneral() {
         <AnimatedCard>
         <Card className={cn(surfaceCardClass)}>
           <CardContent className="p-4">
-            <div className="text-2xl font-bold">${valorVenta.toLocaleString('es-DO', { minimumFractionDigits: 2 })}</div>
+            <div className="text-2xl font-bold">{formatCurrency(valorVenta)}</div>
             <p className="text-xs text-muted-foreground">Valor de inventario (venta)</p>
           </CardContent>
         </Card>
@@ -227,7 +227,7 @@ export function ReporteGeneral() {
                         <Cell key={entry.name || `cell-${index}`} fill={COLORS[index % COLORS.length]} />
                       ))}
                     </Pie>
-                    <Tooltip formatter={(value: number) => `$${value.toLocaleString()}`} />
+                    <Tooltip formatter={(value: number) => formatCurrency(value)} />
                     <Legend />
                   </PieChart>
                 </ResponsiveContainer>
@@ -297,10 +297,10 @@ export function ReporteGeneral() {
                             <Badge variant="secondary">Por defecto (10)</Badge>
                           )}
                         </TableCell>
-                        <TableCell className="text-right">${producto.precioCosto.toLocaleString('es-DO', { minimumFractionDigits: 2 })}</TableCell>
-                        <TableCell className="text-right">${producto.precioVenta.toLocaleString('es-DO', { minimumFractionDigits: 2 })}</TableCell>
-                        <TableCell className="text-right">${(producto.precioCosto * getTotalStock(producto)).toLocaleString('es-DO', { minimumFractionDigits: 2 })}</TableCell>
-                        <TableCell className="text-right">${(producto.precioVenta * getTotalStock(producto)).toLocaleString('es-DO', { minimumFractionDigits: 2 })}</TableCell>
+                        <TableCell className="text-right">{formatCurrency(producto.precioCosto)}</TableCell>
+                        <TableCell className="text-right">{formatCurrency(producto.precioVenta)}</TableCell>
+                        <TableCell className="text-right">{formatCurrency(producto.precioCosto * getTotalStock(producto))}</TableCell>
+                        <TableCell className="text-right">{formatCurrency(producto.precioVenta * getTotalStock(producto))}</TableCell>
                       </TableRow>
                     )})}
                   </TableBody>
