@@ -8,6 +8,7 @@
  * @module src/lib/db/scoped-prisma
  */
 import type { PrismaClient } from '@/generated/prisma';
+import { recordShadowViolation } from './shadow-violation-store';
 import { getModelScope } from './model-classification';
 import { getTenantContext } from './tenant-context';
 
@@ -34,6 +35,7 @@ export interface ViolationReport {
 type ViolationReporter = (report: ViolationReport) => void;
 
 const defaultReporter: ViolationReporter = (report) => {
+  recordShadowViolation(report);
   console.warn('[tenant-isolation]', JSON.stringify(report));
 };
 
