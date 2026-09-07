@@ -9,6 +9,7 @@ import { FileIcon as FilePdf, FileText } from "lucide-react"
 import { exportToPdf, exportToCsv } from "@/lib/export-utils"
 import { PieChart, Pie, Cell, ResponsiveContainer, Legend, Tooltip } from "recharts"
 import { StaggerContainer, StaggerItem, AnimatedCard } from "@/components/ui/animations"
+import { ReportErrorState } from "./report-error-state"
 import { cn, formatCurrency } from "@/lib/utils"
 
 const surfaceCardClass = cn(
@@ -17,8 +18,9 @@ const surfaceCardClass = cn(
 )
 
 export function ReportePorCategoria() {
-  const { productos, isLoading: isLoadingProductos } = useProductos()
-  const { categorias } = useCategorias()
+  const { productos, isLoading: isLoadingProductos, error: productosError } = useProductos()
+  const { categorias, error: categoriasError } = useCategorias()
+  const reportError = productosError ?? categoriasError
   const getTotalStock = (producto: { stock?: number; stockTotal?: number }) =>
     producto.stockTotal ?? producto.stock ?? 0
 
@@ -103,6 +105,14 @@ export function ReportePorCategoria() {
 
   return (
     <StaggerContainer className="space-y-4">
+      {reportError ? (
+        <ReportErrorState
+          title="No se pudo cargar el reporte por categoría"
+          description="Revisa tu conexión a internet y vuelve a intentarlo."
+          onRetry={() => window.location.reload()}
+        />
+      ) : null}
+
       <StaggerItem className="flex justify-end gap-2">
 
         <Button variant="outline" size="sm" onClick={handleExportPdf}>

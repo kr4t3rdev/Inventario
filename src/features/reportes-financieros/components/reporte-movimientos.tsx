@@ -17,6 +17,7 @@ import { flattenVentas } from "@/lib/ventas-utils"
 import { format } from "date-fns"
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from "recharts"
 import { StaggerContainer, StaggerItem, AnimatedCard } from "@/components/ui/animations"
+import { ReportErrorState } from "./report-error-state"
 import { cn } from "@/lib/utils"
 import { getProductDisplayIdentifier } from "@/lib/product-display-utils"
 import { isMovimientoInRange } from "@/features/reportes-financieros/lib/movimientos-date"
@@ -39,8 +40,9 @@ export function ReporteMovimientos({ initialTransferencias = [] }: ReporteMovimi
     to: new Date(),
   })
 
-  const { ventas, isLoading: isLoadingVentas } = useVentas()
-  const { mermas, isLoading: isLoadingMermas } = useMermas()
+  const { ventas, isLoading: isLoadingVentas, error: ventasError } = useVentas()
+  const { mermas, isLoading: isLoadingMermas, error: mermasError } = useMermas()
+  const reportError = ventasError ?? mermasError
   const transferencias = initialTransferencias
   const [productos, setProductos] = useState<any[]>([])
   const [isLoadingProductos, setIsLoadingProductos] = useState(true)
@@ -231,6 +233,14 @@ export function ReporteMovimientos({ initialTransferencias = [] }: ReporteMovimi
 
   return (
     <StaggerContainer className="space-y-4">
+      {reportError ? (
+        <ReportErrorState
+          title="No se pudo cargar el reporte de movimientos"
+          description="Revisa tu conexión a internet y vuelve a intentarlo."
+          onRetry={() => window.location.reload()}
+        />
+      ) : null}
+
       <StaggerItem className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
         <div className="flex flex-col gap-4 md:flex-row md:items-center">
           <Select value={tipoMovimiento} onValueChange={setTipoMovimiento}>

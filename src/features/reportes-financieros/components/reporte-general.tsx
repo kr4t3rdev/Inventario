@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Skeleton } from "@/components/ui/skeleton"
+import { ReportErrorState } from "./report-error-state"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { Badge } from "@/components/ui/badge"
 import {
@@ -33,8 +34,9 @@ const surfaceCardClass = cn(
 const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042', '#8884d8', '#82ca9d', '#ffc658', '#8dd1e1', '#a4de6c', '#d0ed57'];
 
 export function ReporteGeneral() {
-  const { productos, isLoading: isLoadingProductos } = useProductos()
-  const { categorias } = useCategorias()
+  const { productos, isLoading: isLoadingProductos, error: productosError } = useProductos()
+  const { categorias, error: categoriasError } = useCategorias()
+  const reportError = productosError ?? categoriasError
   const [filtroCategoria, setFiltroCategoria] = useState<string>("todas")
   const [currentPage, setCurrentPage] = useState(1)
   const [pageSize, setPageSize] = useState(10)
@@ -133,6 +135,14 @@ export function ReporteGeneral() {
 
   return (
     <StaggerContainer className="space-y-4">
+      {reportError ? (
+        <ReportErrorState
+          title="No se pudo cargar el reporte de inventario"
+          description="Revisa tu conexión a internet y vuelve a intentarlo."
+          onRetry={() => window.location.reload()}
+        />
+      ) : null}
+
       <StaggerItem className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
         <div className="flex items-center gap-4">
           <Select value={filtroCategoria} onValueChange={setFiltroCategoria}>

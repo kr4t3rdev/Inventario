@@ -9,6 +9,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Badge } from "@/components/ui/badge"
 import { Skeleton } from "@/components/ui/skeleton"
+import { ReportErrorState } from "./report-error-state"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { CalendarIcon, TrendingUpIcon, TrendingDownIcon, FileIcon as FilePdf, FileText, DollarSign, Package, Calendar } from "lucide-react"
@@ -46,8 +47,9 @@ export function ReporteVentaDiaria() {
    const [detallesDia, setDetallesDia] = useState<any[]>([])
    const [fechaDetalle, setFechaDetalle] = useState<string>('')
 
-   const { ventas, isLoading: isLoadingVentas } = useVentas()
-  const { ventaServicios } = useVentaServicios()
+   const { ventas, isLoading: isLoadingVentas, error: ventasError } = useVentas()
+  const { ventaServicios, error: serviciosError } = useVentaServicios()
+  const reportError = ventasError ?? serviciosError
   // @ts-expect-error flattenVentas espera el tipo global de Venta; useVentas expone una variante filtrada
   const ventasLineas = useMemo(() => flattenVentas(ventas), [ventas])
 
@@ -447,6 +449,16 @@ export function ReporteVentaDiaria() {
         ease: "easeOut" as const,
       },
     },
+  }
+
+  if (reportError) {
+    return (
+      <ReportErrorState
+        title="No se pudo cargar el reporte de venta diaria"
+        description="Revisa tu conexión a internet y vuelve a intentarlo."
+        onRetry={() => window.location.reload()}
+      />
+    )
   }
 
   if (isLoadingVentas) {

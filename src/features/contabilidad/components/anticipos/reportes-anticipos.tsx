@@ -13,6 +13,7 @@ import { Skeleton } from "@/components/ui/skeleton"
 import { Download, FileSpreadsheet, Users, Truck, BarChart3 } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { getAuthToken } from '@/lib/token'
+import { ReportErrorState } from '@/features/reportes-financieros/components/report-error-state'
 
 interface ReportesAnticiposProps {
   clientes?: Array<{ clienteId: string; nombre: string }>
@@ -42,6 +43,13 @@ export function ReportesAnticipos({
   const [loadingReporteProveedor, setLoadingReporteProveedor] = useState(false)
   const [dataResumen, setDataResumen] = useState<any>(null)
   const [loadingResumen, setLoadingResumen] = useState(false)
+  const [errorCliente, setErrorCliente] = useState(false)
+  const [errorProveedor, setErrorProveedor] = useState(false)
+  const [errorResumen, setErrorResumen] = useState(false)
+  // Las claves de reintento disparan de nuevo el fetch asociado sin recargar la página.
+  const [retryCliente, setRetryCliente] = useState(0)
+  const [retryProveedor, setRetryProveedor] = useState(0)
+  const [retryResumen, setRetryResumen] = useState(0)
 
   useEffect(() => {
     const params = new URLSearchParams()
@@ -49,13 +57,21 @@ export function ReportesAnticipos({
     if (fechaInicio) params.set("fechaInicio", fechaInicio)
     if (fechaFin) params.set("fechaFin", fechaFin)
     setLoadingReporteCliente(true)
+    setErrorCliente(false)
     fetch(`/api/contabilidad/anticipos/reportes/cliente?${params.toString()}`, {
       headers: { Authorization: getAuthToken() },
     })
-      .then((r) => r.json())
-      .then(setDataReporteCliente)
+      .then((r) => {
+        if (!r.ok) throw new Error(`Error ${r.status}`)
+        return r.json()
+      })
+      .then((data) => { setDataReporteCliente(data); setErrorCliente(false) })
+      .catch(() => {
+        setDataReporteCliente(null)
+        setErrorCliente(true)
+      })
       .finally(() => setLoadingReporteCliente(false))
-  }, [clienteFiltro, fechaInicio, fechaFin])
+  }, [clienteFiltro, fechaInicio, fechaFin, retryCliente])
 
   useEffect(() => {
     const params = new URLSearchParams()
@@ -63,23 +79,39 @@ export function ReportesAnticipos({
     if (fechaInicio) params.set("fechaInicio", fechaInicio)
     if (fechaFin) params.set("fechaFin", fechaFin)
     setLoadingReporteProveedor(true)
+    setErrorProveedor(false)
     fetch(`/api/contabilidad/anticipos/reportes/proveedor?${params.toString()}`, {
       headers: { Authorization: getAuthToken() },
     })
-      .then((r) => r.json())
-      .then(setDataReporteProveedor)
+      .then((r) => {
+        if (!r.ok) throw new Error(`Error ${r.status}`)
+        return r.json()
+      })
+      .then((data) => { setDataReporteProveedor(data); setErrorProveedor(false) })
+      .catch(() => {
+        setDataReporteProveedor(null)
+        setErrorProveedor(true)
+      })
       .finally(() => setLoadingReporteProveedor(false))
-  }, [proveedorFiltro, fechaInicio, fechaFin])
+  }, [proveedorFiltro, fechaInicio, fechaFin, retryProveedor])
 
   useEffect(() => {
     setLoadingResumen(true)
+    setErrorResumen(false)
     fetch("/api/contabilidad/anticipos/reportes/resumen", {
       headers: { Authorization: getAuthToken() },
     })
-      .then((r) => r.json())
-      .then(setDataResumen)
+      .then((r) => {
+        if (!r.ok) throw new Error(`Error ${r.status}`)
+        return r.json()
+      })
+      .then((data) => { setDataResumen(data); setErrorResumen(false) })
+      .catch(() => {
+        setDataResumen(null)
+        setErrorResumen(true)
+      })
       .finally(() => setLoadingResumen(false))
-  }, [])
+  }, [retryResumen])
 
   const exportarCSV = (data: any[], filename: string) => {
     if (!data || data.length === 0) return
@@ -168,7 +200,13 @@ export function ReportesAnticipos({
                 </div>
               </div>
 
-              {loadingReporteCliente ? (
+              {errorCliente ? (
+                <ReportErrorState
+                  title="No se pudo cargar el reporte por cliente"
+                  description="Revisa tu conexión a internet y vuelve a intentarlo."
+                  onRetry={() => setRetryCliente((k) => k + 1)}
+                />
+              ) : loadingReporteCliente ? (
                 <div className="space-y-2">
                   <Skeleton className="h-4 w-full" />
                   <Skeleton className="h-4 w-full" />
@@ -276,7 +314,13 @@ export function ReportesAnticipos({
                 </div>
               </div>
 
-              {loadingReporteProveedor ? (
+              {errorProveedor ? (
+                <ReportErrorState
+                  title="No se pudo cargar el reporte por proveedor"
+                  description="Revisa tu conexión a internet y vuelve a intentarlo."
+                  onRetry={() => setRetryProveedor((k) => k + 1)}
+                />
+              ) : loadingReporteProveedor ? (
                 <div className="space-y-2">
                   <Skeleton className="h-4 w-full" />
                   <Skeleton className="h-4 w-full" />
@@ -364,7 +408,13 @@ export function ReportesAnticipos({
 
           {/* Resumen */}
           <TabsContent value="resumen" className="mt-4">
-            {loadingResumen ? (
+            {errorResumen ? (
+              <ReportErrorState
+                title="No se pudo cargar el resumen de anticipos"
+                description="Revisa tu conexión a internet y vuelve a intentarlo."
+                onRetry={() => setRetryResumen((k) => k + 1)}
+              />
+            ) : loadingResumen ? (
               <div className="space-y-2">
                 <Skeleton className="h-20 w-full" />
                 <Skeleton className="h-20 w-full" />
