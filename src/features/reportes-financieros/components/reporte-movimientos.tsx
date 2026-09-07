@@ -19,6 +19,7 @@ import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, Responsi
 import { StaggerContainer, StaggerItem, AnimatedCard } from "@/components/ui/animations"
 import { cn } from "@/lib/utils"
 import { getProductDisplayIdentifier } from "@/lib/product-display-utils"
+import { isMovimientoInRange } from "@/features/reportes-financieros/lib/movimientos-date"
 import type { TransferenciaMovimientos } from "./reportes-inventario"
 
 interface ReporteMovimientosProps {
@@ -57,10 +58,7 @@ export function ReporteMovimientos({ initialTransferencias = [] }: ReporteMovimi
   const getProductoById = (id: string) => productos?.find((producto) => producto.id === id)
 
   // Filtrar movimientos por fecha y producto
-  const filtrarPorFecha = (fecha: string) => {
-    const fechaObj = new Date(fecha)
-    return fechaObj >= dateRange.from && fechaObj <= dateRange.to
-  }
+  const filtrarPorFecha = (fecha: string) => isMovimientoInRange(fecha, dateRange.from, dateRange.to)
 
   const ventasLineas = useMemo(
     () => flattenVentas(ventas as unknown as Parameters<typeof flattenVentas>[0]),

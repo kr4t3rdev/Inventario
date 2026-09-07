@@ -24,7 +24,9 @@ export default async function ReportesPage() {
     redirect('/busy');
   }
 
-  const result = await getTransferenciasAction({});
+  // El reporte filtra por fecha en cliente, por lo que necesita el historial completo
+  // (o al menos una ventana amplia) en lugar del límite por defecto de 10.
+  const result = await getTransferenciasAction({ limit: 1000 });
   const initialTransferencias = result.success ? result.data?.transferencias ?? [] : [];
 
   return <ReportesPageClient initialTransferencias={initialTransferencias} />;
