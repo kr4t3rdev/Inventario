@@ -198,12 +198,19 @@ export const createCompraProductoAction = withAction(async (input: CreateCompraP
         ordenCompraId: parsed.ordenCompraId,
         fechaCompra: new Date(),
         tipoOperacion: 'REGULAR',
-        items: {
-          create: items.map((i) => ({
-          tenantId, productoId: i.producto.id, cantidad: i.cantidad, precioUnitario: i.precioCosto, totalLinea: i.precioCosto * i.cantidad
-          })),
-        },
       },
+    });
+
+    for (const i of items) {
+      await tx.compraDocumentoItem.create({
+        data: {
+          tenantId, compraDocumentoId: compra.compraDocumentoId, productoId: i.producto.id, cantidad: i.cantidad, precioUnitario: i.precioCosto, totalLinea: i.precioCosto * i.cantidad,
+        },
+      });
+    }
+
+    const resultado = await tx.compraDocumento.findUnique({
+      where: { compraDocumentoId: compra.compraDocumentoId },
       include: COMPRA_INCLUDE,
     });
 
@@ -325,7 +332,7 @@ export const createCompraProductoAction = withAction(async (input: CreateCompraP
       }
     }
 
-    return compra;
+    return resultado;
   });
 
   revalidatePath('/busy/compras-productos');

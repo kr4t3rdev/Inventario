@@ -29,7 +29,8 @@ vi.mock("@/lib/services/anticipos-guards", () => ({
 }));
 
 const mockTx = {
-	compraDocumento: { create: vi.fn(), update: vi.fn(), findFirst: vi.fn() },
+	compraDocumento: { create: vi.fn(), update: vi.fn(), findFirst: vi.fn(), findUnique: vi.fn() },
+	compraDocumentoItem: { create: vi.fn() },
 	producto: { update: vi.fn() },
 	gastoCompra: { create: vi.fn() },
 	cuentaPorPagar: { create: vi.fn(), delete: vi.fn() },

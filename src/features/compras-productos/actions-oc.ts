@@ -89,22 +89,30 @@ export const createOrdenCompraAction = withAction(
       (sum, item) => sum + item.cantidadPedida * item.precioUnitario,
       0,
     );
-    const orden = await prisma.ordenCompra.create({
-      data: {
-        tenantId,
-        proveedorId: parsed.proveedorId,
-        estado: 'BORRADOR',
-        total,
-        items: {
-          create: parsed.items.map((item) => ({
+    const orden = await prisma.$transaction(async (tx) => {
+      const created = await tx.ordenCompra.create({
+        data: {
+          tenantId,
+          proveedorId: parsed.proveedorId,
+          estado: 'BORRADOR',
+          total,
+        },
+      });
+      for (const item of parsed.items) {
+        await tx.ordenCompraItem.create({
+          data: {
             tenantId,
+            ordenId: created.id,
             productoId: item.productoId,
             cantidadPedida: item.cantidadPedida,
             precioUnitario: item.precioUnitario,
-          })),
-        },
-      },
-      include: ORDEN_INCLUDE,
+          },
+        });
+      }
+      return tx.ordenCompra.findUnique({
+        where: { tenantId_id: { tenantId, id: created.id } },
+        include: ORDEN_INCLUDE,
+      });
     });
 
     revalidatePath('/busy/compras/ordenes');
@@ -217,19 +225,20 @@ export const registrarRecepcionAction = withAction(
           ordenId: orden.id,
           creadoPorId: user.userId,
           claveIdempotencia: parsed.claveIdempotencia || null,
-          items: {
-            create: parsed.items.map((inputItem) => {
-              const orderItem = orderItems.get(inputItem.ordenItemId);
-              return {
-                tenantId,
-                ordenItemId: inputItem.ordenItemId,
-                productoId: orderItem.productoId,
-                cantidad: inputItem.cantidad,
-              };
-            }),
-          },
         },
       });
+      for (const inputItem of parsed.items) {
+        const orderItem = orderItems.get(inputItem.ordenItemId);
+        await tx.recepcionItem.create({
+          data: {
+            tenantId,
+            recepcionId: recepcion.id,
+            ordenItemId: inputItem.ordenItemId,
+            productoId: orderItem.productoId,
+            cantidad: inputItem.cantidad,
+          },
+        });
+      }
 
       // Los incrementos se serializan por lock de fila en PostgreSQL; tras
       // cada incremento se relee la línea dentro de la transacción y, si el

@@ -10,13 +10,14 @@ const mockTx = {
   ordenCompra: {
     create: vi.fn(),
     findFirst: vi.fn(),
+    findUnique: vi.fn(),
     update: vi.fn(),
     updateMany: vi.fn(),
     findMany: vi.fn(),
   },
-  ordenCompraItem: { update: vi.fn(), findFirst: vi.fn() },
+  ordenCompraItem: { create: vi.fn(), update: vi.fn(), findFirst: vi.fn() },
   recepcion: { create: vi.fn() },
-  recepcionItem: { createMany: vi.fn() },
+  recepcionItem: { create: vi.fn() },
   producto: { findFirst: vi.fn() },
   stockMoveLine: { upsert: vi.fn() },
 };
@@ -35,9 +36,9 @@ vi.mock('@/lib/prisma', () => ({
       update: vi.fn(),
       updateMany: vi.fn(),
     },
-    ordenCompraItem: { update: vi.fn() },
+    ordenCompraItem: { create: vi.fn(), update: vi.fn() },
     recepcion: { create: vi.fn(), findFirst: vi.fn() },
-    recepcionItem: { createMany: vi.fn() },
+    recepcionItem: { create: vi.fn() },
     reglaReabastecimiento: { findMany: vi.fn(), upsert: vi.fn(), delete: vi.fn() },
     stockUbicacion: { findMany: vi.fn() },
     receta: { findFirst: vi.fn() },
@@ -74,8 +75,12 @@ describe('Órdenes de compra y recepciones', () => {
     vi.mocked(prisma.vendor.findFirst).mockResolvedValue({ vendorId: 'ven-1' } as any);
     vi.mocked(prisma.producto.findFirst).mockResolvedValue({ id: 'prod-1' } as any);
     mockTx.ordenCompra.create.mockResolvedValue({
-      id: 'oc-1', estado: 'BORRADOR', total: 1250,
+      id: 'oc-1', tenantId: 'tenant-1', estado: 'BORRADOR', total: 1250,
     });
+    mockTx.ordenCompraItem.create.mockResolvedValue({ id: 'item-1' });
+    mockTx.ordenCompra.findUnique.mockResolvedValue({
+      id: 'oc-1', estado: 'BORRADOR', total: 1250, items: [{ id: 'item-1', productoId: 'prod-1', cantidadPedida: 5, precioUnitario: 250 }],
+    } as any);
 
     const result = await createOrdenCompraAction({
       proveedorId: 'ven-1',
@@ -83,8 +88,8 @@ describe('Órdenes de compra y recepciones', () => {
     });
 
     expect(result.success).toBe(true);
-    expect(prisma.ordenCompra.create).toHaveBeenCalledWith(expect.objectContaining({
-      data: expect.objectContaining({ tenantId: 'tenant-1', total: 1250, estado: 'BORRADOR' }),
+    expect(mockTx.ordenCompraItem.create).toHaveBeenCalledWith(expect.objectContaining({
+      data: expect.objectContaining({ ordenId: 'oc-1', productoId: 'prod-1', cantidadPedida: 5 }),
     }));
   });
 
@@ -112,6 +117,7 @@ describe('Órdenes de compra y recepciones', () => {
       items: [{ id: 'item-1', productoId: 'prod-1', cantidadPedida: 100, cantidadRecibida: 0, precioUnitario: 10, producto: { almacenId: 'alm-1' } }],
     });
     mockTx.recepcion.create.mockResolvedValue({ id: 'rec-1' });
+    mockTx.recepcionItem.create.mockResolvedValue({ id: 'rec-item-1' });
     mockTx.ordenCompraItem.update.mockResolvedValue({});
     mockTx.ordenCompraItem.findFirst.mockResolvedValue({
       id: 'item-1', cantidadPedida: 100, cantidadRecibida: 60,
@@ -160,6 +166,7 @@ describe('Órdenes de compra y recepciones', () => {
       items: [{ id: 'item-1', productoId: 'prod-1', cantidadPedida: 100, cantidadRecibida: 0, precioUnitario: 10, producto: { almacenId: 'alm-1' } }],
     });
     mockTx.recepcion.create.mockResolvedValue({ id: 'rec-1' });
+    mockTx.recepcionItem.create.mockResolvedValue({ id: 'rec-item-1' });
     // Otra recepción concurrente ya aterrizó: el incremento dejaría 120/100.
     mockTx.ordenCompraItem.findFirst.mockResolvedValue({
       id: 'item-1', cantidadPedida: 100, cantidadRecibida: 120,
