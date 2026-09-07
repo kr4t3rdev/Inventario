@@ -78,7 +78,7 @@ describe('AS-01 contrato de clasificación de modelos', () => {
       ['OfertaItem', 'child'],
       ['ContratoVersion', 'child'],
       ['AnticipoMovimiento', 'child'],
-      ['TransaccionMoneda', 'pending-scope'],
+      ['TransaccionMoneda', 'scoped'],
       ['AlertHistory', 'pending-scope'],
       ['TipoContratoCustom', 'pending-scope'],
     ];

@@ -53,6 +53,7 @@ export const convertMoneyAction = withAction(
 
       await prisma.transaccionMoneda.create({
         data: {
+          tenantId: user.tenantId,
           tipoTransaccion: 'exchange',
           referenciaId,
           monedaId: quote.monedaOrigen,

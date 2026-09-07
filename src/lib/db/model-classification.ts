@@ -191,7 +191,7 @@ export const MODEL_CLASSIFICATION: Record<string, ModelClassificationEntry> = {
   SaldoSnapshot: CHILD('PeriodoContable', 'periodoId', 'Snapshot ligado al periodo (y a cuenta bancaria). Requiere columna tenantId propia en AS-05 (ola 3).'),
 
   // ---- pending-scope (6): por tenant de hecho, sin columna; backlog AS-05 ----
-  TransaccionMoneda: PENDING('Espejo contable multimoneda sin tenant: referencia polimórfica (tipoTransaccion + referenciaId) sin FK al tenant. Prioridad 1 en AS-05.'),
+  TransaccionMoneda: SCOPED('Espejo contable multimoneda denormalizado en AS-05: tenantId nullable, backfill desde la tabla padre por tipoTransaccion y escritura dual en todos los writers. Las históricas exchange (sin padre) quedan sin tenant: fail-closed (no se exponen).'),
   AlertHistory: PENDING('Alertas operativas sin tenant (entidadTipo/entidadId polimórficos). Prioridad 2 en AS-05.'),
   ReportHistory: PENDING('Historial de reportes sin tenant (generadoPor como string). Prioridad 2 en AS-05.'),
   ScheduledReport: PENDING('Reportes programados sin tenant (creadoPor como string). Prioridad 2 en AS-05.'),

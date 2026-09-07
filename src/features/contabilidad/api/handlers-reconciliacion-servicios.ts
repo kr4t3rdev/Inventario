@@ -69,7 +69,7 @@ export async function handlePostReconciliacionServicios(request: NextRequest, us
     }
 
     if (validatedData.moneda !== 'CUP' && validatedData.tasaCambio) {
-      await tx.transaccionMoneda.create({ data: { tipoTransaccion: 'servicio', referenciaId: validatedData.ventaServicioId, monedaId: validatedData.moneda, montoOriginal: validatedData.monto, tasaCambio: validatedData.tasaCambio, montoConvertido } })
+      await tx.transaccionMoneda.create({ data: { tenantId: user.tenantId, tipoTransaccion: 'servicio', referenciaId: validatedData.ventaServicioId, monedaId: validatedData.moneda, montoOriginal: validatedData.monto, tasaCambio: validatedData.tasaCambio, montoConvertido } })
     }
 
     return reconciliacion

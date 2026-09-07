@@ -186,6 +186,7 @@ export const createCompraServicioAction = withAction(withPeriodValidation(
         if (tasaCambio !== undefined) {
           await tx.transaccionMoneda.create({
             data: {
+              tenantId,
               tipoTransaccion: 'servicio_egreso',
               referenciaId: compraServicio.compraServicioId,
               monedaId: monedaAnticipo,

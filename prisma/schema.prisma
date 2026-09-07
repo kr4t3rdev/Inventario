@@ -1804,6 +1804,7 @@ model TasaCambio {
 
 model TransaccionMoneda {
   transaccionId   String   @id @default(cuid())
+  tenantId        String?
   tipoTransaccion String
   referenciaId    String
   monedaId        String
@@ -1813,6 +1814,9 @@ model TransaccionMoneda {
   createdAt       DateTime @default(now())
   updatedAt       DateTime @updatedAt
   moneda          Moneda   @relation(fields: [monedaId], references: [codigo])
+
+  @@index([tenantId])
+  @@index([tipoTransaccion, referenciaId])
 }
 
 model CuentaBancaria {

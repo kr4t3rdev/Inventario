@@ -271,6 +271,7 @@ export async function POST(request: NextRequest) {
       if (validatedData.moneda !== 'CUP' && validatedData.tasaCambio) {
         await tx.transaccionMoneda.create({
           data: {
+            tenantId,
             tipoTransaccion: 'servicio',
             referenciaId: validatedData.ventaServicioId,
             monedaId: validatedData.moneda,

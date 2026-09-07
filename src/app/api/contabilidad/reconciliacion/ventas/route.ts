@@ -759,6 +759,7 @@ export async function POST(request: NextRequest) {
 				if (validatedData.tasaCambio) {
 					await tx.transaccionMoneda.create({
 						data: {
+							tenantId,
 							tipoTransaccion: "venta",
 							referenciaId: validatedData.ventaId,
 							monedaId: validatedData.moneda,

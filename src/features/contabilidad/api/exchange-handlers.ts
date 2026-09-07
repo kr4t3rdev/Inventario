@@ -45,6 +45,10 @@ export async function convertCurrency(request: NextRequest) {
     const quote = await CurrencyConversionService.quoteConversion({ monto, monedaOrigen, monedaDestino }, exchangeRateProvider)
     const referenciaId = `legacy-exchange:${crypto.randomUUID()}`
 
+    // Nota AS-05: convertCurrency no está montado en ninguna ruta (muerto).
+    // No autentica, así que no puede resolver tenantId. Si se resucitara,
+    // el shadow/enforce del cliente escopado lo detectará al crear una
+    // TransaccionMoneda sin tenant (enforce fallará cerrado con contexto).
     await prisma.transaccionMoneda.create({
       data: {
         tipoTransaccion: 'exchange',

@@ -624,6 +624,7 @@ export async function applyPagoGastoWorkflow(
   if (params.moneda !== 'CUP' && params.tasaCambio) {
     await tx.transaccionMoneda.create({
       data: {
+        tenantId: params.tenantId,
         tipoTransaccion: 'gasto',
         referenciaId: params.referenciaId,
         monedaId: params.moneda,
