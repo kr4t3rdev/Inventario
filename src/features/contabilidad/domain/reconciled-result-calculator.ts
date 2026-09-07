@@ -208,7 +208,7 @@ function getZonedYearMonth(date: Date, timeZone: string): { year: number; month:
  * @param {string} timeZone - Zona horaria IANA.
  * @returns {Date} Instante UTC equivalente.
  */
-function zonedMidnightToUtc(year: number, month: number, day: number, timeZone: string): Date {
+export function zonedMidnightToUtc(year: number, month: number, day: number, timeZone: string): Date {
   const target = Date.UTC(year, month - 1, day);
   let candidate = new Date(target);
   const formatter = new Intl.DateTimeFormat('en-CA', {

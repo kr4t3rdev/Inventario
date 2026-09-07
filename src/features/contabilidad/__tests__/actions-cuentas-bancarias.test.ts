@@ -612,8 +612,9 @@ describe('Cuentas Bancarias Actions', () => {
         expect.objectContaining({
           where: expect.objectContaining({
             fechaReconciliacion: {
-              gte: new Date('2026-05-01T00:00:00.000Z'),
-              lt: new Date('2026-06-01T00:00:00.000Z'),
+              // Mayo en America/Havana está en DST (UTC-4): las medianoches civiles caen a las 04:00Z.
+              gte: new Date('2026-05-01T04:00:00.000Z'),
+              lt: new Date('2026-06-01T04:00:00.000Z'),
             },
           }),
         }),
@@ -622,8 +623,8 @@ describe('Cuentas Bancarias Actions', () => {
         expect.objectContaining({
           where: expect.objectContaining({
             fechaOperacion: {
-              gte: new Date('2026-05-01T00:00:00.000Z'),
-              lt: new Date('2026-06-01T00:00:00.000Z'),
+              gte: new Date('2026-05-01T04:00:00.000Z'),
+              lt: new Date('2026-06-01T04:00:00.000Z'),
             },
           }),
         }),

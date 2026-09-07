@@ -1,5 +1,7 @@
 import { ActionError } from '@/lib/server-actions';
 import { prisma } from '@/lib/prisma';
+import { getCivilDateRangeInTimeZone } from '@/features/contabilidad/domain/reconciled-result-calculator';
+import { ACCOUNTING_TIME_ZONE } from '@/lib/services/fecha-operacion-registry';
 
 interface BankAccountHistoryParams {
   tenantId: string;
@@ -48,7 +50,7 @@ const EXPENSE_MOVEMENT_TYPES = new Set([
 ]);
 
 /**
- * @description Crea un filtro Prisma semiabierto para fechas civiles UTC.
+ * @description Crea un filtro Prisma semiabierto para fechas civiles en la zona contable.
  * @param {string | null | undefined} fechaInicio - Fecha inicial inclusiva.
  * @param {string | null | undefined} fechaFin - Fecha final inclusiva para el usuario.
  * @returns {Record<string, Date>} Límites de fecha con inicio incluido y fin exclusivo.
@@ -57,19 +59,7 @@ function buildDateFilter(
   fechaInicio?: string | null,
   fechaFin?: string | null,
 ): Record<string, Date> {
-  const dateFilter: Record<string, Date> = {};
-  const DAY_MS = 86_400_000;
-
-  if (fechaInicio) {
-    dateFilter.gte = new Date(`${fechaInicio.slice(0, 10)}T00:00:00.000Z`);
-  }
-  if (fechaFin) {
-    dateFilter.lt = new Date(
-      new Date(`${fechaFin.slice(0, 10)}T00:00:00.000Z`).getTime() + DAY_MS,
-    );
-  }
-
-  return dateFilter;
+  return getCivilDateRangeInTimeZone(fechaInicio, fechaFin, ACCOUNTING_TIME_ZONE);
 }
 
 /**

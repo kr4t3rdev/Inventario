@@ -58,8 +58,22 @@ describe('buildMovementsReportQuery', () => {
     expect(query.values).toContain('account-1');
     expect(query.values).toContain('USD');
     expect(query.values).toContain('gasto');
-    expect(query.values).toContainEqual(new Date('2026-08-01T00:00:00.000Z'));
-    expect(query.values).toContainEqual(new Date('2026-09-01T00:00:00.000Z'));
+    // Límites zonalizados: agosto en America/Havana está en DST (UTC-4).
+    expect(query.values).toContainEqual(new Date('2026-08-01T04:00:00.000Z'));
+    expect(query.values).toContainEqual(new Date('2026-09-01T04:00:00.000Z'));
+  });
+
+  it('cierra el día civil en la zona contable, no en medianoche UTC', () => {
+    const query = buildMovementsReportQuery({
+      tenantId: 'tenant-1',
+      fechaInicio: '2026-01-15',
+      fechaFin: '2026-01-31',
+    });
+
+    // Enero en America/Havana está en hora estándar (UTC-5).
+    expect(query.values).toContainEqual(new Date('2026-01-15T05:00:00.000Z'));
+    expect(query.values).toContainEqual(new Date('2026-02-01T05:00:00.000Z'));
+    expect(query.values).not.toContainEqual(new Date('2026-01-15T00:00:00.000Z'));
   });
 
   it('prunes sources disabled by plan capabilities', () => {

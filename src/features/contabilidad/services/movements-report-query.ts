@@ -1,8 +1,9 @@
 import { Prisma } from '@/generated/prisma';
+import { zonedMidnightToUtc } from '@/features/contabilidad/domain/reconciled-result-calculator';
+import { ACCOUNTING_TIME_ZONE } from '@/lib/services/fecha-operacion-registry';
 
 const MAX_PAGE_SIZE = 100;
 export const MAX_EXPORT_SIZE = 10_000;
-const DAY_MS = 86_400_000;
 
 export interface MovementsReportQueryParams {
   tenantId: string;
@@ -50,23 +51,24 @@ const MOVEMENT_SOURCE_BY_TYPE: Readonly<Record<string, MovementSource>> = {
 };
 
 /**
- * @description Convierte una fecha civil en un límite UTC validado.
+ * @description Convierte una fecha civil en un límite con la zona contable (America/Havana), validado.
  * @param {string} value - Fecha civil YYYY-MM-DD.
  * @param {string} field - Nombre del filtro para el mensaje de error.
  * @param {boolean} exclusiveEnd - Si debe devolver el comienzo del día siguiente.
- * @returns {Date} Límite UTC listo para parametrizar.
+ * @returns {Date} Límite zonal listo para parametrizar.
  */
 function parseCivilDate(value: string, field: string, exclusiveEnd = false): Date {
   if (!/^\d{4}-\d{2}-\d{2}$/.test(value)) {
     throw new Error(`${field} debe tener formato YYYY-MM-DD`);
   }
 
-  const date = new Date(`${value}T00:00:00.000Z`);
-  if (Number.isNaN(date.getTime()) || date.toISOString().slice(0, 10) !== value) {
+  const reference = new Date(`${value}T00:00:00.000Z`);
+  if (Number.isNaN(reference.getTime()) || reference.toISOString().slice(0, 10) !== value) {
     throw new Error(`${field} no es una fecha civil válida`);
   }
 
-  return exclusiveEnd ? new Date(date.getTime() + DAY_MS) : date;
+  const [year, month, day] = value.split('-').map(Number);
+  return zonedMidnightToUtc(year, month, day + (exclusiveEnd ? 1 : 0), ACCOUNTING_TIME_ZONE);
 }
 
 /**
