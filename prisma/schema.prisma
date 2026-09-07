@@ -1367,6 +1367,7 @@ model CompraDocumento {
   cuentaPorPagarId  String?               @unique
   ordenCompraId     String?
   deletedAt         DateTime?
+  claveIdempotencia String?
   updatedById       String?
   createdAt         DateTime              @default(now())
   updatedAt         DateTime              @updatedAt
@@ -1378,6 +1379,7 @@ model CompraDocumento {
   items             CompraDocumentoItem[]
   ordenCompra       OrdenCompra?           @relation(fields: [tenantId, ordenCompraId], references: [tenantId, id], onDelete: NoAction, onUpdate: Cascade)
 
+  @@unique([tenantId, claveIdempotencia])
   @@index([tenantId])
   @@index([estado])
   @@index([proveedorId])
@@ -1455,11 +1457,12 @@ model Recepcion {
   tenantId          String
   fecha             DateTime        @default(now())
   creadoPorId       String?
-  claveIdempotencia String?         @unique
+  claveIdempotencia String?
   orden       OrdenCompra     @relation(fields: [tenantId, ordenId], references: [tenantId, id], onDelete: Cascade)
   tenant      Tenant          @relation(fields: [tenantId], references: [tenantId])
   items       RecepcionItem[]
 
+  @@unique([tenantId, claveIdempotencia])
   @@unique([tenantId, id])
   @@index([tenantId, ordenId])
 }

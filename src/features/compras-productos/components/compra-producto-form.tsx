@@ -1,6 +1,6 @@
 'use client'
 
-import { useCallback, useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { useFieldArray, useForm, useWatch } from 'react-hook-form'
@@ -82,6 +82,12 @@ interface CompraProductoFormProps {
 export function CompraProductoForm({ onSuccess }: CompraProductoFormProps) {
   const router = useRouter()
   const [isLoading, setIsLoading] = useState(false)
+  const submittingRef = useRef(false)
+  const [claveIdempotencia] = useState(() =>
+    typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function'
+      ? crypto.randomUUID()
+      : `${Date.now()}-${Math.random()}`,
+  )
   const anticiposFeatureEnabled = process.env.NEXT_PUBLIC_ENABLE_ANTICIPOS !== 'false'
 
   const { productos: products, isLoading: isLoadingProducts } = useProductos()
@@ -159,9 +165,19 @@ export function CompraProductoForm({ onSuccess }: CompraProductoFormProps) {
     let cancelled = false
     getOrdenesCompraAction({ page: 1, limit: 100 }).then((result) => {
       if (!cancelled && result.success) {
-        setOrdenesDisponibles(
-          (result.data?.items ?? []).filter((item: any) => ['PARCIAL', 'RECIBIDA'].includes(item.estado)),
-        )
+        setOrdenesDisponibles((result.data?.items ?? []).filter((orden: any) => {
+          if (!['PARCIAL', 'RECIBIDA'].includes(orden.estado)) return false
+          const recibidaPorProducto = new Map<string, number>()
+          for (const line of orden.items ?? []) {
+            recibidaPorProducto.set(
+              line.productoId,
+              (recibidaPorProducto.get(line.productoId) ?? 0) + Number(line.cantidadRecibida),
+            )
+          }
+          return [...recibidaPorProducto].some(([productoId, recibida]) =>
+            recibida > Number(orden.facturadoPorProducto?.[productoId] ?? 0),
+          )
+        }))
       }
     })
     return () => { cancelled = true }
@@ -228,16 +244,28 @@ export function CompraProductoForm({ onSuccess }: CompraProductoFormProps) {
     const orden = ordenesDisponibles.find((item) => item.id === ordenCompraId)
     if (!orden) return
     form.setValue('proveedorId', orden.proveedorId, { shouldValidate: true })
-    // Carga TODAS las líneas recepcionadas de la OC para facturarlas.
-    const lineasRecibidas = (orden.items ?? [])
-      .filter((line: any) => Number(line.cantidadRecibida) > 0)
-      .map((line: any) => ({
-        productoId: line.productoId,
-        cantidad: line.cantidadRecibida,
-        precioCosto: line.precioUnitario,
-      }))
+    const recibidas = new Map<string, { cantidad: number; costoTotal: number }>()
+    for (const line of orden.items ?? []) {
+      const cantidad = Number(line.cantidadRecibida)
+      const actual = recibidas.get(line.productoId) ?? { cantidad: 0, costoTotal: 0 }
+      actual.cantidad += cantidad
+      actual.costoTotal += cantidad * Number(line.precioUnitario)
+      recibidas.set(line.productoId, actual)
+    }
+    const lineasRecibidas = [...recibidas].flatMap(([productoId, recibida]) => {
+      const cantidad = recibida.cantidad - Number(orden.facturadoPorProducto?.[productoId] ?? 0)
+      if (cantidad <= 0) return []
+      return [{
+        productoId,
+        cantidad,
+        precioCosto: Math.round(recibida.costoTotal / recibida.cantidad),
+      }]
+    })
     if (lineasRecibidas.length > 0) {
       replace(lineasRecibidas)
+    } else {
+      form.setValue('ordenCompraId', '')
+      sileo.error({ title: 'La orden no tiene cantidades pendientes de facturar.' })
     }
   }
 
@@ -252,6 +280,8 @@ export function CompraProductoForm({ onSuccess }: CompraProductoFormProps) {
   }, [fields.length, remove])
 
   async function onSubmit(data: CompraDocumentoFormValues) {
+    if (submittingRef.current) return
+    submittingRef.current = true
     setIsLoading(true)
     try {
       const idempotencyKey =
@@ -270,7 +300,8 @@ export function CompraProductoForm({ onSuccess }: CompraProductoFormProps) {
         fechaVencimiento: data.fechaVencimiento || undefined,
         ordenCompraId: data.ordenCompraId || undefined,
         anticipoPagoId: data.formaPago === FORMA_PAGO_ANTICIPO_PAGO ? data.anticipoPagoId : undefined,
-        idempotencyKey: data.formaPago === FORMA_PAGO_ANTICIPO_PAGO ? idempotencyKey : undefined
+        idempotencyKey: data.formaPago === FORMA_PAGO_ANTICIPO_PAGO ? idempotencyKey : undefined,
+        claveIdempotencia,
       })
 
       if (!actionResult.success) throw new Error(actionResult.error?.message || 'Error')
@@ -303,6 +334,7 @@ export function CompraProductoForm({ onSuccess }: CompraProductoFormProps) {
       const errorMessage = error?.message || error?.data?.error || 'Hubo un error al registrar la compra.'
       sileo.error({ title: errorMessage })
     } finally {
+      submittingRef.current = false
       setIsLoading(false)
     }
   }

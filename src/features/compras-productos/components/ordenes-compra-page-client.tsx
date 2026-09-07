@@ -41,6 +41,8 @@ interface OrdenesCompraPageClientProps {
   canManageOrders?: boolean;
   /** Permite registrar recepciones (feature `recepciones`). */
   canReceive?: boolean;
+  title?: string;
+  showCreateForm?: boolean;
 }
 
 const EMPTY_LINE: DraftLine = { productoId: '', cantidad: '', precioUnitario: '' };
@@ -63,6 +65,8 @@ export function OrdenesCompraPageClient({
   orders,
   canManageOrders = true,
   canReceive = true,
+  title = 'Órdenes de compra',
+  showCreateForm = true,
 }: OrdenesCompraPageClientProps) {
   const router = useRouter();
   const [vendorId, setVendorId] = useState('');
@@ -70,6 +74,7 @@ export function OrdenesCompraPageClient({
   const [receiveOrderId, setReceiveOrderId] = useState('');
   const [receiveItemId, setReceiveItemId] = useState('');
   const [receiveQuantity, setReceiveQuantity] = useState('');
+  const [receiveKey, setReceiveKey] = useState(nuevaClaveIdempotencia);
   const [error, setError] = useState<string | null>(null);
   const [isPending, setIsPending] = useState(false);
 
@@ -121,7 +126,7 @@ export function OrdenesCompraPageClient({
     event.preventDefault();
     const ok = await run(() => registrarRecepcionAction({
       ordenId: receiveOrderId,
-      claveIdempotencia: nuevaClaveIdempotencia(),
+      claveIdempotencia: receiveKey,
       items: [{ ordenItemId: receiveItemId, cantidad: Number(receiveQuantity) }],
     }));
     // Solo se cierra el panel si la recepción fue aceptada; ante error se
@@ -130,18 +135,19 @@ export function OrdenesCompraPageClient({
       setReceiveOrderId('');
       setReceiveItemId('');
       setReceiveQuantity('');
+      setReceiveKey(nuevaClaveIdempotencia());
     }
   }
 
   return (
     <div className="space-y-6 p-6">
       <div>
-        <h1 className="text-2xl font-semibold">Órdenes de compra</h1>
+        <h1 className="text-2xl font-semibold">{title}</h1>
         <p className="text-sm text-muted-foreground">Solicita mercancía, recibe parcialmente y conserva el backorder.</p>
       </div>
       {error && <p role="alert" className="text-sm text-destructive">{error}</p>}
 
-      {canManageOrders && (
+      {canManageOrders && showCreateForm && (
         <form className="space-y-3 rounded-md border p-4" onSubmit={createOrder}>
           <div className="grid gap-3 md:grid-cols-4">
             <label className="space-y-1 text-sm">Proveedor
@@ -199,8 +205,9 @@ export function OrdenesCompraPageClient({
                     <Button size="sm" variant="outline" disabled={isPending} onClick={() => {
                       setReceiveOrderId(order.id);
                       const pendiente = order.items.find((item) => item.cantidadRecibida < item.cantidadPedida);
-                      setReceiveItemId(pendiente?.id ?? order.items[0]?.id ?? '');
-                      setReceiveQuantity('');
+                       setReceiveItemId(pendiente?.id ?? order.items[0]?.id ?? '');
+                       setReceiveQuantity('');
+                       setReceiveKey(nuevaClaveIdempotencia());
                     }}>Recibir</Button>
                   )}
                   {canManageOrders && !['RECIBIDA', 'CANCELADA'].includes(order.estado) && (
@@ -235,7 +242,10 @@ export function OrdenesCompraPageClient({
           </label>
           <div className="flex gap-2">
             <Button type="submit" disabled={isPending}>Guardar recepción</Button>
-            <Button type="button" variant="ghost" onClick={() => setReceiveOrderId('')}>Cerrar</Button>
+            <Button type="button" variant="ghost" onClick={() => {
+              setReceiveOrderId('');
+              setReceiveKey(nuevaClaveIdempotencia());
+            }}>Cerrar</Button>
           </div>
           {receiveCandidates.length === 0 && (
             <p className="text-sm text-muted-foreground">Esta orden no tiene líneas pendientes por recibir.</p>

@@ -120,6 +120,29 @@ describe('OrdenesCompraPageClient', () => {
     });
   });
 
+  it('reutiliza la misma clave al reintentar una recepción fallida', async () => {
+    vi.mocked(registrarRecepcionAction).mockResolvedValue({
+      success: false, error: { message: 'Respuesta ambigua' },
+    } as any);
+    render(<OrdenesCompraPageClient {...props} orders={[{
+      id: 'oc-1', estado: 'CONFIRMADA', proveedor: { nombre: 'Proveedor 1' },
+      items: [
+        { id: 'item-1', producto: { nombre: 'Producto 1' }, cantidadPedida: 10, cantidadRecibida: 0 },
+      ],
+      createdAt: new Date().toISOString(), total: 200,
+    }]} />);
+
+    fireEvent.click(screen.getByRole('button', { name: /recibir/i }));
+    fireEvent.change(screen.getByLabelText(/cantidad a recibir/i), { target: { value: '4' } });
+    fireEvent.click(screen.getByRole('button', { name: /guardar recepción/i }));
+    await waitFor(() => expect(registrarRecepcionAction).toHaveBeenCalledTimes(1));
+    const firstKey = vi.mocked(registrarRecepcionAction).mock.calls[0][0].claveIdempotencia;
+
+    fireEvent.click(screen.getByRole('button', { name: /guardar recepción/i }));
+    await waitFor(() => expect(registrarRecepcionAction).toHaveBeenCalledTimes(2));
+    expect(vi.mocked(registrarRecepcionAction).mock.calls[1][0].claveIdempotencia).toBe(firstKey);
+  });
+
   it('oculta crear y cancelar sin permiso de órdenes y recibir sin permiso de recepciones', () => {
     render(<OrdenesCompraPageClient {...props} canManageOrders={false} canReceive={false} orders={[{
       id: 'oc-1', estado: 'CONFIRMADA', proveedor: { nombre: 'Proveedor 1' },

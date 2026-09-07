@@ -109,6 +109,7 @@ export const createCompraServicioAction = withAction(withPeriodValidation(
       });
 
       allocationsResult = await applyAnticipoAllocations(tx, parsed.anticipos, {
+        tenantId,
         documentoDestinoId: compraServicio.compraServicioId,
         contexto: 'COMPRA_SERVICIO',
         usuarioId: user.userId || 'system',

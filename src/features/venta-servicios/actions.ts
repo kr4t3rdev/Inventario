@@ -166,6 +166,7 @@ export const createVentaServicioAction = withAction(withPeriodValidation(
       });
 
       allocationsResult = await applyAnticipoAllocations(tx, data.anticipos, {
+        tenantId,
         documentoDestinoId: ventaServicio.ventaServicioId,
         contexto: 'FACTURA_DIRECTA',
         usuarioId: user.userId || 'system',

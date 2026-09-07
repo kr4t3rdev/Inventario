@@ -427,6 +427,7 @@ export async function applyAnticipoAllocations(
   tx: Prisma.TransactionClient,
   allocations: AnticipoAllocation[],
   context: {
+    tenantId: string
     documentoDestinoId: string
     contexto: AnticipoContexto
     usuarioId: string
@@ -452,8 +453,8 @@ export async function applyAnticipoAllocations(
     }
 
     // Cargar anticipo con validaciones
-    const anticipo = await tx.anticipo.findUnique({
-      where: { anticipoId },
+    const anticipo = await tx.anticipo.findFirst({
+      where: { anticipoId, tenantId: context.tenantId },
       select: {
         anticipoId: true,
         tipo: true,
@@ -492,17 +493,38 @@ export async function applyAnticipoAllocations(
       )
     }
 
-    // Descontar saldo
-    const nuevoSaldo = saldoDisponible - montoAplicado
-
-    await tx.anticipo.update({
-      where: { anticipoId },
+    // El decremento condicional evita tanto acceso cruzado entre tenants como
+    // el lost update de dos aplicaciones concurrentes sobre el mismo anticipo.
+    const applied = await tx.anticipo.updateMany({
+      where: {
+        anticipoId,
+        tenantId: context.tenantId,
+        estado: 'RESERVADO',
+        saldoDisponible: { gte: montoAplicado },
+      },
       data: {
-        saldoDisponible: nuevoSaldo,
-        estado: nuevoSaldo <= 0.000001 ? 'EJECUTADO' : 'RESERVADO',
-        fechaEjecucion: nuevoSaldo <= 0.000001 ? new Date() : undefined,
+        saldoDisponible: { decrement: montoAplicado },
       },
     })
+    if (applied.count !== 1) {
+      throw createAnticipoWorkflowError(
+        409,
+        'COBERTURA_INSUFICIENTE',
+        `El anticipo ${anticipoId} cambió o ya no tiene saldo suficiente`
+      )
+    }
+
+    const actualizado = await tx.anticipo.findFirst({
+      where: { anticipoId, tenantId: context.tenantId },
+      select: { saldoDisponible: true },
+    })
+    const nuevoSaldo = Number(actualizado?.saldoDisponible ?? 0)
+    if (nuevoSaldo <= 0.000001) {
+      await tx.anticipo.updateMany({
+        where: { anticipoId, tenantId: context.tenantId },
+        data: { estado: 'EJECUTADO', fechaEjecucion: new Date() },
+      })
+    }
 
     // Crear movimiento de aplicación
     const movimiento = await tx.anticipoMovimiento.create({
@@ -513,7 +535,7 @@ export async function applyAnticipoAllocations(
         documentoDestinoId: context.documentoDestinoId,
         monto: montoAplicado,
         moneda: anticipo.moneda,
-        saldoAntes: saldoDisponible,
+        saldoAntes: nuevoSaldo + montoAplicado,
         saldoDespues: nuevoSaldo,
         usuarioId: context.usuarioId,
         idempotencyKey: context.idempotencyKey

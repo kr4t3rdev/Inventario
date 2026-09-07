@@ -7,6 +7,7 @@ export {
 } from './actions';
 export {
   getOrdenesCompraAction,
+  getOrdenesParaRecepcionAction,
   createOrdenCompraAction,
   confirmarOrdenCompraAction,
   registrarRecepcionAction,

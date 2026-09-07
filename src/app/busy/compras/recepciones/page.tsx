@@ -1,6 +1,6 @@
 import { getProductosAction } from '@/features/productos/actions';
 import { getVendorsAction } from '@/features/vendors';
-import { getOrdenesCompraAction } from '@/features/compras-productos/actions-oc';
+import { getOrdenesParaRecepcionAction } from '@/features/compras-productos/actions-oc';
 import { OrdenesCompraPageClient } from '@/features/compras-productos/components/ordenes-compra-page-client';
 import { getCurrentUser } from '@/lib/server-actions/get-current-user';
 import { hasFeature } from '@/lib/services/tenant-scope';
@@ -18,7 +18,7 @@ export default async function RecepcionesPage() {
     getCurrentUser(),
     getVendorsAction(),
     getProductosAction(),
-    getOrdenesCompraAction({ page: 1, limit: 50 }),
+    getOrdenesParaRecepcionAction({ page: 1, limit: 50 }),
   ]);
   if (!orders.success) {
     return (
@@ -39,6 +39,8 @@ export default async function RecepcionesPage() {
       orders={(orders.data?.items ?? []) as any[]}
       canManageOrders={canManage}
       canReceive={canReceive}
+      title="Recepciones de compra"
+      showCreateForm={false}
     />
   );
 }

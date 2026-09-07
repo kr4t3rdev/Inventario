@@ -15,7 +15,7 @@ const mockTx = {
     updateMany: vi.fn(),
     findMany: vi.fn(),
   },
-  ordenCompraItem: { create: vi.fn(), update: vi.fn(), findFirst: vi.fn() },
+  ordenCompraItem: { create: vi.fn(), update: vi.fn(), findFirst: vi.fn(), findMany: vi.fn() },
   recepcion: { create: vi.fn() },
   recepcionItem: { create: vi.fn() },
   producto: { findFirst: vi.fn() },
@@ -39,6 +39,7 @@ vi.mock('@/lib/prisma', () => ({
     ordenCompraItem: { create: vi.fn(), update: vi.fn() },
     recepcion: { create: vi.fn(), findFirst: vi.fn() },
     recepcionItem: { create: vi.fn() },
+    compraDocumento: { findMany: vi.fn() },
     reglaReabastecimiento: { findMany: vi.fn(), upsert: vi.fn(), delete: vi.fn() },
     stockUbicacion: { findMany: vi.fn() },
     receta: { findFirst: vi.fn() },
@@ -53,6 +54,7 @@ import {
   cancelarOrdenCompraAction,
   confirmarOrdenCompraAction,
   createOrdenCompraAction,
+  getOrdenesParaRecepcionAction,
   registrarRecepcionAction,
 } from '@/features/compras-productos/actions-oc';
 import { sugerirReabastecimientoAction, upsertReglaReabastecimientoAction } from '@/features/compras-productos/actions-reabastecimiento';
@@ -122,6 +124,9 @@ describe('Órdenes de compra y recepciones', () => {
     mockTx.ordenCompraItem.findFirst.mockResolvedValue({
       id: 'item-1', cantidadPedida: 100, cantidadRecibida: 60,
     });
+    mockTx.ordenCompraItem.findMany.mockResolvedValue([
+      { id: 'item-1', cantidadPedida: 100, cantidadRecibida: 60 },
+    ]);
     mockTx.ordenCompra.updateMany.mockResolvedValue({ count: 1 });
     mockTx.ordenCompra.update.mockResolvedValue({ estado: 'PARCIAL' });
 
@@ -256,6 +261,9 @@ describe('Órdenes de compra y recepciones', () => {
     mockTx.ordenCompraItem.findFirst.mockResolvedValue({
       id: 'item-1', cantidadPedida: 100, cantidadRecibida: 100,
     });
+    mockTx.ordenCompraItem.findMany.mockResolvedValue([
+      { id: 'item-1', cantidadPedida: 100, cantidadRecibida: 100 },
+    ]);
     mockTx.ordenCompra.updateMany.mockResolvedValue({ count: 1 });
     mockTx.ordenCompra.update.mockResolvedValue({ estado: 'RECIBIDA' });
 
@@ -284,6 +292,108 @@ describe('Órdenes de compra y recepciones', () => {
     expect(result.success).toBe(false);
     expect(result.error?.code).toBe('RECEPCION_EXCEDENTE');
     expect(mockTx.recepcion.create).not.toHaveBeenCalled();
+  });
+
+  it('cierra en RECIBIDA una OC multilínea aunque la otra línea fue recibida antes (lectura fresca)', async () => {
+    // F4: la línea 1 ya se recibió en otra recepción; recibir la línea 2
+    // debe cerrar la orden leyendo el estado real post-incremento.
+    mockTx.ordenCompra.findFirst.mockResolvedValue({
+      id: 'oc-1', tenantId: 'tenant-1', estado: 'PARCIAL',
+      items: [
+        { id: 'item-1', productoId: 'prod-1', cantidadPedida: 10, cantidadRecibida: 10, precioUnitario: 5, producto: { almacenId: 'alm-1' } },
+        { id: 'item-2', productoId: 'prod-2', cantidadPedida: 4, cantidadRecibida: 0, precioUnitario: 8, producto: { almacenId: 'alm-1' } },
+      ],
+    });
+    mockTx.recepcion.create.mockResolvedValue({ id: 'rec-9' });
+    mockTx.recepcionItem.create.mockResolvedValue({ id: 'ri-1' });
+    mockTx.ordenCompraItem.update.mockResolvedValue({});
+    mockTx.ordenCompraItem.findFirst.mockResolvedValue({
+      id: 'item-2', cantidadPedida: 4, cantidadRecibida: 4,
+    });
+    // Lectura fresca de TODAS las líneas tras los incrementos.
+    mockTx.ordenCompraItem.findMany.mockResolvedValue([
+      { id: 'item-1', cantidadPedida: 10, cantidadRecibida: 10 },
+      { id: 'item-2', cantidadPedida: 4, cantidadRecibida: 4 },
+    ]);
+    mockTx.ordenCompra.updateMany.mockResolvedValue({ count: 1 });
+
+    const result = await registrarRecepcionAction({
+      ordenId: 'oc-1',
+      items: [{ ordenItemId: 'item-2', cantidad: 4 }],
+    });
+
+    expect(result.success).toBe(true);
+    expect(mockTx.ordenCompraItem.findMany).toHaveBeenCalledWith(
+      expect.objectContaining({ where: expect.objectContaining({ ordenId: 'oc-1', tenantId: 'tenant-1' }) }),
+    );
+    expect(mockTx.ordenCompra.updateMany).toHaveBeenCalledWith(expect.objectContaining({
+      data: { estado: 'RECIBIDA' },
+    }));
+  });
+
+  it('procesa las líneas de recepción ordenadas por id para evitar deadlocks', async () => {
+    mockTx.ordenCompra.findFirst.mockResolvedValue({
+      id: 'oc-1', tenantId: 'tenant-1', estado: 'CONFIRMADA',
+      items: [
+        { id: 'item-b', productoId: 'prod-1', cantidadPedida: 10, cantidadRecibida: 0, precioUnitario: 5, producto: { almacenId: 'alm-1' } },
+        { id: 'item-a', productoId: 'prod-2', cantidadPedida: 5, cantidadRecibida: 0, precioUnitario: 8, producto: { almacenId: 'alm-1' } },
+      ],
+    });
+    mockTx.recepcion.create.mockResolvedValue({ id: 'rec-10' });
+    mockTx.recepcionItem.create.mockResolvedValue({ id: 'ri-x' });
+    mockTx.ordenCompraItem.update.mockResolvedValue({});
+    mockTx.ordenCompraItem.findFirst.mockResolvedValue({ cantidadPedida: 99, cantidadRecibida: 2 });
+    mockTx.ordenCompraItem.findMany.mockResolvedValue([]);
+    mockTx.ordenCompra.updateMany.mockResolvedValue({ count: 1 });
+
+    await registrarRecepcionAction({
+      ordenId: 'oc-1',
+      items: [
+        { ordenItemId: 'item-b', cantidad: 2 },
+        { ordenItemId: 'item-a', cantidad: 4 },
+      ],
+    });
+
+    const ordenLlamadas = mockTx.ordenCompraItem.update.mock.calls.map(
+      (call: any[]) => call[0].where.id,
+    );
+    expect(ordenLlamadas).toEqual(['item-a', 'item-b']);
+  });
+
+  it('la idempotencia de recepción se consulta por tenant y clave', async () => {
+    vi.mocked(prisma.recepcion.findFirst).mockResolvedValue({
+      id: 'rec-previa', tenantId: 'tenant-1',
+      orden: { id: 'oc-1', estado: 'PARCIAL' },
+    } as any);
+
+    const result = await registrarRecepcionAction({
+      ordenId: 'oc-1',
+      claveIdempotencia: 'misma-clave',
+      items: [{ ordenItemId: 'item-1', cantidad: 1 }],
+    });
+
+    expect(result.success).toBe(true);
+    expect(result.data?.yaRegistrada).toBe(true);
+    expect(prisma.recepcion.findFirst).toHaveBeenCalledWith(
+      expect.objectContaining({
+        where: { tenantId: 'tenant-1', claveIdempotencia: 'misma-clave' },
+      }),
+    );
+    expect(prisma.$transaction).not.toHaveBeenCalled();
+  });
+
+  it('lista órdenes desde Recepciones sin exigir la feature ordenes-compra', async () => {
+    vi.mocked(getCurrentUser).mockResolvedValue({
+      ...user,
+      role: 'regularUser',
+      planFeatures: { recepciones: true, 'ordenes-compra': false },
+    });
+    vi.mocked(prisma.ordenCompra.findMany).mockResolvedValue([] as any);
+    vi.mocked(prisma.ordenCompra.count).mockResolvedValue(0);
+
+    const result = await getOrdenesParaRecepcionAction({ page: 1, limit: 20 });
+
+    expect(result.success).toBe(true);
   });
 
   it('cancela una OC sin recepción total y no cancela una ya recibida', async () => {

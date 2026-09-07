@@ -25,6 +25,65 @@ const ORDEN_INCLUDE = {
   recepciones: { include: { items: true }, orderBy: { fecha: 'desc' as const } },
 } as const;
 
+interface OrdenesCompraQuery {
+  estado?: string;
+  page?: number;
+  limit?: number;
+}
+
+/**
+ * @description Lista las órdenes y agrega cantidades ya facturadas por producto.
+ * @param {string} tenantId - Tenant dueño de las órdenes.
+ * @param {OrdenesCompraQuery} input - Filtros y paginación.
+ * @returns {Promise<unknown>} Resultado paginado enriquecido.
+ */
+async function listarOrdenesCompra(tenantId: string, input: OrdenesCompraQuery = {}) {
+  const page = Math.max(1, input.page ?? 1);
+  const limit = Math.min(100, Math.max(1, input.limit ?? 20));
+  const where: Record<string, unknown> = { tenantId };
+  if (input.estado) where.estado = input.estado;
+
+  const [orders, total] = await Promise.all([
+    prisma.ordenCompra.findMany({
+      where,
+      include: ORDEN_INCLUDE,
+      orderBy: { createdAt: 'desc' },
+      skip: (page - 1) * limit,
+      take: limit,
+    }),
+    prisma.ordenCompra.count({ where }),
+  ]);
+  const orderIds = orders.map((order) => order.id);
+  const facturas = orderIds.length === 0
+    ? []
+    : await prisma.compraDocumento.findMany({
+        where: { tenantId, ordenCompraId: { in: orderIds }, deletedAt: null },
+        select: {
+          ordenCompraId: true,
+          items: { select: { productoId: true, cantidad: true } },
+        },
+      });
+  const facturado = new Map<string, Record<string, number>>();
+  for (const factura of facturas) {
+    if (!factura.ordenCompraId) continue;
+    const porProducto = facturado.get(factura.ordenCompraId) ?? {};
+    for (const item of factura.items) {
+      porProducto[item.productoId] = (porProducto[item.productoId] ?? 0) + item.cantidad;
+    }
+    facturado.set(factura.ordenCompraId, porProducto);
+  }
+
+  return {
+    items: orders.map((order) => ({
+      ...order,
+      facturadoPorProducto: facturado.get(order.id) ?? {},
+    })),
+    total,
+    page,
+    limit,
+  };
+}
+
 /**
  * @description Lista órdenes de compra del tenant con sus líneas y recepciones.
  * @param {{ estado?: string; page?: number; limit?: number }} input - Filtros y paginación.
@@ -38,22 +97,21 @@ export const getOrdenesCompraAction = withAction(
   ) => {
     const tenantId = requireTenant(user);
     requireFeature(user, 'ordenes-compra', 'órdenes de compra');
-    const page = Math.max(1, input.page ?? 1);
-    const limit = Math.min(100, Math.max(1, input.limit ?? 20));
-    const where: Record<string, unknown> = { tenantId };
-    if (input.estado) where.estado = input.estado;
+    return listarOrdenesCompra(tenantId, input);
+  },
+);
 
-    const [items, total] = await Promise.all([
-      prisma.ordenCompra.findMany({
-        where,
-        include: ORDEN_INCLUDE,
-        orderBy: { createdAt: 'desc' },
-        skip: (page - 1) * limit,
-        take: limit,
-      }),
-      prisma.ordenCompra.count({ where }),
-    ]);
-    return { items, total, page, limit };
+/**
+ * @description Lista órdenes desde la pantalla de recepciones usando su feature.
+ * @param {OrdenesCompraQuery} input - Filtros y paginación.
+ * @param {AuthenticatedUser} user - Usuario autenticado.
+ * @returns {Promise<unknown>} Órdenes disponibles para recepción.
+ */
+export const getOrdenesParaRecepcionAction = withAction(
+  async (input: OrdenesCompraQuery = {}, user: AuthenticatedUser) => {
+    const tenantId = requireTenant(user);
+    requireFeature(user, 'recepciones', 'recepciones de compra');
+    return listarOrdenesCompra(tenantId, input);
   },
 );
 
@@ -207,7 +265,12 @@ export const registrarRecepcionAction = withAction(
       }
 
       const orderItems = new Map(orden.items.map((item: any) => [item.id, item]));
-      for (const inputItem of parsed.items) {
+      // Orden determinista por id de línea: dos recepciones multilínea con
+      // el mismo conjunto en distinto orden no pueden interbloquearse.
+      const itemsOrdenados = [...parsed.items].sort((a, b) =>
+        a.ordenItemId.localeCompare(b.ordenItemId),
+      );
+      for (const inputItem of itemsOrdenados) {
         const orderItem = orderItems.get(inputItem.ordenItemId);
         if (!orderItem) throw new ActionError('Línea de orden no encontrada', 'NOT_FOUND');
         const pendiente = orderItem.cantidadPedida - orderItem.cantidadRecibida;
@@ -227,7 +290,7 @@ export const registrarRecepcionAction = withAction(
           claveIdempotencia: parsed.claveIdempotencia || null,
         },
       });
-      for (const inputItem of parsed.items) {
+      for (const inputItem of itemsOrdenados) {
         const orderItem = orderItems.get(inputItem.ordenItemId);
         await tx.recepcionItem.create({
           data: {
@@ -243,8 +306,7 @@ export const registrarRecepcionAction = withAction(
       // Los incrementos se serializan por lock de fila en PostgreSQL; tras
       // cada incremento se relee la línea dentro de la transacción y, si el
       // acumulado excede lo pedido, se revierte todo el lote.
-      const recibidasActualizadas = new Map<string, number>();
-      for (const [index, inputItem] of parsed.items.entries()) {
+      for (const [index, inputItem] of itemsOrdenados.entries()) {
         const orderItem = orderItems.get(inputItem.ordenItemId);
         const producto = orderItem.producto;
         await tx.ordenCompraItem.update({
@@ -261,7 +323,6 @@ export const registrarRecepcionAction = withAction(
             'RECEPCION_EXCEDENTE',
           );
         }
-        recibidasActualizadas.set(orderItem.id, linea.cantidadRecibida);
         await upsertStockUbicacion(tx, {
           tenantId,
           productoId: orderItem.productoId,
@@ -284,10 +345,16 @@ export const registrarRecepcionAction = withAction(
         });
       }
 
-      const finalizado = orden.items.every((item: any) => {
-        const recibida = recibidasActualizadas.get(item.id) ?? item.cantidadRecibida;
-        return recibida >= item.cantidadPedida;
+      // El estado final se decide leyendo TODAS las líneas de nuevo dentro de
+      // la transacción: así las recepciones concurrentes en líneas distintas
+      // convergen a RECIBIDA en lugar de quedar atascadas en PARCIAL.
+      const itemsFinales = await tx.ordenCompraItem.findMany({
+        where: { ordenId: orden.id, tenantId },
+        select: { cantidadPedida: true, cantidadRecibida: true },
       });
+      const finalizado = itemsFinales.every(
+        (item: any) => item.cantidadRecibida >= item.cantidadPedida,
+      );
       const estado = finalizado ? 'RECIBIDA' : 'PARCIAL';
       // CAS: si la orden fue cancelada concurrentemente, se revierte la
       // recepción completa en lugar de dejar stock sin orden válida.

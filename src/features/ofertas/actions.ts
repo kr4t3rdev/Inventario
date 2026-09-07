@@ -208,6 +208,7 @@ export const facturarOfertaAction = withAction(async (input: FacturarOfertaInput
       await applyAnticipoAllocations(tx, [{
       anticipoId: parsed.anticipoCobroId, montoAplicado: Number(oferta.total)
       }], {
+        tenantId,
         documentoDestinoId: workflow.facturaId,
         contexto: 'FACTURA_OFERTA',
         usuarioId: user.userId,

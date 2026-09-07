@@ -87,202 +87,240 @@ export const createCompraProductoAction = withAction(async (input: CreateCompraP
   const parsed = createCompraProductoSchema.parse(input);
   const tenantId = requireTenant(user);
 
-  // Validar proveedor
-  const proveedor = await prisma.vendor.findFirst({ where: { vendorId: parsed.proveedorId, tenantId } });
-  if (!proveedor) throw new ActionError('Proveedor no encontrado', 'NOT_FOUND');
-
-  let ordenVinculada: any = null;
-  const facturadoPorProducto = new Map<string, number>();
-  if (parsed.ordenCompraId) {
-    requireFeature(user, 'ordenes-compra', 'facturar órdenes de compra');
-    ordenVinculada = await prisma.ordenCompra.findFirst({
-      where: { id: parsed.ordenCompraId, tenantId },
-      include: { items: { include: { recepciones: true } } },
-    });
-    if (!ordenVinculada) throw new ActionError('Orden de compra no encontrada', 'NOT_FOUND');
-    if (!['PARCIAL', 'RECIBIDA'].includes(ordenVinculada.estado)) {
-      throw new ActionError(
-        'La orden debe tener al menos una recepción antes de facturarse',
-        'ORDEN_SIN_RECEPCION',
-      );
-    }
-    if (ordenVinculada.proveedorId !== parsed.proveedorId) {
-      throw new ActionError('El proveedor no coincide con la orden de compra', 'VALIDATION_ERROR');
-    }
-    // Cantidades ya facturadas de esta OC (facturas no eliminadas).
-    const facturasPrevias = await prisma.compraDocumento.findMany({
-      where: { ordenCompraId: parsed.ordenCompraId, tenantId, deletedAt: null },
-      select: { items: { select: { productoId: true, cantidad: true } } },
-    });
-    for (const factura of facturasPrevias) {
-      for (const linea of factura.items) {
-        facturadoPorProducto.set(
-          linea.productoId,
-          (facturadoPorProducto.get(linea.productoId) ?? 0) + linea.cantidad,
-        );
-      }
-    }
-  }
-
-  // Cantidades solicitadas en esta factura, agregadas por producto para que
-  // líneas repetidas no eludan el límite recibido.
-  const solicitadoPorProducto = new Map<string, number>();
-  for (const item of parsed.items) {
-    solicitadoPorProducto.set(
-      item.productoId,
-      (solicitadoPorProducto.get(item.productoId) ?? 0) + item.cantidad,
-    );
-  }
-  if (ordenVinculada) {
-    for (const [productoId, solicitado] of solicitadoPorProducto) {
-      const ordenItems = ordenVinculada.items.filter((orderItem: any) => orderItem.productoId === productoId);
-      const recibido = ordenItems.reduce(
-        (sum: number, orderItem: any) => sum + orderItem.recepciones.reduce(
-          (lineSum: number, reception: any) => lineSum + reception.cantidad,
-          0,
-        ),
-        0,
-      );
-      const disponibleAFacturar = recibido - (facturadoPorProducto.get(productoId) ?? 0);
-      if (ordenItems.length === 0 || solicitado > disponibleAFacturar) {
-        throw new ActionError(
-          `La factura excede la cantidad pendiente de facturar para el producto ${productoId} (disponible: ${Math.max(disponibleAFacturar, 0)})`,
-          'FACTURA_EXCEDE_RECEPCION',
-        );
-      }
-    }
-  }
-
-  // Validar productos
-  const items: any[] = [];
-  for (const item of parsed.items) {
-    const producto = await prisma.producto.findFirst({ where: { id: item.productoId, tenantId } });
-    if (!producto) throw new ActionError(`Producto ${item.productoId} no encontrado`, 'NOT_FOUND');
-
-    const stockAntes = await getStockTotalProducto(prisma, {
-      productoId: item.productoId,
-    });
-
-    // Factura vinculada: la recepción ya incorporó estas unidades al stock.
-    // Solo se ajusta el CPP por la diferencia de precio, prorrateado sobre el
-    // stock restante; si ya se vendió todo, el costo se mantiene.
-    const nuevoPrecioCosto = ordenVinculada
-      ? {
-          precioCostoNuevo:
-            stockAntes > 0
-              ? Math.round(
-                  producto.precioCosto +
-                    ((item.precioCosto - producto.precioCosto) * item.cantidad) / stockAntes,
-                )
-              : producto.precioCosto,
-          metodoCosto: 'AJUSTE_FACTURA',
-        }
-      : calcularPrecioCostoCompra({
-          stockAntes,
-          precioCostoActual: producto.precioCosto,
-          cantidadCompra: item.cantidad,
-          costoUnitario: item.precioCosto,
-        });
-
-    items.push({ producto, cantidad: item.cantidad, precioCosto: item.precioCosto, nuevoPrecioCosto });
-  }
-
-  const total = items.reduce((sum, i) => sum + i.precioCosto * i.cantidad, 0);
-
-  const resultado = await prisma.$transaction(async (tx: any) => {
-    const compra = await tx.compraDocumento.create({
-      data: {
-        tenantId, proveedorId: parsed.proveedorId, numeroFactura: parsed.numeroFactura || '',
-        facturaUrl: parsed.facturaUrl || '', formaPago: parsed.formaPago,
-        estado: parsed.estado, total, descripcion: parsed.descripcionCompra || null,
-        ordenCompraId: parsed.ordenCompraId,
-        fechaCompra: new Date(),
-        tipoOperacion: 'REGULAR',
-      },
-    });
-
-    for (const i of items) {
-      await tx.compraDocumentoItem.create({
-        data: {
-          tenantId, compraDocumentoId: compra.compraDocumentoId, productoId: i.producto.id, cantidad: i.cantidad, precioUnitario: i.precioCosto, totalLinea: i.precioCosto * i.cantidad,
-        },
-      });
-    }
-
-    const resultado = await tx.compraDocumento.findUnique({
-      where: { compraDocumentoId: compra.compraDocumentoId },
+  if (parsed.claveIdempotencia) {
+    const existente = await prisma.compraDocumento.findFirst({
+      where: { tenantId, claveIdempotencia: parsed.claveIdempotencia },
       include: COMPRA_INCLUDE,
     });
+    if (existente) return existente;
+  }
 
-    // Actualizar stock y precios
-    for (const [idx, item] of items.entries()) {
-      const oldPrecioCosto = item.producto.precioCosto;
+  const proveedor = await prisma.vendor.findFirst({ where: { vendorId: parsed.proveedorId, tenantId } });
+  if (!proveedor) throw new ActionError('Proveedor no encontrado', 'NOT_FOUND');
+  if (parsed.ordenCompraId) {
+    requireFeature(user, 'ordenes-compra', 'facturar órdenes de compra');
+  }
 
-      await tx.producto.update({
-        where: { id: item.producto.id },
+  const productos = new Map<string, any>();
+  const agregados = new Map<string, { cantidad: number; costoTotal: number }>();
+  for (const item of parsed.items) {
+    if (!productos.has(item.productoId)) {
+      const producto = await prisma.producto.findFirst({
+        where: { id: item.productoId, tenantId },
+      });
+      if (!producto) {
+        throw new ActionError(`Producto ${item.productoId} no encontrado`, 'NOT_FOUND');
+      }
+      productos.set(item.productoId, producto);
+    }
+    const actual = agregados.get(item.productoId) ?? { cantidad: 0, costoTotal: 0 };
+    actual.cantidad += item.cantidad;
+    actual.costoTotal += item.cantidad * item.precioCosto;
+    agregados.set(item.productoId, actual);
+  }
+
+  const total = parsed.items.reduce((sum, item) => sum + item.precioCosto * item.cantidad, 0);
+
+  try {
+    const resultado = await prisma.$transaction(async (tx: any) => {
+      let ordenVinculada: any = null;
+      const preciosOc = new Map<string, number>();
+
+      if (parsed.ordenCompraId) {
+        // Un UPDATE neutro toma el lock de la fila y serializa facturas y
+        // recepciones concurrentes antes de verificar cantidades disponibles.
+        const locked = await tx.ordenCompra.updateMany({
+          where: { id: parsed.ordenCompraId, tenantId },
+          data: { updatedAt: new Date() },
+        });
+        if (locked.count === 0) {
+          throw new ActionError('Orden de compra no encontrada', 'NOT_FOUND');
+        }
+
+        ordenVinculada = await tx.ordenCompra.findFirst({
+          where: { id: parsed.ordenCompraId, tenantId },
+          include: { items: { include: { recepciones: true } } },
+        });
+        if (!ordenVinculada) {
+          throw new ActionError('Orden de compra no encontrada', 'NOT_FOUND');
+        }
+        if (!['PARCIAL', 'RECIBIDA'].includes(ordenVinculada.estado)) {
+          throw new ActionError(
+            'La orden debe tener al menos una recepción antes de facturarse',
+            'ORDEN_SIN_RECEPCION',
+          );
+        }
+        if (ordenVinculada.proveedorId !== parsed.proveedorId) {
+          throw new ActionError('El proveedor no coincide con la orden de compra', 'VALIDATION_ERROR');
+        }
+
+        const facturadoPorProducto = new Map<string, number>();
+        const facturasPrevias = await tx.compraDocumento.findMany({
+          where: { ordenCompraId: parsed.ordenCompraId, tenantId, deletedAt: null },
+          select: { items: { select: { productoId: true, cantidad: true } } },
+        });
+        for (const factura of facturasPrevias) {
+          for (const linea of factura.items) {
+            facturadoPorProducto.set(
+              linea.productoId,
+              (facturadoPorProducto.get(linea.productoId) ?? 0) + linea.cantidad,
+            );
+          }
+        }
+
+        for (const [productoId, solicitado] of agregados) {
+          const ordenItems = ordenVinculada.items.filter(
+            (orderItem: any) => orderItem.productoId === productoId,
+          );
+          let recibido = 0;
+          let costoRecibido = 0;
+          for (const orderItem of ordenItems) {
+            const recibidoLinea = orderItem.recepciones.reduce(
+              (sum: number, recepcion: any) => sum + recepcion.cantidad,
+              0,
+            );
+            recibido += recibidoLinea;
+            costoRecibido += recibidoLinea * orderItem.precioUnitario;
+          }
+          const disponible = recibido - (facturadoPorProducto.get(productoId) ?? 0);
+          if (ordenItems.length === 0 || solicitado.cantidad > disponible) {
+            const nombre = productos.get(productoId)?.nombre ?? productoId;
+            throw new ActionError(
+              `La factura excede la cantidad pendiente para ${nombre} (disponible: ${Math.max(disponible, 0)})`,
+              'FACTURA_EXCEDE_RECEPCION',
+            );
+          }
+          preciosOc.set(productoId, recibido > 0 ? costoRecibido / recibido : 0);
+        }
+      }
+
+      const ajustes = new Map<string, any>();
+      for (const [productoId, agregado] of agregados) {
+        const producto = productos.get(productoId);
+        const stockAntes = await getStockTotalProducto(tx, { productoId });
+        const precioFactura = agregado.costoTotal / agregado.cantidad;
+        const nuevoPrecioCosto = ordenVinculada
+          ? {
+              precioCostoNuevo: stockAntes > 0
+                ? Math.round(
+                    producto.precioCosto +
+                      ((precioFactura - (preciosOc.get(productoId) ?? precioFactura)) *
+                        Math.min(agregado.cantidad, stockAntes)) /
+                        stockAntes,
+                  )
+                : producto.precioCosto,
+              metodoCosto: 'AJUSTE_FACTURA',
+            }
+          : calcularPrecioCostoCompra({
+              stockAntes,
+              precioCostoActual: producto.precioCosto,
+              cantidadCompra: agregado.cantidad,
+              costoUnitario: precioFactura,
+            });
+        ajustes.set(productoId, { producto, stockAntes, nuevoPrecioCosto, ...agregado });
+      }
+
+      const compra = await tx.compraDocumento.create({
         data: {
-          precioCosto: item.nuevoPrecioCosto.precioCostoNuevo,
+          tenantId,
+          proveedorId: parsed.proveedorId,
+          numeroFactura: parsed.numeroFactura || '',
+          facturaUrl: parsed.facturaUrl || '',
+          formaPago: parsed.formaPago,
+          estado: parsed.estado,
+          total,
+          descripcion: parsed.descripcionCompra || null,
+          ordenCompraId: parsed.ordenCompraId,
+          claveIdempotencia: parsed.claveIdempotencia || null,
+          fechaCompra: new Date(),
+          tipoOperacion: 'REGULAR',
         },
       });
 
-      // Una recepción ya incrementó stock y kardex. La factura vinculada solo
-      // documenta la entrada y nunca debe duplicar el movimiento físico.
+      for (const item of parsed.items) {
+        await tx.compraDocumentoItem.create({
+          data: {
+            tenantId,
+            compraDocumentoId: compra.compraDocumentoId,
+            productoId: item.productoId,
+            cantidad: item.cantidad,
+            precioUnitario: item.precioCosto,
+            totalLinea: item.precioCosto * item.cantidad,
+          },
+        });
+      }
+
+      const compraCompleta = await tx.compraDocumento.findUnique({
+        where: { compraDocumentoId: compra.compraDocumentoId },
+        include: COMPRA_INCLUDE,
+      });
+
+      for (const ajuste of ajustes.values()) {
+        await tx.producto.update({
+          where: { id: ajuste.producto.id },
+          data: { precioCosto: ajuste.nuevoPrecioCosto.precioCostoNuevo },
+        });
+
+        if (ajuste.nuevoPrecioCosto.precioCostoNuevo !== ajuste.producto.precioCosto) {
+          try {
+            await recordCostChange(tx, {
+              productoId: ajuste.producto.id,
+              oldPrecioCosto: ajuste.producto.precioCosto,
+              newPrecioCosto: ajuste.nuevoPrecioCosto.precioCostoNuevo,
+              oldPrecioVenta: ajuste.producto.precioVenta,
+              newPrecioVenta: ajuste.producto.precioVenta,
+              reason: CostChangeReason.RESTOCK,
+              changedBy: user.userId || 'system',
+              notes: `Compra x${ajuste.cantidad} - Factura ${parsed.numeroFactura || 'N/A'}`,
+            });
+          } catch (error) {
+            console.error('Error registrando cost history (no bloqueante):', error);
+          }
+        }
+      }
+
+      // Una factura vinculada documenta lo recibido y no crea otra entrada.
+      for (const [idx, item] of parsed.items.entries()) {
+        const producto = productos.get(item.productoId);
       if (!parsed.ordenCompraId) {
         await upsertStockUbicacion(tx, {
-          tenantId, productoId: item.producto.id, tipoUbicacion: 'almacen',
-          ubicacionId: item.producto.almacenId, modo: 'increment', delta: item.cantidad,
+            tenantId,
+            productoId: item.productoId,
+            tipoUbicacion: 'almacen',
+            ubicacionId: producto.almacenId,
+            modo: 'increment',
+            delta: item.cantidad,
         });
 
         await registrarMovimiento(tx, {
           tenantId,
-          productoId: item.producto.id,
+            productoId: item.productoId,
           tipoOrigen: 'COMPRA',
           origenId: compra.compraDocumentoId,
           tipoUbicacion: 'almacen',
-          ubicacionId: item.producto.almacenId,
+            ubicacionId: producto.almacenId,
           cantidad: item.cantidad,
-          costoUnitario: item.precioCosto,
+            costoUnitario: item.precioCosto,
           secuencia: `ITEM-${idx}`,
           creadoPorId: user.userId,
         });
       }
-
-      // Registrar cambio de costo en historial
-      if (item.nuevoPrecioCosto.precioCostoNuevo !== oldPrecioCosto) {
-        try {
-          await recordCostChange(
-            tx as any,
-            {
-              productoId: item.producto.id,
-              oldPrecioCosto,
-              newPrecioCosto: item.nuevoPrecioCosto.precioCostoNuevo,
-              oldPrecioVenta: item.producto.precioVenta,
-              newPrecioVenta: item.producto.precioVenta,
-              reason: CostChangeReason.RESTOCK,
-              changedBy: user.userId || 'system',
-              notes: `Compra x${item.cantidad} - Factura ${parsed.numeroFactura || 'N/A'}`,
-            },
-          )
-        } catch (_chErr) {
-          console.error('Error registrando cost history (no bloqueante):', _chErr);
-        }
       }
-    }
 
-    // ── Crear GastoCompra (registro contable del gasto) ──
-    // Se crea para PAGO_COMPLETO y PAGO_PARCIAL.
-    // La reconciliación (ReconciliacionGasto) se hace desde Contabilidad.
-    if (parsed.formaPago === 'PAGO_COMPLETO' || parsed.formaPago === 'PAGO_PARCIAL') {
+      if (parsed.formaPago === 'PAGO_COMPLETO' || parsed.formaPago === 'PAGO_PARCIAL') {
       const now = new Date();
       const periodo = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
+        const primeraLinea = parsed.items[0];
 
       const gastoCompra = await tx.gastoCompra.create({
         data: {
           tenantId,
-          productoId: items[0].producto.id,
+            productoId: primeraLinea.productoId,
           vendorId: parsed.proveedorId,
-          cantidad: items.reduce((s, i) => s + i.cantidad, 0),
-          precioUnitario: Math.round(total / items.reduce((s, i) => s + i.cantidad, 0)),
+            cantidad: parsed.items.reduce((sum, item) => sum + item.cantidad, 0),
+            precioUnitario: Math.round(
+              total / parsed.items.reduce((sum, item) => sum + item.cantidad, 0),
+            ),
           total,
           fechaCompra: now,
           descripcion: `Compra #${compra.compraDocumentoId}`,
@@ -291,13 +329,11 @@ export const createCompraProductoAction = withAction(async (input: CreateCompraP
         },
       });
 
-      // Vincular el GastoCompra al CompraDocumento
       await tx.compraDocumento.update({
         where: { compraDocumentoId: compra.compraDocumentoId },
         data: { gastoCompraId: gastoCompra.gastoCompraId },
       });
 
-      // ── PAGO_PARCIAL: Crear CuentaPorPagar (con gastoCompraId linkeado) ──
       if (parsed.formaPago === 'PAGO_PARCIAL') {
         const cxp = await tx.cuentaPorPagar.create({
           data: {
@@ -319,24 +355,35 @@ export const createCompraProductoAction = withAction(async (input: CreateCompraP
           data: { cuentaPorPagarId: cxp.cuentaPorPagarId },
         });
       }
-    }
+      }
 
-    // Anticipo
-    if (parsed.formaPago === FORMA_PAGO_ANTICIPO_PAGO && parsed.anticipoPagoId) {
+      if (parsed.formaPago === FORMA_PAGO_ANTICIPO_PAGO && parsed.anticipoPagoId) {
       const hasAnticipo = await hasUnrevertedAnticipoExecution(tx, parsed.idempotencyKey!);
       if (!hasAnticipo) {
         await applyAnticipoAllocations(tx, [{ anticipoId: parsed.anticipoPagoId, montoAplicado: total }], {
+          tenantId,
           documentoDestinoId: compra.compraDocumentoId, contexto: 'COMPRA_PRODUCTO',
+          idempotencyKey: parsed.idempotencyKey,
           usuarioId: user.userId, observaciones: `Pago de compra ${compra.compraDocumentoId}`,
         });
       }
-    }
+      }
 
+      return compraCompleta;
+    });
+
+    revalidatePath('/busy/compras-productos');
     return resultado;
-  });
-
-  revalidatePath('/busy/compras-productos');
-  return resultado;
+  } catch (error: unknown) {
+    if ((error as { code?: string })?.code === 'P2002' && parsed.claveIdempotencia) {
+      const existente = await prisma.compraDocumento.findFirst({
+        where: { tenantId, claveIdempotencia: parsed.claveIdempotencia },
+        include: COMPRA_INCLUDE,
+      });
+      if (existente) return existente;
+    }
+    throw error;
+  }
 });
 
 export const updateCompraProductoAction = withAction(async (input: UpdateCompraProductoInput, user: AuthenticatedUser) => {

@@ -20,6 +20,9 @@ export const createCompraProductoSchema = z.object({
   fechaVencimiento: z.string().optional(),
   anticipoPagoId: z.string().optional(),
   idempotencyKey: z.string().optional(),
+  // Clave única por tenant que hace seguro reintentar el alta de la factura
+  // tras un timeout: el segundo intento devuelve el documento ya registrado.
+  claveIdempotencia: z.string().min(8).max(128).optional(),
   items: z.array(itemSchema).min(1, 'Debe incluir al menos un producto'),
 }).refine(
   (data) => {
