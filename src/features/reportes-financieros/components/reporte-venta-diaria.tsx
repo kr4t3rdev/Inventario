@@ -17,6 +17,7 @@ import { exportToCsv } from "@/lib/export-utils"
 import { flattenVentas } from "@/lib/ventas-utils"
 import { cn } from "@/lib/utils"
 import { getProductDisplayIdentifier } from "@/lib/product-display-utils"
+import { sumarServiciosPorMoneda } from "@/features/reportes-financieros/lib/venta-servicios-moneda"
 import jsPDF from 'jspdf'
 import 'jspdf-autotable'
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, AreaChart, Area } from "recharts"
@@ -91,7 +92,13 @@ export function ReporteVentaDiaria() {
     const totalServicios = serviciosDelDia.length
     const totalProductosVendidos = ventasDelDia.reduce((sum, venta) => sum + venta.cantidad, 0)
     const ingresosBrutosVentas = ventasDelDia.reduce((sum, venta) => sum + (venta.totalLinea || 0), 0)
-    const ingresosBrutosServicios = serviciosDelDia.reduce((sum, servicio) => sum + servicio.total, 0)
+    // Los productos se valoran en moneda funcional (CUP): solo se suman los
+    // servicios en CUP para no mezclar USD/MLC en el total de ingresos.
+    const serviciosPorMoneda = sumarServiciosPorMoneda(serviciosDelDia)
+    const ingresosBrutosServicios = serviciosPorMoneda['CUP'] ?? 0
+    const ingresosServiciosExtranjeros = Object.fromEntries(
+      Object.entries(serviciosPorMoneda).filter(([moneda]) => moneda !== 'CUP')
+    )
     const ingresosBrutos = ingresosBrutosVentas + ingresosBrutosServicios
     const descuentos = ventasDelDia.reduce((sum, venta) => sum + (venta.descuento || 0), 0)
     const ingresosNetos = ingresosBrutos - descuentos
@@ -104,6 +111,7 @@ export function ReporteVentaDiaria() {
       totalServicios,
       totalProductosVendidos,
       ingresosBrutos,
+      ingresosServiciosExtranjeros,
       descuentos,
       ingresosNetos,
       costoTotal,
@@ -517,6 +525,14 @@ export function ReporteVentaDiaria() {
             <p className="text-xs text-muted-foreground">
               Bruto: ${estadisticasDelDia.ingresosBrutos.toLocaleString()}
             </p>
+            {Object.keys(estadisticasDelDia.ingresosServiciosExtranjeros).length > 0 && (
+              <p className="text-xs text-muted-foreground">
+                Servicios en {Object.entries(estadisticasDelDia.ingresosServiciosExtranjeros)
+                  .map(([moneda, total]) => `${moneda}: $${total.toLocaleString()}`)
+                  .join(' · ')}{' '}
+                (no incluidos)
+              </p>
+            )}
           </CardContent>
         </Card>
         </AnimatedCard>
