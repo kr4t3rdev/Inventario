@@ -48,6 +48,44 @@ export function setViolationReporter(next: ViolationReporter | null): void {
 }
 
 /**
+ * @description Colector en proceso de violaciones (modo shadow). Acumula
+ * reportes para exportarlos como reporte consolidado (AS-04 T1) sin depender
+ * de logging. No es thread-safe ni pensado para producción de alto volumen;
+ * el volumen del proyecto lo hace suficiente.
+ */
+export interface ViolationCollector {
+  /** @description Violaciones acumuladas hasta el momento. */
+  reports: ViolationReport[];
+  /** @description Instala el collector como reportero y lo limpia. */
+  install: () => void;
+  /** @description Devuelve las violaciones y resetea el buffer. */
+  flush: () => ViolationReport[];
+}
+
+/**
+ * @description Crea un collector de violaciones y lo activa como reportero.
+ * @returns {ViolationCollector} Collector listo para flush.
+ */
+export function createViolationCollector(): ViolationCollector {
+  const reports: ViolationReport[] = [];
+  const collector: ViolationCollector = {
+    reports,
+    install() {
+      setViolationReporter((report) => {
+        reports.push(report);
+      });
+    },
+    flush() {
+      const snapshot = reports.slice();
+      reports.length = 0;
+      return snapshot;
+    },
+  };
+  collector.install();
+  return collector;
+}
+
+/**
  * @description Emite un reporte de violación al reportero activo.
  * @param {ViolationReport} report - Reporte a emitir.
  */
@@ -262,19 +300,6 @@ export function applyTenantScope<TArgs>(
 }
 
 /**
- * @description Detecta si un where menciona tenantId en cualquier nivel.
- * @param {unknown} where - Where a inspeccionar.
- * @returns {boolean} true si hay restricción por tenantId.
- */
-function whereMentionsTenant(where: unknown): boolean {
-  if (Array.isArray(where)) return where.some(whereMentionsTenant);
-  if (!isRecord(where)) return false;
-  return Object.entries(where).some(([key, entry]) =>
-    key === 'tenantId' ? entry !== undefined : whereMentionsTenant(entry),
-  );
-}
-
-/**
  * @description Detecta si una data menciona un tenant distinto al del contexto.
  * @param {unknown} data - Data a inspeccionar.
  * @param {string} tenantId - Tenant del contexto.
@@ -290,21 +315,11 @@ function dataMentionsForeignTenant(data: unknown, tenantId: string): boolean {
 }
 
 /**
- * @description Detecta si una data menciona algún tenantId (propio o ajeno).
- * @param {unknown} data - Data a inspeccionar.
- * @returns {boolean} true si hay algún tenantId definido.
- */
-function dataMentionsTenant(data: unknown): boolean {
-  if (Array.isArray(data)) return data.some(dataMentionsTenant);
-  if (!isRecord(data)) return false;
-  return Object.entries(data).some(([key, entry]) => {
-    if (key === 'tenantId') return entry !== undefined;
-    return dataMentionsTenant(entry);
-  });
-}
-
-/**
  * @description Determina si la operación violaría el scope en modo shadow.
+ * Con contexto presente, el enforce SIEMPRE inyecta tenantId en scoped, por
+ * lo que una query que omite el filtro no es una violación: es la ruta normal.
+ * Las únicas violaciones reales en shadow son las escrituras con tenantId
+ * ajeno (enforce las rechazaría con TenantMismatchError).
  * @param {string} operation - Operación Prisma.
  * @param {unknown} args - Argumentos originales.
  * @param {string} tenantId - Tenant del contexto.
@@ -316,17 +331,15 @@ function detectShadowViolation(
   tenantId: string,
 ): ViolationKind | null {
   if (!isRecord(args)) return null;
-  if (READ_MANY_OPS.has(operation) || MANY_WRITE_OPS.has(operation) || UNIQUE_OPS.has(operation)) {
-    return whereMentionsTenant(args.where) ? null : 'missing-scope';
-  }
   if (operation === 'create' || operation === 'createMany' || operation === 'createManyAndReturn') {
-    if (dataMentionsForeignTenant(args.data, tenantId)) return 'tenant-mismatch';
-    return dataMentionsTenant(args.data) ? null : 'missing-scope';
+    return dataMentionsForeignTenant(args.data, tenantId) ? 'tenant-mismatch' : null;
   }
   if (operation === 'upsert') {
     if (dataMentionsForeignTenant(args.create, tenantId)) return 'tenant-mismatch';
-    if (!whereMentionsTenant(args.where) && !dataMentionsTenant(args.create)) return 'missing-scope';
     return null;
+  }
+  if (operation === 'update' || operation === 'updateMany' || operation === 'updateManyAndReturn') {
+    return dataMentionsForeignTenant(args.data, tenantId) ? 'tenant-mismatch' : null;
   }
   return null;
 }

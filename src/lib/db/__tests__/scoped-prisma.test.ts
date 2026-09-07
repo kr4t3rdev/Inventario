@@ -299,14 +299,12 @@ describe('AS-02 interceptOperation (modos + contexto)', () => {
     ]);
   });
 
-  it('shadow con contexto registra la violación pero no inyecta', () => {
+  it('shadow con contexto y sin filtro no es violación (enforce inyecta)', () => {
     vi.stubEnv('TENANT_ISOLATION_MODE', 'shadow');
     const args = { where: { nombre: 'x' } };
     const out = withTestTenant(TENANT_A, () => interceptOperation('Venta', 'findMany', args));
     expect(out).toBe(args);
-    expect(reports).toEqual([
-      expect.objectContaining({ kind: 'missing-scope', model: 'Venta', mode: 'shadow' }),
-    ]);
+    expect(reports).toEqual([]);
   });
 
   it('shadow con filtro propio no reporta', () => {
@@ -315,6 +313,16 @@ describe('AS-02 interceptOperation (modos + contexto)', () => {
       interceptOperation('Venta', 'findMany', { where: { tenantId: TENANT_A } }),
     );
     expect(reports).toEqual([]);
+  });
+
+  it('shadow reporta tenant-mismatch en escritura con tenant ajeno', () => {
+    vi.stubEnv('TENANT_ISOLATION_MODE', 'shadow');
+    withTestTenant(TENANT_A, () =>
+      interceptOperation('Venta', 'create', { data: { tenantId: TENANT_B } }),
+    );
+    expect(reports).toEqual([
+      expect.objectContaining({ kind: 'tenant-mismatch', model: 'Venta', mode: 'shadow' }),
+    ]);
   });
 
   it('shadow nunca lanza ante mismatch (solo reporta)', () => {
