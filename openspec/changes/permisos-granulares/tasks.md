@@ -43,12 +43,13 @@ Leyenda: `- [ ]` pendiente · `- [x]` hecho.
 
 Orden sugerido (de menor a mayor acoplamiento); cada dominio = sub-fase con RED (test de comportamiento del endpoint/action antes de tocarlo) → GREEN (sustituir guard) → verde de regresión:
 
-- [ ] **PG05-T1 — inventario:** productos (3), listas-precios (1), ficha-costo (9) → claves `inventario.*`, `precios.*`.
-- [ ] **PG05-T2 — ventas/servicios:** venta-servicios (1), servicios (1) → `servicios.*`. (Ofertas/Contratos solo si Correcciones Urgentes ya hizo merge; si no, difeir.)
-- [ ] **PG05-T3 — rrhh:** empleados (6), pago-salario (2) → `rrhh.*` (incl. `rrhh.nomina.calcular` sensitive).
-- [ ] **PG05-T4 — financiero/config/lib:** contabilidad (1), app (5), lib (3), checks sueltos (16) → `contabilidad.*`, `config.*`.
-- [ ] **PG05-T5 — rutas REST + mobile:** crear `src/lib/auth/route-permissions.ts`; `checkTenantApiPermission` lee el mapa; rutas mobile importan el mismo mapa; log `UNMAPPED_ROUTE` para pendientes. Conservar comportamiento legacy en rutas no mapeadas **solo** durante esta fase.
-- [ ] **PG05-T6 — Retiro de allowlists.** Cuando el listado `UNMAPPED` sea 0 (o lista blanca firmada): borrar `TENANT_PERMISSIONS`, `ROLE_PERMISSIONS`, `requireDependienteAccess` y sus tests; añadir test de drift "no existen dos fuentes de permisos" (búsqueda estática en CI).
+- [x] **PG05-T1 — inventario:** productos (5: crear/editar/eliminar/restock/stock-minimo), listas-precios (1: gestionar), ficha-costo (9) → claves `inventario.*`. Commit `16c5bc7d`.
+- [x] **PG05-T2 — ventas/servicios:** servicios (3: operaciones.servicios.*), venta-servicios (2: ventas.servicios.*), compras-servicios (3: compras.servicios.*). Commit `4bd88a98`. (Ofertas/Contratos diferidos: sin merge de Correcciones Urgentes.)
+- [x] **PG05-T3 — rrhh:** empleados (19 call sites incl. api handlers), pago-salario (3: rrhh.salarios.*) → `rrhh.*` (incl. `rrhh.nomina.calcular` sensitive). Commit `fd98cd13`.
+- [x] **PG05-T4 — financiero/config/lib:** tipos-pago (REST+actions, financiero.tipos-pago.*), tipos-contratos (config.tipos-contrato.*), conversiones (financiero.conversiones.*), upload (config.empresa.logo), reparaciones (produccion.reparaciones.eliminar), auditoría (financiero.auditoria.ver), accounting-policy (config.contabilidad.politica + customRole), admin users/memberships (config.usuarios.gestionar, 5 checks). Commit `c79298cf`.
+- [ ] **PG05-T0 (previo)** — lazy fallback en `requirePermission`: si `permissions` no viene resuelto (tests/seeds), deriva defaults del rol fijo. Commit `c79298cf`. Verificado: 0 call sites de `requireManagerRole` en producción (solo comentario en registry).
+- [ ] **PG05-T5 — rutas REST + mobile:** crear `src/lib/auth/route-permissions.ts`; `checkTenantApiPermission` lee el mapa; rutas mobile importan el mismo mapa; log `UNMAPPED_ROUTE` para pendientes. Conservar comportamiento legacy en rutas no mapeadas **solo** durante esta fase. Pendiente — incluye `ofertas/[id]` (bloqueado por coordinación hasta merge de CU).
+- [ ] **PG05-T6 — Retiro de allowlists.** Cuando el listado `UNMAPPED` sea 0 (o lista blanca firmada): borrar `TENANT_PERMISSIONS`, `ROLE_PERMISSIONS`, `requireDependienteAccess` y sus tests; añadir test de drift "no existen dos fuentes de permisos" (búsqueda estática en CI). Pendiente.
 - Commit por dominio: `refactor(auth): migrar <dominio> a permisos nombrados (PG-05.x)` + `refactor(auth): eliminar allowlists legacy, fuente única de permisos (PG-05)`
 
 ## PG-06 — UI: matriz de roles y filtrado por permisos
