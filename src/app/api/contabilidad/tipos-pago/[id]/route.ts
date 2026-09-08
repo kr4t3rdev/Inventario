@@ -3,7 +3,7 @@ import { prisma } from '@/lib/prisma'
 import { z } from 'zod'
 import { authenticateUser, type AuthenticatedUser } from "@/lib/auth-middleware"
 import { ActionError } from '@/lib/server-actions'
-import { requireManagerRole, requireTenant } from '@/lib/services/tenant-scope'
+import { requirePermission, requireTenant } from '@/lib/services/tenant-scope'
 import { validarEscrituraPeriodo, extraerFechaDeBody } from '@/lib/services/validate-period-write'
 import { AuditLogService } from "@/lib/services/audit-log-service"
 
@@ -108,7 +108,7 @@ export async function PUT(
     if ('status' in authResultUser) return authResultUser as Response
     const user = authResultUser.user as AuthenticatedUser
     const tenantId = requireTenant(user)
-    requireManagerRole(user, 'actualizar tipos de pago')
+    requirePermission(user, 'financiero.tipos-pago.editar', 'actualizar tipos de pago')
 
     const { id } = await params
     const body = await request.json()
@@ -367,7 +367,7 @@ export async function DELETE(
     if ('status' in authResultUser) return authResultUser as Response
     const user = authResultUser.user as AuthenticatedUser
     const tenantId = requireTenant(user)
-    requireManagerRole(user, 'eliminar tipos de pago')
+    requirePermission(user, 'financiero.tipos-pago.eliminar', 'eliminar tipos de pago')
 
     const { id } = await params
 

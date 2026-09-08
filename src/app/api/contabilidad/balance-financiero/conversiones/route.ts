@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 import { withAuthPost, type AuthenticatedUser } from '@/lib/auth-middleware';
 import { ActionError } from '@/lib/server-actions';
-import { requireFeature, requireManagerRole, requireTenant } from '@/lib/services/tenant-scope';
+import { requireFeature, requirePermission, requireTenant } from '@/lib/services/tenant-scope';
 import { fxEvidenceService } from '@/features/contabilidad/services/fx-evidence-service';
 
 const captureSchema = z.object({
@@ -29,7 +29,7 @@ export const POST = withAuthPost(async (
       );
     }
     requireFeature(user, 'contabilidad', 'registrar conversiones históricas');
-    requireManagerRole(user, 'registrar conversiones históricas');
+    requirePermission(user, 'financiero.conversiones.registrar', 'registrar conversiones históricas');
     const tenantId = requireTenant(user);
     let body: unknown;
     try {

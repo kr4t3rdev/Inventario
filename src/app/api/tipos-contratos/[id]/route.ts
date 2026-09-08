@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import prisma from '@/lib/prisma'
 import { authenticateUser } from '@/lib/auth-middleware'
 import { ActionError } from '@/lib/server-actions'
-import { requireManagerRole } from '@/lib/services/tenant-scope'
+import { requirePermission } from '@/lib/services/tenant-scope'
 
 /**
  * @description DELETE /api/tipos-contratos/[id] - Elimina un tipo de contrato personalizado
@@ -14,7 +14,7 @@ export async function DELETE(
   try {
     const authResultUser = await authenticateUser(request)
     if ('status' in authResultUser) return authResultUser as Response
-    requireManagerRole(authResultUser.user, 'eliminar tipos de contrato')
+    requirePermission(authResultUser.user, 'config.tipos-contrato.eliminar', 'eliminar tipos de contrato')
 
     const { id } = await params
 

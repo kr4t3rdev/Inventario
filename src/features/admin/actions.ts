@@ -25,6 +25,7 @@ import {
 	createSalesAgentEvent,
 	deliverSalesAgentEmails,
 } from "@/features/sales-agent/services/notification-service";
+import { hasPermission } from "@/lib/services/tenant-scope";
 import { confirmSalesAgentTenantPayment } from "@/features/sales-agent/services/payment-service";
 import { confirmReferredTenantPaymentAction } from "@/features/affiliate/actions";
 import { createDemoTenantForPlan } from "@/lib/services/demo-tenant-factory";
@@ -1066,10 +1067,10 @@ export const updateTenantUserAction = withAction(
 			);
 		}
 
-		// Solo manager del mismo tenant puede actualizar usuarios
-		if (user.tenantRole !== "manager") {
+		// Solo quien tiene permiso config.usuarios.gestionar en el tenant
+		if (!hasPermission(user, "config.usuarios.gestionar")) {
 			throw new ActionError(
-				"Solo un manager puede gestionar usuarios del tenant",
+				"Solo un usuario autorizado puede gestionar usuarios del tenant",
 				"FORBIDDEN",
 			);
 		}

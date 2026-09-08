@@ -318,6 +318,7 @@ describe('createTipoPagoAction — tenant isolation', () => {
   it('rechaza creación para un miembro dependiente', async () => {
     vi.mocked(getCurrentUser).mockResolvedValue({
       ...tenantA_user,
+      role: 'regularUser',
       tenantRole: 'dependiente',
     });
 

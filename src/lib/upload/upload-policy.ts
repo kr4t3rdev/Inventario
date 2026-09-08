@@ -1,6 +1,6 @@
 import { ActionError } from '@/lib/server-actions/types'
 import type { AuthenticatedUser } from '@/lib/auth-middleware'
-import { requireFeature, requireManagerRole, requireTenant } from '@/lib/services/tenant-scope'
+import { requireFeature, requirePermission, requireTenant } from '@/lib/services/tenant-scope'
 
 export type UploadKey =
   | 'productos.photo'
@@ -125,7 +125,7 @@ export function resolveUploadPolicy({
       break
     case 'miEmpresa.logo':
       requireFeature(user, 'upload-mi-empresa-logo', 'subir el logo de la empresa')
-      requireManagerRole(user, 'actualizar el logo de la empresa')
+      requirePermission(user, 'config.empresa.logo', 'actualizar el logo de la empresa')
       folder = `${tenantId}/empresa/logo`
       break
     case 'profile.avatar': {

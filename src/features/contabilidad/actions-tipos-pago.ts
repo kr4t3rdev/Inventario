@@ -7,7 +7,7 @@ import { revalidatePath } from 'next/cache';
 import { z } from 'zod';
 import { withAction, ActionError } from '@/lib/server-actions';
 import { prisma } from '@/lib/prisma';
-import { requireManagerRole, requireTenant } from '@/lib/services/tenant-scope';
+import { requirePermission, requireTenant } from '@/lib/services/tenant-scope';
 import { AuditLogService } from '@/lib/services/audit-log-service';
 import { AccountingConfigReadService } from '@/features/contabilidad/services/accounting-config-read-service';
 import type { AuthenticatedUser } from '@/lib/auth-middleware';
@@ -78,7 +78,7 @@ export const getTipoPagoAction = withAction(async (id: string, user: Authenticat
 });
 
 export const createTipoPagoAction = withAction(async (input: z.infer<typeof createSchema>, user: AuthenticatedUser) => {
-  requireManagerRole(user, 'crear tipos de pago');
+  requirePermission(user, 'financiero.tipos-pago.crear', 'crear tipos de pago');
   const tenantId = requireTenant(user);
   const parsed = createSchema.parse(input);
 
@@ -112,7 +112,7 @@ export const createTipoPagoAction = withAction(async (input: z.infer<typeof crea
 });
 
 export const updateTipoPagoAction = withAction(async (input: z.infer<typeof updateSchema>, user: AuthenticatedUser) => {
-  requireManagerRole(user, 'actualizar tipos de pago');
+  requirePermission(user, 'financiero.tipos-pago.editar', 'actualizar tipos de pago');
   const tenantId = requireTenant(user);
   const parsed = updateSchema.parse(input);
   const { id, ...data } = parsed;
@@ -189,7 +189,7 @@ export const updateTipoPagoAction = withAction(async (input: z.infer<typeof upda
 });
 
 export const deleteTipoPagoAction = withAction(async (id: string, user: AuthenticatedUser) => {
-  requireManagerRole(user, 'eliminar tipos de pago');
+  requirePermission(user, 'financiero.tipos-pago.eliminar', 'eliminar tipos de pago');
   const tenantId = requireTenant(user);
 
   const existing = await prisma.tipoPago.findFirst({

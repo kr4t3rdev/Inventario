@@ -3,7 +3,7 @@ import { prisma } from '@/lib/prisma'
 import { z } from 'zod'
 import { authenticateUser, type AuthenticatedUser } from "@/lib/auth-middleware"
 import { ActionError } from '@/lib/server-actions'
-import { requireManagerRole, requireTenant } from '@/lib/services/tenant-scope'
+import { requirePermission, requireTenant } from '@/lib/services/tenant-scope'
 import { validarEscrituraPeriodo, extraerFechaDeBody } from '@/lib/services/validate-period-write'
 import { AuditLogService } from "@/lib/services/audit-log-service"
 
@@ -121,7 +121,7 @@ export async function POST(request: NextRequest) {
     if ('status' in authResultUser) return authResultUser as Response
     const user = authResultUser.user as AuthenticatedUser
     const tenantId = requireTenant(user)
-    requireManagerRole(user, 'crear tipos de pago')
+    requirePermission(user, 'financiero.tipos-pago.crear', 'crear tipos de pago')
 
     const body = await request.json()
     const validatedData = TipoPagoSchema.parse(body)

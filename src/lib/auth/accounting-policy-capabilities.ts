@@ -1,10 +1,13 @@
 import { prisma } from '@/lib/prisma';
+import { getDefaultPermissionsForRole } from '@/lib/auth/permission-registry';
 
 /**
  * @description Revalida la capacidad tenant-scoped para gestionar la política contable.
+ * Respeta roles personalizados: si la membresía tiene customRole, usa sus permisos;
+ * si no, los defaults del rol fijo. Guarda `config.contabilidad.politica`.
  * @param {string} userId - Actor autenticado.
  * @param {string} tenantId - Tenant derivado del contexto autenticado.
- * @returns {Promise<boolean>} Verdadero solo para manager y membresía/usuario activos.
+ * @returns {Promise<boolean>} Verdadero solo si la membresía activa tiene el permiso.
  */
 export async function canManageAccountingPolicy(
   userId: string,
@@ -14,14 +17,26 @@ export async function canManageAccountingPolicy(
     where: { tenantId_userId: { tenantId, userId } },
     select: {
       tenantRole: true,
+      customRoleId: true,
       isActive: true,
       user: { select: { isActive: true } },
     },
   });
 
-  return membership?.isActive === true
-    && membership.user.isActive === true
-    && membership.tenantRole === 'manager';
+  if (membership?.isActive !== true || !membership.user.isActive) return false;
+
+  // Rol fijo por defecto: solo manager raw tiene el permiso por regla legacy.
+  if (!membership.customRoleId) {
+    return membership.tenantRole === 'manager';
+  }
+
+  // rol personalizado: exige la clave explícita (fail-closed si el rol no carga)
+  const customRole = await prisma.tenantRole.findFirst({
+    where: { roleId: membership.customRoleId, tenantId, isActive: true },
+  });
+  if (!customRole) return false;
+  const keys = Array.isArray(customRole.permissions) ? (customRole.permissions as string[]) : [];
+  return keys.includes('config.contabilidad.politica');
 }
 
 /**

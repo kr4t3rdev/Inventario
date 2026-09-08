@@ -11,6 +11,7 @@
 import { revalidatePath } from "next/cache";
 import { Prisma } from "@/generated/prisma";
 import { ActionError } from "@/lib/server-actions";
+import { hasPermission } from "@/lib/services/tenant-scope";
 import type { AuthenticatedUser } from "@/lib/auth-middleware";
 import { prismaPlatform as prisma } from "@/lib/db/platform-prisma";
 import {
@@ -217,9 +218,9 @@ export async function getAdminUsers(
   user: AuthenticatedUser,
 ): Promise<Record<string, unknown>> {
   const isPlatformAdmin = user.role === "admin";
-  const isTenantManager = user.tenantRole === "manager";
+  const canManageUsers = hasPermission(user, "config.usuarios.gestionar");
 
-  if (!isPlatformAdmin && !isTenantManager) {
+  if (!isPlatformAdmin && !canManageUsers) {
     throw new ActionError("Acceso restringido", "FORBIDDEN");
   }
 
@@ -611,9 +612,9 @@ export async function getAdminPendingMemberships(
   user: AuthenticatedUser,
 ): Promise<PendingMembership[]> {
   const isPlatformAdmin = user.role === "admin";
-  const isTenantManager = user.tenantRole === "manager";
+  const canManageUsers = hasPermission(user, "config.usuarios.gestionar");
 
-  if (!isPlatformAdmin && !isTenantManager) {
+  if (!isPlatformAdmin && !canManageUsers) {
     throw new ActionError("Acceso restringido", "FORBIDDEN");
   }
 
@@ -675,10 +676,11 @@ export async function approveAdminMembership(
   }
 
   const isPlatformAdmin = user.role === "admin";
-  const isTenantManager =
-    user.tenantRole === "manager" && user.tenantId === membership.tenantId;
+  const canManageUsers =
+    user.tenantId === membership.tenantId &&
+    hasPermission(user, "config.usuarios.gestionar");
 
-  if (!isPlatformAdmin && !isTenantManager) {
+  if (!isPlatformAdmin && !canManageUsers) {
     throw new ActionError(
       "No tienes permisos para aprobar esta solicitud",
       "FORBIDDEN",
@@ -750,10 +752,11 @@ export async function rejectAdminMembership(
     throw new ActionError("Solicitud no encontrada", "NOT_FOUND");
 
   const isPlatformAdmin = user.role === "admin";
-  const isTenantManager =
-    user.tenantRole === "manager" && user.tenantId === membership.tenantId;
+  const canManageUsers =
+    user.tenantId === membership.tenantId &&
+    hasPermission(user, "config.usuarios.gestionar");
 
-  if (!isPlatformAdmin && !isTenantManager) {
+  if (!isPlatformAdmin && !canManageUsers) {
     throw new ActionError("Acceso restringido", "FORBIDDEN");
   }
 

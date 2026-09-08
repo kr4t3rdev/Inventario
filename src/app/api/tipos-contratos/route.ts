@@ -3,7 +3,7 @@ import prisma from '@/lib/prisma'
 import { z } from 'zod'
 import { authenticateUser } from '@/lib/auth-middleware'
 import { ActionError } from '@/lib/server-actions'
-import { requireManagerRole } from '@/lib/services/tenant-scope'
+import { requirePermission } from '@/lib/services/tenant-scope'
 
 const tipoContratoCustomSchema = z.object({
   nombre: z
@@ -68,7 +68,7 @@ export async function POST(request: NextRequest) {
     const authResultUser = await authenticateUser(request)
     if ('status' in authResultUser) return authResultUser as Response
     const user = authResultUser.user
-    requireManagerRole(user, 'crear tipos de contrato')
+    requirePermission(user, 'config.tipos-contrato.crear', 'crear tipos de contrato')
 
     const body = await request.json()
     const data = tipoContratoCustomSchema.parse(body)

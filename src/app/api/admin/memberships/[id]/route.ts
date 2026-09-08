@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { authenticateUser } from '@/lib/auth-middleware'
+import { hasPermission } from '@/lib/services/tenant-scope'
 
 export const dynamic = 'force-dynamic'
 
@@ -70,13 +71,15 @@ export async function PATCH(
       )
     }
 
-    // Verificar permisos: admin global o manager del tenant
+    // Verificar permisos: admin global o quien gestiona usuarios del tenant
     const isPlatformAdmin = user.role === 'admin'
-    const isTenantManager = user.tenantRole === 'manager' && user.tenantId === membership.tenantId
+    const canManageTenantUsers =
+      user.tenantId === membership.tenantId &&
+      hasPermission(user, 'config.usuarios.gestionar')
 
-    if (!isPlatformAdmin && !isTenantManager) {
+    if (!isPlatformAdmin && !canManageTenantUsers) {
       return NextResponse.json(
-        { error: 'No tenés permisos para aprobar esta solicitud' },
+        { error: 'No tienes permisos para aprobar esta solicitud' },
         { status: 403 },
       )
     }

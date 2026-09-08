@@ -2,6 +2,8 @@ import prisma from '@/lib/prisma'
 import type { OrdenReparacion } from '@/app/models/model'
 import { getAuthenticatedContext } from '@/lib/api/client'
 import { ServerActionError } from '@/lib/api/errors'
+import { hasPermission } from '@/lib/services/tenant-scope'
+import type { AuthenticatedUser } from '@/lib/auth-middleware'
 import { syncOwnerAssets } from '@/lib/upload/cloudinary-admin'
 import type { CloudinaryAssetInput } from '@/lib/upload/cloudinary-asset'
 
@@ -584,8 +586,13 @@ export async function getTecnicosStats(params?: { startDate?: string; endDate?: 
 export async function deleteOrdenReparacion(id: string): Promise<{ success: boolean; id: string }> {
   const ctx = await getAuthenticatedContext()
 
-  if (ctx.tenantRole !== 'manager') {
-    throw new ServerActionError('deleteOrdenReparacion', 'DELETE', 403, 'Solo el manager puede eliminar órdenes de reparación')
+  // Paridad PG-05: permiso nombrado con fallback legacy por rol fijo del tenant.
+  const canDelete = hasPermission(
+    { role: 'regularUser', tenantRole: ctx.tenantRole, tenantId: ctx.tenantId } as AuthenticatedUser,
+    'produccion.reparaciones.eliminar',
+  )
+  if (!canDelete) {
+    throw new ServerActionError('deleteOrdenReparacion', 'DELETE', 403, 'No tienes permisos para eliminar órdenes de reparación')
   }
 
   try {
