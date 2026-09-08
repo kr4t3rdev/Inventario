@@ -5,6 +5,10 @@ export default defineConfig({
   test: {
     environment: 'jsdom',
     globals: true,
+    // Los componentes jsdom pesados (la suite completa corre en paralelo en CI)
+    // tardan ~6-7 s; sin este margen caen en el timeout por defecto de 5 s.
+    testTimeout: 15000,
+    hookTimeout: 15000,
     setupFiles: [
       './vitest.setup.ts',
       './src/test/setup.ts',
