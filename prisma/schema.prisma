@@ -79,6 +79,7 @@ model Vendor {
 
 model InyeccionCapital {
   id                 String         @id @default(cuid())
+  tenantId           String?
   tipo               TipoInyeccion
   montoRecibido      Decimal
   moneda             String         @default("CUP")
@@ -100,10 +101,12 @@ model InyeccionCapital {
   pagos              PagoDeuda[]
 
   @@index([cuentaId, createdAt])
+  @@index([tenantId])
 }
 
 model PagoDeuda {
   id             String           @id @default(cuid())
+  tenantId       String?
   inyeccionId    String
   montoPagado    Decimal
   fechaPago      DateTime         @default(now())
@@ -117,6 +120,7 @@ model PagoDeuda {
   inyeccion      InyeccionCapital @relation(fields: [inyeccionId], references: [id], onDelete: Cascade)
 
   @@index([cuentaId, fechaPago])
+  @@index([tenantId])
 }
 
 model Cliente {
@@ -2998,6 +3002,7 @@ model AperturaPeriodo {
 
 model SaldoSnapshot {
   snapshotId       String          @id @default(cuid())
+  tenantId         String?
   periodoId        String
   cuentaBancariaId String
   saldo            Float
@@ -3008,6 +3013,7 @@ model SaldoSnapshot {
 
   @@index([periodoId])
   @@index([cuentaBancariaId])
+  @@index([tenantId])
   @@map("saldos_snapshot")
 }
 

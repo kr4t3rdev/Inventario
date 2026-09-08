@@ -80,6 +80,9 @@ describe('AS-01 contrato de clasificación de modelos', () => {
       ['AnticipoMovimiento', 'child'],
       ['TransaccionMoneda', 'scoped'],
       ['AlertHistory', 'scoped'],
+      ['InyeccionCapital', 'scoped'],
+      ['PagoDeuda', 'scoped'],
+      ['SaldoSnapshot', 'scoped'],
       ['TipoContratoCustom', 'pending-scope'],
     ];
     for (const [model, scope] of expectations) {

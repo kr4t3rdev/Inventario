@@ -186,9 +186,9 @@ export const MODEL_CLASSIFICATION: Record<string, ModelClassificationEntry> = {
   EmployeeWorkSchedule: CHILD('Empleado', 'employeeId', 'Horario del empleado; acceso vía empleado (scoped).'),
   VacationRequest: CHILD('Empleado', 'employeeId', 'Solicitud del empleado; acceso vía empleado (scoped).'),
   VacationAccrual: CHILD('Empleado', 'employeeId', 'Acumulado del empleado; acceso vía empleado (scoped).'),
-  InyeccionCapital: CHILD('CuentaBancaria', 'cuentaId', 'Inyección ligada a cuenta bancaria (scoped). Requiere columna tenantId propia en AS-05 (ola 3).'),
-  PagoDeuda: CHILD('InyeccionCapital', 'inyeccionId', 'Pago ligado a la inyección (cadena → CuentaBancaria scoped). Requiere columna tenantId propia en AS-05 (ola 3).'),
-  SaldoSnapshot: CHILD('PeriodoContable', 'periodoId', 'Snapshot ligado al periodo (y a cuenta bancaria). Requiere columna tenantId propia en AS-05 (ola 3).'),
+  InyeccionCapital: SCOPED('Inyección de capital denormalizada en AS-05 ola 3: tenantId nullable + índice. Writers: AccountingOperationsMutationService (createCapitalInjection, registerCapitalPayment), createCuentaBancariaAction, handlers legacy.'),
+  PagoDeuda: SCOPED('Pago de deuda denormalizado en AS-05 ola 3: tenantId nullable + índice. Writers: AccountingOperationsMutationService.registerCapitalPayment, handlers legacy.'),
+  SaldoSnapshot: SCOPED('Snapshot de saldo denormalizado en AS-05 ola 3: tenantId nullable + índice. Writer: SnapshotService.generarSnapshot (resuelve tenant desde PeriodoContable). No llamado desde producción actualmente.'),
 
   // ---- pending-scope (1): por tenant de hecho, sin columna; backlog AS-05 ----
   TransaccionMoneda: SCOPED('Espejo contable multimoneda denormalizado en AS-05: tenantId nullable, backfill desde la tabla padre por tipoTransaccion y escritura dual en todos los writers. Las históricas exchange (sin padre) quedan sin tenant: fail-closed (no se exponen).'),

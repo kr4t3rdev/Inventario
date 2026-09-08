@@ -399,6 +399,7 @@ export const AccountingOperationsMutationService = {
 
       const created = await tx.inyeccionCapital.create({
         data: {
+          tenantId,
           montoRecibido: parsed.montoRecibido,
           moneda: parsed.moneda,
           tipo: parsed.tipo,
@@ -454,7 +455,7 @@ export const AccountingOperationsMutationService = {
     const pago = await prisma.$transaction(async (tx: any) => {
       await acquireAccountingTenantLock(tx, tenantId);
 
-      // InyeccionCapital no tiene tenantId: se escopa por la cuenta bancaria referenciada.
+      // InyeccionCapital tiene tenantId propio (AS-05 ola 3); se busca también por cuenta bancaria como defensa.
       const inyeccion = await tx.inyeccionCapital.findFirst({
         where: { id: parsed.inyeccionId, cuentaBancaria: { tenantId } },
         select: { id: true, tipo: true, saldoPendiente: true, pagos: { select: { id: true } } },
@@ -487,6 +488,7 @@ export const AccountingOperationsMutationService = {
       // mantener el contrato web/móvil, pero sólo se persisten las columnas reales.
       const created = await tx.pagoDeuda.create({
         data: {
+          tenantId,
           inyeccionId: parsed.inyeccionId,
           montoPagado: parsed.monto,
           cuentaId: parsed.cuentaBancariaId,

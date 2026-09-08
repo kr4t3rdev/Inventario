@@ -172,6 +172,7 @@ export const createCuentaBancariaAction = withAction(withPeriodValidation(
       const isDebt = parsed.fuenteSaldoInicial === 'DEUDA_EXTERNA';
       const counterpart = await tx.inyeccionCapital.create({
         data: {
+          tenantId,
           tipo: parsed.fuenteSaldoInicial,
           montoRecibido: parsed.saldo,
           moneda: parsed.moneda,

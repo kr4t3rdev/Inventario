@@ -180,7 +180,7 @@ export async function createInyeccionCapital(request: NextRequest) {
   const a = await authenticateUser(request); if ('status' in a) return a as Response; const u = a.user; requireFeature(u, 'inyeccion-capital', 'registrar inyecciones de capital');
   const v = icSchema.parse(await request.json())
   const r = await prisma.$transaction(async (tx: Prisma.TransactionClient) => {
-    const i = await tx.inyeccionCapital.create({ data: { tipo: v.tipo, montoRecibido: v.montoRecibido, moneda: v.moneda, cuentaId: v.cuentaId, descripcion: v.descripcion, socio: v.socio, entidadPrestamista: v.entidadPrestamista, estado: v.tipo === 'DEUDA_EXTERNA' ? 'ACTIVA' : null } })
+    const i = await tx.inyeccionCapital.create({ data: { tenantId: u.tenantId ?? null, tipo: v.tipo, montoRecibido: v.montoRecibido, moneda: v.moneda, cuentaId: v.cuentaId, descripcion: v.descripcion, socio: v.socio, entidadPrestamista: v.entidadPrestamista, estado: v.tipo === 'DEUDA_EXTERNA' ? 'ACTIVA' : null } })
     await tx.cuentaBancaria.update({ where: { cuentaId: v.cuentaId }, data: { saldo: { increment: v.montoRecibido } } })
     return i
   })
@@ -196,7 +196,7 @@ export async function pagarDeudaCapital(request: NextRequest, id: string) {
   const iny = await prisma.inyeccionCapital.findUnique({ where: { id }, include: { pagos: true } })
   if (!iny || iny.tipo !== 'DEUDA_EXTERNA') return NextResponse.json({ error: 'Invalida' }, { status: 400 })
   const r = await prisma.$transaction(async (tx: Prisma.TransactionClient) => {
-    const p = await tx.pagoDeuda.create({ data: { inyeccionId: id, montoPagado: v.montoPagado, cuentaId: v.cuentaId, comprobante: v.comprobante, numeroCuota: iny.pagos.length + 1 } })
+    const p = await tx.pagoDeuda.create({ data: { tenantId: u.tenantId ?? null, inyeccionId: id, montoPagado: v.montoPagado, cuentaId: v.cuentaId, comprobante: v.comprobante, numeroCuota: iny.pagos.length + 1 } })
     await tx.cuentaBancaria.update({ where: { cuentaId: v.cuentaId }, data: { saldo: { decrement: v.montoPagado } } })
     return p
   })

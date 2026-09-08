@@ -78,6 +78,7 @@ export class SnapshotService {
 
 			const snapshot = await db.saldoSnapshot.create({
 				data: {
+					tenantId: periodo.tenantId,
 					periodoId,
 					cuentaBancariaId: cuenta.cuentaId,
 					saldo,
