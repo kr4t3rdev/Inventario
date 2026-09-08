@@ -7,6 +7,8 @@ import { normalizeTenantRole, type TenantRole } from './auth/roles'
 import { runWithTenantContext, enterTenantContext } from './db/tenant-context'
 import { resolveEffectivePlanFeatures } from './plan-features'
 import { getDefaultPermissionsForRole } from './auth/permission-registry'
+import { getRoutePermissionKey, isRouteMapped } from './auth/route-permissions'
+import { hasPermission } from './services/tenant-scope'
 
 export interface PlanLimits {
   maxUsuarios: number
@@ -326,11 +328,41 @@ export async function authenticateUser(
     } as AuthenticatedUser
 
     // 10. Verificar permisos.
-    // Si hay contexto tenant, usa permisos tenant. Si no, permisos globales legados.
+    // Si hay contexto tenant, usa el route-map (clave→hasPermission); ruta sin
+    // mapear → allowlist legacy + log UNMAPPED. Sin contexto tenant, permisos globales.
     if (validatePermissions) {
-      const permissionError = tenantContext
-        ? checkTenantApiPermission(tenantContext.tenantRole, validatePermissions.path, validatePermissions.method)
-        : checkApiPermission(user.role, validatePermissions.path, validatePermissions.method)
+      let permissionError: Response | NextResponse | null = null
+
+      if (tenantContext) {
+        const { path, method } = validatePermissions
+        const routeKey = getRoutePermissionKey(path, method)
+        if (routeKey) {
+          // Ruta mapeada → permiso nombrado (admin/bypass y defaults ya resueltos).
+          if (!hasPermission(authenticatedUser, routeKey)) {
+            permissionError = NextResponse.json(
+              {
+                error: 'Permiso denegado',
+                message: 'No tienes permisos para acceder a este recurso',
+              },
+              { status: 403 },
+            )
+          }
+        } else {
+          // Ruta no mapeada: comportamiento legacy hasta mapearla (PG-05 T6).
+          console.warn('[UNMAPPED_ROUTE]', `${method} ${path}`)
+          permissionError = checkTenantApiPermission(
+            tenantContext.tenantRole,
+            path,
+            method,
+          )
+        }
+      } else {
+        permissionError = checkApiPermission(
+          user.role,
+          validatePermissions.path,
+          validatePermissions.method,
+        )
+      }
 
       if (permissionError) {
         return permissionError
