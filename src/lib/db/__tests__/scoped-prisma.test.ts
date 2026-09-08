@@ -111,7 +111,7 @@ describe('AS-02 applyTenantScope (matriz de operaciones)', () => {
     expect(applyTenantScope('Plan', 'findMany', args, TENANT_A)).toBe(args);
     expect(applyTenantScope('Tenant', 'findMany', args, TENANT_A)).toBe(args);
     expect(applyTenantScope('VentaItem', 'findMany', args, TENANT_A)).toBe(args);
-    expect(applyTenantScope('AlertHistory', 'findMany', args, TENANT_A)).toBe(args);
+    expect(applyTenantScope('TipoContratoCustom', 'findMany', args, TENANT_A)).toBe(args);
   });
 
   it('modelo desconocido falla cerrado', () => {

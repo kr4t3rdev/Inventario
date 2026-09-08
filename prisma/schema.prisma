@@ -2043,6 +2043,7 @@ model TransferenciaBancaria {
 
 model AlertHistory {
   id            String    @id @default(cuid())
+  tenantId      String?
   tipoAlerta    String
   severidad     String
   titulo        String
@@ -2059,6 +2060,8 @@ model AlertHistory {
   fechaAlerta   DateTime  @default(now())
   createdAt     DateTime  @default(now())
   updatedAt     DateTime  @updatedAt
+
+  @@index([tenantId])
 }
 
 model AuditLog {
@@ -2075,6 +2078,7 @@ model AuditLog {
 
 model ReportHistory {
   id               String   @id @default(cuid())
+  tenantId         String?
   tipoReporte      String
   formato          String
   nombre           String
@@ -2091,10 +2095,13 @@ model ReportHistory {
   comparacion      String?
   createdAt        DateTime @default(now())
   updatedAt        DateTime @updatedAt
+
+  @@index([tenantId])
 }
 
 model ScheduledReport {
   id                     String    @id @default(cuid())
+  tenantId               String?
   nombre                 String
   descripcion            String?
   tipoReporte            String
@@ -2119,10 +2126,13 @@ model ScheduledReport {
   ultimaModificacion     DateTime  @updatedAt
   createdAt              DateTime  @default(now())
   updatedAt              DateTime  @updatedAt
+
+  @@index([tenantId])
 }
 
 model ScenarioSimulation {
   id                 String   @id @default(cuid())
+  tenantId           String?
   nombre             String
   descripcion        String?
   tasasSimuladas     String
@@ -2136,6 +2146,8 @@ model ScenarioSimulation {
   esFavorito         Boolean  @default(false)
   createdAt          DateTime @default(now())
   updatedAt          DateTime @updatedAt
+
+  @@index([tenantId])
 }
 
 model Contrato {

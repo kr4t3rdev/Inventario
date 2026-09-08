@@ -190,12 +190,12 @@ export const MODEL_CLASSIFICATION: Record<string, ModelClassificationEntry> = {
   PagoDeuda: CHILD('InyeccionCapital', 'inyeccionId', 'Pago ligado a la inyección (cadena → CuentaBancaria scoped). Requiere columna tenantId propia en AS-05 (ola 3).'),
   SaldoSnapshot: CHILD('PeriodoContable', 'periodoId', 'Snapshot ligado al periodo (y a cuenta bancaria). Requiere columna tenantId propia en AS-05 (ola 3).'),
 
-  // ---- pending-scope (6): por tenant de hecho, sin columna; backlog AS-05 ----
+  // ---- pending-scope (1): por tenant de hecho, sin columna; backlog AS-05 ----
   TransaccionMoneda: SCOPED('Espejo contable multimoneda denormalizado en AS-05: tenantId nullable, backfill desde la tabla padre por tipoTransaccion y escritura dual en todos los writers. Las históricas exchange (sin padre) quedan sin tenant: fail-closed (no se exponen).'),
-  AlertHistory: PENDING('Alertas operativas sin tenant (entidadTipo/entidadId polimórficos). Prioridad 2 en AS-05.'),
-  ReportHistory: PENDING('Historial de reportes sin tenant (generadoPor como string). Prioridad 2 en AS-05.'),
-  ScheduledReport: PENDING('Reportes programados sin tenant (creadoPor como string). Prioridad 2 en AS-05.'),
-  ScenarioSimulation: PENDING('Simulaciones sin tenant (creadoPor como string). Prioridad 2 en AS-05.'),
+  AlertHistory: SCOPED('Alertas operativas denormalizadas en AS-05 ola 2: tenantId nullable + índice. Sin escritores en código; filas históricas NULL quedan fail-closed (no se exponen). Futuros writers deben asignar tenantId desde el contexto.'),
+  ReportHistory: SCOPED('Historial de reportes denormalizado en AS-05 ola 2: tenantId nullable + índice. Sin escritores en código; generadoPor es userId (no atribuible a un tenant); históricos NULL fail-closed.'),
+  ScheduledReport: SCOPED('Reportes programados denormalizados en AS-05 ola 2: tenantId nullable + índice. Sin escritores en código; creadoPor es userId (no atribuible); históricos NULL fail-closed.'),
+  ScenarioSimulation: SCOPED('Simulaciones denormalizadas en AS-05 ola 2: tenantId nullable + índice. Sin escritores en código; creadoPor es userId (no atribuible); históricos NULL fail-closed.'),
   TipoContratoCustom: PENDING('Tipos de contrato personalizados globales por accidente (nombre @unique global). Decisión tomada: por-tenant; migran a scoped con unicidad por tenant en AS-05.'),
 };
 
