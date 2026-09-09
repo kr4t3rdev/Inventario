@@ -59,6 +59,56 @@ function assertKnownPermissionKeys(keys: string[]): void {
 }
 
 /**
+ * @description Lista los roles personalizados del tenant, ordenados por nombre.
+ * @param _input - Sin parámetros (compat con withAction).
+ * @param user - Usuario autenticado.
+ * @returns Lista de roles del tenant.
+ */
+export const listTenantRolesAction = withAction(
+  async (_input: void, user: AuthenticatedUser) => {
+    requirePermission(user, GESTIONAR_USUARIOS, 'gestionar roles de la empresa');
+    const tenantId = requireTenant(user);
+
+    const roles = await prisma.tenantRole.findMany({
+      where: { tenantId },
+      orderBy: { nombre: 'asc' },
+    });
+
+    return { roles };
+  },
+);
+
+/**
+ * @description Lista las membresías activas del tenant con su rol (fijo/custom)
+ * para poder asignar o cambiar el rol personalizado desde la gestión de usuarios.
+ * @param _input - Sin parámetros.
+ * @param user - Usuario autenticado.
+ * @returns Membresías activas con nombre/email del usuario.
+ */
+export const listTenantMembersAction = withAction(
+  async (_input: void, user: AuthenticatedUser) => {
+    requirePermission(user, GESTIONAR_USUARIOS, 'gestionar usuarios de la empresa');
+    const tenantId = requireTenant(user);
+
+    const memberships = await prisma.tenantMembership.findMany({
+      where: { tenantId, isActive: true },
+      select: {
+        membershipId: true,
+        tenantId: true,
+        userId: true,
+        tenantRole: true,
+        customRoleId: true,
+        isActive: true,
+        user: { select: { name: true, email: true } },
+      },
+      orderBy: { createdAt: 'asc' },
+    });
+
+    return { memberships };
+  },
+);
+
+/**
  * @description Crea un rol personalizado del tenant.
  * @param input - Datos del rol (Zod strict).
  * @param user - Usuario autenticado.

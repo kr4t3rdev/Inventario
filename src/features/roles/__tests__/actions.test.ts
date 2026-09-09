@@ -22,6 +22,7 @@ vi.mock('@/lib/prisma', () => ({
     },
     tenantMembership: {
       findFirst: vi.fn(),
+      findMany: vi.fn(),
       update: vi.fn(),
       count: vi.fn(),
     },
@@ -37,6 +38,8 @@ import {
   updateTenantRoleAction,
   deleteTenantRoleAction,
   assignCustomRoleAction,
+  listTenantRolesAction,
+  listTenantMembersAction,
 } from '@/features/roles/actions';
 import type { AuthenticatedUser } from '@/lib/auth-middleware';
 
@@ -317,5 +320,51 @@ describe('assignCustomRoleAction (PG-04 RED)', () => {
 
     const result = await assignCustomRoleAction({ membershipId: 'mem-1', customRoleId: 'role-1' });
     expect(result.success).toBe(true);
+  });
+});
+
+describe('listTenantRolesAction (PG-06)', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    vi.mocked(getCurrentUser).mockResolvedValue(managerUser);
+  });
+
+  it('lista los roles del tenant ordenados por nombre', async () => {
+    vi.mocked(prisma.tenantRole.findMany).mockResolvedValue([
+      { ...baseRole, roleId: 'r2', nombre: 'Auditor' },
+      { ...baseRole, roleId: 'r1', nombre: 'Cajero' },
+    ] as never);
+
+    const result = await listTenantRolesAction(undefined);
+    expect(result.success).toBe(true);
+    expect(prisma.tenantRole.findMany).toHaveBeenCalledWith(
+      expect.objectContaining({ where: { tenantId: 'tenant-1' } }),
+    );
+  });
+
+  it('rechaza usuarios sin permiso config.usuarios.gestionar', async () => {
+    vi.mocked(getCurrentUser).mockResolvedValue(dependienteUser);
+    const result = await listTenantRolesAction(undefined);
+    expect(result.success).toBe(false);
+    if (!result.success) expect(result.error?.code).toBe('FORBIDDEN');
+  });
+});
+
+
+describe('listTenantMembersAction (PG-06)', () => {
+  beforeEach(() => { vi.clearAllMocks(); vi.mocked(getCurrentUser).mockResolvedValue(managerUser); });
+  it('lista membresías del tenant con rol customId para asignación', async () => {
+    vi.mocked(prisma.tenantMembership.findMany).mockResolvedValue([
+      { membershipId: 'm1', tenantId: 'tenant-1', userId: 'u1', tenantRole: 'dependiente', customRoleId: null, isActive: true, user: { name: 'Ana', email: 'a@x.com' } },
+    ] as never);
+    const result = await listTenantMembersAction(undefined);
+    expect(result.success).toBe(true);
+    expect(prisma.tenantMembership.findMany).toHaveBeenCalledWith(expect.objectContaining({ where: { tenantId: 'tenant-1', isActive: true } }));
+  });
+  it('rechaza sin permiso config.usuarios.gestionar', async () => {
+    vi.mocked(getCurrentUser).mockResolvedValue(dependienteUser);
+    const result = await listTenantMembersAction(undefined);
+    expect(result.success).toBe(false);
+    if (!result.success) expect(result.error?.code).toBe('FORBIDDEN');
   });
 });
