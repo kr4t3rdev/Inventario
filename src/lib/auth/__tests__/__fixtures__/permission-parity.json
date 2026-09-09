@@ -36,7 +36,10 @@
     "operaciones.servicios.crear",
     "operaciones.servicios.editar",
     "operaciones.servicios.eliminar",
+    "produccion.recetas.gestionar",
     "produccion.reparaciones.eliminar",
+    "produccion.reparaciones.gestionar",
+    "produccion.vales.gestionar",
     "rrhh.asistencia.editar",
     "rrhh.asistencia.eliminar",
     "rrhh.asistencia.registrar",
@@ -56,6 +59,7 @@
     "rrhh.vacaciones.eliminar",
     "rrhh.vacaciones.solicitar",
     "ventas.facturas.consultar",
+    "ventas.ofertas.gestionar",
     "ventas.servicios.editar",
     "ventas.servicios.eliminar",
     "ventas.venta.registrar"

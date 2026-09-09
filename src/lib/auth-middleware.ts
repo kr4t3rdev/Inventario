@@ -2,12 +2,11 @@ import { NextRequest, NextResponse } from 'next/server'
 import { prismaPlatform as prisma } from './db/platform-prisma'
 import jwt from 'jsonwebtoken'
 import { getJwtSecret } from './secrets'
-import { checkApiPermission, checkTenantApiPermission, type UserRole } from './permissions'
-import { normalizeTenantRole, type TenantRole } from './auth/roles'
+import { normalizeTenantRole, type TenantRole, type AppUserRole } from './auth/roles'
 import { runWithTenantContext, enterTenantContext } from './db/tenant-context'
 import { resolveEffectivePlanFeatures } from './plan-features'
 import { getDefaultPermissionsForRole } from './auth/permission-registry'
-import { getRoutePermissionKey, isRouteMapped } from './auth/route-permissions'
+import { getRoutePermissionKey } from './auth/route-permissions'
 import { hasPermission } from './services/tenant-scope'
 
 export interface PlanLimits {
@@ -25,7 +24,7 @@ export interface AuthenticatedUser {
   userId: string
   name: string
   email: string
-  role: UserRole
+  role: AppUserRole
   isActive: boolean
   // Contexto de tenant (opcional — presente si el usuario tiene membresía activa)
   tenantId?: string
@@ -328,39 +327,36 @@ export async function authenticateUser(
     } as AuthenticatedUser
 
     // 10. Verificar permisos.
-    // Si hay contexto tenant, usa el route-map (clave→hasPermission); ruta sin
-    // mapear → allowlist legacy + log UNMAPPED. Sin contexto tenant, permisos globales.
+    // Con contexto tenant: el route-map decide (clave → hasPermission). Sin
+    // contexto tenant: solo admin de plataforma (fail-closed). La allowlist
+    // legacy (TENANT_PERMISSIONS) quedó retirada (PG-05 T6).
     if (validatePermissions) {
       let permissionError: Response | NextResponse | null = null
 
       if (tenantContext) {
         const { path, method } = validatePermissions
         const routeKey = getRoutePermissionKey(path, method)
-        if (routeKey) {
-          // Ruta mapeada → permiso nombrado (admin/bypass y defaults ya resueltos).
-          if (!hasPermission(authenticatedUser, routeKey)) {
-            permissionError = NextResponse.json(
-              {
-                error: 'Permiso denegado',
-                message: 'No tienes permisos para acceder a este recurso',
-              },
-              { status: 403 },
-            )
-          }
-        } else {
-          // Ruta no mapeada: comportamiento legacy hasta mapearla (PG-05 T6).
+        const denied = NextResponse.json(
+          {
+            error: 'Permiso denegado',
+            message: 'No tienes permisos para acceder a este recurso',
+          },
+          { status: 403 },
+        )
+        if (!routeKey) {
+          // Ruta no mapeada: fail-closed (ya no hay allowlist de respaldo).
           console.warn('[UNMAPPED_ROUTE]', `${method} ${path}`)
-          permissionError = checkTenantApiPermission(
-            tenantContext.tenantRole,
-            path,
-            method,
-          )
+          permissionError = denied
+        } else if (!hasPermission(authenticatedUser, routeKey)) {
+          permissionError = denied
         }
-      } else {
-        permissionError = checkApiPermission(
-          user.role,
-          validatePermissions.path,
-          validatePermissions.method,
+      } else if (user.role !== 'admin') {
+        permissionError = NextResponse.json(
+          {
+            error: 'Permiso denegado',
+            message: 'Solo el administrador global puede acceder a este recurso',
+          },
+          { status: 403 },
         )
       }
 
@@ -490,40 +486,4 @@ export function withAuth(
 
     return runHandlerWithTenant(handler, request, context, result.user)
   }
-}
-
-/**
- * Verificación específica de permisos para dependientes
- */
-export function requireDependienteAccess(
-  userRole: string,
-  requestedPath: string,
-  method: string
-): Response | null {
-  if (userRole === 'dependiente') {
-    // Lista de rutas permitidas para dependientes
-    const allowedRoutes = [
-      { path: '/api/ventas', methods: ['GET', 'POST'] },
-      { path: '/api/venta-servicios', methods: ['GET', 'POST'] },
-      { path: '/api/servicios', methods: ['GET'] },
-      { path: '/api/reportes-financieros', methods: ['GET'] },
-    ]
-
-    const allowedRoute = allowedRoutes.find(route => {
-      if (requestedPath.startsWith(route.path)) {
-        return route.methods.includes(method)
-      }
-      return false
-    })
-
-    if (!allowedRoute) {
-      return NextResponse.json({
-        error: 'Acceso restringido para dependientes',
-        message: 'Los dependientes solo pueden acceder a ventas, servicios y reportes',
-        allowedRoutes: allowedRoutes.map(r => `${r.methods.join(', ')} ${r.path}`)
-      }, { status: 403 })
-    }
-  }
-
-  return null
 }

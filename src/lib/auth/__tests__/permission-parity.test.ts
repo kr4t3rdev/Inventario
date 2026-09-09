@@ -1,7 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { getDefaultPermissionsForRole, PERMISSION_REGISTRY } from '@/lib/auth/permission-registry';
 import { TENANT_ROLES, type TenantRole } from '@/lib/auth/roles';
-import { hasTenantPermission } from '@/lib/permissions';
 import fixture from './__fixtures__/permission-parity.json';
 
 /**
@@ -12,9 +11,8 @@ import fixture from './__fixtures__/permission-parity.json';
  * allowlist viva de withAuth y acciones sin guard) y exige que el resolutor de
  * defaults del registry produzca exactamente ese conjunto.
  *
- * El fixture es la expectativa versionada; los cross-checks contra
- * `hasTenantPermission` mantienen vivo el vínculo con la allowlist mientras
- * exista (se retira en PG-05 junto con TENANT_PERMISSIONS).
+ * El fixture es la expectativa versionada. La allowlist legacy (TENANT_PERMISSIONS)
+ * fue retirada en PG-05 T6; la política declarada queda fijada en este snapshot.
  */
 
 interface ParityFixture {
@@ -84,34 +82,20 @@ describe('paridad día-1 — resolutor del registry ≡ snapshot', () => {
 	});
 });
 
-describe('cross-check contra la allowlist viva (hasTenantPermission)', () => {
-	it('facturas: matcher roto en vivo; el fixture conserva la política declarada', () => {
-		// BUG documentado: la rama wildcard de hasTenantPermission corre antes que la
-		// rama con método, así que 'GET /api/facturas/*' nunca matchea
-		// '/api/facturas/abc' (startsWith incluye el prefijo "GET "). Hoy el
-		// dependiente recibe 403 real en /api/facturas/[id] aunque la allowlist lo
-		// autoriza. El fixture reproduce la POLÍTICA DECLARADA (dependiente incluido);
-		// PG-05 repara el matcher al migrar al route-map.
-		expect(hasTenantPermission('manager', '/api/facturas/abc', 'GET')).toBe(true);
-		expect(hasTenantPermission('dependiente', '/api/facturas/abc', 'GET')).toBe(false);
-		expect(hasTenantPermission('economico', '/api/facturas/abc', 'GET')).toBe(false);
-		expect(fixtureFor('dependiente')).toContain('ventas.facturas.consultar');
-		expect(fixtureFor('economico')).not.toContain('ventas.facturas.consultar');
-	});
+describe('paridad de la política declarada (facturas/empleados) sin allowlist', () => {
+		it('ventas.facturas.consultar cubre manager y dependiente (política declarada)', () => {
+			expect(fixtureFor('dependiente')).toContain('ventas.facturas.consultar');
+			expect(fixtureFor('economico')).not.toContain('ventas.facturas.consultar');
+		});
 
-	it('rutas withAuth fuera de las listas (empleados) no filtran claves rrhh a otros roles', () => {
-		expect(hasTenantPermission('economico', '/api/empleados/vacaciones', 'GET')).toBe(false);
-		expect(hasTenantPermission('dependiente', '/api/empleados/vacaciones', 'GET')).toBe(false);
-		expect(fixtureFor('economico').some((k) => k.startsWith('rrhh.'))).toBe(false);
-		expect(fixtureFor('dependiente').some((k) => k.startsWith('rrhh.'))).toBe(false);
-	});
+		it('las claves rrhh quedan fuera de economico y dependiente (manager-only)', () => {
+			expect(fixtureFor('economico').some((k) => k.startsWith('rrhh.'))).toBe(false);
+			expect(fixtureFor('dependiente').some((k) => k.startsWith('rrhh.'))).toBe(false);
+		});
 
-	it('entradas muertas de economico se conservan como capacidades derivadas del sidebar', () => {
-		// La allowlist declara /api/reportes-financieros para economico aunque la ruta
-		// no exista: la capacidad se materializa en claves de módulo, no de ruta.
-		expect(hasTenantPermission('economico', '/api/reportes-financieros', 'GET')).toBe(true);
-		for (const key of ['financiero.reportes.ver', 'financiero.stats.ver']) {
-			expect(fixtureFor('economico')).toContain(key);
-		}
+		it('las claves derivadas del sidebar económico siguen en economico', () => {
+			for (const key of ['financiero.reportes.ver', 'financiero.stats.ver']) {
+				expect(fixtureFor('economico')).toContain(key);
+			}
+		});
 	});
-});

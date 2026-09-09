@@ -369,6 +369,13 @@ export const PERMISSION_REGISTRY: PermissionDef[] = [
 		category: 'ventas',
 		defaultRoles: ['manager', 'dependiente'],
 	},
+	{
+		key: 'ventas.ofertas.gestionar',
+		label: 'Gestionar ofertas',
+		description: 'Crear, editar y consultar ofertas comerciales.',
+		category: 'ventas',
+		defaultRoles: ['manager'],
+	},
 
 	// ── compras (servicios recibidos) ──
 	{
@@ -501,6 +508,27 @@ export const PERMISSION_REGISTRY: PermissionDef[] = [
 	},
 
 	// ── produccion ──
+	{
+		key: 'produccion.reparaciones.gestionar',
+		label: 'Gestionar reparaciones',
+		description: 'Crear, editar y consultar órdenes de reparación, equipos, piezas y defectaciones.',
+		category: 'produccion',
+		defaultRoles: ['manager'],
+	},
+	{
+		key: 'produccion.recetas.gestionar',
+		label: 'Gestionar recetas',
+		description: 'Crear, editar y consultar recetas de producción e ingredientes.',
+		category: 'produccion',
+		defaultRoles: ['manager'],
+	},
+	{
+		key: 'produccion.vales.gestionar',
+		label: 'Gestionar vales de salida',
+		description: 'Crear, editar y consultar vales de salida de inventario.',
+		category: 'produccion',
+		defaultRoles: ['manager'],
+	},
 	{
 		key: 'produccion.reparaciones.eliminar',
 		label: 'Eliminar órdenes de reparación',

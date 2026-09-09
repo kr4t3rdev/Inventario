@@ -29,6 +29,11 @@ const ROUTE_PERMISSION_MAP: RoutePermission[] = [
   { prefix: '/api/empleados/nomina/', method: 'GET', key: 'rrhh.nomina.calcular' },
   { prefix: '/api/empleados/vacaciones/', method: 'GET', key: 'rrhh.vacaciones.solicitar' },
   { prefix: '/api/empleados/work-schedules', method: 'GET', key: 'rrhh.horarios.gestionar' },
+  // ── Producción / operaciones (gestión manager-only) ──
+  { prefix: '/api/ofertas/', key: 'ventas.ofertas.gestionar' },
+  { prefix: '/api/produccion/recetas/', key: 'produccion.recetas.gestionar' },
+  { prefix: '/api/produccion/vales/', key: 'produccion.vales.gestionar' },
+  { prefix: '/api/reparaciones/', key: 'produccion.reparaciones.gestionar' },
 ];
 
 /**
