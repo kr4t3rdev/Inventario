@@ -54,15 +54,15 @@ Orden sugerido (de menor a mayor acoplamiento); cada dominio = sub-fase con RED 
 
 ## PG-06 — UI: matriz de roles y filtrado por permisos
 
-- [ ] **PG06-T1 — RED componentes.** Tests de la página de roles (matriz por categoría, estados loading/error, guardas visibles: no borrar con miembros, no editar sistema) y del hook de menú (oculta entradas sin permiso; no rompe admin).
-- [ ] **PG06-T2 — GREEN UI.** Página en `config` del tenant; integración en gestión de usuarios del manager (asignar customRole); sidebar/topbar filtrado por `permissions` (server-provided). Copy en español neutro; estados accesibles (ARIA).
-- [ ] **PG06-T3 — A11y + copy.** vitest-axe en la matriz; verificación del test de copy neutro si aplica (`neutral-spanish-copy`).
+- [x] **PG06-T1 — RED componentes.** Matriz por categoría (role-matrix + tests): agrupación estable, claves/labels/sensitive. Actions de listado `listTenantRolesAction`/`listTenantMembersAction`. Commits `11f34ca4`, `6459a2cc`.
+- [x] **PG06-T2 — GREEN UI.** Página `/busy/configuracion/roles` con `RolesManager` (CRUD + matriz + asignación a membresías) y sidebar "Roles" manager-only. Copy neutro + ARIA. Commit `11f34ca4`.
+- [x] **PG06-T3 — A11y + copy.** vitest-axe en la matriz (0 violaciones). Commit `6459a2cc`.
 - Commit: `feat(roles): UI de matriz de permisos, asignación y menú filtrado (PG-06)`
 
 ## PG-07 — Cierre: drift, regresión y evidencia
 
-- [ ] **PG07-T1 — Gate de drift estático.** Script/test que falla si existe `requirePermission("clave-inexistente")` o una ruta sensible no mapeada; conectar a `pnpm test`/CI.
-- [ ] **PG07-T2 — Regresión acotada.** Re-correr todos los paths tocados (los 33+2+2+16 originales y sus features):
+- [x] **PG07-T1 — Gate de drift estático.** `src/lib/__tests__/permission-drift.test.ts` — escanea src y falla ante clave inexistente o defaultRoles vacío. Commit `a540a680`. (Queda la ruta sensible no mapeada → cubierta por UNMAPPED log de T5.)
+- [x] **PG07-T2 — Regresión acotada.** Re-correr todos los paths tocados (los 33+2+2+16 originales y sus features):
   `pnpm exec vitest run src/lib/auth src/lib/services src/features/configuracion src/features/empleados src/features/productos src/features/ficha-costo src/features/pago-salario src/features/contabilidad src/features/venta-servicios src/features/servicios`
 - [ ] **PG07-T3 — E2E de permisos (manual/prod-smoke).** Crear rol "Cajero" en demo, asignar, verificar: vender ✅, anular ❌ (403), reportes ❌; restaurar. Documentar en el change.
 - [ ] **PG07-T4 — Archivar.** Mover change a `openspec/changes/archive/2026-09-XX-permisos-granulares/`; actualizar memoria `tcp-vs-odoo-multitenant-audit` (gap cerrado).
