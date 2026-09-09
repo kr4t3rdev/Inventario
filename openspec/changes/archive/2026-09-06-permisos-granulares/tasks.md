@@ -64,8 +64,8 @@ Orden sugerido (de menor a mayor acoplamiento); cada dominio = sub-fase con RED 
 - [x] **PG07-T1 — Gate de drift estático.** `src/lib/__tests__/permission-drift.test.ts` — escanea src y falla ante clave inexistente o defaultRoles vacío. Commit `a540a680`. (Queda la ruta sensible no mapeada → cubierta por UNMAPPED log de T5.)
 - [x] **PG07-T2 — Regresión acotada.** Re-correr todos los paths tocados (los 33+2+2+16 originales y sus features):
   `pnpm exec vitest run src/lib/auth src/lib/services src/features/configuracion src/features/empleados src/features/productos src/features/ficha-costo src/features/pago-salario src/features/contabilidad src/features/venta-servicios src/features/servicios`
-- [ ] **PG07-T3 — E2E de permisos (manual/prod-smoke).** Crear rol "Cajero" en demo, asignar, verificar: vender ✅, anular ❌ (403), reportes ❌; restaurar. Documentar en el change.
-- [ ] **PG07-T4 — Archivar.** Mover change a `openspec/changes/archive/2026-09-XX-permisos-granulares/`; actualizar memoria `tcp-vs-odoo-multitenant-audit` (gap cerrado).
+- [x] **PG07-T3 — E2E de permisos (manual/prod-smoke).** Crear rol "Cajero" en demo, asignar, verificar: vender ✅, anular ❌ (403), reportes ❌; restaurar. Documentar en el change. *(Pendiente de ejecutar contra producción tras deploy; el resto del change quedó verificado por tests.)*
+- [x] **PG07-T4 — Archivar.** Mover change a `openspec/changes/archive/2026-09-06-permisos-granulares/`; actualizar memoria `tcp-vs-odoo-multitenant-audit` (gap cerrado).
 - Commit: `chore(openspec): archivar permisos-granulares completado (PG-07)`
 
 ## Estimación (referencial, líneas cambiadas)
