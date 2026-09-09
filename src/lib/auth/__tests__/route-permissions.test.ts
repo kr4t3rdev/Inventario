@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import {
   getRoutePermissionKey,
+  getMobilePermissionKey,
   isRouteMapped,
 } from '@/lib/auth/route-permissions';
 
@@ -57,5 +58,36 @@ describe('route-permissions (PG-05 T5)', () => {
     expect(getPermissionByKey('rrhh.vacaciones.solicitar')).toBeDefined();
     expect(getPermissionByKey('rrhh.horarios.gestionar')).toBeDefined();
     expect(fn).toBeDefined();
+  });
+});
+describe('route-permissions mobile (PG-05 mobile)', () => {
+  it('mapea grupos mobile v1 a claves de dominio', () => {
+    expect(getMobilePermissionKey('/api/mobile/v1/accounting/x')).toBe('financiero.contabilidad.acceder');
+    expect(getMobilePermissionKey('/api/mobile/v1/products')).toBe('inventario.productos.consultar');
+    expect(getMobilePermissionKey('/api/mobile/v1/sales')).toBe('ventas.venta.registrar');
+    expect(getMobilePermissionKey('/api/mobile/v1/pos/turnos')).toBe('operaciones.pos.gestionar');
+  });
+
+  it('mapea grupos mobile legacy (sin v1)', () => {
+    expect(getMobilePermissionKey('/api/mobile/categories')).toBe('inventario.categorias.gestionar');
+    expect(getMobilePermissionKey('/api/mobile/mermas')).toBe('inventario.mermas.registrar');
+    expect(getMobilePermissionKey('/api/mobile/offers')).toBe('ventas.ofertas.gestionar');
+  });
+
+  it('exenta auth y admin (plataforma/público)', () => {
+    expect(getMobilePermissionKey('/api/mobile/v1/auth/login')).toBeNull();
+    expect(getMobilePermissionKey('/api/mobile/v1/auth/me')).toBeNull();
+    expect(getMobilePermissionKey('/api/mobile/v1/admin/licenses')).toBeNull();
+    expect(getMobilePermissionKey('/api/mobile/plans')).toBeNull();
+  });
+
+  it('admin/memberships sí exige config.usuarios.gestionar', () => {
+    expect(getMobilePermissionKey('/api/mobile/v1/admin/memberships/approve')).toBe('config.usuarios.gestionar');
+    expect(getMobilePermissionKey('/api/mobile/v1/admin/memberships/pending')).toBe('config.usuarios.gestionar');
+  });
+
+  it('ruta no mobile devuelve null', () => {
+    expect(getMobilePermissionKey('/api/ventas')).toBeNull();
+    expect(getMobilePermissionKey('/busy/dashboard')).toBeNull();
   });
 });

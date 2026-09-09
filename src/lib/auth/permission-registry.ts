@@ -537,6 +537,74 @@ export const PERMISSION_REGISTRY: PermissionDef[] = [
 		defaultRoles: ['manager'],
 		sensitive: true,
 	},
+
+	// ── Acceso por móvil (módulos del API mobile, PG-05 mobile) ──
+	// defaultRoles de paridad: mobile hoy no tiene control de rol (cualquier
+	// miembro), así que las claves nuevas parten abiertas a los 3 roles y se
+	// restringen vía roles custom del manager.
+	{
+		key: 'inventario.productos.consultar',
+		label: 'Consultar productos',
+		description: 'Ver el catálogo de productos desde la app móvil.',
+		category: 'inventario',
+		defaultRoles: ['manager', 'economico', 'dependiente'],
+	},
+	{
+		key: 'inventario.unidades.gestionar',
+		label: 'Gestionar unidades',
+		description: 'Gestionar unidades de medida.',
+		category: 'inventario',
+		defaultRoles: ['manager', 'economico', 'dependiente'],
+	},
+	{
+		key: 'ventas.contratos.gestionar',
+		label: 'Gestionar contratos',
+		description: 'Crear, editar y consultar contratos.',
+		category: 'ventas',
+		defaultRoles: ['manager'],
+	},
+	{
+		key: 'compras.compras.gestionar',
+		label: 'Gestionar compras',
+		description: 'Registrar y consultar compras de productos y recibos.',
+		category: 'compras',
+		defaultRoles: ['manager'],
+	},
+	{
+		key: 'compras.proveedores.gestionar',
+		label: 'Gestionar proveedores',
+		description: 'Gestionar proveedores del tenant.',
+		category: 'compras',
+		defaultRoles: ['manager'],
+	},
+	{
+		key: 'operaciones.servicios.acceder',
+		label: 'Acceder a servicios',
+		description: 'Consultar y registrar servicios desde la app móvil.',
+		category: 'operaciones',
+		defaultRoles: ['manager', 'economico', 'dependiente'],
+	},
+	{
+		key: 'operaciones.clientes.gestionar',
+		label: 'Gestionar clientes',
+		description: 'Gestionar el listado de clientes.',
+		category: 'operaciones',
+		defaultRoles: ['manager', 'economico', 'dependiente'],
+	},
+	{
+		key: 'operaciones.referidos.gestionar',
+		label: 'Gestionar referidos',
+		description: 'Consultar y gestionar referidos del tenant.',
+		category: 'operaciones',
+		defaultRoles: ['manager', 'economico', 'dependiente'],
+	},
+	{
+		key: 'operaciones.pos.gestionar',
+		label: 'Operar punto de venta',
+		description: 'Abrir turnos, arqueos y operar el punto de venta.',
+		category: 'operaciones',
+		defaultRoles: ['manager', 'economico', 'dependiente'],
+	},
 ];
 
 const REGISTRY_BY_KEY = new Map(PERMISSION_REGISTRY.map((def) => [def.key, def]));

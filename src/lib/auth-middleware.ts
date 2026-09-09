@@ -6,7 +6,7 @@ import { normalizeTenantRole, type TenantRole, type AppUserRole } from './auth/r
 import { runWithTenantContext, enterTenantContext } from './db/tenant-context'
 import { resolveEffectivePlanFeatures } from './plan-features'
 import { getDefaultPermissionsForRole } from './auth/permission-registry'
-import { getRoutePermissionKey } from './auth/route-permissions'
+import { getRoutePermissionKey, getMobilePermissionKey } from './auth/route-permissions'
 import { hasPermission } from './services/tenant-scope'
 
 export interface PlanLimits {
@@ -362,6 +362,27 @@ export async function authenticateUser(
 
       if (permissionError) {
         return permissionError
+      }
+    }
+
+    // 10.b. Control de rol para el API mobile (PG-05): las rutas mobile llaman
+    // authenticateUser sin validatePermissions; se aplica el permiso de grupo
+    // mapeado. Rutas exentas (auth/admin plataforma) devuelven null.
+    if (!validatePermissions && authenticatedUser.tenantId) {
+      const mobilePath = new URL(request.url).pathname
+      const mobileKey = getMobilePermissionKey(mobilePath)
+      if (
+        mobileKey &&
+        user.role !== 'admin' &&
+        !hasPermission(authenticatedUser, mobileKey)
+      ) {
+        return NextResponse.json(
+          {
+            error: 'Permiso denegado',
+            message: 'No tienes permisos para acceder a este recurso',
+          },
+          { status: 403 },
+        )
       }
     }
 

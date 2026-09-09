@@ -59,3 +59,59 @@ export function getRoutePermissionKey(path: string, method: string): string | un
 export function isRouteMapped(path: string, method: string): boolean {
   return getRoutePermissionKey(path, method) !== undefined;
 }
+
+/**
+ * Mapa de grupos del API mobile (primer segmento tras `/api/mobile/v1/` o
+ * `/api/mobile/`) → clave del registry. `null` = exenta de control de rol
+ * (público o de plataforma). defaultRoles por claves: paridad (mobile no tenía
+ * control de rol, así que las claves nuevas parten abiertas a los 3 roles).
+ */
+const MOBILE_GROUP_KEYS: Record<string, string | null> = {
+  accounting: 'financiero.contabilidad.acceder',
+  dashboard: 'financiero.stats.ver',
+  products: 'inventario.productos.consultar',
+  categories: 'inventario.categorias.gestionar',
+  units: 'inventario.unidades.gestionar',
+  warehouses: 'inventario.almacenes.gestionar',
+  transfers: 'inventario.transferencias.gestionar',
+  mermas: 'inventario.mermas.registrar',
+  sales: 'ventas.venta.registrar',
+  invoicing: 'ventas.facturas.consultar',
+  offers: 'ventas.ofertas.gestionar',
+  contracts: 'ventas.contratos.gestionar',
+  purchases: 'compras.compras.gestionar',
+  providers: 'compras.proveedores.gestionar',
+  services: 'operaciones.servicios.acceder',
+  clients: 'operaciones.clientes.gestionar',
+  referrals: 'operaciones.referidos.gestionar',
+  pos: 'operaciones.pos.gestionar',
+  expenses: 'financiero.gastos.acceder',
+  'expense-concepts': 'financiero.gastos.acceder',
+  // Exentas:
+  auth: null, // login/register/refresh/me/tenants — público o autenticado genérico
+  admin: null, // salud y administración de plataforma (role admin) — ver memberships abajo
+  'admin/memberships': 'config.usuarios.gestionar', // aprobar/rechazar membresías (manager)
+};
+
+/**
+ * @description Resuelve la clave de permiso para una ruta mobile (o null si exenta).
+ * Normaliza el prefijo `/api/mobile/v1/` y `/api/mobile/` y usa el primer segmento;
+ * privilegia el match `admin/memberships` antes que `admin`.
+ * @param {string} path - Pathname de la petición.
+ * @returns {string | null} Clave del registry, o null si la ruta está exenta.
+ */
+export function getMobilePermissionKey(path: string): string | null {
+  let rest = path;
+  if (path.startsWith('/api/mobile/v1/')) rest = path.slice('/api/mobile/v1/'.length);
+  else if (path.startsWith('/api/mobile/')) rest = path.slice('/api/mobile/'.length);
+  else return null; // no es ruta mobile
+
+  const group = rest.split('/')[0];
+  if (group === 'admin' && rest.split('/')[1] === 'memberships') {
+    return MOBILE_GROUP_KEYS['admin/memberships'];
+  }
+  // admin/* (health, licenses, tenants, users) → exenta (plataforma)
+  if (group === 'admin') return null;
+
+  return MOBILE_GROUP_KEYS[group] ?? null;
+}
