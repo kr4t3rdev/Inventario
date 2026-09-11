@@ -1,7 +1,7 @@
 import { Prisma } from '@/generated/prisma';
 import { prisma } from '@/lib/prisma';
 import { ActionError } from '@/lib/server-actions';
-import { requireFeature, requireTenant } from '@/lib/services/tenant-scope';
+import { requireFeature, requirePermission, requireTenant } from '@/lib/services/tenant-scope';
 import { upsertStockUbicacion } from '@/lib/services/stock-ubicacion-service';
 import { registrarMovimiento, revertirMovimientosDeOrigen } from '@/features/inventario/movimientos';
 import { allocateFifoForSale } from '@/lib/services/fifo-allocation';
@@ -92,6 +92,7 @@ export const VentaMutationService = {
     user: AuthenticatedUser;
   }) {
     requireFeature(user, 'ventas-pos', 'realizar ventas');
+    requirePermission(user, 'ventas.venta.registrar', 'registrar ventas');
     const parsed = createVentaSchema.parse(input);
     const tenantId = requireTenant(user);
     const hasFacturacion = user.planFeatures?.facturacion === true;
@@ -359,6 +360,7 @@ export const VentaMutationService = {
     user: AuthenticatedUser;
   }) {
     requireFeature(user, 'ventas-pos', 'editar ventas');
+    requirePermission(user, 'ventas.venta.editar', 'editar ventas');
     const { ventaId, ...data } = input;
     const tenantId = requireTenant(user);
     const existing = await prisma.venta.findFirst({
@@ -388,6 +390,7 @@ export const VentaMutationService = {
     user: AuthenticatedUser;
   }) {
     requireFeature(user, 'ventas-pos', 'anular ventas');
+    requirePermission(user, 'ventas.venta.anular', 'anular ventas');
     const parsed = anularVentaSchema.parse(input);
     const tenantId = requireTenant(user);
 

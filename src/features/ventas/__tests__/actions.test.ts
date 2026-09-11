@@ -686,3 +686,62 @@ describe("Ventas Server Actions", () => {
 		});
 	});
 });
+
+describe("permisos granulares en mutaciones de ventas (PG-05)", () => {
+	// Rol custom "Cajero": registra ventas pero no las anula ni edita.
+	const cajeroUser: AuthenticatedUser = {
+		userId: "user-cajero",
+		name: "Cajero",
+		email: "cajero@test.com",
+		role: "regularUser",
+		isActive: true,
+		tenantId: "tenant-test",
+		tenantRole: "dependiente",
+		planFeatures: { "ventas-pos": true },
+		permissions: new Set(["ventas.venta.registrar"]),
+	};
+
+	const usuarioSinVentas: AuthenticatedUser = {
+		userId: "user-sin-ventas",
+		name: "Sin Ventas",
+		email: "sinventas@test.com",
+		role: "regularUser",
+		isActive: true,
+		tenantId: "tenant-test",
+		tenantRole: "dependiente",
+		planFeatures: { "ventas-pos": true },
+		permissions: new Set<string>(),
+	};
+
+	beforeEach(() => {
+		vi.clearAllMocks();
+	});
+
+	it("rechaza anular ventas para un rol custom sin ventas.venta.anular (FORBIDDEN)", async () => {
+		vi.mocked(getCurrentUser).mockResolvedValue(cajeroUser);
+
+		const result = await anularVentaAction({ ventaId: "venta-1" });
+
+		expect(result.success).toBe(false);
+		if (!result.success) {
+			expect(result.error!.code).toBe("FORBIDDEN");
+		}
+		// El guard corre antes de cualquier acceso a datos de la venta.
+		expect(prisma.venta.findUnique).not.toHaveBeenCalled();
+	});
+
+	it("rechaza crear ventas para un rol sin ventas.venta.registrar (FORBIDDEN)", async () => {
+		vi.mocked(getCurrentUser).mockResolvedValue(usuarioSinVentas);
+
+		const result = await createVentaAction({
+			puntoDeVentaId: "pv-1",
+			items: [{ productoId: "prod-1", cantidad: 2, precioUnitario: 500 }],
+		});
+
+		expect(result.success).toBe(false);
+		if (!result.success) {
+			expect(result.error!.code).toBe("FORBIDDEN");
+		}
+		expect(prisma.$transaction).not.toHaveBeenCalled();
+	});
+});

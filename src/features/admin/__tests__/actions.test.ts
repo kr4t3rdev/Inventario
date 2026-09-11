@@ -45,6 +45,7 @@ vi.mock('@/lib/prisma', () => {
       create: vi.fn(), findFirst: vi.fn(), findUnique: vi.fn(), update: vi.fn(),
       findMany: vi.fn(), count: vi.fn(), delete: vi.fn(), deleteMany: vi.fn(),
     },
+    tenantRole: { findFirst: vi.fn(), findMany: vi.fn() },
     moneda: { upsert: vi.fn() },
     plan: { findMany: vi.fn(), findUnique: vi.fn(), create: vi.fn(), update: vi.fn(), delete: vi.fn() },
     affiliateProfile: { findUnique: vi.fn() },
@@ -1774,6 +1775,53 @@ describe('Admin Server Actions', () => {
         where: { userId: 'user-worker' },
         data: { isActive: false },
       });
+    });
+
+    it('bloquea degradar al último administrador efectivo del tenant', async () => {
+      vi.mocked(getCurrentUser).mockResolvedValue(managerUser);
+      vi.mocked(prisma.tenantMembership.findFirst).mockResolvedValue({
+        membershipId: 'mem-1',
+        tenantRole: 'manager',
+        isActive: true,
+        customRoleId: null,
+      } as any);
+      // Sólo ese manager es admin efectivo.
+      vi.mocked(prisma.tenantMembership.findMany).mockResolvedValue([
+        { tenantRole: 'manager', customRoleId: null },
+      ] as any);
+
+      const r = await updateTenantUserAction({
+        userId: 'user-manager-otro',
+        tenantRole: 'dependiente',
+      });
+
+      expect(r.success).toBe(false);
+      if (!r.success) expect(r.error!.code).toBe('LAST_MANAGER');
+      expect(prisma.tenantMembership.update).not.toHaveBeenCalled();
+    });
+
+    it('permite degradar a un manager si otro admin efectivo permanece', async () => {
+      vi.mocked(getCurrentUser).mockResolvedValue(managerUser);
+      vi.mocked(prisma.tenantMembership.findFirst).mockResolvedValue({
+        membershipId: 'mem-1',
+        tenantRole: 'manager',
+        isActive: true,
+        customRoleId: null,
+      } as any);
+      vi.mocked(prisma.tenantMembership.findMany).mockResolvedValue([
+        { tenantRole: 'manager', customRoleId: null },
+        { tenantRole: 'manager', customRoleId: null },
+      ] as any);
+      vi.mocked(prisma.tenantMembership.update).mockResolvedValue({} as any);
+      vi.mocked(prisma.user.update).mockResolvedValue({} as any);
+
+      const r = await updateTenantUserAction({
+        userId: 'user-manager-otro',
+        tenantRole: 'dependiente',
+      });
+
+      expect(r.success).toBe(true);
+      expect(prisma.tenantMembership.update).toHaveBeenCalled();
     });
   });
 

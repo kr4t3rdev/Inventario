@@ -268,6 +268,7 @@ export interface Usuario {
 	onboardingType?: string | null;
 	planFeatures?: Record<string, boolean> | null;
 	planName?: string | null;
+	permissions?: string[] | null;
 
 	lastModifiedBy: string | null;
 	loginAttempts: number;

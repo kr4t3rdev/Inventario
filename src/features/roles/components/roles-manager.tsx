@@ -42,6 +42,7 @@ interface RoleRow {
   nombre: string;
   descripcion: string | null;
   permissions: string[];
+  isActive: boolean;
 }
 interface MemberRow {
   membershipId: string;
@@ -163,7 +164,14 @@ export function RolesManager() {
           {roles.map((r) => (
             <li key={r.roleId} className="flex items-center justify-between rounded-md border p-3">
               <div>
-                <div className="font-medium">{r.nombre}</div>
+                <div className="font-medium">
+                  {r.nombre}
+                  {!r.isActive && (
+                    <Badge variant="outline" className="ml-2">
+                      Inactivo
+                    </Badge>
+                  )}
+                </div>
                 <div className="text-xs text-muted-foreground">
                   {Array.isArray(r.permissions) ? r.permissions.length : 0} permisos
                   {r.descripcion ? ` · ${r.descripcion}` : ''}
@@ -202,11 +210,13 @@ export function RolesManager() {
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="__none__">Sin rol personalizado</SelectItem>
-                  {roles.map((r) => (
-                    <SelectItem key={r.roleId} value={r.roleId}>
-                      {r.nombre}
-                    </SelectItem>
-                  ))}
+                  {roles
+                    .filter((r) => r.isActive)
+                    .map((r) => (
+                      <SelectItem key={r.roleId} value={r.roleId}>
+                        {r.nombre}
+                      </SelectItem>
+                    ))}
                 </SelectContent>
               </Select>
             </li>

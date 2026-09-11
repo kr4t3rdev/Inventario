@@ -26,6 +26,7 @@ import {
 	deliverSalesAgentEmails,
 } from "@/features/sales-agent/services/notification-service";
 import { hasPermission } from "@/lib/services/tenant-scope";
+import { computeAdminStatus, countEffectiveAdmins } from "@/lib/auth/last-admin-guard";
 import { confirmSalesAgentTenantPayment } from "@/features/sales-agent/services/payment-service";
 import { confirmReferredTenantPaymentAction } from "@/features/affiliate/actions";
 import { createDemoTenantForPlan } from "@/lib/services/demo-tenant-factory";
@@ -1082,7 +1083,7 @@ export const updateTenantUserAction = withAction(
 		// Verificar que el usuario pertenece al mismo tenant
 		const membership = await prisma.tenantMembership.findFirst({
 			where: { userId, tenantId: user.tenantId },
-			select: { membershipId: true, tenantRole: true, isActive: true },
+			select: { membershipId: true, tenantRole: true, isActive: true, customRoleId: true },
 		});
 
 		if (!membership) {
@@ -1097,6 +1098,29 @@ export const updateTenantUserAction = withAction(
 			throw new ActionError(
 				"No puedes modificar tu propio usuario desde aquí",
 				"FORBIDDEN",
+			);
+		}
+
+		// Guarda de último admin (hallazgo #3): no degradar ni desactivar al
+		// último administrador efectivo del tenant.
+		const nextFixedRole = tenantRole ?? membership.tenantRole;
+		const nextActive = isActive ?? membership.isActive;
+		const wasAdmin = await computeAdminStatus({
+			tenantId: user.tenantId,
+			fixedRole: membership.tenantRole,
+			isActive: membership.isActive,
+			customRoleId: membership.customRoleId,
+		});
+		const willBeAdmin = await computeAdminStatus({
+			tenantId: user.tenantId,
+			fixedRole: nextFixedRole,
+			isActive: nextActive,
+			customRoleId: membership.customRoleId,
+		});
+		if (wasAdmin && !willBeAdmin && (await countEffectiveAdmins(user.tenantId)) <= 1) {
+			throw new ActionError(
+				"No se puede degradar o desactivar al último administrador de la empresa.",
+				"LAST_MANAGER",
 			);
 		}
 

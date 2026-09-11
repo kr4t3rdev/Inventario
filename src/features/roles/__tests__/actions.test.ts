@@ -9,10 +9,10 @@ vi.mock('@/lib/server-actions/get-current-user');
 vi.mock('next/cache', () => ({ revalidatePath: vi.fn() }));
 vi.mock('@/lib/services/audit-log-service', async (importOriginal) => {
   const actual = await importOriginal<typeof import('@/lib/services/audit-log-service')>();
-  return { ...actual, AuditLogService: { ...actual.AuditLogService, log: vi.fn() } };
+  return { ...actual, AuditLogService: { ...actual.AuditLogService, log: vi.fn(), logStrict: vi.fn() } };
 });
-vi.mock('@/lib/prisma', () => ({
-  prisma: {
+vi.mock('@/lib/prisma', () => {
+  const prismaMock: Record<string, unknown> = {
     tenantRole: {
       create: vi.fn(),
       update: vi.fn(),
@@ -25,9 +25,13 @@ vi.mock('@/lib/prisma', () => ({
       findMany: vi.fn(),
       update: vi.fn(),
       count: vi.fn(),
+      delete: vi.fn(),
     },
-  },
-}));
+  };
+  // tx comparte el mismo mock: las aserciones sobre prisma.tenantRole.* siguen válidas.
+  prismaMock.$transaction = vi.fn((cb: (tx: unknown) => unknown) => cb(prismaMock));
+  return { prisma: prismaMock };
+});
 
 import { getCurrentUser } from '@/lib/server-actions/get-current-user';
 import { prisma } from '@/lib/prisma';
@@ -97,9 +101,12 @@ describe('createTenantRoleAction (PG-04 RED)', () => {
         data: expect.objectContaining({ tenantId: 'tenant-1', nombre: 'Cajero' }),
       }),
     );
-    expect(vi.mocked(AuditLogService.log)).toHaveBeenCalledWith(
+    expect(vi.mocked(AuditLogService.logStrict)).toHaveBeenCalledWith(
       expect.objectContaining({ accion: 'CREATE', entidadId: 'role-1', usuarioId: 'u-manager' }),
+      // tx comparte el mock de prisma: mutación y auditoría son atómicas (hallazgo #8).
+      expect.anything(),
     );
+    expect(vi.mocked(prisma.$transaction)).toHaveBeenCalled();
   });
 
   it('rechaza claves de permisos desconocidas con detalle', async () => {
@@ -163,6 +170,11 @@ describe('updateTenantRoleAction (PG-04 RED)', () => {
     vi.mocked(getCurrentUser).mockResolvedValue(managerUser);
     vi.mocked(prisma.tenantRole.findFirst).mockResolvedValue(baseRole as never);
     vi.mocked(prisma.tenantRole.update).mockResolvedValue(baseRole as never);
+    // Guarda de último admin: por defecto hay un manager sin rol custom (admin).
+    vi.mocked(prisma.tenantMembership.findMany).mockResolvedValue([
+      { tenantRole: 'manager', customRoleId: null },
+    ] as never);
+    vi.mocked(prisma.tenantRole.findMany).mockResolvedValue([] as never);
   });
 
   it('actualiza nombre y permisos, valida contra registry y audita', async () => {
@@ -174,9 +186,22 @@ describe('updateTenantRoleAction (PG-04 RED)', () => {
 
     expect(result.success).toBe(true);
     expect(prisma.tenantRole.update).toHaveBeenCalled();
-    expect(vi.mocked(AuditLogService.log)).toHaveBeenCalledWith(
+    expect(vi.mocked(AuditLogService.logStrict)).toHaveBeenCalledWith(
       expect.objectContaining({ accion: 'UPDATE', entidadId: 'role-1' }),
+      expect.anything(), // tx — mutación y auditoría atómicas (hallazgo #8)
     );
+  });
+
+  it('si la auditoría falla dentro de la transacción, la acción reporta error (no deja cambio sin evidencia)', async () => {
+    vi.mocked(AuditLogService.logStrict).mockRejectedValueOnce(
+      new Error('audit write failed'),
+    );
+
+    const result = await updateTenantRoleAction({ roleId: 'role-1', nombre: 'X' });
+
+    expect(result.success).toBe(false);
+    expect(result.error?.code).toBe('INTERNAL_ERROR');
+    expect(vi.mocked(prisma.$transaction)).toHaveBeenCalled();
   });
 
   it('rechaza claves desconocidas y no persiste', async () => {
@@ -193,6 +218,54 @@ describe('updateTenantRoleAction (PG-04 RED)', () => {
     const result = await updateTenantRoleAction({ roleId: 'role-ajena', nombre: 'X' });
     expect(result.success).toBe(false);
     if (!result.success) expect(result.error?.code).toBe('NOT_FOUND');
+  });
+
+  it('bloquea quitar config.usuarios.gestionar del rol del último admin (LAST_MANAGER)', async () => {
+    vi.mocked(prisma.tenantRole.findFirst).mockResolvedValue({
+      ...baseRole,
+      permissions: ['config.usuarios.gestionar'],
+      isActive: true,
+    } as never);
+    // El rol está asignado al único admin efectivo del tenant.
+    vi.mocked(prisma.tenantMembership.findMany).mockResolvedValue([
+      { tenantRole: 'manager', customRoleId: 'role-1' },
+    ] as never);
+    vi.mocked(prisma.tenantRole.findMany).mockResolvedValue([
+      { roleId: 'role-1', permissions: ['config.usuarios.gestionar'], isActive: true },
+    ] as never);
+
+    const result = await updateTenantRoleAction({
+      roleId: 'role-1',
+      permissions: ['ventas.venta.registrar'],
+    });
+
+    expect(result.success).toBe(false);
+    if (!result.success) expect(result.error?.code).toBe('LAST_MANAGER');
+    expect(prisma.tenantRole.update).not.toHaveBeenCalled();
+  });
+
+  it('permite quitar gestionar del rol si otro admin efectivo permanece', async () => {
+    vi.mocked(prisma.tenantRole.findFirst).mockResolvedValue({
+      ...baseRole,
+      permissions: ['config.usuarios.gestionar'],
+      isActive: true,
+    } as never);
+    // Un manager sin rol custom (admin) + el manager con el rol editado.
+    vi.mocked(prisma.tenantMembership.findMany).mockResolvedValue([
+      { tenantRole: 'manager', customRoleId: 'role-1' },
+      { tenantRole: 'manager', customRoleId: null },
+    ] as never);
+    vi.mocked(prisma.tenantRole.findMany).mockResolvedValue([
+      { roleId: 'role-1', permissions: ['config.usuarios.gestionar'], isActive: true },
+    ] as never);
+
+    const result = await updateTenantRoleAction({
+      roleId: 'role-1',
+      permissions: ['ventas.venta.registrar'],
+    });
+
+    expect(result.success).toBe(true);
+    expect(prisma.tenantRole.update).toHaveBeenCalled();
   });
 });
 
@@ -211,8 +284,9 @@ describe('deleteTenantRoleAction (PG-04 RED)', () => {
 
     expect(result.success).toBe(true);
     expect(prisma.tenantRole.delete).toHaveBeenCalledWith({ where: { roleId: 'role-1' } });
-    expect(vi.mocked(AuditLogService.log)).toHaveBeenCalledWith(
+    expect(vi.mocked(AuditLogService.logStrict)).toHaveBeenCalledWith(
       expect.objectContaining({ accion: 'DELETE', entidadId: 'role-1' }),
+      expect.anything(),
     );
   });
 
@@ -266,8 +340,9 @@ describe('assignCustomRoleAction (PG-04 RED)', () => {
         data: { customRoleId: 'role-1' },
       }),
     );
-    expect(vi.mocked(AuditLogService.log)).toHaveBeenCalledWith(
+    expect(vi.mocked(AuditLogService.logStrict)).toHaveBeenCalledWith(
       expect.objectContaining({ accion: 'UPDATE', usuarioId: 'u-manager' }),
+      expect.anything(),
     );
   });
 
@@ -299,8 +374,11 @@ describe('assignCustomRoleAction (PG-04 RED)', () => {
       ...membership,
       tenantRole: 'manager',
     } as never);
-    // Solo ese manager activo en el tenant
-    vi.mocked(prisma.tenantMembership.count).mockResolvedValue(1 as never);
+    // Solo ese manager (admin efectivo) en el tenant.
+    vi.mocked(prisma.tenantMembership.findMany).mockResolvedValue([
+      { tenantRole: 'manager', customRoleId: null },
+    ] as never);
+    vi.mocked(prisma.tenantRole.findMany).mockResolvedValue([] as never);
 
     const result = await assignCustomRoleAction({ membershipId: 'mem-1', customRoleId: 'role-1' });
 
@@ -316,10 +394,31 @@ describe('assignCustomRoleAction (PG-04 RED)', () => {
       ...membership,
       tenantRole: 'manager',
     } as never);
-    vi.mocked(prisma.tenantMembership.count).mockResolvedValue(2 as never);
+    vi.mocked(prisma.tenantMembership.findMany).mockResolvedValue([
+      { tenantRole: 'manager', customRoleId: null },
+      { tenantRole: 'manager', customRoleId: null },
+    ] as never);
+    vi.mocked(prisma.tenantRole.findMany).mockResolvedValue([] as never);
 
     const result = await assignCustomRoleAction({ membershipId: 'mem-1', customRoleId: 'role-1' });
     expect(result.success).toBe(true);
+  });
+
+  it('no asigna un rol INACTIVO: el lookup exige isActive: true', async () => {
+    // Un rol inactivo no se encuentra con el filtro isActive:true,
+    // por lo que la asignación se rechaza con NOT_FOUND.
+    vi.mocked(prisma.tenantRole.findFirst).mockResolvedValue(null as never);
+
+    const result = await assignCustomRoleAction({ membershipId: 'mem-1', customRoleId: 'role-inactivo' });
+
+    expect(result.success).toBe(false);
+    if (!result.success) expect(result.error?.code).toBe('NOT_FOUND');
+    expect(prisma.tenantMembership.update).not.toHaveBeenCalled();
+    expect(prisma.tenantRole.findFirst).toHaveBeenCalledWith(
+      expect.objectContaining({
+        where: expect.objectContaining({ roleId: 'role-inactivo', isActive: true }),
+      }),
+    );
   });
 });
 

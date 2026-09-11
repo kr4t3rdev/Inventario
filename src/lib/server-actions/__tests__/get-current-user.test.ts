@@ -33,6 +33,10 @@ vi.mock("next/headers", () => ({
 
 vi.mock("@/lib/prisma", () => ({ prisma: mocks.prisma }));
 
+// resolveTenantContext (auth-middleware) usa prismaPlatform tras AS-02; alias al
+// mismo mock para que la resolución de contexto quede determinista en units.
+vi.mock("@/lib/db/platform-prisma", () => ({ prismaPlatform: mocks.prisma }));
+
 vi.mock("jsonwebtoken", () => ({ default: mocks.jwt }));
 
 vi.mock("@/lib/secrets", () => ({
@@ -125,6 +129,10 @@ describe("getCurrentUser", () => {
       maxProductos: 500,
       maxClientes: 150,
     });
+    // Los permisos efectivos resueltos en contexto deben propagarse al user
+    // (prerrequisito del guard requirePermission en server actions, PG-05).
+    expect(user!.permissions).toBeInstanceOf(Set);
+    expect(user!.permissions!.has('ventas.venta.registrar')).toBe(true);
     expect(mocks.prisma.tenantMembership.findUnique).toHaveBeenCalled();
     expect(mocks.prisma.tenantMembership.findFirst).not.toHaveBeenCalled();
   });

@@ -12,6 +12,11 @@ import { prisma } from '@/lib/prisma';
 import { requirePermission, requireTenant } from '@/lib/services/tenant-scope';
 import { AuditLogService } from '@/lib/services/audit-log-service';
 import { getPermissionByKey } from '@/lib/auth/permission-registry';
+import {
+  computeAdminStatus,
+  countEffectiveAdmins,
+  rolePermissionsIncludeAdmin,
+} from '@/lib/auth/last-admin-guard';
 import type { AuthenticatedUser } from '@/lib/auth-middleware';
 
 const GESTIONAR_USUARIOS = 'config.usuarios.gestionar';
@@ -132,21 +137,30 @@ export const createTenantRoleAction = withAction(
       );
     }
 
-    const role = await prisma.tenantRole.create({
-      data: {
-        tenantId,
-        nombre: data.nombre,
-        descripcion: data.descripcion ?? null,
-        permissions: data.permissions,
-      },
-    });
+    const role = await prisma.$transaction(async (tx) => {
+      const created = await tx.tenantRole.create({
+        data: {
+          tenantId,
+          nombre: data.nombre,
+          descripcion: data.descripcion ?? null,
+          permissions: data.permissions,
+        },
+      });
 
-    await AuditLogService.log({
-      accion: 'CREATE',
-      entidad: 'TENANT_ROLE',
-      entidadId: role.roleId,
-      usuarioId: user.userId,
-      detalles: { tenantId, nombre: role.nombre, permissions: role.permissions },
+      // Mutación + auditoría en la MISMA transacción (hallazgo #8): si el log
+      // falla, el rol no queda persistido sin evidencia.
+      await AuditLogService.logStrict(
+        {
+          accion: 'CREATE',
+          entidad: 'TENANT_ROLE',
+          entidadId: created.roleId,
+          usuarioId: user.userId,
+          detalles: { tenantId, nombre: created.nombre, permissions: created.permissions },
+        },
+        tx,
+      );
+
+      return created;
     });
 
     revalidatePath(CONFIG_PATH);
@@ -183,17 +197,48 @@ export const updateTenantRoleAction = withAction(
     if (data.permissions !== undefined) updateData.permissions = data.permissions;
     if (data.isActive !== undefined) updateData.isActive = data.isActive;
 
-    const actualizado = await prisma.tenantRole.update({
-      where: { roleId: role.roleId },
-      data: updateData,
-    });
+    // Guarda de último admin (hallazgo #3): la edición no puede dejar al tenant
+    // sin un administrador efectivo. Solo evalúa cuando la edición reduciría la
+    // capacidad administrativa (quitar gestionar o desactivar el rol).
+    const nextPermissions = data.permissions ?? (role.permissions as string[]);
+    const nextIsActive = data.isActive ?? role.isActive;
+    const removesAdmin =
+      !nextIsActive || !rolePermissionsIncludeAdmin(nextPermissions);
 
-    await AuditLogService.log({
-      accion: 'UPDATE',
-      entidad: 'TENANT_ROLE',
-      entidadId: role.roleId,
-      usuarioId: user.userId,
-      detalles: { tenantId, roleId: role.roleId, cambios: updateData },
+    if (removesAdmin) {
+      const before = await countEffectiveAdmins(tenantId);
+      const after = await countEffectiveAdmins(tenantId, {
+        roleId: role.roleId,
+        permissions: Array.isArray(nextPermissions) ? (nextPermissions as string[]) : [],
+        isActive: Boolean(nextIsActive),
+      });
+      if (before >= 1 && after === 0) {
+        throw new ActionError(
+          'No se puede modificar el rol: dejaría a la empresa sin un administrador capaz de gestionar usuarios y roles.',
+          'LAST_MANAGER',
+        );
+      }
+    }
+
+    const actualizado = await prisma.$transaction(async (tx) => {
+      const updated = await tx.tenantRole.update({
+        where: { roleId: role.roleId },
+        data: updateData,
+      });
+
+      // Mutación + auditoría atómicas (hallazgo #8).
+      await AuditLogService.logStrict(
+        {
+          accion: 'UPDATE',
+          entidad: 'TENANT_ROLE',
+          entidadId: role.roleId,
+          usuarioId: user.userId,
+          detalles: { tenantId, roleId: role.roleId, cambios: updateData },
+        },
+        tx,
+      );
+
+      return updated;
     });
 
     revalidatePath(CONFIG_PATH);
@@ -230,14 +275,20 @@ export const deleteTenantRoleAction = withAction(
       );
     }
 
-    await prisma.tenantRole.delete({ where: { roleId: role.roleId } });
+    await prisma.$transaction(async (tx) => {
+      await tx.tenantRole.delete({ where: { roleId: role.roleId } });
 
-    await AuditLogService.log({
-      accion: 'DELETE',
-      entidad: 'TENANT_ROLE',
-      entidadId: role.roleId,
-      usuarioId: user.userId,
-      detalles: { tenantId, nombre: role.nombre },
+      // Mutación + auditoría atómicas (hallazgo #8).
+      await AuditLogService.logStrict(
+        {
+          accion: 'DELETE',
+          entidad: 'TENANT_ROLE',
+          entidadId: role.roleId,
+          usuarioId: user.userId,
+          detalles: { tenantId, nombre: role.nombre },
+        },
+        tx,
+      );
     });
 
     revalidatePath(CONFIG_PATH);
@@ -266,42 +317,57 @@ export const assignCustomRoleAction = withAction(
     }
 
     if (data.customRoleId !== null) {
+      // Solo roles ACTIVOS: asignar un rol inactivo sería una falsa promesa
+      // (la resolución haría fallback a los defaults del rol fijo, mostrando
+      // una restricción que en realidad no aplica).
       const role = await prisma.tenantRole.findFirst({
-        where: { roleId: data.customRoleId, tenantId },
+        where: { roleId: data.customRoleId, tenantId, isActive: true },
       });
       if (!role) {
         throw new ActionError('Rol no encontrado', 'NOT_FOUND');
       }
 
-      if (membership.tenantRole === 'manager') {
-        const managersActivos = await prisma.tenantMembership.count({
-          where: { tenantId, tenantRole: 'manager', isActive: true },
-        });
-        if (managersActivos <= 1) {
-          throw new ActionError(
-            'No se puede asignar un rol personalizado al último manager activo del tenant. Asigna otro manager antes de continuar.',
-            'LAST_MANAGER',
-          );
-        }
+      // Guarda de último admin: asignar un rol sin capacidad administrativa al
+      // último administrador efectivo dejaría al tenant sin gestor.
+      const wasAdmin = await computeAdminStatus({
+        tenantId,
+        fixedRole: membership.tenantRole,
+        isActive: membership.isActive,
+        customRoleId: membership.customRoleId,
+      });
+      // El rol recuperado ya está garantizado activo (isActive: true en el query).
+      const willBeAdmin = rolePermissionsIncludeAdmin(role.permissions);
+
+      if (wasAdmin && !willBeAdmin && (await countEffectiveAdmins(tenantId)) <= 1) {
+        throw new ActionError(
+          'No se puede asignar un rol sin permisos de administración al último administrador activo de la empresa.',
+          'LAST_MANAGER',
+        );
       }
     }
 
-    await prisma.tenantMembership.update({
-      where: { membershipId: membership.membershipId },
-      data: { customRoleId: data.customRoleId },
-    });
+    await prisma.$transaction(async (tx) => {
+      await tx.tenantMembership.update({
+        where: { membershipId: membership.membershipId },
+        data: { customRoleId: data.customRoleId },
+      });
 
-    await AuditLogService.log({
-      accion: 'UPDATE',
-      entidad: 'TENANT_ROLE',
-      entidadId: data.customRoleId ?? membership.membershipId,
-      usuarioId: user.userId,
-      detalles: {
-        tenantId,
-        membershipId: membership.membershipId,
-        customRoleId: data.customRoleId,
-        miembroConRolFijo: membership.tenantRole,
-      },
+      // Mutación + auditoría atómicas (hallazgo #8).
+      await AuditLogService.logStrict(
+        {
+          accion: 'UPDATE',
+          entidad: 'TENANT_ROLE',
+          entidadId: data.customRoleId ?? membership.membershipId,
+          usuarioId: user.userId,
+          detalles: {
+            tenantId,
+            membershipId: membership.membershipId,
+            customRoleId: data.customRoleId,
+            miembroConRolFijo: membership.tenantRole,
+          },
+        },
+        tx,
+      );
     });
 
     revalidatePath(CONFIG_PATH);

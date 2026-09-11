@@ -137,6 +137,7 @@ function toPublicUser(
       tenantRole: tenantContext.tenantRole,
       planFeatures: tenantContext.planFeatures,
       planName: tenantContext.planName,
+      permissions: [...tenantContext.permissions],
     }),
   };
 }
@@ -477,6 +478,7 @@ export const AuthService = {
         tenantRole: user.tenantRole,
         planFeatures: user.planFeatures,
         planName: user.planName,
+        ...(user.permissions ? { permissions: [...user.permissions] } : {}),
       },
     };
   },

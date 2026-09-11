@@ -36,6 +36,7 @@ export interface AuthServiceUser extends Record<string, unknown> {
   tenantId?: string;
   tenantRole?: string;
   planFeatures?: Record<string, boolean>;
+  permissions?: string[];
 }
 
 export interface AuthServiceLoginResult {

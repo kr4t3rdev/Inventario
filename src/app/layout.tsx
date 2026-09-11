@@ -48,6 +48,14 @@ export default async function RootLayout({
   children: React.ReactNode;
 }>) {
   const initialUser = await getCurrentUser();
+  // `permissions` es un Set server-side; serializarlo a array para que cruce
+  // la frontera RSC→cliente (los Set no son serializables por Flight).
+  const serializedUser = initialUser
+    ? {
+        ...initialUser,
+        permissions: initialUser.permissions ? [...initialUser.permissions] : undefined,
+      }
+    : null;
 
   return (
     <html lang="es" suppressHydrationWarning>
@@ -56,7 +64,7 @@ export default async function RootLayout({
       >
         <ThemeProvider attribute="class" defaultTheme="system" enableSystem disableTransitionOnChange>
           <LazyMotion features={domAnimation}>
-            <AuthProvider initialUser={initialUser as never}>
+            <AuthProvider initialUser={serializedUser as never}>
               {children}
             </AuthProvider>
           </LazyMotion>

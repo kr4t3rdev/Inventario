@@ -363,6 +363,21 @@ export const PERMISSION_REGISTRY: PermissionDef[] = [
 		defaultRoles: ['manager', 'economico', 'dependiente'],
 	},
 	{
+		key: 'ventas.venta.editar',
+		label: 'Editar ventas',
+		description: 'Modificar datos básicos de ventas registradas.',
+		category: 'ventas',
+		defaultRoles: ['manager', 'economico', 'dependiente'],
+	},
+	{
+		key: 'ventas.venta.anular',
+		label: 'Anular ventas',
+		description: 'Anular ventas y revertir sus efectos de stock e ingresos.',
+		category: 'ventas',
+		defaultRoles: ['manager', 'economico', 'dependiente'],
+		sensitive: true,
+	},
+	{
 		key: 'ventas.facturas.consultar',
 		label: 'Consultar facturas',
 		description: 'Ver y descargar facturas emitidas.',

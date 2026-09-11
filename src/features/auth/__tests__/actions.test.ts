@@ -52,6 +52,13 @@ vi.mock("@/lib/prisma", () => ({
 	},
 }));
 
+// resolveTenantContext (auth-middleware) usa prismaPlatform tras AS-02; alias al
+// mismo mock para que la resolución de tenant quede determinista en units.
+vi.mock("@/lib/db/platform-prisma", async () => {
+	const { prisma } = await import("@/lib/prisma");
+	return { prismaPlatform: prisma, default: prisma };
+});
+
 vi.mock("bcryptjs", () => ({
 	default: { compare: vi.fn(), hash: vi.fn() },
 	compare: vi.fn(),

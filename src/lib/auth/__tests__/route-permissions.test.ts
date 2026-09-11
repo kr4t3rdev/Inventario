@@ -37,6 +37,26 @@ describe('route-permissions (PG-05 T5)', () => {
     );
   });
 
+  it('mapea mutaciones de rrhh (PUT/DELETE) a claves de edición/eliminación (PG-05)', () => {
+    expect(getRoutePermissionKey('/api/empleados/asistencia/xyz', 'PUT')).toBe(
+      'rrhh.asistencia.editar',
+    );
+    expect(getRoutePermissionKey('/api/empleados/asistencia/xyz', 'DELETE')).toBe(
+      'rrhh.asistencia.eliminar',
+    );
+    expect(getRoutePermissionKey('/api/empleados/nomina/xyz', 'PUT')).toBe('rrhh.nomina.editar');
+    expect(getRoutePermissionKey('/api/empleados/nomina/xyz', 'DELETE')).toBe('rrhh.nomina.eliminar');
+    expect(getRoutePermissionKey('/api/empleados/vacaciones/xyz', 'PUT')).toBe(
+      'rrhh.vacaciones.aprobar',
+    );
+    expect(getRoutePermissionKey('/api/empleados/vacaciones/xyz', 'DELETE')).toBe(
+      'rrhh.vacaciones.eliminar',
+    );
+    expect(getRoutePermissionKey('/api/empleados/work-schedules', 'DELETE')).toBe(
+      'rrhh.horarios.eliminar',
+    );
+  });
+
   it('no mapea métodos distintos al de la entrada (p.ej. POST en facturas)', () => {
     expect(getRoutePermissionKey('/api/facturas', 'POST')).toBeUndefined();
     expect(isRouteMapped('/api/facturas', 'POST')).toBe(false);
@@ -66,6 +86,15 @@ describe('route-permissions mobile (PG-05 mobile)', () => {
     expect(getMobilePermissionKey('/api/mobile/v1/products')).toBe('inventario.productos.consultar');
     expect(getMobilePermissionKey('/api/mobile/v1/sales')).toBe('ventas.venta.registrar');
     expect(getMobilePermissionKey('/api/mobile/v1/pos/turnos')).toBe('operaciones.pos.gestionar');
+  });
+
+  it('distingue create/update/cancel dentro del grupo sales (PG-05 hallazgo #2)', () => {
+    expect(getMobilePermissionKey('/api/mobile/v1/sales/create')).toBe('ventas.venta.registrar');
+    expect(getMobilePermissionKey('/api/mobile/v1/sales/abc123/update')).toBe('ventas.venta.editar');
+    expect(getMobilePermissionKey('/api/mobile/v1/sales/abc123/cancel')).toBe('ventas.venta.anular');
+    // El listado y el detalle siguen bajo la clave de grupo (registrar).
+    expect(getMobilePermissionKey('/api/mobile/v1/sales')).toBe('ventas.venta.registrar');
+    expect(getMobilePermissionKey('/api/mobile/v1/sales/abc123')).toBe('ventas.venta.registrar');
   });
 
   it('mapea grupos mobile legacy (sin v1)', () => {

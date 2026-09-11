@@ -47,7 +47,7 @@ Orden sugerido (de menor a mayor acoplamiento); cada dominio = sub-fase con RED 
 - [x] **PG05-T2 — ventas/servicios:** servicios (3: operaciones.servicios.*), venta-servicios (2: ventas.servicios.*), compras-servicios (3: compras.servicios.*). Commit `4bd88a98`. (Ofertas/Contratos diferidos: sin merge de Correcciones Urgentes.)
 - [x] **PG05-T3 — rrhh:** empleados (19 call sites incl. api handlers), pago-salario (3: rrhh.salarios.*) → `rrhh.*` (incl. `rrhh.nomina.calcular` sensitive). Commit `fd98cd13`.
 - [x] **PG05-T4 — financiero/config/lib:** tipos-pago (REST+actions, financiero.tipos-pago.*), tipos-contratos (config.tipos-contrato.*), conversiones (financiero.conversiones.*), upload (config.empresa.logo), reparaciones (produccion.reparaciones.eliminar), auditoría (financiero.auditoria.ver), accounting-policy (config.contabilidad.politica + customRole), admin users/memberships (config.usuarios.gestionar, 5 checks). Commit `c79298cf`.
-- [ ] **PG05-T0 (previo)** — lazy fallback en `requirePermission`: si `permissions` no viene resuelto (tests/seeds), deriva defaults del rol fijo. Commit `c79298cf`. Verificado: 0 call sites de `requireManagerRole` en producción (solo comentario en registry).
+- [x] **PG05-T0 (previo)** — lazy fallback en `requirePermission`: si `permissions` no viene resuelto (tests/seeds), deriva defaults del rol fijo. Implementado: `effectivePermissions` en `src/lib/services/tenant-scope.ts` (prioriza `user.permissions` del contexto; fallback a `getDefaultPermissionsForRole(tenantRole)`). Commit `c79298cf`. Verificado: 0 call sites de `requireManagerRole` en producción (solo comentario en registry).
 - [x] **PG05-T5 — rutas REST + mobile.** `route-permissions.ts`: web prefijo→clave (17 rutas incl. ofertas/producción/reparaciones) + `MOBILE_GROUP_KEYS`/`getMobilePermissionKey` (grupos mobile v1+legacy; exentas auth/* y admin/* salvo admin/memberships). auth-middleware: web fail-closed por clave; mobile enforce sin validatePermissions. Commits `2914bf76`, `93050209`, `fee783d3`.
 - [x] **PG05-T6 — Retiro de allowlists.** Eliminados `TENANT_PERMISSIONS`, `ROLE_PERMISSIONS`, `requireDependienteAccess`, `checkTenantApiPermission`, `checkApiPermission`, `hasTenantPermission` y `permissions.ts` + sus tests. Fuente única: registry + route-map. Commit `93050209` (web) + `fee783d3` (mobile).
 - Commit por dominio: `refactor(auth): migrar <dominio> a permisos nombrados (PG-05.x)` + `refactor(auth): eliminar allowlists legacy, fuente única de permisos (PG-05)`
@@ -81,3 +81,18 @@ Orden sugerido (de menor a mayor acoplamiento); cada dominio = sub-fase con RED 
 | PG-07 | ~40 | ~120 | 0 |
 
 Total aprox.: 1.6k producción + 1.7k tests. Riesgo principal: PG-05 (se mitiga con sub-fases por dominio y paridad snapshot de PG-01-T4 compartiéndose en todos los PRs).
+
+## Addendum post-revisión (2026-09-08) — correcciones aplicadas tras la revisión del plan archivado
+
+Revisión integral de los artefactos de `permisos-granulares`; se encontraron y corrigieron los siguientes hallazgos:
+
+1. **Ventas sin guard de permisos** — `VentaMutationService` (create/update/cancel) no llamaba `requirePermission`; además no existía `ventas.venta.editar`/`ventas.venta.anular` en el registry. Se añadieron las claves (`ventas.venta.anular` es `sensitive: true`) y el guard en los tres métodos. Además, `getCurrentUser` no propagaba `tenantContext.permissions` a los server actions (se corrigió) y el snapshot de la RSC se serializa a array (evita error Flight con `Set`).
+2. **Mobile sin granularidad en ventas** — `MOBILE_ACTION_KEYS` en `route-permissions.ts`: `sales/create→registrar`, `sales/[id]/update→editar`, `sales/[id]/cancel→anular`.
+3. **Lockout del último gestor** — `src/lib/auth/last-admin-guard.ts` (computeAdminStatus + countEffectiveAdmins con override por rol editado) aplicado en `assignCustomRoleAction`, `updateTenantRoleAction` y `updateTenantUserAction`.
+4. **Roles inactivos asignables** — `assignCustomRoleAction` exige `isActive: true`; el dropdown de asignación filtra inactivos (roles-manager.tsx muestra badge "Inactivo").
+5. **Sidebar sin uso de permisos efectivos** — `build-visible-groups.ts`: con rol custom, filtra ítems por categoría de permiso (`SIDEBAR_TENANT_PERMISSION_CATEGORY`); con rol fijo, paridad previa. El cliente recibe `permissions` (`auth-service.me`/`toPublicUser`) y el `auth-context` los transporta.
+6. **Gate de drift débil** — `permission-drift.test.ts` endurecido: claves literales (simple y doble), constantes locales (`GESTIONAR_USUARIOS`), todas las claves de los mapas de rutas, escaneo de rutas mobile (exención explícita auth/plans/admin) y cobertura por método de toda ruta `withAuth`.
+7. **Regresión con `withAuth` en mutaciones rrhh** — rutas `/api/empleados/**` con `PUT`/`DELETE` quedaban sin mapeo (403 con allowlist retirada); se cubrieron con claves `rrhh.*` alineadas a los handlers internos.
+8. **Auditoría no atómica** — las 4 mutaciones de roles ahora envuelven cambio + `AuditLogService.logStrict` en `prisma.$transaction`; si el log falla, el rol no queda persistido sin evidencia.
+
+Tests en verde en todos los cambios (unitátas de ventas, roles, auth, mobile/REST, sidebar, drift). PG07-T3 (smoke manual en demo) sigue pendiente de ejecutarse contra producción tras el siguiente deploy.

@@ -39,6 +39,13 @@ vi.mock('@/lib/prisma', () => ({
   },
 }));
 
+// resolveTenantContext (auth-middleware) usa prismaPlatform tras AS-02; alias al
+// mismo mock para que la resolución de tenant quede determinista en units.
+vi.mock('@/lib/db/platform-prisma', async () => {
+  const { prisma } = await import('@/lib/prisma');
+  return { prismaPlatform: prisma, default: prisma };
+});
+
 vi.mock('bcryptjs', () => ({
   default: { compare: vi.fn() },
 }));
@@ -121,6 +128,9 @@ describe('AuthService.login', () => {
     expect(result.user.tenantId).toBe('tenant-1');
     expect(result.user.tenantRole).toBe('manager');
     expect(result.user.planFeatures).toEqual({ productos: true });
+    // AuthService.login ahora expone los permisos efectivos al cliente (PG-05 hallazgo #5).
+    expect(result.user.permissions).toContain('ventas.venta.registrar');
+    expect(Array.isArray(result.user.permissions)).toBe(true);
     expect(prisma.userSession.create).toHaveBeenCalledWith({
       data: expect.objectContaining({
         userId: 'user-1',

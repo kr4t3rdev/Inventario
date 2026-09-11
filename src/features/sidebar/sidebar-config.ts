@@ -42,6 +42,7 @@ import {
   type LucideIcon,
 } from "lucide-react"
 import { type TenantRole } from "@/lib/auth/roles"
+import { type PermissionCategory } from "@/lib/auth/permission-registry"
 import type { SidebarConfig } from "./types"
 
 export const DASHBOARD_URL = "/busy/dashboard"
@@ -170,6 +171,86 @@ export const SIDEBAR_TENANT_PERMISSIONS: Record<string, TenantRole[]> = {
   "Reconciliación Gastos": ["economico", "manager"],
   "Cuadre Financiero": ["economico", "manager"],
   "Cuadres POS": ["dependiente", "economico", "manager"],
+}
+
+/**
+ * Mapa de ítem de menú → categoría de permiso. Usado SÓLO para usuarios con rol
+ * personalizado (permisos efectivos ≠ defaults de su rol fijo); los roles fijos
+ * siguen usando `SIDEBAR_TENANT_PERMISSIONS` (sin regresión día-1).
+ * Un ítem sin categoría cae al comportamiento legacy por rol fijo.
+ */
+export const SIDEBAR_TENANT_PERMISSION_CATEGORY: Record<string, PermissionCategory> = {
+  // inventario
+  Productos: "inventario",
+  Categorías: "inventario",
+  Unidades: "inventario",
+  Almacenes: "inventario",
+  "Listas de Precios": "inventario",
+  Mermas: "inventario",
+  Kardex: "inventario",
+  "Ajustes de Inventario": "inventario",
+  "Conteo Físico": "inventario",
+  Transferencias: "inventario",
+  "Ficha de Costo": "inventario",
+  // ventas
+  Ventas: "ventas",
+  "Gestión de Facturas": "ventas",
+  Contratos: "ventas",
+  Ofertas: "ventas",
+  // compras
+  Proveedores: "compras",
+  "Compras de Productos": "compras",
+  "Órdenes de Compra": "compras",
+  Recepciones: "compras",
+  Reabastecimiento: "compras",
+  // rrhh
+  Empleados: "rrhh",
+  "Gestión de Empleados": "rrhh",
+  Asistencia: "rrhh",
+  Vacaciones: "rrhh",
+  Nómina: "rrhh",
+  // operaciones
+  "Puntos de Venta": "operaciones",
+  Clientes: "operaciones",
+  Servicios: "operaciones",
+  Referidos: "operaciones",
+  "Arqueos de Caja": "operaciones",
+  "Cuadres POS": "operaciones",
+  // financiero
+  "Gastos DE": "financiero",
+  "Lista de Gastos": "financiero",
+  "Conceptos de Gastos": "financiero",
+  Dashboard: "financiero",
+  "Cuentas Bancarias": "financiero",
+  "Cuentas por Cobrar": "financiero",
+  "Cuentas por Pagar": "financiero",
+  Anticipos: "financiero",
+  "Préstamos en Efectivo": "financiero",
+  "Deudas en Efectivo": "financiero",
+  "Transferencias Bancarias": "financiero",
+  "Ajustes Bancarios": "financiero",
+  Exchange: "financiero",
+  "Inyección Capital": "financiero",
+  "Analisis Estado Cuenta": "financiero",
+  "Facturas Vencidas": "financiero",
+  "Balance y Resultados": "financiero",
+  "Reportes Contables": "financiero",
+  "Configuracion Contable": "financiero",
+  "Períodos Contables": "financiero",
+  Logs: "financiero",
+  Reportes: "financiero",
+  "Venta Diaria": "financiero",
+  "Rentabilidad x Compra": "financiero",
+  Reconciliación: "financiero",
+  "Reconciliación Ventas": "financiero",
+  "Reconciliación Servicios": "financiero",
+  "Reconciliación Gastos": "financiero",
+  "Cuadre Financiero": "financiero",
+  // produccion
+  Producción: "produccion",
+  // config
+  Usuarios: "config",
+  Roles: "config",
 }
 
 export const SIDEBAR_CONFIG: SidebarConfig = {

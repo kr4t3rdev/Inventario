@@ -71,6 +71,8 @@
     "ventas.ofertas.gestionar",
     "ventas.servicios.editar",
     "ventas.servicios.eliminar",
+    "ventas.venta.anular",
+    "ventas.venta.editar",
     "ventas.venta.registrar"
   ],
   "economico": [
@@ -91,6 +93,8 @@
     "operaciones.pos.gestionar",
     "operaciones.referidos.gestionar",
     "operaciones.servicios.acceder",
+    "ventas.venta.anular",
+    "ventas.venta.editar",
     "ventas.venta.registrar"
   ],
   "dependiente": [
@@ -107,6 +111,8 @@
     "operaciones.referidos.gestionar",
     "operaciones.servicios.acceder",
     "ventas.facturas.consultar",
+    "ventas.venta.anular",
+    "ventas.venta.editar",
     "ventas.venta.registrar"
   ]
 }

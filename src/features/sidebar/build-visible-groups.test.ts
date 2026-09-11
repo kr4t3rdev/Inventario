@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import { SIDEBAR_CONFIG } from './sidebar-config'
 import { buildVisibleSidebarGroups } from './build-visible-groups'
+import { getDefaultPermissionsForRole } from '@/lib/auth/permission-registry'
 import type { SidebarAccessContext } from './types'
 
 function makeCtx(overrides: Partial<SidebarAccessContext>): SidebarAccessContext {
@@ -277,6 +278,43 @@ describe('buildVisibleSidebarGroups', () => {
       expect(allTitles).not.toContain('Nómina')
       expect(allTitles).not.toContain('Vacaciones')
       expect(allTitles).not.toContain('Asistencia')
+    })
+  })
+
+  describe('custom role (permissions)', () => {
+    it('filters by effective permissions, not fixed tenantRole', () => {
+      const ctx = makeCtx({
+        role: 'regularUser',
+        tenantRole: 'dependiente',
+        tenantId: 't1',
+        planFeatures: FULL_FEATURES,
+        permissions: ['ventas.venta.registrar', 'operaciones.pos.gestionar'],
+      })
+      const result = buildVisibleSidebarGroups(SIDEBAR_CONFIG, ctx)
+      const allTitles = result.flatMap((g) => g.items.flatMap((i) => [i.title, ...(i.subItems?.map((s) => s.title) ?? [])]))
+
+      expect(allTitles).toContain('Ventas')
+      expect(allTitles).toContain('Puntos de Venta')
+      expect(allTitles).not.toContain('Usuarios')
+      expect(allTitles).not.toContain('Roles')
+      expect(allTitles).not.toContain('Empleados')
+      expect(allTitles).not.toContain('Dashboard')
+      expect(allTitles).not.toContain('Productos')
+    })
+
+    it('keeps fixed-role behavior when permissions equal the role defaults', () => {
+      const ctx = makeCtx({
+        role: 'regularUser',
+        tenantRole: 'dependiente',
+        tenantId: 't1',
+        planFeatures: {},
+        permissions: [...getDefaultPermissionsForRole('dependiente')],
+      })
+      const result = buildVisibleSidebarGroups(SIDEBAR_CONFIG, ctx)
+      const summary = toSummary(result)
+
+      expect(summary.find((g) => g.title === 'Contabilidad')).toBeUndefined()
+      expect(summary.find((g) => g.title === 'Acciones')?.itemCount).toBe(2)
     })
   })
 

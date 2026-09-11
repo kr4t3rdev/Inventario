@@ -79,6 +79,7 @@ export function AppSidebar2({
 			tenantId: user?.tenantId ?? null,
 			planFeatures,
 			planName: user?.planName ?? null,
+			permissions: user?.permissions ?? null,
 			isBusyRoute,
 		}),
 		[
@@ -86,6 +87,7 @@ export function AppSidebar2({
 			user?.tenantRole,
 			user?.tenantId,
 			user?.planName,
+			user?.permissions,
 			planFeatures,
 			isBusyRoute,
 		],
@@ -93,14 +95,7 @@ export function AppSidebar2({
 
 	const filteredGroups = React.useMemo(
 		() => buildVisibleSidebarGroups(SIDEBAR_CONFIG, accessContext),
-		[
-			accessContext.role,
-			accessContext.tenantRole,
-			accessContext.tenantId,
-			accessContext.planName,
-			accessContext.isBusyRoute,
-			accessContext.planFeatures,
-		],
+		[accessContext],
 	);
 
 	return (

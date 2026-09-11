@@ -28,4 +28,5 @@ export interface SidebarAccessContext {
   planFeatures: Record<string, boolean | undefined> | null | undefined
   planName: string | null | undefined
   isBusyRoute: boolean
+  permissions?: string[] | null
 }
