@@ -1,0 +1,59 @@
+
+ RUN  v3.2.4 /Users/arturo/Documents/Proyecto Inventario/TCP
+
+ ✓ src/features/auth/__tests__/neutral-spanish-password-reset.test.ts (1 test) 216ms
+ ✓ src/features/auth/__tests__/neutral-spanish-copy.test.ts (2 tests) 1142ms
+   ✓ auth/onboarding neutral Spanish copy > does not use Argentine or Rioplatense voseo in identity flows  1102ms
+stdout | src/features/auth/__tests__/handlers-onboarding.test.ts > register — copy neutro (PE-01) > registro exitoso pide "Revisa tu correo" (sin voseo)
+[REGISTER] Email de verificación enviado — usuario: user-new, email: ana@example.com, messageId: msg-1
+
+stdout | src/features/auth/__tests__/handlers-onboarding.test.ts > onboarding — cliente platform (PE-02) > register con referido consulta perfiles únicamente en prismaPlatform
+[REGISTER] Email de verificación enviado — usuario: user-referral, email: ana-referral@example.com, messageId: msg-1
+
+ ✓ src/features/auth/__tests__/handlers-onboarding.test.ts (6 tests) 197ms
+ ✓ src/features/auth/__tests__/auth-service-tenant.test.ts (4 tests) 91ms
+ ✓ src/features/auth/services/__tests__/auth-service.test.ts (9 tests) 236ms
+ ✓ src/features/auth/__tests__/actions.test.ts (7 tests) 263ms
+ ✓ src/features/auth/__tests__/password-reset-actions.test.ts (7 tests) 68ms
+
+ Test Files  7 passed (7)
+      Tests  36 passed (36)
+   Start at  00:28:33
+   Duration  15.60s (transform 5.67s, setup 10.91s, collect 16.03s, tests 2.21s, environment 40.99s, prepare 7.08s)
+
+
+Exit status: 0
+
+=== AS-03 validation: pnpm exec vitest run src/features/auth src/lib/db ===
+
+ RUN  v3.2.4 /Users/arturo/Documents/Proyecto Inventario/TCP
+
+ ✓ src/features/auth/__tests__/neutral-spanish-password-reset.test.ts (1 test) 151ms
+ ✓ src/features/auth/__tests__/neutral-spanish-copy.test.ts (2 tests) 618ms
+   ✓ auth/onboarding neutral Spanish copy > does not use Argentine or Rioplatense voseo in identity flows  555ms
+stdout | src/features/auth/__tests__/handlers-onboarding.test.ts > register — copy neutro (PE-01) > registro exitoso pide "Revisa tu correo" (sin voseo)
+[REGISTER] Email de verificación enviado — usuario: user-new, email: ana@example.com, messageId: msg-1
+
+stdout | src/features/auth/__tests__/handlers-onboarding.test.ts > onboarding — cliente platform (PE-02) > register con referido consulta perfiles únicamente en prismaPlatform
+[REGISTER] Email de verificación enviado — usuario: user-referral, email: ana-referral@example.com, messageId: msg-1
+
+ ✓ src/features/auth/__tests__/handlers-onboarding.test.ts (6 tests) 314ms
+ ✓ src/lib/db/__tests__/scoped-prisma.test.ts (42 tests) 304ms
+ ✓ src/features/auth/services/__tests__/auth-service.test.ts (9 tests) 79ms
+ ✓ src/features/auth/__tests__/actions.test.ts (7 tests) 98ms
+ ✓ src/lib/db/__tests__/model-classification.test.ts (5 tests) 127ms
+ ✓ src/lib/db/__tests__/data-access-allowlists.test.ts (3 tests) 8266ms
+   ✓ AS-03 allowlists de acceso a datos > prismaPlatform solo se importa desde consumidores aprobados  3568ms
+   ✓ AS-03 allowlists de acceso a datos > sin clientes Prisma directos fuera de la fábrica (cierra el bypass base-prisma)  1905ms
+   ✓ AS-03 allowlists de acceso a datos > todo raw SQL de producción está inventariado con conteo estable  2784ms
+ ✓ src/features/auth/__tests__/auth-service-tenant.test.ts (4 tests) 79ms
+ ✓ src/lib/db/__tests__/shadow-violation-store.test.ts (3 tests) 38ms
+ ✓ src/features/auth/__tests__/password-reset-actions.test.ts (7 tests) 80ms
+
+ Test Files  11 passed (11)
+      Tests  89 passed (89)
+   Start at  00:29:09
+   Duration  19.75s (transform 7.53s, setup 8.46s, collect 19.46s, tests 10.16s, environment 38.75s, prepare 11.48s)
+
+
+Exit status (AS-03 validation): 0

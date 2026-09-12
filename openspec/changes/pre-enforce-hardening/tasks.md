@@ -18,9 +18,9 @@ Plan SDD/TDD pequeño y cerrado. Reglas: RED con fallo guardado → GREEN mínim
 
 ## PE-03 — switchTenant multi-tenant
 
-- [ ] **PE03-T1 — RED.** Test que monta contexto del tenant A y llama `switchTenant` al tenant B (membresía válida): en `enforce` debe resolver con los tokens del tenant B; y el caso negativo (sin membresía) → FORBIDDEN. Mockear clientes y afirmar que el lookup de membresía se hace en platform (no recibe inyección del tenant origen).
+- [x] **PE03-T1 — RED.** Test que monta contexto del tenant A y llama `switchTenant` al tenant B (membresía válida): en `enforce` debe resolver con los tokens del tenant B; y el caso negativo (sin membresía) → FORBIDDEN. Mockear clientes y afirmar que el lookup de membresía se hace en platform (no recibe inyección del tenant origen). **Completado: 2026-09-12. Evidencia: `evidence/PE-03-RED.txt` (2 fallos auténticos antes de producción).**
   `pnpm exec vitest run src/features/auth`
-- [ ] **PE03-T2 — GREEN.** `switchTenant` valida la membresía con `prismaPlatform.tenantMembership.findUnique`; resto intacto (`resolveTenantContext`, emisión de tokens, reset de sesiones).
+- [x] **PE03-T2 — GREEN.** `switchTenant` valida la membresía con `prismaPlatform.tenantMembership.findUnique`; resto intacto (`resolveTenantContext`, emisión de tokens, reset de sesiones). **Completado: 2026-09-12. Evidencia: `evidence/PE-03-GREEN.txt` (89 tests en `src/features/auth src/lib/db`; 36 tests en `src/features/auth`; AS-03 verde).**
 - Commit: `fix(auth): switchTenant valida membresía vía plataforma bajo enforce (PE-03)`
 
 ## PE-04 — Gate de integración en enforce + observabilidad

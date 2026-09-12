@@ -3,6 +3,7 @@ import jwt from 'jsonwebtoken';
 import type { SignOptions } from 'jsonwebtoken';
 import { z } from 'zod';
 import { prisma } from '@/lib/prisma';
+import { prismaPlatform } from '@/lib/db/platform-prisma';
 import { getJwtSecret, getRefreshJwtSecret } from '@/lib/secrets';
 import { ActionError } from '@/lib/server-actions';
 import { resolveTenantContext } from '@/lib/auth-middleware';
@@ -512,7 +513,7 @@ export const AuthService = {
    * @returns {Promise<{ tenantId: string; tenantRole: string; tokens: AuthTokens }>} Switch result.
    */
   async switchTenant({ tenantId, user, client = {} }: SwitchTenantArgs) {
-    const membership = await prisma.tenantMembership.findUnique({
+    const membership = await prismaPlatform.tenantMembership.findUnique({
       where: { tenantId_userId: { tenantId, userId: user.userId } },
     });
 

@@ -3,11 +3,11 @@
  * mockeado para aislar los flujos de login y cambio de empresa.
  * @module src/features/auth/__tests__/auth-service-tenant.test
  */
-import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 // ─── Mock del cliente Prisma ────────────────────────────────────────────────
 
-const { scopedMock } = vi.hoisted(() => {
+const { scopedMock, platformMock } = vi.hoisted(() => {
 	const scopedMock = {
 		user: {
 			findUnique: vi.fn(),
@@ -16,11 +16,21 @@ const { scopedMock } = vi.hoisted(() => {
 		tenantMembership: {
 			findUnique: vi.fn(),
 		},
+		userSession: {
+			deleteMany: vi.fn(),
+			create: vi.fn(),
+		},
 	};
-	return { scopedMock };
+	const platformMock = {
+		tenantMembership: {
+			findUnique: vi.fn(),
+		},
+	};
+	return { scopedMock, platformMock };
 });
 
 vi.mock('@/lib/prisma', () => ({ prisma: scopedMock }));
+vi.mock('@/lib/db/platform-prisma', () => ({ prismaPlatform: platformMock }));
 
 vi.mock('@/lib/auth-middleware', () => ({
 	resolveTenantContext: vi.fn(),
@@ -93,6 +103,10 @@ beforeEach(() => {
 	vi.clearAllMocks();
 });
 
+afterEach(() => {
+	vi.unstubAllEnvs();
+});
+
 // ─── PE-01: copy neutro ─────────────────────────────────────────────────────
 
 describe('AuthService — copy neutro (PE-01)', () => {
@@ -110,7 +124,7 @@ describe('AuthService — copy neutro (PE-01)', () => {
 	});
 
 	it('switchTenant sin membresía responde "No tienes acceso" (sin voseo)', async () => {
-		scopedMock.tenantMembership.findUnique.mockResolvedValue(null);
+		platformMock.tenantMembership.findUnique.mockResolvedValue(null);
 
 		await expect(
 			AuthService.switchTenant({
@@ -118,5 +132,49 @@ describe('AuthService — copy neutro (PE-01)', () => {
 				user: buildAuthUser(),
 			}),
 		).rejects.toThrow('No tienes acceso a esta empresa');
+	});
+});
+
+// ─── PE-03: switchTenant fuera del contexto tenant ─────────────────────────
+
+describe('AuthService.switchTenant — membresía platform (PE-03)', () => {
+	it('cambia de tenant A a tenant B consultando membresía en platform bajo enforce', async () => {
+		vi.stubEnv('TENANT_ISOLATION_MODE', 'enforce');
+		platformMock.tenantMembership.findUnique.mockResolvedValue({
+			tenantId: 'tenant-b',
+			userId: 'user-1',
+			isActive: true,
+			tenantRole: 'manager',
+		});
+		vi.mocked(resolveTenantContext).mockResolvedValue({
+			tenantId: 'tenant-b',
+			tenantRole: 'manager',
+		} as never);
+
+		const result = await AuthService.switchTenant({
+			tenantId: 'tenant-b',
+			user: buildAuthUser({ tenantId: 'tenant-a', tenantRole: 'dependiente' }),
+		});
+
+		expect(result.tenantId).toBe('tenant-b');
+		expect(result.tenantRole).toBe('manager');
+		expect(platformMock.tenantMembership.findUnique).toHaveBeenCalledWith({
+			where: { tenantId_userId: { tenantId: 'tenant-b', userId: 'user-1' } },
+		});
+		expect(scopedMock.tenantMembership.findUnique).not.toHaveBeenCalled();
+	});
+
+	it('rechaza FORBIDDEN cuando platform no encuentra la membresía destino', async () => {
+		vi.stubEnv('TENANT_ISOLATION_MODE', 'enforce');
+		platformMock.tenantMembership.findUnique.mockResolvedValue(null);
+
+		await expect(
+			AuthService.switchTenant({
+				tenantId: 'tenant-b',
+				user: buildAuthUser({ tenantId: 'tenant-a' }),
+			}),
+		).rejects.toMatchObject({ code: 'FORBIDDEN' });
+		expect(platformMock.tenantMembership.findUnique).toHaveBeenCalled();
+		expect(scopedMock.tenantMembership.findUnique).not.toHaveBeenCalled();
 	});
 });
