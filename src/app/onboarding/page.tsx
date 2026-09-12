@@ -604,7 +604,7 @@ export default function OnboardingPage(): React.ReactNode {
 									<TypeCard
 										icon={BriefcaseIcon}
 										title="Trabajador"
-										description="Accedé a una empresa existente como empleado, dependiente o económico."
+										description="Accede a una empresa existente como empleado, dependiente o económico."
 										features={[
 											"Gestión de inventario y ventas",
 											"Reportes asignados por tu manager",
@@ -628,7 +628,7 @@ export default function OnboardingPage(): React.ReactNode {
 									<TypeCard
 										icon={StoreIcon}
 										title="Gestor de Ventas"
-										description="Referí empresas y solicitá tu alta comercial."
+										description="Refiere empresas y solicita tu alta comercial."
 										features={[
 											"Registro independiente",
 											"Aprobación del admin global",

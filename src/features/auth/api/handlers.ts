@@ -255,9 +255,9 @@ export async function login(request: NextRequest) {
 			} else if (user.role !== "admin") {
 				return NextResponse.json(
 					{
-						error: "No tenés una empresa activa para iniciar sesión.",
+						error: "No tienes una empresa activa para iniciar sesión.",
 						message:
-							"Contactá al manager de tu empresa o al admin global para completar tu acceso.",
+							"Contacta al manager de tu empresa o al admin global para completar tu acceso.",
 					},
 					{ status: 403 },
 				);
@@ -544,7 +544,7 @@ export async function register(request: NextRequest) {
 		const rate = checkRateLimit(ip, path);
 		if (!rate.allowed) {
 			return NextResponse.json(
-				{ error: "Demasiados intentos. Intentalo de nuevo en unos segundos." },
+				{ error: "Demasiados intentos. Inténtalo de nuevo en unos segundos." },
 				{ status: 429 },
 			);
 		}
@@ -659,7 +659,7 @@ export async function register(request: NextRequest) {
 
 		const res = NextResponse.json({
 			message:
-				"Revisá tu correo para verificar la cuenta y continuar con el onboarding",
+				"Revisa tu correo para verificar la cuenta y continuar con el onboarding",
 			success: true,
 		});
 		res.headers.set("X-RateLimit-Remaining", String(rate.remaining));
@@ -681,7 +681,7 @@ export async function verifyEmail(request: NextRequest) {
 		const rate = checkRateLimit(ip, path);
 		if (!rate.allowed) {
 			return NextResponse.json(
-				{ error: "Demasiados intentos. Intentalo de nuevo en unos segundos." },
+				{ error: "Demasiados intentos. Inténtalo de nuevo en unos segundos." },
 				{ status: 429 },
 			);
 		}
@@ -838,7 +838,7 @@ export async function resendVerification(request: NextRequest) {
 		const rate = checkRateLimit(ip, path);
 		if (!rate.allowed) {
 			return NextResponse.json(
-				{ error: "Demasiados intentos. Intentalo de nuevo más tarde." },
+				{ error: "Demasiados intentos. Inténtalo de nuevo más tarde." },
 				{ status: 429 },
 			);
 		}
@@ -991,7 +991,7 @@ export async function onboardingTenant(request: NextRequest) {
 				data: {
 					userId: manager.userId,
 					title: "Nuevo miembro esperando aprobación",
-					message: `${user.name} solicita acceso a la empresa como dependiente. Revisá las solicitudes pendientes.`,
+					message: `${user.name} solicita acceso a la empresa como dependiente. Revisa las solicitudes pendientes.`,
 					link: "/busy/configuracion/usuarios",
 					type: "info",
 					prioridad: "media",

@@ -1,0 +1,79 @@
+
+ RUN  v3.2.4 /Users/arturo/Documents/Proyecto Inventario/TCP
+
+ ✓ src/features/auth/__tests__/neutral-spanish-password-reset.test.ts (1 test) 204ms
+ ✓ src/features/auth/__tests__/neutral-spanish-copy.test.ts (2 tests) 486ms
+   ✓ auth/onboarding neutral Spanish copy > does not use Argentine or Rioplatense voseo in identity flows  458ms
+stderr | src/features/admin/hooks/use-admin-users.test.ts > useAdminUsers > allows refetch when enabled flips from false to true
+An update to TestComponent inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+ ✓ src/features/admin/hooks/use-admin-users.test.ts (5 tests) 305ms
+stderr | src/features/admin/components/user-monitoring-panel.test.tsx > UserMonitoringPanel > separa sesiones de cleanup de Cloudinary en tabs distintas
+React does not recognize the `layoutId` prop on a DOM element. If you intentionally want it to appear in the DOM as a custom attribute, spell it as lowercase `layoutid` instead. If you accidentally passed it from a parent component, remove it from the DOM element.
+
+ ✓ src/features/admin/components/user-monitoring-panel.test.tsx (1 test) 555ms
+   ✓ UserMonitoringPanel > separa sesiones de cleanup de Cloudinary en tabs distintas  552ms
+ ✓ src/features/admin/components/tenant-users-page.test.tsx (1 test) 538ms
+   ✓ TenantUsersPage > aprueba una membresía usando el endpoint de tenant  531ms
+11:52:40 PM [vite] (client) Failed to load source map for /Users/arturo/Documents/Proyecto Inventario/TCP/src/generated/prisma/runtime/library.js.
+Error: An error occurred while trying to read the map file at library.js.map
+Error: ENOENT: no such file or directory, open '/Users/arturo/Documents/Proyecto Inventario/TCP/src/generated/prisma/runtime/library.js.map'
+    at async open (node:internal/fs/promises:636:25)
+    at async Object.readFile (node:internal/fs/promises:1269:14)
+    at async extractSourcemapFromFile (file:///Users/arturo/Documents/Proyecto%20Inventario/TCP/node_modules/.pnpm/vite@7.3.0_@types+node@20.19.27_jiti@2.6.1_lightningcss@1.30.2_terser@5.46.0_tsx@4.21.0_yaml@2.9.0/node_modules/vite/dist/node/chunks/config.js:8050:65)
+    at async loadAndTransform (file:///Users/arturo/Documents/Proyecto%20Inventario/TCP/node_modules/.pnpm/vite@7.3.0_@types+node@20.19.27_jiti@2.6.1_lightningcss@1.30.2_terser@5.46.0_tsx@4.21.0_yaml@2.9.0/node_modules/vite/dist/node/chunks/config.js:22640:22)
+ ✓ src/features/admin/components/edit-user-dialog.test.tsx (1 test) 1084ms
+   ✓ EditUserDialog > renders for users without tenantRole using a non-empty select value  1080ms
+ ✓ src/features/admin/__tests__/actions.test.ts (67 tests) 184ms
+ ✓ src/features/admin/__tests__/neutral-spanish-copy.test.ts (2 tests) 80ms
+ ✓ src/features/admin/lib/admin-plan-page.test.ts (4 tests) 129ms
+ ✓ src/features/auth/services/__tests__/auth-service.test.ts (9 tests) 116ms
+stdout | src/features/auth/__tests__/handlers-onboarding.test.ts > register — copy neutro (PE-01) > registro exitoso pide "Revisa tu correo" (sin voseo)
+[REGISTER] Email de verificación enviado — usuario: user-new, email: ana@example.com, messageId: msg-1
+
+ ✓ src/features/auth/__tests__/handlers-onboarding.test.ts (2 tests) 59ms
+ ✓ src/features/admin/__tests__/renew-licencia.test.ts (10 tests) 109ms
+ ✓ src/features/auth/__tests__/actions.test.ts (7 tests) 48ms
+ ✓ src/features/auth/__tests__/password-reset-actions.test.ts (7 tests) 29ms
+ ✓ src/features/admin/__tests__/actions-licencias.test.ts (2 tests) 32ms
+ ✓ src/features/admin/__tests__/approve-admin-membership.test.ts (4 tests) 17ms
+ ✓ src/features/admin/server/data.test.ts (1 test) 16ms
+ ✓ src/features/auth/__tests__/auth-service-tenant.test.ts (2 tests) 13ms
+ ✓ src/features/admin/__tests__/license-feature-overrides.test.ts (3 tests) 15ms
+ ✓ src/features/admin/components/admin-users-table.test.ts (5 tests) 4ms
+
+ Test Files  20 passed (20)
+      Tests  136 passed (136)
+   Start at  23:52:31
+   Duration  19.72s (transform 4.76s, setup 8.07s, collect 19.43s, tests 4.02s, environment 32.69s, prepare 16.66s)
+
+
+Exit status: 0
+
+
+PE-01 reviewer follow-up (2026-09-12)
+
+ RUN  v3.2.4 /Users/arturo/Documents/Proyecto Inventario/TCP
+
+stdout | src/features/auth/__tests__/handlers-onboarding.test.ts > register — copy neutro (PE-01) > registro exitoso pide "Revisa tu correo" (sin voseo)
+[REGISTER] Email de verificación enviado — usuario: user-new, email: ana@example.com, messageId: msg-1
+
+ ✓ src/features/auth/__tests__/handlers-onboarding.test.ts (2 tests) 32ms
+ ✓ src/features/auth/__tests__/auth-service-tenant.test.ts (2 tests) 17ms
+
+ Test Files  2 passed (2)
+      Tests  4 passed (4)
+   Start at  00:02:06
+   Duration  2.84s (transform 399ms, setup 506ms, collect 658ms, tests 49ms, environment 1.38s, prepare 520ms)
+
+
+Exit status: 0

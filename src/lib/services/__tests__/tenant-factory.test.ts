@@ -314,6 +314,16 @@ describe('createTenantForUser referral attribution', () => {
     await expect(createTenantForUser({ userId: 'company-user' }))
       .rejects.toMatchObject({ code: 'REFERRAL_CODE_COLLISION' });
   });
+
+  it('rechaza sin planes con copy neutro "Crea al menos un plan primero" (PE-01)', async () => {
+    vi.mocked(prisma.plan.findFirst).mockResolvedValueOnce(null);
+
+    await expect(createTenantForUser({ userId: 'company-user' }))
+      .rejects.toMatchObject({
+        code: 'NO_PLANS',
+        message: 'No hay planes disponibles. Crea al menos un plan primero.',
+      });
+  });
 });
 
 describe('createTenantForUser duración de licencia', () => {

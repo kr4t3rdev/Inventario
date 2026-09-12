@@ -299,7 +299,7 @@ export const AuthService = {
           'FORBIDDEN',
         );
       } else if (user.role !== 'admin' && user.role !== 'salesAgent') {
-        throw new ActionError('No tenés una empresa activa para iniciar sesión.', 'NO_TENANT');
+        throw new ActionError('No tienes una empresa activa para iniciar sesión.', 'NO_TENANT');
       }
     }
 
@@ -517,7 +517,7 @@ export const AuthService = {
     });
 
     if (!membership || !membership.isActive) {
-      throw new ActionError('No tenés acceso a esta empresa', 'FORBIDDEN');
+      throw new ActionError('No tienes acceso a esta empresa', 'FORBIDDEN');
     }
 
     const tenantContext = await resolveTenantContext(user.userId, tenantId);

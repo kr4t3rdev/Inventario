@@ -645,7 +645,7 @@ export async function approveAdminMembership(
     throw new ActionError("El rol del tenant es requerido", "VALIDATION");
   }
 
-  const validRoles = ["manager", "economico", "dependiente", "admin"];
+  const validRoles = ["manager", "economico", "dependiente"];
   if (!validRoles.includes(tenantRole)) {
     throw new ActionError(
       `Rol inválido: ${tenantRole}. Roles válidos: ${validRoles.join(", ")}`,
@@ -705,7 +705,6 @@ export async function approveAdminMembership(
     manager: "Director / Manager",
     economico: "Económico",
     dependiente: "Dependiente",
-    admin: "Administrador",
   };
 
   let empleadoCreado = false;

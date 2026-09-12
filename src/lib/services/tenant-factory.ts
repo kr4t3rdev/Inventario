@@ -136,7 +136,7 @@ export async function createTenantForUser(
     if (!plan) throw new ActionError('Plan no encontrado', 'PLAN_NOT_FOUND')
   } else {
     plan = await prisma.plan.findFirst({ orderBy: { precio: 'asc' } })
-    if (!plan) throw new ActionError('No hay planes disponibles. Creá al menos un plan primero.', 'NO_PLANS')
+    if (!plan) throw new ActionError('No hay planes disponibles. Crea al menos un plan primero.', 'NO_PLANS')
   }
 
   // 5b. Resolver duración de la licencia: override explícito o la duración del plan

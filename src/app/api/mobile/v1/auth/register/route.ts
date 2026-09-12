@@ -31,7 +31,7 @@ export async function POST(request: Request) {
   const rate = checkRateLimit(ip, RATE_LIMIT_PATH);
   if (!rate.allowed) {
     return errorResponse(
-      'Demasiados intentos. Intentalo de nuevo en unos segundos.',
+      'Demasiados intentos. Inténtalo de nuevo en unos segundos.',
       429,
       'RATE_LIMITED',
     );
@@ -88,7 +88,7 @@ export async function POST(request: Request) {
 
     const response = successResponse(
       {
-        message: 'Revisá tu correo para verificar la cuenta y continuar con el onboarding',
+        message: 'Revisa tu correo para verificar la cuenta y continuar con el onboarding',
         success: true,
       },
       201,
