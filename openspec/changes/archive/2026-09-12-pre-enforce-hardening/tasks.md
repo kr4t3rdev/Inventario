@@ -33,11 +33,11 @@ Plan SDD/TDD pequeño y cerrado. Reglas: RED con fallo guardado → GREEN mínim
 
 ## PE-05 — Cierre
 
-- [ ] **PE05-T1 — Regresión.** Suite acotada en modo default (`off`):
+- [x] **PE05-T1 — Regresión.** Suite acotada en modo default (`off`):
   `pnpm exec vitest run src/features/auth src/features/admin src/lib/db`
-  + `pnpm exec prisma validate`.
-- [ ] **PE05-T2 — Desbloquear AS-06.** Anotar en `openspec/changes/aislamiento-sistemico-tenant/tasks.md` (sección AS-06): "Desbloqueada por pre-enforce-hardening (fecha; evidencias PE-04)".
-- [ ] **PE05-T3 — Memorias + archivo.** Actualizar memoria `post-planes-audit-onboarding` (resuelto) y mover este change a `openspec/changes/archive/2026-09-XX-pre-enforce-hardening/`.
+  + `pnpm exec prisma validate`. **Completado: 2026-09-12; 24 archivos/195 tests PASS. La validación exacta sin `DATABASE_URL` da P1012 por entorno restringido; validación con el URL aislado `DATABASE_URL_TEST` PASS. Evidencia: `evidence/PE-05-GREEN.txt`.**
+- [x] **PE05-T2 — Desbloquear AS-06.** Anotar en `openspec/changes/aislamiento-sistemico-tenant/tasks.md` (sección AS-06): "Desbloqueada por pre-enforce-hardening (fecha; evidencias PE-04)". **Completado: 2026-09-12; AS-06 queda desbloqueada, no ejecutada. Evidencia: `../aislamiento-sistemico-tenant/tasks.md` y `evidence/PE-05-RED.txt`/`PE-05-GREEN.txt`.**
+- [x] **PE05-T3 — Memorias + archivo.** Actualizar memoria `post-planes-audit-onboarding` (resuelto) y mover este change a `openspec/changes/archive/2026-09-12-pre-enforce-hardening/`. **Completado: 2026-09-12; ausencia de memoria previa registrada y observación equivalente creada; archivo movido. Evidencia: `evidence/PE-05-GREEN.txt`.**
 - Commit: `chore(openspec): archivar pre-enforce-hardening y desbloquear AS-06 (PE-05)`
 
 ## Estimación (referencial)
