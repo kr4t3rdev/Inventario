@@ -11,8 +11,8 @@ Plan SDD/TDD pequeño y cerrado. Reglas: RED con fallo guardado → GREEN mínim
 
 ## PE-02 — Handlers de onboarding a prismaPlatform
 
-- [ ] **PE02-T1 — RED (unitarios, modo enforce).** Por handler (`register` con referralCode, `onboardingType`, `onboardingTenant`, `onboardingMe`): con `TENANT_ISOLATION_MODE='enforce'` y prisma mockeado, afirmar que NO se invoca el modelo scoped sobre el cliente scoped (spy) y SÍ sobre platform. Estos tests deben fallar antes del cambio.
-- [ ] **PE02-T2 — GREEN.** Sustituir en `src/features/auth/api/handlers.ts` las queries a modelos SCOPED por `prismaPlatform` (incluida la transacción completa del flujo salesAgent en `onboardingType` — no partirla entre clientes). Registrar `src/features/auth/services/auth-service.ts` en la allowlist de imports platform si falta (el test estático de AS-03 debe seguir verde con la lista actualizada).
+- [x] **PE02-T1 — RED (unitarios, modo enforce).** Por handler (`register` con referralCode, `onboardingType`, `onboardingTenant`, `onboardingMe`): con `TENANT_ISOLATION_MODE='enforce'` y prisma mockeado, afirmar que NO se invoca el modelo scoped sobre el cliente scoped (spy) y SÍ sobre platform. Completado el 2026-09-12; evidencia RED preservada en `evidence/PE-02-RED.txt` (4 fallos esperados antes del cambio; el contrato AS-03 permaneció verde).
+- [x] **PE02-T2 — GREEN.** Sustituir en `src/features/auth/api/handlers.ts` las queries a modelos SCOPED por `prismaPlatform` (incluida la transacción completa del flujo salesAgent en `onboardingType` — no partirla entre clientes). La allowlist AS-03 incorpora el import exacto de `src/features/auth/api/handlers.ts`; `auth-service.ts` no requiere cambio en PE-02. Completado el 2026-09-12; `pnpm exec vitest run src/features/auth src/lib/db` pasó 11 archivos/87 tests. Evidencia: `evidence/PE-02-GREEN.txt` (sin fallos).
   `pnpm exec vitest run src/features/auth src/lib/db`
 - Commit: `fix(auth): onboarding usa prismaPlatform para membresías fuera de contexto (PE-02)`
 

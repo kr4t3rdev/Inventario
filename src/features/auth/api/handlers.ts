@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
+import { prismaPlatform } from "@/lib/db/platform-prisma";
 import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
 import {
@@ -581,7 +582,7 @@ export async function register(request: NextRequest) {
 
 		if (normalizedReferralCode) {
 			const [affiliateProfile, salesAgentProfile] = await Promise.all([
-				prisma.affiliateProfile.findUnique({
+				prismaPlatform.affiliateProfile.findUnique({
 					where: { referralCode: normalizedReferralCode },
 					select: {
 						affiliateProfileId: true,
@@ -589,7 +590,7 @@ export async function register(request: NextRequest) {
 						status: true,
 					},
 				}),
-				prisma.salesAgentProfile.findUnique({
+				prismaPlatform.salesAgentProfile.findUnique({
 					where: { referralCode: normalizedReferralCode },
 					select: { salesAgentProfileId: true, status: true },
 				}),
@@ -800,7 +801,7 @@ export async function onboardingMe(request: NextRequest) {
 				select: { tenantId: true, nombre: true, slug: true },
 				orderBy: { nombre: "asc" },
 			}),
-			prisma.tenantMembership.count({
+			prismaPlatform.tenantMembership.count({
 				where: { userId: payload.userId, isActive: true },
 			}),
 			prisma.moneda.findMany({
@@ -951,7 +952,7 @@ export async function onboardingTenant(request: NextRequest) {
 			);
 		}
 
-		const existingMembershipCount = await prisma.tenantMembership.count({
+		const existingMembershipCount = await prismaPlatform.tenantMembership.count({
 			where: { userId: payload.userId, isActive: true },
 		});
 
@@ -965,7 +966,7 @@ export async function onboardingTenant(request: NextRequest) {
 			);
 		}
 
-		const membership = await prisma.tenantMembership.upsert({
+		const membership = await prismaPlatform.tenantMembership.upsert({
 			where: { tenantId_userId: { tenantId, userId: payload.userId } },
 			create: {
 				tenantId,
@@ -981,7 +982,7 @@ export async function onboardingTenant(request: NextRequest) {
 			data: { onboardingStatus: "awaiting_manager_approval" },
 		});
 
-		const managers = await prisma.tenantMembership.findMany({
+		const managers = await prismaPlatform.tenantMembership.findMany({
 			where: { tenantId, isActive: true, tenantRole: "manager" },
 			select: { userId: true },
 		});
@@ -1046,7 +1047,7 @@ export async function onboardingType(request: NextRequest) {
 			}
 			const normalizedPhone = parsedPhone.data;
 			const onboardingStatus = "awaiting_sales_agent_approval";
-			const accepted = await prisma.$transaction(async (transaction) => {
+			const accepted = await prismaPlatform.$transaction(async (transaction) => {
 				const currentUser = await transaction.user.findUnique({
 					where: { userId: payload.userId },
 					select: { isActive: true, onboardingStatus: true },

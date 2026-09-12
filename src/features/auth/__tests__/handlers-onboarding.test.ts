@@ -3,12 +3,12 @@
  * (PE-01), con el cliente Prisma mockeado para aislar el flujo de registro.
  * @module src/features/auth/__tests__/handlers-onboarding.test
  */
-import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { NextRequest } from 'next/server';
 
 // ─── Mock del cliente Prisma ────────────────────────────────────────────────
 
-const { scopedMock } = vi.hoisted(() => {
+const { scopedMock, platformMock } = vi.hoisted(() => {
 	const buildClientMock = () => ({
 		user: {
 			findUnique: vi.fn(),
@@ -18,7 +18,11 @@ const { scopedMock } = vi.hoisted(() => {
 			findMany: vi.fn(),
 		},
 		affiliateProfile: { findUnique: vi.fn() },
-		salesAgentProfile: { findUnique: vi.fn() },
+		salesAgentProfile: {
+			findUnique: vi.fn(),
+			updateMany: vi.fn(),
+			create: vi.fn(),
+		},
 		tenant: { findUnique: vi.fn(), findMany: vi.fn() },
 		tenantMembership: {
 			count: vi.fn(),
@@ -38,10 +42,17 @@ const { scopedMock } = vi.hoisted(() => {
 		userActivityLog: { create: vi.fn() },
 		$transaction: vi.fn(),
 	});
-	return { scopedMock: buildClientMock() };
+	return {
+		scopedMock: buildClientMock(),
+		platformMock: buildClientMock(),
+	};
 });
 
 vi.mock('@/lib/prisma', () => ({ prisma: scopedMock }));
+vi.mock('@/lib/db/platform-prisma', () => ({
+	prismaPlatform: platformMock,
+	default: platformMock,
+}));
 
 // ─── Mocks de colaboradores ─────────────────────────────────────────────────
 
@@ -52,6 +63,7 @@ vi.mock('@/lib/auth-middleware', () => ({
 
 vi.mock('@/lib/auth/onboarding', () => ({
 	signOnboardingToken: vi.fn(() => 'onboarding-token-mock'),
+	verifyOnboardingToken: vi.fn(),
 	validateCSRF: vi.fn(() => ({ valid: true })),
 }));
 
@@ -82,8 +94,9 @@ vi.mock('bcryptjs', () => ({
 }));
 
 import bcrypt from 'bcryptjs';
+import { verifyOnboardingToken } from '@/lib/auth/onboarding';
 import { checkRateLimit } from '@/lib/rate-limit';
-import { register } from '../api/handlers';
+import { onboardingMe, onboardingTenant, onboardingType, register } from '../api/handlers';
 
 // ─── Helpers ────────────────────────────────────────────────────────────────
 
@@ -113,6 +126,11 @@ function buildRequest(
 
 beforeEach(() => {
 	vi.clearAllMocks();
+	vi.stubEnv('TENANT_ISOLATION_MODE', 'enforce');
+});
+
+afterEach(() => {
+	vi.unstubAllEnvs();
 });
 
 // ─── PE-01: copy neutro en mensajes devueltos ───────────────────────────────
@@ -157,5 +175,135 @@ describe('register — copy neutro (PE-01)', () => {
 		expect(body.message).toBe(
 			'Revisa tu correo para verificar la cuenta y continuar con el onboarding',
 		);
+	});
+});
+
+describe('onboarding — cliente platform (PE-02)', () => {
+	it('register con referido consulta perfiles únicamente en prismaPlatform', async () => {
+		scopedMock.user.findUnique.mockResolvedValue(null);
+		scopedMock.user.create.mockResolvedValue({ userId: 'user-referral' });
+		platformMock.affiliateProfile.findUnique.mockResolvedValue({
+			affiliateProfileId: 'affiliate-1',
+			isEligible: true,
+			status: 'active',
+		});
+		platformMock.salesAgentProfile.findUnique.mockResolvedValue(null);
+		vi.mocked(bcrypt.hash).mockResolvedValue('hashed-password' as never);
+
+		const res = await register(
+			buildRequest('/api/auth/register', {
+				name: 'Ana',
+				email: 'ana-referral@example.com',
+				password: 'secret123',
+				referralCode: 'AFFILIATE-1',
+			}),
+		);
+
+		expect(res.status).toBe(200);
+		expect(platformMock.affiliateProfile.findUnique).toHaveBeenCalledWith(
+			expect.objectContaining({ where: { referralCode: 'AFFILIATE-1' } }),
+		);
+		expect(platformMock.salesAgentProfile.findUnique).toHaveBeenCalled();
+		expect(scopedMock.affiliateProfile.findUnique).not.toHaveBeenCalled();
+		expect(scopedMock.salesAgentProfile.findUnique).not.toHaveBeenCalled();
+	});
+
+	it('onboardingType salesAgent ejecuta la transacción completa en prismaPlatform', async () => {
+		vi.mocked(verifyOnboardingToken).mockReturnValue({
+			userId: 'user-sales-agent',
+			purpose: 'onboarding',
+		} as never);
+		platformMock.$transaction.mockImplementation(async (callback) => callback(platformMock));
+		platformMock.user.findUnique.mockResolvedValue({
+			isActive: false,
+			onboardingStatus: 'selecting_user_type',
+		});
+		platformMock.tenantMembership.count.mockResolvedValue(0);
+		platformMock.salesAgentProfile.findUnique.mockResolvedValue(null);
+		platformMock.salesAgentProfile.create.mockResolvedValue({});
+		platformMock.tenantMembership.deleteMany.mockResolvedValue({ count: 0 });
+		platformMock.user.update.mockResolvedValue({});
+
+		const res = await onboardingType(
+			buildRequest(
+				'/api/auth/onboarding/type',
+				{ userType: 'salesAgent', phone: '+5355555555' },
+				{ authorization: 'Bearer onboarding-token' },
+			),
+		);
+
+		expect(res.status).toBe(200);
+		expect(platformMock.$transaction).toHaveBeenCalled();
+		expect(scopedMock.$transaction).not.toHaveBeenCalled();
+		expect(platformMock.tenantMembership.count).toHaveBeenCalled();
+		expect(platformMock.tenantMembership.deleteMany).toHaveBeenCalled();
+		expect(scopedMock.tenantMembership.count).not.toHaveBeenCalled();
+	});
+
+	it('onboardingTenant usa prismaPlatform para todas las membresías', async () => {
+		vi.mocked(verifyOnboardingToken).mockReturnValue({
+			userId: 'user-worker',
+			purpose: 'onboarding',
+		} as never);
+		scopedMock.user.findUnique.mockResolvedValue({
+			userId: 'user-worker',
+			name: 'Ana',
+			onboardingType: 'worker',
+			onboardingStatus: 'selecting_tenant',
+		});
+		scopedMock.tenant.findUnique.mockResolvedValue({ tenantId: 'tenant-1' });
+		platformMock.tenantMembership.count.mockResolvedValue(0);
+		platformMock.tenantMembership.upsert.mockResolvedValue({
+			membershipId: 'membership-1',
+		});
+		platformMock.tenantMembership.findMany.mockResolvedValue([]);
+
+		const res = await onboardingTenant(
+			buildRequest(
+				'/api/auth/onboarding/tenant',
+				{ tenantId: 'tenant-1' },
+				{ authorization: 'Bearer onboarding-token' },
+			),
+		);
+
+		expect(res.status).toBe(200);
+		expect(platformMock.tenantMembership.count).toHaveBeenCalled();
+		expect(platformMock.tenantMembership.upsert).toHaveBeenCalled();
+		expect(platformMock.tenantMembership.findMany).toHaveBeenCalled();
+		expect(scopedMock.tenantMembership.count).not.toHaveBeenCalled();
+		expect(scopedMock.tenantMembership.upsert).not.toHaveBeenCalled();
+		expect(scopedMock.tenantMembership.findMany).not.toHaveBeenCalled();
+	});
+
+	it('onboardingMe consulta el conteo de membresías únicamente en prismaPlatform', async () => {
+		vi.mocked(verifyOnboardingToken).mockReturnValue({
+			userId: 'user-worker',
+			purpose: 'onboarding',
+		} as never);
+		scopedMock.user.findUnique.mockResolvedValue({
+			userId: 'user-worker',
+			name: 'Ana',
+			email: 'ana@example.com',
+			role: 'user',
+			isActive: false,
+			onboardingType: 'worker',
+			onboardingStatus: 'selecting_tenant',
+			emailVerifiedAt: new Date(),
+		});
+		scopedMock.tenant.findMany.mockResolvedValue([]);
+		scopedMock.moneda.findMany.mockResolvedValue([]);
+		platformMock.tenantMembership.count.mockResolvedValue(0);
+
+		const res = await onboardingMe(
+			buildRequest(
+				'/api/auth/onboarding/me',
+				{},
+				{ authorization: 'Bearer onboarding-token' },
+			),
+		);
+
+		expect(res.status).toBe(200);
+		expect(platformMock.tenantMembership.count).toHaveBeenCalled();
+		expect(scopedMock.tenantMembership.count).not.toHaveBeenCalled();
 	});
 });
