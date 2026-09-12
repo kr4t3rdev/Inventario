@@ -28,7 +28,7 @@ interface ReporteMovimientosProps {
 }
 
 
-import { SURFACE_CARD_CLASS } from "@/features/reportes-financieros/lib/reporte-styles"
+import { SURFACE_CARD_CLASS, CHART_COLORS } from "@/features/reportes-financieros/lib/reporte-styles"
 
 export function ReporteMovimientos({ initialTransferencias = [] }: ReporteMovimientosProps) {
   const [tipoMovimiento, setTipoMovimiento] = useState<string>("ventas")
@@ -307,9 +307,15 @@ export function ReporteMovimientos({ initialTransferencias = [] }: ReporteMovimi
                   <CartesianGrid strokeDasharray="3 3" />
                   <XAxis dataKey="fecha" />
                   <YAxis />
-                  <Tooltip />
+                  <Tooltip
+                    formatter={(value) => [
+                      `${Number(value).toLocaleString()}`,
+                      "Cantidad",
+                    ]}
+                    labelFormatter={(label) => `Fecha: ${label}`}
+                  />
                   <Legend />
-                  <Line type="monotone" dataKey="cantidad" name="Cantidad" stroke="#8884d8" activeDot={{ r: 8 }} />
+                  <Line type="monotone" dataKey="cantidad" name="Cantidad" stroke={CHART_COLORS[0]} activeDot={{ r: 8 }} />
                 </LineChart>
               </ResponsiveContainer>
             )}

@@ -11,9 +11,16 @@ import { Badge } from "@/components/ui/badge"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { Skeleton } from "@/components/ui/skeleton"
 import { Download, FileSpreadsheet, Users, Truck, BarChart3 } from "lucide-react"
-import { cn } from "@/lib/utils"
+import { cn, formatCurrency } from "@/lib/utils"
 import { getAuthToken } from '@/lib/token'
 import { ReportErrorState } from '@/features/reportes-financieros/components/report-error-state'
+
+/** Etiquetas en español neutro para los estados internos del anticipo. */
+const ESTADO_LABELS: Record<string, string> = {
+  RESERVADO: 'Reservado',
+  EJECUTADO: 'Ejecutado',
+  ANULADO: 'Anulado',
+}
 
 interface ReportesAnticiposProps {
   clientes?: Array<{ clienteId: string; nombre: string }>
@@ -159,8 +166,9 @@ export function ReportesAnticipos({
           {/* Filtros comunes */}
           <div className="flex flex-wrap gap-4 mt-4 p-4 bg-muted/50 rounded-lg">
             <div className="space-y-2">
-              <Label>Fecha Inicio</Label>
+              <Label htmlFor="anticipos-fecha-inicio">Fecha Inicio</Label>
               <Input
+                id="anticipos-fecha-inicio"
                 type="date"
                 value={fechaInicio}
                 onChange={(e) => setFechaInicio(e.target.value)}
@@ -168,8 +176,9 @@ export function ReportesAnticipos({
               />
             </div>
             <div className="space-y-2">
-              <Label>Fecha Fin</Label>
+              <Label htmlFor="anticipos-fecha-fin">Fecha Fin</Label>
               <Input
+                id="anticipos-fecha-fin"
                 type="date"
                 value={fechaFin}
                 onChange={(e) => setFechaFin(e.target.value)}
@@ -183,9 +192,9 @@ export function ReportesAnticipos({
             <div className="space-y-4">
               <div className="flex items-center gap-4">
                 <div className="space-y-2">
-                  <Label>Cliente</Label>
+                  <Label id="anticipos-cliente-label">Cliente</Label>
                   <Select value={clienteFiltro} onValueChange={setClienteFiltro}>
-                    <SelectTrigger className="w-[250px]">
+                    <SelectTrigger className="w-[250px]" aria-labelledby="anticipos-cliente-label">
                       <SelectValue placeholder="Todos los clientes" />
                     </SelectTrigger>
                     <SelectContent>
@@ -247,11 +256,11 @@ export function ReportesAnticipos({
                                 <TableRow key={a.anticipoId}>
                                   <TableCell className="font-mono text-xs">{a.anticipoId.substring(0, 8)}</TableCell>
                                   <TableCell>{a.numeroContrato || "-"}</TableCell>
-                                  <TableCell>{a.moneda} {a.montoOriginal.toLocaleString()}</TableCell>
-                                  <TableCell>{a.moneda} {a.saldoDisponible.toLocaleString()}</TableCell>
+                                  <TableCell>{formatCurrency(a.montoOriginal, a.moneda)}</TableCell>
+                                  <TableCell>{formatCurrency(a.saldoDisponible, a.moneda)}</TableCell>
                                   <TableCell>
                                     <Badge variant={a.estado === "EJECUTADO" ? "default" : "outline"}>
-                                      {a.estado}
+                                      {ESTADO_LABELS[a.estado] ?? a.estado}
                                     </Badge>
                                   </TableCell>
                                   <TableCell>{new Date(a.fechaReserva).toLocaleDateString("es-ES")}</TableCell>
@@ -262,15 +271,15 @@ export function ReportesAnticipos({
                           <div className="mt-4 flex gap-4 text-sm">
                             <div>
                               <span className="text-muted-foreground">Total Original: </span>
-                              <span className="font-medium">{item.totales.totalOriginal.toLocaleString()}</span>
+                              <span className="font-medium">{item.totales.totalOriginal.toLocaleString("es", { minimumFractionDigits: 2 })}</span>
                             </div>
                             <div>
                               <span className="text-muted-foreground">Total Ejecutado: </span>
-                              <span className="font-medium text-green-600">{item.totales.totalEjecutado.toLocaleString()}</span>
+                              <span className="font-medium text-green-600">{item.totales.totalEjecutado.toLocaleString("es", { minimumFractionDigits: 2 })}</span>
                             </div>
                             <div>
                               <span className="text-muted-foreground">Pendiente: </span>
-                              <span className="font-medium">{item.totales.totalPendiente.toLocaleString()}</span>
+                              <span className="font-medium">{item.totales.totalPendiente.toLocaleString("es", { minimumFractionDigits: 2 })}</span>
                             </div>
                           </div>
                         </CardContent>
@@ -297,9 +306,9 @@ export function ReportesAnticipos({
             <div className="space-y-4">
               <div className="flex items-center gap-4">
                 <div className="space-y-2">
-                  <Label>Proveedor</Label>
+                  <Label id="anticipos-proveedor-label">Proveedor</Label>
                   <Select value={proveedorFiltro} onValueChange={setProveedorFiltro}>
-                    <SelectTrigger className="w-[250px]">
+                    <SelectTrigger className="w-[250px]" aria-labelledby="anticipos-proveedor-label">
                       <SelectValue placeholder="Todos los proveedores" />
                     </SelectTrigger>
                     <SelectContent>
@@ -361,11 +370,11 @@ export function ReportesAnticipos({
                                 <TableRow key={a.anticipoId}>
                                   <TableCell className="font-mono text-xs">{a.anticipoId.substring(0, 8)}</TableCell>
                                   <TableCell>{a.numeroContrato || "-"}</TableCell>
-                                  <TableCell>{a.moneda} {a.montoOriginal.toLocaleString()}</TableCell>
-                                  <TableCell>{a.moneda} {a.saldoDisponible.toLocaleString()}</TableCell>
+                                  <TableCell>{formatCurrency(a.montoOriginal, a.moneda)}</TableCell>
+                                  <TableCell>{formatCurrency(a.saldoDisponible, a.moneda)}</TableCell>
                                   <TableCell>
                                     <Badge variant={a.estado === "EJECUTADO" ? "default" : "outline"}>
-                                      {a.estado}
+                                      {ESTADO_LABELS[a.estado] ?? a.estado}
                                     </Badge>
                                   </TableCell>
                                   <TableCell>{new Date(a.fechaReserva).toLocaleDateString("es-ES")}</TableCell>
@@ -376,15 +385,15 @@ export function ReportesAnticipos({
                           <div className="mt-4 flex gap-4 text-sm">
                             <div>
                               <span className="text-muted-foreground">Total Original: </span>
-                              <span className="font-medium">{item.totales.totalOriginal.toLocaleString()}</span>
+                              <span className="font-medium">{item.totales.totalOriginal.toLocaleString("es", { minimumFractionDigits: 2 })}</span>
                             </div>
                             <div>
                               <span className="text-muted-foreground">Total Ejecutado: </span>
-                              <span className="font-medium text-green-600">{item.totales.totalEjecutado.toLocaleString()}</span>
+                              <span className="font-medium text-green-600">{item.totales.totalEjecutado.toLocaleString("es", { minimumFractionDigits: 2 })}</span>
                             </div>
                             <div>
                               <span className="text-muted-foreground">Pendiente: </span>
-                              <span className="font-medium">{item.totales.totalPendiente.toLocaleString()}</span>
+                              <span className="font-medium">{item.totales.totalPendiente.toLocaleString("es", { minimumFractionDigits: 2 })}</span>
                             </div>
                           </div>
                         </CardContent>
@@ -486,8 +495,8 @@ export function ReportesAnticipos({
                         {Object.entries(dataResumen.resumen.porMoneda || {}).map(([moneda, valores]: [string, any]) => (
                           <TableRow key={moneda}>
                             <TableCell className="font-medium">{moneda}</TableCell>
-                            <TableCell className="text-right">{valores.total?.toLocaleString() || 0}</TableCell>
-                            <TableCell className="text-right">{valores.pendiente?.toLocaleString() || 0}</TableCell>
+                            <TableCell className="text-right">{valores.total?.toLocaleString("es", { minimumFractionDigits: 2 }) || 0}</TableCell>
+                            <TableCell className="text-right">{valores.pendiente?.toLocaleString("es", { minimumFractionDigits: 2 }) || 0}</TableCell>
                           </TableRow>
                         ))}
                       </TableBody>

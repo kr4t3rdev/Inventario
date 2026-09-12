@@ -72,6 +72,7 @@ export function PurchaseSearchBar({
           role="combobox"
           aria-expanded={open}
           className="w-full justify-between md:w-[500px]"
+          aria-label="Seleccionar compra para analizar"
         >
           {selectedId && selectedLabel ? (
             <span className="truncate">{selectedLabel}</span>
@@ -83,8 +84,8 @@ export function PurchaseSearchBar({
           <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
         </Button>
       </PopoverTrigger>
-      <PopoverContent className="w-[500px] p-0" align="start">
-        <div className="flex items border-b px-3">
+      <PopoverContent className="w-[min(500px,90vw)] p-0" align="start">
+        <div className="flex items-center border-b px-3">
           <Search className="mr-2 h-4 w-4 shrink-0 opacity-50" />
           <Input
             placeholder="Buscar por proveedor, factura o producto..."

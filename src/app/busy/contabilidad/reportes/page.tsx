@@ -13,30 +13,10 @@ import { ContabilidadBreadcrumb } from '@/features/contabilidad/components/conta
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 ;
-import { Skeleton } from '@/components/ui/skeleton';
+import { ReportesShellLoader } from '@/features/reportes-financieros/components/reportes-shell-loader';
 import { cn } from '@/lib/utils';
 
-/**
- * @description Loader inicial para la página de reportes contables.
- * @returns {JSX.Element} Esqueleto de precarga del módulo.
- */
-function ReportesPageLoader() {
-  return (
-    <div className="space-y-6">
-      <div className="space-y-2">
-        <Skeleton className="h-5 w-40" />
-        <Skeleton className="h-8 w-80" />
-        <Skeleton className="h-4 w-lg max-w-full" />
-      </div>
-      <div className="grid gap-4 md:grid-cols-3">
-        <Skeleton className="h-10 rounded-xl" />
-        <Skeleton className="h-10 rounded-xl" />
-        <Skeleton className="h-10 rounded-xl" />
-      </div>
-      <Skeleton className="h-160 w-full rounded-2xl" />
-    </div>
-  );
-}
+const ReportesPageLoader = () => <ReportesShellLoader kpis={3} />;
 
 const ReportesAnalyticsPage = dynamic(
   () =>
@@ -150,8 +130,8 @@ export default function ReportesPage() {
                   className="h-8 w-8 text-muted-foreground hover:text-foreground"
                   asChild
                 >
-                  <Link href="/busy/contabilidad">
-                    <ArrowLeft className="h-4 w-4" />
+                  <Link href="/busy/contabilidad" aria-label="Volver a contabilidad">
+                    <ArrowLeft className="h-4 w-4" aria-hidden="true" />
                   </Link>
                 </Button>
                 <div className="flex items-center gap-3">

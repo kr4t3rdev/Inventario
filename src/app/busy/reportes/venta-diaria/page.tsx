@@ -9,32 +9,11 @@ import { ArrowLeft, CalendarDays } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 ;
-import { Skeleton } from '@/components/ui/skeleton';
+import { ReportesShellLoader } from '@/features/reportes-financieros/components/reportes-shell-loader';
 import { cn } from '@/lib/utils';
 import { PageTransition } from '@/components/ui/animations';
 
-/**
- * @description Loader de precarga para venta diaria.
- * @returns {JSX.Element} Skeleton de la página mientras carga el módulo.
- */
-function VentaDiariaPageLoader() {
-  return (
-    <div className='space-y-6'>
-      <div className='space-y-2'>
-        <Skeleton className='h-5 w-40' />
-        <Skeleton className='h-8 w-80' />
-        <Skeleton className='h-4 w-[34rem] max-w-full' />
-      </div>
-      <div className='grid gap-4 md:grid-cols-4'>
-        <Skeleton className='h-24 rounded-xl' />
-        <Skeleton className='h-24 rounded-xl' />
-        <Skeleton className='h-24 rounded-xl' />
-        <Skeleton className='h-24 rounded-xl' />
-      </div>
-      <Skeleton className='h-[620px] w-full rounded-2xl' />
-    </div>
-  );
-}
+const VentaDiariaPageLoader = () => <ReportesShellLoader kpis={4} />;
 
 const ReporteVentaDiaria = dynamic(
   () =>
@@ -114,8 +93,8 @@ export default function VentaDiariaPage() {
                   className='h-8 w-8 text-muted-foreground hover:text-foreground'
                   asChild
                 >
-                  <Link href='/busy/reportes'>
-                    <ArrowLeft className='h-4 w-4' />
+                  <Link href='/busy/reportes' aria-label='Volver a reportes de inventario'>
+                    <ArrowLeft className='h-4 w-4' aria-hidden='true' />
                   </Link>
                 </Button>
                 <div className='flex items-center gap-3'>

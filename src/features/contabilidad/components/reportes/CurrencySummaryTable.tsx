@@ -2,7 +2,7 @@
 
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
-import { cn } from "@/lib/utils";
+import { cn, formatCurrency } from "@/lib/utils";
 import { TrendingUp, TrendingDown } from "lucide-react";
 
 interface CurrencyRow {
@@ -44,13 +44,13 @@ export function CurrencySummaryTable({ data, monedaPrincipal }: CurrencySummaryT
                   </div>
                 </TableCell>
                 <TableCell className="text-right font-mono tabular-nums">
-                  {(row.saldoActual ?? 0).toLocaleString('es-ES', { minimumFractionDigits: 2 })}
+                  {formatCurrency(row.saldoActual ?? 0, row.moneda)}
                 </TableCell>
                 <TableCell className="text-right font-mono tabular-nums text-emerald-600 dark:text-emerald-400">
-                  {(row.totalIngresos ?? 0).toLocaleString('es-ES', { minimumFractionDigits: 2 })}
+                  {formatCurrency(row.totalIngresos ?? 0, row.moneda)}
                 </TableCell>
                 <TableCell className="text-right font-mono tabular-nums text-rose-600 dark:text-rose-400">
-                  {(row.totalEgresos ?? 0).toLocaleString('es-ES', { minimumFractionDigits: 2 })}
+                  {formatCurrency(row.totalEgresos ?? 0, row.moneda)}
                 </TableCell>
                 <TableCell className={cn(
                   "text-right font-mono tabular-nums font-semibold",
@@ -58,7 +58,7 @@ export function CurrencySummaryTable({ data, monedaPrincipal }: CurrencySummaryT
                 )}>
                   <div className="flex items-center justify-end gap-1">
                     {netFlow >= 0 ? <TrendingUp className="h-3 w-3" /> : <TrendingDown className="h-3 w-3" />}
-                    {(netFlow ?? 0).toLocaleString('es-ES', { minimumFractionDigits: 2 })}
+                    {formatCurrency(netFlow ?? 0, row.moneda)}
                   </div>
                 </TableCell>
               </TableRow>

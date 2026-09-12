@@ -8,13 +8,14 @@ import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Badge } from "@/components/ui/badge"
+import { Label } from "@/components/ui/label"
 import { Skeleton } from "@/components/ui/skeleton"
 import { ReportErrorState } from "./report-error-state"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { CalendarIcon, TrendingUpIcon, TrendingDownIcon, FileIcon as FilePdf, FileText, DollarSign, Package, Calendar } from "lucide-react"
 import { format, subDays, startOfDay, endOfDay } from "date-fns"
-import { exportToCsv } from "@/lib/export-utils"
+import { exportToCsv, exportToPdf } from "@/lib/export-utils"
 import { flattenVentas } from "@/lib/ventas-utils"
 import { cn, formatCurrency } from "@/lib/utils"
 import { getProductDisplayIdentifier } from "@/lib/product-display-utils"
@@ -24,15 +25,13 @@ import 'jspdf-autotable'
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, AreaChart, Area } from "recharts"
 import { AnimatedCard, StaggerContainer, StaggerItem } from "@/components/ui/animations"
 
-const surfaceCardClass = cn(
-  "relative overflow-hidden border-slate-200/60 bg-white/70 shadow-sm backdrop-blur-xl",
-  "dark:border-slate-800/60 dark:bg-slate-900/10",
-)
 
 /**
  * @description Módulo de análisis de venta diaria con métricas, comparación y detalle de transacciones.
  * @returns {JSX.Element} Vista principal del reporte diario de ventas.
  */
+
+import { SURFACE_CARD_CLASS, CHART_COLOR_POSITIVE } from "@/features/reportes-financieros/lib/reporte-styles"
 
 export function ReporteVentaDiaria() {
    const shouldReduceMotion = useReducedMotion()
@@ -127,44 +126,51 @@ export function ReporteVentaDiaria() {
     if (ventasLineas.length === 0 && !ventaServicios) return null
 
     const fechaActual = crearFechaLocal(fechaSeleccionada)
-    let fechaComparacion: Date
+    // diasPeriodo: tamaño del rango agregado. El período anterior es el rango
+    // de igual tamaño inmediatamente previo (día vs día, semana vs semana).
+    let diasPeriodo: number
     let label: string
 
     switch (vistaPeriodo) {
       case 'dia':
-        fechaComparacion = subDays(fechaActual, 1)
+        diasPeriodo = 1
         label = "Día anterior"
         break
       case 'semana':
-        fechaComparacion = subDays(fechaActual, 7)
-        label = "Semana anterior"
+        diasPeriodo = 7
+        label = "Semana anterior (7 días)"
         break
       case 'mes':
-        fechaComparacion = subDays(fechaActual, 30)
-        label = "Mes anterior"
+        diasPeriodo = 30
+        label = "Mes anterior (30 días)"
         break
     }
+
+    const inicioActual = startOfDay(subDays(fechaActual, diasPeriodo - 1))
+    const finActual = endOfDay(fechaActual)
+    const fechaComparacion = subDays(inicioActual, diasPeriodo)
+    const finAnterior = endOfDay(subDays(inicioActual, 1))
 
     const ventasPeriodoActual = ventasLineas
       .filter((venta) => {
         const fechaVenta = new Date(venta.createdAt)
-        return fechaVenta >= startOfDay(fechaActual) && fechaVenta <= endOfDay(fechaActual)
+        return fechaVenta >= inicioActual && fechaVenta <= finActual
       })
 
     const ventasPeriodoAnterior = ventasLineas
       .filter((venta) => {
         const fechaVenta = new Date(venta.createdAt)
-        return fechaVenta >= startOfDay(fechaComparacion) && fechaVenta <= endOfDay(fechaComparacion)
+        return fechaVenta >= fechaComparacion && fechaVenta <= finAnterior
       })
 
     const serviciosPeriodoActual = (ventaServicios || []).filter(servicio => {
       const fechaServicio = new Date(servicio.createdAt || '')
-      return fechaServicio >= startOfDay(fechaActual) && fechaServicio <= endOfDay(fechaActual)
+      return fechaServicio >= inicioActual && fechaServicio <= finActual
     })
 
     const serviciosPeriodoAnterior = (ventaServicios || []).filter(servicio => {
       const fechaServicio = new Date(servicio.createdAt || '')
-      return fechaServicio >= startOfDay(fechaComparacion) && fechaServicio <= endOfDay(fechaComparacion)
+      return fechaServicio >= fechaComparacion && fechaServicio <= finAnterior
     })
 
     const ingresosActualVentas = ventasPeriodoActual.reduce(
@@ -197,7 +203,7 @@ export function ReporteVentaDiaria() {
       productosAnterior,
       porcentajeCambioIngresos,
       porcentajeCambioProductos,
-      fechaComparacion: format(fechaComparacion, 'dd/MM/yyyy')
+      fechaComparacion: `${format(fechaComparacion, 'dd/MM/yyyy')} – ${format(finAnterior, 'dd/MM/yyyy')}`
     }
   }, [ventasLineas, ventaServicios, fechaSeleccionada, vistaPeriodo])
 
@@ -242,7 +248,7 @@ export function ReporteVentaDiaria() {
     return tendencias
   }, [ventasLineas, ventaServicios, fechaSeleccionada])
 
-  const exportarCsv = () => {
+  const buildDatosExport = () => {
     const datosVentas = ventasDelDia.map(venta => ({
       Fecha: format(new Date(venta.createdAt), 'yyyy-MM-dd'),
       Hora: format(new Date(venta.createdAt), 'HH:mm'),
@@ -275,9 +281,21 @@ export function ReporteVentaDiaria() {
       Cliente: servicio.cliente?.clienteId || 'Cliente general'
     }))
 
-    const datosParaExport = [...datosVentas, ...datosServicios]
+    return [...datosVentas, ...datosServicios]
+  }
 
-    exportToCsv(datosParaExport, `Reporte_Venta_Diaria_${format(crearFechaLocal(fechaSeleccionada), 'yyyy-MM-dd')}`)
+  const hayDatosExportables = ventasDelDia.length > 0 || serviciosDelDia.length > 0
+
+  const exportarCsv = () => {
+    exportToCsv(buildDatosExport(), `Reporte_Venta_Diaria_${format(crearFechaLocal(fechaSeleccionada), 'yyyy-MM-dd')}`)
+  }
+
+  const exportarPdf = () => {
+    exportToPdf(
+      buildDatosExport(),
+      null,
+      `Reporte de Venta Diaria ${format(crearFechaLocal(fechaSeleccionada), 'dd/MM/yyyy')}`,
+    )
   }
 
   // Función para obtener detalles de ventas de un día específico
@@ -473,7 +491,7 @@ export function ReporteVentaDiaria() {
         </div>
         <div className="grid gap-4 md:grid-cols-4">
           {[1, 2, 3, 4].map((i) => (
-            <Card key={i} className={surfaceCardClass}>
+            <Card key={i} className={SURFACE_CARD_CLASS}>
               <CardHeader className="pb-2">
                 <Skeleton className="h-4 w-24" />
                 <Skeleton className="h-8 w-20" />
@@ -493,7 +511,7 @@ export function ReporteVentaDiaria() {
       {/* Header con controles */}
       <StaggerItem
         className={cn(
-          surfaceCardClass,
+          SURFACE_CARD_CLASS,
           "flex flex-col gap-4 rounded-xl border-dashed p-5 md:flex-row md:items-center md:justify-between",
         )}
       >
@@ -506,16 +524,36 @@ export function ReporteVentaDiaria() {
           </div>
         </div>
         <div className="flex items-center gap-2">
-          <input
-            type="date"
-            value={fechaSeleccionada}
-            onChange={(e) => setFechaSeleccionada(e.target.value)}
-            className={cn(
-              "rounded-md border border-slate-200 bg-white px-3 py-2 text-sm shadow-sm",
-              "dark:border-slate-700 dark:bg-slate-900",
-            )}
-          />
-          <Button variant="outline" size="sm" onClick={exportarCsv}>
+          <div className="flex items-center gap-2">
+            <Label htmlFor="fecha-venta-diaria" className="text-sm text-muted-foreground">
+              Fecha
+            </Label>
+            <input
+              id="fecha-venta-diaria"
+              type="date"
+              value={fechaSeleccionada}
+              onChange={(e) => setFechaSeleccionada(e.target.value)}
+              className={cn(
+                "rounded-md border border-slate-200 bg-white px-3 py-2 text-sm shadow-sm",
+                "dark:border-slate-700 dark:bg-slate-900",
+              )}
+            />
+          </div>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={exportarPdf}
+            disabled={!hayDatosExportables}
+          >
+            <FilePdf className="mr-2 h-4 w-4" />
+            PDF
+          </Button>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={exportarCsv}
+            disabled={!hayDatosExportables}
+          >
             <FileText className="mr-2 h-4 w-4" />
             CSV
           </Button>
@@ -525,7 +563,7 @@ export function ReporteVentaDiaria() {
       {/* Tarjetas de estadísticas */}
       <StaggerItem className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
         <AnimatedCard>
-        <Card className={cn(surfaceCardClass)}>
+        <Card className={cn(SURFACE_CARD_CLASS)}>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardDescription className="text-sm font-medium">Total de Ventas</CardDescription>
             <Package className="h-4 w-4 text-muted-foreground" />
@@ -540,7 +578,7 @@ export function ReporteVentaDiaria() {
         </AnimatedCard>
 
         <AnimatedCard>
-        <Card className={cn(surfaceCardClass)}>
+        <Card className={cn(SURFACE_CARD_CLASS)}>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardDescription className="text-sm font-medium">Ingresos Netos</CardDescription>
             <DollarSign className="h-4 w-4 text-muted-foreground" />
@@ -563,7 +601,7 @@ export function ReporteVentaDiaria() {
         </AnimatedCard>
 
         <AnimatedCard>
-        <Card className={cn(surfaceCardClass)}>
+        <Card className={cn(SURFACE_CARD_CLASS)}>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardDescription className="text-sm font-medium">Ganancia</CardDescription>
             <TrendingUpIcon className="h-4 w-4 text-muted-foreground" />
@@ -578,7 +616,7 @@ export function ReporteVentaDiaria() {
         </AnimatedCard>
 
         <AnimatedCard>
-        <Card className={cn(surfaceCardClass)}>
+        <Card className={cn(SURFACE_CARD_CLASS)}>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardDescription className="text-sm font-medium">Ticket Promedio</CardDescription>
             <Calendar className="h-4 w-4 text-muted-foreground" />
@@ -599,7 +637,7 @@ export function ReporteVentaDiaria() {
       <StaggerItem className="grid gap-6 lg:grid-cols-2">
         {/* Gráfico de tendencias */}
         <AnimatedCard>
-        <Card className={surfaceCardClass}>
+        <Card className={SURFACE_CARD_CLASS}>
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <CalendarIcon className="h-5 w-5" />
@@ -614,8 +652,8 @@ export function ReporteVentaDiaria() {
               <AreaChart data={datosTendencias} margin={{ top: 10, right: 30, left: 0, bottom: 0 }}>
                 <defs>
                   <linearGradient id="colorIngresos" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="5%" stopColor="#10b981" stopOpacity={0.8}/>
-                    <stop offset="95%" stopColor="#10b981" stopOpacity={0}/>
+                    <stop offset="5%" stopColor={CHART_COLOR_POSITIVE} stopOpacity={0.8}/>
+                    <stop offset="95%" stopColor={CHART_COLOR_POSITIVE} stopOpacity={0}/>
                   </linearGradient>
                 </defs>
                 <XAxis dataKey="fecha" />
@@ -629,7 +667,7 @@ export function ReporteVentaDiaria() {
                 <Area 
                   type="monotone" 
                   dataKey="ingresos" 
-                  stroke="#10b981" 
+                  stroke={CHART_COLOR_POSITIVE}
                   fillOpacity={1} 
                   fill="url(#colorIngresos)" 
                   strokeWidth={2}
@@ -642,7 +680,7 @@ export function ReporteVentaDiaria() {
 
         {/* Comparación de períodos */}
         <AnimatedCard>
-        <Card className={surfaceCardClass}>
+        <Card className={SURFACE_CARD_CLASS}>
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <TrendingUpIcon className="h-5 w-5" />
@@ -667,7 +705,9 @@ export function ReporteVentaDiaria() {
                 <div className="flex items-center justify-between rounded-lg border p-3 bg-slate-50/50 dark:bg-slate-900/30">
                   <div>
                     <p className="font-medium">Ingresos</p>
-                    <p className="text-sm text-muted-foreground">{datosComparacion.label}</p>
+                    <p className="text-sm text-muted-foreground">
+                      {datosComparacion.label} ({datosComparacion.fechaComparacion})
+                    </p>
                   </div>
                   <div className="text-right">
                     <p className="font-bold">{formatCurrency(datosComparacion.ingresosActual)}</p>
@@ -686,7 +726,9 @@ export function ReporteVentaDiaria() {
                 <div className="flex items-center justify-between rounded-lg border p-3 bg-slate-50/50 dark:bg-slate-900/30">
                   <div>
                     <p className="font-medium">Productos Vendidos</p>
-                    <p className="text-sm text-muted-foreground">{datosComparacion.label}</p>
+                    <p className="text-sm text-muted-foreground">
+                      {datosComparacion.label} ({datosComparacion.fechaComparacion})
+                    </p>
                   </div>
                   <div className="text-right">
                     <p className="font-bold">{datosComparacion.productosActual}</p>
@@ -713,7 +755,7 @@ export function ReporteVentaDiaria() {
       {/* Tabla detallada de ventas */}
       <StaggerItem>
         <AnimatedCard>
-        <Card className={surfaceCardClass}>
+        <Card className={SURFACE_CARD_CLASS}>
         <CardHeader>
           <CardTitle>Detalle de Ventas del Día</CardTitle>
           <CardDescription>
@@ -834,7 +876,7 @@ export function ReporteVentaDiaria() {
           
           {/* Resumen */}
           <div className="grid grid-cols-3 gap-4 mb-4">
-            <Card className={surfaceCardClass}>
+            <Card className={SURFACE_CARD_CLASS}>
               <CardContent className="p-4">
                 <div className="text-center">
                   <div className="text-2xl font-bold text-blue-600">{detallesDia.length}</div>
@@ -842,7 +884,7 @@ export function ReporteVentaDiaria() {
                 </div>
               </CardContent>
             </Card>
-            <Card className={surfaceCardClass}>
+            <Card className={SURFACE_CARD_CLASS}>
               <CardContent className="p-4">
                 <div className="text-center">
                   <div className="text-2xl font-bold text-green-600">
@@ -852,7 +894,7 @@ export function ReporteVentaDiaria() {
                 </div>
               </CardContent>
             </Card>
-            <Card className={surfaceCardClass}>
+            <Card className={SURFACE_CARD_CLASS}>
               <CardContent className="p-4">
                 <div className="text-center">
                   <div className="text-2xl font-bold text-sky-600">

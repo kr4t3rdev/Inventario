@@ -22,18 +22,16 @@ import {
 	Cell,
 } from "recharts";
 import type { ProductoAnalisis } from "@/features/reportes-financieros/actions-rentabilidad-compra";
+import {
+	CHART_COLORS,
+	CHART_COLOR_POSITIVE,
+	CHART_COLOR_NEGATIVE,
+} from "@/features/reportes-financieros/lib/reporte-styles";
 
+const COLORS = [...CHART_COLORS];
 
-const COLORS = [
-	"#10b981",
-	"#f59e0b",
-	"#3b82f6",
-	"#8b5cf6",
-	"#ef4444",
-	"#06b6d4",
-	"#f97316",
-	"#6366f1",
-];
+const COLOR_INGRESOS = CHART_COLOR_POSITIVE;
+const COLOR_COSTO = "var(--chart-4)";
 
 interface ChartsRentabilidadProps {
 	productos: ProductoAnalisis[];
@@ -111,8 +109,8 @@ export function ChartsRentabilidad({ productos }: ChartsRentabilidadProps) {
 								<YAxis tick={{ fontSize: 11 }} />
 								<Tooltip formatter={formatterDollar} />
 								<Legend />
-								<Bar dataKey="Ingresos" fill="#10b981" radius={[4, 4, 0, 0]} />
-								<Bar dataKey="Costo" fill="#f59e0b" radius={[4, 4, 0, 0]} />
+								<Bar dataKey="Ingresos" fill={COLOR_INGRESOS} radius={[4, 4, 0, 0]} />
+								<Bar dataKey="Costo" fill={COLOR_COSTO} radius={[4, 4, 0, 0]} />
 							</BarChart>
 						</ResponsiveContainer>
 					) : (
@@ -158,7 +156,7 @@ export function ChartsRentabilidad({ productos }: ChartsRentabilidadProps) {
 												y={adjustedY}
 												width={width}
 												height={absHeight}
-												fill={isNegative ? "#ef4444" : "#10b981"}
+												fill={isNegative ? CHART_COLOR_NEGATIVE : CHART_COLOR_POSITIVE}
 												rx={4}
 											/>
 										);
@@ -204,7 +202,7 @@ export function ChartsRentabilidad({ productos }: ChartsRentabilidadProps) {
 										undefined,
 									]}
 								/>
-								<Bar dataKey="días" fill="#3b82f6" radius={[0, 4, 4, 0]} />
+								<Bar dataKey="días" fill={CHART_COLORS[0]} radius={[0, 4, 4, 0]} />
 							</BarChart>
 						</ResponsiveContainer>
 					) : (

@@ -74,6 +74,7 @@ export function ReportesAnalyticsPage() {
   );
   const [resetMovimientosKey, setResetMovimientosKey] = useState(0);
   const [refreshKey, setRefreshKey] = useState(0);
+  const [isRefreshing, setIsRefreshing] = useState(false);
   const [monedas, setMonedas] = useState<Array<{ codigo: string; esPrincipal?: boolean }>>([]);
 
   const { cuentas } = useCuentasBancarias();
@@ -119,6 +120,15 @@ export function ReportesAnalyticsPage() {
     setFiltrosGlobales({ fechaInicio: '', fechaFin: '', cuentaId: '' });
     setFiltrosLocalesMovimientos(FILTROS_LOCALES_INICIALES);
     setResetMovimientosKey((prev) => prev + 1);
+  };
+
+  // Los sub-reportes recargan al cambiar refreshKey; el feedback visual dura
+  // lo suficiente para que el usuario perciba la recarga en curso.
+  const handleRefresh = (): void => {
+    if (isRefreshing) return;
+    setIsRefreshing(true);
+    setRefreshKey((prev) => prev + 1);
+    setTimeout(() => setIsRefreshing(false), 800);
   };
 
   const handleLocalFiltersChange = (cambios: Partial<FiltrosLocalesMovimientos>): void => {
@@ -199,9 +209,10 @@ export function ReportesAnalyticsPage() {
                 periodo={periodoString}
                 cuentaActiva={cuentaSeleccionada?.nombreBanco || 'Todas las cuentas'}
                 monedaPrincipal={monedaPrincipal}
-                onRefresh={() => setRefreshKey((previous) => previous + 1)}
+                onRefresh={handleRefresh}
                 onClear={handleLimpiarFiltros}
                 hasActiveFilters={hasActiveFilters}
+                isRefreshing={isRefreshing}
               />
             </div>
           </div>

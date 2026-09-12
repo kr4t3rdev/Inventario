@@ -24,7 +24,7 @@ import {
 	TableRow,
 } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
-import { FileIcon as FilePdf, FileText, Warehouse, Store } from "lucide-react";
+import { FileIcon as FilePdf, FileText, Warehouse, Store, Package, Boxes, DollarSign } from "lucide-react";
 import { exportToPdf, exportToCsv } from "@/lib/export-utils";
 import {
 	BarChart,
@@ -46,7 +46,8 @@ import { getStockPorUbicacionAction } from "@/features/productos/actions";
 import { getProductDisplayIdentifier } from "@/lib/product-display-utils";
 
 
-import { SURFACE_CARD_CLASS } from "@/features/reportes-financieros/lib/reporte-styles"
+import { SURFACE_CARD_CLASS, CHART_COLORS } from "@/features/reportes-financieros/lib/reporte-styles"
+import { ReportKpiCard } from "./report-kpi-card"
 
 export function ReportePorUbicacion() {
 	const [ubicacionId, setUbicacionId] = useState<string>("");
@@ -234,59 +235,44 @@ export function ReportePorUbicacion() {
 					<Skeleton className="h-100 w-full" />
 				</StaggerItem>
 			) : (
-				<StaggerItem className="grid gap-4 md:grid-cols-3">
-					<AnimatedCard>
-						<Card
-							className={cn(SURFACE_CARD_CLASS)}
-						>
-							<CardContent className="p-4">
-								<div className="text-2xl font-bold">
-									{productosUbicacion?.filter((p: any) => p.stockUbicacion > 0)
-										.length || 0}
-								</div>
-								<p className="text-xs text-muted-foreground">
-									Productos en ubicación
-								</p>
-							</CardContent>
-						</Card>
-					</AnimatedCard>
-					<AnimatedCard>
-						<Card
-							className={cn(SURFACE_CARD_CLASS)}
-						>
-							<CardContent className="p-4">
-								<div className="text-2xl font-bold">
-									{productosUbicacion?.reduce(
+					<StaggerItem className="grid gap-4 md:grid-cols-3">
+						<AnimatedCard>
+							<ReportKpiCard
+								label="Productos en ubicación"
+								value={(
+									productosUbicacion?.filter((p: any) => p.stockUbicacion > 0)
+										.length || 0
+								).toLocaleString()}
+								icon={Package}
+							/>
+						</AnimatedCard>
+						<AnimatedCard>
+							<ReportKpiCard
+								label="Unidades totales"
+								value={(
+									productosUbicacion?.reduce(
 										(sum: any, p: any) => sum + p.stockUbicacion,
 										0,
-									) || 0}
-								</div>
-								<p className="text-xs text-muted-foreground">
-									Unidades totales
-								</p>
-							</CardContent>
-						</Card>
-					</AnimatedCard>
-					<AnimatedCard>
-						<Card
-							className={cn(SURFACE_CARD_CLASS)}
-						>
-								<CardContent className="p-4">
-									<div className="text-2xl font-bold">
-										{formatCurrency(productosUbicacion?.reduce(
-											(sum: any, p: any) =>
-												sum + p.stockUbicacion * p.precioCosto,
-											0,
-										) ?? 0)}
-									</div>
-									<p className="text-xs text-muted-foreground">
-										Valor del inventario
-									</p>
-								</CardContent>
-						</Card>
-					</AnimatedCard>
-				</StaggerItem>
-			)}
+									) || 0
+								).toLocaleString()}
+								icon={Boxes}
+							/>
+						</AnimatedCard>
+						<AnimatedCard>
+							<ReportKpiCard
+								label="Valor del inventario"
+								value={formatCurrency(
+									productosUbicacion?.reduce(
+										(sum: any, p: any) =>
+											sum + p.stockUbicacion * p.precioCosto,
+										0,
+									) ?? 0,
+								)}
+								icon={DollarSign}
+							/>
+						</AnimatedCard>
+					</StaggerItem>
+				)}
 
 			{ubicacionId && !stockError && !isLoadingStock && (
 				<>
@@ -312,13 +298,13 @@ export function ReportePorUbicacion() {
 											<Bar
 												dataKey="stock"
 												name="Stock"
-												fill="#8884d8"
+												fill={CHART_COLORS[0]}
 												radius={[4, 4, 0, 0]}
 											/>
 											<Bar
 												dataKey="valor"
-												name="Valor ($)"
-												fill="#82ca9d"
+												name="Valor"
+												fill={CHART_COLORS[1]}
 												radius={[4, 4, 0, 0]}
 											/>
 										</BarChart>

@@ -19,17 +19,16 @@ import {
   PaginationNext,
   PaginationPrevious,
 } from "@/components/ui/pagination"
-import { FileIcon as FilePdf, FileText, PieChart as PieChartIcon, Package } from "lucide-react"
+import { FileIcon as FilePdf, FileText, PieChart as PieChartIcon, Package, DollarSign } from "lucide-react"
 import {  exportToPdf, exportToCsv } from "@/lib/export-utils"
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip, Legend } from "recharts"
 import { StaggerContainer, StaggerItem, AnimatedCard } from "@/components/ui/animations"
 import { cn, formatCurrency } from "@/lib/utils"
 import { getProductDisplayIdentifier } from "@/lib/product-display-utils"
+import { SURFACE_CARD_CLASS, CHART_COLORS } from "@/features/reportes-financieros/lib/reporte-styles"
+import { ReportKpiCard } from "./report-kpi-card"
 
-
-const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042', '#8884d8', '#82ca9d', '#ffc658', '#8dd1e1', '#a4de6c', '#d0ed57'];
-
-import { SURFACE_CARD_CLASS } from "@/features/reportes-financieros/lib/reporte-styles"
+const COLORS = [...CHART_COLORS]
 
 export function ReporteGeneral() {
   const { productos, isLoading: isLoadingProductos, error: productosError } = useProductos()
@@ -144,7 +143,7 @@ export function ReporteGeneral() {
       <StaggerItem className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
         <div className="flex items-center gap-4">
           <Select value={filtroCategoria} onValueChange={setFiltroCategoria}>
-            <SelectTrigger className="w-[200px]">
+            <SelectTrigger className="w-[200px]" aria-label="Filtrar por categoría">
               <SelectValue placeholder="Filtrar por categoría" />
             </SelectTrigger>
             <SelectContent>
@@ -159,11 +158,21 @@ export function ReporteGeneral() {
         </div>
         <div className="flex items-center gap-2">
           
-          <Button variant="outline" size="sm" onClick={handleExportPdf}>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={handleExportPdf}
+            disabled={productosFiltrados.length === 0}
+          >
             <FilePdf className="mr-2 h-4 w-4" />
             PDF
           </Button>
-          <Button variant="outline" size="sm" onClick={handleExportCsv}>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={handleExportCsv}
+            disabled={productosFiltrados.length === 0}
+          >
             <FileText className="mr-2 h-4 w-4" />
             CSV
           </Button>
@@ -172,35 +181,27 @@ export function ReporteGeneral() {
 
       <StaggerItem className="grid gap-4 md:grid-cols-3">
         <AnimatedCard>
-        <Card className={cn(SURFACE_CARD_CLASS)}>
-          <CardContent className="p-4">
-            <div className="flex items-center justify-between">
-              <div>
-                <div className="text-2xl font-bold">{totalProductos}</div>
-                <p className="text-xs text-muted-foreground">Total de productos</p>
-              </div>
-              <Package className="h-8 w-8 text-primary opacity-50" />
-            </div>
-          </CardContent>
-        </Card>
+          <ReportKpiCard
+            label="Total de productos"
+            value={totalProductos.toLocaleString()}
+            icon={Package}
+          />
         </AnimatedCard>
-        
+
         <AnimatedCard>
-        <Card className={cn(SURFACE_CARD_CLASS)}>
-          <CardContent className="p-4">
-            <div className="text-2xl font-bold">{formatCurrency(valorTotal)}</div>
-            <p className="text-xs text-muted-foreground">Valor de inventario (costo)</p>
-          </CardContent>
-        </Card>
+          <ReportKpiCard
+            label="Valor de inventario (costo)"
+            value={formatCurrency(valorTotal)}
+            icon={DollarSign}
+          />
         </AnimatedCard>
-        
+
         <AnimatedCard>
-        <Card className={cn(SURFACE_CARD_CLASS)}>
-          <CardContent className="p-4">
-            <div className="text-2xl font-bold">{formatCurrency(valorVenta)}</div>
-            <p className="text-xs text-muted-foreground">Valor de inventario (venta)</p>
-          </CardContent>
-        </Card>
+          <ReportKpiCard
+            label="Valor de inventario (venta)"
+            value={formatCurrency(valorVenta)}
+            icon={DollarSign}
+          />
         </AnimatedCard>
       </StaggerItem>
 
@@ -228,7 +229,7 @@ export function ReporteGeneral() {
                       labelLine={false}
                       label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
                       outerRadius={80}
-                      fill="#8884d8"
+                      fill={CHART_COLORS[0]}
                       dataKey="value"
                     >
                       {valorPorCategoria.map((entry, index) => (
@@ -355,7 +356,8 @@ export function ReporteGeneral() {
                 <PaginationItem>
                   <PaginationPrevious
                     onClick={() => handlePageChange(Math.max(1, currentPage - 1))}
-                    //disabled={currentPage === 1}
+                    aria-disabled={currentPage === 1}
+                    className={currentPage === 1 ? "pointer-events-none opacity-50" : undefined}
                   />
                 </PaginationItem>
                 
@@ -395,7 +397,8 @@ export function ReporteGeneral() {
                 <PaginationItem>
                   <PaginationNext
                     onClick={() => handlePageChange(Math.min(totalPages, currentPage + 1))}
-                    //disabled={currentPage === totalPages}
+                    aria-disabled={currentPage === totalPages}
+                    className={currentPage === totalPages ? "pointer-events-none opacity-50" : undefined}
                   />
                 </PaginationItem>
               </PaginationContent>

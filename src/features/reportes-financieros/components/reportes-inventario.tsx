@@ -32,6 +32,14 @@ export interface TransferenciaMovimientos {
   destinoNombre?: string;
 }
 
+/** Etiquetas visibles de cada pestaña (evita exponer el id interno). */
+const TAB_LABELS: Record<string, string> = {
+  general: 'General',
+  categoria: 'Categoría',
+  ubicacion: 'Ubicación',
+  movimientos: 'Movimientos',
+};
+
 interface ReportesInventarioProps {
   initialTransferencias: TransferenciaMovimientos[];
 }
@@ -93,7 +101,7 @@ export default function ReportesInventario({ initialTransferencias }: ReportesIn
             <div className='flex flex-wrap gap-2'>
               <Badge variant='outline' className='h-8 px-3'>
                 <Layers3 className='mr-1.5 h-3.5 w-3.5' />
-                Vista activa: {activeTab}
+                Vista activa: {TAB_LABELS[activeTab] ?? activeTab}
               </Badge>
               <Badge variant='outline' className='h-8 px-3'>
                 Datos en tiempo real

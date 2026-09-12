@@ -13,7 +13,7 @@ import { ReportErrorState } from "./report-error-state"
 import { cn, formatCurrency } from "@/lib/utils"
 
 
-import { SURFACE_CARD_CLASS } from "@/features/reportes-financieros/lib/reporte-styles"
+import { SURFACE_CARD_CLASS, CHART_COLORS } from "@/features/reportes-financieros/lib/reporte-styles"
 
 export function ReportePorCategoria() {
   const { productos, isLoading: isLoadingProductos, error: productosError } = useProductos()
@@ -63,8 +63,8 @@ export function ReportePorCategoria() {
     item.percent = total > 0 ? item.value / total : 0
   })
 
-  // Colores vibrantes para mejor visibilidad
-  const COLORS = ["#E53935", "#43A047", "#1E88E5", "#FB8C00", "#8E24AA", "#00ACC1", "#FF7043", "#5C6BC0"]
+  // Paleta compartida del módulo (tokens de tema, soportan modo oscuro)
+  const COLORS = [...CHART_COLORS]
 
   // Custom Legend con colores prominentes
   const renderCustomLegend = ({ payload }: any) => {
@@ -76,8 +76,8 @@ export function ReportePorCategoria() {
               className="w-4 h-4 rounded flex-shrink-0"
               style={{ backgroundColor: entry.color }}
             />
-            <span className="font-medium text-gray-700">{entry.value}</span>
-            <span className="text-gray-500 ml-auto">({((entry.payload.percent) * 100).toFixed(1)}%)</span>
+            <span className="font-medium text-foreground/80">{entry.value}</span>
+            <span className="text-muted-foreground ml-auto">({((entry.payload.percent) * 100).toFixed(1)}%)</span>
           </li>
         ))}
       </ul>
@@ -113,11 +113,21 @@ export function ReportePorCategoria() {
 
       <StaggerItem className="flex justify-end gap-2">
 
-        <Button variant="outline" size="sm" onClick={handleExportPdf}>
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={handleExportPdf}
+          disabled={!productosPorCategoria || productosPorCategoria.length === 0}
+        >
           <FilePdf className="mr-2 h-4 w-4" />
           PDF
         </Button>
-        <Button variant="outline" size="sm" onClick={handleExportCsv}>
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={handleExportCsv}
+          disabled={!productosPorCategoria || productosPorCategoria.length === 0}
+        >
           <FileText className="mr-2 h-4 w-4" />
           CSV
         </Button>
@@ -139,7 +149,7 @@ export function ReportePorCategoria() {
                     cy="50%"
                     labelLine={false}
                     outerRadius={100}
-                    fill="#8884d8"
+                    fill={CHART_COLORS[0]}
                     dataKey="value"
                   >
                     {chartData?.map((entry, index) => (
