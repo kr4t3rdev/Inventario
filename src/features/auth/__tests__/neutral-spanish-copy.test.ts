@@ -57,6 +57,7 @@ const SCANNED_DIRECTORIES = [
   'src/app/api/auth',
   'src/app/api/mobile/v1/auth',
   'src/app/onboarding',
+  'src/app/verify-email',
 ];
 
 const SCANNED_FILES = ['src/lib/services/tenant-factory.ts'];

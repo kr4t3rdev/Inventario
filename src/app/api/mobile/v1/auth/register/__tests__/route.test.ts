@@ -67,7 +67,7 @@ describe('POST /api/mobile/v1/auth/register', () => {
 
     expect(response.status).toBe(201);
     expect(data).toEqual({
-      message: 'Revisá tu correo para verificar la cuenta y continuar con el onboarding',
+      message: 'Revisa tu correo para verificar la cuenta y continuar con el onboarding',
       success: true,
     });
     expect(prisma.user.create).toHaveBeenCalledWith(expect.objectContaining({

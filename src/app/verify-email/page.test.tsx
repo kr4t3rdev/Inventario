@@ -56,7 +56,7 @@ describe('/verify-email page', () => {
     await waitFor(() => {
       expect(
         screen.getByText(
-          'No pudimos verificar tu correo por un problema temporal. Intentá de nuevo.'
+          'No pudimos verificar tu correo por un problema temporal. Inténtalo de nuevo.'
         )
       ).toBeInTheDocument()
     })
