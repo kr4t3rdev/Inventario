@@ -1,0 +1,38 @@
+# PE-04 GREEN evidence — 2026-09-12
+
+## Focused gate
+
+Command (real DB, integration config, no unit Prisma mocks; this is the command that actually filters the file):
+
+```text
+DATABASE_URL_TEST='postgresql://arturo@127.0.0.1:5433/test_db' pnpm exec vitest run --config vitest.integration.config.mjs src/features/auth/__integration__/onboarding-enforce.test.ts
+```
+
+Result: **PASS**, 1 file / 8 tests passed. Repeated twice after the cleanup fix (`/tmp/tcp-pe04-cleanup-green-1.txt` and `/tmp/tcp-pe04-cleanup-green-2.txt`).
+
+- Enforce: register+referral, worker approval→login, company provisioning→manager login, and switch A↔B.
+- Shadow: the same four flows exercised with `createViolationCollector`; every collector returned `[]` (zero violations).
+- Fixtures are deleted in `afterEach`; no production `DATABASE_URL` was used.
+- `afterAll` asserts the cleanup contract with `prismaPlatform.user.count({ email: { startsWith: 'pe04-' } }) === 0`; both reruns ended with database residue count `0`.
+
+## Requested package-script command
+
+The required command was also executed exactly:
+
+```text
+DATABASE_URL_TEST='postgresql://arturo@127.0.0.1:5433/test_db' pnpm test:integration -- src/features/auth/__integration__/onboarding-enforce.test.ts
+```
+
+It exited 1 because the current Vitest integration config ignored the positional path and ran all 10 integration files. The PE-04 file passed (8/8); four unrelated integration files failed against the locally reconstructed database because their older migration columns are absent (`Vendor.vendorCode`, `GastoCompra.tenantId`, and other tenant columns). Full sanitized output: `/tmp/tcp-pe04-exact-green.txt`. This baseline is unrelated to the focused PE-04 gate.
+
+## Isolated local DB setup
+
+`DATABASE_URL_TEST` was initially unset. Docker and Railway CLIs were unavailable, so an isolated PostgreSQL 17 cluster was started locally at `127.0.0.1:5433`, database `test_db`, data directory `/tmp/tcp-pe04-postgres`. Prisma migration commands failed with a blank schema-engine error in this environment; migrations were applied manually and the minimal missing columns/tables needed by the PE-04 fixtures were added locally only. No repository migration or production database was changed.
+
+## Unit isolation barrier
+
+```text
+pnpm exec vitest run src/lib/__tests__/test-isolation-contract.test.ts
+```
+
+Result: **PASS**, 7/7 tests, 0 unit-test DB offenders.

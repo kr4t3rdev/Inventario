@@ -25,10 +25,10 @@ Plan SDD/TDD pequeño y cerrado. Reglas: RED con fallo guardado → GREEN mínim
 
 ## PE-04 — Gate de integración en enforce + observabilidad
 
-- [ ] **PE04-T1 — Suite de integración.** `src/features/auth/__integration__/onboarding-enforce.test.ts` con DB real (fixtures que se autodestruyen): (a) register+referido, (b) ciclo worker completo hasta login, (c) ciclo company hasta login del manager, (d) switch A↔B. Todo con `TENANT_ISOLATION_MODE=enforce`.
-  `DATABASE_URL_TEST=... pnpm test:integration -- src/features/auth/__integration__/onboarding-enforce.test.ts`
-- [ ] **PE04-T2 — Shadow cero.** Los mismos flujos en modo `shadow` no emiten violaciones (reporter mockeado/inspeccionado: contador 0 para estos flujos).
-- [ ] **PE04-T3 — Producción.** Verificar en Railway que `TENANT_ISOLATION_MODE=shadow` está activa (o fijarla si falta) y registrar la fecha desde la que cuenta la ventana de observación para el gate P-1 de AS-06. Anotar en este archivo el resultado con fecha.
+- [x] **PE04-T1 — Suite de integración.** `src/features/auth/__integration__/onboarding-enforce.test.ts` con DB real (fixtures que se autodestruyen): (a) register+referido, (b) ciclo worker completo hasta login, (c) ciclo company hasta login del manager, (d) switch A↔B. Todo con `TENANT_ISOLATION_MODE=enforce`. **Completado: 2026-09-12. Evidencia: `evidence/PE-04-RED.txt` (fallo auténtico del contrato de cleanup) y `evidence/PE-04-GREEN.txt` (gate enfocado 8/8, dos ejecuciones, 0 residuos; el script amplio arrastra fallas de schema ajenas).**
+  `DATABASE_URL_TEST=... pnpm exec vitest run --config vitest.integration.config.mjs src/features/auth/__integration__/onboarding-enforce.test.ts`
+- [x] **PE04-T2 — Shadow cero.** Los mismos cuatro flujos en modo `shadow` no emiten violaciones; cada collector devuelve `[]`. **Completado: 2026-09-12. Evidencia: `evidence/PE-04-GREEN.txt`.**
+- [x] **PE04-T3 — Producción.** Verificar en Railway que `TENANT_ISOLATION_MODE=shadow` está activa (o fijarla si falta) y registrar la fecha desde la que cuenta la ventana de observación para el gate P-1 de AS-06. **Completado: 2026-09-12; ventana desde `2026-09-12T05:02:57.021Z` (UTC). Evidencia: `evidence/PE-04-RAILWAY.txt`.**
 - Commit: `test(auth): gate de integración enforce para onboarding y switch (PE-04)`
 
 ## PE-05 — Cierre

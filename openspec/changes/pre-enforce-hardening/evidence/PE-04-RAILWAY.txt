@@ -1,0 +1,28 @@
+# PE-04 Railway evidence — 2026-09-12
+
+Status: **VERIFIED (PE04-T3 completed; shadow remains active)**
+
+Inspection was performed with the authenticated local Railway CLI via
+`pnpm dlx @railway/cli`; no deployment or variable mutation was requested because
+the target variable was already present with the required value. Secret-bearing
+variable output was always filtered before it was displayed.
+
+```text
+whoami                         -> authenticated Railway account
+project                       -> FinanceMDM (project 0dbb20f0-2d06-4de0-ad0b-509121846ccd)
+environment list               -> production (accessible), staging (linked)
+service list --environment production
+                               -> FinanceMDM: SUCCESS, 1/1 replica, deployment
+                                  ed1c6621-82a4-4d36-997e-30ce339f896c
+                                  created 2026-09-11T16:06:50.551Z
+filtered variable inspection  -> TENANT_ISOLATION_MODE=shadow
+GET https://kr4t3rdev.xyz/api/health
+                               -> HTTP/2 200; status=healthy; environment=production
+                                  observed 2026-09-12T05:02:57.021Z
+```
+
+**Observation-window start (conservative): `2026-09-12T05:02:57.021Z`.** This is
+the first timestamp at which the production runtime was verified healthy while the
+Railway service variable was confirmed as `shadow`; no earlier start is assumed.
+The latest successful deployment is recorded above for correlation. The variable
+was not changed, `enforce` was not activated, and no secrets were printed.
