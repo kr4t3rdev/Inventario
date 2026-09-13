@@ -344,6 +344,7 @@ describe('AccountingOperationsMutationService', () => {
     // Escribe solo columnas reales del modelo PagoDeuda.
     const pagoData = pagoCreate.mock.calls[0][0].data as Record<string, unknown>;
     expect(pagoData).toMatchObject({
+      tenantId: 'tenant-1',
       inyeccionId: 'inyeccion-1',
       montoPagado: 300,
       cuentaId: 'account-1',
@@ -353,7 +354,6 @@ describe('AccountingOperationsMutationService', () => {
     expect(pagoData).not.toHaveProperty('monto');
     expect(pagoData).not.toHaveProperty('cuentaBancariaId');
     expect(pagoData).not.toHaveProperty('tipoPagoId');
-    expect(pagoData).not.toHaveProperty('tenantId');
     // Descuenta saldo de cuenta y saldo pendiente de la deuda.
     expect(update).toHaveBeenCalledWith({
       where: { cuentaId: 'account-1' },
