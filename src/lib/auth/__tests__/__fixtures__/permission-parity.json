@@ -35,6 +35,7 @@
     "inventario.productos.eliminar",
     "inventario.productos.restock",
     "inventario.stock.editar",
+    "inventario.transferencias.aprobar",
     "inventario.transferencias.gestionar",
     "inventario.unidades.gestionar",
     "operaciones.clientes.gestionar",

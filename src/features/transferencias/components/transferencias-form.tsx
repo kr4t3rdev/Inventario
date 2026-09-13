@@ -78,6 +78,7 @@ export function TransferenciaForm({ initialData }: TransferenciaFormProps) {
   const [isLoading, setIsLoading] = useState(false)
   const [productoSearch, setProductoSearch] = useState("")
   const [showOutOfStock, setShowOutOfStock] = useState(false)
+  const [enviarAAprobacion, setEnviarAAprobacion] = useState(false)
   const [minStockAlert, setMinStockAlert] = useState<string | null>(null)
   const isEdit = Boolean(initialData)
 
@@ -199,7 +200,10 @@ export function TransferenciaForm({ initialData }: TransferenciaFormProps) {
           destinoId: data.destinoId,
         })
       } else {
-        result = await createTransferenciaAction(data)
+        result = await createTransferenciaAction({
+          ...data,
+          estado: enviarAAprobacion ? 'PENDIENTE' : 'COMPLETADA',
+        })
       }
 
       console.log('=== TransferenciaForm :: action result ===', JSON.parse(JSON.stringify(result)))
@@ -810,6 +814,23 @@ export function TransferenciaForm({ initialData }: TransferenciaFormProps) {
                 </FormItem>
               )}
             />
+
+            {!initialData && (
+              <div className="flex items-start space-x-2 rounded-md border border-muted p-3">
+                <Checkbox
+                  id="enviar-a-aprobacion"
+                  checked={enviarAAprobacion}
+                  onCheckedChange={(checked) => setEnviarAAprobacion(checked as boolean)}
+                />
+                <label
+                  htmlFor="enviar-a-aprobacion"
+                  className="text-sm text-muted-foreground cursor-pointer select-none leading-5"
+                >
+                  Guardar como pendiente de aprobación. El stock no se moverá hasta que un encargado la apruebe
+                  y el destino confirme la recepción.
+                </label>
+              </div>
+            )}
 
             <div className="flex justify-end gap-4 pt-4">
               <Button type="button" variant="outline" onClick={() => router.push("/busy/transferencias")}>

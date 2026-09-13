@@ -165,6 +165,13 @@ export const PERMISSION_REGISTRY: PermissionDef[] = [
 		defaultRoles: ['manager', 'economico', 'dependiente'],
 	},
 	{
+		key: 'inventario.transferencias.aprobar',
+		label: 'Aprobar transferencias',
+		description: 'Aprobar o rechazar transferencias de stock pendientes (decisión de jefatura).',
+		category: 'inventario',
+		defaultRoles: ['manager'],
+	},
+	{
 		key: 'inventario.categorias.gestionar',
 		label: 'Gestionar categorías',
 		description: 'Crear, editar y eliminar categorías y específicos de productos.',

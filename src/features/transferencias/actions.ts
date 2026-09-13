@@ -8,7 +8,7 @@
 import { revalidatePath } from "next/cache";
 import { withAction, ActionError } from "@/lib/server-actions";
 import { prisma } from "@/lib/prisma";
-import { requireTenant } from "@/lib/services/tenant-scope";
+import { requirePermission, requireTenant } from "@/lib/services/tenant-scope";
 import { notificarTransferencia } from "@/lib/notificaciones-utils";
 import { upsertStockUbicacion } from "@/lib/services/stock-ubicacion-service";
 import {
@@ -63,10 +63,12 @@ async function getStockDisponibleEnPuntoVenta(
 	);
 }
 
-async function generarNumeroTransferencia(tx: any): Promise<string> {
+// B-01: el correlativo es por tenant (la unicidad es (tenantId, numeroTransferencia)).
+async function generarNumeroTransferencia(tx: any, tenantId: string): Promise<string> {
 	const year = new Date().getFullYear();
 	const count = await tx.transferencia.count({
 		where: {
+			tenantId,
 			createdAt: {
 				gte: new Date(`${year}-01-01`),
 				lt: new Date(`${year + 1}-01-01`),
@@ -355,9 +357,15 @@ export const createTransferenciaAction = withAction(
 			numeroTransferencia: "",
 		});
 
-		const result = await prisma.$transaction(async (tx: any) => {
-			const transferenciasCreadas = [];
-			const numeroTransferencia = await generarNumeroTransferencia(tx);
+		// Crear en transacción con reintento ante colisión de numeración (P2002)
+		// sobre el correlativo por tenant.
+		const MAX_INTENTOS = 3;
+		let result: any[] | null = null;
+		for (let intento = 0; intento < MAX_INTENTOS; intento++) {
+			try {
+				result = await prisma.$transaction(async (tx: any) => {
+					const transferenciasCreadas = [];
+					const numeroTransferencia = await generarNumeroTransferencia(tx, tenantId);
 
 			console.log("=== createTransferenciaAction :: numero generado ===", {
 				numeroTransferencia,
@@ -439,10 +447,22 @@ export const createTransferenciaAction = withAction(
 					});
 				}
 
-				transferenciasCreadas.push(transferencia);
+					transferenciasCreadas.push(transferencia);
+				}
+				return transferenciasCreadas;
+				});
+				break;
+			} catch (error: unknown) {
+				const esColision =
+					(typeof (error as { code?: string })?.code === "string" &&
+						(error as { code?: string }).code === "P2002");
+				if (!esColision || intento === MAX_INTENTOS - 1) throw error;
+				console.warn(`createTransferenciaAction: colisión de numeración, reintento ${intento + 2}`);
 			}
-			return transferenciasCreadas;
-		});
+		}
+		if (!result) {
+			throw new ActionError("No fue posible generar la numeración de la transferencia", "INTERNAL");
+		}
 
 		console.log("=== createTransferenciaAction :: transacción OK ===", {
 			creadas: result.length,
@@ -793,6 +813,8 @@ export const aprobarTransferenciaAction = withAction(
 	async (input: AprobarTransferenciaInput, user: AuthenticatedUser) => {
 		const parsed = aprobarTransferenciaSchema.parse(input);
 		const tenantId = requireTenant(user);
+		// B-01: la aprobación es decisión de jefatura (no del operador).
+		requirePermission(user, "inventario.transferencias.aprobar", "aprobar transferencias");
 
 		const transferencia = await prisma.transferencia.findFirst({
 			where: {
@@ -860,6 +882,16 @@ export const completarTransferenciaAction = withAction(
 			puntoDeVentaDestinoId,
 		} = transferencia;
 
+		// B-01: recepción parcial — se mueve solo lo confirmado recibido.
+		const cantidadRecibida = parsed.cantidadRecibida ?? cantidad;
+		if (cantidadRecibida > cantidad) {
+			throw new ActionError(
+				`La cantidad recibida (${cantidadRecibida}) no puede superar la enviada (${cantidad})`,
+				"VALIDATION_ERROR",
+			);
+		}
+		const esParcial = cantidadRecibida < cantidad;
+
 		const result = await prisma.$transaction(async (tx: any) => {
 			const claim = await tx.transferencia.updateMany({
 				where: {
@@ -868,7 +900,15 @@ export const completarTransferenciaAction = withAction(
 					deletedAt: null,
 					estado: { in: ["APROBADA", "EN_TRANSITO"] },
 				},
-				data: { estado: "COMPLETADA" },
+				data: {
+					estado: "COMPLETADA",
+					cantidadRecibida,
+					...(esParcial
+						? {
+								descripcion: `Recepción parcial: ${cantidadRecibida} de ${cantidad} unidades recibidas`,
+							}
+						: {}),
+				},
 			});
 			if (claim.count !== 1) {
 				const current = await tx.transferencia.findUnique({
@@ -904,14 +944,14 @@ export const completarTransferenciaAction = withAction(
 				tipoUbicacion: tipoOrigen,
 				ubicacionId: origenUbicacionId,
 				modo: "increment",
-				delta: -cantidad,
+				delta: -cantidadRecibida,
 			});
 			await upsertStockUbicacion(tx, {
 				productoId,
 				tipoUbicacion: tipoDestino,
 				ubicacionId: destinoUbicacionId,
 				modo: "increment",
-				delta: cantidad,
+				delta: cantidadRecibida,
 			});
 			const costoUnitario = transferencia.costoUnitario ?? transferencia.producto.precioCosto;
 			await registrarMovimiento(tx, {
@@ -921,7 +961,7 @@ export const completarTransferenciaAction = withAction(
 				origenId: transferencia.transferenciaId,
 				tipoUbicacion: tipoOrigen,
 				ubicacionId: origenUbicacionId,
-				cantidad: -cantidad,
+				cantidad: -cantidadRecibida,
 				costoUnitario,
 				secuencia: "SALIDA-0",
 				creadoPorId: user.userId,
@@ -933,7 +973,7 @@ export const completarTransferenciaAction = withAction(
 				origenId: transferencia.transferenciaId,
 				tipoUbicacion: tipoDestino,
 				ubicacionId: destinoUbicacionId,
-				cantidad,
+				cantidad: cantidadRecibida,
 				costoUnitario,
 				secuencia: "ENTRADA-0",
 				creadoPorId: user.userId,
@@ -956,6 +996,8 @@ export const rechazarTransferenciaAction = withAction(
 	async (input: RechazarTransferenciaInput, user: AuthenticatedUser) => {
 		const parsed = rechazarTransferenciaSchema.parse(input);
 		const tenantId = requireTenant(user);
+		// B-01: rechazar también es decisión de jefatura.
+		requirePermission(user, "inventario.transferencias.aprobar", "rechazar transferencias");
 
 		const transferencia = await prisma.transferencia.findFirst({
 			where: {

@@ -40,6 +40,8 @@ export const aprobarTransferenciaSchema = z.object({
 
 export const completarTransferenciaSchema = z.object({
   transferenciaId: z.string().min(1),
+  /** Unidades recibidas al confirmar; omitir = recepción total (B-01). */
+  cantidadRecibida: z.coerce.number().int().min(1).optional(),
 });
 
 export const rechazarTransferenciaSchema = z.object({

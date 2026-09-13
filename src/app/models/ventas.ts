@@ -167,6 +167,8 @@ export interface Transferencia {
 	puntoDeVentaDestinoId?: string | null;
 	estado: EstadoTransferencia;
 	numeroTransferencia?: string | null;
+	/** Unidades confirmadas al recibir; ausente = recepción total (B-01). */
+	cantidadRecibida?: number | null;
 	createdAt: string;
 	updatedAt: string;
 	productoCodigoInterno?: string | null;
@@ -219,8 +221,10 @@ export interface TransferenciaMultiple {
 
 export type EstadoTransferencia =
 	| "PENDIENTE"
+	| "APROBADA"
 	| "EN_TRANSITO"
 	| "COMPLETADA"
+	| "RECHAZADA"
 	| "CANCELADA"
 	| "PARCIAL";
 

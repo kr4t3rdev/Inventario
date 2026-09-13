@@ -745,7 +745,9 @@ model Transferencia {
   costoTotal            Int?
   deletedAt             DateTime?
   estado                String        @default("COMPLETADA")
-  numeroTransferencia   String?       @unique
+  numeroTransferencia   String?
+  // Unidades confirmadas al recibir; null = recepción total (compat con datos previos).
+  cantidadRecibida      Int?
   creadoPorId           String?
   puntoDeVentaDestinoId String?
   puntoDeVentaOrigenId  String?
@@ -757,6 +759,7 @@ model Transferencia {
   puntoDeVentaOrigen    PuntoDeVenta? @relation("TransferenciasOrigen", fields: [puntoDeVentaOrigenId], references: [pvId])
   tenant                Tenant        @relation(fields: [tenantId], references: [tenantId])
 
+  @@unique([tenantId, numeroTransferencia])
   @@index([tenantId])
 }
 

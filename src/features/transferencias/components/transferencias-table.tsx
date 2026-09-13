@@ -56,9 +56,11 @@ interface TransferenciasTableProps {
   error: any
   onDelete: (id: string) => void
   onConfirmarRecepcion?: (transferencia: Transferencia) => void
+  onAprobar?: (transferencia: Transferencia) => void
+  onRechazar?: (transferencia: Transferencia) => void
 }
 
-export function TransferenciasTable({ transferencias, isLoading, error, onDelete, onConfirmarRecepcion }: TransferenciasTableProps) {
+export function TransferenciasTable({ transferencias, isLoading, error, onDelete, onConfirmarRecepcion, onAprobar, onRechazar }: TransferenciasTableProps) {
   const [sorting, setSorting] = useState<SortingState>([])
   const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([])
   const [columnVisibility, setColumnVisibility] = useState<VisibilityState>({})
@@ -130,6 +132,14 @@ export function TransferenciasTable({ transferencias, isLoading, error, onDelete
           case 'PENDIENTE':
             variant = "secondary"
             icon = <Clock className="mr-1 h-3 w-3" />
+            break
+          case 'APROBADA':
+            variant = "outline"
+            icon = <CheckCircle className="mr-1 h-3 w-3" />
+            break
+          case 'RECHAZADA':
+            variant = "destructive"
+            icon = <XCircle className="mr-1 h-3 w-3" />
             break
           case 'EN_TRANSITO':
             variant = "outline"
@@ -233,7 +243,10 @@ export function TransferenciasTable({ transferencias, isLoading, error, onDelete
       id: "actions",
       cell: ({ row }) => {
         const transferencia = row.original
-        const puedeConfirmar = transferencia.estado === 'PENDIENTE' || transferencia.estado === 'EN_TRANSITO'
+        const esPendiente = transferencia.estado === 'PENDIENTE'
+        // La recepción (stock) aplica a aprobadas o en tránsito; una pendiente
+        // primero necesita aprobación de jefatura.
+        const puedeConfirmar = transferencia.estado === 'APROBADA' || transferencia.estado === 'EN_TRANSITO'
 
         return (
           <DropdownMenu>
@@ -245,6 +258,15 @@ export function TransferenciasTable({ transferencias, isLoading, error, onDelete
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
               <DropdownMenuLabel>Acciones</DropdownMenuLabel>
+              {esPendiente && onAprobar && (
+                <DropdownMenuItem
+                  onClick={() => onAprobar(transferencia)}
+                  className="cursor-pointer text-green-600 focus:text-green-600"
+                >
+                  <CheckCircle className="mr-2 h-4 w-4" />
+                  Aprobar
+                </DropdownMenuItem>
+              )}
               {puedeConfirmar && onConfirmarRecepcion && (
                 <DropdownMenuItem 
                   onClick={() => onConfirmarRecepcion(transferencia)}
@@ -252,6 +274,15 @@ export function TransferenciasTable({ transferencias, isLoading, error, onDelete
                 >
                   <CheckCircle className="mr-2 h-4 w-4" />
                   Confirmar Recepción
+                </DropdownMenuItem>
+              )}
+              {esPendiente && onRechazar && (
+                <DropdownMenuItem
+                  onClick={() => onRechazar(transferencia)}
+                  className="cursor-pointer text-amber-600 focus:text-amber-600"
+                >
+                  <XCircle className="mr-2 h-4 w-4" />
+                  Rechazar
                 </DropdownMenuItem>
               )}
               <DropdownMenuItem asChild>
