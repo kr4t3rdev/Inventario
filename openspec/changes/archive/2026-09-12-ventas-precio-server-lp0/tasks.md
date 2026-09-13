@@ -40,6 +40,6 @@ Review (agente typescript-reviewer) con veredicto: bloquear por M-1/M-2; resto f
 
 ## LP0-T4 — Cierre
 
-- [ ] **LP0-T4.1 Regresión.** `pnpm exec vitest run src/features/ventas src/lib/api src/lib/auth src/lib/server-actions src/app/api/ventas src/app/actions src/app/api/mobile` + `pnpm exec tsc --noEmit` + lint de archivos tocados. Evidencia `evidence/LP0-T4-GREEN.txt`.
-- [ ] **LP0-T4.2 Memorias + archivo.** Actualizar `listas-precios-audit-plan` (LP-0 completado) y mover el change a `openspec/changes/archive/2026-09-12-ventas-precio-server-lp0/`.
+- [x] **LP0-T4.1 Regresión.** 120 archivos / 504 tests verdes en `src/features/ventas src/lib/api src/lib/auth src/lib/server-actions src/app/api/ventas src/app/actions src/app/api/mobile`; `tsc --noEmit` limpio; eslint sin errores en archivos tocados. Evidencia `evidence/LP0-T4-GREEN.txt`. (Único fallo ajeno conocido: `mobile-v1-integration-smoke.test.ts` — Blob.arrayBuffer del SDK generado, pre-existente.)
+- [x] **LP0-T4.2 Memorias + archivo.** Memoria `listas-precios-audit-plan` actualizada (LP-0 completado, H1/H2/P-0 cerrados) y change movido a `openspec/changes/archive/2026-09-12-ventas-precio-server-lp0/`.
 - Commit: `docs(openspec): cerrar LP-0 integridad de precios server-side`
