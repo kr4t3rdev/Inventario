@@ -284,4 +284,21 @@ describe("integridad de precios en createVentaAction", () => {
 		expect(result.success).toBe(false);
 		expect(result.error?.code).toBe("NOT_FOUND");
 	});
+
+	it("rechaza si el cliente no existe en el tenant (cross-tenant)", async () => {
+		vi.mocked(getCurrentUser).mockResolvedValue(cajeroUser);
+		vi.mocked(prisma.cliente.findFirst).mockResolvedValue(null);
+		mockHappyPath();
+
+		const result = await createVentaAction({
+			puntoDeVentaId: "pv-1",
+			turnoId: "turno-1",
+			clienteId: "cli-de-otro-tenant",
+			items: [{ productoId: "prod-1", cantidad: 1, precioUnitario: 500 }],
+		});
+
+		expect(result.success).toBe(false);
+		expect(result.error?.code).toBe("NOT_FOUND");
+		expect(mockTx.venta.create).not.toHaveBeenCalled();
+	});
 });

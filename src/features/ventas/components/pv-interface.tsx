@@ -469,6 +469,11 @@ export function VentaInterface() {
 			return;
 		}
 
+		if (isFetchingProductos) {
+			toast("Espera a que terminen de cargarse los precios actualizados");
+			return;
+		}
+
 		setIsProcessing(true);
 
 		try {
@@ -519,6 +524,11 @@ export function VentaInterface() {
 		}
 		if (cart.length === 0) {
 			toast("Añada productos al carrito para realizar una venta");
+			return;
+		}
+
+		if (isFetchingProductos) {
+			toast("Espera a que terminen de cargarse los precios actualizados");
 			return;
 		}
 
@@ -1541,7 +1551,7 @@ export function VentaInterface() {
 									className="w-full bg-linear-to-r from-orange-500 to-red-600 hover:from-orange-500/90 hover:to-red-600/90 text-white"
 									size="lg"
 									disabled={
-										cart.length === 0 || !selectedPuntoVenta || isProcessing
+										cart.length === 0 || !selectedPuntoVenta || isProcessing || isFetchingProductos
 									}
 									onClick={processVenta}
 								>
@@ -1565,7 +1575,7 @@ export function VentaInterface() {
 										size="lg"
 										variant="secondary"
 										disabled={
-											cart.length === 0 || !selectedPuntoVenta || isProcessing
+											cart.length === 0 || !selectedPuntoVenta || isProcessing || isFetchingProductos
 										}
 										onClick={() => setIsInvoiceDialogOpen(true)}
 									>

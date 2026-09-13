@@ -6,7 +6,8 @@ import { handleServerActionError } from './_helpers/error-handler'
 
 /**
  * @description Server Action que obtiene productos con stock disponible en una ubicación.
- * Cachea con tag 'ProductosUbicacion' para revalidación automática.
+ * NO cachear por ubicacionId solo: con clienteId el payload incluye precios
+ * de la lista del cliente; una caché compartida mezclaría precios entre clientes.
  *
  * @param ubicacionId - ID del punto de venta o almacén
  * @param clienteId - Opcional; en puntos de venta incluye los precios de la

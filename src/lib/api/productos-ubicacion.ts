@@ -60,12 +60,23 @@ export async function getProductosPorUbicacion(
 ): Promise<ProductoConStock[]> {
 	const context = await getAuthenticatedContext();
 
+	// Fail-closed: sin tenant en el contexto no se expone nada (LP-0/review).
+	if (!context.tenantId) {
+		throw new ServerActionError(
+			"getProductosPorUbicacion",
+			"GET",
+			403,
+			"Se requiere una empresa activa para consultar los productos",
+		);
+	}
+	const tenantId = context.tenantId;
+
 	// Verificar si la ubicación existe y determinar el tipo
 	let isPuntoVenta = false;
 	let listaPrecioId: string | null = null;
 
-	const puntoVenta = await prisma.puntoDeVenta.findUnique({
-		where: { pvId: ubicacionId },
+	const puntoVenta = await prisma.puntoDeVenta.findFirst({
+		where: { pvId: ubicacionId, tenantId },
 		select: { pvId: true, listaPrecioId: true },
 	});
 
@@ -73,8 +84,8 @@ export async function getProductosPorUbicacion(
 		isPuntoVenta = true;
 		listaPrecioId = puntoVenta.listaPrecioId ?? null;
 	} else {
-		const almacen = await prisma.almacen.findUnique({
-			where: { almacenId: ubicacionId },
+		const almacen = await prisma.almacen.findFirst({
+			where: { almacenId: ubicacionId, tenantId },
 		});
 		if (!almacen) {
 			throw new ServerActionError(
@@ -88,6 +99,7 @@ export async function getProductosPorUbicacion(
 
 	// Obtener todos los productos con sus relaciones
 	const productos = await prisma.producto.findMany({
+		where: { tenantId },
 		select: {
 			id: true,
 			nombre: true,
@@ -118,7 +130,7 @@ export async function getProductosPorUbicacion(
 
 	if (isPuntoVenta && clienteId) {
 		const cliente = await prisma.cliente.findFirst({
-			where: { clienteId, ...(context.tenantId && { tenantId: context.tenantId }) },
+			where: { clienteId, tenantId },
 			select: { listaPrecioId: true },
 		});
 		clienteListaId = cliente?.listaPrecioId ?? null;

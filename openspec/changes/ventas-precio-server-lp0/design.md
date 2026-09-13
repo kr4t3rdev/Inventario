@@ -76,4 +76,11 @@ El fixture de paridad agrega la clave solo a `manager` (orden alfabético: tras 
 ## Riesgos
 
 - Tests existentes de `createVentaAction` dejarán de pasar hasta actualizar los mocks (`producto.findMany` nuevo): ajuste mecánico, incluido en LP0-T2.
-- `getProductosPorUbicacion` se usa también para almacenes: con `clienteId` ausente el payload no cambia (campo `precios` presente pero vacío/no serializado — se decide omitirlo cuando no hay listas para no inflar respuestas de almacén).
+- `getProductosPorUbicacion` se usa también para almacenes: con `clienteId` ausente el payload devuelve `precios: []` y no toca listas.
+- **TOCTOU conocido**: la resolución ocurre antes de `prisma.$transaction`; si una lista cambia en la ventana (ms), la venta se persiste con el precio del payload y el audit registra el `precioEsperado` de ese instante. Trade-off aceptado para no alargar la transacción; revisar solo si aparece abuso real.
+- **Rollout**: web y mobile comparten `VentaMutationService.create`; clientes móviles que calculen precio distinto al vigente empezarán a recibir 400 `PRICE_MISMATCH`. Coordinar release móvil y avisar a tenants que editaban precio a mano (ahora requiere `ventas.precio.override`, default manager).
+
+## Notas post-review (LP0-T5)
+
+- `getProductosPorUbicacion` quedó **fail-closed**: sin `tenantId` en el contexto responde 403, y PV, almacén, productos y cliente se consultan con filtro de tenant explícito (cierra también el P-0 pre-existente del endpoint).
+- El POS bloquea el cobro mientras se recargan productos (`isFetchingProductos`) para evitar la carrera entre refetch por cambio de cliente y confirmación de venta.
