@@ -192,6 +192,7 @@ export const deleteVendorAction = withAction(async (vendorId: string, user: Auth
     anticipos,
     comprasServicio,
     contratos,
+    gastosDE,
   ] = await Promise.all([
     prisma.producto.count({ where: { vendorId, tenantId } }),
     prisma.gastoCompra.count({ where: { vendorId, tenantId } }),
@@ -203,15 +204,16 @@ export const deleteVendorAction = withAction(async (vendorId: string, user: Auth
     prisma.anticipo.count({ where: { proveedorId: vendorId, tenantId } }),
     prisma.compraServicio.count({ where: { proveedorId: vendorId, tenantId } }),
     prisma.contrato.count({ where: { vendorId, tenantId } }),
+    prisma.gastosDE.count({ where: { proveedorId: vendorId, tenantId } }),
   ]);
 
   const total =
     productos + gastosCompra + comprasProductos + comprasDocumentos +
-    ordenesCompra + deudas + cuentasPorPagar + anticipos + comprasServicio + contratos;
+    ordenesCompra + deudas + cuentasPorPagar + anticipos + comprasServicio + contratos + gastosDE;
 
   if (total > 0) {
     throw new ActionError(
-      `No se puede eliminar el proveedor porque tiene registros asociados: ${productos} producto(s), ${comprasProductos} compra(s) de productos, ${comprasDocumentos} documento(s) de compra, ${gastosCompra} gasto(s) de compra, ${ordenesCompra} orden(es) de compra, ${comprasServicio} compra(s) de servicio, ${cuentasPorPagar} cuenta(s) por pagar, ${deudas} deuda(s), ${anticipos} anticipo(s), ${contratos} contrato(s).`,
+      `No se puede eliminar el proveedor porque tiene registros asociados: ${productos} producto(s), ${comprasProductos} compra(s) de productos, ${comprasDocumentos} documento(s) de compra, ${gastosCompra} gasto(s) de compra, ${gastosDE} gasto(s) de explotación, ${ordenesCompra} orden(es) de compra, ${comprasServicio} compra(s) de servicio, ${cuentasPorPagar} cuenta(s) por pagar, ${deudas} deuda(s), ${anticipos} anticipo(s), ${contratos} contrato(s).`,
       'PROVEEDOR_EN_USO',
     );
   }

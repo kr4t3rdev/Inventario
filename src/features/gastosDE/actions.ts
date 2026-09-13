@@ -1,8 +1,10 @@
 'use server';
 import { revalidatePath } from 'next/cache';
+import { z } from 'zod';
 import { withAction, ActionError } from '@/lib/server-actions';
 import { prisma } from '@/lib/prisma';
-import { requireFeature, requireTenant } from '@/lib/services/tenant-scope';
+import { requireFeature, requirePermission, requireTenant } from '@/lib/services/tenant-scope';
+import { hasPermission } from '@/lib/services/tenant-scope';
 import { gastosDESchema, gastosDEUpdateSchema } from './schemas';
 import type { GastosDEInput, GastosDEUpdateInput } from './schemas';
 import type { AuthenticatedUser } from '@/lib/auth-middleware';
@@ -51,7 +53,18 @@ export const createGastosDEAction = withAction(async (input: GastosDEInput, user
     const elemento = concepto?.elementos?.[0];
     if (concepto && elemento) tipo = `${concepto.nombre} — ${elemento.nombre}`;
   }
-  const g = await prisma.gastosDE.create({ data: { tipo, conceptoId: parsed.conceptoId||null, elementoId: parsed.elementoId||null, proveedor: parsed.proveedor, monto: parsed.monto, periodo, numeroFactura: parsed.numeroFactura||null, descripcion: parsed.descripcion, tenantId }, include: INCLUDE });
+
+  // B-04: proveedor del catálogo (FK) con nombre canonizado; el texto libre
+  // queda como respaldo. Todo gasto nuevo nace PENDIENTE de aprobación.
+  let proveedor = parsed.proveedor ?? '';
+  let proveedorId: string | null = null;
+  if (parsed.proveedorId) {
+    const vendor = await prisma.vendor.findFirst({ where: { vendorId: parsed.proveedorId, tenantId } });
+    if (!vendor) throw new ActionError('Proveedor no encontrado', 'NOT_FOUND');
+    proveedorId = vendor.vendorId;
+    proveedor = vendor.nombre;
+  }
+  const g = await prisma.gastosDE.create({ data: { tipo, conceptoId: parsed.conceptoId||null, elementoId: parsed.elementoId||null, proveedor, proveedorId, estado: 'PENDIENTE', monto: parsed.monto, periodo, numeroFactura: parsed.numeroFactura||null, descripcion: parsed.descripcion, tenantId }, include: INCLUDE });
   revalidatePath('/busy/gastosDE');
   return g;
 });
@@ -63,6 +76,20 @@ export const updateGastosDEAction = withAction(async (input: GastosDEUpdateInput
   const tenantId = requireTenant(user);
   const existing = await prisma.gastosDE.findFirst({ where: { gastosDEId, tenantId } });
   if (!existing) throw new ActionError('Gasto no encontrado', 'NOT_FOUND');
+  // B-04: un gasto aprobado solo lo edita quien puede aprobar (o se rechaza antes).
+  if (existing.estado === 'APROBADO') {
+    requirePermission(user, 'financiero.gastos.aprobar', 'editar gastos aprobados');
+  }
+  let proveedorUpdate: { proveedor?: string; proveedorId?: string | null } = {};
+  if (data.proveedorId !== undefined) {
+    if (data.proveedorId === null) {
+      proveedorUpdate = { proveedorId: null };
+    } else {
+      const vendor = await prisma.vendor.findFirst({ where: { vendorId: data.proveedorId, tenantId } });
+      if (!vendor) throw new ActionError('Proveedor no encontrado', 'NOT_FOUND');
+      proveedorUpdate = { proveedorId: vendor.vendorId, proveedor: vendor.nombre };
+    }
+  }
   if (data.conceptoId || data.elementoId) {
     const concepto = data.conceptoId
       ? await prisma.gastoConcepto.findFirst({ where: { conceptoId: data.conceptoId, tenantId } })
@@ -73,7 +100,7 @@ export const updateGastosDEAction = withAction(async (input: GastosDEUpdateInput
       : null;
     if (data.elementoId && !elem) throw new ActionError('El elemento no pertenece al concepto de esta empresa', 'VALIDATION_ERROR');
   }
-  const g = await prisma.gastosDE.update({ where: { gastosDEId }, data: { ...(data.tipo!==undefined&&{tipo:data.tipo}), ...(data.conceptoId!==undefined&&{conceptoId:data.conceptoId}), ...(data.elementoId!==undefined&&{elementoId:data.elementoId}), ...(data.periodo!==undefined&&{periodo:data.periodo}), ...(data.proveedor!==undefined&&{proveedor:data.proveedor}), ...(data.monto!==undefined&&{monto:data.monto}), ...(data.descripcion!==undefined&&{descripcion:data.descripcion}), ...(data.numeroFactura!==undefined&&{numeroFactura:data.numeroFactura}) } });
+  const g = await prisma.gastosDE.update({ where: { gastosDEId }, data: { ...(data.tipo!==undefined&&{tipo:data.tipo}), ...(data.conceptoId!==undefined&&{conceptoId:data.conceptoId}), ...(data.elementoId!==undefined&&{elementoId:data.elementoId}), ...(data.periodo!==undefined&&{periodo:data.periodo}), ...(data.proveedor!==undefined&&{proveedor:data.proveedor}), ...proveedorUpdate, ...(data.monto!==undefined&&{monto:data.monto}), ...(data.descripcion!==undefined&&{descripcion:data.descripcion}), ...(data.numeroFactura!==undefined&&{numeroFactura:data.numeroFactura}) } });
   revalidatePath('/busy/gastosDE');
   return g;
 });
@@ -88,16 +115,19 @@ export const deleteGastosDEBulkAction = withAction(async (ids: string[], user: A
   // always exposes $transaction.
   if (typeof (prisma as any).$transaction !== 'function') {
     let eliminados = 0;
+    let omitidosAprobados = 0;
     for (const id of cleanIds) {
       const existing = await prisma.gastosDE.findFirst({ where: { gastosDEId: id, tenantId } });
       if (!existing) continue;
+      if (existing.estado === 'APROBADO') { omitidosAprobados++; continue; }
       await prisma.gastosDE.delete({ where: { gastosDEId: id } });
       eliminados++;
     }
     revalidatePath('/busy/gastosDE');
-    return { eliminados, ids: cleanIds };
+    return { eliminados, omitidosAprobados, ids: cleanIds };
   }
 
+  let omitidosAprobados = 0;
   await (prisma as any).$transaction(async (tx: any) => {
     for (const id of cleanIds) {
       // Row lock serializes concurrent deletes before the claim.
@@ -106,9 +136,10 @@ export const deleteGastosDEBulkAction = withAction(async (ids: string[], user: A
       }
       const existing = await tx.gastosDE.findUnique({
         where: { gastosDEId: id },
-        select: { gastosDEId: true, tenantId: true, cuentaPorPagar: { select: { cuentaPorPagarId: true } } },
+        select: { gastosDEId: true, tenantId: true, estado: true, cuentaPorPagar: { select: { cuentaPorPagarId: true } } },
       });
       if (!existing || existing.tenantId !== tenantId) continue;
+      if (existing.estado === 'APROBADO') { omitidosAprobados++; continue; }
 
       const claimedForDeletion = await tx.gastosDE.updateMany({
         where: {
@@ -132,7 +163,7 @@ export const deleteGastosDEBulkAction = withAction(async (ids: string[], user: A
     }
   });
   revalidatePath('/busy/gastosDE');
-  return { eliminados: cleanIds.length, ids: cleanIds };
+  return { eliminados: cleanIds.length - omitidosAprobados, omitidosAprobados, ids: cleanIds };
 });
 
 export const deleteGastosDEAction = withAction(async (id: string, user: AuthenticatedUser) => {
@@ -144,6 +175,9 @@ export const deleteGastosDEAction = withAction(async (id: string, user: Authenti
   if (typeof (prisma as any).$transaction !== 'function') {
     const existing = await prisma.gastosDE.findFirst({ where: { gastosDEId: id, tenantId } });
     if (!existing) throw new ActionError('Gasto no encontrado', 'NOT_FOUND');
+    if (existing.estado === 'APROBADO') {
+      throw new ActionError('El gasto está aprobado; rechácelo antes de eliminarlo', 'VALIDATION_ERROR');
+    }
     await prisma.gastosDE.delete({ where: { gastosDEId: id } });
     revalidatePath('/busy/gastosDE');
     return { id, eliminado: true };
@@ -156,10 +190,13 @@ export const deleteGastosDEAction = withAction(async (id: string, user: Authenti
     }
     const existing = await tx.gastosDE.findUnique({
       where: { gastosDEId: id },
-      select: { gastosDEId: true, tenantId: true, cuentaPorPagar: { select: { cuentaPorPagarId: true } } },
+      select: { gastosDEId: true, tenantId: true, estado: true, cuentaPorPagar: { select: { cuentaPorPagarId: true } } },
     });
     if (!existing || existing.tenantId !== tenantId) {
       throw new ActionError('Gasto no encontrado', 'NOT_FOUND');
+    }
+    if (existing.estado === 'APROBADO') {
+      throw new ActionError('El gasto está aprobado; rechácelo antes de eliminarlo', 'VALIDATION_ERROR');
     }
 
     // Claim before side effects. `isPagado` is a legacy status column but is the
@@ -189,6 +226,59 @@ export const deleteGastosDEAction = withAction(async (id: string, user: Authenti
   });
   revalidatePath('/busy/gastosDE');
   return { id, eliminado: true };
+});
+
+const aprobarGastoSchema = z.object({
+  id: z.string().min(1),
+});
+
+/**
+ * @description Aprueba un gasto pendiente (PENDIENTE → APROBADO).
+ * Solo APROBADO cuenta en reportes y cuadres. Requiere el permiso de aprobación.
+ */
+export const aprobarGastoDEAction = withAction(async (input: { id: string }, user: AuthenticatedUser) => {
+  requireFeature(user, 'gastos', 'gestionar gastos de empresa');
+  requirePermission(user, 'financiero.gastos.aprobar', 'aprobar gastos');
+  const tenantId = requireTenant(user);
+  const parsed = aprobarGastoSchema.parse(input);
+
+  const existing = await prisma.gastosDE.findFirst({ where: { gastosDEId: parsed.id, tenantId } });
+  if (!existing) throw new ActionError('Gasto no encontrado', 'NOT_FOUND');
+  if (existing.estado !== 'PENDIENTE') {
+    throw new ActionError(`El gasto ya está en estado ${existing.estado}`, 'VALIDATION_ERROR');
+  }
+
+  const g = await prisma.gastosDE.update({
+    where: { gastosDEId: parsed.id },
+    data: { estado: 'APROBADO', aprobadoPorId: user.userId },
+    include: INCLUDE,
+  });
+  revalidatePath('/busy/gastosDE');
+  return g;
+});
+
+/**
+ * @description Rechaza un gasto pendiente (PENDIENTE → RECHAZADO).
+ */
+export const rechazarGastoDEAction = withAction(async (input: { id: string }, user: AuthenticatedUser) => {
+  requireFeature(user, 'gastos', 'gestionar gastos de empresa');
+  requirePermission(user, 'financiero.gastos.aprobar', 'rechazar gastos');
+  const tenantId = requireTenant(user);
+  const parsed = aprobarGastoSchema.parse(input);
+
+  const existing = await prisma.gastosDE.findFirst({ where: { gastosDEId: parsed.id, tenantId } });
+  if (!existing) throw new ActionError('Gasto no encontrado', 'NOT_FOUND');
+  if (existing.estado !== 'PENDIENTE') {
+    throw new ActionError(`El gasto ya está en estado ${existing.estado}`, 'VALIDATION_ERROR');
+  }
+
+  const g = await prisma.gastosDE.update({
+    where: { gastosDEId: parsed.id },
+    data: { estado: 'RECHAZADO' },
+    include: INCLUDE,
+  });
+  revalidatePath('/busy/gastosDE');
+  return g;
 });
 
 // ─── Conceptos ─────────────────────────────────────────────

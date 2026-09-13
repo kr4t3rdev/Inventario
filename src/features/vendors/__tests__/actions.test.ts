@@ -30,6 +30,7 @@ vi.mock('@/lib/prisma', () => ({
     anticipo: { count: vi.fn().mockResolvedValue(0) },
     compraServicio: { count: vi.fn().mockResolvedValue(0) },
     contrato: { count: vi.fn().mockResolvedValue(0) },
+    gastosDE: { count: vi.fn().mockResolvedValue(0) },
   },
 }));
 vi.mock('@/lib/vendor-code-utils', () => ({

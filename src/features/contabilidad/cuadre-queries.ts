@@ -674,6 +674,7 @@ export async function obtenerVentasVsReconciliado(
 			where: {
 				tenantId,
 				createdAt: rangoAntiguos,
+				estado: 'APROBADO', // B-04
 				reconciliaciones: { none: {} },
 			},
 			include: {

@@ -176,12 +176,14 @@ export async function GET(request: NextRequest) {
     if (!tipoGasto || tipoGasto === 'gastoDE') {
       const whereClauseGastosDE: {
         tenantId: string
+        estado?: string
         reconciliaciones?: { none: object }
         createdAt?: { gte?: Date; lte?: Date }
         periodo?: string
        // isPagado?: string | null | { not: string }
       } = {
         tenantId,
+        estado: 'APROBADO', // B-04: solo gastos aprobados son reconciliables
         reconciliaciones: { none: {} }
        // isPagado: { not: 'pagado' }
       }

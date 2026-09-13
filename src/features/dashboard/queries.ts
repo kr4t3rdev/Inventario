@@ -185,7 +185,7 @@ export async function getDashboardStatsQuery(
       select: { cantidad: true, producto: { select: { precioCosto: true } }, createdAt: true },
     }),
     prisma.gastosDE.findMany({
-      where: { tenantId },
+      where: { tenantId, estado: 'APROBADO' }, // B-04: solo aprobados cuentan
       select: { monto: true, createdAt: true },
     }),
     prisma.pagosalario.findMany({

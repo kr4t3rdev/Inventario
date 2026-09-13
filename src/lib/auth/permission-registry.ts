@@ -496,6 +496,13 @@ export const PERMISSION_REGISTRY: PermissionDef[] = [
 		category: 'financiero',
 		defaultRoles: ['manager', 'economico'],
 	},
+	{
+		key: 'financiero.gastos.aprobar',
+		label: 'Aprobar gastos de explotación',
+		description: 'Aprobar o rechazar gastos pendientes; un gasto solo suma a reportes al estar aprobado.',
+		category: 'financiero',
+		defaultRoles: ['manager', 'economico'],
+	},
 
 	// ── config ──
 	{

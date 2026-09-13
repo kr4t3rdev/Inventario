@@ -23,6 +23,7 @@ vi.mock('@/lib/prisma', () => ({
     anticipo: { count: vi.fn() },
     compraServicio: { count: vi.fn() },
     contrato: { count: vi.fn() },
+    gastosDE: { count: vi.fn() },
   },
 }));
 
@@ -52,6 +53,7 @@ const COUNTS = [
   prisma.anticipo.count,
   prisma.compraServicio.count,
   prisma.contrato.count,
+  prisma.gastosDE.count,
 ] as const;
 
 describe('deleteVendorAction — guarda anti-cascada (B-03)', () => {

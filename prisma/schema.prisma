@@ -69,6 +69,7 @@ model Vendor {
   cuentasPorPagar  CuentaPorPagar[]
   deudasCash       DeudaCash[]
   gastoCompras     GastoCompra[]
+  gastosDE         GastosDE[]
   productos        Producto[]
   tenant           Tenant            @relation(fields: [tenantId], references: [tenantId])
 
@@ -796,6 +797,7 @@ model User {
   contratoFirmas                 ContratoFirma[]
   contratoVersiones              ContratoVersion[]
   mermasCreadas                  Merma[]                      @relation("MermaCreador")
+  gastosDEAprobados              GastosDE[]                   @relation("GastosDEAprobador")
   notifications                  Notification[]
   tiposContratosCustom           TipoContratoCustom[]
   transferenciasCreadas          Transferencia[]
@@ -1643,6 +1645,11 @@ model GastosDE {
   conceptoId       String?
   elementoId       String?
   proveedor        String
+  proveedorId      String?
+  // Flujo de aprobación (B-04): históricos quedan APROBADO por defecto;
+  // los gastos nuevos nacen PENDIENTE y solo suman a reportes al aprobarse.
+  estado           String                @default("APROBADO")
+  aprobadoPorId    String?
   monto            Int
   periodo          String
   descripcion      String?
@@ -1653,11 +1660,14 @@ model GastosDE {
   cuentaPorPagar   CuentaPorPagar?
   concepto         GastoConcepto?        @relation(fields: [conceptoId], references: [conceptoId])
   elemento         GastoElemento?        @relation(fields: [elementoId], references: [elementoId])
+  proveedorVendor  Vendor?               @relation(fields: [proveedorId], references: [vendorId], onDelete: Restrict)
+  aprobadoPor      User?                 @relation("GastosDEAprobador", fields: [aprobadoPorId], references: [userId])
   tenant           Tenant                @relation(fields: [tenantId], references: [tenantId])
   reconciliaciones ReconciliacionGasto[]
 
   @@index([tenantId])
   @@index([tenantId, createdAt])
+  @@index([proveedorId])
 }
 
 model Moneda {

@@ -28,6 +28,7 @@ const gastosDESchema = z.object({
   elementoId: z.string().optional(),
   numeroFactura: z.string().max(50, 'Máximo 50 caracteres').optional(),
   proveedor: z.string().max(200, 'Máximo 200 caracteres').optional(),
+  proveedorId: z.string().max(64).optional(),
   monto: z.coerce.number({ invalid_type_error: 'Ingrese un monto válido' }).positive({ message: "El monto debe ser mayor a 0" }),
   descripcion: z.string().min(1, 'La descripción es obligatoria').max(500, 'Máximo 500 caracteres'),
   periodo: z.string().regex(/^\d{4}-\d{2}$/, "El período debe tener formato YYYY-MM"),
@@ -36,7 +37,7 @@ const gastosDESchema = z.object({
 type GastosDEFormValues = z.infer<typeof gastosDESchema>
 
 interface GastosDEFormProps {
-  initialData?: { gastosDEId: string; tipo: string | null; conceptoId: string | null; elementoId: string | null; numeroFactura?: string | null; proveedor: string | null; monto: number; descripcion: string | null; periodo?: string }
+  initialData?: { gastosDEId: string; tipo: string | null; conceptoId: string | null; elementoId: string | null; numeroFactura?: string | null; proveedor: string | null; proveedorId?: string | null; monto: number; descripcion: string | null; periodo?: string }
   initialVendors?: Vendor[]
 }
 
@@ -67,12 +68,17 @@ export function GastoDEForm({ initialData, initialVendors }: GastosDEFormProps) 
     defaultValues: {
       tipo: initialData?.tipo || '', conceptoId: initialData?.conceptoId || '', elementoId: initialData?.elementoId || '',
       numeroFactura: initialData?.numeroFactura || '', proveedor: initialData?.proveedor || '',
+      proveedorId: initialData?.proveedorId || (initialVendors?.find((v) => v.nombre === initialData?.proveedor)?.vendorId ?? ''),
       descripcion: initialData?.descripcion || '', monto: initialData?.monto ?? undefined,
       periodo: initialData?.periodo || `${new Date().getFullYear()}-${String(new Date().getMonth() + 1).padStart(2, '0')}`,
     },
   })
 
   const watchedValues = form.watch()
+  // Permite registrar proveedores fuera del catálogo (texto libre) como antes.
+  // Catálogo por defecto; texto libre solo para históricos sin vínculo.
+  const [usarProveedorLibre, setUsarProveedorLibre] = useState(initialData ? !initialData.proveedorId : false)
+  const proveedorSeleccionadoNombre = vendors?.find((v: any) => v.vendorId === watchedValues.proveedorId)?.nombre
   // Verificar si el período está bloqueado (período contable cerrado)
   const watchedPeriodo = form.watch('periodo')
   const { isLocked, message, periodo, checking, error: lockError } = usePeriodLock(watchedPeriodo)
@@ -81,14 +87,14 @@ export function GastoDEForm({ initialData, initialVendors }: GastosDEFormProps) 
     setIsLoading(true)
     try {
       if (initialData) {
-        const result = await updateGastosDEAction({ gastosDEId: initialData.gastosDEId, ...data })
+        const result = await updateGastosDEAction({ gastosDEId: initialData.gastosDEId, ...data, proveedorId: data.proveedorId || null })
         if (!result.success) {
           sileo.error({ title: result.error?.message || 'Hubo un error al guardar el gasto.' })
           return
         }
         sileo.success({ title: 'El gasto de explotación ha sido actualizado exitosamente.' })
       } else {
-        const result = await createGastosDEAction({ ...data, proveedor: data.proveedor ?? '' })
+        const result = await createGastosDEAction({ ...data, proveedorId: data.proveedorId || undefined, proveedor: data.proveedor?.trim() || '' })
         if (!result.success) {
           sileo.error({ title: result.error?.message || 'Hubo un error al guardar el gasto.' })
           return
@@ -159,7 +165,16 @@ export function GastoDEForm({ initialData, initialVendors }: GastosDEFormProps) 
                 { name: "tipo" as const, label: "Tipo (texto libre, opcional)", desc: "Texto libre alternativo al concepto/elemento.", delay: 0.24, render: (field: any) => <Input type="text" {...field} placeholder="Solo si no usa concepto/elemento" className="transition-all duration-200 focus:scale-[1.01]" /> },
                 { name: "periodo" as const, label: "Período", desc: "Período del gasto (formato YYYY-MM).", delay: 0.22, render: (field: any) => <Input type="text" placeholder="YYYY-MM" {...field} className="transition-all duration-200 focus:scale-[1.01]" /> },
                 { name: "numeroFactura" as const, label: "Nro. Factura", desc: "Factura entrante del proveedor (opcional).", delay: 0.25, render: (field: any) => <Input type="text" placeholder="Ej: F-2024-0012" {...field} className="transition-all duration-200 focus:scale-[1.01]" /> },
-                { name: "proveedor" as const, label: "Proveedor", desc: "Seleccione el proveedor del gasto.", delay: 0.3, render: (field: any) => <VendorCombobox value={field.value ?? ''} onChange={field.onChange} vendors={vendors?.filter((v: any) => v.vendorId) || []} placeholder="Seleccionar proveedor" error={!!form.formState.errors.proveedor} /> },
+                { name: (usarProveedorLibre ? "proveedor" : "proveedorId") as "proveedor", label: "Proveedor", desc: usarProveedorLibre ? "Escriba el nombre del proveedor (texto libre)." : "Seleccione el proveedor del catálogo.", delay: 0.3, render: (field: any) => (
+                  <div className="space-y-2">
+                    {usarProveedorLibre
+                      ? <Input type="text" value={form.watch('proveedor') ?? ''} onChange={(e) => form.setValue('proveedor', e.target.value, { shouldDirty: true })} placeholder="Nombre del proveedor" />
+                      : <VendorCombobox value={field.value ?? ''} onChange={(v) => field.onChange(v)} vendors={vendors?.filter((v: any) => v.vendorId) || []} placeholder="Seleccionar proveedor" error={!!form.formState.errors.proveedorId} />}
+                    <button type="button" onClick={() => { const next = !usarProveedorLibre; setUsarProveedorLibre(next); if (next) form.setValue('proveedorId', ''); else form.setValue('proveedor', '') }} className="text-xs text-muted-foreground underline underline-offset-2 hover:text-foreground">
+                      {usarProveedorLibre ? 'Elegir del catálogo de proveedores' : 'Proveedor fuera del catálogo (texto libre)'}
+                    </button>
+                  </div>
+                )} ,
                 { name: "descripcion" as const, label: "Descripción", desc: "Ingrese la descripción para el gasto.", delay: 0.35, render: (field: any) => <Input type="text" {...field} onChange={(e) => { field.onChange(e.target.value.toUpperCase()) }} className="transition-all duration-200 focus:scale-[1.01]" /> },
                 { name: "monto" as const, label: "Monto", desc: "Ingrese el monto del gasto.", delay: 0.4, render: (field: any) => <Input type="number" step="0.01" min="0.01" {...field} className="transition-all duration-200 focus:scale-[1.01]" /> },
               ].map(({ name, label, desc, delay, render }) => (
@@ -175,7 +190,7 @@ export function GastoDEForm({ initialData, initialVendors }: GastosDEFormProps) 
                     <div className="flex items-center gap-2 mb-3"><Receipt className="h-4 w-4" /><h3 className="font-medium">Resumen del Gasto</h3></div>
                     <div className="grid grid-cols-2 gap-4 text-sm">
                       <div><p className="text-muted-foreground">Tipo:</p><p className="font-medium">{watchedValues.tipo || "(texto libre)"}</p></div>
-                      <div><p className="text-muted-foreground">Proveedor:</p><p className="font-medium">{watchedValues.proveedor || "Sin especificar"}</p></div>
+                      <div><p className="text-muted-foreground">Proveedor:</p><p className="font-medium">{proveedorSeleccionadoNombre || watchedValues.proveedor || "Sin especificar"}</p></div>
                       <div><p className="text-muted-foreground">Monto:</p><Badge variant="default" className="text-sm">${Number(watchedValues.monto).toFixed(2)}</Badge></div>
                     </div>
                   </CardContent></Card>

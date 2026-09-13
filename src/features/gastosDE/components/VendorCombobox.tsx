@@ -46,12 +46,15 @@ export function VendorCombobox({ value, onChange, vendors, placeholder = "Selecc
     if (open) searchRef.current?.focus()
   }, [open])
 
-  const selectVendor = (nombre: string) => {
-    onChange(nombre)
+  // value es el vendorId (FK); el nombre visible se resuelve desde la lista.
+  const selectVendor = (vendor: { vendorId: string; nombre: string }) => {
+    onChange(vendor.vendorId)
     setSearch("")
     setOpen(false)
     setActiveIndex(-1)
   }
+
+  const selectedVendor = vendors.find((v) => v.vendorId === value)
 
   const handleSearchKeyDown = (event: React.KeyboardEvent<HTMLInputElement>) => {
     if (filtered.length === 0) return
@@ -74,7 +77,7 @@ export function VendorCombobox({ value, onChange, vendors, placeholder = "Selecc
         break
       case 'Enter':
         event.preventDefault()
-        if (activeIndex >= 0 && filtered[activeIndex]) selectVendor(filtered[activeIndex].nombre)
+        if (activeIndex >= 0 && filtered[activeIndex]) selectVendor(filtered[activeIndex])
         break
       case 'Escape':
         event.preventDefault()
@@ -95,7 +98,7 @@ export function VendorCombobox({ value, onChange, vendors, placeholder = "Selecc
           aria-label={placeholder}
           className={cn("w-full justify-between font-normal", !value && "text-muted-foreground", error && "border-destructive")}
         >
-          {value || placeholder}
+          {selectedVendor?.nombre || placeholder}
           <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
         </Button>
       </PopoverTrigger>
@@ -126,7 +129,7 @@ export function VendorCombobox({ value, onChange, vendors, placeholder = "Selecc
             <div className="py-6 text-center text-sm text-muted-foreground">No se encontraron proveedores</div>
           ) : (
             filtered.map((vendor, index) => {
-              const isSelected = value === vendor.nombre
+              const isSelected = value === vendor.vendorId
               const isActive = index === activeIndex
               return (
                 <div
@@ -140,7 +143,7 @@ export function VendorCombobox({ value, onChange, vendors, placeholder = "Selecc
                     isSelected && !isActive && "bg-accent/60 text-accent-foreground"
                   )}
                   onMouseEnter={() => setActiveIndex(index)}
-                  onClick={() => selectVendor(vendor.nombre)}
+                  onClick={() => selectVendor(vendor)}
                 >
                   <span>{vendor.nombre}</span>
                   {isSelected && <Check className="mr-2 h-4 w-4" />}

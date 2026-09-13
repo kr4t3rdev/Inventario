@@ -87,7 +87,7 @@ export const getCuadreDiarioAction = withAction(
 			}),
 			// Gastos operativos
 			prisma.gastosDE.findMany({
-				where: { createdAt: { gte: fechaInicio, lte: fechaFin }, tenantId },
+				where: { createdAt: { gte: fechaInicio, lte: fechaFin }, tenantId, estado: 'APROBADO' }, // B-04
 			}),
 			// Compras con vendor
 			prisma.gastoCompra.findMany({
