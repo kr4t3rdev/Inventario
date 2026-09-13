@@ -1,12 +1,13 @@
 import { Prisma } from '@/generated/prisma';
 import { prisma } from '@/lib/prisma';
 import { ActionError } from '@/lib/server-actions';
-import { requireFeature, requirePermission, requireTenant } from '@/lib/services/tenant-scope';
+import { hasPermission, requireFeature, requirePermission, requireTenant } from '@/lib/services/tenant-scope';
 import { upsertStockUbicacion } from '@/lib/services/stock-ubicacion-service';
 import { registrarMovimiento, revertirMovimientosDeOrigen } from '@/features/inventario/movimientos';
 import { allocateFifoForSale } from '@/lib/services/fifo-allocation';
 import { createVentaSchema, anularVentaSchema } from '@/features/ventas/schemas';
 import { applyFacturacionCobroWorkflow } from '@/features/ventas/services/facturacion-workflow';
+import { resolvePrecioVenta, type PrecioVentaFuente } from '@/features/ventas/services/precio-venta-resolver';
 import { getOrCreateTurnoActivo } from '@/features/turnos-pos';
 import { AuditLogService } from '@/lib/services/audit-log-service';
 import { VENTA_SELECT } from '@/features/ventas/services/venta-read-service';
@@ -26,6 +27,15 @@ type ReconciliationForReversal = {
   cuentaId: string;
   moneda: string;
   monto: unknown;
+};
+
+/** Detalle de un precio aplicado distinto al resuelto (permiso ventas.precio.override). */
+type PriceOverrideDetalle = {
+  productoId: string;
+  nombre: string;
+  precioEsperado: number;
+  precioAplicado: number;
+  fuente: PrecioVentaFuente;
 };
 
 /**
@@ -120,12 +130,80 @@ export const VentaMutationService = {
       }
     }
 
-    const itemsData = parsed.items.map((item) => ({
-      productoId: item.productoId,
-      cantidad: item.cantidad,
-      precioUnitario: item.precioUnitario,
-      total: item.cantidad * item.precioUnitario,
-    }));
+    // ── Resolución server-side de precios (LP-0): el precioUnitario del
+    // payload nunca se persiste tal cual; se valida contra la cadena
+    // cliente > PV > base antes de abrir la transacción.
+    const puntoVenta = await prisma.puntoDeVenta.findFirst({
+      where: { pvId: parsed.puntoDeVentaId, tenantId },
+      select: { pvId: true, listaPrecioId: true },
+    });
+    if (!puntoVenta) {
+      throw new ActionError('Punto de venta no encontrado', 'NOT_FOUND');
+    }
+
+    let clienteListaId: string | null = null;
+    if (parsed.clienteId) {
+      const cliente = await prisma.cliente.findFirst({
+        where: { clienteId: parsed.clienteId, tenantId },
+        select: { listaPrecioId: true },
+      });
+      if (!cliente) {
+        throw new ActionError('Cliente no encontrado', 'NOT_FOUND');
+      }
+      clienteListaId = cliente.listaPrecioId;
+    }
+
+    const productoIds = [...new Set(parsed.items.map((item) => item.productoId))];
+    const productosParaPrecio = await prisma.producto.findMany({
+      where: { id: { in: productoIds }, tenantId },
+      select: {
+        id: true,
+        nombre: true,
+        precioVenta: true,
+        precios: { select: { listaPrecioId: true, precio: true } },
+      },
+    });
+    const productoPrecioMap = new Map(productosParaPrecio.map((p) => [p.id, p]));
+
+    const puedeOverridePrecio = hasPermission(user, 'ventas.precio.override');
+    const overrides: PriceOverrideDetalle[] = [];
+
+    const itemsData = parsed.items.map((item) => {
+      const producto = productoPrecioMap.get(item.productoId);
+      if (!producto) {
+        throw new ActionError(
+          `Producto con ID ${item.productoId} no encontrado`,
+          'NOT_FOUND',
+        );
+      }
+      const { precio, fuente } = resolvePrecioVenta({
+        precioBase: producto.precioVenta,
+        precios: producto.precios,
+        pvListaId: puntoVenta.listaPrecioId,
+        clienteListaId,
+      });
+      if (precio !== item.precioUnitario) {
+        if (!puedeOverridePrecio) {
+          throw new ActionError(
+            `El precio de "${producto.nombre}" no coincide con el vigente (${precio}). Recarga los productos e inténtalo de nuevo.`,
+            'PRICE_MISMATCH',
+          );
+        }
+        overrides.push({
+          productoId: producto.id,
+          nombre: producto.nombre,
+          precioEsperado: precio,
+          precioAplicado: item.precioUnitario,
+          fuente,
+        });
+      }
+      return {
+        productoId: item.productoId,
+        cantidad: item.cantidad,
+        precioUnitario: item.precioUnitario,
+        total: item.cantidad * item.precioUnitario,
+      };
+    });
 
     const subtotalVenta = itemsData.reduce((sum, item) => sum + item.total, 0);
     const cargoTransporte = parsed.cargoTransporte ?? 0;
@@ -192,6 +270,22 @@ export const VentaMutationService = {
           },
         },
       });
+
+      if (overrides.length > 0) {
+        await AuditLogService.logStrict(
+          {
+            accion: 'EXECUTE',
+            entidad: 'VENTA',
+            entidadId: venta.ventaId,
+            usuarioId: user.userId,
+            detalles: {
+              tipo: 'PRICE_OVERRIDE',
+              items: overrides,
+            },
+          },
+          tx,
+        );
+      }
 
       for (const [itemIdx, item] of itemsData.entries()) {
         const producto = await tx.producto.findUnique({

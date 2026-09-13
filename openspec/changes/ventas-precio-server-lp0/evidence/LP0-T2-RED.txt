@@ -1,0 +1,224 @@
+
+ RUN  v3.2.4 /Users/arturo/Documents/Proyecto Inventario/TCP
+
+stderr | src/features/ventas/__tests__/venta-price-integrity.test.ts > integridad de precios en createVentaAction > rechaza con PRICE_MISMATCH un precio manipulado si el usuario no tiene override
+Server Action Error: TypeError: Cannot read properties of undefined (reading 'serieId')
+    at /Users/arturo/Documents/Proyecto Inventario/TCP/src/features/ventas/services/venta-mutation-service.ts:165:35
+    at processTicksAndRejections (node:internal/process/task_queues:104:5)
+
+ ❯ src/features/ventas/__tests__/venta-price-integrity.test.ts (7 tests | 6 failed) 35ms
+   × integridad de precios en createVentaAction > rechaza con PRICE_MISMATCH un precio manipulado si el usuario no tiene override 22ms
+     → expected 'INTERNAL_ERROR' to be 'PRICE_MISMATCH' // Object.is equality
+   ✓ integridad de precios en createVentaAction > acepta la venta sin ruido cuando el precio coincide con el resuelto 4ms
+   × integridad de precios en createVentaAction > con ventas.precio.override acepta el precio enviado y lo audita 3ms
+     → expected "spy" to be called with arguments: [ ObjectContaining{…}, Anything ]
+
+Number of calls: 0
+
+   × integridad de precios en createVentaAction > exige el precio de la lista del cliente aunque el POS mande el del PV 2ms
+     → expected true to be false // Object.is equality
+   × integridad de precios en createVentaAction > exige el precio base cuando no hay listas aplicables 1ms
+     → expected true to be false // Object.is equality
+   × integridad de precios en createVentaAction > rechaza si el punto de venta no existe en el tenant 1ms
+     → expected true to be false // Object.is equality
+   × integridad de precios en createVentaAction > rechaza si el producto no existe en el tenant 1ms
+     → expected true to be false // Object.is equality
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 6 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  src/features/ventas/__tests__/venta-price-integrity.test.ts > integridad de precios en createVentaAction > rechaza con PRICE_MISMATCH un precio manipulado si el usuario no tiene override
+AssertionError: expected 'INTERNAL_ERROR' to be 'PRICE_MISMATCH' // Object.is equality
+
+Expected: "PRICE_MISMATCH"
+Received: "INTERNAL_ERROR"
+
+ ❯ src/features/ventas/__tests__/venta-price-integrity.test.ts:143:30
+    141| 
+    142|   expect(result.success).toBe(false);
+    143|   expect(result.error?.code).toBe("PRICE_MISMATCH");
+       |                              ^
+    144|   expect(result.error?.message).toContain("Producto");
+    145|   expect(mockTx.venta.create).not.toHaveBeenCalled();
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/6]⎯
+
+ FAIL  src/features/ventas/__tests__/venta-price-integrity.test.ts > integridad de precios en createVentaAction > con ventas.precio.override acepta el precio enviado y lo audita
+AssertionError: expected "spy" to be called with arguments: [ ObjectContaining{…}, Anything ]
+
+Number of calls: 0
+
+ ❯ src/features/ventas/__tests__/venta-price-integrity.test.ts:194:37
+    192|    }),
+    193|   );
+    194|   expect(AuditLogService.logStrict).toHaveBeenCalledWith(
+       |                                     ^
+    195|    expect.objectContaining({
+    196|     entidad: "VENTA",
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/6]⎯
+
+ FAIL  src/features/ventas/__tests__/venta-price-integrity.test.ts > integridad de precios en createVentaAction > exige el precio de la lista del cliente aunque el POS mande el del PV
+AssertionError: expected true to be false // Object.is equality
+
+- Expected
++ Received
+
+- false
++ true
+
+ ❯ src/features/ventas/__tests__/venta-price-integrity.test.ts:241:26
+    239|   });
+    240| 
+    241|   expect(result.success).toBe(false);
+       |                          ^
+    242|   expect(result.error?.code).toBe("PRICE_MISMATCH");
+    243|   expect(mockTx.venta.create).not.toHaveBeenCalled();
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/6]⎯
+
+ FAIL  src/features/ventas/__tests__/venta-price-integrity.test.ts > integridad de precios en createVentaAction > exige el precio base cuando no hay listas aplicables
+AssertionError: expected true to be false // Object.is equality
+
+- Expected
++ Received
+
+- false
++ true
+
+ ❯ src/features/ventas/__tests__/venta-price-integrity.test.ts:255:26
+    253|   });
+    254| 
+    255|   expect(result.success).toBe(false);
+       |                          ^
+    256|   expect(result.error?.code).toBe("PRICE_MISMATCH");
+    257|  });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/6]⎯
+
+ FAIL  src/features/ventas/__tests__/venta-price-integrity.test.ts > integridad de precios en createVentaAction > rechaza si el punto de venta no existe en el tenant
+AssertionError: expected true to be false // Object.is equality
+
+- Expected
++ Received
+
+- false
++ true
+
+ ❯ src/features/ventas/__tests__/venta-price-integrity.test.ts:269:26
+    267|   });
+    268| 
+    269|   expect(result.success).toBe(false);
+       |                          ^
+    270|   expect(result.error?.code).toBe("NOT_FOUND");
+    271|   expect(mockTx.venta.create).not.toHaveBeenCalled();
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/6]⎯
+
+ FAIL  src/features/ventas/__tests__/venta-price-integrity.test.ts > integridad de precios en createVentaAction > rechaza si el producto no existe en el tenant
+AssertionError: expected true to be false // Object.is equality
+
+- Expected
++ Received
+
+- false
++ true
+
+ ❯ src/features/ventas/__tests__/venta-price-integrity.test.ts:284:26
+    282|   });
+    283| 
+    284|   expect(result.success).toBe(false);
+       |                          ^
+    285|   expect(result.error?.code).toBe("NOT_FOUND");
+    286|  });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[6/6]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  6 failed | 1 passed (7)
+   Start at  00:24:39
+   Duration  6.15s (transform 945ms, setup 188ms, collect 3.99s, tests 35ms, environment 626ms, prepare 221ms)
+
+
+ RUN  v3.2.4 /Users/arturo/Documents/Proyecto Inventario/TCP
+
+stderr | src/lib/server-actions/__tests__/with-action.test.ts > withAction() > cuando la acción interna lanza ActionError > propaga mensaje y código aunque el código empiece por P
+Server Action Error: ReferenceError: ActionError is not defined
+    at /Users/arturo/Documents/Proyecto Inventario/TCP/src/lib/server-actions/__tests__/with-action.test.ts:221:9
+    at /Users/arturo/Documents/Proyecto Inventario/TCP/src/lib/server-actions/with-action.ts:56:54
+    at AsyncLocalStorage.run (node:internal/async_local_storage/async_context_frame:63:14)
+    at runWithTenantContext (/Users/arturo/Documents/Proyecto Inventario/TCP/src/lib/db/tenant-context.ts:39:18)
+    at /Users/arturo/Documents/Proyecto Inventario/TCP/src/lib/server-actions/with-action.ts:56:12
+    at processTicksAndRejections (node:internal/process/task_queues:104:5)
+    at /Users/arturo/Documents/Proyecto Inventario/TCP/src/lib/server-actions/__tests__/with-action.test.ts:224:22
+    at file:///Users/arturo/Documents/Proyecto%20Inventario/TCP/node_modules/.pnpm/@vitest+runner@3.2.4/node_modules/@vitest/runner/dist/chunk-hooks.js:752:20
+
+stderr | src/lib/server-actions/__tests__/with-action.test.ts > withAction() > cuando la acción interna lanza PrismaClientValidationError > retorna error de validación de base de datos con código específico
+Prisma Validation Error: {
+  message: 'Invalid value for field "precio": expected number, got string'
+}
+
+stderr | src/lib/server-actions/__tests__/with-action.test.ts > withAction() > cuando la acción interna lanza un error desconocido > retorna { success: false, error: INTERNAL_ERROR }
+Server Action Error: Error: Algo explotó inesperadamente
+    at /Users/arturo/Documents/Proyecto Inventario/TCP/src/lib/server-actions/__tests__/with-action.test.ts:275:15
+    at /Users/arturo/Documents/Proyecto Inventario/TCP/src/lib/server-actions/with-action.ts:56:54
+    at AsyncLocalStorage.run (node:internal/async_local_storage/async_context_frame:63:14)
+    at runWithTenantContext (/Users/arturo/Documents/Proyecto Inventario/TCP/src/lib/db/tenant-context.ts:39:18)
+    at /Users/arturo/Documents/Proyecto Inventario/TCP/src/lib/server-actions/with-action.ts:56:12
+    at processTicksAndRejections (node:internal/process/task_queues:104:5)
+    at /Users/arturo/Documents/Proyecto Inventario/TCP/src/lib/server-actions/__tests__/with-action.test.ts:278:22
+    at file:///Users/arturo/Documents/Proyecto%20Inventario/TCP/node_modules/.pnpm/@vitest+runner@3.2.4/node_modules/@vitest/runner/dist/chunk-hooks.js:752:20
+
+stderr | src/lib/server-actions/__tests__/with-action.test.ts > withAction() > cuando la acción interna lanza un error desconocido > NO expone el mensaje del error original al cliente
+Server Action Error: Error: SECRETO: password=12345
+    at /Users/arturo/Documents/Proyecto Inventario/TCP/src/lib/server-actions/__tests__/with-action.test.ts:289:15
+    at /Users/arturo/Documents/Proyecto Inventario/TCP/src/lib/server-actions/with-action.ts:56:54
+    at AsyncLocalStorage.run (node:internal/async_local_storage/async_context_frame:63:14)
+    at runWithTenantContext (/Users/arturo/Documents/Proyecto Inventario/TCP/src/lib/db/tenant-context.ts:39:18)
+    at /Users/arturo/Documents/Proyecto Inventario/TCP/src/lib/server-actions/with-action.ts:56:12
+    at processTicksAndRejections (node:internal/process/task_queues:104:5)
+    at /Users/arturo/Documents/Proyecto Inventario/TCP/src/lib/server-actions/__tests__/with-action.test.ts:292:22
+    at file:///Users/arturo/Documents/Proyecto%20Inventario/TCP/node_modules/.pnpm/@vitest+runner@3.2.4/node_modules/@vitest/runner/dist/chunk-hooks.js:752:20
+
+ ❯ src/lib/server-actions/__tests__/with-action.test.ts (15 tests | 1 failed) 22ms
+   ✓ withAction() > cuando la acción tiene éxito > retorna { success: true, data } con el resultado de la acción 2ms
+   ✓ withAction() > cuando la acción tiene éxito > llama a getCurrentUser y pasa el usuario a la acción interna 0ms
+   ✓ withAction() > cuando no hay usuario autenticado > retorna { success: false, error: AUTH_REQUIRED } 0ms
+   ✓ withAction() > cuando no hay usuario autenticado > NO ejecuta la acción interna si no hay usuario 0ms
+   ✓ withAction() > cuando la acción interna lanza ZodError > retorna { success: false, error: VALIDATION_ERROR con details } 3ms
+   ✓ withAction() > cuando la acción interna lanza ZodError > NO deja propagar el ZodError como excepción 1ms
+   ✓ withAction() > cuando la acción interna lanza PrismaClientKnownRequestError > retorna mensaje amigable para error P2002 (unique constraint) 0ms
+   ✓ withAction() > cuando la acción interna lanza PrismaClientKnownRequestError > retorna mensaje amigable para error P2025 (record not found) 0ms
+   ✓ withAction() > cuando la acción interna lanza PrismaClientKnownRequestError > retorna mensaje genérico para códigos desconocidos 0ms
+   × withAction() > cuando la acción interna lanza ActionError > propaga mensaje y código aunque el código empiece por P 11ms
+     → expected 'INTERNAL_ERROR' to be 'PRICE_MISMATCH' // Object.is equality
+   ✓ withAction() > cuando la acción interna lanza ActionError > sigue mapeando errores Prisma reales con código P a mensaje amigable 0ms
+   ✓ withAction() > cuando la acción interna lanza PrismaClientValidationError > retorna error de validación de base de datos con código específico 1ms
+   ✓ withAction() > cuando la acción interna lanza un error desconocido > retorna { success: false, error: INTERNAL_ERROR } 1ms
+   ✓ withAction() > cuando la acción interna lanza un error desconocido > NO expone el mensaje del error original al cliente 0ms
+   ✓ withAction() > con tipado genérico > preserva el tipo de input y output correctamente 0ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  src/lib/server-actions/__tests__/with-action.test.ts > withAction() > cuando la acción interna lanza ActionError > propaga mensaje y código aunque el código empiece por P
+AssertionError: expected 'INTERNAL_ERROR' to be 'PRICE_MISMATCH' // Object.is equality
+
+Expected: "PRICE_MISMATCH"
+Received: "INTERNAL_ERROR"
+
+ ❯ src/lib/server-actions/__tests__/with-action.test.ts:227:34
+    225| 
+    226|       expect(result.success).toBe(false);
+    227|       expect(result.error!.code).toBe('PRICE_MISMATCH');
+       |                                  ^
+    228|       expect(result.error!.message).toBe('El precio no coincide con el…
+    229|     });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 14 passed (15)
+   Start at  00:44:39
+   Duration  3.26s (transform 675ms, setup 193ms, collect 962ms, tests 22ms, environment 615ms, prepare 244ms)
+

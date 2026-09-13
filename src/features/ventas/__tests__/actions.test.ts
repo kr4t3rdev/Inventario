@@ -59,7 +59,8 @@ vi.mock("@/lib/prisma", () => ({
 			delete: vi.fn(),
 		},
 		ventaItem: { create: vi.fn() },
-		producto: { findUnique: vi.fn(), update: vi.fn() },
+		producto: { findUnique: vi.fn(), findMany: vi.fn(), update: vi.fn() },
+		cliente: { findFirst: vi.fn() },
 		turnoPuntoVenta: { findFirst: vi.fn(), create: vi.fn() },
 		puntoDeVenta: { findFirst: vi.fn() },
 		$transaction: vi.fn((cb: any) => cb(mockTx)),
@@ -141,6 +142,19 @@ describe("Ventas Server Actions", () => {
 			puntoDeVentaId: "pv-1",
 			items: [{ productoId: "prod-1", cantidad: 2, precioUnitario: 500 }],
 		};
+
+		beforeEach(() => {
+			// Resolución server-side de precios (LP-0): PV sin lista, sin cliente,
+			// producto con precio base 500 (coincide con los precioUnitario de los tests).
+			vi.mocked(prisma.puntoDeVenta.findFirst).mockResolvedValue({
+				pvId: "pv-1",
+				listaPrecioId: null,
+			} as any);
+			vi.mocked(prisma.cliente.findFirst).mockResolvedValue(null);
+			vi.mocked(prisma.producto.findMany).mockResolvedValue([
+				{ id: "prod-1", nombre: "Producto", precioVenta: 500, precios: [] },
+			] as any);
+		});
 
 		it("crea venta con items exitosamente", async () => {
 			vi.mocked(getCurrentUser).mockResolvedValue(mockUser);

@@ -19,6 +19,7 @@ vi.mock('@/lib/server-actions/get-current-user');
 
 import { getCurrentUser } from '@/lib/server-actions/get-current-user';
 import { withAction } from '@/lib/server-actions/with-action';
+import { ActionError } from '@/lib/server-actions/types';
 import type { AuthenticatedUser } from '@/lib/auth-middleware';
 
 // ─── Helpers ───────────────────────────────────────────────
@@ -208,6 +209,38 @@ describe('withAction()', () => {
       expect(result.success).toBe(false);
       expect(result.error!.code).toBe('P9999');
       expect(result.error!.message).toBeDefined();
+    });
+  });
+
+  // ─── ActionError (errores de negocio) ──────────
+
+  describe('cuando la acción interna lanza ActionError', () => {
+    it('propaga mensaje y código aunque el código empiece por P', async () => {
+      vi.mocked(getCurrentUser).mockResolvedValue(mockUser);
+
+      const wrapped = withAction(async () => {
+        throw new ActionError('El precio no coincide con el vigente', 'PRICE_MISMATCH');
+      });
+
+      const result = await wrapped(undefined);
+
+      expect(result.success).toBe(false);
+      expect(result.error!.code).toBe('PRICE_MISMATCH');
+      expect(result.error!.message).toBe('El precio no coincide con el vigente');
+    });
+
+    it('sigue mapeando errores Prisma reales con código P a mensaje amigable', async () => {
+      vi.mocked(getCurrentUser).mockResolvedValue(mockUser);
+
+      const wrapped = withAction(async () => {
+        throw makePrismaKnownError('P2002', { target: ['nombre'] });
+      });
+
+      const result = await wrapped(undefined);
+
+      expect(result.success).toBe(false);
+      expect(result.error!.code).toBe('P2002');
+      expect(result.error!.message).toContain('Ya existe');
     });
   });
 
