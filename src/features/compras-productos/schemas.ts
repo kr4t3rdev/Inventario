@@ -16,6 +16,8 @@ export const createCompraProductoSchema = z.object({
   facturaUrl: z.string().optional().default(''),
   formaPago: z.enum(['PAGO_PARCIAL', 'PAGO_COMPLETO', 'ANTICIPO_PAGO']),
   estado: z.enum(['PENDIENTE', 'PAGADA']),
+  // Moneda del documento y de la CxP que genere (B-02.1). Histórico: CUP.
+  moneda: z.enum(['CUP', 'USD', 'EUR', 'MLC']).default('CUP'),
   descripcionCompra: z.string().max(500).optional(),
   fechaVencimiento: z.string().optional(),
   anticipoPagoId: z.string().optional(),

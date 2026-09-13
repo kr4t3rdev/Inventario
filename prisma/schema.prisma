@@ -1365,6 +1365,7 @@ model CompraDocumento {
   numeroFactura     String                @default("")
   facturaUrl        String                @default("")
   formaPago         String
+  moneda            String                @default("CUP")
   estado            String
   tipoOperacion     String                @default("REGULAR")
   descripcion       String?

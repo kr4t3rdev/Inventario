@@ -168,7 +168,12 @@ export function ComprasProductosContent({ initialCompras, initialPagination }: C
     {
       accessorKey: 'total',
       header: 'Total',
-      cell: ({ row }) => <span className="text-right block font-medium">${row.original.total.toLocaleString()}</span>,
+      cell: ({ row }) => (
+        <span className="text-right block font-medium">
+          ${row.original.total.toLocaleString()}
+          <span className="ml-1 text-xs text-muted-foreground">{row.original.moneda ?? 'CUP'}</span>
+        </span>
+      ),
     },
     {
       id: 'acciones',

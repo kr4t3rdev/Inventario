@@ -766,6 +766,99 @@ describe("ComprasProductos Server Actions", () => {
 		});
 	});
 
+	describe("moneda de la compra (B-02.1)", () => {
+		const setupCreateMocks = () => {
+			vi.mocked(getCurrentUser).mockResolvedValue(mockUser);
+			vi.mocked(prisma.vendor.findFirst).mockResolvedValue({
+				vendorId: "ven-1",
+				nombre: "Proveedor",
+			} as never);
+			vi.mocked(prisma.producto.findFirst).mockResolvedValue({
+				id: "prod-1", stock: 10, precioCosto: 500, almacenId: "alm-1", tenantId: "tenant-test",
+			} as never);
+			mockTx.compraDocumento.create.mockResolvedValue({ compraDocumentoId: "cd-1" } as never);
+			mockTx.compraDocumento.findUnique.mockResolvedValue({ compraDocumentoId: "cd-1" } as never);
+			mockTx.gastoCompra.create.mockResolvedValue({ gastoCompraId: "gc-1" } as never);
+			mockTx.compraDocumento.update.mockResolvedValue({} as never);
+			vi.mocked(getStockTotalProducto).mockResolvedValue(12);
+			vi.mocked(calcularPrecioCostoCompra).mockReturnValue({
+				precioCostoNuevo: 450, metodoCosto: "PONDERADO",
+			} as never);
+		};
+
+		it("propaga la moneda elegida al documento y a la CxP", async () => {
+			setupCreateMocks();
+
+			const result = await createCompraProductoAction({
+				proveedorId: "ven-1",
+				formaPago: "PAGO_PARCIAL",
+				estado: "PENDIENTE",
+				moneda: "USD",
+				items: [{ productoId: "prod-1", precioCosto: 400, cantidad: 10 }],
+			});
+
+			expect(result.success).toBe(true);
+			expect(mockTx.compraDocumento.create.mock.calls[0][0].data.moneda).toBe("USD");
+			// La deuda nace en la moneda de la compra, no en CUP fijo.
+			expect(mockTx.cuentaPorPagar.create).toHaveBeenCalledWith(
+				expect.objectContaining({
+					data: expect.objectContaining({ moneda: "USD" }),
+				}),
+			);
+		});
+
+		it("usa CUP por defecto cuando no se indica moneda", async () => {
+			setupCreateMocks();
+
+			const result = await createCompraProductoAction({
+				proveedorId: "ven-1",
+				formaPago: "PAGO_PARCIAL",
+				estado: "PENDIENTE",
+				items: [{ productoId: "prod-1", precioCosto: 400, cantidad: 10 }],
+			});
+
+			expect(result.success).toBe(true);
+			expect(mockTx.compraDocumento.create.mock.calls[0][0].data.moneda).toBe("CUP");
+			expect(mockTx.cuentaPorPagar.create).toHaveBeenCalledWith(
+				expect.objectContaining({
+					data: expect.objectContaining({ moneda: "CUP" }),
+				}),
+			);
+		});
+
+		it("al cambiar a PAGO_PARCIAL la nueva CxP hereda la moneda del documento", async () => {
+			vi.mocked(getCurrentUser).mockResolvedValue(mockUser);
+			mockTx.compraDocumento.findFirst.mockResolvedValue({
+				compraDocumentoId: "cd-1",
+				tenantId: "tenant-test",
+				formaPago: "PAGO_COMPLETO",
+				estado: "PAGADA",
+				numeroFactura: "F-1",
+				total: 4000,
+				moneda: "MLC",
+				proveedorId: "ven-1",
+				gastoCompraId: "gc-1",
+				cuentaPorPagarId: null,
+				cuentaPorPagar: null,
+			} as never);
+			mockTx.cuentaPorPagar.create.mockResolvedValue({ cuentaPorPagarId: "cxp-1" } as never);
+			mockTx.compraDocumento.update.mockResolvedValue({} as never);
+
+			const result = await updateCompraProductoAction({
+				compraDocumentoId: "cd-1",
+				formaPago: "PAGO_PARCIAL",
+				estado: "PENDIENTE",
+			});
+
+			expect(result.success).toBe(true);
+			expect(mockTx.cuentaPorPagar.create).toHaveBeenCalledWith(
+				expect.objectContaining({
+					data: expect.objectContaining({ moneda: "MLC" }),
+				}),
+			);
+		});
+	});
+
 	describe("auth requerido", () => {
 		it("retorna AUTH_REQUIRED", async () => {
 			vi.mocked(getCurrentUser).mockResolvedValue(null);

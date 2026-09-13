@@ -39,6 +39,7 @@ const compraDocumentoSchema = z.object({
   facturaUrl: z.string().optional().default(''),
   formaPago: z.enum(['PAGO_PARCIAL', 'PAGO_COMPLETO', FORMA_PAGO_ANTICIPO_PAGO]),
   estado: z.enum(['PENDIENTE', 'PAGADA']),
+  moneda: z.enum(['CUP', 'USD', 'EUR', 'MLC']),
   descripcionCompra: z.string().max(500).optional().default(''),
   fechaVencimiento: z.string().optional().default(''),
   anticipoPagoId: z.string().optional().default(''),
@@ -101,6 +102,7 @@ export function CompraProductoForm({ onSuccess }: CompraProductoFormProps) {
       facturaUrl: '',
       formaPago: 'PAGO_COMPLETO',
       estado: 'PAGADA',
+      moneda: 'CUP',
       descripcionCompra: '',
       fechaVencimiento: '',
       anticipoPagoId: '',
@@ -490,6 +492,31 @@ export function CompraProductoForm({ onSuccess }: CompraProductoFormProps) {
                         </SelectContent>
                       </Select>
                       <FormDescription>El pago parcial genera cuentas por pagar.</FormDescription>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                <FormField
+                  control={form.control}
+                  name='moneda'
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Moneda</FormLabel>
+                      <Select onValueChange={field.onChange} value={field.value}>
+                        <FormControl>
+                          <SelectTrigger aria-label='Moneda'>
+                            <SelectValue placeholder='Moneda de la compra' />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          <SelectItem value='CUP'>CUP</SelectItem>
+                          <SelectItem value='USD'>USD</SelectItem>
+                          <SelectItem value='EUR'>EUR</SelectItem>
+                          <SelectItem value='MLC'>MLC</SelectItem>
+                        </SelectContent>
+                      </Select>
+                      <FormDescription>La deuda por esta compra se registra en esta moneda.</FormDescription>
                       <FormMessage />
                     </FormItem>
                   )}
