@@ -153,8 +153,10 @@ export function VentaInterface() {
 			setIsLoadingProductos(true);
 			setIsFetchingProductos(true);
 			try {
-				const result = await fetchProductosPuntoVenta(selectedPuntoVenta, () =>
-					setProductos([]),
+				const result = await fetchProductosPuntoVenta(
+					selectedPuntoVenta,
+					() => setProductos([]),
+					selectedClienteId,
 				);
 				if (!result.success) {
 					toast.error(result.error.message);
@@ -173,7 +175,7 @@ export function VentaInterface() {
 		};
 
 		loadProductos();
-	}, [selectedPuntoVenta, productosRefreshKey]);
+	}, [selectedPuntoVenta, selectedClienteId, productosRefreshKey]);
 
 	// Cargar turno activo al seleccionar punto de venta
 	const refreshTurno = useCallback(async () => {

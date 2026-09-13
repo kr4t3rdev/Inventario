@@ -13,6 +13,12 @@ export interface ProductoConStock {
 	precioVentaResuelto: number;
 	precioFuente: "LISTA" | "BASE";
 	listaPrecioIdAplicada: string | null;
+	/**
+	 * Precios por lista relevantes al contexto (lista del PV + lista del
+	 * cliente cuando se pasa clienteId). Permite que el cliente aplique la
+	 * prioridad cliente > PV vía getPrecioEfectivo.
+	 */
+	precios: Array<{ listaPrecioId: string; precio: number }>;
 	stock: number;
 	stockEnUbicacion: number;
 	fotos: string[];
@@ -43,13 +49,16 @@ export interface ProductoConStock {
  * pero utilizando Prisma directamente desde la Server Action.
  *
  * @param ubicacionId - ID del punto de venta o almacén
+ * @param clienteId - Opcional; en puntos de venta incluye también los precios
+ *   de la lista del cliente para que la UI pueda aplicarlos (LP-0).
  * @returns Lista de productos con stock > 0 en la ubicación
  * @throws {ServerActionError} si la ubicación no existe o hay error de base de datos
  */
 export async function getProductosPorUbicacion(
 	ubicacionId: string,
+	clienteId?: string,
 ): Promise<ProductoConStock[]> {
-	await getAuthenticatedContext();
+	const context = await getAuthenticatedContext();
 
 	// Verificar si la ubicación existe y determinar el tipo
 	let isPuntoVenta = false;
@@ -100,17 +109,41 @@ export async function getProductosPorUbicacion(
 
 	// Precios por lista de precios (solo para punto de venta)
 	const preciosPorListaMap = new Map<string, number>();
-	if (isPuntoVenta && listaPrecioId && productos.length > 0) {
+	// Entradas completas por lista relevante (PV + cliente) para el payload.
+	const preciosPorProductoMap = new Map<
+		string,
+		Array<{ listaPrecioId: string; precio: number }>
+	>();
+	let clienteListaId: string | null = null;
+
+	if (isPuntoVenta && clienteId) {
+		const cliente = await prisma.cliente.findFirst({
+			where: { clienteId, ...(context.tenantId && { tenantId: context.tenantId }) },
+			select: { listaPrecioId: true },
+		});
+		clienteListaId = cliente?.listaPrecioId ?? null;
+	}
+
+	const listasRelevantes = [listaPrecioId, clienteListaId].filter(
+		(id): id is string => id !== null,
+	);
+
+	if (isPuntoVenta && listasRelevantes.length > 0 && productos.length > 0) {
 		const preciosPorLista = await prisma.precioProducto.findMany({
 			where: {
-				listaPrecioId,
+				listaPrecioId: { in: listasRelevantes },
 				productoId: { in: productos.map((p) => p.id) },
 			},
-			select: { productoId: true, precio: true },
+			select: { productoId: true, listaPrecioId: true, precio: true },
 		});
 
 		for (const pl of preciosPorLista) {
-			preciosPorListaMap.set(pl.productoId, Number(pl.precio));
+			if (pl.listaPrecioId === listaPrecioId) {
+				preciosPorListaMap.set(pl.productoId, Number(pl.precio));
+			}
+			const entradas = preciosPorProductoMap.get(pl.productoId) ?? [];
+			entradas.push({ listaPrecioId: pl.listaPrecioId, precio: Number(pl.precio) });
+			preciosPorProductoMap.set(pl.productoId, entradas);
 		}
 	}
 
@@ -140,6 +173,7 @@ export async function getProductosPorUbicacion(
 			precioVentaResuelto,
 			precioFuente,
 			listaPrecioIdAplicada: listaPrecioId,
+			precios: preciosPorProductoMap.get(producto.id) ?? [],
 		};
 	});
 

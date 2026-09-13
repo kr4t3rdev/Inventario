@@ -25,7 +25,15 @@ describe('getProductosPorUbicacion (Server Action)', () => {
     const result = await getProductosPorUbicacion('pv-1')
 
     expect(result).toEqual(mockProducts)
-    expect(fetcher.getProductosPorUbicacion).toHaveBeenCalledWith('pv-1')
+    expect(fetcher.getProductosPorUbicacion).toHaveBeenCalledWith('pv-1', undefined)
+  })
+
+  it('propaga clienteId opcional al fetcher', async () => {
+    vi.mocked(fetcher.getProductosPorUbicacion).mockResolvedValue([])
+
+    await getProductosPorUbicacion('pv-1', 'cli-9')
+
+    expect(fetcher.getProductosPorUbicacion).toHaveBeenCalledWith('pv-1', 'cli-9')
   })
 
   it('should propagate ServerActionError from fetcher', async () => {

@@ -34,14 +34,20 @@ async function unwrapArrayResult<T>(
  * @description Carga productos de un punto de venta mediante una ruta estable.
  * @param {string} puntoDeVentaId - ID del punto de venta.
  * @param {() => void} clearState - Callback para limpiar estado stale.
+ * @param {string} [clienteId] - Cliente seleccionado; incluye los precios de
+ *   su lista para que la UI aplique la prioridad cliente > PV (LP-0).
  * @returns {Promise<ClientAuthFetchResult<ProductoConStock[]>>} Resultado normalizado.
  */
 export async function fetchProductosPuntoVenta(
   puntoDeVentaId: string,
   clearState?: () => void,
+  clienteId?: string | null,
 ): Promise<ClientAuthFetchResult<ProductoConStock[]>> {
+  const url = clienteId
+    ? `/api/ventas/punto-venta/${puntoDeVentaId}/productos?clienteId=${encodeURIComponent(clienteId)}`
+    : `/api/ventas/punto-venta/${puntoDeVentaId}/productos`;
   const result = await fetchClientAuthJson<ProductosPayload>(
-    `/api/ventas/punto-venta/${puntoDeVentaId}/productos`,
+    url,
     {
       clearState,
       defaultErrorMessage: 'Error al cargar productos',

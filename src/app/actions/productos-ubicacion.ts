@@ -9,14 +9,17 @@ import { handleServerActionError } from './_helpers/error-handler'
  * Cachea con tag 'ProductosUbicacion' para revalidación automática.
  *
  * @param ubicacionId - ID del punto de venta o almacén
+ * @param clienteId - Opcional; en puntos de venta incluye los precios de la
+ *   lista del cliente además de los del PV (LP-0).
  * @returns Lista de productos con stock > 0 en la ubicación
  * @throws {ServerActionError} si hay error de autenticación, la ubicación no existe, o error interno
  */
 export async function getProductosPorUbicacion(
-  ubicacionId: string
+  ubicacionId: string,
+  clienteId?: string
 ): Promise<ProductoConStock[]> {
   try {
-    return await fetchProductosPorUbicacion(ubicacionId)
+    return await fetchProductosPorUbicacion(ubicacionId, clienteId)
   } catch (error) {
     handleServerActionError(error, 'getProductosPorUbicacion')
   }

@@ -12,12 +12,13 @@ import { ServerActionError } from '@/lib/api/errors';
  */
 export const GET = withAuthGet(
   async (
-    _request: NextRequest,
+    request: NextRequest,
     context: { params: Promise<{ puntoDeVentaId: string }> },
   ) => {
     try {
       const { puntoDeVentaId } = await context.params;
-      const productos = await getProductosPorUbicacion(puntoDeVentaId);
+      const clienteId = request.nextUrl.searchParams.get('clienteId') ?? undefined;
+      const productos = await getProductosPorUbicacion(puntoDeVentaId, clienteId);
       return successResponse({ productos });
     } catch (error) {
       if (error instanceof ServerActionError) {

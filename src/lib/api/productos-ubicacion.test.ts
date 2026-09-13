@@ -13,6 +13,7 @@ vi.mock("@/lib/prisma", () => ({
 		almacen: { findUnique: vi.fn() },
 		producto: { findMany: vi.fn() },
 		precioProducto: { findMany: vi.fn() },
+		cliente: { findFirst: vi.fn() },
 		stockUbicacion: { findMany: vi.fn() },
 		transferencia: { aggregate: vi.fn() },
 		ventaItem: { aggregate: vi.fn() },
@@ -70,7 +71,7 @@ describe("getProductosPorUbicacion", () => {
 		vi.mocked(prisma.puntoDeVenta.findUnique).mockResolvedValue(mockPV as any);
 		vi.mocked(prisma.producto.findMany).mockResolvedValue(mockProducts as any);
 		vi.mocked(prisma.precioProducto.findMany).mockResolvedValue([
-			{ productoId: "prod-1", precio: 160 },
+			{ productoId: "prod-1", listaPrecioId: "lp-1", precio: 160 },
 		] as any);
 		// StockUbicacion materializada para el PV via batch query
 		vi.mocked(prisma.stockUbicacion.findMany).mockResolvedValue([
@@ -239,5 +240,151 @@ describe("getProductosPorUbicacion", () => {
 		const result = await getProductosPorUbicacion("pv-1");
 
 		expect(result).toHaveLength(0);
+	});
+
+	it("con clienteId incluye en precios las entradas de la lista del PV y la del cliente", async () => {
+		const mockPV = { pvId: "pv-1", listaPrecioId: "lp-pv" };
+		const mockProducts = [
+			{
+				id: "prod-1",
+				nombre: "Producto 1",
+				descripcion: null,
+				precioCosto: 100,
+				precioVenta: 150,
+				stock: 10,
+				fotos: [],
+				categoriaId: "cat-1",
+				unidadId: "und-1",
+				vendorId: "v-1",
+				createdAt: new Date(),
+				updatedAt: new Date(),
+				categoria: null,
+				unidad: null,
+				vendor: null,
+			},
+		];
+
+		vi.mocked(prisma.puntoDeVenta.findUnique).mockResolvedValue(mockPV as any);
+		vi.mocked(prisma.cliente.findFirst).mockResolvedValue({
+			clienteId: "cli-1",
+			listaPrecioId: "lp-cli",
+		} as any);
+		vi.mocked(prisma.producto.findMany).mockResolvedValue(mockProducts as any);
+		vi.mocked(prisma.precioProducto.findMany).mockResolvedValue([
+			{ productoId: "prod-1", listaPrecioId: "lp-pv", precio: 160 },
+			{ productoId: "prod-1", listaPrecioId: "lp-cli", precio: 140 },
+		] as any);
+		vi.mocked(prisma.stockUbicacion.findMany).mockResolvedValue([
+			{
+				productoId: "prod-1",
+				cantidad: 12,
+				cantidadReservada: 0,
+				cantidadDisponible: 12,
+			},
+		] as any);
+
+		const result = await getProductosPorUbicacion("pv-1", "cli-1");
+
+		expect(result).toHaveLength(1);
+		// precioVentaResuelto sigue saliendo de la lista del PV
+		expect(result[0].precioVentaResuelto).toBe(160);
+		// pero el array precios trae ambas listas para que la UI aplique la del cliente
+		expect(result[0].precios).toEqual(
+			expect.arrayContaining([
+				{ listaPrecioId: "lp-pv", precio: 160 },
+				{ listaPrecioId: "lp-cli", precio: 140 },
+			]),
+		);
+		// El lookup del cliente va scoped al tenant del contexto
+		expect(prisma.cliente.findFirst).toHaveBeenCalledWith(
+			expect.objectContaining({
+				where: expect.objectContaining({ clienteId: "cli-1" }),
+			}),
+		);
+	});
+
+	it("sin clienteId el array precios solo trae entradas de la lista del PV", async () => {
+		const mockPV = { pvId: "pv-1", listaPrecioId: "lp-1" };
+		const mockProducts = [
+			{
+				id: "prod-1",
+				nombre: "Producto 1",
+				descripcion: null,
+				precioCosto: 100,
+				precioVenta: 150,
+				stock: 10,
+				fotos: [],
+				categoriaId: "cat-1",
+				unidadId: "und-1",
+				vendorId: "v-1",
+				createdAt: new Date(),
+				updatedAt: new Date(),
+				categoria: null,
+				unidad: null,
+				vendor: null,
+			},
+		];
+
+		vi.mocked(prisma.puntoDeVenta.findUnique).mockResolvedValue(mockPV as any);
+		vi.mocked(prisma.producto.findMany).mockResolvedValue(mockProducts as any);
+		vi.mocked(prisma.precioProducto.findMany).mockResolvedValue([
+			{ productoId: "prod-1", listaPrecioId: "lp-1", precio: 160 },
+		] as any);
+		vi.mocked(prisma.stockUbicacion.findMany).mockResolvedValue([
+			{
+				productoId: "prod-1",
+				cantidad: 12,
+				cantidadReservada: 0,
+				cantidadDisponible: 12,
+			},
+		] as any);
+
+		const result = await getProductosPorUbicacion("pv-1");
+
+		expect(result).toHaveLength(1);
+		expect(result[0].precios).toEqual([{ listaPrecioId: "lp-1", precio: 160 }]);
+		expect(prisma.cliente.findFirst).not.toHaveBeenCalled();
+	});
+
+	it("en almacén no incluye precios ni consulta cliente aunque llegue clienteId", async () => {
+		const mockAlmacen = { almacenId: "alm-1", nombre: "Almacen 1" };
+		const mockProducts = [
+			{
+				id: "prod-1",
+				nombre: "Producto 1",
+				descripcion: null,
+				precioCosto: 100,
+				precioVenta: 150,
+				stock: 50,
+				fotos: [],
+				categoriaId: "cat-1",
+				unidadId: "und-1",
+				vendorId: "v-1",
+				createdAt: new Date(),
+				updatedAt: new Date(),
+				categoria: null,
+				unidad: null,
+				vendor: null,
+			},
+		];
+
+		vi.mocked(prisma.puntoDeVenta.findUnique).mockResolvedValue(null);
+		vi.mocked(prisma.almacen.findUnique).mockResolvedValue(mockAlmacen as any);
+		vi.mocked(prisma.producto.findMany).mockResolvedValue(mockProducts as any);
+		vi.mocked(prisma.stockUbicacion.findMany).mockResolvedValue([
+			{
+				productoId: "prod-1",
+				cantidad: 55,
+				cantidadReservada: 0,
+				cantidadDisponible: 55,
+			},
+		] as any);
+
+		const result = await getProductosPorUbicacion("alm-1", "cli-1");
+
+		expect(result).toHaveLength(1);
+		expect(result[0].precios).toEqual([]);
+		expect(prisma.precioProducto.findMany).not.toHaveBeenCalled();
+		expect(prisma.cliente.findFirst).not.toHaveBeenCalled();
 	});
 });

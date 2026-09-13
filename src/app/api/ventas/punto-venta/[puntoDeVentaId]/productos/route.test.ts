@@ -58,7 +58,19 @@ describe('/api/ventas/punto-venta/[puntoDeVentaId]/productos', () => {
     expect(response.status).toBe(200);
     expect(data.productos).toHaveLength(1);
     expect(data.productos[0]).toMatchObject({ id: 'prod-1', stockEnUbicacion: 5 });
-    expect(getProductosPorUbicacion).toHaveBeenCalledWith('pv-1');
+    expect(getProductosPorUbicacion).toHaveBeenCalledWith('pv-1', undefined);
+  });
+
+  it('propaga el query param clienteId al servicio', async () => {
+    vi.mocked(getProductosPorUbicacion).mockResolvedValue([] as never);
+
+    const response = await GET(
+      new NextRequest('http://localhost/api/ventas/punto-venta/pv-1/productos?clienteId=cli-9'),
+      { params: Promise.resolve({ puntoDeVentaId: 'pv-1' }) },
+    );
+
+    expect(response.status).toBe(200);
+    expect(getProductosPorUbicacion).toHaveBeenCalledWith('pv-1', 'cli-9');
   });
 
   it('maps missing locations to 404 without leaking a server action failure', async () => {
