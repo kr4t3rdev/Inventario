@@ -80,6 +80,8 @@ export function VendorPageClient({ vendors: initialVendors }: VendorPageClientPr
       if (r.success) {
         toast("El proveedor ha sido eliminado exitosamente.")
         router.refresh()
+      } else if (r.error?.code === 'PROVEEDOR_EN_USO') {
+        toast(`No se puede eliminar: ${r.error.message}`)
       } else {
         toast(r.error?.message || "Hubo un error al eliminar el proveedor.")
       }

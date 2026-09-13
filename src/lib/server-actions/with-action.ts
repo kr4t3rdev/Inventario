@@ -68,6 +68,17 @@ export function withAction<TInput, TOutput>(
 				};
 			}
 
+			// Errores de negocio controlados: se propagan con mensaje y código.
+			// Deben evaluarse ANTES del duck-typing de Prisma: un código de
+			// negocio que empiece por "P" (p. ej. PRICE_MISMATCH) sería mal
+			// clasificado como PrismaClientKnownRequestError.
+			if (error instanceof ActionError) {
+				return {
+					success: false,
+					error: { message: error.message, code: error.code },
+				};
+			}
+
 			// Duck-typing para errores de Prisma: instanceof puede fallar
 			// cuando pnpm/npm resuelve @prisma/client desde distintas ubicaciones.
 			const errorObj = error as Record<string, unknown>;
@@ -105,13 +116,6 @@ export function withAction<TInput, TOutput>(
 						code: "PRISMA_VALIDATION_ERROR",
 						details: { general: [detail] },
 					},
-				};
-			}
-
-			if (error instanceof ActionError) {
-				return {
-					success: false,
-					error: { message: error.message, code: error.code },
 				};
 			}
 

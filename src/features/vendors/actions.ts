@@ -165,6 +165,14 @@ export const updateVendorAction = withAction(async (input: VendorUpdateInput, us
   return enrichVendor(vendor);
 });
 
+/**
+ * @description Elimina un proveedor por ID, bloqueando el borrado si tiene dependencias.
+ *
+ * @throws ActionError si el proveedor no existe
+ * @throws ActionError con código PROVEEDOR_EN_USO si tiene productos, compras,
+ * gastos, deudas, cuentas por pagar, anticipos, órdenes de compra, servicios
+ * o contratos asociados (B-03: la cascada de DB borraba todo físicamente)
+ */
 export const deleteVendorAction = withAction(async (vendorId: string, user: AuthenticatedUser) => {
   const tenantId = requireTenant(user);
   const existing = await prisma.vendor.findFirst({
@@ -172,6 +180,41 @@ export const deleteVendorAction = withAction(async (vendorId: string, user: Auth
     select: { vendorId: true },
   });
   if (!existing) throw new ActionError('Proveedor no encontrado', 'NOT_FOUND');
+
+  const [
+    productos,
+    gastosCompra,
+    comprasProductos,
+    comprasDocumentos,
+    ordenesCompra,
+    deudas,
+    cuentasPorPagar,
+    anticipos,
+    comprasServicio,
+    contratos,
+  ] = await Promise.all([
+    prisma.producto.count({ where: { vendorId, tenantId } }),
+    prisma.gastoCompra.count({ where: { vendorId, tenantId } }),
+    prisma.compraProducto.count({ where: { proveedorId: vendorId, tenantId } }),
+    prisma.compraDocumento.count({ where: { proveedorId: vendorId, tenantId } }),
+    prisma.ordenCompra.count({ where: { proveedorId: vendorId, tenantId } }),
+    prisma.deudaCash.count({ where: { proveedorId: vendorId, tenantId } }),
+    prisma.cuentaPorPagar.count({ where: { proveedorId: vendorId, tenantId } }),
+    prisma.anticipo.count({ where: { proveedorId: vendorId, tenantId } }),
+    prisma.compraServicio.count({ where: { proveedorId: vendorId, tenantId } }),
+    prisma.contrato.count({ where: { vendorId, tenantId } }),
+  ]);
+
+  const total =
+    productos + gastosCompra + comprasProductos + comprasDocumentos +
+    ordenesCompra + deudas + cuentasPorPagar + anticipos + comprasServicio + contratos;
+
+  if (total > 0) {
+    throw new ActionError(
+      `No se puede eliminar el proveedor porque tiene registros asociados: ${productos} producto(s), ${comprasProductos} compra(s) de productos, ${comprasDocumentos} documento(s) de compra, ${gastosCompra} gasto(s) de compra, ${ordenesCompra} orden(es) de compra, ${comprasServicio} compra(s) de servicio, ${cuentasPorPagar} cuenta(s) por pagar, ${deudas} deuda(s), ${anticipos} anticipo(s), ${contratos} contrato(s).`,
+      'PROVEEDOR_EN_USO',
+    );
+  }
 
   await prisma.vendor.delete({ where: { vendorId } });
   revalidatePath('/busy/vendor');
