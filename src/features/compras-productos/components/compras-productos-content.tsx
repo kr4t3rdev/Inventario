@@ -2,7 +2,7 @@
 
 import { useMemo, useState, useTransition, useCallback, useRef } from 'react'
 import Link from 'next/link'
-import { Plus, ShoppingCart, Eye, Pencil, Trash2, Package, Loader2, Search } from 'lucide-react'
+import { Plus, ShoppingCart, Eye, Pencil, Trash2, Package, Loader2, Search, Ban } from 'lucide-react'
 import type { ColumnDef, PaginationState } from '@tanstack/react-table'
 import { LazyMotion, m as motion } from 'framer-motion'
 
@@ -10,7 +10,7 @@ import { DataTable } from '@/components/data-table'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
-import { getComprasProductosAction, deleteCompraProductoAction } from '@/features/compras-productos/actions'
+import { getComprasProductosAction, deleteCompraProductoAction, anularCompraProductoAction } from '@/features/compras-productos/actions'
 import type { CompraDocumento } from '@/app/models/model'
 import {
   Dialog,
@@ -36,6 +36,8 @@ export function ComprasProductosContent({ initialCompras, initialPagination }: C
   const [selectedCompra, setSelectedCompra] = useState<any>(null)
   const [isViewDialogOpen, setIsViewDialogOpen] = useState(false)
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false)
+  const [isAnularDialogOpen, setIsAnularDialogOpen] = useState(false)
+  const [motivoAnulacion, setMotivoAnulacion] = useState('')
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null)
 
   const fetchData = useCallback((page: number, limit: number, searchTerm: string) => {
@@ -88,6 +90,38 @@ export function ComprasProductosContent({ initialCompras, initialPagination }: C
         toast.error(r.error?.message || 'Error al eliminar la compra')
       }
       setIsDeleteDialogOpen(false)
+      setSelectedCompra(null)
+    })
+  }
+
+  const handleAnular = (compra: any) => {
+    setSelectedCompra(compra)
+    setMotivoAnulacion('')
+    setIsAnularDialogOpen(true)
+  }
+
+  const confirmAnular = async () => {
+    if (!selectedCompra) return
+    startTransition(async () => {
+      const r = await anularCompraProductoAction({
+        id: selectedCompra.compraDocumentoId,
+        motivo: motivoAnulacion || undefined,
+      })
+      if (r.success) {
+        toast.success('Compra anulada: el stock y la deuda quedaron revertidos')
+        const ref = await getComprasProductosAction({ page: pagination.pageIndex + 1, limit: pagination.pageSize, search: search || undefined })
+        if (ref.success) {
+          setCompras(ref.data?.compras ?? [])
+          setTotalPages(ref.data?.pagination?.totalPages ?? 1)
+        }
+      } else if (r.error?.code === 'CXP_HAS_PAYMENTS') {
+        toast.error(r.error.message)
+      } else if (r.error?.code === 'HAS_IMPACT') {
+        toast.error(r.error.message)
+      } else {
+        toast.error(r.error?.message || 'Error al anular la compra')
+      }
+      setIsAnularDialogOpen(false)
       setSelectedCompra(null)
     })
   }
@@ -160,9 +194,13 @@ export function ComprasProductosContent({ initialCompras, initialPagination }: C
       accessorKey: 'estado',
       header: 'Estado',
       cell: ({ row }) => (
-        <Badge variant={row.original.estado === 'PAGADA' ? 'default' : 'secondary'}>
-          {row.original.estado === 'PAGADA' ? 'Pagada' : 'Pendiente'}
-        </Badge>
+        row.original.estado === 'ANULADA' ? (
+          <Badge variant="destructive" className="bg-red-100 text-red-700 hover:bg-red-100">Anulada</Badge>
+        ) : (
+          <Badge variant={row.original.estado === 'PAGADA' ? 'default' : 'secondary'}>
+            {row.original.estado === 'PAGADA' ? 'Pagada' : 'Pendiente'}
+          </Badge>
+        )
       ),
     },
     {
@@ -188,6 +226,18 @@ export function ComprasProductosContent({ initialCompras, initialPagination }: C
               <Pencil className="h-4 w-4" aria-hidden="true" />
             </Button>
           </Link>
+          {row.original.estado !== 'ANULADA' && (
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={() => handleAnular(row.original)}
+              title="Anular compra (revierte stock y deuda)"
+              aria-label="Anular compra"
+              className="text-orange-600 hover:text-orange-700"
+            >
+              <Ban className="h-4 w-4" aria-hidden="true" />
+            </Button>
+          )}
           <Button
             variant="ghost"
             size="icon"
@@ -373,6 +423,52 @@ export function ComprasProductosContent({ initialCompras, initialPagination }: C
             </Button>
             <Button variant="destructive" onClick={confirmDelete}>
               Eliminar
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={isAnularDialogOpen} onOpenChange={setIsAnularDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Anular compra</DialogTitle>
+            <DialogDescription>
+              Se revierte el stock de los productos, se elimina la deuda sin pagos y el documento queda
+              visible como anulado. No se puede anular si la deuda ya tiene pagos.
+            </DialogDescription>
+          </DialogHeader>
+          {selectedCompra && (
+            <div className="py-4 space-y-3">
+              <p className="text-sm">
+                <span className="font-medium">Proveedor:</span> {selectedCompra.proveedor?.nombre || 'N/A'}
+              </p>
+              <p className="text-sm">
+                <span className="font-medium">Factura:</span> {selectedCompra.numeroFactura || 'S/N'}
+              </p>
+              <p className="text-sm">
+                <span className="font-medium">Total:</span> ${selectedCompra.total.toLocaleString()} {selectedCompra.moneda ?? 'CUP'}
+              </p>
+              <div className="pt-2">
+                <label htmlFor="motivo-anulacion" className="text-sm font-medium">
+                  Motivo (opcional)
+                </label>
+                <Input
+                  id="motivo-anulacion"
+                  value={motivoAnulacion}
+                  onChange={(e) => setMotivoAnulacion(e.target.value)}
+                  placeholder="Factura duplicada, error de captura…"
+                  className="mt-1"
+                  maxLength={500}
+                />
+              </div>
+            </div>
+          )}
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setIsAnularDialogOpen(false)}>
+              Cancelar
+            </Button>
+            <Button variant="destructive" onClick={confirmAnular}>
+              Anular compra
             </Button>
           </DialogFooter>
         </DialogContent>

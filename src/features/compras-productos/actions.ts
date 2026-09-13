@@ -6,6 +6,7 @@
 'use server';
 
 import { revalidatePath } from 'next/cache';
+import { z } from 'zod';
 import { withAction, ActionError } from '@/lib/server-actions';
 import { prisma } from '@/lib/prisma';
 import { requireFeature, requireTenant } from '@/lib/services/tenant-scope';
@@ -156,7 +157,7 @@ export const createCompraProductoAction = withAction(async (input: CreateCompraP
 
         const facturadoPorProducto = new Map<string, number>();
         const facturasPrevias = await tx.compraDocumento.findMany({
-          where: { ordenCompraId: parsed.ordenCompraId, tenantId, deletedAt: null },
+          where: { ordenCompraId: parsed.ordenCompraId, tenantId, deletedAt: null, estado: { not: 'ANULADA' } },
           select: { items: { select: { productoId: true, cantidad: true } } },
         });
         for (const factura of facturasPrevias) {
@@ -519,7 +520,6 @@ export const deleteCompraProductoAction = withAction(async (id: string, user: Au
     },
   });
   if (!compra) throw new ActionError('Compra no encontrada', 'NOT_FOUND');
-
   if (compra.gastoCompraId) {
     throw new ActionError(
       'No se puede eliminar la compra porque tiene gasto contable asociado. Revierta el gasto desde Contabilidad primero.',
@@ -549,7 +549,7 @@ export const deleteCompraProductoAction = withAction(async (id: string, user: Au
     );
   }
 
-  if ((compra.items?.length ?? 0) > 0) {
+  if ((compra.items?.length ?? 0) > 0 && compra.estado !== 'ANULADA') {
     throw new ActionError(
       'No se puede eliminar la compra porque ya impactó inventario. Use una anulación o reversión en lugar de borrar.',
       'HAS_INVENTORY_IMPACT'
@@ -567,4 +567,140 @@ export const deleteCompraProductoAction = withAction(async (id: string, user: Au
 
   revalidatePath('/busy/compras-productos');
   return { id, eliminado: true };
+});
+
+const anularCompraSchema = z.object({
+  id: z.string().min(1),
+  motivo: z.string().max(500).optional(),
+});
+
+/**
+ * @description Anula una compra de productos: revierte stock y kardex (las
+ * ligadas a orden de compra no, su stock lo movió la recepción), elimina la
+ * CxP sin pagos, deja el gasto como borrado lógico y marca el documento como
+ * ANULADA. Las anuladas no alimentan FIFO ni el pendiente de facturar por OC.
+ *
+ * Limitación documentada: el precios de costo ponderado del producto no se
+ * recalcula hacia atrás (el kardex registra la reversa con el costo original).
+ *
+ * @param {{ id: string; motivo?: string }} input - Compra a anular y motivo opcional.
+ * @returns {{ id: string; estado: 'ANULADA' }} Documento anulado.
+ */
+export const anularCompraProductoAction = withAction(async (input: { id: string; motivo?: string }, user: AuthenticatedUser) => {
+  const parsed = anularCompraSchema.parse(input);
+  const tenantId = requireTenant(user);
+
+  const compra = await prisma.compraDocumento.findFirst({
+    where: { compraDocumentoId: parsed.id, tenantId, deletedAt: null },
+    include: {
+      items: {
+        include: { producto: { select: { id: true, almacenId: true, nombre: true } } },
+      },
+      cuentaPorPagar: {
+        include: {
+          pagos: { select: { pagoCuentaPorPagarId: true } },
+          reconciliaciones: { select: { reconciliacionId: true } },
+        },
+      },
+      gastoCompra: { include: { reconciliaciones: { select: { reconciliacionId: true } } } },
+    },
+  });
+  if (!compra) throw new ActionError('Compra no encontrada', 'NOT_FOUND');
+  if (compra.estado === 'ANULADA') {
+    throw new ActionError('La compra ya está anulada', 'VALIDATION_ERROR');
+  }
+
+  const anticipoMovimiento = await prisma.anticipoMovimiento.findFirst({
+    where: {
+      documentoDestinoId: parsed.id,
+      contexto: 'COMPRA_PRODUCTO',
+      anticipo: { tenantId },
+    },
+  });
+  if (anticipoMovimiento) {
+    throw new ActionError(
+      'No se puede anular la compra porque tiene anticipo aplicado. Revierta el anticipo primero.',
+      'HAS_IMPACT'
+    );
+  }
+
+  const resultado = await prisma.$transaction(async (tx: any) => {
+    // CAS: marcar ANULADA primero evita que dos anulaciones concurrentes
+    // reviertan el stock dos veces.
+    const marcada = await tx.compraDocumento.updateMany({
+      where: { compraDocumentoId: compra.compraDocumentoId, tenantId, deletedAt: null, estado: { not: 'ANULADA' } },
+      data: {
+        estado: 'ANULADA',
+        gastoCompraId: null,
+        cuentaPorPagarId: null,
+        updatedById: user.userId,
+        ...(parsed.motivo
+          ? { descripcion: `${compra.descripcion ? compra.descripcion + ' — ' : ''}Anulada: ${parsed.motivo}` }
+          : {}),
+      },
+    });
+    if (marcada.count !== 1) {
+      throw new ActionError('La compra ya está anulada', 'VALIDATION_ERROR');
+    }
+
+    if (compra.cuentaPorPagar) {
+      const cxp = compra.cuentaPorPagar;
+      const tienePagos =
+        cxp.pagos.length > 0 ||
+        (cxp.reconciliaciones?.length ?? 0) > 0 ||
+        Number(cxp.montoPagado ?? 0) > 0;
+      if (tienePagos) {
+        throw new ActionError(
+          'No se puede anular la compra porque la cuenta por pagar tiene pagos registrados. Revierta los pagos desde Contabilidad primero.',
+          'CXP_HAS_PAYMENTS'
+        );
+      }
+      // Sin pagos la CxP es solo un pasivo pendiente: se elimina.
+      await tx.cuentaPorPagar.delete({ where: { cuentaPorPagarId: cxp.cuentaPorPagarId } });
+    }
+
+    if (compra.gastoCompra) {
+      if ((compra.gastoCompra.reconciliaciones?.length ?? 0) > 0) {
+        throw new ActionError(
+          'No se puede anular la compra porque el gasto está reconciliado. Revise la reconciliación primero.',
+          'HAS_IMPACT'
+        );
+      }
+      await tx.gastoCompra.update({
+        where: { gastoCompraId: compra.gastoCompra.gastoCompraId },
+        data: { deletedAt: new Date() },
+      });
+    }
+
+    if (!compra.ordenCompraId) {
+      for (const [idx, item] of compra.items.entries()) {
+        if (!item.producto?.almacenId) continue;
+        await upsertStockUbicacion(tx, {
+          tenantId,
+          productoId: item.productoId,
+          tipoUbicacion: 'almacen',
+          ubicacionId: item.producto.almacenId,
+          modo: 'increment',
+          delta: -item.cantidad,
+        });
+        await registrarMovimiento(tx, {
+          tenantId,
+          productoId: item.productoId,
+          tipoOrigen: 'AJUSTE',
+          origenId: compra.compraDocumentoId,
+          tipoUbicacion: 'almacen',
+          ubicacionId: item.producto.almacenId,
+          cantidad: -item.cantidad,
+          costoUnitario: item.precioUnitario,
+          secuencia: `ANULACION-ITEM-${idx}`,
+          creadoPorId: user.userId,
+        });
+      }
+    }
+
+    return { id: compra.compraDocumentoId, estado: 'ANULADA' };
+  });
+
+  revalidatePath('/busy/compras-productos');
+  return resultado;
 });

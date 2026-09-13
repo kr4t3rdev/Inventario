@@ -37,6 +37,32 @@ describe("allocateFifoForVentaItem", () => {
 		tx = createMockTx();
 	});
 
+	it("excluye compras anuladas o eliminadas del pool FIFO (B-02.2)", async () => {
+		tx.compraDocumentoItem.findMany.mockResolvedValue([
+			{ compraDocumentoItemId: "c1", cantidad: 100 },
+		]);
+		tx.purchaseAllocation.groupBy.mockResolvedValue([]);
+
+		await allocateFifoForVentaItem(tx as any, {
+			tenantId: "t1",
+			ventaItemId: "v1",
+			productoId: "p1",
+			cantidad: 10,
+		});
+
+		expect(tx.compraDocumentoItem.findMany).toHaveBeenCalledWith(
+			expect.objectContaining({
+				where: expect.objectContaining({
+					compraDocumento: expect.objectContaining({
+						tenantId: "t1",
+						deletedAt: null,
+						estado: { not: "ANULADA" },
+					}),
+				}),
+			}),
+		);
+	});
+
 	it("debe asignar a la compra más antigua cuando hay stock suficiente", async () => {
 		tx.compraDocumentoItem.findMany.mockResolvedValue([
 			{ compraDocumentoItemId: "c1", cantidad: 100 },

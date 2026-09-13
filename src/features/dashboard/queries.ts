@@ -214,7 +214,7 @@ export async function getDashboardStatsQuery(
       },
     }),
     prisma.gastoCompra.findMany({
-      where: { tenantId },
+      where: { tenantId, deletedAt: null },
       select: { total: true, createdAt: true },
     }),
     prisma.stockUbicacion.findMany({

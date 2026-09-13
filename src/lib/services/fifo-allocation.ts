@@ -46,13 +46,15 @@ export async function allocateFifoForVentaItem(
 
 	if (cantidad <= 0) return;
 
-	// 1. Obtener CompraDocumentoItem del producto ordenadas por fecha ASC
+	// 1. Obtener CompraDocumentoItem del producto ordenadas por fecha ASC.
+	// Las compras anuladas devolvieron su stock: no pueden alimentar el FIFO.
 	const purchaseItems = await tx.compraDocumentoItem.findMany({
 		where: {
 			productoId,
 			compraDocumento: {
 				tenantId,
 				deletedAt: null,
+				estado: { not: "ANULADA" },
 			},
 		},
 		orderBy: { createdAt: "asc" },
@@ -137,7 +139,7 @@ export async function getAvailableStock(
 	const [compraItem, allocatedResult] = await Promise.all([
 		tx.compraDocumentoItem.findUnique({
 			where: { compraDocumentoItemId },
-			select: { cantidad: true },
+			select: { cantidad: true, compraDocumento: { select: { estado: true, deletedAt: true } } },
 		}),
 		tx.purchaseAllocation.aggregate({
 			where: { compraDocumentoItemId },
@@ -146,6 +148,8 @@ export async function getAvailableStock(
 	]);
 
 	if (!compraItem) return 0;
+	// Una compra anulada o eliminada ya no tiene stock disponible para asignar.
+	if (compraItem.compraDocumento?.deletedAt || compraItem.compraDocumento?.estado === "ANULADA") return 0;
 
 	const originalCantidad = compraItem.cantidad;
 	const allocated = allocatedResult._sum.cantidad ?? 0;
