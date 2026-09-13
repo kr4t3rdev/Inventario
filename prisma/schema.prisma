@@ -1566,12 +1566,15 @@ model VentaServicios {
   reconciliado     Boolean?
   clienteId        String?
   ventaId          String?
+  // B-06: CONTADO no genera deuda; CREDITO crea su cuenta por cobrar.
+  condicionPago    String                   @default("CONTADO")
   createdAt        DateTime                 @default(now())
   updatedAt        DateTime                 @updatedAt
   reconciliaciones ReconciliacionServicio[]
   cliente          Cliente?                 @relation(fields: [clienteId], references: [clienteId], onDelete: Cascade)
   servicio         Servicios                @relation(fields: [servicioId], references: [servicioId], onDelete: Cascade)
   venta            Venta?                   @relation(fields: [ventaId], references: [ventaId], onDelete: SetNull)
+  cuentaPorCobrar  CuentaPorCobrar?
   tenant           Tenant                   @relation(fields: [tenantId], references: [tenantId])
 
   @@index([tenantId])
@@ -2404,10 +2407,12 @@ model CuentaPorCobrar {
   createdAt        DateTime              @default(now())
   updatedAt        DateTime              @updatedAt
   tipoCuenta       String?
+  ventaServicioId  String?               @unique
   cliente          Cliente               @relation(fields: [clienteId], references: [clienteId])
   factura          Factura?              @relation(fields: [facturaId], references: [idFactura])
   tenant           Tenant                @relation(fields: [tenantId], references: [tenantId])
   prestamoCash     PrestamoCash?
+  ventaServicio    VentaServicios?       @relation(fields: [ventaServicioId], references: [ventaServicioId])
 
   @@index([tenantId])
 }

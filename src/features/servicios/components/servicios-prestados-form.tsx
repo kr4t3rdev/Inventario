@@ -31,8 +31,13 @@ const schema = z.object({
   clienteId: z.string().optional(),
   cantidad: z.coerce.number().int().positive(),
   costo: z.coerce.number().int().optional().default(0),
-  formaCobro: z.enum(['COBRO_DIRECTO', FORMA_COBRO_ANTICIPO]),
+  formaCobro: z.enum(['COBRO_DIRECTO', FORMA_COBRO_ANTICIPO, 'CREDITO']),
+  fechaVencimiento: z.string().optional(),
   observaciones: z.string().optional(),
+}).superRefine((data, ctx) => {
+  if (data.formaCobro === 'CREDITO' && !data.clienteId) {
+    ctx.addIssue({ code: z.ZodIssueCode.custom, path: ['clienteId'], message: 'La venta a crédito requiere un cliente' })
+  }
 })
 
 type FormValues = z.infer<typeof schema>
@@ -62,6 +67,7 @@ export function ServiciosPrestadosForm({ initialServicios }: ServiciosPrestadosF
       cantidad: 1,
       costo: 0,
       formaCobro: 'COBRO_DIRECTO',
+      fechaVencimiento: '',
       observaciones: '',
     },
   })
@@ -89,6 +95,8 @@ export function ServiciosPrestadosForm({ initialServicios }: ServiciosPrestadosF
         costo: values.costo ?? 0,
         observaciones: values.observaciones,
         anticipos: values.formaCobro === FORMA_COBRO_ANTICIPO ? anticipoAllocations : undefined,
+        condicionPago: values.formaCobro === 'CREDITO' ? 'CREDITO' : 'CONTADO',
+        fechaVencimiento: values.formaCobro === 'CREDITO' && values.fechaVencimiento ? values.fechaVencimiento : undefined,
       })
       if (!result.success) {
         throw new Error(result.error?.message ?? 'Error desconocido')
@@ -347,6 +355,7 @@ export function ServiciosPrestadosForm({ initialServicios }: ServiciosPrestadosF
                           <SelectContent>
                             <SelectItem value='COBRO_DIRECTO'>Cobro directo</SelectItem>
                             <SelectItem value={FORMA_COBRO_ANTICIPO}>Cobro con anticipo</SelectItem>
+                            <SelectItem value='CREDITO'>A crédito (cuenta por cobrar)</SelectItem>
                           </SelectContent>
                         </Select>
                         <FormDescription className='text-slate-500 dark:text-slate-500'>
@@ -358,6 +367,24 @@ export function ServiciosPrestadosForm({ initialServicios }: ServiciosPrestadosF
                   />
                 </motion.div>
                 </div>
+
+                {formaCobro === 'CREDITO' && (
+                  <div className='space-y-2'>
+                    <label htmlFor='fecha-vencimiento-servicio' className='text-sm font-medium text-slate-700 dark:text-slate-300'>
+                      Fecha de vencimiento (opcional)
+                    </label>
+                    <Input
+                      id='fecha-vencimiento-servicio'
+                      type='date'
+                      value={form.watch('fechaVencimiento') ?? ''}
+                      onChange={(e) => form.setValue('fechaVencimiento', e.target.value, { shouldDirty: true })}
+                      className={servicioInputClassName}
+                    />
+                    <p className='text-xs text-muted-foreground'>
+                      La deuda queda registrada como cuenta por cobrar del cliente; lo aplicado con anticipos se descuenta.
+                    </p>
+                  </div>
+                )}
 
                 {formaCobro === FORMA_COBRO_ANTICIPO && (
                   <AnticipoSelector

@@ -97,6 +97,14 @@ export const createVentaServicioAction = withAction(withPeriodValidation(
     if (lineasProducto.length > 0) {
       throw new ActionError('Las líneas de producto deben registrarse por /api/ventas', 'PRODUCT_LINE_NOT_SUPPORTED_IN_THIS_ENDPOINT');
     }
+    if (payload.condicionPago === 'CREDITO' && !payload.clienteId) {
+      throw new ActionError('Una venta a crédito requiere un cliente (quien queda debe el dinero)', 'VALIDATION_ERROR');
+    }
+
+    const fechaVencimiento = payload.fechaVencimiento ? new Date(payload.fechaVencimiento) : null;
+    if (fechaVencimiento && Number.isNaN(fechaVencimiento.getTime())) {
+      throw new ActionError('La fecha de vencimiento no es válida', 'VALIDATION_ERROR');
+    }
 
     const serviciosMonedas = await assertServiciosDelTenant(tenantId, lineasServicio.map((l) => l.servicioId!));
     await assertClienteDelTenant(tenantId, payload.clienteId);
@@ -116,10 +124,28 @@ export const createVentaServicioAction = withAction(withPeriodValidation(
             precioUnitario,
             observaciones: linea.observaciones ?? payload.observaciones ?? null,
             clienteId: payload.clienteId ?? null,
+            condicionPago: payload.condicionPago,
           },
         });
       })
     );
+
+    // B-06: crédito en modo mixto → una CxC por línea (cada fila es una venta).
+    if (payload.condicionPago === 'CREDITO') {
+      await prisma.$transaction((created as Array<{ ventaServicioId: string; total: number }>).map((venta) =>
+        prisma.cuentaPorCobrar.create({
+          data: {
+            tenantId,
+            ventaServicioId: venta.ventaServicioId,
+            clienteId: payload.clienteId!,
+            montoDeuda: venta.total,
+            estado: 'PENDIENTE',
+            tipoCuenta: 'VENTA_SERVICIO',
+            fechaVencimiento,
+          },
+        }),
+      ));
+    }
 
     revalidatePath('/busy/venta-servicios');
     return {
@@ -139,18 +165,28 @@ export const createVentaServicioAction = withAction(withPeriodValidation(
   const precioUnitario = catalogoServicio.precio;
   await assertClienteDelTenant(tenantId, data.clienteId);
 
+  if (data.condicionPago === 'CREDITO' && !data.clienteId) {
+    throw new ActionError('Una venta a crédito requiere un cliente (quien queda debe el dinero)', 'VALIDATION_ERROR');
+  }
+  const fechaVencimiento = data.fechaVencimiento ? new Date(data.fechaVencimiento) : null;
+  if (fechaVencimiento && Number.isNaN(fechaVencimiento.getTime())) {
+    throw new ActionError('La fecha de vencimiento no es válida', 'VALIDATION_ERROR');
+  }
+
   const resultado = await prisma.$transaction(async (tx) => {
+    const ventaTotal = data.cantidad * precioUnitario;
     const ventaServicio = await tx.ventaServicios.create({
       data: {
         tenantId,
         servicioId: data.servicioId,
         cantidad: data.cantidad,
         costo: data.costo ?? 0,
-        total: data.cantidad * precioUnitario,
+        total: ventaTotal,
         moneda: monedaServicio,
         precioUnitario,
         observaciones: data.observaciones ?? null,
         clienteId: data.clienteId ?? null,
+        condicionPago: data.condicionPago,
       },
     });
 
@@ -255,6 +291,28 @@ export const createVentaServicioAction = withAction(withPeriodValidation(
             },
           });
         }
+      }
+    }
+
+    // B-06: venta a crédito → cuenta por cobrar por el remanente tras anticipos.
+    if (data.condicionPago === 'CREDITO') {
+      const cobradoAnticipo = allocationsResult.reduce(
+        (suma: number, a: { montoAplicado: number }) => suma + Number(a.montoAplicado || 0),
+        0,
+      );
+      const remanente = ventaTotal - cobradoAnticipo;
+      if (remanente > 0) {
+        await tx.cuentaPorCobrar.create({
+          data: {
+            tenantId,
+            ventaServicioId: ventaServicio.ventaServicioId,
+            clienteId: data.clienteId!,
+            montoDeuda: remanente,
+            estado: 'PENDIENTE',
+            tipoCuenta: 'VENTA_SERVICIO',
+            fechaVencimiento,
+          },
+        });
       }
     }
 

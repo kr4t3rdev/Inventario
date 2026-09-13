@@ -30,6 +30,9 @@ export const ventaMixtaSchema = z.object({
   clienteId: z.string().optional().nullable(),
   observaciones: z.string().optional().nullable(),
   lineas: z.array(lineaMixtaSchema).min(1),
+  // B-06: CONTADO (default) cobra al momento; CREDITO crea cuenta por cobrar.
+  condicionPago: z.enum(['CONTADO', 'CREDITO']).optional().default('CONTADO'),
+  fechaVencimiento: z.string().optional().nullable(),
 }).strict();
 
 export const ventaServicioLegacySchema = z.object({
@@ -39,6 +42,9 @@ export const ventaServicioLegacySchema = z.object({
   observaciones: z.string().optional().nullable(),
   clienteId: z.string().optional().nullable(),
   anticipos: z.array(anticipoAllocationSchema).optional(),
+  // B-06: CONTADO (default) cobra al momento; CREDITO crea cuenta por cobrar.
+  condicionPago: z.enum(['CONTADO', 'CREDITO']).optional().default('CONTADO'),
+  fechaVencimiento: z.string().optional().nullable(),
   // Nota: `precioUnitario` y `total` se resuelven en el servidor desde el
   // catálogo (cantidad × precio); no se aceptan del cliente.
 }).strict();
