@@ -191,7 +191,7 @@ export async function getWandaDashboardHandler(request: NextRequest) {
         }
       > = {}
 
-      const colores = ["#10B981", "#3B82F6", "#F59E0B", "#EF4444", "#8B5CF6", "#EC4899"]
+      const colores = ["var(--chart-income-light)", "var(--chart-primary-light)", "var(--chart-accent)", "var(--chart-expense-light)", "var(--chart-series-violet)", "var(--chart-series-pink)"]
 
       reconciliacionesVentas.forEach((rec) => {
         const tipoPagoNombre = rec.tipoPago.nombre
@@ -294,9 +294,9 @@ export async function getWandaDashboardHandler(request: NextRequest) {
         string,
         { inicio: number; fin: number; total: number; cantidad: number; color: string }
       > = {
-        Mañana: { inicio: 6, fin: 14, total: 0, cantidad: 0, color: "#FCD34D" },
-        Tarde: { inicio: 14, fin: 22, total: 0, cantidad: 0, color: "#F97316" },
-        Noche: { inicio: 22, fin: 6, total: 0, cantidad: 0, color: "#1E40AF" },
+        Mañana: { inicio: 6, fin: 14, total: 0, cantidad: 0, color: "var(--chart-shift-morning)" },
+        Tarde: { inicio: 14, fin: 22, total: 0, cantidad: 0, color: "var(--chart-shift-afternoon)" },
+        Noche: { inicio: 22, fin: 6, total: 0, cantidad: 0, color: "var(--chart-shift-night)" },
       }
 
       const procesarVenta = (fecha: Date, total: number) => {
@@ -350,7 +350,7 @@ export async function getWandaDashboardHandler(request: NextRequest) {
         }
       > = {}
 
-      const colores = ["#10B981", "#3B82F6", "#F59E0B", "#EF4444", "#8B5CF6"]
+      const colores = ["var(--chart-income-light)", "var(--chart-primary-light)", "var(--chart-accent)", "var(--chart-expense-light)", "var(--chart-series-violet)"]
 
       monedas.forEach((m, index) => {
         monedasTotales[m.codigo] = {

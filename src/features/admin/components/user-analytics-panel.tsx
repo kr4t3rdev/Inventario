@@ -94,7 +94,7 @@ const TOOLTIP_STYLE = {
 	borderRadius: "0.75rem",
 };
 
-const PIE_COLORS = ["#3b82f6", "#f59e0b", "#6b7280"];
+const PIE_COLORS = ["var(--chart-primary-light)", "var(--chart-accent)", "var(--chart-neutral)"];
 
 function monthTickFormatter(value: string): string {
 	const [, month] = value.split("-");
@@ -371,8 +371,8 @@ export function UserAnalyticsPanel(): React.JSX.Element {
 										x2="0"
 										y2="1"
 									>
-										<stop offset="5%" stopColor="#22c55e" stopOpacity={0.8} />
-										<stop offset="95%" stopColor="#22c55e" stopOpacity={0.1} />
+										<stop offset="5%" stopColor="var(--chart-success-strong)" stopOpacity={0.8} />
+										<stop offset="95%" stopColor="var(--chart-success-strong)" stopOpacity={0.1} />
 									</linearGradient>
 									<linearGradient
 										id="overview-created"
@@ -381,8 +381,8 @@ export function UserAnalyticsPanel(): React.JSX.Element {
 										x2="0"
 										y2="1"
 									>
-										<stop offset="5%" stopColor="#3b82f6" stopOpacity={0.8} />
-										<stop offset="95%" stopColor="#3b82f6" stopOpacity={0.1} />
+										<stop offset="5%" stopColor="var(--chart-primary-light)" stopOpacity={0.8} />
+										<stop offset="95%" stopColor="var(--chart-primary-light)" stopOpacity={0.1} />
 									</linearGradient>
 								</defs>
 								<CartesianGrid vertical={false} />
@@ -400,7 +400,7 @@ export function UserAnalyticsPanel(): React.JSX.Element {
 									type="monotone"
 									name="Activos"
 									dataKey="activeUsersEnd"
-									stroke="#22c55e"
+									stroke="var(--chart-success-strong)"
 									strokeWidth={2}
 									fill="url(#overview-active)"
 									fillOpacity={0.62}
@@ -411,7 +411,7 @@ export function UserAnalyticsPanel(): React.JSX.Element {
 									type="monotone"
 									name="Creados"
 									dataKey="usersCreated"
-									stroke="#3b82f6"
+									stroke="var(--chart-primary-light)"
 									strokeWidth={2}
 									fill="url(#overview-created)"
 									fillOpacity={0.62}
@@ -548,9 +548,9 @@ export function UserAnalyticsPanel(): React.JSX.Element {
 							<Line
 								type="monotone"
 								dataKey="growth"
-								stroke="#22c55e"
+								stroke="var(--chart-success-strong)"
 								strokeWidth={2.4}
-								dot={{ fill: "#22c55e", strokeWidth: 2 }}
+								dot={{ fill: "var(--chart-success-strong)", strokeWidth: 2 }}
 								isAnimationActive={!shouldReduceMotion}
 								animationDuration={640}
 							/>
@@ -585,8 +585,8 @@ export function UserAnalyticsPanel(): React.JSX.Element {
 										x2="0"
 										y2="1"
 									>
-										<stop offset="5%" stopColor="#22c55e" stopOpacity={0.72} />
-										<stop offset="95%" stopColor="#22c55e" stopOpacity={0.08} />
+										<stop offset="5%" stopColor="var(--chart-success-strong)" stopOpacity={0.72} />
+										<stop offset="95%" stopColor="var(--chart-success-strong)" stopOpacity={0.08} />
 									</linearGradient>
 									<linearGradient
 										id="activity-logout"
@@ -595,8 +595,8 @@ export function UserAnalyticsPanel(): React.JSX.Element {
 										x2="0"
 										y2="1"
 									>
-										<stop offset="5%" stopColor="#ef4444" stopOpacity={0.72} />
-										<stop offset="95%" stopColor="#ef4444" stopOpacity={0.08} />
+										<stop offset="5%" stopColor="var(--chart-expense-light)" stopOpacity={0.72} />
+										<stop offset="95%" stopColor="var(--chart-expense-light)" stopOpacity={0.08} />
 									</linearGradient>
 								</defs>
 								<CartesianGrid vertical={false} strokeDasharray="4 4" />
@@ -614,7 +614,7 @@ export function UserAnalyticsPanel(): React.JSX.Element {
 									type="monotone"
 									name="Login"
 									dataKey="logins"
-									stroke="#22c55e"
+									stroke="var(--chart-success-strong)"
 									strokeWidth={2}
 									fill="url(#activity-login)"
 									fillOpacity={0.7}
@@ -625,7 +625,7 @@ export function UserAnalyticsPanel(): React.JSX.Element {
 									type="monotone"
 									name="Logout"
 									dataKey="logouts"
-									stroke="#ef4444"
+									stroke="var(--chart-expense-light)"
 									strokeWidth={2}
 									fill="url(#activity-logout)"
 									fillOpacity={0.65}
@@ -671,9 +671,9 @@ export function UserAnalyticsPanel(): React.JSX.Element {
 								<Line
 									type="monotone"
 									dataKey="blockedUsers"
-									stroke="#ef4444"
+									stroke="var(--chart-expense-light)"
 									strokeWidth={2.4}
-									dot={{ fill: "#ef4444", strokeWidth: 2 }}
+									dot={{ fill: "var(--chart-expense-light)", strokeWidth: 2 }}
 									isAnimationActive={!shouldReduceMotion}
 									animationDuration={640}
 								/>
@@ -699,12 +699,12 @@ export function UserAnalyticsPanel(): React.JSX.Element {
 							>
 								<defs>
 									<linearGradient id="bar-active" x1="0" y1="0" x2="0" y2="1">
-										<stop offset="5%" stopColor="#22c55e" stopOpacity={0.82} />
-										<stop offset="95%" stopColor="#22c55e" stopOpacity={0.18} />
+										<stop offset="5%" stopColor="var(--chart-success-strong)" stopOpacity={0.82} />
+										<stop offset="95%" stopColor="var(--chart-success-strong)" stopOpacity={0.18} />
 									</linearGradient>
 									<linearGradient id="bar-inactive" x1="0" y1="0" x2="0" y2="1">
-										<stop offset="5%" stopColor="#6b7280" stopOpacity={0.82} />
-										<stop offset="95%" stopColor="#6b7280" stopOpacity={0.18} />
+										<stop offset="5%" stopColor="var(--chart-neutral)" stopOpacity={0.82} />
+										<stop offset="95%" stopColor="var(--chart-neutral)" stopOpacity={0.18} />
 									</linearGradient>
 								</defs>
 								<CartesianGrid vertical={false} />
@@ -786,7 +786,7 @@ export function UserAnalyticsPanel(): React.JSX.Element {
 							<Bar
 								dataKey="admin"
 								name="Admin"
-								fill="#3b82f6"
+								fill="var(--chart-primary-light)"
 								radius={[8, 8, 0, 0]}
 								isAnimationActive={!shouldReduceMotion}
 								animationDuration={620}
@@ -794,7 +794,7 @@ export function UserAnalyticsPanel(): React.JSX.Element {
 							<Bar
 								dataKey="regularUser"
 								name="Usuario legado"
-								fill="#6b7280"
+								fill="var(--chart-neutral)"
 								radius={[8, 8, 0, 0]}
 								isAnimationActive={!shouldReduceMotion}
 								animationDuration={620}

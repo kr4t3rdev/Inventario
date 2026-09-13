@@ -60,15 +60,15 @@ const chartConfig = {
   ingresos: {
     label: 'Ingresos',
     theme: {
-      light: '#16a34a',
-      dark: '#22c55e',
+      light: 'var(--chart-success)',
+      dark: 'var(--chart-success)',
     },
   },
   gastos: {
     label: 'Gastos',
     theme: {
-      light: '#dc2626',
-      dark: '#ef4444',
+      light: 'var(--chart-danger)',
+      dark: 'var(--chart-danger)',
     },
   },
 } satisfies ChartConfig
