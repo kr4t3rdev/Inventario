@@ -79,7 +79,7 @@ interface SalarioData {
   salario: number
   bonificaciones: number | null
   deducciones: number | null
-  horasExtras: number | null
+  montoHorasExtras: number | null
   createdAt: Date
 }
 
@@ -190,7 +190,7 @@ export async function getDashboardStatsQuery(
     }),
     prisma.pagosalario.findMany({
       where: { tenantId },
-      select: { salario: true, bonificaciones: true, deducciones: true, horasExtras: true, createdAt: true },
+      select: { salario: true, bonificaciones: true, deducciones: true, montoHorasExtras: true, createdAt: true },
     }),
     prisma.transferencia.findMany({
       where: { tenantId },

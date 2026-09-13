@@ -418,7 +418,10 @@ export interface GastoPendiente {
 		salarioBases?: number;
 		bonificaciones?: number;
 		deducciones?: number;
+		/** Cantidad de horas extras (unidad: horas). */
 		horasExtras?: number;
+		/** Dinero correspondiente a las horas extras (unidad: moneda). */
+		montoHorasExtras?: number;
 		tipo?: string;
 		proveedor?: string;
 		descripcionOriginal?: string;

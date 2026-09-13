@@ -269,12 +269,16 @@ export function NominaEmpleadoSection({
               <Label htmlFor="horasExtras" className="text-right">
                 Horas Extras
               </Label>
-              <Input
-                id="horasExtras"
-                type="number"
-                className="col-span-3"
-                {...register("horasExtras", { valueAsNumber: true })}
-              />
+              <div className="col-span-3 space-y-1">
+                <Input
+                  id="horasExtras"
+                  type="number"
+                  {...register("horasExtras", { valueAsNumber: true })}
+                />
+                <p className="text-xs text-muted-foreground">
+                  Cantidad de horas; se pagan a 1.5× la tarifa horaria del salario base.
+                </p>
+              </div>
             </div>
             <div className="grid grid-cols-4 items-center gap-4">
               <Label htmlFor="observaciones" className="text-right">

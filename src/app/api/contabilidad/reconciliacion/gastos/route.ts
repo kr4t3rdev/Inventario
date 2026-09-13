@@ -6,6 +6,7 @@ import { validarEscrituraPeriodo, extraerFechaDeBody } from '@/lib/services/vali
 import {
   reconciliarGastoAdapter,
 } from '@/features/contabilidad/api/reconciliacion-gastos-adapter'
+import { getPayrollPaymentAmount } from '@/features/pago-salario/payroll-amounts'
 import { z } from 'zod'
 
 // POST - Reconciliar gasto con cuenta(s) bancaria(s)
@@ -126,7 +127,8 @@ export async function GET(request: NextRequest) {
           salario: true,
           bonificaciones: true,
           deducciones: true,
-          horasExtras: true,
+          horasExtrasHoras: true,
+          montoHorasExtras: true,
           periodo: true,
           createdAt: true,
           updatedAt: true,
@@ -143,7 +145,7 @@ export async function GET(request: NextRequest) {
 
       // Agregar información de reconciliación para salarios
       for (const pagoSalario of empleadosConSalarios) {
-        const salarioTotal = pagoSalario.salario + (pagoSalario.bonificaciones || 0) + (pagoSalario.horasExtras || 0) - (pagoSalario.deducciones || 0)
+        const salarioTotal = getPayrollPaymentAmount(pagoSalario)
 
         gastosPendientes.push({
           tipo: 'salario',
@@ -161,7 +163,8 @@ export async function GET(request: NextRequest) {
             salarioBases: pagoSalario.salario,
             bonificaciones: pagoSalario.bonificaciones,
             deducciones: pagoSalario.deducciones,
-            horasExtras: pagoSalario.horasExtras
+            horasExtras: pagoSalario.horasExtrasHoras,
+            montoHorasExtras: pagoSalario.montoHorasExtras
           },
           createdAt: pagoSalario.createdAt,
           updatedAt: pagoSalario.updatedAt

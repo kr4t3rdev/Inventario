@@ -15,8 +15,10 @@ import type { AuthenticatedUser } from "@/lib/auth-middleware";
 import { Decimal } from "@prisma/client/runtime/library";
 import { z } from "zod";
 import {
+	calcularMontoHorasExtras,
 	calculatePayrollFormulas,
 	getPayrollConfig,
+	STANDARD_MONTHLY_HOURS,
 } from "@/lib/payroll-formulas";
 
 export const getEmpleadosAction = withAction(
@@ -659,23 +661,34 @@ export const calculateNominaAction = withAction(
 					}
 				}
 
-				const standardHours = 192;
+				const standardHours = STANDARD_MONTHLY_HOURS;
 				const bonificaciones = 0;
-				const hoursWorked = totalHours > 0 ? totalHours : standardHours;
+				// Las horas extras no entran al devengado base: se pagan aparte a 1.5×
+				// en `montoHorasExtras` (B-05). Sin asistencias se asume mes completo.
+				const baseHoursWorked =
+					totalHours > 0 ? totalHours - overtimeHours : standardHours;
 				const devengadoReal =
-					(hoursWorked / standardHours) * empleado.salarioBases + bonificaciones;
+					(baseHoursWorked / standardHours) * empleado.salarioBases + bonificaciones;
 				const calculations = calculatePayrollFormulas(
 					devengadoReal,
 					payrollConfig,
+				);
+				const horasExtrasHoras = Math.round(overtimeHours);
+				const montoHorasExtras = calcularMontoHorasExtras(
+					horasExtrasHoras,
+					empleado.salarioBases,
 				);
 
 				const payroll = await prisma.pagosalario.create({
 					data: {
 						empleadoId: empleado.empleadoId,
-						salario: Math.round(calculations.netoACobrar),
+						// Bruto del período (base imponible); las deducciones van aparte,
+						// en su campo, para no descontarlas dos veces al total.
+						salario: Math.round(calculations.baseImponible),
 						bonificaciones,
 						deducciones: Math.round(calculations.deducciones.total),
-						horasExtras: Math.round(overtimeHours),
+						horasExtrasHoras,
+						montoHorasExtras,
 						periodo,
 						tenantId,
 						observaciones:
@@ -683,6 +696,9 @@ export const calculateNominaAction = withAction(
 							`Deducciones: 5%($${calculations.deducciones.p5.toFixed(2)}), 3%($${calculations.deducciones.p3.toFixed(2)})` +
 							(payrollConfig.aplicar12_5y1_5
 								? `, 12.5%($${calculations.deducciones.p12_5.toFixed(2)}), 1.5%($${calculations.deducciones.p1_5.toFixed(2)})`
+								: "") +
+							(horasExtrasHoras > 0
+								? `. Horas extras: ${horasExtrasHoras} h × 1.5 = $${montoHorasExtras}`
 								: ""),
 					},
 					include: nominaInclude,

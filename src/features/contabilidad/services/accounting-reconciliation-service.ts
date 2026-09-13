@@ -4,6 +4,7 @@ import type { AuthenticatedUser } from '@/lib/auth-middleware';
 import { requireTenant } from '@/lib/services/tenant-scope';
 import { Prisma } from '@/generated/prisma';
 import { buildAppliedFxEvidence } from '@/features/contabilidad/domain/fx-evidence';
+import { getPayrollPaymentAmount } from '@/features/pago-salario/payroll-amounts';
 import { acquireAccountingTenantLock } from './accounting-tenant-lock-service';
 
 /**
@@ -754,7 +755,12 @@ export const AccountingReconciliationService = {
         descripcion:
           `Salario de ${g.empleado?.nombre || ''} ${g.empleado?.apellido || ''}`.trim() ||
           `Pago #${g.pgId.slice(0, 8)}`,
-        monto: Number(g.salario || 0),
+        monto: getPayrollPaymentAmount({
+          salario: Number(g.salario || 0),
+          bonificaciones: Number(g.bonificaciones || 0),
+          deducciones: Number(g.deducciones || 0),
+          montoHorasExtras: Number(g.montoHorasExtras || 0),
+        }),
         periodo: g.periodo || undefined,
         detalles: {
           empleado: g.empleado
@@ -767,7 +773,8 @@ export const AccountingReconciliationService = {
           salarioBases: g.salario || undefined,
           bonificaciones: g.bonificaciones || undefined,
           deducciones: g.deducciones || undefined,
-          horasExtras: g.horasExtras || undefined,
+          horasExtras: (g.horasExtrasHoras ?? g.horasExtras) || undefined,
+          montoHorasExtras: g.montoHorasExtras || undefined,
         },
         createdAt: g.createdAt.toISOString(),
         updatedAt: g.updatedAt.toISOString(),

@@ -308,7 +308,7 @@ export async function getReconciledResultForYear(params: {
         gastoCompra: { select: { total: true } },
         gastoDE: { select: { monto: true } },
         pagoSalario: {
-          select: { salario: true, bonificaciones: true, deducciones: true, horasExtras: true },
+          select: { salario: true, bonificaciones: true, deducciones: true, montoHorasExtras: true },
         },
       },
     }),
@@ -762,7 +762,7 @@ export async function getReconciledResultForYear(params: {
           salario: Number(expense.pagoSalario.salario),
           bonificaciones: Number(expense.pagoSalario.bonificaciones ?? 0),
           deducciones: Number(expense.pagoSalario.deducciones ?? 0),
-          horasExtras: Number(expense.pagoSalario.horasExtras ?? 0),
+          montoHorasExtras: Number(expense.pagoSalario.montoHorasExtras ?? 0),
         })
       : null;
     const purchasedServiceDocument = purchasedServiceDocuments.get(expense.referenciaId);

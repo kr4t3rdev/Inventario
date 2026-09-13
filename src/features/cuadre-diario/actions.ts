@@ -9,6 +9,7 @@
 import { withAction } from "@/lib/server-actions";
 import { prisma } from "@/lib/prisma";
 import { requireFeature, requireTenant } from "@/lib/services/tenant-scope";
+import { getPayrollPaymentAmount } from "@/features/pago-salario/payroll-amounts";
 import type { AuthenticatedUser } from "@/lib/auth-middleware";
 
 /**
@@ -128,7 +129,7 @@ export const getCuadreDiarioAction = withAction(
 		const totalGastosDE = gastosDEdelDia.reduce((sum, g) => sum + g.monto, 0);
 		const totalGastosSalarios = gastosSalariosDia.reduce(
 			(sum, s) =>
-				sum + s.salario + (s.bonificaciones ?? 0) + (s.horasExtras ?? 0),
+				sum + getPayrollPaymentAmount(s),
 			0,
 		);
 		const totalGastosCompra = gastosCompraDelDia.reduce(
@@ -246,7 +247,7 @@ export const getCuadreDiarioAction = withAction(
 		}
 
 		for (const s of gastosSalariosDia) {
-			const monto = s.salario + (s.bonificaciones ?? 0) + (s.horasExtras ?? 0);
+			const monto = getPayrollPaymentAmount(s);
 			gastos.push({
 				id: s.pgId,
 				hora: formatoFecha(s.createdAt),
@@ -258,7 +259,7 @@ export const getCuadreDiarioAction = withAction(
 				bonificaciones: s.bonificaciones,
 				deducciones: s.deducciones,
 				observaciones: s.observaciones,
-				horasExtras: s.horasExtras,
+				horasExtras: s.horasExtrasHoras,
 			});
 		}
 

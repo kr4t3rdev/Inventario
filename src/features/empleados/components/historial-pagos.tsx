@@ -18,6 +18,7 @@ import {
 } from "@/components/ui/table";
 import { Card, CardContent } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { getPayrollPaymentAmount } from "@/features/pago-salario/payroll-amounts";
 import type { Pagosalario } from "@/app/models/model";
 
 interface HistorialPagosProps {
@@ -47,10 +48,7 @@ export function HistorialPagos({ pagos }: HistorialPagosProps) {
           count: 0,
         };
       }
-      const totalPagado =
-        pago.salario +
-        (pago.bonificaciones || 0) -
-        Math.abs(pago.deducciones || 0);
+      const totalPagado = getPayrollPaymentAmount(pago);
       acc[key].total += totalPagado;
       acc[key].count += 1;
       return acc;
@@ -87,10 +85,7 @@ export function HistorialPagos({ pagos }: HistorialPagosProps) {
               </TableHeader>
               <TableBody>
                 {pagos.map((pago) => {
-                  const totalPagado =
-                    pago.salario +
-                    (pago.bonificaciones || 0) -
-                    Math.abs(pago.deducciones || 0);
+                  const totalPagado = getPayrollPaymentAmount(pago);
 
                   return (
                     <TableRow key={pago.pgId}>
@@ -105,7 +100,12 @@ export function HistorialPagos({ pagos }: HistorialPagosProps) {
                         ${(pago.deducciones || 0).toLocaleString()}
                       </TableCell>
                       <TableCell>
-                        {(pago.horasExtras || 0).toLocaleString()}
+                        {(pago.horasExtrasHoras ?? pago.horasExtras ?? 0).toLocaleString()} h
+                        {(pago.montoHorasExtras ?? 0) > 0 && (
+                          <span className="block text-xs text-muted-foreground">
+                            ${(pago.montoHorasExtras ?? 0).toLocaleString()}
+                          </span>
+                        )}
                       </TableCell>
                       <TableCell className="font-semibold">
                         ${totalPagado.toLocaleString()}

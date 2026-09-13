@@ -909,7 +909,7 @@ export const getGastosPendientesAction = withAction(
 					salario: Number(g.salario || 0),
 					bonificaciones: Number(g.bonificaciones || 0),
 					deducciones: Number(g.deducciones || 0),
-					horasExtras: Number(g.horasExtras || 0),
+					montoHorasExtras: Number(g.montoHorasExtras || 0),
 				}),
 				periodo: g.periodo || undefined,
 				detalles: {
@@ -923,7 +923,8 @@ export const getGastosPendientesAction = withAction(
 					salarioBases: g.salario || undefined,
 					bonificaciones: g.bonificaciones || undefined,
 					deducciones: g.deducciones || undefined,
-					horasExtras: g.horasExtras || undefined,
+					horasExtras: (g.horasExtrasHoras ?? g.horasExtras) || undefined,
+					montoHorasExtras: g.montoHorasExtras || undefined,
 				},
 				createdAt: g.createdAt.toISOString(),
 				updatedAt: g.updatedAt.toISOString(),

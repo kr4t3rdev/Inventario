@@ -75,7 +75,10 @@ export interface Pagosalario {
 	salario: number;
 	bonificaciones?: number;
 	deducciones?: number;
+	/** @deprecated Histórico en horas. Usar horasExtrasHoras / montoHorasExtras. */
 	horasExtras?: number;
+	horasExtrasHoras?: number;
+	montoHorasExtras?: number;
 	observaciones?: string;
 	periodo: string;
 	createdAt: string;

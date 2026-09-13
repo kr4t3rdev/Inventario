@@ -1250,7 +1250,10 @@ model Pagosalario {
   salario             Int
   bonificaciones      Int?                  @default(0)
   deducciones         Int?                  @default(0)
+  // DEPRECADO: histórico en HORAS (no dinero). Leer para compatibilidad; no escribir.
   horasExtras         Int?                  @default(0)
+  horasExtrasHoras    Int                   @default(0)
+  montoHorasExtras    Int                   @default(0)
   observaciones       String?
   periodo             String
   createdAt           DateTime              @default(now())

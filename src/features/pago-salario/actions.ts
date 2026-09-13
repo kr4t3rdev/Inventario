@@ -14,6 +14,7 @@ import type { PagoSalarioInput, PagoSalarioUpdateInput } from "./schemas";
 import type { AuthenticatedUser } from "@/lib/auth-middleware";
 import { Prisma } from "@/generated/prisma";
 import { reversePayrollReconciliations } from "@/features/empleados/payroll-reversal";
+import { calcularMontoHorasExtras } from "@/lib/payroll-formulas";
 
 const PAGO_SALARIO_INCLUDE = { empleado: true } as const;
 
@@ -58,6 +59,14 @@ export const createPagoSalarioAction = withAction(
 		const now = new Date();
 		const periodo = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}`;
 
+		// B-05: `horasExtras` de entrada es una cantidad de HORAS; su dinero se
+		// calcula con la tarifa del salario base del empleado y se guarda aparte.
+		const horasExtrasHoras = parsed.horasExtras ?? 0;
+		const montoHorasExtras = calcularMontoHorasExtras(
+			horasExtrasHoras,
+			empleado.salarioBases ?? 0,
+		);
+
 		const pago = await prisma.pagosalario.create({
 			data: {
 				empleadoId: parsed.empleadoId,
@@ -65,7 +74,8 @@ export const createPagoSalarioAction = withAction(
 				periodo,
 				bonificaciones: parsed.bonificaciones ?? 0,
 				deducciones: parsed.deducciones ?? 0,
-				horasExtras: parsed.horasExtras ?? 0,
+				horasExtrasHoras,
+				montoHorasExtras,
 				observaciones: parsed.observaciones ?? null,
 				tenantId,
 			},
@@ -91,6 +101,23 @@ export const updatePagoSalarioAction = withAction(
 		if (!existing)
 			throw new ActionError("Pago de salario no encontrado", "NOT_FOUND");
 
+		// B-05: al editar horas, persistirlas en `horasExtrasHoras` y recalcular
+		// su dinero con la tarifa actual del empleado.
+		let overridesHoras: { horasExtrasHoras: number; montoHorasExtras: number } | undefined;
+		if (data.horasExtras !== undefined) {
+			const empleado = await prisma.empleado.findFirst({
+				where: { empleadoId: existing.empleadoId, tenantId },
+				select: { salarioBases: true },
+			});
+			overridesHoras = {
+				horasExtrasHoras: data.horasExtras,
+				montoHorasExtras: calcularMontoHorasExtras(
+					data.horasExtras,
+					empleado?.salarioBases ?? 0,
+				),
+			};
+		}
+
 		const pago = await prisma.pagosalario.update({
 			where: { pgId },
 			data: {
@@ -102,9 +129,7 @@ export const updatePagoSalarioAction = withAction(
 				...(data.deducciones !== undefined && {
 					deducciones: data.deducciones,
 				}),
-				...(data.horasExtras !== undefined && {
-					horasExtras: data.horasExtras,
-				}),
+				...(overridesHoras !== undefined && overridesHoras),
 				...(data.observaciones !== undefined && {
 					observaciones: data.observaciones,
 				}),

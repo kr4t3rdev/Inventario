@@ -24,7 +24,7 @@ describe('operational dashboard expenses', () => {
     prisma.ventaServicios.findMany.mockResolvedValue([{ total: 9600, cantidad: 1, createdAt }]);
     prisma.gastosDE.findMany.mockResolvedValue([{ monto: 130500, periodo: '2026-08', createdAt }]);
     prisma.pagosalario.findMany.mockResolvedValue([{
-      salario: 225000, bonificaciones: 18500, deducciones: 6500, horasExtras: 0,
+      salario: 225000, bonificaciones: 18500, deducciones: 6500, montoHorasExtras: 0,
       periodo: '2026-08', createdAt,
     }]);
     prisma.compraServicio.findMany.mockResolvedValue([{

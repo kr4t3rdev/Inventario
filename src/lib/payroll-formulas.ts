@@ -7,6 +7,25 @@ export interface PayrollConfig {
   aplicar12_5y1_5: boolean
 }
 
+/** Horas estándar del mes para la tarifa horaria. Única fuente (antes: 192 en servidor y 240 en UI). */
+export const STANDARD_MONTHLY_HOURS = 192
+
+/** Multiplicador legal de la hora extra sobre la tarifa horaria. */
+export const OVERTIME_RATE_MULTIPLIER = 1.5
+
+/**
+ * @description Calcula el dinero a pagar por horas extras. Las horas NUNCA se
+ * suman directamente al salario: se multiplican por la tarifa horaria del
+ * salario base y el multiplicador legal.
+ * @param {number} horas - Cantidad de horas extras trabajadas.
+ * @param {number} salarioBase - Salario base mensual del empleado.
+ * @returns {number} Monto entero (los salarios se persisten como Int).
+ */
+export function calcularMontoHorasExtras(horas: number, salarioBase: number): number {
+  if (!horas || !salarioBase || horas <= 0 || salarioBase <= 0) return 0
+  return Math.round(horas * (salarioBase / STANDARD_MONTHLY_HOURS) * OVERTIME_RATE_MULTIPLIER)
+}
+
 const DEFAULT_PAYROLL_CONFIG: PayrollConfig = {
   vacacionesPorcentaje: 9.09,
   impuesto3Porcentaje: 3,

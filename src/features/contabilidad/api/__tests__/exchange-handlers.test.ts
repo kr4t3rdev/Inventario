@@ -501,7 +501,7 @@ describe('getBalanceFinanciero', () => {
         monto: 650, moneda: 'CUP', montoConvertido: null, tasaCambio: null,
         fechaReconciliacion: new Date('2025-01-14T12:00:00Z'), estado: 'PAGADA',
         gastoCompra: null, gastoDE: null,
-        pagoSalario: { salario: 500, bonificaciones: 100, horasExtras: 50 },
+        pagoSalario: { salario: 500, bonificaciones: 100, montoHorasExtras: 50 },
       },
       {
         reconciliacionId: 'rg-service-cost', tipoGasto: 'venta_servicio',

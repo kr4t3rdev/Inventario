@@ -14,6 +14,8 @@ import {
   getNominaAction,
 } from "@/features/empleados/actions";
 import { updatePagoSalarioAction } from "@/features/pago-salario/actions";
+import { calcularMontoHorasExtras } from "@/lib/payroll-formulas";
+import { getPayrollPaymentAmount } from "@/features/pago-salario/payroll-amounts";
 import { LazyMotion, m as motion, AnimatePresence } from "framer-motion";
 import { Switch } from "@/components/ui/switch";
 import {
@@ -33,6 +35,8 @@ interface PayrollRecord {
   deducciones: number;
   aportes?: number;
   horasExtras: number;
+  horasExtrasHoras?: number;
+  montoHorasExtras?: number;
   observaciones: string | null;
   periodo: string;
   createdAt: string;
@@ -66,20 +70,17 @@ function EditPayrollDialog({
       setBonificaciones(record.bonificaciones);
       setDeducciones(record.deducciones);
       setAportes(record.aportes || 0);
-      setHorasExtras(record.horasExtras);
-      setNetSalary(record.salario);
+      setHorasExtras(record.horasExtrasHoras ?? record.horasExtras ?? 0);
     }
   }, [record]);
 
   useEffect(() => {
     if (record) {
-      // Calculate Net Salary dynamically
-      // Defaults: 240 hours/month, 1.5x overtime. 
-      // Ideally should match backend config but this is a good approximation for UI feedback
-      const hourlyRate = record.empleado.salarioBases / 240;
-      const overtimePay = horasExtras * hourlyRate * 1.5;
-      const gross = record.empleado.salarioBases + overtimePay + bonificaciones;
-      const net = gross - deducciones;
+      // Estimación en vivo: las horas se pagan a 1.5× la tarifa del salario base
+      // (constantes compartidas en @/lib/payroll-formulas; la hora NUNCA vale 1 peso).
+      // El servidor recalcula y persiste el monto al guardar.
+      const overtimePay = calcularMontoHorasExtras(horasExtras, record.empleado.salarioBases);
+      const net = record.salario + bonificaciones + overtimePay - deducciones;
       setNetSalary(Math.round(net));
     }
   }, [bonificaciones, deducciones, horasExtras, record]);
@@ -92,7 +93,6 @@ function EditPayrollDialog({
         deducciones,
         aportes,
         horasExtras,
-        salario: netSalary
       });
       onOpenChange(false);
     }
@@ -299,7 +299,7 @@ export function NominaView() {
    * Calcula el total de la nómina
    */
   const calculateTotal = () => {
-    return payrollRecords.reduce((total, record) => total + record.salario, 0);
+    return payrollRecords.reduce((total, record) => total + getPayrollPaymentAmount(record), 0);
   };
 
   const calculateAverage = () => {
@@ -316,7 +316,6 @@ export function NominaView() {
     try {
       const result = await updatePagoSalarioAction({
         pgId: id,
-        salario: updates.salario,
         bonificaciones: updates.bonificaciones,
         deducciones: updates.deducciones,
         horasExtras: updates.horasExtras,
@@ -549,12 +548,12 @@ export function NominaView() {
                       </TableCell>
                       <TableCell className="py-4">
                         <Badge variant="outline" className="font-mono">
-                          {record.horasExtras}h
+                          {record.horasExtrasHoras ?? record.horasExtras}h
                         </Badge>
                       </TableCell>
                       <TableCell className="py-4 text-right">
                         <span className="font-bold text-lg text-foreground font-mono">
-                          {formatCurrency(record.salario)}
+                          {formatCurrency(getPayrollPaymentAmount(record))}
                         </span>
                       </TableCell>
                       <TableCell className="py-4 text-center">

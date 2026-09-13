@@ -3,7 +3,7 @@ import { prisma } from "@/lib/prisma"
 import { Prisma, EstadoCuentaPorPagar } from "@/generated/prisma"
 import { z } from "zod"
 import { VacationAccrualService } from "@/lib/vacation-accrual-service"
-import { calculatePayrollFormulas, getPayrollConfig } from "@/lib/payroll-formulas"
+import { calculatePayrollFormulas, getPayrollConfig, calcularMontoHorasExtras, STANDARD_MONTHLY_HOURS } from "@/lib/payroll-formulas"
 import { requirePermission, requireTenant, requireFeature } from "@/lib/services/tenant-scope"
 import type { AuthenticatedUser } from "@/lib/auth-middleware"
 import {
@@ -187,28 +187,33 @@ export async function calculateNominaHandler(
         }
 
         const baseSalary = empleado.salarioBases;
-        const standardHours = 192;
+        const standardHours = STANDARD_MONTHLY_HOURS;
 
-        const hourlyRate = baseSalary / standardHours;
-
-        const hoursWorked = totalHours > 0 ? totalHours : standardHours;
+        // Las horas extras no entran al devengado base: se pagan aparte a 1.5×
+        // en `montoHorasExtras` (B-05). Sin asistencias se asume mes completo.
+        const baseHoursWorked = totalHours > 0 ? totalHours - overtimeHours : standardHours;
         const bonificaciones = 0;
-        const devengadoReal = (hoursWorked / standardHours) * baseSalary + bonificaciones;
+        const devengadoReal = (baseHoursWorked / standardHours) * baseSalary + bonificaciones;
 
         const calculations = calculatePayrollFormulas(devengadoReal, payrollConfig);
+        const horasExtrasHoras = Math.round(overtimeHours);
+        const montoHorasExtras = calcularMontoHorasExtras(horasExtrasHoras, baseSalary);
 
         const payroll = await prisma.pagosalario.create({
           data: {
             empleadoId: empleado.empleadoId,
-            salario: Math.round(calculations.netoACobrar),
+            // Bruto del período (base imponible); las deducciones van aparte.
+            salario: Math.round(calculations.baseImponible),
             bonificaciones,
             deducciones: Math.round(calculations.deducciones.total),
-            horasExtras: Math.round(overtimeHours),
+            horasExtrasHoras,
+            montoHorasExtras,
             periodo,
             tenantId,
             observaciones: `Devengado: ${devengadoReal.toFixed(2)}, Vacaciones (9.09%): ${calculations.vacaciones.toFixed(2)}. ` +
                            `Deducciones: 5%($${calculations.deducciones.p5.toFixed(2)}), 3%($${calculations.deducciones.p3.toFixed(2)})` +
-                           (payrollConfig.aplicar12_5y1_5 ? `, 12.5%($${calculations.deducciones.p12_5.toFixed(2)}), 1.5%($${calculations.deducciones.p1_5.toFixed(2)})` : '')
+                           (payrollConfig.aplicar12_5y1_5 ? `, 12.5%($${calculations.deducciones.p12_5.toFixed(2)}), 1.5%($${calculations.deducciones.p1_5.toFixed(2)})` : '') +
+                           (horasExtrasHoras > 0 ? `. Horas extras: ${horasExtrasHoras} h × 1.5 = $${montoHorasExtras}` : '')
           },
           include: {
             empleado: {
@@ -353,9 +358,22 @@ export async function updateNominaHandler(
       );
     }
 
+    // B-05: `horasExtras` de entrada es una cantidad de horas; persistir en
+    // `horasExtrasHoras` y recalcular su dinero con la tarifa del empleado.
+    const { horasExtras, ...camposDirectos } = validatedData;
+    const data: Prisma.PagosalarioUncheckedUpdateInput = { ...camposDirectos };
+    if (horasExtras !== undefined) {
+      const empleado = await prisma.empleado.findFirst({
+        where: { empleadoId: existingPayroll.empleadoId, tenantId },
+        select: { salarioBases: true }
+      });
+      data.horasExtrasHoras = horasExtras;
+      data.montoHorasExtras = calcularMontoHorasExtras(horasExtras, empleado?.salarioBases ?? 0);
+    }
+
     const updatedPayroll = await prisma.pagosalario.update({
       where: { pgId: id },
-      data: validatedData,
+      data,
       include: {
         empleado: {
           select: {
