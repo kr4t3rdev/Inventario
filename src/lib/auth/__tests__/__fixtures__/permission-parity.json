@@ -69,6 +69,7 @@
     "ventas.contratos.gestionar",
     "ventas.facturas.consultar",
     "ventas.ofertas.gestionar",
+    "ventas.precio.override",
     "ventas.servicios.editar",
     "ventas.servicios.eliminar",
     "ventas.venta.anular",

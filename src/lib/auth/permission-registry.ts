@@ -391,6 +391,14 @@ export const PERMISSION_REGISTRY: PermissionDef[] = [
 		category: 'ventas',
 		defaultRoles: ['manager'],
 	},
+	{
+		key: 'ventas.precio.override',
+		label: 'Modificar precios en venta',
+		description: 'Aplicar en una venta un precio distinto al de las listas vigentes.',
+		category: 'ventas',
+		defaultRoles: ['manager'],
+		sensitive: true,
+	},
 
 	// ── compras (servicios recibidos) ──
 	{
