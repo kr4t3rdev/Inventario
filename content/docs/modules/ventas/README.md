@@ -37,6 +37,7 @@ Este módulo maneja la operación comercial diaria en caja. Al crear una venta n
 - Si falta el backfill de `StockUbicacion`, la venta puede bloquearse aunque el producto exista.
 - Un POS principal exige turno abierto antes de vender.
 - Las anulaciones deben contemplar impacto operativo y documental.
+- **El precio lo re-resuelve el servidor** (lista del cliente > lista del POS > precio base): un `precioUnitario` que no coincida se rechaza con `PRICE_MISMATCH`, salvo que el usuario tenga el permiso `ventas.precio.override`, en cuyo caso la desviación queda auditada. Detalle completo en [Integridad de precios](./integridad-precios.md).
 
 ## Qué conviene cuidar
 
@@ -48,8 +49,10 @@ Este módulo maneja la operación comercial diaria en caja. Al crear una venta n
 - `/busy/sales`
 - `/busy/sales/new`
 - `/busy/sales/editar/[id]`
+- [Integridad de precios (LP-0)](./integridad-precios.md)
 - `src/features/ventas/actions.ts`
 - `src/features/ventas/services/venta-mutation-service.ts`
+- `src/features/ventas/services/precio-venta-resolver.ts`
 - `src/features/ventas/services/facturacion-workflow.ts`
 
 ## Relación con otros módulos

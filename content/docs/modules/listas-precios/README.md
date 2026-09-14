@@ -26,6 +26,9 @@ Este módulo permite crear y mantener listas de precios separadas del precio bas
 - Solo puede existir una lista predeterminada por tenant.
 - No se puede borrar una lista que siga asociada a un punto de venta.
 - El módulo cambia precios aplicados, no stock ni catálogo base.
+- **Cadena de prioridad al vender**: lista asignada al cliente > lista asignada al punto de venta > precio base del producto. El servidor valida esa prioridad en cada venta ([detalle](../ventas/integridad-precios.md)).
+- La lista del cliente se asigna en la ficha del cliente (`Cliente.listaPrecioId`) y se aplica en el POS y en las ofertas.
+- Nota: la marca "predeterminada" (`esDefault`) por ahora solo es administrativa; no entra en la cadena de resolución (previsto en LP-1).
 
 ## Qué conviene cuidar
 
@@ -36,6 +39,7 @@ Este módulo permite crear y mantener listas de precios separadas del precio bas
 
 - `/busy/listas-precios`
 - `src/features/listas-precios/actions.ts`
+- `openspec/changes/archive/2026-09-12-ventas-precio-server-lp0/` (LP-0: integridad de precios server-side)
 
 ## En una frase
 
