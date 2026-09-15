@@ -1,0 +1,10 @@
+
+ RUN  v3.2.4 /Users/arturo/Documents/Proyecto Inventario/TCP
+
+ ✓ src/features/ventas/__tests__/devolucion-calculo.test.ts (18 tests) 8ms
+
+ Test Files  1 passed (1)
+      Tests  18 passed (18)
+   Start at  17:48:11
+   Duration  2.50s (transform 435ms, setup 134ms, collect 776ms, tests 8ms, environment 506ms, prepare 153ms)
+
