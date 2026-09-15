@@ -58,8 +58,25 @@ export const anularVentaSchema = z.object({
   motivo: z.string().max(500).optional().nullable(),
 });
 
+/**
+ * Schema para facturar una venta ya entregada (transición ENTREGADA → FACTURADA).
+ * Espejo de los campos de cobro/facturación de createVentaSchema, pero sin
+ * los datos de mercadería (ya persistidos en la venta).
+ */
+export const facturarVentaSchema = z.object({
+  metodoPago: z.nativeEnum(MetodoPagoVenta).optional().nullable(),
+  montoEfectivo: z.coerce.number().int().min(0).optional().nullable(),
+  montoTarjeta: z.coerce.number().int().min(0).optional().nullable(),
+  montoTransferencia: z.coerce.number().int().min(0).optional().nullable(),
+  montoCredito: z.coerce.number().int().min(0).optional().nullable(),
+  tipoVencimiento: z.enum(['contra_pago', 'fecha', 'plazo']).optional().nullable(),
+  fechaVencimiento: z.string().optional().nullable(),
+  cuentaBancariaId: z.string().optional().nullable(),
+});
+
 // ─── Tipos inferidos ──────────────────────────────────────
 
 export type CreateVentaInput = z.infer<typeof createVentaSchema>;
 export type VentaItemInput = z.infer<typeof ventaItemSchema>;
 export type AnularVentaInput = z.infer<typeof anularVentaSchema>;
+export type FacturarVentaInput = z.infer<typeof facturarVentaSchema>;

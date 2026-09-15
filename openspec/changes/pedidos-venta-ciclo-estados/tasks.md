@@ -9,29 +9,39 @@ jamás `git add -A`; revisar `git diff --cached --name-only` antes de commitear)
 
 ## PVE-T1 — Schema, migración, permiso y feature flag
 
-- [ ] **T1.1 RED.** Test de tipos/contrato: `src/features/ventas/__tests__/venta-estado-types.test.ts`
+- [x] **T1.1 RED.** Test de tipos/contrato: `src/features/ventas/__tests__/venta-estado-types.test.ts`
   (enum importable, defaults del schema validados vía `_dmmf` o fixture; backfill documentado como
   snapshot de la migración SQL). Evidencia `evidence/PVE-T1-RED.txt`.
-- [ ] **T1.2 GREEN.** `EstadoVenta` + `Venta.estado @default(ENTREGADA)` en `prisma/schema.prisma`;
-  migración con backfill (`ANULADA` ← deletedAt, `FACTURADA` ← factura) generada y revisada a mano.
-  `npx prisma validate` + migración aplicada en DB local de desarrollo.
-- [ ] **T1.3 Permiso + flag.** `ventas.pedido.gestionar` en `permission-registry.ts`
+- [x] **T1.2 GREEN.** `EstadoVenta` + `Venta.estado @default(ENTREGADA)` en `prisma/schema.prisma`;
+  migración con backfill (`ANULADA` ← deletedAt, `FACTURADA` ← factura) generada offline
+  (`migrate diff` datamodel↔datamodel + backfill a mano; `migrate dev` inaccesible sin
+  DATABASE_URL en la shell del agente — `prisma.config.ts` salta la carga de .env).
+  Aplicación: pendiente en dev local; en producción corre con `migrate deploy` al arrancar.
+- [x] **T1.3 Permiso + flag.** `ventas.pedido.gestionar` en `permission-registry.ts`
   (default = roles de `ventas.venta.registrar`) + fixture de paridad; feature `ventas-pedidos`
-  en `feature-registry.ts`. Suite auth verde.
-- [ ] Review + commit: `feat(ventas): estado de ciclo de vida en Venta con backfill (PVE-T1)`
+  en `feature-registry.ts`. Suite auth/planes verde (101 tests, incluida paridad).
+- [x] Review (typescript-reviewer: APROBAR, sin bloqueantes; typecheck exit 0) + commit
+  `24061660 feat(ventas): estado de ciclo de vida en Venta con backfill (PVE-T1)`.
 
 ## PVE-T2 — Servicio de ciclo de vida (núcleo, sin tocar create)
 
-- [ ] **T2.1 RED.** `src/features/ventas/__tests__/venta-lifecycle.test.ts`:
-  entregar (happy + stock insuficiente sin efectos + doble entrega concurrente), facturar
-  (happy + gate `ventas-factura` + ya-facturada), anular desde cada estado (PEDIDO sin efectos,
-  ENTREGADA revierte stock/FIFO, FACTURADA reversión completa, turno cerrado rechazado).
-  Evidencia `evidence/PVE-T2-RED.txt`.
-- [ ] **T2.2 GREEN.** `venta-lifecycle-service.ts` con `entregarVenta`, `facturarVenta`,
-  `anularVentaPorEstado`; guards idempotentes por `updateMany` condicionado a estado; efectos
-  llamando a los mismos servicios actuales (`upsertStockUbicacion`, `allocateFifoForSale`,
-  `applyFacturacionCobroWorkflow`). Evidencia `evidence/PVE-T2-GREEN.txt`.
-- [ ] Review + commit: `feat(ventas): servicio de ciclo de vida de pedidos (PVE-T2)`
+- [x] **T2.1 RED.** `src/features/ventas/__tests__/venta-lifecycle.test.ts` (13 casos):
+  entregar (happy + stock insuficiente sin efectos + doble entrega + tenant + gate plan),
+  facturar (happy con serie + workflow de cobro + pedido-no-entregado + sin cliente),
+  anular por estado (PEDIDO sin efectos, ENTREGADA con reversión, FACTURADA completa, turno
+  cerrado). Evidencia `evidence/PVE-T2-RED.txt` (módulo inexistente).
+- [x] **T2.2 GREEN.** `venta-lifecycle-service.ts` con `entregarVenta`, `facturarVenta`,
+  `anularVentaPorEstado`; claims idempotentes por `updateMany` condicionado a estado;
+  efectos con los mismos servicios vigentes; `cancel()` del mutation-service queda como
+  wrapper delegando (reversión unificada). Evidencia `evidence/PVE-T2-GREEN.txt`
+  (suite ventas 71/71: 15 lifecycle + 56 existentes intactos).
+- [x] **T2.3 Review (typescript-reviewer: APROBAR con observaciones) y fixes aplicados.**
+  MEDIA-1: invariante MIXTO restaurado en `facturarVenta` (+test). MEDIA-2: `cargoTransporte`
+  fuera del schema de facturar (subtotal = total + descuento; columna en Venta queda como
+  change futuro si se necesita). MEDIA-3: invariante documentado — el pedido nace sin pago,
+  el cobro se define al facturar. BAJA-1: costo del kardex leído dentro de la tx.
+  BAJA-4: `observaciones` propagadas al workflow. Cobertura extra: claim perdedor (+1 test).
+- [x] Commit: `feat(ventas): servicio de ciclo de vida de pedidos (PVE-T2)`
 
 ## PVE-T3 — `create` como orquestador + acciones server
 

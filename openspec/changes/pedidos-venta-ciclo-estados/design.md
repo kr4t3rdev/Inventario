@@ -75,6 +75,18 @@ Sin semántica nueva: los asientos/partidas que hoy genera el flujo de cobro
 o `ENTREGADA` sin facturar **aún no tiene asiento de venta** (igual que Odoo: el asiento nace
 de la factura).
 
+## Invariantes de cobro del pedido (decisión post-review T2)
+
+- **El pedido nace sin pago**: campos de cobro (`metodoPago`, montos) se definen al facturar
+  (`facturarVenta` los persiste). Ningún flujo crea un PEDIDO con montos ya seteados; si en el
+  futuro se permite anticipo al crear el pedido, `facturarVenta` debe *fusionar* en lugar de
+  sobrescribir (revisar el claim antes de habilitar eso).
+- **`cargoTransporte` no se persiste en `Venta`**: la factura derivada lleva `subtotal =
+  total + descuento` y cargo 0. Si un pedido requiere cargo por transporte, se añadirá la
+  columna a `Venta` en un change separado (no en PVE).
+- Cobro mixto: el invariante del POS (`suma de montos == total`) se exige también en
+  `facturarVenta`.
+
 ## Coexistencia con `Oferta`
 
 - Oferta = cotización (comercial). Pedido = compromiso operativo.
