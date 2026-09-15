@@ -20,6 +20,15 @@ it('collects blob coverage per shard and checks thresholds only on merge', () =>
   expect(ci).toContain('.vitest-reports');
   const config = read('vitest.config.mjs');
   expect(config).toContain('CI_COVERAGE_MERGE');
+  for (const scope of [
+    'src/lib/api/**/*.{ts,tsx}',
+    'src/lib/auth/**/*.{ts,tsx}',
+    'src/lib/db/**/*.{ts,tsx}',
+    'src/lib/server-actions/**/*.{ts,tsx}',
+    'src/features/contabilidad/domain/**/*.{ts,tsx}',
+  ]) {
+    expect(config).toContain(scope);
+  }
   for (const metric of ['statements', 'branches', 'functions', 'lines']) {
     expect(config).toContain(`${metric}: 80`);
   }
@@ -37,7 +46,6 @@ it('accepts only all-success required results', async () => {
 it('declares compatible Vitest package families', () => {
   const deps = JSON.parse(read('package.json')).devDependencies;
   expect(deps.vitest).toBe(deps['@vitest/ui']);
-  const family = (version: string) => version.replace(/^[^0-9]+/, '').split('.').slice(0, 2).join('.');
-  expect(family(deps.vitest)).toBe(family(deps['@vitest/coverage-v8']));
-  expect(family(deps.vitest)).toBe('3.2');
+  expect(deps.vitest).toBe(deps['@vitest/coverage-v8']);
+  expect(deps.vitest).toBe('^3.2.4');
 });

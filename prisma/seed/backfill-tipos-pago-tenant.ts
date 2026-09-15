@@ -7,16 +7,23 @@
  *
  * Uso: npx tsx prisma/seed/backfill-tipos-pago-tenant.ts
  */
-import { PrismaClient } from '@prisma/client';
+import { PrismaClient } from '../../src/generated/prisma';
 
 const prisma = new PrismaClient();
+
+type TipoPagoLegacy = {
+  tipoId: string;
+  nombre: string;
+};
 
 async function backfillTiposPagoTenant() {
   console.log('🔍 Buscando TipoPago sin tenantId...');
 
-  const tiposSinTenant = await prisma.tipoPago.findMany({
-    where: { tenantId: null },
-  });
+  const tiposSinTenant = await prisma.$queryRaw<TipoPagoLegacy[]>`
+    SELECT "tipoId", "nombre"
+    FROM "TipoPago"
+    WHERE "tenantId" IS NULL
+  `;
 
   console.log(`📦 Encontrados ${tiposSinTenant.length} TipoPago sin tenantId`);
 

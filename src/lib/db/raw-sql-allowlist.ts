@@ -17,6 +17,12 @@ export interface RawSqlAllowlistEntry {
  */
 export const RAW_SQL_ALLOWLIST: readonly RawSqlAllowlistEntry[] = [
   {
+    file: 'prisma/seed/backfill-tipos-pago-tenant.ts',
+    occurrences: 1,
+    reason: 'Lee TipoPago legacy sin tenantId antes de completar su backfill.',
+    tenantGuarantee: 'Script offline; resuelve tenantId desde reconciliaciones o el primer tenant antes de actualizar.',
+  },
+  {
     file: 'prisma/seed/run-seed.js',
     occurrences: 1,
     reason: 'Ejecuta SQL de seed como operación administrativa offline.',
