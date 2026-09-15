@@ -31,6 +31,15 @@ interface OrdenesCompraQuery {
   limit?: number;
 }
 
+interface OrdenCompraItemRecepcion {
+  id: string;
+  productoId: string;
+  cantidadPedida: number;
+  cantidadRecibida: number;
+  precioUnitario: number;
+  producto: { id: string; almacenId: string };
+}
+
 /**
  * @description Lista las órdenes y agrega cantidades ya facturadas por producto.
  * @param {string} tenantId - Tenant dueño de las órdenes.
@@ -264,7 +273,9 @@ export const registrarRecepcionAction = withAction(
         );
       }
 
-      const orderItems = new Map(orden.items.map((item: any) => [item.id, item]));
+      const orderItems = new Map<string, OrdenCompraItemRecepcion>(
+        orden.items.map((item: OrdenCompraItemRecepcion) => [item.id, item]),
+      );
       // Orden determinista por id de línea: dos recepciones multilínea con
       // el mismo conjunto en distinto orden no pueden interbloquearse.
       const itemsOrdenados = [...parsed.items].sort((a, b) =>
@@ -292,6 +303,7 @@ export const registrarRecepcionAction = withAction(
       });
       for (const inputItem of itemsOrdenados) {
         const orderItem = orderItems.get(inputItem.ordenItemId);
+        if (!orderItem) throw new ActionError('Línea de orden no encontrada', 'NOT_FOUND');
         await tx.recepcionItem.create({
           data: {
             tenantId,
@@ -308,6 +320,7 @@ export const registrarRecepcionAction = withAction(
       // acumulado excede lo pedido, se revierte todo el lote.
       for (const [index, inputItem] of itemsOrdenados.entries()) {
         const orderItem = orderItems.get(inputItem.ordenItemId);
+        if (!orderItem) throw new ActionError('Línea de orden no encontrada', 'NOT_FOUND');
         const producto = orderItem.producto;
         await tx.ordenCompraItem.update({
           where: { id: orderItem.id },

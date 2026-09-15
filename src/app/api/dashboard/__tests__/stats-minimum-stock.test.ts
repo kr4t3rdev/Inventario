@@ -49,6 +49,9 @@ const mockPrisma = vi.hoisted(() => ({
 	gastoCompra: {
 		findMany: vi.fn(),
 	},
+	compraServicio: {
+		findMany: vi.fn(),
+	},
 	$transaction: vi.fn(),
 }));
 
@@ -90,6 +93,7 @@ describe("Dashboard Stats API - Minimum Stock Integration", () => {
 		mockPrisma.categoria.findMany.mockResolvedValue([]);
 		mockPrisma.producto.findMany.mockResolvedValue([]);
 		mockPrisma.gastoCompra.findMany.mockResolvedValue([]);
+		mockPrisma.compraServicio.findMany.mockResolvedValue([]);
 	});
 
 	it("should calculate low stock using hybrid logic with custom minimums", async () => {

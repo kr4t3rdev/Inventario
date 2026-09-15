@@ -129,6 +129,7 @@ export default function ServiciosCart({
 			if (mode === "VENTA") {
 				const result = await createVentaServicioAction({
 					clienteId: selectedClienteId,
+					condicionPago: 'CONTADO',
 					observaciones: observaciones || undefined,
 					lineas: cart.map((item) => ({
 						tipoLinea: 'SERVICIO' as const,

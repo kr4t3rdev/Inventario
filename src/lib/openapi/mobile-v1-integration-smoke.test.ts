@@ -213,7 +213,15 @@ describe('mobile v1 generated TypeScript SDK integration smoke', () => {
     expect(catalog.items[0]?.nombre).toBe('Café');
     expect(stock.items[0]?.stock).toBe(8);
     expect(receipt.type).toBe('application/pdf');
-    expect(Buffer.from(await receipt.arrayBuffer())).toEqual(pdf);
+    const receiptBytes = typeof receipt.arrayBuffer === 'function'
+      ? await receipt.arrayBuffer()
+      : await new Promise<ArrayBuffer>((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = () => resolve(reader.result as ArrayBuffer);
+        reader.onerror = () => reject(reader.error);
+        reader.readAsArrayBuffer(receipt);
+      });
+    expect(Buffer.from(receiptBytes)).toEqual(pdf);
     expect(responseError).toBeInstanceOf(ResponseError);
     expect(responseError?.response.status).toBe(422);
     await expect(responseError?.response.json()).resolves.toEqual({

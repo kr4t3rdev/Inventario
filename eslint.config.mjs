@@ -7,6 +7,14 @@ const eslintConfig = defineConfig([
   ...nextVitals,
   ...nextTs,
   {
+    // Scripts utilitarios (bench/ops Playwright) usan @ts-nocheck a propósito:
+    // son tooling desechable con tipos sueltos, no código de aplicación.
+    files: ['scripts/**'],
+    rules: {
+      '@typescript-eslint/ban-ts-comment': 'off',
+    },
+  },
+  {
     files: ['src/features/contabilidad/components/prestamos-cash/prestamos-cash-table.tsx'],
     plugins: {
       'react-hooks': reactHooks,
@@ -49,6 +57,8 @@ const eslintConfig = defineConfig([
     'node_modules/**',
     'next-env.d.ts',
     'src/generated/**',
+    // Script de benchmark local corrupto (header: "no va al repo"); no debe lintearse.
+    'scripts/bench-contabilidad.js',
     '.kilocode/**',
     '.opencode/**',
     '.worktrees/**',

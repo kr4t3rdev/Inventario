@@ -12,6 +12,7 @@ export const PLATFORM_PRISMA_ALLOWLIST = [
   'src/lib/services/demo-tenant-factory.ts',
   'src/features/auth/api/handlers.ts',
   'src/features/auth/services/auth-service.ts',
+  'src/features/auth/__integration__/**',
   'src/features/admin/**',
   'src/features/affiliate/**',
   'src/features/backups/**',

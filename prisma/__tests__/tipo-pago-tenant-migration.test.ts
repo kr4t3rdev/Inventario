@@ -33,8 +33,11 @@ describe('TipoPago tenant migration', () => {
     const migration = await readFile(tenantMigrationPath, 'utf8');
     const addColumnIndex = migration.indexOf('ADD COLUMN "tenantId" TEXT');
     const backfillIndex = migration.indexOf('UPDATE "TipoPago"');
-    const validationIndex = migration.indexOf('RAISE EXCEPTION');
-    const notNullIndex = migration.indexOf('ALTER COLUMN "tenantId" SET NOT NULL');
+    const validationIndex = migration.indexOf('RAISE EXCEPTION', backfillIndex);
+    const notNullIndex = migration.indexOf(
+      'ALTER COLUMN "tenantId" SET NOT NULL',
+      validationIndex,
+    );
 
     expect(addColumnIndex).toBeGreaterThanOrEqual(0);
     expect(backfillIndex).toBeGreaterThan(addColumnIndex);

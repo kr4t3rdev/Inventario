@@ -137,10 +137,16 @@ export const RAW_SQL_ALLOWLIST: readonly RawSqlAllowlistEntry[] = [
     tenantGuarantee: 'WHERE incluye id y tenantId de requireTenant.',
   },
   {
-    file: 'src/features/ventas/services/venta-mutation-service.ts',
+    file: 'src/features/ventas/services/venta-lifecycle-service.ts',
     occurrences: 1,
-    reason: 'Lock FOR UPDATE para cancelar venta sin carrera.',
-    tenantGuarantee: 'WHERE incluye ventaId y tenantId autenticado.',
+    reason: 'Lock transaccional para proteger la transición de estado de una venta.',
+    tenantGuarantee: 'La venta fue resuelta con tenantId autenticado antes del lock.',
+  },
+  {
+    file: 'scripts/seed-e2e-user.ts',
+    occurrences: 1,
+    reason: 'Reinicia el esquema de una base de datos descartable para fixtures E2E.',
+    tenantGuarantee: 'Tooling offline destructivo; no procesa requests ni datos de tenants reales.',
   },
   {
     file: 'src/lib/admin/userMetrics.ts',

@@ -70,12 +70,20 @@ export function RolesManager() {
     setLoading(true);
     setError(null);
     const [r, m] = await Promise.all([listTenantRolesAction(undefined), listTenantMembersAction(undefined)]);
-    if (r.success && m.success) {
-      setRoles(r.data.roles ?? []);
-      setMembers(m.data.memberships ?? []);
+    if (!r.success) {
+      setError(r.error?.message ?? 'No se pudieron cargar los roles');
+    } else if (!m.success) {
+      setError(m.error?.message ?? 'No se pudieron cargar los roles');
     } else {
-      const msg = r.success ? m.error?.message : r.error?.message;
-      setError(msg ?? 'No se pudieron cargar los roles');
+      setRoles((r.data.roles ?? []).map((role) => ({
+        ...role,
+        permissions: Array.isArray(role.permissions)
+          ? role.permissions.filter(
+            (permission): permission is string => typeof permission === 'string',
+          )
+          : [],
+      })));
+      setMembers(m.data.memberships ?? []);
     }
     setLoading(false);
   }, []);

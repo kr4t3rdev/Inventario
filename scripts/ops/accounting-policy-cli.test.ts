@@ -40,6 +40,10 @@ vi.mock('@/features/contabilidad/services/tenant-accounting-policy-service', () 
   provisionTenantAccountingPolicy: provisionMock,
 }));
 vi.mock('@/lib/prisma', () => ({ prisma: prismaMock }));
+vi.mock('@/lib/db/platform-prisma', async () => ({
+  prismaPlatform: prismaMock,
+  default: prismaMock,
+}));
 vi.mock('@/lib/services/audit-log-service', () => ({
   verifyAccountingPolicyAuditRetention: retentionMock,
 }));
