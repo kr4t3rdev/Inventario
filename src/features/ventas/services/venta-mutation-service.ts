@@ -1,3 +1,4 @@
+import { Prisma } from '@/generated/prisma';
 import { prisma } from '@/lib/prisma';
 import { ActionError } from '@/lib/server-actions';
 import { hasPermission, requireFeature, requirePermission, requireTenant } from '@/lib/services/tenant-scope';
@@ -22,6 +23,142 @@ type PriceOverrideDetalle = {
   precioAplicado: number;
   fuente: PrecioVentaFuente;
 };
+
+/**
+ * @description Descuenta el stock por item, registra el kardex de salida y
+ * aplica las allocations FIFO (efectos de la entrega de una venta).
+ * @param {Prisma.TransactionClient} tx - Cliente transaccional de Prisma.
+ * @param {object} params - Datos de la entrega: tenant, venta, punto de venta
+ * (o almacén por item), líneas y usuario que ejecuta.
+ * @returns {Promise<void>} No devuelve valor; aborta la transacción si el
+ * stock es insuficiente o el registro está inconsistente.
+ */
+async function aplicarEfectosInventario(
+  tx: Prisma.TransactionClient,
+  params: {
+    tenantId: string;
+    ventaId: string;
+    puntoDeVentaId?: string | null;
+    itemsData: { productoId: string; cantidad: number; precioUnitario: number; total: number }[];
+    userId: string;
+  },
+) {
+  const { tenantId, ventaId, puntoDeVentaId, itemsData, userId } = params;
+  for (const [itemIdx, item] of itemsData.entries()) {
+    const producto = await tx.producto.findUnique({
+      where: { id: item.productoId },
+      select: {
+        id: true,
+        nombre: true,
+        stock: true,
+        precioCosto: true,
+        almacenId: true,
+        tenantId: true,
+      },
+    });
+
+    if (!producto) {
+      throw new ActionError(`Producto con ID ${item.productoId} no encontrado`, 'NOT_FOUND');
+    }
+
+    if (puntoDeVentaId) {
+      const stockPV = await tx.stockUbicacion.findUnique({
+        where: {
+          productoId_tipoUbicacion_ubicacionId: {
+            productoId: item.productoId,
+            tipoUbicacion: 'punto_venta',
+            ubicacionId: puntoDeVentaId,
+          },
+        },
+        select: { cantidadDisponible: true },
+      });
+
+      if (stockPV === null) {
+        throw new ActionError(
+          `El producto "${producto.nombre}" no tiene registro de stock en este punto de venta. Complete el backfill de StockUbicacion antes de vender.`,
+          'STOCK_INCONSISTENTE',
+        );
+      }
+
+      if (stockPV.cantidadDisponible < item.cantidad) {
+        throw new ActionError(
+          `Stock insuficiente en el punto de venta. Disponible: ${stockPV.cantidadDisponible}, solicitado: ${item.cantidad}`,
+          'STOCK_INSUFICIENTE',
+        );
+      }
+    } else if (producto.almacenId) {
+      const stockAlmacen = await tx.stockUbicacion.findUnique({
+        where: {
+          productoId_tipoUbicacion_ubicacionId: {
+            productoId: item.productoId,
+            tipoUbicacion: 'almacen',
+            ubicacionId: producto.almacenId,
+          },
+        },
+        select: { cantidadDisponible: true },
+      });
+
+      if (stockAlmacen === null) {
+        throw new ActionError(
+          `El producto "${producto.nombre}" no tiene registro de stock en su almacén. Complete el backfill de StockUbicacion antes de vender.`,
+          'STOCK_INCONSISTENTE',
+        );
+      }
+
+      if (stockAlmacen.cantidadDisponible < item.cantidad) {
+        throw new ActionError(
+          `Stock insuficiente en el almacén. Disponible: ${stockAlmacen.cantidadDisponible}, solicitado: ${item.cantidad}`,
+          'STOCK_INSUFICIENTE',
+        );
+      }
+    }
+
+    if (puntoDeVentaId) {
+      await upsertStockUbicacion(tx, {
+        tenantId: producto.tenantId,
+        productoId: item.productoId,
+        tipoUbicacion: 'punto_venta',
+        ubicacionId: puntoDeVentaId,
+        modo: 'increment',
+        delta: -item.cantidad,
+      });
+      await registrarMovimiento(tx, {
+        tenantId,
+        productoId: item.productoId,
+        tipoOrigen: 'VENTA',
+        origenId: ventaId,
+        tipoUbicacion: 'punto_venta',
+        ubicacionId: puntoDeVentaId,
+        cantidad: -item.cantidad,
+        costoUnitario: producto.precioCosto,
+        secuencia: `ITEM-${itemIdx}`,
+        creadoPorId: userId,
+      });
+    } else if (producto.almacenId) {
+      await upsertStockUbicacion(tx, {
+        productoId: item.productoId,
+        tipoUbicacion: 'almacen',
+        ubicacionId: producto.almacenId,
+        modo: 'increment',
+        delta: -item.cantidad,
+      });
+      await registrarMovimiento(tx, {
+        tenantId,
+        productoId: item.productoId,
+        tipoOrigen: 'VENTA',
+        origenId: ventaId,
+        tipoUbicacion: 'almacen',
+        ubicacionId: producto.almacenId,
+        cantidad: -item.cantidad,
+        costoUnitario: producto.precioCosto,
+        secuencia: `ITEM-${itemIdx}`,
+        creadoPorId: userId,
+      });
+    }
+  }
+
+  await allocateFifoForSale(tx, tenantId, ventaId);
+}
 
 /**
  * @description Shared sales mutation service for web and mobile adapters.
@@ -145,13 +282,16 @@ export const VentaMutationService = {
     const cargoTransporte = parsed.cargoTransporte ?? 0;
     const totalVenta = subtotalVenta - (parsed.descuento ?? 0) + cargoTransporte;
     const totalCantidad = itemsData.reduce((sum, item) => sum + item.cantidad, 0);
+    // PVE: el modo pedido detiene el ciclo en PEDIDO (sin stock/FIFO/factura ni
+    // pago); el flujo clásico completa el ciclo dentro de la misma transacción.
+    const esPedido = parsed.modoPedido === true;
 
     return prisma.$transaction(async (tx) => {
       let serie: any = null;
       let numeroConsecutivo = 0;
       let numeroFactura = '';
 
-      if (hasFacturacion) {
+      if (hasFacturacion && !esPedido) {
         serie = await tx.serieFacturacion.findFirst({
           where: { tenantId, esPorDefecto: true },
         });
@@ -191,11 +331,17 @@ export const VentaMutationService = {
           clienteId: parsed.clienteId ?? null,
           empleadoId: parsed.empleadoId ?? null,
           turnoId,
-          metodoPago: parsed.metodoPago ?? null,
-          montoEfectivo: parsed.montoEfectivo ?? null,
-          montoTarjeta: parsed.montoTarjeta ?? null,
-          montoTransferencia: parsed.montoTransferencia ?? null,
-          montoCredito: parsed.montoCredito ?? null,
+          // PVE: el pedido nace sin pago; el cobro se define al facturar.
+          estado: esPedido
+            ? 'PEDIDO'
+            : hasFacturacion && parsed.clienteId
+              ? 'FACTURADA'
+              : 'ENTREGADA',
+          metodoPago: esPedido ? null : (parsed.metodoPago ?? null),
+          montoEfectivo: esPedido ? null : (parsed.montoEfectivo ?? null),
+          montoTarjeta: esPedido ? null : (parsed.montoTarjeta ?? null),
+          montoTransferencia: esPedido ? null : (parsed.montoTransferencia ?? null),
+          montoCredito: esPedido ? null : (parsed.montoCredito ?? null),
           descuento: parsed.descuento ?? 0,
           observaciones: parsed.observaciones ?? null,
           total: Math.max(totalVenta, 0),
@@ -223,120 +369,15 @@ export const VentaMutationService = {
         );
       }
 
-      for (const [itemIdx, item] of itemsData.entries()) {
-        const producto = await tx.producto.findUnique({
-          where: { id: item.productoId },
-          select: {
-            id: true,
-            nombre: true,
-            stock: true,
-            precioCosto: true,
-            almacenId: true,
-            tenantId: true,
-          },
+      if (!esPedido) {
+        await aplicarEfectosInventario(tx, {
+          tenantId,
+          ventaId: venta.ventaId,
+          puntoDeVentaId: parsed.puntoDeVentaId,
+          itemsData,
+          userId: user.userId,
         });
-
-        if (!producto) {
-          throw new ActionError(`Producto con ID ${item.productoId} no encontrado`, 'NOT_FOUND');
-        }
-
-        if (parsed.puntoDeVentaId) {
-          const stockPV = await tx.stockUbicacion.findUnique({
-            where: {
-              productoId_tipoUbicacion_ubicacionId: {
-                productoId: item.productoId,
-                tipoUbicacion: 'punto_venta',
-                ubicacionId: parsed.puntoDeVentaId,
-              },
-            },
-            select: { cantidadDisponible: true },
-          });
-
-          if (stockPV === null) {
-            throw new ActionError(
-              `El producto "${producto.nombre}" no tiene registro de stock en este punto de venta. Complete el backfill de StockUbicacion antes de vender.`,
-              'STOCK_INCONSISTENTE',
-            );
-          }
-
-          if (stockPV.cantidadDisponible < item.cantidad) {
-            throw new ActionError(
-              `Stock insuficiente en el punto de venta. Disponible: ${stockPV.cantidadDisponible}, solicitado: ${item.cantidad}`,
-              'STOCK_INSUFICIENTE',
-            );
-          }
-        } else if (producto.almacenId) {
-          const stockAlmacen = await tx.stockUbicacion.findUnique({
-            where: {
-              productoId_tipoUbicacion_ubicacionId: {
-                productoId: item.productoId,
-                tipoUbicacion: 'almacen',
-                ubicacionId: producto.almacenId,
-              },
-            },
-            select: { cantidadDisponible: true },
-          });
-
-          if (stockAlmacen === null) {
-            throw new ActionError(
-              `El producto "${producto.nombre}" no tiene registro de stock en su almacén. Complete el backfill de StockUbicacion antes de vender.`,
-              'STOCK_INCONSISTENTE',
-            );
-          }
-
-          if (stockAlmacen.cantidadDisponible < item.cantidad) {
-            throw new ActionError(
-              `Stock insuficiente en el almacén. Disponible: ${stockAlmacen.cantidadDisponible}, solicitado: ${item.cantidad}`,
-              'STOCK_INSUFICIENTE',
-            );
-          }
-        }
-
-        if (parsed.puntoDeVentaId) {
-          await upsertStockUbicacion(tx, {
-            tenantId: producto.tenantId,
-            productoId: item.productoId,
-            tipoUbicacion: 'punto_venta',
-            ubicacionId: parsed.puntoDeVentaId,
-            modo: 'increment',
-            delta: -item.cantidad,
-          });
-          await registrarMovimiento(tx, {
-            tenantId,
-            productoId: item.productoId,
-            tipoOrigen: 'VENTA',
-            origenId: venta.ventaId,
-            tipoUbicacion: 'punto_venta',
-            ubicacionId: parsed.puntoDeVentaId,
-            cantidad: -item.cantidad,
-            costoUnitario: producto.precioCosto,
-            secuencia: `ITEM-${itemIdx}`,
-            creadoPorId: user.userId,
-          });
-        } else if (producto.almacenId) {
-          await upsertStockUbicacion(tx, {
-            productoId: item.productoId,
-            tipoUbicacion: 'almacen',
-            ubicacionId: producto.almacenId,
-            modo: 'increment',
-            delta: -item.cantidad,
-          });
-          await registrarMovimiento(tx, {
-            tenantId,
-            productoId: item.productoId,
-            tipoOrigen: 'VENTA',
-            origenId: venta.ventaId,
-            tipoUbicacion: 'almacen',
-            ubicacionId: producto.almacenId,
-            cantidad: -item.cantidad,
-            costoUnitario: producto.precioCosto,
-            secuencia: `ITEM-${itemIdx}`,
-            creadoPorId: user.userId,
-          });
-        }
       }
-
-      await allocateFifoForSale(tx, tenantId, venta.ventaId);
 
       if (hasFacturacion && parsed.clienteId && serie) {
         const factura = await tx.factura.create({

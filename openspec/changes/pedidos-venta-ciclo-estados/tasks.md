@@ -45,18 +45,22 @@ jamás `git add -A`; revisar `git diff --cached --name-only` antes de commitear)
 
 ## PVE-T3 — `create` como orquestador + acciones server
 
-- [ ] **T3.1 RED.** Tests de orquestación en `venta-lifecycle.test.ts` o nuevo
-  `venta-create-orquestacion.test.ts`: create clásico termina `FACTURADA`/`ENTREGADA` según plan;
-  create modo pedido termina `PEDIDO` sin stock; mismos campos de respuesta que hoy.
-  Evidencia `evidence/PVE-T3-RED.txt`.
-- [ ] **T3.2 GREEN.** Extracción de efectos en `venta-mutation-service.ts` (bloques
-  persistir/entrega/facturación) y orquestación; `anular` delega en `anularVentaPorEstado`.
-  Regresión: suites `src/features/ventas src/app/api/ventas src/app/api/mobile` verdes (la red
-  de 150+ tests existente valida el refactor puro). Evidencia `evidence/PVE-T3-GREEN.txt`.
-- [ ] **T3.3 Actions.** `entregarVentaAction`, `facturarVentaAction` con `withAction` +
-  `requireTenant` + `requirePermission('ventas.pedido.gestionar')` + `AuditLogService.log`.
-  Tests de auth/permiso incluidos.
-- [ ] Review + commit: `feat(ventas): create orquesta el ciclo y acciones de transición (PVE-T3)`
+- [x] **T3.1 RED.** Tests de orquestación en `venta-create-orquestacion.test.ts` (4 casos:
+  clásico+cliente→FACTURADA, clásico sin cliente→ENTREGADA, modo pedido→PEDIDO sin efectos ni
+  pago persistido, shape de respuesta intacto) + caso `anular PEDIDO con turno cerrado` en
+  `venta-lifecycle.test.ts`. Evidencia `evidence/PVE-T3-RED.txt` (4 fallos auténticos).
+- [x] **T3.2 GREEN.** Extracción de efectos a `aplicarEfectosInventario` (paridad exacta) y
+  orquestación en `create` (estado en el create; serie/factura/efectos saltados en modo pedido);
+  `anularVentaPorEstado` exime al PEDIDO de la guarda de turno cerrado (sin efectos que revertir,
+  igual pre-tx que post-lock). Regresión: `src/features/ventas src/app/api/ventas src/app/actions`
+  21 archivos / 105 tests verdes + typecheck limpio. Evidencia `evidence/PVE-T3-GREEN.txt`.
+- [x] **T3.3 Actions.** `entregarVentaAction`, `facturarVentaAction` con `withAction` +
+  `requireFeature('ventas-pedidos')` + delegación al lifecycle + `revalidatePath`.
+  Tests de auth/permiso en `actions-lifecycle.test.ts` (3 casos).
+  Nota review T3: `modoPedido` sin `.default()` (z.input) para no romper payloads de UI.
+- [x] Review (typescript-reviewer: APROBAR con observaciones; MEDIUM de JSDoc corregido,
+  LOWs documentados: MIXTO-pedido inofensivo, turno en pedido se ataca en T4 con la UI de
+  entrega) + commit: `feat(ventas): create orquesta el ciclo y acciones de transición (PVE-T3)`
 
 ## PVE-T4 — UI de pedidos + integración Ofertas
 

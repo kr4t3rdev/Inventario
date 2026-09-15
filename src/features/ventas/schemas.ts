@@ -20,6 +20,11 @@ export const createVentaSchema = z.object({
   cargoTransporte: z.coerce.number().int().min(0).optional().default(0),
   observaciones: z.string().max(500).optional().nullable(),
   items: z.array(ventaItemSchema).min(1, 'Debe tener al menos un producto'),
+  /**
+   * Modo pedido (PVE): crea la venta en estado PEDIDO sin efectos de stock,
+   * FIFO ni factura; los campos de pago no se persisten (se definen al facturar).
+   */
+  modoPedido: z.boolean().optional(),
   // Turno de punto de venta
   turnoId: z.string().optional().nullable(),
   // Método de pago

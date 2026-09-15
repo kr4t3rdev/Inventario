@@ -451,7 +451,9 @@ export const VentaLifecycleService = {
     if (venta.deletedAt) {
       throw new ActionError('La venta ya está anulada', 'VALIDATION_ERROR');
     }
-    if (hasClosedPeriodEffects(venta)) {
+    // La guarda de turno cerrado solo aplica cuando hubo efectos que revertir:
+    // un PEDIDO nunca movió dinero ni stock, así que puede anularse después.
+    if (venta.estado !== 'PEDIDO' && hasClosedPeriodEffects(venta)) {
       throw new ActionError(
         'No se puede anular una venta de un turno cerrado o con arqueo.',
         'FINANCIAL_REVERSAL_REQUIRED',
@@ -478,7 +480,7 @@ export const VentaLifecycleService = {
       if (currentVenta.deletedAt) {
         throw new ActionError('La venta ya está anulada', 'VALIDATION_ERROR');
       }
-      if (hasClosedPeriodEffects(currentVenta)) {
+      if (currentVenta.estado !== 'PEDIDO' && hasClosedPeriodEffects(currentVenta)) {
         throw new ActionError(
           'No se puede anular una venta de un turno cerrado o con arqueo.',
           'FINANCIAL_REVERSAL_REQUIRED',

@@ -344,6 +344,22 @@ describe('anularVentaPorEstado', () => {
 		);
 	});
 
+	it('permite anular un PEDIDO aunque su turno esté cerrado (sin efectos que revertir)', async () => {
+		mirarVenta({ ...ventaPedido, turno: { estado: 'CERRADO', arqueos: [{ id: 'a1' }] } });
+		const result = await svc.anularVentaPorEstado({
+			ventaId: 'venta-1',
+			motivo: null,
+			user: adminUser,
+		});
+		expect(result).toEqual({ ventaId: 'venta-1', anulada: true });
+		expect(mockTx.venta.updateMany).toHaveBeenCalledWith(
+			expect.objectContaining({
+				data: expect.objectContaining({ estado: 'ANULADA' }),
+			}),
+		);
+		expect(upsertStockUbicacion).not.toHaveBeenCalled();
+	});
+
 	it('rechaza anular una venta de turno cerrado', async () => {
 		mirarVenta({
 			...ventaPedido,
