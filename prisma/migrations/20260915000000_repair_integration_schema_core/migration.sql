@@ -127,8 +127,23 @@ ALTER TABLE "RecetaIngrediente"
   ADD COLUMN IF NOT EXISTS "tenantId" TEXT,
   ADD COLUMN IF NOT EXISTS "unidadSimbolo" TEXT;
 
+DO $$
+BEGIN
+  IF EXISTS (
+    SELECT 1
+    FROM information_schema.columns
+    WHERE table_schema = 'public'
+      AND table_name = 'RecetaIngrediente'
+      AND column_name = 'recetaIngredienteId'
+  ) THEN
+    EXECUTE 'UPDATE "RecetaIngrediente"
+      SET "id" = COALESCE("id", "recetaIngredienteId"::TEXT)';
+  END IF;
+END $$;
+
 UPDATE "RecetaIngrediente"
-SET "id" = COALESCE("id", "recetaIngredienteId"::TEXT);
+SET "id" = gen_random_uuid()::TEXT
+WHERE "id" IS NULL;
 
 ALTER TABLE "RecetaIngrediente"
   ALTER COLUMN "id" SET DEFAULT ((gen_random_uuid())::TEXT);
