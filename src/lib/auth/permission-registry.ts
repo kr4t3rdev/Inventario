@@ -413,6 +413,22 @@ export const PERMISSION_REGISTRY: PermissionDef[] = [
 		category: 'ventas',
 		defaultRoles: ['manager', 'economico', 'dependiente'],
 	},
+	{
+		key: 'ventas.devolucion.registrar',
+		label: 'Registrar devoluciones',
+		description: 'Registrar devoluciones parciales o totales de ventas con nota de crédito.',
+		category: 'ventas',
+		defaultRoles: ['manager', 'economico'],
+		sensitive: true,
+	},
+	{
+		key: 'ventas.devolucion.reembolso',
+		label: 'Reembolsar en efectivo',
+		description: 'Entregar efectivo de la caja abierta como reembolso de una devolución.',
+		category: 'ventas',
+		defaultRoles: ['manager'],
+		sensitive: true,
+	},
 
 	// ── compras (servicios recibidos) ──
 	{

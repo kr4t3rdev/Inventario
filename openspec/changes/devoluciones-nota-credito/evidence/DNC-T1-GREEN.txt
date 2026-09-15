@@ -1,0 +1,16 @@
+
+ RUN  v3.2.4 /Users/arturo/Documents/Proyecto Inventario/TCP
+
+ ✓ src/lib/auth/__tests__/roles.test.ts (15 tests) 9ms
+ ✓ src/lib/auth/__tests__/tenant-role-schema.test.ts (7 tests) 9ms
+ ✓ src/lib/auth/__tests__/sales-agent-access.test.ts (5 tests) 9ms
+ ✓ src/lib/auth/accounting-policy-capabilities.test.ts (5 tests) 81ms
+ ✓ src/lib/auth/__tests__/route-permissions.test.ts (12 tests) 42ms
+ ✓ src/lib/auth/__tests__/permission-registry.test.ts (22 tests) 76ms
+ ✓ src/lib/auth/__tests__/permission-parity.test.ts (11 tests) 25ms
+
+ Test Files  7 passed (7)
+      Tests  77 passed (77)
+   Start at  17:05:04
+   Duration  4.02s (transform 617ms, setup 2.58s, collect 899ms, tests 252ms, environment 13.22s, prepare 3.22s)
+

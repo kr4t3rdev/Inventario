@@ -227,6 +227,7 @@ model Tenant {
   valesSalidaItem                ValeSalidaItem[]
   vendors                        Vendor[]
   ventas                         Venta[]
+  devolucionesVenta              DevolucionVenta[]
   ventasServicios                VentaServicios[]
   aperturaPeriodos               AperturaPeriodo[]
   arqueosCaja                    ArqueoCaja[]
@@ -414,6 +415,7 @@ model TurnoPuntoVenta {
   empleado        Empleado?    @relation(fields: [empleadoId], references: [empleadoId])
   puntoDeVenta    PuntoDeVenta @relation(fields: [puntoDeVentaId], references: [pvId])
   tenant          Tenant       @relation(fields: [tenantId], references: [tenantId])
+  reembolsos      DevolucionVenta[]
 
   @@index([tenantId])
   @@index([puntoDeVentaId, fechaApertura])
@@ -692,6 +694,7 @@ model Venta {
   factura            Factura?
   items              VentaItem[]
   VentaServicios     VentaServicios[]
+  devoluciones       DevolucionVenta[]
 
   @@index([tenantId])
   @@index([tenantId, createdAt])
@@ -710,6 +713,7 @@ model VentaItem {
   allocations    PurchaseAllocation[]
   producto       Producto             @relation(fields: [productoId], references: [id], onDelete: Cascade)
   venta          Venta                @relation(fields: [ventaId], references: [ventaId], onDelete: Cascade)
+  devoluciones   DevolucionVentaItem[]
 
   @@map("venta_items")
 }
@@ -2334,6 +2338,7 @@ model Factura {
   serie             SerieFacturacion @relation(fields: [serieId], references: [serieId])
   tenant            Tenant           @relation(fields: [tenantId], references: [tenantId])
   venta             Venta?           @relation(fields: [ventaId], references: [ventaId], onDelete: Cascade)
+  devolucionesNC    DevolucionVenta[]
 
   @@unique([tenantId, numeroFactura])
   @@index([tenantId])
@@ -2863,7 +2868,8 @@ model Anticipo {
   tenantId          String
   tipo              TipoAnticipo
   estado            EstadoAnticipo       @default(RESERVADO)
-  contratoId        String
+  // Desde DNC: opcional — los saldos a favor por nota de crédito no tienen contrato.
+  contratoId        String?
   proveedorId       String?
   clienteId         String?
   facturaId         String?              @unique
@@ -2882,12 +2888,13 @@ model Anticipo {
   updatedAt         DateTime             @updatedAt
   cliente           Cliente?             @relation(fields: [clienteId], references: [clienteId])
   compraProducto    CompraProducto?      @relation(fields: [compraProductoId], references: [compraProductoId])
-  contrato          Contrato             @relation(fields: [contratoId], references: [contratoId])
+  contrato          Contrato?            @relation(fields: [contratoId], references: [contratoId])
   creador           User                 @relation(fields: [createdById], references: [userId])
   factura           Factura?             @relation(fields: [facturaId], references: [idFactura])
   proveedor         Vendor?              @relation(fields: [proveedorId], references: [vendorId])
   tenant            Tenant               @relation(fields: [tenantId], references: [tenantId])
   movimientos       AnticipoMovimiento[]
+  devoluciones      DevolucionVenta[]
 
   @@index([tenantId])
   @@index([contratoId])
@@ -2922,6 +2929,68 @@ model AnticipoMovimiento {
   @@unique([anticipoId, idempotencyKey])
   @@index([anticipoId, createdAt])
   @@index([documentoDestinoId])
+}
+
+/// Devolución (parcial o total) de una venta de productos. DNC.
+model DevolucionVenta {
+  devolucionId         String             @id @default(cuid())
+  tenantId             String
+  ventaId              String
+  estado               EstadoDevolucion   @default(REGISTRADA)
+  motivo               String?
+  /// Centavos: Σ de items devueltos (mundo venta, Int)
+  subtotal             Int
+  /// Prorrateo acotado del descuento global de la venta
+  descuento            Int
+  /// subtotal − descuento
+  total                Int
+  moneda               String             @default("CUP")
+  /// Copia histórica de la tasa de la factura origen (1 si no hay)
+  tasaCambio           Decimal?
+  facturaNotaCreditoId String?            @unique
+  anticipoId           String?            @unique
+  turnoReembolsoId     String?
+  montoAplicadoCxc     Int                @default(0)
+  montoSaldoFavor      Int                @default(0)
+  montoReembolsado     Int                @default(0)
+  idempotencyKey       String?
+  createdById          String
+  createdAt            DateTime           @default(now())
+  updatedAt            DateTime           @updatedAt
+  venta                Venta              @relation(fields: [ventaId], references: [ventaId])
+  facturaNotaCredito   Factura?           @relation(fields: [facturaNotaCreditoId], references: [idFactura])
+  anticipo             Anticipo?          @relation(fields: [anticipoId], references: [anticipoId])
+  turnoReembolso       TurnoPuntoVenta?   @relation(fields: [turnoReembolsoId], references: [id])
+  tenant               Tenant             @relation(fields: [tenantId], references: [tenantId])
+  items                DevolucionVentaItem[]
+
+  @@unique([tenantId, idempotencyKey])
+  @@index([tenantId, ventaId])
+  @@index([tenantId, turnoReembolsoId])
+  @@map("devoluciones_venta")
+}
+
+/// Línea de una devolución: cantidad devuelta de un VentaItem concreto.
+model DevolucionVentaItem {
+  id                      String          @id @default(cuid())
+  devolucionId            String
+  ventaItemId             String
+  productoId              String
+  cantidad                Int
+  /// Centavos, copia del VentaItem (auditable)
+  precioUnitario          Int
+  total                   Int
+  /// Costo FIFO ponderado restaurado (auditoría y rentabilidad)
+  costoUnitarioDevolucion Int
+  /// 'punto_venta' | 'almacen' (ubicación origen de la venta)
+  tipoUbicacion           String
+  ubicacionId             String
+  devolucion              DevolucionVenta @relation(fields: [devolucionId], references: [devolucionId], onDelete: Cascade)
+  ventaItem               VentaItem       @relation(fields: [ventaItemId], references: [id])
+
+  @@unique([devolucionId, ventaItemId])
+  @@index([ventaItemId])
+  @@map("devoluciones_venta_items")
 }
 
 model PeriodoContable {
@@ -3172,6 +3241,8 @@ enum ContextoAnticipo {
   COMPRA_SERVICIO
   FACTURA_OFERTA
   FACTURA_DIRECTA
+  /// Saldo a favor generado por la nota de crédito de una devolución (DNC).
+  NOTA_CREDITO
 }
 
 enum TipoInyeccion {
@@ -3214,6 +3285,12 @@ enum EstadoVenta {
   PEDIDO
   ENTREGADA
   FACTURADA
+  ANULADA
+}
+
+/// Ciclo de la devolución. ANULADA está reservado para una reversión futura.
+enum EstadoDevolucion {
+  REGISTRADA
   ANULADA
 }
 

@@ -64,6 +64,28 @@ export const anularVentaSchema = z.object({
 });
 
 /**
+ * Schema para registrar una devolución de venta (DNC): parcial o total.
+ * La preferencia financiera solo aplica al excedente tras reducir la CxC.
+ */
+export const registrarDevolucionSchema = z.object({
+  ventaId: z.string().min(1, 'El ID de la venta es requerido'),
+  items: z
+    .array(
+      z.object({
+        ventaItemId: z.string().min(1, 'El ítem de venta es requerido'),
+        cantidad: z.coerce.number().int().positive('Debe ser mayor a 0'),
+      }),
+    )
+    .min(1, 'Debe devolver al menos un ítem'),
+  motivo: z.string().min(3, 'El motivo es obligatorio').max(500),
+  preferenciaFinanciera: z
+    .enum(['SALDO_FAVOR', 'REEMBOLSO_EFECTIVO'])
+    .optional()
+    .default('SALDO_FAVOR'),
+  idempotencyKey: z.string().uuid('La clave de idempotencia debe ser un UUID'),
+});
+
+/**
  * Schema para facturar una venta ya entregada (transición ENTREGADA → FACTURADA).
  * Espejo de los campos de cobro/facturación de createVentaSchema, pero sin
  * los datos de mercadería (ya persistidos en la venta).
@@ -85,3 +107,4 @@ export type CreateVentaInput = z.infer<typeof createVentaSchema>;
 export type VentaItemInput = z.infer<typeof ventaItemSchema>;
 export type AnularVentaInput = z.infer<typeof anularVentaSchema>;
 export type FacturarVentaInput = z.infer<typeof facturarVentaSchema>;
+export type RegistrarDevolucionInput = z.infer<typeof registrarDevolucionSchema>;
