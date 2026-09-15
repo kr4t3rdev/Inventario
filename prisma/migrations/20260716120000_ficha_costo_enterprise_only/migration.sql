@@ -1,4 +1,23 @@
 -- Restrict Ficha de Costo to Empresarial/Enterprise plans and legacy licenses.
+-- The Prisma schema renamed Plan.funcionalidades to Plan.features without a
+-- corresponding migration. Restore the target column before using it and
+-- preserve legacy JSON values when the old column is still present.
+ALTER TABLE "Plan"
+  ADD COLUMN IF NOT EXISTS "features" JSONB NOT NULL DEFAULT '{}'::jsonb;
+
+DO $$
+BEGIN
+  IF EXISTS (
+    SELECT 1
+    FROM information_schema.columns
+    WHERE table_schema = current_schema()
+      AND table_name = 'Plan'
+      AND column_name = 'funcionalidades'
+  ) THEN
+    EXECUTE 'UPDATE "Plan" SET "features" = "funcionalidades" WHERE "features" = ''{}''::jsonb AND "funcionalidades" IS NOT NULL';
+  END IF;
+END $$;
+
 UPDATE "Plan"
 SET "features" = CASE
   WHEN lower("nombre") IN ('empresarial', 'enterprise') THEN

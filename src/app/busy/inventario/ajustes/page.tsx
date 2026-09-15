@@ -29,7 +29,12 @@ export default async function AjustesPage() {
 			productos={productos.success ? (productos.data ?? []) : []}
 			almacenes={almacenes.success ? (almacenes.data ?? []) : []}
 			puntosVenta={puntosVenta.success ? (puntosVenta.data ?? []) : []}
-			ajustesIniciales={ajustes.success ? (ajustes.data?.items ?? []) : []}
+			ajustesIniciales={ajustes.success
+				? (ajustes.data?.items ?? []).map((ajuste) => ({
+					...ajuste,
+					createdAt: ajuste.createdAt.toISOString(),
+				}))
+				: []}
 		/>
 	);
 }

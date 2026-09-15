@@ -12,6 +12,7 @@ import {
 	conciliarConteoSchema,
 	iniciarConteoSchema,
 	registrarConteoSchema,
+	tipoUbicacionSchema,
 	type ConciliarConteoInput,
 	type IniciarConteoInput,
 	type RegistrarConteoInput,
@@ -171,6 +172,7 @@ export const conciliarConteoAction = withAction(
 				'ESTADO_INVALIDO',
 			);
 		}
+		const tipoUbicacion = tipoUbicacionSchema.parse(conteo.tipoUbicacion);
 
 		return prisma.$transaction(async (tx: any) => {
 			const lineas = await tx.conteoLinea.findMany({
@@ -216,7 +218,7 @@ export const conciliarConteoAction = withAction(
 					data: {
 						tenantId,
 						productoId: linea.productoId,
-						tipoUbicacion: conteo.tipoUbicacion,
+						tipoUbicacion,
 						ubicacionId: conteo.ubicacionId,
 						motivo: 'ERROR_CONTEO',
 						cantidadTeorica: linea.teorico,
@@ -238,7 +240,7 @@ export const conciliarConteoAction = withAction(
 				await upsertStockUbicacion(tx, {
 					tenantId,
 					productoId: linea.productoId,
-					tipoUbicacion: conteo.tipoUbicacion,
+					tipoUbicacion,
 					ubicacionId: conteo.ubicacionId,
 					modo: 'increment',
 					delta: diferencia,
@@ -249,7 +251,7 @@ export const conciliarConteoAction = withAction(
 					productoId: linea.productoId,
 					tipoOrigen: 'CONTEO',
 					origenId: conteo.id,
-					tipoUbicacion: conteo.tipoUbicacion,
+					tipoUbicacion,
 					ubicacionId: conteo.ubicacionId,
 					cantidad: diferencia,
 					costoUnitario,

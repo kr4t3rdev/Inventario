@@ -1,4 +1,26 @@
 -- Órdenes de compra, recepciones parciales y reglas min/max.
+ALTER TABLE "CompraDocumento" ADD COLUMN IF NOT EXISTS "tenantId" TEXT;
+UPDATE "CompraDocumento" document
+SET "tenantId" = vendor."tenantId"
+FROM "Vendor" vendor
+WHERE document."proveedorId" = vendor."vendorId"
+  AND document."tenantId" IS NULL;
+ALTER TABLE "CompraDocumento" ALTER COLUMN "tenantId" SET NOT NULL;
+ALTER TABLE "CompraDocumento" ADD CONSTRAINT "CompraDocumento_tenantId_fkey"
+  FOREIGN KEY ("tenantId") REFERENCES "tenants"("tenantId") ON DELETE RESTRICT ON UPDATE CASCADE;
+CREATE INDEX IF NOT EXISTS "CompraDocumento_tenantId_idx" ON "CompraDocumento"("tenantId");
+
+ALTER TABLE "CompraDocumentoItem" ADD COLUMN IF NOT EXISTS "tenantId" TEXT;
+UPDATE "CompraDocumentoItem" item
+SET "tenantId" = document."tenantId"
+FROM "CompraDocumento" document
+WHERE item."compraDocumentoId" = document."compraDocumentoId"
+  AND item."tenantId" IS NULL;
+ALTER TABLE "CompraDocumentoItem" ALTER COLUMN "tenantId" SET NOT NULL;
+ALTER TABLE "CompraDocumentoItem" ADD CONSTRAINT "CompraDocumentoItem_tenantId_fkey"
+  FOREIGN KEY ("tenantId") REFERENCES "tenants"("tenantId") ON DELETE RESTRICT ON UPDATE CASCADE;
+CREATE INDEX IF NOT EXISTS "CompraDocumentoItem_tenantId_idx" ON "CompraDocumentoItem"("tenantId");
+
 ALTER TABLE "CompraDocumento" ADD COLUMN "ordenCompraId" TEXT;
 CREATE INDEX "CompraDocumento_tenantId_ordenCompraId_idx"
   ON "CompraDocumento"("tenantId", "ordenCompraId");

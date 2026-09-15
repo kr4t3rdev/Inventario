@@ -11,7 +11,11 @@ import {
 	registrarMovimiento,
 	revertirMovimientosDeOrigen,
 } from '@/features/inventario/movimientos';
-import { createAjusteSchema, type CreateAjusteInput } from './schemas';
+import {
+	createAjusteSchema,
+	tipoUbicacionSchema,
+	type CreateAjusteInput,
+} from './schemas';
 import type { AuthenticatedUser } from '@/lib/auth-middleware';
 
 /**
@@ -144,6 +148,7 @@ export const anularAjusteAction = withAction(
 				'AJUSTE_NO_ANULABLE',
 			);
 		}
+		const tipoUbicacion = tipoUbicacionSchema.parse(ajuste.tipoUbicacion);
 
 		await prisma.$transaction(async (tx: any) => {
 			// Compensar kardex con el costo histórico original.
@@ -157,7 +162,7 @@ export const anularAjusteAction = withAction(
 			await upsertStockUbicacion(tx, {
 				tenantId,
 				productoId: ajuste.productoId,
-				tipoUbicacion: ajuste.tipoUbicacion,
+				tipoUbicacion,
 				ubicacionId: ajuste.ubicacionId,
 				modo: 'increment',
 				delta: -ajuste.diferencia,

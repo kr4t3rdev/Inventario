@@ -1,23 +1,14 @@
-name: E2E Producción (smoke post-deploy)
+name: Smoke público post-deploy
 
 # Chequeo manual post-deploy contra el host real de Railway.
 # NO se ejecuta automáticamente en push/PR: el deploy de Railway es asíncrono
 # respecto al push, así que una corrida automática validaría un deploy viejo
 # o parcial (flaky/enganchado). Se dispara a mano desde "Run workflow" tras
 # confirmar en Railway que el deploy activo es el esperado.
-#
-# El seed es OPCIONAL (checkbox): escribe contra la DB de producción
-# (licencia + catálogo del tenant e2e-tenant) y es idempotente; por defecto
-# se asume que los fixtures ya existen.
 
 on:
   workflow_dispatch:
     inputs:
-      run_seed:
-        description: 'Ejecutar seed:e2e contra la DB de producción (idempotente)'
-        required: false
-        default: false
-        type: boolean
       base_url:
         description: 'Host a validar (default: producción Railway)'
         required: false
@@ -41,44 +32,35 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 30
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          persist-credentials: false
 
       - name: Set up pnpm
-        uses: pnpm/action-setup@v4
+        uses: pnpm/action-setup@a7487c7e89a18df4991f7f222e4898a00d66ddda # v4.1.0
         with:
           version: ${{ env.PNPM_VERSION }}
 
       - name: Set up Node.js
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
         with:
           node-version: ${{ env.NODE_VERSION }}
           cache: pnpm
 
       - name: Install dependencies
-        run: pnpm install --frozen-lockfile
+        run: pnpm install --frozen-lockfile --ignore-scripts
 
       - name: Instalar navegador Chromium (Playwright)
         run: pnpm exec playwright install --with-deps chromium
 
-      # Los specs E2E viven en e2e/ que está en .gitignore — verificar que
-      # estén presentes en el checkout antes de continuar (solo hay versiones
-      # locales en el workspace del desarrollador).
-      - name: Verificar presencia de specs E2E
-        run: |
-          test -f e2e/servicios-cart.spec.ts || { echo "Specs E2E ausentes (e2e/ está en .gitignore). Crea los specs en el workspace y replica los archivos al repo o usa el comando local pnpm run test:e2e:prod."; exit 1; }
-
-      - name: Semilla E2E opcional (DB de producción)
-        if: ${{ inputs.run_seed }}
-        run: pnpm run seed:e2e
-
       - name: Suite E2E contra producción
         env:
           E2E_BASE_URL: ${{ inputs.base_url }}
-        run: pnpm run test:e2e:prod
+        run: pnpm run test:smoke:prod
 
       - name: Subir artefacto de reporte (si falla)
         if: failure()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
         with:
           name: playwright-report
           path: playwright-report/

@@ -9,9 +9,46 @@
 --   4. Elimina los registros globales huérfanos.
 --   5. Aplica NOT NULL, índices, unicidad por tenant y FKs.
 
+-- These catalog models existed in the Prisma schema without a corresponding
+-- create-table migration. Restore their legacy shape before tenant scoping.
+CREATE TABLE IF NOT EXISTS "GastoConcepto" (
+  "conceptoId" TEXT NOT NULL,
+  "nombre" TEXT NOT NULL,
+  "descripcion" TEXT,
+  "isActive" BOOLEAN NOT NULL DEFAULT true,
+  "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  "updatedAt" TIMESTAMP(3) NOT NULL,
+  CONSTRAINT "GastoConcepto_pkey" PRIMARY KEY ("conceptoId")
+);
+CREATE TABLE IF NOT EXISTS "GastoElemento" (
+  "elementoId" TEXT NOT NULL,
+  "nombre" TEXT NOT NULL,
+  "descripcion" TEXT,
+  "isActive" BOOLEAN NOT NULL DEFAULT true,
+  "conceptoId" TEXT NOT NULL,
+  "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  "updatedAt" TIMESTAMP(3) NOT NULL,
+  CONSTRAINT "GastoElemento_pkey" PRIMARY KEY ("elementoId")
+);
+CREATE UNIQUE INDEX IF NOT EXISTS "GastoConcepto_nombre_key" ON "GastoConcepto"("nombre");
+CREATE INDEX IF NOT EXISTS "GastoElemento_conceptoId_idx" ON "GastoElemento"("conceptoId");
+DO $$
+BEGIN
+  IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'GastoElemento_conceptoId_fkey') THEN
+    ALTER TABLE "GastoElemento" ADD CONSTRAINT "GastoElemento_conceptoId_fkey"
+      FOREIGN KEY ("conceptoId") REFERENCES "GastoConcepto"("conceptoId") ON DELETE CASCADE ON UPDATE CASCADE;
+  END IF;
+END $$;
+
+-- GastosDE also referenced these catalog IDs in the Prisma schema without a
+-- corresponding historical ALTER TABLE.
+ALTER TABLE "GastosDE"
+  ADD COLUMN IF NOT EXISTS "conceptoId" TEXT,
+  ADD COLUMN IF NOT EXISTS "elementoId" TEXT;
+
 -- El índice único global sobre nombre impide insertar las copias (mismo
 -- nombre) mientras exista; se elimina primero.
-DROP INDEX "GastoConcepto_nombre_key";
+DROP INDEX IF EXISTS "GastoConcepto_nombre_key";
 
 -- 1) Columnas tenantId nullable
 ALTER TABLE "GastoConcepto" ADD COLUMN     "tenantId" TEXT;
@@ -71,3 +108,7 @@ CREATE UNIQUE INDEX "GastoElemento_tenantId_conceptoId_nombre_key" ON "GastoElem
 
 ALTER TABLE "GastoConcepto" ADD CONSTRAINT "GastoConcepto_tenantId_fkey" FOREIGN KEY ("tenantId") REFERENCES "tenants"("tenantId") ON DELETE RESTRICT ON UPDATE CASCADE;
 ALTER TABLE "GastoElemento" ADD CONSTRAINT "GastoElemento_tenantId_fkey" FOREIGN KEY ("tenantId") REFERENCES "tenants"("tenantId") ON DELETE RESTRICT ON UPDATE CASCADE;
+ALTER TABLE "GastosDE" ADD CONSTRAINT "GastosDE_conceptoId_fkey"
+  FOREIGN KEY ("conceptoId") REFERENCES "GastoConcepto"("conceptoId") ON DELETE SET NULL ON UPDATE CASCADE;
+ALTER TABLE "GastosDE" ADD CONSTRAINT "GastosDE_elementoId_fkey"
+  FOREIGN KEY ("elementoId") REFERENCES "GastoElemento"("elementoId") ON DELETE SET NULL ON UPDATE CASCADE;

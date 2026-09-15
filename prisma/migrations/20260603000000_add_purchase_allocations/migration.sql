@@ -19,4 +19,4 @@ CREATE INDEX "purchase_allocations_tenantId_idx" ON "purchase_allocations"("tena
 -- AddForeignKeys
 ALTER TABLE "purchase_allocations" ADD CONSTRAINT "purchase_allocations_compraDocumentoItemId_fkey" FOREIGN KEY ("compraDocumentoItemId") REFERENCES "CompraDocumentoItem"("compraDocumentoItemId") ON DELETE CASCADE ON UPDATE CASCADE;
 ALTER TABLE "purchase_allocations" ADD CONSTRAINT "purchase_allocations_ventaItemId_fkey" FOREIGN KEY ("ventaItemId") REFERENCES "venta_items"("id") ON DELETE CASCADE ON UPDATE CASCADE;
-ALTER TABLE "purchase_allocations" ADD CONSTRAINT "purchase_allocations_tenantId_fkey" FOREIGN KEY ("tenantId") REFERENCES "Tenant"("tenantId") ON DELETE CASCADE ON UPDATE CASCADE;
+ALTER TABLE "purchase_allocations" ADD CONSTRAINT "purchase_allocations_tenantId_fkey" FOREIGN KEY ("tenantId") REFERENCES "tenants"("tenantId") ON DELETE CASCADE ON UPDATE CASCADE;

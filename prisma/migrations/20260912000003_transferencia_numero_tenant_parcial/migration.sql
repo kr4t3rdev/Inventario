@@ -4,7 +4,18 @@
 -- colisionan al migrarse. cantidadRecibida = unidades confirmadas al recibir
 -- (NULL mantiene el comportamiento histórico de recepción total).
 
+ALTER TABLE "Transferencia" ADD COLUMN IF NOT EXISTS "tenantId" TEXT;
+UPDATE "Transferencia" transfer
+SET "tenantId" = producto."tenantId"
+FROM "Producto" producto
+WHERE transfer."productoId" = producto."id"
+  AND transfer."tenantId" IS NULL;
+ALTER TABLE "Transferencia" ALTER COLUMN "tenantId" SET NOT NULL;
+ALTER TABLE "Transferencia" ADD CONSTRAINT "Transferencia_tenantId_fkey"
+  FOREIGN KEY ("tenantId") REFERENCES "tenants"("tenantId") ON DELETE RESTRICT ON UPDATE CASCADE;
+CREATE INDEX IF NOT EXISTS "Transferencia_tenantId_idx" ON "Transferencia"("tenantId");
+
 ALTER TABLE "Transferencia" ADD COLUMN "cantidadRecibida" INTEGER;
 
-ALTER TABLE "Transferencia" DROP CONSTRAINT "Transferencia_numeroTransferencia_key";
+ALTER TABLE "Transferencia" DROP CONSTRAINT IF EXISTS "Transferencia_numeroTransferencia_key";
 CREATE UNIQUE INDEX "Transferencia_tenantId_numeroTransferencia_key" ON "Transferencia"("tenantId", "numeroTransferencia");

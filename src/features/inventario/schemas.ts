@@ -16,11 +16,15 @@ export const MOTIVOS_AJUSTE = [
 
 export type MotivoAjuste = (typeof MOTIVOS_AJUSTE)[number];
 
+export const tipoUbicacionSchema = z.enum(['almacen', 'punto_venta']);
+
 export const createAjusteSchema = z.object({
 	productoId: z.string().min(1),
-	tipoUbicacion: z.enum(['almacen', 'punto_venta']),
+	tipoUbicacion: tipoUbicacionSchema,
 	ubicacionId: z.string().min(1),
-	motivo: z.enum(MOTIVOS_AJUSTE, 'El motivo debe ser uno del catálogo'),
+	motivo: z.enum(MOTIVOS_AJUSTE, {
+		errorMap: () => ({ message: 'El motivo debe ser uno del catálogo' }),
+	}),
 	cantidadContada: z.coerce.number().int().min(0),
 	observaciones: z.string().max(500).optional().nullable(),
 });
@@ -37,7 +41,7 @@ export const ESTADOS_CONTEO = [
 ] as const;
 
 export const iniciarConteoSchema = z.object({
-	tipoUbicacion: z.enum(['almacen', 'punto_venta']),
+	tipoUbicacion: tipoUbicacionSchema,
 	ubicacionId: z.string().min(1),
 	observaciones: z.string().max(500).optional().nullable(),
 });

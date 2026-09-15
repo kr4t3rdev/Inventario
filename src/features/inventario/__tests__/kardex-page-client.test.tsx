@@ -58,7 +58,7 @@ describe('KardexPageClient', () => {
             cantidad: 10,
             saldo: 50,
             costoUnitario: 100,
-            createdAt: '2026-02-01T10:00:00.000Z',
+            createdAt: new Date('2026-02-01T10:00:00.000Z'),
           },
           {
             id: 'm-2',
@@ -67,7 +67,7 @@ describe('KardexPageClient', () => {
             cantidad: -3,
             saldo: 47,
             costoUnitario: 100,
-            createdAt: '2026-02-02T10:00:00.000Z',
+            createdAt: new Date('2026-02-02T10:00:00.000Z'),
           },
         ],
       },
@@ -107,6 +107,22 @@ describe('KardexPageClient', () => {
 
     await waitFor(() => {
       expect(screen.getByText(/error de base de datos/i)).toBeInTheDocument()
+    })
+  })
+
+  it('muestra error si la acción responde éxito sin datos', async () => {
+    vi.mocked(getKardexAction).mockResolvedValue({
+      success: true,
+    } as Awaited<ReturnType<typeof getKardexAction>>)
+
+    renderPage()
+    fireEvent.change(screen.getByLabelText(/producto/i), {
+      target: { value: 'prod-1' },
+    })
+    fireEvent.click(screen.getByRole('button', { name: /consultar/i }))
+
+    await waitFor(() => {
+      expect(screen.getByText(/no se pudo cargar el kardex/i)).toBeInTheDocument()
     })
   })
 })

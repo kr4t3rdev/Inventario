@@ -4,7 +4,10 @@
  * NO es el default (`vitest` corre el config del proyecto). Esta config
  * se ejecuta explícitamente:
  *
- *   DATABASE_URL_TEST=postgresql://localhost:5433/test_db \
+ *   ALLOW_DISPOSABLE_TEST_DB=1 \
+ *   DATABASE_URL=postgresql://postgres:test@127.0.0.1:5433/tcp_test_local \
+ *   DATABASE_URL_TEST=postgresql://postgres:test@127.0.0.1:5433/tcp_test_local \
+ *   DIRECT_URL=postgresql://postgres:test@127.0.0.1:5433/tcp_test_local \
  *   pnpm test:integration
  *
  * Ejecuta solo archivos bajo `__integration__` en cualquier parte del repo.
@@ -16,10 +19,16 @@
  */
 import { defineConfig } from 'vitest/config';
 import path from 'path';
+import { assertDisposableDatabase } from './scripts/ci/disposable-database.mjs';
+
+assertDisposableDatabase(process.env);
 
 export default defineConfig({
+  envFile: false,
   test: {
     environment: 'node',
+    maxWorkers: 1,
+    fileParallelism: false,
     globals: true,
     setupFiles: ['./vitest.integration.setup.ts'],
     // Solo tests marcados como de integración.

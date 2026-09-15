@@ -56,8 +56,13 @@ const TABLES: TableHarness[] = [
   },
   {
     name: 'SaldoSnapshot',
-    findManyPending: () =>
-      prisma.saldoSnapshot.findMany({ where: { tenantId: null }, select: { snapshotId: true } }),
+    findManyPending: async () => {
+      const rows = await prisma.saldoSnapshot.findMany({
+        where: { tenantId: null },
+        select: { snapshotId: true },
+      });
+      return rows.map(({ snapshotId }) => ({ id: snapshotId }));
+    },
     resolve: async (snapshotId) => {
       const row = await prisma.saldoSnapshot.findUnique({
         where: { snapshotId },

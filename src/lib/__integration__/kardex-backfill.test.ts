@@ -13,13 +13,14 @@ describe('Backfill de kardex (integración)', { timeout: 60_000 }, () => {
 
   afterEach(async () => {
     if (!tenantId) return
-    await prisma.$executeRaw`DELETE FROM "StockMoveLine" WHERE "tenantId" = ${tenantId}` // @ts-expect-error Prisma raw query typing is narrower in integration tests.
+    // StockMoveLine is append-only; truncate is reserved for this disposable DB cleanup.
+    await prisma.$executeRaw`TRUNCATE TABLE "StockMoveLine"` // @ts-expect-error Prisma raw query typing is narrower in integration tests.
     await prisma.$executeRaw`DELETE FROM "StockUbicacion" WHERE "tenantId" = ${tenantId}`
-    await prisma.$executeRaw`DELETE FROM "VentaItem" WHERE "productoId" IN (SELECT id FROM "Producto" WHERE "tenantId" = ${tenantId})`
     await prisma.$executeRaw`DELETE FROM "Venta" WHERE "tenantId" = ${tenantId}`
     await prisma.$executeRaw`DELETE FROM "CompraDocumentoItem" WHERE "tenantId" = ${tenantId}`
     await prisma.$executeRaw`DELETE FROM "CompraDocumento" WHERE "tenantId" = ${tenantId}`
     await prisma.$executeRaw`DELETE FROM "Transferencia" WHERE "tenantId" = ${tenantId}`
+    await prisma.$executeRaw`DELETE FROM "PuntoDeVenta" WHERE "tenantId" = ${tenantId}`
     await prisma.$executeRaw`DELETE FROM "Merma" WHERE "tenantId" = ${tenantId}`
     await prisma.$executeRaw`DELETE FROM "Producto" WHERE "tenantId" = ${tenantId}`
     await prisma.$executeRaw`DELETE FROM "Vendor" WHERE "tenantId" = ${tenantId}`

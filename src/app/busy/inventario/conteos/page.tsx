@@ -26,7 +26,13 @@ export default async function ConteosPage() {
 		<ConteosPageClient
 			almacenes={almacenes.success ? (almacenes.data ?? []) : []}
 			puntosVenta={puntosVenta.success ? (puntosVenta.data ?? []) : []}
-			conteosIniciales={conteos.success ? (conteos.data ?? []) : []}
+			conteosIniciales={conteos.success
+				? (conteos.data ?? []).map((conteo) => ({
+					...conteo,
+					createdAt: conteo.createdAt.toISOString(),
+					conciliadoAt: conteo.conciliadoAt?.toISOString() ?? null,
+				}))
+				: []}
 		/>
 	);
 }

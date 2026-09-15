@@ -130,12 +130,23 @@ export function KardexPageClient({
 				page: nuevaPagina,
 				limit: PAGE_SIZE,
 			});
-			if (!result.success || !result.data) {
+			if (!result.success) {
 				setError(result.error?.message ?? 'No se pudo cargar el kardex');
 				setDatos(null);
 				return;
 			}
-			setDatos(result.data as unknown as KardexDatos);
+			if (!result.data) {
+				setError('No se pudo cargar el kardex');
+				setDatos(null);
+				return;
+			}
+			setDatos({
+				...result.data,
+				items: result.data.items.map((item) => ({
+					...item,
+					createdAt: item.createdAt.toISOString(),
+				})),
+			});
 		} catch (err) {
 			setError(err instanceof Error ? err.message : 'Error inesperado');
 			setDatos(null);
