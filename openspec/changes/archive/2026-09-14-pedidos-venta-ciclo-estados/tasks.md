@@ -86,17 +86,17 @@ jamás `git add -A`; revisar `git diff --cached --name-only` antes de commitear)
 
 ## PVE-T5 — Cierre: regresión, E2E y docs
 
-- [ ] **T5.1 Regresión completa** de suites scoped: `src/features/ventas src/features/ofertas
-  src/lib/api src/lib/auth src/lib/server-actions src/app/api/ventas src/app/api/mobile
-  src/app/actions`; `tsc --noEmit` limpio; eslint limpio en archivos tocados.
-  Evidencia `evidence/PVE-T5-GREEN.txt`. (Fallos pre-existentes ajenos se listan, no se arreglan.)
-- [ ] **T5.2 E2E.** Spec Playwright del ciclo pedido→entregar→facturar en entorno controlado
-  (specs e2e force-trackeados); el smoke contra producción corre manual tras el deploy
-  (`pnpm run test:e2e:prod`).
-- [ ] **T5.3 Cierre.** Actualizar memoria (`ventas-vs-odoo-verificacion`: gap 1 → resuelto) y
-  AGENTS.md si el flujo de ventas cambia para próximas sesiones; mover el change a
-  `openspec/changes/archive/2026-09-XX-pedidos-venta-ciclo-estados/`.
-- [ ] Commit: `docs(openspec): cerrar PVE pedidos de venta con ciclo de estados`
+- [x] **T5.1 Regresión completa.** `src/features/ventas src/features/ofertas src/lib/api
+  src/lib/auth src/lib/server-actions src/app/api/ventas src/app/api/mobile src/app/actions`:
+  **132 archivos / 572 tests verdes, 0 fallos**. typecheck limpio; eslint sin errores nuevos.
+  Evidencia `evidence/PVE-T5-GREEN.txt`.
+- [x] **T5.2 E2E.** `e2e/pedidos-ciclo-estados.spec.ts` (pedido → entregar → facturar con badges;
+  se salta solo si el plan del usuario e2e no tiene `ventas-pedidos`). El smoke contra producción
+  corre manual tras el deploy (`pnpm run test:e2e:prod`): requiere la migración aplicada y la
+  feature activada en el tenant e2e.
+- [x] **T5.3 Cierre.** Memoria `ventas-vs-odoo-verificacion` actualizada (gap 1 implementado);
+  change archivado a `openspec/changes/archive/2026-09-14-pedidos-venta-ciclo-estados/`.
+- [x] Commit: `test+docs(openspec): E2E del ciclo y cierre de PVE`
 
 ## Dependencias y notas
 
