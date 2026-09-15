@@ -197,6 +197,12 @@ export const FEATURE_REGISTRY: FeatureDef[] = [
 		category: "ventas",
 	},
 	{
+		key: "ventas-pedidos",
+		label: "Pedidos de venta",
+		description: "Pedidos con ciclo de estados: confirmar, entregar y facturar por separado",
+		category: "ventas",
+	},
+	{
 		key: "turnos-pos",
 		label: "Turnos POS",
 		description: "Gestión de turnos de empleados por punto de venta",

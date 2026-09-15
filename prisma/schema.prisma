@@ -671,6 +671,8 @@ model Venta {
   esVentaUnica       Boolean               @default(false)
   ofertaId           String?               @unique
   ventaPadreId       String?
+  /// Ciclo de vida del pedido de venta (PVE): PEDIDO -> ENTREGADA -> FACTURADA; ANULADA terminal.
+  estado             EstadoVenta           @default(ENTREGADA)
   metodoPago         MetodoPagoVenta?
   montoCredito       Int?
   montoEfectivo      Int?
@@ -3204,6 +3206,15 @@ enum EstadoFactura {
   PAGADA
   ANULADA
   VENCIDA
+}
+
+/// Ciclo de vida del pedido de venta (PVE). El flujo POS clásico crea la venta
+/// y la deja directamente en ENTREGADA/FACTURADA dentro de la misma transacción.
+enum EstadoVenta {
+  PEDIDO
+  ENTREGADA
+  FACTURADA
+  ANULADA
 }
 
 enum TipoDocumento {

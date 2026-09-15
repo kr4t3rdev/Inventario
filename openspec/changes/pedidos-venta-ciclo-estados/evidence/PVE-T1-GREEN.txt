@@ -1,0 +1,24 @@
+
+ RUN  v3.2.4 /Users/arturo/Documents/Proyecto Inventario/TCP
+
+ ✓ src/features/planes/__tests__/ficha-costo-migration.test.ts (7 tests) 13ms
+ ✓ src/lib/auth/accounting-policy-capabilities.test.ts (5 tests) 110ms
+ ✓ src/lib/auth/__tests__/route-permissions.test.ts (12 tests) 466ms
+   ✓ route-permissions (PG-05 T5) > toda clave del mapa existe en el permission-registry (anti-drift)  447ms
+ ✓ src/lib/auth/__tests__/permission-parity.test.ts (11 tests) 26ms
+ ✓ src/lib/auth/__tests__/permission-registry.test.ts (22 tests) 69ms
+ ✓ src/features/planes/actions.test.ts (2 tests) 120ms
+ ✓ src/features/ventas/__tests__/venta-estado-types.test.ts (3 tests) 821ms
+   ✓ Venta.estado — ciclo de vida (PVE-T1) > expone los cuatro estados del ciclo  795ms
+ ✓ src/lib/auth/__tests__/roles.test.ts (15 tests) 11ms
+ ✓ src/features/planes/__tests__/inventario-flags-migration.test.ts (4 tests) 10ms
+ ✓ src/lib/auth/__tests__/tenant-role-schema.test.ts (7 tests) 7ms
+ ✓ src/lib/auth/__tests__/sales-agent-access.test.ts (5 tests) 7ms
+ ✓ src/features/planes/__tests__/ficha-costo-plan-access.test.ts (3 tests) 4ms
+ ✓ src/features/planes/__tests__/inventario-paridad-odoo.test.ts (5 tests) 6ms
+
+ Test Files  13 passed (13)
+      Tests  101 passed (101)
+   Start at  23:36:17
+   Duration  8.85s (transform 2.01s, setup 5.56s, collect 6.61s, tests 1.67s, environment 19.37s, prepare 4.05s)
+

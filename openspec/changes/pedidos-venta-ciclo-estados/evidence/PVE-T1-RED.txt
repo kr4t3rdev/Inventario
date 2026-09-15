@@ -1,0 +1,62 @@
+
+ RUN  v3.2.4 /Users/arturo/Documents/Proyecto Inventario/TCP
+
+ ❯ src/features/ventas/__tests__/venta-estado-types.test.ts (3 tests | 3 failed) 15ms
+   × Venta.estado — ciclo de vida (PVE-T1) > expone los cuatro estados del ciclo 10ms
+     → Cannot convert undefined or null to object
+   × Venta.estado — ciclo de vida (PVE-T1) > el default de Venta.estado es ENTREGADA según el datamodel 0ms
+     → Cannot read properties of undefined (reading 'datamodel')
+   × Venta.estado — ciclo de vida (PVE-T1) > la migración aplica el backfill: ANULADA ← deletedAt, FACTURADA ← factura 4ms
+     → debe existir la migración add_estado_ciclo_venta: expected undefined to be truthy
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 3 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  src/features/ventas/__tests__/venta-estado-types.test.ts > Venta.estado — ciclo de vida (PVE-T1) > expone los cuatro estados del ciclo
+TypeError: Cannot convert undefined or null to object
+ ❯ src/features/ventas/__tests__/venta-estado-types.test.ts:12:17
+     10|  it('expone los cuatro estados del ciclo', async () => {
+     11|   const { EstadoVenta } = await import('@prisma/client');
+     12|   expect(Object.values(EstadoVenta).sort()).toEqual([
+       |                 ^
+     13|    'ANULADA',
+     14|    'ENTREGADA',
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/3]⎯
+
+ FAIL  src/features/ventas/__tests__/venta-estado-types.test.ts > Venta.estado — ciclo de vida (PVE-T1) > el default de Venta.estado es ENTREGADA según el datamodel
+TypeError: Cannot read properties of undefined (reading 'datamodel')
+ ❯ src/features/ventas/__tests__/venta-estado-types.test.ts:22:29
+     20|  it('el default de Venta.estado es ENTREGADA según el datamodel', asyn…
+     21|   const { Prisma } = await import('@prisma/client');
+     22|   const model = Prisma.dmmf.datamodel.models.find((m) => m.name === 'V…
+       |                             ^
+     23|   const field = model?.fields.find((f) => f.name === 'estado');
+     24|   expect(field?.default).toBe('ENTREGADA');
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/3]⎯
+
+ FAIL  src/features/ventas/__tests__/venta-estado-types.test.ts > Venta.estado — ciclo de vida (PVE-T1) > la migración aplica el backfill: ANULADA ← deletedAt, FACTURADA ← factura
+AssertionError: debe existir la migración add_estado_ciclo_venta: expected undefined to be truthy
+
+- Expected: 
+true
+
++ Received: 
+undefined
+
+ ❯ src/features/ventas/__tests__/venta-estado-types.test.ts:32:67
+     30|    d.includes('add_estado_ciclo_venta'),
+     31|   );
+     32|   expect(dir, 'debe existir la migración add_estado_ciclo_venta').toBe…
+       |                                                                   ^
+     33|   const sql = readFileSync(join(migrationsDir, dir as string, 'migrati…
+     34|   // Orden vinculante: primero anuladas (deletedAt), luego facturadas …
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/3]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  3 failed (3)
+   Start at  22:41:22
+   Duration  2.82s (transform 150ms, setup 186ms, collect 21ms, tests 15ms, environment 1.07s, prepare 468ms)
+

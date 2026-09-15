@@ -71,6 +71,7 @@
     "ventas.contratos.gestionar",
     "ventas.facturas.consultar",
     "ventas.ofertas.gestionar",
+    "ventas.pedido.gestionar",
     "ventas.precio.override",
     "ventas.servicios.editar",
     "ventas.servicios.eliminar",
@@ -97,6 +98,7 @@
     "operaciones.pos.gestionar",
     "operaciones.referidos.gestionar",
     "operaciones.servicios.acceder",
+    "ventas.pedido.gestionar",
     "ventas.venta.anular",
     "ventas.venta.editar",
     "ventas.venta.registrar"
@@ -115,6 +117,7 @@
     "operaciones.referidos.gestionar",
     "operaciones.servicios.acceder",
     "ventas.facturas.consultar",
+    "ventas.pedido.gestionar",
     "ventas.venta.anular",
     "ventas.venta.editar",
     "ventas.venta.registrar"

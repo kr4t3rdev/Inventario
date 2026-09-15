@@ -406,6 +406,13 @@ export const PERMISSION_REGISTRY: PermissionDef[] = [
 		defaultRoles: ['manager'],
 		sensitive: true,
 	},
+	{
+		key: 'ventas.pedido.gestionar',
+		label: 'Gestionar pedidos de venta',
+		description: 'Confirmar entregas y facturar pedidos de venta fuera del flujo directo del POS.',
+		category: 'ventas',
+		defaultRoles: ['manager', 'economico', 'dependiente'],
+	},
 
 	// ── compras (servicios recibidos) ──
 	{
