@@ -11,11 +11,37 @@ FROM "Producto" producto
 WHERE transfer."productoId" = producto."id"
   AND transfer."tenantId" IS NULL;
 ALTER TABLE "Transferencia" ALTER COLUMN "tenantId" SET NOT NULL;
-ALTER TABLE "Transferencia" ADD CONSTRAINT "Transferencia_tenantId_fkey"
-  FOREIGN KEY ("tenantId") REFERENCES "tenants"("tenantId") ON DELETE RESTRICT ON UPDATE CASCADE;
+DO $$
+BEGIN
+  IF NOT EXISTS (
+    SELECT 1
+    FROM pg_constraint
+    WHERE conname = 'Transferencia_tenantId_fkey'
+      AND conrelid = '"Transferencia"'::regclass
+  ) THEN
+    ALTER TABLE "Transferencia" ADD CONSTRAINT "Transferencia_tenantId_fkey"
+      FOREIGN KEY ("tenantId") REFERENCES "tenants"("tenantId") ON DELETE RESTRICT ON UPDATE CASCADE;
+  END IF;
+END
+$$;
 CREATE INDEX IF NOT EXISTS "Transferencia_tenantId_idx" ON "Transferencia"("tenantId");
 
-ALTER TABLE "Transferencia" ADD COLUMN "cantidadRecibida" INTEGER;
+ALTER TABLE "Transferencia" ADD COLUMN IF NOT EXISTS "cantidadRecibida" INTEGER;
+
+DO $$
+BEGIN
+  IF EXISTS (
+    SELECT 1
+    FROM "Transferencia"
+    WHERE "numeroTransferencia" IS NOT NULL
+    GROUP BY "tenantId", "numeroTransferencia"
+    HAVING COUNT(*) > 1
+  ) THEN
+    RAISE EXCEPTION 'Cannot create tenant-scoped Transferencia uniqueness: duplicate tenantId/numeroTransferencia values exist';
+  END IF;
+END
+$$;
 
 ALTER TABLE "Transferencia" DROP CONSTRAINT IF EXISTS "Transferencia_numeroTransferencia_key";
-CREATE UNIQUE INDEX "Transferencia_tenantId_numeroTransferencia_key" ON "Transferencia"("tenantId", "numeroTransferencia");
+DROP INDEX IF EXISTS "Transferencia_numeroTransferencia_key";
+CREATE UNIQUE INDEX IF NOT EXISTS "Transferencia_tenantId_numeroTransferencia_key" ON "Transferencia"("tenantId", "numeroTransferencia");
