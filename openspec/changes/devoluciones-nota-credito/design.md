@@ -212,7 +212,9 @@ total_i     = devSubtotal_i − aplicado_i
 ```
 
 Monótono, acotado (la suma de devoluciones nunca excede el descuento original) y con
-redondeo absorbido por el floor. `cargoTransporte` nunca se devuelve en DNC.
+redondeo absorbido por el floor. La implementación añade un tercer cap (`aplicado_i ≤
+subtotal_i`) para descuentos degenerados (> subtotal de la venta): el total de la NC nunca
+queda negativo. `cargoTransporte` nunca se devuelve en DNC.
 
 ## Guardas e idempotencia
 

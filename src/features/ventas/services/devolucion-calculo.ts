@@ -5,19 +5,19 @@ import { ActionError } from '@/lib/server-actions';
  * Todo el dinero en centavos enteros (Int), coherente con el mundo Venta.
  */
 
-interface ItemVentaMin {
+export interface ItemVentaMin {
   id: string;
   cantidad: number;
   precioUnitario: number;
   total: number;
 }
 
-interface DevolucionPreviaMin {
+export interface DevolucionPreviaMin {
   ventaItemId: string;
   cantidad: number;
 }
 
-interface SeleccionItem {
+export interface SeleccionItem {
   ventaItemId: string;
   cantidad: number;
 }
@@ -95,8 +95,15 @@ export function calcularMontosDevolucion(params: {
     consolidada.set(sel.ventaItemId, (consolidada.get(sel.ventaItemId) ?? 0) + sel.cantidad);
   }
 
+  if (consolidada.size === 0) {
+    throw new ActionError('Seleccione al menos un ítem a devolver', 'VALIDATION_ERROR');
+  }
+
   const items: ItemDevolucionCalculado[] = [];
   for (const [ventaItemId, cantidad] of consolidada) {
+    if (!Number.isInteger(cantidad)) {
+      throw new ActionError('La cantidad a devolver debe ser un entero', 'VALIDATION_ERROR');
+    }
     const ventaItem = porId.get(ventaItemId);
     if (!ventaItem) {
       throw new ActionError(

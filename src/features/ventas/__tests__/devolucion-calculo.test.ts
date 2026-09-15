@@ -96,6 +96,30 @@ describe('calcularMontosDevolucion', () => {
 			'CANTIDAD_EXCEDIDA');
 	});
 
+	it('rechaza una selección vacía', () => {
+		expectCode(() =>
+			calcularMontosDevolucion({
+				itemsVenta,
+				descuentoVenta: 0,
+				descuentoYaDevuelto: 0,
+				devolucionesPrevias: [],
+				seleccion: [],
+			}),
+			'VALIDATION_ERROR');
+	});
+
+	it('rechaza cantidades no enteras', () => {
+		expectCode(() =>
+			calcularMontosDevolucion({
+				itemsVenta,
+				descuentoVenta: 0,
+				descuentoYaDevuelto: 0,
+				devolucionesPrevias: [],
+				seleccion: [{ ventaItemId: 'vi-1', cantidad: 1.5 }],
+			}),
+			'VALIDATION_ERROR');
+	});
+
 	it('rechaza un ítem que no pertenece a la venta', () => {
 		expectCode(() =>
 			calcularMontosDevolucion({
