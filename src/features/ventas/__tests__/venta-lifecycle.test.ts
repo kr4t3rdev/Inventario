@@ -21,6 +21,12 @@ vi.mock('@/lib/services/audit-log-service', () => ({
 vi.mock('@/features/ventas/services/facturacion-workflow', () => ({
 	applyFacturacionCobroWorkflow: vi.fn(),
 }));
+vi.mock('@/features/turnos-pos', () => ({
+	getOrCreateTurnoActivo: vi.fn().mockResolvedValue({
+		success: true,
+		data: { turnoId: 't-9' },
+	}),
+}));
 
 const { mockTx } = vi.hoisted(() => {
 	const mockTx = {
@@ -60,6 +66,7 @@ import {
 } from '@/features/inventario/movimientos';
 import { allocateFifoForSale } from '@/lib/services/fifo-allocation';
 import { applyFacturacionCobroWorkflow } from '@/features/ventas/services/facturacion-workflow';
+import { getOrCreateTurnoActivo } from '@/features/turnos-pos';
 import { ActionError } from '@/lib/server-actions';
 import { VentaLifecycleService } from '@/features/ventas/services/venta-lifecycle-service';
 import type { AuthenticatedUser } from '@/lib/auth-middleware';
@@ -85,6 +92,7 @@ const ventaPedido = {
 	deletedAt: null,
 	total: 1000,
 	descuento: 0,
+	turnoId: 't-0',
 	factura: null,
 	reconciliaciones: [],
 	turno: { estado: 'ABIERTO', arqueos: [] },
@@ -276,6 +284,46 @@ describe('facturarVenta (ENTREGADA → FACTURADA)', () => {
 				user: adminUser,
 			}),
 		).rejects.toMatchObject({ code: 'CLIENTE_REQUERIDO' });
+	});
+
+	it('amarra el cobro al turno activo cuando el turno original está cerrado', async () => {
+		mirarVenta({
+			...ventaEntregada,
+			turnoId: 't-0',
+			turno: { estado: 'CERRADO', arqueos: [] },
+		});
+		await svc.facturarVenta({
+			ventaId: 'venta-1',
+			input: { metodoPago: 'EFECTIVO', montoEfectivo: 1000 },
+			user: adminUser,
+		});
+		expect(mockTx.venta.updateMany).toHaveBeenCalledWith(
+			expect.objectContaining({
+				data: expect.objectContaining({ turnoId: 't-9', estado: 'FACTURADA' }),
+			}),
+		);
+	});
+
+	it('no amarra un turno cerrado si no se puede abrir uno nuevo', async () => {
+		mirarVenta({
+			...ventaEntregada,
+			turnoId: 't-0',
+			turno: { estado: 'CERRADO', arqueos: [] },
+		});
+		vi.mocked(getOrCreateTurnoActivo).mockResolvedValueOnce({
+			success: false,
+			error: { message: 'NO_TURNO_ACTIVO' },
+		} as never);
+		await svc.facturarVenta({
+			ventaId: 'venta-1',
+			input: { metodoPago: 'EFECTIVO', montoEfectivo: 1000 },
+			user: adminUser,
+		});
+		expect(mockTx.venta.updateMany).toHaveBeenCalledWith(
+			expect.objectContaining({
+				data: expect.objectContaining({ turnoId: null, estado: 'FACTURADA' }),
+			}),
+		);
 	});
 
 	it('exige que el desglose MIXTO sume exactamente el total de la venta', async () => {

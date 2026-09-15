@@ -8,7 +8,8 @@
 import { revalidatePath } from 'next/cache';
 import { withAction, ActionError } from '@/lib/server-actions';
 import { prisma } from '@/lib/prisma';
-import { requireFeature, requireTenant } from '@/lib/services/tenant-scope';
+import { requireFeature, requirePermission, requireTenant } from '@/lib/services/tenant-scope';
+import { convertirOfertaAPedido } from './services/convertir-oferta-pedido';
 import { applyAnticipoAllocations } from '@/lib/services/anticipos-workflow';
 import { getOrCreateTurnoActivo } from '@/features/turnos-pos';
 import { ofertaSchema, ofertaUpdateSchema, facturarOfertaSchema } from './schemas';
@@ -228,3 +229,32 @@ export const facturarOfertaAction = withAction(async (input: FacturarOfertaInput
   revalidatePath('/busy/ofertas');
   return resultado;
 });
+
+/**
+ * @description Convierte una oferta (PENDIENTE/ACEPTADA) en un pedido de venta
+ * (PVE): crea la venta en estado PEDIDO sin efectos de stock ni factura.
+ * Idempotente; requiere la feature ventas-pedidos del plan.
+ */
+export const convertirOfertaAPedidoAction = withAction(
+  async (
+    input: { ofertaId: string; puntoDeVentaId: string },
+    user: AuthenticatedUser,
+  ) => {
+    requireFeature(user, 'ofertas', 'gestionar ofertas');
+    requireFeature(user, 'ventas-pedidos', 'convertir ofertas a pedidos');
+    requirePermission(user, 'ventas.ofertas.gestionar', 'convertir ofertas');
+    requirePermission(user, 'ventas.pedido.gestionar', 'crear pedidos de venta');
+    const tenantId = requireTenant(user);
+
+    const result = await convertirOfertaAPedido({
+      ofertaId: input.ofertaId,
+      puntoDeVentaId: input.puntoDeVentaId,
+      tenantId,
+      usuarioId: user.userId,
+    });
+
+    revalidatePath('/busy/ofertas');
+    revalidatePath('/busy/sales');
+    return result;
+  },
+);

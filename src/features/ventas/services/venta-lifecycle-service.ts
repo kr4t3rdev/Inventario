@@ -1,6 +1,7 @@
 import { Prisma } from '@/generated/prisma';
 import { prisma } from '@/lib/prisma';
 import { ActionError } from '@/lib/server-actions';
+import { getOrCreateTurnoActivo } from '@/features/turnos-pos';
 import { requireFeature, requirePermission, requireTenant } from '@/lib/services/tenant-scope';
 import { upsertStockUbicacion } from '@/lib/services/stock-ubicacion-service';
 import { registrarMovimiento, revertirMovimientosDeOrigen } from '@/features/inventario/movimientos';
@@ -273,6 +274,9 @@ export const VentaLifecycleService = {
         total: true,
         descuento: true,
         observaciones: true,
+        puntoDeVentaId: true,
+        turnoId: true,
+        turno: { select: { estado: true } },
         factura: { select: { idFactura: true } },
       },
     });
@@ -306,6 +310,22 @@ export const VentaLifecycleService = {
       }
     }
     const clienteId = venta.clienteId;
+
+    // El cobro se amarra al turno vigente AHORA (no al turno del pedido, que puede
+    // estar cerrado). Se resuelve ANTES de abrir la transacción, como en el create
+    // clásico, porque getOrCreateTurnoActivo usa el cliente global de Prisma. Si no
+    // hay turno abierto y no se puede abrir uno, el cobro queda sin turno (igual que
+    // una venta del flujo clásico sin turno); nunca se conserva un turno cerrado.
+    let turnoCobroId: string | null =
+      venta.turnoId && venta.turno?.estado === 'ABIERTO' ? venta.turnoId : null;
+    if (!turnoCobroId) {
+      const turnoActual = await getOrCreateTurnoActivo({
+        puntoDeVentaId: venta.puntoDeVentaId,
+      });
+      if (turnoActual.success) {
+        turnoCobroId = turnoActual.data.turnoId;
+      }
+    }
 
     return prisma.$transaction(async (tx) => {
       const current = await tx.venta.findUnique({
@@ -346,17 +366,18 @@ export const VentaLifecycleService = {
       const numeroConsecutivo = updatedSerie.consecutivo - 1;
       const numeroFactura = `${serie.prefijo}-${String(numeroConsecutivo).padStart(6, '0')}`;
 
-      const claimed = await tx.venta.updateMany({
-        where: { ventaId, tenantId, estado: 'ENTREGADA', deletedAt: null },
-        data: {
-          estado: 'FACTURADA',
-          metodoPago: parsed.metodoPago ?? null,
-          montoEfectivo: parsed.montoEfectivo ?? null,
-          montoTarjeta: parsed.montoTarjeta ?? null,
-          montoTransferencia: parsed.montoTransferencia ?? null,
-          montoCredito: parsed.montoCredito ?? null,
-        },
-      });
+        const claimed = await tx.venta.updateMany({
+          where: { ventaId, tenantId, estado: 'ENTREGADA', deletedAt: null },
+          data: {
+            estado: 'FACTURADA',
+            turnoId: turnoCobroId ?? null,
+            metodoPago: parsed.metodoPago ?? null,
+            montoEfectivo: parsed.montoEfectivo ?? null,
+            montoTarjeta: parsed.montoTarjeta ?? null,
+            montoTransferencia: parsed.montoTransferencia ?? null,
+            montoCredito: parsed.montoCredito ?? null,
+          },
+        });
       if (claimed.count !== 1) {
         throw new ActionError(
           'Solo se puede facturar una venta en estado ENTREGADA.',

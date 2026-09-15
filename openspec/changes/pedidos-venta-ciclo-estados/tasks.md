@@ -64,17 +64,25 @@ jamás `git add -A`; revisar `git diff --cached --name-only` antes de commitear)
 
 ## PVE-T4 — UI de pedidos + integración Ofertas
 
-- [ ] **T4.1 RED.** Tests de componentes nuevos (badge de estado, filtro, botones por estado con
-  permiso) en `src/features/ventas/__tests__/` con Testing Library. Evidencia
-  `evidence/PVE-T4-RED.txt`.
-- [ ] **T4.2 GREEN.** Lista de ventas (`src/app/busy/sales/`): columna/badge de estado + filtro;
-  detalle con acciones Entregar/Facturar/Anular según estado y permiso; formulario "Nuevo pedido"
-  (crea en `PEDIDO`, sin paso de cobro). Todo tras flag `ventas-pedidos`; textos en español neutro
-  con JSDoc según guía. Componentes < 200 líneas.
-- [ ] **T4.3 Ofertas.** `convertirOfertaAPedidoAction` + botón en detalle de oferta
-  (`PENDIENTE|ACEPTADA`); tests: crea venta `PEDIDO` vinculada por `ofertaId`, oferta queda
-  `ACEPTADA`, idempotencia (doble click no duplica). Evidencia `evidence/PVE-T4-GREEN.txt`.
-- [ ] Review + commit: `feat(ventas): UI de pedidos con transiciones y conversión desde ofertas (PVE-T4)`
+- [x] **T4.1 RED.** Tests de componentes nuevos (badge de estado, filtro, botones por estado con
+  flag) en `ventas-pedido-ui.test.tsx` + conversión en `convertir-oferta-pedido.test.ts`.
+  Evidencia `evidence/PVE-T4-RED.txt` (módulos inexistentes).
+- [x] **T4.2 GREEN.** Lista de ventas: columna/badge `EstadoVentaBadge` + filtro por estado;
+  acciones Entregar/Facturar por estado en `PedidoAcciones` (diálogo de cobro con método y
+  vencimiento a crédito); diálogo "Nuevo pedido" (crea en `PEDIDO` sin cobro) tras flag
+  `ventas-pedidos` (server: `hasFeature` en `busy/sales/page.tsx`); precios del diálogo vía
+  `precioVentaResuelto`/`getPrecioEfectivo` y enforcement LP-0 intacto server-side.
+- [x] **T4.3 Ofertas.** `convertirOfertaAPedidoAction` + botón/diálogo en detalle
+  (`PENDIENTE|ACEPTADA`); servicio idempotente (devuelve pedido existente), valida PV del tenant
+  y guarda atómica de estado de oferta. Evidencia `evidence/PVE-T4-GREEN.txt` (121/121).
+- [x] **Review (typescript-reviewer: BLOQUEAR → fixes aplicados).** HIGH-1 validación de PV por
+  tenant en conversión (+test). HIGH-2 sentinel `__none__` mapeado a "sin cliente" (+aviso de
+  pedido sin cliente). HIGH-3/4: resolución de turno al facturar movida FUERA de la tx y nunca
+  conserva un turno cerrado (sin turno activo → `turnoId: null` como el create); cobertura nueva.
+  MEDIUM: try/catch con toast en handlers async, crédito exige fecha (botón deshabilitado) y
+  reset de estado al cerrar. Además: `facturarVenta` amarra el cobro al turno activo actual
+  (el cobro cae en el cuadre de hoy, no en el turno cerrado del pedido). 121/121 + typecheck OK.
+- [x] Commit: `feat(ventas): UI de pedidos con transiciones y conversión desde ofertas (PVE-T4)`
 
 ## PVE-T5 — Cierre: regresión, E2E y docs
 

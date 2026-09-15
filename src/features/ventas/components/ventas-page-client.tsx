@@ -1,14 +1,18 @@
 'use client';
 
+import { useState } from 'react';
 import Link from 'next/link';
 import { LazyMotion, m as motion } from 'framer-motion';
 import { Button } from '@/components/ui/button';
-import { TrendingUp, PlusCircle } from 'lucide-react';
+import { TrendingUp, PlusCircle, ClipboardList } from 'lucide-react';
 import { VentasTable } from './ventas-table';
+import { NuevoPedidoDialog } from './nuevo-pedido-dialog';
 import type { Venta } from '../types';
 
 interface VentasPageClientProps {
   ventas: Venta[];
+  /** Habilita la UI del ciclo de pedidos (feature ventas-pedidos del plan). */
+  pedidosEnabled?: boolean;
 }
 
 /**
@@ -16,7 +20,8 @@ interface VentasPageClientProps {
  * @param {VentasPageClientProps} props - Props del componente
  * @returns {JSX.Element} Página de ventas con animaciones
  */
-export function VentasPageClient({ ventas }: VentasPageClientProps) {
+export function VentasPageClient({ ventas, pedidosEnabled = false }: VentasPageClientProps) {
+  const [pedidoOpen, setPedidoOpen] = useState(false);
   return (
     <>
       <motion.div
@@ -51,15 +56,23 @@ export function VentasPageClient({ ventas }: VentasPageClientProps) {
           animate={{ opacity: 1, x: 0 }}
           transition={{ delay: 0.2 }}
         >
-          <Button
-            asChild
-            className="bg-linear-to-r from-orange-500 to-red-600 hover:from-orange-500/90 hover:to-red-600/90"
-          >
-            <Link href="/busy/sales/new">
-              <PlusCircle className="mr-2 h-4 w-4" />
-              Nueva Venta
-            </Link>
-          </Button>
+          <div className="flex items-center gap-2">
+            {pedidosEnabled && (
+              <Button variant="outline" onClick={() => setPedidoOpen(true)}>
+                <ClipboardList className="mr-2 h-4 w-4" />
+                Nuevo pedido
+              </Button>
+            )}
+            <Button
+              asChild
+              className="bg-linear-to-r from-orange-500 to-red-600 hover:from-orange-500/90 hover:to-red-600/90"
+            >
+              <Link href="/busy/sales/new">
+                <PlusCircle className="mr-2 h-4 w-4" />
+                Nueva Venta
+              </Link>
+            </Button>
+          </div>
         </motion.div>
       </motion.div>
 
@@ -73,8 +86,10 @@ export function VentasPageClient({ ventas }: VentasPageClientProps) {
           isLoading={false}
           error={null}
           onDelete={() => {}}
+          pedidosEnabled={pedidosEnabled}
         />
       </motion.div>
+      <NuevoPedidoDialog open={pedidoOpen} onOpenChange={setPedidoOpen} />
     </>
   );
 }

@@ -22,6 +22,8 @@ import { ArrowUpDown, Pencil, Trash2Icon } from "lucide-react"
 import { Skeleton } from "@/components/ui/skeleton"
 import { formatCurrency } from "@/lib/utils"
 import { useProductos } from "@/features/productos/hooks/use-productos"
+import { EstadoVentaBadge } from "./estado-venta-badge"
+import { PedidoAcciones } from "./pedido-acciones"
 import type { Venta } from "@/app/models/model"
 
 interface VentasTableProps {
@@ -29,9 +31,11 @@ interface VentasTableProps {
   isLoading: boolean
   error: any
   onDelete: (id: string) => void
+  /** Habilita las acciones del ciclo de pedidos (feature ventas-pedidos). */
+  pedidosEnabled?: boolean
 }
 
-export function VentasTable({ ventas: ventasProp, isLoading, error, onDelete }: VentasTableProps) {
+export function VentasTable({ ventas: ventasProp, isLoading, error, onDelete, pedidosEnabled = false }: VentasTableProps) {
   const ventas = ventasProp ?? []
   const [sorting, setSorting] = useState<SortingState>([])
   const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([])
@@ -187,6 +191,12 @@ export function VentasTable({ ventas: ventasProp, isLoading, error, onDelete }: 
       },
     },
     {
+      accessorKey: "estado",
+      header: "Estado",
+      filterFn: (row, _columnId, value) => (row.original.estado ?? 'ENTREGADA') === value,
+      cell: ({ row }) => <EstadoVentaBadge estado={row.original.estado} />,
+    },
+    {
       header: "Acciones",
       enableHiding: false,
       cell: ({ row }) => {
@@ -195,6 +205,13 @@ export function VentasTable({ ventas: ventasProp, isLoading, error, onDelete }: 
 
         return (
           <div className="flex items-center gap-2">
+            {pedidosEnabled && (
+              <PedidoAcciones
+                ventaId={venta.ventaId}
+                estado={venta.estado ?? 'ENTREGADA'}
+                total={venta.total ?? 0}
+              />
+            )}
             {esVentaMultiProducto ? (
               <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
                 <Button
@@ -329,6 +346,21 @@ export function VentasTable({ ventas: ventasProp, isLoading, error, onDelete }: 
           onChange={(event) => table.getColumn("producto")?.setFilterValue(event.target.value)}
           className="max-w-sm transition-all duration-200 focus:scale-[1.01]"
         />
+        <select
+          aria-label="Filtrar por estado"
+          className="ml-2 h-9 rounded-md border bg-background px-2 text-sm"
+          value={(table.getColumn('estado')?.getFilterValue() as string) ?? ''}
+          onChange={(event) => {
+            const value = event.target.value
+            table.getColumn('estado')?.setFilterValue(value === '' ? undefined : value)
+          }}
+        >
+          <option value="">Todos los estados</option>
+          <option value="PEDIDO">Pedidos</option>
+          <option value="ENTREGADA">Entregadas</option>
+          <option value="FACTURADA">Facturadas</option>
+          <option value="ANULADA">Anuladas</option>
+        </select>
       </motion.div>
       <div className="rounded-md border border-dashed dark:border-gray-700">
         <Table>

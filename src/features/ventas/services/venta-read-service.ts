@@ -4,6 +4,7 @@ import { prisma } from '@/lib/prisma';
 export const VENTA_SELECT = {
   ventaId: true,
   tenantId: true,
+  estado: true,
   total: true,
   descuento: true,
   clienteId: true,

@@ -12,6 +12,7 @@ import { TrendingUp, PlusCircle } from "lucide-react"
 import { VentasPageClient } from "@/features/ventas/components/ventas-page-client"
 import { SalesHealthCard } from "@/features/ventas/components/sales-health-card"
 import { getCurrentUser } from "@/lib/server-actions"
+import { hasFeature } from "@/lib/services/tenant-scope"
 
 /**
  * @description Página principal de ventas
@@ -25,11 +26,12 @@ export const metadata = {
 export default async function VentasPage() {
   const [result, user] = await Promise.all([getVentasAction(), getCurrentUser()])
   const ventas = result.success ? result.data ?? [] : []
+  const pedidosEnabled = user ? hasFeature(user, 'ventas-pedidos') : false
 
   return (
     <div className="container mx-auto space-y-6 py-4">
       {user?.role === 'admin' ? <SalesHealthCard userRole="admin" /> : null}
-      <VentasPageClient ventas={ventas as any} />
+      <VentasPageClient ventas={ventas as any} pedidosEnabled={pedidosEnabled} />
     </div>
   )
 }

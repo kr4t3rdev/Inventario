@@ -84,6 +84,8 @@ export interface Venta {
 	productoId?: string | null;
 	cantidad: number;
 	puntoDeVentaId: string;
+	/** Ciclo de vida del pedido (PVE): PEDIDO | ENTREGADA | FACTURADA | ANULADA. */
+	estado?: string;
 	cliente?: {
 		clienteId?: string;
 		nombre?: string;
