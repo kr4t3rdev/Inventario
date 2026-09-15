@@ -4,6 +4,7 @@ const read = (path: string) => readFileSync(path, 'utf8');
 
 it('runs independent checks, gates build and rejects skipped dependencies', () => {
   const ci = read('.github/workflows/ci.yml');
+  expect(ci).toContain("branches: [main, 'codex/**']");
   expect(ci).not.toContain('needs: [lint, typecheck]');
   expect(ci).toContain('uses: ./.github/workflows/integration.yml');
   expect(ci).toContain('needs: [lint, typecheck, test, coverage, integration]');
