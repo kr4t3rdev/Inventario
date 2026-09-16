@@ -42,7 +42,7 @@ export function calcularVuelto(
  * @returns {ResultadoCobro} Resultado con el cambio o el código de rechazo.
  */
 export function validarCobro(params: {
-	metodoPago: MetodoPagoPos;
+	metodoPago: MetodoPagoPos | null | undefined;
 	montoEfectivo: number;
 	montoRecibidoEfectivo: number | null | undefined;
 }): ResultadoCobro {

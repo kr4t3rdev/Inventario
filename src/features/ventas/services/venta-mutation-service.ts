@@ -12,6 +12,7 @@ import { getOrCreateTurnoActivo } from '@/features/turnos-pos';
 import { AuditLogService } from '@/lib/services/audit-log-service';
 import { VENTA_SELECT } from '@/features/ventas/services/venta-read-service';
 import { VentaLifecycleService } from '@/features/ventas/services/venta-lifecycle-service';
+import { validarCobro } from '@/features/ventas/services/pos-vuelto-calcu';
 import type { AuthenticatedUser } from '@/lib/auth-middleware';
 import type { AnularVentaInput, CreateVentaInput } from '@/features/ventas/schemas';
 
@@ -286,6 +287,21 @@ export const VentaMutationService = {
     // pago); el flujo clásico completa el ciclo dentro de la misma transacción.
     const esPedido = parsed.modoPedido === true;
 
+    // VC: defensa de la invariante del recibido (el schema Zod ya la valida) y
+    // derivación del vuelto desde el recibido (server es la fuente de verdad).
+    const cobro = validarCobro({
+      metodoPago: parsed.metodoPago ?? null,
+      montoEfectivo: parsed.montoEfectivo ?? 0,
+      montoRecibidoEfectivo: parsed.montoRecibidoEfectivo ?? null,
+    });
+    if (!cobro.ok) {
+      throw new ActionError(
+        'El efectivo recibido no alcanza la porción en efectivo de la venta.',
+        'RECIBIDO_INSUFICIENTE',
+      );
+    }
+    const cambioDerivado = esPedido ? null : cobro.cambio;
+
     return prisma.$transaction(async (tx) => {
       let serie: any = null;
       let numeroConsecutivo = 0;
@@ -342,6 +358,12 @@ export const VentaMutationService = {
           montoTarjeta: esPedido ? null : (parsed.montoTarjeta ?? null),
           montoTransferencia: esPedido ? null : (parsed.montoTransferencia ?? null),
           montoCredito: esPedido ? null : (parsed.montoCredito ?? null),
+          // VC: vuelto documentado — el servidor deriva el cambio desde el
+          // recibido (única fuente de verdad; el cliente no lo impone).
+          montoRecibidoEfectivo: esPedido
+            ? null
+            : (parsed.montoRecibidoEfectivo ?? null),
+          cambioDevuelto: esPedido ? null : cambioDerivado,
           descuento: parsed.descuento ?? 0,
           observaciones: parsed.observaciones ?? null,
           total: Math.max(totalVenta, 0),

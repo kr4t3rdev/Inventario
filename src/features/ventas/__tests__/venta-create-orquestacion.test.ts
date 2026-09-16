@@ -158,6 +158,47 @@ describe('create como orquestador del ciclo (PVE-T3)', () => {
 		expect(mockTx.factura.create).not.toHaveBeenCalled();
 	});
 
+	it('persiste recibido y vuelto derivado en ventas de efectivo (VC-T2)', async () => {
+		await VentaMutationService.create({
+			input: {
+				puntoDeVentaId: 'pv-1',
+				items,
+				metodoPago: 'EFECTIVO',
+				montoEfectivo: 1000,
+				montoRecibidoEfectivo: 1500,
+			},
+			user: adminUser,
+		});
+		expect(mockTx.venta.create).toHaveBeenCalledWith(
+			expect.objectContaining({
+				data: expect.objectContaining({
+					montoRecibidoEfectivo: 1500,
+					cambioDevuelto: 500,
+				}),
+			}),
+		);
+	});
+
+	it('sin efectivo los campos de vuelto quedan nulos', async () => {
+		await VentaMutationService.create({
+			input: {
+				puntoDeVentaId: 'pv-1',
+				items,
+				metodoPago: 'TARJETA',
+				montoTarjeta: 1000,
+			},
+			user: adminUser,
+		});
+		expect(mockTx.venta.create).toHaveBeenCalledWith(
+			expect.objectContaining({
+				data: expect.objectContaining({
+					montoRecibidoEfectivo: null,
+					cambioDevuelto: null,
+				}),
+			}),
+		);
+	});
+
 	it('la respuesta conserva la forma actual (venta creada)', async () => {
 		const result = await VentaMutationService.create({
 			input: { puntoDeVentaId: 'pv-1', items },
