@@ -26,6 +26,7 @@ import { StaggerContainer, StaggerItem, AnimatedCard } from "@/components/ui/ani
 import { cn, formatCurrency } from "@/lib/utils"
 import { getProductDisplayIdentifier } from "@/lib/product-display-utils"
 import { SURFACE_CARD_CLASS, CHART_COLORS } from "@/features/reportes-financieros/lib/reporte-styles"
+import { formatPiePercentLabel } from "@/features/reportes-financieros/lib/pie-labels"
 import { ReportKpiCard } from "./report-kpi-card"
 
 const COLORS = [...CHART_COLORS]
@@ -227,7 +228,7 @@ export function ReporteGeneral() {
                       cx="50%"
                       cy="50%"
                       labelLine={false}
-                      label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
+                      label={({ percent }: { percent?: number }) => formatPiePercentLabel(percent ?? 0)}
                       outerRadius={80}
                       fill={CHART_COLORS[0]}
                       dataKey="value"

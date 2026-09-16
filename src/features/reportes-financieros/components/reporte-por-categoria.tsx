@@ -10,7 +10,8 @@ import { exportToPdf, exportToCsv } from "@/lib/export-utils"
 import { PieChart, Pie, Cell, ResponsiveContainer, Legend, Tooltip } from "recharts"
 import { StaggerContainer, StaggerItem, AnimatedCard } from "@/components/ui/animations"
 import { ReportErrorState } from "./report-error-state"
-import { cn, formatCurrency } from "@/lib/utils"
+import { CategoryLegend } from "./category-legend"
+import { formatCurrency } from "@/lib/utils"
 
 
 import { SURFACE_CARD_CLASS, CHART_COLORS } from "@/features/reportes-financieros/lib/reporte-styles"
@@ -65,24 +66,6 @@ export function ReportePorCategoria() {
 
   // Paleta compartida del módulo (tokens de tema, soportan modo oscuro)
   const COLORS = [...CHART_COLORS]
-
-  // Custom Legend con colores prominentes
-  const renderCustomLegend = ({ payload }: any) => {
-    return (
-      <ul className="space-y-2 mt-4">
-        {payload.map((entry: any) => (
-          <li key={entry.value} className="flex items-center gap-2 text-sm">
-            <span
-              className="w-4 h-4 rounded flex-shrink-0"
-              style={{ backgroundColor: entry.color }}
-            />
-            <span className="font-medium text-foreground/80">{entry.value}</span>
-            <span className="text-muted-foreground ml-auto">({((entry.payload.percent) * 100).toFixed(1)}%)</span>
-          </li>
-        ))}
-      </ul>
-    )
-  }
 
   // const handleExportExcel = () => {
   //   if (!productosPorCategoria) return
@@ -139,9 +122,9 @@ export function ReportePorCategoria() {
           <CardContent className="p-4">
             <h3 className="mb-4 text-lg font-medium">Distribución por Categoría</h3>
             {isLoadingProductos ? (
-              <Skeleton className="h-[300px] w-full" />
+              <Skeleton className="h-[400px] w-full" />
             ) : (
-              <ResponsiveContainer width="100%" height={300}>
+              <ResponsiveContainer width="100%" height={400}>
                 <PieChart>
                   <Pie
                     data={chartData}
@@ -157,7 +140,7 @@ export function ReportePorCategoria() {
                     ))}
                   </Pie>
                   <Tooltip formatter={(value: number) => formatCurrency(value)} />
-                  <Legend content={renderCustomLegend} />
+                  <Legend content={<CategoryLegend />} />
                 </PieChart>
               </ResponsiveContainer>
             )}
