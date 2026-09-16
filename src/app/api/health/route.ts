@@ -12,6 +12,8 @@ export async function GET(): Promise<NextResponse> {
       timestamp: new Date().toISOString(),
       uptime: process.uptime(),
       environment: process.env.NODE_ENV || 'unknown',
+      deploymentEnvironment:
+        process.env.DEPLOYMENT_ENVIRONMENT || process.env.NODE_ENV || 'unknown',
       version: process.env.npm_package_version || '1.0.0',
     };
 
