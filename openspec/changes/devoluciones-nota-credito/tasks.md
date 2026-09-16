@@ -25,46 +25,38 @@ sucio: jamás `git add -A`). Evidencias en `evidence/` dentro de este change
 - [x] **T1.5 Schema Zod.** `registrarDevolucionSchema` + `devolucion-schema.test.ts` (6/6).
 - Commit: `feat(ventas): modelo DevolucionVenta, serie NC y permisos de devoluciones (DNC-T1)`
 
-## DNC-T2 — Motor de dominio puro
+## DNC-T2 — Motor de dominio puro ✅
 
-- [ ] **DNC-T2.1 RED.** `src/features/ventas/__tests__/devolucion-calculo.test.ts`:
-  disponibles por ítem con devoluciones previas; rechazo de cantidad 0/negativa/superior;
-  prorrateo de descuento (floor, cap acumulado, bruto 0, distribución en N parciales sin
-  exceder el descuento original); cascada financiera (CxC cubre todo / CxC parcial +
-  excedente a saldo / sin CxC → saldo o reembolso / reembolso sin turno → rechazo);
-  consolidación de ítems repetidos. ~12 casos. Evidencia `evidence/DNC-T2-RED.txt`.
-- [ ] **DNC-T2.2 GREEN.** `src/features/ventas/services/devolucion-calculo.ts` puro:
-  `calcularDisponibles`, `calcularMontosDevolucion`, `resolverTratamientoFinanciero`.
-  Sin I/O, enteros `Int` centavos. Evidencia `evidence/DNC-T2-GREEN.txt`.
-- [ ] **DNC-T2.3 Review typescript-reviewer de la fase; fixes si aplica.**
+- [x] **T2.1 RED.** `devolucion-calculo.test.ts` (18 casos). Evidencia `evidence/DNC-T2-RED.txt`.
+- [x] **T2.2 GREEN.** `src/features/ventas/services/devolucion-calculo.ts` puro:
+  `calcularDisponibles`, `calcularMontosDevolucion` (con cap adicional por subtotal del ítem,
+  detectado en diseño de tests: descuento degenerado nunca hace total negativo) y
+  `resolverTratamientoFinanciero` (conserva el total; reembolso con permiso + turno abierto).
+  Evidencia `evidence/DNC-T2-GREEN.txt`.
+- [x] **T2.3 Review** typescript-reviewer: (aprobado sin bloqueantes; ver commit).
 - Commit: `feat(ventas): cálculo puro de devoluciones y cascada financiera (DNC-T2)`
 
-## DNC-T3 — Servicio transaccional de registro
+## DNC-T3 — Servicio transaccional de registro ✅
 
-- [ ] **DNC-T3.1 RED unitario.** `src/features/ventas/__tests__/devolucion-service.test.ts`
-  con prisma mockeado: happy path multi-ítem; guardas (tenant, anulada, excedida, sin
-  permiso); replay por `idempotencyKey`; orden de llamadas (lock → guardas → efectos);
-  CxC recalculada; anticipo creado solo con excedente; reembolso solo con permiso + turno
-  abierto; NC solo con feature `facturacion`; audit log estricto. Evidencia
-  `evidence/DNC-T3-RED.txt`.
-- [ ] **DNC-T3.2 GREEN.** `devolucion-venta-service.ts` (`registrar`): tx `Serializable`,
-  `FOR UPDATE`, claim idempotente, stock/kardex/allocations, serie `NC-` + NC, cascada,
-  audit. Helpers: `restaurarAllocacionesFifo` en
-  `src/lib/services/fifo-allocation.ts` (retorna costo ponderado; tests propios) y
-  `createAnticipoDevolucion` en `src/lib/services/anticipos-workflow.ts` (sin contrato,
-  `facturaId` = NC, `contexto: NOTA_CREDITO`, idempotencia por devolución). Kardex vía
-  `registrarMovimiento` con `origenId = devolucionId` (sin enum nuevo).
-  `assertVentaDevolvible` con `TODO(PVE)` para la guarda de `estado`.
-- [ ] **DNC-T3.3 Arqueo.** Helper único de reembolsos del turno aplicado en
-  `getEsperadosArqueoAction`, `realizarArqueoAction` y
-  `src/app/api/mobile/pos/turnos/esperados/route.ts`; tests actualizados (el esperado
-  descuenta reembolsos; turno sin reembolsos intacto).
-- [ ] **DNC-T3.4 Integración real.** `src/features/ventas/__integration__/devolucion-fifo.test.ts`
-  con `pnpm test:integration`: dos compras del mismo producto a costos distintos → venta
-  que cruza ambos lotes → devolución parcial → se verifican stock reintegrado, allocations
-  reducidas en orden FIFO, línea de kardex con costo ponderado, NC y cascada financiera
-  persistidas; replay por key no duplica nada.
-- [ ] **DNC-T3.5 Review typescript-reviewer de la fase; fixes si aplica.**
+- [x] **T3.1 RED unitario** (`devolucion-service.test.ts`, 14 casos) + T3.4 integración real
+  multi-lote pasando contra Postgres 17 local. Evidencia `evidence/DNC-T3-RED.txt`.
+- [x] **T3.2 GREEN.** `devolucion-venta-service.ts` (tx Serializable + FOR UPDATE; replay por
+  key con verificación de venta → IDEMPOTENCIA_CONFLICTO; NC con serie NC- vía upsert real;
+  cascada CxC multi-cuenta + saldo a favor (createAnticipoDevolucion, contexto NOTA_CREDITO) +
+  reembolso ligado al turno ABIERTO actual). `restaurarAllocacionesFifo` (orden FIFO ASC,
+  costo ponderado) con tests propios. Venta sin cliente con excedente → CLIENTE_REQUERIDO
+  orientativo (H1 del review). Nota: PVE ya desplegado en esta rama → la guarda usa
+  `estado IN (ENTREGADA, FACTURADA)` desde ya (el TODO(PVE) quedó resuelto).
+- [x] **T3.3 Arqueo.** `getReembolsosTurnoCup` aplicado en getEsperadosArqueoAction,
+  realizarArqueoAction y ruta mobile; test cubriendo resta y caso sin reembolsos.
+- [x] **T3.4 Integración real.** Dos lotes a distinto costo, venta cruzada, devolución parcial:
+  stock/kardex ponderado/allocations/NC/cascada/replay verificados en `tcp_test_local`.
+  NOTA operativa: el sandbox carecía de test DB viva; se creó `tcp_test_local` en el Postgres
+  local (sin docker). Ci solo la verá con `migrate deploy` propiamente.
+- [x] **T3.5 Review typescript-reviewer** → APROBAR con observaciones; fixes aplicados: H1
+  (cliente requerido para saldo a favor), M1 (upsert serie NC), M2 (fingerprint por ventaId),
+  M3 (facturación evaluada post-lock), sentinel de ubicación eliminado. Suites scoped:
+  485/485 verdes + integración real verde + typecheck limpio + lint limpio.
   Evidencia `evidence/DNC-T3-GREEN.txt`.
 - Commit: `feat(ventas): registro transaccional de devoluciones con nota de crédito (DNC-T3)`
 

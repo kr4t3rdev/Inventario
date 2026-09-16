@@ -163,8 +163,10 @@ export function resolverTratamientoFinanciero(params: {
   preferencia: PreferenciaFinanciera;
   hayTurnoAbierto: boolean;
   puedeReembolsar: boolean;
+  hayCliente: boolean;
 }): TratamientoFinanciero {
-  const { total, saldoCxc, preferencia, hayTurnoAbierto, puedeReembolsar } = params;
+  const { total, saldoCxc, preferencia, hayTurnoAbierto, puedeReembolsar, hayCliente } =
+    params;
 
   if (preferencia === 'REEMBOLSO_EFECTIVO') {
     if (!puedeReembolsar) {
@@ -183,6 +185,16 @@ export function resolverTratamientoFinanciero(params: {
 
   const aplicadoCxc = Math.min(total, Math.max(saldoCxc, 0));
   const excedente = total - aplicadoCxc;
+
+  // El saldo a favor necesita cliente (el anticipo es por cliente). Sin él, la
+  // única salida posible del excedente es el reembolso en efectivo.
+  if (preferencia === 'SALDO_FAVOR' && excedente > 0 && !hayCliente) {
+    throw new ActionError(
+      'La venta no tiene cliente: no se puede crear un saldo a favor. Seleccione reembolso en efectivo.',
+      'CLIENTE_REQUERIDO',
+    );
+  }
+
   const reembolso = preferencia === 'REEMBOLSO_EFECTIVO' ? excedente : 0;
   const saldoFavor = excedente - reembolso;
 

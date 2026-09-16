@@ -16,6 +16,9 @@ const mockPrisma = vi.hoisted(() => ({
 		create: vi.fn(),
 		findMany: vi.fn(),
 	},
+	devolucionVenta: {
+		aggregate: vi.fn().mockResolvedValue({ _sum: { montoReembolsado: 0 } }),
+	},
 	$transaction: vi.fn((fn: any) => fn(mockPrisma)),
 }));
 
@@ -96,6 +99,28 @@ describe("getEsperadosArqueoAction", () => {
 			expect(result.data.esperadoEfectivoCup).toBe(100000); // ventas EFECTIVO 100000 (sin fondo)
 			expect(result.data.esperadoTarjeta).toBe(50000);
 			expect(result.data.esperadoEfectivoUsd).toBe(0);
+		}
+	});
+
+	it("descuenta los reembolsos en efectivo del turno (DNC)", async () => {
+		mockPrisma.turnoPuntoVenta.findFirst.mockResolvedValue(buildTurno());
+		mockPrisma.devolucionVenta.aggregate.mockResolvedValue({
+			_sum: { montoReembolsado: 20000 },
+		});
+
+		const result = await getEsperadosArqueoAction("turno-1", mockUser);
+
+		expect(result.success).toBe(true);
+		if (result.success && result.data) {
+			expect(result.data.esperadoEfectivoCup).toBe(80000);
+		}
+		// y sin reembolsos el cálculo queda intacto
+		mockPrisma.devolucionVenta.aggregate.mockResolvedValue({
+			_sum: { montoReembolsado: null },
+		});
+		const result2 = await getEsperadosArqueoAction("turno-1", mockUser);
+		if (result2.success && result2.data) {
+			expect(result2.data.esperadoEfectivoCup).toBe(100000);
 		}
 	});
 

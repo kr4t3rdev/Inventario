@@ -191,3 +191,57 @@ export async function allocateFifoForSale(
 		});
 	}
 }
+
+/**
+ * @description Reversa parcial FIFO de una línea de venta (DNC): recorre las
+ * allocations del VentaItem en orden de compra ASC (los lotes más antiguos
+ * primero), descuenta la cantidad devuelta y devuelve el costo restaurado.
+ * @param {Prisma.TransactionClient} tx - Cliente transaccional.
+ * @param {object} params - tenantId, ventaItemId y cantidad a restaurar.
+ * @returns {Promise<{ restaurado: number; costoTotal: number }>} Cantidad
+ * restaurada y costo total acumulado (ponderado por lote).
+ */
+export async function restaurarAllocacionesFifo(
+	tx: Prisma.TransactionClient,
+	params: { tenantId: string; ventaItemId: string; cantidad: number },
+): Promise<{ restaurado: number; costoTotal: number }> {
+	const { tenantId, ventaItemId, cantidad } = params;
+	if (cantidad <= 0) return { restaurado: 0, costoTotal: 0 };
+
+	const allocations = await tx.purchaseAllocation.findMany({
+		where: { tenantId, ventaItemId },
+		include: {
+			compraDocumentoItem: {
+				select: { createdAt: true, precioUnitario: true },
+			},
+		},
+	});
+
+	// Orden FIFO: las unidades vuelven al lote más antiguo primero.
+	allocations.sort(
+		(a, b) =>
+			new Date(a.compraDocumentoItem.createdAt).getTime() -
+			new Date(b.compraDocumentoItem.createdAt).getTime(),
+	);
+
+	let restante = cantidad;
+	let restaurado = 0;
+	let costoTotal = 0;
+	for (const alloc of allocations) {
+		if (restante <= 0) break;
+		const devolver = Math.min(restante, alloc.cantidad);
+		if (devolver >= alloc.cantidad) {
+			await tx.purchaseAllocation.delete({ where: { id: alloc.id } });
+		} else {
+			await tx.purchaseAllocation.update({
+				where: { id: alloc.id },
+				data: { cantidad: alloc.cantidad - devolver },
+			});
+		}
+		costoTotal += devolver * alloc.compraDocumentoItem.precioUnitario;
+		restaurado += devolver;
+		restante -= devolver;
+	}
+
+	return { restaurado, costoTotal };
+}

@@ -211,6 +211,7 @@ describe('resolverTratamientoFinanciero', () => {
 			preferencia: 'SALDO_FAVOR',
 			hayTurnoAbierto: true,
 			puedeReembolsar: true,
+			hayCliente: true,
 		});
 		expect(r).toEqual({ aplicadoCxc: 400, saldoFavor: 0, reembolso: 0 });
 	});
@@ -222,6 +223,7 @@ describe('resolverTratamientoFinanciero', () => {
 			preferencia: 'SALDO_FAVOR',
 			hayTurnoAbierto: false,
 			puedeReembolsar: false,
+			hayCliente: true,
 		});
 		expect(r).toEqual({ aplicadoCxc: 300, saldoFavor: 200, reembolso: 0 });
 	});
@@ -233,6 +235,7 @@ describe('resolverTratamientoFinanciero', () => {
 			preferencia: 'REEMBOLSO_EFECTIVO',
 			hayTurnoAbierto: true,
 			puedeReembolsar: true,
+			hayCliente: true,
 		});
 		expect(r).toEqual({ aplicadoCxc: 0, saldoFavor: 0, reembolso: 250 });
 	});
@@ -257,8 +260,22 @@ describe('resolverTratamientoFinanciero', () => {
 				preferencia: 'REEMBOLSO_EFECTIVO',
 				hayTurnoAbierto: true,
 				puedeReembolsar: false,
+				hayCliente: true,
 			}),
 			'FORBIDDEN');
+	});
+
+	it('sin cliente y con excedente, saldo a favor se rechaza orientando a reembolso', () => {
+		expectCode(() =>
+			resolverTratamientoFinanciero({
+				total: 100,
+				saldoCxc: 0,
+				preferencia: 'SALDO_FAVOR',
+				hayTurnoAbierto: true,
+				puedeReembolsar: true,
+				hayCliente: false,
+			}),
+			'CLIENTE_REQUERIDO');
 	});
 
 	it('la cascada siempre conserva el total', () => {
@@ -273,6 +290,7 @@ describe('resolverTratamientoFinanciero', () => {
 				preferencia: 'SALDO_FAVOR',
 				hayTurnoAbierto: true,
 				puedeReembolsar: true,
+				hayCliente: true,
 			});
 			expect(r.aplicadoCxc + r.saldoFavor + r.reembolso).toBe(c.total);
 		}

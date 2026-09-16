@@ -2,6 +2,7 @@ import { authenticateUser } from '@/lib/auth-middleware';
 import { errorResponse, successResponse } from '@/lib/api-response';
 import prisma from '@/lib/prisma';
 import { requireFeature } from '@/lib/services/tenant-scope';
+import { getReembolsosTurnoCup } from '@/lib/services/reembolsos-turno';
 
 export const dynamic = 'force-dynamic';
 
@@ -51,9 +52,11 @@ export async function GET(request: Request) {
       .filter((v) => v.metodoPago === 'EFECTIVO' || v.metodoPago === 'MIXTO')
       .reduce((sum, v) => sum + (v.montoEfectivo ?? 0), 0);
     const ventasEfectivoUsd = 0;
+    // DNC: los reembolsos en efectivo del turno descuentan el esperado.
+    const reembolsosCup = await getReembolsosTurnoCup(turno.id, tenantId);
 
     return successResponse({
-      esperadoEfectivoCup: ventasEfectivoCup,
+      esperadoEfectivoCup: ventasEfectivoCup - reembolsosCup,
       esperadoEfectivoUsd: turno.fondoInicialUsd + ventasEfectivoUsd,
       esperadoTarjeta: turno.ventas
         .filter((v) => v.metodoPago === 'TARJETA' || v.metodoPago === 'MIXTO')

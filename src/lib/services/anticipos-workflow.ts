@@ -555,3 +555,69 @@ export async function applyAnticipoAllocations(
 
   return results
 }
+
+/**
+ * @description Crea un saldo a favor del cliente como anticipo COBRO sin contrato
+ * (DNC): nace del excedente de una nota de crédito. El movimiento inicial lleva
+ * contexto NOTA_CREDITO y una clave de idempotencia ligada a la devolución.
+ * @param {Prisma.TransactionClient} tx - Cliente transaccional.
+ * @param {object} params - tenantId, clienteId, monto (centavos), moneda,
+ * facturaId de la NC (opcional), devolucionId y usuarioId.
+ * @returns {Promise<object>} El anticipo creado.
+ */
+export async function createAnticipoDevolucion(
+  tx: Prisma.TransactionClient,
+  params: {
+    tenantId: string
+    clienteId: string | null
+    monto: number
+    moneda?: string
+    facturaId?: string | null
+    devolucionId: string
+    usuarioId: string
+  }
+) {
+  if (!params.clienteId) {
+    throw createAnticipoWorkflowError(
+      400,
+      'CLIENTE_REQUERIDO',
+      'Para el saldo a favor se requiere cliente'
+    )
+  }
+
+  if (!Number.isFinite(params.monto) || params.monto <= 0) {
+    throw createAnticipoWorkflowError(400, 'MONTO_INVALIDO', 'El monto debe ser mayor que cero')
+  }
+
+  const anticipo = await tx.anticipo.create({
+    data: {
+      tenantId: params.tenantId,
+      tipo: 'COBRO',
+      contratoId: null,
+      clienteId: params.clienteId,
+      facturaId: params.facturaId || null,
+      montoOriginal: params.monto,
+      saldoDisponible: params.monto,
+      moneda: params.moneda || 'CUP',
+      referenciaExterna: `NC:${params.devolucionId}`,
+      createdById: params.usuarioId
+    }
+  })
+
+  await tx.anticipoMovimiento.create({
+    data: {
+      anticipoId: anticipo.anticipoId,
+      tipoMovimiento: 'CREACION_RESERVA',
+      contexto: 'NOTA_CREDITO',
+      documentoDestinoId: params.facturaId || null,
+      monto: params.monto,
+      moneda: anticipo.moneda,
+      saldoAntes: 0,
+      saldoDespues: params.monto,
+      usuarioId: params.usuarioId,
+      idempotencyKey: `DNC-${params.devolucionId}`
+    }
+  })
+
+  return anticipo
+}
