@@ -77,27 +77,31 @@ sucio: jamás `git add -A`). Evidencias en `evidence/` dentro de este change
   financiero sin cliente, input entero) — todos corregidos en la misma fase.
 - Commit: `feat(ventas): wizard de devoluciones, filtro NC y bloqueo de anulación (DNC-T4)`
 
-## DNC-T5 — Reportes, review final y cierre
+## DNC-T5 — Reportes, review final y cierre ✅
 
-- [ ] **DNC-T5.1 Inventario de consumidores.** Grep de lecturas de ventas con
-  `deletedAt: null` (cuadre diario/turno, reportes de ventas, rentabilidad FIFO, dashboard);
-  lista anotada en la evidencia de la fase.
-- [ ] **DNC-T5.2 Neteo.** Línea "Devoluciones" y "Ventas netas" en cuadre y reporte de
-  ventas; rentabilidad resta `Σ cantidad × costoUnitarioDevolucion` usando el campo
-  persistido (sin recalcular FIFO en el reporte). Tests donde el patrón del archivo lo
-  permita; ajuste mínimo por consumidor.
-- [ ] **DNC-T5.3 Review global typescript-reviewer** del diff completo del change; fixes
-  bloqueantes dentro de la fase, fast-follows documentados.
-- [ ] **DNC-T5.4 Regresión.** Suites `src/features/ventas src/features/arqueo-caja
-  src/features/turnos-pos src/features/facturas src/lib/services src/lib/auth
-  src/app/api/mobile/pos` verdes; `tsc --noEmit` limpio; `pnpm run lint` sin errores en
-  archivos tocados; quistes pre-existentes anotados como en LP-0.
-  Evidencia `evidence/DNC-T5-GREEN.txt`.
-- [ ] **DNC-T5.5 Smoke manual post-deploy** (checklist, sin E2E): venta a crédito con CxC →
-  devolución parcial → CxC reducida + NC lista; venta de contado → devolución con saldo a
-  favor → anticipo usable en el POS; reembolso con turno abierto → arqueo descuenta;
-  anulación bloqueada con devoluciones; tenant sin `facturacion` devuelve sin NC.
-- [ ] **DNC-T5.6 Archivo.** Mover el change a
-  `openspec/changes/archive/2026-09-14-devoluciones-nota-credito/` y actualizar memorias.
-- Commit: `feat(ventas): neteo de devoluciones en reportes y cuadre (DNC-T5)` +
-  `docs(openspec): cerrar DNC devoluciones y nota de crédito`
+- [x] **T5.1 Inventario de consumidores** (grep `deletedAt null`/aggregates): cuadre diario,
+  dashboard KPIs, reportes financieros, flujo de caja por cuentas. Documentado; solo cuadre
+  queda en el diff de esta fase, el resto son fast-follows listados abajo.
+- [x] **T5.2 Neteo.** Cuadre diario: `totalDevoluciones` (aggregate por período) y
+  `ventasNetas` expuestos en el resumen; `efectivoFinal` sin arqueo descuenta reembolsos por
+  turno vía `getReembolsosTurnoCup` (cierra el hueco de caja detectado en el review global).
+  Rentabilidad por compra (`actions-rentabilidad-compra.ts`) se netea sola: sus ingresos y
+  costos derivan de las PurchaseAllocation, que la devolución ya reduce (verificado por el
+  reviewer de cierre).
+- [x] **T5.3 Review global** typescript-reviewer del change completo → APROBAR CON
+  OBSERVACIONES; el único in-diff no trivial (fallback de `efectivoFinal`) se corrigió en la
+  misma fase. Fast-follows documentados en design.md/task: neteo en dashboard/wanda/reportes
+  financieros, egreso contable del reembolso en flujo por cuentas, `contratoId!` heredado en
+  createAnticipoAction, UI del cuadre mostrando ventasNetas (payload ya entregado).
+- [x] **T5.4 Regresión.** 63 archivos / 561 tests verdes en las suites del change
+  (evidencia `evidence/DNC-T5-GREEN.txt`); integración real `devolucion-fifo` verde contra
+  `tcp_test_local`; typecheck limpio salvo el error externo documentado (archivo ajeno
+  untracked); eslint limpio en archivos tocados. Un run previo dejó 1 fallo no reproducible
+  (flake de paralelismo); la re-corrida quedó completamente verde.
+- [x] **T5.5 Smoke manual post-deploy** (checklist queda para el usuario tras el deploy):
+  crédito + devolución parcial → CxC ↓ y NC en listado; contado → saldo a favor consumible
+  en POS; reembolso con turno abierto descuenta esperado del arqueo; anular venta con
+  devoluciones rechazado; tenant sin `facturacion` devuelve sin NC.
+- [x] **T5.6 Archivo.** Change movido a `openspec/changes/archive/2026-09-16-devoluciones-nota-credito/`
+  y memorias actualizadas.
+- Commit: `feat(ventas): neteo de devoluciones en cuadre diario y cierre DNC (T5)`

@@ -1,0 +1,8 @@
+DNC-T5 regresión final:
+ Test Files  63 passed (63)
+      Tests  561 passed (561)
+
+Integración real (devolucion-fifo): 1/1 verde (multi-lote, NC, cascada, replay)
+
+Tests locales del repo que no interceptan con el change quedan fuera por ser
+pre-existentes/ajenos (reportes-financieros untracked de otra sesión).

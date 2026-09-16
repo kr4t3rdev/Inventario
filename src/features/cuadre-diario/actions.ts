@@ -9,6 +9,7 @@
 import { withAction } from "@/lib/server-actions";
 import { prisma } from "@/lib/prisma";
 import { requireFeature, requireTenant } from "@/lib/services/tenant-scope";
+import { getReembolsosTurnoCup } from "@/lib/services/reembolsos-turno";
 import { getPayrollPaymentAmount } from "@/features/pago-salario/payroll-amounts";
 import type { AuthenticatedUser } from "@/lib/auth-middleware";
 
@@ -67,6 +68,7 @@ export const getCuadreDiarioAction = withAction(
 			gastosSalariosDia,
 			turnosDelDia,
 			arqueosDelDia,
+			devolucionesDelDia,
 		] = await Promise.all([
 			// Ventas del día (producto + punto de venta + cliente)
 			prisma.venta.findMany({
@@ -112,6 +114,15 @@ export const getCuadreDiarioAction = withAction(
 			prisma.arqueoCaja.findMany({
 				where: { tenantId, createdAt: { gte: fechaInicio, lte: fechaFin } },
 			}),
+			// DNC: devoluciones del período (netean las ventas del cuadre)
+			prisma.devolucionVenta.aggregate({
+				where: {
+					tenantId,
+					estado: 'REGISTRADA',
+					createdAt: { gte: fechaInicio, lte: fechaFin },
+				},
+				_sum: { total: true },
+			}),
 		]);
 
 		// ── Totales (centavos → pesos) ────────────────────────────────
@@ -124,6 +135,9 @@ export const getCuadreDiarioAction = withAction(
 			(sum, v) => sum + (v.total ?? 0),
 			0,
 		);
+		// DNC: ventas netas = ventas del período − devoluciones registradas en el período.
+		const totalDevoluciones = devolucionesDelDia._sum.total ?? 0;
+		const ventasNetas = totalVentas - totalDevoluciones;
 		const totalIngresos = totalVentas + totalServicios;
 
 		const totalGastosDE = gastosDEdelDia.reduce((sum, g) => sum + g.monto, 0);
@@ -290,25 +304,34 @@ export const getCuadreDiarioAction = withAction(
 		// ── Efectivo inicial / final ────────────────────────────────────
 		const efectivoInicial =
 			turnosDelDia.reduce((sum, t) => sum + t.fondoInicialCup, 0) / 100;
-		const efectivoFinal =
-			arqueosDelDia.length > 0
-				? arqueosDelDia.reduce((sum, a) => sum + a.totalEfectivoCup, 0) / 100
-				: turnosDelDia.reduce((sum, t) => {
-						const ventasEfectivo = ventasDelDia
-							.filter(
-								(v) =>
-									v.turnoId === t.id &&
-									(v.metodoPago === "EFECTIVO" || v.metodoPago === "MIXTO"),
-							)
-							.reduce((s, v) => s + (v.montoEfectivo ?? 0), 0);
-						return sum + t.fondoInicialCup + ventasEfectivo;
-					}, 0) / 100;
+		let efectivoFinal: number;
+		if (arqueosDelDia.length > 0) {
+			efectivoFinal =
+				arqueosDelDia.reduce((sum, a) => sum + a.totalEfectivoCup, 0) / 100;
+		} else {
+			// Fallback sin arqueo: fondo + ventas en efectivo − reembolsos del turno.
+			let efectivoFinalCentavos = 0;
+			for (const t of turnosDelDia) {
+				const ventasEfectivo = ventasDelDia
+					.filter(
+						(v) =>
+							v.turnoId === t.id &&
+							(v.metodoPago === "EFECTIVO" || v.metodoPago === "MIXTO"),
+					)
+					.reduce((s, v) => s + (v.montoEfectivo ?? 0), 0);
+				const reembolsos = await getReembolsosTurnoCup(t.id, tenantId);
+				efectivoFinalCentavos += t.fondoInicialCup + ventasEfectivo - reembolsos;
+			}
+			efectivoFinal = efectivoFinalCentavos / 100;
+		}
 
 		// ── Response ─────────────────────────────────────────────────
 		return {
 			resumen: {
 				fecha: formatoFecha(f),
 				totalVentas,
+				totalDevoluciones,
+				ventasNetas,
 				totalServicios,
 				totalIngresos,
 				totalGastosDE,

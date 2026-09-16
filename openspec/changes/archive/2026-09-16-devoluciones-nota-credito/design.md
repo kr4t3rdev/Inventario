@@ -320,3 +320,14 @@ básicos sin razón). Fixture de paridad actualizado con ambas claves.
   queda libre para apuntar a la NC de la devolución.
 - Regresión con `contratoId` opcional: `src/features/ventas src/features/contabilidad
   src/lib/services` → 123 archivos / 1062 tests (1060 ok, 2 todo) sin fallos.
+
+## Fast-follows documentados (post-cierre)
+
+1. Cuadre: mostrar `ventasNetas`/`totalDevoluciones` en `cuadre-diario.tsx` (payload listo) y
+   neteo de métodos de pago/diferencia.
+2. Dashboard (`queries.ts`, `wanda.ts`) y rentabilidad financiera: neteo de NC — el costo FIFO
+   restaurado ya se netea vía allocations.
+3. Flujo de caja por cuentas: mapear el reembolso en efectivo como egreso (hoy el faltante
+   solo existe "en caja física" y se captura en el arqueo).
+4. Hardening heredado: `parsed.contratoId!` en src/features/contabilidad/actions-anticipos.ts:104.
+5. Reversión de devoluciones (EstadoDevolucion.ANULADA reservado).
