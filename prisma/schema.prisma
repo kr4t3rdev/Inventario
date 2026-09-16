@@ -673,6 +673,10 @@ model Venta {
   esVentaUnica       Boolean               @default(false)
   ofertaId           String?               @unique
   ventaPadreId       String?
+  /// Efectivo recibido del cliente (centavos; null = no aplica). VC.
+  montoRecibidoEfectivo Int?
+  /// Vuelto entregado (centavos; null = no aplica o cero). VC.
+  cambioDevuelto        Int?
   /// Ciclo de vida del pedido de venta (PVE): PEDIDO -> ENTREGADA -> FACTURADA; ANULADA terminal.
   estado             EstadoVenta           @default(ENTREGADA)
   metodoPago         MetodoPagoVenta?

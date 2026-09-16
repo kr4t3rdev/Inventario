@@ -1,0 +1,59 @@
+
+ RUN  v3.2.4 /Users/arturo/Documents/Proyecto Inventario/TCP
+
+ ✓ src/features/ventas/__tests__/venta-estado-types.test.ts (3 tests) 533ms
+   ✓ Venta.estado — ciclo de vida (PVE-T1) > expone los cuatro estados del ciclo  527ms
+ ✓ src/features/ventas/components/sales-health-card.test.tsx (3 tests) 323ms
+ ✓ src/features/ventas/__tests__/devoluciones-actions.test.ts (4 tests) 9ms
+ ✓ src/features/ventas/__tests__/venta-create-orquestacion.test.ts (4 tests) 17ms
+stderr | src/features/ventas/__tests__/ventas-pedido-ui.test.tsx > VentasTable — ciclo de pedidos > filtra por estado al elegirlo en el selector
+An update to VentasTable inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+"puntoDeVenta" in deeply nested key "puntoDeVenta.nombre" returned undefined.
+"nombre" in deeply nested key "puntoDeVenta.nombre" returned undefined.
+
+ ✓ src/features/ventas/__tests__/ventas-pedido-ui.test.tsx (9 tests) 910ms
+ ✓ src/features/ventas/__tests__/devolucion-service.test.ts (14 tests) 56ms
+ ✓ src/features/ventas/actions-health.test.ts (3 tests) 12ms
+ ✓ src/features/ventas/__tests__/venta-lifecycle.test.ts (19 tests) 40ms
+ ✓ src/features/ventas/__tests__/devolucion-calculo.test.ts (21 tests) 27ms
+ ✓ src/features/ventas/__tests__/precio-venta-resolver.test.ts (6 tests) 6ms
+ ✓ src/features/ventas/__tests__/devolucion-schema.test.ts (6 tests) 36ms
+ ✓ src/features/ventas/__tests__/actions.test.ts (21 tests) 93ms
+stderr | src/features/ventas/components/ventas-table.a11y.test.tsx > VentasTable acciones accesibles > los botones de acciones icon-only exponen aria-label
+An update to Button inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+stderr | src/features/ventas/components/ventas-table.a11y.test.tsx > VentasTable acciones accesibles > los botones de acciones icon-only exponen aria-label
+Unknown event handler property `onAnimationComplete`. It will be ignored.
+
+ ✓ src/features/ventas/components/ventas-table.a11y.test.tsx (1 test) 497ms
+   ✓ VentasTable acciones accesibles > los botones de acciones icon-only exponen aria-label  495ms
+ ✓ src/features/ventas/services/__tests__/venta-read-service.test.ts (5 tests) 13ms
+ ✓ src/features/ventas/__tests__/venta-price-integrity.test.ts (8 tests) 22ms
+ ✓ src/features/ventas/__tests__/pos-vuelto-calcu.test.ts (9 tests) 6ms
+ ✓ src/features/ventas/lib/pv-client.test.ts (4 tests) 39ms
+ ✓ src/features/ventas/schemas.test.ts (2 tests) 11ms
+ ✓ src/features/ventas/__tests__/actions-lifecycle.test.ts (3 tests) 3ms
+
+ Test Files  19 passed (19)
+      Tests  145 passed (145)
+   Start at  19:03:56
+   Duration  12.09s (transform 3.13s, setup 4.81s, collect 27.81s, tests 2.65s, environment 21.04s, prepare 4.34s)
+

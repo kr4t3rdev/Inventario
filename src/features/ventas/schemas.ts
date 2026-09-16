@@ -33,11 +33,27 @@ export const createVentaSchema = z.object({
   montoTarjeta: z.coerce.number().int().min(0).optional().nullable(),
   montoTransferencia: z.coerce.number().int().min(0).optional().nullable(),
   montoCredito: z.coerce.number().int().min(0).optional().nullable(),
+  // VC: efectivo recibido del cliente y vuelto entregado (centavos).
+  montoRecibidoEfectivo: z.coerce.number().int().min(0).optional().nullable(),
+  cambioDevuelto: z.coerce.number().int().min(0).optional().nullable(),
   // Parámetros de facturación y cobro
   tipoVencimiento: z.enum(['contra_pago', 'fecha', 'plazo']).optional().nullable(),
   fechaVencimiento: z.string().optional().nullable(),
   cuentaBancariaId: z.string().optional().nullable(),
 }).refine(
+  (data) => {
+    // Si hay recibido registrado, no puede ser menor que la porción en efectivo (VC).
+    if (data.montoRecibidoEfectivo != null) {
+      const porcionEfectivo = data.montoEfectivo ?? 0;
+      if (data.montoRecibidoEfectivo < porcionEfectivo) return false;
+    }
+    return true;
+  },
+  {
+    message: 'El monto recibido no alcanza la porción en efectivo de la venta',
+    path: ['montoRecibidoEfectivo'],
+  },
+).refine(
   (data) => {
     // Si es MIXTO, la suma de los montos desglosados debe ser igual al total
     if (data.metodoPago === 'MIXTO') {
