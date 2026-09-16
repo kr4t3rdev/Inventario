@@ -155,7 +155,7 @@ export function ReportePorCategoria() {
             {isLoadingProductos ? (
               <Skeleton className="h-[300px] w-full" />
             ) : (
-              <div className="rounded-md border">
+              <div className="overflow-x-auto rounded-md border">
                 <Table >
                   <TableHeader className={SURFACE_CARD_CLASS}>
                     <TableRow>
@@ -187,7 +187,7 @@ export function ReportePorCategoria() {
         <AnimatedCard>
         <Card className={SURFACE_CARD_CLASS}>
           <CardContent className="p-0">
-            <div className="rounded-md border-0">
+              <div className="overflow-x-auto rounded-md border-0">
               <Table>
                 <TableHeader className="bg-muted/50">
                   <TableRow>

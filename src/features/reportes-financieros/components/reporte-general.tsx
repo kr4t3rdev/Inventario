@@ -255,7 +255,7 @@ export function ReporteGeneral() {
         <AnimatedCard>
         <Card className={SURFACE_CARD_CLASS}>
           <CardContent className="p-0">
-            <div className="rounded-md border-0">
+            <div className="overflow-x-auto rounded-md border-0">
               {!hasData ? (
                 <div className="p-8 text-center text-muted-foreground">
                   {isLoadingProductos ? (

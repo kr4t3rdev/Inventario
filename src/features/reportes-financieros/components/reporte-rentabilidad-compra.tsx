@@ -171,7 +171,7 @@ export function ReporteRentabilidadCompra() {
 								selectedLabel
 									? undefined // We'll set this after data loads
 									: compra
-										? `${compra.proveedor?.nombre ?? "Sin proveedor"} · ${compra.numeroFactura || "S/N"} · {formatCurrency(compra.total)}`
+										? `${compra.proveedor?.nombre ?? "Sin proveedor"} · ${compra.numeroFactura || "S/N"} · ${formatCurrency(compra.total)}`
 										: undefined
 							}
 						/>

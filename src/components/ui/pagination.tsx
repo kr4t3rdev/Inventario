@@ -37,7 +37,7 @@ PaginationItem.displayName = "PaginationItem"
 type PaginationLinkProps = {
   isActive?: boolean
   size?: "default" | "sm" | "lg" | "icon"
-} & React.ComponentProps<"a">
+} & React.ComponentProps<"button">
 
 const PaginationLink = ({
   className,
@@ -45,7 +45,10 @@ const PaginationLink = ({
   size = "icon",
   ...props
 }: PaginationLinkProps) => (
-  <a
+  // Botón, no <a>: los consumidores usan onClick sin href, y un anchor sin
+  // href no es enfocable por teclado ni anunciado como control por lectores.
+  <button
+    type="button"
     aria-current={isActive ? "page" : undefined}
     className={cn(
       buttonVariants({

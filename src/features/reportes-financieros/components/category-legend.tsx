@@ -1,5 +1,7 @@
 "use client"
 
+import type { ReactElement } from "react"
+
 /**
  * @description Entrada de la leyenda del gráfico por categoría.
  * Recharts inyecta estas props al clonar el elemento pasado a <Legend content={...} />.
@@ -20,9 +22,9 @@ interface CategoryLegendProps {
  * La versión anterior crecía sin límite (una fila por categoría) y, al superar la
  * altura del contenedor, recharts desplazaba el pie hacia arriba fuera del svg.
  * @param {CategoryLegendProps} props - Entradas inyectadas por recharts Legend
- * @returns {JSX.Element} Lista de categorías con color y porcentaje
+ * @returns {ReactElement} Lista de categorías con color y porcentaje
  */
-export function CategoryLegend({ payload = [] }: CategoryLegendProps): JSX.Element {
+export function CategoryLegend({ payload = [] }: CategoryLegendProps): ReactElement {
   return (
     <ul className="mt-4 max-h-40 space-y-2 overflow-y-auto pr-1">
       {payload.map((entry) => (

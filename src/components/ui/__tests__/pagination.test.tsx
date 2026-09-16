@@ -17,22 +17,22 @@ describe('Pagination navigation links', () => {
       <Pagination>
         <PaginationContent>
           <PaginationItem>
-            <PaginationPrevious href="#" />
+            <PaginationPrevious />
           </PaginationItem>
           <PaginationItem>
-            <PaginationLink href="#" isActive>
+            <PaginationLink isActive>
               1
             </PaginationLink>
           </PaginationItem>
           <PaginationItem>
-            <PaginationNext href="#" />
+            <PaginationNext />
           </PaginationItem>
         </PaginationContent>
       </Pagination>,
     );
 
-    const previous = screen.getByRole('link', { name: /página anterior/i });
-    const next = screen.getByRole('link', { name: /página siguiente/i });
+    const previous = screen.getByRole('button', { name: /página anterior/i });
+    const next = screen.getByRole('button', { name: /página siguiente/i });
 
     for (const link of [previous, next]) {
       expect(link).not.toHaveClass('size-10');
@@ -46,16 +46,16 @@ describe('Pagination navigation links', () => {
       <Pagination>
         <PaginationContent>
           <PaginationItem>
-            <PaginationPrevious href="#" />
+            <PaginationPrevious />
           </PaginationItem>
           <PaginationItem>
-            <PaginationNext href="#" />
+            <PaginationNext />
           </PaginationItem>
         </PaginationContent>
       </Pagination>,
     );
 
-    expect(screen.getByRole('link', { name: 'Ir a la página anterior' })).toBeInTheDocument();
-    expect(screen.getByRole('link', { name: 'Ir a la página siguiente' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Ir a la página anterior' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Ir a la página siguiente' })).toBeInTheDocument();
   });
 });
