@@ -1,4 +1,4 @@
-name: Smoke público post-deploy
+name: Smoke post-deploy
 
 # Chequeo manual post-deploy contra el host real de Railway.
 # NO se ejecuta automáticamente en push/PR: el deploy de Railway es asíncrono
@@ -14,12 +14,24 @@ on:
         required: false
         default: 'https://kr4t3rdev.xyz'
         type: string
+      target_environment:
+        description: 'GitHub Environment y entorno esperado en /api/health'
+        required: true
+        default: production
+        type: choice
+        options:
+          - staging
+          - production
+      expected_sha:
+        description: 'SHA exacto del commit que debe estar desplegado'
+        required: true
+        type: string
 
 permissions:
   contents: read
 
 concurrency:
-  group: e2e-prod-${{ github.ref }}
+  group: e2e-deployment-${{ inputs.target_environment }}-${{ github.ref }}
   cancel-in-progress: false
 
 env:
@@ -28,7 +40,8 @@ env:
 
 jobs:
   e2e-prod:
-    name: E2E Playwright contra producción
+    name: E2E Playwright contra ${{ inputs.target_environment }}
+    environment: ${{ inputs.target_environment }}
     runs-on: ubuntu-latest
     timeout-minutes: 30
     steps:
@@ -53,9 +66,11 @@ jobs:
       - name: Instalar navegador Chromium (Playwright)
         run: pnpm exec playwright install --with-deps chromium
 
-      - name: Suite E2E contra producción
+      - name: Suite E2E contra el entorno objetivo
         env:
           E2E_BASE_URL: ${{ inputs.base_url }}
+          EXPECTED_DEPLOYMENT_ENVIRONMENT: ${{ inputs.target_environment }}
+          EXPECTED_DEPLOYMENT_SHA: ${{ inputs.expected_sha }}
         run: pnpm run test:smoke:prod
 
       - name: Subir artefacto de reporte (si falla)
