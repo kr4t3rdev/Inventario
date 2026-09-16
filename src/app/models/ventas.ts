@@ -111,6 +111,8 @@ export interface Venta {
 	factura?: Factura;
 	reconciliaciones?: ReconciliacionVenta[];
 	items?: VentaItem[];
+	/** DNC: devoluciones activas (REGISTRADA) con su total — se usa para el badge NC. */
+	devoluciones?: { devolucionId: string; total: number }[];
 }
 
 export interface VentaStats {

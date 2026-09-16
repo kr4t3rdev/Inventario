@@ -15,6 +15,7 @@ export const FACTURA_INCLUDE = {
 
 export interface FacturaFilters {
   search?: string;
+  tipoDocumento?: string;
   estado?: string;
   clienteId?: string;
   serieId?: string;
@@ -81,6 +82,7 @@ export async function listFacturasForTenant(
   const {
     search,
     estado,
+    tipoDocumento,
     clienteId,
     serieId,
     fechaInicio,
@@ -92,6 +94,7 @@ export async function listFacturasForTenant(
   const boundedLimit = Math.max(1, Math.min(limit, 100));
   const where: Record<string, unknown> = { tenantId };
   if (estado) where.estado = estado;
+  if (tipoDocumento) where.tipoDocumento = tipoDocumento;
   if (clienteId) where.clienteId = clienteId;
   if (serieId) where.serieId = serieId;
   if (fechaInicio || fechaFin) {

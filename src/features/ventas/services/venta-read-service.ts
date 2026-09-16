@@ -34,6 +34,11 @@ export const VENTA_SELECT = {
   puntoDeVenta: { select: { pvId: true, nombre: true } },
   cliente: { select: { clienteId: true, nombre: true } },
   factura: { select: { idFactura: true, numeroFactura: true } },
+  // DNC: para el badge "Con devoluciones" en la tabla.
+  devoluciones: {
+    where: { estado: 'REGISTRADA' },
+    select: { devolucionId: true, total: true },
+  },
 } as const;
 
 interface SaleListFilters {

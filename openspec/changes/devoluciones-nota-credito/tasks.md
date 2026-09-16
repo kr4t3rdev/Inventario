@@ -60,22 +60,22 @@ sucio: jamás `git add -A`). Evidencias en `evidence/` dentro de este change
   Evidencia `evidence/DNC-T3-GREEN.txt`.
 - Commit: `feat(ventas): registro transaccional de devoluciones con nota de crédito (DNC-T3)`
 
-## DNC-T4 — Actions, UI y bloqueo de anulación
+## DNC-T4 — Actions, UI y bloqueo de anulación ✅
 
-- [ ] **DNC-T4.1 Actions RED→GREEN.** `src/features/ventas/actions-devoluciones.ts`:
-  `getDevolucionContextoAction`, `registrarDevolucionAction`, `getDevolucionesAction`
-  (patrón `withAction` + `requireTenant` + permisos + gates de plan). Tests de actions con
-  prisma mockeado. Evidencia `evidence/DNC-T4-RED.txt` / `evidence/DNC-T4-GREEN.txt`.
-- [ ] **DNC-T4.2 UI.** `components/devolucion-wizard.tsx` (2 pasos, máximos por ítem,
-  resumen financiero, reembolso deshabilitado con motivo visible), entrada "Devolver…" en
-  detalle/tabla de ventas, badge de devolución parcial/total, filtro `NOTA_CREDITO` con
-  detalle vinculado en facturas. Componentes <200 líneas, JSDoc, español neutro, estados
-  de carga y error con toast.
-- [ ] **DNC-T4.3 Bloqueo de anulación.** Guarda `VENTA_CON_DEVOLUCIONES` en
-  `VentaMutationService.cancel` (consulta barata dentro de la tx actual) + test; tooltip en
-  la UI que orienta a completar la devolución al 100%.
-- [ ] **DNC-T4.4 Review typescript-reviewer de la fase; fixes si aplica.**
-- Commit: `feat(ventas): wizard de devoluciones, vista de NC y bloqueo de anulación (DNC-T4)`
+- [x] **T4.1 Actions** `src/features/ventas/actions-devoluciones.ts` (contexto con
+  disponibilidad por ítem, saldo CxC y turno abierto; registrar; listar por venta) +
+  `devoluciones-actions.test.ts` (4). Evidencia `evidence/DNC-T4-GREEN.txt` (184/184 scoped).
+- [x] **T4.2 UI.** `devolucion-wizard.tsx` (ítems con máximo disponible, motivo, resumen
+  financiero con prorrateo de descuento del motor, radios con motivos de deshabilitación,
+  idempotencyKey por apertura, submit bloqueado sin canal válido); botón Devolver + badge "NC"
+  en la tabla de ventas; filtro `NOTA_CREDITO` en facturas (page → action → read-service).
+- [x] **T4.3 Bloqueo de anulación.** Guarda `VENTA_CON_DEVOLUCIONES` dentro de la tx (tras el
+  lock, antes del claim) en `anularVentaPorEstado` + test; PEDIDO exento. Mocks
+  `devolucionVenta.count` añadidos a las suites existentes (regresión verde).
+- [x] **T4.4 Review** typescript-reviewer: BLOQUEO por cast `as unknown` del badge (HIGH, tipo
+  real añadido a `Venta`) + MEDIUM del wizard (efecto estable, prorrateo en preview, default
+  financiero sin cliente, input entero) — todos corregidos en la misma fase.
+- Commit: `feat(ventas): wizard de devoluciones, filtro NC y bloqueo de anulación (DNC-T4)`
 
 ## DNC-T5 — Reportes, review final y cierre
 

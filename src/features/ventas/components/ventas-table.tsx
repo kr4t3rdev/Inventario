@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useCallback, useState } from "react"
 import Link from "next/link"
 import { LazyMotion, m as motion } from "framer-motion"
 import {
@@ -24,6 +24,8 @@ import { formatCurrency } from "@/lib/utils"
 import { useProductos } from "@/features/productos/hooks/use-productos"
 import { EstadoVentaBadge } from "./estado-venta-badge"
 import { PedidoAcciones } from "./pedido-acciones"
+import { DevolucionWizard } from "./devolucion-wizard"
+import { RotateCcw } from "lucide-react"
 import type { Venta } from "@/app/models/model"
 
 interface VentasTableProps {
@@ -36,6 +38,10 @@ interface VentasTableProps {
 }
 
 export function VentasTable({ ventas: ventasProp, isLoading, error, onDelete, pedidosEnabled = false }: VentasTableProps) {
+  const [devolucionVentaId, setDevolucionVentaId] = useState<string | null>(null)
+  const handleDevolucionOpenChange = useCallback((open: boolean) => {
+    if (!open) setDevolucionVentaId(null)
+  }, [])
   const ventas = ventasProp ?? []
   const [sorting, setSorting] = useState<SortingState>([])
   const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([])
@@ -194,7 +200,22 @@ export function VentasTable({ ventas: ventasProp, isLoading, error, onDelete, pe
       accessorKey: "estado",
       header: "Estado",
       filterFn: (row, _columnId, value) => (row.original.estado ?? 'ENTREGADA') === value,
-      cell: ({ row }) => <EstadoVentaBadge estado={row.original.estado} />,
+      cell: ({ row }) => {
+        const numDevoluciones = row.original.devoluciones?.length ?? 0
+        return (
+          <div className="flex items-center gap-1">
+            <EstadoVentaBadge estado={row.original.estado} />
+            {numDevoluciones > 0 && (
+              <span
+                className="inline-flex rounded-full border border-amber-300 bg-amber-50 px-1.5 text-[10px] font-medium text-amber-700 dark:bg-amber-950 dark:text-amber-300"
+                title="La venta tiene devoluciones parciales o totales"
+              >
+                NC
+              </span>
+            )}
+          </div>
+        )
+      },
     },
     {
       header: "Acciones",
@@ -205,6 +226,19 @@ export function VentasTable({ ventas: ventasProp, isLoading, error, onDelete, pe
 
         return (
           <div className="flex items-center gap-2">
+            {(venta.estado === 'ENTREGADA' || venta.estado === 'FACTURADA') && (
+              <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
+                <Button
+                  onClick={() => setDevolucionVentaId(venta.ventaId)}
+                  variant='outline'
+                  className='h-8 w-8 p-0'
+                  aria-label={`Devolver venta ${venta.ventaId}`}
+                  title="Devolver mercancía (nota de crédito)"
+                >
+                  <RotateCcw className="h-4 w-4" aria-hidden="true" />
+                </Button>
+              </motion.div>
+            )}
             {pedidosEnabled && (
               <PedidoAcciones
                 ventaId={venta.ventaId}
@@ -435,6 +469,13 @@ export function VentasTable({ ventas: ventasProp, isLoading, error, onDelete, pe
           Siguiente
         </Button>
       </motion.div>
+      {devolucionVentaId && (
+        <DevolucionWizard
+          ventaId={devolucionVentaId}
+          open={true}
+          onOpenChange={handleDevolucionOpenChange}
+        />
+      )}
     </motion.div>
   )
 }

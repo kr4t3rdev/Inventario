@@ -78,6 +78,7 @@ export function FacturasContent({ initialData }: FacturasContentProps) {
   const [page, setPage] = useState(1)
   const [limit, setLimit] = useState(50)
   const [estadoFilter, setEstadoFilter] = useState<string>("ALL")
+  const [tipoFilter, setTipoFilter] = useState<string>("ALL")
   const [search, setSearch] = useState("")
   const [isPending, startTransition] = useTransition()
   const [response, setResponse] = useState<FacturasContentProps['initialData'] | null>(initialData || null)
@@ -102,7 +103,7 @@ export function FacturasContent({ initialData }: FacturasContentProps) {
       return
     }
     setIsLoading(true)
-    getFacturasAction({ page, limit, estado: estadoFilter === "ALL" ? undefined : estadoFilter, search: search || undefined })
+    getFacturasAction({ page, limit, estado: estadoFilter === "ALL" ? undefined : estadoFilter, tipoDocumento: tipoFilter === "ALL" ? undefined : tipoFilter, search: search || undefined })
       .then(r => {
         if (r.success && r.data) {
           setResponse({
@@ -112,7 +113,7 @@ export function FacturasContent({ initialData }: FacturasContentProps) {
         }
         setIsLoading(false)
       })
-  }, [page, limit, estadoFilter, search, initialData])
+  }, [page, limit, estadoFilter, tipoFilter, search, initialData])
 
   const facturas = response?.data || []
   const pagination = response?.pagination
@@ -291,6 +292,16 @@ export function FacturasContent({ initialData }: FacturasContentProps) {
                 <SelectItem value="PAGADA">Pagada</SelectItem>
                 <SelectItem value="VENCIDA">Vencida</SelectItem>
                 <SelectItem value="CANCELADA">Cancelada</SelectItem>
+              </SelectContent>
+            </Select>
+            <Select value={tipoFilter} onValueChange={(v) => { setTipoFilter(v); setPage(1) }}>
+              <SelectTrigger className="w-[200px]">
+                <SelectValue placeholder="Tipo de documento" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="ALL">Todos los tipos</SelectItem>
+                <SelectItem value="FACTURA">Facturas</SelectItem>
+                <SelectItem value="NOTA_CREDITO">Notas de crédito</SelectItem>
               </SelectContent>
             </Select>
           </div>

@@ -88,6 +88,23 @@ describe('VentasTable — ciclo de pedidos', () => {
 		expect(screen.queryByRole('button', { name: 'Entregar pedido v-p' })).not.toBeInTheDocument();
 	});
 
+	it('muestra la acción Devolver en ventas entregadas/facturadas', () => {
+		render(
+			<VentasTable
+				ventas={[
+					{ ...baseVenta, ventaId: 'v-f', estado: 'FACTURADA' },
+					{ ...baseVenta, ventaId: 'v-p', estado: 'PEDIDO' },
+				]}
+				isLoading={false}
+				error={undefined}
+				onDelete={vi.fn()}
+			/>,
+		);
+		expect(screen.getByRole('button', { name: 'Devolver venta v-f' })).toBeInTheDocument();
+		// Un pedido sin entregar no se puede devolver
+		expect(screen.queryByRole('button', { name: 'Devolver venta v-p' })).not.toBeInTheDocument();
+	});
+
 	it('filtra por estado al elegirlo en el selector', async () => {
 		render(
 			<VentasTable

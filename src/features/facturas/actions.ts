@@ -12,7 +12,7 @@ import {
 import type { UpdateFacturaInput } from './schemas';
 import type { AuthenticatedUser } from '@/lib/auth-middleware';
 
-export const getFacturasAction = withAction(async (f: { search?: string; estado?: string; clienteId?: string; serieId?: string; fechaInicio?: string; fechaFin?: string; page?: number; limit?: number } = {}, user: AuthenticatedUser) => {
+export const getFacturasAction = withAction(async (f: { search?: string; estado?: string; tipoDocumento?: string; clienteId?: string; serieId?: string; fechaInicio?: string; fechaFin?: string; page?: number; limit?: number } = {}, user: AuthenticatedUser) => {
   requireFeature(user, 'facturacion', 'gestionar facturación');
   const tenantId = requireTenant(user);
   return listFacturasForTenant(tenantId, f);

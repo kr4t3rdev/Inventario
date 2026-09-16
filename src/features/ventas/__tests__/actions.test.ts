@@ -24,6 +24,7 @@ const { mockTx } = vi.hoisted(() => {
 			updateMany: vi.fn().mockResolvedValue({ count: 1 }),
 		},
 		factura: { update: vi.fn(), updateMany: vi.fn() },
+		devolucionVenta: { count: vi.fn().mockResolvedValue(0) },
 		cuentaPorCobrar: { findMany: vi.fn(), updateMany: vi.fn(), deleteMany: vi.fn() },
 		reconciliacionVenta: { deleteMany: vi.fn() },
 		cuentaBancaria: { updateMany: vi.fn(), findFirst: vi.fn() },

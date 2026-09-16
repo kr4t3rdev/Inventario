@@ -18,6 +18,7 @@ interface PageProps {
     page?: string
     limit?: string
     estado?: string
+    tipoDocumento?: string
     search?: string
   }>
 }
@@ -36,6 +37,7 @@ export default async function FacturasPage(props: PageProps) {
     page,
     limit,
     estado: searchParams.estado,
+    tipoDocumento: searchParams.tipoDocumento,
     search: searchParams.search,
   }), getCurrentUser()])
 

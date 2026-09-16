@@ -510,6 +510,25 @@ export const VentaLifecycleService = {
 
       // Reclamo atómico de la anulación: si otra operación la ganó, count != 1
       // y ningún efecto colateral se aplica dos veces.
+      if (currentVenta.estado !== 'PEDIDO') {
+        // DNC: una venta con devoluciones registradas no se anula (la reversión
+        // total reintegraría dos veces las unidades ya devueltas); la devolución
+        // al 100% cubre ese caso.
+        const devolucionesActivas = await tx.devolucionVenta.count({
+          where: {
+            tenantId,
+            ventaId: parsed.ventaId,
+            estado: 'REGISTRADA',
+          },
+        });
+        if (devolucionesActivas > 0) {
+          throw new ActionError(
+            'La venta tiene devoluciones registradas. Para revertirla por completo, complete la devolución del 100% en lugar de anularla.',
+            'VENTA_CON_DEVOLUCIONES',
+          );
+        }
+      }
+
       const marked = await tx.venta.updateMany({
         where: {
           ventaId: parsed.ventaId,

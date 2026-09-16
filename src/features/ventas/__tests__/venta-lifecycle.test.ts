@@ -47,6 +47,7 @@ const { mockTx } = vi.hoisted(() => {
 		cuentaPorCobrar: { findMany: vi.fn(), updateMany: vi.fn() },
 		reconciliacionVenta: { deleteMany: vi.fn() },
 		purchaseAllocation: { deleteMany: vi.fn() },
+		devolucionVenta: { count: vi.fn().mockResolvedValue(0) },
 	};
 	return { mockTx };
 });
@@ -121,6 +122,7 @@ function mirarVenta(v: typeof ventaPedido) {
 beforeEach(() => {
 	vi.clearAllMocks();
 	mockTx.venta.updateMany.mockResolvedValue({ count: 1 });
+	mockTx.devolucionVenta.count.mockResolvedValue(0);
 	mockTx.serieFacturacion.findFirst.mockResolvedValue({
 		serieId: 'serie-1',
 		prefijo: 'FV',
@@ -417,6 +419,15 @@ describe('anularVentaPorEstado', () => {
 		await expect(
 			svc.anularVentaPorEstado({ ventaId: 'venta-1', motivo: null, user: adminUser }),
 		).rejects.toMatchObject({ code: 'FINANCIAL_REVERSAL_REQUIRED' });
+	});
+
+	it('bloquea anular una venta con devoluciones registradas (VENTA_CON_DEVOLUCIONES)', async () => {
+		mirarVenta({ ...ventaPedido, estado: 'ENTREGADA' });
+		mockTx.devolucionVenta.count.mockResolvedValue(1);
+		await expect(
+			svc.anularVentaPorEstado({ ventaId: 'venta-1', motivo: null, user: adminUser }),
+		).rejects.toMatchObject({ code: 'VENTA_CON_DEVOLUCIONES' });
+		expect(upsertStockUbicacion).not.toHaveBeenCalled();
 	});
 
 	it('falla sin efectos si el claim de anulación pierde la carrera', async () => {
