@@ -14,6 +14,7 @@ export async function GET(): Promise<NextResponse> {
       environment: process.env.NODE_ENV || 'unknown',
       deploymentEnvironment:
         process.env.DEPLOYMENT_ENVIRONMENT || process.env.NODE_ENV || 'unknown',
+      deploymentSha: process.env.RAILWAY_GIT_COMMIT_SHA || 'unknown',
       version: process.env.npm_package_version || '1.0.0',
     };
 
