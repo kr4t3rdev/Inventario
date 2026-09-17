@@ -34,7 +34,7 @@ describe('Capa fiscal — modelos (FE-T1)', () => {
 		const sql = readFileSync(join(dir, folder as string, 'migration.sql'), 'utf8');
 		expect(sql).toContain('CREATE TYPE "EstadoFiscalDocumento"');
 		expect(sql).toContain('CREATE TABLE "fiscal_documents"');
-		expect(sql).toContain('ALTER TABLE "Tenant" ADD COLUMN');
+		expect(sql).toContain('ALTER TABLE "tenants" ADD COLUMN');
 		expect(sql).toContain('ALTER TABLE "Cliente" ADD COLUMN');
 	});
 });
