@@ -1,0 +1,10 @@
+
+ RUN  v3.2.4 /Users/arturo/Documents/Proyecto Inventario/TCP
+
+ ✓ src/features/facturas/__tests__/fiscal-emision.test.ts (4 tests) 6ms
+
+ Test Files  1 passed (1)
+      Tests  4 passed (4)
+   Start at  07:26:05
+   Duration  1.02s (transform 75ms, setup 105ms, collect 37ms, tests 6ms, environment 384ms, prepare 76ms)
+
