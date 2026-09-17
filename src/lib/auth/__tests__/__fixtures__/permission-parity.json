@@ -7,6 +7,7 @@
     "compras.servicios.eliminar",
     "config.contabilidad.politica",
     "config.empresa.logo",
+    "config.fiscal.gestionar",
     "config.tipos-contrato.crear",
     "config.tipos-contrato.eliminar",
     "config.usuarios.gestionar",

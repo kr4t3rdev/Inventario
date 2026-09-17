@@ -2,6 +2,10 @@ import { prisma } from '@/lib/prisma';
 
 export const FACTURA_INCLUDE = {
   serie: { select: { serieId: true, prefijo: true, descripcion: true } },
+  // Gap 4: estado fiscal (null si la factura nunca se emitió).
+  fiscalDocument: {
+    select: { fiscalDocumentId: true, estado: true, uuidExterno: true },
+  },
   cliente: {
     select: { clienteId: true, nombre: true, direccion: true, telefono: true },
   },

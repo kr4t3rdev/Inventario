@@ -6,6 +6,7 @@ import {
   BookOpen,
   Briefcase,
   Building2,
+  Landmark,
   Calculator,
   Calendar,
   CheckCircle,
@@ -317,6 +318,7 @@ export const SIDEBAR_CONFIG: SidebarConfig = {
       title: "Configuración",
       items: [
         { title: "Mi Empresa", url: "/busy/configuracion/mi-empresa", icon: Building2 as LucideIcon },
+        { title: "Facturación fiscal", url: "/busy/configuracion/fiscal", icon: Landmark as LucideIcon },
         { title: "Referidos", url: "/busy/referidos", icon: Gift as LucideIcon },
         { title: "Usuarios", url: "/busy/configuracion/usuarios", icon: Users as LucideIcon },
         { title: "Roles", url: "/busy/configuracion/roles", icon: SlidersHorizontal as LucideIcon },

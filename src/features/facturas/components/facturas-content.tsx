@@ -27,8 +27,12 @@ import type { FacturaRow } from "@/features/facturas/types"
 import { getAuthToken } from "@/lib/token"
 import { EstadoFacturaBadge } from "@/features/facturas"
 import { ActualizarEstadoFactura } from "@/features/facturas"
+import { FiscalBadge } from "./fiscal-badge"
+import { FiscalPanelDialog } from "./fiscal-panel-dialog"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Card, CardContent } from "@/components/ui/card"
+
+type FacturaRowConFiscal = { fiscalDocument?: { estado: string; uuidExterno: string | null } | null }
 
 interface FacturasContentProps {
   initialData?: {
@@ -123,6 +127,7 @@ export function FacturasContent({ initialData }: FacturasContentProps) {
   const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([])
   const [columnVisibility, setColumnVisibility] = useState<VisibilityState>({})
   const [rowSelection, setRowSelection] = useState({})
+  const [fiscalFacturaId, setFiscalFacturaId] = useState<string | null>(null)
 
   const columns: ColumnDef<FacturaRow>[] = [
     {
@@ -196,6 +201,25 @@ export function FacturasContent({ initialData }: FacturasContentProps) {
       id: "estado",
       header: "Estado",
       cell: ({ row }) => <EstadoFacturaBadge estado={row.original.estado} />,
+    },
+    {
+      id: "fiscal",
+      header: "Fiscal",
+      cell: ({ row }) => {
+        const f = row.original as FacturaRow & FacturaRowConFiscal
+        const estado = f.fiscalDocument?.estado ?? null
+        if (!estado) return null
+        return (
+          <button
+            type="button"
+            className="text-left"
+            onClick={() => setFiscalFacturaId(f.facturaId)}
+            aria-label={"Ver documento fiscal de " + f.numeroFactura}
+          >
+            <FiscalBadge estado={estado} />
+          </button>
+        )
+      },
     },
     {
       id: "actions",
@@ -363,6 +387,9 @@ export function FacturasContent({ initialData }: FacturasContentProps) {
             </div>
           )}
         </div>
+        {fiscalFacturaId !== null && (
+          <FiscalPanelDialog facturaId={fiscalFacturaId} open onOpenChange={(v) => { if (!v) setFiscalFacturaId(null) }} />
+        )}
       </SidebarInset>
     </SidebarProvider>
   )

@@ -529,6 +529,14 @@ export const PERMISSION_REGISTRY: PermissionDef[] = [
 
 	// ── config ──
 	{
+		key: 'config.fiscal.gestionar',
+		label: 'Configurar datos fiscales',
+		description: 'Editar los datos fiscales del emisor (taxId, régimen, razón social) y activar la capa fiscal.',
+		category: 'config',
+		defaultRoles: ['manager'],
+		sensitive: true,
+	},
+	{
 		key: 'config.usuarios.gestionar',
 		label: 'Gestionar usuarios y membresías',
 		description: 'Invitar, aprobar, cambiar roles y desactivar usuarios del tenant.',
