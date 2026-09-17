@@ -188,6 +188,14 @@ export const PERMISSION_REGISTRY: PermissionDef[] = [
 
 	// ── rrhh ──
 	{
+		key: 'rrhh.comisiones.gestionar',
+		label: 'Gestionar comisiones de vendedores',
+		description: 'Configurar porcentaje de comisión y meta mensual de un empleado; consultar el reporte.',
+		category: 'rrhh',
+		defaultRoles: ['manager'],
+		sensitive: true,
+	},
+	{
 		key: 'rrhh.empleados.crear',
 		label: 'Crear empleados',
 		description: 'Dar de alta empleados del tenant.',

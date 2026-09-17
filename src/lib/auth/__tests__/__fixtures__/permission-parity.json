@@ -54,6 +54,7 @@
     "rrhh.asistencia.editar",
     "rrhh.asistencia.eliminar",
     "rrhh.asistencia.registrar",
+    "rrhh.comisiones.gestionar",
     "rrhh.empleados.crear",
     "rrhh.empleados.editar",
     "rrhh.empleados.eliminar",

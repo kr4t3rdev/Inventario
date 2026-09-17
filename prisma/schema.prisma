@@ -1248,6 +1248,10 @@ model Empleado {
   telefono              String?
   cargo                 String
   salarioBases          Int
+  /// Gap 5: porcentaje de comisión por ventas cobradas (0-100) y meta mensual
+  /// en centavos (0 = sin meta).
+  comisionPct           Int                    @default(0)
+  metaMensual           Int                    @default(0)
   createdAt             DateTime               @default(now())
   updatedAt             DateTime               @updatedAt
   diasVacacionesAnuales Int                    @default(15)
