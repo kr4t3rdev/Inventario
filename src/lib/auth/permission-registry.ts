@@ -188,6 +188,14 @@ export const PERMISSION_REGISTRY: PermissionDef[] = [
 
 	// ── rrhh ──
 	{
+		key: 'ventas.venta.credito-override',
+		label: 'Autorizar venta sobre el límite de crédito del cliente',
+		description: 'Permite procesar una venta a crédito que supera el límite configurado del cliente.',
+		category: 'ventas',
+		defaultRoles: ['manager'],
+		sensitive: true,
+	},
+	{
 		key: 'rrhh.comisiones.gestionar',
 		label: 'Gestionar comisiones de vendedores',
 		description: 'Configurar porcentaje de comisión y meta mensual de un empleado; consultar el reporte.',

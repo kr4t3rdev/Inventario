@@ -139,7 +139,10 @@ model Cliente {
   listaPrecioId     String?
   /// Gap 4: identificador fiscal del cliente (opcional, lo exige el país final).
   taxIdCliente      String?
+  /// Gap 6: límite de crédito del cliente (centavos; null = sin tope).
+  limiteCredito     Int?
   anticipos         Anticipo[]
+  notasContacto     CobroNota[]
   tenant            Tenant            @relation(fields: [tenantId], references: [tenantId])
   listaPrecio       ListaPrecio?      @relation(fields: [listaPrecioId], references: [id], onDelete: SetNull)
   contratos         Contrato[]        @relation("ContratoCliente")
@@ -236,6 +239,7 @@ model Tenant {
   vendors                        Vendor[]
   ventas                         Venta[]
   devolucionesVenta              DevolucionVenta[]
+  cobroNotas                     CobroNota[]
   ventasServicios                VentaServicios[]
   fiscalDocuments                FiscalDocument[]
   fiscalEmisionEvents            FiscalEmisionEvent[]
@@ -2196,6 +2200,23 @@ model ScenarioSimulation {
   updatedAt          DateTime @updatedAt
 
   @@index([tenantId])
+}
+
+/// Nota de contacto del seguimiento de un cliente (Gap 6, CRM operativo).
+model CobroNota {
+  id          String   @id @default(cuid())
+  tenantId    String
+  clienteId   String
+  texto       String
+  /// Motivo del contacto ('cobro' | 'llamada' | 'nota libre' | ...).
+  causa       String?
+  cliente     Cliente  @relation(fields: [clienteId], references: [clienteId], onDelete: Cascade)
+  tenant      Tenant   @relation(fields: [tenantId], references: [tenantId])
+  createdById String
+  createdAt   DateTime @default(now())
+
+  @@index([tenantId, clienteId])
+  @@map("cobro_notas")
 }
 
 model Contrato {

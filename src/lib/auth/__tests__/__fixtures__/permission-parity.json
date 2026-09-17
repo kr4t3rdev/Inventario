@@ -80,6 +80,7 @@
     "ventas.servicios.editar",
     "ventas.servicios.eliminar",
     "ventas.venta.anular",
+    "ventas.venta.credito-override",
     "ventas.venta.editar",
     "ventas.venta.registrar"
   ],
