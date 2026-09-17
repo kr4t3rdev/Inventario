@@ -5,6 +5,7 @@ import { useParams } from "next/navigation"
 import { useEffect, useState } from "react"
 import { ClienteForm, getClienteByIdAction } from "@/features/clientes"
 import { ClientesPageHeader } from "@/features/clientes/components/clientes-page-header"
+import { Cliente360 } from "@/features/clientes/components/cliente-360"
 
 export default function EditarClientePage() {
   const params = useParams()
@@ -46,6 +47,7 @@ export default function EditarClientePage() {
             description="Modifique los datos del cliente"
           />
           <ClienteForm initialData={cliente as any} />
+          <Cliente360 clienteId={clienteId} />
         </div>
   )
 }
