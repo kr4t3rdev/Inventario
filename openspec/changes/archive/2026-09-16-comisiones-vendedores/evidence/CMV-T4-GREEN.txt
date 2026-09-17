@@ -1,0 +1,136 @@
+
+ RUN  v3.2.4 /Users/arturo/Documents/Proyecto Inventario/TCP
+
+ ✓ src/features/empleados/__tests__/comision-fields.test.ts (1 test) 1585ms
+   ✓ Gap 5 — campos de comisión en Empleado (CMV-T1) > Empleado tiene comisionPct y metaMensual (Int, default 0)  1581ms
+ ✓ src/features/ventas/__tests__/venta-estado-types.test.ts (3 tests) 841ms
+   ✓ Venta.estado — ciclo de vida (PVE-T1) > expone los cuatro estados del ciclo  831ms
+ ✓ src/features/ventas/__tests__/fiscal-model-types.test.ts (3 tests) 879ms
+   ✓ Capa fiscal — modelos (FE-T1) > el enum EstadoFiscalDocumento expone los cinco estados  851ms
+stderr | src/features/ventas/__tests__/pos-cobro-dialog.test.tsx > PosCobroDialog (VC-T3) > con efectivo muestra recibido y calcula el vuelto en vivo
+Unknown event handler property `onAnimationComplete`. It will be ignored.
+
+ ✓ src/features/ventas/__tests__/pos-cobro-dialog.test.tsx (6 tests) 2875ms
+   ✓ PosCobroDialog (VC-T3) > con efectivo muestra recibido y calcula el vuelto en vivo  1414ms
+   ✓ PosCobroDialog (VC-T3) > bloquea el cobro si el recibido no alcanza  435ms
+   ✓ PosCobroDialog (VC-T3) > MIXTO completo: suma correcta y recibido suficiente → confirma con desglose  445ms
+ ✓ src/features/ventas/components/sales-health-card.test.tsx (3 tests) 1368ms
+   ✓ SalesHealthCard > muestra inactivo sin ventas  797ms
+   ✓ SalesHealthCard > muestra activo con 50 ventas  410ms
+stderr | src/features/empleados/components/__tests__/empleado-card.test.tsx > EmpleadoCard > botón Realizar Pago > llama onPago con el empleado cuando se hace click
+An update to Button inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+Unknown event handler property `onAnimationComplete`. It will be ignored.
+
+stderr | src/features/empleados/components/__tests__/empleado-card.test.tsx > EmpleadoCard > botón Eliminar > llama onDelete con el id cuando se hace click
+An update to Button inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+ ✓ src/features/empleados/components/__tests__/empleado-card.test.tsx (13 tests) 2832ms
+   ✓ EmpleadoCard > renderizado básico > muestra el nombre y apellido del empleado  511ms
+   ✓ EmpleadoCard > botón Editar > muestra el botón Editar cuando puedeEditar es true  430ms
+   ✓ EmpleadoCard > botón Realizar Pago > muestra el botón cuando showPagoButton es true y hay onPago  540ms
+   ✓ EmpleadoCard > botón Realizar Pago > llama onPago con el empleado cuando se hace click  951ms
+stderr | src/features/turnos-pos/__tests__/cuadre-detail-mode.test.tsx > CuadreDetailActions > keeps operational buttons for open shifts with mismatch
+Unknown event handler property `onAnimationComplete`. It will be ignored.
+
+stderr | src/features/ventas/__tests__/ventas-pedido-ui.test.tsx > VentasTable — ciclo de pedidos > filtra por estado al elegirlo en el selector
+An update to VentasTable inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+"puntoDeVenta" in deeply nested key "puntoDeVenta.nombre" returned undefined.
+"nombre" in deeply nested key "puntoDeVenta.nombre" returned undefined.
+
+ ✓ src/features/ventas/__tests__/ventas-pedido-ui.test.tsx (9 tests) 5639ms
+   ✓ VentasTable — ciclo de pedidos > muestra el badge de estado en cada fila  741ms
+   ✓ VentasTable — ciclo de pedidos > ofrece Entregar a un PEDIDO y Facturar a una ENTREGADA  2073ms
+   ✓ VentasTable — ciclo de pedidos > sin el flag pedidosEnabled no muestra acciones de ciclo  590ms
+   ✓ VentasTable — ciclo de pedidos > muestra la acción Devolver en ventas entregadas/facturadas  1650ms
+ ✓ src/features/turnos-pos/__tests__/cuadre-detail-mode.test.tsx (4 tests) 2956ms
+   ✓ CuadreDetailReadonlyNotice > renders the readonly badge and historical inventory warning  673ms
+   ✓ CuadreDetailActions > hides mutating actions in readonly mode and keeps a back action  2003ms
+ ✓ src/features/turnos-pos/__tests__/cuadres-history-page-client.test.tsx (2 tests) 660ms
+   ✓ CuadresHistoryPageClient > renders settlement rows and links to the existing detail route  615ms
+ ✓ src/features/facturas/components/billing-health-card.test.tsx (2 tests) 186ms
+ ✓ src/features/turnos-pos/__tests__/actions-cuadre.test.ts (7 tests) 193ms
+ ✓ src/features/ventas/__tests__/venta-lifecycle.test.ts (19 tests) 174ms
+ ✓ src/features/empleados/__tests__/actions.test.ts (15 tests) 60ms
+ ✓ src/features/arqueo-caja/__tests__/actions.test.ts (10 tests) 71ms
+stderr | src/features/ventas/components/ventas-table.a11y.test.tsx > VentasTable acciones accesibles > los botones de acciones icon-only exponen aria-label
+An update to Button inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+stderr | src/features/ventas/components/ventas-table.a11y.test.tsx > VentasTable acciones accesibles > los botones de acciones icon-only exponen aria-label
+Unknown event handler property `onAnimationComplete`. It will be ignored.
+
+ ✓ src/features/ventas/components/ventas-table.a11y.test.tsx (1 test) 1204ms
+   ✓ VentasTable acciones accesibles > los botones de acciones icon-only exponen aria-label  1201ms
+ ✓ src/lib/auth/__tests__/permission-registry.test.ts (22 tests) 109ms
+ ✓ src/features/sidebar/build-visible-groups.test.ts (19 tests) 127ms
+ ✓ src/lib/auth/accounting-policy-capabilities.test.ts (5 tests) 61ms
+ ✓ src/features/ventas/__tests__/devolucion-service.test.ts (14 tests) 140ms
+ ✓ src/features/turnos-pos/__tests__/actions.test.ts (11 tests) 183ms
+ ✓ src/features/ventas/lib/pv-client.test.ts (4 tests) 85ms
+ ✓ src/features/ventas/__tests__/actions.test.ts (21 tests) 135ms
+ ✓ src/features/ventas/__tests__/venta-create-orquestacion.test.ts (6 tests) 104ms
+ ✓ src/features/ventas/actions-health.test.ts (3 tests) 168ms
+ ✓ src/features/empleados/__tests__/comision-calc.test.ts (5 tests) 44ms
+ ✓ src/features/empleados/__tests__/comisiones-actions.test.ts (4 tests) 155ms
+ ✓ src/features/empleados/__tests__/calcular-nomina-horas-extras.test.ts (3 tests) 233ms
+ ✓ src/lib/auth/__tests__/route-permissions.test.ts (12 tests) 146ms
+ ✓ src/features/ventas/__tests__/venta-price-integrity.test.ts (8 tests) 36ms
+ ✓ src/features/ventas/__tests__/devolucion-calculo.test.ts (21 tests) 34ms
+ ✓ src/features/facturas/__tests__/fiscal-emision.test.ts (4 tests) 15ms
+ ✓ src/lib/auth/__tests__/permission-parity.test.ts (11 tests) 42ms
+ ✓ src/lib/auth/__tests__/roles.test.ts (15 tests) 63ms
+ ✓ src/features/facturas/actions-health.test.ts (3 tests) 22ms
+ ✓ src/features/turnos-pos/__tests__/tenant-scope.test.ts (3 tests) 46ms
+ ✓ src/features/ventas/services/__tests__/venta-read-service.test.ts (5 tests) 39ms
+ ✓ src/features/ventas/__tests__/pos-vuelto-calcu.test.ts (9 tests) 17ms
+ ✓ src/features/facturas/__tests__/actions.test.ts (6 tests) 26ms
+ ✓ src/features/ventas/__tests__/devolucion-schema.test.ts (6 tests) 72ms
+ ✓ src/features/ventas/__tests__/devoluciones-actions.test.ts (4 tests) 24ms
+ ✓ src/features/ventas/schemas.test.ts (2 tests) 41ms
+ ✓ src/features/ventas/__tests__/precio-venta-resolver.test.ts (6 tests) 11ms
+ ✓ src/lib/auth/__tests__/tenant-role-schema.test.ts (7 tests) 12ms
+ ✓ src/features/empleados/__tests__/nomina-delete.test.ts (6 tests) 29ms
+ ✓ src/lib/auth/__tests__/sales-agent-access.test.ts (5 tests) 9ms
+ ✓ src/features/facturas/__tests__/fiscal-actions.test.ts (3 tests) 10ms
+ ✓ src/features/ventas/__tests__/actions-lifecycle.test.ts (3 tests) 5ms
+
+ Test Files  47 passed (47)
+      Tests  354 passed (354)
+   Start at  16:23:05
+   Duration  55.98s (transform 11.80s, setup 22.47s, collect 112.57s, tests 23.76s, environment 102.70s, prepare 21.28s)
+
