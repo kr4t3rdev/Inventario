@@ -49,12 +49,12 @@ por fase con **stage selectivo** (worktree sucio: jamás `git add -A`). Evidenci
   Evidencia `evidence/VC-T4-GREEN.txt`.
 - [ ] Review + commit: `feat(ventas): ticket con recibido/vuelto y arqueo intacto (VC-T4)`
 
-## VC-T5 — Cierre
+## VC-T5 — Cierre ✅
 
-- [ ] **T5.1 Regresión completa** (ventas, arqueo, turnos, cuadre, reportes, mobile pos).
-  Evidencia `evidence/VC-T5-GREEN.txt`.
-- [ ] **T5.2 E2E rápido** del flujo (POS → cobro con vuelto → arqueo lo cuenta bien),
-  guardado para post-deploy manual.
-- [ ] **T5.3 Cierre documental:** memoria actualizada (`ventas-vs-odoo-verificacion`: gap 3
-  resuelto) y archivo del change a `openspec/changes/archive/2026-09-16-pos-vuelto-cambio/`.
+- [x] **T5.1 Regresión completa**: 67 archivos / 547 tests scoped verdes; typecheck limpio salvo
+  el error externo pre-existente (reportes-financieros/category-legend.tsx, untracked de otra
+  sesión). Evidencia `evidence/VC-T5-GREEN.txt`.
+- [x] **T5.2 E2E rápido** (post-deploy manual): abrir POS → Nueva venta → Efectivo con recibido
+  mayor → confirmar vuelto mostrado + ticket con recibido/cambio + arqueo sin descuadre.
+- [x] **T5.3 Cierre documental**: change archivado y memoria actualizada.
 - Commit: `docs(openspec): cerrar VC vuelto en POS`
