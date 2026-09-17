@@ -29,15 +29,22 @@ export const VENTA_SELECT = {
       precioUnitario: true,
       total: true,
       producto: { select: { id: true, nombre: true, precioCosto: true } },
+      // FIFO: allocations por línea con el costo del lote origen (reporte venta diaria)
+      allocations: {
+        select: {
+          cantidad: true,
+          compraDocumentoItem: { select: { precioUnitario: true } },
+        },
+      },
     },
   },
   puntoDeVenta: { select: { pvId: true, nombre: true } },
   cliente: { select: { clienteId: true, nombre: true } },
   factura: { select: { idFactura: true, numeroFactura: true } },
-  // DNC: para el badge "Con devoluciones" en la tabla.
+  // DNC: para el badge "Con devoluciones" en la tabla y el neteo en reportes.
   devoluciones: {
     where: { estado: 'REGISTRADA' },
-    select: { devolucionId: true, total: true },
+    select: { devolucionId: true, estado: true, total: true },
   },
 } as const;
 

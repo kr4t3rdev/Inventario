@@ -20,6 +20,8 @@ import { flattenVentas } from "@/lib/ventas-utils"
 import { cn, formatCurrency } from "@/lib/utils"
 import { getProductDisplayIdentifier } from "@/lib/product-display-utils"
 import { ingresosServiciosFuncional, sumarServiciosPorMoneda } from "@/features/reportes-financieros/lib/venta-servicios-moneda"
+import { calcularCostoTotalDia, calcularDevolucionesNetas, calcularTicketPromedio, contarVentasDistintas } from "@/features/reportes-financieros/lib/venta-diaria-stats"
+import type { VentaDocStats } from "@/features/reportes-financieros/lib/venta-diaria-stats"
 import jsPDF from 'jspdf'
 import 'jspdf-autotable'
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, AreaChart, Area } from "recharts"
@@ -89,7 +91,8 @@ export function ReporteVentaDiaria() {
 
   // Calcular estadísticas del día
   const estadisticasDelDia = useMemo(() => {
-    const totalVentas = ventasDelDia.length
+    // "Total de Ventas" cuenta documentos de venta, no líneas de detalle (D-1).
+    const totalVentas = contarVentasDistintas(ventasDelDia)
     const totalServicios = serviciosDelDia.length
     const totalProductosVendidos = ventasDelDia.reduce((sum, venta) => sum + venta.cantidad, 0)
     const ingresosBrutosVentas = ventasDelDia.reduce((sum, venta) => sum + (venta.totalLinea || 0), 0)
@@ -102,8 +105,18 @@ export function ReporteVentaDiaria() {
     )
     const ingresosBrutos = ingresosBrutosVentas + ingresosBrutosServicios
     const descuentos = ventasDelDia.reduce((sum, venta) => sum + (venta.descuento || 0), 0)
-    const ingresosNetos = ingresosBrutos - descuentos
-    const costoTotal = ventasDelDia.reduce((sum, venta) => sum + (venta.cantidad * (venta.producto?.precioCosto || 0)), 0)
+    // Las notas de crédito REGISTRADAS netean el día (par convención DNC/FIFO del
+    // costo): sin neteo, devoluciones parciales inflarían la ganancia (M-1).
+    const ventasDocDelDia = ventas.filter((v) => {
+      const fv = new Date(v.createdAt)
+      const fecha = crearFechaLocal(fechaSeleccionada)
+      return fv >= startOfDay(fecha) && fv <= endOfDay(fecha)
+    })
+    const devolucionesNetas = calcularDevolucionesNetas(ventasDocDelDia as unknown as VentaDocStats[])
+    // Costo por lotes FIFO reales (PurchaseAllocation); líneas sin allocations
+    // estiman con el precioCosto vigente y se señalan con usaFifoCompleto=false (D-3).
+    const { costoTotal, usaFifoCompleto } = calcularCostoTotalDia(ventasDelDia)
+    const ingresosNetos = ingresosBrutos - descuentos - devolucionesNetas
     const ganancia = ingresosNetos - costoTotal
     const margenGanancia = ingresosNetos > 0 ? (ganancia / ingresosNetos) * 100 : 0
 
@@ -114,12 +127,14 @@ export function ReporteVentaDiaria() {
       ingresosBrutos,
       ingresosServiciosExtranjeros,
       descuentos,
+      devolucionesNetas,
       ingresosNetos,
       costoTotal,
+      usaFifoCompleto,
       ganancia,
       margenGanancia
     }
-  }, [ventasDelDia, serviciosDelDia])
+  }, [ventasDelDia, serviciosDelDia, ventas, fechaSeleccionada])
 
   // Calcular datos para comparación
   const datosComparacion = useMemo(() => {
@@ -179,7 +194,17 @@ export function ReporteVentaDiaria() {
     )
 
     const ingresosActualServicios = ingresosServiciosFuncional(serviciosPeriodoActual)
-    const ingresosActual = ingresosActualVentas + ingresosActualServicios
+    const docsActual = ventas.filter((v) => {
+      const fv = new Date(v.createdAt)
+      return fv >= inicioActual && fv <= finActual
+    })
+    const docsAnterior = ventas.filter((v) => {
+      const fv = new Date(v.createdAt)
+      return fv >= fechaComparacion && fv <= finAnterior
+    })
+    const devolucionesActual = calcularDevolucionesNetas(docsActual as unknown as VentaDocStats[])
+    const devolucionesAnterior = calcularDevolucionesNetas(docsAnterior as unknown as VentaDocStats[])
+    const ingresosActual = ingresosActualVentas + ingresosActualServicios - devolucionesActual
 
     const ingresosAnteriorVentas = ventasPeriodoAnterior.reduce(
       (sum, venta) => sum + (venta.totalLinea || 0) - (venta.descuento || 0),
@@ -187,7 +212,7 @@ export function ReporteVentaDiaria() {
     )
 
     const ingresosAnteriorServicios = ingresosServiciosFuncional(serviciosPeriodoAnterior)
-    const ingresosAnterior = ingresosAnteriorVentas + ingresosAnteriorServicios
+    const ingresosAnterior = ingresosAnteriorVentas + ingresosAnteriorServicios - devolucionesAnterior
 
     const productosActual = ventasPeriodoActual.reduce((sum, venta) => sum + venta.cantidad, 0)
     const productosAnterior = ventasPeriodoAnterior.reduce((sum, venta) => sum + venta.cantidad, 0)
@@ -203,9 +228,12 @@ export function ReporteVentaDiaria() {
       productosAnterior,
       porcentajeCambioIngresos,
       porcentajeCambioProductos,
+      fechaActualLabel: vistaPeriodo === 'dia'
+        ? format(finActual, 'dd/MM/yyyy')
+        : `${format(inicioActual, 'dd/MM/yyyy')} – ${format(finActual, 'dd/MM/yyyy')}`,
       fechaComparacion: `${format(fechaComparacion, 'dd/MM/yyyy')} – ${format(finAnterior, 'dd/MM/yyyy')}`
     }
-  }, [ventasLineas, ventaServicios, fechaSeleccionada, vistaPeriodo])
+  }, [ventasLineas, ventaServicios, ventas, fechaSeleccionada, vistaPeriodo])
 
   // Datos para tendencias (últimos 7 días)
   const datosTendencias = useMemo(() => {
@@ -588,6 +616,11 @@ export function ReporteVentaDiaria() {
             <p className="text-xs text-muted-foreground">
               Bruto: {formatCurrency(estadisticasDelDia.ingresosBrutos)}
             </p>
+            {estadisticasDelDia.devolucionesNetas > 0 && (
+              <p className="text-xs text-muted-foreground">
+                Devoluciones neteadas: −{formatCurrency(estadisticasDelDia.devolucionesNetas)}
+              </p>
+            )}
             {Object.keys(estadisticasDelDia.ingresosServiciosExtranjeros).length > 0 && (
               <p className="text-xs text-muted-foreground">
                 Servicios en {Object.entries(estadisticasDelDia.ingresosServiciosExtranjeros)
@@ -611,6 +644,11 @@ export function ReporteVentaDiaria() {
             <p className="text-xs text-muted-foreground">
               Margen: {estadisticasDelDia.margenGanancia.toFixed(1)}%
             </p>
+            <p className="text-xs text-muted-foreground">
+              {estadisticasDelDia.usaFifoCompleto
+                ? "Costo por lotes FIFO reales"
+                : "Costo estimado (precio de costo actual)"}
+            </p>
           </CardContent>
         </Card>
         </AnimatedCard>
@@ -623,7 +661,7 @@ export function ReporteVentaDiaria() {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">
-              {(estadisticasDelDia.totalVentas + estadisticasDelDia.totalServicios) > 0 ? formatCurrency(estadisticasDelDia.ingresosNetos / (estadisticasDelDia.totalVentas + estadisticasDelDia.totalServicios)) : formatCurrency(0)}
+              {formatCurrency(calcularTicketPromedio(estadisticasDelDia.ingresosNetos, estadisticasDelDia.totalVentas, estadisticasDelDia.totalServicios))}
             </div>
             <p className="text-xs text-muted-foreground">
               Por venta/servicio realizado
@@ -705,42 +743,54 @@ export function ReporteVentaDiaria() {
                 <div className="flex items-center justify-between rounded-lg border p-3 bg-slate-50/50 dark:bg-slate-900/30">
                   <div>
                     <p className="font-medium">Ingresos</p>
-                    <p className="text-sm text-muted-foreground">
-                      {datosComparacion.label} ({datosComparacion.fechaComparacion})
+                    <p className="text-xs text-muted-foreground">
+                      {datosComparacion.label} ({datosComparacion.fechaComparacion}):{' '}
+                      <span className="font-medium text-foreground/80">{formatCurrency(datosComparacion.ingresosAnterior)}</span>
                     </p>
                   </div>
                   <div className="text-right">
+                    <p className="text-xs text-muted-foreground">Período actual ({datosComparacion.fechaActualLabel})</p>
                     <p className="font-bold">{formatCurrency(datosComparacion.ingresosActual)}</p>
-                    <div className={`text-xs flex items-center gap-1 ${
-                      datosComparacion.porcentajeCambioIngresos >= 0 ? 'text-green-600' : 'text-red-600'
-                    }`}>
-                      {datosComparacion.porcentajeCambioIngresos >= 0 ? 
-                        <TrendingUpIcon className="h-3 w-3" /> : 
-                        <TrendingDownIcon className="h-3 w-3" />
-                      }
-                      {Math.abs(datosComparacion.porcentajeCambioIngresos).toFixed(1)}%
-                    </div>
+                    {datosComparacion.ingresosAnterior > 0 ? (
+                      <div className={`text-xs flex items-center justify-end gap-1 ${
+                        datosComparacion.porcentajeCambioIngresos >= 0 ? 'text-green-600' : 'text-red-600'
+                      }`}>
+                        {datosComparacion.porcentajeCambioIngresos >= 0 ?
+                          <TrendingUpIcon className="h-3 w-3" /> :
+                          <TrendingDownIcon className="h-3 w-3" />
+                        }
+                        {Math.abs(datosComparacion.porcentajeCambioIngresos).toFixed(1)}%
+                      </div>
+                    ) : (
+                      <p className="text-xs text-muted-foreground">Sin base de comparación</p>
+                    )}
                   </div>
                 </div>
 
                 <div className="flex items-center justify-between rounded-lg border p-3 bg-slate-50/50 dark:bg-slate-900/30">
                   <div>
                     <p className="font-medium">Productos Vendidos</p>
-                    <p className="text-sm text-muted-foreground">
-                      {datosComparacion.label} ({datosComparacion.fechaComparacion})
+                    <p className="text-xs text-muted-foreground">
+                      {datosComparacion.label} ({datosComparacion.fechaComparacion}):{' '}
+                      <span className="font-medium text-foreground/80">{datosComparacion.productosAnterior}</span>
                     </p>
                   </div>
                   <div className="text-right">
+                    <p className="text-xs text-muted-foreground">Período actual ({datosComparacion.fechaActualLabel})</p>
                     <p className="font-bold">{datosComparacion.productosActual}</p>
-                    <div className={`text-xs flex items-center gap-1 ${
-                      datosComparacion.porcentajeCambioProductos >= 0 ? 'text-green-600' : 'text-red-600'
-                    }`}>
-                      {datosComparacion.porcentajeCambioProductos >= 0 ? 
-                        <TrendingUpIcon className="h-3 w-3" /> : 
-                        <TrendingDownIcon className="h-3 w-3" />
-                      }
-                      {Math.abs(datosComparacion.porcentajeCambioProductos).toFixed(1)}%
-                    </div>
+                    {datosComparacion.productosAnterior > 0 ? (
+                      <div className={`text-xs flex items-center justify-end gap-1 ${
+                        datosComparacion.porcentajeCambioProductos >= 0 ? 'text-green-600' : 'text-red-600'
+                      }`}>
+                        {datosComparacion.porcentajeCambioProductos >= 0 ?
+                          <TrendingUpIcon className="h-3 w-3" /> :
+                          <TrendingDownIcon className="h-3 w-3" />
+                        }
+                        {Math.abs(datosComparacion.porcentajeCambioProductos).toFixed(1)}%
+                      </div>
+                    ) : (
+                      <p className="text-xs text-muted-foreground">Sin base de comparación</p>
+                    )}
                   </div>
                 </div>
               </>
