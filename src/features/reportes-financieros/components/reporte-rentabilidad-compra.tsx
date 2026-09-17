@@ -135,7 +135,7 @@ export function ReporteRentabilidadCompra() {
 						</Badge>
 					</div>
 					<p className="text-muted-foreground pl-11">
-						Seleccione una compra para analizar su rentabilidad: ingresos,
+						Selecciona una compra para analizar su rentabilidad: ingresos,
 						costos, márgenes y días para vender.
 					</p>
 				</div>
@@ -187,11 +187,11 @@ export function ReporteRentabilidadCompra() {
 							<div className="flex flex-col items-center justify-center py-12 text-center">
 								<BarChart3 className="mb-4 h-12 w-12 text-muted-foreground/50" />
 								<h3 className="text-lg font-medium text-slate-900 dark:text-slate-100">
-									Seleccione una compra
+									Selecciona una compra
 								</h3>
 								<p className="mt-1 max-w-md text-sm text-muted-foreground">
-									Use el buscador para encontrar una compra por proveedor,
-									número de factura o producto. Una vez seleccionada, verá el
+									Usa el buscador para encontrar una compra por proveedor,
+									número de factura o producto. Una vez seleccionada, verás el
 									análisis completo de rentabilidad con asignación FIFO.
 								</p>
 							</div>

@@ -94,7 +94,7 @@ export default function ReportesInventario({ initialTransferencias }: ReportesIn
                 Centro de Reportes
               </CardTitle>
               <CardDescription>
-                Seleccione una vista para revisar inventario global, categoría, ubicación y
+                Selecciona una vista para revisar inventario global, categoría, ubicación y
                 movimientos.
               </CardDescription>
             </div>
@@ -104,7 +104,7 @@ export default function ReportesInventario({ initialTransferencias }: ReportesIn
                 Vista activa: {TAB_LABELS[activeTab] ?? activeTab}
               </Badge>
               <Badge variant='outline' className='h-8 px-3'>
-                Datos en tiempo real
+                Datos del inventario
               </Badge>
             </div>
           </CardHeader>

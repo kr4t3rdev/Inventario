@@ -330,7 +330,7 @@ export function ReporteGeneral() {
                 value={String(pageSize)}
                 onValueChange={(value) => handlePageSizeChange(Number(value))}
               >
-                <SelectTrigger className="h-8 w-[70px]">
+                <SelectTrigger className="h-8 w-[70px]" aria-label="Filas por página">
                   <SelectValue placeholder={pageSize} />
                 </SelectTrigger>
                 <SelectContent side="top">

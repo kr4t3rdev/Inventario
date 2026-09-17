@@ -127,7 +127,7 @@ export function ReportesPageClient({
 								</div>
 							</div>
 							<p className="pl-11 text-muted-foreground">
-								Genere análisis por categoría, ubicación y movimientos con una
+								Genera análisis por categoría, ubicación y movimientos con una
 								navegación rápida.
 							</p>
 						</div>
