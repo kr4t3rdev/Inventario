@@ -13,6 +13,10 @@ import { AuditLogService } from '@/lib/services/audit-log-service';
 import { VENTA_SELECT } from '@/features/ventas/services/venta-read-service';
 import { VentaLifecycleService } from '@/features/ventas/services/venta-lifecycle-service';
 import { validarCobro } from '@/features/ventas/services/pos-vuelto-calcu';
+import {
+	saldoVivoCliente,
+	superaLimiteCredito,
+} from '@/features/crm/services/credito-calculo';
 import type { AuthenticatedUser } from '@/lib/auth-middleware';
 import type { AnularVentaInput, CreateVentaInput } from '@/features/ventas/schemas';
 
@@ -216,17 +220,18 @@ export const VentaMutationService = {
     }
 
     let clienteListaId: string | null = null;
+    let clienteLimiteCredito: number | null = null;
     if (parsed.clienteId) {
       const cliente = await prisma.cliente.findFirst({
         where: { clienteId: parsed.clienteId, tenantId },
-        select: { listaPrecioId: true },
+        select: { listaPrecioId: true, limiteCredito: true },
       });
       if (!cliente) {
         throw new ActionError('Cliente no encontrado', 'NOT_FOUND');
       }
       clienteListaId = cliente.listaPrecioId;
+      clienteLimiteCredito = cliente.limiteCredito;
     }
-
     const productoIds = [...new Set(parsed.items.map((item) => item.productoId))];
     const productosParaPrecio = await prisma.producto.findMany({
       where: { id: { in: productoIds }, tenantId },
@@ -283,8 +288,50 @@ export const VentaMutationService = {
     const cargoTransporte = parsed.cargoTransporte ?? 0;
     const totalVenta = subtotalVenta - (parsed.descuento ?? 0) + cargoTransporte;
     const totalCantidad = itemsData.reduce((sum, item) => sum + item.cantidad, 0);
-    // PVE: el modo pedido detiene el ciclo en PEDIDO (sin stock/FIFO/factura ni
-    // pago); el flujo clásico completa el ciclo dentro de la misma transacción.
+    // CRM-T2: una venta al crédito exige que el tope del cliente la cubra; con
+    // permiso de override solo deja rastro (el AuditLog real se escribe dentro
+    // de la transacción posterior).
+    let creditoOverrideUsado = false;
+    let montoCreditoRequerido = 0;
+    const montoCreditoSolicitado = parsed.montoCredito ?? 0;
+    const usaCredito = parsed.metodoPago === 'CREDITO' || montoCreditoSolicitado > 0;
+    if (usaCredito && parsed.modoPedido !== true && parsed.clienteId && clienteLimiteCredito != null) {
+      const cuentasVivas = await prisma.cuentaPorCobrar.findMany({
+        where: {
+          tenantId,
+          clienteId: parsed.clienteId,
+          estado: { not: 'ANULADA' },
+        },
+        select: { montoDeuda: true, montoPagado: true, estado: true },
+      });
+      const saldoVivo = saldoVivoCliente(
+        cuentasVivas.map((c) => ({
+          montoDeuda: Number(c.montoDeuda),
+          montoPagado: Number(c.montoPagado),
+          estado: c.estado,
+        })),
+      );
+      const requerido =
+        montoCreditoSolicitado ||
+        (parsed.metodoPago === 'CREDITO' ? Math.max(totalVenta, 0) : 0);
+      montoCreditoRequerido = requerido;
+      if (
+        superaLimiteCredito({
+          saldoVivo,
+          montoRequerido: requerido,
+          limiteCredito: clienteLimiteCredito,
+        })
+      ) {
+        if (!hasPermission(user, 'ventas.venta.credito-override')) {
+          throw new ActionError(
+            `La venta a crédito supera el límite del cliente. Saldo: ${saldoVivo}, requerido: ${requerido}, límite: ${clienteLimiteCredito}. Solicita override al manager.`,
+            'CREDITO_EXCEDIDO',
+          );
+        }
+        creditoOverrideUsado = true;
+      }
+    }
+
     const esPedido = parsed.modoPedido === true;
 
     // VC: defensa de la invariante del recibido (el schema Zod ya la valida) y
@@ -374,6 +421,25 @@ export const VentaMutationService = {
           },
         },
       });
+
+      // CRM-T2: se persiste evidencia del override dentro de la transacción.
+      if (creditoOverrideUsado) {
+        await AuditLogService.logStrict(
+          {
+            accion: 'EXECUTE',
+            entidad: 'VENTA',
+            entidadId: venta.ventaId,
+            usuarioId: user.userId,
+            detalles: {
+              tipo: 'CREDITO_OVERRIDE',
+              clienteId: parsed.clienteId,
+              limiteCredito: clienteLimiteCredito,
+              montoRequerido: montoCreditoRequerido,
+            },
+          },
+          tx,
+        );
+      }
 
       if (overrides.length > 0) {
         await AuditLogService.logStrict(
