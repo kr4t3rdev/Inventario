@@ -137,6 +137,8 @@ model Cliente {
   numeroCuentaUSD   String?
   telefono          String?
   listaPrecioId     String?
+  /// Gap 4: identificador fiscal del cliente (opcional, lo exige el país final).
+  taxIdCliente      String?
   anticipos         Anticipo[]
   tenant            Tenant            @relation(fields: [tenantId], references: [tenantId])
   listaPrecio       ListaPrecio?      @relation(fields: [listaPrecioId], references: [id], onDelete: SetNull)
@@ -161,6 +163,12 @@ model Tenant {
   createdAt                      DateTime                         @default(now())
   updatedAt                      DateTime                         @updatedAt
   contabilidadTimezone           String                           @default("America/Argentina/Buenos_Aires")
+  /// Gap 4 — Capa fiscal. Todos opcionales: el tenant no fiscal no guarda nada.
+  regimenFiscal                    String?
+  taxId                            String?
+  razonSocial                      String?
+  codigoPostalFiscal               String?
+  fiscalActivado                   Boolean                         @default(false)
   affiliateProfile               AffiliateProfile?
   affiliateCreditBalance         AffiliateCreditBalance?
   affiliatePerkGrants            AffiliatePerkGrant[]
@@ -229,6 +237,8 @@ model Tenant {
   ventas                         Venta[]
   devolucionesVenta              DevolucionVenta[]
   ventasServicios                VentaServicios[]
+  fiscalDocuments                FiscalDocument[]
+  fiscalEmisionEvents            FiscalEmisionEvent[]
   aperturaPeriodos               AperturaPeriodo[]
   arqueosCaja                    ArqueoCaja[]
   auditoriaPeriodos              AuditoriaPeriodo[]
@@ -2343,6 +2353,7 @@ model Factura {
   tenant            Tenant           @relation(fields: [tenantId], references: [tenantId])
   venta             Venta?           @relation(fields: [ventaId], references: [ventaId], onDelete: Cascade)
   devolucionesNC    DevolucionVenta[]
+  fiscalDocument    FiscalDocument?
 
   @@unique([tenantId, numeroFactura])
   @@index([tenantId])
@@ -2997,6 +3008,47 @@ model DevolucionVentaItem {
   @@map("devoluciones_venta_items")
 }
 
+/// Gap 4 — Documento fiscal emitido (CFDI/XML/timbré) asociado a una factura interna.
+model FiscalDocument {
+  fiscalDocumentId String               @id @default(cuid())
+  tenantId         String
+  facturaId        String               @unique
+  /// Jurisdicción del emisor: "LOCAL" por ahora (stub); preparada para "MX-SAT", etc.
+  jurisdiccion     String               @default("LOCAL")
+  /// Tipo lógico interno que mapea al régimen fiscal ('FACTURA', 'NOTA_CREDITO').
+  tipoDocumento    String               @default("FACTURA")
+  estado           EstadoFiscalDocumento @default(PENDIENTE)
+  uuidExterno      String?
+  xml              String?
+  folio            String?
+  intentos         Int                  @default(0)
+  ultimoError      String?
+  createdAt        DateTime             @default(now())
+  updatedAt        DateTime             @updatedAt
+  factura          Factura              @relation(fields: [facturaId], references: [idFactura])
+  tenant           Tenant               @relation(fields: [tenantId], references: [tenantId])
+  eventos          FiscalEmisionEvent[]
+
+  @@index([tenantId, estado])
+  @@index([tenantId, createdAt])
+  @@map("fiscal_documents")
+}
+
+/// Evento del ciclo fiscal (GENERADO/PROCESANDO/TIMBRADO/RECHAZADO/CANCELADO/REINTENTO).
+model FiscalEmisionEvent {
+  id               String         @id @default(cuid())
+  tenantId         String
+  fiscalDocumentId String
+  estado           String
+  detalle          Json?
+  createdAt        DateTime       @default(now())
+  fiscalDocument   FiscalDocument @relation(fields: [fiscalDocumentId], references: [fiscalDocumentId], onDelete: Cascade)
+  tenant           Tenant         @relation(fields: [tenantId], references: [tenantId])
+
+  @@index([tenantId, fiscalDocumentId, createdAt])
+  @@map("fiscal_emision_events")
+}
+
 model PeriodoContable {
   periodoId          String             @id @default(cuid())
   tenantId           String
@@ -3296,6 +3348,15 @@ enum EstadoVenta {
 enum EstadoDevolucion {
   REGISTRADA
   ANULADA
+}
+
+/// Estados del ciclo fiscal (Gap 4).
+enum EstadoFiscalDocumento {
+  PENDIENTE
+  PROCESANDO
+  TIMBRADA
+  RECHAZADA
+  CANCELADA
 }
 
 enum TipoDocumento {

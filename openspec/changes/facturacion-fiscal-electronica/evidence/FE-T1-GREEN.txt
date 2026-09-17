@@ -1,0 +1,104 @@
+
+ RUN  v3.2.4 /Users/arturo/Documents/Proyecto Inventario/TCP
+
+ ❯ src/features/ventas/__tests__/fiscal-model-types.test.ts (3 tests | 1 failed) 692ms
+   ✓ Capa fiscal — modelos (FE-T1) > el enum EstadoFiscalDocumento expone los cinco estados  669ms
+   ✓ Capa fiscal — modelos (FE-T1) > Venta sigue intacta y el FiscalDocument apunta a Factura 1ms
+   × Capa fiscal — modelos (FE-T1) > la migración crea las tablas fiscales y los campos de Tenant/Cliente 19ms
+     → expected '-- CreateEnum\nCREATE TYPE "EstadoFis…' to contain 'ALTER TABLE "Tenant" ADD COLUMN'
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  src/features/ventas/__tests__/fiscal-model-types.test.ts > Capa fiscal — modelos (FE-T1) > la migración crea las tablas fiscales y los campos de Tenant/Cliente
+AssertionError: expected '-- CreateEnum\nCREATE TYPE "EstadoFis…' to contain 'ALTER TABLE "Tenant" ADD COLUMN'
+
+- Expected
++ Received
+
+- ALTER TABLE "Tenant" ADD COLUMN
++ -- CreateEnum
++ CREATE TYPE "EstadoFiscalDocumento" AS ENUM ('PENDIENTE', 'PROCESANDO', 'TIMBRADA', 'RECHAZADA', 'CANCELADA');
++
++ -- AlterTable
++ ALTER TABLE "Cliente" ADD COLUMN     "taxIdCliente" TEXT;
++
++ -- AlterTable
++ ALTER TABLE "tenants" ADD COLUMN     "codigoPostalFiscal" TEXT,
++ ADD COLUMN     "fiscalActivado" BOOLEAN NOT NULL DEFAULT false,
++ ADD COLUMN     "razonSocial" TEXT,
++ ADD COLUMN     "regimenFiscal" TEXT,
++ ADD COLUMN     "taxId" TEXT;
++
++ -- CreateTable
++ CREATE TABLE "fiscal_documents" (
++     "fiscalDocumentId" TEXT NOT NULL,
++     "tenantId" TEXT NOT NULL,
++     "facturaId" TEXT NOT NULL,
++     "jurisdiccion" TEXT NOT NULL DEFAULT 'LOCAL',
++     "tipoDocumento" TEXT NOT NULL DEFAULT 'FACTURA',
++     "estado" "EstadoFiscalDocumento" NOT NULL DEFAULT 'PENDIENTE',
++     "uuidExterno" TEXT,
++     "xml" TEXT,
++     "folio" TEXT,
++     "intentos" INTEGER NOT NULL DEFAULT 0,
++     "ultimoError" TEXT,
++     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
++     "updatedAt" TIMESTAMP(3) NOT NULL,
++
++     CONSTRAINT "fiscal_documents_pkey" PRIMARY KEY ("fiscalDocumentId")
++ );
++
++ -- CreateTable
++ CREATE TABLE "fiscal_emision_events" (
++     "id" TEXT NOT NULL,
++     "tenantId" TEXT NOT NULL,
++     "fiscalDocumentId" TEXT NOT NULL,
++     "estado" TEXT NOT NULL,
++     "detalle" JSONB,
++     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
++
++     CONSTRAINT "fiscal_emision_events_pkey" PRIMARY KEY ("id")
++ );
++
++ -- CreateIndex
++ CREATE UNIQUE INDEX "fiscal_documents_facturaId_key" ON "fiscal_documents"("facturaId");
++
++ -- CreateIndex
++ CREATE INDEX "fiscal_documents_tenantId_estado_idx" ON "fiscal_documents"("tenantId", "estado");
++
++ -- CreateIndex
++ CREATE INDEX "fiscal_documents_tenantId_createdAt_idx" ON "fiscal_documents"("tenantId", "createdAt");
++
++ -- CreateIndex
++ CREATE INDEX "fiscal_emision_events_tenantId_fiscalDocumentId_createdAt_idx" ON "fiscal_emision_events"("tenantId", "fiscalDocumentId", "createdAt");
++
++ -- AddForeignKey
++ ALTER TABLE "fiscal_documents" ADD CONSTRAINT "fiscal_documents_facturaId_fkey" FOREIGN KEY ("facturaId") REFERENCES "facturas"("idFactura") ON DELETE RESTRICT ON UPDATE CASCADE;
++
++ -- AddForeignKey
++ ALTER TABLE "fiscal_documents" ADD CONSTRAINT "fiscal_documents_tenantId_fkey" FOREIGN KEY ("tenantId") REFERENCES "tenants"("tenantId") ON DELETE RESTRICT ON UPDATE CASCADE;
++
++ -- AddForeignKey
++ ALTER TABLE "fiscal_emision_events" ADD CONSTRAINT "fiscal_emision_events_fiscalDocumentId_fkey" FOREIGN KEY ("fiscalDocumentId") REFERENCES "fiscal_documents"("fiscalDocumentId") ON DELETE CASCADE ON UPDATE CASCADE;
++
++ -- AddForeignKey
++ ALTER TABLE "fiscal_emision_events" ADD CONSTRAINT "fiscal_emision_events_tenantId_fkey" FOREIGN KEY ("tenantId") REFERENCES "tenants"("tenantId") ON DELETE RESTRICT ON UPDATE CASCADE;
++
++
+
+ ❯ src/features/ventas/__tests__/fiscal-model-types.test.ts:37:15
+     35|   expect(sql).toContain('CREATE TYPE "EstadoFiscalDocumento"');
+     36|   expect(sql).toContain('CREATE TABLE "fiscal_documents"');
+     37|   expect(sql).toContain('ALTER TABLE "Tenant" ADD COLUMN');
+       |               ^
+     38|   expect(sql).toContain('ALTER TABLE "Cliente" ADD COLUMN');
+     39|  });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 2 passed (3)
+   Start at  07:03:26
+   Duration  3.32s (transform 532ms, setup 213ms, collect 24ms, tests 692ms, environment 725ms, prepare 375ms)
+

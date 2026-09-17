@@ -203,6 +203,12 @@ export const FEATURE_REGISTRY: FeatureDef[] = [
 		category: "ventas",
 	},
 	{
+		key: "facturacion-fiscal",
+		label: "Facturación fiscal",
+		description: "Documentos fiscales por jurisdicción (capa Gap 4; apagada por defecto)",
+		category: "ventas",
+	},
+	{
 		key: "turnos-pos",
 		label: "Turnos POS",
 		description: "Gestión de turnos de empleados por punto de venta",
