@@ -1,0 +1,32 @@
+
+ RUN  v3.2.4 /Users/arturo/Documents/Proyecto Inventario/TCP
+
+
+⎯⎯⎯⎯⎯⎯ Failed Suites 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  src/features/facturas/__tests__/fiscal-actions.test.ts [ src/features/facturas/__tests__/fiscal-actions.test.ts ]
+Error: Failed to resolve import "@/features/facturas/actions-fiscal" from "src/features/facturas/__tests__/fiscal-actions.test.ts". Does the file exist?
+  Plugin: vite:import-analysis
+  File: /Users/arturo/Documents/Proyecto Inventario/TCP/src/features/facturas/__tests__/fiscal-actions.test.ts:33:0
+  21 |  }));
+  22 |  const __vi_import_0__ = await import("@/lib/server-actions/get-current-user");
+  23 |  const __vi_import_1__ = await import("@/features/facturas/actions-fiscal");
+     |                                       ^
+  24 |  import { describe, it, expect, beforeEach, vi } from "vitest";
+  25 |  
+ ❯ TransformPluginContext._formatLog ../../Proyecto%20Inventario/TCP/node_modules/.pnpm/vite@7.3.0_@types+node@20.19.27_jiti@2.6.1_lightningcss@1.30.2_terser@5.46.0_tsx@4.21.0_yaml@2.9.0/node_modules/vite/dist/node/chunks/config.js:28998:43
+ ❯ TransformPluginContext.error ../../Proyecto%20Inventario/TCP/node_modules/.pnpm/vite@7.3.0_@types+node@20.19.27_jiti@2.6.1_lightningcss@1.30.2_terser@5.46.0_tsx@4.21.0_yaml@2.9.0/node_modules/vite/dist/node/chunks/config.js:28995:14
+ ❯ normalizeUrl ../../Proyecto%20Inventario/TCP/node_modules/.pnpm/vite@7.3.0_@types+node@20.19.27_jiti@2.6.1_lightningcss@1.30.2_terser@5.46.0_tsx@4.21.0_yaml@2.9.0/node_modules/vite/dist/node/chunks/config.js:27118:18
+ ❯ ../../Proyecto%20Inventario/TCP/node_modules/.pnpm/vite@7.3.0_@types+node@20.19.27_jiti@2.6.1_lightningcss@1.30.2_terser@5.46.0_tsx@4.21.0_yaml@2.9.0/node_modules/vite/dist/node/chunks/config.js:27176:32
+ ❯ TransformPluginContext.transform ../../Proyecto%20Inventario/TCP/node_modules/.pnpm/vite@7.3.0_@types+node@20.19.27_jiti@2.6.1_lightningcss@1.30.2_terser@5.46.0_tsx@4.21.0_yaml@2.9.0/node_modules/vite/dist/node/chunks/config.js:27144:4
+ ❯ EnvironmentPluginContainer.transform ../../Proyecto%20Inventario/TCP/node_modules/.pnpm/vite@7.3.0_@types+node@20.19.27_jiti@2.6.1_lightningcss@1.30.2_terser@5.46.0_tsx@4.21.0_yaml@2.9.0/node_modules/vite/dist/node/chunks/config.js:28796:14
+ ❯ loadAndTransform ../../Proyecto%20Inventario/TCP/node_modules/.pnpm/vite@7.3.0_@types+node@20.19.27_jiti@2.6.1_lightningcss@1.30.2_terser@5.46.0_tsx@4.21.0_yaml@2.9.0/node_modules/vite/dist/node/chunks/config.js:22669:26
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  no tests
+   Start at  07:58:47
+   Duration  1.31s (transform 58ms, setup 110ms, collect 0ms, tests 0ms, environment 411ms, prepare 241ms)
+
