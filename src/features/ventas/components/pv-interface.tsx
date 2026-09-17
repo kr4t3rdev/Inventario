@@ -77,7 +77,8 @@ import { AperturaTurnoDialog } from "@/features/turnos-pos/components/apertura-t
 import { CierreTurnoDialog } from "@/features/turnos-pos/components/cierre-turno-dialog";
 import { CuadreTurnoDialog } from "@/features/turnos-pos/components/cuadre-turno-dialog";
 import { ArqueoForm } from "@/features/arqueo-caja/components/arqueo-form";
-import { VentaInvoiceDialog } from "./pv-invoice-dialog";
+import { VentaInvoiceDialog } from "./pv-invoice-dialog"
+import { PosCobroDialog, type CobroPos } from "./pos-cobro-dialog";
 import { useAuth } from "@/contexts/auth-context";
 
 interface CartProduct {
@@ -111,6 +112,8 @@ export function VentaInterface() {
 	const [viewMode, setViewMode] = useState<"grid" | "list" | "table">("grid");
 	const [cart, setCart] = useState<CartProduct[]>([]);
 	const [isProcessing, setIsProcessing] = useState(false);
+	const [isCobroOpen, setIsCobroOpen] = useState(false);
+	const [cobroObjetivo, setCobroObjetivo] = useState<"simple" | "factura">("simple");
 	const [isInvoiceDialogOpen, setIsInvoiceDialogOpen] = useState(false);
 	const [selectedClienteId, setSelectedClienteId] = useState<string>("");
 	const [descuento, setDescuento] = useState<number>(0);
@@ -458,7 +461,7 @@ export function VentaInterface() {
 	};
 
 	// Procesar venta
-	const processVenta = async () => {
+	const processVenta = async (cobro?: CobroPos) => {
 		if (!selectedPuntoVenta) {
 			toast("Debe seleccionar un punto de venta para continuar");
 			return;
@@ -471,6 +474,13 @@ export function VentaInterface() {
 
 		if (isFetchingProductos) {
 			toast("Espera a que terminen de cargarse los precios actualizados");
+			return;
+		}
+
+		if (!cobro) {
+			// VC-T3: el cobro se captura en el diálogo (método, recibido, vuelto).
+			setCobroObjetivo("simple");
+			setIsCobroOpen(true);
 			return;
 		}
 
@@ -489,6 +499,7 @@ export function VentaInterface() {
 				observaciones,
 				cargoTransporte: 0,
 				items,
+				...(cobro ?? {}),
 			});
 
 			if (!result.success) {
@@ -513,7 +524,7 @@ export function VentaInterface() {
 	};
 
 	// Procesar venta y generar factura
-	const processVentaConFactura = async () => {
+	const processVentaConFactura = async (cobro?: CobroPos) => {
 		if (!selectedPuntoVenta) {
 			toast("Debe seleccionar un punto de venta para continuar");
 			return;
@@ -529,6 +540,12 @@ export function VentaInterface() {
 
 		if (isFetchingProductos) {
 			toast("Espera a que terminen de cargarse los precios actualizados");
+			return;
+		}
+
+		if (!cobro) {
+			setCobroObjetivo("factura");
+			setIsCobroOpen(true);
 			return;
 		}
 
@@ -550,6 +567,7 @@ export function VentaInterface() {
 				fechaVencimiento:
 					tipoVencimiento === "fecha" ? fechaVencimiento : undefined,
 				cargoTransporte: Math.round(cargoTransporte),
+				...(cobro ?? {}),
 			});
 
 			if (!result.success) {
@@ -1553,7 +1571,7 @@ export function VentaInterface() {
 									disabled={
 										cart.length === 0 || !selectedPuntoVenta || isProcessing || isFetchingProductos
 									}
-									onClick={processVenta}
+									onClick={() => processVenta()}
 								>
 									{isProcessing ? (
 										<>
@@ -1612,11 +1630,36 @@ export function VentaInterface() {
 					selectedAnticipoCobroId={selectedAnticipoCobroId}
 					setSelectedAnticipoCobroId={setSelectedAnticipoCobroId}
 					isLoadingAnticiposCobro={isLoadingAnticiposCobro}
-					onConfirm={processVentaConFactura}
+					onConfirm={() => {
+						setIsInvoiceDialogOpen(false);
+						processVentaConFactura();
+					}}
 					isProcessing={isProcessing}
 					isLoadingClientes={isLoadingClientes}
 				/>
 			)}
+
+		{/* VC-T3: diálogo de cobro con método de pago y vuelto */}
+		{isCobroOpen && (
+			<PosCobroDialog
+				open={isCobroOpen}
+				onOpenChange={setIsCobroOpen}
+				total={Math.round(
+					cobroObjetivo === "factura"
+						? totalConDescuento + cargoTransporte
+						: totalConDescuento,
+				)}
+				isProcessing={isProcessing}
+				onConfirm={(cobro) => {
+					setIsCobroOpen(false);
+					if (cobroObjetivo === "factura") {
+						processVentaConFactura(cobro);
+					} else {
+						processVenta(cobro);
+					}
+				}}
+			/>
+		)}
 
 			{/* Diálogo de apertura de turno */}
 			<AperturaTurnoDialog

@@ -58,7 +58,7 @@ export const createVentaSchema = z.object({
     // Si es MIXTO, la suma de los montos desglosados debe ser igual al total
     if (data.metodoPago === 'MIXTO') {
       const totalItems = data.items.reduce((sum, item) => sum + item.cantidad * item.precioUnitario, 0);
-      const totalVenta = totalItems - (data.descuento ?? 0);
+      const totalVenta = totalItems - (data.descuento ?? 0) + (data.cargoTransporte ?? 0); // VC: incluir cargo
       const sumaMontos = (data.montoEfectivo ?? 0)
         + (data.montoTarjeta ?? 0)
         + (data.montoTransferencia ?? 0)
