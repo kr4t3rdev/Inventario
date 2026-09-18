@@ -68,7 +68,7 @@ jobs:
 
       - name: Cache OpenAPI Generator
         id: cache-openapi-generator
-        uses: actions/cache@v4
+        uses: actions/cache@v6
         with:
           path: .cache/openapi-generator/openapi-generator-cli-7.17.0.jar
           key: openapi-generator-7.17.0-25d6bd8273dd2be99979d544b62ea43f0ce1975f1aa582678b5093d1e7fcfce8
