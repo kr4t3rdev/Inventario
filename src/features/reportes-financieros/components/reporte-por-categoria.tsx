@@ -1,4 +1,5 @@
 "use client"
+import { useState, useEffect } from "react"
 import { useProductos } from '@/features/productos/hooks/use-productos'
 import { useCategorias } from "@/features/categorias/hooks/use-categorias"
 import { Button } from "@/components/ui/button"
@@ -16,6 +17,8 @@ import { formatCurrency } from "@/lib/utils"
 
 import { SURFACE_CARD_CLASS, CHART_COLORS } from "@/features/reportes-financieros/lib/reporte-styles"
 import { deriveCategoryInsights } from "@/features/reportes-financieros/lib/category-insights"
+import { getValorInventarioFifoAction } from "@/features/reportes-financieros/actions"
+import type { ValuacionInventario } from "@/features/reportes-financieros/lib/valoracion-fifo"
 
 export function ReportePorCategoria() {
   const { productos, isLoading: isLoadingProductos, error: productosError } = useProductos()
@@ -23,6 +26,20 @@ export function ReportePorCategoria() {
   const reportError = productosError ?? categoriasError
   const getTotalStock = (producto: { stock?: number; stockTotal?: number }) =>
     producto.stockTotal ?? producto.stock ?? 0
+
+  // Valoración FIFO: cada producto vale su costo de lotes remanentes; sin lote,
+  // fallback a precioCosto (misma fuente que la pestaña General).
+  const [valuacion, setValuacion] = useState<ValuacionInventario | null>(null)
+  useEffect(() => {
+    let mounted = true
+    getValorInventarioFifoAction()
+      .then((r) => { if (mounted && r.success && r.data) setValuacion(r.data) })
+      .catch(() => { /* fallback a precioCosto */ })
+    return () => { mounted = false }
+  }, [])
+  const fifoValorPorProducto = new Map((valuacion?.porProducto ?? []).map((p) => [p.productoId, p.valorFifo]))
+  const valorCostoDe = (producto: { id: string; precioCosto: number; stock?: number; stockTotal?: number }) =>
+    fifoValorPorProducto.get(producto.id) ?? producto.precioCosto * getTotalStock(producto)
 
   // Agrupar productos por categoría
   const productosPorCategoria = categorias?.map((categoria) => {
@@ -32,7 +49,7 @@ export function ReportePorCategoria() {
 
 
     const cantidadProductos = productosCategoria.length
-    const valorTotal = productosCategoria.reduce((sum, producto) => sum + producto.precioCosto * getTotalStock(producto), 0)
+    const valorTotal = productosCategoria.reduce((sum, producto) => sum + valorCostoDe(producto), 0)
     const valorVenta = productosCategoria.reduce((sum, producto) => sum + producto.precioVenta * getTotalStock(producto), 0)
     const stockTotal = productosCategoria.reduce((sum, producto) => sum + getTotalStock(producto), 0)
 
@@ -212,7 +229,7 @@ export function ReportePorCategoria() {
                     <TableHead>Categoría</TableHead>
                     <TableHead className="text-right">Cantidad Productos</TableHead>
                     <TableHead className="text-right">Stock Total</TableHead>
-                    <TableHead className="text-right">Valor Inventario</TableHead>
+                    <TableHead className="text-right">Valor Inventario (FIFO)</TableHead>
                     <TableHead className="text-right">Valor Venta</TableHead>
                     <TableHead className="text-right">Margen</TableHead>
                   </TableRow>

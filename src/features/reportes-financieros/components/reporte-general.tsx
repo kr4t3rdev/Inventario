@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useMemo } from "react"
+import { useState, useMemo, useEffect } from "react"
 import { useProductos } from '@/features/productos/hooks/use-productos'
 import { useCategorias } from "@/features/categorias/hooks/use-categorias"
 import { Button } from "@/components/ui/button"
@@ -27,6 +27,8 @@ import { cn, formatCurrency } from "@/lib/utils"
 import { getProductDisplayIdentifier } from "@/lib/product-display-utils"
 import { SURFACE_CARD_CLASS, CHART_COLORS } from "@/features/reportes-financieros/lib/reporte-styles"
 import { formatPiePercentLabel } from "@/features/reportes-financieros/lib/pie-labels"
+import { getValorInventarioFifoAction } from "@/features/reportes-financieros/actions"
+import type { ValuacionInventario } from "@/features/reportes-financieros/lib/valoracion-fifo"
 import { ReportKpiCard } from "./report-kpi-card"
 
 const COLORS = [...CHART_COLORS]
@@ -38,6 +40,25 @@ export function ReporteGeneral() {
   const [filtroCategoria, setFiltroCategoria] = useState<string>("todas")
   const [currentPage, setCurrentPage] = useState(1)
   const [pageSize, setPageSize] = useState(10)
+  const [valuacion, setValuacion] = useState<ValuacionInventario | null>(null)
+
+  // Valoración FIFO del inventario: si la acción falla, todo cae a precioCosto
+  useEffect(() => {
+    let mounted = true
+    getValorInventarioFifoAction()
+      .then((r) => { if (mounted && r.success && r.data) setValuacion(r.data) })
+      .catch(() => { /* fallback: valoración por precioCosto */ })
+    return () => { mounted = false }
+  }, [])
+
+  const fifoPorProducto = useMemo(
+    () => new Map((valuacion?.porProducto ?? []).map((p) => [p.productoId, p.valorFifo])),
+    [valuacion],
+  )
+
+  /** Valor de inventario de un producto: FIFO si está disponible, si no precioCosto. */
+  const valorInventarioDe = (producto: { id: string; precioCosto: number; stock?: number; stockTotal?: number }) =>
+    fifoPorProducto.get(producto.id) ?? producto.precioCosto * getTotalStock(producto)
 
   // Filtrar productos considerando que categorias puede estar cargando
   const productosFiltrados = useMemo(() => productos?.filter((producto) => {
@@ -52,7 +73,8 @@ export function ReporteGeneral() {
     producto.stockTotal ?? producto.stock ?? 0
 
   const totalProductos = productosFiltrados?.length || 0
-  const valorTotal = productosFiltrados?.reduce((sum, producto) => sum + producto.precioCosto * getTotalStock(producto), 0) || 0
+  // Valoración FIFO real por lotes; cae a precioCosto cuando falta la acción o el lote
+  const valorTotal = productosFiltrados?.reduce((sum, producto) => sum + valorInventarioDe(producto), 0) || 0
   const valorVenta = productosFiltrados?.reduce((sum, producto) => sum + producto.precioVenta * getTotalStock(producto), 0) || 0
 
   // Paginación
@@ -77,7 +99,7 @@ export function ReporteGeneral() {
     
     productos.forEach(p => {
       const catName = categorias.find(c => c.catId === p.categoriaId || c.catId === p.categoria?.catId)?.nombre || "Sin categoría";
-      const valor = p.precioCosto * getTotalStock(p);
+      const valor = fifoPorProducto.get(p.id) ?? p.precioCosto * getTotalStock(p);
       map.set(catName, (map.get(catName) || 0) + valor);
     });
     
@@ -85,7 +107,7 @@ export function ReporteGeneral() {
       .map(([name, value]) => ({ name, value }))
       .sort((a, b) => b.value - a.value)
       .slice(0, 10); // Top 10 categories
-  }, [productos, categorias]);
+  }, [productos, categorias, fifoPorProducto]);
 
   const handleExportPdf = () => {
     if (!productosFiltrados || productosFiltrados.length === 0) return
@@ -98,7 +120,7 @@ export function ReporteGeneral() {
       "Stock Mínimo": producto.stockMinimo > 0 ? producto.stockMinimo : "Por defecto (10)",
       "Precio Costo": producto.precioCosto,
       "Precio Venta": producto.precioVenta,
-      "Valor Inventario": producto.precioCosto * getTotalStock(producto),
+      "Valor Inventario": valorInventarioDe(producto),
       "Valor Venta": producto.precioVenta * getTotalStock(producto),
     }))
 
@@ -124,7 +146,7 @@ export function ReporteGeneral() {
       })(),
       "Precio Costo": producto.precioCosto,
       "Precio Venta": producto.precioVenta,
-      "Valor Inventario": producto.precioCosto * getTotalStock(producto),
+      "Valor Inventario": valorInventarioDe(producto),
       "Valor Venta": producto.precioVenta * getTotalStock(producto),
     }))
 
@@ -191,7 +213,7 @@ export function ReporteGeneral() {
 
         <AnimatedCard>
           <ReportKpiCard
-            label="Valor de inventario (costo)"
+            label="Valor de inventario (FIFO)"
             value={formatCurrency(valorTotal)}
             icon={DollarSign}
           />
@@ -216,7 +238,10 @@ export function ReporteGeneral() {
                 Valor de Inventario por Categoría
               </CardTitle>
               <CardDescription>
-                Distribución del valor (costo) de los productos por categoría (Top 10)
+                Distribución del valor de los productos por categoría (Top 10). Valoración FIFO real de lotes
+                {valuacion?.tieneEstimado
+                  ? `; incluye partes estimadas a precio de costo actual (${formatCurrency(valuacion.valorTotalEstimado)}) por falta de lotes de compra`
+                  : ""}
               </CardDescription>
             </CardHeader>
             <CardContent className="h-[300px]">
@@ -274,7 +299,7 @@ export function ReporteGeneral() {
                       <TableHead className="text-right">Stock Mínimo</TableHead>
                       <TableHead className="text-right">Precio Costo</TableHead>
                       <TableHead className="text-right">Precio Venta</TableHead>
-                      <TableHead className="text-right">Valor Inventario</TableHead>
+                      <TableHead className="text-right">Valor Inventario (FIFO)</TableHead>
                       <TableHead className="text-right">Valor Venta</TableHead>
                     </TableRow>
                   </TableHeader>
@@ -309,7 +334,7 @@ export function ReporteGeneral() {
                         </TableCell>
                         <TableCell className="text-right">{formatCurrency(producto.precioCosto)}</TableCell>
                         <TableCell className="text-right">{formatCurrency(producto.precioVenta)}</TableCell>
-                        <TableCell className="text-right">{formatCurrency(producto.precioCosto * getTotalStock(producto))}</TableCell>
+                        <TableCell className="text-right">{formatCurrency(valorInventarioDe(producto))}</TableCell>
                         <TableCell className="text-right">{formatCurrency(producto.precioVenta * getTotalStock(producto))}</TableCell>
                       </TableRow>
                     )})}
