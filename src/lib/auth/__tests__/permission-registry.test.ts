@@ -30,9 +30,9 @@ const EXPECTED_CATEGORIES: PermissionCategory[] = [
 const FORBIDDEN_VOSEO = /\b(vos|sos|tenés|querés|podés|probá|hacé|elegí|compartí|ganá|registrate)\b/i;
 
 describe('PERMISSION_REGISTRY — estructura', () => {
-  it('contiene entre 45 y 80 claves (inventario PG01 + módulos T6 + mobile)', () => {
+  it('contiene entre 45 y 96 claves (inventario PG01 + módulos T6 + mobile + ventas/fiscal)', () => {
     expect(PERMISSION_REGISTRY.length).toBeGreaterThanOrEqual(45);
-    expect(PERMISSION_REGISTRY.length).toBeLessThanOrEqual(80);
+    expect(PERMISSION_REGISTRY.length).toBeLessThanOrEqual(96);
   });
 
   it('las claves son únicas', () => {

@@ -5,6 +5,7 @@ const { prismaMock, setFeature } = vi.hoisted(() => {
   const prismaMock = {
     puntoDeVenta: { findMany: vi.fn(), findFirst: vi.fn() },
     turnoPuntoVenta: { findFirst: vi.fn(), create: vi.fn(), findMany: vi.fn(), update: vi.fn() },
+    devolucionVenta: { aggregate: vi.fn().mockResolvedValue({ _sum: { montoReembolsado: 0 } }) },
     arqueoCaja: { create: vi.fn() },
     venta: { aggregate: vi.fn() },
     ventaItem: { findMany: vi.fn() },

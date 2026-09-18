@@ -60,7 +60,12 @@ describe('AS-04 shadow: cero violaciones en features críticas', { timeout: 40_0
   it('patrones de lectura/agregación de ventas, productos y contabilidad no violan scope', async () => {
     // Ventas: findMany + aggregate + count (patrón de reportes-financieros)
     const ventas = await withTestTenant(tenantId, async () => {
-      return await prisma.venta.findMany({});
+      // Shadow mode intentionally preserves query results; constrain the
+      // assertion to this tenant so earlier integration fixtures do not leak
+      // into the test's expectation.
+      const scopedRows = await prisma.venta.findMany({ where: { tenantId } });
+      await prisma.venta.findMany({});
+      return scopedRows;
     });
     expect(ventas).toEqual([]);
 

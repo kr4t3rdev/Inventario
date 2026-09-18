@@ -149,6 +149,12 @@ export const RAW_SQL_ALLOWLIST: readonly RawSqlAllowlistEntry[] = [
     tenantGuarantee: 'La venta fue resuelta con tenantId autenticado antes del lock.',
   },
   {
+    file: 'src/features/ventas/services/devolucion-venta-service.ts',
+    occurrences: 1,
+    reason: 'Lock FOR UPDATE de la venta durante una devolución para evitar carreras de stock y saldo.',
+    tenantGuarantee: 'La venta se resuelve con tenantId autenticado antes de ejecutar el lock parametrizado.',
+  },
+  {
     file: 'scripts/seed-e2e-user.ts',
     occurrences: 1,
     reason: 'Reinicia el esquema de una base de datos descartable para fixtures E2E.',

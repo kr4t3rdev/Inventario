@@ -57,7 +57,7 @@ describe('HistorialTasasTable', () => {
     render(<HistorialTasasTable />);
 
     await waitFor(() => {
-      expect(screen.getByText('Historial de Tasas de Cambio')).toBeInTheDocument();
+      expect(screen.getByText('rate-2')).toBeInTheDocument();
     });
 
     expect(screen.getByText('Tasa ID')).toBeInTheDocument();

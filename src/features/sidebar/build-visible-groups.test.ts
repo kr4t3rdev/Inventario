@@ -70,7 +70,7 @@ describe('buildVisibleSidebarGroups', () => {
 
       expect(summary).toContainEqual({ title: 'Gestión', itemCount: 7 })
       expect(summary).toContainEqual({ title: 'Acciones', itemCount: 18 })
-      expect(summary).toContainEqual({ title: 'Configuración', itemCount: 7 })
+      expect(summary).toContainEqual({ title: 'Configuración', itemCount: 8 })
       expect(summary).toContainEqual({ title: 'Contabilidad', itemCount: 19 })
       expect(summary).toContainEqual({ title: 'Reportes', itemCount: 7 })
     })
