@@ -14,14 +14,10 @@ import {
 	CardHeader,
 	CardDescription,
 } from "@/components/ui/card";
-import { cn } from "@/lib/utils";
+import { cn, formatCurrency } from "@/lib/utils";
 import { AnimatedCard } from "@/components/ui/animations";
 import type { ResumenAnalisis } from "@/features/reportes-financieros/actions-rentabilidad-compra";
 
-const surfaceCardClass = cn(
-	"relative overflow-hidden border-slate-200/60 bg-white/70 shadow-sm backdrop-blur-xl",
-	"dark:border-slate-800/60 dark:bg-slate-900/10",
-);
 
 interface SummaryCardsProps {
 	resumen: ResumenAnalisis;
@@ -33,25 +29,27 @@ interface SummaryCardsProps {
  * @param {SummaryCardsProps} props - Datos del resumen.
  * @returns {JSX.Element} Grid de 5 tarjetas con métricas.
  */
+import { SURFACE_CARD_CLASS } from "@/features/reportes-financieros/lib/reporte-styles"
+
 export function SummaryCards({ resumen }: SummaryCardsProps) {
 	const cards = [
 		{
 			label: "Costo Total",
-			value: `$${resumen.totalComprado.toLocaleString()}`,
+			value: formatCurrency(resumen.totalComprado),
 			sublabel: "Total pagado en la compra",
 			icon: DollarSign,
 			borderColor: "border-l-primary",
 		},
 		{
 			label: "Total Vendido",
-			value: `$${resumen.totalVendido.toLocaleString()}`,
+			value: formatCurrency(resumen.totalVendido),
 			sublabel: "Ingresos generados",
 			icon: TrendingUp,
 			borderColor: "border-l-chart-2",
 		},
 		{
 			label: "Ganancia Neta",
-			value: `$${resumen.gananciaTotal.toLocaleString()}`,
+			value: formatCurrency(resumen.gananciaTotal),
 			sublabel: `Margen: ${resumen.margenPromedio.toFixed(1)}%`,
 			icon: Landmark,
 			borderColor:
@@ -84,7 +82,7 @@ export function SummaryCards({ resumen }: SummaryCardsProps) {
 		<div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5">
 			{cards.map((card) => (
 				<AnimatedCard key={card.label}>
-					<Card className={cn(surfaceCardClass, card.borderColor)}>
+					<Card className={cn(SURFACE_CARD_CLASS, card.borderColor)}>
 						<CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
 							<CardDescription className="text-sm font-medium">
 								{card.label}

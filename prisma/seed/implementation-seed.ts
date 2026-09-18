@@ -2,11 +2,31 @@ import { PrismaClient } from '../../src/generated/prisma'
 
 const prisma = new PrismaClient()
 
+interface ImplementationSeedClient {
+  moneda: { upsert: (args: any) => Promise<unknown> }
+  tipoPago: { upsert: (args: any) => Promise<unknown> }
+  cuentaBancaria: { upsert: (args: any) => Promise<unknown> }
+  categoria: { upsert: (args: any) => Promise<unknown> }
+  unidad: { upsert: (args: any) => Promise<unknown> }
+  vendor: { upsert: (args: any) => Promise<unknown> }
+  cliente: { upsert: (args: any) => Promise<unknown> }
+  almacen: { upsert: (args: any) => Promise<unknown> }
+  listaPrecio: { upsert: (args: any) => Promise<unknown> }
+  puntoDeVenta: { upsert: (args: any) => Promise<unknown> }
+  producto: { upsert: (args: any) => Promise<unknown> }
+  precioProducto: { upsert: (args: any) => Promise<unknown> }
+  $disconnect?: () => Promise<unknown>
+}
+
+export interface ImplementationSeedInput {
+  tenantId: string
+}
+
 /**
  * @description Crea o actualiza monedas base para pruebas de implementacion.
  * @returns {Promise<void>} Promesa resuelta cuando termina el upsert de monedas
  */
-async function seedMonedas(): Promise<void> {
+async function seedMonedas(client: ImplementationSeedClient): Promise<void> {
   const monedas = [
     { codigo: 'CUP', nombre: 'Peso Cubano', simbolo: 'CUP', esPrincipal: true, isActive: true },
     { codigo: 'USD', nombre: 'Dolar Estadounidense', simbolo: 'USD', esPrincipal: false, isActive: true },
@@ -15,7 +35,7 @@ async function seedMonedas(): Promise<void> {
   ]
 
   for (const moneda of monedas) {
-    await prisma.moneda.upsert({
+    await client.moneda.upsert({
       where: { codigo: moneda.codigo },
       update: {
         nombre: moneda.nombre,
@@ -30,19 +50,24 @@ async function seedMonedas(): Promise<void> {
 
 /**
  * @description Crea tipos de pago contables de transferencia y efectivo.
- * @returns {Promise<void>} Promesa resuelta cuando termina el upsert de tipos de pago
+ * @param {ImplementationSeedClient} client - Cliente Prisma o doble de prueba.
+ * @param {string} tenantId - Tenant propietario de los tipos de pago.
+ * @returns {Promise<void>} Promesa resuelta cuando termina el upsert de tipos de pago.
  */
-async function seedTiposPagoContables(): Promise<void> {
+async function seedTiposPagoContables(
+  client: ImplementationSeedClient,
+  tenantId: string,
+): Promise<void> {
   const tiposPago = [
     {
-      tipoId: 'tp_impl_transferencia',
+      tipoId: `tp_impl_transferencia__${tenantId}`,
       nombre: 'Transferencia',
       descripcion: 'Pago por transferencia bancaria',
       requiereCuenta: true,
       isActive: true
     },
     {
-      tipoId: 'tp_impl_efectivo',
+      tipoId: `tp_impl_efectivo__${tenantId}`,
       nombre: 'Efectivo',
       descripcion: 'Pago en efectivo',
       requiereCuenta: false,
@@ -51,7 +76,7 @@ async function seedTiposPagoContables(): Promise<void> {
   ]
 
   for (const tipoPago of tiposPago) {
-    await prisma.tipoPago.upsert({
+    await client.tipoPago.upsert({
       where: { tipoId: tipoPago.tipoId },
       update: {
         nombre: tipoPago.nombre,
@@ -59,7 +84,7 @@ async function seedTiposPagoContables(): Promise<void> {
         requiereCuenta: tipoPago.requiereCuenta,
         isActive: tipoPago.isActive
       },
-      create: tipoPago
+      create: { ...tipoPago, tenantId }
     })
   }
 }
@@ -68,7 +93,10 @@ async function seedTiposPagoContables(): Promise<void> {
  * @description Crea dos cuentas bancarias por moneda para transferencia y efectivo.
  * @returns {Promise<void>} Promesa resuelta cuando termina el upsert de cuentas
  */
-async function seedCuentasBancariasPorMoneda(): Promise<void> {
+async function seedCuentasBancariasPorMoneda(
+  client: ImplementationSeedClient,
+  tenantId: string,
+): Promise<void> {
   const cuentas = [
     {
       cuentaId: 'cb_impl_cup_transferencia',
@@ -145,7 +173,7 @@ async function seedCuentasBancariasPorMoneda(): Promise<void> {
   ]
 
   for (const cuenta of cuentas) {
-    await prisma.cuentaBancaria.upsert({
+    await client.cuentaBancaria.upsert({
       where: { cuentaId: cuenta.cuentaId },
       update: {
         nombreBanco: cuenta.nombreBanco,
@@ -155,7 +183,7 @@ async function seedCuentasBancariasPorMoneda(): Promise<void> {
         moneda: cuenta.moneda,
         isActive: cuenta.isActive
       },
-      create: { ...cuenta, tenantId: 'demo-tenant' }
+      create: { ...cuenta, tenantId }
     })
   }
 }
@@ -164,12 +192,17 @@ async function seedCuentasBancariasPorMoneda(): Promise<void> {
  * @description Inserta datos base de inventario y contabilidad para fase de implementacion.
  * @returns {Promise<void>} Promesa resuelta al completar el seed
  */
-export async function seedImplementationData(): Promise<void> {
+export async function seedImplementationData(
+  input: ImplementationSeedInput,
+  client: ImplementationSeedClient = prisma,
+): Promise<void> {
+  const { tenantId } = input
+
   console.log('🌱 Iniciando seed de implementacion...')
 
-  await seedMonedas()
-  await seedTiposPagoContables()
-  await seedCuentasBancariasPorMoneda()
+  await seedMonedas(client)
+  await seedTiposPagoContables(client, tenantId)
+  await seedCuentasBancariasPorMoneda(client, tenantId)
 
   const categorias = [
     { catId: 'cat_impl_alimentos', nombre: 'Alimentos', descripcion: 'Categoria para alimentos' },
@@ -190,14 +223,14 @@ export async function seedImplementationData(): Promise<void> {
   ]
 
   for (const categoria of categorias) {
-    await prisma.categoria.upsert({
+    await client.categoria.upsert({
       where: { catId: categoria.catId },
       update: {
         nombre: categoria.nombre,
         descripcion: categoria.descripcion,
         parentId: categoria.parentId
       },
-      create: { ...categoria, tenantId: 'demo-tenant' }
+      create: { ...categoria, tenantId }
     })
   }
 
@@ -209,13 +242,13 @@ export async function seedImplementationData(): Promise<void> {
   ]
 
   for (const unidad of unidades) {
-    await prisma.unidad.upsert({
+    await client.unidad.upsert({
       where: { unidadId: unidad.unidadId },
       update: {
         nombre: unidad.nombre,
         simbolo: unidad.simbolo
       },
-      create: unidad
+      create: { ...unidad, tenantId }
     })
   }
 
@@ -244,7 +277,7 @@ export async function seedImplementationData(): Promise<void> {
   ]
 
   for (const proveedor of proveedores) {
-    await prisma.vendor.upsert({
+    await client.vendor.upsert({
       where: { vendorId: proveedor.vendorId },
       update: {
         nombre: proveedor.nombre,
@@ -252,7 +285,7 @@ export async function seedImplementationData(): Promise<void> {
         telefono: proveedor.telefono,
         direccion: proveedor.direccion
       },
-      create: { ...proveedor, tenantId: 'demo-tenant' }
+      create: { ...proveedor, tenantId }
     })
   }
 
@@ -278,14 +311,14 @@ export async function seedImplementationData(): Promise<void> {
   ]
 
   for (const cliente of clientes) {
-    await prisma.cliente.upsert({
+    await client.cliente.upsert({
       where: { clienteId: cliente.clienteId },
       update: {
         nombre: cliente.nombre,
         telefono: cliente.telefono,
         direccion: cliente.direccion
       },
-      create: { ...cliente, tenantId: 'demo-tenant' }
+      create: { ...cliente, tenantId }
     })
   }
 
@@ -295,12 +328,12 @@ export async function seedImplementationData(): Promise<void> {
   ]
 
   for (const almacen of almacenes) {
-    await prisma.almacen.upsert({
+    await client.almacen.upsert({
       where: { almacenId: almacen.almacenId },
       update: {
         nombre: almacen.nombre
       },
-      create: { ...almacen, tenantId: 'demo-tenant' }
+      create: { ...almacen, tenantId }
     })
   }
 
@@ -320,14 +353,14 @@ export async function seedImplementationData(): Promise<void> {
   ]
 
   for (const lista of listasPrecios) {
-    await prisma.listaPrecio.upsert({
+    await client.listaPrecio.upsert({
       where: { id: lista.id },
       update: {
         nombre: lista.nombre,
         descripcion: lista.descripcion,
         esDefault: lista.esDefault
       },
-      create: { ...lista, tenantId: 'demo-tenant' }
+      create: { ...lista, tenantId }
     })
   }
 
@@ -347,14 +380,14 @@ export async function seedImplementationData(): Promise<void> {
   ]
 
   for (const puntoDeVenta of puntosDeVenta) {
-    await prisma.puntoDeVenta.upsert({
+    await client.puntoDeVenta.upsert({
       where: { pvId: puntoDeVenta.pvId },
       update: {
         nombre: puntoDeVenta.nombre,
         ubicacion: puntoDeVenta.ubicacion,
         listaPrecioId: puntoDeVenta.listaPrecioId
       },
-      create: { ...puntoDeVenta, tenantId: 'demo-tenant' }
+      create: { ...puntoDeVenta, tenantId }
     })
   }
 
@@ -450,7 +483,7 @@ export async function seedImplementationData(): Promise<void> {
   ]
 
   for (const producto of productos) {
-    await prisma.producto.upsert({
+    await client.producto.upsert({
       where: { id: producto.id },
       update: {
         nombre: producto.nombre,
@@ -466,7 +499,7 @@ export async function seedImplementationData(): Promise<void> {
         almacenId: producto.almacenId,
         puntoDeVentaId: producto.puntoDeVentaId
       },
-      create: { ...producto, tenantId: 'demo-tenant' }
+      create: { ...producto, tenantId }
     })
   }
 
@@ -486,7 +519,7 @@ export async function seedImplementationData(): Promise<void> {
   ]
 
   for (const precioProducto of preciosProducto) {
-    await prisma.precioProducto.upsert({
+    await client.precioProducto.upsert({
       where: { id: precioProducto.id },
       update: {
         listaPrecioId: precioProducto.listaPrecioId,
@@ -503,7 +536,9 @@ export async function seedImplementationData(): Promise<void> {
 const isDirectExecution = process.argv.some((arg) => arg.includes('implementation-seed.ts'))
 
 if (isDirectExecution) {
-  seedImplementationData()
+  seedImplementationData({
+    tenantId: process.env.SEED_TENANT_ID || 'demo-tenant',
+  })
     .catch((error) => {
       console.error('❌ Error en seed de implementacion:', error)
       process.exit(1)

@@ -10,7 +10,7 @@
  */
 
 import { getCurrentUser } from "@/lib/server-actions/get-current-user";
-import { prisma } from "@/lib/prisma";
+import { prismaPlatform as prisma } from "@/lib/db/platform-prisma";
 
 export interface AdminUsersPageData {
 	users: Array<{
@@ -35,6 +35,9 @@ export interface AdminUsersPageData {
 			isActive: boolean;
 			tenant: { nombre: string };
 		}>;
+		salesAgentProfile: { phone: string | null; status: string } | null;
+		salesAgentBalance: { availableUsd: unknown; paidUsd: unknown } | null;
+		activeReferralCount: number;
 	}>;
 	total: number;
 	planes: Array<{
@@ -65,9 +68,33 @@ export async function getAdminUsersPageData(): Promise<AdminUsersPageData | null
 		prisma.user.findMany({
 			take: 100,
 			orderBy: { createdAt: "desc" },
-			include: {
+			select: {
+				userId: true,
+				name: true,
+				email: true,
+				role: true,
+				onboardingStatus: true,
+				onboardingType: true,
+				isActive: true,
+				lockedUntil: true,
+				expiresAt: true,
+				createdAt: true,
+				loginAttempts: true,
+				salesAgentProfile: { select: { phone: true, status: true } },
+				salesAgentBalance: { select: { availableUsd: true, paidUsd: true } },
+				salesAgentReferrals: {
+					where: { status: "attributed" },
+					select: { salesAgentReferralId: true },
+				},
 				tenantMemberships: {
-					include: { tenant: { select: { nombre: true } } },
+					select: {
+						tenantId: true,
+						tenantRole: true,
+						isActive: true,
+						tenant: {
+							select: { nombre: true },
+						},
+					},
 				},
 				_count: {
 					select: { tenantMemberships: true },
@@ -102,6 +129,9 @@ export async function getAdminUsersPageData(): Promise<AdminUsersPageData | null
 				tenantId: activeMembership?.tenantId ?? null,
 				tenantName: activeMembership?.tenant?.nombre ?? null,
 				membershipCount: u._count?.tenantMemberships ?? 0,
+				salesAgentProfile: u.salesAgentProfile,
+				salesAgentBalance: u.salesAgentBalance,
+				activeReferralCount: u.salesAgentReferrals.length,
 				tenants: u.tenantMemberships.map((m) => ({
 					tenantId: m.tenantId,
 					tenantRole: m.tenantRole,

@@ -1,6 +1,7 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 
 import {
+  applyAnticipoAllocations,
   createAnticipo,
   executeAnticipo,
   isAnticipoWorkflowError
@@ -13,6 +14,7 @@ function createTxMock() {
     },
     anticipo: {
       create: vi.fn(),
+      findFirst: vi.fn(),
       findUnique: vi.fn(),
       updateMany: vi.fn()
     },
@@ -219,5 +221,43 @@ describe('anticipos-workflow', () => {
         async () => ({ reconciliacionGastoId: 'rec-g-1' })
       )
     ).rejects.toSatisfy((error) => isAnticipoWorkflowError(error) && error.code === 'CONCURRENCIA')
+  })
+
+  it('aplica una asignación con tenant scope y decremento atómico', async () => {
+    const tx = createTxMock()
+    tx.anticipo.findFirst
+      .mockResolvedValueOnce({
+        anticipoId: 'ant-tenant',
+        estado: 'RESERVADO',
+        saldoDisponible: 100,
+        moneda: 'CUP',
+        vigenciaHasta: null,
+      })
+      .mockResolvedValueOnce({ saldoDisponible: 60 })
+    tx.anticipo.updateMany.mockResolvedValue({ count: 1 })
+    tx.anticipoMovimiento.create.mockResolvedValue({ movimientoId: 'mov-tenant' })
+
+    await applyAnticipoAllocations(
+      tx,
+      [{ anticipoId: 'ant-tenant', montoAplicado: 40 }],
+      {
+        tenantId: 'tenant-1',
+        documentoDestinoId: 'compra-1',
+        contexto: 'COMPRA_PRODUCTO',
+        usuarioId: 'user-1',
+      },
+    )
+
+    expect(tx.anticipo.findFirst).toHaveBeenNthCalledWith(1, expect.objectContaining({
+      where: { anticipoId: 'ant-tenant', tenantId: 'tenant-1' },
+    }))
+    expect(tx.anticipo.updateMany).toHaveBeenCalledWith(expect.objectContaining({
+      where: expect.objectContaining({
+        anticipoId: 'ant-tenant',
+        tenantId: 'tenant-1',
+        saldoDisponible: { gte: 40 },
+      }),
+      data: { saldoDisponible: { decrement: 40 } },
+    }))
   })
 })

@@ -8,11 +8,10 @@
  * @param {ServiciosContentProps} props - Props del componente
  * @returns {JSX.Element} Interfaz de gestión de Servicios
  */
-import { useEffect, useState, useTransition } from 'react'
+import { useState, useTransition } from 'react'
 import { LazyMotion, m as motion, AnimatePresence } from 'framer-motion'
 import { Button } from '@/components/ui/button'
 import { SidebarProvider, SidebarInset } from '@/components/ui/sidebar'
-import { Skeleton } from '@/components/ui/skeleton'
 import { deleteServicioAction } from '@/features/servicios/actions'
 import type { VentaServicio } from '@/features/venta-servicios/types'
 import { ColumnDef } from '@tanstack/react-table'
@@ -23,18 +22,30 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { Input } from '@/components/ui/input'
 import { Badge } from '@/components/ui/badge'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog'
 import { formatCurrency } from '@/lib/utils'
+import { formatearTotalVenta } from '@/features/servicios/lib/moneda-servicio'
 import dynamic from 'next/dynamic'
 
 const DataTable = dynamic(() => import('@/components/data-table').then(mod => ({ default: mod.DataTable })))
 const ServiciosCart = dynamic(() => import('@/features/servicios/components/servicios-cart').then(mod => ({ default: mod.default })))
-const ServiciosRecibidosTable = dynamic(() => import('@/features/servicios/components/servicios-recibidos-table').then(mod => mod.ServiciosRecibidosTable))
+const ServiciosRecibidosTable = dynamic(() => import('@/features/servicios/components/servicios-recibidos-table').then(mod => ({ default: mod.ServiciosRecibidosTable })))
 
 interface Servicio {
   servicioId: string
   nombre: string
   precio: number
   descripcion: string
+  moneda?: string
 }
 
 interface ServicioItem {
@@ -45,6 +56,7 @@ interface ServicioItem {
   costo: number
   descripcion: string
   cantidad: number
+  moneda?: string
 }
 
 interface ServiciosContentProps {
@@ -55,7 +67,6 @@ interface ServiciosContentProps {
 
 export function ServiciosContent({ initialServicios, initialVentaServicios, tenantRole }: ServiciosContentProps) {
   const [servicios, setServicios] = useState<Servicio[]>(initialServicios)
-  const [isLoading, setIsLoading] = useState(false)
   const [isPending, startTransition] = useTransition()
 
   // ─── Permisos ──
@@ -122,10 +133,21 @@ export function ServiciosContent({ initialServicios, initialVentaServicios, tena
     {
       accessorKey: 'total',
       header: 'Total',
+      cell: ({ row }) => {
+        const venta = row.original as VentaServicio
+        return (
+          <span className='font-semibold text-green-600'>
+            {formatearTotalVenta(venta.total, venta.moneda)}
+          </span>
+        )
+      }
+    },
+    {
+      id: 'moneda',
+      accessorFn: (row: unknown) => (row as VentaServicio).moneda ?? 'CUP',
+      header: 'Moneda',
       cell: ({ row }) => (
-        <span className='font-semibold text-green-600'>
-          {formatCurrency(row.getValue('total'))}
-        </span>
+        <Badge variant='secondary'>{row.getValue('moneda')}</Badge>
       )
     },
     {
@@ -151,32 +173,6 @@ export function ServiciosContent({ initialServicios, initialVentaServicios, tena
       )
     }
   ]
-
-  if (isLoading) {
-    return (
-      <SidebarProvider>
-        <SidebarInset>
-          <div className='container mx-auto py-4 px-4'>
-            <div className='flex justify-between items-center mb-6'>
-              <div className='flex items-center gap-2'>
-                <Skeleton className='h-8 w-8 rounded-lg' />
-                <Skeleton className='h-8 w-48' />
-              </div>
-              <div className='flex gap-2'>
-                <Skeleton className='h-10 w-32' />
-                <Skeleton className='h-10 w-32' />
-              </div>
-            </div>
-            <div className='grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4'>
-              {[1, 2, 3, 4, 5, 6].map((i) => (
-                <Skeleton key={i} className='h-64 w-full rounded-lg' />
-              ))}
-            </div>
-          </div>
-        </SidebarInset>
-      </SidebarProvider>
-    )
-  }
 
   return (
     <SidebarProvider>
@@ -328,8 +324,8 @@ export function ServiciosContent({ initialServicios, initialVentaServicios, tena
                               <div className='flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity duration-200'>
                                 {puedeEditar && (
                                 <Link href={`/busy/servicios/update/${servicio.servicioId}`}>
-                                  <Button variant='ghost' size='icon' className='h-8 w-8'>
-                                    <Pencil className='h-4 w-4' />
+                                  <Button variant='ghost' size='icon' className='h-8 w-8' aria-label='Editar servicio'>
+                                    <Pencil className='h-4 w-4' aria-hidden='true' />
                                   </Button>
                                 </Link>
                                 )}
@@ -351,7 +347,7 @@ export function ServiciosContent({ initialServicios, initialVentaServicios, tena
                           </CardHeader>
                           <CardContent className='pt-0'>
                             <Badge variant='outline' className='text-lg font-semibold px-3 py-1'>
-                              {formatCurrency(servicio.precio)}
+                              {formatCurrency(servicio.precio, servicio.moneda)}
                             </Badge>
                           </CardContent>
                           <CardFooter className='bg-muted/50 pt-3 border-t'>
@@ -442,7 +438,7 @@ export function ServiciosContent({ initialServicios, initialVentaServicios, tena
                   <Card>
                     <CardHeader>
                       <div className='flex items-center gap-3'>
-                        <CheckCircle className='h-6 w-6 text-purple-600' />
+                        <CheckCircle className='h-6 w-6 text-purple' />
                         <div>
                           <CardTitle>Historial de Ventas</CardTitle>
                           <CardDescription>Registro de todos los servicios vendidos</CardDescription>
@@ -489,53 +485,35 @@ export function ServiciosContent({ initialServicios, initialVentaServicios, tena
           </Tabs>
 
           {/* Delete Confirmation Dialog */}
-          <AnimatePresence>
-            {servicioToDelete && (
-              <motion.div 
-                className='fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4'
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                exit={{ opacity: 0 }}
-                onClick={() => setServicioToDelete(null)}
-              >
-                <motion.div 
-                  className='bg-background p-6 rounded-lg max-w-md w-full shadow-2xl border'
-                  initial={{ scale: 0.9, opacity: 0, y: 20 }}
-                  animate={{ scale: 1, opacity: 1, y: 0 }}
-                  exit={{ scale: 0.9, opacity: 0, y: 20 }}
-                  transition={{ type: 'spring', damping: 25, stiffness: 300 }}
-                  onClick={(e) => e.stopPropagation()}
+          <AlertDialog open={servicioToDelete !== null} onOpenChange={(open) => !open && setServicioToDelete(null)}>
+            <AlertDialogContent>
+              <AlertDialogHeader>
+                <AlertDialogTitle className='flex items-center gap-3'>
+                  <div className='p-3 bg-destructive/10 rounded-full'>
+                    <Trash2 className='h-6 w-6 text-destructive' aria-hidden='true' />
+                  </div>
+                  Confirmar eliminación
+                </AlertDialogTitle>
+                <AlertDialogDescription>
+                  ¿Está seguro de que desea eliminar este servicio? Esta acción no se puede deshacer.
+                </AlertDialogDescription>
+              </AlertDialogHeader>
+              <AlertDialogFooter>
+                <AlertDialogCancel onClick={() => setServicioToDelete(null)}>Cancelar</AlertDialogCancel>
+                <AlertDialogAction
+                  onClick={(e) => {
+                    e.preventDefault()
+                    handleDeleteServicio()
+                  }}
+                  disabled={isPending}
+                  className='bg-destructive text-destructive-foreground hover:bg-destructive/90'
                 >
-                  <div className='flex items-center gap-3 mb-4'>
-                    <div className='p-3 bg-destructive/10 rounded-full'>
-                      <Trash2 className='h-6 w-6 text-destructive' />
-                    </div>
-                    <h3 className='text-xl font-semibold'>
-                      Confirmar eliminación
-                    </h3>
-                  </div>
-                  <p className='text-muted-foreground mb-6'>
-                    ¿Está seguro de que desea eliminar este servicio? Esta acción no se puede deshacer.
-                  </p>
-                  <div className='flex gap-3 justify-end'>
-                    <Button 
-                      variant='outline' 
-                      onClick={() => setServicioToDelete(null)}
-                    >
-                      Cancelar
-                    </Button>
-                    <Button 
-                      variant='destructive' 
-                      onClick={handleDeleteServicio}
-                    >
-                      <Trash2 className='mr-2 h-4 w-4' />
-                      Eliminar
-                    </Button>
-                  </div>
-                </motion.div>
-              </motion.div>
-            )}
-          </AnimatePresence>
+                  <Trash2 className='mr-2 h-4 w-4' aria-hidden='true' />
+                  {isPending ? 'Eliminando...' : 'Eliminar'}
+                </AlertDialogAction>
+              </AlertDialogFooter>
+            </AlertDialogContent>
+          </AlertDialog>
 
           {/* Cart Component */}
           <ServiciosCart 

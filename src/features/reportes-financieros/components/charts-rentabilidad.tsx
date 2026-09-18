@@ -7,7 +7,7 @@ import {
 	CardHeader,
 	CardTitle,
 } from "@/components/ui/card";
-import { cn } from "@/lib/utils";
+import { cn, formatCurrency } from "@/lib/utils";
 import {
 	BarChart,
 	Bar,
@@ -22,22 +22,16 @@ import {
 	Cell,
 } from "recharts";
 import type { ProductoAnalisis } from "@/features/reportes-financieros/actions-rentabilidad-compra";
+import {
+	CHART_COLORS,
+	CHART_COLOR_POSITIVE,
+	CHART_COLOR_NEGATIVE,
+} from "@/features/reportes-financieros/lib/reporte-styles";
 
-const surfaceCardClass = cn(
-	"relative overflow-hidden border-slate-200/60 bg-white/70 shadow-sm backdrop-blur-xl",
-	"dark:border-slate-800/60 dark:bg-slate-900/10",
-);
+const COLORS = [...CHART_COLORS];
 
-const COLORS = [
-	"#10b981",
-	"#f59e0b",
-	"#3b82f6",
-	"#8b5cf6",
-	"#ef4444",
-	"#06b6d4",
-	"#f97316",
-	"#6366f1",
-];
+const COLOR_INGRESOS = CHART_COLOR_POSITIVE;
+const COLOR_COSTO = "var(--chart-4)";
 
 interface ChartsRentabilidadProps {
 	productos: ProductoAnalisis[];
@@ -54,6 +48,8 @@ function shortName(name: string, max = 18): string {
  * @param {ChartsRentabilidadProps} props - Productos del análisis.
  * @returns {JSX.Element} Grid de 3 charts + pie chart de distribución.
  */
+import { SURFACE_CARD_CLASS } from "@/features/reportes-financieros/lib/reporte-styles"
+
 export function ChartsRentabilidad({ productos }: ChartsRentabilidadProps) {
 	const hasSales = productos.some((p) => p.unidadesVendidas > 0);
 
@@ -88,14 +84,14 @@ export function ChartsRentabilidad({ productos }: ChartsRentabilidadProps) {
 		}));
 
 	const formatterDollar = (value: number) => [
-		`$${value.toLocaleString()}`,
+		formatCurrency(value),
 		undefined,
 	];
 
 	return (
 		<div className="grid gap-6 lg:grid-cols-2">
 			{/* Ingresos vs Costo */}
-			<Card className={surfaceCardClass}>
+			<Card className={SURFACE_CARD_CLASS}>
 				<CardHeader>
 					<CardTitle className="text-base">Ingresos vs Costo</CardTitle>
 					<CardDescription>Comparación por producto</CardDescription>
@@ -113,8 +109,8 @@ export function ChartsRentabilidad({ productos }: ChartsRentabilidadProps) {
 								<YAxis tick={{ fontSize: 11 }} />
 								<Tooltip formatter={formatterDollar} />
 								<Legend />
-								<Bar dataKey="Ingresos" fill="#10b981" radius={[4, 4, 0, 0]} />
-								<Bar dataKey="Costo" fill="#f59e0b" radius={[4, 4, 0, 0]} />
+								<Bar dataKey="Ingresos" fill={COLOR_INGRESOS} radius={[4, 4, 0, 0]} />
+								<Bar dataKey="Costo" fill={COLOR_COSTO} radius={[4, 4, 0, 0]} />
 							</BarChart>
 						</ResponsiveContainer>
 					) : (
@@ -126,7 +122,7 @@ export function ChartsRentabilidad({ productos }: ChartsRentabilidadProps) {
 			</Card>
 
 			{/* Ganancia por producto */}
-			<Card className={surfaceCardClass}>
+			<Card className={SURFACE_CARD_CLASS}>
 				<CardHeader>
 					<CardTitle className="text-base">Ganancia por Producto</CardTitle>
 					<CardDescription>Resultado neto por producto</CardDescription>
@@ -160,7 +156,7 @@ export function ChartsRentabilidad({ productos }: ChartsRentabilidadProps) {
 												y={adjustedY}
 												width={width}
 												height={absHeight}
-												fill={isNegative ? "#ef4444" : "#10b981"}
+												fill={isNegative ? CHART_COLOR_NEGATIVE : CHART_COLOR_POSITIVE}
 												rx={4}
 											/>
 										);
@@ -177,7 +173,7 @@ export function ChartsRentabilidad({ productos }: ChartsRentabilidadProps) {
 			</Card>
 
 			{/* Días para vender */}
-			<Card className={surfaceCardClass}>
+			<Card className={SURFACE_CARD_CLASS}>
 				<CardHeader>
 					<CardTitle className="text-base">Días para Vender</CardTitle>
 					<CardDescription>
@@ -206,7 +202,7 @@ export function ChartsRentabilidad({ productos }: ChartsRentabilidadProps) {
 										undefined,
 									]}
 								/>
-								<Bar dataKey="días" fill="#3b82f6" radius={[0, 4, 4, 0]} />
+								<Bar dataKey="días" fill={CHART_COLORS[0]} radius={[0, 4, 4, 0]} />
 							</BarChart>
 						</ResponsiveContainer>
 					) : (
@@ -218,7 +214,7 @@ export function ChartsRentabilidad({ productos }: ChartsRentabilidadProps) {
 			</Card>
 
 			{/* Distribución de Ingresos */}
-			<Card className={surfaceCardClass}>
+			<Card className={SURFACE_CARD_CLASS}>
 				<CardHeader>
 					<CardTitle className="text-base">Distribución de Ingresos</CardTitle>
 					<CardDescription>Participación por producto</CardDescription>

@@ -8,6 +8,8 @@ import { z } from 'zod'
 import prisma from '@/lib/prisma'
 import type { Prisma } from '@/generated/prisma'
 import { AuditLogService } from '@/lib/services/audit-log-service'
+import { requireTenant } from '@/lib/services/tenant-scope'
+import type { AuthenticatedUser } from '@/lib/auth-middleware'
 import {
   applyPagoGastoWorkflow,
   isGastoWorkflowError,
@@ -30,6 +32,7 @@ export const reconciliacionGastoSchema = z.object({
   tasaCambio: z.number().positive().optional(),
   descripcion: z.string().min(1, 'Descripción es requerida'),
   periodo: z.string().optional(),
+  fechaReconciliacion: z.string().optional(),
   observaciones: z.string().optional(),
   estado: z.enum(['PENDIENTE', 'PAGADA', 'PARCIAL']).default('PAGADA'),
   cuentaPorPagarId: z.string().optional(),
@@ -53,6 +56,13 @@ export const reconciliacionGastoSchema = z.object({
       return true
     },
     { message: 'Debe proporcionar el ID correspondiente al tipo de gasto' },
+  )
+  .refine(
+    (data) => {
+      const explicit = [data.pgId, data.gastosDEId, data.gastoCompraId].filter(Boolean)
+      return explicit.length <= 1 && (!data.referenciaId || explicit.length === 0 || data.referenciaId === explicit[0])
+    },
+    { message: 'Debe proporcionar exactamente una referencia de gasto' },
   )
   .refine(
     (data) => {
@@ -112,10 +122,13 @@ export interface ReconciliacionGastoResult {
  */
 export async function reconciliarGastoAdapter(
   body: unknown,
-  user: { userId: string; tenantId?: string },
+  user: AuthenticatedUser,
 ): Promise<ReconciliacionGastoResult> {
   const validatedData = reconciliacionGastoSchema.parse(body)
-  const tenantId = user.tenantId ?? ''
+  const tenantId = requireTenant(user)
+
+  const fechaPago = validatedData.fechaReconciliacion ??
+    (validatedData.periodo ? `${validatedData.periodo}-01T00:00:00.000Z` : undefined)
 
   // ── Verificar que la referencia existe según el tipo de gasto ──
   let referenciaExiste = false
@@ -133,7 +146,7 @@ export async function reconciliarGastoAdapter(
           code: 'EMPLEADO_ID_REQUERIDO',
         })
       }
-      const pago = await prisma.pagosalario.findUnique({ where: { pgId: id } })
+      const pago = await prisma.pagosalario.findFirst({ where: { pgId: id, tenantId } })
       if (pago) {
         referenciaExiste = true
         referenciaId = id
@@ -149,7 +162,7 @@ export async function reconciliarGastoAdapter(
           code: 'GASTO_DE_ID_REQUERIDO',
         })
       }
-      const gasto = await prisma.gastosDE.findUnique({ where: { gastosDEId: id } })
+      const gasto = await prisma.gastosDE.findFirst({ where: { gastosDEId: id, tenantId } })
       if (gasto) {
         referenciaExiste = true
         referenciaId = id
@@ -165,7 +178,7 @@ export async function reconciliarGastoAdapter(
           code: 'GASTO_COMPRA_ID_REQUERIDO',
         })
       }
-      const compra = await prisma.gastoCompra.findUnique({ where: { gastoCompraId: id } })
+      const compra = await prisma.gastoCompra.findFirst({ where: { gastoCompraId: id, tenantId } })
       if (compra) {
         referenciaExiste = true
         referenciaId = id
@@ -185,6 +198,7 @@ export async function reconciliarGastoAdapter(
   // ── Verificar si ya está reconciliado (solo gastos sin CxP) ──
   if (!validatedData.cuentaPorPagarId) {
     const whereRec: any = {
+      tenantId,
       tipoGasto: validatedData.tipoGasto,
       ...(validatedData.periodo && { periodo: validatedData.periodo }),
     }
@@ -203,7 +217,7 @@ export async function reconciliarGastoAdapter(
     const cuentaIds = Array.from(new Set(validatedData.distribucion.map((d) => d.cuentaId)))
     if (cuentaIds.length > 0) {
       const cuentas = await prisma.cuentaBancaria.findMany({
-        where: { cuentaId: { in: cuentaIds } },
+        where: { cuentaId: { in: cuentaIds }, tenantId },
         select: { cuentaId: true, moneda: true },
       })
       const monedasDifieren = cuentas.some((c) => c.moneda !== validatedData.moneda)
@@ -215,8 +229,8 @@ export async function reconciliarGastoAdapter(
       }
     }
   } else if (validatedData.cuentaId) {
-    const cuenta = await prisma.cuentaBancaria.findUnique({
-      where: { cuentaId: validatedData.cuentaId },
+    const cuenta = await prisma.cuentaBancaria.findFirst({
+      where: { cuentaId: validatedData.cuentaId, tenantId },
       select: { moneda: true },
     })
     if (cuenta && cuenta.moneda !== validatedData.moneda && !validatedData.tasaCambio) {
@@ -239,6 +253,7 @@ export async function reconciliarGastoAdapter(
       tenantId,
       tasaCambio: validatedData.tasaCambio,
       periodo: validatedData.periodo,
+      fechaPago,
       observaciones: validatedData.observaciones,
       estado: validatedData.estado,
       cuentaPorPagarId: validatedData.cuentaPorPagarId,

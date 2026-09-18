@@ -284,7 +284,7 @@ async function seedQaCuentasPorCobrar(): Promise<void> {
 export async function seedQaScenarios(): Promise<void> {
   console.log('Iniciando seed QA...')
 
-  await seedImplementationData()
+  await seedImplementationData({ tenantId: 'demo-tenant' })
   await seedQaProductos()
   await seedQaCuentasPorPagar()
   await seedQaCuentasPorCobrar()

@@ -1,0 +1,107 @@
+
+ RUN  v3.2.4 /Users/arturo/Documents/Proyecto Inventario/TCP
+
+stdout | src/features/auth/__tests__/handlers-onboarding.test.ts > register — copy neutro (PE-01) > registro exitoso pide "Revisa tu correo" (sin voseo)
+[REGISTER] Email de verificación enviado — usuario: user-new, email: ana@example.com, messageId: msg-1
+
+stderr | src/features/auth/__tests__/handlers-onboarding.test.ts > onboarding — cliente platform (PE-02) > onboardingTenant usa prismaPlatform para todas las membresías
+Error asignando tenant al onboarding: TypeError: Cannot read properties of undefined (reading 'map')
+    at Module.onboardingTenant (/Users/arturo/Documents/Proyecto Inventario/TCP/src/features/auth/api/handlers.ts:989:41)
+    at processTicksAndRejections (node:internal/process/task_queues:104:5)
+    at /Users/arturo/Documents/Proyecto Inventario/TCP/src/features/auth/__tests__/handlers-onboarding.test.ts:262:15
+    at file:///Users/arturo/Documents/Proyecto%20Inventario/TCP/node_modules/.pnpm/@vitest+runner@3.2.4/node_modules/@vitest/runner/dist/chunk-hooks.js:752:20
+
+ ❯ src/features/auth/__tests__/handlers-onboarding.test.ts (6 tests | 4 failed) 84ms
+   ✓ register — copy neutro (PE-01) > rate limit responde "Inténtalo" con tilde y sin voseo 21ms
+   ✓ register — copy neutro (PE-01) > registro exitoso pide "Revisa tu correo" (sin voseo) 7ms
+   × onboarding — cliente platform (PE-02) > register con referido consulta perfiles únicamente en prismaPlatform 21ms
+     → expected 400 to be 200 // Object.is equality
+   × onboarding — cliente platform (PE-02) > onboardingType salesAgent ejecuta la transacción completa en prismaPlatform 9ms
+     → expected 409 to be 200 // Object.is equality
+   × onboarding — cliente platform (PE-02) > onboardingTenant usa prismaPlatform para todas las membresías 14ms
+     → expected 500 to be 200 // Object.is equality
+   × onboarding — cliente platform (PE-02) > onboardingMe consulta el conteo de membresías únicamente en prismaPlatform 8ms
+     → expected "spy" to be called at least once
+ ✓ src/lib/db/__tests__/data-access-allowlists.test.ts (3 tests) 1337ms
+   ✓ AS-03 allowlists de acceso a datos > prismaPlatform solo se importa desde consumidores aprobados  637ms
+   ✓ AS-03 allowlists de acceso a datos > sin clientes Prisma directos fuera de la fábrica (cierra el bypass base-prisma)  473ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 4 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  src/features/auth/__tests__/handlers-onboarding.test.ts > onboarding — cliente platform (PE-02) > register con referido consulta perfiles únicamente en prismaPlatform
+AssertionError: expected 400 to be 200 // Object.is equality
+
+- Expected
++ Received
+
+- 200
++ 400
+
+ ❯ src/features/auth/__tests__/handlers-onboarding.test.ts:203:22
+    201|   );
+    202| 
+    203|   expect(res.status).toBe(200);
+       |                      ^
+    204|   expect(platformMock.affiliateProfile.findUnique).toHaveBeenCalledWit…
+    205|    expect.objectContaining({ where: { referralCode: 'AFFILIATE-1' } }),
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/4]⎯
+
+ FAIL  src/features/auth/__tests__/handlers-onboarding.test.ts > onboarding — cliente platform (PE-02) > onboardingType salesAgent ejecuta la transacción completa en prismaPlatform
+AssertionError: expected 409 to be 200 // Object.is equality
+
+- Expected
++ Received
+
+- 200
++ 409
+
+ ❯ src/features/auth/__tests__/handlers-onboarding.test.ts:236:22
+    234|   );
+    235| 
+    236|   expect(res.status).toBe(200);
+       |                      ^
+    237|   expect(platformMock.$transaction).toHaveBeenCalled();
+    238|   expect(scopedMock.$transaction).not.toHaveBeenCalled();
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/4]⎯
+
+ FAIL  src/features/auth/__tests__/handlers-onboarding.test.ts > onboarding — cliente platform (PE-02) > onboardingTenant usa prismaPlatform para todas las membresías
+AssertionError: expected 500 to be 200 // Object.is equality
+
+- Expected
++ Received
+
+- 200
++ 500
+
+ ❯ src/features/auth/__tests__/handlers-onboarding.test.ts:270:22
+    268|   );
+    269| 
+    270|   expect(res.status).toBe(200);
+       |                      ^
+    271|   expect(platformMock.tenantMembership.count).toHaveBeenCalled();
+    272|   expect(platformMock.tenantMembership.upsert).toHaveBeenCalled();
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/4]⎯
+
+ FAIL  src/features/auth/__tests__/handlers-onboarding.test.ts > onboarding — cliente platform (PE-02) > onboardingMe consulta el conteo de membresías únicamente en prismaPlatform
+AssertionError: expected "spy" to be called at least once
+ ❯ src/features/auth/__tests__/handlers-onboarding.test.ts:307:47
+    305| 
+    306|   expect(res.status).toBe(200);
+    307|   expect(platformMock.tenantMembership.count).toHaveBeenCalled();
+       |                                               ^
+    308|   expect(scopedMock.tenantMembership.count).not.toHaveBeenCalled();
+    309|  });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/4]⎯
+
+
+ Test Files  1 failed | 1 passed (2)
+      Tests  4 failed | 5 passed (9)
+   Start at  00:10:21
+   Duration  4.74s (transform 353ms, setup 551ms, collect 466ms, tests 1.42s, environment 2.15s, prepare 765ms)
+
+
+Exit status: 1

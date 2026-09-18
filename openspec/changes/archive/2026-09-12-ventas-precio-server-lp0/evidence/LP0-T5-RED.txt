@@ -1,0 +1,187 @@
+
+ RUN  v3.2.4 /Users/arturo/Documents/Proyecto Inventario/TCP
+
+ ❯ src/lib/api/productos-ubicacion.test.ts (11 tests | 11 failed) 39ms
+   × getProductosPorUbicacion > should throw ServerActionError when location not found 16ms
+     → expected TypeError: default.… to be an instance of ServerActionError
+   × getProductosPorUbicacion > should return products for punto de venta using StockUbicacion when populated 2ms
+     → default.puntoDeVenta.findUnique is not a function
+   × getProductosPorUbicacion > retorna 0 en stockEnUbicacion cuando no existe StockUbicacion (stock=0) 1ms
+     → default.puntoDeVenta.findUnique is not a function
+   × getProductosPorUbicacion > should return products for almacen location with StockUbicacion 1ms
+     → default.puntoDeVenta.findUnique is not a function
+   × getProductosPorUbicacion > should return correct type ProductoConStock[] 1ms
+     → default.puntoDeVenta.findUnique is not a function
+   × getProductosPorUbicacion > filtra productos con stock>0 cuando no existe StockUbicacion (stockEnUbicacion=0) 1ms
+     → default.puntoDeVenta.findUnique is not a function
+   × getProductosPorUbicacion > con clienteId incluye en precios las entradas de la lista del PV y la del cliente 1ms
+     → default.puntoDeVenta.findUnique is not a function
+   × getProductosPorUbicacion > sin clienteId el array precios solo trae entradas de la lista del PV 1ms
+     → default.puntoDeVenta.findUnique is not a function
+   × getProductosPorUbicacion > en almacén no incluye precios ni consulta cliente aunque llegue clienteId 1ms
+     → default.puntoDeVenta.findUnique is not a function
+   × getProductosPorUbicacion > rechaza con 403 si el contexto no trae tenantId (fail-closed) 12ms
+     → expected TypeError: default.… to match object { status: 403 }
+   × getProductosPorUbicacion > un cliente de otro tenant no filtra su lista al payload 1ms
+     → default.puntoDeVenta.findUnique is not a function
+ ✓ src/features/ventas/__tests__/venta-price-integrity.test.ts (8 tests) 31ms
+
+⎯⎯⎯⎯⎯⎯ Failed Tests 11 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  src/lib/api/productos-ubicacion.test.ts > getProductosPorUbicacion > should throw ServerActionError when location not found
+AssertionError: expected TypeError: default.… to be an instance of ServerActionError
+ ❯ src/lib/api/productos-ubicacion.test.ts:44:18
+     42|    expect.unreachable("Should have thrown");
+     43|   } catch (error) {
+     44|    expect(error).toBeInstanceOf(ServerActionError);
+       |                  ^
+     45|    expect((error as ServerActionError).status).toBe(404);
+     46|   }
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/11]⎯
+
+ FAIL  src/lib/api/productos-ubicacion.test.ts > getProductosPorUbicacion > should return products for punto de venta using StockUbicacion when populated
+TypeError: default.puntoDeVenta.findUnique is not a function
+ ❯ Module.getProductosPorUbicacion src/lib/api/productos-ubicacion.ts:67:47
+     65|  let listaPrecioId: string | null = null;
+     66| 
+     67|  const puntoVenta = await prisma.puntoDeVenta.findUnique({
+       |                                               ^
+     68|   where: { pvId: ubicacionId },
+     69|   select: { pvId: true, listaPrecioId: true },
+ ❯ src/lib/api/productos-ubicacion.test.ts:86:18
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/11]⎯
+
+ FAIL  src/lib/api/productos-ubicacion.test.ts > getProductosPorUbicacion > retorna 0 en stockEnUbicacion cuando no existe StockUbicacion (stock=0)
+TypeError: default.puntoDeVenta.findUnique is not a function
+ ❯ Module.getProductosPorUbicacion src/lib/api/productos-ubicacion.ts:67:47
+     65|  let listaPrecioId: string | null = null;
+     66| 
+     67|  const puntoVenta = await prisma.puntoDeVenta.findUnique({
+       |                                               ^
+     68|   where: { pvId: ubicacionId },
+     69|   select: { pvId: true, listaPrecioId: true },
+ ❯ src/lib/api/productos-ubicacion.test.ts:134:18
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/11]⎯
+
+ FAIL  src/lib/api/productos-ubicacion.test.ts > getProductosPorUbicacion > should return products for almacen location with StockUbicacion
+TypeError: default.puntoDeVenta.findUnique is not a function
+ ❯ Module.getProductosPorUbicacion src/lib/api/productos-ubicacion.ts:67:47
+     65|  let listaPrecioId: string | null = null;
+     66| 
+     67|  const puntoVenta = await prisma.puntoDeVenta.findUnique({
+       |                                               ^
+     68|   where: { pvId: ubicacionId },
+     69|   select: { pvId: true, listaPrecioId: true },
+ ❯ src/lib/api/productos-ubicacion.test.ts:176:18
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/11]⎯
+
+ FAIL  src/lib/api/productos-ubicacion.test.ts > getProductosPorUbicacion > should return correct type ProductoConStock[]
+TypeError: default.puntoDeVenta.findUnique is not a function
+ ❯ Module.getProductosPorUbicacion src/lib/api/productos-ubicacion.ts:67:47
+     65|  let listaPrecioId: string | null = null;
+     66| 
+     67|  const puntoVenta = await prisma.puntoDeVenta.findUnique({
+       |                                               ^
+     68|   where: { pvId: ubicacionId },
+     69|   select: { pvId: true, listaPrecioId: true },
+ ❯ src/lib/api/productos-ubicacion.test.ts:219:38
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/11]⎯
+
+ FAIL  src/lib/api/productos-ubicacion.test.ts > getProductosPorUbicacion > filtra productos con stock>0 cuando no existe StockUbicacion (stockEnUbicacion=0)
+TypeError: default.puntoDeVenta.findUnique is not a function
+ ❯ Module.getProductosPorUbicacion src/lib/api/productos-ubicacion.ts:67:47
+     65|  let listaPrecioId: string | null = null;
+     66| 
+     67|  const puntoVenta = await prisma.puntoDeVenta.findUnique({
+       |                                               ^
+     68|   where: { pvId: ubicacionId },
+     69|   select: { pvId: true, listaPrecioId: true },
+ ❯ src/lib/api/productos-ubicacion.test.ts:251:18
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[6/11]⎯
+
+ FAIL  src/lib/api/productos-ubicacion.test.ts > getProductosPorUbicacion > con clienteId incluye en precios las entradas de la lista del PV y la del cliente
+TypeError: default.puntoDeVenta.findUnique is not a function
+ ❯ Module.getProductosPorUbicacion src/lib/api/productos-ubicacion.ts:67:47
+     65|  let listaPrecioId: string | null = null;
+     66| 
+     67|  const puntoVenta = await prisma.puntoDeVenta.findUnique({
+       |                                               ^
+     68|   where: { pvId: ubicacionId },
+     69|   select: { pvId: true, listaPrecioId: true },
+ ❯ src/lib/api/productos-ubicacion.test.ts:297:18
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[7/11]⎯
+
+ FAIL  src/lib/api/productos-ubicacion.test.ts > getProductosPorUbicacion > sin clienteId el array precios solo trae entradas de la lista del PV
+TypeError: default.puntoDeVenta.findUnique is not a function
+ ❯ Module.getProductosPorUbicacion src/lib/api/productos-ubicacion.ts:67:47
+     65|  let listaPrecioId: string | null = null;
+     66| 
+     67|  const puntoVenta = await prisma.puntoDeVenta.findUnique({
+       |                                               ^
+     68|   where: { pvId: ubicacionId },
+     69|   select: { pvId: true, listaPrecioId: true },
+ ❯ src/lib/api/productos-ubicacion.test.ts:353:18
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[8/11]⎯
+
+ FAIL  src/lib/api/productos-ubicacion.test.ts > getProductosPorUbicacion > en almacén no incluye precios ni consulta cliente aunque llegue clienteId
+TypeError: default.puntoDeVenta.findUnique is not a function
+ ❯ Module.getProductosPorUbicacion src/lib/api/productos-ubicacion.ts:67:47
+     65|  let listaPrecioId: string | null = null;
+     66| 
+     67|  const puntoVenta = await prisma.puntoDeVenta.findUnique({
+       |                                               ^
+     68|   where: { pvId: ubicacionId },
+     69|   select: { pvId: true, listaPrecioId: true },
+ ❯ src/lib/api/productos-ubicacion.test.ts:394:18
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[9/11]⎯
+
+ FAIL  src/lib/api/productos-ubicacion.test.ts > getProductosPorUbicacion > rechaza con 403 si el contexto no trae tenantId (fail-closed)
+AssertionError: expected TypeError: default.… to match object { status: 403 }
+
+- Expected
++ Received
+
+- {
+-   "status": 403,
++ TypeError {
++   "message": "__vite_ssr_import_0__.default.puntoDeVenta.findUnique is not a function",
+  }
+
+ ❯ src/lib/api/productos-ubicacion.test.ts:405:3
+    403|   vi.mocked(getAuthenticatedContext).mockResolvedValue({ userId: "user…
+    404| 
+    405|   await expect(getProductosPorUbicacion("pv-1")).rejects.toMatchObject…
+       |   ^
+    406|    status: 403,
+    407|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[10/11]⎯
+
+ FAIL  src/lib/api/productos-ubicacion.test.ts > getProductosPorUbicacion > un cliente de otro tenant no filtra su lista al payload
+TypeError: default.puntoDeVenta.findUnique is not a function
+ ❯ Module.getProductosPorUbicacion src/lib/api/productos-ubicacion.ts:67:47
+     65|  let listaPrecioId: string | null = null;
+     66| 
+     67|  const puntoVenta = await prisma.puntoDeVenta.findUnique({
+       |                                               ^
+     68|   where: { pvId: ubicacionId },
+     69|   select: { pvId: true, listaPrecioId: true },
+ ❯ src/lib/api/productos-ubicacion.test.ts:447:18
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[11/11]⎯
+
+
+ Test Files  1 failed | 1 passed (2)
+      Tests  11 failed | 8 passed (19)
+   Start at  03:53:11
+   Duration  6.41s (transform 1.06s, setup 392ms, collect 4.33s, tests 70ms, environment 1.62s, prepare 389ms)
+

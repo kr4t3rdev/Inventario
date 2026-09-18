@@ -4,10 +4,17 @@ import { twMerge } from 'tailwind-merge';
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
 }
-export function formatCurrency(amount: number): string {
+/**
+ * @description Formatea un monto como moneda. Por defecto CUP (retrocompatible);
+ * acepta un código de moneda opcional (USD, MLC, ...).
+ * @param {number} amount - Monto a formatear.
+ * @param {string} [currency='CUP'] - Código ISO 4217 o moneda del sistema.
+ * @returns {string} Monto formateado en locale es.
+ */
+export function formatCurrency(amount: number, currency: string = 'CUP'): string {
   return new Intl.NumberFormat('es', {
     style: 'currency',
-    currency: 'CUP',
+    currency,
     currencyDisplay: 'symbol',
     minimumFractionDigits: 2,
     maximumFractionDigits: 2,

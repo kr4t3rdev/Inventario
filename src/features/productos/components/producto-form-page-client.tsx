@@ -1,7 +1,7 @@
 "use client"
 
 import { LazyMotion, m as motion } from 'framer-motion'
-import { Boxes, Sparkles, AlertCircle, History, Package, TrendingUp } from 'lucide-react'
+import { Boxes, AlertCircle, History, Package, TrendingUp } from 'lucide-react'
 
 import { SidebarInset, SidebarProvider } from '@/components/ui/sidebar'
 import { Skeleton } from '@/components/ui/skeleton'
@@ -21,7 +21,7 @@ interface ProductoFormPageClientProps {
   unidades?: Pick<Unidad, 'unidadId' | 'nombre' | 'simbolo'>[]
   almacenes?: Pick<Almacen, 'almacenId' | 'nombre'>[]
   listasPrecios?: Array<{ id: string; nombre: string }>
-  vendors?: Array<Pick<Vendor, 'vendorId' | 'nombre' | 'proveedorCodigo'>>
+  vendors?: Array<Pick<any, 'nombre' | 'vendorId' | 'proveedorCodigo'>>
   categorias?: Array<Pick<Categoria, 'catId' | 'nombre'> & { parentId?: string | null }>
   loading?: boolean
 }
@@ -95,11 +95,8 @@ export function ProductoFormPageClient({
         <motion.div className="container mx-auto py-4" initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.5 }}>
           <motion.div className="mb-8" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1, duration: 0.5 }}>
             <div className="flex items-center gap-3 mb-2">
-              <motion.div className="w-12 h-12 bg-linear-to-br from-primary to-purple-600 rounded-xl flex items-center justify-center shadow-lg relative" whileHover={{ scale: 1.05, rotate: 5 }} transition={{ duration: 0.2 }}>
+              <motion.div className="w-12 h-12 bg-linear-to-br from-primary to-purple rounded-xl flex items-center justify-center shadow-lg relative" whileHover={{ scale: 1.05, rotate: 5 }} transition={{ duration: 0.2 }}>
                 <Boxes className="h-6 w-6 text-white" />
-                <motion.div animate={{ rotate: 360, scale: [1, 1.2, 1] }} transition={{ rotate: { duration: 20, repeat: Infinity, ease: 'linear' }, scale: { duration: 2, repeat: Infinity, ease: 'easeInOut' } }} className="absolute -top-1 -right-1">
-                  <Sparkles className="h-4 w-4 text-yellow-400" />
-                </motion.div>
               </motion.div>
               <div>
                 <h1 className="text-3xl font-bold bg-linear-to-r from-slate-900 to-slate-600 dark:from-white dark:to-slate-300 bg-clip-text text-transparent">

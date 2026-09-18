@@ -6,7 +6,7 @@ import { zodResolver } from "@hookform/resolvers/zod"
 import { useForm } from "react-hook-form"
 import { z } from "zod"
 import { LazyMotion, m as motion } from "framer-motion"
-import { AlertTriangle, Sparkles, Loader2 } from "lucide-react"
+import { AlertTriangle, Loader2 } from "lucide-react"
 
 import { Button } from "@/components/ui/button"
 import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form"
@@ -35,8 +35,6 @@ const mermaFormSchema = createMermaSchema.extend({
 })
 
 type MermaFormValues = z.infer<typeof mermaFormSchema>
-
-type MermaFormValues = z.infer<typeof mermaSchema>
 
 interface MermaFormProps {
   initialData?: {
@@ -154,16 +152,6 @@ export function MermaForm({ initialData }: MermaFormProps) {
               <p className="text-sm text-muted-foreground">
                 {initialData ? "Modifique los datos de la merma" : "Ingrese los datos de la merma"}
               </p>
-              <motion.div
-                className="absolute -right-4 -top-1"
-                animate={{ rotate: 360, scale: [1, 1.2, 1] }}
-                transition={{ 
-                  rotate: { duration: 20, repeat: Infinity, ease: "linear" },
-                  scale: { duration: 2, repeat: Infinity, ease: "easeInOut" }
-                }}
-              >
-                <Sparkles className="h-4 w-4 text-yellow-500" />
-              </motion.div>
             </div>
           </motion.div>
 

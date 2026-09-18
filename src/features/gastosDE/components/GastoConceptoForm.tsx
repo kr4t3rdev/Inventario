@@ -5,8 +5,8 @@ import { useRouter } from "next/navigation"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { useForm } from "react-hook-form"
 import { z } from "zod"
-import { LazyMotion, m as motion } from "framer-motion"
-import { FolderOpen, Sparkles, ArrowLeft, Loader2 } from "lucide-react"
+import { MotionConfig, m as motion } from "framer-motion"
+import { FolderOpen, ArrowLeft, Loader2 } from "lucide-react"
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
 import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form"
@@ -45,7 +45,7 @@ export function GastoConceptoForm({ initialData }: GastoConceptoFormProps) {
         if (!result.success) { sileo.error({ title: result.error?.message || 'Error al actualizar' }); return }
         sileo.success({ title: 'El concepto ha sido actualizado exitosamente.' })
       } else {
-        const result = await createGastoConceptoAction({ ...data, isActive: true } as any)
+        const result = await createGastoConceptoAction({ ...data })
         if (!result.success) { sileo.error({ title: result.error?.message || 'Error al crear' }); return }
         sileo.success({ title: 'El concepto ha sido creado exitosamente.' })
       }
@@ -60,15 +60,13 @@ export function GastoConceptoForm({ initialData }: GastoConceptoFormProps) {
   }
 
   return (
+    <MotionConfig reducedMotion="user">
     <motion.div initial={{ opacity: 0, y: 30 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5 }}>
       <Card className="overflow-hidden border-dashed">
         <CardContent className="pt-6">
           <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }} className="flex items-center gap-3 mb-6">
             <motion.div className="w-10 h-10 bg-linear-to-br from-orange-500 to-red-600 rounded-xl flex items-center justify-center shadow-lg relative" whileHover={{ scale: 1.05, rotate: 5 }} transition={{ duration: 0.2 }}>
               <FolderOpen className="h-5 w-5 text-white" />
-              <motion.div animate={{ rotate: 360, scale: [1, 1.2, 1] }} transition={{ rotate: { duration: 20, repeat: Infinity, ease: "linear" }, scale: { duration: 2, repeat: Infinity, ease: "easeInOut" } }} className="absolute -top-1 -right-1">
-                <Sparkles className="h-4 w-4 text-yellow-400" />
-              </motion.div>
             </motion.div>
             <div>
               <h2 className="text-xl font-semibold">{initialData ? "Editar Concepto" : "Nuevo Concepto de Gasto"}</h2>
@@ -76,7 +74,7 @@ export function GastoConceptoForm({ initialData }: GastoConceptoFormProps) {
             </div>
           </motion.div>
           <Form {...form}>
-            <form onSubmit={form.handleSubmit(onSubmit, () => { sileo.error({ title: 'Completá los campos requeridos antes de continuar.' }) })} className="space-y-6">
+            <form onSubmit={form.handleSubmit(onSubmit, () => { sileo.error({ title: 'Completa los campos requeridos antes de continuar.' }) })} className="space-y-6">
               <motion.div initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: 0.2 }}>
                 <FormField control={form.control} name="nombre" render={({ field }) => (
                   <FormItem>
@@ -108,5 +106,6 @@ export function GastoConceptoForm({ initialData }: GastoConceptoFormProps) {
         </CardContent>
       </Card>
     </motion.div>
+    </MotionConfig>
   )
 }

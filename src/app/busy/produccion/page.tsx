@@ -27,11 +27,11 @@ export default async function ProduccionPage() {
 
   return (
     <ProduccionContent
-  // @ts-expect-error
+  // @ts-expect-error TODO: fix type cast for recetas array
       initialRecetas={
       initialRecetas
       }
-  // @ts-expect-error
+  // @ts-expect-error TODO: fix type cast for ordenes array
       initialOrdenes={
       initialOrdenes
       }

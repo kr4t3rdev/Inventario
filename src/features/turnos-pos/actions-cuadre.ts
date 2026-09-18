@@ -41,6 +41,8 @@ export interface CuadreTurnoData {
 		fondoInicialCup: number;
 		fondoInicialUsd: number;
 		fechaApertura: Date;
+		fechaCierre: Date | null;
+		estado: "ABIERTO" | "CERRADO";
 		tipo: string;
 		empleado: { nombre: string; apellido: string } | null;
 	};
@@ -99,7 +101,7 @@ export const getCuadreTurnoAction = withAction(
 
 		// 2. Obtener VentaItems del turno (productos vendidos)
 		const ventaItems = await prisma.ventaItem.findMany({
-			where: { venta: { turnoId: parsed.turnoId } },
+			where: { venta: { turnoId: parsed.turnoId, deletedAt: null } },
 			select: {
 				productoId: true,
 				cantidad: true,
@@ -199,10 +201,10 @@ export const getCuadreTurnoAction = withAction(
 
 		// 7. Calcular total de venta del turno (desde Venta.total)
 		const ventasTurno = await prisma.venta.aggregate({
-			where: { turnoId: parsed.turnoId },
+			where: { turnoId: parsed.turnoId, deletedAt: null },
 			_sum: { total: true },
 		});
-		const totalVentaTurno = ventasTurno._sum.total ?? 0;
+		const totalVentaTurno = ventasTurno._sum.total ?? 0; // Venta.total ya está en pesos
 
 		return {
 			turno: {
@@ -212,6 +214,8 @@ export const getCuadreTurnoAction = withAction(
 				fondoInicialCup: turno.fondoInicialCup,
 				fondoInicialUsd: turno.fondoInicialUsd,
 				fechaApertura: turno.fechaApertura,
+				fechaCierre: turno.fechaCierre,
+				estado: turno.estado,
 				tipo: turno.tipo,
 				empleado: turno.empleado,
 			},

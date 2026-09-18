@@ -7,6 +7,10 @@ import { CurrencyIndicator } from "@/features/contabilidad/components/currency-i
 import { PeriodoActivoIndicator } from "@/features/contabilidad/components/periodo-activo-indicator"
 import { ContabilidadBreadcrumb } from "@/features/contabilidad/components/contabilidad-breadcrumb"
 
+/**
+ * @description Encabezado principal con controles globales y contexto contable.
+ * @returns {Promise<React.JSX.Element>} Encabezado accesible de la aplicación.
+ */
 export async function SiteHeader() {
   const [monedasResult, tasasResult] = await Promise.all([
     getMonedasAction(),
@@ -18,9 +22,12 @@ export async function SiteHeader() {
   
   return (
     <div>
-      <header className="group-has-data-[collapsible=icon]/sidebar-wrapper:h-12 flex h-12 shrink-0 items-center gap-2 border-b transition-[width,height] ease-linear">
-        <div className="flex w-full items-center gap-1 px-4 lg:gap-2 lg:px-6">
-          <SidebarTrigger className="-ml-1" />
+      <header className="group-has-data-[collapsible=icon]/sidebar-wrapper:h-12 flex h-12 min-w-0 shrink-0 items-center gap-2 overflow-hidden border-b transition-[width,height] ease-linear">
+        <div className="flex min-w-0 flex-1 items-center gap-1 px-4 lg:gap-2 lg:px-6">
+          <SidebarTrigger
+            aria-label="Alternar barra lateral"
+            className="-ml-1 size-11"
+          />
           <Separator
             orientation="vertical"
             className="mx-2 data-[orientation=vertical]:h-4"

@@ -11,11 +11,20 @@ import { prisma } from "@/lib/prisma";
 import { requireTenant } from "@/lib/services/tenant-scope";
 import { notificarMerma } from "@/lib/notificaciones-utils";
 import { upsertStockUbicacion } from "@/lib/services/stock-ubicacion-service";
+import {
+	mapearMotivoLegacy,
+	getMovimientosDeOrigen,
+	registrarMovimiento,
+	revertirMovimientosDeOrigen,
+} from "@/features/inventario/movimientos";
 import { createMermaSchema, updateMermaSchema } from "./schemas";
 import type { CreateMermaInput, UpdateMermaInput } from "./schemas";
 import type { AuthenticatedUser } from "@/lib/auth-middleware";
 
-const MERMA_INCLUDE = { producto: true } as const;
+const MERMA_INCLUDE = {
+  producto: true,
+  creadoPor: { select: { userId: true, name: true } },
+} as const;
 
 export const getMermasAction = withAction(
 	async (_input: void, user: AuthenticatedUser) => {
@@ -89,6 +98,7 @@ export const createMermaAction = withAction(
 					costoTotal,
 					tenantId,
 					almacenId: almacenIdEfectivo,
+					creadoPorId: user.userId,
 				},
 				include: MERMA_INCLUDE,
 			});
@@ -99,6 +109,40 @@ export const createMermaAction = withAction(
 				ubicacionId: almacenIdEfectivo,
 				modo: "increment",
 				delta: -parsed.cantidad,
+			});
+
+			await registrarMovimiento(tx, {
+				tenantId,
+				productoId: parsed.productoId,
+				tipoOrigen: "MERMA",
+				origenId: creada.mermaId,
+				tipoUbicacion: "almacen",
+				ubicacionId: almacenIdEfectivo,
+				cantidad: -parsed.cantidad,
+				costoUnitario: producto.precioCosto,
+				secuencia: "SALIDA-0",
+				creadoPorId: user.userId,
+			});
+
+			// Puente legacy: la merma produce su AjusteInventario espejo
+			// (documento unificado de valorización; no duplica kardex).
+			await tx.ajusteInventario.create({
+				data: {
+					tenantId,
+					productoId: parsed.productoId,
+					tipoUbicacion: "almacen",
+					ubicacionId: almacenIdEfectivo,
+					motivo: mapearMotivoLegacy(parsed.motivo),
+					cantidadTeorica: stockUbicacion.cantidadDisponible,
+					cantidadContada:
+						stockUbicacion.cantidadDisponible - parsed.cantidad,
+					diferencia: -parsed.cantidad,
+					costoUnitario: producto.precioCosto,
+					costoTotal: -parsed.cantidad * producto.precioCosto,
+					estado: "APLICADO",
+					origenMermaId: creada.mermaId,
+					creadoPorId: user.userId,
+				},
 			});
 
 			return creada;
@@ -136,7 +180,7 @@ export const updateMermaAction = withAction(
 		const productoId = data.productoId ?? mermaActual.productoId;
 		const cantidad = data.cantidad ?? mermaActual.cantidad;
 		const nuevoAlmacenId = data.almacenId ?? mermaActual.almacenId;
-		const oldAlmacenId = mermaActual.almacenId;
+		const oldAlmacenId = mermaActual.almacenId as string;
 
 		const productoCambia = productoId !== mermaActual.productoId;
 		const cantidadCambia = cantidad !== mermaActual.cantidad;
@@ -144,17 +188,28 @@ export const updateMermaAction = withAction(
 
 		if (productoCambia || cantidadCambia || almacenCambia) {
 			// Resolver almacén destino: si cambia producto, puede venir del producto nuevo
-			let resolvedAlmacenId = nuevoAlmacenId;
+			let resolvedAlmacenId = nuevoAlmacenId as string;
+			// Precio de costo vigente al momento de la edición para recalcular el costo.
+			let precioCostoVigente: number | null = null;
 			if (productoCambia) {
 				const productoNuevo = await prisma.producto.findFirst({
 					where: { id: productoId, tenantId },
-					select: { id: true, almacenId: true },
+					select: { id: true, almacenId: true, precioCosto: true },
 				});
 				if (!productoNuevo)
 					throw new ActionError("Producto no encontrado", "NOT_FOUND");
 				if (data.almacenId === undefined) {
 					resolvedAlmacenId = productoNuevo.almacenId;
 				}
+				precioCostoVigente = productoNuevo.precioCosto;
+			} else if (cantidadCambia) {
+				const productoActual = await prisma.producto.findFirst({
+					where: { id: productoId, tenantId },
+					select: { precioCosto: true },
+				});
+				if (!productoActual)
+					throw new ActionError("Producto no encontrado", "NOT_FOUND");
+				precioCostoVigente = productoActual.precioCosto;
 			}
 
 			const cantidadAdicional =
@@ -179,36 +234,110 @@ export const updateMermaAction = withAction(
 			}
 
 			const merma = await prisma.$transaction(async (tx: any) => {
-				const updated = await tx.merma.update({
-					where: { mermaId },
-					data: {
-						productoId,
-						cantidad,
-						motivo: data.motivo ?? undefined,
-						almacenId: resolvedAlmacenId,
-					},
-					include: MERMA_INCLUDE,
-				});
+			const updated = await tx.merma.update({
+				where: { mermaId },
+				data: {
+					productoId,
+					cantidad,
+					motivo: data.motivo ?? undefined,
+					almacenId: resolvedAlmacenId,
+					...(precioCostoVigente !== null && {
+						costoTotal: precioCostoVigente * cantidad,
+					}),
+				},
+				include: MERMA_INCLUDE,
+			});
 
-				// Revertir stock del producto/almacén anterior
-				await upsertStockUbicacion(tx, {
-					productoId: mermaActual.productoId,
+			// Revertir stock del producto/almacén anterior
+			await upsertStockUbicacion(tx, {
+				productoId: mermaActual.productoId,
+				tipoUbicacion: "almacen",
+				ubicacionId: oldAlmacenId,
+				modo: "increment",
+				delta: mermaActual.cantidad,
+			});
+			// Compensar kardex de la merma original con su costo histórico
+			const movimientosOriginales = await getMovimientosDeOrigen(tx, {
+				tenantId,
+				tipoOrigen: "MERMA",
+				origenId: mermaId,
+			});
+			await revertirMovimientosDeOrigen(tx, {
+				tenantId,
+				tipoOrigen: "MERMA",
+				origenId: mermaId,
+				creadoPorId: user.userId,
+			});
+
+			// Aplicar stock al nuevo producto/almacén
+			await upsertStockUbicacion(tx, {
+				productoId,
+				tipoUbicacion: "almacen",
+				ubicacionId: resolvedAlmacenId,
+				modo: "increment",
+				delta: -cantidad,
+			});
+
+			// Kardex de la merma editada: costo vigente si se recalculó,
+			// si no, el costo histórico del movimiento original.
+			const costoUnitarioNuevo =
+				precioCostoVigente ??
+				movimientosOriginales.find((m) => m.secuencia === "SALIDA-0")
+					?.costoUnitario;
+			if (costoUnitarioNuevo !== undefined && costoUnitarioNuevo !== null) {
+				await registrarMovimiento(tx, {
+					tenantId,
+					productoId,
+					tipoOrigen: "MERMA",
+					origenId: mermaId,
 					tipoUbicacion: "almacen",
-					ubicacionId: oldAlmacenId,
-					modo: "increment",
-					delta: mermaActual.cantidad,
+					ubicacionId: resolvedAlmacenId,
+					cantidad: -cantidad,
+					costoUnitario: costoUnitarioNuevo,
+					secuencia: "SALIDA-1",
+					creadoPorId: user.userId,
 				});
-				// Aplicar stock al nuevo producto/almacén
-				await upsertStockUbicacion(tx, {
+			}
+
+			// Espejo: los ajustes previos de la merma quedan anulados y se
+			// registra la nueva versión con los valores editados.
+			await tx.ajusteInventario.updateMany({
+				where: { tenantId, origenMermaId: mermaId },
+				data: { estado: "ANULADO" },
+			});
+
+			const teoricoPrevio =
+				(await tx.stockUbicacion.findUnique({
+					where: {
+						productoId_tipoUbicacion_ubicacionId: {
+							productoId,
+							tipoUbicacion: "almacen",
+							ubicacionId: resolvedAlmacenId,
+						},
+					},
+					select: { cantidad: true },
+				}))?.cantidad ?? 0;
+
+			await tx.ajusteInventario.create({
+				data: {
+					tenantId,
 					productoId,
 					tipoUbicacion: "almacen",
 					ubicacionId: resolvedAlmacenId,
-					modo: "increment",
-					delta: -cantidad,
-				});
-
-				return updated;
+					motivo: mapearMotivoLegacy(data.motivo),
+					cantidadTeorica: teoricoPrevio,
+					cantidadContada: teoricoPrevio - cantidad,
+					diferencia: -cantidad,
+					costoUnitario: costoUnitarioNuevo ?? 0,
+					costoTotal: -cantidad * (costoUnitarioNuevo ?? 0),
+					estado: "APLICADO",
+					origenMermaId: mermaId,
+					creadoPorId: user.userId,
+				},
 			});
+
+			return updated;
+		});
 
 			revalidatePath("/busy/mermas");
 			return merma;
@@ -241,6 +370,16 @@ export const deleteMermaAction = withAction(
 		if (!merma) throw new ActionError("Merma no encontrada", "NOT_FOUND");
 
 		await prisma.$transaction(async (tx: any) => {
+			await revertirMovimientosDeOrigen(tx, {
+				tenantId,
+				tipoOrigen: "MERMA",
+				origenId: merma.mermaId,
+				creadoPorId: user.userId,
+			});
+			await tx.ajusteInventario.updateMany({
+				where: { tenantId, origenMermaId: merma.mermaId },
+				data: { estado: "ANULADO" },
+			});
 			await tx.merma.delete({ where: { mermaId: id } });
 			await upsertStockUbicacion(tx, {
 				productoId: merma.productoId,

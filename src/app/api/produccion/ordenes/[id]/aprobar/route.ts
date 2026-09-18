@@ -41,8 +41,26 @@ export const POST = withAuthPost(async (request: NextRequest, { params }: { para
       for (const ingrediente of orden.Receta.RecetaIngrediente) {
         const producto = await tx.producto.findUnique({
           where: { id: ingrediente.productoId },
-          select: { id: true, nombre: true, precioCosto: true, stock: true, almacenId: true },
+          select: { id: true, nombre: true, precioCosto: true, almacenId: true },
         });
+
+        const stockEnAlmacen = producto?.almacenId
+          ? await tx.stockUbicacion.findUnique({
+              where: {
+                productoId_tipoUbicacion_ubicacionId: {
+                  productoId: ingrediente.productoId,
+                  tipoUbicacion: 'almacen',
+                  ubicacionId: producto.almacenId,
+                },
+              },
+              select: {
+                productoId: true,
+                cantidad: true,
+                cantidadReservada: true,
+                cantidadDisponible: true,
+              },
+            })
+          : null;
 
         ingredientesConStock.push({
           productoId: ingrediente.productoId,
@@ -54,7 +72,7 @@ export const POST = withAuthPost(async (request: NextRequest, { params }: { para
             ? {
                 nombre: producto.nombre,
                 precioCosto: producto.precioCosto,
-                stock: producto.stock,
+                stock: stockEnAlmacen?.cantidadDisponible ?? 0,
               }
             : undefined,
         });
@@ -71,15 +89,6 @@ export const POST = withAuthPost(async (request: NextRequest, { params }: { para
 
       for (const ingrediente of ingredientesConStock) {
         const cantidadRequerida = calcularCantidadRequeridaMaterial(ingrediente, orden.cantidad);
-
-        await tx.producto.update({
-          where: { id: ingrediente.productoId },
-          data: {
-            stock: {
-              decrement: cantidadRequerida,
-            },
-          },
-        });
 
         if (ingrediente.almacenId) {
           await upsertStockUbicacion(tx, {

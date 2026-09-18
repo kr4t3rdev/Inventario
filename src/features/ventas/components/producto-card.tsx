@@ -27,6 +27,7 @@ interface ProductoCardProps {
   }
   onAddToCart: () => void
   searchTerm?: string
+  reduceMotion?: boolean
 }
 
 const highlightText = (text: string, term?: string) => {
@@ -38,7 +39,7 @@ const highlightText = (text: string, term?: string) => {
   )
 }
 
-export function ProductoCard({ producto, onAddToCart, searchTerm }: ProductoCardProps) {
+export function ProductoCard({ producto, onAddToCart, searchTerm, reduceMotion = false }: ProductoCardProps) {
   const stockBadgeVariant = producto.stock === 0 ? 'destructive' : producto.stock < 5 ? 'secondary' : 'outline'
   const fotos = producto.fotos ?? []
   const hasPhotos = fotos.length > 0
@@ -46,8 +47,8 @@ export function ProductoCard({ producto, onAddToCart, searchTerm }: ProductoCard
 
   return (
     <motion.div
-      whileHover={{ y: -4 }}
-      whileTap={{ scale: 0.98 }}
+      whileHover={reduceMotion ? undefined : { y: -4 }}
+      whileTap={reduceMotion ? undefined : { scale: 0.98 }}
       transition={{ type: "spring", stiffness: 400, damping: 17 }}
     >
       <Card className="overflow-hidden h-full flex flex-col border-dashed hover:border-primary/50 transition-colors duration-200">
@@ -57,7 +58,7 @@ export function ProductoCard({ producto, onAddToCart, searchTerm }: ProductoCard
               {fotoUrl ? (
                 <motion.div
                   className="w-12 h-12 rounded-lg overflow-hidden flex-shrink-0 bg-muted"
-                  whileHover={{ scale: 1.05 }}
+                  whileHover={reduceMotion ? undefined : { scale: 1.05 }}
                 >
                   <img 
                     src={fotoUrl} 
@@ -68,7 +69,7 @@ export function ProductoCard({ producto, onAddToCart, searchTerm }: ProductoCard
               ) : (
                 <motion.div
                   className="w-8 h-8 bg-linear-to-br from-orange-500 to-red-600 rounded-lg flex items-center justify-center flex-shrink-0"
-                  whileHover={{ scale: 1.05, rotate: 5 }}
+                  whileHover={reduceMotion ? undefined : { scale: 1.05, rotate: 5 }}
                 >
                   <Package className="h-4 w-4 text-white" />
                 </motion.div>
@@ -103,10 +104,10 @@ export function ProductoCard({ producto, onAddToCart, searchTerm }: ProductoCard
             <p className="text-sm text-muted-foreground line-clamp-2 mb-2">{producto.descripcion}</p>
           )}
           <motion.p 
-            className="text-lg font-bold bg-linear-to-r from-orange-500 to-red-600 bg-clip-text text-transparent"
+            className="text-lg font-bold text-primary"
             key={producto.precioVenta}
-            initial={{ scale: 1.1 }}
-            animate={{ scale: 1 }}
+            initial={reduceMotion ? false : { scale: 1.1 }}
+            animate={reduceMotion ? undefined : { scale: 1 }}
             transition={{ type: "spring", stiffness: 300, damping: 20 }}
           >
             ${producto.precioVenta.toFixed(2)}
@@ -116,9 +117,14 @@ export function ProductoCard({ producto, onAddToCart, searchTerm }: ProductoCard
           <TooltipProvider>
             <Tooltip>
               <TooltipTrigger asChild>
-                <motion.div className="w-full" whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}>
+                <motion.div
+                  className="w-full"
+                  whileHover={reduceMotion ? undefined : { scale: 1.02 }}
+                  whileTap={reduceMotion ? undefined : { scale: 0.98 }}
+                >
                   <Button 
                     onClick={onAddToCart} 
+                    aria-label={`Añadir ${producto.nombre} al carrito`}
                     className="w-full bg-linear-to-r from-orange-500 to-red-600 hover:from-orange-500/90 hover:to-red-600/90 text-white" 
                     disabled={producto.stock === 0}
                   >

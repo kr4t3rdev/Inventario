@@ -70,6 +70,10 @@ import {
 	getFeaturesGrouped,
 } from "@/features/planes";
 import type { FeatureDef, FeatureCategory } from "@/features/planes";
+import {
+	formatPlanPriceLabel,
+	filterAdminPlans,
+} from "@/features/admin/lib/admin-plan-page";
 
 /* ─── Types ─── */
 
@@ -129,6 +133,7 @@ export default function AdminPlanesPage() {
 	}, []);
 
 	const planes = data?.planes || [];
+	const filteredPlanes = filterAdminPlans(planes, search);
 
 	const groupedFeatures = getFeaturesGrouped();
 
@@ -202,7 +207,7 @@ export default function AdminPlanesPage() {
 	function buildPayload() {
 		return {
 			nombre: formData.nombre,
-			descripcion: formData.descripcion || null,
+			descripcion: formData.descripcion || undefined,
 			precio: formData.precio ? parseFloat(formData.precio) : 0,
 			duracionDias: parseInt(formData.duracionDias) || 30,
 			maxUsuarios: parseInt(formData.maxUsuarios) || 1,
@@ -336,17 +341,19 @@ export default function AdminPlanesPage() {
 									Cargando...
 								</TableCell>
 							</TableRow>
-						) : !planes?.length ? (
+						) : !filteredPlanes?.length ? (
 							<TableRow>
 								<TableCell
 									colSpan={7}
 									className="h-24 text-center text-muted-foreground"
 								>
-									No hay planes configurados
+									{planes.length
+										? "No hay planes que coincidan con la búsqueda"
+										: "No hay planes configurados"}
 								</TableCell>
 							</TableRow>
 						) : (
-							planes.map((plan: any) => (
+							filteredPlanes.map((plan: any) => (
 								<TableRow key={plan.planId}>
 									<TableCell>
 										<div>
@@ -362,9 +369,10 @@ export default function AdminPlanesPage() {
 										<Badge
 											variant={plan.precio === 0 ? "secondary" : "default"}
 										>
-											{plan.precio === 0
-												? "Gratis"
-												: `$${Number(plan.precio).toLocaleString()}/mes`}
+											{formatPlanPriceLabel(
+												Number(plan.precio),
+												plan.duracionDias,
+											)}
 										</Badge>
 									</TableCell>
 									<TableCell className="text-sm">
@@ -449,16 +457,18 @@ export default function AdminPlanesPage() {
 												variant="outline"
 												size="sm"
 												onClick={() => openEdit(plan)}
+												aria-label={`Editar plan ${plan.nombre}`}
 											>
-												<Edit className="h-4 w-4" />
+												<Edit className="h-4 w-4" aria-hidden="true" />
 											</Button>
 											<Button
 												variant="ghost"
 												size="sm"
 												onClick={() => handleDelete(plan.planId)}
 												className="text-rose-500 hover:text-rose-600"
+												aria-label={`Eliminar plan ${plan.nombre}`}
 											>
-												<Trash2 className="h-4 w-4" />
+												<Trash2 className="h-4 w-4" aria-hidden="true" />
 											</Button>
 										</div>
 									</TableCell>
@@ -479,15 +489,15 @@ export default function AdminPlanesPage() {
 					}
 				}}
 			>
-				<DialogContent className="max-w-3xl max-h-[90vh]">
+				<DialogContent className="max-w-3xl max-h-[90vh]" onInteractOutside={(e) => e.preventDefault()}>
 					<DialogHeader>
 						<DialogTitle>
 							{editingPlan ? "Editar Plan" : "Nuevo Plan"}
 						</DialogTitle>
 						<DialogDescription>
 							{editingPlan
-								? "Modificá los datos, límites y módulos del plan"
-								: "Creá un nuevo plan de suscripción con sus módulos y límites"}
+								? "Modifica los datos, límites y módulos del plan"
+								: "Crea un nuevo plan de suscripción con sus módulos y límites"}
 						</DialogDescription>
 					</DialogHeader>
 
@@ -644,7 +654,7 @@ export default function AdminPlanesPage() {
 											}
 										/>
 										<p className="text-[10px] text-muted-foreground">
-											Usá 999999 para ilimitado
+											Usa 999999 para ilimitado
 										</p>
 									</div>
 									<div className="grid gap-2">
@@ -774,8 +784,9 @@ export default function AdminPlanesPage() {
 																		enableAllInCategory(cat);
 																	}}
 																	title="Activar todos"
+																	aria-label={`Activar todos los módulos de ${cat}`}
 																>
-																	<CheckCircle2 className="h-3.5 w-3.5 text-emerald-500" />
+																	<CheckCircle2 className="h-3.5 w-3.5 text-emerald-500" aria-hidden="true" />
 																</Button>
 																<Button
 																	variant="ghost"
@@ -786,8 +797,9 @@ export default function AdminPlanesPage() {
 																		disableAllInCategory(cat);
 																	}}
 																	title="Desactivar todos"
+																	aria-label={`Desactivar todos los módulos de ${cat}`}
 																>
-																	<XCircle className="h-3.5 w-3.5 text-muted-foreground" />
+																	<XCircle className="h-3.5 w-3.5 text-muted-foreground" aria-hidden="true" />
 																</Button>
 															</div>
 															{isExpanded ? (

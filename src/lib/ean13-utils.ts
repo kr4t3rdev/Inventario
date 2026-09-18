@@ -238,7 +238,7 @@ export async function FindNextAvailableSurtido(
     // Extraer números de surtido válidos
     const surtidoNumbers = existingProducts
       .map((product) => {
-        const num = parseInt(product.surtidoCodigo, 10)
+        const num = parseInt(product.surtidoCodigo ?? '', 10)
         return isNaN(num) ? null : num
       })
       .filter((n): n is number => n !== null)

@@ -1,0 +1,116 @@
+
+ RUN  v3.2.4 /Users/arturo/Documents/Proyecto Inventario/TCP
+
+ ❯ src/lib/auth/__tests__/permission-parity.test.ts (11 tests | 3 failed) 19ms
+   ✓ fixture de paridad — forma > cubre exactamente los 3 roles fijos 2ms
+   ✓ fixture de paridad — forma > las listas están ordenadas, sin duplicados y solo con claves del registry 3ms
+   × fixture de paridad — forma > el fixture de manager contiene todas las claves del registry 9ms
+     → expected [ 'compras.compras.gestionar', …(77) ] to deeply equal [ 'compras.compras.gestionar', …(79) ]
+   × paridad día-1 — resolutor del registry ≡ snapshot > defaultPermissions(manager) produce exactamente el snapshot 2ms
+     → expected [ 'compras.compras.gestionar', …(79) ] to deeply equal [ 'compras.compras.gestionar', …(77) ]
+   × paridad día-1 — resolutor del registry ≡ snapshot > defaultPermissions(economico) produce exactamente el snapshot 1ms
+     → expected [ 'financiero.auditoria.ver', …(22) ] to deeply equal [ 'financiero.auditoria.ver', …(21) ]
+   ✓ paridad día-1 — resolutor del registry ≡ snapshot > defaultPermissions(dependiente) produce exactamente el snapshot 0ms
+   ✓ paridad día-1 — resolutor del registry ≡ snapshot > las claves sin guard server-side están en los 3 roles (paridad de servidor abierto) 0ms
+   ✓ paridad día-1 — resolutor del registry ≡ snapshot > una clave con requireManagerRole (rrhh.nomina.calcular) solo vive en manager 1ms
+   ✓ paridad de la política declarada (facturas/empleados) sin allowlist > ventas.facturas.consultar cubre manager y dependiente (política declarada) 0ms
+   ✓ paridad de la política declarada (facturas/empleados) sin allowlist > las claves rrhh quedan fuera de economico y dependiente (manager-only) 0ms
+   ✓ paridad de la política declarada (facturas/empleados) sin allowlist > las claves derivadas del sidebar económico siguen en economico 0ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 3 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  src/lib/auth/__tests__/permission-parity.test.ts > fixture de paridad — forma > el fixture de manager contiene todas las claves del registry
+AssertionError: expected [ 'compras.compras.gestionar', …(77) ] to deeply equal [ 'compras.compras.gestionar', …(79) ]
+
+- Expected
++ Received
+
+@@ -66,12 +66,10 @@
+    "rrhh.vacaciones.aprobar",
+    "rrhh.vacaciones.calcular-acumulacion",
+    "rrhh.vacaciones.eliminar",
+    "rrhh.vacaciones.solicitar",
+    "ventas.contratos.gestionar",
+-   "ventas.devolucion.reembolso",
+-   "ventas.devolucion.registrar",
+    "ventas.facturas.consultar",
+    "ventas.ofertas.gestionar",
+    "ventas.pedido.gestionar",
+    "ventas.precio.override",
+    "ventas.servicios.editar",
+
+ ❯ src/lib/auth/__tests__/permission-parity.test.ts:59:33
+     57|  it('el fixture de manager contiene todas las claves del registry', ()…
+     58|   const allKeys = PERMISSION_REGISTRY.map((p) => p.key).sort();
+     59|   expect(fixtureFor('manager')).toEqual(allKeys);
+       |                                 ^
+     60|  });
+     61| });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/3]⎯
+
+ FAIL  src/lib/auth/__tests__/permission-parity.test.ts > paridad día-1 — resolutor del registry ≡ snapshot > defaultPermissions(manager) produce exactamente el snapshot
+AssertionError: expected [ 'compras.compras.gestionar', …(79) ] to deeply equal [ 'compras.compras.gestionar', …(77) ]
+
+- Expected
++ Received
+
+@@ -66,10 +66,12 @@
+    "rrhh.vacaciones.aprobar",
+    "rrhh.vacaciones.calcular-acumulacion",
+    "rrhh.vacaciones.eliminar",
+    "rrhh.vacaciones.solicitar",
+    "ventas.contratos.gestionar",
++   "ventas.devolucion.reembolso",
++   "ventas.devolucion.registrar",
+    "ventas.facturas.consultar",
+    "ventas.ofertas.gestionar",
+    "ventas.pedido.gestionar",
+    "ventas.precio.override",
+    "ventas.servicios.editar",
+
+ ❯ src/lib/auth/__tests__/permission-parity.test.ts:66:20
+     64|  it.each([...TENANT_ROLES])('defaultPermissions(%s) produce exactament…
+     65|   const resolved = [...getDefaultPermissionsForRole(role)].sort();
+     66|   expect(resolved).toEqual(fixtureFor(role));
+       |                    ^
+     67|  });
+     68| 
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/3]⎯
+
+ FAIL  src/lib/auth/__tests__/permission-parity.test.ts > paridad día-1 — resolutor del registry ≡ snapshot > defaultPermissions(economico) produce exactamente el snapshot
+AssertionError: expected [ 'financiero.auditoria.ver', …(22) ] to deeply equal [ 'financiero.auditoria.ver', …(21) ]
+
+- Expected
++ Received
+
+@@ -15,10 +15,11 @@
+    "inventario.unidades.gestionar",
+    "operaciones.clientes.gestionar",
+    "operaciones.pos.gestionar",
+    "operaciones.referidos.gestionar",
+    "operaciones.servicios.acceder",
++   "ventas.devolucion.registrar",
+    "ventas.pedido.gestionar",
+    "ventas.venta.anular",
+    "ventas.venta.editar",
+    "ventas.venta.registrar",
+  ]
+
+ ❯ src/lib/auth/__tests__/permission-parity.test.ts:66:20
+     64|  it.each([...TENANT_ROLES])('defaultPermissions(%s) produce exactament…
+     65|   const resolved = [...getDefaultPermissionsForRole(role)].sort();
+     66|   expect(resolved).toEqual(fixtureFor(role));
+       |                    ^
+     67|  });
+     68| 
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/3]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  3 failed | 8 passed (11)
+   Start at  16:57:43
+   Duration  2.17s (transform 136ms, setup 173ms, collect 59ms, tests 19ms, environment 634ms, prepare 250ms)
+

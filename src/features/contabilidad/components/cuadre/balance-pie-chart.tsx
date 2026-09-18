@@ -128,7 +128,7 @@ export function BalancePieChart({ saldosPorCuenta }: BalancePieChartProps) {
 							formatter={(
 								value: number,
 								_name: string,
-								props: { payload: { saldoActual: number; moneda: string } },
+								props: any,
 							) => [formatCurrency(value, props.payload.moneda), "Saldo"]}
 						/>
 						<Legend content={CUSTOMIZED_LEGEND} />

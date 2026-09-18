@@ -7,6 +7,7 @@ import { Settings, ArrowLeft } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
 import { cn } from '@/lib/utils';
+import { AccountingPolicyCard } from '@/features/contabilidad/components/accounting-policy-card';
 
 ;
 
@@ -120,7 +121,8 @@ export default function ConfiguracionPage(): React.JSX.Element {
           </motion.div>
 
           {/* Main Content */}
-          <motion.div variants={fadeInUp}>
+          <motion.div variants={fadeInUp} className="space-y-6">
+             <AccountingPolicyCard />
              <TiposPagoConfigPage />
           </motion.div>
         </motion.div>

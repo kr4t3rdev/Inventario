@@ -1,19 +1,17 @@
 "use client";
 
 import { useMemo, useState, useCallback, useEffect } from "react";
-;
+import { useRouter } from "next/navigation";
+import { EstadoBadge } from "@/features/contabilidad/components/cxp/estado-badge";
+import { PagosExpandidos } from "@/features/contabilidad/components/cxp/pagos-expandidos";
+import { CxpMetricsCards } from "@/features/contabilidad/components/cxp/cxp-metrics-cards";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import {
-	TrendingUp,
-	TrendingDown,
-	DollarSign,
 	CreditCard,
 	FileText,
 	AlertCircle,
-	CheckCircle2,
-	Clock,
 	ChevronDown,
 	ChevronRight,
 	Search,
@@ -53,15 +51,11 @@ import Link from "next/link";
 import React from "react";
 import { toast } from "sonner";
 import {
-	LazyMotion,
 	m as motion,
 	AnimatePresence,
-	useSpring,
-	useTransform,
-	useReducedMotion,
 } from "framer-motion";
+import { useAuth } from "@/contexts/auth-context";
 import { cn } from "@/lib/utils";
-import { AnimatedNumber } from "@/components/ui/animated-number";
 import {
 	PageTransition,
 	StaggerContainer,
@@ -74,138 +68,11 @@ const surfaceCardClass = cn(
 	"dark:border-slate-800/60 dark:bg-slate-950/15",
 );
 
-interface PagosExpandidosProps {
-	pagos: PagoCuentaPorPagar[];
-}
-
-function PagosExpandidos({ pagos }: PagosExpandidosProps) {
-	if (!pagos || pagos.length === 0) {
-		return (
-			<motion.div
-				initial={{ opacity: 0, height: 0 }}
-				animate={{ opacity: 1, height: "auto" }}
-				exit={{ opacity: 0, height: 0 }}
-				className="p-6 text-sm text-muted-foreground bg-muted/30 rounded-lg border border-dashed"
-			>
-				<div className="flex items-center gap-2">
-					<AlertCircle className="h-4 w-4" />
-					No hay pagos registrados para esta factura.
-				</div>
-			</motion.div>
-		);
-	}
-
-	return (
-		<motion.div
-			initial={{ opacity: 0, height: 0 }}
-			animate={{ opacity: 1, height: "auto" }}
-			exit={{ opacity: 0, height: 0 }}
-			className="p-4 bg-muted/30 rounded-lg border border-l-4 border-l-primary/30 ml-4 mt-2 mb-2"
-		>
-			<h4 className="font-semibold mb-3 text-sm flex items-center gap-2">
-				<CreditCard className="h-4 w-4 text-primary" />
-				<span>Historial de Pagos</span>
-				<Badge variant="secondary" className="text-xs font-normal">
-					{pagos.length} {pagos.length === 1 ? "pago" : "pagos"}
-				</Badge>
-			</h4>
-			<div className="rounded-md border overflow-hidden">
-				<Table>
-					<TableHeader>
-						<TableRow className="bg-muted/50 hover:bg-muted/50">
-							<TableHead className="text-xs font-semibold">Fecha</TableHead>
-							<TableHead className="text-xs font-semibold">
-								N° Transacción
-							</TableHead>
-							<TableHead className="text-xs font-semibold">
-								Cuenta Proveedor
-							</TableHead>
-							<TableHead className="text-xs text-right font-semibold">
-								Monto
-							</TableHead>
-							<TableHead className="text-xs font-semibold">
-								Observaciones
-							</TableHead>
-						</TableRow>
-					</TableHeader>
-					<TableBody>
-						{pagos.map((pago, idx) => (
-							<motion.tr
-								key={pago.pagoCuentaPorPagarId}
-								initial={{ opacity: 0, x: -10 }}
-								animate={{ opacity: 1, x: 0 }}
-								transition={{ delay: idx * 0.05 }}
-								className="hover:bg-muted/30 border-b last:border-0"
-							>
-								<TableCell className="text-xs text-muted-foreground">
-									{new Date(pago.fechaPago).toLocaleDateString("es-ES", {
-										day: "2-digit",
-										month: "short",
-										year: "numeric",
-									})}
-								</TableCell>
-								<TableCell className="text-xs font-mono font-medium">
-									{pago.numeroTransaccion}
-								</TableCell>
-								<TableCell className="text-xs font-mono">
-									{pago.cuentaProveedor}
-								</TableCell>
-								<TableCell className="text-xs text-right font-medium text-green-600">
-									{formatCurrency(pago.monto)}
-								</TableCell>
-								<TableCell className="text-xs text-muted-foreground max-w-[200px] truncate">
-									{pago.observaciones || "-"}
-								</TableCell>
-							</motion.tr>
-						))}
-					</TableBody>
-				</Table>
-			</div>
-		</motion.div>
-	);
-}
-
-function EstadoBadge({ estado }: { estado: string }) {
-	const configs = {
-		PENDIENTE: {
-			variant: "destructive" as const,
-			icon: AlertCircle,
-			label: "Pendiente",
-			className:
-				"bg-red-100 text-red-700 border-red-200 hover:bg-red-100 dark:bg-red-900/30 dark:text-red-300 dark:border-red-800",
-		},
-		PAGADA: {
-			variant: "default" as const,
-			icon: CheckCircle2,
-			label: "Pagada",
-			className:
-				"bg-green-100 text-green-700 border-green-200 hover:bg-green-100 dark:bg-green-900/30 dark:text-green-300 dark:border-green-800",
-		},
-		PARCIAL: {
-			variant: "secondary" as const,
-			icon: Clock,
-			label: "Parcial",
-			className:
-				"bg-amber-100 text-amber-700 border-amber-200 hover:bg-amber-100 dark:bg-amber-900/30 dark:text-amber-300 dark:border-amber-800",
-		},
-	};
-
-	const config = configs[estado as keyof typeof configs] || configs.PENDIENTE;
-	const Icon = config.icon;
-
-	return (
-		<Badge
-			variant={config.variant}
-			className={`flex items-center gap-1.5 w-fit ${config.className}`}
-		>
-			<Icon className="h-3 w-3" />
-			{config.label}
-		</Badge>
-	);
-}
-
 export default function CuentasPorPagarPage() {
+	const router = useRouter();
+	const { user } = useAuth();
 	const [search, setSearch] = useState("");
+	const [debouncedSearch, setDebouncedSearch] = useState("");
 	const [estado, setEstado] = useState<string>("all");
 	const [tipo, setTipo] = useState<string>("all");
 	const [page, setPage] = useState(1);
@@ -222,20 +89,23 @@ export default function CuentasPorPagarPage() {
 	);
 	const [isLoading, setIsLoading] = useState(true);
 	const [fetchError, setFetchError] = useState<unknown>(null);
+	const isBlocked =
+		user?.role !== "admin" &&
+		user?.planFeatures?.["cuentas-pagar"] !== true;
 
 	const loadData = useCallback(
-		async (overrides?: {
+		async (overrides: {
 			search?: string;
 			estado?: string;
 			tipo?: string;
 			page?: number;
 			limit?: number;
 		}) => {
-			const s = overrides?.search ?? search;
-			const e = overrides?.estado ?? estado;
-			const t = overrides?.tipo ?? tipo;
-			const p = overrides?.page ?? page;
-			const l = overrides?.limit ?? limit;
+			const s = overrides.search ?? "";
+			const e = overrides.estado ?? "all";
+			const t = overrides.tipo ?? "all";
+			const p = overrides.page ?? 1;
+			const l = overrides.limit ?? 10;
 
 			setIsLoading(true);
 			setFetchError(null);
@@ -248,10 +118,10 @@ export default function CuentasPorPagarPage() {
 					page: p,
 					limit: l,
 				});
-				if (result.success && result.data) {
-					setDataResult(result.data);
+				if (!result.success) {
+					setFetchError(result.error.message ?? true);
 				} else {
-					setFetchError(result.error?.message ?? true);
+					setDataResult(result.data);
 				}
 			} catch (err) {
 				setFetchError(err);
@@ -259,21 +129,22 @@ export default function CuentasPorPagarPage() {
 				setIsLoading(false);
 			}
 		},
-		[search, estado, tipo, page, limit],
+		[],
 	);
 
-	// Initial load
+	// Debounce de búsqueda: una sola consulta por pausa de tipado.
 	useEffect(() => {
-		loadData();
-	}, []); // eslint-disable-line react-hooks/exhaustive-deps
+		const t = setTimeout(() => {
+			setDebouncedSearch(search);
+			setPage(1);
+		}, 400);
+		return () => clearTimeout(t);
+	}, [search]);
 
-	// Reload when filters change
+	// Carga inicial + recarga en cualquier cambio de filtro o página.
 	useEffect(() => {
-		if (dataResult !== null) {
-			// skip initial (handled above)
-			loadData();
-		}
-	}, [search, estado, tipo, page, limit]); // eslint-disable-line react-hooks/exhaustive-deps
+		loadData({ search: debouncedSearch, estado, tipo, page, limit });
+	}, [debouncedSearch, estado, tipo, page, limit, loadData]);
 
 	const cuentas = useMemo(
 		() => (dataResult?.cuentas ?? []) as unknown as CuentaPorPagar[],
@@ -304,6 +175,16 @@ export default function CuentasPorPagarPage() {
 				m.totalFacturado > 0 ? (m.totalPagado / m.totalFacturado) * 100 : 0,
 		};
 	}, [dataResult?.metricas]);
+
+	useEffect(() => {
+		if (isBlocked) {
+			router.replace("/busy/contabilidad");
+		}
+	}, [isBlocked, router]);
+
+	if (isBlocked) {
+		return null;
+	}
 
 	const toggleExpanded = (cuentaId: string) => {
 		const newExpanded = new Set(expandedRows);
@@ -417,116 +298,7 @@ export default function CuentasPorPagarPage() {
 							</div>
 
 							{/* Cards de métricas */}
-							<div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-								<AnimatedCard>
-									<Card
-										className={cn(
-											surfaceCardClass,
-											"border-l-4 border-l-primary hover:shadow-md transition-shadow",
-										)}
-									>
-										<CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-											<CardTitle className="text-sm font-medium text-muted-foreground">
-												Total Facturado
-											</CardTitle>
-											<DollarSign className="h-4 w-4 text-blue-500" />
-										</CardHeader>
-										<CardContent>
-											<div className="text-2xl font-bold text-foreground">
-												<AnimatedNumber
-													value={metricas.totalFacturado}
-													currency="$"
-												/>
-											</div>
-											<p className="text-xs text-muted-foreground mt-1">
-												{metricas.totalCuentas} facturas de proveedores
-											</p>
-										</CardContent>
-									</Card>
-								</AnimatedCard>
-
-								<AnimatedCard>
-									<Card
-										className={cn(
-											surfaceCardClass,
-											"border-l-4 border-l-chart-2 hover:shadow-md transition-shadow",
-										)}
-									>
-										<CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-											<CardTitle className="text-sm font-medium text-muted-foreground">
-												Total Pagado
-											</CardTitle>
-											<TrendingUp className="h-4 w-4 text-green-500" />
-										</CardHeader>
-										<CardContent>
-											<div className="text-2xl font-bold text-foreground">
-												<AnimatedNumber
-													value={metricas.totalPagado}
-													currency="$"
-												/>
-											</div>
-											<p className="text-xs text-green-600 mt-1 font-medium">
-												{metricas.porcentajePagado.toFixed(1)}% pagado
-											</p>
-										</CardContent>
-									</Card>
-								</AnimatedCard>
-
-								<AnimatedCard>
-									<Card
-										className={cn(
-											surfaceCardClass,
-											"border-l-4 border-l-destructive hover:shadow-md transition-shadow",
-										)}
-									>
-										<CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-											<CardTitle className="text-sm font-medium text-muted-foreground">
-												Saldo Pendiente
-											</CardTitle>
-											<TrendingDown className="h-4 w-4 text-red-500" />
-										</CardHeader>
-										<CardContent>
-											<div className="text-2xl font-bold text-red-600">
-												<AnimatedNumber
-													value={metricas.totalSaldo}
-													currency="$"
-												/>
-											</div>
-											<p className="text-xs text-muted-foreground mt-1">
-												{metricas.cuentasPendientes} cuentas pendientes
-											</p>
-										</CardContent>
-									</Card>
-								</AnimatedCard>
-
-								<AnimatedCard>
-									<Card
-										className={cn(
-											surfaceCardClass,
-											"border-l-4 border-l-accent hover:shadow-md transition-shadow",
-										)}
-									>
-										<CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-											<CardTitle className="text-sm font-medium text-muted-foreground">
-												Estado General
-											</CardTitle>
-											<CreditCard className="h-4 w-4 text-amber-500" />
-										</CardHeader>
-										<CardContent>
-											<div className="text-2xl font-bold text-foreground">
-												{metricas.cuentasPagadas}
-												<span className="text-sm font-normal text-muted-foreground">
-													{" "}
-													/ {metricas.totalCuentas}
-												</span>
-											</div>
-											<p className="text-xs text-muted-foreground mt-1">
-												facturas pagadas
-											</p>
-										</CardContent>
-									</Card>
-								</AnimatedCard>
-							</div>
+				<CxpMetricsCards metricas={metricas} />
 						</StaggerItem>
 
 						{/* Filtros y tabla */}
@@ -544,7 +316,7 @@ export default function CuentasPorPagarPage() {
 											<Button
 												variant="outline"
 												size="sm"
-												onClick={() => loadData()}
+												onClick={() => loadData({ search: debouncedSearch, estado, tipo, page, limit })}
 											>
 												<RefreshCw className="mr-2 h-4 w-4" />
 												Actualizar
@@ -679,9 +451,15 @@ export default function CuentasPorPagarPage() {
 																	<h3 className="text-lg font-semibold mb-2">
 																		Error al cargar las cuentas
 																	</h3>
-																	<p className="text-muted-foreground">
-																		Intente nuevamente más tarde.
+																	<p className="text-muted-foreground mb-4">
+																		No se pudieron cargar las cuentas por pagar.
 																	</p>
+																	<Button
+																		variant="outline"
+onClick={() => loadData({ search: debouncedSearch, estado, tipo, page, limit })}
+																	>
+																		Intentar nuevamente
+																	</Button>
 																</div>
 															</TableCell>
 														</TableRow>
@@ -945,7 +723,7 @@ export default function CuentasPorPagarPage() {
 							onSuccess={() => {
 								setOpenPago(false);
 								setSelectedCuenta(null);
-								loadData();
+								loadData({ search: debouncedSearch, estado, tipo, page, limit });
 							}}
 							isCuentaPorPagar={true}
 							cuentaPorPagarId={selectedCuenta.cuentaPorPagarId}

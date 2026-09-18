@@ -29,7 +29,36 @@ Stack tecnológico:
 - `.env.local`
 - `prisma/.env`
 
-## Build and Test Commands
+## Demo Features
+
+- `TenantLicense.isDemo` (Boolean): marca licencias demo, filtradas de KPIs del admin
+- `TenantLicense.createdBy` (String?): ID del admin que creó la demo (auditoría)
+- `createDemoTenantAction`: crea tenant + usuario + licencia demo + seed de datos
+- `cleanupExpiredDemoLicenciasAction`: desactiva demos expiradas (dry-run o real)
+- Cron job cada 1h: `deactivate-expired-demos.sh` via `no_agent=True`
+- **Seed diferenciado por plan**:
+  - `prisma/seed/demo/base-seed.ts` → Básico (~20 productos, 1 almacén)
+  - `prisma/seed/demo/professional-seed.ts` → +25 productos, +1 almacén, ventas
+  - `prisma/seed/demo/enterprise-seed.ts` → +50 productos, +2 almacenes, compras, transferencias
+  - Orquestador: `src/lib/services/demo-seed.ts` (resuelve perfil y ejecuta seeds)
+
+## EAN-13 / CLAS Classifier
+
+- Feature flag: `categorias-ean13` en Plan.features + `usaCodigoEan13` en MiEmpresa
+- CLAS classifier: archivo `public/clasificador.md` parseado en `src/lib/clas-classifier.ts`
+- "Categorías" y "Subcategorías" se renombran a "Secciones CLAS" y "Específicos CLAS" en modo EAN-13
+- Helper `getCategoryLabels(usaEan13)` en `src/features/categorias/lib/category-labels.ts`
+- Validación CLAS: `CategoriaValidator` en `src/lib/categoria-validation.ts`
+
+## Motor de precios (LP-0, implementado 2026-09-12)
+
+- El servidor re-resuelve precios en toda creación de venta; el `precioUnitario` del payload debe coincidir o la venta se rechaza con `PRICE_MISMATCH`.
+- Cadena de prioridad: lista del cliente > lista del punto de venta > `Producto.precioVenta`. Resolver puro en `src/features/ventas/services/precio-venta-resolver.ts`.
+- Desviaciones solo con permiso `ventas.precio.override` (default manager, `sensitive`), auditadas en `AuditLog` dentro de la transacción.
+- El payload del POS incluye `precios` por producto (listas PV+cliente) via `GET /api/ventas/punto-venta/[id]/productos?clienteId=`; endpoint fail-closed: sin tenant en contexto → 403.
+- Doc completa: `content/docs/modules/ventas/integridad-precios.md`. Plan de extensión (vigencias, escalones, moneda): `docs/auditoria-listas-precios-vs-odoo.md`.
+
+
 
 ### Desarrollo
 
@@ -52,6 +81,19 @@ Stack tecnológico:
 **Importante**: Después de ejecutar los tests y obtener un resultado, cierra la ejecución antes de continuar.
 
 ## Code Style Guidelines
+
+### Language and UI Copy
+
+- Todo texto visible para usuarios debe escribirse en **español neutro internacional**.
+- No usar voseo ni conjugaciones rioplatenses en UI, mensajes, validaciones, documentación
+  funcional o datos de demostración.
+- Evitar formas como `vos`, `sos`, `tenés`, `querés`, `podés`, `probá`, `hacé`, `elegí`,
+  `compartí`, `ganá`, `cobrá` o `registrate`.
+- Usar equivalentes neutrales como `tú`, `eres`, `tienes`, `quieres`, `puedes`, `prueba`,
+  `haz`, `elige`, `comparte`, `gana`, `cobra` y `regístrate`.
+- No eliminar tildes gramaticalmente correctas del español neutro (`está`, `será`, `regístrate`).
+- Los cambios de copy en la landing deben mantener aprobado
+  `src/features/landing/__tests__/neutral-spanish-copy.test.ts`.
 
 ### Imports
 
@@ -287,3 +329,68 @@ Para nuevas features, usar Server Actions. Solo usar API Routes cuando sea estri
 - Maneja errores con try-catch y devuelve NextResponse.json con código apropiado.
 - Consultas a base de datos via Prisma con await y manejo de null checks.
 - Params de query via `searchParams` de URL.
+
+## Codebase Knowledge Graph (codebase-memory-mcp)
+
+This project has a knowledge graph via codebase-memory-mcp (95,577 nodes, 121,522 edges) for structural code queries. ALWAYS prefer these tools over grep/glob for code discovery:
+
+### Priority Order
+1. `search_graph` — find functions, classes, routes, variables by name or natural language
+2. `trace_path` — trace who calls a function or what it calls (impact analysis)
+3. `get_code_snippet` — read source code of a specific function/class
+4. `query_graph` — run Cypher queries for complex patterns (hot paths, dead code, etc.)
+5. `get_architecture` — high-level project overview with community clusters
+
+### When to fall back to grep/glob
+- Searching for string literals, error messages, config values
+- Searching non-code files (Dockerfiles, shell scripts, configs)
+- When graph tools return insufficient results
+
+### Examples
+- Find a handler: `search_graph(name_pattern=".*OrderHandler.*")`
+- Who calls it: `trace_path(function_name="OrderHandler", direction="inbound")`
+- Read source: `get_code_snippet(qualified_name="pkg/orders.OrderHandler")`
+
+## graphify
+
+This project has a complementary knowledge graph at graphify-out/ with god nodes, community structure, and cross-file relationships (AST-level, complementary to codebase-memory-mcp's LSP-level graph).
+
+When the user types `/graphify`, use the installed graphify skill or instructions before doing anything else.
+
+### Combined Workflow
+- **Broad architecture / overview**: `get_architecture(aspects=['all'])` + `graphify query "overview of X"`
+- **Specific function/class discovery**: `search_graph` first → then `graphify explain "<concept>"` for cross-file relationships
+- **Impact analysis**: `trace_path` for direct callers/callees → `graphify path "<A>" "<B>"` for indirect community-level links
+- **Hot path / complexity analysis**: `query_graph` with Cypher for complexity metrics (loop_depth, linear_scan_in_loop, etc.)
+- **After code changes**: `graphify update .` to keep the AST graph current; codebase-memory-mcp updates on next index
+
+### graphify Rules
+- For codebase questions, first run `graphify query "<question>"` when graphify-out/graph.json exists. Use `graphify path "<A>" "<B>"` for relationships and `graphify explain "<concept>"` for focused concepts. These return a scoped subgraph, usually much smaller than GRAPH_REPORT.md or raw grep output.
+- Dirty graphify-out/ files are expected after hooks or incremental updates; dirty graph files are not a reason to skip graphify. Only skip graphify if the task is about stale or incorrect graph output, or the user explicitly says not to use it.
+- If graphify-out/wiki/index.md exists, use it for broad navigation instead of raw source browsing.
+- Read graphify-out/GRAPH_REPORT.md only for broad architecture review or when query/path/explain do not surface enough context.
+- After modifying code, run `graphify update .` to keep the graph current (AST-only, no API cost).
+
+## Test isolation (MM-B barrier)
+
+- Los tests unitarios corren con `DATABASE_URL` sobrescrita a una dirección local
+  inalcanzable (`127.0.0.1:5114`). Cualquier test que intente usar prisma real
+  falla inmediatamente con `Can't reach database server at 127.0.0.1:5114`.
+- La regla es: **todo test unitario debe mockear `@/lib/prisma` o mockear el
+  servicio accedido por prisma**. Nunca importar prisma directamente en un test
+  sin mockearlo.
+- El contrato se valida automáticamente por `src/lib/__tests__/test-isolation-contract.test.ts`
+  (0 offenders entre los tests del repositorio).
+- Los tests que sí necesitan base de datos real (con fixtures creados, consultas
+  entre tablas, etc.) viven bajo `src/**/__integration__/` y se ejecutan solo
+  con la config dedicada:
+
+```bash
+DATABASE_URL_TEST=postgresql://postgres:test@localhost:5433/test_db pnpm test:integration
+```
+
+- Ese directorio está excluido de la corrida unitaria por defecto (`vitest
+  config exclude: '**/__integration__/**'`), por lo que no pueden romper el
+  pool ni interferir con las pruebas de UI/contabilidad.
+- Casos de uso actuales: `src/lib/__integration__/ean13-reset.test.ts`
+  (yo creé este test como ejemplo del flujo).

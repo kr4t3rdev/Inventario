@@ -1,19 +1,26 @@
 import { prisma } from "@/lib/prisma"
+import { verificarStockBajo as verificarStockBajoDerivado } from "@/lib/verificar-stock"
 
 interface NotificationData {
   title: string
   message: string
+  link?: string
   type: "stock_bajo" | "sin_stock" | "transferencia" | "merma" | "venta"
   prioridad: "alta" | "media" | "baja"
   userId?: string
+  tenantId?: string
 }
 
 export async function crearNotificacion(data: NotificationData) {
   try {
-    // Si no se especifica userId, enviar a todos los usuarios activos
+    // Si no se especifica userId, enviar a todos los usuarios activos del tenant
     if (!data.userId) {
+      if (!data.tenantId) {
+        throw new Error("tenantId is required when creating a broadcast notification")
+      }
+
       const usuarios = await prisma.user.findMany({
-        where: { isActive: true },
+        where: { isActive: true, tenantId: data.tenantId } as any,
         select: { userId: true },
       })
 
@@ -31,9 +38,6 @@ export async function crearNotificacion(data: NotificationData) {
       return notificaciones
     } else {
       const { userId, ...restData } = data
-      if (!userId) {
-        throw new Error("userId is required when creating a notification for a specific user")
-      }
       const notificacion = await prisma.notification.create({
         data: {
           ...restData,
@@ -50,88 +54,10 @@ export async function crearNotificacion(data: NotificationData) {
 }
 
 export async function verificarStockBajo() {
-  try {
-    // Obtener productos con stock bajo (menos de 10 unidades)
-    const productosStockBajo = await prisma.producto.findMany({
-      where: {
-        stock: {
-          lte: 10,
-          gt: 0,
-        },
-      },
-      include: {
-        categoria: true,
-        almacen: true,
-      },
-    })
-
-    // Obtener productos sin stock
-    const productosSinStock = await prisma.producto.findMany({
-      where: {
-        stock: 0,
-      },
-      include: {
-        categoria: true,
-        almacen: true,
-      },
-    })
-
-    // Crear notificaciones para stock bajo
-    for (const producto of productosStockBajo) {
-      // Verificar si ya existe una notificación reciente para este producto
-      const notificacionExistente = await prisma.notification.findFirst({
-        where: {
-          type: "stock_bajo",
-          message: {
-            contains: producto.nombre,
-          },
-          createdAt: {
-            gte: new Date(Date.now() - 24 * 60 * 60 * 1000), // Últimas 24 horas
-          },
-        },
-      })
-
-      if (!notificacionExistente) {
-        await crearNotificacion({
-          title: "Stock Bajo",
-          message: `El producto "${producto.nombre}" tiene stock bajo (${producto.stock} unidades restantes)`,
-          type: "stock_bajo",
-          prioridad: "media",
-        })
-      }
-    }
-
-    // Crear notificaciones para productos sin stock
-    for (const producto of productosSinStock) {
-      const notificacionExistente = await prisma.notification.findFirst({
-        where: {
-          type: "sin_stock",
-          message: {
-            contains: producto.nombre,
-          },
-          createdAt: {
-            gte: new Date(Date.now() - 24 * 60 * 60 * 1000),
-          },
-        },
-      })
-
-      if (!notificacionExistente) {
-        await crearNotificacion({
-          title: "Sin Stock",
-          message: `El producto "${producto.nombre}" está agotado`,
-          type: "sin_stock",
-          prioridad: "alta",
-        })
-      }
-    }
-
-    return {
-      stockBajo: productosStockBajo.length,
-      sinStock: productosSinStock.length,
-    }
-  } catch (error) {
-    console.error("Error verificando stock:", error)
-    throw error
+  const resultado = await verificarStockBajoDerivado()
+  return {
+    stockBajo: resultado.productosStockBajo,
+    sinStock: resultado.productosSinStock,
   }
 }
 
@@ -151,8 +77,10 @@ export async function notificarTransferencia(transferenciaId: string) {
     await crearNotificacion({
       title: "Nueva Transferencia",
       message: `Se transfirieron ${transferencia.cantidad} unidades de "${transferencia.producto?.nombre}" desde ${transferencia.origen?.nombre} hacia ${transferencia.destino?.nombre}`,
+      link: "/busy/transferencias",
       type: "transferencia",
       prioridad: "baja",
+      tenantId: transferencia.tenantId,
     })
   } catch (error) {
     console.error("Error notificando transferencia:", error)
@@ -176,8 +104,10 @@ export async function notificarMerma(mermaId: string) {
     await crearNotificacion({
       title: "Nueva Merma Registrada",
       message: `Se registró una merma de ${merma.cantidad} unidades de "${merma.producto?.nombre}"${merma.motivo ? ` por: ${merma.motivo}` : ""}`,
+      link: "/busy/mermas",
       type: "merma",
       prioridad,
+      tenantId: merma.tenantId,
     })
   } catch (error) {
     console.error("Error notificando merma:", error)

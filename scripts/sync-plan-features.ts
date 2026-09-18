@@ -1,6 +1,10 @@
 /**
- * @description Sincroniza los features canónicos de los planes y de las licencias
- * existentes con la definición actual en `prisma/seed/plans-seed.ts`.
+ * @description Sincroniza solo `Plan.features` con la definición canónica de
+ * `prisma/seed/plans-seed.ts`.
+ *
+ * Importante: NO toca `TenantLicense.features` porque eso es un snapshot legacy
+ * y la arquitectura nueva resuelve permisos desde `Plan.features` +
+ * `TenantLicense.featureOverrides`.
  *
  * Ejecutar: npx tsx scripts/sync-plan-features.ts
  */
@@ -37,17 +41,10 @@ async function main() {
       data: { features: canonicalFeatures },
     });
 
-    const updatedLicenses = await prisma.tenantLicense.updateMany({
-      where: { planId: plan.planId },
-      data: { features: canonicalFeatures },
-    });
-
-    console.log(
-      `✓ ${plan.nombre}: plan sincronizado y ${updatedLicenses.count} licencia(s) actualizada(s).`,
-    );
+    console.log(`✓ ${plan.nombre}: Plan.features sincronizado.`);
   }
 
-  console.log('✅ Features de planes y licencias sincronizados.');
+  console.log('✅ Plan.features sincronizado con la definición canónica.');
 }
 
 main()

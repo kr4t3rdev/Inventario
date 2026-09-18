@@ -6,3 +6,4 @@ export { LandingFaq } from "./components/faq";
 export { LandingContact } from "./components/contact";
 export { LandingFooter } from "./components/footer";
 export { LandingPreloader } from "./utils";
+export { LandingPosDemoSection } from "./components/pos-demo/pos-demo-section";

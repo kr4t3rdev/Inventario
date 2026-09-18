@@ -5,11 +5,14 @@ import { useDropzone } from 'react-dropzone'
 import { Upload, X, Image as ImageIcon, Loader2 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { toast } from 'sonner'
-import { getAuthToken } from '@/lib/token'
+import type { CloudinaryAssetUploadResult } from '@/lib/upload/cloudinary-asset'
+import { toLegacyAssetUploadResult, uploadAsset } from '@/lib/upload/upload-asset'
 
 interface ProductPhotoUploadProps {
   photos: string[]
   onPhotosChange: (photos: string[]) => void
+  assets?: CloudinaryAssetUploadResult[]
+  onAssetsChange?: (assets: CloudinaryAssetUploadResult[]) => void
   maxPhotos?: number
   maxFileSize?: number // Tamaño máximo en bytes
 }
@@ -20,6 +23,8 @@ const DEFAULT_MAX_FILE_SIZE = 2 * 1024 * 1024 // 2MB en bytes
 export function ProductPhotoUpload({ 
   photos, 
   onPhotosChange, 
+  assets = [],
+  onAssetsChange,
   maxPhotos = DEFAULT_MAX_PHOTOS,
   maxFileSize = DEFAULT_MAX_FILE_SIZE 
 }: ProductPhotoUploadProps) {
@@ -37,6 +42,7 @@ export function ProductPhotoUpload({
     setUploading(true)
     
     const uploadedUrls: string[] = []
+    const uploadedAssets: CloudinaryAssetUploadResult[] = []
 
     for (const file of acceptedFiles) {
       try {
@@ -52,24 +58,11 @@ export function ProductPhotoUpload({
           continue
         }
 
-        const formData = new FormData()
-        formData.append('file', file)
-
-        // Upload file to existing upload endpoint
-        const uploadRes = await fetch('/api/upload', {
-          method: 'POST',
-          body: formData,
-          headers: {
-            'Authorization': getAuthToken(),
-          },
+        const uploaded = await uploadAsset(file, {
+          uploadKey: 'productos.photo',
         })
-
-        if (!uploadRes.ok) {
-          throw new Error('Failed to upload file')
-        }
-        
-        const uploadData = await uploadRes.json()
-        uploadedUrls.push(uploadData.url)
+        uploadedUrls.push(uploaded.url)
+        uploadedAssets.push(toLegacyAssetUploadResult(uploaded))
         
       } catch (error) {
         console.error('Upload error:', error)
@@ -81,13 +74,16 @@ export function ProductPhotoUpload({
     
     if (uploadedUrls.length > 0) {
       onPhotosChange([...photos, ...uploadedUrls])
+      onAssetsChange?.(uploadedAssets)
       toast.success(`${uploadedUrls.length} foto(s) subida(s) correctamente`)
     }
-  }, [photos, onPhotosChange, maxPhotos, maxFileSize])
+  }, [photos, onPhotosChange, onAssetsChange, maxPhotos, maxFileSize])
 
   const removePhoto = (indexToRemove: number) => {
+    const removedPhoto = photos[indexToRemove]
     const newPhotos = photos.filter((_, index) => index !== indexToRemove)
     onPhotosChange(newPhotos)
+    onAssetsChange?.(assets.filter((asset) => asset.secureUrl !== removedPhoto))
   }
 
   const { getRootProps, getInputProps, isDragActive } = useDropzone({ 

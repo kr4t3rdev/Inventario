@@ -12,6 +12,7 @@ import { withAction, ActionError } from '@/lib/server-actions';
 import { prisma } from '@/lib/prisma';
 import { requireFeature, requireTenant } from '@/lib/services/tenant-scope';
 import { withPeriodValidation } from '@/lib/services/with-period-validation';
+import { AuditLogService } from '@/lib/services/audit-log-service';
 import type { AuthenticatedUser } from '@/lib/auth-middleware';
 
 // ─── Schemas ───────────────────────────────────────────────
@@ -108,6 +109,14 @@ export const createAnticipoAction = withAction(withPeriodValidation(
       },
     });
 
+    AuditLogService.log({
+      accion: 'CREATE',
+      entidad: 'ANTICIPO',
+      entidadId: anticipo.anticipoId,
+      usuarioId: user.userId,
+      detalles: { tipo: parsed.tipo, monto: parsed.monto, moneda: parsed.moneda, proveedorId: parsed.proveedorId, clienteId: parsed.clienteId },
+    }).catch((err) => console.error('[AuditLog] Error logging anticipo:', err));
+
     revalidatePath('/busy/contabilidad/anticipos');
     return { anticipo };
   }
@@ -130,6 +139,14 @@ export const executeAnticipoAction = withAction(withPeriodValidation(
     data: { estado: 'EJECUTADO' },
   });
 
+  AuditLogService.log({
+    accion: 'EXECUTE',
+    entidad: 'ANTICIPO',
+    entidadId: parsed.anticipoId,
+    usuarioId: user.userId,
+    detalles: { montoEjecutar: parsed.montoEjecutar, documentoDestinoId: parsed.documentoDestinoId, observaciones: parsed.observaciones },
+  }).catch((err) => console.error('[AuditLog] Error logging execute anticipo:', err));
+
   revalidatePath('/busy/contabilidad/anticipos');
   return { anticipo: updated };
 }));
@@ -150,6 +167,14 @@ export const reverseAnticipoAction = withAction(withPeriodValidation(
     where: { anticipoId: parsed.anticipoId },
     data: { estado: 'ANULADO' },
   });
+
+  AuditLogService.log({
+    accion: 'DELETE',
+    entidad: 'ANTICIPO',
+    entidadId: parsed.anticipoId,
+    usuarioId: user.userId,
+    detalles: { montoReverso: parsed.montoReverso, observaciones: parsed.observaciones },
+  }).catch((err) => console.error('[AuditLog] Error logging reverse anticipo:', err));
 
   revalidatePath('/busy/contabilidad/anticipos');
   return { anticipo: updated };

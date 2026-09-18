@@ -1,0 +1,12 @@
+generatorName: kotlin
+inputSpec: docs/openapi/mobile-v1.json
+outputDir: sdks/mobile-v1/kotlin
+library: jvm-okhttp4
+additionalProperties:
+  packageName: com.tcp.mobile.v1
+  groupId: com.tcp
+  artifactId: tcp-mobile-v1-sdk
+  artifactVersion: 1.0.0
+  dateLibrary: java8
+  serializationLibrary: jackson
+  hideGenerationTimestamp: true

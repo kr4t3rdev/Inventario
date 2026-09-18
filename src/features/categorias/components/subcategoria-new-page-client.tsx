@@ -1,21 +1,48 @@
 "use client";
 
+import { useEffect, useState } from "react";
 import type { ReactElement } from "react";
 import Link from "next/link";
 import { LazyMotion, m as motion } from "framer-motion";
-import { ArrowLeft, Sparkles } from "lucide-react";
+import { ArrowLeft } from "lucide-react";
 import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar";
 import { Button } from "@/components/ui/button";
 import { SubcategoryForm } from "@/features/categorias/components/subcategory-form";
+import { useAuth } from "@/contexts/auth-context";
+import { fetchMiEmpresaSettings } from "@/features/mi-empresa/lib/client-mi-empresa";
 
 /**
- * @description Componente cliente para la página de creación de subcategorías CLAS.
+ * @description Componente cliente para la página de creación de subcategorías.
  * Encapsula el layout animado, la sidebar y el formulario interactivo.
- * El Server Component padre solo renderiza este componente.
+ * El formulario interno decide si opera en modo jerárquico normal o CLAS/EAN-13.
  *
- * @returns {ReactElement} Vista completa de creación de subcategorías CLAS.
+ * @returns {ReactElement} Vista completa de creación de subcategorías.
  */
 export function SubcategoriaNewPageClient(): ReactElement {
+  const { user } = useAuth();
+  const [usaEan13, setUsaEan13] = useState(false);
+  const categoriasEan13Habilitado =
+    user?.role === 'admin' || user?.planFeatures?.['categorias-ean13'] === true;
+
+  useEffect(() => {
+    fetchMiEmpresaSettings(() => setUsaEan13(false))
+      .then((r) => {
+        if (r.success) {
+          setUsaEan13(
+            categoriasEan13Habilitado && r.data?.usaCodigoEan13 === true,
+          );
+        } else {
+          setUsaEan13(false);
+        }
+      })
+      .catch(() => setUsaEan13(false));
+  }, [categoriasEan13Habilitado]);
+
+  const title = usaEan13 ? 'Nuevo Específico CLAS' : 'Nueva Subcategoría';
+  const description = usaEan13
+    ? 'Selecciona la sección CLAS y luego el específico que deseas registrar dentro de la taxonomía EAN-13.'
+    : 'Crea una subcategoría nueva dentro de una categoría existente.';
+
   return (
     <SidebarProvider>
       <SidebarInset>
@@ -46,31 +73,17 @@ export function SubcategoriaNewPageClient(): ReactElement {
 
             <div className="flex items-center gap-3 mb-2">
               <motion.div
-                className="w-12 h-12 bg-linear-to-br from-primary to-purple-600 rounded-xl flex items-center justify-center shadow-lg relative"
+                className="w-12 h-12 bg-linear-to-br from-primary to-purple rounded-xl flex items-center justify-center shadow-lg relative"
                 whileHover={{ scale: 1.05, rotate: 5 }}
                 transition={{ duration: 0.2 }}
               >
-                <Sparkles className="h-6 w-6 text-white" />
-                <motion.div
-                  animate={{
-                    rotate: 360,
-                    scale: [1, 1.2, 1],
-                  }}
-                  transition={{
-                    rotate: { duration: 20, repeat: Infinity, ease: "linear" },
-                    scale: { duration: 2, repeat: Infinity, ease: "easeInOut" },
-                  }}
-                  className="absolute -top-1 -right-1"
-                >
-                  <Sparkles className="h-4 w-4 text-yellow-400" />
-                </motion.div>
               </motion.div>
               <div>
                 <h1 className="text-3xl font-bold tracking-tight bg-linear-to-r from-slate-900 to-slate-600 dark:from-white dark:to-slate-300 bg-clip-text text-transparent">
-                  Nueva Subcategoría CLAS
+                  {title}
                 </h1>
                 <p className="text-muted-foreground">
-                  Selecciona la sección CLAS y luego el específico que deseas registrar.
+                  {description}
                 </p>
               </div>
             </div>

@@ -35,7 +35,7 @@ export function register() {
  * aceleración de Prisma).
  */
 function getPrismaInstrumentation() {
-  // eslint-disable-next-line @typescript-eslint/no-require-imports
+   
   const { PrismaInstrumentation } = require("@prisma/instrumentation")
   return new PrismaInstrumentation({
     middleware: false,

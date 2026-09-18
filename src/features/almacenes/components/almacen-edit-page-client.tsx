@@ -3,7 +3,7 @@
 import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar"
 import { AlmacenForm } from "./almacen-form"
 import { LazyMotion, m as motion } from "framer-motion"
-import { Warehouse, AlertCircle, Sparkles, ArrowLeft } from "lucide-react"
+import { Warehouse, AlertCircle, ArrowLeft } from "lucide-react"
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
 import { Button } from "@/components/ui/button"
 import Link from "next/link"
@@ -95,24 +95,12 @@ export function EditarAlmacenPageClient({ almacen }: AlmacenEditPageClientProps)
 
             <div className="flex items-center gap-3 mb-2">
               <motion.div 
-                className="w-12 h-12 bg-linear-to-br from-primary to-purple-600 rounded-xl flex items-center justify-center shadow-lg relative"
+                className="w-12 h-12 bg-linear-to-br from-primary to-purple rounded-xl flex items-center justify-center shadow-lg relative"
                 whileHover={{ scale: 1.05, rotate: 5 }}
                 transition={{ duration: 0.2 }}
               >
                 <Warehouse className="h-6 w-6 text-white" />
-                <motion.div
-                  animate={{ 
-                    rotate: 360,
-                    scale: [1, 1.2, 1]
-                  }}
-                  transition={{ 
-                    rotate: { duration: 20, repeat: Infinity, ease: "linear" },
-                    scale: { duration: 2, repeat: Infinity, ease: "easeInOut" }
-                  }}
-                  className="absolute -top-1 -right-1"
-                >
-                  <Sparkles className="h-4 w-4 text-yellow-400" />
-                </motion.div>
+
               </motion.div>
               <div>
                 <h1 className="text-3xl font-bold bg-linear-to-r from-slate-900 to-slate-600 dark:from-white dark:to-slate-300 bg-clip-text text-transparent">

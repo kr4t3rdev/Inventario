@@ -19,7 +19,7 @@ import {
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
-import { ArrowUpDown, Eye, Printer, Trash2, Sparkles, Receipt } from "lucide-react"
+import { ArrowUpDown, Eye, Printer, Trash2, Receipt } from "lucide-react"
 import { Skeleton } from "@/components/ui/skeleton"
 import { formatCurrency } from "@/lib/utils"
 import { Oferta } from "@/app/models/model"
@@ -307,16 +307,6 @@ export function OfertasTable({ ofertas, isLoading, error }: OfertasTableProps) {
             </motion.div>
             <div className="relative">
               <h2 className="text-lg font-semibold">Lista de Ofertas</h2>
-              <motion.div
-                className="absolute -right-4 -top-1"
-                animate={{ rotate: 360, scale: [1, 1.2, 1] }}
-                transition={{
-                  rotate: { duration: 20, repeat: Infinity, ease: "linear" },
-                  scale: { duration: 2, repeat: Infinity, ease: "easeInOut" }
-                }}
-              >
-                <Sparkles className="h-4 w-4 text-yellow-500" />
-              </motion.div>
             </div>
           </div>
         </motion.div>

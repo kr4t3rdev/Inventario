@@ -19,6 +19,15 @@ export function LandingFooter(): React.JSX.Element {
 					</p>
 				</div>
 
+				<div className="flex flex-wrap items-center gap-2 text-sm">
+					<Link href="#demo-pos" className="rounded-md bg-primary px-3 py-2 font-semibold text-primary-foreground hover:bg-primary/90">
+						Ver demo POS
+					</Link>
+					<Link href="#precios" className="rounded-md border border-border px-3 py-2 font-semibold hover:bg-muted">
+						Ver planes
+					</Link>
+				</div>
+
 				<div className="grid gap-5 sm:grid-cols-2">
 					<div className="space-y-2">
 						<p className="text-sm font-semibold font-mono">Producto</p>
@@ -41,6 +50,18 @@ export function LandingFooter(): React.JSX.Element {
 							>
 								Planes
 							</Link>
+							<Link
+								href="#faq"
+								className="hover:text-foreground hover:underline"
+							>
+								Preguntas frecuentes
+							</Link>
+							<Link
+								href="/docs"
+								className="hover:text-foreground hover:underline"
+							>
+								Documentación
+							</Link>
 						</div>
 					</div>
 					<div className="space-y-2">
@@ -48,19 +69,19 @@ export function LandingFooter(): React.JSX.Element {
 						<div className="flex flex-col gap-1.5 text-sm text-muted-foreground">
 							<Link
 								href="/login"
-								className="hover:text-foreground hover:underline"
+								className="hover:text-foreground hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
 							>
-								Login
+								Iniciar sesión
 							</Link>
 							<Link
 								href="/register"
-								className="hover:text-foreground hover:underline"
+								className="hover:text-foreground hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
 							>
-								Registro
+								Registrarse
 							</Link>
 							<Link
 								href="#contacto"
-								className="hover:text-foreground hover:underline"
+								className="hover:text-foreground hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
 							>
 								Contacto
 							</Link>

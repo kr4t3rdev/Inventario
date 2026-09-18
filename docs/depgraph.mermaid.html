@@ -1,0 +1,299 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Source Map — Inventario TCP</title>
+  <script src="https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.min.js"></script>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: #f8fafc;
+      color: #1e293b;
+    }
+    header {
+      background: #0f172a;
+      color: #f8fafc;
+      padding: 1rem 2rem;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      box-shadow: 0 1px 3px rgba(0,0,0,.3);
+    }
+    header h1 { font-size: 1.25rem; font-weight: 600; }
+    header .meta { font-size: .85rem; color: #94a3b8; }
+    header .actions { display: flex; gap: .5rem; align-items: center; }
+    header .actions a {
+      color: #38bdf8;
+      text-decoration: none;
+      font-size: .875rem;
+      padding: .35rem .75rem;
+      border: 1px solid #334155;
+      border-radius: 6px;
+      transition: all .15s;
+    }
+    header .actions a:hover { background: #1e293b; border-color: #38bdf8; }
+    #controls {
+      background: #f1f5f9;
+      padding: .75rem 2rem;
+      display: flex;
+      gap: 1rem;
+      align-items: center;
+      flex-wrap: wrap;
+      border-bottom: 1px solid #e2e8f0;
+    }
+    #controls label { font-size: .875rem; font-weight: 500; color: #475569; }
+    #controls input, #controls select {
+      padding: .35rem .65rem;
+      border: 1px solid #cbd5e1;
+      border-radius: 6px;
+      font-size: .875rem;
+      background: white;
+    }
+    #controls input:focus, #controls select:focus {
+      outline: none;
+      border-color: #3b82f6;
+      box-shadow: 0 0 0 2px rgba(59,130,246,.2);
+    }
+    #graph-container {
+      padding: 2rem;
+      overflow: auto;
+      max-height: calc(100vh - 120px);
+    }
+    #graph-container svg { max-width: none; }
+    .badge {
+      display: inline-block;
+      padding: .15rem .5rem;
+      border-radius: 9999px;
+      font-size: .75rem;
+      font-weight: 600;
+    }
+    .loading {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 300px;
+      color: #64748b;
+      font-size: 1rem;
+    }
+    #stats {
+      display: flex;
+      gap: 1.5rem;
+    }
+    #stats span {
+      font-size: .8rem;
+      color: #94a3b8;
+    }
+    #stats strong {
+      color: #e2e8f0;
+    }
+    .filter-hint {
+      font-size: .75rem;
+      color: #94a3b8;
+      margin-top: .25rem;
+    }
+  </style>
+</head>
+<body>
+
+<header>
+  <div>
+    <h1>🗺️ Source Map — Inventario TCP</h1>
+    <div class="meta">Dependency graph generado con dependency-cruiser</div>
+  </div>
+  <div class="actions">
+    <a href="depgraph.mmd" download>⬇ Descargar .mmd</a>
+    <a href="#" id="btn-reset" title="Reset zoom/pan">⟲ Reset</a>
+  </div>
+</header>
+
+<div id="controls">
+  <div>
+    <label for="filter">🔍 Filtrar por nombre:</label>
+    <input type="text" id="filter" placeholder="ej: ventas, productos, lib..." />
+  </div>
+  <div>
+    <label for="depth">📏 Profundidad:</label>
+    <select id="depth">
+      <option value="1">1 — solo top-level</option>
+      <option value="2" selected>2 — directorios principales</option>
+      <option value="3">3 — subdirectorios</option>
+      <option value="99">∞ — completo</option>
+    </select>
+  </div>
+  <div id="stats">
+    <span>Nodos: <strong id="node-count">—</strong></span>
+    <span>Edges: <strong id="edge-count">—</strong></span>
+    <span>Actualizado: <strong id="update-time">—</strong></span>
+  </div>
+</div>
+
+<div id="graph-container">
+  <div class="loading">⏳ Cargando grafo de dependencias...</div>
+</div>
+
+<script>
+(async () => {
+  const mermaidGraph = document.getElementById('graph-container');
+  const filterInput = document.getElementById('filter');
+  const depthSelect = document.getElementById('depth');
+  const nodeCount = document.getElementById('node-count');
+  const edgeCount = document.getElementById('edge-count');
+  const updateTime = document.getElementById('update-time');
+  const btnReset = document.getElementById('btn-reset');
+
+  async function loadGraph() {
+    const resp = await fetch('depgraph.mmd');
+    let raw = await resp.text();
+    updateTime.textContent = new Date().toLocaleString('es-AR');
+
+    const filter = filterInput.value.trim().toLowerCase();
+    const depth = parseInt(depthSelect.value);
+
+    // Filter by name
+    if (filter) {
+      const lines = raw.split('\n');
+      const keep = new Set();
+      let inSubgraph = null;
+      let subgraphParents = [];
+
+      for (const line of lines) {
+        const subMatch = line.match(/^subgraph\s+(\S+)\s*\["(.+)"\]/);
+        if (subMatch) {
+          const id = subMatch[1];
+          const name = subMatch[2].toLowerCase();
+          if (name.includes(filter)) {
+            keep.add(id);
+            // Keep all parent subgraphs
+            for (const p of subgraphParents) keep.add(p);
+          }
+          subgraphParents.push(id);
+        } else if (line.match(/^end\b/)) {
+          subgraphParents.pop();
+        } else {
+          // Keep edges/nodes that reference kept subgraphs
+          const ids = line.match(/\b(\w+)\b/g);
+          if (ids && ids.some(id => keep.has(id))) {
+            // Check if this line should be kept
+          }
+        }
+      }
+
+      // Simple approach: keep all subgraph headers and 'end' markers, filter others
+      const filteredLines = [];
+      const activeSubgraphs = new Set();
+
+      for (const line of lines) {
+        const subMatch = line.match(/^subgraph\s+(\S+)\s*\["(.+)"\]/);
+        if (subMatch) {
+          const id = subMatch[1];
+          const name = subMatch[2].toLowerCase();
+          if (name.includes(filter)) {
+            activeSubgraphs.add(id);
+            filteredLines.push(line);
+          }
+        } else if (line.match(/^end\b/)) {
+          // Keep end markers
+          filteredLines.push(line);
+        } else {
+          // Keep if it references an active subgraph
+          filteredLines.push(line);
+        }
+      }
+      raw = filteredLines.join('\n');
+    }
+
+    // Limit depth
+    if (depth < 99) {
+      const lines = raw.split('\n');
+      const depthMap = new Map();
+      depthMap.set('root', 0);
+      const resultLines = [];
+
+      for (const line of lines) {
+        const subMatch = line.match(/^subgraph\s+(\S+)\s*\["(.+)"\]/);
+        if (subMatch) {
+          const id = subMatch[1];
+          const parent = [...depthMap.entries()].findLast(([k]) => k !== 'root')?.[0] || 'root';
+          depthMap.set(id, (depthMap.get(parent) || 0) + 1);
+          if (depthMap.get(id) <= depth) {
+            resultLines.push(line);
+          }
+        } else if (line.match(/^end\b/)) {
+          resultLines.push(line);
+        } else {
+          // Always keep edges between visible nodes
+          resultLines.push(line);
+        }
+      }
+      raw = resultLines.join('\n');
+    }
+
+    // Render
+    try {
+      const { svg, bindFunctions } = await mermaid.render('mermaid-svg', raw);
+      mermaidGraph.innerHTML = svg;
+      if (bindFunctions) bindFunctions(mermaidGraph);
+
+      // Count stats
+      const svgEl = mermaidGraph.querySelector('svg');
+      const nodes = svgEl?.querySelectorAll('[id^="flowchart-"]')?.length || 0;
+      const edges = svgEl?.querySelectorAll('.edgeLine, .edgePath, .edge-thickness-normal')?.length || 0;
+      nodeCount.textContent = nodes || '—';
+      edgeCount.textContent = edges || '—';
+    } catch (err) {
+      mermaidGraph.innerHTML = `<div class="loading" style="color:#dc2626">
+        ❌ Error al renderizar: ${err.message}
+        <br><small>El archivo tiene ${raw.split('\n').length} líneas. Probablemente el grafo es muy grande para Mermaid.</small>
+      </div>`;
+      console.error(err);
+    }
+  }
+
+  // Debounced filter input
+  let debounceTimer;
+  filterInput.addEventListener('input', () => {
+    clearTimeout(debounceTimer);
+    debounceTimer = setTimeout(loadGraph, 300);
+  });
+  depthSelect.addEventListener('change', loadGraph);
+  btnReset.addEventListener('click', () => {
+    filterInput.value = '';
+    depthSelect.value = '2';
+    loadGraph();
+  });
+
+  // Initialize Mermaid
+  mermaid.initialize({
+    startOnLoad: false,
+    theme: 'base',
+    themeVariables: {
+      primaryColor: '#e0f2fe',
+      primaryBorderColor: '#0284c7',
+      lineColor: '#64748b',
+      secondaryColor: '#fef3c7',
+      tertiaryColor: '#d1fae5',
+      clusterBkg: '#f8fafc',
+      clusterBorder: '#cbd5e1',
+      nodeTextColor: '#1e293b',
+      edgeLabelBackground: '#f8fafc',
+    },
+    flowchart: {
+      useMaxWidth: true,
+      htmlLabels: true,
+      curve: 'basis',
+      padding: 16,
+    },
+    maxTextSize: 200000,
+  });
+
+  await loadGraph();
+})();
+</script>
+
+</body>
+</html>

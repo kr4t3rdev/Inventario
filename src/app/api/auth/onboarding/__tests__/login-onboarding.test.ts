@@ -9,6 +9,7 @@ vi.mock('@/lib/prisma', () => ({
     user: {
       findUnique: vi.fn(),
       update: vi.fn(),
+      updateMany: vi.fn(),
       findMany: vi.fn(),
     },
     userSession: { create: vi.fn() },
@@ -68,7 +69,8 @@ describe('login con estados onboarding', () => {
     const data = await response.json()
 
     expect(response.status).toBe(200)
-    expect(data.token).toBe('mock-jwt-token')
+    expect(data).not.toHaveProperty('token')
+    expect(data).not.toHaveProperty('refreshToken')
     expect(data.user.onboardingStatus).toBe('awaiting_manager_approval')
     expect(data.user.isActive).toBe(false)
   })
@@ -158,5 +160,37 @@ describe('login con estados onboarding', () => {
 
     expect(response.status).toBe(200)
     expect(data.user.onboardingStatus).toBe('pending_email_verification')
+  })
+
+  it('mantiene al salesAgent pendiente dentro del onboarding sin resolver tenant', async () => {
+    vi.mocked(prisma.user.findUnique).mockResolvedValueOnce({
+      userId: 'user-agent',
+      name: 'Sales Agent',
+      email: 'agent@test.com',
+      password: 'hashed-password',
+      role: 'regularUser',
+      isActive: false,
+      expiresAt: null,
+      lockedUntil: null,
+      loginAttempts: 0,
+      onboardingStatus: 'awaiting_sales_agent_approval',
+    } as any)
+    vi.mocked(prisma.userSession.create).mockResolvedValueOnce({} as any)
+    vi.mocked(prisma.userActivityLog.create).mockResolvedValueOnce({} as any)
+
+    const request = new NextRequest('http://localhost/api/auth/login', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email: 'agent@test.com', password: 'correct' }),
+    })
+
+    const response = await POST(request)
+    const data = await response.json()
+
+    expect(response.status).toBe(200)
+    expect(data.user.onboardingStatus).toBe('awaiting_sales_agent_approval')
+    expect(data.redirectTo).toBe('/onboarding')
+    expect(prisma.tenantMembership.findUnique).not.toHaveBeenCalled()
+    expect(prisma.tenantLicense.findFirst).not.toHaveBeenCalled()
   })
 })

@@ -26,6 +26,7 @@ vi.mock("@/lib/prisma", () => ({
 		user: {
 			findUnique: vi.fn(),
 			update: vi.fn(),
+			updateMany: vi.fn(),
 			findMany: vi.fn(),
 		},
 		userSession: {
@@ -50,6 +51,13 @@ vi.mock("@/lib/prisma", () => ({
 		},
 	},
 }));
+
+// resolveTenantContext (auth-middleware) usa prismaPlatform tras AS-02; alias al
+// mismo mock para que la resolución de tenant quede determinista en units.
+vi.mock("@/lib/db/platform-prisma", async () => {
+	const { prisma } = await import("@/lib/prisma");
+	return { prismaPlatform: prisma, default: prisma };
+});
 
 vi.mock("bcryptjs", () => ({
 	default: { compare: vi.fn(), hash: vi.fn() },
@@ -95,7 +103,7 @@ describe("loginAction", () => {
 		const mockUser = createMockUser();
 		vi.mocked(prisma.user.findUnique).mockResolvedValue(mockUser as any);
 		vi.mocked(bcrypt.compare).mockResolvedValue(true as never);
-		vi.mocked(prisma.user.update).mockResolvedValue(mockUser as any);
+		vi.mocked(prisma.user.updateMany).mockResolvedValue({ count: 1 } as any);
 		vi.mocked(prisma.tenantMembership.findFirst).mockResolvedValue({
 			tenantId: "tenant-1",
 			tenantRole: "dependiente",
@@ -127,7 +135,7 @@ describe("loginAction", () => {
 		const mockUser = createMockUser({ loginAttempts: 0 });
 		vi.mocked(prisma.user.findUnique).mockResolvedValue(mockUser as any);
 		vi.mocked(bcrypt.compare).mockResolvedValue(false as never);
-		vi.mocked(prisma.user.update).mockResolvedValue(mockUser as any);
+		vi.mocked(prisma.user.updateMany).mockResolvedValue({ count: 1 } as any);
 
 		const result = await loginAction({ email: "test@example.com", password: "wrong" });
 
@@ -163,11 +171,11 @@ describe("loginAction", () => {
 		const mockUser = createMockUser({ loginAttempts: 0 });
 		vi.mocked(prisma.user.findUnique).mockResolvedValue(mockUser as any);
 		vi.mocked(bcrypt.compare).mockResolvedValue(false as never);
-		vi.mocked(prisma.user.update).mockResolvedValue(mockUser as any);
+		vi.mocked(prisma.user.updateMany).mockResolvedValue({ count: 1 } as any);
 
 		await loginAction({ email: "test@example.com", password: "wrong" });
 
-		expect(prisma.user.update).toHaveBeenCalledWith(
+		expect(prisma.user.updateMany).toHaveBeenCalledWith(
 			expect.objectContaining({
 				where: { userId: "user-1" },
 				data: expect.objectContaining({ loginAttempts: 1 }),
@@ -186,7 +194,7 @@ describe("loginAction", () => {
 		const mockUser = createMockUser();
 		vi.mocked(prisma.user.findUnique).mockResolvedValue(mockUser as any);
 		vi.mocked(bcrypt.compare).mockResolvedValue(true as never);
-		vi.mocked(prisma.user.update).mockResolvedValue(mockUser as any);
+		vi.mocked(prisma.user.updateMany).mockResolvedValue({ count: 1 } as any);
 		vi.mocked(prisma.tenantMembership.findFirst).mockResolvedValue({
 			tenantId: "tenant-1",
 			tenantRole: "dependiente",

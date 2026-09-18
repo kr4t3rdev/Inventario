@@ -15,7 +15,6 @@ import {
   RotateCcw,
   Loader2,
   HardDrive,
-  AlertCircle,
   CheckCircle2,
   XCircle,
   Clock,
@@ -28,6 +27,7 @@ interface BackupHistoryTableProps {
   logs: BackupLogRow[]
   isLoading: boolean
   total: number
+  tenantNames?: Record<string, string>
   onDelete: (id: string) => void
   onDownload: (id: string) => void
   onRestore: (log: BackupLogRow) => void
@@ -76,6 +76,7 @@ export function BackupHistoryTable({
   logs,
   isLoading,
   total,
+  tenantNames = {},
   onDelete,
   onDownload,
   onRestore,
@@ -178,7 +179,14 @@ export function BackupHistoryTable({
                     <td className="px-4 py-3">
                       <div className="flex items-center gap-2">
                         <TypeIcon className={`h-4 w-4 ${typeMeta.color}`} />
-                        <span className="font-medium">{typeMeta.label}</span>
+                        <div>
+                          <span className="font-medium">{typeMeta.label}</span>
+                          {log.type === 'tenant' && log.tenantId ? (
+                            <p className="text-xs text-muted-foreground">
+                              {tenantNames[log.tenantId] ?? log.tenantId}
+                            </p>
+                          ) : null}
+                        </div>
                       </div>
                     </td>
                     <td className="px-4 py-3">

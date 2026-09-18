@@ -106,7 +106,7 @@ export function TransferenciasBancariasTable({ transferencias, isLoading }: Tran
       ),
       cell: ({ row }) => (
         <div className="text-right font-semibold tabular-nums">
-          {formatCurrency(row.getValue("montoOrigen"), row.original.monedaOrigen)}
+          {formatCurrency(row.getValue("montoOrigen"))}
         </div>
       ),
     },

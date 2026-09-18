@@ -1,4 +1,6 @@
-import { Prisma } from '@/generated/prisma'
+import type { Prisma } from '@/generated/prisma'
+import { buildAppliedFxEvidence } from '@/features/contabilidad/domain/fx-evidence';
+import { normalizeAccountingAmount } from '@/features/contabilidad/domain/accounting-amount'
 
 /**
  * @description Representa un error funcional del workflow de pago de gastos.
@@ -87,6 +89,68 @@ function createGastoWorkflowError(
   return error
 }
 
+async function lockAndValidateReference(
+  tx: Prisma.TransactionClient,
+  params: ApplyPagoGastoWorkflowParams,
+): Promise<void> {
+  const tableByType = {
+    salario: 'Pagosalario',
+    gastoDE: 'GastosDE',
+    compra: 'GastoCompra',
+    servicio: 'CompraServicio',
+    venta_servicio: 'VentaServicios',
+  } as const
+  const table = tableByType[params.tipoGasto]
+  const idColumnByType = {
+    salario: 'pgId',
+    gastoDE: 'gastosDEId',
+    compra: 'gastoCompraId',
+    servicio: 'compraServicioId',
+    venta_servicio: 'ventaServicioId',
+  } as const
+  const idColumn = idColumnByType[params.tipoGasto]
+  await tx.$queryRawUnsafe(
+    `SELECT 1 FROM "${table}" WHERE "${idColumn}" = $1 AND "tenantId" = $2 FOR UPDATE`,
+    params.referenciaId,
+    params.tenantId,
+  )
+
+  let source: { tenantId: string; deletedAt?: Date | null; estado?: string | null; isPagado?: string | null; numeroFactura?: string | null } | null = null
+  if (params.tipoGasto === 'salario') {
+    source = await tx.pagosalario.findFirst({ where: { pgId: params.referenciaId, tenantId: params.tenantId }, select: { tenantId: true } })
+  } else if (params.tipoGasto === 'gastoDE') {
+    source = await tx.gastosDE.findFirst({ where: { gastosDEId: params.referenciaId, tenantId: params.tenantId }, select: { tenantId: true, isPagado: true } })
+  } else if (params.tipoGasto === 'compra') {
+    source = await tx.gastoCompra.findFirst({ where: { gastoCompraId: params.referenciaId, tenantId: params.tenantId }, select: { tenantId: true, deletedAt: true } })
+  } else if (params.tipoGasto === 'servicio') {
+    source = await tx.compraServicio.findFirst({ where: { compraServicioId: params.referenciaId, tenantId: params.tenantId }, select: { tenantId: true, estado: true, numeroFactura: true } })
+  } else {
+    source = await tx.ventaServicios.findFirst({ where: { ventaServicioId: params.referenciaId, tenantId: params.tenantId }, select: { tenantId: true } })
+  }
+  if (!source || source.tenantId !== params.tenantId || source.deletedAt || source.isPagado === 'ELIMINANDO' || source.estado === 'ELIMINANDO') {
+    throw createGastoWorkflowError(404, 'REFERENCIA_NO_ENCONTRADA', 'Referencia de gasto no encontrada o eliminada')
+  }
+  if (params.cuentaPorPagarId) {
+    if (params.tipoGasto === 'salario') {
+      throw createGastoWorkflowError(400, 'CXP_NO_PERTENECE', 'La nómina no puede asociarse a una cuenta por pagar de compras')
+    }
+    const payableWhere = params.tipoGasto === 'gastoDE'
+      ? { cuentaPorPagarId: params.cuentaPorPagarId, tenantId: params.tenantId, gastosDEId: params.referenciaId }
+      : params.tipoGasto === 'compra'
+        ? { cuentaPorPagarId: params.cuentaPorPagarId, tenantId: params.tenantId, gastoCompraId: params.referenciaId }
+        : {
+            cuentaPorPagarId: params.cuentaPorPagarId,
+            tenantId: params.tenantId,
+            tipo: 'servicio' as const,
+            numeroFactura: source.numeroFactura || '__MISSING_SERVICE_INVOICE__',
+          }
+    const payable = await tx.cuentaPorPagar.findFirst({ where: payableWhere, select: { cuentaPorPagarId: true } })
+    if (!payable) {
+      throw createGastoWorkflowError(400, 'CXP_NO_PERTENECE', 'La cuenta por pagar no pertenece al gasto')
+    }
+  }
+}
+
 /**
  * @description Determina si un error corresponde a una validación de workflow.
  * @param {unknown} error - Error a evaluar.
@@ -101,20 +165,39 @@ export function isGastoWorkflowError(error: unknown): error is GastoWorkflowErro
 }
 
 /**
- * @description Convierte monto de una moneda a CUP para reportes.
+ * @description Normaliza un monto a CUP y rechaza conversiones incompletas.
  * @param {number} monto - Monto original.
  * @param {string} moneda - Moneda origen.
  * @param {number | undefined} tasaCambio - Tasa opcional.
+ * @param {Date} fechaOperacion - Fecha en que se aplicó la tasa informada.
  * @returns {number} Monto normalizado en CUP.
  */
-function normalizeMontoToCup(monto: number, moneda: string, tasaCambio?: number): number {
-  if (moneda === 'CUP') {
-    return monto
+function normalizeMontoToCup(
+  monto: number,
+  moneda: string,
+  tasaCambio: number | undefined,
+  fechaOperacion: Date,
+): number {
+  const hasValidRate =
+    typeof tasaCambio === 'number' && Number.isFinite(tasaCambio) && tasaCambio > 0
+  const result = normalizeAccountingAmount({
+    amount: monto,
+    currency: moneda,
+    functionalCurrency: 'CUP',
+    convertedAmount: hasValidRate ? monto * tasaCambio : null,
+    exchangeRate: tasaCambio,
+    operationAt: fechaOperacion,
+    rateEffectiveAt: hasValidRate ? fechaOperacion : null,
+  })
+
+  if (result.status === 'unresolved') {
+    throw createGastoWorkflowError(
+      400,
+      'CONVERSION_REQUERIDA',
+      `No se puede expresar el pago en CUP: ${result.issue}`,
+    )
   }
-  if (typeof tasaCambio === 'number' && Number.isFinite(tasaCambio) && tasaCambio > 0) {
-    return monto * tasaCambio
-  }
-  return monto
+  return result.amount
 }
 
 /**
@@ -148,15 +231,16 @@ function convertMontoToCuentaMoneda(
  */
 async function resolveTipoPago(
   tx: Prisma.TransactionClient,
-  tipoPagoId?: string
+  tipoPagoId?: string,
+  tenantId?: string
 ): Promise<{ tipoId: string; cuentaDefecto: string | null }> {
   const tipoPago = tipoPagoId
     ? await tx.tipoPago.findUnique({
-        where: { tipoId: tipoPagoId },
+        where: { tipoId: tipoPagoId, tenantId },
         select: { tipoId: true, isActive: true, cuentaDefecto: true }
       })
     : await tx.tipoPago.findFirst({
-        where: { isActive: true },
+        where: { isActive: true, tenantId },
         orderBy: { createdAt: 'asc' },
         select: { tipoId: true, isActive: true, cuentaDefecto: true }
       })
@@ -181,11 +265,12 @@ async function resolveTipoPago(
 async function resolveCuentaId(
   tx: Prisma.TransactionClient,
   cuentaId?: string,
-  cuentaDefectoId?: string | null
+  cuentaDefectoId?: string | null,
+  tenantId?: string,
 ): Promise<string> {
   if (cuentaId) {
-    const cuenta = await tx.cuentaBancaria.findUnique({
-      where: { cuentaId },
+    const cuenta = await tx.cuentaBancaria.findFirst({
+      where: { cuentaId, tenantId },
       select: { cuentaId: true, isActive: true }
     })
     if (cuenta?.isActive) {
@@ -195,8 +280,8 @@ async function resolveCuentaId(
   }
 
   if (cuentaDefectoId) {
-    const cuentaDefecto = await tx.cuentaBancaria.findUnique({
-      where: { cuentaId: cuentaDefectoId },
+    const cuentaDefecto = await tx.cuentaBancaria.findFirst({
+      where: { cuentaId: cuentaDefectoId, tenantId },
       select: { cuentaId: true, isActive: true }
     })
     if (cuentaDefecto?.isActive) {
@@ -205,7 +290,7 @@ async function resolveCuentaId(
   }
 
   const cuentaFallback = await tx.cuentaBancaria.findFirst({
-    where: { isActive: true },
+    where: { isActive: true, tenantId },
     orderBy: { createdAt: 'asc' },
     select: { cuentaId: true }
   })
@@ -272,16 +357,33 @@ export async function applyPagoGastoWorkflow(
   if (!Number.isFinite(montoTotal) || montoTotal <= 0) {
     throw createGastoWorkflowError(400, 'MONTO_INVALIDO', 'El monto debe ser mayor que cero')
   }
+  const fechaOperacion = params.fechaPago ? new Date(params.fechaPago) : new Date()
+  const montoTotalConvertido = normalizeMontoToCup(
+    montoTotal,
+    params.moneda,
+    params.tasaCambio,
+    fechaOperacion,
+  )
+
+  // Every source reference is a non-composite foreign key. Lock and validate
+  // tenant ownership before touching bank/CxP state to close deletion races.
+  await lockAndValidateReference(tx, params)
 
   const estadoSolicitado = params.estado || 'PAGADA'
   let estadoReconciliacion: 'PENDIENTE' | 'PAGADA' | 'PARCIAL' = estadoSolicitado
-  const tipoPago = await resolveTipoPago(tx, params.tipoPagoId)
-  const cuentaIdForSimplePago = await resolveCuentaId(tx, params.cuentaId, tipoPago.cuentaDefecto)
+  const tipoPago = await resolveTipoPago(tx, params.tipoPagoId, params.tenantId)
+  const cuentaIdForSimplePago = await resolveCuentaId(
+    tx,
+    params.cuentaId,
+    tipoPago.cuentaDefecto,
+    params.tenantId,
+  )
   const distribucion = buildDistribucion(params, cuentaIdForSimplePago)
 
   if (!params.cuentaPorPagarId && estadoReconciliacion !== 'PENDIENTE') {
     const pagoPrevio = await tx.reconciliacionGasto.findFirst({
       where: {
+        tenantId: params.tenantId,
         tipoGasto: params.tipoGasto,
         referenciaId: params.referenciaId,
         estado: {
@@ -308,11 +410,12 @@ export async function applyPagoGastoWorkflow(
     await tx.$queryRaw`
       SELECT 1 FROM "CuentaPorPagar"
       WHERE "cuentaPorPagarId" = ${params.cuentaPorPagarId}
+        AND "tenantId" = ${params.tenantId}
       FOR UPDATE
     `
 
-    cuentaPorPagarActual = await tx.cuentaPorPagar.findUnique({
-      where: { cuentaPorPagarId: params.cuentaPorPagarId },
+    cuentaPorPagarActual = await tx.cuentaPorPagar.findFirst({
+      where: { cuentaPorPagarId: params.cuentaPorPagarId, tenantId: params.tenantId },
       select: {
         cuentaPorPagarId: true,
         estado: true,
@@ -378,13 +481,13 @@ export async function applyPagoGastoWorkflow(
   for (const cuentaId of cuentaIds) {
     await tx.$queryRaw`
       SELECT 1 FROM "CuentaBancaria"
-      WHERE "cuentaId" = ${cuentaId}
+      WHERE "cuentaId" = ${cuentaId} AND "tenantId" = ${params.tenantId}
       FOR UPDATE
     `
   }
 
   const cuentas = await tx.cuentaBancaria.findMany({
-    where: { cuentaId: { in: cuentaIds } },
+    where: { cuentaId: { in: cuentaIds }, tenantId: params.tenantId },
     select: {
       cuentaId: true,
       moneda: true,
@@ -431,7 +534,21 @@ export async function applyPagoGastoWorkflow(
   const reconciliaciones: ApplyPagoGastoWorkflowResult['reconciliaciones'] = []
   for (const pago of distribucion) {
     const montoPago = Number(pago.monto)
-    const montoConvertido = normalizeMontoToCup(montoPago, params.moneda, params.tasaCambio)
+    const montoConvertido = normalizeMontoToCup(
+      montoPago,
+      params.moneda,
+      params.tasaCambio,
+      fechaOperacion,
+    )
+    const fxEvidence = buildAppliedFxEvidence({
+      originalAmount: montoPago,
+      originalCurrency: params.moneda,
+      functionalCurrency: 'CUP',
+      exchangeRate: params.tasaCambio ?? null,
+      convertedAmount: montoConvertido,
+      rateEffectiveAt: params.moneda.trim().toUpperCase() === 'CUP' ? null : fechaOperacion,
+      source: 'pago-gastos-workflow'
+    })
 
     const reconciliacion = await tx.reconciliacionGasto.create({
       data: {
@@ -448,6 +565,16 @@ export async function applyPagoGastoWorkflow(
         moneda: params.moneda,
         tasaCambio: params.tasaCambio,
         montoConvertido,
+        fechaReconciliacion: fechaOperacion,
+        functionalCurrency: fxEvidence.functionalCurrency,
+        fxProvenanceKind: fxEvidence.fxProvenanceKind,
+        fxProvenanceSource: fxEvidence.fxProvenanceSource,
+        fxCatalogRateId: fxEvidence.fxCatalogRateId,
+        fxEvidenceFingerprint: fxEvidence.fxEvidenceFingerprint,
+        fxEvidenceVersion: fxEvidence.fxEvidenceVersion,
+        ...(fxEvidence.rateEffectiveAt
+          ? { rateEffectiveAt: new Date(fxEvidence.rateEffectiveAt) }
+          : {}),
         descripcion:
           typeof pago.porcentaje === 'number'
             ? `${params.descripcion} (${pago.porcentaje}%)`
@@ -480,26 +607,30 @@ export async function applyPagoGastoWorkflow(
 
   if (estadoReconciliacion !== 'PENDIENTE') {
     for (const [cuentaId, montoDescontar] of saldosADescontar.entries()) {
-      await tx.cuentaBancaria.update({
-        where: { cuentaId },
+      const updated = await tx.cuentaBancaria.updateMany({
+        where: { cuentaId, tenantId: params.tenantId },
         data: {
           saldo: {
             decrement: montoDescontar
           }
         }
       })
+      if (updated.count !== 1) {
+        throw createGastoWorkflowError(404, 'CUENTA_NO_ENCONTRADA', 'Cuenta bancaria no encontrada')
+      }
     }
   }
 
   if (params.moneda !== 'CUP' && params.tasaCambio) {
     await tx.transaccionMoneda.create({
       data: {
+        tenantId: params.tenantId,
         tipoTransaccion: 'gasto',
         referenciaId: params.referenciaId,
         monedaId: params.moneda,
         montoOriginal: montoTotal,
         tasaCambio: params.tasaCambio,
-        montoConvertido: normalizeMontoToCup(montoTotal, params.moneda, params.tasaCambio)
+        montoConvertido: montoTotalConvertido
       }
     })
   }
@@ -510,7 +641,7 @@ export async function applyPagoGastoWorkflow(
   if (cuentaPorPagarActual && params.cuentaPorPagarId) {
     const montoPagadoActual = Number(cuentaPorPagarActual.montoPagado || 0)
     const saldoPendienteActual = Number(cuentaPorPagarActual.saldoPendiente || 0)
-    const montoDeudaActual = Number(cuentaPorPagarActual.montoDeuda || 0)
+    const montoDeudaActual = Number((cuentaPorPagarActual as any).montoDeuda || 0)
     const nuevoMontoPagado = montoPagadoActual + montoTotal
     const nuevoSaldoPendiente = Math.max(0, saldoPendienteActual - montoTotal)
     const nuevoEstado = estadoReconciliacion === 'PAGADA' ? 'PAGADA' : 'PARCIAL'
@@ -531,20 +662,17 @@ export async function applyPagoGastoWorkflow(
         : new Date()
     const fechaPagoNormalizada = Number.isNaN(fechaPago.getTime()) ? new Date() : fechaPago
 
-    const cuentaActualizada = await tx.cuentaPorPagar.update({
-      where: { cuentaPorPagarId: params.cuentaPorPagarId },
+    const cuentaActualizada = await tx.cuentaPorPagar.updateMany({
+      where: { cuentaPorPagarId: params.cuentaPorPagarId, tenantId: params.tenantId },
       data: {
         estado: nuevoEstado,
         montoPagado: nuevoMontoPagado,
         saldoPendiente: nuevoSaldoPendiente
-      },
-      select: {
-        cuentaPorPagarId: true,
-        estado: true,
-        montoPagado: true,
-        saldoPendiente: true
       }
     })
+    if (cuentaActualizada.count !== 1) {
+      throw createGastoWorkflowError(404, 'CUENTA_POR_PAGAR_NO_ENCONTRADA', 'Cuenta por pagar no encontrada')
+    }
 
     const cuentaProveedor =
       params.cuentaProveedor ||
@@ -553,6 +681,9 @@ export async function applyPagoGastoWorkflow(
         : cuentaPorPagarActual.proveedor?.cuentaCUP) ||
       'N/A'
     const numeroTransaccion = params.numeroTransaccion?.trim() || reconciliaciones[0]?.reconciliacionId
+    const reconciliationMarker = `reconciliationIds:${reconciliaciones
+      .map((reconciliacion) => reconciliacion.reconciliacionId)
+      .join(',')}`
 
     const pagoRegistrado = await tx.pagoCuentaPorPagar.create({
       data: {
@@ -563,8 +694,11 @@ export async function applyPagoGastoWorkflow(
         cuentaProveedor,
         fechaPago: fechaPagoNormalizada,
         observaciones:
-          params.observaciones ||
-          `Pago ${nuevoEstado === 'PAGADA' ? 'total' : 'parcial'} vía reconciliación`
+          [
+            params.observaciones ||
+              `Pago ${nuevoEstado === 'PAGADA' ? 'total' : 'parcial'} vía reconciliación`,
+            reconciliationMarker,
+          ].join(' | ')
       },
       select: {
         pagoCuentaPorPagarId: true,
@@ -590,10 +724,10 @@ export async function applyPagoGastoWorkflow(
     }
 
     cuentaPorPagarResult = {
-      cuentaPorPagarId: cuentaActualizada.cuentaPorPagarId,
-      estado: cuentaActualizada.estado as 'PENDIENTE' | 'PARCIAL' | 'PAGADA',
-      montoPagado: Number(cuentaActualizada.montoPagado),
-      saldoPendiente: Number(cuentaActualizada.saldoPendiente)
+      cuentaPorPagarId: params.cuentaPorPagarId,
+      estado: nuevoEstado as 'PENDIENTE' | 'PARCIAL' | 'PAGADA',
+      montoPagado: nuevoMontoPagado,
+      saldoPendiente: nuevoSaldoPendiente
     }
     pagoCuentaPorPagarResult = {
       pagoCuentaPorPagarId: pagoRegistrado.pagoCuentaPorPagarId,

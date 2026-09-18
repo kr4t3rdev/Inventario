@@ -71,7 +71,7 @@ export function WorkScheduleManager() {
     try {
       const result = await getWorkSchedulesAction({ employeeId: selectedEmpleado });
       if (result.success) {
-        setWorkSchedules((result.data ?? []) as EmployeeWorkSchedule[]);
+        setWorkSchedules((result.data ?? []) as unknown as EmployeeWorkSchedule[]);
       } else {
         toast.error(result.error?.message || "Error cargando horarios de trabajo");
       }

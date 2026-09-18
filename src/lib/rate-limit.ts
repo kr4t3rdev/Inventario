@@ -2,7 +2,7 @@ const STORE = new Map<string, { count: number; resetAt: number }>()
 
 const PURGE_INTERVAL_MS = 60_000
 
-let purgeTimer: ReturnType<typeof setInterval> | null = null
+let purgeTimer: ReturnType<typeof setInterval> & { unref?: () => void } | null = null
 
 function startPurgeTimer(): void {
   if (purgeTimer) return

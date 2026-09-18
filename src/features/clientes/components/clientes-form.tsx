@@ -6,7 +6,7 @@ import { zodResolver } from "@hookform/resolvers/zod"
 import { useForm } from "react-hook-form"
 import { z } from "zod"
 import { LazyMotion, m as motion } from "framer-motion"
-import { Users, Sparkles, Loader2, UserCircle } from "lucide-react"
+import { Users, Loader2, UserCircle } from "lucide-react"
 
 import { Button } from "@/components/ui/button"
 import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form"
@@ -18,7 +18,10 @@ import { useClientes } from "@/features/clientes/hooks/use-clientes"
 import { createClienteAction, updateClienteAction } from "@/features/clientes/actions"
 import { useListasPrecios } from "@/features/listas-precios/hooks/use-listas-precios"
 import { ClienteLogoUpload } from "./cliente-logo-upload"
+import type { CloudinaryAssetUploadResult } from "@/lib/upload/cloudinary-asset"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { useAuth } from "@/contexts/auth-context"
+import { hasPlanFeature } from "@/lib/plan-access"
 
 const clienteSchema = z
   .object({
@@ -62,11 +65,14 @@ interface ClienteFormProps {
 }
 
 export function ClienteForm({ initialData }: ClienteFormProps) {
+  const { user } = useAuth()
   const router = useRouter()
   const [isLoading, setIsLoading] = useState(false)
+  const [logoAsset, setLogoAsset] = useState<CloudinaryAssetUploadResult | null>(null)
 
   const { clientes, isLoading: isLoadingClientes } = useClientes()
   const { listasPrecios, isLoading: isLoadingListas } = useListasPrecios()
+  const canUploadClienteLogo = hasPlanFeature(user, 'upload-clientes-logo')
   
   
   const form = useForm<ClienteFormValues>({
@@ -84,6 +90,7 @@ export function ClienteForm({ initialData }: ClienteFormProps) {
 
   async function onSubmit(data: ClienteFormValues) {
     setIsLoading(true)
+    const listaPrecioId = data.listaPrecioId && data.listaPrecioId !== 'none' ? data.listaPrecioId : null
 
     try {
       if (initialData) {
@@ -92,8 +99,11 @@ export function ClienteForm({ initialData }: ClienteFormProps) {
           nombre: data.nombre,
           direccion: data.direccion,
           telefono: data.telefono,
+          logoUrl: data.logoUrl,
+          logoAsset,
           numeroCuentaCUP: data.numeroCuentaCUP,
           numeroCuentaUSD: data.numeroCuentaUSD,
+          listaPrecioId,
         } as any)
         if (!result.success) throw new Error(result.error?.message ?? 'Error al actualizar')
         sileo.success({ title: 'El cliente ha sido actualizado exitosamente.' })
@@ -102,8 +112,11 @@ export function ClienteForm({ initialData }: ClienteFormProps) {
           nombre: data.nombre,
           direccion: data.direccion,
           telefono: data.telefono,
+          logoUrl: data.logoUrl,
+          logoAsset,
           numeroCuentaCUP: data.numeroCuentaCUP,
           numeroCuentaUSD: data.numeroCuentaUSD,
+          listaPrecioId,
         } as any)
         if (!result.success) throw new Error(result.error?.message ?? 'Error al crear')
         sileo.success({ title: 'El cliente ha sido registrado exitosamente.' })
@@ -184,16 +197,7 @@ export function ClienteForm({ initialData }: ClienteFormProps) {
               <p className="text-sm text-muted-foreground">
                 {initialData ? "Modifique los datos del cliente" : "Ingrese los datos del cliente"}
               </p>
-              <motion.div
-                className="absolute -right-4 -top-1"
-                animate={{ rotate: 360, scale: [1, 1.2, 1] }}
-                transition={{ 
-                  rotate: { duration: 20, repeat: Infinity, ease: "linear" },
-                  scale: { duration: 2, repeat: Infinity, ease: "easeInOut" }
-                }}
-              >
-                <Sparkles className="h-4 w-4 text-yellow-500" />
-              </motion.div>
+
             </div>
           </motion.div>
 
@@ -224,30 +228,33 @@ export function ClienteForm({ initialData }: ClienteFormProps) {
                 />
               </motion.div>
 
-              <motion.div
-                initial={{ opacity: 0, x: -20 }}
-                animate={{ opacity: 1, x: 0 }}
-                transition={{ delay: 0.25 }}
-              >
-                <FormField
-                  control={form.control}
-                  name="logoUrl"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Logo del Cliente</FormLabel>
-                      <FormControl>
-                        <ClienteLogoUpload
-                          value={field.value}
-                          onChange={field.onChange}
-                          disabled={isLoading}
-                        />
-                      </FormControl>
-                      <FormDescription>Sube un logo o imagen representativa del cliente.</FormDescription>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-              </motion.div>
+              {canUploadClienteLogo && (
+                <motion.div
+                  initial={{ opacity: 0, x: -20 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  transition={{ delay: 0.25 }}
+                >
+                  <FormField
+                    control={form.control}
+                    name="logoUrl"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Logo del Cliente</FormLabel>
+                        <FormControl>
+                          <ClienteLogoUpload
+                            value={field.value}
+                            onChange={field.onChange}
+                            onAssetChange={setLogoAsset}
+                            disabled={isLoading}
+                          />
+                        </FormControl>
+                        <FormDescription>Sube un logo o imagen representativa del cliente.</FormDescription>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                </motion.div>
+              )}
 
               <motion.div
                 initial={{ opacity: 0, x: -20 }}

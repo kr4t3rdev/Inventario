@@ -1,3 +1,6 @@
+import type { Venta } from './ventas';
+import type { Cliente, CuentaPorCobrar } from './clientes';
+
 export interface SerieFacturacion {
 	serieId: string;
 	prefijo: string;

@@ -8,7 +8,7 @@ import {
 } from "../stock-ubicacion-service";
 
 const txMock = {
-	stockUbicacion: { upsert: vi.fn(), findUnique: vi.fn() },
+	stockUbicacion: { upsert: vi.fn(), findUnique: vi.fn(), updateMany: vi.fn() },
 	producto: {
 		findUniqueOrThrow: vi.fn().mockResolvedValue({ tenantId: "tenant-1" }),
 	},
@@ -129,8 +129,11 @@ describe("upsertStockUbicacion", () => {
 		});
 
 		it("increment con cantidadReservada y delta negativo descuenta correctamente", async () => {
-			txMock.stockUbicacion.findUnique.mockResolvedValue({ cantidad: 15 });
-			txMock.stockUbicacion.upsert.mockResolvedValue({ id: "su-1" });
+			txMock.stockUbicacion.findUnique.mockResolvedValue({
+				cantidad: 15,
+				cantidadDisponible: 13,
+			});
+			txMock.stockUbicacion.updateMany.mockResolvedValue({ count: 1 });
 
 			await upsertStockUbicacion(txMock as any, {
 				productoId: "prod-1",
@@ -142,15 +145,35 @@ describe("upsertStockUbicacion", () => {
 			});
 
 			// cantidadDisponible = (15 + -3) - 2 = 10
-			expect(txMock.stockUbicacion.upsert).toHaveBeenCalledWith(
-				expect.objectContaining({
-					update: expect.objectContaining({
-						cantidad: { increment: -3 },
-						cantidadReservada: 2,
-						cantidadDisponible: 10,
-					}),
+			expect(txMock.stockUbicacion.updateMany).toHaveBeenCalledWith({
+				where: {
+					productoId: "prod-1",
+					tipoUbicacion: "punto_venta",
+					ubicacionId: "pv-1",
+					cantidad: 15,
+					cantidadDisponible: 13,
+				},
+				data: {
+					cantidad: { increment: -3 },
+					cantidadReservada: 2,
+					cantidadDisponible: 10,
+				},
+			});
+		});
+
+		it("rechaza decremento cuando no hay stock suficiente", async () => {
+			txMock.stockUbicacion.updateMany.mockResolvedValue({ count: 0 });
+
+			await expect(
+				upsertStockUbicacion(txMock as any, {
+					productoId: "prod-1",
+					tipoUbicacion: "punto_venta",
+					ubicacionId: "pv-1",
+					modo: "increment",
+					delta: -4,
 				}),
-			);
+			).rejects.toMatchObject({ code: "STOCK_INSUFICIENTE" });
+			expect(txMock.stockUbicacion.upsert).not.toHaveBeenCalled();
 		});
 
 		it("increment con cantidadReservada y sin registro existente usa create", async () => {
@@ -221,7 +244,7 @@ describe("upsertStockUbicacion", () => {
 	});
 
 	it("funciona con tipoUbicacion punto_venta", async () => {
-		txMock.stockUbicacion.upsert.mockResolvedValue({ id: "su-2" });
+		txMock.stockUbicacion.updateMany.mockResolvedValue({ count: 1 });
 
 		await upsertStockUbicacion(txMock as any, {
 			productoId: "prod-1",
@@ -231,19 +254,20 @@ describe("upsertStockUbicacion", () => {
 			delta: -3,
 		});
 
-		expect(txMock.stockUbicacion.upsert).toHaveBeenCalledWith(
+		expect(txMock.stockUbicacion.updateMany).toHaveBeenCalledWith(
 			expect.objectContaining({
-				where: {
-					productoId_tipoUbicacion_ubicacionId: {
-						productoId: "prod-1",
-						tipoUbicacion: "punto_venta",
-						ubicacionId: "pv-1",
-					},
-				},
-				update: expect.objectContaining({
-					cantidad: { increment: -3 },
-				}),
-			}),
+			where: {
+				productoId: "prod-1",
+				tipoUbicacion: "punto_venta",
+				ubicacionId: "pv-1",
+				cantidad: { gte: 3 },
+				cantidadDisponible: { gte: 3 },
+			},
+			data: {
+				cantidad: { increment: -3 },
+				cantidadDisponible: { increment: -3 },
+			},
+		}),
 		);
 	});
 
@@ -292,7 +316,7 @@ describe("upsertStockUbicacion", () => {
 
 	describe("descontarStock", () => {
 		it("descuenta stock con delta negativo", async () => {
-			txMock.stockUbicacion.upsert.mockResolvedValue({ id: "su-1" });
+			txMock.stockUbicacion.updateMany.mockResolvedValue({ count: 1 });
 
 			await descontarStock(txMock as any, {
 				productoId: "prod-1",
@@ -301,9 +325,9 @@ describe("upsertStockUbicacion", () => {
 				cantidad: 5,
 			});
 
-			expect(txMock.stockUbicacion.upsert).toHaveBeenCalledWith(
+			expect(txMock.stockUbicacion.updateMany).toHaveBeenCalledWith(
 				expect.objectContaining({
-					update: expect.objectContaining({
+					data: expect.objectContaining({
 						cantidad: { increment: -5 },
 					}),
 				}),
@@ -313,6 +337,7 @@ describe("upsertStockUbicacion", () => {
 
 	describe("transferirStock", () => {
 		it("transfiere stock entre dos ubicaciones", async () => {
+			txMock.stockUbicacion.updateMany.mockResolvedValue({ count: 1 });
 			txMock.stockUbicacion.upsert.mockResolvedValue({ id: "su-1" });
 
 			await transferirStock(txMock as any, {
@@ -324,23 +349,11 @@ describe("upsertStockUbicacion", () => {
 				cantidad: 8,
 			});
 
-			expect(txMock.stockUbicacion.upsert).toHaveBeenCalledTimes(2);
+			expect(txMock.stockUbicacion.updateMany).toHaveBeenCalledTimes(1);
+			expect(txMock.stockUbicacion.upsert).toHaveBeenCalledTimes(1);
 
-			// Primera llamada: descuenta del origen
-			expect(txMock.stockUbicacion.upsert).toHaveBeenNthCalledWith(
-				1,
-				expect.objectContaining({
-					create: expect.objectContaining({
-						tipoUbicacion: "almacen",
-						ubicacionId: "alm-1",
-						cantidad: -8,
-					}),
-				}),
-			);
-
-			// Segunda llamada: suma al destino
-			expect(txMock.stockUbicacion.upsert).toHaveBeenNthCalledWith(
-				2,
+			// Segunda operación: suma al destino
+			expect(txMock.stockUbicacion.upsert).toHaveBeenCalledWith(
 				expect.objectContaining({
 					create: expect.objectContaining({
 						tipoUbicacion: "punto_venta",
@@ -354,7 +367,7 @@ describe("upsertStockUbicacion", () => {
 
 	describe("revertirMovimiento", () => {
 		it("revierte un movimiento previo", async () => {
-			txMock.stockUbicacion.upsert.mockResolvedValue({ id: "su-1" });
+			txMock.stockUbicacion.updateMany.mockResolvedValue({ count: 1 });
 
 			await revertirMovimiento(txMock as any, {
 				productoId: "prod-1",
@@ -363,9 +376,9 @@ describe("upsertStockUbicacion", () => {
 				cantidad: 10,
 			});
 
-			expect(txMock.stockUbicacion.upsert).toHaveBeenCalledWith(
+			expect(txMock.stockUbicacion.updateMany).toHaveBeenCalledWith(
 				expect.objectContaining({
-					update: expect.objectContaining({
+					data: expect.objectContaining({
 						cantidad: { increment: -10 },
 					}),
 				}),

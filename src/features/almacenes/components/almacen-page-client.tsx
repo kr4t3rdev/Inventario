@@ -22,7 +22,6 @@ import {
   Plus, 
   Trash2, 
   Warehouse,
-  Sparkles,
   AlertCircle,
 } from "lucide-react"
 import Link from "next/link"
@@ -81,6 +80,8 @@ export function AlmacenPageClient({ almacenes: initialAlmacenes }: AlmacenPageCl
       if (result.success) {
         toast("El almacén ha sido eliminado exitosamente.")
         router.refresh()
+      } else if (result.error?.code === 'ALMACEN_EN_USO') {
+        toast(`No se puede eliminar: ${result.error.message}`)
       } else {
         toast(result.error?.message || "Hubo un error al eliminar el almacén.")
       }
@@ -146,8 +147,8 @@ export function AlmacenPageClient({ almacenes: initialAlmacenes }: AlmacenPageCl
           <div className="flex items-center gap-2">
             <Link href={`/busy/almacen/update/${almacen.almacenId}`}>
               <motion.div whileHover={{ scale: 1.1 }} whileTap={{ scale: 0.95 }}>
-                <Button variant='outline' className='h-8 w-8 p-0 cursor-pointer'>
-                  <Pencil className='h-4 w-4'/>
+                <Button variant='outline' className='h-8 w-8 p-0 cursor-pointer' aria-label="Editar almacén">
+                  <Pencil className='h-4 w-4' aria-hidden='true'/>
                 </Button>
               </motion.div>
             </Link>
@@ -185,24 +186,12 @@ export function AlmacenPageClient({ almacenes: initialAlmacenes }: AlmacenPageCl
             >
               <div className="flex items-center gap-3">
                 <motion.div 
-                  className="w-10 h-10 bg-linear-to-br from-primary to-purple-600 rounded-xl flex items-center justify-center shadow-lg relative"
+                  className="w-10 h-10 bg-linear-to-br from-primary to-purple rounded-xl flex items-center justify-center shadow-lg relative"
                   whileHover={{ scale: 1.05, rotate: 5 }}
                   transition={{ duration: 0.2 }}
                 >
                   <Warehouse className="h-5 w-5 text-white" />
-                  <motion.div
-                    animate={{ 
-                      rotate: 360,
-                      scale: [1, 1.2, 1]
-                    }}
-                    transition={{ 
-                      rotate: { duration: 20, repeat: Infinity, ease: "linear" },
-                      scale: { duration: 2, repeat: Infinity, ease: "easeInOut" }
-                    }}
-                    className="absolute -top-1 -right-1"
-                  >
-                    <Sparkles className="h-4 w-4 text-yellow-400" />
-                  </motion.div>
+
                 </motion.div>
                 <div>
                   <h1 className="text-3xl font-bold bg-linear-to-r from-slate-900 to-slate-600 dark:from-white dark:to-slate-300 bg-clip-text text-transparent">
@@ -223,7 +212,7 @@ export function AlmacenPageClient({ almacenes: initialAlmacenes }: AlmacenPageCl
               >
                 <Button 
                   asChild 
-                  className="gap-2 bg-linear-to-r from-primary to-purple-600 hover:from-primary/90 hover:to-purple-600/90"
+                  className="gap-2 bg-linear-to-r from-primary to-purple hover:from-primary/90 hover:to-purple/90"
                 >
                   <Link href="/busy/almacen/new">
                     <Plus className="h-4 w-4" /> 

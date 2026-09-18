@@ -1,8 +1,9 @@
 import { PrismaClient } from '../../src/generated/prisma'
 
 const prisma = new PrismaClient()
+const DEMO_TENANT_ID = 'demo-tenant'
 
-export async function seedContabilidad() {
+export async function seedContabilidad(client: PrismaClient = prisma) {
   console.log('🌱 Seeding contabilidad data...')
 
   // Crear monedas básicas
@@ -31,7 +32,7 @@ export async function seedContabilidad() {
   ]
 
   for (const moneda of monedas) {
-    await prisma.moneda.upsert({
+    await client.moneda.upsert({
       where: { codigo: moneda.codigo },
       update: {},
       create: moneda
@@ -41,11 +42,13 @@ export async function seedContabilidad() {
   // Crear tasas de cambio iniciales
   const tasasIniciales = [
     {
+      tasaId: 'contabilidad_usd_cup',
       monedaOrigenId: 'USD',
       monedaDestino: 'CUP',
       tasa: 120.0
     },
     {
+      tasaId: 'contabilidad_eur_cup',
       monedaOrigenId: 'EUR',
       monedaDestino: 'CUP',
       tasa: 130.0
@@ -53,32 +56,42 @@ export async function seedContabilidad() {
   ]
 
   for (const tasa of tasasIniciales) {
-    await prisma.tasaCambio.create({
-      data: tasa
+    await client.tasaCambio.upsert({
+      where: { tasaId: tasa.tasaId },
+      update: {
+        monedaOrigenId: tasa.monedaOrigenId,
+        monedaDestino: tasa.monedaDestino,
+        tasa: tasa.tasa,
+      },
+      create: tasa
     })
   }
 
   // Crear tipos de pago básicos
   const tiposPago = [
     {
+      tipoId: `contabilidad_efectivo__${DEMO_TENANT_ID}`,
       nombre: 'Efectivo',
       descripcion: 'Pago en efectivo',
       requiereCuenta: false,
       isActive: true
     },
     {
+      tipoId: `contabilidad_transferencia__${DEMO_TENANT_ID}`,
       nombre: 'Transferencia Bancaria',
       descripcion: 'Transferencia electrónica',
       requiereCuenta: true,
       isActive: true
     },
     {
+      tipoId: `contabilidad_debito__${DEMO_TENANT_ID}`,
       nombre: 'Tarjeta de Débito',
       descripcion: 'Pago con tarjeta de débito',
       requiereCuenta: true,
       isActive: true
     },
     {
+      tipoId: `contabilidad_credito__${DEMO_TENANT_ID}`,
       nombre: 'Tarjeta de Crédito',
       descripcion: 'Pago con tarjeta de crédito',
       requiereCuenta: true,
@@ -87,8 +100,15 @@ export async function seedContabilidad() {
   ]
 
   for (const tipoPago of tiposPago) {
-    await prisma.tipoPago.create({
-      data: tipoPago
+    await client.tipoPago.upsert({
+      where: { tipoId: tipoPago.tipoId },
+      update: {
+        nombre: tipoPago.nombre,
+        descripcion: tipoPago.descripcion,
+        requiereCuenta: tipoPago.requiereCuenta,
+        isActive: tipoPago.isActive
+      },
+      create: { ...tipoPago, tenantId: DEMO_TENANT_ID }
     })
   }
 
@@ -121,11 +141,23 @@ export async function seedContabilidad() {
   ]
 
   for (const cuenta of cuentasBancarias) {
-    await prisma.cuentaBancaria.create({
-      data: {
+    await client.cuentaBancaria.upsert({
+      where: {
+        tenantId_numeroCuenta: {
+          tenantId: DEMO_TENANT_ID,
+          numeroCuenta: cuenta.numeroCuenta,
+        },
+      },
+      update: {
+        nombreBanco: cuenta.nombreBanco,
+        tipoCuenta: cuenta.tipoCuenta,
+        moneda: cuenta.moneda,
+        isActive: cuenta.isActive,
+      },
+      create: {
         ...cuenta,
-        tenant: { connect: { tenantId: 'demo-tenant' } }
-      }
+        tenantId: DEMO_TENANT_ID,
+      },
     })
   }
 

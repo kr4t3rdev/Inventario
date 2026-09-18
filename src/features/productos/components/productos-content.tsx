@@ -20,7 +20,6 @@ import {
 	History,
 	Tag,
 	Boxes,
-	Sparkles,
 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
@@ -154,6 +153,16 @@ interface ProductosContentProps {
 	initialPuntosVenta: Array<{ pvId: string; nombre: string }>;
 	usaEan13: boolean;
 	tenantRole?: string;
+	planFeatures?: Record<string, boolean>;
+}
+
+/**
+ * @description Determina si el usuario puede crear/editar productos desde la UI.
+ * @param {string | undefined} tenantRole - Rol del usuario en el tenant actual.
+ * @returns {boolean} True solo para manager.
+ */
+export function canManageProducts(tenantRole?: string): boolean {
+	return tenantRole === "manager";
 }
 
 /**
@@ -166,6 +175,7 @@ export function ProductosContent({
 	initialPuntosVenta,
 	usaEan13: initialUsaEan13,
 	tenantRole,
+	planFeatures,
 }: ProductosContentProps) {
 	const [ubicacionSeleccionada, setUbicacionSeleccionada] =
 		useState<UbicacionSeleccionada | null>(null);
@@ -186,7 +196,7 @@ export function ProductosContent({
 	const [isPending, startTransition] = useTransition();
 
 	// ─── Permisos ──
-	const puedeEditar = tenantRole === "manager" || !tenantRole;
+	const puedeEditar = canManageProducts(tenantRole);
 
 	// ─── Data fetching: stock por ubicación (Server Action) ──
 	useEffect(() => {
@@ -260,7 +270,7 @@ export function ProductosContent({
 			result = result.filter((producto) => {
 				const stockValue = ubicacionSeleccionada
 					? producto.stockUbicacion
-					: producto.stock;
+					: (producto.stockTotal ?? producto.stock);
 				return (stockValue ?? 0) > 0;
 			});
 		}
@@ -281,7 +291,7 @@ export function ProductosContent({
 		const getStockValue = (producto: ProductoConStock) => {
 			return ubicacionSeleccionada
 				? (producto.stockUbicacion ?? 0)
-				: (producto.stock ?? 0);
+				: (producto.stockTotal ?? producto.stock ?? 0);
 		};
 
 		const total = datosAMostrar.length;
@@ -308,7 +318,7 @@ export function ProductosContent({
 			if (result.success) {
 				toast.success("El producto ha sido eliminado exitosamente.");
 				const refresh = await getProductosAction();
-				// @ts-expect-error
+				// @ts-expect-error El shape de retorno de getProductosAction no expone success en el tipo filtrado
 				if (refresh.success) setProductos(refresh.data ?? []);
 			} else {
 				toast.error(
@@ -646,8 +656,9 @@ export function ProductosContent({
 										variant="outline"
 										className="h-8 w-8 p-0 cursor-pointer"
 										title="Crear oferta rápida"
+										aria-label="Crear oferta rápida"
 									>
-										<Tag className="h-4 w-4" />
+										<Tag className="h-4 w-4" aria-hidden="true" />
 									</Button>
 								}
 							/>
@@ -665,8 +676,9 @@ export function ProductosContent({
 										variant="outline"
 										className="h-8 w-8 p-0 cursor-pointer"
 										title="Crear oferta rápida"
+										aria-label="Crear oferta rápida"
 									>
-										<Tag className="h-4 w-4" />
+										<Tag className="h-4 w-4" aria-hidden="true" />
 									</Button>
 								}
 							/>
@@ -677,8 +689,9 @@ export function ProductosContent({
 										variant="outline"
 										className="h-8 w-8 p-0 cursor-pointer"
 										title="Editar producto"
+										aria-label="Editar producto"
 									>
-										<Pencil className="h-4 w-4" />
+										<Pencil className="h-4 w-4" aria-hidden="true" />
 									</Button>
 								</Link>
 
@@ -689,8 +702,9 @@ export function ProductosContent({
 											variant="outline"
 											className="h-8 w-8 p-0 cursor-pointer"
 											title="Restock producto"
+											aria-label="Restock producto"
 										>
-											<Package className="h-4 w-4" />
+											<Package className="h-4 w-4" aria-hidden="true" />
 										</Button>
 									}
 								/>
@@ -705,8 +719,9 @@ export function ProductosContent({
 													variant="outline"
 													className="h-8 w-8 p-0 cursor-pointer"
 													title="Ver historial de restock"
+													aria-label="Ver historial de restock"
 												>
-													<History className="h-4 w-4" />
+													<History className="h-4 w-4" aria-hidden="true" />
 												</Button>
 											</TooltipTrigger>
 											<TooltipContent side="top">
@@ -723,8 +738,9 @@ export function ProductosContent({
 											variant="outline"
 											className="h-8 w-8 p-0 cursor-pointer"
 											title="Crear oferta rápida"
+											aria-label="Crear oferta rápida"
 										>
-											<Tag className="h-4 w-4" />
+											<Tag className="h-4 w-4" aria-hidden="true" />
 										</Button>
 									}
 								/>
@@ -734,8 +750,9 @@ export function ProductosContent({
 									className="h-8 w-8 p-0 cursor-pointer"
 									onClick={() => setProductToDelete(producto.id)}
 									title="Eliminar producto"
+									aria-label="Eliminar producto"
 								>
-									<Trash2 className="h-4 w-4" />
+									<Trash2 className="h-4 w-4" aria-hidden="true" />
 								</Button>
 							</>
 						)}
@@ -781,18 +798,8 @@ export function ProductosContent({
 						transition={{ delay: 0.1, duration: 0.5 }}
 					>
 						<div className="flex items-center gap-3">
-							<motion.div className="relative flex h-10 w-10 items-center justify-center rounded-xl bg-linear-to-br from-primary to-purple-600 shadow-lg">
+							<motion.div className="relative flex h-10 w-10 items-center justify-center rounded-xl bg-linear-to-br from-primary to-purple shadow-lg">
 								<Boxes className="h-5 w-5 text-white" />
-								<motion.div
-									animate={{ rotate: 360, scale: [1, 1.2, 1] }}
-									transition={{
-										rotate: { duration: 18, repeat: Infinity, ease: "linear" },
-										scale: { duration: 2, repeat: Infinity, ease: "easeInOut" },
-									}}
-									className="absolute -right-1 -top-1"
-								>
-									<Sparkles className="h-3.5 w-3.5 text-yellow-400" />
-								</motion.div>
 							</motion.div>
 							<div>
 								<h1 className="text-3xl font-bold bg-linear-to-r from-slate-900 to-slate-600 dark:from-white dark:to-slate-300 bg-clip-text text-transparent">
@@ -804,15 +811,17 @@ export function ProductosContent({
 							</div>
 						</div>
 						<div className="flex items-center gap-2">
-							<Link href="/busy/products/bulk-stock-minimo">
-								<Button variant="outline" className="gap-2 border-dashed">
-									<Package className="h-4 w-4" />
-									Stock Mínimo
-								</Button>
-							</Link>
+							{planFeatures?.["productos-stock-masivo"] === true && (
+								<Link href="/busy/products/bulk-stock-minimo">
+									<Button variant="outline" className="gap-2 border-dashed">
+										<Package className="h-4 w-4" />
+										Stock Mínimo
+									</Button>
+								</Link>
+							)}
 							{puedeEditar && (
 								<Link href="/busy/products/new">
-									<Button className="gap-2 bg-linear-to-r from-primary to-purple-600 hover:from-primary/90 hover:to-purple-600/90">
+									<Button className="gap-2 bg-linear-to-r from-primary to-purple hover:from-primary/90 hover:to-purple/90">
 										<Plus className="h-4 w-4" />
 										Nuevo Producto
 									</Button>
@@ -890,7 +899,7 @@ export function ProductosContent({
 						animate={{ opacity: 1, y: 0 }}
 						transition={{ delay: 0.3, duration: 0.5 }}
 					>
-						<Card className="mb-4 border-dashed bg-linear-to-br from-primary/5 via-background to-purple-500/8 dark:from-primary/10 dark:to-purple-500/10">
+						<Card className="mb-4 border-dashed bg-linear-to-br from-primary/5 via-background to-purple/8 dark:from-primary/10 dark:to-purple/10">
 							<CardHeader className="pb-3">
 								<div className="flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
 									<CardTitle className="flex items-center gap-2 text-lg">

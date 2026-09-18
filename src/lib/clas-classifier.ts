@@ -165,7 +165,7 @@ export function validateCLASSection(name: string): string | null {
     key => key.trim().toUpperCase() === normalized
   );
 
-  return match ? CATEGORY_TO_SECTION[match] : null;
+  return match ? CATEGORY_TO_SECTION[match as keyof typeof CATEGORY_TO_SECTION] : null;
 }
 
 export function validateCLASSpecific(name: string): string | null {
@@ -174,5 +174,5 @@ export function validateCLASSpecific(name: string): string | null {
     key => key.trim().toUpperCase() === normalized
   );
 
-  return match ? SUBCATEGORY_TO_SPECIFIC[match] : null;
+  return match ? SUBCATEGORY_TO_SPECIFIC[match as keyof typeof SUBCATEGORY_TO_SPECIFIC] : null;
 }

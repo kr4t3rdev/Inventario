@@ -1,0 +1,59 @@
+
+ RUN  v3.2.4 /Users/arturo/Documents/Proyecto Inventario/TCP
+
+ ❯ src/features/ventas/__tests__/venta-credito-limite.test.ts (4 tests | 2 failed) 17ms
+   ✓ enforcement del límite de crédito (CRM-T2) > sin límite configurado el crédito pasa siempre 5ms
+   ✓ enforcement del límite de crédito (CRM-T2) > dentro del límite pasa sin alerta 1ms
+   × enforcement del límite de crédito (CRM-T2) > superar el tope sin permiso → CREDITO_EXCEDIDO, sin crear venta 10ms
+     → promise resolved "{ ventaId: 'v-1' }" instead of rejecting
+   × enforcement del límite de crédito (CRM-T2) > con el permiso override pasa y queda auditado 1ms
+     → expected "spy" to be called with arguments: [ ObjectContaining{…}, Anything ]
+
+Number of calls: 0
+
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  src/features/ventas/__tests__/venta-credito-limite.test.ts > enforcement del límite de crédito (CRM-T2) > superar el tope sin permiso → CREDITO_EXCEDIDO, sin crear venta
+AssertionError: promise resolved "{ ventaId: 'v-1' }" instead of rejecting
+
+- Expected
++ Received
+
+- Error {
+-   "message": "rejected promise",
++ {
++   "ventaId": "v-1",
+  }
+
+ ❯ src/features/ventas/__tests__/venta-credito-limite.test.ts:123:3
+    121|   await expect(
+    122|    VentaMutationService.create({ input: baseVentaACredito, user: manag…
+    123|   ).rejects.toMatchObject({ code: 'CREDITO_EXCEDIDO' });
+       |   ^
+    124|   expect(mockTx.venta.create).not.toHaveBeenCalled();
+    125|  });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/2]⎯
+
+ FAIL  src/features/ventas/__tests__/venta-credito-limite.test.ts > enforcement del límite de crédito (CRM-T2) > con el permiso override pasa y queda auditado
+AssertionError: expected "spy" to be called with arguments: [ ObjectContaining{…}, Anything ]
+
+Number of calls: 0
+
+ ❯ src/features/ventas/__tests__/venta-credito-limite.test.ts:135:37
+    133|   const r = await VentaMutationService.create({ input: baseVentaACredi…
+    134|   expect(r.ventaId).toBe('v-1');
+    135|   expect(AuditLogService.logStrict).toHaveBeenCalledWith(
+       |                                     ^
+    136|    expect.objectContaining({ detalles: expect.objectContaining({ tipo:…
+    137|    expect.anything(),
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/2]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  2 failed | 2 passed (4)
+   Start at  18:02:51
+   Duration  6.14s (transform 929ms, setup 349ms, collect 2.31s, tests 17ms, environment 1.46s, prepare 452ms)
+

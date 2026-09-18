@@ -36,6 +36,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { getVentasPendientesAction } from "@/features/contabilidad/actions-reconciliacion"
 import { getCuentasPorCobrarAction } from "@/features/contabilidad"
 import type { VentaPendiente } from "@/app/models/model"
+import { canCreateCuentaPorCobrarFromVenta } from "@/features/contabilidad/lib/cuentas-por-cobrar-flow"
 import { cn } from "@/lib/utils"
 import {
   StaggerContainer,
@@ -45,6 +46,8 @@ import {
 
 interface VentasPendientesTableProps {
   onReconciliar?: (ventas: VentaPendiente[]) => void
+  onCreateCuentaPorCobrar?: (venta: VentaPendiente) => void
+  canManageCuentasPorCobrar?: boolean
   saldosPorFactura?: Record<string, number>
   fechaInicio?: string
   fechaFin?: string
@@ -70,6 +73,8 @@ const surfaceCardClass = cn(
 
 export function VentasPendientesTable({
   onReconciliar,
+  onCreateCuentaPorCobrar,
+  canManageCuentasPorCobrar = false,
   saldosPorFactura,
   fechaInicio,
   fechaFin,
@@ -163,6 +168,16 @@ export function VentasPendientesTable({
              ordenId.toLowerCase().includes(term)
     })
   }, [ventasCombinadas, searchTerm])
+
+  const cuentasPorCobrarVentaKeys = useMemo(
+    () =>
+      new Set(
+        (cuentasPorCobrarData || []).flatMap((cuenta: any) =>
+          [cuenta.factura?.ventaId, cuenta.facturaId, cuenta.numeroFactura].filter(Boolean),
+        ),
+      ),
+    [cuentasPorCobrarData],
+  )
 
   const obtenerSaldoPendiente = (venta: VentaPendiente) => {
     if (typeof venta.saldoPendiente === 'number' && Number.isFinite(venta.saldoPendiente)) {
@@ -326,7 +341,7 @@ export function VentasPendientesTable({
                           <TableHead className="font-semibold">Sin Reconciliar</TableHead>
                           <TableHead className="font-semibold">Moneda</TableHead>
                           <TableHead className="font-semibold">Estado</TableHead>
-                          <TableHead className="w-[120px] font-semibold">Acción</TableHead>
+                          <TableHead className="w-[220px] font-semibold">Acción</TableHead>
                         </TableRow>
                       </TableHeader>
                       <TableBody>
@@ -385,19 +400,40 @@ export function VentasPendientesTable({
                               )}
                             </TableCell>
                             <TableCell>
-                              {onReconciliar && obtenerSaldoPendiente(venta) > 0.01 && (
-                                <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}>
-                                  <Button
-                                    size="sm"
-                                    variant="secondary"
-                                    onClick={() => onReconciliar([venta])}
-                                    className="gap-1"
-                                  >
-                                    <CheckCircle2 className="h-4 w-4" />
-                                    Reconciliar
-                                  </Button>
-                                </motion.div>
-                              )}
+                              <div className="flex flex-wrap gap-2">
+                                {onReconciliar && obtenerSaldoPendiente(venta) > 0.01 && (
+                                  <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}>
+                                    <Button
+                                      size="sm"
+                                      variant="secondary"
+                                      onClick={() => onReconciliar([venta])}
+                                      className="gap-1"
+                                    >
+                                      <CheckCircle2 className="h-4 w-4" />
+                                      Reconciliar
+                                    </Button>
+                                  </motion.div>
+                                )}
+                                {onCreateCuentaPorCobrar &&
+                                  canCreateCuentaPorCobrarFromVenta(
+                                    venta,
+                                    canManageCuentasPorCobrar,
+                                    cuentasPorCobrarVentaKeys.has(venta.ventaId) ||
+                                      cuentasPorCobrarVentaKeys.has(venta.ordenId ?? ''),
+                                  ) && (
+                                    <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}>
+                                      <Button
+                                        size="sm"
+                                        variant="outline"
+                                        onClick={() => onCreateCuentaPorCobrar(venta)}
+                                        className="gap-1"
+                                      >
+                                        <FileText className="h-4 w-4" />
+                                        Crear CxC
+                                      </Button>
+                                    </motion.div>
+                                  )}
+                              </div>
                             </TableCell>
                           </TableRow>
                         ))}

@@ -2,7 +2,7 @@
 
 import { VentaInterface } from "@/features/ventas"
 import { LazyMotion, m as motion } from "framer-motion"
-import { TrendingUp, Sparkles, ArrowLeft, ShoppingBag } from "lucide-react"
+import { TrendingUp, ArrowLeft, ShoppingBag } from "lucide-react"
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
 
@@ -43,15 +43,6 @@ export default function PuntoVentaPage() {
                   <h1 className="text-2xl font-bold bg-linear-to-r from-orange-500 to-red-600 bg-clip-text text-transparent">
                     Nueva Venta
                   </h1>
-                  <motion.div
-                    className="absolute -right-4 -top-1"
-                    animate={{ rotate: 360, scale: [1, 1.2, 1] }}
-                    transition={{ 
-                      rotate: { duration: 20, repeat: Infinity, ease: "linear" },
-                      scale: { duration: 2, repeat: Infinity, ease: "easeInOut" }
-                    }}
-                  >
-                  </motion.div>
                 </div>
               </motion.div>
             </div>

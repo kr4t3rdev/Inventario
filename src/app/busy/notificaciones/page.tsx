@@ -1,4 +1,5 @@
 "use client"
+import { useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
@@ -19,6 +20,7 @@ import {
   updateNotificacionAction,
   deleteNotificacionAction,
 } from "@/features/notificaciones/actions"
+import { getNotificationHref } from "@/features/notificaciones/notification-navigation"
 import type { Notification } from "@/app/models/model"
 import { format } from "date-fns"
 import { useState, useEffect } from "react"
@@ -82,6 +84,7 @@ export default function NotificationsPage() {
   const [isLoading, setIsLoading] = useState(true)
   const [eliminandoIds, setEliminandoIds] = useState<Set<string>>(new Set())
   const shouldReduceMotion = useReducedMotion()
+  const router = useRouter()
 
   useEffect(() => {
     getNotificacionesAction().then(r => { if (r.success) setData(r.data); setIsLoading(false) })
@@ -134,6 +137,24 @@ export default function NotificationsPage() {
         newSet.delete(notificationId)
         return newSet
       })
+    }
+  }
+
+  const handleNotificationClick = async (notification: Notification) => {
+    try {
+      if (!notification.isRead) {
+        await updateNotificacionAction({ id: notification.id, isRead: true })
+      }
+
+      const ref = await getNotificacionesAction()
+      if (ref.success) setData(ref.data)
+
+      const href = getNotificationHref(notification)
+      if (href) {
+        router.push(href)
+      }
+    } catch (error) {
+      toast.error("No se pudo abrir la notificación")
     }
   }
 
@@ -310,15 +331,24 @@ export default function NotificationsPage() {
                   variants={itemVariants}
                   exit="exit"
                   layout
+                  onClick={() => handleNotificationClick(notification)}
+                  onKeyDown={(event) => {
+                    if (event.key === 'Enter' || event.key === ' ') {
+                      event.preventDefault()
+                      void handleNotificationClick(notification)
+                    }
+                  }}
                   whileHover={{ scale: 1.01, x: 4 }}
                   transition={{ duration: shouldReduceMotion ? 0 : 0.2 }}
+                  role="button"
+                  tabIndex={0}
                 >
                   <Card
                     className={`transition-all ${
                       !notification.isRead
                         ? "border-l-4 border-l-primary bg-primary/10 dark:bg-primary/5"
                         : ""
-                    }`}
+                    } ${getNotificationHref(notification) ? "cursor-pointer" : "cursor-default"}`}
                   >
                     <CardContent className="p-6">
                       <div className="flex items-start justify-between">
@@ -359,7 +389,14 @@ export default function NotificationsPage() {
                               whileHover={{ scale: 1.1 }}
                               whileTap={{ scale: 0.9 }}
                             >
-                              <Button variant="ghost" size="sm" onClick={() => markAsRead(notification.id)}>
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={(event) => {
+                                  event.stopPropagation()
+                                  void markAsRead(notification.id)
+                                }}
+                              >
                                 <Check className="h-4 w-4" />
                               </Button>
                             </motion.div>
@@ -371,7 +408,10 @@ export default function NotificationsPage() {
                             <Button
                               variant="ghost"
                               size="sm"
-                              onClick={() => eliminarNotificacion(notification.id)}
+                              onClick={(event) => {
+                                event.stopPropagation()
+                                void eliminarNotificacion(notification.id)
+                              }}
                               disabled={eliminandoIds.has(notification.id)}
                               className="text-red-600 hover:text-red-700 hover:bg-red-50"
                             >

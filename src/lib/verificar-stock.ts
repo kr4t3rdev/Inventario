@@ -42,41 +42,45 @@ export async function verificarStockBajo(
 	);
 
 	try {
-		// ── Productos con stock bajo (stock > 0, stock <= stockMinimo) ──
-		const whereStockBajo: Record<string, unknown> = {
-			stock: { gt: 0 },
-			stockMinimo: { gt: 0 },
-		};
-		if (tenantId) whereStockBajo.tenantId = tenantId;
+		const whereProductos: Record<string, unknown> = {};
+		if (tenantId) whereProductos.tenantId = tenantId;
 
-		const productosStockBajo = await prisma.producto.findMany({
-			where: {
-				...whereStockBajo,
-				// stock <= stockMinimo
-			},
-			select: {
-				id: true,
-				nombre: true,
-				stock: true,
-				stockMinimo: true,
-				tenantId: true,
-				almacen: { select: { nombre: true } },
-			},
-		});
+		const [productos, registrosStock] = await Promise.all([
+			prisma.producto.findMany({
+				where: whereProductos,
+				select: {
+					id: true,
+					nombre: true,
+					stockMinimo: true,
+					tenantId: true,
+					almacen: { select: { nombre: true } },
+				},
+			}),
+			prisma.stockUbicacion.findMany({
+				where: tenantId ? { tenantId } : {},
+				select: { productoId: true, cantidad: true },
+			}),
+		]);
 
-		// Filtrar en memoria: stock <= stockMinimo (no podemos hacer esto directo en Prisma sin raw)
-		const productosBajoStock = productosStockBajo.filter(
-			(p) => p.stock <= p.stockMinimo,
+		const stockPorProducto = registrosStock.reduce<Record<string, number>>(
+			(acc, registro) => {
+				acc[registro.productoId] =
+					(acc[registro.productoId] ?? 0) + Number(registro.cantidad ?? 0);
+				return acc;
+			},
+			{},
 		);
 
-		// ── Productos sin stock ──
-		const whereSinStock: Record<string, unknown> = { stock: 0 };
-		if (tenantId) whereSinStock.tenantId = tenantId;
+		const productosConStock = productos.map((producto) => ({
+			...producto,
+			stockActual: stockPorProducto[producto.id] ?? 0,
+		}));
 
-		const productoSinStock = await prisma.producto.findMany({
-			where: whereSinStock,
-			select: { id: true, nombre: true, tenantId: true },
-		});
+		const productosBajoStock = productosConStock.filter(
+			(p) => p.stockActual > 0 && p.stockMinimo > 0 && p.stockActual <= p.stockMinimo,
+		);
+
+		const productoSinStock = productosConStock.filter((p) => p.stockActual === 0);
 
 		result.productosStockBajo = productosBajoStock.length;
 		result.productosSinStock = productoSinStock.length;
@@ -88,10 +92,10 @@ export async function verificarStockBajo(
 		if (dryRun) return result;
 
 		// ── Obtener usuarios activos ──
-		const usuarios = await prisma.user.findMany({
+		const usuarios = (await prisma.user.findMany({
 			where: { isActive: true },
-			select: { userId: true, tenantId: true },
-		});
+			select: { userId: true, tenantId: true } as any,
+		})) as unknown as Array<{ userId: string; tenantId: string }>;
 
 		const now = new Date();
 		const hace24h = new Date(now.getTime() - 24 * 60 * 60 * 1000);
@@ -122,7 +126,8 @@ export async function verificarStockBajo(
 				await prisma.notification.createMany({
 					data: usuariosDelTenant.map((u) => ({
 						title: "Stock Bajo",
-						message: `El producto "${producto.nombre}" tiene stock bajo (${producto.stock} de ${producto.stockMinimo} mínimo) - Almacén: ${almacenNombre}`,
+						message: `El producto "${producto.nombre}" tiene stock bajo (${producto.stockActual} de ${producto.stockMinimo} mínimo) - Almacén: ${almacenNombre}`,
+						link: "/busy/products",
 						type: "stock_bajo",
 						prioridad: "media",
 						userId: u.userId,
@@ -163,6 +168,7 @@ export async function verificarStockBajo(
 					data: usuariosDelTenant.map((u) => ({
 						title: "Sin Stock",
 						message: `El producto "${producto.nombre}" está agotado`,
+						link: "/busy/products",
 						type: "sin_stock",
 						prioridad: "alta",
 						userId: u.userId,

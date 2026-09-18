@@ -3,6 +3,7 @@ import prisma from '@/lib/prisma'
 import { z } from 'zod'
 import type { Prisma } from '@/generated/prisma'
 import { authenticateUser } from "@/lib/auth-middleware"
+import { requireFeature, requireTenant } from '@/lib/services/tenant-scope'
 import { AuditLogService } from "@/lib/services/audit-log-service"
 import { validarEscrituraPeriodo, extraerFechaDeBody } from '@/lib/services/validate-period-write'
 
@@ -20,6 +21,7 @@ const reconciliacionServicioSchema = z.object({
 // GET - Obtener servicios pendientes de reconciliar
 export async function GET(request: NextRequest) {
   try {
+    const a = await authenticateUser(request); if ('status' in a) return a as Response; const u = a.user; const tenantId = requireTenant(u); requireFeature(u, 'servicios', 'ver reconciliación de servicios');
     const { searchParams } = new URL(request.url)
     const fechaDesde = searchParams.get('fechaDesde')
     const fechaHasta = searchParams.get('fechaHasta')
@@ -28,7 +30,15 @@ export async function GET(request: NextRequest) {
     const skip = (page - 1) * limit
 
     // Construir filtros - obtener todos los servicios, filtraremos en el cliente por estado de reconciliación
-    const whereClause: {
+    const whereClause: Prisma.VentaServiciosWhereInput = {
+      tenantId,
+      servicio: { is: { tenantId } },
+      AND: [
+        { OR: [{ clienteId: null }, { cliente: { is: { tenantId } } }] },
+      ],
+    }
+
+    const dateFilter: {
       createdAt?: {
         gte?: Date
         lte?: Date
@@ -36,14 +46,16 @@ export async function GET(request: NextRequest) {
     } = {}
 
     if (fechaDesde || fechaHasta) {
-      whereClause.createdAt = {}
+      dateFilter.createdAt = {}
       if (fechaDesde) {
-        whereClause.createdAt.gte = new Date(fechaDesde)
+        dateFilter.createdAt.gte = new Date(fechaDesde)
       }
       if (fechaHasta) {
-        whereClause.createdAt.lte = new Date(fechaHasta)
+        dateFilter.createdAt.lte = new Date(fechaHasta)
       }
     }
+
+    Object.assign(whereClause, dateFilter)
 
     // Obtener servicios pendientes
     const [ventaServicios, total] = await Promise.all([
@@ -57,6 +69,7 @@ export async function GET(request: NextRequest) {
           cliente: true,
           servicio: true,
           reconciliaciones: {
+            where: { tenantId },
             select: {
               montoConvertido: true
             }
@@ -93,6 +106,8 @@ export async function POST(request: NextRequest) {
     const authResultUser = await authenticateUser(request)
     if ('status' in authResultUser) return authResultUser as Response
     const user = authResultUser.user
+    const tenantId = requireTenant(user)
+    requireFeature(user, 'servicios', 'reconciliar servicios');
 
     const body = await request.json()
     const validatedData = reconciliacionServicioSchema.parse(body)
@@ -101,7 +116,7 @@ export async function POST(request: NextRequest) {
     const fechaOperacion = extraerFechaDeBody(body) ?? new Date()
     const validacionPeriodo = await validarEscrituraPeriodo({
       fecha: fechaOperacion,
-      tenantId: user.tenantId ?? '',
+      tenantId,
       tipoOperacion: 'reconciliacion_servicios',
       actor: user.userId,
     })
@@ -113,8 +128,15 @@ export async function POST(request: NextRequest) {
     }
 
     // Verificar que el servicio existe
-    const ventaServicio = await prisma.ventaServicios.findUnique({
-      where: { ventaServicioId: validatedData.ventaServicioId }
+    const ventaServicio = await prisma.ventaServicios.findFirst({
+      where: {
+        ventaServicioId: validatedData.ventaServicioId,
+        tenantId,
+        servicio: { is: { tenantId } },
+        AND: [
+          { OR: [{ clienteId: null }, { cliente: { is: { tenantId } } }] },
+        ],
+      }
     })
 
     if (!ventaServicio) {
@@ -125,8 +147,8 @@ export async function POST(request: NextRequest) {
     }
 
     // Verificar que la cuenta bancaria existe y está activa
-    const cuentaBancaria = await prisma.cuentaBancaria.findUnique({
-      where: { cuentaId: validatedData.cuentaId }
+    const cuentaBancaria = await prisma.cuentaBancaria.findFirst({
+      where: { cuentaId: validatedData.cuentaId, tenantId }
     })
 
     if (!cuentaBancaria || !cuentaBancaria.isActive) {
@@ -137,8 +159,8 @@ export async function POST(request: NextRequest) {
     }
 
     // Verificar que el tipo de pago existe y está activo
-    const tipoPago = await prisma.tipoPago.findUnique({
-      where: { tipoId: validatedData.tipoPagoId }
+    const tipoPago = await prisma.tipoPago.findFirst({
+      where: { tipoId: validatedData.tipoPagoId, tenantId }
     })
 
     if (!tipoPago || !tipoPago.isActive) {
@@ -157,8 +179,8 @@ export async function POST(request: NextRequest) {
     // Si el tipo de pago requiere cuenta, verificar cuenta defecto
     let cuentaOrigen = null
     if (tipoPago.requiereCuenta && tipoPago.cuentaDefecto) {
-      cuentaOrigen = await prisma.cuentaBancaria.findUnique({
-        where: { cuentaId: tipoPago.cuentaDefecto }
+      cuentaOrigen = await prisma.cuentaBancaria.findFirst({
+        where: { cuentaId: tipoPago.cuentaDefecto, tenantId }
       })
 
       if (!cuentaOrigen || !cuentaOrigen.isActive) {
@@ -182,7 +204,7 @@ export async function POST(request: NextRequest) {
       // Crear la reconciliación
       const reconciliacion = await tx.reconciliacionServicio.create({
         data: {
-          tenantId: ventaServicio.tenantId,
+          tenantId,
           ventaServicioId: validatedData.ventaServicioId,
           cuentaId: validatedData.cuentaId,
           tipoPagoId: validatedData.tipoPagoId,
@@ -206,8 +228,8 @@ export async function POST(request: NextRequest) {
 
       if (cuentaOrigen && tipoPago.cuentaDefecto !== validatedData.cuentaId) {
         // Transferir: decrementar de cuenta origen e incrementar en cuenta destino
-        await tx.cuentaBancaria.update({
-          where: { cuentaId: tipoPago.cuentaDefecto! },
+        const cuentaOrigenUpdate = await tx.cuentaBancaria.updateMany({
+          where: { cuentaId: tipoPago.cuentaDefecto!, tenantId },
           data: {
             saldo: {
               decrement: saldoIncremento
@@ -215,30 +237,41 @@ export async function POST(request: NextRequest) {
           }
         })
 
-        await tx.cuentaBancaria.update({
-          where: { cuentaId: validatedData.cuentaId },
+        if (cuentaOrigenUpdate.count !== 1) {
+          throw new Error('No se pudo actualizar la cuenta bancaria de origen')
+        }
+
+        const cuentaDestinoUpdate = await tx.cuentaBancaria.updateMany({
+          where: { cuentaId: validatedData.cuentaId, tenantId },
           data: {
             saldo: {
               increment: saldoIncremento
             }
           }
         })
+        if (cuentaDestinoUpdate.count !== 1) {
+          throw new Error('No se pudo actualizar la cuenta bancaria destino')
+        }
       } else {
         // Solo incrementar en la cuenta destino
-        await tx.cuentaBancaria.update({
-          where: { cuentaId: validatedData.cuentaId },
+        const cuentaDestinoUpdate = await tx.cuentaBancaria.updateMany({
+          where: { cuentaId: validatedData.cuentaId, tenantId },
           data: {
             saldo: {
               increment: saldoIncremento
             }
           }
         })
+        if (cuentaDestinoUpdate.count !== 1) {
+          throw new Error('No se pudo actualizar la cuenta bancaria destino')
+        }
       }
 
       // Registrar la transacción de moneda si es diferente a CUP
       if (validatedData.moneda !== 'CUP' && validatedData.tasaCambio) {
         await tx.transaccionMoneda.create({
           data: {
+            tenantId,
             tipoTransaccion: 'servicio',
             referenciaId: validatedData.ventaServicioId,
             monedaId: validatedData.moneda,

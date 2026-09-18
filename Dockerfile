@@ -1,5 +1,5 @@
 # Builder
-FROM node:20 AS builder
+FROM node:22 AS builder
 ARG DATABASE_URL
 WORKDIR /app
 
@@ -13,7 +13,7 @@ RUN apt-get update && apt-get install -y \
     && rm -rf /var/lib/apt/lists/*
 
 # Instalar PNPM primero
-RUN corepack enable && corepack prepare pnpm@latest --activate
+RUN corepack enable && corepack prepare pnpm@10.22.0 --activate
 
 # Copiar solo archivos de dependencias primero (mejor caching)
 COPY package.json pnpm-lock.yaml ./
@@ -34,9 +34,7 @@ ENV DATABASE_URL=$DATABASE_URL
 # Generar cliente Prisma (output: src/generated/prisma según schema)
 RUN pnpm prisma generate
 
-# Eliminar prisma.config.ts para que no se incluya en el output standalone.
-# En runtime, el CLI de Prisma usa env vars (DATABASE_URL) directamente
-# y el .ts no se puede parsear sin un TS loader.
+# Evitar que prisma.config.ts llegue al standalone; el runtime usa las variables de entorno.
 RUN rm -f /app/prisma.config.ts
 
 # Build con variables de entorno para estabilidad
@@ -45,7 +43,7 @@ ENV NODE_OPTIONS="--max-http-header-size=80000 --dns-result-order=ipv4first"
 RUN pnpm build
 
 # Runtime
-FROM node:20-slim
+FROM node:22-slim
 WORKDIR /app
 ENV NODE_ENV=production
 
@@ -58,7 +56,7 @@ RUN apt-get update && apt-get install -y \
     && rm -rf /var/lib/apt/lists/*
 
 # Habilitar pnpm via corepack (necesario para `prisma migrate deploy` en runtime)
-RUN corepack enable && corepack prepare pnpm@latest --activate
+RUN corepack enable && corepack prepare pnpm@10.22.0 --activate
 
 # Copiar standalone build como base
 COPY --from=builder /app/.next/standalone /app
@@ -72,6 +70,9 @@ COPY --from=builder /app/public /app/public
 # Copiar schema Prisma para usar en runtime
 COPY --from=builder /app/prisma /app/prisma
 
+# Copiar scripts de migración
+COPY --from=builder /app/scripts /app/scripts
+
 # Copiar el cliente Prisma generado (output en src/generated/prisma según schema)
 COPY --from=builder /app/src/generated/prisma /app/src/generated/prisma
 
@@ -81,6 +82,8 @@ COPY --from=builder /app/src/generated/prisma /app/src/generated/prisma
 # en runtime (no tenemos prisma.config.ts accesible). El cliente ya fue
 # generado en el builder stage.
 COPY package.json pnpm-lock.yaml ./
+# Remover prisma.config.ts si existe para evitar que prisma generate falle
+RUN rm -f /app/prisma.config.ts
 RUN pnpm install --frozen-lockfile --prefer-offline --ignore-scripts || \
     (sleep 5 && pnpm install --frozen-lockfile --prefer-offline --ignore-scripts) || \
     (sleep 10 && pnpm install --frozen-lockfile --ignore-scripts)

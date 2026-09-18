@@ -115,7 +115,7 @@ export function StaggerItem({ children, className, ...props }: StaggerItemProps)
   const hasMounted = useHasMounted();
 
   if (!hasMounted) {
-    return <div className={className} {...props}>{children}</div>;
+    return <div className={className}>{children}</div>;
   }
 
   const item: Variants = shouldReduceMotion
@@ -157,7 +157,7 @@ export function AnimatedCard({ children, className, hoverEffect = true, ...props
   const hasMounted = useHasMounted();
 
   if (!hasMounted) {
-    return <div className={className} {...props}>{children}</div>;
+    return <div className={className}>{children}</div>;
   }
 
   return (
@@ -186,7 +186,7 @@ export function FadeIn({ children, className, delay = 0, duration = motionTokens
   const hasMounted = useHasMounted();
 
   if (!hasMounted) {
-    return <div className={className} {...props}>{children}</div>;
+    return <div className={className} {...props as any}>{children as React.ReactNode}</div>;
   }
 
   return (
@@ -214,7 +214,7 @@ export function SlideIn({ children, className, direction = 'up', delay = 0, ...p
   const hasMounted = useHasMounted();
 
   if (!hasMounted) {
-    return <div className={className} {...props}>{children}</div>;
+    return <div className={className} {...props as any}>{children as React.ReactNode}</div>;
   }
 
   const directions = {
@@ -297,7 +297,7 @@ export function AnimatedTableRow({ children, className, index = 0, ...props }: T
   const hasMounted = useHasMounted();
 
   if (!hasMounted) {
-    return <tr className={className} {...props}>{children}</tr>;
+    return <tr className={className} {...(props as React.HTMLAttributes<HTMLTableRowElement>)}>{children}</tr>;
   }
 
   return (

@@ -40,7 +40,7 @@ export function CurrencyIndicator({ monedas = [], tasas = [] }: CurrencyIndicato
 
   if (!monedaPrincipal) {
     return (
-      <div className="flex items-center gap-2 px-3">
+      <div className="flex min-w-0 max-w-[45vw] shrink items-center gap-2 overflow-x-auto px-3 sm:max-w-none">
         <Badge variant="outline" className="flex items-center gap-1">
           <DollarSign className="h-3 w-3" />
           CUP
@@ -51,7 +51,7 @@ export function CurrencyIndicator({ monedas = [], tasas = [] }: CurrencyIndicato
 
   return (
     <TooltipProvider>
-      <div className="flex items-center gap-2 px-3">
+      <div className="flex min-w-0 max-w-[45vw] shrink items-center gap-2 overflow-x-auto px-3 sm:max-w-none">
         <Badge variant="default" className="flex items-center gap-1">
           <DollarSign className="h-3 w-3" />
           {monedaPrincipal.codigo}

@@ -1,3 +1,5 @@
+import { ActionError } from "@/lib/server-actions/types";
+
 export type TipoUbicacion = "almacen" | "punto_venta";
 
 type UpsertStockOpts =
@@ -25,13 +27,12 @@ type UpsertStockOpts =
 /**
  * @description Hace upsert del stock materializado por ubicación dentro de una transacción Prisma.
  * Usar modo 'increment' para compras, transferencias y ventas (delta puede ser negativo para decrementar).
- * Usar modo 'set' para restock (que ya calcula el valor absoluto nuevo).
+ * Usar modo 'set' solo en inicialización o correcciones explícitas donde el valor absoluto
+ * de la ubicación ya fue calculado fuera de este helper.
  *
- * @note producto.stock (legacy): se actualiza manualmente en CADA calling action con el mismo delta.
- *   NO depende de este helper. Es un agregado legacy de compatibilidad mantenido en paralelo.
- *   Regla: toda mutación a StockUbicacion DEBE también actualizar producto.stock con el mismo delta,
- *   para mantener consistencia. En el futuro producto.stock será derivado explícitamente de
- *   SUM(StockUbicacion.cantidad) y este mantenimiento manual se eliminará.
+ * @note StockUbicacion es la fuente de verdad operativa del inventario por ubicación.
+ *   `producto.stock` permanece solo como compatibilidad legacy en algunos read models todavía no migrados.
+ *   Las nuevas mutaciones NO deben depender de `producto.stock` ni asumir sincronización manual paralela.
  *
  * @param {any} tx - Cliente de transacción Prisma (o prisma directo)
  * @param {UpsertStockOpts} opts - Opciones de actualización
@@ -61,19 +62,77 @@ export async function upsertStockUbicacion(
 
 	if (opts.modo === "increment") {
 		const { delta, cantidadReservada } = opts;
+		const compositeWhere = {
+			productoId_tipoUbicacion_ubicacionId: {
+				productoId,
+				tipoUbicacion,
+				ubicacionId,
+			},
+		};
+		const scalarWhere = { productoId, tipoUbicacion, ubicacionId };
+
+		if (delta < 0 && cantidadReservada === undefined) {
+			const result = await tx.stockUbicacion.updateMany({
+				where: {
+					...scalarWhere,
+					cantidad: { gte: Math.abs(delta) },
+					cantidadDisponible: { gte: Math.abs(delta) },
+				},
+				data: {
+					cantidad: { increment: delta },
+					cantidadDisponible: { increment: delta },
+				},
+			});
+
+			if (result.count !== 1) {
+				throw new ActionError(
+					`Stock insuficiente en ${tipoUbicacion} ${ubicacionId}`,
+					"STOCK_INSUFICIENTE",
+				);
+			}
+			return;
+		}
 
 		if (cantidadReservada !== undefined) {
 			// Si se provee cantidadReservada, leer registro existente para calcular disponible
 			const existing = await tx.stockUbicacion.findUnique({
-				where: {
-					productoId_tipoUbicacion_ubicacionId: {
-						productoId,
-						tipoUbicacion,
-						ubicacionId,
-					},
-				},
-				select: { cantidad: true },
+				where: compositeWhere,
+				select: { cantidad: true, cantidadDisponible: true },
 			});
+
+			if (delta < 0) {
+				const currentCantidad = existing?.cantidad ?? 0;
+				const currentDisponible = existing?.cantidadDisponible ?? 0;
+				const nextCantidad = currentCantidad + delta;
+				const nextDisponible = nextCantidad - cantidadReservada;
+				if (!existing || nextCantidad < 0 || nextDisponible < 0 || currentDisponible < 0) {
+					throw new ActionError(
+						`Stock insuficiente en ${tipoUbicacion} ${ubicacionId}`,
+						"STOCK_INSUFICIENTE",
+					);
+				}
+
+				const result = await tx.stockUbicacion.updateMany({
+					where: {
+						...scalarWhere,
+						cantidad: currentCantidad,
+						cantidadDisponible: currentDisponible,
+					},
+					data: {
+						cantidad: { increment: delta },
+						cantidadReservada,
+						cantidadDisponible: nextDisponible,
+					},
+				});
+
+				if (result.count !== 1) {
+					throw new ActionError(
+						"El stock cambió mientras se procesaba la operación",
+						"STOCK_CONCURRENCIA",
+					);
+				}
+				return;
+			}
 
 			await tx.stockUbicacion.upsert({
 				where: {

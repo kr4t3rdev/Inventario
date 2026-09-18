@@ -1,9 +1,5 @@
 import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
-import { validateAllSecrets } from '@/lib/secrets'
-
-// Validar secretos al iniciar el proxy (falla rápido si faltan vars de entorno)
-validateAllSecrets()
 
 /**
  * @description Proxy de Next.js que maneja la protección de rutas.
@@ -45,6 +41,8 @@ export async function proxy(request: NextRequest) {
     '/api/auth/google/callback',
     '/api/health',
     '/api/licencias/validar',
+    '/api/mobile/v1/auth/login',
+    '/api/mobile/v1/auth/refresh',
   ]
 
   const publicPathsPrefix = [

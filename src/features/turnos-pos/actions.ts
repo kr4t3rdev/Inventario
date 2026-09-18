@@ -189,7 +189,7 @@ export const cerrarTurnoAction = withAction(
 			where: { turnoId: parsed.turnoId, deletedAt: null },
 			_sum: { total: true },
 		});
-		const totalVentaTurno = (ventaAgg._sum.total ?? 0) / 100; // centavos → pesos
+		const totalVentaTurno = ventaAgg._sum.total ?? 0; // Venta.total ya está en pesos
 
 		const fondo = turno.fondoInicialCup;
 		const arqueoTotalPesos =
@@ -243,11 +243,13 @@ export const getOrCreateTurnoActivo = withAction(
 	) => {
 		const parsed = turnoAutomaticoSchema.parse(params);
 		const tenantId = requireTenant(user);
+		requireFeature(user, 'turnos-pos', 'gestionar turnos POS');
 
-		// Buscar turno activo existente
+		// Buscar turno activo existente dentro del tenant
 		const turnoActivo = await prisma.turnoPuntoVenta.findFirst({
 			where: {
 				puntoDeVentaId: parsed.puntoDeVentaId,
+				tenantId,
 				estado: "ABIERTO",
 			},
 		});

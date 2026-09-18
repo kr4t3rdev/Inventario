@@ -26,7 +26,7 @@ export default async function NewContratoPage() {
     prisma.contrato.findMany({
       where: { tenantId: { not: undefined } },
       select: {
-  // @ts-expect-error
+  // @ts-expect-error TODO: fix prisma select type inference
       tipoCustomId: true, nombre: true
       }
     }).catch(() => [])
@@ -39,12 +39,12 @@ export default async function NewContratoPage() {
   return (
     <div className="container mx-auto py-6 max-w-4xl">
       <ContratoForm
-  // @ts-expect-error
+  // @ts-expect-error TODO: fix type cast for clientes array
         initialClientes={
         clientes
         }
         initialVendors={vendors}
-  // @ts-expect-error
+  // @ts-expect-error TODO: fix type cast for tiposCustom array
         initialTiposCustom={
         tiposCustom
         }

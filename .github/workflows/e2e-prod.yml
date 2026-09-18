@@ -1,0 +1,82 @@
+name: Smoke post-deploy
+
+# Chequeo manual post-deploy contra el host real de Railway.
+# NO se ejecuta automáticamente en push/PR: el deploy de Railway es asíncrono
+# respecto al push, así que una corrida automática validaría un deploy viejo
+# o parcial (flaky/enganchado). Se dispara a mano desde "Run workflow" tras
+# confirmar en Railway que el deploy activo es el esperado.
+
+on:
+  workflow_dispatch:
+    inputs:
+      base_url:
+        description: 'Host a validar (default: producción Railway)'
+        required: false
+        default: 'https://kr4t3rdev.xyz'
+        type: string
+      target_environment:
+        description: 'GitHub Environment y entorno esperado en /api/health'
+        required: true
+        default: production
+        type: choice
+        options:
+          - staging
+          - production
+      expected_sha:
+        description: 'SHA exacto del commit que debe estar desplegado'
+        required: true
+        type: string
+
+permissions:
+  contents: read
+
+concurrency:
+  group: e2e-deployment-${{ inputs.target_environment }}-${{ github.ref }}
+  cancel-in-progress: false
+
+env:
+  NODE_VERSION: '22'
+  PNPM_VERSION: '10.22.0'
+
+jobs:
+  e2e-prod:
+    name: E2E Playwright contra ${{ inputs.target_environment }}
+    environment: ${{ format('FinanceMDM / {0}', inputs.target_environment) }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          persist-credentials: false
+
+      - name: Set up pnpm
+        uses: pnpm/action-setup@a7487c7e89a18df4991f7f222e4898a00d66ddda # v4.1.0
+        with:
+          version: ${{ env.PNPM_VERSION }}
+
+      - name: Set up Node.js
+        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile --ignore-scripts
+
+      - name: Instalar navegador Chromium (Playwright)
+        run: pnpm exec playwright install --with-deps chromium
+
+      - name: Suite E2E contra el entorno objetivo
+        env:
+          E2E_BASE_URL: ${{ inputs.base_url }}
+          EXPECTED_DEPLOYMENT_ENVIRONMENT: ${{ inputs.target_environment }}
+          EXPECTED_DEPLOYMENT_SHA: ${{ inputs.expected_sha }}
+        run: pnpm run test:smoke:prod
+
+      - name: Subir artefacto de reporte (si falla)
+        if: failure()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: playwright-report
+          path: playwright-report/
+          if-no-files-found: ignore

@@ -26,6 +26,11 @@ describe('produccion/vales fetcher', () => {
     vi.mocked(prisma.gastosDE.findMany).mockResolvedValue([{ concepto: 'Merma' }, { concepto: 'Consumo' }] as any)
     const result = await getConceptos()
     expect(result).toEqual(['Merma', 'Consumo'])
+    expect(prisma.gastosDE.findMany).toHaveBeenCalledWith(
+      expect.objectContaining({
+        where: { tenantId: 't1' },
+      }),
+    )
   })
 
   it('getValesSalida should return list with items', async () => {

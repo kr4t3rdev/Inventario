@@ -4,42 +4,18 @@ import { prisma } from "../../src/lib/prisma";
 /**
  * @description Pobla StockUbicacion con datos calculados del estado actual del sistema.
  * Ejecutar una sola vez después de la migración.
+ *
+ * ⚠️ IMPORTANTE:
+ * Ya NO siembra stock de almacenes desde `producto.stock`, porque ese agregado legacy
+ * puede estar desalineado y reintroducir stock fantasma. El script solo conserva la
+ * materialización derivable para puntos de venta.
  */
 async function main() {
 	console.log("Iniciando seed de StockUbicacion...");
 
-	// 1. Almacenes: usar Producto.stock directamente
-	const productos = await prisma.producto.findMany({
-		select: { id: true, stock: true, almacenId: true, tenantId: true },
-	});
-
-	for (const producto of productos) {
-		if (producto.stock > 0) {
-			await prisma.stockUbicacion.upsert({
-				where: {
-					productoId_tipoUbicacion_ubicacionId: {
-						productoId: producto.id,
-						tipoUbicacion: "almacen",
-						ubicacionId: producto.almacenId,
-					},
-				},
-				update: {
-					cantidad: producto.stock,
-					cantidadDisponible: producto.stock,
-				},
-				create: {
-					productoId: producto.id,
-					tipoUbicacion: "almacen",
-					ubicacionId: producto.almacenId,
-					cantidad: producto.stock,
-					cantidadReservada: 0,
-					cantidadDisponible: producto.stock,
-					tenantId: producto.tenantId,
-				},
-			});
-		}
-	}
-	console.log(`  Almacenes: ${productos.length} productos procesados`);
+	console.log(
+		"  Almacenes: omitidos intencionalmente. `producto.stock` ya no es una fuente confiable para seed.",
+	);
 
 	// 2. Puntos de venta: calcular stock materializado a partir de transferencias y ventas
 	const puntosDeVenta = await prisma.puntoDeVenta.findMany({

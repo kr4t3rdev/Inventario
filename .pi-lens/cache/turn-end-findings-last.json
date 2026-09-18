@@ -1,6 +1,6 @@
 {
-  "signature": "src/features/facturas/actions.ts|src/features/ofertas/actions.ts::Unresolved from this turn — src/features/ofertas/actions.ts:\n🔴 STOP — 3 issue(s) must be fixed:\n  L145: @typescript-eslint/ban-ts-comment: Include a description after the \"@ts-expect-error\" directive to explain why the @ts-expect-error is necessary. The description must be 3 characters or longer.\n  L168: @typescript-eslint/ban-ts-comment: Include a description after the \"@ts-expect-error\" directive to explain why the @ts-expect-error is necessary. The description must be 3 characters or longer.\n  L171: @typescript-eslint/ban-ts-comment: Include a description after the \"@ts-expect-error\" directive to explain why the @ts-expect-error is necessary. The description must be 3 characters or longer.",
-  "sessionId": "lens-mq6yz8kn-926f67ec",
-  "projectSeqStart": 61,
-  "projectSeqEnd": 63
+  "signature": "openspec/changes/remediate-reconciled-balance-audit-blockers/tasks.md::ℹ️ Advisory — no action required this turn:\nCode-quality warnings introduced/touched this turn: 1 across 1 file(s).\nTop rules: pi-lens×1\nDetails written to .pi-lens/cache/code-quality-warnings.json\nNo action required unless you are already refactoring these areas.",
+  "sessionId": "01a02f04-003b-7a70-bfab-b05a3921a515",
+  "projectSeqStart": 244,
+  "projectSeqEnd": 245
 }

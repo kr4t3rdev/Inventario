@@ -34,6 +34,13 @@ function VerifyEmailContent(): React.JSX.Element {
       const data = await response.json()
 
       if (!response.ok) {
+        if (response.status >= 500) {
+          setMessage(
+            'No pudimos verificar tu correo por un problema temporal. Inténtalo de nuevo.'
+          )
+          return
+        }
+
         setMessage(data.error || 'No se pudo verificar el correo.')
         return
       }
@@ -42,7 +49,7 @@ function VerifyEmailContent(): React.JSX.Element {
       router.replace('/onboarding')
     } catch (err) {
       console.error('Error verificando email:', err)
-      setMessage('Error de conexión. Intentalo de nuevo.')
+      setMessage('Error de conexión. Inténtalo de nuevo.')
     }
   }, [router])
 

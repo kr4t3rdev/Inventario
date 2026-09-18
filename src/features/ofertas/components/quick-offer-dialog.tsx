@@ -2,7 +2,7 @@
 
 import { useState, type ReactNode } from "react"
 import { LazyMotion, m as motion, AnimatePresence } from "framer-motion"
-import { Loader2, Tag, Sparkles, Receipt, Package } from "lucide-react"
+import { Loader2, Tag, Receipt, Package } from "lucide-react"
 
 import { Button } from "@/components/ui/button"
 import {
@@ -191,8 +191,8 @@ export function QuickOfferDialog({ producto, trigger }: QuickOfferDialogProps) {
       <DialogTrigger asChild>
         {trigger || (
           <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
-            <Button variant="outline" size="icon" title="Crear oferta rápida">
-              <Tag className="h-4 w-4" />
+            <Button variant="outline" size="icon" title="Crear oferta rápida" aria-label="Crear oferta rápida">
+              <Tag className="h-4 w-4" aria-hidden="true" />
             </Button>
           </motion.div>
         )}
@@ -214,16 +214,6 @@ export function QuickOfferDialog({ producto, trigger }: QuickOfferDialogProps) {
               </motion.div>
               <div className="relative">
                 <DialogTitle>Oferta Rápida</DialogTitle>
-                <motion.div
-                  className="absolute -right-4 -top-1"
-                  animate={{ rotate: 360, scale: [1, 1.2, 1] }}
-                  transition={{
-                    rotate: { duration: 20, repeat: Infinity, ease: "linear" },
-                    scale: { duration: 2, repeat: Infinity, ease: "easeInOut" }
-                  }}
-                >
-                  <Sparkles className="h-4 w-4 text-yellow-500" />
-                </motion.div>
               </div>
             </div>
             <DialogDescription>
@@ -332,7 +322,7 @@ export function QuickOfferDialog({ producto, trigger }: QuickOfferDialogProps) {
                 </motion.div>
 
                 <motion.div variants={fadeInUp}>
-                  <Card className="mt-4 p-3 border-dashed bg-linear-to-r from-primary/5 to-purple-600/5">
+                  <Card className="mt-4 p-3 border-dashed bg-linear-to-r from-primary/5 to-purple/5">
                     <div className="flex justify-between items-center">
                       <span className="font-medium">Total Estimado:</span>
                       <span className="font-bold text-lg text-primary">{formatCurrency(total)}</span>

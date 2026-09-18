@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button"
 import { Skeleton } from "@/components/ui/skeleton"
 import { getClientesAction, deleteClienteAction } from "@/features/clientes"
 import { ColumnDef } from "@tanstack/react-table"
-import { ArrowUp, ArrowUpDown, Pencil, Plus, Trash2, Users, Sparkles, UserCircle } from "lucide-react"
+import { ArrowUp, ArrowUpDown, Pencil, Plus, Trash2, Users, UserCircle } from "lucide-react"
 import Link from "next/link"
 import { useState, useEffect, useTransition } from "react"
 import { toast } from "sonner"
@@ -195,16 +195,6 @@ const Cliente = () => {
                                 <h1 className="text-2xl font-bold bg-linear-to-r from-orange-500 to-red-600 bg-clip-text text-transparent">
                                   Clientes
                                 </h1>
-                                <motion.div
-                                  className="absolute -right-4 -top-1"
-                                  animate={{ rotate: 360, scale: [1, 1.2, 1] }}
-                                  transition={{ 
-                                    rotate: { duration: 20, repeat: Infinity, ease: "linear" },
-                                    scale: { duration: 2, repeat: Infinity, ease: "easeInOut" }
-                                  }}
-                                >
-                                  <Sparkles className="h-4 w-4 text-yellow-500" />
-                                </motion.div>
                               </div>
                             </motion.div>
                             <motion.div

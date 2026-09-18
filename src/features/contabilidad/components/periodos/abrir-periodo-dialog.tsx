@@ -40,7 +40,7 @@ export function AbrirPeriodoDialog({
 	onSuccess,
 }: AbrirPeriodoDialogProps) {
 	const [isLoading, setIsLoading] = useState(false);
-	const [tipo, setTipo] = useState<TipoPeriodo>("MENSUAL");
+	const [tipo, setTipo] = useState<string>("MENSUAL");
 	const [categoria, setCategoria] = useState<string>("ORDINARIO");
 	const [modoContable, setModoContable] = useState<string>("CAJA");
 	const [fechaInicio, setFechaInicio] = useState("");
@@ -58,7 +58,7 @@ export function AbrirPeriodoDialog({
 				"@/features/contabilidad/actions-periodos"
 			);
 			const result = await abrirPeriodoAction({
-				tipo,
+				tipo: tipo as any,
 				fechaInicio: new Date(fechaInicio).toISOString(),
 				fechaFin: new Date(fechaFin).toISOString(),
 				observaciones: observaciones || undefined,
@@ -66,7 +66,7 @@ export function AbrirPeriodoDialog({
 					categoria !== "ORDINARIO"
 						? (categoria as CategoriaPeriodo)
 						: undefined,
-				modoContable: modoContable !== "CAJA" ? modoContable : undefined,
+				modoContable: modoContable !== "CAJA" ? (modoContable as any) : undefined,
 			});
 
 			if (!result.success) {

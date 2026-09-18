@@ -1,15 +1,32 @@
 "use client"
 
-import { useState } from "react"
+import { useEffect, useState } from "react"
+import { useRouter } from "next/navigation"
 import { CapitalForm } from "./capital-form"
 import { CapitalTable } from "./capital-table"
 import { Separator } from "@/components/ui/separator"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { LazyMotion, m as motion, AnimatePresence } from "framer-motion"
 import { Wallet, History, Plus } from "lucide-react"
+import { useAuth } from "@/contexts/auth-context"
 
 export function CapitalPageClient() {
+  const router = useRouter()
+  const { user } = useAuth()
   const [activeTab, setActiveTab] = useState("list")
+  const isBlocked =
+    user?.role !== 'admin' &&
+    user?.planFeatures?.['inyeccion-capital'] !== true
+
+  useEffect(() => {
+    if (isBlocked) {
+      router.replace('/busy/contabilidad')
+    }
+  }, [isBlocked, router])
+
+  if (isBlocked) {
+    return null
+  }
 
   const containerVariants = {
     hidden: { opacity: 0 },

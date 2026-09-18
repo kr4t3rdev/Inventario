@@ -18,9 +18,15 @@ import {
 } from '@/components/ui/dialog'
 import { Button } from '@/components/ui/button'
 
+export interface BackupTenantOption {
+  tenantId: string
+  nombre: string
+}
+
 interface BackupTriggerDialogProps {
   isCreating: boolean
   error: string | null
+  tenants?: BackupTenantOption[]
   onCreateBackup: (type: 'full' | 'tenant' | 'config', tenantId?: string) => void
   children?: React.ReactNode
 }
@@ -52,17 +58,23 @@ const BACKUP_TYPES = [
 export function BackupTriggerDialog({
   isCreating,
   error,
+  tenants = [],
   onCreateBackup,
   children,
 }: BackupTriggerDialogProps) {
   const [open, setOpen] = useState(false)
   const [selectedType, setSelectedType] = useState<'full' | 'tenant' | 'config'>('full')
+  const [selectedTenantId, setSelectedTenantId] = useState('')
 
   const handleSubmit = () => {
-    onCreateBackup(selectedType)
+    onCreateBackup(selectedType, selectedType === 'tenant' ? selectedTenantId : undefined)
     setOpen(false)
     setSelectedType('full')
+    setSelectedTenantId('')
   }
+
+  const requiresTenant = selectedType === 'tenant'
+  const canSubmit = !isCreating && (!requiresTenant || selectedTenantId.length > 0)
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
@@ -118,6 +130,30 @@ export function BackupTriggerDialog({
           })}
         </div>
 
+        {requiresTenant ? (
+          <div className="space-y-1.5">
+            <label
+              htmlFor="backup-tenant"
+              className="text-xs font-medium text-muted-foreground"
+            >
+              Tenant
+            </label>
+            <select
+              id="backup-tenant"
+              value={selectedTenantId}
+              onChange={(e) => setSelectedTenantId(e.target.value)}
+              className="h-9 w-full rounded-lg border border-input bg-background px-3 text-sm shadow-sm"
+            >
+              <option value="">Seleccioná un tenant</option>
+              {tenants.map((tenant) => (
+                <option key={tenant.tenantId} value={tenant.tenantId}>
+                  {tenant.nombre}
+                </option>
+              ))}
+            </select>
+          </div>
+        ) : null}
+
         {error && (
           <div className="flex items-start gap-2 rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-700 dark:border-red-800 dark:bg-red-950/30 dark:text-red-400">
             <AlertCircle className="mt-0.5 h-4 w-4 shrink-0" />
@@ -131,7 +167,7 @@ export function BackupTriggerDialog({
           </Button>
           <Button
             onClick={handleSubmit}
-            disabled={isCreating}
+            disabled={!canSubmit}
             className="bg-violet-600 hover:bg-violet-700"
           >
             {isCreating ? (

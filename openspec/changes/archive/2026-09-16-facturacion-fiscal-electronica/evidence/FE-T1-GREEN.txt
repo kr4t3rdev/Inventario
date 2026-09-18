@@ -1,0 +1,11 @@
+
+ RUN  v3.2.4 /Users/arturo/Documents/Proyecto Inventario/TCP
+
+ ✓ src/features/ventas/__tests__/fiscal-model-types.test.ts (3 tests) 662ms
+   ✓ Capa fiscal — modelos (FE-T1) > el enum EstadoFiscalDocumento expone los cinco estados  657ms
+
+ Test Files  1 passed (1)
+      Tests  3 passed (3)
+   Start at  07:08:05
+   Duration  3.22s (transform 530ms, setup 243ms, collect 21ms, tests 662ms, environment 822ms, prepare 364ms)
+

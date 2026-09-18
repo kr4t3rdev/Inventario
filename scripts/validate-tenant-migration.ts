@@ -44,7 +44,7 @@ async function validateMiEmpresaLinked(): Promise<ValidationResult> {
   const errors: string[] = [];
   const warnings: string[] = [];
 
-  const miEmpresa = await prisma.miEmpresa.findUnique({ where: { id: 1 } });
+  const miEmpresa = await prisma.miEmpresa.findFirst({ orderBy: { createdAt: 'asc' } });
 
   if (!miEmpresa) {
     warnings.push('No existe registro MiEmpresa. Se creará al configurar la empresa.');
@@ -52,7 +52,7 @@ async function validateMiEmpresaLinked(): Promise<ValidationResult> {
   }
 
   if (!miEmpresa.tenantId) {
-    errors.push('MiEmpresa (id=1) NO tiene tenantId. Ejecutá backfill-tenant-default.ts.');
+    errors.push('MiEmpresa NO tiene tenantId. Ejecutá backfill-tenant-default.ts.');
   } else {
     const tenant = await prisma.tenant.findUnique({ where: { tenantId: miEmpresa.tenantId } });
     if (!tenant) {

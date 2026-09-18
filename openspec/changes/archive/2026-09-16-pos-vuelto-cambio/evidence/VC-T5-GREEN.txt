@@ -1,0 +1,140 @@
+
+ RUN  v3.2.4 /Users/arturo/Documents/Proyecto Inventario/TCP
+
+ ✓ src/lib/services/__tests__/stock-ubicacion-service.test.ts (13 tests) 46ms
+ ✓ src/features/ventas/__tests__/venta-estado-types.test.ts (3 tests) 1009ms
+   ✓ Venta.estado — ciclo de vida (PVE-T1) > expone los cuatro estados del ciclo  999ms
+ ✓ src/features/facturas/components/billing-health-card.test.tsx (2 tests) 394ms
+ ✓ src/features/ventas/__tests__/venta-lifecycle.test.ts (19 tests) 58ms
+stderr | src/features/ventas/__tests__/pos-cobro-dialog.test.tsx > PosCobroDialog (VC-T3) > con efectivo muestra recibido y calcula el vuelto en vivo
+Unknown event handler property `onAnimationComplete`. It will be ignored.
+
+ ✓ src/features/ventas/__tests__/pos-cobro-dialog.test.tsx (6 tests) 2736ms
+   ✓ PosCobroDialog (VC-T3) > con efectivo muestra recibido y calcula el vuelto en vivo  1142ms
+   ✓ PosCobroDialog (VC-T3) > bloquea el cobro sin recibido capturado  346ms
+   ✓ PosCobroDialog (VC-T3) > MIXTO completo: suma correcta y recibido suficiente → confirma con desglose  595ms
+   ✓ PosCobroDialog (VC-T3) > MIXTO valida que el desglose sume el total  343ms
+stderr | src/features/ventas/__tests__/ventas-pedido-ui.test.tsx > VentasTable — ciclo de pedidos > filtra por estado al elegirlo en el selector
+An update to VentasTable inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+"puntoDeVenta" in deeply nested key "puntoDeVenta.nombre" returned undefined.
+"nombre" in deeply nested key "puntoDeVenta.nombre" returned undefined.
+
+ ✓ src/features/ventas/__tests__/ventas-pedido-ui.test.tsx (9 tests) 1733ms
+   ✓ VentasTable — ciclo de pedidos > muestra el badge de estado en cada fila  368ms
+   ✓ VentasTable — ciclo de pedidos > ofrece Entregar a un PEDIDO y Facturar a una ENTREGADA  484ms
+stderr | src/features/turnos-pos/__tests__/cuadre-detail-mode.test.tsx > CuadreDetailActions > keeps operational buttons for open shifts with mismatch
+Unknown event handler property `onAnimationComplete`. It will be ignored.
+
+ ✓ src/features/turnos-pos/__tests__/cuadre-detail-mode.test.tsx (4 tests) 590ms
+ ✓ src/lib/services/__tests__/tenant-scope.test.ts (44 tests) 93ms
+ ✓ src/features/ventas/components/sales-health-card.test.tsx (3 tests) 412ms
+   ✓ SalesHealthCard > muestra inactivo sin ventas  348ms
+ ✓ src/app/actions/profile.test.ts (4 tests) 21ms
+ ✓ src/app/api/ventas/punto-venta/[puntoDeVentaId]/productos/route.test.ts (3 tests) 66ms
+ ✓ src/lib/services/__tests__/cierre-contable-service.test.ts (2 tests) 227ms
+ ✓ src/features/ventas/services/__tests__/venta-read-service.test.ts (5 tests) 39ms
+ ✓ src/features/facturas/__tests__/actions.test.ts (6 tests) 17ms
+ ✓ src/features/ventas/__tests__/devolucion-service.test.ts (14 tests) 167ms
+ ✓ src/features/ofertas/components/offers-services-health-card.test.tsx (3 tests) 631ms
+   ✓ OffersServicesHealthCard > muestra sin actividad cuando ambos son cero  520ms
+stderr | src/features/ventas/components/ventas-table.a11y.test.tsx > VentasTable acciones accesibles > los botones de acciones icon-only exponen aria-label
+An update to Button inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+stderr | src/features/ventas/components/ventas-table.a11y.test.tsx > VentasTable acciones accesibles > los botones de acciones icon-only exponen aria-label
+Unknown event handler property `onAnimationComplete`. It will be ignored.
+
+ ✓ src/features/ventas/components/ventas-table.a11y.test.tsx (1 test) 1788ms
+   ✓ VentasTable acciones accesibles > los botones de acciones icon-only exponen aria-label  1775ms
+ ✓ src/app/api/ventas/punto-venta/ventas/route.test.ts (2 tests) 65ms
+ ✓ src/app/actions/_helpers/error-handler.test.ts (6 tests) 17ms
+stderr | src/lib/services/__tests__/demo-tenant-factory.test.ts > createDemoTenantForPlan > no convierte un fallo de métrica post-commit en un fallo de creación
+No se pudo registrar la métrica de provisioning de demo después del commit { origin: 'DEMO', result: 'CREATED', error: 'metrics unavailable' }
+
+ ✓ src/lib/services/__tests__/demo-tenant-factory.test.ts (9 tests) 73ms
+stderr | src/lib/services/__tests__/with-period-validation.test.ts > withPeriodValidation > wrapper permite con audit-only > ejecuta el handler aunque el período esté CERRADO en audit-only
+[PeriodoGuard] AUDIT-ONLY — El período MENSUAL Abril 2026 está cerrado. No se permiten modificaciones.
+
+ ✓ src/lib/services/__tests__/with-period-validation.test.ts (11 tests) 53ms
+ ✓ src/lib/services/__tests__/periodo-contable-service.test.ts (61 tests) 79ms
+ ✓ src/features/ventas/__tests__/venta-create-orquestacion.test.ts (6 tests) 84ms
+ ✓ src/lib/services/__tests__/facturacion-ventas-workflow.test.ts (8 tests) 47ms
+ ✓ src/lib/services/__tests__/pago-gastos-workflow.test.ts (8 tests) 107ms
+ ✓ src/features/turnos-pos/__tests__/actions-cuadre.test.ts (7 tests) 281ms
+ ✓ src/app/api/ventas/punto-venta/[puntoDeVentaId]/turno-activo/route.test.ts (2 tests) 70ms
+stderr | src/lib/services/__tests__/periodo-contable-guard.test.ts > modo disabled > no valida — retorna ok inmediatamente
+[PeriodoGuard] GUARD DISABLED — bypassando validación de período. tenantId=tenant-1, fecha=2026-02-15T00:00:00.000Z
+
+stderr | src/lib/services/__tests__/periodo-contable-guard.test.ts > modo disabled > enabled=false fuerza modo disabled
+[PeriodoGuard] GUARD DISABLED — bypassando validación de período. tenantId=tenant-1, fecha=2026-02-15T00:00:00.000Z
+
+stderr | src/lib/services/__tests__/periodo-contable-guard.test.ts > modo audit-only > logea violación pero permite escritura en período cerrado
+[PeriodoGuard] AUDIT-ONLY — El período MENSUAL Febrero 2026 está cerrado. No se permiten modificaciones.
+
+stderr | src/lib/services/__tests__/periodo-contable-guard.test.ts > modo audit-only > permite si no existe período
+[PeriodoGuard] AUDIT-ONLY — No existe un período contable para esta fecha. Creá un período primero.
+
+ ✓ src/lib/services/__tests__/periodo-contable-guard.test.ts (41 tests) 71ms
+ ✓ src/features/ventas/__tests__/devolucion-calculo.test.ts (21 tests) 38ms
+ ✓ src/features/turnos-pos/__tests__/cuadres-history-page-client.test.tsx (2 tests) 884ms
+   ✓ CuadresHistoryPageClient > renders settlement rows and links to the existing detail route  838ms
+ ✓ src/features/turnos-pos/__tests__/actions.test.ts (11 tests) 47ms
+ ✓ src/features/ofertas/__tests__/urgent-corrections-red.test.ts (5 tests) 107ms
+ ✓ src/lib/services/__tests__/tenant-factory.test.ts (14 tests) 68ms
+ ✓ src/lib/services/__tests__/periodo-snapshot-service.test.ts (12 tests) 71ms
+ ✓ src/features/ventas/__tests__/actions.test.ts (21 tests) 74ms
+ ✓ src/features/ventas/lib/pv-client.test.ts (4 tests) 34ms
+ ✓ src/app/actions/productos-ubicacion.test.ts (4 tests) 11ms
+ ✓ src/features/arqueo-caja/__tests__/actions.test.ts (10 tests) 24ms
+ ✓ src/lib/services/__tests__/fifo-allocation.test.ts (13 tests) 19ms
+ ✓ src/lib/services/__tests__/fifo-restaurar.test.ts (3 tests) 17ms
+ ✓ src/lib/services/__tests__/periodo-audit-service.test.ts (8 tests) 50ms
+ ✓ src/app/actions/reportes-financieros.test.ts (2 tests) 11ms
+ ✓ src/app/actions/_helpers/auth-check.test.ts (3 tests) 12ms
+ ✓ src/features/facturas/actions-health.test.ts (3 tests) 10ms
+ ✓ src/features/ofertas/__tests__/convertir-oferta-pedido.test.ts (6 tests) 42ms
+ ✓ src/features/ventas/__tests__/venta-price-integrity.test.ts (8 tests) 27ms
+ ✓ src/features/ventas/actions-health.test.ts (3 tests) 14ms
+ ✓ src/lib/services/__tests__/anticipos-workflow.test.ts (7 tests) 25ms
+ ✓ src/features/ventas/schemas.test.ts (2 tests) 10ms
+ ✓ src/lib/services/__tests__/license-duration.test.ts (6 tests) 9ms
+ ✓ src/features/ofertas/__tests__/actions.test.ts (12 tests) 71ms
+ ✓ src/lib/services/__tests__/currency-conversion-service.test.ts (4 tests) 476ms
+ ✓ src/lib/services/__tests__/plan-pricing.test.ts (9 tests) 168ms
+ ✓ src/features/turnos-pos/__tests__/tenant-scope.test.ts (3 tests) 155ms
+ ✓ src/lib/services/validate-period-write.test.ts (3 tests) 15ms
+ ✓ src/features/ofertas/__tests__/facturar-workerflow-mixta.test.ts (3 tests) 51ms
+ ✓ src/features/ofertas/__tests__/facturar-erronea.test.ts (2 tests) 20ms
+ ✓ src/lib/services/__tests__/demo-seed.test.ts (5 tests) 17ms
+ ✓ src/features/ventas/__tests__/devolucion-schema.test.ts (6 tests) 26ms
+ ✓ src/features/ventas/__tests__/pos-vuelto-calcu.test.ts (9 tests) 11ms
+ ✓ src/lib/services/__tests__/anticipos-guards.test.ts (3 tests) 8ms
+ ✓ src/lib/services/__tests__/stock-ubicacion-queries.test.ts (2 tests) 18ms
+ ✓ src/features/ventas/__tests__/devoluciones-actions.test.ts (4 tests) 19ms
+ ✓ src/features/ventas/__tests__/precio-venta-resolver.test.ts (6 tests) 44ms
+ ✓ src/features/ofertas/actions-health.test.ts (1 test) 9ms
+ ✓ src/app/busy/invoice/print/__tests__/ticket-vuelto.test.ts (2 tests) 7ms
+ ✓ src/features/ventas/__tests__/actions-lifecycle.test.ts (3 tests) 5ms
+
+ Test Files  67 passed (67)
+      Tests  547 passed (547)
+   Start at  05:42:12
+   Duration  69.95s (transform 12.59s, setup 40.51s, collect 90.30s, tests 13.70s, environment 165.57s, prepare 29.23s)
+

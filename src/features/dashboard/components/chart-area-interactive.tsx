@@ -51,19 +51,24 @@ interface ChartAreaInteractiveProps {
   data: DatosPorMes[]
 }
 
+const yAxisTickCompactFormatter = new Intl.NumberFormat('es', {
+  notation: 'compact',
+  maximumFractionDigits: 1,
+})
+
 const chartConfig = {
   ingresos: {
     label: 'Ingresos',
     theme: {
-      light: '#16a34a',
-      dark: '#22c55e',
+      light: 'var(--chart-success)',
+      dark: 'var(--chart-success)',
     },
   },
   gastos: {
     label: 'Gastos',
     theme: {
-      light: '#dc2626',
-      dark: '#ef4444',
+      light: 'var(--chart-danger)',
+      dark: 'var(--chart-danger)',
     },
   },
 } satisfies ChartConfig
@@ -85,6 +90,17 @@ function transformData(data: DatosPorMes[]): ChartDataPoint[] {
   })
 }
 
+export function formatYAxisTick(value: number): string {
+  const prefix = value < 0 ? '-' : ''
+  const absoluteValue = Math.abs(value)
+
+  if (absoluteValue < 1000) {
+    return `${prefix}$${absoluteValue.toLocaleString('es')}`
+  }
+
+  return `${prefix}$${yAxisTickCompactFormatter.format(absoluteValue).replace(/\u00a0/g, ' ')}`
+}
+
 /**
  * @description Chart de áreas que muestra ingresos vs gastos por mes.
  * @param {ChartAreaInteractiveProps} props - Datos mensuales del dashboard.
@@ -95,7 +111,7 @@ export function ChartAreaInteractive({ data }: ChartAreaInteractiveProps) {
 
   if (!data || data.length === 0) {
     return (
-      <Card>
+      <Card className='min-w-0'>
         <CardHeader>
           <CardTitle>Ingresos vs Gastos</CardTitle>
           <CardDescription>Evolución mensual</CardDescription>
@@ -112,15 +128,15 @@ export function ChartAreaInteractive({ data }: ChartAreaInteractiveProps) {
   const chartData = transformData(data)
 
   return (
-    <Card>
+    <Card className='min-w-0'>
       <CardHeader>
         <CardTitle>Ingresos vs Gastos</CardTitle>
         <CardDescription>Evolución mensual de ingresos y gastos</CardDescription>
       </CardHeader>
-      <CardContent>
+      <CardContent className='min-w-0'>
         <ChartContainer
           config={chartConfig}
-          className='aspect-auto h-[350px] w-full'
+          className='aspect-auto h-[350px] min-w-0 max-w-full'
         >
           <AreaChart
             data={chartData}
@@ -169,7 +185,7 @@ export function ChartAreaInteractive({ data }: ChartAreaInteractiveProps) {
               tickLine={false}
               axisLine={false}
               tickMargin={8}
-              tickFormatter={(value) => `${(value / 1000).toFixed(0)}k`}
+              tickFormatter={formatYAxisTick}
             />
             <ChartTooltip
               cursor={false}

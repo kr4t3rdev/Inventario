@@ -59,6 +59,7 @@ import {
 	getTurnosAction,
 	getOrCreateTurnoActivo,
 } from "../actions";
+import { getCuadresCerradosAction } from "../actions-historial";
 
 function buildTurno(overrides: Record<string, unknown> = {}) {
 	return {
@@ -205,6 +206,88 @@ describe("getOrCreateTurnoActivo", () => {
 	});
 });
 
+// ─── Suite: getCuadresCerradosAction ──────────────────────
+
+describe("getCuadresCerradosAction", () => {
+	beforeEach(() => {
+		vi.clearAllMocks();
+	});
+
+	it("should return only closed shifts with sales and arqueo summary", async () => {
+		mockPrisma.turnoPuntoVenta.findMany.mockResolvedValue([
+			{
+				...buildTurno({
+					id: "turno-cerrado-1",
+					estado: "CERRADO",
+					fechaCierre: new Date("2026-06-19T10:00:00.000Z"),
+					puntoDeVenta: { pvId: "pv-1", nombre: "PV Centro", tipoCaja: "PRINCIPAL" },
+					empleado: { empleadoId: "emp-1", nombre: "Ana", apellido: "Pérez" },
+					arqueos: [{ diferenciaCup: 3500, createdAt: new Date("2026-06-19T10:00:00.000Z") }],
+					ventas: [{ total: 120 }, { total: 80 }],
+					_count: { ventas: 2 },
+				}),
+			},
+		]);
+
+		const result = await getCuadresCerradosAction({ limit: 20 }, mockUser);
+
+		expect(result.success).toBe(true);
+		if (result.success && result.data) {
+			expect(result.data).toHaveLength(1);
+			expect(result.data[0]).toMatchObject({
+				turnoId: "turno-cerrado-1",
+				puntoDeVentaNombre: "PV Centro",
+				empleadoNombre: "Ana Pérez",
+				totalVentas: 200,
+				diferenciaCup: 35,
+				arqueado: true,
+				totalTickets: 2,
+			});
+		}
+
+		expect(mockPrisma.turnoPuntoVenta.findMany).toHaveBeenCalledWith(
+			expect.objectContaining({
+				where: expect.objectContaining({
+					tenantId: "tenant-mock-1",
+					estado: "CERRADO",
+				}),
+				take: 20,
+			}),
+		);
+	});
+
+	it("should keep closed shifts without arqueo or employee as consultable rows", async () => {
+		mockPrisma.turnoPuntoVenta.findMany.mockResolvedValue([
+			{
+				...buildTurno({
+					id: "turno-cerrado-2",
+					estado: "CERRADO",
+					puntoDeVenta: { pvId: "pv-2", nombre: "PV Norte", tipoCaja: "PRINCIPAL" },
+					arqueos: [],
+					empleado: null,
+					ventas: [],
+					_count: { ventas: 0 },
+				}),
+			},
+		]);
+
+		const result = await getCuadresCerradosAction({}, mockUser);
+
+		expect(result.success).toBe(true);
+		if (result.success && result.data) {
+			expect(result.data[0]).toMatchObject({
+				turnoId: "turno-cerrado-2",
+				puntoDeVentaNombre: "PV Norte",
+				empleadoNombre: null,
+				arqueado: false,
+				diferenciaCup: null,
+				totalVentas: 0,
+				totalTickets: 0,
+			});
+		}
+	});
+});
+
 // ─── Suite: cerrarTurnoAction ─────────────────────────────
 
 describe("cerrarTurnoAction", () => {
@@ -214,6 +297,9 @@ describe("cerrarTurnoAction", () => {
 
 	it("should close an active turno with valid arqueo", async () => {
 		// Turno con arqueo y puntoDeVenta (include requerido)
+		// fondoInicialCup=50000, totalEfectivoCup=60000 → neto efectivo = 10000 centavos ($100)
+		// totalTarjeta=0, totalTransferencia=0, totalCredito=0
+		// → arqueoTotalPesos = (60000 - 50000 + 0 + 0 + 0) / 100 = 100
 		mockPrisma.turnoPuntoVenta.findFirst.mockResolvedValue({
 			...buildTurno(),
 			arqueos: [
@@ -221,7 +307,7 @@ describe("cerrarTurnoAction", () => {
 					id: "arq-1",
 					totalEfectivoCup: 60000, // $600
 					totalEfectivoUsd: 0,
-					totalTarjeta: 10000, // $100
+					totalTarjeta: 0,
 					totalTransferencia: 0,
 					totalCredito: 0,
 					diferenciaCup: 0,
@@ -230,9 +316,9 @@ describe("cerrarTurnoAction", () => {
 			],
 			puntoDeVenta: { pvId: "pv-1" },
 		});
-		// Ventas del turno: $600 - $500 (fondo) + $100 = $200 => coincide con arqueo
+		// Venta.total está en pesos → $100 coincide con arqueoTotalPesos
 		mockPrisma.venta.aggregate.mockResolvedValue({
-			_sum: { total: 20000 }, // $200 en centavos
+			_sum: { total: 100 },
 		});
 		mockPrisma.turnoPuntoVenta.update.mockResolvedValue(
 			buildTurno({ estado: "CERRADO" }),

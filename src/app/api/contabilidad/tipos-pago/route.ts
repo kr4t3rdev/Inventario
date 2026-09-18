@@ -2,7 +2,8 @@ import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { z } from 'zod'
 import { authenticateUser, type AuthenticatedUser } from "@/lib/auth-middleware"
-import { requireTenant } from '@/lib/services/tenant-scope'
+import { ActionError } from '@/lib/server-actions'
+import { requirePermission, requireTenant } from '@/lib/services/tenant-scope'
 import { validarEscrituraPeriodo, extraerFechaDeBody } from '@/lib/services/validate-period-write'
 import { AuditLogService } from "@/lib/services/audit-log-service"
 
@@ -45,20 +46,13 @@ const UpdateTipoPagoSchema = z.object({
 // GET /api/contabilidad/tipos-pago - Listar tipos de pago
 export async function GET(request: NextRequest) {
   try {
-    const { searchParams } = new URL(request.url)
-    // const includeInactive = searchParams.get('includeInactive') === 'true'
-    // const requiereCuenta = searchParams.get('requiereCuenta')
+    const authResultUser = await authenticateUser(request)
+    if ('status' in authResultUser) return authResultUser as Response
+    const user = authResultUser.user as AuthenticatedUser
+    const tenantId = requireTenant(user)
 
     // Construir filtros
-    const where: any = {}
-    
-    // if (!includeInactive) {
-    //   where.isActive = true
-    // }
-
-    // if (requiereCuenta !== null) {
-    //   where.requiereCuenta = requiereCuenta === 'true'
-    // }
+    const where = { tenantId }
 
     const tiposPago = await prisma.tipoPago.findMany({
       where,
@@ -82,8 +76,8 @@ export async function GET(request: NextRequest) {
       tiposPago.map(async (tipo: any) => {
         let cuentaDefectoInfo = null
         if (tipo.cuentaDefecto) {
-          cuentaDefectoInfo = await prisma.cuentaBancaria.findUnique({
-            where: { cuentaId: tipo.cuentaDefecto },
+          cuentaDefectoInfo = await prisma.cuentaBancaria.findFirst({
+            where: { cuentaId: tipo.cuentaDefecto, tenantId },
             select: {
               cuentaId: true,
               nombreBanco: true,
@@ -127,6 +121,7 @@ export async function POST(request: NextRequest) {
     if ('status' in authResultUser) return authResultUser as Response
     const user = authResultUser.user as AuthenticatedUser
     const tenantId = requireTenant(user)
+    requirePermission(user, 'financiero.tipos-pago.crear', 'crear tipos de pago')
 
     const body = await request.json()
     const validatedData = TipoPagoSchema.parse(body)
@@ -151,8 +146,8 @@ export async function POST(request: NextRequest) {
       where: { 
         nombre: {
           equals: validatedData.nombre,
-          
-        }
+        },
+        tenantId
       }
     })
 
@@ -169,8 +164,8 @@ export async function POST(request: NextRequest) {
 
     // Si se especifica cuenta por defecto, verificar que existe y está activa
     if (validatedData.cuentaDefecto) {
-      const cuenta = await prisma.cuentaBancaria.findUnique({
-        where: { cuentaId: validatedData.cuentaDefecto }
+      const cuenta = await prisma.cuentaBancaria.findFirst({
+        where: { cuentaId: validatedData.cuentaDefecto, tenantId }
       })
 
       if (!cuenta) {
@@ -197,7 +192,7 @@ export async function POST(request: NextRequest) {
     }
 
     const nuevoTipoPago = await prisma.tipoPago.create({
-      data: validatedData,
+      data: { ...validatedData, tenantId },
       include: {
         _count: {
           select: {
@@ -218,7 +213,8 @@ export async function POST(request: NextRequest) {
       detalles: {
         nombre: nuevoTipoPago.nombre,
         requiereCuenta: nuevoTipoPago.requiereCuenta,
-        cuentaDefecto: nuevoTipoPago.cuentaDefecto
+        cuentaDefecto: nuevoTipoPago.cuentaDefecto,
+        tenantId
       }
     });
 
@@ -229,6 +225,13 @@ export async function POST(request: NextRequest) {
     }, { status: 201 })
 
   } catch (error) {
+    if (error instanceof ActionError && error.code === 'FORBIDDEN') {
+      return NextResponse.json(
+        { success: false, error: error.message, code: error.code },
+        { status: 403 },
+      )
+    }
+
     if (error instanceof z.ZodError) {
       return NextResponse.json(
         {

@@ -143,7 +143,7 @@ export function GastosPendientesTable({
       (gasto.detalles?.producto?.toLowerCase().includes(searchLower)) ||
       (gasto.detalles?.servicio?.toLowerCase().includes(searchLower)) ||
       (gasto.detalles?.proveedorNombre?.toLowerCase().includes(searchLower)) ||
-      (gasto.detalles?.clienteNombre?.toLowerCase().includes(searchLower))
+      ((gasto.detalles as any)?.clienteNombre?.toLowerCase().includes(searchLower))
     )
 
     const matchesPeriodo = periodoFiltro === "all" || gasto.periodo === periodoFiltro
@@ -239,7 +239,7 @@ export function GastosPendientesTable({
       case 'venta_servicio':
         return {
           primary: gasto?.detalles?.servicio || gasto?.descripcion,
-          secondary: gasto?.detalles?.clienteNombre,
+          secondary: (gasto?.detalles as any)?.clienteNombre,
           extra: `Cant: ${gasto.detalles?.cantidad || 0}`
         }
       default:

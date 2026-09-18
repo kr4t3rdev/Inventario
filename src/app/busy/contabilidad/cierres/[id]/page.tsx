@@ -29,7 +29,7 @@ export default async function CierreDetailsPage({ params }: Props) {
 
   const cierre = result.data;
 
-  // @ts-expect-error
+  // @ts-expect-error TODO: fix type mismatch between server and client component
   return <CierreDetailsPageClient cierre={
   cierre
   } />;

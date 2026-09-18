@@ -2,14 +2,13 @@
 
 import { useState, useEffect, useMemo, useCallback } from "react";
 import { useRouter } from "next/navigation";
-import { LazyMotion, m as motion, AnimatePresence } from "framer-motion";
+import { LazyMotion, m as motion, AnimatePresence, useReducedMotion } from "framer-motion";
 import {
 	ShoppingCart,
 	Store,
 	Package,
 	Search,
 	Loader2,
-	Sparkles,
 	TrendingUp,
 	Filter,
 	CreditCard,
@@ -46,13 +45,15 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { Textarea } from "@/components/ui/textarea";
 import { Skeleton } from "@/components/ui/skeleton";
 import { usePuntosDeVenta } from "@/features/puntos-venta/hooks/use-puntos-de-venta";
-import { getProductosPorUbicacion } from "@/app/actions/productos-ubicacion";
+import {
+	createVentaPos,
+	fetchAnticiposCobroDisponibles,
+	fetchProductosPuntoVenta,
+	fetchTurnoActivoPuntoVenta,
+} from "@/features/ventas/lib/pv-client";
 import type { ProductoConStock } from "@/lib/api/productos-ubicacion";
-import { ServerActionError } from "@/lib/api/errors";
-import { createVentaAction } from "@/features/ventas/actions";
 import { useClientes } from "@/features/clientes/hooks/use-clientes";
 import { useCategorias } from "@/features/categorias/hooks/use-categorias";
-import { getAnticiposAction } from "@/features/contabilidad/actions-anticipos";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Label } from "@/components/ui/label";
 import {
@@ -71,14 +72,13 @@ import {
 import { ProductoCard } from "./producto-card";
 import { CartItem } from "./cart-item";
 import { useDebounce } from "@/hooks/use-debounce";
-import {
-	CabeceraTurno,
-	AperturaTurnoDialog,
-	CierreTurnoDialog,
-} from "@/features/turnos-pos";
-import { getTurnoActivoAction } from "@/features/turnos-pos/actions";
-import { ArqueoForm } from "@/features/arqueo-caja";
-import { VentaInvoiceDialog } from "./pv-invoice-dialog";
+import { CabeceraTurno } from "@/features/turnos-pos/components/cabecera-turno";
+import { AperturaTurnoDialog } from "@/features/turnos-pos/components/apertura-turno-dialog";
+import { CierreTurnoDialog } from "@/features/turnos-pos/components/cierre-turno-dialog";
+import { CuadreTurnoDialog } from "@/features/turnos-pos/components/cuadre-turno-dialog";
+import { ArqueoForm } from "@/features/arqueo-caja/components/arqueo-form";
+import { VentaInvoiceDialog } from "./pv-invoice-dialog"
+import { PosCobroDialog, type CobroPos } from "./pos-cobro-dialog";
 import { useAuth } from "@/contexts/auth-context";
 
 interface CartProduct {
@@ -96,6 +96,7 @@ interface CartProduct {
 export function VentaInterface() {
 	const router = useRouter();
 	const { user } = useAuth();
+	const shouldReduceMotion = useReducedMotion();
 	const hasFacturacion = user?.planFeatures?.['facturacion'] === true;
 	const anticiposFeatureEnabled =
 		process.env.NEXT_PUBLIC_ENABLE_ANTICIPOS !== "false";
@@ -111,6 +112,8 @@ export function VentaInterface() {
 	const [viewMode, setViewMode] = useState<"grid" | "list" | "table">("grid");
 	const [cart, setCart] = useState<CartProduct[]>([]);
 	const [isProcessing, setIsProcessing] = useState(false);
+	const [isCobroOpen, setIsCobroOpen] = useState(false);
+	const [cobroObjetivo, setCobroObjetivo] = useState<"simple" | "factura">("simple");
 	const [isInvoiceDialogOpen, setIsInvoiceDialogOpen] = useState(false);
 	const [selectedClienteId, setSelectedClienteId] = useState<string>("");
 	const [descuento, setDescuento] = useState<number>(0);
@@ -134,11 +137,13 @@ export function VentaInterface() {
 	const [isAperturaDialogOpen, setIsAperturaDialogOpen] = useState(false);
 	const [isCierreDialogOpen, setIsCierreDialogOpen] = useState(false);
 	const [isArqueoDialogOpen, setIsArqueoDialogOpen] = useState(false);
+	const [isCuadreDialogOpen, setIsCuadreDialogOpen] = useState(false);
 
 	// Cerrar todo el flujo de turno (cuando el usuario cierra un diálogo manualmente)
 	const resetTurnoFlow = useCallback(() => {
 		setIsCierreDialogOpen(false);
 		setIsArqueoDialogOpen(false);
+		setIsCuadreDialogOpen(false);
 	}, []);
 
 	const { puntosDeVenta, isLoading: isLoadingPuntosVenta } = usePuntosDeVenta();
@@ -151,15 +156,20 @@ export function VentaInterface() {
 			setIsLoadingProductos(true);
 			setIsFetchingProductos(true);
 			try {
-				const data = await getProductosPorUbicacion(selectedPuntoVenta);
-				setProductos(data);
-			} catch (err) {
-				if (err instanceof ServerActionError) {
-					toast.error(err.message);
-				} else {
-					console.error("Error al cargar productos:", err);
-					toast.error("Error al cargar productos");
+				const result = await fetchProductosPuntoVenta(
+					selectedPuntoVenta,
+					() => setProductos([]),
+					selectedClienteId,
+				);
+				if (!result.success) {
+					toast.error(result.error.message);
+					setProductos([]);
+					return;
 				}
+				setProductos(result.data);
+			} catch (err) {
+				console.error("Error al cargar productos:", err);
+				toast.error("Error al cargar productos");
 				setProductos([]);
 			} finally {
 				setIsLoadingProductos(false);
@@ -168,7 +178,7 @@ export function VentaInterface() {
 		};
 
 		loadProductos();
-	}, [selectedPuntoVenta, productosRefreshKey]);
+	}, [selectedPuntoVenta, selectedClienteId, productosRefreshKey]);
 
 	// Cargar turno activo al seleccionar punto de venta
 	const refreshTurno = useCallback(async () => {
@@ -178,10 +188,14 @@ export function VentaInterface() {
 		}
 
 		try {
-			const result = await getTurnoActivoAction(selectedPuntoVenta);
-			if (result.success) {
-				setTurnoActivo(result.data);
+			const result = await fetchTurnoActivoPuntoVenta(selectedPuntoVenta, () =>
+				setTurnoActivo(null),
+			);
+			if (!result.success) {
+				setTurnoActivo(null);
+				return;
 			}
+			setTurnoActivo(result.data);
 		} catch {
 			setTurnoActivo(null);
 		}
@@ -210,10 +224,12 @@ export function VentaInterface() {
 
 		let cancelled = false;
 		setIsLoadingAnticiposCobro(true);
-		getAnticiposAction({ clienteId: selectedClienteId, moneda: "CUP" })
+		fetchAnticiposCobroDisponibles(selectedClienteId, () =>
+				setAnticiposCobroDisponibles(undefined),
+			)
 			.then((res) => {
 				if (!cancelled && res.success) {
-					setAnticiposCobroDisponibles(res.data);
+					setAnticiposCobroDisponibles({ anticipos: res.data });
 				}
 			})
 			.finally(() => {
@@ -306,7 +322,7 @@ export function VentaInterface() {
 							activa: true,
 							esPorDefecto: true,
 						}).then((cr) => {
-							if (cr.success) data = [cr.data];
+							if (cr.success) data = [cr.data as any];
 						});
 					}
 
@@ -344,8 +360,10 @@ export function VentaInterface() {
 	// Obtener listaPrecioId del cliente seleccionado
 	const clienteListaPrecioId = useMemo(() => {
 		if (!selectedClienteId || !clientes) return null;
-		const cliente = clientes.find((c) => c.clienteId === selectedClienteId);
-		return (cliente as any)?.listaPrecioId || null;
+		const cliente = clientes.find((c) => c.clienteId === selectedClienteId) as
+			| { listaPrecioId?: string | null }
+			| undefined;
+		return cliente?.listaPrecioId || null;
 	}, [selectedClienteId, clientes]);
 
 	// Recalcular carrito cuando cambia el cliente (y su lista de precios)
@@ -443,7 +461,7 @@ export function VentaInterface() {
 	};
 
 	// Procesar venta
-	const processVenta = async () => {
+	const processVenta = async (cobro?: CobroPos) => {
 		if (!selectedPuntoVenta) {
 			toast("Debe seleccionar un punto de venta para continuar");
 			return;
@@ -451,6 +469,18 @@ export function VentaInterface() {
 
 		if (cart.length === 0) {
 			toast("Añada productos al carrito para realizar una venta");
+			return;
+		}
+
+		if (isFetchingProductos) {
+			toast("Espera a que terminen de cargarse los precios actualizados");
+			return;
+		}
+
+		if (!cobro) {
+			// VC-T3: el cobro se captura en el diálogo (método, recibido, vuelto).
+			setCobroObjetivo("simple");
+			setIsCobroOpen(true);
 			return;
 		}
 
@@ -463,16 +493,18 @@ export function VentaInterface() {
 				precioUnitario: Math.round(item.precioVenta),
 			}));
 
-			const result = await createVentaAction({
+			const result = await createVentaPos({
 				puntoDeVentaId: selectedPuntoVenta,
 				descuento: Math.round(descuento),
 				observaciones,
+				cargoTransporte: 0,
 				items,
+				...(cobro ?? {}),
 			});
 
 			if (!result.success) {
 				toast(
-					result.error?.message ||
+					result.error.message ||
 						"Ha ocurrido un error al procesar la venta. Intente nuevamente.",
 				);
 				return;
@@ -492,7 +524,7 @@ export function VentaInterface() {
 	};
 
 	// Procesar venta y generar factura
-	const processVentaConFactura = async () => {
+	const processVentaConFactura = async (cobro?: CobroPos) => {
 		if (!selectedPuntoVenta) {
 			toast("Debe seleccionar un punto de venta para continuar");
 			return;
@@ -506,6 +538,17 @@ export function VentaInterface() {
 			return;
 		}
 
+		if (isFetchingProductos) {
+			toast("Espera a que terminen de cargarse los precios actualizados");
+			return;
+		}
+
+		if (!cobro) {
+			setCobroObjetivo("factura");
+			setIsCobroOpen(true);
+			return;
+		}
+
 		setIsProcessing(true);
 		try {
 			const items = cart.map((item) => ({
@@ -514,7 +557,7 @@ export function VentaInterface() {
 				precioUnitario: Math.round(item.precioVenta),
 			}));
 
-			const result = await createVentaAction({
+			const result = await createVentaPos({
 				puntoDeVentaId: selectedPuntoVenta,
 				clienteId: selectedClienteId,
 				descuento: Math.round(descuento),
@@ -523,19 +566,19 @@ export function VentaInterface() {
 				tipoVencimiento,
 				fechaVencimiento:
 					tipoVencimiento === "fecha" ? fechaVencimiento : undefined,
-				cuentaBancariaId:
-					tipoVencimiento === "contra_pago" ? selectedSerieId : undefined,
+				cargoTransporte: Math.round(cargoTransporte),
+				...(cobro ?? {}),
 			});
 
 			if (!result.success) {
 				toast(
-					result.error?.message ||
+					result.error.message ||
 						"Ha ocurrido un error al procesar la venta. Intente nuevamente.",
 				);
 				return;
 			}
 
-			const ventaCreada = result.data;
+			const ventaCreada = result.data as { ventaId?: string } | undefined;
 
 			toast(`Venta registrada y factura generada por $${cartTotal}`);
 			setCart([]);
@@ -651,7 +694,7 @@ export function VentaInterface() {
 									</p>
 									<motion.div
 										className="absolute -right-4 -top-1"
-										animate={{ rotate: 360, scale: [1, 1.2, 1] }}
+										animate={shouldReduceMotion ? { scale: 1 } : { rotate: 360, scale: [1, 1.2, 1] }}
 										transition={{
 											rotate: {
 												duration: 20,
@@ -871,6 +914,7 @@ export function VentaInterface() {
 								{turnoActivo && (
 									<CabeceraTurno
 										turno={turnoActivo}
+										onCerrarTurno={() => setIsCierreDialogOpen(true)}
 										onArqueo={() => setIsArqueoDialogOpen(true)}
 										onCuadre={() =>
 											router.push(
@@ -975,7 +1019,7 @@ export function VentaInterface() {
 									transition={{ duration: 0.3 }}
 								>
 									<motion.div
-										animate={{ rotate: [0, -10, 10, 0] }}
+										animate={shouldReduceMotion ? { rotate: 0 } : { rotate: [0, -10, 10, 0] }}
 										transition={{
 											duration: 2,
 											repeat: Infinity,
@@ -1096,7 +1140,7 @@ export function VentaInterface() {
 														</motion.div>
 													) : (
 														<motion.div
-															className="w-12 h-12 bg-linear-to-br from-primary/20 to-purple-600/20 rounded-lg flex items-center justify-center flex-shrink-0"
+															className="w-12 h-12 bg-linear-to-br from-primary/20 to-purple/20 rounded-lg flex items-center justify-center flex-shrink-0"
 															whileHover={{ scale: 1.05, rotate: 5 }}
 														>
 															<Package className="h-5 w-5 text-primary" />
@@ -1153,6 +1197,7 @@ export function VentaInterface() {
 														<motion.button
 															whileHover={{ scale: 1.1 }}
 															whileTap={{ scale: 0.9 }}
+															aria-label={`Agregar ${producto.nombre} al carrito`}
 															className="mt-1 p-1.5 rounded-full bg-primary/10 text-primary hover:bg-primary hover:text-white transition-colors"
 															disabled={producto.stockEnUbicacion === 0}
 														>
@@ -1222,7 +1267,7 @@ export function VentaInterface() {
 																	</motion.div>
 																) : (
 																	<motion.div
-																		className="w-10 h-10 bg-linear-to-br from-primary/20 to-purple-600/20 rounded-lg flex items-center justify-center"
+																		className="w-10 h-10 bg-linear-to-br from-primary/20 to-purple/20 rounded-lg flex items-center justify-center"
 																		whileHover={{ scale: 1.1, rotate: 5 }}
 																	>
 																		<Package className="h-4 w-4 text-primary" />
@@ -1318,7 +1363,7 @@ export function VentaInterface() {
 									transition={{ duration: 0.3 }}
 								>
 									<motion.div
-										animate={{ rotate: [0, 10, -10, 0] }}
+										animate={shouldReduceMotion ? { rotate: 0 } : { rotate: [0, 10, -10, 0] }}
 										transition={{
 											duration: 2,
 											repeat: Infinity,
@@ -1390,7 +1435,7 @@ export function VentaInterface() {
 									transition={{ duration: 0.3 }}
 								>
 									<motion.div
-										animate={{ rotate: [0, -10, 10, 0] }}
+										animate={shouldReduceMotion ? { rotate: 0 } : { rotate: [0, -10, 10, 0] }}
 										transition={{
 											duration: 2,
 											repeat: Infinity,
@@ -1524,9 +1569,9 @@ export function VentaInterface() {
 									className="w-full bg-linear-to-r from-orange-500 to-red-600 hover:from-orange-500/90 hover:to-red-600/90 text-white"
 									size="lg"
 									disabled={
-										cart.length === 0 || !selectedPuntoVenta || isProcessing
+										cart.length === 0 || !selectedPuntoVenta || isProcessing || isFetchingProductos
 									}
-									onClick={processVenta}
+									onClick={() => processVenta()}
 								>
 									{isProcessing ? (
 										<>
@@ -1548,7 +1593,7 @@ export function VentaInterface() {
 										size="lg"
 										variant="secondary"
 										disabled={
-											cart.length === 0 || !selectedPuntoVenta || isProcessing
+											cart.length === 0 || !selectedPuntoVenta || isProcessing || isFetchingProductos
 										}
 										onClick={() => setIsInvoiceDialogOpen(true)}
 									>
@@ -1585,11 +1630,36 @@ export function VentaInterface() {
 					selectedAnticipoCobroId={selectedAnticipoCobroId}
 					setSelectedAnticipoCobroId={setSelectedAnticipoCobroId}
 					isLoadingAnticiposCobro={isLoadingAnticiposCobro}
-					onConfirm={processVentaConFactura}
+					onConfirm={() => {
+						setIsInvoiceDialogOpen(false);
+						processVentaConFactura();
+					}}
 					isProcessing={isProcessing}
 					isLoadingClientes={isLoadingClientes}
 				/>
 			)}
+
+		{/* VC-T3: diálogo de cobro con método de pago y vuelto */}
+		{isCobroOpen && (
+			<PosCobroDialog
+				open={isCobroOpen}
+				onOpenChange={setIsCobroOpen}
+				total={Math.round(
+					cobroObjetivo === "factura"
+						? totalConDescuento + cargoTransporte
+						: totalConDescuento,
+				)}
+				isProcessing={isProcessing}
+				onConfirm={(cobro) => {
+					setIsCobroOpen(false);
+					if (cobroObjetivo === "factura") {
+						processVentaConFactura(cobro);
+					} else {
+						processVenta(cobro);
+					}
+				}}
+			/>
+		)}
 
 			{/* Diálogo de apertura de turno */}
 			<AperturaTurnoDialog
@@ -1603,7 +1673,9 @@ export function VentaInterface() {
 				onSuccess={() => {
 					// Recargar turno activo
 					if (selectedPuntoVenta) {
-						getTurnoActivoAction(selectedPuntoVenta).then((r) => {
+						fetchTurnoActivoPuntoVenta(selectedPuntoVenta, () =>
+							setTurnoActivo(null),
+						).then((r) => {
 							if (r.success) setTurnoActivo(r.data);
 						});
 					}
@@ -1638,9 +1710,27 @@ export function VentaInterface() {
 					submitLabel="Continuar con el Cuadre"
 					onSuccess={() => {
 						setIsArqueoDialogOpen(false);
-						router.push(
-							`/busy/sales/cuadre/${turnoActivo.id}?pvId=${selectedPuntoVenta}`,
-						);
+						setIsCuadreDialogOpen(true);
+					}}
+				/>
+			)}
+
+			{/* Diálogo de cuadre de turno */}
+			{turnoActivo && isCuadreDialogOpen && (
+				<CuadreTurnoDialog
+					open={true}
+					onOpenChange={resetTurnoFlow}
+					turnoId={turnoActivo.id}
+					puntoDeVentaId={selectedPuntoVenta}
+					onRepetirArqueo={() => {
+						setIsCuadreDialogOpen(false);
+						setIsArqueoDialogOpen(true);
+					}}
+					onSuccess={() => {
+						setIsCuadreDialogOpen(false);
+						setTurnoActivo(null);
+						refreshTurno();
+						setProductosRefreshKey((k) => k + 1);
 					}}
 				/>
 			)}

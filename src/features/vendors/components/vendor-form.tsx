@@ -2,7 +2,7 @@
 
 import { zodResolver } from "@hookform/resolvers/zod";
 import { LazyMotion, m as motion } from "framer-motion";
-import { Building2, Loader2, Sparkles, Copy, Check } from "lucide-react";
+import { Building2, Loader2, Copy, Check } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { useForm } from "react-hook-form";
@@ -16,6 +16,9 @@ import { vendorSchema } from "@/features/vendors/schemas";
 import type { VendorInput } from "@/features/vendors/schemas";
 import { createVendorAction, updateVendorAction } from "@/features/vendors/actions";
 import { VendorLogoUpload } from "./vendor-logo-upload";
+import type { CloudinaryAssetUploadResult } from "@/lib/upload/cloudinary-asset";
+import { useAuth } from "@/contexts/auth-context";
+import { hasPlanFeature } from "@/lib/plan-access";
 
 interface VendorFormProps {
     initialData?: {
@@ -41,9 +44,12 @@ interface VendorFormProps {
  * @returns {JSX.Element} Formulario de proveedor.
  */
 export function VendorForm({initialData}: VendorFormProps) {
+    const { user } = useAuth()
     const router = useRouter()
     const [isLoading, setIsLoading] = useState(false)
     const [copiedField, setCopiedField] = useState<string | null>(null)
+    const [logoAsset, setLogoAsset] = useState<CloudinaryAssetUploadResult | null>(null)
+    const canUploadVendorLogo = hasPlanFeature(user, 'upload-vendors-logo')
 
     const copyToClipboard = (text: string, field: string) => {
         navigator.clipboard.writeText(text)
@@ -78,6 +84,7 @@ export function VendorForm({initialData}: VendorFormProps) {
                     cuentaCUP: data.cuentaCUP,
                     cuentaUSD: data.cuentaUSD,
                     logo: data.logo ?? null,
+                    logoAsset,
                 })
                 if (!result.success) {
                     throw new Error(result.error?.message || 'Error al actualizar el proveedor')
@@ -92,6 +99,7 @@ export function VendorForm({initialData}: VendorFormProps) {
                     cuentaCUP: data.cuentaCUP,
                     cuentaUSD: data.cuentaUSD,
                     logo: data.logo ?? null,
+                    logoAsset,
                 })
                 if (!result.success) {
                     throw new Error(result.error?.message || 'Error al crear el proveedor')
@@ -115,7 +123,7 @@ export function VendorForm({initialData}: VendorFormProps) {
             transition={{ duration: 0.5 }}
         >
             <Card className="border-dashed overflow-hidden">
-                <div className="h-1 bg-linear-to-r from-primary via-purple-500 to-primary" />
+                <div className="h-1 bg-linear-to-r from-primary via-purple to-primary" />
                 <CardContent className="pt-6">
                     <motion.div 
                         className="flex items-center gap-3 mb-6"
@@ -124,7 +132,7 @@ export function VendorForm({initialData}: VendorFormProps) {
                         transition={{ delay: 0.1 }}
                     >
                         <motion.div 
-                            className="w-10 h-10 bg-linear-to-br from-primary to-purple-600 rounded-xl flex items-center justify-center shadow-lg"
+                            className="w-10 h-10 bg-linear-to-br from-primary to-purple rounded-xl flex items-center justify-center shadow-lg"
                             whileHover={{ scale: 1.05, rotate: 5 }}
                             transition={{ type: "spring", stiffness: 400, damping: 10 }}
                         >
@@ -137,16 +145,7 @@ export function VendorForm({initialData}: VendorFormProps) {
                             <p className="text-sm text-muted-foreground">
                                 {initialData ? "Modifique los datos del proveedor" : "Ingrese los datos para registrar un nuevo proveedor"}
                             </p>
-                            <motion.div
-                                className="absolute -right-4 -top-1"
-                                animate={{ rotate: 360, scale: [1, 1.2, 1] }}
-                                transition={{ 
-                                    rotate: { duration: 20, repeat: Infinity, ease: "linear" },
-                                    scale: { duration: 2, repeat: Infinity, ease: "easeInOut" }
-                                }}
-                            >
-                                <Sparkles className="h-4 w-4 text-yellow-500" />
-                            </motion.div>
+
                         </div>
                     </motion.div>
 
@@ -183,7 +182,7 @@ export function VendorForm({initialData}: VendorFormProps) {
                                     <div className="space-y-2">
                                         <FormLabel className="text-sm">Código de Proveedor</FormLabel>
                                         <motion.div
-                                            className="flex items-center gap-2 p-3 bg-linear-to-r from-blue-50 to-indigo-50 rounded-lg border border-blue-200"
+                                            className="flex items-center gap-2 p-3 bg-linear-to-r from-primary/5 to-purple/5 rounded-lg border border-primary/15"
                                             whileHover={{ scale: 1.02 }}
                                         >
                                             <Badge variant="secondary" className="text-lg font-mono">
@@ -247,7 +246,7 @@ export function VendorForm({initialData}: VendorFormProps) {
                                         <FormItem>
                                             <FormLabel>Dirección</FormLabel>
                                             <FormControl>
-                                                <Input type="text" {...field} className="transition-all duration-200 focus:scale-[1.01]" />
+                                                <Input type="text" {...field as any} className="transition-all duration-200 focus:scale-[1.01]" />
                                             </FormControl>
                                             <FormDescription>Ingrese la dirección del proveedor</FormDescription>
                                             <FormMessage />
@@ -261,7 +260,7 @@ export function VendorForm({initialData}: VendorFormProps) {
                                         <FormItem>
                                             <FormLabel>Teléfono</FormLabel>
                                             <FormControl>
-                                                <Input type="text" {...field} className="transition-all duration-200 focus:scale-[1.01]" />
+                                                <Input type="text" {...field as any} className="transition-all duration-200 focus:scale-[1.01]" />
                                             </FormControl>
                                             <FormDescription>Ingrese el teléfono del proveedor</FormDescription>
                                             <FormMessage />
@@ -283,7 +282,7 @@ export function VendorForm({initialData}: VendorFormProps) {
                                         <FormItem>
                                             <FormLabel>Cuenta CUP</FormLabel>
                                             <FormControl>
-                                                <Input type="text" {...field} className="transition-all duration-200 focus:scale-[1.01]" />
+                                                <Input type="text" {...field as any} className="transition-all duration-200 focus:scale-[1.01]" />
                                             </FormControl>
                                             <FormDescription>Ingrese la cuenta en CUP</FormDescription>
                                             <FormMessage />
@@ -297,7 +296,7 @@ export function VendorForm({initialData}: VendorFormProps) {
                                         <FormItem>
                                             <FormLabel>Cuenta USD</FormLabel>
                                             <FormControl>
-                                                <Input type="text" {...field} className="transition-all duration-200 focus:scale-[1.01]" />
+                                                <Input type="text" {...field as any} className="transition-all duration-200 focus:scale-[1.01]" />
                                             </FormControl>
                                             <FormDescription>Ingrese la cuenta en USD</FormDescription>
                                             <FormMessage />
@@ -318,7 +317,7 @@ export function VendorForm({initialData}: VendorFormProps) {
                                         <FormItem>
                                             <FormLabel>Persona de contacto</FormLabel>
                                             <FormControl>
-                                                <Input type="text" {...field} className="transition-all duration-200 focus:scale-[1.01]" />
+                                                <Input type="text" {...field as any} className="transition-all duration-200 focus:scale-[1.01]" />
                                             </FormControl>
                                             <FormDescription>Ingrese el nombre de la persona de contacto</FormDescription>
                                             <FormMessage />
@@ -327,32 +326,35 @@ export function VendorForm({initialData}: VendorFormProps) {
                                 />
                             </motion.div>
 
-                            <motion.div
-                                initial={{ opacity: 0, x: -20 }}
-                                animate={{ opacity: 1, x: 0 }}
-                                transition={{ delay: 0.6 }}
-                            >
-                                <FormField
-                                    control={form.control}
-                                    name="logo"
-                                    render={({ field }) => (
-                                        <FormItem>
-                                            <FormLabel>Logo</FormLabel>
-                                            <FormControl>
-                                                <VendorLogoUpload
-                                                    value={field.value}
-                                                    onChange={field.onChange}
-                                                    disabled={isLoading}
-                                                />
-                                            </FormControl>
-                                            <FormDescription>
-                                                Suba un logo opcional para el proveedor (máx. 2MB).
-                                            </FormDescription>
-                                            <FormMessage />
-                                        </FormItem>
-                                    )}
-                                />
-                            </motion.div>
+                            {canUploadVendorLogo && (
+                                <motion.div
+                                    initial={{ opacity: 0, x: -20 }}
+                                    animate={{ opacity: 1, x: 0 }}
+                                    transition={{ delay: 0.6 }}
+                                >
+                                    <FormField
+                                        control={form.control}
+                                        name="logo"
+                                        render={({ field }) => (
+                                            <FormItem>
+                                                <FormLabel>Logo</FormLabel>
+                                                <FormControl>
+                                                    <VendorLogoUpload
+                                                        value={field.value}
+                                                        onChange={field.onChange}
+                                                        onAssetChange={setLogoAsset}
+                                                        disabled={isLoading}
+                                                    />
+                                                </FormControl>
+                                                <FormDescription>
+                                                    Suba un logo opcional para el proveedor (máx. 2MB).
+                                                </FormDescription>
+                                                <FormMessage />
+                                            </FormItem>
+                                        )}
+                                    />
+                                </motion.div>
+                            )}
 
                             <motion.div 
                                 className="flex justify-end space-x-4 pt-4"
@@ -369,7 +371,7 @@ export function VendorForm({initialData}: VendorFormProps) {
                                     <Button 
                                         type="submit" 
                                         disabled={isLoading}
-                                        className="bg-linear-to-r from-primary to-purple-600 hover:from-primary/90 hover:to-purple-600/90"
+                                        className="bg-linear-to-r from-primary to-purple hover:from-primary/90 hover:to-purple/90"
                                     >
                                         {isLoading ? (
                                             <>

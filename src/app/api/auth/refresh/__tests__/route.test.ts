@@ -9,6 +9,7 @@ vi.mock('@/lib/prisma', () => ({
     user: {
       findUnique: vi.fn(),
       update: vi.fn(),
+      updateMany: vi.fn(),
     },
     userSession: {
       findFirst: vi.fn(),
@@ -36,6 +37,13 @@ vi.mock('@/lib/secrets', () => ({
   getJwtSecret: vi.fn(() => 'test-secret'),
   getRefreshJwtSecret: vi.fn(() => 'test-refresh-secret'),
 }));
+
+// resolveTenantContext (auth-middleware) usa prismaPlatform tras AS-02; alias al
+// mismo mock para que la resolución de tenant quede determinista en units.
+vi.mock('@/lib/db/platform-prisma', async () => {
+  const { prisma } = await import('@/lib/prisma')
+  return { prismaPlatform: prisma, default: prisma }
+});
 
 const cookieMap: Record<string, string> = {};
 vi.mock('next/headers', () => ({
@@ -103,7 +111,7 @@ describe('auth refresh route', () => {
 
     const response = await POST(request);
     expect(response.status).toBe(403);
-    expect(prisma.user.update).toHaveBeenCalledWith({
+    expect(prisma.user.updateMany).toHaveBeenCalledWith({
       where: { userId: 'u2' },
       data: { isActive: false },
     });

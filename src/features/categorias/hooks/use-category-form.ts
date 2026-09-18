@@ -81,7 +81,7 @@ export function useCategoryForm({
       clasSectionId: undefined,
       clasSpecificId: undefined,
     },
-    mode: 'onBlur',
+    mode: 'onChange',
     reValidateMode: 'onChange',
   });
 
@@ -109,21 +109,21 @@ export function useCategoryForm({
       } else {
         // Subcategory: must match a CLAS specific
         if (!sectionId || !specificId || !normalizedParentId) {
-          return { valid: false, error: 'Estas en modo generacion ean-13 por lo q la subcategoria ingresada debe coincidir con el especifico declarado en el clasificador' }
+          return { valid: false, error: 'Estas en modo generación EAN-13 por lo que el específico ingresado debe coincidir con el declarado en el clasificador' }
         }
 
         const matchedSpecificId = validateCLASSpecific(data.nombre)
         if (matchedSpecificId !== specificId) {
-          return { valid: false, error: 'Estas en modo generacion ean-13 por lo q la subcategoria ingresada debe coincidir con el especifico declarado en el clasificador' }
+          return { valid: false, error: 'Estas en modo generación EAN-13 por lo que el específico ingresado debe coincidir con el declarado en el clasificador' }
         }
 
         if (!clasClassifierData) {
-          return { valid: false, error: 'Estas en modo generacion ean-13 por lo q la subcategoria ingresada debe coincidir con el especifico declarado en el clasificador' }
+          return { valid: false, error: 'Estas en modo generación EAN-13 por lo que el específico ingresado debe coincidir con el declarado en el clasificador' }
         }
 
         const specificSection = clasClassifierData.specificSectionById[specificId]
         if (specificSection !== sectionId) {
-          return { valid: false, error: 'Estas en modo generacion ean-13 por lo q la subcategoria ingresada debe coincidir con el especifico declarado en el clasificador' }
+          return { valid: false, error: 'Estas en modo generación EAN-13 por lo que el específico ingresado debe coincidir con el declarado en el clasificador' }
         }
       }
       return { valid: true }
@@ -133,7 +133,7 @@ export function useCategoryForm({
         valid: false,
         error: isRootCategory
           ? 'Estas en modo generacion ean-13 por lo q categoria debe coincidir con las secciones declaradas en el clasificador'
-          : 'Estas en modo generacion ean-13 por lo q la subcategoria ingresada debe coincidir con el especifico declarado en el clasificador',
+          : 'Estas en modo generación EAN-13 por lo que el específico ingresado debe coincidir con el declarado en el clasificador',
       }
     }
   }

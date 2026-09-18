@@ -1,0 +1,19 @@
+# PE-04 RED evidence — cleanup contract — 2026-09-12
+
+The behavioral integration gate passed its 8 flow tests, but the newly added cleanup contract failed against the current implementation and existing residues:
+
+```text
+DATABASE_URL_TEST='postgresql://arturo@127.0.0.1:5433/test_db' pnpm exec vitest run --config vitest.integration.config.mjs src/features/auth/__integration__/onboarding-enforce.test.ts
+
+Test Files  1 failed (1)
+Tests       8 passed (8)
+
+AssertionError: expected 46 to be +0
+  at src/features/auth/__integration__/onboarding-enforce.test.ts:176:25
+  residualUsers = await prismaPlatform.user.count({
+    where: { email: { startsWith: 'pe04-' } },
+  });
+  expect(residualUsers).toBe(0);
+```
+
+This is the authentic RED for PE04 cleanup: `registerAndVerify()` returned newly created users without registering their IDs in `fixtures.userIds`, so `afterEach` could not remove them. The count includes residues from previous focal runs plus users created by this run. Full raw output: `/tmp/tcp-pe04-cleanup-red.txt`.

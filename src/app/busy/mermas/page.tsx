@@ -9,6 +9,8 @@
  */
 import { getMermasAction } from "@/features/mermas"
 import { MermasContent } from "@/features/mermas"
+import { WastageHealthCard } from "@/features/mermas/components/wastage-health-card"
+import { getCurrentUser } from "@/lib/server-actions"
 
 
 export const metadata = {
@@ -16,16 +18,19 @@ export const metadata = {
 }
 
 export default async function MermasPage() {
-  const result = await getMermasAction()
+  const [result, user] = await Promise.all([getMermasAction(), getCurrentUser()])
   
   const initialMermas = result.success ? result.data ?? [] : []
   
   return (
-    <MermasContent 
-  // @ts-expect-error
-      initialMermas={
-      initialMermas
-      }
-    />
+    <div className="space-y-6">
+      {user?.role === 'admin' ? <WastageHealthCard userRole="admin" /> : null}
+      <MermasContent 
+    // @ts-expect-error -- InitialMermas type mismatches MermasContent pending migration
+        initialMermas={
+        initialMermas
+        }
+      />
+    </div>
   )
 }

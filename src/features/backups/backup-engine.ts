@@ -8,12 +8,14 @@
  */
 import { gzipSync, gunzipSync } from 'zlib'
 import { PrismaClient } from '@/generated/prisma'
+import { prismaPlatform } from '@/lib/db/platform-prisma'
 import type { BackupStorage } from './storage/types'
 import { SchemaReader } from './schema-reader'
 import { DataExporter } from './data-exporter'
 import { SQLBuilder } from './sql-builder'
 import type { BackupOptions, BackupResult } from './types'
 import type { ColumnDef } from './types'
+import type { TenantTableFilter } from './data-exporter'
 
 /**
  * @description Validates a buffer as a valid .sql.gz backup file.
@@ -58,7 +60,12 @@ export function validateBackupFile(buffer: Buffer): {
 	}
 }
 
-const DEFAULT_PRISMA = new PrismaClient()
+const DEFAULT_PRISMA = prismaPlatform
+const TENANT_GLOBAL_TABLE_FILTERS: Record<string, TenantTableFilter['mode']> = {
+  tenants: 'tenant-row',
+  User: 'user-membership',
+  Plan: 'plan-by-tenant',
+}
 
 export interface BackupEngineOptions {
   prisma?: PrismaClient
@@ -115,6 +122,7 @@ export class BackupEngine {
       // 1. Discover schema
       if (signal?.aborted) throw Object.assign(new Error('Backup cancelled'), { code: 'ABORT_ERR' })
       const schema = await this.schemaReader.discover()
+      const tenantScopedTables = new Set(schema.tenantScopedTables)
 
       // Filter tables based on backup type
       const tablesToExport = this.filterTables(schema.tables, options)
@@ -150,16 +158,22 @@ export class BackupEngine {
         if (table.indexes.length > 0) sqlParts.push('')
 
         // Data export — stream batches
-        const tenantFilter = options.type === 'tenant' && options.tenantId
-          ? { tenantId: options.tenantId }
-          : undefined
+        const tenantFilter = this.resolveTenantFilter(
+          table.name,
+          tenantScopedTables,
+          options,
+        )
+
+        if (options.type === 'tenant' && options.tenantId && tenantFilter === null) {
+          continue
+        }
 
         for await (const batch of this.dataExporter.exportTable(
           table.name,
           table.columns,
           table.primaryKey,
           signal,
-          tenantFilter,
+          tenantFilter ?? undefined,
         )) {
       if (signal?.aborted) throw Object.assign(new Error('Backup cancelled'), { code: 'ABORT_ERR' })
 
@@ -266,18 +280,43 @@ export class BackupEngine {
     const tenant = options.tenantId ? `_${options.tenantId}` : ''
     return `${type}${tenant}_${ts}.sql.gz`
   }
+
+  private resolveTenantFilter(
+    tableName: string,
+    tenantScopedTables: Set<string>,
+    options: BackupOptions,
+  ): TenantTableFilter | null | undefined {
+    if (options.type !== 'tenant' || !options.tenantId) {
+      return undefined
+    }
+
+    if (tenantScopedTables.has(tableName)) {
+      return {
+        tenantId: options.tenantId,
+        mode: 'tenant-column',
+      }
+    }
+
+    const globalMode = TENANT_GLOBAL_TABLE_FILTERS[tableName]
+    if (!globalMode) {
+      return null
+    }
+
+    return {
+      tenantId: options.tenantId,
+      mode: globalMode,
+    }
+  }
 }
 
 /**
  * Tables included in config-only backups.
  */
 const CONFIG_TABLES = new Set([
-  'Tenant',
-  'TenantMembership',
-  'TenantLicense',
+  'tenants',
+  'tenant_memberships',
+  'tenant_licenses',
   'User',
   'Plan',
-  'Licencia',
-  'LicenciaAudit',
   'MiEmpresa',
 ])

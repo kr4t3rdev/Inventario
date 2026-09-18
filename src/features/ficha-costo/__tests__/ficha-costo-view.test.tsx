@@ -1,0 +1,313 @@
+import { describe, it, expect, beforeEach, vi } from 'vitest'
+import { render, screen, within } from '@testing-library/react'
+import userEvent from '@testing-library/user-event'
+import { FichaCostoView } from '../components/ficha-costo-view'
+import type { FichaCostoData } from '../actions'
+
+// Mockear la action de historial para no tocar Prisma
+vi.mock('../actions', async (importOriginal) => {
+  const mod = await importOriginal<typeof import('../actions')>()
+  return {
+    ...mod,
+    getComposicionCostoAction: vi.fn(),
+    getListasPreciosProductoAction: vi.fn(),
+  }
+})
+
+vi.mock('../actions-reconciliacion', () => ({
+  getHistorialReconciliadoAction: vi.fn(),
+}))
+
+vi.mock('../components/resumen-plantilla-card', () => ({
+  ResumenPlantillaCard: () => <div data-testid="resumen-plantilla-card">Plantilla</div>,
+}))
+
+import {
+  getComposicionCostoAction,
+  getListasPreciosProductoAction,
+} from '../actions'
+import { getHistorialReconciliadoAction } from '../actions-reconciliacion'
+
+const baseData: FichaCostoData = {
+  producto: {
+    id: 'prod-1',
+    entityType: 'PRODUCTO',
+    nombre: 'Harina 50kg',
+    codigoInterno: 'HAR-50',
+    tipo: 'SIMPLE',
+    precioCosto: 500,
+    precioVenta: 800,
+  },
+  costoCalculado: {
+    valor: 493.33,
+    metodo: 'CPP',
+    moneda: 'CUP',
+  },
+  margen: {
+    absoluto: 306.67,
+    porcentaje: 38.33,
+    estado: 'SALUDABLE',
+  },
+  variacion: {
+    absoluto: -6.67,
+    porcentaje: -1.33,
+    estado: 'OK',
+  },
+  merma: {
+    cantidad30d: 0,
+    porcentajeSobreStock: null,
+    desperdicioEsperadoPromedio: null,
+  },
+  advertencias: ['Ejemplo de advertencia'],
+  ultimaActualizacion: '2026-06-18T12:00:00.000Z',
+}
+
+describe('FichaCostoView', () => {
+  beforeEach(() => {
+    vi.clearAllMocks()
+  })
+
+  it('muestra encabezado con nombre, código y tipo del producto', () => {
+    vi.mocked(getHistorialReconciliadoAction).mockResolvedValue({
+      success: true,
+      data: {
+        items: [],
+        pagination: { page: 1, limit: 20, total: 0, totalPages: 1 },
+        proveedores: [],
+        estadoCPP: 'SIN_DATOS',
+        advertencias: [],
+      },
+    } as any)
+    vi.mocked(getListasPreciosProductoAction).mockResolvedValue({
+      success: true,
+      data: [],
+    } as any)
+    render(<FichaCostoView data={baseData} />)
+    expect(screen.getByRole('heading', { name: /Harina 50kg/i })).toBeInTheDocument()
+    expect(screen.getByText(/HAR-50/)).toBeInTheDocument()
+    expect(screen.getByText(/Producto simple/)).toBeInTheDocument()
+  })
+
+  it('muestra el margen saludable en el resumen', () => {
+    vi.mocked(getHistorialReconciliadoAction).mockResolvedValue({
+      success: true,
+      data: {
+        items: [],
+        pagination: { page: 1, limit: 20, total: 0, totalPages: 1 },
+        proveedores: [],
+        estadoCPP: 'SIN_DATOS',
+        advertencias: [],
+      },
+    } as any)
+    vi.mocked(getListasPreciosProductoAction).mockResolvedValue({
+      success: true,
+      data: [],
+    } as any)
+    render(<FichaCostoView data={baseData} />)
+    expect(screen.getByText(/Margen 38.3%/)).toBeInTheDocument()
+  })
+
+  it('muestra el indicador accesible de margen (texto + icono)', () => {
+    vi.mocked(getHistorialReconciliadoAction).mockResolvedValue({
+      success: true,
+      data: {
+        items: [],
+        pagination: { page: 1, limit: 20, total: 0, totalPages: 1 },
+        proveedores: [],
+        estadoCPP: 'SIN_DATOS',
+        advertencias: [],
+      },
+    } as any)
+    vi.mocked(getListasPreciosProductoAction).mockResolvedValue({
+      success: true,
+      data: [],
+    } as any)
+    render(<FichaCostoView data={baseData} />)
+    const status = screen.getByRole('status', { name: /Margen saludable/i })
+    expect(status).toBeInTheDocument()
+  })
+
+  it('muestra advertencias cuando las hay', () => {
+    vi.mocked(getHistorialReconciliadoAction).mockResolvedValue({
+      success: true,
+      data: {
+        items: [],
+        pagination: { page: 1, limit: 20, total: 0, totalPages: 1 },
+        proveedores: [],
+        estadoCPP: 'SIN_DATOS',
+        advertencias: [],
+      },
+    } as any)
+    vi.mocked(getListasPreciosProductoAction).mockResolvedValue({
+      success: true,
+      data: [],
+    } as any)
+    render(<FichaCostoView data={baseData} />)
+    expect(screen.getByText('Ejemplo de advertencia')).toBeInTheDocument()
+  })
+
+  it('NO muestra la pestaña Composición para producto simple', () => {
+    vi.mocked(getHistorialReconciliadoAction).mockResolvedValue({
+      success: true,
+      data: {
+        items: [],
+        pagination: { page: 1, limit: 20, total: 0, totalPages: 1 },
+        proveedores: [],
+        estadoCPP: 'SIN_DATOS',
+        advertencias: [],
+      },
+    } as any)
+    vi.mocked(getListasPreciosProductoAction).mockResolvedValue({
+      success: true,
+      data: [],
+    } as any)
+    render(<FichaCostoView data={baseData} />)
+    expect(screen.queryByRole('tab', { name: /Composición/i })).not.toBeInTheDocument()
+  })
+
+  it('SÍ muestra la pestaña Composición para producto compuesto', async () => {
+    vi.mocked(getHistorialReconciliadoAction).mockResolvedValue({
+      success: true,
+      data: {
+        items: [],
+        pagination: { page: 1, limit: 20, total: 0, totalPages: 1 },
+        proveedores: [],
+        estadoCPP: 'SIN_DATOS',
+        advertencias: [],
+      },
+    } as any)
+    vi.mocked(getComposicionCostoAction).mockResolvedValue({
+      success: true,
+      data: {
+        materiales: 100,
+        manoObra: 50,
+        indirectos: 25,
+        total: 175,
+        ingredientesSinCosto: 0,
+        detalle: [],
+        porcentajes: { materiales: 57.14, manoObra: 28.57, indirectos: 14.29 },
+      },
+    } as any)
+    vi.mocked(getListasPreciosProductoAction).mockResolvedValue({
+      success: true,
+      data: [],
+    } as any)
+    render(
+      <FichaCostoView
+        data={{
+          ...baseData,
+          producto: { ...baseData.producto, tipo: 'COMPUESTO' },
+        }}
+      />,
+    )
+    expect(screen.getByRole('tab', { name: /Composición/i })).toBeInTheDocument()
+    const user = userEvent.setup()
+    await user.click(screen.getByRole('tab', { name: /Composición/i }))
+    // Tras cambiar de tab se monta ComposicionCosto, que llama a la action mock
+    expect(getComposicionCostoAction).toHaveBeenCalled()
+  })
+
+  it('cambia a la pestaña Historial y dispara la query', async () => {
+    vi.mocked(getHistorialReconciliadoAction).mockResolvedValue({
+      success: true,
+      data: {
+        items: [],
+        pagination: { page: 1, limit: 20, total: 0, totalPages: 1 },
+        proveedores: [],
+        estadoCPP: 'SIN_DATOS',
+        advertencias: [],
+      },
+    } as any)
+    vi.mocked(getListasPreciosProductoAction).mockResolvedValue({
+      success: true,
+      data: [],
+    } as any)
+    render(<FichaCostoView data={baseData} />)
+    const user = userEvent.setup()
+    await user.click(screen.getByRole('tab', { name: /Historial/i }))
+    expect(getHistorialReconciliadoAction).toHaveBeenCalledWith(
+      expect.objectContaining({ productoId: 'prod-1', page: 1, limit: 20 }),
+    )
+  })
+
+  it('muestra error de la action de historial', async () => {
+    vi.mocked(getHistorialReconciliadoAction).mockResolvedValue({
+      success: false,
+      error: { message: 'Boom', code: 'INTERNAL' },
+    } as any)
+    vi.mocked(getListasPreciosProductoAction).mockResolvedValue({
+      success: true,
+      data: [],
+    } as any)
+    render(<FichaCostoView data={baseData} />)
+    const user = userEvent.setup()
+    await user.click(screen.getByRole('tab', { name: /Historial/i }))
+    const alert = await screen.findByRole('alert')
+    expect(within(alert).getByText('Boom')).toBeInTheDocument()
+  })
+
+  it('muestra el botón Exportar PDF', () => {
+    vi.mocked(getHistorialReconciliadoAction).mockResolvedValue({
+      success: true,
+      data: {
+        items: [],
+        pagination: { page: 1, limit: 20, total: 0, totalPages: 1 },
+        proveedores: [],
+        estadoCPP: 'SIN_DATOS',
+        advertencias: [],
+      },
+    } as any)
+    vi.mocked(getListasPreciosProductoAction).mockResolvedValue({
+      success: true,
+      data: [],
+    } as any)
+    render(<FichaCostoView data={baseData} />)
+    expect(screen.getByRole('button', { name: /Exportar PDF/i })).toBeInTheDocument()
+  })
+
+  it('oculta tabs exclusivas de producto cuando la entidad es un servicio', () => {
+    render(
+      <FichaCostoView
+        data={{
+          ...baseData,
+          producto: {
+            ...baseData.producto,
+            id: 'svc-1',
+            entityType: 'SERVICIO',
+            nombre: 'Instalación técnica',
+            codigoInterno: null,
+            tipo: 'SERVICIO',
+            precioCosto: 0,
+            precioVenta: 350,
+          },
+          costoCalculado: {
+            valor: 0,
+            metodo: null,
+            moneda: 'CUP',
+          },
+          margen: {
+            absoluto: null,
+            porcentaje: null,
+            estado: 'SIN_DATOS',
+          },
+          variacion: {
+            absoluto: null,
+            porcentaje: null,
+            estado: 'SIN_DATOS',
+          },
+          advertencias: ['No se puede calcular un costo confiable del servicio'],
+        }}
+      />,
+    )
+
+    expect(screen.queryByRole('tab', { name: /Historial/i })).not.toBeInTheDocument()
+    expect(screen.queryByRole('tab', { name: /Ventas/i })).not.toBeInTheDocument()
+    expect(screen.queryByRole('tab', { name: /Plantilla/i })).not.toBeInTheDocument()
+    expect(screen.queryByRole('tab', { name: /Listas de precios/i })).not.toBeInTheDocument()
+    expect(screen.getByText(/^Servicio$/i)).toBeInTheDocument()
+    expect(screen.getByText(/Costo del servicio no disponible/i)).toBeInTheDocument()
+    expect(
+      screen.getByText(/compras históricas conservan una moneda snapshot consistente/i),
+    ).toBeInTheDocument()
+  })
+})

@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Skeleton } from "@/components/ui/skeleton"
+import { ReportErrorState } from "./report-error-state"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { Badge } from "@/components/ui/badge"
 import {
@@ -18,23 +19,22 @@ import {
   PaginationNext,
   PaginationPrevious,
 } from "@/components/ui/pagination"
-import { FileIcon as FilePdf, FileText, PieChart as PieChartIcon, Package } from "lucide-react"
+import { FileIcon as FilePdf, FileText, PieChart as PieChartIcon, Package, DollarSign } from "lucide-react"
 import {  exportToPdf, exportToCsv } from "@/lib/export-utils"
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip, Legend } from "recharts"
 import { StaggerContainer, StaggerItem, AnimatedCard } from "@/components/ui/animations"
-import { cn } from "@/lib/utils"
+import { cn, formatCurrency } from "@/lib/utils"
 import { getProductDisplayIdentifier } from "@/lib/product-display-utils"
+import { SURFACE_CARD_CLASS, CHART_COLORS } from "@/features/reportes-financieros/lib/reporte-styles"
+import { formatPiePercentLabel } from "@/features/reportes-financieros/lib/pie-labels"
+import { ReportKpiCard } from "./report-kpi-card"
 
-const surfaceCardClass = cn(
-  "relative overflow-hidden border-slate-200/60 shadow-sm backdrop-blur-xl",
-  "dark:border-slate-800/20 dark:bg-slate-900/10",
-)
-
-const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042', '#8884d8', '#82ca9d', '#ffc658', '#8dd1e1', '#a4de6c', '#d0ed57'];
+const COLORS = [...CHART_COLORS]
 
 export function ReporteGeneral() {
-  const { productos, isLoading: isLoadingProductos } = useProductos()
-  const { categorias } = useCategorias()
+  const { productos, isLoading: isLoadingProductos, error: productosError } = useProductos()
+  const { categorias, error: categoriasError } = useCategorias()
+  const reportError = productosError ?? categoriasError
   const [filtroCategoria, setFiltroCategoria] = useState<string>("todas")
   const [currentPage, setCurrentPage] = useState(1)
   const [pageSize, setPageSize] = useState(10)
@@ -48,9 +48,12 @@ export function ReporteGeneral() {
   // Determinar si hay datos para mostrar
   const hasData = !isLoadingProductos && productos && productos.length > 0
 
+  const getTotalStock = (producto: { stock?: number; stockTotal?: number }) =>
+    producto.stockTotal ?? producto.stock ?? 0
+
   const totalProductos = productosFiltrados?.length || 0
-  const valorTotal = productosFiltrados?.reduce((sum, producto) => sum + producto.precioCosto * producto.stock, 0) || 0
-  const valorVenta = productosFiltrados?.reduce((sum, producto) => sum + producto.precioVenta * producto.stock, 0) || 0
+  const valorTotal = productosFiltrados?.reduce((sum, producto) => sum + producto.precioCosto * getTotalStock(producto), 0) || 0
+  const valorVenta = productosFiltrados?.reduce((sum, producto) => sum + producto.precioVenta * getTotalStock(producto), 0) || 0
 
   // Paginación
   const totalPages = Math.ceil(productosFiltrados.length / pageSize)
@@ -74,7 +77,7 @@ export function ReporteGeneral() {
     
     productos.forEach(p => {
       const catName = categorias.find(c => c.catId === p.categoriaId || c.catId === p.categoria?.catId)?.nombre || "Sin categoría";
-      const valor = p.precioCosto * p.stock;
+      const valor = p.precioCosto * getTotalStock(p);
       map.set(catName, (map.get(catName) || 0) + valor);
     });
     
@@ -91,12 +94,12 @@ export function ReporteGeneral() {
       Producto: getProductDisplayIdentifier(producto),
       Nombre: producto.nombre,
       Categoría: categorias?.find((c) => c.catId === producto.categoriaId || c.catId === producto.categoria?.catId)?.nombre || "Sin categoría",
-      Stock: producto.stock,
+      Stock: getTotalStock(producto),
       "Stock Mínimo": producto.stockMinimo > 0 ? producto.stockMinimo : "Por defecto (10)",
       "Precio Costo": producto.precioCosto,
       "Precio Venta": producto.precioVenta,
-      "Valor Inventario": producto.precioCosto * producto.stock,
-      "Valor Venta": producto.precioVenta * producto.stock,
+      "Valor Inventario": producto.precioCosto * getTotalStock(producto),
+      "Valor Venta": producto.precioVenta * getTotalStock(producto),
     }))
 
     exportToPdf(data, null, "Reporte General de Inventario")
@@ -111,18 +114,18 @@ export function ReporteGeneral() {
       Nombre: producto.nombre,
       Producto: getProductDisplayIdentifier(producto),
       Categoría: categorias?.find((c) => c.catId === producto.categoriaId || c.catId === producto.categoria?.catId)?.nombre || "",
-      Stock: producto.stock,
+      Stock: getTotalStock(producto),
       "Stock Mínimo": producto.stockMinimo > 0 ? producto.stockMinimo : "Por defecto (10)",
       "Estado Stock": (() => {
         const threshold = producto.stockMinimo > 0 ? producto.stockMinimo : 10
-        if (producto.stock === 0) return "Sin Stock"
-        if (producto.stock <= threshold) return "Stock Bajo"
+        if (getTotalStock(producto) === 0) return "Sin Stock"
+        if (getTotalStock(producto) <= threshold) return "Stock Bajo"
         return "Stock Normal"
       })(),
       "Precio Costo": producto.precioCosto,
       "Precio Venta": producto.precioVenta,
-      "Valor Inventario": producto.precioCosto * producto.stock,
-      "Valor Venta": producto.precioVenta * producto.stock,
+      "Valor Inventario": producto.precioCosto * getTotalStock(producto),
+      "Valor Venta": producto.precioVenta * getTotalStock(producto),
     }))
 
     exportToCsv(data, "Reporte_General_Inventario")
@@ -130,10 +133,18 @@ export function ReporteGeneral() {
 
   return (
     <StaggerContainer className="space-y-4">
+      {reportError ? (
+        <ReportErrorState
+          title="No se pudo cargar el reporte de inventario"
+          description="Revisa tu conexión a internet y vuelve a intentarlo."
+          onRetry={() => window.location.reload()}
+        />
+      ) : null}
+
       <StaggerItem className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
         <div className="flex items-center gap-4">
           <Select value={filtroCategoria} onValueChange={setFiltroCategoria}>
-            <SelectTrigger className="w-[200px]">
+            <SelectTrigger className="w-[200px]" aria-label="Filtrar por categoría">
               <SelectValue placeholder="Filtrar por categoría" />
             </SelectTrigger>
             <SelectContent>
@@ -148,11 +159,21 @@ export function ReporteGeneral() {
         </div>
         <div className="flex items-center gap-2">
           
-          <Button variant="outline" size="sm" onClick={handleExportPdf}>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={handleExportPdf}
+            disabled={productosFiltrados.length === 0}
+          >
             <FilePdf className="mr-2 h-4 w-4" />
             PDF
           </Button>
-          <Button variant="outline" size="sm" onClick={handleExportCsv}>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={handleExportCsv}
+            disabled={productosFiltrados.length === 0}
+          >
             <FileText className="mr-2 h-4 w-4" />
             CSV
           </Button>
@@ -161,42 +182,34 @@ export function ReporteGeneral() {
 
       <StaggerItem className="grid gap-4 md:grid-cols-3">
         <AnimatedCard>
-        <Card className={cn(surfaceCardClass, "border-l-4 border-l-primary")}>
-          <CardContent className="p-4">
-            <div className="flex items-center justify-between">
-              <div>
-                <div className="text-2xl font-bold">{totalProductos}</div>
-                <p className="text-xs text-muted-foreground">Total de productos</p>
-              </div>
-              <Package className="h-8 w-8 text-primary opacity-50" />
-            </div>
-          </CardContent>
-        </Card>
+          <ReportKpiCard
+            label="Total de productos"
+            value={totalProductos.toLocaleString()}
+            icon={Package}
+          />
         </AnimatedCard>
-        
+
         <AnimatedCard>
-        <Card className={cn(surfaceCardClass, "border-l-4 border-l-chart-2")}>
-          <CardContent className="p-4">
-            <div className="text-2xl font-bold">${valorTotal.toLocaleString('es-DO', { minimumFractionDigits: 2 })}</div>
-            <p className="text-xs text-muted-foreground">Valor de inventario (costo)</p>
-          </CardContent>
-        </Card>
+          <ReportKpiCard
+            label="Valor de inventario (costo)"
+            value={formatCurrency(valorTotal)}
+            icon={DollarSign}
+          />
         </AnimatedCard>
-        
+
         <AnimatedCard>
-        <Card className={cn(surfaceCardClass, "border-l-4 border-l-chart-3")}>
-          <CardContent className="p-4">
-            <div className="text-2xl font-bold">${valorVenta.toLocaleString('es-DO', { minimumFractionDigits: 2 })}</div>
-            <p className="text-xs text-muted-foreground">Valor de inventario (venta)</p>
-          </CardContent>
-        </Card>
+          <ReportKpiCard
+            label="Valor de inventario (venta)"
+            value={formatCurrency(valorVenta)}
+            icon={DollarSign}
+          />
         </AnimatedCard>
       </StaggerItem>
 
       {/* Chart Section */}
       <StaggerItem>
         <AnimatedCard>
-          <Card className={surfaceCardClass}>
+          <Card className={SURFACE_CARD_CLASS}>
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
                 <PieChartIcon className="h-5 w-5" />
@@ -215,16 +228,16 @@ export function ReporteGeneral() {
                       cx="50%"
                       cy="50%"
                       labelLine={false}
-                      label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
+                      label={({ percent }: { percent?: number }) => formatPiePercentLabel(percent ?? 0)}
                       outerRadius={80}
-                      fill="#8884d8"
+                      fill={CHART_COLORS[0]}
                       dataKey="value"
                     >
                       {valorPorCategoria.map((entry, index) => (
                         <Cell key={entry.name || `cell-${index}`} fill={COLORS[index % COLORS.length]} />
                       ))}
                     </Pie>
-                    <Tooltip formatter={(value: number) => `$${value.toLocaleString()}`} />
+                    <Tooltip formatter={(value: number) => formatCurrency(value)} />
                     <Legend />
                   </PieChart>
                 </ResponsiveContainer>
@@ -240,9 +253,9 @@ export function ReporteGeneral() {
 
       <StaggerItem>
         <AnimatedCard>
-        <Card className={surfaceCardClass}>
+        <Card className={SURFACE_CARD_CLASS}>
           <CardContent className="p-0">
-            <div className="rounded-md border-0">
+            <div className="overflow-x-auto rounded-md border-0">
               {!hasData ? (
                 <div className="p-8 text-center text-muted-foreground">
                   {isLoadingProductos ? (
@@ -252,9 +265,9 @@ export function ReporteGeneral() {
                   )}
                 </div>
               ) : (
-                <Table className={surfaceCardClass}>
+                <Table className={SURFACE_CARD_CLASS}>
                   <TableHeader className="bg-muted/50">
-                    <TableRow className={surfaceCardClass}>
+                    <TableRow className={SURFACE_CARD_CLASS}>
                       <TableHead>Producto</TableHead>
                       <TableHead>Categoría</TableHead>
                       <TableHead className="text-right">Stock</TableHead>
@@ -265,7 +278,7 @@ export function ReporteGeneral() {
                       <TableHead className="text-right">Valor Venta</TableHead>
                     </TableRow>
                   </TableHeader>
-                  <TableBody className={surfaceCardClass}>
+                  <TableBody className={SURFACE_CARD_CLASS}>
                     {productosPaginados?.map((producto) => {
                       const categoriaNombre = categorias?.find((c) => c.catId === producto.categoriaId || c.catId === producto.categoria?.catId)?.nombre || "Sin categoría"
                       return (
@@ -277,13 +290,14 @@ export function ReporteGeneral() {
                             const threshold = producto.stockMinimo > 0 ? producto.stockMinimo : 10
                             let variant: "default" | "destructive" | "secondary" = "default"
                             
-                            if (producto.stock === 0) {
+                            const totalStock = getTotalStock(producto)
+                            if (totalStock === 0) {
                               variant = "destructive"
-                            } else if (producto.stock <= threshold) {
+                            } else if (totalStock <= threshold) {
                               variant = "secondary"
                             }
                             
-                            return <Badge variant={variant}>{producto.stock}</Badge>
+                            return <Badge variant={variant}>{totalStock}</Badge>
                           })()}
                         </TableCell>
                         <TableCell className="text-right">
@@ -293,10 +307,10 @@ export function ReporteGeneral() {
                             <Badge variant="secondary">Por defecto (10)</Badge>
                           )}
                         </TableCell>
-                        <TableCell className="text-right">${producto.precioCosto.toLocaleString('es-DO', { minimumFractionDigits: 2 })}</TableCell>
-                        <TableCell className="text-right">${producto.precioVenta.toLocaleString('es-DO', { minimumFractionDigits: 2 })}</TableCell>
-                        <TableCell className="text-right">${(producto.precioCosto * producto.stock).toLocaleString('es-DO', { minimumFractionDigits: 2 })}</TableCell>
-                        <TableCell className="text-right">${(producto.precioVenta * producto.stock).toLocaleString('es-DO', { minimumFractionDigits: 2 })}</TableCell>
+                        <TableCell className="text-right">{formatCurrency(producto.precioCosto)}</TableCell>
+                        <TableCell className="text-right">{formatCurrency(producto.precioVenta)}</TableCell>
+                        <TableCell className="text-right">{formatCurrency(producto.precioCosto * getTotalStock(producto))}</TableCell>
+                        <TableCell className="text-right">{formatCurrency(producto.precioVenta * getTotalStock(producto))}</TableCell>
                       </TableRow>
                     )})}
                   </TableBody>
@@ -316,7 +330,7 @@ export function ReporteGeneral() {
                 value={String(pageSize)}
                 onValueChange={(value) => handlePageSizeChange(Number(value))}
               >
-                <SelectTrigger className="h-8 w-[70px]">
+                <SelectTrigger className="h-8 w-[70px]" aria-label="Filas por página">
                   <SelectValue placeholder={pageSize} />
                 </SelectTrigger>
                 <SelectContent side="top">
@@ -343,7 +357,8 @@ export function ReporteGeneral() {
                 <PaginationItem>
                   <PaginationPrevious
                     onClick={() => handlePageChange(Math.max(1, currentPage - 1))}
-                    //disabled={currentPage === 1}
+                    aria-disabled={currentPage === 1}
+                    className={currentPage === 1 ? "pointer-events-none opacity-50" : undefined}
                   />
                 </PaginationItem>
                 
@@ -383,7 +398,8 @@ export function ReporteGeneral() {
                 <PaginationItem>
                   <PaginationNext
                     onClick={() => handlePageChange(Math.min(totalPages, currentPage + 1))}
-                    //disabled={currentPage === totalPages}
+                    aria-disabled={currentPage === totalPages}
+                    className={currentPage === totalPages ? "pointer-events-none opacity-50" : undefined}
                   />
                 </PaginationItem>
               </PaginationContent>

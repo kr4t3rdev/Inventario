@@ -78,7 +78,7 @@ export function ArqueoForm({
 				const result = await getEsperadosArqueoAction(turnoId);
 				if (result.success && result.data) {
 					setEsperados(result.data);
-				} else {
+				} else if (!result.success) {
 					toast.error(result.error?.message ?? "Error al cargar esperados");
 				}
 			} catch {
@@ -141,7 +141,7 @@ export function ArqueoForm({
 				totalTransferencia: esperados?.esperadoTransferencia ?? 0,
 				totalCredito: esperados?.esperadoCredito ?? 0,
 				observaciones: observaciones || null,
-			});
+			} as any);
 
 			if (result.success) {
 				toast.success("Arqueo registrado exitosamente");

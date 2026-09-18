@@ -5,6 +5,8 @@
 
 import { getFacturasAction } from "@/features/facturas"
 import { FacturasContent } from "@/features/facturas"
+import { BillingHealthCard } from "@/features/facturas/components/billing-health-card"
+import { getCurrentUser } from "@/lib/server-actions"
 
 
 export const metadata = {
@@ -16,6 +18,7 @@ interface PageProps {
     page?: string
     limit?: string
     estado?: string
+    tipoDocumento?: string
     search?: string
   }>
 }
@@ -30,14 +33,20 @@ export default async function FacturasPage(props: PageProps) {
   const page = parseInt(searchParams.page || '1')
   const limit = parseInt(searchParams.limit || '50')
 
-  const result = await getFacturasAction({
+  const [result, user] = await Promise.all([getFacturasAction({
     page,
     limit,
     estado: searchParams.estado,
+    tipoDocumento: searchParams.tipoDocumento,
     search: searchParams.search,
-  })
+  }), getCurrentUser()])
 
-  const initialData = result.success ? result.data : undefined
+  const initialData = result.success ? result.data as any : undefined
 
-  return <FacturasContent initialData={initialData} />
+  return (
+    <div className="space-y-6">
+      {user?.role === 'admin' ? <BillingHealthCard userRole="admin" /> : null}
+      <FacturasContent initialData={initialData} />
+    </div>
+  )
 }

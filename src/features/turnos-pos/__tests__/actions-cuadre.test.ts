@@ -217,6 +217,29 @@ describe("getCuadreTurnoAction", () => {
 		}
 	});
 
+	it("should expose closed-shift metadata for readonly detail mode", async () => {
+		const fechaCierre = new Date("2026-06-19T18:00:00.000Z");
+		mockPrisma.turnoPuntoVenta.findFirst.mockResolvedValue(
+			buildTurno({
+				estado: "CERRADO",
+				fechaCierre,
+			}),
+		);
+		mockPrisma.ventaItem.findMany.mockResolvedValue([]);
+		mockPrisma.stockUbicacion.findMany.mockResolvedValue([]);
+		mockPrisma.venta.aggregate.mockResolvedValue({ _sum: { total: 0 } });
+
+		const result = await getCuadreTurnoAction("turno-1", mockUser);
+
+		expect(result.success).toBe(true);
+		if (result.success && result.data) {
+			expect(result.data.turno.estado).toBe("CERRADO");
+			expect(new Date(result.data.turno.fechaCierre ?? "").toISOString()).toBe(
+				fechaCierre.toISOString(),
+			);
+		}
+	});
+
 	it("should fallback to warehouse stock when no PV StockUbicacion records exist", async () => {
 		// Turno con PV que tiene almacenId
 		mockPrisma.turnoPuntoVenta.findFirst.mockResolvedValue(

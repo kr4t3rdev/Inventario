@@ -3,10 +3,12 @@ import { reconciliarGastoAction } from "@/features/contabilidad/actions-reconcil
 
 const prismaMock = vi.hoisted(() => ({
 	$transaction: vi.fn(),
+	auditLog: { create: vi.fn() },
 }));
 
 vi.mock("@/lib/prisma", () => ({
 	prisma: prismaMock,
+	default: prismaMock,
 }));
 
 const getCurrentUserMock = vi.hoisted(() => vi.fn());
@@ -58,7 +60,8 @@ const AUTH_USER = {
 	tenantId: "tenant-1",
 	name: "Test",
 	email: "test@test.com",
-	role: "ADMIN" as const,
+	role: "admin" as const,
+	tenantRole: "admin" as const,
 	isActive: true,
 };
 
@@ -94,7 +97,7 @@ describe("Cuentas por Pagar — reconciliarGastoAction (flujo real)", () => {
 		};
 
 		workflowMock.applyPagoGastoWorkflow.mockResolvedValue(workflowResult);
-		prismaMock.$transaction.mockImplementation(async (cb: any) => cb({}));
+		prismaMock.$transaction.mockImplementation(async (cb: any) => cb({ $executeRaw: vi.fn() }));
 
 		const result = await reconciliarGastoAction({
 			gastoCompraId: "gc-1",
@@ -147,7 +150,7 @@ describe("Cuentas por Pagar — reconciliarGastoAction (flujo real)", () => {
 		};
 
 		workflowMock.applyPagoGastoWorkflow.mockResolvedValue(workflowResult);
-		prismaMock.$transaction.mockImplementation(async (cb: any) => cb({}));
+		prismaMock.$transaction.mockImplementation(async (cb: any) => cb({ $executeRaw: vi.fn() }));
 
 		const result = await reconciliarGastoAction({
 			gastoCompraId: "gc-2",
@@ -200,7 +203,7 @@ describe("Cuentas por Pagar — reconciliarGastoAction (flujo real)", () => {
 		};
 
 		workflowMock.applyPagoGastoWorkflow.mockResolvedValue(workflowResult);
-		prismaMock.$transaction.mockImplementation(async (cb: any) => cb({}));
+		prismaMock.$transaction.mockImplementation(async (cb: any) => cb({ $executeRaw: vi.fn() }));
 
 		const result = await reconciliarGastoAction({
 			gastoCompraId: "gc-3",
@@ -243,7 +246,7 @@ describe("Cuentas por Pagar — reconciliarGastoAction (flujo real)", () => {
 			status: 400,
 			code: "MONTO_EXCEDE_SALDO",
 		});
-		prismaMock.$transaction.mockImplementation(async (cb: any) => cb({}));
+		prismaMock.$transaction.mockImplementation(async (cb: any) => cb({ $executeRaw: vi.fn() }));
 
 		const result = await reconciliarGastoAction({
 			gastoCompraId: "gc-4",
@@ -265,7 +268,7 @@ describe("Cuentas por Pagar — reconciliarGastoAction (flujo real)", () => {
 			status: 400,
 			code: "CUENTA_YA_PAGADA",
 		});
-		prismaMock.$transaction.mockImplementation(async (cb: any) => cb({}));
+		prismaMock.$transaction.mockImplementation(async (cb: any) => cb({ $executeRaw: vi.fn() }));
 
 		const result = await reconciliarGastoAction({
 			gastoCompraId: "gc-5",
@@ -298,7 +301,7 @@ describe("Cuentas por Pagar — reconciliarGastoAction (flujo real)", () => {
 		};
 
 		workflowMock.applyPagoGastoWorkflow.mockResolvedValue(workflowResult);
-		prismaMock.$transaction.mockImplementation(async (cb: any) => cb({}));
+		prismaMock.$transaction.mockImplementation(async (cb: any) => cb({ $executeRaw: vi.fn() }));
 
 		const result = await reconciliarGastoAction({
 			pgId: "pg-1",
@@ -322,7 +325,7 @@ describe("Cuentas por Pagar — reconciliarGastoAction (flujo real)", () => {
 	});
 
 	it("7. RED: Sin cuentaPorPagarId DEBE llamar al workflow (parity)", async () => {
-		prismaMock.$transaction.mockImplementation(async (cb: any) => cb({}));
+		prismaMock.$transaction.mockImplementation(async (cb: any) => cb({ $executeRaw: vi.fn() }));
 
 		await reconciliarGastoAction({
 			pgId: "pg-7",

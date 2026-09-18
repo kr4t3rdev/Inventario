@@ -19,6 +19,18 @@ vi.mock('@/lib/prisma', () => ({
       update: vi.fn(),
       upsert: vi.fn(),
     },
+    // Guarda B-03: conteos de dependencias del proveedor
+    producto: { count: vi.fn().mockResolvedValue(0) },
+    gastoCompra: { count: vi.fn().mockResolvedValue(0) },
+    compraProducto: { count: vi.fn().mockResolvedValue(0) },
+    compraDocumento: { count: vi.fn().mockResolvedValue(0) },
+    ordenCompra: { count: vi.fn().mockResolvedValue(0) },
+    deudaCash: { count: vi.fn().mockResolvedValue(0) },
+    cuentaPorPagar: { count: vi.fn().mockResolvedValue(0) },
+    anticipo: { count: vi.fn().mockResolvedValue(0) },
+    compraServicio: { count: vi.fn().mockResolvedValue(0) },
+    contrato: { count: vi.fn().mockResolvedValue(0) },
+    gastosDE: { count: vi.fn().mockResolvedValue(0) },
   },
 }));
 vi.mock('@/lib/vendor-code-utils', () => ({

@@ -12,7 +12,7 @@ class PerformanceOptimizer {
   private config: PerformanceConfig
   private performanceMarks: Map<string, number> = new Map()
   private batchQueue: Map<string, any[]> = new Map()
-  private debounceTimers: Map<string, NodeJS.Timeout> = new Map()
+  private debounceTimers: Map<string, ReturnType<typeof setTimeout>> = new Map()
 
   constructor(config: Partial<PerformanceConfig> = {}) {
     this.config = {

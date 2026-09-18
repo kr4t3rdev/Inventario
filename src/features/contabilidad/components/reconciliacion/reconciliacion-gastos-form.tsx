@@ -438,6 +438,7 @@ export function ReconciliacionGastosForm({
 
       const result = await reconciliarGastoAction({
         pgId: baseData.pgId,
+        gastosDEId: baseData.gastosDEId,
         gastoCompraId: baseData.gastoCompraId,
         compraServicioId: baseData.compraServicioId,
         ventaServicioId: baseData.ventaServicioId,
@@ -446,6 +447,8 @@ export function ReconciliacionGastosForm({
         monto: baseData.monto,
         moneda: baseData.moneda,
         descripcion: baseData.descripcion,
+        periodo: baseData.periodo,
+        fechaReconciliacion: baseData.fechaReconciliacion,
         cuentaPorPagarId: baseData.cuentaPorPagarId,
         // Pasar distribución completa para multi-cuenta (CxP)
         distribucion: baseData.distribucion,
@@ -722,7 +725,7 @@ export function ReconciliacionGastosForm({
                                             field.onChange(newValue)
                                           }
                                         }}
-                                        className={`h-9 ${field.value > 0 ? 'border-blue-300 bg-blue-50 dark:bg-gray-800 text-gray-400' : ''}`}
+                                        className={`h-9 ${field.value > 0 ? 'border-blue-300 bg-blue-50 dark:bg-gray-800 text-blue-900 dark:text-blue-100' : ''}`}
                                       />
                                     </FormControl>
                                     {isCuentaPorPagar && (

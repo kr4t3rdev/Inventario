@@ -117,6 +117,38 @@ export async function sendEmailVerificationLink(
 	return { success: result !== null, messageId: result?.id };
 }
 
+/**
+ * @description Envía un enlace de reseteo de contraseña.
+ * @param {string} to - Correo del usuario.
+ * @param {string} resetUrl - URL completa con el token de reseteo.
+ * @param {string} userName - Nombre del usuario.
+ * @returns {Promise<{ success: boolean; messageId?: string }>} Resultado del envío
+ */
+export async function sendPasswordResetEmail(
+	to: string,
+	resetUrl: string,
+	userName: string,
+): Promise<{ success: boolean; messageId?: string }> {
+	const appName = process.env.NEXT_PUBLIC_APP_NAME || "Sistema de Gestion FinanceMDM";
+
+	const html = `
+    <div style="font-family: Arial, sans-serif; max-width: 640px; margin: 0 auto; padding: 24px; color: #0f172a;">
+      <h2 style="margin: 0 0 16px; color: #4f46e5;">Restablece tu contraseña</h2>
+      <p>Hola ${userName}, recibimos una solicitud para restablecer la contraseña de tu cuenta en <strong>${appName}</strong>.</p>
+      <p>Haz clic en el botón de abajo para crear una nueva contraseña. El enlace es válido por 1 hora.</p>
+      <p style="margin: 28px 0;">
+        <a href="${resetUrl}" style="display:inline-block;background:#4f46e5;color:#fff;text-decoration:none;padding:12px 18px;border-radius:8px;">
+          Restablecer contraseña
+        </a>
+      </p>
+      <p style="font-size: 14px; color: #64748b;">Si no fuiste tú quien lo solicitó, ignora este mensaje y tu contraseña seguirá sin cambios.</p>
+    </div>
+  `;
+
+	const result = await sendEmail(to, `Restablece tu contraseña en ${appName}`, html);
+	return { success: result !== null, messageId: result?.id };
+}
+
 export async function sendNewUserNotification(
 	newUserName: string,
 	newUserEmail: string,

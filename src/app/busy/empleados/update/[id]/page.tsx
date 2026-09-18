@@ -8,7 +8,7 @@ import { Button } from "@/components/ui/button"
 import { useParams } from "next/navigation"
 import { useEffect, useState } from "react"
 import { getEmpleadoByIdAction } from "@/features/empleados"
-import { ArrowLeft, Users, Sparkles, AlertCircle, Loader2 } from "lucide-react"
+import { ArrowLeft, Users, AlertCircle, Loader2 } from "lucide-react"
 import Link from "next/link"
 
 export default function EditarEmpleadoPage() {
@@ -66,26 +66,17 @@ export default function EditarEmpleadoPage() {
                   </Button>
                 </motion.div>
                 <motion.div
-                  className="w-10 h-10 bg-linear-to-br from-primary to-purple-600 rounded-xl flex items-center justify-center shadow-lg"
+                  className="w-10 h-10 bg-linear-to-br from-primary to-purple rounded-xl flex items-center justify-center shadow-lg"
                   whileHover={{ scale: 1.05, rotate: 5 }}
                   transition={{ type: "spring", stiffness: 400, damping: 10 }}
                 >
                   <Users className="h-5 w-5 text-white" />
                 </motion.div>
                 <div className="relative">
-                  <h1 className="text-2xl font-bold bg-linear-to-r from-primary to-purple-600 bg-clip-text text-transparent">
+                  <h1 className="text-2xl font-bold bg-linear-to-r from-primary to-purple bg-clip-text text-transparent">
                     Editar Empleado
                   </h1>
-                  <motion.div
-                    className="absolute -right-4 -top-1"
-                    animate={{ rotate: 360, scale: [1, 1.2, 1] }}
-                    transition={{
-                      rotate: { duration: 20, repeat: Infinity, ease: "linear" },
-                      scale: { duration: 2, repeat: Infinity, ease: "easeInOut" }
-                    }}
-                  >
-                    <Sparkles className="h-4 w-4 text-yellow-500" />
-                  </motion.div>
+
                 </div>
               </motion.div>
 
@@ -134,26 +125,16 @@ export default function EditarEmpleadoPage() {
                 </Button>
               </motion.div>
               <motion.div
-                className="w-10 h-10 bg-linear-to-br from-primary to-purple-600 rounded-xl flex items-center justify-center shadow-lg"
+                className="w-10 h-10 bg-linear-to-br from-primary to-purple rounded-xl flex items-center justify-center shadow-lg"
                 whileHover={{ scale: 1.05, rotate: 5 }}
                 transition={{ type: "spring", stiffness: 400, damping: 10 }}
               >
                 <Users className="h-5 w-5 text-white" />
               </motion.div>
               <div className="relative">
-                <h1 className="text-2xl font-bold bg-linear-to-r from-primary to-purple-600 bg-clip-text text-transparent">
+                <h1 className="text-2xl font-bold bg-linear-to-r from-primary to-purple bg-clip-text text-transparent">
                   Editar Empleado
                 </h1>
-                <motion.div
-                  className="absolute -right-4 -top-1"
-                  animate={{ rotate: 360, scale: [1, 1.2, 1] }}
-                  transition={{
-                    rotate: { duration: 20, repeat: Infinity, ease: "linear" },
-                    scale: { duration: 2, repeat: Infinity, ease: "easeInOut" }
-                  }}
-                >
-                  <Sparkles className="h-4 w-4 text-yellow-500" />
-                </motion.div>
               </div>
             </motion.div>
             <motion.p

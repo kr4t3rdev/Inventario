@@ -3,6 +3,7 @@ import { v4 as uuid } from 'uuid';
 import { withAuthGet, withAuthPost, type AuthenticatedUser } from '@/lib/auth-middleware';
 import { requireTenant } from '@/lib/services/tenant-scope';
 import { prisma } from '@/lib/prisma';
+import { upsertStockUbicacion } from '@/lib/services/stock-ubicacion-service';
 import { z } from 'zod';
 
 const createValeSchema = z.object({
@@ -87,20 +88,53 @@ export const POST = withAuthPost(async (request: NextRequest, _ctx: any, user: A
       vale = await prisma.$transaction(async (tx) => {
         // Validar disponibilidad dentro de la transacción para evitar race conditions
         const productosFaltantes: Array<{ productoId: string; productoNombre: string; requerido: number; disponible: number }> = [];
+        const itemsValidados: Array<{
+          productoId: string;
+          cantidad: number;
+          productoNombre: string;
+          almacenId: string;
+        }> = [];
+
         for (const item of payload.items) {
           const producto = await tx.producto.findUnique({
             where: { id: item.productoId },
-            select: { id: true, nombre: true, stock: true },
+            select: { id: true, nombre: true, almacenId: true },
           });
 
-          if (!producto || producto.stock < item.cantidad) {
+          const stockEnAlmacen = producto?.almacenId
+            ? await tx.stockUbicacion.findUnique({
+                where: {
+                  productoId_tipoUbicacion_ubicacionId: {
+                    productoId: item.productoId,
+                    tipoUbicacion: 'almacen',
+                    ubicacionId: producto.almacenId,
+                  },
+                },
+                select: {
+                  productoId: true,
+                  cantidad: true,
+                  cantidadReservada: true,
+                  cantidadDisponible: true,
+                },
+              })
+            : null;
+
+          if (!producto || !producto.almacenId || !stockEnAlmacen || stockEnAlmacen.cantidadDisponible < item.cantidad) {
             productosFaltantes.push({
               productoId: item.productoId,
               productoNombre: producto?.nombre || 'Desconocido',
               requerido: item.cantidad,
-              disponible: producto?.stock || 0,
+              disponible: stockEnAlmacen?.cantidadDisponible || 0,
             });
+            continue;
           }
+
+          itemsValidados.push({
+            productoId: item.productoId,
+            cantidad: item.cantidad,
+            productoNombre: producto.nombre,
+            almacenId: producto.almacenId,
+          });
         }
 
         if (productosFaltantes.length > 0) {
@@ -120,7 +154,7 @@ export const POST = withAuthPost(async (request: NextRequest, _ctx: any, user: A
         });
 
         // Crear los items y decrementar stock
-        for (const item of payload.items) {
+        for (const item of itemsValidados) {
           await tx.valeSalidaItem.create({
             data: {
               valeSalidaItemId: uuid(),
@@ -131,9 +165,12 @@ export const POST = withAuthPost(async (request: NextRequest, _ctx: any, user: A
             },
           });
 
-          await tx.producto.update({
-            where: { id: item.productoId },
-            data: { stock: { decrement: item.cantidad } },
+          await upsertStockUbicacion(tx, {
+            productoId: item.productoId,
+            tipoUbicacion: 'almacen',
+            ubicacionId: item.almacenId,
+            modo: 'increment',
+            delta: -item.cantidad,
           });
         }
 

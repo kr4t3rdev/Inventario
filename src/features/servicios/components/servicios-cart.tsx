@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import { Input } from "@/components/ui/input";
@@ -19,9 +19,18 @@ import {
 	SelectTrigger,
 	SelectValue,
 } from "@/components/ui/select";
+import {
+	Tabs,
+	TabsContent,
+	TabsList,
+	TabsTrigger,
+} from "@/components/ui/tabs";
 import { formatCurrency } from "@/lib/utils";
+import { resumirCarritoPorMoneda, monedasOrdenadas } from "@/features/servicios/lib/carrito-resumen";
 import { createVentaServicioAction } from "@/features/venta-servicios/actions";
+import { createCompraServicioAction } from "@/features/compras-servicios/actions";
 import { useClientes } from "@/features/clientes/hooks/use-clientes";
+import { useVendors } from "@/features/vendors/hooks/use-vendors";
 import { toast } from "sonner";
 import { CreditCard, Plus, Minus, X, ShoppingCart } from "lucide-react";
 
@@ -33,6 +42,7 @@ interface ServicioItem {
 	costo: number;
 	descripcion: string;
 	cantidad: number;
+	moneda?: string;
 }
 
 interface ServiciosCartProps {
@@ -49,21 +59,21 @@ export default function ServiciosCart({
 	onOpenChange,
 }: ServiciosCartProps) {
 	const { clientes } = useClientes();
+	const { vendors } = useVendors();
 	const [selectedClienteId, setSelectedClienteId] = useState<string>("");
 	const [observaciones, setObservaciones] = useState<string>("");
 	const [isProcessing, setIsProcessing] = useState(false);
-
-	// Calcular total del carrito
-	const cartTotal = cart.reduce(
-		(total, item) => total + item.precio * item.cantidad,
-		0,
+	// Modo: venta (registra VentaServicio) o compra (registra CompraServicio).
+	const [mode, setMode] = useState<"VENTA" | "COMPRA">("VENTA");
+	const [selectedProveedorId, setSelectedProveedorId] = useState<string>("");
+	const [numeroFactura, setNumeroFactura] = useState<string>("");
+	const [formaPago, setFormaPago] = useState<"PAGO_COMPLETO" | "PAGO_PARCIAL">(
+		"PAGO_COMPLETO",
 	);
 
-	// Calcular costo total del carrito
-	const cartCostoTotal = cart.reduce(
-		(total, item) => total + item.costo * item.cantidad,
-		0,
-	);
+	// El carrito puede mezclar monedas: los totales se calculan agrupados por
+	// moneda y nunca se suman importes cruzados.
+	const resumen = useMemo(() => resumirCarritoPorMoneda(cart), [cart]);
 
 	// Remover servicio del carrito
 	const removeFromCart = (cartItemId: string) => {
@@ -83,16 +93,9 @@ export default function ServiciosCart({
 		);
 	};
 
-	// Actualizar precio de servicio en carrito
-	const updatePrice = (cartItemId: string, newPrice: number) => {
-		if (newPrice < 0) return;
-
-		setCart(
-			cart.map((item) =>
-				item.cartItemId === cartItemId ? { ...item, precio: newPrice } : item,
-			),
-		);
-	};
+	// El precio se muestra como lectura desde el catálogo: el servidor
+	// resuelve el precio unitario al procesar la venta y no acepta
+	// importes del cliente.
 
 	// Actualizar costo de servicio en carrito
 	const updateCosto = (cartItemId: string, newCosto: number) => {
@@ -105,44 +108,78 @@ export default function ServiciosCart({
 		);
 	};
 
-	// Procesar venta de servicios (batch atómico via transactional mixed-line)
-	const processVenta = async () => {
+	// Procesar venta o compra de servicios (batch por modo)
+	const processCarrito = async () => {
 		if (cart.length === 0) {
-			toast("Añada servicios al carrito para realizar una venta");
+			toast.error("Añada servicios al carrito para continuar");
 			return;
 		}
 
-		if (!selectedClienteId) {
-			toast("Seleccione un cliente para continuar");
+		if (mode === "VENTA" && !selectedClienteId) {
+			toast.error("Seleccione un cliente para continuar");
+			return;
+		}
+		if (mode === "COMPRA" && !selectedProveedorId) {
+			toast.error("Seleccione un proveedor para continuar");
 			return;
 		}
 
 		setIsProcessing(true);
 		try {
-			const result = await createVentaServicioAction({
-				clienteId: selectedClienteId,
-				observaciones: observaciones || undefined,
-				lineas: cart.map((item) => ({
-					tipoLinea: 'SERVICIO' as const,
-					servicioId: item.servicioId,
-					cantidad: item.cantidad,
-					precioUnitario: Math.round(item.precio),
-					costo: Math.round(item.costo),
-				})),
-			});
-
-			if (!result.success) {
-				throw new Error(result.error?.message ?? "Error desconocido");
+			if (mode === "VENTA") {
+				const result = await createVentaServicioAction({
+					clienteId: selectedClienteId,
+					condicionPago: 'CONTADO',
+					observaciones: observaciones || undefined,
+					lineas: cart.map((item) => ({
+						tipoLinea: 'SERVICIO' as const,
+						servicioId: item.servicioId,
+						cantidad: item.cantidad,
+						costo: Math.round(item.costo),
+					})),
+				});
+				if (!result.success) {
+					throw new Error(result.error?.message ?? "Error desconocido");
+				}
+			} else {
+				// Compra: cada línea del carrito se vuelve un registro CompraServicio.
+				await Promise.all(
+					cart.map((item) =>
+						createCompraServicioAction({
+							servicioId: item.servicioId,
+							cantidad: item.cantidad,
+							costoUnitario: Math.round(item.costo),
+							proveedorId: selectedProveedorId || null,
+							numeroFactura: numeroFactura || null,
+							formaPago,
+							estado: formaPago === "PAGO_COMPLETO" ? "PAGADA" : "PENDIENTE",
+							anticipos: undefined,
+						}).then((r) => {
+							if (!r.success) {
+								throw new Error(r.error?.message ?? "Error desconocido");
+							}
+						}),
+					),
+				);
 			}
 
-			toast("Venta de servicios procesada exitosamente");
+			toast.success(
+				mode === "VENTA"
+					? "Venta de servicios procesada exitosamente"
+					: "Compra de servicios registrada exitosamente",
+			);
 			setCart([]);
 			setSelectedClienteId("");
+			setSelectedProveedorId("");
+			setNumeroFactura("");
 			setObservaciones("");
+			setMode("VENTA");
 			onOpenChange(false);
 		} catch (error) {
-			console.error("Error al procesar la venta:", error);
-			toast("Hubo un error al procesar la venta. El carrito se ha preservado para reintentar.");
+			console.error("Error al procesar el carrito:", error);
+			toast.error(
+				"Hubo un error al procesar. El carrito se ha preservado para reintentar.",
+			);
 		} finally {
 			setIsProcessing(false);
 		}
@@ -158,9 +195,11 @@ export default function ServiciosCart({
 						<ShoppingCart className="h-5 w-5" />
 						Carrito de Servicios ({cart.length})
 					</DialogTitle>
-					<DialogDescription>
-						Revise y procese la venta de servicios
-					</DialogDescription>
+								<DialogDescription>
+									{mode === "VENTA"
+										? "Revise y procese la venta de servicios"
+										: "Registre servicios recibidos (egresos)"}
+								</DialogDescription>
 				</DialogHeader>
 
 				<div className="flex-1 overflow-y-auto">
@@ -198,6 +237,14 @@ export default function ServiciosCart({
 												{item.descripcion}
 											</div>
 										</div>
+									<div className="col-span-2 flex justify-center">
+										<span
+											aria-label={`Precio de ${item.nombre}`}
+											className="h-8 text-center text-sm inline-flex items-center font-medium"
+										>
+											{formatCurrency(item.precio, item.moneda)}
+										</span>
+									</div>
 										<div className="col-span-2 flex justify-center">
 											<div className="relative w-24">
 												<span className="absolute left-2 top-1/2 -translate-y-1/2 text-muted-foreground text-sm">
@@ -206,22 +253,8 @@ export default function ServiciosCart({
 												<Input
 													type="number"
 													min={0}
-													value={item.precio}
-													onChange={(e) =>
-														updatePrice(item.cartItemId, Number(e.target.value))
-													}
-													className="pl-6 h-8 text-center text-sm"
-												/>
-											</div>
-										</div>
-										<div className="col-span-2 flex justify-center">
-											<div className="relative w-24">
-												<span className="absolute left-2 top-1/2 -translate-y-1/2 text-muted-foreground text-sm">
-													$
-												</span>
-												<Input
-													type="number"
-													min={0}
+													step={1}
+													aria-label={`Costo de ${item.nombre}`}
 													value={item.costo}
 													onChange={(e) =>
 														updateCosto(item.cartItemId, Number(e.target.value))
@@ -235,6 +268,7 @@ export default function ServiciosCart({
 												variant="outline"
 												size="icon"
 												className="h-7 w-7"
+												aria-label={`Restar una unidad de ${item.nombre}`}
 												onClick={() =>
 													updateQuantity(item.cartItemId, item.cantidad - 1)
 												}
@@ -249,6 +283,7 @@ export default function ServiciosCart({
 												variant="outline"
 												size="icon"
 												className="h-7 w-7"
+												aria-label={`Sumar una unidad de ${item.nombre}`}
 												onClick={() =>
 													updateQuantity(item.cartItemId, item.cantidad + 1)
 												}
@@ -257,12 +292,13 @@ export default function ServiciosCart({
 											</Button>
 										</div>
 										<div className="col-span-2 text-center font-medium text-sm">
-											{formatCurrency(item.precio * item.cantidad)}
+											{formatCurrency(item.precio * item.cantidad, item.moneda)}
 										</div>
 										<div className="col-span-1 text-right">
 											<Button
 												variant="ghost"
 												size="icon"
+												aria-label={`Quitar ${item.nombre} del carrito`}
 												onClick={() => removeFromCart(item.cartItemId)}
 												className="text-destructive hover:text-destructive"
 											>
@@ -274,70 +310,182 @@ export default function ServiciosCart({
 								))}
 							</div>
 
-							{/* Información del cliente */}
-							<div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-								<div className="space-y-2">
-									<h4 className="font-medium">Cliente *</h4>
-									<Select
-										value={selectedClienteId}
-										onValueChange={setSelectedClienteId}
-									>
-										<SelectTrigger>
-											<SelectValue placeholder="Seleccione un cliente" />
-										</SelectTrigger>
-										<SelectContent>
-											{clientes?.map((cliente) => (
-												<SelectItem
-													key={cliente.clienteId}
-													value={cliente.clienteId}
-												>
-													{cliente.nombre}
-												</SelectItem>
-											))}
-										</SelectContent>
-									</Select>
-								</div>
-
-								<div className="space-y-2">
-									<h4 className="font-medium">Observaciones</h4>
-									<Input
-										placeholder="Observaciones adicionales"
-										value={observaciones}
-										onChange={(e) => setObservaciones(e.target.value)}
-									/>
-								</div>
-							</div>
-
-							{/* Resumen de la venta */}
-							<div className="rounded-md border p-4 bg-muted/50">
-								<h4 className="font-medium mb-3">Resumen de la Venta</h4>
-								<div className="space-y-2">
-									{cart.map((item) => (
-										<div
-											key={item.cartItemId}
-											className="flex justify-between text-sm"
-										>
-											<span>
-												{item.nombre} x{item.cantidad}
-											</span>
-											<span>{formatCurrency(item.precio * item.cantidad)}</span>
+									<div className="rounded-md border p-4">
+										<div className="mb-2 text-xs font-semibold uppercase text-muted-foreground tracking-wider">
+											Tipo de operación
 										</div>
-									))}
-									<Separator className="my-2" />
-									<div className="flex justify-between text-sm">
-										<span className="text-muted-foreground">Costo Total</span>
-										<span>{formatCurrency(cartCostoTotal)}</span>
+										<Tabs
+											value={mode}
+											onValueChange={(v) => setMode(v as "VENTA" | "COMPRA")}
+										>
+											<TabsList className="w-full">
+												<TabsTrigger value="VENTA" className="flex-1">
+													Venta
+												</TabsTrigger>
+												<TabsTrigger value="COMPRA" className="flex-1">
+													Compra (servicio recibido)
+												</TabsTrigger>
+											</TabsList>
+										</Tabs>
 									</div>
-									<div className="flex justify-between text-sm font-medium">
-										<span className="text-muted-foreground">Margen</span>
-										<span>{formatCurrency(cartTotal - cartCostoTotal)}</span>
-									</div>
-									<Separator className="my-2" />
-									<div className="flex justify-between font-bold text-lg">
-										<span>Total</span>
-										<span>{formatCurrency(cartTotal)}</span>
-									</div>
-								</div>
+
+									{/* Venta: cliente + observaciones */}
+									{mode === "VENTA" && (
+										<div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+											<div className="space-y-2">
+												<h4 className="font-medium">Cliente *</h4>
+												<Select
+													value={selectedClienteId}
+													onValueChange={setSelectedClienteId}
+												>
+													<SelectTrigger>
+														<SelectValue placeholder="Seleccione un cliente" />
+													</SelectTrigger>
+													<SelectContent>
+														{clientes?.map((cliente) => (
+															<SelectItem
+																key={cliente.clienteId}
+																value={cliente.clienteId}
+															>
+																{cliente.nombre}
+															</SelectItem>
+														))}
+													</SelectContent>
+												</Select>
+											</div>
+
+											<div className="space-y-2">
+												<h4 className="font-medium">Observaciones</h4>
+												<Input
+													placeholder="Observaciones adicionales"
+													value={observaciones}
+													onChange={(e) => setObservaciones(e.target.value)}
+												/>
+											</div>
+										</div>
+									)}
+
+									{/* Compra: proveedor, factura y forma de pago */}
+									{mode === "COMPRA" && (
+										<div className="space-y-4">
+											<div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+												<div className="space-y-2">
+													<h4 className="font-medium">Proveedor *</h4>
+													<Select
+														value={selectedProveedorId}
+														onValueChange={setSelectedProveedorId}
+													>
+														<SelectTrigger>
+															<SelectValue placeholder="Seleccione un proveedor" />
+														</SelectTrigger>
+														<SelectContent>
+															{vendors?.map((vendor: any) =>
+																vendor.vendorId ? (
+																	<SelectItem
+																		key={vendor.vendorId}
+																		value={vendor.vendorId}
+																	>
+																		{vendor.nombre}
+																	</SelectItem>
+																) : null,
+															)}
+														</SelectContent>
+													</Select>
+												</div>
+
+												<div className="space-y-2">
+													<h4 className="font-medium">No. de factura</h4>
+													<Input
+														placeholder="Ej: F-2026-001 (opcional)"
+														value={numeroFactura}
+														onChange={(e) =>
+															setNumeroFactura(e.target.value)
+														}
+													/>
+												</div>
+											</div>
+
+											<div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+												<div className="space-y-2">
+													<h4 className="font-medium">Forma de pago</h4>
+													<Select
+														value={formaPago}
+														onValueChange={(v) =>
+															setFormaPago(
+																v as "PAGO_COMPLETO" | "PAGO_PARCIAL",
+															)
+														}
+													>
+														<SelectTrigger>
+															<SelectValue />
+														</SelectTrigger>
+														<SelectContent>
+															<SelectItem value="PAGO_COMPLETO">
+																Pago completo
+															</SelectItem>
+															<SelectItem value="PAGO_PARCIAL">
+																Pago parcial
+															</SelectItem>
+														</SelectContent>
+													</Select>
+												</div>
+
+												<div className="space-y-2">
+													<h4 className="font-medium text-muted-foreground text-sm">
+														Precio unitario = costo actual del ítem
+													</h4>
+													<p className="text-sm text-muted-foreground">
+														El costo del carrito del servicio marca el
+														costoUnitario de la compra. Cantidad viene
+														de la línea.
+													</p>
+												</div>
+											</div>
+										</div>
+									)}
+
+									{/* Resumen de la venta, agrupado por moneda */}
+							<div className="space-y-4">
+								{monedasOrdenadas(resumen.monedas).map((moneda) => {
+									const g = resumen.grupos[moneda];
+									const itemsMoneda = cart.filter(
+										(i) => (i.moneda ?? 'CUP').trim().toUpperCase() === moneda,
+									);
+									return (
+										<div key={moneda} className="rounded-md border p-4 bg-muted/50">
+											<h4 className="font-medium mb-3">
+												Resumen de {mode === 'VENTA' ? 'la Venta' : 'la Compra'}{resumen.esMultiMoneda ? ` (${moneda})` : ''}
+											</h4>
+											<div className="space-y-2">
+												{itemsMoneda.map((item) => (
+													<div
+														key={item.cartItemId}
+														className="flex justify-between text-sm"
+													>
+														<span>
+															{item.nombre} x{item.cantidad}
+														</span>
+														<span>{formatCurrency(item.precio * item.cantidad, moneda)}</span>
+													</div>
+												))}
+												<Separator className="my-2" />
+												<div className="flex justify-between text-sm">
+													<span className="text-muted-foreground">Costo Total</span>
+													<span>{formatCurrency(g.costoTotal, moneda)}</span>
+												</div>
+												<div className="flex justify-between text-sm font-medium">
+													<span className="text-muted-foreground">Margen</span>
+													<span>{formatCurrency(g.margen, moneda)}</span>
+												</div>
+												<Separator className="my-2" />
+												<div className="flex justify-between font-bold text-lg">
+													<span>Total</span>
+													<span>{formatCurrency(g.total, moneda)}</span>
+												</div>
+											</div>
+										</div>
+									);
+								})}
 							</div>
 						</div>
 					)}
@@ -352,8 +500,13 @@ export default function ServiciosCart({
 						Cerrar
 					</Button>
 					<Button
-						onClick={processVenta}
-						disabled={!selectedClienteId || isCartEmpty || isProcessing}
+						onClick={processCarrito}
+						disabled={
+							isCartEmpty ||
+							isProcessing ||
+							(mode === "VENTA" && !selectedClienteId) ||
+							(mode === "COMPRA" && !selectedProveedorId)
+						}
 						className="min-w-35"
 					>
 						{isProcessing ? (
@@ -361,7 +514,7 @@ export default function ServiciosCart({
 						) : (
 							<>
 								<CreditCard className="mr-2 h-4 w-4" />
-								Confirmar Venta
+								{mode === "VENTA" ? "Confirmar Venta" : "Registrar Compra"}
 							</>
 						)}
 					</Button>

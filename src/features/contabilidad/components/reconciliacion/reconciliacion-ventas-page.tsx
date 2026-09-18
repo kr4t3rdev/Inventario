@@ -23,9 +23,12 @@ import { VentasPendientesTable } from "../ventas-pendientes-table"
 import { ReconciliacionVentasForm } from "./reconciliacion-ventas-form"
 import { ResumenReconciliacion } from "./resumen-reconciliacion"
 import { getVentasPendientesAction, getHistorialReconciliacionVentasAction } from "@/features/contabilidad/actions-reconciliacion"
-import { getCuentasPorCobrarAction } from "@/features/contabilidad"
+import { createCuentaPorCobrarAction, getCuentasPorCobrarAction } from "@/features/contabilidad"
 import type { VentaPendiente, ReconciliacionVenta } from "@/app/models/model"
 import { cn } from "@/lib/utils"
+import { useAuth } from "@/contexts/auth-context"
+import { toast } from "sonner"
+import { buildCreateCuentaPorCobrarInputFromVenta } from "@/features/contabilidad/lib/cuentas-por-cobrar-flow"
 import {
   PageTransition,
   StaggerContainer,
@@ -49,6 +52,7 @@ interface RecoProps {
 }
 
 export function ReconciliacionVentasPage({cuentaId}: RecoProps) {
+  const { user } = useAuth()
   const shouldReduceMotion = useReducedMotion()
   const [showReconciliacionForm, setShowReconciliacionForm] = useState(false)
   const [ventasToReconcile, setVentasToReconcile] = useState<VentaPendiente[]>([])
@@ -107,7 +111,7 @@ export function ReconciliacionVentasPage({cuentaId}: RecoProps) {
   const allVentasMerged = useMemo(() => {
     const apiVentas = Array.isArray(allVentasData?.ventas) ? allVentasData.ventas : [];
     // API now returns saldoPendiente calculated server-side
-    const apiVentaKeys = new Set(apiVentas.map(v => v.ordenId || v.ventaId));
+    const apiVentaKeys = new Set(apiVentas.map((v: any) => v.ordenId || v.ventaId));
 
     const arVentas = cuentasPorCobrar
       .filter(cuenta => {
@@ -155,6 +159,24 @@ export function ReconciliacionVentasPage({cuentaId}: RecoProps) {
   const handleReconciliarVentas = (ventasSeleccionadas: VentaPendiente[]) => {
     setVentasToReconcile(ventasSeleccionadas)
     setShowReconciliacionForm(true)
+  }
+
+  const handleCreateCuentaPorCobrar = async (venta: VentaPendiente) => {
+    try {
+      const result = await createCuentaPorCobrarAction(
+        buildCreateCuentaPorCobrarInputFromVenta(venta),
+      )
+
+      if (!result.success) {
+        toast.error(result.error?.message || 'No se pudo crear la cuenta por cobrar')
+        return
+      }
+
+      toast.success('Cuenta por cobrar creada')
+      refetch()
+    } catch (_error) {
+      toast.error('No se pudo crear la cuenta por cobrar')
+    }
   }
  
   const handleReconciliacionSuccess = () => {
@@ -340,7 +362,7 @@ export function ReconciliacionVentasPage({cuentaId}: RecoProps) {
       <StaggerItem>
         <AnimatedCard>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <Card className={cn(surfaceCardClass, 'border-l-4 border-l-accent')}>
+            <Card className={cn(surfaceCardClass)}>
               <CardHeader className="pb-2">
                 <div className="flex items-center justify-between">
                   <CardTitle className="text-sm font-medium text-muted-foreground">Monto total sin reconciliar</CardTitle>
@@ -354,7 +376,7 @@ export function ReconciliacionVentasPage({cuentaId}: RecoProps) {
                 </Badge>
               </CardContent>
             </Card>
-            <Card className={cn(surfaceCardClass, 'border-l-4 border-l-chart-2')}>
+            <Card className={cn(surfaceCardClass)}>
               <CardHeader className="pb-2">
                 <div className="flex items-center justify-between">
                   <CardTitle className="text-sm font-medium text-muted-foreground">Ventas Reconciliada</CardTitle>
@@ -368,7 +390,7 @@ export function ReconciliacionVentasPage({cuentaId}: RecoProps) {
                 </Badge>
               </CardContent>
             </Card>
-            <Card className={cn(surfaceCardClass, 'border-l-4 border-l-primary')}>
+            <Card className={cn(surfaceCardClass)}>
               <CardHeader className="pb-2">
                 <div className="flex items-center justify-between">
                   <CardTitle className="text-sm font-medium text-muted-foreground">Monto Convertido</CardTitle>
@@ -388,6 +410,8 @@ export function ReconciliacionVentasPage({cuentaId}: RecoProps) {
         <AnimatedCard>
           <VentasPendientesTable
             onReconciliar={handleReconciliarVentas}
+            onCreateCuentaPorCobrar={handleCreateCuentaPorCobrar}
+            canManageCuentasPorCobrar={user?.planFeatures?.['cuentas-cobrar'] === true}
             saldosPorFactura={saldosPorFactura}
             fechaInicio={fechaInicio}
             fechaFin={fechaFin}

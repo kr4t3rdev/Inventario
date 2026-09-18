@@ -8,7 +8,7 @@ import { z } from "zod";
 // ═══ Cuentas por Cobrar ═══
 
 export const getCuentasPorCobrarSchema = z.object({
-	estado: z.enum(["PENDIENTE", "PAGADA", "PARCIAL"]).optional(),
+	estado: z.enum(["PENDIENTE", "PAGADA", "PARCIAL", "ANULADA"]).optional(),
 	clienteId: z.string().optional(),
 	search: z.string().optional(),
 	page: z.number().int().positive().default(1),
@@ -31,6 +31,11 @@ export const updateCuentaPorCobrarSchema = z.object({
 	montoPagado: z.number().min(0).optional(),
 	idTransferencia: z.string().optional(),
 	fechaVencimiento: z.string().datetime().optional().nullable(),
+});
+
+export const annulCuentaPorCobrarSchema = z.object({
+	id: z.string().min(1),
+	motivo: z.string().trim().min(1).max(500).optional(),
 });
 
 // ═══ Cuentas por Pagar ═══
@@ -68,6 +73,9 @@ export type CreateCuentaPorCobrarInput = z.infer<
 >;
 export type UpdateCuentaPorCobrarInput = z.infer<
 	typeof updateCuentaPorCobrarSchema
+>;
+export type AnnulCuentaPorCobrarInput = z.infer<
+	typeof annulCuentaPorCobrarSchema
 >;
 
 export type GetCuentasPorPagarInput = z.infer<typeof getCuentasPorPagarSchema>;

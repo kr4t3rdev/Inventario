@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
+import { prismaPlatform } from "@/lib/db/platform-prisma";
 import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
 import {
@@ -14,6 +15,8 @@ import {
 	verifyOnboardingToken,
 	validateCSRF,
 } from "@/lib/auth/onboarding";
+import { salesAgentPhoneSchema } from "@/features/sales-agent/phone";
+import { getConfiguredPublicAppUrl } from "@/features/sales-agent/public-url";
 import { checkRateLimit } from "@/lib/rate-limit";
 
 const MAX_LOGIN_ATTEMPTS = 5;
@@ -25,6 +28,7 @@ const ONBOARDING_MID_FLOW = new Set([
 	"selecting_tenant",
 	"awaiting_manager_approval",
 	"awaiting_global_approval",
+	"awaiting_sales_agent_approval",
 ]);
 
 function isMidOnboarding(onboardingStatus: string | null): boolean {
@@ -36,6 +40,17 @@ function getBearerToken(request: NextRequest): string | null {
 	const authorization = request.headers.get("authorization") || "";
 	if (!authorization.startsWith("Bearer ")) return null;
 	return authorization.replace("Bearer ", "").trim() || null;
+}
+
+function getVerificationAppUrl(request: NextRequest): string | null {
+	const configuredUrl = getConfiguredPublicAppUrl();
+	if (configuredUrl) return configuredUrl;
+	if (process.env.NODE_ENV === "production") return null;
+
+	const requestUrl = new URL(request.url);
+	return ["localhost", "127.0.0.1", "::1"].includes(requestUrl.hostname)
+		? requestUrl.origin
+		: null;
 }
 
 export async function login(request: NextRequest) {
@@ -159,6 +174,7 @@ export async function login(request: NextRequest) {
 							userId: admin.userId,
 							title: "Alerta: Múltiples intentos fallidos",
 							message: `El usuario ${user.name} (${user.email}) ha realizado ${newAttempts} intentos fallidos de inicio de sesión. Posible ataque de fuerza bruta.`,
+							link: "/admin/usuarios",
 							type: "warning",
 							prioridad: "alta",
 						},
@@ -177,6 +193,7 @@ export async function login(request: NextRequest) {
 							userId: admin.userId,
 							title: "Usuario bloqueado por intentos fallidos",
 							message: `El usuario ${user.name} (${user.email}) ha sido bloqueado tras ${MAX_LOGIN_ATTEMPTS} intentos fallidos de inicio de sesión.`,
+							link: "/admin/usuarios",
 							type: "error",
 							prioridad: "alta",
 						},
@@ -239,9 +256,9 @@ export async function login(request: NextRequest) {
 			} else if (user.role !== "admin") {
 				return NextResponse.json(
 					{
-						error: "No tenés una empresa activa para iniciar sesión.",
+						error: "No tienes una empresa activa para iniciar sesión.",
 						message:
-							"Contactá al manager de tu empresa o al admin global para completar tu acceso.",
+							"Contacta al manager de tu empresa o al admin global para completar tu acceso.",
 					},
 					{ status: 403 },
 				);
@@ -528,12 +545,12 @@ export async function register(request: NextRequest) {
 		const rate = checkRateLimit(ip, path);
 		if (!rate.allowed) {
 			return NextResponse.json(
-				{ error: "Demasiados intentos. Intentalo de nuevo en unos segundos." },
+				{ error: "Demasiados intentos. Inténtalo de nuevo en unos segundos." },
 				{ status: 429 },
 			);
 		}
 
-		const { name, email, password } = await request.json();
+		const { name, email, password, referralCode } = await request.json();
 
 		if (!name || !email || !password) {
 			return NextResponse.json(
@@ -549,6 +566,11 @@ export async function register(request: NextRequest) {
 			);
 		}
 
+		const normalizedReferralCode =
+			typeof referralCode === "string" && referralCode.trim().length > 0
+				? referralCode.trim()
+				: null;
+
 		const existingUser = await prisma.user.findUnique({ where: { email } });
 
 		if (existingUser) {
@@ -556,6 +578,35 @@ export async function register(request: NextRequest) {
 				{ error: "El usuario ya existe" },
 				{ status: 409 },
 			);
+		}
+
+		if (normalizedReferralCode) {
+			const [affiliateProfile, salesAgentProfile] = await Promise.all([
+				prismaPlatform.affiliateProfile.findUnique({
+					where: { referralCode: normalizedReferralCode },
+					select: {
+						affiliateProfileId: true,
+						isEligible: true,
+						status: true,
+					},
+				}),
+				prismaPlatform.salesAgentProfile.findUnique({
+					where: { referralCode: normalizedReferralCode },
+					select: { salesAgentProfileId: true, status: true },
+				}),
+			]);
+			const activeOwners = [
+				affiliateProfile?.isEligible === true &&
+					affiliateProfile.status === "active",
+				salesAgentProfile?.status === "active",
+			].filter(Boolean).length;
+
+			if (activeOwners !== 1) {
+				return NextResponse.json(
+					{ error: "Código de referido inválido o inactivo" },
+					{ status: 400 },
+				);
+			}
 		}
 
 		const hashedPassword = await bcrypt.hash(password, 12);
@@ -568,6 +619,7 @@ export async function register(request: NextRequest) {
 				role: normalizeUserRole("user")!,
 				isActive: false,
 				onboardingStatus: "pending_email_verification",
+				pendingReferralCode: normalizedReferralCode,
 				emailVerifiedAt: null,
 			},
 		});
@@ -578,9 +630,17 @@ export async function register(request: NextRequest) {
 			purpose: "email-verification",
 		});
 
-		const appUrl =
-			process.env.NEXT_PUBLIC_APP_URL || new URL(request.url).origin;
-		const verificationUrl = `${appUrl}/verify-email?token=${encodeURIComponent(verificationToken)}`;
+			const appUrl = getVerificationAppUrl(request);
+			if (!appUrl) {
+				console.error(
+					`[REGISTER] No hay un origen público canónico configurado — usuario: ${createdUser.userId}`,
+				);
+				return NextResponse.json(
+					{ error: "El servicio de verificación no está disponible" },
+					{ status: 503 },
+				);
+			}
+			const verificationUrl = `${appUrl}/verify-email?token=${encodeURIComponent(verificationToken)}`;
 
 		const emailResult = await sendEmailVerificationLink(
 			email,
@@ -592,15 +652,15 @@ export async function register(request: NextRequest) {
 			console.log(
 				`[REGISTER] Email de verificación enviado — usuario: ${createdUser.userId}, email: ${email}, messageId: ${emailResult.messageId}`,
 			);
-		} else {
-			console.error(
-				`[REGISTER] ❌ Fallo el envío del email de verificación — usuario: ${createdUser.userId}, email: ${email}, verificationUrl: ${verificationUrl}`,
-			);
-		}
+			} else {
+				console.error(
+					`[REGISTER] Falló el envío del email de verificación — usuario: ${createdUser.userId}, email: ${email}`,
+				);
+			}
 
 		const res = NextResponse.json({
 			message:
-				"Revisá tu correo para verificar la cuenta y continuar con el onboarding",
+				"Revisa tu correo para verificar la cuenta y continuar con el onboarding",
 			success: true,
 		});
 		res.headers.set("X-RateLimit-Remaining", String(rate.remaining));
@@ -622,7 +682,7 @@ export async function verifyEmail(request: NextRequest) {
 		const rate = checkRateLimit(ip, path);
 		if (!rate.allowed) {
 			return NextResponse.json(
-				{ error: "Demasiados intentos. Intentalo de nuevo en unos segundos." },
+				{ error: "Demasiados intentos. Inténtalo de nuevo en unos segundos." },
 				{ status: 429 },
 			);
 		}
@@ -633,7 +693,16 @@ export async function verifyEmail(request: NextRequest) {
 			return NextResponse.json({ error: "Token requerido" }, { status: 400 });
 		}
 
-		const payload = verifyOnboardingToken(token);
+		let payload;
+		try {
+			payload = verifyOnboardingToken(token);
+		} catch {
+			return NextResponse.json(
+				{ error: "Token inválido o expirado" },
+				{ status: 400 },
+			);
+		}
+
 		if (payload.purpose !== "email-verification") {
 			return NextResponse.json({ error: "Token inválido" }, { status: 400 });
 		}
@@ -683,8 +752,8 @@ export async function verifyEmail(request: NextRequest) {
 	} catch (error) {
 		console.error("Error verificando email:", error);
 		return NextResponse.json(
-			{ error: "Token inválido o expirado" },
-			{ status: 400 },
+			{ error: "No se pudo verificar el correo por un problema temporal" },
+			{ status: 500 },
 		);
 	}
 }
@@ -727,12 +796,27 @@ export async function onboardingMe(request: NextRequest) {
 			);
 		}
 
-		const tenants = await prisma.tenant.findMany({
-			select: { tenantId: true, nombre: true, slug: true },
-			orderBy: { nombre: "asc" },
-		});
+		const [tenants, activeMembershipCount, currencies] = await Promise.all([
+			prisma.tenant.findMany({
+				select: { tenantId: true, nombre: true, slug: true },
+				orderBy: { nombre: "asc" },
+			}),
+			prismaPlatform.tenantMembership.count({
+				where: { userId: payload.userId, isActive: true },
+			}),
+			prisma.moneda.findMany({
+				where: { isActive: true },
+				select: { codigo: true, nombre: true, simbolo: true },
+				orderBy: { codigo: "asc" },
+			}),
+		]);
 
-		return NextResponse.json({ user, tenants });
+		return NextResponse.json({
+			user,
+			tenants,
+			currencies,
+			hasActiveMembership: activeMembershipCount > 0,
+		});
 	} catch (error) {
 		console.error("Error obteniendo onboarding:", error);
 		return NextResponse.json(
@@ -755,7 +839,7 @@ export async function resendVerification(request: NextRequest) {
 		const rate = checkRateLimit(ip, path);
 		if (!rate.allowed) {
 			return NextResponse.json(
-				{ error: "Demasiados intentos. Intentalo de nuevo más tarde." },
+				{ error: "Demasiados intentos. Inténtalo de nuevo más tarde." },
 				{ status: 429 },
 			);
 		}
@@ -794,9 +878,14 @@ export async function resendVerification(request: NextRequest) {
 			purpose: "email-verification",
 		});
 
-		const appUrl =
-			process.env.NEXT_PUBLIC_APP_URL || new URL(request.url).origin;
-		const verificationUrl = `${appUrl}/verify-email?token=${encodeURIComponent(verificationToken)}`;
+			const appUrl = getVerificationAppUrl(request);
+			if (!appUrl) {
+				return NextResponse.json(
+					{ error: "El servicio de verificación no está disponible" },
+					{ status: 503 },
+				);
+			}
+			const verificationUrl = `${appUrl}/verify-email?token=${encodeURIComponent(verificationToken)}`;
 
 		await sendEmailVerificationLink(user.email, verificationUrl, user.name);
 
@@ -863,7 +952,7 @@ export async function onboardingTenant(request: NextRequest) {
 			);
 		}
 
-		const existingMembershipCount = await prisma.tenantMembership.count({
+		const existingMembershipCount = await prismaPlatform.tenantMembership.count({
 			where: { userId: payload.userId, isActive: true },
 		});
 
@@ -877,7 +966,7 @@ export async function onboardingTenant(request: NextRequest) {
 			);
 		}
 
-		const membership = await prisma.tenantMembership.upsert({
+		const membership = await prismaPlatform.tenantMembership.upsert({
 			where: { tenantId_userId: { tenantId, userId: payload.userId } },
 			create: {
 				tenantId,
@@ -893,7 +982,7 @@ export async function onboardingTenant(request: NextRequest) {
 			data: { onboardingStatus: "awaiting_manager_approval" },
 		});
 
-		const managers = await prisma.tenantMembership.findMany({
+		const managers = await prismaPlatform.tenantMembership.findMany({
 			where: { tenantId, isActive: true, tenantRole: "manager" },
 			select: { userId: true },
 		});
@@ -903,7 +992,8 @@ export async function onboardingTenant(request: NextRequest) {
 				data: {
 					userId: manager.userId,
 					title: "Nuevo miembro esperando aprobación",
-					message: `${user.name} solicita acceso a la empresa como dependiente. Revisá las solicitudes pendientes.`,
+					message: `${user.name} solicita acceso a la empresa como dependiente. Revisa las solicitudes pendientes.`,
+					link: "/busy/configuracion/usuarios",
 					type: "info",
 					prioridad: "media",
 				},
@@ -938,13 +1028,111 @@ export async function onboardingType(request: NextRequest) {
 		}
 
 		const payload = verifyOnboardingToken(token);
-		const { userType } = await request.json();
+		const { userType, phone, functionalCurrencyCode } = await request.json();
 
-		if (!["worker", "company"].includes(userType)) {
+		if (!["worker", "company", "salesAgent"].includes(userType)) {
 			return NextResponse.json(
 				{ error: "Tipo de usuario inválido" },
 				{ status: 400 },
 			);
+		}
+
+		if (userType === "salesAgent") {
+			const parsedPhone = salesAgentPhoneSchema.safeParse(phone);
+			if (!parsedPhone.success) {
+				return NextResponse.json(
+					{ error: parsedPhone.error.issues[0]?.message ?? "Teléfono inválido" },
+					{ status: 400 },
+				);
+			}
+			const normalizedPhone = parsedPhone.data;
+			const onboardingStatus = "awaiting_sales_agent_approval";
+			const accepted = await prismaPlatform.$transaction(async (transaction) => {
+				const currentUser = await transaction.user.findUnique({
+					where: { userId: payload.userId },
+					select: { isActive: true, onboardingStatus: true },
+				});
+				if (
+					!currentUser ||
+					currentUser.isActive ||
+					currentUser.onboardingStatus !== "selecting_user_type"
+				) {
+					return false;
+				}
+
+				const activeMemberships = await transaction.tenantMembership.count({
+					where: { userId: payload.userId, isActive: true },
+				});
+				if (activeMemberships > 0) return false;
+
+				const currentProfile = await transaction.salesAgentProfile.findUnique({
+					where: { userId: payload.userId },
+					select: { status: true },
+				});
+				if (currentProfile?.status === "active") return false;
+
+				if (currentProfile) {
+					const locked = await transaction.salesAgentProfile.updateMany({
+						where: {
+							userId: payload.userId,
+							status: "pending_approval",
+						},
+						data: { phone: normalizedPhone },
+					});
+					if (locked.count === 0) return false;
+				} else {
+					await transaction.salesAgentProfile.create({
+						data: {
+							userId: payload.userId,
+							referralCode: null,
+							phone: normalizedPhone,
+							status: "pending_approval",
+						},
+					});
+				}
+
+				await transaction.tenantMembership.deleteMany({
+					where: { userId: payload.userId, isActive: false },
+				});
+				await transaction.user.update({
+					where: { userId: payload.userId },
+					data: { onboardingType: userType, onboardingStatus },
+				});
+				return true;
+			});
+			if (!accepted) {
+				return NextResponse.json(
+					{ error: "El perfil de Gestor de Ventas ya está activo" },
+					{ status: 409 },
+				);
+			}
+
+			return NextResponse.json({ success: true, onboardingStatus });
+		}
+
+		let confirmedFunctionalCurrencyCode: string | undefined;
+		if (userType === "company") {
+			if (
+				typeof functionalCurrencyCode !== "string" ||
+				!/^[A-Z]{3}$/.test(functionalCurrencyCode.trim().toUpperCase())
+			) {
+				return NextResponse.json(
+					{ error: "Debes confirmar una moneda funcional contable válida" },
+					{ status: 400 },
+				);
+			}
+
+			confirmedFunctionalCurrencyCode = functionalCurrencyCode.trim().toUpperCase();
+			const currency = await prisma.moneda.findUnique({
+				where: { codigo: confirmedFunctionalCurrencyCode },
+				select: { codigo: true, isActive: true },
+			});
+			if (!currency?.isActive) {
+				return NextResponse.json(
+					{ error: "La moneda funcional seleccionada no está activa" },
+					{ status: 400 },
+				);
+			}
 		}
 
 		const onboardingStatus =
@@ -952,7 +1140,13 @@ export async function onboardingType(request: NextRequest) {
 
 		await prisma.user.update({
 			where: { userId: payload.userId },
-			data: { onboardingType: userType, onboardingStatus },
+			data: {
+				onboardingType: userType,
+				onboardingStatus,
+				...(confirmedFunctionalCurrencyCode
+					? { pendingFunctionalCurrencyCode: confirmedFunctionalCurrencyCode }
+					: {}),
+			},
 		});
 
 		return NextResponse.json({ success: true, onboardingStatus });

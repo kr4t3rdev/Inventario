@@ -2,7 +2,8 @@
 
 import type React from 'react'
 
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
+import { useSearchParams } from 'next/navigation'
 import { useAuth } from '@/contexts/auth-context'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -10,7 +11,7 @@ import { Label } from '@/components/ui/label'
 import { Alert, AlertDescription } from '@/components/ui/alert'
 import { EyeIcon, EyeOffIcon, UserPlusIcon, AlertCircleIcon, Loader2Icon, CheckCircleIcon } from 'lucide-react'
 import Link from 'next/link'
-import { m as motion, AnimatePresence, useReducedMotion } from 'framer-motion'
+import { motion, AnimatePresence, useReducedMotion } from 'framer-motion'
 import { AuthLayout } from '@/components/auth/auth-layout'
 
 const SPRING_DEFAULT = { type: 'spring' as const, stiffness: 120, damping: 20 }
@@ -31,7 +32,14 @@ export default function RegisterPage(): React.ReactElement {
 	const [successMessage, setSuccessMessage] = useState('')
 	const [loading, setLoading] = useState(false)
 	const { register } = useAuth()
+	const searchParams = useSearchParams()
 	const reduceMotion = !!useReducedMotion()
+	const [mounted, setMounted] = useState(false)
+	const referralCode = searchParams.get('ref')?.trim() || ''
+
+	useEffect(() => {
+		setMounted(true)
+	}, [])
 
 	const handleSubmit = async (e: React.FormEvent) => {
 		e.preventDefault()
@@ -50,7 +58,7 @@ export default function RegisterPage(): React.ReactElement {
 
 		setLoading(true)
 
-		const result = await register(name, email, password)
+		const result = await register(name, email, password, referralCode || undefined)
 
 		if (result.success) {
 			setSuccessMessage(result.message || 'Cuenta creada exitosamente')
@@ -62,7 +70,7 @@ export default function RegisterPage(): React.ReactElement {
 	}
 
 	const fadeUp = (delay: number) =>
-		reduceMotion
+		!mounted || reduceMotion
 			? {}
 			: {
 					initial: { opacity: 0, y: 30 },
@@ -73,7 +81,7 @@ export default function RegisterPage(): React.ReactElement {
 	return (
 		<AuthLayout>
 			<motion.div
-				initial={reduceMotion ? { opacity: 1 } : { opacity: 0, y: 30 }}
+				initial={!mounted || reduceMotion ? { opacity: 1, y: 0 } : { opacity: 0, y: 30 }}
 				animate={{ opacity: 1, y: 0 }}
 				transition={SPRING_DEFAULT}
 				className="overflow-hidden rounded-[18px] border border-black/8 bg-white shadow-sm dark:border-white/10 dark:bg-[#272729]"
@@ -99,8 +107,13 @@ export default function RegisterPage(): React.ReactElement {
 						{...fadeUp(0.15)}
 						className="text-[17px] leading-[1.47] tracking-[-0.022em] text-[#7a7a7a] dark:text-[#cccccc]"
 					>
-						Completá los datos para comenzar
+						Completa los datos para comenzar
 					</motion.p>
+					{referralCode ? (
+						<p className="mt-3 text-sm text-[#0066cc] dark:text-[#2997ff]">
+							Código de referido aplicado: {referralCode}
+						</p>
+					) : null}
 				</div>
 
 				{/* Form */}
@@ -195,6 +208,7 @@ export default function RegisterPage(): React.ReactElement {
 								</motion.div>
 								<motion.button
 									type="button"
+									aria-label={showPassword ? 'Ocultar contraseña' : 'Mostrar contraseña'}
 									whileHover={reduceMotion ? {} : { scale: 1.1 }}
 									whileTap={reduceMotion ? {} : { scale: 0.9 }}
 									transition={SPRING_HOVER}
@@ -216,7 +230,7 @@ export default function RegisterPage(): React.ReactElement {
 									<Input
 										id="confirmPassword"
 										type={showConfirmPassword ? 'text' : 'password'}
-										placeholder="Repetí tu contraseña"
+										placeholder="Repite tu contraseña"
 										value={confirmPassword}
 										onChange={(e) => setConfirmPassword(e.target.value)}
 										required
@@ -226,6 +240,7 @@ export default function RegisterPage(): React.ReactElement {
 								</motion.div>
 								<motion.button
 									type="button"
+									aria-label={showConfirmPassword ? 'Ocultar contraseña de confirmación' : 'Mostrar contraseña de confirmación'}
 									whileHover={reduceMotion ? {} : { scale: 1.1 }}
 									whileTap={reduceMotion ? {} : { scale: 0.9 }}
 									transition={SPRING_HOVER}
@@ -262,12 +277,12 @@ export default function RegisterPage(): React.ReactElement {
 						</motion.div>
 
 						<motion.p {...fadeUp(0.45)} className="text-center text-sm text-[#7a7a7a] dark:text-[#cccccc]">
-							¿Ya tenés una cuenta?{' '}
+							¿Ya tienes una cuenta?{' '}
 							<Link
 								href="/login"
 								className="font-medium text-[#0066cc] hover:underline dark:text-[#2997ff]"
 							>
-								Iniciá sesión aquí
+								Inicia sesión aquí
 							</Link>
 						</motion.p>
 					</div>

@@ -1,7 +1,7 @@
 "use client"
 
 import React, { useState, useEffect, Suspense } from "react"
-import { useSearchParams } from "next/navigation"
+import { useRouter, useSearchParams } from "next/navigation"
 import { Plus } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
@@ -19,6 +19,7 @@ import { AnticipoEjecutarDialog } from "@/features/contabilidad/components/antic
 import { AnticipoRevertirDialog } from "@/features/contabilidad/components/anticipos/anticipo-revertir-dialog"
 import { ReportesAnticipos } from "@/features/contabilidad/components/anticipos/reportes-anticipos"
 import { Anticipo } from "@/app/models/model"
+import { useAuth } from "@/contexts/auth-context"
 
 const anticiposFeatureEnabled = process.env.NEXT_PUBLIC_ENABLE_ANTICIPOS !== "false"
 
@@ -30,8 +31,13 @@ interface ContratoAnticipo {
 }
 
 function AnticiposContent() {
+  const router = useRouter()
+  const { user } = useAuth()
   const searchParams = useSearchParams()
-  
+  const isBlocked =
+    user?.role !== 'admin' &&
+    user?.planFeatures?.anticipos !== true
+
   // Estados para modals/dialogs
   const [openForm, setOpenForm] = useState(false)
   const [openDetail, setOpenDetail] = useState(false)
@@ -61,6 +67,12 @@ function AnticiposContent() {
     if (r.success) setAnticipos(r.data?.anticipos ?? [])
     setLoadingAnticipos(false)
   }
+
+  useEffect(() => {
+    if (isBlocked) {
+      router.replace('/busy/contabilidad')
+    }
+  }, [isBlocked, router])
 
   useEffect(() => {
     loadAnticipos()
@@ -110,6 +122,10 @@ function AnticiposContent() {
 
     fetchContratos()
   }, [])
+
+  if (isBlocked) {
+    return null
+  }
 
   // Handlers
   const handleVerDetalle = (anticipo: Anticipo) => {

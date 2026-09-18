@@ -6,6 +6,7 @@ import {
   updateProfile as fetchUpdateProfile,
 } from '@/lib/api/profile'
 import { handleServerActionError } from './_helpers/error-handler'
+import type { CloudinaryAssetInput } from '@/lib/upload/cloudinary-asset'
 import type { Usuario } from '@/app/models/model'
 
 /**
@@ -28,11 +29,11 @@ export async function getProfile(): Promise<Usuario[]> {
  * @returns El usuario actualizado
  */
 export async function updateProfile(
-  data: { name?: string; avatar?: string }
+  data: { name?: string; avatar?: string; avatarAsset?: CloudinaryAssetInput | null }
 ): Promise<Usuario> {
   try {
     const result = await fetchUpdateProfile(data)
-    revalidateTag('Profile')
+    revalidateTag('Profile', 'max')
     return result
   } catch (error) {
     handleServerActionError(error, 'updateProfile')

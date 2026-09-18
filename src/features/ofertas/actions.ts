@@ -8,19 +8,21 @@
 import { revalidatePath } from 'next/cache';
 import { withAction, ActionError } from '@/lib/server-actions';
 import { prisma } from '@/lib/prisma';
-import { requireFeature, requireTenant } from '@/lib/services/tenant-scope';
+import { requireFeature, requirePermission, requireTenant } from '@/lib/services/tenant-scope';
+import { convertirOfertaAPedido } from './services/convertir-oferta-pedido';
 import { applyAnticipoAllocations } from '@/lib/services/anticipos-workflow';
 import { getOrCreateTurnoActivo } from '@/features/turnos-pos';
 import { ofertaSchema, ofertaUpdateSchema, facturarOfertaSchema } from './schemas';
 import { facturarOfertaWorkflow } from './services/facturar-oferta-workflow';
+import {
+  getOfertaForTenant,
+  listOfertasForTenant,
+  OFERTA_INCLUDE,
+} from './services/oferta-read-service';
 import type { OfertaInput, OfertaUpdateInput, FacturarOfertaInput } from './schemas';
 import type { AuthenticatedUser } from '@/lib/auth-middleware';
 import type { Oferta } from '@/app/models/model';
-
-const OFERTA_INCLUDE = {
-  cliente: true,
-  items: { include: { producto: true, servicio: true } },
-} as const;
+import { getPrecioEfectivo } from '@/lib/types/pricing';
 
 function serializeOferta(oferta: unknown): Oferta {
   return JSON.parse(JSON.stringify(oferta)) as Oferta;
@@ -29,21 +31,14 @@ function serializeOferta(oferta: unknown): Oferta {
 export const getOfertasAction = withAction(async (_input: void, user: AuthenticatedUser) => {
   requireFeature(user, 'ofertas', 'gestionar ofertas');
   const tenantId = requireTenant(user);
-  const ofertas = await prisma.oferta.findMany({
-    where: { tenantId },
-    include: OFERTA_INCLUDE,
-    orderBy: { createdAt: 'desc' },
-  });
+  const ofertas = await listOfertasForTenant(tenantId);
   return ofertas.map(serializeOferta);
 });
 
 export const getOfertaByIdAction = withAction(async (id: string, user: AuthenticatedUser) => {
   requireFeature(user, 'ofertas', 'gestionar ofertas');
   const tenantId = requireTenant(user);
-  const oferta = await prisma.oferta.findFirst({
-    where: { id, tenantId },
-    include: OFERTA_INCLUDE,
-  });
+  const oferta = await getOfertaForTenant(id, tenantId);
   if (!oferta) throw new ActionError('Oferta no encontrada', 'NOT_FOUND');
   return serializeOferta(oferta);
 });
@@ -54,8 +49,31 @@ export const createOfertaAction = withAction(async (input: OfertaInput, user: Au
   const tenantId = requireTenant(user);
 
   // Validar cliente
-  const cliente = await prisma.cliente.findFirst({ where: { clienteId: parsed.clienteId, tenantId } });
+  const cliente = await prisma.cliente.findFirst({
+    where: { clienteId: parsed.clienteId, tenantId },
+    select: { clienteId: true, listaPrecioId: true },
+  });
   if (!cliente) throw new ActionError('Cliente no encontrado', 'NOT_FOUND');
+
+  const resolvedItems = await Promise.all(parsed.items.map(async (item) => {
+    if (item.productoId) {
+      const producto = await prisma.producto.findFirst({
+        where: { id: item.productoId, tenantId },
+        include: { precios: true },
+      });
+      if (!producto) throw new ActionError('Producto no encontrado', 'NOT_FOUND');
+      const precioUnitario = getPrecioEfectivo(producto, cliente.listaPrecioId);
+      return { ...item, precioUnitario, total: item.cantidad * precioUnitario };
+    }
+
+    const servicio = await prisma.servicios.findFirst({
+      where: { servicioId: item.servicioId, tenantId },
+    });
+    if (!servicio) throw new ActionError('Servicio no encontrado', 'NOT_FOUND');
+    return { ...item, precioUnitario: servicio.precio, total: item.cantidad * servicio.precio };
+  }));
+  const subtotal = resolvedItems.reduce((sum, item) => sum + item.total, 0);
+  const impuestos = parsed.impuestos ?? 0;
 
   // Generar número de oferta secuencial por tenant
   const ultimaOferta = await prisma.oferta.findFirst({
@@ -75,12 +93,12 @@ export const createOfertaAction = withAction(async (input: OfertaInput, user: Au
       clienteId: parsed.clienteId,
       fechaVencimiento: parsed.fechaVencimiento ? new Date(parsed.fechaVencimiento) : null,
       estado: 'PENDIENTE',
-      subtotal: parsed.subtotal,
-      impuestos: parsed.impuestos,
-      total: parsed.total,
+      subtotal,
+      impuestos,
+      total: subtotal + impuestos,
       observaciones: parsed.observaciones || null,
       items: {
-        create: parsed.items.map((item) => ({
+        create: resolvedItems.map((item) => ({
           productoId: item.productoId || null,
           servicioId: item.servicioId || null,
           cantidad: item.cantidad,
@@ -144,14 +162,14 @@ export const facturarOfertaAction = withAction(async (input: FacturarOfertaInput
   if (oferta.estado === 'FACTURADA') throw new ActionError('La oferta ya fue facturada', 'VALIDATION_ERROR');
   if (oferta.estado === 'RECHAZADA') throw new ActionError('No se puede facturar una oferta rechazada', 'VALIDATION_ERROR');
 
-  let turnoId: string | null = null;
   const turnoResult = await getOrCreateTurnoActivo({
     puntoDeVentaId: parsed.puntoDeVentaId,
     empleadoId: parsed.empleadoId,
   });
-  if (turnoResult.success) {
-    turnoId = turnoResult.data.turnoId;
+  if (!turnoResult.success) {
+    throw new ActionError(turnoResult.error.message, turnoResult.error.code ?? 'VALIDATION_ERROR');
   }
+  const turnoId = turnoResult.data.turnoId;
 
   const resultado = await prisma.$transaction(async (tx: any) => {
     const workflow = await facturarOfertaWorkflow(tx, {
@@ -160,12 +178,19 @@ export const facturarOfertaAction = withAction(async (input: FacturarOfertaInput
       clienteId: oferta.clienteId,
       puntoDeVentaId: parsed.puntoDeVentaId,
       turnoId,
-      items: oferta.items.map((item) => ({
+       items: oferta.items.filter((item) => item.productoId).map((item) => ({
         productoId: item.productoId,
         cantidad: item.cantidad,
         precioUnitario: item.precioUnitario,
         total: item.total,
-      })),
+       })),
+       servicios: oferta.items.filter((item) => item.servicioId).map((item) => ({
+         servicioId: item.servicioId,
+         cantidad: item.cantidad,
+         precioUnitario: item.precioUnitario,
+         total: item.total,
+         moneda: item.servicio?.moneda ?? 'CUP',
+       })),
       subtotal: oferta.subtotal,
       impuestos: oferta.impuestos,
       total: oferta.total,
@@ -184,6 +209,7 @@ export const facturarOfertaAction = withAction(async (input: FacturarOfertaInput
       await applyAnticipoAllocations(tx, [{
       anticipoId: parsed.anticipoCobroId, montoAplicado: Number(oferta.total)
       }], {
+        tenantId,
         documentoDestinoId: workflow.facturaId,
         contexto: 'FACTURA_OFERTA',
         usuarioId: user.userId,
@@ -203,3 +229,32 @@ export const facturarOfertaAction = withAction(async (input: FacturarOfertaInput
   revalidatePath('/busy/ofertas');
   return resultado;
 });
+
+/**
+ * @description Convierte una oferta (PENDIENTE/ACEPTADA) en un pedido de venta
+ * (PVE): crea la venta en estado PEDIDO sin efectos de stock ni factura.
+ * Idempotente; requiere la feature ventas-pedidos del plan.
+ */
+export const convertirOfertaAPedidoAction = withAction(
+  async (
+    input: { ofertaId: string; puntoDeVentaId: string },
+    user: AuthenticatedUser,
+  ) => {
+    requireFeature(user, 'ofertas', 'gestionar ofertas');
+    requireFeature(user, 'ventas-pedidos', 'convertir ofertas a pedidos');
+    requirePermission(user, 'ventas.ofertas.gestionar', 'convertir ofertas');
+    requirePermission(user, 'ventas.pedido.gestionar', 'crear pedidos de venta');
+    const tenantId = requireTenant(user);
+
+    const result = await convertirOfertaAPedido({
+      ofertaId: input.ofertaId,
+      puntoDeVentaId: input.puntoDeVentaId,
+      tenantId,
+      usuarioId: user.userId,
+    });
+
+    revalidatePath('/busy/ofertas');
+    revalidatePath('/busy/sales');
+    return result;
+  },
+);

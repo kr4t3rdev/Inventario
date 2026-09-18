@@ -5,6 +5,7 @@
  * Se usan tanto en cliente (React Hook Form) como en servidor (Server Actions).
  */
 import { z } from 'zod';
+import { cloudinaryAssetSchema } from '@/lib/upload/cloudinary-asset';
 
 /**
  * Schema para creación de producto.
@@ -37,6 +38,7 @@ export const productoSchema = z.object({
   puntoDeVentaId: z.string().optional().nullable(),
 
   fotos: z.array(z.string()).optional().default([]),
+  photoAssets: z.array(cloudinaryAssetSchema).optional(),
   precios: z
     .array(z.object({ listaPrecioId: z.string(), precio: z.number() }))
     .optional(),
@@ -76,6 +78,7 @@ export const productoUpdateSchema = z.object({
   puntoDeVentaId: z.string().optional().nullable(),
 
   fotos: z.array(z.string()).optional(),
+  photoAssets: z.array(cloudinaryAssetSchema).optional(),
   precios: z
     .array(z.object({ listaPrecioId: z.string(), precio: z.number() }))
     .optional(),

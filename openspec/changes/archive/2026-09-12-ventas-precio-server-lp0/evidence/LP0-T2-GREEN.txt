@@ -1,0 +1,8 @@
+
+ Test Files  21 passed (21)
+      Tests  158 passed (158)
+   Start at  01:19:09
+   Duration  18.71s (transform 3.64s, setup 9.02s, collect 23.04s, tests 2.49s, environment 42.98s, prepare 9.40s)
+
+--- nota ---
+Pre-existente ajeno: src/lib/openapi/mobile-v1-integration-smoke.test.ts falla por 'receipt.arrayBuffer is not a function' (Blob del SDK generado contra mock server; no importa el código tocado por LP-0).

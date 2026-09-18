@@ -11,7 +11,6 @@ import {
   Trash2,
   Store,
   MapPin,
-  Sparkles,
   AlertCircle
 } from 'lucide-react'
 import { SidebarInset, SidebarProvider } from '@/components/ui/sidebar'
@@ -183,8 +182,8 @@ export function PvPageClient({ puntosDeVenta: initialData }: PvPageClientProps) 
           <div className="flex items-center gap-2">
             <Link href={`/busy/puntosDeVenta/update/${pv.pvId}`}>
               <motion.div whileHover={{ scale: 1.1 }} whileTap={{ scale: 0.95 }}>
-                <Button variant='outline' className='h-8 w-8 p-0 cursor-pointer'>
-                  <Pencil className='h-4 w-4'/>
+                <Button variant='outline' className='h-8 w-8 p-0 cursor-pointer' aria-label="Editar punto de venta">
+                  <Pencil className='h-4 w-4' aria-hidden='true'/>
                 </Button>
               </motion.div>
             </Link>
@@ -217,24 +216,12 @@ export function PvPageClient({ puntosDeVenta: initialData }: PvPageClientProps) 
             >
               <div className="flex items-center gap-3">
                 <motion.div 
-                  className="w-10 h-10 bg-linear-to-br from-primary to-purple-600 rounded-xl flex items-center justify-center shadow-lg relative"
+                  className="w-10 h-10 bg-linear-to-br from-primary to-purple rounded-xl flex items-center justify-center shadow-lg relative"
                   whileHover={{ scale: 1.05, rotate: 5 }}
                   transition={{ duration: 0.2 }}
                 >
                   <Store className="h-5 w-5 text-white" />
-                  <motion.div
-                    animate={{ 
-                      rotate: 360,
-                      scale: [1, 1.2, 1]
-                    }}
-                    transition={{ 
-                      rotate: { duration: 20, repeat: Infinity, ease: "linear" },
-                      scale: { duration: 2, repeat: Infinity, ease: "easeInOut" }
-                    }}
-                    className="absolute -top-1 -right-1"
-                  >
-                    <Sparkles className="h-4 w-4 text-yellow-400" />
-                  </motion.div>
+
                 </motion.div>
                 <div>
                   <h1 className="text-3xl font-bold bg-linear-to-r from-slate-900 to-slate-600 dark:from-white dark:to-slate-300 bg-clip-text text-transparent">
@@ -255,7 +242,7 @@ export function PvPageClient({ puntosDeVenta: initialData }: PvPageClientProps) 
               >
                 <Button 
                   asChild 
-                  className="gap-2 bg-linear-to-r from-primary to-purple-600 hover:from-primary/90 hover:to-purple-600/90"
+                  className="gap-2 bg-linear-to-r from-primary to-purple hover:from-primary/90 hover:to-purple/90"
                 >
                   <Link href="/busy/puntosDeVenta/new">
                     <Plus className="h-4 w-4" /> 

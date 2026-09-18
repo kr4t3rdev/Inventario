@@ -8,15 +8,17 @@
 import { revalidatePath } from "next/cache";
 import { withAction, ActionError } from "@/lib/server-actions";
 import { prisma } from "@/lib/prisma";
-import { requireFeature, requireTenant, requireManagerRole } from "@/lib/services/tenant-scope";
+import { requireFeature, requireTenant, requirePermission } from "@/lib/services/tenant-scope";
 import { empleadoSchema, empleadoUpdateSchema } from "./schemas";
 import type { EmpleadoInput, EmpleadoUpdateInput } from "./schemas";
 import type { AuthenticatedUser } from "@/lib/auth-middleware";
 import { Decimal } from "@prisma/client/runtime/library";
 import { z } from "zod";
 import {
+	calcularMontoHorasExtras,
 	calculatePayrollFormulas,
 	getPayrollConfig,
+	STANDARD_MONTHLY_HOURS,
 } from "@/lib/payroll-formulas";
 
 export const getEmpleadosAction = withAction(
@@ -52,7 +54,7 @@ export const getEmpleadoByIdAction = withAction(
 export const createEmpleadoAction = withAction(
 	async (input: EmpleadoInput, user: AuthenticatedUser) => {
 		requireFeature(user, 'empleados', 'gestionar empleados');
-		requireManagerRole(user, "crear empleados");
+		requirePermission(user, "rrhh.empleados.crear", "crear empleados");
 		const parsed = empleadoSchema.parse(input);
 		const tenantId = requireTenant(user);
 
@@ -80,7 +82,7 @@ export const createEmpleadoAction = withAction(
 export const updateEmpleadoAction = withAction(
 	async (input: EmpleadoUpdateInput, user: AuthenticatedUser) => {
 		requireFeature(user, 'empleados', 'gestionar empleados');
-		requireManagerRole(user, "editar empleados");
+		requirePermission(user, "rrhh.empleados.editar", "editar empleados");
 		const parsed = empleadoUpdateSchema.parse(input);
 		const { empleadoId, ...data } = parsed;
 		const tenantId = requireTenant(user);
@@ -117,7 +119,7 @@ export const updateEmpleadoAction = withAction(
 export const deleteEmpleadoAction = withAction(
 	async (id: string, user: AuthenticatedUser) => {
 		requireFeature(user, 'empleados', 'gestionar empleados');
-		requireManagerRole(user, "eliminar empleados");
+		requirePermission(user, "rrhh.empleados.eliminar", "eliminar empleados");
 		const tenantId = requireTenant(user);
 		const existing = await prisma.empleado.findFirst({
 			where: { empleadoId: id, tenantId },
@@ -144,7 +146,7 @@ export const getAsistenciaAction = withAction(
 		},
 		user: AuthenticatedUser,
 	) => {
-		requireFeature(user, 'empleados', 'gestionar empleados');
+		requireFeature(user, 'asistencia', 'gestionar asistencia');
 		const tenantId = requireTenant(user);
 		const where: any = { employee: { tenantId } };
 
@@ -229,8 +231,8 @@ export const registerAsistenciaAction = withAction(
 		input: z.infer<typeof registerAsistenciaSchema>,
 		user: AuthenticatedUser,
 	) => {
-		requireFeature(user, 'empleados', 'gestionar empleados');
-		requireManagerRole(user, "registrar asistencia");
+		requireFeature(user, 'asistencia', 'gestionar asistencia');
+		requirePermission(user, "rrhh.asistencia.registrar", "registrar asistencia");
 		const tenantId = requireTenant(user);
 		const parsed = registerAsistenciaSchema.parse(input);
 
@@ -314,8 +316,8 @@ export const updateAsistenciaAction = withAction(
 		input: z.infer<typeof manualAsistenciaSchema>,
 		user: AuthenticatedUser,
 	) => {
-		requireFeature(user, 'empleados', 'gestionar empleados');
-		requireManagerRole(user, "editar asistencia");
+		requireFeature(user, 'asistencia', 'gestionar asistencia');
+		requirePermission(user, "rrhh.asistencia.editar", "editar asistencia");
 		const tenantId = requireTenant(user);
 		const parsed = manualAsistenciaSchema.parse(input);
 
@@ -394,7 +396,7 @@ export const getVacacionesAction = withAction(
 		input: { employeeId?: string; status?: string },
 		user: AuthenticatedUser,
 	) => {
-		requireFeature(user, 'empleados', 'gestionar empleados');
+		requireFeature(user, 'vacaciones', 'gestionar vacaciones');
 		const tenantId = requireTenant(user);
 		const where: any = { employee: { tenantId } };
 		if (input.employeeId) where.employeeId = input.employeeId;
@@ -436,8 +438,8 @@ export const createVacacionAction = withAction(
 		input: z.infer<typeof createVacacionSchema>,
 		user: AuthenticatedUser,
 	) => {
-		requireFeature(user, 'empleados', 'gestionar empleados');
-		requireManagerRole(user, "crear solicitudes de vacaciones");
+		requireFeature(user, 'vacaciones', 'gestionar vacaciones');
+		requirePermission(user, "rrhh.vacaciones.solicitar", "crear solicitudes de vacaciones");
 		const tenantId = requireTenant(user);
 		const parsed = createVacacionSchema.parse(input);
 
@@ -536,7 +538,7 @@ export const getNominaAction = withAction(
 		input: { periodo?: string; employeeId?: string } = {},
 		user: AuthenticatedUser,
 	) => {
-		requireFeature(user, 'empleados', 'gestionar empleados');
+		requireFeature(user, 'nomina', 'gestionar nómina');
 		const tenantId = requireTenant(user);
 		return prisma.pagosalario.findMany({
 			where: {
@@ -562,8 +564,8 @@ export const calculateNominaAction = withAction(
 		input: z.infer<typeof calculateNominaSchema>,
 		user: AuthenticatedUser,
 	) => {
-		requireFeature(user, 'empleados', 'gestionar empleados');
-		requireManagerRole(user, "calcular nómina");
+		requireFeature(user, 'nomina', 'gestionar nómina');
+		requirePermission(user, "rrhh.nomina.calcular", "calcular nómina");
 		const tenantId = requireTenant(user);
 		const parsed = calculateNominaSchema.parse(input);
 		const {
@@ -577,23 +579,40 @@ export const calculateNominaAction = withAction(
 		const startDate = new Date(year, month - 1, 1);
 		const endDate = new Date(year, month, 0);
 
-		if (!forceRecalculate) {
-			const existingPayrolls = await prisma.pagosalario.findMany({
-				where: { tenantId, periodo },
-				include: nominaInclude,
+		if (forceRecalculate) {
+			const replacementEmployees = await prisma.empleado.findMany({
+				where: {
+					tenantId,
+					...(employeeIds?.length ? { empleadoId: { in: employeeIds } } : {}),
+					fechaContratacion: { not: undefined },
+				},
+				select: { empleadoId: true },
 			});
-
-			if (existingPayrolls.length > 0) {
-				return {
-					payrolls: existingPayrolls,
-					message: `Ya existe nómina calculada para este período con ${existingPayrolls.length} empleados`,
-					existing: true,
-				};
+			if (replacementEmployees.length === 0) {
+				throw new ActionError(
+					"No se encontraron empleados con fecha de contratación para calcular nómina",
+					"NOT_FOUND",
+				);
 			}
-		} else {
-			await prisma.pagosalario.deleteMany({
-				where: { tenantId, periodo },
-			});
+			await getPayrollConfig(periodo);
+		}
+
+		const existingPayrolls = await prisma.pagosalario.findMany({
+			where: { tenantId, periodo },
+			include: nominaInclude,
+		});
+		if (existingPayrolls.length > 0) {
+			if (forceRecalculate) {
+				throw new ActionError(
+					"La nómina existente debe eliminarse mediante el flujo de reversión antes de recalcular",
+					"FINANCIAL_REVERSAL_REQUIRED",
+				);
+			}
+			return {
+				payrolls: existingPayrolls,
+				message: `Ya existe nómina calculada para este período con ${existingPayrolls.length} empleados`,
+				existing: true,
+			};
 		}
 
 		const empleados = await prisma.empleado.findMany({
@@ -642,23 +661,34 @@ export const calculateNominaAction = withAction(
 					}
 				}
 
-				const standardHours = 192;
+				const standardHours = STANDARD_MONTHLY_HOURS;
 				const bonificaciones = 0;
-				const hoursWorked = totalHours > 0 ? totalHours : standardHours;
+				// Las horas extras no entran al devengado base: se pagan aparte a 1.5×
+				// en `montoHorasExtras` (B-05). Sin asistencias se asume mes completo.
+				const baseHoursWorked =
+					totalHours > 0 ? totalHours - overtimeHours : standardHours;
 				const devengadoReal =
-					(hoursWorked / standardHours) * empleado.salarioBases + bonificaciones;
+					(baseHoursWorked / standardHours) * empleado.salarioBases + bonificaciones;
 				const calculations = calculatePayrollFormulas(
 					devengadoReal,
 					payrollConfig,
+				);
+				const horasExtrasHoras = Math.round(overtimeHours);
+				const montoHorasExtras = calcularMontoHorasExtras(
+					horasExtrasHoras,
+					empleado.salarioBases,
 				);
 
 				const payroll = await prisma.pagosalario.create({
 					data: {
 						empleadoId: empleado.empleadoId,
-						salario: Math.round(calculations.netoACobrar),
+						// Bruto del período (base imponible); las deducciones van aparte,
+						// en su campo, para no descontarlas dos veces al total.
+						salario: Math.round(calculations.baseImponible),
 						bonificaciones,
 						deducciones: Math.round(calculations.deducciones.total),
-						horasExtras: Math.round(overtimeHours),
+						horasExtrasHoras,
+						montoHorasExtras,
 						periodo,
 						tenantId,
 						observaciones:
@@ -666,6 +696,9 @@ export const calculateNominaAction = withAction(
 							`Deducciones: 5%($${calculations.deducciones.p5.toFixed(2)}), 3%($${calculations.deducciones.p3.toFixed(2)})` +
 							(payrollConfig.aplicar12_5y1_5
 								? `, 12.5%($${calculations.deducciones.p12_5.toFixed(2)}), 1.5%($${calculations.deducciones.p1_5.toFixed(2)})`
+								: "") +
+							(horasExtrasHoras > 0
+								? `. Horas extras: ${horasExtrasHoras} h × 1.5 = $${montoHorasExtras}`
 								: ""),
 					},
 					include: nominaInclude,
@@ -763,7 +796,7 @@ export const upsertWorkScheduleAction = withAction(
 		user: AuthenticatedUser,
 	) => {
 		requireFeature(user, 'empleados', 'gestionar empleados');
-		requireManagerRole(user, "guardar horarios de trabajo");
+		requirePermission(user, "rrhh.horarios.gestionar", "guardar horarios de trabajo");
 		const tenantId = requireTenant(user);
 		const parsed = workScheduleSchema.parse(input);
 
@@ -810,7 +843,7 @@ export const upsertWorkScheduleAction = withAction(
 export const deleteWorkScheduleAction = withAction(
 	async (input: { scheduleId: string }, user: AuthenticatedUser) => {
 		requireFeature(user, 'empleados', 'gestionar empleados');
-		requireManagerRole(user, "eliminar horarios de trabajo");
+		requirePermission(user, "rrhh.horarios.eliminar", "eliminar horarios de trabajo");
 		const tenantId = requireTenant(user);
 		const existing = await prisma.employeeWorkSchedule.findFirst({
 			where: {

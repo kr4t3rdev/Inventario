@@ -213,7 +213,7 @@ export const getRentabilidadCompraAction = withAction(
 						cantidad: true,
 						ventaItem: {
 							select: {
-								total: true,
+								precioUnitario: true,
 								createdAt: true,
 							},
 						},
@@ -226,7 +226,7 @@ export const getRentabilidadCompraAction = withAction(
 					0,
 				);
 				const ingresos = allocations.reduce(
-					(s, a) => s + (a.ventaItem?.total ?? 0),
+					(s, a) => s + a.cantidad * (a.ventaItem?.precioUnitario ?? 0),
 					0,
 				);
 				const costoVendido = unidadesVendidas * item.precioUnitario;

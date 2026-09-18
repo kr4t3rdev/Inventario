@@ -7,9 +7,44 @@
  * @module prisma/seed/tenant-licenses-seed
  */
 
-import { PrismaClient } from "../../src/generated/prisma";
+import { Prisma, PrismaClient } from "../../src/generated/prisma";
 
 const prisma = new PrismaClient();
+
+interface DefaultPlanSeed {
+  planId: string;
+  maxUsuarios: number;
+  maxAlmacenes: number;
+  maxProductos: number;
+  maxClientes: number;
+}
+
+/**
+ * @description Construye el payload de licencia inicial sin snapshotear
+ * features legacy; los features efectivos se resuelven desde Plan.features
+ * más featureOverrides.
+ * @param {string} tenantId - ID del tenant.
+ * @param {DefaultPlanSeed} defaultPlan - Plan base a aplicar.
+ * @returns {Record<string, unknown>} Payload listo para Prisma.
+ */
+export function buildTenantLicenseSeedData(
+  tenantId: string,
+  defaultPlan: DefaultPlanSeed,
+) {
+  return {
+    tenantId,
+    planId: defaultPlan.planId,
+    activa: true,
+    inicio: new Date(),
+    expiracion: new Date(Date.now() + 365 * 86400000), // 1 año
+    maxUsuarios: defaultPlan.maxUsuarios,
+    maxAlmacenes: defaultPlan.maxAlmacenes,
+    maxProductos: defaultPlan.maxProductos,
+    maxClientes: defaultPlan.maxClientes,
+    features: Prisma.DbNull,
+    featureOverrides: {},
+  };
+}
 
 async function main() {
   console.log("🔍 Buscando tenants sin licencia activa...");
@@ -61,17 +96,7 @@ async function main() {
     }
 
     await prisma.tenantLicense.create({
-      data: {
-        tenantId: tenant.tenantId,
-        planId: defaultPlan.planId,
-        activa: true,
-        inicio: new Date(),
-        expiracion: new Date(Date.now() + 365 * 86400000), // 1 año
-        maxUsuarios: defaultPlan.maxUsuarios,
-        maxAlmacenes: defaultPlan.maxAlmacenes,
-        maxProductos: defaultPlan.maxProductos,
-        features: defaultPlan.features as any,
-      },
+      data: buildTenantLicenseSeedData(tenant.tenantId, defaultPlan),
     });
     created++;
     console.log(`  ✅ ${tenant.nombre} — licencia creada (plan: ${defaultPlan.nombre})`);
@@ -80,9 +105,11 @@ async function main() {
   console.log(`\n✅ ${created} licencias creadas. ${skipped} tenants omitidos (sin memberships activas).`);
 }
 
-main()
-  .catch((e) => {
-    console.error("❌ Error:", e);
-    process.exit(1);
-  })
-  .finally(() => prisma.$disconnect());
+if (require.main === module) {
+  main()
+    .catch((e) => {
+      console.error("❌ Error:", e);
+      process.exit(1);
+    })
+    .finally(() => prisma.$disconnect());
+}

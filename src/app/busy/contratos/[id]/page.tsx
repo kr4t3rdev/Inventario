@@ -32,7 +32,7 @@ export default async function ContratoDetailPage(props: PageProps) {
     notFound()
   }
 
-  // @ts-expect-error
+  // @ts-expect-error TODO: fix type mismatch between server and client component
   return <ContratoDetailContent initialData={
   contrato} contratoId={params.id
   } />

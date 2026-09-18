@@ -1,72 +1,137 @@
 'use client';
 
 import React from 'react';
-import { motion } from 'framer-motion';
-import { CheckCircle2 } from 'lucide-react';
+import { motion, useReducedMotion } from 'framer-motion';
+import { ArrowDownRight, CheckCircle2 } from 'lucide-react';
 
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { FEATURE_ITEMS } from '@/features/landing/data';
 import { SpringSection } from '@/features/landing/utils';
+import { cn } from '@/lib/utils';
+
+const CAPABILITY_GROUPS = [
+  {
+    label: 'Operación diaria',
+    description: 'Vende, compra y mueve inventario sin perder el hilo entre áreas.',
+    featureIndexes: [1, 2, 3, 4],
+  },
+  {
+    label: 'Control financiero',
+    description: 'Convierte cada movimiento operativo en información financiera útil.',
+    featureIndexes: [0, 5, 8],
+  },
+  {
+    label: 'Escala del negocio',
+    description: 'Coordina personas, producción y procesos con una misma base de datos.',
+    featureIndexes: [6, 7],
+  },
+] as const;
 
 /**
- * @description Sección de características con cards animadas.
- * @returns {JSX.Element} Grid de features
+ * @description Presenta las capacidades del producto como tres capas operativas compactas.
+ * @returns {JSX.Element} Sección editorial de capacidades del sistema.
  */
 export function LandingFeatures(): React.JSX.Element {
+  const reduceMotion = useReducedMotion();
+
   return (
-    <section id="caracteristicas" className="space-y-10 scroll-mt-24">
-      <SpringSection className="mx-auto max-w-3xl space-y-3 text-center">
-        <span className="inline-flex rounded-full border border-cyan-accent bg-primary/10 px-4 py-1 text-xs font-semibold uppercase tracking-[0.16em] text-cyan-accent font-mono">
-          Características
-        </span>
-        <h2 className="text-4xl font-bold tracking-tight sm:text-5xl font-mono leading-[1.05] tracking-display">
-          Todo lo que tu operación necesita en un solo lugar
-        </h2>
-        <p className="text-muted-foreground sm:text-lg">
-          Cada módulo está diseñado para reducir fricción operativa y acelerar la toma de
-          decisiones estratégicas.
+    <section id="caracteristicas" className="space-y-12 scroll-mt-24">
+      <SpringSection
+        className="grid gap-6 border-b border-border/70 pb-10 lg:grid-cols-[0.75fr_1.25fr] lg:items-end"
+        reduceMotion={Boolean(reduceMotion)}
+      >
+        <div>
+          <p className="mb-4 text-xs font-semibold uppercase tracking-[0.18em] text-primary font-mono">
+            Un sistema, tres capas
+          </p>
+          <h2 className="max-w-xl text-4xl font-bold leading-[1.05] tracking-tight sm:text-5xl font-mono tracking-display">
+            Todo lo que tu operación necesita en un solo lugar
+          </h2>
+        </div>
+        <p className="max-w-2xl text-muted-foreground sm:text-lg lg:justify-self-end">
+          FinanceMDM conecta el trabajo diario, el control financiero y el crecimiento del
+          negocio sin obligarte a saltar entre sistemas desconectados.
         </p>
       </SpringSection>
 
-      <div className="grid gap-5 md:grid-cols-2 xl:grid-cols-3">
-        {FEATURE_ITEMS.map((feature, index) => {
-          const Icon = feature.icon;
+      <div className="space-y-14">
+        {CAPABILITY_GROUPS.map((group, groupIndex) => (
+          <section
+            key={group.label}
+            aria-labelledby={`capability-group-${groupIndex}`}
+            className="grid gap-6 lg:grid-cols-[15rem_1fr] lg:gap-10"
+          >
+            <div className="lg:sticky lg:top-24 lg:self-start">
+              <span className="text-xs font-semibold text-primary font-mono">
+                0{groupIndex + 1}
+              </span>
+              <h3
+                id={`capability-group-${groupIndex}`}
+                className="mt-2 text-2xl font-semibold font-mono"
+              >
+                {group.label}
+              </h3>
+              <p className="mt-3 text-sm leading-relaxed text-muted-foreground">
+                {group.description}
+              </p>
+            </div>
 
-          return (
-            <motion.article
-              key={feature.title}
-              initial={{ opacity: 0, y: 25 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true, amount: 0.1 }}
-              transition={{ type: 'spring', stiffness: 120, damping: 20, delay: index * 0.08 }}
-              whileHover={{ y: -8, scale: 1.02, transition: { type: 'spring', stiffness: 200, damping: 12 } }}
-              className="group"
-            >
-              <Card className="h-full border-border/60 bg-card/80 shadow-md shadow-black/[0.03] transition-all duration-300 group-hover:border-primary/30 group-hover:shadow-xl group-hover:shadow-primary/5">
-                <CardHeader>
-                  <motion.div
-                    className="mb-3 flex h-12 w-12 items-center justify-center rounded-xl bg-primary/10 group-hover:bg-primary/15"
-                    whileHover={{ rotate: -10, scale: 1.12, transition: { type: 'spring', stiffness: 200, damping: 10 } }}
+            <div className="grid gap-px overflow-hidden rounded-2xl border border-border/70 bg-border/70 sm:grid-cols-2">
+              {group.featureIndexes.map((featureIndex, featurePosition) => {
+                const feature = FEATURE_ITEMS[featureIndex];
+                const Icon = feature.icon;
+
+                return (
+                  <motion.article
+                    key={feature.title}
+                    initial={reduceMotion ? false : { y: 16 }}
+                    whileInView={reduceMotion ? undefined : { opacity: 1, y: 0 }}
+                    viewport={{ once: true, amount: 0.15 }}
+                    transition={{ delay: reduceMotion ? 0 : featurePosition * 0.04 }}
+                    className={cn(
+                      'group bg-background p-6 transition-colors hover:bg-muted/40 sm:p-7',
+                      group.featureIndexes.length === 3 && featurePosition === 0 && 'sm:col-span-2',
+                    )}
                   >
-                    <Icon className="h-6 w-6 text-primary transition-transform duration-300 group-hover:scale-110" />
-                  </motion.div>
-                  <CardTitle className="text-xl font-mono">{feature.title}</CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  <p className="text-sm text-muted-foreground">{feature.description}</p>
-                  <ul className="space-y-2">
-                    {feature.bullets.map((bullet) => (
-                      <li key={bullet} className="flex items-start gap-2 text-sm">
-                        <CheckCircle2 className="mt-[2px] h-4 w-4 text-primary" />
-                        <span>{bullet}</span>
-                      </li>
-                    ))}
-                  </ul>
-                </CardContent>
-              </Card>
-            </motion.article>
-          );
-        })}
+                    <div className="flex items-start justify-between gap-4">
+                      <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-primary/10 text-primary">
+                        <Icon className="h-5 w-5" aria-hidden="true" />
+                      </div>
+                      <ArrowDownRight
+                        className={cn(
+                          'h-5 w-5 text-muted-foreground/50',
+                          !reduceMotion &&
+                            'transition-transform group-hover:translate-x-0.5 group-hover:translate-y-0.5',
+                        )}
+                        aria-hidden="true"
+                      />
+                    </div>
+                    <h4 className="mt-8 text-xl font-semibold font-mono">{feature.title}</h4>
+                    <p className="mt-3 text-sm leading-relaxed text-muted-foreground">
+                      {feature.description}
+                    </p>
+                    <details className="mt-6 border-t border-border/60 pt-4">
+                      <summary className="cursor-pointer text-xs font-semibold uppercase tracking-[0.12em] text-primary font-mono">
+                        Ver capacidades
+                        <span className="sr-only"> de {feature.title}</span>
+                      </summary>
+                      <ul className="mt-4 grid gap-2 text-xs text-foreground/75 sm:grid-cols-2">
+                        {feature.bullets.map((bullet) => (
+                          <li key={bullet} className="flex items-start gap-2">
+                            <CheckCircle2
+                              className="mt-0.5 h-3.5 w-3.5 shrink-0 text-primary"
+                              aria-hidden="true"
+                            />
+                            <span>{bullet}</span>
+                          </li>
+                        ))}
+                      </ul>
+                    </details>
+                  </motion.article>
+                );
+              })}
+            </div>
+          </section>
+        ))}
       </div>
     </section>
   );

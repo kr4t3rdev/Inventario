@@ -1,0 +1,13 @@
+import { chromium } from '@playwright/test';
+const browser = await chromium.launch({ headless: true });
+const page = await browser.newPage({ viewport: { width: 1440, height: 1400 } });
+page.on('console', msg => console.log('CONSOLE', msg.type(), msg.text()));
+page.on('pageerror', err => console.log('PAGEERROR', err.message));
+await page.goto('http://localhost:3000/admin/backups', { waitUntil: 'networkidle' });
+await page.waitForTimeout(3000);
+await page.getByRole('button', { name: 'Nueva copia' }).click({ force: true });
+await page.waitForTimeout(2000);
+const dialogs = await page.locator('[role="dialog"]').count();
+const body = await page.textContent('body');
+console.log(JSON.stringify({dialogs, hasTitle: body?.includes('Nueva copia de seguridad')}, null, 2));
+await browser.close();

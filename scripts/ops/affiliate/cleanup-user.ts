@@ -1,0 +1,21 @@
+import { PrismaClient } from '../../../src/generated/prisma';
+
+const prisma = new PrismaClient();
+const email = process.argv[2] || process.env.EMAIL;
+
+if (!email) {
+  console.error('Usage: pnpm exec tsx scripts/ops/affiliate/cleanup-user.ts <email>');
+  process.exit(1);
+}
+
+async function main() {
+  const deleted = await prisma.user.deleteMany({ where: { email } });
+  console.log(JSON.stringify({ email, deleted: deleted.count }, null, 2));
+}
+
+main().catch((error) => {
+  console.error(error);
+  process.exitCode = 1;
+}).finally(async () => {
+  await prisma.$disconnect();
+});

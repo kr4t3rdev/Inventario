@@ -8,16 +8,19 @@
 import { revalidatePath } from "next/cache";
 import { withAction, ActionError } from "@/lib/server-actions";
 import { prisma } from "@/lib/prisma";
-import { requireFeature, requireTenant, requireManagerRole } from "@/lib/services/tenant-scope";
+import { requireFeature, requireTenant, requirePermission } from "@/lib/services/tenant-scope";
 import { pagoSalarioSchema, pagoSalarioUpdateSchema } from "./schemas";
 import type { PagoSalarioInput, PagoSalarioUpdateInput } from "./schemas";
 import type { AuthenticatedUser } from "@/lib/auth-middleware";
+import { Prisma } from "@/generated/prisma";
+import { reversePayrollReconciliations } from "@/features/empleados/payroll-reversal";
+import { calcularMontoHorasExtras } from "@/lib/payroll-formulas";
 
 const PAGO_SALARIO_INCLUDE = { empleado: true } as const;
 
 export const getPagoSalariosAction = withAction(
 	async (_input: void, user: AuthenticatedUser) => {
-		requireFeature(user, 'nomina', 'gestionar nómina');
+		requireFeature(user, 'empleados', 'gestionar pagos de empleados');
 		const tenantId = requireTenant(user);
 		return prisma.pagosalario.findMany({
 			where: { tenantId },
@@ -29,7 +32,7 @@ export const getPagoSalariosAction = withAction(
 
 export const getPagoSalarioByIdAction = withAction(
 	async (id: string, user: AuthenticatedUser) => {
-		requireFeature(user, 'nomina', 'gestionar nómina');
+		requireFeature(user, 'empleados', 'gestionar pagos de empleados');
 		const tenantId = requireTenant(user);
 		const pago = await prisma.pagosalario.findFirst({
 			where: { pgId: id, tenantId },
@@ -43,8 +46,8 @@ export const getPagoSalarioByIdAction = withAction(
 
 export const createPagoSalarioAction = withAction(
 	async (input: PagoSalarioInput, user: AuthenticatedUser) => {
-		requireFeature(user, 'nomina', 'gestionar nómina');
-		requireManagerRole(user, "crear pagos de salario");
+		requireFeature(user, 'empleados', 'gestionar pagos de empleados');
+		requirePermission(user, "rrhh.salarios.crear", "crear pagos de salario");
 		const parsed = pagoSalarioSchema.parse(input);
 		const tenantId = requireTenant(user);
 
@@ -56,6 +59,14 @@ export const createPagoSalarioAction = withAction(
 		const now = new Date();
 		const periodo = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}`;
 
+		// B-05: `horasExtras` de entrada es una cantidad de HORAS; su dinero se
+		// calcula con la tarifa del salario base del empleado y se guarda aparte.
+		const horasExtrasHoras = parsed.horasExtras ?? 0;
+		const montoHorasExtras = calcularMontoHorasExtras(
+			horasExtrasHoras,
+			empleado.salarioBases ?? 0,
+		);
+
 		const pago = await prisma.pagosalario.create({
 			data: {
 				empleadoId: parsed.empleadoId,
@@ -63,22 +74,23 @@ export const createPagoSalarioAction = withAction(
 				periodo,
 				bonificaciones: parsed.bonificaciones ?? 0,
 				deducciones: parsed.deducciones ?? 0,
-				horasExtras: parsed.horasExtras ?? 0,
+				horasExtrasHoras,
+				montoHorasExtras,
 				observaciones: parsed.observaciones ?? null,
 				tenantId,
 			},
 			include: PAGO_SALARIO_INCLUDE,
 		});
 
-		revalidatePath("/busy/pago-salario");
+		revalidatePath("/busy/empleados");
 		return pago;
 	},
 );
 
 export const updatePagoSalarioAction = withAction(
 	async (input: PagoSalarioUpdateInput, user: AuthenticatedUser) => {
-		requireFeature(user, 'nomina', 'gestionar nómina');
-		requireManagerRole(user, "editar pagos de salario");
+		requireFeature(user, 'empleados', 'gestionar pagos de empleados');
+		requirePermission(user, "rrhh.salarios.editar", "editar pagos de salario");
 		const parsed = pagoSalarioUpdateSchema.parse(input);
 		const { pgId, ...data } = parsed;
 		const tenantId = requireTenant(user);
@@ -88,6 +100,23 @@ export const updatePagoSalarioAction = withAction(
 		});
 		if (!existing)
 			throw new ActionError("Pago de salario no encontrado", "NOT_FOUND");
+
+		// B-05: al editar horas, persistirlas en `horasExtrasHoras` y recalcular
+		// su dinero con la tarifa actual del empleado.
+		let overridesHoras: { horasExtrasHoras: number; montoHorasExtras: number } | undefined;
+		if (data.horasExtras !== undefined) {
+			const empleado = await prisma.empleado.findFirst({
+				where: { empleadoId: existing.empleadoId, tenantId },
+				select: { salarioBases: true },
+			});
+			overridesHoras = {
+				horasExtrasHoras: data.horasExtras,
+				montoHorasExtras: calcularMontoHorasExtras(
+					data.horasExtras,
+					empleado?.salarioBases ?? 0,
+				),
+			};
+		}
 
 		const pago = await prisma.pagosalario.update({
 			where: { pgId },
@@ -100,9 +129,7 @@ export const updatePagoSalarioAction = withAction(
 				...(data.deducciones !== undefined && {
 					deducciones: data.deducciones,
 				}),
-				...(data.horasExtras !== undefined && {
-					horasExtras: data.horasExtras,
-				}),
+				...(overridesHoras !== undefined && overridesHoras),
 				...(data.observaciones !== undefined && {
 					observaciones: data.observaciones,
 				}),
@@ -110,24 +137,55 @@ export const updatePagoSalarioAction = withAction(
 			include: PAGO_SALARIO_INCLUDE,
 		});
 
-		revalidatePath("/busy/pago-salario");
+		revalidatePath("/busy/empleados");
 		return pago;
 	},
 );
 
 export const deletePagoSalarioAction = withAction(
 	async (id: string, user: AuthenticatedUser) => {
-		requireFeature(user, 'nomina', 'gestionar nómina');
-		requireManagerRole(user, "eliminar pagos de salario");
+		requireFeature(user, 'empleados', 'gestionar pagos de empleados');
+		requirePermission(user, "rrhh.salarios.eliminar", "eliminar pagos de salario");
 		const tenantId = requireTenant(user);
-		const existing = await prisma.pagosalario.findFirst({
-			where: { pgId: id, tenantId },
-		});
-		if (!existing)
-			throw new ActionError("Pago de salario no encontrado", "NOT_FOUND");
+		await prisma.$transaction(async (tx) => {
+			await tx.$queryRaw`
+				SELECT "pgId" FROM "Pagosalario"
+				WHERE "pgId" = ${id} AND "tenantId" = ${tenantId}
+				FOR UPDATE
+			`;
+			const existing = await tx.pagosalario.findFirst({
+				where: { pgId: id, tenantId },
+				select: { pgId: true },
+			});
+			if (!existing)
+				throw new ActionError("Pago de salario no encontrado", "NOT_FOUND");
 
-		await prisma.pagosalario.delete({ where: { pgId: id } });
-		revalidatePath("/busy/pago-salario");
+			const reconciliaciones = await tx.reconciliacionGasto.findMany({
+				where: { tenantId, pgId: id },
+				select: {
+					reconciliacionId: true,
+					pgId: true,
+					cuentaId: true,
+					monto: true,
+					montoConvertido: true,
+					cuentaPorPagarId: true,
+					estado: true,
+					moneda: true,
+					tasaCambio: true,
+				},
+			});
+			await reversePayrollReconciliations(tx, reconciliaciones, tenantId);
+			await tx.reconciliacionGasto.deleteMany({
+				where: { tenantId, pgId: id },
+			});
+
+			const deleted = await tx.pagosalario.deleteMany({
+				where: { tenantId, pgId: id },
+			});
+			if (deleted.count !== 1)
+				throw new ActionError("Pago de salario no encontrado", "NOT_FOUND");
+		}, { isolationLevel: Prisma.TransactionIsolationLevel.Serializable });
+		revalidatePath("/busy/empleados");
 		return { success: true };
 	},
 );

@@ -24,7 +24,7 @@ describe('numeroContratoGenerator', () => {
     it('debería retornar 1 cuando no hay contratos del tipo', async () => {
       ;(prisma.contrato.findFirst as any).mockResolvedValueOnce(null)
 
-      const resultado = await generarProximoConsecutivo('COMPRA_VENTA')
+      const resultado = await generarProximoConsecutivo('tenant-1', 'COMPRA_VENTA')
       expect(resultado).toBe(1)
     })
 
@@ -33,26 +33,43 @@ describe('numeroContratoGenerator', () => {
         numeroConsecutivo: 5,
       })
 
-      const resultado = await generarProximoConsecutivo('SERVICIO')
+      const resultado = await generarProximoConsecutivo('tenant-1', 'SERVICIO')
       expect(resultado).toBe(6)
     })
 
-    it('debería buscar por tipo correcto', async () => {
+    it('debería buscar por tenant y tipo correctos', async () => {
       ;(prisma.contrato.findFirst as any).mockResolvedValueOnce(null)
 
-      await generarProximoConsecutivo('SUMINISTROS')
+      await generarProximoConsecutivo('tenant-1', 'SUMINISTROS')
 
       expect(prisma.contrato.findFirst).toHaveBeenCalledWith({
-        where: { tipo: 'SUMINISTROS' },
+        where: { tenantId: 'tenant-1', tipo: 'SUMINISTROS' },
         orderBy: { numeroConsecutivo: 'desc' },
         select: { numeroConsecutivo: true },
       })
     })
 
+    it('debería aislar consecutivos por tenant', async () => {
+      ;(prisma.contrato.findFirst as any).mockResolvedValueOnce({ numeroConsecutivo: 3 })
+      ;(prisma.contrato.findFirst as any).mockResolvedValueOnce({ numeroConsecutivo: 7 })
+
+      const a = await generarProximoConsecutivo('tenant-A', 'COMPRA_VENTA')
+      const b = await generarProximoConsecutivo('tenant-B', 'COMPRA_VENTA')
+
+      expect(a).toBe(4)
+      expect(b).toBe(8)
+      expect(prisma.contrato.findFirst).toHaveBeenNthCalledWith(1, expect.objectContaining({
+        where: expect.objectContaining({ tenantId: 'tenant-A' }),
+      }))
+      expect(prisma.contrato.findFirst).toHaveBeenNthCalledWith(2, expect.objectContaining({
+        where: expect.objectContaining({ tenantId: 'tenant-B' }),
+      }))
+    })
+
     it('debería ordenar por numeroConsecutivo descendente', async () => {
       ;(prisma.contrato.findFirst as any).mockResolvedValueOnce(null)
 
-      await generarProximoConsecutivo('COMPRA_VENTA')
+      await generarProximoConsecutivo('tenant-1', 'COMPRA_VENTA')
 
       const llamada = (prisma.contrato.findFirst as any).mock.calls[0][0]
       expect(llamada.orderBy).toEqual({ numeroConsecutivo: 'desc' })

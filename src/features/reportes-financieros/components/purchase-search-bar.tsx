@@ -11,7 +11,7 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from '@/components/ui/popover';
-import { cn } from '@/lib/utils';
+import { cn, formatCurrency } from '@/lib/utils';
 import { searchComprasAction } from '@/features/reportes-financieros/actions-rentabilidad-compra';
 import type { CompraResult } from '@/features/reportes-financieros/actions-rentabilidad-compra';
 
@@ -72,6 +72,7 @@ export function PurchaseSearchBar({
           role="combobox"
           aria-expanded={open}
           className="w-full justify-between md:w-[500px]"
+          aria-label="Seleccionar compra para analizar"
         >
           {selectedId && selectedLabel ? (
             <span className="truncate">{selectedLabel}</span>
@@ -83,8 +84,8 @@ export function PurchaseSearchBar({
           <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
         </Button>
       </PopoverTrigger>
-      <PopoverContent className="w-[500px] p-0" align="start">
-        <div className="flex items border-b px-3">
+      <PopoverContent className="w-[min(500px,90vw)] p-0" align="start">
+        <div className="flex items-center border-b px-3">
           <Search className="mr-2 h-4 w-4 shrink-0 opacity-50" />
           <Input
             placeholder="Buscar por proveedor, factura o producto..."
@@ -120,7 +121,7 @@ export function PurchaseSearchBar({
                       {compra.proveedorNombre ?? 'Sin proveedor'}
                     </span>
                     <span className="ml-2 whitespace-nowrap font-mono text-xs text-muted-foreground">
-                      ${compra.total.toLocaleString()}
+                      {formatCurrency(compra.total)}
                     </span>
                   </div>
                   <div className="mt-0.5 flex items-center gap-2 text-xs text-muted-foreground">
@@ -131,7 +132,7 @@ export function PurchaseSearchBar({
                     <span>{compra.itemsCount} producto(s)</span>
                   </div>
                   <div className="mt-1 flex flex-wrap gap-1">
-                    {compra.productos.slice(0, 3).map((p) => (
+                    {(compra as any).productos?.slice(0, 3).map((p: string) => (
                       <span
                         key={p}
                         className="inline-flex items-center rounded-md border px-1.5 py-0.5 text-[10px] font-medium text-muted-foreground"
@@ -139,9 +140,9 @@ export function PurchaseSearchBar({
                         {p}
                       </span>
                     ))}
-                    {compra.productos.length > 3 && (
+                    {(compra as any).productos?.length > 3 && (
                       <span className="text-[10px] text-muted-foreground">
-                        +{compra.productos.length - 3} más
+                        +{(compra as any).productos.length - 3} más
                       </span>
                     )}
                   </div>

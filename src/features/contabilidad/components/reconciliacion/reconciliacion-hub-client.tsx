@@ -25,6 +25,8 @@ import { Progress } from "@/components/ui/progress";
 import { Skeleton } from "@/components/ui/skeleton";
 import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar";
 import { getReconciliacionStatsAction } from "@/features/contabilidad/actions-reconciliacion";
+import { useAuth } from "@/contexts/auth-context";
+import { shouldHideBasicAccountingItem } from "@/lib/plan-access";
 import { cn } from "@/lib/utils";
 
 type ToneKey = "emerald" | "blue" | "amber";
@@ -138,6 +140,7 @@ export function ReconciliacionHubClient({
 	initialStats: any;
 }) {
 	const shouldReduceMotion = useReducedMotion();
+	const { user } = useAuth();
 	const [statsData, setStatsData] = useState(initialStats);
 	const [isLoading, setIsLoading] = useState(!initialStats);
 	const [error, setError] = useState(false);
@@ -155,7 +158,7 @@ export function ReconciliacionHubClient({
 		if (!initialStats) loadStats();
 		const interval = setInterval(loadStats, 10000); // Polling cada 10s
 		return () => clearInterval(interval);
-	}, []);
+	}, [initialStats]);
 
 	const fadeIn = {
 		hidden: { opacity: 0 },
@@ -237,7 +240,7 @@ export function ReconciliacionHubClient({
 			...modules.gastos,
 			tone: "amber" as ToneKey,
 		},
-	];
+	].filter((module) => !shouldHideBasicAccountingItem(user, `Reconciliación ${module.title}`));
 
 	if (isLoading)
 		return (

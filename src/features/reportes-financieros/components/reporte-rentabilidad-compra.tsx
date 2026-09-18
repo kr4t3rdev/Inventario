@@ -2,12 +2,12 @@
 
 import { useState, useEffect } from "react";
 import { motion, useReducedMotion } from "framer-motion";
-import { BarChart3, Sparkles } from "lucide-react";
+import { BarChart3 } from "lucide-react";
 
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
-import { cn } from "@/lib/utils";
+import { cn, formatCurrency } from "@/lib/utils";
 import {
 	PageTransition,
 	StaggerContainer,
@@ -25,10 +25,6 @@ import type {
 	CompraResult,
 } from "@/features/reportes-financieros/actions-rentabilidad-compra";
 
-const surfaceCardClass = cn(
-	"relative overflow-hidden rounded-2xl border border-slate-200/60 bg-white/75 shadow-sm backdrop-blur-xl",
-	"dark:border-slate-800/60 dark:bg-slate-900/10",
-);
 
 interface CompraInfo {
 	compraDocumentoId: string;
@@ -49,7 +45,13 @@ interface CompraInfo {
  *   ChartsRentabilidad y RentabilidadDetailTable.
  *
  * @returns {JSX.Element} Vista completa del reporte.
- */
+ */import { SURFACE_CARD_CLASS as BASE_SURFACE_CARD_CLASS } from "@/features/reportes-financieros/lib/reporte-styles"
+
+const SURFACE_CARD_CLASS = cn(
+  BASE_SURFACE_CARD_CLASS,
+  "rounded-2xl border bg-white/75",
+)
+
 export function ReporteRentabilidadCompra() {
 	const shouldReduceMotion = useReducedMotion();
 
@@ -76,7 +78,7 @@ export function ReporteRentabilidadCompra() {
 					setCompra(r.data.compra as CompraInfo);
 					setProductos(r.data.productos);
 					setResumen(r.data.resumen);
-				} else {
+				} else if (!r.success) {
 					setError(r.error?.message ?? "Error al cargar el análisis");
 				}
 			})
@@ -118,7 +120,7 @@ export function ReporteRentabilidadCompra() {
 			</div>
 
 			{/* Header */}
-			<motion.div variants={fadeInUp} initial="hidden" animate="show">
+			<motion.div variants={fadeInUp as any} initial="hidden" animate="show">
 				<div className="space-y-1">
 					<Badge variant="outline">Reporte operativo</Badge>
 					<div className="flex items-center gap-3 mt-2">
@@ -129,12 +131,11 @@ export function ReporteRentabilidadCompra() {
 							Rentabilidad por Compra
 						</h1>
 						<Badge className="border border-emerald-200/80 bg-emerald-50/80 text-emerald-700 dark:border-emerald-900/60 dark:bg-emerald-900/20 dark:text-emerald-300">
-							<Sparkles className="mr-1 h-3.5 w-3.5" />
 							Asignación FIFO
 						</Badge>
 					</div>
 					<p className="text-muted-foreground pl-11">
-						Seleccione una compra para analizar su rentabilidad: ingresos,
+						Selecciona una compra para analizar su rentabilidad: ingresos,
 						costos, márgenes y días para vender.
 					</p>
 				</div>
@@ -160,8 +161,8 @@ export function ReporteRentabilidadCompra() {
 			</StaggerContainer>
 
 			{/* Purchase Selector */}
-			<motion.div variants={fadeInUp} initial="hidden" animate="show">
-				<Card className={cn(surfaceCardClass, "border-dashed")}>
+			<motion.div variants={fadeInUp as any} initial="hidden" animate="show">
+				<Card className={cn(SURFACE_CARD_CLASS, "border-dashed")}>
 					<CardContent className="p-4">
 						<PurchaseSearchBar
 							onSelect={handleSelectCompra}
@@ -170,7 +171,7 @@ export function ReporteRentabilidadCompra() {
 								selectedLabel
 									? undefined // We'll set this after data loads
 									: compra
-										? `${compra.proveedor?.nombre ?? "Sin proveedor"} · ${compra.numeroFactura || "S/N"} · $${compra.total.toLocaleString()}`
+										? `${compra.proveedor?.nombre ?? "Sin proveedor"} · ${compra.numeroFactura || "S/N"} · ${formatCurrency(compra.total)}`
 										: undefined
 							}
 						/>
@@ -180,17 +181,17 @@ export function ReporteRentabilidadCompra() {
 
 			{/* Empty State */}
 			{!selectedCompraId && (
-				<motion.div variants={fadeInUp} initial="hidden" animate="show">
-					<Card className={cn(surfaceCardClass, "border-dashed")}>
+				<motion.div variants={fadeInUp as any} initial="hidden" animate="show">
+					<Card className={cn(SURFACE_CARD_CLASS, "border-dashed")}>
 						<CardContent className="pt-6">
 							<div className="flex flex-col items-center justify-center py-12 text-center">
 								<BarChart3 className="mb-4 h-12 w-12 text-muted-foreground/50" />
 								<h3 className="text-lg font-medium text-slate-900 dark:text-slate-100">
-									Seleccione una compra
+									Selecciona una compra
 								</h3>
 								<p className="mt-1 max-w-md text-sm text-muted-foreground">
-									Use el buscador para encontrar una compra por proveedor,
-									número de factura o producto. Una vez seleccionada, verá el
+									Usa el buscador para encontrar una compra por proveedor,
+									número de factura o producto. Una vez seleccionada, verás el
 									análisis completo de rentabilidad con asignación FIFO.
 								</p>
 							</div>
@@ -201,10 +202,10 @@ export function ReporteRentabilidadCompra() {
 
 			{/* Error State */}
 			{error && (
-				<motion.div variants={fadeInUp} initial="hidden" animate="show">
+				<motion.div variants={fadeInUp as any} initial="hidden" animate="show">
 					<Card
 						className={cn(
-							surfaceCardClass,
+							SURFACE_CARD_CLASS,
 							"border-destructive/30 bg-destructive/5",
 						)}
 					>
@@ -241,7 +242,7 @@ export function ReporteRentabilidadCompra() {
 
 					<StaggerItem>
 						<AnimatedCard>
-							<Card className={surfaceCardClass}>
+							<Card className={SURFACE_CARD_CLASS}>
 								<CardContent className="p-4 sm:p-5">
 									<RentabilidadDetailTable
 										productos={productos}

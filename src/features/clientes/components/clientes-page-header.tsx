@@ -8,7 +8,7 @@
  * @returns {JSX.Element} Header con icono naranja animado
  */
 import { motion } from "framer-motion"
-import { UserCircle, Sparkles } from "lucide-react"
+import { UserCircle } from "lucide-react"
 
 interface ClientesPageHeaderProps {
   title: string
@@ -35,16 +35,7 @@ export function ClientesPageHeader({ title, description }: ClientesPageHeaderPro
           <h1 className="text-2xl font-bold bg-linear-to-r from-orange-500 to-red-600 bg-clip-text text-transparent">
             {title}
           </h1>
-          <motion.div
-            className="absolute -right-4 -top-1"
-            animate={{ rotate: 360, scale: [1, 1.2, 1] }}
-            transition={{
-              rotate: { duration: 20, repeat: Infinity, ease: "linear" },
-              scale: { duration: 2, repeat: Infinity, ease: "easeInOut" }
-            }}
-          >
-            <Sparkles className="h-4 w-4 text-yellow-500" />
-          </motion.div>
+
         </div>
       </div>
       <motion.p

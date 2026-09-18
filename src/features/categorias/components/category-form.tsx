@@ -9,10 +9,11 @@ import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, For
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Loader2, Folder, ArrowLeft, Sparkles, Layers } from "lucide-react";
+import { Loader2, Folder, ArrowLeft } from "lucide-react";
 import { LazyMotion, m as motion } from "framer-motion";
 import { ClasificadorInfoNote } from "@/features/productos/components/clasificador-info-note";
-import { getMiEmpresaAction } from "@/features/mi-empresa/actions";
+import { fetchMiEmpresaSettings } from "@/features/mi-empresa/lib/client-mi-empresa";
+import { useAuth } from "@/contexts/auth-context";
 import { 
   CLASClassifierData,
   parseClasClassifierMarkdown,
@@ -54,9 +55,12 @@ function LoadingSpinner({ size = 24 }: { size?: number }) {
  */
 export function CategoryForm({ initialData, onSuccess }: CategoryFormProps) {
   const router = useRouter();
+  const { user } = useAuth();
   const [usaEan13, setUsaEan13] = useState(false)
   const [clasClassifierData, setClasClassifierData] = useState<CLASClassifierData | null>(null)
   const [selectedSection, setSelectedSection] = useState('')
+  const categoriasEan13Habilitado =
+    user?.role === 'admin' || user?.planFeatures?.['categorias-ean13'] === true;
 
   const clasSections = useMemo(() => {
     return clasClassifierData?.sections ?? []
@@ -69,6 +73,20 @@ export function CategoryForm({ initialData, onSuccess }: CategoryFormProps) {
 
     return clasClassifierData.sectionNameById[selectedSection] ?? ''
   }, [clasClassifierData, selectedSection])
+  const title = usaEan13
+    ? initialData
+      ? "Editar Sección CLAS"
+      : "Nueva Sección CLAS"
+    : initialData
+      ? "Editar Categoría"
+      : "Nueva Categoría";
+  const description = usaEan13
+    ? initialData
+      ? "Modifica la sección CLAS existente que estructura la taxonomía EAN-13."
+      : "Crea una nueva sección CLAS para organizar productos bajo EAN-13."
+    : initialData
+      ? "Modifica los datos de la categoría existente"
+      : "Crea una nueva categoría para organizar tus productos";
 
   const {
     form,
@@ -89,12 +107,17 @@ export function CategoryForm({ initialData, onSuccess }: CategoryFormProps) {
   });
 
   useEffect(() => {
-    getMiEmpresaAction()
+    fetchMiEmpresaSettings(() => setUsaEan13(false))
       .then((r) => {
-        if (r.success) setUsaEan13(r.data?.usaCodigoEan13 ?? false)
+        if (r.success) {
+          setUsaEan13(
+            categoriasEan13Habilitado && r.data?.usaCodigoEan13 === true,
+          )
+        }
+        else setUsaEan13(false)
       })
-      .catch(() => {})
-  }, [])
+      .catch(() => setUsaEan13(false))
+  }, [categoriasEan13Habilitado])
 
   useEffect(() => {
     if (!usaEan13) {
@@ -175,35 +198,15 @@ export function CategoryForm({ initialData, onSuccess }: CategoryFormProps) {
             className="flex items-center gap-2 mb-6"
           >
             <motion.div 
-              className="w-10 h-10 bg-linear-to-br from-primary to-purple-600 rounded-xl flex items-center justify-center shadow-lg relative"
+              className="w-10 h-10 bg-linear-to-br from-primary to-purple rounded-xl flex items-center justify-center shadow-lg relative"
               whileHover={{ scale: 1.05, rotate: 5 }}
               transition={{ duration: 0.2 }}
             >
               <Folder className="h-5 w-5 text-white" />
-              <motion.div
-                animate={{ 
-                  rotate: 360,
-                  scale: [1, 1.2, 1]
-                }}
-                transition={{ 
-                  rotate: { duration: 20, repeat: Infinity, ease: "linear" },
-                  scale: { duration: 2, repeat: Infinity, ease: "easeInOut" }
-                }}
-                className="absolute -top-1 -right-1"
-              >
-                <Sparkles className="h-4 w-4 text-yellow-400" />
-              </motion.div>
             </motion.div>
             <div>
-              <h2 className="text-xl font-semibold">
-                {initialData ? "Editar Categoría" : "Nueva Categoría"}
-              </h2>
-              <p className="text-sm text-muted-foreground">
-                {initialData 
-                  ? "Modifica los datos de la categoría existente" 
-                  : "Crea una nueva categoría para organizar tus productos"
-                }
-              </p>
+              <h2 className="text-xl font-semibold">{title}</h2>
+              <p className="text-sm text-muted-foreground">{description}</p>
             </div>
           </motion.div>
 
@@ -288,54 +291,6 @@ export function CategoryForm({ initialData, onSuccess }: CategoryFormProps) {
                 </>
               )}
 
-              {!usaEan13 && (
-                <motion.div
-                  initial={{ opacity: 0, x: -20 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  transition={{ delay: 0.4 }}
-                >
-                  <FormField
-                    control={form.control}
-                    name="parentId"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel className="flex items-center gap-2">
-                          <Layers className="h-4 w-4 text-muted-foreground" />
-                          Categoría Padre
-                        </FormLabel>
-                        <Select
-                          onValueChange={field.onChange}
-                          value={field.value || (initialData?.parentId ? initialData.parentId : "none")}
-                          disabled={isLoading}
-                        >
-                          <FormControl>
-                            <SelectTrigger className={`transition-all duration-200 ${getFieldError("parentId") ? "border-destructive" : ""}`}>
-                              <SelectValue placeholder="Seleccione una categoría padre (opcional)" />
-                            </SelectTrigger>
-                          </FormControl>
-                          <SelectContent>
-                            <SelectItem value="none">
-                              <div className="flex items-center gap-2">
-                                <Folder className="h-4 w-4 text-primary" />
-                                Sin categoría padre (categoría principal)
-                              </div>
-                            </SelectItem>
-                          </SelectContent>
-                        </Select>
-                        <FormDescription>
-                          Seleccione una categoría padre para crear una subcategoría.
-                          <br />
-                          <span className="text-amber-600 dark:text-amber-400">
-                            Máximo 3 niveles de profundidad permitidos.
-                          </span>
-                        </FormDescription>
-                        <FormMessage>{getFieldError("parentId")}</FormMessage>
-                      </FormItem>
-                    )}
-                  />
-                </motion.div>
-              )}
-
               <motion.div
                 initial={{ opacity: 0, x: -20 }}
                 animate={{ opacity: 1, x: 0 }}
@@ -387,8 +342,8 @@ export function CategoryForm({ initialData, onSuccess }: CategoryFormProps) {
                 <motion.div whileHover={{ scale: isLoading ? 1 : 1.02 }} whileTap={{ scale: isLoading ? 1 : 0.98 }}>
                   <Button 
                     type="submit" 
-                    disabled={isLoading || !isDirty || !isValid}
-                    className="min-w-40 gap-2 bg-linear-to-r from-primary to-purple-600 hover:from-primary/90 hover:to-purple-600/90 cursor-pointer"
+                    disabled={isLoading}
+                    className="min-w-40 gap-2 bg-linear-to-r from-primary to-purple hover:from-primary/90 hover:to-purple/90 cursor-pointer"
                   >
                     {isLoading ? (
                       <>

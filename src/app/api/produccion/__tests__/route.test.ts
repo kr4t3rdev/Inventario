@@ -36,6 +36,11 @@ const { prismaMock, transactionClientMock } = vi.hoisted(() => {
     update: vi.fn(),
   }
 
+  const stockUbicacion = {
+    findUnique: vi.fn(),
+    upsert: vi.fn(),
+  }
+
   const reconciliacionGasto = {
     create: vi.fn(),
   }
@@ -50,6 +55,7 @@ const { prismaMock, transactionClientMock } = vi.hoisted(() => {
     valeSalida,
     valeSalidaItem,
     producto,
+    stockUbicacion,
     reconciliacionGasto,
     ordenProduccionHistorial,
   }
@@ -60,6 +66,7 @@ const { prismaMock, transactionClientMock } = vi.hoisted(() => {
     valeSalida,
     valeSalidaItem,
     producto,
+    stockUbicacion,
     reconciliacionGasto,
     ordenProduccionHistorial,
     $transaction: vi.fn((fn: Function) => fn(transactionClientMock)),
@@ -86,8 +93,13 @@ vi.mock('@/lib/auth-middleware', () => ({
     fn(request, context, { userId: 'user-test', tenantId: 'tenant-1', role: 'admin' }),
 }))
 
+vi.mock('@/lib/services/stock-ubicacion-service', () => ({
+  upsertStockUbicacion: vi.fn(),
+}))
+
 // Import after mocking
 import prisma from '@/lib/prisma'
+import { upsertStockUbicacion } from '@/lib/services/stock-ubicacion-service'
 import { GET as getRecetas, POST as createReceta } from '../recetas/route'
 import { GET as getOrden } from '../ordenes/[id]/route'
 import { POST as aprobarOrden } from '../ordenes/[id]/aprobar/route'
@@ -255,8 +267,18 @@ describe('Production Module API Routes', () => {
       
       ;(transactionClientMock.ordenProduccion.update as Mock).mockResolvedValue(mockUpdatedOrden)
       ;(transactionClientMock.ordenProduccion.findUnique as Mock).mockResolvedValue(mockOrden)
-      ;(transactionClientMock.producto.findUnique as Mock).mockResolvedValue({ id: 'prod-1', nombre: 'Harina', stock: 100 })
-      ;(transactionClientMock.producto.update as Mock).mockResolvedValue({})
+      ;(transactionClientMock.producto.findUnique as Mock).mockResolvedValue({
+        id: 'prod-1',
+        nombre: 'Harina',
+        precioCosto: 10,
+        almacenId: 'alm-1',
+      })
+      ;(transactionClientMock.stockUbicacion.findUnique as Mock).mockResolvedValue({
+        productoId: 'prod-1',
+        cantidad: 100,
+        cantidadReservada: 0,
+        cantidadDisponible: 100,
+      })
       ;(transactionClientMock.ordenProduccionHistorial.create as Mock).mockResolvedValue({})
 
       const request = new NextRequest('http://localhost:3000/api/produccion/ordenes/orden-1/aprobar', {
@@ -269,6 +291,17 @@ describe('Production Module API Routes', () => {
 
       expect(response.status).toBe(200)
       expect(data.estado).toBe('EN_PROCESO')
+      expect(upsertStockUbicacion).toHaveBeenCalledWith(
+        transactionClientMock,
+        expect.objectContaining({
+          productoId: 'prod-1',
+          tipoUbicacion: 'almacen',
+          ubicacionId: 'alm-1',
+          modo: 'increment',
+          delta: -20,
+        })
+      )
+      expect(transactionClientMock.producto.update).not.toHaveBeenCalled()
     })
 
     it('debe rechazar si la orden no está pendiente', async () => {
@@ -303,8 +336,19 @@ describe('Production Module API Routes', () => {
           ],
         },
       }
-      ;(prisma.ordenProduccion.findUnique as Mock).mockResolvedValue(mockOrden)
-      ;(prisma.producto.findUnique as Mock).mockResolvedValue({ id: 'prod-1', nombre: 'Harina', stock: 5 })
+      ;(transactionClientMock.ordenProduccion.findUnique as Mock).mockResolvedValue(mockOrden)
+      ;(transactionClientMock.producto.findUnique as Mock).mockResolvedValue({
+        id: 'prod-1',
+        nombre: 'Harina',
+        precioCosto: 10,
+        almacenId: 'alm-1',
+      })
+      ;(transactionClientMock.stockUbicacion.findUnique as Mock).mockResolvedValue({
+        productoId: 'prod-1',
+        cantidad: 5,
+        cantidadReservada: 0,
+        cantidadDisponible: 5,
+      })
 
       const request = new NextRequest('http://localhost:3000/api/produccion/ordenes/orden-1/aprobar', {
         method: 'POST',
@@ -316,6 +360,7 @@ describe('Production Module API Routes', () => {
 
       expect(response.status).toBe(400)
       expect(data.error).toBe('Materiales insuficientes.')
+      expect(upsertStockUbicacion).not.toHaveBeenCalled()
     })
   })
 
@@ -547,8 +592,8 @@ describe('Production Module API Routes', () => {
   })
 
   describe('POST /api/produccion/vales', () => {
-    it('debe crear un vale y decrementar stock', async () => {
-      const mockProducto = { id: 'prod-1', nombre: 'Harina', stock: 100, precioCosto: 10 }
+    it('debe crear un vale y decrementar StockUbicacion del almacén', async () => {
+      const mockProducto = { id: 'prod-1', nombre: 'Harina', almacenId: 'alm-1' }
       const mockVale = {
         valeSalidaId: 'vale-1',
         concepto: 'Materia Prima',
@@ -557,10 +602,15 @@ describe('Production Module API Routes', () => {
       }
       
       ;(transactionClientMock.producto.findUnique as Mock).mockResolvedValue(mockProducto)
-      ;(prisma.valeSalida.create as Mock).mockResolvedValue(mockVale)
-      ;(prisma.valeSalidaItem.create as Mock).mockResolvedValue({})
-      ;(prisma.producto.update as Mock).mockResolvedValue({})
-      ;(prisma.valeSalida.findUnique as Mock).mockResolvedValue(mockVale)
+      ;(transactionClientMock.stockUbicacion.findUnique as Mock).mockResolvedValue({
+        productoId: 'prod-1',
+        cantidad: 100,
+        cantidadReservada: 0,
+        cantidadDisponible: 100,
+      })
+      ;(transactionClientMock.valeSalida.create as Mock).mockResolvedValue(mockVale)
+      ;(transactionClientMock.valeSalidaItem.create as Mock).mockResolvedValue({})
+      ;(transactionClientMock.valeSalida.findUnique as Mock).mockResolvedValue(mockVale)
 
       // Mock transaction
       ;(prisma.$transaction as Mock).mockImplementation(async (fn: Function) => fn(transactionClientMock))
@@ -577,11 +627,28 @@ describe('Production Module API Routes', () => {
 
       expect(response.status).toBe(201)
       expect(data.concepto).toBe('Materia Prima')
+      expect(upsertStockUbicacion).toHaveBeenCalledWith(
+        transactionClientMock,
+        expect.objectContaining({
+          productoId: 'prod-1',
+          tipoUbicacion: 'almacen',
+          ubicacionId: 'alm-1',
+          modo: 'increment',
+          delta: -10,
+        })
+      )
+      expect(transactionClientMock.producto.update).not.toHaveBeenCalled()
     })
 
-    it('debe rechazar si no hay stock suficiente', async () => {
-      const mockProducto = { id: 'prod-1', nombre: 'Harina', stock: 5, precioCosto: 10 }
-      ;(prisma.producto.findUnique as Mock).mockResolvedValue(mockProducto)
+    it('debe rechazar si no hay stock suficiente en StockUbicacion', async () => {
+      const mockProducto = { id: 'prod-1', nombre: 'Harina', almacenId: 'alm-1' }
+      ;(transactionClientMock.producto.findUnique as Mock).mockResolvedValue(mockProducto)
+      ;(transactionClientMock.stockUbicacion.findUnique as Mock).mockResolvedValue({
+        productoId: 'prod-1',
+        cantidad: 5,
+        cantidadReservada: 0,
+        cantidadDisponible: 5,
+      })
 
       const request = new NextRequest('http://localhost:3000/api/produccion/vales', {
         method: 'POST',
@@ -595,6 +662,7 @@ describe('Production Module API Routes', () => {
 
       expect(response.status).toBe(400)
       expect(data.error).toBe('Stock insuficiente.')
+      expect(upsertStockUbicacion).not.toHaveBeenCalled()
     })
 
     it('debe validar datos de entrada', async () => {

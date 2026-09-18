@@ -13,6 +13,12 @@ export interface ProductoConStock {
 	precioVentaResuelto: number;
 	precioFuente: "LISTA" | "BASE";
 	listaPrecioIdAplicada: string | null;
+	/**
+	 * Precios por lista relevantes al contexto (lista del PV + lista del
+	 * cliente cuando se pasa clienteId). Permite que el cliente aplique la
+	 * prioridad cliente > PV vía getPrecioEfectivo.
+	 */
+	precios: Array<{ listaPrecioId: string; precio: number }>;
 	stock: number;
 	stockEnUbicacion: number;
 	fotos: string[];
@@ -43,20 +49,34 @@ export interface ProductoConStock {
  * pero utilizando Prisma directamente desde la Server Action.
  *
  * @param ubicacionId - ID del punto de venta o almacén
+ * @param clienteId - Opcional; en puntos de venta incluye también los precios
+ *   de la lista del cliente para que la UI pueda aplicarlos (LP-0).
  * @returns Lista de productos con stock > 0 en la ubicación
  * @throws {ServerActionError} si la ubicación no existe o hay error de base de datos
  */
 export async function getProductosPorUbicacion(
 	ubicacionId: string,
+	clienteId?: string,
 ): Promise<ProductoConStock[]> {
-	await getAuthenticatedContext();
+	const context = await getAuthenticatedContext();
+
+	// Fail-closed: sin tenant en el contexto no se expone nada (LP-0/review).
+	if (!context.tenantId) {
+		throw new ServerActionError(
+			"getProductosPorUbicacion",
+			"GET",
+			403,
+			"Se requiere una empresa activa para consultar los productos",
+		);
+	}
+	const tenantId = context.tenantId;
 
 	// Verificar si la ubicación existe y determinar el tipo
 	let isPuntoVenta = false;
 	let listaPrecioId: string | null = null;
 
-	const puntoVenta = await prisma.puntoDeVenta.findUnique({
-		where: { pvId: ubicacionId },
+	const puntoVenta = await prisma.puntoDeVenta.findFirst({
+		where: { pvId: ubicacionId, tenantId },
 		select: { pvId: true, listaPrecioId: true },
 	});
 
@@ -64,8 +84,8 @@ export async function getProductosPorUbicacion(
 		isPuntoVenta = true;
 		listaPrecioId = puntoVenta.listaPrecioId ?? null;
 	} else {
-		const almacen = await prisma.almacen.findUnique({
-			where: { almacenId: ubicacionId },
+		const almacen = await prisma.almacen.findFirst({
+			where: { almacenId: ubicacionId, tenantId },
 		});
 		if (!almacen) {
 			throw new ServerActionError(
@@ -79,6 +99,7 @@ export async function getProductosPorUbicacion(
 
 	// Obtener todos los productos con sus relaciones
 	const productos = await prisma.producto.findMany({
+		where: { tenantId },
 		select: {
 			id: true,
 			nombre: true,
@@ -100,17 +121,41 @@ export async function getProductosPorUbicacion(
 
 	// Precios por lista de precios (solo para punto de venta)
 	const preciosPorListaMap = new Map<string, number>();
-	if (isPuntoVenta && listaPrecioId && productos.length > 0) {
+	// Entradas completas por lista relevante (PV + cliente) para el payload.
+	const preciosPorProductoMap = new Map<
+		string,
+		Array<{ listaPrecioId: string; precio: number }>
+	>();
+	let clienteListaId: string | null = null;
+
+	if (isPuntoVenta && clienteId) {
+		const cliente = await prisma.cliente.findFirst({
+			where: { clienteId, tenantId },
+			select: { listaPrecioId: true },
+		});
+		clienteListaId = cliente?.listaPrecioId ?? null;
+	}
+
+	const listasRelevantes = [listaPrecioId, clienteListaId].filter(
+		(id): id is string => id !== null,
+	);
+
+	if (isPuntoVenta && listasRelevantes.length > 0 && productos.length > 0) {
 		const preciosPorLista = await prisma.precioProducto.findMany({
 			where: {
-				listaPrecioId,
+				listaPrecioId: { in: listasRelevantes },
 				productoId: { in: productos.map((p) => p.id) },
 			},
-			select: { productoId: true, precio: true },
+			select: { productoId: true, listaPrecioId: true, precio: true },
 		});
 
 		for (const pl of preciosPorLista) {
-			preciosPorListaMap.set(pl.productoId, Number(pl.precio));
+			if (pl.listaPrecioId === listaPrecioId) {
+				preciosPorListaMap.set(pl.productoId, Number(pl.precio));
+			}
+			const entradas = preciosPorProductoMap.get(pl.productoId) ?? [];
+			entradas.push({ listaPrecioId: pl.listaPrecioId, precio: Number(pl.precio) });
+			preciosPorProductoMap.set(pl.productoId, entradas);
 		}
 	}
 
@@ -127,15 +172,6 @@ export async function getProductosPorUbicacion(
 	const productosConStock = productos.map((producto) => {
 		const stockReg = stockMap.get(producto.id);
 
-		if (stockReg === undefined && producto.stock > 0) {
-			throw new ServerActionError(
-				"getProductosPorUbicacion",
-				"GET",
-				500,
-				`Inconsistencia de stock: producto ${producto.id} (${producto.nombre}) tiene stock=${producto.stock} pero no tiene registro en StockUbicacion para ${tipo} ${ubicacionId}. Ejecute la reconciliación (prisma/scripts/reconcile-stock-ubicacion.ts --fix).`,
-			);
-		}
-
 		const stockEnUbicacion = stockReg !== undefined ? stockReg.cantidad : 0;
 
 		const precioLista = preciosPorListaMap.get(producto.id);
@@ -149,6 +185,7 @@ export async function getProductosPorUbicacion(
 			precioVentaResuelto,
 			precioFuente,
 			listaPrecioIdAplicada: listaPrecioId,
+			precios: preciosPorProductoMap.get(producto.id) ?? [],
 		};
 	});
 

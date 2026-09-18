@@ -5,6 +5,11 @@ import { withAction, ActionError } from "@/lib/server-actions";
 import { prisma } from "@/lib/prisma";
 import { requireFeature, requireTenant } from "@/lib/services/tenant-scope";
 import { upsertStockUbicacion } from "@/lib/services/stock-ubicacion-service";
+import {
+	getMovimientosDeOrigen,
+	registrarMovimiento,
+	revertirMovimientosDeOrigen,
+} from "@/features/inventario/movimientos";
 import { PRODUCTION_STATES } from "@/lib/constants/production";
 import {
 	calcularCantidadRequeridaMaterial,
@@ -41,7 +46,7 @@ export const getRecetasProduccionAction = withAction(
 			prisma.receta.findMany({
 				where,
 				include: {
-					// @ts-expect-error
+					// @ts-expect-error TODO: fix prisma include type
 					producto: true,
 					RecetaIngrediente: { include: { Producto: true } },
 				},
@@ -71,8 +76,8 @@ export const getRecetaProduccionByIdAction = withAction(
 		const receta = await prisma.receta.findFirst({
 			where: { recetaId: id, tenantId },
 			include: {
-				// @ts-expect-error
-				producto: true,
+				// @ts-expect-error TODO: fix prisma include type
+					producto: true,
 				RecetaIngrediente: { include: { Producto: true } },
 			},
 		});
@@ -95,7 +100,7 @@ export const createRecetaProduccionAction = withAction(
 		requireFeature(user, 'produccion', 'gestionar producción');
 		const tenantId = requireTenant(user);
 		const receta = await prisma.receta.create({
-			// @ts-expect-error
+			// @ts-expect-error TODO: fix prisma create data type
 			data: {
 				nombre: input.nombre,
 				rendimiento: input.rendimiento ?? 1,
@@ -185,10 +190,10 @@ export const setIngredientesRecetaProduccionAction = withAction(
 		});
 
 		// Create new ingredients
-		// @ts-expect-error
+		// @ts-expect-error TODO: fix input.ingredientes type
 		if (input.ingredientes.length > 0) {
 			await prisma.recetaIngrediente.createMany({
-				// @ts-expect-error
+				// @ts-expect-error TODO: fix prisma createMany data type
 				data: input.ingredientes.map((ing: any) => ({
 					recetaId: input.recetaId,
 					productoId: ing.productoId,
@@ -232,7 +237,7 @@ export const getOrdenesProduccionAction = withAction(
 			prisma.ordenProduccion.findMany({
 				where,
 				include: {
-					// @ts-expect-error
+					// @ts-expect-error TODO: fix prisma include type
 					receta: {
 						include: {
 							Producto: true,
@@ -266,7 +271,7 @@ export const getOrdenProduccionByIdAction = withAction(
 		const orden = await prisma.ordenProduccion.findFirst({
 			where: { ordenProduccionId: id, tenantId },
 			include: {
-				// @ts-expect-error
+				// @ts-expect-error TODO: fix prisma include type
 				receta: {
 					include: {
 						Producto: true,
@@ -307,13 +312,13 @@ export const createOrdenProduccionAction = withAction(
 		});
 
 		const costoMateriales = ingredientes.reduce((total, ing) => {
-			// @ts-expect-error
+			// @ts-expect-error TODO: fix ing.producto type
 			const costoProducto = ing.producto?.precioVenta ?? 0;
 			return total + costoProducto * ing.cantidad;
 		}, 0);
 
 		const orden = await prisma.ordenProduccion.create({
-			// @ts-expect-error
+			// @ts-expect-error TODO: fix prisma create data type
 			data: {
 				recetaId: input.recetaId,
 				cantidad: input.cantidad,
@@ -388,7 +393,7 @@ export const aprobarOrdenProduccionAction = withAction(
 						productoId_tipoUbicacion_ubicacionId: {
 							productoId: ingrediente.productoId,
 							tipoUbicacion: "almacen",
-							ubicacionId: producto?.almacenId,
+							ubicacionId: producto?.almacenId ?? '',
 						},
 					},
 					select: { cantidadDisponible: true },
@@ -429,7 +434,7 @@ export const aprobarOrdenProduccionAction = withAction(
 			}
 
 			// Descontar stock de cada ingrediente
-			for (const ing of ingredientesConStock) {
+			for (const [ingIdx, ing] of ingredientesConStock.entries()) {
 				const cantidadRequerida = calcularCantidadRequeridaMaterial(
 					ing,
 					orden.cantidad,
@@ -442,6 +447,18 @@ export const aprobarOrdenProduccionAction = withAction(
 						ubicacionId: ing.almacenId,
 						modo: "increment",
 						delta: -cantidadRequerida,
+					});
+					await registrarMovimiento(tx as any, {
+						tenantId,
+						productoId: ing.productoId,
+						tipoOrigen: "PRODUCCION",
+						origenId: id,
+						tipoUbicacion: "almacen",
+						ubicacionId: ing.almacenId,
+						cantidad: -Math.round(cantidadRequerida),
+						costoUnitario: ing.producto?.precioCosto ?? 0,
+						secuencia: `ING-${ingIdx}`,
+						creadoPorId: user.userId,
 					});
 				}
 			}
@@ -554,6 +571,20 @@ export const completarOrdenProduccionAction = withAction(
 					modo: "increment",
 					delta: stockIncrementado,
 				});
+				await registrarMovimiento(tx as any, {
+					tenantId,
+					productoId,
+					tipoOrigen: "PRODUCCION",
+					origenId: id,
+					tipoUbicacion: "almacen",
+					ubicacionId: productoFinal.almacenId,
+					cantidad: stockIncrementado,
+					costoUnitario: stockIncrementado > 0
+						? Math.round(costoMateriales / stockIncrementado)
+						: 0,
+					secuencia: "PRODUCTO-0",
+					creadoPorId: user.userId,
+				});
 			}
 
 			// Actualizar orden
@@ -610,6 +641,14 @@ export const cancelarOrdenProduccionAction = withAction(
 
 		const orden = await prisma.ordenProduccion.findFirst({
 			where: { ordenProduccionId: id, tenantId },
+			include: {
+				Receta: {
+					include: {
+						Producto: true,
+						RecetaIngrediente: { include: { Producto: true } },
+					},
+				},
+			},
 		});
 		if (!orden) throw new ActionError("Orden no encontrada", "NOT_FOUND");
 		if (orden.estado === "COMPLETADA")
@@ -617,6 +656,36 @@ export const cancelarOrdenProduccionAction = withAction(
 				"No se puede cancelar una orden completada",
 				"VALIDATION_ERROR",
 			);
+
+		// Si la orden estaba EN_PROCESO ya consumió materiales: reponer stock
+		// y compensar el kardex de los ingredientes consumidos.
+		if (orden.estado === "EN_PROCESO") {
+			await prisma.$transaction(async (tx) => {
+				const movimientosPrevios = await getMovimientosDeOrigen(tx as any, {
+					tenantId,
+					tipoOrigen: "PRODUCCION",
+					origenId: id,
+				});
+
+				for (const mov of movimientosPrevios) {
+					if (!mov.secuencia.startsWith("ING-")) continue;
+					await upsertStockUbicacion(tx, {
+						productoId: mov.productoId,
+						tipoUbicacion: mov.tipoUbicacion as any,
+						ubicacionId: mov.ubicacionId,
+						modo: "increment",
+						delta: -mov.cantidad,
+					});
+				}
+
+				await revertirMovimientosDeOrigen(tx as any, {
+					tenantId,
+					tipoOrigen: "PRODUCCION",
+					origenId: id,
+					creadoPorId: user.userId,
+				});
+			});
+		}
 
 		const updated = await prisma.ordenProduccion.update({
 			where: { ordenProduccionId: id },

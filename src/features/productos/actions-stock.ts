@@ -4,39 +4,12 @@ import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import { withAction, ActionError } from "@/lib/server-actions";
 import { prisma } from "@/lib/prisma";
-import { requireFeature, requireTenant, requireManagerRole } from "@/lib/services/tenant-scope";
+import { requireFeature, requireTenant, requirePermission } from "@/lib/services/tenant-scope";
+import { ProductoService } from "./services/producto-service";
 import { stockUbicacionQuerySchema } from "./schemas";
 import type { StockUbicacionQuery } from "./schemas";
 import type { AuthenticatedUser } from "@/lib/auth-middleware";
-// ─── Select reutilizable para stock por ubicación ──────────
-
-const PRODUCTO_CON_STOCK_SELECT = {
-	id: true,
-	nombre: true,
-	descripcion: true,
-	codigoInterno: true,
-	codigoNegocio: true,
-	proveedorCodigo: true,
-	idSeccionCodigo: true,
-	especificoCodigo: true,
-	surtidoCodigo: true,
-	dcCodigo: true,
-	fotos: true,
-	precioCosto: true,
-	precioVenta: true,
-	stock: true,
-	stockMinimo: true,
-	categoriaId: true,
-	subcategoriaId: true,
-	unidadId: true,
-	vendorId: true,
-	almacenId: true,
-	categoria: { select: { catId: true, nombre: true } },
-	subcategoria: { select: { catId: true, nombre: true, parentId: true } },
-	unidad: { select: { unidadId: true, nombre: true, simbolo: true } },
-	vendor: { select: { vendorId: true, nombre: true } },
-} as const;
-
+import type { RestockHistoryQueryInput, RestockHistoryResponse, RestockHistoryItem } from "./types";
 /**
  * @description Obtiene productos con su stock en una ubicación específica
  *   (almacén o punto de venta).
@@ -53,55 +26,12 @@ export const getStockPorUbicacionAction = withAction(
 		const { ubicacionId, tipoUbicacion, includeZero } =
 			stockUbicacionQuerySchema.parse(input);
 		const tenantId = requireTenant(user);
-
-		// ── Path 1: solo productos con stock ──
-		if (!includeZero) {
-			const registros = await prisma.stockUbicacion.findMany({
-				where: {
-					ubicacionId,
-					tipoUbicacion,
-					tenantId,
-					cantidad: { gt: 0 },
-				},
-				include: {
-					producto: { select: PRODUCTO_CON_STOCK_SELECT },
-				},
-			});
-
-			return registros.map((r) => ({
-				...r.producto,
-				stockUbicacion: r.cantidad,
-				stockTotal: r.producto.stock,
-			}));
-		}
-
-		// ── Path 2: todos los productos con stock (incluye ceros) ──
-		// Consulta base de productos filtrados por almacén si aplica
-		const whereProductos: Record<string, unknown> = { tenantId };
-		if (tipoUbicacion === "almacen") {
-			whereProductos.almacenId = ubicacionId;
-		}
-
-		const [productosBase, registrosStock] = await Promise.all([
-			prisma.producto.findMany({
-				where: whereProductos,
-				select: PRODUCTO_CON_STOCK_SELECT,
-			}),
-			prisma.stockUbicacion.findMany({
-				where: { ubicacionId, tipoUbicacion, tenantId },
-				select: { productoId: true, cantidad: true },
-			}),
-		]);
-
-		const stockMap = new Map(
-			registrosStock.map((r) => [r.productoId, r.cantidad]),
-		);
-
-		return productosBase.map((p) => ({
-			...p,
-			stockUbicacion: stockMap.get(p.id) ?? 0,
-			stockTotal: p.stock,
-		}));
+		return ProductoService.listByLocation({
+			tenantId,
+			ubicacionId,
+			tipoUbicacion,
+			includeZero,
+		});
 	},
 );
 
@@ -131,7 +61,7 @@ const bulkUpdateSchema = z.object({
 export const bulkUpdateStockMinimoAction = withAction(
 	async (input: z.infer<typeof bulkUpdateSchema>, user: AuthenticatedUser) => {
 		requireFeature(user, 'productos-stock-masivo', 'actualizar stock mínimo masivo');
-		requireManagerRole(user, "modificar el stock mínimo de productos");
+		requirePermission(user, "inventario.stock.editar", "modificar el stock mínimo de productos");
 		const { updates } = bulkUpdateSchema.parse(input);
 		requireTenant(user);
 

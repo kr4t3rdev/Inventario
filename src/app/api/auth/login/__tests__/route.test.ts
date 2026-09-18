@@ -12,6 +12,7 @@ vi.mock('@/lib/prisma', () => ({
     user: {
       findUnique: vi.fn(),
       update: vi.fn(),
+      updateMany: vi.fn(),
       findMany: vi.fn(),
     },
     userSession: {
@@ -22,9 +23,6 @@ vi.mock('@/lib/prisma', () => ({
       findFirst: vi.fn(),
     },
     tenantLicense: {
-      findFirst: vi.fn(),
-    },
-    licencia: {
       findFirst: vi.fn(),
     },
     userActivityLog: {
@@ -41,6 +39,13 @@ vi.mock('bcryptjs', () => ({
     compare: vi.fn(),
   },
 }))
+
+// resolveTenantContext (auth-middleware) usa prismaPlatform tras AS-02; alias al
+// mismo mock para que la resolución de tenant quede determinista en units.
+vi.mock('@/lib/db/platform-prisma', async () => {
+  const { prisma } = await import('@/lib/prisma')
+  return { prismaPlatform: prisma, default: prisma }
+})
 
 vi.mock('jsonwebtoken', () => ({
   default: {
@@ -63,7 +68,7 @@ describe('auth login route', () => {
     vi.mocked(prisma.tenantMembership.findUnique).mockResolvedValue(null as never)
     vi.mocked(prisma.tenantMembership.findFirst).mockResolvedValue(null as never)
     vi.mocked(prisma.tenantLicense.findFirst).mockResolvedValue(null as never)
-    vi.mocked(prisma.licencia.findFirst).mockResolvedValue(null as never)
+    vi.mocked(prisma.user.updateMany).mockResolvedValue({ count: 1 } as never)
   })
 
   it('firma JWT tenant-aware cuando recibe un tenant válido', async () => {
@@ -90,6 +95,7 @@ describe('auth login route', () => {
     vi.mocked(prisma.tenantLicense.findFirst).mockResolvedValue({
       tenantLicenseId: 'license-1',
       tenantId: 'tenant-1',
+      plan: { nombre: 'Básico' },
       activa: true,
       inicio: new Date(),
       expiracion: new Date(Date.now() + 1000000),
@@ -111,10 +117,12 @@ describe('auth login route', () => {
     const data = await response.json()
 
     expect(response.status).toBe(200)
-    expect(data.token).toBe('access-token')
+    expect(data).not.toHaveProperty('token')
+    expect(data).not.toHaveProperty('refreshToken')
     expect(data.user.tenantId).toBe('tenant-1')
     expect(data.user.tenantRole).toBe('manager')
-    expect(prisma.user.update).toHaveBeenCalledWith(
+    expect(data.user.planName).toBe('Básico')
+    expect(prisma.user.updateMany).toHaveBeenCalledWith(
       expect.objectContaining({
         where: { userId: 'u1' },
         data: expect.objectContaining({ expiresAt: expect.any(Date) }),
@@ -126,6 +134,47 @@ describe('auth login route', () => {
       'jwt-secret',
       { expiresIn: '30d' }
     )
+    expect(response.headers.getSetCookie()).toEqual(
+      expect.arrayContaining([
+        expect.stringContaining('auth_token=access-token'),
+        expect.stringContaining('refreshToken=refresh-token'),
+      ]),
+    )
+    expect(response.headers.getSetCookie().every((cookie) => cookie.includes('HttpOnly'))).toBe(true)
+  })
+
+  it('devuelve onboardingToken para un usuario mid-onboarding', async () => {
+    vi.mocked(prisma.user.findUnique).mockResolvedValue({
+      userId: 'u-onb',
+      email: 'onb@test.com',
+      password: 'hash',
+      isActive: false,
+      role: 'regularUser',
+      loginAttempts: 0,
+      lockedUntil: null,
+      lastFailedLogin: null,
+      onboardingStatus: 'selecting_user_type',
+    } as never)
+    vi.mocked(bcrypt.compare).mockResolvedValue(true as never)
+    vi.mocked(prisma.user.updateMany).mockResolvedValue({ count: 1 } as never)
+    vi.mocked(jwt.sign)
+      .mockReturnValueOnce('access-token' as never)
+      .mockReturnValueOnce('refresh-token' as never)
+      .mockReturnValueOnce('onboarding-token' as never)
+
+    const request = new NextRequest('http://localhost/api/auth/login', {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ email: 'onb@test.com', password: 'secret123' }),
+    })
+
+    const response = await POST(request)
+    const data = await response.json()
+
+    expect(response.status).toBe(200)
+    expect(data.redirectTo).toBe('/onboarding')
+    expect(data.onboardingToken).toBe('onboarding-token')
+    expect(prisma.tenantMembership.findUnique).not.toHaveBeenCalled()
   })
 
   it('rechaza un tenant solicitado que no pertenece al usuario', async () => {
@@ -153,7 +202,7 @@ describe('auth login route', () => {
     expect(response.status).toBe(403)
   })
 
-  it('rechaza login sin tenant activo aunque exista licencia legacy', async () => {
+  it('rechaza login sin tenant activo', async () => {
     vi.mocked(prisma.user.findUnique).mockResolvedValue({
       userId: 'u3',
       email: 'u3@test.com',
@@ -165,14 +214,6 @@ describe('auth login route', () => {
       lastFailedLogin: null,
     } as never)
     vi.mocked(bcrypt.compare).mockResolvedValue(true as never)
-    vi.mocked(prisma.licencia.findFirst).mockResolvedValue({
-      licenciaId: 'legacy-license',
-      usuarioId: 'u3',
-      planId: 'plan-1',
-      activa: true,
-      inicio: new Date(),
-      expiracion: new Date(Date.now() + 1000000),
-    } as never)
 
     const request = new NextRequest('http://localhost/api/auth/login', {
       method: 'POST',
@@ -185,6 +226,5 @@ describe('auth login route', () => {
 
     expect(response.status).toBe(403)
     expect(data.error).toContain('empresa activa')
-    expect(prisma.licencia.findFirst).not.toHaveBeenCalled()
   })
 })

@@ -1,0 +1,14 @@
+extends:
+  - recommended-strict
+
+apis:
+  mobile-v1:
+    root: docs/openapi/mobile-v1.json
+
+rules:
+  # Internal contract: publishing license metadata is not applicable.
+  info-license: off
+  operation-operationId: error
+  operation-operationId-unique: error
+  security-defined: error
+  spec-strict-refs: error

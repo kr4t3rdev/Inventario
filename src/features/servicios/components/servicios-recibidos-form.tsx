@@ -19,6 +19,7 @@ import { createCompraServicioAction } from '@/features/compras-servicios/actions
 import { useVendors } from '@/features/vendors/hooks/use-vendors'
 import { AnticipoSelector } from '@/features/contabilidad/components/anticipos/anticipo-selector'
 import type { AnticipoAllocation } from '@/features/contabilidad/components/anticipos/anticipo-selector'
+import { resolverMonedaServicio } from '@/features/servicios/lib/moneda-servicio'
 import { ArrowLeft, Truck, Save, Loader2 } from 'lucide-react'
 import Link from 'next/link'
 import type { Servicios } from '@/app/models/model'
@@ -72,9 +73,11 @@ export function ServiciosRecibidosForm({ initialServicios }: ServiciosRecibidosF
 
   const formaPago = useWatch({ control: form.control, name: 'formaPago' })
   const proveedorId = useWatch({ control: form.control, name: 'proveedorId' })
+  const servicioId = useWatch({ control: form.control, name: 'servicioId' })
   const costoUnitario = useWatch({ control: form.control, name: 'costoUnitario' }) || 0
   const cantidad = useWatch({ control: form.control, name: 'cantidad' }) || 1
   const costoTotal = costoUnitario * cantidad
+  const monedaServicio = resolverMonedaServicio(servicios, servicioId)
 
   /**
    * @description Registra un servicio recibido.
@@ -171,7 +174,7 @@ export function ServiciosRecibidosForm({ initialServicios }: ServiciosRecibidosF
                   Servicio Recibido
                 </CardTitle>
                 <CardDescription className='text-slate-500 dark:text-slate-400 mt-1'>
-                  Registra un servicio o egreso periodicó
+                  Registra un servicio o egreso periódico
                 </CardDescription>
               </div>
             </div>
@@ -179,7 +182,7 @@ export function ServiciosRecibidosForm({ initialServicios }: ServiciosRecibidosF
           
           <CardContent className='pt-8'>
             <Form {...form}>
-              <form className='space-y-6' onSubmit={form.handleSubmit(onSubmit, () => { sileo.error({ title: 'Completá los campos requeridos antes de continuar.' }) })}>
+              <form className='space-y-6' onSubmit={form.handleSubmit(onSubmit, () => { sileo.error({ title: 'Completa los campos requeridos antes de continuar.' }) })}>
                 <motion.div
                   initial={{ opacity: 0, x: -20 }}
                   animate={{ opacity: 1, x: 0 }}
@@ -369,7 +372,7 @@ export function ServiciosRecibidosForm({ initialServicios }: ServiciosRecibidosF
                     entidadId={proveedorId}
                     montoTotal={costoTotal}
                     onSelectionChange={setAnticipoAllocations}
-                    moneda="CUP"
+                    moneda={monedaServicio}
                     disabled={isLoading}
                   />
                 )}
@@ -408,11 +411,10 @@ export function ServiciosRecibidosForm({ initialServicios }: ServiciosRecibidosF
                   transition={{ delay: 0.55 }}
                 >
                   <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}>
-                    <Button 
-                      type='button' 
-                      variant='destructive' 
+                    <Button
+                      type='button'
+                      variant='destructive'
                       onClick={() => router.back()}
-                      className='border-slate-200 dark:border-slate-700 hover:bg-red-150 dark:hover:bg-orange-700'
                     >
                       Cancelar
                     </Button>

@@ -1,6 +1,7 @@
 "use client"
 
 import { useMemo, useState, useEffect, useCallback, useRef } from "react"
+import { useRouter } from "next/navigation"
 import { ReconciliacionVentasForm } from "@/features/contabilidad/components/reconciliacion/reconciliacion-ventas-form"
 import { CuentasPorCobrarTable } from "@/features/contabilidad/components/cuentas-por-cobrar-table"
 import { getCuentasPorCobrarAction, getCxcMetricsAction } from "@/features/contabilidad"
@@ -17,6 +18,7 @@ import { getAuthToken } from "@/lib/token"
 import { LazyMotion, m as motion, AnimatePresence, useReducedMotion } from "framer-motion"
 import { AnimatedNumber } from "@/components/ui/animated-number"
 import Link from "next/link"
+import { useAuth } from "@/contexts/auth-context"
 
 export const dynamic = 'force-dynamic'
 
@@ -38,6 +40,8 @@ function useHasMounted() {
  * @returns {JSX.Element} Vista principal de cuentas por cobrar.
  */
 export default function CuentasPorCobrarPage() {
+  const router = useRouter()
+  const { user } = useAuth()
   const [cuentasData, setCuentasData] = useState<GetCuentasPorCobrarResult | null>(null)
   const [isLoading, setIsLoading] = useState(true)
   const [fetchError, setFetchError] = useState<string | null>(null)
@@ -51,6 +55,9 @@ export default function CuentasPorCobrarPage() {
   const hasMounted = useHasMounted()
 
   const [metricas, setMetricas] = useState<CxcMetrics | null>(null)
+  const isBlocked =
+    user?.role !== 'admin' &&
+    user?.planFeatures?.['cuentas-cobrar'] !== true
 
   // ── Debounce search ───────────────────────────────────
   useEffect(() => {
@@ -71,10 +78,10 @@ export default function CuentasPorCobrarPage() {
     setFetchError(null)
     try {
       const result = await getCuentasPorCobrarAction({ page: pageNum, limit: LIMIT, search: search || undefined })
-      if (result.success && result.data) {
-        setCuentasData(result.data)
+      if (!result.success) {
+        setFetchError(result.error.message ?? 'Error al cargar cuentas')
       } else {
-        setFetchError(result.error?.message ?? 'Error al cargar cuentas')
+        setCuentasData(result.data)
       }
     } catch (err) {
       setFetchError('Error de conexión al cargar cuentas')
@@ -87,15 +94,19 @@ export default function CuentasPorCobrarPage() {
   // ── Load metrics separately ───────────────────────────
   const loadMetrics = useCallback(async () => {
     const result = await getCxcMetricsAction({})
-    if (result.success && result.data) {
+    if (result.success) {
       setMetricas(result.data)
     }
   }, [])
 
+  // Las métricas agregadas no cambian al paginar o filtrar: se cargan una sola vez.
+  useEffect(() => {
+    loadMetrics()
+  }, [loadMetrics])
+
   useEffect(() => {
     loadCuentas(page, debouncedSearch)
-    loadMetrics()
-  }, [page, debouncedSearch, loadCuentas, loadMetrics])
+  }, [page, debouncedSearch, loadCuentas])
 
   const cuentas = useMemo(() =>
     (cuentasData?.cuentas ?? []) as unknown as CuentaPorCobrar[],
@@ -200,23 +211,6 @@ export default function CuentasPorCobrarPage() {
     setIsTimeOut(false)
   }, [showReconciliacion, ventaParaReconciliar])
 
-  const isLoadingData = showReconciliacion && !ventaParaReconciliar && (isResolvingFactura || isResolvingVenta || (!isTimeOut && (!!facturaId || !!numeroFactura)))
-  const dataMissing = showReconciliacion && !ventaParaReconciliar && !isLoadingData
-
-  const handlePagarCuenta = (cuenta: CuentaPorCobrar) => {
-    if (cuenta.tipoCuenta === 'PRESTAMO_CASH') return
-    setCuentaSeleccionada(cuenta)
-    setShowReconciliacion(true)
-    setIsTimeOut(false)
-  }
-
-  const handleCloseReconciliacion = () => {
-    setShowReconciliacion(false)
-    setCuentaSeleccionada(null)
-    setIsTimeOut(false)
-    loadCuentas(page, debouncedSearch)
-  }
-
   // ── Procesamiento de Datos ────────────────────────────
   const cuentasParaMostrar = useMemo(() => {
     const list = cuentas || []
@@ -235,6 +229,33 @@ export default function CuentasPorCobrarPage() {
     }
     return Array.from(byKey.values())
   }, [cuentas])
+
+  useEffect(() => {
+    if (isBlocked) {
+      router.replace('/busy/contabilidad')
+    }
+  }, [isBlocked, router])
+
+  if (isBlocked) {
+    return null
+  }
+
+  const isLoadingData = showReconciliacion && !ventaParaReconciliar && (isResolvingFactura || isResolvingVenta || (!isTimeOut && (!!facturaId || !!numeroFactura)))
+  const dataMissing = showReconciliacion && !ventaParaReconciliar && !isLoadingData
+
+  const handlePagarCuenta = (cuenta: CuentaPorCobrar) => {
+    if (cuenta.tipoCuenta === 'PRESTAMO_CASH') return
+    setCuentaSeleccionada(cuenta)
+    setShowReconciliacion(true)
+    setIsTimeOut(false)
+  }
+
+  const handleCloseReconciliacion = () => {
+    setShowReconciliacion(false)
+    setCuentaSeleccionada(null)
+    setIsTimeOut(false)
+    loadCuentas(page, debouncedSearch)
+  }
 
   // ── Variantes de Animación ────────────────────────────
   const containerVariants = {
@@ -294,7 +315,7 @@ export default function CuentasPorCobrarPage() {
 
             {/* Cards de métricas */}
             <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-              <Card className={cn(surfaceCardClass, "border-l-4 border-l-destructive shadow-sm hover:shadow-md transition-shadow")}>
+              <Card className={cn(surfaceCardClass, "shadow-sm hover:shadow-md transition-shadow")}>
                 <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                   <CardTitle className="text-sm font-medium text-muted-foreground">Total Pendiente</CardTitle>
                   <DollarSign className="h-4 w-4 text-red-500" />
@@ -307,7 +328,7 @@ export default function CuentasPorCobrarPage() {
                 </CardContent>
               </Card>
 
-              <Card className={cn(surfaceCardClass, "border-l-4 border-l-chart-2 shadow-sm hover:shadow-md transition-shadow")}>
+              <Card className={cn(surfaceCardClass, "shadow-sm hover:shadow-md transition-shadow")}>
                 <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                   <CardTitle className="text-sm font-medium text-muted-foreground">Por Vencer</CardTitle>
                   <TrendingUp className="h-4 w-4 text-green-500" />
@@ -320,7 +341,7 @@ export default function CuentasPorCobrarPage() {
                 </CardContent>
               </Card>
 
-              <Card className={cn(surfaceCardClass, "border-l-4 border-l-destructive shadow-sm hover:shadow-md transition-shadow")}>
+              <Card className={cn(surfaceCardClass, "shadow-sm hover:shadow-md transition-shadow")}>
                 <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                   <CardTitle className="text-sm font-medium text-muted-foreground">Vencidas</CardTitle>
                   <AlertCircle className="h-4 w-4 text-red-500" />
@@ -333,7 +354,7 @@ export default function CuentasPorCobrarPage() {
                 </CardContent>
               </Card>
 
-              <Card className={cn(surfaceCardClass, "border-l-4 border-l-accent shadow-sm hover:shadow-md transition-shadow")}>
+              <Card className={cn(surfaceCardClass, "shadow-sm hover:shadow-md transition-shadow")}>
                 <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                   <CardTitle className="text-sm font-medium text-muted-foreground">Total Cuentas</CardTitle>
                   <CreditCard className="h-4 w-4 text-amber-500" />
@@ -357,6 +378,7 @@ export default function CuentasPorCobrarPage() {
                 page={page}
                 totalPages={totalPages}
                 onPageChange={setPage}
+                onRetry={() => loadCuentas(page, debouncedSearch)}
             />
           </motion.div>
 

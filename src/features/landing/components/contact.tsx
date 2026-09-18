@@ -1,7 +1,7 @@
 'use client';
 
 import React from 'react';
-import { motion } from 'framer-motion';
+import { motion, useReducedMotion } from 'framer-motion';
 
 import { Card, CardContent } from '@/components/ui/card';
 import { CONTACT_ITEMS } from '@/features/landing/data';
@@ -13,20 +13,25 @@ import { SpringSection } from '@/features/landing/utils';
  * @returns {JSX.Element} Contact section
  */
 export function LandingContact({ reduceMotion }: { reduceMotion?: boolean }): React.JSX.Element {
+  const prefersReducedMotion = useReducedMotion();
+  const shouldReduceMotion = Boolean(reduceMotion || prefersReducedMotion);
+
   return (
     <section
       id="contacto"
+      aria-labelledby="contacto-title"
+      aria-describedby="contacto-description"
       className="scroll-mt-24 rounded-asymmetric-tl-br border border-border/60 bg-muted/20 p-6 md:p-10 glow-primary"
     >
-      <SpringSection className="mx-auto max-w-4xl space-y-8 text-center">
+      <SpringSection reduceMotion={shouldReduceMotion} className="mx-auto max-w-4xl space-y-8 text-center">
         <div className="space-y-3">
           <span className="inline-flex rounded-full border border-cyan-accent bg-primary/10 px-4 py-1 text-xs font-semibold uppercase tracking-[0.16em] text-cyan-accent font-mono">
             Contacto
           </span>
-          <h2 className="text-4xl font-bold tracking-tight sm:text-5xl font-mono leading-[1.05] tracking-display">
+          <h2 id="contacto-title" className="text-4xl font-bold tracking-tight sm:text-5xl font-mono leading-[1.05] tracking-display">
             ¿Listo para optimizar tu operación financiera?
           </h2>
-          <p className="text-muted-foreground sm:text-lg">
+          <p id="contacto-description" className="text-muted-foreground sm:text-lg">
             Nuestro equipo puede ayudarte a definir la mejor implementación para tu negocio.
           </p>
         </div>
@@ -42,14 +47,15 @@ export function LandingContact({ reduceMotion }: { reduceMotion?: boolean }): Re
                   href={item.href}
                   target={item.href.startsWith('https') ? '_blank' : undefined}
                   rel={item.href.startsWith('https') ? 'noreferrer' : undefined}
-                  className="group flex items-center gap-3 rounded-xl border border-border/70 bg-background/80 px-4 py-3 transition-colors hover:border-primary/40"
-                  whileHover={reduceMotion ? undefined : { y: -4 }}
-                  transition={{ type: 'spring', stiffness: 250, damping: 15 }}
+                  className="group flex items-center gap-3 rounded-xl border border-border/70 bg-background/80 px-4 py-3 transition-colors hover:border-primary/40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/60"
+                  aria-label={`${item.label}: ${item.value}`}
+                  whileHover={shouldReduceMotion ? undefined : { y: -4 }}
+                  transition={shouldReduceMotion ? undefined : { type: 'spring', stiffness: 250, damping: 15 }}
                 >
                   <motion.div
                     className="flex h-10 w-10 items-center justify-center rounded-full bg-primary/10"
-                    animate={reduceMotion ? undefined : { rotate: [0, -8, 8, 0] }}
-                    transition={{ duration: 2.4 + index * 0.3, repeat: Infinity, ease: 'easeInOut' }}
+                    animate={shouldReduceMotion ? undefined : { rotate: [0, -8, 8, 0] }}
+                    transition={shouldReduceMotion ? undefined : { duration: 2.4 + index * 0.3, repeat: Infinity, ease: 'easeInOut' }}
                   >
                     <Icon className="h-5 w-5 text-primary" />
                   </motion.div>

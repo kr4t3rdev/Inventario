@@ -1,7 +1,12 @@
 "use client";
 
 import { useDeferredValue, useEffect, useMemo, useState } from "react";
-import { LazyMotion, m as motion, useReducedMotion } from "framer-motion";
+import {
+	AnimatePresence,
+	LazyMotion,
+	m as motion,
+	useReducedMotion,
+} from "framer-motion";
 import {
 	ArrowDown,
 	ArrowUp,
@@ -23,6 +28,7 @@ import {
 	Square,
 	Unlock,
 	Lock,
+	Eraser,
 } from "lucide-react";
 import { format } from "date-fns";
 import { toast } from "sonner";
@@ -91,6 +97,8 @@ interface AdminUsersTableProps {
 	onSortChange?: (sortBy: string, sortOrder: "asc" | "desc") => void;
 	onApproveUser?: (user: Usuario) => void;
 	onAddTenantMembership?: (user: Usuario) => void;
+	onCreateUser?: () => void;
+	onConfirmSalesAgentPayout?: (user: Usuario) => void;
 }
 
 type RoleFilter =
@@ -99,7 +107,8 @@ type RoleFilter =
 	| "admin"
 	| "economico"
 	| "dependiente"
-	| "regularUser";
+	| "regularUser"
+	| "salesAgent";
 type StatusFilter = "all" | "active" | "inactive";
 type SortableColumn = "name" | "email" | "createdAt" | "expiresAt";
 
@@ -109,6 +118,27 @@ const SORTABLE_COLUMNS: { key: SortableColumn; label: string }[] = [
 	{ key: "createdAt", label: "Fecha de Creación" },
 	{ key: "expiresAt", label: "Expira" },
 ];
+
+interface SalesAgentPayoutCandidate {
+	role: string;
+	isActive: boolean;
+	salesAgentProfile?: { status?: string | null } | null;
+	salesAgentBalance?: { availableUsd?: unknown } | null;
+}
+
+/**
+ * @description Verifica si un usuario cumple todas las condiciones para iniciar un payout.
+ * @param {SalesAgentPayoutCandidate} candidate - Usuario y estado financiero del gestor.
+ * @returns {boolean} True únicamente para gestores activos con perfil activo y saldo positivo.
+ */
+export function canConfirmSalesAgentPayout(
+	candidate: SalesAgentPayoutCandidate,
+): boolean {
+	return candidate.role === "salesAgent" &&
+		candidate.isActive &&
+		candidate.salesAgentProfile?.status === "active" &&
+		Number(candidate.salesAgentBalance?.availableUsd ?? 0) > 0;
+}
 
 export function AdminUsersTable({
 	users,
@@ -123,6 +153,8 @@ export function AdminUsersTable({
 	onSortChange,
 	onApproveUser,
 	onAddTenantMembership,
+	onCreateUser,
+	onConfirmSalesAgentPayout,
 }: AdminUsersTableProps): React.JSX.Element {
 	const shouldReduceMotion = useReducedMotion();
 	const [searchTerm, setSearchTerm] = useState("");
@@ -150,6 +182,20 @@ export function AdminUsersTable({
 	}, []);
 
 	const perPage = 25;
+
+	const hasActiveFilters =
+		searchTerm !== "" ||
+		roleFilter !== "all" ||
+		statusFilter !== "all" ||
+		tenantFilter !== "all";
+
+	const handleClearFilters = () => {
+		setSearchTerm("");
+		setRoleFilter("all");
+		setStatusFilter("all");
+		setTenantFilter("all");
+		clearSelection();
+	};
 
 	const isUserWithTenant = (
 		u: Usuario | UsuarioWithTenant,
@@ -356,7 +402,7 @@ export function AdminUsersTable({
 				return (
 					<Badge
 						variant="outline"
-						className="border-violet-500/40 bg-violet-500/10 text-violet-700"
+						className="border-purple/40 bg-purple/10 text-purple"
 					>
 						<Shield className="mr-1 h-3 w-3" />
 						{getTenantRoleLabel("manager")}
@@ -400,6 +446,16 @@ export function AdminUsersTable({
 					>
 						<User className="mr-1 h-3 w-3" />
 						{getTenantRoleLabel("regularUser")}
+					</Badge>
+				);
+			case "salesAgent":
+				return (
+					<Badge
+						variant="outline"
+						className="border-teal-500/40 bg-teal-500/10 text-teal-700 dark:border-teal-500/40 dark:bg-teal-500/10 dark:text-teal-300"
+					>
+						<User className="mr-1 h-3 w-3" />
+						{getTenantRoleLabel("salesAgent")}
 					</Badge>
 				);
 			default:
@@ -462,12 +518,15 @@ export function AdminUsersTable({
 	const handleDeleteUser = async (userId: string): Promise<void> => {
 		try {
 			const r = await deleteUserAction(userId);
-			if (!r.success) throw new Error(r.error?.message ?? "Error");
+			if (!r.success)
+				throw new Error(r.error?.message ?? "Error al eliminar usuario");
 			toast.success("Usuario eliminado correctamente");
 			await onRefresh();
 		} catch (error) {
 			console.error("Error al eliminar usuario:", error);
-			toast.error("Error al eliminar usuario");
+			toast.error(
+				error instanceof Error ? error.message : "Error al eliminar usuario",
+			);
 		}
 	};
 
@@ -549,7 +608,7 @@ export function AdminUsersTable({
 								variant="outline"
 								size="sm"
 								onClick={() => handleBulkAction("lock")}
-								className="h-9 border-violet-500/40 bg-violet-500/10 text-violet-700 hover:bg-violet-500/20"
+								className="h-9 border-purple/40 bg-purple/10 text-purple hover:bg-purple/20"
 							>
 								<Lock className="mr-1 h-3 w-3" />
 								Bloquear
@@ -630,6 +689,7 @@ export function AdminUsersTable({
 							<SelectItem value="economico">Económicos</SelectItem>
 							<SelectItem value="dependiente">Dependientes</SelectItem>
 							<SelectItem value="regularUser">Usuarios legados</SelectItem>
+							<SelectItem value="salesAgent">Gestores de Ventas</SelectItem>
 						</SelectContent>
 					</Select>
 					{showTenantColumn && tenants && (
@@ -672,6 +732,27 @@ export function AdminUsersTable({
 						)}
 						{isExporting ? "Exportando..." : "Exportar"}
 					</Button>
+					<AnimatePresence>
+						{hasActiveFilters && (
+							<motion.div
+								initial={shouldReduceMotion ? { opacity: 1 } : { opacity: 0, y: -4, scale: 0.98 }}
+								animate={{ opacity: 1, y: 0, scale: 1 }}
+								exit={shouldReduceMotion ? { opacity: 1 } : { opacity: 0, y: -4, scale: 0.98 }}
+								transition={{ duration: 0.15 }}
+							>
+								<Button
+									variant="outline"
+									size="sm"
+									onClick={handleClearFilters}
+									className="h-11 border-amber-200/60 bg-amber-50/60 text-amber-700 hover:bg-amber-100 hover:border-amber-300 transition-all duration-200"
+								>
+									<Eraser className="mr-2 h-4 w-4" />
+									Limpiar filtros
+								</Button>
+							</motion.div>
+							)
+						}
+					</AnimatePresence>
 				</div>
 			</motion.div>
 
@@ -679,16 +760,20 @@ export function AdminUsersTable({
 				initial={shouldReduceMotion ? { opacity: 1 } : { opacity: 0 }}
 				animate={{ opacity: 1 }}
 				transition={{ duration: shouldReduceMotion ? 0 : 0.3 }}
-				className="overflow-hidden rounded-xl border border-slate-200 bg-card shadow-sm"
+				className="overflow-auto rounded-xl border border-slate-200 bg-card shadow-sm max-h-[70vh]"
 			>
 				<Table>
-					<TableHeader>
-						<TableRow className="bg-linear-to-r from-primary/10 via-purple-600/5 to-primary/10">
+					<TableHeader className="sticky top-0 bg-background z-10">
+						<TableRow className="bg-linear-to-r from-primary/10 via-purple/5 to-primary/10">
 							<TableHead className="w-12">
 								<button
+									type="button"
 									onClick={toggleSelectAll}
 									className="flex items-center justify-center w-full h-full hover:opacity-80 transition-opacity"
 									title={
+										isAllSelected ? "Deseleccionar todos" : "Seleccionar todos"
+									}
+									aria-label={
 										isAllSelected ? "Deseleccionar todos" : "Seleccionar todos"
 									}
 								>
@@ -706,6 +791,7 @@ export function AdminUsersTable({
 							).map((col) => (
 								<TableHead key={col.key}>
 									<button
+										type="button"
 										onClick={() => handleSort(col.key)}
 										className="flex items-center gap-1 font-medium hover:text-foreground/80 transition-colors"
 									>
@@ -719,6 +805,7 @@ export function AdminUsersTable({
 							<TableHead>Estado</TableHead>
 							<TableHead>
 								<button
+									type="button"
 									onClick={() => handleSort("createdAt")}
 									className="flex items-center gap-1 font-medium hover:text-foreground/80 transition-colors"
 								>
@@ -727,6 +814,7 @@ export function AdminUsersTable({
 							</TableHead>
 							<TableHead>
 								<button
+									type="button"
 									onClick={() => handleSort("expiresAt")}
 									className="flex items-center gap-1 font-medium hover:text-foreground/80 transition-colors"
 								>
@@ -755,9 +843,15 @@ export function AdminUsersTable({
 									>
 										<TableCell>
 											<button
+												type="button"
 												onClick={() => toggleSelectUser(candidate.userId)}
 												className="flex items-center justify-center w-full h-full hover:opacity-80 transition-opacity"
 												title={isSelected ? "Deseleccionar" : "Seleccionar"}
+												aria-label={
+													isSelected
+														? `Deseleccionar ${candidate.name}`
+														: `Seleccionar ${candidate.name}`
+												}
 											>
 												{isSelected ? (
 													<CheckSquare className="h-4 w-4 text-primary" />
@@ -767,7 +861,14 @@ export function AdminUsersTable({
 											</button>
 										</TableCell>
 										<TableCell className="font-medium">
-											{candidate.name}
+											<div>{candidate.name}</div>
+											{candidate.role === "salesAgent" ? (
+												<div className="text-xs font-normal text-muted-foreground">
+													{(candidate as any).salesAgentProfile?.phone ?? "Sin teléfono"} ·{" "}
+													{(candidate as any).activeReferralCount ?? 0} referidos · USD{" "}
+													{Number((candidate as any).salesAgentBalance?.availableUsd ?? 0).toFixed(2)}
+												</div>
+											) : null}
 										</TableCell>
 										<TableCell>{candidate.email}</TableCell>
 										{showTenantColumn && (
@@ -781,7 +882,7 @@ export function AdminUsersTable({
 															(candidate as any).membershipCount > 1 && (
 																<Badge
 																	variant="outline"
-																	className="border-violet-200 bg-violet-50 text-violet-700 text-[10px] px-1.5 dark:border-violet-800 dark:bg-violet-900/30 dark:text-violet-300"
+																	className="border-purple/30 bg-purple/10 text-purple text-[10px] px-1.5 dark:border-purple/60 dark:bg-purple/25 dark:text-purple/80"
 																>
 																	+
 																	{(candidate as any).membershipCount -
@@ -819,37 +920,53 @@ export function AdminUsersTable({
 										</TableCell>
 										<TableCell className="text-right">
 											<div className="flex justify-end gap-2">
+												{onConfirmSalesAgentPayout &&
+													canConfirmSalesAgentPayout(candidate) && (
+														<Button type="button" size="sm"
+															onClick={() => onConfirmSalesAgentPayout(candidate)}>
+															Confirmar pago
+														</Button>
+													)}
 												{onApproveUser &&
-													candidate.onboardingType === "company" &&
-													candidate.onboardingStatus ===
-														"awaiting_global_approval" && (
+													((candidate.onboardingType === "company" &&
+														candidate.onboardingStatus ===
+															"awaiting_global_approval") ||
+														(candidate.onboardingType === "salesAgent" &&
+															candidate.onboardingStatus ===
+																"awaiting_sales_agent_approval")) && (
 														<Button
+															type="button"
 															variant="outline"
 															size="sm"
 															onClick={() => onApproveUser(candidate)}
 															className="border-emerald-200 bg-emerald-50 text-emerald-700 transition-all duration-200 hover:shadow-sm hover:bg-emerald-100 dark:border-emerald-800 dark:bg-emerald-900/40 dark:text-emerald-400 dark:hover:bg-emerald-900/60"
+															aria-label={`Aprobar usuario ${candidate.name}`}
 														>
-															<ShieldCheck className="h-4 w-4" />
+															<ShieldCheck className="h-4 w-4" aria-hidden="true" />
 														</Button>
 													)}
 												{onAddTenantMembership && (
 													<Button
+														type="button"
 														variant="outline"
 														size="sm"
 														onClick={() => onAddTenantMembership(candidate)}
-														className="border-violet-200 bg-violet-50 text-violet-700 transition-all duration-200 hover:shadow-sm hover:bg-violet-100 dark:border-violet-800 dark:bg-violet-900/40 dark:text-violet-400 dark:hover:bg-violet-900/60"
+														className="border-purple/30 bg-purple/10 text-purple transition-all duration-200 hover:shadow-sm hover:bg-purple/15 dark:border-purple/60 dark:bg-purple/30 dark:text-purple/80 dark:hover:bg-purple/40"
 														title="Añadir a otra empresa"
+														aria-label={`Añadir ${candidate.name} a otra empresa`}
 													>
-														<Building2 className="h-4 w-4" />
+														<Building2 className="h-4 w-4" aria-hidden="true" />
 													</Button>
 												)}
 												<Button
+													type="button"
 													variant="outline"
 													size="sm"
 													onClick={() => onEditUser(candidate)}
 													className="border-slate-200 bg-white/70 transition-all duration-200 hover:shadow-sm dark:border-slate-700 dark:bg-slate-900/60"
+													aria-label={`Editar usuario ${candidate.name}`}
 												>
-													<Edit className="h-4 w-4" />
+													<Edit className="h-4 w-4" aria-hidden="true" />
 												</Button>
 												<AlertDialog>
 													<AlertDialogTrigger asChild>
@@ -857,8 +974,9 @@ export function AdminUsersTable({
 															variant="outline"
 															size="sm"
 															className="border-slate-200 bg-white/70 text-rose-600 transition-all duration-200 hover:text-rose-700 dark:border-slate-700 dark:bg-slate-900/60 dark:text-rose-400 dark:hover:text-rose-300"
+															aria-label={`Eliminar usuario ${candidate.name}`}
 														>
-															<Trash2 className="h-4 w-4" />
+															<Trash2 className="h-4 w-4" aria-hidden="true" />
 														</Button>
 													</AlertDialogTrigger>
 													<AlertDialogContent className="border-slate-200/70 bg-white/90 backdrop-blur-xl dark:border-slate-700/60 dark:bg-slate-900/90">
@@ -873,8 +991,9 @@ export function AdminUsersTable({
 														</AlertDialogHeader>
 														<AlertDialogFooter>
 															<AlertDialogCancel>Cancelar</AlertDialogCancel>
-															<Button
-																onClick={() =>
+														<Button
+															type="button"
+															onClick={() =>
 																	handleDeleteUser(candidate.userId)
 																}
 																variant="destructive"
@@ -978,6 +1097,16 @@ export function AdminUsersTable({
 								Limpiar filtros
 							</Button>
 						)}
+						{!deferredSearch &&
+							roleFilter === "all" &&
+							statusFilter === "all" &&
+							tenantFilter === "all" &&
+							onCreateUser && (
+								<Button onClick={onCreateUser} className="mt-2">
+									<Plus className="mr-2 h-4 w-4" />
+									Crear usuario
+								</Button>
+							)}
 					</div>
 				</motion.div>
 			)}

@@ -136,7 +136,7 @@ export function EmpleadoForm({ initialData }: EmpleadoFormProps) {
         router.push("/busy/empleados")
       } else {
         const result = await createEmpleadoAction({
-  // @ts-expect-error
+  // @ts-expect-error -- empleadoId es opcional en create, pero el tipo lo pide
           empleadoId: v4(),
           ...submitData
         })

@@ -3,11 +3,8 @@
 import { useState, useEffect, useCallback } from 'react';
 import { Building2, Check, ChevronRight, Loader2 } from 'lucide-react';
 import { toast } from 'sonner';
-import {
-	getMyTenantsAction,
-	switchActiveTenantAction,
-} from '@/features/auth/actions';
 import { useAuth } from '@/contexts/auth-context';
+import { fetchClientAuthJson } from '@/lib/client-auth-fetch';
 
 interface TenantEntry {
 	tenantId: string;
@@ -20,9 +17,11 @@ interface TenantEntry {
 /**
  * @description Dropdown para cambiar de tenant activo cuando el usuario
  * pertenece a múltiples empresas.
- * @returns {JSX.Element | null} Selector de tenant o null si ≤1 tenant
+ * Consume el payload estable `{ items: TenantEntry[] }` de `/api/auth/tenants`
+ * y sólo limpia estado local cuando la respuesta indica auth stale/invalid.
+ * @returns {React.JSX.Element | null} Selector de tenant o null si ≤1 tenant
  */
-export function TenantSwitcher(): JSX.Element | null {
+export function TenantSwitcher(): React.JSX.Element | null {
 	const { user } = useAuth();
 	const [tenants, setTenants] = useState<TenantEntry[]>([]);
 	const [loading, setLoading] = useState(false);
@@ -30,14 +29,17 @@ export function TenantSwitcher(): JSX.Element | null {
 
 	const fetchTenants = useCallback(async () => {
 		setLoading(true);
-		try {
-			const r = await getMyTenantsAction();
-			if (r.success && r.data) setTenants(r.data as TenantEntry[]);
-		} catch {
-			/* fail silently */
-		} finally {
-			setLoading(false);
+		const result = await fetchClientAuthJson<{ items?: TenantEntry[] }>('/api/auth/tenants', {
+			method: 'GET',
+			clearState: () => setTenants([]),
+			defaultErrorMessage: 'Error al cargar empresas',
+		});
+
+		if (result.success) {
+			setTenants((result.data.items ?? []) as TenantEntry[]);
 		}
+
+		setLoading(false);
 	}, []);
 
 	useEffect(() => {
@@ -46,18 +48,22 @@ export function TenantSwitcher(): JSX.Element | null {
 
 	const handleSwitch = async (tenantId: string) => {
 		setSwitching(true);
-		try {
-			const r = await switchActiveTenantAction(tenantId);
-			if (r.success) {
-				window.location.reload();
-			} else {
-				toast.error(r.error?.message ?? 'Error al cambiar de empresa');
-			}
-		} catch {
-			toast.error('Error al cambiar de empresa');
-		} finally {
-			setSwitching(false);
+		const result = await fetchClientAuthJson<{ tenantId: string; tenantRole: string }>('/api/auth/tenants', {
+			method: 'POST',
+			headers: {
+				'content-type': 'application/json',
+			},
+			body: JSON.stringify({ tenantId }),
+			defaultErrorMessage: 'Error al cambiar de empresa',
+		});
+
+		if (result.success) {
+			window.location.reload();
+		} else {
+			toast.error(result.error.message);
 		}
+
+		setSwitching(false);
 	};
 
 	// Si no hay usuario, o hay solo 1 tenant, no mostrar

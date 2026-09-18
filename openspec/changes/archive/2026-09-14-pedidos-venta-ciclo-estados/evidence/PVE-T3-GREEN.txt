@@ -1,0 +1,10 @@
+
+ Test Files  21 passed (21)
+      Tests  105 passed (105)
+   Start at  08:53:00
+   Duration  25.63s (transform 5.94s, setup 13.08s, collect 46.26s, tests 3.69s, environment 46.51s, prepare 10.15s)
+
+=== TYPECHECK ===
+
+
+=== TYPECHECK (tsc exit 0, sin errores) ===

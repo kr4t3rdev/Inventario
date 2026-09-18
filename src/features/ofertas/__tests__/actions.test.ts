@@ -14,6 +14,8 @@ vi.mock('@/lib/services/stock-ubicacion-service', () => ({ upsertStockUbicacion:
 const mockTx = {
   oferta: { update: vi.fn() },
   venta: { create: vi.fn() },
+  ventaServicios: { create: vi.fn() },
+  servicios: { findFirst: vi.fn() },
   factura: { create: vi.fn() },
   serieFacturacion: { findFirst: vi.fn(), create: vi.fn(), update: vi.fn() },
   producto: { findUnique: vi.fn() },
@@ -30,6 +32,7 @@ vi.mock('@/lib/prisma', () => ({
       delete: vi.fn(),
     },
     cliente: { findFirst: vi.fn() },
+    producto: { findFirst: vi.fn() },
     turnoPuntoVenta: { findFirst: vi.fn() },
     $transaction: vi.fn((cb: any) => cb(mockTx)),
   },
@@ -96,6 +99,9 @@ describe('Ofertas Server Actions', () => {
     it('crea oferta exitosamente', async () => {
       vi.mocked(getCurrentUser).mockResolvedValue(mockUser);
       vi.mocked(prisma.cliente.findFirst).mockResolvedValue({ clienteId: 'cli-1', nombre: 'Test' });
+      vi.mocked(prisma.producto.findFirst).mockResolvedValue({
+        id: 'prod-1', tenantId: 'tenant-test', precioVenta: 1000, precios: [],
+      } as any);
       vi.mocked(prisma.oferta.create).mockResolvedValue({ ofertaId: 'of-1' } as any);
 
       const result = await createOfertaAction({
@@ -217,6 +223,44 @@ describe('Ofertas Server Actions', () => {
       expect(allocateFifoForSale).toHaveBeenCalledWith(mockTx, 'tenant-test', 'ven-1');
     });
 
+    it('crea VentaItem y VentaServicios para una oferta mixta', async () => {
+      vi.mocked(getCurrentUser).mockResolvedValue(mockUser);
+      vi.mocked(prisma.oferta.findFirst).mockResolvedValue({
+        id: 'of-mix', estado: 'PENDIENTE', clienteId: 'cli-1', tenantId: 'tenant-test',
+        subtotal: 300, impuestos: 0, total: 300,
+        items: [
+          { productoId: 'prod-1', servicioId: null, cantidad: 2, precioUnitario: 100, total: 200 },
+          { productoId: null, servicioId: 'srv-1', cantidad: 1, precioUnitario: 100, total: 100, servicio: { moneda: 'CUP' } },
+        ],
+        cliente: { clienteId: 'cli-1', nombre: 'Test' },
+      } as any);
+      mockTx.serieFacturacion.findFirst.mockResolvedValue({ serieId: 'serie-1', prefijo: 'FV', consecutivo: 1 });
+      mockTx.serieFacturacion.update.mockResolvedValue({ consecutivo: 2 });
+      mockTx.venta.create.mockResolvedValue({ ventaId: 'ven-mix' });
+      mockTx.servicios.findFirst.mockResolvedValue({ servicioId: 'srv-1', moneda: 'CUP', nombre: 'Srv' });
+      mockTx.ventaServicios.create.mockResolvedValue({ ventaServicioId: 'vs-1' });
+      mockTx.factura.create.mockResolvedValue({ idFactura: 'fac-mix' });
+      mockTx.producto.findUnique.mockResolvedValue({ id: 'prod-1', nombre: 'P', tenantId: 'tenant-test' });
+      mockTx.stockUbicacion.findUnique.mockResolvedValue({ cantidadDisponible: 10 });
+      vi.mocked(applyFacturacionCobroWorkflow).mockResolvedValue({ tipoVencimiento: 'contra_pago', reconciliacionId: null });
+
+      const result = await facturarOfertaAction({ ofertaId: 'of-mix', puntoDeVentaId: 'pv-1' });
+
+      expect(result.success).toBe(true);
+      expect(mockTx.servicios.findFirst).toHaveBeenCalledWith({
+        where: { servicioId: 'srv-1', tenantId: 'tenant-test' },
+        select: { servicioId: true, moneda: true, nombre: true },
+      });
+      expect(mockTx.venta.create).toHaveBeenCalledWith(expect.objectContaining({
+        data: expect.objectContaining({
+          items: { create: [{ productoId: 'prod-1', cantidad: 2, precioUnitario: 100, total: 200 }] },
+        }),
+      }));
+      expect(mockTx.ventaServicios.create).toHaveBeenCalledWith(expect.objectContaining({
+        data: expect.objectContaining({ servicioId: 'srv-1', cantidad: 1, total: 100, moneda: 'CUP' }),
+      }));
+    });
+
     it('rechaza oferta ya facturada', async () => {
       vi.mocked(getCurrentUser).mockResolvedValue(mockUser);
       vi.mocked(prisma.oferta.findFirst).mockResolvedValue({
@@ -239,6 +283,7 @@ describe('Ofertas Server Actions', () => {
       } as any);
       vi.mocked(applyFacturacionCobroWorkflow).mockResolvedValue({ ventaId: 'ven-1' } as any);
       vi.mocked(applyAnticipoAllocations).mockResolvedValue([]);
+      mockTx.factura.create.mockResolvedValue({ idFactura: 'fac-1' });
 
       const result = await facturarOfertaAction({
         ofertaId: 'of-1',

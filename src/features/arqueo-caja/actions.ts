@@ -7,6 +7,7 @@ import { revalidatePath } from "next/cache";
 import { withAction, ActionError } from "@/lib/server-actions";
 import { prisma } from "@/lib/prisma";
 import { requireTenant } from "@/lib/services/tenant-scope";
+import { getReembolsosTurnoCup } from "@/lib/services/reembolsos-turno";
 import { realizarArqueoSchema, listarArqueosSchema } from "./schemas";
 import type { RealizarArqueoInput, ListarArqueosInput } from "./schemas";
 import type { EsperadosArqueo } from "./types";
@@ -88,6 +89,7 @@ export const getEsperadosArqueoAction = withAction(
 			where: { id: turnoId, tenantId },
 			include: {
 				ventas: {
+					where: { deletedAt: null },
 					select: {
 						metodoPago: true,
 						montoEfectivo: true,
@@ -106,11 +108,14 @@ export const getEsperadosArqueoAction = withAction(
 			.filter((v) => v.metodoPago === "EFECTIVO" || v.metodoPago === "MIXTO")
 			.reduce((sum, v) => sum + (v.montoEfectivo ?? 0), 0);
 
+		// DNC: los reembolsos en efectivo del turno descuentan el esperado.
+		const reembolsosCup = await getReembolsosTurnoCup(turno.id, tenantId);
+
 		// USD se calcula desde fondoInicialUsd (las ventas en USD requerirían tipo de cambio)
 		const ventasEfectivoUsd = 0;
 
 		return {
-			esperadoEfectivoCup: ventasEfectivoCup, // sin fondoInicial — se descuenta al mostrar
+			esperadoEfectivoCup: ventasEfectivoCup - reembolsosCup, // sin fondoInicial — se descuenta al mostrar
 			esperadoEfectivoUsd: turno.fondoInicialUsd + ventasEfectivoUsd,
 			esperadoTarjeta: turno.ventas
 				.filter((v) => v.metodoPago === "TARJETA" || v.metodoPago === "MIXTO")
@@ -150,6 +155,7 @@ export const realizarArqueoAction = withAction(
 			where: { id: parsed.turnoId, tenantId },
 			include: {
 				ventas: {
+					where: { deletedAt: null },
 					select: {
 						metodoPago: true,
 						montoEfectivo: true,
@@ -175,9 +181,11 @@ export const realizarArqueoAction = withAction(
 		const totalCredito = parsed.totalCredito;
 
 		// 3. Calcular esperados desde las ventas (sin fondoInicial — se descuenta al mostrar la diferencia)
-		const esperadoEfectivoCup = turno.ventas
-			.filter((v) => v.metodoPago === "EFECTIVO" || v.metodoPago === "MIXTO")
-			.reduce((sum, v) => sum + (v.montoEfectivo ?? 0), 0);
+		const esperadoEfectivoCup =
+			turno.ventas
+				.filter((v) => v.metodoPago === "EFECTIVO" || v.metodoPago === "MIXTO")
+				.reduce((sum, v) => sum + (v.montoEfectivo ?? 0), 0) -
+			(await getReembolsosTurnoCup(turno.id, tenantId));
 
 		const esperadoEfectivoUsd = turno.fondoInicialUsd;
 

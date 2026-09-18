@@ -6,6 +6,7 @@ import { AuditLogService } from '@/lib/services/audit-log-service'
 import { requireTenant } from '@/lib/services/tenant-scope'
 import { calcularSaldoPendientePrestamo, normalizarEstadoPrestamoCash } from '@/lib/utils/prestamo-cash'
 import { PDFDocument, StandardFonts, rgb } from 'pdf-lib'
+import { buildPersistedAccountingAmount } from '@/features/contabilidad/services/accounting-reconciliation-service'
 
 function prestamosCashEnabled(): boolean { return process.env.NEXT_PUBLIC_ENABLE_PRESTAMOS_CASH !== 'false' }
 
@@ -56,14 +57,14 @@ export async function handlePostPrestamosCash(request: NextRequest, user: Authen
   if (!cuentaOrigen || !cuentaOrigen.isActive) return NextResponse.json({ error: 'Cuenta bancaria no encontrada o inactiva' }, { status: 400 })
   if (cuentaOrigen.saldo < body.montoCapital) return NextResponse.json({ error: `Saldo insuficiente en la cuenta. Disponible: ${cuentaOrigen.saldo}` }, { status: 400 })
 
-  const tp = (await prisma.tipoPago.findFirst({ where: { nombre: 'Transferencia', isActive: true } })) || (await prisma.tipoPago.findFirst({ where: { nombre: 'Efectivo', isActive: true } }))
+  const tp = (await prisma.tipoPago.findFirst({ where: { nombre: 'Transferencia', isActive: true, tenantId } })) || (await prisma.tipoPago.findFirst({ where: { nombre: 'Efectivo', isActive: true, tenantId } }))
   if (!tp) return NextResponse.json({ error: 'No existe un tipo de pago válido para registrar el desembolso' }, { status: 400 })
 
   const prestamo = await prisma.$transaction(async (tx: any) => {
     await tx.cuentaBancaria.update({ where: { cuentaId: body.cuentaBancariaId }, data: { saldo: { decrement: body.montoCapital } } })
     const montoDeuda = body.tasaInteres ? Number((body.montoCapital * (1 + body.tasaInteres / 100)).toFixed(2)) : body.montoCapital
     const cxc = await tx.cuentaPorCobrar.create({ data: { tenantId, clienteId: body.clienteId, montoDeuda, montoPagado: 0, tipoCuenta: 'PRESTAMO_CASH', estado: 'PENDIENTE', fechaVencimiento: body.fechaVencimiento ? new Date(body.fechaVencimiento) : undefined } })
-    await tx.reconciliacionVenta.create({ data: { cuentaId: body.cuentaBancariaId, tipoPagoId: tp.tipoId, monto: body.montoCapital, moneda: body.moneda, montoConvertido: body.tasaCambioAlCrear ? body.montoCapital * body.tasaCambioAlCrear : body.montoCapital, tasaCambio: body.tasaCambioAlCrear, fechaReconciliacion: new Date(), observaciones: body.observaciones || `Desembolso de préstamo cash para cliente ${body.clienteId}`, reconciliadoPor: user.userId, prestamoCashId: null, tipoReconciliacion: 'PRESTAMO_CASH_DESEMBOLSO' } })
+     await tx.reconciliacionVenta.create({ data: { tenantId, cuentaId: body.cuentaBancariaId, tipoPagoId: tp.tipoId, monto: body.montoCapital, moneda: body.moneda, ...buildPersistedAccountingAmount(body.montoCapital, body.moneda, body.tasaCambioAlCrear), fechaReconciliacion: new Date(), observaciones: body.observaciones || `Desembolso de préstamo cash para cliente ${body.clienteId}`, reconciliadoPor: user.userId, prestamoCashId: null, tipoReconciliacion: 'PRESTAMO_CASH_DESEMBOLSO' } })
     return tx.prestamoCash.create({ data: { clienteId: body.clienteId, cuentaPorCobrarId: cxc.id, montoCapital: body.montoCapital, moneda: body.moneda, tasaInteres: body.tasaInteres, tasaCambioAlCrear: body.tasaCambioAlCrear, fechaVencimiento: body.fechaVencimiento ? new Date(body.fechaVencimiento) : undefined, observaciones: body.observaciones, cuentaBancariaId: body.cuentaBancariaId, createdById: user.userId }, include: { cliente: { select: { clienteId: true, nombre: true } }, cuentaPorCobrar: true } })
   })
 
@@ -178,7 +179,8 @@ export async function handlePostPrestamoCashPago(request: NextRequest, context: 
   if (body.monto > sp) return NextResponse.json({ error: `El monto excede el saldo pendiente de ${sp}` }, { status: 400 })
 
   const resultado = await prisma.$transaction(async (tx: any) => {
-    const r = await tx.reconciliacionVenta.create({ data: { cuentaId: body.cuentaId, tipoPagoId: body.tipoPagoId, monto: body.monto, moneda: body.moneda || prestamo.moneda, ...(body.tasaCambio != null && { tasaCambio: body.tasaCambio }), ...(body.observaciones != null && { observaciones: body.observaciones }), reconciliadoPor: user.userId, prestamoCashId: prestamo.id, tipoReconciliacion: 'PRESTAMO_CASH' } })
+     const moneda = body.moneda || prestamo.moneda
+     const r = await tx.reconciliacionVenta.create({ data: { tenantId: prestamo.tenantId, cuentaId: body.cuentaId, tipoPagoId: body.tipoPagoId, monto: body.monto, moneda, ...buildPersistedAccountingAmount(body.monto, moneda, body.tasaCambio), ...(body.observaciones != null && { observaciones: body.observaciones }), reconciliadoPor: user.userId, prestamoCashId: prestamo.id, tipoReconciliacion: 'PRESTAMO_CASH' } })
     await tx.cuentaBancaria.update({ where: { cuentaId: body.cuentaId }, data: { saldo: { increment: body.monto } } })
     const nmp = Number((Number(prestamo.cuentaPorCobrar.montoPagado) + body.monto).toFixed(2))
     const td = Number(prestamo.cuentaPorCobrar.montoDeuda); const ns = calcularSaldoPendientePrestamo(td, nmp); const nec = ns <= 0.01 ? 'PAGADA' : 'PARCIAL'

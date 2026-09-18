@@ -13,8 +13,6 @@ import {
   Trash2,
   Loader2,
   Clock,
-  CheckCircle2,
-  XCircle,
   Plus,
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
@@ -25,6 +23,7 @@ import type { UpdatePlanInput } from '../schemas'
 interface PlanListProps {
   plans: BackupPlanRow[]
   isLoading: boolean
+  tenantNames?: Record<string, string>
   onToggle: (input: UpdatePlanInput) => Promise<boolean>
   onDelete: (planId: string) => Promise<boolean>
   onCreateNew: () => void
@@ -67,6 +66,7 @@ function scheduleLabel(cron: string): string {
 export function PlanList({
   plans,
   isLoading,
+  tenantNames = {},
   onToggle,
   onDelete,
   onCreateNew,
@@ -138,6 +138,9 @@ export function PlanList({
                 </Badge>
               </div>
               <div className="mt-1 flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-muted-foreground">
+                {plan.type === 'tenant' && plan.tenantId ? (
+                  <span>Tenant: {tenantNames[plan.tenantId] ?? plan.tenantId}</span>
+                ) : null}
                 <span>{scheduleLabel(plan.schedule)}</span>
                 <span>Último: {formatDate(plan.lastRunAt)}</span>
                 <span>Próximo: {formatDate(plan.nextRunAt)}</span>

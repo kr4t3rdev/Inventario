@@ -45,6 +45,12 @@ import {
 import { toast } from "sonner";
 import { LazyMotion, m as motion, AnimatePresence } from "framer-motion";
 import { useAuth } from "@/contexts/auth-context";
+import {
+	getEmpleadosAction,
+	getAsistenciaAction,
+	registerAsistenciaAction,
+	updateAsistenciaAction,
+} from "@/features/empleados/actions";
 
 interface Empleado {
 	empleadoId: string;
@@ -99,10 +105,10 @@ export function EnhancedAsistenciaForm() {
 	// Cargar lista de empleados
 	useEffect(() => {
 		getEmpleadosAction()
-			.then((r) => {
+			.then((r: any) => {
 				if (r.success) setEmpleados(r.data ?? []);
 			})
-			.catch((error) => console.error("Error cargando empleados:", error));
+			.catch((error: any) => console.error("Error cargando empleados:", error));
 	}, []);
 
 	// Verificar asistencia de hoy y cargar historial para el empleado seleccionado
@@ -114,12 +120,12 @@ export function EnhancedAsistenciaForm() {
 
 			// Fetch today's attendance
 			getAsistenciaAction({ employeeId: selectedEmpleado, date: today })
-				.then((r) => {
+				.then((r: any) => {
 					if (r.success && r.data) {
 						setAsistenciaHoy(r.data.length > 0 ? r.data[0] : null);
 					}
 				})
-				.catch((error) =>
+				.catch((error: any) =>
 					console.error("Error cargando asistencia de hoy:", error),
 				);
 
@@ -129,10 +135,10 @@ export function EnhancedAsistenciaForm() {
 				startDate: thirtyDaysAgo.toISOString().split("T")[0],
 				endDate: today,
 			})
-				.then((r) => {
+				.then((r: any) => {
 					if (r.success) setHistorialAsistencia(r.data ?? []);
 				})
-				.catch((error) =>
+				.catch((error: any) =>
 					console.error("Error cargando historial de asistencia:", error),
 				);
 		} else {
@@ -174,7 +180,7 @@ export function EnhancedAsistenciaForm() {
 					employeeId: selectedEmpleado,
 					startDate: thirtyDaysAgo.toISOString().split("T")[0],
 					endDate: today,
-				}).then((hr) => {
+				}).then((hr: any) => {
 					if (hr.success) setHistorialAsistencia(hr.data ?? []);
 				});
 			} else {
@@ -222,7 +228,7 @@ export function EnhancedAsistenciaForm() {
 				// Update the record in the history
 				setHistorialAsistencia((prev) =>
 					prev.map((record) =>
-						record.attendanceId === editingRecord.attendanceId ? data : record,
+						record.attendanceId === editingRecord.attendanceId ? (data as any) : record,
 					),
 				);
 

@@ -19,6 +19,7 @@ import { useClientes } from '@/features/clientes/hooks/use-clientes'
 import { createVentaServicioAction } from '@/features/venta-servicios/actions'
 import { AnticipoSelector } from '@/features/contabilidad/components/anticipos/anticipo-selector'
 import type { AnticipoAllocation } from '@/features/contabilidad/components/anticipos/anticipo-selector'
+import { resolverMonedaServicio } from '@/features/servicios/lib/moneda-servicio'
 import { ArrowLeft, Handshake, Save, Loader2 } from 'lucide-react'
 import Link from 'next/link'
 import type { Servicios } from '@/app/models/model'
@@ -29,10 +30,14 @@ const schema = z.object({
   servicioId: z.string().min(1, 'Seleccione un servicio'),
   clienteId: z.string().optional(),
   cantidad: z.coerce.number().int().positive(),
-  precioUnitario: z.coerce.number().int().positive(),
   costo: z.coerce.number().int().optional().default(0),
-  formaCobro: z.enum(['COBRO_DIRECTO', FORMA_COBRO_ANTICIPO]),
+  formaCobro: z.enum(['COBRO_DIRECTO', FORMA_COBRO_ANTICIPO, 'CREDITO']),
+  fechaVencimiento: z.string().optional(),
   observaciones: z.string().optional(),
+}).superRefine((data, ctx) => {
+  if (data.formaCobro === 'CREDITO' && !data.clienteId) {
+    ctx.addIssue({ code: z.ZodIssueCode.custom, path: ['clienteId'], message: 'La venta a crédito requiere un cliente' })
+  }
 })
 
 type FormValues = z.infer<typeof schema>
@@ -55,14 +60,14 @@ export function ServiciosPrestadosForm({ initialServicios }: ServiciosPrestadosF
   const servicios = initialServicios ?? []
   const { clientes, isLoading: isLoadingClientes } = useClientes()
   const form = useForm<FormValues>({
-    resolver: zodResolver(schema),
+    resolver: zodResolver(schema) as any,
     defaultValues: {
       servicioId: '',
       clienteId: '',
       cantidad: 1,
-      precioUnitario: 0,
       costo: 0,
       formaCobro: 'COBRO_DIRECTO',
+      fechaVencimiento: '',
       observaciones: '',
     },
   })
@@ -70,7 +75,8 @@ export function ServiciosPrestadosForm({ initialServicios }: ServiciosPrestadosF
   const servicioId = useWatch({ control: form.control, name: 'servicioId' })
   const clienteId = useWatch({ control: form.control, name: 'clienteId' })
   const cantidad = useWatch({ control: form.control, name: 'cantidad' }) || 1
-  const precioUnitario = useWatch({ control: form.control, name: 'precioUnitario' }) || 0
+  // Precio de solo lectura desde el catálogo; el servidor lo resuelve al guardar.
+  const precioUnitario = servicios.find((s) => s.servicioId === servicioId)?.precio ?? 0
   const totalServicio = cantidad * precioUnitario
   const formaCobro = useWatch({ control: form.control, name: 'formaCobro' })
 
@@ -87,9 +93,10 @@ export function ServiciosPrestadosForm({ initialServicios }: ServiciosPrestadosF
         clienteId: values.clienteId || undefined,
         cantidad: values.cantidad,
         costo: values.costo ?? 0,
-        total: values.cantidad * values.precioUnitario,
         observaciones: values.observaciones,
         anticipos: values.formaCobro === FORMA_COBRO_ANTICIPO ? anticipoAllocations : undefined,
+        condicionPago: values.formaCobro === 'CREDITO' ? 'CREDITO' : 'CONTADO',
+        fechaVencimiento: values.formaCobro === 'CREDITO' && values.fechaVencimiento ? values.fechaVencimiento : undefined,
       })
       if (!result.success) {
         throw new Error(result.error?.message ?? 'Error desconocido')
@@ -174,7 +181,7 @@ export function ServiciosPrestadosForm({ initialServicios }: ServiciosPrestadosF
           
           <CardContent className='pt-8'>
             <Form {...form}>
-              <form className='space-y-6' onSubmit={form.handleSubmit(onSubmit, () => { sileo.error({ title: 'Completá los campos requeridos antes de continuar.' }) })}>
+              <form className='space-y-6' onSubmit={form.handleSubmit(onSubmit as any, () => { sileo.error({ title: 'Completa los campos requeridos antes de continuar.' }) })}>
                 <motion.div
                   initial={{ opacity: 0, x: -20 }}
                   animate={{ opacity: 1, x: 0 }}
@@ -274,27 +281,25 @@ export function ServiciosPrestadosForm({ initialServicios }: ServiciosPrestadosF
                     animate={{ opacity: 1, x: 0 }}
                     transition={{ delay: 0.35 }}
                   >
-                    <FormField
-                      control={form.control}
-                      name='precioUnitario'
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel className='text-slate-700 dark:text-slate-300 text-base'>Precio unitario</FormLabel>
-                          <FormControl>
-                            <div className='relative'>
-                              <span className='absolute left-4 top-1/2 transform -translate-y-1/2 text-slate-400 dark:text-slate-500 text-lg'>$</span>
-                              <Input 
-                                min={1} 
-                                type='number' 
-                                {...field} 
-                                className={`${servicioInputClassName} pl-8`}
-                              />
-                            </div>
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
+                    <FormItem>
+                      <FormLabel className='text-slate-700 dark:text-slate-300 text-base'>Precio unitario (catálogo)</FormLabel>
+                      <FormControl>
+                        <div className='relative'>
+                          <span className='absolute left-4 top-1/2 transform -translate-y-1/2 text-slate-400 dark:text-slate-500 text-lg'>$</span>
+                          <Input
+                            type='number'
+                            value={precioUnitario}
+                            readOnly
+                            disabled
+                            aria-label='Precio unitario del catálogo'
+                            className={`${servicioInputClassName} pl-8 opacity-80`}
+                          />
+                        </div>
+                      </FormControl>
+                      <FormDescription className='text-slate-500 dark:text-slate-500'>
+                        Precio fijado por el catálogo; no es editable.
+                      </FormDescription>
+                    </FormItem>
                   </motion.div>
                 </div>
 
@@ -350,6 +355,7 @@ export function ServiciosPrestadosForm({ initialServicios }: ServiciosPrestadosF
                           <SelectContent>
                             <SelectItem value='COBRO_DIRECTO'>Cobro directo</SelectItem>
                             <SelectItem value={FORMA_COBRO_ANTICIPO}>Cobro con anticipo</SelectItem>
+                            <SelectItem value='CREDITO'>A crédito (cuenta por cobrar)</SelectItem>
                           </SelectContent>
                         </Select>
                         <FormDescription className='text-slate-500 dark:text-slate-500'>
@@ -362,13 +368,31 @@ export function ServiciosPrestadosForm({ initialServicios }: ServiciosPrestadosF
                 </motion.div>
                 </div>
 
+                {formaCobro === 'CREDITO' && (
+                  <div className='space-y-2'>
+                    <label htmlFor='fecha-vencimiento-servicio' className='text-sm font-medium text-slate-700 dark:text-slate-300'>
+                      Fecha de vencimiento (opcional)
+                    </label>
+                    <Input
+                      id='fecha-vencimiento-servicio'
+                      type='date'
+                      value={form.watch('fechaVencimiento') ?? ''}
+                      onChange={(e) => form.setValue('fechaVencimiento', e.target.value, { shouldDirty: true })}
+                      className={servicioInputClassName}
+                    />
+                    <p className='text-xs text-muted-foreground'>
+                      La deuda queda registrada como cuenta por cobrar del cliente; lo aplicado con anticipos se descuenta.
+                    </p>
+                  </div>
+                )}
+
                 {formaCobro === FORMA_COBRO_ANTICIPO && (
                   <AnticipoSelector
                     tipo="COBRO"
                     entidadId={clienteId}
                     montoTotal={totalServicio}
                     onSelectionChange={setAnticipoAllocations}
-                    moneda="CUP"
+                    moneda={resolverMonedaServicio(servicios, servicioId)}
                     disabled={isLoading}
                   />
                 )}
@@ -407,11 +431,10 @@ export function ServiciosPrestadosForm({ initialServicios }: ServiciosPrestadosF
                   transition={{ delay: 0.5 }}
                 >
                   <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}>
-                    <Button 
-                      type='button' 
-                      variant='destructive' 
+                    <Button
+                      type='button'
+                      variant='destructive'
                       onClick={() => router.back()}
-                      className='border-slate-200 dark:border-slate-700 hover:bg-red-150 dark:hover:bg-orange-700'
                     >
                       Cancelar
                     </Button>

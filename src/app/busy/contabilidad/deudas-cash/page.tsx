@@ -1,6 +1,7 @@
 "use client"
 
 import React, { useState, Suspense, useEffect } from "react"
+import { useRouter } from "next/navigation"
 import { Plus } from "lucide-react"
 
 import { Button } from "@/components/ui/button"
@@ -14,6 +15,7 @@ import { DeudasCashTable } from "@/features/contabilidad/components/deudas-cash/
 import { DeudaCashForm } from "@/features/contabilidad/components/deudas-cash/deuda-cash-form"
 import { PagoDeudaModal } from "@/features/contabilidad/components/deudas-cash/pago-deuda-modal"
 import type { DeudaCash } from "@/app/models/model"
+import { useAuth } from "@/contexts/auth-context"
 
 const featureEnabled = process.env.NEXT_PUBLIC_ENABLE_DEUDAS_CASH !== "false"
 
@@ -22,6 +24,8 @@ const featureEnabled = process.env.NEXT_PUBLIC_ENABLE_DEUDAS_CASH !== "false"
  * @returns {JSX.Element} Contenido con tabla, form y modal de pago.
  */
 function DeudasCashContent() {
+  const router = useRouter()
+  const { user } = useAuth()
   const [openForm, setOpenForm] = useState(false)
   const [openPago, setOpenPago] = useState(false)
   const [deudaSeleccionada, setDeudaSeleccionada] = useState<DeudaCash | null>(null)
@@ -29,6 +33,9 @@ function DeudasCashContent() {
   const [deudas, setDeudas] = useState<any[]>([])
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState<any>(null)
+  const isBlocked =
+    user?.role !== 'admin' &&
+    user?.planFeatures?.['deudas-cash'] !== true
 
   const loadDeudas = async () => {
     setIsLoading(true)
@@ -37,6 +44,12 @@ function DeudasCashContent() {
     else setError(r.error)
     setIsLoading(false)
   }
+
+  useEffect(() => {
+    if (isBlocked) {
+      router.replace('/busy/contabilidad')
+    }
+  }, [isBlocked, router])
 
   useEffect(() => { loadDeudas() }, [])
 
@@ -48,6 +61,10 @@ function DeudasCashContent() {
     getCuentasBancariasAction().then(r => { if (r.success) setCuentasBancarias(r.data?.cuentas ?? []) })
     getTiposPagoAction({}).then(r => { if (r.success) setTiposPago(r.data?.data ?? []) })
   }, [])
+
+  if (isBlocked) {
+    return null
+  }
 
   const proveedores = dataProveedores || []
 

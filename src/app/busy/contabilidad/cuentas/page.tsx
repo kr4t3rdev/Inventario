@@ -18,5 +18,10 @@ export default async function CuentasBancariasPage() {
   const result = await getCuentasBancariasAction()
   const cuentas = result.success ? (result.data?.cuentas ?? []) : []
 
-  return <CuentasPageClient cuentas={serializePrismaData(cuentas)} />
+  return (
+    <CuentasPageClient
+      cuentas={serializePrismaData(cuentas)}
+      error={result.success ? undefined : (result.error?.message ?? 'No se pudieron cargar las cuentas bancarias.')}
+    />
+  )
 }

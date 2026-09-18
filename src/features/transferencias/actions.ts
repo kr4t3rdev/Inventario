@@ -8,9 +8,14 @@
 import { revalidatePath } from "next/cache";
 import { withAction, ActionError } from "@/lib/server-actions";
 import { prisma } from "@/lib/prisma";
-import { requireTenant } from "@/lib/services/tenant-scope";
+import { requirePermission, requireTenant } from "@/lib/services/tenant-scope";
 import { notificarTransferencia } from "@/lib/notificaciones-utils";
 import { upsertStockUbicacion } from "@/lib/services/stock-ubicacion-service";
+import {
+	getMovimientosDeOrigen,
+	registrarMovimiento,
+	revertirMovimientosDeOrigen,
+} from "@/features/inventario/movimientos";
 import {
 	createTransferenciaSchema,
 	updateTransferenciaSchema,
@@ -58,10 +63,12 @@ async function getStockDisponibleEnPuntoVenta(
 	);
 }
 
-async function generarNumeroTransferencia(tx: any): Promise<string> {
+// B-01: el correlativo es por tenant (la unicidad es (tenantId, numeroTransferencia)).
+async function generarNumeroTransferencia(tx: any, tenantId: string): Promise<string> {
 	const year = new Date().getFullYear();
 	const count = await tx.transferencia.count({
 		where: {
+			tenantId,
 			createdAt: {
 				gte: new Date(`${year}-01-01`),
 				lt: new Date(`${year + 1}-01-01`),
@@ -303,15 +310,19 @@ export const createTransferenciaAction = withAction(
 			productosValidados.push({ producto, cantidad: item.cantidad });
 		}
 
-		// Validar origen/destino
+		// Validar origen/destino (siempre con aislamiento por tenant)
 		console.log("=== createTransferenciaAction :: validando origen ===", {
 			tipoOrigen,
 			origenId,
 		});
 		const origenValido =
 			tipoOrigen === "almacen"
-				? await prisma.almacen.findUnique({ where: { almacenId: origenId } })
-				: await prisma.puntoDeVenta.findUnique({ where: { pvId: origenId } });
+				? await prisma.almacen.findFirst({
+						where: { almacenId: origenId, tenantId },
+					})
+				: await prisma.puntoDeVenta.findFirst({
+						where: { pvId: origenId, tenantId },
+					});
 		if (!origenValido) {
 			console.error(
 				"=== createTransferenciaAction :: origen no encontrado ===",
@@ -326,8 +337,12 @@ export const createTransferenciaAction = withAction(
 		});
 		const destinoValido =
 			tipoDestino === "almacen"
-				? await prisma.almacen.findUnique({ where: { almacenId: destinoId } })
-				: await prisma.puntoDeVenta.findUnique({ where: { pvId: destinoId } });
+				? await prisma.almacen.findFirst({
+						where: { almacenId: destinoId, tenantId },
+					})
+				: await prisma.puntoDeVenta.findFirst({
+						where: { pvId: destinoId, tenantId },
+					});
 		if (!destinoValido) {
 			console.error(
 				"=== createTransferenciaAction :: destino no encontrado ===",
@@ -342,9 +357,15 @@ export const createTransferenciaAction = withAction(
 			numeroTransferencia: "",
 		});
 
-		const result = await prisma.$transaction(async (tx: any) => {
-			const transferenciasCreadas = [];
-			const numeroTransferencia = await generarNumeroTransferencia(tx);
+		// Crear en transacción con reintento ante colisión de numeración (P2002)
+		// sobre el correlativo por tenant.
+		const MAX_INTENTOS = 3;
+		let result: any[] | null = null;
+		for (let intento = 0; intento < MAX_INTENTOS; intento++) {
+			try {
+				result = await prisma.$transaction(async (tx: any) => {
+					const transferenciasCreadas = [];
+					const numeroTransferencia = await generarNumeroTransferencia(tx, tenantId);
 
 			console.log("=== createTransferenciaAction :: numero generado ===", {
 				numeroTransferencia,
@@ -356,9 +377,9 @@ export const createTransferenciaAction = withAction(
 			] of productosValidados.entries()) {
 				const costoTotal = cantidad * producto.precioCosto;
 				const data: any = {
-					producto: { connect: { id: producto.id } },
+					tenantId,
+					productoId: producto.id,
 					cantidad,
-					tenant: { connect: { tenantId } },
 					costoUnitario: producto.precioCosto,
 					costoTotal,
 					descripcion: descripcion || `Transferencia - ${producto.nombre}`,
@@ -400,12 +421,48 @@ export const createTransferenciaAction = withAction(
 						modo: "increment",
 						delta: cantidad,
 					});
+					await registrarMovimiento(tx, {
+						tenantId,
+						productoId: producto.id,
+						tipoOrigen: "TRANSFERENCIA",
+						origenId: transferencia.transferenciaId,
+						tipoUbicacion: tipoOrigen,
+						ubicacionId: origenId,
+						cantidad: -cantidad,
+						costoUnitario: producto.precioCosto,
+						secuencia: `SALIDA-${idx}`,
+						creadoPorId: user.userId,
+					});
+					await registrarMovimiento(tx, {
+						tenantId,
+						productoId: producto.id,
+						tipoOrigen: "TRANSFERENCIA",
+						origenId: transferencia.transferenciaId,
+						tipoUbicacion: tipoDestino,
+						ubicacionId: destinoId,
+						cantidad,
+						costoUnitario: producto.precioCosto,
+						secuencia: `ENTRADA-${idx}`,
+						creadoPorId: user.userId,
+					});
 				}
 
-				transferenciasCreadas.push(transferencia);
+					transferenciasCreadas.push(transferencia);
+				}
+				return transferenciasCreadas;
+				});
+				break;
+			} catch (error: unknown) {
+				const esColision =
+					(typeof (error as { code?: string })?.code === "string" &&
+						(error as { code?: string }).code === "P2002");
+				if (!esColision || intento === MAX_INTENTOS - 1) throw error;
+				console.warn(`createTransferenciaAction: colisión de numeración, reintento ${intento + 2}`);
 			}
-			return transferenciasCreadas;
-		});
+		}
+		if (!result) {
+			throw new ActionError("No fue posible generar la numeración de la transferencia", "INTERNAL");
+		}
 
 		console.log("=== createTransferenciaAction :: transacción OK ===", {
 			creadas: result.length,
@@ -455,6 +512,7 @@ export const updateTransferenciaAction = withAction(
 			select: {
 				productoId: true,
 				cantidad: true,
+				costoUnitario: true,
 				origenId: true,
 				destinoId: true,
 				puntoDeVentaOrigenId: true,
@@ -554,6 +612,50 @@ export const updateTransferenciaAction = withAction(
 						delta: cantidad,
 					});
 				}
+
+				// Kardex: compensar el documento original y registrar la nueva versión.
+				const originales = await getMovimientosDeOrigen(tx, {
+					tenantId,
+					tipoOrigen: "TRANSFERENCIA",
+					origenId: transferenciaId,
+				});
+				const costoKardex =
+					originales.find((m) => m.secuencia.startsWith("SALIDA"))
+						?.costoUnitario ?? existing.costoUnitario ?? 0;
+
+				await revertirMovimientosDeOrigen(tx, {
+					tenantId,
+					tipoOrigen: "TRANSFERENCIA",
+					origenId: transferenciaId,
+					creadoPorId: user.userId,
+				});
+
+				if (costoKardex > 0) {
+					await registrarMovimiento(tx, {
+						tenantId,
+						productoId,
+						tipoOrigen: "TRANSFERENCIA",
+						origenId: transferenciaId,
+						tipoUbicacion: tipoOrigen,
+						ubicacionId: origenId,
+						cantidad: -cantidad,
+						costoUnitario: costoKardex,
+						secuencia: "SALIDA-1",
+						creadoPorId: user.userId,
+					});
+					await registrarMovimiento(tx, {
+						tenantId,
+						productoId,
+						tipoOrigen: "TRANSFERENCIA",
+						origenId: transferenciaId,
+						tipoUbicacion: tipoDestino,
+						ubicacionId: destinoId,
+						cantidad,
+						costoUnitario: costoKardex,
+						secuencia: "ENTRADA-1",
+						creadoPorId: user.userId,
+					});
+				}
 			}
 
 			const updated = await tx.transferencia.findUnique({
@@ -571,7 +673,7 @@ export const deleteTransferenciaAction = withAction(
 	async (id: string, user: AuthenticatedUser) => {
 		const tenantId = requireTenant(user);
 		const transferencia = await prisma.transferencia.findFirst({
-			where: { transferenciaId: id, tenantId, deletedAt: null },
+			where: { transferenciaId: id, tenantId },
 			include: {
 				producto: true,
 				origen: true,
@@ -582,48 +684,121 @@ export const deleteTransferenciaAction = withAction(
 		});
 		if (!transferencia)
 			throw new ActionError("Transferencia no encontrada", "NOT_FOUND");
-		if (transferencia.estado === "CANCELADA")
-			throw new ActionError(
-				"La transferencia ya está cancelada",
-				"VALIDATION_ERROR",
-			);
 
-		await prisma.$transaction(async (tx: any) => {
-			await tx.transferencia.update({
+		// El soft-delete es idempotente: un reintento no debe volver a mover stock.
+		if (transferencia.deletedAt) {
+			revalidatePath("/busy/transferencias");
+			return { success: true, id, message: "Transferencia ya cancelada" };
+		}
+		if (transferencia.estado === "CANCELADA") {
+			// Compatibilidad con filas legacy CANCELADA sin deletedAt: ocúltala sin stock.
+			await prisma.$transaction(async (tx: any) => {
+				await tx.transferencia.updateMany({
+					where: {
+						transferenciaId: id,
+						tenantId,
+						deletedAt: null,
+						estado: "CANCELADA",
+					},
+					data: { deletedAt: new Date() },
+				});
+			});
+			revalidatePath("/busy/transferencias");
+			return { success: true, id, message: "Transferencia ya cancelada" };
+		}
+
+		const result = await prisma.$transaction(async (tx: any) => {
+			const current = await tx.transferencia.findUnique({
 				where: { transferenciaId: id },
+				select: {
+					tenantId: true,
+					deletedAt: true,
+					estado: true,
+					productoId: true,
+					cantidad: true,
+					origenId: true,
+					destinoId: true,
+					puntoDeVentaOrigenId: true,
+					puntoDeVentaDestinoId: true,
+				},
+			});
+			if (!current || current.tenantId !== tenantId)
+				throw new ActionError("Transferencia no encontrada", "NOT_FOUND");
+			if (current.deletedAt || current.estado === "CANCELADA")
+				return { claimed: false as const, idempotent: true as const };
+
+			// Reclamo atómico y tenant-scoped para impedir doble reversión concurrente.
+			const claim = await tx.transferencia.updateMany({
+				where: {
+					transferenciaId: id,
+					tenantId,
+					deletedAt: null,
+					estado: current.estado,
+				},
 				data: { estado: "CANCELADA", deletedAt: new Date() },
 			});
+			if (claim.count !== 1) {
+				const latest = await tx.transferencia.findUnique({
+					where: { transferenciaId: id },
+					select: { tenantId: true, deletedAt: true, estado: true },
+				});
+				if (!latest || latest.tenantId !== tenantId)
+					throw new ActionError("Transferencia no encontrada", "NOT_FOUND");
+				if (latest.deletedAt || latest.estado === "CANCELADA") {
+					return { claimed: false as const, idempotent: true as const };
+				}
+				throw new ActionError(
+					"La transferencia cambió de estado; vuelve a cargarla e inténtalo de nuevo",
+					"CONFLICT",
+				);
+			}
 
 			// Solo revertir stock si la transferencia estaba COMPLETADA
 			// (PENDIENTE/APROBADA nunca movieron stock)
-			if (transferencia.estado === "COMPLETADA") {
-				const tipoOrigen = transferencia.origenId
+			if (current.estado === "COMPLETADA") {
+				const tipoOrigen = current.origenId
 					? ("almacen" as const)
 					: ("punto_venta" as const);
-				const tipoDestino = transferencia.destinoId
+				const tipoDestino = current.destinoId
 					? ("almacen" as const)
 					: ("punto_venta" as const);
-				const origenUbicacionId = (transferencia.origenId ||
-					transferencia.puntoDeVentaOrigenId)!;
-				const destinoUbicacionId = (transferencia.destinoId ||
-					transferencia.puntoDeVentaDestinoId)!;
+				const origenUbicacionId = (current.origenId ||
+					current.puntoDeVentaOrigenId)!;
+				const destinoUbicacionId = (current.destinoId ||
+					current.puntoDeVentaDestinoId)!;
 
 				await upsertStockUbicacion(tx, {
-					productoId: transferencia.productoId,
+					tenantId,
+					productoId: current.productoId,
 					tipoUbicacion: tipoOrigen,
 					ubicacionId: origenUbicacionId,
 					modo: "increment",
-					delta: transferencia.cantidad,
+					delta: current.cantidad,
 				});
 				await upsertStockUbicacion(tx, {
-					productoId: transferencia.productoId,
+					tenantId,
+					productoId: current.productoId,
 					tipoUbicacion: tipoDestino,
 					ubicacionId: destinoUbicacionId,
 					modo: "increment",
-					delta: -transferencia.cantidad,
+					delta: -current.cantidad,
+				});
+
+				// Kardex: compensación de las líneas originales con su costo histórico.
+				await revertirMovimientosDeOrigen(tx, {
+					tenantId,
+					tipoOrigen: "TRANSFERENCIA",
+					origenId: id,
+					creadoPorId: user.userId,
 				});
 			}
+			return { claimed: true as const };
 		});
+
+		if (!result.claimed && result.idempotent) {
+			revalidatePath("/busy/transferencias");
+			return { success: true, id, message: "Transferencia ya cancelada" };
+		}
 
 		revalidatePath("/busy/transferencias");
 		return { success: true, id, message: "Transferencia cancelada" };
@@ -638,6 +813,8 @@ export const aprobarTransferenciaAction = withAction(
 	async (input: AprobarTransferenciaInput, user: AuthenticatedUser) => {
 		const parsed = aprobarTransferenciaSchema.parse(input);
 		const tenantId = requireTenant(user);
+		// B-01: la aprobación es decisión de jefatura (no del operador).
+		requirePermission(user, "inventario.transferencias.aprobar", "aprobar transferencias");
 
 		const transferencia = await prisma.transferencia.findFirst({
 			where: {
@@ -705,11 +882,50 @@ export const completarTransferenciaAction = withAction(
 			puntoDeVentaDestinoId,
 		} = transferencia;
 
-		await prisma.$transaction(async (tx: any) => {
-			await tx.transferencia.update({
-				where: { transferenciaId: parsed.transferenciaId },
-				data: { estado: "COMPLETADA" },
+		// B-01: recepción parcial — se mueve solo lo confirmado recibido.
+		const cantidadRecibida = parsed.cantidadRecibida ?? cantidad;
+		if (cantidadRecibida > cantidad) {
+			throw new ActionError(
+				`La cantidad recibida (${cantidadRecibida}) no puede superar la enviada (${cantidad})`,
+				"VALIDATION_ERROR",
+			);
+		}
+		const esParcial = cantidadRecibida < cantidad;
+
+		const result = await prisma.$transaction(async (tx: any) => {
+			const claim = await tx.transferencia.updateMany({
+				where: {
+					transferenciaId: parsed.transferenciaId,
+					tenantId,
+					deletedAt: null,
+					estado: { in: ["APROBADA", "EN_TRANSITO"] },
+				},
+				data: {
+					estado: "COMPLETADA",
+					cantidadRecibida,
+					...(esParcial
+						? {
+								descripcion: `Recepción parcial: ${cantidadRecibida} de ${cantidad} unidades recibidas`,
+							}
+						: {}),
+				},
 			});
+			if (claim.count !== 1) {
+				const current = await tx.transferencia.findUnique({
+					where: { transferenciaId: parsed.transferenciaId },
+					select: { tenantId: true, deletedAt: true, estado: true },
+				});
+				if (!current || current.tenantId !== tenantId)
+					throw new ActionError("Transferencia no encontrada", "NOT_FOUND");
+				if (current.deletedAt || current.estado === "CANCELADA")
+					throw new ActionError("La transferencia ya no está disponible", "CONFLICT");
+				if (current.estado === "COMPLETADA")
+					return { alreadyCompleted: true as const };
+				throw new ActionError(
+					`La transferencia está en estado ${current.estado}, solo se pueden completar transferencias aprobadas o en tránsito`,
+					"CONFLICT",
+				);
+			}
 
 			// Sincronizar StockUbicacion
 			const origenEsAlmacen = !!origenId;
@@ -728,18 +944,46 @@ export const completarTransferenciaAction = withAction(
 				tipoUbicacion: tipoOrigen,
 				ubicacionId: origenUbicacionId,
 				modo: "increment",
-				delta: -cantidad,
+				delta: -cantidadRecibida,
 			});
 			await upsertStockUbicacion(tx, {
 				productoId,
 				tipoUbicacion: tipoDestino,
 				ubicacionId: destinoUbicacionId,
 				modo: "increment",
-				delta: cantidad,
+				delta: cantidadRecibida,
 			});
+			const costoUnitario = transferencia.costoUnitario ?? transferencia.producto.precioCosto;
+			await registrarMovimiento(tx, {
+				tenantId,
+				productoId,
+				tipoOrigen: "TRANSFERENCIA",
+				origenId: transferencia.transferenciaId,
+				tipoUbicacion: tipoOrigen,
+				ubicacionId: origenUbicacionId,
+				cantidad: -cantidadRecibida,
+				costoUnitario,
+				secuencia: "SALIDA-0",
+				creadoPorId: user.userId,
+			});
+			await registrarMovimiento(tx, {
+				tenantId,
+				productoId,
+				tipoOrigen: "TRANSFERENCIA",
+				origenId: transferencia.transferenciaId,
+				tipoUbicacion: tipoDestino,
+				ubicacionId: destinoUbicacionId,
+				cantidad: cantidadRecibida,
+				costoUnitario,
+				secuencia: "ENTRADA-0",
+				creadoPorId: user.userId,
+			});
+			return { alreadyCompleted: false as const };
 		});
 
 		revalidatePath("/busy/transferencias");
+		if (result.alreadyCompleted)
+			return { success: true, message: "Transferencia ya completada" };
 		return { success: true, message: "Transferencia completada" };
 	},
 );
@@ -752,6 +996,8 @@ export const rechazarTransferenciaAction = withAction(
 	async (input: RechazarTransferenciaInput, user: AuthenticatedUser) => {
 		const parsed = rechazarTransferenciaSchema.parse(input);
 		const tenantId = requireTenant(user);
+		// B-01: rechazar también es decisión de jefatura.
+		requirePermission(user, "inventario.transferencias.aprobar", "rechazar transferencias");
 
 		const transferencia = await prisma.transferencia.findFirst({
 			where: {

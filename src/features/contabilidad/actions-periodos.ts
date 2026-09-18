@@ -13,19 +13,36 @@
 import { z } from "zod";
 import { revalidatePath } from "next/cache";
 import { withAction, ActionError } from "@/lib/server-actions";
-import { requireTenant } from "@/lib/services/tenant-scope";
+import { requireFeature, requireTenant } from "@/lib/services/tenant-scope";
 import type { AuthenticatedUser } from "@/lib/auth-middleware";
 import { PeriodoContableService } from "@/lib/services/periodo-contable-service";
 import { AperturaPeriodoService } from "@/lib/services/apertura-periodo-service";
-import { SnapshotService } from "@/lib/services/periodo-snapshot-service";
+import { AuditLogService } from "@/lib/services/audit-log-service";
 import { invalidateCache } from "@/lib/services/periodo-contable-guard";
 import {
 	TipoPeriodo,
 	EstadoPeriodo,
 	CategoriaPeriodo,
+	ModoContable,
 } from "@/lib/services/periodo-contable-types";
+import { getAccountingYear } from "@/lib/services/fecha-operacion-registry";
 import { isTenantAdminRole } from "@/lib/auth/roles";
 import { prisma } from "@/lib/prisma";
+import type { Prisma } from "@/generated/prisma";
+import { getCurrentBalance } from "@/features/contabilidad/services/current-balance-service";
+import { getReconciledResultForYear } from "@/features/contabilidad/services/reconciled-result-service";
+import {
+	captureFinancialAuxiliaryCheckpoint,
+	collectFinancialAuxiliaryEvidence,
+	type FinancialAuxiliaryCheckpointPayload,
+	} from "@/features/contabilidad/services/financial-auxiliary-checkpoint-service";
+import { acquireAccountingTenantLock } from "@/features/contabilidad/services/accounting-tenant-lock-service";
+import {
+	approveFinancialSnapshotV3,
+	captureFinancialSnapshotV3,
+} from "@/features/contabilidad/services/financial-snapshot-v3-service";
+import { hashImmutableFinancialEvidence } from "@/features/contabilidad/services/immutable-financial-evidence";
+import { isFinancialV3CaptureEnabled } from "@/features/contabilidad/config/financial-v3-capture";
 import {
 	obtenerBalanceConVariacion,
 	obtenerVentasVsReconciliado,
@@ -34,6 +51,13 @@ import {
 } from "@/features/contabilidad/cuadre-queries";
 
 // ── Period Lock Check (para bloqueos visuales en UI) ─────────────────────
+
+
+function requirePeriodManagementAccess(user: AuthenticatedUser, action: string): void {
+  requireFeature(user, 'contabilidad', action);
+}
+ 
+
 
 const checkLockSchema = z.object({
 	fecha: z.string().min(1, "Fecha requerida"),
@@ -93,7 +117,7 @@ const abrirPeriodoSchema = z.object({
 		.datetime({ message: "La fecha de fin debe ser una fecha válida" }),
 	observaciones: z.string().max(500).optional(),
 	categoria: z.nativeEnum(CategoriaPeriodo).optional(),
-	modoContable: z.string().optional(),
+	modoContable: z.nativeEnum(ModoContable).optional(),
 });
 
 /**
@@ -142,6 +166,7 @@ export const listarPeriodosAction = withAction(
 		} = {},
 		user: AuthenticatedUser,
 	) => {
+		requirePeriodManagementAccess(user, 'gestionar períodos contables');
 		const tenantId = requireTenant(user);
 		const { tipo, estado, page = 1, limit = 50 } = input;
 
@@ -236,6 +261,8 @@ export const listarPeriodosAction = withAction(
  */
 export const obtenerPeriodoAction = withAction(
 	async (periodoId: string, user: AuthenticatedUser) => {
+		requirePeriodManagementAccess(user, 'consultar períodos contables');
+			requirePeriodManagementAccess(user, 'verificar operaciones pendientes del período');
 		const tenantId = requireTenant(user);
 
 		const periodo = await prisma.periodoContable.findFirst({
@@ -288,6 +315,7 @@ export const obtenerPeriodoAction = withAction(
  */
 export const obtenerTimelineAction = withAction(
 	async (periodoId: string, user: AuthenticatedUser) => {
+			requirePeriodManagementAccess(user, 'consultar el timeline de períodos contables');
 		const tenantId = requireTenant(user);
 
 		// Verificar que el período pertenece al tenant
@@ -328,12 +356,12 @@ export const abrirPeriodoAction = withAction(
 		user: AuthenticatedUser,
 	) => {
 		const tenantId = requireTenant(user);
+		requirePeriodManagementAccess(user, 'abrir períodos contables');
 		const parsed = abrirPeriodoSchema.parse(input);
 
 		const fechaInicio = new Date(parsed.fechaInicio);
 		const fechaFin = new Date(parsed.fechaFin);
 
-		// Validar que fechaInicio <= fechaFin
 		if (fechaInicio > fechaFin) {
 			throw new ActionError(
 				"La fecha de inicio no puede ser posterior a la fecha de fin",
@@ -341,29 +369,41 @@ export const abrirPeriodoAction = withAction(
 			);
 		}
 
-		const periodo = await PeriodoContableService.abrirPeriodo(
-			{
+		// Transacción: período + apertura se crean juntos o nada
+		const { periodo } = await prisma.$transaction(async (tx) => {
+			const p = await PeriodoContableService.abrirPeriodo(
+				{
+					tenantId,
+					tipo: parsed.tipo,
+					fechaInicio,
+					fechaFin,
+					observaciones: parsed.observaciones,
+					categoria: parsed.categoria,
+					modoContable: parsed.modoContable,
+				},
+				user.userId,
+				tx,
+			);
+
+			await AperturaPeriodoService.createAperturaPeriodo(
+				p.periodoId,
 				tenantId,
-				tipo: parsed.tipo,
-				fechaInicio,
-				fechaFin,
-				observaciones: parsed.observaciones,
-				categoria: parsed.categoria,
-				modoContable: parsed.modoContable,
-			},
-			user.userId,
-		);
+				user.userId,
+				tx,
+			);
 
-		// Crear asiento de apertura formal con saldos iniciales
-		await AperturaPeriodoService.createAperturaPeriodo(
-			periodo.periodoId,
-			tenantId,
-			user.userId,
-		);
+			return { periodo: p };
+		});
 
-		// Invalidar caché del guard para este tenant
+		AuditLogService.log({
+			accion: "CREATE",
+			entidad: "CIERRE_CONTABLE",
+			entidadId: periodo.periodoId,
+			usuarioId: user.userId,
+			detalles: { tipo: parsed.tipo, fechaInicio: parsed.fechaInicio, fechaFin: parsed.fechaFin, accion: "ABRIR" },
+		}).catch((err) => console.error("[AuditLog] Error logging abrir periodo:", err));
+
 		await invalidateCache(tenantId);
-
 		revalidatePath("/busy/contabilidad/periodos");
 
 		return { periodo };
@@ -387,6 +427,7 @@ export const cerrarPeriodoAction = withAction(
 		user: AuthenticatedUser,
 	) => {
 		const tenantId = requireTenant(user);
+		requirePeriodManagementAccess(user, 'cerrar períodos contables');
 		const parsed = cerrarPeriodoSchema.parse(input);
 
 		// Verificar ownership del tenant
@@ -399,47 +440,204 @@ export const cerrarPeriodoAction = withAction(
 		}
 
 		// Usar modo contable del período (CAJA | DEVENGO)
-		const modoContable = (periodo.modoContable ?? "CAJA") as "CAJA" | "DEVENGO";
-		const modoSnapshot = modoContable === "CAJA" ? "caja" : "devengo";
-
-		// Generar snapshot ANTES de cerrar (captura el estado mientras está ABIERTO)
-		const snapshotService = new SnapshotService();
-		const snapshots = await snapshotService.generarSnapshot(
-			parsed.periodoId,
-			modoSnapshot,
-			user.userId,
-		);
-
-		// Generar resumen agregado con hash de integridad
-		const { resumenJson, hashIntegridad } =
-			await snapshotService.generarResumenSnapshot(
-				tenantId,
-				periodo.fechaInicio,
-				periodo.fechaFin,
-				modoContable,
-			);
-
-		// Cerrar período (valida transición e hijos)
-		// Managers y admins del tenant auto-aprueban al cerrar
 		const esAdminTenant = isTenantAdminRole(user.tenantRole);
-		const cerrado = await PeriodoContableService.cerrarPeriodo(
-			parsed.periodoId,
-			user.userId,
-			{ snapshotsCount: snapshots.length },
-			esAdminTenant,
-		);
+		if (periodo.tipo === TipoPeriodo.ANUAL && !isFinancialV3CaptureEnabled()) {
+			throw new ActionError(
+				"La captura financiera v3 no está habilitada para este entorno",
+				"CUTOFF_EVIDENCE_UNAVAILABLE",
+			);
+		}
+		let snapshotsCount = 0;
+		// Cerrar período y persistir su evidencia en una sola transacción.
+		// Managers y admins del tenant auto-aprueban al cerrar.
+			const { cerrado } = await prisma.$transaction(async (tx) => {
+				await acquireAccountingTenantLock(tx, tenantId);
+				let resultadoCierre;
 
-		// Persistir resumen y hash en el período (después del close exitoso)
-		await prisma.periodoContable.update({
-			where: { periodoId: parsed.periodoId },
-			data: { resumenJson, hashIntegridad },
-		});
+				if (periodo.tipo === TipoPeriodo.ANUAL) {
+					const year = getAccountingYear(periodo.fechaInicio);
+					let collectedResult: Awaited<ReturnType<typeof getReconciledResultForYear>> | undefined;
+					let collectedBalance: Awaited<ReturnType<typeof getCurrentBalance>> | undefined;
 
-		// Crear versión historificada de SnapshotPeriodo
-		await snapshotService.crearVersionSnapshot(parsed.periodoId, {
-			resumenJson: resumenJson as Record<string, unknown>,
-			hashIntegridad,
-		});
+					const checkpoint = await captureFinancialAuxiliaryCheckpoint({
+						tenantId,
+						capturedBy: user.userId,
+						schemaVersion: 3,
+						client: tx,
+						collectEvidence: async (checkpointClient, checkpointCutoffAt) => {
+							collectedResult = await getReconciledResultForYear({
+								tenantId,
+								year,
+								cutoffAt: checkpointCutoffAt,
+								client: checkpointClient,
+							});
+							collectedBalance = await getCurrentBalance({
+								tenantId,
+								asOf: checkpointCutoffAt,
+								currentResult: collectedResult.annual.reconciledResult,
+								currentResultYear: year,
+								client: checkpointClient,
+							});
+							const auxiliaries = await collectFinancialAuxiliaryEvidence({
+								client: checkpointClient,
+								tenantId,
+								cutoffAt: checkpointCutoffAt,
+								functionalCurrency: collectedBalance.functionalCurrency,
+							});
+
+							const resultRecord = collectedResult as unknown as Record<string, unknown>;
+							const resultCoverage = resultRecord.coverage as
+								| { complete?: boolean }
+								| undefined;
+							const balanceCoverage = collectedBalance.coverage as
+								{ complete?: boolean } | undefined;
+							const incidents = resultRecord.incidents;
+							const estimates = resultRecord.estimates;
+							if (
+								balanceCoverage?.complete !== true ||
+								resultCoverage?.complete === false ||
+								(Array.isArray(incidents) && incidents.length > 0) ||
+								(Array.isArray(estimates) && estimates.length > 0)
+							) {
+								throw new ActionError(
+									"No existe evidencia canónica completa para capturar el cierre anual",
+									"CUTOFF_EVIDENCE_UNAVAILABLE",
+								);
+							}
+
+							return {
+								functionalCurrency: collectedBalance.functionalCurrency,
+								balance: collectedBalance,
+								result: collectedResult,
+								resultThrough: periodo.fechaFin.toISOString(),
+								sourceFingerprints: {
+									reconciledPeriods: String(collectedResult.monthly.length),
+								},
+								appliedFxEvidence: [],
+								auxiliaries,
+							};
+						},
+					});
+
+					const checkpointPayload = checkpoint.payload as unknown as
+						FinancialAuxiliaryCheckpointPayload;
+					const result = (collectedResult ?? checkpointPayload.result) as Awaited<
+						ReturnType<typeof getReconciledResultForYear>
+					>;
+					const balance = (collectedBalance ?? checkpointPayload.balance) as Awaited<
+						ReturnType<typeof getCurrentBalance>
+					>;
+					const checkpointCutoffAt = new Date(checkpointPayload.cutoffAt);
+					const checkpointCapturedAt = new Date(checkpointPayload.capturedAt);
+					const auxiliaries = checkpointPayload.version === 3
+						? checkpointPayload.auxiliaries
+						: undefined;
+					if (!auxiliaries) {
+						throw new ActionError(
+							"La evidencia auxiliar v3 no está disponible para el cierre anual",
+							"CUTOFF_EVIDENCE_UNAVAILABLE",
+						);
+					}
+					const resultRecord = result as unknown as Record<string, unknown>;
+					const incidents = Array.isArray(resultRecord.incidents)
+						? resultRecord.incidents
+						: [];
+					const estimates = Array.isArray(resultRecord.estimates)
+						? resultRecord.estimates
+						: [];
+					const cashFlow = resultRecord.annual;
+					const annualCashFlow = cashFlow && typeof cashFlow === "object"
+						? (cashFlow as Record<string, unknown>).cashFlow
+						: undefined;
+					if (!annualCashFlow || typeof annualCashFlow !== "object") {
+						throw new ActionError(
+							"El resultado canónico no contiene flujo de caja auditable",
+							"CUTOFF_EVIDENCE_UNAVAILABLE",
+						);
+					}
+					const sourceFingerprints = Object.fromEntries(
+						Object.entries(auxiliaries).map(([source, entries]) => [
+							source,
+							hashImmutableFinancialEvidence(entries),
+						]),
+					);
+					const snapshotPayload = {
+						cutoffAt: checkpointCutoffAt,
+						capturedAt: checkpointCapturedAt,
+						range: {
+							gte: periodo.fechaInicio.toISOString(),
+							lt: checkpointCutoffAt.toISOString(),
+						},
+						functionalCurrency: balance.functionalCurrency,
+						canonicalContractVersion: "financial-report.v3",
+						balance: balance as unknown as Record<string, unknown>,
+						result: result as unknown as Record<string, unknown>,
+						cashFlow: annualCashFlow as Record<string, unknown>,
+						coverage: {
+							balance: balance.coverage,
+							result: {
+								complete: incidents.length === 0 && estimates.length === 0,
+								incidentCount: incidents.length,
+								estimateCount: estimates.length,
+							},
+						},
+						provenance: {
+							appliedFxEvidence: checkpointPayload.appliedFxEvidence,
+							sourceFingerprints,
+						},
+					};
+					let approved: Awaited<ReturnType<typeof approveFinancialSnapshotV3>>;
+					try {
+						const captured = await captureFinancialSnapshotV3({
+							tenantId,
+							periodoId: parsed.periodoId,
+							version: 1,
+							...snapshotPayload,
+						}, tx);
+						approved = captured.status === "APPROVED"
+							? captured
+							: await approveFinancialSnapshotV3({
+								tenantId,
+								snapshotId: captured.snapshotId,
+								approvedAt: new Date(),
+								approvedBy: user.userId,
+							}, tx);
+					} catch (error) {
+						if (error instanceof ActionError) throw error;
+						throw new ActionError(
+							"No fue posible aprobar la evidencia financiera v3",
+							"FINANCIAL_V3_APPROVAL_FAILED",
+						);
+					}
+
+					await tx.periodoContable.update({
+						where: { periodoId: parsed.periodoId },
+						data: {
+							resumenJson: approved.resumenJson as unknown as Prisma.InputJsonValue,
+							hashIntegridad: approved.hashIntegridad,
+						},
+					});
+					snapshotsCount = 1;
+				}
+
+				resultadoCierre = await PeriodoContableService.cerrarPeriodo(
+					parsed.periodoId,
+					user.userId,
+					{ snapshotsCount },
+					esAdminTenant,
+					tx,
+				);
+
+				return { cerrado: resultadoCierre };
+			}, { isolationLevel: "Serializable" });
+
+		AuditLogService.log({
+			accion: "UPDATE",
+			entidad: "CIERRE_CONTABLE",
+			entidadId: parsed.periodoId,
+			usuarioId: user.userId,
+			detalles: { accion: "CERRAR", snapshotsCount },
+		}).catch((err) => console.error("[AuditLog] Error logging cerrar periodo:", err));
 
 		// Invalidar caché del guard
 		await invalidateCache(tenantId);
@@ -448,7 +646,7 @@ export const cerrarPeriodoAction = withAction(
 
 		return {
 			periodo: cerrado,
-			snapshots: snapshots.length,
+			snapshots: snapshotsCount,
 		};
 	},
 );
@@ -471,6 +669,7 @@ export const reabrirPeriodoAction = withAction(
 		user: AuthenticatedUser,
 	) => {
 		const tenantId = requireTenant(user);
+		requirePeriodManagementAccess(user, 'reabrir períodos contables');
 		const parsed = reabrirPeriodoSchema.parse(input);
 
 		// Verificar ownership del tenant
@@ -487,6 +686,14 @@ export const reabrirPeriodoAction = withAction(
 			user.userId,
 			parsed.motivo,
 		);
+
+		AuditLogService.log({
+			accion: "UPDATE",
+			entidad: "CIERRE_CONTABLE",
+			entidadId: parsed.periodoId,
+			usuarioId: user.userId,
+			detalles: { accion: "REABRIR", motivo: parsed.motivo },
+		}).catch((err) => console.error("[AuditLog] Error logging reopen periodo:", err));
 
 		// Invalidar caché del guard
 		await invalidateCache(tenantId);
@@ -514,6 +721,7 @@ export const aprobarPeriodoAction = withAction(
 		user: AuthenticatedUser,
 	) => {
 		const tenantId = requireTenant(user);
+		requirePeriodManagementAccess(user, 'aprobar períodos contables');
 		const parsed = aprobarPeriodoSchema.parse(input);
 
 		// Verificar ownership del tenant
@@ -529,6 +737,14 @@ export const aprobarPeriodoAction = withAction(
 			parsed.periodoId,
 			user.userId,
 		);
+
+		AuditLogService.log({
+			accion: "UPDATE",
+			entidad: "CIERRE_CONTABLE",
+			entidadId: parsed.periodoId,
+			usuarioId: user.userId,
+			detalles: { accion: "APROBAR" },
+		}).catch((err) => console.error("[AuditLog] Error logging approve periodo:", err));
 
 		revalidatePath("/busy/contabilidad/periodos");
 
@@ -549,6 +765,7 @@ export const aprobarPeriodoAction = withAction(
  */
 export const obtenerDashboardPeriodosAction = withAction(
 	async (_input: Record<string, never> = {}, user: AuthenticatedUser) => {
+			requirePeriodManagementAccess(user, 'consultar períodos contables');
 		const tenantId = requireTenant(user);
 
 		// 1. Conteo por estado
@@ -644,6 +861,7 @@ export const obtenerDashboardPeriodosAction = withAction(
  */
 export const integrarArqueosEnPeriodoAction = withAction(
 	async (periodoId: string, user: AuthenticatedUser) => {
+			requirePeriodManagementAccess(user, 'integrar arqueos en períodos contables');
 		const tenantId = requireTenant(user);
 
 		const periodo = await prisma.periodoContable.findFirst({
@@ -706,10 +924,10 @@ export const integrarArqueosEnPeriodoAction = withAction(
 				periodoId,
 				tenantId,
 				saldoCajaInicial: 0,
-				detalleJson: detalle as Record<string, unknown>,
+				detalleJson: detalle as unknown as Prisma.InputJsonValue,
 			},
 			update: {
-				detalleJson: detalle as Record<string, unknown>,
+				detalleJson: detalle as unknown as Prisma.InputJsonValue,
 			},
 		});
 
@@ -756,6 +974,7 @@ export const obtenerCuadrePeriodoAction = withAction(
 		input: z.infer<typeof obtenerCuadreSchema>,
 		user: AuthenticatedUser,
 	) => {
+			requirePeriodManagementAccess(user, 'consultar el cuadre de períodos contables');
 		const tenantId = requireTenant(user);
 		const parsed = obtenerCuadreSchema.parse(input);
 
@@ -855,6 +1074,7 @@ export const obtenerOperacionesDiaAction = withAction(
 		input: z.infer<typeof obtenerOperacionesDiaSchema>,
 		user: AuthenticatedUser,
 	) => {
+			requirePeriodManagementAccess(user, 'consultar operaciones de períodos contables');
 		const tenantId = requireTenant(user);
 		const parsed = obtenerOperacionesDiaSchema.parse(input);
 

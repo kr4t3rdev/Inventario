@@ -1,13 +1,13 @@
 'use client'
 
-import { useCallback, useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { useFieldArray, useForm, useWatch } from 'react-hook-form'
 import { z } from 'zod'
 import { sileo } from '@/lib/sileo-shim'
 import { LazyMotion, m as motion, AnimatePresence } from 'framer-motion'
-import { ShoppingCart, Sparkles, Loader2, Plus, Trash2, Package } from 'lucide-react'
+import { ShoppingCart, Loader2, Plus, Trash2, Package } from 'lucide-react'
 
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
@@ -22,6 +22,7 @@ import type { Producto, Vendor } from '@/app/models/model'
 import { useVendors } from '@/features/vendors/hooks/use-vendors'
 import { useProductos } from '@/features/productos/hooks/use-productos'
 import { createCompraProductoAction } from '@/features/compras-productos/actions'
+import { getOrdenesCompraAction } from '@/features/compras-productos/actions-oc'
 import { getAnticiposAction } from '@/features/contabilidad/actions-anticipos'
 import { FORMA_PAGO_ANTICIPO_PAGO } from '@/lib/constants/anticipos'
 
@@ -33,10 +34,12 @@ const itemSchema = z.object({
 
 const compraDocumentoSchema = z.object({
   proveedorId: z.string().min(1, 'Seleccione un proveedor'),
+  ordenCompraId: z.string().optional().default(''),
   numeroFactura: z.string().optional().default(''),
   facturaUrl: z.string().optional().default(''),
   formaPago: z.enum(['PAGO_PARCIAL', 'PAGO_COMPLETO', FORMA_PAGO_ANTICIPO_PAGO]),
   estado: z.enum(['PENDIENTE', 'PAGADA']),
+  moneda: z.enum(['CUP', 'USD', 'EUR', 'MLC']),
   descripcionCompra: z.string().max(500).optional().default(''),
   fechaVencimiento: z.string().optional().default(''),
   anticipoPagoId: z.string().optional().default(''),
@@ -80,6 +83,12 @@ interface CompraProductoFormProps {
 export function CompraProductoForm({ onSuccess }: CompraProductoFormProps) {
   const router = useRouter()
   const [isLoading, setIsLoading] = useState(false)
+  const submittingRef = useRef(false)
+  const [claveIdempotencia] = useState(() =>
+    typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function'
+      ? crypto.randomUUID()
+      : `${Date.now()}-${Math.random()}`,
+  )
   const anticiposFeatureEnabled = process.env.NEXT_PUBLIC_ENABLE_ANTICIPOS !== 'false'
 
   const { productos: products, isLoading: isLoadingProducts } = useProductos()
@@ -88,10 +97,12 @@ export function CompraProductoForm({ onSuccess }: CompraProductoFormProps) {
     resolver: zodResolver(compraDocumentoSchema),
     defaultValues: {
       proveedorId: '',
+      ordenCompraId: '',
       numeroFactura: '',
       facturaUrl: '',
       formaPago: 'PAGO_COMPLETO',
       estado: 'PAGADA',
+      moneda: 'CUP',
       descripcionCompra: '',
       fechaVencimiento: '',
       anticipoPagoId: '',
@@ -99,7 +110,7 @@ export function CompraProductoForm({ onSuccess }: CompraProductoFormProps) {
     }
   })
 
-  const { fields, append, remove } = useFieldArray({
+  const { fields, append, remove, replace } = useFieldArray({
     control: form.control,
     name: 'items',
   })
@@ -129,6 +140,8 @@ export function CompraProductoForm({ onSuccess }: CompraProductoFormProps) {
     return map
   }, [productosCatalogo])
 
+  const [ordenesDisponibles, setOrdenesDisponibles] = useState<any[]>([])
+
   const [anticiposDisponibles, setAnticiposDisponibles] = useState<{ anticipos: any[] } | undefined>(undefined)
   const [isLoadingAnticipos, setIsLoadingAnticipos] = useState(false)
 
@@ -149,6 +162,28 @@ export function CompraProductoForm({ onSuccess }: CompraProductoFormProps) {
     })
     return () => { cancelled = true }
   }, [anticiposFeatureEnabled, formaPagoSeleccionada, proveedorSeleccionado])
+
+  useEffect(() => {
+    let cancelled = false
+    getOrdenesCompraAction({ page: 1, limit: 100 }).then((result) => {
+      if (!cancelled && result.success) {
+        setOrdenesDisponibles((result.data?.items ?? []).filter((orden: any) => {
+          if (!['PARCIAL', 'RECIBIDA'].includes(orden.estado)) return false
+          const recibidaPorProducto = new Map<string, number>()
+          for (const line of orden.items ?? []) {
+            recibidaPorProducto.set(
+              line.productoId,
+              (recibidaPorProducto.get(line.productoId) ?? 0) + Number(line.cantidadRecibida),
+            )
+          }
+          return [...recibidaPorProducto].some(([productoId, recibida]) =>
+            recibida > Number(orden.facturadoPorProducto?.[productoId] ?? 0),
+          )
+        }))
+      }
+    })
+    return () => { cancelled = true }
+  }, [])
 
   // Calcular monto total estimado (con parsing robusto)
   const montoEstimadoCompra = useMemo(() => {
@@ -200,6 +235,42 @@ export function CompraProductoForm({ onSuccess }: CompraProductoFormProps) {
     }
   }, [productoLookup, form])
 
+  function handleOrdenCompraChange(ordenCompraId: string) {
+    if (ordenCompraId === 'directa') {
+      // Volver a compra directa descarta las líneas de la OC.
+      form.setValue('ordenCompraId', '')
+      replace([{ productoId: '', precioCosto: '' as unknown as number, cantidad: 1 }])
+      return
+    }
+    form.setValue('ordenCompraId', ordenCompraId)
+    const orden = ordenesDisponibles.find((item) => item.id === ordenCompraId)
+    if (!orden) return
+    form.setValue('proveedorId', orden.proveedorId, { shouldValidate: true })
+    const recibidas = new Map<string, { cantidad: number; costoTotal: number }>()
+    for (const line of orden.items ?? []) {
+      const cantidad = Number(line.cantidadRecibida)
+      const actual = recibidas.get(line.productoId) ?? { cantidad: 0, costoTotal: 0 }
+      actual.cantidad += cantidad
+      actual.costoTotal += cantidad * Number(line.precioUnitario)
+      recibidas.set(line.productoId, actual)
+    }
+    const lineasRecibidas = [...recibidas].flatMap(([productoId, recibida]) => {
+      const cantidad = recibida.cantidad - Number(orden.facturadoPorProducto?.[productoId] ?? 0)
+      if (cantidad <= 0) return []
+      return [{
+        productoId,
+        cantidad,
+        precioCosto: Math.round(recibida.costoTotal / recibida.cantidad),
+      }]
+    })
+    if (lineasRecibidas.length > 0) {
+      replace(lineasRecibidas)
+    } else {
+      form.setValue('ordenCompraId', '')
+      sileo.error({ title: 'La orden no tiene cantidades pendientes de facturar.' })
+    }
+  }
+
   const addItem = useCallback(() => {
     append({ productoId: '', precioCosto: '' as unknown as number, cantidad: 1 })
   }, [append])
@@ -211,6 +282,8 @@ export function CompraProductoForm({ onSuccess }: CompraProductoFormProps) {
   }, [fields.length, remove])
 
   async function onSubmit(data: CompraDocumentoFormValues) {
+    if (submittingRef.current) return
+    submittingRef.current = true
     setIsLoading(true)
     try {
       const idempotencyKey =
@@ -227,8 +300,10 @@ export function CompraProductoForm({ onSuccess }: CompraProductoFormProps) {
             ? 'PAGADA'
             : 'PENDIENTE',
         fechaVencimiento: data.fechaVencimiento || undefined,
+        ordenCompraId: data.ordenCompraId || undefined,
         anticipoPagoId: data.formaPago === FORMA_PAGO_ANTICIPO_PAGO ? data.anticipoPagoId : undefined,
-        idempotencyKey: data.formaPago === FORMA_PAGO_ANTICIPO_PAGO ? idempotencyKey : undefined
+        idempotencyKey: data.formaPago === FORMA_PAGO_ANTICIPO_PAGO ? idempotencyKey : undefined,
+        claveIdempotencia,
       })
 
       if (!actionResult.success) throw new Error(actionResult.error?.message || 'Error')
@@ -258,9 +333,10 @@ export function CompraProductoForm({ onSuccess }: CompraProductoFormProps) {
       router.push('/busy/compras-productos')
     } catch (error: any) {
       console.error('Error al registrar compra:', error)
-      const errorMessage = error?.data?.error || 'Hubo un error al registrar la compra.'
+      const errorMessage = error?.message || error?.data?.error || 'Hubo un error al registrar la compra.'
       sileo.error({ title: errorMessage })
     } finally {
+      submittingRef.current = false
       setIsLoading(false)
     }
   }
@@ -304,14 +380,11 @@ export function CompraProductoForm({ onSuccess }: CompraProductoFormProps) {
             <div className='relative'>
               <h2 className='text-lg font-semibold'>Datos de la Compra</h2>
               <p className='text-sm text-muted-foreground'>Agregue productos del clasificador y registre la compra múltiple</p>
-              <motion.div className='absolute -right-4 -top-1' animate={{ rotate: 360 }} transition={{ rotate: { duration: 20, repeat: Infinity, ease: 'linear' } }}>
-                <Sparkles className='h-4 w-4 text-yellow-500' />
-              </motion.div>
             </div>
           </motion.div>
 
           <Form {...form}>
-            <form onSubmit={form.handleSubmit(onSubmit, () => { sileo.error({ title: 'Completá los campos requeridos antes de continuar.' }) })} className='space-y-6'>
+            <form onSubmit={form.handleSubmit(onSubmit, () => { sileo.error({ title: 'Completa los campos requeridos antes de continuar.' }) })} className='space-y-6'>
               {/* Cabecera: Proveedor y Factura */}
               <div className='grid grid-cols-1 md:grid-cols-2 gap-4'>
                 <FormField
@@ -322,7 +395,7 @@ export function CompraProductoForm({ onSuccess }: CompraProductoFormProps) {
                       <FormLabel>Proveedor</FormLabel>
                       <Select onValueChange={field.onChange} value={field.value}>
                         <FormControl>
-                          <SelectTrigger>
+                          <SelectTrigger aria-label='Proveedor'>
                             <SelectValue placeholder='Seleccione un proveedor' />
                           </SelectTrigger>
                         </FormControl>
@@ -341,12 +414,39 @@ export function CompraProductoForm({ onSuccess }: CompraProductoFormProps) {
 
                 <FormField
                   control={form.control}
+                  name='ordenCompraId'
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Orden de compra (opcional)</FormLabel>
+                      <Select onValueChange={handleOrdenCompraChange} value={field.value}>
+                        <FormControl>
+                          <SelectTrigger aria-label='Orden de compra (opcional)'>
+                            <SelectValue placeholder='Compra directa' />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          <SelectItem value='directa'>Compra directa</SelectItem>
+                          {ordenesDisponibles.map((orden) => (
+                            <SelectItem key={orden.id} value={orden.id}>
+                              {orden.id} · {orden.proveedor?.nombre ?? orden.proveedorId}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                      <FormDescription>Órdenes con mercancía recibida. El sistema valida que no se facture dos veces lo ya cobrado.</FormDescription>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                <FormField
+                  control={form.control}
                   name='numeroFactura'
                   render={({ field }) => (
                     <FormItem>
                       <FormLabel>Nro. Factura</FormLabel>
                       <FormControl>
-                        <Input type='text' placeholder='Ej: F-2024-0012' {...field} />
+                         <Input aria-label='Nro. Factura' type='text' placeholder='Ej: F-2024-0012' {...field} />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -381,7 +481,7 @@ export function CompraProductoForm({ onSuccess }: CompraProductoFormProps) {
                       <FormLabel>Forma de Pago</FormLabel>
                       <Select onValueChange={field.onChange} value={field.value}>
                         <FormControl>
-                          <SelectTrigger>
+                          <SelectTrigger aria-label='Forma de Pago'>
                             <SelectValue placeholder='Seleccione la forma de pago' />
                           </SelectTrigger>
                         </FormControl>
@@ -399,13 +499,38 @@ export function CompraProductoForm({ onSuccess }: CompraProductoFormProps) {
 
                 <FormField
                   control={form.control}
+                  name='moneda'
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Moneda</FormLabel>
+                      <Select onValueChange={field.onChange} value={field.value}>
+                        <FormControl>
+                          <SelectTrigger aria-label='Moneda'>
+                            <SelectValue placeholder='Moneda de la compra' />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          <SelectItem value='CUP'>CUP</SelectItem>
+                          <SelectItem value='USD'>USD</SelectItem>
+                          <SelectItem value='EUR'>EUR</SelectItem>
+                          <SelectItem value='MLC'>MLC</SelectItem>
+                        </SelectContent>
+                      </Select>
+                      <FormDescription>La deuda por esta compra se registra en esta moneda.</FormDescription>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                <FormField
+                  control={form.control}
                   name='estado'
                   render={({ field }) => (
                     <FormItem>
                       <FormLabel>Estado</FormLabel>
                       <Select value={field.value} onValueChange={field.onChange} disabled>
                         <FormControl>
-                          <SelectTrigger>
+                                       <SelectTrigger aria-label='Estado'>
                             <SelectValue placeholder='Estado' />
                           </SelectTrigger>
                         </FormControl>

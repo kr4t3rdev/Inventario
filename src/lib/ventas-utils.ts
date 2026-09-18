@@ -19,6 +19,8 @@ export interface VentaLinea {
   producto?: Venta["producto"]
   productoNombre?: string
   productoCodigoInterno?: string
+  /** Costo FIFO real de la línea (Σ allocations × costo del lote); null si no hubo allocations. */
+  costoFifo?: number | null
 }
 
 /**
@@ -55,6 +57,27 @@ export function flattenVentas(ventas?: Venta[]): VentaLinea[] {
 
         if (!productoId) return
 
+        // Costo FIFO agregado de la línea: viene de PurchaseAllocation (lotes reales).
+        // null cuando la línea no tiene allocations (legacy/pedido no entregado);
+        // 0 cuando la venta ya fue devuelta por completo — la devolución elimina
+        // las allocations y sin regla el costo reaparecería por el fallback.
+        const allocations = (item as { allocations?: Array<{ cantidad?: number; compraDocumentoItem?: { precioUnitario?: number } | null }> }).allocations
+        const devoluciones = (venta as { devoluciones?: Array<{ estado?: string; total?: number | string }> }).devoluciones
+        const totalDevuelto = (devoluciones ?? [])
+          .filter((d) => d.estado === 'REGISTRADA')
+          .reduce((sum, d) => sum + Number(d.total ?? 0), 0)
+        const ventaTotal = Number(venta.total ?? 0)
+        const ventaDevueltaCompleta = totalDevuelto > 0 && ventaTotal > 0 && totalDevuelto >= ventaTotal
+
+        const costoFifo = Array.isArray(allocations) && allocations.length > 0
+          ? allocations.reduce(
+              (sum, alloc) => sum + Number(alloc.cantidad ?? 0) * Number(alloc.compraDocumentoItem?.precioUnitario ?? 0),
+              0,
+            )
+          : ventaDevueltaCompleta
+            ? 0
+            : null
+
         lineas.push({
           id: item.id,
           ventaId: venta.ventaId,
@@ -71,6 +94,7 @@ export function flattenVentas(ventas?: Venta[]): VentaLinea[] {
           producto: item.producto ?? venta.producto,
           productoNombre: item.producto?.nombre || venta.producto?.nombre,
           productoCodigoInterno: item.producto?.codigoInterno || venta.producto?.codigoInterno || undefined,
+          costoFifo,
         })
       })
       return

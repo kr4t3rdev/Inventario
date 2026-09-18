@@ -4,6 +4,7 @@
  * Muestra el período activo actual (DIARIO → MENSUAL → TRIMESTRAL → SEMESTRAL → ANUAL) con su estado
  * y color correspondiente. Se actualiza al navegar.
  */
+import type React from 'react';
 import { PeriodoContableService } from "@/lib/services/periodo-contable-service";
 import { Badge } from "@/components/ui/badge";
 import {
@@ -135,9 +136,9 @@ async function getPeriodoActivoData() {
  * @description Server component que busca el período activo para el tenant
  *              y renderiza un badge clickeable que lleva a /busy/contabilidad/periodos.
  *
- * @returns {Promise<JSX.Element | null>} Badge del período activo o null si no hay.
+ * @returns {Promise<React.JSX.Element | null>} Badge del período activo o null si no hay.
  */
-export async function PeriodoActivoIndicator(): Promise<JSX.Element | null> {
+export async function PeriodoActivoIndicator(): Promise<React.JSX.Element | null> {
 	const data = await getPeriodoActivoData();
 	if (!data) return null;
 

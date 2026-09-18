@@ -36,7 +36,7 @@ export async function seedHistoricalData() {
     await prisma.unidad.upsert({
       where: { unidadId: unidad.unidadId },
       update: {},
-      create: unidad
+      create: { ...unidad, tenantId: 'historical-tenant' }
     })
   }
 

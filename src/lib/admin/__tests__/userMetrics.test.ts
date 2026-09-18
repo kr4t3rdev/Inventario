@@ -6,7 +6,7 @@ describe('getUserMetrics', () => {
   it('agrega métricas por roles de tenant cuando recibe tenantId', async () => {
     const monthStart = new Date('2026-01-01T00:00:00.000Z');
     const prisma = {
-      $queryRaw: vi
+      $queryRawUnsafe: vi
         .fn()
         .mockResolvedValueOnce([
           {
@@ -43,5 +43,14 @@ describe('getUserMetrics', () => {
     });
     expect(result.summary.totalUsers).toBe(12);
     expect(result.summary.totalLogins).toBe(13);
+  });
+
+  it('rechaza tenantId con formato inválido antes de tocar SQL', async () => {
+    const prisma = { $queryRawUnsafe: vi.fn() } as any;
+
+    await expect(getUserMetrics(prisma, 6, "x' OR '1'='1")).rejects.toThrow(
+      /formato inválido/,
+    );
+    expect(prisma.$queryRawUnsafe).not.toHaveBeenCalled();
   });
 });

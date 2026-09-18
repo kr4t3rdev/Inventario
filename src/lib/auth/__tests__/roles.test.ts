@@ -19,7 +19,13 @@ describe('roles - plataforma', () => {
     // dependiente se mapea a regularUser (legado)
     expect(normalizeUserRole('dependiente')).toBe('regularUser');
     expect(normalizeUserRole('regularUser')).toBe('regularUser');
+    expect(normalizeUserRole('salesAgent')).toBe('salesAgent');
     expect(normalizeUserRole('guest')).toBeNull();
+  });
+
+  it('expone la etiqueta global del gestor de ventas', async () => {
+    const { getTenantRoleLabel } = await import('@/lib/auth/roles');
+    expect(getTenantRoleLabel('salesAgent')).toBe('Gestor de Ventas');
   });
 
   it('identifica admin usando normalización central', () => {

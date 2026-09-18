@@ -1,14 +1,7 @@
--- AlterTable: Add soft delete and audit fields to CompraProducto
-ALTER TABLE "CompraProducto" ADD COLUMN "deletedAt" TIMESTAMP(3);
-ALTER TABLE "CompraProducto" ADD COLUMN "updatedById" TEXT;
-CREATE INDEX "CompraProducto_deletedAt_idx" ON "CompraProducto"("deletedAt");
-
--- AlterTable: Add soft delete to GastoCompra
-ALTER TABLE "GastoCompra" ADD COLUMN "deletedAt" TIMESTAMP(3);
-
--- AlterTable: Add soft delete to CuentaPorPagar
-ALTER TABLE "CuentaPorPagar" ADD COLUMN "deletedAt" TIMESTAMP(3);
-CREATE INDEX "CuentaPorPagar_deletedAt_idx" ON "CuentaPorPagar"("deletedAt");
+-- Soft-delete and audit columns/indexes already exist from
+-- 20260217190000_add_soft_delete_and_audit_fields and
+-- 20260314174003_add_cost_to_transferencia. Do not recreate them here so the
+-- migration history can be replayed from an empty database.
 
 -- CreateTable: CompraDocumento (cabecera de compra múltiple)
 CREATE TABLE "CompraDocumento" (

@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import prisma from '@/lib/prisma'
 import { PDFDocument, StandardFonts, rgb } from 'pdf-lib'
+import { authenticateUser } from '@/lib/auth-middleware'
 
 const ORANGE = rgb(249 / 255, 115 / 255, 22 / 255)
 const DARK = rgb(30 / 255, 30 / 255, 30 / 255)
@@ -15,14 +16,18 @@ const WHITE = rgb(1, 1, 1)
  * @returns {Promise<NextResponse>} PDF de la oferta.
  */
 export async function getOfertaPdfHandler(
-  _request: NextRequest,
+  request: NextRequest,
   context: { params: Promise<{ id: string }> }
 ): Promise<NextResponse> {
   try {
+    const authResult = await authenticateUser(request)
+    if ('status' in authResult) return authResult as NextResponse
+    const tenantId = authResult.user.tenantId
+    if (!tenantId) return NextResponse.json({ error: 'Autenticación requerida' }, { status: 401 })
     const { id } = await context.params
 
-    const oferta = await prisma.oferta.findUnique({
-      where: { id },
+    const oferta = await prisma.oferta.findFirst({
+      where: { id, tenantId },
       include: {
         cliente: true,
         items: {
@@ -182,14 +187,18 @@ export async function getOfertaPdfHandler(
  * @returns {Promise<NextResponse>} CSV descargable.
  */
 export async function getOfertaExcelHandler(
-  _request: NextRequest,
+  request: NextRequest,
   context: { params: Promise<{ id: string }> }
 ): Promise<NextResponse> {
   try {
+    const authResult = await authenticateUser(request)
+    if ('status' in authResult) return authResult as NextResponse
+    const tenantId = authResult.user.tenantId
+    if (!tenantId) return NextResponse.json({ error: 'Autenticación requerida' }, { status: 401 })
     const { id } = await context.params
 
-    const oferta = await prisma.oferta.findUnique({
-      where: { id },
+    const oferta = await prisma.oferta.findFirst({
+      where: { id, tenantId },
       include: {
         cliente: true,
         items: {

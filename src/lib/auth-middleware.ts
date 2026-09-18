@@ -1,14 +1,19 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { prisma } from './prisma'
+import { prismaPlatform as prisma } from './db/platform-prisma'
 import jwt from 'jsonwebtoken'
 import { getJwtSecret } from './secrets'
-import { checkApiPermission, checkTenantApiPermission, type UserRole } from './permissions'
-import { normalizeTenantRole, type TenantRole } from './auth/roles'
+import { normalizeTenantRole, type TenantRole, type AppUserRole } from './auth/roles'
+import { runWithTenantContext, enterTenantContext } from './db/tenant-context'
+import { resolveEffectivePlanFeatures } from './plan-features'
+import { getDefaultPermissionsForRole } from './auth/permission-registry'
+import { getRoutePermissionKey, getMobilePermissionKey } from './auth/route-permissions'
+import { hasPermission } from './services/tenant-scope'
 
 export interface PlanLimits {
   maxUsuarios: number
   maxAlmacenes: number
   maxProductos: number
+  maxClientes: number
 }
 
 /**
@@ -19,13 +24,30 @@ export interface AuthenticatedUser {
   userId: string
   name: string
   email: string
-  role: UserRole
+  role: AppUserRole
   isActive: boolean
   // Contexto de tenant (opcional — presente si el usuario tiene membresía activa)
   tenantId?: string
   tenantRole?: TenantRole
   planLimits?: PlanLimits
   planFeatures?: Record<string, boolean>
+  planName?: string
+  // Permisos efectivos del usuario en el tenant (resueltos en autenticación)
+  permissions?: ReadonlySet<string>
+}
+
+/**
+ * @description Resultado de la resolución de contexto de tenant.
+ * Incluye los permisos efectivos resueltos (rol custom o defaults del rol fijo).
+ */
+export interface TenantContext {
+  tenantId: string
+  tenantRole: TenantRole
+  planLimits?: PlanLimits
+  planFeatures?: Record<string, boolean>
+  planName?: string
+  licenseExpiresAt?: Date
+  permissions: ReadonlySet<string>
 }
 
 /**
@@ -33,12 +55,12 @@ export interface AuthenticatedUser {
  * Busca membresía activa; si el request incluye x-tenant-id usa ese, sino el primero activo.
  * @param {string} userId - ID del usuario autenticado.
  * @param {string | null} headerTenantId - Tenant solicitado via header (opcional).
- * @returns {Promise<{ tenantId: string; tenantRole: TenantRole; planLimits?: PlanLimits } | null>}
+ * @returns {Promise<TenantContext | null>}
  */
 export async function resolveTenantContext(
   userId: string,
   headerTenantId: string | null,
-): Promise<{ tenantId: string; tenantRole: TenantRole; planLimits?: PlanLimits; planFeatures?: Record<string, boolean>; licenseExpiresAt?: Date } | null> {
+): Promise<TenantContext | null> {
   try {
     const membership = headerTenantId
       ? await prisma.tenantMembership.findUnique({
@@ -59,6 +81,14 @@ export async function resolveTenantContext(
         activa: true,
         expiracion: { gt: new Date() },
       },
+      include: {
+        plan: {
+          select: {
+            nombre: true,
+            features: true,
+          },
+        },
+      },
       orderBy: { inicio: 'desc' },
     });
 
@@ -67,20 +97,59 @@ export async function resolveTenantContext(
         maxUsuarios: license.maxUsuarios,
         maxAlmacenes: license.maxAlmacenes,
         maxProductos: license.maxProductos,
+        maxClientes: license.maxClientes,
       };
     }
 
-    let planFeatures: Record<string, boolean> | undefined;
-    if (license?.features && typeof license.features === 'object') {
-      planFeatures = license.features as Record<string, boolean>;
+    const planFeatures = license
+      ? resolveEffectivePlanFeatures({
+          planFeatures:
+            license.plan?.features && typeof license.plan.features === 'object'
+              ? (license.plan.features as Record<string, boolean>)
+              : undefined,
+          featureOverrides:
+            license.featureOverrides && typeof license.featureOverrides === 'object'
+              ? (license.featureOverrides as Record<string, boolean>)
+              : undefined,
+          legacyLicenseFeatures:
+            license.features && typeof license.features === 'object'
+              ? (license.features as Record<string, boolean>)
+              : undefined,
+        })
+      : undefined;
+
+    const normalizedRole = normalizeTenantRole(membership.tenantRole) ?? 'dependiente';
+
+    // Resolución de permisos efectivos (PG-03): rol custom validado por tenant
+    // y estado; si no existe/se invalidó → defaults del rol fijo (fail-safe).
+    // Sin customRoleId no se hace ninguna query extra.
+    let permissions: ReadonlySet<string>;
+    if (membership.customRoleId) {
+      const customRole = await prisma.tenantRole.findFirst({
+        where: {
+          roleId: membership.customRoleId,
+          tenantId: membership.tenantId,
+          isActive: true,
+        },
+      });
+      const rolePermissions = Array.isArray(customRole?.permissions)
+        ? (customRole.permissions as string[])
+        : null;
+      permissions = rolePermissions
+        ? new Set(rolePermissions)
+        : getDefaultPermissionsForRole(normalizedRole);
+    } else {
+      permissions = getDefaultPermissionsForRole(normalizedRole);
     }
 
     return {
       tenantId: membership.tenantId,
-      tenantRole: normalizeTenantRole(membership.tenantRole) ?? 'dependiente',
+      tenantRole: normalizedRole,
       planLimits,
       planFeatures,
+      planName: license?.plan?.nombre,
       licenseExpiresAt: license?.expiracion,
+      permissions,
     };
   } catch (error) {
     console.error('[Auth] Error resolviendo contexto tenant:', {
@@ -252,19 +321,76 @@ export async function authenticateUser(
         tenantRole: tenantContext.tenantRole,
         planLimits: tenantContext.planLimits,
         planFeatures: tenantContext.planFeatures,
+        planName: tenantContext.planName,
+        permissions: tenantContext.permissions,
       }),
     } as AuthenticatedUser
 
     // 10. Verificar permisos.
-    // Si hay contexto tenant, usa permisos tenant. Si no, permisos globales legados.
+    // Con contexto tenant: el route-map decide (clave → hasPermission). Sin
+    // contexto tenant: solo admin de plataforma (fail-closed). La allowlist
+    // legacy (TENANT_PERMISSIONS) quedó retirada (PG-05 T6).
     if (validatePermissions) {
-      const permissionError = tenantContext
-        ? checkTenantApiPermission(tenantContext.tenantRole, validatePermissions.path, validatePermissions.method)
-        : checkApiPermission(user.role, validatePermissions.path, validatePermissions.method)
+      let permissionError: Response | NextResponse | null = null
+
+      if (tenantContext) {
+        const { path, method } = validatePermissions
+        const routeKey = getRoutePermissionKey(path, method)
+        const denied = NextResponse.json(
+          {
+            error: 'Permiso denegado',
+            message: 'No tienes permisos para acceder a este recurso',
+          },
+          { status: 403 },
+        )
+        if (!routeKey) {
+          // Ruta no mapeada: fail-closed (ya no hay allowlist de respaldo).
+          console.warn('[UNMAPPED_ROUTE]', `${method} ${path}`)
+          permissionError = denied
+        } else if (!hasPermission(authenticatedUser, routeKey)) {
+          permissionError = denied
+        }
+      } else if (user.role !== 'admin') {
+        permissionError = NextResponse.json(
+          {
+            error: 'Permiso denegado',
+            message: 'Solo el administrador global puede acceder a este recurso',
+          },
+          { status: 403 },
+        )
+      }
 
       if (permissionError) {
         return permissionError
       }
+    }
+
+    // 10.b. Control de rol para el API mobile (PG-05): las rutas mobile llaman
+    // authenticateUser sin validatePermissions; se aplica el permiso de grupo
+    // mapeado. Rutas exentas (auth/admin plataforma) devuelven null.
+    if (!validatePermissions && authenticatedUser.tenantId) {
+      const mobilePath = new URL(request.url).pathname
+      const mobileKey = getMobilePermissionKey(mobilePath)
+      if (
+        mobileKey &&
+        user.role !== 'admin' &&
+        !hasPermission(authenticatedUser, mobileKey)
+      ) {
+        return NextResponse.json(
+          {
+            error: 'Permiso denegado',
+            message: 'No tienes permisos para acceder a este recurso',
+          },
+          { status: 403 },
+        )
+      }
+    }
+
+    // 11. Fijar el contexto tenant de la cadena async actual (AS-02): los
+    // handlers que llaman a authenticateUser directamente quedan escopados.
+    // Los wrappers withAuth* además envuelven el handler con run (doble capa).
+    if (authenticatedUser.tenantId) {
+      enterTenantContext(authenticatedUser.tenantId)
     }
 
     return { user: authenticatedUser }
@@ -294,6 +420,29 @@ export async function authenticateUser(
 }
 
 /**
+ * @description Ejecuta el handler con el contexto tenant fijado (AS-02).
+ * @param handler - Handler de ruta autenticado.
+ * @param request - Request de Next.js.
+ * @param context - Contexto de ruta.
+ * @param user - Usuario autenticado.
+ */
+function runHandlerWithTenant(
+  handler: (
+    request: NextRequest,
+    context: any,
+    user: AuthenticatedUser
+  ) => Promise<Response>,
+  request: NextRequest,
+  context: any,
+  user: AuthenticatedUser
+): Promise<Response> {
+  if (user.tenantId) {
+    return runWithTenantContext(user.tenantId, () => handler(request, context, user))
+  }
+  return handler(request, context, user)
+}
+
+/**
  * @description Wrapper para rutas GET protegidas
  */
 export function withAuthGet(
@@ -301,7 +450,7 @@ export function withAuthGet(
     request: NextRequest,
     context: any,
     user: AuthenticatedUser
-  ) => Promise<NextResponse>
+  ) => Promise<Response>
 ) {
   return async (request: NextRequest, context: any) => {
     const result = await authenticateUser(request)
@@ -310,7 +459,7 @@ export function withAuthGet(
       return result as Response
     }
 
-    return handler(request, context, result.user)
+    return runHandlerWithTenant(handler, request, context, result.user)
   }
 }
 
@@ -322,7 +471,7 @@ export function withAuthPost(
     request: NextRequest,
     context: any,
     user: AuthenticatedUser
-  ) => Promise<NextResponse>
+  ) => Promise<Response>
 ) {
   return async (request: NextRequest, context: any) => {
     const result = await authenticateUser(request)
@@ -331,7 +480,7 @@ export function withAuthPost(
       return result as Response
     }
 
-    return handler(request, context, result.user)
+    return runHandlerWithTenant(handler, request, context, result.user)
   }
 }
 
@@ -343,7 +492,7 @@ export function withAuth(
     request: NextRequest,
     context: any,
     user: AuthenticatedUser
-  ) => Promise<NextResponse>
+  ) => Promise<Response>
 ) {
   return async (request: NextRequest, context: any) => {
     const url = new URL(request.url)
@@ -356,42 +505,6 @@ export function withAuth(
       return result as Response
     }
 
-    return handler(request, context, result.user)
+    return runHandlerWithTenant(handler, request, context, result.user)
   }
-}
-
-/**
- * Verificación específica de permisos para dependientes
- */
-export function requireDependienteAccess(
-  userRole: string,
-  requestedPath: string,
-  method: string
-): Response | null {
-  if (userRole === 'dependiente') {
-    // Lista de rutas permitidas para dependientes
-    const allowedRoutes = [
-      { path: '/api/ventas', methods: ['GET', 'POST'] },
-      { path: '/api/venta-servicios', methods: ['GET', 'POST'] },
-      { path: '/api/servicios', methods: ['GET'] },
-      { path: '/api/reportes-financieros', methods: ['GET'] },
-    ]
-
-    const allowedRoute = allowedRoutes.find(route => {
-      if (requestedPath.startsWith(route.path)) {
-        return route.methods.includes(method)
-      }
-      return false
-    })
-
-    if (!allowedRoute) {
-      return NextResponse.json({
-        error: 'Acceso restringido para dependientes',
-        message: 'Los dependientes solo pueden acceder a ventas, servicios y reportes',
-        allowedRoutes: allowedRoutes.map(r => `${r.methods.join(', ')} ${r.path}`)
-      }, { status: 403 })
-    }
-  }
-
-  return null
 }

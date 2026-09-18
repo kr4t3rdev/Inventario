@@ -40,12 +40,14 @@ interface EditUserFormState {
   daysToExpire: string;
 }
 
+const NO_TENANT_ROLE = 'none';
+
 const INITIAL_FORM_STATE: EditUserFormState = {
   name: '',
   email: '',
   password: '',
   role: 'regularUser',
-  tenantRole: '',
+  tenantRole: NO_TENANT_ROLE,
   isActive: true,
   daysToExpire: '',
 };
@@ -70,7 +72,7 @@ export function EditUserDialog({ open, onClose, user }: EditUserDialogProps): Re
       email: user.email || '',
       password: '',
       role: (user.role as EditUserFormState['role']) || 'regularUser',
-      tenantRole: user.tenantRole || '',
+      tenantRole: user.tenantRole || NO_TENANT_ROLE,
       isActive: Boolean(user.isActive),
       daysToExpire: '',
     });
@@ -89,7 +91,11 @@ export function EditUserDialog({ open, onClose, user }: EditUserDialogProps): Re
   }, []);
 
   const handleRoleChange = useCallback((value: string) => {
-    setFormData((prev) => ({ ...prev, role: value as EditUserFormState['role'] }));
+    setFormData((prev) => ({
+      ...prev,
+      role: value as EditUserFormState['role'],
+      tenantRole: value === 'salesAgent' ? NO_TENANT_ROLE : prev.tenantRole,
+    }));
   }, []);
 
   const handleTenantRoleChange = useCallback((value: string) => {
@@ -119,7 +125,13 @@ export function EditUserDialog({ open, onClose, user }: EditUserDialogProps): Re
       isActive: formData.isActive,
     };
     if (formData.password) payload.password = formData.password;
-    if (formData.tenantRole) payload.tenantRole = formData.tenantRole;
+    if (
+      formData.tenantRole &&
+      formData.tenantRole !== NO_TENANT_ROLE &&
+      formData.role !== 'salesAgent'
+    ) {
+      payload.tenantRole = formData.tenantRole;
+    }
     if (parsedDays && !Number.isNaN(parsedDays)) payload.daysToExpire = parsedDays;
 
     const validation = updateUserBodySchema.safeParse(payload);
@@ -162,10 +174,10 @@ export function EditUserDialog({ open, onClose, user }: EditUserDialogProps): Re
   return (
     <Dialog open={open} onOpenChange={handleDialogChange}>
       <DialogContent className="overflow-hidden border bg-background sm:max-w-125">
-        <div className="absolute left-0 right-0 top-0 h-1 bg-linear-to-r from-primary via-purple-500 to-primary" />
+        <div className="absolute left-0 right-0 top-0 h-1 bg-linear-to-r from-primary via-purple to-primary" />
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
-            <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-linear-to-br from-primary to-purple-600 shadow-md">
+            <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-linear-to-br from-primary to-purple shadow-md">
               <UserPen className="h-4 w-4 text-white" />
             </span>
             <span className="bg-linear-to-r from-slate-900 to-slate-600 bg-clip-text text-transparent dark:from-white dark:to-slate-300">
@@ -233,6 +245,7 @@ export function EditUserDialog({ open, onClose, user }: EditUserDialogProps): Re
                     </SelectTrigger>
                     <SelectContent>
                       <SelectItem value="admin">Administrador</SelectItem>
+                      <SelectItem value="salesAgent">Gestor de Ventas</SelectItem>
                       <SelectItem value="dependiente">Dependiente</SelectItem>
                       <SelectItem value="regularUser">Usuario legado</SelectItem>
                     </SelectContent>
@@ -242,26 +255,29 @@ export function EditUserDialog({ open, onClose, user }: EditUserDialogProps): Re
                   </p>
                 </div>
 
-                <div className="space-y-2">
-                  <Label htmlFor="edit-tenant-role">Rol en el tenant</Label>
-                  <Select
-                    value={formData.tenantRole || ''}
-                    onValueChange={handleTenantRoleChange}
-                  >
-                    <SelectTrigger id="edit-tenant-role" className="h-11 border-slate-200 bg-white/60 dark:border-slate-700 dark:bg-slate-800/50">
-                      <SelectValue placeholder="Sin cambio" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="manager">Manager</SelectItem>
-                      <SelectItem value="admin">Administrador</SelectItem>
-                      <SelectItem value="economico">Económico</SelectItem>
-                      <SelectItem value="dependiente">Dependiente</SelectItem>
-                    </SelectContent>
-                  </Select>
-                  <p className="text-xs text-muted-foreground">
-                    Permisos operativos dentro de la empresa.
-                  </p>
-                </div>
+                {formData.role !== 'salesAgent' && (
+                  <div className="space-y-2">
+                    <Label htmlFor="edit-tenant-role">Rol en el tenant</Label>
+                    <Select
+                      value={formData.tenantRole}
+                      onValueChange={handleTenantRoleChange}
+                    >
+                      <SelectTrigger id="edit-tenant-role" className="h-11 border-slate-200 bg-white/60 dark:border-slate-700 dark:bg-slate-800/50">
+                        <SelectValue placeholder="Sin cambio" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value={NO_TENANT_ROLE}>Sin cambio</SelectItem>
+                        <SelectItem value="manager">Manager</SelectItem>
+                        <SelectItem value="admin">Administrador</SelectItem>
+                        <SelectItem value="economico">Económico</SelectItem>
+                        <SelectItem value="dependiente">Dependiente</SelectItem>
+                      </SelectContent>
+                    </Select>
+                    <p className="text-xs text-muted-foreground">
+                      Permisos operativos dentro de la empresa.
+                    </p>
+                  </div>
+                )}
              </div>
 
              <div className="flex items-center justify-between rounded-lg border border-slate-200/70 bg-slate-50/70 p-3 dark:border-slate-700/70 dark:bg-slate-800/40">
@@ -304,7 +320,7 @@ export function EditUserDialog({ open, onClose, user }: EditUserDialogProps): Re
             <Button
               type="submit"
               disabled={loading}
-              className="min-w-40 bg-linear-to-r from-primary to-purple-600 text-white hover:from-primary/90 hover:to-purple-600/90"
+              className="min-w-40 bg-linear-to-r from-primary to-purple text-white hover:from-primary/90 hover:to-purple/90"
             >
               {loading ? (
                 <>

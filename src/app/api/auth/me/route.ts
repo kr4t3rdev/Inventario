@@ -1,28 +1,23 @@
-import { meAction } from '@/features/auth/actions';
+import { AuthService } from '@/features/auth/services/auth-service';
+import { authenticateUser } from '@/lib/auth-middleware';
 
 export const dynamic = 'force-dynamic';
 
 /**
- * @description Route Handler wrapper para /api/auth/me.
- * Delega a meAction Server Action.
+ * @description Route Handler estable para /api/auth/me.
+ * Resuelve auth por request y evita depender de Server Action IDs regenerados.
  */
-export async function GET() {
+export async function GET(request: Request) {
+  const authResult = await authenticateUser(request as never);
+  if ('status' in authResult) {
+    return authResult as Response;
+  }
+
   try {
-    const result = await meAction(undefined);
-
-    if (result.success) {
-      return Response.json(result.data?.user ?? result.data);
-    }
-
-    const statusMap: Record<string, number> = {
-      AUTH_REQUIRED: 401,
-      NOT_FOUND: 404,
-    };
-
-    const status = statusMap[result.error?.code ?? ''] ?? 401;
-    return Response.json({ error: result.error?.message }, { status });
+    const result = await AuthService.me(authResult.user);
+    return Response.json(result.user);
   } catch (error) {
     console.error('Error en me route:', error);
-    return Response.json({ error: 'Error interno' }, { status: 500 });
+    return Response.json({ error: 'Error interno del servidor' }, { status: 500 });
   }
 }

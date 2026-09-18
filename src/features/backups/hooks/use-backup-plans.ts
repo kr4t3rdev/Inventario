@@ -53,7 +53,7 @@ export function useBackupPlans() {
           isLoading: false,
           error: null,
         })
-      } else {
+      } else if (!result.success) {
         setState((prev) => ({
           ...prev,
           isLoading: false,

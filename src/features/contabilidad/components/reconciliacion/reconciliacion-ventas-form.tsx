@@ -41,7 +41,7 @@ import {
 } from "lucide-react"
 import { toast } from "sonner"
 import { reconciliarVentaAction } from "@/features/contabilidad/actions-reconciliacion"
-import { getCuentasBancariasAction } from "@/features/contabilidad/actions-cuentas-bancarias"
+import { useCuentasBancarias } from "@/features/contabilidad/hooks/use-cuentas-bancarias"
 import { getTiposPagoAction } from "@/features/contabilidad/actions-tipos-pago"
 import { getMonedasAction } from "@/features/contabilidad/actions-exchange"
 import type { VentaPendiente } from "@/app/models/model"
@@ -95,7 +95,7 @@ export function ReconciliacionVentasForm({
 }: ReconciliacionVentasFormProps) {
   const [monedas, setMonedas] = useState<any[]>([])
   const [isLoading, setIsLoading] = useState(false)
-  const [cuentas, setCuentas] = useState<any[]>([])
+  const { cuentas, isLoading: isLoadingCuentas } = useCuentasBancarias()
   const [tiposPago, setTiposPago] = useState<any[]>([])
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [totalDistribuido, setTotalDistribuido] = useState(0)
@@ -103,9 +103,8 @@ export function ReconciliacionVentasForm({
   const [forceUpdate, setForceUpdate] = useState(0)
 
   useEffect(() => {
-    getCuentasBancariasAction().then(r => { if (r.success) setCuentas(r.data?.cuentas ?? []) })
+    getMonedasAction().then(r => { if (r.success) setMonedas(r.data ?? []) })
     getTiposPagoAction().then(r => { if (r.success) setTiposPago(r.data?.data ?? []) })
-    getMonedasAction().then(r => { if (r.success) setMonedas(r.data?.filter((m: any) => m.isActive) ?? []) })
   }, [])
 
   const form = useForm<ReconciliacionVentaFormData>({

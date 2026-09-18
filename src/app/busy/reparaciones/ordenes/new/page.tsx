@@ -7,6 +7,8 @@ import Link from "next/link"
 import Image from "next/image"
 import { ArrowLeft, Save, Plus, Trash2, Wrench, Upload, X, Camera, FileText, Printer } from "lucide-react"
 import { toast } from "sonner"
+import type { CloudinaryAssetUploadResult } from "@/lib/upload/cloudinary-asset"
+import { uploadToCloudinary } from "@/lib/upload/cloudinary-upload"
 import { Button } from "@/components/ui/button"
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card"
 import { Label } from "@/components/ui/label"
@@ -28,6 +30,7 @@ interface EquipoForm {
   accesorios: string
   problemaReportado: string
   fotos: string[]
+  fotoAssets: CloudinaryAssetUploadResult[]
 }
 
 interface ReciboData {
@@ -68,7 +71,8 @@ export default function NewOrdenPage() {
       contrasena: "",
       accesorios: "",
       problemaReportado: "",
-      fotos: []
+      fotos: [],
+      fotoAssets: [],
     }
   ])
 
@@ -91,7 +95,8 @@ export default function NewOrdenPage() {
         contrasena: "",
         accesorios: "",
         problemaReportado: "",
-        fotos: []
+        fotos: [],
+        fotoAssets: [],
       }
     ])
   }
@@ -106,28 +111,29 @@ export default function NewOrdenPage() {
 
     setUploadingIndex(index)
     const uploadedUrls: string[] = []
+    const uploadedAssets: CloudinaryAssetUploadResult[] = []
 
     try {
       for (const file of Array.from(files)) {
-        const formData = new FormData()
-        formData.append('file', file)
-
-        const response = await fetch('/api/upload', {
-          method: 'POST',
-          body: formData
-        })
-
-        if (response.ok) {
-          const data = await response.json()
-          uploadedUrls.push(data.url)
-        } else {
+        try {
+          const asset = await uploadToCloudinary(file, {
+            uploadKey: 'reparaciones.equipo-photo',
+          })
+          uploadedUrls.push(asset.secureUrl)
+          uploadedAssets.push(asset)
+        } catch (error) {
+          console.error(`Error subiendo ${file.name}:`, error)
           toast.error(`Error al subir ${file.name}`)
         }
       }
 
       if (uploadedUrls.length > 0) {
         const currentFotos = equipos[index].fotos || []
-        updateEquipo(index, { fotos: [...currentFotos, ...uploadedUrls] })
+        const currentAssets = equipos[index].fotoAssets || []
+        updateEquipo(index, {
+          fotos: [...currentFotos, ...uploadedUrls],
+          fotoAssets: [...currentAssets, ...uploadedAssets],
+        })
         toast.success(`${uploadedUrls.length} foto(s) subida(s) exitosamente`)
       }
     } catch (error) {
@@ -138,8 +144,12 @@ export default function NewOrdenPage() {
   }
 
   const removeFoto = (equipoIndex: number, fotoIndex: number) => {
+    const fotoRemovida = equipos[equipoIndex].fotos[fotoIndex]
     const nuevasFotos = equipos[equipoIndex].fotos.filter((_, i) => i !== fotoIndex)
-    updateEquipo(equipoIndex, { fotos: nuevasFotos })
+    const nuevosAssets = (equipos[equipoIndex].fotoAssets || []).filter(
+      (asset) => asset.secureUrl !== fotoRemovida
+    )
+    updateEquipo(equipoIndex, { fotos: nuevasFotos, fotoAssets: nuevosAssets })
   }
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -166,7 +176,7 @@ export default function NewOrdenPage() {
         accesorios: primary.accesorios,
         problemaReportado: primary.problemaReportado,
         fotos: primary.fotos,
-  // @ts-expect-error
+  // @ts-expect-error -- el payload acepta equipos anidados aunque el tipo local no lo modele
         equipos: equipos.map((eq) => ({
           equipoTipoId: eq.equipoTipoId,
           marca: eq.marca,
@@ -175,7 +185,8 @@ export default function NewOrdenPage() {
           contrasena: eq.contrasena,
           accesorios: eq.accesorios,
           problemaReportado: eq.problemaReportado,
-          fotos: eq.fotos
+          fotos: eq.fotos,
+          fotoAssets: eq.fotoAssets,
         }))
       })
 

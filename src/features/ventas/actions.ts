@@ -9,49 +9,11 @@ import { withAction, ActionError } from "@/lib/server-actions";
 import { prisma } from "@/lib/prisma";
 import { requireFeature, requireTenant } from "@/lib/services/tenant-scope";
 import { revalidatePath } from "next/cache";
-import { createVentaSchema, anularVentaSchema } from "./schemas";
-import { upsertStockUbicacion } from "@/lib/services/stock-ubicacion-service";
-import { allocateFifoForSale } from "@/lib/services/fifo-allocation";
-import type { CreateVentaInput, AnularVentaInput } from "./schemas";
+import type { CreateVentaInput, AnularVentaInput, FacturarVentaInput } from "./schemas";
 import type { AuthenticatedUser } from "@/lib/auth-middleware";
-import { applyFacturacionCobroWorkflow } from "./services/facturacion-workflow";
-import { getOrCreateTurnoActivo } from "@/features/turnos-pos";
-
-// ─── Select reutilizable ──────────────────────────────────
-
-const VENTA_SELECT = {
-	ventaId: true,
-	tenantId: true,
-	total: true,
-	descuento: true,
-	clienteId: true,
-	empleadoId: true,
-	puntoDeVentaId: true,
-	observaciones: true,
-	esVentaUnica: true,
-	ofertaId: true,
-	turnoId: true,
-	metodoPago: true,
-	montoEfectivo: true,
-	montoTarjeta: true,
-	montoTransferencia: true,
-	montoCredito: true,
-	createdAt: true,
-	updatedAt: true,
-	items: {
-		select: {
-			id: true,
-			productoId: true,
-			cantidad: true,
-			precioUnitario: true,
-			total: true,
-			producto: { select: { id: true, nombre: true } },
-		},
-	},
-	puntoDeVenta: { select: { pvId: true, nombre: true } },
-	cliente: { select: { clienteId: true, nombre: true } },
-	factura: { select: { idFactura: true, numeroFactura: true } },
-} as const;
+import { VentaReadService, VENTA_SELECT } from "./services/venta-read-service";
+import { VentaMutationService } from "./services/venta-mutation-service";
+import { VentaLifecycleService } from "./services/venta-lifecycle-service";
 
 // ─── Server Actions ────────────────────────────────────────
 
@@ -62,11 +24,7 @@ export const getVentasAction = withAction(
 	async (_input: void, user: AuthenticatedUser) => {
 		requireFeature(user, 'ventas-pos', 'ver ventas');
 		const tenantId = requireTenant(user);
-		return prisma.venta.findMany({
-			where: { tenantId, deletedAt: null },
-			select: VENTA_SELECT,
-			orderBy: { createdAt: "desc" },
-		});
+		return VentaReadService.list(tenantId);
 	},
 );
 
@@ -76,257 +34,7 @@ export const getVentasAction = withAction(
  */
 export const createVentaAction = withAction(
 	async (input: CreateVentaInput, user: AuthenticatedUser) => {
-		requireFeature(user, 'ventas-pos', 'realizar ventas');
-		const parsed = createVentaSchema.parse(input);
-		const tenantId = requireTenant(user);
-
-		const hasFacturacion = user.planFeatures?.['facturacion'] === true;
-
-		if (parsed.clienteId && !hasFacturacion) {
-			throw new ActionError(
-				'Tu plan no incluye facturación. Para vincular clientes a ventas, actualiza tu plan.',
-				'FEATURE_NOT_AVAILABLE',
-			);
-		}
-
-		// Resolver turno activo
-		let turnoId: string | null = parsed.turnoId ?? null;
-		if (!turnoId) {
-			const turnoResult = await getOrCreateTurnoActivo({
-				puntoDeVentaId: parsed.puntoDeVentaId,
-				empleadoId: parsed.empleadoId,
-			});
-			// getOrCreateTurnoActivo retorna ActionResponse, no el raw result
-			if (turnoResult.success) {
-				turnoId = turnoResult.data.turnoId;
-			}
-			// Si falla (ej: PRINCIPAL sin turno), se permite venta sin turno (legacy)
-		}
-
-		// Calcular totales de la venta
-		const itemsData = parsed.items.map((item) => ({
-			productoId: item.productoId,
-			cantidad: item.cantidad,
-			precioUnitario: item.precioUnitario,
-			total: item.cantidad * item.precioUnitario,
-		}));
-
-		const subtotalVenta = itemsData.reduce((sum, item) => sum + item.total, 0);
-		const totalVenta = subtotalVenta - (parsed.descuento ?? 0);
-		const totalCantidad = itemsData.reduce(
-			(sum, item) => sum + item.cantidad,
-			0,
-		);
-
-		// Crear venta + factura (si el plan lo permite) en una transacción
-		const result = await prisma.$transaction(async (tx) => {
-			// Variables para facturación (solo si el plan lo permite)
-			let serie: any = null;
-			let numeroConsecutivo = 0;
-			let numeroFactura = '';
-
-			if (hasFacturacion) {
-				// 1. Obtener o crear serie de facturación por defecto para el tenant
-				serie = await tx.serieFacturacion.findFirst({
-					where: { tenantId, esPorDefecto: true },
-				});
-
-				if (!serie) {
-					serie = await tx.serieFacturacion.findFirst({
-						where: { tenantId },
-						orderBy: { createdAt: "asc" },
-					});
-				}
-
-				if (!serie) {
-					serie = await tx.serieFacturacion.create({
-						data: {
-							tenantId,
-							prefijo: "FV",
-							descripcion: "Facturas de Venta",
-							consecutivo: 1,
-							esPorDefecto: true,
-						},
-					});
-				}
-
-				// 2. Incrementar consecutivo
-				const updatedSerie = await tx.serieFacturacion.update({
-					where: { serieId: serie.serieId },
-					data: { consecutivo: { increment: 1 } },
-				});
-
-				numeroConsecutivo = updatedSerie.consecutivo - 1;
-				numeroFactura = `${serie.prefijo}-${String(numeroConsecutivo).padStart(6, "0")}`;
-			}
-
-			// 3. Crear venta
-			const venta = await tx.venta.create({
-				data: {
-					tenantId,
-					puntoDeVentaId: parsed.puntoDeVentaId,
-					clienteId: parsed.clienteId ?? null,
-					empleadoId: parsed.empleadoId ?? null,
-					turnoId,
-					metodoPago: parsed.metodoPago ?? null,
-					montoEfectivo: parsed.montoEfectivo ?? null,
-					montoTarjeta: parsed.montoTarjeta ?? null,
-					montoTransferencia: parsed.montoTransferencia ?? null,
-					montoCredito: parsed.montoCredito ?? null,
-					descuento: parsed.descuento ?? 0,
-					observaciones: parsed.observaciones ?? null,
-					total: Math.max(totalVenta, 0),
-					cantidad: totalCantidad,
-					esVentaUnica: true,
-					items: {
-						create: itemsData,
-					},
-				},
-			});
-
-			// 3b. Descontar stock por cada ítem vendido
-			for (const item of itemsData) {
-				const producto = await tx.producto.findUnique({
-					where: { id: item.productoId },
-					select: {
-						id: true,
-						nombre: true,
-						stock: true,
-						almacenId: true,
-						tenantId: true,
-					},
-				});
-
-				if (!producto) {
-					throw new ActionError(
-						`Producto con ID ${item.productoId} no encontrado`,
-						"NOT_FOUND",
-					);
-				}
-
-				// Validar stock contra StockUbicacion del punto de venta
-				if (parsed.puntoDeVentaId) {
-					// Validar contra cantidadDisponible (Fase 3)
-					const stockPV = await tx.stockUbicacion.findUnique({
-						where: {
-							productoId_tipoUbicacion_ubicacionId: {
-								productoId: item.productoId,
-								tipoUbicacion: "punto_venta",
-								ubicacionId: parsed.puntoDeVentaId,
-							},
-						},
-						select: { cantidadDisponible: true },
-					});
-
-					if (stockPV === null) {
-						throw new ActionError(
-							`El producto "${producto.nombre}" no tiene registro de stock en este punto de venta. Complete el backfill de StockUbicacion antes de vender.`,
-							"STOCK_INCONSISTENTE",
-						);
-					}
-
-					if (stockPV.cantidadDisponible < item.cantidad) {
-						throw new ActionError(
-							`Stock insuficiente en el punto de venta. Disponible: ${stockPV.cantidadDisponible}, solicitado: ${item.cantidad}`,
-							"STOCK_INSUFICIENTE",
-						);
-					}
-				} else if (producto.almacenId) {
-					const stockAlmacen = await tx.stockUbicacion.findUnique({
-						where: {
-							productoId_tipoUbicacion_ubicacionId: {
-								productoId: item.productoId,
-								tipoUbicacion: "almacen",
-								ubicacionId: producto.almacenId,
-							},
-						},
-						select: { cantidadDisponible: true },
-					});
-
-					if (stockAlmacen === null) {
-						throw new ActionError(
-							`El producto "${producto.nombre}" no tiene registro de stock en su almacén. Complete el backfill de StockUbicacion antes de vender.`,
-							"STOCK_INCONSISTENTE",
-						);
-					}
-
-					if (stockAlmacen.cantidadDisponible < item.cantidad) {
-						throw new ActionError(
-							`Stock insuficiente en el almacén. Disponible: ${stockAlmacen.cantidadDisponible}, solicitado: ${item.cantidad}`,
-							"STOCK_INSUFICIENTE",
-						);
-					}
-				}
-
-				// Sincronizar StockUbicacion solo de la ubicación correcta
-				// Si la venta tiene PV, solo descontar del PV (el stock ya fue transferido del almacén)
-				if (parsed.puntoDeVentaId) {
-					await upsertStockUbicacion(tx, {
-						tenantId: producto.tenantId,
-						productoId: item.productoId,
-						tipoUbicacion: "punto_venta",
-						ubicacionId: parsed.puntoDeVentaId,
-						modo: "increment",
-						delta: -item.cantidad,
-					});
-				} else if (producto.almacenId) {
-					await upsertStockUbicacion(tx, {
-						productoId: item.productoId,
-						tipoUbicacion: "almacen",
-						ubicacionId: producto.almacenId,
-						modo: "increment",
-						delta: -item.cantidad,
-					});
-				}
-			}
-
-			// 3c. Asignación FIFO de compras
-			await allocateFifoForSale(tx, tenantId, venta.ventaId);
-
-			// 4. Crear factura solo si el plan tiene facturación Y hay cliente
-			if (hasFacturacion && parsed.clienteId && serie) {
-				const factura = await tx.factura.create({
-					data: {
-						tenantId,
-						serieId: serie.serieId,
-						numeroConsecutivo,
-						numeroFactura,
-						tipoDocumento: "FACTURA",
-						ventaId: venta.ventaId,
-						clienteId: parsed.clienteId,
-						subtotal: subtotalVenta,
-						descuento: parsed.descuento ?? 0,
-						cargoTransporte: 0,
-						total: Math.max(totalVenta, 0),
-						estado: "PENDIENTE",
-						creadoPor: user.userId || "sistema",
-						fechaVencimiento: parsed.fechaVencimiento
-							? new Date(parsed.fechaVencimiento)
-							: null,
-						cuentaBancariaId: parsed.cuentaBancariaId || null,
-					},
-				});
-
-				// 5. Aplicar workflow de cobro (reconciliación o cuenta por cobrar)
-				if (parsed.tipoVencimiento || parsed.fechaVencimiento) {
-					await applyFacturacionCobroWorkflow(tx, {
-						ventaId: venta.ventaId,
-						facturaId: factura.idFactura,
-						clienteId: parsed.clienteId,
-						montoTotal: Math.max(totalVenta, 0),
-						usuarioId: user.userId || "sistema",
-						tenantId,
-						observaciones: parsed.observaciones,
-						tipoVencimiento: parsed.tipoVencimiento || undefined,
-						fechaVencimiento: parsed.fechaVencimiento || undefined,
-						cuentaBancariaId: parsed.cuentaBancariaId || undefined,
-					});
-				}
-			}
-
-			return venta;
-		});
-
+		const result = await VentaMutationService.create({ input, user });
 		revalidatePath("/busy/sales");
 		return result;
 	},
@@ -346,12 +54,7 @@ export const getVentaByIdAction = withAction(
 	async (id: string, user: AuthenticatedUser) => {
 		requireFeature(user, 'ventas-pos', 'ver ventas');
 		const tenantId = requireTenant(user);
-		const venta = await prisma.venta.findFirst({
-			where: { ventaId: id, tenantId, deletedAt: null },
-			select: VENTA_SELECT,
-		});
-		if (!venta) throw new ActionError("Venta no encontrada", "NOT_FOUND");
-		return venta;
+		return VentaReadService.getById({ tenantId, ventaId: id });
 	},
 );
 
@@ -368,19 +71,7 @@ export const updateVentaAction = withAction(
 		}>,
 		user: AuthenticatedUser,
 	) => {
-		requireFeature(user, 'ventas-pos', 'editar ventas');
-		const { ventaId, ...data } = input;
-		const tenantId = requireTenant(user);
-		const existing = await prisma.venta.findFirst({
-			where: { ventaId, tenantId, deletedAt: null },
-			select: { ventaId: true },
-		});
-		if (!existing) throw new ActionError("Venta no encontrada", "NOT_FOUND");
-		const updated = await prisma.venta.update({
-			where: { ventaId },
-			data,
-			select: VENTA_SELECT,
-		});
+		const updated = await VentaMutationService.update({ input, user });
 		revalidatePath("/busy/sales");
 		return updated;
 	},
@@ -388,76 +79,41 @@ export const updateVentaAction = withAction(
 
 export const anularVentaAction = withAction(
 	async (input: AnularVentaInput, user: AuthenticatedUser) => {
-		requireFeature(user, 'ventas-pos', 'anular ventas');
-		const parsed = anularVentaSchema.parse(input);
-		const tenantId = requireTenant(user);
-
-		// Leer venta con sus items para restaurar stock
-		const venta = await prisma.venta.findUnique({
-			where: { ventaId: parsed.ventaId },
-			select: {
-				ventaId: true,
-				tenantId: true,
-				puntoDeVentaId: true,
-				deletedAt: true,
-				items: {
-					select: {
-						productoId: true,
-						cantidad: true,
-						producto: {
-							select: { id: true, almacenId: true, tenantId: true },
-						},
-					},
-				},
-			},
-		});
-
-		if (!venta) {
-			throw new ActionError("Venta no encontrada", "NOT_FOUND");
-		}
-
-		if (venta.deletedAt) {
-			throw new ActionError("La venta ya está anulada", "VALIDATION_ERROR");
-		}
-
-		// Restaurar stock en una transacción
-		await prisma.$transaction(async (tx) => {
-			for (const item of venta.items) {
-				// Restaurar SOLO la ubicación que realmente se descontó al vender
-				// Si la venta tiene PV, el stock salió del PV, no del almacén
-				if (venta.puntoDeVentaId) {
-					await upsertStockUbicacion(tx, {
-						tenantId: item.producto.tenantId,
-						productoId: item.productoId,
-						tipoUbicacion: "punto_venta",
-						ubicacionId: venta.puntoDeVentaId,
-						modo: "increment",
-						delta: item.cantidad,
-					});
-				} else if (item.producto?.almacenId) {
-					await upsertStockUbicacion(tx, {
-						productoId: item.productoId,
-						tipoUbicacion: "almacen",
-						ubicacionId: item.producto.almacenId,
-						modo: "increment",
-						delta: item.cantidad,
-					});
-				}
-			}
-
-			// Soft-delete: marcar como anulada
-			await tx.venta.update({
-				where: { ventaId: parsed.ventaId },
-				data: {
-					deletedAt: new Date(),
-					observaciones: parsed.motivo
-						? `ANULADA: ${parsed.motivo}`
-						: "ANULADA",
-				},
-			});
-		});
-
+		const result = await VentaMutationService.cancel({ input, user });
 		revalidatePath("/busy/sales");
-		return { ventaId: parsed.ventaId, anulada: true };
+		return result;
+	},
+);
+
+/**
+ * @description Entrega un pedido de venta (PEDIDO → ENTREGADA): descuenta stock,
+ * registra kardex y aplica FIFO. Permiso: ventas.pedido.gestionar.
+ */
+export const entregarVentaAction = withAction(
+	async (ventaId: string, user: AuthenticatedUser) => {
+		requireFeature(user, 'ventas-pedidos', 'gestionar pedidos de venta');
+		const result = await VentaLifecycleService.entregarVenta({ ventaId, user });
+		revalidatePath("/busy/sales");
+		return result;
+	},
+);
+
+/**
+ * @description Factura una venta entregada (ENTREGADA → FACTURADA): crea la
+ * factura con serie y registra el cobro/CxC. Permiso: ventas.pedido.gestionar.
+ */
+export const facturarVentaAction = withAction(
+	async (
+		params: { ventaId: string; input: FacturarVentaInput },
+		user: AuthenticatedUser,
+	) => {
+		requireFeature(user, 'ventas-pedidos', 'gestionar pedidos de venta');
+		const result = await VentaLifecycleService.facturarVenta({
+			ventaId: params.ventaId,
+			input: params.input,
+			user,
+		});
+		revalidatePath("/busy/sales");
+		return result;
 	},
 );

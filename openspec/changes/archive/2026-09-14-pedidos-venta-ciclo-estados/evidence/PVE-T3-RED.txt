@@ -1,0 +1,347 @@
+
+ RUN  v3.2.4 /Users/arturo/Documents/Proyecto Inventario/TCP
+
+ ❯ src/features/ventas/__tests__/venta-lifecycle.test.ts (16 tests | 1 failed) 47ms
+   ✓ entregarVenta (PEDIDO → ENTREGADA) > reclama el estado, descuenta stock, registra kardex y aplica FIFO 9ms
+   ✓ entregarVenta (PEDIDO → ENTREGADA) > rechaza una doble entrega (estado ya avanzó) sin efectos 2ms
+   ✓ entregarVenta (PEDIDO → ENTREGADA) > rechaza la entrega si el stock ya no alcanza, sin efectos 2ms
+   ✓ entregarVenta (PEDIDO → ENTREGADA) > exige venta del tenant 0ms
+   ✓ entregarVenta (PEDIDO → ENTREGADA) > exige la feature ventas-pedidos a no-admin 1ms
+   ✓ facturarVenta (ENTREGADA → FACTURADA) > crea la factura con serie, reclama el estado y persiste el cobro 6ms
+   ✓ facturarVenta (ENTREGADA → FACTURADA) > aplica el workflow de cobro cuando hay vencimiento 3ms
+   ✓ facturarVenta (ENTREGADA → FACTURADA) > rechaza facturar un pedido que aún no se entregó 1ms
+   ✓ facturarVenta (ENTREGADA → FACTURADA) > rechaza facturar una venta sin cliente 1ms
+   ✓ facturarVenta (ENTREGADA → FACTURADA) > exige que el desglose MIXTO sume exactamente el total de la venta 1ms
+   ✓ anularVentaPorEstado > anula un PEDIDO sin tocar stock, FIFO ni factura 2ms
+   ✓ anularVentaPorEstado > anula una ENTREGADA revirtiendo stock, kardex y allocations 1ms
+   ✓ anularVentaPorEstado > anula una FACTURADA anulando también factura y CxC 1ms
+   × anularVentaPorEstado > permite anular un PEDIDO aunque su turno esté cerrado (sin efectos que revertir) 12ms
+     → No se puede anular una venta de un turno cerrado o con arqueo.
+   ✓ anularVentaPorEstado > rechaza anular una venta de turno cerrado 1ms
+   ✓ anularVentaPorEstado > falla sin efectos si el claim de anulación pierde la carrera 2ms
+ ❯ src/features/ventas/__tests__/venta-create-orquestacion.test.ts (4 tests | 3 failed) 42ms
+   × create como orquestador del ciclo (PVE-T3) > flujo clásico con cliente y plan de facturación termina FACTURADA 33ms
+     → expected "spy" to be called with arguments: [ ObjectContaining{…} ]
+
+Received: 
+
+  1st spy call:
+
+  [
+-   ObjectContaining {
+-     "data": ObjectContaining {
+-       "estado": "FACTURADA",
++   {
++     "data": {
++       "cantidad": 2,
++       "clienteId": "c-1",
++       "descuento": 0,
++       "empleadoId": null,
++       "esVentaUnica": true,
++       "items": {
++         "create": [
++           {
++             "cantidad": 2,
++             "precioUnitario": 500,
++             "productoId": "prod-1",
++             "total": 1000,
++           },
++         ],
++       },
+        "metodoPago": "EFECTIVO",
++       "montoCredito": null,
++       "montoEfectivo": 1000,
++       "montoTarjeta": null,
++       "montoTransferencia": null,
++       "observaciones": null,
++       "puntoDeVentaId": "pv-1",
++       "tenantId": "tenant-1",
++       "total": 1000,
++       "turnoId": "t-1",
+      },
+    },
+  ]
+
+
+Number of calls: 1
+
+   × create como orquestador del ciclo (PVE-T3) > flujo clásico sin cliente termina ENTREGADA con efectos de stock 4ms
+     → expected "spy" to be called with arguments: [ ObjectContaining{…} ]
+
+Received: 
+
+  1st spy call:
+
+  [
+-   ObjectContaining {
+-     "data": ObjectContaining {
+-       "estado": "ENTREGADA",
++   {
++     "data": {
++       "cantidad": 2,
++       "clienteId": null,
++       "descuento": 0,
++       "empleadoId": null,
++       "esVentaUnica": true,
++       "items": {
++         "create": [
++           {
++             "cantidad": 2,
++             "precioUnitario": 500,
++             "productoId": "prod-1",
++             "total": 1000,
++           },
++         ],
++       },
++       "metodoPago": "EFECTIVO",
++       "montoCredito": null,
++       "montoEfectivo": 1000,
++       "montoTarjeta": null,
++       "montoTransferencia": null,
++       "observaciones": null,
++       "puntoDeVentaId": "pv-1",
++       "tenantId": "tenant-1",
++       "total": 1000,
++       "turnoId": "t-1",
+      },
+    },
+  ]
+
+
+Number of calls: 1
+
+   × create como orquestador del ciclo (PVE-T3) > modo pedido crea en PEDIDO sin stock, FIFO, factura ni pago persistido 3ms
+     → expected "spy" to be called with arguments: [ ObjectContaining{…} ]
+
+Received: 
+
+  1st spy call:
+
+  [
+-   ObjectContaining {
+-     "data": ObjectContaining {
+-       "estado": "PEDIDO",
+-       "metodoPago": null,
++   {
++     "data": {
++       "cantidad": 2,
++       "clienteId": "c-1",
++       "descuento": 0,
++       "empleadoId": null,
++       "esVentaUnica": true,
++       "items": {
++         "create": [
++           {
++             "cantidad": 2,
++             "precioUnitario": 500,
++             "productoId": "prod-1",
++             "total": 1000,
++           },
++         ],
++       },
++       "metodoPago": "EFECTIVO",
++       "montoCredito": null,
++       "montoEfectivo": 1000,
++       "montoTarjeta": null,
++       "montoTransferencia": null,
++       "observaciones": null,
++       "puntoDeVentaId": "pv-1",
++       "tenantId": "tenant-1",
++       "total": 1000,
++       "turnoId": "t-1",
+      },
+    },
+  ]
+
+
+Number of calls: 1
+
+   ✓ create como orquestador del ciclo (PVE-T3) > la respuesta conserva la forma actual (venta creada) 1ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 4 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  src/features/ventas/__tests__/venta-create-orquestacion.test.ts > create como orquestador del ciclo (PVE-T3) > flujo clásico con cliente y plan de facturación termina FACTURADA
+AssertionError: expected "spy" to be called with arguments: [ ObjectContaining{…} ]
+
+Received: 
+
+  1st spy call:
+
+  [
+-   ObjectContaining {
+-     "data": ObjectContaining {
+-       "estado": "FACTURADA",
++   {
++     "data": {
++       "cantidad": 2,
++       "clienteId": "c-1",
++       "descuento": 0,
++       "empleadoId": null,
++       "esVentaUnica": true,
++       "items": {
++         "create": [
++           {
++             "cantidad": 2,
++             "precioUnitario": 500,
++             "productoId": "prod-1",
++             "total": 1000,
++           },
++         ],
++       },
+        "metodoPago": "EFECTIVO",
++       "montoCredito": null,
++       "montoEfectivo": 1000,
++       "montoTarjeta": null,
++       "montoTransferencia": null,
++       "observaciones": null,
++       "puntoDeVentaId": "pv-1",
++       "tenantId": "tenant-1",
++       "total": 1000,
++       "turnoId": "t-1",
+      },
+    },
+  ]
+
+
+Number of calls: 1
+
+ ❯ src/features/ventas/__tests__/venta-create-orquestacion.test.ts:113:31
+    111|   });
+    112|   expect(result).toEqual({ ventaId: 'v-1' });
+    113|   expect(mockTx.venta.create).toHaveBeenCalledWith(
+       |                               ^
+    114|    expect.objectContaining({
+    115|     data: expect.objectContaining({ estado: 'FACTURADA', metodoPago: '…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/4]⎯
+
+ FAIL  src/features/ventas/__tests__/venta-create-orquestacion.test.ts > create como orquestador del ciclo (PVE-T3) > flujo clásico sin cliente termina ENTREGADA con efectos de stock
+AssertionError: expected "spy" to be called with arguments: [ ObjectContaining{…} ]
+
+Received: 
+
+  1st spy call:
+
+  [
+-   ObjectContaining {
+-     "data": ObjectContaining {
+-       "estado": "ENTREGADA",
++   {
++     "data": {
++       "cantidad": 2,
++       "clienteId": null,
++       "descuento": 0,
++       "empleadoId": null,
++       "esVentaUnica": true,
++       "items": {
++         "create": [
++           {
++             "cantidad": 2,
++             "precioUnitario": 500,
++             "productoId": "prod-1",
++             "total": 1000,
++           },
++         ],
++       },
++       "metodoPago": "EFECTIVO",
++       "montoCredito": null,
++       "montoEfectivo": 1000,
++       "montoTarjeta": null,
++       "montoTransferencia": null,
++       "observaciones": null,
++       "puntoDeVentaId": "pv-1",
++       "tenantId": "tenant-1",
++       "total": 1000,
++       "turnoId": "t-1",
+      },
+    },
+  ]
+
+
+Number of calls: 1
+
+ ❯ src/features/ventas/__tests__/venta-create-orquestacion.test.ts:128:31
+    126|    user: adminUser,
+    127|   });
+    128|   expect(mockTx.venta.create).toHaveBeenCalledWith(
+       |                               ^
+    129|    expect.objectContaining({
+    130|     data: expect.objectContaining({ estado: 'ENTREGADA' }),
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/4]⎯
+
+ FAIL  src/features/ventas/__tests__/venta-create-orquestacion.test.ts > create como orquestador del ciclo (PVE-T3) > modo pedido crea en PEDIDO sin stock, FIFO, factura ni pago persistido
+AssertionError: expected "spy" to be called with arguments: [ ObjectContaining{…} ]
+
+Received: 
+
+  1st spy call:
+
+  [
+-   ObjectContaining {
+-     "data": ObjectContaining {
+-       "estado": "PEDIDO",
+-       "metodoPago": null,
++   {
++     "data": {
++       "cantidad": 2,
++       "clienteId": "c-1",
++       "descuento": 0,
++       "empleadoId": null,
++       "esVentaUnica": true,
++       "items": {
++         "create": [
++           {
++             "cantidad": 2,
++             "precioUnitario": 500,
++             "productoId": "prod-1",
++             "total": 1000,
++           },
++         ],
++       },
++       "metodoPago": "EFECTIVO",
++       "montoCredito": null,
++       "montoEfectivo": 1000,
++       "montoTarjeta": null,
++       "montoTransferencia": null,
++       "observaciones": null,
++       "puntoDeVentaId": "pv-1",
++       "tenantId": "tenant-1",
++       "total": 1000,
++       "turnoId": "t-1",
+      },
+    },
+  ]
+
+
+Number of calls: 1
+
+ ❯ src/features/ventas/__tests__/venta-create-orquestacion.test.ts:150:31
+    148|    user: adminUser,
+    149|   });
+    150|   expect(mockTx.venta.create).toHaveBeenCalledWith(
+       |                               ^
+    151|    expect.objectContaining({
+    152|     data: expect.objectContaining({ estado: 'PEDIDO', metodoPago: null…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/4]⎯
+
+ FAIL  src/features/ventas/__tests__/venta-lifecycle.test.ts > anularVentaPorEstado > permite anular un PEDIDO aunque su turno esté cerrado (sin efectos que revertir)
+ActionError: No se puede anular una venta de un turno cerrado o con arqueo.
+ ❯ Object.anularVentaPorEstado src/features/ventas/services/venta-lifecycle-service.ts:455:13
+    453|     }
+    454|     if (hasClosedPeriodEffects(venta)) {
+    455|       throw new ActionError(
+       |             ^
+    456|         'No se puede anular una venta de un turno cerrado o con arqueo…
+    457|         'FINANCIAL_REVERSAL_REQUIRED',
+ ❯ src/features/ventas/__tests__/venta-lifecycle.test.ts:349:18
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/4]⎯
+
+
+ Test Files  2 failed (2)
+      Tests  4 failed | 16 passed (20)
+   Start at  02:22:11
+   Duration  3.55s (transform 638ms, setup 555ms, collect 1.90s, tests 90ms, environment 1.68s, prepare 416ms)
+

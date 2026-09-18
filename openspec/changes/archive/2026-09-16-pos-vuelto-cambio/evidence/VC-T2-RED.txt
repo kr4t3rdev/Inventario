@@ -1,0 +1,225 @@
+
+ RUN  v3.2.4 /Users/arturo/Documents/Proyecto Inventario/TCP
+
+ ❯ src/features/ventas/__tests__/venta-create-orquestacion.test.ts (6 tests | 2 failed) 20ms
+   ✓ create como orquestador del ciclo (PVE-T3) > flujo clásico con cliente y plan de facturación termina FACTURADA 7ms
+   ✓ create como orquestador del ciclo (PVE-T3) > flujo clásico sin cliente termina ENTREGADA con efectos de stock 1ms
+   ✓ create como orquestador del ciclo (PVE-T3) > modo pedido crea en PEDIDO sin stock, FIFO, factura ni pago persistido 1ms
+   × create como orquestador del ciclo (PVE-T3) > persiste recibido y vuelto derivado en ventas de efectivo (VC-T2) 7ms
+     → expected "spy" to be called with arguments: [ ObjectContaining{…} ]
+
+Received: 
+
+  1st spy call:
+
+  [
+-   ObjectContaining {
+-     "data": ObjectContaining {
+-       "cambioDevuelto": 500,
+-       "montoRecibidoEfectivo": 1500,
++   {
++     "data": {
++       "cantidad": 2,
++       "clienteId": null,
++       "descuento": 0,
++       "empleadoId": null,
++       "esVentaUnica": true,
++       "estado": "ENTREGADA",
++       "items": {
++         "create": [
++           {
++             "cantidad": 2,
++             "precioUnitario": 500,
++             "productoId": "prod-1",
++             "total": 1000,
++           },
++         ],
++       },
++       "metodoPago": "EFECTIVO",
++       "montoCredito": null,
++       "montoEfectivo": 1000,
++       "montoTarjeta": null,
++       "montoTransferencia": null,
++       "observaciones": null,
++       "puntoDeVentaId": "pv-1",
++       "tenantId": "tenant-1",
++       "total": 1000,
++       "turnoId": "t-1",
+      },
+    },
+  ]
+
+
+Number of calls: 1
+
+   × create como orquestador del ciclo (PVE-T3) > sin efectivo los campos de vuelto quedan nulos 1ms
+     → expected "spy" to be called with arguments: [ ObjectContaining{…} ]
+
+Received: 
+
+  1st spy call:
+
+  [
+-   ObjectContaining {
+-     "data": ObjectContaining {
+-       "cambioDevuelto": null,
+-       "montoRecibidoEfectivo": null,
++   {
++     "data": {
++       "cantidad": 2,
++       "clienteId": null,
++       "descuento": 0,
++       "empleadoId": null,
++       "esVentaUnica": true,
++       "estado": "ENTREGADA",
++       "items": {
++         "create": [
++           {
++             "cantidad": 2,
++             "precioUnitario": 500,
++             "productoId": "prod-1",
++             "total": 1000,
++           },
++         ],
++       },
++       "metodoPago": "TARJETA",
++       "montoCredito": null,
++       "montoEfectivo": null,
++       "montoTarjeta": 1000,
++       "montoTransferencia": null,
++       "observaciones": null,
++       "puntoDeVentaId": "pv-1",
++       "tenantId": "tenant-1",
++       "total": 1000,
++       "turnoId": "t-1",
+      },
+    },
+  ]
+
+
+Number of calls: 1
+
+   ✓ create como orquestador del ciclo (PVE-T3) > la respuesta conserva la forma actual (venta creada) 0ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  src/features/ventas/__tests__/venta-create-orquestacion.test.ts > create como orquestador del ciclo (PVE-T3) > persiste recibido y vuelto derivado en ventas de efectivo (VC-T2)
+AssertionError: expected "spy" to be called with arguments: [ ObjectContaining{…} ]
+
+Received: 
+
+  1st spy call:
+
+  [
+-   ObjectContaining {
+-     "data": ObjectContaining {
+-       "cambioDevuelto": 500,
+-       "montoRecibidoEfectivo": 1500,
++   {
++     "data": {
++       "cantidad": 2,
++       "clienteId": null,
++       "descuento": 0,
++       "empleadoId": null,
++       "esVentaUnica": true,
++       "estado": "ENTREGADA",
++       "items": {
++         "create": [
++           {
++             "cantidad": 2,
++             "precioUnitario": 500,
++             "productoId": "prod-1",
++             "total": 1000,
++           },
++         ],
++       },
++       "metodoPago": "EFECTIVO",
++       "montoCredito": null,
++       "montoEfectivo": 1000,
++       "montoTarjeta": null,
++       "montoTransferencia": null,
++       "observaciones": null,
++       "puntoDeVentaId": "pv-1",
++       "tenantId": "tenant-1",
++       "total": 1000,
++       "turnoId": "t-1",
+      },
+    },
+  ]
+
+
+Number of calls: 1
+
+ ❯ src/features/ventas/__tests__/venta-create-orquestacion.test.ts:172:31
+    170|    user: adminUser,
+    171|   });
+    172|   expect(mockTx.venta.create).toHaveBeenCalledWith(
+       |                               ^
+    173|    expect.objectContaining({
+    174|     data: expect.objectContaining({
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/2]⎯
+
+ FAIL  src/features/ventas/__tests__/venta-create-orquestacion.test.ts > create como orquestador del ciclo (PVE-T3) > sin efectivo los campos de vuelto quedan nulos
+AssertionError: expected "spy" to be called with arguments: [ ObjectContaining{…} ]
+
+Received: 
+
+  1st spy call:
+
+  [
+-   ObjectContaining {
+-     "data": ObjectContaining {
+-       "cambioDevuelto": null,
+-       "montoRecibidoEfectivo": null,
++   {
++     "data": {
++       "cantidad": 2,
++       "clienteId": null,
++       "descuento": 0,
++       "empleadoId": null,
++       "esVentaUnica": true,
++       "estado": "ENTREGADA",
++       "items": {
++         "create": [
++           {
++             "cantidad": 2,
++             "precioUnitario": 500,
++             "productoId": "prod-1",
++             "total": 1000,
++           },
++         ],
++       },
++       "metodoPago": "TARJETA",
++       "montoCredito": null,
++       "montoEfectivo": null,
++       "montoTarjeta": 1000,
++       "montoTransferencia": null,
++       "observaciones": null,
++       "puntoDeVentaId": "pv-1",
++       "tenantId": "tenant-1",
++       "total": 1000,
++       "turnoId": "t-1",
+      },
+    },
+  ]
+
+
+Number of calls: 1
+
+ ❯ src/features/ventas/__tests__/venta-create-orquestacion.test.ts:192:31
+    190|    user: adminUser,
+    191|   });
+    192|   expect(mockTx.venta.create).toHaveBeenCalledWith(
+       |                               ^
+    193|    expect.objectContaining({
+    194|     data: expect.objectContaining({
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/2]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  2 failed | 4 passed (6)
+   Start at  19:12:31
+   Duration  1.73s (transform 346ms, setup 104ms, collect 604ms, tests 20ms, environment 395ms, prepare 172ms)
+

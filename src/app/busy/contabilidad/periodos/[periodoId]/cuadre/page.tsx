@@ -37,7 +37,22 @@ export default async function CuadrePeriodoPage({ params }: PageProps) {
 
   return (
     <div className="container mx-auto p-6">
-      <CuadrePeriodoPageClient periodoId={periodoId} initialPeriodo={periodo} />
+      <CuadrePeriodoPageClient
+        periodoId={periodoId}
+        initialPeriodo={{
+          periodoId: periodo.periodoId,
+          codigo: periodo.codigo,
+          tipo: periodo.tipo,
+          estado: periodo.estado,
+          modoContable: periodo.modoContable,
+          fechaInicio: periodo.fechaInicio instanceof Date
+            ? periodo.fechaInicio.toISOString()
+            : String(periodo.fechaInicio),
+          fechaFin: periodo.fechaFin instanceof Date
+            ? periodo.fechaFin.toISOString()
+            : String(periodo.fechaFin),
+        }}
+      />
     </div>
   );
 }

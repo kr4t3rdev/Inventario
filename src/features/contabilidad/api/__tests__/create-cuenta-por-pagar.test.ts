@@ -28,10 +28,8 @@ const AUTH_USER = {
   email: 'test@test.com',
   role: 'ADMIN' as const,
   isActive: true,
+  planFeatures: { 'cuentas-pagar': true },
 }
-
-const PROVEEDOR_A = { vendorId: 'prov-1', nombre: 'Proveedor A' }
-const PROVEEDOR_B = { vendorId: 'prov-2', nombre: 'Proveedor B' }
 
 describe('Cuentas por Pagar — createCuentaPorPagarAction', () => {
   beforeEach(() => {

@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { RefreshCw, Loader2, Coins, Sparkles } from "lucide-react";
+import { RefreshCw, Loader2, Coins } from "lucide-react";
 import { LazyMotion, m as motion, useReducedMotion } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { GaugeChart } from "@/components/sugerencias/wanda/gauge-chart";
@@ -266,16 +266,6 @@ export default function WandaDashboardPage() {
 								transition={{ duration: 0.2 }}
 							>
 								<Coins className="h-5 w-5 text-white" />
-								<motion.div
-									animate={{ rotate: 360, scale: [1, 1.2, 1] }}
-									transition={{
-										rotate: { duration: 18, repeat: Infinity, ease: "linear" },
-										scale: { duration: 2, repeat: Infinity, ease: "easeInOut" },
-									}}
-									className="absolute -right-1 -top-1"
-								>
-									<Sparkles className="h-3.5 w-3.5 text-yellow-400" />
-								</motion.div>
 							</motion.div>
 							<div>
 								<h1 className="text-2xl font-bold bg-linear-to-r from-slate-900 to-slate-600 dark:from-white dark:to-slate-300 bg-clip-text text-transparent">

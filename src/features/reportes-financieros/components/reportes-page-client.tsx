@@ -4,42 +4,23 @@ import dynamic from "next/dynamic";
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import { LazyMotion, m as motion, useReducedMotion } from "framer-motion";
-import { ArrowLeft, BarChart3, Sparkles } from "lucide-react";
+import { ArrowLeft, BarChart3 } from "lucide-react";
 
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar";
-import { Skeleton } from "@/components/ui/skeleton";
 import { cn } from "@/lib/utils";
+import { SURFACE_CARD_CLASS as BASE_SURFACE_CARD_CLASS } from "@/features/reportes-financieros/lib/reporte-styles"
 import {
 	PageTransition,
 	StaggerContainer,
 	StaggerItem,
 	AnimatedCard,
 } from "@/components/ui/animations";
+import { ReportesShellLoader } from "./reportes-shell-loader";
 import type { TransferenciaMovimientos } from "./reportes-inventario";
 
-/**
- * @description Skeleton principal para la carga inicial de reportes.
- * @returns {JSX.Element} Estructura base de carga.
- */
-function ReportesPageLoader() {
-	return (
-		<div className="space-y-6">
-			<div className="space-y-2">
-				<Skeleton className="h-5 w-40" />
-				<Skeleton className="h-8 w-80" />
-				<Skeleton className="h-4 w-lg max-w-full" />
-			</div>
-			<div className="grid gap-4 md:grid-cols-3">
-				<Skeleton className="h-10 rounded-xl" />
-				<Skeleton className="h-10 rounded-xl" />
-				<Skeleton className="h-10 rounded-xl" />
-			</div>
-			<Skeleton className="h-160 w-full rounded-2xl" />
-		</div>
-	);
-}
+const ReportesPageLoader = () => <ReportesShellLoader kpis={3} />;
 
 const ReportesInventario = dynamic(
 	() =>
@@ -52,10 +33,6 @@ const ReportesInventario = dynamic(
 );
 
 const EASE_OUT = [0.16, 1, 0.3, 1] as const;
-const surfaceCardClass = cn(
-	"relative overflow-hidden rounded-2xl border border-slate-200/60 bg-white/75 shadow-sm backdrop-blur-xl",
-	"dark:border-slate-800/60 dark:bg-slate-900/10",
-);
 const statusBadgeClass = cn(
 	"border border-rose-200/80 bg-rose-50/80 text-rose-700",
 	"dark:border-rose-900/60 dark:bg-rose-900/20 dark:text-rose-300",
@@ -69,6 +46,11 @@ interface ReportesPageClientProps {
  * @description Shell de diseño para la página de reportes de inventario.
  * @returns {JSX.Element} Vista animada con header, estados y contenido.
  */
+const SURFACE_CARD_CLASS = cn(
+  BASE_SURFACE_CARD_CLASS,
+  "rounded-2xl border bg-white/75",
+)
+
 export function ReportesPageClient({
 	initialTransferencias,
 }: ReportesPageClientProps) {
@@ -131,8 +113,8 @@ export function ReportesPageClient({
 									className="h-8 w-8 text-muted-foreground hover:text-foreground"
 									asChild
 								>
-									<Link href="/busy">
-										<ArrowLeft className="h-4 w-4" />
+									<Link href="/busy" aria-label="Volver al panel principal">
+										<ArrowLeft className="h-4 w-4" aria-hidden="true" />
 									</Link>
 								</Button>
 								<div className="flex items-center gap-3">
@@ -145,13 +127,12 @@ export function ReportesPageClient({
 								</div>
 							</div>
 							<p className="pl-11 text-muted-foreground">
-								Genere análisis por categoría, ubicación y movimientos con una
+								Genera análisis por categoría, ubicación y movimientos con una
 								navegación rápida.
 							</p>
 						</div>
 
 						<Badge className={statusBadgeClass}>
-							<Sparkles className="mr-1 h-3.5 w-3.5" />
 							Visualización mejorada
 						</Badge>
 					</motion.div>
@@ -186,7 +167,7 @@ export function ReportesPageClient({
 					</StaggerContainer>
 
 					<motion.div variants={fadeInUp} initial="hidden" animate="show">
-						<div className={surfaceCardClass}>
+						<div className={SURFACE_CARD_CLASS}>
 							<ReportesInventario
 								initialTransferencias={
 									initialTransferencias as TransferenciaMovimientos[]

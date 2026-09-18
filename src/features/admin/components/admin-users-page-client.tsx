@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState, useTransition } from "react";
+import { useMemo, useState } from "react";
 import type { LucideIcon } from "lucide-react";
 import {
 	AlertTriangle,
@@ -8,7 +8,6 @@ import {
 	Clock,
 	Plus,
 	RefreshCw,
-	Sparkles,
 	Shield,
 	ShieldCheck,
 	User,
@@ -52,11 +51,20 @@ import {
 	AnimatedCard,
 } from "@/components/ui/animations";
 import { useAuth } from "@/contexts/auth-context";
-import { getGlobalUsersAction, getAdminPlanesAction, approveGlobalUserAction, addTenantMembershipAction } from "@/features/admin";
-import { getAdminTenantsAction } from "@/features/admin/actions";
-import { LazyMotion, m as motion, type Variants } from "framer-motion";
+import {
+	addTenantMembershipAction,
+	approveGlobalUserAction,
+	getAdminPlanesAction,
+	getAdminTenantsAction,
+	getGlobalUsersAction,
+} from "@/features/admin/actions";
+import { LazyMotion, m as motion, useReducedMotion, type Variants } from "framer-motion";
 import type { AdminUsersPageData } from "../server/data";
 import { getTenantRoleLabel } from "@/lib/auth/roles";
+import {
+	SalesAgentPayoutDialog,
+	type SalesAgentPayoutTarget,
+} from "@/features/sales-agent/components/sales-agent-payout-dialog";
 
 const UserAnalyticsPanel = dynamic(
 	() =>
@@ -95,17 +103,6 @@ const headerIconVariants: Variants = {
 	},
 };
 
-const sparklesVariants: Variants = {
-	animate: {
-		rotate: 360,
-		scale: [1, 1.2, 1],
-		transition: {
-			rotate: { duration: 18, repeat: Infinity, ease: "linear" },
-			scale: { duration: 2, repeat: Infinity, ease: "easeInOut" },
-		},
-	},
-};
-
 const titleVariants: Variants = {
 	hidden: { opacity: 0, y: -20 },
 	visible: {
@@ -129,7 +126,7 @@ export function AdminUsersPageClient({
 	initialData: AdminUsersPageData | null;
 }) {
 	const { user } = useAuth();
-	const [isPending, startTransition] = useTransition();
+	const shouldReduceMotion = useReducedMotion();
 	const [createDialogOpen, setCreateDialogOpen] = useState(false);
 	const [editDialogOpen, setEditDialogOpen] = useState(false);
 	const [approveDialogOpen, setApproveDialogOpen] = useState(false);
@@ -138,6 +135,7 @@ export function AdminUsersPageClient({
 	const [selectedPlanId, setSelectedPlanId] = useState<string>("");
 	const [tenantName, setTenantName] = useState<string>("");
 	const [isApproving, setIsApproving] = useState(false);
+	const [payoutTarget, setPayoutTarget] = useState<SalesAgentPayoutTarget | null>(null);
 
 	// Multi-tenant: diálogo para añadir usuario a otra empresa
 	const [addTenantDialogOpen, setAddTenantDialogOpen] = useState(false);
@@ -247,7 +245,7 @@ export function AdminUsersPageClient({
 				value: lockedUsers,
 				description: "Por intentos fallidos",
 				icon: AlertTriangle,
-				valueClassName: "text-violet-600 dark:text-violet-400",
+				valueClassName: "text-purple",
 			},
 			{
 				title: "Expiran Pronto",
@@ -287,10 +285,8 @@ export function AdminUsersPageClient({
 	};
 
 	const handleEditUser = (candidate: Usuario): void => {
-		startTransition(() => {
-			setSelectedUser(candidate);
-			setEditDialogOpen(true);
-		});
+		setSelectedUser(candidate);
+		setEditDialogOpen(true);
 	};
 
 	const handleApproveUser = (candidate: Usuario): void => {
@@ -377,13 +373,13 @@ export function AdminUsersPageClient({
 		<PageTransition className="relative min-h-screen w-full">
 			<div className="fixed inset-0 pointer-events-none overflow-hidden -z-10">
 				<motion.div
-					className="absolute top-0 left-1/4 w-96 h-96 bg-violet-500/10 rounded-full blur-3xl dark:bg-violet-500/5"
-					animate={{ scale: [1, 1.1, 1], x: [0, 20, 0], y: [0, -20, 0] }}
-					transition={{ duration: 8, repeat: Infinity, ease: "easeInOut" }}
+					className="absolute top-0 left-1/4 w-96 h-96 bg-primary/10 rounded-full blur-3xl dark:bg-primary/5"
+					animate={shouldReduceMotion ? { opacity: 0.5 } : { scale: [1, 1.1, 1], x: [0, 20, 0], y: [0, -20, 0] }}
+					transition={{ duration: 8, repeat: Infinity, ease: "easeInOut", repeatType: "loop" }}
 				/>
 				<motion.div
-					className="absolute top-0 right-1/4 w-96 h-96 bg-purple-500/10 rounded-full blur-3xl dark:bg-purple-500/5"
-					animate={{ scale: [1, 1.15, 1], x: [0, -30, 0], y: [0, 30, 0] }}
+					className="absolute top-0 right-1/4 w-96 h-96 bg-purple/10 rounded-full blur-3xl dark:bg-purple/5"
+					animate={shouldReduceMotion ? { opacity: 0.5 } : { scale: [1, 1.15, 1], x: [0, -30, 0], y: [0, 30, 0] }}
 					transition={{
 						duration: 10,
 						repeat: Infinity,
@@ -403,22 +399,16 @@ export function AdminUsersPageClient({
 						animate="visible"
 					>
 						<motion.div
-							className="relative flex h-12 w-12 items-center justify-center rounded-xl bg-linear-to-br from-violet-600 to-purple-600 shadow-lg"
+							className="relative flex h-12 w-12 items-center justify-center rounded-xl bg-linear-to-br from-primary to-purple shadow-lg"
 							variants={headerIconVariants}
 							initial="initial"
 							whileHover="hover"
 						>
 							<ShieldCheck className="h-6 w-6 text-white" />
-							<motion.div
-								variants={sparklesVariants}
-								animate="animate"
-								className="absolute -right-1 -top-1"
-							>
-								<Sparkles className="h-3.5 w-3.5 text-yellow-400" />
-							</motion.div>
+
 							<motion.div
 								className="absolute inset-0 rounded-xl bg-linear-to-tr from-transparent via-white/20 to-transparent"
-								animate={{ rotate: [0, 360] }}
+								animate={shouldReduceMotion ? { opacity: 0 } : { rotate: [0, 360] }}
 								transition={{ duration: 4, repeat: Infinity, ease: "linear" }}
 								style={{ mixBlendMode: "overlay" }}
 							/>
@@ -461,7 +451,7 @@ export function AdminUsersPageClient({
 							</Button>
 							<Button
 								onClick={() => setCreateDialogOpen(true)}
-								className="bg-linear-to-r from-violet-600 to-purple-600 text-white transition-all duration-200 hover:from-violet-600/90 hover:to-purple-600/90 hover:shadow-sm"
+								className="bg-linear-to-r from-primary to-purple text-white transition-all duration-200 hover:from-primary/90 hover:to-purple/90 hover:shadow-sm"
 							>
 								<Plus className="mr-2 h-4 w-4" />
 								Crear Usuario
@@ -487,8 +477,8 @@ export function AdminUsersPageClient({
 										<CardTitle className="text-sm font-medium">
 											{card.title}
 										</CardTitle>
-										<div className="rounded-md bg-linear-to-br from-violet-600/15 to-purple-600/15 p-2">
-											<Icon className="h-4 w-4 text-violet-600 dark:text-violet-400" />
+										<div className="rounded-md bg-linear-to-br from-primary/15 to-purple/15 p-2">
+											<Icon className="h-4 w-4 text-purple" />
 										</div>
 									</CardHeader>
 									<CardContent className="mb-4">
@@ -530,6 +520,13 @@ export function AdminUsersPageClient({
 									onApproveUser={handleApproveUser}
 									onAddTenantMembership={handleOpenAddTenant}
 									onRefresh={refresh}
+									onCreateUser={() => setCreateDialogOpen(true)}
+									onConfirmSalesAgentPayout={(candidate) => setPayoutTarget({
+										userId: candidate.userId,
+										name: candidate.name,
+										phone: (candidate as any).salesAgentProfile?.phone ?? null,
+										availableUsd: Number((candidate as any).salesAgentBalance?.availableUsd ?? 0),
+									})}
 								/>
 							</CardContent>
 						</Card>
@@ -558,6 +555,12 @@ export function AdminUsersPageClient({
 			</StaggerContainer>
 
 			<CreateUserDialog open={createDialogOpen} onClose={handleDialogClose} />
+			<SalesAgentPayoutDialog
+				open={Boolean(payoutTarget)}
+				agent={payoutTarget}
+				onOpenChange={(open) => { if (!open) setPayoutTarget(null); }}
+				onConfirmed={refresh}
+			/>
 			{selectedUser && (
 				<EditUserDialog
 					open={editDialogOpen}
@@ -573,41 +576,54 @@ export function AdminUsersPageClient({
 						<DialogDescription>
 							Estás por aprobar a{" "}
 							<span className="font-medium">{approveUser?.name}</span> (
-							{approveUser?.email}). Se creará su empresa y se le asignará una
-							licencia.
+							{approveUser?.email}).
+							{approveUser?.onboardingType === "salesAgent" ? (
+								"Se activará su perfil como Gestor de Ventas y se le asignará un código de referido."
+							) : (
+								"Se creará su empresa y se le asignará una licencia."
+							)}
 						</DialogDescription>
 					</DialogHeader>
 
 					<div className="space-y-4 py-4">
-						<div className="space-y-2">
-							<Label htmlFor="tenantName">Nombre de la empresa</Label>
-							<Input
-								id="tenantName"
-								value={tenantName}
-								onChange={(e) => setTenantName(e.target.value)}
-								placeholder="Ej: Mi Empresa SRL"
-							/>
-						</div>
-						<div className="space-y-2">
-							<span className="text-sm font-medium">
-								Plan de licencia (opcional)
-							</span>
-							<Select value={selectedPlanId} onValueChange={setSelectedPlanId}>
-								<SelectTrigger>
-									<SelectValue placeholder="Seleccionar plan" />
-								</SelectTrigger>
-								<SelectContent>
-									<SelectItem value="none">
-										Sin plan (licencia básica)
-									</SelectItem>
-									{planes.map((plan: any) => (
-										<SelectItem key={plan.planId} value={plan.planId}>
-											{plan.nombre} - ${plan.precio}/{plan.billingCycle}
-										</SelectItem>
-									))}
-								</SelectContent>
-							</Select>
-						</div>
+						{approveUser?.onboardingType === "salesAgent" ? (
+							<div className="rounded-xl border border-primary/20 bg-primary/5 p-4 text-sm text-primary dark:border-primary/40 dark:bg-primary/10 dark:text-primary">
+								Se generará un código de referido único para {approveUser.name}.
+								El Gestor de Ventas no necesita empresa ni licencia.
+							</div>
+						) : (
+							<>
+								<div className="space-y-2">
+									<Label htmlFor="tenantName">Nombre de la empresa</Label>
+									<Input
+										id="tenantName"
+										value={tenantName}
+										onChange={(e) => setTenantName(e.target.value)}
+										placeholder="Ej: Mi Empresa SRL"
+									/>
+								</div>
+								<div className="space-y-2">
+									<span className="text-sm font-medium">
+										Plan de licencia (opcional)
+									</span>
+									<Select value={selectedPlanId} onValueChange={setSelectedPlanId}>
+										<SelectTrigger>
+											<SelectValue placeholder="Seleccionar plan" />
+										</SelectTrigger>
+										<SelectContent>
+											<SelectItem value="none">
+												Sin plan (licencia básica)
+											</SelectItem>
+											{planes.map((plan: any) => (
+												<SelectItem key={plan.planId} value={plan.planId}>
+													{plan.nombre} - ${plan.precio}/{plan.billingCycle}
+												</SelectItem>
+											))}
+										</SelectContent>
+									</Select>
+								</div>
+							</>
+						)}
 					</div>
 
 					<DialogFooter>
@@ -627,7 +643,7 @@ export function AdminUsersPageClient({
 							disabled={isApproving}
 							className="bg-linear-to-r from-emerald-600 to-green-600 text-white hover:from-emerald-600/90 hover:to-green-600/90"
 						>
-							{isApproving ? "Aprobando..." : "Aprobar y Crear Empresa"}
+							{isApproving ? "Aprobando..." : approveUser?.onboardingType === "salesAgent" ? "Aprobar Gestor de Ventas" : "Aprobar y Crear Empresa"}
 						</Button>
 					</DialogFooter>
 				</DialogContent>
@@ -701,7 +717,7 @@ export function AdminUsersPageClient({
 						<Button
 							onClick={handleAddTenant}
 							disabled={addTenantSubmitting || !addTenantId}
-							className="bg-linear-to-r from-violet-600 to-purple-600 text-white hover:from-violet-600/90 hover:to-purple-600/90"
+							className="bg-linear-to-r from-primary to-purple text-white hover:from-primary/90 hover:to-purple/90"
 						>
 							{addTenantSubmitting ? "Añadiendo..." : "Añadir"}
 						</Button>

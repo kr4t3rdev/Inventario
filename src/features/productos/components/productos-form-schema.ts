@@ -7,6 +7,24 @@
 
 import { z } from "zod";
 
+const optionalCoercedNumber = (message: string) =>
+	z.preprocess((value) => {
+		if (value === "" || value === null || value === undefined) {
+			return undefined;
+		}
+
+		return value;
+	}, z.coerce.number().min(0, message).optional());
+
+const requiredPositiveCoercedNumber = (message: string) =>
+	z.preprocess((value) => {
+		if (value === "" || value === null || value === undefined) {
+			return undefined;
+		}
+
+		return value;
+	}, z.coerce.number().min(0.01, message));
+
 /**
  * @description Construye el schema de validación para el formulario de productos.
  * Si usa EAN-13, ciertos campos pasan a ser requeridos.
@@ -26,13 +44,12 @@ export function buildProductosSchema(usaEan13: boolean) {
 		vendorId: z.string().optional().default(""),
 		categoriaId: z.string().min(1, "La categoría es obligatoria"),
 		subcategoriaId: z.string().optional().default(""),
-		precioCosto: z.coerce
-			.number()
-			.min(0, "El precio de costo no puede ser negativo")
-			.optional(),
-		precioVenta: z.coerce
-			.number()
-			.min(0.01, "El precio de venta debe ser mayor a 0"),
+		precioCosto: optionalCoercedNumber(
+			"El precio de costo no puede ser negativo",
+		),
+		precioVenta: requiredPositiveCoercedNumber(
+			"El precio de venta debe ser mayor a 0",
+		),
 		stock: z.coerce.number().min(0, "El stock no puede ser negativo"),
 		stockMinimo: z.coerce
 			.number()

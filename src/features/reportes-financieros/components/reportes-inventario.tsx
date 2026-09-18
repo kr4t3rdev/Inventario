@@ -12,10 +12,6 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { cn } from '@/lib/utils';
 import { StaggerContainer, StaggerItem, AnimatedCard } from '@/components/ui/animations';
 
-const surfaceCardClass = cn(
-  'relative overflow-hidden border-slate-200/60 bg-white/70 shadow-sm backdrop-blur-xl',
-  'dark:border-slate-800/60 dark:bg-slate-900/10',
-);
 
 const tabTriggerClass = cn(
   'gap-2 rounded-lg border border-transparent text-xs sm:text-sm',
@@ -35,6 +31,14 @@ export interface TransferenciaMovimientos {
   origenNombre?: string;
   destinoNombre?: string;
 }
+
+/** Etiquetas visibles de cada pestaña (evita exponer el id interno). */
+const TAB_LABELS: Record<string, string> = {
+  general: 'General',
+  categoria: 'Categoría',
+  ubicacion: 'Ubicación',
+  movimientos: 'Movimientos',
+};
 
 interface ReportesInventarioProps {
   initialTransferencias: TransferenciaMovimientos[];
@@ -74,6 +78,8 @@ const ReporteMovimientos = dynamic(
  * @description Vista principal con pestañas para los reportes de inventario.
  * @returns {JSX.Element} Panel de reportes con transiciones y metadatos de vista.
  */
+import { SURFACE_CARD_CLASS } from "@/features/reportes-financieros/lib/reporte-styles"
+
 export default function ReportesInventario({ initialTransferencias }: ReportesInventarioProps) {
   const [activeTab, setActiveTab] = useState('general');
   const shouldReduceMotion = useReducedMotion();
@@ -81,24 +87,24 @@ export default function ReportesInventario({ initialTransferencias }: ReportesIn
   return (
     <StaggerContainer className='space-y-5 p-6'>
       <StaggerItem>
-        <Card className={cn(surfaceCardClass, 'border-dashed')}>
+        <Card className={cn(SURFACE_CARD_CLASS, 'border-dashed')}>
           <CardHeader className='flex flex-col gap-3 pb-4 sm:flex-row sm:items-end sm:justify-between'>
             <div className='space-y-1'>
               <CardTitle className='text-xl text-slate-900 dark:text-slate-100'>
                 Centro de Reportes
               </CardTitle>
               <CardDescription>
-                Seleccione una vista para revisar inventario global, categoría, ubicación y
+                Selecciona una vista para revisar inventario global, categoría, ubicación y
                 movimientos.
               </CardDescription>
             </div>
             <div className='flex flex-wrap gap-2'>
               <Badge variant='outline' className='h-8 px-3'>
                 <Layers3 className='mr-1.5 h-3.5 w-3.5' />
-                Vista activa: {activeTab}
+                Vista activa: {TAB_LABELS[activeTab] ?? activeTab}
               </Badge>
               <Badge variant='outline' className='h-8 px-3'>
-                Datos en tiempo real
+                Datos del inventario
               </Badge>
             </div>
           </CardHeader>
@@ -107,7 +113,7 @@ export default function ReportesInventario({ initialTransferencias }: ReportesIn
 
       <StaggerItem>
         <AnimatedCard>
-        <Card className={surfaceCardClass}>
+        <Card className={SURFACE_CARD_CLASS}>
           <CardContent className='p-4 sm:p-5'>
             <Tabs value={activeTab} onValueChange={setActiveTab} className='w-full space-y-4'>
               <TabsList className='grid h-auto w-full grid-cols-2 gap-2 rounded-xl p-1 sm:grid-cols-4 dark:bg-slate-900/10'>

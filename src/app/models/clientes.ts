@@ -1,3 +1,5 @@
+import type { Factura } from './facturacion';
+
 export interface Cliente {
 	clienteId: string;
 	nombre: string;
@@ -8,6 +10,7 @@ export interface Cliente {
 	numeroCuentaUSD?: string;
 	numeroContrato?: string;
 	logoUrl?: string | null;
+	listaPrecioId?: string | null;
 	createdAt?: string;
 	updatedAt?: string;
 }
@@ -22,7 +25,7 @@ export interface CuentaPorCobrar {
 	montoDeuda: number;
 	montoPagado: number;
 	idTransferencia?: string;
-	estado: "PENDIENTE" | "PAGADA" | "PARCIAL";
+	estado: "PENDIENTE" | "PAGADA" | "PARCIAL" | "ANULADA";
 	tipoCuenta?: "VENTA" | "PRESTAMO_CASH";
 	fechaVencimiento?: string | null;
 	totalVenta?: number;
@@ -52,4 +55,3 @@ export interface CreateCuentaPorCobrarRequest {
 	fechaVencimiento?: string;
 	estado?: "PENDIENTE" | "PAGADA" | "PARCIAL";
 }
-

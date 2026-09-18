@@ -26,8 +26,11 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog"
-import { deleteTransferenciaAction } from "@/features/transferencias/actions"
+import { deleteTransferenciaAction, aprobarTransferenciaAction, rechazarTransferenciaAction, completarTransferenciaAction } from "@/features/transferencias/actions"
 import { TransferenciasTable } from "@/features/transferencias/components/transferencias-table"
+import { ConfirmarRecepcionDialog } from "@/features/transferencias/components/confirmar-recepcion-dialog"
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog"
+import { Input } from "@/components/ui/input"
 import type { Transferencia } from "@/app/models/model"
 
 interface TransferenciasContentProps {
@@ -44,10 +47,72 @@ export function TransferenciasContent({ initialTransferencias, isLoading: initia
   const [isPending, startTransition] = useTransition()
 
   const [transferenciaToDelete, setTransferenciaToDelete] = useState<string | null>(null)
+  const [transferenciaSeleccionada, setTransferenciaSeleccionada] = useState<Transferencia | null>(null)
+  const [recepcionAbierta, setRecepcionAbierta] = useState(false)
+  const [transferenciaARechazar, setTransferenciaARechazar] = useState<Transferencia | null>(null)
+  const [motivoRechazo, setMotivoRechazo] = useState("")
 
   useEffect(() => {
     setTransferencias(initialTransferencias)
   }, [initialTransferencias])
+
+  const handleAprobar = (t: Transferencia) => {
+    startTransition(async () => {
+      const result = await aprobarTransferenciaAction({ transferenciaId: t.transferenciaId })
+      if (result.success) {
+        toast.success('Transferencia aprobada')
+        router.refresh()
+      } else {
+        toast.error(result.error?.message ?? 'Error al aprobar')
+      }
+    })
+  }
+
+  const handleConfirmarRechazo = () => {
+    if (!transferenciaARechazar) return
+    if (!motivoRechazo.trim()) {
+      toast.error('El motivo del rechazo es requerido')
+      return
+    }
+    startTransition(async () => {
+      const result = await rechazarTransferenciaAction({
+        transferenciaId: transferenciaARechazar.transferenciaId,
+        motivo: motivoRechazo.trim(),
+      })
+      if (result.success) {
+        toast.success('Transferencia rechazada')
+        router.refresh()
+      } else {
+        toast.error(result.error?.message ?? 'Error al rechazar')
+      }
+      setTransferenciaARechazar(null)
+      setMotivoRechazo("")
+    })
+  }
+
+  const handleConfirmarRecepcion = (t: Transferencia) => {
+    setTransferenciaSeleccionada(t)
+    setRecepcionAbierta(true)
+  }
+
+  const handleRecepcion = (cantidadesRecibidas: Record<string, number>, tipo: 'total' | 'parcial') => {
+    const id = transferenciaSeleccionada?.transferenciaId
+    if (!id) return
+    startTransition(async () => {
+      const result = await completarTransferenciaAction({
+        transferenciaId: id,
+        cantidadRecibida: cantidadesRecibidas[id],
+      })
+      if (result.success) {
+        toast.success(tipo === 'parcial' ? 'Recepción parcial registrada' : 'Transferencia completada')
+        router.refresh()
+      } else {
+        toast.error(result.error?.message ?? 'Error al confirmar la recepción')
+      }
+      setRecepcionAbierta(false)
+      setTransferenciaSeleccionada(null)
+    })
+  }
 
   const handleConfirmDelete = async () => {
     if (!transferenciaToDelete) return
@@ -122,6 +187,9 @@ export function TransferenciasContent({ initialTransferencias, isLoading: initia
               isLoading={isLoading}
               error={error}
               onDelete={(id) => setTransferenciaToDelete(id)}
+              onAprobar={handleAprobar}
+              onRechazar={(t) => { setTransferenciaARechazar(t); setMotivoRechazo("") }}
+              onConfirmarRecepcion={handleConfirmarRecepcion}
             />
           </motion.div>
         </motion.div>
@@ -143,6 +211,43 @@ export function TransferenciasContent({ initialTransferencias, isLoading: initia
             </AlertDialogFooter>
           </AlertDialogContent>
         </AlertDialog>
+
+        {/* Rechazar transferencia (motivo requerido) */}
+        <Dialog open={!!transferenciaARechazar} onOpenChange={(open) => { if (!open) setTransferenciaARechazar(null) }}>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>Rechazar transferencia</DialogTitle>
+              <DialogDescription>
+                La transferencia pendiente quedará rechazada y no moverá stock. Indique el motivo.
+              </DialogDescription>
+            </DialogHeader>
+            <div className="py-2">
+              <label htmlFor="motivo-rechazo" className="text-sm font-medium">Motivo del rechazo</label>
+              <Input
+                id="motivo-rechazo"
+                value={motivoRechazo}
+                onChange={(e) => setMotivoRechazo(e.target.value)}
+                placeholder="Sin disponibilidad, solicitud incorrecta…"
+                className="mt-1"
+              />
+            </div>
+            <DialogFooter>
+              <Button variant="outline" onClick={() => setTransferenciaARechazar(null)}>Cancelar</Button>
+              <Button variant="destructive" onClick={handleConfirmarRechazo} disabled={isPending}>
+                Rechazar
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+
+        {/* Confirmar recepción (total o parcial) */}
+        <ConfirmarRecepcionDialog
+          transferencia={transferenciaSeleccionada}
+          open={recepcionAbierta}
+          onOpenChange={setRecepcionAbierta}
+          onConfirmar={handleRecepcion}
+          isLoading={isPending}
+        />
       </SidebarInset>
     </SidebarProvider>
   )
