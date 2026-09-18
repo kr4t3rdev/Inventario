@@ -192,7 +192,7 @@ jobs:
   required-checks:
     name: Required CI checks
     if: always()
-    needs: [lint, typecheck, test, coverage, integration, build]
+    needs: [lint, typecheck, test, coverage, integration, build, post-deploy-smoke]
     runs-on: ubuntu-latest
     timeout-minutes: 5
     steps:
@@ -205,12 +205,13 @@ jobs:
       - name: Reject failed, skipped, missing or cancelled checks
         env:
           REQUIRED_RESULTS: ${{ toJSON(needs) }}
+          REQUIRE_POST_DEPLOY_SMOKE: ${{ github.event_name == 'push' }}
         run: node scripts/ci/required-checks.mjs
 
   post-deploy-smoke:
     name: Post-deploy smoke (${{ matrix.target_environment }})
-    if: github.event_name == 'push' && needs.required-checks.result == 'success'
-    needs: [required-checks]
+    if: github.event_name == 'push' && needs.build.result == 'success'
+    needs: [lint, typecheck, test, coverage, integration, build]
     strategy:
       fail-fast: false
       matrix:

@@ -7,7 +7,9 @@ it('runs independent checks, gates build and rejects skipped dependencies', () =
   expect(ci).toContain("branches: [main, 'codex/**']");
   expect(ci).not.toContain('needs: [lint, typecheck]');
   expect(ci).toContain('uses: ./.github/workflows/integration.yml');
-  expect(ci).toContain('needs: [lint, typecheck, test, coverage, integration]');
+  expect(ci).toContain(
+    'needs: [lint, typecheck, test, coverage, integration, build, post-deploy-smoke]',
+  );
   expect(ci).toContain('required-checks:');
   expect(ci).toContain('if: always()');
   expect(ci).toContain('node scripts/ci/required-checks.mjs');
@@ -38,8 +40,15 @@ it('accepts only all-success required results', async () => {
   const names = ['lint', 'typecheck', 'test', 'coverage', 'integration', 'build'];
   const good = Object.fromEntries(names.map(name => [name, { result: 'success' }]));
   expect(() => checkRequiredResults(good)).not.toThrow();
+  expect(
+    () => checkRequiredResults({ ...good, 'post-deploy-smoke': { result: 'success' } }, true),
+  ).not.toThrow();
+  expect(() => checkRequiredResults(good, true)).toThrow();
   for (const result of ['failure', 'skipped', 'cancelled', '', undefined]) {
     expect(() => checkRequiredResults({ ...good, build: { result } })).toThrow();
+    expect(
+      () => checkRequiredResults({ ...good, 'post-deploy-smoke': { result } }, true),
+    ).toThrow();
   }
   expect(() => checkRequiredResults({})).toThrow();
 });
