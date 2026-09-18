@@ -1,6 +1,6 @@
 'use client'
 
-import { Activity, Sparkles, Shield, Clock, Loader2, RefreshCw } from "lucide-react"
+import { Activity, Shield, Clock, Loader2, RefreshCw } from "lucide-react"
 import { LazyMotion, m as motion } from "framer-motion"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
@@ -20,12 +20,12 @@ export default function SistemaPage() {
   return (
     <PageTransition className="flex flex-1 flex-col gap-4 p-4 lg:p-6">
       <div className="flex items-center gap-3">
-        <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-linear-to-br from-violet-600 to-purple-600 shadow-lg">
+        <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-linear-to-br from-primary to-purple shadow-lg">
           <Activity className="h-6 w-6 text-white" />
         </div>
         <div className="flex-1">
           <h1 className="text-2xl font-bold">Salud del Sistema</h1>
-          <p className="text-muted-foreground text-sm">Métricas de infraestructura y sesiones activas</p>
+          <p className="text-muted-foreground text-sm">Métricas de usuarios reales, licencias reales y sesiones activas</p>
         </div>
         <Button
           onClick={refetch}
@@ -65,7 +65,7 @@ export default function SistemaPage() {
             ) : (
               <p className="text-3xl font-bold text-emerald-600 dark:text-emerald-400">{safeSystem.sessions.active}</p>
             )}
-            <p className="text-xs text-muted-foreground mt-1">Usuarios conectados ahora</p>
+            <p className="text-xs text-muted-foreground mt-1">Sesiones reales activas en este momento</p>
           </CardContent>
         </Card>
 
@@ -79,7 +79,7 @@ export default function SistemaPage() {
             ) : (
               <p className="text-3xl font-bold text-sky-600 dark:text-sky-400">{safeSystem.licenses.active}</p>
             )}
-            <p className="text-xs text-muted-foreground mt-1">de {safeSystem.licenses.total} totales</p>
+            <p className="text-xs text-muted-foreground mt-1">de {safeSystem.licenses.total} licencias reales</p>
           </CardContent>
         </Card>
 
@@ -95,7 +95,7 @@ export default function SistemaPage() {
                   {safeSystem.licenses.expiringSoon}
                 </p>
             )}
-            <p className="text-xs text-muted-foreground mt-1">Próximos 30 días</p>
+            <p className="text-xs text-muted-foreground mt-1">Licencias reales en próximos 30 días</p>
           </CardContent>
         </Card>
       </div>
@@ -104,10 +104,10 @@ export default function SistemaPage() {
         <Card className="rounded-xl border bg-card/80 backdrop-blur-sm shadow-sm">
           <CardHeader>
             <CardTitle className="flex items-center gap-2 text-base">
-              <Shield className="h-4 w-4 text-violet-600" />
+              <Shield className="h-4 w-4 text-purple" />
               Distribución de Roles
             </CardTitle>
-            <CardDescription>Usuarios del sistema por tipo de rol</CardDescription>
+            <CardDescription>Usuarios reales del sistema por tipo de rol</CardDescription>
           </CardHeader>
           <CardContent>
             {isLoading ? (
@@ -121,7 +121,7 @@ export default function SistemaPage() {
                     ? Math.round((r.count / safeSystem.users.total) * 100)
                     : 0
                   const colors: Record<string, string> = {
-                    admin: "bg-violet-500",
+                    admin: "bg-purple",
                     regularUser: "bg-slate-500",
                     dependiente: "bg-slate-500",
                   }
@@ -151,7 +151,7 @@ export default function SistemaPage() {
               <Clock className="h-4 w-4 text-amber-600" />
               Estado de Licencias
             </CardTitle>
-            <CardDescription>Resumen de licencias en la plataforma</CardDescription>
+            <CardDescription>Resumen de licencias reales en la plataforma</CardDescription>
           </CardHeader>
           <CardContent>
             {isLoading ? (

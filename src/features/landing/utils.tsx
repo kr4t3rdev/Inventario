@@ -114,17 +114,19 @@ export function SpringSection({
   children,
   delay = 0,
   className,
+  reduceMotion = false,
 }: {
   children: React.ReactNode;
   delay?: number;
   className?: string;
+  reduceMotion?: boolean;
 }): React.JSX.Element {
   return (
     <motion.div
-      initial={{ opacity: 0, y: 30 }}
-      whileInView={{ opacity: 1, y: 0 }}
+      initial={reduceMotion ? false : { y: 30 }}
+      whileInView={reduceMotion ? undefined : { opacity: 1, y: 0 }}
       viewport={{ once: true, amount: 0.15 }}
-      transition={{ type: 'spring', stiffness: 120, damping: 20, delay }}
+      transition={reduceMotion ? undefined : { type: 'spring', stiffness: 120, damping: 20, delay }}
       className={className}
     >
       {children}
@@ -145,11 +147,13 @@ export function ParallaxLayer({
   speed = 0.3,
   className,
   style,
+  reduceMotion = false,
 }: {
   children: React.ReactNode;
   speed?: number;
   className?: string;
   style?: React.CSSProperties;
+  reduceMotion?: boolean;
 }): React.JSX.Element {
   const ref = useRef<HTMLDivElement>(null);
   const { scrollYProgress } = useScroll({
@@ -159,8 +163,8 @@ export function ParallaxLayer({
   const y = useTransform(scrollYProgress, [0, 1], [speed * 60, speed * -60]);
 
   return (
-    <div ref={ref} className={className} style={{ ...style, willChange: 'transform' }}>
-      <motion.div style={{ y }}>{children}</motion.div>
+    <div ref={ref} className={className} style={{ ...style, ...(reduceMotion ? {} : { willChange: 'transform' }) }}>
+      <motion.div style={reduceMotion ? undefined : { y }}>{children}</motion.div>
     </div>
   );
 }

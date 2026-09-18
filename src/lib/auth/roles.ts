@@ -1,5 +1,5 @@
 // ── Roles de plataforma (identidad global del usuario) ──
-export const APP_USER_ROLES = ["admin", "regularUser"] as const;
+export const APP_USER_ROLES = ["admin", "regularUser", "salesAgent"] as const;
 export type AppUserRole = (typeof APP_USER_ROLES)[number];
 
 // ── Roles de tenant (autorización operativa dentro de una empresa) ──
@@ -121,6 +121,8 @@ export function getTenantRoleLabel(role: string | null | undefined): string {
 			return "Dependiente";
 		case "regularUser":
 			return "Usuario regular";
+		case "salesAgent":
+			return "Gestor de Ventas";
 		default:
 			return "Sin rol de tenant";
 	}

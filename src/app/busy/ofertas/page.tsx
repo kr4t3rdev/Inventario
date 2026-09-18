@@ -4,6 +4,8 @@
  */
 
 import { getOfertasAction } from "@/features/ofertas"
+import { OffersServicesHealthCard } from "@/features/ofertas/components/offers-services-health-card"
+import { getCurrentUser } from "@/lib/server-actions"
 import { OfertasPageContent } from "./page-client"
 
 /**
@@ -16,8 +18,13 @@ export const metadata = {
 }
 
 export default async function OfertasPage() {
-  const result = await getOfertasAction()
+  const [result, user] = await Promise.all([getOfertasAction(), getCurrentUser()])
   const ofertas = result.success ? result.data ?? [] : []
 
-  return <OfertasPageContent ofertas={ofertas} />
+  return (
+    <div className="space-y-6">
+      {user?.role === 'admin' ? <OffersServicesHealthCard userRole="admin" /> : null}
+      <OfertasPageContent ofertas={ofertas} />
+    </div>
+  )
 }

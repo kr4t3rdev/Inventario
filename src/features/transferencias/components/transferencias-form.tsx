@@ -27,7 +27,7 @@ import { cn } from "@/lib/utils"
 
 import { usePuntosDeVenta } from "@/features/puntos-venta/hooks/use-puntos-de-venta"
 import { useAlmacenes } from "@/features/almacenes/hooks/use-almacenes"
-import { getProductosAction } from "@/features/productos"
+import { getProductosAction } from "@/features/productos/actions"
 import { getStockPorUbicacionAction } from "@/features/productos/actions"
 import { createTransferenciaAction, updateTransferenciaAction } from "@/features/transferencias/actions"
 import { transferenciaSchema, TransferenciaFormValues } from "@/features/transferencias/schemas"
@@ -78,6 +78,7 @@ export function TransferenciaForm({ initialData }: TransferenciaFormProps) {
   const [isLoading, setIsLoading] = useState(false)
   const [productoSearch, setProductoSearch] = useState("")
   const [showOutOfStock, setShowOutOfStock] = useState(false)
+  const [enviarAAprobacion, setEnviarAAprobacion] = useState(false)
   const [minStockAlert, setMinStockAlert] = useState<string | null>(null)
   const isEdit = Boolean(initialData)
 
@@ -99,7 +100,7 @@ export function TransferenciaForm({ initialData }: TransferenciaFormProps) {
   }, [])
 
   const form = useForm<TransferenciaFormValues>({
-    resolver: zodResolver(transferenciaSchema),
+    resolver: zodResolver(transferenciaSchema) as any,
     defaultValues: {
       productos: initialData?.productos || [{ productoId: "", cantidad: 1 }],
       tipoOrigen: initialData?.tipoOrigen || "almacen",
@@ -107,7 +108,7 @@ export function TransferenciaForm({ initialData }: TransferenciaFormProps) {
       tipoDestino: initialData?.tipoDestino || "punto_venta",
       destinoId: initialData?.destinoId || "",
       descripcion: initialData?.descripcion || "",
-    },
+    } as any,
   })
 
   const { fields, append, remove } = useFieldArray({
@@ -199,7 +200,10 @@ export function TransferenciaForm({ initialData }: TransferenciaFormProps) {
           destinoId: data.destinoId,
         })
       } else {
-        result = await createTransferenciaAction(data)
+        result = await createTransferenciaAction({
+          ...data,
+          estado: enviarAAprobacion ? 'PENDIENTE' : 'COMPLETADA',
+        })
       }
 
       console.log('=== TransferenciaForm :: action result ===', JSON.parse(JSON.stringify(result)))
@@ -280,7 +284,7 @@ export function TransferenciaForm({ initialData }: TransferenciaFormProps) {
       </CardHeader>
       <CardContent className="p-6">
         <Form {...form}>
-          <form id="transferencia-form" onSubmit={form.handleSubmit(onSubmit, (errors) => {
+          <form id="transferencia-form" onSubmit={form.handleSubmit(onSubmit as any, (errors) => {
     console.error('=== TransferenciaForm :: Zod validation errors ===', JSON.parse(JSON.stringify(errors)))
     sileo.error({ title: 'Completá los campos requeridos antes de continuar.' })
 })} className="space-y-8">
@@ -804,12 +808,29 @@ export function TransferenciaForm({ initialData }: TransferenciaFormProps) {
                 <FormItem>
                   <FormLabel>Notas / Descripción</FormLabel>
                   <FormControl>
-                    <Input placeholder="Especifique el motivo de la transferencia (opcional)..." {...field} />
+                    <Input placeholder="Especifique el motivo de la transferencia (opcional)..." {...field as any} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
               )}
             />
+
+            {!initialData && (
+              <div className="flex items-start space-x-2 rounded-md border border-muted p-3">
+                <Checkbox
+                  id="enviar-a-aprobacion"
+                  checked={enviarAAprobacion}
+                  onCheckedChange={(checked) => setEnviarAAprobacion(checked as boolean)}
+                />
+                <label
+                  htmlFor="enviar-a-aprobacion"
+                  className="text-sm text-muted-foreground cursor-pointer select-none leading-5"
+                >
+                  Guardar como pendiente de aprobación. El stock no se moverá hasta que un encargado la apruebe
+                  y el destino confirme la recepción.
+                </label>
+              </div>
+            )}
 
             <div className="flex justify-end gap-4 pt-4">
               <Button type="button" variant="outline" onClick={() => router.push("/busy/transferencias")}>

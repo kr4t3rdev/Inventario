@@ -1,7 +1,6 @@
 'use client'
 
 import { useMemo } from 'react'
-import { m as motion } from 'framer-motion'
 import {
   DollarSign, Package, ShoppingCart, BarChart3,
   TrendingUp, ArrowUpRight, ArrowDownRight,
@@ -35,9 +34,9 @@ interface SectionCardsProps {
 }
 
 /**
- * @description Tarjetas de métricas principales del dashboard con animaciones de entrada.
+ * @description Indicadores principales del dashboard con jerarquía visual por relevancia.
  * @param {SectionCardsProps} props - Estadísticas del dashboard recibidas por props
- * @returns {JSX.Element} Grid de 4 tarjetas animadas
+ * @returns {JSX.Element} Grid responsivo de cuatro indicadores
  */
 export function SectionCards({ dashboardStats }: SectionCardsProps): React.JSX.Element {
   const cards = useMemo(() => {
@@ -56,8 +55,9 @@ export function SectionCards({ dashboardStats }: SectionCardsProps): React.JSX.E
         title: 'Total Ingresos',
         value: formatCurrency(totalIngresos),
         icon: DollarSign,
-        gradient: 'from-emerald-500 to-teal-600',
-        iconBg: 'bg-emerald-500/20',
+        layout: 'md:col-span-2 xl:col-span-2',
+        valueStyle: 'text-3xl',
+        iconStyle: 'bg-emerald-500/10 text-emerald-700 dark:text-emerald-300',
         badge: (
           <Badge variant="outline" className="gap-1 border-emerald-200 text-emerald-700 dark:border-emerald-800 dark:text-emerald-300">
             <TrendingUp className="h-3 w-3" />{margen.toFixed(1)}% margen
@@ -69,8 +69,9 @@ export function SectionCards({ dashboardStats }: SectionCardsProps): React.JSX.E
         title: 'Valor Inventario',
         value: formatCurrency(valorTotalInventario),
         icon: Package,
-        gradient: 'from-blue-500 to-indigo-600',
-        iconBg: 'bg-blue-500/20',
+        layout: 'xl:col-span-1',
+        valueStyle: 'text-2xl',
+        iconStyle: 'bg-blue-500/10 text-blue-700 dark:text-blue-300',
         badge: <Badge variant="secondary" className="text-xs">{totalProductos} productos</Badge>,
         description: 'Valor total del inventario en stock',
       },
@@ -78,8 +79,9 @@ export function SectionCards({ dashboardStats }: SectionCardsProps): React.JSX.E
         title: 'Ventas de Hoy',
         value: formatCurrency(ventasDiarias.ingresosHoy),
         icon: ShoppingCart,
-        gradient: 'from-amber-500 to-orange-600',
-        iconBg: 'bg-amber-500/20',
+        layout: 'xl:col-span-1',
+        valueStyle: 'text-2xl',
+        iconStyle: 'bg-amber-500/10 text-amber-700 dark:text-amber-300',
         badge: (
           <Badge variant="outline" className={cn('gap-1', sube ? trendStyles : declineStyles)}>
             {sube ? <ArrowUpRight className="h-3 w-3" /> : <ArrowDownRight className="h-3 w-3" />}
@@ -92,8 +94,9 @@ export function SectionCards({ dashboardStats }: SectionCardsProps): React.JSX.E
         title: 'Promedio Diario',
         value: formatCurrency(ventasDiarias.promedioIngresosDiarios),
         icon: BarChart3,
-        gradient: 'from-violet-500 to-purple-600',
-        iconBg: 'bg-violet-500/20',
+        layout: 'xl:col-span-1',
+        valueStyle: 'text-2xl',
+        iconStyle: 'bg-primary/10 text-primary',
         badge: <Badge variant="secondary" className="text-xs">{tasaActividad.toFixed(0)}% actividad</Badge>,
         description: 'Promedio de ingresos diarios (30 días)',
       },
@@ -101,45 +104,35 @@ export function SectionCards({ dashboardStats }: SectionCardsProps): React.JSX.E
   }, [dashboardStats])
 
   return (
-    <motion.div
-      className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-4"
-      variants={{
-        hidden: { opacity: 0 },
-        show: { opacity: 1, transition: { staggerChildren: 0.1, delayChildren: 0.15 } },
-      }}
-      initial="hidden"
-      animate="show"
+    <section
+      aria-label="Indicadores principales"
+      className="grid min-w-0 grid-cols-1 gap-4 px-4 md:grid-cols-2 lg:px-6 xl:grid-cols-5"
     >
       {cards.map((card) => {
         const Icon = card.icon
         return (
-          <motion.div
+          <div
             key={card.title}
-            variants={{
-              hidden: { opacity: 0, y: 20 },
-              show: { opacity: 1, y: 0, transition: { type: 'spring' as const, stiffness: 60, damping: 15 } },
-            }}
-            whileHover={{ y: -4, transition: { duration: 0.2 } }}
+            className={cn('min-w-0', card.layout)}
           >
-            <Card className="group relative overflow-hidden border-0 bg-card/50 shadow-sm backdrop-blur-sm transition-all duration-300 hover:shadow-md">
-              <div className={cn('absolute -top-10 -right-10 h-32 w-32 rounded-full blur-3xl opacity-0 transition-opacity duration-500 group-hover:opacity-100', card.iconBg)} />
+            <Card className="h-full min-w-0 border-border/70 bg-card shadow-none">
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                 <CardTitle className="text-sm font-medium text-muted-foreground">{card.title}</CardTitle>
-                <div className={cn('rounded-xl bg-linear-to-br p-2.5 shadow-lg', card.gradient)}>
-                  <Icon className="h-4 w-4 text-white" />
+                <div className={cn('rounded-lg p-2', card.iconStyle)}>
+                  <Icon aria-hidden="true" className="h-4 w-4" />
                 </div>
               </CardHeader>
               <div className="px-5 pb-2">
-                <div className="text-2xl font-bold tracking-tight">{card.value}</div>
+                <div className={cn('font-semibold tracking-tight tabular-nums', card.valueStyle)}>{card.value}</div>
                 <div className="mt-1">{card.badge}</div>
               </div>
               <CardFooter>
                 <CardDescription>{card.description}</CardDescription>
               </CardFooter>
             </Card>
-          </motion.div>
+          </div>
         )
       })}
-    </motion.div>
+    </section>
   )
 }

@@ -36,12 +36,14 @@ interface CreateUserFormState {
   daysToExpire: string;
 }
 
+const AUTO_TENANT_ROLE = 'auto';
+
 const INITIAL_FORM_STATE: CreateUserFormState = {
   name: '',
   email: '',
   password: '',
   role: 'regularUser',
-  tenantRole: '',
+  tenantRole: AUTO_TENANT_ROLE,
   daysToExpire: '',
 };
 
@@ -74,7 +76,10 @@ export function CreateUserDialog({ open, onClose }: CreateUserDialogProps): Reac
       email: formData.email.trim(),
       password: formData.password,
       role: formData.role,
-      tenantRole: formData.tenantRole || undefined,
+      tenantRole:
+        formData.tenantRole && formData.tenantRole !== AUTO_TENANT_ROLE
+          ? formData.tenantRole
+          : undefined,
       daysToExpire: Number.isNaN(parsedDays) ? undefined : parsedDays,
     });
 
@@ -114,10 +119,10 @@ export function CreateUserDialog({ open, onClose }: CreateUserDialogProps): Reac
   return (
     <Dialog open={open} onOpenChange={handleDialogChange}>
       <DialogContent className="overflow-hidden border bg-background sm:max-w-120">
-        <div className="absolute left-0 right-0 top-0 h-1 bg-linear-to-r from-primary via-purple-500 to-primary" />
+        <div className="absolute left-0 right-0 top-0 h-1 bg-linear-to-r from-primary via-purple to-primary" />
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
-            <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-linear-to-br from-primary to-purple-600 shadow-md">
+            <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-linear-to-br from-primary to-purple shadow-md">
               <PlusCircle className="h-4 w-4 text-white" />
             </span>
             <span className="bg-linear-to-r from-slate-900 to-slate-600 bg-clip-text text-transparent dark:from-white dark:to-slate-300">
@@ -182,7 +187,11 @@ export function CreateUserDialog({ open, onClose }: CreateUserDialogProps): Reac
                 <Select
                   value={formData.role}
                   onValueChange={(value) =>
-                    setFormData({ ...formData, role: value as CreateUserFormState['role'] })
+                    setFormData({
+                      ...formData,
+                      role: value as CreateUserFormState['role'],
+                      tenantRole: value === 'salesAgent' ? AUTO_TENANT_ROLE : formData.tenantRole,
+                    })
                   }
                 >
                   <SelectTrigger id="create-role" className="h-11 border-slate-200 bg-white/60 dark:border-slate-700 dark:bg-slate-800/50">
@@ -190,6 +199,7 @@ export function CreateUserDialog({ open, onClose }: CreateUserDialogProps): Reac
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="admin">Administrador</SelectItem>
+                    <SelectItem value="salesAgent">Gestor de Ventas</SelectItem>
                     <SelectItem value="regularUser">Regular User</SelectItem>
                   </SelectContent>
                 </Select>
@@ -198,28 +208,30 @@ export function CreateUserDialog({ open, onClose }: CreateUserDialogProps): Reac
                 </p>
               </div>
 
-              <div className="space-y-2">
-                <Label htmlFor="create-tenant-role">Rol en el tenant (opcional)</Label>
-                <Select
-                  value={formData.tenantRole}
-                  onValueChange={(value) =>
-                    setFormData({ ...formData, tenantRole: value })
-                  }
-                >
-                  <SelectTrigger id="create-tenant-role" className="h-11 border-slate-200 bg-white/60 dark:border-slate-700 dark:bg-slate-800/50">
-                    <SelectValue placeholder="Auto-asignado" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="">Auto-asignado</SelectItem>
-                    <SelectItem value="manager">Manager / Director</SelectItem>
-                    <SelectItem value="economico">Económico</SelectItem>
-                    <SelectItem value="dependiente">Dependiente</SelectItem>
-                  </SelectContent>
-                </Select>
-                <p className="text-xs text-muted-foreground">
-                  Si no se especifica, se asigna según el rol de plataforma.
-                </p>
-              </div>
+              {formData.role !== 'salesAgent' && (
+                <div className="space-y-2">
+                  <Label htmlFor="create-tenant-role">Rol en el tenant (opcional)</Label>
+                  <Select
+                    value={formData.tenantRole}
+                    onValueChange={(value) =>
+                      setFormData({ ...formData, tenantRole: value })
+                    }
+                  >
+                    <SelectTrigger id="create-tenant-role" className="h-11 border-slate-200 bg-white/60 dark:border-slate-700 dark:bg-slate-800/50">
+                      <SelectValue placeholder="Auto-asignado" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value={AUTO_TENANT_ROLE}>Auto-asignado</SelectItem>
+                      <SelectItem value="manager">Manager / Director</SelectItem>
+                      <SelectItem value="economico">Económico</SelectItem>
+                      <SelectItem value="dependiente">Dependiente</SelectItem>
+                    </SelectContent>
+                  </Select>
+                  <p className="text-xs text-muted-foreground">
+                    Si no se especifica, se asigna según el rol de plataforma.
+                  </p>
+                </div>
+              )}
             </div>
 
             <div className="space-y-2 rounded-lg border border-slate-200/70 bg-slate-50/70 p-3 dark:border-slate-700/70 dark:bg-slate-800/40">
@@ -254,7 +266,7 @@ export function CreateUserDialog({ open, onClose }: CreateUserDialogProps): Reac
             <Button
               type="submit"
               disabled={loading}
-              className="min-w-36 bg-linear-to-r from-primary to-purple-600 text-white hover:from-primary/90 hover:to-purple-600/90"
+              className="min-w-36 bg-linear-to-r from-primary to-purple text-white hover:from-primary/90 hover:to-purple/90"
             >
               {loading ? (
                 <>

@@ -14,7 +14,7 @@ import { createUnidadAction, updateUnidadAction } from "@/features/unidades/acti
 import { unidadSchema } from "@/features/unidades/schemas"
 import type { UnidadInput } from "@/features/unidades/schemas"
 import { LazyMotion, m as motion } from "framer-motion"
-import { Scale, Sparkles, ArrowLeft, Loader2 } from "lucide-react"
+import { Scale, ArrowLeft, Loader2 } from "lucide-react"
 
 
 
@@ -95,24 +95,12 @@ export function UnidadForm({ initialData }: UnidadFormProps) {
             className="flex items-center gap-3 mb-6"
           >
             <motion.div 
-              className="w-10 h-10 bg-linear-to-br from-primary to-purple-600 rounded-xl flex items-center justify-center shadow-lg relative"
+              className="w-10 h-10 bg-linear-to-br from-primary to-purple rounded-xl flex items-center justify-center shadow-lg relative"
               whileHover={{ scale: 1.05, rotate: 5 }}
               transition={{ duration: 0.2 }}
             >
               <Scale className="h-5 w-5 text-white" />
-              <motion.div
-                animate={{ 
-                  rotate: 360,
-                  scale: [1, 1.2, 1]
-                }}
-                transition={{ 
-                  rotate: { duration: 20, repeat: Infinity, ease: "linear" },
-                  scale: { duration: 2, repeat: Infinity, ease: "easeInOut" }
-                }}
-                className="absolute -top-1 -right-1"
-              >
-                <Sparkles className="h-4 w-4 text-yellow-400" />
-              </motion.div>
+
             </motion.div>
             <div>
               <h2 className="text-xl font-semibold">
@@ -219,7 +207,7 @@ export function UnidadForm({ initialData }: UnidadFormProps) {
                   <Button 
                     type="submit" 
                     disabled={isLoading}
-                    className="min-w-35 gap-2 bg-linear-to-r from-primary to-purple-600 hover:from-primary/90 hover:to-purple-600/90 cursor-pointer transition-colors duration-200"
+                    className="min-w-35 gap-2 bg-linear-to-r from-primary to-purple hover:from-primary/90 hover:to-purple/90 cursor-pointer transition-colors duration-200"
                   >
                     {isLoading ? (
                       <>

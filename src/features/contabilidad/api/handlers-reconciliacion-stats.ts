@@ -2,26 +2,26 @@ import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { startOfDay, endOfDay } from 'date-fns'
 
-export async function handleGetReconciliacionStats() {
+export async function handleGetReconciliacionStats(tenantId: string) {
   const todayStart = startOfDay(new Date()); const todayEnd = endOfDay(new Date())
 
-  const ventasPendientesCount = await prisma.venta.count({ where: { reconciliaciones: { none: {} } } })
-  const ventasCompletadasHoyCount = await prisma.reconciliacionVenta.count({ where: { createdAt: { gte: todayStart, lte: todayEnd } } })
-  const serviciosPendientesCount = await prisma.reconciliacionServicio.count({ where: { ventasServicio: { reconciliaciones: { none: {} } } } })
-  const serviciosCompletadosHoyCount = await prisma.reconciliacionServicio.count({ where: { createdAt: { gte: todayStart, lte: todayEnd } } })
+  const ventasPendientesCount = await prisma.venta.count({ where: { tenantId, deletedAt: null, reconciliaciones: { none: {} } } })
+  const ventasCompletadasHoyCount = await prisma.reconciliacionVenta.count({ where: { tenantId, createdAt: { gte: todayStart, lte: todayEnd } } })
+  const serviciosPendientesCount = await prisma.reconciliacionServicio.count({ where: { tenantId, ventasServicio: { tenantId, reconciliaciones: { none: {} } } } })
+  const serviciosCompletadosHoyCount = await prisma.reconciliacionServicio.count({ where: { tenantId, createdAt: { gte: todayStart, lte: todayEnd } } })
 
   const [salariosPendientes, gastosDEPendientes, comprasPendientes] = await Promise.all([
-    prisma.pagosalario.count({ where: { ReconciliacionGasto: { none: {} } } }),
-    prisma.gastosDE.count({ where: { reconciliaciones: { none: {} } } }),
-    prisma.gastoCompra.count({ where: { reconciliaciones: { none: {} } } })
+    prisma.pagosalario.count({ where: { tenantId, ReconciliacionGasto: { none: {} } } }),
+    prisma.gastosDE.count({ where: { tenantId, reconciliaciones: { none: {} } } }),
+    prisma.gastoCompra.count({ where: { tenantId, reconciliaciones: { none: {} } } })
   ])
   const gastosPendientesCount = salariosPendientes + gastosDEPendientes + comprasPendientes
-  const gastosCompletadosHoyCount = await prisma.reconciliacionGasto.count({ where: { createdAt: { gte: todayStart, lte: todayEnd } } })
+  const gastosCompletadosHoyCount = await prisma.reconciliacionGasto.count({ where: { tenantId, createdAt: { gte: todayStart, lte: todayEnd } } })
 
   const [lastVentas, lastServicios, lastGastos] = await Promise.all([
-    prisma.reconciliacionVenta.findMany({ take: 5, orderBy: { createdAt: 'desc' }, include: { venta: { select: { ventaId: true } }, cuentaBancaria: { select: { nombreBanco: true } } } }),
-    prisma.reconciliacionServicio.findMany({ take: 5, orderBy: { createdAt: 'desc' }, include: { ventasServicio: { select: { ventaServicioId: true } }, cuentaBancaria: { select: { nombreBanco: true } } } }),
-    prisma.reconciliacionGasto.findMany({ take: 5, orderBy: { createdAt: 'desc' }, include: { cuentaBancaria: { select: { nombreBanco: true } } } })
+    prisma.reconciliacionVenta.findMany({ where: { tenantId }, take: 5, orderBy: { createdAt: 'desc' }, include: { venta: { select: { ventaId: true } }, cuentaBancaria: { select: { nombreBanco: true } } } }),
+    prisma.reconciliacionServicio.findMany({ where: { tenantId }, take: 5, orderBy: { createdAt: 'desc' }, include: { ventasServicio: { select: { ventaServicioId: true } }, cuentaBancaria: { select: { nombreBanco: true } } } }),
+    prisma.reconciliacionGasto.findMany({ where: { tenantId }, take: 5, orderBy: { createdAt: 'desc' }, include: { cuentaBancaria: { select: { nombreBanco: true } } } })
   ])
 
   const activity = [
@@ -33,9 +33,9 @@ export async function handleGetReconciliacionStats() {
   const recentActivity = activity.slice(0, 5)
 
   const [sumVentas, sumServicios, sumGastos] = await Promise.all([
-    prisma.reconciliacionVenta.aggregate({ _sum: { montoConvertido: true }, where: { createdAt: { gte: todayStart, lte: todayEnd } } }),
-    prisma.reconciliacionServicio.aggregate({ _sum: { montoConvertido: true }, where: { createdAt: { gte: todayStart, lte: todayEnd } } }),
-    prisma.reconciliacionGasto.aggregate({ _sum: { montoConvertido: true }, where: { createdAt: { gte: todayStart, lte: todayEnd } } })
+    prisma.reconciliacionVenta.aggregate({ _sum: { montoConvertido: true }, where: { tenantId, createdAt: { gte: todayStart, lte: todayEnd } } }),
+    prisma.reconciliacionServicio.aggregate({ _sum: { montoConvertido: true }, where: { tenantId, createdAt: { gte: todayStart, lte: todayEnd } } }),
+    prisma.reconciliacionGasto.aggregate({ _sum: { montoConvertido: true }, where: { tenantId, createdAt: { gte: todayStart, lte: todayEnd } } })
   ])
 
   const totalReconciledAmount = (Number(sumVentas._sum.montoConvertido) || 0) + (Number(sumServicios._sum.montoConvertido) || 0) + (Number(sumGastos._sum.montoConvertido) || 0)

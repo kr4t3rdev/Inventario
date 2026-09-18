@@ -3,6 +3,7 @@
 export const dynamic = 'force-dynamic'
 
 import { useState, useEffect } from 'react'
+import Link from 'next/link'
 import {
   Building2,
   Users,
@@ -10,7 +11,6 @@ import {
   Wallet,
   AlertTriangle,
   Shield,
-  Sparkles,
   RefreshCw,
   ArrowUpRight,
   ArrowDownRight,
@@ -19,7 +19,7 @@ import {
   Globe,
   Loader2,
 } from "lucide-react"
-import { LazyMotion, m as motion, type Variants } from "framer-motion"
+import { LazyMotion, m as motion, useReducedMotion, type Variants } from "framer-motion"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { PageTransition, StaggerContainer, StaggerItem, AnimatedCard } from "@/components/ui/animations"
@@ -37,16 +37,6 @@ const headerIconVariants: Variants = {
   hover: {
     scale: 1.05, rotate: 5,
     transition: { type: "spring" as const, stiffness: 400, damping: 10 },
-  },
-}
-
-const sparklesVariants: Variants = {
-  animate: {
-    rotate: 360, scale: [1, 1.2, 1],
-    transition: {
-      rotate: { duration: 18, repeat: Infinity, ease: "linear" },
-      scale: { duration: 2, repeat: Infinity, ease: "easeInOut" },
-    },
   },
 }
 
@@ -73,12 +63,34 @@ export default function AdminDashboardPage(): React.JSX.Element {
   const [finance, setFinance] = useState<any>(null)
   const [system, setSystem] = useState<any>(null)
   const [isLoading, setIsLoading] = useState(true)
+  const [lastUpdated, setLastUpdated] = useState<Date | null>(null)
 
-  useEffect(() => { setIsLoading(true); Promise.all([getAdminTenantsAction(), getAdminFinanceAction(), getAdminSystemHealthAction()]).then(([r1,r2,r3]) => { if(r1.success) setTenants(r1.data??[]); if(r2.success) setFinance(r2.data); if(r3.success) setSystem(r3.data); setIsLoading(false) }) }, [])
+  useEffect(() => { setIsLoading(true); Promise.all([getAdminTenantsAction(), getAdminFinanceAction(), getAdminSystemHealthAction()]).then(([r1,r2,r3]) => { if(r1.success) setTenants(r1.data??[]); if(r2.success) setFinance(r2.data); if(r3.success) setSystem(r3.data); setLastUpdated(new Date()); setIsLoading(false) }) }, [])
   const safeTenants = tenants ?? []
   const loading = isLoading
   const safeFinance = finance
-  const safeSystem = system ?? { users: { total: 0, byRole: [] }, tenants: { total: 0 }, sessions: { active: 0 }, licenses: { total: 0, active: 0, expiringSoon: 0 } }
+  const safeSystem = system ?? { users: { total: 0, byRole: [] }, tenants: { total: 0 }, sessions: { active: 0 }, licenses: { total: 0, active: 0, expiringSoon: 0 }, usersTrend: [], usersComparison: { current7DaysUsers: 0, previous7DaysUsers: 0 } }
+  const calculateTrend = (current: number, previous: number) => {
+    if (previous === 0) return null;
+    const change = ((current - previous) / previous) * 100;
+    return {
+      value: Math.abs(Math.round(change)),
+      direction: change > 0 ? 'up' as const : change < 0 ? 'down' as const : 'neutral' as const,
+    };
+  };
+
+  // Calcular tendencias de los últimos 7 días vs 7 días anteriores
+  const revenueTrend = safeFinance?.revenueTrend ?? [];
+  const usersTrend = safeSystem?.usersTrend ?? [];
+
+  const currentWeekRevenue = safeFinance?.revenueComparison.current7DaysRevenue ?? 0;
+  const previousWeekRevenue = safeFinance?.revenueComparison.previous7DaysRevenue ?? 0;
+  const revenueTrendData = calculateTrend(currentWeekRevenue, previousWeekRevenue);
+
+  const currentWeekUsers = safeSystem?.usersComparison.current7DaysUsers ?? 0;
+  const previousWeekUsers = safeSystem?.usersComparison.previous7DaysUsers ?? 0;
+  const usersTrendData = calculateTrend(currentWeekUsers, previousWeekUsers);
+
 
   const kpiCards = [
     {
@@ -86,17 +98,17 @@ export default function AdminDashboardPage(): React.JSX.Element {
       value: safeSystem?.tenants.total ?? safeTenants.length,
       loading: isLoading,
       trend: null,
-      description: "Empresas activas en la plataforma",
+      description: "Empresas reales registradas en la plataforma",
       icon: Building2,
-      valueClassName: "text-violet-600 dark:text-violet-400",
-      iconBg: "from-violet-600/15 to-purple-600/15",
+      valueClassName: "text-purple",
+      iconBg: "from-primary/15 to-purple/15",
     },
     {
       title: "Usuarios del Sistema",
       value: safeSystem?.users.total ?? 0,
       loading: isLoading,
-      trend: null,
-      description: "Usuarios registrados",
+      trend: usersTrendData,
+      description: "Usuarios reales registrados",
       icon: Users,
       valueClassName: "text-emerald-600 dark:text-emerald-400",
       iconBg: "from-emerald-600/15 to-teal-600/15",
@@ -106,17 +118,17 @@ export default function AdminDashboardPage(): React.JSX.Element {
       value: safeSystem?.sessions.active ?? 0,
       loading: isLoading,
       trend: null,
-      description: "Usuarios con sesión abierta ahora",
+      description: "Sesiones activas no expiradas",
       icon: Activity,
       valueClassName: "text-sky-600 dark:text-sky-400",
       iconBg: "from-sky-600/15 to-blue-600/15",
     },
     {
       title: "Ingresos Totales",
-      value: safeFinance ? `$${Number(safeFinance.revenue.totalIngresos).toLocaleString()}` : "-",
+      value: safeFinance ? `$${Number(safeFinance.revenue.totalIngresos).toLocaleString()}` : "Sin datos",
       loading: isLoading,
-      trend: null,
-      description: "Ventas + servicios consolidados",
+      trend: revenueTrendData,
+      description: "Ventas + servicios de tenants reales",
       icon: Wallet,
       valueClassName: "text-emerald-600 dark:text-emerald-400",
       iconBg: "from-emerald-600/15 to-green-600/15",
@@ -126,7 +138,7 @@ export default function AdminDashboardPage(): React.JSX.Element {
       value: safeSystem?.licenses.expiringSoon ?? 0,
       loading: isLoading,
       trend: null,
-      description: "Próximos 30 días",
+      description: "Licencias reales en próximos 30 días",
       icon: Clock,
       valueClassName: "text-amber-600 dark:text-amber-400",
       iconBg: "from-amber-600/15 to-orange-600/15",
@@ -136,10 +148,10 @@ export default function AdminDashboardPage(): React.JSX.Element {
       value: safeSystem?.licenses.active ?? 0,
       loading: isLoading,
       trend: null,
-      description: `de ${safeSystem?.licenses.total ?? 0} totales`,
+      description: `de ${safeSystem?.licenses.total ?? 0} licencias reales`,
       icon: Shield,
-      valueClassName: "text-violet-600 dark:text-violet-400",
-      iconBg: "from-violet-600/15 to-purple-600/15",
+      valueClassName: "text-purple",
+      iconBg: "from-primary/15 to-purple/15",
     },
   ]
 
@@ -161,17 +173,19 @@ export default function AdminDashboardPage(): React.JSX.Element {
     if(r1.success) setTenants(r1.data??[]); if(r2.success) setFinance(r2.data); if(r3.success) setSystem(r3.data)
   }
 
+  const shouldReduceMotion = useReducedMotion()
+
   return (
     <PageTransition className="relative min-h-screen w-full">
       <div className="fixed inset-0 pointer-events-none overflow-hidden -z-10">
         <motion.div
-          className="absolute top-0 left-1/4 w-96 h-96 bg-violet-500/10 rounded-full blur-3xl dark:bg-violet-500/5"
-          animate={{ scale: [1, 1.1, 1], x: [0, 20, 0], y: [0, -20, 0] }}
-          transition={{ duration: 8, repeat: Infinity, ease: "easeInOut" }}
+          className="absolute top-0 left-1/4 w-96 h-96 bg-primary/10 rounded-full blur-3xl dark:bg-primary/5"
+          animate={shouldReduceMotion ? { opacity: 0.5 } : { scale: [1, 1.1, 1], x: [0, 20, 0], y: [0, -20, 0] }}
+          transition={{ duration: 8, repeat: Infinity, ease: "easeInOut", repeatType: "loop" }}
         />
         <motion.div
-          className="absolute top-0 right-1/4 w-96 h-96 bg-purple-500/10 rounded-full blur-3xl dark:bg-purple-500/5"
-          animate={{ scale: [1, 1.15, 1], x: [0, -30, 0], y: [0, 30, 0] }}
+          className="absolute top-0 right-1/4 w-96 h-96 bg-purple/10 rounded-full blur-3xl dark:bg-purple/5"
+          animate={shouldReduceMotion ? { opacity: 0.5 } : { scale: [1, 1.15, 1], x: [0, -30, 0], y: [0, 30, 0] }}
           transition={{ duration: 10, repeat: Infinity, ease: "easeInOut", delay: 1 }}
         />
       </div>
@@ -186,18 +200,15 @@ export default function AdminDashboardPage(): React.JSX.Element {
             animate="visible"
           >
             <motion.div
-              className="relative flex h-12 w-12 items-center justify-center rounded-xl bg-linear-to-br from-violet-600 to-purple-600 shadow-lg"
+              className="relative flex h-12 w-12 items-center justify-center rounded-xl bg-linear-to-br from-primary to-purple shadow-lg"
               variants={headerIconVariants}
               initial="initial"
               whileHover="hover"
             >
               <Shield className="h-6 w-6 text-white" />
-              <motion.div variants={sparklesVariants} animate="animate" className="absolute -right-1 -top-1">
-                <Sparkles className="h-3.5 w-3.5 text-yellow-400" />
-              </motion.div>
               <motion.div
                 className="absolute inset-0 rounded-xl bg-linear-to-tr from-transparent via-white/20 to-transparent"
-                animate={{ rotate: [0, 360] }}
+                animate={shouldReduceMotion ? { opacity: 0 } : { rotate: [0, 360] }}
                 transition={{ duration: 4, repeat: Infinity, ease: "linear" }}
                 style={{ mixBlendMode: "overlay" }}
               />
@@ -227,6 +238,12 @@ export default function AdminDashboardPage(): React.JSX.Element {
               animate={{ opacity: 1, scale: 1 }}
               transition={{ delay: 0.4, type: "spring", stiffness: 200 }}
             >
+              {lastUpdated && (
+                <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                  <Clock className="h-3 w-3" />
+                  <span>Actualizado: {lastUpdated.toLocaleTimeString('es-CU')}</span>
+                </div>
+              )}
               <Button
                 onClick={handleRefresh}
                 variant="outline"
@@ -253,7 +270,7 @@ export default function AdminDashboardPage(): React.JSX.Element {
                   <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 mt-4">
                     <CardTitle className="text-sm font-medium">{card.title}</CardTitle>
                     <div className={`rounded-md bg-linear-to-br ${card.iconBg} p-2`}>
-                      <Icon className="h-4 w-4 text-violet-600 dark:text-violet-400" />
+                      <Icon className="h-4 w-4 text-purple" />
                     </div>
                   </CardHeader>
                   <CardContent className="mb-4">
@@ -267,13 +284,120 @@ export default function AdminDashboardPage(): React.JSX.Element {
                         <div className={`text-2xl font-bold ${card.valueClassName}`}>
                           {typeof card.value === "number" ? card.value.toLocaleString() : card.value}
                         </div>
-                        <p className="mt-1 text-xs text-muted-foreground">{card.description}</p>
+                        <div className="flex items-center justify-between mt-1">
+                          <p className="text-xs text-muted-foreground">{card.description}</p>
+                          {card.trend && (
+                            <div className={`flex items-center gap-0.5 text-xs ${
+                              card.trend.direction === 'up' ? 'text-emerald-600 dark:text-emerald-400' :
+                              card.trend.direction === 'down' ? 'text-rose-600 dark:text-rose-400' :
+                              'text-muted-foreground'
+                            }`}>
+                              {card.trend.direction === 'up' && <ArrowUpRight className="h-3 w-3" />}
+                              {card.trend.direction === 'down' && <ArrowDownRight className="h-3 w-3" />}
+                              <span>{card.trend.value}%</span>
+                            </div>
+                          )}
+                        </div>
                       </>
                     )}
                   </CardContent>
                 </AnimatedCard>
               )
             })}
+          </motion.div>
+
+          {/* Trend Charts */}
+          <motion.div
+            className="grid grid-cols-1 gap-4 px-4 lg:grid-cols-2 lg:px-6"
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.5, duration: 0.5 }}
+          >
+            {/* Revenue Trend */}
+            <Card className="rounded-xl border bg-card/80 backdrop-blur-sm shadow-sm">
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2 text-base">
+                  <ArrowUpRight className="h-4 w-4 text-emerald-600" />
+                  Tendencia de Ingresos (Últimos 7 días)
+                </CardTitle>
+                <CardDescription>Evolución diaria de ingresos reales por ventas y servicios</CardDescription>
+              </CardHeader>
+              <CardContent>
+                {isLoading ? (
+                  <div className="flex items-center justify-center py-8">
+                    <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+                  </div>
+                ) : (safeFinance?.revenueTrend?.length ?? 0) > 0 ? (
+                  <div className="space-y-2">
+                    <div className="flex items-center justify-between text-xs text-muted-foreground">
+                      <span>Total: ${safeFinance.revenueTrend.reduce((sum: number, d: { ingresos: number }) => sum + d.ingresos, 0).toLocaleString()}</span>
+                      <span>Promedio: ${Math.round(safeFinance.revenueTrend.reduce((sum: number, d: { ingresos: number }) => sum + d.ingresos, 0) / safeFinance.revenueTrend.length).toLocaleString()}/día</span>
+                    </div>
+                    <div className="h-32 flex items-end gap-1">
+                      {safeFinance.revenueTrend.map((day: { fecha: string; ingresos: number }, idx: number) => {
+                        const maxIngresos = Math.max(...safeFinance.revenueTrend.map((d: { ingresos: number }) => d.ingresos));
+                        const height = maxIngresos > 0 ? (day.ingresos / maxIngresos) * 100 : 0;
+                        return (
+                          <div key={idx} className="flex-1 flex flex-col items-center gap-1 group">
+                            <div className="w-full bg-emerald-500/20 dark:bg-emerald-500/30 rounded-t-sm relative overflow-hidden" style={{ height: `${height}%` }}>
+                              <div className="absolute inset-0 bg-gradient-to-t from-emerald-500 to-emerald-400 opacity-80 group-hover:opacity-100 transition-opacity" />
+                            </div>
+                            <span className="text-[10px] text-muted-foreground">{day.fecha.slice(5)}</span>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
+                ) : (
+                  <div className="flex items-center justify-center py-8 text-sm text-muted-foreground">
+                    No hay datos de ingresos disponibles
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+
+            {/* Users Trend */}
+            <Card className="rounded-xl border bg-card/80 backdrop-blur-sm shadow-sm">
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2 text-base">
+                  <Users className="h-4 w-4 text-purple" />
+                  Nuevos Usuarios (Últimos 7 días)
+                </CardTitle>
+                <CardDescription>Altas diarias de usuarios en tenants reales</CardDescription>
+              </CardHeader>
+              <CardContent>
+                {isLoading ? (
+                  <div className="flex items-center justify-center py-8">
+                    <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+                  </div>
+                ) : (safeSystem?.usersTrend?.length ?? 0) > 0 ? (
+                  <div className="space-y-2">
+                    <div className="flex items-center justify-between text-xs text-muted-foreground">
+                      <span>Total: {safeSystem.usersTrend.reduce((sum: number, d: { usuarios: number }) => sum + d.usuarios, 0)}</span>
+                      <span>Promedio: {(safeSystem.usersTrend.reduce((sum: number, d: { usuarios: number }) => sum + d.usuarios, 0) / safeSystem.usersTrend.length).toFixed(1)}/día</span>
+                    </div>
+                    <div className="h-32 flex items-end gap-1">
+                      {safeSystem.usersTrend.map((day: { fecha: string; usuarios: number }, idx: number) => {
+                        const maxUsers = Math.max(...safeSystem.usersTrend.map((d: { usuarios: number }) => d.usuarios));
+                        const height = maxUsers > 0 ? (day.usuarios / maxUsers) * 100 : 0;
+                        return (
+                          <div key={idx} className="flex-1 flex flex-col items-center gap-1 group">
+                            <div className="w-full bg-purple/20 dark:bg-purple/30 rounded-t-sm relative overflow-hidden" style={{ height: `${height}%` }}>
+                              <div className="absolute inset-0 bg-gradient-to-t from-primary to-purple opacity-80 group-hover:opacity-100 transition-opacity" />
+                            </div>
+                            <span className="text-[10px] text-muted-foreground">{day.fecha.slice(5)}</span>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
+                ) : (
+                  <div className="flex items-center justify-center py-8 text-sm text-muted-foreground">
+                    No hay datos de usuarios disponibles
+                  </div>
+                )}
+              </CardContent>
+            </Card>
           </motion.div>
 
           {/* Two-column layout: Tenant Distribution + Alerts */}
@@ -287,24 +411,24 @@ export default function AdminDashboardPage(): React.JSX.Element {
               <Card className="rounded-xl border bg-card/80 backdrop-blur-sm shadow-sm h-full">
                 <CardHeader>
                   <CardTitle className="flex items-center gap-2 text-base">
-                    <UserCheck className="h-4 w-4 text-violet-600" />
+                    <UserCheck className="h-4 w-4 text-purple" />
                     Usuarios por Rol
                   </CardTitle>
-                  <CardDescription>Distribución global de roles</CardDescription>
+                  <CardDescription>Distribución de usuarios reales por rol</CardDescription>
                 </CardHeader>
                 <CardContent>
                   {isLoading ? (
                     <div className="flex items-center justify-center py-8">
                       <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
                     </div>
-                  ) : (
+                  ) : safeSystem.users.byRole.length > 0 ? (
                     <div className="space-y-3">
                       {safeSystem.users.byRole.map((r: any) => {
                         const pct = safeSystem.users.total > 0
                           ? Math.round((r.count / safeSystem.users.total) * 100)
                           : 0
                         const colors: Record<string, string> = {
-                          admin: "bg-violet-500",
+                          admin: "bg-purple",
                           regularUser: "bg-slate-500",
                           dependiente: "bg-slate-500",
                         }
@@ -323,6 +447,10 @@ export default function AdminDashboardPage(): React.JSX.Element {
                           </div>
                         )
                       })}
+                    </div>
+                  ) : (
+                    <div className="flex items-center justify-center py-8 text-sm text-muted-foreground">
+                      Aún no hay usuarios reales para mostrar por rol
                     </div>
                   )}
                 </CardContent>
@@ -373,6 +501,8 @@ export default function AdminDashboardPage(): React.JSX.Element {
             </motion.div>
           </div>
 
+          
+
           {/* Tenant consumption stats */}
           <motion.div
             className="grid grid-cols-1 gap-4 px-4 lg:grid-cols-2 lg:px-6"
@@ -383,27 +513,31 @@ export default function AdminDashboardPage(): React.JSX.Element {
             <AnimatedCard className="rounded-xl border bg-card/80 backdrop-blur-sm shadow-sm">
               <CardHeader>
                 <CardTitle className="flex items-center gap-2 text-base">
-                  <Globe className="h-4 w-4 text-violet-600" />
+                  <Globe className="h-4 w-4 text-purple" />
                   Distribución de Tenants por Plan
                 </CardTitle>
-                <CardDescription>Planes activos por empresa</CardDescription>
+                <CardDescription>Distribución de empresas reales por plan activo</CardDescription>
               </CardHeader>
               <CardContent>
                 {isLoading ? (
                   <div className="flex items-center justify-center py-8">
                     <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
                   </div>
-                ) : (
+                ) : safeTenants.length > 0 ? (
                   <div className="space-y-3">
                     {safeTenants.map((t) => (
                       <div key={t.tenantId} className="flex items-center justify-between rounded-lg border p-2.5 text-sm">
                         <span className="font-medium truncate flex-1">{t.nombre}</span>
-                        <span className="text-xs text-muted-foreground mx-2">{t.totalUsers ?? 0} users</span>
+                        <span className="text-xs text-muted-foreground mx-2">{t.totalUsers ?? 0} usuarios</span>
                         <span className={`text-xs font-medium px-2 py-0.5 rounded-full ${t.licenseActive ? "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400" : "bg-rose-100 text-rose-700 dark:bg-rose-900/30 dark:text-rose-400"}`}>
                           {t.plan || "Sin plan"}
                         </span>
                       </div>
                     ))}
+                  </div>
+                ) : (
+                  <div className="flex items-center justify-center py-8 text-sm text-muted-foreground">
+                    No hay empresas reales con plan activo para mostrar
                   </div>
                 )}
               </CardContent>
@@ -412,10 +546,10 @@ export default function AdminDashboardPage(): React.JSX.Element {
             <AnimatedCard className="rounded-xl border bg-card/80 backdrop-blur-sm shadow-sm">
               <CardHeader>
                 <CardTitle className="flex items-center gap-2 text-base">
-                  <Activity className="h-4 w-4 text-violet-600" />
+                  <Activity className="h-4 w-4 text-purple" />
                   Resumen Financiero
                 </CardTitle>
-                <CardDescription>Métricas consolidadas de la plataforma</CardDescription>
+                <CardDescription>Métricas financieras consolidadas de tenants reales</CardDescription>
               </CardHeader>
               <CardContent>
                 {isLoading ? (
@@ -451,7 +585,7 @@ export default function AdminDashboardPage(): React.JSX.Element {
                   </div>
                 ) : (
                   <div className="flex items-center justify-center py-8 text-sm text-muted-foreground">
-                    No hay datos financieros disponibles
+                    No hay datos financieros reales disponibles
                   </div>
                 )}
               </CardContent>

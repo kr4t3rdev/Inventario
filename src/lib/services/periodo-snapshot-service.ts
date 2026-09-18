@@ -9,6 +9,7 @@
  */
 
 import { prisma } from "@/lib/prisma";
+import { Prisma } from "@/generated/prisma";
 import type { SaldoSnapshot, SnapshotPeriodo } from "@/generated/prisma";
 import { SnapshotTotales } from "./periodo-contable-types";
 import { ENTIDADES_CAJA, ENTIDADES_DEVENGO } from "./fecha-operacion-registry";
@@ -33,9 +34,11 @@ export class SnapshotService {
 		periodoId: string,
 		tipo: "caja" | "devengo",
 		actor: string,
+		client?: Prisma.TransactionClient,
 	): Promise<SaldoSnapshot[]> {
+		const db = client ?? prisma;
 		// Obtener el período para conocer tenantId y rango de fechas
-		const periodo = await prisma.periodoContable.findUnique({
+		const periodo = await db.periodoContable.findUnique({
 			where: { periodoId },
 		});
 
@@ -44,7 +47,7 @@ export class SnapshotService {
 		}
 
 		// Obtener todas las cuentas bancarias activas del tenant
-		const cuentas = await prisma.cuentaBancaria.findMany({
+		const cuentas = await db.cuentaBancaria.findMany({
 			where: {
 				tenantId: periodo.tenantId,
 				isActive: true,
@@ -70,10 +73,12 @@ export class SnapshotService {
 				periodo.tenantId,
 				dateFilter,
 				field,
+				client,
 			);
 
-			const snapshot = await prisma.saldoSnapshot.create({
+			const snapshot = await db.saldoSnapshot.create({
 				data: {
+					tenantId: periodo.tenantId,
 					periodoId,
 					cuentaBancariaId: cuenta.cuentaId,
 					saldo,
@@ -103,8 +108,12 @@ export class SnapshotService {
 	 * @param {string} snapshotId - ID del snapshot a verificar.
 	 * @returns {Promise<boolean>} True si el snapshot es íntegro.
 	 */
-	async verificarIntegridad(snapshotId: string): Promise<boolean> {
-		const snapshot = await prisma.saldoSnapshot.findUnique({
+	async verificarIntegridad(
+		snapshotId: string,
+		client?: Prisma.TransactionClient,
+	): Promise<boolean> {
+		const db = client ?? prisma;
+		const snapshot = await db.saldoSnapshot.findUnique({
 			where: { snapshotId },
 			include: {
 				periodo: true,
@@ -140,6 +149,7 @@ export class SnapshotService {
 			snapshot.periodo.tenantId,
 			dateFilter,
 			field,
+			client,
 		);
 
 		// Comparar con tolerancia de punto flotante
@@ -156,9 +166,11 @@ export class SnapshotService {
 	async obtenerUltimoSnapshot(
 		periodoId: string,
 		tipo: "caja" | "devengo",
+		client?: Prisma.TransactionClient,
 	): Promise<SaldoSnapshot | null> {
 		// Buscamos snapshots del período cuyo metadata.tipo coincida
-		const snapshots = await prisma.saldoSnapshot.findMany({
+		const db = client ?? prisma;
+		const snapshots = await db.saldoSnapshot.findMany({
 			where: { periodoId },
 			orderBy: { createdAt: "desc" },
 		});
@@ -193,12 +205,14 @@ export class SnapshotService {
 		cuentaId: string,
 		tenantId: string,
 		fecha: Date,
+		client?: Prisma.TransactionClient,
 	): Promise<number> {
 		const finDelDia = new Date(fecha);
 		finDelDia.setHours(23, 59, 59, 999);
 
 		// 1. Obtener saldo actual
-		const cuenta = await prisma.cuentaBancaria.findUnique({
+		const db = client ?? prisma;
+		const cuenta = await db.cuentaBancaria.findUnique({
 			where: { cuentaId },
 			select: { saldo: true },
 		});
@@ -212,6 +226,7 @@ export class SnapshotService {
 			cuentaId,
 			tenantId,
 			{ gte: new Date(finDelDia.getTime() + 1) }, // desde el día siguiente
+			client,
 		);
 
 		// 3. Saldo histórico = saldo actual - transacciones después de la fecha
@@ -231,15 +246,17 @@ export class SnapshotService {
 	async calcularSaldoDesdeSnapshot(
 		snapshotId: string,
 		fecha: Date,
+		client?: Prisma.TransactionClient,
 	): Promise<{
 		saldo: number;
 		snapshotBase: string;
 		transaccionesNetas: number;
 	}> {
-		const snapshot = await prisma.saldoSnapshot.findUnique({
+		const db = client ?? prisma;
+		const snapshot = await db.saldoSnapshot.findUnique({
 			where: { snapshotId },
 			include: {
-				periodo: { select: { tenantId: true } },
+				periodo: { select: { tenantId: true, fechaFin: true } },
 			},
 		});
 
@@ -258,6 +275,7 @@ export class SnapshotService {
 				gte: snapshot.periodo.fechaFin,
 				lte: finDelDia,
 			},
+			client,
 		);
 
 		return {
@@ -280,28 +298,30 @@ export class SnapshotService {
 		cuentaId: string,
 		tenantId: string,
 		dateRange: { gte?: Date; lte?: Date },
+		client?: Prisma.TransactionClient,
 	): Promise<number> {
-		const ventas = await prisma.reconciliacionVenta.aggregate({
+		const db = client ?? prisma;
+		const ventas = await db.reconciliacionVenta.aggregate({
 			_sum: { montoConvertido: true },
 			where: { tenantId, cuentaId, fechaReconciliacion: dateRange },
 		});
 
-		const servicios = await prisma.reconciliacionServicio.aggregate({
+		const servicios = await db.reconciliacionServicio.aggregate({
 			_sum: { montoConvertido: true },
 			where: { tenantId, cuentaId, fechaReconciliacion: dateRange },
 		});
 
-		const gastos = await prisma.reconciliacionGasto.aggregate({
+		const gastos = await db.reconciliacionGasto.aggregate({
 			_sum: { montoConvertido: true },
 			where: { tenantId, cuentaId, fechaReconciliacion: dateRange },
 		});
 
-		const ajustes = await prisma.ajusteBancario.aggregate({
+		const ajustes = await db.ajusteBancario.aggregate({
 			_sum: { montoConvertido: true },
-			where: { tenantId, cuentaId, createdAt: dateRange },
+			where: { tenantId, cuentaId, fechaOperacion: dateRange },
 		});
 
-		const transSalientes = await prisma.transferenciaBancaria.aggregate({
+		const transSalientes = await db.transferenciaBancaria.aggregate({
 			_sum: { montoOrigen: true },
 			where: {
 				tenantId,
@@ -310,7 +330,7 @@ export class SnapshotService {
 			},
 		});
 
-		const transEntrantes = await prisma.transferenciaBancaria.aggregate({
+		const transEntrantes = await db.transferenciaBancaria.aggregate({
 			_sum: { montoDestino: true },
 			where: {
 				tenantId,
@@ -342,7 +362,9 @@ export class SnapshotService {
 		tenantId: string,
 		_dateFilter: Record<string, unknown>,
 		field: string,
+		client?: Prisma.TransactionClient,
 	): Promise<number> {
+		const db = client ?? prisma;
 		const usarCaja = field === "fechaReconciliacion";
 
 		// Extraer rango de fechas del dateFilter (viene armado desde generarSnapshot)
@@ -356,11 +378,11 @@ export class SnapshotService {
 			? { fechaReconciliacion: rangoFechas }
 			: { createdAt: rangoFechas };
 
-		// Ajustes siempre usan createdAt (no tienen fechaOperacion aún)
+		// Los ajustes usan la fecha declarada de operación, incluso en modo devengo.
 		// Transferencias siempre usan fechaTransferencia
 
 		// 1. Ingresos por reconciliaciones de venta
-		const ventasResult = await prisma.reconciliacionVenta.aggregate({
+		const ventasResult = await db.reconciliacionVenta.aggregate({
 			_sum: { montoConvertido: true },
 			where: {
 				tenantId,
@@ -370,7 +392,7 @@ export class SnapshotService {
 		});
 
 		// 2. Ingresos por reconciliaciones de servicio
-		const serviciosResult = await prisma.reconciliacionServicio.aggregate({
+		const serviciosResult = await db.reconciliacionServicio.aggregate({
 			_sum: { montoConvertido: true },
 			where: {
 				tenantId,
@@ -380,7 +402,7 @@ export class SnapshotService {
 		});
 
 		// 3. Egresos por reconciliaciones de gasto
-		const gastosResult = await prisma.reconciliacionGasto.aggregate({
+		const gastosResult = await db.reconciliacionGasto.aggregate({
 			_sum: { montoConvertido: true },
 			where: {
 				tenantId,
@@ -389,18 +411,18 @@ export class SnapshotService {
 			},
 		});
 
-		// 4. Ajustes bancarios — usan createdAt
-		const ajustesResult = await prisma.ajusteBancario.aggregate({
+		// 4. Ajustes bancarios — usan fechaOperacion
+		const ajustesResult = await db.ajusteBancario.aggregate({
 			_sum: { montoConvertido: true },
 			where: {
 				tenantId,
 				cuentaId,
-				createdAt: rangoFechas,
+				fechaOperacion: rangoFechas,
 			},
 		});
 
 		// 5. Transferencias — filtran por fechaTransferencia
-		const transferenciasOrigen = await prisma.transferenciaBancaria.aggregate({
+		const transferenciasOrigen = await db.transferenciaBancaria.aggregate({
 			_sum: { montoOrigen: true },
 			where: {
 				tenantId,
@@ -409,7 +431,7 @@ export class SnapshotService {
 			},
 		});
 
-		const transferenciasDestino = await prisma.transferenciaBancaria.aggregate({
+		const transferenciasDestino = await db.transferenciaBancaria.aggregate({
 			_sum: { montoDestino: true },
 			where: {
 				tenantId,
@@ -463,8 +485,10 @@ export class SnapshotService {
 		fechaInicio: Date,
 		fechaFin: Date,
 		modo: "CAJA" | "DEVENGO" = "CAJA",
+		client?: Prisma.TransactionClient,
 	): Promise<{ resumenJson: Record<string, unknown>; hashIntegridad: string }> {
-		const cuentas = await prisma.cuentaBancaria.findMany({
+		const db = client ?? prisma;
+		const cuentas = await db.cuentaBancaria.findMany({
 			where: { tenantId, isActive: true },
 		});
 
@@ -489,6 +513,7 @@ export class SnapshotService {
 				tenantId,
 				{ [field]: rango },
 				field,
+				client,
 			);
 
 			saldosPorMoneda[cuenta.moneda] =
@@ -496,19 +521,19 @@ export class SnapshotService {
 
 			cuentasDetalle.push({
 				cuentaId: cuenta.cuentaId,
-				nombre: cuenta.nombre ?? "Sin nombre",
+				nombre: cuenta.nombreBanco ?? "Sin nombre",
 				moneda: cuenta.moneda,
 				saldo,
 			});
 		}
 
 		// Total de ingresos en el período
-		const ingresos = await prisma.reconciliacionVenta.aggregate({
+		const ingresos = await db.reconciliacionVenta.aggregate({
 			_sum: { montoConvertido: true },
 			where: { tenantId, ...filtroReconciliacion },
 		});
 
-		const ingresosServicios = await prisma.reconciliacionServicio.aggregate({
+		const ingresosServicios = await db.reconciliacionServicio.aggregate({
 			_sum: { montoConvertido: true },
 			where: { tenantId, ...filtroReconciliacion },
 		});
@@ -518,7 +543,7 @@ export class SnapshotService {
 			Number(ingresosServicios._sum.montoConvertido ?? 0);
 
 		// Total de egresos en el período
-		const egresos = await prisma.reconciliacionGasto.aggregate({
+		const egresos = await db.reconciliacionGasto.aggregate({
 			_sum: { montoConvertido: true },
 			where: { tenantId, ...filtroReconciliacion },
 		});
@@ -573,9 +598,11 @@ export class SnapshotService {
 			resumenJson?: Record<string, unknown>;
 			hashIntegridad?: string;
 		},
+		client?: Prisma.TransactionClient,
 	): Promise<SnapshotPeriodo> {
+		const db = client ?? prisma;
 		// Determinar próxima versión
-		const ultimaVersion = await prisma.snapshotPeriodo.findFirst({
+		const ultimaVersion = await db.snapshotPeriodo.findFirst({
 			where: { periodoId },
 			orderBy: { version: "desc" },
 			select: { version: true },
@@ -584,7 +611,7 @@ export class SnapshotService {
 		const proximaVersion = (ultimaVersion?.version ?? 0) + 1;
 
 		// Obtener snapshots actuales de SaldoSnapshot para serializar
-		const snapshotsActuales = await prisma.saldoSnapshot.findMany({
+		const snapshotsActuales = await db.saldoSnapshot.findMany({
 			where: { periodoId },
 			orderBy: { createdAt: "desc" },
 		});
@@ -600,12 +627,14 @@ export class SnapshotService {
 				: null;
 
 		// Crear SnapshotPeriodo versionado
-		const snapshotPeriodo = await prisma.snapshotPeriodo.create({
+		const snapshotPeriodo = await db.snapshotPeriodo.create({
 			data: {
 				periodoId,
 				version: proximaVersion,
-				baseCajaJson: baseCaja as Record<string, unknown>[] | null,
-				resumenJson: params.resumenJson,
+				baseCajaJson: baseCaja === null
+					? Prisma.JsonNull
+					: (baseCaja as unknown as Prisma.InputJsonValue),
+				resumenJson: params.resumenJson as Prisma.InputJsonValue | undefined,
 				hashIntegridad: params.hashIntegridad,
 			},
 		});

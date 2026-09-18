@@ -1,0 +1,6 @@
+VC-T4 GREEN
+
+ Test Files  6 passed (6)
+      Tests  37 passed (37)
+
+ticket-vuelto: 2/2 tests (ensamblaje del recibo con/sin vuelto)

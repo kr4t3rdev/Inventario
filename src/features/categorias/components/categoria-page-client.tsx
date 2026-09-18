@@ -26,8 +26,7 @@ import {
   Folder,
   FolderOpen,
   Layers,
-  Grid3X3,
-  Sparkles
+  Grid3X3
 } from "lucide-react"
 import Link from "next/link"
 import { useState, useEffect, useTransition } from "react"
@@ -35,6 +34,8 @@ import { useRouter } from "next/navigation"
 import { toast } from "sonner"
 import type { Categoria, CategoriaHierarchy } from "@/app/models/model"
 import { LazyMotion, m as motion, AnimatePresence } from "framer-motion"
+import { useAuth } from "@/contexts/auth-context"
+import { fetchMiEmpresaSettings } from "@/features/mi-empresa/lib/client-mi-empresa"
 
 interface CategoriaPageClientProps {
   categorias: Categoria[]
@@ -84,18 +85,38 @@ const DataTable = dynamic(() => import("@/components/data-table").then(mod => ({
  * @returns {JSX.Element} Vista completa de gestión de categorías.
  */
 export function CategoriaPageClient({ categorias: initialCategorias, hierarchy: initialHierarchy }: CategoriaPageClientProps) {
+  const { user } = useAuth()
   const [categorias, setCategorias] = useState<Categoria[]>(initialCategorias)
   const [categoriaHierarchy, setCategoriaHierarchy] = useState<CategoriaHierarchy[]>(initialHierarchy)
   const [showTreeView, setShowTreeView] = useState(false)
   const [categoriaToDelete, setCategoriaToDelete] = useState<string | null>(null)
+  const [usaEan13, setUsaEan13] = useState(false)
   const [, startTransition] = useTransition()
   const router = useRouter()
+  const categoriasEan13Habilitado =
+    user?.role === 'admin' || user?.planFeatures?.['categorias-ean13'] === true
+  const categoryCtaLabel = usaEan13 ? 'Nueva Sección CLAS' : 'Nueva Categoría'
+  const subcategoryCtaLabel = usaEan13 ? 'Nuevo Específico CLAS' : 'Nueva Subcategoría'
 
   // Sync state when server re-fetches (e.g., after router.refresh())
   useEffect(() => {
     setCategorias(initialCategorias)
     setCategoriaHierarchy(initialHierarchy)
   }, [initialCategorias, initialHierarchy])
+
+  useEffect(() => {
+    fetchMiEmpresaSettings(() => setUsaEan13(false))
+      .then((r) => {
+        if (r.success) {
+          setUsaEan13(
+            categoriasEan13Habilitado && r.data?.usaCodigoEan13 === true,
+          )
+        } else {
+          setUsaEan13(false)
+        }
+      })
+      .catch(() => setUsaEan13(false))
+  }, [categoriasEan13Habilitado])
 
   const handleDelete = () => {
     if (!categoriaToDelete) return
@@ -139,7 +160,7 @@ export function CategoriaPageClient({ categorias: initialCategorias, hierarchy: 
             <span>{categoria.nombre}</span>
             {hasSubcategorias && categoria.subcategorias && (
               <Badge variant="secondary" className="text-xs">
-                {categoria.subcategorias.length} subcategorías
+                {usaEan13 ? `${categoria.subcategorias.length} específicos CLAS` : `${categoria.subcategorias.length} subcategorías`}
               </Badge>
             )}
           </div>
@@ -180,7 +201,7 @@ export function CategoriaPageClient({ categorias: initialCategorias, hierarchy: 
           <div className="flex items-center gap-2">
             <Link href={`/busy/categoria/update/${categoria.catId}`}>
               <motion.div whileHover={{ scale: 1.1 }} whileTap={{ scale: 0.95 }}>
-                <Button variant='outline' className='h-8 w-8 p-0 cursor-pointer'>
+                <Button variant='outline' className='h-8 w-8 p-0 cursor-pointer' aria-label="Editar categoría">
                   <Pencil className='h-4 w-4' />
                 </Button>
               </motion.div>
@@ -263,7 +284,7 @@ export function CategoriaPageClient({ categorias: initialCategorias, hierarchy: 
           <div className="flex items-center gap-2">
             <Link href={`/busy/categoria/update/${categoria.catId}`}>
               <motion.div whileHover={{ scale: 1.1 }} whileTap={{ scale: 0.95 }}>
-                <Button variant='outline' className='h-8 w-8 p-0 cursor-pointer'>
+                <Button variant='outline' className='h-8 w-8 p-0 cursor-pointer' aria-label="Editar categoría">
                   <Pencil className='h-4 w-4' />
                 </Button>
               </motion.div>
@@ -325,24 +346,11 @@ export function CategoriaPageClient({ categorias: initialCategorias, hierarchy: 
             >
               <div className="flex items-center gap-3">
                 <motion.div
-                  className="w-10 h-10 bg-linear-to-br from-primary to-purple-600 rounded-xl flex items-center justify-center shadow-lg relative"
+                  className="w-10 h-10 bg-linear-to-br from-primary to-purple rounded-xl flex items-center justify-center shadow-lg relative"
                   whileHover={{ scale: 1.05, rotate: 5 }}
                   transition={{ duration: 0.2 }}
                 >
                   <Layers className="h-5 w-5 text-white" />
-                  <motion.div
-                    animate={{
-                      rotate: 360,
-                      scale: [1, 1.2, 1]
-                    }}
-                    transition={{
-                      rotate: { duration: 20, repeat: Infinity, ease: "linear" },
-                      scale: { duration: 2, repeat: Infinity, ease: "easeInOut" }
-                    }}
-                    className="absolute -top-1 -right-1"
-                  >
-                    <Sparkles className="h-4 w-4 text-yellow-400" />
-                  </motion.div>
                 </motion.div>
                 <div>
                   <h1 className="text-3xl font-bold bg-linear-to-r from-slate-900 to-slate-600 dark:from-white dark:to-slate-300 bg-clip-text text-transparent">
@@ -396,11 +404,11 @@ export function CategoriaPageClient({ categorias: initialCategorias, hierarchy: 
                   >
                     <Button
                       asChild
-                      className="gap-2 bg-linear-to-r from-primary to-purple-600 hover:from-primary/90 hover:to-purple-600/90"
+                      className="gap-2 bg-linear-to-r from-primary to-purple hover:from-primary/90 hover:to-purple/90"
                     >
                       <Link href="/busy/categoria/new">
                         <Plus className="h-4 w-4" />
-                        Nueva Categoría
+                        {categoryCtaLabel}
                       </Link>
                     </Button>
                   </motion.div>
@@ -419,7 +427,7 @@ export function CategoriaPageClient({ categorias: initialCategorias, hierarchy: 
                     >
                       <Link href="/busy/categoria/subcategoria/new">
                         <Layers className="h-4 w-4" />
-                        Nueva Subcategoría
+                        {subcategoryCtaLabel}
                       </Link>
                     </Button>
                   </motion.div>

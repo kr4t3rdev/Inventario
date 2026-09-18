@@ -7,7 +7,7 @@
  */
 import { TransferenciaForm } from "@/features/transferencias"
 import { LazyMotion, m as motion } from "framer-motion"
-import { ArrowLeftRight, Sparkles } from "lucide-react"
+import { ArrowLeftRight } from "lucide-react"
 
 export default function NuevaTransferenciaPage() {
   return (
@@ -30,19 +30,6 @@ export default function NuevaTransferenciaPage() {
                 transition={{ duration: 0.2 }}
               >
                 <ArrowLeftRight className="h-5 w-5 text-white" />
-                <motion.div
-                  animate={{ 
-                    rotate: 360,
-                    scale: [1, 1.2, 1]
-                  }}
-                  transition={{ 
-                    rotate: { duration: 10, repeat: Infinity, ease: "linear" },
-                    scale: { duration: 2, repeat: Infinity, ease: "easeInOut" }
-                  }}
-                  className="absolute -top-1 -right-1"
-                >
-                  <Sparkles className="h-3 w-3 text-yellow-300" />
-                </motion.div>
               </motion.div>
               <div>
                 <h1 className="text-3xl font-bold bg-linear-to-r from-slate-900 to-slate-600 dark:from-white dark:to-slate-300 bg-clip-text text-transparent">

@@ -6,20 +6,14 @@ import {
   LayoutDashboard,
   Building2,
   Wallet,
+  DollarSign,
   Shield,
-  Users,
   Database,
-  BarChart3,
+  
   Activity,
-  Globe,
-  AlertTriangle,
-  Logs,
-  Settings,
   UserCog,
   FileText,
-  RefreshCw,
   ArrowLeftRight,
-  Sparkles,
   Key,
   CreditCard,
   HardDrive,
@@ -95,6 +89,16 @@ export function AdminSidebar({
             url: "/admin/finanzas",
             icon: Wallet,
           },
+          {
+            title: "Revenue Suscripciones",
+            url: "/admin/subscriptions",
+            icon: DollarSign,
+          },
+          {
+            title: "Referidos",
+            url: "/admin/referidos",
+            icon: ArrowLeftRight,
+          },
         ],
       },
       {
@@ -112,6 +116,7 @@ export function AdminSidebar({
           },
         ],
       },
+      
       {
         title: "Licencias",
         items: [
@@ -140,14 +145,20 @@ export function AdminSidebar({
             url: "/admin/backups",
             icon: HardDrive,
           },
+          {
+            title: "Logs de Auditoría",
+            url: "/admin/audit-logs",
+            icon: FileText,
+          },
         ],
       },
     ],
   }
 
   const groupToneByTitle: Record<string, string> = {
-    "Panel de Control": "from-violet-500/15 via-sidebar-accent/45 to-transparent",
+    "Panel de Control": "from-purple/15 via-sidebar-accent/45 to-transparent",
     Monitor: "from-amber-500/15 via-sidebar-accent/45 to-transparent",
+    
     Licencias: "from-emerald-500/15 via-sidebar-accent/45 to-transparent",
     Herramientas: "from-sky-500/15 via-sidebar-accent/45 to-transparent",
   }
@@ -182,10 +193,10 @@ export function AdminSidebar({
               <SidebarHeader className="px-3 pb-2 pt-3">
                 <Link
                   href={dashboardUrl}
-                  className="group/brand flex min-h-11 items-center gap-3 rounded-xl border border-sidebar-border/70 bg-linear-to-br from-violet-600/15 via-sidebar-accent/55 to-transparent px-3 py-3 text-sidebar-foreground transition-colors duration-200 hover:border-violet-400/70 hover:from-violet-600/20 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sidebar-ring"
+                  className="group/brand flex min-h-11 items-center gap-3 rounded-xl border border-sidebar-border/70 bg-linear-to-br from-purple/15 via-sidebar-accent/55 to-transparent px-3 py-3 text-sidebar-foreground transition-colors duration-200 hover:border-purple/70 hover:from-purple/20 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sidebar-ring"
                 >
                   <motion.span
-                    className="flex size-10 shrink-0 items-center justify-center rounded-lg bg-violet-600/15 text-violet-600"
+                    className="flex size-10 shrink-0 items-center justify-center rounded-lg bg-purple/15 text-purple"
                     whileHover={shouldReduceMotion ? undefined : { scale: 1.04 }}
                     transition={{ duration: shouldReduceMotion ? 0 : 0.2, ease: "easeOut" as const }}
                   >
@@ -231,7 +242,7 @@ export function AdminSidebar({
                   <SidebarGroupLabel className="h-auto px-2 py-1 text-[0.67rem] font-semibold uppercase tracking-widest text-sidebar-foreground/70">
                     {group.title}
                   </SidebarGroupLabel>
-                  <NavMain items={group.items} />
+                  <NavMain items={group.items} label={group.title} />
                 </SidebarGroup>
               </motion.div>
             ))}

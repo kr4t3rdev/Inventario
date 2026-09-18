@@ -23,7 +23,8 @@ export const CategoriaSchema = z.object({
 	descripcion: z
 		.string()
 		.max(500, "La descripción no puede exceder 500 caracteres")
-		.optional(),
+		.optional()
+		.nullable(),
 
 	parentId: z.string().optional().nullable(),
 
@@ -114,8 +115,15 @@ export async function validateCategoryAgainstCLAS(
 	tenantId: string,
 	clasSectionId?: string | null,
 	clasSpecificId?: string | null,
+	options?: {
+		skipEan13Validation?: boolean;
+	},
 ): Promise<CategoriaValidationResult> {
 	try {
+		if (options?.skipEan13Validation) {
+			return { success: true };
+		}
+
 		// Check if EAN-13 mode is enabled for the current tenant.
 		// ⚠️ IMPORTANTE: el modelo MiEmpresa es 1:1 por tenant (id siempre vale 1,
 		// pero tenantId es UNIQUE). NUNCA buscar por `id: 1` sin filtrar por tenant,
@@ -691,6 +699,9 @@ export class CategoriaValidator {
 	static async validateCategoryCreation(
 		data: unknown,
 		tenantId: string,
+		options?: {
+			skipEan13Validation?: boolean;
+		},
 	): Promise<CategoriaValidationResult> {
 		const allErrors: CategoriaValidationError[] = [];
 
@@ -709,6 +720,7 @@ export class CategoriaValidator {
 			tenantId,
 			validatedData.clasSectionId ?? null,
 			validatedData.clasSpecificId ?? null,
+			options,
 		);
 		if (!clasValidation.success) {
 			allErrors.push(...(clasValidation.errors || []));
@@ -756,6 +768,9 @@ export class CategoriaValidator {
 		categoryId: string,
 		data: unknown,
 		tenantId: string,
+		options?: {
+			skipEan13Validation?: boolean;
+		},
 	): Promise<CategoriaValidationResult> {
 		const allErrors: CategoriaValidationError[] = [];
 
@@ -791,22 +806,22 @@ export class CategoriaValidator {
 		}
 
 		const validatedData: CategoriaInput = {
-			nombre: inputValidation.data.nombre ?? existingCategory.nombre,
+			nombre: inputValidation.data!.nombre ?? existingCategory.nombre,
 			descripcion:
-				inputValidation.data.descripcion !== undefined
-					? inputValidation.data.descripcion
+				inputValidation.data!.descripcion !== undefined
+					? inputValidation.data!.descripcion
 					: existingCategory.descripcion ?? undefined,
 			parentId:
-				inputValidation.data.parentId !== undefined
-					? inputValidation.data.parentId
+				inputValidation.data!.parentId !== undefined
+					? inputValidation.data!.parentId
 					: existingCategory.parentId,
 			clasSectionId:
-				inputValidation.data.clasSectionId !== undefined
-					? inputValidation.data.clasSectionId
+				inputValidation.data!.clasSectionId !== undefined
+					? inputValidation.data!.clasSectionId
 					: existingCategory.clasSectionId,
 			clasSpecificId:
-				inputValidation.data.clasSpecificId !== undefined
-					? inputValidation.data.clasSpecificId
+				inputValidation.data!.clasSpecificId !== undefined
+					? inputValidation.data!.clasSpecificId
 					: existingCategory.clasSpecificId,
 		};
 
@@ -817,6 +832,7 @@ export class CategoriaValidator {
 			tenantId,
 			validatedData.clasSectionId ?? null,
 			validatedData.clasSpecificId ?? null,
+			options,
 		);
 		if (!clasValidation.success) {
 			allErrors.push(...(clasValidation.errors || []));

@@ -7,6 +7,7 @@ import { requireTenant } from '@/lib/services/tenant-scope'
 import { AuditLogService } from '@/lib/services/audit-log-service'
 import { validarEscrituraPeriodo, extraerFechaDeBody } from '@/lib/services/validate-period-write'
 import { calcularSaldoPendienteDeuda, calcularTotalDeudaConInteres, normalizarEstadoDeudaCash } from '@/lib/utils/deuda-cash'
+import { buildPersistedAccountingAmount } from '@/features/contabilidad/services/accounting-reconciliation-service';
 
 const querySchema = z.object({
   estado: z.enum(['ACTIVO', 'PAGADO', 'VENCIDO', 'CANCELADO']).optional(),
@@ -169,8 +170,8 @@ export const POST = withAuthPost(async (request: NextRequest, _context: unknown,
 
     const deuda = await prisma.$transaction(async (tx) => {
       const tipoPagoDesembolso =
-        (await tx.tipoPago.findFirst({ where: { nombre: 'Transferencia', isActive: true } })) ||
-        (await tx.tipoPago.findFirst({ where: { nombre: 'Efectivo', isActive: true } }))
+        (await tx.tipoPago.findFirst({ where: { nombre: 'Transferencia', isActive: true, tenantId } })) ||
+        (await tx.tipoPago.findFirst({ where: { nombre: 'Efectivo', isActive: true, tenantId } }))
 
       if (!tipoPagoDesembolso) {
         throw new Error('No existe un tipo de pago válido para el desembolso de deuda')
@@ -204,6 +205,13 @@ export const POST = withAuthPost(async (request: NextRequest, _context: unknown,
         }
       })
 
+      const fechaReconciliacion = new Date();
+      const conversion = buildPersistedAccountingAmount(
+        Number(body.montoCapital),
+        body.moneda || 'CUP',
+        undefined,
+        fechaReconciliacion,
+      );
       await tx.reconciliacionVenta.create({
         data: {
           tenantId,
@@ -211,8 +219,10 @@ export const POST = withAuthPost(async (request: NextRequest, _context: unknown,
           tipoPagoId: tipoPagoDesembolso.tipoId,
           monto: body.montoCapital,
           moneda: body.moneda,
-          montoConvertido: body.montoCapital,
-          fechaReconciliacion: new Date(),
+          ...(conversion.montoConvertido != null ? { montoConvertido: conversion.montoConvertido } : {}),
+          ...(conversion.tasaCambio != null ? { tasaCambio: conversion.tasaCambio } : {}),
+          fechaReconciliacion,
+          ...(conversion.fxEvidence ?? {}),
           observaciones: body.observaciones || `Desembolso de deuda cash para proveedor ${body.proveedorId}`,
           reconciliadoPor: user.userId,
           deudaCashId: null,

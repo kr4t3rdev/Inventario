@@ -1,6 +1,22 @@
 import { prisma } from '@/lib/prisma';
 import { ActionError } from '@/lib/server-actions/types';
 import type { AuthenticatedUser } from '@/lib/auth-middleware';
+import { isTenantEconomicoRole, normalizeTenantRole } from '@/lib/auth/roles';
+import { getDefaultPermissionsForRole } from '@/lib/auth/permission-registry';
+
+/**
+ * @description Resuelve los permisos efectivos del usuario.
+ * En producción llegan resueltos por `resolveTenantContext` (rol custom o
+ * defaults). Si vienen crudos (tests/seeds sin pasar por autenticación),
+ * aplica los defaults del rol fijo — regla de paridad día-1.
+ */
+function effectivePermissions(user: AuthenticatedUser): ReadonlySet<string> {
+  if (user.permissions) return user.permissions;
+  const role = normalizeTenantRole(user.tenantRole);
+  if (!role) return new Set<string>();
+  return getDefaultPermissionsForRole(role);
+}
+
 
 /**
  * @description Valida que el usuario tenga rol de manager (o superior) en el tenant.
@@ -20,6 +36,95 @@ export function requireManagerRole(user: AuthenticatedUser, action: string = 're
       'FORBIDDEN',
     )
   }
+}
+
+/**
+ * @description Valida que el usuario tenga un rol económico (o superior) en el tenant.
+ * Permite acceso a `economico` y `manager`.
+ *
+ * @example
+ * requireEconomicoRole(user, 'consultar reportes contables')
+ *
+ * @param {AuthenticatedUser} user - Usuario autenticado.
+ * @param {string} [action='realizar esta acción'] - Descripción de la acción para el mensaje de error.
+ * @throws {ActionError} Si el rol no tiene alcance económico.
+ */
+export function requireEconomicoRole(
+  user: AuthenticatedUser,
+  action: string = 'realizar esta acción',
+): void {
+  if (!isTenantEconomicoRole(user.tenantRole)) {
+    throw new ActionError(
+      `No tienes permisos para ${action}. Solo los roles económico o manager pueden realizar esta operación.`,
+      'FORBIDDEN',
+    )
+  }
+}
+
+/**
+ * @description Valida que el usuario tenga cualquier rol operativo válido dentro del tenant.
+ * Permite acceso a `dependiente`, `economico` y `manager`.
+ *
+ * @example
+ * requireDependienteRole(user, 'registrar ventas')
+ *
+ * @param {AuthenticatedUser} user - Usuario autenticado.
+ * @param {string} [action='realizar esta acción'] - Descripción de la acción para el mensaje de error.
+ * @throws {ActionError} Si el usuario no tiene un rol de tenant válido.
+ */
+export function requireDependienteRole(
+  user: AuthenticatedUser,
+  action: string = 'realizar esta acción',
+): void {
+  requireTenant(user)
+
+  if (!normalizeTenantRole(user.tenantRole)) {
+    throw new ActionError(
+      `No tienes permisos para ${action}. Se requiere un rol operativo válido dentro de la empresa.`,
+      'FORBIDDEN',
+    )
+  }
+}
+
+/**
+ * @description Valida que el usuario posea el permiso nombrado dentro del tenant.
+ * Admin global hace bypass; sin tenant lanza error de contexto (fail-closed);
+ * sin el permiso lanza FORBIDDEN con mensaje neutro.
+ *
+ * @example
+ * requirePermission(user, 'rrhh.nomina.calcular', 'calcular nómina')
+ *
+ * @param {AuthenticatedUser} user - Usuario autenticado.
+ * @param {string} key - Clave del permission-registry (`<cat>.<recurso>.<accion>`).
+ * @param {string} [action='realizar esta acción'] - Descripción de la acción para el mensaje de error.
+ * @throws {ActionError} Si el usuario no tiene el permiso.
+ */
+export function requirePermission(
+  user: AuthenticatedUser,
+  key: string,
+  action: string = 'realizar esta acción',
+): void {
+  if (user.role === 'admin') return;
+  requireTenant(user);
+  if (!effectivePermissions(user).has(key)) {
+    throw new ActionError(
+      `No tienes permisos para ${action}.`,
+      'FORBIDDEN',
+    );
+  }
+}
+
+/**
+ * @description Consulta booleana de permiso (para UI/condicionales).
+ * NUNCA sustituye a requirePermission server-side.
+ *
+ * @param {AuthenticatedUser} user - Usuario autenticado.
+ * @param {string} key - Clave del permission-registry.
+ * @returns {boolean} true si admin o posee el permiso.
+ */
+export function hasPermission(user: AuthenticatedUser, key: string): boolean {
+  if (user.role === 'admin') return true;
+  return effectivePermissions(user).has(key);
 }
 
 /**
@@ -44,6 +149,19 @@ export function requireFeature(
       'FEATURE_NOT_AVAILABLE',
     );
   }
+}
+
+/**
+ * @description Consulta booleana de feature de plan para condicionales de UI.
+ * NUNCA sustituye a `requireFeature` server-side.
+ *
+ * @param {AuthenticatedUser} user - Usuario autenticado.
+ * @param {string} featureKey - Clave del feature en el registro del plan.
+ * @returns {boolean} true si admin global o el plan incluye el feature.
+ */
+export function hasFeature(user: AuthenticatedUser, featureKey: string): boolean {
+  if (user.role === 'admin') return true;
+  return user.planFeatures?.[featureKey] === true;
 }
 
 /**
@@ -129,7 +247,7 @@ export function requireTenant(user: AuthenticatedUser): string {
  */
 export async function validateTenantLimit(
   tenantId: string,
-  limitField: 'maxUsuarios' | 'maxAlmacenes' | 'maxProductos',
+  limitField: 'maxUsuarios' | 'maxAlmacenes' | 'maxProductos' | 'maxClientes',
   currentCount: number,
 ): Promise<void> {
   const license = await prisma.tenantLicense.findFirst({
@@ -147,6 +265,7 @@ export async function validateTenantLimit(
       maxUsuarios: 'usuarios',
       maxAlmacenes: 'almacenes',
       maxProductos: 'productos',
+      maxClientes: 'clientes',
     }
     throw new Error(
       `Límite del plan alcanzado: máximo ${limit} ${labels[limitField]}. Contacte al administrador del sistema.`,

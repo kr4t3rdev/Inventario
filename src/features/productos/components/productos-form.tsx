@@ -1,13 +1,12 @@
 "use client";
 
-import React, { useEffect, useState, useTransition } from "react";
+import React, { useEffect, useMemo, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useForm, type FieldErrors } from "react-hook-form";
+import { useForm, useWatch, type FieldErrors } from "react-hook-form";
 import { LazyMotion, m as motion } from "framer-motion";
 import {
 	Boxes,
-	Sparkles,
 	ArrowLeft,
 	Loader2,
 	Info,
@@ -44,13 +43,15 @@ import {
 } from "@/components/ui/tooltip";
 import { Skeleton } from "@/components/ui/skeleton";
 import { sileo } from "@/lib/sileo-shim";
+import { useAuth } from "@/contexts/auth-context";
+import { hasPlanFeature } from "@/lib/plan-access";
 import type { Almacen, Categoria, Unidad, Vendor } from "@/app/models/model";
 
 import {
 	createProductoAction,
 	updateProductoAction,
 } from "@/features/productos/actions";
-import { getMiEmpresaAction } from "@/features/mi-empresa/actions";
+import { fetchMiEmpresaSettings } from "@/features/mi-empresa/lib/client-mi-empresa";
 import { SubcategorySelector } from "@/features/categorias/components/subcategory-selector";
 import {
 	buildProductBusinessCodePreview,
@@ -64,8 +65,10 @@ import {
 	buildProductosSchema,
 	type ProductosFormValues,
 } from "./productos-form-schema";
+import { mapCategoryToSection, mapSubcategoryToSpecific } from "@/lib/category-mapping";
 import { PulseSkeleton } from "./pulse-skeleton";
 import { ProductosPriceListsSection } from "./productos-price-lists";
+import type { CloudinaryAssetUploadResult } from "@/lib/upload/cloudinary-asset";
 
 function getFirstFormErrorMessage(
 	errors: FieldErrors<ProductosFormValues>,
@@ -100,7 +103,7 @@ interface ProductosFormProps {
 	unidades?: Pick<Unidad, "unidadId" | "nombre" | "simbolo">[];
 	almacenes?: Pick<Almacen, "almacenId" | "nombre">[];
 	listasPrecios?: Array<{ id: string; nombre: string }>;
-	vendors?: Array<Pick<Vendor, "vendorId" | "nombre" | "proveedorCodigo">>;
+	vendors?: Array<Pick<any, "vendorId" | "nombre" | "proveedorCodigo">>;
 	categorias?: Array<
 		Pick<Categoria, "catId" | "nombre"> & { parentId?: string | null }
 	>;
@@ -129,6 +132,7 @@ interface ProductosFormProps {
 			precio: number;
 		}>;
 	};
+	planFeatures?: Record<string, boolean>;
 }
 
 /**
@@ -152,7 +156,9 @@ export function ProductoForm({
 	listasPrecios = [],
 	vendors = [],
 	categorias = [],
+	planFeatures,
 }: ProductosFormProps): React.JSX.Element {
+	const { user } = useAuth();
 	const router = useRouter();
 	const [isLoading, setIsLoading] = useState(false);
 	const [usaEan13, setUsaEan13] = useState(false);
@@ -161,11 +167,12 @@ export function ProductoForm({
 	const isTaxonomyLocked = usaEan13 && isEditing;
 
 	useEffect(() => {
-		getMiEmpresaAction()
+		fetchMiEmpresaSettings(() => setUsaEan13(false))
 			.then((r) => {
 				if (r.success) setUsaEan13(r.data?.usaCodigoEan13 ?? false);
+				else setUsaEan13(false);
 			})
-			.catch(() => {});
+			.catch(() => setUsaEan13(false));
 	}, []);
 
 	const [preciosPorLista, setPreciosPorLista] = useState<
@@ -177,9 +184,15 @@ export function ProductoForm({
 		});
 		return initialMap;
 	});
+	const [photoAssets, setPhotoAssets] = useState<CloudinaryAssetUploadResult[]>([]);
+	const canUploadProductPhotos = hasPlanFeature(
+		planFeatures ? { planFeatures } : user,
+		"upload-productos-photo",
+	);
+	const schema = useMemo(() => buildProductosSchema(usaEan13), [usaEan13]);
 
 	const form = useForm<ProductosFormValues>({
-		resolver: zodResolver(buildProductosSchema(usaEan13)),
+		resolver: zodResolver(schema) as any,
 		defaultValues: {
 			nombre: initialData?.nombre || "",
 			descripcion: initialData?.descripcion || "",
@@ -188,8 +201,8 @@ export function ProductoForm({
 			vendorId: initialData?.vendorId || "",
 			categoriaId: initialData?.categoriaId || "",
 			subcategoriaId: initialData?.subcategoriaId || "",
-			precioCosto: initialData?.precioCosto,
-			precioVenta: initialData?.precioVenta,
+			precioCosto: initialData?.precioCosto ?? 0,
+			precioVenta: initialData?.precioVenta ?? 0,
 			stock: initialData?.stock ?? 0,
 			stockMinimo: initialData?.stockMinimo ?? 0,
 			fotos: initialData?.fotos || [],
@@ -198,17 +211,45 @@ export function ProductoForm({
 		},
 	});
 
-	const watchedCategoryId = form.watch("categoriaId");
-	const watchedSubcategoryId = form.watch("subcategoriaId");
-	const watchedProveedorCodigo = form.watch("proveedorCodigo");
-	const watchedVendorId = form.watch("vendorId");
+	useEffect(() => {
+		void form.trigger(["codigoInterno", "precioCosto", "precioVenta"]);
+	}, [form, usaEan13]);
+
+	const watchedCategoryId = useWatch({
+		control: form.control,
+		name: "categoriaId",
+	});
+	const watchedSubcategoryId = useWatch({
+		control: form.control,
+		name: "subcategoriaId",
+	});
+	const watchedProveedorCodigo = useWatch({
+		control: form.control,
+		name: "proveedorCodigo",
+	});
+	const watchedVendorId = useWatch({
+		control: form.control,
+		name: "vendorId",
+	});
+	const watchedStock = useWatch({
+		control: form.control,
+		name: "stock",
+	});
+	const watchedStockMinimo = useWatch({
+		control: form.control,
+		name: "stockMinimo",
+	});
+	const watchedPrecioVenta = useWatch({
+		control: form.control,
+		name: "precioVenta",
+	});
 
 	const subcategorias = categorias.filter(
 		(categoria) => categoria.parentId === watchedCategoryId,
 	);
 
-	const stockValue = Number(form.watch("stock") || 0);
-	const stockMinimoValue = Number(form.watch("stockMinimo") || 0);
+	const stockValue = Number(watchedStock || 0);
+	const stockMinimoValue = Number(watchedStockMinimo || 0);
 	const umbral = stockMinimoValue > 0 ? stockMinimoValue : 10;
 	const estadoStock =
 		stockValue === 0
@@ -222,7 +263,7 @@ export function ProductoForm({
 		(vendor) => vendor.vendorId === watchedVendorId,
 	);
 	const selectedVendorProviderCode =
-		selectedVendor?.proveedorCodigo?.trim() || "";
+		(selectedVendor?.proveedorCodigo as any)?.trim?.() || "";
 
 	const selectedCategory = categorias.find(
 		(categoria) => categoria.catId === watchedCategoryId,
@@ -295,6 +336,10 @@ export function ProductoForm({
 					stock: data.stock,
 					stockMinimo: data.stockMinimo ?? 0,
 					fotos: data.fotos ?? [],
+					...(JSON.stringify(data.fotos ?? []) !==
+					JSON.stringify(initialData.fotos ?? [])
+						? { photoAssets }
+						: {}),
 					categoriaId: data.categoriaId,
 					subcategoriaId: data.subcategoriaId || null,
 					unidadId: data.unidadId,
@@ -343,6 +388,7 @@ export function ProductoForm({
 					stock: data.stock,
 					stockMinimo: data.stockMinimo ?? 0,
 					fotos: data.fotos ?? [],
+					photoAssets,
 					categoriaId: data.categoriaId,
 					subcategoriaId: data.subcategoriaId || null,
 					unidadId: data.unidadId,
@@ -397,7 +443,7 @@ export function ProductoForm({
 			animate={{ opacity: 1, y: 0 }}
 			transition={{ duration: 0.45 }}
 		>
-			<Card className="overflow-hidden border-dashed bg-linear-to-br from-primary/5 via-background to-purple-500/8 dark:from-primary/10 dark:to-purple-500/10">
+			<Card className="overflow-hidden border-dashed bg-linear-to-br from-primary/5 via-background to-purple/8 dark:from-primary/10 dark:to-purple/10">
 				<CardContent className="pt-6">
 					<motion.div
 						className="mb-7 flex items-start gap-3"
@@ -406,21 +452,11 @@ export function ProductoForm({
 						transition={{ delay: 0.1 }}
 					>
 						<motion.div
-							className="relative flex h-11 w-11 items-center justify-center rounded-xl bg-linear-to-br from-primary to-purple-600 text-white shadow-lg"
+							className="relative flex h-11 w-11 items-center justify-center rounded-xl bg-linear-to-br from-primary to-purple text-white shadow-lg"
 							whileHover={{ scale: 1.05, rotate: 4 }}
 							transition={{ duration: 0.2 }}
 						>
 							<Boxes className="h-5 w-5" />
-							<motion.span
-								className="absolute -right-1 -top-1"
-								animate={{ rotate: 360, scale: [1, 1.15, 1] }}
-								transition={{
-									rotate: { duration: 18, repeat: Infinity, ease: "linear" },
-									scale: { duration: 2, repeat: Infinity, ease: "easeInOut" },
-								}}
-							>
-								<Sparkles className="h-3.5 w-3.5 text-yellow-400" />
-							</motion.span>
 						</motion.div>
 						<div>
 							<h2 className="text-xl font-semibold">
@@ -437,7 +473,7 @@ export function ProductoForm({
 					<TooltipProvider>
 						<Form {...form}>
 							<form
-								onSubmit={form.handleSubmit(onSubmit, (errors) => {
+								onSubmit={form.handleSubmit(onSubmit as any, (errors) => {
 									sileo.error({
 										title:
 											getFirstFormErrorMessage(errors) ||
@@ -546,7 +582,7 @@ export function ProductoForm({
 														);
 														form.setValue(
 															"proveedorCodigo",
-															nextVendor?.proveedorCodigo || "",
+															(nextVendor?.proveedorCodigo as unknown as string) || "",
 															{
 																shouldValidate: true,
 																shouldDirty: true,
@@ -741,32 +777,36 @@ export function ProductoForm({
 									)}
 								</motion.div>
 
-								<motion.div
-									initial={{ opacity: 0, y: 14 }}
-									animate={{ opacity: 1, y: 0 }}
-									transition={{ delay: 0.2 }}
-								>
-									<FormField
-										control={form.control}
-										name="fotos"
-										render={({ field }) => (
-											<FormItem>
-												<FormLabel>Foto del producto</FormLabel>
-												<FormControl>
-													<ProductPhotoUpload
-														photos={field.value || []}
-														onPhotosChange={field.onChange}
-														maxPhotos={1}
-													/>
-												</FormControl>
-												<FormDescription>
-													Adjunta una imagen opcional (máximo 2MB).
-												</FormDescription>
-												<FormMessage />
-											</FormItem>
-										)}
-									/>
-								</motion.div>
+								{canUploadProductPhotos && (
+									<motion.div
+										initial={{ opacity: 0, y: 14 }}
+										animate={{ opacity: 1, y: 0 }}
+										transition={{ delay: 0.2 }}
+									>
+										<FormField
+											control={form.control}
+											name="fotos"
+											render={({ field }) => (
+												<FormItem>
+													<FormLabel>Foto del producto</FormLabel>
+													<FormControl>
+														<ProductPhotoUpload
+															photos={field.value || []}
+															onPhotosChange={field.onChange}
+															assets={photoAssets}
+															onAssetsChange={setPhotoAssets}
+															maxPhotos={1}
+														/>
+													</FormControl>
+													<FormDescription>
+														Adjunta una imagen opcional (máximo 2MB).
+													</FormDescription>
+													<FormMessage />
+												</FormItem>
+											)}
+										/>
+									</motion.div>
+								)}
 
 								<motion.div
 									initial={{ opacity: 0, y: 14 }}
@@ -781,7 +821,7 @@ export function ProductoForm({
 												<SubcategorySelector
 													categories={categorias}
 													selectedCategoryId={field.value}
-													selectedSubcategoryId={form.watch("subcategoriaId")}
+													selectedSubcategoryId={watchedSubcategoryId}
 													onCategoryChange={(categoryId) => {
 														field.onChange(categoryId);
 														form.setValue("subcategoriaId", "");
@@ -1073,7 +1113,7 @@ export function ProductoForm({
 										)}
 									/>
 
-									<div className="rounded-xl border border-dashed bg-linear-to-br from-primary/5 to-purple-500/8 dark:from-primary/10 dark:to-purple-500/10 p-4">
+									<div className="rounded-xl border border-dashed bg-linear-to-br from-primary/5 to-purple/8 dark:from-primary/10 dark:to-purple/10 p-4">
 										<p className="text-sm font-semibold">
 											Estado de inventario estimado
 										</p>
@@ -1105,7 +1145,7 @@ export function ProductoForm({
 												[listaId]: value,
 											}))
 										}
-										precioBase={Number(form.watch("precioVenta") || 0)}
+										precioBase={Number(watchedPrecioVenta || 0)}
 										isLoading={isLoading}
 									/>
 								)}
@@ -1145,7 +1185,7 @@ export function ProductoForm({
 										<Button
 											type="submit"
 											disabled={isLoading || isPending}
-											className="cursor-pointer min-w-42.5 gap-2 bg-linear-to-r from-primary to-purple-600 hover:from-primary/90 hover:to-purple-600/90"
+											className="cursor-pointer min-w-42.5 gap-2 bg-linear-to-r from-primary to-purple hover:from-primary/90 hover:to-purple/90"
 										>
 											{isLoading || isPending ? (
 												<>

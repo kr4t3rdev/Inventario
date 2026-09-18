@@ -27,7 +27,7 @@ export default function ReviewsPage(): React.JSX.Element {
     setIsLoading(true);
     const result = await getPendingReviewsAction(undefined);
     if (result.success) {
-      setReviews(result.data?.reviews ?? []);
+      setReviews((result.data?.reviews as any ?? []) as ReviewWithUser[]);
       setTotal(result.data?.total ?? 0);
     }
     setIsLoading(false);
@@ -85,7 +85,7 @@ export default function ReviewsPage(): React.JSX.Element {
               <CardHeader className="pb-2">
                 <div className="flex items-center justify-between">
                   <CardTitle className="font-mono text-base">
-                    {review.user.name}
+                    {review.user?.name}
                   </CardTitle>
                   <span className="text-sm text-muted-foreground font-mono">
                     {new Date(review.createdAt).toLocaleDateString()}

@@ -30,6 +30,17 @@ const NUMERIC_TYPES = new Set([
   'float4', 'float8', 'real', 'double precision', 'numeric', 'decimal',
 ])
 
+export type TenantFilterMode =
+  | 'tenant-column'
+  | 'tenant-row'
+  | 'user-membership'
+  | 'plan-by-tenant'
+
+export interface TenantTableFilter {
+  tenantId: string
+  mode: TenantFilterMode
+}
+
 /**
  * DataExporter class — streams table rows in batches using cursor pagination.
  */
@@ -53,7 +64,7 @@ export class DataExporter {
     columns: ColumnDef[],
     pkColumns: string[],
     signal?: AbortSignal,
-    tenantFilter?: { tenantId: string },
+    tenantFilter?: TenantTableFilter,
   ): AsyncGenerator<unknown[][]> {
     const pkCol = pkColumns[0]
     if (!pkCol) {
@@ -101,7 +112,7 @@ export class DataExporter {
     pkCol: string,
     isNumeric: boolean,
     cursor: string | null,
-    tenantFilter?: { tenantId: string },
+    tenantFilter?: TenantTableFilter,
   ): Promise<unknown[][]> {
     const conditions: string[] = []
     const params: unknown[] = []
@@ -114,9 +125,7 @@ export class DataExporter {
     }
 
     if (tenantFilter) {
-      const paramIdx = params.length + 1
-      conditions.push(`"tenantId" = $${paramIdx}`)
-      params.push(tenantFilter.tenantId)
+      this.appendTenantFilter(conditions, params, tenantFilter)
     }
 
     const whereClause = conditions.length > 0
@@ -138,7 +147,7 @@ export class DataExporter {
   private async fetchAllRows(
     tableName: string,
     columns: ColumnDef[],
-    tenantFilter?: { tenantId: string },
+    tenantFilter?: TenantTableFilter,
   ): Promise<unknown[][]> {
     const colNames = columns.map((c) => `"${c.name}"`).join(', ')
 
@@ -146,8 +155,7 @@ export class DataExporter {
     const params: unknown[] = []
 
     if (tenantFilter) {
-      conditions.push('"tenantId" = $1')
-      params.push(tenantFilter.tenantId)
+      this.appendTenantFilter(conditions, params, tenantFilter)
     }
 
     const whereClause = conditions.length > 0
@@ -159,5 +167,36 @@ export class DataExporter {
     return result.rows.map((row) =>
       columns.map((col) => row[col.name]),
     )
+  }
+
+  private appendTenantFilter(
+    conditions: string[],
+    params: unknown[],
+    tenantFilter: TenantTableFilter,
+  ): void {
+    const paramIdx = params.length + 1
+
+    switch (tenantFilter.mode) {
+      case 'tenant-column':
+        conditions.push(`"tenantId" = $${paramIdx}`)
+        params.push(tenantFilter.tenantId)
+        return
+      case 'tenant-row':
+        conditions.push(`"tenantId" = $${paramIdx}`)
+        params.push(tenantFilter.tenantId)
+        return
+      case 'user-membership':
+        conditions.push(
+          `"userId" IN (SELECT "userId" FROM "tenant_memberships" WHERE "tenantId" = $${paramIdx})`,
+        )
+        params.push(tenantFilter.tenantId)
+        return
+      case 'plan-by-tenant':
+        conditions.push(
+          `"planId" IN (SELECT "planId" FROM "tenant_licenses" WHERE "tenantId" = $${paramIdx} AND "planId" IS NOT NULL)`,
+        )
+        params.push(tenantFilter.tenantId)
+        return
+    }
   }
 }

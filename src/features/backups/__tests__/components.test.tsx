@@ -15,6 +15,7 @@ import { PlanFormDialog } from '../components/plan-form-dialog'
 import { RestoreDialog } from '../components/restore-dialog'
 import type { BackupLogRow } from '../hooks/use-backups'
 import type { BackupPlanRow } from '../hooks/use-backup-plans'
+import type { BackupTenantOption } from '../components/backup-trigger-dialog'
 
 // ─── Mocks ──────────────────────────────────────────────────
 
@@ -50,6 +51,9 @@ const ENABLED_PLAN: BackupPlanRow = {
 }
 
 const DISABLED_PLAN: BackupPlanRow = { ...ENABLED_PLAN, backupPlanId: 'plan-2', type: 'config', enabled: false, retention: 14, schedule: '0 2 * * 0', lastRunAt: null, nextRunAt: new Date('2026-05-31T02:00:00Z') }
+const TENANT_PLAN: BackupPlanRow = { ...ENABLED_PLAN, backupPlanId: 'plan-3', type: 'tenant', tenantId: 'tenant-1' }
+const TENANT_LOG: BackupLogRow = { ...FULL_LOG, backupLogId: 'log-4', type: 'tenant', tenantId: 'tenant-1' }
+const TENANTS: BackupTenantOption[] = [{ tenantId: 'tenant-1', nombre: 'Tenant Uno' }]
 
 // ─── BackupTriggerDialog ──────────────────────────────────
 
@@ -72,7 +76,25 @@ describe('BackupTriggerDialog', () => {
     render(<BackupTriggerDialog isCreating={false} error={null} onCreateBackup={fn}><button>Nueva copia</button></BackupTriggerDialog>)
     await userEvent.click(screen.getByText('Nueva copia'))
     await userEvent.click(screen.getByText('Iniciar copia'))
-    expect(fn).toHaveBeenCalledWith('full')
+    expect(fn).toHaveBeenCalledWith('full', undefined)
+  })
+
+  it('requires tenant selection for tenant backups', async () => {
+    const fn = vi.fn()
+    render(
+      <BackupTriggerDialog
+        isCreating={false}
+        error={null}
+        tenants={TENANTS}
+        onCreateBackup={fn}
+      ><button>Nueva copia</button></BackupTriggerDialog>
+    )
+    await userEvent.click(screen.getByText('Nueva copia'))
+    await userEvent.click(screen.getByText('Por Tenant'))
+    expect(screen.getByText('Iniciar copia').closest('button')).toBeDisabled()
+    await userEvent.selectOptions(screen.getByLabelText('Tenant'), 'tenant-1')
+    await userEvent.click(screen.getByText('Iniciar copia'))
+    expect(fn).toHaveBeenCalledWith('tenant', 'tenant-1')
   })
 
   it('disables button while creating', async () => {
@@ -121,6 +143,20 @@ describe('PlanList', () => {
     render(<PlanList plans={[]} isLoading={false} onToggle={vi.fn()} onDelete={vi.fn()} onCreateNew={vi.fn()} />)
     expect(screen.getByText('No hay planes programados')).toBeDefined()
   })
+
+  it('shows tenant scope when a plan is tenant-scoped', () => {
+    render(
+      <PlanList
+        plans={[TENANT_PLAN]}
+        isLoading={false}
+        tenantNames={{ 'tenant-1': 'Tenant Uno' }}
+        onToggle={vi.fn()}
+        onDelete={vi.fn()}
+        onCreateNew={vi.fn()}
+      />
+    )
+    expect(screen.getByText('Tenant: Tenant Uno')).toBeDefined()
+  })
 })
 
 // ─── BackupHistoryTable ─────────────────────────────────────
@@ -135,6 +171,19 @@ describe('BackupHistoryTable', () => {
     expect(screen.getAllByText('En progreso').length).toBeGreaterThanOrEqual(1)
     expect(screen.getAllByText('Fallido').length).toBeGreaterThanOrEqual(1)
     expect(screen.getByText('1.00 MB')).toBeDefined()
+  })
+
+  it('shows tenant name for tenant backups', () => {
+    render(
+      <BackupHistoryTable
+        logs={[TENANT_LOG]}
+        isLoading={false}
+        total={1}
+        tenantNames={{ 'tenant-1': 'Tenant Uno' }}
+        {...base}
+      />
+    )
+    expect(screen.getByText('Tenant Uno')).toBeDefined()
   })
 
   it('shows loading', () => {
@@ -162,6 +211,25 @@ describe('PlanFormDialog', () => {
     render(<PlanFormDialog open={true} onOpenChange={vi.fn()} isSaving={false} error={null} onSubmit={fn} />)
     await userEvent.click(screen.getByText('Crear plan'))
     expect(fn).toHaveBeenCalled()
+  })
+
+  it('submits selected tenant for tenant plan', async () => {
+    const fn = vi.fn().mockResolvedValue(undefined)
+    render(
+      <PlanFormDialog
+        open={true}
+        onOpenChange={vi.fn()}
+        isSaving={false}
+        error={null}
+        tenants={TENANTS}
+        onSubmit={fn}
+      />
+    )
+    await userEvent.selectOptions(screen.getByDisplayValue('Completa') as HTMLSelectElement, 'tenant')
+    expect(screen.getByText('Crear plan').closest('button')).toBeDisabled()
+    await userEvent.selectOptions(screen.getByLabelText('Tenant'), 'tenant-1')
+    await userEvent.click(screen.getByText('Crear plan'))
+    expect(fn).toHaveBeenCalledWith(expect.objectContaining({ type: 'tenant', tenantId: 'tenant-1' }))
   })
 
   it('shows error', () => {

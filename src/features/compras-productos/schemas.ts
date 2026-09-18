@@ -11,14 +11,20 @@ const itemSchema = z.object({
 
 export const createCompraProductoSchema = z.object({
   proveedorId: z.string().min(1, 'Seleccione un proveedor'),
+  ordenCompraId: z.string().optional(),
   numeroFactura: z.string().optional().default(''),
   facturaUrl: z.string().optional().default(''),
   formaPago: z.enum(['PAGO_PARCIAL', 'PAGO_COMPLETO', 'ANTICIPO_PAGO']),
   estado: z.enum(['PENDIENTE', 'PAGADA']),
+  // Moneda del documento y de la CxP que genere (B-02.1). Histórico: CUP.
+  moneda: z.enum(['CUP', 'USD', 'EUR', 'MLC']).default('CUP'),
   descripcionCompra: z.string().max(500).optional(),
   fechaVencimiento: z.string().optional(),
   anticipoPagoId: z.string().optional(),
   idempotencyKey: z.string().optional(),
+  // Clave única por tenant que hace seguro reintentar el alta de la factura
+  // tras un timeout: el segundo intento devuelve el documento ya registrado.
+  claveIdempotencia: z.string().min(8).max(128).optional(),
   items: z.array(itemSchema).min(1, 'Debe incluir al menos un producto'),
 }).refine(
   (data) => {

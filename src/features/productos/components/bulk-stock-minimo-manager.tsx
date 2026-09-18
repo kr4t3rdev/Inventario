@@ -10,7 +10,6 @@ import {
   Save,
   Search,
   Settings,
-  Sparkles,
 } from 'lucide-react'
 import { toast } from 'sonner'
 
@@ -203,7 +202,7 @@ export function BulkStockMinimoManager(): React.JSX.Element {
         setSelectAll(false)
       } else {
         toast.error(`Se actualizaron ${
-  // @ts-expect-error
+  // @ts-expect-error El tipo top-level de withAction no expone updated (vive en data.updated)
         result.updated} de ${updates.length
         } productos. Revisa los errores.`)
       }
@@ -263,25 +262,15 @@ export function BulkStockMinimoManager(): React.JSX.Element {
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.4 }}
     >
-      <Card className="overflow-hidden border-dashed bg-linear-to-br from-primary/[0.05] via-background to-purple-500/[0.08] dark:from-primary/10 dark:to-purple-500/10">
+      <Card className="overflow-hidden border-dashed bg-linear-to-br from-primary/[0.05] via-background to-purple/[0.08] dark:from-primary/10 dark:to-purple/10">
         <CardHeader className="space-y-3">
           <CardTitle className="flex items-center gap-3 text-xl">
             <motion.div
-              className="relative flex h-10 w-10 items-center justify-center rounded-xl bg-linear-to-br from-primary to-purple-600 text-white shadow-md"
+              className="relative flex h-10 w-10 items-center justify-center rounded-xl bg-linear-to-br from-primary to-purple text-white shadow-md"
               whileHover={{ scale: 1.05, rotate: 3 }}
               transition={{ duration: 0.2 }}
             >
               <Settings className="h-5 w-5" />
-              <motion.span
-                className="absolute -right-1 -top-1"
-                animate={{ rotate: 360, scale: [1, 1.15, 1] }}
-                transition={{
-                  rotate: { duration: 16, repeat: Infinity, ease: 'linear' },
-                  scale: { duration: 2, repeat: Infinity, ease: 'easeInOut' },
-                }}
-              >
-                <Sparkles className="h-3.5 w-3.5 text-yellow-400" />
-              </motion.span>
             </motion.div>
             Gestión Masiva de Stock Mínimo
           </CardTitle>
@@ -323,7 +312,7 @@ export function BulkStockMinimoManager(): React.JSX.Element {
               <Button
                 onClick={handleBulkUpdate}
                 disabled={selectedProductos.length === 0 || isUpdating}
-                className="min-w-42.5 gap-2 bg-linear-to-r from-primary to-purple-600 hover:from-primary/90 hover:to-purple-600/90"
+                className="min-w-42.5 gap-2 bg-linear-to-r from-primary to-purple hover:from-primary/90 hover:to-purple/90"
               >
                 {isUpdating ? (
                   <>

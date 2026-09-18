@@ -7,7 +7,7 @@
 
 import { LazyMotion, m as motion } from "framer-motion"
 import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar"
-import { ArrowLeftRight, Sparkles } from "lucide-react"
+import { ArrowLeftRight } from "lucide-react"
 import { TransferenciaForm } from "@/features/transferencias/components/transferencias-form"
 
 const loadFeatures = () => import("framer-motion").then((mod) => mod.domAnimation)
@@ -33,19 +33,6 @@ export function EditarTransferenciaContent({ transferencia }: EditarTransferenci
                 transition={{ duration: 0.2 }}
               >
                 <ArrowLeftRight className="h-5 w-5 text-white" />
-                <motion.div
-                  animate={{
-                    rotate: 360,
-                    scale: [1, 1.2, 1],
-                  }}
-                  transition={{
-                    rotate: { duration: 10, repeat: Infinity, ease: "linear" },
-                    scale: { duration: 2, repeat: Infinity, ease: "easeInOut" },
-                  }}
-                  className="absolute -top-1 -right-1"
-                >
-                  <Sparkles className="h-3 w-3 text-yellow-300" />
-                </motion.div>
               </motion.div>
               <div>
                 <h1 className="text-2xl font-bold">Editar Transferencia</h1>

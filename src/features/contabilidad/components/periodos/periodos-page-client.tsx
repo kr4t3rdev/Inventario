@@ -524,7 +524,7 @@ export function PeriodosPageClient({
 												</TableRow>
 												{timelinePeriodoId === periodo.periodoId && (
 													<TableRow key={`${periodo.periodoId}-timeline`}>
-														<TableCell colSpan={8} className="p-0">
+														<TableCell colSpan={7} className="p-0">
 															<div className="px-4 pb-2 pt-2 grid grid-cols-3 gap-4 text-xs text-muted-foreground border-b">
 																<div>
 																	<span className="font-medium">Código:</span>{" "}

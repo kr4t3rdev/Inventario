@@ -1,3 +1,7 @@
+import type { Cliente, CuentaPorCobrar } from './clientes';
+import type { Vendor } from './economicos';
+import type { CuentaPorPagar } from './ventas';
+
 export type EstadoPrestamoCash = "ACTIVO" | "PAGADO" | "VENCIDO" | "CANCELADO";
 
 export interface PrestamoCash {

@@ -1,4 +1,5 @@
 import { Prisma } from '@/generated/prisma'
+import { buildPersistedAccountingAmount } from '@/features/contabilidad/services/accounting-reconciliation-service'
 
 export type TipoVencimientoFactura = 'fecha' | 'plazo' | 'contra_pago'
 
@@ -84,14 +85,16 @@ interface CuentaTipoPagoResolucion {
 
 async function resolveCuentaYTipoPago(
   tx: Prisma.TransactionClient,
-  cuentaBancariaId?: string | null
+  cuentaBancariaId?: string | null,
+  tenantId?: string
 ): Promise<CuentaTipoPagoResolucion> {
   let cuentaPreferida: { cuentaId: string; moneda: string } | null = null
   if (cuentaBancariaId) {
     cuentaPreferida = await tx.cuentaBancaria.findFirst({
       where: {
         cuentaId: cuentaBancariaId,
-        isActive: true
+        isActive: true,
+        tenantId
       },
       select: {
         cuentaId: true,
@@ -101,7 +104,7 @@ async function resolveCuentaYTipoPago(
   }
 
   const tipoPagoActivos = await tx.tipoPago.findMany({
-    where: { isActive: true },
+    where: { isActive: true, tenantId },
     orderBy: { createdAt: 'asc' },
     select: {
       tipoId: true,
@@ -146,7 +149,7 @@ async function resolveCuentaYTipoPago(
     cuentaPreferida ||
     cuentaDefecto ||
     (await tx.cuentaBancaria.findFirst({
-      where: { isActive: true },
+      where: { isActive: true, tenantId },
       orderBy: { createdAt: 'asc' },
       select: {
         cuentaId: true,
@@ -185,10 +188,18 @@ export async function reconciliarVentaDirecta(
     throw new Error('El monto total de la venta debe ser mayor que cero')
   }
 
-  const { cuenta, tipoPago } = await resolveCuentaYTipoPago(tx, params.cuentaBancariaId)
+  const { cuenta, tipoPago } = await resolveCuentaYTipoPago(tx, params.cuentaBancariaId, params.tenantId)
   
   // Para ventas directas sin factura, usamos una referencia genérica
   const referenciaCobro = `AUTO-${params.ventaId.slice(-8)}`
+
+  const fechaReconciliacion = new Date()
+  const conversion = buildPersistedAccountingAmount(
+    montoTotal,
+    cuenta.moneda,
+    undefined,
+    fechaReconciliacion
+  )
 
   const reconciliacion = await tx.reconciliacionVenta.create({
     data: {
@@ -198,8 +209,12 @@ export async function reconciliarVentaDirecta(
       tipoPagoId: tipoPago.tipoId,
       monto: montoTotal,
       moneda: cuenta.moneda,
-      tasaCambio: 1,
-      montoConvertido: montoTotal,
+      ...(conversion.tasaCambio != null ? { tasaCambio: conversion.tasaCambio } : {}),
+      ...(conversion.montoConvertido != null
+        ? { montoConvertido: conversion.montoConvertido }
+        : {}),
+      fechaReconciliacion,
+      ...(conversion.fxEvidence ?? {}),
       verificacionTransferenciaId: referenciaCobro,
       idTransferencia: referenciaCobro,
       observaciones: params.observaciones || `Venta directa al contado`,
@@ -238,8 +253,16 @@ export async function applyFacturacionCobroWorkflow(
   )
 
   if (tipoVencimiento === 'contra_pago') {
-    const { cuenta, tipoPago } = await resolveCuentaYTipoPago(tx, params.cuentaBancariaId)
+    const { cuenta, tipoPago } = await resolveCuentaYTipoPago(tx, params.cuentaBancariaId, params.tenantId)
     const referenciaCobro = `AUTO-${params.facturaId.slice(-8)}`
+
+    const fechaReconciliacion = new Date()
+    const conversion = buildPersistedAccountingAmount(
+      montoTotal,
+      cuenta.moneda,
+      undefined,
+      fechaReconciliacion
+    )
 
     const reconciliacion = await tx.reconciliacionVenta.create({
       data: {
@@ -249,8 +272,12 @@ export async function applyFacturacionCobroWorkflow(
         tipoPagoId: tipoPago.tipoId,
         monto: montoTotal,
         moneda: cuenta.moneda,
-        tasaCambio: 1,
-        montoConvertido: montoTotal,
+        ...(conversion.tasaCambio != null ? { tasaCambio: conversion.tasaCambio } : {}),
+        ...(conversion.montoConvertido != null
+          ? { montoConvertido: conversion.montoConvertido }
+          : {}),
+        fechaReconciliacion,
+        ...(conversion.fxEvidence ?? {}),
         verificacionTransferenciaId: referenciaCobro,
         idTransferencia: referenciaCobro,
         observaciones: params.observaciones || `Cobro total por contra pago`,

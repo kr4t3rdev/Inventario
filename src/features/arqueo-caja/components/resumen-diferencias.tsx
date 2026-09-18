@@ -118,7 +118,7 @@ export function ResumenDiferencias({
 		},
 		{
 			label: "Tarjeta",
-			icon: <CreditCard className="h-4 w-4 text-purple-600" />,
+			icon: <CreditCard className="h-4 w-4 text-purple" />,
 			esperado: esperados.esperadoTarjeta,
 			contado: contados.totalTarjeta,
 			moneda: "CUP",

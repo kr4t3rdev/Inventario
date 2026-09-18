@@ -40,7 +40,7 @@ function getActionBadge(action: string) {
     case "delete_user":
       return <Badge variant="destructive">Eliminar</Badge>
     case "role_change":
-      return <Badge variant="outline" className="border-violet-500/40 bg-violet-500/10 text-violet-700">Cambio Rol</Badge>
+      return <Badge variant="outline" className="border-purple/40 bg-purple/10 text-purple">Cambio Rol</Badge>
     case "password_change":
       return <Badge variant="outline" className="border-rose-500/40 bg-rose-500/10 text-rose-700">Contraseña</Badge>
     default:
@@ -92,21 +92,7 @@ export function ActivityLogsTab() {
             </SelectContent>
           </Select>
         </div>
-        {logs && logs.length > 0 && (
-          <Pagination>
-            <PaginationContent>
-              <PaginationItem>
-                <PaginationPrevious onClick={() => setPage(p => Math.max(1, p - 1))} className={page === 1 ? "pointer-events-none opacity-50" : "cursor-pointer"} />
-              </PaginationItem>
-              <PaginationItem>
-                <span className="flex items-center px-4">Página {page} de {totalPages}</span>
-              </PaginationItem>
-              <PaginationItem>
-                <PaginationNext onClick={() => setPage(p => Math.min(totalPages, p + 1))} className={page === totalPages ? "pointer-events-none opacity-50" : "cursor-pointer"} />
-              </PaginationItem>
-            </PaginationContent>
-          </Pagination>
-        )}
+        {/* Pagination moved below table */}
       </div>
 
       {isLoading ? (
@@ -156,6 +142,24 @@ export function ActivityLogsTab() {
               <p className="text-xs text-muted-foreground">Los logs de actividad aparecerán aquí cuando los usuarios interactúen con el sistema.</p>
             </div>
           </div>
+        </div>
+      )}
+
+      {logs.length > 0 && (
+        <div className="flex justify-center pt-2">
+          <Pagination>
+            <PaginationContent>
+              <PaginationItem>
+                <PaginationPrevious onClick={() => setPage(p => Math.max(1, p - 1))} className={page === 1 ? "pointer-events-none opacity-50" : "cursor-pointer"} />
+              </PaginationItem>
+              <PaginationItem>
+                <span className="flex items-center px-4">Página {page} de {totalPages}</span>
+              </PaginationItem>
+              <PaginationItem>
+                <PaginationNext onClick={() => setPage(p => Math.min(totalPages, p + 1))} className={page === totalPages ? "pointer-events-none opacity-50" : "cursor-pointer"} />
+              </PaginationItem>
+            </PaginationContent>
+          </Pagination>
         </div>
       )}
     </div>

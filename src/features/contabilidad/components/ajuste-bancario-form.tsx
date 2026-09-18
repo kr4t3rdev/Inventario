@@ -32,7 +32,8 @@ const ajusteBancarioSchema = z.object({
     .max(500, 'La descripción no puede exceder 500 caracteres'),
   motivo: z.string()
     .min(5, 'El motivo debe tener al menos 5 caracteres')
-    .max(200, 'El motivo no puede exceder 200 caracteres')
+    .max(200, 'El motivo no puede exceder 200 caracteres'),
+  fechaOperacion: z.string().min(1, 'La fecha de operación es obligatoria'),
 })
 
 type AjusteBancarioFormData = z.infer<typeof ajusteBancarioSchema>
@@ -76,7 +77,8 @@ export function AjusteBancarioForm({ onSuccess, onCancel }: AjusteBancarioFormPr
   } = useForm<AjusteBancarioFormData>({
     resolver: zodResolver(ajusteBancarioSchema),
     defaultValues: {
-      moneda: monedaPrincipal || 'CUP'
+      moneda: monedaPrincipal || 'CUP',
+      fechaOperacion: new Date().toISOString().slice(0, 10),
     }
   })
 
@@ -160,7 +162,8 @@ export function AjusteBancarioForm({ onSuccess, onCancel }: AjusteBancarioFormPr
         monto,
         moneda: data.moneda,
         descripcion: data.descripcion,
-        motivo: data.motivo
+        motivo: data.motivo,
+        fechaOperacion: new Date(`${data.fechaOperacion}T12:00:00.000Z`),
       })
 
       if (!result.success) throw new Error(result.error?.message || 'Error al crear ajuste')
@@ -333,6 +336,19 @@ export function AjusteBancarioForm({ onSuccess, onCancel }: AjusteBancarioFormPr
                 </AlertDescription>
               </Alert>
             )}
+
+            {/* Fecha de operación */}
+            <div className="space-y-2">
+              <Label htmlFor="fechaOperacion">Fecha de operación *</Label>
+              <Input
+                id="fechaOperacion"
+                type="date"
+                {...register('fechaOperacion')}
+              />
+              {errors.fechaOperacion && (
+                <p className="text-sm text-red-600">{errors.fechaOperacion.message}</p>
+              )}
+            </div>
 
             {/* Descripción */}
             <div className="space-y-2">

@@ -69,6 +69,34 @@ const mockUser: AuthenticatedUser = {
 	tenantRole: "admin",
 };
 
+const mockTenantUserWithoutCategorias: AuthenticatedUser = {
+	userId: "user-test-2",
+	name: "Tenant User",
+	email: "tenant@test.com",
+	role: "user",
+	isActive: true,
+	tenantId: "tenant-test",
+	tenantRole: "manager",
+	planFeatures: {
+		categorias: false,
+		"categorias-ean13": false,
+	},
+};
+
+const mockTenantUserWithoutCategoriasEan13: AuthenticatedUser = {
+	userId: "user-test-3",
+	name: "Tenant User No EAN13",
+	email: "tenant-ean@test.com",
+	role: "user",
+	isActive: true,
+	tenantId: "tenant-test",
+	tenantRole: "manager",
+	planFeatures: {
+		categorias: true,
+		"categorias-ean13": false,
+	},
+};
+
 const mockCategoriaRow = {
 	catId: "cat-1",
 	nombre: "Electrónica",
@@ -118,6 +146,15 @@ describe("Categorias Server Actions", () => {
 
 			expect(result.success).toBe(true);
 			expect(result.data).toEqual([]);
+		});
+
+		it("rechaza acceso cuando el plan no incluye categorías", async () => {
+			vi.mocked(getCurrentUser).mockResolvedValue(mockTenantUserWithoutCategorias);
+
+			const result = await getCategoriasAction();
+
+			expect(result.success).toBe(false);
+			expect(result.error?.code).toBe("FEATURE_NOT_AVAILABLE");
 		});
 	});
 
@@ -253,6 +290,26 @@ describe("Categorias Server Actions", () => {
 
 			expect(result.success).toBe(false);
 			expect(result.error!.code).toBeDefined();
+		});
+
+		it("crea categoría sin campos CLAS aunque el plan no incluya categorias-ean13", async () => {
+			vi.mocked(getCurrentUser).mockResolvedValue(
+				mockTenantUserWithoutCategoriasEan13,
+			);
+			vi.mocked(CategoriaValidator.validateCategoryCreation).mockResolvedValue({
+				success: true,
+				data: validInput as any,
+			});
+			vi.mocked(prisma.categoria.create).mockResolvedValue(mockCategoriaRow);
+
+			const result = await createCategoriaAction(validInput);
+
+			expect(result.success).toBe(true);
+			expect(CategoriaValidator.validateCategoryCreation).toHaveBeenCalledWith(
+				validInput,
+				"tenant-test",
+				{ skipEan13Validation: false },
+			);
 		});
 	});
 
@@ -402,6 +459,7 @@ describe("Categorias Server Actions", () => {
 			expect(CategoriaValidator.validateCategoryCreation).toHaveBeenCalledWith(
 				expect.anything(),
 				"tenant-test",
+				{ skipEan13Validation: false },
 			);
 		});
 
@@ -420,6 +478,7 @@ describe("Categorias Server Actions", () => {
 				"cat-1",
 				expect.anything(),
 				"tenant-test",
+				{ skipEan13Validation: false },
 			);
 		});
 

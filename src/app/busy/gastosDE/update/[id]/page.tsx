@@ -55,7 +55,7 @@ export default async function EditarGastoDEPage({ params }: Props) {
               descripcion: gastoDE.descripcion,
               periodo: gastoDE.periodo,
             }}
-            initialVendors={initialVendors}
+            initialVendors={initialVendors as any}
           />
         </div>
   )

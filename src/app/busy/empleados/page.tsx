@@ -1,9 +1,14 @@
 import { getEmpleadosAction } from '@/features/empleados/actions'
+import { NominaEmpleadoSection } from '@/features/empleados/components'
 import { getPagoSalariosAction } from '@/features/pago-salario/actions'
-import { EmpleadosNominaContent } from '@/features/empleados/components'
 
 /**
- * @description Página principal de empleados y nómina en Server Component.
+ * @description Página principal de empleados en Server Component.
+ *
+ * El plan Básico integra la gestión de empleados y el historial de
+ * pagos en la misma pantalla. Las rutas separadas de nómina,
+ * asistencia y vacaciones quedan como módulos premium independientes.
+ *
  * @returns {Promise<JSX.Element>} Página de empleados con datos precargados.
  */
 
@@ -23,15 +28,9 @@ export default async function EmpleadosPage() {
   const initialPagos = pagosResult.success ? pagosResult.data ?? [] : []
 
   return (
-    <EmpleadosNominaContent
-  // @ts-expect-error
-      initialEmpleados={
-      initialEmpleados
-      }
-  // @ts-expect-error
-      initialPagos={
-      initialPagos
-      }
+    <NominaEmpleadoSection
+      initialEmpleados={initialEmpleados}
+      initialPagos={initialPagos as any}
     />
   )
 }

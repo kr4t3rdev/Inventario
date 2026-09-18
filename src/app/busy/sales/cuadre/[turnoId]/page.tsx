@@ -30,11 +30,9 @@ import {
 	ResponsiveContainer,
 } from "recharts";
 import {
-	Loader2,
 	CheckCircle2,
 	AlertTriangle,
 	ArrowLeft,
-	Lock,
 	Store,
 	User,
 	DollarSign,
@@ -47,6 +45,10 @@ import {
 import { cerrarTurnoAction } from "@/features/turnos-pos/actions";
 import { getCuadreTurnoAction } from "@/features/turnos-pos/actions-cuadre";
 import type { CuadreTurnoData } from "@/features/turnos-pos/actions-cuadre";
+import {
+	CuadreDetailActions,
+	CuadreDetailReadonlyNotice,
+} from "@/features/turnos-pos/components/cuadre-detail-mode";
 import { ArqueoForm } from "@/features/arqueo-caja";
 
 // ─── Animaciones ──────────────────────────────────────────
@@ -83,7 +85,7 @@ export default function CuadrePage() {
 	const params = useParams();
 	const searchParams = useSearchParams();
 	const turnoId = params.turnoId as string;
-	const pvId = searchParams.get("pvId") ?? "";
+	const fromHistory = searchParams.get("from") === "history";
 
 	const [data, setData] = useState<CuadreTurnoData | null>(null);
 	const [isLoading, setIsLoading] = useState(true);
@@ -162,6 +164,9 @@ export default function CuadrePage() {
 	const totalVenta = data?.totalVentaTurno ?? 0;
 	const diferencia = arqueoTotalCup - totalVenta;
 	const tieneDiferencia = Math.abs(diferencia) > 0.01;
+	const isReadOnly = data?.turno.estado === "CERRADO";
+	const backHref = fromHistory || isReadOnly ? "/busy/sales/cuadres" : "/busy/sales/new";
+	const backLabel = fromHistory || isReadOnly ? "Volver al historial" : "Volver al POS";
 
 	const paymentData = data?.arqueo
 		? [
@@ -240,10 +245,10 @@ export default function CuadrePage() {
 				</p>
 				<Button
 					variant="outline"
-					onClick={() => router.push("/busy/sales/new")}
+					onClick={() => router.push(backHref)}
 				>
 					<ArrowLeft className="h-4 w-4 mr-2" />
-					Volver al POS
+					{backLabel}
 				</Button>
 			</div>
 		);
@@ -277,6 +282,7 @@ export default function CuadrePage() {
 				</div>
 
 				<div className="flex items-center gap-2 self-end">
+					{isReadOnly && <Badge variant="outline">Consulta histórica</Badge>}
 					{data.turno.empleado && (
 						<div className="flex items-center gap-1.5 text-sm text-muted-foreground bg-muted/50 px-3 py-1.5 rounded-full">
 							<User className="h-3.5 w-3.5" />
@@ -382,7 +388,7 @@ export default function CuadrePage() {
 						value: `${data.resumen.totalVendido} vendidos`,
 						icon: Package,
 						color:
-							"text-purple-600 bg-purple-100 dark:bg-purple-950 dark:text-purple-400",
+							"text-purple bg-purple/15 dark:bg-purple/25 dark:text-purple",
 					},
 				].map((card, i) => {
 					const Icon = card.icon;
@@ -535,6 +541,10 @@ export default function CuadrePage() {
 
 			{/* Product Table */}
 			<motion.div variants={itemVariants}>
+				<CuadreDetailReadonlyNotice isReadOnly={Boolean(isReadOnly)} />
+			</motion.div>
+
+			<motion.div variants={itemVariants}>
 				<Card>
 					<CardHeader className="pb-2 border-b">
 						<CardTitle className="text-sm font-medium flex items-center gap-2">
@@ -658,48 +668,15 @@ export default function CuadrePage() {
 				variants={itemVariants}
 				className="fixed bottom-0 left-0 right-0 border-t bg-background/95 backdrop-blur-sm p-4 z-50"
 			>
-				<div className="container mx-auto max-w-6xl flex items-center justify-between gap-3">
-					<Button
-						variant="outline"
-						onClick={() => router.push("/busy/sales/new")}
-						className="gap-1.5"
-					>
-						<ArrowLeft className="h-4 w-4" />
-						Cancelar
-					</Button>
-
-					<div className="flex items-center gap-3">
-						{/* Repetir Arqueo — solo si hay diferencia */}
-						{tieneDiferencia && (
-							<Button
-								variant="outline"
-								onClick={handleRepetirArqueo}
-								className="gap-1.5"
-							>
-								Repetir Arqueo
-							</Button>
-						)}
-
-						{/* Cerrar Turno */}
-						<Button
-							variant="default"
-							onClick={handleCerrarTurno}
-							disabled={tieneDiferencia || isClosing}
-							className={cn(
-								"gap-1.5 min-w-[160px]",
-								!tieneDiferencia &&
-									"bg-green-600 hover:bg-green-700 dark:bg-green-700 dark:hover:bg-green-600",
-							)}
-						>
-							{isClosing ? (
-								<Loader2 className="h-4 w-4 animate-spin" />
-							) : (
-								<Lock className="h-4 w-4" />
-							)}
-							{tieneDiferencia ? "Cierre bloqueado" : "Cerrar Turno"}
-						</Button>
-					</div>
-				</div>
+				<CuadreDetailActions
+					backLabel={fromHistory || isReadOnly ? "Volver al historial" : "Cancelar"}
+					isClosing={isClosing}
+					isReadOnly={Boolean(isReadOnly)}
+					onBack={() => router.push(backHref)}
+					onCerrarTurno={handleCerrarTurno}
+					onRepetirArqueo={handleRepetirArqueo}
+					tieneDiferencia={tieneDiferencia}
+				/>
 			</motion.div>
 
 			{/* Arqueo Dialog — Repetir Arqueo */}

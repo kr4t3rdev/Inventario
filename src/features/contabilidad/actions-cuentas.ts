@@ -13,10 +13,13 @@ import { prisma } from "@/lib/prisma";
 import { requireFeature, requireTenant } from "@/lib/services/tenant-scope";
 import { revalidatePath } from "next/cache";
 import type { AuthenticatedUser } from "@/lib/auth-middleware";
+import { AccountingAccountsService } from "@/features/contabilidad/services/accounting-accounts-service";
+import { AuditLogService } from "@/lib/services/audit-log-service";
 import {
 	getCuentasPorCobrarSchema,
 	createCuentaPorCobrarSchema,
 	updateCuentaPorCobrarSchema,
+	annulCuentaPorCobrarSchema,
 	getCuentasPorPagarSchema,
 	createCuentaPorPagarSchema,
 } from "./schemas-cuentas";
@@ -24,6 +27,7 @@ import type {
 	GetCuentasPorCobrarInput,
 	CreateCuentaPorCobrarInput,
 	UpdateCuentaPorCobrarInput,
+	AnnulCuentaPorCobrarInput,
 	GetCuentasPorPagarInput,
 	CreateCuentaPorPagarInput,
 } from "./schemas-cuentas";
@@ -42,7 +46,7 @@ export interface CuentaPorCobrarEnriquecida {
 	montoDeuda: number;
 	montoPagado: number;
 	idTransferencia: string | null;
-	estado: "PENDIENTE" | "PAGADA" | "PARCIAL";
+	estado: "PENDIENTE" | "PAGADA" | "PARCIAL" | "ANULADA";
 	tipoCuenta: string | null;
 	fechaVencimiento: string | null;
 	totalFactura: number;
@@ -73,6 +77,7 @@ export interface CxcMetrics {
 	totalPendiente: number;
 	porVencer: number;
 	vencidas: number;
+	cuentasActivas: number;
 	totalCuentas: number;
 }
 
@@ -280,7 +285,7 @@ function enriquecerCuentaPorCobrar(
 		montoDeuda: Number(cuenta.montoDeuda),
 		montoPagado: Number(cuenta.montoPagado),
 		idTransferencia: cuenta.idTransferencia as string | null,
-		estado: cuenta.estado as "PENDIENTE" | "PAGADA" | "PARCIAL",
+		estado: cuenta.estado as "PENDIENTE" | "PAGADA" | "PARCIAL" | "ANULADA",
 		tipoCuenta: cuenta.tipoCuenta as string | null,
 		fechaVencimiento: cuenta.fechaVencimiento as string | null,
 		totalFactura,
@@ -390,42 +395,14 @@ export const getCuentasPorCobrarAction = withAction(
 		const tenantId = requireTenant(user);
 		const f = getCuentasPorCobrarSchema.parse(input);
 
-		const where: Record<string, unknown> = { tenantId };
-		if (f.estado) where.estado = f.estado;
-		if (f.clienteId) where.clienteId = f.clienteId;
-		if (f.search) {
-			where.OR = [
-				{ numeroFactura: { contains: f.search, mode: "insensitive" } },
-				{ cliente: { nombre: { contains: f.search, mode: "insensitive" } } },
-			];
-		}
-
-		const skip = (f.page - 1) * f.limit;
-
-		const [cuentasRaw, total] = await Promise.all([
-			prisma.cuentaPorCobrar.findMany({
-				where,
-				include: CXC_INCLUDE,
-				orderBy: { createdAt: "desc" },
-				skip,
-				take: f.limit,
-			}),
-			prisma.cuentaPorCobrar.count({ where }),
-		]);
-
-		const cuentas = cuentasRaw.map((c) =>
-			enriquecerCuentaPorCobrar(c as unknown as Record<string, unknown>),
-		);
-
-		return {
-			cuentas,
-			pagination: {
-				page: f.page,
-				limit: f.limit,
-				total,
-				totalPages: Math.ceil(total / f.limit),
-			},
-		};
+		return AccountingAccountsService.listReceivables({
+			tenantId,
+			estado: f.estado ?? null,
+			clienteId: f.clienteId ?? null,
+			search: f.search ?? null,
+			page: f.page,
+			limit: f.limit,
+		});
 	},
 );
 
@@ -486,6 +463,14 @@ export const createCuentaPorCobrarAction = withAction(
 			include: CXC_INCLUDE,
 		});
 
+		AuditLogService.log({
+			accion: "CREATE",
+			entidad: "CUENTA_POR_COBRAR",
+			entidadId: cuenta.id,
+			usuarioId: user.userId,
+			detalles: { clienteId: p.clienteId, monto: p.monto, moneda: p.moneda, ventaId: p.ventaId },
+		}).catch((err) => console.error("[AuditLog] Error logging cuenta por cobrar:", err));
+
 		revalidatePath("/busy/contabilidad/cuentas-por-cobrar");
 		return enriquecerCuentaPorCobrar(
 			cuenta as unknown as Record<string, unknown>,
@@ -510,6 +495,11 @@ export const updateCuentaPorCobrarAction = withAction(
 		});
 		if (!existente)
 			throw new ActionError("Cuenta por cobrar no encontrada", "NOT_FOUND");
+		if (existente.estado === "ANULADA")
+			throw new ActionError(
+				"Una cuenta por cobrar anulada no puede reactivarse mediante una actualización genérica",
+				"VALIDATION_ERROR",
+			);
 
 		const data: Record<string, unknown> = {};
 		if (p.estado !== undefined) data.estado = p.estado;
@@ -522,16 +512,77 @@ export const updateCuentaPorCobrarAction = withAction(
 				? new Date(p.fechaVencimiento)
 				: null;
 
-		const cuenta = await prisma.cuentaPorCobrar.update({
-			where: { id: p.id },
+		const updated = await prisma.cuentaPorCobrar.updateMany({
+			where: { id: p.id, tenantId, estado: { not: "ANULADA" } },
 			data,
+		});
+		if (updated.count !== 1)
+			throw new ActionError(
+				"La cuenta por cobrar cambió mientras se actualizaba; vuelve a cargarla",
+				"VALIDATION_ERROR",
+			);
+
+		const cuenta = await prisma.cuentaPorCobrar.findFirst({
+			where: { id: p.id, tenantId },
 			include: CXC_INCLUDE,
 		});
+		if (!cuenta)
+			throw new ActionError("Cuenta por cobrar no encontrada", "NOT_FOUND");
+
+		AuditLogService.log({
+			accion: "UPDATE",
+			entidad: "CUENTA_POR_COBRAR",
+			entidadId: p.id,
+			usuarioId: user.userId,
+			detalles: { cambios: data },
+		}).catch((err) => console.error("[AuditLog] Error logging cuenta por cobrar update:", err));
 
 		revalidatePath("/busy/contabilidad/cuentas-por-cobrar");
 		return enriquecerCuentaPorCobrar(
 			cuenta as unknown as Record<string, unknown>,
 		);
+	},
+);
+
+/**
+ * @description Anula una cuenta por cobrar de forma explícita e idempotente.
+ * Conserva el monto de la deuda, pagos y reconciliaciones históricas.
+ * @param {AnnulCuentaPorCobrarInput} input - Cuenta y motivo opcional.
+ * @param {AuthenticatedUser} user - Usuario autenticado.
+ * @returns {Promise<CuentaPorCobrarEnriquecida>} Cuenta anulada.
+ */
+export const anularCuentaPorCobrarAction = withAction(
+	async (
+		input: AnnulCuentaPorCobrarInput,
+		user: AuthenticatedUser,
+	): Promise<CuentaPorCobrarEnriquecida> => {
+		requireFeature(user, 'cuentas-cobrar', 'anular cuentas por cobrar');
+		const tenantId = requireTenant(user);
+		const p = annulCuentaPorCobrarSchema.parse(input);
+		const result = await AccountingAccountsService.annulReceivable({
+			id: p.id,
+			tenantId,
+		});
+		if (!result) {
+			throw new ActionError('Cuenta por cobrar no encontrada', 'NOT_FOUND');
+		}
+
+		if (result.changed) {
+			AuditLogService.log({
+				accion: 'UPDATE',
+				entidad: 'CUENTA_POR_COBRAR',
+				entidadId: p.id,
+				usuarioId: user.userId,
+				detalles: {
+					estadoAnterior: result.previousState,
+					estadoNuevo: 'ANULADA',
+					motivo: p.motivo ?? null,
+				},
+			}).catch((err) => console.error('[AuditLog] Error logging cuenta por cobrar annulment:', err));
+			revalidatePath('/busy/contabilidad/cuentas-por-cobrar');
+		}
+
+		return enriquecerCuentaPorCobrar(result.cuenta);
 	},
 );
 
@@ -550,30 +601,7 @@ export const getCxcMetricsAction = withAction(
 		requireFeature(user, 'cuentas-cobrar', 'ver métricas de cuentas por cobrar');
 		const tenantId = requireTenant(user);
 
-		const ahora = new Date();
-
-		const pendientesAgg = await prisma.cuentaPorCobrar.aggregate({
-			where: { tenantId, estado: { in: ["PENDIENTE", "PARCIAL"] } },
-			_sum: { montoDeuda: true },
-		});
-
-		const [vencidas, totalCuentas] = await Promise.all([
-			prisma.cuentaPorCobrar.count({
-				where: {
-					tenantId,
-					estado: { not: "PAGADA" },
-					fechaVencimiento: { lt: ahora, not: null },
-				},
-			}),
-			prisma.cuentaPorCobrar.count({ where: { tenantId } }),
-		]);
-
-		return {
-			totalPendiente: Number(pendientesAgg._sum.montoDeuda ?? 0),
-			porVencer: totalCuentas - vencidas,
-			vencidas,
-			totalCuentas,
-		};
+		return AccountingAccountsService.getReceivablesMetrics({ tenantId });
 	},
 );
 
@@ -593,59 +621,14 @@ export const getCuentasPorPagarAction = withAction(
 		const tenantId = requireTenant(user);
 		const f = getCuentasPorPagarSchema.parse(input);
 
-		const where: Record<string, unknown> = { tenantId, deletedAt: null };
-		if (f.estado) where.estado = f.estado;
-		if (f.tipo) where.tipo = f.tipo;
-		if (f.search) {
-			where.OR = [
-				{ numeroFactura: { contains: f.search, mode: "insensitive" } },
-				{ proveedorNombre: { contains: f.search, mode: "insensitive" } },
-			];
-		}
-
-		const skip = (f.page - 1) * f.limit;
-
-		const [cuentasRaw, total, aggregates, pendientes, pagadas] =
-			await Promise.all([
-				prisma.cuentaPorPagar.findMany({
-					where,
-					include: CXP_INCLUDE,
-					orderBy: { createdAt: "desc" },
-					skip,
-					take: f.limit,
-				}),
-				prisma.cuentaPorPagar.count({ where }),
-				prisma.cuentaPorPagar.aggregate({
-					where,
-					_sum: { montoDeuda: true, montoPagado: true, saldoPendiente: true },
-				}),
-				prisma.cuentaPorPagar.count({
-					where: { ...where, estado: "PENDIENTE" },
-				}),
-				prisma.cuentaPorPagar.count({ where: { ...where, estado: "PAGADA" } }),
-			]);
-
-		const cuentas = cuentasRaw.map((c) =>
-			enriquecerCuentaPorPagar(c as unknown as Record<string, unknown>),
-		);
-
-		return {
-			cuentas,
-			pagination: {
-				page: f.page,
-				limit: f.limit,
-				total,
-				totalPages: Math.ceil(total / f.limit),
-			},
-			metricas: {
-				totalCuentas: total,
-				totalFacturado: Number(aggregates._sum.montoDeuda ?? 0),
-				totalPagado: Number(aggregates._sum.montoPagado ?? 0),
-				totalSaldo: Number(aggregates._sum.saldoPendiente ?? 0),
-				cuentasPendientes: pendientes,
-				cuentasPagadas: pagadas,
-			},
-		};
+		return AccountingAccountsService.listPayables({
+			tenantId,
+			estado: f.estado ?? null,
+			tipo: f.tipo ?? null,
+			search: f.search ?? null,
+			page: f.page,
+			limit: f.limit,
+		});
 	},
 );
 
@@ -697,6 +680,14 @@ export const createCuentaPorPagarAction = withAction(
 			},
 			include: CXP_INCLUDE,
 		});
+
+		AuditLogService.log({
+			accion: "CREATE",
+			entidad: "CUENTA_POR_PAGAR",
+			entidadId: cuenta.cuentaPorPagarId,
+			usuarioId: user.userId,
+			detalles: { numeroFactura: p.numeroFactura, proveedorId: p.proveedorId, montoDeuda: p.montoDeuda, moneda: p.moneda },
+		}).catch((err) => console.error("[AuditLog] Error logging cuenta por pagar:", err));
 
 		revalidatePath("/busy/contabilidad/cuentas-por-pagar");
 		return enriquecerCuentaPorPagar(

@@ -66,4 +66,31 @@ describe('CategoriaValidator.validateCategoryUpdate', () => {
       parentId: null,
     })
   })
+
+  it('acepta descripcion null para limpiar el campo', async () => {
+    vi.mocked(prisma.categoria.findFirst)
+      .mockResolvedValueOnce({
+        catId: 'cat-1',
+        tenantId: 'tenant-1',
+        nombre: 'Electrónica',
+        descripcion: 'Original',
+        parentId: null,
+        clasSectionId: null,
+        clasSpecificId: null,
+      } as never)
+      .mockResolvedValueOnce(null as never)
+
+    const result = await CategoriaValidator.validateCategoryUpdate(
+      'cat-1',
+      { descripcion: null },
+      'tenant-1',
+    )
+
+    expect(result.success).toBe(true)
+    expect(result.data).toMatchObject({
+      nombre: 'Electrónica',
+      descripcion: null,
+      parentId: null,
+    })
+  })
 })

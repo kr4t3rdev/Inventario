@@ -27,8 +27,9 @@
 /.kiro
 /.opencode
 /.trae
-/e2e
-/docs
+/e2e/.auth
+/e2e/artifacts
+!e2e/**/*.spec.ts
 /sistema_inventario_tcp
 /onprem
 /plans
@@ -100,3 +101,7 @@ worktrees
 .env
 # Local Pi runtime state
 .atl/
+
+# Mobile app lives in its own repository (kr4t3rdev/tcp-mobile)
+/mobile/
+.env*

@@ -1,13 +1,19 @@
 "use client"
 
 import { useState, useEffect } from "react"
+import { useRouter } from "next/navigation"
 import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { ScrollArea } from "@/components/ui/scroll-area"
 import { Separator } from "@/components/ui/separator"
 import { Bell, AlertTriangle, Package, TrendingDown, ArrowRightLeft, ShoppingCart, X, Info, CheckCircle } from "lucide-react"
-import { getNotificacionesAction, marcarNotificacionLeidaAction } from "@/features/notificaciones/actions"
+import {
+  deleteNotificacionAction,
+  getNotificacionesAction,
+  marcarNotificacionLeidaAction,
+} from "@/features/notificaciones/actions"
+import { getNotificationHref } from "@/features/notificaciones/notification-navigation"
 import type { Notification } from "@/app/models/model"
 import {formatDistanceToNow} from "date-fns/formatDistanceToNow"
 import { es } from "date-fns/locale"
@@ -80,18 +86,16 @@ function formatNotificacionDate(dateValue: unknown): string {
   }
 }
 
+/**
+ * @description Muestra las notificaciones del usuario y sus acciones disponibles.
+ * @returns {React.JSX.Element} Panel lateral de notificaciones.
+ */
 export function PanelNotificaciones() {
   const [open, setOpen] = useState(false)
-  const [notificacionesEliminadas, setNotificacionesEliminadas] = useState<Set<string>>(() => {
-    if (typeof window !== 'undefined') {
-      const saved = localStorage.getItem('notificacionesEliminadas')
-      return new Set(saved ? JSON.parse(saved) : [])
-    }
-    return new Set()
-  })
   const [data, setData] = useState<any>(null)
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState<any>(null)
+  const router = useRouter()
 
   useEffect(() => {
     getNotificacionesAction().then(r => {
@@ -102,14 +106,19 @@ export function PanelNotificaciones() {
   }, [])
   const shouldReduceMotion = useReducedMotion()
 
-  useEffect(() => {
-    localStorage.setItem('notificacionesEliminadas', JSON.stringify([...notificacionesEliminadas]))
-  }, [notificacionesEliminadas])
-
-  const handleNotificacionClick = async (id: string) => {
-    if (notificacionesEliminadas.has(id)) return
+  const handleNotificacionClick = async (notification: Notification) => {
     try {
-      await marcarNotificacionLeidaAction(id)
+      if (!notification.isRead) {
+        await marcarNotificacionLeidaAction(notification.id)
+      }
+      const ref = await getNotificacionesAction()
+      if (ref.success) setData(ref.data)
+
+      const href = getNotificationHref(notification)
+      if (href) {
+        setOpen(false)
+        router.push(href)
+      }
     } catch (error) {
       console.error('Error al marcar como leída:', error)
     }
@@ -118,31 +127,29 @@ export function PanelNotificaciones() {
   const handleEliminarClick = async (id: string, e: React.MouseEvent) => {
     e.stopPropagation()
     try {
-      setNotificacionesEliminadas(prev => new Set([...prev, id]))
+      await deleteNotificacionAction(id)
+      const ref = await getNotificacionesAction()
+      if (ref.success) setData(ref.data)
     } catch (error) {
       console.error('Error al eliminar la notificación:', error)
     }
   }
-  const notificacionesFiltradas = (data?.notificaciones || []).filter(
-    (notif: Notification) => !notificacionesEliminadas.has(notif.id),
-  )
+  const notificacionesFiltradas: Notification[] = data?.notificaciones || []
 
-  // @ts-expect-error
-  const notificacionesNoLeidas = notificacionesFiltradas?.filter(n => !n.isRead)?.length || 0
+  const notificacionesNoLeidas = notificacionesFiltradas.filter((n) => !n.isRead).length
 
   const notificaciones = notificacionesFiltradas
 
   return (
     <Sheet open={open} onOpenChange={setOpen}>
       <SheetTrigger asChild>
-        <Button variant="ghost" size="sm" className="relative">
-          <motion.div
-            whileHover={{ scale: 1.1 }}
-            whileTap={{ scale: 0.95 }}
-            transition={{ type: "spring", stiffness: 400, damping: 17 }}
-          >
-            <Bell className="h-4 w-4" />
-          </motion.div>
+        <Button
+          aria-label="Abrir notificaciones"
+          variant="ghost"
+          size="icon"
+          className="relative size-11"
+        >
+          <Bell aria-hidden="true" className="h-4 w-4" />
           <AnimatePresence>
             {notificacionesNoLeidas > 0 && (
               <motion.div
@@ -278,14 +285,22 @@ export function PanelNotificaciones() {
                       variants={notificationVariants}
                       exit="exit"
                       layout
-                      onClick={() => handleNotificacionClick(notificacion.id)}
+                      onClick={() => handleNotificacionClick(notificacion)}
+                      onKeyDown={(event) => {
+                        if (event.key === 'Enter' || event.key === ' ') {
+                          event.preventDefault()
+                          void handleNotificacionClick(notificacion)
+                        }
+                      }}
                       whileHover={{ scale: 1.01, x: 4 }}
                       transition={{ duration: shouldReduceMotion ? 0 : 0.2 }}
-                      className={`p-3 rounded-lg border transition-colors hover:bg-gray-50 dark:hover:bg-gray-800/50 cursor-pointer group relative ${
+                      role="button"
+                      tabIndex={0}
+                      className={`p-3 rounded-lg border transition-colors hover:bg-gray-50 dark:hover:bg-gray-800/50 group relative ${
                         !notificacion.isRead
                           ? "bg-blue-50/50 dark:bg-blue-950/20 border-blue-200 dark:border-blue-800"
                           : "bg-white dark:bg-gray-800"
-                      }`}
+                      } ${getNotificationHref(notificacion) ? 'cursor-pointer' : 'cursor-default'}`}
                     >
                       <div className="flex items-start gap-3">
                         <motion.div
@@ -300,8 +315,7 @@ export function PanelNotificaciones() {
                             <h4 className="text-sm font-medium truncate">{notificacion.title}</h4>
                             <div className="flex items-center gap-2">
                               <Badge variant={
-  // @ts-expect-error
-                              coloresPrioridad[notificacion.prioridad]
+                                coloresPrioridad[notificacion.prioridad as keyof typeof coloresPrioridad] || "default"
                               }>
                                 {notificacion.prioridad}
                               </Badge>
@@ -311,12 +325,13 @@ export function PanelNotificaciones() {
                                 whileTap={{ scale: 0.9 }}
                               >
                                 <Button
+                                  aria-label={`Eliminar notificación: ${notificacion.title}`}
                                   variant="ghost"
                                   size="icon"
-                                  className="h-6 w-6 opacity-0 group-hover:opacity-100 hover:bg-red-100 hover:text-red-600 transition-opacity"
+                                  className="size-11 opacity-0 transition-opacity group-hover:opacity-100 focus-visible:opacity-100 hover:bg-red-100 hover:text-red-600"
                                   onClick={(e) => handleEliminarClick(notificacion.id, e)}
                                 >
-                                  <X className="h-4 w-4" />
+                                  <X aria-hidden="true" className="h-4 w-4" />
                                 </Button>
                               </motion.div>
                             </div>

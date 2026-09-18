@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import prisma from '@/lib/prisma'
 import { authenticateUser } from '@/lib/auth-middleware'
+import { requireTenant } from '@/lib/services/tenant-scope'
 
 // GET - Obtener historial de reconciliaciones de ventas
 export async function GET(request: NextRequest) {
@@ -8,6 +9,7 @@ export async function GET(request: NextRequest) {
     const authResultUser = await authenticateUser(request)
     if ('status' in authResultUser) return authResultUser as Response
     const user = authResultUser.user
+    const tenantId = requireTenant(user)
 
     const { searchParams } = new URL(request.url)
     const fechaDesde = searchParams.get('fechaDesde') || searchParams.get('fechaInicio')
@@ -24,7 +26,7 @@ export async function GET(request: NextRequest) {
     const skip = (page - 1) * limit
 
     // Construir filtros
-    const whereClause: any = {}
+    const whereClause: any = { tenantId }
 
     if (fechaDesde || fechaHasta) {
       whereClause.fechaReconciliacion = {}
@@ -151,6 +153,7 @@ export async function GET(request: NextRequest) {
     // Obtener nombres de tipos de pago para el resumen
     const tiposPagoInfo = await prisma.tipoPago.findMany({
       where: {
+        tenantId,
         tipoId: {
           in: porTipoPago.map((tp: { tipoPagoId: string }) => tp.tipoPagoId)
         }

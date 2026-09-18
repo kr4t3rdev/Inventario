@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { google } from 'googleapis'
-import { prisma } from '@/lib/prisma'
+import { prismaPlatform as prisma } from '@/lib/db/platform-prisma'
 import bcrypt from 'bcryptjs'
 import jwt from 'jsonwebtoken'
 import { getJwtSecret, getRefreshJwtSecret } from '@/lib/secrets'

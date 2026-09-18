@@ -1,24 +1,32 @@
 'use client'
 
-import { useState, useEffect, useCallback } from 'react'
+import type React from 'react'
+import { useCallback, useEffect, useState } from 'react'
 import { useReducedMotion } from 'framer-motion'
-import { Button } from "@/components/ui/button"
-import { Badge } from "@/components/ui/badge"
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { format } from 'date-fns'
+import { LogOut, Shield } from 'lucide-react'
+import { toast } from 'sonner'
+
+import { Button } from '@/components/ui/button'
+import { Badge } from '@/components/ui/badge'
 import {
   Pagination,
   PaginationContent,
   PaginationItem,
   PaginationNext,
   PaginationPrevious,
-} from "@/components/ui/pagination"
-import { AdminTableLoader } from "@/features/admin/components/animations"
-import { getSessionsAction, deleteSessionAction } from "@/features/admin/actions"
-import { format } from "date-fns"
-import { toast } from "sonner"
-import { LogOut, Shield } from "lucide-react"
-import type { UserSession } from "@/app/models/model"
+} from '@/components/ui/pagination'
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select'
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
+import { AdminTableLoader } from '@/features/admin/components/animations'
+import { deleteSessionAction, getSessionsAction } from '@/features/admin/actions'
+import type { UserSession } from '@/app/models/model'
 
 interface SessionWithUser extends UserSession {
   user?: {
@@ -29,7 +37,11 @@ interface SessionWithUser extends UserSession {
   }
 }
 
-export function SessionsTab() {
+/**
+ * @description Tab de sesiones activas para monitoreo administrativo.
+ * @returns {React.JSX.Element} Tabla paginada de sesiones con acción de cierre.
+ */
+export function SessionsTab(): React.JSX.Element {
   const shouldReduceMotion = useReducedMotion()
   const [page, setPage] = useState(1)
   const [perPage, setPerPage] = useState(10)
@@ -58,20 +70,20 @@ export function SessionsTab() {
   const handleDeleteSession = async (sessionId: string) => {
     try {
       await deleteSessionAction(sessionId)
-      toast.success("Sesión cerrada correctamente")
+      toast.success('Sesión cerrada correctamente')
       fetchSessions()
     } catch (error) {
-      console.error("Error:", error)
-      toast.error("Error al cerrar sesión")
+      console.error('Error:', error)
+      toast.error('Error al cerrar sesión')
     }
   }
 
   return (
     <div className="space-y-4">
-      <div className="flex justify-between items-center flex-wrap gap-2">
+      <div className="flex items-center justify-between flex-wrap gap-2">
         <div className="flex items-center gap-4">
           <p className="text-sm text-muted-foreground">Total: {sessions?.length || 0} sesiones</p>
-          <Select value={perPage.toString()} onValueChange={(v) => { setPerPage(parseInt(v)); setPage(1) }}>
+          <Select value={perPage.toString()} onValueChange={(value) => { setPerPage(parseInt(value)); setPage(1) }}>
             <SelectTrigger className="w-32">
               <SelectValue />
             </SelectTrigger>
@@ -83,21 +95,7 @@ export function SessionsTab() {
             </SelectContent>
           </Select>
         </div>
-        {sessions && sessions.length > 0 && (
-          <Pagination>
-            <PaginationContent>
-              <PaginationItem>
-                <PaginationPrevious onClick={() => setPage(p => Math.max(1, p - 1))} className={page === 1 ? "pointer-events-none opacity-50" : "cursor-pointer"} />
-              </PaginationItem>
-              <PaginationItem>
-                <span className="flex items-center px-4">Página {page} de {totalPages}</span>
-              </PaginationItem>
-              <PaginationItem>
-                <PaginationNext onClick={() => setPage(p => Math.min(totalPages, p + 1))} className={page === totalPages ? "pointer-events-none opacity-50" : "cursor-pointer"} />
-              </PaginationItem>
-            </PaginationContent>
-          </Pagination>
-        )}
+        {/* Pagination moved below table */}
       </div>
 
       {isLoading ? (
@@ -118,13 +116,15 @@ export function SessionsTab() {
             </TableHeader>
             <TableBody>
               {paginatedSessions.map((session: SessionWithUser, index: number) => (
-                <TableRow key={session.id} className={shouldReduceMotion ? '' : 'animate-fade-in'}
+                <TableRow
+                  key={session.id}
+                  className={shouldReduceMotion ? '' : 'animate-fade-in'}
                   style={shouldReduceMotion ? undefined : { animationDelay: `${Math.min(index * 35, 240)}ms`, animationFillMode: 'both' }}
                 >
                   <TableCell>
                     <div>
-                      <p className="font-medium">{session.user?.name || "N/A"}</p>
-                      <p className="text-xs text-muted-foreground">{session.user?.email || "N/A"}</p>
+                      <p className="font-medium">{session.user?.name || 'N/A'}</p>
+                      <p className="text-xs text-muted-foreground">{session.user?.email || 'N/A'}</p>
                     </div>
                   </TableCell>
                   <TableCell>
@@ -134,14 +134,13 @@ export function SessionsTab() {
                       <Badge variant="secondary">Inactiva</Badge>
                     )}
                   </TableCell>
-                  <TableCell className="text-sm text-muted-foreground">{session.ipAddress || "N/A"}</TableCell>
-                  <TableCell>{format(new Date(session.createdAt), "dd/MM/yyyy HH:mm")}</TableCell>
-                  <TableCell>{format(new Date(session.lastActive), "dd/MM/yyyy HH:mm")}</TableCell>
-                  <TableCell>{session.expiresAt ? format(new Date(session.expiresAt), "dd/MM/yyyy HH:mm") : "N/A"}</TableCell>
+                  <TableCell className="text-sm text-muted-foreground">{session.ipAddress || 'N/A'}</TableCell>
+                  <TableCell>{format(new Date(session.createdAt), 'dd/MM/yyyy HH:mm')}</TableCell>
+                  <TableCell>{format(new Date(session.lastActive), 'dd/MM/yyyy HH:mm')}</TableCell>
+                  <TableCell>{session.expiresAt ? format(new Date(session.expiresAt), 'dd/MM/yyyy HH:mm') : 'N/A'}</TableCell>
                   <TableCell className="text-right">
                     {session.isActive && (
-                      <Button variant="outline" size="sm" onClick={() => handleDeleteSession(session.id)}
-                        className="text-rose-600 hover:text-rose-700">
+                      <Button variant="outline" size="sm" onClick={() => handleDeleteSession(session.id)} className="text-rose-600 hover:text-rose-700">
                         <LogOut className="h-4 w-4" />
                       </Button>
                     )}
@@ -162,6 +161,24 @@ export function SessionsTab() {
               <p className="text-xs text-muted-foreground">Las sesiones de los usuarios aparecerán aquí cuando inicien sesión.</p>
             </div>
           </div>
+        </div>
+      )}
+
+      {sessions.length > 0 && (
+        <div className="flex justify-center pt-2">
+          <Pagination>
+            <PaginationContent>
+              <PaginationItem>
+                <PaginationPrevious onClick={() => setPage((current) => Math.max(1, current - 1))} className={page === 1 ? 'pointer-events-none opacity-50' : 'cursor-pointer'} />
+              </PaginationItem>
+              <PaginationItem>
+                <span className="flex items-center px-4">Página {page} de {totalPages}</span>
+              </PaginationItem>
+              <PaginationItem>
+                <PaginationNext onClick={() => setPage((current) => Math.min(totalPages, current + 1))} className={page === totalPages ? 'pointer-events-none opacity-50' : 'cursor-pointer'} />
+              </PaginationItem>
+            </PaginationContent>
+          </Pagination>
         </div>
       )}
     </div>

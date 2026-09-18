@@ -9,19 +9,21 @@ function requireTenant(ctx: { tenantId?: string }): string {
 }
 
 export async function getConceptos(): Promise<string[]> {
-  await getAuthenticatedContext()
+  const ctx = await getAuthenticatedContext()
+  const tenantId = requireTenant(ctx)
 
   try {
     const conceptos = await prisma.gastosDE.findMany({
+      where: { tenantId },
       select: { concepto: true },
-  // @ts-expect-error
+  // @ts-expect-error TODO: fix prisma distinct type
       distinct: ['concepto'],
-  // @ts-expect-error
+  // @ts-expect-error TODO: fix prisma orderBy type
       orderBy: {
       concepto: 'asc'
       },
     })
-  // @ts-expect-error
+  // @ts-expect-error TODO: fix return type
     return conceptos.map((c: {
     concepto: string
     }) => c.concepto)

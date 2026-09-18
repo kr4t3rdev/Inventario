@@ -1,0 +1,15 @@
+name: TCPMobileV1SDK
+targets:
+  TCPMobileV1SDK:
+    type: framework
+    platform: iOS
+    deploymentTarget: "11.0"
+    sources: [Sources]
+    info:
+      path: ./Info.plist
+      version: 1.0.0
+    settings:
+      APPLICATION_EXTENSION_API_ONLY: true
+    scheme: {}
+    dependencies:
+    - carthage: AnyCodable

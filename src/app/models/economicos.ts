@@ -2,12 +2,25 @@ export interface Empleado {
 	empleadoId: string;
 	nombre: string;
 	apellido: string;
-	telefono?: string;
+	/** Puede ser null en la BD (campo opcional) */
+	telefono?: string | null;
 	cargo: string;
 	salarioBases: number;
 	bonificaciones?: number;
 	deducciones?: number;
 	horasExtras?: number;
+	createdAt: Date;
+	updatedAt: Date;
+}
+
+export interface Vendor {
+	vendorId: string;
+	nombre: string;
+	contacto?: string | null;
+	email?: string | null;
+	telefono?: string | null;
+	direccion?: string | null;
+	notas?: string | null;
 	createdAt: Date;
 	updatedAt: Date;
 }
@@ -62,7 +75,10 @@ export interface Pagosalario {
 	salario: number;
 	bonificaciones?: number;
 	deducciones?: number;
+	/** @deprecated Histórico en horas. Usar horasExtrasHoras / montoHorasExtras. */
 	horasExtras?: number;
+	horasExtrasHoras?: number;
+	montoHorasExtras?: number;
 	observaciones?: string;
 	periodo: string;
 	createdAt: string;
@@ -103,6 +119,7 @@ export interface GastosDE {
 
 export interface GastoConcepto {
 	conceptoId: string;
+	tenantId: string;
 	nombre: string;
 	descripcion: string | null;
 	isActive: boolean;
@@ -113,6 +130,7 @@ export interface GastoConcepto {
 
 export interface GastoElemento {
 	elementoId: string;
+	tenantId: string;
 	conceptoId: string;
 	nombre: string;
 	descripcion: string | null;
@@ -154,6 +172,7 @@ export interface CompraServicio {
 	costoUnitario: number;
 	cantidad: number;
 	total: number;
+	moneda?: string | null;
 	formaPago: "PAGO_PARCIAL" | "PAGO_COMPLETO";
 	estado: "PENDIENTE" | "PAGADA";
 	descripcion?: string | null;

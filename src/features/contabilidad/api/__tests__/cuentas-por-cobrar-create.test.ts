@@ -52,6 +52,7 @@ describe('Cuentas por Cobrar — createCuentaPorCobrarAction', () => {
       email: 'test@test.com',
       role: 'ADMIN' as const,
       isActive: true,
+      planFeatures: { 'cuentas-cobrar': true },
     })
 
     prismaMock.venta.findFirst.mockResolvedValue(null)
@@ -76,6 +77,7 @@ describe('Cuentas por Cobrar — createCuentaPorCobrarAction', () => {
       email: 'test@test.com',
       role: 'ADMIN' as const,
       isActive: true,
+      planFeatures: { 'cuentas-cobrar': true },
     })
 
     prismaMock.venta.findFirst.mockResolvedValue({
@@ -108,6 +110,7 @@ describe('Cuentas por Cobrar — createCuentaPorCobrarAction', () => {
       email: 'test@test.com',
       role: 'ADMIN' as const,
       isActive: true,
+      planFeatures: { 'cuentas-cobrar': true },
     })
 
     prismaMock.venta.findFirst.mockResolvedValue({

@@ -39,7 +39,12 @@ import {
 	AlertDialogHeader,
 	AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import { updateMiEmpresaAction } from "../actions";
+import { updateMiEmpresaSettings } from "../lib/client-mi-empresa";
+import {
+  toCloudinaryAssetUploadResult,
+  uploadAsset,
+} from "@/lib/upload/upload-asset";
+import type { CloudinaryAssetUploadResult } from "@/lib/upload/cloudinary-asset";
 import type {
 	CuentaBancariaItem,
 	MiEmpresaFormValues as MiEmpresaFormValuesType,
@@ -107,7 +112,7 @@ async function saveMiEmpresa(
 	values: MiEmpresaFormValuesType,
 ): Promise<{ data: MiEmpresaApiResponse; message?: string }> {
 	const payload = normalizeMiEmpresaFormValues(values);
-	const result = await updateMiEmpresaAction(payload);
+	const result = await updateMiEmpresaSettings(payload);
 
 	if (!result.success) {
 		const err: Error & { fieldErrors?: Record<string, string> } = new Error(
@@ -115,10 +120,10 @@ async function saveMiEmpresa(
 		);
 		if (
 			result.error?.code === "VALIDATION_ERROR" &&
-			result.error.details &&
-			typeof result.error.details === "object"
+			(result.error as any).details &&
+			typeof (result.error as any).details === "object"
 		) {
-			const details = result.error.details as Record<string, string[]>;
+			const details = (result.error as any).details as Record<string, string[]>;
 			err.fieldErrors = Object.fromEntries(
 				Object.entries(details).map(([k, v]) => [k, v[0] ?? ""]),
 			);
@@ -137,6 +142,7 @@ export function MiEmpresaForm({
 	cuentas = [],
 }: MiEmpresaFormProps) {
 	const { user } = useAuth();
+	const [logoAsset, setLogoAsset] = useState<CloudinaryAssetUploadResult | null>(null);
 	const puedeEditar = user?.tenantRole === "manager" || user?.role === "admin";
 	const ean13Habilitado = user?.planFeatures?.["mi-empresa-ean13"] === true;
 	const [saving, setSaving] = useState(false);
@@ -170,7 +176,7 @@ export function MiEmpresaForm({
 		if (!checked) {
 			setIsSubmitting(true);
 			try {
-				const result = await updateMiEmpresaAction({ usaCodigoEan13: false });
+				const result = await updateMiEmpresaSettings({ usaCodigoEan13: false });
 				if (!result.success) {
 					throw new Error(result.error?.message ?? "Error al actualizar");
 				}
@@ -203,7 +209,7 @@ export function MiEmpresaForm({
 		setIsSubmitting(true);
 		setShowEan13Confirmation(false);
 		try {
-			const result = await updateMiEmpresaAction({
+			const result = await updateMiEmpresaSettings({
 				usaCodigoEan13: true,
 				confirmReset: true,
 			});
@@ -234,7 +240,7 @@ export function MiEmpresaForm({
 	const onSubmit = async (values: MiEmpresaFormValuesType) => {
 		setSaving(true);
 		try {
-			const { data: saved, message } = await saveMiEmpresa(values);
+			const { data: saved, message } = await saveMiEmpresa({ ...values, logoAsset });
 			form.reset({
 				nombre: saved.nombre || "Mi Empresa",
 				propietario: saved.propietario || "",
@@ -545,50 +551,41 @@ export function MiEmpresaForm({
 																/>
 															</motion.div>
 														)}
-														<div className="flex gap-2 items-center">
-															<Input
-																type="file"
-																accept="image/*"
-																onChange={async (e) => {
-																	const file = e.target.files?.[0];
-																	if (!file) return;
+															<div className="flex gap-2 items-center">
+																<Input
+																	type="file"
+																	accept="image/*"
+																	onChange={async (e) => {
+																		const file = e.target.files?.[0];
+																		if (!file) return;
 
-																	const formData = new FormData();
-																	formData.append("file", file);
-
-																	const loadingToastId = sileo.info({
-																		title: "Subiendo logo...",
-																	});
-
-																	try {
-																		const res = await fetch("/api/upload", {
-																			method: "POST",
-																			headers: {
-																				Authorization: getAuthToken(),
-																			},
-																			body: formData,
+																		const loadingToastId = sileo.info({
+																			title: "Subiendo logo...",
 																		});
 
-																		if (!res.ok)
-																			throw new Error("Error subiendo imagen");
-
-																		const data = await res.json();
-																		field.onChange(data.url);
-																		sileo.success({
-																			title: "Logo subido correctamente",
-																		});
-																	} catch (error) {
-																		console.error(error);
-																		sileo.error({
-																			title: "Error al subir el logo",
-																		});
-																	} finally {
-																		sileo.dismiss(loadingToastId);
-																	}
-																}}
-																disabled={saving}
-																className="cursor-pointer"
-															/>
+																		try {
+																			const uploaded = await uploadAsset(file, {
+																				uploadKey: 'miEmpresa.logo',
+																			});
+																			field.onChange(uploaded.url);
+																			setLogoAsset(
+																				toCloudinaryAssetUploadResult(uploaded),
+																			);
+																			sileo.success({
+																				title: "Logo subido correctamente",
+																			});
+																		} catch (error) {
+																			console.error(error);
+																			sileo.error({
+																				title: "Error al subir el logo",
+																			});
+																		} finally {
+																			sileo.dismiss(loadingToastId);
+																		}
+																	}}
+																	disabled={saving}
+																	className="cursor-pointer"
+																/>
 															{field.value && (
 																<motion.div
 																	whileHover={{ scale: 1.1 }}
@@ -598,7 +595,10 @@ export function MiEmpresaForm({
 																		type="button"
 																		variant="destructive"
 																		size="icon"
-																		onClick={() => field.onChange("")}
+																			onClick={() => {
+																				field.onChange("");
+																				setLogoAsset(null);
+																			}}
 																		title="Eliminar logo"
 																	>
 																		<span className="sr-only">Eliminar</span>

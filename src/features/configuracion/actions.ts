@@ -19,11 +19,11 @@ export const getNextSerieNumberAction = withAction(async (prefijo: string, _user
   const ultimaSerie = await prisma.serieFacturacion.findFirst({
     where: { prefijo, activa: true },
     select: {
-  // @ts-expect-error
+  // @ts-expect-error El shape de SerieFacturacion expone ultimoNumero como string en el tipo Prisma
     serieId: true, prefijo: true, ultimoNumero: true
     },
   })
-  // @ts-expect-error
+  // @ts-expect-error El tipo de ultimoNumero es string; el cálculo numérico convierte en runtime
   const nextNumber = (ultimaSerie?.ultimoNumero ?? 0) + 1
   const preview = `${prefijo}${String(nextNumber).padStart(6, '0')}`
   return { nextNumber, prefijo, preview }

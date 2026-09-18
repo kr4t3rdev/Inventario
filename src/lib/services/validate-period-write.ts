@@ -70,7 +70,7 @@ export async function validarEscrituraPeriodo(
     const result = await PeriodoContableService.validarEscritura(
       params.fecha,
       params.tenantId,
-      params.tipoOperacion
+      params.tipoOperacion as any
     )
 
     if (result.error) {
@@ -114,7 +114,7 @@ export async function validarEscrituraPeriodo(
         modo: 'enforce',
         error: {
           message: err instanceof Error ? err.message : 'Error validando período',
-          code: 'INTERNAL_ERROR',
+          code: 'INTERNAL_ERROR' as any,
         },
       }
     }
@@ -148,6 +148,14 @@ export function extraerFechaDeBody(body: Record<string, unknown>): Date | null {
       if (!isNaN(fecha.getTime())) {
         return fecha
       }
+    }
+  }
+
+  const periodo = body.periodo
+  if (typeof periodo === 'string' && /^\d{4}-\d{2}$/.test(periodo)) {
+    const [year, month] = periodo.split('-').map(Number)
+    if (month >= 1 && month <= 12) {
+      return new Date(Date.UTC(year, month - 1, 1))
     }
   }
 

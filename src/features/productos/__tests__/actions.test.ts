@@ -27,24 +27,25 @@ vi.mock("@/generated/prisma", () => {
 		APROBADO: "APROBADO",
 		REABIERTO: "REABIERTO",
 	} as const;
-	return {
-		EstadoPeriodo,
-		Prisma: {
-			PrismaClientKnownRequestError: MockPrismaClientKnownRequestError,
-			PrismaClientValidationError: class extends Error {
-				constructor(message: string, clientVersion: string) {
-					super(message);
-					this.name = "PrismaClientValidationError";
-				}
+return {
+			EstadoPeriodo,
+			Prisma: {
+				PrismaClientKnownRequestError: MockPrismaClientKnownRequestError,
+				PrismaClientValidationError: class extends Error {
+					constructor(message: string, clientVersion: string) {
+						super(message);
+						this.name = "PrismaClientValidationError";
+					}
+				},
 			},
-		},
-	};
-});
+		};
+	});
 vi.mock("@/lib/prisma", () => {
 	const tx = {
 		producto: {
 			findMany: vi.fn(),
 			findUnique: vi.fn(),
+			count: vi.fn(),
 			create: vi.fn(),
 			update: vi.fn(),
 			delete: vi.fn(),
@@ -57,8 +58,15 @@ vi.mock("@/lib/prisma", () => {
 			count: vi.fn(),
 			create: vi.fn(),
 		},
+		stockUbicacion: {
+			findMany: vi.fn(),
+		},
 		categoria: {
 			findUnique: vi.fn(),
+			findFirst: vi.fn(),
+		},
+		listaPrecio: {
+			count: vi.fn(),
 		},
 	};
 	return {
@@ -66,9 +74,14 @@ vi.mock("@/lib/prisma", () => {
 			producto: tx.producto,
 			precioProducto: tx.precioProducto,
 			gastoCompra: tx.gastoCompra,
+			stockUbicacion: tx.stockUbicacion,
 			categoria: tx.categoria,
+			listaPrecio: tx.listaPrecio,
 			miEmpresa: {
-				findFirst: vi.fn().mockResolvedValue({ usaCodigoEan13: false }),
+				findUnique: vi.fn().mockResolvedValue({ usaCodigoEan13: false }),
+			},
+			tenantLicense: {
+				findFirst: vi.fn().mockResolvedValue({ maxProductos: 999 }),
 			},
 			$transaction: vi
 				.fn()
@@ -80,6 +93,12 @@ vi.mock("@/lib/prisma", () => {
 });
 vi.mock("@/lib/services/stock-ubicacion-service", () => ({
 	upsertStockUbicacion: vi.fn(),
+}));
+// auth-middleware importa platform-prisma (cliente sin escope) y ejecuta
+// buildPlatformClient al cargar; lo mockeamos para que no instancie el cliente base.
+vi.mock("@/lib/db/platform-prisma", () => ({
+	prismaPlatform: {} as unknown,
+	default: {} as unknown,
 }));
 vi.mock("@/lib/cost-history-utils", () => ({
 	recordCostChange: vi.fn(),
@@ -157,6 +176,10 @@ describe("Productos Server Actions", () => {
 		it("retorna lista de productos del tenant", async () => {
 			vi.mocked(getCurrentUser).mockResolvedValue(mockUser);
 			vi.mocked(prisma.producto.findMany).mockResolvedValue([mockProducto]);
+			vi.mocked(prisma.stockUbicacion.findMany).mockResolvedValue([
+				{ productoId: "prod-1", cantidad: 30 },
+				{ productoId: "prod-1", cantidad: 20 },
+			] as any);
 
 			const result = await getProductosAction();
 
@@ -173,6 +196,7 @@ describe("Productos Server Actions", () => {
 		it("retorna lista vacía si no hay productos", async () => {
 			vi.mocked(getCurrentUser).mockResolvedValue(mockUser);
 			vi.mocked(prisma.producto.findMany).mockResolvedValue([]);
+			vi.mocked(prisma.stockUbicacion.findMany).mockResolvedValue([] as any);
 
 			const result = await getProductosAction();
 
@@ -239,6 +263,50 @@ describe("Productos Server Actions", () => {
 			expect(result.success).toBe(false);
 			expect(result.error!.code).toBeDefined();
 		});
+
+		it("rechaza precios asociados a listas de otro tenant", async () => {
+			vi.mocked(getCurrentUser).mockResolvedValue(mockUser);
+			vi.mocked(prisma.listaPrecio.count).mockResolvedValue(0);
+
+			const result = await createProductoAction({
+				...validInput,
+				precios: [{ listaPrecioId: "lista-externa", precio: 1250 }],
+			});
+
+			expect(result.success).toBe(false);
+			expect(result.error?.code).toBe("INVALID_PRICE_LIST");
+			expect(prisma.producto.create).not.toHaveBeenCalled();
+			expect(prisma.listaPrecio.count).toHaveBeenCalledWith({
+				where: { id: { in: ["lista-externa"] }, tenantId: "tenant-test" },
+			});
+		});
+
+		it("no duplica el stock inicial entre almacén y punto de venta", async () => {
+			vi.mocked(getCurrentUser).mockResolvedValue(mockUser);
+			vi.mocked(prisma.producto.create).mockResolvedValue(mockProducto);
+
+			const result = await createProductoAction({
+				...validInput,
+				puntoDeVentaId: "punto-venta-1",
+			});
+
+			expect(result.success).toBe(true);
+			// El stock inicial va completo al almacén; el punto de venta NO recibe stock.
+			expect(upsertStockUbicacion).toHaveBeenCalledTimes(1);
+			expect(upsertStockUbicacion).toHaveBeenCalledWith(
+				expect.anything(),
+				expect.objectContaining({
+					tipoUbicacion: "almacen",
+					ubicacionId: "almacen-1",
+					modo: "set",
+					valor: 100,
+				}),
+			);
+			expect(upsertStockUbicacion).not.toHaveBeenCalledWith(
+				expect.anything(),
+				expect.objectContaining({ tipoUbicacion: "punto_venta" }),
+			);
+		});
 	});
 
 	// ─── updateProductoAction ─────────────────────
@@ -273,6 +341,20 @@ describe("Productos Server Actions", () => {
 			expect(result.success).toBe(false);
 			expect(result.error!.message).toContain("no encontrado");
 		});
+
+		it("rechaza actualizar un producto de otro tenant", async () => {
+			vi.mocked(getCurrentUser).mockResolvedValue(mockUser);
+			vi.mocked(prisma.producto.findUnique).mockResolvedValue({
+				...mockProducto,
+				tenantId: "tenant-externo",
+			});
+
+			const result = await updateProductoAction(validUpdate);
+
+			expect(result.success).toBe(false);
+			expect(result.error?.code).toBe("NOT_FOUND");
+			expect(prisma.producto.update).not.toHaveBeenCalled();
+		});
 	});
 
 	// ─── deleteProductoAction ─────────────────────
@@ -299,6 +381,20 @@ describe("Productos Server Actions", () => {
 
 			expect(result.success).toBe(false);
 			expect(result.error!.message).toContain("no encontrado");
+		});
+
+		it("rechaza eliminar un producto de otro tenant", async () => {
+			vi.mocked(getCurrentUser).mockResolvedValue(mockUser);
+			vi.mocked(prisma.producto.findUnique).mockResolvedValue({
+				...mockProducto,
+				tenantId: "tenant-externo",
+			});
+
+			const result = await deleteProductoAction("prod-1");
+
+			expect(result.success).toBe(false);
+			expect(result.error?.code).toBe("NOT_FOUND");
+			expect(prisma.producto.delete).not.toHaveBeenCalled();
 		});
 	});
 
@@ -520,6 +616,31 @@ describe("Productos Server Actions", () => {
 			expect(result.data).toBeDefined();
 			expect(result.data!.producto.stock).toBe(55);
 			expect(result.data!.gastoCompra.cantidad).toBe(5);
+			expect(mockTx.producto.update).toHaveBeenCalledWith({
+				where: { id: "prod-1" },
+				data: { stock: 55 },
+				include: expect.any(Object),
+			});
+			expect(upsertStockUbicacion).toHaveBeenCalledWith(
+				mockTx,
+				expect.objectContaining({
+					productoId: "prod-1",
+					tipoUbicacion: "almacen",
+					ubicacionId: "almacen-1",
+					modo: "increment",
+					delta: 5,
+				}),
+			);
+			expect(upsertStockUbicacion).not.toHaveBeenCalledWith(
+				mockTx,
+				expect.objectContaining({
+					productoId: "prod-1",
+					tipoUbicacion: "almacen",
+					ubicacionId: "almacen-1",
+					modo: "set",
+					valor: 55,
+				}),
+			);
 		});
 
 		// ── 3.3: Restock con PAGO_COMPLETO ──

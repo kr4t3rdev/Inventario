@@ -12,6 +12,7 @@ export default defineConfig({
   retries: process.env.CI ? 2 : 0,
   workers: 1,
   globalSetup: './e2e/global-setup.ts',
+  globalTeardown: './e2e/global-teardown.ts',
   reporter: [
     ['html', { open: 'never' }],
     ['list']
@@ -29,7 +30,7 @@ export default defineConfig({
     }
   ],
   webServer: {
-    command: 'pnpm run dev',
+    command: 'PORT=3001 pnpm run dev',
     url: 'http://localhost:3001',
     reuseExistingServer: true,
     timeout: 120000

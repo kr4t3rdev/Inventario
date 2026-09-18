@@ -52,6 +52,10 @@ interface InvoiceData {
   descuento: number
   cargoTransporte: number
   observaciones: string
+  /** VC: efectivo recibido del cliente (null si no aplica/no se capturó). */
+  montoRecibidoEfectivo?: number | null
+  /** VC: vuelto entregado (null si no aplica). */
+  cambioDevuelto?: number | null
 }
 
 interface LegacyInvoiceData {
@@ -71,7 +75,7 @@ interface LegacyInvoiceData {
  * @param {any} factura - Factura con relaciones de venta, cliente y items.
  * @returns {InvoiceData} Datos normalizados para la vista de impresión.
  */
-function buildInvoiceDataFromFactura(factura: any): InvoiceData {
+export function buildInvoiceDataFromFactura(factura: any): InvoiceData {
   const venta = factura?.venta || null
   const cliente = factura?.cliente || venta?.cliente || null
   const fecha = factura?.fechaEmision || venta?.createdAt || new Date().toISOString()
@@ -172,6 +176,8 @@ function buildInvoiceDataFromFactura(factura: any): InvoiceData {
     descuento: Number(factura?.descuento ?? venta?.descuento ?? 0),
     cargoTransporte: Number(factura?.cargoTransporte ?? 0),
     observaciones: factura?.observaciones || venta?.observaciones || "",
+    montoRecibidoEfectivo: venta?.montoRecibidoEfectivo ?? null,
+    cambioDevuelto: venta?.cambioDevuelto ?? null,
   }
 }
 
@@ -180,7 +186,7 @@ function buildInvoiceDataFromFactura(factura: any): InvoiceData {
  * @param {LegacyInvoiceData} data - Datos antiguos de impresión.
  * @returns {InvoiceData | null} Datos normalizados o null si son inválidos.
  */
-function normalizeLegacyInvoiceData(data: LegacyInvoiceData): InvoiceData | null {
+export function normalizeLegacyInvoiceData(data: LegacyInvoiceData): InvoiceData | null {
   if (!data || !data.fecha) return null
   const cargoTransporte = Number(data.cargoTransporte ?? 0)
   const subtotal = Number(data.subtotal ?? data.total ?? 0)
@@ -196,6 +202,8 @@ function normalizeLegacyInvoiceData(data: LegacyInvoiceData): InvoiceData | null
     descuento: Number(data.descuento ?? 0),
     cargoTransporte,
     observaciones: data.observaciones ?? "",
+    montoRecibidoEfectivo: null,
+    cambioDevuelto: null,
   }
 }
 
@@ -465,6 +473,18 @@ function InvoicePrintContent() {
                     <span className="text-xs font-bold">TOTAL MN</span>
                     <span className={`text-base font-bold ${getTotalColorClass()}`}>{total.toFixed(2)}</span>
                 </div>
+                {invoiceData.montoRecibidoEfectivo != null && (
+                    <div className="flex justify-between items-center px-2 py-1">
+                        <span className="text-xs font-medium">RECIBIDO EFECTIVO MN</span>
+                        <span className="text-sm">{invoiceData.montoRecibidoEfectivo.toFixed(2)}</span>
+                    </div>
+                )}
+                {invoiceData.cambioDevuelto != null && (
+                    <div className="flex justify-between items-center px-2 py-1">
+                        <span className="text-xs font-medium">CAMBIO ENTREGADO MN</span>
+                        <span className="text-sm">{invoiceData.cambioDevuelto.toFixed(2)}</span>
+                    </div>
+                )}
             </div>
         </div>
 

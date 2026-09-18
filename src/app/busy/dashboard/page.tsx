@@ -9,6 +9,9 @@ import {
   StockBajoTable,
   TransferenciasStats,
 } from '@/features/dashboard/components'
+import { MargenBajoTable } from '@/features/dashboard/components/margen-bajo-table'
+import { RentabilidadDashboard } from '@/features/dashboard/components/rentabilidad-dashboard'
+import { canAccessFichaCosto } from '@/features/ficha-costo/lib/access'
 
 /**
  * @description Página principal del Dashboard con arquitectura server-first.
@@ -43,11 +46,11 @@ export default async function DashboardPage() {
     return (
       <DashboardShell>
         <div className="flex flex-col items-center justify-center py-16 px-4 text-center">
-          <div className="text-violet-600 text-lg font-medium mb-2">
+          <div className="text-primary text-lg font-medium mb-2">
             Dashboard global de administrador
           </div>
           <p className="text-muted-foreground text-sm max-w-xl">
-            Tu usuario tiene acceso global al panel de control admin. El dashboard operativo requiere una membresía de empresa, así que usá el panel admin para métricas globales.
+            Tu usuario tiene acceso global al panel de control admin. El dashboard operativo requiere una membresía de empresa, así que usa el panel admin para métricas globales.
           </p>
         </div>
       </DashboardShell>
@@ -85,13 +88,13 @@ export default async function DashboardPage() {
       />
 
       {/* Gráficos principales */}
-      <div className="grid grid-cols-1 gap-4 px-4 lg:grid-cols-2 lg:px-6">
+      <div className="grid min-w-0 grid-cols-1 gap-4 px-4 lg:grid-cols-2 lg:px-6 [&>*]:min-w-0">
         <ChartAreaInteractive data={stats.datosPorMes as any} />
         <TopProductsTable productosMasVendidos={stats.productosMasVendidos as any} />
       </div>
 
       {/* Distribución y análisis */}
-      <div className="grid grid-cols-1 gap-4 px-4 lg:grid-cols-2 lg:px-6">
+      <div className="grid min-w-0 grid-cols-1 gap-4 px-4 lg:grid-cols-2 lg:px-6 [&>*]:min-w-0">
         <StockDistributionChart data={stats.distribucionStock as any} />
         <TransferenciasStats transferenciasStats={stats.transferenciasStats} />
       </div>
@@ -100,6 +103,16 @@ export default async function DashboardPage() {
       <div className="px-4 lg:px-6">
         <StockBajoTable productosStockBajo={stats.productosStockBajo as any} />
       </div>
+      {canAccessFichaCosto(user) ? (
+        <>
+          <div className="px-4 lg:px-6 mt-4">
+            <MargenBajoTable />
+          </div>
+          <div className="px-4 lg:px-6 mt-4">
+            <RentabilidadDashboard />
+          </div>
+        </>
+      ) : null}
     </DashboardShell>
   )
 }

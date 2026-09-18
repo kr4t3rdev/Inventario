@@ -1,3 +1,14 @@
+import type { Vendor, GastosDE, GastosCompra } from './economicos';
+import type { Producto } from './productos';
+import type { Oferta } from './ofertas';
+import type { Factura } from './facturacion';
+import type { ReconciliacionVenta } from './contabilidad';
+import type { PuntoDeVenta } from './punto-venta';
+import type { DeudaCash } from './prestamos-cash';
+
+export type TipoNotificacion = "info" | "warning" | "error" | "success";
+export type Prioridad = "baja" | "media" | "alta" | "urgente";
+
 export interface CuentaPorPagar {
 	cuentaPorPagarId: string;
 	numeroFactura: string;
@@ -73,6 +84,8 @@ export interface Venta {
 	productoId?: string | null;
 	cantidad: number;
 	puntoDeVentaId: string;
+	/** Ciclo de vida del pedido (PVE): PEDIDO | ENTREGADA | FACTURADA | ANULADA. */
+	estado?: string;
 	cliente?: {
 		clienteId?: string;
 		nombre?: string;
@@ -98,6 +111,8 @@ export interface Venta {
 	factura?: Factura;
 	reconciliaciones?: ReconciliacionVenta[];
 	items?: VentaItem[];
+	/** DNC: devoluciones activas (REGISTRADA) con su total — se usa para el badge NC. */
+	devoluciones?: { devolucionId: string; total: number }[];
 }
 
 export interface VentaStats {
@@ -120,6 +135,11 @@ export interface Merma {
 	motivo: string | null;
 	createdAt: string;
 	updatedAt: string;
+	creadoPorId?: string | null;
+	creadoPor?: {
+		userId: string;
+		name: string | null;
+	} | null;
 	producto?: {
 		id: string;
 		nombre: string;
@@ -151,6 +171,8 @@ export interface Transferencia {
 	puntoDeVentaDestinoId?: string | null;
 	estado: EstadoTransferencia;
 	numeroTransferencia?: string | null;
+	/** Unidades confirmadas al recibir; ausente = recepción total (B-01). */
+	cantidadRecibida?: number | null;
 	createdAt: string;
 	updatedAt: string;
 	productoCodigoInterno?: string | null;
@@ -180,11 +202,11 @@ export interface Transferencia {
 	tipoTransferencia: string;
 }
 
-export interface TransferenciaWithDetails extends Transferencia {
+export type TransferenciaWithDetails = Omit<Transferencia, 'origen' | 'destino' | 'producto'> & {
 	producto: Producto;
 	origen: PuntoDeVenta;
 	destino: PuntoDeVenta;
-}
+};
 
 // Nuevos tipos para transferencias múltiples
 export interface ProductoTransferencia {
@@ -203,8 +225,10 @@ export interface TransferenciaMultiple {
 
 export type EstadoTransferencia =
 	| "PENDIENTE"
+	| "APROBADA"
 	| "EN_TRANSITO"
 	| "COMPLETADA"
+	| "RECHAZADA"
 	| "CANCELADA"
 	| "PARCIAL";
 
@@ -251,6 +275,8 @@ export interface Usuario {
 	onboardingStatus?: string | null;
 	onboardingType?: string | null;
 	planFeatures?: Record<string, boolean> | null;
+	planName?: string | null;
+	permissions?: string[] | null;
 
 	lastModifiedBy: string | null;
 	loginAttempts: number;
@@ -290,6 +316,7 @@ export interface Notification {
 	id: string;
 	title: string;
 	message: string;
+	link?: string | null;
 	type: TipoNotificacion; // "info" | "warning" | "error" | "success"
 	prioridad: Prioridad;
 	isRead: boolean;

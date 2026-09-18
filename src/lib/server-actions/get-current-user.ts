@@ -13,6 +13,7 @@
  * @returns {Promise<AuthenticatedUser | null>} Usuario autenticado o null si no hay sesión válida
  */
 import { cookies, headers } from 'next/headers';
+import { normalizeUserRole } from '@/lib/auth/roles';
 import jwt from 'jsonwebtoken';
 import { prisma } from '@/lib/prisma';
 import { getJwtSecret } from '@/lib/secrets';
@@ -112,6 +113,15 @@ export async function getCurrentUser(): Promise<AuthenticatedUser | null> {
 
     if (!user || !user.isActive) return null;
 
+    const normalizedRole = normalizeUserRole(user.role);
+    if (!normalizedRole) {
+      console.error('[getCurrentUser] Invalid user role found in database:', {
+        userId: user.userId,
+        role: user.role,
+      });
+      return null;
+    }
+
     // 5. Resolver contexto de tenant.
     // Usar el tenantId del JWT como hint para mantener consistencia con
     // las API routes (auth-middleware) y con el flujo de refresh.
@@ -126,14 +136,16 @@ export async function getCurrentUser(): Promise<AuthenticatedUser | null> {
       userId: user.userId,
       name: user.name,
       email: user.email,
-      // @ts-expect-error: user.role is string in DB but UserRole in runtime
-      role: user.role,
+
+      role: normalizedRole,
       isActive: user.isActive,
       ...(tenantContext && {
         tenantId: tenantContext.tenantId,
         tenantRole: tenantContext.tenantRole,
         planLimits: tenantContext.planLimits,
         planFeatures: tenantContext.planFeatures,
+        planName: tenantContext.planName,
+        permissions: tenantContext.permissions,
       }),
     };
 

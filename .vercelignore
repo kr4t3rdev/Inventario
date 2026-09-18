@@ -1,0 +1,11 @@
+node_modules
+.next
+.git
+mobile
+sdks
+.graphify-out
+graphify-out
+.pi-lens
+test-results
+backups
+coverage

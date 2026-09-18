@@ -43,55 +43,17 @@ async function main() {
 	// ─── Almacenes ──────────────────────────────────────────
 
 	console.log("▶ Almacenes...");
+	console.log(
+		"  ! Omitidos en reconciliación automática: producto.stock ya no es una fuente confiable para almacenes.",
+	);
 	const productos = await prisma.producto.findMany({
 		select: {
 			id: true,
 			nombre: true,
-			stock: true,
 			almacenId: true,
 			tenantId: true,
 		},
-		// No filter on almacenId; handled inline with `if (!p.almacenId) continue`
 	});
-
-	for (const p of productos) {
-		if (!p.almacenId) continue;
-
-		const actual = await prisma.stockUbicacion.findUnique({
-			where: {
-				productoId_tipoUbicacion_ubicacionId: {
-					productoId: p.id,
-					tipoUbicacion: "almacen",
-					ubicacionId: p.almacenId,
-				},
-			},
-			select: { cantidad: true },
-		});
-
-		const esperado = p.stock;
-
-		if (!actual && esperado > 0) {
-			sinRegistro.push({
-				tipo: "almacen",
-				ubicacionNombre: p.almacenId,
-				productoId: p.id,
-				productoNombre: p.nombre,
-				esperado,
-				actual: 0,
-				diferencia: esperado,
-			});
-		} else if (actual && actual.cantidad !== esperado) {
-			discrepancias.push({
-				tipo: "almacen",
-				ubicacionNombre: p.almacenId,
-				productoId: p.id,
-				productoNombre: p.nombre,
-				esperado,
-				actual: actual.cantidad,
-				diferencia: actual.cantidad - esperado,
-			});
-		}
-	}
 
 	// ─── Puntos de Venta ────────────────────────────────────
 

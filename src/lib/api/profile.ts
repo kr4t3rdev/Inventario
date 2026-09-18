@@ -1,6 +1,8 @@
 import prisma from '@/lib/prisma'
 import { getAuthenticatedContext } from '@/lib/api/client'
 import { ServerActionError } from '@/lib/api/errors'
+import { replaceOwnerAsset } from '@/lib/upload/cloudinary-admin'
+import type { CloudinaryAssetInput } from '@/lib/upload/cloudinary-asset'
 import type { Usuario } from '@/app/models/model'
 
 /**
@@ -12,7 +14,7 @@ export async function getProfile(): Promise<Usuario[]> {
   const { userId } = await getAuthenticatedContext()
 
   try {
-  // @ts-expect-error
+  // @ts-expect-error -- generated Prisma types in this project lag behind the selected shape
     return await prisma.user.findMany({
       where: { userId },
       select: {
@@ -46,13 +48,12 @@ export async function getProfile(): Promise<Usuario[]> {
  * @throws {ServerActionError} si no está autenticado o hay error de base de datos
  */
 export async function updateProfile(
-  data: { name?: string; avatar?: string }
-): Promise<Usuario> {
-  const { userId } = await getAuthenticatedContext()
+  data: { name?: string; avatar?: string; avatarAsset?: CloudinaryAssetInput | null }
+): Promise<any> {
+  const { userId, tenantId } = await getAuthenticatedContext()
 
   try {
-  // @ts-expect-error
-    return await prisma.user.update({
+    const profile = await prisma.user.update({
       where: { userId },
       data: {
         ...(data.name !== undefined && { name: data.name }),
@@ -71,6 +72,18 @@ export async function updateProfile(
         updatedAt: true,
       },
     })
+
+    if (tenantId && data.avatarAsset) {
+      await replaceOwnerAsset({
+        tenantId,
+        ownerType: 'user',
+        ownerId: userId,
+        slot: 'avatar',
+        asset: data.avatarAsset,
+      })
+    }
+
+    return profile
   } catch (error) {
     throw new ServerActionError(
       'updateProfile',

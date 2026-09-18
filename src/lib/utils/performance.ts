@@ -213,13 +213,13 @@ export const LAZY_COMPONENTS = {
   /** Gráficos complejos - prioridad baja */
   CHARTS: {
     chunkName: 'exchange-charts',
-  // @ts-expect-error
+  // @ts-expect-error TODO: fix dynamic import type
     import: () => import('@/components/contabilidad/exchange-intelligence/exchange-charts'),
   },
   /** Simulador de escenarios - prioridad media */
   SIMULATOR: {
     chunkName: 'scenario-simulator',
-  // @ts-expect-error
+  // @ts-expect-error TODO: fix dynamic import type
     import: () => import('@/components/contabilidad/exchange-intelligence/scenario-simulator'),
   },
 };

@@ -9,9 +9,69 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import { clearCache } from "@/lib/services/periodo-contable-guard";
 
+vi.hoisted(() => {});
+
+// Mock estático compartido: como los actions importan prisma con imports
+// absolutos, un mock de módulo asegura que no haya acceso a la DB real.
+const prismaShared = vi.hoisted(() => ({
+	periodoContable: { findFirst: vi.fn() },
+	producto: { findUnique: vi.fn() },
+	vendor: { findUnique: vi.fn() },
+	servicios: { findUnique: vi.fn(), findMany: vi.fn(), findFirst: vi.fn() },
+	cliente: { findFirst: vi.fn() },
+	cuentaBancaria: { findMany: vi.fn(), findFirst: vi.fn(), update: vi.fn() },
+	anticipo: { findFirst: vi.fn(), findUnique: vi.fn() },
+	cierreContable: { findFirst: vi.fn(), create: vi.fn() },
+	inyeccionCapital: { findFirst: vi.fn(), create: vi.fn() },
+	pagoDeuda: { create: vi.fn() },
+	compraServicio: { create: vi.fn() },
+	ventaServicios: { findFirst: vi.fn(), create: vi.fn() },
+	gastoCompra: { create: vi.fn() },
+	compraProducto: { create: vi.fn() },
+	cuentaPorPagar: { create: vi.fn() },
+	tipoPago: { findFirst: vi.fn() },
+	tipoDeCaja: { findFirst: vi.fn() },
+	reconciliacionGasto: { create: vi.fn() },
+	reconciliacionServicio: { create: vi.fn() },
+	reconciliacionVenta: { create: vi.fn() },
+	transaccionMoneda: { create: vi.fn() },
+	tenantAccountingPolicy: { findUnique: vi.fn() },
+	fxEvidence: { findMany: vi.fn() },
+	stockUbicacion: { findFirst: vi.fn(), upsert: vi.fn() },
+	stockLog: { create: vi.fn() },
+	periodoCache: {
+		findUnique: vi.fn(),
+		upsert: vi.fn().mockResolvedValue({}),
+		deleteMany: vi.fn().mockResolvedValue({ count: 0 }),
+		delete: vi.fn().mockResolvedValue({}),
+	},
+	$transaction: vi.fn((cb: any) => cb({})),
+	$executeRaw: vi.fn().mockResolvedValue(undefined),
+	$queryRaw: vi.fn().mockResolvedValue([]),
+}));
+
+vi.mock("@/lib/prisma", () => ({
+	prisma: prismaShared,
+	default: prismaShared,
+}));
+
 // ── Mock shared: getCurrentUser devuelve usuario autenticado ──
 vi.mock("@/lib/server-actions/get-current-user", () => ({
 	getCurrentUser: vi.fn(),
+}));
+
+// El exchange provider se mocke para que los actions no intenten
+// resolver tasas desde el catálogo real.
+vi.mock("@/features/contabilidad/services/exchange-rate-provider", () => ({
+	exchangeRateProvider: {
+		getRateAsOf: vi.fn().mockResolvedValue(null),
+		getCurrency: vi.fn(),
+		getPrincipalCurrency: vi.fn(),
+		getLatestRate: vi.fn(),
+		getCurrentRates: vi.fn(),
+		getRateHistory: vi.fn(),
+		createRate: vi.fn(),
+	},
 }));
 
 const mockPeriodoCerrado = {
@@ -50,51 +110,23 @@ const baseUser = {
 function mockPrisma(
 	periodoMock: typeof mockPeriodoCerrado | typeof mockPeriodoAbierto | null,
 ) {
-	vi.doMock("@/lib/prisma", () => ({
-		prisma: {
-			periodoContable: {
-				findFirst: vi.fn().mockResolvedValue(periodoMock),
-			},
-			// Otros modelos necesarios para que no fallen imports
-			producto: { findUnique: vi.fn() },
-			vendor: { findUnique: vi.fn() },
-			servicios: { findUnique: vi.fn() },
-			cuentaBancaria: { findMany: vi.fn(), update: vi.fn() },
-			anticipo: { findFirst: vi.fn() },
-			cierreContable: { findFirst: vi.fn(), create: vi.fn() },
-			inyeccionCapital: { findFirst: vi.fn(), create: vi.fn() },
-			pagoDeuda: { create: vi.fn() },
-			compraServicio: { create: vi.fn() },
-			ventaServicios: { findFirst: vi.fn(), create: vi.fn() },
-			gastoCompra: { create: vi.fn() },
-			compraProducto: { create: vi.fn() },
-			cuentaPorPagar: { create: vi.fn() },
-			tipoPago: { findFirst: vi.fn() },
-			reconciliacionGasto: { create: vi.fn() },
-			stockUbicacion: { findFirst: vi.fn(), upsert: vi.fn() },
-			stockLog: { create: vi.fn() },
-			periodoCache: {
-				findUnique: vi.fn(),
-				upsert: vi.fn().mockResolvedValue({}),
-				deleteMany: vi.fn().mockResolvedValue({ count: 0 }),
-				delete: vi.fn().mockResolvedValue({}),
-			},
-			$transaction: vi.fn((cb: any) =>
-				cb({
-					compraServicio: {
-						create: vi.fn().mockResolvedValue({ compraServicioId: "cs-1" }),
-					},
-					reconciliacionGasto: { create: vi.fn() },
-					cuentaPorPagar: { create: vi.fn() },
-					gastoCompra: { create: vi.fn() },
-					compraProducto: { create: vi.fn() },
-					cuentaBancaria: { update: vi.fn() },
-					tipoPago: { findFirst: vi.fn() },
-					anticipo: { findFirst: vi.fn(), update: vi.fn() },
-				}),
-			),
+	prismaShared.periodoContable.findFirst.mockResolvedValue(periodoMock);
+	const tx = {
+		compraServicio: {
+			create: vi.fn().mockResolvedValue({ compraServicioId: "cs-1" }),
 		},
-	}));
+		reconciliacionGasto: { create: vi.fn() },
+		reconciliacionServicio: { create: vi.fn() },
+		transaccionMoneda: { create: vi.fn() },
+		tenantAccountingPolicy: { findUnique: vi.fn() },
+		anticipo: { findUnique: vi.fn() },
+		cuentaPorPagar: { create: vi.fn() },
+		gastoCompra: { create: vi.fn() },
+		compraProducto: { create: vi.fn() },
+		cuentaBancaria: { update: vi.fn(), findFirst: vi.fn(), findMany: vi.fn() },
+		tipoPago: { findFirst: vi.fn() },
+	};
+	prismaShared.$transaction.mockImplementation((cb: any) => cb(tx));
 }
 
 describe("Integración guard — auto-reconciliaciones", () => {
@@ -268,8 +300,11 @@ describe("Integración guard — auto-reconciliaciones", () => {
 				"@/features/contabilidad/actions-capital"
 			);
 			const result = await createInyeccionCapitalAction({
-				monto: 1000,
+				montoRecibido: 1000,
 				moneda: "CUP",
+				tipo: "CAPITAL_SOCIAL",
+				cuentaId: "account-1",
+				socio: "Socio fundador",
 			});
 
 			expect(result.success).toBe(false);

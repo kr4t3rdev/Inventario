@@ -1,7 +1,10 @@
 'use client';
 
 import dynamic from 'next/dynamic';
+import { useRouter } from 'next/navigation';
 import Link from 'next/link';
+import { useAuth } from '@/contexts/auth-context';
+import { canAccessAccountingItem } from '@/lib/plan-access';
 import { useState, useEffect, useCallback } from 'react';
 import { LazyMotion, m as motion, useReducedMotion } from 'framer-motion';
 import { ArrowLeft, BadgeDollarSign, Plus, RefreshCw, ArrowRightLeft } from 'lucide-react';
@@ -30,23 +33,38 @@ const TransferenciaBancariaForm = dynamic(() =>
   { loading: () => <Skeleton className="w-full h-100" /> }
 );
 
-export default function TransferenciasBancariasPage(): React.JSX.Element {
+export default function TransferenciasBancariasPage(): React.JSX.Element | null {
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
   const [isClient, setIsClient] = useState(false);
   useEffect(() => { setIsClient(true) }, []);
   const shouldReduceMotion = useReducedMotion();
+  const router = useRouter();
+  const { user, loading } = useAuth();
   const [transferenciasList, setTransferenciasList] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const isBlocked =
+    !loading &&
+    user?.role !== 'admin' &&
+    !canAccessAccountingItem(user, 'Transferencias Bancarias');
+
+  useEffect(() => {
+    if (isBlocked) {
+      router.replace('/busy/contabilidad');
+    }
+  }, [isBlocked, router]);
 
   const fetchTransferencias = useCallback(async () => {
+    if (isBlocked) {
+      setIsLoading(false)
+      return
+    }
     setIsLoading(true)
     const res = await getTransferenciasBancariasAction({})
     if (res.success) {
-  // @ts-expect-error
       setTransferenciasList(res.data.transferencias ?? [])
     }
     setIsLoading(false)
-  }, [])
+  }, [isBlocked])
 
   useEffect(() => {
     fetchTransferencias()
@@ -114,6 +132,8 @@ export default function TransferenciasBancariasPage(): React.JSX.Element {
     'relative overflow-hidden border-slate-200/60 bg-white/70 shadow-sm backdrop-blur-xl',
     'dark:border-slate-800/60 dark:bg-slate-900/10',
   );
+
+  if (isBlocked) return null;
 
   return (
         <motion.div 
@@ -190,7 +210,7 @@ export default function TransferenciasBancariasPage(): React.JSX.Element {
 
             <motion.div className="grid grid-cols-1 gap-4 md:grid-cols-3" variants={stagger}>
               <motion.div variants={fadeInUp}>
-                <Card className={cn(surfaceCardClass, "border-l-4 border-l-chart-2")}>
+                <Card className={cn(surfaceCardClass)}>
                   <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                     <CardTitle className="text-sm font-medium text-muted-foreground">
                       Monto Total CUP
@@ -209,7 +229,7 @@ export default function TransferenciasBancariasPage(): React.JSX.Element {
               </motion.div>
 
               <motion.div variants={fadeInUp}>
-                <Card className={cn(surfaceCardClass, "border-l-4 border-l-primary")}>
+                <Card className={cn(surfaceCardClass)}>
                   <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                     <CardTitle className="text-sm font-medium text-muted-foreground">
                       Monto Total USD
@@ -228,7 +248,7 @@ export default function TransferenciasBancariasPage(): React.JSX.Element {
               </motion.div>
 
               <motion.div variants={fadeInUp}>
-                <Card className={cn(surfaceCardClass, "border-l-4 border-l-accent")}>
+                <Card className={cn(surfaceCardClass)}>
                   <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                     <CardTitle className="text-sm font-medium text-muted-foreground">
                       Pendientes

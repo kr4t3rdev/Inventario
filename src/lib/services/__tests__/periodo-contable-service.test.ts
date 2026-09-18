@@ -883,6 +883,23 @@ describe("resolverPeriodoActivo", () => {
 			}),
 		);
 	});
+
+	it("acepta cualquier hora del último día cuando fechaFin está a medianoche", async () => {
+		const mensual = makePeriodo({
+			estado: EstadoPeriodo.ABIERTO,
+			fechaFin: new Date("2026-03-31T00:00:00Z"),
+		});
+		mockPrisma.periodoContable.findFirst.mockResolvedValue(mensual);
+
+		const result = await PeriodoContableService.resolverPeriodoActivo(
+			new Date("2026-03-31T18:30:00Z"),
+			TENANT,
+			TipoPeriodo.MENSUAL,
+		);
+
+		expect(result.periodo?.periodoId).toBe("p-1");
+		expect(result.esWritable).toBe(true);
+	});
 });
 
 // ── Tests: obtenerTimeline ───────────────────────────────────────────────

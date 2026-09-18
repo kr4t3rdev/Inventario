@@ -2,6 +2,9 @@ import type { Metadata } from 'next'
 
 import { getServiciosAction } from '@/features/servicios/actions'
 import { ServiciosPrestadosForm } from '@/features/servicios/components'
+import { getCurrentUser } from '@/lib/server-actions'
+import { hasPlanFeature } from '@/lib/plan-access'
+import { redirect } from 'next/navigation'
 export const metadata: Metadata = {
   title: 'Servicios Prestados',
   description: 'Registro de servicios prestados a clientes',
@@ -12,6 +15,12 @@ export const metadata: Metadata = {
  * @returns {JSX.Element} Vista de registro de servicios prestados.
  */
 export default async function ServiciosPrestadosPage() {
+  const user = await getCurrentUser()
+
+  if (user?.role !== 'admin' && !hasPlanFeature(user, 'servicios')) {
+    redirect('/busy')
+  }
+
   const serviciosResult = await getServiciosAction()
   const initialServicios = serviciosResult.success ? serviciosResult.data ?? [] : []
 

@@ -21,14 +21,18 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Skeleton } from "@/components/ui/skeleton"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
-import { ArrowUpDown, Download, FileSpreadsheet, PlusCircle, Filter, FileText, Sparkles, Loader2 } from "lucide-react"
+import { ArrowUpDown, Download, FileSpreadsheet, PlusCircle, Filter, FileText, Loader2 } from "lucide-react"
 import { formatCurrency } from "@/lib/utils"
 import type { FacturaRow } from "@/features/facturas/types"
 import { getAuthToken } from "@/lib/token"
 import { EstadoFacturaBadge } from "@/features/facturas"
 import { ActualizarEstadoFactura } from "@/features/facturas"
+import { FiscalBadge } from "./fiscal-badge"
+import { FiscalPanelDialog } from "./fiscal-panel-dialog"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Card, CardContent } from "@/components/ui/card"
+
+type FacturaRowConFiscal = { fiscalDocument?: { estado: string; uuidExterno: string | null } | null }
 
 interface FacturasContentProps {
   initialData?: {
@@ -78,6 +82,7 @@ export function FacturasContent({ initialData }: FacturasContentProps) {
   const [page, setPage] = useState(1)
   const [limit, setLimit] = useState(50)
   const [estadoFilter, setEstadoFilter] = useState<string>("ALL")
+  const [tipoFilter, setTipoFilter] = useState<string>("ALL")
   const [search, setSearch] = useState("")
   const [isPending, startTransition] = useTransition()
   const [response, setResponse] = useState<FacturasContentProps['initialData'] | null>(initialData || null)
@@ -102,7 +107,7 @@ export function FacturasContent({ initialData }: FacturasContentProps) {
       return
     }
     setIsLoading(true)
-    getFacturasAction({ page, limit, estado: estadoFilter === "ALL" ? undefined : estadoFilter, search: search || undefined })
+    getFacturasAction({ page, limit, estado: estadoFilter === "ALL" ? undefined : estadoFilter, tipoDocumento: tipoFilter === "ALL" ? undefined : tipoFilter, search: search || undefined })
       .then(r => {
         if (r.success && r.data) {
           setResponse({
@@ -112,7 +117,7 @@ export function FacturasContent({ initialData }: FacturasContentProps) {
         }
         setIsLoading(false)
       })
-  }, [page, limit, estadoFilter, search, initialData])
+  }, [page, limit, estadoFilter, tipoFilter, search, initialData])
 
   const facturas = response?.data || []
   const pagination = response?.pagination
@@ -122,6 +127,7 @@ export function FacturasContent({ initialData }: FacturasContentProps) {
   const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([])
   const [columnVisibility, setColumnVisibility] = useState<VisibilityState>({})
   const [rowSelection, setRowSelection] = useState({})
+  const [fiscalFacturaId, setFiscalFacturaId] = useState<string | null>(null)
 
   const columns: ColumnDef<FacturaRow>[] = [
     {
@@ -197,15 +203,34 @@ export function FacturasContent({ initialData }: FacturasContentProps) {
       cell: ({ row }) => <EstadoFacturaBadge estado={row.original.estado} />,
     },
     {
+      id: "fiscal",
+      header: "Fiscal",
+      cell: ({ row }) => {
+        const f = row.original as FacturaRow & FacturaRowConFiscal
+        const estado = f.fiscalDocument?.estado ?? null
+        if (!estado) return null
+        return (
+          <button
+            type="button"
+            className="text-left"
+            onClick={() => setFiscalFacturaId(f.facturaId)}
+            aria-label={"Ver documento fiscal de " + f.numeroFactura}
+          >
+            <FiscalBadge estado={estado} />
+          </button>
+        )
+      },
+    },
+    {
       id: "actions",
       header: "Acciones",
       cell: ({ row }) => {
         const factura = row.original
         return (
           <div className="flex items-center gap-2">
-            <Button variant="ghost" size="icon" asChild>
+            <Button variant="ghost" size="icon" asChild aria-label="Ver factura">
               <Link href={`/busy/invoice/print?id=${factura.facturaId}`}>
-                <FileText className="h-4 w-4" />
+                <FileText className="h-4 w-4" aria-hidden="true" />
               </Link>
             </Button>
             {factura.pdfUrl && (
@@ -249,9 +274,6 @@ export function FacturasContent({ initialData }: FacturasContentProps) {
               </motion.div>
               <div>
                 <h1 className="text-2xl font-bold bg-linear-to-r from-orange-500 to-red-600 bg-clip-text text-transparent">Facturas</h1>
-                <motion.div animate={{ rotate: 360, scale: [1, 1.2, 1] }} transition={{ rotate: { duration: 20, repeat: Infinity }, scale: { duration: 2, repeat: Infinity } }}>
-                  <Sparkles className="h-4 w-4 text-yellow-500 inline ml-1" />
-                </motion.div>
               </div>
             </motion.div>
             <div className="flex gap-2">
@@ -294,6 +316,16 @@ export function FacturasContent({ initialData }: FacturasContentProps) {
                 <SelectItem value="PAGADA">Pagada</SelectItem>
                 <SelectItem value="VENCIDA">Vencida</SelectItem>
                 <SelectItem value="CANCELADA">Cancelada</SelectItem>
+              </SelectContent>
+            </Select>
+            <Select value={tipoFilter} onValueChange={(v) => { setTipoFilter(v); setPage(1) }}>
+              <SelectTrigger className="w-[200px]">
+                <SelectValue placeholder="Tipo de documento" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="ALL">Todos los tipos</SelectItem>
+                <SelectItem value="FACTURA">Facturas</SelectItem>
+                <SelectItem value="NOTA_CREDITO">Notas de crédito</SelectItem>
               </SelectContent>
             </Select>
           </div>
@@ -355,6 +387,9 @@ export function FacturasContent({ initialData }: FacturasContentProps) {
             </div>
           )}
         </div>
+        {fiscalFacturaId !== null && (
+          <FiscalPanelDialog facturaId={fiscalFacturaId} open onOpenChange={(v) => { if (!v) setFiscalFacturaId(null) }} />
+        )}
       </SidebarInset>
     </SidebarProvider>
   )

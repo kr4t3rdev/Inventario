@@ -55,11 +55,11 @@ export function RestockDialog({ producto, trigger, onSuccess }: RestockDialogPro
               exit={{ opacity: 0, scale: 0.95, y: 20 }}
               transition={{ duration: 0.3 }}
             >
-              <DialogHeader className="p-6 pb-4 border-b bg-linear-to-r from-primary/5 to-purple-600/5">
+              <DialogHeader className="p-6 pb-4 border-b bg-linear-to-r from-primary/5 to-purple/5">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-3">
                     <motion.div 
-                      className="w-10 h-10 bg-linear-to-br from-primary to-purple-600 rounded-xl flex items-center justify-center shadow-lg"
+                      className="w-10 h-10 bg-linear-to-br from-primary to-purple rounded-xl flex items-center justify-center shadow-lg"
                       initial={{ scale: 0, rotate: -180 }}
                       animate={{ scale: 1, rotate: 0 }}
                       transition={{ type: "spring", stiffness: 200, damping: 15, delay: 0.2 }}

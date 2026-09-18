@@ -7,137 +7,33 @@ import { revalidatePath } from "next/cache";
 import { withAction, ActionError } from "@/lib/server-actions";
 import { prisma } from "@/lib/prisma";
 import { Prisma } from "@/generated/prisma";
-import { requireTenant } from "@/lib/services/tenant-scope";
+import { requireFeature, requireTenant } from "@/lib/services/tenant-scope";
 import { withPeriodValidation } from "@/lib/services/with-period-validation";
 import {
 	applyPagoGastoWorkflow,
 	isGastoWorkflowError,
 } from "@/lib/services/pago-gastos-workflow";
+import { exchangeRateProvider } from "./services/exchange-rate-provider";
+import { AuditLogService } from "@/lib/services/audit-log-service";
+import { endOfDay } from "@/lib/date-range";
 import type { AuthenticatedUser } from "@/lib/auth-middleware";
+import {
+	buildPersistedAccountingAmount,
+	validateSaleReconciliationInput,
+} from "@/features/contabilidad/services/accounting-reconciliation-service";
+import {
+	getReconciliationStats,
+} from "@/features/contabilidad/services/reconciliation-stats-service";
+import { acquireAccountingTenantLock } from "@/features/contabilidad/services/accounting-tenant-lock-service";
+import { getPayrollPaymentAmount } from "@/features/pago-salario/payroll-amounts";
 
 // ─── Stats Hub ────────────────────────────────────────────
 
 export const getReconciliacionStatsAction = withAction(
 	async (_input: void, user: AuthenticatedUser) => {
+		requireFeature(user, 'contabilidad', 'consultar el estado de reconciliación');
 		const tenantId = requireTenant(user);
-		const hoy = new Date();
-		hoy.setHours(0, 0, 0, 0);
-		const manana = new Date(hoy);
-		manana.setDate(manana.getDate() + 1);
-
-		const [vp, sp, gp, gs, gc, gvs, vh, sh, gh, montoHoy, act] =
-			await Promise.all([
-				// Pendientes: registros fuente sin reconciliación asignada
-				prisma.venta.count({
-					where: { tenantId, reconciliaciones: { none: {} } },
-				}),
-				prisma.ventaServicios.count({
-					where: { tenantId, NOT: { reconciliado: true } },
-				}),
-				prisma.gastosDE.count({
-					where: { tenantId, reconciliaciones: { none: {} } },
-				}),
-				prisma.pagosalario.count({
-					where: { tenantId, ReconciliacionGasto: { none: {} } },
-				}),
-				// CompraServicio sin reconciliar - obtener IDs reconciliados primero
-				(async () => {
-					const reconciliados = await prisma.reconciliacionGasto.findMany({
-						where: { tenantId, tipoGasto: "servicio" },
-						select: { referenciaId: true },
-						distinct: ["referenciaId"],
-					});
-					const idsReconciliados = reconciliados
-						.map((r) => r.referenciaId)
-						.filter(Boolean);
-					return prisma.compraServicio.count({
-						where: {
-							tenantId,
-							compraServicioId:
-								idsReconciliados.length > 0
-									? { notIn: idsReconciliados }
-									: undefined,
-						},
-					});
-				})(),
-				// VentaServicios con costo > 0 sin reconciliar en ReconciliacionGasto (venta_servicio)
-				(async () => {
-					const reconciliados = await prisma.reconciliacionGasto.findMany({
-						where: { tenantId, tipoGasto: "venta_servicio" },
-						select: { referenciaId: true },
-						distinct: ["referenciaId"],
-					});
-					const idsReconciliados = reconciliados
-						.map((r) => r.referenciaId)
-						.filter(Boolean);
-					return prisma.ventaServicios.count({
-						where: {
-							tenantId,
-							costo: { gt: 0 },
-							ventaServicioId:
-								idsReconciliados.length > 0
-									? { notIn: idsReconciliados }
-									: undefined,
-						},
-					});
-				})(),
-				prisma.reconciliacionVenta.count({
-					where: { fechaReconciliacion: { gte: hoy, lt: manana }, tenantId },
-				}),
-				prisma.reconciliacionServicio.count({
-					where: { fechaReconciliacion: { gte: hoy, lt: manana }, tenantId },
-				}),
-				prisma.reconciliacionGasto.count({
-					where: { fechaReconciliacion: { gte: hoy, lt: manana }, tenantId },
-				}),
-				prisma.reconciliacionVenta.aggregate({
-					where: { fechaReconciliacion: { gte: hoy, lt: manana }, tenantId },
-					_sum: { monto: true },
-				}),
-				prisma.reconciliacionVenta.findMany({
-					where: { tenantId },
-					orderBy: { fechaReconciliacion: "desc" },
-					take: 10,
-					select: {
-						reconciliacionId: true,
-						monto: true,
-						moneda: true,
-						fechaReconciliacion: true,
-						observaciones: true,
-						cuentaBancaria: { select: { nombreBanco: true } },
-					},
-				}),
-			]);
-
-		const gastosPendientes = gp + gs + gc + gvs;
-
-		const totalHoy = Math.max(vh + vp, sh + sp, gh + gastosPendientes, 1);
-		return {
-			modules: {
-				ventas: { pending: vp, completedToday: vh, totalToday: vh + vp },
-				servicios: { pending: sp, completedToday: sh, totalToday: sh + sp },
-				gastos: {
-					pending: gastosPendientes,
-					completedToday: gh,
-					totalToday: gh + gastosPendientes,
-				},
-			},
-			stats: {
-				totalPending: vp + sp + gastosPendientes,
-				completedToday: vh + sh + gh,
-				reconciledAmount: Number(montoHoy._sum.monto ?? 0),
-				efficiency: Math.round(((vh + sh + gh) / totalHoy) * 100),
-			},
-			recentActivity: act.map((a: any) => ({
-				id: a.reconciliacionId,
-				type: "venta",
-				reference: a.reconciliacionId.slice(0, 8),
-				description: a.observaciones || "Venta reconciliada",
-				accountName: a.cuentaBancaria?.nombreBanco || "Sin cuenta",
-				amount: Number(a.monto),
-				date: a.fechaReconciliacion.toISOString(),
-			})),
-		};
+		return getReconciliationStats({ tenantId });
 	},
 );
 
@@ -154,13 +50,28 @@ export const getVentasPendientesAction = withAction(
 		} = {},
 		user: AuthenticatedUser,
 	) => {
+		requireFeature(user, 'contabilidad', 'consultar reconciliación de ventas');
 		const tenantId = requireTenant(user);
 		const page = params.page || 1;
 		const limit = Math.min(200, params.limit || 50);
 		const skip = (page - 1) * limit;
 
 		// Build WHERE clause for raw SQL
-		const whereParts: Prisma.Sql[] = [Prisma.sql`v."tenantId" = ${tenantId}`];
+		const whereParts: Prisma.Sql[] = [
+			Prisma.sql`v."tenantId" = ${tenantId}`,
+			Prisma.sql`v."deletedAt" IS NULL`,
+			Prisma.sql`NOT EXISTS (
+				SELECT 1
+				FROM "facturas" f
+				JOIN "CuentaPorCobrar" cxc ON cxc."facturaId" = f."idFactura"
+				WHERE f."ventaId" = v."ventaId"
+					AND cxc."tenantId" = ${tenantId}
+					AND cxc."estado" IN (
+						${`PENDIENTE`}::"EstadoCuentaPorCobrar",
+						${`PARCIAL`}::"EstadoCuentaPorCobrar"
+					)
+			)`,
+		];
 		if (params.fechaInicio)
 			whereParts.push(
 				Prisma.sql`v."createdAt" >= ${new Date(params.fechaInicio)}`,
@@ -245,9 +156,9 @@ export const getVentasPendientesAction = withAction(
 
 		// Step 2: Fetch full venta records with includes
 		const ventasRaw = await prisma.venta.findMany({
-			where: { ventaId: { in: ventaIds } },
+			where: { ventaId: { in: ventaIds }, deletedAt: null },
 			include: {
-				cliente: { select: { nombre: true } },
+				cliente: { select: { clienteId: true, nombre: true } },
 				puntoDeVenta: { select: { nombre: true } },
 			},
 		});
@@ -289,6 +200,7 @@ export const getHistorialReconciliacionVentasAction = withAction(
 		} = {},
 		user: AuthenticatedUser,
 	) => {
+		requireFeature(user, 'contabilidad', 'consultar historial de reconciliación de ventas');
 		const tenantId = requireTenant(user);
 		const where: any = { tenantId };
 		if (params.cuentaId) where.cuentaId = params.cuentaId;
@@ -359,48 +271,72 @@ export const reconciliarVentaAction = withAction(
 				tipoPagoId: string;
 				monto: number;
 				moneda?: string;
+				tasaCambio?: number;
 				fechaReconciliacion?: string;
 				observaciones?: string;
 			},
 			user: AuthenticatedUser,
 		) => {
+			requireFeature(user, 'contabilidad', 'reconciliar ventas');
 			const tenantId = requireTenant(user);
+			validateSaleReconciliationInput(input);
+			const fechaReconciliacion = input.fechaReconciliacion
+				? new Date(input.fechaReconciliacion)
+				: new Date();
+			let fxCatalogRateId: string | null = null;
+			if ((input.moneda || 'CUP').trim().toUpperCase() !== 'CUP') {
+				try {
+					const rate = await exchangeRateProvider.getRateAsOf({
+						sourceCurrency: input.moneda || 'CUP',
+						boundaryAt: fechaReconciliacion,
+					});
+					fxCatalogRateId = rate?.tasaId ?? null;
+				} catch {
+					fxCatalogRateId = null;
+				}
+			}
+			const conversion = buildPersistedAccountingAmount(
+				input.monto,
+				input.moneda || 'CUP',
+				input.tasaCambio,
+				fechaReconciliacion,
+				fxCatalogRateId,
+			);
 
 			const result = await prisma.$transaction(async (tx) => {
-				// Incrementar saldo de la cuenta bancaria (ingreso por venta)
-				await tx.cuentaBancaria.update({
-					where: { cuentaId: input.cuentaId },
-					data: { saldo: { increment: input.monto } },
-				});
-
-				const reconciliacion = await tx.reconciliacionVenta.create({
-					data: {
-						ventaId: input.ventaId,
-						cuentaId: input.cuentaId,
-						tipoPagoId: input.tipoPagoId,
-						monto: input.monto,
-						moneda: input.moneda || "CUP",
-						fechaReconciliacion: input.fechaReconciliacion
-							? new Date(input.fechaReconciliacion)
-							: new Date(),
-						observaciones: input.observaciones,
-						tenantId,
-						reconciliadoPor: user.userId,
-					},
-				});
-
-				// Actualizar estado de CuentaPorCobrar asociada
-				// Resolver Venta → Factura para buscar CxC por facturaId correcto
+				await acquireAccountingTenantLock(tx, tenantId);
+				// Re-read the sale and its receivable while holding the transaction.
+				// Cancellation claims deletedAt atomically, so this prevents a late
+				// reconciliation from reactivating an annulled CxC or bank balance.
+				if (tx.$queryRaw) {
+					await tx.$queryRaw`
+						SELECT 1 FROM "Venta"
+						WHERE "ventaId" = ${input.ventaId}
+						  AND "tenantId" = ${tenantId}
+						FOR UPDATE
+					`;
+				}
 				const ventaWithFactura = await tx.venta.findUnique({
 					where: { ventaId: input.ventaId },
-					select: { factura: { select: { idFactura: true } } },
+					select: {
+						tenantId: true,
+						deletedAt: true,
+						factura: { select: { idFactura: true } },
+					},
 				});
-				const facturaIdReal = ventaWithFactura?.factura?.idFactura;
+				if (!ventaWithFactura || ventaWithFactura.tenantId !== tenantId) {
+					throw new ActionError('Venta no encontrada', 'NOT_FOUND');
+				}
+				if (ventaWithFactura.deletedAt) {
+					throw new ActionError('La venta ya está anulada', 'VALIDATION_ERROR');
+				}
+
+				const facturaIdReal = ventaWithFactura.factura?.idFactura;
 				const cuentaPorCobrar = await tx.cuentaPorCobrar.findFirst({
 					where: {
 						OR: [
-							{ facturaId: input.ventaId }, // legacy: algunas CxC tienen ventaId en facturaId
-							...(facturaIdReal ? [{ facturaId: facturaIdReal }] : []), // correcto: Factura.idFactura
+							{ facturaId: input.ventaId },
+							...(facturaIdReal ? [{ facturaId: facturaIdReal }] : []),
 						],
 						tenantId,
 					},
@@ -409,6 +345,67 @@ export const reconciliarVentaAction = withAction(
 						montoDeuda: true,
 						montoPagado: true,
 						estado: true,
+					},
+				});
+				if (cuentaPorCobrar?.estado === 'ANULADA') {
+					throw new ActionError('La venta ya está anulada', 'VALIDATION_ERROR');
+				}
+
+				if (tx.$queryRaw) {
+					await tx.$queryRaw`
+						SELECT 1 FROM "CuentaBancaria"
+						WHERE "cuentaId" = ${input.cuentaId}
+						  AND "tenantId" = ${tenantId}
+						FOR UPDATE
+					`;
+					await tx.$queryRaw`
+						SELECT 1 FROM "TipoPago"
+						WHERE "tipoId" = ${input.tipoPagoId}
+						  AND "tenantId" = ${tenantId}
+						FOR UPDATE
+					`;
+				}
+				const cuentaBancaria = await tx.cuentaBancaria.findFirst({
+					where: { cuentaId: input.cuentaId, tenantId },
+					select: { cuentaId: true, isActive: true },
+				});
+				if (!cuentaBancaria || !cuentaBancaria.isActive) {
+					throw new ActionError(
+						'Cuenta bancaria no encontrada o inactiva',
+						'NOT_FOUND',
+					);
+				}
+				const tipoPago = await tx.tipoPago.findFirst({
+					where: { tipoId: input.tipoPagoId, tenantId },
+					select: { tipoId: true, isActive: true },
+				});
+				if (!tipoPago || !tipoPago.isActive) {
+					throw new ActionError('Tipo de pago no encontrado o inactivo', 'NOT_FOUND');
+				}
+
+				// Incrementar saldo de la cuenta bancaria (ingreso por venta)
+				const saldoActualizado = await tx.cuentaBancaria.updateMany({
+					where: { cuentaId: input.cuentaId, tenantId },
+					data: { saldo: { increment: input.monto } },
+				});
+				if (saldoActualizado.count !== 1) {
+					throw new ActionError('Cuenta bancaria no encontrada', 'NOT_FOUND');
+				}
+
+				const reconciliacion = await tx.reconciliacionVenta.create({
+					data: {
+						ventaId: input.ventaId,
+						cuentaId: input.cuentaId,
+						tipoPagoId: input.tipoPagoId,
+						monto: input.monto,
+						moneda: input.moneda || "CUP",
+						montoConvertido: conversion.montoConvertido,
+						tasaCambio: conversion.tasaCambio,
+						fechaReconciliacion,
+						...(conversion.fxEvidence ?? {}),
+						observaciones: input.observaciones,
+						tenantId,
+						reconciliadoPor: user.userId,
 					},
 				});
 
@@ -434,7 +431,7 @@ export const reconciliarVentaAction = withAction(
 
 					if (nuevoEstado !== cuentaPorCobrar.estado) {
 						await tx.cuentaPorCobrar.updateMany({
-							where: { idCC: cuentaPorCobrar.idCC },
+							where: { idCC: cuentaPorCobrar.idCC, tenantId },
 							data: {
 								estado: nuevoEstado,
 								montoPagado: totalPagado,
@@ -445,6 +442,21 @@ export const reconciliarVentaAction = withAction(
 
 				return reconciliacion;
 			});
+
+			AuditLogService.log({
+				accion: "CREATE",
+				entidad: "RECONCILIACION",
+				entidadId: result.reconciliacionId,
+				usuarioId: user.userId,
+				detalles: {
+					tipo: "VENTA",
+					ventaId: input.ventaId,
+					cuentaId: input.cuentaId,
+					tipoPagoId: input.tipoPagoId,
+					monto: input.monto,
+					moneda: input.moneda || "CUP",
+				},
+			}).catch((err) => console.error("[AuditLog] Error logging reconciliacion venta:", err));
 
 			revalidatePath("/busy/contabilidad/reconciliacion");
 			revalidatePath("/busy/contabilidad/cuentas-por-cobrar");
@@ -466,6 +478,7 @@ export const getServiciosPendientesAction = withAction(
 		} = {},
 		user: AuthenticatedUser,
 	) => {
+		requireFeature(user, 'servicios', 'consultar reconciliación de servicios');
 		const tenantId = requireTenant(user);
 		const where: any = {
 			tenantId,
@@ -521,6 +534,7 @@ export const getHistorialReconciliacionServiciosAction = withAction(
 		} = {},
 		user: AuthenticatedUser,
 	) => {
+		requireFeature(user, 'servicios', 'consultar historial de reconciliación de servicios');
 		const tenantId = requireTenant(user);
 		const where: any = { tenantId };
 		if (params.cuentaId) where.cuentaId = params.cuentaId;
@@ -568,12 +582,14 @@ export const reconciliarServicioAction = withAction(
 					tipoPagoId: string;
 					monto: number;
 					moneda?: string;
+					tasaCambio?: number;
 					observaciones?: string;
 				}>;
 				fechaReconciliacion?: string;
 			},
 			user: AuthenticatedUser,
 		) => {
+			requireFeature(user, 'servicios', 'reconciliar servicios');
 			const tenantId = requireTenant(user);
 
 			if (!input.distribuciones?.length) {
@@ -584,6 +600,7 @@ export const reconciliarServicioAction = withAction(
 			}
 
 			const result = await prisma.$transaction(async (tx) => {
+				await acquireAccountingTenantLock(tx, tenantId);
 				// Verificar el total del servicio
 				const servicio = await tx.ventaServicios.findUnique({
 					where: { ventaServicioId: input.ventaServicioId },
@@ -614,6 +631,29 @@ export const reconciliarServicioAction = withAction(
 						data: { saldo: { increment: dist.monto } },
 					});
 
+					const fechaDistribucion = input.fechaReconciliacion
+						? new Date(input.fechaReconciliacion)
+						: new Date();
+					let distRateId: string | null = null;
+					if ((dist.moneda || 'CUP').trim().toUpperCase() !== 'CUP') {
+						try {
+							const rate = await exchangeRateProvider.getRateAsOf({
+								sourceCurrency: dist.moneda || 'CUP',
+								boundaryAt: fechaDistribucion,
+							});
+							distRateId = rate?.tasaId ?? null;
+						} catch {
+							distRateId = null;
+						}
+					}
+					const conversion = buildPersistedAccountingAmount(
+						dist.monto,
+						dist.moneda || 'CUP',
+						dist.tasaCambio,
+						fechaDistribucion,
+						distRateId,
+					);
+
 					await tx.reconciliacionServicio.create({
 						data: {
 							ventaServicioId: input.ventaServicioId,
@@ -621,9 +661,10 @@ export const reconciliarServicioAction = withAction(
 							tipoPagoId: dist.tipoPagoId,
 							monto: dist.monto,
 							moneda: dist.moneda || "CUP",
-							fechaReconciliacion: input.fechaReconciliacion
-								? new Date(input.fechaReconciliacion)
-								: new Date(),
+							montoConvertido: conversion.montoConvertido,
+							tasaCambio: conversion.tasaCambio,
+							fechaReconciliacion: fechaDistribucion,
+							...(conversion.fxEvidence ?? {}),
 							observaciones: dist.observaciones,
 							tenantId,
 							reconciliadoPor: user.userId,
@@ -642,6 +683,19 @@ export const reconciliarServicioAction = withAction(
 					distribuciones: input.distribuciones.length,
 				};
 			});
+
+			AuditLogService.log({
+				accion: "CREATE",
+				entidad: "RECONCILIACION",
+				entidadId: `SERV-${input.ventaServicioId}`,
+				usuarioId: user.userId,
+				detalles: {
+					tipo: "SERVICIO",
+					ventaServicioId: input.ventaServicioId,
+					distribuciones: input.distribuciones,
+					moneda: "CUP",
+				},
+			}).catch((err) => console.error("[AuditLog] Error logging reconciliacion servicio:", err));
 
 			revalidatePath("/busy/contabilidad/reconciliacion");
 			revalidatePath("/busy/contabilidad");
@@ -664,6 +718,7 @@ export const getGastosPendientesAction = withAction(
 		} = {},
 		user: AuthenticatedUser,
 	) => {
+		requireFeature(user, 'contabilidad', 'consultar reconciliación de gastos');
 		const tenantId = requireTenant(user);
 
 		// ── Query GastosDE ──
@@ -674,18 +729,26 @@ export const getGastosPendientesAction = withAction(
 			if (params.fechaDesde)
 				whereDE.createdAt.gte = new Date(params.fechaDesde);
 			if (params.fechaHasta)
-				whereDE.createdAt.lte = new Date(params.fechaHasta);
+					whereDE.createdAt.lte = endOfDay(params.fechaHasta);
 		}
 
 		// ── Query GastoCompra (compras de productos) ──
-		const whereGC: any = { tenantId, deletedAt: null };
+		const whereGC: any = {
+			tenantId,
+			deletedAt: null,
+			NOT: {
+				cuentaPorPagar: {
+					is: { estado: { in: ['PENDIENTE', 'PARCIAL'] } },
+				},
+			},
+		};
 		if (params.soloNoReconciliados) whereGC.reconciliaciones = { none: {} };
 		if (params.fechaDesde || params.fechaHasta) {
 			whereGC.fechaCompra = {};
 			if (params.fechaDesde)
 				whereGC.fechaCompra.gte = new Date(params.fechaDesde);
 			if (params.fechaHasta)
-				whereGC.fechaCompra.lte = new Date(params.fechaHasta);
+					whereGC.fechaCompra.lte = endOfDay(params.fechaHasta);
 		}
 
 		// ── Query PagoSalario (salarios de empleados) ──
@@ -696,7 +759,7 @@ export const getGastosPendientesAction = withAction(
 			if (params.fechaDesde)
 				wherePS.createdAt.gte = new Date(params.fechaDesde);
 			if (params.fechaHasta)
-				wherePS.createdAt.lte = new Date(params.fechaHasta);
+					wherePS.createdAt.lte = endOfDay(params.fechaHasta);
 		}
 
 		// ── Query CompraServicio (servicios recibidos de proveedores) ──
@@ -706,7 +769,7 @@ export const getGastosPendientesAction = withAction(
 			if (params.fechaDesde)
 				whereCS.fechaServicio.gte = new Date(params.fechaDesde);
 			if (params.fechaHasta)
-				whereCS.fechaServicio.lte = new Date(params.fechaHasta);
+					whereCS.fechaServicio.lte = endOfDay(params.fechaHasta);
 		}
 
 		// ── Query VentaServicios (costo de servicios vendidos) ──
@@ -716,7 +779,7 @@ export const getGastosPendientesAction = withAction(
 			if (params.fechaDesde)
 				whereVS.createdAt.gte = new Date(params.fechaDesde);
 			if (params.fechaHasta)
-				whereVS.createdAt.lte = new Date(params.fechaHasta);
+					whereVS.createdAt.lte = endOfDay(params.fechaHasta);
 		}
 
 		const page = params.page || 1;
@@ -842,7 +905,12 @@ export const getGastosPendientesAction = withAction(
 				descripcion:
 					`Salario de ${g.empleado?.nombre || ""} ${g.empleado?.apellido || ""}`.trim() ||
 					`Pago #${g.pgId.slice(0, 8)}`,
-				monto: Number(g.salario || 0),
+				monto: getPayrollPaymentAmount({
+					salario: Number(g.salario || 0),
+					bonificaciones: Number(g.bonificaciones || 0),
+					deducciones: Number(g.deducciones || 0),
+					montoHorasExtras: Number(g.montoHorasExtras || 0),
+				}),
 				periodo: g.periodo || undefined,
 				detalles: {
 					empleado: g.empleado
@@ -855,7 +923,8 @@ export const getGastosPendientesAction = withAction(
 					salarioBases: g.salario || undefined,
 					bonificaciones: g.bonificaciones || undefined,
 					deducciones: g.deducciones || undefined,
-					horasExtras: g.horasExtras || undefined,
+					horasExtras: (g.horasExtrasHoras ?? g.horasExtras) || undefined,
+					montoHorasExtras: g.montoHorasExtras || undefined,
 				},
 				createdAt: g.createdAt.toISOString(),
 				updatedAt: g.updatedAt.toISOString(),
@@ -922,6 +991,7 @@ export const getHistorialReconciliacionGastosAction = withAction(
 		} = {},
 		user: AuthenticatedUser,
 	) => {
+		requireFeature(user, 'contabilidad', 'consultar historial de reconciliación de gastos');
 		const tenantId = requireTenant(user);
 		const where: any = { tenantId };
 		if (params.cuentaId) where.cuentaId = params.cuentaId;
@@ -957,12 +1027,17 @@ export const getHistorialReconciliacionGastosAction = withAction(
 
 export const reconciliarGastoAction = withAction(
 	withPeriodValidation(
-		(input) =>
-			input.fechaReconciliacion
-				? new Date(input.fechaReconciliacion)
-				: new Date(),
+		(input) => {
+			if (input.fechaReconciliacion) return new Date(input.fechaReconciliacion);
+			if (input.periodo && /^\d{4}-\d{2}$/.test(input.periodo)) {
+				const [year, month] = input.periodo.split("-").map(Number);
+				if (month >= 1 && month <= 12) return new Date(Date.UTC(year, month - 1, 1));
+			}
+			return new Date();
+		},
 		async (
 			input: {
+				gastosDEId?: string;
 				gastoCompraId?: string;
 				pgId?: string;
 				compraServicioId?: string;
@@ -972,6 +1047,7 @@ export const reconciliarGastoAction = withAction(
 				monto: number;
 				moneda?: string;
 				fechaReconciliacion?: string;
+				periodo?: string;
 				descripcion?: string;
 				cuentaPorPagarId?: string;
 				distribucion?: Array<{
@@ -987,29 +1063,81 @@ export const reconciliarGastoAction = withAction(
 			},
 			user: AuthenticatedUser,
 		) => {
+			requireFeature(user, 'contabilidad', 'reconciliar gastos');
 			const tenantId = requireTenant(user);
+			const fechaPago = input.fechaReconciliacion ??
+				(input.periodo && /^\d{4}-\d{2}$/.test(input.periodo)
+					? `${input.periodo}-01T00:00:00.000Z`
+					: undefined);
 
 			const referenciaId =
+				input.gastosDEId ||
 				input.pgId ||
 				input.gastoCompraId ||
 				input.compraServicioId ||
 				input.ventaServicioId;
 			if (!referenciaId)
 				throw new Error("Se requiere referencia del gasto para pagar");
+			const explicitSourceIds = [
+				input.gastosDEId,
+				input.pgId,
+				input.gastoCompraId,
+				input.compraServicioId,
+				input.ventaServicioId,
+			].filter(Boolean);
+			if (
+				explicitSourceIds.length > 1 ||
+				(explicitSourceIds.length === 1 && (input as any).referenciaId && (input as any).referenciaId !== explicitSourceIds[0])
+			) {
+				throw new ActionError(
+					"Debe proporcionar exactamente una referencia de gasto",
+					"VALIDATION_ERROR",
+				);
+			}
 
+			const esGastoDE = !!input.gastosDEId;
 			const esVentaServicio = !!input.ventaServicioId;
 			const esServicio = !!input.compraServicioId;
 			const esSalario = !!input.pgId;
-			const tipoGasto = esVentaServicio
-				? ("venta_servicio" as const)
-				: esServicio
-					? ("servicio" as const)
-					: esSalario
-						? ("salario" as const)
-						: ("compra" as const);
+			const tipoGasto = esGastoDE
+				? ("gastoDE" as const)
+				: esVentaServicio
+					? ("venta_servicio" as const)
+					: esServicio
+						? ("servicio" as const)
+						: esSalario
+							? ("salario" as const)
+							: ("compra" as const);
 
 			try {
 				const result = await prisma.$transaction(async (tx) => {
+					await acquireAccountingTenantLock(tx, tenantId);
+					if (esServicio) {
+						// Serialize against CompraServicio deletion so a late payment cannot
+						// recreate reconciliation effects after the row is claimed.
+						if (tx.$queryRaw) {
+							await tx.$queryRaw`
+								SELECT 1 FROM "CompraServicio"
+								WHERE "compraServicioId" = ${referenciaId}
+								  AND "tenantId" = ${tenantId}
+								FOR UPDATE
+							`;
+						}
+						const servicio = await tx.compraServicio?.findUnique({
+							where: { compraServicioId: referenciaId },
+							select: { compraServicioId: true, tenantId: true, estado: true },
+						});
+						if (!servicio || servicio.tenantId !== tenantId) {
+							throw new ActionError('Servicio recibido no encontrado', 'NOT_FOUND');
+						}
+						if (servicio.estado === 'ELIMINANDO') {
+							throw new ActionError(
+								'El servicio recibido ya fue eliminado',
+								'ALREADY_DELETED',
+							);
+						}
+					}
+
 					const distribucion =
 						input.distribucion && input.distribucion.length > 0
 							? input.distribucion.map((d) => ({
@@ -1032,16 +1160,41 @@ export const reconciliarGastoAction = withAction(
 						tasaCambio: input.distribucion?.[0]?.tasaCambio,
 						observaciones:
 							input.distribucion?.[0]?.observaciones || input.descripcion,
+						periodo: input.periodo,
+						fechaPago,
 						estado: "PAGADA",
 						cuentaPorPagarId: input.cuentaPorPagarId,
 						numeroTransaccion:
 							input.distribucion?.[0]?.numeroTransaccion,
 						pgId: input.pgId,
+						gastosDEId: input.gastosDEId,
 						gastoCompraId: input.gastoCompraId,
 						tipoPagoId: input.tipoPagoId,
 						distribucion,
 					});
 				});
+
+				const auditReferenciaId =
+					input.gastosDEId ||
+					input.pgId ||
+					input.gastoCompraId ||
+					input.compraServicioId ||
+					input.ventaServicioId;
+
+				AuditLogService.log({
+					accion: "CREATE",
+					entidad: "RECONCILIACION",
+					entidadId: (result as any)?.reconciliacionId || `GASTO-${auditReferenciaId}`,
+					usuarioId: user.userId,
+					detalles: {
+						tipo: tipoGasto,
+						referenciaId: auditReferenciaId,
+						cuentaId: input.cuentaId,
+						tipoPagoId: input.tipoPagoId,
+						monto: input.monto,
+						moneda: input.moneda || "CUP",
+					},
+				}).catch((err) => console.error("[AuditLog] Error logging reconciliacion gasto:", err));
 
 				revalidatePath("/busy/contabilidad/reconciliacion");
 				if (input.cuentaPorPagarId) {

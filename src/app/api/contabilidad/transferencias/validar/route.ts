@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server'
 import prisma from '@/lib/prisma'
 import { z } from 'zod'
+import { authenticateUser } from '@/lib/auth-middleware'
+import { canAccessAccountingItem } from '@/lib/plan-access'
 
 // Schema for validating a bank transfer
 const validarTransferenciaSchema = z.object({
@@ -14,6 +16,14 @@ const validarTransferenciaSchema = z.object({
 // POST /api/contabilidad/transferencias/validar - Validate transfer before execution
 export async function POST(request: NextRequest) {
   try {
+    const authResultUser = await authenticateUser(request)
+    if ('status' in authResultUser) return authResultUser as Response
+    const user = authResultUser.user
+
+    if (user.role !== 'admin' && !canAccessAccountingItem(user, 'Transferencias Bancarias')) {
+      return NextResponse.json({ error: 'Prohibido' }, { status: 403 })
+    }
+
     const body = await request.json()
     const validatedData = validarTransferenciaSchema.parse(body)
 

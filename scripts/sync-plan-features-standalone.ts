@@ -1,6 +1,8 @@
 /**
- * @description Sincroniza los features de Plan y TenantLicense con la
- * definición canónica. Versión autocontenida (no depende de imports del seed).
+ * @description Sincroniza solo `Plan.features` con la definición canónica.
+ * Versión autocontenida (no depende de imports del seed).
+ *
+ * Importante: NO toca `TenantLicense.features`; ese campo quedó legacy.
  *
  * Ejecutar: npx tsx scripts/sync-plan-features-standalone.ts
  */
@@ -23,7 +25,7 @@ const PLAN_BASICO_FEATURES: Record<string, boolean> = {
   mermas: true,
   'ventas-pos': true,
   'ventas-factura': false,
-  'turnos-pos': false,
+  'turnos-pos': true,
   'arqueo-caja': true,
   'cuadre-diario': false,
   ofertas: false,
@@ -32,12 +34,13 @@ const PLAN_BASICO_FEATURES: Record<string, boolean> = {
   'series-facturacion': false,
   proveedores: true,
   compras: true,
-  servicios: true,
+  servicios: false,
   gastos: true,
   contabilidad: true,
   'multi-moneda': false,
   'rentabilidad-compra': true,
-  'reportes-financieros': false,
+  'inyeccion-capital': false,
+  'reportes-financieros': true,
   'cuentas-cobrar': false,
   'cuentas-pagar': false,
   'prestamos-cash': false,
@@ -47,8 +50,10 @@ const PLAN_BASICO_FEATURES: Record<string, boolean> = {
   'facturas-vencidas': false,
   produccion: false,
   reparaciones: false,
-  empleados: false,
+  empleados: true,
   nomina: false,
+  vacaciones: false,
+  asistencia: false,
   'mi-empresa': true,
   'mi-empresa-ean13': false,
   contratos: false,
@@ -71,7 +76,9 @@ const PLAN_PROFESIONAL_FEATURES: Record<string, boolean> = {
   clientes: true,
   facturacion: true,
   'series-facturacion': true,
+  'ventas-factura': true,
   'multi-moneda': true,
+  servicios: true,
   'reportes-financieros': true,
   empleados: true,
   notificaciones: true,
@@ -86,8 +93,12 @@ const PLAN_EMPRESARIAL_FEATURES: Record<string, boolean> = {
   'ventas-factura': true,
   produccion: true,
   nomina: true,
+  vacaciones: true,
+  asistencia: true,
   'mi-empresa-ean13': true,
   contratos: true,
+  multitenantmembership: true,
+  'inyeccion-capital': true,
   'cuentas-cobrar': true,
   'cuentas-pagar': true,
   'prestamos-cash': true,
@@ -124,17 +135,10 @@ async function main() {
       data: { features: canonicalFeatures },
     });
 
-    const updatedLicenses = await prisma.tenantLicense.updateMany({
-      where: { planId: plan.planId },
-      data: { features: canonicalFeatures },
-    });
-
-    console.log(
-      `✓ ${plan.nombre}: plan sincronizado y ${updatedLicenses.count} licencia(s) actualizada(s).`,
-    );
+    console.log(`✓ ${plan.nombre}: Plan.features sincronizado.`);
   }
 
-  console.log('✅ Features de planes y licencias sincronizados.');
+  console.log('✅ Plan.features sincronizado con la definición canónica.');
 }
 
 main()

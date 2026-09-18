@@ -8,29 +8,32 @@ import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Badge } from "@/components/ui/badge"
+import { Label } from "@/components/ui/label"
 import { Skeleton } from "@/components/ui/skeleton"
+import { ReportErrorState } from "./report-error-state"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { CalendarIcon, TrendingUpIcon, TrendingDownIcon, FileIcon as FilePdf, FileText, DollarSign, Package, Calendar } from "lucide-react"
 import { format, subDays, startOfDay, endOfDay } from "date-fns"
-import { exportToCsv } from "@/lib/export-utils"
+import { exportToCsv, exportToPdf } from "@/lib/export-utils"
 import { flattenVentas } from "@/lib/ventas-utils"
-import { cn } from "@/lib/utils"
+import { cn, formatCurrency } from "@/lib/utils"
 import { getProductDisplayIdentifier } from "@/lib/product-display-utils"
+import { ingresosServiciosFuncional, sumarServiciosPorMoneda } from "@/features/reportes-financieros/lib/venta-servicios-moneda"
+import { calcularCostoTotalDia, calcularDevolucionesNetas, calcularTicketPromedio, contarVentasDistintas } from "@/features/reportes-financieros/lib/venta-diaria-stats"
+import type { VentaDocStats } from "@/features/reportes-financieros/lib/venta-diaria-stats"
 import jsPDF from 'jspdf'
 import 'jspdf-autotable'
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, AreaChart, Area } from "recharts"
 import { AnimatedCard, StaggerContainer, StaggerItem } from "@/components/ui/animations"
 
-const surfaceCardClass = cn(
-  "relative overflow-hidden border-slate-200/60 bg-white/70 shadow-sm backdrop-blur-xl",
-  "dark:border-slate-800/60 dark:bg-slate-900/10",
-)
 
 /**
  * @description Módulo de análisis de venta diaria con métricas, comparación y detalle de transacciones.
  * @returns {JSX.Element} Vista principal del reporte diario de ventas.
  */
+
+import { SURFACE_CARD_CLASS, CHART_COLOR_POSITIVE } from "@/features/reportes-financieros/lib/reporte-styles"
 
 export function ReporteVentaDiaria() {
    const shouldReduceMotion = useReducedMotion()
@@ -45,9 +48,10 @@ export function ReporteVentaDiaria() {
    const [detallesDia, setDetallesDia] = useState<any[]>([])
    const [fechaDetalle, setFechaDetalle] = useState<string>('')
 
-   const { ventas, isLoading: isLoadingVentas } = useVentas()
-  const { ventaServicios } = useVentaServicios()
-  // @ts-expect-error
+   const { ventas, isLoading: isLoadingVentas, error: ventasError } = useVentas()
+  const { ventaServicios, error: serviciosError } = useVentaServicios()
+  const reportError = ventasError ?? serviciosError
+  // @ts-expect-error flattenVentas espera el tipo global de Venta; useVentas expone una variante filtrada
   const ventasLineas = useMemo(() => flattenVentas(ventas), [ventas])
 
   // Helper function para crear fecha local
@@ -87,15 +91,32 @@ export function ReporteVentaDiaria() {
 
   // Calcular estadísticas del día
   const estadisticasDelDia = useMemo(() => {
-    const totalVentas = ventasDelDia.length
+    // "Total de Ventas" cuenta documentos de venta, no líneas de detalle (D-1).
+    const totalVentas = contarVentasDistintas(ventasDelDia)
     const totalServicios = serviciosDelDia.length
     const totalProductosVendidos = ventasDelDia.reduce((sum, venta) => sum + venta.cantidad, 0)
     const ingresosBrutosVentas = ventasDelDia.reduce((sum, venta) => sum + (venta.totalLinea || 0), 0)
-    const ingresosBrutosServicios = serviciosDelDia.reduce((sum, servicio) => sum + servicio.total, 0)
+    // Los productos se valoran en moneda funcional (CUP): solo se suman los
+    // servicios en CUP para no mezclar USD/MLC en el total de ingresos.
+    const serviciosPorMoneda = sumarServiciosPorMoneda(serviciosDelDia)
+    const ingresosBrutosServicios = serviciosPorMoneda['CUP'] ?? 0
+    const ingresosServiciosExtranjeros = Object.fromEntries(
+      Object.entries(serviciosPorMoneda).filter(([moneda]) => moneda !== 'CUP')
+    )
     const ingresosBrutos = ingresosBrutosVentas + ingresosBrutosServicios
     const descuentos = ventasDelDia.reduce((sum, venta) => sum + (venta.descuento || 0), 0)
-    const ingresosNetos = ingresosBrutos - descuentos
-    const costoTotal = ventasDelDia.reduce((sum, venta) => sum + (venta.cantidad * (venta.producto?.precioCosto || 0)), 0)
+    // Las notas de crédito REGISTRADAS netean el día (par convención DNC/FIFO del
+    // costo): sin neteo, devoluciones parciales inflarían la ganancia (M-1).
+    const ventasDocDelDia = ventas.filter((v) => {
+      const fv = new Date(v.createdAt)
+      const fecha = crearFechaLocal(fechaSeleccionada)
+      return fv >= startOfDay(fecha) && fv <= endOfDay(fecha)
+    })
+    const devolucionesNetas = calcularDevolucionesNetas(ventasDocDelDia as unknown as VentaDocStats[])
+    // Costo por lotes FIFO reales (PurchaseAllocation); líneas sin allocations
+    // estiman con el precioCosto vigente y se señalan con usaFifoCompleto=false (D-3).
+    const { costoTotal, usaFifoCompleto } = calcularCostoTotalDia(ventasDelDia)
+    const ingresosNetos = ingresosBrutos - descuentos - devolucionesNetas
     const ganancia = ingresosNetos - costoTotal
     const margenGanancia = ingresosNetos > 0 ? (ganancia / ingresosNetos) * 100 : 0
 
@@ -104,57 +125,67 @@ export function ReporteVentaDiaria() {
       totalServicios,
       totalProductosVendidos,
       ingresosBrutos,
+      ingresosServiciosExtranjeros,
       descuentos,
+      devolucionesNetas,
       ingresosNetos,
       costoTotal,
+      usaFifoCompleto,
       ganancia,
       margenGanancia
     }
-  }, [ventasDelDia, serviciosDelDia])
+  }, [ventasDelDia, serviciosDelDia, ventas, fechaSeleccionada])
 
   // Calcular datos para comparación
   const datosComparacion = useMemo(() => {
     if (ventasLineas.length === 0 && !ventaServicios) return null
 
     const fechaActual = crearFechaLocal(fechaSeleccionada)
-    let fechaComparacion: Date
+    // diasPeriodo: tamaño del rango agregado. El período anterior es el rango
+    // de igual tamaño inmediatamente previo (día vs día, semana vs semana).
+    let diasPeriodo: number
     let label: string
 
     switch (vistaPeriodo) {
       case 'dia':
-        fechaComparacion = subDays(fechaActual, 1)
+        diasPeriodo = 1
         label = "Día anterior"
         break
       case 'semana':
-        fechaComparacion = subDays(fechaActual, 7)
-        label = "Semana anterior"
+        diasPeriodo = 7
+        label = "Semana anterior (7 días)"
         break
       case 'mes':
-        fechaComparacion = subDays(fechaActual, 30)
-        label = "Mes anterior"
+        diasPeriodo = 30
+        label = "Mes anterior (30 días)"
         break
     }
+
+    const inicioActual = startOfDay(subDays(fechaActual, diasPeriodo - 1))
+    const finActual = endOfDay(fechaActual)
+    const fechaComparacion = subDays(inicioActual, diasPeriodo)
+    const finAnterior = endOfDay(subDays(inicioActual, 1))
 
     const ventasPeriodoActual = ventasLineas
       .filter((venta) => {
         const fechaVenta = new Date(venta.createdAt)
-        return fechaVenta >= startOfDay(fechaActual) && fechaVenta <= endOfDay(fechaActual)
+        return fechaVenta >= inicioActual && fechaVenta <= finActual
       })
 
     const ventasPeriodoAnterior = ventasLineas
       .filter((venta) => {
         const fechaVenta = new Date(venta.createdAt)
-        return fechaVenta >= startOfDay(fechaComparacion) && fechaVenta <= endOfDay(fechaComparacion)
+        return fechaVenta >= fechaComparacion && fechaVenta <= finAnterior
       })
 
     const serviciosPeriodoActual = (ventaServicios || []).filter(servicio => {
       const fechaServicio = new Date(servicio.createdAt || '')
-      return fechaServicio >= startOfDay(fechaActual) && fechaServicio <= endOfDay(fechaActual)
+      return fechaServicio >= inicioActual && fechaServicio <= finActual
     })
 
     const serviciosPeriodoAnterior = (ventaServicios || []).filter(servicio => {
       const fechaServicio = new Date(servicio.createdAt || '')
-      return fechaServicio >= startOfDay(fechaComparacion) && fechaServicio <= endOfDay(fechaComparacion)
+      return fechaServicio >= fechaComparacion && fechaServicio <= finAnterior
     })
 
     const ingresosActualVentas = ventasPeriodoActual.reduce(
@@ -162,16 +193,26 @@ export function ReporteVentaDiaria() {
       0,
     )
 
-    const ingresosActualServicios = serviciosPeriodoActual.reduce((sum, servicio) => sum + servicio.total, 0)
-    const ingresosActual = ingresosActualVentas + ingresosActualServicios
+    const ingresosActualServicios = ingresosServiciosFuncional(serviciosPeriodoActual)
+    const docsActual = ventas.filter((v) => {
+      const fv = new Date(v.createdAt)
+      return fv >= inicioActual && fv <= finActual
+    })
+    const docsAnterior = ventas.filter((v) => {
+      const fv = new Date(v.createdAt)
+      return fv >= fechaComparacion && fv <= finAnterior
+    })
+    const devolucionesActual = calcularDevolucionesNetas(docsActual as unknown as VentaDocStats[])
+    const devolucionesAnterior = calcularDevolucionesNetas(docsAnterior as unknown as VentaDocStats[])
+    const ingresosActual = ingresosActualVentas + ingresosActualServicios - devolucionesActual
 
     const ingresosAnteriorVentas = ventasPeriodoAnterior.reduce(
       (sum, venta) => sum + (venta.totalLinea || 0) - (venta.descuento || 0),
       0,
     )
 
-    const ingresosAnteriorServicios = serviciosPeriodoAnterior.reduce((sum, servicio) => sum + servicio.total, 0)
-    const ingresosAnterior = ingresosAnteriorVentas + ingresosAnteriorServicios
+    const ingresosAnteriorServicios = ingresosServiciosFuncional(serviciosPeriodoAnterior)
+    const ingresosAnterior = ingresosAnteriorVentas + ingresosAnteriorServicios - devolucionesAnterior
 
     const productosActual = ventasPeriodoActual.reduce((sum, venta) => sum + venta.cantidad, 0)
     const productosAnterior = ventasPeriodoAnterior.reduce((sum, venta) => sum + venta.cantidad, 0)
@@ -187,9 +228,12 @@ export function ReporteVentaDiaria() {
       productosAnterior,
       porcentajeCambioIngresos,
       porcentajeCambioProductos,
-      fechaComparacion: format(fechaComparacion, 'dd/MM/yyyy')
+      fechaActualLabel: vistaPeriodo === 'dia'
+        ? format(finActual, 'dd/MM/yyyy')
+        : `${format(inicioActual, 'dd/MM/yyyy')} – ${format(finActual, 'dd/MM/yyyy')}`,
+      fechaComparacion: `${format(fechaComparacion, 'dd/MM/yyyy')} – ${format(finAnterior, 'dd/MM/yyyy')}`
     }
-  }, [ventasLineas, ventaServicios, fechaSeleccionada, vistaPeriodo])
+  }, [ventasLineas, ventaServicios, ventas, fechaSeleccionada, vistaPeriodo])
 
   // Datos para tendencias (últimos 7 días)
   const datosTendencias = useMemo(() => {
@@ -215,7 +259,7 @@ export function ReporteVentaDiaria() {
         0,
       )
 
-      const ingresosServicios = serviciosDia.reduce((sum, servicio) => sum + servicio.total, 0)
+      const ingresosServicios = ingresosServiciosFuncional(serviciosDia)
       const ingresos = ingresosVentas + ingresosServicios
 
       const productosVendidos = ventasDia.reduce((sum, venta) => sum + venta.cantidad, 0)
@@ -232,7 +276,7 @@ export function ReporteVentaDiaria() {
     return tendencias
   }, [ventasLineas, ventaServicios, fechaSeleccionada])
 
-  const exportarCsv = () => {
+  const buildDatosExport = () => {
     const datosVentas = ventasDelDia.map(venta => ({
       Fecha: format(new Date(venta.createdAt), 'yyyy-MM-dd'),
       Hora: format(new Date(venta.createdAt), 'HH:mm'),
@@ -265,9 +309,21 @@ export function ReporteVentaDiaria() {
       Cliente: servicio.cliente?.clienteId || 'Cliente general'
     }))
 
-    const datosParaExport = [...datosVentas, ...datosServicios]
+    return [...datosVentas, ...datosServicios]
+  }
 
-    exportToCsv(datosParaExport, `Reporte_Venta_Diaria_${format(crearFechaLocal(fechaSeleccionada), 'yyyy-MM-dd')}`)
+  const hayDatosExportables = ventasDelDia.length > 0 || serviciosDelDia.length > 0
+
+  const exportarCsv = () => {
+    exportToCsv(buildDatosExport(), `Reporte_Venta_Diaria_${format(crearFechaLocal(fechaSeleccionada), 'yyyy-MM-dd')}`)
+  }
+
+  const exportarPdf = () => {
+    exportToPdf(
+      buildDatosExport(),
+      null,
+      `Reporte de Venta Diaria ${format(crearFechaLocal(fechaSeleccionada), 'dd/MM/yyyy')}`,
+    )
   }
 
   // Función para obtener detalles de ventas de un día específico
@@ -312,6 +368,7 @@ export function ReporteVentaDiaria() {
         precioUnitario: venta.precioUnitario || 0,
         descuento: venta.descuento || 0,
         total: (venta.totalLinea || 0) - (venta.descuento || 0),
+        moneda: 'CUP',
         puntoVenta: venta.puntoDeVenta?.nombre || 'N/A',
         cliente: venta.cliente?.nombre || 'Cliente general'
       })),
@@ -323,6 +380,7 @@ export function ReporteVentaDiaria() {
         precioUnitario: servicio.servicio?.precio || 0,
         descuento: 0,
         total: servicio.total,
+        moneda: servicio.moneda || 'CUP',
         puntoVenta: 'N/A',
         cliente: servicio.cliente?.clienteId || 'Cliente general'
       }))
@@ -348,10 +406,18 @@ export function ReporteVentaDiaria() {
     doc.text(`Total de transacciones: ${detallesDia.length}`, 20, 40)
     
     const totalProductos = detallesDia.reduce((sum, item) => sum + item.cantidad, 0)
-    const totalVentas = detallesDia.reduce((sum, item) => sum + item.total, 0)
-    
+    const totalesPorMoneda = detallesDia.reduce<Record<string, number>>((acc, item) => {
+      acc[item.moneda] = (acc[item.moneda] ?? 0) + item.total
+      return acc
+    }, {})
+
     doc.text(`Total productos vendidos: ${totalProductos}`, 20, 50)
-    doc.text(`Total ventas: ${totalVentas.toLocaleString()}`, 20, 60)
+    // Mostrar un total por moneda para no sumar importes en divisas distintas
+    let yTotales = 60
+    for (const [moneda, total] of Object.entries(totalesPorMoneda)) {
+      doc.text(`Total: ${formatCurrency(total, moneda)}`, 20, yTotales)
+      yTotales += 10
+    }
     
     // Headers de la tabla
     const headers = ['Hora', 'Tipo', 'Descripción', 'Cant.', 'P. Unit.', 'Total']
@@ -386,8 +452,8 @@ export function ReporteVentaDiaria() {
         item.tipo,
         item.descripcion.substring(0, 30) + (item.descripcion.length > 30 ? '...' : ''),
         item.cantidad.toString(),
-        `${item.precioUnitario.toFixed(2)}`,
-        `${item.total.toFixed(2)}`
+        formatCurrency(item.precioUnitario, item.moneda),
+        formatCurrency(item.total, item.moneda)
       ]
       
       row.forEach((cell, i) => {
@@ -398,10 +464,13 @@ export function ReporteVentaDiaria() {
       y += 10
     })
     
-    // Total final
+    // Totales finales por moneda
     y += 10
     doc.setFont('helvetica', 'bold')
-    doc.text(`TOTAL: ${totalVentas.toLocaleString()}`, 20, y)
+    for (const [moneda, total] of Object.entries(totalesPorMoneda)) {
+      doc.text(`TOTAL ${moneda}: ${formatCurrency(total, moneda)}`, 20, y)
+      y += 10
+    }
     
     doc.save(`Desglose_Ventas_${fechaDetalle.replace(/\//g, '-')}.pdf`)
   }
@@ -428,6 +497,16 @@ export function ReporteVentaDiaria() {
     },
   }
 
+  if (reportError) {
+    return (
+      <ReportErrorState
+        title="No se pudo cargar el reporte de venta diaria"
+        description="Revisa tu conexión a internet y vuelve a intentarlo."
+        onRetry={() => window.location.reload()}
+      />
+    )
+  }
+
   if (isLoadingVentas) {
     return (
       <div className="space-y-4 p-6">
@@ -440,7 +519,7 @@ export function ReporteVentaDiaria() {
         </div>
         <div className="grid gap-4 md:grid-cols-4">
           {[1, 2, 3, 4].map((i) => (
-            <Card key={i} className={surfaceCardClass}>
+            <Card key={i} className={SURFACE_CARD_CLASS}>
               <CardHeader className="pb-2">
                 <Skeleton className="h-4 w-24" />
                 <Skeleton className="h-8 w-20" />
@@ -460,7 +539,7 @@ export function ReporteVentaDiaria() {
       {/* Header con controles */}
       <StaggerItem
         className={cn(
-          surfaceCardClass,
+          SURFACE_CARD_CLASS,
           "flex flex-col gap-4 rounded-xl border-dashed p-5 md:flex-row md:items-center md:justify-between",
         )}
       >
@@ -473,16 +552,36 @@ export function ReporteVentaDiaria() {
           </div>
         </div>
         <div className="flex items-center gap-2">
-          <input
-            type="date"
-            value={fechaSeleccionada}
-            onChange={(e) => setFechaSeleccionada(e.target.value)}
-            className={cn(
-              "rounded-md border border-slate-200 bg-white px-3 py-2 text-sm shadow-sm",
-              "dark:border-slate-700 dark:bg-slate-900",
-            )}
-          />
-          <Button variant="outline" size="sm" onClick={exportarCsv}>
+          <div className="flex items-center gap-2">
+            <Label htmlFor="fecha-venta-diaria" className="text-sm text-muted-foreground">
+              Fecha
+            </Label>
+            <input
+              id="fecha-venta-diaria"
+              type="date"
+              value={fechaSeleccionada}
+              onChange={(e) => setFechaSeleccionada(e.target.value)}
+              className={cn(
+                "rounded-md border border-slate-200 bg-white px-3 py-2 text-sm shadow-sm",
+                "dark:border-slate-700 dark:bg-slate-900",
+              )}
+            />
+          </div>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={exportarPdf}
+            disabled={!hayDatosExportables}
+          >
+            <FilePdf className="mr-2 h-4 w-4" />
+            PDF
+          </Button>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={exportarCsv}
+            disabled={!hayDatosExportables}
+          >
             <FileText className="mr-2 h-4 w-4" />
             CSV
           </Button>
@@ -492,7 +591,7 @@ export function ReporteVentaDiaria() {
       {/* Tarjetas de estadísticas */}
       <StaggerItem className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
         <AnimatedCard>
-        <Card className={cn(surfaceCardClass, "border-l-4 border-l-primary")}>
+        <Card className={cn(SURFACE_CARD_CLASS)}>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardDescription className="text-sm font-medium">Total de Ventas</CardDescription>
             <Package className="h-4 w-4 text-muted-foreground" />
@@ -507,44 +606,62 @@ export function ReporteVentaDiaria() {
         </AnimatedCard>
 
         <AnimatedCard>
-        <Card className={cn(surfaceCardClass, "border-l-4 border-l-chart-2")}>
+        <Card className={cn(SURFACE_CARD_CLASS)}>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardDescription className="text-sm font-medium">Ingresos Netos</CardDescription>
             <DollarSign className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">${estadisticasDelDia.ingresosNetos.toLocaleString()}</div>
+            <div className="text-2xl font-bold">{formatCurrency(estadisticasDelDia.ingresosNetos)}</div>
             <p className="text-xs text-muted-foreground">
-              Bruto: ${estadisticasDelDia.ingresosBrutos.toLocaleString()}
+              Bruto: {formatCurrency(estadisticasDelDia.ingresosBrutos)}
             </p>
+            {estadisticasDelDia.devolucionesNetas > 0 && (
+              <p className="text-xs text-muted-foreground">
+                Devoluciones neteadas: −{formatCurrency(estadisticasDelDia.devolucionesNetas)}
+              </p>
+            )}
+            {Object.keys(estadisticasDelDia.ingresosServiciosExtranjeros).length > 0 && (
+              <p className="text-xs text-muted-foreground">
+                Servicios en {Object.entries(estadisticasDelDia.ingresosServiciosExtranjeros)
+                  .map(([moneda, total]) => formatCurrency(total, moneda))
+                  .join(' · ')}{' '}
+                (no incluidos)
+              </p>
+            )}
           </CardContent>
         </Card>
         </AnimatedCard>
 
         <AnimatedCard>
-        <Card className={cn(surfaceCardClass, "border-l-4 border-l-accent")}>
+        <Card className={cn(SURFACE_CARD_CLASS)}>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardDescription className="text-sm font-medium">Ganancia</CardDescription>
             <TrendingUpIcon className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-green-600">${estadisticasDelDia.ganancia.toLocaleString()}</div>
+            <div className={cn("text-2xl font-bold", estadisticasDelDia.ganancia >= 0 ? "text-green-600" : "text-destructive")}>{formatCurrency(estadisticasDelDia.ganancia)}</div>
             <p className="text-xs text-muted-foreground">
               Margen: {estadisticasDelDia.margenGanancia.toFixed(1)}%
+            </p>
+            <p className="text-xs text-muted-foreground">
+              {estadisticasDelDia.usaFifoCompleto
+                ? "Costo por lotes FIFO reales"
+                : "Costo estimado (precio de costo actual)"}
             </p>
           </CardContent>
         </Card>
         </AnimatedCard>
 
         <AnimatedCard>
-        <Card className={cn(surfaceCardClass, "border-l-4 border-l-muted")}>
+        <Card className={cn(SURFACE_CARD_CLASS)}>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardDescription className="text-sm font-medium">Ticket Promedio</CardDescription>
             <Calendar className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">
-              ${(estadisticasDelDia.totalVentas + estadisticasDelDia.totalServicios) > 0 ? (estadisticasDelDia.ingresosNetos / (estadisticasDelDia.totalVentas + estadisticasDelDia.totalServicios)).toFixed(2) : '0.00'}
+              {formatCurrency(calcularTicketPromedio(estadisticasDelDia.ingresosNetos, estadisticasDelDia.totalVentas, estadisticasDelDia.totalServicios))}
             </div>
             <p className="text-xs text-muted-foreground">
               Por venta/servicio realizado
@@ -558,7 +675,7 @@ export function ReporteVentaDiaria() {
       <StaggerItem className="grid gap-6 lg:grid-cols-2">
         {/* Gráfico de tendencias */}
         <AnimatedCard>
-        <Card className={surfaceCardClass}>
+        <Card className={SURFACE_CARD_CLASS}>
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <CalendarIcon className="h-5 w-5" />
@@ -573,22 +690,22 @@ export function ReporteVentaDiaria() {
               <AreaChart data={datosTendencias} margin={{ top: 10, right: 30, left: 0, bottom: 0 }}>
                 <defs>
                   <linearGradient id="colorIngresos" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="5%" stopColor="#10b981" stopOpacity={0.8}/>
-                    <stop offset="95%" stopColor="#10b981" stopOpacity={0}/>
+                    <stop offset="5%" stopColor={CHART_COLOR_POSITIVE} stopOpacity={0.8}/>
+                    <stop offset="95%" stopColor={CHART_COLOR_POSITIVE} stopOpacity={0}/>
                   </linearGradient>
                 </defs>
                 <XAxis dataKey="fecha" />
                 <YAxis />
                 <CartesianGrid strokeDasharray="3 3" vertical={false} opacity={0.3} />
                 <Tooltip 
-                  formatter={(value: number) => [`$${value.toLocaleString()}`, 'Ingresos']}
+                  formatter={(value: number) => [formatCurrency(value), 'Ingresos']}
                   labelFormatter={(label) => `Fecha: ${label}`}
                   contentStyle={{ borderRadius: '8px', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }}
                 />
                 <Area 
                   type="monotone" 
                   dataKey="ingresos" 
-                  stroke="#10b981" 
+                  stroke={CHART_COLOR_POSITIVE}
                   fillOpacity={1} 
                   fill="url(#colorIngresos)" 
                   strokeWidth={2}
@@ -601,7 +718,7 @@ export function ReporteVentaDiaria() {
 
         {/* Comparación de períodos */}
         <AnimatedCard>
-        <Card className={surfaceCardClass}>
+        <Card className={SURFACE_CARD_CLASS}>
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <TrendingUpIcon className="h-5 w-5" />
@@ -626,38 +743,54 @@ export function ReporteVentaDiaria() {
                 <div className="flex items-center justify-between rounded-lg border p-3 bg-slate-50/50 dark:bg-slate-900/30">
                   <div>
                     <p className="font-medium">Ingresos</p>
-                    <p className="text-sm text-muted-foreground">{datosComparacion.label}</p>
+                    <p className="text-xs text-muted-foreground">
+                      {datosComparacion.label} ({datosComparacion.fechaComparacion}):{' '}
+                      <span className="font-medium text-foreground/80">{formatCurrency(datosComparacion.ingresosAnterior)}</span>
+                    </p>
                   </div>
                   <div className="text-right">
-                    <p className="font-bold">${datosComparacion.ingresosActual.toLocaleString()}</p>
-                    <div className={`text-xs flex items-center gap-1 ${
-                      datosComparacion.porcentajeCambioIngresos >= 0 ? 'text-green-600' : 'text-red-600'
-                    }`}>
-                      {datosComparacion.porcentajeCambioIngresos >= 0 ? 
-                        <TrendingUpIcon className="h-3 w-3" /> : 
-                        <TrendingDownIcon className="h-3 w-3" />
-                      }
-                      {Math.abs(datosComparacion.porcentajeCambioIngresos).toFixed(1)}%
-                    </div>
+                    <p className="text-xs text-muted-foreground">Período actual ({datosComparacion.fechaActualLabel})</p>
+                    <p className="font-bold">{formatCurrency(datosComparacion.ingresosActual)}</p>
+                    {datosComparacion.ingresosAnterior > 0 ? (
+                      <div className={`text-xs flex items-center justify-end gap-1 ${
+                        datosComparacion.porcentajeCambioIngresos >= 0 ? 'text-green-600' : 'text-red-600'
+                      }`}>
+                        {datosComparacion.porcentajeCambioIngresos >= 0 ?
+                          <TrendingUpIcon className="h-3 w-3" /> :
+                          <TrendingDownIcon className="h-3 w-3" />
+                        }
+                        {Math.abs(datosComparacion.porcentajeCambioIngresos).toFixed(1)}%
+                      </div>
+                    ) : (
+                      <p className="text-xs text-muted-foreground">Sin base de comparación</p>
+                    )}
                   </div>
                 </div>
 
                 <div className="flex items-center justify-between rounded-lg border p-3 bg-slate-50/50 dark:bg-slate-900/30">
                   <div>
                     <p className="font-medium">Productos Vendidos</p>
-                    <p className="text-sm text-muted-foreground">{datosComparacion.label}</p>
+                    <p className="text-xs text-muted-foreground">
+                      {datosComparacion.label} ({datosComparacion.fechaComparacion}):{' '}
+                      <span className="font-medium text-foreground/80">{datosComparacion.productosAnterior}</span>
+                    </p>
                   </div>
                   <div className="text-right">
+                    <p className="text-xs text-muted-foreground">Período actual ({datosComparacion.fechaActualLabel})</p>
                     <p className="font-bold">{datosComparacion.productosActual}</p>
-                    <div className={`text-xs flex items-center gap-1 ${
-                      datosComparacion.porcentajeCambioProductos >= 0 ? 'text-green-600' : 'text-red-600'
-                    }`}>
-                      {datosComparacion.porcentajeCambioProductos >= 0 ? 
-                        <TrendingUpIcon className="h-3 w-3" /> : 
-                        <TrendingDownIcon className="h-3 w-3" />
-                      }
-                      {Math.abs(datosComparacion.porcentajeCambioProductos).toFixed(1)}%
-                    </div>
+                    {datosComparacion.productosAnterior > 0 ? (
+                      <div className={`text-xs flex items-center justify-end gap-1 ${
+                        datosComparacion.porcentajeCambioProductos >= 0 ? 'text-green-600' : 'text-red-600'
+                      }`}>
+                        {datosComparacion.porcentajeCambioProductos >= 0 ?
+                          <TrendingUpIcon className="h-3 w-3" /> :
+                          <TrendingDownIcon className="h-3 w-3" />
+                        }
+                        {Math.abs(datosComparacion.porcentajeCambioProductos).toFixed(1)}%
+                      </div>
+                    ) : (
+                      <p className="text-xs text-muted-foreground">Sin base de comparación</p>
+                    )}
                   </div>
                 </div>
               </>
@@ -672,7 +805,7 @@ export function ReporteVentaDiaria() {
       {/* Tabla detallada de ventas */}
       <StaggerItem>
         <AnimatedCard>
-        <Card className={surfaceCardClass}>
+        <Card className={SURFACE_CARD_CLASS}>
         <CardHeader>
           <CardTitle>Detalle de Ventas del Día</CardTitle>
           <CardDescription>
@@ -725,16 +858,16 @@ export function ReporteVentaDiaria() {
                             })}
                           </TableCell>
                           <TableCell className="text-right">{venta.cantidad}</TableCell>
-                          <TableCell className="text-right">${(venta.precioUnitario || 0).toFixed(2)}</TableCell>
-                          <TableCell className="text-right">${totalBruto.toFixed(2)}</TableCell>
+                          <TableCell className="text-right">{formatCurrency(venta.precioUnitario || 0)}</TableCell>
+                          <TableCell className="text-right">{formatCurrency(totalBruto)}</TableCell>
                           <TableCell className="text-right">
                             {venta.descuento ? (
-                              <Badge variant="destructive">${venta.descuento.toFixed(2)}</Badge>
+                              <Badge variant="destructive">{formatCurrency(venta.descuento)}</Badge>
                             ) : (
                               <span className="text-muted-foreground">-</span>
                             )}
                           </TableCell>
-                          <TableCell className="text-right font-medium">${totalNeto.toFixed(2)}</TableCell>
+                          <TableCell className="text-right font-medium">{formatCurrency(totalNeto)}</TableCell>
                           <TableCell>{venta.puntoDeVenta?.nombre || 'N/A'}</TableCell>
                           <TableCell>{venta.cliente?.nombre || 'Cliente general'}</TableCell>
                         </TableRow>
@@ -750,12 +883,12 @@ export function ReporteVentaDiaria() {
                         </TableCell>
                         <TableCell>{servicio.servicio?.descripcion || 'Servicio no especificado'}</TableCell>
                         <TableCell className="text-right">{servicio.cantidad}</TableCell>
-                        <TableCell className="text-right">${(servicio.servicio?.precio || 0).toFixed(2)}</TableCell>
-                        <TableCell className="text-right">${servicio.total.toFixed(2)}</TableCell>
+                        <TableCell className="text-right">{formatCurrency(servicio.servicio?.precio || 0, servicio.moneda || 'CUP')}</TableCell>
+                        <TableCell className="text-right">{formatCurrency(servicio.total, servicio.moneda || 'CUP')}</TableCell>
                         <TableCell className="text-right">
                           <span className="text-muted-foreground">-</span>
                         </TableCell>
-                        <TableCell className="text-right font-medium">${servicio.total.toFixed(2)}</TableCell>
+                        <TableCell className="text-right font-medium">{formatCurrency(servicio.total, servicio.moneda || 'CUP')}</TableCell>
                         <TableCell>N/A</TableCell>
                         <TableCell>{servicio.cliente?.clienteId || 'Cliente general'}</TableCell>
                       </TableRow>
@@ -793,7 +926,7 @@ export function ReporteVentaDiaria() {
           
           {/* Resumen */}
           <div className="grid grid-cols-3 gap-4 mb-4">
-            <Card className={surfaceCardClass}>
+            <Card className={SURFACE_CARD_CLASS}>
               <CardContent className="p-4">
                 <div className="text-center">
                   <div className="text-2xl font-bold text-blue-600">{detallesDia.length}</div>
@@ -801,7 +934,7 @@ export function ReporteVentaDiaria() {
                 </div>
               </CardContent>
             </Card>
-            <Card className={surfaceCardClass}>
+            <Card className={SURFACE_CARD_CLASS}>
               <CardContent className="p-4">
                 <div className="text-center">
                   <div className="text-2xl font-bold text-green-600">
@@ -811,11 +944,18 @@ export function ReporteVentaDiaria() {
                 </div>
               </CardContent>
             </Card>
-            <Card className={surfaceCardClass}>
+            <Card className={SURFACE_CARD_CLASS}>
               <CardContent className="p-4">
                 <div className="text-center">
                   <div className="text-2xl font-bold text-sky-600">
-                    ${detallesDia.reduce((sum, item) => sum + item.total, 0).toLocaleString()}
+                    {Object.entries(
+                      detallesDia.reduce<Record<string, number>>((acc, item) => {
+                        acc[item.moneda] = (acc[item.moneda] ?? 0) + item.total
+                        return acc
+                      }, {})
+                    )
+                      .map(([moneda, total]) => formatCurrency(total, moneda))
+                      .join(' · ')}
                   </div>
                   <div className="text-sm text-muted-foreground">Total de Ventas</div>
                 </div>
@@ -860,15 +1000,15 @@ export function ReporteVentaDiaria() {
                           {item.descripcion}
                         </TableCell>
                         <TableCell className="text-right">{item.cantidad}</TableCell>
-                        <TableCell className="text-right">${item.precioUnitario.toFixed(2)}</TableCell>
+                        <TableCell className="text-right">{formatCurrency(item.precioUnitario, item.moneda)}</TableCell>
                         <TableCell className="text-right">
                           {item.descuento > 0 ? (
-                            <Badge variant="destructive">${item.descuento.toFixed(2)}</Badge>
+                            <Badge variant="destructive">{formatCurrency(item.descuento, item.moneda)}</Badge>
                           ) : (
                             <span className="text-muted-foreground">-</span>
                           )}
                         </TableCell>
-                        <TableCell className="text-right font-medium">${item.total.toFixed(2)}</TableCell>
+                        <TableCell className="text-right font-medium">{formatCurrency(item.total, item.moneda)}</TableCell>
                         <TableCell className="text-sm">{item.puntoVenta}</TableCell>
                         <TableCell className="text-sm max-w-xs truncate" title={item.cliente}>
                           {item.cliente}
@@ -892,7 +1032,14 @@ export function ReporteVentaDiaria() {
                   </div>
                   <div className="text-lg font-bold text-green-600">
                     <span>Total de ventas:</span>{" "}
-                    ${detallesDia.reduce((sum, item) => sum + item.total, 0).toLocaleString()}
+                    {Object.entries(
+                      detallesDia.reduce<Record<string, number>>((acc, item) => {
+                        acc[item.moneda] = (acc[item.moneda] ?? 0) + item.total
+                        return acc
+                      }, {})
+                    )
+                      .map(([moneda, total]) => formatCurrency(total, moneda))
+                      .join(' · ')}
                   </div>
                 </div>
               </div>

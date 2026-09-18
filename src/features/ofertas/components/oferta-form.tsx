@@ -10,7 +10,6 @@ import {
   Trash2,
   Plus,
   Loader2,
-  Sparkles,
   Receipt,
   Package,
   Calculator
@@ -294,16 +293,6 @@ export function OfertaForm() {
             <div className="relative">
               <h2 className="text-lg font-semibold">Nueva Oferta</h2>
               <p className="text-sm text-muted-foreground">Cree una nueva oferta para un cliente</p>
-              <motion.div
-                className="absolute -right-4 -top-1"
-                animate={{ rotate: 360, scale: [1, 1.2, 1] }}
-                transition={{
-                  rotate: { duration: 20, repeat: Infinity, ease: "linear" },
-                  scale: { duration: 2, repeat: Infinity, ease: "easeInOut" }
-                }}
-              >
-                <Sparkles className="h-4 w-4 text-yellow-500" />
-              </motion.div>
             </div>
           </motion.div>
 

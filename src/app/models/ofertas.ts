@@ -1,3 +1,8 @@
+import type { Producto } from './productos';
+import type { Servicios } from './economicos';
+import type { Venta } from './ventas';
+import type { Cliente } from './clientes';
+
 export interface OfertaItem {
 	id: string;
 	ofertaId: string;

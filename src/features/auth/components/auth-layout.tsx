@@ -82,7 +82,7 @@ export function AuthLayout({ children }: AuthLayoutProps) {
         <motion.div
           animate={prefersReducedMotion ? {} : { y: [0, 20, 0] }}
           transition={prefersReducedMotion ? {} : { duration: 8, repeat: Infinity, ease: 'easeInOut', delay: 1 }}
-          className="absolute top-1/3 -right-40 w-80 h-80 bg-purple-500/20 rounded-full blur-3xl"
+          className="absolute top-1/3 -right-40 w-80 h-80 bg-primary/20 rounded-full blur-3xl"
         />
         <motion.div
           animate={prefersReducedMotion ? {} : { y: [0, -15, 0] }}

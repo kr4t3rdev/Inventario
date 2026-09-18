@@ -1,0 +1,16 @@
+# PE-05 RED evidence — acceptance-first closure gate — 2026-09-12
+
+The pre-edit closure verification failed as required because AS-06 was not yet explicitly unlocked and the archive directory did not exist:
+
+```text
+MISSING: AS-06 unblock note
+MISSING: AS-06 date
+MISSING: PE-04 evidence
+MISSING: archive directory openspec/changes/archive/2026-09-12-pre-enforce-hardening
+ACCEPTANCE: FAIL (exit=1)
+```
+
+Verification required all of the following simultaneously:
+
+- `openspec/changes/aislamiento-sistemico-tenant/tasks.md` contains `Desbloqueada por pre-enforce-hardening`, date `2026-09-12`, and PE-04 evidence.
+- `openspec/changes/archive/2026-09-12-pre-enforce-hardening/` exists.

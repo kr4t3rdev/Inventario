@@ -1,0 +1,96 @@
+name: OpenAPI
+
+on:
+  pull_request:
+    paths:
+      - '.github/workflows/openapi.yml'
+      - 'docs/openapi/**'
+      - 'src/app/api/mobile/v1/**'
+      - 'src/lib/openapi/**'
+      - 'openapi-generator/**'
+      - 'scripts/openapi/**'
+      - 'sdks/mobile-v1/**'
+      - 'openapitools.json'
+      - 'package.json'
+      - 'pnpm-lock.yaml'
+      - 'redocly.yaml'
+  push:
+    branches:
+      - main
+    paths:
+      - '.github/workflows/openapi.yml'
+      - 'docs/openapi/**'
+      - 'src/app/api/mobile/v1/**'
+      - 'src/lib/openapi/**'
+      - 'openapi-generator/**'
+      - 'scripts/openapi/**'
+      - 'sdks/mobile-v1/**'
+      - 'openapitools.json'
+      - 'package.json'
+      - 'pnpm-lock.yaml'
+      - 'redocly.yaml'
+
+permissions:
+  contents: read
+
+jobs:
+  check:
+    name: Validate mobile v1 contract
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    env:
+      OPENAPI_GENERATOR_JAR: ${{ github.workspace }}/.cache/openapi-generator/openapi-generator-cli-7.17.0.jar
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Read Node.js version
+        id: node-version
+        shell: bash
+        run: echo "version=$(tr -d '[:space:]' < .nvmrc)" >> "$GITHUB_OUTPUT"
+
+      - name: Set up pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 10.22.0
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ steps.node-version.outputs.version }}
+          cache: pnpm
+
+      - name: Set up Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+
+      - name: Cache OpenAPI Generator
+        id: cache-openapi-generator
+        uses: actions/cache@v4
+        with:
+          path: .cache/openapi-generator/openapi-generator-cli-7.17.0.jar
+          key: openapi-generator-7.17.0-25d6bd8273dd2be99979d544b62ea43f0ce1975f1aa582678b5093d1e7fcfce8
+
+      - name: Download pinned OpenAPI Generator
+        if: steps.cache-openapi-generator.outputs.cache-hit != 'true'
+        shell: bash
+        run: |
+          mkdir -p "$(dirname "$OPENAPI_GENERATOR_JAR")"
+          curl --fail --location --retry 3 \
+            --output "$OPENAPI_GENERATOR_JAR" \
+            https://repo.maven.apache.org/maven2/org/openapitools/openapi-generator-cli/7.17.0/openapi-generator-cli-7.17.0.jar
+
+      - name: Verify OpenAPI Generator checksum
+        shell: bash
+        run: echo "25d6bd8273dd2be99979d544b62ea43f0ce1975f1aa582678b5093d1e7fcfce8  $OPENAPI_GENERATOR_JAR" | sha256sum --check --strict
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Smoke test committed TypeScript SDK
+        run: pnpm run mobile:smoke
+
+      - name: Check OpenAPI contract
+        run: pnpm run openapi:lint && pnpm run openapi:parity && pnpm run openapi:generate:check

@@ -90,9 +90,11 @@ export function ShiftBillingBarChart({ data }: ShiftBillingBarChartProps) {
                     isActive ? "shadow-md" : ""
                   }`}
                   style={{ 
-                    width: `${isHovered && isActive ? Math.min(percentage + 2, 100) : percentage}%`,
+                    width: '100%',
+                    transform: `scaleX(${(isHovered && isActive ? Math.min(percentage + 2, 100) : percentage) / 100})`,
+                    transformOrigin: 'left',
                     backgroundColor: getChartColor(index),
-                    transition: 'width 0.5s cubic-bezier(0.34, 1.56, 0.64, 1)'
+                    transition: 'transform 0.5s ease-out'
                   }}
                 >
                   {isActive && (

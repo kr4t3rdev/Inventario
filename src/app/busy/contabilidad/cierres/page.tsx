@@ -14,7 +14,7 @@ export const metadata = {
 
 export default async function CierresPage() {
   const result = await getCierresAction();
-  // @ts-expect-error
+  // @ts-expect-error TODO: fix type cast for CierreContableItem array
   const cierres: CierreContableItem[] = (result.success ? (result.data ?? []) : []) as unknown as CierreContableItem[];
 
   return (

@@ -1,0 +1,32 @@
+
+ RUN  v3.2.4 /Users/arturo/Documents/Proyecto Inventario/TCP
+
+
+⎯⎯⎯⎯⎯⎯ Failed Suites 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  src/features/ventas/__tests__/pos-vuelto-calcu.test.ts [ src/features/ventas/__tests__/pos-vuelto-calcu.test.ts ]
+Error: Failed to resolve import "@/features/ventas/services/pos-vuelto-calcu" from "src/features/ventas/__tests__/pos-vuelto-calcu.test.ts". Does the file exist?
+  Plugin: vite:import-analysis
+  File: /Users/arturo/Documents/Proyecto Inventario/TCP/src/features/ventas/__tests__/pos-vuelto-calcu.test.ts:8:7
+  3  |    calcularVuelto,
+  4  |    validarCobro
+  5  |  } from "@/features/ventas/services/pos-vuelto-calcu";
+     |          ^
+  6  |  describe("calcularVuelto (VC-T1)", () => {
+  7  |    it("devuelve el vuelto cuando el recibido supera lo cobrado", () => {
+ ❯ TransformPluginContext._formatLog ../../Proyecto%20Inventario/TCP/node_modules/.pnpm/vite@7.3.0_@types+node@20.19.27_jiti@2.6.1_lightningcss@1.30.2_terser@5.46.0_tsx@4.21.0_yaml@2.9.0/node_modules/vite/dist/node/chunks/config.js:28998:43
+ ❯ TransformPluginContext.error ../../Proyecto%20Inventario/TCP/node_modules/.pnpm/vite@7.3.0_@types+node@20.19.27_jiti@2.6.1_lightningcss@1.30.2_terser@5.46.0_tsx@4.21.0_yaml@2.9.0/node_modules/vite/dist/node/chunks/config.js:28995:14
+ ❯ normalizeUrl ../../Proyecto%20Inventario/TCP/node_modules/.pnpm/vite@7.3.0_@types+node@20.19.27_jiti@2.6.1_lightningcss@1.30.2_terser@5.46.0_tsx@4.21.0_yaml@2.9.0/node_modules/vite/dist/node/chunks/config.js:27118:18
+ ❯ ../../Proyecto%20Inventario/TCP/node_modules/.pnpm/vite@7.3.0_@types+node@20.19.27_jiti@2.6.1_lightningcss@1.30.2_terser@5.46.0_tsx@4.21.0_yaml@2.9.0/node_modules/vite/dist/node/chunks/config.js:27176:32
+ ❯ TransformPluginContext.transform ../../Proyecto%20Inventario/TCP/node_modules/.pnpm/vite@7.3.0_@types+node@20.19.27_jiti@2.6.1_lightningcss@1.30.2_terser@5.46.0_tsx@4.21.0_yaml@2.9.0/node_modules/vite/dist/node/chunks/config.js:27144:4
+ ❯ EnvironmentPluginContainer.transform ../../Proyecto%20Inventario/TCP/node_modules/.pnpm/vite@7.3.0_@types+node@20.19.27_jiti@2.6.1_lightningcss@1.30.2_terser@5.46.0_tsx@4.21.0_yaml@2.9.0/node_modules/vite/dist/node/chunks/config.js:28796:14
+ ❯ loadAndTransform ../../Proyecto%20Inventario/TCP/node_modules/.pnpm/vite@7.3.0_@types+node@20.19.27_jiti@2.6.1_lightningcss@1.30.2_terser@5.46.0_tsx@4.21.0_yaml@2.9.0/node_modules/vite/dist/node/chunks/config.js:22669:26
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  no tests
+   Start at  18:17:13
+   Duration  1.35s (transform 64ms, setup 134ms, collect 0ms, tests 0ms, environment 452ms, prepare 171ms)
+

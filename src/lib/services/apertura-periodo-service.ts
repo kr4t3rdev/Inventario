@@ -8,6 +8,7 @@
  */
 
 import { prisma } from "@/lib/prisma";
+import type { Prisma } from "@/generated/prisma";
 import { PeriodoError, TipoPeriodo } from "./periodo-contable-types";
 import type { AperturaPeriodo } from "@/generated/prisma";
 
@@ -54,12 +55,14 @@ export class AperturaPeriodoService {
 		tenantId: string,
 		tipo: TipoPeriodo,
 		fechaInicio: Date,
+		client?: Prisma.TransactionClient,
 	): Promise<SaldosApertura> {
-		// 1. Buscar período anterior del mismo tipo, ordenado por fechaFin descendente
-		const periodoAnterior = await prisma.periodoContable.findFirst({
+		const db = client ?? prisma;
+
+		const periodoAnterior = await db.periodoContable.findFirst({
 			where: {
 				tenantId,
-				tipo,
+				tipo: tipo as any,
 				fechaFin: { lt: fechaInicio },
 			},
 			orderBy: { fechaFin: "desc" },
@@ -102,29 +105,31 @@ export class AperturaPeriodoService {
 
 		// 3. No hay período anterior → derivar de datos vivos
 		// Saldos bancarios actuales
-		const cuentas = await prisma.cuentaBancaria.findMany({
+		const cuentas = await db.cuentaBancaria.findMany({
 			where: { tenantId, isActive: true },
 			select: { saldo: true },
 		});
 
 		const totalBancario = cuentas.reduce((sum, c) => sum + Number(c.saldo), 0);
 
-		// Cuentas por cobrar
-		const totalCxC = await prisma.cuentaPorCobrar.aggregate({
-			_sum: { saldoPendiente: true },
-			where: { tenantId, estado: { not: "cancelada" } },
+		// Cuentas por cobrar — CuentaPorCobrar no tiene saldoPendiente,
+		// se calcula como montoDeuda - montoPagado
+		const totalCxC = await db.cuentaPorCobrar.aggregate({
+			_sum: { montoDeuda: true, montoPagado: true },
+			where: { tenantId, estado: { not: "PAGADA" } },
 		});
+		const saldoPendienteCxC = Number(totalCxC._sum.montoDeuda ?? 0) - Number(totalCxC._sum.montoPagado ?? 0);
 
-		// Cuentas por pagar
-		const totalCxP = await prisma.cuentaPorPagar.aggregate({
+		// Cuentas por pagar — CuentaPorPagar sí tiene saldoPendiente
+		const totalCxP = await db.cuentaPorPagar.aggregate({
 			_sum: { saldoPendiente: true },
-			where: { tenantId, estado: { not: "cancelada" } },
+			where: { tenantId, estado: { not: "PAGADA" } },
 		});
 
 		return {
 			saldoCajaInicial: 0,
 			saldoBancoInicial: totalBancario,
-			saldoCuentasCobrarInicial: Number(totalCxC._sum.saldoPendiente ?? 0),
+			saldoCuentasCobrarInicial: saldoPendienteCxC,
 			saldoCuentasPagarInicial: Number(totalCxP._sum.saldoPendiente ?? 0),
 			saldoInventarioInicial: 0,
 			saldoCapitalInicial: 0,
@@ -133,7 +138,7 @@ export class AperturaPeriodoService {
 			detalle: {
 				origen: "datos_vivos",
 				cuentasBancarias: cuentas.length,
-				totalCuentasPorCobrar: Number(totalCxC._sum.saldoPendiente ?? 0),
+				totalCuentasPorCobrar: saldoPendienteCxC,
 				totalCuentasPorPagar: Number(totalCxP._sum.saldoPendiente ?? 0),
 			},
 		};
@@ -152,9 +157,11 @@ export class AperturaPeriodoService {
 		periodoId: string,
 		tenantId: string,
 		actor: string,
+		client?: Prisma.TransactionClient,
 	): Promise<AperturaPeriodo> {
-		// Verificar que el período existe
-		const periodo = await prisma.periodoContable.findUnique({
+		const db = client ?? prisma;
+
+		const periodo = await db.periodoContable.findUnique({
 			where: { periodoId },
 		});
 
@@ -165,8 +172,7 @@ export class AperturaPeriodoService {
 			);
 		}
 
-		// Verificar que no tenga apertura ya
-		const aperturaExistente = await prisma.aperturaPeriodo.findUnique({
+		const aperturaExistente = await db.aperturaPeriodo.findUnique({
 			where: { periodoId },
 		});
 
@@ -177,15 +183,14 @@ export class AperturaPeriodoService {
 			);
 		}
 
-		// Derivar saldos
 		const saldos = await this.deriveOpeningBalances(
 			tenantId,
 			periodo.tipo as TipoPeriodo,
 			periodo.fechaInicio,
+			client,
 		);
 
-		// Crear apertura
-		const apertura = await prisma.aperturaPeriodo.create({
+		const apertura = await db.aperturaPeriodo.create({
 			data: {
 				periodoId,
 				tenantId,

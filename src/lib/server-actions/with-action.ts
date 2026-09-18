@@ -11,6 +11,7 @@
  */
 import { ZodError } from "zod";
 import { getCurrentUser } from "./get-current-user";
+import { runWithTenantContext } from "@/lib/db/tenant-context";
 import { ActionError, type ActionResponse, type ServerAction } from "./types";
 import type { AuthenticatedUser } from "@/lib/auth-middleware";
 import { serializePrismaData } from "@/lib/prisma-utils";
@@ -41,7 +42,7 @@ const PRISMA_ERROR_MESSAGES: Record<string, string> = {
 export function withAction<TInput, TOutput>(
 	action: (input: TInput, user: AuthenticatedUser) => Promise<TOutput>,
 ): ServerAction<TInput, TOutput> {
-	return async (input: TInput): Promise<ActionResponse<TOutput>> => {
+	return async (input?: TInput): Promise<ActionResponse<TOutput>> => {
 		try {
 			const user = await getCurrentUser();
 			if (!user) {
@@ -51,8 +52,10 @@ export function withAction<TInput, TOutput>(
 				};
 			}
 
-			const data = await action(input, user);
-			return { success: true, data: serializePrismaData(data) };
+		const data = user.tenantId
+			? await runWithTenantContext(user.tenantId, () => action(input! as TInput, user))
+			: await action(input! as TInput, user);
+		return { success: true, data: serializePrismaData(data) };
 		} catch (error) {
 			if (error instanceof ZodError) {
 				return {
@@ -62,6 +65,17 @@ export function withAction<TInput, TOutput>(
 						code: "VALIDATION_ERROR",
 						details: error.flatten().fieldErrors as Record<string, string[]>,
 					},
+				};
+			}
+
+			// Errores de negocio controlados: se propagan con mensaje y código.
+			// Deben evaluarse ANTES del duck-typing de Prisma: un código de
+			// negocio que empiece por "P" (p. ej. PRICE_MISMATCH) sería mal
+			// clasificado como PrismaClientKnownRequestError.
+			if (error instanceof ActionError) {
+				return {
+					success: false,
+					error: { message: error.message, code: error.code },
 				};
 			}
 
@@ -100,15 +114,8 @@ export function withAction<TInput, TOutput>(
 					error: {
 						message: "Error de validación en la base de datos",
 						code: "PRISMA_VALIDATION_ERROR",
-						details: detail,
+						details: { general: [detail] },
 					},
-				};
-			}
-
-			if (error instanceof ActionError) {
-				return {
-					success: false,
-					error: { message: error.message, code: error.code },
 				};
 			}
 

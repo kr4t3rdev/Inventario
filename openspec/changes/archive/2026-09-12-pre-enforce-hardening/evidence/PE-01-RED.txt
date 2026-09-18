@@ -1,0 +1,186 @@
+
+ RUN  v3.2.4 /Users/arturo/Documents/Proyecto Inventario/TCP
+
+ ❯ src/features/auth/__tests__/neutral-spanish-copy.test.ts (2 tests | 1 failed) 177ms
+   ✓ auth/onboarding neutral Spanish copy > detects voseo ending in accented Unicode letters 10ms
+   × auth/onboarding neutral Spanish copy > does not use Argentine or Rioplatense voseo in identity flows 165ms
+     → expected [ …(11) ] to deeply equal []
+stdout | src/features/auth/__tests__/handlers-onboarding.test.ts > register — copy neutro (PE-01) > registro exitoso pide "Revisa tu correo" (sin voseo)
+[REGISTER] Email de verificación enviado — usuario: user-new, email: ana@example.com, messageId: msg-1
+
+ ❯ src/features/auth/__tests__/handlers-onboarding.test.ts (2 tests | 2 failed) 33ms
+   × register — copy neutro (PE-01) > rate limit responde "Inténtalo" con tilde y sin voseo 26ms
+     → expected 'Demasiados intentos. Intentalo de nue…' to be 'Demasiados intentos. Inténtalo de nue…' // Object.is equality
+   × register — copy neutro (PE-01) > registro exitoso pide "Revisa tu correo" (sin voseo) 6ms
+     → expected 'Revisá tu correo para verificar la cu…' to be 'Revisa tu correo para verificar la cu…' // Object.is equality
+ ❯ src/features/auth/__tests__/auth-service-tenant.test.ts (2 tests | 2 failed) 28ms
+   × AuthService — copy neutro (PE-01) > login sin empresa activa responde "No tienes" (sin voseo) 25ms
+     → expected [Function] to throw error including 'No tienes una empresa activa para ini…' but got 'No tenés una empresa activa para inic…'
+   × AuthService — copy neutro (PE-01) > switchTenant sin membresía responde "No tienes acceso" (sin voseo) 1ms
+     → expected [Function] to throw error including 'No tienes acceso a esta empresa' but got 'No tenés acceso a esta empresa'
+ ❯ src/lib/services/__tests__/tenant-factory.test.ts (14 tests | 1 failed) 43ms
+   ✓ createTenantForUser referral attribution > atribuye el tenant al Gestor activo dentro de la transacción 11ms
+   ✓ createTenantForUser referral attribution > aplica el precio base cuando el tenant no es referido 2ms
+   ✓ createTenantForUser referral attribution > provisiona la política explícita antes de activar al usuario 2ms
+   ✓ createTenantForUser referral attribution > falla cerrado si la política devuelve BLOCKED y no crea licencia ni activa usuario 3ms
+   ✓ createTenantForUser referral attribution > abre el alta con aislamiento serializable 1ms
+   ✓ createTenantForUser referral attribution > impide completar el alta sin moneda funcional confirmada 1ms
+   ✓ createTenantForUser referral attribution > publica la métrica solo después del commit del alta exterior 2ms
+   ✓ createTenantForUser referral attribution > devuelve el alta ya confirmada al reintentar sin duplicar recursos 1ms
+   ✓ createTenantForUser referral attribution > bloquea atribución si el Gestor conserva membership residual del referido 1ms
+   ✓ createTenantForUser referral attribution > no atribuye si el código colisiona entre affiliate y Gestor 1ms
+   × createTenantForUser referral attribution > rechaza sin planes con copy neutro "Crea al menos un plan primero" (PE-01) 15ms
+     → expected ActionError: No hay planes disponibles. C… { code: '…' } to match object { code: 'NO_PLANS', …(1) }
+(1 matching property omitted from actual)
+   ✓ createTenantForUser duración de licencia > usa la duración del plan (30 días) cuando no se pasa override 1ms
+   ✓ createTenantForUser duración de licencia > respeta el override explícito de duración 1ms
+   ✓ createTenantForUser duración de licencia > rechaza duración inválida (cero o negativa) 1ms
+ ❯ src/features/admin/__tests__/approve-admin-membership.test.ts (4 tests | 1 failed) 24ms
+   × approveAdminMembership — roles válidos (PE-01) > rechaza el alias legado "admin" con el error de rol inválido 18ms
+     → expected [Function] to throw error including 'Rol inválido: admin. Roles válidos: m…' but got 'Solicitud de membresía no encontrada'
+   ✓ approveAdminMembership — roles válidos (PE-01) > acepta el rol "manager", activa la membresía y crea el empleado 3ms
+   ✓ approveAdminMembership — roles válidos (PE-01) > acepta el rol "economico", activa la membresía y crea el empleado 1ms
+   ✓ approveAdminMembership — roles válidos (PE-01) > acepta el rol "dependiente", activa la membresía y crea el empleado 1ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 7 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  src/features/admin/__tests__/approve-admin-membership.test.ts > approveAdminMembership — roles válidos (PE-01) > rechaza el alias legado "admin" con el error de rol inválido
+AssertionError: expected [Function] to throw error including 'Rol inválido: admin. Roles válidos: m…' but got 'Solicitud de membresía no encontrada'
+
+Expected: "Rol inválido: admin. Roles válidos: manager, economico, dependiente"
+Received: "Solicitud de membresía no encontrada"
+
+ ❯ src/features/admin/__tests__/approve-admin-membership.test.ts:73:3
+     71| 
+     72|  it('rechaza el alias legado "admin" con el error de rol inválido', as…
+     73|   await expect(
+       |   ^
+     74|    approveAdminMembership(
+     75|     { membershipId: 'membership-1', tenantRole: 'admin' },
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/7]⎯
+
+ FAIL  src/features/auth/__tests__/auth-service-tenant.test.ts > AuthService — copy neutro (PE-01) > login sin empresa activa responde "No tienes" (sin voseo)
+AssertionError: expected [Function] to throw error including 'No tienes una empresa activa para ini…' but got 'No tenés una empresa activa para inic…'
+
+Expected: "No tienes una empresa activa para iniciar sesión."
+Received: "No tenés una empresa activa para iniciar sesión."
+
+ ❯ src/features/auth/__tests__/auth-service-tenant.test.ts:122:3
+    120|   vi.mocked(resolveTenantContext).mockResolvedValue(null);
+    121| 
+    122|   await expect(
+       |   ^
+    123|    AuthService.login({
+    124|     input: { email: 'ana@example.com', password: 'secret123' },
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/7]⎯
+
+ FAIL  src/features/auth/__tests__/auth-service-tenant.test.ts > AuthService — copy neutro (PE-01) > switchTenant sin membresía responde "No tienes acceso" (sin voseo)
+AssertionError: expected [Function] to throw error including 'No tienes acceso a esta empresa' but got 'No tenés acceso a esta empresa'
+
+Expected: "No tienes acceso a esta empresa"
+Received: "No tenés acceso a esta empresa"
+
+ ❯ src/features/auth/__tests__/auth-service-tenant.test.ts:133:3
+    131|   scopedMock.tenantMembership.findUnique.mockResolvedValue(null);
+    132| 
+    133|   await expect(
+       |   ^
+    134|    AuthService.switchTenant({
+    135|     tenantId: 'tenant-b',
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/7]⎯
+
+ FAIL  src/features/auth/__tests__/handlers-onboarding.test.ts > register — copy neutro (PE-01) > rate limit responde "Inténtalo" con tilde y sin voseo
+AssertionError: expected 'Demasiados intentos. Intentalo de nue…' to be 'Demasiados intentos. Inténtalo de nue…' // Object.is equality
+
+Expected: "Demasiados intentos. Inténtalo de nuevo en unos segundos."
+Received: "Demasiados intentos. Intentalo de nuevo en unos segundos."
+
+ ❯ src/features/auth/__tests__/handlers-onboarding.test.ts:150:22
+    148|   expect(res.status).toBe(429);
+    149|   const body = await res.json();
+    150|   expect(body.error).toBe(
+       |                      ^
+    151|    'Demasiados intentos. Inténtalo de nuevo en unos segundos.',
+    152|   );
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/7]⎯
+
+ FAIL  src/features/auth/__tests__/handlers-onboarding.test.ts > register — copy neutro (PE-01) > registro exitoso pide "Revisa tu correo" (sin voseo)
+AssertionError: expected 'Revisá tu correo para verificar la cu…' to be 'Revisa tu correo para verificar la cu…' // Object.is equality
+
+Expected: "Revisa tu correo para verificar la cuenta y continuar con el onboarding"
+Received: "Revisá tu correo para verificar la cuenta y continuar con el onboarding"
+
+ ❯ src/features/auth/__tests__/handlers-onboarding.test.ts:170:24
+    168|   expect(res.status).toBe(200);
+    169|   const body = await res.json();
+    170|   expect(body.message).toBe(
+       |                        ^
+    171|    'Revisa tu correo para verificar la cuenta y continuar con el onboa…
+    172|   );
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/7]⎯
+
+ FAIL  src/features/auth/__tests__/neutral-spanish-copy.test.ts > auth/onboarding neutral Spanish copy > does not use Argentine or Rioplatense voseo in identity flows
+AssertionError: expected [ …(11) ] to deeply equal []
+
+- Expected
++ Received
+
+- []
++ [
++   "src/features/auth/api/handlers.ts: tenés",
++   "src/features/auth/api/handlers.ts: contactá",
++   "src/features/auth/api/handlers.ts: revisá",
++   "src/features/auth/api/handlers.ts: intentalo",
++   "src/features/auth/services/auth-service.ts: tenés",
++   "src/app/api/mobile/v1/auth/register/route.ts: revisá",
++   "src/app/api/mobile/v1/auth/register/route.ts: intentalo",
++   "src/app/onboarding/layout.tsx: completá",
++   "src/app/onboarding/page.tsx: solicitá",
++   "src/app/onboarding/page.tsx: accedé",
++   "src/lib/services/tenant-factory.ts: creá",
++ ]
+
+ ❯ src/features/auth/__tests__/neutral-spanish-copy.test.ts:114:22
+    112|     });
+    113| 
+    114|     expect(findings).toEqual([]);
+       |                      ^
+    115|   });
+    116| });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[6/7]⎯
+
+ FAIL  src/lib/services/__tests__/tenant-factory.test.ts > createTenantForUser referral attribution > rechaza sin planes con copy neutro "Crea al menos un plan primero" (PE-01)
+AssertionError: expected ActionError: No hay planes disponibles. C… { code: '…' } to match object { code: 'NO_PLANS', …(1) }
+(1 matching property omitted from actual)
+
+- Expected
++ Received
+
+- {
++ ActionError {
+    "code": "NO_PLANS",
+-   "message": "No hay planes disponibles. Crea al menos un plan primero.",
+  }
+
+ ❯ src/lib/services/__tests__/tenant-factory.test.ts:321:5
+    319|     vi.mocked(prisma.plan.findFirst).mockResolvedValueOnce(null);
+    320| 
+    321|     await expect(createTenantForUser({ userId: 'company-user' }))
+       |     ^
+    322|       .rejects.toMatchObject({
+    323|         code: 'NO_PLANS',
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[7/7]⎯
+
+
+ Test Files  5 failed (5)
+      Tests  7 failed | 17 passed (24)
+   Start at  22:08:59
+   Duration  5.00s (transform 1.42s, setup 1.79s, collect 3.40s, tests 305ms, environment 7.72s, prepare 1.91s)
+

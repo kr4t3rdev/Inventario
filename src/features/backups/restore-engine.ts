@@ -14,9 +14,10 @@
 import { gunzipSync } from 'zlib'
 import { Pool } from 'pg'
 import { PrismaClient } from '@/generated/prisma'
+import { prismaPlatform } from '@/lib/db/platform-prisma'
 import type { BackupStorage } from './storage/types'
 
-const DEFAULT_PRISMA = new PrismaClient()
+const DEFAULT_PRISMA = prismaPlatform
 
 export interface RestoreResult {
   backupLogId: string

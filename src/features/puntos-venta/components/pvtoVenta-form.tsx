@@ -14,7 +14,7 @@ import { sileo } from '@/lib/sileo-shim'
 import { createPuntoDeVentaAction, updatePuntoDeVentaAction } from "@/features/puntos-venta/actions"
 import { getListasPreciosAction } from "@/features/listas-precios"
 import { LazyMotion, m as motion } from "framer-motion"
-import { Store, MapPin, Sparkles, ArrowLeft, Loader2 } from "lucide-react"
+import { Store, MapPin, ArrowLeft, Loader2 } from "lucide-react"
 import {
   parsePvFormValues,
   ptoVentaFormValuesSchema,
@@ -50,12 +50,16 @@ export function PtoVentaForm({ initialData }: PtoVentaFormProps) {
   const router = useRouter()
   const [isLoading, setIsLoading] = useState(false)
   const [listasPrecios, setListasPrecios] = useState<ListaPrecioOption[]>([])
+  const [hasListaPreciosFeature, setHasListaPreciosFeature] = useState<boolean | null>(null)
 
-  // Fetch price lists via Server Action
   useEffect(() => {
     getListasPreciosAction().then(result => {
       if (result.success) {
+        setHasListaPreciosFeature(true)
         setListasPrecios(result.data ?? [])
+      } else if (result.error?.code === 'FEATURE_NOT_AVAILABLE') {
+        setHasListaPreciosFeature(false)
+        form.setValue('listaPrecioId', 'default')
       }
     })
   }, [])
@@ -124,24 +128,12 @@ export function PtoVentaForm({ initialData }: PtoVentaFormProps) {
             className="flex items-center gap-3 mb-6"
           >
             <motion.div 
-              className="w-10 h-10 bg-linear-to-br from-primary to-purple-600 rounded-xl flex items-center justify-center shadow-lg relative"
+              className="w-10 h-10 bg-linear-to-br from-primary to-purple rounded-xl flex items-center justify-center shadow-lg relative"
               whileHover={{ scale: 1.05, rotate: 5 }}
               transition={{ duration: 0.2 }}
             >
               <Store className="h-5 w-5 text-white" />
-              <motion.div
-                animate={{ 
-                  rotate: 360,
-                  scale: [1, 1.2, 1]
-                }}
-                transition={{ 
-                  rotate: { duration: 20, repeat: Infinity, ease: "linear" },
-                  scale: { duration: 2, repeat: Infinity, ease: "easeInOut" }
-                }}
-                className="absolute -top-1 -right-1"
-              >
-                <Sparkles className="h-4 w-4 text-yellow-400" />
-              </motion.div>
+
             </motion.div>
             <div>
               <h2 className="text-xl font-semibold">
@@ -227,41 +219,43 @@ export function PtoVentaForm({ initialData }: PtoVentaFormProps) {
                 />
               </motion.div>
 
-              {/* Lista de Precios Field */}
-              <motion.div
-                initial={{ opacity: 0, x: -20 }}
-                animate={{ opacity: 1, x: 0 }}
-                transition={{ delay: 0.35 }}
-              >
-                <FormField
-                  control={form.control}
-                  name="listaPrecioId"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Lista de precios</FormLabel>
-                      <Select value={field.value || "default"} onValueChange={field.onChange}>
-                        <FormControl>
-                          <SelectTrigger>
-                            <SelectValue placeholder="Usar precio base" />
-                          </SelectTrigger>
-                        </FormControl>
-                        <SelectContent>
-                          <SelectItem value="default">Usar precio base</SelectItem>
-                          {listasPrecios?.map((lista) => (
-                            <SelectItem key={lista.id} value={lista.id}>
-                              {lista.nombre}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                      <FormDescription>
-                        Si no se selecciona, el punto de venta usará precio base del producto.
-                      </FormDescription>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-              </motion.div>
+              {/* Lista de Precios Field — solo visible si el plan incluye el feature */}
+              {hasListaPreciosFeature && (
+                <motion.div
+                  initial={{ opacity: 0, x: -20 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  transition={{ delay: 0.35 }}
+                >
+                  <FormField
+                    control={form.control}
+                    name="listaPrecioId"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Lista de precios</FormLabel>
+                        <Select value={field.value || "default"} onValueChange={field.onChange}>
+                          <FormControl>
+                            <SelectTrigger>
+                              <SelectValue placeholder="Usar precio base" />
+                            </SelectTrigger>
+                          </FormControl>
+                          <SelectContent>
+                            <SelectItem value="default">Usar precio base</SelectItem>
+                            {listasPrecios?.map((lista) => (
+                              <SelectItem key={lista.id} value={lista.id}>
+                                {lista.nombre}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                        <FormDescription>
+                          Si no se selecciona, el punto de venta usará precio base del producto.
+                        </FormDescription>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                </motion.div>
+              )}
               
               <motion.div 
                 className="flex flex-col sm:flex-row justify-end gap-4 pt-4 border-t"
@@ -286,7 +280,7 @@ export function PtoVentaForm({ initialData }: PtoVentaFormProps) {
                   <Button 
                     type="submit" 
                     disabled={isLoading}
-                    className="min-w-45 gap-2 bg-linear-to-r from-primary to-purple-600 hover:from-primary/90 hover:to-purple-600/90 cursor-pointer transition-colors duration-200"
+                    className="min-w-45 gap-2 bg-linear-to-r from-primary to-purple hover:from-primary/90 hover:to-purple/90 cursor-pointer transition-colors duration-200"
                   >
                     {isLoading ? (
                       <>

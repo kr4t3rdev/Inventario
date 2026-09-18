@@ -6,7 +6,7 @@
  */
 'use client'
 
-import { useState, useCallback } from 'react'
+import { useState, useCallback, useEffect, useMemo } from 'react'
 import {
   Database,
   Loader2,
@@ -37,6 +37,9 @@ import {
 import { createPlanAction, updatePlanAction, deletePlanAction } from '../actions-plans'
 import type { BackupLogRow } from '../hooks/use-backups'
 import type { CreatePlanInput, UpdatePlanInput } from '../schemas'
+import { getAdminTenantsAction } from '@/features/admin/actions'
+import type { AdminTenant } from '@/features/admin'
+import type { BackupTenantOption } from './backup-trigger-dialog'
 
 export function BackupDashboardPage() {
   const [backupError, setBackupError] = useState<string | null>(null)
@@ -64,14 +67,36 @@ export function BackupDashboardPage() {
   const [planFormOpen, setPlanFormOpen] = useState(false)
   const [planSaving, setPlanSaving] = useState(false)
   const [planError, setPlanError] = useState<string | null>(null)
+  const [tenantOptions, setTenantOptions] = useState<BackupTenantOption[]>([])
+
+  useEffect(() => {
+    let cancelled = false
+
+    void getAdminTenantsAction().then((response) => {
+      if (cancelled || !response.success || !response.data) {
+        return
+      }
+
+      const options = (response.data as unknown as AdminTenant[]).map((tenant) => ({
+        tenantId: tenant.tenantId,
+        nombre: tenant.nombre,
+      }))
+
+      setTenantOptions(options)
+    })
+
+    return () => {
+      cancelled = true
+    }
+  }, [])
 
   // --- Manual backup ---
   const handleCreateBackup = useCallback(
-    async (type: 'full' | 'tenant' | 'config') => {
+    async (type: 'full' | 'tenant' | 'config', tenantId?: string) => {
       setIsCreating(true)
       setBackupError(null)
       try {
-        const res = await createBackupAction({ type })
+        const res = await createBackupAction({ type, tenantId })
         if (!res.success) {
           const msg = res.error?.message ?? 'No se pudo iniciar la copia de seguridad'
           setBackupError(msg)
@@ -114,8 +139,12 @@ export function BackupDashboardPage() {
     async (backupLogId: string) => {
       try {
         const res = await downloadBackupAction({ backupLogId })
-        if (!res.success || !res.data?.downloadUrl) {
+        if (!res.success) {
           toast.error(res.error?.message ?? 'No se pudo descargar la copia')
+          return
+        }
+        if (!res.data?.downloadUrl) {
+          toast.error('No se pudo descargar la copia')
           return
         }
 
@@ -229,6 +258,15 @@ export function BackupDashboardPage() {
         new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
     )[0] ?? null
 
+  const tenantNames = useMemo(
+    () =>
+      tenantOptions.reduce<Record<string, string>>((acc, tenant) => {
+        acc[tenant.tenantId] = tenant.nombre
+        return acc
+      }, {}),
+    [tenantOptions]
+  )
+
   return (
     <div className="space-y-6">
       {/* Page header */}
@@ -249,6 +287,7 @@ export function BackupDashboardPage() {
           <BackupTriggerDialog
             isCreating={isCreating}
             error={backupError}
+            tenants={tenantOptions}
             onCreateBackup={handleCreateBackup}
           >
             <Button className="bg-violet-600 hover:bg-violet-700">
@@ -341,6 +380,7 @@ export function BackupDashboardPage() {
             logs={logs}
             isLoading={logsLoading}
             total={total}
+            tenantNames={tenantNames}
             onDelete={handleDeleteBackup}
             onDownload={handleDownload}
             onRestore={(log) => setRestoreTarget(log)}
@@ -365,6 +405,7 @@ export function BackupDashboardPage() {
           <PlanList
             plans={plans}
             isLoading={plansLoading}
+            tenantNames={tenantNames}
             onToggle={handleTogglePlan}
             onDelete={handleDeletePlan}
             onCreateNew={() => setPlanFormOpen(true)}
@@ -387,6 +428,7 @@ export function BackupDashboardPage() {
         onOpenChange={setPlanFormOpen}
         isSaving={planSaving}
         error={planError}
+        tenants={tenantOptions}
         onSubmit={handleCreatePlan}
       />
     </div>

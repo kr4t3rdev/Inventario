@@ -20,7 +20,7 @@ export type ActionResponse<T = unknown> =
  * @template TOutput - Tipo de los datos que devuelve en caso de éxito
  */
 export type ServerAction<TInput = void, TOutput = unknown> = (
-  input: TInput
+  input?: TInput
 ) => Promise<ActionResponse<TOutput>>;
 
 /**

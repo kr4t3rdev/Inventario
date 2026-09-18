@@ -1,6 +1,7 @@
 'use client';
 
 import dynamic from 'next/dynamic';
+import { useRouter } from 'next/navigation';
 import { useState, useEffect } from 'react';
 import { LazyMotion, m as motion, useReducedMotion } from 'framer-motion';
 import { ArrowLeft, ShieldCheck, ShieldAlert } from 'lucide-react';
@@ -9,6 +10,7 @@ import { Badge } from '@/components/ui/badge';
 import Link from 'next/link';
 ;
 import { Skeleton } from '@/components/ui/skeleton';
+import { useAuth } from '@/contexts/auth-context';
 import { ContabilidadBreadcrumb } from '@/features/contabilidad/components/contabilidad-breadcrumb';
 import { cn } from '@/lib/utils';
 
@@ -52,11 +54,24 @@ const statusBadgeClass = cn(
  */
 export default function LogsPage() {
   const shouldReduceMotion = useReducedMotion();
+  const router = useRouter();
+  const { user, loading } = useAuth();
   const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
     setMounted(true);
   }, []);
+
+  const isBlocked =
+    !loading &&
+    user?.role !== 'admin' &&
+    user?.planFeatures?.contabilidad !== true;
+
+  useEffect(() => {
+    if (isBlocked) {
+      router.replace('/busy/contabilidad');
+    }
+  }, [isBlocked, router]);
 
   const fadeIn = {
     hidden: { opacity: 0 },
@@ -80,6 +95,8 @@ export default function LogsPage() {
       },
     },
   };
+
+  if (isBlocked) return null;
 
   if (!mounted) {
     return (

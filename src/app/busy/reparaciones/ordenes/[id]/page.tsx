@@ -4,6 +4,8 @@ import { useState, useEffect, use , useRef} from "react"
 import { useRouter } from "next/navigation"
 import { LazyMotion, m as motion } from "framer-motion"
 import { getAuthToken } from "@/lib/token"
+import type { CloudinaryAssetUploadResult } from "@/lib/upload/cloudinary-asset"
+import { uploadToCloudinary } from "@/lib/upload/cloudinary-upload"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from "@/components/ui/card"
@@ -185,6 +187,7 @@ export default function OrdenDetail({ params }: { params: Promise<{ id: string }
   const [complejidad, setComplejidad] = useState<ComplejidadReparacion | null>(null)
   const [diagnostico, setDiagnostico] = useState("")
   const [fotos, setFotos] = useState<string[]>([])
+  const [fotoAssets, setFotoAssets] = useState<CloudinaryAssetUploadResult[]>([])
   const isUploading = useRef(false)
   
   // Items (Mano de obra / Piezas de reparación)
@@ -250,9 +253,10 @@ export default function OrdenDetail({ params }: { params: Promise<{ id: string }
       setEstado(orden.estado)
       setDiagnostico(orden.diagnosticoTecnico || "")
       setFotos(orden.fotos || [])
+      setFotoAssets(orden.cloudinaryPhotoAssets || [])
       
       if (orden.items) {
-  // @ts-expect-error
+  // @ts-expect-error -- orden.items llega enriquecido desde el API handler
         setItems(orden.items.map(i => ({
           ordenEquipoId: i.ordenEquipoId || undefined,
           equipoTipoId: i.ordenEquipo?.equipoTipoId || orden.equipoTipoId,
@@ -269,7 +273,7 @@ export default function OrdenDetail({ params }: { params: Promise<{ id: string }
       }
 
       if (orden.materiales) {
-  // @ts-expect-error
+  // @ts-expect-error -- orden.materiales llega enriquecido desde el API handler
         setMateriales(orden.materiales.map(m => ({
           productoId: m.productoId,
           nombreProducto: m.producto?.nombre || "Producto desconocido",
@@ -353,36 +357,34 @@ export default function OrdenDetail({ params }: { params: Promise<{ id: string }
     if (!e.target.files || e.target.files.length === 0) return
     
     isUploading.current = true
-    const formData = new FormData()
-    formData.append('file', e.target.files[0])
 
     try {
-      const token = ''
-      const res = await fetch('/api/upload', {
-        method: 'POST',
-        headers: token ? { Authorization: `Bearer ${token}` } : {},
-        body: formData
-      })
-      
-      if (!res.ok) throw new Error('Error subiendo imagen')
-      
-      const data = await res.json()
-      setFotos([...fotos, data.url])
+      const asset = await uploadToCloudinary(
+        e.target.files[0],
+        {
+          uploadKey: 'reparaciones.orden-photo',
+          entityId: ordId,
+        }
+      )
+      setFotos([...fotos, asset.secureUrl])
+      setFotoAssets([...fotoAssets, asset])
       toast.success("Foto subida")
     } catch (error) {
       console.error(error)
       toast.error("Error al subir la foto")
     } finally {
-      isUploading.current = false;
+      isUploading.current = false
       // Limpiar input
       e.target.value = ''
     }
   }
 
   const handleRemovePhoto = (index: number) => {
+    const fotoRemovida = fotos[index]
     const newFotos = [...fotos]
     newFotos.splice(index, 1)
     setFotos(newFotos)
+    setFotoAssets(fotoAssets.filter((asset) => asset.secureUrl !== fotoRemovida))
   }
 
   // Handlers para Materiales
@@ -505,6 +507,8 @@ export default function OrdenDetail({ params }: { params: Promise<{ id: string }
         estado: estado as any,
         complejidad,
         diagnosticoTecnico: diagnostico,
+        fotos,
+        fotoAssets,
         items: items.map(i => ({
           ordenEquipoId: i.ordenEquipoId && ordenEquipoIds.has(i.ordenEquipoId) ? i.ordenEquipoId : null,
           piezaId: i.piezaId,

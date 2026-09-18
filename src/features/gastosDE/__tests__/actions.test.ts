@@ -1,12 +1,22 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 vi.mock('@/lib/server-actions/get-current-user');
 vi.mock('next/cache', () => ({ revalidatePath: vi.fn() }));
-vi.mock('@/lib/prisma', () => ({ prisma: { gastosDE: { findMany: vi.fn(), findFirst: vi.fn(), create: vi.fn(), update: vi.fn(), delete: vi.fn() }, gastoElemento: { findFirst: vi.fn() }, gastoConcepto: { findUnique: vi.fn() } } }));
+vi.mock('@/lib/prisma', () => ({ prisma: { gastosDE: { findMany: vi.fn(), findFirst: vi.fn(), create: vi.fn(), update: vi.fn(), delete: vi.fn() }, gastoElemento: { findMany: vi.fn(), findFirst: vi.fn(), create: vi.fn(), update: vi.fn(), delete: vi.fn() }, gastoConcepto: { findMany: vi.fn(), findFirst: vi.fn(), create: vi.fn(), update: vi.fn(), delete: vi.fn(), findUnique: vi.fn() }, vendor: { findFirst: vi.fn() } } }));
 import { getCurrentUser } from '@/lib/server-actions/get-current-user';
 import { prisma } from '@/lib/prisma';
-import { getGastosDEAction, createGastosDEAction, deleteGastosDEAction, updateGastosDEAction } from '@/features/gastosDE/actions';
+import { getGastosDEAction, createGastosDEAction, deleteGastosDEAction, deleteGastosDEBulkAction, updateGastosDEAction, aprobarGastoDEAction, rechazarGastoDEAction, getGastoConceptosAction, createGastoConceptoAction, getGastoElementosAction, createGastoElementoAction } from '@/features/gastosDE/actions';
 import type { AuthenticatedUser } from '@/lib/auth-middleware';
 const u: AuthenticatedUser = { userId: 'u1', name: 'T', email: 't@t.com', role: 'admin', isActive: true, tenantId: 't1', tenantRole: 'admin' };
+const featureBlockedUser: AuthenticatedUser = {
+  userId: 'u2',
+  name: 'Feature Blocked',
+  email: 'blocked@t.com',
+  role: 'regularUser',
+  isActive: true,
+  tenantId: 't1',
+  tenantRole: 'economico',
+  planFeatures: { gastos: false },
+};
 describe('GastosDE Actions', () => {
   beforeEach(() => vi.clearAllMocks());
   it('lista', async () => { vi.mocked(getCurrentUser).mockResolvedValue(u); vi.mocked(prisma.gastosDE.findMany).mockResolvedValue([]); const r=await getGastosDEAction(); expect(r.success).toBe(true); });
@@ -39,6 +49,7 @@ describe('GastosDE Actions', () => {
     it('persiste conceptoId cuando viene en el payload', async () => {
       vi.mocked(getCurrentUser).mockResolvedValue(u);
       vi.mocked(prisma.gastosDE.findFirst).mockResolvedValue(existing as any);
+      vi.mocked(prisma.gastoConcepto.findFirst).mockResolvedValue({ conceptoId: 'c-1', tenantId: 't1', nombre: 'Arrendamiento' } as any);
       vi.mocked(prisma.gastosDE.update).mockResolvedValue({} as any);
       await updateGastosDEAction({ gastosDEId: 'g1', conceptoId: 'c-1' });
       expect(vi.mocked(prisma.gastosDE.update)).toHaveBeenCalledWith(
@@ -49,6 +60,7 @@ describe('GastosDE Actions', () => {
     it('persiste elementoId cuando viene en el payload', async () => {
       vi.mocked(getCurrentUser).mockResolvedValue(u);
       vi.mocked(prisma.gastosDE.findFirst).mockResolvedValue(existing as any);
+      vi.mocked(prisma.gastoElemento.findFirst).mockResolvedValue({ elementoId: 'e-1', tenantId: 't1', conceptoId: 'c-1' } as any);
       vi.mocked(prisma.gastosDE.update).mockResolvedValue({} as any);
       await updateGastosDEAction({ gastosDEId: 'g1', elementoId: 'e-1' });
       expect(vi.mocked(prisma.gastosDE.update)).toHaveBeenCalledWith(
@@ -69,8 +81,29 @@ describe('GastosDE Actions', () => {
     it('rechaza update con conceptoId + elementoId que no se relacionan', async () => {
       vi.mocked(getCurrentUser).mockResolvedValue(u);
       vi.mocked(prisma.gastosDE.findFirst).mockResolvedValue(existing as any);
+      vi.mocked(prisma.gastoConcepto.findFirst).mockResolvedValue({ conceptoId: 'c-1', tenantId: 't1', nombre: 'Arrendamiento' } as any);
       vi.mocked(prisma.gastoElemento.findFirst).mockResolvedValue(null);
       const r = await updateGastosDEAction({ gastosDEId: 'g1', conceptoId: 'c-1', elementoId: 'e-from-c2' });
+      expect(r.success).toBe(false);
+      expect(r.error?.code).toBe('VALIDATION_ERROR');
+      expect(vi.mocked(prisma.gastosDE.update)).not.toHaveBeenCalled();
+    });
+
+    it('rechaza update con concepto de otro tenant', async () => {
+      vi.mocked(getCurrentUser).mockResolvedValue(u);
+      vi.mocked(prisma.gastosDE.findFirst).mockResolvedValue(existing as any);
+      vi.mocked(prisma.gastoConcepto.findFirst).mockResolvedValue(null);
+      const r = await updateGastosDEAction({ gastosDEId: 'g1', conceptoId: 'c-de-otro-tenant' });
+      expect(r.success).toBe(false);
+      expect(r.error?.code).toBe('VALIDATION_ERROR');
+      expect(vi.mocked(prisma.gastosDE.update)).not.toHaveBeenCalled();
+    });
+
+    it('rechaza update con elemento de otro tenant', async () => {
+      vi.mocked(getCurrentUser).mockResolvedValue(u);
+      vi.mocked(prisma.gastosDE.findFirst).mockResolvedValue(existing as any);
+      vi.mocked(prisma.gastoElemento.findFirst).mockResolvedValue(null);
+      const r = await updateGastosDEAction({ gastosDEId: 'g1', elementoId: 'e-de-otro-tenant' });
       expect(r.success).toBe(false);
       expect(r.error?.code).toBe('VALIDATION_ERROR');
       expect(vi.mocked(prisma.gastosDE.update)).not.toHaveBeenCalled();
@@ -104,5 +137,267 @@ describe('GastosDE Actions', () => {
     expect(r.success).toBe(false);
     expect(r.error?.code).toBe('NOT_FOUND');
     expect(vi.mocked(prisma.gastosDE.delete)).not.toHaveBeenCalled();
+  });
+
+  describe('deleteGastosDEBulkAction', () => {
+    it('rechaza lista vacía con VALIDATION_ERROR', async () => {
+      vi.mocked(getCurrentUser).mockResolvedValue(u);
+      const r = await deleteGastosDEBulkAction([]);
+      expect(r.success).toBe(false);
+      expect(r.error?.code).toBe('VALIDATION_ERROR');
+      expect(vi.mocked(prisma.gastosDE.delete)).not.toHaveBeenCalled();
+    });
+
+    it('elimina los ids existentes del tenant en el fallback sin $transaction', async () => {
+      vi.mocked(getCurrentUser).mockResolvedValue(u);
+      vi.mocked(prisma.gastosDE.findFirst)
+        .mockResolvedValueOnce({ gastosDEId: 'g1' } as any)
+        .mockResolvedValueOnce({ gastosDEId: 'g2' } as any)
+        .mockResolvedValueOnce(null);
+      vi.mocked(prisma.gastosDE.delete).mockResolvedValue({} as any);
+      const r = await deleteGastosDEBulkAction(['g1', 'g2', 'g-otro-tenant']);
+      expect(r.success).toBe(true);
+      expect(vi.mocked(prisma.gastosDE.delete)).toHaveBeenCalledTimes(2);
+      expect(r.data?.eliminados).toBe(2);
+    });
+
+    it('ignora ids no string o vacíos', async () => {
+      vi.mocked(getCurrentUser).mockResolvedValue(u);
+      const r = await deleteGastosDEBulkAction(['', 123 as unknown as string]);
+      expect(r.success).toBe(false);
+      expect(r.error?.code).toBe('VALIDATION_ERROR');
+    });
+  });
+
+  it('bloquea acceso cuando el plan no incluye gastos', async () => {
+    vi.mocked(getCurrentUser).mockResolvedValue(featureBlockedUser);
+
+    const r = await getGastosDEAction();
+
+    expect(r.success).toBe(false);
+    expect(r.error?.code).toBe('FEATURE_NOT_AVAILABLE');
+    expect(vi.mocked(prisma.gastosDE.findMany)).not.toHaveBeenCalled();
+  });
+});
+
+describe('GastosDE Conceptos/Elementos - aislamiento por tenant', () => {
+  beforeEach(() => vi.clearAllMocks());
+
+  it('getGastoConceptosAction filtra por tenantId', async () => {
+    vi.mocked(getCurrentUser).mockResolvedValue(u);
+    vi.mocked(prisma.gastoConcepto.findMany).mockResolvedValue([]);
+    await getGastoConceptosAction({});
+    expect(prisma.gastoConcepto.findMany).toHaveBeenCalledWith(
+      expect.objectContaining({ where: expect.objectContaining({ tenantId: 't1' }) })
+    );
+  });
+
+  it('createGastoConceptoAction asigna tenantId y valida duplicado por tenant', async () => {
+    vi.mocked(getCurrentUser).mockResolvedValue(u);
+    vi.mocked(prisma.gastoConcepto.findFirst).mockResolvedValue({ conceptoId: 'c-1', tenantId: 't1', nombre: 'Arrendamiento' } as any);
+    const r = await createGastoConceptoAction({ nombre: 'Arrendamiento' });
+    expect(r.success).toBe(false);
+    expect(r.error?.code).toBe('DUPLICATE');
+    expect(prisma.gastoConcepto.create).not.toHaveBeenCalled();
+  });
+
+  it('createGastoConceptoAction crea con tenantId', async () => {
+    vi.mocked(getCurrentUser).mockResolvedValue(u);
+    vi.mocked(prisma.gastoConcepto.findFirst).mockResolvedValue(null);
+    vi.mocked(prisma.gastoConcepto.create).mockResolvedValue({ conceptoId: 'c-nuevo' } as any);
+    const r = await createGastoConceptoAction({ nombre: 'Marketing' });
+    expect(r.success).toBe(true);
+    expect(prisma.gastoConcepto.create).toHaveBeenCalledWith(
+      expect.objectContaining({ data: expect.objectContaining({ tenantId: 't1', nombre: 'Marketing' }) })
+    );
+  });
+
+  it('getGastoElementosAction filtra por conceptoId y tenantId', async () => {
+    vi.mocked(getCurrentUser).mockResolvedValue(u);
+    vi.mocked(prisma.gastoElemento.findMany).mockResolvedValue([]);
+    await getGastoElementosAction('c-1');
+    expect(prisma.gastoElemento.findMany).toHaveBeenCalledWith(
+      expect.objectContaining({ where: expect.objectContaining({ conceptoId: 'c-1', tenantId: 't1' }) })
+    );
+  });
+
+  it('createGastoElementoAction rechaza concepto de otro tenant', async () => {
+    vi.mocked(getCurrentUser).mockResolvedValue(u);
+    vi.mocked(prisma.gastoConcepto.findFirst).mockResolvedValue(null);
+    const r = await createGastoElementoAction({ conceptoId: 'c-de-otro-tenant', nombre: 'Extra' });
+    expect(r.success).toBe(false);
+    expect(r.error?.code).toBe('NOT_FOUND');
+    expect(prisma.gastoElemento.create).not.toHaveBeenCalled();
+  });
+
+  it('createGastoElementoAction crea con tenantId', async () => {
+    vi.mocked(getCurrentUser).mockResolvedValue(u);
+    vi.mocked(prisma.gastoConcepto.findFirst).mockResolvedValue({ conceptoId: 'c-1', tenantId: 't1' } as any);
+    vi.mocked(prisma.gastoElemento.create).mockResolvedValue({ elementoId: 'e-nuevo' } as any);
+    const r = await createGastoElementoAction({ conceptoId: 'c-1', nombre: 'Local' });
+    expect(r.success).toBe(true);
+    expect(prisma.gastoElemento.create).toHaveBeenCalledWith(
+      expect.objectContaining({ data: expect.objectContaining({ tenantId: 't1', conceptoId: 'c-1' }) })
+    );
+  });
+
+  it('createGastosDEAction rechaza concepto de otro tenant', async () => {
+    vi.mocked(getCurrentUser).mockResolvedValue(u);
+    vi.mocked(prisma.gastoConcepto.findFirst).mockResolvedValue(null);
+    const r = await createGastosDEAction({ proveedor: 'P', monto: 100, descripcion: 'D', conceptoId: 'c-de-otro-tenant' });
+    expect(r.success).toBe(false);
+    expect(r.error?.code).toBe('VALIDATION_ERROR');
+    expect(prisma.gastosDE.create).not.toHaveBeenCalled();
+  });
+
+  it('createGastosDEAction rechaza elemento de otro tenant', async () => {
+    vi.mocked(getCurrentUser).mockResolvedValue(u);
+    vi.mocked(prisma.gastoElemento.findFirst).mockResolvedValue(null);
+    const r = await createGastosDEAction({ proveedor: 'P', monto: 100, descripcion: 'D', elementoId: 'e-de-otro-tenant' });
+    expect(r.success).toBe(false);
+    expect(r.error?.code).toBe('VALIDATION_ERROR');
+    expect(prisma.gastosDE.create).not.toHaveBeenCalled();
+  });
+});
+
+describe('B-04: proveedor con FK y aprobación', () => {
+  const dependiente: AuthenticatedUser = {
+    userId: 'd1', name: 'Dep', email: 'd@t.com', role: 'user', isActive: true, tenantId: 't1', tenantRole: 'dependiente',
+    planFeatures: { gastos: true },
+  };
+  const economico: AuthenticatedUser = {
+    userId: 'e1', name: 'Eco', email: 'e@t.com', role: 'user', isActive: true, tenantId: 't1', tenantRole: 'economico',
+    planFeatures: { gastos: true },
+  };
+
+  beforeEach(() => vi.clearAllMocks());
+
+  it('create con proveedorId persiste la FK y canoniza el nombre del catálogo', async () => {
+    vi.mocked(getCurrentUser).mockResolvedValue(u);
+    vi.mocked(prisma.vendor.findFirst).mockResolvedValue({ vendorId: 'ven-1', nombre: 'Proveedor Oficial' } as never);
+    vi.mocked(prisma.gastosDE.create).mockResolvedValue({ gastosDEId: 'g1' } as never);
+
+    const r = await createGastosDEAction({ proveedor: '', proveedorId: 'ven-1', monto: 500, descripcion: 'Compra' } as never);
+
+    expect(r.success).toBe(true);
+    expect(prisma.vendor.findFirst).toHaveBeenCalledWith({ where: { vendorId: 'ven-1', tenantId: 't1' } });
+    expect(prisma.gastosDE.create).toHaveBeenCalledWith(
+      expect.objectContaining({
+        data: expect.objectContaining({
+          proveedorId: 'ven-1',
+          proveedor: 'Proveedor Oficial',
+          estado: 'PENDIENTE',
+        }),
+      }),
+    );
+  });
+
+  it('create rechaza un proveedorId de otro tenant', async () => {
+    vi.mocked(getCurrentUser).mockResolvedValue(u);
+    vi.mocked(prisma.vendor.findFirst).mockResolvedValue(null as never);
+
+    const r = await createGastosDEAction({ proveedor: '', proveedorId: 'ven-x', monto: 500, descripcion: 'Compra' } as never);
+
+    expect(r.success).toBe(false);
+    expect(r.error?.code).toBe('NOT_FOUND');
+    expect(prisma.gastosDE.create).not.toHaveBeenCalled();
+  });
+
+  it('create sin proveedorId nace PENDIENTE (nunca suma a reportes hasta aprobarse)', async () => {
+    vi.mocked(getCurrentUser).mockResolvedValue(u);
+    vi.mocked(prisma.gastosDE.create).mockResolvedValue({ gastosDEId: 'g1' } as never);
+
+    const r = await createGastosDEAction({ proveedor: 'Texto libre', monto: 100, descripcion: 'Varios' });
+
+    expect(r.success).toBe(true);
+    expect(prisma.gastosDE.create).toHaveBeenCalledWith(
+      expect.objectContaining({
+        data: expect.objectContaining({ estado: 'PENDIENTE', proveedor: 'Texto libre' }),
+      }),
+    );
+  });
+
+  it('un dependiente no puede aprobar gastos', async () => {
+    vi.mocked(getCurrentUser).mockResolvedValue(dependiente);
+
+    const r = await aprobarGastoDEAction({ id: 'g1' });
+
+    expect(r.success).toBe(false);
+    expect(r.error?.code).toBe('FORBIDDEN');
+    expect(prisma.gastosDE.update).not.toHaveBeenCalled();
+  });
+
+  it('un economico aprueba una pendiente (PENDIENTE → APROBADO)', async () => {
+    vi.mocked(getCurrentUser).mockResolvedValue(economico);
+    vi.mocked(prisma.gastosDE.findFirst).mockResolvedValue({ gastosDEId: 'g1', tenantId: 't1', estado: 'PENDIENTE' } as never);
+    vi.mocked(prisma.gastosDE.update).mockResolvedValue({} as never);
+
+    const r = await aprobarGastoDEAction({ id: 'g1' });
+
+    expect(r.success).toBe(true);
+    expect(prisma.gastosDE.update).toHaveBeenCalledWith(
+      expect.objectContaining({
+        where: { gastosDEId: 'g1' },
+        data: expect.objectContaining({ estado: 'APROBADO', aprobadoPorId: 'e1' }),
+      }),
+    );
+  });
+
+  it('aprobar una ya aprobada es error de validación', async () => {
+    vi.mocked(getCurrentUser).mockResolvedValue(economico);
+    vi.mocked(prisma.gastosDE.findFirst).mockResolvedValue({ gastosDEId: 'g1', tenantId: 't1', estado: 'APROBADO' } as never);
+
+    const r = await aprobarGastoDEAction({ id: 'g1' });
+
+    expect(r.success).toBe(false);
+    expect(r.error?.code).toBe('VALIDATION_ERROR');
+  });
+
+  it('rechazar deja el gasto RECHAZADO', async () => {
+    vi.mocked(getCurrentUser).mockResolvedValue(economico);
+    vi.mocked(prisma.gastosDE.findFirst).mockResolvedValue({ gastosDEId: 'g1', tenantId: 't1', estado: 'PENDIENTE' } as never);
+    vi.mocked(prisma.gastosDE.update).mockResolvedValue({} as never);
+
+    const r = await rechazarGastoDEAction({ id: 'g1' });
+
+    expect(r.success).toBe(true);
+    expect(prisma.gastosDE.update).toHaveBeenCalledWith(
+      expect.objectContaining({
+        where: { gastosDEId: 'g1' },
+        data: expect.objectContaining({ estado: 'RECHAZADO' }),
+      }),
+    );
+  });
+
+  it('editar un gasto APROBADO exige el permiso de aprobación', async () => {
+    vi.mocked(getCurrentUser).mockResolvedValue(dependiente);
+    vi.mocked(prisma.gastosDE.findFirst).mockResolvedValue({ gastosDEId: 'g1', tenantId: 't1', estado: 'APROBADO' } as never);
+
+    const r = await updateGastosDEAction({ gastosDEId: 'g1', monto: 200 });
+
+    expect(r.success).toBe(false);
+    expect(r.error?.code).toBe('FORBIDDEN');
+  });
+
+  it('eliminar un gasto APROBADO se bloquea (rechazar primero)', async () => {
+    vi.mocked(getCurrentUser).mockResolvedValue(u);
+    vi.mocked(prisma.gastosDE.findFirst).mockResolvedValue({ gastosDEId: 'g1', tenantId: 't1', estado: 'APROBADO' } as never);
+
+    const r = await deleteGastosDEAction('g1');
+
+    expect(r.success).toBe(false);
+    expect(r.error?.code).toBe('VALIDATION_ERROR');
+    expect(prisma.gastosDE.delete).not.toHaveBeenCalled();
+  });
+
+  it('eliminar un gasto PENDIENTE sigue funcionando', async () => {
+    vi.mocked(getCurrentUser).mockResolvedValue(u);
+    vi.mocked(prisma.gastosDE.findFirst).mockResolvedValue({ gastosDEId: 'g1', tenantId: 't1', estado: 'PENDIENTE' } as never);
+    vi.mocked(prisma.gastosDE.delete).mockResolvedValue({} as never);
+    vi.mocked(prisma.gastosDE.update).mockResolvedValue({} as never);
+
+    const r = await deleteGastosDEAction('g1');
+
+    expect(r.success).toBe(true);
   });
 });

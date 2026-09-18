@@ -3,7 +3,7 @@ import type { Metadata } from 'next'
 export const metadata: Metadata = {
   title: 'Configuración Inicial — FinanceMDM',
   description:
-    'Completá tu registro eligiendo el tipo de usuario y la organización para empezar a usar FinanceMDM.',
+    'Completa tu registro eligiendo el tipo de usuario y la organización para empezar a usar FinanceMDM.',
   robots: {
     index: false,
     follow: false,

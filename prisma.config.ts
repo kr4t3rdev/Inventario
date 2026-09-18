@@ -1,13 +1,10 @@
-import { defineConfig, env } from 'prisma/config';
-
-const databaseUrl = env('DATABASE_URL');
-const directUrl = process.env.DIRECT_URL?.trim() || databaseUrl;
+import { defineConfig } from 'prisma/config'
 
 export default defineConfig({
   schema: 'prisma/schema.prisma',
   engine: 'classic',
   datasource: {
-    url: databaseUrl,
-    directUrl,
+    url: process.env.DATABASE_URL!,
+    directUrl: process.env.DIRECT_URL || process.env.DATABASE_URL!,
   },
-});
+})

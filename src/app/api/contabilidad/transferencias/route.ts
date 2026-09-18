@@ -4,6 +4,7 @@ import { z } from 'zod'
 import { authenticateUser } from '@/lib/auth-middleware'
 import { AuditLogService } from '@/lib/services/audit-log-service'
 import { validarEscrituraPeriodo, extraerFechaDeBody } from '@/lib/services/validate-period-write'
+import { canAccessAccountingItem } from '@/lib/plan-access'
 
 // Schema for creating a bank transfer
 const createTransferenciaSchema = z.object({
@@ -18,6 +19,14 @@ const createTransferenciaSchema = z.object({
 // GET /api/contabilidad/transferencias - List bank transfers
 export async function GET(request: NextRequest) {
   try {
+    const authResultUser = await authenticateUser(request)
+    if ('status' in authResultUser) return authResultUser as Response
+    const user = authResultUser.user
+
+    if (user.role !== 'admin' && !canAccessAccountingItem(user, 'Transferencias Bancarias')) {
+      return NextResponse.json({ error: 'Prohibido' }, { status: 403 })
+    }
+
     const { searchParams } = new URL(request.url)
     const page = parseInt(searchParams.get('page') || '1')
     const limit = parseInt(searchParams.get('limit') || '10')
@@ -126,6 +135,10 @@ export async function POST(request: NextRequest) {
     const authResultUser = await authenticateUser(request)
     if ('status' in authResultUser) return authResultUser as Response
     const user = authResultUser.user
+
+    if (user.role !== 'admin' && !canAccessAccountingItem(user, 'Transferencias Bancarias')) {
+      return NextResponse.json({ error: 'Prohibido' }, { status: 403 })
+    }
 
     const body = await request.json()
     const validatedData = createTransferenciaSchema.parse(body)

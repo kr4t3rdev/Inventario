@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { z } from 'zod'
+import { authenticateUser, type AuthenticatedUser } from '@/lib/auth-middleware'
+import { requireTenant } from '@/lib/services/tenant-scope'
 
 // Schema para validar configuración de tipo de pago
 const ValidacionTipoPagoSchema = z.object({
@@ -13,6 +15,9 @@ const ValidacionTipoPagoSchema = z.object({
 // POST /api/contabilidad/tipos-pago/validar - Validar configuración de tipo de pago
 export async function POST(request: NextRequest) {
   try {
+    const authResult = await authenticateUser(request)
+    if ('status' in authResult) return authResult as Response
+    const tenantId = requireTenant(authResult.user as AuthenticatedUser)
     const body = await request.json()
     const validatedData = ValidacionTipoPagoSchema.parse(body)
 
@@ -25,11 +30,12 @@ export async function POST(request: NextRequest) {
 
     // 1. Validar nombre único
     const existingTipo = await prisma.tipoPago.findFirst({
-      where: { 
+      where: {
         nombre: {
           equals: validatedData.nombre,
-          
+
         },
+        tenantId,
         ...(validatedData.tipoId && { tipoId: { not: validatedData.tipoId } })
       }
     })
@@ -48,7 +54,7 @@ export async function POST(request: NextRequest) {
     // 3. Validar cuenta por defecto si se especifica
     if (validatedData.cuentaDefecto) {
       const cuenta = await prisma.cuentaBancaria.findUnique({
-        where: { cuentaId: validatedData.cuentaDefecto }
+        where: { cuentaId: validatedData.cuentaDefecto, tenantId }
       })
 
       if (!cuenta) {
@@ -67,16 +73,16 @@ export async function POST(request: NextRequest) {
 
     // 4. Sugerencias basadas en tipos de pago existentes
     const tiposExistentes = await prisma.tipoPago.findMany({
-      where: { isActive: true },
+      where: { isActive: true, tenantId },
       select: { nombre: true, requiereCuenta: true }
     })
 
     // Sugerir tipos de pago comunes si no existen
     const tiposComunes = ['efectivo', 'transferencia', 'tarjeta', 'cheque']
     const nombresExistentes = tiposExistentes.map((t: any) => t.nombre.toLowerCase())
-    
-    const tiposFaltantes = tiposComunes.filter((tipo: string) => 
-      !nombresExistentes.includes(tipo) && 
+
+    const tiposFaltantes = tiposComunes.filter((tipo: string) =>
+      !nombresExistentes.includes(tipo) &&
       !validatedData.nombre.toLowerCase().includes(tipo)
     )
 

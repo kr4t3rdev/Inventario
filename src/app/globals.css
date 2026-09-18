@@ -45,6 +45,11 @@
   --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
   --color-sidebar-border: var(--sidebar-border);
   --color-sidebar-ring: var(--sidebar-ring);
+  --color-success: var(--success);
+  --color-warning: var(--warning);
+  --color-info: var(--info);
+  --color-danger: var(--danger);
+  --color-purple: var(--purple);
 }
 
 :root {
@@ -67,11 +72,43 @@
   --border: oklch(0.88 0.01 255);
   --input: oklch(0.88 0.01 255);
   --ring: oklch(0.55 0.12 252);
+  --success: oklch(0.6 0.15 163);
+  --warning: oklch(0.77 0.16 70);
+  --info: oklch(0.68 0.15 237);
+  --danger: oklch(0.64 0.22 16);
+  --purple: oklch(0.6 0.23 292);
   --chart-1: oklch(0.58 0.16 250);
   --chart-2: oklch(0.65 0.12 195);
   --chart-3: oklch(0.45 0.08 228);
   --chart-4: oklch(0.74 0.15 90);
   --chart-5: oklch(0.67 0.17 35);
+  /* Tokens semánticos de charts (B-07b): fuente única para cuadre, admin,
+     dashboard y wanda. Tono oscuro solo donde el diseño lo marcaba antes. */
+  --chart-primary: #2563eb;
+  --chart-primary-light: #3b82f6;
+  --chart-primary-dark: #1d4ed8;
+  --chart-income: #059669;
+  --chart-income-light: #10b981;
+  --chart-income-bg: #ecfdf5;
+  --chart-expense: #dc2626;
+  --chart-expense-light: #ef4444;
+  --chart-expense-bg: #fef2f2;
+  --chart-neutral: #64748b;
+  --chart-neutral-light: #94a3b8;
+  --chart-neutral-bg: #f1f5f9;
+  --chart-accent: #f59e0b;
+  --chart-success: #16a34a;
+  --chart-success-strong: #22c55e;
+  --chart-danger: #dc2626;
+  --chart-series-violet: #8b5cf6;
+  --chart-series-cyan: #06b6d4;
+  --chart-series-lime: #84cc16;
+  --chart-series-pink: #ec4899;
+  --chart-series-orange: #f97316;
+  --chart-series-indigo: #6366f1;
+  --chart-shift-morning: #fcd34d;
+  --chart-shift-afternoon: #f97316;
+  --chart-shift-night: #1e40af;
   --sidebar: oklch(0.975 0.003 254);
   --sidebar-foreground: oklch(0.24 0.02 255);
   --sidebar-primary: oklch(0.49 0.14 254);
@@ -105,11 +142,19 @@
   --border: oklch(1 0 0 / 6%);
   --input: oklch(1 0 0 / 8%);
   --ring: oklch(0.70 0.18 255);
+  --success: oklch(0.72 0.17 163);
+  --warning: oklch(0.83 0.16 70);
+  --info: oklch(0.75 0.16 237);
+  --danger: oklch(0.7 0.22 16);
+  --purple: oklch(0.68 0.23 292);
   --chart-1: oklch(0.62 0.16 251);
   --chart-2: oklch(0.74 0.13 165);
   --chart-3: oklch(0.72 0.15 80);
   --chart-4: oklch(0.66 0.2 300);
   --chart-5: oklch(0.67 0.19 16);
+  /* B-07b: variantes oscuras de las parejas light/dark del dashboard. */
+  --chart-success: #22c55e;
+  --chart-danger: #ef4444;
   --sidebar: oklch(0.16 0.006 260);
   --sidebar-foreground: oklch(0.98 0.002 260);
   --sidebar-primary: oklch(0.70 0.18 255);

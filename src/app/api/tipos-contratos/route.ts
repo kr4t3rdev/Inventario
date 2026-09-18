@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from 'next/server'
 import prisma from '@/lib/prisma'
 import { z } from 'zod'
 import { authenticateUser } from '@/lib/auth-middleware'
+import { ActionError } from '@/lib/server-actions'
+import { requirePermission } from '@/lib/services/tenant-scope'
 
 const tipoContratoCustomSchema = z.object({
   nombre: z
@@ -66,6 +68,7 @@ export async function POST(request: NextRequest) {
     const authResultUser = await authenticateUser(request)
     if ('status' in authResultUser) return authResultUser as Response
     const user = authResultUser.user
+    requirePermission(user, 'config.tipos-contrato.crear', 'crear tipos de contrato')
 
     const body = await request.json()
     const data = tipoContratoCustomSchema.parse(body)
@@ -101,6 +104,13 @@ export async function POST(request: NextRequest) {
     return NextResponse.json(tipo, { status: 201 })
   } catch (error) {
     console.error('Error al crear tipo de contrato:', error)
+
+    if (error instanceof ActionError && error.code === 'FORBIDDEN') {
+      return NextResponse.json(
+        { error: error.message, code: error.code },
+        { status: 403 }
+      )
+    }
 
     if (error instanceof z.ZodError) {
       return NextResponse.json(

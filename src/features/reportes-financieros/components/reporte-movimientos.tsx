@@ -3,7 +3,7 @@
 import { useMemo, useState, useEffect } from "react"
 import { useVentas } from "@/features/ventas/hooks/use-ventas"
 import { useMermas } from "@/features/mermas/hooks/use-mermas"
-import { getProductosAction } from "@/features/productos"
+import { getProductosAction } from "@/features/productos/actions"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
@@ -17,18 +17,18 @@ import { flattenVentas } from "@/lib/ventas-utils"
 import { format } from "date-fns"
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from "recharts"
 import { StaggerContainer, StaggerItem, AnimatedCard } from "@/components/ui/animations"
+import { ReportErrorState } from "./report-error-state"
 import { cn } from "@/lib/utils"
 import { getProductDisplayIdentifier } from "@/lib/product-display-utils"
+import { isMovimientoInRange } from "@/features/reportes-financieros/lib/movimientos-date"
 import type { TransferenciaMovimientos } from "./reportes-inventario"
 
 interface ReporteMovimientosProps {
   initialTransferencias?: TransferenciaMovimientos[]
 }
 
-const surfaceCardClass = cn(
-  "relative overflow-hidden border-slate-200/60 bg-white/70 shadow-sm backdrop-blur-xl",
-  "dark:border-slate-800/60 dark:bg-slate-900/10",
-)
+
+import { SURFACE_CARD_CLASS, CHART_COLORS } from "@/features/reportes-financieros/lib/reporte-styles"
 
 export function ReporteMovimientos({ initialTransferencias = [] }: ReporteMovimientosProps) {
   const [tipoMovimiento, setTipoMovimiento] = useState<string>("ventas")
@@ -38,8 +38,9 @@ export function ReporteMovimientos({ initialTransferencias = [] }: ReporteMovimi
     to: new Date(),
   })
 
-  const { ventas, isLoading: isLoadingVentas } = useVentas()
-  const { mermas, isLoading: isLoadingMermas } = useMermas()
+  const { ventas, isLoading: isLoadingVentas, error: ventasError } = useVentas()
+  const { mermas, isLoading: isLoadingMermas, error: mermasError } = useMermas()
+  const reportError = ventasError ?? mermasError
   const transferencias = initialTransferencias
   const [productos, setProductos] = useState<any[]>([])
   const [isLoadingProductos, setIsLoadingProductos] = useState(true)
@@ -57,10 +58,7 @@ export function ReporteMovimientos({ initialTransferencias = [] }: ReporteMovimi
   const getProductoById = (id: string) => productos?.find((producto) => producto.id === id)
 
   // Filtrar movimientos por fecha y producto
-  const filtrarPorFecha = (fecha: string) => {
-    const fechaObj = new Date(fecha)
-    return fechaObj >= dateRange.from && fechaObj <= dateRange.to
-  }
+  const filtrarPorFecha = (fecha: string) => isMovimientoInRange(fecha, dateRange.from, dateRange.to)
 
   const ventasLineas = useMemo(
     () => flattenVentas(ventas as unknown as Parameters<typeof flattenVentas>[0]),
@@ -233,6 +231,14 @@ export function ReporteMovimientos({ initialTransferencias = [] }: ReporteMovimi
 
   return (
     <StaggerContainer className="space-y-4">
+      {reportError ? (
+        <ReportErrorState
+          title="No se pudo cargar el reporte de movimientos"
+          description="Revisa tu conexión a internet y vuelve a intentarlo."
+          onRetry={() => window.location.reload()}
+        />
+      ) : null}
+
       <StaggerItem className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
         <div className="flex flex-col gap-4 md:flex-row md:items-center">
           <Select value={tipoMovimiento} onValueChange={setTipoMovimiento}>
@@ -284,7 +290,7 @@ export function ReporteMovimientos({ initialTransferencias = [] }: ReporteMovimi
 
       <StaggerItem>
         <AnimatedCard>
-        <Card className={surfaceCardClass}>
+        <Card className={SURFACE_CARD_CLASS}>
           <CardContent className="p-4">
             <h3 className="mb-4 text-lg font-medium">
               {tipoMovimiento === "ventas"
@@ -301,9 +307,15 @@ export function ReporteMovimientos({ initialTransferencias = [] }: ReporteMovimi
                   <CartesianGrid strokeDasharray="3 3" />
                   <XAxis dataKey="fecha" />
                   <YAxis />
-                  <Tooltip />
+                  <Tooltip
+                    formatter={(value) => [
+                      `${Number(value).toLocaleString()}`,
+                      "Cantidad",
+                    ]}
+                    labelFormatter={(label) => `Fecha: ${label}`}
+                  />
                   <Legend />
-                  <Line type="monotone" dataKey="cantidad" name="Cantidad" stroke="#8884d8" activeDot={{ r: 8 }} />
+                  <Line type="monotone" dataKey="cantidad" name="Cantidad" stroke={CHART_COLORS[0]} activeDot={{ r: 8 }} />
                 </LineChart>
               </ResponsiveContainer>
             )}
@@ -314,7 +326,7 @@ export function ReporteMovimientos({ initialTransferencias = [] }: ReporteMovimi
 
       <StaggerItem>
         <AnimatedCard>
-        <Card className={surfaceCardClass}>
+        <Card className={SURFACE_CARD_CLASS}>
           <CardContent className="p-0">
             <div className="rounded-md border-0">
               {isLoading ? (

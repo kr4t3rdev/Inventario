@@ -171,12 +171,7 @@ export function OperacionesTab({
 									<TableHead>Referencia</TableHead>
 								</TableRow>
 							</TableHeader>
-							<TableBody asChild>
-								<motion.tbody
-									variants={staggerSlow}
-									initial="hidden"
-									animate="visible"
-								>
+							<TableBody>
 									{items.length === 0 ? (
 										<TableRow>
 											<TableCell
@@ -195,9 +190,8 @@ export function OperacionesTab({
 											};
 											const Icon = cfg.icon;
 											return (
-												<motion.tr
+												<TableRow
 													key={`${item.tipo}-${item.id}`}
-													variants={slideRow}
 												>
 													<TableCell className="text-sm">
 														{format(new Date(item.fecha), "dd/MM/yy HH:mm", {
@@ -227,11 +221,10 @@ export function OperacionesTab({
 													<TableCell className="text-xs text-muted-foreground font-mono">
 														{item.referencia ?? "—"}
 													</TableCell>
-												</motion.tr>
+												</TableRow>
 											);
 										})
 									)}
-								</motion.tbody>
 							</TableBody>
 						</Table>
 					</CardContent>

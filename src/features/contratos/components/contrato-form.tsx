@@ -9,7 +9,7 @@ import { useVendors } from '@/features/vendors/hooks/use-vendors'
 import { Button } from "@/components/ui/button"
 import { Label } from "@/components/ui/label"
 import { LazyMotion, m as motion, AnimatePresence } from "framer-motion"
-import { FileText, Sparkles, ArrowLeft, Loader2, Receipt, Building2, UserCircle, Calendar } from "lucide-react"
+import { FileText, ArrowLeft, Loader2, Receipt, Building2, UserCircle, Calendar } from "lucide-react"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Select, SelectContent, SelectGroup, SelectItem, SelectLabel, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Input } from "@/components/ui/input"
@@ -227,16 +227,7 @@ export function ContratoForm({
           <h1 className="text-2xl font-bold bg-linear-to-r from-orange-500 to-red-600 bg-clip-text text-transparent">
             {isUpdate ? 'Editar Contrato' : 'Nuevo Contrato'}
           </h1>
-          <motion.div
-            className="absolute -right-4 -top-1"
-            animate={{ rotate: 360, scale: [1, 1.2, 1] }}
-            transition={{
-              rotate: { duration: 20, repeat: Infinity, ease: "linear" },
-              scale: { duration: 2, repeat: Infinity, ease: "easeInOut" }
-            }}
-          >
-            <Sparkles className="h-4 w-4 text-yellow-500" />
-          </motion.div>
+
         </div>
       </motion.div>
 
@@ -490,7 +481,6 @@ export function ContratoForm({
                 </>
               ) : (
                 <>
-                  <Sparkles className="mr-2 h-4 w-4" />
                   {isUpdate ? 'Actualizar Contrato' : 'Crear Contrato'}
                 </>
               )}

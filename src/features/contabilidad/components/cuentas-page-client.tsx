@@ -21,6 +21,7 @@ import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { toast } from 'sonner';
 import { cn, formatCurrency } from '@/lib/utils';
+import { PanelError } from '@/features/contabilidad/components/panel-states';
 import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar"
 import { LazyMotion, m as motion } from "framer-motion"
 import {
@@ -30,15 +31,36 @@ import {
 
 interface CuentasPageClientProps {
   cuentas: any[]
+  /** Mensaje de error del server fetch; si existe, la lista viene vacía o incompleta. */
+  error?: string
 }
 
-const emptyForm = { nombreBanco: '', numeroCuenta: '', tipoCuenta: 'AHORROS', saldo: 0, moneda: 'CUP' };
+type OpeningBalanceSource = 'CAPITAL_SOCIAL' | 'DEUDA_EXTERNA';
+
+interface CreateBankAccountForm {
+  nombreBanco: string;
+  numeroCuenta: string;
+  tipoCuenta: string;
+  saldo: number;
+  moneda: string;
+  fuenteSaldoInicial?: OpeningBalanceSource;
+  socio?: string;
+  entidadPrestamista?: string;
+}
+
+const emptyForm: CreateBankAccountForm = {
+  nombreBanco: '',
+  numeroCuenta: '',
+  tipoCuenta: 'AHORROS',
+  saldo: 0,
+  moneda: 'CUP',
+};
 
 /**
  * @description Componente cliente para la página de cuentas bancarias.
  * Recibe datos desde el Server Component y maneja CRUD via Server Actions.
  */
-export function CuentasPageClient({ cuentas: initialCuentas }: CuentasPageClientProps) {
+export function CuentasPageClient({ cuentas: initialCuentas, error: fetchError }: CuentasPageClientProps) {
   const router = useRouter();
   const [cuentas, setCuentas] = useState<any[]>(initialCuentas);
   const [isCreateOpen, setIsCreateOpen] = useState(false);
@@ -54,6 +76,12 @@ export function CuentasPageClient({ cuentas: initialCuentas }: CuentasPageClient
   }, [initialCuentas])
 
   const resetForm = () => setForm(emptyForm);
+
+  const requiresOpeningBalanceSource = form.saldo > 0;
+  const hasRequiredOpeningBalanceFields = !requiresOpeningBalanceSource
+    || (form.fuenteSaldoInicial === 'CAPITAL_SOCIAL' && Boolean(form.socio?.trim()))
+    || (form.fuenteSaldoInicial === 'DEUDA_EXTERNA'
+      && Boolean(form.entidadPrestamista?.trim()));
 
   const handleCreate = async () => {
     setIsSaving(true);
@@ -120,7 +148,13 @@ export function CuentasPageClient({ cuentas: initialCuentas }: CuentasPageClient
 
   const totalCuentas = cuentas.length;
   const cuentasActivas = cuentas.filter((c) => c.isActive).length;
-  const saldoTotal = cuentas.reduce((sum, c) => sum + Number(c.saldo ?? 0), 0);
+  // Los saldos se agrupan por moneda; nunca se suman divisas entre sí.
+  const saldosPorMoneda = cuentas.reduce<Record<string, number>>((acc, c) => {
+    const moneda = c.moneda || 'CUP';
+    acc[moneda] = (acc[moneda] || 0) + Number(c.saldo ?? 0);
+    return acc;
+  }, {});
+  const monedasConSaldo = Object.entries(saldosPorMoneda).sort(([a], [b]) => a.localeCompare(b));
 
   const surfaceCardClass = cn(
     'relative overflow-hidden border-slate-600/10 shadow-sm backdrop-blur-xl',
@@ -196,13 +230,89 @@ export function CuentasPageClient({ cuentas: initialCuentas }: CuentasPageClient
                       </Select>
                     </div>
                     <div className="space-y-2">
-                      <Label>Saldo inicial</Label>
-                      <Input type="number" value={form.saldo} onChange={e => setForm({...form, saldo: Number(e.target.value)})} />
+                      <Label htmlFor="opening-balance-amount">Saldo inicial</Label>
+                      <Input
+                        id="opening-balance-amount"
+                        type="number"
+                        min="0"
+                        value={form.saldo}
+                        onChange={(event) => {
+                          const saldo = Number(event.target.value);
+                          setForm(saldo > 0
+                            ? { ...form, saldo }
+                            : {
+                                ...form,
+                                saldo,
+                                fuenteSaldoInicial: undefined,
+                                socio: undefined,
+                                entidadPrestamista: undefined,
+                              });
+                        }}
+                      />
                     </div>
                   </div>
+                  {requiresOpeningBalanceSource && (
+                    <div className="space-y-4 rounded-md border p-4">
+                      <div className="space-y-2">
+                        <Label htmlFor="opening-balance-source">
+                          Origen contable del saldo inicial
+                        </Label>
+                        <Select
+                          value={form.fuenteSaldoInicial}
+                          onValueChange={(value: OpeningBalanceSource) => setForm({
+                            ...form,
+                            fuenteSaldoInicial: value,
+                            socio: undefined,
+                            entidadPrestamista: undefined,
+                          })}
+                        >
+                          <SelectTrigger id="opening-balance-source" aria-required="true">
+                            <SelectValue placeholder="Seleccione el origen" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="CAPITAL_SOCIAL">Capital social</SelectItem>
+                            <SelectItem value="DEUDA_EXTERNA">Deuda externa</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
+                      {form.fuenteSaldoInicial === 'CAPITAL_SOCIAL' && (
+                        <div className="space-y-2">
+                          <Label htmlFor="opening-balance-partner">Socio aportante</Label>
+                          <Input
+                            id="opening-balance-partner"
+                            required
+                            value={form.socio ?? ''}
+                            onChange={(event) => setForm({ ...form, socio: event.target.value })}
+                            placeholder="Nombre del socio"
+                          />
+                        </div>
+                      )}
+                      {form.fuenteSaldoInicial === 'DEUDA_EXTERNA' && (
+                        <div className="space-y-2">
+                          <Label htmlFor="opening-balance-lender">Entidad prestamista</Label>
+                          <Input
+                            id="opening-balance-lender"
+                            required
+                            value={form.entidadPrestamista ?? ''}
+                            onChange={(event) => setForm({
+                              ...form,
+                              entidadPrestamista: event.target.value,
+                            })}
+                            placeholder="Nombre de la entidad prestamista"
+                          />
+                        </div>
+                      )}
+                    </div>
+                  )}
                   <div className="flex justify-end gap-3 pt-4">
                     <Button variant="outline" onClick={() => { setIsCreateOpen(false); resetForm(); }}>Cancelar</Button>
-                    <Button onClick={handleCreate} disabled={isSaving || !form.nombreBanco || !form.numeroCuenta}>
+                    <Button
+                      onClick={handleCreate}
+                      disabled={isSaving
+                        || !form.nombreBanco
+                        || !form.numeroCuenta
+                        || !hasRequiredOpeningBalanceFields}
+                    >
                       {isSaving ? 'Creando...' : 'Crear cuenta'}
                     </Button>
                   </div>
@@ -213,7 +323,7 @@ export function CuentasPageClient({ cuentas: initialCuentas }: CuentasPageClient
 
           {/* Stats Cards */}
           <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }} className="grid gap-4 md:grid-cols-3">
-            <Card className={cn(surfaceCardClass, "border-l-4 border-l-primary")}>
+            <Card className={cn(surfaceCardClass)}>
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                 <CardTitle className="text-sm font-medium">Total Cuentas</CardTitle>
                 <Wallet className="h-4 w-4 text-blue-500" />
@@ -223,7 +333,7 @@ export function CuentasPageClient({ cuentas: initialCuentas }: CuentasPageClient
                 <p className="text-xs text-muted-foreground">Cuentas registradas</p>
               </CardContent>
             </Card>
-            <Card className={cn(surfaceCardClass, "border-l-4 border-l-chart-2")}>
+            <Card className={cn(surfaceCardClass)}>
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                 <CardTitle className="text-sm font-medium">Cuentas Activas</CardTitle>
                 <CreditCard className="h-4 w-4 text-emerald-500" />
@@ -233,14 +343,24 @@ export function CuentasPageClient({ cuentas: initialCuentas }: CuentasPageClient
                 <p className="text-xs text-muted-foreground">Disponibles para operaciones</p>
               </CardContent>
             </Card>
-            <Card className={cn(surfaceCardClass, "border-l-4 border-l-accent")}>
+            <Card className={cn(surfaceCardClass)}>
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">Saldo Total</CardTitle>
+                <CardTitle className="text-sm font-medium">Saldos por moneda</CardTitle>
                 <TrendingUp className="h-4 w-4 text-amber-500" />
               </CardHeader>
               <CardContent>
-                <div className="text-2xl font-bold">{formatCurrency(saldoTotal)}</div>
-                <p className="text-xs text-muted-foreground">Suma total en CUP</p>
+                {monedasConSaldo.length === 0 ? (
+                  <div className="text-2xl font-bold tabular-nums">Sin cuentas</div>
+                ) : (
+                  <div className="space-y-1">
+                    {monedasConSaldo.map(([moneda, total]) => (
+                      <div key={moneda} className="flex items-baseline justify-between gap-2">
+                        <span className="text-xs font-medium text-muted-foreground">{moneda}</span>
+                        <span className="text-lg font-bold tabular-nums">{formatCurrency(total)}</span>
+                      </div>
+                    ))}
+                  </div>
+                )}
               </CardContent>
             </Card>
           </motion.div>
@@ -253,7 +373,12 @@ export function CuentasPageClient({ cuentas: initialCuentas }: CuentasPageClient
                 <CardDescription>Gestiona y monitorea el estado de tus cuentas bancarias.</CardDescription>
               </CardHeader>
               <CardContent>
-                {cuentas.length === 0 ? (
+                {fetchError ? (
+                  <PanelError
+                    message={fetchError}
+                    onRetry={() => router.refresh()}
+                  />
+                ) : cuentas.length === 0 ? (
                   <div className="text-center py-8 text-muted-foreground">No hay cuentas bancarias registradas.</div>
                 ) : (
                   <div className="overflow-x-auto">

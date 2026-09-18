@@ -13,8 +13,8 @@ const Loader = () => {
           --tool: #FBC56C;
           --duration: 3s;
           position: relative;
-          -webkit-animation: maqescr-bounce05 var(--duration) linear infinite;
-          animation: maqescr-bounce05 var(--duration) linear infinite;
+          -webkit-animation: maqescr-bob05 var(--duration) linear infinite;
+          animation: maqescr-bob05 var(--duration) linear infinite;
         }
         .maqescr-loader-wrap .typewriter .slide {
           width: 92px;
@@ -116,7 +116,7 @@ const Loader = () => {
           -webkit-animation: maqescr-keyboard05 var(--duration) linear infinite;
           animation: maqescr-keyboard05 var(--duration) linear infinite;
         }
-        @keyframes maqescr-bounce05 {
+        @keyframes maqescr-bob05 {
           85%, 92%, 100% { transform: translateY(0); }
           89% { transform: translateY(-4px); }
           95% { transform: translateY(2px); }

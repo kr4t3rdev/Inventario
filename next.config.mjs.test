@@ -1,0 +1,92 @@
+// @ts-check
+
+import { fileURLToPath } from "url";
+import { dirname, resolve } from "path";
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = dirname(__filename);
+
+/** @type {import("next").NextConfig} */
+const nextConfig = {
+  // Desactivar características que ralentizan el build
+  productionBrowserSourceMaps: false,
+  generateEtags: false,
+  poweredByHeader: false,
+  compress: true,
+
+  // Optimizaciones de imágenes
+  images: {
+    formats: ["image/webp"],
+    minimumCacheTTL: 60,
+    remotePatterns: [],
+    unoptimized: true,
+  },
+
+  // Incluir archivos del engine de Prisma en el output standalone de Next.js.
+  outputFileTracingIncludes: {
+    "/**": ["./src/generated/prisma/**"],
+  },
+
+  // Packages that should not be bundled by the server runtime.
+  serverExternalPackages: ["@vercel/blob", "@prisma/client"],
+
+  // Optimizaciones experimentales
+  experimental: {
+    optimizePackageImports: [
+      "recharts",
+      "lucide-react",
+      "@radix-ui/react-icons",
+      "date-fns",
+      "jspdf",
+      "pdf-lib",
+      "@radix-ui/react-dialog",
+      "@radix-ui/react-select",
+      "@radix-ui/react-dropdown-menu",
+      "@radix-ui/react-popover",
+      "react-hook-form",
+    ],
+  },
+
+  // TypeScript
+  // NOTA: ignoreBuildErrors: true se mantiene porque tsc --noEmit crashea con segfault
+  // (Node OOM, no errores de TS). La compensación es el pre-commit hook con lint-staged
+  // que corre eslint sobre archivos staged.
+  typescript: {
+    ignoreBuildErrors: true,
+  },
+
+  // Output optimizado
+  output: "standalone",
+  outputFileTracingRoot: resolve(__dirname),
+  distDir: ".next",
+  cleanDistDir: true,
+
+  // Exclusiones de build
+  
+      },
+    ];
+  },
+
+  async redirects() {
+    return [];
+  },
+
+  async rewrites() {
+    return [];
+  },
+
+  // Variables de entorno para el build
+  env: {
+    NEXT_TELEMETRY_DISABLED: "1",
+  },
+
+  // OpenTelemetry
+  // src/instrumentation.ts ya está configurado con @vercel/otel y
+  // @prisma/instrumentation para tracing de Server Actions, Route Handlers
+  // y queries de base de datos. Ver src/instrumentation.ts y src/lib/tracing.ts.
+  logging: {
+    browserToTerminal: true,
+  },
+};
+
+export default nextConfig;

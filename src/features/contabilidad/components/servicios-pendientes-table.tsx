@@ -282,6 +282,7 @@ export function ServiciosPendientesTable({
                         <TableHead className="font-semibold">Precio</TableHead>
                         <TableHead className="font-semibold">Moneda</TableHead>
                         <TableHead className="font-semibold">Estado</TableHead>
+                        <TableHead className="font-semibold text-right">Acciones</TableHead>
                       </TableRow>
                     </TableHeader>
                     <TableBody>
@@ -329,6 +330,21 @@ export function ServiciosPendientesTable({
                               <Clock className="h-3 w-3" />
                               Pendiente
                             </Badge>
+                          </TableCell>
+                          <TableCell className="text-right">
+                            {onReconciliar && Number(servicio.total ?? 0) > 0.01 && (
+                              <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}>
+                                <Button
+                                  size="sm"
+                                  variant="secondary"
+                                  onClick={() => onReconciliar(servicio)}
+                                  className="gap-1"
+                                >
+                                  <CheckCircle2 className="h-4 w-4" />
+                                  Reconciliar
+                                </Button>
+                              </motion.div>
+                            )}
                           </TableCell>
                         </TableRow>
                       ))}

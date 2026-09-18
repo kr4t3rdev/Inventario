@@ -7,6 +7,9 @@ import { Button } from '@/components/ui/button'
 import { Progress } from '@/components/ui/progress'
 import { toast } from 'sonner'
 import { getAuthToken } from '@/lib/token'
+import { toLegacyAssetUploadResult, uploadAsset } from '@/lib/upload/upload-asset'
+import { useAuth } from '@/contexts/auth-context'
+import { hasPlanFeature } from '@/lib/plan-access'
 
 interface FileUploadProps {
   contratoId: string
@@ -14,8 +17,10 @@ interface FileUploadProps {
 }
 
 export function FileUpload({ contratoId, onUploadComplete }: FileUploadProps) {
+  const { user } = useAuth()
   const [uploading, setUploading] = useState(false)
   const [progress, setProgress] = useState(0)
+  const canUploadAttachments = hasPlanFeature(user, 'upload-contratos-attachment')
 
   const onDrop = useCallback(async (acceptedFiles: File[]) => {
     if (acceptedFiles.length === 0) return
@@ -23,31 +28,16 @@ export function FileUpload({ contratoId, onUploadComplete }: FileUploadProps) {
     setUploading(true)
     setProgress(0)
     
-    // Process files one by one or all together.
-    // Current backend allows 1 file per POST to /api/upload.
-    // We will upload to /api/upload first, then create record in /api/contratos/[id]/archivos
-    
     let successCount = 0
     const totalFiles = acceptedFiles.length
 
     for (const file of acceptedFiles) {
       try {
-        const formData = new FormData()
-        formData.append('file', file)
-
-        // 1. Upload file
-        const uploadRes = await fetch('/api/upload', {
-          method: 'POST',
-          body: formData,
-          headers: {
-            'Authorization': getAuthToken(),
-          },
+        const uploaded = await uploadAsset(file, {
+          uploadKey: 'contratos.attachment',
+          entityId: contratoId,
         })
-
-        if (!uploadRes.ok) throw new Error('Failed to upload file')
-        
-        const uploadData = await uploadRes.json()
-        const fileUrl = uploadData.url
+        const asset = toLegacyAssetUploadResult(uploaded)
 
         // 2. Link to contract
         const linkRes = await fetch(`/api/contratos/${contratoId}/archivos`, {
@@ -58,10 +48,14 @@ export function FileUpload({ contratoId, onUploadComplete }: FileUploadProps) {
           },
           body: JSON.stringify({
             tipo: 'ANEXO', // Default type
-            rutaArchivo: fileUrl,
+            rutaArchivo: asset.secureUrl,
+            cloudinaryPublicId: asset.publicId,
+            mimeType: asset.mimeType,
+            bytes: asset.bytes,
             nombreArchivo: file.name,
             versionId: null, // Optional
             generadoPor: 'USER', // This should be handled by backend from token actually
+            storageProvider: uploaded.provider,
           })
         })
 
@@ -84,6 +78,10 @@ export function FileUpload({ contratoId, onUploadComplete }: FileUploadProps) {
   }, [contratoId, onUploadComplete])
 
   const { getRootProps, getInputProps, isDragActive } = useDropzone({ onDrop })
+
+  if (!canUploadAttachments) {
+    return null
+  }
 
   return (
     <div className="w-full">

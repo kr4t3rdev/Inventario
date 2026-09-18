@@ -32,7 +32,7 @@ import {
 import { Textarea } from "@/components/ui/textarea"
 import { sileo } from '@/lib/sileo-shim'
 import { getAuthToken } from "@/lib/token"
-import { Plus, UserPlus, Sparkles, Loader2, PenTool } from "lucide-react"
+import { Plus, UserPlus, Loader2, PenTool } from "lucide-react"
 import { LazyMotion, m as motion } from "framer-motion"
 
 // Schema para el formulario
@@ -119,16 +119,7 @@ export function AddFirmaDialog({ contratoId, onSuccess, users }: AddFirmaDialogP
                 <UserPlus className="h-4 w-4 text-white" />
               </motion.div>
               Agregar Solicitud de Firma
-              <motion.div
-                className="absolute right-10 top-4"
-                animate={{ rotate: 360, scale: [1, 1.2, 1] }}
-                transition={{ 
-                  rotate: { duration: 20, repeat: Infinity, ease: "linear" },
-                  scale: { duration: 2, repeat: Infinity, ease: "easeInOut" }
-                }}
-              >
-                <Sparkles className="h-4 w-4 text-yellow-500" />
-              </motion.div>
+
             </DialogTitle>
             <DialogDescription>
               Seleccione el usuario que debe firmar este contrato.

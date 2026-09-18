@@ -20,7 +20,7 @@ import { useForm } from "react-hook-form"
 import { z } from "zod"
 import { getAuthToken } from "@/lib/token"
 import { SerieFacturacion } from "@/app/models/model"
-import { Pencil, Trash2, Plus, CheckCircle, XCircle, AlertCircle, FileText, Sparkles, Loader2 } from "lucide-react"
+import { Pencil, Trash2, Plus, CheckCircle, XCircle, AlertCircle, FileText, Loader2 } from "lucide-react"
 
 const serieSchema = z.object({
   prefijo: z.string().min(1, "Prefijo requerido").max(10, "Máximo 10 caracteres"),
@@ -330,20 +330,10 @@ export default function SeriesFacturacionTable() {
           >
             <FileText className="h-5 w-5 text-white" />
           </motion.div>
-          <div className="relative">
+          <div>
             <h1 className="text-2xl font-bold bg-linear-to-r from-primary to-purple-600 bg-clip-text text-transparent">
               Series de Facturación
             </h1>
-            <motion.div
-              className="absolute -right-4 -top-1"
-              animate={{ rotate: 360, scale: [1, 1.2, 1] }}
-              transition={{ 
-                rotate: { duration: 20, repeat: Infinity, ease: "linear" },
-                scale: { duration: 2, repeat: Infinity, ease: "easeInOut" }
-              }}
-            >
-              <Sparkles className="h-4 w-4 text-yellow-500" />
-            </motion.div>
           </div>
         </motion.div>
         

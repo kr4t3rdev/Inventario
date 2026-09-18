@@ -5,7 +5,7 @@ import type { ReactElement } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { LazyMotion, m as motion } from "framer-motion";
-import { AlertCircle, ArrowLeft, ChevronDown, Folder, Layers, Loader2, Search, Sparkles, X } from "lucide-react";
+import { AlertCircle, ArrowLeft, ChevronDown, Folder, Layers, Loader2, Search, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
@@ -15,9 +15,11 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { getCategoriasAction } from "@/features/categorias/actions";
-import { getMiEmpresaAction } from '@/features/mi-empresa/actions'
+import { fetchMiEmpresaSettings } from '@/features/mi-empresa/lib/client-mi-empresa'
+import { getCategoryLabels } from '@/features/categorias/lib/category-labels'
 import { useCategoryForm } from "@/features/categorias/hooks/use-category-form";
 import { ClasificadorInfoNote } from "@/features/productos/components/clasificador-info-note";
+import { useAuth } from "@/contexts/auth-context";
 
 import type { Categoria } from "@/app/models/model";
 import {
@@ -139,7 +141,9 @@ export function filterSpecifics(
  */
 export function SubcategoryForm({ initialData, onSuccess }: SubcategoryFormProps): ReactElement {
   const router = useRouter();
+  const { user } = useAuth();
   const [usaEan13, setUsaEan13] = useState<boolean | null>(null);
+  const labels = usaEan13 === null ? null : getCategoryLabels(usaEan13);
   const [clasClassifierData, setClasClassifierData] = useState<CLASClassifierData | null>(null);
   const [isClassifierLoading, setIsClassifierLoading] = useState(false);
   const [classifierError, setClassifierError] = useState<string | null>(null);
@@ -150,6 +154,8 @@ export function SubcategoryForm({ initialData, onSuccess }: SubcategoryFormProps
   const [categories, setCategories] = useState<Categoria[]>([]);
   const [isLoadingCategories, setIsLoadingCategories] = useState(true);
   const [categoriesError, setCategoriesError] = useState(false);
+  const categoriasEan13Habilitado =
+    user?.role === 'admin' || user?.planFeatures?.['categorias-ean13'] === true;
 
   useEffect(() => {
     getCategoriasAction().then(result => {
@@ -217,12 +223,17 @@ export function SubcategoryForm({ initialData, onSuccess }: SubcategoryFormProps
   }, [clasSectionId]);
 
   useEffect(() => {
-    getMiEmpresaAction()
+    fetchMiEmpresaSettings(() => setUsaEan13(false))
       .then((r) => {
-        if (r.success) setUsaEan13(r.data?.usaCodigoEan13 ?? false)
+        if (r.success) {
+          setUsaEan13(
+            categoriasEan13Habilitado && r.data?.usaCodigoEan13 === true,
+          )
+        }
+        else setUsaEan13(false)
       })
       .catch(() => setUsaEan13(false));
-  }, []);
+  }, [categoriasEan13Habilitado]);
 
   useEffect(() => {
     if (usaEan13 !== true) {
@@ -294,6 +305,11 @@ export function SubcategoryForm({ initialData, onSuccess }: SubcategoryFormProps
     !isLoadingCategories &&
     !categoriesError &&
     availableSections.length === 0;
+  const rootCategories = useMemo(
+    () => categories.filter((category) => !category.parentId),
+    [categories],
+  );
+  const clasTitle = initialData ? 'Editar Específico CLAS' : 'Nuevo Específico CLAS';
 
   if (usaEan13 === null || isClassifierLoading) {
     return (
@@ -314,23 +330,197 @@ export function SubcategoryForm({ initialData, onSuccess }: SubcategoryFormProps
   if (!usaEan13) {
     return (
       <Card className="overflow-hidden border-dashed">
-        <CardContent className="space-y-4 py-10">
-          <div className="flex items-start gap-3 rounded-lg border border-dashed bg-muted/40 p-4">
-            <AlertCircle className="mt-0.5 h-5 w-5 text-destructive" />
-            <div className="space-y-1">
-              <h3 className="font-semibold">Formulario disponible solo en modo EAN-13</h3>
+        <CardContent className="pt-6">
+          <motion.div
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.1 }}
+              className="mb-6 flex items-center gap-2"
+            >
+            <motion.div
+              className="relative flex h-10 w-10 items-center justify-center rounded-xl bg-linear-to-br from-primary to-purple shadow-lg"
+              whileHover={{ scale: 1.05, rotate: 5 }}
+              transition={{ duration: 0.2 }}
+            >
+              <Layers className="h-5 w-5 text-white" />
+            </motion.div>
+            <div>
+              <h2 className="text-xl font-semibold">
+                {initialData ? 'Editar Subcategoría' : 'Nueva Subcategoría'}
+              </h2>
               <p className="text-sm text-muted-foreground">
-                Para usar este flujo de subcategoría o específico, primero activa la generación EAN-13 en la empresa.
+                Crea una subcategoría jerárquica estándar para organizar tus productos.
               </p>
             </div>
-          </div>
+          </motion.div>
 
-          <Button asChild variant="outline" className="gap-2">
-            <Link href="/busy/categoria">
-              <ArrowLeft className="h-4 w-4" />
-              Volver a categorías
-            </Link>
-          </Button>
+          <Form {...form}>
+            <form onSubmit={onSubmit} className="space-y-6">
+              <motion.div
+                initial={{ opacity: 0, x: -20 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{ delay: 0.2 }}
+              >
+                <FormField
+                  control={form.control}
+                  name="nombre"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel className="flex items-center gap-2">
+                        Nombre *
+                        <span className="text-xs font-normal text-muted-foreground">
+                          (requerido)
+                        </span>
+                      </FormLabel>
+                      <FormControl>
+                        <Input
+                          type="text"
+                          placeholder={usaEan13 ? "Ingrese el nombre del específico" : "Ingrese el nombre de la subcategoría"}
+                          {...field}
+                          disabled={isLoading}
+                          className={`transition-all duration-200 ${getFieldError('nombre') ? 'border-destructive focus:ring-destructive' : 'focus:ring-primary'}`}
+                        />
+                      </FormControl>
+                      <FormDescription>
+                        {usaEan13 ? 'Nombre del específico CLAS dentro de la sección.' : 'Nombre visible de la subcategoría dentro de la categoría padre.'}
+                      </FormDescription>
+                      <FormMessage>{getFieldError('nombre')}</FormMessage>
+                    </FormItem>
+                  )}
+                />
+              </motion.div>
+
+              <motion.div
+                initial={{ opacity: 0, x: -20 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{ delay: 0.25 }}
+              >
+                <FormField
+                  control={form.control}
+                  name="parentId"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel className="flex items-center gap-2">
+                        <Layers className="h-4 w-4 text-muted-foreground" />
+                        Categoría Padre
+                      </FormLabel>
+                      <Select
+                        onValueChange={field.onChange}
+                        value={field.value || (initialData?.parentId ?? '')}
+                        disabled={isLoading || isLoadingCategories}
+                      >
+                        <FormControl>
+                          <SelectTrigger
+                            className={`transition-all duration-200 ${getFieldError('parentId') ? 'border-destructive' : ''}`}
+                          >
+                            <SelectValue placeholder="Seleccione una categoría padre" />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          {rootCategories.map((category) => (
+                            <SelectItem key={category.catId} value={category.catId}>
+                              {category.nombre}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                      <FormDescription>
+                        {rootCategories.length > 0
+                          ? usaEan13 ? 'Selecciona la sección bajo la cual va a vivir este específico CLAS.' : 'Selecciona la categoría raíz bajo la cual va a vivir esta subcategoría.'
+                          : 'Primero necesitas crear al menos una categoría principal.'}
+                      </FormDescription>
+                      {categoriesError && (
+                        <p className="text-sm text-destructive">
+                          Error al cargar las categorías disponibles.
+                        </p>
+                      )}
+                      <FormMessage>{getFieldError('parentId')}</FormMessage>
+                    </FormItem>
+                  )}
+                />
+              </motion.div>
+
+              <motion.div
+                initial={{ opacity: 0, x: -20 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{ delay: 0.3 }}
+              >
+                <FormField
+                  control={form.control}
+                  name="descripcion"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Descripción</FormLabel>
+                      <FormControl>
+                        <Textarea
+                          placeholder={usaEan13 ? "Descripción opcional del específico CLAS" : "Descripción opcional de la subcategoría"}
+                          className={`resize-none transition-all duration-200 ${getFieldError('descripcion') ? 'border-destructive' : ''}`}
+                          disabled={isLoading}
+                          {...field}
+                          value={field.value || ''}
+                        />
+                      </FormControl>
+                      <FormDescription>
+                        {usaEan13 ? 'Descripción opcional del específico CLAS.' : 'Descripción opcional para dar contexto adicional a la subcategoría.'}
+                      </FormDescription>
+                      <FormMessage>{getFieldError('descripcion')}</FormMessage>
+                    </FormItem>
+                  )}
+                />
+              </motion.div>
+
+              <motion.div
+                className="flex flex-col justify-end gap-4 border-t pt-4 sm:flex-row"
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.5 }}
+              >
+                <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}>
+                  <Button
+                    type="button"
+                    variant="destructive"
+                    onClick={() => router.push('/busy/categoria')}
+                    disabled={isLoading}
+                    className="cursor-pointer gap-2"
+                  >
+                    <ArrowLeft className="h-4 w-4" />
+                    Cancelar
+                  </Button>
+                </motion.div>
+
+                <motion.div
+                  whileHover={{ scale: isLoading ? 1 : 1.02 }}
+                  whileTap={{ scale: isLoading ? 1 : 0.98 }}
+                >
+                  <Button
+                    type="submit"
+                    disabled={
+                      isLoading ||
+                      !form.watch('parentId') ||
+                      rootCategories.length === 0
+                    }
+                    className="min-w-40 cursor-pointer gap-2 bg-linear-to-r from-primary to-purple hover:from-primary/90 hover:to-purple/90"
+                  >
+                    {isLoading ? (
+                      <>
+                        <motion.div
+                          animate={{ rotate: 360 }}
+                          transition={{ duration: 1, repeat: Infinity, ease: 'linear' }}
+                        >
+                          <Loader2 className="h-4 w-4" />
+                        </motion.div>
+                        {initialData ? 'Actualizando...' : 'Creando...'}
+                      </>
+                    ) : initialData ? (
+                      usaEan13 ? 'Actualizar específico CLAS' : 'Actualizar subcategoría'
+                    ) : (
+                      usaEan13 ? 'Crear específico CLAS' : 'Crear subcategoría'
+                    )}
+                  </Button>
+                </motion.div>
+              </motion.div>
+            </form>
+          </Form>
         </CardContent>
       </Card>
     );
@@ -374,28 +564,15 @@ export function SubcategoryForm({ initialData, onSuccess }: SubcategoryFormProps
             className="flex items-center gap-2 mb-6"
           >
             <motion.div
-              className="w-10 h-10 bg-linear-to-br from-primary to-purple-600 rounded-xl flex items-center justify-center shadow-lg relative"
+              className="w-10 h-10 bg-linear-to-br from-primary to-purple rounded-xl flex items-center justify-center shadow-lg relative"
               whileHover={{ scale: 1.05, rotate: 5 }}
               transition={{ duration: 0.2 }}
             >
               <Folder className="h-5 w-5 text-white" />
-              <motion.div
-                animate={{
-                  rotate: 360,
-                  scale: [1, 1.2, 1],
-                }}
-                transition={{
-                  rotate: { duration: 20, repeat: Infinity, ease: 'linear' },
-                  scale: { duration: 2, repeat: Infinity, ease: 'easeInOut' },
-                }}
-                className="absolute -top-1 -right-1"
-              >
-                <Sparkles className="h-4 w-4 text-yellow-400" />
-              </motion.div>
             </motion.div>
             <div>
               <h2 className="text-xl font-semibold">
-                {initialData ? 'Editar Subcategoría / Específico' : 'Nueva Subcategoría / Específico'}
+                {clasTitle}
               </h2>
               <p className="text-sm text-muted-foreground">
                 Selecciona la sección CLAS y luego el específico que deseas registrar.
@@ -471,7 +648,7 @@ export function SubcategoryForm({ initialData, onSuccess }: SubcategoryFormProps
                   </Select>
                   <FormDescription>
                     {showMissingSectionsMessage
-                      ? 'Debe crear secciones o categorias para despues elegir las subcategorias correspondientes'
+                      ? usaEan13 ? 'Debe crear secciones CLAS para después elegir los específicos correspondientes.' : 'Debe crear categorías para después elegir las subcategorías correspondientes.'
                       : 'Selecciona la sección oficial del clasificador CLAS que ya existe como categoría.'}
                   </FormDescription>
                   {categoriesError && (
@@ -488,7 +665,7 @@ export function SubcategoryForm({ initialData, onSuccess }: SubcategoryFormProps
                 transition={{ delay: 0.27 }}
               >
                 <FormItem>
-                  <FormLabel>Específico (subcategoría) *</FormLabel>
+                  <FormLabel>{usaEan13 ? 'Específico CLAS *' : 'Subcategoría *'}</FormLabel>
                   <Popover open={specificOpen} onOpenChange={setSpecificOpen}>
                     <PopoverTrigger asChild>
                       <Button
@@ -580,7 +757,7 @@ export function SubcategoryForm({ initialData, onSuccess }: SubcategoryFormProps
                   <FormLabel>Resumen CLAS</FormLabel>
                   <div className="rounded-md border border-dashed p-3 text-sm text-muted-foreground space-y-1">
                     <div>Sección: {selectedSectionName || 'Sin seleccionar'}</div>
-                    <div>Subcategoría: {selectedSpecificName || 'Sin seleccionar'}</div>
+                    <div>{usaEan13 ? 'Específico:' : 'Subcategoría:'} {selectedSpecificName || (usaEan13 ? 'Sin seleccionar' : 'Sin seleccionar')}</div>
                   </div>
                 </FormItem>
               </motion.div>
@@ -637,8 +814,8 @@ export function SubcategoryForm({ initialData, onSuccess }: SubcategoryFormProps
                 </Button>
                 <Button
                   type="submit"
-                  disabled={isLoading || !isDirty || !isValid || !clasSpecificId}
-                  className="min-w-40 gap-2 bg-linear-to-r from-primary to-purple-600 hover:from-primary/90 hover:to-purple-600/90 cursor-pointer"
+                  disabled={isLoading || !clasSpecificId}
+                  className="min-w-40 gap-2 bg-linear-to-r from-primary to-purple hover:from-primary/90 hover:to-purple/90 cursor-pointer"
                 >
                   {isLoading ? (
                     <>

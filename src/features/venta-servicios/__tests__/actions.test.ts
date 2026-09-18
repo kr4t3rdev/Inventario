@@ -8,6 +8,9 @@ vi.mock("next/cache", () => ({ revalidatePath: vi.fn() }));
 vi.mock("@/lib/services/anticipos-workflow", () => ({
 	applyAnticipoAllocations: vi.fn(),
 }));
+vi.mock("@/features/contabilidad/services/exchange-rate-provider", () => ({
+	exchangeRateProvider: { getRateAsOf: vi.fn() },
+}));
 
 const mockTx = {
 	ventaServicios: { create: vi.fn() },
@@ -15,6 +18,8 @@ const mockTx = {
 	cuentaBancaria: { findFirst: vi.fn() },
 	anticipo: { findUnique: vi.fn() },
 	reconciliacionServicio: { create: vi.fn() },
+	transaccionMoneda: { create: vi.fn() },
+	tenantAccountingPolicy: { findUnique: vi.fn() },
 };
 
 vi.mock("@/lib/prisma", () => ({
@@ -26,12 +31,24 @@ vi.mock("@/lib/prisma", () => ({
 			update: vi.fn(),
 			delete: vi.fn(),
 		},
+		servicios: {
+			findFirst: vi.fn(),
+			findMany: vi.fn(),
+		},
+		cliente: {
+			findFirst: vi.fn(),
+		},
+		reconciliacionServicio: {
+			count: vi.fn(),
+		},
 		$transaction: vi.fn((cb: any) => cb(mockTx)),
 	},
 }));
 
 import { getCurrentUser } from "@/lib/server-actions/get-current-user";
 import { prisma } from "@/lib/prisma";
+import { applyAnticipoAllocations } from "@/lib/services/anticipos-workflow";
+import { exchangeRateProvider } from "@/features/contabilidad/services/exchange-rate-provider";
 import {
 	getVentaServiciosAction,
 	getVentaServicioByIdAction,
@@ -48,7 +65,7 @@ const mockUser: AuthenticatedUser = {
 	role: "admin",
 	isActive: true,
 	tenantId: "tenant-test",
-	tenantRole: "admin",
+	tenantRole: "manager",
 };
 
 const mockVentaRow = {
@@ -107,19 +124,204 @@ describe("VentaServicios Server Actions", () => {
 	describe("createVentaServicioAction", () => {
 		it("crea venta legacy exitosamente", async () => {
 			vi.mocked(getCurrentUser).mockResolvedValue(mockUser);
+			vi.mocked(prisma.servicios.findMany).mockResolvedValue([
+				{ servicioId: "sv-1", moneda: "CUP", precio: 5000 },
+			] as any);
 			mockTx.ventaServicios.create.mockResolvedValue(mockVentaRow);
 
 			const result = await createVentaServicioAction({
 				servicioId: "sv-1",
 				cantidad: 1,
-				total: 5000,
 			});
 
 			expect(result.success).toBe(true);
 		});
 
+		it("persiste snapshot de moneda y precioUnitario en modo legacy", async () => {
+			vi.mocked(getCurrentUser).mockResolvedValue(mockUser);
+			vi.mocked(prisma.servicios.findMany).mockResolvedValue([
+				{ servicioId: "sv-1", moneda: "USD", precio: 5000 },
+			] as any);
+			mockTx.ventaServicios.create.mockResolvedValue(mockVentaRow);
+
+			const result = await createVentaServicioAction({
+				servicioId: "sv-1",
+				cantidad: 2,
+			});
+
+			expect(result.success).toBe(true);
+			expect(mockTx.ventaServicios.create).toHaveBeenCalledWith(
+				expect.objectContaining({
+					data: expect.objectContaining({
+						moneda: "USD",
+						precioUnitario: 5000,
+					}),
+				}),
+			);
+		});
+
+		it("calcula el total en el servidor desde el catálogo e ignora importes del cliente", async () => {
+			vi.mocked(getCurrentUser).mockResolvedValue(mockUser);
+			vi.mocked(prisma.servicios.findMany).mockResolvedValue([
+				{ servicioId: "sv-1", moneda: "CUP", precio: 5000 },
+			] as any);
+			mockTx.ventaServicios.create.mockResolvedValue(mockVentaRow);
+
+			const result = await createVentaServicioAction({
+				servicioId: "sv-1",
+				cantidad: 2,
+			} as any);
+
+			expect(result.success).toBe(true);
+			expect(mockTx.ventaServicios.create).toHaveBeenCalledWith(
+				expect.objectContaining({
+					data: expect.objectContaining({ total: 10000, precioUnitario: 5000 }),
+				}),
+			);
+		});
+
+		it("rechaza precioUnitario enviado desde el cliente", async () => {
+			vi.mocked(getCurrentUser).mockResolvedValue(mockUser);
+			vi.mocked(prisma.servicios.findMany).mockResolvedValue([
+				{ servicioId: "sv-1", moneda: "CUP", precio: 5000 },
+			] as any);
+
+			const result = await createVentaServicioAction({
+				servicioId: "sv-1",
+				cantidad: 1,
+				precioUnitario: 2500,
+			} as any);
+
+			expect(result.success).toBe(false);
+		});
+
+		it("persiste la moneda de cada línea en modo mixto", async () => {
+			vi.mocked(getCurrentUser).mockResolvedValue(mockUser);
+			vi.mocked(prisma.servicios.findMany).mockResolvedValue([
+				{ servicioId: "sv-1", moneda: "USD", precio: 5000 },
+			] as any);
+			vi.mocked(prisma.$transaction).mockImplementation((args: any) => {
+				if (Array.isArray(args)) return Promise.all(args);
+				return args(mockTx);
+			});
+			vi.mocked(prisma.ventaServicios.create).mockResolvedValue(mockVentaRow);
+
+			const result = await createVentaServicioAction({
+				lineas: [
+					{
+						tipoLinea: "SERVICIO",
+						servicioId: "sv-1",
+						cantidad: 1,
+					},
+				],
+			} as any);
+
+			expect(result.success).toBe(true);
+			expect(prisma.ventaServicios.create).toHaveBeenCalledWith(
+				expect.objectContaining({
+					data: expect.objectContaining({
+						moneda: "USD",
+						precioUnitario: 5000,
+					}),
+				}),
+			);
+		});
+
+		it("usa el precioUnitario persistido al recalcular el total en update", async () => {
+			vi.mocked(getCurrentUser).mockResolvedValue(mockUser);
+			vi.mocked(prisma.ventaServicios.findFirst).mockResolvedValue({
+				...mockVentaRow,
+				precioUnitario: 6000,
+				cantidad: 1,
+				total: 5000,
+			});
+			vi.mocked(prisma.ventaServicios.update).mockResolvedValue(mockVentaRow);
+
+			const result = await updateVentaServicioAction({
+				ventaServicioId: "vs-1",
+				cantidad: 3,
+			});
+
+			expect(result.success).toBe(true);
+			expect(prisma.ventaServicios.update).toHaveBeenCalledWith(
+				expect.objectContaining({
+					data: expect.objectContaining({ cantidad: 3, total: 18000 }),
+				}),
+			);
+			});
+			it("recurre al precio derivado cuando el registro no tiene snapshot de precio", async () => {
+				vi.mocked(getCurrentUser).mockResolvedValue(mockUser);
+			vi.mocked(prisma.ventaServicios.findFirst).mockResolvedValue(
+				mockVentaRow,
+			);
+			vi.mocked(prisma.ventaServicios.update).mockResolvedValue(mockVentaRow);
+
+			const result = await updateVentaServicioAction({
+				ventaServicioId: "vs-1",
+				cantidad: 3,
+			});
+
+			expect(result.success).toBe(true);
+			expect(prisma.ventaServicios.update).toHaveBeenCalledWith(
+				expect.objectContaining({
+					data: expect.objectContaining({ cantidad: 3, total: 15000 }),
+				}),
+			);
+		});
+
+		it("rechaza servicio de otro tenant en modo legacy", async () => {
+			vi.mocked(getCurrentUser).mockResolvedValue(mockUser);
+			vi.mocked(prisma.servicios.findMany).mockResolvedValue([] as any);
+
+			const result = await createVentaServicioAction({
+				servicioId: "sv-otro-tenant",
+				cantidad: 1,
+			});
+
+			expect(result.success).toBe(false);
+			expect(result.error!.code).toBe("NOT_FOUND");
+		});
+
+		it("rechaza servicio de otro tenant en modo mixto", async () => {
+			vi.mocked(getCurrentUser).mockResolvedValue(mockUser);
+			vi.mocked(prisma.servicios.findMany).mockResolvedValue([] as any);
+
+			const result = await createVentaServicioAction({
+				lineas: [
+					{
+						tipoLinea: "SERVICIO",
+						servicioId: "sv-otro-tenant",
+						cantidad: 1,
+					},
+				],
+			} as any);
+
+			expect(result.success).toBe(false);
+			expect(result.error!.code).toBe("NOT_FOUND");
+		});
+
+		it("rechaza cliente de otro tenant", async () => {
+			vi.mocked(getCurrentUser).mockResolvedValue(mockUser);
+			vi.mocked(prisma.servicios.findMany).mockResolvedValue([
+				{ servicioId: "sv-1", moneda: "CUP", precio: 5000 },
+			] as any);
+			vi.mocked(prisma.cliente.findFirst).mockResolvedValue(null);
+
+			const result = await createVentaServicioAction({
+				servicioId: "sv-1",
+				cantidad: 1,
+				clienteId: "cliente-otro-tenant",
+			});
+
+			expect(result.success).toBe(false);
+			expect(result.error!.code).toBe("NOT_FOUND");
+		});
+
 		it("crea venta mixta exitosamente", async () => {
 			vi.mocked(getCurrentUser).mockResolvedValue(mockUser);
+			vi.mocked(prisma.servicios.findMany).mockResolvedValue([
+				{ servicioId: "sv-1", moneda: "CUP", precio: 5000 },
+			] as any);
 			// Modo mixto usa $transaction(array) no callback
 			vi.mocked(prisma.$transaction).mockImplementation((args: any) => {
 				if (Array.isArray(args)) return Promise.all(args);
@@ -133,7 +335,6 @@ describe("VentaServicios Server Actions", () => {
 						tipoLinea: "SERVICIO",
 						servicioId: "sv-1",
 						cantidad: 1,
-						precioUnitario: 5000,
 					},
 				],
 			} as any);
@@ -147,18 +348,283 @@ describe("VentaServicios Server Actions", () => {
 			const result = await createVentaServicioAction({
 				lineas: [
 					{
-						tipoLinea: "PRODUCTO",
-						productoId: "prod-1",
+						tipoLinea: "SERVICIO",
+						servicioId: "sv-1",
 						cantidad: 1,
-						precioUnitario: 1000,
 					},
 				],
 			} as any);
 
-			expect(result.success).toBe(false);
-			expect(result.error!.code).toBe(
-				"PRODUCT_LINE_NOT_SUPPORTED_IN_THIS_ENDPOINT",
+			expect(result.success).toBe(true);
+		});
+		it("convierte anticipo en moneda extranjera con tasa del catálogo", async () => {
+			vi.mocked(getCurrentUser).mockResolvedValue(mockUser);
+			vi.mocked(prisma.servicios.findMany).mockResolvedValue([
+				{ servicioId: "sv-1", moneda: "CUP", precio: 5000 },
+			] as any);
+			mockTx.tenantAccountingPolicy.findUnique.mockResolvedValue({
+				functionalCurrencyCode: "CUP",
+			} as any);
+			mockTx.ventaServicios.create.mockResolvedValue(mockVentaRow);
+			vi.mocked(applyAnticipoAllocations).mockResolvedValue([
+				{ anticipoId: "a1", montoAplicado: 100 },
+			] as any);
+			mockTx.anticipo.findUnique.mockResolvedValue({
+				tipo: "COBRO",
+				moneda: "USD",
+				cuentaOrigenId: "cb-1",
+				tipoPagoOrigenId: "tp-1",
+			} as any);
+			mockTx.tipoPago.findFirst.mockResolvedValue({ tipoId: "tp-1" } as any);
+			mockTx.cuentaBancaria.findFirst.mockResolvedValue({
+				cuentaId: "cb-1",
+			} as any);
+			vi.mocked(exchangeRateProvider.getRateAsOf).mockResolvedValue({
+				tasaId: "tasa-1",
+				tasa: 24.5,
+				fechaVigencia: new Date("2026-09-03"),
+			});
+
+			const result = await createVentaServicioAction({
+				servicioId: "sv-1",
+				cantidad: 1,
+				anticipos: [{ anticipoId: "a1", montoAplicado: 100 }],
+			});
+
+			expect(result.success).toBe(true);
+			expect(mockTx.reconciliacionServicio.create).toHaveBeenCalledWith(
+				expect.objectContaining({
+					data: expect.objectContaining({
+						moneda: "USD",
+						tasaCambio: expect.anything(),
+						montoConvertido: expect.anything(),
+					}),
+				}),
 			);
+		});
+
+		it("escribe transaccionMoneda de espejo cuando el anticipo es extranjero", async () => {
+			vi.mocked(getCurrentUser).mockResolvedValue(mockUser);
+			vi.mocked(prisma.servicios.findMany).mockResolvedValue([
+				{ servicioId: "sv-1", moneda: "CUP", precio: 5000 },
+			] as any);
+			mockTx.tenantAccountingPolicy.findUnique.mockResolvedValue({
+				functionalCurrencyCode: "CUP",
+			} as any);
+			mockTx.ventaServicios.create.mockResolvedValue(mockVentaRow);
+			vi.mocked(applyAnticipoAllocations).mockResolvedValue([
+				{ anticipoId: "a1", montoAplicado: 100 },
+			] as any);
+			mockTx.anticipo.findUnique.mockResolvedValue({
+				tipo: "COBRO",
+				moneda: "USD",
+				cuentaOrigenId: "cb-1",
+				tipoPagoOrigenId: "tp-1",
+			} as any);
+			mockTx.tipoPago.findFirst.mockResolvedValue({ tipoId: "tp-1" } as any);
+			mockTx.cuentaBancaria.findFirst.mockResolvedValue({
+				cuentaId: "cb-1",
+			} as any);
+			vi.mocked(exchangeRateProvider.getRateAsOf).mockResolvedValue({
+				tasaId: "tasa-1",
+				tasa: 24.5,
+				fechaVigencia: new Date("2026-09-03"),
+			});
+
+			const result = await createVentaServicioAction({
+				servicioId: "sv-1",
+				cantidad: 1,
+				anticipos: [{ anticipoId: "a1", montoAplicado: 100 }],
+			});
+
+			// La captación de transaccionMoneda debe reflejar la conversión aplicada.
+			expect(result.success).toBe(true);
+			expect(mockTx.transaccionMoneda.create).toHaveBeenCalledWith(
+				expect.objectContaining({
+					data: expect.objectContaining({
+						tipoTransaccion: "servicio",
+						referenciaId: mockVentaRow.ventaServicioId,
+						monedaId: "USD",
+						montoOriginal: 100,
+						tasaCambio: 24.5,
+						montoConvertido: 2450, // 100 * 24.5
+					}),
+				}),
+			);
+		});
+
+		it("no escribe transaccionMoneda cuando la moneda es la funcional del tenant", async () => {
+			vi.mocked(getCurrentUser).mockResolvedValue(mockUser);
+			vi.mocked(prisma.servicios.findMany).mockResolvedValue([
+				{ servicioId: "sv-1", moneda: "CUP", precio: 5000 },
+			] as any);
+			mockTx.tenantAccountingPolicy.findUnique.mockResolvedValue({
+				functionalCurrencyCode: "CUP",
+			} as any);
+			mockTx.ventaServicios.create.mockResolvedValue(mockVentaRow);
+			vi.mocked(applyAnticipoAllocations).mockResolvedValue([
+				{ anticipoId: "a1", montoAplicado: 100 },
+			] as any);
+			mockTx.anticipo.findUnique.mockResolvedValue({
+				tipo: "COBRO",
+				moneda: "CUP",
+				cuentaOrigenId: "cb-1",
+				tipoPagoOrigenId: "tp-1",
+			} as any);
+			mockTx.tipoPago.findFirst.mockResolvedValue({ tipoId: "tp-1" } as any);
+			mockTx.cuentaBancaria.findFirst.mockResolvedValue({
+				cuentaId: "cb-1",
+			} as any);
+
+			const result = await createVentaServicioAction({
+				servicioId: "sv-1",
+				cantidad: 1,
+				anticipos: [{ anticipoId: "a1", montoAplicado: 100 }],
+			});
+
+			expect(result.success).toBe(true);
+			expect(mockTx.transaccionMoneda.create).not.toHaveBeenCalled();
+		});
+
+		it("rechaza anticipo extranjero sin tasa disponible (evita fila invisible)", async () => {
+			vi.mocked(getCurrentUser).mockResolvedValue(mockUser);
+			vi.mocked(prisma.servicios.findMany).mockResolvedValue([
+				{ servicioId: "sv-1", moneda: "CUP", precio: 5000 },
+			] as any);
+			mockTx.tenantAccountingPolicy.findUnique.mockResolvedValue({
+				functionalCurrencyCode: "CUP",
+			} as any);
+			mockTx.ventaServicios.create.mockResolvedValue(mockVentaRow);
+			vi.mocked(applyAnticipoAllocations).mockResolvedValue([
+				{ anticipoId: "a1", montoAplicado: 100 },
+			] as any);
+			mockTx.anticipo.findUnique.mockResolvedValue({
+				tipo: "COBRO",
+				moneda: "USD",
+				cuentaOrigenId: "cb-1",
+				tipoPagoOrigenId: "tp-1",
+			} as any);
+			mockTx.tipoPago.findFirst.mockResolvedValue({ tipoId: "tp-1" } as any);
+			mockTx.cuentaBancaria.findFirst.mockResolvedValue({
+				cuentaId: "cb-1",
+			} as any);
+			vi.mocked(exchangeRateProvider.getRateAsOf).mockResolvedValue(null);
+
+			const result = await createVentaServicioAction({
+				servicioId: "sv-1",
+				cantidad: 1,
+				anticipos: [{ anticipoId: "a1", montoAplicado: 100 }],
+			});
+
+			expect(result.success).toBe(false);
+			expect(result.error!.code).toBe("VALIDATION_ERROR");
+			expect(mockTx.reconciliacionServicio.create).not.toHaveBeenCalled();
+		});
+
+		it("etiqueta la reconciliación con la moneda del anticipo, no hardcodeada", async () => {
+			vi.mocked(getCurrentUser).mockResolvedValue(mockUser);
+			vi.mocked(prisma.servicios.findMany).mockResolvedValue([
+				{ servicioId: "sv-1", moneda: "CUP", precio: 5000 },
+			] as any);
+			mockTx.tenantAccountingPolicy.findUnique.mockResolvedValue({
+				functionalCurrencyCode: "CUP",
+			} as any);
+			mockTx.ventaServicios.create.mockResolvedValue(mockVentaRow);
+			vi.mocked(applyAnticipoAllocations).mockResolvedValue([
+				{ anticipoId: "a1", montoAplicado: 100 },
+			] as any);
+			// Anticipo de COBRO en USD con tasa disponible: la etiqueta es USD
+			// y se persisten montoConvertido/tasa de la evidencia.
+			mockTx.anticipo.findUnique.mockResolvedValue({
+				tipo: "COBRO",
+				moneda: "USD",
+				cuentaOrigenId: "cb-1",
+				tipoPagoOrigenId: "tp-1",
+			} as any);
+			mockTx.tipoPago.findFirst.mockResolvedValue({ tipoId: "tp-1" } as any);
+			mockTx.cuentaBancaria.findFirst.mockResolvedValue({
+				cuentaId: "cb-1",
+			} as any);
+			vi.mocked(exchangeRateProvider.getRateAsOf).mockResolvedValue({
+				tasaId: "tasa-1",
+				tasa: 24.5,
+				fechaVigencia: new Date("2026-09-03"),
+			});
+
+			const result = await createVentaServicioAction({
+				servicioId: "sv-1",
+				cantidad: 1,
+				anticipos: [{ anticipoId: "a1", montoAplicado: 100 }],
+			});
+
+			expect(result.success).toBe(true);
+			expect(mockTx.reconciliacionServicio.create).toHaveBeenCalledWith(
+				expect.objectContaining({
+					data: expect.objectContaining({ moneda: "USD" }),
+				}),
+			);
+		});
+
+		it("usa el usuario autenticado como reconciliadoPor al aplicar anticipos", async () => {
+			vi.mocked(getCurrentUser).mockResolvedValue(mockUser);
+			vi.mocked(prisma.servicios.findMany).mockResolvedValue([
+				{ servicioId: "sv-1", moneda: "CUP", precio: 5000 },
+			] as any);
+			mockTx.ventaServicios.create.mockResolvedValue(mockVentaRow);
+			vi.mocked(applyAnticipoAllocations).mockResolvedValue([
+				{ anticipoId: "a1", montoAplicado: 100 },
+			] as any);
+			mockTx.anticipo.findUnique.mockResolvedValue({
+				tipo: "COBRO",
+				cuentaOrigenId: "cb-1",
+				tipoPagoOrigenId: "tp-1",
+				clienteId: "cl-1",
+			} as any);
+			mockTx.tipoPago.findFirst.mockResolvedValue({ tipoId: "tp-1" } as any);
+			mockTx.cuentaBancaria.findFirst.mockResolvedValue({
+				cuentaId: "cb-1",
+			} as any);
+
+			const result = await createVentaServicioAction({
+				servicioId: "sv-1",
+				cantidad: 1,
+				anticipos: [{ anticipoId: "a1", montoAplicado: 100 }],
+			});
+
+			expect(result.success).toBe(true);
+			expect(mockTx.reconciliacionServicio.create).toHaveBeenCalledWith(
+				expect.objectContaining({
+					data: expect.objectContaining({ reconciliadoPor: "user-1" }),
+				}),
+			);
+		});
+
+		it("rechaza anticipo sin cuenta ni tipo de pago configurados", async () => {
+			vi.mocked(getCurrentUser).mockResolvedValue(mockUser);
+			vi.mocked(prisma.servicios.findMany).mockResolvedValue([
+				{ servicioId: "sv-1", moneda: "CUP", precio: 5000 },
+			] as any);
+			mockTx.ventaServicios.create.mockResolvedValue(mockVentaRow);
+			vi.mocked(applyAnticipoAllocations).mockResolvedValue([
+				{ anticipoId: "a1", montoAplicado: 100 },
+			] as any);
+			mockTx.anticipo.findUnique.mockResolvedValue({
+				tipo: "COBRO",
+				cuentaOrigenId: null,
+				tipoPagoOrigenId: null,
+			} as any);
+			mockTx.tipoPago.findFirst.mockResolvedValue(null);
+			mockTx.cuentaBancaria.findFirst.mockResolvedValue(null);
+
+			const result = await createVentaServicioAction({
+				servicioId: "sv-1",
+				cantidad: 1,
+				anticipos: [{ anticipoId: "a1", montoAplicado: 100 }],
+			});
+
+			expect(result.success).toBe(false);
+			expect(result.error!.code).toBe("VALIDATION_ERROR");
+			expect(mockTx.reconciliacionServicio.create).not.toHaveBeenCalled();
 		});
 	});
 
@@ -184,9 +650,64 @@ describe("VentaServicios Server Actions", () => {
 			vi.mocked(prisma.ventaServicios.findFirst).mockResolvedValue(
 				mockVentaRow,
 			);
+			vi.mocked(prisma.reconciliacionServicio.count).mockResolvedValue(0);
 			vi.mocked(prisma.ventaServicios.delete).mockResolvedValue(mockVentaRow);
 			const result = await deleteVentaServicioAction("vs-1");
 			expect(result.success).toBe(true);
+		});
+
+		it("bloquea el borrado de ventas con reconciliaciones (HAS_REFERENCES)", async () => {
+			vi.mocked(getCurrentUser).mockResolvedValue(mockUser);
+			vi.mocked(prisma.ventaServicios.findFirst).mockResolvedValue(
+				mockVentaRow,
+			);
+			vi.mocked(prisma.reconciliacionServicio.count).mockResolvedValue(2);
+
+			const result = await deleteVentaServicioAction("vs-1");
+
+			expect(result.success).toBe(false);
+			expect(result.error!.code).toBe("HAS_REFERENCES");
+			expect(prisma.ventaServicios.delete).not.toHaveBeenCalled();
+		});
+	});
+
+	describe("autorización", () => {
+		it("updateVentaServicioAction requiere rol manager", async () => {
+			vi.mocked(getCurrentUser).mockResolvedValue({
+				...mockUser,
+				role: "regularUser",
+				planFeatures: { servicios: true },
+				tenantRole: "dependiente",
+			});
+			vi.mocked(prisma.ventaServicios.findFirst).mockResolvedValue(
+				mockVentaRow,
+			);
+
+			const result = await updateVentaServicioAction({
+				ventaServicioId: "vs-1",
+				cantidad: 2,
+			});
+
+			expect(result.success).toBe(false);
+			expect(result.error!.code).toBe("FORBIDDEN");
+		});
+
+		it("deleteVentaServicioAction requiere rol manager", async () => {
+			vi.mocked(getCurrentUser).mockResolvedValue({
+				...mockUser,
+				role: "regularUser",
+				planFeatures: { servicios: true },
+				tenantRole: "dependiente",
+			});
+			vi.mocked(prisma.ventaServicios.findFirst).mockResolvedValue(
+				mockVentaRow,
+			);
+			vi.mocked(prisma.reconciliacionServicio.count).mockResolvedValue(0);
+
+			const result = await deleteVentaServicioAction("vs-1");
+
+			expect(result.success).toBe(false);
+			expect(result.error!.code).toBe("FORBIDDEN");
 		});
 	});
 

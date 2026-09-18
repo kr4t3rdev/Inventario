@@ -1,0 +1,74 @@
+
+ RUN  v3.2.4 /Users/arturo/Documents/Proyecto Inventario/TCP
+
+ ✓ src/features/ventas/__tests__/venta-estado-types.test.ts (3 tests) 548ms
+   ✓ Venta.estado — ciclo de vida (PVE-T1) > expone los cuatro estados del ciclo  543ms
+ ✓ src/features/ventas/__tests__/fiscal-model-types.test.ts (3 tests) 549ms
+   ✓ Capa fiscal — modelos (FE-T1) > el enum EstadoFiscalDocumento expone los cinco estados  543ms
+ ✓ src/features/ventas/components/sales-health-card.test.tsx (3 tests) 300ms
+stderr | src/features/ventas/__tests__/pos-cobro-dialog.test.tsx > PosCobroDialog (VC-T3) > con efectivo muestra recibido y calcula el vuelto en vivo
+Unknown event handler property `onAnimationComplete`. It will be ignored.
+
+ ✓ src/features/ventas/__tests__/pos-cobro-dialog.test.tsx (6 tests) 1234ms
+   ✓ PosCobroDialog (VC-T3) > con efectivo muestra recibido y calcula el vuelto en vivo  437ms
+   ✓ PosCobroDialog (VC-T3) > MIXTO completo: suma correcta y recibido suficiente → confirma con desglose  338ms
+stderr | src/features/ventas/__tests__/ventas-pedido-ui.test.tsx > VentasTable — ciclo de pedidos > filtra por estado al elegirlo en el selector
+An update to VentasTable inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+"puntoDeVenta" in deeply nested key "puntoDeVenta.nombre" returned undefined.
+"nombre" in deeply nested key "puntoDeVenta.nombre" returned undefined.
+
+ ✓ src/features/ventas/__tests__/ventas-pedido-ui.test.tsx (9 tests) 1341ms
+   ✓ VentasTable — ciclo de pedidos > ofrece Entregar a un PEDIDO y Facturar a una ENTREGADA  590ms
+ ✓ src/features/facturas/components/billing-health-card.test.tsx (2 tests) 147ms
+ ✓ src/features/ventas/__tests__/devolucion-service.test.ts (14 tests) 50ms
+ ✓ src/features/ventas/__tests__/venta-lifecycle.test.ts (19 tests) 36ms
+ ✓ src/features/ventas/actions-health.test.ts (3 tests) 26ms
+ ✓ src/features/ventas/lib/pv-client.test.ts (4 tests) 28ms
+ ✓ src/features/ventas/__tests__/actions.test.ts (21 tests) 53ms
+ ✓ src/features/arqueo-caja/__tests__/actions.test.ts (10 tests) 28ms
+ ✓ src/features/ventas/__tests__/venta-create-orquestacion.test.ts (6 tests) 25ms
+stderr | src/features/ventas/components/ventas-table.a11y.test.tsx > VentasTable acciones accesibles > los botones de acciones icon-only exponen aria-label
+An update to Button inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+stderr | src/features/ventas/components/ventas-table.a11y.test.tsx > VentasTable acciones accesibles > los botones de acciones icon-only exponen aria-label
+Unknown event handler property `onAnimationComplete`. It will be ignored.
+
+ ✓ src/features/ventas/components/ventas-table.a11y.test.tsx (1 test) 599ms
+   ✓ VentasTable acciones accesibles > los botones de acciones icon-only exponen aria-label  596ms
+ ✓ src/features/ventas/__tests__/devolucion-calculo.test.ts (21 tests) 24ms
+ ✓ src/features/facturas/__tests__/fiscal-emision.test.ts (4 tests) 30ms
+ ✓ src/features/ventas/__tests__/devolucion-schema.test.ts (6 tests) 11ms
+ ✓ src/features/ventas/services/__tests__/venta-read-service.test.ts (5 tests) 14ms
+ ✓ src/features/ventas/__tests__/devoluciones-actions.test.ts (4 tests) 8ms
+ ✓ src/features/facturas/__tests__/actions.test.ts (6 tests) 11ms
+ ✓ src/features/ventas/schemas.test.ts (2 tests) 17ms
+ ✓ src/features/ventas/__tests__/venta-price-integrity.test.ts (8 tests) 32ms
+ ✓ src/features/ventas/__tests__/pos-vuelto-calcu.test.ts (9 tests) 8ms
+ ✓ src/features/facturas/actions-health.test.ts (3 tests) 9ms
+ ✓ src/features/facturas/__tests__/fiscal-actions.test.ts (3 tests) 57ms
+ ✓ src/features/ventas/__tests__/precio-venta-resolver.test.ts (6 tests) 8ms
+ ✓ src/features/ventas/__tests__/actions-lifecycle.test.ts (3 tests) 3ms
+
+ Test Files  27 passed (27)
+      Tests  184 passed (184)
+   Start at  09:01:41
+   Duration  16.56s (transform 3.11s, setup 7.22s, collect 32.35s, tests 5.19s, environment 30.49s, prepare 6.59s)
+

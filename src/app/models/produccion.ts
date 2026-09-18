@@ -1,3 +1,5 @@
+import type { Producto } from './productos';
+
 export type EstadoProduccion =
 	| "PENDIENTE"
 	| "EN_PROCESO"

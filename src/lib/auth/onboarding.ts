@@ -2,10 +2,16 @@ import jwt, { SignOptions } from 'jsonwebtoken';
 
 import { getJwtSecret } from '@/lib/secrets';
 
+export type OnboardingTokenPurpose =
+  | 'email-verification'
+  | 'onboarding'
+  | 'resend-verification'
+  | 'password-reset';
+
 export interface OnboardingTokenPayload {
   userId: string;
   email: string;
-  purpose: 'email-verification' | 'onboarding' | 'resend-verification';
+  purpose: OnboardingTokenPurpose;
 }
 
 const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
@@ -39,11 +45,15 @@ export function signOnboardingToken(payload: OnboardingTokenPayload, expiresIn: 
 /**
  * @description Verifica y decodifica un token temporal de onboarding.
  * @param {string} token - JWT a validar.
+ * @param {OnboardingTokenPurpose[]} allowedPurposes - Propósitos aceptados para este token.
  * @returns {OnboardingTokenPayload} Payload validado.
  */
-export function verifyOnboardingToken(token: string): OnboardingTokenPayload {
+export function verifyOnboardingToken(
+  token: string,
+  allowedPurposes: OnboardingTokenPurpose[] = ['email-verification', 'onboarding'],
+): OnboardingTokenPayload {
   const decoded = jwt.verify(token, getJwtSecret()) as OnboardingTokenPayload;
-  if (decoded.purpose !== 'email-verification' && decoded.purpose !== 'onboarding') {
+  if (!allowedPurposes.includes(decoded.purpose)) {
     throw new Error('Token de onboarding inválido');
   }
   return decoded;

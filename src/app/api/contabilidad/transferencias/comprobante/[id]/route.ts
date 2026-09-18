@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server'
 import prisma from '@/lib/prisma'
 import { PDFDocument, StandardFonts, rgb } from 'pdf-lib'
+import { authenticateUser } from '@/lib/auth-middleware'
+import { canAccessAccountingItem } from '@/lib/plan-access'
 
 // Ensure Node.js runtime for compatibility with pdf generation
 export const runtime = 'nodejs'
@@ -11,6 +13,14 @@ export async function GET(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const authResultUser = await authenticateUser(request)
+    if ('status' in authResultUser) return authResultUser as Response
+    const user = authResultUser.user
+
+    if (user.role !== 'admin' && !canAccessAccountingItem(user, 'Transferencias Bancarias')) {
+      return NextResponse.json({ error: 'Prohibido' }, { status: 403 })
+    }
+
     const { id } = await params
 
     if (!id) {

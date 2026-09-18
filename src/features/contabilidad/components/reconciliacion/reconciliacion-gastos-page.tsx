@@ -209,7 +209,7 @@ export function ReconciliacionGastosPage() {
       <StaggerItem>
         <AnimatedCard>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-            <Card className={cn(surfaceCardClass, 'border-l-4 border-l-primary')}>
+            <Card className={cn(surfaceCardClass)}>
               <CardContent className="pt-4">
                 <div className="flex items-center justify-between">
                   <div>
@@ -224,7 +224,7 @@ export function ReconciliacionGastosPage() {
               </CardContent>
             </Card>
 
-            <Card className={cn(surfaceCardClass, 'border-l-4 border-l-accent')}>
+            <Card className={cn(surfaceCardClass)}>
               <CardContent className="pt-4">
                 <div className="flex items-center justify-between">
                   <div>
@@ -239,7 +239,7 @@ export function ReconciliacionGastosPage() {
               </CardContent>
             </Card>
 
-            <Card className={cn(surfaceCardClass, 'border-l-4 border-l-chart-2')}>
+            <Card className={cn(surfaceCardClass)}>
               <CardContent className="pt-4">
                 <div className="flex items-center justify-between">
                   <div>
@@ -254,7 +254,7 @@ export function ReconciliacionGastosPage() {
               </CardContent>
             </Card>
 
-            <Card className={cn(surfaceCardClass, 'border-l-4 border-l-chart-4')}>
+            <Card className={cn(surfaceCardClass)}>
               <CardContent className="pt-4">
                 <div className="flex items-center justify-between">
                   <div>
@@ -347,8 +347,8 @@ export function ReconciliacionGastosPage() {
 
                   <div className="flex items-center justify-between p-4 border rounded-lg bg-slate-50 dark:bg-slate-900/30">
                     <div className="flex items-center gap-3">
-                      <div className="p-2 bg-purple-100 dark:bg-purple-900/30 rounded-lg">
-                        <FileText className="h-5 w-5 text-purple-600 dark:text-purple-300" />
+                      <div className="p-2 bg-primary/15 dark:bg-primary/20 rounded-lg">
+                        <FileText className="h-5 w-5 text-primary" />
                       </div>
                       <div>
                         <p className="font-medium">Servicios Recibidos</p>

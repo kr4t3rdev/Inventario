@@ -74,6 +74,18 @@ export const FEATURE_REGISTRY: FeatureDef[] = [
 		description: "Listas de precios diferenciadas por producto y cliente",
 		category: "inventario",
 	},
+	{
+		key: "ficha-costo",
+		label: "Ficha de Costo",
+		description: "Análisis detallado de costos, márgenes e historial por producto",
+		category: "inventario",
+	},
+	{
+		key: "ficha-costo-bulk",
+		label: "Actualización masiva de precios",
+		description: "Ajuste porcentual y aplicación de plantillas a múltiples productos",
+		category: "inventario",
+	},
 
 	// ════════════════════════════════════════════
 	// Operaciones (almacenes, sucursales)
@@ -102,6 +114,72 @@ export const FEATURE_REGISTRY: FeatureDef[] = [
 		description: "Registro y control de mermas y ajustes de inventario",
 		category: "operaciones",
 	},
+	{
+		key: "kardex",
+		label: "Kardex de inventario",
+		description: "Historial auditable de movimientos con saldo y costo",
+		category: "inventario",
+	},
+	{
+		key: "ajustes-inventario",
+		label: "Ajustes de inventario",
+		description: "Ajustes unificados con motivo de catálogo y valorización",
+		category: "inventario",
+	},
+	{
+		key: "conteo-fisico",
+		label: "Conteo físico",
+		description: "Toma de inventario con doble conteo ciego y varianzas",
+		category: "inventario",
+	},
+	{
+		key: "unidades-conversion",
+		label: "Conversión de unidades",
+		description: "Compra en caja y venta en unidad con factor a stock",
+		category: "inventario",
+	},
+	{
+		key: "lotes-series",
+		label: "Lotes y vencimientos",
+		description: "Trazabilidad por lote con FEFO y alertas de caducidad",
+		category: "inventario",
+	},
+	{
+		key: "variantes",
+		label: "Variantes de producto",
+		description: "Talla y color con SKU, precio y stock propios",
+		category: "inventario",
+	},
+	{
+		key: "ubicaciones-avanzadas",
+		label: "Ubicaciones anidadas",
+		description: "Zonas, pasillos y estantes dentro del almacén",
+		category: "operaciones",
+	},
+	{
+		key: "ordenes-compra",
+		label: "Órdenes de compra",
+		description: "Pedidos a proveedor previos a la recepción y factura",
+		category: "compras",
+	},
+	{
+		key: "recepciones",
+		label: "Recepciones parciales",
+		description: "Entradas parciales con backorder contra la orden",
+		category: "compras",
+	},
+	{
+		key: "reabastecimiento",
+		label: "Reabastecimiento",
+		description: "Reglas min/max con sugerencia de compra o fabricación",
+		category: "compras",
+	},
+	{
+		key: "mrp-avanzado",
+		label: "MRP avanzado",
+		description: "BOM multinivel con explosión de necesidades",
+		category: "produccion",
+	},
 
 	// ════════════════════════════════════════════
 	// Ventas
@@ -116,6 +194,18 @@ export const FEATURE_REGISTRY: FeatureDef[] = [
 		key: "ventas-factura",
 		label: "Ventas con factura",
 		description: "Ventas que generan factura / crédito",
+		category: "ventas",
+	},
+	{
+		key: "ventas-pedidos",
+		label: "Pedidos de venta",
+		description: "Pedidos con ciclo de estados: confirmar, entregar y facturar por separado",
+		category: "ventas",
+	},
+	{
+		key: "facturacion-fiscal",
+		label: "Facturación fiscal",
+		description: "Documentos fiscales por jurisdicción (capa Gap 4; apagada por defecto)",
 		category: "ventas",
 	},
 	{
@@ -201,6 +291,25 @@ export const FEATURE_REGISTRY: FeatureDef[] = [
 		label: "Contabilidad",
 		description:
 			"Contabilidad completa: cuentas, ajustes, reconciliación, reportes, logs",
+		category: "financiero",
+	},
+	{
+		key: "transferencias-bancarias",
+		label: "Transferencias bancarias",
+		description: "Movimientos entre cuentas bancarias con comprobantes y trazabilidad",
+		category: "financiero",
+	},
+	{
+		key: "ajustes-bancarios",
+		label: "Ajustes bancarios",
+		description: "Ajustes manuales y correcciones sobre cuentas bancarias",
+		category: "financiero",
+	},
+	{
+		key: "inyeccion-capital",
+		label: "Inyección de capital",
+		description:
+			"Inyecciones y aportaciones de capital con registro de pagos de deuda",
 		category: "financiero",
 	},
 	{
@@ -290,6 +399,18 @@ export const FEATURE_REGISTRY: FeatureDef[] = [
 		category: "rrhh",
 	},
 	{
+		key: "vacaciones",
+		label: "Vacaciones",
+		description: "Solicitudes, acumulación automática y aprobación de vacaciones",
+		category: "rrhh",
+	},
+	{
+		key: "asistencia",
+		label: "Asistencia",
+		description: "Checkin/checkout de empleados con horarios semanales",
+		category: "rrhh",
+	},
+	{
 		key: "nomina",
 		label: "Nómina y salarios",
 		description: "Pago de salarios, comisiones dinámicas y vacaciones",
@@ -340,6 +461,54 @@ export const FEATURE_REGISTRY: FeatureDef[] = [
 		key: "dashboard",
 		label: "Dashboard ejecutivo",
 		description: "Panel principal con indicadores en tiempo real",
+		category: "config",
+	},
+	{
+		key: "upload-mi-empresa-logo",
+		label: "Logo de empresa",
+		description: "Permite subir y reemplazar el logo principal de la empresa",
+		category: "config",
+	},
+	{
+		key: "upload-clientes-logo",
+		label: "Logos de clientes",
+		description: "Permite cargar logos e imágenes de identidad para clientes",
+		category: "config",
+	},
+	{
+		key: "upload-vendors-logo",
+		label: "Logos de proveedores",
+		description: "Permite cargar logos e imágenes de identidad para proveedores",
+		category: "config",
+	},
+	{
+		key: "upload-profile-avatar",
+		label: "Avatar de usuario",
+		description: "Permite cargar avatares de perfil para usuarios del tenant",
+		category: "config",
+	},
+	{
+		key: "upload-deudas-cash-receipt",
+		label: "Comprobantes de deudas cash",
+		description: "Permite adjuntar comprobantes visuales en deudas cash",
+		category: "config",
+	},
+	{
+		key: "upload-productos-photo",
+		label: "Fotos de productos",
+		description: "Permite cargar fotos y galerías de productos",
+		category: "config",
+	},
+	{
+		key: "upload-contratos-attachment",
+		label: "Anexos de contratos",
+		description: "Permite adjuntar archivos auxiliares a contratos",
+		category: "config",
+	},
+	{
+		key: "upload-contratos-version",
+		label: "Versiones de contratos",
+		description: "Permite cargar nuevas versiones de documentos contractuales",
 		category: "config",
 	},
 

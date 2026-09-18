@@ -4,7 +4,7 @@ import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import { withAction, ActionError } from "@/lib/server-actions";
 import { prisma } from "@/lib/prisma";
-import { requireTenant, requireManagerRole } from "@/lib/services/tenant-scope";
+import { requireTenant, requirePermission } from "@/lib/services/tenant-scope";
 import { withPeriodValidation } from "@/lib/services/with-period-validation";
 import { upsertStockUbicacion } from "@/lib/services/stock-ubicacion-service";
 import { executeProductInstanceCreationWorkflow } from "@/lib/restock-utils";
@@ -60,7 +60,7 @@ export const restockProductoAction = withAction(
 	withPeriodValidation(
 		() => new Date(),
 		async (input: RestockInput, user: AuthenticatedUser) => {
-			requireManagerRole(user, 'hacer restock de productos');
+			requirePermission(user, 'inventario.productos.restock', 'hacer restock de productos');
 			const parsed = restockSchema.parse(input);
 			const {
 				productoId,
@@ -129,7 +129,7 @@ export const restockProductoAction = withAction(
 			// ── 3. Transacción: stock + gastos + pagos ──
 			const result = await prisma.$transaction(
 				async (tx) => {
-					let updatedProducto: typeof producto;
+					let updatedProducto: any = null;
 					let newProductInstance: typeof producto | null = null;
 					let gastoCompra: Awaited<ReturnType<typeof tx.gastoCompra.create>>;
 					let compraProducto: Awaited<
@@ -278,16 +278,15 @@ export const restockProductoAction = withAction(
 							productoId,
 							tipoUbicacion: "almacen",
 							ubicacionId: producto.almacenId!,
-							modo: "set",
-							valor: workflowResult.originalProductUpdate.newStock,
+							modo: "increment",
+							delta: cantidad,
 						});
 
 						// Registrar cambio de precio en historial
 						if (precioCosto !== undefined || precioVenta !== undefined) {
 							try {
 								await recordCostChange(
-									// @ts-expect-error - tx es compatible con PrismaClient
-									tx,
+									tx as any,
 									{
 										productoId: producto.id,
 										oldPrecioCosto: producto.precioCosto,
@@ -296,7 +295,7 @@ export const restockProductoAction = withAction(
 										newPrecioVenta: updatedProducto.precioVenta,
 										reason: CostChangeReason.RESTOCK,
 										changedBy:
-											((user as Record<string, unknown>).userId as string) ||
+											((user as unknown as Record<string, unknown>).userId as string) ||
 											"system",
 										notes: `Restock x${cantidad} - ${descripcion || ""}`.trim(),
 									},
@@ -374,7 +373,7 @@ export const restockProductoAction = withAction(
 					}
 
 					return {
-						producto: (updatedProducto ?? newProductInstance)!,
+						producto: (updatedProducto as any ?? newProductInstance)!,
 						gastoCompra,
 						newProductInstance,
 						compraProducto,
@@ -480,7 +479,7 @@ async function handlePaymentInTransaction(
 		// Resolver cuenta por defecto si no se especificó
 		if (!cuentaId) {
 			const tipoPago = await tx.tipoPago.findFirst({
-				where: { isActive: true },
+				where: { isActive: true, tenantId },
 				orderBy: { createdAt: "asc" },
 				select: { tipoId: true, cuentaDefecto: true },
 			});
@@ -518,7 +517,7 @@ async function handlePaymentInTransaction(
 		}
 
 		const tipoPagoData = await tx.tipoPago.findFirst({
-			where: { isActive: true },
+			where: { isActive: true, tenantId },
 			orderBy: { createdAt: "asc" },
 			select: { tipoId: true },
 		});

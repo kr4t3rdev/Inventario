@@ -1,0 +1,46 @@
+
+ RUN  v3.2.4 /Users/arturo/Documents/Proyecto Inventario/TCP
+
+ ❯ src/features/auth/__tests__/auth-service-tenant.test.ts (4 tests | 2 failed) 71ms
+   ✓ AuthService — copy neutro (PE-01) > login sin empresa activa responde "No tienes" (sin voseo) 22ms
+   ✓ AuthService — copy neutro (PE-01) > switchTenant sin membresía responde "No tienes acceso" (sin voseo) 4ms
+   × AuthService.switchTenant — membresía platform (PE-03) > cambia de tenant A a tenant B consultando membresía en platform bajo enforce 17ms
+     → No tienes acceso a esta empresa
+   × AuthService.switchTenant — membresía platform (PE-03) > rechaza FORBIDDEN cuando platform no encuentra la membresía destino 23ms
+     → expected "spy" to be called at least once
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  src/features/auth/__tests__/auth-service-tenant.test.ts > AuthService.switchTenant — membresía platform (PE-03) > cambia de tenant A a tenant B consultando membresía en platform bajo enforce
+ActionError: No tienes acceso a esta empresa
+ ❯ Object.switchTenant src/features/auth/services/auth-service.ts:520:13
+    518|
+    519|     if (!membership || !membership.isActive) {
+    520|       throw new ActionError('No tienes acceso a esta empresa', 'FORBID…
+       |             ^
+    521|     }
+    522|
+ ❯ src/features/auth/__tests__/auth-service-tenant.test.ts:150:18
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/2]⎯
+
+ FAIL  src/features/auth/__tests__/auth-service-tenant.test.ts > AuthService.switchTenant — membresía platform (PE-03) > rechaza FORBIDDEN cuando platform no encuentra la membresía destino
+AssertionError: expected "spy" to be called at least once
+ ❯ src/features/auth/__tests__/auth-service-tenant.test.ts:173:52
+    171|    }),
+    172|   ).rejects.toMatchObject({ code: 'FORBIDDEN' });
+    173|   expect(platformMock.tenantMembership.findUnique).toHaveBeenCalled();
+       |                                                    ^
+    174|   expect(scopedMock.tenantMembership.findUnique).not.toHaveBeenCalled(…
+    175|  });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/2]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  2 failed | 2 passed (4)
+   Start at  00:23:21
+   Duration  9.58s (transform 893ms, setup 838ms, collect 857ms, tests 71ms, environment 3.82s, prepare 1.36s)
+
+
+Exit status: 1

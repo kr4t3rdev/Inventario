@@ -54,11 +54,11 @@ const ESTADO_COLORS: Record<string, string> = {
   REABIERTO: 'text-purple-600 bg-purple-50 dark:text-purple-400 dark:bg-purple-950',
 };
 
-const EVENTO_ICONS: Record<string, typeof Activity> = {
+const EVENTO_ICONS: Record<string, any> = {
   APERTURA: Calendar,
   CIERRE: LockIcon,
   APROBACION: CheckCircle2,
-  REAPERTURA: Clock,
+  REAPERTURA: Clock as any,
 };
 
 function LockIcon(props: React.SVGProps<SVGSVGElement>) {
@@ -86,8 +86,8 @@ export function PeriodosDashboard() {
       const { obtenerDashboardPeriodosAction } = await import('@/features/contabilidad/actions-periodos');
       const result = await obtenerDashboardPeriodosAction({});
       if (result.success && result.data) {
-        setData(result.data as DashboardData);
-      } else {
+        setData(result.data as unknown as DashboardData);
+      } else if (!result.success) {
         setError(result.error?.message ?? 'Error al cargar dashboard');
       }
     } catch (err) {

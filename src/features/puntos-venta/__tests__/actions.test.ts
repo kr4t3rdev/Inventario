@@ -49,6 +49,17 @@ const mockUser: AuthenticatedUser = {
   tenantRole: 'admin',
 };
 
+const featureBlockedUser: AuthenticatedUser = {
+  userId: 'user-pv-2',
+  name: 'Blocked',
+  email: 'blocked@test.com',
+  role: 'regularUser',
+  isActive: true,
+  tenantId: 'tenant-pv',
+  tenantRole: 'manager',
+  planFeatures: { 'puntos-venta': false },
+};
+
 const mockPvRow = {
   pvId: 'pv-1',
   nombre: 'Tienda Principal',
@@ -108,6 +119,16 @@ describe('Puntos de Venta Server Actions', () => {
 
       expect(result.success).toBe(true);
       expect(result.data).toEqual([]);
+    });
+
+    it('bloquea acceso si el plan no incluye puntos de venta', async () => {
+      vi.mocked(getCurrentUser).mockResolvedValue(featureBlockedUser);
+
+      const result = await getPuntosDeVentaAction();
+
+      expect(result.success).toBe(false);
+      expect(result.error?.code).toBe('FEATURE_NOT_AVAILABLE');
+      expect(prisma.puntoDeVenta.findMany).not.toHaveBeenCalled();
     });
   });
 

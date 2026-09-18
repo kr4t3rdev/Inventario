@@ -25,7 +25,7 @@ import {
 } from "@/components/ui/form"
 import { ArrowRightLeft, Loader2, Info } from "lucide-react"
 import { sileo } from '@/lib/sileo-shim'
-import { getCuentasBancariasAction } from "@/features/contabilidad/actions-cuentas-bancarias"
+import { useCuentasBancarias } from "@/features/contabilidad/hooks/use-cuentas-bancarias"
 import { validarTransferenciaAction, createTransferenciaBancariaAction } from "@/features/contabilidad/actions"
 import { TasaCambioDialog } from "@/features/contabilidad/components/tasa-cambio-dialog"
 import { cn } from "@/lib/utils"
@@ -73,16 +73,12 @@ const outlineButtonClass = cn(
 );
 
 export function TransferenciaBancariaForm({ onSuccess, onCancel }: TransferenciaBancariaFormProps) {
-  const [cuentasBancarias, setCuentasBancarias] = useState<any[]>([])
+  const { cuentas: cuentasBancarias, isLoading: isLoadingCuentas } = useCuentasBancarias()
   const [showTasaDialog, setShowTasaDialog] = useState(false)
   const [validacionData, setValidacionData] = useState<any>(null)
   const [isSubmitting, setIsSubmitting] = useState(false)
 
-  useEffect(() => {
-    getCuentasBancariasAction().then(r => {
-      if (r.success) setCuentasBancarias(r.data?.cuentas ?? [])
-    })
-  }, [])
+
 
   const shouldReduceMotion = useReducedMotion()
 

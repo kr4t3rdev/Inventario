@@ -16,6 +16,11 @@ vi.mock('@/lib/prisma', () => ({
   },
 }))
 
+vi.mock('@/lib/db/platform-prisma', async () => {
+  const { prisma } = await import('@/lib/prisma')
+  return { prismaPlatform: prisma, default: prisma }
+})
+
 import { getCurrentUser } from '@/lib/server-actions/get-current-user'
 import { prisma } from '@/lib/prisma'
 import { getAdminUsersPageData } from './data'
@@ -33,11 +38,16 @@ describe('getAdminUsersPageData', () => {
         name: 'Admin User',
         email: 'admin@test.com',
         role: 'admin',
+        onboardingStatus: 'completado',
+        onboardingType: null,
         isActive: true,
         lockedUntil: null,
         expiresAt: null,
         createdAt: new Date('2026-01-01T00:00:00.000Z'),
         loginAttempts: 0,
+        salesAgentProfile: null,
+        salesAgentBalance: null,
+        salesAgentReferrals: [],
         tenantMemberships: [
           {
             tenantId: 'tenant-1',
@@ -46,6 +56,7 @@ describe('getAdminUsersPageData', () => {
             tenant: { nombre: 'Tenant Uno' },
           },
         ],
+        _count: { tenantMemberships: 1 },
       },
     ] as any)
     vi.mocked(prisma.user.count).mockResolvedValue(1)
@@ -63,17 +74,13 @@ describe('getAdminUsersPageData', () => {
     ])
     expect(prisma.user.findMany).toHaveBeenCalledWith(
       expect.objectContaining({
-        include: {
-          tenantMemberships: {
-            include: {
-              tenant: {
-                select: {
-                  nombre: true,
-                },
-              },
-            },
-          },
-        },
+        select: expect.objectContaining({
+          tenantMemberships: expect.objectContaining({
+            select: expect.objectContaining({
+              tenant: { select: { nombre: true } },
+            }),
+          }),
+        }),
       }),
     )
   })

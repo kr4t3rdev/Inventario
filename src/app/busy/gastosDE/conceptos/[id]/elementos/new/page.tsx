@@ -33,7 +33,6 @@ export default async function NewGastoElementoPage({ params }: Props) {
   return (
         <div className="container mx-auto py-6 max-w-2xl">
           <GastoElementoForm conceptoId={
-  // @ts-expect-error
           conceptoId} conceptoNombre={concepto.nombre
           } />
         </div>

@@ -2,7 +2,7 @@
 
 import type React from 'react'
 
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { useAuth } from '@/contexts/auth-context'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -10,8 +10,9 @@ import { Label } from '@/components/ui/label'
 import { Alert, AlertDescription } from '@/components/ui/alert'
 import { EyeIcon, EyeOffIcon, LogInIcon, AlertCircleIcon, Loader2Icon } from 'lucide-react'
 import Link from 'next/link'
-import { m as motion, AnimatePresence, useReducedMotion } from 'framer-motion'
 import { AuthLayout } from '@/components/auth/auth-layout'
+import { motion, AnimatePresence } from 'framer-motion'
+import { useHydrationSafeReducedMotion } from '@/hooks/use-hydration-safe-reduced-motion'
 
 const SPRING_DEFAULT = { type: 'spring' as const, stiffness: 120, damping: 20 }
 const SPRING_HOVER = { type: 'spring' as const, stiffness: 300, damping: 15 }
@@ -27,7 +28,13 @@ export default function LoginPage(): React.ReactElement {
 	const [error, setError] = useState('')
 	const [loading, setLoading] = useState(false)
 	const { login } = useAuth()
-	const reduceMotion = !!useReducedMotion()
+	const reduceMotion = useHydrationSafeReducedMotion()
+	const [mounted, setMounted] = useState(false)
+	const shouldAnimate = mounted && !reduceMotion
+
+	useEffect(() => {
+		setMounted(true)
+	}, [])
 
 	const handleSubmit = async (e: React.FormEvent) => {
 		e.preventDefault()
@@ -37,14 +44,14 @@ export default function LoginPage(): React.ReactElement {
 		const success = await login(email, password)
 
 		if (!success) {
-			setError('Credenciales inválidas. Por favor, verificá tu email y contraseña.')
+			setError('Credenciales inválidas. Por favor, verifica tu email y contraseña.')
 		}
 
 		setLoading(false)
 	}
 
 	const fadeUp = (delay: number) =>
-		reduceMotion
+		!shouldAnimate
 			? {}
 			: {
 					initial: { opacity: 0, y: 30 },
@@ -55,7 +62,7 @@ export default function LoginPage(): React.ReactElement {
 	return (
 		<AuthLayout>
 			<motion.div
-				initial={reduceMotion ? { opacity: 1 } : { opacity: 0, y: 30 }}
+				initial={shouldAnimate ? { opacity: 0, y: 30 } : { opacity: 1, y: 0 }}
 				animate={{ opacity: 1, y: 0 }}
 				transition={SPRING_DEFAULT}
 				className="overflow-hidden rounded-[18px] border border-black/8 bg-white shadow-sm dark:border-white/10 dark:bg-[#272729]"
@@ -63,7 +70,7 @@ export default function LoginPage(): React.ReactElement {
 				{/* Header */}
 				<div className="px-8 pb-6 pt-10 text-center">
 					<motion.div
-						initial={reduceMotion ? { scale: 1 } : { scale: 0 }}
+						initial={shouldAnimate ? { scale: 0 } : { scale: 1 }}
 						animate={{ scale: 1 }}
 						transition={{ type: 'spring' as const, stiffness: 200, damping: 18, delay: 0.05 }}
 						className="mx-auto mb-6 flex h-14 w-14 items-center justify-center rounded-2xl bg-[#0066cc]/10"
@@ -81,7 +88,7 @@ export default function LoginPage(): React.ReactElement {
 						{...fadeUp(0.15)}
 						className="text-[17px] leading-[1.47] tracking-[-0.022em] text-[#7a7a7a] dark:text-[#cccccc]"
 					>
-						Ingresá tus credenciales para continuar
+						Ingresa tus credenciales para continuar
 					</motion.p>
 				</div>
 
@@ -91,9 +98,9 @@ export default function LoginPage(): React.ReactElement {
 						<AnimatePresence>
 							{error && (
 								<motion.div
-									initial={reduceMotion ? { opacity: 1 } : { opacity: 0, height: 0 }}
+									initial={shouldAnimate ? { opacity: 0, height: 0 } : { opacity: 1 }}
 									animate={{ opacity: 1, height: 'auto' }}
-									exit={reduceMotion ? { opacity: 1 } : { opacity: 0, height: 0 }}
+									exit={shouldAnimate ? { opacity: 0, height: 0 } : { opacity: 1 }}
 									transition={{ duration: 0.25, ease: 'easeOut' }}
 								>
 									<Alert variant="destructive" className="border-red-300 bg-red-50/80 dark:bg-red-900/20">
@@ -108,7 +115,7 @@ export default function LoginPage(): React.ReactElement {
 							<Label htmlFor="email" className="text-sm font-medium text-[#1d1d1f] dark:text-white">
 								Correo electrónico
 							</Label>
-							<motion.div whileFocus={reduceMotion ? {} : { scale: 1.01 }} transition={SPRING_DEFAULT}>
+							<motion.div whileFocus={shouldAnimate ? { scale: 1.01 } : {}} transition={SPRING_DEFAULT}>
 								<Input
 									id="email"
 									type="email"
@@ -123,11 +130,19 @@ export default function LoginPage(): React.ReactElement {
 						</motion.div>
 
 						<motion.div {...fadeUp(0.25)} className="space-y-2">
-							<Label htmlFor="password" className="text-sm font-medium text-[#1d1d1f] dark:text-white">
-								Contraseña
-							</Label>
+							<div className="flex items-center justify-between">
+								<Label htmlFor="password" className="text-sm font-medium text-[#1d1d1f] dark:text-white">
+									Contraseña
+								</Label>
+								<Link
+									href="/forgot-password"
+									className="text-sm font-medium text-[#0066cc] hover:underline dark:text-[#2997ff]"
+								>
+									¿Olvidaste tu contraseña?
+								</Link>
+							</div>
 							<div className="relative">
-								<motion.div whileFocus={reduceMotion ? {} : { scale: 1.01 }} transition={SPRING_DEFAULT}>
+								<motion.div whileFocus={shouldAnimate ? { scale: 1.01 } : {}} transition={SPRING_DEFAULT}>
 									<Input
 										id="password"
 										type={showPassword ? 'text' : 'password'}
@@ -141,8 +156,9 @@ export default function LoginPage(): React.ReactElement {
 								</motion.div>
 								<motion.button
 									type="button"
-									whileHover={reduceMotion ? {} : { scale: 1.1 }}
-									whileTap={reduceMotion ? {} : { scale: 0.9 }}
+									aria-label={showPassword ? 'Ocultar contraseña' : 'Mostrar contraseña'}
+									whileHover={shouldAnimate ? { scale: 1.1 } : {}}
+									whileTap={shouldAnimate ? { scale: 0.9 } : {}}
 									transition={SPRING_HOVER}
 									onClick={() => setShowPassword(!showPassword)}
 									disabled={loading}
@@ -155,8 +171,8 @@ export default function LoginPage(): React.ReactElement {
 
 						<motion.div {...fadeUp(0.3)}>
 							<motion.div
-								whileHover={reduceMotion || loading ? {} : { scale: 1.02 }}
-								whileTap={reduceMotion || loading ? {} : { scale: 0.97 }}
+								whileHover={shouldAnimate && !loading ? { scale: 1.02 } : {}}
+								whileTap={shouldAnimate && !loading ? { scale: 0.97 } : {}}
 								transition={SPRING_HOVER}
 							>
 								<Button
@@ -182,7 +198,7 @@ export default function LoginPage(): React.ReactElement {
 							</div>
 							<div className="relative flex justify-center text-xs">
 								<span className="bg-white px-4 text-[#7a7a7a] dark:bg-[#272729] dark:text-[#cccccc]">
-									o continuá con
+									o continúa con
 								</span>
 							</div>
 						</motion.div>
@@ -190,8 +206,8 @@ export default function LoginPage(): React.ReactElement {
 						<motion.div {...fadeUp(0.4)}>
 							<motion.a
 								href="/api/auth/google/authorize"
-								whileHover={reduceMotion ? {} : { scale: 1.02 }}
-								whileTap={reduceMotion ? {} : { scale: 0.97 }}
+								whileHover={shouldAnimate ? { scale: 1.02 } : {}}
+								whileTap={shouldAnimate ? { scale: 0.97 } : {}}
 								transition={SPRING_HOVER}
 								className="flex h-11 w-full items-center justify-center gap-2 rounded-full border border-[#e0e0e0] bg-white text-[17px] font-normal leading-[1.47] tracking-[-0.022em] text-[#1d1d1f] transition-colors hover:bg-[#f5f5f7] dark:border-white/15 dark:bg-[#1d1d1f] dark:text-white dark:hover:bg-white/5"
 							>
@@ -218,12 +234,12 @@ export default function LoginPage(): React.ReactElement {
 						</motion.div>
 
 						<motion.p {...fadeUp(0.45)} className="text-center text-sm text-[#7a7a7a] dark:text-[#cccccc]">
-							¿No tenés una cuenta?{' '}
+							¿No tienes una cuenta?{' '}
 							<Link
 								href="/register"
 								className="font-medium text-[#0066cc] hover:underline dark:text-[#2997ff]"
 							>
-								Registrate aquí
+								Regístrate aquí
 							</Link>
 						</motion.p>
 					</div>

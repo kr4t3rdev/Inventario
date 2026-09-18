@@ -1,0 +1,11 @@
+generatorName: typescript-fetch
+inputSpec: docs/openapi/mobile-v1.json
+outputDir: sdks/mobile-v1/typescript
+additionalProperties:
+  npmName: '@tcp/mobile-v1-sdk'
+  npmVersion: 1.0.0
+  supportsES6: true
+  typescriptThreePlus: true
+  useSingleRequestParameter: true
+  withInterfaces: true
+  hideGenerationTimestamp: true

@@ -70,7 +70,7 @@ export function TenantUsersStats({ total, active, admins, pending, prevPending }
       title: 'Total Usuarios',
       value: total,
       icon: Users,
-      gradient: 'from-blue-500 to-indigo-600',
+      gradient: 'from-primary to-purple',
       bgGlow: 'bg-blue-500/20',
       trend: total > 0 ? `${Math.round((active / total) * 100)}% activos` : null,
     },
@@ -86,8 +86,8 @@ export function TenantUsersStats({ total, active, admins, pending, prevPending }
       title: 'Administradores',
       value: admins,
       icon: Shield,
-      gradient: 'from-violet-500 to-purple-600',
-      bgGlow: 'bg-violet-500/20',
+      gradient: 'from-primary to-purple',
+      bgGlow: 'bg-purple/20',
       trend: null,
     },
     {
@@ -116,7 +116,7 @@ export function TenantUsersStats({ total, active, admins, pending, prevPending }
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: index * 0.1, duration: 0.4 }}
           >
-            <Card className="relative overflow-hidden border-0 bg-slate-900/5 dark:bg-white/5 backdrop-blur-sm hover:shadow-lg hover:shadow-violet-500/10 transition-all duration-300 group cursor-pointer">
+            <Card className="relative overflow-hidden border-0 bg-slate-900/5 dark:bg-white/5 backdrop-blur-sm hover:shadow-lg hover:shadow-purple/10 transition-all duration-300 group cursor-pointer">
               {/* Background glow on hover */}
               <div
                 className={`absolute -top-10 -right-10 h-32 w-32 rounded-full ${stat.bgGlow} blur-3xl opacity-0 group-hover:opacity-100 transition-opacity duration-500`}

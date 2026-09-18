@@ -9,7 +9,8 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/contexts/auth-context";
-import { LazyMotion, m as motion } from "framer-motion";
+import { getPayrollPaymentAmount } from "@/features/pago-salario/payroll-amounts";
+import { LazyMotion, m as motion, useReducedMotion } from "framer-motion";
 import {
 	AlertDialog,
 	AlertDialogAction,
@@ -59,7 +60,6 @@ import {
 	Trash2,
 	CreditCard,
 	Users,
-	Sparkles,
 } from "lucide-react";
 import { toast } from "sonner";
 import { useForm } from "react-hook-form";
@@ -112,6 +112,7 @@ export function EmpleadosNominaContent({
 }: EmpleadosNominaContentProps) {
 	const router = useRouter();
 	const { user } = useAuth();
+	const shouldReduceMotion = useReducedMotion();
 	const puedeEditar = user?.tenantRole === "manager" || user?.role === "admin";
 	const [empleados, setEmpleados] = useState<Empleado[]>(initialEmpleados);
 	const [pagos, setPagos] = useState<Pagosalario[]>(initialPagos);
@@ -226,7 +227,7 @@ export function EmpleadosNominaContent({
 								</h1>
 								<motion.div
 									className="absolute -right-4 -top-1"
-									animate={{ rotate: 360, scale: [1, 1.2, 1] }}
+									animate={shouldReduceMotion ? { scale: 1 } : { rotate: 360, scale: [1, 1.2, 1] }}
 									transition={{
 										rotate: { duration: 20, repeat: Infinity, ease: "linear" },
 										scale: { duration: 2, repeat: Infinity, ease: "easeInOut" },
@@ -416,10 +417,7 @@ export function EmpleadosNominaContent({
 												</TableHeader>
 												<TableBody>
 													{pagos.map((pago, index) => {
-														const totalPagado =
-															pago.salario +
-															(pago.bonificaciones || 0) -
-															Math.abs(pago.deducciones || 0);
+														const totalPagado = getPayrollPaymentAmount(pago);
 
 														return (
 															<motion.tr
@@ -443,7 +441,17 @@ export function EmpleadosNominaContent({
 																	${(pago.deducciones || 0).toLocaleString()}
 																</TableCell>
 																<TableCell className="dark:text-slate-300">
-																	{(pago.horasExtras || 0).toLocaleString()}
+																	{(
+																		pago.horasExtrasHoras ??
+																		pago.horasExtras ??
+																		0
+																	).toLocaleString()}{" "}
+																	h
+																	{(pago.montoHorasExtras ?? 0) > 0 && (
+																		<span className="block text-xs text-muted-foreground">
+																			${(pago.montoHorasExtras ?? 0).toLocaleString()}
+																		</span>
+																	)}
 																</TableCell>
 																<TableCell className="font-semibold from-orange-400 to-red-500">
 																	${totalPagado.toLocaleString()}
@@ -501,10 +509,7 @@ export function EmpleadosNominaContent({
 																	};
 																}
 
-																const totalPagado =
-																	pago.salario +
-																	(pago.bonificaciones || 0) -
-																	Math.abs(pago.deducciones || 0);
+																const totalPagado = getPayrollPaymentAmount(pago);
 																acc[key].total += totalPagado;
 																acc[key].count += 1;
 																return acc;

@@ -173,7 +173,8 @@ export interface CompraDocumento {
 	numeroFactura: string;
 	facturaUrl: string;
 	formaPago: "PAGO_PARCIAL" | "PAGO_COMPLETO" | "ANTICIPO_PAGO";
-	estado: "PENDIENTE" | "PAGADA";
+	moneda: "CUP" | "USD" | "EUR" | "MLC";
+	estado: "PENDIENTE" | "PAGADA" | "ANULADA";
 	tipoOperacion: "RESTOCK" | "REGULAR";
 	descripcion?: string | null;
 	fechaCompra: string;

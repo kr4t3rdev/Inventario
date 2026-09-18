@@ -17,8 +17,14 @@ export const createVentaSchema = z.object({
   clienteId: z.string().optional().nullable(),
   empleadoId: z.string().optional().nullable(),
   descuento: z.coerce.number().int().min(0).optional().default(0),
+  cargoTransporte: z.coerce.number().int().min(0).optional().default(0),
   observaciones: z.string().max(500).optional().nullable(),
   items: z.array(ventaItemSchema).min(1, 'Debe tener al menos un producto'),
+  /**
+   * Modo pedido (PVE): crea la venta en estado PEDIDO sin efectos de stock,
+   * FIFO ni factura; los campos de pago no se persisten (se definen al facturar).
+   */
+  modoPedido: z.boolean().optional(),
   // Turno de punto de venta
   turnoId: z.string().optional().nullable(),
   // Método de pago
@@ -27,16 +33,32 @@ export const createVentaSchema = z.object({
   montoTarjeta: z.coerce.number().int().min(0).optional().nullable(),
   montoTransferencia: z.coerce.number().int().min(0).optional().nullable(),
   montoCredito: z.coerce.number().int().min(0).optional().nullable(),
+  // VC: efectivo recibido del cliente y vuelto entregado (centavos).
+  montoRecibidoEfectivo: z.coerce.number().int().min(0).optional().nullable(),
+  cambioDevuelto: z.coerce.number().int().min(0).optional().nullable(),
   // Parámetros de facturación y cobro
   tipoVencimiento: z.enum(['contra_pago', 'fecha', 'plazo']).optional().nullable(),
   fechaVencimiento: z.string().optional().nullable(),
   cuentaBancariaId: z.string().optional().nullable(),
 }).refine(
   (data) => {
+    // Si hay recibido registrado, no puede ser menor que la porción en efectivo (VC).
+    if (data.montoRecibidoEfectivo != null) {
+      const porcionEfectivo = data.montoEfectivo ?? 0;
+      if (data.montoRecibidoEfectivo < porcionEfectivo) return false;
+    }
+    return true;
+  },
+  {
+    message: 'El monto recibido no alcanza la porción en efectivo de la venta',
+    path: ['montoRecibidoEfectivo'],
+  },
+).refine(
+  (data) => {
     // Si es MIXTO, la suma de los montos desglosados debe ser igual al total
     if (data.metodoPago === 'MIXTO') {
       const totalItems = data.items.reduce((sum, item) => sum + item.cantidad * item.precioUnitario, 0);
-      const totalVenta = totalItems - (data.descuento ?? 0);
+      const totalVenta = totalItems - (data.descuento ?? 0) + (data.cargoTransporte ?? 0); // VC: incluir cargo
       const sumaMontos = (data.montoEfectivo ?? 0)
         + (data.montoTarjeta ?? 0)
         + (data.montoTransferencia ?? 0)
@@ -57,8 +79,48 @@ export const anularVentaSchema = z.object({
   motivo: z.string().max(500).optional().nullable(),
 });
 
+/**
+ * Schema para registrar una devolución de venta (DNC): parcial o total.
+ * La preferencia financiera solo aplica al excedente tras reducir la CxC.
+ */
+export const registrarDevolucionSchema = z.object({
+  ventaId: z.string().min(1, 'El ID de la venta es requerido'),
+  items: z
+    .array(
+      z.object({
+        ventaItemId: z.string().min(1, 'El ítem de venta es requerido'),
+        cantidad: z.coerce.number().int().positive('Debe ser mayor a 0'),
+      }),
+    )
+    .min(1, 'Debe devolver al menos un ítem'),
+  motivo: z.string().min(3, 'El motivo es obligatorio').max(500),
+  preferenciaFinanciera: z
+    .enum(['SALDO_FAVOR', 'REEMBOLSO_EFECTIVO'])
+    .optional()
+    .default('SALDO_FAVOR'),
+  idempotencyKey: z.string().uuid('La clave de idempotencia debe ser un UUID'),
+});
+
+/**
+ * Schema para facturar una venta ya entregada (transición ENTREGADA → FACTURADA).
+ * Espejo de los campos de cobro/facturación de createVentaSchema, pero sin
+ * los datos de mercadería (ya persistidos en la venta).
+ */
+export const facturarVentaSchema = z.object({
+  metodoPago: z.nativeEnum(MetodoPagoVenta).optional().nullable(),
+  montoEfectivo: z.coerce.number().int().min(0).optional().nullable(),
+  montoTarjeta: z.coerce.number().int().min(0).optional().nullable(),
+  montoTransferencia: z.coerce.number().int().min(0).optional().nullable(),
+  montoCredito: z.coerce.number().int().min(0).optional().nullable(),
+  tipoVencimiento: z.enum(['contra_pago', 'fecha', 'plazo']).optional().nullable(),
+  fechaVencimiento: z.string().optional().nullable(),
+  cuentaBancariaId: z.string().optional().nullable(),
+});
+
 // ─── Tipos inferidos ──────────────────────────────────────
 
 export type CreateVentaInput = z.infer<typeof createVentaSchema>;
 export type VentaItemInput = z.infer<typeof ventaItemSchema>;
 export type AnularVentaInput = z.infer<typeof anularVentaSchema>;
+export type FacturarVentaInput = z.infer<typeof facturarVentaSchema>;
+export type RegistrarDevolucionInput = z.infer<typeof registrarDevolucionSchema>;

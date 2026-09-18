@@ -2,447 +2,529 @@
 
 ## Resumen
 
-Definición de los planes **Básico** y **Profesional** mapeando cada feature del sistema a su tier correspondiente. Estos planes reemplazan los datos estáticos del landing page y se conectan al modelo `Plan` + `TenantLicense.features` (JSON) para gating real en backend y UI.
+Definición de los planes **Básico**, **Profesional** y **Empresarial**. Los flags de cada plan se persisten en el campo JSON `Plan.features` y se propagan a cada tenant vía `TenantLicense.features` para hacer gating real en backend (`requireFeature`) y en UI (`SIDEBAR_FEATURE_MAP`).
+
+**Fuente única de verdad**: el catálogo de features vive en `src/features/planes/feature-registry.ts` (51 features en 9 categorías). Cualquier feature nuevo debe agregarse ahí primero y recién después asignarse a un plan. El seed (`prisma/seed/plans-seed.ts`) y el panel admin (`/admin/planes`) leen de ese registro.
+
+**Moneda**: los precios se manejan en **USD**. La conversión a CUP se hace en el frontend de la landing según la tasa vigente.
 
 ---
 
-## Plan Básico — Operaciones Esenciales
+## Plan Básico — Arranque del Negocio
 
-Para negocios pequeños que necesitan control operativo básico.
+Para negocios que están empezando y necesitan la base operativa completa: productos, almacenes, POS, compras a proveedores, gastos y contabilidad básica en CUP.
 
 ### Límites
 
 | Recurso | Límite |
 |---------|--------|
-| Usuarios | 2 |
-| Almacenes | 1 |
-| Puntos de Venta | 1 |
-| Productos | 100 |
-| Clientes | 200 |
-| Facturas/mes | 200 |
-| Backups | No |
+| Usuarios | 3 |
+| Almacenes | 2 |
+| Puntos de Venta | 2 |
+| Productos | 500 |
+| Clientes | Ilimitado |
+| Facturas/mes | Ilimitado |
+| Contratos | No |
+| Backups | Semanal |
 
-### Feature Flags (`TenantLicense.features`)
+### Feature Flags (`Plan.features`)
 
 ```json
 {
   "productos": true,
+  "productos-stock-masivo": false,
+  "restock": true,
   "categorias": true,
+  "categorias-ean13": false,
   "unidades": true,
+  "listas-precios": false,
   "almacenes": true,
-  "ventas": true,
-  "venta-servicios": true,
-  "clientes": true,
-  "facturas": true,
-  "series-facturacion": true,
-  "gastos": true,
-  "dashboard": true,
-  "reportes-basicos": true,
   "puntos-venta": true,
+  "transferencias": true,
+  "mermas": true,
+  "ventas-pos": true,
+  "ventas-factura": false,
   "turnos-pos": true,
   "arqueo-caja": true,
-  "cuadre-diario": true,
-  "perfil": true,
-  "mi-empresa": true,
-  "configuracion": true,
+  "cuadre-diario": false,
+  "ofertas": false,
+  "clientes": false,
+  "facturacion": false,
+  "series-facturacion": false,
+  "proveedores": true,
+  "compras": true,
   "servicios": true,
-  "notificaciones": true,
-  "ofertas": true,
-  "contabilidad": false,
-  "empleados": false,
-  "pago-salario": false,
-  "compras": false,
-  "vendors": false,
-  "mermas": false,
-  "transferencias": false,
-  "produccion": false,
-  "reparaciones": false,
-  "contratos": false,
-  "listas-precios": false,
+  "gastos": true,
+  "contabilidad": true,
+  "multi-moneda": false,
+  "rentabilidad-compra": true,
   "reportes-financieros": false,
-  "backups": false,
   "cuentas-cobrar": false,
   "cuentas-pagar": false,
   "prestamos-cash": false,
   "deudas-cash": false,
   "anticipos": false,
-  "multi-moneda": false
+  "analisis-estado-cuenta": false,
+  "facturas-vencidas": false,
+  "produccion": false,
+  "reparaciones": false,
+  "empleados": true,
+  "vacaciones": false,
+  "asistencia": false,
+  "nomina": false,
+  "multitenantmembership": false,
+  "mi-empresa": true,
+  "mi-empresa-ean13": false,
+  "contratos": false,
+  "gestion-usuarios": true,
+  "notificaciones": false,
+  "configuracion": true,
+  "dashboard": true,
+  "backups-semanal": true,
+  "backups-diario": false,
+  "backups-tiempo-real": false,
+  "api-integraciones": false
 }
 ```
 
 ### Features incluidas
 
 #### Inventario y Productos
-- CRUD completo de productos con fotos, códigos EAN13/internos
-- Categorías jerárquicas con clasificador CLAS
-- Unidades de medida
-- Control de stock mínimo/máximo
-- Historial de cambios de costo
-- **1 almacén**
+- CRUD completo de productos con fotos y código interno
+- Categorías jerárquicas
+- Unidades de medida (kg, unidad, L, etc.)
+- Sugerencias de restock automático
+- **Hasta 2 almacenes**
+- **Transferencias** entre almacenes y PdV
+- **Mermas**: registro de pérdidas y ajustes de stock
+- Reporte de rentabilidad por compra (calculado al recibir mercadería)
 
-#### Ventas y Facturación
-- POS (Punto de Venta) con múltiples métodos de pago (efectivo, tarjeta, transferencia, crédito, mixto)
-- Ventas de servicios
-- Facturación con series y numeración consecutiva
-- Gestión de series de facturación
-- Ofertas/presupuestos a clientes
-- Gestión de clientes con historial de compras
+#### Ventas y POS
+- Ventas POS con múltiples métodos de pago (efectivo, tarjeta, transferencia, mixto)
+- **Apertura y cierre de turnos POS** con arqueo automático al cierre
+- (Sin cuadre diario, sin ofertas en este plan)
 
-#### Caja y Operaciones
-- 1 Punto de Venta
-- Turnos POS (apertura/cierre)
-- Arqueo de caja con conteo de billetes y diferencias
-- Cuadre diario de operaciones
+#### Compras y Proveedores
+- Compras de productos con actualización de stock
+- Compras de servicios
+- Gestión de proveedores
+- Gastos asociados a compras
 
-#### Gastos
+#### Gastos y Contabilidad (Básica)
 - Registro de gastos operativos
-- Desglose por concepto y elemento de gasto
+- Contabilidad en una sola moneda (CUP)
+- Dashboard con KPIs principales
 
-#### Reportes Básicos
-- Dashboard principal con KPIs y gráficos
-- Reportes operativos esenciales (venta diaria, inventario básico)
+#### Recursos Humanos (Básico)
+- CRUD de **empleados** con datos personales, cargo y salario base
+- (Vacaciones, asistencia y nómina requieren el plan Empresarial)
 
 #### Empresa y Configuración
-- Datos de la empresa (nombre, dirección, datos fiscales, logo)
-- Perfil de usuario (cambio de contraseña, datos personales)
-- Configuración general del sistema
-- Notificaciones del sistema
+- Datos de la empresa (Mi Empresa)
+- Gestión de usuarios del negocio
+- Configuración general
+- Dashboard ejecutivo
+- Backups semanales automáticos
 
 ---
 
 ## Plan Profesional — PYME en Crecimiento
 
-Para negocios que requieren automatización, contabilidad, RRHH y control avanzado.
+Para negocios que necesitan facturación, multi-moneda, clientes, empleados y herramientas de control diario. Hereda todo lo del Básico y suma automatización.
+
+### Límites
+
+| Recurso | Límite |
+|---------|--------|
+| Usuarios | 5 |
+| Almacenes | 5 |
+| Puntos de Venta | 5 |
+| Productos | 5.000 |
+| Clientes | Ilimitado |
+| Facturas/mes | Ilimitado |
+| Contratos | 50 |
+| Backups | Diario |
+
+### Features añadidas vs Básico
+
+```jsonc
+{
+  // …todo lo del Básico, más:
+  "listas-precios": true,
+  "cuadre-diario": true,
+  "ofertas": true,
+  "clientes": true,
+  "facturacion": true,
+  "series-facturacion": true,
+  "multi-moneda": true,
+  "reportes-financieros": true,
+  "empleados": true,
+  "notificaciones": true,
+  "ventas-factura": true,
+  "backups-semanal": false,
+  "backups-diario": true
+}
+```
+
+### Capacidades diferenciales
+
+#### Ventas y Facturación
+- **Turnos POS** con apertura/cierre y arqueo automático
+- **Cuadre diario** consolidado de ventas
+- **Ofertas y promociones** por producto
+- **Clientes** con historial de compras
+- **Facturación electrónica** con series fiscales configurables
+- **Ventas con factura / crédito** automáticas
+- **Multi-moneda** (CUP + USD) con tasas de cambio y conversión automática
+
+#### Control Operativo
+- **Listas de precios** múltiples con asignación por cliente
+
+#### Reportes
+- **Reportes financieros avanzados** exportables
+- Notificaciones automáticas del sistema
+
+#### Recursos Humanos (Básico, igual al Plan Básico)
+- CRUD de **empleados** con datos personales, cargo y salario base
+- (Vacaciones, asistencia y nómina requieren el plan Empresarial)
+
+#### Backups
+- **Backups diarios** automáticos con retención configurable
+
+---
+
+## Plan Empresarial — Máxima Potencia
+
+Para negocios consolidados con producción, manufactura, cuentas por cobrar/pagar, nómina y operaciones críticas que requieren point-in-time recovery.
 
 ### Límites
 
 | Recurso | Límite |
 |---------|--------|
 | Usuarios | 10 |
-| Almacenes | 5 |
-| Puntos de Venta | 5 |
-| Productos | 5,000 |
+| Almacenes | Ilimitado (999) |
+| Puntos de Venta | Ilimitado (999) |
+| Productos | Ilimitado (999.999) |
 | Clientes | Ilimitado |
 | Facturas/mes | Ilimitado |
-| Contratos | 50 |
-| Backups | Diario automático |
+| Contratos | Ilimitado (999) |
+| Backups | Cada hora + restauración point-in-time |
 
-### Feature Flags (`TenantLicense.features`)
+### Features añadidas vs Profesional
 
-```json
+```jsonc
 {
-  "productos": true,
-  "categorias": true,
-  "unidades": true,
-  "almacenes": true,
-  "ventas": true,
-  "venta-servicios": true,
-  "clientes": true,
-  "facturas": true,
-  "series-facturacion": true,
-  "gastos": true,
-  "dashboard": true,
-  "reportes-basicos": true,
-  "puntos-venta": true,
-  "turnos-pos": true,
-  "arqueo-caja": true,
-  "cuadre-diario": true,
-  "perfil": true,
-  "mi-empresa": true,
-  "configuracion": true,
-  "servicios": true,
-  "notificaciones": true,
-  "ofertas": true,
-  "contabilidad": true,
-  "empleados": true,
-  "pago-salario": true,
-  "compras": true,
-  "vendors": true,
-  "mermas": true,
-  "transferencias": true,
+  // …todo lo del Profesional, más:
+  "productos-stock-masivo": true,
+  "categorias-ean13": true,
   "produccion": true,
-  "reparaciones": true,
+  "nomina": true,
+  "vacaciones": true,
+  "asistencia": true,
+  "mi-empresa-ean13": true,
   "contratos": true,
-  "listas-precios": true,
-  "reportes-financieros": true,
-  "backups": true,
   "cuentas-cobrar": true,
   "cuentas-pagar": true,
   "prestamos-cash": true,
   "deudas-cash": true,
   "anticipos": true,
-  "multi-moneda": true
+  "analisis-estado-cuenta": true,
+  "facturas-vencidas": true,
+  "multitenantmembership": true,
+  "backups-diario": false,
+  "backups-tiempo-real": true
 }
 ```
 
-### Todo lo del Plan Básico (con límites superiores)
-- Mismos módulos que Básico, pero con límites de recursos 5x-50x mayores
-- Múltiples almacenes (hasta 5)
-- Múltiples puntos de venta (hasta 5)
+### Capacidades diferenciales
 
-### Contabilidad Completa
-- Cuentas bancarias múltiples con historial de transacciones
-- Períodos contables (apertura, cierre, reapertura, aprobación, bloqueo)
-- Cierres contables
-- **Reconciliación bancaria** de ventas, servicios y gastos
-- **Multi-moneda**: CUP/USD con tasas de cambio, conversión automática
-- Inyecciones de capital (aportes de socios)
-- Ajustes bancarios manuales
-- Transferencias entre cuentas bancarias
+#### Inventario Avanzado
+- **Stock mínimo masivo**: actualizar el mínimo de stock de toda una lista en una sola operación
+- **Prefijos y configuración EAN-13** por categoría
+- **Generación de EAN-13** desde Mi Empresa
 
-### Cuentas por Cobrar / Pagar
-- Cuentas por Cobrar (clientes deudores)
-- Cuentas por Pagar (deudas a proveedores)
-- Pagos de cuentas por pagar
-- Préstamos Cash a clientes (con interés, cuotas, estado)
-- Deudas Cash con proveedores
-- Anticipos de pago/cobro
-
-### Recursos Humanos
-- CRUD de empleados (datos personales, cargo, salario base)
-- **Asistencia**: checkin/checkout con horarios semanales
-- **Vacaciones**: solicitudes, acumulación automática, aprobación
-- **Nómina**: pago de salarios, liquidación
-- Programación de horarios por empleado
-
-### Compras y Proveedores
-- Compras de productos físicos con actualización de stock
-- Compras de servicios
-- Compras multi-item (documento de compra)
-- Gestión de proveedores (Vendors) con vendor code
-- Gastos asociados a compras
-
-### Control de Inventario Avanzado
-- **Transferencias** entre almacenes y PdV
-- **Mermas**: registro de pérdidas (roturas, vencimientos), ajuste de stock
-- **Listas de precios** múltiples con asignación por cliente
-- Alertas de stock mínimo
-
-### Producción (Manufactura)
-- Recetas de producción (BOM) con ingredientes y cantidades
+#### Producción (Manufactura)
+- Recetas de producción (BOM) con ingredientes y unidades
 - Órdenes de producción con seguimiento de estados
 - Vales de salida de materiales desde almacén
-- Cálculo de cantidades requeridas
-- Validación de disponibilidad de materiales
+- Cálculo de cantidades requeridas y validación de stock
 - Conversión de unidades en producción
 
-### Taller de Reparaciones
-- Órdenes de reparación con equipos y técnicos
-- Catálogo de defectaciones
-- Piezas con costos por complejidad
-- Materiales usados por orden
+#### RRHH Completo
+- **Empleados** (igual que Básico/Profesional)
+- **Vacaciones**: solicitudes, acumulación automática y aprobación
+- **Asistencia**: checkin/checkout con horarios semanales
+- **Nómina**: pago de salarios, comisiones y liquidación
 
-### Contratos
-- Gestión de contratos con versionado
-- Firmas digitales
-- Aprobación multi-nivel
-- Archivos adjuntos
-- Alertas de vencimiento
+#### Cuentas por Cobrar / Pagar
+- **Cuentas por Cobrar** con seguimiento de deudas de clientes
+- **Cuentas por Pagar** a proveedores
+- **Préstamos cash** otorgados a clientes (con interés, cuotas, estado)
+- **Deudas cash** con proveedores
+- **Anticipos** de pago y cobro
+- **Análisis de Estado de Cuenta** con antigüedad de saldos
+- **Reporte de Facturas Vencidas** por antigüedad de deuda
+
+#### Contratos
+- Versionado de contratos
+- Firmas digitales y aprobación multi-nivel
+- Archivos adjuntos y alertas de vencimiento
 - Tipos de contrato personalizables
 
-### Reportes Financieros Avanzados
-- Reportes por ubicación y categoría
-- Reporte de venta diaria
-- Movimientos de inventario
-- Reportes financieros generales
-- Reportes programados (ScheduledReport)
+#### Backups de Alta Disponibilidad
+- **Backups cada hora** con **restauración point-in-time**
 
-### Backups Automáticos
-- Backup programado diario (full/tenant/config)
-- Configuración de retención
-- Restoration desde panel
+#### Membresía Multi-Tenant
+- **Un mismo usuario puede pertenecer y trabajar en varias empresas simultáneamente** (gateado por `multitenantmembership` en `admin/actions.ts:955`)
+
+#### Features NO incluidas (en ningún plan)
+- `reparaciones` — Taller de reparaciones con seguimiento de equipos
+- `api-integraciones` — Endpoints públicos para integraciones externas
 
 ---
 
 ## Resumen Comparativo
 
-| Feature | Básico | Profesional |
-|---------|--------|-------------|
-| **Productos** | Hasta 100 | Hasta 5,000 |
-| **Almacenes** | 1 | 5 |
-| **Puntos de Venta** | 1 | 5 |
-| **Usuarios** | 2 | 10 |
-| **Clientes** | Hasta 200 | Ilimitado |
-| **Ventas POS** | ✅ | ✅ |
-| **Facturación** | ✅ | ✅ |
-| **Gastos** | ✅ | ✅ |
-| **Ofertas** | ✅ | ✅ |
-| **Caja / Turnos / Arqueo** | ✅ | ✅ |
-| **Cuadre Diario** | ✅ | ✅ |
-| **Contabilidad** | ❌ | ✅ |
-| **Multi-moneda** | ❌ | ✅ |
-| **Empleados / Asistencia** | ❌ | ✅ |
-| **Nómina** | ❌ | ✅ |
-| **Vacaciones** | ❌ | ✅ |
-| **Compras** | ❌ | ✅ |
-| **Proveedores** | ❌ | ✅ |
-| **Transferencias** | ❌ | ✅ |
-| **Mermas** | ❌ | ✅ |
-| **Producción** | ❌ | ✅ |
-| **Reparaciones** | ❌ | ✅ |
-| **Contratos** | ❌ | ✅ |
-| **Listas de Precios** | ❌ | ✅ |
-| **CxC / CxP** | ❌ | ✅ |
-| **Préstamos Cash** | ❌ | ✅ |
-| **Deudas Cash** | ❌ | ✅ |
-| **Anticipos** | ❌ | ✅ |
-| **Reportes Financieros** | ❌ | ✅ |
-| **Backups** | ❌ | ✅ |
+| Feature | Básico | Profesional | Empresarial |
+|---------|:-:|:-:|:-:|
+| **Precio mensual (USD)** | $30 | $70 | $100 |
+| **Usuarios** | 3 | 5 | 10 |
+| **Almacenes** | 2 | 5 | Ilimitado |
+| **Puntos de Venta** | 2 | 5 | Ilimitado |
+| **Productos** | 500 | 5.000 | Ilimitado |
+| **Clientes** | Ilimitado | Ilimitado | Ilimitado |
+| **Contratos** | ❌ | 50 | Ilimitado |
+| **Productos con código** | ✅ | ✅ | ✅ |
+| **Stock mínimo masivo** | ❌ | ❌ | ✅ |
+| **Categorías + EAN-13 config** | ❌ | ❌ | ✅ |
+| **Restock sugerido** | ✅ | ✅ | ✅ |
+| **Almacenes** | ✅ | ✅ | ✅ |
+| **Transferencias** | ✅ | ✅ | ✅ |
+| **Mermas** | ✅ | ✅ | ✅ |
+| **Listas de precios** | ❌ | ✅ | ✅ |
+| **POS / Ventas** | ✅ | ✅ | ✅ |
+| **Ventas con factura** | ❌ | ✅ | ✅ |
+| **Turnos POS** | ✅ | ✅ | ✅ |
+| **Arqueo de caja** | ✅ | ✅ | ✅ |
+| **Cuadre diario** | ❌ | ✅ | ✅ |
+| **Ofertas / Promociones** | ❌ | ✅ | ✅ |
+| **Clientes** | ❌ | ✅ | ✅ |
+| **Facturación electrónica** | ❌ | ✅ | ✅ |
+| **Series fiscales** | ❌ | ✅ | ✅ |
+| **Proveedores** | ✅ | ✅ | ✅ |
+| **Compras** | ✅ | ✅ | ✅ |
+| **Servicios** | ✅ | ✅ | ✅ |
+| **Gastos** | ✅ | ✅ | ✅ |
+| **Contabilidad** | ✅ | ✅ | ✅ |
+| **Multi-moneda (USD)** | ❌ | ✅ | ✅ |
+| **Rentabilidad por compra** | ✅ | ✅ | ✅ |
+| **Reportes financieros** | ❌ | ✅ | ✅ |
+| **Cuentas por Cobrar** | ❌ | ❌ | ✅ |
+| **Cuentas por Pagar** | ❌ | ❌ | ✅ |
+| **Préstamos cash** | ❌ | ❌ | ✅ |
+| **Deudas cash** | ❌ | ❌ | ✅ |
+| **Anticipos** | ❌ | ❌ | ✅ |
+| **Análisis Estado de Cuenta** | ❌ | ❌ | ✅ |
+| **Facturas Vencidas** | ❌ | ❌ | ✅ |
+| **Producción** | ❌ | ❌ | ✅ |
+| **Empleados** | ✅ | ✅ | ✅ |
+| **Vacaciones** | ❌ | ❌ | ✅ |
+| **Asistencia** | ❌ | ❌ | ✅ |
+| **Nómina** | ❌ | ❌ | ✅ |
+| **Contratos** | ❌ | ❌ | ✅ |
+| **Membresía multi-tenant** | ❌ | ❌ | ✅ |
+| **Generación EAN-13** | ❌ | ❌ | ✅ |
+| **Mi Empresa** | ✅ | ✅ | ✅ |
+| **Gestión de usuarios** | ✅ | ✅ | ✅ |
+| **Notificaciones** | ❌ | ✅ | ✅ |
+| **Configuración** | ✅ | ✅ | ✅ |
+| **Dashboard** | ✅ | ✅ | ✅ |
+| **Backups semanales** | ✅ | ❌ | ❌ |
+| **Backups diarios** | ❌ | ✅ | ❌ |
+| **Backups cada hora + PIT** | ❌ | ❌ | ✅ |
+| **API e integraciones** | ❌ | ❌ | ❌ |
+| **Taller de reparaciones** | ❌ | ❌ | ❌ |
 
 ---
 
-## Pricing Sugerido
+## Pricing
 
-| Plan | Precio mensual (CUP) | Precio mensual (USD) |
-|------|---------------------|---------------------|
-| Básico | 1,500 CUP | $15 USD |
-| Profesional | 4,500 CUP | $45 USD |
-| Empresarial | A medida | A medida |
+| Plan | Precio mensual (USD) |
+|------|----------------------|
+| Básico | $30 |
+| Profesional | $70 |
+| Empresarial | $100 |
+
+> El cobro es mensual. La conversión a CUP se muestra en la landing según la tasa vigente del mercado. El `duracionDias` del plan es 30.
 
 ---
 
 ## Implementación Técnica
 
-### 1. Modelo Plan
+### 1. Modelo Prisma (`prisma/schema.prisma`)
 
-Agregar nuevos campos al modelo `Plan` en Prisma:
+El modelo `Plan` ya tiene todos los campos necesarios:
 
 ```prisma
 model Plan {
-  // ... campos existentes
-  maxClientes      Int      @default(200)
-  maxPuntosVenta   Int      @default(1)
-  maxFacturasMes   Int      @default(0)     // 0 = ilimitado
-  maxContratos     Int      @default(0)
-  maxBackups       Int      @default(0)
-  incluyeBackups   Boolean  @default(false)
-  features         Json     @default("{}")   // Feature flags default del plan
+  planId         String   @id @default(cuid())
+  nombre         String
+  descripcion    String?
+  precio         Decimal  @default(0)        // USD
+  duracionDias   Int                          // 30
+  maxUsuarios    Int      @default(1)
+  maxAlmacenes   Int      @default(1)
+  maxProductos   Int      @default(100)
+  maxClientes    Int      @default(200)      // 0 = ilimitado
+  maxPuntosVenta Int      @default(1)
+  maxFacturasMes Int      @default(200)      // 0 = ilimitado
+  maxContratos   Int      @default(0)        // 0 = no habilitado
+  incluyeBackups Boolean  @default(false)
+  features       Json     @default("{}")     // Feature flags por plan
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+  licencias      Licencia[]
+  tenantLicenses TenantLicense[]
 }
 ```
 
-### 2. Feature Flags Schema
+El modelo `TenantLicense` (multi-tenant) replica los flags por tenant para poder customizarlos sin tocar el `Plan` base:
 
-Usar el campo `features` (JSON) existente en `TenantLicense`. Definir un tipo TypeScript:
-
-```typescript
-// src/lib/services/plan-features.ts
-export interface PlanFeatures {
-  // Core
-  productos: boolean
-  categorias: boolean
-  unidades: boolean
-  almacenes: boolean
-  clientes: boolean
-  // Ventas
-  ventas: boolean
-  'venta-servicios': boolean
-  facturas: boolean
-  'series-facturacion': boolean
-  ofertas: boolean
-  // Caja
-  'puntos-venta': boolean
-  'turnos-pos': boolean
-  'arqueo-caja': boolean
-  'cuadre-diario': boolean
-  // Gastos
-  gastos: boolean
-  // Contabilidad
-  contabilidad: boolean
-  'cuentas-cobrar': boolean
-  'cuentas-pagar': boolean
-  'prestamos-cash': boolean
-  'deudas-cash': boolean
-  anticipos: boolean
-  'multi-moneda': boolean
-  // RRHH
-  empleados: boolean
-  'pago-salario': boolean
-  // Compras
-  compras: boolean
-  vendors: boolean
-  // Inventario avanzado
-  transferencias: boolean
-  mermas: boolean
-  'listas-precios': boolean
-  // Producción
-  produccion: boolean
-  // Taller
-  reparaciones: boolean
-  // Contratos
-  contratos: boolean
-  // Reportes
-  'reportes-basicos': boolean
-  'reportes-financieros': boolean
-  // Sistema
-  backups: boolean
-  notificaciones: boolean
-  configuracion: boolean
-  'mi-empresa': boolean
-  perfil: boolean
-  dashboard: boolean
-  servicios: boolean
+```prisma
+model TenantLicense {
+  tenantLicenseId String   @id @default(cuid())
+  tenantId        String
+  planId          String?
+  activa          Boolean  @default(true)
+  inicio          DateTime @default(now())
+  expiracion      DateTime
+  maxUsuarios     Int      @default(1)
+  maxAlmacenes    Int      @default(1)
+  maxProductos    Int      @default(100)
+  features        Json?    // Override por tenant
+  plan            Plan?    @relation(fields: [planId], references: [planId])
+  tenant          Tenant   @relation(fields: [tenantId], references: [tenantId], onDelete: Cascade)
 }
 ```
 
-### 3. Gating en Server Actions
+### 2. Feature Registry (`src/features/planes/feature-registry.ts`)
+
+Catálogo central con 51 features organizadas en 9 categorías (`inventario`, `operaciones`, `ventas`, `compras`, `financiero`, `produccion`, `rrhh`, `config`, `infra`). Es la fuente de verdad: cualquier feature nuevo debe declararse acá antes de poder asignarse a un plan.
 
 ```typescript
-import { requireFeature } from '@/lib/services/plan-features'
+export const FEATURE_REGISTRY: FeatureDef[] = [
+  { key: "productos",            label: "Productos",          category: "inventario" },
+  { key: "listas-precios",       label: "Listas de precios",  category: "inventario" },
+  { key: "ventas-pos",           label: "Ventas POS",         category: "ventas"     },
+  { key: "contabilidad",         label: "Contabilidad",       category: "financiero" },
+  // ... 47 más
+];
+```
+
+Helpers exportados:
+- `getFeatureByKey(key)` — buscar un feature por su clave.
+- `getFeaturesGrouped()` — agrupar por categoría para la UI admin.
+- `getEnabledFeatures(features)` — filtrar los que están `true` en un objeto de flags.
+- `getEnabledFeatureLabels(features)` — solo los labels habilitados (usado en landing y reseñas).
+
+### 3. Gating en Server Actions y API Routes
+
+`requireFeature()` en `src/lib/services/tenant-scope.ts:34` se llama al inicio de cada acción que necesita un feature pago. Los usuarios con rol `admin` global la bypasean; el resto debe tener `planFeatures[featureKey] === true`.
+
+```typescript
+import { requireFeature, requireTenant } from '@/lib/services/tenant-scope';
 
 export const createCompraAction = withAction(async (input, user) => {
-  const tenantId = requireTenant(user)
-  await requireFeature(tenantId, 'compras')
+  const tenantId = requireTenant(user);
+  await requireFeature(user, 'compras', 'crear compras');
   // ... resto del código
-})
+});
 ```
 
-### 4. Gating en UI
+`requireFeature` lanza `ActionError` con código `FEATURE_NOT_AVAILABLE` cuando el plan no incluye el feature. El wrapper `withAction` lo serializa para el cliente, donde se muestra un toast pidiendo actualizar el plan.
+
+### 4. Gating en UI (`src/components/app-sidebar2.tsx`)
+
+El sidebar oculta items según el plan del usuario:
 
 ```typescript
-'use client'
-import { usePlanFeatures } from '@/hooks/use-plan-features'
+const SIDEBAR_FEATURE_MAP: Record<string, string> = {
+  "Listas de Precios":      "listas-precios",
+  "Gestión de Facturas":    "facturacion",
+  "Gestión de Empleados":   "empleados",
+  "Nómina":                 "nomina",
+  "Producción":             "produccion",
+  "Clientes":               "clientes",
+  "Cuentas por Cobrar":     "cuentas-cobrar",
+  "Cuentas por Pagar":      "cuentas-pagar",
+  "Anticipos":              "anticipos",
+  "Préstamos en Efectivo":  "prestamos-cash",
+  "Deudas en Efectivo":     "deudas-cash",
+  "Exchange":               "multi-moneda",
+  "Cuadre Financiero":      "cuadre-diario",
+  "Reportes":               "reportes-financieros",
+  "Notificaciones":         "notificaciones",
+  "Analisis Estado Cuenta": "analisis-estado-cuenta",
+  "Facturas Vencidas":      "facturas-vencidas",
+};
+```
 
-function SidebarNav() {
-  const features = usePlanFeatures()
-  if (!features.compras) return null
-  return <NavItem href="/busy/compras" label="Compras" />
+`canSeeSidebarItem(title)` consulta el mapa y oculta el item si `planFeatures[featureKey] === false`.
+
+### 5. Carga de features en sesión
+
+`getCurrentUser()` y `authenticateUser()` en `src/lib/auth-middleware.ts` leen `TenantLicense.features` y lo propagan al `AuthenticatedUser.planFeatures`, que termina disponible en cada Server Action y en el cliente vía sesión.
+
+```typescript
+// src/lib/auth-middleware.ts
+let planFeatures: Record<string, boolean> | undefined;
+if (license.features) {
+  planFeatures = license.features as Record<string, boolean>;
 }
 ```
 
-### 5. Seed Data
+### 6. Landing dinámica
+
+La landing usa `PricingDynamic` (`src/features/reviews/components/pricing-dynamic.tsx`), que consulta los planes reales desde la BD vía `getPlanesActivosAction` y los renderiza con los features habilitados usando `getEnabledFeatureLabels`. Los precios en `data.ts` son fallback estático (no se usan cuando la BD responde).
+
+### 7. Seed (`prisma/seed/plans-seed.ts`)
+
+El seed crea los 3 planes con spread incremental (`PLAN_PROFESIONAL_FEATURES = { ...PLAN_BASICO_FEATURES, ... }`) para mantener la jerarquía de tiers. Es idempotente: si ya existen planes, no los duplica.
 
 ```typescript
-// prisma/seed/plans.ts
-export const DEFAULT_PLANS = [
-  {
-    nombre: 'Básico',
-    descripcion: 'Operaciones esenciales para pequeños negocios',
-    precio: 1500,
-    duracionDias: 30,
-    maxUsuarios: 2,
-    maxAlmacenes: 1,
-    maxProductos: 100,
-    maxClientes: 200,
-    maxPuntosVenta: 1,
-    maxFacturasMes: 200,
-    maxContratos: 0,
-    incluyeBackups: false,
-    features: { /* Básico feature flags */ },
-  },
-  {
-    nombre: 'Profesional',
-    descripcion: 'PYME en crecimiento con automatización y control total',
-    precio: 4500,
-    duracionDias: 30,
-    maxUsuarios: 10,
-    maxAlmacenes: 5,
-    maxProductos: 5000,
-    maxClientes: 0,     // 0 = ilimitado
-    maxPuntosVenta: 5,
-    maxFacturasMes: 0,  // ilimitado
-    maxContratos: 50,
-    incluyeBackups: true,
-    features: { /* Profesional feature flags */ },
-  },
-]
+export async function seedPlans() {
+  const existing = await prisma.plan.count();
+  if (existing > 0) {
+    console.log(`Ya existen ${existing} planes. Se omite seed.`);
+    return;
+  }
+  await prisma.plan.createMany({ data: [ /* Básico, Profesional, Empresarial */ ] });
+}
 ```
+
+Para ejecutarlo:
+
+```bash
+npx tsx prisma/seed/plans-seed.ts
+```
+
+### 8. Administración desde panel
+
+`/admin/planes` (`src/app/admin/planes/page.tsx`) permite crear, editar y asignar features a planes sin tocar código. Usa `FEATURE_REGISTRY` para listar los features disponibles agrupados por categoría.
+
+---
+
+## Cómo agregar un feature nuevo
+
+1. **Declarar en el registry** (`src/features/planes/feature-registry.ts`): agregar `{ key, label, description, category }`.
+2. **Asignar a planes** en el panel admin (`/admin/planes`) o actualizar el seed (`prisma/seed/plans-seed.ts`).
+3. **Proteger el código** con `requireFeature(user, 'feature-key', 'descripción')` en cada Server Action / API route que lo use.
+4. **Gating en UI** (si corresponde): agregar entrada en `SIDEBAR_FEATURE_MAP` (`src/components/app-sidebar2.tsx:530`).
+5. **Tests**: extender `src/lib/services/__tests__/tenant-scope.test.ts` con casos para el nuevo flag.
+
+## Cómo agregar un plan nuevo
+
+1. **Definir features** (heredar del tier anterior con spread + agregar nuevos).
+2. **Seed**: agregar entrada en `prisma/seed/plans-seed.ts` con nombre, precio, límites y features.
+3. **Panel admin**: el plan aparece automáticamente en `/admin/planes`.
+4. **PricingDynamic**: no requiere cambios — consume directo de la BD.

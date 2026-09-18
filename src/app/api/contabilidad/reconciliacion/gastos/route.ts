@@ -1,10 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server'
 import prisma from '@/lib/prisma'
 import { authenticateUser } from "@/lib/auth-middleware"
+import { requireTenant } from '@/lib/services/tenant-scope'
 import { validarEscrituraPeriodo, extraerFechaDeBody } from '@/lib/services/validate-period-write'
 import {
   reconciliarGastoAdapter,
 } from '@/features/contabilidad/api/reconciliacion-gastos-adapter'
+import { getPayrollPaymentAmount } from '@/features/pago-salario/payroll-amounts'
 import { z } from 'zod'
 
 // POST - Reconciliar gasto con cuenta(s) bancaria(s)
@@ -14,6 +16,7 @@ export async function POST(request: NextRequest) {
     const authResultUser = await authenticateUser(request)
     if ('status' in authResultUser) return authResultUser as Response
     const user = authResultUser.user
+    const tenantId = requireTenant(user)
 
     const body = await request.json()
 
@@ -76,6 +79,7 @@ export async function GET(request: NextRequest) {
     const authResultUser = await authenticateUser(request)
     if ('status' in authResultUser) return authResultUser as Response
     const user = authResultUser.user
+    const tenantId = requireTenant(user)
 
     const { searchParams } = new URL(request.url)
     const tipoGasto = searchParams.get('tipoGasto') // 'salario', 'gastoDE', 'compra'
@@ -97,10 +101,12 @@ export async function GET(request: NextRequest) {
     // Obtener salarios pendientes
     if (!tipoGasto || tipoGasto === 'salario') {
       const whereClauseSalarios: {
+        tenantId: string
         ReconciliacionGasto?: { none: object }
         createdAt?: { gte?: Date; lte?: Date }
         periodo?: string
       } = {
+        tenantId,
         ReconciliacionGasto: { none: {} }
       }
 
@@ -121,7 +127,8 @@ export async function GET(request: NextRequest) {
           salario: true,
           bonificaciones: true,
           deducciones: true,
-          horasExtras: true,
+          horasExtrasHoras: true,
+          montoHorasExtras: true,
           periodo: true,
           createdAt: true,
           updatedAt: true,
@@ -138,7 +145,7 @@ export async function GET(request: NextRequest) {
 
       // Agregar información de reconciliación para salarios
       for (const pagoSalario of empleadosConSalarios) {
-        const salarioTotal = pagoSalario.salario + (pagoSalario.bonificaciones || 0) + (pagoSalario.horasExtras || 0) - (pagoSalario.deducciones || 0)
+        const salarioTotal = getPayrollPaymentAmount(pagoSalario)
 
         gastosPendientes.push({
           tipo: 'salario',
@@ -156,7 +163,8 @@ export async function GET(request: NextRequest) {
             salarioBases: pagoSalario.salario,
             bonificaciones: pagoSalario.bonificaciones,
             deducciones: pagoSalario.deducciones,
-            horasExtras: pagoSalario.horasExtras
+            horasExtras: pagoSalario.horasExtrasHoras,
+            montoHorasExtras: pagoSalario.montoHorasExtras
           },
           createdAt: pagoSalario.createdAt,
           updatedAt: pagoSalario.updatedAt
@@ -167,11 +175,15 @@ export async function GET(request: NextRequest) {
     // Obtener gastos DE pendientes
     if (!tipoGasto || tipoGasto === 'gastoDE') {
       const whereClauseGastosDE: {
+        tenantId: string
+        estado?: string
         reconciliaciones?: { none: object }
         createdAt?: { gte?: Date; lte?: Date }
         periodo?: string
        // isPagado?: string | null | { not: string }
       } = {
+        tenantId,
+        estado: 'APROBADO', // B-04: solo gastos aprobados son reconciliables
         reconciliaciones: { none: {} }
        // isPagado: { not: 'pagado' }
       }
@@ -228,6 +240,7 @@ export async function GET(request: NextRequest) {
     // Obtener compras pendientes
     if (!tipoGasto || tipoGasto === 'compra') {
       const whereClauseCompras: any = {
+        tenantId,
         reconciliaciones: { none: {} }
       }
 
@@ -314,4 +327,3 @@ export async function GET(request: NextRequest) {
 }
 
 // POST - Reconciliar gasto con cuenta(s) bancaria(s)
-

@@ -12,6 +12,7 @@ import {
 function createTxMock() {
   return {
     $queryRaw: vi.fn().mockResolvedValue([]),
+    $queryRawUnsafe: vi.fn().mockResolvedValue([]),
     tipoPago: {
       findUnique: vi.fn(),
       findFirst: vi.fn()
@@ -20,7 +21,8 @@ function createTxMock() {
       findUnique: vi.fn(),
       findFirst: vi.fn(),
       findMany: vi.fn(),
-      update: vi.fn()
+      update: vi.fn(),
+      updateMany: vi.fn()
     },
     reconciliacionGasto: {
       findFirst: vi.fn(),
@@ -28,7 +30,9 @@ function createTxMock() {
     },
     cuentaPorPagar: {
       findUnique: vi.fn(),
-      update: vi.fn()
+      findFirst: vi.fn(),
+      update: vi.fn(),
+      updateMany: vi.fn()
     },
     pagoCuentaPorPagar: {
       findFirst: vi.fn(),
@@ -41,7 +45,14 @@ function createTxMock() {
       updateMany: vi.fn()
     },
     gastosDE: {
+      findFirst: vi.fn().mockResolvedValue({ tenantId: 'tenant-1', isPagado: 'pendiente' }),
       update: vi.fn()
+    },
+    gastoCompra: { findFirst: vi.fn().mockResolvedValue({ tenantId: 'tenant-1', deletedAt: null }) },
+    compraServicio: { findFirst: vi.fn().mockResolvedValue({ tenantId: 'tenant-1', estado: 'RECIBIDO' }) },
+    ventaServicios: { findFirst: vi.fn().mockResolvedValue({ tenantId: 'tenant-1' }) },
+    pagosalario: {
+      findFirst: vi.fn().mockResolvedValue({ tenantId: 'tenant-1' })
     }
   }
 }
@@ -58,7 +69,7 @@ describe('pago-gastos-workflow', () => {
       isActive: true,
       cuentaDefecto: 'cb-1'
     })
-    tx.cuentaBancaria.findUnique.mockResolvedValue({
+    tx.cuentaBancaria.findFirst.mockResolvedValue({
       cuentaId: 'cb-1',
       isActive: true
     })
@@ -79,7 +90,7 @@ describe('pago-gastos-workflow', () => {
       montoConvertido: 120,
       descripcion: 'Pago servicio'
     })
-    tx.cuentaBancaria.update.mockResolvedValue({})
+    tx.cuentaBancaria.updateMany.mockResolvedValue({ count: 1 })
     tx.gastosDE.update.mockResolvedValue({})
 
     const result = await applyPagoGastoWorkflow(tx as any, {
@@ -87,9 +98,12 @@ describe('pago-gastos-workflow', () => {
       referenciaId: 'gde-1',
       gastosDEId: 'gde-1',
       reconciliadoPor: 'user-1',
+      tenantId: 'tenant-1',
       descripcion: 'Pago servicio',
       monto: 120,
-      moneda: 'CUP'
+      moneda: 'CUP',
+      periodo: '2026-08',
+      fechaPago: '2026-08-31T18:00:00.000Z'
     })
 
     expect(result.cuentaPorPagar).toBeNull()
@@ -101,6 +115,144 @@ describe('pago-gastos-workflow', () => {
       })
     )
     expect(tx.cuentaPorPagar.update).not.toHaveBeenCalled()
+    expect(tx.reconciliacionGasto.create).toHaveBeenCalledWith(
+      expect.objectContaining({
+        data: expect.objectContaining({
+          periodo: '2026-08',
+          fechaReconciliacion: new Date('2026-08-31T18:00:00.000Z'),
+        }),
+      }),
+    )
+  })
+
+  it('rechaza moneda extranjera sin una conversión válida a CUP', async () => {
+    const tx = createTxMock()
+    tx.tipoPago.findFirst.mockResolvedValue({
+      tipoId: 'tp-1',
+      isActive: true,
+      cuentaDefecto: 'cb-usd'
+    })
+    tx.cuentaBancaria.findFirst.mockResolvedValue({ cuentaId: 'cb-usd', isActive: true })
+    tx.reconciliacionGasto.findFirst.mockResolvedValue(null)
+    tx.cuentaBancaria.findMany.mockResolvedValue([
+      { cuentaId: 'cb-usd', moneda: 'USD', saldo: 1000, isActive: true }
+    ])
+    tx.reconciliacionGasto.create.mockResolvedValue({
+      reconciliacionId: 'rec-usd',
+      cuentaId: 'cb-usd',
+      monto: 100,
+      moneda: 'USD',
+      montoConvertido: 100,
+      descripcion: 'Pago USD'
+    })
+    tx.cuentaBancaria.updateMany.mockResolvedValue({ count: 1 })
+    tx.gastosDE.update.mockResolvedValue({})
+
+    await expect(applyPagoGastoWorkflow(tx as any, {
+      tipoGasto: 'gastoDE',
+      referenciaId: 'gde-usd',
+      gastosDEId: 'gde-usd',
+      reconciliadoPor: 'user-1',
+      tenantId: 'tenant-1',
+      descripcion: 'Pago USD',
+      monto: 100,
+      moneda: 'USD'
+    })).rejects.toMatchObject({ code: 'CONVERSION_REQUERIDA', status: 400 })
+
+    expect(tx.reconciliacionGasto.create).not.toHaveBeenCalled()
+  })
+
+  it('persiste en CUP el importe extranjero convertido una sola vez', async () => {
+    const tx = createTxMock()
+    tx.tipoPago.findFirst.mockResolvedValue({
+      tipoId: 'tp-1',
+      isActive: true,
+      cuentaDefecto: 'cb-usd'
+    })
+    tx.cuentaBancaria.findFirst.mockResolvedValue({ cuentaId: 'cb-usd', isActive: true })
+    tx.reconciliacionGasto.findFirst.mockResolvedValue(null)
+    tx.cuentaBancaria.findMany.mockResolvedValue([
+      { cuentaId: 'cb-usd', moneda: 'USD', saldo: 1000, isActive: true }
+    ])
+    tx.reconciliacionGasto.create.mockResolvedValue({
+      reconciliacionId: 'rec-usd',
+      cuentaId: 'cb-usd',
+      monto: 100,
+      moneda: 'USD',
+      montoConvertido: 2450,
+      descripcion: 'Pago USD'
+    })
+    tx.cuentaBancaria.updateMany.mockResolvedValue({ count: 1 })
+    tx.gastosDE.update.mockResolvedValue({})
+
+    await applyPagoGastoWorkflow(tx as any, {
+      tipoGasto: 'gastoDE',
+      referenciaId: 'gde-usd',
+      gastosDEId: 'gde-usd',
+      reconciliadoPor: 'user-1',
+      tenantId: 'tenant-1',
+      descripcion: 'Pago USD',
+      monto: 100,
+      moneda: 'USD',
+      tasaCambio: 24.5,
+      fechaPago: '2026-08-19T12:00:00.000Z'
+    })
+
+    expect(tx.reconciliacionGasto.create).toHaveBeenCalledWith(
+      expect.objectContaining({
+        data: expect.objectContaining({
+          monto: 100,
+          moneda: 'USD',
+          tasaCambio: 24.5,
+          montoConvertido: 2450
+        })
+      })
+    )
+  })
+
+  it('persiste evidencia FX inmutable en reconciliaciones extranjeras', async () => {
+    const tx = createTxMock()
+    tx.tipoPago.findFirst.mockResolvedValue({
+      tipoId: 'tp-1',
+      isActive: true,
+      cuentaDefecto: 'cb-usd'
+    })
+    tx.cuentaBancaria.findFirst.mockResolvedValue({ cuentaId: 'cb-usd', isActive: true })
+    tx.reconciliacionGasto.findFirst.mockResolvedValue(null)
+    tx.cuentaBancaria.findMany.mockResolvedValue([
+      { cuentaId: 'cb-usd', moneda: 'USD', saldo: 1000, isActive: true }
+    ])
+    tx.reconciliacionGasto.create.mockResolvedValue({
+      reconciliacionId: 'rec-usd-fx',
+      cuentaId: 'cb-usd',
+      monto: 100,
+      moneda: 'USD',
+      montoConvertido: 2450,
+      descripcion: 'Pago USD'
+    })
+    tx.cuentaBancaria.updateMany.mockResolvedValue({ count: 1 })
+    tx.gastosDE.update.mockResolvedValue({})
+
+    await applyPagoGastoWorkflow(tx as any, {
+      tipoGasto: 'gastoDE',
+      referenciaId: 'gde-usd',
+      gastosDEId: 'gde-usd',
+      reconciliadoPor: 'user-1',
+      tenantId: 'tenant-1',
+      descripcion: 'Pago USD',
+      monto: 100,
+      moneda: 'USD',
+      tasaCambio: 24.5,
+      fechaPago: '2026-08-19T12:00:00.000Z'
+    })
+
+    const data = tx.reconciliacionGasto.create.mock.calls[0]?.[0]?.data
+    expect(data.functionalCurrency).toBe('CUP')
+    expect(data.fxProvenanceKind).toBe('MANUAL_GOVERNED')
+    expect(data.fxProvenanceSource).toBe('pago-gastos-workflow')
+    expect(data.rateEffectiveAt).toEqual(new Date('2026-08-19T12:00:00.000Z'))
+    expect(data.fxEvidenceVersion).toBe(1)
+    expect(data.fxEvidenceFingerprint).toMatch(/^[a-f0-9]{64}$/)
   })
 
   it('para CxP parcial crea reconciliacion PARCIAL y no marca gasto DE como pagado', async () => {
@@ -110,17 +262,18 @@ describe('pago-gastos-workflow', () => {
       isActive: true,
       cuentaDefecto: 'cb-1'
     })
-    tx.cuentaBancaria.findUnique.mockResolvedValue({
+    tx.cuentaBancaria.findFirst.mockResolvedValue({
       cuentaId: 'cb-1',
       isActive: true
     })
-    tx.cuentaPorPagar.findUnique.mockResolvedValue({
+    tx.cuentaPorPagar.findFirst.mockResolvedValue({
       cuentaPorPagarId: 'cxp-1',
       estado: 'PENDIENTE',
       montoDeuda: 100,
       montoPagado: 0,
       saldoPendiente: 100,
       gastoCompraId: null,
+      gastosDEId: 'gde-2',
       proveedor: {
         cuentaCUP: '123456',
         cuentaUSD: null
@@ -143,13 +296,8 @@ describe('pago-gastos-workflow', () => {
       montoConvertido: 40,
       descripcion: 'Pago parcial'
     })
-    tx.cuentaBancaria.update.mockResolvedValue({})
-    tx.cuentaPorPagar.update.mockResolvedValue({
-      cuentaPorPagarId: 'cxp-1',
-      estado: 'PARCIAL',
-      montoPagado: 40,
-      saldoPendiente: 60
-    })
+    tx.cuentaBancaria.updateMany.mockResolvedValue({ count: 1 })
+    tx.cuentaPorPagar.updateMany.mockResolvedValue({ count: 1 })
     tx.pagoCuentaPorPagar.create.mockResolvedValue({
       pagoCuentaPorPagarId: 'pago-1',
       numeroTransaccion: 'TRX-1',
@@ -161,6 +309,7 @@ describe('pago-gastos-workflow', () => {
       referenciaId: 'gde-2',
       gastosDEId: 'gde-2',
       reconciliadoPor: 'user-1',
+      tenantId: 'tenant-1',
       descripcion: 'Pago parcial',
       monto: 40,
       moneda: 'CUP',
@@ -188,11 +337,11 @@ describe('pago-gastos-workflow', () => {
       isActive: true,
       cuentaDefecto: 'cb-1'
     })
-    tx.cuentaBancaria.findUnique.mockResolvedValue({
+    tx.cuentaBancaria.findFirst.mockResolvedValue({
       cuentaId: 'cb-1',
       isActive: true
     })
-    tx.cuentaPorPagar.findUnique.mockResolvedValue({
+    tx.cuentaPorPagar.findFirst.mockResolvedValue({
       cuentaPorPagarId: 'cxp-1',
       estado: 'PENDIENTE',
       montoDeuda: 100,
@@ -214,6 +363,7 @@ describe('pago-gastos-workflow', () => {
         referenciaId: 'gde-3',
         gastosDEId: 'gde-3',
         reconciliadoPor: 'user-1',
+        tenantId: 'tenant-1',
         descripcion: 'Pago duplicado',
         monto: 20,
         moneda: 'CUP',
@@ -237,17 +387,18 @@ describe('pago-gastos-workflow', () => {
       isActive: true,
       cuentaDefecto: 'cb-1'
     })
-    tx.cuentaBancaria.findUnique.mockResolvedValue({
+    tx.cuentaBancaria.findFirst.mockResolvedValue({
       cuentaId: 'cb-1',
       isActive: true
     })
-    tx.cuentaPorPagar.findUnique.mockResolvedValue({
+    tx.cuentaPorPagar.findFirst.mockResolvedValue({
       cuentaPorPagarId: 'cxp-2',
       estado: 'PENDIENTE',
       montoDeuda: 100,
       montoPagado: 0,
       saldoPendiente: 100,
       gastoCompraId: 'gc-10',
+      gastosDEId: null,
       proveedor: {
         cuentaCUP: '123456',
         cuentaUSD: null
@@ -270,13 +421,8 @@ describe('pago-gastos-workflow', () => {
       montoConvertido: 100,
       descripcion: 'Pago total'
     })
-    tx.cuentaBancaria.update.mockResolvedValue({})
-    tx.cuentaPorPagar.update.mockResolvedValue({
-      cuentaPorPagarId: 'cxp-2',
-      estado: 'PAGADA',
-      montoPagado: 100,
-      saldoPendiente: 0
-    })
+    tx.cuentaBancaria.updateMany.mockResolvedValue({ count: 1 })
+    tx.cuentaPorPagar.updateMany.mockResolvedValue({ count: 1 })
     tx.pagoCuentaPorPagar.create.mockResolvedValue({
       pagoCuentaPorPagarId: 'pago-2',
       numeroTransaccion: 'TRX-TOTAL',
@@ -288,6 +434,7 @@ describe('pago-gastos-workflow', () => {
       tipoGasto: 'compra',
       referenciaId: 'gc-10',
       reconciliadoPor: 'user-1',
+      tenantId: 'tenant-1',
       descripcion: 'Pago total',
       monto: 100,
       moneda: 'CUP',
@@ -302,5 +449,46 @@ describe('pago-gastos-workflow', () => {
         data: { estado: 'PAGADA' }
       })
     )
+  })
+
+  it('permite CxP de servicio cuando coincide tenant, tipo e invoice del servicio', async () => {
+    const tx = createTxMock()
+    tx.compraServicio.findFirst.mockResolvedValue({
+      tenantId: 'tenant-1',
+      estado: 'RECIBIDO',
+      numeroFactura: 'SVC-001',
+    })
+    tx.tipoPago.findFirst.mockResolvedValue({ tipoId: 'tp-1', isActive: true, cuentaDefecto: 'cb-1' })
+    tx.cuentaBancaria.findFirst.mockResolvedValue({ cuentaId: 'cb-1', isActive: true })
+    tx.cuentaPorPagar.findFirst
+      .mockResolvedValueOnce({ cuentaPorPagarId: 'cxp-svc' })
+      .mockResolvedValueOnce({
+        cuentaPorPagarId: 'cxp-svc',
+        estado: 'PENDIENTE',
+        montoDeuda: 100,
+        montoPagado: 0,
+        saldoPendiente: 100,
+        gastoCompraId: null,
+        gastosDEId: null,
+        proveedor: { cuentaCUP: '123', cuentaUSD: null },
+      })
+    tx.pagoCuentaPorPagar.findFirst.mockResolvedValue(null)
+    tx.cuentaBancaria.findMany.mockResolvedValue([{ cuentaId: 'cb-1', moneda: 'CUP', saldo: 500, isActive: true }])
+    tx.reconciliacionGasto.create.mockResolvedValue({
+      reconciliacionId: 'rec-svc', cuentaId: 'cb-1', monto: 100, moneda: 'CUP', montoConvertido: 100, descripcion: 'Servicio',
+    })
+    tx.cuentaBancaria.updateMany.mockResolvedValue({ count: 1 })
+    tx.cuentaPorPagar.updateMany.mockResolvedValue({ count: 1 })
+    tx.pagoCuentaPorPagar.create.mockResolvedValue({ pagoCuentaPorPagarId: 'pago-svc', numeroTransaccion: 'rec-svc', monto: 100 })
+
+    const result = await applyPagoGastoWorkflow(tx as any, {
+      tipoGasto: 'servicio', referenciaId: 'svc-1', tenantId: 'tenant-1', cuentaPorPagarId: 'cxp-svc',
+      reconciliadoPor: 'user-1', descripcion: 'Servicio', monto: 100, moneda: 'CUP',
+    })
+
+    expect(result.cuentaPorPagar?.cuentaPorPagarId).toBe('cxp-svc')
+    expect(tx.cuentaPorPagar.findFirst).toHaveBeenNthCalledWith(1, expect.objectContaining({
+      where: expect.objectContaining({ tipo: 'servicio', numeroFactura: 'SVC-001' }),
+    }))
   })
 })

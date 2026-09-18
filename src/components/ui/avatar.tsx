@@ -7,8 +7,9 @@ import { cn } from "@/lib/utils"
 
 function Avatar({
   className,
+  children,
   ...props
-}: React.ComponentProps<typeof AvatarPrimitive.Root>) {
+}: React.HTMLAttributes<HTMLSpanElement> & { children?: React.ReactNode }) {
   return (
     <AvatarPrimitive.Root
       data-slot="avatar"
@@ -16,28 +17,34 @@ function Avatar({
         "relative flex size-8 shrink-0 overflow-hidden rounded-full",
         className
       )}
-      {...props}
-    />
+      {...(props as any)}
+    >
+      {children}
+    </AvatarPrimitive.Root>
   )
 }
 
 function AvatarImage({
   className,
+  children,
   ...props
-}: React.ComponentProps<typeof AvatarPrimitive.Image>) {
+}: React.ImgHTMLAttributes<HTMLImageElement> & { children?: React.ReactNode }) {
   return (
     <AvatarPrimitive.Image
       data-slot="avatar-image"
       className={cn("aspect-square size-full", className)}
-      {...props}
-    />
+      {...(props as any)}
+    >
+      {children}
+    </AvatarPrimitive.Image>
   )
 }
 
 function AvatarFallback({
   className,
+  children,
   ...props
-}: React.ComponentProps<typeof AvatarPrimitive.Fallback>) {
+}: React.HTMLAttributes<HTMLSpanElement> & { children?: React.ReactNode }) {
   return (
     <AvatarPrimitive.Fallback
       data-slot="avatar-fallback"
@@ -45,8 +52,10 @@ function AvatarFallback({
         "bg-muted flex size-full items-center justify-center rounded-full",
         className
       )}
-      {...props}
-    />
+      {...(props as any)}
+    >
+      {children}
+    </AvatarPrimitive.Fallback>
   )
 }
 

@@ -18,6 +18,7 @@ import { getExpiringSoonAction, sendExpiryNotificationsAction } from "@/features
 import { format } from "date-fns"
 import { toast } from "sonner"
 import { Bell, Calendar, History } from "lucide-react"
+import { getUrgencyColor } from "@/features/admin/lib/urgency-colors"
 import type { Usuario } from "@/app/models/model"
 
 interface ExpiringUsersTabProps {
@@ -36,7 +37,7 @@ export function ExpiringUsersTab({ onOpenHistory }: ExpiringUsersTabProps) {
     setIsLoading(true)
     try {
       const data = await getExpiringSoonAction({ days: parseInt(days) })
-      setExpiringUsers((data?.success ? data.data : undefined) as unknown as { users: (Usuario & { daysUntilExpiry: number; })[]; } | undefined)
+      setExpiringUsers(data?.success ? (data.data as unknown as { users: (Usuario & { daysUntilExpiry: number })[] }) : undefined)
     } catch {
       setExpiringUsers(undefined)
     } finally {
@@ -55,7 +56,7 @@ export function ExpiringUsersTab({ onOpenHistory }: ExpiringUsersTabProps) {
     try {
       const result = await sendExpiryNotificationsAction()
       toast.success(`Notificaciones enviadas: ${
-  // @ts-expect-error
+  // @ts-expect-error TODO: fix type for result.notificationsCreated
       result?.notificationsCreated ?? 0
       } administradores notificados`)
       fetchExpiring()
@@ -93,28 +94,11 @@ export function ExpiringUsersTab({ onOpenHistory }: ExpiringUsersTabProps) {
             </SelectContent>
           </Select>
         </div>
-        <div className="flex gap-2">
-          {expiringUsers && expiringUsers.users.length > 0 && (
-            <Pagination>
-              <PaginationContent>
-                <PaginationItem>
-                  <PaginationPrevious onClick={() => setPage(p => Math.max(1, p - 1))} className={page === 1 ? "pointer-events-none opacity-50" : "cursor-pointer"} />
-                </PaginationItem>
-                <PaginationItem>
-                  <span className="flex items-center px-4">Página {page} de {totalPages}</span>
-                </PaginationItem>
-                <PaginationItem>
-                  <PaginationNext onClick={() => setPage(p => Math.min(totalPages, p + 1))} className={page === totalPages ? "pointer-events-none opacity-50" : "cursor-pointer"} />
-                </PaginationItem>
-              </PaginationContent>
-            </Pagination>
-          )}
-          <Button variant="default" size="sm" onClick={handleSendNotifications}
-            disabled={!expiringUsers || expiringUsers.users.length === 0}>
-            <Bell className="mr-2 h-4 w-4" />
-            Enviar Alertas
-          </Button>
-        </div>
+        <Button variant="default" size="sm" onClick={handleSendNotifications}
+          disabled={!expiringUsers || expiringUsers.users.length === 0}>
+          <Bell className="mr-2 h-4 w-4" />
+          Enviar Alertas
+        </Button>
       </div>
 
       {isLoading ? (
@@ -151,9 +135,7 @@ export function ExpiringUsersTab({ onOpenHistory }: ExpiringUsersTabProps) {
                   <TableCell>{format(new Date(user.expiresAt!), "dd/MM/yyyy")}</TableCell>
                   <TableCell>
                     <Badge variant="outline"
-                      className={user.daysUntilExpiry <= 3 ? "border-rose-500/50 bg-rose-500/10 text-rose-700"
-                        : user.daysUntilExpiry <= 7 ? "border-amber-500/50 bg-amber-500/10 text-amber-700"
-                        : "border-yellow-500/50 bg-yellow-500/10 text-yellow-700"}>
+                      className={getUrgencyColor(user.daysUntilExpiry)}>
                       {user.daysUntilExpiry} días
                     </Badge>
                   </TableCell>
@@ -182,6 +164,24 @@ export function ExpiringUsersTab({ onOpenHistory }: ExpiringUsersTabProps) {
               </p>
             </div>
           </div>
+        </div>
+      )}
+
+      {expiringUsers && expiringUsers.users.length > 0 && (
+        <div className="flex justify-center pt-2">
+          <Pagination>
+            <PaginationContent>
+              <PaginationItem>
+                <PaginationPrevious onClick={() => setPage(p => Math.max(1, p - 1))} className={page === 1 ? "pointer-events-none opacity-50" : "cursor-pointer"} />
+              </PaginationItem>
+              <PaginationItem>
+                <span className="flex items-center px-4">Página {page} de {totalPages}</span>
+              </PaginationItem>
+              <PaginationItem>
+                <PaginationNext onClick={() => setPage(p => Math.min(totalPages, p + 1))} className={page === totalPages ? "pointer-events-none opacity-50" : "cursor-pointer"} />
+              </PaginationItem>
+            </PaginationContent>
+          </Pagination>
         </div>
       )}
     </div>

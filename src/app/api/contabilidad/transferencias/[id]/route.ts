@@ -1,5 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import prisma from '@/lib/prisma'
+import { authenticateUser } from '@/lib/auth-middleware'
+import { canAccessAccountingItem } from '@/lib/plan-access'
 
 // GET /api/contabilidad/transferencias/[id] - Get transfer details
 export async function GET(
@@ -7,6 +9,14 @@ export async function GET(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const authResultUser = await authenticateUser(request)
+    if ('status' in authResultUser) return authResultUser as Response
+    const user = authResultUser.user
+
+    if (user.role !== 'admin' && !canAccessAccountingItem(user, 'Transferencias Bancarias')) {
+      return NextResponse.json({ error: 'Prohibido' }, { status: 403 })
+    }
+
     const { id } = await params
 
     if (!id) {

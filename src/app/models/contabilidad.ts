@@ -243,6 +243,7 @@ export interface AjusteBancario {
 	descripcion: string;
 	motivo: string;
 	realizadoPor: string;
+	fechaOperacion: string;
 	createdAt: string;
 	updatedAt: string;
 	cuentaBancaria?: CuentaBancaria;
@@ -327,8 +328,10 @@ export interface CreateAjusteBancarioRequest {
 	tipo: string;
 	monto: number;
 	moneda: string;
+	tasaCambio?: number;
 	descripcion: string;
 	motivo: string;
+	fechaOperacion?: string;
 }
 
 export interface CreateMonedaRequest {
@@ -378,6 +381,7 @@ export interface ServicioPendiente extends VentaServicio {
 
 export interface VentaServicio {
 	ventaServicioId?: string;
+	moneda?: string;
 	servicio: {
 		servicioId: string;
 		descripcion: string;
@@ -414,7 +418,10 @@ export interface GastoPendiente {
 		salarioBases?: number;
 		bonificaciones?: number;
 		deducciones?: number;
+		/** Cantidad de horas extras (unidad: horas). */
 		horasExtras?: number;
+		/** Dinero correspondiente a las horas extras (unidad: moneda). */
+		montoHorasExtras?: number;
 		tipo?: string;
 		proveedor?: string;
 		descripcionOriginal?: string;

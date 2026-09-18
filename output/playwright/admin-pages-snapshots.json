@@ -1,0 +1,27 @@
+{
+  "dashboard": {
+    "url": "https://kr4t3rdev.xyz/admin",
+    "title": "FinanceMDM",
+    "snippet": "Admin Panel\nControl del sistema\nPANEL DE CONTROL\nOverview\nTenants\nFinanzas Globales\nRevenue Suscripciones\nReferidos\nMONITOR\nSalud del Sistema\nUsuarios\nLICENCIAS\nLicencias\nPlanes\nHERRAMIENTAS\nMigraciones\nBackups\nLogs de Auditoría\nIr al Negocio\nToggle Sidebar\nPanel de Administración\nToggle theme\nPanel de Control\n\nVisión general del sistema\n\nActualizado: 1:48:27 p.m.\nActualizar\nTotal Tenants\n0\n\nEmpresas reales registradas en la plataforma\n\nUsuarios del Sistema\n0\n\nUsuarios registrados\n\nSesiones Activas\n0\n\nUsuarios con sesión abierta ahora\n\nIngresos Totales\n-\n\nVentas + servicios consolidados\n\nLicencias por Vencer\n0\n\nPróximos 30 días\n\nLicencias Activas\n0\n\nde 0 totales\n\nTendencia de Ingresos (Últimos 7 días)\nEvolución diaria de ventas y servicios\nNo hay datos de ingresos disponibles\nNuevos Usuarios (Últimos 7 días)\nRegistros diarios de usuarios\nNo hay datos de usuarios disponibles\nUsuarios por Rol\nDistribución global de roles\nAlertas del Sistema\nProblemas que requieren atención\n\nSin alertas activas\n\nEl sistema funciona con normalidad\n\nDistribución de Tenants por Plan\nPlanes activos por empresa\nResumen Financiero\nMétricas consolidadas de la plataforma\nNo hay datos financieros disponibles"
+  },
+  "sistema": {
+    "url": "https://kr4t3rdev.xyz/admin/sistema",
+    "title": "FinanceMDM",
+    "snippet": "Admin Panel\nControl del sistema\nPANEL DE CONTROL\nOverview\nTenants\nFinanzas Globales\nRevenue Suscripciones\nReferidos\nMONITOR\nSalud del Sistema\nUsuarios\nLICENCIAS\nLicencias\nPlanes\nHERRAMIENTAS\nMigraciones\nBackups\nLogs de Auditoría\nIr al Negocio\nToggle Sidebar\nPanel de Administración\nToggle theme\nSalud del Sistema\n\nMétricas de infraestructura y sesiones activas\n\nActualizar\nUsuarios Totales\n\n0\n\n0 admins\n\nSesiones Activas\n\n0\n\nUsuarios conectados ahora\n\nLicencias Activas\n\n0\n\nde 0 totales\n\nPor Vencer\n\n0\n\nPróximos 30 días\n\nDistribución de Roles\nUsuarios del sistema por tipo de rol\nEstado de Licencias\nResumen de licencias en la plataforma\nActivas\n0\nPor vencer (30d)\n0\nInactivas\n0"
+  },
+  "tenants": {
+    "url": "https://kr4t3rdev.xyz/admin/tenants",
+    "title": "FinanceMDM",
+    "snippet": "Admin Panel\nControl del sistema\nPANEL DE CONTROL\nOverview\nTenants\nFinanzas Globales\nRevenue Suscripciones\nReferidos\nMONITOR\nSalud del Sistema\nUsuarios\nLICENCIAS\nLicencias\nPlanes\nHERRAMIENTAS\nMigraciones\nBackups\nLogs de Auditoría\nIr al Negocio\nToggle Sidebar\nPanel de Administración\nToggle theme\nTenants\n\nGestión de empresas y organizaciones\n\nExportar CSV\nActualizar\nTotal Tenants\n\n0\n\nUsuarios Totales\n\n0\n\nLicencias Activas\n\n0\n\nTodas las licencias\nActivas\nInactivas\nOrdenar por nombre\nOrdenar por usuarios\nOrdenar por fecha\nLista de Empresas\nTodos los tenants registrados en la plataforma\n\nNo hay tenants registrados"
+  },
+  "finanzas": {
+    "url": "https://kr4t3rdev.xyz/admin/finanzas",
+    "title": "FinanceMDM",
+    "snippet": "Admin Panel\nControl del sistema\nPANEL DE CONTROL\nOverview\nTenants\nFinanzas Globales\nRevenue Suscripciones\nReferidos\nMONITOR\nSalud del Sistema\nUsuarios\nLICENCIAS\nLicencias\nPlanes\nHERRAMIENTAS\nMigraciones\nBackups\nLogs de Auditoría\nIr al Negocio\nToggle Sidebar\nPanel de Administración\nToggle theme\nFinanzas Globales\n\nConsolidación financiera de la plataforma\n\nActualizar\n\nUnauthorized"
+  },
+  "licencias": {
+    "url": "https://kr4t3rdev.xyz/admin/licencias",
+    "title": "FinanceMDM",
+    "snippet": "Admin Panel\nControl del sistema\nPANEL DE CONTROL\nOverview\nTenants\nFinanzas Globales\nRevenue Suscripciones\nReferidos\nMONITOR\nSalud del Sistema\nUsuarios\nLICENCIAS\nLicencias\nPlanes\nHERRAMIENTAS\nMigraciones\nBackups\nLogs de Auditoría\nIr al Negocio\nToggle Sidebar\nPanel de Administración\nToggle theme\nLicencias\n\nGestión de licencias y activaciones\n\nLimpiar Demos Expiradas\nCrear Demo\nGenerar Licencias\nTotal\n0\nActivas\n0\nDemos\n0\nPor Vencer\n0\nExpiradas\n0\nTodos los planes\nTodos\nTodos\n\tLICENCIA\tTENANT / ADMIN\tPLAN\tEXPIRACIÓN\tESTADO\tACCIONES\nNo hay licencias"
+  }
+}

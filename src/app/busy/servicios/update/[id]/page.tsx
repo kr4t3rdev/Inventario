@@ -5,7 +5,9 @@
  */
 import { getServicioByIdAction } from "@/features/servicios/actions"
 import { ServicioForm } from "@/features/servicios/components/servicios-form"
-import { notFound } from "next/navigation"
+import { notFound, redirect } from "next/navigation"
+import { getCurrentUser } from "@/lib/server-actions"
+import { hasPlanFeature } from "@/lib/plan-access"
 
 export const metadata = {
   title: "Editar Servicio - FinanceMDM",
@@ -16,6 +18,16 @@ interface Props {
 }
 
 export default async function EditarServicioPage({ params }: Props) {
+  const user = await getCurrentUser()
+
+  if (user?.role !== 'admin' && !hasPlanFeature(user, 'servicios')) {
+    redirect('/busy')
+  }
+
+  if (user?.role !== 'admin' && user?.tenantRole !== 'manager') {
+    redirect('/busy/servicios')
+  }
+
   const { id: servicioId } = await params
 
   const servicioResult = await getServicioByIdAction(servicioId)
@@ -26,8 +38,8 @@ export default async function EditarServicioPage({ params }: Props) {
   return (
     <div className="container mx-auto py-4">
       <div className="mb-6">
-        <h1 className="text-2xl font-bold">Editar Servicios</h1>
-        <p className="text-muted-foreground">Modifique los datos de los Servicios</p>
+        <h1 className="text-2xl font-bold">Editar servicio</h1>
+        <p className="text-muted-foreground">Modifica los datos del servicio</p>
       </div>
       <ServicioForm initialData={servicioResult.data} />
     </div>

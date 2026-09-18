@@ -67,8 +67,21 @@ interface AccordionItemProps {
   children: React.ReactNode;
 }
 
+interface AccordionItemContextValue {
+  value: string;
+  triggerId: string;
+  contentId: string;
+}
+
 function AccordionItem({ value, className, children }: AccordionItemProps): React.JSX.Element {
-  return <div className={cn('', className)} data-state="closed" data-value={value}>{children}</div>;
+  const { value: openValue } = useAccordion();
+  const isOpen = openValue === value;
+
+  return (
+    <div className={cn('', className)} data-state={isOpen ? 'open' : 'closed'} data-value={value}>
+      {children}
+    </div>
+  );
 }
 
 /* ─── AccordionTrigger ─── */
@@ -81,12 +94,14 @@ interface AccordionTriggerProps {
 function AccordionTrigger({ className, children }: AccordionTriggerProps): React.JSX.Element {
   const { value, onValueChange } = useAccordion();
   const itemValue = React.useContext(AccordionItemContext);
-  const isOpen = value === itemValue;
+  const isOpen = value === itemValue?.value;
+
+  if (!itemValue) throw new Error('AccordionTrigger must be used within <AccordionItem>');
 
   return (
     <button
       type="button"
-      onClick={() => onValueChange(itemValue ?? null)}
+      onClick={() => onValueChange(itemValue.value)}
       className={cn(
         'flex w-full items-center justify-between py-4 text-left text-sm font-medium transition-all',
         'hover:underline [&[data-state=open]>svg]:rotate-180',
@@ -94,6 +109,8 @@ function AccordionTrigger({ className, children }: AccordionTriggerProps): React
       )}
       data-state={isOpen ? 'open' : 'closed'}
       aria-expanded={isOpen}
+      aria-controls={itemValue.contentId}
+      id={itemValue.triggerId}
     >
       {children}
       <ChevronDown className="h-4 w-4 shrink-0 text-muted-foreground transition-transform duration-200" />
@@ -103,7 +120,7 @@ function AccordionTrigger({ className, children }: AccordionTriggerProps): React
 
 /* ─── AccordionContent ─── */
 
-const AccordionItemContext = React.createContext<string | null>(null);
+const AccordionItemContext = React.createContext<AccordionItemContextValue | null>(null);
 
 interface AccordionContentProps {
   className?: string;
@@ -113,7 +130,9 @@ interface AccordionContentProps {
 function AccordionContent({ className, children }: AccordionContentProps): React.JSX.Element {
   const { value } = useAccordion();
   const itemValue = React.useContext(AccordionItemContext);
-  const isOpen = value === itemValue;
+  const isOpen = value === itemValue?.value;
+
+  if (!itemValue) throw new Error('AccordionContent must be used within <AccordionItem>');
 
   return (
     <div
@@ -124,6 +143,9 @@ function AccordionContent({ className, children }: AccordionContentProps): React
       )}
       data-state={isOpen ? 'open' : 'closed'}
       role="region"
+      id={itemValue.contentId}
+      aria-labelledby={itemValue.triggerId}
+      hidden={!isOpen}
     >
       {children}
     </div>
@@ -133,8 +155,18 @@ function AccordionContent({ className, children }: AccordionContentProps): React
 /* ─── Wrapper to provide item value via context ─── */
 
 function AccordionItemWrapper({ value, className, children }: AccordionItemProps): React.JSX.Element {
+  const instanceId = React.useId().replace(/[^a-zA-Z0-9_-]/g, '-');
+  const ids = React.useMemo(
+    () => ({
+      value,
+      triggerId: `accordion-trigger-${instanceId}`,
+      contentId: `accordion-content-${instanceId}`,
+    }),
+    [instanceId, value],
+  );
+
   return (
-    <AccordionItemContext.Provider value={value}>
+    <AccordionItemContext.Provider value={ids}>
       <AccordionItem value={value} className={className}>
         {children}
       </AccordionItem>

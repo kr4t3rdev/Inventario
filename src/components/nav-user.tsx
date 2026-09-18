@@ -22,6 +22,37 @@ import { useAdminUsers } from '@/features/admin/hooks/use-admin-users'
 import { TenantSwitcher } from "@/components/tenant-switcher"
 
 /**
+ * @description Resuelve la etiqueta corta del fallback de avatar para el usuario actual.
+ * @param {string} name - Nombre visible del usuario.
+ * @param {string | null | undefined} tenantRole - Rol del usuario en el tenant.
+ * @param {string | null | undefined} role - Rol global de plataforma.
+ * @returns {string} Abreviatura legible para el avatar fallback.
+ */
+export function getNavUserFallbackLabel(
+  name: string,
+  tenantRole?: string | null,
+  role?: string | null,
+): string {
+  if (tenantRole === 'dependiente') return 'DEP'
+  if (tenantRole === 'economico') return 'ECO'
+  if (tenantRole === 'manager') return 'MGR'
+  if (role === 'admin') return 'ADM'
+
+  const normalizedName = name?.trim()
+  if (!normalizedName) {
+    return 'US'
+  }
+
+  return normalizedName
+    .split(' ')
+    .filter(Boolean)
+    .map((n) => n[0])
+    .join('')
+    .slice(0, 2)
+    .toUpperCase()
+}
+
+/**
  * @description Menú de usuario en el footer del sidebar con acciones de perfil, tema y cierre de sesión.
  * @returns {JSX.Element | null} Menú de usuario o null si no hay usuario autenticado.
  */
@@ -29,8 +60,8 @@ export function NavUser() {
   const pathname = usePathname()
   const { isMobile } = useSidebar()
   const { setTheme, theme } = useTheme()
-  const { users } = useAdminUsers()
   const { user } = useAuth()
+  const { users } = useAdminUsers({ enabled: user?.role === 'admin' })
   const { logout } = useAuth()
 
   const profile = users?.find((u) => u.userId === user?.userId)
@@ -43,11 +74,8 @@ export function NavUser() {
    logout()
   }
 
-  const initials = user.name
-    .split(" ")
-    .map((n) => n[0])
-    .join("")
-    .toUpperCase()
+  const displayName = user.name?.trim() || user.email || 'Usuario'
+  const initials = getNavUserFallbackLabel(displayName, user.tenantRole, user.role)
 
   const avatarSrc = profile?.avatar || user.avatar || ''
 
@@ -59,15 +87,15 @@ export function NavUser() {
           <DropdownMenuTrigger asChild>
             <SidebarMenuButton
               size="lg"
-              tooltip={user.name}
+              tooltip={displayName}
               className="data-[state=open]:bg-sidebar-accent data-[state=open]:text-sidebar-accent-foreground group-data-[collapsible=icon]:!size-8 group-data-[collapsible=icon]:justify-center group-data-[collapsible=icon]:p-0"
             >
               <Avatar className="h-8 w-8 rounded-lg group-data-[collapsible=icon]:h-7 group-data-[collapsible=icon]:w-7">
-                <AvatarImage src={avatarSrc} alt={user.name} />
+                <AvatarImage src={avatarSrc} alt={displayName} />
                 <AvatarFallback className="rounded-lg">{<span>{initials}</span>}</AvatarFallback>
               </Avatar>
               <div className="grid flex-1 text-left text-sm leading-tight group-data-[collapsible=icon]:hidden">
-                <span className="truncate font-medium">{user.name}</span>
+                <span className="truncate font-medium">{displayName}</span>
                 <span className="truncate text-xs text-muted-foreground">{user.email}</span>
               </div>
               <MoreVerticalIcon className="ml-auto size-4 group-data-[collapsible=icon]:hidden" />
@@ -82,11 +110,11 @@ export function NavUser() {
             <DropdownMenuLabel className="p-0 font-normal">
               <div className="flex items-center gap-2 px-1 py-1.5 text-left text-sm">
                 <Avatar className="h-8 w-8 rounded-lg">
-                  <AvatarImage src={avatarSrc} alt={user.name} />
+                  <AvatarImage src={avatarSrc} alt={displayName} />
                   <AvatarFallback className="rounded-lg">{<span>{initials}</span>}</AvatarFallback>                 
                 </Avatar>
                 <div className="grid flex-1 text-left text-sm leading-tight">
-                  <span className="truncate font-medium">{user.name}</span>
+                  <span className="truncate font-medium">{displayName}</span>
                   <span className="truncate text-xs text-muted-foreground">{user.email}</span>
                 </div>
               </div>

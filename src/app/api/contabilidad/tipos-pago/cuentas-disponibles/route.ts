@@ -1,16 +1,22 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
+import { authenticateUser, type AuthenticatedUser } from '@/lib/auth-middleware'
+import { requireTenant } from '@/lib/services/tenant-scope'
 
 // GET /api/contabilidad/tipos-pago/cuentas-disponibles - Obtener cuentas disponibles para tipos de pago
 export async function GET(request: NextRequest) {
   try {
+    const authResult = await authenticateUser(request)
+    if ('status' in authResult) return authResult as Response
+    const tenantId = requireTenant(authResult.user as AuthenticatedUser)
     const { searchParams } = new URL(request.url)
     const moneda = searchParams.get('moneda')
     const tipoCuenta = searchParams.get('tipoCuenta')
 
     // Construir filtros
     const where: any = {
-      isActive: true
+      isActive: true,
+      tenantId
     }
 
     if (moneda) {
@@ -43,9 +49,10 @@ export async function GET(request: NextRequest) {
     const cuentasConUso = await Promise.all(
       cuentas.map(async (cuenta: any) => {
         const tiposPagoUsando = await prisma.tipoPago.findMany({
-          where: { 
+          where: {
             cuentaDefecto: cuenta.cuentaId,
-            isActive: true
+            isActive: true,
+            tenantId
           },
           select: {
             tipoId: true,
@@ -67,12 +74,12 @@ export async function GET(request: NextRequest) {
       totalCuentas: cuentas.length,
       cuentasPorMoneda: await prisma.cuentaBancaria.groupBy({
         by: ['moneda'],
-        where: { isActive: true },
+        where: { isActive: true, tenantId },
         _count: { cuentaId: true }
       }),
       cuentasPorTipo: await prisma.cuentaBancaria.groupBy({
         by: ['tipoCuenta'],
-        where: { isActive: true },
+        where: { isActive: true, tenantId },
         _count: { cuentaId: true }
       })
     }

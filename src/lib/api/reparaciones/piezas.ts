@@ -14,7 +14,7 @@ export async function createPiezaReparacion(data: {
 
   try {
     return await prisma.piezaReparacion.create({
-  // @ts-expect-error
+  // @ts-expect-error TODO: fix prisma create data type
     data
     }) as any
   } catch (error) {

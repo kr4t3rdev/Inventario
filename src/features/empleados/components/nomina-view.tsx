@@ -14,6 +14,8 @@ import {
   getNominaAction,
 } from "@/features/empleados/actions";
 import { updatePagoSalarioAction } from "@/features/pago-salario/actions";
+import { calcularMontoHorasExtras } from "@/lib/payroll-formulas";
+import { getPayrollPaymentAmount } from "@/features/pago-salario/payroll-amounts";
 import { LazyMotion, m as motion, AnimatePresence } from "framer-motion";
 import { Switch } from "@/components/ui/switch";
 import {
@@ -33,6 +35,8 @@ interface PayrollRecord {
   deducciones: number;
   aportes?: number;
   horasExtras: number;
+  horasExtrasHoras?: number;
+  montoHorasExtras?: number;
   observaciones: string | null;
   periodo: string;
   createdAt: string;
@@ -66,20 +70,17 @@ function EditPayrollDialog({
       setBonificaciones(record.bonificaciones);
       setDeducciones(record.deducciones);
       setAportes(record.aportes || 0);
-      setHorasExtras(record.horasExtras);
-      setNetSalary(record.salario);
+      setHorasExtras(record.horasExtrasHoras ?? record.horasExtras ?? 0);
     }
   }, [record]);
 
   useEffect(() => {
     if (record) {
-      // Calculate Net Salary dynamically
-      // Defaults: 240 hours/month, 1.5x overtime. 
-      // Ideally should match backend config but this is a good approximation for UI feedback
-      const hourlyRate = record.empleado.salarioBases / 240;
-      const overtimePay = horasExtras * hourlyRate * 1.5;
-      const gross = record.empleado.salarioBases + overtimePay + bonificaciones;
-      const net = gross - deducciones;
+      // Estimación en vivo: las horas se pagan a 1.5× la tarifa del salario base
+      // (constantes compartidas en @/lib/payroll-formulas; la hora NUNCA vale 1 peso).
+      // El servidor recalcula y persiste el monto al guardar.
+      const overtimePay = calcularMontoHorasExtras(horasExtras, record.empleado.salarioBases);
+      const net = record.salario + bonificaciones + overtimePay - deducciones;
       setNetSalary(Math.round(net));
     }
   }, [bonificaciones, deducciones, horasExtras, record]);
@@ -92,7 +93,6 @@ function EditPayrollDialog({
         deducciones,
         aportes,
         horasExtras,
-        salario: netSalary
       });
       onOpenChange(false);
     }
@@ -217,7 +217,7 @@ export function NominaView() {
         periodoFilter ? { periodo: periodoFilter } : {},
       );
       if (result.success) {
-        setPayrollRecords((result.data ?? []) as PayrollRecord[]);
+        setPayrollRecords((result.data ?? []) as unknown as PayrollRecord[]);
       } else {
         toast.error(result.error?.message || "Error al cargar registros de nómina");
       }
@@ -243,6 +243,7 @@ export function NominaView() {
       const result = await calculateNominaAction({
           periodo,
           forceRecalculate,
+          includeVacationAccrual: false,
       });
       if (result.success) {
         const data = result.data;
@@ -251,11 +252,11 @@ export function NominaView() {
         
         if (data.existing) {
           // Si ya existía nómina, reemplazar los registros actuales
-          setPayrollRecords(newPayrolls);
+          setPayrollRecords(newPayrolls as any);
           toast.info(data.message || `Nómina existente cargada para ${newPayrolls.length} empleados`);
         } else {
           // Si es nueva nómina, agregar a los registros existentes
-          setPayrollRecords(prev => [...newPayrolls, ...prev]);
+          setPayrollRecords(prev => [...(newPayrolls as any), ...prev]);
           toast.success(`Nómina calculada para ${newPayrolls.length} empleados`);
         }
         
@@ -298,7 +299,7 @@ export function NominaView() {
    * Calcula el total de la nómina
    */
   const calculateTotal = () => {
-    return payrollRecords.reduce((total, record) => total + record.salario, 0);
+    return payrollRecords.reduce((total, record) => total + getPayrollPaymentAmount(record), 0);
   };
 
   const calculateAverage = () => {
@@ -315,16 +316,15 @@ export function NominaView() {
     try {
       const result = await updatePagoSalarioAction({
         pgId: id,
-        salario: updates.salario,
         bonificaciones: updates.bonificaciones,
         deducciones: updates.deducciones,
         horasExtras: updates.horasExtras,
       });
       if (result.success && result.data) {
-        const updatedRecord = result.data as PayrollRecord;
+        const updatedRecord = result.data as unknown as PayrollRecord;
         setPayrollRecords(prev => prev.map(r => r.pgId === id ? { ...r, ...updatedRecord } : r));
         toast.success("Registro actualizado");
-      } else {
+      } else if (!result.success) {
         toast.error(result.error?.message || "Error al actualizar");
       }
     } catch (error) {
@@ -342,7 +342,7 @@ export function NominaView() {
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.1 }}
         >
-          <Card className="border-l-4 border-l-chart-2 shadow-sm bg-linear-to-br from-card to-chart-2/10 dark:to-chart-2/5">
+          <Card className="shadow-sm bg-linear-to-br from-card to-chart-2/10 dark:to-chart-2/5">
             <CardContent className="p-6">
               <div className="flex justify-between items-start">
                 <div>
@@ -364,7 +364,7 @@ export function NominaView() {
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.2 }}
         >
-          <Card className="border-l-4 border-l-primary shadow-sm bg-linear-to-br from-card to-primary/10 dark:to-primary/5">
+          <Card className="shadow-sm bg-linear-to-br from-card to-primary/10 dark:to-primary/5">
             <CardContent className="p-6">
               <div className="flex justify-between items-start">
                 <div>
@@ -386,16 +386,16 @@ export function NominaView() {
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.3 }}
         >
-          <Card className="border-l-4 border-l-chart-3 shadow-sm bg-linear-to-br from-card to-chart-3/10 dark:to-chart-3/5">
+          <Card className="shadow-sm bg-linear-to-br from-card to-chart-3/10 dark:to-chart-3/5">
             <CardContent className="p-6">
               <div className="flex justify-between items-start">
                 <div>
                   <p className="text-sm font-medium text-muted-foreground mb-1">Total Empleados</p>
-                  <h3 className="text-3xl font-bold text-violet-600 dark:text-violet-400">
+                  <h3 className="text-3xl font-bold text-purple">
                     {payrollRecords.length}
                   </h3>
                 </div>
-                <div className="p-3 bg-violet-100 dark:bg-violet-900/30 rounded-lg text-violet-600 dark:text-violet-400">
+                <div className="p-3 bg-purple/15 rounded-lg text-purple">
                   <Users className="w-6 h-6" />
                 </div>
               </div>
@@ -548,12 +548,12 @@ export function NominaView() {
                       </TableCell>
                       <TableCell className="py-4">
                         <Badge variant="outline" className="font-mono">
-                          {record.horasExtras}h
+                          {record.horasExtrasHoras ?? record.horasExtras}h
                         </Badge>
                       </TableCell>
                       <TableCell className="py-4 text-right">
                         <span className="font-bold text-lg text-foreground font-mono">
-                          {formatCurrency(record.salario)}
+                          {formatCurrency(getPayrollPaymentAmount(record))}
                         </span>
                       </TableCell>
                       <TableCell className="py-4 text-center">

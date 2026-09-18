@@ -8,6 +8,7 @@ vi.mock('@/lib/api/client', () => ({
 vi.mock('@/lib/prisma', () => ({
   default: {
     ordenReparacion: { findMany: vi.fn(), findUnique: vi.fn(), create: vi.fn(), update: vi.fn(), delete: vi.fn() },
+    cloudinaryAsset: { findMany: vi.fn() },
     $transaction: vi.fn(),
   },
 }))
@@ -32,6 +33,7 @@ describe('reparaciones/ordenes fetcher', () => {
 
   it('getOrdenReparacion should return single order', async () => {
     vi.mocked(prisma.ordenReparacion.findUnique).mockResolvedValue({ id: 'o1', cliente: {} } as any)
+    vi.mocked(prisma.cloudinaryAsset.findMany).mockResolvedValue([] as any)
     const result = await getOrdenReparacion('o1')
     expect(result.id).toBe('o1')
   })

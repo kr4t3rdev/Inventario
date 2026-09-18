@@ -1,3 +1,8 @@
+import type { Cliente } from './clientes';
+import type { Empleado } from './economicos';
+import type { Venta } from './ventas';
+import type { Producto } from './productos';
+
 export interface EquipoReparacion {
 	id: string;
 	nombre: string;

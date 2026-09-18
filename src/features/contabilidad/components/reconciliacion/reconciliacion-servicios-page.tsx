@@ -273,7 +273,7 @@ export function ReconciliacionServiciosPage() {
       <StaggerItem>
         <AnimatedCard>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <Card className={cn(surfaceCardClass, 'border-l-4 border-l-accent')}>
+            <Card className={cn(surfaceCardClass)}>
               <CardContent className="pt-4">
                 <div className="flex items-center justify-between">
                   <div>
@@ -286,7 +286,7 @@ export function ReconciliacionServiciosPage() {
                 </div>
               </CardContent>
             </Card>
-            <Card className={cn(surfaceCardClass, 'border-l-4 border-l-chart-2')}>
+            <Card className={cn(surfaceCardClass)}>
               <CardContent className="pt-4">
                 <div className="flex items-center justify-between">
                   <div>

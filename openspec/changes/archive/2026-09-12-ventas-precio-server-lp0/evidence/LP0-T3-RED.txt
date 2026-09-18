@@ -1,0 +1,87 @@
+
+ RUN  v3.2.4 /Users/arturo/Documents/Proyecto Inventario/TCP
+
+ ❯ src/lib/api/productos-ubicacion.test.ts (9 tests | 3 failed) 15ms
+   ✓ getProductosPorUbicacion > should throw ServerActionError when location not found 2ms
+   ✓ getProductosPorUbicacion > should return products for punto de venta using StockUbicacion when populated 1ms
+   ✓ getProductosPorUbicacion > retorna 0 en stockEnUbicacion cuando no existe StockUbicacion (stock=0) 0ms
+   ✓ getProductosPorUbicacion > should return products for almacen location with StockUbicacion 0ms
+   ✓ getProductosPorUbicacion > should return correct type ProductoConStock[] 0ms
+   ✓ getProductosPorUbicacion > filtra productos con stock>0 cuando no existe StockUbicacion (stockEnUbicacion=0) 0ms
+   × getProductosPorUbicacion > con clienteId incluye en precios las entradas de la lista del PV y la del cliente 7ms
+     → expected 140 to be 160 // Object.is equality
+   × getProductosPorUbicacion > sin clienteId el array precios solo trae entradas de la lista del PV 2ms
+     → expected undefined to deeply equal [ { listaPrecioId: 'lp-1', …(1) } ]
+   × getProductosPorUbicacion > en almacén no incluye precios ni consulta cliente aunque llegue clienteId 1ms
+     → expected undefined to deeply equal []
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 3 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  src/lib/api/productos-ubicacion.test.ts > getProductosPorUbicacion > con clienteId incluye en precios las entradas de la lista del PV y la del cliente
+AssertionError: expected 140 to be 160 // Object.is equality
+
+- Expected
++ Received
+
+- 160
++ 140
+
+ ❯ src/lib/api/productos-ubicacion.test.ts:290:41
+    288|   expect(result).toHaveLength(1);
+    289|   // precioVentaResuelto sigue saliendo de la lista del PV
+    290|   expect(result[0].precioVentaResuelto).toBe(160);
+       |                                         ^
+    291|   // pero el array precios trae ambas listas para que la UI aplique la…
+    292|   expect(result[0].precios).toEqual(
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/3]⎯
+
+ FAIL  src/lib/api/productos-ubicacion.test.ts > getProductosPorUbicacion > sin clienteId el array precios solo trae entradas de la lista del PV
+AssertionError: expected undefined to deeply equal [ { listaPrecioId: 'lp-1', …(1) } ]
+
+- Expected: 
+[
+  {
+    "listaPrecioId": "lp-1",
+    "precio": 160,
+  },
+]
+
++ Received: 
+undefined
+
+ ❯ src/lib/api/productos-ubicacion.test.ts:345:29
+    343| 
+    344|   expect(result).toHaveLength(1);
+    345|   expect(result[0].precios).toEqual([{ listaPrecioId: "lp-1", precio: …
+       |                             ^
+    346|   expect(prisma.cliente.findFirst).not.toHaveBeenCalled();
+    347|  });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/3]⎯
+
+ FAIL  src/lib/api/productos-ubicacion.test.ts > getProductosPorUbicacion > en almacén no incluye precios ni consulta cliente aunque llegue clienteId
+AssertionError: expected undefined to deeply equal []
+
+- Expected: 
+[]
+
++ Received: 
+undefined
+
+ ❯ src/lib/api/productos-ubicacion.test.ts:386:29
+    384| 
+    385|   expect(result).toHaveLength(1);
+    386|   expect(result[0].precios).toEqual([]);
+       |                             ^
+    387|   expect(prisma.precioProducto.findMany).not.toHaveBeenCalled();
+    388|   expect(prisma.cliente.findFirst).not.toHaveBeenCalled();
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/3]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  3 failed | 6 passed (9)
+   Start at  01:36:56
+   Duration  1.90s (transform 105ms, setup 113ms, collect 49ms, tests 15ms, environment 485ms, prepare 216ms)
+

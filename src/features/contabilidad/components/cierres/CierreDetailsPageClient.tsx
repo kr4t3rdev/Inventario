@@ -85,7 +85,7 @@ export function CierreDetailsPageClient({ cierre }: CierreDetailsPageClientProps
       </div>
 
       <CierreDetails
-  // @ts-expect-error
+  // @ts-expect-error TODO: fix type for cierre prop
         cierre={
         normalizedCierre
         }

@@ -29,14 +29,10 @@ import {
 	TableHeader,
 	TableRow,
 } from "@/components/ui/table";
-import { cn } from "@/lib/utils";
+import { cn, formatCurrency } from "@/lib/utils";
 import { exportToPdf, exportToCsv } from "@/lib/export-utils";
 import type { ProductoAnalisis } from "@/features/reportes-financieros/actions-rentabilidad-compra";
 
-const surfaceCardClass = cn(
-	"relative overflow-hidden border-slate-200/60 bg-white/70 shadow-sm backdrop-blur-xl",
-	"dark:border-slate-800/60 dark:bg-slate-900/10",
-);
 
 interface DetailTableProps {
 	productos: ProductoAnalisis[];
@@ -53,12 +49,68 @@ type SortField =
 	| "diasPromedioVenta";
 type SortDir = "asc" | "desc";
 
+interface SortableHeadProps {
+	label: string;
+	field: SortField;
+	sortField: SortField;
+	sortDir: SortDir;
+	onSort: (field: SortField) => void;
+	align?: "left" | "right";
+}
+
+/**
+ * @description Encabezado de columna ordenable accesible: botón real con
+ *   `aria-sort` en la celda para lectores de pantalla.
+ * @param {SortableHeadProps} props - Configuración de la columna.
+ * @returns {JSX.Element} Celda de encabezado ordenable.
+ */
+function SortableHead({
+	label,
+	field,
+	sortField,
+	sortDir,
+	onSort,
+	align = "left",
+}: SortableHeadProps) {
+	const active = sortField === field;
+	return (
+		<TableHead
+			className={cn(align === "right" && "text-right")}
+			aria-sort={
+				active ? (sortDir === "asc" ? "ascending" : "descending") : undefined
+			}
+		>
+			<button
+				type="button"
+				onClick={() => onSort(field)}
+				className={cn(
+					"inline-flex w-full items-center gap-1 font-medium",
+					align === "right" && "justify-end",
+				)}
+			>
+				{label}
+				<ArrowUpDown
+					className={cn("h-3 w-3", !active && "opacity-40")}
+					aria-hidden="true"
+				/>
+				<span className="sr-only">
+					{active
+						? `(ordenado ${sortDir === "asc" ? "ascendente" : "descendente"})`
+						: "(ordenar)"}
+				</span>
+			</button>
+		</TableHead>
+	);
+}
+
 /**
  * @description Tabla detalle del reporte de rentabilidad con exportación CSV/PDF.
  *
  * @param {DetailTableProps} props - Productos del análisis.
  * @returns {JSX.Element} Tabla paginada y ordenable con exportación.
  */
+import { SURFACE_CARD_CLASS } from "@/features/reportes-financieros/lib/reporte-styles"
+
 export function RentabilidadDetailTable({
 	productos,
 	numeroFactura,
@@ -97,8 +149,10 @@ export function RentabilidadDetailTable({
 		}
 	};
 
-	const handleExportCsv = () => {
-		const data = productos.map((p) => ({
+	// Columnas amigables compartidas entre CSV y PDF (evita claves técnicas
+	// como `diasPromedioVenta` en los archivos exportados)
+	const mapExportData = () =>
+		productos.map((p) => ({
 			Producto: p.productoNombre,
 			"Cant. Comprada": p.cantidadComprada,
 			"Costo Unit.": p.costoUnitario,
@@ -112,12 +166,14 @@ export function RentabilidadDetailTable({
 			"Días Prom.": p.diasPromedioVenta?.toFixed(1) ?? "N/A",
 			Velocidad: `${p.velocidadVenta.toFixed(2)} unids/día`,
 		}));
-		exportToCsv(data, `Rentabilidad_${numeroFactura || "Compra"}`);
+
+	const handleExportCsv = () => {
+		exportToCsv(mapExportData(), `Rentabilidad_${numeroFactura || "Compra"}`);
 	};
 
 	const handleExportPdf = () => {
 		exportToPdf(
-			productos,
+			mapExportData(),
 			null,
 			`Rentabilidad de Compra - ${numeroFactura || "Sin factura"}`,
 		);
@@ -135,11 +191,21 @@ export function RentabilidadDetailTable({
 					)}
 				</div>
 				<div className="flex items-center gap-2">
-					<Button variant="outline" size="sm" onClick={handleExportPdf}>
+					<Button
+						variant="outline"
+						size="sm"
+						onClick={handleExportPdf}
+						disabled={productos.length === 0}
+					>
 						<FilePdf className="mr-2 h-4 w-4" />
 						PDF
 					</Button>
-					<Button variant="outline" size="sm" onClick={handleExportCsv}>
+					<Button
+						variant="outline"
+						size="sm"
+						onClick={handleExportCsv}
+						disabled={productos.length === 0}
+					>
 						<FileText className="mr-2 h-4 w-4" />
 						CSV
 					</Button>
@@ -151,71 +217,63 @@ export function RentabilidadDetailTable({
 				<Table>
 					<TableHeader className="bg-muted/50">
 						<TableRow>
-							<TableHead
-								className="cursor-pointer"
-								onClick={() => toggleSort("productoNombre")}
-							>
-								<span className="flex items-center gap-1">
-									Producto
-									<ArrowUpDown className="h-3 w-3" />
-								</span>
-							</TableHead>
-							<TableHead
-								className="cursor-pointer text-right"
-								onClick={() => toggleSort("cantidadComprada")}
-							>
-								<span className="flex items-center justify-end gap-1">
-									Comp.
-									<ArrowUpDown className="h-3 w-3" />
-								</span>
-							</TableHead>
-							<TableHead className="text-right">Costo U.</TableHead>
-							<TableHead
-								className="cursor-pointer text-right"
-								onClick={() => toggleSort("unidadesVendidas")}
-							>
-								<span className="flex items-center justify-end gap-1">
-									Vend.
-									<ArrowUpDown className="h-3 w-3" />
-								</span>
-							</TableHead>
-							<TableHead
-								className="cursor-pointer text-right"
-								onClick={() => toggleSort("ingresos")}
-							>
-								<span className="flex items-center justify-end gap-1">
-									Ingresos
-									<ArrowUpDown className="h-3 w-3" />
-								</span>
-							</TableHead>
-							<TableHead
-								className="cursor-pointer text-right"
-								onClick={() => toggleSort("ganancia")}
-							>
-								<span className="flex items-center justify-end gap-1">
-									Ganancia
-									<ArrowUpDown className="h-3 w-3" />
-								</span>
-							</TableHead>
-							<TableHead
-								className="cursor-pointer text-right"
-								onClick={() => toggleSort("margen")}
-							>
-								<span className="flex items-center justify-end gap-1">
-									Margen
-									<ArrowUpDown className="h-3 w-3" />
-								</span>
-							</TableHead>
-							<TableHead className="text-right">Stock Rest.</TableHead>
-							<TableHead
-								className="cursor-pointer text-right"
-								onClick={() => toggleSort("diasPromedioVenta")}
-							>
-								<span className="flex items-center justify-end gap-1">
-									Días
-									<ArrowUpDown className="h-3 w-3" />
-								</span>
-							</TableHead>
+							<SortableHead
+								label="Producto"
+								field="productoNombre"
+								sortField={sortField}
+								sortDir={sortDir}
+								onSort={toggleSort}
+							/>
+							<SortableHead
+								label="Compradas"
+								field="cantidadComprada"
+								sortField={sortField}
+								sortDir={sortDir}
+								onSort={toggleSort}
+								align="right"
+							/>
+							<TableHead className="text-right">Costo unitario</TableHead>
+							<SortableHead
+								label="Vendidas"
+								field="unidadesVendidas"
+								sortField={sortField}
+								sortDir={sortDir}
+								onSort={toggleSort}
+								align="right"
+							/>
+							<SortableHead
+								label="Ingresos"
+								field="ingresos"
+								sortField={sortField}
+								sortDir={sortDir}
+								onSort={toggleSort}
+								align="right"
+							/>
+							<SortableHead
+								label="Ganancia"
+								field="ganancia"
+								sortField={sortField}
+								sortDir={sortDir}
+								onSort={toggleSort}
+								align="right"
+							/>
+							<SortableHead
+								label="Margen"
+								field="margen"
+								sortField={sortField}
+								sortDir={sortDir}
+								onSort={toggleSort}
+								align="right"
+							/>
+							<TableHead className="text-right">Stock restante</TableHead>
+							<SortableHead
+								label="Días"
+								field="diasPromedioVenta"
+								sortField={sortField}
+								sortDir={sortDir}
+								onSort={toggleSort}
+								align="right"
+							/>
 						</TableRow>
 					</TableHeader>
 					<TableBody>
@@ -244,7 +302,7 @@ export function RentabilidadDetailTable({
 										{p.cantidadComprada}
 									</TableCell>
 									<TableCell className="text-right font-mono text-xs">
-										${p.costoUnitario.toLocaleString()}
+										{formatCurrency(p.costoUnitario)}
 									</TableCell>
 									<TableCell className="text-right">
 										<Badge
@@ -254,7 +312,7 @@ export function RentabilidadDetailTable({
 										</Badge>
 									</TableCell>
 									<TableCell className="text-right font-mono text-xs">
-										${p.ingresos.toLocaleString()}
+										{formatCurrency(p.ingresos)}
 									</TableCell>
 									<TableCell
 										className={cn(
@@ -262,7 +320,7 @@ export function RentabilidadDetailTable({
 											p.ganancia >= 0 ? "text-green-600" : "text-red-600",
 										)}
 									>
-										${p.ganancia.toLocaleString()}
+										{formatCurrency(p.ganancia)}
 									</TableCell>
 									<TableCell className="text-right">
 										<Badge

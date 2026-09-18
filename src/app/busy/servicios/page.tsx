@@ -12,6 +12,9 @@ import { getServiciosAction } from "@/features/servicios/actions"
 import { getVentaServiciosAction } from "@/features/venta-servicios/actions"
 import { ServiciosContent } from "@/features/servicios"
 import { getCurrentUser } from "@/lib/server-actions"
+import { hasPlanFeature } from "@/lib/plan-access"
+import { redirect } from "next/navigation"
+import type { VentaServicio } from "@/app/models/model"
 
 
 export const metadata = {
@@ -21,6 +24,11 @@ export const metadata = {
 export default async function ServiciosPage() {
   // ── Obtener datos y rol del usuario ──
   const user = await getCurrentUser()
+
+  if (user?.role !== 'admin' && !hasPlanFeature(user, 'servicios')) {
+    redirect('/busy')
+  }
+
   const tenantRole = user?.tenantRole
 
   // ── Resolver datos en paralelo en el servidor ──
@@ -30,7 +38,9 @@ export default async function ServiciosPage() {
   ])
 
   const initialServicios = serviciosResult.success ? serviciosResult.data ?? [] : []
-  const initialVentaServicios = ventaServiciosResult.success ? ventaServiciosResult.data ?? [] : []
+  const initialVentaServicios = ventaServiciosResult.success
+    ? (ventaServiciosResult.data ?? []) as unknown as VentaServicio[]
+    : []
 
   return (
     <ServiciosContent

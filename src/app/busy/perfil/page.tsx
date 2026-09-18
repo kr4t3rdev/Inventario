@@ -15,10 +15,14 @@ import { useAuth } from "@/contexts/auth-context"
 import { getProfile, updateProfile } from "@/app/actions/profile"
 import { ServerActionError } from "@/lib/api/errors"
 import { toast } from "sonner"
-import { getAuthToken } from "@/lib/token"
+import {
+  toCloudinaryAssetUploadResult,
+  uploadAsset,
+} from "@/lib/upload/upload-asset"
 import Loader2 from "@/components/Loaders/hoja/loader"
 import { LazyMotion, m as motion, AnimatePresence, useReducedMotion, Variants } from "framer-motion"
 import { cn } from "@/lib/utils"
+import { hasPlanFeature } from "@/lib/plan-access"
 
 const shouldReduceMotion = typeof window !== 'undefined' 
   ? window.matchMedia('(prefers-reduced-motion: reduce)').matches 
@@ -125,39 +129,27 @@ export default function ProfilePage() {
 
   const handleImageUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0]
-    if (!file) return
+    if (!file || !user?.userId) return
 
     setIsUploading(true)
     const loadingToast = toast.loading("Subiendo imagen...")
     
     try {
-      const uploadFormData = new FormData()
-      uploadFormData.append('file', file)
-      
-      const res = await fetch('/api/upload', {
-        method: 'POST',
-        headers: {
-          Authorization: getAuthToken() || '',
-        },
-        body: uploadFormData,
+      const uploaded = await uploadAsset(file, {
+        uploadKey: 'profile.avatar',
+        entityId: user.userId,
       })
+      const asset = toCloudinaryAssetUploadResult(uploaded)
+      setFormData((prev) => ({ ...prev, avatar: uploaded.url }))
       
-      if (!res.ok) throw new Error("Error al subir imagen")
+      const updated = await updateProfile({
+        name: formData.name,
+        avatar: uploaded.url,
+        avatarAsset: asset,
+      })
+      setProfile(updated)
       
-      const data = await res.json()
-      if (data.url) {
-        setFormData((prev) => ({ ...prev, avatar: data.url }))
-        
-        if (profile?.userId) {
-          const updated = await updateProfile({
-            name: formData.name,
-            avatar: data.url,
-          })
-          setProfile(updated)
-        }
-        
-        toast.success("Foto de perfil actualizada correctamente")
-      }
+      toast.success("Foto de perfil actualizada correctamente")
     } catch (error) {
       console.error(error)
       toast.error("Error al actualizar la imagen")
@@ -214,6 +206,7 @@ export default function ProfilePage() {
   }
 
   const accountTime = get_account_time_remaining(profile?.expiresAt)
+  const canUploadAvatar = hasPlanFeature(user, 'upload-profile-avatar')
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -359,33 +352,35 @@ export default function ProfilePage() {
                     </motion.div>
                   </motion.div>
                   
-                  <div className="flex flex-col items-center sm:items-start gap-2">
-                    <motion.div
-                      whileHover={{ scale: 1.02 }}
-                      whileTap={{ scale: 0.98 }}
-                    >
-                      <Button 
-                        type="button" 
-                        variant="outline" 
-                        size="sm"
-                        onClick={() => fileInputRef.current?.click()}
-                        disabled={isUploading}
-                        className="cursor-pointer"
+                  {canUploadAvatar && (
+                    <div className="flex flex-col items-center sm:items-start gap-2">
+                      <motion.div
+                        whileHover={{ scale: 1.02 }}
+                        whileTap={{ scale: 0.98 }}
                       >
-                        <Camera className="mr-2 h-4 w-4" />
-                        Cambiar Foto
-                      </Button>
-                    </motion.div>
-                    <input
-                      ref={fileInputRef}
-                      type="file"
-                      accept="image/*"
-                      onChange={handleImageUpload}
-                      className="hidden"
-                      disabled={isUploading}
-                    />
-                    <p className="text-xs text-muted-foreground">JPG, PNG o GIF. Máx 2MB</p>
-                  </div>
+                        <Button
+                          type="button"
+                          variant="outline"
+                          size="sm"
+                          onClick={() => fileInputRef.current?.click()}
+                          disabled={isUploading}
+                          className="cursor-pointer"
+                        >
+                          <Camera className="mr-2 h-4 w-4" />
+                          Cambiar Foto
+                        </Button>
+                      </motion.div>
+                      <input
+                        ref={fileInputRef}
+                        type="file"
+                        accept="image/*"
+                        onChange={handleImageUpload}
+                        className="hidden"
+                        disabled={isUploading}
+                      />
+                      <p className="text-xs text-muted-foreground">JPG, PNG o GIF. Máx 2MB</p>
+                    </div>
+                  )}
                 </motion.div>
 
                 {/* Form Fields */}

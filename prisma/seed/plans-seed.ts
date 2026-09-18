@@ -9,7 +9,7 @@ import { PrismaClient } from "../../src/generated/prisma";
 
 const prisma = new PrismaClient();
 
-/* ─── Plan 1: Básico — $30/mes ─── */
+/* ─── Plan 1: Básico — $40/mes (referido: $35/mes) ─── */
 
 export const PLAN_BASICO_FEATURES: Record<string, boolean> = {
 	// Inventario
@@ -20,15 +20,25 @@ export const PLAN_BASICO_FEATURES: Record<string, boolean> = {
 	"categorias-ean13": false,
 	unidades: true,
 	"listas-precios": false,
+	"ficha-costo": false,
+	"ficha-costo-bulk": false,
+	// Paridad Odoo: núcleo auditable en Básico
+	kardex: true,
+	"ajustes-inventario": true,
+	"conteo-fisico": true,
+	"unidades-conversion": false,
+	"lotes-series": false,
+	variantes: false,
 	// Operaciones
 	almacenes: true,
 	"puntos-venta": true,
 	transferencias: true,
 	mermas: true,
+	"ubicaciones-avanzadas": false,
 	// Ventas
 	"ventas-pos": true,
 	"ventas-factura": false,
-	"turnos-pos": false,
+	"turnos-pos": true,
 	"arqueo-caja": true,
 	"cuadre-diario": false,
 	ofertas: false,
@@ -39,13 +49,19 @@ export const PLAN_BASICO_FEATURES: Record<string, boolean> = {
 	// Compras
 	proveedores: true,
 	compras: true,
-	servicios: true,
+	servicios: false,
+	"ordenes-compra": false,
+	recepciones: false,
+	reabastecimiento: false,
 	// Financiero
 	gastos: true,
 	contabilidad: true,
+	"transferencias-bancarias": false,
+	"ajustes-bancarios": false,
 	"multi-moneda": false,
 	"rentabilidad-compra": true,
-	"reportes-financieros": false,
+	"inyeccion-capital": false,
+	"reportes-financieros": true,
 	"cuentas-cobrar": false,
 	"cuentas-pagar": false,
 	"prestamos-cash": false,
@@ -56,8 +72,11 @@ export const PLAN_BASICO_FEATURES: Record<string, boolean> = {
 	// Producción
 	produccion: false,
 	reparaciones: false,
+	"mrp-avanzado": false,
 	// RRHH
-	empleados: false,
+	empleados: true,
+	vacaciones: false,
+	asistencia: false,
 	nomina: false,
 	// Empresa y Config
 	"mi-empresa": true,
@@ -67,6 +86,14 @@ export const PLAN_BASICO_FEATURES: Record<string, boolean> = {
 	notificaciones: false,
 	configuracion: true,
 	dashboard: true,
+	"upload-mi-empresa-logo": true,
+	"upload-clientes-logo": false,
+	"upload-vendors-logo": false,
+	"upload-profile-avatar": false,
+	"upload-deudas-cash-receipt": false,
+	"upload-productos-photo": false,
+	"upload-contratos-attachment": false,
+	"upload-contratos-version": false,
 	// Infra
 	"backups-semanal": true,
 	"backups-diario": false,
@@ -74,36 +101,56 @@ export const PLAN_BASICO_FEATURES: Record<string, boolean> = {
 	"api-integraciones": false,
 };
 
-/* ─── Plan 2: Profesional — $70/mes ─── */
+/* ─── Plan 2: Profesional — $80/mes (referido: $75/mes) ─── */
 
 export const PLAN_PROFESIONAL_FEATURES: Record<string, boolean> = {
 	...PLAN_BASICO_FEATURES,
 	// Habilita adicionales
 	"listas-precios": true,
-	"turnos-pos": true,
 	"cuadre-diario": true,
 	ofertas: true,
 	clientes: true,
 	facturacion: true,
 	"series-facturacion": true,
 	"multi-moneda": true,
+	"transferencias-bancarias": true,
+	"ajustes-bancarios": true,
+	"servicios": true,
 	"reportes-financieros": true,
+	"cuentas-cobrar": true,
+	"cuentas-pagar": true,
 	empleados: true,
+	nomina: true,
 	notificaciones: true,
+	"ventas-factura": true,
 	"backups-semanal": false,
 	"backups-diario": true,
+	"upload-clientes-logo": true,
+	"upload-vendors-logo": true,
+	"upload-profile-avatar": true,
+	"upload-deudas-cash-receipt": true,
+	// Paridad Odoo P1 Profesional
+	"ordenes-compra": true,
+	recepciones: true,
+	reabastecimiento: true,
+	"unidades-conversion": true,
+	"lotes-series": true,
+	variantes: true,
+	"ubicaciones-avanzadas": true,
+	"mrp-avanzado": false,
 };
 
-/* ─── Plan 3: Empresarial — $100/mes ─── */
+/* ─── Plan 3: Empresarial — $110/mes (referido: $105/mes) ─── */
 
 export const PLAN_EMPRESARIAL_FEATURES: Record<string, boolean> = {
 	...PLAN_PROFESIONAL_FEATURES,
 	// Habilita todo excepto reparaciones y api-integraciones
 	"productos-stock-masivo": true,
 	"categorias-ean13": true,
-	"ventas-factura": true,
 	produccion: true,
 	nomina: true,
+	vacaciones: true,
+	asistencia: true,
 	"mi-empresa-ean13": true,
 	contratos: true,
 	"cuentas-cobrar": true,
@@ -113,9 +160,17 @@ export const PLAN_EMPRESARIAL_FEATURES: Record<string, boolean> = {
 	anticipos: true,
 	"analisis-estado-cuenta": true,
 	"facturas-vencidas": true,
+	"multitenantmembership": true,
+	"inyeccion-capital": true,
+	"ficha-costo": true,
+	"ficha-costo-bulk": true,
 	// Backups cada hora + restauración point-in-time
 	"backups-diario": false,
 	"backups-tiempo-real": true,
+	"upload-productos-photo": true,
+	"upload-contratos-attachment": true,
+	"upload-contratos-version": true,
+	"mrp-avanzado": true,
 	// NO incluidos
 	reparaciones: false,
 	"api-integraciones": false,
@@ -126,7 +181,7 @@ export const PLAN_EMPRESARIAL_FEATURES: Record<string, boolean> = {
 export async function seedPlans() {
 	const existing = await prisma.plan.count();
 	if (existing > 0) {
-		console.log(`Ya existen ${existing} planes. Se omite seed.`);
+		console.log(`Ya existen ${existing} planes. Se omite seed (los flags de inventario en planes existentes los propaga la migración 20260905130001).`);
 		return;
 	}
 
@@ -136,7 +191,7 @@ export async function seedPlans() {
 				nombre: "Básico",
 				descripcion:
 					"Base sólida para arrancar tu negocio. Incluye productos con código, almacenes, POS, contabilidad en CUP y backups semanales.",
-				precio: 30,
+				precio: 40,
 				duracionDias: 30,
 				maxUsuarios: 3,
 				maxAlmacenes: 2,
@@ -151,8 +206,8 @@ export async function seedPlans() {
 			{
 				nombre: "Profesional",
 				descripcion:
-					"PYME en crecimiento con facturación electrónica, multi-moneda, empleados, clientes y backups diarios.",
-				precio: 70,
+					"PYME en crecimiento con facturación, multi-moneda, cuentas por cobrar y pagar, empleados, clientes y backups diarios.",
+				precio: 80,
 				duracionDias: 30,
 				maxUsuarios: 5,
 				maxAlmacenes: 5,
@@ -167,8 +222,8 @@ export async function seedPlans() {
 			{
 				nombre: "Empresarial",
 				descripcion:
-					"Máxima potencia con producción, nómina, generación EAN-13, cuentas por cobrar/pagar y backups cada hora + restauración point-in-time.",
-				precio: 100,
+					"Máxima potencia con producción, nómina, generación EAN-13 y backups cada hora + restauración point-in-time.",
+				precio: 110,
 				duracionDias: 30,
 				maxUsuarios: 10,
 				maxAlmacenes: 999,
@@ -184,7 +239,7 @@ export async function seedPlans() {
 	});
 
 	console.log(
-		"✅ Planes: Básico ($30), Profesional ($70) y Empresarial ($100) creados.",
+		"✅ Planes: Básico ($40), Profesional ($80) y Empresarial ($110) creados. Descuento por referido: $5 USD.",
 	);
 }
 

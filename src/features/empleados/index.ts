@@ -18,5 +18,9 @@ export {
   WorkScheduleManager,
   AsistenciaForm,
   EnhancedEmpleadoForm,
+  EmpleadoCard,
+  EmpleadosListContent,
   EmpleadosNominaContent,
+  NominaEmpleadoSection,
+  HistorialPagos,
 } from './components';

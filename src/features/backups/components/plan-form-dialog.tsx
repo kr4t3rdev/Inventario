@@ -16,7 +16,8 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog'
 import { Button } from '@/components/ui/button'
-import type { CreatePlanInput, UpdatePlanInput } from '../schemas'
+import type { CreatePlanInput } from '../schemas'
+import type { BackupTenantOption } from './backup-trigger-dialog'
 
 interface PlanFormDialogProps {
   open: boolean
@@ -24,6 +25,7 @@ interface PlanFormDialogProps {
   isSaving: boolean
   error: string | null
   initial?: CreatePlanInput
+  tenants?: BackupTenantOption[]
   onSubmit: (input: CreatePlanInput) => Promise<void>
 }
 
@@ -39,14 +41,18 @@ export function PlanFormDialog({
   isSaving,
   error,
   initial,
+  tenants = [],
   onSubmit,
 }: PlanFormDialogProps) {
   const [type, setType] = useState<'full' | 'tenant' | 'config'>('full')
   const [schedule, setSchedule] = useState('daily')
   const [retention, setRetention] = useState(7)
   const [customCron, setCustomCron] = useState('')
+  const [tenantId, setTenantId] = useState('')
 
   const isEditing = !!initial
+  const requiresTenant = type === 'tenant'
+  const canSubmit = !isSaving && (!requiresTenant || tenantId.length > 0)
 
   // Reset form when dialog opens
   useEffect(() => {
@@ -55,15 +61,18 @@ export function PlanFormDialog({
       setSchedule(initial?.schedule ?? 'daily')
       setRetention(initial?.retention ?? 7)
       setCustomCron('')
+      setTenantId(initial?.tenantId ?? '')
     }
   }, [open, initial])
 
   const handleSubmit = async () => {
     const resolvedSchedule = schedule === 'custom' ? customCron : schedule
     if (!resolvedSchedule) return
+    if (type === 'tenant' && !tenantId) return
 
     const payload: CreatePlanInput = {
       type,
+      tenantId: type === 'tenant' ? tenantId : undefined,
       schedule: resolvedSchedule,
       retention,
     }
@@ -88,7 +97,13 @@ export function PlanFormDialog({
             <label className="text-xs font-medium text-muted-foreground">Tipo de copia</label>
             <select
               value={type}
-              onChange={(e) => setType(e.target.value as typeof type)}
+              onChange={(e) => {
+                const nextType = e.target.value as typeof type
+                setType(nextType)
+                if (nextType !== 'tenant') {
+                  setTenantId('')
+                }
+              }}
               className="h-9 w-full rounded-lg border border-input bg-background px-3 text-sm shadow-sm"
             >
               <option value="full">Completa</option>
@@ -96,6 +111,30 @@ export function PlanFormDialog({
               <option value="config">Configuración</option>
             </select>
           </div>
+
+          {requiresTenant ? (
+            <div className="space-y-1.5">
+              <label
+                htmlFor="plan-tenant"
+                className="text-xs font-medium text-muted-foreground"
+              >
+                Tenant
+              </label>
+              <select
+                id="plan-tenant"
+                value={tenantId}
+                onChange={(e) => setTenantId(e.target.value)}
+                className="h-9 w-full rounded-lg border border-input bg-background px-3 text-sm shadow-sm"
+              >
+                <option value="">Seleccioná un tenant</option>
+                {tenants.map((tenant) => (
+                  <option key={tenant.tenantId} value={tenant.tenantId}>
+                    {tenant.nombre}
+                  </option>
+                ))}
+              </select>
+            </div>
+          ) : null}
 
           {/* Schedule */}
           <div className="space-y-1.5">
@@ -162,7 +201,7 @@ export function PlanFormDialog({
           <Button variant="outline" onClick={() => onOpenChange(false)}>
             Cancelar
           </Button>
-          <Button onClick={handleSubmit} disabled={isSaving}>
+          <Button onClick={handleSubmit} disabled={!canSubmit}>
             {isSaving ? (
               <>
                 <Loader2 className="mr-2 h-4 w-4 animate-spin" />

@@ -9,7 +9,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Button } from "@/components/ui/button"
 import { formatCurrency } from "@/lib/utils"
 import { LazyMotion, m as motion } from "framer-motion"
-import { TrendingUp, Sparkles, ArrowLeft, AlertCircle, ShoppingBag } from "lucide-react"
+import { TrendingUp, ArrowLeft, AlertCircle, ShoppingBag } from "lucide-react"
 import Link from "next/link"
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
 
@@ -17,7 +17,10 @@ export default function EditarVentaPage() {
   const params = useParams()
   const router = useRouter()
   const ventaId = params.id as string
-  const [venta, setVenta] = useState<Awaited<ReturnType<typeof getVentaByIdAction>>['data'] | null>(null)
+  type VentaData = NonNullable<
+    Extract<Awaited<ReturnType<typeof getVentaByIdAction>>, { success: true }>['data']
+  >
+  const [venta, setVenta] = useState<VentaData | null>(null)
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState<unknown>(null)
 
@@ -96,10 +99,11 @@ export default function EditarVentaPage() {
   const items = venta.items || []
   const tieneMultiplesProductos = items.length > 1
   const itemUnico = items.length === 1 ? items[0] : null
-  // @ts-expect-error
-  const productoIdInicial = venta.productoId || itemUnico?.productoId || ""
-  // @ts-expect-error
-  const cantidadInicial = venta.productoId ? venta.cantidad : (itemUnico?.cantidad ?? venta.cantidad ?? 1)
+  const ventaLegacy = venta as VentaData & { productoId?: string; cantidad?: number }
+  const productoIdInicial = ventaLegacy.productoId || itemUnico?.productoId || ""
+  const cantidadInicial = ventaLegacy.productoId
+    ? (ventaLegacy.cantidad ?? 1)
+    : (itemUnico?.cantidad ?? ventaLegacy.cantidad ?? 1)
 
   return (
         <div className="container mx-auto py-4">
@@ -137,16 +141,6 @@ export default function EditarVentaPage() {
                   <h1 className="text-2xl font-bold bg-linear-to-r from-orange-500 to-red-600 bg-clip-text text-transparent">
                     Editar Venta
                   </h1>
-                  <motion.div
-                    className="absolute -right-4 -top-1"
-                    animate={{ rotate: 360, scale: [1, 1.2, 1] }}
-                    transition={{ 
-                      rotate: { duration: 20, repeat: Infinity, ease: "linear" },
-                      scale: { duration: 2, repeat: Infinity, ease: "easeInOut" }
-                    }}
-                  >
-                    <Sparkles className="h-4 w-4 text-yellow-500" />
-                  </motion.div>
                 </div>
               </motion.div>
             </div>
@@ -189,7 +183,7 @@ export default function EditarVentaPage() {
                         </TableRow>
                       </TableHeader>
                       <TableBody>
-                        {items.map((item) => (
+                        {items.map((item: NonNullable<VentaData>['items'][number]) => (
                           <TableRow key={item.id}>
                             <TableCell>{item.producto?.nombre || item.productoId}</TableCell>
                             <TableCell className="text-right">{item.cantidad}</TableCell>

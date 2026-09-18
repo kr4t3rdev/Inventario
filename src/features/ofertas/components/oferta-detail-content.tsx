@@ -8,7 +8,7 @@
 import { useEffect, useState, useTransition } from 'react'
 import Link from 'next/link'
 import { useRouter, useSearchParams } from 'next/navigation'
-import { ArrowLeft, Check, X, FileText, ShoppingCart, Loader2, User, Calendar, Receipt, Printer } from 'lucide-react'
+import { ArrowLeft, Check, X, FileText, ShoppingCart, Loader2, User, Calendar, Receipt, Printer, ClipboardList } from 'lucide-react'
 import { toast } from 'sonner'
 
 import { Button } from '@/components/ui/button'
@@ -24,7 +24,7 @@ import { Badge } from '@/components/ui/badge'
 import { Skeleton } from '@/components/ui/skeleton'
 import { getAnticiposAction } from '@/features/contabilidad/actions-anticipos'
 import { usePuntosDeVenta } from '@/features/puntos-venta/hooks/use-puntos-de-venta'
-import { facturarOfertaAction, updateOfertaAction } from '@/features/ofertas/actions'
+import { facturarOfertaAction, updateOfertaAction, convertirOfertaAPedidoAction } from '@/features/ofertas/actions'
 import { formatCurrency } from '@/lib/utils'
 import { getAuthToken } from '@/lib/token'
 import { getSeriesFacturacionAction } from '@/features/series-facturacion/actions'
@@ -55,6 +55,7 @@ export function OfertaDetailContent({ initialOferta }: OfertaDetailContentProps)
   const [oferta, setOferta] = useState<Oferta | null>(initialOferta)
   const [isPending, startTransition] = useTransition()
   const [isFacturarDialogOpen, setIsFacturarDialogOpen] = useState(false)
+  const [isConvertirOpen, setIsConvertirOpen] = useState(false)
   const [selectedPuntoVenta, setSelectedPuntoVenta] = useState<string>('')
   const [cargoTransporte, setCargoTransporte] = useState<number>(0)
   const [series, setSeries] = useState<any[]>([])
@@ -122,6 +123,32 @@ export function OfertaDetailContent({ initialOferta }: OfertaDetailContentProps)
         }
       } else {
         toast.error(result.error?.message || 'Error al actualizar la oferta')
+      }
+    })
+  }
+
+  /**
+   * @description Convierte la oferta en un pedido de venta (PVE) sin efectos
+   * de stock ni cobro; el pedido se entrega y factura después.
+   */
+  const handleConvertirAPedido = () => {
+    if (!oferta) return
+    if (!selectedPuntoVenta) {
+      toast.error('Seleccione un punto de venta')
+      return
+    }
+    startTransition(async () => {
+      const result = await convertirOfertaAPedidoAction({
+        ofertaId: oferta.id,
+        puntoDeVentaId: selectedPuntoVenta,
+      })
+      if (result.success) {
+        toast.success('Pedido creado desde la oferta')
+        setIsConvertirOpen(false)
+        router.push('/busy/sales')
+        router.refresh()
+      } else {
+        toast.error(result.error?.message || 'No se pudo convertir la oferta')
       }
     })
   }
@@ -224,9 +251,9 @@ export function OfertaDetailContent({ initialOferta }: OfertaDetailContentProps)
       <SidebarInset>
         <div className="container mx-auto py-4 space-y-4">
           <div className="flex items-center gap-4">
-            <Button variant="outline" size="icon" asChild>
+            <Button variant="outline" size="icon" asChild aria-label="Volver a ofertas">
               <Link href="/busy/ofertas">
-                <ArrowLeft className="h-4 w-4" />
+                <ArrowLeft className="h-4 w-4" aria-hidden="true" />
               </Link>
             </Button>
 
@@ -366,6 +393,16 @@ export function OfertaDetailContent({ initialOferta }: OfertaDetailContentProps)
               </Button>
             )}
 
+            {(oferta.estado === 'PENDIENTE' || oferta.estado === 'ACEPTADA') && (
+              <Button
+                variant="outline"
+                onClick={() => setIsConvertirOpen(true)}
+                disabled={isPending}
+              >
+                <ClipboardList className="mr-2 h-4 w-4" /> Convertir a pedido
+              </Button>
+            )}
+
             {oferta.estado === 'ACEPTADA' && (
               <Button
                 onClick={() => setIsFacturarDialogOpen(true)}
@@ -384,6 +421,45 @@ export function OfertaDetailContent({ initialOferta }: OfertaDetailContentProps)
               </Button>
             )}
           </div>
+
+          <Dialog open={isConvertirOpen} onOpenChange={setIsConvertirOpen}>
+            <DialogContent className="sm:max-w-125">
+              <DialogHeader>
+                <DialogTitle>Convertir a pedido</DialogTitle>
+                <DialogDescription>
+                  Se creará un pedido de venta en estado Pedido, sin descontar stock ni cobrar.
+                </DialogDescription>
+              </DialogHeader>
+              <div className="grid gap-4 py-4">
+                <div className="grid grid-cols-4 items-center gap-4">
+                  <label htmlFor="pv-convertir" className="text-right text-sm font-medium">
+                    Punto de Venta
+                  </label>
+                  <Select value={selectedPuntoVenta} onValueChange={setSelectedPuntoVenta}>
+                    <SelectTrigger id="pv-convertir" className="col-span-3">
+                      <SelectValue placeholder="Seleccione punto de venta" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {puntosDeVenta?.map((pv) => (
+                        <SelectItem key={pv.pvId} value={pv.pvId}>
+                          {pv.nombre}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+              <div className="flex justify-end gap-2">
+                <Button variant="outline" onClick={() => setIsConvertirOpen(false)} disabled={isPending}>
+                  Cancelar
+                </Button>
+                <Button onClick={handleConvertirAPedido} disabled={isPending}>
+                  {isPending ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
+                  Crear pedido
+                </Button>
+              </div>
+            </DialogContent>
+          </Dialog>
 
           <Dialog open={isFacturarDialogOpen} onOpenChange={setIsFacturarDialogOpen}>
             <DialogContent className="sm:max-w-125">

@@ -23,6 +23,11 @@ vi.mock('../prisma', () => ({
   },
 }))
 
+vi.mock('@/lib/db/platform-prisma', async () => {
+  const { prisma } = await import('../prisma')
+  return { prismaPlatform: prisma, default: prisma }
+})
+
 vi.mock('jsonwebtoken')
 
 describe('authenticateUser', () => {
@@ -113,6 +118,153 @@ describe('authenticateUser', () => {
     }
 
     expect(result.user).toEqual(mockUser)
+  })
+
+  it('preserves planName and planFeatures from the resolved tenant context', async () => {
+    const mockToken = 'valid.jwt.token'
+
+    const mockRequest = new NextRequest(
+      new Request('http://localhost/api/test', {
+        headers: { authorization: `Bearer ${mockToken}` },
+      })
+    )
+
+    vi.mocked(jwt.verify).mockReturnValue({
+      userId: 'user-1',
+      email: 'test@example.com',
+      tenantId: 'tenant-basic',
+    } as any)
+
+    vi.mocked(prisma.userSession.findUnique).mockResolvedValue({
+      isActive: true,
+      expiresAt: new Date(Date.now() + 1000000),
+      userId: 'user-1',
+    } as any)
+
+    vi.mocked(prisma.user.findUnique).mockResolvedValue({
+      userId: 'user-1',
+      name: 'Test User',
+      email: 'test@example.com',
+      role: 'manager',
+      isActive: true,
+    } as any)
+
+    vi.mocked(prisma.tenantMembership.findUnique).mockResolvedValue({
+      tenantId: 'tenant-basic',
+      userId: 'user-1',
+      tenantRole: 'manager',
+      isActive: true,
+    } as any)
+
+    vi.mocked(prisma.tenantLicense.findFirst).mockResolvedValue({
+      maxUsuarios: 3,
+      maxAlmacenes: 2,
+      maxProductos: 500,
+      expiracion: new Date(Date.now() + 1000000),
+      features: {
+        empleados: true,
+        nomina: true,
+        asistencia: true,
+        vacaciones: true,
+      },
+      plan: {
+        nombre: 'Básico',
+      },
+    } as any)
+
+    const result = await authenticateUser(mockRequest)
+
+    if ('status' in result) {
+      throw new Error('Expected user object, got error response')
+    }
+
+    expect(result.user).toEqual(
+      expect.objectContaining({
+        tenantId: 'tenant-basic',
+        tenantRole: 'manager',
+        planName: 'Básico',
+        planFeatures: {
+          empleados: true,
+          nomina: true,
+          asistencia: true,
+          vacaciones: true,
+        },
+      }),
+    )
+  })
+
+  it('merges plan features with explicit license overrides', async () => {
+    const mockToken = 'valid.jwt.token'
+
+    const mockRequest = new NextRequest(
+      new Request('http://localhost/api/test', {
+        headers: { authorization: `Bearer ${mockToken}` },
+      })
+    )
+
+    vi.mocked(jwt.verify).mockReturnValue({
+      userId: 'user-1',
+      email: 'test@example.com',
+      tenantId: 'tenant-basic',
+    } as any)
+
+    vi.mocked(prisma.userSession.findUnique).mockResolvedValue({
+      isActive: true,
+      expiresAt: new Date(Date.now() + 1000000),
+      userId: 'user-1',
+    } as any)
+
+    vi.mocked(prisma.user.findUnique).mockResolvedValue({
+      userId: 'user-1',
+      name: 'Test User',
+      email: 'test@example.com',
+      role: 'manager',
+      isActive: true,
+    } as any)
+
+    vi.mocked(prisma.tenantMembership.findUnique).mockResolvedValue({
+      tenantId: 'tenant-basic',
+      userId: 'user-1',
+      tenantRole: 'manager',
+      isActive: true,
+    } as any)
+
+    vi.mocked(prisma.tenantLicense.findFirst).mockResolvedValue({
+      maxUsuarios: 3,
+      maxAlmacenes: 2,
+      maxProductos: 500,
+      maxClientes: 50,
+      expiracion: new Date(Date.now() + 1000000),
+      features: {
+        contabilidad: false,
+      },
+      featureOverrides: {
+        'reportes-financieros': false,
+      },
+      plan: {
+        nombre: 'Básico',
+        features: {
+          contabilidad: true,
+          'reportes-financieros': true,
+        },
+      },
+    } as any)
+
+    const result = await authenticateUser(mockRequest)
+
+    if ('status' in result) {
+      throw new Error('Expected user object, got error response')
+    }
+
+    expect(result.user).toEqual(
+      expect.objectContaining({
+        planName: 'Básico',
+        planFeatures: {
+          contabilidad: true,
+          'reportes-financieros': false,
+        },
+      }),
+    )
   })
 
   it('should return error if session is inactive', async () => {
@@ -366,6 +518,7 @@ describe('authenticateUser', () => {
         maxUsuarios: 10,
         maxAlmacenes: 5,
         maxProductos: 500,
+        maxClientes: 250,
       } as any)
 
       const request = new NextRequest(
@@ -384,6 +537,7 @@ describe('authenticateUser', () => {
         maxUsuarios: 10,
         maxAlmacenes: 5,
         maxProductos: 500,
+        maxClientes: 250,
       })
     })
   })

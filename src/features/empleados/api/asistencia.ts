@@ -2,7 +2,7 @@ import { type NextRequest, NextResponse } from "next/server"
 import { prisma } from "@/lib/prisma"
 import { z } from "zod"
 import { Decimal } from "@/generated/prisma/runtime/library"
-import { requireManagerRole, requireTenant } from "@/lib/services/tenant-scope"
+import { requirePermission, requireTenant, requireFeature } from "@/lib/services/tenant-scope"
 import type { AuthenticatedUser } from "@/lib/auth-middleware"
 
 const asistenciaSchema = z.object({
@@ -96,6 +96,7 @@ export async function getAsistenciaHandler(
   user: AuthenticatedUser,
 ) {
   try {
+    requireFeature(user, 'asistencia', 'gestionar asistencia');
     const tenantId = requireTenant(user);
     const { searchParams } = new URL(request.url);
     const employeeId = searchParams.get("employeeId");
@@ -180,7 +181,8 @@ export async function postAsistenciaHandler(
   user: AuthenticatedUser,
 ) {
   try {
-    requireManagerRole(user, "registrar asistencia");
+    requireFeature(user, 'asistencia', 'gestionar asistencia');
+    requirePermission(user, "rrhh.asistencia.registrar", "registrar asistencia");
     const tenantId = requireTenant(user);
     const body = await request.json();
 
@@ -323,6 +325,7 @@ export async function getAsistenciaByIdHandler(
   user: AuthenticatedUser,
 ) {
   try {
+    requireFeature(user, 'asistencia', 'gestionar asistencia');
     const tenantId = requireTenant(user);
     const { id } = await params;
 
@@ -362,7 +365,8 @@ export async function updateAsistenciaHandler(
   user: AuthenticatedUser,
 ) {
   try {
-    requireManagerRole(user, "editar asistencia");
+    requireFeature(user, 'asistencia', 'gestionar asistencia');
+    requirePermission(user, "rrhh.asistencia.editar", "editar asistencia");
     const tenantId = requireTenant(user);
     const { id } = await params;
     const body = await request.json();
@@ -432,7 +436,8 @@ export async function deleteAsistenciaHandler(
   user: AuthenticatedUser,
 ) {
   try {
-    requireManagerRole(user, "eliminar asistencia");
+    requireFeature(user, 'asistencia', 'gestionar asistencia');
+    requirePermission(user, "rrhh.asistencia.eliminar", "eliminar asistencia");
     const tenantId = requireTenant(user);
     const { id } = await params;
 

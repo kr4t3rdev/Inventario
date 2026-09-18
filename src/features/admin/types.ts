@@ -10,6 +10,11 @@ export interface AdminFinance {
   gastos: { totalGastos: number; totalMonto: number }
   cuentasPorCobrar: { total: number; saldoPendiente: number }
   cuentasPorPagar: { total: number; saldoPendiente: number }
+  revenueTrend: Array<{ fecha: string; ingresos: number }>
+  revenueComparison: {
+    current7DaysRevenue: number
+    previous7DaysRevenue: number
+  }
 }
 
 export interface AdminFinanceMeta {
@@ -58,6 +63,11 @@ export interface AdminSystemHealth {
   tenants: { total: number }
   sessions: { active: number }
   licenses: { total: number; active: number; expiringSoon: number }
+  usersTrend: Array<{ fecha: string; usuarios: number }>
+  usersComparison: {
+    current7DaysUsers: number
+    previous7DaysUsers: number
+  }
 }
 
 export interface AdminTenant {
@@ -76,4 +86,46 @@ export interface AdminTenant {
   licenseActive: boolean
   licenseExpiresAt: string | null
   consumption: { usuarios: number; almacenes: number; productos: number }
+}
+
+export interface AdminSubscriptionRevenue {
+  mrr: number
+  arr: number
+  revenueByPlan: Array<{
+    planId: string
+    nombre: string
+    tenants: number
+    mrr: number
+    precio: number
+  }>
+  activeLicenses: number
+  inactiveLicenses: number
+  avgRevenuePerTenant: number
+  churnRate: number
+  ltv: number
+  licenseHistory: Array<{
+    mes: string
+    nuevasLicencias: number
+    renovaciones: number
+    ingresos: number
+    mrr: number
+    licenciasActivas: number
+  }>
+  comparison: {
+    mrrChange: number
+    mrrChangePercent: number
+    revenueChange: number
+    revenueChangePercent: number
+    licensesChange: number
+  } | null
+  dateRange: {
+    start: string
+    end: string
+    months: number
+  }
+  projectedRevenue: {
+    fromExpiring: number
+    fromNew: number
+    expiringCount: number
+  }
 }

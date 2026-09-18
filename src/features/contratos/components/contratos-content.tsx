@@ -5,7 +5,7 @@ import Link from "next/link"
 import { SidebarProvider, SidebarInset } from "@/components/ui/sidebar"
 import { DataTable } from "@/components/data-table"
 import { Button } from "@/components/ui/button"
-import { Plus, ChevronDown, AlertTriangle, Clock, FileText, Sparkles, Settings, Trash2, Pencil } from "lucide-react"
+import { Plus, ChevronDown, AlertTriangle, Clock, FileText, Settings, Trash2, Pencil } from "lucide-react"
 import { ColumnDef } from "@tanstack/react-table"
 import { ArrowUp } from "lucide-react"
 import { toast } from "sonner"
@@ -494,16 +494,7 @@ export function ContratosContent({ initialData = [], initialMeta, configuracion 
                   <h1 className="text-2xl font-bold bg-linear-to-r from-orange-500 to-red-600 bg-clip-text text-transparent">
                     Contratos
                   </h1>
-                  <motion.div
-                    className="absolute -right-4 -top-1"
-                    animate={{ rotate: 360, scale: [1, 1.2, 1] }}
-                    transition={{
-                      rotate: { duration: 20, repeat: Infinity, ease: "linear" },
-                      scale: { duration: 2, repeat: Infinity, ease: "easeInOut" }
-                    }}
-                  >
-                    <Sparkles className="h-4 w-4 text-yellow-500" />
-                  </motion.div>
+
                 </div>
               </motion.div>
 

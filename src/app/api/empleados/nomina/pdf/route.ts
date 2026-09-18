@@ -88,12 +88,14 @@ async function getNominaPdfHandler(
     const totalSalarios = pagos.reduce((s, p) => s + p.salario, 0);
     const totalBonos = pagos.reduce((s, p) => s + (p.bonificaciones || 0), 0);
     const totalDeducciones = pagos.reduce((s, p) => s + (p.deducciones || 0), 0);
-    const totalHorasExtras = pagos.reduce((s, p) => s + (p.horasExtras || 0), 0);
+    // B-05: el dinero de horas extras viene del campo calculado en servidor,
+    // nunca de multiplicar horas como si fueran pesos.
+    const totalHorasExtras = pagos.reduce((s, p) => s + (p.montoHorasExtras ?? 0), 0);
     const totalNeto = pagos.reduce((s, p) => {
       const bono = p.bonificaciones || 0;
       const ded = p.deducciones || 0;
-      const he = (p.horasExtras || 0) * (p.empleado.salarioBases / 240) * 1.5;
-      return s + p.salario + bono + Math.round(he) - ded;
+      const he = p.montoHorasExtras ?? 0;
+      return s + p.salario + bono + he - ded;
     }, 0);
 
     page.drawText(`Total Empleados: ${pagos.length}`, {
@@ -180,7 +182,7 @@ async function getNominaPdfHandler(
       const nombre = `${pago.empleado.nombre} ${pago.empleado.apellido}`.slice(0, 22);
       const bono = pago.bonificaciones || 0;
       const ded = pago.deducciones || 0;
-      const he = Math.round((pago.horasExtras || 0) * (pago.empleado.salarioBases / 240) * 1.5);
+      const he = pago.montoHorasExtras ?? 0;
       const neto = pago.salario + bono + he - ded;
 
       if (index % 2 === 0) {

@@ -1,8 +1,8 @@
 'use client';
 
-import { useMemo, useState, useEffect, useCallback } from 'react';
-import { LazyMotion, m as motion, useReducedMotion } from 'framer-motion';
-import { ArrowRightLeft, Plus, RefreshCw, Sparkles } from 'lucide-react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
+import { m as motion, useReducedMotion } from 'framer-motion';
+import { ArrowRightLeft, Plus, RefreshCw } from 'lucide-react';
 import { toast } from 'sonner';
 
 import { Badge } from '@/components/ui/badge';
@@ -11,6 +11,11 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { cn } from '@/lib/utils';
 import { getMonedasAction, getTasasActualesAction } from '@/features/contabilidad/actions-exchange';
+import type {
+  ExchangeCurrentRate,
+  ExchangeCurrentRatesResult,
+  ExchangeCurrencyRecord,
+} from '@/features/contabilidad/services/exchange-types';
 
 import { ConversionDialog } from './conversion-dialog';
 import { HistorialTasasTable } from './historial-tasas-table';
@@ -36,10 +41,10 @@ export function ExchangeManager() {
   const [showMonedaForm, setShowMonedaForm] = useState(false);
   const [showTasaForm, setShowTasaForm] = useState(false);
   const [showConversionDialog, setShowConversionDialog] = useState(false);
-  const [editingMoneda, setEditingMoneda] = useState<any>(null);
+  const [editingMoneda, setEditingMoneda] = useState<ExchangeCurrencyRecord | null>(null);
 
-  const [monedasData, setMonedasData] = useState<any[]>([]);
-  const [tasasActualesData, setTasasActualesData] = useState<any>(null);
+  const [monedasData, setMonedasData] = useState<ExchangeCurrencyRecord[]>([]);
+  const [tasasActualesData, setTasasActualesData] = useState<ExchangeCurrentRatesResult | null>(null);
   const [loadingMonedas, setLoadingMonedas] = useState(true);
   const [loadingTasas, setLoadingTasas] = useState(true);
   const [refreshKey, setRefreshKey] = useState(0);
@@ -57,16 +62,17 @@ export function ExchangeManager() {
 
   useEffect(() => { fetchData(); }, [fetchData, refreshKey]);
 
-  const monedas = useMemo(() => Array.isArray(monedasData) ? monedasData : [], [monedasData]) as any[];
+  const monedas = useMemo(() => monedasData ?? [], [monedasData]);
 
-  const tasasActualesList = useMemo(() => {
-    if (!tasasActualesData) return [];
-    if (Array.isArray(tasasActualesData.tasas)) return tasasActualesData.tasas;
-    if (Array.isArray(tasasActualesData)) return tasasActualesData;
-    return [];
-  }, [tasasActualesData]) as any[];
+  const tasasActualesList = useMemo<ExchangeCurrentRate[]>(() => {
+    if (!tasasActualesData) {
+      return [];
+    }
 
-  const monedaPrincipal = monedas.find((moneda) => moneda?.esPrincipal);
+    return tasasActualesData.tasas ?? [];
+  }, [tasasActualesData]);
+
+  const monedaPrincipal = monedas.find((moneda) => moneda.esPrincipal);
   const loadingGeneral = loadingMonedas || loadingTasas;
 
   const containerVariants = {
@@ -175,9 +181,7 @@ export function ExchangeManager() {
             </CardHeader>
             <CardContent className="flex flex-wrap items-center justify-between gap-4">
               <div className="flex items-center gap-4">
-                <div className="rounded-xl bg-blue-100 p-3 text-blue-600 dark:bg-blue-900/10 dark:text-blue-300">
-                  <Sparkles className="h-5 w-5" />
-                </div>
+                <div className="rounded-xl bg-blue-100 p-3 text-blue-600 dark:bg-blue-900/10 dark:text-blue-300" />
                 <div>
                   <div className="text-lg font-semibold text-slate-900 dark:text-slate-100">
                     {monedaPrincipal.nombre}
@@ -288,7 +292,7 @@ export function ExchangeManager() {
             </div>
 
             <div className="grid gap-4">
-              {tasasActualesList.map((tasa, index) => {
+              {tasasActualesList.map((tasa: any, index) => {
                 const id = tasa?.tasaId ?? `${tasa?.monedaOrigenId ?? tasa?.monedaOrigen}-${tasa?.monedaDestino ?? 'na'}`;
                 const monedaOrigen = tasa?.monedaOrigenId ?? tasa?.monedaOrigen ?? 'N/A';
                 const monedaDestino = tasa?.monedaDestino ?? tasa?.monedaDestinoId ?? 'N/A';
@@ -352,7 +356,7 @@ export function ExchangeManager() {
           <TabsContent value="historial">
             <Card className={surfaceCardClass}>
               <CardContent className="pt-6">
-                <HistorialTasasTable />
+                <HistorialTasasTable refreshKey={refreshKey} />
               </CardContent>
             </Card>
           </TabsContent>
@@ -373,6 +377,7 @@ export function ExchangeManager() {
       {showTasaForm && (
         <TasaCambioForm
           onClose={() => setShowTasaForm(false)}
+          refreshKey={refreshKey}
           onSuccess={() => {
             setShowTasaForm(false);
             setRefreshKey(k => k + 1);
@@ -380,7 +385,13 @@ export function ExchangeManager() {
         />
       )}
 
-      {showConversionDialog && <ConversionDialog onClose={() => setShowConversionDialog(false)} />}
+      {showConversionDialog && (
+        <ConversionDialog
+          onClose={() => setShowConversionDialog(false)}
+          refreshKey={refreshKey}
+          onSuccess={handleRefresh}
+        />
+      )}
     </motion.div>
   );
 }

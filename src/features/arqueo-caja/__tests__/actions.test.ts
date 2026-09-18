@@ -16,6 +16,9 @@ const mockPrisma = vi.hoisted(() => ({
 		create: vi.fn(),
 		findMany: vi.fn(),
 	},
+	devolucionVenta: {
+		aggregate: vi.fn().mockResolvedValue({ _sum: { montoReembolsado: 0 } }),
+	},
 	$transaction: vi.fn((fn: any) => fn(mockPrisma)),
 }));
 
@@ -97,6 +100,50 @@ describe("getEsperadosArqueoAction", () => {
 			expect(result.data.esperadoTarjeta).toBe(50000);
 			expect(result.data.esperadoEfectivoUsd).toBe(0);
 		}
+	});
+
+	it("descuenta los reembolsos en efectivo del turno (DNC)", async () => {
+		mockPrisma.turnoPuntoVenta.findFirst.mockResolvedValue(buildTurno());
+		mockPrisma.devolucionVenta.aggregate.mockResolvedValue({
+			_sum: { montoReembolsado: 20000 },
+		});
+
+		const result = await getEsperadosArqueoAction("turno-1", mockUser);
+
+		expect(result.success).toBe(true);
+		if (result.success && result.data) {
+			expect(result.data.esperadoEfectivoCup).toBe(80000);
+		}
+		// y sin reembolsos el cálculo queda intacto
+		mockPrisma.devolucionVenta.aggregate.mockResolvedValue({
+			_sum: { montoReembolsado: null },
+		});
+		const result2 = await getEsperadosArqueoAction("turno-1", mockUser);
+		if (result2.success && result2.data) {
+			expect(result2.data.esperadoEfectivoCup).toBe(100000);
+		}
+	});
+
+	it("requests only active sales for expected totals", async () => {
+		mockPrisma.turnoPuntoVenta.findFirst.mockResolvedValue(
+			buildTurno({
+				ventas: buildTurno().ventas,
+			}),
+		);
+
+		const result = await getEsperadosArqueoAction("turno-1", mockUser);
+
+		expect(result.success).toBe(true);
+		if (result.success && result.data) {
+			expect(result.data.esperadoEfectivoCup).toBe(100000);
+		}
+		expect(mockPrisma.turnoPuntoVenta.findFirst).toHaveBeenCalledWith(
+			expect.objectContaining({
+				include: expect.objectContaining({
+					ventas: expect.objectContaining({ where: { deletedAt: null } }),
+				}),
+			}),
+		);
 	});
 
 	it("should fail if turno does not exist", async () => {
@@ -198,6 +245,56 @@ describe("realizarArqueoAction", () => {
 			expect(result.data.diferencias.cup).toBeLessThan(0);
 			expect(result.data.diferencias.cup).toBe(-50000);
 		}
+	});
+
+	it("requests only active sales when creating an arqueo", async () => {
+		mockPrisma.turnoPuntoVenta.findFirst.mockResolvedValue(
+			buildTurno({
+				ventas: [buildTurno().ventas[0]],
+			}),
+		);
+		mockPrisma.arqueoCaja.create.mockResolvedValue({ id: "arqueo-1" });
+
+		const result = await realizarArqueoAction(
+			{
+				turnoId: "turno-1",
+				billetes1000Cup: 0,
+				billetes500Cup: 0,
+				billetes200Cup: 0,
+				billetes100Cup: 10,
+				billetes50Cup: 0,
+				billetes20Cup: 0,
+				billetes10Cup: 0,
+				billetes5Cup: 0,
+				billetes1Cup: 0,
+				monedasCup: 0,
+				billetes100Usd: 0,
+				billetes50Usd: 0,
+				billetes20Usd: 0,
+				billetes10Usd: 0,
+				billetes5Usd: 0,
+				billetes1Usd: 0,
+				monedasUsd: 0,
+				totalTarjeta: 0,
+				totalTransferencia: 0,
+				totalCredito: 0,
+			},
+			mockUser,
+		);
+
+		expect(result.success).toBe(true);
+		expect(mockPrisma.arqueoCaja.create).toHaveBeenCalledWith(
+			expect.objectContaining({
+				data: expect.objectContaining({ esperadoEfectivoCup: 100000 }),
+			}),
+		);
+		expect(mockPrisma.turnoPuntoVenta.findFirst).toHaveBeenCalledWith(
+			expect.objectContaining({
+				include: expect.objectContaining({
+					ventas: expect.objectContaining({ where: { deletedAt: null } }),
+				}),
+			}),
+		);
 	});
 
 	it("should detect sobrante when contado > esperado", async () => {

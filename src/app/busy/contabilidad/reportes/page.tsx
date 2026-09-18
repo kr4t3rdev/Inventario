@@ -1,39 +1,22 @@
 'use client';
 
 import dynamic from 'next/dynamic';
+import { useRouter } from 'next/navigation';
 import Link from 'next/link';
+import { useAuth } from '@/contexts/auth-context';
+import { shouldHideBasicAccountingItem } from '@/lib/plan-access';
 import { useEffect, useState } from 'react';
 import { LazyMotion, m as motion, useReducedMotion } from 'framer-motion';
-import { ArrowLeft, BarChart3, Sparkles } from 'lucide-react';
+import { ArrowLeft, BarChart3 } from 'lucide-react';
 
 import { ContabilidadBreadcrumb } from '@/features/contabilidad/components/contabilidad-breadcrumb';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 ;
-import { Skeleton } from '@/components/ui/skeleton';
+import { ReportesShellLoader } from '@/features/reportes-financieros/components/reportes-shell-loader';
 import { cn } from '@/lib/utils';
 
-/**
- * @description Loader inicial para la página de reportes contables.
- * @returns {JSX.Element} Esqueleto de precarga del módulo.
- */
-function ReportesPageLoader() {
-  return (
-    <div className="space-y-6">
-      <div className="space-y-2">
-        <Skeleton className="h-5 w-40" />
-        <Skeleton className="h-8 w-80" />
-        <Skeleton className="h-4 w-lg max-w-full" />
-      </div>
-      <div className="grid gap-4 md:grid-cols-3">
-        <Skeleton className="h-10 rounded-xl" />
-        <Skeleton className="h-10 rounded-xl" />
-        <Skeleton className="h-10 rounded-xl" />
-      </div>
-      <Skeleton className="h-160 w-full rounded-2xl" />
-    </div>
-  );
-}
+const ReportesPageLoader = () => <ReportesShellLoader kpis={3} />;
 
 const ReportesAnalyticsPage = dynamic(
   () =>
@@ -61,11 +44,25 @@ const statusBadgeClass = cn(
  */
 export default function ReportesPage() {
   const shouldReduceMotion = useReducedMotion();
+  const router = useRouter();
+  const { user, loading } = useAuth();
   const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
     setMounted(true);
   }, []);
+
+  const isBlocked =
+    !loading &&
+    user?.role !== 'admin' &&
+    (shouldHideBasicAccountingItem(user, 'Reportes Contables') ||
+      user?.planFeatures?.contabilidad !== true);
+
+  useEffect(() => {
+    if (isBlocked) {
+      router.replace('/busy/contabilidad');
+    }
+  }, [isBlocked, router]);
 
   const fadeIn = {
     hidden: { opacity: 0 },
@@ -99,6 +96,8 @@ export default function ReportesPage() {
     },
   };
 
+  if (isBlocked) return null;
+
   if (!mounted) {
     return (
           <div className="space-y-8 p-8">
@@ -131,8 +130,8 @@ export default function ReportesPage() {
                   className="h-8 w-8 text-muted-foreground hover:text-foreground"
                   asChild
                 >
-                  <Link href="/busy/contabilidad">
-                    <ArrowLeft className="h-4 w-4" />
+                  <Link href="/busy/contabilidad" aria-label="Volver a contabilidad">
+                    <ArrowLeft className="h-4 w-4" aria-hidden="true" />
                   </Link>
                 </Button>
                 <div className="flex items-center gap-3">
@@ -150,7 +149,6 @@ export default function ReportesPage() {
             </div>
 
             <Badge className={statusBadgeClass}>
-              <Sparkles className="mr-1 h-3.5 w-3.5" />
               Insights activos
             </Badge>
           </motion.div>

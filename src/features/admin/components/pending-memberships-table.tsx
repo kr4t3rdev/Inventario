@@ -1,7 +1,7 @@
 'use client'
 
 import { LazyMotion, m as motion, AnimatePresence, useReducedMotion } from 'framer-motion'
-import { Loader2, RefreshCw, UserPlus, Sparkles, Check, X, Clock, PartyPopper } from 'lucide-react'
+import { Loader2, RefreshCw, UserPlus, Check, X, Clock, PartyPopper } from 'lucide-react'
 import { formatDistanceToNow } from 'date-fns'
 import { es } from 'date-fns/locale'
 
@@ -80,8 +80,8 @@ export function PendingMembershipsTable({
       <CardHeader className="flex flex-col gap-4 border-b bg-muted/30 sm:flex-row sm:items-center sm:justify-between">
         <div className="flex items-center gap-4">
           <CardTitle>Solicitudes Pendientes</CardTitle>
-          <Button variant="ghost" size="icon" onClick={onRefresh} className="h-8 w-8">
-            <RefreshCw className="h-4 w-4" />
+          <Button variant="ghost" size="icon" onClick={onRefresh} className="h-8 w-8" aria-label="Refrescar solicitudes">
+            <RefreshCw className="h-4 w-4" aria-hidden="true" />
           </Button>
         </div>
       </CardHeader>
@@ -96,13 +96,7 @@ export function PendingMembershipsTable({
               <div className="flex h-20 w-20 items-center justify-center rounded-full bg-emerald-100 dark:bg-emerald-900/30">
                 <PartyPopper className="h-10 w-10 text-emerald-600 dark:text-emerald-400" />
               </div>
-              <motion.div
-                animate={shouldReduceMotion ? { rotate: 0 } : { rotate: [0, 10, -10, 0] }}
-                transition={{ duration: 2, repeat: Infinity, repeatDelay: 3 }}
-                className="absolute -right-1 -top-1"
-              >
-                <Sparkles className="h-5 w-5 text-amber-500" />
-              </motion.div>
+
             </div>
             <div className="space-y-1">
               <h3 className="text-lg font-semibold">¡Todo al día!</h3>
@@ -180,7 +174,7 @@ export function PendingMembershipsTable({
                           <Button
                             variant="default"
                             size="sm"
-                            className="h-8 gap-1.5 bg-violet-600 text-white hover:bg-violet-700"
+                            className="h-8 gap-1.5 bg-purple text-white hover:bg-purple/90"
                             onClick={() => onApprove(membership)}
                           >
                             <Check className="h-3.5 w-3.5" />

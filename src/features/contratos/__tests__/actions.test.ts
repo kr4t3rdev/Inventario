@@ -8,6 +8,7 @@ vi.mock('next/cache', () => ({ revalidatePath: vi.fn() }));
 vi.mock('@/features/contratos/lib/numeroContratoGenerator', () => ({
   generarProximoConsecutivo: vi.fn(),
   formatearNumeroContrato: vi.fn(),
+  crearContratoConConsecutivo: vi.fn(),
 }));
 vi.mock('@/lib/prisma', () => ({
   prisma: {
@@ -22,13 +23,14 @@ vi.mock('@/lib/prisma', () => ({
       deleteMany: vi.fn(),
     },
     contratoVersion: { create: vi.fn() },
-    cliente: { update: vi.fn() },
+    cliente: { findFirst: vi.fn(), update: vi.fn() },
+    vendor: { findFirst: vi.fn() },
   },
 }));
 
 import { getCurrentUser } from '@/lib/server-actions/get-current-user';
 import { prisma } from '@/lib/prisma';
-import { generarProximoConsecutivo, formatearNumeroContrato } from '@/features/contratos/lib/numeroContratoGenerator';
+import { generarProximoConsecutivo, formatearNumeroContrato, crearContratoConConsecutivo } from '@/features/contratos/lib/numeroContratoGenerator';
 import {
   getContratosAction,
   getContratoByIdAction,
@@ -97,8 +99,9 @@ describe('Contratos Server Actions', () => {
 
     it('crea contrato exitosamente', async () => {
       vi.mocked(getCurrentUser).mockResolvedValue(mockUser);
-      vi.mocked(generarProximoConsecutivo).mockResolvedValue(1);
-      vi.mocked(formatearNumeroContrato).mockReturnValue('COMPRA_VENTA-2025-001');
+      vi.mocked(prisma.cliente.findFirst).mockResolvedValue({ clienteId: 'cli-1' } as any);
+      vi.mocked(crearContratoConConsecutivo).mockImplementation(async ({ create }: any) =>
+        create({ numeroConsecutivo: 1, numeroContrato: 'CV-0001' }));
       vi.mocked(prisma.contrato.create).mockResolvedValue(mockContrato);
       vi.mocked(prisma.contratoVersion.create).mockResolvedValue({} as any);
       vi.mocked(prisma.cliente.update).mockResolvedValue({} as any);
@@ -106,7 +109,9 @@ describe('Contratos Server Actions', () => {
       const result = await createContratoAction(validInput as any);
 
       expect(result.success).toBe(true);
-      expect(generarProximoConsecutivo).toHaveBeenCalledWith('COMPRA_VENTA');
+      expect(crearContratoConConsecutivo).toHaveBeenCalledWith(
+        expect.objectContaining({ tenantId: 'tenant-test', tipo: 'COMPRA_VENTA' }),
+      );
     });
 
     it('rechaza si faltan datos requeridos', async () => {

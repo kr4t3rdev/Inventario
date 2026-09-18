@@ -4,11 +4,18 @@ import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import { withAction, ActionError } from "@/lib/server-actions";
 import { prisma } from "@/lib/prisma";
-import { requireTenant, requireManagerRole } from "@/lib/services/tenant-scope";
+import {
+	requireTenant,
+	requirePermission,
+	requireFeature,
+	validateTenantLimit,
+} from "@/lib/services/tenant-scope";
 import { withPeriodValidation } from "@/lib/services/with-period-validation";
 import { upsertStockUbicacion } from "@/lib/services/stock-ubicacion-service";
 import { executeProductInstanceCreationWorkflow } from "@/lib/restock-utils";
 import { recordCostChange, CostChangeReason } from "@/lib/cost-history-utils";
+import { syncOwnerAssets } from "@/lib/upload/cloudinary-admin";
+import { PRODUCTO_SELECT, ProductoService } from "./services/producto-service";
 import {
 	productoSchema,
 	productoUpdateSchema,
@@ -27,50 +34,41 @@ import type {
 	RestockHistoryResponse,
 	RestockHistoryItem,
 } from "./types";
+
+/**
+ * @description Verifica que todas las listas de precios indicadas pertenezcan al tenant activo.
+ * @param {string} tenantId - Identificador del tenant autenticado.
+ * @param {Array<{ listaPrecioId: string }>} precios - Precios asociados al producto.
+ * @returns {Promise<void>} Finaliza cuando todas las listas son válidas.
+ * @throws {ActionError} Si alguna lista no pertenece al tenant.
+ */
+async function validatePriceListsTenant(
+	tenantId: string,
+	precios: Array<{ listaPrecioId: string }>,
+): Promise<void> {
+	const listaIds = [...new Set(precios.map((precio) => precio.listaPrecioId))];
+	if (listaIds.length === 0) return;
+
+	const validListCount = await prisma.listaPrecio.count({
+		where: { id: { in: listaIds }, tenantId },
+	});
+	if (validListCount !== listaIds.length) {
+		throw new ActionError(
+			"Una o más listas de precios no pertenecen a la empresa activa",
+			"INVALID_PRICE_LIST",
+		);
+	}
+}
 // ─── EAN-13: shared utilities ─────────────────────────────
 import {
 	resolveTaxonomySegments,
-	generateProductCodeWithRetry,
 	normalizeProveedorCodigo,
 } from "@/lib/product-business-code";
+import { generateProductCodeWithRetry } from "@/lib/product-business-code.server";
 import {
 	FindNextAvailableSurtido,
 	ValidateAssembledCode,
 } from "@/lib/ean13-utils";
-
-// ─── Select reutilizable ──────────────────────────────────
-
-const PRODUCTO_SELECT = {
-	id: true,
-	nombre: true,
-	descripcion: true,
-	precioCosto: true,
-	precioVenta: true,
-	stock: true,
-	stockMinimo: true,
-	codigoInterno: true,
-	codigoNegocio: true,
-	proveedorCodigo: true,
-	idSeccionCodigo: true,
-	especificoCodigo: true,
-	surtidoCodigo: true,
-	categoriaId: true,
-	subcategoriaId: true,
-	unidadId: true,
-	vendorId: true,
-	almacenId: true,
-	puntoDeVentaId: true,
-	fotos: true,
-	esCompuesto: true,
-	createdAt: true,
-	updatedAt: true,
-	tenantId: true,
-	categoria: { select: { catId: true, nombre: true } },
-	subcategoria: { select: { catId: true, nombre: true, parentId: true } },
-	unidad: { select: { unidadId: true, nombre: true, simbolo: true } },
-	vendor: { select: { vendorId: true, nombre: true } },
-	precios: { select: { listaPrecioId: true, precio: true } },
-} as const;
 
 // ─── Server Actions ────────────────────────────────────────
 
@@ -80,11 +78,7 @@ const PRODUCTO_SELECT = {
 export const getProductosAction = withAction(
 	async (_input: void, user: AuthenticatedUser) => {
 		const tenantId = requireTenant(user);
-		return prisma.producto.findMany({
-			where: { tenantId },
-			select: PRODUCTO_SELECT,
-			orderBy: { createdAt: "desc" },
-		});
+		return ProductoService.list(tenantId);
 	},
 );
 
@@ -94,17 +88,7 @@ export const getProductosAction = withAction(
 export const getProductoByIdAction = withAction(
 	async (id: string, user: AuthenticatedUser) => {
 		const tenantId = requireTenant(user);
-
-		const producto = await prisma.producto.findFirst({
-			where: { id, tenantId },
-			select: PRODUCTO_SELECT,
-		});
-
-		if (!producto) {
-			throw new ActionError("Producto no encontrado", "NOT_FOUND");
-		}
-
-		return producto;
+		return ProductoService.getById({ tenantId, productId: id });
 	},
 );
 
@@ -118,8 +102,21 @@ export const createProductoAction = withAction(
 		const parsed = productoSchema.parse(input);
 		const tenantId = requireTenant(user);
 
+		requirePermission(user, "inventario.productos.crear", "crear productos");
+		await validatePriceListsTenant(tenantId, parsed.precios ?? []);
+		requireFeature(user, "productos", "gestión de productos");
+		await validateTenantLimit(
+			tenantId,
+			"maxProductos",
+			await prisma.producto.count({ where: { tenantId } }),
+		);
+
 		// ── Detectar si la empresa usa EAN-13 ──
-		const miEmpresa = await prisma.miEmpresa.findFirst({
+		// ⚠️ MULTI-TENANT: MiEmpresa es 1:1 por tenant (id siempre vale 1,
+		// tenantId es UNIQUE). Sin filtrar por tenantId, leemos el flag de
+		// un tenant arbitrario, lo que rompe toda la lógica EAN-13.
+		const miEmpresa = await prisma.miEmpresa.findUnique({
+			where: { tenantId },
 			select: { usaCodigoEan13: true },
 		});
 		const usaCodigoEan13 = miEmpresa?.usaCodigoEan13 ?? false;
@@ -181,12 +178,14 @@ export const createProductoAction = withAction(
 			}
 
 			const [categoria, subcategoria] = await Promise.all([
-				prisma.categoria.findUnique({
-					where: { catId: parsed.categoriaId },
+				// ⚠️ MULTI-TENANT: filtrar por tenantId para que un usuario malicioso
+				// no pueda referenciar categorías de otros tenants.
+				prisma.categoria.findFirst({
+					where: { tenantId, catId: parsed.categoriaId },
 					select: { catId: true, nombre: true },
 				}),
-				prisma.categoria.findUnique({
-					where: { catId: parsed.subcategoriaId },
+				prisma.categoria.findFirst({
+					where: { tenantId, catId: parsed.subcategoriaId },
 					select: { catId: true, nombre: true, parentId: true },
 				}),
 			]);
@@ -312,6 +311,15 @@ export const createProductoAction = withAction(
 			}
 
 			revalidatePath("/busy/products");
+			if (parsed.photoAssets) {
+				await syncOwnerAssets({
+					tenantId,
+					ownerType: "producto",
+					ownerId: resultado.producto.id,
+					slot: "photo",
+					assets: parsed.photoAssets,
+				});
+			}
 			return resultado.producto;
 		}
 
@@ -358,6 +366,16 @@ export const createProductoAction = withAction(
 			});
 		}
 
+		if (parsed.photoAssets) {
+			await syncOwnerAssets({
+				tenantId,
+				ownerType: "producto",
+				ownerId: producto.id,
+				slot: "photo",
+				assets: parsed.photoAssets,
+			});
+		}
+
 		revalidatePath("/busy/products");
 		return producto;
 	},
@@ -370,18 +388,19 @@ export const createProductoAction = withAction(
  */
 export const updateProductoAction = withAction(
 	async (input: ProductoUpdateInput, user: AuthenticatedUser) => {
-		requireManagerRole(user, "editar productos");
+		requirePermission(user, "inventario.productos.editar", "editar productos");
 		const parsed = productoUpdateSchema.parse(input);
 		const { id, ...updateData } = parsed;
 
 		const tenantId = requireTenant(user);
+		await validatePriceListsTenant(tenantId, parsed.precios ?? []);
 
 		const existing = await prisma.producto.findUnique({
 			where: { id },
 			select: { id: true, tenantId: true, stock: true, almacenId: true },
 		});
 
-		if (!existing) {
+		if (!existing || existing.tenantId !== tenantId) {
 			throw new ActionError("Producto no encontrado", "NOT_FOUND");
 		}
 
@@ -522,6 +541,16 @@ export const updateProductoAction = withAction(
 			return updated;
 		});
 
+		if (parsed.photoAssets) {
+			await syncOwnerAssets({
+				tenantId,
+				ownerType: "producto",
+				ownerId: producto.id,
+				slot: "photo",
+				assets: parsed.photoAssets,
+			});
+		}
+
 		revalidatePath("/busy/products");
 		return producto;
 	},
@@ -534,7 +563,7 @@ export const updateProductoAction = withAction(
  */
 export const deleteProductoAction = withAction(
 	async (id: string, user: AuthenticatedUser) => {
-		requireManagerRole(user, "eliminar productos");
+		requirePermission(user, "inventario.productos.eliminar", "eliminar productos");
 		const tenantId = requireTenant(user);
 
 		const existing = await prisma.producto.findUnique({
@@ -542,12 +571,13 @@ export const deleteProductoAction = withAction(
 			select: { id: true, tenantId: true },
 		});
 
-		if (!existing) {
+		if (!existing || existing.tenantId !== tenantId) {
 			throw new ActionError("Producto no encontrado", "NOT_FOUND");
 		}
 
 		await prisma.producto.delete({ where: { id } });
 		revalidatePath("/busy/products");
+		revalidatePath("/busy/dashboard");
 
 		return { id, eliminado: true };
 	},

@@ -1,8 +1,15 @@
 "use client"
 
-import { BarChart, Bar, CartesianGrid, XAxis, YAxis, Tooltip, Legend } from "recharts"
+import { BarChart, Bar, CartesianGrid, XAxis, YAxis } from "recharts"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { ChartContainer, type ChartConfig } from "@/components/ui/chart"
+import {
+  ChartContainer,
+  ChartLegend,
+  ChartLegendContent,
+  ChartTooltip,
+  ChartTooltipContent,
+  type ChartConfig,
+} from "@/components/ui/chart"
 
 export interface StockDistributionItem {
   categoria: string
@@ -28,17 +35,17 @@ export function StockDistributionChart({ data, className }: StockDistributionCha
   const chartConfig = {
     stockTotal: {
       label: "Stock Total",
-      color: "hsl(var(--chart-1))",
+      color: "var(--chart-1)",
     },
     productos: {
       label: "Productos",
-      color: "hsl(var(--chart-2))",
+      color: "var(--chart-2)",
     },
   } satisfies ChartConfig
 
   if (isEmpty) {
     return (
-      <Card className={className}>
+      <Card className={`min-w-0 ${className ?? ''}`}>
         <CardHeader>
           <CardTitle>Distribución de Stock</CardTitle>
           <CardDescription>Stock total y productos por categoría</CardDescription>
@@ -53,13 +60,35 @@ export function StockDistributionChart({ data, className }: StockDistributionCha
   }
 
   return (
-    <Card className={className}>
+    <Card className={`min-w-0 ${className ?? ''}`}>
       <CardHeader>
         <CardTitle>Distribución de Stock</CardTitle>
         <CardDescription>Stock total y productos por categoría</CardDescription>
       </CardHeader>
-      <CardContent>
-        <ChartContainer config={chartConfig} className="h-[350px] w-full">
+      <CardContent className="min-w-0">
+        <ul
+          aria-label="Distribución de stock por categoría"
+          className="space-y-2 sm:sr-only"
+        >
+          {data.map((item) => (
+            <li
+              key={item.categoria}
+              className="grid grid-cols-[minmax(0,1fr)_auto] gap-x-4 gap-y-1 rounded-lg border border-border/70 px-3 py-2"
+            >
+              <span className="min-w-0 break-words font-medium">{item.categoria}</span>
+              <span className="tabular-nums">{item.stockTotal.toLocaleString('es')} unidades</span>
+              <span className="text-sm text-muted-foreground">Existencias</span>
+              <span className="text-sm tabular-nums text-muted-foreground">
+                {item.productos.toLocaleString('es')} productos
+              </span>
+            </li>
+          ))}
+        </ul>
+        <ChartContainer
+          aria-hidden="true"
+          config={chartConfig}
+          className="hidden h-[350px] min-w-0 max-w-full sm:block"
+        >
           <BarChart data={data} barCategoryGap="20%">
             <CartesianGrid strokeDasharray="3 3" vertical={false} />
             <XAxis
@@ -71,17 +100,14 @@ export function StockDistributionChart({ data, className }: StockDistributionCha
             />
             <YAxis yAxisId="left" orientation="left" tick={{ fontSize: 12 }} />
             <YAxis yAxisId="right" orientation="right" tick={{ fontSize: 12 }} />
-            <Tooltip
-              contentStyle={{ fontSize: 13 }}
-              formatter={(value: number, name: string) => {
-                if (name === "stockTotal") {
-                  return [value.toLocaleString(), "Stock Total"]
-                }
-                return [value.toLocaleString(), "Productos"]
-              }}
-              labelFormatter={(label: string) => `Categoría: ${label}`}
+            <ChartTooltip
+              content={
+                <ChartTooltipContent
+                  labelFormatter={(label) => `Categoría: ${label}`}
+                />
+              }
             />
-            <Legend />
+            <ChartLegend content={<ChartLegendContent />} />
             <Bar
               yAxisId="left"
               dataKey="stockTotal"
