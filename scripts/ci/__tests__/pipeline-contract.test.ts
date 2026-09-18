@@ -13,7 +13,22 @@ it('runs independent checks, gates build and rejects skipped dependencies', () =
   expect(ci).toContain('required-checks:');
   expect(ci).toContain('if: always()');
   expect(ci).toContain('node scripts/ci/required-checks.mjs');
+  expect(ci).toContain(
+    "if: github.event_name == 'push' && github.ref == 'refs/heads/main' && needs.build.result == 'success'",
+  );
+  expect(ci).toContain(
+    "REQUIRE_POST_DEPLOY_SMOKE: ${{ github.event_name == 'push' && github.ref == 'refs/heads/main' }}",
+  );
   expect(ci).not.toMatch(/secrets\.|pull_request_target/);
+});
+it('keeps database mutations out of Vercel builds and scopes mobile CI to mobile files', () => {
+  const vercel = JSON.parse(read('vercel.json')) as { buildCommand: string };
+  const mobile = read('.github/workflows/mobile.yml');
+
+  expect(vercel.buildCommand).not.toContain('run-prisma-schema-sync.sh');
+  expect(vercel.buildCommand).not.toContain('db push');
+  expect(mobile).toContain("      - 'mobile/**'");
+  expect(mobile).not.toContain("      - '.github/workflows/mobile.yml'");
 });
 it('collects blob coverage per shard and checks thresholds only on merge', () => {
   const ci = read('.github/workflows/ci.yml');

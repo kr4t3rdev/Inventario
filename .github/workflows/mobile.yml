@@ -3,13 +3,11 @@ name: Mobile
 on:
   pull_request:
     paths:
-      - '.github/workflows/mobile.yml'
       - 'mobile/**'
   push:
     branches:
       - main
     paths:
-      - '.github/workflows/mobile.yml'
       - 'mobile/**'
 
 permissions:
