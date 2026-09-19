@@ -26,13 +26,7 @@ async function main() {
     await client.query(sql);
     console.log('✅ Migración completada exitosamente.');
   } catch (err) {
-    const msg = String(err);
-    // Errores esperados por idempotencia (constraints ya existen)
-    if (msg.includes('already exists')) {
-      console.log('  ⏭️  Algunos pasos ya estaban aplicados (idempotente)');
-    } else {
-      throw err;
-    }
+    throw err;
   } finally {
     await client.end();
   }
