@@ -34,6 +34,12 @@ export interface ValuacionProducto {
   unidadesEstimadas: number
   tieneEstimado: boolean
   escalado: boolean
+  /**
+   * Costo unitario medio bajo FIFO (valorFifo ÷ stock físico). Sirve para valorar
+   * por ubicación de forma aditiva: la suma entre ubicaciones reproduce el total
+   * tenant. Sin stock o sin FIFO: cae a precioCosto.
+   */
+  costoUnitarioFifo: number
 }
 
 export interface ValuacionInventario {
@@ -114,6 +120,7 @@ export function calcularValuacionFifo(
       unidadesEstimadas,
       tieneEstimado: tieneEstimadoProducto,
       escalado,
+      costoUnitarioFifo: stock > 0 ? valorFifo / stock : producto.precioCosto,
     });
   }
 

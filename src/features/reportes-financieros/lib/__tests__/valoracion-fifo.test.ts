@@ -72,4 +72,36 @@ describe('calcularValuacionFifo', () => {
     expect(result.porProducto[0].valorFifo).toBe(0);
     expect(result.porProducto[0].escalado).toBe(true); // lotes > 0, stock 0 → factor 0
   });
+
+  it('costoUnitarioFifo = valorFIFO ÷ stock y hace la suma por ubicación aditiva', () => {
+    const result = calcularValuacionFifo(
+      [
+        { id: 'l1', productoId: 'aceite', cantidad: 10, precioUnitario: 100 },
+        { id: 'l2', productoId: 'aceite', cantidad: 10, precioUnitario: 150 },
+      ],
+      new Map([['l1', 8], ['l2', 2]]),
+      [{ productoId: 'aceite', precioCosto: 120, stockTotal: 10 }],
+    );
+    // 1400/10 = 140 por unidad; 8 unidades en almacén + 2 en PV = 1120+280 = 1400 exacto
+    expect(result.porProducto[0].costoUnitarioFifo).toBe(140);
+  });
+
+  it('costoUnitarioFifo cubre parte estimada: valor total ÷ stock', () => {
+    const result = calcularValuacionFifo(
+      [{ id: 'l1', productoId: 'p', cantidad: 4, precioUnitario: 100 }],
+      new Map(),
+      [{ productoId: 'p', precioCosto: 50, stockTotal: 10 }],
+    );
+    // 400 FIFO + 300 estimado = 700 total → 70 por unidad
+    expect(result.porProducto[0].costoUnitarioFifo).toBe(70);
+  });
+
+  it('costoUnitarioFifo cae a precioCosto sin stock físico', () => {
+    const result = calcularValuacionFifo(
+      [],
+      new Map(),
+      [{ productoId: 'p', precioCosto: 77, stockTotal: 0 }],
+    );
+    expect(result.porProducto[0].costoUnitarioFifo).toBe(77);
+  });
 });
