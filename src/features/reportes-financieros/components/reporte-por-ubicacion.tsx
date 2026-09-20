@@ -44,6 +44,8 @@ import {
 import { cn, formatCurrency } from "@/lib/utils";
 import { getStockPorUbicacionAction } from "@/features/productos/actions";
 import { getProductDisplayIdentifier } from "@/lib/product-display-utils";
+import { getValorInventarioFifoAction } from "@/features/reportes-financieros/actions";
+import type { ValuacionInventario } from "@/features/reportes-financieros/lib/valoracion-fifo";
 
 
 import { SURFACE_CARD_CLASS, CHART_COLORS } from "@/features/reportes-financieros/lib/reporte-styles"
@@ -64,6 +66,22 @@ export function ReportePorUbicacion() {
 	const [productosUbicacion, setProductosUbicacion] = useState<any[]>([]);
 	const [isLoadingStock, setIsLoadingStock] = useState(false);
 	const [stockError, setStockError] = useState<string | null>(null);
+	const [valuacion, setValuacion] = useState<ValuacionInventario | null>(null);
+
+	// Costo unitario medio FIFO por producto: la valoración por ubicación suma
+	// exactamente el total del tenant (aditiva); fallback a precioCosto si falla.
+	useEffect(() => {
+		let mounted = true;
+		getValorInventarioFifoAction()
+			.then((r) => { if (mounted && r.success && r.data) setValuacion(r.data); })
+			.catch(() => { /* fallback a precioCosto */ });
+		return () => { mounted = false; };
+	}, []);
+	const costoFifoPorProducto = new Map(
+		(valuacion?.porProducto ?? []).map((p) => [p.productoId, p.costoUnitarioFifo]),
+	);
+	const costoUnitarioDe = (producto: { id: string; precioCosto: number }) =>
+		costoFifoPorProducto.get(producto.id) ?? producto.precioCosto;
 
 	useEffect(() => {
 		if (!ubicacionId) return;
@@ -100,7 +118,7 @@ export function ReportePorUbicacion() {
 					? getProductDisplayIdentifier(p).substring(0, 15) + "..."
 					: getProductDisplayIdentifier(p),
 			stock: p.stockUbicacion,
-			valor: p.stockUbicacion * p.precioCosto,
+			valor: p.stockUbicacion * costoUnitarioDe(p),
 		}));
 
 	const nombreUbicacion =
@@ -129,7 +147,7 @@ export function ReportePorUbicacion() {
 			Subcategoria: (producto as any)?.subcategoria?.nombre ?? "",
 			"Stock en Ubicación": producto.stockUbicacion,
 			"Precio Costo": producto.precioCosto,
-			"Valor en Ubicación": producto.stockUbicacion * producto.precioCosto,
+			"Valor en Ubicación": producto.stockUbicacion * costoUnitarioDe(producto),
 		}));
 
 		exportToCsv(data, `Inventario_${nombreUbicacion}`);
@@ -260,11 +278,11 @@ export function ReportePorUbicacion() {
 						</AnimatedCard>
 						<AnimatedCard>
 							<ReportKpiCard
-								label="Valor del inventario"
+								label="Valor del inventario (FIFO)"
 								value={formatCurrency(
 									productosUbicacion?.reduce(
 										(sum: any, p: any) =>
-											sum + p.stockUbicacion * p.precioCosto,
+											sum + p.stockUbicacion * costoUnitarioDe(p),
 										0,
 									) ?? 0,
 								)}
@@ -280,9 +298,10 @@ export function ReportePorUbicacion() {
 						<AnimatedCard>
 							<Card className={SURFACE_CARD_CLASS}>
 								<CardContent className="p-4">
-									<h3 className="mb-4 text-lg font-medium">
+									<h3 className="mb-1 text-lg font-medium">
 										Top 10 Productos por Stock
 									</h3>
+																<p className="mb-4 text-xs text-muted-foreground">Valores a costo FIFO medio por producto (aditivo al total del inventario); sin lote se usa el precio de costo actual.</p>
 									<ResponsiveContainer width="100%" height={300}>
 										<BarChart data={chartData}>
 											<CartesianGrid strokeDasharray="3 3" />
@@ -332,8 +351,8 @@ export function ReportePorUbicacion() {
 														Precio Costo
 													</TableHead>
 													<TableHead className="text-right">
-														Valor en Ubicación
-													</TableHead>
+																		Valor en Ubicación (FIFO)
+																		</TableHead>
 												</TableRow>
 											</TableHeader>
 											<TableBody>
@@ -377,7 +396,7 @@ export function ReportePorUbicacion() {
 																{formatCurrency(producto.precioCosto)}
 															</TableCell>
 															<TableCell className="text-right">
-																{formatCurrency(producto.stockUbicacion * producto.precioCosto)}
+																{formatCurrency(producto.stockUbicacion * costoUnitarioDe(producto))}
 															</TableCell>
 														</TableRow>
 													))

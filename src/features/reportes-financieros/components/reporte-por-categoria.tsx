@@ -1,11 +1,12 @@
 "use client"
+import { useState, useEffect } from "react"
 import { useProductos } from '@/features/productos/hooks/use-productos'
 import { useCategorias } from "@/features/categorias/hooks/use-categorias"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
 import { Skeleton } from "@/components/ui/skeleton"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
-import { FileIcon as FilePdf, FileText } from "lucide-react"
+import { FileIcon as FilePdf, FileText, AlertTriangle, Info } from "lucide-react"
 import { exportToPdf, exportToCsv } from "@/lib/export-utils"
 import { PieChart, Pie, Cell, ResponsiveContainer, Legend, Tooltip } from "recharts"
 import { StaggerContainer, StaggerItem, AnimatedCard } from "@/components/ui/animations"
@@ -15,6 +16,9 @@ import { formatCurrency } from "@/lib/utils"
 
 
 import { SURFACE_CARD_CLASS, CHART_COLORS } from "@/features/reportes-financieros/lib/reporte-styles"
+import { deriveCategoryInsights } from "@/features/reportes-financieros/lib/category-insights"
+import { getValorInventarioFifoAction } from "@/features/reportes-financieros/actions"
+import type { ValuacionInventario } from "@/features/reportes-financieros/lib/valoracion-fifo"
 
 export function ReportePorCategoria() {
   const { productos, isLoading: isLoadingProductos, error: productosError } = useProductos()
@@ -22,6 +26,20 @@ export function ReportePorCategoria() {
   const reportError = productosError ?? categoriasError
   const getTotalStock = (producto: { stock?: number; stockTotal?: number }) =>
     producto.stockTotal ?? producto.stock ?? 0
+
+  // Valoración FIFO: cada producto vale su costo de lotes remanentes; sin lote,
+  // fallback a precioCosto (misma fuente que la pestaña General).
+  const [valuacion, setValuacion] = useState<ValuacionInventario | null>(null)
+  useEffect(() => {
+    let mounted = true
+    getValorInventarioFifoAction()
+      .then((r) => { if (mounted && r.success && r.data) setValuacion(r.data) })
+      .catch(() => { /* fallback a precioCosto */ })
+    return () => { mounted = false }
+  }, [])
+  const fifoValorPorProducto = new Map((valuacion?.porProducto ?? []).map((p) => [p.productoId, p.valorFifo]))
+  const valorCostoDe = (producto: { id: string; precioCosto: number; stock?: number; stockTotal?: number }) =>
+    fifoValorPorProducto.get(producto.id) ?? producto.precioCosto * getTotalStock(producto)
 
   // Agrupar productos por categoría
   const productosPorCategoria = categorias?.map((categoria) => {
@@ -31,7 +49,7 @@ export function ReportePorCategoria() {
 
 
     const cantidadProductos = productosCategoria.length
-    const valorTotal = productosCategoria.reduce((sum, producto) => sum + producto.precioCosto * getTotalStock(producto), 0)
+    const valorTotal = productosCategoria.reduce((sum, producto) => sum + valorCostoDe(producto), 0)
     const valorVenta = productosCategoria.reduce((sum, producto) => sum + producto.precioVenta * getTotalStock(producto), 0)
     const stockTotal = productosCategoria.reduce((sum, producto) => sum + getTotalStock(producto), 0)
 
@@ -66,6 +84,18 @@ export function ReportePorCategoria() {
 
   // Paleta compartida del módulo (tokens de tema, soportan modo oscuro)
   const COLORS = [...CHART_COLORS]
+
+  // Productos bajo stock mínimo por categoría (misma regla que reporte-general)
+  const quiebresPorCategoria = new Map<string, number>();
+  productos?.forEach((producto) => {
+    const total = getTotalStock(producto);
+    const minimo = producto.stockMinimo > 0 ? producto.stockMinimo : 10;
+    if (total <= minimo) {
+      const catId = producto.categoria?.catId ?? producto.categoriaId;
+      if (catId) quiebresPorCategoria.set(catId, (quiebresPorCategoria.get(catId) ?? 0) + 1);
+    }
+  });
+  const insights = deriveCategoryInsights(productosPorCategoria ?? [], quiebresPorCategoria);
 
   // const handleExportExcel = () => {
   //   if (!productosPorCategoria) return
@@ -151,32 +181,37 @@ export function ReportePorCategoria() {
         <AnimatedCard>
         <Card className={SURFACE_CARD_CLASS}>
           <CardContent className="p-4">
-            <h3 className="mb-4 text-lg font-medium">Resumen por Categoría</h3>
+            <h3 className="mb-1 text-lg font-medium">Lectura rápida</h3>
+            <p className="mb-4 text-sm text-muted-foreground">
+              Síntesis automática de la distribución por categoría
+            </p>
             {isLoadingProductos ? (
               <Skeleton className="h-[300px] w-full" />
+            ) : insights.length === 0 ? (
+              <p className="text-sm text-muted-foreground">
+                No hay datos suficientes para generar insights.
+              </p>
             ) : (
-              <div className="overflow-x-auto rounded-md border">
-                <Table >
-                  <TableHeader className={SURFACE_CARD_CLASS}>
-                    <TableRow>
-                      <TableHead>Categoría</TableHead>
-                      <TableHead className="text-right">Productos</TableHead>
-                      <TableHead className="text-right">Stock</TableHead>
-                      <TableHead className="text-right">Valor Total</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {productosPorCategoria?.map((categoria) => (
-                      <TableRow key={categoria.categoriaId}>
-                        <TableCell className="font-medium">{categoria.nombre}</TableCell>
-                        <TableCell className="text-right">{categoria.cantidadProductos}</TableCell>
-                        <TableCell className="text-right">{categoria.stockTotal}</TableCell>
-                        <TableCell className="text-right">{formatCurrency(categoria.valorTotal)}</TableCell>
-                      </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
-              </div>
+              <ul className="space-y-3">
+                {insights.map((insight) => (
+                  <li key={insight.id} className="flex items-start gap-3 rounded-md border p-3">
+                    <span
+                      className={insight.tono === 'alerta' ? 'mt-0.5 text-amber-600' : 'mt-0.5 text-muted-foreground'}
+                      aria-hidden="true"
+                    >
+                      {insight.tono === 'alerta' ? (
+                        <AlertTriangle className="h-4 w-4" />
+                      ) : (
+                        <Info className="h-4 w-4" />
+                      )}
+                    </span>
+                    <div>
+                      <p className="text-sm font-medium">{insight.titulo}</p>
+                      <p className="text-xs text-muted-foreground">{insight.detalle}</p>
+                    </div>
+                  </li>
+                ))}
+              </ul>
             )}
           </CardContent>
         </Card>
@@ -194,7 +229,7 @@ export function ReportePorCategoria() {
                     <TableHead>Categoría</TableHead>
                     <TableHead className="text-right">Cantidad Productos</TableHead>
                     <TableHead className="text-right">Stock Total</TableHead>
-                    <TableHead className="text-right">Valor Inventario</TableHead>
+                    <TableHead className="text-right">Valor Inventario (FIFO)</TableHead>
                     <TableHead className="text-right">Valor Venta</TableHead>
                     <TableHead className="text-right">Margen</TableHead>
                   </TableRow>
