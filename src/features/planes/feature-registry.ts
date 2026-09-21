@@ -294,6 +294,13 @@ export const FEATURE_REGISTRY: FeatureDef[] = [
 		category: "financiero",
 	},
 	{
+		key: "contabilidad-formal",
+		label: "Contabilidad formal",
+		description:
+			"Plan de cuentas, asientos de partida doble y libros formales derivados de las operaciones",
+		category: "financiero",
+	},
+	{
 		key: "transferencias-bancarias",
 		label: "Transferencias bancarias",
 		description: "Movimientos entre cuentas bancarias con comprobantes y trazabilidad",

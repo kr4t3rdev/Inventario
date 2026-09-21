@@ -65,6 +65,7 @@ export const MODEL_CLASSIFICATION: Record<string, ModelClassificationEntry> = {
   Anticipo: SCOPED(),
   AperturaPeriodo: SCOPED(),
   ArqueoCaja: SCOPED(),
+  Asiento: SCOPED('Asiento contable formal por tenant (capa CTA-0).'),
   AuditoriaPeriodo: SCOPED(),
   BackupLog: SCOPED('Log de respaldos del tenant.'),
   BackupPlan: SCOPED('Plan de respaldos del tenant.'),
@@ -81,8 +82,10 @@ export const MODEL_CLASSIFICATION: Record<string, ModelClassificationEntry> = {
   ConteoLinea: SCOPED('Línea de conteo con tenantId propio denormalizado.'),
   Contrato: SCOPED(),
   CuentaBancaria: SCOPED(),
+  CuentaContable: SCOPED('Cuenta del plan de cuentas formal por tenant (capa CTA-0).'),
   CuentaPorCobrar: SCOPED(),
   CuentaPorPagar: SCOPED(),
+  CuentaRolTenant: SCOPED('Mapeo rol semántico → cuenta del plan, por tenant (capa CTA-0).'),
   DefectacionCatalogo: SCOPED('Catálogo de defectos por tenant.'),
   DeudaCash: SCOPED(),
   DevolucionVenta: SCOPED('Devolución de venta por tenant.'),
@@ -91,6 +94,7 @@ export const MODEL_CLASSIFICATION: Record<string, ModelClassificationEntry> = {
     'devolucionId',
     'Línea de devolución; hereda el tenant de la devolución.',
   ),
+  Diario: SCOPED('Diario contable formal por tenant (capa CTA-0).'),
   Empleado: SCOPED(),
   EquipoReparacion: SCOPED(),
   Factura: SCOPED(),
@@ -160,13 +164,14 @@ export const MODEL_CLASSIFICATION: Record<string, ModelClassificationEntry> = {
   Venta: SCOPED(),
   VentaServicios: SCOPED(),
 
-  // ---- global (22): plataforma, nunca llevan tenant ----
+  // ---- global (23): plataforma, nunca llevan tenant ----
   Tenant: GLOBAL('Identidad del tenant: su PK es tenantId, no es una fila escopada.'),
   User: GLOBAL('Identidad de plataforma: un usuario puede pertenecer a varios tenants vía TenantMembership.'),
   UserSession: GLOBAL('Sesión de plataforma ligada al usuario, no a un tenant.'),
   UserActivityLog: GLOBAL('Actividad de plataforma ligada al usuario. El acceso por tenant se filtra vía membresías.'),
   Notification: GLOBAL('Notificación ligada al usuario (userId). El tenant se resuelve vía el destinatario.'),
   Plan: GLOBAL('Catálogo de planes de la plataforma (los tenants lo referencian vía TenantLicense).'),
+  PlantillaAsiento: GLOBAL('Plantillas de asiento por evento, gestionadas por la plataforma (capa CTA-0); el tenant remapea roles vía CuentaRolTenant.'),
   ReferralPerkCatalog: GLOBAL('Catálogo de beneficios de la plataforma, solo admin.'),
   Moneda: GLOBAL('Catálogo monetario compartido (CUP, USD…). La selección por tenant vive en TenantAccountingPolicy.'),
   TasaCambio: GLOBAL('Catálogo de tasas gobernado global (confirmado en auditoría FX 2026-09-05).'),
@@ -184,7 +189,7 @@ export const MODEL_CLASSIFICATION: Record<string, ModelClassificationEntry> = {
   VendorCodeSequence: GLOBAL('Secuencia global de códigos de proveedor (una fila id=1). RIESGO: contador compartido entre tenants; evaluar secuencia por tenant en AS-05.'),
   AuditLog: GLOBAL('Auditoría polimórfica de plataforma (entidad/entidadId libres + usuarioId). Decisión AS-01: se mantiene global; las vistas por tenant filtran vía usuarioId/membresías. Reevaluar tenantId en AS-05 si el volumen lo exige.'),
 
-  // ---- child (17): heredan el tenant del padre ----
+  // ---- child (18): heredan el tenant del padre ----
   VentaItem: CHILD('Venta', 'ventaId', 'Ítem intra-transacción; acceso siempre vía la venta.'),
   OfertaItem: CHILD('Oferta', 'ofertaId', 'Ítem intra-transacción; acceso siempre vía la oferta.'),
   ContratoVersion: CHILD('Contrato', 'contratoId', 'Versión intra-contrato; acceso siempre vía el contrato.'),
@@ -195,6 +200,7 @@ export const MODEL_CLASSIFICATION: Record<string, ModelClassificationEntry> = {
   PrecioProducto: CHILD('ListaPrecio', 'listaPrecioId', 'Precio dentro de lista; la lista ya es scoped.'),
   ProductoCostHistory: CHILD('Producto', 'productoId', 'Historial intra-producto. Candidato a denormalizar tenantId en AS-05 por valor de auditoría.'),
   AnticipoMovimiento: CHILD('Anticipo', 'anticipoId', 'Movimiento intra-anticipo. Candidato a denormalizar tenantId en AS-05.'),
+  AsientoLinea: CHILD('Asiento', 'asientoId', 'Línea de asiento; hereda el tenant del asiento padre (capa CTA-0).'),
   Attendance: CHILD('Empleado', 'employeeId', 'Asistencia del empleado; acceso vía empleado (scoped).'),
   EmployeeWorkSchedule: CHILD('Empleado', 'employeeId', 'Horario del empleado; acceso vía empleado (scoped).'),
   VacationRequest: CHILD('Empleado', 'employeeId', 'Solicitud del empleado; acceso vía empleado (scoped).'),

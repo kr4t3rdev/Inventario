@@ -268,6 +268,10 @@ model Tenant {
   conteosInventario              ConteoInventario[]
   turnosPos                      TurnoPuntoVenta[]
   tiposPago                      TipoPago[]
+  cuentasContables               CuentaContable[]
+  diarios                        Diario[]
+  asientos                       Asiento[]
+  cuentasRol                     CuentaRolTenant[]
 
   @@index([slug])
   @@map("tenants")
@@ -3108,6 +3112,7 @@ model PeriodoContable {
   modoContable       ModoContable       @default(CAJA)
   apertura           AperturaPeriodo?
   auditoria          AuditoriaPeriodo[]
+  asientos           Asiento[]
   periodoPadre       PeriodoContable?   @relation("PeriodoHierarchy", fields: [periodoPadreId], references: [periodoId])
   subperiodos        PeriodoContable[]  @relation("PeriodoHierarchy")
   tenant             Tenant             @relation(fields: [tenantId], references: [tenantId])
@@ -3524,4 +3529,254 @@ enum TipoOrigenMovimiento {
   AJUSTE
   PRODUCCION
   CONTEO
+}
+
+// ────────────────────────────────────────────────────────────────────────────
+// Capa de contabilidad formal (CTA-0) — aditiva sobre la base caja
+// ────────────────────────────────────────────────────────────────────────────
+
+/// Plan de cuentas por tenant. Árbol vía padreId con códigos jerárquicos
+/// ("1", "1.1", "1.1.01"). Solo cuentas con aceptaMovimiento reciben líneas.
+model CuentaContable {
+  cuentaContableId String            @id @default(cuid())
+  tenantId         String
+  codigo           String
+  nombre           String
+  tipo             TipoCuentaContable
+  naturaleza       NaturalezaCuenta
+  padreId          String?
+  nivel            Int               @default(1)
+  aceptaMovimiento Boolean           @default(true)
+  activa           Boolean           @default(true)
+  /// Sembrada por la plantilla de la plataforma; reglas de borrado propias
+  esDeSistema      Boolean           @default(false)
+  createdAt        DateTime          @default(now())
+  updatedAt        DateTime          @updatedAt
+  padre            CuentaContable?   @relation("PlanJerarquia", fields: [padreId], references: [cuentaContableId])
+  hijas            CuentaContable[]  @relation("PlanJerarquia")
+  tenant           Tenant            @relation(fields: [tenantId], references: [tenantId])
+  lineas           AsientoLinea[]
+  roles            CuentaRolTenant[]
+
+  @@unique([tenantId, codigo])
+  @@index([tenantId, tipo, activa])
+  @@index([tenantId, padreId])
+  @@map("cuentas_contables")
+}
+
+/// Diarios contables del tenant: agrupan asientos y su consecutivo por período.
+model Diario {
+  diarioId  String     @id @default(cuid())
+  tenantId  String
+  tipo      TipoDiario
+  codigo    String
+  nombre    String
+  activo    Boolean    @default(true)
+  createdAt DateTime   @default(now())
+  asientos  Asiento[]
+  tenant    Tenant     @relation(fields: [tenantId], references: [tenantId])
+
+  @@unique([tenantId, codigo])
+  @@index([tenantId, tipo])
+  @@map("diarios_contables")
+}
+
+/// Asiento de partida doble. Cuadrado por construcción (validación en tx).
+/// Nunca se edita ni se borra: se anula con asiento inverso (revertidoPorId).
+model Asiento {
+  asientoId      String          @id @default(cuid())
+  tenantId       String
+  diarioId       String
+  /// Período contable resuelto por el guard a la fecha del asiento
+  periodoId      String
+  /// Consecutivo por (diarioId, periodoId) bajo advisory lock
+  numero         Int
+  fecha          DateTime
+  descripcion    String
+  estado         EstadoAsiento   @default(CONTABILIZADO)
+  /// Idempotencia fuerte: un evento de negocio = un asiento por tenant
+  origenTipo     String
+  origenId       String
+  /// SHA256 de la representación canónica (líneas + número + fecha + hashAnterior)
+  hash           String
+  hashAnterior   String?
+  revertidoPorId String?
+  observaciones  String?
+  createdBy      String
+  createdAt      DateTime        @default(now())
+  updatedAt      DateTime        @updatedAt
+  diario         Diario          @relation(fields: [diarioId], references: [diarioId])
+  periodo        PeriodoContable @relation(fields: [periodoId], references: [periodoId])
+  tenant         Tenant          @relation(fields: [tenantId], references: [tenantId])
+  lineas         AsientoLinea[]
+
+  @@unique([tenantId, origenTipo, origenId])
+  @@unique([diarioId, periodoId, numero])
+  @@index([tenantId, fecha])
+  @@index([tenantId, periodoId])
+  @@index([tenantId, hash])
+  @@map("asientos")
+}
+
+model AsientoLinea {
+  lineaId   String  @id @default(cuid())
+  asientoId String
+  orden     Int
+  cuentaId  String
+  /// Montos en moneda funcional: exactamente uno de los dos > 0
+  debe      Decimal @default(0) @db.Decimal(20, 4)
+  haber     Decimal @default(0) @db.Decimal(20, 4)
+  /// Valoración original heredada de la escritura de negocio (nunca recalculada)
+  monedaOriginal        String
+  montoOriginal         Decimal @db.Decimal(20, 4)
+  tasaCambio            Decimal? @db.Decimal(20, 10)
+  fxEvidenceFingerprint String?
+  /// Etiqueta libre para el mayor ("Factura 2301", "Cobro préstamo 15")
+  referencia String?
+  asiento    Asiento        @relation(fields: [asientoId], references: [asientoId], onDelete: Cascade)
+  cuenta     CuentaContable @relation(fields: [cuentaId], references: [cuentaContableId])
+
+  @@index([asientoId, orden])
+  @@index([cuentaId])
+  @@map("asiento_lineas")
+}
+
+/// Plantilla global (plataforma): evento de negocio → líneas por rol de cuenta.
+/// El tenant no edita plantillas; remapea roles a sus cuentas (CuentaRolTenant).
+model PlantillaAsiento {
+  plantillaId String              @id @default(cuid())
+  evento      TipoEventoContable
+  orden       Int
+  lado        LadoAsiento
+  rolCuenta   RolCuenta
+  /// Regla para extraer el monto del payload del evento
+  montoRegla  ReglaMontoEvento
+  /// Condición opcional interpretada por el motor (CTA-1): FX_POSITIVA, etc.
+  condicion   String?
+  version     Int                 @default(1)
+  activa      Boolean             @default(true)
+
+  @@unique([evento, orden, version])
+  @@map("plantillas_asiento")
+}
+
+/// Mapeo por tenant: rol semántico → cuenta real de su plan de cuentas.
+model CuentaRolTenant {
+  cuentaRolId String         @id @default(cuid())
+  tenantId    String
+  rol         RolCuenta
+  cuentaId    String
+  createdAt   DateTime       @default(now())
+  updatedAt   DateTime       @updatedAt
+  cuenta      CuentaContable @relation(fields: [cuentaId], references: [cuentaContableId])
+  tenant      Tenant         @relation(fields: [tenantId], references: [tenantId])
+
+  @@unique([tenantId, rol])
+  @@map("cuentas_roles_tenant")
+}
+
+enum TipoCuentaContable {
+  ACTIVO
+  PASIVO
+  PATRIMONIO
+  INGRESO
+  COSTO
+  GASTO
+}
+
+enum NaturalezaCuenta {
+  DEUDORA
+  ACREEDORA
+}
+
+enum TipoDiario {
+  VENTAS
+  COMPRAS
+  CAJA
+  BANCOS
+  NOMINA
+  AJUSTES
+  APERTURA_CIERRE
+}
+
+enum EstadoAsiento {
+  CONTABILIZADO
+  ANULADO
+}
+
+enum LadoAsiento {
+  DEBE
+  HABER
+}
+
+enum ReglaMontoEvento {
+  TOTAL
+  MONTO_PAGADO
+  COSTO_FIFO
+  INTERESES
+  TOTAL_MENOS_INTERESES
+  DIFERENCIA_FX
+  TOTAL_MENOS_DIFERENCIA
+  TOTAL_MAS_DIFERENCIA
+}
+
+enum RolCuenta {
+  CAJA_PRINCIPAL
+  BANCOS
+  INVENTARIOS
+  CXC_CLIENTES
+  ANTICIPOS_CLIENTES
+  PRESTAMOS_OTORGADOS
+  CXP_PROVEEDORES
+  ANTICIPOS_PROVEEDORES
+  DEUDAS_RECIBIDAS
+  CAPITAL_SOCIAL
+  RESULTADOS_ACUMULADOS
+  RESULTADO_PERIODO
+  VENTAS_PRODUCTOS
+  VENTAS_SERVICIOS
+  OTROS_INGRESOS
+  INTERESES_GANADOS
+  DIFERENCIA_CAMBIARIA_INGRESO
+  COSTO_VENTAS
+  GASTOS_OPERATIVOS
+  GASTOS_NOMINA
+  GASTOS_FINANCIEROS
+  MERMAS
+  DIFERENCIA_CAMBIARIA_GASTO
+}
+
+enum TipoEventoContable {
+  VENTA_CONTADO
+  VENTA_CREDITO
+  COBRO_CXC
+  COSTO_VENTA_DEVENGADO
+  DEVOLUCION_VENTA
+  VENTA_SERVICIO
+  COBRO_SERVICIO
+  COMPRA_CONTADO
+  COMPRA_CREDITO
+  PAGO_CXP
+  GASTO_CONTADO
+  GASTO_CREDITO
+  PAGO_GASTO_CREDITO
+  PAGO_NOMINA
+  ANTICIPO_CLIENTE_RECIBIDO
+  ANTICIPO_CLIENTE_APLICADO
+  ANTICIPO_PROVEEDOR_ENTREGADO
+  ANTICIPO_PROVEEDOR_APLICADO
+  PRESTAMO_OTORGADO
+  COBRO_PRESTAMO
+  DEUDA_RECIBIDA
+  PAGO_DEUDA
+  AJUSTE_BANCARIO_CARGO
+  AJUSTE_BANCARIO_ABONO
+  TRANSFERENCIA_BANCARIA
+  INYECCION_CAPITAL
+  PAGO_DEUDA_CAPITAL
+  MERMA_INVENTARIO
+  PRODUCCION_SALIDA
+  DIFERENCIA_CAMBIARIA
+  APERTURA_PERIODO
+  CIERRE_PERIODO
 }
