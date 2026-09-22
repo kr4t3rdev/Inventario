@@ -616,7 +616,6 @@ export async function applyPagoGastoWorkflow(
         pgId: params.pgId,
         gastoCompraId: params.gastoCompraId,
       }),
-      tipo: tipoEvento,
       reconciliacionId: reconciliacion.reconciliacionId,
       descripcion: reconciliacion.descripcion ?? undefined,
       fecha: fechaOperacion,
