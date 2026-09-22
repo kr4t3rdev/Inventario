@@ -17,6 +17,8 @@ import type { AuthenticatedUser } from '@/lib/auth-middleware';
 import { reverseExpenseEffects } from '@/features/gastosDE/reversal';
 import { buildPersistedAccountingAmount } from '@/features/contabilidad/services/accounting-reconciliation-service';
 import { exchangeRateProvider } from '@/features/contabilidad/services/exchange-rate-provider';
+import { postEvento } from '@/features/contabilidad-formal/services/posting-engine';
+import { buildEventoGastoConAnticipoProveedor } from '@/features/contabilidad-formal/lib/event-builders';
 
 const COMPRA_SERVICIO_INCLUDE = {
   servicio: true,
@@ -162,7 +164,7 @@ export const createCompraServicioAction = withAction(withPeriodValidation(
           tasaFxCatalogId = tasa.tasaId;
         }
 
-        await tx.reconciliacionGasto.create({
+        const recAnticipo = await tx.reconciliacionGasto.create({
           data: {
             tenantId,
             tipoGasto: 'servicio',
@@ -182,6 +184,27 @@ export const createCompraServicioAction = withAction(withPeriodValidation(
             reconciliadoPor: user.userId || 'system',
           },
         });
+
+        // Capa de contabilidad formal (CTA-1): gasto pagado con anticipo de
+        // proveedor — no hay movimiento bancario, se liquida el anticipo.
+        await postEvento(
+          tx,
+          { tenantId, userId: user.userId || 'system' },
+          buildEventoGastoConAnticipoProveedor({
+            reconciliacionId: recAnticipo.reconciliacionId,
+            descripcion: `Pago de servicio con anticipo (${compraServicio.compraServicioId})`,
+            tesoreria: {
+              monto: alloc.montoAplicado,
+              moneda: monedaAnticipo,
+              montoFuncional: tasaCambio !== undefined
+                ? alloc.montoAplicado * tasaCambio
+                : alloc.montoAplicado,
+              monedaFuncionalCodigo: monedaFuncional,
+              tasaCambio: tasaCambio ?? null,
+              referencia: `Servicio ${compraServicio.compraServicioId}`,
+            },
+          }),
+        );
 
         // Espejo del flujo manual: tracking de conversión para la moneda extranjera.
         if (tasaCambio !== undefined) {

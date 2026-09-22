@@ -113,7 +113,7 @@ describe('plantillas de asiento por defecto', () => {
 		}
 	});
 
-	it('todo evento con plantilla tiene diario asignado y los 32 tipos de evento están cubiertos', () => {
+	it('todo evento con plantilla tiene diario asignado y los 33 tipos de evento están cubiertos', () => {
 		const tiposDiario = new Set(DIARIOS_DEFAULT.map((d) => d.tipo));
 		const eventos: TipoEventoClave[] = [
 			'VENTA_CONTADO', 'VENTA_CREDITO', 'COBRO_CXC', 'COSTO_VENTA_DEVENGADO',
@@ -124,10 +124,10 @@ describe('plantillas de asiento por defecto', () => {
 			'ANTICIPO_PROVEEDOR_APLICADO', 'PRESTAMO_OTORGADO', 'COBRO_PRESTAMO',
 			'DEUDA_RECIBIDA', 'PAGO_DEUDA', 'AJUSTE_BANCARIO_CARGO', 'AJUSTE_BANCARIO_ABONO',
 			'TRANSFERENCIA_BANCARIA', 'INYECCION_CAPITAL', 'PAGO_DEUDA_CAPITAL',
-			'MERMA_INVENTARIO', 'PRODUCCION_SALIDA', 'DIFERENCIA_CAMBIARIA',
-			'APERTURA_PERIODO', 'CIERRE_PERIODO',
+			'MERMA_INVENTARIO', 'PRODUCCION_SALIDA', 'GASTO_CON_ANTICIPO_PROVEEDOR',
+			'DIFERENCIA_CAMBIARIA', 'APERTURA_PERIODO', 'CIERRE_PERIODO',
 		];
-		expect(eventos).toHaveLength(32);
+		expect(eventos).toHaveLength(33);
 		for (const evento of eventos) {
 			const diario = DIARIO_POR_EVENTO[evento];
 			expect(diario, `evento ${evento} sin diario`).toBeDefined();

@@ -129,6 +129,116 @@ export function buildEventoCostoVenta(params: {
 	};
 }
 
+/** Tipo de evento de egreso resuelto por el workflow de pago de gastos. */
+export type TipoEventoEgreso =
+	| 'PAGO_CXP'
+	| 'PAGO_NOMINA'
+	| 'COMPRA_CONTADO'
+	| 'GASTO_CONTADO';
+
+const DESCRIPCION_EGRESO: Record<TipoEventoEgreso, string> = {
+	PAGO_CXP: 'Pago de cuenta por pagar',
+	PAGO_NOMINA: 'Pago de nómina',
+	COMPRA_CONTADO: 'Compra al contado',
+	GASTO_CONTADO: 'Gasto al contado',
+};
+
+/**
+ * @description Evento de egreso (pago a proveedores, nómina, compra o gasto al
+ * contado) anclado a la reconciliación de gasto generada por el workflow.
+ */
+export function buildEventoEgreso(params: {
+	tipo: TipoEventoEgreso;
+	reconciliacionId: string;
+	descripcion?: string;
+	fecha?: Date;
+	tesoreria: ParamsTesoreria;
+}): EventoContableInput {
+	const base = buildEventoVentaContado({
+		reconciliacionId: params.reconciliacionId,
+		descripcion: params.descripcion,
+		fecha: params.fecha,
+		tesoreria: params.tesoreria,
+	});
+	return {
+		...base,
+		tipo: params.tipo,
+		descripcion: params.descripcion ?? DESCRIPCION_EGRESO[params.tipo],
+		origen: { tipo: 'reconciliacion_gasto', id: params.reconciliacionId },
+	};
+}
+
+/**
+ * @description Evento COMPRA_CREDITO anclado al documento de compra (CxP creada).
+ */
+export function buildEventoCompraCredito(params: {
+	compraId: string;
+	monto: number;
+	moneda?: string;
+	montoFuncional?: number;
+	descripcion?: string;
+	fecha?: Date;
+	referencia?: string;
+}): EventoContableInput {
+	return {
+		tipo: 'COMPRA_CREDITO',
+		fecha: params.fecha ?? new Date(),
+		descripcion: params.descripcion ?? 'Compra a crédito',
+		origen: { tipo: 'compra_documento', id: params.compraId },
+		monto: params.monto,
+		moneda: params.moneda ?? MONEDA_FUNCIONAL_DEFECTO,
+		montoFuncional: params.montoFuncional ?? params.monto,
+		monedaFuncional: MONEDA_FUNCIONAL_DEFECTO,
+		tasaCambio: null,
+		fxEvidenceFingerprint: null,
+		referencia: params.referencia,
+	};
+}
+
+/**
+ * @description Evento GASTO_CON_ANTICIPO_PROVEEDOR: el gasto se liquida con
+ * fondos del anticipo (sin movimiento bancario): D gasto / H anticipos proveedor.
+ */
+export function buildEventoGastoConAnticipoProveedor(params: {
+	reconciliacionId: string;
+	descripcion?: string;
+	fecha?: Date;
+	tesoreria: Omit<ParamsTesoreria, 'tipoCuenta'>;
+}): EventoContableInput {
+	const base = buildEventoVentaContado({
+		reconciliacionId: params.reconciliacionId,
+		descripcion: params.descripcion,
+		fecha: params.fecha,
+		tesoreria: params.tesoreria,
+	});
+	return {
+		...base,
+		tipo: 'GASTO_CON_ANTICIPO_PROVEEDOR',
+		descripcion: params.descripcion ?? 'Gasto liquidado con anticipo a proveedor',
+		origen: { tipo: 'reconciliacion_gasto', id: params.reconciliacionId },
+		medioCobro: undefined,
+	};
+}
+
+export { MONEDA_FUNCIONAL_DEFECTO };
+
+/**
+ * @description Discrimina el evento de egreso según el destino del pago en el
+ * workflow de gastos. Prioridad: CxP → nómina → compra → gasto genérico.
+ * @param {object} params - Referencias del workflow de pago de gastos.
+ * @returns {TipoEventoEgreso} Tipo de evento contable resultante.
+ */
+export function resolverTipoEventoEgreso(params: {
+	cuentaPorPagarId?: string | null;
+	pgId?: string | null;
+	gastoCompraId?: string | null;
+}): TipoEventoEgreso {
+	if (params.cuentaPorPagarId) return 'PAGO_CXP';
+	if (params.pgId) return 'PAGO_NOMINA';
+	if (params.gastoCompraId) return 'COMPRA_CONTADO';
+	return 'GASTO_CONTADO';
+}
+
 /**
  * @description Evento DEVOLUCION_VENTA: reversa del ingreso por el total de la
  * devolución y, si hay costo restaurado FIFO > 0, reversa del costo (líneas 3-4).

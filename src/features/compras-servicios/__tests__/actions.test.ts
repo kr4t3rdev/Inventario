@@ -26,7 +26,7 @@ const mockTx = {
 	cuentaBancaria: { findFirst: vi.fn() },
 	anticipo: { findUnique: vi.fn() },
 	reconciliacionGasto: {
-		create: vi.fn(),
+		create: vi.fn().mockResolvedValue({ reconciliacionId: 'rec-mock' }),
 		findMany: vi.fn(),
 		findFirst: vi.fn(),
 	},

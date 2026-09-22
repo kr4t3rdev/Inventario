@@ -82,6 +82,7 @@ export type TipoEventoClave =
 	| 'PAGO_DEUDA_CAPITAL'
 	| 'MERMA_INVENTARIO'
 	| 'PRODUCCION_SALIDA'
+	| 'GASTO_CON_ANTICIPO_PROVEEDOR'
 	| 'DIFERENCIA_CAMBIARIA'
 	| 'APERTURA_PERIODO'
 	| 'CIERRE_PERIODO';
@@ -119,6 +120,7 @@ export const DIARIO_POR_EVENTO: Record<TipoEventoClave, DiarioDefault['tipo']> =
 	PAGO_GASTO_CREDITO: 'COMPRAS',
 	ANTICIPO_PROVEEDOR_ENTREGADO: 'COMPRAS',
 	ANTICIPO_PROVEEDOR_APLICADO: 'COMPRAS',
+	GASTO_CON_ANTICIPO_PROVEEDOR: 'COMPRAS',
 	GASTO_CONTADO: 'CAJA',
 	PAGO_NOMINA: 'NOMINA',
 	INYECCION_CAPITAL: 'CAJA',
@@ -601,6 +603,10 @@ export const PLANTILLAS_DEFAULT: PlantillaLineaDefault[] = [
 	...plantilla('PRODUCCION_SALIDA', [
 		{ lado: 'DEBE', rol: 'INVENTARIOS', regla: 'TOTAL' },
 		{ lado: 'HABER', rol: 'INVENTARIOS', regla: 'TOTAL' },
+	]),
+	...plantilla('GASTO_CON_ANTICIPO_PROVEEDOR', [
+		{ lado: 'DEBE', rol: 'GASTOS_OPERATIVOS', regla: 'TOTAL' },
+		{ lado: 'HABER', rol: 'ANTICIPOS_PROVEEDORES', regla: 'TOTAL' },
 	]),
 	...plantilla('DIFERENCIA_CAMBIARIA', [
 		{

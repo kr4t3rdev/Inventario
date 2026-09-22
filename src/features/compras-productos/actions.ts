@@ -18,6 +18,8 @@ import { getStockTotalProducto } from '@/lib/services/stock-ubicacion-queries';
 import { recordCostChange, CostChangeReason } from '@/lib/cost-history-utils';
 import { hasUnrevertedAnticipoExecution } from '@/lib/services/anticipos-guards';
 import { FORMA_PAGO_ANTICIPO_PAGO } from '@/lib/constants/anticipos';
+import { postEvento } from '@/features/contabilidad-formal/services/posting-engine';
+import { buildEventoCompraCredito } from '@/features/contabilidad-formal/lib/event-builders';
 import { createCompraProductoSchema, updateCompraProductoSchema } from './schemas';
 import type { CreateCompraProductoInput, UpdateCompraProductoInput } from './schemas';
 import type { AuthenticatedUser } from '@/lib/auth-middleware';
@@ -356,6 +358,19 @@ export const createCompraProductoAction = withAction(async (input: CreateCompraP
           where: { compraDocumentoId: compra.compraDocumentoId },
           data: { cuentaPorPagarId: cxp.cuentaPorPagarId },
         });
+
+        // Capa de contabilidad formal (CTA-1): compra a crédito → inventario vs CxP.
+        await postEvento(
+          tx,
+          { tenantId, userId: user.userId || 'system' },
+          buildEventoCompraCredito({
+            compraId: compra.compraDocumentoId,
+            monto: total,
+            moneda: parsed.moneda,
+            descripcion: `Compra a crédito ${parsed.numeroFactura || compra.compraDocumentoId}`,
+            referencia: parsed.numeroFactura || undefined,
+          }),
+        );
       }
       }
 

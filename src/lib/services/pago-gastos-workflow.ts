@@ -1,6 +1,8 @@
 import type { Prisma } from '@/generated/prisma'
 import { buildAppliedFxEvidence } from '@/features/contabilidad/domain/fx-evidence';
 import { normalizeAccountingAmount } from '@/features/contabilidad/domain/accounting-amount'
+import { postEvento } from '@/features/contabilidad-formal/services/posting-engine'
+import { buildEventoEgreso, resolverTipoEventoEgreso } from '@/features/contabilidad-formal/lib/event-builders'
 
 /**
  * @description Representa un error funcional del workflow de pago de gastos.
@@ -492,7 +494,8 @@ export async function applyPagoGastoWorkflow(
       cuentaId: true,
       moneda: true,
       saldo: true,
-      isActive: true
+      isActive: true,
+      tipoCuenta: true
     }
   })
   const cuentaMap = new Map(cuentas.map((cuenta) => [cuenta.cuentaId, cuenta]))
@@ -603,6 +606,31 @@ export async function applyPagoGastoWorkflow(
         reconciliacion.montoConvertido === null ? null : Number(reconciliacion.montoConvertido),
       descripcion: reconciliacion.descripcion
     })
+
+    // Capa de contabilidad formal (CTA-1): la conciliación de gasto genera su
+    // asiento según el destino del pago (CxP, nómina, compra al contado, gasto).
+    const cuentaPago = cuentaMap.get(reconciliacion.cuentaId)
+    await postEvento(tx, { tenantId: params.tenantId, userId: params.reconciliadoPor }, buildEventoEgreso({
+      tipo: resolverTipoEventoEgreso({
+        cuentaPorPagarId: params.cuentaPorPagarId,
+        pgId: params.pgId,
+        gastoCompraId: params.gastoCompraId,
+      }),
+      tipo: tipoEvento,
+      reconciliacionId: reconciliacion.reconciliacionId,
+      descripcion: reconciliacion.descripcion ?? undefined,
+      fecha: fechaOperacion,
+      tesoreria: {
+        monto: montoPago,
+        moneda: params.moneda,
+        montoFuncional: montoConvertido,
+        monedaFuncionalCodigo: fxEvidence.functionalCurrency,
+        tasaCambio: params.tasaCambio ?? null,
+        fxEvidenceFingerprint: fxEvidence.fxEvidenceFingerprint,
+        tipoCuenta: cuentaPago?.tipoCuenta ?? null,
+        referencia: params.referenciaId,
+      },
+    }))
   }
 
   if (estadoReconciliacion !== 'PENDIENTE') {
