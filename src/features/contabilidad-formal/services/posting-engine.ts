@@ -152,6 +152,162 @@ function logShadow(mensaje: string, extra?: Record<string, unknown>): void {
 	console.warn('[contabilidad-formal][shadow]', mensaje, extra ?? '');
 }
 
+/** Línea de asiento ya resuelta (cuenta y montos definidos). */
+export interface LineaAsientoResuelta {
+	orden: number;
+	cuentaId: string;
+	debe: number;
+	haber: number;
+	monedaOriginal: string;
+	montoOriginal: number;
+	tasaCambio: number | null;
+	fxEvidenceFingerprint: string | null;
+	referencia: string | null;
+}
+
+/** Datos canónicos de un asiento para el hash de integridad. */
+export interface HashAsientoInput {
+	tenantId: string;
+	diarioId: string;
+	periodoId: string;
+	numero: number;
+	fecha: Date;
+	origenTipo: string;
+	origenId: string;
+	lineas: Array<Pick<LineaAsientoResuelta, 'orden' | 'cuentaId' | 'debe' | 'haber'>>;
+	hashAnterior: string | null;
+}
+
+/**
+ * @description Hash SHA256 de la representación canónica del asiento.
+ * Usado por el motor (al crear) y por el verificador forense (al auditar).
+ * @param {HashAsientoInput} input - Contenido canónico del asiento.
+ * @returns {string} Hash hexadecimal de 64 caracteres.
+ */
+export function construirHashAsiento(input: HashAsientoInput): string {
+	const canonico = JSON.stringify({
+		tenantId: input.tenantId,
+		diarioId: input.diarioId,
+		periodoId: input.periodoId,
+		numero: input.numero,
+		fecha: input.fecha.toISOString(),
+		origenTipo: input.origenTipo,
+		origenId: input.origenId,
+		lineas: input.lineas.map((l) => ({
+			orden: l.orden,
+			cuentaId: l.cuentaId,
+			debe: l.debe,
+			haber: l.haber,
+		})),
+		hashAnterior: input.hashAnterior,
+	});
+	return createHash('sha256').update(canonico).digest('hex');
+}
+
+/** Resultado de la inserción con numeración y cadena. */
+export interface ResultadoInsertarAsiento {
+	asientoId: string;
+	duplicado: boolean;
+}
+
+/** Datos completos para insertar un asiento (líneas ya cuadradas y resueltas). */
+export interface InsertarAsientoInput {
+	diarioId: string;
+	periodoId: string;
+	fecha: Date;
+	descripcion: string;
+	origenTipo: string;
+	origenId: string;
+	lineas: LineaAsientoResuelta[];
+	createdBy: string;
+}
+
+/**
+ * @description Inserta el asiento bajo el advisory lock del tenant: asigna el
+ * consecutivo del diario+período, encadena el hash del asiento previo y lo
+ * persiste. Doble posteo concurrente del mismo origen se resuelve como
+ * lectura del asiento ganador (retry-safe).
+ * @param {PostingTx} tx - Transacción activa.
+ * @param {ContextoPosting} ctx - Tenant y actor.
+ * @param {InsertarAsientoInput} input - Asiento listo para persistir.
+ * @returns {Promise<ResultadoInsertarAsiento>} Id persistido y flag de duplicado.
+ */
+export async function insertarAsientoConNumeracion(
+	tx: PostingTx,
+	ctx: ContextoPosting,
+	input: InsertarAsientoInput,
+): Promise<ResultadoInsertarAsiento> {
+	return withAccountingTenantLock(
+		tx as Parameters<typeof withAccountingTenantLock>[0],
+		ctx.tenantId,
+		async () => {
+			const agregado = await tx.asiento.aggregate({
+				_max: { numero: true },
+				where: { diarioId: input.diarioId, periodoId: input.periodoId },
+			});
+			const numero = (agregado._max.numero ?? 0) + 1;
+
+			const ultimo = await tx.asiento.findFirst({
+				where: { tenantId: ctx.tenantId },
+				orderBy: [{ createdAt: 'desc' }, { asientoId: 'desc' }],
+				select: { hash: true },
+			});
+			const hashAnterior = ultimo?.hash ?? null;
+
+			const hash = construirHashAsiento({
+				tenantId: ctx.tenantId,
+				diarioId: input.diarioId,
+				periodoId: input.periodoId,
+				numero,
+				fecha: input.fecha,
+				origenTipo: input.origenTipo,
+				origenId: input.origenId,
+				lineas: input.lineas,
+				hashAnterior,
+			});
+
+			try {
+				const creado = await tx.asiento.create({
+					data: {
+						tenantId: ctx.tenantId,
+						diarioId: input.diarioId,
+						periodoId: input.periodoId,
+						numero,
+						fecha: input.fecha,
+						descripcion: input.descripcion,
+						estado: 'CONTABILIZADO',
+						origenTipo: input.origenTipo,
+						origenId: input.origenId,
+						hash,
+						hashAnterior,
+						createdBy: input.createdBy,
+						lineas: { create: input.lineas },
+					},
+				});
+				return { asientoId: creado.asientoId, duplicado: false };
+			} catch (error) {
+				if (
+					typeof error === 'object' &&
+					error !== null &&
+					(error as { code?: string }).code === 'P2002'
+				) {
+					const previo = await tx.asiento.findUnique({
+						where: {
+							tenantId_origenTipo_origenId: {
+								tenantId: ctx.tenantId,
+								origenTipo: input.origenTipo,
+								origenId: input.origenId,
+							},
+						},
+					});
+					if (previo) return { asientoId: previo.asientoId, duplicado: true };
+				}
+				throw error;
+			}
+		},
+	);
+}
+
 /**
  * @description Filtra las líneas de plantilla por condición FX y calcula el
  * monto funcional de cada una según su regla.
@@ -367,78 +523,15 @@ async function postEventoInterno(
 		);
 	}
 
-	const resultado = await withAccountingTenantLock(tx as Parameters<typeof withAccountingTenantLock>[0], ctx.tenantId, async () => {
-		const agregado = await tx.asiento.aggregate({
-			_max: { numero: true },
-			where: { diarioId: diario.diarioId, periodoId },
-		});
-		const numero = (agregado._max.numero ?? 0) + 1;
-
-		const ultimo = await tx.asiento.findFirst({
-			where: { tenantId: ctx.tenantId },
-			orderBy: [{ createdAt: 'desc' }, { asientoId: 'desc' }],
-			select: { hash: true },
-		});
-		const hashAnterior = ultimo?.hash ?? null;
-
-		const canonico = JSON.stringify({
-			tenantId: ctx.tenantId,
-			diarioId: diario.diarioId,
-			periodoId,
-			numero,
-			fecha: evento.fecha.toISOString(),
-			origenTipo: evento.origen.tipo,
-			origenId: evento.origen.id,
-			lineas: lineas.map((l) => ({
-				orden: l.orden,
-				cuentaId: l.cuentaId,
-				debe: l.debe,
-				haber: l.haber,
-			})),
-			hashAnterior,
-		});
-		const hash = createHash('sha256').update(canonico).digest('hex');
-
-		try {
-			const creado = await tx.asiento.create({
-				data: {
-					tenantId: ctx.tenantId,
-					diarioId: diario.diarioId,
-					periodoId,
-					numero,
-					fecha: evento.fecha,
-					descripcion: evento.descripcion,
-					estado: 'CONTABILIZADO',
-					origenTipo: evento.origen.tipo,
-					origenId: evento.origen.id,
-					hash,
-					hashAnterior,
-					createdBy: ctx.userId,
-					lineas: { create: lineas },
-				},
-			});
-			return { asientoId: creado.asientoId, duplicado: false };
-		} catch (error) {
-			// Doble posteo concurrente del mismo origen: la unicidad lo resuelve — leer
-			// el asiento ganador y tratarlo como YA_EXISTENTE (retry-safe).
-			if (
-				typeof error === 'object' &&
-				error !== null &&
-				(error as { code?: string }).code === 'P2002'
-			) {
-				const previo = await tx.asiento.findUnique({
-					where: {
-						tenantId_origenTipo_origenId: {
-							tenantId: ctx.tenantId,
-							origenTipo: evento.origen.tipo,
-							origenId: evento.origen.id,
-						},
-					},
-				});
-				if (previo) return { asientoId: previo.asientoId, duplicado: true };
-			}
-			throw error;
-		}
+	const resultado = await insertarAsientoConNumeracion(tx, ctx, {
+		diarioId: diario.diarioId,
+		periodoId,
+		fecha: evento.fecha,
+		descripcion: evento.descripcion,
+		origenTipo: evento.origen.tipo,
+		origenId: evento.origen.id,
+		lineas,
+		createdBy: ctx.userId,
 	});
 
 	return resultado.duplicado

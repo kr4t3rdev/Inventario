@@ -17,6 +17,7 @@ import { obtenerLibroDiario } from '@/features/contabilidad-formal/services/libr
 import { obtenerLibroMayor } from '@/features/contabilidad-formal/services/libro-mayor-service';
 import { obtenerBalanceComprobacion } from '@/features/contabilidad-formal/services/balance-comprobacion-service';
 import { obtenerConciliacionCruzada } from '@/features/contabilidad-formal/services/conciliacion-cruzada-service';
+import { verificarCadenaAsientos } from '@/features/contabilidad-formal/services/verificador-hash-service';
 
 const FEATURE = 'contabilidad-formal';
 
@@ -96,6 +97,18 @@ export const getConciliacionCruzadaAction = withAction(
 		const tenantId = requireTenant(user);
 		requireFeature(user, FEATURE, 'consultar la conciliación cruzada');
 		return obtenerConciliacionCruzada(tenantId, {});
+	},
+);
+
+/**
+ * @description Verificación forense de la cadena de hash del tenant (CTA-3).
+ * Detecta manipulación directa de asientos históricos.
+ */
+export const verificarCadenaAsientosAction = withAction(
+	async (_input: void, user: AuthenticatedUser) => {
+		const tenantId = requireTenant(user);
+		requireFeature(user, FEATURE, 'verificar la cadena de asientos');
+		return verificarCadenaAsientos(tenantId);
 	},
 );
 

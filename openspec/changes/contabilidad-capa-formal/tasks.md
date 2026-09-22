@@ -40,9 +40,9 @@ Rama sugerida: `feat/contabilidad-capa-formal` desde `main` (después del merge 
 
 ## CTA-3 — Cierre y apertura formales
 
-- [ ] **T1 — RED asientos de cierre/apertura.** Aprobar cierre genera asiento de cierre correcto (resultados → `RESULTADO_PERIODO`, pérdida a la inversa); abrir siguiente período genera apertura desde `AperturaPeriodo`; `RESULTADO_PERIODO → RESULTADOS_ACUMULADOS`; `resumenJson` del período incluye totales del libro formal.
-- [ ] **T2 — GREEN.** Servicios `cierre-formal-service.ts` enganchados a las transiciones de estado existentes ([periodo-contable-service](/src/lib/services/periodo-contable-service.ts)); hash encadenado continúa tras cierre/apertura; script `verificar-cadena-hash` + chequeo en `actions-health`.
-- [ ] **T3 — Integración.** Flujo completo cierre→apertura con libros cuadrados en ambos períodos; verificador de cadena detecta una línea alterada a propósito (red→green forense).
+- [x] **T1 — RED asientos de cierre/apertura.** Aprobar cierre genera asiento de cierre correcto (resultados → `RESULTADO_PERIODO`, pérdida a la inversa); abrir siguiente período genera apertura desde `AperturaPeriodo`; `RESULTADO_PERIODO → RESULTADOS_ACUMULADOS`; `resumenJson` del período incluye totales del libro formal.
+- [x] **T2 — GREEN.** Servicios `cierre-formal-service.ts` enganchados a las transiciones de estado existentes ([periodo-contable-service](/src/lib/services/periodo-contable-service.ts)); hash encadenado continúa tras cierre/apertura; script `verificar-cadena-hash` + chequeo en `actions-health`.
+- [x] **T3 — Integración.** Flujo completo cierre→apertura con libros cuadrados en ambos períodos; verificador de cadena detecta una línea alterada a propósito (red→green forense).
   `DATABASE_URL_TEST=... pnpm test:integration -- src/features/contabilidad-formal/__integration__/cierre-formal.test.ts`
 - Commit: `feat(contabilidad): asientos de cierre y apertura + verificación de cadena (CTA-3)`
 

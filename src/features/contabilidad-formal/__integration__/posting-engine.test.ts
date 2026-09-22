@@ -110,11 +110,12 @@ describe('posting engine — integración (DB real)', { timeout: 60_000 }, () =>
 	}, 60_000);
 
 	afterAll(async () => {
-		delete process.env.CONTABILIDAD_FORMAL_MODE;
-		for (const tenantId of [estado.tenantA, estado.tenantB]) {
-			if (!tenantId) continue;
-			await prisma.asiento.deleteMany({ where: { tenantId } });
-			await prisma.cuentaRolTenant.deleteMany({ where: { tenantId } });
+			delete process.env.CONTABILIDAD_FORMAL_MODE;
+			for (const tenantId of [estado.tenantA, estado.tenantB]) {
+				if (!tenantId) continue;
+				await prisma.asiento.deleteMany({ where: { tenantId } });
+				await prisma.aperturaPeriodo.deleteMany({ where: { tenantId } });
+				await prisma.cuentaRolTenant.deleteMany({ where: { tenantId } });
 			await prisma.cuentaContable.deleteMany({ where: { tenantId } });
 			await prisma.diario.deleteMany({ where: { tenantId } });
 			await prisma.periodoContable.deleteMany({ where: { tenantId } });
@@ -284,6 +285,112 @@ describe('posting engine — integración (DB real)', { timeout: 60_000 }, () =>
 			const resultado = await obtenerConciliacionCruzada(tenantListado('A'), {});
 			expect(resultado.rubros.map((r) => r.clave).sort()).toEqual(['CXC', 'CXP', 'TESORERIA']);
 			expect(resultado.monedaFuncional).toBe('CUP');
+		});
+	});
+
+	describe('cierre y apertura formales (CTA-3 T4)', () => {
+		it('aprobar el período genera el asiento de cierre con líneas de resultado', async () => {
+			const { generarAsientoCierre } = await import(
+				'@/features/contabilidad-formal/services/cierre-formal-service'
+			);
+			const resultado = await prisma.$transaction((tx) =>
+				generarAsientoCierre(tx as never, {
+					periodoId: _estado.periodoVigenteA,
+					tenantId: _estado.tenantA,
+					actorId: 'u-it',
+				}),
+			);
+
+			expect(resultado.estado).toBe('CONTABILIZADO');
+			const asiento = await prisma.asiento.findFirstOrThrow({
+				where: { origenTipo: 'cierre_periodo', origenId: _estado.periodoVigenteA },
+				include: { lineas: true },
+			});
+			// Las ventas al contado del período cierran contra el resultado del período.
+			const ventas = asiento.lineas.find((l) =>
+				l.debe && l.debe.gt(0),
+			);
+			expect(ventas).toBeDefined();
+			const totalDebe = asiento.lineas.reduce((s, l) => s + Number(l.debe), 0);
+			const totalHaber = asiento.lineas.reduce((s, l) => s + Number(l.haber), 0);
+			expect(totalDebe).toBeCloseTo(totalHaber, 4);
+		});
+
+		it('la apertura del período siguiente crea el asiento con saldos iniciales', async () => {
+			const { AperturaPeriodoService } = await import(
+				'@/lib/services/apertura-periodo-service'
+			);
+			const { generarAsientoApertura } = await import(
+				'@/features/contabilidad-formal/services/cierre-formal-service'
+			);
+
+			const periodoNuevo = await prisma.periodoContable.create({
+				data: {
+					tenantId: _estado.tenantA,
+					tipo: 'MENSUAL',
+					estado: 'ABIERTO',
+					fechaInicio: new Date('2027-01-01'),
+					fechaFin: new Date('2027-01-31T23:59:59Z'),
+				},
+			});
+
+			await prisma.$transaction(async (tx) => {
+				await AperturaPeriodoService.createAperturaPeriodo(
+					periodoNuevo.periodoId,
+					_estado.tenantA,
+					'u-it',
+					tx,
+				);
+			});
+
+			const resultado = await prisma.$transaction((tx) =>
+				generarAsientoApertura(tx as never, {
+					periodoId: periodoNuevo.periodoId,
+					tenantId: _estado.tenantA,
+					actorId: 'u-it',
+					fecha: new Date('2027-01-01T00:00:00Z'),
+				}),
+			);
+
+			expect(['CONTABILIZADO', 'OMITIDO']).toContain(resultado.estado);
+			if (resultado.estado === 'CONTABILIZADO') {
+				const asiento = await prisma.asiento.findFirstOrThrow({
+					where: { origenTipo: 'apertura_periodo', origenId: periodoNuevo.periodoId },
+					include: { lineas: true },
+				});
+				expect(asiento.lineas.length).toBeGreaterThan(0);
+				const debe = asiento.lineas.reduce((s, l) => s + Number(l.debe), 0);
+				const haber = asiento.lineas.reduce((s, l) => s + Number(l.haber), 0);
+				expect(debe).toBeCloseTo(haber, 4);
+			}
+
+			// La limpieza del período nuevo ocurre en afterAll junto al resto del tenant.
+		});
+
+		it('la cadena de hash detecta una línea alterada a propósito', async () => {
+			const { verificarCadenaAsientos } = await import(
+				'@/features/contabilidad-formal/services/verificador-hash-service'
+			);
+
+			// Cadena sana primero
+			const sano = await verificarCadenaAsientos(_estado.tenantA);
+			expect(sano.integro).toBe(true);
+			expect(sano.total).toBeGreaterThan(0);
+
+			// Alterar la primera línea del primer asiento y verificar quiebre
+			const primero = await prisma.asiento.findFirstOrThrow({
+				where: { tenantId: _estado.tenantA },
+				orderBy: { numero: 'asc' },
+				include: { lineas: true },
+			});
+			await prisma.asientoLinea.updateMany({
+				where: { asientoId: primero.asientoId, orden: 1 },
+				data: { debe: 1 },
+			});
+
+			const corrupto = await verificarCadenaAsientos(_estado.tenantA);
+			expect(corrupto.integro).toBe(false);
+			expect(corrupto.asientoCortadoId).toBe(primero.asientoId);
 		});
 	});
 });

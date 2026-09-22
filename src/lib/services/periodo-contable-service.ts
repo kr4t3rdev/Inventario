@@ -516,8 +516,13 @@ export class PeriodoContableService {
 	 * @param {string} actor - ID del usuario que aprueba.
 	 * @returns {Promise<PeriodoContable>} El período aprobado.
 	 */
-	static async aprobarPeriodo(periodoId: string, actor: string) {
-		const periodo = await prisma.periodoContable.findUnique({
+	static async aprobarPeriodo(
+		periodoId: string,
+		actor: string,
+		client?: any,
+	) {
+		const db = client ?? prisma;
+		const periodo = await db.periodoContable.findUnique({
 			where: { periodoId },
 		});
 
@@ -552,7 +557,7 @@ export class PeriodoContableService {
 		const esSegundaAprobacion =
 			periodo.aprobadoPor !== null && periodo.aprobadoPor !== undefined;
 
-		const aprobado = await prisma.periodoContable.update({
+		const aprobado = await db.periodoContable.update({
 			where: { periodoId },
 			data: {
 				estado: EstadoPeriodo.APROBADO,

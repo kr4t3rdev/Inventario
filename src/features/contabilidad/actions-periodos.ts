@@ -38,6 +38,10 @@ import {
 	} from "@/features/contabilidad/services/financial-auxiliary-checkpoint-service";
 import { acquireAccountingTenantLock } from "@/features/contabilidad/services/accounting-tenant-lock-service";
 import {
+	generarAsientoApertura,
+	generarAsientoCierre,
+} from "@/features/contabilidad-formal/services/cierre-formal-service";
+import {
 	approveFinancialSnapshotV3,
 	captureFinancialSnapshotV3,
 } from "@/features/contabilidad/services/financial-snapshot-v3-service";
@@ -392,6 +396,14 @@ export const abrirPeriodoAction = withAction(
 				tx,
 			);
 
+			// Capa de contabilidad formal (CTA-3): asiento de apertura con saldos.
+			await generarAsientoApertura(tx as never, {
+				periodoId: p.periodoId,
+				tenantId,
+				actorId: user.userId,
+				fecha: fechaInicio,
+			});
+
 			return { periodo: p };
 		});
 
@@ -628,6 +640,17 @@ export const cerrarPeriodoAction = withAction(
 					tx,
 				);
 
+				// Capa de contabilidad formal (CTA-3): si el cierre ya aprobó el
+				// período (cierre auto-aprobado del manager/admin), emitir el asiento
+				// de cierre dentro de la misma transacción.
+				if (resultadoCierre.estado === 'APROBADO') {
+					await generarAsientoCierre(tx as never, {
+						periodoId: parsed.periodoId,
+						tenantId,
+						actorId: user.userId,
+					});
+				}
+
 				return { cerrado: resultadoCierre };
 			}, { isolationLevel: "Serializable" });
 
@@ -733,10 +756,23 @@ export const aprobarPeriodoAction = withAction(
 			throw new ActionError("Período no encontrado", "NOT_FOUND");
 		}
 
-		const aprobado = await PeriodoContableService.aprobarPeriodo(
-			parsed.periodoId,
-			user.userId,
-		);
+		// Aprobar y emitir asiento de cierre dentro de la misma transacción:
+		// si el período queda en CERRADO o APROBADO, la formalización es atómica.
+		const aprobado = await prisma.$transaction(async (tx) => {
+			const resultado = await PeriodoContableService.aprobarPeriodo(
+				parsed.periodoId,
+				user.userId,
+				tx,
+			);
+
+			await generarAsientoCierre(tx as never, {
+				periodoId: parsed.periodoId,
+				tenantId,
+				actorId: user.userId,
+			});
+
+			return resultado;
+		});
 
 		AuditLogService.log({
 			accion: "UPDATE",
