@@ -116,19 +116,16 @@ describe('seedPlanContable', () => {
 		}
 	});
 
-	it('conecta cada hija con su padre vía relación', async () => {
+	it('conecta cada hija con su padre vía FK escalar', async () => {
 		const { tx, llamadasCuentas } = crearTxMock();
 		await seedPlanContable(tx, TENANT_ID);
 		for (const llamada of llamadasCuentas) {
-			const create = llamada.create as {
-				codigo: string;
-				padre?: { connect: { cuentaContableId: string } };
-			};
+			const create = llamada.create as { codigo: string; padreId?: string };
 			const padre = padreDeCodigo(create.codigo);
 			if (!padre) {
-				expect(create.padre, `${create.codigo} no debe conectar padre`).toBeUndefined();
+				expect(create.padreId, `${create.codigo} no debe tener padreId`).toBeUndefined();
 			} else {
-				expect(create.padre?.connect.cuentaContableId).toBe(`cta-${padre}`);
+				expect(create.padreId).toBe(`cta-${padre}`);
 			}
 		}
 	});

@@ -8,10 +8,12 @@ import { describe, expect, it } from 'vitest';
 import {
 	CUENTAS_PLAN_DEFAULT,
 	DIARIOS_DEFAULT,
+	DIARIO_POR_EVENTO,
 	PLANTILLAS_DEFAULT,
 	ROLES_CUENTA_DEFAULT,
 	naturalezaParaTipo,
 	padreDeCodigo,
+	type TipoEventoClave,
 } from '@/features/contabilidad-formal/lib/plan-default';
 
 describe('plan de cuentas por defecto', () => {
@@ -108,6 +110,32 @@ describe('plantillas de asiento por defecto', () => {
 				condiciones.has(linea.condicion),
 				`condición desconocida en ${linea.evento}:${linea.orden}`,
 			).toBe(true);
+		}
+	});
+
+	it('todo evento con plantilla tiene diario asignado y los 32 tipos de evento están cubiertos', () => {
+		const tiposDiario = new Set(DIARIOS_DEFAULT.map((d) => d.tipo));
+		const eventos: TipoEventoClave[] = [
+			'VENTA_CONTADO', 'VENTA_CREDITO', 'COBRO_CXC', 'COSTO_VENTA_DEVENGADO',
+			'DEVOLUCION_VENTA', 'VENTA_SERVICIO', 'COBRO_SERVICIO', 'COMPRA_CONTADO',
+			'COMPRA_CREDITO', 'PAGO_CXP', 'GASTO_CONTADO', 'GASTO_CREDITO',
+			'PAGO_GASTO_CREDITO', 'PAGO_NOMINA', 'ANTICIPO_CLIENTE_RECIBIDO',
+			'ANTICIPO_CLIENTE_APLICADO', 'ANTICIPO_PROVEEDOR_ENTREGADO',
+			'ANTICIPO_PROVEEDOR_APLICADO', 'PRESTAMO_OTORGADO', 'COBRO_PRESTAMO',
+			'DEUDA_RECIBIDA', 'PAGO_DEUDA', 'AJUSTE_BANCARIO_CARGO', 'AJUSTE_BANCARIO_ABONO',
+			'TRANSFERENCIA_BANCARIA', 'INYECCION_CAPITAL', 'PAGO_DEUDA_CAPITAL',
+			'MERMA_INVENTARIO', 'PRODUCCION_SALIDA', 'DIFERENCIA_CAMBIARIA',
+			'APERTURA_PERIODO', 'CIERRE_PERIODO',
+		];
+		expect(eventos).toHaveLength(32);
+		for (const evento of eventos) {
+			const diario = DIARIO_POR_EVENTO[evento];
+			expect(diario, `evento ${evento} sin diario`).toBeDefined();
+			expect(tiposDiario.has(diario), `diario inválido para ${evento}`).toBe(true);
+		}
+		// Eventos con plantilla no pueden caer en diarios de apertura/cierre
+		for (const linea of PLANTILLAS_DEFAULT) {
+			expect(DIARIO_POR_EVENTO[linea.evento]).not.toBe('APERTURA_CIERRE');
 		}
 	});
 });

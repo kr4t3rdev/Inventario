@@ -98,7 +98,7 @@ export async function seedPlanContable(
 				nivel: cuenta.nivel,
 				aceptaMovimiento: cuenta.aceptaMovimiento,
 				esDeSistema: true,
-				...(padreId ? { padre: { connect: { cuentaContableId: padreId } } } : {}),
+				...(padreId ? { padreId } : {}),
 			},
 			update: {
 				nombre: cuenta.nombre,
