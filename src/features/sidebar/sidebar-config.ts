@@ -339,6 +339,7 @@ export const SIDEBAR_CONFIG: SidebarConfig = {
         { title: "Deudas en Efectivo", url: "/busy/contabilidad/deudas-cash", icon: CreditCard as LucideIcon },
         { title: "Transferencias Bancarias", url: "/busy/contabilidad/transferencias", icon: ArrowRightLeft as LucideIcon },
         { title: "Ajustes Bancarios", url: "/busy/contabilidad/ajustes", icon: SlidersHorizontal as LucideIcon },
+        { title: "Libros Contables", url: "/busy/contabilidad/libros", icon: BookOpen as LucideIcon },
         {
           title: "Reconciliación",
           url: "/busy/contabilidad/reconciliacion",

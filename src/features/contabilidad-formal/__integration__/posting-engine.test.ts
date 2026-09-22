@@ -27,6 +27,15 @@ interface EstadoSuite {
 	periodoCerradoA: string;
 }
 
+/** Accessor auxiliar dentro del describe de libros. */
+let _estado: EstadoSuite;
+function tenantListado(cual: 'A' | 'B'): string {
+	return cual === 'A' ? _estado.tenantA : _estado.tenantB;
+}
+function periodoVigenteId(): string {
+	return _estado.periodoVigenteA;
+}
+
 /**
  * @description Evento de venta al contado mínimo para la suite.
  */
@@ -67,6 +76,7 @@ describe('posting engine — integración (DB real)', { timeout: 60_000 }, () =>
 		});
 		estado.tenantA = tA.tenantId;
 		estado.tenantB = tB.tenantId;
+		_estado = estado;
 
 		for (const tenantId of [estado.tenantA, estado.tenantB]) {
 			await prisma.$transaction(async (tx) => {
@@ -215,5 +225,65 @@ describe('posting engine — integración (DB real)', { timeout: 60_000 }, () =>
 			where: { tenantId: estado.tenantA, origenId: 'it-cerrada-1' },
 		});
 		expect(asientos).toBe(0);
+	});
+
+	describe('libros desde los asientos posteados (CTA-2 T4)', () => {
+		it('el libro diario lista los asientos del período con líneas', async () => {
+			const { obtenerLibroDiario } = await import(
+				'@/features/contabilidad-formal/services/libro-diario-service'
+			);
+			const resultado = await obtenerLibroDiario(tenantListado('A'), {
+				periodoId: periodoVigenteId(),
+			});
+
+			expect(resultado.total).toBeGreaterThanOrEqual(3);
+			expect(resultado.asientos.length).toBeGreaterThan(0);
+			for (const asiento of resultado.asientos) {
+				expect(asiento.totalDebe).toBeCloseTo(asiento.totalHaber, 4);
+				expect(asiento.etiqueta).toMatch(/^(VTA|CMP|CAJ|BAN|NOM|AJU|APE)-\d+$/);
+			}
+		});
+
+		it('el balance de comprobación cuadra los totales', async () => {
+			const { obtenerBalanceComprobacion } = await import(
+				'@/features/contabilidad-formal/services/balance-comprobacion-service'
+			);
+			const resultado = await obtenerBalanceComprobacion(tenantListado('A'), {
+				periodoId: periodoVigenteId(),
+			});
+			expect(resultado.totales.debe).toBeCloseTo(resultado.totales.haber, 4);
+			expect(resultado.totales.saldoDeudor).toBeCloseTo(resultado.totales.saldoAcreedor, 4);
+			expect(resultado.filas.length).toBeGreaterThan(0);
+		});
+
+		it('el libro mayor de caja muestra saldo corrido según naturaleza', async () => {
+			const { obtenerLibroMayor } = await import(
+				'@/features/contabilidad-formal/services/libro-mayor-service'
+			);
+			const caja = await prisma.cuentaRolTenant.findFirstOrThrow({
+				where: { tenantId: tenantListado('A'), rol: 'CAJA_PRINCIPAL' },
+			});
+			const resultado = await obtenerLibroMayor(tenantListado('A'), {
+				cuentaId: caja.cuentaId,
+				fechaDesde: new Date('2026-01-01').toISOString(),
+				fechaHasta: new Date('2026-12-31').toISOString(),
+			});
+			expect(resultado.movimientos.length).toBeGreaterThan(0);
+			expect(resultado.saldoFinal).toBeGreaterThan(0);
+			// Saldo final = inicial + Σ(debe - haber)
+			const esperado =
+				resultado.saldoInicial +
+				resultado.movimientos.reduce((s, m) => s + m.debe - m.haber, 0);
+			expect(resultado.saldoFinal).toBeCloseTo(esperado, 4);
+		});
+
+		it('la conciliación cruzada reporta los tres rubros', async () => {
+			const { obtenerConciliacionCruzada } = await import(
+				'@/features/contabilidad-formal/services/conciliacion-cruzada-service'
+			);
+			const resultado = await obtenerConciliacionCruzada(tenantListado('A'), {});
+			expect(resultado.rubros.map((r) => r.clave).sort()).toEqual(['CXC', 'CXP', 'TESORERIA']);
+			expect(resultado.monedaFuncional).toBe('CUP');
+		});
 	});
 });

@@ -30,11 +30,11 @@ Rama sugerida: `feat/contabilidad-capa-formal` desde `main` (después del merge 
 
 ## CTA-2 — Libros formales y conciliación cruzada
 
-- [ ] **T1 — RED servicios de lectura.** Diario (período, diario, rango, cursor), mayor (saldo corrido por naturaleza), comprobación (4 columnas, total cuadrado), balance/P&L por cuentas, conciliación por rubro vs `balance-results-report-service`.
+- [x] **T1 — RED servicios de lectura.** Diario (período, diario, rango, cursor), mayor (saldo corrido por naturaleza), comprobación (4 columnas, total cuadrado), balance/P&L por cuentas, conciliación por rubro vs `balance-results-report-service`.
   `pnpm exec vitest run src/features/contabilidad-formal/__tests__/libros.test.ts`
-- [ ] **T2 — GREEN servicios + actions.** `actions-diario.ts`, `actions-mayor.ts`, `actions-comprobacion.ts`, `actions-conciliacion-cruzada.ts` (withAction + feature guard; Zod strict en filtros).
-- [ ] **T3 — UI sección "Contabilidad formal".** Vistas diario/mayor/comprobación + panel de conciliación cruzada; componentes <200 líneas; tests Testing Library + `vitest-axe`; copys en español neutro (incl. errores §7 del design).
-- [ ] **T4 — Integración libros.** Comprobación cuadrada en cualquier período sembrado; mayor de cuenta agregada = saldo de rubro calculado; aislamiento tenant en lecturas.
+- [x] **T2 — GREEN servicios + actions.** `actions-diario.ts`, `actions-mayor.ts`, `actions-comprobacion.ts`, `actions-conciliacion-cruzada.ts` (withAction + feature guard; Zod strict en filtros).
+- [x] **T3 — UI sección "Contabilidad formal".** Vistas diario/mayor/comprobación + panel de conciliación cruzada; componentes <200 líneas; tests Testing Library + `vitest-axe`; copys en español neutro (incl. errores §7 del design).
+- [x] **T4 — Integración libros.** Comprobación cuadrada en cualquier período sembrado; mayor de cuenta agregada = saldo de rubro calculado; aislamiento tenant en lecturas.
   `DATABASE_URL_TEST=... pnpm test:integration -- src/features/contabilidad-formal/__integration__/libros.test.ts`
 - Commit: `feat(contabilidad): libro diario, mayor, comprobación y conciliación cruzada (CTA-2)`
 
