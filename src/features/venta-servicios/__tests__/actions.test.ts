@@ -17,7 +17,7 @@ const mockTx = {
 	tipoPago: { findFirst: vi.fn() },
 	cuentaBancaria: { findFirst: vi.fn() },
 	anticipo: { findUnique: vi.fn() },
-	reconciliacionServicio: { create: vi.fn() },
+	reconciliacionServicio: { create: vi.fn().mockResolvedValue({ reconciliacionId: 'rec-serv-mock' }) },
 	transaccionMoneda: { create: vi.fn() },
 	tenantAccountingPolicy: { findUnique: vi.fn() },
 };

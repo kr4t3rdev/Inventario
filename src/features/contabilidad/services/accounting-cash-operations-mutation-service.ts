@@ -10,6 +10,13 @@ import {
 import type { AuthenticatedUser } from '@/lib/auth-middleware';
 import { requireTenant } from '@/lib/services/tenant-scope';
 import { acquireAccountingTenantLock } from './accounting-tenant-lock-service';
+import { postEvento } from '@/features/contabilidad-formal/services/posting-engine';
+import {
+  buildEventoDeudaRecibida,
+  buildEventoPagoDeuda,
+  buildEventoPrestamoOtorgado,
+  buildEventoCobroPrestamo,
+} from '@/features/contabilidad-formal/lib/event-builders';
 
 function prestamosCashEnabled(): boolean {
   return process.env.NEXT_PUBLIC_ENABLE_PRESTAMOS_CASH !== 'false';
@@ -133,10 +140,18 @@ export const AccountingCashOperationsMutationService = {
       if (input.fechaVencimiento) prestamoData.fechaVencimiento = new Date(input.fechaVencimiento);
       if (input.observaciones) prestamoData.observaciones = input.observaciones;
 
-      return tx.prestamoCash.create({
+      const prestamoCreado = await tx.prestamoCash.create({
         data: prestamoData,
         include: { cliente: { select: { clienteId: true, nombre: true } }, cuentaPorCobrar: true },
       });
+
+      await postEvento(tx, { tenantId, userId: user.userId }, buildEventoPrestamoOtorgado({
+        prestamoId: prestamoCreado.id,
+        valoracion: { monto: Number(input.montoCapital), moneda: input.moneda || 'CUP' },
+        descripcion: input.observaciones || `Desembolso de préstamo cash para cliente ${input.clienteId}`,
+      }));
+
+      return prestamoCreado;
     });
 
     await AuditLogService.log({
@@ -263,6 +278,19 @@ export const AccountingCashOperationsMutationService = {
       if (nuevoEstadoCuenta === 'PAGADA') {
         await tx.prestamoCash.update({ where: { id: prestamo.id }, data: { estado: 'PAGADO' } });
       }
+      await postEvento(tx, { tenantId, userId: user.userId }, buildEventoCobroPrestamo({
+        reconciliacionId: reconciliacion.reconciliacionId,
+        valoracion: {
+          monto: Number(input.monto),
+          moneda: input.moneda || String(prestamo.moneda),
+          montoFuncional: conversion.montoConvertido ?? Number(input.monto),
+          monedaFuncionalCodigo: conversion.fxEvidence?.functionalCurrency ?? null,
+          tasaCambio: conversion.tasaCambio ?? null,
+          fxEvidenceFingerprint: conversion.fxEvidence?.fxEvidenceFingerprint ?? null,
+        },
+        descripcion: input.observaciones ?? undefined,
+        referencia: prestamo.id,
+      }));
       return reconciliacion;
     });
 
@@ -355,7 +383,7 @@ export const AccountingCashOperationsMutationService = {
         },
       });
 
-      return tx.deudaCash.create({
+      const deudaCreada = await tx.deudaCash.create({
         data: {
           tenantId,
           proveedorId: input.proveedorId,
@@ -371,6 +399,14 @@ export const AccountingCashOperationsMutationService = {
         },
         include: { proveedor: { select: { vendorId: true, nombre: true } }, cuentaPorPagar: true },
       });
+
+      await postEvento(tx, { tenantId, userId: user.userId }, buildEventoDeudaRecibida({
+        deudaId: deudaCreada.id,
+        valoracion: { monto: Number(input.montoCapital), moneda: input.moneda || 'CUP' },
+        descripcion: input.observaciones || `Desembolso de deuda cash para proveedor ${input.proveedorId}`,
+      }));
+
+      return deudaCreada;
     });
 
     await AuditLogService.log({
@@ -485,6 +521,16 @@ export const AccountingCashOperationsMutationService = {
       if (nuevoEstadoCuenta === 'PAGADA') {
         await tx.deudaCash.update({ where: { id: deuda.id }, data: { estado: 'PAGADO' } });
       }
+      await postEvento(tx, { tenantId, userId: user.userId }, buildEventoPagoDeuda({
+        reconciliacionId: reconciliacion.reconciliacionId,
+        valoracion: {
+          monto: Number(input.monto),
+          moneda: input.moneda || deuda.moneda,
+          montoFuncional: Number(input.monto),
+        },
+        descripcion: input.observaciones ?? undefined,
+        referencia: deuda.id,
+      }));
       return reconciliacion;
     });
 

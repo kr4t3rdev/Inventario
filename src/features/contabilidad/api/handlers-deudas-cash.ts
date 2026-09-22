@@ -6,6 +6,8 @@ import { AuditLogService } from '@/lib/services/audit-log-service'
 import { requireTenant } from '@/lib/services/tenant-scope'
 import { calcularSaldoPendienteDeuda, calcularTotalDeudaConInteres, normalizarEstadoDeudaCash } from '@/lib/utils/deuda-cash'
 import { buildPersistedAccountingAmount } from '@/features/contabilidad/services/accounting-reconciliation-service'
+import { postEvento } from '@/features/contabilidad-formal/services/posting-engine'
+import { buildEventoDeudaRecibida, buildEventoPagoDeuda } from '@/features/contabilidad-formal/lib/event-builders'
 
 function deudasCashEnabled(): boolean { return process.env.NEXT_PUBLIC_ENABLE_DEUDAS_CASH !== 'false' }
 
@@ -66,7 +68,14 @@ export async function handlePostDeudasCash(request: NextRequest, user: Authentic
     const nextNum = (lastDeuda?.idNumerico ?? 0) + 1
     const cxp = await tx.cuentaPorPagar.create({ data: { tenantId, numeroFactura: `DC-${nextNum}`, proveedorId: body.proveedorId, proveedorNombre: proveedor.nombre, montoDeuda: totalDeuda, montoPagado: 0, saldoPendiente: totalDeuda, moneda: body.moneda, tipo: 'compra', tipoDeuda: 'DEUDA_CASH', estado: 'PENDIENTE', fechaVencimiento: body.fechaVencimiento ? new Date(body.fechaVencimiento) : undefined } })
      await tx.reconciliacionVenta.create({ data: { tenantId, cuentaId: body.cuentaBancariaId, tipoPagoId: tp.tipoId, monto: body.montoCapital, moneda: body.moneda, ...buildPersistedAccountingAmount(body.montoCapital, body.moneda, body.tasaCambio), fechaReconciliacion: new Date(), observaciones: body.observaciones || `Desembolso de deuda cash para proveedor ${body.proveedorId}`, reconciliadoPor: user.userId, deudaCashId: null, tipoReconciliacion: 'DEUDA_CASH_DESEMBOLSO' } })
-    return tx.deudaCash.create({ data: { tenantId, proveedorId: body.proveedorId, cuentaPorPagarId: cxp.cuentaPorPagarId, montoCapital: body.montoCapital, montoTotalDeuda: totalDeuda, moneda: body.moneda, tasaInteres: body.tasaInteres, fechaVencimiento: body.fechaVencimiento ? new Date(body.fechaVencimiento) : undefined, observaciones: body.observaciones, comprobanteUrl: body.comprobanteUrl, cuentaBancariaId: body.cuentaBancariaId, createdById: user.userId }, include: { proveedor: { select: { vendorId: true, nombre: true } }, cuentaPorPagar: true } })
+    const deudaCreada = await tx.deudaCash.create({ data: { tenantId, proveedorId: body.proveedorId, cuentaPorPagarId: cxp.cuentaPorPagarId, montoCapital: body.montoCapital, montoTotalDeuda: totalDeuda, moneda: body.moneda, tasaInteres: body.tasaInteres, fechaVencimiento: body.fechaVencimiento ? new Date(body.fechaVencimiento) : undefined, observaciones: body.observaciones, comprobanteUrl: body.comprobanteUrl, cuentaBancariaId: body.cuentaBancariaId, createdById: user.userId }, include: { proveedor: { select: { vendorId: true, nombre: true } }, cuentaPorPagar: true } })
+    // Capa de contabilidad formal (CTA-1): deuda recibida de terceros.
+    await postEvento(tx, { tenantId, userId: user.userId }, buildEventoDeudaRecibida({
+      deudaId: deudaCreada.id,
+      valoracion: { monto: body.montoCapital, moneda: body.moneda },
+      descripcion: body.observaciones || `Deuda recibida de proveedor ${body.proveedorId}`,
+    }))
+    return deudaCreada
   })
 
   await AuditLogService.log({ accion: 'CREATE', entidad: 'DEUDA_CASH', entidadId: deuda.id, usuarioId: user.userId, detalles: { proveedorId: body.proveedorId, montoCapital: body.montoCapital, moneda: body.moneda } })
@@ -116,6 +125,12 @@ export async function handlePostDeudaCashPago(request: NextRequest, context: { p
      const moneda = body.moneda || deuda.moneda
      const r = await tx.reconciliacionVenta.create({ data: { tenantId: deuda.tenantId, cuentaId: body.cuentaId, tipoPagoId: body.tipoPagoId, monto: body.monto, moneda, ...buildPersistedAccountingAmount(body.monto, moneda, body.tasaCambio), ...(body.observaciones != null && { observaciones: body.observaciones }), reconciliadoPor: user.userId, deudaCashId: deuda.id, tipoReconciliacion: 'DEUDA_CASH' } })
     await tx.cuentaBancaria.update({ where: { cuentaId: body.cuentaId }, data: { saldo: { decrement: body.monto } } })
+    // Capa de contabilidad formal (CTA-1): pago de deuda.
+    await postEvento(tx, { tenantId: deuda.tenantId, userId: user.userId }, buildEventoPagoDeuda({
+      reconciliacionId: r.reconciliacionId,
+      valoracion: { monto: body.monto, moneda },
+      descripcion: body.observaciones || `Pago de deuda ${deuda.id}`,
+    }))
     const nmp = Number((Number(deuda.cuentaPorPagar.montoPagado) + body.monto).toFixed(2))
     const td = Number(deuda.cuentaPorPagar.montoDeuda); const nsp = calcularSaldoPendienteDeuda(td, nmp); const nec = nsp <= 0.01 ? 'PAGADA' : 'PARCIAL'
     await tx.cuentaPorPagar.update({ where: { cuentaPorPagarId: deuda.cuentaPorPagarId }, data: { montoPagado: nmp, saldoPendiente: nsp, estado: nec } })

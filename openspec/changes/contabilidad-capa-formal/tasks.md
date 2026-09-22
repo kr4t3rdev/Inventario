@@ -6,25 +6,27 @@ Rama sugerida: `feat/contabilidad-capa-formal` desde `main` (después del merge 
 
 ## CTA-0 — Modelo de datos, plan por defecto y flags
 
-- [ ] **T1 — RED contratos de modelo.** Tests del seed y clasificación: seed crea 7 diarios + plan ~32 cuentas idempotente (re-ejecutarlo no duplica); `CuentaRolTenant` completo (23 roles mapeados); naturaleza coherente con tipo; unicidad `tenantId+codigo`; los 6 modelos nuevos figuran en la clasificación de aislamiento (5 `scoped` + `PlantillaAsiento` global).
+- [x] **T1 — RED contratos de modelo.** Tests del seed y clasificación: seed crea 7 diarios + plan ~32 cuentas idempotente (re-ejecutarlo no duplica); `CuentaRolTenant` completo (23 roles mapeados); naturaleza coherente con tipo; unicidad `tenantId+codigo`; los 6 modelos nuevos figuran en la clasificación de aislamiento (5 `scoped` + `PlantillaAsiento` global).
   `pnpm exec vitest run src/features/contabilidad-formal/__tests__/seed-plan.test.ts src/lib/db/__tests__`
-- [ ] **T2 — GREEN schema + seed.** Añadir a [prisma/schema.prisma](/prisma/schema.prisma) los 6 modelos y 6 enums del design §1; `src/features/contabilidad-formal/services/seed-plan-contable.ts` (upserts idempotentes); registrar modelo ↔ scoped en `src/lib/db/model-classification.ts`; flag `contabilidad-formal` en [feature-registry.ts](/src/features/planes/feature-registry.ts) (categoría `financiero`).
-- [ ] **T3 — Migración gateada.** `prisma migrate dev --create-only` → revisión SQL de índices/uniques/decimales (paridad con `fx_evidence`) → aprobación → aplicar en local.
-- [ ] **T4 — Seed accesible.** Server action `inicializarPlanContableAction` (withAction + `requireFeature('contabilidad-formal')`) idempotente; botón en configuración contable (gated por flag).
+- [x] **T2 — GREEN schema + seed.** Añadir a [prisma/schema.prisma](/prisma/schema.prisma) los 6 modelos y 6 enums del design §1; `src/features/contabilidad-formal/services/seed-plan-contable.ts` (upserts idempotentes); registrar modelo ↔ scoped en `src/lib/db/model-classification.ts`; flag `contabilidad-formal` en [feature-registry.ts](/src/features/planes/feature-registry.ts) (categoría `financiero`).
+- [x] **T3 — Migración gateada.** `prisma migrate dev --create-only` → revisión SQL de índices/uniques/decimales (paridad con `fx_evidence`) → aprobación → aplicar en local.
+- [x] **T4 — Seed accesible.** Server action `inicializarPlanContableAction` (withAction + `requireFeature('contabilidad-formal')`) idempotente; botón en configuración contable (gated por flag).
 - Commit: `feat(contabilidad): schema capa formal + plan de cuentas por defecto (CTA-0)`
 
 ## CTA-1 — Motor de asientos + hooks en los 18 writers
 
-- [ ] **T1 — RED motor puro.** Tests por evento representativo de cada grupo (venta contado, compra crédito, cobro con intereses, ajuste, transferencia, inyección, diferencia cambiaria, merma): plantilla→líneas correctas, cuadre exacto, moneda original + funcional + fingerprint heredados, rol sin mapear → `CUENTA_SIN_MAPEAR` (enforce) / log (shadow), flag `off` → no-op.
+- [x] **T1 — RED motor puro.** Tests por evento representativo de cada grupo (venta contado, compra crédito, cobro con intereses, ajuste, transferencia, inyección, diferencia cambiaria, merma): plantilla→líneas correctas, cuadre exacto, moneda original + funcional + fingerprint heredados, rol sin mapear → `CUENTA_SIN_MAPEAR` (enforce) / log (shadow), flag `off` → no-op.
   `pnpm exec vitest run src/features/contabilidad-formal/__tests__/posting-engine.test.ts`
-- [ ] **T2 — GREEN motor.** `posting-engine.ts` + `asiento-service.ts` (numeración bajo `AccountingTenantLockService`, hash encadenado, inserción) según design §2; modo vía `CONTABILIDAD_FORMAL_MODE` (default `off`).
-- [ ] **T3 — RED integración cuadre/idempotencia.** Contra DB real: intentar persistir asiento descuadrado falla; reintentar mismo `origen` no duplica; asiento cae en período resuelto por fecha; período cerrado → rechazo + `INTENTO_BYPASS` en `AuditoriaPeriodo`.
+- [x] **T2 — GREEN motor.** `posting-engine.ts` + `asiento-service.ts` (numeración bajo `AccountingTenantLockService`, hash encadenado, inserción) según design §2; modo vía `CONTABILIDAD_FORMAL_MODE` (default `off`).
+- [x] **T3 — RED integración cuadre/idempotencia.** Contra DB real: intentar persistir asiento descuadrado falla; reintentar mismo `origen` no duplica; asiento cae en período resuelto por fecha; período cerrado → rechazo + `INTENTO_BYPASS` en `AuditoriaPeriodo`.
   `DATABASE_URL_TEST=... pnpm test:integration -- src/features/contabilidad-formal/__integration__/posting-engine.test.ts`
-- [ ] **T4 — Hooks en writers (lote 1: ventas y cobros).** `postEvento(tx, …)` en `facturacion-workflow`, `actions-reconciliacion` (ventas), handlers legacy de reconciliación ventas/servicios: eventos `VENTA_CONTADO`, `VENTA_CREDITO`, `COSTO_VENTA_DEVENGADO`, `COBRO_CXC`, `COBRO_SERVICIO`, `DEVOLUCION_VENTA`, `DIFERENCIA_CAMBIARIA`. Tests RED→GREEN por evento (mockean prisma, verifican construcción del evento desde el payload real).
-- [ ] **T5 — Hooks lote 2 (compras, gastos, nómina).** `COMPRA_*`, `GASTO_*`, `PAGO_CXP`, `PAGO_GASTO_CREDITO`, `PAGO_NOMINA` en compras-*, gastos workflow, pago-salario.
-- [ ] **T6 — Hooks lote 3 (flujos de efectivo especiales).** Anticipos, préstamos (`COBRO_PRESTAMO` con `INTERESES`), deudas (`PAGO_DEUDA` con `INTERESES`), ajustes bancarios, transferencias, inyección/pago deuda capital, mermas, producción (`produccion/ordenes/[id]/completar`), restock.
+- [x] **T4 — Hooks en writers (lote 1: ventas y cobros).** `postEvento(tx, …)` en `facturacion-workflow`, `actions-reconciliacion` (ventas), handlers legacy de reconciliación ventas/servicios: eventos `VENTA_CONTADO`, `VENTA_CREDITO`, `COSTO_VENTA_DEVENGADO`, `COBRO_CXC`, `COBRO_SERVICIO`, `DEVOLUCION_VENTA`, `DIFERENCIA_CAMBIARIA`. Tests RED→GREEN por evento (mockean prisma, verifican construcción del evento desde el payload real).
+- [x] **T5 — Hooks lote 2 (compras, gastos, nómina).** `COMPRA_*`, `GASTO_*`, `PAGO_CXP`, `PAGO_GASTO_CREDITO`, `PAGO_NOMINA` en compras-*, gastos workflow, pago-salario.
+- [x] **T6 — Hooks lote 3 (flujos de efectivo especiales).** Anticipos, préstamos (`COBRO_PRESTAMO` con `INTERESES`), deudas (`PAGO_DEUDA` con `INTERESES`), ajustes bancarios, transferencias, inyección/pago deuda capital, mermas, producción (`produccion/ordenes/[id]/completar`), restock.
 - [ ] **T7 — Shadow activable.** `shadow` en staging con contadores por evento; reporte de cobertura (eventos vistos vs contabilizados) visible en `actions-health`.
 - Commit por lote: `feat(contabilidad): motor de asientos + hooks ventas (CTA-1/T1–T4)` etc.
+
+<!-- CTA-1 ejecutado 2026-09-22: 16 writers cableados (venta contado/crédito, cobros CxC, devolución, costo FIFO, compras contado/crédito, pago CxP, gastos, nómina, anticipos crear+aplicar, préstamos, deudas, ajustes, transferencias, capital, mermas, producción, servicios, restock). Decisiones v1 documentadas: cobros de préstamo/deuda sin split capital/interés (los writers cobran monto total de CxC/CxP); el handler legacy `api/handlers.ts:createTransferencia` NO se hookea (path legacy sin user en-contexto; el canal canónico es accounting-operations-mutation-service). -->
 
 ## CTA-2 — Libros formales y conciliación cruzada
 

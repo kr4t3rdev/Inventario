@@ -1,5 +1,7 @@
 import { Prisma } from '@/generated/prisma'
 import { getIdempotentResult, setIdempotentResult } from '@/lib/idempotency'
+import { postEvento } from '@/features/contabilidad-formal/services/posting-engine'
+import { buildEventoAnticipoAplicado, buildEventoAnticipoCreado } from '@/features/contabilidad-formal/lib/event-builders'
 import {
   AnticipoWorkflowError,
   AnticipoContexto,
@@ -170,6 +172,19 @@ export async function createAnticipo(
       usuarioId: params.usuarioId
     }
   })
+
+  // Capa de contabilidad formal (CTA-1): el anticipo documenta el pasivo
+  // (cliente) o el activo (proveedor) contra la tesorería.
+  await postEvento(
+    tx,
+    { tenantId: params.tenantId, userId: params.usuarioId },
+    buildEventoAnticipoCreado({
+      anticipoId: anticipo.anticipoId,
+      tipo: params.tipo,
+      valoracion: { monto, moneda: anticipo.moneda },
+      descripcion: params.referenciaExterna ?? undefined,
+    }),
+  )
 
   return anticipo
 }
@@ -544,6 +559,18 @@ export async function applyAnticipoAllocations(
         observaciones: context.observaciones || null,
       },
     })
+
+    // Capa de contabilidad formal (CTA-1): aplicación del anticipo al documento.
+    await postEvento(
+      tx,
+      { tenantId: context.tenantId, userId: context.usuarioId },
+      buildEventoAnticipoAplicado({
+        movimientoId: movimiento.movimientoId,
+        tipo: anticipo.tipo === 'COBRO' ? 'CLIENTE' : 'PROVEEDOR',
+        valoracion: { monto: montoAplicado, moneda: anticipo.moneda },
+        referencia: context.documentoDestinoId,
+      }),
+    )
 
     results.push({
       anticipoId,

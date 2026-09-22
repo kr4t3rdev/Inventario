@@ -3,6 +3,8 @@ import { z } from 'zod'
 import { prisma } from '@/lib/prisma'
 import type { Prisma } from '@/generated/prisma'
 import { AuditLogService } from '@/lib/services/audit-log-service'
+import { postEvento } from '@/features/contabilidad-formal/services/posting-engine'
+import { buildEventoServicio } from '@/features/contabilidad-formal/lib/event-builders'
 
 export const reconciliacionServicioSchema = z.object({
   ventaServicioId: z.string().min(1, 'ID de venta de servicio es requerido'),
@@ -59,6 +61,20 @@ export async function handlePostReconciliacionServicios(request: NextRequest, us
       data: { ventaServicioId: validatedData.ventaServicioId, cuentaId: validatedData.cuentaId, tipoPagoId: validatedData.tipoPagoId, monto: validatedData.monto, moneda: validatedData.moneda, tasaCambio: validatedData.tasaCambio, montoConvertido, observaciones: validatedData.observaciones, reconciliadoPor: user.userId, tenantId: ventaServicio.tenantId },
       include: { ventasServicio: true, cuentaBancaria: true, tipoPago: true }
     })
+
+    // Capa de contabilidad formal (CTA-1): cobro de servicio legacy.
+    await postEvento(tx, { tenantId: ventaServicio.tenantId, userId: user.userId }, buildEventoServicio({
+      cobro: true,
+      reconciliacionId: reconciliacion.reconciliacionId,
+      tesoreria: {
+        monto: validatedData.monto,
+        moneda: validatedData.moneda || 'CUP',
+        montoFuncional: montoConvertido,
+        tasaCambio: validatedData.tasaCambio ?? null,
+        referencia: validatedData.ventaServicioId,
+      },
+      descripcion: validatedData.observaciones,
+    }))
 
     const saldoIncremento = parseFloat(montoConvertido.toString())
     if (cuentaOrigen && tipoPago.cuentaDefecto !== validatedData.cuentaId) {

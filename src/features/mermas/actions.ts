@@ -19,6 +19,8 @@ import {
 } from "@/features/inventario/movimientos";
 import { createMermaSchema, updateMermaSchema } from "./schemas";
 import type { CreateMermaInput, UpdateMermaInput } from "./schemas";
+import { postEvento } from "@/features/contabilidad-formal/services/posting-engine";
+import { buildEventoMerma } from "@/features/contabilidad-formal/lib/event-builders";
 import type { AuthenticatedUser } from "@/lib/auth-middleware";
 
 const MERMA_INCLUDE = {
@@ -144,6 +146,18 @@ export const createMermaAction = withAction(
 					creadoPorId: user.userId,
 				},
 			});
+
+			// Capa de contabilidad formal (CTA-1): la merma baja el inventario a costo.
+			await postEvento(
+				tx,
+				{ tenantId, userId: user.userId },
+				buildEventoMerma({
+					mermaId: creada.mermaId,
+					costo: costoTotal,
+					descripcion: parsed.motivo ?? undefined,
+					referencia: parsed.productoId,
+				}),
+			);
 
 			return creada;
 		});

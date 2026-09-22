@@ -5,6 +5,14 @@ import { AuditLogService } from '@/lib/services/audit-log-service';
 import { requireTenant } from '@/lib/services/tenant-scope';
 import type { AuthenticatedUser } from '@/lib/auth-middleware';
 import { acquireAccountingTenantLock } from './accounting-tenant-lock-service';
+import { postEvento } from '@/features/contabilidad-formal/services/posting-engine';
+import {
+  buildEventoAjusteBancario,
+  buildEventoDeudaRecibida,
+  buildEventoInyeccionCapital,
+  buildEventoPagoDeudaCapital,
+  buildEventoTransferenciaBancaria,
+} from '@/features/contabilidad-formal/lib/event-builders';
 
 const validateBankTransferSchema = z.object({
   cuentaOrigenId: z.string().min(1, 'Cuenta origen es requerida'),
@@ -224,7 +232,7 @@ export const AccountingOperationsMutationService = {
         data: { saldo: { increment: montoDestino } },
       });
 
-      return tx.transferenciaBancaria.create({
+      const creada = await tx.transferenciaBancaria.create({
         data: {
           numeroComprobante,
           cuentaOrigen: { connect: { cuentaId: parsed.cuentaOrigenId } },
@@ -248,6 +256,25 @@ export const AccountingOperationsMutationService = {
           },
         },
       });
+
+      // Capa de contabilidad formal (CTA-1): la transferencia mueve tesorería
+      // entre cuentas del mismo tenant (mismo rubro bancario, dos lados).
+      await postEvento(
+        tx,
+        { tenantId, userId: user.userId },
+        buildEventoTransferenciaBancaria({
+          transferenciaId: creada.transferenciaId,
+          montoOrigen: parsed.montoOrigen,
+          monedaOrigen: cuentaOrigen.moneda,
+          montoDestino,
+          monedaDestino: cuentaDestino.moneda,
+          tasaCambio: tasaCambioFinal ?? null,
+          referencia: numeroComprobante,
+          descripcion: parsed.motivo,
+        }),
+      );
+
+      return creada;
     });
 
     await AuditLogService.log({
@@ -325,6 +352,28 @@ export const AccountingOperationsMutationService = {
         data: { saldo: nuevoSaldo },
       });
 
+      // Capa de contabilidad formal (CTA-1): ajuste bancario manual.
+      await postEvento(
+        tx,
+        { tenantId, userId: user.userId },
+        buildEventoAjusteBancario({
+          ajusteId: ajuste.ajusteId,
+          tipo: parsed.tipo,
+          valoracion: {
+            monto: parsed.monto,
+            moneda: parsed.moneda,
+            montoFuncional:
+              parsed.moneda.toUpperCase() === 'CUP'
+                ? parsed.monto
+                : parsed.tasaCambio
+                  ? parsed.monto * parsed.tasaCambio
+                  : parsed.monto,
+            tasaCambio: parsed.moneda.toUpperCase() === 'CUP' ? 1 : parsed.tasaCambio,
+          },
+          descripcion: parsed.descripcion ?? undefined,
+        }),
+      );
+
       return ajuste;
     });
 
@@ -375,6 +424,7 @@ export const AccountingOperationsMutationService = {
           saldo: true,
           moneda: true,
           isActive: true,
+          tipoCuenta: true,
         },
       });
 
@@ -423,6 +473,31 @@ export const AccountingOperationsMutationService = {
         data: { saldo: { increment: parsed.montoRecibido } },
       });
 
+      // Capa de contabilidad formal (CTA-1): aporte propio sube capital social;
+      // deuda externa sube deudas recibidas (mismo dinero entrando a caja).
+      const valoracionCapital = {
+        monto: parsed.montoRecibido,
+        moneda: parsed.moneda,
+        montoFuncional: parsed.montoRecibido,
+      };
+      await postEvento(
+        tx,
+        { tenantId, userId: user.userId },
+        isDebt
+          ? buildEventoDeudaRecibida({
+              deudaId: created.id,
+              valoracion: valoracionCapital,
+              tipoCuenta: cuenta.tipoCuenta,
+              descripcion: parsed.descripcion ?? undefined,
+            })
+          : buildEventoInyeccionCapital({
+              inyeccionId: created.id,
+              valoracion: valoracionCapital,
+              tipoCuenta: cuenta.tipoCuenta,
+              descripcion: parsed.descripcion ?? undefined,
+            }),
+      );
+
       await AuditLogService.logStrict({
         accion: 'CREATE',
         entidad: 'INYECCION_CAPITAL',
@@ -470,7 +545,7 @@ export const AccountingOperationsMutationService = {
 
       const cuenta = await tx.cuentaBancaria.findFirst({
         where: { cuentaId: parsed.cuentaBancariaId, tenantId },
-        select: { cuentaId: true, isActive: true },
+        select: { cuentaId: true, isActive: true, moneda: true },
       });
       if (!cuenta) {
         throw new ActionError('Cuenta bancaria no encontrada', 'NOT_FOUND');
@@ -509,6 +584,21 @@ export const AccountingOperationsMutationService = {
           ...(parsed.monto >= saldoPendiente ? { estado: 'PAGADA' as const } : {}),
         },
       });
+
+      // Capa de contabilidad formal (CTA-1): pago de deuda de capital.
+      await postEvento(
+        tx,
+        { tenantId, userId: user.userId },
+        buildEventoPagoDeudaCapital({
+          pagoDeudaId: created.id,
+          valoracion: {
+            monto: parsed.monto,
+            moneda: cuenta.moneda ?? 'CUP',
+            montoFuncional: parsed.monto,
+          },
+          descripcion: parsed.observaciones ?? undefined,
+        }),
+      );
 
       await AuditLogService.logStrict({
         accion: 'CREATE',

@@ -5,6 +5,8 @@ import { z } from "zod";
 import { Prisma } from "@/generated/prisma";
 import { authenticateUser } from "@/lib/auth-middleware";
 import { AuditLogService } from "@/lib/services/audit-log-service";
+import { postEvento } from "@/features/contabilidad-formal/services/posting-engine";
+import { buildEventoCobroCxc, buildEventoVentaContado } from "@/features/contabilidad-formal/lib/event-builders";
 import { requireTenant } from "@/lib/services/tenant-scope";
 import {
 	validarEscrituraPeriodo,
@@ -690,9 +692,28 @@ export async function POST(request: NextRequest) {
 						cuentaBancaria: true,
 						tipoPago: true,
 					},
-				});
+					});
 
-				// Actualizar el saldo de las cuentas bancarias
+					// Capa de contabilidad formal (CTA-1): cobro legacy de venta.
+					await postEvento(
+						tx,
+						{ tenantId: venta.tenantId, userId: user.userId },
+						(venta.factura ? buildEventoCobroCxc : buildEventoVentaContado)({
+							reconciliacionId: reconciliacion.reconciliacionId,
+							fecha: new Date(),
+							tesoreria: {
+								monto: Number(validatedData.monto),
+								moneda: validatedData.moneda || 'CUP',
+								montoFuncional: montoDestino ?? Number(validatedData.monto),
+								tasaCambio: validatedData.tasaCambio ?? null,
+								tipoCuenta: cuentaDestinoLocked?.tipoCuenta ?? null,
+								referencia: referenciaTransferencia,
+							},
+							descripcion: validatedData.observaciones ?? undefined,
+						}),
+					);
+
+					// Actualizar el saldo de las cuentas bancarias
 				const saldoIncrementoDestino = parseFloat(montoDestino.toString());
 
 				if (cuentaOrigen && tipoPago.cuentaDefecto !== validatedData.cuentaId) {

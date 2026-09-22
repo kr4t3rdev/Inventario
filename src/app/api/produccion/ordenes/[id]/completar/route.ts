@@ -4,6 +4,8 @@ import { prisma } from '@/lib/prisma';
 import { PRODUCTION_STATES } from '@/lib/constants/production';
 import { convertToBase } from '@/lib/utils/unit-converter';
 import { upsertStockUbicacion } from '@/lib/services/stock-ubicacion-service';
+import { postEvento } from '@/features/contabilidad-formal/services/posting-engine';
+import { buildEventoProduccionSalida } from '@/features/contabilidad-formal/lib/event-builders';
 
 /**
  * @description Completa una orden de producción, incrementando el stock del producto terminado
@@ -135,6 +137,19 @@ export const POST = withAuthPost(async (request: NextRequest, { params }: { para
           usuarioId: userId,
         },
       });
+
+      // Capa de contabilidad formal (CTA-1): salida de producción al costo de insumos.
+      if (costoMateriales > 0) {
+        await postEvento(
+          tx,
+          { tenantId: orden.tenantId, userId },
+          buildEventoProduccionSalida({
+            ordenId: id,
+            costo: costoMateriales,
+            descripcion: `Salida de producción ${orden_updated.ordenProduccionId}`,
+          }),
+        );
+      }
 
       return { orden: orden_updated, costoMateriales };
     });

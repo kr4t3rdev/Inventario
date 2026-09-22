@@ -16,6 +16,8 @@ import type { VentaServicioInput, VentaMixtaInput, VentaServicioUpdateInput } fr
 import type { AuthenticatedUser } from '@/lib/auth-middleware';
 import { buildPersistedAccountingAmount } from '@/features/contabilidad/services/accounting-reconciliation-service';
 import { exchangeRateProvider } from '@/features/contabilidad/services/exchange-rate-provider';
+import { postEvento } from '@/features/contabilidad-formal/services/posting-engine';
+import { buildEventoServicio } from '@/features/contabilidad-formal/lib/event-builders';
 
 const VENTA_SERVICIO_INCLUDE = {
   servicio: true,
@@ -257,7 +259,7 @@ export const createVentaServicioAction = withAction(withPeriodValidation(
           tasaFxCatalogId = tasa.tasaId;
         }
 
-        await tx.reconciliacionServicio.create({
+        const recServicio = await tx.reconciliacionServicio.create({
           data: {
             tenantId,
             ventaServicioId: ventaServicio.ventaServicioId,
@@ -276,6 +278,27 @@ export const createVentaServicioAction = withAction(withPeriodValidation(
             reconciliadoPor: user.userId || 'system',
           },
         });
+
+        // Capa de contabilidad formal (CTA-1): servicio cobrado con anticipo de cliente.
+        await postEvento(
+          tx,
+          { tenantId, userId: user.userId || 'system' },
+          buildEventoServicio({
+            cobro: true,
+            reconciliacionId: recServicio.reconciliacionId,
+            tesoreria: {
+              monto: alloc.montoAplicado,
+              moneda: monedaAnticipo,
+              montoFuncional:
+                tasaCambio !== undefined
+                  ? alloc.montoAplicado * tasaCambio
+                  : alloc.montoAplicado,
+              tasaCambio: tasaCambio ?? null,
+              referencia: `Servicio ${ventaServicio.ventaServicioId}`,
+            },
+            descripcion: `Cobro anticipado en servicio ${ventaServicio.ventaServicioId}`,
+          }),
+        );
 
         // Espejo del flujo manual: tracking de conversión para la moneda extranjera.
         if (tasaCambio !== undefined) {

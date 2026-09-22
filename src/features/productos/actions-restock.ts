@@ -7,6 +7,8 @@ import { prisma } from "@/lib/prisma";
 import { requireTenant, requirePermission } from "@/lib/services/tenant-scope";
 import { withPeriodValidation } from "@/lib/services/with-period-validation";
 import { upsertStockUbicacion } from "@/lib/services/stock-ubicacion-service";
+import { postEvento } from '@/features/contabilidad-formal/services/posting-engine';
+import { buildEventoEgreso } from '@/features/contabilidad-formal/lib/event-builders';
 import { executeProductInstanceCreationWorkflow } from "@/lib/restock-utils";
 import { recordCostChange, CostChangeReason } from "@/lib/cost-history-utils";
 import { restockSchema } from "./schemas";
@@ -533,7 +535,7 @@ async function handlePaymentInTransaction(
 			? (montoConvertido ?? null)
 			: null;
 
-		await tx.reconciliacionGasto.create({
+		const restockRec = await tx.reconciliacionGasto.create({
 			data: {
 				tipoGasto: "compra",
 				referenciaId: gastoCompraId,
@@ -551,6 +553,24 @@ async function handlePaymentInTransaction(
 				tenantId,
 			},
 		});
+
+		// Capa de contabilidad formal (CTA-1): restock al contado consume inventario pagado.
+		await postEvento(
+			tx,
+			{ tenantId, userId: userId || 'system' },
+			buildEventoEgreso({
+				tipo: 'COMPRA_CONTADO',
+				reconciliacionId: restockRec.reconciliacionId,
+				descripcion: `Restock pagado - ${productoNombre}`,
+				tesoreria: {
+					monto: reconciliacionMonto,
+					moneda: reconciliacionMoneda,
+					montoFuncional: reconciliacionMontoConvertido ?? totalCost,
+					tasaCambio: reconciliacionTasaCambio,
+					referencia: gastoCompraId,
+				},
+			}),
+		);
 
 		const saldoADescontar = isForeignCurrency
 			? (montoConvertido ?? totalCost)

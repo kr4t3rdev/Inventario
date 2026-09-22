@@ -7,6 +7,8 @@ import { requireTenant } from '@/lib/services/tenant-scope'
 import { calcularSaldoPendientePrestamo, normalizarEstadoPrestamoCash } from '@/lib/utils/prestamo-cash'
 import { PDFDocument, StandardFonts, rgb } from 'pdf-lib'
 import { buildPersistedAccountingAmount } from '@/features/contabilidad/services/accounting-reconciliation-service'
+import { postEvento } from '@/features/contabilidad-formal/services/posting-engine'
+import { buildEventoCobroPrestamo, buildEventoPrestamoOtorgado } from '@/features/contabilidad-formal/lib/event-builders'
 
 function prestamosCashEnabled(): boolean { return process.env.NEXT_PUBLIC_ENABLE_PRESTAMOS_CASH !== 'false' }
 
@@ -65,7 +67,14 @@ export async function handlePostPrestamosCash(request: NextRequest, user: Authen
     const montoDeuda = body.tasaInteres ? Number((body.montoCapital * (1 + body.tasaInteres / 100)).toFixed(2)) : body.montoCapital
     const cxc = await tx.cuentaPorCobrar.create({ data: { tenantId, clienteId: body.clienteId, montoDeuda, montoPagado: 0, tipoCuenta: 'PRESTAMO_CASH', estado: 'PENDIENTE', fechaVencimiento: body.fechaVencimiento ? new Date(body.fechaVencimiento) : undefined } })
      await tx.reconciliacionVenta.create({ data: { tenantId, cuentaId: body.cuentaBancariaId, tipoPagoId: tp.tipoId, monto: body.montoCapital, moneda: body.moneda, ...buildPersistedAccountingAmount(body.montoCapital, body.moneda, body.tasaCambioAlCrear), fechaReconciliacion: new Date(), observaciones: body.observaciones || `Desembolso de préstamo cash para cliente ${body.clienteId}`, reconciliadoPor: user.userId, prestamoCashId: null, tipoReconciliacion: 'PRESTAMO_CASH_DESEMBOLSO' } })
-    return tx.prestamoCash.create({ data: { clienteId: body.clienteId, cuentaPorCobrarId: cxc.id, montoCapital: body.montoCapital, moneda: body.moneda, tasaInteres: body.tasaInteres, tasaCambioAlCrear: body.tasaCambioAlCrear, fechaVencimiento: body.fechaVencimiento ? new Date(body.fechaVencimiento) : undefined, observaciones: body.observaciones, cuentaBancariaId: body.cuentaBancariaId, createdById: user.userId }, include: { cliente: { select: { clienteId: true, nombre: true } }, cuentaPorCobrar: true } })
+    const prestamoCreado = await tx.prestamoCash.create({ data: { clienteId: body.clienteId, cuentaPorCobrarId: cxc.id, montoCapital: body.montoCapital, moneda: body.moneda, tasaInteres: body.tasaInteres, tasaCambioAlCrear: body.tasaCambioAlCrear, fechaVencimiento: body.fechaVencimiento ? new Date(body.fechaVencimiento) : undefined, observaciones: body.observaciones, cuentaBancariaId: body.cuentaBancariaId, createdById: user.userId }, include: { cliente: { select: { clienteId: true, nombre: true } }, cuentaPorCobrar: true } })
+    // Capa de contabilidad formal (CTA-1): desembolso de préstamo otorgado.
+    await postEvento(tx, { tenantId, userId: user.userId }, buildEventoPrestamoOtorgado({
+      prestamoId: prestamoCreado.id,
+      valoracion: { monto: body.montoCapital, moneda: body.moneda },
+      descripcion: body.observaciones || `Desembolso de préstamo cash para cliente ${body.clienteId}`,
+    }))
+    return prestamoCreado
   })
 
   await AuditLogService.log({ accion: 'CREATE', entidad: 'PRESTAMO_CASH', entidadId: prestamo.id, usuarioId: user.userId, detalles: { clienteId: body.clienteId, montoCapital: body.montoCapital, moneda: body.moneda } })
@@ -182,6 +191,12 @@ export async function handlePostPrestamoCashPago(request: NextRequest, context: 
      const moneda = body.moneda || prestamo.moneda
      const r = await tx.reconciliacionVenta.create({ data: { tenantId: prestamo.tenantId, cuentaId: body.cuentaId, tipoPagoId: body.tipoPagoId, monto: body.monto, moneda, ...buildPersistedAccountingAmount(body.monto, moneda, body.tasaCambio), ...(body.observaciones != null && { observaciones: body.observaciones }), reconciliadoPor: user.userId, prestamoCashId: prestamo.id, tipoReconciliacion: 'PRESTAMO_CASH' } })
     await tx.cuentaBancaria.update({ where: { cuentaId: body.cuentaId }, data: { saldo: { increment: body.monto } } })
+    // Capa de contabilidad formal (CTA-1): cobro de préstamo.
+    await postEvento(tx, { tenantId: prestamo.tenantId, userId: user.userId }, buildEventoCobroPrestamo({
+      reconciliacionId: r.reconciliacionId,
+      valoracion: { monto: body.monto, moneda },
+      descripcion: body.observaciones || `Cobro de préstamo ${prestamo.id}`,
+    }))
     const nmp = Number((Number(prestamo.cuentaPorCobrar.montoPagado) + body.monto).toFixed(2))
     const td = Number(prestamo.cuentaPorCobrar.montoDeuda); const ns = calcularSaldoPendientePrestamo(td, nmp); const nec = ns <= 0.01 ? 'PAGADA' : 'PARCIAL'
     await tx.cuentaPorCobrar.update({ where: { id: prestamo.cuentaPorCobrarId }, data: { montoPagado: nmp, estado: nec } })
