@@ -4,7 +4,9 @@ import { ActionError } from '@/lib/server-actions';
 import { hasPermission, requireFeature, requirePermission, requireTenant } from '@/lib/services/tenant-scope';
 import { upsertStockUbicacion } from '@/lib/services/stock-ubicacion-service';
 import { registrarMovimiento } from '@/features/inventario/movimientos';
-import { allocateFifoForSale } from '@/lib/services/fifo-allocation';
+import { allocateFifoForSale, getCostoFifoVenta } from '@/lib/services/fifo-allocation';
+import { postEvento } from '@/features/contabilidad-formal/services/posting-engine';
+import { buildEventoCostoVenta } from '@/features/contabilidad-formal/lib/event-builders';
 import { createVentaSchema } from '@/features/ventas/schemas';
 import { applyFacturacionCobroWorkflow } from '@/features/ventas/services/facturacion-workflow';
 import { resolvePrecioVenta, type PrecioVentaFuente } from '@/features/ventas/services/precio-venta-resolver';
@@ -465,6 +467,16 @@ export const VentaMutationService = {
           itemsData,
           userId: user.userId,
         });
+
+        // Capa de contabilidad formal: costo de venta FIFO (sale de inventario).
+        const costoFifo = await getCostoFifoVenta(tx, tenantId, venta.ventaId);
+        if (costoFifo > 0) {
+          await postEvento(
+            tx,
+            { tenantId, userId: user.userId },
+            buildEventoCostoVenta({ ventaId: venta.ventaId, costoFifo }),
+          );
+        }
       }
 
       if (hasFacturacion && parsed.clienteId && serie) {

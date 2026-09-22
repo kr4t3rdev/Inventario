@@ -14,6 +14,7 @@ vi.mock('@/features/inventario/movimientos', () => ({
 }));
 vi.mock('@/lib/services/fifo-allocation', () => ({
 	allocateFifoForSale: vi.fn(),
+	getCostoFifoVenta: vi.fn().mockResolvedValue(0),
 }));
 vi.mock('@/lib/services/audit-log-service', () => ({
 	AuditLogService: { logStrict: vi.fn() },

@@ -26,6 +26,11 @@ import {
 } from "@/features/contabilidad/services/reconciliation-stats-service";
 import { acquireAccountingTenantLock } from "@/features/contabilidad/services/accounting-tenant-lock-service";
 import { getPayrollPaymentAmount } from "@/features/pago-salario/payroll-amounts";
+import { postEvento } from "@/features/contabilidad-formal/services/posting-engine";
+import {
+	buildEventoCobroCxc,
+	buildEventoVentaContado,
+} from "@/features/contabilidad-formal/lib/event-builders";
 
 // ─── Stats Hub ────────────────────────────────────────────
 
@@ -367,7 +372,7 @@ export const reconciliarVentaAction = withAction(
 				}
 				const cuentaBancaria = await tx.cuentaBancaria.findFirst({
 					where: { cuentaId: input.cuentaId, tenantId },
-					select: { cuentaId: true, isActive: true },
+					select: { cuentaId: true, isActive: true, tipoCuenta: true },
 				});
 				if (!cuentaBancaria || !cuentaBancaria.isActive) {
 					throw new ActionError(
@@ -408,6 +413,30 @@ export const reconciliarVentaAction = withAction(
 						reconciliadoPor: user.userId,
 					},
 				});
+
+				// Capa de contabilidad formal: cobro de CxC si la venta era a crédito,
+				// o venta al contado si se cobra en el acto.
+				await postEvento(
+					tx,
+					{ tenantId, userId: user.userId },
+					(cuentaPorCobrar ? buildEventoCobroCxc : buildEventoVentaContado)({
+						reconciliacionId: reconciliacion.reconciliacionId,
+						descripcion: input.observaciones ?? undefined,
+						fecha: fechaReconciliacion,
+						tesoreria: {
+							monto: input.monto,
+							moneda: input.moneda || 'CUP',
+							montoFuncional: conversion.montoConvertido ?? input.monto,
+							tasaCambio: conversion.tasaCambio,
+							fxEvidenceFingerprint:
+								conversion.fxEvidence?.fxEvidenceFingerprint ?? null,
+						tipoCuenta: cuentaBancaria.tipoCuenta,
+						monedaFuncionalCodigo:
+							conversion.fxEvidence?.functionalCurrency ?? null,
+						referencia: `Venta ${input.ventaId}`,
+						},
+					}),
+				);
 
 				if (cuentaPorCobrar) {
 					// Sumar todas las reconciliaciones de esta venta para calcular el total pagado

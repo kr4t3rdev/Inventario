@@ -1,5 +1,10 @@
 import { Prisma } from '@/generated/prisma'
 import { buildPersistedAccountingAmount } from '@/features/contabilidad/services/accounting-reconciliation-service'
+import { postEvento } from '@/features/contabilidad-formal/services/posting-engine'
+import {
+  buildEventoVentaContado,
+  buildEventoVentaCredito,
+} from '@/features/contabilidad-formal/lib/event-builders'
 
 export type TipoVencimientoFactura = 'fecha' | 'plazo' | 'contra_pago'
 
@@ -76,6 +81,7 @@ interface CuentaTipoPagoResolucion {
   cuenta: {
     cuentaId: string
     moneda: string
+    tipoCuenta: string | null
   }
   tipoPago: {
     tipoId: string
@@ -98,7 +104,8 @@ async function resolveCuentaYTipoPago(
       },
       select: {
         cuentaId: true,
-        moneda: true
+        moneda: true,
+        tipoCuenta: true
       }
     })
   }
@@ -132,7 +139,8 @@ async function resolveCuentaYTipoPago(
       },
       select: {
         cuentaId: true,
-        moneda: true
+        moneda: true,
+        tipoCuenta: true
       }
     })
 
@@ -153,7 +161,8 @@ async function resolveCuentaYTipoPago(
       orderBy: { createdAt: 'asc' },
       select: {
         cuentaId: true,
-        moneda: true
+        moneda: true,
+        tipoCuenta: true
       }
     }))
 
@@ -231,6 +240,22 @@ export async function reconciliarVentaDirecta(
     }
   })
 
+  // Capa de contabilidad formal: la venta al contado genera su asiento.
+  await postEvento(tx, { tenantId: params.tenantId, userId: params.usuarioId }, buildEventoVentaContado({
+    reconciliacionId: reconciliacion.reconciliacionId,
+    descripcion: params.observaciones || 'Venta directa al contado',
+    fecha: fechaReconciliacion,
+    tesoreria: {
+      monto: montoTotal,
+      moneda: cuenta.moneda,
+      montoFuncional: conversion.montoConvertido ?? montoTotal,
+      tasaCambio: conversion.tasaCambio,
+      fxEvidenceFingerprint: conversion.fxEvidence?.fxEvidenceFingerprint ?? null,
+      tipoCuenta: cuenta.tipoCuenta,
+      referencia: referenciaCobro,
+    },
+  }))
+
   return reconciliacion.reconciliacionId
 }
 
@@ -302,11 +327,28 @@ export async function applyFacturacionCobroWorkflow(
       }
     })
 
-    return {
-      tipoVencimiento,
-      reconciliacionId: reconciliacion.reconciliacionId
-    }
+    // Capa de contabilidad formal: la factura cobrada al contado genera su asiento.
+    await postEvento(tx, { tenantId: params.tenantId, userId: params.usuarioId }, buildEventoVentaContado({
+      reconciliacionId: reconciliacion.reconciliacionId,
+      descripcion: params.observaciones || `Cobro total por contra pago`,
+      fecha: fechaReconciliacion,
+    tesoreria: {
+      monto: montoTotal,
+      moneda: cuenta.moneda,
+      montoFuncional: conversion.montoConvertido ?? montoTotal,
+      monedaFuncionalCodigo: conversion.fxEvidence?.functionalCurrency ?? null,
+      tasaCambio: conversion.tasaCambio,
+      fxEvidenceFingerprint: conversion.fxEvidence?.fxEvidenceFingerprint ?? null,
+      tipoCuenta: cuenta.tipoCuenta,
+      referencia: referenciaCobro,
+    },
+  }))
+
+  return {
+    tipoVencimiento,
+    reconciliacionId: reconciliacion.reconciliacionId
   }
+}
 
   await tx.cuentaPorCobrar.upsert({
     where: { facturaId: params.facturaId },
@@ -336,6 +378,15 @@ export async function applyFacturacionCobroWorkflow(
       fechaVencimiento
     }
   })
+
+  // Capa de contabilidad formal: la venta a crédito genera su asiento
+  // (debe Clientes, haber Ventas) respaldado por la CxC recién creada.
+  await postEvento(tx, { tenantId: params.tenantId, userId: params.usuarioId }, buildEventoVentaCredito({
+    facturaId: params.facturaId,
+    monto: montoTotal,
+    descripcion: params.observaciones || `Venta a crédito (${params.facturaId.slice(-8)})`,
+    referencia: params.facturaId,
+  }))
 
   return { tipoVencimiento, reconciliacionId: null }
 }

@@ -12,6 +12,8 @@ import { upsertStockUbicacion } from '@/lib/services/stock-ubicacion-service';
 import { registrarMovimiento } from '@/features/inventario/movimientos';
 import { restaurarAllocacionesFifo } from '@/lib/services/fifo-allocation';
 import { createAnticipoDevolucion } from '@/lib/services/anticipos-workflow';
+import { postEvento } from '@/features/contabilidad-formal/services/posting-engine';
+import { buildEventoDevolucionVenta } from '@/features/contabilidad-formal/lib/event-builders';
 import {
   calcularMontosDevolucion,
   resolverTratamientoFinanciero,
@@ -202,6 +204,7 @@ export const DevolucionVentaService = {
         });
 
         // 2) Efectos de inventario por línea (stock, kardex, FIFO parcial).
+        let costoFifoRestaurado = 0;
         const ventaItemPorId = new Map(actual.items.map((i) => [i.id, i]));
         for (const [idx, item] of montos.items.entries()) {
           const origen = ventaItemPorId.get(item.ventaItemId);
@@ -216,6 +219,7 @@ export const DevolucionVentaService = {
             ventaItemId: item.ventaItemId,
             cantidad: item.cantidad,
           });
+          costoFifoRestaurado += costoTotal;
           const costoUnitario =
             restaurado > 0
               ? Math.round(costoTotal / restaurado)
@@ -415,6 +419,19 @@ export const DevolucionVentaService = {
             },
           },
           tx,
+        );
+
+        // Capa de contabilidad formal: reversa del ingreso y del costo FIFO.
+        await postEvento(
+          tx,
+          { tenantId, userId: user.userId },
+          buildEventoDevolucionVenta({
+            devolucionId: devolucion.devolucionId,
+            total: montos.total,
+            tasaCambio,
+            costoFifoRestaurado,
+            descripcion: `Devolución de la venta ${actual.ventaId}`,
+          }),
         );
 
         return {

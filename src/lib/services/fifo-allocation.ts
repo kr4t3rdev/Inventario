@@ -19,6 +19,34 @@ export interface AllocateFifoParams {
 	cantidad: number;
 }
 
+/**
+ * @description Costo FIFO agregado de una venta: suma de (cantidad asignada ×
+ * precio unitario del lote de compra) sobre todas las PurchaseAllocation de la
+ * venta. Retorna 0 cuando la venta no tiene asignaciones (p. ej. servicios).
+ * CTA-1: alimenta el evento COSTO_VENTA_DEVENGADO de la capa formal.
+ * @param {Prisma.TransactionClient} tx - Cliente transaccional de Prisma.
+ * @param {string} tenantId - Tenant propietario.
+ * @param {string} ventaId - Venta a costear.
+ * @returns {Promise<number>} Costo FIFO total en moneda de la operación.
+ */
+export async function getCostoFifoVenta(
+	tx: Prisma.TransactionClient,
+	tenantId: string,
+	ventaId: string,
+): Promise<number> {
+	const asignaciones = await tx.purchaseAllocation.findMany({
+		where: { tenantId, ventaItem: { ventaId } },
+		select: {
+			cantidad: true,
+			compraDocumentoItem: { select: { precioUnitario: true } },
+		},
+	});
+	return asignaciones.reduce(
+		(total, a) => total + a.cantidad * Number(a.compraDocumentoItem.precioUnitario),
+		0,
+	);
+}
+
 // ─── FIFO: Asignación individual ───────────────────────────────
 
 /**
