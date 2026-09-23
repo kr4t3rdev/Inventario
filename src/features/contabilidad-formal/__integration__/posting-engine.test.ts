@@ -23,8 +23,10 @@ const FECHA_PERIODO_CERRADO = new Date('2020-06-15T12:00:00Z');
 interface EstadoSuite {
 	tenantA: string;
 	tenantB: string;
+	tenantC: string;
 	periodoVigenteA: string;
 	periodoCerradoA: string;
+	periodoHistoricoC: string;
 }
 
 /** Accessor auxiliar dentro del describe de libros. */
@@ -57,8 +59,10 @@ describe('posting engine — integración (DB real)', { timeout: 60_000 }, () =>
 	const estado: EstadoSuite = {
 		tenantA: '',
 		tenantB: '',
+		tenantC: '',
 		periodoVigenteA: '',
 		periodoCerradoA: '',
+		periodoHistoricoC: '',
 	};
 
 	beforeAll(async () => {
@@ -77,6 +81,74 @@ describe('posting engine — integración (DB real)', { timeout: 60_000 }, () =>
 		estado.tenantA = tA.tenantId;
 		estado.tenantB = tB.tenantId;
 		_estado = estado;
+
+		// Tenant C: período histórico cerrado con operaciones sin asientos (backfill).
+		const tC = await prisma.tenant.create({
+			data: { nombre: 'Tenant CTA1 C histórico', slug: `cta1-c-${Date.now()}` },
+		});
+		estado.tenantC = tC.tenantId;
+		await prisma.$transaction(async (tx) => {
+			await seedPlanContable(tx, tC.tenantId);
+		});
+		const cuentaC = await prisma.cuentaBancaria.create({
+			data: {
+				tenantId: tC.tenantId,
+				nombreBanco: 'Banco C',
+				numeroCuenta: `C-${Date.now()}`,
+				tipoCuenta: 'AHORROS',
+				moneda: 'CUP',
+				saldo: 0,
+			},
+		});
+		const tipoPagoC = await prisma.tipoPago.create({
+			data: {
+				tenantId: tC.tenantId,
+				nombre: 'Efectivo',
+				descripcion: 'Test',
+				isActive: true,
+			},
+		});
+		const periodoHistoricoC = await prisma.periodoContable.create({
+			data: {
+				tenantId: tC.tenantId,
+				tipo: 'MENSUAL',
+				estado: 'APROBADO',
+				codigo: 'M-2026-03',
+				fechaInicio: new Date('2026-03-01T00:00:00Z'),
+				fechaFin: new Date('2026-03-31T23:59:59Z'),
+			},
+		});
+		estado.periodoHistoricoC = periodoHistoricoC.periodoId;
+
+		// Dos operaciones históricas: venta al contado y gasto.
+		await prisma.reconciliacionVenta.create({
+			data: {
+				tenantId: tC.tenantId,
+				ventaId: null,
+				cuentaId: cuentaC.cuentaId,
+				tipoPagoId: tipoPagoC.tipoId,
+				monto: 500,
+				moneda: 'CUP',
+				montoConvertido: 500,
+				fechaReconciliacion: new Date('2026-03-10T12:00:00Z'),
+				reconciliadoPor: 'u-it',
+			},
+		});
+		await prisma.reconciliacionGasto.create({
+			data: {
+				tenantId: tC.tenantId,
+				tipoGasto: 'gasto',
+				referenciaId: 'gasto-hist-1',
+				cuentaId: cuentaC.cuentaId,
+				tipoPagoId: tipoPagoC.tipoId,
+				monto: 200,
+				moneda: 'CUP',
+				montoConvertido: 200,
+				descripcion: 'Gasto histórico de marzo',
+				fechaReconciliacion: new Date('2026-03-05T12:00:00Z'),
+				reconciliadoPor: 'u-it',
+			},
+		});
 
 		for (const tenantId of [estado.tenantA, estado.tenantB]) {
 			await prisma.$transaction(async (tx) => {
@@ -110,15 +182,19 @@ describe('posting engine — integración (DB real)', { timeout: 60_000 }, () =>
 	}, 60_000);
 
 	afterAll(async () => {
-			delete process.env.CONTABILIDAD_FORMAL_MODE;
-			for (const tenantId of [estado.tenantA, estado.tenantB]) {
+		delete process.env.CONTABILIDAD_FORMAL_MODE;
+		for (const tenantId of [estado.tenantA, estado.tenantB, estado.tenantC]) {
 				if (!tenantId) continue;
 				await prisma.asiento.deleteMany({ where: { tenantId } });
 				await prisma.aperturaPeriodo.deleteMany({ where: { tenantId } });
+				await prisma.reconciliacionVenta.deleteMany({ where: { tenantId } });
+				await prisma.reconciliacionGasto.deleteMany({ where: { tenantId } });
 				await prisma.cuentaRolTenant.deleteMany({ where: { tenantId } });
 			await prisma.cuentaContable.deleteMany({ where: { tenantId } });
-			await prisma.diario.deleteMany({ where: { tenantId } });
-			await prisma.periodoContable.deleteMany({ where: { tenantId } });
+				await prisma.diario.deleteMany({ where: { tenantId } });
+				await prisma.periodoContable.deleteMany({ where: { tenantId } });
+				await prisma.tipoPago.deleteMany({ where: { tenantId } });
+				await prisma.cuentaBancaria.deleteMany({ where: { tenantId } });
 			await prisma.periodoCache.deleteMany({ where: { tenantId } });
 			await prisma.tenant.delete({ where: { tenantId } }).catch(() => undefined);
 		}
@@ -391,6 +467,57 @@ describe('posting engine — integración (DB real)', { timeout: 60_000 }, () =>
 			const corrupto = await verificarCadenaAsientos(_estado.tenantA);
 			expect(corrupto.integro).toBe(false);
 			expect(corrupto.asientoCortadoId).toBe(primero.asientoId);
+		});
+	});
+
+	describe('backfill histórico (CTA-4 T3)', () => {
+		it('dry-run reporta replayables por período y ejecución postea ambos', async () => {
+			const { planBackfillContable, ejecutarBackfillPeriodo } = await import(
+				'@/features/contabilidad-formal/services/replay-backfill-service'
+			);
+			const plan = await planBackfillContable(_estado.tenantC);
+			const historico = plan.periodos.find((p) => p.periodoId === _estado.periodoHistoricoC);
+			expect(historico).toBeDefined();
+			expect(historico!.replayables).toBe(2);
+
+			const resultado = await ejecutarBackfillPeriodo(
+				_estado.tenantC,
+				_estado.periodoHistoricoC,
+				'u-replay',
+			);
+			expect(resultado.contabilizados).toBe(2);
+
+			// Los asientos quedan en el período cerrado y el libro cuadra
+			const asientos = await prisma.asiento.findMany({
+				where: { tenantId: _estado.tenantC, periodoId: _estado.periodoHistoricoC },
+				include: { lineas: true },
+			});
+			expect(asientos).toHaveLength(2);
+			for (const a of asientos) {
+				const debe = a.lineas.reduce((s, l) => s + Number(l.debe), 0);
+				const haber = a.lineas.reduce((s, l) => s + Number(l.haber), 0);
+				expect(debe).toBeCloseTo(haber, 4);
+			}
+
+			// La cadena del tenant está íntegra tras el replay
+			const { verificarCadenaAsientos } = await import(
+				'@/features/contabilidad-formal/services/verificador-hash-service'
+			);
+			const cadena = await verificarCadenaAsientos(_estado.tenantC);
+			expect(cadena.integro).toBe(true);
+		});
+
+		it('re-ejecutar el backfill es idempotente (sin duplicados)', async () => {
+			const { ejecutarBackfillPeriodo } = await import(
+				'@/features/contabilidad-formal/services/replay-backfill-service'
+			);
+			const segunda = await ejecutarBackfillPeriodo(
+				_estado.tenantC,
+				_estado.periodoHistoricoC,
+				'u-replay',
+			);
+			expect(segunda.contabilizados).toBe(0);
+			expect(segunda.yaPosteados).toBe(2);
 		});
 	});
 });

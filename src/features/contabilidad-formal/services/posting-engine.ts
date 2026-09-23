@@ -388,11 +388,42 @@ export async function postEvento(
 	}
 }
 
+/**
+ * @description Replay histórico (CTA-4): postea un evento de negocio omitiendo
+ * el guard de períodos — los períodos históricos están cerrados por definición.
+ * Solo `ejecutarBackfillContable` lo invoca; los writers operativos usan
+ * `postEvento`. El período destinatario es obligatorio y explícito.
+ * @param {PostingTx} tx - Transacción del replay por período.
+ * @param {ContextoPosting} ctx - Tenant y actor de la ejecución.
+ * @param {EventoContableInput} evento - Evento de negocio reconstruido.
+ * @param {string} periodoId - Período contable destinatario (ya validado).
+ * @returns {Promise<PostEventoResult>} Contabilizado o YA_EXISTENTE.
+ */
+export interface OpcionesPosteo {
+	/** Solo el backfill: omitir el guard de períodos. */
+	omitirGuard?: boolean;
+	/** Solo el backfill: período destinatario explícito. */
+	periodoIdForzado?: string;
+}
+
+export async function replayEvento(
+	tx: PostingTx,
+	ctx: ContextoPosting,
+	evento: EventoContableInput,
+	periodoId: string,
+): Promise<PostEventoResult> {
+	return postEventoInterno(tx, ctx, evento, 'enforce', {
+		omitirGuard: true,
+		periodoIdForzado: periodoId,
+	});
+}
+
 async function postEventoInterno(
 	tx: PostingTx,
 	ctx: ContextoPosting,
 	evento: EventoContableInput,
 	modo: ModoMotorContable,
+	opciones?: OpcionesPosteo,
 ): Promise<PostEventoResult> {
 	const existente = await tx.asiento.findUnique({
 		where: {
@@ -422,24 +453,29 @@ async function postEventoInterno(
 		return { estado: 'OMITIDO', motivo: 'PLAN_NO_INICIALIZADO' };
 	}
 
-	// Gobernanza: mismo guard que bloquea la escritura de la base caja.
-	const validacion = await PeriodoGuard.assertWritable(
-		evento.fecha,
-		ctx.tenantId,
-		'asiento',
-	);
-	if (!validacion.permitido) {
-		throw new ActionError(
-			validacion.error ??
-				'El período contable está cerrado para esa fecha',
-			validacion.codigo ?? 'PERIODO_CERRADO',
+	// Gobernanza: mismo guard que bloquea la escritura de la base caja. El
+	// replay histórico lo omite porque su origen ya es deliberado.
+	if (!opciones?.omitirGuard) {
+		const validacion = await PeriodoGuard.assertWritable(
+			evento.fecha,
+			ctx.tenantId,
+			'asiento',
 		);
+		if (!validacion.permitido) {
+			throw new ActionError(
+				validacion.error ??
+					'El período contable está cerrado para esa fecha',
+				validacion.codigo ?? 'PERIODO_CERRADO',
+			);
+		}
 	}
 
-	const resolucion = await PeriodoContableService.resolverPeriodoActivo(
-		evento.fecha,
-		ctx.tenantId,
-	);
+	const resolucion = opciones?.periodoIdForzado
+		? { periodo: { periodoId: opciones.periodoIdForzado } }
+		: await PeriodoContableService.resolverPeriodoActivo(
+				evento.fecha,
+				ctx.tenantId,
+			);
 	if (!resolucion.periodo) {
 		throw new ActionError(
 			'No existe un período contable para la fecha del asiento',

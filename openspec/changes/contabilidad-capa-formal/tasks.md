@@ -48,9 +48,9 @@ Rama sugerida: `feat/contabilidad-capa-formal` desde `main` (después del merge 
 
 ## CTA-4 — Backfill histórico (opt-in por tenant)
 
-- [ ] **T1 — Dry-run replay.** `replay-backfill-service.ts` (modo dry): conteos por período de eventos replayables / omitidos / ambiguos / sin-fx; reporte al usuario antes de ejecutar (patrón backfill AS-05).
-- [ ] **T2 — Ejecución gateada.** Modo `replay` del motor (sin guard ni auditoría de escritura, `replayRunId`); orden cronológico; conciliación cruzada resultante contra `SnapshotPeriodo` del período; gate explícito del usuario.
-- [ ] **T3 — Integración acotada.** Período histórico con datos mixtos (ventas + gastos + préstamos) replays y cuadra contra snapshot.
+- [x] **T1 — Dry-run replay.** `replay-backfill-service.ts` (modo dry): conteos por período de eventos replayables / omitidos / ambiguos / sin-fx; reporte al usuario antes de ejecutar (patrón backfill AS-05).
+- [x] **T2 — Ejecución gateada.** Modo `replay` del motor (sin guard ni auditoría de escritura, `replayRunId`); orden cronológico; conciliación cruzada resultante contra `SnapshotPeriodo` del período; gate explícito del usuario.
+- [x] **T3 — Integración acotada.** Período histórico con datos mixtos (ventas + gastos + préstamos) replays y cuadra contra snapshot.
   `DATABASE_URL_TEST=... pnpm test:integration -- src/features/contabilidad-formal/__integration__/backfill.test.ts`
 - Commit: `feat(contabilidad): backfill histórico opt-in con dry-run (CTA-4)`
 
