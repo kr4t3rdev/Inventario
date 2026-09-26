@@ -17,7 +17,6 @@ import {
 	registrarMovimiento,
 	revertirMovimientosDeOrigen,
 } from "@/features/inventario/movimientos";
-import { registrarMermaEnTransaccion } from "./services/registrar-merma-service";
 import { createMermaSchema, updateMermaSchema } from "./schemas";
 import type { CreateMermaInput, UpdateMermaInput } from "./schemas";
 import type { AuthenticatedUser } from "@/lib/auth-middleware";
@@ -70,8 +69,6 @@ export const createMermaAction = withAction(
 			throw new ActionError("Producto no encontrado", "NOT_FOUND");
 
 		const almacenIdEfectivo = parsed.almacenId ?? producto.almacenId;
-		if (!almacenIdEfectivo)
-			throw new ActionError("El producto no tiene almacén asignado", "VALIDATION_ERROR");
 		const stockUbicacion = await prisma.stockUbicacion.findUnique({
 			where: {
 				productoId_tipoUbicacion_ubicacionId: {
@@ -89,20 +86,67 @@ export const createMermaAction = withAction(
 			);
 		}
 
-		// Crear merma y actualizar stock en transacción (núcleo compartido
-		// con la API móvil: kardex, espejo y autoría en un solo punto).
-		const merma = await prisma.$transaction(async (tx: any) =>
-			registrarMermaEnTransaccion(tx, {
+		const costoTotal = producto.precioCosto * parsed.cantidad;
+
+		// Crear merma y actualizar stock en transacción
+		const merma = await prisma.$transaction(async (tx: any) => {
+			const creada = await tx.merma.create({
+				data: {
+					productoId: parsed.productoId,
+					cantidad: parsed.cantidad,
+					motivo: parsed.motivo ?? null,
+					costoTotal,
+					tenantId,
+					almacenId: almacenIdEfectivo,
+					creadoPorId: user.userId,
+				},
+				include: MERMA_INCLUDE,
+			});
+
+			await upsertStockUbicacion(tx, {
+				productoId: parsed.productoId,
+				tipoUbicacion: "almacen",
+				ubicacionId: almacenIdEfectivo,
+				modo: "increment",
+				delta: -parsed.cantidad,
+			});
+
+			await registrarMovimiento(tx, {
 				tenantId,
 				productoId: parsed.productoId,
-				cantidad: parsed.cantidad,
-				motivo: parsed.motivo ?? null,
-				almacenId: almacenIdEfectivo,
-				creadoPorId: user.userId,
+				tipoOrigen: "MERMA",
+				origenId: creada.mermaId,
+				tipoUbicacion: "almacen",
+				ubicacionId: almacenIdEfectivo,
+				cantidad: -parsed.cantidad,
 				costoUnitario: producto.precioCosto,
-				stockDisponibleAntes: stockUbicacion.cantidadDisponible,
-			}, { include: MERMA_INCLUDE }),
-		);
+				secuencia: "SALIDA-0",
+				creadoPorId: user.userId,
+			});
+
+			// Puente legacy: la merma produce su AjusteInventario espejo
+			// (documento unificado de valorización; no duplica kardex).
+			await tx.ajusteInventario.create({
+				data: {
+					tenantId,
+					productoId: parsed.productoId,
+					tipoUbicacion: "almacen",
+					ubicacionId: almacenIdEfectivo,
+					motivo: mapearMotivoLegacy(parsed.motivo),
+					cantidadTeorica: stockUbicacion.cantidadDisponible,
+					cantidadContada:
+						stockUbicacion.cantidadDisponible - parsed.cantidad,
+					diferencia: -parsed.cantidad,
+					costoUnitario: producto.precioCosto,
+					costoTotal: -parsed.cantidad * producto.precioCosto,
+					estado: "APLICADO",
+					origenMermaId: creada.mermaId,
+					creadoPorId: user.userId,
+				},
+			});
+
+			return creada;
+		});
 
 		try {
 			await notificarMerma(merma.mermaId);

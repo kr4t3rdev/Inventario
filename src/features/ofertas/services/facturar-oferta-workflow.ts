@@ -110,20 +110,6 @@ export async function facturarOfertaWorkflow(
   tx: Prisma.TransactionClient,
   params: FacturarOfertaWorkflowParams,
 ): Promise<FacturarOfertaWorkflowResult> {
-  // Guarda de venta vinculada (limbo de ofertas): si la oferta ya tiene una
-  // venta NO anulada, no se consume numeración ni se crea nada. Las ventas
-  // anuladas no bloquean porque anularVentaPorEstado libera el ofertaId.
-  const ventaViva = await tx.venta.findFirst({
-    where: { ofertaId: params.ofertaId, tenantId: params.tenantId, deletedAt: null },
-    select: { ventaId: true, estado: true },
-  });
-  if (ventaViva) {
-    throw new ActionError(
-      'La oferta ya tiene una venta activa vinculada y no puede facturarse de nuevo.',
-      'VALIDATION_ERROR',
-    );
-  }
-
   const serie = await resolveSerieFacturacion(tx, params.tenantId, params.serieId);
 
   const updatedSerie = await tx.serieFacturacion.update({
@@ -140,42 +126,29 @@ export async function facturarOfertaWorkflow(
   const cargoTransporte = Number(params.cargoTransporte ?? 0);
   const totalCantidad = params.items.reduce((sum, item) => sum + Number(item.cantidad ?? 0), 0);
 
-  let venta: { ventaId: string };
-  try {
-    venta = await tx.venta.create({
-      data: {
-        tenantId: params.tenantId,
-        puntoDeVentaId: params.puntoDeVentaId,
-        clienteId: params.clienteId,
-        empleadoId: params.empleadoId ?? null,
-        turnoId: params.turnoId ?? null,
-        observaciones: params.observaciones ?? null,
-        total,
-        cantidad: totalCantidad,
-        esVentaUnica: true,
-        ofertaId: params.ofertaId,
-        items: {
-          create: params.items.map((item) => ({
-            productoId: item.productoId as string,
-            cantidad: item.cantidad,
-            precioUnitario: Number(item.precioUnitario),
-            total: Number(item.total),
-          })),
-        },
+  const venta = await tx.venta.create({
+    data: {
+      tenantId: params.tenantId,
+      puntoDeVentaId: params.puntoDeVentaId,
+      clienteId: params.clienteId,
+      empleadoId: params.empleadoId ?? null,
+      turnoId: params.turnoId ?? null,
+      observaciones: params.observaciones ?? null,
+      total,
+      cantidad: totalCantidad,
+      esVentaUnica: true,
+      ofertaId: params.ofertaId,
+      items: {
+        create: params.items.map((item) => ({
+          productoId: item.productoId as string,
+          cantidad: item.cantidad,
+          precioUnitario: Number(item.precioUnitario),
+          total: Number(item.total),
+        })),
       },
-      select: { ventaId: true },
-    });
-  } catch (error) {
-    // Red de seguridad (limbo de ofertas): la violación unique de ofertaId
-    // significa que otra venta viva tomó el vínculo en una carrera.
-    if ((error as { code?: string }).code === 'P2002') {
-      throw new ActionError(
-        'La oferta ya tiene una venta vinculada; recarga la página e inténtalo de nuevo.',
-        'VALIDATION_ERROR',
-      );
-    }
-    throw error;
-  }
+    },
+    select: { ventaId: true },
+  });
 
   for (const item of params.servicios ?? []) {
     if (!item.servicioId) continue;

@@ -1,8 +1,7 @@
 import { authenticateUser } from '@/lib/auth-middleware';
 import { errorResponse, successResponse } from '@/lib/api-response';
 import prisma from '@/lib/prisma';
-import { notificarMerma } from '@/lib/notificaciones-utils';
-import { registrarMermaEnTransaccion } from '@/features/mermas/services/registrar-merma-service';
+import { upsertStockUbicacion } from '@/lib/services/stock-ubicacion-service';
 
 export const dynamic = 'force-dynamic';
 
@@ -82,9 +81,7 @@ export async function POST(request: Request) {
     const body = (await request.json()) as { productoId?: unknown; cantidad?: unknown; motivo?: unknown };
     const productoId = typeof body.productoId === 'string' ? body.productoId : '';
     const cantidad = typeof body.cantidad === 'number' && Number.isFinite(body.cantidad) ? body.cantidad : 0;
-    // Enteros estrictos: el kardex (registrarMovimiento) rechaza fracciones y
-    // sin esta guarda llegarían como 500.
-    if (!productoId || cantidad <= 0 || !Number.isInteger(cantidad)) {
+    if (!productoId || cantidad <= 0) {
       return errorResponse('Datos inválidos', 400, 'VALIDATION_ERROR');
     }
 
@@ -115,26 +112,28 @@ export async function POST(request: Request) {
 
     const motivo = typeof body.motivo === 'string' && body.motivo.trim() ? body.motivo.trim() : null;
 
-    // Núcleo compartido con el desktop: merma con creadoPorId, stock,
-    // kardex (SALIDA-0) y espejo AjusteInventario en una sola transacción.
-    const merma = await prisma.$transaction(async (tx: any) =>
-      registrarMermaEnTransaccion(tx, {
+    const merma = await prisma.$transaction(async (tx: any) => {
+      const creada = await tx.merma.create({
+        data: {
+          productoId,
+          cantidad,
+          motivo,
+          costoTotal: producto.precioCosto * cantidad,
+          tenantId,
+          almacenId: producto.almacenId,
+        },
+        select: SELECT,
+      });
+      await upsertStockUbicacion(tx, {
         tenantId,
         productoId,
-        cantidad,
-        motivo,
-        almacenId: producto.almacenId!,
-        creadoPorId: authResult.user.userId,
-        costoUnitario: producto.precioCosto,
-        stockDisponibleAntes: stockUbicacion.cantidadDisponible,
-      }, { select: SELECT }),
-    );
-
-    try {
-      await notificarMerma(merma.mermaId);
-    } catch (notifyError) {
-      console.error('Error enviando notificación de merma (mobile):', notifyError);
-    }
+        tipoUbicacion: 'almacen',
+        ubicacionId: producto.almacenId!,
+        modo: 'increment',
+        delta: -cantidad,
+      });
+      return creada;
+    });
 
     return successResponse(mapMerma(merma), 201);
   } catch (error) {

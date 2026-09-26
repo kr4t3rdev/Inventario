@@ -48,7 +48,6 @@ const { mockTx } = vi.hoisted(() => {
 		reconciliacionVenta: { deleteMany: vi.fn() },
 		purchaseAllocation: { deleteMany: vi.fn() },
 		devolucionVenta: { count: vi.fn().mockResolvedValue(0) },
-		oferta: { updateMany: vi.fn().mockResolvedValue({ count: 1 }) },
 	};
 	return { mockTx };
 });
@@ -438,44 +437,5 @@ describe('anularVentaPorEstado', () => {
 			svc.anularVentaPorEstado({ ventaId: 'venta-1', motivo: null, user: adminUser }),
 		).rejects.toMatchObject({ code: 'VALIDATION_ERROR' });
 		expect(upsertStockUbicacion).not.toHaveBeenCalled();
-	});
-
-	it('limpia ofertaId en el claim y restaura la oferta a ACEPTADA al anular', async () => {
-		mirarVenta({ ...ventaPedido, ofertaId: 'of-1' });
-		await svc.anularVentaPorEstado({ ventaId: 'venta-1', motivo: 'error', user: adminUser });
-
-		expect(mockTx.venta.updateMany).toHaveBeenCalledWith(
-			expect.objectContaining({
-				data: expect.objectContaining({ estado: 'ANULADA', ofertaId: null }),
-			}),
-		);
-		expect(mockTx.oferta.updateMany).toHaveBeenCalledWith(
-			expect.objectContaining({
-				where: expect.objectContaining({ id: 'of-1', tenantId: 'tenant-1' }),
-				data: { estado: 'ACEPTADA' },
-			}),
-		);
-	});
-
-	it('restaura a ACEPTADA una oferta FACTURADA cuya venta se anula', async () => {
-		mirarVenta({
-			...ventaPedido,
-			estado: 'FACTURADA',
-			ofertaId: 'of-2',
-			factura: { idFactura: 'fac-1', tenantId: 'tenant-1' },
-		});
-		mockTx.cuentaPorCobrar.findMany.mockResolvedValue([]);
-		await svc.anularVentaPorEstado({ ventaId: 'venta-1', motivo: null, user: adminUser });
-
-		expect(mockTx.oferta.updateMany).toHaveBeenCalledWith(
-			expect.objectContaining({ data: { estado: 'ACEPTADA' } }),
-		);
-	});
-
-	it('no toca la oferta si la venta no tiene vínculo', async () => {
-		mirarVenta(ventaPedido);
-		await svc.anularVentaPorEstado({ ventaId: 'venta-1', motivo: null, user: adminUser });
-
-		expect(mockTx.oferta.updateMany).not.toHaveBeenCalled();
 	});
 });

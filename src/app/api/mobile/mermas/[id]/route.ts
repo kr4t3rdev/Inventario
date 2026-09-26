@@ -2,7 +2,6 @@ import { authenticateUser } from '@/lib/auth-middleware';
 import { errorResponse, successResponse } from '@/lib/api-response';
 import prisma from '@/lib/prisma';
 import { upsertStockUbicacion } from '@/lib/services/stock-ubicacion-service';
-import { revertirMovimientosDeOrigen } from '@/features/inventario/movimientos';
 import { mapMerma } from '../route';
 
 export const dynamic = 'force-dynamic';
@@ -79,21 +78,8 @@ export async function DELETE(request: Request, context: RouteContext) {
       return errorResponse('Merma no encontrada', 404, 'NOT_FOUND');
     }
 
-    // Alineado con deleteMermaAction (desktop): anular espejos, revertir
-    // kardex y restaurar stock. El kardex y el stock requieren ubicación
-    // (almacenId); la anulación del espejo no y siempre aplica.
-    await prisma.$transaction(async (tx: any) => {
-      await tx.ajusteInventario.updateMany({
-        where: { tenantId, origenMermaId: id },
-        data: { estado: 'ANULADO' },
-      });
-      if (existing.almacenId) {
-        await revertirMovimientosDeOrigen(tx, {
-          tenantId,
-          tipoOrigen: 'MERMA',
-          origenId: id,
-          creadoPorId: authResult.user.userId,
-        });
+    if (existing.almacenId) {
+      await prisma.$transaction(async (tx: any) => {
         await tx.merma.delete({ where: { mermaId: id } });
         await upsertStockUbicacion(tx, {
           tenantId,
@@ -103,10 +89,10 @@ export async function DELETE(request: Request, context: RouteContext) {
           modo: 'increment',
           delta: existing.cantidad,
         });
-      } else {
-        await tx.merma.delete({ where: { mermaId: id } });
-      }
-    });
+      });
+    } else {
+      await prisma.merma.delete({ where: { mermaId: id } });
+    }
 
     return successResponse({ success: true, mermaId: id });
   } catch (error) {

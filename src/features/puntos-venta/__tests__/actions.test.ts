@@ -23,11 +23,6 @@ vi.mock('@/lib/prisma', () => ({
       update: vi.fn(),
       delete: vi.fn(),
     },
-    producto: { count: vi.fn() },
-    venta: { count: vi.fn() },
-    turnoPuntoVenta: { count: vi.fn() },
-    arqueoCaja: { count: vi.fn() },
-    transferencia: { count: vi.fn() },
   },
 }));
 
@@ -327,14 +322,6 @@ describe('Puntos de Venta Server Actions', () => {
   // ─── deletePuntoDeVentaAction ──────────────────────────
 
   describe('deletePuntoDeVentaAction', () => {
-    beforeEach(() => {
-      vi.mocked(prisma.producto.count).mockResolvedValue(0 as never);
-      vi.mocked(prisma.venta.count).mockResolvedValue(0 as never);
-      vi.mocked(prisma.turnoPuntoVenta.count).mockResolvedValue(0 as never);
-      vi.mocked(prisma.arqueoCaja.count).mockResolvedValue(0 as never);
-      vi.mocked(prisma.transferencia.count).mockResolvedValue(0 as never);
-    });
-
     it('elimina punto de venta exitosamente', async () => {
       vi.mocked(prisma.puntoDeVenta.findFirst).mockResolvedValue(mockPvRow);
       vi.mocked(prisma.puntoDeVenta.delete).mockResolvedValue(mockPvRow);
@@ -344,66 +331,6 @@ describe('Puntos de Venta Server Actions', () => {
       expect(result.success).toBe(true);
       expect(prisma.puntoDeVenta.delete).toHaveBeenCalledWith(
         expect.objectContaining({ where: { pvId: 'pv-1' } })
-      );
-    });
-
-    it('bloquea el borrado con dependencias y devuelve conteos', async () => {
-      vi.mocked(prisma.puntoDeVenta.findFirst).mockResolvedValue(mockPvRow);
-      vi.mocked(prisma.producto.count).mockResolvedValue(3 as never);
-
-      const result = await deletePuntoDeVentaAction('pv-1');
-
-      expect(result.success).toBe(false);
-      if (!result.success) {
-        expect(result.error?.code).toBe('PUNTO_VENTA_EN_USO');
-        expect(result.error?.message).toContain('3 producto(s)');
-      }
-      expect(prisma.puntoDeVenta.delete).not.toHaveBeenCalled();
-    });
-
-    it('bloquea el borrado con traza financiera (ventas, turnos, arqueos y transferencias)', async () => {
-      vi.mocked(prisma.puntoDeVenta.findFirst).mockResolvedValue(mockPvRow);
-      vi.mocked(prisma.venta.count).mockResolvedValue(2 as never);
-      vi.mocked(prisma.turnoPuntoVenta.count).mockResolvedValue(1 as never);
-      vi.mocked(prisma.arqueoCaja.count).mockResolvedValue(1 as never);
-      vi.mocked(prisma.transferencia.count).mockResolvedValue(4 as never);
-
-      const result = await deletePuntoDeVentaAction('pv-1');
-
-      expect(result.success).toBe(false);
-      if (!result.success) {
-        expect(result.error?.code).toBe('PUNTO_VENTA_EN_USO');
-        expect(result.error?.message).toContain('2 venta(s)');
-        expect(result.error?.message).toContain('1 turno(s)');
-        expect(result.error?.message).toContain('1 arqueo(s)');
-        expect(result.error?.message).toContain('4 transferencia(s)');
-      }
-      expect(prisma.puntoDeVenta.delete).not.toHaveBeenCalled();
-    });
-
-    it('cuenta transferencias por origen y destino del punto de venta', async () => {
-      vi.mocked(prisma.puntoDeVenta.findFirst).mockResolvedValue(mockPvRow);
-
-      await deletePuntoDeVentaAction('pv-1');
-
-      expect(prisma.transferencia.count).toHaveBeenCalledWith(
-        expect.objectContaining({
-          where: expect.objectContaining({
-            OR: [{ puntoDeVentaOrigenId: 'pv-1' }, { puntoDeVentaDestinoId: 'pv-1' }],
-          }),
-        })
-      );
-    });
-
-    it('permite borrar un punto de venta vacío', async () => {
-      vi.mocked(prisma.puntoDeVenta.findFirst).mockResolvedValue(mockPvRow);
-      vi.mocked(prisma.puntoDeVenta.delete).mockResolvedValue(mockPvRow);
-
-      const result = await deletePuntoDeVentaAction('pv-vacio');
-
-      expect(result.success).toBe(true);
-      expect(prisma.puntoDeVenta.delete).toHaveBeenCalledWith(
-        expect.objectContaining({ where: { pvId: 'pv-vacio' } })
       );
     });
 

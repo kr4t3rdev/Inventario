@@ -19,7 +19,7 @@ model Categoria {
   parentId              String?
   clasSectionId         String?
   clasSpecificId        String?
-  parent                Categoria?  @relation("CategoriaHierarchy", fields: [parentId], references: [catId], onDelete: Restrict)
+  parent                Categoria?  @relation("CategoriaHierarchy", fields: [parentId], references: [catId], onDelete: Cascade)
   subcategorias         Categoria[] @relation("CategoriaHierarchy")
   tenant                Tenant      @relation(fields: [tenantId], references: [tenantId])
   productos             Producto[]
@@ -522,10 +522,10 @@ model Producto {
   ordenMateriales      OrdenReparacionMaterial[]
   precios              PrecioProducto[]
   almacen              Almacen                   @relation(fields: [almacenId], references: [almacenId], onDelete: Restrict)
-  categoria            Categoria                 @relation(fields: [categoriaId], references: [catId], onDelete: Restrict)
+  categoria            Categoria                 @relation(fields: [categoriaId], references: [catId], onDelete: Cascade)
   productoPadre        Producto?                 @relation("ProductoCompuesto", fields: [productoPadreId], references: [id])
   productosHijos       Producto[]                @relation("ProductoCompuesto")
-  puntoDeVenta         PuntoDeVenta?             @relation(fields: [puntoDeVentaId], references: [pvId], onDelete: SetNull)
+  puntoDeVenta         PuntoDeVenta?             @relation(fields: [puntoDeVentaId], references: [pvId], onDelete: Cascade)
   subcategoria         Categoria?                @relation("ProductoSubcategoria", fields: [subcategoriaId], references: [catId])
   tenant               Tenant                    @relation(fields: [tenantId], references: [tenantId])
   unidad               Unidad?                   @relation(fields: [unidadId], references: [unidadId], onDelete: Restrict)
