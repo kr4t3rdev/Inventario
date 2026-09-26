@@ -9,11 +9,11 @@
 
 ## 2. Fase B-2 — PARCIAL real (acumulativo)
 
-- [ ] 2.1 Tests rojos: completar persiste PARCIAL + mueve solo delta + kardex por recepción; acumulación hasta COMPLETADA; excedente rechazado; claim condicional concurrente; cancelar PARCIAL revierte; permiso gestionar en completar
-- [ ] 2.2 Implementar acumulación y PARCIAL en `completarTransferenciaAction` (claim condicional por `cantidadRecibida`, delta de stock, secuencias `SALIDA-n`/`ENTRADA-n`)
-- [ ] 2.3 `deleteTransferenciaAction` revierte PARCIAL; `updateTransferenciaAction` bloquea EN_TRANSITO/PARCIAL
-- [ ] 2.4 `TRANSFERENCIA_ESTADOS` + `PARCIAL`; select de listado incluye `cantidadRecibida`
-- [ ] 2.5 UI: diálogo de recepción con prellenado del faltante y evidencia "X de Y"; tabla muestra `recibida/enviada` y habilita recepción sobre PARCIAL; tests verdes
+- [x] 2.1 Tests rojos: completar persiste PARCIAL + mueve solo delta + kardex por recepción; acumulación hasta COMPLETADA; excedente rechazado; claim condicional concurrente; cancelar PARCIAL revierte; permiso gestionar en completar
+- [x] 2.2 Implementar acumulación y PARCIAL en `completarTransferenciaAction` (claim condicional por `cantidadRecibida`, delta de stock, secuencias `SALIDA-n`/`ENTRADA-n`)
+- [x] 2.3 `deleteTransferenciaAction` revierte PARCIAL; `updateTransferenciaAction` bloquea EN_TRANSITO/PARCIAL
+- [x] 2.4 `TRANSFERENCIA_ESTADOS` + `PARCIAL`; select de listado incluye `cantidadRecibida`
+- [x] 2.5 UI: diálogo de recepción con prellenado del faltante y evidencia "X de Y"; tabla muestra `recibida/enviada` y habilita recepción sobre PARCIAL; tests verdes
 
 ## 3. Fase B-3 — Input muerto y estados de creación
 

@@ -111,11 +111,16 @@ export function TransferenciasTable({ transferencias, isLoading, error, onDelete
       header: ({ column }) => (
         <div className="text-center text-xs uppercase">Cant.</div>
       ),
-      cell: ({ row }) => (
-        <div className="text-center font-semibold bg-muted/40 rounded-md py-1 px-2 min-w-[3rem]">
-          {row.getValue("cantidad")}
-        </div>
-      ),
+      cell: ({ row }) => {
+        const t = row.original
+        // En filas PARCIAL se muestra recibida/enviada para evidenciar el faltante.
+        const esParcial = t.estado === 'PARCIAL' && t.cantidadRecibida != null
+        return (
+          <div className="text-center font-semibold bg-muted/40 rounded-md py-1 px-2 min-w-[3rem]">
+            {esParcial ? `${t.cantidadRecibida}/${t.cantidad}` : row.getValue("cantidad")}
+          </div>
+        )
+      },
     },
     {
       accessorKey: "estado",

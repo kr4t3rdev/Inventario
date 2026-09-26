@@ -3,7 +3,7 @@
  */
 import { z } from 'zod';
 
-export const TRANSFERENCIA_ESTADOS = ['PENDIENTE', 'APROBADA', 'EN_TRANSITO', 'COMPLETADA', 'RECHAZADA', 'CANCELADA'] as const;
+export const TRANSFERENCIA_ESTADOS = ['PENDIENTE', 'APROBADA', 'EN_TRANSITO', 'PARCIAL', 'COMPLETADA', 'RECHAZADA', 'CANCELADA'] as const;
 export type TransferenciaEstado = (typeof TRANSFERENCIA_ESTADOS)[number];
 
 export const transferenciaItemSchema = z.object({
@@ -40,7 +40,7 @@ export const aprobarTransferenciaSchema = z.object({
 
 export const completarTransferenciaSchema = z.object({
   transferenciaId: z.string().min(1),
-  /** Unidades recibidas al confirmar; omitir = recepción total (B-01). */
+  /** Unidades recibidas en esta recepción; omitir = recibir todo el pendiente (B-02). */
   cantidadRecibida: z.coerce.number().int().min(1).optional(),
 });
 

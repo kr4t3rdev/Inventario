@@ -32,12 +32,17 @@ export function ConfirmarRecepcionDialog({
   onConfirmar,
   isLoading = false,
 }: ConfirmarRecepcionDialogProps): React.ReactElement {
+  // B-02: el input cuenta unidades de ESTA recepción; en una fila PARCIAL se
+  // prellena el faltante y el tope es el pendiente, no el total enviado.
+  const previaRecibida = transferencia?.cantidadRecibida ?? 0
+  const pendiente = transferencia ? transferencia.cantidad - previaRecibida : 0
+  const esRecepcionAdicional = (transferencia?.cantidadRecibida ?? 0) > 0
   const [cantidadRecibida, setCantidadRecibida] = useState<number>(transferencia?.cantidad || 0)
   const [showDiscrepancia, setShowDiscrepancia] = useState(false)
 
   const handleOpenChange = (newOpen: boolean) => {
     if (newOpen && transferencia) {
-      setCantidadRecibida(transferencia.cantidad)
+      setCantidadRecibida(pendiente > 0 ? pendiente : transferencia.cantidad)
       setShowDiscrepancia(false)
     }
     onOpenChange(newOpen)
@@ -47,7 +52,7 @@ export function ConfirmarRecepcionDialog({
     const numValue = parseInt(value) || 0
     setCantidadRecibida(numValue)
 
-    if (transferencia && numValue < transferencia.cantidad) {
+    if (transferencia && numValue < pendiente) {
       setShowDiscrepancia(true)
     } else {
       setShowDiscrepancia(false)
@@ -56,12 +61,12 @@ export function ConfirmarRecepcionDialog({
 
   const handleConfirmarTotal = () => {
     if (!transferencia) return
-    onConfirmar({ [transferencia.transferenciaId]: transferencia.cantidad }, 'total')
+    onConfirmar({ [transferencia.transferenciaId]: pendiente }, 'total')
   }
 
   const handleConfirmarParcial = () => {
     if (!transferencia) return
-    if (cantidadRecibida < 0 || cantidadRecibida > (transferencia?.cantidad || 0)) {
+    if (cantidadRecibida < 0 || cantidadRecibida > pendiente) {
       return
     }
     onConfirmar({ [transferencia.transferenciaId]: cantidadRecibida }, 'parcial')
@@ -89,9 +94,9 @@ export function ConfirmarRecepcionDialog({
     return transferencia.destinoId ? <Building2 className="h-4 w-4" /> : <Store className="h-4 w-4" />
   }
 
-  const tieneDiscrepancia = cantidadRecibida !== (transferencia?.cantidad || 0)
-  const esParcial = cantidadRecibida < (transferencia?.cantidad || 0)
-  const esExcedente = cantidadRecibida > (transferencia?.cantidad || 0)
+  const tieneDiscrepancia = cantidadRecibida !== pendiente
+  const esParcial = cantidadRecibida < pendiente
+  const esExcedente = cantidadRecibida > pendiente
 
   return (
     <Dialog open={open} onOpenChange={handleOpenChange}>
@@ -99,10 +104,10 @@ export function ConfirmarRecepcionDialog({
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <CheckCircle className="h-5 w-5 text-green-500" />
-            Confirmar Recepción de Transferencia
+            {esRecepcionAdicional ? "Confirmar Recepción Adicional" : "Confirmar Recepción de Transferencia"}
           </DialogTitle>
           <DialogDescription>
-            Verifique los productos recibidos y confirme la cantidad.
+            Verifique los productos recibidos y confirme la cantidad de esta recepción.
           </DialogDescription>
         </DialogHeader>
 
@@ -154,16 +159,31 @@ export function ConfirmarRecepcionDialog({
                   <Input
                     id="cantidad-recibida"
                     type="number"
-                    min={0}
-                    max={transferencia.cantidad * 2}
+                    min={1}
+                    max={pendiente}
                     value={cantidadRecibida}
                     onChange={(e) => handleCantidadChange(e.target.value)}
                     className="w-32"
                   />
                   <p className="text-xs text-muted-foreground">
-                    Ingrese la cantidad realmente recibida. Puede ser menor o igual a la cantidad enviada.
+                    Unidades recibidas en esta recepción. Pendiente: {pendiente} de {transferencia.cantidad} enviadas.
                   </p>
                 </div>
+
+                {esRecepcionAdicional && (
+                  <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 flex items-start gap-2">
+                    <AlertTriangle className="h-5 w-5 text-blue-600 flex-shrink-0 mt-0.5" />
+                    <div className="space-y-1">
+                      <p className="text-sm font-medium text-blue-800">
+                        Recepción acumulada
+                      </p>
+                      <p className="text-sm text-blue-700">
+                        Ya se recibieron {previaRecibida} de {transferencia.cantidad} unidades enviadas.
+                        Al confirmar, el acumulado pasará a {previaRecibida + cantidadRecibida}.
+                      </p>
+                    </div>
+                  </div>
+                )}
 
                 {showDiscrepancia && (
                   <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-3 flex items-start gap-2">
@@ -173,11 +193,11 @@ export function ConfirmarRecepcionDialog({
                         Discrepancia detectada
                       </p>
                       <p className="text-sm text-yellow-700">
-                        Se recibieron {cantidadRecibida} unidades de {transferencia.cantidad} enviadas.
-                        ({transferencia.cantidad - cantidadRecibida} unidades faltantes)
+                        Se recibieron {cantidadRecibida} unidades de {pendiente} pendientes.
+                        ({pendiente - cantidadRecibida} unidades siguen pendientes)
                       </p>
                       <p className="text-xs text-yellow-600">
-                        La transferencia se marcará como PARCIAL.
+                        La transferencia quedará como PARCIAL y podrá recibir el resto después.
                       </p>
                     </div>
                   </div>
@@ -208,13 +228,17 @@ export function ConfirmarRecepcionDialog({
                     <span className="ml-2 font-medium">{transferencia.cantidad}</span>
                   </div>
                   <div>
-                    <span className="text-blue-700">Recibido:</span>
+                    <span className="text-blue-700">Recibidas antes:</span>
+                    <span className="ml-2 font-medium">{previaRecibida}</span>
+                  </div>
+                  <div>
+                    <span className="text-blue-700">Recibidas ahora:</span>
                     <span className="ml-2 font-medium">{cantidadRecibida}</span>
                   </div>
                   <div>
-                    <span className="text-blue-700">Faltante:</span>
+                    <span className="text-blue-700">Quedarán pendientes:</span>
                     <span className="ml-2 font-medium text-red-600">
-                      {transferencia.cantidad - cantidadRecibida}
+                      {pendiente - cantidadRecibida}
                     </span>
                   </div>
                   <div>
@@ -245,7 +269,11 @@ export function ConfirmarRecepcionDialog({
               className="bg-green-600 hover:bg-green-700"
             >
               <CheckCircle className="mr-2 h-4 w-4" />
-              {isLoading ? "Confirmando..." : "Confirmar Recepción Total"}
+              {isLoading
+                ? "Confirmando..."
+                : esRecepcionAdicional
+                  ? "Recibir lo Pendiente"
+                  : "Confirmar Recepción Total"}
             </Button>
           ) : (
             !esExcedente && (

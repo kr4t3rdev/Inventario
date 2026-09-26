@@ -1304,7 +1304,7 @@ describe("B-01: workflow, numeración por tenant y permisos", () => {
 		expect(mockTx.transferencia.updateMany).toHaveBeenCalledWith(
 			expect.objectContaining({
 				data: expect.objectContaining({
-					estado: "COMPLETADA",
+					estado: "PARCIAL",
 					cantidadRecibida: 4,
 				}),
 			}),
@@ -1455,5 +1455,288 @@ describe("B-1: despacho EN_TRANSITO (Sesión B)", () => {
 
 		expect(result.success).toBe(false);
 		expect(result.error?.code).toBe("CONFLICT");
+	});
+});
+
+describe("B-2: recepción parcial real (Sesión B)", () => {
+	beforeEach(() => {
+		vi.clearAllMocks();
+		vi.mocked(upsertStockUbicacion).mockReset();
+		mockTx.transferencia.updateMany.mockResolvedValue({ count: 1 });
+	});
+
+	const operador: AuthenticatedUser = {
+		...mockUser,
+		role: "user",
+		tenantRole: "manager",
+	};
+	const sinPermisoGestion: AuthenticatedUser = {
+		...mockUser,
+		role: "user",
+		permissions: new Set<string>(),
+	};
+
+	function mockTransferencia(overrides: Record<string, unknown> = {}) {
+		vi.mocked(prisma.transferencia.findFirst).mockResolvedValue({
+			transferenciaId: "tr-1",
+			tenantId: "tenant-test",
+			deletedAt: null,
+			estado: "APROBADA",
+			productoId: "prod-1",
+			cantidad: 10,
+			cantidadRecibida: null,
+			costoUnitario: 100,
+			origenId: "alm-1",
+			destinoId: "alm-2",
+			puntoDeVentaOrigenId: null,
+			puntoDeVentaDestinoId: null,
+			producto: { id: "prod-1", precioCosto: 100 },
+			...overrides,
+		} as any);
+	}
+
+	it("completar exige el permiso de gestión", async () => {
+		vi.mocked(getCurrentUser).mockResolvedValue(sinPermisoGestion);
+
+		const result = await completarTransferenciaAction({ transferenciaId: "tr-1" });
+
+		expect(result.success).toBe(false);
+		expect(result.error?.code).toBe("FORBIDDEN");
+		expect(prisma.transferencia.findFirst).not.toHaveBeenCalled();
+	});
+
+	it("primera recepción parcial persiste PARCIAL, mueve solo lo recibido y deja evidencia", async () => {
+		vi.mocked(getCurrentUser).mockResolvedValue(operador);
+		mockTransferencia({ estado: "APROBADA", cantidadRecibida: null });
+
+		const result = await completarTransferenciaAction({
+			transferenciaId: "tr-1",
+			cantidadRecibida: 4,
+		});
+
+		expect(result.success).toBe(true);
+		expect(mockTx.transferencia.updateMany).toHaveBeenCalledWith(
+			expect.objectContaining({
+				where: expect.objectContaining({
+					estado: { in: ["APROBADA", "EN_TRANSITO", "PARCIAL"] },
+					cantidadRecibida: null,
+				}),
+				data: expect.objectContaining({
+					estado: "PARCIAL",
+					cantidadRecibida: 4,
+				}),
+			}),
+		);
+		expect(upsertStockUbicacion).toHaveBeenCalledWith(
+			mockTx,
+			expect.objectContaining({ ubicacionId: "alm-1", delta: -4 }),
+		);
+		expect(upsertStockUbicacion).toHaveBeenCalledWith(
+			mockTx,
+			expect.objectContaining({ ubicacionId: "alm-2", delta: 4 }),
+		);
+	});
+
+	it("la primera recepción registra SALIDA-0/ENTRADA-0 en el kardex", async () => {
+		vi.mocked(getCurrentUser).mockResolvedValue(operador);
+		mockTransferencia({ estado: "EN_TRANSITO", cantidadRecibida: null });
+
+		const result = await completarTransferenciaAction({
+			transferenciaId: "tr-1",
+			cantidadRecibida: 4,
+		});
+
+		expect(result.success).toBe(true);
+		const secuencias = mockTx.stockMoveLine.upsert.mock.calls.map(
+			(c: any[]) => c[0].create.secuencia,
+		);
+		expect(secuencias).toEqual(["SALIDA-0", "ENTRADA-0"]);
+		expect(mockTx.stockMoveLine.upsert).toHaveBeenCalledWith(
+			expect.objectContaining({
+				create: expect.objectContaining({ cantidad: -4, ubicacionId: "alm-1" }),
+			}),
+		);
+	});
+
+	it("una recepción adicional acumula hasta COMPLETADA y mueve solo el delta", async () => {
+		vi.mocked(getCurrentUser).mockResolvedValue(operador);
+		mockTransferencia({ estado: "PARCIAL", cantidadRecibida: 4 });
+		mockTx.stockMoveLine.findMany.mockResolvedValueOnce([
+			{ secuencia: "SALIDA-0", cantidad: -4 },
+			{ secuencia: "ENTRADA-0", cantidad: 4 },
+		] as any);
+
+		const result = await completarTransferenciaAction({
+			transferenciaId: "tr-1",
+			cantidadRecibida: 6,
+		});
+
+		expect(result.success).toBe(true);
+		expect(mockTx.transferencia.updateMany).toHaveBeenCalledWith(
+			expect.objectContaining({
+				where: expect.objectContaining({ cantidadRecibida: 4 }),
+				data: expect.objectContaining({
+					estado: "COMPLETADA",
+					cantidadRecibida: 10,
+				}),
+			}),
+		);
+		expect(upsertStockUbicacion).toHaveBeenCalledWith(
+			mockTx,
+			expect.objectContaining({ ubicacionId: "alm-1", delta: -6 }),
+		);
+		expect(upsertStockUbicacion).toHaveBeenCalledWith(
+			mockTx,
+			expect.objectContaining({ ubicacionId: "alm-2", delta: 6 }),
+		);
+		const secuencias = mockTx.stockMoveLine.upsert.mock.calls.map(
+			(c: any[]) => c[0].create.secuencia,
+		);
+		expect(secuencias).toEqual(["SALIDA-1", "ENTRADA-1"]);
+	});
+
+	it("rechaza una recepción que supera el pendiente", async () => {
+		vi.mocked(getCurrentUser).mockResolvedValue(operador);
+		mockTransferencia({ estado: "PARCIAL", cantidadRecibida: 4 });
+
+		const result = await completarTransferenciaAction({
+			transferenciaId: "tr-1",
+			cantidadRecibida: 7,
+		});
+
+		expect(result.success).toBe(false);
+		expect(result.error?.code).toBe("VALIDATION_ERROR");
+		expect(mockTx.transferencia.updateMany).not.toHaveBeenCalled();
+		expect(upsertStockUbicacion).not.toHaveBeenCalled();
+	});
+
+	it("cancelar una PARCIAL revierte las unidades ya recibidas", async () => {
+		vi.mocked(getCurrentUser).mockResolvedValue(operador);
+		vi.mocked(prisma.transferencia.findFirst).mockResolvedValue({
+			transferenciaId: "tr-1",
+			tenantId: "tenant-test",
+			deletedAt: null,
+			estado: "PARCIAL",
+			productoId: "prod-1",
+			cantidad: 10,
+			cantidadRecibida: 4,
+			origenId: "alm-1",
+			destinoId: "alm-2",
+			puntoDeVentaOrigenId: null,
+			puntoDeVentaDestinoId: null,
+		} as any);
+		mockTx.transferencia.findUnique.mockResolvedValueOnce({
+			transferenciaId: "tr-1",
+			tenantId: "tenant-test",
+			deletedAt: null,
+			estado: "PARCIAL",
+			productoId: "prod-1",
+			cantidad: 10,
+			cantidadRecibida: 4,
+			origenId: "alm-1",
+			destinoId: "alm-2",
+			puntoDeVentaOrigenId: null,
+			puntoDeVentaDestinoId: null,
+		} as any);
+
+		const result = await deleteTransferenciaAction("tr-1");
+
+		expect(result.success).toBe(true);
+		// El origen recupera lo recibido; el destino lo descuenta.
+		expect(upsertStockUbicacion).toHaveBeenCalledWith(
+			mockTx,
+			expect.objectContaining({ ubicacionId: "alm-1", delta: 4 }),
+		);
+		expect(upsertStockUbicacion).toHaveBeenCalledWith(
+			mockTx,
+			expect.objectContaining({ ubicacionId: "alm-2", delta: -4 }),
+		);
+	});
+
+	it("no permite editar una transferencia en tránsito", async () => {
+		vi.mocked(getCurrentUser).mockResolvedValue(operador);
+		vi.mocked(prisma.transferencia.findFirst).mockResolvedValue({
+			transferenciaId: "tr-1",
+			tenantId: "tenant-test",
+			deletedAt: null,
+			estado: "EN_TRANSITO",
+			productoId: "prod-1",
+			cantidad: 10,
+			origenId: "alm-1",
+			destinoId: "alm-2",
+			puntoDeVentaOrigenId: null,
+			puntoDeVentaDestinoId: null,
+		} as any);
+
+		const result = await updateTransferenciaAction({
+			transferenciaId: "tr-1",
+			productoId: "prod-1",
+			cantidad: 5,
+			tipoOrigen: "almacen",
+			origenId: "alm-1",
+			tipoDestino: "almacen",
+			destinoId: "alm-2",
+		});
+
+		expect(result.success).toBe(false);
+		expect(result.error?.code).toBe("VALIDATION_ERROR");
+		expect(mockTx.transferencia.update).not.toHaveBeenCalled();
+	});
+
+	it("no permite editar una transferencia con recepción parcial", async () => {
+		vi.mocked(getCurrentUser).mockResolvedValue(operador);
+		vi.mocked(prisma.transferencia.findFirst).mockResolvedValue({
+			transferenciaId: "tr-1",
+			tenantId: "tenant-test",
+			deletedAt: null,
+			estado: "PARCIAL",
+			productoId: "prod-1",
+			cantidad: 10,
+			cantidadRecibida: 4,
+			origenId: "alm-1",
+			destinoId: "alm-2",
+			puntoDeVentaOrigenId: null,
+			puntoDeVentaDestinoId: null,
+		} as any);
+
+		const result = await updateTransferenciaAction({
+			transferenciaId: "tr-1",
+			productoId: "prod-1",
+			cantidad: 5,
+			tipoOrigen: "almacen",
+			origenId: "alm-1",
+			tipoDestino: "almacen",
+			destinoId: "alm-2",
+		});
+
+		expect(result.success).toBe(false);
+		expect(result.error?.code).toBe("VALIDATION_ERROR");
+		expect(mockTx.transferencia.update).not.toHaveBeenCalled();
+	});
+
+	it("el listado expone cantidadRecibida para la UI", async () => {
+		vi.mocked(getCurrentUser).mockResolvedValue(operador);
+		vi.mocked(prisma.transferencia.findMany).mockResolvedValue([
+			{
+				transferenciaId: "tr-1",
+				producto: { nombre: "P", codigoInterno: "C1" },
+				cantidad: 10,
+				cantidadRecibida: 4,
+				estado: "PARCIAL",
+				origen: { almacenId: "alm-1", nombre: "A1" },
+				destino: { almacenId: "alm-2", nombre: "A2" },
+				puntoDeVentaOrigen: null,
+				puntoDeVentaDestino: null,
+				creadoPor: null,
+				createdAt: new Date("2026-09-26"),
+				updatedAt: new Date("2026-09-26"),
+			},
+		] as any);
+		vi.mocked(prisma.transferencia.count).mockResolvedValue(1);
+
+		const result = await getTransferenciasAction({ page: 1, limit: 10 });
+
+		expect(result.success).toBe(true);
+		expect(result.data!.transferencias[0].cantidadRecibida).toBe(4);
 	});
 });

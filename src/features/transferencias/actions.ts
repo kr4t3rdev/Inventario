@@ -105,6 +105,7 @@ const TRANSFERENCIA_LIST_SELECT = {
 	numeroTransferencia: true,
 	productoId: true,
 	cantidad: true,
+	cantidadRecibida: true,
 	costoUnitario: true,
 	costoTotal: true,
 	estado: true,
@@ -161,6 +162,7 @@ export const getTransferenciasAction = withAction(
 				productoNombre: t.producto.nombre,
 				productoCodigoInterno: t.producto.codigoInterno,
 				cantidad: t.cantidad,
+				cantidadRecibida: t.cantidadRecibida,
 				costoUnitario: t.costoUnitario,
 				costoTotal: t.costoTotal,
 				tipoTransferencia,
@@ -522,6 +524,14 @@ export const updateTransferenciaAction = withAction(
 		});
 		if (!existing)
 			throw new ActionError("Transferencia no encontrada", "NOT_FOUND");
+		// B-2: con mercancía en camino o recepción iniciada, el documento ya no
+		// admite edición (las cantidades recibidas quedarían incoherentes).
+		if (["EN_TRANSITO", "PARCIAL"].includes(existing.estado!)) {
+			throw new ActionError(
+				"No se puede editar una transferencia en tránsito o con recepción parcial",
+				"VALIDATION_ERROR",
+			);
+		}
 
 		const oldProductoId = existing.productoId!;
 		const oldTipoOrigen = existing.origenId ? "almacen" : "punto_venta";
@@ -716,6 +726,7 @@ export const deleteTransferenciaAction = withAction(
 					estado: true,
 					productoId: true,
 					cantidad: true,
+					cantidadRecibida: true,
 					origenId: true,
 					destinoId: true,
 					puntoDeVentaOrigenId: true,
@@ -753,9 +764,14 @@ export const deleteTransferenciaAction = withAction(
 				);
 			}
 
-			// Solo revertir stock si la transferencia estaba COMPLETADA
-			// (PENDIENTE/APROBADA nunca movieron stock)
-			if (current.estado === "COMPLETADA") {
+			// Revertir stock si la transferencia movió unidades: COMPLETADA movió
+			// el total y PARCIAL movió lo recibido hasta el momento (B-2).
+			// (PENDIENTE/APROBADA/EN_TRANSITO nunca movieron stock)
+			if (current.estado === "COMPLETADA" || current.estado === "PARCIAL") {
+				const cantidadMovida =
+					current.estado === "PARCIAL"
+						? (current.cantidadRecibida ?? 0)
+						: current.cantidad;
 				const tipoOrigen = current.origenId
 					? ("almacen" as const)
 					: ("punto_venta" as const);
@@ -773,7 +789,7 @@ export const deleteTransferenciaAction = withAction(
 					tipoUbicacion: tipoOrigen,
 					ubicacionId: origenUbicacionId,
 					modo: "increment",
-					delta: current.cantidad,
+					delta: cantidadMovida,
 				});
 				await upsertStockUbicacion(tx, {
 					tenantId,
@@ -781,7 +797,7 @@ export const deleteTransferenciaAction = withAction(
 					tipoUbicacion: tipoDestino,
 					ubicacionId: destinoUbicacionId,
 					modo: "increment",
-					delta: -current.cantidad,
+					delta: -cantidadMovida,
 				});
 
 				// Kardex: compensación de las líneas originales con su costo histórico.
@@ -907,13 +923,21 @@ export const despacharTransferenciaAction = withAction(
 );
 
 /**
- * @description Completa una transferencia APROBADA o EN_TRANSITO, moviendo el stock definitivamente.
- * Transición: {APROBADA, EN_TRANSITO} → COMPLETADA. El stock se descuenta del origen y se suma al destino.
+ * @description Confirma la recepción de una transferencia, moviendo el stock.
+ * Transiciones: {APROBADA, EN_TRANSITO, PARCIAL} → COMPLETADA | PARCIAL.
+ * El input `cantidadRecibida` son las unidades recibidas en esta recepción y
+ * se acumula sobre lo ya recibido: si el acumulado queda por debajo de lo
+ * enviado, la transferencia persiste en PARCIAL y admite recepciones
+ * adicionales hasta completarse. Cada recepción mueve solo su delta de stock
+ * y registra SALIDA-n/ENTRADA-n con n creciente por recepción.
  */
 export const completarTransferenciaAction = withAction(
 	async (input: CompletarTransferenciaInput, user: AuthenticatedUser) => {
 		const parsed = completarTransferenciaSchema.parse(input);
 		const tenantId = requireTenant(user);
+		// B-2: la recepción mueve stock — exige el permiso operativo de gestión
+		// (simétrico con aprobar/rechazar, que exigen el de jefatura).
+		requirePermission(user, "inventario.transferencias.gestionar", "completar transferencias");
 
 		const transferencia = await prisma.transferencia.findFirst({
 			where: {
@@ -925,9 +949,9 @@ export const completarTransferenciaAction = withAction(
 		});
 		if (!transferencia)
 			throw new ActionError("Transferencia no encontrada", "NOT_FOUND");
-		if (!["APROBADA", "EN_TRANSITO"].includes(transferencia.estado)) {
+		if (!["APROBADA", "EN_TRANSITO", "PARCIAL"].includes(transferencia.estado)) {
 			throw new ActionError(
-				`La transferencia está en estado ${transferencia.estado}, solo se pueden completar transferencias aprobadas o en tránsito`,
+				`La transferencia está en estado ${transferencia.estado}, solo se pueden completar transferencias aprobadas, en tránsito o parciales`,
 				"VALIDATION_ERROR",
 			);
 		}
@@ -941,30 +965,43 @@ export const completarTransferenciaAction = withAction(
 			puntoDeVentaDestinoId,
 		} = transferencia;
 
-		// B-01: recepción parcial — se mueve solo lo confirmado recibido.
-		const cantidadRecibida = parsed.cantidadRecibida ?? cantidad;
-		if (cantidadRecibida > cantidad) {
+		// B-2: recepción acumulativa — se recibe lo que llega en esta entrega.
+		const previaRecibida = transferencia.cantidadRecibida ?? 0;
+		const pendiente = cantidad - previaRecibida;
+		const recibidasAhora = parsed.cantidadRecibida ?? pendiente;
+		if (recibidasAhora < 1) {
 			throw new ActionError(
-				`La cantidad recibida (${cantidadRecibida}) no puede superar la enviada (${cantidad})`,
+				"La cantidad recibida debe ser mayor a cero",
 				"VALIDATION_ERROR",
 			);
 		}
-		const esParcial = cantidadRecibida < cantidad;
+		if (recibidasAhora > pendiente) {
+			throw new ActionError(
+				`La cantidad recibida (${recibidasAhora}) supera el pendiente (${pendiente}) de las ${cantidad} enviadas`,
+				"VALIDATION_ERROR",
+			);
+		}
+		const acumulado = previaRecibida + recibidasAhora;
+		const esParcial = acumulado < cantidad;
+		const nuevoEstado = esParcial ? "PARCIAL" : "COMPLETADA";
 
 		const result = await prisma.$transaction(async (tx: any) => {
+			// Claim condicional: además del estado, exige el valor previo de
+			// cantidadRecibida para serializar recepciones concurrentes.
 			const claim = await tx.transferencia.updateMany({
 				where: {
 					transferenciaId: parsed.transferenciaId,
 					tenantId,
 					deletedAt: null,
-					estado: { in: ["APROBADA", "EN_TRANSITO"] },
+					estado: { in: ["APROBADA", "EN_TRANSITO", "PARCIAL"] },
+					cantidadRecibida: previaRecibida === 0 ? null : previaRecibida,
 				},
 				data: {
-					estado: "COMPLETADA",
-					cantidadRecibida,
+					estado: nuevoEstado,
+					cantidadRecibida: acumulado,
 					...(esParcial
 						? {
-								descripcion: `Recepción parcial: ${cantidadRecibida} de ${cantidad} unidades recibidas`,
+								descripcion: `Recepción parcial: ${acumulado} de ${cantidad} unidades recibidas`,
 							}
 						: {}),
 				},
@@ -981,12 +1018,12 @@ export const completarTransferenciaAction = withAction(
 				if (current.estado === "COMPLETADA")
 					return { alreadyCompleted: true as const };
 				throw new ActionError(
-					`La transferencia está en estado ${current.estado}, solo se pueden completar transferencias aprobadas o en tránsito`,
+					`La transferencia está en estado ${current.estado}, solo se pueden completar transferencias aprobadas, en tránsito o parciales`,
 					"CONFLICT",
 				);
 			}
 
-			// Sincronizar StockUbicacion
+			// Sincronizar StockUbicacion con el delta de esta recepción
 			const origenEsAlmacen = !!origenId;
 			const destinoEsAlmacen = !!destinoId;
 			const tipoOrigen = origenEsAlmacen
@@ -1003,15 +1040,27 @@ export const completarTransferenciaAction = withAction(
 				tipoUbicacion: tipoOrigen,
 				ubicacionId: origenUbicacionId,
 				modo: "increment",
-				delta: -cantidadRecibida,
+				delta: -recibidasAhora,
 			});
 			await upsertStockUbicacion(tx, {
 				productoId,
 				tipoUbicacion: tipoDestino,
 				ubicacionId: destinoUbicacionId,
 				modo: "increment",
-				delta: cantidadRecibida,
+				delta: recibidasAhora,
 			});
+
+			// Kardex: secuencia por recepción (la clave de evento es idempotente,
+			// así que cada entrega nueva necesita un n distinto).
+			const movimientosPrevios = await getMovimientosDeOrigen(tx, {
+				tenantId,
+				tipoOrigen: "TRANSFERENCIA",
+				origenId: transferencia.transferenciaId,
+			});
+			const nRecepcion = movimientosPrevios.filter((m) =>
+				m.secuencia.startsWith("ENTRADA"),
+			).length;
+
 			const costoUnitario = transferencia.costoUnitario ?? transferencia.producto.precioCosto;
 			await registrarMovimiento(tx, {
 				tenantId,
@@ -1020,9 +1069,9 @@ export const completarTransferenciaAction = withAction(
 				origenId: transferencia.transferenciaId,
 				tipoUbicacion: tipoOrigen,
 				ubicacionId: origenUbicacionId,
-				cantidad: -cantidadRecibida,
+				cantidad: -recibidasAhora,
 				costoUnitario,
-				secuencia: "SALIDA-0",
+				secuencia: `SALIDA-${nRecepcion}`,
 				creadoPorId: user.userId,
 			});
 			await registrarMovimiento(tx, {
@@ -1032,9 +1081,9 @@ export const completarTransferenciaAction = withAction(
 				origenId: transferencia.transferenciaId,
 				tipoUbicacion: tipoDestino,
 				ubicacionId: destinoUbicacionId,
-				cantidad: cantidadRecibida,
+				cantidad: recibidasAhora,
 				costoUnitario,
-				secuencia: "ENTRADA-0",
+				secuencia: `ENTRADA-${nRecepcion}`,
 				creadoPorId: user.userId,
 			});
 			return { alreadyCompleted: false as const };
@@ -1043,7 +1092,10 @@ export const completarTransferenciaAction = withAction(
 		revalidatePath("/busy/transferencias");
 		if (result.alreadyCompleted)
 			return { success: true, message: "Transferencia ya completada" };
-		return { success: true, message: "Transferencia completada" };
+		return {
+			success: true,
+			message: esParcial ? "Recepción parcial registrada" : "Transferencia completada",
+		};
 	},
 );
 
