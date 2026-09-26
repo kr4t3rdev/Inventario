@@ -5,12 +5,39 @@ import { withAction, ActionError } from '@/lib/server-actions';
 import { prisma } from '@/lib/prisma';
 import { requireFeature, requirePermission, requireTenant } from '@/lib/services/tenant-scope';
 import { hasPermission } from '@/lib/services/tenant-scope';
+import { PeriodoGuard } from '@/lib/services/periodo-contable-guard';
+import { extraerFechaDeBody } from '@/lib/services/validate-period-write';
 import { gastosDESchema, gastosDEUpdateSchema } from './schemas';
 import type { GastosDEInput, GastosDEUpdateInput } from './schemas';
 import type { AuthenticatedUser } from '@/lib/auth-middleware';
 import { reverseExpenseEffects } from './reversal';
 
 const INCLUDE = { concepto: true, elemento: true } as const;
+
+/**
+ * @description Valida en servidor que el período contable del gasto permita
+ * escrituras. El bloqueo client-side (usePeriodLock) es solo UX; este es el
+ * enforcement real. Respeta el feature flag y el modo del guard.
+ * @param {string} periodo - Período del gasto ("YYYY-MM").
+ * @param {string} tenantId - Tenant del gasto.
+ * @returns {Promise<void>} Lanza ActionError con el código del guard si bloquea.
+ */
+async function assertPeriodoGastoEscritable(periodo: string, tenantId: string): Promise<void> {
+  const fecha = extraerFechaDeBody({ periodo });
+  if (!fecha) {
+    // Fail-open consciente: formatos legacy no parseables no bloquean, pero
+    // quedan trazados para detección.
+    console.warn(`[PeríodoGuard] período de gasto no parseable: "${periodo}" (tenant ${tenantId})`);
+    return;
+  }
+  const resultado = await PeriodoGuard.assertWritable(fecha, tenantId, 'devengo');
+  if (!resultado.permitido) {
+    throw new ActionError(
+      resultado.error ?? 'Período no permite escrituras contables',
+      resultado.codigo ?? 'PERIODO_ERROR',
+    );
+  }
+}
 
 // ─── GastosDE ──────────────────────────────────────────────
 
@@ -47,6 +74,7 @@ export const createGastosDEAction = withAction(async (input: GastosDEInput, user
     if (parsed.elementoId && !elem) throw new ActionError('El elemento no pertenece al concepto de esta empresa', 'VALIDATION_ERROR');
   }
   const periodo = parsed.periodo || `${new Date().getFullYear()}-${String(new Date().getMonth()+1).padStart(2,'0')}`;
+  await assertPeriodoGastoEscritable(periodo, tenantId);
   let tipo = parsed.tipo || null;
   if (parsed.conceptoId && parsed.elementoId) {
     const concepto = await prisma.gastoConcepto.findFirst({ where: { conceptoId: parsed.conceptoId, tenantId }, include: { elementos: { where: { elementoId: parsed.elementoId, tenantId } } } });
@@ -79,6 +107,12 @@ export const updateGastosDEAction = withAction(async (input: GastosDEUpdateInput
   // B-04: un gasto aprobado solo lo edita quien puede aprobar (o se rechaza antes).
   if (existing.estado === 'APROBADO') {
     requirePermission(user, 'financiero.gastos.aprobar', 'editar gastos aprobados');
+  }
+  // Enforcement de período cerrado: se valida tanto el período origen del
+  // gasto como el destino cuando el payload lo cambia.
+  await assertPeriodoGastoEscritable(existing.periodo, tenantId);
+  if (data.periodo !== undefined && data.periodo !== existing.periodo) {
+    await assertPeriodoGastoEscritable(data.periodo, tenantId);
   }
   let proveedorUpdate: { proveedor?: string; proveedorId?: string | null } = {};
   if (data.proveedorId !== undefined) {
@@ -116,10 +150,17 @@ export const deleteGastosDEBulkAction = withAction(async (ids: string[], user: A
   if (typeof (prisma as any).$transaction !== 'function') {
     let eliminados = 0;
     let omitidosAprobados = 0;
+    // Pre-pass: valida períodos ANTES de borrar nada (esta rama no tiene
+    // rollback; un throw a mitad de bucle dejaría un borrado parcial).
+    const aEliminar: string[] = [];
     for (const id of cleanIds) {
       const existing = await prisma.gastosDE.findFirst({ where: { gastosDEId: id, tenantId } });
       if (!existing) continue;
       if (existing.estado === 'APROBADO') { omitidosAprobados++; continue; }
+      await assertPeriodoGastoEscritable(existing.periodo, tenantId);
+      aEliminar.push(id);
+    }
+    for (const id of aEliminar) {
       await prisma.gastosDE.delete({ where: { gastosDEId: id } });
       eliminados++;
     }
@@ -136,10 +177,11 @@ export const deleteGastosDEBulkAction = withAction(async (ids: string[], user: A
       }
       const existing = await tx.gastosDE.findUnique({
         where: { gastosDEId: id },
-        select: { gastosDEId: true, tenantId: true, estado: true, cuentaPorPagar: { select: { cuentaPorPagarId: true } } },
+        select: { gastosDEId: true, tenantId: true, estado: true, periodo: true, cuentaPorPagar: { select: { cuentaPorPagarId: true } } },
       });
       if (!existing || existing.tenantId !== tenantId) continue;
       if (existing.estado === 'APROBADO') { omitidosAprobados++; continue; }
+      await assertPeriodoGastoEscritable(existing.periodo, tenantId);
 
       const claimedForDeletion = await tx.gastosDE.updateMany({
         where: {
@@ -178,6 +220,7 @@ export const deleteGastosDEAction = withAction(async (id: string, user: Authenti
     if (existing.estado === 'APROBADO') {
       throw new ActionError('El gasto está aprobado; rechácelo antes de eliminarlo', 'VALIDATION_ERROR');
     }
+    await assertPeriodoGastoEscritable(existing.periodo, tenantId);
     await prisma.gastosDE.delete({ where: { gastosDEId: id } });
     revalidatePath('/busy/gastosDE');
     return { id, eliminado: true };
@@ -190,7 +233,7 @@ export const deleteGastosDEAction = withAction(async (id: string, user: Authenti
     }
     const existing = await tx.gastosDE.findUnique({
       where: { gastosDEId: id },
-      select: { gastosDEId: true, tenantId: true, estado: true, cuentaPorPagar: { select: { cuentaPorPagarId: true } } },
+      select: { gastosDEId: true, tenantId: true, estado: true, periodo: true, cuentaPorPagar: { select: { cuentaPorPagarId: true } } },
     });
     if (!existing || existing.tenantId !== tenantId) {
       throw new ActionError('Gasto no encontrado', 'NOT_FOUND');
@@ -198,6 +241,7 @@ export const deleteGastosDEAction = withAction(async (id: string, user: Authenti
     if (existing.estado === 'APROBADO') {
       throw new ActionError('El gasto está aprobado; rechácelo antes de eliminarlo', 'VALIDATION_ERROR');
     }
+    await assertPeriodoGastoEscritable(existing.periodo, tenantId);
 
     // Claim before side effects. `isPagado` is a legacy status column but is the
     // only persisted mutation marker available on GastosDE; the transaction
@@ -247,6 +291,7 @@ export const aprobarGastoDEAction = withAction(async (input: { id: string }, use
   if (existing.estado !== 'PENDIENTE') {
     throw new ActionError(`El gasto ya está en estado ${existing.estado}`, 'VALIDATION_ERROR');
   }
+  await assertPeriodoGastoEscritable(existing.periodo, tenantId);
 
   const g = await prisma.gastosDE.update({
     where: { gastosDEId: parsed.id },
@@ -271,6 +316,7 @@ export const rechazarGastoDEAction = withAction(async (input: { id: string }, us
   if (existing.estado !== 'PENDIENTE') {
     throw new ActionError(`El gasto ya está en estado ${existing.estado}`, 'VALIDATION_ERROR');
   }
+  await assertPeriodoGastoEscritable(existing.periodo, tenantId);
 
   const g = await prisma.gastosDE.update({
     where: { gastosDEId: parsed.id },

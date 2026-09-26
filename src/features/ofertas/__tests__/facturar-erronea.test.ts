@@ -17,7 +17,7 @@ vi.mock('@/features/turnos-pos', () => ({ getOrCreateTurnoActivo: vi.fn() }));
 
 const mockTx = {
   oferta: { update: vi.fn() },
-  venta: { create: vi.fn() },
+  venta: { findFirst: vi.fn().mockResolvedValue(null), create: vi.fn() },
   ventaServicios: { create: vi.fn() },
   factura: { create: vi.fn() },
   serieFacturacion: { findFirst: vi.fn(), create: vi.fn(), update: vi.fn() },
