@@ -24,7 +24,12 @@ const INCLUDE = { concepto: true, elemento: true } as const;
  */
 async function assertPeriodoGastoEscritable(periodo: string, tenantId: string): Promise<void> {
   const fecha = extraerFechaDeBody({ periodo });
-  if (!fecha) return;
+  if (!fecha) {
+    // Fail-open consciente: formatos legacy no parseables no bloquean, pero
+    // quedan trazados para detección.
+    console.warn(`[PeríodoGuard] período de gasto no parseable: "${periodo}" (tenant ${tenantId})`);
+    return;
+  }
   const resultado = await PeriodoGuard.assertWritable(fecha, tenantId, 'devengo');
   if (!resultado.permitido) {
     throw new ActionError(
@@ -145,11 +150,17 @@ export const deleteGastosDEBulkAction = withAction(async (ids: string[], user: A
   if (typeof (prisma as any).$transaction !== 'function') {
     let eliminados = 0;
     let omitidosAprobados = 0;
+    // Pre-pass: valida períodos ANTES de borrar nada (esta rama no tiene
+    // rollback; un throw a mitad de bucle dejaría un borrado parcial).
+    const aEliminar: string[] = [];
     for (const id of cleanIds) {
       const existing = await prisma.gastosDE.findFirst({ where: { gastosDEId: id, tenantId } });
       if (!existing) continue;
       if (existing.estado === 'APROBADO') { omitidosAprobados++; continue; }
       await assertPeriodoGastoEscritable(existing.periodo, tenantId);
+      aEliminar.push(id);
+    }
+    for (const id of aEliminar) {
       await prisma.gastosDE.delete({ where: { gastosDEId: id } });
       eliminados++;
     }

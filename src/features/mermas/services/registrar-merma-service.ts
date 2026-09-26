@@ -71,6 +71,13 @@ export async function registrarMermaEnTransaccion<
 		...(createOptions.select !== undefined && { select: createOptions.select }),
 	})) as M;
 
+	const mermaId = (creada as Record<string, unknown>).mermaId;
+	if (typeof mermaId !== 'string' || mermaId.length === 0) {
+		throw new Error(
+			'registrarMermaEnTransaccion: la proyección (include/select) debe incluir mermaId',
+		);
+	}
+
 	await upsertStockUbicacion(tx as Parameters<typeof upsertStockUbicacion>[0], {
 		tenantId,
 		productoId,
@@ -84,7 +91,7 @@ export async function registrarMermaEnTransaccion<
 		tenantId,
 		productoId,
 		tipoOrigen: 'MERMA',
-		origenId: String((creada as Record<string, unknown>).mermaId),
+		origenId: mermaId,
 		tipoUbicacion: 'almacen',
 		ubicacionId: almacenId,
 		cantidad: -cantidad,
@@ -108,7 +115,7 @@ export async function registrarMermaEnTransaccion<
 			costoUnitario,
 			costoTotal: -cantidad * costoUnitario,
 			estado: 'APLICADO',
-			origenMermaId: String((creada as Record<string, unknown>).mermaId),
+			origenMermaId: mermaId,
 			creadoPorId,
 		},
 	});

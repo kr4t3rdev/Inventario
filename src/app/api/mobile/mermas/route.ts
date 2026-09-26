@@ -82,7 +82,9 @@ export async function POST(request: Request) {
     const body = (await request.json()) as { productoId?: unknown; cantidad?: unknown; motivo?: unknown };
     const productoId = typeof body.productoId === 'string' ? body.productoId : '';
     const cantidad = typeof body.cantidad === 'number' && Number.isFinite(body.cantidad) ? body.cantidad : 0;
-    if (!productoId || cantidad <= 0) {
+    // Enteros estrictos: el kardex (registrarMovimiento) rechaza fracciones y
+    // sin esta guarda llegarían como 500.
+    if (!productoId || cantidad <= 0 || !Number.isInteger(cantidad)) {
       return errorResponse('Datos inválidos', 400, 'VALIDATION_ERROR');
     }
 

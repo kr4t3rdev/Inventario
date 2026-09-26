@@ -354,6 +354,25 @@ describe("Transferencias Server Actions", () => {
 					}),
 				}),
 			);
+			// Complemento del BUG-3: las ventas anuladas tampoco descuentan stock.
+			expect(prisma.ventaItem.aggregate).toHaveBeenCalledWith(
+				expect.objectContaining({
+					where: expect.objectContaining({
+						venta: expect.objectContaining({
+							deletedAt: null,
+							estado: { not: "ANULADA" },
+						}),
+					}),
+				}),
+			);
+			expect(prisma.venta.aggregate).toHaveBeenCalledWith(
+				expect.objectContaining({
+					where: expect.objectContaining({
+						deletedAt: null,
+						estado: { not: "ANULADA" },
+					}),
+				}),
+			);
 		});
 	});
 

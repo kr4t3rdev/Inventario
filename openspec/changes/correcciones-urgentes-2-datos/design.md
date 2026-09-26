@@ -138,21 +138,28 @@ propio mapping móvil usa `transfers → inventario.transferencias.gestionar`
 (`route-permissions.ts:89`). Queda simétrico con el flujo y no rompe el caso
 de uso dependiente-recibe-mercancía.
 
-### D7 — Período cerrado: dos mecanismos según forma de entrada
+### D7 — Período cerrado: un helper uniforme sobre `PeriodoGuard.assertWritable`
 
-- **Actions con input (create/update)**: wrapper
-  `withPeriodValidation(extractor, handler)` con extractor que mapea
-  `input.periodo` ("YYYY-MM" → `Date.UTC(y, m-1, 1)`, fallback mes actual).
-- **Actions por id (update/delete/bulk/aprobar/rechazar)**: dentro del
-  handler, tras cargar el gasto, `PeriodoGuard.assertWritable(fechaDelGasto,
-  tenantId, ...)`; `fechaDelGasto` se deriva de `gasto.periodo`. En `update`
-  se valida también el `periodo` destino si cambia.
+- **Implementación final**: helper `assertPeriodoGastoEscritable(periodo,
+  tenantId)` en `gastosDE/actions.ts` que mapea el `periodo` ("YYYY-MM" →
+  `Date.UTC(y, m-1, 1)`, vía `extraerFechaDeBody`) y llama
+  `PeriodoGuard.assertWritable`; si no es permitido lanza `ActionError` con
+  el código del guard. Se invoca en el handler de las seis acciones:
+  `create` (tras resolver el mes default), `update` (período origen del
+  gasto Y destino si cambia), `delete` y `deleteBulk` (antes del claim y de
+  revertir efectos; en bulk el throw dentro de la transacción hace rollback
+  atómico), `aprobar` y `rechazar`.
+  Nota: se prefirió el helper explícito al wrapper `withPeriodValidation`
+  porque el período del gasto se resuelve dentro del handler (campo
+  `periodo` con default al mes actual) y así un solo mecanismo cubre las
+  acciones con y sin input de fecha.
 - **Ruta móvil** `POST /api/mobile/expenses`: `validarEscrituraPeriodo`
   (patrón de `src/app/api/contabilidad/reconciliacion/gastos/route.ts`)
   usando la `fecha` del body (el route ya calcula `periodo` desde esa fecha).
-- Config respetada: el guard honor `PERIODO_GUARD_ENABLED` y los modos
+- Config respetada: el guard honra `PERIODO_GUARD_ENABLED` y los modos
   `audit-only`/`disabled`; en `enforce` (default) bloquea con los códigos
-  existentes (`PERIODO_CERRADO`, `PERIODO_APROBADO`, `PERIODO_EN_CIERRE`).
+  existentes (`PERIODO_CERRADO`, `PERIODO_APROBADO`, `PERIODO_EN_CIERRE`,
+  `PERIODO_NO_EXISTE`).
 - Queda anotado como gap fuera de alcance: `createCompraProductoAction`
   (`GastoCompra`) y `createProductoAction` (stock inicial) sin wrapper; se
   abordan en la Sesión C/G para no mezclar con compras-productos aquí.

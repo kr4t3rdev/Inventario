@@ -112,7 +112,7 @@ export class PeriodoContableService {
 			return {
 				permitido: false,
 				error: new PeriodoError(
-					"No existe un período contable para esta fecha. Creá un período primero.",
+					"No existe un período contable para esta fecha. Crea un período primero.",
 					"PERIODO_NO_EXISTE",
 				),
 			};

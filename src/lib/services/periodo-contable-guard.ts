@@ -210,7 +210,7 @@ export class PeriodoGuard {
 		// No existe período
 		if (resultado.estado === "NO_EXISTE") {
 			const error =
-				"No existe un período contable para esta fecha. Creá un período primero.";
+				"No existe un período contable para esta fecha. Crea un período primero.";
 			await this._registrarIntentoBypass(tenantId, actor, error, {
 				fecha: fecha.toISOString(),
 				tipoOperacion,

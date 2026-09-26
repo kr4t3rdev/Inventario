@@ -60,11 +60,21 @@ async function getStockDisponibleEnPuntoVenta(
 	});
 	const [ventasItems, ventasLegacy] = await Promise.all([
 		prisma.ventaItem.aggregate({
-			where: { productoId, venta: { puntoDeVentaId } },
+			where: {
+				productoId,
+				// Complemento del BUG-3: una venta anulada ya no consume stock.
+				venta: { puntoDeVentaId, deletedAt: null, estado: { not: "ANULADA" } },
+			},
 			_sum: { cantidad: true },
 		}),
 		prisma.venta.aggregate({
-			where: { productoId, puntoDeVentaId, items: { none: {} } },
+			where: {
+				productoId,
+				puntoDeVentaId,
+				deletedAt: null,
+				estado: { not: "ANULADA" },
+				items: { none: {} },
+			},
 			_sum: { cantidad: true },
 		}),
 	]);

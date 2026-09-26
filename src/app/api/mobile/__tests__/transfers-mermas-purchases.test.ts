@@ -240,6 +240,22 @@ describe('Mobile API: transfers, mermas & purchases', () => {
     expect(data.code).toBe('STOCK_INSUFICIENTE');
   });
 
+  it('POST /api/mobile/mermas rechaza cantidades fraccionales con 400', async () => {
+    (prismaMock.producto.findUnique as Mock).mockResolvedValue({ id: 'p1', tenantId: 'tenant-1', precioCosto: 50, almacenId: 'a1' });
+    (prismaMock.stockUbicacion.findUnique as Mock).mockResolvedValue({ cantidadDisponible: 10 });
+
+    const request = new NextRequest('http://localhost/api/mobile/mermas', {
+      method: 'POST',
+      body: JSON.stringify({ productoId: 'p1', cantidad: 1.5, motivo: 'Caducidad' }),
+    });
+    const response = await createMerma(request);
+    const data = await response.json();
+
+    expect(response.status).toBe(400);
+    expect(data.code).toBe('VALIDATION_ERROR');
+    expect(prismaMock.merma.create).not.toHaveBeenCalled();
+  });
+
   it('DELETE /api/mobile/mermas/[id] revierte kardex, anula el espejo y restaura stock', async () => {
     (prismaMock.merma.findFirst as Mock).mockResolvedValue({
       mermaId: 'm1',
@@ -301,6 +317,27 @@ describe('Mobile API: transfers, mermas & purchases', () => {
     const response = await deleteTransfer(new NextRequest('http://localhost/api/mobile/transfers/t1'), ctx('t1'));
 
     expect(response.status).toBe(200);
+  });
+
+  it('DELETE /api/mobile/mermas/[id] sin almacén anula el espejo y no revierte kardex', async () => {
+    (prismaMock.merma.findFirst as Mock).mockResolvedValue({
+      mermaId: 'm1',
+      productoId: 'p1',
+      cantidad: 2,
+      almacenId: null,
+    });
+
+    const response = await deleteMerma(new NextRequest('http://localhost/api/mobile/mermas/m1'), ctx('m1'));
+
+    expect(response.status).toBe(200);
+    expect(prismaMock.ajusteInventario.updateMany).toHaveBeenCalledWith(
+      expect.objectContaining({
+        where: { tenantId: 'tenant-1', origenMermaId: 'm1' },
+        data: { estado: 'ANULADO' },
+      }),
+    );
+    expect(revertirMovimientosDeOrigen).not.toHaveBeenCalled();
+    expect(prismaMock.merma.delete).toHaveBeenCalledWith({ where: { mermaId: 'm1' } });
   });
 
   it('DELETE /api/mobile/purchases/[id] soft-delete', async () => {
