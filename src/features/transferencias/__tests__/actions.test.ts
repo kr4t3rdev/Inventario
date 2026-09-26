@@ -62,6 +62,7 @@ import {
 	completarTransferenciaAction,
 	aprobarTransferenciaAction,
 	rechazarTransferenciaAction,
+	despacharTransferenciaAction,
 } from "@/features/transferencias/actions";
 import type { AuthenticatedUser } from "@/lib/auth-middleware";
 
@@ -1355,5 +1356,104 @@ describe("B-01: workflow, numeración por tenant y permisos", () => {
 
 		expect(result.success).toBe(false);
 		expect(result.error?.code).toBe("VALIDATION_ERROR");
+	});
+});
+
+describe("B-1: despacho EN_TRANSITO (Sesión B)", () => {
+	beforeEach(() => {
+		vi.clearAllMocks();
+		vi.mocked(upsertStockUbicacion).mockReset();
+		mockTx.transferencia.updateMany.mockResolvedValue({ count: 1 });
+	});
+
+	const operador: AuthenticatedUser = {
+		...mockUser,
+		role: "user",
+		tenantRole: "manager",
+	};
+	const sinPermisoGestion: AuthenticatedUser = {
+		...mockUser,
+		role: "user",
+		permissions: new Set<string>(),
+	};
+
+	function mockTransferenciaAprobada() {
+		vi.mocked(prisma.transferencia.findFirst).mockResolvedValue({
+			transferenciaId: "tr-1",
+			tenantId: "tenant-test",
+			deletedAt: null,
+			estado: "APROBADA",
+			productoId: "prod-1",
+			cantidad: 10,
+			origenId: "alm-1",
+			destinoId: "alm-2",
+			puntoDeVentaOrigenId: null,
+			puntoDeVentaDestinoId: null,
+		} as any);
+	}
+
+	it("despacha una transferencia aprobada a EN_TRANSITO sin mover stock", async () => {
+		vi.mocked(getCurrentUser).mockResolvedValue(operador);
+		mockTransferenciaAprobada();
+
+		const result = await despacharTransferenciaAction({ transferenciaId: "tr-1" });
+
+		expect(result.success).toBe(true);
+		expect(mockTx.transferencia.updateMany).toHaveBeenCalledWith({
+			where: {
+				transferenciaId: "tr-1",
+				tenantId: "tenant-test",
+				deletedAt: null,
+				estado: "APROBADA",
+			},
+			data: { estado: "EN_TRANSITO" },
+		});
+		expect(upsertStockUbicacion).not.toHaveBeenCalled();
+		expect(mockTx.stockMoveLine.upsert).not.toHaveBeenCalled();
+	});
+
+	it("un usuario sin permiso de gestión no puede despachar", async () => {
+		vi.mocked(getCurrentUser).mockResolvedValue(sinPermisoGestion);
+
+		const result = await despacharTransferenciaAction({ transferenciaId: "tr-1" });
+
+		expect(result.success).toBe(false);
+		expect(result.error?.code).toBe("FORBIDDEN");
+		// El gate corre antes de cualquier consulta de datos.
+		expect(prisma.transferencia.findFirst).not.toHaveBeenCalled();
+	});
+
+	it("rechaza despachar una transferencia no aprobada", async () => {
+		vi.mocked(getCurrentUser).mockResolvedValue(operador);
+		mockTransferenciaAprobada();
+		vi.mocked(prisma.transferencia.findFirst).mockResolvedValue({
+			transferenciaId: "tr-1",
+			tenantId: "tenant-test",
+			deletedAt: null,
+			estado: "PENDIENTE",
+		} as any);
+
+		const result = await despacharTransferenciaAction({ transferenciaId: "tr-1" });
+
+		expect(result.success).toBe(false);
+		expect(result.error?.code).toBe("VALIDATION_ERROR");
+		expect(mockTx.transferencia.updateMany).not.toHaveBeenCalled();
+	});
+
+	it("falla con CONFLICT si el claim pierde la carrera", async () => {
+		vi.mocked(getCurrentUser).mockResolvedValue(operador);
+		mockTransferenciaAprobada();
+		mockTx.transferencia.updateMany.mockResolvedValueOnce({ count: 0 });
+		mockTx.transferencia.findUnique.mockResolvedValueOnce({
+			transferenciaId: "tr-1",
+			tenantId: "tenant-test",
+			deletedAt: null,
+			estado: "EN_TRANSITO",
+		} as any);
+
+		const result = await despacharTransferenciaAction({ transferenciaId: "tr-1" });
+
+		expect(result.success).toBe(false);
+		expect(result.error?.code).toBe("CONFLICT");
 	});
 });

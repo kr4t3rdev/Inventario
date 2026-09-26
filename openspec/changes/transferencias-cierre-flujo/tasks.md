@@ -2,10 +2,10 @@
 
 ## 1. Fase B-1 — Despacho (EN_TRANSITO alcanzable)
 
-- [ ] 1.1 Tests rojos: `despacharTransferenciaAction` (APROBADA→EN_TRANSITO con claim, PENDIENTE rechazado, dependiente FORBIDDEN, sin movimiento de stock/kardex)
-- [ ] 1.2 Implementar `despacharTransferenciaAction` (permiso `inventario.transferencias.gestionar`, claim atómico tenant-scoped)
-- [ ] 1.3 Helpers puros `puedeDespachar`/`puedeConfirmarRecepcion` en `lib/estados.ts` con tests
-- [ ] 1.4 UI: item "Despachar" en la tabla para APROBADA + handler en content + test verde
+- [x] 1.1 Tests rojos: `despacharTransferenciaAction` (APROBADA→EN_TRANSITO con claim, PENDIENTE rechazado, dependiente FORBIDDEN, sin movimiento de stock/kardex)
+- [x] 1.2 Implementar `despacharTransferenciaAction` (permiso `inventario.transferencias.gestionar`, claim atómico tenant-scoped)
+- [x] 1.3 Helpers puros `puedeDespachar`/`puedeConfirmarRecepcion` en `lib/estados.ts` con tests
+- [x] 1.4 UI: item "Despachar" en la tabla para APROBADA + handler en content + test verde
 
 ## 2. Fase B-2 — PARCIAL real (acumulativo)
 

@@ -848,6 +848,65 @@ export const aprobarTransferenciaAction = withAction(
 );
 
 /**
+ * @description Despacha una transferencia APROBADA hacia su destino.
+ * Transición: APROBADA → EN_TRANSITO. No mueve stock — la recepción (completar) lo hace.
+ */
+export const despacharTransferenciaAction = withAction(
+	async (input: AprobarTransferenciaInput, user: AuthenticatedUser) => {
+		const parsed = aprobarTransferenciaSchema.parse(input);
+		const tenantId = requireTenant(user);
+		// B-1: despachar es operativo (gestión); aprobar/rechazar siguen siendo de jefatura.
+		requirePermission(user, "inventario.transferencias.gestionar", "despachar transferencias");
+
+		const transferencia = await prisma.transferencia.findFirst({
+			where: {
+				transferenciaId: parsed.transferenciaId,
+				tenantId,
+				deletedAt: null,
+			},
+			select: { transferenciaId: true, estado: true },
+		});
+		if (!transferencia)
+			throw new ActionError("Transferencia no encontrada", "NOT_FOUND");
+		if (transferencia.estado !== "APROBADA") {
+			throw new ActionError(
+				`La transferencia está en estado ${transferencia.estado}, solo se pueden despachar transferencias aprobadas`,
+				"VALIDATION_ERROR",
+			);
+		}
+
+		await prisma.$transaction(async (tx: any) => {
+			const claim = await tx.transferencia.updateMany({
+				where: {
+					transferenciaId: parsed.transferenciaId,
+					tenantId,
+					deletedAt: null,
+					estado: "APROBADA",
+				},
+				data: { estado: "EN_TRANSITO" },
+			});
+			if (claim.count !== 1) {
+				const current = await tx.transferencia.findUnique({
+					where: { transferenciaId: parsed.transferenciaId },
+					select: { tenantId: true, deletedAt: true, estado: true },
+				});
+				if (!current || current.tenantId !== tenantId)
+					throw new ActionError("Transferencia no encontrada", "NOT_FOUND");
+				if (current.estado === "EN_TRANSITO")
+					throw new ActionError("La transferencia ya está en tránsito", "CONFLICT");
+				throw new ActionError(
+					`La transferencia está en estado ${current.estado}, solo se pueden despachar transferencias aprobadas`,
+					"CONFLICT",
+				);
+			}
+		});
+
+		revalidatePath("/busy/transferencias");
+		return { success: true, message: "Transferencia despachada" };
+	},
+);
+
+/**
  * @description Completa una transferencia APROBADA o EN_TRANSITO, moviendo el stock definitivamente.
  * Transición: {APROBADA, EN_TRANSITO} → COMPLETADA. El stock se descuenta del origen y se suma al destino.
  */

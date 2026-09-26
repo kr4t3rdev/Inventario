@@ -37,6 +37,10 @@ import {
   AlertTriangle
 } from "lucide-react"
 import { Transferencia, EstadoTransferencia } from "@/app/models/model"
+import {
+	puedeConfirmarRecepcion,
+	puedeDespachar,
+} from "@/features/transferencias/lib/estados"
 import { Badge } from "@/components/ui/badge"
 import { Skeleton } from "@/components/ui/skeleton"
 import { LazyMotion, m as motion } from "framer-motion"
@@ -57,10 +61,11 @@ interface TransferenciasTableProps {
   onDelete: (id: string) => void
   onConfirmarRecepcion?: (transferencia: Transferencia) => void
   onAprobar?: (transferencia: Transferencia) => void
+  onDespachar?: (transferencia: Transferencia) => void
   onRechazar?: (transferencia: Transferencia) => void
 }
 
-export function TransferenciasTable({ transferencias, isLoading, error, onDelete, onConfirmarRecepcion, onAprobar, onRechazar }: TransferenciasTableProps) {
+export function TransferenciasTable({ transferencias, isLoading, error, onDelete, onConfirmarRecepcion, onAprobar, onDespachar, onRechazar }: TransferenciasTableProps) {
   const [sorting, setSorting] = useState<SortingState>([])
   const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([])
   const [columnVisibility, setColumnVisibility] = useState<VisibilityState>({})
@@ -244,9 +249,10 @@ export function TransferenciasTable({ transferencias, isLoading, error, onDelete
       cell: ({ row }) => {
         const transferencia = row.original
         const esPendiente = transferencia.estado === 'PENDIENTE'
-        // La recepción (stock) aplica a aprobadas o en tránsito; una pendiente
-        // primero necesita aprobación de jefatura.
-        const puedeConfirmar = transferencia.estado === 'APROBADA' || transferencia.estado === 'EN_TRANSITO'
+        // La recepción (stock) aplica a aprobadas, en tránsito o con recepción
+        // parcial previa; una pendiente primero necesita aprobación de jefatura.
+        const puedeConfirmar = puedeConfirmarRecepcion(transferencia.estado)
+        const puedeDespacharFila = puedeDespachar(transferencia.estado)
 
         return (
           <DropdownMenu>
@@ -265,6 +271,15 @@ export function TransferenciasTable({ transferencias, isLoading, error, onDelete
                 >
                   <CheckCircle className="mr-2 h-4 w-4" />
                   Aprobar
+                </DropdownMenuItem>
+              )}
+              {puedeDespacharFila && onDespachar && (
+                <DropdownMenuItem
+                  onClick={() => onDespachar(transferencia)}
+                  className="cursor-pointer text-blue-600 focus:text-blue-600"
+                >
+                  <Truck className="mr-2 h-4 w-4" />
+                  Despachar
                 </DropdownMenuItem>
               )}
               {puedeConfirmar && onConfirmarRecepcion && (
