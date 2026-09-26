@@ -8,7 +8,7 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 const mockTx = {
   serieFacturacion: { findFirst: vi.fn(), create: vi.fn(), update: vi.fn() },
   oferta: { update: vi.fn() },
-  venta: { create: vi.fn() },
+  venta: { findFirst: vi.fn().mockResolvedValue(null), create: vi.fn() },
   ventaServicios: { create: vi.fn() },
   factura: { create: vi.fn() },
   producto: { findUnique: vi.fn(), findFirst: vi.fn() },

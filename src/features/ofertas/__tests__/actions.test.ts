@@ -13,7 +13,7 @@ vi.mock('@/lib/services/stock-ubicacion-service', () => ({ upsertStockUbicacion:
 
 const mockTx = {
   oferta: { update: vi.fn() },
-  venta: { create: vi.fn() },
+  venta: { findFirst: vi.fn().mockResolvedValue(null), create: vi.fn() },
   ventaServicios: { create: vi.fn() },
   servicios: { findFirst: vi.fn() },
   factura: { create: vi.fn() },
