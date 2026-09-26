@@ -27,9 +27,9 @@
 
 ## 5. Fase B-5 — Checklists openspec
 
-- [ ] 5.1 Verificar contra el código y sincronizar tareas de `fix-transferencias-bugs` (0/24)
-- [ ] 5.2 Verificar contra el código y sincronizar tareas de `migrar-transferencias-server-first` (0/13)
-- [ ] 5.3 Archivar ambos en `openspec/changes/archive/2026-09-26-*`
+- [x] 5.1 Verificar contra el código y sincronizar tareas de `fix-transferencias-bugs` (0/24)
+- [x] 5.2 Verificar contra el código y sincronizar tareas de `migrar-transferencias-server-first` (0/13)
+- [x] 5.3 Archivar ambos en `openspec/changes/archive/2026-09-26-*`
 
 ## 6. Verificación final
 
