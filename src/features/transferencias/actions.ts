@@ -38,12 +38,24 @@ async function getStockDisponibleEnPuntoVenta(
 	productoId: string,
 	puntoDeVentaId: string,
 ): Promise<number> {
+	// BUG-3: las transferencias canceladas/rechazadas o eliminadas lógicamente
+	// no mueven stock; incluirlas distorsionaba el disponible del PV.
 	const entrada = await prisma.transferencia.aggregate({
-		where: { productoId, puntoDeVentaDestinoId: puntoDeVentaId },
+		where: {
+			productoId,
+			puntoDeVentaDestinoId: puntoDeVentaId,
+			deletedAt: null,
+			estado: { notIn: ["CANCELADA", "RECHAZADA"] },
+		},
 		_sum: { cantidad: true },
 	});
 	const salida = await prisma.transferencia.aggregate({
-		where: { productoId, puntoDeVentaOrigenId: puntoDeVentaId },
+		where: {
+			productoId,
+			puntoDeVentaOrigenId: puntoDeVentaId,
+			deletedAt: null,
+			estado: { notIn: ["CANCELADA", "RECHAZADA"] },
+		},
 		_sum: { cantidad: true },
 	});
 	const [ventasItems, ventasLegacy] = await Promise.all([
@@ -265,11 +277,6 @@ export const createTransferenciaAction = withAction(
 					item.productoId,
 					origenId,
 				);
-				console.log("=== createTransferenciaAction :: stock punto_venta ===", {
-					producto: producto.nombre,
-					solicitado: item.cantidad,
-					disponible: stockDisponible,
-				});
 				if (stockDisponible < item.cantidad)
 					throw new ActionError(
 						`Stock insuficiente para ${producto.nombre} en el punto de venta`,
@@ -855,6 +862,9 @@ export const completarTransferenciaAction = withAction(
 	async (input: CompletarTransferenciaInput, user: AuthenticatedUser) => {
 		const parsed = completarTransferenciaSchema.parse(input);
 		const tenantId = requireTenant(user);
+		// La recepción física es operativa (a diferencia de aprobar/rechazar,
+		// que son de jefatura): se exige el permiso de gestión de transferencias.
+		requirePermission(user, "inventario.transferencias.gestionar", "completar transferencias");
 
 		const transferencia = await prisma.transferencia.findFirst({
 			where: {
