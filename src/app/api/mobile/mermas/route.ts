@@ -1,7 +1,8 @@
 import { authenticateUser } from '@/lib/auth-middleware';
 import { errorResponse, successResponse } from '@/lib/api-response';
 import prisma from '@/lib/prisma';
-import { upsertStockUbicacion } from '@/lib/services/stock-ubicacion-service';
+import { notificarMerma } from '@/lib/notificaciones-utils';
+import { registrarMermaEnTransaccion } from '@/features/mermas/services/registrar-merma-service';
 
 export const dynamic = 'force-dynamic';
 
@@ -112,28 +113,26 @@ export async function POST(request: Request) {
 
     const motivo = typeof body.motivo === 'string' && body.motivo.trim() ? body.motivo.trim() : null;
 
-    const merma = await prisma.$transaction(async (tx: any) => {
-      const creada = await tx.merma.create({
-        data: {
-          productoId,
-          cantidad,
-          motivo,
-          costoTotal: producto.precioCosto * cantidad,
-          tenantId,
-          almacenId: producto.almacenId,
-        },
-        select: SELECT,
-      });
-      await upsertStockUbicacion(tx, {
+    // Núcleo compartido con el desktop: merma con creadoPorId, stock,
+    // kardex (SALIDA-0) y espejo AjusteInventario en una sola transacción.
+    const merma = await prisma.$transaction(async (tx: any) =>
+      registrarMermaEnTransaccion(tx, {
         tenantId,
         productoId,
-        tipoUbicacion: 'almacen',
-        ubicacionId: producto.almacenId!,
-        modo: 'increment',
-        delta: -cantidad,
-      });
-      return creada;
-    });
+        cantidad,
+        motivo,
+        almacenId: producto.almacenId!,
+        creadoPorId: authResult.user.userId,
+        costoUnitario: producto.precioCosto,
+        stockDisponibleAntes: stockUbicacion.cantidadDisponible,
+      }, { select: SELECT }),
+    );
+
+    try {
+      await notificarMerma(merma.mermaId);
+    } catch (notifyError) {
+      console.error('Error enviando notificación de merma (mobile):', notifyError);
+    }
 
     return successResponse(mapMerma(merma), 201);
   } catch (error) {

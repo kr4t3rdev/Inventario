@@ -2,6 +2,7 @@ import { authenticateUser } from '@/lib/auth-middleware';
 import { errorResponse, successResponse } from '@/lib/api-response';
 import prisma from '@/lib/prisma';
 import { upsertStockUbicacion } from '@/lib/services/stock-ubicacion-service';
+import { revertirMovimientosDeOrigen } from '@/features/inventario/movimientos';
 import { mapMerma } from '../route';
 
 export const dynamic = 'force-dynamic';
@@ -79,7 +80,19 @@ export async function DELETE(request: Request, context: RouteContext) {
     }
 
     if (existing.almacenId) {
+      // Alineado con deleteMermaAction (desktop): revertir kardex, anular el
+      // espejo AjusteInventario y restaurar stock en la misma transacción.
       await prisma.$transaction(async (tx: any) => {
+        await revertirMovimientosDeOrigen(tx, {
+          tenantId,
+          tipoOrigen: 'MERMA',
+          origenId: id,
+          creadoPorId: authResult.user.userId,
+        });
+        await tx.ajusteInventario.updateMany({
+          where: { tenantId, origenMermaId: id },
+          data: { estado: 'ANULADO' },
+        });
         await tx.merma.delete({ where: { mermaId: id } });
         await upsertStockUbicacion(tx, {
           tenantId,

@@ -9,6 +9,7 @@ const { prismaMock } = vi.hoisted(() => {
     producto: { findUnique: vi.fn(), findFirst: vi.fn() },
     vendor: { findFirst: vi.fn() },
     stockUbicacion: { findUnique: vi.fn() },
+    ajusteInventario: { create: vi.fn(), updateMany: vi.fn() },
   };
   prismaMock.$transaction = vi.fn((cb: any) => cb(prismaMock));
   return { prismaMock };
@@ -31,12 +32,25 @@ vi.mock('@/lib/services/stock-ubicacion-service', () => ({
   upsertStockUbicacion: vi.fn(async () => undefined),
 }));
 
+vi.mock('@/features/inventario/movimientos', async () => ({
+  ...(await vi.importActual('@/features/inventario/movimientos')),
+  registrarMovimiento: vi.fn(async () => undefined),
+  revertirMovimientosDeOrigen: vi.fn(async () => undefined),
+}));
+
+vi.mock('@/lib/notificaciones-utils', () => ({
+  notificarMerma: vi.fn(async () => undefined),
+}));
+
 import { GET as getTransfers } from '../transfers/route';
 import { GET as getTransferById, DELETE as deleteTransfer } from '../transfers/[id]/route';
 import { GET as getMermas, POST as createMerma } from '../mermas/route';
 import { GET as getMermaById, DELETE as deleteMerma } from '../mermas/[id]/route';
 import { GET as getPurchases, POST as createPurchase } from '../purchases/route';
 import { GET as getPurchaseById, DELETE as deletePurchase } from '../purchases/[id]/route';
+import { registrarMovimiento, revertirMovimientosDeOrigen } from '@/features/inventario/movimientos';
+import { notificarMerma } from '@/lib/notificaciones-utils';
+import { upsertStockUbicacion } from '@/lib/services/stock-ubicacion-service';
 
 const ctx = (id: string) => ({ params: Promise.resolve({ id }) });
 
@@ -158,6 +172,59 @@ describe('Mobile API: transfers, mermas & purchases', () => {
     expect(response.status).toBe(201);
   });
 
+  it('POST /api/mobile/mermas crea con trazabilidad completa (creadoPor, kardex, espejo) y notifica', async () => {
+    (prismaMock.producto.findUnique as Mock).mockResolvedValue({ id: 'p1', tenantId: 'tenant-1', precioCosto: 50, almacenId: 'a1' });
+    (prismaMock.stockUbicacion.findUnique as Mock).mockResolvedValue({ cantidadDisponible: 10 });
+    (prismaMock.merma.create as Mock).mockResolvedValue(mermaRow);
+
+    const request = new NextRequest('http://localhost/api/mobile/mermas', {
+      method: 'POST',
+      body: JSON.stringify({ productoId: 'p1', cantidad: 2, motivo: 'Producto dañado en recepción' }),
+    });
+    const response = await createMerma(request);
+    const data = await response.json();
+
+    expect(response.status).toBe(201);
+    const createCall = (prismaMock.merma.create as Mock).mock.calls[0][0];
+    expect(createCall.data).toMatchObject({
+      productoId: 'p1',
+      cantidad: 2,
+      costoTotal: 100,
+      tenantId: 'tenant-1',
+      almacenId: 'a1',
+      creadoPorId: 'user-test',
+    });
+    expect(registrarMovimiento).toHaveBeenCalledWith(
+      expect.anything(),
+      expect.objectContaining({
+        tenantId: 'tenant-1',
+        productoId: 'p1',
+        tipoOrigen: 'MERMA',
+        origenId: 'm1',
+        cantidad: -2,
+        costoUnitario: 50,
+        secuencia: 'SALIDA-0',
+        creadoPorId: 'user-test',
+      }),
+    );
+    expect(prismaMock.ajusteInventario.create).toHaveBeenCalledWith(
+      expect.objectContaining({
+        data: expect.objectContaining({
+          estado: 'APLICADO',
+          origenMermaId: 'm1',
+          diferencia: -2,
+          creadoPorId: 'user-test',
+        }),
+      }),
+    );
+    expect(upsertStockUbicacion).toHaveBeenCalledWith(
+      expect.anything(),
+      expect.objectContaining({ productoId: 'p1', delta: -2 }),
+    );
+    expect(notificarMerma).toHaveBeenCalledWith('m1');
+    expect(data.mermaId).toBe('m1');
+  });
+
   it('POST /api/mobile/mermas rechaza stock insuficiente con 409', async () => {
     (prismaMock.producto.findUnique as Mock).mockResolvedValue({ id: 'p1', tenantId: 'tenant-1', precioCosto: 50, almacenId: 'a1' });
     (prismaMock.stockUbicacion.findUnique as Mock).mockResolvedValue({ cantidadDisponible: 1 });
@@ -171,6 +238,37 @@ describe('Mobile API: transfers, mermas & purchases', () => {
 
     expect(response.status).toBe(409);
     expect(data.code).toBe('STOCK_INSUFICIENTE');
+  });
+
+  it('DELETE /api/mobile/mermas/[id] revierte kardex, anula el espejo y restaura stock', async () => {
+    (prismaMock.merma.findFirst as Mock).mockResolvedValue({
+      mermaId: 'm1',
+      productoId: 'p1',
+      cantidad: 2,
+      almacenId: 'a1',
+    });
+    (prismaMock.ajusteInventario.updateMany as Mock).mockResolvedValue({ count: 1 });
+
+    const response = await deleteMerma(new NextRequest('http://localhost/api/mobile/mermas/m1'), ctx('m1'));
+    const data = await response.json();
+
+    expect(response.status).toBe(200);
+    expect(data).toEqual({ success: true, mermaId: 'm1' });
+    expect(revertirMovimientosDeOrigen).toHaveBeenCalledWith(
+      expect.anything(),
+      expect.objectContaining({ tenantId: 'tenant-1', tipoOrigen: 'MERMA', origenId: 'm1' }),
+    );
+    expect(prismaMock.ajusteInventario.updateMany).toHaveBeenCalledWith(
+      expect.objectContaining({
+        where: { tenantId: 'tenant-1', origenMermaId: 'm1' },
+        data: { estado: 'ANULADO' },
+      }),
+    );
+    expect(prismaMock.merma.delete).toHaveBeenCalledWith({ where: { mermaId: 'm1' } });
+    expect(upsertStockUbicacion).toHaveBeenCalledWith(
+      expect.anything(),
+      expect.objectContaining({ productoId: 'p1', modo: 'increment', delta: 2 }),
+    );
   });
 
   it('POST /api/mobile/purchases crea con defaults y devuelve 201', async () => {
