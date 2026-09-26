@@ -29,8 +29,22 @@ const { prismaMock } = vi.hoisted(() => {
     findMany: vi.fn(),
     count: vi.fn(),
   }
+  const periodoContable = {
+    findFirst: vi.fn(),
+    findUnique: vi.fn(),
+    findMany: vi.fn(),
+    count: vi.fn(),
+    create: vi.fn(),
+    update: vi.fn(),
+  }
+  const periodoCache = {
+    findUnique: vi.fn(),
+    upsert: vi.fn().mockResolvedValue({}),
+    deleteMany: vi.fn().mockResolvedValue({ count: 0 }),
+    delete: vi.fn(),
+  }
   return {
-    prismaMock: { gastosDE, gastoConcepto, plan, affiliateReferral },
+    prismaMock: { gastosDE, gastoConcepto, plan, affiliateReferral, periodoContable, periodoCache },
   }
 })
 
@@ -231,6 +245,15 @@ describe('Mobile API: expenses (GastosDE)', () => {
   beforeEach(() => {
     vi.clearAllMocks()
     currentRole = 'admin'
+    // Período abierto amplio: la suite prueba CRUD de gastos, no períodos
+    // (el enforcement server se cubre en gastosDE/periodo-cerrado.test.ts).
+    ;(prismaMock.periodoContable.findFirst as Mock).mockResolvedValue({
+      periodoId: 'p-open',
+      tipo: 'MENSUAL',
+      estado: 'ABIERTO',
+      fechaInicio: new Date('2000-01-01T00:00:00Z'),
+      fechaFin: new Date('2099-12-31T23:59:59Z'),
+    })
   })
 
   it('GET /api/mobile/expenses lista gastos del tenant con concepto incluido', async () => {
