@@ -196,11 +196,6 @@ export const getTransferenciaByIdAction = withAction(
 
 export const createTransferenciaAction = withAction(
 	async (input: CreateTransferenciaInput, user: AuthenticatedUser) => {
-		console.log(
-			"=== createTransferenciaAction :: input ===",
-			JSON.parse(JSON.stringify(input)),
-		);
-
 		const parsed = createTransferenciaSchema.parse(input);
 		const tenantId = requireTenant(user);
 		const {
@@ -212,17 +207,7 @@ export const createTransferenciaAction = withAction(
 			descripcion,
 		} = parsed;
 
-		console.log("=== createTransferenciaAction :: parsed ===", {
-			tenantId,
-			tipoOrigen,
-			origenId,
-			tipoDestino,
-			destinoId,
-			productosCount: productos.length,
-		});
-
 		if (tipoOrigen === tipoDestino && origenId === destinoId) {
-			console.error("=== createTransferenciaAction :: origen === destino ===");
 			throw new ActionError(
 				"El origen y destino no pueden ser iguales",
 				"VALIDATION_ERROR",
@@ -232,11 +217,6 @@ export const createTransferenciaAction = withAction(
 		// Validar productos
 		const productosValidados: any[] = [];
 		for (const item of productos) {
-			console.log(
-				"=== createTransferenciaAction :: validando producto ===",
-				item,
-			);
-
 			const producto = await prisma.producto.findUnique({
 				where: { id: item.productoId },
 				select: {
@@ -248,14 +228,6 @@ export const createTransferenciaAction = withAction(
 				},
 			});
 			if (!producto || producto.tenantId !== tenantId) {
-				console.error(
-					"=== createTransferenciaAction :: producto no encontrado ===",
-					{
-						productoId: item.productoId,
-						encontrado: !!producto,
-						tenantMatch: producto?.tenantId === tenantId,
-					},
-				);
 				throw new ActionError(
 					`Producto con ID ${item.productoId} no encontrado`,
 					"NOT_FOUND",
@@ -267,11 +239,6 @@ export const createTransferenciaAction = withAction(
 					item.productoId,
 					origenId,
 				);
-				console.log("=== createTransferenciaAction :: stock punto_venta ===", {
-					producto: producto.nombre,
-					solicitado: item.cantidad,
-					disponible: stockDisponible,
-				});
 				if (stockDisponible < item.cantidad)
 					throw new ActionError(
 						`Stock insuficiente para ${producto.nombre} en el punto de venta`,
@@ -295,14 +262,6 @@ export const createTransferenciaAction = withAction(
 					);
 				}
 				if (stockAlmacen.cantidadDisponible < item.cantidad) {
-					console.error(
-						"=== createTransferenciaAction :: stock insuficiente ===",
-						{
-							producto: producto.nombre,
-							solicitado: item.cantidad,
-							disponible: stockAlmacen.cantidadDisponible,
-						},
-					);
 					throw new ActionError(
 						`Stock insuficiente para ${producto.nombre}. Disponible: ${stockAlmacen.cantidadDisponible}`,
 						"STOCK_INSUFICIENTE",
@@ -313,10 +272,6 @@ export const createTransferenciaAction = withAction(
 		}
 
 		// Validar origen/destino (siempre con aislamiento por tenant)
-		console.log("=== createTransferenciaAction :: validando origen ===", {
-			tipoOrigen,
-			origenId,
-		});
 		const origenValido =
 			tipoOrigen === "almacen"
 				? await prisma.almacen.findFirst({
@@ -326,17 +281,9 @@ export const createTransferenciaAction = withAction(
 						where: { pvId: origenId, tenantId },
 					});
 		if (!origenValido) {
-			console.error(
-				"=== createTransferenciaAction :: origen no encontrado ===",
-				{ tipoOrigen, origenId },
-			);
 			throw new ActionError("Origen no encontrado", "NOT_FOUND");
 		}
 
-		console.log("=== createTransferenciaAction :: validando destino ===", {
-			tipoDestino,
-			destinoId,
-		});
 		const destinoValido =
 			tipoDestino === "almacen"
 				? await prisma.almacen.findFirst({
@@ -346,18 +293,8 @@ export const createTransferenciaAction = withAction(
 						where: { pvId: destinoId, tenantId },
 					});
 		if (!destinoValido) {
-			console.error(
-				"=== createTransferenciaAction :: destino no encontrado ===",
-				{ tipoDestino, destinoId },
-			);
 			throw new ActionError("Destino no encontrado", "NOT_FOUND");
 		}
-
-		// Crear en transacción
-		console.log("=== createTransferenciaAction :: iniciando transacción ===", {
-			productosCount: productosValidados.length,
-			numeroTransferencia: "",
-		});
 
 		// Crear en transacción con reintento ante colisión de numeración (P2002)
 		// sobre el correlativo por tenant.
@@ -369,89 +306,75 @@ export const createTransferenciaAction = withAction(
 					const transferenciasCreadas = [];
 					const numeroTransferencia = await generarNumeroTransferencia(tx, tenantId);
 
-			console.log("=== createTransferenciaAction :: numero generado ===", {
-				numeroTransferencia,
-			});
+					for (const [
+						idx,
+						{ producto, cantidad },
+					] of productosValidados.entries()) {
+						const costoTotal = cantidad * producto.precioCosto;
+						const data: any = {
+							tenantId,
+							productoId: producto.id,
+							cantidad,
+							costoUnitario: producto.precioCosto,
+							costoTotal,
+							descripcion: descripcion || `Transferencia - ${producto.nombre}`,
+							estado: parsed.estado ?? "COMPLETADA",
+							creadoPorId: user.userId,
+							numeroTransferencia: `${numeroTransferencia}-${String(transferenciasCreadas.length + 1).padStart(3, "0")}`,
+						};
+						if (tipoOrigen === "almacen") data.origenId = origenId;
+						else data.puntoDeVentaOrigenId = origenId;
+						if (tipoDestino === "almacen") data.destinoId = destinoId;
+						else data.puntoDeVentaDestinoId = destinoId;
 
-			for (const [
-				idx,
-				{ producto, cantidad },
-			] of productosValidados.entries()) {
-				const costoTotal = cantidad * producto.precioCosto;
-				const data: any = {
-					tenantId,
-					productoId: producto.id,
-					cantidad,
-					costoUnitario: producto.precioCosto,
-					costoTotal,
-					descripcion: descripcion || `Transferencia - ${producto.nombre}`,
-					estado: parsed.estado ?? "COMPLETADA",
-					creadoPorId: user.userId,
-					numeroTransferencia: `${numeroTransferencia}-${String(transferenciasCreadas.length + 1).padStart(3, "0")}`,
-				};
-				if (tipoOrigen === "almacen") data.origenId = origenId;
-				else data.puntoDeVentaOrigenId = origenId;
-				if (tipoDestino === "almacen") data.destinoId = destinoId;
-				else data.puntoDeVentaDestinoId = destinoId;
+						const transferencia = await tx.transferencia.create({ data });
 
-				console.log(
-					`=== createTransferenciaAction :: create[${idx}] data ===`,
-					JSON.parse(JSON.stringify(data)),
-				);
+						const estadoFinal = parsed.estado ?? "COMPLETADA";
 
-				const transferencia = await tx.transferencia.create({ data });
+						if (estadoFinal === "COMPLETADA") {
+							await upsertStockUbicacion(tx, {
+								productoId: producto.id,
+								tipoUbicacion: tipoOrigen,
+								ubicacionId: origenId,
+								modo: "increment",
+								delta: -cantidad,
+							});
+							await upsertStockUbicacion(tx, {
+								productoId: producto.id,
+								tipoUbicacion: tipoDestino,
+								ubicacionId: destinoId,
+								modo: "increment",
+								delta: cantidad,
+							});
+							await registrarMovimiento(tx, {
+								tenantId,
+								productoId: producto.id,
+								tipoOrigen: "TRANSFERENCIA",
+								origenId: transferencia.transferenciaId,
+								tipoUbicacion: tipoOrigen,
+								ubicacionId: origenId,
+								cantidad: -cantidad,
+								costoUnitario: producto.precioCosto,
+								secuencia: `SALIDA-${idx}`,
+								creadoPorId: user.userId,
+							});
+							await registrarMovimiento(tx, {
+								tenantId,
+								productoId: producto.id,
+								tipoOrigen: "TRANSFERENCIA",
+								origenId: transferencia.transferenciaId,
+								tipoUbicacion: tipoDestino,
+								ubicacionId: destinoId,
+								cantidad,
+								costoUnitario: producto.precioCosto,
+								secuencia: `ENTRADA-${idx}`,
+								creadoPorId: user.userId,
+							});
+						}
 
-				const estadoFinal = parsed.estado ?? "COMPLETADA";
-				console.log(`=== createTransferenciaAction :: stockDelta[${idx}] ===`, {
-					stockDelta:
-						(tipoOrigen === "almacen" ? -cantidad : 0) +
-						(tipoDestino === "almacen" ? cantidad : 0),
-				});
-
-				if (estadoFinal === "COMPLETADA") {
-					await upsertStockUbicacion(tx, {
-						productoId: producto.id,
-						tipoUbicacion: tipoOrigen,
-						ubicacionId: origenId,
-						modo: "increment",
-						delta: -cantidad,
-					});
-					await upsertStockUbicacion(tx, {
-						productoId: producto.id,
-						tipoUbicacion: tipoDestino,
-						ubicacionId: destinoId,
-						modo: "increment",
-						delta: cantidad,
-					});
-					await registrarMovimiento(tx, {
-						tenantId,
-						productoId: producto.id,
-						tipoOrigen: "TRANSFERENCIA",
-						origenId: transferencia.transferenciaId,
-						tipoUbicacion: tipoOrigen,
-						ubicacionId: origenId,
-						cantidad: -cantidad,
-						costoUnitario: producto.precioCosto,
-						secuencia: `SALIDA-${idx}`,
-						creadoPorId: user.userId,
-					});
-					await registrarMovimiento(tx, {
-						tenantId,
-						productoId: producto.id,
-						tipoOrigen: "TRANSFERENCIA",
-						origenId: transferencia.transferenciaId,
-						tipoUbicacion: tipoDestino,
-						ubicacionId: destinoId,
-						cantidad,
-						costoUnitario: producto.precioCosto,
-						secuencia: `ENTRADA-${idx}`,
-						creadoPorId: user.userId,
-					});
-				}
-
-					transferenciasCreadas.push(transferencia);
-				}
-				return transferenciasCreadas;
+						transferenciasCreadas.push(transferencia);
+					}
+					return transferenciasCreadas;
 				});
 				break;
 			} catch (error: unknown) {
@@ -459,30 +382,18 @@ export const createTransferenciaAction = withAction(
 					(typeof (error as { code?: string })?.code === "string" &&
 						(error as { code?: string }).code === "P2002");
 				if (!esColision || intento === MAX_INTENTOS - 1) throw error;
-				console.warn(`createTransferenciaAction: colisión de numeración, reintento ${intento + 2}`);
+				console.warn("createTransferenciaAction: colisión de numeración de transferencia, reintentando");
 			}
 		}
 		if (!result) {
 			throw new ActionError("No fue posible generar la numeración de la transferencia", "INTERNAL");
 		}
 
-		console.log("=== createTransferenciaAction :: transacción OK ===", {
-			creadas: result.length,
-			ids: result.map((t: any) => t.transferenciaId),
-		});
-
 		for (const t of result) {
 			try {
-				console.log(
-					"=== createTransferenciaAction :: notificando ===",
-					t.transferenciaId,
-				);
 				await notificarTransferencia(t.transferenciaId);
 			} catch (e) {
-				console.error(
-					"=== createTransferenciaAction :: notificación falló ===",
-					e,
-				);
+				console.error("createTransferenciaAction: falló la notificación de la transferencia", e);
 			}
 		}
 

@@ -22,8 +22,8 @@
 
 ## 4. Fase B-4 — Higiene de logs
 
-- [ ] 4.1 Eliminar logs con datos de negocio de `createTransferenciaAction` (conservar warn de reintento y error genérico de notificación)
-- [ ] 4.2 Verificación: grep sin `=== ` en el feature y suite scoped verde
+- [x] 4.1 Eliminar logs con datos de negocio de `createTransferenciaAction` (conservar warn de reintento y error genérico de notificación)
+- [x] 4.2 Verificación: grep sin `=== ` en el feature y suite scoped verde
 
 ## 5. Fase B-5 — Checklists openspec
 
