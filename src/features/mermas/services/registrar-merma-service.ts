@@ -47,7 +47,9 @@ type MermaTx = Parameters<typeof registrarMovimiento>[0] & {
  * @param {RegistrarMermaCreateOptions} createOptions - include/select para el create.
  * @returns {Promise<M>} Fila de merma creada proyectada según createOptions.
  */
-export async function registrarMermaEnTransaccion<M = Record<string, unknown>>(
+export async function registrarMermaEnTransaccion<
+	M extends Record<string, unknown> = { mermaId: string } & Record<string, unknown>,
+>(
 	tx: MermaTx,
 	params: RegistrarMermaParams,
 	createOptions: RegistrarMermaCreateOptions = {},
