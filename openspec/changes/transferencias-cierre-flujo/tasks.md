@@ -17,8 +17,8 @@
 
 ## 3. Fase B-3 — Input muerto y estados de creación
 
-- [ ] 3.1 Tests rojos: `updateTransferenciaSchema` descarta `estado`; `createTransferenciaSchema` rechaza estados distintos de PENDIENTE/COMPLETADA
-- [ ] 3.2 Retirar `estado` del schema de update y restringir el de creación; tests verdes
+- [x] 3.1 Tests rojos: `updateTransferenciaSchema` descarta `estado`; `createTransferenciaSchema` rechaza estados distintos de PENDIENTE/COMPLETADA
+- [x] 3.2 Retirar `estado` del schema de update y restringir el de creación; tests verdes
 
 ## 4. Fase B-4 — Higiene de logs
 

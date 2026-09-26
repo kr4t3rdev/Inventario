@@ -18,8 +18,11 @@ export const createTransferenciaSchema = z.object({
   tipoDestino: z.enum(['almacen', 'punto_venta']),
   destinoId: z.string().min(1),
   descripcion: z.string().optional().nullable(),
-  /** Estado inicial. Por defecto COMPLETADA para mantener compatibilidad. */
-  estado: z.enum(TRANSFERENCIA_ESTADOS).optional().default('COMPLETADA'),
+  /**
+   * Estado inicial. Solo los dos estados coherentes al crear: COMPLETADA por
+   * defecto (compatibilidad); EN_TRANSITO/PARCIAL se alcanzan con el workflow.
+   */
+  estado: z.enum(['PENDIENTE', 'COMPLETADA']).optional().default('COMPLETADA'),
 });
 
 export const updateTransferenciaSchema = z.object({
@@ -30,8 +33,8 @@ export const updateTransferenciaSchema = z.object({
   origenId: z.string().min(1),
   tipoDestino: z.enum(['almacen', 'punto_venta']),
   destinoId: z.string().min(1),
-  /** Estado al que cambiar la transferencia. Permite transiciones manuales. */
-  estado: z.enum(TRANSFERENCIA_ESTADOS).optional(),
+  // Sin `estado`: el workflow (aprobar/despachar/completar/rechazar) es la
+  // única vía de cambio de estado; el input anterior era un campo muerto.
 });
 
 export const aprobarTransferenciaSchema = z.object({
