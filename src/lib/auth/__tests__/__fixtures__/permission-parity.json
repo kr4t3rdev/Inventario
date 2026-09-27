@@ -41,6 +41,7 @@
     "inventario.transferencias.gestionar",
     "inventario.unidades.gestionar",
     "operaciones.clientes.gestionar",
+    "operaciones.clientes.limite-credito",
     "operaciones.pos.gestionar",
     "operaciones.referidos.gestionar",
     "operaciones.servicios.acceder",

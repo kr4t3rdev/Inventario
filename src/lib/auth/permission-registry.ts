@@ -676,6 +676,14 @@ export const PERMISSION_REGISTRY: PermissionDef[] = [
 		defaultRoles: ['manager', 'economico', 'dependiente'],
 	},
 	{
+		key: 'operaciones.clientes.limite-credito',
+		label: 'Editar límite de crédito del cliente',
+		description: 'Actualizar el tope de crédito de un cliente (política financiera sensible).',
+		category: 'operaciones',
+		defaultRoles: ['manager'],
+		sensitive: true,
+	},
+	{
 		key: 'operaciones.referidos.gestionar',
 		label: 'Gestionar referidos',
 		description: 'Consultar y gestionar referidos del tenant.',

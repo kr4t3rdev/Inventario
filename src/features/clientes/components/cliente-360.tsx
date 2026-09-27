@@ -19,6 +19,7 @@ import {
 	getCliente360Action,
 	addNotaClienteAction,
 } from '@/features/clientes/actions-360';
+import { EditarLimiteCreditoDialog } from '@/features/clientes/components/editar-limite-credito-dialog';
 
 interface Nota {
 	id: string;
@@ -29,8 +30,9 @@ interface Nota {
 
 /**
  * @description Vista operativa del cliente: nombre, compras hechas, CxC viva,
- * anticipos y notas de contacto recientes. Pendiente en CRUD: edición del
- * límite de crédito queda fuera (vendedor no edita el tope).
+ * anticipos y notas de contacto recientes. Incluye la edición del límite de
+ * crédito (C-1); el gate de permiso lo aplica el servidor y la UI muestra el
+ * error si el usuario no lo tiene.
  * @param {{ clienteId: string }} props - ID del cliente.
  * @returns {JSX.Element | null} El panel 360 o nada mientras carga.
  */
@@ -40,6 +42,7 @@ export function Cliente360({ clienteId }: { clienteId: string }) {
 	const [notaNueva, setNotaNueva] = useState('');
 	const [causa, setCausa] = useState('cobro');
 	const [isSaving, setIsSaving] = useState(false);
+	const [limiteDialogOpen, setLimiteDialogOpen] = useState(false);
 
 	useEffect(() => {
 		setIsLoading(true);
@@ -114,14 +117,27 @@ export function Cliente360({ clienteId }: { clienteId: string }) {
 						Saldo anticipado disponible:{' '}
 						<strong>{formatCurrency(saldoAnticipado)}</strong>
 					</p>
-					{limite != null && (
+					{limite != null ? (
 						<p className="rounded-md border px-2 py-1 text-sm">
 							Límite de crédito: <strong>{formatCurrency(limite)}</strong>
 							{saldoCxc > limite && (
 								<span className="ml-2 text-destructive">excedido</span>
 							)}
 						</p>
+					) : (
+						<p className="rounded-md border px-2 py-1 text-sm">
+							Límite de crédito: <strong>Sin tope</strong>
+						</p>
 					)}
+					<Button
+						type="button"
+						variant="outline"
+						size="sm"
+						className="w-fit"
+						onClick={() => setLimiteDialogOpen(true)}
+					>
+						Editar límite
+					</Button>
 					<div className="pt-2">
 						<p className="mb-1 text-xs font-medium text-muted-foreground">
 							Últimas notas ({cliente.notasContacto?.length ?? 0}):
@@ -164,6 +180,15 @@ export function Cliente360({ clienteId }: { clienteId: string }) {
 					</div>
 				</div>
 			</CardContent>
+			<EditarLimiteCreditoDialog
+				open={limiteDialogOpen}
+				onOpenChange={setLimiteDialogOpen}
+				clienteId={clienteId}
+				limiteActual={limite}
+				onActualizado={(nuevoLimite) =>
+					setData((prev: any) => (prev ? { ...prev, limiteCredito: nuevoLimite } : prev))
+				}
+			/>
 		</Card>
 	);
 }

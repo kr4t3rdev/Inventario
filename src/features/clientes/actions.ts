@@ -8,10 +8,11 @@
 import { revalidatePath } from 'next/cache';
 import { withAction, ActionError } from '@/lib/server-actions';
 import { prisma } from '@/lib/prisma';
-import { requireFeature, requireTenant } from '@/lib/services/tenant-scope';
+import { requireFeature, requirePermission, requireTenant } from '@/lib/services/tenant-scope';
+import { AuditLogService } from '@/lib/services/audit-log-service';
 import { replaceOwnerAsset } from '@/lib/upload/cloudinary-admin';
-import { clienteSchema, clienteUpdateSchema } from './schemas';
-import type { ClienteInput, ClienteUpdateInput } from './schemas';
+import { clienteSchema, clienteUpdateSchema, limiteCreditoSchema } from './schemas';
+import type { ClienteInput, ClienteUpdateInput, LimiteCreditoInput } from './schemas';
 import type { AuthenticatedUser } from '@/lib/auth-middleware';
 
 const CLIENTE_SELECT = {
@@ -130,4 +131,52 @@ export const deleteClienteAction = withAction(async (clienteId: string, user: Au
   await prisma.cliente.delete({ where: { clienteId } });
   revalidatePath('/busy/cliente');
   return { id: clienteId, eliminado: true };
+});
+
+/**
+ * @description Actualiza el límite de crédito de un cliente (C-1). Política
+ * financiera sensible: requiere el permiso `operaciones.clientes.limite-credito`
+ * y audita valorAnterior → valorNuevo dentro de la misma transacción.
+ * @param {LimiteCreditoInput} input - ID del cliente y nuevo límite (null = sin tope).
+ * @param {AuthenticatedUser} user - Usuario autenticado.
+ * @returns {Promise<object>} Cliente actualizado con su límite.
+ * @throws {ActionError} AUTH_REQUIRED, VALIDATION_ERROR, FORBIDDEN o NOT_FOUND.
+ */
+export const updateLimiteCreditoClienteAction = withAction(async (input: LimiteCreditoInput, user: AuthenticatedUser) => {
+  requireFeature(user, 'clientes', 'gestionar clientes');
+  const parsed = limiteCreditoSchema.parse(input);
+  const tenantId = requireTenant(user);
+  requirePermission(user, 'operaciones.clientes.limite-credito', 'editar el límite de crédito del cliente');
+
+  const cliente = await prisma.cliente.findFirst({
+    where: { clienteId: parsed.clienteId, tenantId },
+    select: { clienteId: true, limiteCredito: true },
+  });
+  if (!cliente) throw new ActionError('Cliente no encontrado', 'NOT_FOUND');
+
+  const actualizado = await prisma.$transaction(async (tx) => {
+    const row = await tx.cliente.update({
+      where: { clienteId: parsed.clienteId },
+      data: { limiteCredito: parsed.limiteCredito },
+      select: { clienteId: true, limiteCredito: true },
+    });
+    await AuditLogService.logStrict(
+      {
+        accion: 'UPDATE',
+        entidad: 'CLIENTE',
+        entidadId: parsed.clienteId,
+        usuarioId: user.userId,
+        detalles: {
+          tipo: 'LIMITE_CREDITO_ACTUALIZADO',
+          valorAnterior: cliente.limiteCredito,
+          valorNuevo: parsed.limiteCredito,
+        },
+      },
+      tx,
+    );
+    return row;
+  });
+
+  revalidatePath('/busy/cliente');
+  return actualizado;
 });
