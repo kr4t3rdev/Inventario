@@ -26,6 +26,7 @@ import { getPrecioEfectivo } from '@/lib/types/pricing';
 import { crearOfertaConNumero } from './lib/numero-oferta-generator';
 import { expirarOfertasVencidas } from './services/expiracion-ofertas-service';
 import { transicionPermitida } from './lib/transiciones-estado';
+import { calcularTotalesOferta } from './lib/totales-oferta';
 
 function serializeOferta(oferta: unknown): Oferta {
   return JSON.parse(JSON.stringify(oferta)) as Oferta;
@@ -68,17 +69,21 @@ export const createOfertaAction = withAction(async (input: OfertaInput, user: Au
       });
       if (!producto) throw new ActionError('Producto no encontrado', 'NOT_FOUND');
       const precioUnitario = getPrecioEfectivo(producto, cliente.listaPrecioId);
-      return { ...item, precioUnitario, total: item.cantidad * precioUnitario };
+      return { productoId: item.productoId as string, servicioId: null as string | null, cantidad: item.cantidad, precioUnitario };
     }
 
     const servicio = await prisma.servicios.findFirst({
       where: { servicioId: item.servicioId, tenantId },
     });
     if (!servicio) throw new ActionError('Servicio no encontrado', 'NOT_FOUND');
-    return { ...item, precioUnitario: servicio.precio, total: item.cantidad * servicio.precio };
+    return { productoId: null as string | null, servicioId: item.servicioId ?? null, cantidad: item.cantidad, precioUnitario: Number(servicio.precio) };
   }));
-  const subtotal = resolvedItems.reduce((sum, item) => sum + item.total, 0);
-  const impuestos = parsed.impuestos ?? 0;
+
+  const totales = calcularTotalesOferta(
+    resolvedItems.map((item) => ({ cantidad: item.cantidad, precioUnitario: item.precioUnitario })),
+    parsed.impuestos ?? 0,
+  );
+  if (!totales.ok) throw new ActionError(totales.message, totales.code);
 
   const oferta = await crearOfertaConNumero({
     tenantId,
@@ -88,17 +93,17 @@ export const createOfertaAction = withAction(async (input: OfertaInput, user: Au
       clienteId: parsed.clienteId,
       fechaVencimiento: parsed.fechaVencimiento ? new Date(parsed.fechaVencimiento) : null,
       estado: 'PENDIENTE' as const,
-      subtotal,
-      impuestos,
-      total: subtotal + impuestos,
+      subtotal: totales.subtotal,
+      impuestos: totales.impuestos,
+      total: totales.total,
       observaciones: parsed.observaciones || null,
       items: {
-        create: resolvedItems.map((item) => ({
-          productoId: item.productoId || null,
-          servicioId: item.servicioId || null,
-          cantidad: item.cantidad,
-          precioUnitario: item.precioUnitario,
-          total: item.total,
+        create: totales.lineas.map((linea, idx) => ({
+          productoId: resolvedItems[idx].productoId,
+          servicioId: resolvedItems[idx].servicioId,
+          cantidad: linea.cantidad,
+          precioUnitario: linea.precioUnitario,
+          total: linea.total,
         })),
       },
     }),

@@ -145,6 +145,51 @@ describe('Ofertas Server Actions', () => {
       expect(result.success).toBe(true);
       expect(prisma.oferta.create).toHaveBeenCalledTimes(2);
     });
+
+    it('E-3 rechaza impuestos que superan el subtotal resuelto (TAX_INVALID)', async () => {
+      vi.mocked(getCurrentUser).mockResolvedValue(mockUser);
+      vi.mocked(prisma.cliente.findFirst).mockResolvedValue({ clienteId: 'cli-1', nombre: 'Test' });
+      vi.mocked(prisma.producto.findFirst).mockResolvedValue({
+        id: 'prod-1', tenantId: 'tenant-test', precioVenta: 100, precios: [],
+      } as any);
+      vi.mocked(prisma.oferta.findFirst).mockResolvedValue(null);
+
+      const result = await createOfertaAction({
+        clienteId: 'cli-1', subtotal: 200, impuestos: 500, total: 700,
+        items: [{ productoId: 'prod-1', cantidad: 2, precioUnitario: 100, total: 200 }],
+      });
+
+      expect(result.success).toBe(false);
+      expect(result.error!.code).toBe('TAX_INVALID');
+      expect(prisma.oferta.create).not.toHaveBeenCalled();
+    });
+
+    it('E-3 ignora subtotal/total del payload y persiste montos recalculados', async () => {
+      vi.mocked(getCurrentUser).mockResolvedValue(mockUser);
+      vi.mocked(prisma.cliente.findFirst).mockResolvedValue({ clienteId: 'cli-1', nombre: 'Test' });
+      vi.mocked(prisma.producto.findFirst).mockResolvedValue({
+        id: 'prod-1', tenantId: 'tenant-test', precioVenta: 100, precios: [],
+      } as any);
+      vi.mocked(prisma.oferta.findFirst).mockResolvedValue(null);
+      vi.mocked(prisma.oferta.create).mockResolvedValue({ id: 'of-1' } as any);
+
+      const result = await createOfertaAction({
+        clienteId: 'cli-1', subtotal: 1, impuestos: 40, total: 99999,
+        items: [{ productoId: 'prod-1', cantidad: 2, precioUnitario: 9999, total: 9999 }],
+      });
+
+      expect(result.success).toBe(true);
+      expect(prisma.oferta.create).toHaveBeenCalledWith(
+        expect.objectContaining({
+          data: expect.objectContaining({
+            subtotal: 200,
+            impuestos: 40,
+            total: 240,
+            items: { create: [expect.objectContaining({ precioUnitario: 100, total: 200 })] },
+          }),
+        }),
+      );
+    });
   });
 
   describe('updateOfertaAction', () => {
