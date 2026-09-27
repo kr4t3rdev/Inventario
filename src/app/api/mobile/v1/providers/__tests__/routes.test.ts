@@ -175,4 +175,34 @@ describe('mobile providers routes', () => {
     expect(response.status).toBe(401);
     expect(prisma.vendor.findMany).not.toHaveBeenCalled();
   });
+
+  describe('CTF-7: campo legacy contrato no escribible', () => {
+    it('ignora contrato en la creación del proveedor', async () => {
+      vi.mocked(prisma.vendor.create).mockResolvedValue(vendor as never);
+
+      const response = await createPOST(buildRequest('/providers/create', {
+        nombre: 'Proveedor Uno',
+        contrato: 'C-123',
+      }));
+
+      expect(response.status).toBe(200);
+      const call = vi.mocked(prisma.vendor.create).mock.calls[0][0] as { data: Record<string, unknown> };
+      expect('contrato' in call.data).toBe(false);
+    });
+
+    it('ignora contrato en la actualización del proveedor', async () => {
+      vi.mocked(prisma.vendor.findFirst).mockResolvedValue(vendor as never);
+      vi.mocked(prisma.vendor.update).mockResolvedValue(vendor as never);
+
+      const response = await updateById(buildRequest('/providers/vendor-1', {
+        nombre: 'Nuevo',
+        contrato: 'C-123',
+      }), context('vendor-1'));
+
+      expect(response.status).toBe(200);
+      const call = vi.mocked(prisma.vendor.update).mock.calls[0][0] as { data: Record<string, unknown> };
+      expect('contrato' in call.data).toBe(false);
+      expect(call.data.nombre).toBe('Nuevo');
+    });
+  });
 });

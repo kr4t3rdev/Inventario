@@ -102,7 +102,6 @@ export async function PUT(request: Request, context: RouteContext) {
     if (parsed.cuentaCUP !== undefined) updateData.cuentaCUP = parsed.cuentaCUP;
     if (parsed.cuentaUSD !== undefined) updateData.cuentaUSD = parsed.cuentaUSD;
     if (parsed.logo !== undefined) updateData.logo = parsed.logo;
-    if (parsed.contrato !== undefined) updateData.contrato = parsed.contrato;
 
     const vendor = await prisma.vendor.update({
       where: { vendorId: id },

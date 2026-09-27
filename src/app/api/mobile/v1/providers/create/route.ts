@@ -50,7 +50,6 @@ export async function POST(request: Request) {
         cuentaCUP: parsed.cuentaCUP ?? null,
         cuentaUSD: parsed.cuentaUSD ?? null,
         logo: parsed.logo ?? null,
-        contrato: parsed.contrato ?? null,
         tenantId,
       },
       select: VENDOR_SELECT,
