@@ -2462,7 +2462,8 @@ model CuentaPorCobrar {
   factura          Factura?              @relation(fields: [facturaId], references: [idFactura])
   tenant           Tenant                @relation(fields: [tenantId], references: [tenantId])
   prestamoCash     PrestamoCash?
-  ventaServicio    VentaServicios?       @relation(fields: [ventaServicioId], references: [ventaServicioId])
+  // C-5: Restrict — ninguna vía de borrado deja CxC de servicio huérfana.
+  ventaServicio    VentaServicios?       @relation(fields: [ventaServicioId], references: [ventaServicioId], onDelete: Restrict)
 
   @@index([tenantId])
 }

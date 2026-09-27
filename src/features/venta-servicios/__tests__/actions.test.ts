@@ -13,8 +13,8 @@ vi.mock("@/features/contabilidad/services/exchange-rate-provider", () => ({
 }));
 
 const mockTx = {
-	ventaServicios: { create: vi.fn(), update: vi.fn() },
-	cuentaPorCobrar: { create: vi.fn(), findFirst: vi.fn(), updateMany: vi.fn() },
+	ventaServicios: { create: vi.fn(), update: vi.fn(), delete: vi.fn() },
+	cuentaPorCobrar: { create: vi.fn(), findFirst: vi.fn(), updateMany: vi.fn(), deleteMany: vi.fn() },
 	tipoPago: { findFirst: vi.fn() },
 	cuentaBancaria: { findFirst: vi.fn() },
 	anticipo: { findUnique: vi.fn() },
@@ -657,7 +657,8 @@ describe("VentaServicios Server Actions", () => {
 				mockVentaRow,
 			);
 			vi.mocked(prisma.reconciliacionServicio.count).mockResolvedValue(0);
-			vi.mocked(prisma.ventaServicios.delete).mockResolvedValue(mockVentaRow);
+			vi.mocked(prisma.cuentaPorCobrar.findFirst).mockResolvedValue(null);
+			mockTx.ventaServicios.delete.mockResolvedValue(mockVentaRow);
 			const result = await deleteVentaServicioAction("vs-1");
 			expect(result.success).toBe(true);
 		});
@@ -776,5 +777,58 @@ describe("costo server-side de servicios (C-3)", () => {
 		expect(result.success).toBe(false);
 		expect(result.error?.code).toBe("VALIDATION_ERROR");
 		expect(prisma.ventaServicios.update).not.toHaveBeenCalled();
+	});
+});
+
+describe("delete con protección de CxC (C-5)", () => {
+	beforeEach(() => {
+		vi.clearAllMocks();
+		vi.stubEnv("PERIODO_GUARD_ENABLED", "false");
+		vi.mocked(getCurrentUser).mockResolvedValue(mockUser);
+		vi.mocked(prisma.ventaServicios.findFirst).mockResolvedValue(mockVentaRow as never);
+		vi.mocked(prisma.reconciliacionServicio.count).mockResolvedValue(0 as never);
+		mockTx.ventaServicios.delete.mockResolvedValue(mockVentaRow as never);
+		mockTx.cuentaPorCobrar.deleteMany.mockResolvedValue({ count: 0 } as never);
+	});
+
+	it("con CxC activa rechaza el borrado (VENTA_CON_CXC_ACTIVA) y la venta sobrevive", async () => {
+		vi.mocked(prisma.cuentaPorCobrar.findFirst).mockResolvedValue({
+			cuentaPorCobrarId: "cxc-1",
+		} as never);
+
+		const result = await deleteVentaServicioAction("vs-1");
+
+		expect(result.success).toBe(false);
+		expect(result.error?.code).toBe("VENTA_CON_CXC_ACTIVA");
+		expect(prisma.$transaction).not.toHaveBeenCalled();
+		expect(mockTx.ventaServicios.delete).not.toHaveBeenCalled();
+	});
+
+	it("con solo CxC ANULADA borra la CxC anulada y la venta en la misma transacción", async () => {
+		vi.mocked(prisma.cuentaPorCobrar.findFirst).mockResolvedValue(null as never);
+		mockTx.cuentaPorCobrar.deleteMany.mockResolvedValue({ count: 1 } as never);
+
+		const result = await deleteVentaServicioAction("vs-1");
+
+		expect(result.success).toBe(true);
+		expect(prisma.$transaction).toHaveBeenCalledTimes(1);
+		expect(mockTx.cuentaPorCobrar.deleteMany).toHaveBeenCalledWith({
+			where: { ventaServicioId: "vs-1", estado: "ANULADA" },
+		});
+		expect(mockTx.ventaServicios.delete).toHaveBeenCalledWith({
+			where: { ventaServicioId: "vs-1" },
+		});
+	});
+
+	it("sin CxC elimina solo la venta (regresión)", async () => {
+		vi.mocked(prisma.cuentaPorCobrar.findFirst).mockResolvedValue(null as never);
+
+		const result = await deleteVentaServicioAction("vs-1");
+
+		expect(result.success).toBe(true);
+		expect(mockTx.cuentaPorCobrar.deleteMany).toHaveBeenCalledWith({
+			where: { ventaServicioId: "vs-1", estado: "ANULADA" },
+		});
+		expect(mockTx.ventaServicios.delete).toHaveBeenCalled();
 	});
 });

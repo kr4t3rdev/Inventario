@@ -583,7 +583,27 @@ export const deleteVentaServicioAction = withAction(async (id: string, user: Aut
     );
   }
 
-  await prisma.ventaServicios.delete({ where: { ventaServicioId: id } });
+  // C-5: una CxC activa protege la venta del borrado — anularla es un acto
+  // explícito y auditable, no un efecto colateral del delete.
+  const cxcActiva = await prisma.cuentaPorCobrar.findFirst({
+    where: { ventaServicioId: id, estado: { not: 'ANULADA' } },
+    select: { cuentaPorCobrarId: true },
+  });
+  if (cxcActiva) {
+    throw new ActionError(
+      'No se puede eliminar la venta: tiene una cuenta por cobrar activa; anula primero la cuenta por cobrar',
+      'VENTA_CON_CXC_ACTIVA',
+    );
+  }
+
+  // C-5: con la FK en Restrict, las CxC ANULADA que aún referencien la venta
+  // se eliminan junto a ella en la misma transacción.
+  await prisma.$transaction(async (tx) => {
+    await tx.cuentaPorCobrar.deleteMany({
+      where: { ventaServicioId: id, estado: 'ANULADA' },
+    });
+    await tx.ventaServicios.delete({ where: { ventaServicioId: id } });
+  });
   revalidatePath('/busy/servicios');
   return { id, eliminado: true };
 });
