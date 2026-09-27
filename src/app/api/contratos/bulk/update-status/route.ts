@@ -1,6 +1,4 @@
-import { NextRequest } from 'next/server'
 import { bulkUpdateContratoStatusHandler } from '@/features/contratos/api/handlers'
+import { withAuth } from '@/lib/auth-middleware'
 
-export async function POST(request: NextRequest) {
-  return bulkUpdateContratoStatusHandler(request)
-}
+export const POST = withAuth((request) => bulkUpdateContratoStatusHandler(request))

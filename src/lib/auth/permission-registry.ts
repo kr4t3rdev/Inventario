@@ -576,6 +576,13 @@ export const PERMISSION_REGISTRY: PermissionDef[] = [
 		sensitive: true,
 	},
 	{
+		key: 'config.contratos.configurar',
+		label: 'Configurar contratos',
+		description: 'Definir la configuración de contratos del tenant (avisos de vencimiento).',
+		category: 'config',
+		defaultRoles: ['manager'],
+	},
+	{
 		key: 'config.empresa.logo',
 		label: 'Actualizar logo de la empresa',
 		description: 'Subir y reemplazar el logo de la empresa.',

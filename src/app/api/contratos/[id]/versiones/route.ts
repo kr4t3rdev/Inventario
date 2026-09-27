@@ -1,6 +1,4 @@
-import { NextRequest } from 'next/server'
 import { createContratoVersionHandler } from '@/features/contratos/api/handlers'
+import { withAuth } from '@/lib/auth-middleware'
 
-export async function POST(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
-  return createContratoVersionHandler(req, { params })
-}
+export const POST = withAuth((request, context) => createContratoVersionHandler(request, context))

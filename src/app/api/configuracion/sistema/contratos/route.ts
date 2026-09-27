@@ -1,13 +1,13 @@
 import { NextRequest, NextResponse } from 'next/server';
 import prisma from '@/lib/prisma';
 import { z } from 'zod';
-import { authenticateUser } from '@/lib/auth-middleware';
+import { authenticateUser, withAuth } from '@/lib/auth-middleware';
 
 const configSchema = z.object({
   diasAvisoVencimientoContrato: z.number().min(1).max(365),
 });
 
-export async function GET(request: NextRequest) {
+export const GET = withAuth(async (request: NextRequest) => {
   try {
     const authResultUser = await authenticateUser(request)
     if ('status' in authResultUser) return authResultUser as Response
@@ -26,9 +26,9 @@ export async function GET(request: NextRequest) {
     console.error('Error al obtener configuración:', error);
     return NextResponse.json({ error: 'Error al obtener configuración' }, { status: 500 });
   }
-}
+});
 
-export async function PUT(request: NextRequest) {
+export const PUT = withAuth(async (request: NextRequest) => {
   try {
     const authResultUser = await authenticateUser(request)
     if ('status' in authResultUser) return authResultUser as Response
@@ -62,4 +62,4 @@ export async function PUT(request: NextRequest) {
     }
     return NextResponse.json({ error: 'Error al actualizar configuración' }, { status: 500 });
   }
-}
+});

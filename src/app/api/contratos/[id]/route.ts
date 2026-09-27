@@ -1,14 +1,8 @@
-import { NextRequest } from 'next/server'
 import { getContratoByIdHandler, updateContratoHandler, deleteContratoHandler } from '@/features/contratos/api/handlers'
+import { withAuth } from '@/lib/auth-middleware'
 
-export async function GET(request: NextRequest, context: { params: Promise<{ id: string }> }) {
-  return getContratoByIdHandler(request, context)
-}
+export const GET = withAuth((request, context) => getContratoByIdHandler(request, context))
 
-export async function PUT(request: NextRequest, context: { params: Promise<{ id: string }> }) {
-  return updateContratoHandler(request, context)
-}
+export const PUT = withAuth((request, context) => updateContratoHandler(request, context))
 
-export async function DELETE(request: NextRequest, context: { params: Promise<{ id: string }> }) {
-  return deleteContratoHandler(request, context)
-}
+export const DELETE = withAuth((request, context) => deleteContratoHandler(request, context))
