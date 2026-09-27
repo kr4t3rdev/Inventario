@@ -6,8 +6,8 @@
 import { getContratosAction } from '@/features/contratos'
 import { ContratosContent } from '@/features/contratos'
 import { unwrapActionResponseWithDefault } from '@/lib/server-actions/helpers'
+import { getCurrentUser } from '@/lib/server-actions/get-current-user'
 import prisma from '@/lib/prisma'
-import { authenticateUser } from '@/lib/auth-middleware'
 
 
 export const metadata = {
@@ -48,10 +48,15 @@ export default async function ContratosPage(props: PageProps) {
   // Desempaquetar response
   const initialData = unwrapActionResponseWithDefault(result, { data: [], meta: { page: 1, limit: 10, total: 0, totalPages: 0 } })
 
-  // Obtener configuración del sistema
-  let configuracion = null
+  // Obtener la configuración de contratos del tenant (CTF-5; fallback null → 30 en UI)
+  let configuracion: { diasAvisoVencimiento: number } | null = null
   try {
-    configuracion = await prisma.configuracionSistema.findFirst()
+    const user = await getCurrentUser()
+    if (user?.tenantId) {
+      configuracion = await prisma.configuracionContratos.findUnique({
+        where: { tenantId: user.tenantId },
+      })
+    }
   } catch (error) {
     console.error('Error fetching config:', error)
   }

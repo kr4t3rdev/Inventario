@@ -24,6 +24,7 @@ import { Input } from "@/components/ui/input"
 import { Badge } from "@/components/ui/badge"
 import { LazyMotion, m as motion, AnimatePresence } from "framer-motion"
 import { getAuthToken } from '@/lib/token'
+import { resolverDiasAviso } from '@/features/contratos/lib/dias-aviso'
 
 interface Contrato {
   contratoId: string
@@ -47,8 +48,7 @@ interface Contrato {
 }
 
 interface ConfiguracionSistema {
-  configId: string
-  diasAvisoVencimientoContrato: number
+  diasAvisoVencimiento: number
 }
 
 interface ContratosContentProps {
@@ -295,7 +295,7 @@ export function ContratosContent({ initialData = [], initialMeta, configuracion 
 
   const getVencimientoBadge = (contrato: Contrato) => {
     const diasRestantes = getDiasRestantes(contrato.fechaFin)
-    const diasAviso = configState?.diasAvisoVencimientoContrato || contrato.diasAvisoVencimiento || 30
+    const diasAviso = resolverDiasAviso(contrato, configState)
 
     if (!contrato.fechaFin || diasRestantes === null) {
       return <span className="text-muted-foreground text-xs">Sin fecha</span>

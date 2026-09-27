@@ -9,13 +9,7 @@ import { toast } from "sonner"
 import { getAuthToken } from "@/lib/token"
 import { Settings, Bell } from "lucide-react"
 
-interface ConfiguracionSistema {
-  configId: string
-  diasAvisoVencimientoContrato: number
-}
-
 export function ConfiguracionContratos() {
-  const [config, setConfig] = useState<ConfiguracionSistema | null>(null)
   const [isLoading, setIsLoading] = useState(true)
   const [isSaving, setIsSaving] = useState(false)
   const [diasAviso, setDiasAviso] = useState(30)
@@ -33,8 +27,7 @@ export function ConfiguracionContratos() {
       })
       if (response.ok) {
         const data = await response.json()
-        setConfig(data)
-        setDiasAviso(data.diasAvisoVencimientoContrato)
+        setDiasAviso(data.diasAvisoVencimiento)
       }
     } catch (error) {
       console.error('Error al cargar configuración:', error)
@@ -54,7 +47,7 @@ export function ConfiguracionContratos() {
           'Authorization': getAuthToken(),
         },
         body: JSON.stringify({
-          diasAvisoVencimientoContrato: diasAviso,
+          diasAvisoVencimiento: diasAviso,
         }),
       })
 

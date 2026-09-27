@@ -3,8 +3,11 @@ import prisma from '@/lib/prisma';
 import { z } from 'zod';
 import { authenticateUser, withAuth } from '@/lib/auth-middleware';
 
+// CTF-5: la configuración de contratos vive por tenant (ConfiguracionContratos).
+// El campo global ConfiguracionSistema.diasAvisoVencimientoContrato quedó
+// deprecado y ya no se lee ni se escribe.
 const configSchema = z.object({
-  diasAvisoVencimientoContrato: z.number().min(1).max(365),
+  diasAvisoVencimiento: z.number().int().min(1).max(365),
 });
 
 export const GET = withAuth(async (request: NextRequest) => {
@@ -13,17 +16,24 @@ export const GET = withAuth(async (request: NextRequest) => {
     if ('status' in authResultUser) return authResultUser as Response
     const user = authResultUser.user
 
-    let config = await prisma.configuracionSistema.findFirst();
+    if (!user.tenantId) {
+      return NextResponse.json({ error: 'Se requiere una membresía de empresa activa' }, { status: 403 });
+    }
+
+    let config = await prisma.configuracionContratos.findUnique({
+      where: { tenantId: user.tenantId },
+    });
 
     if (!config) {
-      config = await prisma.configuracionSistema.create({
-        data: {},
+      // Upsert perezoso: la primera consulta crea la fila default del tenant.
+      config = await prisma.configuracionContratos.create({
+        data: { tenantId: user.tenantId },
       });
     }
 
-    return NextResponse.json(config);
+    return NextResponse.json({ diasAvisoVencimiento: config.diasAvisoVencimiento });
   } catch (error) {
-    console.error('Error al obtener configuración:', error);
+    console.error('Error al obtener configuración de contratos:', error);
     return NextResponse.json({ error: 'Error al obtener configuración' }, { status: 500 });
   }
 });
@@ -34,29 +44,22 @@ export const PUT = withAuth(async (request: NextRequest) => {
     if ('status' in authResultUser) return authResultUser as Response
     const user = authResultUser.user
 
+    if (!user.tenantId) {
+      return NextResponse.json({ error: 'Se requiere una membresía de empresa activa' }, { status: 403 });
+    }
+
     const body = await request.json();
     const data = configSchema.parse(body);
 
-    let config = await prisma.configuracionSistema.findFirst();
+    const config = await prisma.configuracionContratos.upsert({
+      where: { tenantId: user.tenantId },
+      update: { diasAvisoVencimiento: data.diasAvisoVencimiento },
+      create: { tenantId: user.tenantId, diasAvisoVencimiento: data.diasAvisoVencimiento },
+    });
 
-    if (config) {
-      config = await prisma.configuracionSistema.update({
-        where: { configId: config.configId },
-        data: {
-          diasAvisoVencimientoContrato: data.diasAvisoVencimientoContrato,
-        },
-      });
-    } else {
-      config = await prisma.configuracionSistema.create({
-        data: {
-          diasAvisoVencimientoContrato: data.diasAvisoVencimientoContrato,
-        },
-      });
-    }
-
-    return NextResponse.json(config);
+    return NextResponse.json({ diasAvisoVencimiento: config.diasAvisoVencimiento });
   } catch (error) {
-    console.error('Error al actualizar configuración:', error);
+    console.error('Error al actualizar configuración de contratos:', error);
     if (error instanceof z.ZodError) {
       return NextResponse.json({ error: 'Validation error', details: error.errors }, { status: 400 });
     }
