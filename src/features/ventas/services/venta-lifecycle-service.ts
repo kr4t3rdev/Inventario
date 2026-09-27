@@ -7,6 +7,7 @@ import { upsertStockUbicacion } from '@/lib/services/stock-ubicacion-service';
 import { registrarMovimiento, revertirMovimientosDeOrigen } from '@/features/inventario/movimientos';
 import { allocateFifoForSale } from '@/lib/services/fifo-allocation';
 import { applyFacturacionCobroWorkflow } from '@/features/ventas/services/facturacion-workflow';
+import { exigirLimiteCredito } from '@/features/crm/services/credito-enforcement';
 import { AuditLogService } from '@/lib/services/audit-log-service';
 import { anularVentaSchema, facturarVentaSchema } from '@/features/ventas/schemas';
 import type { AuthenticatedUser } from '@/lib/auth-middleware';
@@ -337,6 +338,40 @@ export const VentaLifecycleService = {
           'Solo se puede facturar una venta en estado ENTREGADA.',
           'ESTADO_INVALIDO',
         );
+      }
+
+      // C-2: el pedido no creó deuda, así que el crédito elegido al facturar se
+      // revalida contra el tope del cliente aquí, antes de emitir la factura;
+      // el override (permiso ventas.venta.credito-override) queda auditado en
+      // esta misma transacción.
+      const montoCreditoSolicitado =
+        parsed.montoCredito ?? (parsed.metodoPago === 'CREDITO' ? (venta.total ?? 0) : 0);
+      if (montoCreditoSolicitado > 0) {
+        const res = await exigirLimiteCredito({
+          client: tx,
+          tenantId,
+          clienteId,
+          montoRequerido: montoCreditoSolicitado,
+          user,
+        });
+        if (res.overrideUsado) {
+          await AuditLogService.logStrict(
+            {
+              accion: 'EXECUTE',
+              entidad: 'VENTA',
+              entidadId: ventaId,
+              usuarioId: user.userId,
+              detalles: {
+                tipo: 'CREDITO_OVERRIDE',
+                clienteId,
+                limiteCredito: res.limiteCredito,
+                saldoVivo: res.saldoVivo,
+                montoRequerido: res.montoEvaluado,
+              },
+            },
+            tx,
+          );
+        }
       }
 
       let serie = await tx.serieFacturacion.findFirst({

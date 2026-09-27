@@ -11,6 +11,8 @@ import { prisma } from '@/lib/prisma';
 import { requireTenant, requireFeature, requirePermission } from '@/lib/services/tenant-scope';
 import { withPeriodValidation } from '@/lib/services/with-period-validation';
 import { applyAnticipoAllocations } from '@/lib/services/anticipos-workflow';
+import { exigirLimiteCredito } from '@/features/crm/services/credito-enforcement';
+import { AuditLogService } from '@/lib/services/audit-log-service';
 import { ventaServicioLegacySchema, ventaMixtaSchema, updateVentaServicioSchema } from './schemas';
 import type { VentaServicioInput, VentaMixtaInput, VentaServicioUpdateInput } from './schemas';
 import type { AuthenticatedUser } from '@/lib/auth-middleware';
@@ -21,6 +23,13 @@ const VENTA_SERVICIO_INCLUDE = {
   servicio: true,
   cliente: true,
 } as const;
+
+/** Datos del override de límite de crédito listos para la auditoría. */
+interface CreditoOverrideInfo {
+  limiteCredito: number | null;
+  saldoVivo: number;
+  montoRequerido: number;
+}
 
 /**
  * @description Valida que todos los servicios referenciados pertenezcan al tenant
@@ -109,6 +118,31 @@ export const createVentaServicioAction = withAction(withPeriodValidation(
     const serviciosMonedas = await assertServiciosDelTenant(tenantId, lineasServicio.map((l) => l.servicioId!));
     await assertClienteDelTenant(tenantId, payload.clienteId);
 
+    // C-2: la venta de servicios a crédito valida el tope del cliente antes de
+    // escribir; el override (permiso ventas.venta.credito-override) se audita
+    // cuando las filas ya existen.
+    let creditoOverrideMixto: CreditoOverrideInfo | null = null;
+    if (payload.condicionPago === 'CREDITO') {
+      const totalVentaMixto = lineasServicio.reduce(
+        (suma, linea) => suma + linea.cantidad * serviciosMonedas.get(linea.servicioId!)!.precio,
+        0,
+      );
+      const res = await exigirLimiteCredito({
+        client: prisma,
+        tenantId,
+        clienteId: payload.clienteId!,
+        montoRequerido: totalVentaMixto,
+        user,
+      });
+      if (res.overrideUsado) {
+        creditoOverrideMixto = {
+          limiteCredito: res.limiteCredito,
+          saldoVivo: res.saldoVivo,
+          montoRequerido: res.montoEvaluado,
+        };
+      }
+    }
+
     const created = await prisma.$transaction(
       lineasServicio.map((linea) => {
         const catalogo = serviciosMonedas.get(linea.servicioId!)!;
@@ -145,6 +179,22 @@ export const createVentaServicioAction = withAction(withPeriodValidation(
           },
         }),
       ));
+      if (creditoOverrideMixto) {
+        // Puente hasta C-4: la auditoría corre fuera de las transacciones batch,
+        // así que usa log() no bloqueante para no inducir reintentos que
+        // duplicarían la venta. C-4 la mueve dentro de la transacción única.
+        AuditLogService.log({
+          accion: 'EXECUTE',
+          entidad: 'VENTA_SERVICIO',
+          entidadId: (created as Array<{ ventaServicioId: string }>)[0].ventaServicioId,
+          usuarioId: user.userId,
+          detalles: {
+            tipo: 'CREDITO_OVERRIDE',
+            clienteId: payload.clienteId,
+            ...creditoOverrideMixto,
+          },
+        });
+      }
     }
 
     revalidatePath('/busy/venta-servicios');
@@ -173,6 +223,31 @@ export const createVentaServicioAction = withAction(withPeriodValidation(
     throw new ActionError('La fecha de vencimiento no es válida', 'VALIDATION_ERROR');
   }
 
+  // C-2: el tope se evalúa sobre el remanente estimado (total − anticipos)
+  // antes de abrir la transacción; el override se audita dentro de ella.
+  const ventaTotalEstimado = data.cantidad * precioUnitario;
+  let creditoOverrideLegacy: CreditoOverrideInfo | null = null;
+  if (data.condicionPago === 'CREDITO') {
+    const estimadoAnticipos = (data.anticipos ?? []).reduce(
+      (suma, a) => suma + Number(a.montoAplicado || 0),
+      0,
+    );
+    const res = await exigirLimiteCredito({
+      client: prisma,
+      tenantId,
+      clienteId: data.clienteId!,
+      montoRequerido: Math.max(ventaTotalEstimado - estimadoAnticipos, 0),
+      user,
+    });
+    if (res.overrideUsado) {
+      creditoOverrideLegacy = {
+        limiteCredito: res.limiteCredito,
+        saldoVivo: res.saldoVivo,
+        montoRequerido: res.montoEvaluado,
+      };
+    }
+  }
+
   const resultado = await prisma.$transaction(async (tx) => {
     const ventaTotal = data.cantidad * precioUnitario;
     const ventaServicio = await tx.ventaServicios.create({
@@ -189,6 +264,23 @@ export const createVentaServicioAction = withAction(withPeriodValidation(
         condicionPago: data.condicionPago,
       },
     });
+
+    if (creditoOverrideLegacy) {
+      await AuditLogService.logStrict(
+        {
+          accion: 'EXECUTE',
+          entidad: 'VENTA_SERVICIO',
+          entidadId: ventaServicio.ventaServicioId,
+          usuarioId: user.userId,
+          detalles: {
+            tipo: 'CREDITO_OVERRIDE',
+            clienteId: data.clienteId,
+            ...creditoOverrideLegacy,
+          },
+        },
+        tx,
+      );
+    }
 
     let allocationsResult: any[] = [];
     if (data.anticipos && data.anticipos.length > 0) {
