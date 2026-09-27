@@ -13,8 +13,8 @@ vi.mock('@/features/contabilidad/services/exchange-rate-provider', () => ({
 }));
 
 const mockTx = {
-  ventaServicios: { create: vi.fn() },
-  cuentaPorCobrar: { create: vi.fn() },
+  ventaServicios: { create: vi.fn(), update: vi.fn() },
+  cuentaPorCobrar: { create: vi.fn(), findFirst: vi.fn(), updateMany: vi.fn() },
   tipoPago: { findFirst: vi.fn() },
   cuentaBancaria: { findFirst: vi.fn() },
   anticipo: { findUnique: vi.fn() },
@@ -29,7 +29,7 @@ vi.mock('@/lib/prisma', () => {
     ventaServicios: { findMany: vi.fn(), findFirst: vi.fn(), create: vi.fn(), update: vi.fn(), delete: vi.fn() },
     servicios: { findFirst: vi.fn(), findMany: vi.fn() },
     cliente: { findFirst: vi.fn() },
-    cuentaPorCobrar: { findMany: vi.fn(), create: vi.fn() },
+    cuentaPorCobrar: { findMany: vi.fn(), create: vi.fn(), findFirst: vi.fn() },
     reconciliacionServicio: { count: vi.fn() },
     auditLog: { create: vi.fn() },
     $transaction: vi.fn((cb: any) => cb(mockTx)),
@@ -40,7 +40,7 @@ vi.mock('@/lib/prisma', () => {
 
 import { getCurrentUser } from '@/lib/server-actions/get-current-user';
 import { prisma } from '@/lib/prisma';
-import { createVentaServicioAction } from '@/features/venta-servicios/actions';
+import { createVentaServicioAction, updateVentaServicioAction } from '@/features/venta-servicios/actions';
 import type { AuthenticatedUser } from '@/lib/auth-middleware';
 
 const mockUser: AuthenticatedUser = {
@@ -216,11 +216,11 @@ describe('enforcement del límite de crédito en venta de servicios (C-2)', () =
     } as never);
 
     expect(result.success).toBe(true);
-    const auditCall = vi.mocked(prisma.auditLog.create).mock.calls.find(
-      (c) => (c[0]?.data?.detalles as { tipo?: string })?.tipo === 'CREDITO_OVERRIDE',
-    );
-    expect(auditCall).toBeDefined();
-    expect(auditCall![0].data.entidad).toBe('VENTA_SERVICIO');
+    expect(mockTx.auditLog.create).toHaveBeenCalledTimes(1);
+    const auditData = mockTx.auditLog.create.mock.calls[0][0].data;
+    expect(auditData.entidad).toBe('VENTA_SERVICIO');
+    expect(auditData.detalles).toMatchObject({ tipo: 'CREDITO_OVERRIDE' });
+    expect(prisma.auditLog.create).not.toHaveBeenCalled();
   });
 
   it('legacy CREDITO sobre el tope sin permiso: CREDITO_EXCEDIDO y no crea la venta', async () => {
@@ -289,5 +289,128 @@ describe('enforcement del límite de crédito en venta de servicios (C-2)', () =
     } as never);
 
     expect(result.success).toBe(true);
+  });
+});
+
+describe('update coherente con la CxC (C-4)', () => {
+  const adminUser = mockUser;
+  const ventaCredito = {
+    ventaServicioId: 'vs-1',
+    cantidad: 1,
+    total: 5000,
+    precioUnitario: 5000,
+    clienteId: 'cli-1',
+    condicionPago: 'CREDITO',
+  };
+  const cxcActiva = {
+    cuentaPorCobrarId: 'cxc-1',
+    estado: 'PENDIENTE',
+    montoDeuda: 5000,
+    clienteId: 'cli-1',
+  };
+
+  beforeEach(() => {
+    vi.clearAllMocks();
+    vi.stubEnv('PERIODO_GUARD_ENABLED', 'false');
+    vi.mocked(getCurrentUser).mockResolvedValue(adminUser);
+    vi.mocked(prisma.ventaServicios.findFirst).mockResolvedValue(ventaCredito as never);
+    vi.mocked(prisma.cuentaPorCobrar.findFirst).mockResolvedValue(cxcActiva as never);
+    vi.mocked(prisma.reconciliacionServicio.count).mockResolvedValue(0 as never);
+    vi.mocked(prisma.cliente.findFirst).mockResolvedValue({
+      clienteId: 'cli-2', limiteCredito: null,
+    } as never);
+    mockTx.ventaServicios.update.mockResolvedValue(ventaCredito as never);
+    mockTx.cuentaPorCobrar.updateMany.mockResolvedValue({ count: 1 } as never);
+  });
+
+  it('cambio de cantidad ajusta montoDeuda en la misma transacción', async () => {
+    const result = await updateVentaServicioAction({ ventaServicioId: 'vs-1', cantidad: 2 });
+
+    expect(result.success).toBe(true);
+    expect(prisma.$transaction).toHaveBeenCalledTimes(1);
+    expect(mockTx.ventaServicios.update).toHaveBeenCalledWith(
+      expect.objectContaining({
+        where: { ventaServicioId: 'vs-1' },
+        data: expect.objectContaining({ cantidad: 2, total: 10000 }),
+      }),
+    );
+    expect(mockTx.cuentaPorCobrar.updateMany).toHaveBeenCalledWith({
+      where: { cuentaPorCobrarId: 'cxc-1', estado: { in: ['PENDIENTE', 'PARCIAL'] } },
+      data: { montoDeuda: 10000 },
+    });
+  });
+
+  it('con reconciliaciones registradas rechaza el cambio de cantidad (HAS_REFERENCES)', async () => {
+    vi.mocked(prisma.reconciliacionServicio.count).mockResolvedValue(2 as never);
+
+    const result = await updateVentaServicioAction({ ventaServicioId: 'vs-1', cantidad: 2 });
+
+    expect(result.success).toBe(false);
+    expect(result.error?.code).toBe('HAS_REFERENCES');
+    expect(mockTx.ventaServicios.update).not.toHaveBeenCalled();
+  });
+
+  it('con la CxC PAGADA rechaza el cambio de total (CXC_PAGADA)', async () => {
+    vi.mocked(prisma.cuentaPorCobrar.findFirst).mockResolvedValue({
+      ...cxcActiva, estado: 'PAGADA',
+    } as never);
+
+    const result = await updateVentaServicioAction({ ventaServicioId: 'vs-1', cantidad: 2 });
+
+    expect(result.success).toBe(false);
+    expect(result.error?.code).toBe('CXC_PAGADA');
+    expect(mockTx.ventaServicios.update).not.toHaveBeenCalled();
+  });
+
+  it('cambio de cliente mueve la CxC en la misma transacción', async () => {
+    const result = await updateVentaServicioAction({
+      ventaServicioId: 'vs-1', clienteId: 'cli-2',
+    });
+
+    expect(result.success).toBe(true);
+    expect(mockTx.cuentaPorCobrar.updateMany).toHaveBeenCalledWith({
+      where: { cuentaPorCobrarId: 'cxc-1', estado: { not: 'ANULADA' } },
+      data: { clienteId: 'cli-2' },
+    });
+  });
+
+  it('cambio de cliente sobre el tope del nuevo cliente sin permiso: CREDITO_EXCEDIDO', async () => {
+    vi.mocked(prisma.cliente.findFirst).mockResolvedValue({
+      clienteId: 'cli-2', limiteCredito: 100,
+    } as never);
+    vi.mocked(prisma.cuentaPorCobrar.findMany).mockResolvedValue([] as never);
+    vi.mocked(getCurrentUser).mockResolvedValue({
+      ...mockUser,
+      role: 'regularUser',
+      planFeatures: { servicios: true },
+      permissions: new Set(['ventas.servicios.editar']),
+    } as unknown as AuthenticatedUser);
+
+    const result = await updateVentaServicioAction({
+      ventaServicioId: 'vs-1', clienteId: 'cli-2',
+    });
+
+    expect(result.success).toBe(false);
+    expect(result.error?.code).toBe('CREDITO_EXCEDIDO');
+    expect(mockTx.ventaServicios.update).not.toHaveBeenCalled();
+  });
+
+  it('quitar el cliente de una venta a crédito con CxC activa es rechazado', async () => {
+    const result = await updateVentaServicioAction({
+      ventaServicioId: 'vs-1', clienteId: null,
+    });
+
+    expect(result.success).toBe(false);
+    expect(result.error?.code).toBe('VALIDATION_ERROR');
+    expect(mockTx.ventaServicios.update).not.toHaveBeenCalled();
+  });
+
+  it('si la CxC cambió de estado entre lectura y escritura falla con CXC_ESTADO_CAMBIO', async () => {
+    mockTx.cuentaPorCobrar.updateMany.mockResolvedValue({ count: 0 } as never);
+
+    const result = await updateVentaServicioAction({ ventaServicioId: 'vs-1', cantidad: 2 });
+
+    expect(result.success).toBe(false);
+    expect(result.error?.code).toBe('CXC_ESTADO_CAMBIO');
   });
 });

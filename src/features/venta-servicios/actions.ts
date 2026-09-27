@@ -143,11 +143,14 @@ export const createVentaServicioAction = withAction(withPeriodValidation(
       }
     }
 
-    const created = await prisma.$transaction(
-      lineasServicio.map((linea) => {
+    // C-4: ventas y CxC se crean en UNA transacción interactiva — un fallo a
+    // mitad deja cero filas de ambas; la auditoría de override vive aquí dentro.
+    const created = await prisma.$transaction(async (tx) => {
+      const rows: Array<{ ventaServicioId: string; total: number }> = [];
+      for (const linea of lineasServicio) {
         const catalogo = serviciosMonedas.get(linea.servicioId!)!;
         const precioUnitario = catalogo.precio;
-        return prisma.ventaServicios.create({
+        const row = await tx.ventaServicios.create({
           data: {
             tenantId,
             servicioId: linea.servicioId!,
@@ -162,41 +165,43 @@ export const createVentaServicioAction = withAction(withPeriodValidation(
             condicionPago: payload.condicionPago,
           },
         });
-      })
-    );
-
-    // B-06: crédito en modo mixto → una CxC por línea (cada fila es una venta).
-    if (payload.condicionPago === 'CREDITO') {
-      await prisma.$transaction((created as Array<{ ventaServicioId: string; total: number }>).map((venta) =>
-        prisma.cuentaPorCobrar.create({
-          data: {
-            tenantId,
-            ventaServicioId: venta.ventaServicioId,
-            clienteId: payload.clienteId!,
-            montoDeuda: venta.total,
-            estado: 'PENDIENTE',
-            tipoCuenta: 'VENTA_SERVICIO',
-            fechaVencimiento,
-          },
-        }),
-      ));
-      if (creditoOverrideMixto) {
-        // Puente hasta C-4: la auditoría corre fuera de las transacciones batch,
-        // así que usa log() no bloqueante para no inducir reintentos que
-        // duplicarían la venta. C-4 la mueve dentro de la transacción única.
-        AuditLogService.log({
-          accion: 'EXECUTE',
-          entidad: 'VENTA_SERVICIO',
-          entidadId: (created as Array<{ ventaServicioId: string }>)[0].ventaServicioId,
-          usuarioId: user.userId,
-          detalles: {
-            tipo: 'CREDITO_OVERRIDE',
-            clienteId: payload.clienteId,
-            ...creditoOverrideMixto,
-          },
-        });
+        rows.push({ ventaServicioId: row.ventaServicioId, total: row.total });
       }
-    }
+
+      // B-06: crédito en modo mixto → una CxC por línea (cada fila es una venta).
+      if (payload.condicionPago === 'CREDITO') {
+        for (const venta of rows) {
+          await tx.cuentaPorCobrar.create({
+            data: {
+              tenantId,
+              ventaServicioId: venta.ventaServicioId,
+              clienteId: payload.clienteId!,
+              montoDeuda: venta.total,
+              estado: 'PENDIENTE',
+              tipoCuenta: 'VENTA_SERVICIO',
+              fechaVencimiento,
+            },
+          });
+        }
+        if (creditoOverrideMixto) {
+          await AuditLogService.logStrict(
+            {
+              accion: 'EXECUTE',
+              entidad: 'VENTA_SERVICIO',
+              entidadId: rows[0]?.ventaServicioId ?? '',
+              usuarioId: user.userId,
+              detalles: {
+                tipo: 'CREDITO_OVERRIDE',
+                clienteId: payload.clienteId,
+                ...creditoOverrideMixto,
+              },
+            },
+            tx,
+          );
+        }
+      }
+      return rows;
+    });
 
     revalidatePath('/busy/servicios');
     return {
@@ -426,28 +431,130 @@ export const updateVentaServicioAction = withAction(async (input: VentaServicioU
 
   const existing = await prisma.ventaServicios.findFirst({
     where: { ventaServicioId, tenantId },
-    select: { ventaServicioId: true, cantidad: true, total: true, precioUnitario: true },
+    select: {
+      ventaServicioId: true,
+      cantidad: true,
+      total: true,
+      precioUnitario: true,
+      clienteId: true,
+      condicionPago: true,
+    },
   });
   if (!existing) throw new ActionError('Venta de servicio no encontrada', 'NOT_FOUND');
 
-  const updateData: Record<string, unknown> = {};
-  if (data.cantidad !== undefined) {
-    updateData.cantidad = data.cantidad;
-    // El total no se acepta del cliente: al cambiar la cantidad se recalcula
-    // con el precio unitario persistido (o derivado del registro legacy).
-    if (data.cantidad !== existing.cantidad) {
-      const precioUnitario = existing.precioUnitario
-        ?? (existing.cantidad > 0 ? Math.round(existing.total / existing.cantidad) : 0);
-      updateData.total = precioUnitario * data.cantidad;
+  // C-4: la CxC activa de la venta acompaña cualquier cambio de deuda o cliente.
+  const cxcActiva = await prisma.cuentaPorCobrar.findFirst({
+    where: { ventaServicioId, estado: { not: 'ANULADA' } },
+    select: { cuentaPorCobrarId: true, estado: true, montoDeuda: true, clienteId: true },
+  });
+
+  const cambiaCantidad = data.cantidad !== undefined && data.cantidad !== existing.cantidad;
+  if (cambiaCantidad) {
+    const reconciliacionesCount = await prisma.reconciliacionServicio.count({
+      where: { ventaServicioId },
+    });
+    if (reconciliacionesCount > 0) {
+      throw new ActionError(
+        `No se puede modificar la venta: tiene ${reconciliacionesCount} cobro(s) reconciliado(s) y el total debe mantenerse`,
+        'HAS_REFERENCES',
+      );
     }
   }
+
+  let nuevoTotal = existing.total;
+  if (cambiaCantidad) {
+    // El total no se acepta del cliente: al cambiar la cantidad se recalcula
+    // con el precio unitario persistido (o derivado del registro legacy).
+    const precioUnitario = existing.precioUnitario
+      ?? (existing.cantidad > 0 ? Math.round(existing.total / existing.cantidad) : 0);
+    nuevoTotal = precioUnitario * data.cantidad!;
+  }
+  const cambiaTotal = nuevoTotal !== existing.total;
+  const cambiaCliente = data.clienteId !== undefined && data.clienteId !== existing.clienteId;
+
+  if (cxcActiva && cambiaTotal && cxcActiva.estado === 'PAGADA') {
+    throw new ActionError(
+      'No se puede modificar la venta: su cuenta por cobrar ya está pagada',
+      'CXC_PAGADA',
+    );
+  }
+  if (cxcActiva && cambiaCliente && data.clienteId === null) {
+    throw new ActionError(
+      'No se puede quitar el cliente de una venta a crédito con cuenta por cobrar activa',
+      'VALIDATION_ERROR',
+    );
+  }
+
+  // Cambio de cliente con deuda activa: revalidar el tope del nuevo cliente
+  // (la CxC propia pertenece al cliente anterior, no se descuenta de su saldo).
+  let creditoOverrideUpdate: CreditoOverrideInfo | null = null;
+  if (cxcActiva && cambiaCliente && data.clienteId) {
+    await assertClienteDelTenant(tenantId, data.clienteId);
+    const res = await exigirLimiteCredito({
+      client: prisma,
+      tenantId,
+      clienteId: data.clienteId,
+      montoRequerido: Number(cxcActiva.montoDeuda),
+      user,
+    });
+    if (res.overrideUsado) {
+      creditoOverrideUpdate = {
+        limiteCredito: res.limiteCredito,
+        saldoVivo: res.saldoVivo,
+        montoRequerido: res.montoEvaluado,
+      };
+    }
+  }
+
+  const updateData: Record<string, unknown> = {};
+  if (data.cantidad !== undefined) updateData.cantidad = data.cantidad;
+  if (cambiaTotal) updateData.total = nuevoTotal;
   // C-3: el costo no se acepta del payload; el snapshot de la venta es histórico.
   if (data.observaciones !== undefined) updateData.observaciones = data.observaciones;
   if (data.clienteId !== undefined) updateData.clienteId = data.clienteId;
 
-  const updated = await prisma.ventaServicios.update({
-    where: { ventaServicioId },
-    data: updateData,
+  const updated = await prisma.$transaction(async (tx) => {
+    const row = await tx.ventaServicios.update({
+      where: { ventaServicioId },
+      data: updateData,
+    });
+
+    if (cxcActiva && cambiaTotal) {
+      // Claim de estado: solo se ajusta la deuda si la CxC sigue editable.
+      const claim = await tx.cuentaPorCobrar.updateMany({
+        where: { cuentaPorCobrarId: cxcActiva.cuentaPorCobrarId, estado: { in: ['PENDIENTE', 'PARCIAL'] } },
+        data: { montoDeuda: nuevoTotal },
+      });
+      if (claim.count !== 1) {
+        throw new ActionError(
+          'La cuenta por cobrar cambió de estado durante la operación; reintenta',
+          'CXC_ESTADO_CAMBIO',
+        );
+      }
+    }
+    if (cxcActiva && cambiaCliente && data.clienteId) {
+      await tx.cuentaPorCobrar.updateMany({
+        where: { cuentaPorCobrarId: cxcActiva.cuentaPorCobrarId, estado: { not: 'ANULADA' } },
+        data: { clienteId: data.clienteId },
+      });
+    }
+    if (creditoOverrideUpdate) {
+      await AuditLogService.logStrict(
+        {
+          accion: 'EXECUTE',
+          entidad: 'VENTA_SERVICIO',
+          entidadId: ventaServicioId,
+          usuarioId: user.userId,
+          detalles: {
+            tipo: 'CREDITO_OVERRIDE',
+            clienteId: data.clienteId,
+            ...creditoOverrideUpdate,
+          },
+        },
+        tx,
+      );
+    }
+    return row;
   });
 
   revalidatePath('/busy/servicios');

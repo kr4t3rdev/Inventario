@@ -13,13 +13,15 @@ vi.mock("@/features/contabilidad/services/exchange-rate-provider", () => ({
 }));
 
 const mockTx = {
-	ventaServicios: { create: vi.fn() },
+	ventaServicios: { create: vi.fn(), update: vi.fn() },
+	cuentaPorCobrar: { create: vi.fn(), findFirst: vi.fn(), updateMany: vi.fn() },
 	tipoPago: { findFirst: vi.fn() },
 	cuentaBancaria: { findFirst: vi.fn() },
 	anticipo: { findUnique: vi.fn() },
 	reconciliacionServicio: { create: vi.fn() },
 	transaccionMoneda: { create: vi.fn() },
 	tenantAccountingPolicy: { findUnique: vi.fn() },
+	auditLog: { create: vi.fn() },
 };
 
 vi.mock("@/lib/prisma", () => ({
@@ -36,6 +38,9 @@ vi.mock("@/lib/prisma", () => ({
 			findMany: vi.fn(),
 		},
 		cliente: {
+			findFirst: vi.fn(),
+		},
+		cuentaPorCobrar: {
 			findFirst: vi.fn(),
 		},
 		reconciliacionServicio: {
@@ -204,7 +209,7 @@ describe("VentaServicios Server Actions", () => {
 				if (Array.isArray(args)) return Promise.all(args);
 				return args(mockTx);
 			});
-			vi.mocked(prisma.ventaServicios.create).mockResolvedValue(mockVentaRow);
+			mockTx.ventaServicios.create.mockResolvedValue(mockVentaRow);
 
 			const result = await createVentaServicioAction({
 				lineas: [
@@ -217,7 +222,7 @@ describe("VentaServicios Server Actions", () => {
 			} as any);
 
 			expect(result.success).toBe(true);
-			expect(prisma.ventaServicios.create).toHaveBeenCalledWith(
+			expect(mockTx.ventaServicios.create).toHaveBeenCalledWith(
 				expect.objectContaining({
 					data: expect.objectContaining({
 						moneda: "USD",
@@ -234,8 +239,10 @@ describe("VentaServicios Server Actions", () => {
 				precioUnitario: 6000,
 				cantidad: 1,
 				total: 5000,
+				clienteId: null,
+				condicionPago: "CONTADO",
 			});
-			vi.mocked(prisma.ventaServicios.update).mockResolvedValue(mockVentaRow);
+			mockTx.ventaServicios.update.mockResolvedValue(mockVentaRow);
 
 			const result = await updateVentaServicioAction({
 				ventaServicioId: "vs-1",
@@ -243,7 +250,7 @@ describe("VentaServicios Server Actions", () => {
 			});
 
 			expect(result.success).toBe(true);
-			expect(prisma.ventaServicios.update).toHaveBeenCalledWith(
+			expect(mockTx.ventaServicios.update).toHaveBeenCalledWith(
 				expect.objectContaining({
 					data: expect.objectContaining({ cantidad: 3, total: 18000 }),
 				}),
@@ -254,7 +261,7 @@ describe("VentaServicios Server Actions", () => {
 			vi.mocked(prisma.ventaServicios.findFirst).mockResolvedValue(
 				mockVentaRow,
 			);
-			vi.mocked(prisma.ventaServicios.update).mockResolvedValue(mockVentaRow);
+			mockTx.ventaServicios.update.mockResolvedValue(mockVentaRow);
 
 			const result = await updateVentaServicioAction({
 				ventaServicioId: "vs-1",
@@ -262,7 +269,7 @@ describe("VentaServicios Server Actions", () => {
 			});
 
 			expect(result.success).toBe(true);
-			expect(prisma.ventaServicios.update).toHaveBeenCalledWith(
+			expect(mockTx.ventaServicios.update).toHaveBeenCalledWith(
 				expect.objectContaining({
 					data: expect.objectContaining({ cantidad: 3, total: 15000 }),
 				}),
@@ -634,7 +641,7 @@ describe("VentaServicios Server Actions", () => {
 			vi.mocked(prisma.ventaServicios.findFirst).mockResolvedValue(
 				mockVentaRow,
 			);
-			vi.mocked(prisma.ventaServicios.update).mockResolvedValue(mockVentaRow);
+			mockTx.ventaServicios.update.mockResolvedValue(mockVentaRow);
 			const result = await updateVentaServicioAction({
 				ventaServicioId: "vs-1",
 				cantidad: 2,
