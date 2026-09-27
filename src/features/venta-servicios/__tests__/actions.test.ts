@@ -638,7 +638,6 @@ describe("VentaServicios Server Actions", () => {
 			const result = await updateVentaServicioAction({
 				ventaServicioId: "vs-1",
 				cantidad: 2,
-				total: 10000,
 			});
 			expect(result.success).toBe(true);
 		});
@@ -718,5 +717,57 @@ describe("VentaServicios Server Actions", () => {
 			expect(result.success).toBe(false);
 			expect(result.error!.code).toBe("AUTH_REQUIRED");
 		});
+	});
+});
+
+describe("costo server-side de servicios (C-3)", () => {
+	beforeEach(() => {
+		vi.clearAllMocks();
+		vi.stubEnv("PERIODO_GUARD_ENABLED", "false");
+		vi.mocked(getCurrentUser).mockResolvedValue(mockUser);
+		// El catálogo define el costo estándar: 750 por unidad.
+		vi.mocked(prisma.servicios.findMany).mockResolvedValue([
+			{ servicioId: "sv-1", moneda: "CUP", precio: 5000, costo: 750 },
+		] as never);
+		vi.mocked(prisma.cliente.findFirst).mockResolvedValue({ clienteId: "cli-1" } as never);
+		mockTx.ventaServicios.create.mockResolvedValue(mockVentaRow as never);
+	});
+
+	it("mixto con costo manipulado es rechazado por el schema strict", async () => {
+		const result = await createVentaServicioAction({
+			lineas: [{ tipoLinea: "SERVICIO", servicioId: "sv-1", cantidad: 1, costo: 999999 }],
+		} as never);
+
+		expect(result.success).toBe(false);
+		expect(result.error?.code).toBe("VALIDATION_ERROR");
+		expect(mockTx.ventaServicios.create).not.toHaveBeenCalled();
+	});
+
+	it("legacy persiste el costo del catálogo aunque el payload no lo envíe", async () => {
+		const result = await createVentaServicioAction({
+			servicioId: "sv-1",
+			cantidad: 2,
+		} as never);
+
+		expect(result.success).toBe(true);
+		expect(mockTx.ventaServicios.create).toHaveBeenCalledWith(
+			expect.objectContaining({
+				data: expect.objectContaining({ costo: 750 }),
+			}),
+		);
+	});
+
+	it("update con costo manipulado es rechazado", async () => {
+		vi.mocked(prisma.ventaServicios.findFirst).mockResolvedValue(mockVentaRow as never);
+		vi.mocked(prisma.ventaServicios.update).mockResolvedValue(mockVentaRow as never);
+
+		const result = await updateVentaServicioAction({
+			ventaServicioId: "vs-1",
+			costo: 5,
+		} as never);
+
+		expect(result.success).toBe(false);
+		expect(result.error?.code).toBe("VALIDATION_ERROR");
+		expect(prisma.ventaServicios.update).not.toHaveBeenCalled();
 	});
 });

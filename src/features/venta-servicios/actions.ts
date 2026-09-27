@@ -33,25 +33,25 @@ interface CreditoOverrideInfo {
 
 /**
  * @description Valida que todos los servicios referenciados pertenezcan al tenant
- * y devuelve su snapshot de moneda y precio para persistirlo en la venta.
+ * y devuelve su snapshot de moneda, precio y costo para persistirlo en la venta.
  * @param {string} tenantId - Tenant del usuario autenticado.
  * @param {string[]} servicioIds - IDs de servicios a validar.
  * @throws {ActionError} NOT_FOUND si algún servicio no pertenece al tenant.
- * @returns {Promise<Map<string, { moneda: string; precio: number }>>} Moneda y precio por servicioId.
+ * @returns {Promise<Map<string, { moneda: string; precio: number; costo: number }>>} Snapshot por servicioId.
  */
 async function assertServiciosDelTenant(
   tenantId: string,
   servicioIds: string[],
-): Promise<Map<string, { moneda: string; precio: number }>> {
+): Promise<Map<string, { moneda: string; precio: number; costo: number }>> {
   const uniqueIds = [...new Set(servicioIds)];
   const found = await prisma.servicios.findMany({
     where: { tenantId, servicioId: { in: uniqueIds } },
-    select: { servicioId: true, moneda: true, precio: true },
+    select: { servicioId: true, moneda: true, precio: true, costo: true },
   });
   if (found.length !== uniqueIds.length) {
     throw new ActionError('Servicio no encontrado', 'NOT_FOUND');
   }
-  return new Map(found.map((s) => [s.servicioId, { moneda: s.moneda, precio: s.precio }]));
+  return new Map(found.map((s) => [s.servicioId, { moneda: s.moneda, precio: s.precio, costo: s.costo }]));
 }
 
 /**
@@ -152,7 +152,8 @@ export const createVentaServicioAction = withAction(withPeriodValidation(
             tenantId,
             servicioId: linea.servicioId!,
             cantidad: linea.cantidad,
-            costo: linea.costo ?? 0,
+            // C-3: el costo es el snapshot del catálogo; el payload no lo fija.
+            costo: catalogo.costo,
             total: linea.cantidad * precioUnitario,
             moneda: catalogo.moneda,
             precioUnitario,
@@ -197,7 +198,7 @@ export const createVentaServicioAction = withAction(withPeriodValidation(
       }
     }
 
-    revalidatePath('/busy/venta-servicios');
+    revalidatePath('/busy/servicios');
     return {
       mode: 'MIXED_LINES' as const,
       lineasProcesadas: created.length,
@@ -255,7 +256,8 @@ export const createVentaServicioAction = withAction(withPeriodValidation(
         tenantId,
         servicioId: data.servicioId,
         cantidad: data.cantidad,
-        costo: data.costo ?? 0,
+        // C-3: el costo es el snapshot del catálogo; el payload no lo fija.
+        costo: catalogoServicio.costo,
         total: ventaTotal,
         moneda: monedaServicio,
         precioUnitario,
@@ -411,7 +413,7 @@ export const createVentaServicioAction = withAction(withPeriodValidation(
     return { ventaServicio, allocationsResult };
   });
 
-  revalidatePath('/busy/venta-servicios');
+  revalidatePath('/busy/servicios');
   return resultado;
 }));
 
@@ -439,7 +441,7 @@ export const updateVentaServicioAction = withAction(async (input: VentaServicioU
       updateData.total = precioUnitario * data.cantidad;
     }
   }
-  if (data.costo !== undefined) updateData.costo = data.costo;
+  // C-3: el costo no se acepta del payload; el snapshot de la venta es histórico.
   if (data.observaciones !== undefined) updateData.observaciones = data.observaciones;
   if (data.clienteId !== undefined) updateData.clienteId = data.clienteId;
 
@@ -448,7 +450,7 @@ export const updateVentaServicioAction = withAction(async (input: VentaServicioU
     data: updateData,
   });
 
-  revalidatePath('/busy/venta-servicios');
+  revalidatePath('/busy/servicios');
   return updated;
 });
 
@@ -475,6 +477,6 @@ export const deleteVentaServicioAction = withAction(async (id: string, user: Aut
   }
 
   await prisma.ventaServicios.delete({ where: { ventaServicioId: id } });
-  revalidatePath('/busy/venta-servicios');
+  revalidatePath('/busy/servicios');
   return { id, eliminado: true };
 });

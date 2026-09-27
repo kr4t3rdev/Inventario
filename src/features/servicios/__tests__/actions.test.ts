@@ -228,3 +228,47 @@ describe("deleteServicioAction (guarded)", () => {
     expect(r.error?.code).toBe("NOT_FOUND");
   });
 });
+
+describe("costo estándar del catálogo (C-3)", () => {
+  it("create persiste el costo estándar y lo serializa", async () => {
+    vi.mocked(getCurrentUser).mockResolvedValue(u);
+    vi.mocked(prisma.servicios.create).mockResolvedValue({
+      ...mockServicioRow,
+      costo: 750,
+    } as never);
+
+    const result = await createServicioAction({
+      nombre: "Instalación",
+      descripcion: "Servicio de instalación",
+      precio: 5000,
+      costo: 750,
+    });
+
+    expect(result.success).toBe(true);
+    expect(prisma.servicios.create).toHaveBeenCalledWith({
+      data: expect.objectContaining({ costo: 750, tenantId: "t1" }),
+    });
+    expect(result.data!.costo).toBe(750);
+  });
+
+  it("update permite ajustar el costo estándar", async () => {
+    vi.mocked(getCurrentUser).mockResolvedValue(u);
+    vi.mocked(prisma.servicios.findFirst).mockResolvedValue({
+      ...mockServicioRow,
+      costo: 750,
+    } as never);
+    vi.mocked(prisma.servicios.update).mockResolvedValue({
+      ...mockServicioRow,
+      costo: 900,
+    } as never);
+
+    const result = await updateServicioAction({ servicioId: "s1", costo: 900 });
+
+    expect(result.success).toBe(true);
+    expect(prisma.servicios.update).toHaveBeenCalledWith({
+      where: { servicioId: "s1" },
+      data: expect.objectContaining({ costo: 900 }),
+    });
+    expect(result.data!.costo).toBe(900);
+  });
+});

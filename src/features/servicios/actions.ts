@@ -13,13 +13,14 @@ import type { AuthenticatedUser } from '@/lib/auth-middleware';
  */
 function serialize(s: {
   servicioId: string; nombre: string; descripcion: string;
-  precio: number; moneda: string; createdAt: Date; updatedAt: Date;
+  precio: number; costo: number; moneda: string; createdAt: Date; updatedAt: Date;
 }): ServicioResponse {
   return {
     servicioId: s.servicioId,
     nombre: s.nombre,
     descripcion: s.descripcion,
     precio: s.precio,
+    costo: s.costo,
     moneda: s.moneda,
     createdAt: s.createdAt.toISOString(),
     updatedAt: s.updatedAt.toISOString(),

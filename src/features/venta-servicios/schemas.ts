@@ -13,10 +13,9 @@ export const lineaMixtaSchema = z.object({
   servicioId: z.string().optional(),
   productoId: z.string().optional(),
   cantidad: z.coerce.number().int().positive(),
-  costo: z.coerce.number().int().optional().default(0),
   observaciones: z.string().optional().nullable(),
-  // Nota: el precio unitario lo resuelve el servidor desde el catálogo;
-  // no se acepta del cliente.
+  // Nota: el precio y el costo los resuelve el servidor desde el catálogo
+  // (C-3); no se aceptan del cliente.
 }).strict().superRefine((linea, ctx) => {
   if (linea.tipoLinea === 'SERVICIO' && !linea.servicioId) {
     ctx.addIssue({ code: z.ZodIssueCode.custom, message: 'servicioId requerido para línea de servicio' });
@@ -38,26 +37,24 @@ export const ventaMixtaSchema = z.object({
 export const ventaServicioLegacySchema = z.object({
   servicioId: z.string().min(1),
   cantidad: z.coerce.number().int().positive(),
-  costo: z.coerce.number().int().optional().default(0),
   observaciones: z.string().optional().nullable(),
   clienteId: z.string().optional().nullable(),
   anticipos: z.array(anticipoAllocationSchema).optional(),
   // B-06: CONTADO (default) cobra al momento; CREDITO crea cuenta por cobrar.
   condicionPago: z.enum(['CONTADO', 'CREDITO']).optional().default('CONTADO'),
   fechaVencimiento: z.string().optional().nullable(),
-  // Nota: `precioUnitario` y `total` se resuelven en el servidor desde el
-  // catálogo (cantidad × precio); no se aceptan del cliente.
+  // Nota: `precioUnitario`, `total` y `costo` se resuelven en el servidor desde
+  // el catálogo (C-3); no se aceptan del cliente.
 }).strict();
 
 export const updateVentaServicioSchema = z.object({
   ventaServicioId: z.string().min(1),
   cantidad: z.coerce.number().int().positive().optional(),
-  costo: z.coerce.number().int().optional(),
   observaciones: z.string().optional().nullable(),
   clienteId: z.string().optional().nullable(),
-  // Nota: `total` no se acepta del cliente; al cambiar `cantidad` el servidor
-  // recalcula el total con el precio unitario derivado del registro.
-});
+  // Nota: `total` y `costo` no se aceptan del cliente; el total se recalcula
+  // con el precio unitario persistido y el costo es el snapshot histórico (C-3).
+}).strict();
 
 export type VentaServicioInput = z.infer<typeof ventaServicioLegacySchema>;
 export type VentaMixtaInput = z.infer<typeof ventaMixtaSchema>;
