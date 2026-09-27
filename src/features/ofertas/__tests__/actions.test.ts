@@ -29,6 +29,7 @@ vi.mock('@/lib/prisma', () => ({
       findFirst: vi.fn(),
       create: vi.fn(),
       update: vi.fn(),
+      updateMany: vi.fn().mockResolvedValue({ count: 0 }),
       delete: vi.fn(),
     },
     cliente: { findFirst: vi.fn() },
@@ -149,7 +150,7 @@ describe('Ofertas Server Actions', () => {
   describe('updateOfertaAction', () => {
     it('actualiza estado exitosamente', async () => {
       vi.mocked(getCurrentUser).mockResolvedValue(mockUser);
-      vi.mocked(prisma.oferta.findFirst).mockResolvedValue({ ofertaId: 'of-1' });
+      vi.mocked(prisma.oferta.findFirst).mockResolvedValue({ id: 'of-1', estado: 'PENDIENTE' } as any);
       vi.mocked(prisma.oferta.update).mockResolvedValue({} as any);
 
       const result = await updateOfertaAction({ ofertaId: 'of-1', estado: 'ACEPTADA' });

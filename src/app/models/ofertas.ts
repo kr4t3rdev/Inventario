@@ -21,7 +21,7 @@ export interface Oferta {
 	clienteId: string;
 	fechaEmision: string;
 	fechaVencimiento: string | null;
-	estado: "PENDIENTE" | "ACEPTADA" | "RECHAZADA" | "FACTURADA";
+	estado: "PENDIENTE" | "ACEPTADA" | "RECHAZADA" | "FACTURADA" | "VENCIDA";
 	subtotal: number;
 	impuestos: number;
 	total: number;

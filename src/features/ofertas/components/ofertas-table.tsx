@@ -149,6 +149,7 @@ export function OfertasTable({ ofertas, isLoading, error }: OfertasTableProps) {
           case 'ACEPTADA': variant = 'default'; break;
           case 'RECHAZADA': variant = 'destructive'; break;
           case 'FACTURADA': variant = 'outline'; break;
+          case 'VENCIDA': variant = 'outline'; break;
         }
 
         return <Badge variant={variant}>{estado}</Badge>

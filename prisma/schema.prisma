@@ -3396,6 +3396,7 @@ enum EstadoOferta {
   ACEPTADA
   RECHAZADA
   FACTURADA
+  VENCIDA
 }
 
 enum EstadoCuentaPorCobrar {

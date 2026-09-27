@@ -126,6 +126,21 @@ describe('convertirOfertaAPedido (PVE-T4)', () => {
 		).rejects.toMatchObject({ code: 'VALIDATION_ERROR' });
 	});
 
+	it('rechaza ofertas VENCIDAS (E-2)', async () => {
+		vi.mocked(prisma.oferta.findFirst).mockResolvedValue({
+			...oferta,
+			estado: 'VENCIDA',
+		} as never);
+		await expect(
+			convertirOfertaAPedido({
+				ofertaId: 'of-1',
+				puntoDeVentaId: 'pv-1',
+				tenantId: 'tenant-1',
+			}),
+		).rejects.toMatchObject({ code: 'VALIDATION_ERROR' });
+		expect(mockTx.venta.create).not.toHaveBeenCalled();
+	});
+
 	it('rechaza un punto de venta que no pertenece al tenant', async () => {
 		vi.mocked(prisma.puntoDeVenta.findFirst).mockResolvedValue(null);
 		await expect(

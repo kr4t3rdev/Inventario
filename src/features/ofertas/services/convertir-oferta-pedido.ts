@@ -33,6 +33,9 @@ export async function convertirOfertaAPedido({
   if (oferta.estado === 'RECHAZADA') {
     throw new ActionError('No se puede convertir una oferta rechazada', 'VALIDATION_ERROR');
   }
+  if (oferta.estado === 'VENCIDA') {
+    throw new ActionError('No se puede convertir una oferta vencida', 'VALIDATION_ERROR');
+  }
 
   const itemsProducto = oferta.items.filter((item) => item.productoId);
   if (itemsProducto.length !== oferta.items.length) {

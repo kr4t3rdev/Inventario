@@ -24,6 +24,8 @@ import type { AuthenticatedUser } from '@/lib/auth-middleware';
 import type { Oferta } from '@/app/models/model';
 import { getPrecioEfectivo } from '@/lib/types/pricing';
 import { crearOfertaConNumero } from './lib/numero-oferta-generator';
+import { expirarOfertasVencidas } from './services/expiracion-ofertas-service';
+import { transicionPermitida } from './lib/transiciones-estado';
 
 function serializeOferta(oferta: unknown): Oferta {
   return JSON.parse(JSON.stringify(oferta)) as Oferta;
@@ -32,6 +34,7 @@ function serializeOferta(oferta: unknown): Oferta {
 export const getOfertasAction = withAction(async (_input: void, user: AuthenticatedUser) => {
   requireFeature(user, 'ofertas', 'gestionar ofertas');
   const tenantId = requireTenant(user);
+  await expirarOfertasVencidas(tenantId);
   const ofertas = await listOfertasForTenant(tenantId);
   return ofertas.map(serializeOferta);
 });
@@ -39,6 +42,7 @@ export const getOfertasAction = withAction(async (_input: void, user: Authentica
 export const getOfertaByIdAction = withAction(async (id: string, user: AuthenticatedUser) => {
   requireFeature(user, 'ofertas', 'gestionar ofertas');
   const tenantId = requireTenant(user);
+  await expirarOfertasVencidas(tenantId);
   const oferta = await getOfertaForTenant(id, tenantId);
   if (!oferta) throw new ActionError('Oferta no encontrada', 'NOT_FOUND');
   return serializeOferta(oferta);
@@ -116,6 +120,15 @@ export const updateOfertaAction = withAction(async (input: OfertaUpdateInput, us
   });
   if (!existing) throw new ActionError('Oferta no encontrada', 'NOT_FOUND');
 
+  if (parsed.estado !== undefined && parsed.estado !== existing.estado) {
+    if (!transicionPermitida(existing.estado, parsed.estado)) {
+      throw new ActionError(
+        `La oferta en estado ${existing.estado} no puede pasar a ${parsed.estado}.`,
+        'ESTADO_TRANSICION_INVALIDA',
+      );
+    }
+  }
+
   const oferta = await prisma.oferta.update({
     where: { id: ofertaId },
     data: {
@@ -134,6 +147,9 @@ export const deleteOfertaAction = withAction(async (id: string, user: Authentica
   const tenantId = requireTenant(user);
   const existing = await prisma.oferta.findFirst({ where: { id: id, tenantId } });
   if (!existing) throw new ActionError('Oferta no encontrada', 'NOT_FOUND');
+  if (existing.estado === 'FACTURADA') {
+    throw new ActionError('No se puede eliminar una oferta facturada', 'ESTADO_NO_ELIMINABLE');
+  }
 
   await prisma.oferta.delete({ where: { id: id } });
   revalidatePath('/busy/ofertas');
@@ -144,6 +160,7 @@ export const facturarOfertaAction = withAction(async (input: FacturarOfertaInput
   requireFeature(user, 'ofertas', 'gestionar ofertas');
   const parsed = facturarOfertaSchema.parse(input);
   const tenantId = requireTenant(user);
+  await expirarOfertasVencidas(tenantId);
 
   const oferta = await prisma.oferta.findFirst({
     where: { id: parsed.ofertaId, tenantId },
@@ -152,6 +169,7 @@ export const facturarOfertaAction = withAction(async (input: FacturarOfertaInput
   if (!oferta) throw new ActionError('Oferta no encontrada', 'NOT_FOUND');
   if (oferta.estado === 'FACTURADA') throw new ActionError('La oferta ya fue facturada', 'VALIDATION_ERROR');
   if (oferta.estado === 'RECHAZADA') throw new ActionError('No se puede facturar una oferta rechazada', 'VALIDATION_ERROR');
+  if (oferta.estado === 'VENCIDA') throw new ActionError('No se puede facturar una oferta vencida', 'VALIDATION_ERROR');
 
   const turnoResult = await getOrCreateTurnoActivo({
     puntoDeVentaId: parsed.puntoDeVentaId,
@@ -236,6 +254,7 @@ export const convertirOfertaAPedidoAction = withAction(
     requirePermission(user, 'ventas.ofertas.gestionar', 'convertir ofertas');
     requirePermission(user, 'ventas.pedido.gestionar', 'crear pedidos de venta');
     const tenantId = requireTenant(user);
+    await expirarOfertasVencidas(tenantId);
 
     const result = await convertirOfertaAPedido({
       ofertaId: input.ofertaId,
