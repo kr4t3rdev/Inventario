@@ -33,7 +33,13 @@
 
 ## 6. Verificación final
 
-- [ ] 6.1 Suite scoped de transferencias + dashboard/reportes relacionados verde
-- [ ] 6.2 `pnpm run lint` y `pnpm run typecheck` limpios
-- [ ] 6.3 Code review (skill) sobre el diff completo; críticos/altos resueltos
-- [ ] 6.4 Push de `feat/transferencias-cierre-flujo` a origin (sin merge a main hasta aviso del usuario)
+- [x] 6.1 Suite scoped de transferencias + dashboard/reportes relacionados verde
+- [x] 6.2 `pnpm run lint` y `pnpm run typecheck` limpios
+- [x] 6.3 Code review (skill) sobre el diff completo; críticos/altos resueltos
+- [x] 6.4 Push de `feat/transferencias-cierre-flujo` a origin (sin merge a main hasta aviso del usuario)
+
+## Notas de verificación (2026-09-26)
+
+- Suite: 122/122 (transferencias 62 + reportes-financieros 46 + dashboard 14) · lint scoped 0 errores · `tsc --noEmit` principal 0 errores.
+- `typecheck:tests` no es gate activo: 1321 errores TS preexistentes en main y el script crashea por OOM sin NODE_OPTIONS (limitación preexistente, fuera de alcance).
+- Code review final del diff completo (APPROVE): sin críticos/altos; limitaciones documentadas en design.md (filas fantasma históricas sin backfill, BUG-3 de agregados PV queda para la Sesión A, semántica del input `cantidadRecibida` documentada en schema).
