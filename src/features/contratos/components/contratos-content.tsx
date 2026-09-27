@@ -216,9 +216,28 @@ export function ContratosContent({ initialData = [], initialMeta, configuracion 
       })
 
       if (response.ok) {
-        toast.success(`Estado actualizado a ${newStatus}`)
+        const result = await response.json() as { actualizados?: string[]; fallidos?: Array<{ contratoId: string; motivo: string }> }
+        const actualizados = result.actualizados ?? []
+        const fallidos = result.fallidos ?? []
+
+        if (fallidos.length > 0) {
+          const resumenFallidos = fallidos
+            .slice(0, 3)
+            .map(f => `${f.contratoId}: ${f.motivo}`)
+            .join('; ')
+          const resto = fallidos.length > 3 ? ` y ${fallidos.length - 3} más` : ''
+          if (actualizados.length > 0) {
+            toast.warning(`${actualizados.length} contratos actualizados a ${newStatus}. ${fallidos.length} no se pudieron cambiar: ${resumenFallidos}${resto}`)
+          } else {
+            toast.error(`Ningún contrato cambió de estado: ${resumenFallidos}${resto}`)
+          }
+        } else {
+          toast.success(`Estado actualizado a ${newStatus}`)
+        }
         setRowSelection({})
         fetchContratos(pagination.pageIndex + 1, pagination.pageSize)
+      } else {
+        toast.error('Error al actualizar estado')
       }
     } catch (error) {
       console.error('Error bulk update:', error)

@@ -155,9 +155,12 @@ describe('CU-01 aislamiento tenant API contratos (RED)', () => {
   });
 
   it('bulk update-status no toca contratos de otro tenant', async () => {
-    vi.mocked(prisma.contrato.updateMany).mockResolvedValue({ count: 0 } as never);
+    vi.mocked(prisma.contrato.findMany).mockResolvedValue([
+      { contratoId: 'ct-a', estado: 'BORRADOR' },
+    ] as never);
+    vi.mocked(prisma.contrato.updateMany).mockResolvedValue({ count: 1 } as never);
     await bulkUpdateContratoStatusHandler(
-      req('http://localhost/api/contratos/bulk/update-status', { method: 'POST', body: JSON.stringify({ ids: ['ct-b'], estado: 'ACTIVO' }) }) as never,
+      req('http://localhost/api/contratos/bulk/update-status', { method: 'POST', body: JSON.stringify({ ids: ['ct-a', 'ct-b'], estado: 'PENDIENTE_APROBACION' }) }) as never,
     );
     expect(prisma.contrato.updateMany).toHaveBeenCalledWith(
       expect.objectContaining({ where: expect.objectContaining({ tenantId: 'tenant-A' }) }),

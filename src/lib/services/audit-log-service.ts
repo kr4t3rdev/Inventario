@@ -29,7 +29,8 @@ export type AuditEntity =
   | "TENANT_ACCOUNTING_POLICY"
   | "ACCOUNTING_POLICY_ROLLOUT"
   | "EMPLEADO"
-  | "TENANT_ROLE";
+  | "TENANT_ROLE"
+  | "CONTRATO";
 
 export type AuditAction = 
   | "CREATE" 

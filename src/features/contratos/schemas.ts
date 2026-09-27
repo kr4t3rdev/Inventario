@@ -40,6 +40,12 @@ export const contratoUpdateSchema = z.object({
   aprobadoPor: z.string().nullable().optional(),
 });
 
+export const cambioEstadoSchema = z.object({
+  contratoId: z.string().min(1),
+  estado: estadoContratoEnum,
+  motivo: z.string().optional(),
+});
+
 export const bulkStatusSchema = z.object({
   ids: z.array(z.string()),
   estado: estadoContratoEnum,
@@ -51,5 +57,6 @@ export const bulkDeleteSchema = z.object({
 
 export type ContratoInput = z.infer<typeof contratoSchema>;
 export type ContratoUpdateInput = z.infer<typeof contratoUpdateSchema>;
+export type CambioEstadoInput = z.infer<typeof cambioEstadoSchema>;
 export type BulkStatusInput = z.infer<typeof bulkStatusSchema>;
 export type BulkDeleteInput = z.infer<typeof bulkDeleteSchema>;

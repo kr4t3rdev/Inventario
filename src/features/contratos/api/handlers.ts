@@ -3,6 +3,7 @@ import { prisma } from '@/lib/prisma'
 import { z } from 'zod'
 import { authenticateUser } from '@/lib/auth-middleware'
 import { ActionError } from '@/lib/server-actions/types'
+import { puedeTransicionar } from '@/features/contratos/lib/estado-contrato-machine'
 import { generarProximoConsecutivo, formatearNumeroContrato, crearContratoConConsecutivo } from '@/features/contratos/lib/numeroContratoGenerator'
 import fs from 'fs'
 import path from 'path'
@@ -361,11 +362,29 @@ export async function bulkUpdateContratoStatusHandler(req: NextRequest): Promise
     const body = await req.json()
     const { ids, estado } = bulkStatusSchema.parse(body)
     if (ids.length === 0) return NextResponse.json({ message: 'No IDs provided' }, { status: 400 })
-    const result = await prisma.contrato.updateMany({
+    const contratos = await prisma.contrato.findMany({
       where: { contratoId: { in: ids }, tenantId },
-      data: { estado },
+      select: { contratoId: true, estado: true },
     })
-    return NextResponse.json({ success: true, count: result.count, message: `${result.count} contratos actualizados a ${estado}` })
+    const actualizados: string[] = []
+    const fallidos: { contratoId: string; motivo: string }[] = []
+    for (const c of contratos) {
+      if (puedeTransicionar(c.estado, estado)) {
+        actualizados.push(c.contratoId)
+      } else {
+        fallidos.push({
+          contratoId: c.contratoId,
+          motivo: `No se puede cambiar un contrato de ${c.estado} a ${estado}`,
+        })
+      }
+    }
+    if (actualizados.length > 0) {
+      await prisma.contrato.updateMany({
+        where: { contratoId: { in: actualizados }, tenantId },
+        data: { estado },
+      })
+    }
+    return NextResponse.json({ success: true, actualizados, fallidos })
   } catch (error) {
     console.error('Error in bulk status update:', error)
     if (error instanceof z.ZodError) return NextResponse.json({ error: 'Invalid data', details: error.errors }, { status: 400 })
@@ -840,10 +859,13 @@ export async function createContratoAprobacionHandler(request: NextRequest, { pa
       },
       include: { aprobador: { select: { userId: true, name: true, email: true } } },
     })
-    if (body.estado === 'APROBADO' && body.fechaAprobacion) {
+    // La transición del contrato pasa por la máquina de estados: solo un contrato
+    // en PENDIENTE_APROBACION pasa a APROBADO, y el aprobador y la fecha los
+    // asigna el servidor (aprobadorId ya fue validado como miembro del tenant).
+    if (body.estado === 'APROBADO' && puedeTransicionar(owner.estado, 'APROBADO')) {
       await prisma.contrato.update({
         where: { contratoId: id },
-        data: { aprobadoPor: body.aprobadorId, fechaAprobacion: new Date(body.fechaAprobacion), estado: 'APROBADO' },
+        data: { aprobadoPor: body.aprobadorId, fechaAprobacion: new Date(), estado: 'APROBADO' },
       })
     }
     return NextResponse.json(aprobacion)

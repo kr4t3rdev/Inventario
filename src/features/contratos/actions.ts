@@ -9,9 +9,11 @@ import { revalidatePath } from 'next/cache';
 import { withAction, ActionError } from '@/lib/server-actions';
 import { prisma } from '@/lib/prisma';
 import { requireFeature, requireTenant } from '@/lib/services/tenant-scope';
+import { AuditLogService } from '@/lib/services/audit-log-service';
+import { assertTransicionValida, puedeTransicionar } from '@/features/contratos/lib/estado-contrato-machine';
 import { generarProximoConsecutivo, formatearNumeroContrato, crearContratoConConsecutivo } from '@/features/contratos/lib/numeroContratoGenerator';
-import { contratoSchema, contratoUpdateSchema, bulkStatusSchema, bulkDeleteSchema } from './schemas';
-import type { ContratoInput, ContratoUpdateInput, BulkStatusInput, BulkDeleteInput } from './schemas';
+import { contratoSchema, contratoUpdateSchema, cambioEstadoSchema, bulkStatusSchema, bulkDeleteSchema } from './schemas';
+import type { ContratoInput, ContratoUpdateInput, CambioEstadoInput, BulkStatusInput, BulkDeleteInput } from './schemas';
 import type { AuthenticatedUser } from '@/lib/auth-middleware';
 
 const CONTRATO_LIST_INCLUDE = {
@@ -216,18 +218,104 @@ export const deleteContratoAction = withAction(async (id: string, user: Authenti
   return { id, eliminado: true };
 });
 
+/**
+ * @description Cambia el estado de un contrato validando la transición contra
+ *              la máquina de estados (CTF-1). Los efectos sobre el aprobador
+ *              son siempre server-side: al aprobar asigna el usuario autenticado;
+ *              al volver a estados tempranos o anular limpia el aprobador; al
+ *              activar o finalizar lo conserva.
+ * @param {CambioEstadoInput} input - contratoId, estado destino y motivo opcional.
+ * @param {AuthenticatedUser} user - Usuario autenticado.
+ * @returns {Promise<Contrato>} Contrato actualizado con relaciones de interés.
+ * @throws {ActionError} NOT_FOUND fuera del tenant; TRANSICION_INVALIDA si la
+ *   transición no está permitida.
+ */
+export const cambiarEstadoContratoAction = withAction(async (input: CambioEstadoInput, user: AuthenticatedUser) => {
+  requireFeature(user, 'contratos', 'gestionar contratos');
+  const parsed = cambioEstadoSchema.parse(input);
+  const tenantId = requireTenant(user);
+
+  const existing = await prisma.contrato.findFirst({
+    where: { contratoId: parsed.contratoId, tenantId },
+  });
+  if (!existing) throw new ActionError('Contrato no encontrado', 'NOT_FOUND');
+
+  assertTransicionValida(existing.estado, parsed.estado);
+
+  const updateData: any = { estado: parsed.estado };
+  if (parsed.estado === 'APROBADO') {
+    updateData.aprobadoPor = user.userId;
+    updateData.fechaAprobacion = new Date();
+  } else if (parsed.estado !== 'ACTIVO' && parsed.estado !== 'FINALIZADO') {
+    updateData.aprobadoPor = null;
+    updateData.fechaAprobacion = null;
+  }
+
+  const contrato = await prisma.contrato.update({
+    where: { contratoId: parsed.contratoId },
+    data: updateData,
+    include: {
+      cliente: true,
+      vendor: true,
+      creador: { select: { userId: true, name: true, email: true } },
+      aprobador: { select: { userId: true, name: true, email: true } },
+    },
+  });
+
+  await AuditLogService.log({
+    accion: 'UPDATE',
+    entidad: 'CONTRATO',
+    entidadId: parsed.contratoId,
+    usuarioId: user.userId,
+    detalles: { desde: existing.estado, hacia: parsed.estado, ...(parsed.motivo ? { motivo: parsed.motivo } : {}) },
+  });
+
+  revalidatePath('/busy/contratos');
+  return contrato;
+});
+
+/**
+ * @description Cambio masivo de estado de contratos validando cada transición
+ *              contra la máquina de estados (CTF-1). Aplica un único updateMany
+ *              con los contratos cuya transición es válida y reporta los
+ *              fallidos por id con su motivo; nunca lanza por transiciones inválidas.
+ * @param {BulkStatusInput} input - ids de contratos y estado destino.
+ * @param {AuthenticatedUser} user - Usuario autenticado.
+ * @returns {Promise<{ success: true; actualizados: string[]; fallidos: Array<{ contratoId: string; motivo: string }> }>} Resultado por id.
+ */
 export const bulkUpdateContratoStatusAction = withAction(async (input: BulkStatusInput, user: AuthenticatedUser) => {
   requireFeature(user, 'contratos', 'gestionar contratos');
   const parsed = bulkStatusSchema.parse(input);
   const tenantId = requireTenant(user);
 
-  const result = await prisma.contrato.updateMany({
+  const contratos = await prisma.contrato.findMany({
     where: { contratoId: { in: parsed.ids }, tenantId },
-    data: { estado: parsed.estado },
+    select: { contratoId: true, estado: true },
   });
 
+  const actualizados: string[] = [];
+  const fallidos: { contratoId: string; motivo: string }[] = [];
+  for (const c of contratos) {
+    try {
+      assertTransicionValida(c.estado, parsed.estado);
+      actualizados.push(c.contratoId);
+    } catch (error) {
+      fallidos.push({
+        contratoId: c.contratoId,
+        motivo: error instanceof ActionError ? error.message : 'Error al validar la transición',
+      });
+    }
+  }
+
+  if (actualizados.length > 0) {
+    await prisma.contrato.updateMany({
+      where: { contratoId: { in: actualizados }, tenantId },
+      data: { estado: parsed.estado },
+    });
+  }
+
   revalidatePath('/busy/contratos');
-  return { success: true, count: result.count, message: `${result.count} contratos actualizados a ${parsed.estado}` };
+  return { success: true as const, actualizados, fallidos };
 });
 
 export const bulkDeleteContratosAction = withAction(async (input: BulkDeleteInput, user: AuthenticatedUser) => {
