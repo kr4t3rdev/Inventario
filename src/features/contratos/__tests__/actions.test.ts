@@ -184,6 +184,22 @@ describe('Contratos Server Actions', () => {
       });
     });
 
+    it('reporta los ids inexistentes como fallidos', async () => {
+      vi.mocked(getCurrentUser).mockResolvedValue(mockUser);
+      vi.mocked(prisma.contrato.findMany).mockResolvedValue([
+        { contratoId: 'ct-1', estado: 'PENDIENTE_APROBACION' },
+      ] as any);
+      vi.mocked(prisma.contrato.updateMany).mockResolvedValue({ count: 1 } as any);
+
+      const result = await bulkUpdateContratoStatusAction({ ids: ['ct-1', 'ct-inexistente'], estado: 'APROBADO' });
+
+      expect(result.success).toBe(true);
+      expect(result.data!.actualizados).toEqual(['ct-1']);
+      expect(result.data!.fallidos).toEqual([
+        { contratoId: 'ct-inexistente', motivo: 'Contrato no encontrado' },
+      ]);
+    });
+
     it('no lanza error cuando todos los contratos tienen transición inválida', async () => {
       vi.mocked(getCurrentUser).mockResolvedValue(mockUser);
       vi.mocked(prisma.contrato.findMany).mockResolvedValue([

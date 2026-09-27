@@ -138,6 +138,27 @@ describe('CTF-1 handlers de estado de contratos', () => {
       expect(json.fallidos).toHaveLength(1);
       expect(prisma.contrato.updateMany).not.toHaveBeenCalled();
     });
+
+    it('reporta los ids inexistentes como fallidos', async () => {
+      vi.mocked(prisma.contrato.findMany).mockResolvedValue([
+        { contratoId: 'ct-1', estado: 'PENDIENTE_APROBACION' },
+      ] as never);
+      vi.mocked(prisma.contrato.updateMany).mockResolvedValue({ count: 1 } as never);
+
+      const res = await bulkUpdateContratoStatusHandler(
+        req('http://localhost/api/contratos/bulk/update-status', {
+          method: 'POST',
+          body: JSON.stringify({ ids: ['ct-1', 'ct-inexistente'], estado: 'APROBADO' }),
+        }),
+      ) as Response;
+      const json = await res.json();
+
+      expect(res.status).toBe(200);
+      expect(json.actualizados).toEqual(['ct-1']);
+      expect(json.fallidos).toEqual([
+        { contratoId: 'ct-inexistente', motivo: 'Contrato no encontrado' },
+      ]);
+    });
   });
 
   describe('createContratoAprobacionHandler', () => {

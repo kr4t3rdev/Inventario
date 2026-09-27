@@ -361,7 +361,9 @@ export async function bulkUpdateContratoStatusHandler(req: NextRequest): Promise
     })
     const actualizados: string[] = []
     const fallidos: { contratoId: string; motivo: string }[] = []
+    const idsEncontrados = new Set<string>()
     for (const c of contratos) {
+      idsEncontrados.add(c.contratoId)
       if (puedeTransicionar(c.estado, estado)) {
         actualizados.push(c.contratoId)
       } else {
@@ -369,6 +371,11 @@ export async function bulkUpdateContratoStatusHandler(req: NextRequest): Promise
           contratoId: c.contratoId,
           motivo: `No se puede cambiar un contrato de ${c.estado} a ${estado}`,
         })
+      }
+    }
+    for (const id of ids) {
+      if (!idsEncontrados.has(id)) {
+        fallidos.push({ contratoId: id, motivo: 'Contrato no encontrado' })
       }
     }
     if (actualizados.length > 0) {

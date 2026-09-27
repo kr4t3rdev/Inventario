@@ -54,8 +54,7 @@ describe('CTF-5 configuración de contratos por tenant', () => {
 
   describe('GET', () => {
     it('crea la fila default con upsert perezoso y responde diasAvisoVencimiento', async () => {
-      vi.mocked(prisma.configuracionContratos.findUnique).mockResolvedValue(null as never);
-      vi.mocked(prisma.configuracionContratos.create).mockResolvedValue({
+      vi.mocked(prisma.configuracionContratos.upsert).mockResolvedValue({
         configId: 'cfg-1',
         tenantId: 'tenant-A',
         diasAvisoVencimiento: 30,
@@ -66,16 +65,16 @@ describe('CTF-5 configuración de contratos por tenant', () => {
 
       expect(res.status).toBe(200);
       expect(json.diasAvisoVencimiento).toBe(30);
-      expect(prisma.configuracionContratos.findUnique).toHaveBeenCalledWith(
-        expect.objectContaining({ where: { tenantId: 'tenant-A' } }),
-      );
-      expect(prisma.configuracionContratos.create).toHaveBeenCalledWith(
-        expect.objectContaining({ data: expect.objectContaining({ tenantId: 'tenant-A' }) }),
+      expect(prisma.configuracionContratos.upsert).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: { tenantId: 'tenant-A' },
+          create: expect.objectContaining({ tenantId: 'tenant-A' }),
+        }),
       );
     });
 
     it('devuelve la fila existente del tenant sin crear otra', async () => {
-      vi.mocked(prisma.configuracionContratos.findUnique).mockResolvedValue({
+      vi.mocked(prisma.configuracionContratos.upsert).mockResolvedValue({
         configId: 'cfg-1',
         tenantId: 'tenant-A',
         diasAvisoVencimiento: 15,
@@ -86,7 +85,6 @@ describe('CTF-5 configuración de contratos por tenant', () => {
 
       expect(res.status).toBe(200);
       expect(json.diasAvisoVencimiento).toBe(15);
-      expect(prisma.configuracionContratos.create).not.toHaveBeenCalled();
     });
 
     it('responde 403 cuando el usuario no tiene tenant', async () => {
@@ -97,7 +95,7 @@ describe('CTF-5 configuración de contratos por tenant', () => {
       const res = await GET(new NextRequestShim('http://localhost/api/configuracion/sistema/contratos') as never) as Response;
 
       expect(res.status).toBe(403);
-      expect(prisma.configuracionContratos.findUnique).not.toHaveBeenCalled();
+      expect(prisma.configuracionContratos.upsert).not.toHaveBeenCalled();
     });
   });
 
@@ -152,11 +150,6 @@ describe('CTF-5 configuración de contratos por tenant', () => {
 
   describe('aislamiento', () => {
     it('un tenant solo lee y escribe su propia fila', async () => {
-      vi.mocked(prisma.configuracionContratos.findUnique).mockResolvedValue({
-        configId: 'cfg-a',
-        tenantId: 'tenant-A',
-        diasAvisoVencimiento: 10,
-      } as never);
       vi.mocked(prisma.configuracionContratos.upsert).mockResolvedValue({
         configId: 'cfg-a',
         tenantId: 'tenant-A',
@@ -169,9 +162,6 @@ describe('CTF-5 configuración de contratos por tenant', () => {
         body: JSON.stringify({ diasAvisoVencimiento: 15 }),
       }) as never);
 
-      expect(prisma.configuracionContratos.findUnique).toHaveBeenCalledWith(
-        expect.objectContaining({ where: { tenantId: 'tenant-A' } }),
-      );
       expect(prisma.configuracionContratos.upsert).toHaveBeenCalledWith(
         expect.objectContaining({ where: { tenantId: 'tenant-A' } }),
       );

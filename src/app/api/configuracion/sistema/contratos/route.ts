@@ -20,16 +20,13 @@ export const GET = withAuth(async (request: NextRequest) => {
       return NextResponse.json({ error: 'Se requiere una membresía de empresa activa' }, { status: 403 });
     }
 
-    let config = await prisma.configuracionContratos.findUnique({
+    // Upsert perezoso: la primera consulta crea la fila default del tenant
+    // (update vacío: solo la crea si falta).
+    const config = await prisma.configuracionContratos.upsert({
       where: { tenantId: user.tenantId },
+      update: {},
+      create: { tenantId: user.tenantId },
     });
-
-    if (!config) {
-      // Upsert perezoso: la primera consulta crea la fila default del tenant.
-      config = await prisma.configuracionContratos.create({
-        data: { tenantId: user.tenantId },
-      });
-    }
 
     return NextResponse.json({ diasAvisoVencimiento: config.diasAvisoVencimiento });
   } catch (error) {

@@ -294,7 +294,9 @@ export const bulkUpdateContratoStatusAction = withAction(async (input: BulkStatu
 
   const actualizados: string[] = [];
   const fallidos: { contratoId: string; motivo: string }[] = [];
+  const idsEncontrados = new Set<string>();
   for (const c of contratos) {
+    idsEncontrados.add(c.contratoId);
     try {
       assertTransicionValida(c.estado, parsed.estado);
       actualizados.push(c.contratoId);
@@ -303,6 +305,11 @@ export const bulkUpdateContratoStatusAction = withAction(async (input: BulkStatu
         contratoId: c.contratoId,
         motivo: error instanceof ActionError ? error.message : 'Error al validar la transición',
       });
+    }
+  }
+  for (const id of parsed.ids) {
+    if (!idsEncontrados.has(id)) {
+      fallidos.push({ contratoId: id, motivo: 'Contrato no encontrado' });
     }
   }
 
