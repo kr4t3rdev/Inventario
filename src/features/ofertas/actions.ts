@@ -22,11 +22,11 @@ import {
 import type { OfertaInput, OfertaUpdateInput, FacturarOfertaInput } from './schemas';
 import type { AuthenticatedUser } from '@/lib/auth-middleware';
 import type { Oferta } from '@/app/models/model';
-import { getPrecioEfectivo } from '@/lib/types/pricing';
 import { crearOfertaConNumero } from './lib/numero-oferta-generator';
 import { expirarOfertasVencidas } from './services/expiracion-ofertas-service';
 import { transicionPermitida } from './lib/transiciones-estado';
 import { calcularTotalesOferta } from './lib/totales-oferta';
+import { resolverItemsOferta } from './lib/resolver-items-oferta';
 
 function serializeOferta(oferta: unknown): Oferta {
   return JSON.parse(JSON.stringify(oferta)) as Oferta;
@@ -61,23 +61,7 @@ export const createOfertaAction = withAction(async (input: OfertaInput, user: Au
   });
   if (!cliente) throw new ActionError('Cliente no encontrado', 'NOT_FOUND');
 
-  const resolvedItems = await Promise.all(parsed.items.map(async (item) => {
-    if (item.productoId) {
-      const producto = await prisma.producto.findFirst({
-        where: { id: item.productoId, tenantId },
-        include: { precios: true },
-      });
-      if (!producto) throw new ActionError('Producto no encontrado', 'NOT_FOUND');
-      const precioUnitario = getPrecioEfectivo(producto, cliente.listaPrecioId);
-      return { productoId: item.productoId as string, servicioId: null as string | null, cantidad: item.cantidad, precioUnitario };
-    }
-
-    const servicio = await prisma.servicios.findFirst({
-      where: { servicioId: item.servicioId, tenantId },
-    });
-    if (!servicio) throw new ActionError('Servicio no encontrado', 'NOT_FOUND');
-    return { productoId: null as string | null, servicioId: item.servicioId ?? null, cantidad: item.cantidad, precioUnitario: Number(servicio.precio) };
-  }));
+  const resolvedItems = await resolverItemsOferta(tenantId, parsed.items, cliente.listaPrecioId);
 
   const totales = calcularTotalesOferta(
     resolvedItems.map((item) => ({ cantidad: item.cantidad, precioUnitario: item.precioUnitario })),
@@ -121,7 +105,8 @@ export const updateOfertaAction = withAction(async (input: OfertaUpdateInput, us
   const tenantId = requireTenant(user);
 
   const existing = await prisma.oferta.findFirst({
-  where: { id: ofertaId, tenantId }
+  where: { id: ofertaId, tenantId },
+  include: { cliente: true },
   });
   if (!existing) throw new ActionError('Oferta no encontrada', 'NOT_FOUND');
 
@@ -132,6 +117,46 @@ export const updateOfertaAction = withAction(async (input: OfertaUpdateInput, us
         'ESTADO_TRANSICION_INVALIDA',
       );
     }
+  }
+
+  if (parsed.items !== undefined) {
+    if (existing.estado !== 'PENDIENTE') {
+      throw new ActionError('Solo se pueden editar los ítems de una oferta en estado PENDIENTE', 'ITEMS_NO_EDITABLES');
+    }
+    const resolvedItems = await resolverItemsOferta(tenantId, parsed.items, existing.cliente?.listaPrecioId ?? null);
+    const impuestosDeclarados = parsed.impuestos ?? Number(existing.impuestos ?? 0);
+    const totales = calcularTotalesOferta(
+      resolvedItems.map((item) => ({ cantidad: item.cantidad, precioUnitario: item.precioUnitario })),
+      impuestosDeclarados,
+    );
+    if (!totales.ok) throw new ActionError(totales.message, totales.code);
+
+    const oferta = await prisma.$transaction(async (tx: any) => {
+      await tx.ofertaItem.deleteMany({ where: { ofertaId: existing.id } });
+      await tx.ofertaItem.createMany({
+        data: totales.lineas.map((linea, idx) => ({
+          ofertaId: existing.id,
+          productoId: resolvedItems[idx].productoId,
+          servicioId: resolvedItems[idx].servicioId,
+          cantidad: linea.cantidad,
+          precioUnitario: linea.precioUnitario,
+          total: linea.total,
+        })),
+      });
+      return tx.oferta.update({
+        where: { id: existing.id },
+        data: {
+          subtotal: totales.subtotal,
+          impuestos: totales.impuestos,
+          total: totales.total,
+          ...(parsed.estado !== undefined && { estado: parsed.estado }),
+          ...(parsed.observaciones !== undefined && { observaciones: parsed.observaciones }),
+        },
+        include: OFERTA_INCLUDE,
+      });
+    });
+    revalidatePath('/busy/ofertas');
+    return serializeOferta(oferta);
   }
 
   const oferta = await prisma.oferta.update({
@@ -159,6 +184,74 @@ export const deleteOfertaAction = withAction(async (id: string, user: Authentica
   await prisma.oferta.delete({ where: { id: id } });
   revalidatePath('/busy/ofertas');
   return { id, eliminado: true };
+});
+
+/**
+ * @description Duplica una oferta del tenant: número nuevo vía generador con
+ * reintento, estado PENDIENTE, ítems re-resueltos a precio vigente y totales
+ * recalculados en servidor. La fechaVencimiento se conserva solo si sigue
+ * futura; los impuestos declarados se conservan y se revalidan.
+ */
+export const duplicarOfertaAction = withAction(async (ofertaId: string, user: AuthenticatedUser) => {
+  requireFeature(user, 'ofertas', 'gestionar ofertas');
+  const tenantId = requireTenant(user);
+
+  const original = await prisma.oferta.findFirst({
+    where: { id: ofertaId, tenantId },
+    include: { items: true, cliente: true },
+  });
+  if (!original) throw new ActionError('Oferta no encontrada', 'NOT_FOUND');
+
+  const resolvedItems = await resolverItemsOferta(
+    tenantId,
+    original.items.map((item) => ({
+      productoId: item.productoId ?? undefined,
+      servicioId: item.servicioId ?? undefined,
+      cantidad: item.cantidad,
+    })),
+    original.cliente?.listaPrecioId ?? null,
+  );
+
+  const totales = calcularTotalesOferta(
+    resolvedItems.map((item) => ({ cantidad: item.cantidad, precioUnitario: item.precioUnitario })),
+    Number(original.impuestos ?? 0),
+  );
+  if (!totales.ok) {
+    throw new ActionError(`No se pudo duplicar la oferta: ${totales.message}`, totales.code);
+  }
+
+  const fechaVencimiento =
+    original.fechaVencimiento && new Date(original.fechaVencimiento) > new Date()
+      ? new Date(original.fechaVencimiento)
+      : null;
+
+  const duplicada = await crearOfertaConNumero({
+    tenantId,
+    buildData: (numeroOferta) => ({
+      tenantId,
+      numeroOferta,
+      clienteId: original.clienteId,
+      fechaVencimiento,
+      estado: 'PENDIENTE' as const,
+      subtotal: totales.subtotal,
+      impuestos: totales.impuestos,
+      total: totales.total,
+      observaciones: original.observaciones || null,
+      items: {
+        create: totales.lineas.map((linea, idx) => ({
+          productoId: resolvedItems[idx].productoId,
+          servicioId: resolvedItems[idx].servicioId,
+          cantidad: linea.cantidad,
+          precioUnitario: linea.precioUnitario,
+          total: linea.total,
+        })),
+      },
+    }),
+    create: (data) => prisma.oferta.create({ data, include: OFERTA_INCLUDE }),
+  });
+
+  revalidatePath('/busy/ofertas');
+  return serializeOferta(duplicada);
 });
 
 export const facturarOfertaAction = withAction(async (input: FacturarOfertaInput, user: AuthenticatedUser) => {
