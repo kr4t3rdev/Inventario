@@ -4,6 +4,7 @@ import { z } from 'zod'
 import { authenticateUser } from '@/lib/auth-middleware'
 import { ActionError } from '@/lib/server-actions/types'
 import { puedeTransicionar } from '@/features/contratos/lib/estado-contrato-machine'
+import { registrarFirmaYTransicionar } from '@/features/contratos/lib/firmas-contrato'
 import { generarProximoConsecutivo, formatearNumeroContrato, crearContratoConConsecutivo } from '@/features/contratos/lib/numeroContratoGenerator'
 import fs from 'fs'
 import path from 'path'
@@ -76,8 +77,9 @@ const bulkDeleteSchema = z.object({
 const contratoFirmaSchema = z.object({
   firmanteId: z.string().min(1, 'El firmante es requerido'),
   tipoFirma: z.enum(['CLIENTE', 'PROVEEDOR', 'INTERNO']),
-  estado: z.string().optional(),
+  estado: z.enum(['PENDIENTE', 'FIRMADA', 'RECHAZADA']).optional(),
   firmaDigital: z.string().nullable().optional(),
+  // CTF-3: la fechaFirma de una firma FIRMADA la asigna el servidor.
   fechaFirma: z.string().datetime().nullable().optional(),
   comentarios: z.string().nullable().optional(),
 })
@@ -698,18 +700,12 @@ export async function createContratoFirmaHandler(request: NextRequest, { params 
     if (!firmanteValido) {
       return NextResponse.json({ error: 'Contrato no encontrado' }, { status: 404 })
     }
-    const firma = await prisma.contratoFirma.create({
-      data: {
-        contratoId: id,
-        firmanteId: parsed.firmanteId,
-        tipoFirma: parsed.tipoFirma,
-        estado: parsed.estado || 'PENDIENTE',
-        firmaDigital: parsed.firmaDigital,
-        fechaFirma: parsed.fechaFirma ? new Date(parsed.fechaFirma) : null,
-        comentarios: parsed.comentarios,
-      },
-      include: { firmante: { select: { userId: true, name: true, email: true } } },
-    })
+    // CTF-3: el registro de la firma y la activación del contrato (APROBADO →
+    // ACTIVO con firma FIRMADA) ocurren vía la máquina de estados.
+    const { firma } = await registrarFirmaYTransicionar(
+      { contratoId: id, estado: owner.estado },
+      parsed,
+    )
     return NextResponse.json(firma)
   } catch (error) {
     console.error('Error al crear firma:', error)
