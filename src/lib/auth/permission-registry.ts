@@ -379,6 +379,13 @@ export const PERMISSION_REGISTRY: PermissionDef[] = [
 		sensitive: true,
 	},
 	{
+		key: 'ventas.servicios.facturar',
+		label: 'Facturar ventas de servicios',
+		description: 'Emitir el documento de factura para ventas de servicios.',
+		category: 'ventas',
+		defaultRoles: ['manager'],
+	},
+	{
 		key: 'ventas.venta.registrar',
 		label: 'Registrar ventas',
 		description: 'Crear ventas en nombre del tenant.',

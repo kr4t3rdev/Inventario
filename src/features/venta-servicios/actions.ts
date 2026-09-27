@@ -12,9 +12,20 @@ import { requireTenant, requireFeature, requirePermission } from '@/lib/services
 import { withPeriodValidation } from '@/lib/services/with-period-validation';
 import { applyAnticipoAllocations } from '@/lib/services/anticipos-workflow';
 import { exigirLimiteCredito } from '@/features/crm/services/credito-enforcement';
+import { resolverSerieYNumero } from '@/features/ventas/services/serie-facturacion-service';
 import { AuditLogService } from '@/lib/services/audit-log-service';
-import { ventaServicioLegacySchema, ventaMixtaSchema, updateVentaServicioSchema } from './schemas';
-import type { VentaServicioInput, VentaMixtaInput, VentaServicioUpdateInput } from './schemas';
+import {
+  ventaServicioLegacySchema,
+  ventaMixtaSchema,
+  updateVentaServicioSchema,
+  facturarVentaServicioSchema,
+} from './schemas';
+import type {
+  VentaServicioInput,
+  VentaMixtaInput,
+  VentaServicioUpdateInput,
+  FacturarVentaServicioInput,
+} from './schemas';
 import type { AuthenticatedUser } from '@/lib/auth-middleware';
 import { buildPersistedAccountingAmount } from '@/features/contabilidad/services/accounting-reconciliation-service';
 import { exchangeRateProvider } from '@/features/contabilidad/services/exchange-rate-provider';
@@ -583,6 +594,17 @@ export const deleteVentaServicioAction = withAction(async (id: string, user: Aut
     );
   }
 
+  // C-6: con factura emitida la venta es documento fiscal; no se elimina.
+  const facturasCount = await prisma.factura.count({
+    where: { ventaServicioId: id },
+  });
+  if (facturasCount > 0) {
+    throw new ActionError(
+      'No se puede eliminar la venta: tiene una factura emitida; anula primero la factura',
+      'VENTA_CON_FACTURA',
+    );
+  }
+
   // C-5: una CxC activa protege la venta del borrado — anularla es un acto
   // explícito y auditable, no un efecto colateral del delete.
   const cxcActiva = await prisma.cuentaPorCobrar.findFirst({
@@ -606,4 +628,105 @@ export const deleteVentaServicioAction = withAction(async (id: string, user: Aut
   });
   revalidatePath('/busy/servicios');
   return { id, eliminado: true };
+});
+
+/**
+ * @description Emite el documento de factura para una venta de servicio (C-6).
+ * Numeración compartida de SerieFacturacion; enlaza la CxC existente sin crear
+ * deuda nueva (el tope de crédito ya fue validado al crear/actualizar la venta).
+ * Si la venta ya está cobrada (`reconciliado`), la factura nace PAGADA y la CxC
+ * pendiente se cierra en la misma transacción.
+ * @param {FacturarVentaServicioInput} input - Venta a facturar y vencimiento opcional.
+ * @param {AuthenticatedUser} user - Usuario autenticado.
+ * @returns {Promise<object>} Factura emitida.
+ * @throws {ActionError} NOT_FOUND, FACTURA_REQUIERE_CLIENTE, VENTA_YA_FACTURADA, FORBIDDEN.
+ */
+export const facturarVentaServicioAction = withAction(async (input: FacturarVentaServicioInput, user: AuthenticatedUser) => {
+  const parsed = facturarVentaServicioSchema.parse(input);
+  const tenantId = requireTenant(user);
+  requireFeature(user, 'servicios', 'facturar servicios');
+  requireFeature(user, 'facturacion', 'facturar servicios');
+  requireFeature(user, 'ventas-factura', 'facturar servicios');
+  requirePermission(user, 'ventas.servicios.facturar', 'facturar ventas de servicios');
+
+  const venta = await prisma.ventaServicios.findFirst({
+    where: { ventaServicioId: parsed.ventaServicioId, tenantId },
+    include: { factura: { select: { idFactura: true } } },
+  });
+  if (!venta) throw new ActionError('Venta de servicio no encontrada', 'NOT_FOUND');
+  if (!venta.clienteId) {
+    throw new ActionError(
+      'La venta no tiene cliente asociado; no se puede facturar',
+      'FACTURA_REQUIERE_CLIENTE',
+    );
+  }
+  if (venta.factura?.idFactura) {
+    throw new ActionError('La venta ya tiene una factura asociada', 'VENTA_YA_FACTURADA');
+  }
+
+  const fechaVencimiento = parsed.fechaVencimiento ? new Date(parsed.fechaVencimiento) : null;
+  if (fechaVencimiento && Number.isNaN(fechaVencimiento.getTime())) {
+    throw new ActionError('La fecha de vencimiento no es válida', 'VALIDATION_ERROR');
+  }
+
+  const factura = await prisma.$transaction(async (tx) => {
+    const { serieId, numeroConsecutivo, numeroFactura } = await resolverSerieYNumero(tx, tenantId);
+    const doc = await tx.factura.create({
+      data: {
+        tenantId,
+        serieId,
+        numeroConsecutivo,
+        numeroFactura,
+        tipoDocumento: 'FACTURA',
+        ventaServicioId: venta.ventaServicioId,
+        clienteId: venta.clienteId,
+        subtotal: venta.total,
+        descuento: 0,
+        total: venta.total,
+        estado: venta.reconciliado ? 'PAGADA' : 'PENDIENTE',
+        creadoPor: user.userId || 'sistema',
+        fechaVencimiento,
+      },
+    });
+
+    const cxc = await tx.cuentaPorCobrar.findFirst({
+      where: { ventaServicioId: venta.ventaServicioId },
+      select: { cuentaPorCobrarId: true, estado: true, montoDeuda: true },
+    });
+    if (cxc && cxc.estado !== 'ANULADA') {
+      if (venta.reconciliado && cxc.estado !== 'PAGADA') {
+        // Cobrada sin documento: el documento nace pagado y la deuda se cierra.
+        await tx.cuentaPorCobrar.update({
+          where: { cuentaPorCobrarId: cxc.cuentaPorCobrarId },
+          data: { estado: 'PAGADA', montoPagado: cxc.montoDeuda },
+        });
+      } else if (!venta.reconciliado && cxc.estado !== 'PAGADA') {
+        // Deuda viva: solo se enlaza el documento, el monto no cambia.
+        await tx.cuentaPorCobrar.update({
+          where: { cuentaPorCobrarId: cxc.cuentaPorCobrarId },
+          data: { facturaId: doc.idFactura, numeroFactura, fechaVencimiento },
+        });
+      }
+    }
+
+    await AuditLogService.logStrict(
+      {
+        accion: 'EXECUTE',
+        entidad: 'VENTA_SERVICIO',
+        entidadId: venta.ventaServicioId,
+        usuarioId: user.userId,
+        detalles: {
+          tipo: 'VENTA_SERVICIO_FACTURADA',
+          facturaId: doc.idFactura,
+          numeroFactura,
+          estado: doc.estado,
+        },
+      },
+      tx,
+    );
+    return doc;
+  });
+
+  revalidatePath('/busy/servicios');
+  return factura;
 });

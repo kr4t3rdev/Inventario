@@ -13,10 +13,12 @@ import { LazyMotion, m as motion, AnimatePresence } from 'framer-motion'
 import { Button } from '@/components/ui/button'
 import { SidebarProvider, SidebarInset } from '@/components/ui/sidebar'
 import { deleteServicioAction } from '@/features/servicios/actions'
+import { facturarVentaServicioAction } from '@/features/venta-servicios/actions'
 import type { VentaServicio } from '@/features/venta-servicios/types'
 import { ColumnDef } from '@tanstack/react-table'
-import { Pencil, Plus, Trash2, ShoppingCart, Search, Package, CheckCircle, Truck } from 'lucide-react'
+import { Pencil, Plus, Trash2, ShoppingCart, Search, Package, CheckCircle, Truck, FileText } from 'lucide-react'
 import Link from 'next/link'
+import { useRouter } from 'next/navigation'
 import { toast } from 'sonner'
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
@@ -63,9 +65,12 @@ interface ServiciosContentProps {
   initialServicios: Servicio[]
   initialVentaServicios: VentaServicio[]
   tenantRole?: string
+  /** C-6: permiso `ventas.servicios.facturar` resuelto en el servidor. */
+  puedeFacturar?: boolean
 }
 
-export function ServiciosContent({ initialServicios, initialVentaServicios, tenantRole }: ServiciosContentProps) {
+export function ServiciosContent({ initialServicios, initialVentaServicios, tenantRole, puedeFacturar = false }: ServiciosContentProps) {
+  const router = useRouter()
   const [servicios, setServicios] = useState<Servicio[]>(initialServicios)
   const [isPending, startTransition] = useTransition()
 
@@ -102,6 +107,21 @@ export function ServiciosContent({ initialServicios, initialVentaServicios, tena
         }
         setServicioToDelete(null)
       })
+    }
+  }
+
+  /**
+   * @description Emite la factura de una venta de servicio (C-6) y avisa el
+   * resultado; el servidor revalida los datos al completar.
+   * @param {string} ventaServicioId - Venta a facturar.
+   */
+  const handleFacturarVenta = async (ventaServicioId: string) => {
+    const r = await facturarVentaServicioAction({ ventaServicioId })
+    if (r.success) {
+      toast.success(`Factura ${r.data?.numeroFactura ?? ''} emitida correctamente`)
+      router.refresh()
+    } else {
+      toast.error(r.error?.message || 'No se pudo emitir la factura')
     }
   }
 
@@ -171,7 +191,29 @@ export function ServiciosContent({ initialServicios, initialVentaServicios, tena
           {row.getValue('observaciones') || '-'}
         </span>
       )
-    }
+    },
+    ...(puedeFacturar ? [{
+      id: 'acciones',
+      header: 'Acciones',
+      cell: ({ row }: { row: { original: unknown } }) => {
+        const venta = row.original as VentaServicio
+        // Sin cliente no hay factura posible; con factura ya está emitida.
+        const disabled = !venta.clienteId || Boolean(venta.factura)
+        return (
+          <Button
+            type='button'
+            variant='outline'
+            size='sm'
+            disabled={disabled}
+            title={venta.factura ? 'Ya tiene factura emitida' : 'Emitir factura de la venta'}
+            onClick={() => venta.ventaServicioId && handleFacturarVenta(venta.ventaServicioId)}
+          >
+            <FileText className='mr-1 h-4 w-4' />
+            {venta.factura ? 'Facturada' : 'Facturar'}
+          </Button>
+        )
+      }
+    }] : []),
   ]
 
   return (

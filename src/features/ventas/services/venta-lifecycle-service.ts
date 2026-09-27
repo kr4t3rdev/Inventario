@@ -8,6 +8,7 @@ import { registrarMovimiento, revertirMovimientosDeOrigen } from '@/features/inv
 import { allocateFifoForSale } from '@/lib/services/fifo-allocation';
 import { applyFacturacionCobroWorkflow } from '@/features/ventas/services/facturacion-workflow';
 import { exigirLimiteCredito } from '@/features/crm/services/credito-enforcement';
+import { resolverSerieYNumero } from '@/features/ventas/services/serie-facturacion-service';
 import { AuditLogService } from '@/lib/services/audit-log-service';
 import { anularVentaSchema, facturarVentaSchema } from '@/features/ventas/schemas';
 import type { AuthenticatedUser } from '@/lib/auth-middleware';
@@ -374,32 +375,8 @@ export const VentaLifecycleService = {
         }
       }
 
-      let serie = await tx.serieFacturacion.findFirst({
-        where: { tenantId, esPorDefecto: true },
-      });
-      if (!serie) {
-        serie = await tx.serieFacturacion.findFirst({
-          where: { tenantId },
-          orderBy: { createdAt: 'asc' },
-        });
-      }
-      if (!serie) {
-        serie = await tx.serieFacturacion.create({
-          data: {
-            tenantId,
-            prefijo: 'FV',
-            descripcion: 'Facturas de Venta',
-            consecutivo: 1,
-            esPorDefecto: true,
-          },
-        });
-      }
-      const updatedSerie = await tx.serieFacturacion.update({
-        where: { serieId: serie.serieId },
-        data: { consecutivo: { increment: 1 } },
-      });
-      const numeroConsecutivo = updatedSerie.consecutivo - 1;
-      const numeroFactura = `${serie.prefijo}-${String(numeroConsecutivo).padStart(6, '0')}`;
+      // C-6/D7: numeración compartida con la facturación de servicios.
+      const { serieId, numeroConsecutivo, numeroFactura } = await resolverSerieYNumero(tx, tenantId);
 
         const claimed = await tx.venta.updateMany({
           where: { ventaId, tenantId, estado: 'ENTREGADA', deletedAt: null },
@@ -427,7 +404,7 @@ export const VentaLifecycleService = {
       const factura = await tx.factura.create({
         data: {
           tenantId,
-          serieId: serie.serieId,
+          serieId,
           numeroConsecutivo,
           numeroFactura,
           tipoDocumento: 'FACTURA',

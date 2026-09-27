@@ -43,6 +43,9 @@ vi.mock("@/lib/prisma", () => ({
 		cuentaPorCobrar: {
 			findFirst: vi.fn(),
 		},
+		factura: {
+			count: vi.fn(),
+		},
 		reconciliacionServicio: {
 			count: vi.fn(),
 		},
@@ -93,6 +96,7 @@ describe("VentaServicios Server Actions", () => {
 	beforeEach(() => {
 		vi.clearAllMocks();
 		vi.stubEnv("PERIODO_GUARD_ENABLED", "false");
+		vi.mocked(prisma.factura.count).mockResolvedValue(0);
 	});
 
 	describe("getVentaServiciosAction", () => {

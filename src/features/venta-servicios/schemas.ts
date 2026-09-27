@@ -56,6 +56,17 @@ export const updateVentaServicioSchema = z.object({
   // con el precio unitario persistido y el costo es el snapshot histórico (C-3).
 }).strict();
 
+/**
+ * Schema de facturación de una venta de servicio (C-6): emite el documento
+ * `Factura` y enlaza la CxC existente. No acepta montos: el total ya está
+ * persistido y la deuda ya fue validada al crear/actualizar la venta.
+ */
+export const facturarVentaServicioSchema = z.object({
+  ventaServicioId: z.string().min(1),
+  fechaVencimiento: z.string().optional().nullable(),
+}).strict();
+
 export type VentaServicioInput = z.infer<typeof ventaServicioLegacySchema>;
 export type VentaMixtaInput = z.infer<typeof ventaMixtaSchema>;
 export type VentaServicioUpdateInput = z.infer<typeof updateVentaServicioSchema>;
+export type FacturarVentaServicioInput = z.infer<typeof facturarVentaServicioSchema>;

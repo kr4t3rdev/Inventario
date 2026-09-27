@@ -122,6 +122,40 @@ export function validateSaleReconciliationInput(input: {
 }
 
 /**
+ * @description Cierra el ciclo del documento de una venta de servicio cobrada
+ * (C-6): la Factura emitida y la CxC enlazada pasan a PAGADA. Condicional —
+ * si no hay documento ni CxC, no toca nada. Debe llamarse dentro de la
+ * transacción del writer de cobro (action web o servicio compartido móvil).
+ * @param {Pick<Prisma.TransactionClient, 'factura' | 'cuentaPorCobrar'>} tx - Transacción del writer.
+ * @param {string} ventaServicioId - Venta de servicio cobrada.
+ */
+export async function cerrarDocumentoServicio(
+  tx: Pick<Prisma.TransactionClient, 'factura' | 'cuentaPorCobrar'>,
+  ventaServicioId: string,
+): Promise<void> {
+  const facturaServicio = await tx.factura.findFirst({
+    where: { ventaServicioId, estado: { not: 'ANULADA' } },
+    select: { idFactura: true, estado: true },
+  });
+  if (facturaServicio && facturaServicio.estado !== 'PAGADA') {
+    await tx.factura.update({
+      where: { idFactura: facturaServicio.idFactura },
+      data: { estado: 'PAGADA' },
+    });
+  }
+  const cxcServicio = await tx.cuentaPorCobrar.findFirst({
+    where: { ventaServicioId },
+    select: { cuentaPorCobrarId: true, estado: true, montoDeuda: true },
+  });
+  if (cxcServicio && cxcServicio.estado !== 'ANULADA' && cxcServicio.estado !== 'PAGADA') {
+    await tx.cuentaPorCobrar.update({
+      where: { cuentaPorCobrarId: cxcServicio.cuentaPorCobrarId },
+      data: { estado: 'PAGADA', montoPagado: cxcServicio.montoDeuda },
+    });
+  }
+}
+
+/**
  * @description Shared service for accounting reconciliation flows used by web and mobile adapters.
  */
 export const AccountingReconciliationService = {
@@ -588,6 +622,9 @@ export const AccountingReconciliationService = {
         where: { ventaServicioId: input.ventaServicioId },
         data: { reconciliado: true },
       });
+
+      // C-6: el cobro cierra el ciclo del documento (Factura y CxC enlazadas).
+      await cerrarDocumentoServicio(tx, input.ventaServicioId);
 
       return { reconciliado: true, distribuciones: input.distribuciones.length };
     });
