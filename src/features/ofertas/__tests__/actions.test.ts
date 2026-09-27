@@ -123,6 +123,27 @@ describe('Ofertas Server Actions', () => {
 
       expect(result.success).toBe(false);
     });
+
+    it('E-1 reintenta la creación cuando el número colisiona (P2002)', async () => {
+      vi.mocked(getCurrentUser).mockResolvedValue(mockUser);
+      vi.mocked(prisma.cliente.findFirst).mockResolvedValue({ clienteId: 'cli-1', nombre: 'Test' });
+      vi.mocked(prisma.producto.findFirst).mockResolvedValue({
+        id: 'prod-1', tenantId: 'tenant-test', precioVenta: 1000, precios: [],
+      } as any);
+      vi.mocked(prisma.oferta.findFirst).mockResolvedValue({ numeroOferta: 'OF-000006' } as any);
+      const p2002 = Object.assign(new Error('Unique constraint'), { code: 'P2002' });
+      vi.mocked(prisma.oferta.create)
+        .mockRejectedValueOnce(p2002)
+        .mockResolvedValueOnce({ ofertaId: 'of-1', numeroOferta: 'OF-000007' } as any);
+
+      const result = await createOfertaAction({
+        clienteId: 'cli-1', subtotal: 1000, impuestos: 0, total: 1000,
+        items: [{ productoId: 'prod-1', cantidad: 1, precioUnitario: 1000, total: 1000 }],
+      });
+
+      expect(result.success).toBe(true);
+      expect(prisma.oferta.create).toHaveBeenCalledTimes(2);
+    });
   });
 
   describe('updateOfertaAction', () => {

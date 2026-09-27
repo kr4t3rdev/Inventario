@@ -23,6 +23,7 @@ import type { OfertaInput, OfertaUpdateInput, FacturarOfertaInput } from './sche
 import type { AuthenticatedUser } from '@/lib/auth-middleware';
 import type { Oferta } from '@/app/models/model';
 import { getPrecioEfectivo } from '@/lib/types/pricing';
+import { crearOfertaConNumero } from './lib/numero-oferta-generator';
 
 function serializeOferta(oferta: unknown): Oferta {
   return JSON.parse(JSON.stringify(oferta)) as Oferta;
@@ -75,24 +76,14 @@ export const createOfertaAction = withAction(async (input: OfertaInput, user: Au
   const subtotal = resolvedItems.reduce((sum, item) => sum + item.total, 0);
   const impuestos = parsed.impuestos ?? 0;
 
-  // Generar número de oferta secuencial por tenant
-  const ultimaOferta = await prisma.oferta.findFirst({
-    where: { tenantId },
-    orderBy: { numeroOferta: 'desc' },
-    select: { numeroOferta: true },
-  });
-  const nextNumber = ultimaOferta
-    ? parseInt(ultimaOferta.numeroOferta.replace('OF-', ''), 10) + 1
-    : 1;
-  const numeroOferta = `OF-${String(nextNumber).padStart(6, '0')}`;
-
-  const oferta = await prisma.oferta.create({
-    data: {
+  const oferta = await crearOfertaConNumero({
+    tenantId,
+    buildData: (numeroOferta) => ({
       tenantId,
       numeroOferta,
       clienteId: parsed.clienteId,
       fechaVencimiento: parsed.fechaVencimiento ? new Date(parsed.fechaVencimiento) : null,
-      estado: 'PENDIENTE',
+      estado: 'PENDIENTE' as const,
       subtotal,
       impuestos,
       total: subtotal + impuestos,
@@ -106,8 +97,8 @@ export const createOfertaAction = withAction(async (input: OfertaInput, user: Au
           total: item.total,
         })),
       },
-    },
-    include: OFERTA_INCLUDE,
+    }),
+    create: (data) => prisma.oferta.create({ data, include: OFERTA_INCLUDE }),
   });
 
   revalidatePath('/busy/ofertas');
