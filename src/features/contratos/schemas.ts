@@ -35,9 +35,8 @@ export const contratoUpdateSchema = z.object({
   numeroContratoClienteProveedor: z.string().nullable().optional(),
   clienteId: z.string().nullable().optional(),
   vendorId: z.string().nullable().optional(),
-  estado: estadoContratoEnum.optional(),
-  fechaAprobacion: z.string().datetime().nullable().optional(),
-  aprobadoPor: z.string().nullable().optional(),
+  // CTF-2: estado, fechaAprobacion y aprobadoPor no son escribibles por el
+  // cliente; el ciclo de vida solo cambia por la máquina de estados (CTF-1).
 });
 
 export const cambioEstadoSchema = z.object({

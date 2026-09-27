@@ -160,8 +160,9 @@ export const updateContratoAction = withAction(async (input: ContratoUpdateInput
   if (!existing) throw new ActionError('Contrato no encontrado', 'NOT_FOUND');
 
   const updateData: any = {};
+  // CTF-2: estado, fechaAprobacion y aprobadoPor no provienen del payload;
+  // el ciclo de vida solo cambia por cambiarEstadoContratoAction (CTF-1).
   if (data.tipo !== undefined) updateData.tipo = data.tipo;
-  if (data.estado !== undefined) updateData.estado = data.estado;
   if (data.monto !== undefined) updateData.monto = data.monto;
   if (data.moneda !== undefined) updateData.moneda = data.moneda;
   if (data.esMultiMoneda !== undefined) updateData.esMultiMoneda = data.esMultiMoneda;
@@ -170,10 +171,8 @@ export const updateContratoAction = withAction(async (input: ContratoUpdateInput
   if (data.numeroContratoClienteProveedor !== undefined) updateData.numeroContratoClienteProveedor = data.numeroContratoClienteProveedor;
   if (data.fechaInicio !== undefined) updateData.fechaInicio = new Date(data.fechaInicio);
   if (data.fechaFin !== undefined) updateData.fechaFin = data.fechaFin ? new Date(data.fechaFin) : null;
-  if (data.fechaAprobacion !== undefined) updateData.fechaAprobacion = data.fechaAprobacion ? new Date(data.fechaAprobacion) : null;
   if (data.clienteId !== undefined) updateData.cliente = data.clienteId ? { connect: { clienteId: data.clienteId } } : { disconnect: true };
   if (data.vendorId !== undefined) updateData.vendor = data.vendorId ? { connect: { vendorId: data.vendorId } } : { disconnect: true };
-  if (data.aprobadoPor !== undefined) updateData.aprobador = data.aprobadoPor ? { connect: { userId: data.aprobadoPor } } : { disconnect: true };
 
   const contrato = await prisma.contrato.update({
     where: { contratoId },

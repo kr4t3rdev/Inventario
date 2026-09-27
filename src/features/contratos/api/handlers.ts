@@ -47,10 +47,9 @@ const contratoUpdateSchema = z.object({
   numeroContratoClienteProveedor: z.string().nullable().optional(),
   clienteId: z.string().nullable().optional(),
   vendorId: z.string().nullable().optional(),
-  estado: z.enum(['BORRADOR', 'PENDIENTE_APROBACION', 'APROBADO', 'RECHAZADO', 'ACTIVO', 'FINALIZADO', 'ANULADO']).optional(),
-  numeroContrato: z.string().optional(),
-  fechaAprobacion: z.string().datetime().nullable().optional(),
-  aprobadoPor: z.string().nullable().optional(),
+  // CTF-2: estado, numeroContrato, fechaAprobacion y aprobadoPor no son
+  // escribibles por el cliente. El ciclo de vida solo cambia por la máquina de
+  // estados y la numeración la genera el servidor (consecutivo por tenant).
 }).refine(
   (data) => {
     if (data.tipo) {
@@ -282,15 +281,9 @@ export async function updateContratoHandler(request: NextRequest, { params }: { 
       const v = await prisma.vendor.findFirst({ where: { vendorId: validatedBody.vendorId, tenantId } })
       if (!v) return NextResponse.json({ error: 'Contrato no encontrado' }, { status: 404 })
     }
-    if (validatedBody.aprobadoPor !== undefined && validatedBody.aprobadoPor !== null) {
-      const validMiembro = await usuarioEsMiembroDelTenant(validatedBody.aprobadoPor, tenantId)
-      if (!validMiembro) return NextResponse.json({ error: 'Contrato no encontrado' }, { status: 404 })
-    }
 
     const data: any = {}
-    if (validatedBody.numeroContrato !== undefined) data.numeroContrato = validatedBody.numeroContrato
     if (validatedBody.tipo !== undefined) data.tipo = validatedBody.tipo
-    if (validatedBody.estado !== undefined) data.estado = validatedBody.estado
     if (validatedBody.monto !== undefined) data.monto = validatedBody.monto
     if (validatedBody.moneda !== undefined) data.moneda = validatedBody.moneda
     if (validatedBody.esMultiMoneda !== undefined) data.esMultiMoneda = validatedBody.esMultiMoneda
@@ -299,10 +292,8 @@ export async function updateContratoHandler(request: NextRequest, { params }: { 
     if (validatedBody.numeroContratoClienteProveedor !== undefined) data.numeroContratoClienteProveedor = validatedBody.numeroContratoClienteProveedor
     if (validatedBody.fechaInicio !== undefined) data.fechaInicio = new Date(validatedBody.fechaInicio)
     if (validatedBody.fechaFin !== undefined) data.fechaFin = validatedBody.fechaFin ? new Date(validatedBody.fechaFin) : null
-    if (validatedBody.fechaAprobacion !== undefined) data.fechaAprobacion = validatedBody.fechaAprobacion ? new Date(validatedBody.fechaAprobacion) : null
     if (validatedBody.clienteId !== undefined) data.cliente = validatedBody.clienteId ? { connect: { clienteId: validatedBody.clienteId } } : { disconnect: true }
     if (validatedBody.vendorId !== undefined) data.vendor = validatedBody.vendorId ? { connect: { vendorId: validatedBody.vendorId } } : { disconnect: true }
-    if (validatedBody.aprobadoPor !== undefined) data.aprobador = validatedBody.aprobadoPor ? { connect: { userId: validatedBody.aprobadoPor } } : { disconnect: true }
     const contrato = await prisma.contrato.update({
       where: { contratoId: id },
       data,
