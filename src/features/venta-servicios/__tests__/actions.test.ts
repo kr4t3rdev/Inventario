@@ -797,7 +797,7 @@ describe("delete con protección de CxC (C-5)", () => {
 
 	it("con CxC activa rechaza el borrado (VENTA_CON_CXC_ACTIVA) y la venta sobrevive", async () => {
 		vi.mocked(prisma.cuentaPorCobrar.findFirst).mockResolvedValue({
-			cuentaPorCobrarId: "cxc-1",
+			id: "cxc-1",
 		} as never);
 
 		const result = await deleteVentaServicioAction("vs-1");

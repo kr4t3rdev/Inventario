@@ -456,7 +456,7 @@ export const updateVentaServicioAction = withAction(async (input: VentaServicioU
   // C-4: la CxC activa de la venta acompaña cualquier cambio de deuda o cliente.
   const cxcActiva = await prisma.cuentaPorCobrar.findFirst({
     where: { ventaServicioId, estado: { not: 'ANULADA' } },
-    select: { cuentaPorCobrarId: true, estado: true, montoDeuda: true, clienteId: true },
+    select: { id: true, estado: true, montoDeuda: true, clienteId: true },
   });
 
   const cambiaCantidad = data.cantidad !== undefined && data.cantidad !== existing.cantidad;
@@ -533,7 +533,7 @@ export const updateVentaServicioAction = withAction(async (input: VentaServicioU
     if (cxcActiva && cambiaTotal) {
       // Claim de estado: solo se ajusta la deuda si la CxC sigue editable.
       const claim = await tx.cuentaPorCobrar.updateMany({
-        where: { cuentaPorCobrarId: cxcActiva.cuentaPorCobrarId, estado: { in: ['PENDIENTE', 'PARCIAL'] } },
+        where: { id: cxcActiva.id, estado: { in: ['PENDIENTE', 'PARCIAL'] } },
         data: { montoDeuda: nuevoTotal },
       });
       if (claim.count !== 1) {
@@ -545,7 +545,7 @@ export const updateVentaServicioAction = withAction(async (input: VentaServicioU
     }
     if (cxcActiva && cambiaCliente && data.clienteId) {
       await tx.cuentaPorCobrar.updateMany({
-        where: { cuentaPorCobrarId: cxcActiva.cuentaPorCobrarId, estado: { not: 'ANULADA' } },
+        where: { id: cxcActiva.id, estado: { not: 'ANULADA' } },
         data: { clienteId: data.clienteId },
       });
     }
@@ -609,7 +609,7 @@ export const deleteVentaServicioAction = withAction(async (id: string, user: Aut
   // explícito y auditable, no un efecto colateral del delete.
   const cxcActiva = await prisma.cuentaPorCobrar.findFirst({
     where: { ventaServicioId: id, estado: { not: 'ANULADA' } },
-    select: { cuentaPorCobrarId: true },
+    select: { id: true },
   });
   if (cxcActiva) {
     throw new ActionError(
@@ -660,6 +660,8 @@ export const facturarVentaServicioAction = withAction(async (input: FacturarVent
       'FACTURA_REQUIERE_CLIENTE',
     );
   }
+  // Capturar tras el guard: el narrowing no sobrevive dentro del callback de la tx.
+  const clienteIdFactura = venta.clienteId;
   if (venta.factura?.idFactura) {
     throw new ActionError('La venta ya tiene una factura asociada', 'VENTA_YA_FACTURADA');
   }
@@ -679,7 +681,7 @@ export const facturarVentaServicioAction = withAction(async (input: FacturarVent
         numeroFactura,
         tipoDocumento: 'FACTURA',
         ventaServicioId: venta.ventaServicioId,
-        clienteId: venta.clienteId,
+        clienteId: clienteIdFactura,
         subtotal: venta.total,
         descuento: 0,
         total: venta.total,
@@ -691,19 +693,19 @@ export const facturarVentaServicioAction = withAction(async (input: FacturarVent
 
     const cxc = await tx.cuentaPorCobrar.findFirst({
       where: { ventaServicioId: venta.ventaServicioId },
-      select: { cuentaPorCobrarId: true, estado: true, montoDeuda: true },
+      select: { id: true, estado: true, montoDeuda: true },
     });
     if (cxc && cxc.estado !== 'ANULADA') {
       if (venta.reconciliado && cxc.estado !== 'PAGADA') {
         // Cobrada sin documento: el documento nace pagado y la deuda se cierra.
         await tx.cuentaPorCobrar.update({
-          where: { cuentaPorCobrarId: cxc.cuentaPorCobrarId },
+          where: { id: cxc.id },
           data: { estado: 'PAGADA', montoPagado: cxc.montoDeuda },
         });
       } else if (!venta.reconciliado && cxc.estado !== 'PAGADA') {
         // Deuda viva: solo se enlaza el documento, el monto no cambia.
         await tx.cuentaPorCobrar.update({
-          where: { cuentaPorCobrarId: cxc.cuentaPorCobrarId },
+          where: { id: cxc.id },
           data: { facturaId: doc.idFactura, numeroFactura, fechaVencimiento },
         });
       }

@@ -70,7 +70,7 @@ describe('facturarVentaServicioAction (C-6)', () => {
       estado: 'PENDIENTE',
     } as never);
     mockTx.cuentaPorCobrar.findFirst.mockResolvedValue({
-      cuentaPorCobrarId: 'cxc-1',
+      id: 'cxc-1',
       estado: 'PENDIENTE',
       montoDeuda: 10000,
     } as never);
@@ -99,7 +99,7 @@ describe('facturarVentaServicioAction (C-6)', () => {
     });
     // La deuda ya existía: solo se enlaza el documento, no se crea CxC nueva.
     expect(mockTx.cuentaPorCobrar.update).toHaveBeenCalledWith({
-      where: { cuentaPorCobrarId: 'cxc-1' },
+      where: { id: 'cxc-1' },
       data: expect.objectContaining({
         facturaId: 'fac-1',
         numeroFactura: 'FV-000003',
@@ -155,7 +155,7 @@ describe('facturarVentaServicioAction (C-6)', () => {
       clienteId: 'cli-1', limiteCredito: 0,
     } as never);
     vi.mocked(prisma.cuentaPorCobrar.findMany).mockResolvedValue([
-      { cuentaPorCobrarId: 'cxc-vieja', montoDeuda: 999999, montoPagado: 0, estado: 'PENDIENTE' },
+      { id: 'cxc-vieja', montoDeuda: 999999, montoPagado: 0, estado: 'PENDIENTE' },
     ] as never);
 
     const result = await facturarVentaServicioAction({ ventaServicioId: 'vs-1' });

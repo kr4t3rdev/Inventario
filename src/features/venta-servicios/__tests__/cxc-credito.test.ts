@@ -303,7 +303,7 @@ describe('update coherente con la CxC (C-4)', () => {
     condicionPago: 'CREDITO',
   };
   const cxcActiva = {
-    cuentaPorCobrarId: 'cxc-1',
+    id: 'cxc-1',
     estado: 'PENDIENTE',
     montoDeuda: 5000,
     clienteId: 'cli-1',
@@ -335,7 +335,7 @@ describe('update coherente con la CxC (C-4)', () => {
       }),
     );
     expect(mockTx.cuentaPorCobrar.updateMany).toHaveBeenCalledWith({
-      where: { cuentaPorCobrarId: 'cxc-1', estado: { in: ['PENDIENTE', 'PARCIAL'] } },
+      where: { id: 'cxc-1', estado: { in: ['PENDIENTE', 'PARCIAL'] } },
       data: { montoDeuda: 10000 },
     });
   });
@@ -369,7 +369,7 @@ describe('update coherente con la CxC (C-4)', () => {
 
     expect(result.success).toBe(true);
     expect(mockTx.cuentaPorCobrar.updateMany).toHaveBeenCalledWith({
-      where: { cuentaPorCobrarId: 'cxc-1', estado: { not: 'ANULADA' } },
+      where: { id: 'cxc-1', estado: { not: 'ANULADA' } },
       data: { clienteId: 'cli-2' },
     });
   });

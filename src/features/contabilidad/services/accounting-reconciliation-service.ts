@@ -145,11 +145,11 @@ export async function cerrarDocumentoServicio(
   }
   const cxcServicio = await tx.cuentaPorCobrar.findFirst({
     where: { ventaServicioId },
-    select: { cuentaPorCobrarId: true, estado: true, montoDeuda: true },
+    select: { id: true, estado: true, montoDeuda: true },
   });
   if (cxcServicio && cxcServicio.estado !== 'ANULADA' && cxcServicio.estado !== 'PAGADA') {
     await tx.cuentaPorCobrar.update({
-      where: { cuentaPorCobrarId: cxcServicio.cuentaPorCobrarId },
+      where: { id: cxcServicio.id },
       data: { estado: 'PAGADA', montoPagado: cxcServicio.montoDeuda },
     });
   }

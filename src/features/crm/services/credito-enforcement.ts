@@ -63,14 +63,19 @@ export async function exigirLimiteCredito(
 
   const cuentas = await params.client.cuentaPorCobrar.findMany({
     where: { tenantId: params.tenantId, clienteId: params.clienteId, estado: { not: 'ANULADA' } },
-    select: { cuentaPorCobrarId: true, montoDeuda: true, montoPagado: true, estado: true },
+    select: { id: true, montoDeuda: true, montoPagado: true, estado: true },
   });
 
   // La cuenta excluida sale del saldo vivo: el caller pasa en montoRequerido
   // el nuevo monto completo de esa deuda (reemplazo), no un delta.
-  const vivas = params.cuentaExcluidaId
-    ? cuentas.filter((c) => c.cuentaPorCobrarId !== params.cuentaExcluidaId)
-    : cuentas;
+  const vivas = (params.cuentaExcluidaId
+    ? cuentas.filter((c) => c.id !== params.cuentaExcluidaId)
+    : cuentas
+  ).map((c) => ({
+    montoDeuda: Number(c.montoDeuda),
+    montoPagado: Number(c.montoPagado),
+    estado: c.estado,
+  }));
 
   const saldoVivo = saldoVivoCliente(vivas);
   if (

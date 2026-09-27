@@ -2357,7 +2357,7 @@ model Factura {
   tipoDocumento     TipoDocumento    @default(FACTURA)
   ventaId           String?          @unique
   // C-6: documento de factura para ventas de servicios (1:1, exclusivo con ventaId en la práctica).
-  ventaServicioId   String?
+  ventaServicioId   String?          @unique
   clienteId         String
   subtotal          Decimal
   impuestos         Decimal          @default(0)

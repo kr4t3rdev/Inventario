@@ -67,7 +67,7 @@ describe('exigirLimiteCredito (C-2)', () => {
 
   it('dentro del límite pasa sin override', async () => {
     const { client } = crearClient([
-      { cuentaPorCobrarId: 'cxc-1', montoDeuda: 300, montoPagado: 0, estado: 'PENDIENTE' },
+      { id: 'cxc-1', montoDeuda: 300, montoPagado: 0, estado: 'PENDIENTE' },
     ]);
 
     const r = await exigirLimiteCredito({ ...base, client, montoRequerido: 500 });
@@ -77,7 +77,7 @@ describe('exigirLimiteCredito (C-2)', () => {
 
   it('sobre el tope sin permiso lanza CREDITO_EXCEDIDO con saldo, requerido y límite', async () => {
     const { client } = crearClient([
-      { cuentaPorCobrarId: 'cxc-1', montoDeuda: 900, montoPagado: 0, estado: 'PENDIENTE' },
+      { id: 'cxc-1', montoDeuda: 900, montoPagado: 0, estado: 'PENDIENTE' },
     ]);
 
     await expect(
@@ -95,7 +95,7 @@ describe('exigirLimiteCredito (C-2)', () => {
 
   it('sobre el tope con permiso retorna overrideUsado sin auditar (lo hace el caller)', async () => {
     const { client } = crearClient([
-      { cuentaPorCobrarId: 'cxc-1', montoDeuda: 900, montoPagado: 0, estado: 'PENDIENTE' },
+      { id: 'cxc-1', montoDeuda: 900, montoPagado: 0, estado: 'PENDIENTE' },
     ]);
 
     const r = await exigirLimiteCredito({ ...base, client, montoRequerido: 500 });
@@ -105,7 +105,7 @@ describe('exigirLimiteCredito (C-2)', () => {
 
   it('CxC ANULADA no cuenta en el saldo vivo', async () => {
     const { client } = crearClient([
-      { cuentaPorCobrarId: 'cxc-1', montoDeuda: 900, montoPagado: 0, estado: 'ANULADA' },
+      { id: 'cxc-1', montoDeuda: 900, montoPagado: 0, estado: 'ANULADA' },
     ]);
 
     const r = await exigirLimiteCredito({ ...base, client, montoRequerido: 500 });
@@ -117,8 +117,8 @@ describe('exigirLimiteCredito (C-2)', () => {
     // Límite 1000. Cuentas: propia 800 (la que se va a reemplazar) y otra 300.
     // Con exclusión: saldo vivo = 300; requerido nuevo = 700 → 1000 ≤ 1000 pasa (igualdad no bloquea).
     const { client } = crearClient([
-      { cuentaPorCobrarId: 'cxc-propia', montoDeuda: 800, montoPagado: 0, estado: 'PENDIENTE' },
-      { cuentaPorCobrarId: 'cxc-otra', montoDeuda: 300, montoPagado: 0, estado: 'PENDIENTE' },
+      { id: 'cxc-propia', montoDeuda: 800, montoPagado: 0, estado: 'PENDIENTE' },
+      { id: 'cxc-otra', montoDeuda: 300, montoPagado: 0, estado: 'PENDIENTE' },
     ]);
 
     const r = await exigirLimiteCredito({
@@ -133,8 +133,8 @@ describe('exigirLimiteCredito (C-2)', () => {
 
   it('con exclusión, un requerido mayor al tope bloquea evaluando solo el saldo de terceros', async () => {
     const { client } = crearClient([
-      { cuentaPorCobrarId: 'cxc-propia', montoDeuda: 800, montoPagado: 0, estado: 'PENDIENTE' },
-      { cuentaPorCobrarId: 'cxc-otra', montoDeuda: 300, montoPagado: 0, estado: 'PENDIENTE' },
+      { id: 'cxc-propia', montoDeuda: 800, montoPagado: 0, estado: 'PENDIENTE' },
+      { id: 'cxc-otra', montoDeuda: 300, montoPagado: 0, estado: 'PENDIENTE' },
     ]);
 
     await expect(

@@ -44,7 +44,7 @@ describe('cierre de factura y CxC al cobrar servicios (C-6)', () => {
   it('marca PAGADA la Factura y la CxC enlazadas en la misma transacción', async () => {
     mockTx.factura.findFirst.mockResolvedValue({ idFactura: 'fac-1', estado: 'PENDIENTE' });
     mockTx.cuentaPorCobrar.findFirst.mockResolvedValue({
-      cuentaPorCobrarId: 'cxc-1',
+      id: 'cxc-1',
       estado: 'PENDIENTE',
       montoDeuda: 10000,
     });
@@ -57,7 +57,7 @@ describe('cierre de factura y CxC al cobrar servicios (C-6)', () => {
       data: { estado: 'PAGADA' },
     });
     expect(mockTx.cuentaPorCobrar.update).toHaveBeenCalledWith({
-      where: { cuentaPorCobrarId: 'cxc-1' },
+      where: { id: 'cxc-1' },
       data: { estado: 'PAGADA', montoPagado: 10000 },
     });
   });
@@ -76,7 +76,7 @@ describe('cierre de factura y CxC al cobrar servicios (C-6)', () => {
   it('Factura o CxC ya PAGADAS no se actualizan de nuevo', async () => {
     mockTx.factura.findFirst.mockResolvedValue({ idFactura: 'fac-1', estado: 'PAGADA' });
     mockTx.cuentaPorCobrar.findFirst.mockResolvedValue({
-      cuentaPorCobrarId: 'cxc-1',
+      id: 'cxc-1',
       estado: 'PAGADA',
       montoDeuda: 10000,
     });

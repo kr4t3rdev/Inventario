@@ -371,7 +371,7 @@ export function ReconciliacionServiciosForm({
 										<span className="text-muted-foreground">Cliente:</span>
 										<p className="flex items-center gap-1">
 											<Building className="h-3 w-3" />
-											{servicio.cliente.clienteId || "N/A"}
+											{servicio.cliente?.clienteId || "N/A"}
 										</p>
 									</div>
 									<div>

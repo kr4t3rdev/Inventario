@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import type { ReactElement } from 'react';
 import { toast } from 'sonner';
 import {
   Dialog,
@@ -41,7 +42,7 @@ export function EditarLimiteCreditoDialog({
   clienteId,
   limiteActual,
   onActualizado,
-}: EditarLimiteCreditoDialogProps): JSX.Element {
+}: EditarLimiteCreditoDialogProps): ReactElement {
   const [valor, setValor] = useState('');
   const [error, setError] = useState<string | null>(null);
   const [isSaving, setIsSaving] = useState(false);
