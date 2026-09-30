@@ -225,9 +225,9 @@ async function seedVentasDemo(client: ProfessionalSeedClient, tenantId: string):
       data: {
         tenantId,
         total: 0, // se calcula abajo
-        subtotal: 0,
+        cantidad: 0, // se calcula abajo
         descuento: 0,
-        estado: 'completada',
+        estado: 'ENTREGADA',
         clienteId: demoSeedId('demo_base_cli_001', tenantId),
         puntoDeVentaId: demoSeedId('demo_base_pv', tenantId),
         createdAt: fecha,
@@ -236,18 +236,18 @@ async function seedVentasDemo(client: ProfessionalSeedClient, tenantId: string):
     }) as { ventaId: string }
     // Items de la venta
     const items = [
-      { ventaId: v1.ventaId, productoId: demoSeedId('demo_base_arroz', tenantId), cantidad: 2, precioUnitario: 95, subtotal: 190 },
-      { ventaId: v1.ventaId, productoId: demoSeedId('demo_base_aceite', tenantId), cantidad: 1, precioUnitario: 220, subtotal: 220 },
-      { ventaId: v1.ventaId, productoId: demoSeedId('demo_base_detergente', tenantId), cantidad: 1, precioUnitario: 165, subtotal: 165 },
-      { ventaId: v1.ventaId, productoId: demoSeedId('demo_base_jabon', tenantId), cantidad: 3, precioUnitario: 55, subtotal: 165 },
+      { ventaId: v1.ventaId, productoId: demoSeedId('demo_base_arroz', tenantId), cantidad: 2, precioUnitario: 95, total: 190 },
+      { ventaId: v1.ventaId, productoId: demoSeedId('demo_base_aceite', tenantId), cantidad: 1, precioUnitario: 220, total: 220 },
+      { ventaId: v1.ventaId, productoId: demoSeedId('demo_base_detergente', tenantId), cantidad: 1, precioUnitario: 165, total: 165 },
+      { ventaId: v1.ventaId, productoId: demoSeedId('demo_base_jabon', tenantId), cantidad: 3, precioUnitario: 55, total: 165 },
     ]
-    const total = items.reduce((s, i) => s + i.subtotal, 0)
+    const total = items.reduce((s, i) => s + i.total, 0)
     await client.ventaItem.createMany({ data: items })
     await client.venta.update({
       where: { ventaId: v1.ventaId },
       data: {
-        subtotal: total,
         total,
+        cantidad: items.reduce((s, i) => s + i.cantidad, 0),
       },
     })
   }

@@ -248,22 +248,22 @@ async function seedVentasEmp(client: EnterpriseSeedClient, tenantId: string): Pr
     const v = await client.venta.create({
       data: {
         tenantId,
-        total: 0, subtotal: 0, descuento: 0,
-        estado: 'completada',
+        total: 0, descuento: 0,
+        cantidad: 1 + (d % 3),
+        estado: 'ENTREGADA',
         clienteId: demoSeedId(`demo_emp_cli_00${7 + (d % 4)}`, tenantId),
         puntoDeVentaId: pvId,
         createdAt: fecha, updatedAt: fecha,
       },
     }) as { ventaId: string }
     await client.ventaItem.createMany({
-      data: [{ ventaId: v.ventaId, productoId: prodId, cantidad: 1 + (d % 3), precioUnitario: 500 + d * 100, subtotal: (1 + (d % 3)) * (500 + d * 100) }],
+      data: [{ ventaId: v.ventaId, productoId: prodId, cantidad: 1 + (d % 3), precioUnitario: 500 + d * 100, total: (1 + (d % 3)) * (500 + d * 100) }],
     })
-    const subtotal = (1 + (d % 3)) * (500 + d * 100)
+    const total = (1 + (d % 3)) * (500 + d * 100)
     await client.venta.update({
       where: { ventaId: v.ventaId },
       data: {
-        subtotal,
-        total: subtotal,
+        total,
       },
     })
   }
@@ -285,12 +285,13 @@ async function seedComprasEmp(client: EnterpriseSeedClient, tenantId: string): P
     await client.gastoCompra.create({
       data: {
         tenantId,
+        productoId: c.producto,
         vendorId: c.proveedor,
-        monto: c.costo,
-        tipoCompra: 'INVENTARIO',
+        cantidad: c.cantidad,
+        precioUnitario: Math.round(c.costo / c.cantidad),
+        total: c.costo,
         descripcion: `Compra demo de ${c.cantidad}u`,
-        estadoPago: 'PAGADA',
-        cuentaBancariaId: demoSeedId('demo_base_cup_transf', tenantId),
+        fechaCompra: fecha,
         createdAt: fecha, updatedAt: fecha,
       },
     })
@@ -312,11 +313,11 @@ async function seedTransferenciasEmp(client: EnterpriseSeedClient, tenantId: str
     await client.transferencia.create({
       data: {
         tenantId,
-        almacenOrigenId: t.origen,
-        almacenDestinoId: t.destino,
+        origenId: t.origen,
+        destinoId: t.destino,
         productoId: t.producto,
         cantidad: t.cantidad,
-        estado: 'completada',
+        estado: 'COMPLETADA',
         createdAt: fecha, updatedAt: fecha,
       },
     })
