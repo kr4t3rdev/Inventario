@@ -2,6 +2,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 const getCurrentUserMock = vi.hoisted(() => vi.fn());
 const getReconciliationStatsMock = vi.hoisted(() => vi.fn());
+const requirePermissionMock = vi.hoisted(() => vi.fn());
 const txMock = vi.hoisted(() => ({
 	$queryRaw: vi.fn(),
 	$executeRaw: vi.fn(),
@@ -43,6 +44,7 @@ vi.mock('@/lib/services/pago-gastos-workflow', () => ({
 vi.mock('@/lib/services/tenant-scope', () => ({
 	requireFeature: vi.fn(),
 	requireTenant: (user: { tenantId: string }) => user.tenantId,
+	requirePermission: requirePermissionMock,
 }));
 vi.mock('@/lib/services/audit-log-service', () => ({
 	AuditLogService: { log: vi.fn() },
@@ -56,6 +58,8 @@ import {
 	reconciliarVentaAction,
 } from '@/features/contabilidad/actions-reconciliacion';
 import { validateSaleReconciliationInput } from '@/features/contabilidad/services/accounting-reconciliation-service';
+import { ActionError } from '@/lib/server-actions';
+import type { AuthenticatedUser } from '@/lib/auth-middleware';
 
 const user = {
 	userId: 'user-1',
@@ -71,6 +75,10 @@ describe('Reconciliación — ventas anuladas y carreras de servicios', () => {
 	beforeEach(() => {
 		vi.clearAllMocks();
 		getCurrentUserMock.mockResolvedValue(user);
+		requirePermissionMock.mockImplementation((requester: AuthenticatedUser, key: string) => {
+			if (requester.role === 'admin' || requester.permissions?.has(key)) return;
+			throw new ActionError('No tienes permisos para reconciliar ventas.', 'FORBIDDEN');
+		});
 		prismaMock.ventaServicios.count.mockResolvedValue(0);
 		prismaMock.gastosDE.count.mockResolvedValue(0);
 		prismaMock.pagosalario.count.mockResolvedValue(0);
@@ -142,6 +150,7 @@ describe('Reconciliación — ventas anuladas y carreras de servicios', () => {
 		txMock.venta.findUnique.mockResolvedValue({
 			tenantId: 'tenant-1',
 			deletedAt: null,
+			clienteId: 'cliente-1',
 			factura: { idFactura: 'factura-1' },
 		});
 		txMock.cuentaPorCobrar.findFirst.mockResolvedValue({
@@ -170,6 +179,7 @@ describe('Reconciliación — ventas anuladas y carreras de servicios', () => {
 		txMock.venta.findUnique.mockResolvedValue({
 			tenantId: 'tenant-1',
 			deletedAt: null,
+			clienteId: 'cliente-1',
 			factura: null,
 		});
 		txMock.cuentaPorCobrar.findFirst.mockResolvedValue(null);
@@ -197,6 +207,34 @@ describe('Reconciliación — ventas anuladas y carreras de servicios', () => {
 				monto: -100,
 			}),
 		).toThrowError('Datos de reconciliación inválidos');
+	});
+
+	it('requiere permiso contable antes de abrir una transacción de venta', async () => {
+		const previousMode = process.env.CONTABILIDAD_FORMAL_MODE;
+		process.env.CONTABILIDAD_FORMAL_MODE = 'off';
+		getCurrentUserMock.mockResolvedValue({
+			...user,
+			role: 'regularUser',
+			tenantRole: 'manager',
+			planFeatures: { contabilidad: true },
+			permissions: new Set<string>(),
+		});
+
+		try {
+			const result = await reconciliarVentaAction({
+				ventaId: 'venta-1',
+				cuentaId: 'cuenta-1',
+				tipoPagoId: 'tipo-1',
+				monto: 100,
+			});
+
+			expect(result.success).toBe(false);
+			if (!result.success) expect(result.error?.code).toBe('FORBIDDEN');
+			expect(prismaMock.$transaction).not.toHaveBeenCalled();
+		} finally {
+			if (previousMode === undefined) delete process.env.CONTABILIDAD_FORMAL_MODE;
+			else process.env.CONTABILIDAD_FORMAL_MODE = previousMode;
+		}
 	});
 
 	it('bloquea el pago de un CompraServicio marcado como ELIMINANDO bajo lock', async () => {

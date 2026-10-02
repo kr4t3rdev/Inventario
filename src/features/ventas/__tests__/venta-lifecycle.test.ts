@@ -14,7 +14,7 @@ vi.mock('@/features/inventario/movimientos', () => ({
 }));
 vi.mock('@/lib/services/fifo-allocation', () => ({
 	allocateFifoForSale: vi.fn(),
-	getCostoFifoVenta: vi.fn().mockResolvedValue(0),
+	getCostoFifoVentaValorado: vi.fn().mockResolvedValue(null),
 }));
 vi.mock('@/lib/services/audit-log-service', () => ({
 	AuditLogService: { logStrict: vi.fn() },
@@ -23,10 +23,7 @@ vi.mock('@/features/ventas/services/facturacion-workflow', () => ({
 	applyFacturacionCobroWorkflow: vi.fn(),
 }));
 vi.mock('@/features/turnos-pos', () => ({
-	getOrCreateTurnoActivo: vi.fn().mockResolvedValue({
-		success: true,
-		data: { turnoId: 't-9' },
-	}),
+	getOrCreateTurnoActivo: vi.fn(),
 }));
 
 const { mockTx } = vi.hoisted(() => {
@@ -39,6 +36,8 @@ const { mockTx } = vi.hoisted(() => {
 		},
 		producto: { findUnique: vi.fn() },
 		stockUbicacion: { findUnique: vi.fn() },
+		turnoPuntoVenta: { findFirst: vi.fn().mockResolvedValue({ id: 't-9' }), create: vi.fn() },
+		puntoDeVenta: { findFirst: vi.fn() },
 		serieFacturacion: {
 			findFirst: vi.fn(),
 			create: vi.fn(),
@@ -46,6 +45,7 @@ const { mockTx } = vi.hoisted(() => {
 		},
 		factura: { create: vi.fn(), update: vi.fn() },
 		cuentaPorCobrar: { findMany: vi.fn(), updateMany: vi.fn() },
+		cliente: { findFirst: vi.fn() },
 		reconciliacionVenta: { deleteMany: vi.fn() },
 		purchaseAllocation: { deleteMany: vi.fn() },
 		devolucionVenta: { count: vi.fn().mockResolvedValue(0) },
@@ -61,6 +61,7 @@ vi.mock('@/lib/prisma', () => ({
 }));
 
 import { prisma } from '@/lib/prisma';
+import { AuditLogService } from '@/lib/services/audit-log-service';
 import { upsertStockUbicacion } from '@/lib/services/stock-ubicacion-service';
 import {
 	registrarMovimiento,
@@ -68,7 +69,6 @@ import {
 } from '@/features/inventario/movimientos';
 import { allocateFifoForSale } from '@/lib/services/fifo-allocation';
 import { applyFacturacionCobroWorkflow } from '@/features/ventas/services/facturacion-workflow';
-import { getOrCreateTurnoActivo } from '@/features/turnos-pos';
 import { ActionError } from '@/lib/server-actions';
 import { VentaLifecycleService } from '@/features/ventas/services/venta-lifecycle-service';
 import type { AuthenticatedUser } from '@/lib/auth-middleware';
@@ -137,6 +137,8 @@ beforeEach(() => {
 	mockTx.stockUbicacion.findUnique.mockResolvedValue({ cantidadDisponible: 10 });
 	mockTx.producto.findUnique.mockResolvedValue(ventaPedido.items[0].producto);
 	mockTx.cuentaPorCobrar.findMany.mockResolvedValue([]);
+	mockTx.cliente.findFirst.mockResolvedValue({ clienteId: 'cliente-1', limiteCredito: null });
+	mockTx.$queryRaw.mockResolvedValue([]);
 });
 
 describe('entregarVenta (PEDIDO → ENTREGADA)', () => {
@@ -265,6 +267,44 @@ describe('facturarVenta (ENTREGADA → FACTURADA)', () => {
 		);
 	});
 
+	it('revalida el cupo dentro de la transacción al facturar un pedido a crédito', async () => {
+		mirarVenta(ventaEntregada);
+		mockTx.cliente.findFirst.mockResolvedValue({ clienteId: 'cliente-1', limiteCredito: 500 });
+
+		await expect(svc.facturarVenta({
+			ventaId: 'venta-1',
+			input: { metodoPago: 'CREDITO', tipoVencimiento: 'plazo' },
+			user: adminUser,
+		})).rejects.toMatchObject({ code: 'CREDITO_EXCEDIDO' });
+
+		expect(mockTx.$queryRaw).toHaveBeenCalledOnce();
+		expect(mockTx.factura.create).not.toHaveBeenCalled();
+		expect(mockTx.venta.updateMany).not.toHaveBeenCalled();
+	});
+
+	it('permite override explícito con motivo y audita en la tx al facturar el pedido', async () => {
+		mirarVenta(ventaEntregada);
+		mockTx.cliente.findFirst.mockResolvedValue({ clienteId: 'cliente-1', limiteCredito: 500 });
+
+		await svc.facturarVenta({
+			ventaId: 'venta-1',
+			input: {
+				metodoPago: 'CREDITO',
+				tipoVencimiento: 'plazo',
+				solicitarCreditoOverride: true,
+				motivoCreditoOverride: 'Aprobación del manager',
+			},
+			user: adminUser,
+		});
+
+		expect(AuditLogService.logStrict).toHaveBeenCalledWith(
+			expect.objectContaining({
+				detalles: expect.objectContaining({ tipo: 'CREDITO_OVERRIDE', motivo: 'Aprobación del manager' }),
+			}),
+			mockTx,
+		);
+	});
+
 	it('rechaza facturar un pedido que aún no se entregó', async () => {
 		mirarVenta(ventaPedido);
 		mockTx.venta.findUnique.mockResolvedValue(ventaPedido as never);
@@ -313,10 +353,10 @@ describe('facturarVenta (ENTREGADA → FACTURADA)', () => {
 			turnoId: 't-0',
 			turno: { estado: 'CERRADO', arqueos: [] },
 		});
-		vi.mocked(getOrCreateTurnoActivo).mockResolvedValueOnce({
-			success: false,
-			error: { message: 'NO_TURNO_ACTIVO' },
-		} as never);
+		// PV PRINCIPAL sin turno ABIERTO: el resolver dentro de la tx devuelve
+		// null y el cobro queda sin turno (no se conserva un turno cerrado).
+		mockTx.turnoPuntoVenta.findFirst.mockResolvedValueOnce(null);
+		mockTx.puntoDeVenta.findFirst.mockResolvedValue({ tipoCaja: 'PRINCIPAL' });
 		await svc.facturarVenta({
 			ventaId: 'venta-1',
 			input: { metodoPago: 'EFECTIVO', montoEfectivo: 1000 },

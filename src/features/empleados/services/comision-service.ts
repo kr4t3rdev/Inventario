@@ -91,10 +91,15 @@ import { prisma } from '@/lib/prisma';
 
 /**
  * @description Devuelve las ventas elegibles del empleado en el período y las
- * devoluciones registradas sobre esas ventas. Encapsula el acceso a datos para
+ * devoluciones registradas sobre ESAS ventas. Encapsula el acceso a datos para
  * no acoplar la regla pura al ORM.
+ *
+ * Imputación temporal (6.2): una devolución se atribuye al mes de su VENTA
+ * original — la consulta es por los IDs de las ventas del período, sin filtro
+ * por fecha de registro de la devolución. Sin ventas en el período no hay
+ * devoluciones que consultar.
  * @param {object} params - tenantId, empleadoId, período (desde/hasta).
- * @returns {Promise<{ ventas: VentaComisionable[]; devoluciones: DevolucionDeVenta[] }>}
+ * @returns {Promise<ReporteComision>} Reporte agregado del período.
  */
 export async function getComisionEmpleado({
 	tenantId,
@@ -119,7 +124,7 @@ export async function getComisionEmpleado({
 			estado: { in: ['ENTREGADA', 'FACTURADA'] },
 			createdAt: { gte: desde, lte: hasta },
 		},
-		select: { empleadoId: true, total: true, estado: true, deletedAt: true },
+		select: { ventaId: true, empleadoId: true, total: true, estado: true, deletedAt: true },
 	});
 	// Normalización Prisma → regla pura: el where garantiza empleadoId no nulo;
 	// un total null cae a 0.
@@ -130,15 +135,19 @@ export async function getComisionEmpleado({
 		deletedAt: v.deletedAt,
 	}));
 
-	const devoluciones = await prisma.devolucionVenta.findMany({
-		where: {
-			tenantId,
-			estado: 'REGISTRADA',
-			createdAt: { gte: desde, lte: hasta },
-			venta: { empleadoId },
-		},
-		select: { total: true },
-	});
+	// Devoluciones imputadas al mes de la venta: por IDs de las ventas del
+	// período, sin fecha de registro. Los IDs ya pertenecen al empleado.
+	const ventaIds = ventasRaw.map((v) => v.ventaId);
+	const devoluciones = ventaIds.length === 0
+		? []
+		: await prisma.devolucionVenta.findMany({
+				where: {
+					tenantId,
+					estado: 'REGISTRADA',
+					ventaId: { in: ventaIds },
+				},
+				select: { total: true },
+			});
 
 	return calcularComisionReport({
 		ventas,

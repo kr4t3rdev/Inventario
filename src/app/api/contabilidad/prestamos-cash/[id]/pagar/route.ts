@@ -2,11 +2,16 @@ import { NextRequest, NextResponse } from 'next/server'
 import { z } from 'zod'
 
 import prisma from '@/lib/prisma'
-import { withAuthPost } from '@/lib/auth-middleware'
+import { withAuthPost, type AuthenticatedUser } from '@/lib/auth-middleware'
+import { requireTenant } from '@/lib/services/tenant-scope'
 import { AuditLogService } from '@/lib/services/audit-log-service'
 import { validarEscrituraPeriodo, extraerFechaDeBody } from '@/lib/services/validate-period-write'
 import { calcularSaldoPendientePrestamo } from '@/lib/utils/prestamo-cash'
 import { buildPersistedAccountingAmount } from '@/features/contabilidad/services/accounting-reconciliation-service';
+import { postEvento } from '@/features/contabilidad-formal/services/posting-engine';
+import { buildEventoCobroPrestamo } from '@/features/contabilidad-formal/lib/event-builders';
+import { ActionError } from '@/lib/server-actions';
+import { bloquearClienteCredito } from '@/features/ventas/services/credito-override';
 
 const pagoSchema = z.object({
   monto: z.coerce.number().positive('El monto debe ser positivo'),
@@ -30,18 +35,20 @@ function prestamosCashEnabled(): boolean {
  * @param {NextRequest} request - Request con body: monto, cuentaId, tipoPagoId, moneda?, tasaCambio?, observaciones?
  * @returns {NextResponse} Reconciliación creada con status 201
  */
-export const POST = withAuthPost(async (request: NextRequest, context: unknown, user: { userId: string }) => {
+export const POST = withAuthPost(async (request: NextRequest, context: unknown, user: AuthenticatedUser) => {
   try {
     if (!prestamosCashEnabled()) {
       return NextResponse.json({ error: 'Módulo de préstamos cash deshabilitado' }, { status: 404 })
     }
 
+    const tenantId = requireTenant(user);
     const { params } = context as { params: Promise<{ id: string }> }
     const { id } = await params
     const body = pagoSchema.parse(await request.json())
 
+    // Búsqueda tenant-scoped: un préstamo de otro tenant es inexistente.
     const prestamo = await prisma.prestamoCash.findFirst({
-      where: { id, deletedAt: null },
+      where: { id, deletedAt: null, tenantId },
       include: { cuentaPorCobrar: true }
     })
 
@@ -80,17 +87,58 @@ export const POST = withAuthPost(async (request: NextRequest, context: unknown, 
       )
     }
 
+    // Referencia de la cuenta resuelta antes de abrir la transacción.
+    const cuentaOrigen = await prisma.cuentaBancaria.findFirst({
+      where: { cuentaId: body.cuentaId, tenantId, isActive: true },
+      select: { cuentaId: true }
+    })
+    if (!cuentaOrigen) {
+      return NextResponse.json({ error: 'Cuenta bancaria no encontrada o inactiva' }, { status: 400 })
+    }
+
+    // Valoración persistida una sola vez; sin tasa explícita en moneda extranjera
+    // se rechaza antes de escribir (el camino CUP legítimo siempre tiene evidencia).
+    const fechaReconciliacion = new Date();
+    const conversion = buildPersistedAccountingAmount(
+      Number(body.monto),
+      body.moneda || String(prestamo.moneda),
+      body.tasaCambio ?? undefined,
+      fechaReconciliacion,
+    );
+    if (conversion.montoConvertido == null ||
+        ((body.moneda || String(prestamo.moneda)).toUpperCase() !== 'CUP' && !conversion.fxEvidence)) {
+      return NextResponse.json(
+        { error: 'Falta evidencia de conversión para el pago del préstamo', code: 'FX_INSUFICIENTE' },
+        { status: 400 }
+      )
+    }
+
     const resultado = await prisma.$transaction(async (tx) => {
-      const fechaReconciliacion = new Date();
-      const conversion = buildPersistedAccountingAmount(
-        Number(body.monto),
-        body.moneda || String(prestamo.moneda),
-        body.tasaCambio ?? undefined,
-        fechaReconciliacion,
+      await bloquearClienteCredito(tx, tenantId, prestamo.clienteId);
+      const cxcVigente = await tx.cuentaPorCobrar.findFirst({
+        where: { id: prestamo.cuentaPorCobrarId, tenantId },
+        select: { id: true, montoDeuda: true, montoPagado: true, estado: true },
+      });
+      if (!cxcVigente || cxcVigente.estado === 'ANULADA') {
+        throw new ActionError('La cuenta por cobrar ya no está disponible', 'CREDITO_CONFLICTO');
+      }
+      const saldoVigente = calcularSaldoPendientePrestamo(
+        Number(cxcVigente.montoDeuda),
+        Number(cxcVigente.montoPagado),
       );
+      if (body.monto > saldoVigente) {
+        throw new ActionError('El saldo del préstamo cambió; vuelve a consultar', 'CREDITO_CONFLICTO');
+      }
+
+      const credit = await tx.cuentaBancaria.updateMany({
+        where: { cuentaId: body.cuentaId, tenantId, isActive: true },
+        data: { saldo: { increment: body.monto } }
+      })
+      if (credit.count !== 1) throw new Error('Cuenta bancaria no disponible')
+
       const reconciliacion = await tx.reconciliacionVenta.create({
         data: {
-          tenantId: prestamo.tenantId,
+          tenantId,
           cuentaId: body.cuentaId,
           tipoPagoId: body.tipoPagoId,
           monto: body.monto,
@@ -106,18 +154,13 @@ export const POST = withAuthPost(async (request: NextRequest, context: unknown, 
         }
       })
 
-      await tx.cuentaBancaria.update({
-        where: { cuentaId: body.cuentaId },
-        data: { saldo: { increment: body.monto } }
-      })
-
-      const nuevoMontoPagado = Number((Number(prestamo.cuentaPorCobrar.montoPagado) + body.monto).toFixed(2))
-      const totalDeuda = Number(prestamo.cuentaPorCobrar.montoDeuda)
+      const nuevoMontoPagado = Number((Number(cxcVigente.montoPagado) + body.monto).toFixed(2))
+      const totalDeuda = Number(cxcVigente.montoDeuda)
       const nuevoSaldo = calcularSaldoPendientePrestamo(totalDeuda, nuevoMontoPagado)
       const nuevoEstadoCuenta = nuevoSaldo <= 0.01 ? 'PAGADA' : 'PARCIAL'
 
       await tx.cuentaPorCobrar.update({
-        where: { id: prestamo.cuentaPorCobrarId },
+        where: { id: prestamo.cuentaPorCobrarId, tenantId },
         data: {
           montoPagado: nuevoMontoPagado,
           estado: nuevoEstadoCuenta
@@ -130,6 +173,23 @@ export const POST = withAuthPost(async (request: NextRequest, context: unknown, 
           data: { estado: 'PAGADO' }
         })
       }
+
+      // Capa de contabilidad formal (CTA-1/R6): cobro de préstamo, una vez por
+      // origen dentro de la misma transacción; valoración heredada de la fila de
+      // caja persistida, sin recalcular la tasa. Sin split capital/intereses
+      // (decisión v1): el cobro contabiliza el monto total cobrado.
+      await postEvento(tx, { tenantId, userId: user.userId }, buildEventoCobroPrestamo({
+        reconciliacionId: reconciliacion.reconciliacionId,
+        valoracion: {
+          monto: Number(reconciliacion.monto),
+          moneda: reconciliacion.moneda || 'CUP',
+          montoFuncional: reconciliacion.montoConvertido == null ? undefined : Number(reconciliacion.montoConvertido),
+          tasaCambio: reconciliacion.tasaCambio == null ? undefined : Number(reconciliacion.tasaCambio),
+          fxEvidenceFingerprint: reconciliacion.fxEvidenceFingerprint ?? undefined,
+        },
+        fecha: reconciliacion.fechaReconciliacion,
+        descripcion: body.observaciones || `Cobro de préstamo ${prestamo.id}`,
+      }))
 
       return reconciliacion
     })
@@ -150,6 +210,9 @@ export const POST = withAuthPost(async (request: NextRequest, context: unknown, 
   } catch (error) {
     if (error instanceof z.ZodError) {
       return NextResponse.json({ error: 'Parámetros inválidos', details: error.errors }, { status: 400 })
+    }
+    if (error instanceof ActionError) {
+      return NextResponse.json({ error: error.message, code: error.code }, { status: 409 })
     }
     console.error('Error registrando pago de préstamo:', error)
     return NextResponse.json({ error: 'Error registrando pago de préstamo' }, { status: 500 })

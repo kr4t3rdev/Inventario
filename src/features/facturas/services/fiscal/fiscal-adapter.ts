@@ -34,6 +34,24 @@ export interface FiscalEmisionResultado {
 	folio: string;
 }
 
+/**
+ * @description Rechazo definitivo y autenticado del proveedor fiscal: el
+ * adaptador lo lanza sólo cuando el PAC respondió de forma verificable que
+ * el comprobante NO fue emitido (respuesta firmada/correlacionada). Es la
+ * única clase de fallo que deja el documento en RECHAZADA; cualquier otro
+ * error post-envío es INCIERTA y exige conciliación con evidencia.
+ */
+export class FiscalRechazoDefinitivoError extends Error {
+	/** Código autenticado del proveedor (correlacionado con su respuesta). */
+	readonly codigo: string;
+
+	constructor(message: string, codigo: string) {
+		super(message);
+		this.name = 'FiscalRechazoDefinitivoError';
+		this.codigo = codigo;
+	}
+}
+
 export interface FiscalAdapter {
 	/** Identificador de la jurisdicción a la que este adaptador responde ("MX-SAT", "LOCAL"...). */
 	jurisdiccion: string;

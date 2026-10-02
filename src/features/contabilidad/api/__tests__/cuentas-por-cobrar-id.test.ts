@@ -1,12 +1,30 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { updateCuentaPorCobrarAction } from '@/features/contabilidad/actions-cuentas'
 
-const prismaMock = vi.hoisted(() => ({
-  cuentaPorCobrar: {
-    findFirst: vi.fn(),
-    updateMany: vi.fn(),
-  },
-}))
+// La acción ahora ejecuta la relectura y el updateMany dentro de una transacción
+// con gate de cupo; el mock raíz actúa también como cliente transaccional para
+// conservar las aserciones existentes sobre los mismos espías.
+const prismaMock = vi.hoisted(() => {
+  const mock: {
+    cuentaPorCobrar: { findFirst: ReturnType<typeof vi.fn>; updateMany: ReturnType<typeof vi.fn>; findMany: ReturnType<typeof vi.fn> };
+    cliente: { findFirst: ReturnType<typeof vi.fn> };
+    auditLog: { create: ReturnType<typeof vi.fn> };
+    $transaction: ReturnType<typeof vi.fn>;
+    $queryRaw: ReturnType<typeof vi.fn>;
+  } = {
+    cuentaPorCobrar: {
+      findFirst: vi.fn(),
+      updateMany: vi.fn(),
+      findMany: vi.fn().mockResolvedValue([]),
+    },
+    cliente: { findFirst: vi.fn() },
+    auditLog: { create: vi.fn() },
+    $transaction: vi.fn(),
+    $queryRaw: vi.fn().mockResolvedValue([]),
+  };
+  mock.$transaction.mockImplementation((cb: (tx: typeof mock) => unknown) => cb(mock));
+  return mock;
+})
 
 vi.mock('@/lib/prisma', () => ({
   prisma: prismaMock,
@@ -74,10 +92,21 @@ describe('Cuentas por Cobrar — updateCuentaPorCobrarAction', () => {
     } as any)
 
     prismaMock.cuentaPorCobrar.updateMany.mockResolvedValue({ count: 1 })
+    // Secuencia de lecturas de la acción: (1) lectura previa fuera de tx,
+    // (2) relectura vigente dentro de tx para el delta neto, (3) lectura
+    // enriquecida posterior al commit.
     prismaMock.cuentaPorCobrar.findFirst.mockResolvedValueOnce({
       id: 'cxc-1',
       tenantId: 'tenant-1',
       montoPagado: 0,
+      estado: 'PENDIENTE',
+    } as any).mockResolvedValueOnce({
+      id: 'cxc-1',
+      tenantId: 'tenant-1',
+      clienteId: 'cli-1',
+      montoDeuda: 1000,
+      montoPagado: 0,
+      monedaOriginal: 'CUP',
       estado: 'PENDIENTE',
     } as any).mockResolvedValueOnce({
       id: 'cxc-1',

@@ -7,7 +7,7 @@ import { revalidatePath } from "next/cache";
 import { withAction, ActionError } from "@/lib/server-actions";
 import { prisma } from "@/lib/prisma";
 import { Prisma } from "@/generated/prisma";
-import { requireFeature, requireTenant } from "@/lib/services/tenant-scope";
+import { requireFeature, requirePermission, requireTenant } from "@/lib/services/tenant-scope";
 import { withPeriodValidation } from "@/lib/services/with-period-validation";
 import {
 	applyPagoGastoWorkflow,
@@ -21,15 +21,18 @@ import {
 	buildPersistedAccountingAmount,
 	validateSaleReconciliationInput,
 } from "@/features/contabilidad/services/accounting-reconciliation-service";
+import { AccountingReconciliationService } from "@/features/contabilidad/services/accounting-reconciliation-service";
 import {
 	getReconciliationStats,
 } from "@/features/contabilidad/services/reconciliation-stats-service";
 import { acquireAccountingTenantLock } from "@/features/contabilidad/services/accounting-tenant-lock-service";
+import { bloquearClienteCredito } from "@/features/ventas/services/credito-override";
 import { getPayrollPaymentAmount } from "@/features/pago-salario/payroll-amounts";
 import { postEvento } from "@/features/contabilidad-formal/services/posting-engine";
 import {
 	buildEventoCobroCxc,
 	buildEventoVentaContado,
+	buildEventoServicio,
 } from "@/features/contabilidad-formal/lib/event-builders";
 
 // ─── Stats Hub ────────────────────────────────────────────
@@ -283,7 +286,8 @@ export const reconciliarVentaAction = withAction(
 			user: AuthenticatedUser,
 		) => {
 			requireFeature(user, 'contabilidad', 'reconciliar ventas');
-			const tenantId = requireTenant(user);
+			requireTenant(user);
+			requirePermission(user, 'financiero.contabilidad.acceder', 'reconciliar ventas');
 			validateSaleReconciliationInput(input);
 			const fechaReconciliacion = input.fechaReconciliacion
 				? new Date(input.fechaReconciliacion)
@@ -300,176 +304,13 @@ export const reconciliarVentaAction = withAction(
 					fxCatalogRateId = null;
 				}
 			}
-			const conversion = buildPersistedAccountingAmount(
-				input.monto,
-				input.moneda || 'CUP',
-				input.tasaCambio,
-				fechaReconciliacion,
+			const result = await AccountingReconciliationService.reconcileSale({
+				input: {
+					...input,
+					fechaReconciliacion: input.fechaReconciliacion ?? fechaReconciliacion.toISOString(),
+				},
+				user,
 				fxCatalogRateId,
-			);
-
-			const result = await prisma.$transaction(async (tx) => {
-				await acquireAccountingTenantLock(tx, tenantId);
-				// Re-read the sale and its receivable while holding the transaction.
-				// Cancellation claims deletedAt atomically, so this prevents a late
-				// reconciliation from reactivating an annulled CxC or bank balance.
-				if (tx.$queryRaw) {
-					await tx.$queryRaw`
-						SELECT 1 FROM "Venta"
-						WHERE "ventaId" = ${input.ventaId}
-						  AND "tenantId" = ${tenantId}
-						FOR UPDATE
-					`;
-				}
-				const ventaWithFactura = await tx.venta.findUnique({
-					where: { ventaId: input.ventaId },
-					select: {
-						tenantId: true,
-						deletedAt: true,
-						factura: { select: { idFactura: true } },
-					},
-				});
-				if (!ventaWithFactura || ventaWithFactura.tenantId !== tenantId) {
-					throw new ActionError('Venta no encontrada', 'NOT_FOUND');
-				}
-				if (ventaWithFactura.deletedAt) {
-					throw new ActionError('La venta ya está anulada', 'VALIDATION_ERROR');
-				}
-
-				const facturaIdReal = ventaWithFactura.factura?.idFactura;
-				const cuentaPorCobrar = await tx.cuentaPorCobrar.findFirst({
-					where: {
-						OR: [
-							{ facturaId: input.ventaId },
-							...(facturaIdReal ? [{ facturaId: facturaIdReal }] : []),
-						],
-						tenantId,
-					},
-					select: {
-						idCC: true,
-						montoDeuda: true,
-						montoPagado: true,
-						estado: true,
-					},
-				});
-				if (cuentaPorCobrar?.estado === 'ANULADA') {
-					throw new ActionError('La venta ya está anulada', 'VALIDATION_ERROR');
-				}
-
-				if (tx.$queryRaw) {
-					await tx.$queryRaw`
-						SELECT 1 FROM "CuentaBancaria"
-						WHERE "cuentaId" = ${input.cuentaId}
-						  AND "tenantId" = ${tenantId}
-						FOR UPDATE
-					`;
-					await tx.$queryRaw`
-						SELECT 1 FROM "TipoPago"
-						WHERE "tipoId" = ${input.tipoPagoId}
-						  AND "tenantId" = ${tenantId}
-						FOR UPDATE
-					`;
-				}
-				const cuentaBancaria = await tx.cuentaBancaria.findFirst({
-					where: { cuentaId: input.cuentaId, tenantId },
-					select: { cuentaId: true, isActive: true, tipoCuenta: true },
-				});
-				if (!cuentaBancaria || !cuentaBancaria.isActive) {
-					throw new ActionError(
-						'Cuenta bancaria no encontrada o inactiva',
-						'NOT_FOUND',
-					);
-				}
-				const tipoPago = await tx.tipoPago.findFirst({
-					where: { tipoId: input.tipoPagoId, tenantId },
-					select: { tipoId: true, isActive: true },
-				});
-				if (!tipoPago || !tipoPago.isActive) {
-					throw new ActionError('Tipo de pago no encontrado o inactivo', 'NOT_FOUND');
-				}
-
-				// Incrementar saldo de la cuenta bancaria (ingreso por venta)
-				const saldoActualizado = await tx.cuentaBancaria.updateMany({
-					where: { cuentaId: input.cuentaId, tenantId },
-					data: { saldo: { increment: input.monto } },
-				});
-				if (saldoActualizado.count !== 1) {
-					throw new ActionError('Cuenta bancaria no encontrada', 'NOT_FOUND');
-				}
-
-				const reconciliacion = await tx.reconciliacionVenta.create({
-					data: {
-						ventaId: input.ventaId,
-						cuentaId: input.cuentaId,
-						tipoPagoId: input.tipoPagoId,
-						monto: input.monto,
-						moneda: input.moneda || "CUP",
-						montoConvertido: conversion.montoConvertido,
-						tasaCambio: conversion.tasaCambio,
-						fechaReconciliacion,
-						...(conversion.fxEvidence ?? {}),
-						observaciones: input.observaciones,
-						tenantId,
-						reconciliadoPor: user.userId,
-					},
-				});
-
-				// Capa de contabilidad formal: cobro de CxC si la venta era a crédito,
-				// o venta al contado si se cobra en el acto.
-				await postEvento(
-					tx,
-					{ tenantId, userId: user.userId },
-					(cuentaPorCobrar ? buildEventoCobroCxc : buildEventoVentaContado)({
-						reconciliacionId: reconciliacion.reconciliacionId,
-						descripcion: input.observaciones ?? undefined,
-						fecha: fechaReconciliacion,
-						tesoreria: {
-							monto: input.monto,
-							moneda: input.moneda || 'CUP',
-							montoFuncional: conversion.montoConvertido ?? input.monto,
-							tasaCambio: conversion.tasaCambio,
-							fxEvidenceFingerprint:
-								conversion.fxEvidence?.fxEvidenceFingerprint ?? null,
-						tipoCuenta: cuentaBancaria.tipoCuenta,
-						monedaFuncionalCodigo:
-							conversion.fxEvidence?.functionalCurrency ?? null,
-						referencia: `Venta ${input.ventaId}`,
-						},
-					}),
-				);
-
-				if (cuentaPorCobrar) {
-					// Sumar todas las reconciliaciones de esta venta para calcular el total pagado
-					const reconciliaciones = await tx.reconciliacionVenta.findMany({
-						where: { ventaId: input.ventaId, tenantId },
-						select: { monto: true, moneda: true, tasaCambio: true },
-					});
-
-					const totalPagado = reconciliaciones.reduce((sum, rec) => {
-						const tasa = rec.tasaCambio ? Number(rec.tasaCambio) : 1;
-						return sum + Number(rec.monto) * tasa;
-					}, 0);
-
-					const montoDeuda = Number(cuentaPorCobrar.montoDeuda);
-					const nuevoEstado =
-						totalPagado >= montoDeuda - 0.01
-							? "PAGADA"
-							: totalPagado > 0
-								? "PARCIAL"
-								: "PENDIENTE";
-
-					if (nuevoEstado !== cuentaPorCobrar.estado) {
-						await tx.cuentaPorCobrar.updateMany({
-							where: { idCC: cuentaPorCobrar.idCC, tenantId },
-							data: {
-								estado: nuevoEstado,
-								montoPagado: totalPagado,
-							},
-						});
-					}
-				}
-
-				return reconciliacion;
 			});
 
 			AuditLogService.log({
@@ -620,6 +461,7 @@ export const reconciliarServicioAction = withAction(
 		) => {
 			requireFeature(user, 'servicios', 'reconciliar servicios');
 			const tenantId = requireTenant(user);
+			requirePermission(user, 'financiero.contabilidad.acceder', 'reconciliar servicios');
 
 			if (!input.distribuciones?.length) {
 				throw new ActionError(
@@ -631,12 +473,15 @@ export const reconciliarServicioAction = withAction(
 			const result = await prisma.$transaction(async (tx) => {
 				await acquireAccountingTenantLock(tx, tenantId);
 				// Verificar el total del servicio
-				const servicio = await tx.ventaServicios.findUnique({
-					where: { ventaServicioId: input.ventaServicioId },
-					select: { total: true },
+				const servicio = await tx.ventaServicios.findFirst({
+					where: { ventaServicioId: input.ventaServicioId, tenantId },
+					select: { total: true, reconciliado: true },
 				});
 				if (!servicio) {
 					throw new ActionError("Servicio no encontrado", "NOT_FOUND");
+				}
+				if (servicio.reconciliado) {
+					throw new ActionError('Servicio ya reconciliado', 'ALREADY_RECONCILED');
 				}
 
 				const montoTotalDistribuido = input.distribuciones.reduce(
@@ -654,11 +499,23 @@ export const reconciliarServicioAction = withAction(
 
 				// Crear todas las reconciliaciones e incrementar saldos en una sola transacción
 				for (const dist of input.distribuciones) {
+					const cuenta = await tx.cuentaBancaria.findFirst({
+						where: { cuentaId: dist.cuentaId, tenantId, isActive: true },
+					});
+					const tipoPago = await tx.tipoPago.findFirst({
+						where: { tipoId: dist.tipoPagoId, tenantId, isActive: true },
+					});
+					if (!cuenta || !tipoPago) {
+						throw new ActionError('Cuenta o tipo de pago no encontrado', 'NOT_FOUND');
+					}
 					// Incrementar saldo de la cuenta bancaria (ingreso por servicio)
-					await tx.cuentaBancaria.update({
-						where: { cuentaId: dist.cuentaId },
+					const saldoActualizado = await tx.cuentaBancaria.updateMany({
+						where: { cuentaId: dist.cuentaId, tenantId },
 						data: { saldo: { increment: dist.monto } },
 					});
+					if (saldoActualizado.count !== 1) {
+						throw new ActionError('Cuenta bancaria no encontrada', 'NOT_FOUND');
+					}
 
 					const fechaDistribucion = input.fechaReconciliacion
 						? new Date(input.fechaReconciliacion)
@@ -683,7 +540,7 @@ export const reconciliarServicioAction = withAction(
 						distRateId,
 					);
 
-					await tx.reconciliacionServicio.create({
+					const reconciliacion = await tx.reconciliacionServicio.create({
 						data: {
 							ventaServicioId: input.ventaServicioId,
 							cuentaId: dist.cuentaId,
@@ -699,11 +556,30 @@ export const reconciliarServicioAction = withAction(
 							reconciliadoPor: user.userId,
 						},
 					});
+					if (reconciliacion.moneda !== 'CUP' &&
+						(!reconciliacion.fxEvidenceFingerprint || !reconciliacion.tasaCambio ||
+							reconciliacion.montoConvertido == null)) {
+						throw new ActionError('Falta evidencia de conversión para el servicio', 'FX_INSUFICIENTE');
+					}
+					await postEvento(tx, { tenantId, userId: user.userId }, buildEventoServicio({
+						cobro: true,
+						reconciliacionId: reconciliacion.reconciliacionId,
+						fecha: reconciliacion.fechaReconciliacion,
+						tesoreria: {
+							monto: Number(reconciliacion.monto),
+							moneda: reconciliacion.moneda,
+							montoFuncional: Number(reconciliacion.montoConvertido),
+							tasaCambio: reconciliacion.tasaCambio
+								? Number(reconciliacion.tasaCambio) : null,
+							fxEvidenceFingerprint: reconciliacion.fxEvidenceFingerprint,
+							tipoCuenta: cuenta.tipoCuenta,
+						},
+					}));
 				}
 
 				// Marcar el servicio como reconciliado
-				await tx.ventaServicios.update({
-					where: { ventaServicioId: input.ventaServicioId },
+				await tx.ventaServicios.updateMany({
+					where: { ventaServicioId: input.ventaServicioId, tenantId },
 					data: { reconciliado: true },
 				});
 
@@ -1093,6 +969,7 @@ export const reconciliarGastoAction = withAction(
 			user: AuthenticatedUser,
 		) => {
 			requireFeature(user, 'contabilidad', 'reconciliar gastos');
+			requirePermission(user, 'financiero.contabilidad.acceder', 'reconciliar gastos');
 			const tenantId = requireTenant(user);
 			const fechaPago = input.fechaReconciliacion ??
 				(input.periodo && /^\d{4}-\d{2}$/.test(input.periodo)

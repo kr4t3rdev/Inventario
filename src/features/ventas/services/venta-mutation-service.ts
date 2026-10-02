@@ -4,21 +4,23 @@ import { ActionError } from '@/lib/server-actions';
 import { hasPermission, requireFeature, requirePermission, requireTenant } from '@/lib/services/tenant-scope';
 import { upsertStockUbicacion } from '@/lib/services/stock-ubicacion-service';
 import { registrarMovimiento } from '@/features/inventario/movimientos';
-import { allocateFifoForSale, getCostoFifoVenta } from '@/lib/services/fifo-allocation';
+import { allocateFifoForSale, getCostoFifoVentaValorado } from '@/lib/services/fifo-allocation';
 import { postEvento } from '@/features/contabilidad-formal/services/posting-engine';
 import { buildEventoCostoVenta } from '@/features/contabilidad-formal/lib/event-builders';
 import { createVentaSchema } from '@/features/ventas/schemas';
 import { applyFacturacionCobroWorkflow } from '@/features/ventas/services/facturacion-workflow';
 import { resolvePrecioVenta, type PrecioVentaFuente } from '@/features/ventas/services/precio-venta-resolver';
-import { getOrCreateTurnoActivo } from '@/features/turnos-pos';
+import { resolverTurnoDentroDeTx } from '@/features/turnos-pos/services/turno-tx';
 import { AuditLogService } from '@/lib/services/audit-log-service';
 import { VENTA_SELECT } from '@/features/ventas/services/venta-read-service';
 import { VentaLifecycleService } from '@/features/ventas/services/venta-lifecycle-service';
 import { validarCobro } from '@/features/ventas/services/pos-vuelto-calcu';
 import {
-	saldoVivoCliente,
-	superaLimiteCredito,
-} from '@/features/crm/services/credito-calculo';
+  auditarCreditoOverride,
+  validarCreditoOrigen,
+  type CreditoOverrideDecision,
+} from '@/features/ventas/services/credito-override';
+import { conReintentosCredito } from '@/features/ventas/services/credito-retry';
 import type { AuthenticatedUser } from '@/lib/auth-middleware';
 import type { AnularVentaInput, CreateVentaInput } from '@/features/ventas/schemas';
 
@@ -199,16 +201,8 @@ export const VentaMutationService = {
       requireFeature(user, 'ventas-factura', 'generar factura desde ventas');
     }
 
-    let turnoId: string | null = parsed.turnoId ?? null;
-    if (!turnoId) {
-      const turnoResult = await getOrCreateTurnoActivo({
-        puntoDeVentaId: parsed.puntoDeVentaId,
-        empleadoId: parsed.empleadoId,
-      });
-      if (turnoResult.success) {
-        turnoId = turnoResult.data.turnoId;
-      }
-    }
+    // 3.2.c.iii: el turno se resuelve DENTRO de la transacción (ver abajo) para
+    // que un turno AUTO no persista huérfano si la venta se rechaza.
 
     // ── Resolución server-side de precios (LP-0): el precioUnitario del
     // payload nunca se persiste tal cual; se valida contra la cadena
@@ -222,17 +216,15 @@ export const VentaMutationService = {
     }
 
     let clienteListaId: string | null = null;
-    let clienteLimiteCredito: number | null = null;
     if (parsed.clienteId) {
       const cliente = await prisma.cliente.findFirst({
         where: { clienteId: parsed.clienteId, tenantId },
-        select: { listaPrecioId: true, limiteCredito: true },
+        select: { listaPrecioId: true },
       });
       if (!cliente) {
         throw new ActionError('Cliente no encontrado', 'NOT_FOUND');
       }
       clienteListaId = cliente.listaPrecioId;
-      clienteLimiteCredito = cliente.limiteCredito;
     }
     const productoIds = [...new Set(parsed.items.map((item) => item.productoId))];
     const productosParaPrecio = await prisma.producto.findMany({
@@ -290,50 +282,6 @@ export const VentaMutationService = {
     const cargoTransporte = parsed.cargoTransporte ?? 0;
     const totalVenta = subtotalVenta - (parsed.descuento ?? 0) + cargoTransporte;
     const totalCantidad = itemsData.reduce((sum, item) => sum + item.cantidad, 0);
-    // CRM-T2: una venta al crédito exige que el tope del cliente la cubra; con
-    // permiso de override solo deja rastro (el AuditLog real se escribe dentro
-    // de la transacción posterior).
-    let creditoOverrideUsado = false;
-    let montoCreditoRequerido = 0;
-    const montoCreditoSolicitado = parsed.montoCredito ?? 0;
-    const usaCredito = parsed.metodoPago === 'CREDITO' || montoCreditoSolicitado > 0;
-    if (usaCredito && parsed.modoPedido !== true && parsed.clienteId && clienteLimiteCredito != null) {
-      const cuentasVivas = await prisma.cuentaPorCobrar.findMany({
-        where: {
-          tenantId,
-          clienteId: parsed.clienteId,
-          estado: { not: 'ANULADA' },
-        },
-        select: { montoDeuda: true, montoPagado: true, estado: true },
-      });
-      const saldoVivo = saldoVivoCliente(
-        cuentasVivas.map((c) => ({
-          montoDeuda: Number(c.montoDeuda),
-          montoPagado: Number(c.montoPagado),
-          estado: c.estado,
-        })),
-      );
-      const requerido =
-        montoCreditoSolicitado ||
-        (parsed.metodoPago === 'CREDITO' ? Math.max(totalVenta, 0) : 0);
-      montoCreditoRequerido = requerido;
-      if (
-        superaLimiteCredito({
-          saldoVivo,
-          montoRequerido: requerido,
-          limiteCredito: clienteLimiteCredito,
-        })
-      ) {
-        if (!hasPermission(user, 'ventas.venta.credito-override')) {
-          throw new ActionError(
-            `La venta a crédito supera el límite del cliente. Saldo: ${saldoVivo}, requerido: ${requerido}, límite: ${clienteLimiteCredito}. Solicita override al manager.`,
-            'CREDITO_EXCEDIDO',
-          );
-        }
-        creditoOverrideUsado = true;
-      }
-    }
-
     const esPedido = parsed.modoPedido === true;
 
     // VC: defensa de la invariante del recibido (el schema Zod ya la valida) y
@@ -351,7 +299,68 @@ export const VentaMutationService = {
     }
     const cambioDerivado = esPedido ? null : cobro.cambio;
 
-    return prisma.$transaction(async (tx) => {
+    // VC (3.4): el vuelto declarado es opcional (compatibilidad legacy), pero
+    // si viene debe coincidir exactamente con el derivado del recibido y la
+    // porción en efectivo; el servidor persiste siempre el DERIVADO. Se
+    // revalida antes de abrir la transacción: sin venta parcial.
+    if (parsed.cambioDevuelto != null && parsed.cambioDevuelto !== cambioDerivado) {
+      throw new ActionError(
+        'El cambio declarado no coincide con el efectivo recibido y la porción cobrada.',
+        'CAMBIO_INCONSISTENTE',
+      );
+    }
+
+    // La transacción completa se reintenta ante conflictos de serialización
+    // (P2034/deadlock) con backoff+jitter; la factory crea una tx nueva por
+    // intento. Errores de dominio (CREDITO_EXCEDIDO, PRICE_MISMATCH...) se
+    // propagan sin gastar reintentos.
+    return conReintentosCredito(() => prisma.$transaction(async (tx) => {
+      let creditoDecision: CreditoOverrideDecision | null = null;
+      let montoCreditoAuditado = 0;
+      // Porción cobrada hoy (efectivo+tarjeta+transferencia): en MIXTO con
+      // vencimiento se concilia hoy y la CxC queda por el remanente.
+      const cobradoContado = (parsed.montoEfectivo ?? 0)
+        + (parsed.montoTarjeta ?? 0)
+        + (parsed.montoTransferencia ?? 0);
+      if (parsed.clienteId && !esPedido) {
+        const tipoVencimiento = parsed.tipoVencimiento ??
+          (parsed.fechaVencimiento ? 'fecha' : null);
+        const creaCxC = tipoVencimiento === 'fecha' || tipoVencimiento === 'plazo';
+        const creditoDeclarado = parsed.montoCredito ?? 0;
+        // Con vencimiento, la CxC que creará el workflow es el remanente tras
+        // lo cobrado hoy (regla aprobada: MIXTO consume sólo deuda pendiente).
+        const montoCreditoRequerido = creaCxC
+          ? Math.max(Math.max(totalVenta, 0) - cobradoContado, 0)
+          : creditoDeclarado || (parsed.metodoPago === 'CREDITO' ? Math.max(totalVenta, 0) : 0);
+        const requiereCupo = montoCreditoRequerido > 0 || parsed.metodoPago === 'CREDITO';
+
+        if (requiereCupo && montoCreditoRequerido > 0) {
+          montoCreditoAuditado = montoCreditoRequerido;
+          creditoDecision = await validarCreditoOrigen({
+            tx,
+            user,
+            tenantId,
+            clienteId: parsed.clienteId,
+            moneda: 'CUP',
+            montoNuevo: montoCreditoRequerido,
+            permiso: 'ventas.venta.credito-override',
+            solicitarCreditoOverride: parsed.solicitarCreditoOverride,
+            motivoCreditoOverride: parsed.motivoCreditoOverride,
+          });
+        }
+      }
+
+      // 3.2.c.iii: turno resuelto dentro de la tx; un AUTO creado aquí se
+      // deshace con el rollback si la venta se rechaza más adelante.
+      let turnoId: string | null = parsed.turnoId ?? null;
+      if (!turnoId) {
+        turnoId = await resolverTurnoDentroDeTx(tx, {
+          tenantId,
+          puntoDeVentaId: parsed.puntoDeVentaId,
+          empleadoId: parsed.empleadoId,
+        });
+      }
+
       let serie: any = null;
       let numeroConsecutivo = 0;
       let numeroFactura = '';
@@ -424,23 +433,17 @@ export const VentaMutationService = {
         },
       });
 
-      // CRM-T2: se persiste evidencia del override dentro de la transacción.
-      if (creditoOverrideUsado) {
-        await AuditLogService.logStrict(
-          {
-            accion: 'EXECUTE',
-            entidad: 'VENTA',
-            entidadId: venta.ventaId,
-            usuarioId: user.userId,
-            detalles: {
-              tipo: 'CREDITO_OVERRIDE',
-              clienteId: parsed.clienteId,
-              limiteCredito: clienteLimiteCredito,
-              montoRequerido: montoCreditoRequerido,
-            },
-          },
+      if (creditoDecision && parsed.clienteId) {
+        await auditarCreditoOverride({
           tx,
-        );
+          user,
+          decision: creditoDecision,
+          tenantId,
+          clienteId: parsed.clienteId,
+          origen: 'VENTA_PRODUCTOS',
+          origenId: venta.ventaId,
+          montoNuevo: montoCreditoAuditado,
+        });
       }
 
       if (overrides.length > 0) {
@@ -468,15 +471,41 @@ export const VentaMutationService = {
           userId: user.userId,
         });
 
-        // Capa de contabilidad formal: costo de venta FIFO (sale de inventario).
-        const costoFifo = await getCostoFifoVenta(tx, tenantId, venta.ventaId);
-        if (costoFifo > 0) {
-          await postEvento(
-            tx,
-            { tenantId, userId: user.userId },
-            buildEventoCostoVenta({ ventaId: venta.ventaId, costoFifo }),
-          );
-        }
+		// El modo off conserva el flujo legacy sin exigir valoración formal de FIFO.
+		const modoFormal = process.env.CONTABILIDAD_FORMAL_MODE;
+		if (modoFormal === 'shadow' || modoFormal === 'enforce') {
+			try {
+				const costoFifo = await getCostoFifoVentaValorado(tx, tenantId, venta.ventaId);
+				if (costoFifo?.montoFuncional.gt(0)) {
+              await postEvento(
+                tx,
+                { tenantId, userId: user.userId },
+                buildEventoCostoVenta({
+                  ventaId: venta.ventaId,
+                  costoFifo: costoFifo.montoFuncional,
+                  monedaFuncional: costoFifo.monedaFuncional,
+                }),
+              );
+				}
+			} catch (error) {
+            if (
+              modoFormal !== 'shadow' ||
+              !(error instanceof ActionError) ||
+              error.code !== 'FX_INSUFICIENTE'
+            ) {
+              throw error;
+				}
+				await postEvento(
+					tx,
+					{ tenantId, userId: user.userId },
+					buildEventoCostoVenta({
+						ventaId: venta.ventaId,
+						costoFifo: null,
+						monedaFuncional: null,
+					}),
+				);
+			}
+		}
       }
 
       if (hasFacturacion && parsed.clienteId && serie) {
@@ -512,12 +541,14 @@ export const VentaMutationService = {
             tipoVencimiento: parsed.tipoVencimiento || undefined,
             fechaVencimiento: parsed.fechaVencimiento || undefined,
             cuentaBancariaId: parsed.cuentaBancariaId || undefined,
+            // Porción cobrada hoy (MIXTO): concilia hoy, CxC por el remanente.
+            montoCobradoContado: cobradoContado,
           });
         }
       }
 
       return venta;
-    });
+    }));
   },
 
   /**

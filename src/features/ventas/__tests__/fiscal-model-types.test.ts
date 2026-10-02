@@ -7,10 +7,11 @@ import { readdirSync, readFileSync } from 'node:fs';
 import { join } from 'node:path';
 
 describe('Capa fiscal — modelos (FE-T1)', () => {
-	it('el enum EstadoFiscalDocumento expone los cinco estados', async () => {
+	it('el enum EstadoFiscalDocumento expone los seis estados (incluida INCIERTA)', async () => {
 		const { EstadoFiscalDocumento } = await import('@/generated/prisma');
 		expect(Object.values(EstadoFiscalDocumento).sort()).toEqual([
 			'CANCELADA',
+			'INCIERTA',
 			'PENDIENTE',
 			'PROCESANDO',
 			'RECHAZADA',

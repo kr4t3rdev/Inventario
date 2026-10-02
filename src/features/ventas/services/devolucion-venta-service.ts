@@ -10,7 +10,10 @@ import {
 } from '@/lib/services/tenant-scope';
 import { upsertStockUbicacion } from '@/lib/services/stock-ubicacion-service';
 import { registrarMovimiento } from '@/features/inventario/movimientos';
-import { restaurarAllocacionesFifo } from '@/lib/services/fifo-allocation';
+import {
+  getCostoFifoVentaValorado,
+  restaurarAllocacionesFifo,
+} from '@/lib/services/fifo-allocation';
 import { createAnticipoDevolucion } from '@/lib/services/anticipos-workflow';
 import { postEvento } from '@/features/contabilidad-formal/services/posting-engine';
 import { buildEventoDevolucionVenta } from '@/features/contabilidad-formal/lib/event-builders';
@@ -19,6 +22,11 @@ import {
   resolverTratamientoFinanciero,
 } from '@/features/ventas/services/devolucion-calculo';
 import { AuditLogService } from '@/lib/services/audit-log-service';
+import { bloquearClienteCredito } from '@/features/ventas/services/credito-override';
+import {
+  resolverValoracionDevolucion,
+  type ValoracionDevolucion,
+} from '@/features/ventas/services/devolucion-valoracion';
 import { registrarDevolucionSchema } from '@/features/ventas/schemas';
 import type { AuthenticatedUser } from '@/lib/auth-middleware';
 import type { RegistrarDevolucionInput } from '@/features/ventas/schemas';
@@ -32,7 +40,29 @@ const VENTA_DEVOLUCION_SELECT = {
   clienteId: true,
   descuento: true,
   total: true,
-  factura: { select: { idFactura: true, tasaCambio: true } },
+  factura: {
+    select: {
+      idFactura: true,
+      tasaCambio: true,
+      cuentaPorCobrar: {
+        select: {
+          monedaOriginal: true,
+          montoOriginal: true,
+          montoDeuda: true,
+          montoDeudaFuncional: true,
+          monedaFuncional: true,
+          tasaCambio: true,
+          rateEffectiveAt: true,
+          fxProvenanceKind: true,
+          fxProvenanceSource: true,
+          fxCatalogRateId: true,
+          fxEvidenceFingerprint: true,
+          fxEvidenceVersion: true,
+        },
+      },
+    },
+  },
+  reconciliaciones: { select: { moneda: true } },
   items: {
     select: {
       id: true,
@@ -50,6 +80,17 @@ const VENTA_DEVOLUCION_SELECT = {
 type VentaParaDevolucion = Prisma.VentaGetPayload<{
   select: typeof VENTA_DEVOLUCION_SELECT;
 }>;
+
+const DEVOLUCION_TRANSACTION_MAX_ATTEMPTS = 3;
+
+/** Reintenta únicamente conflictos de serialización o deadlocks del motor. */
+function isRetryableDevolucionTransactionError(error: unknown): boolean {
+  if (!error || typeof error !== 'object') return false;
+  const candidate = error as { code?: unknown; meta?: { code?: unknown; cause?: unknown } };
+  return candidate.code === 'P2034' || candidate.code === '40001' || candidate.code === '40P01' ||
+    candidate.meta?.code === '40001' || candidate.meta?.code === '40P01' ||
+    candidate.meta?.cause === '40001' || candidate.meta?.cause === '40P01';
+}
 
 export interface ResultadoDevolucion {
   devolucionId: string;
@@ -147,8 +188,13 @@ export const DevolucionVentaService = {
     });
     assertVentaDevolvible(venta, tenantId);
 
-    return prisma.$transaction(
+    for (let attempt = 1; attempt <= DEVOLUCION_TRANSACTION_MAX_ATTEMPTS; attempt += 1) {
+      try {
+      return await prisma.$transaction(
       async (tx) => {
+        if (venta.clienteId) {
+          await bloquearClienteCredito(tx, tenantId, venta.clienteId);
+        }
         await tx.$queryRaw`
           SELECT "ventaId" FROM "Venta"
           WHERE "ventaId" = ${parsed.ventaId} AND "tenantId" = ${tenantId}
@@ -182,9 +228,46 @@ export const DevolucionVentaService = {
           seleccion: parsed.items,
         });
 
-        const tasaCambio = actual.factura?.tasaCambio != null
-          ? Number(actual.factura.tasaCambio)
-          : 1;
+        const modoEnv = process.env.CONTABILIDAD_FORMAL_MODE;
+        const modoFormal = modoEnv === 'shadow' || modoEnv === 'enforce' ? modoEnv : 'off';
+        let monedaFuncional: string | null = null;
+        let valoracionDevolucion: ValoracionDevolucion | null = null;
+        let valoracionDisponible = true;
+        if (modoFormal !== 'off') {
+          try {
+            const policy = await tx.tenantAccountingPolicy.findUnique({
+              where: { tenantId },
+              select: { functionalCurrencyCode: true },
+            });
+            monedaFuncional = policy?.functionalCurrencyCode?.trim().toUpperCase() ?? null;
+            if (!monedaFuncional) {
+              throw new ActionError(
+                'No hay moneda funcional configurada para valorar la devolución',
+                'FX_INSUFICIENTE',
+              );
+            }
+            valoracionDevolucion = resolverValoracionDevolucion({
+              montoOriginal: montos.total,
+              monedaFuncional,
+              snapshotCxc: actual.factura?.cuentaPorCobrar,
+              fuentesPago: actual.reconciliaciones,
+            });
+          } catch (error) {
+            if (
+              modoFormal !== 'shadow' ||
+              !(error instanceof ActionError) ||
+              error.code !== 'FX_INSUFICIENTE'
+            ) {
+              throw error;
+            }
+            valoracionDisponible = false;
+          }
+        }
+
+        const monedaDevolucion = valoracionDevolucion?.moneda ??
+          actual.factura?.cuentaPorCobrar?.monedaOriginal ?? monedaFuncional ?? 'CUP';
+        const tasaCambio = valoracionDevolucion?.tasaCambio ??
+          (modoFormal === 'off' ? actual.factura?.tasaCambio ?? 1 : null);
 
         // 1) Persistir la devolución con sus líneas.
         const devolucion = await tx.devolucionVenta.create({
@@ -196,7 +279,7 @@ export const DevolucionVentaService = {
             subtotal: montos.subtotal,
             descuento: montos.descuento,
             total: montos.total,
-            moneda: 'CUP',
+            moneda: monedaDevolucion,
             tasaCambio,
             idempotencyKey: parsed.idempotencyKey,
             createdById: user.userId,
@@ -204,7 +287,8 @@ export const DevolucionVentaService = {
         });
 
         // 2) Efectos de inventario por línea (stock, kardex, FIFO parcial).
-        let costoFifoRestaurado = 0;
+        let costoFifoRestaurado = new Prisma.Decimal(0);
+        let costoFifoCompleto = true;
         const ventaItemPorId = new Map(actual.items.map((i) => [i.id, i]));
         for (const [idx, item] of montos.items.entries()) {
           const origen = ventaItemPorId.get(item.ventaItemId);
@@ -214,15 +298,53 @@ export const DevolucionVentaService = {
               'ITEM_NO_PERTENECE',
             );
           }
+          let costoFifoValorado = null;
+          if (modoFormal !== 'off') {
+            try {
+              costoFifoValorado = await getCostoFifoVentaValorado(
+                tx,
+                tenantId,
+                actual.ventaId,
+                { ventaItemId: item.ventaItemId, cantidad: item.cantidad },
+              );
+            } catch (error) {
+              if (
+                modoFormal !== 'shadow' ||
+                !(error instanceof ActionError) ||
+                error.code !== 'FX_INSUFICIENTE'
+              ) {
+                throw error;
+              }
+              costoFifoCompleto = false;
+            }
+          }
+
           const { restaurado, costoTotal } = await restaurarAllocacionesFifo(tx, {
             tenantId,
             ventaItemId: item.ventaItemId,
             cantidad: item.cantidad,
           });
-          costoFifoRestaurado += costoTotal;
+          if (costoFifoValorado) {
+            if (costoFifoValorado.cantidadValorada !== restaurado) {
+              throw new ActionError(
+                'Las allocations FIFO cambiaron durante la devolución',
+                'FX_INSUFICIENTE',
+              );
+            }
+            costoFifoRestaurado = costoFifoRestaurado.add(costoFifoValorado.montoFuncional);
+          } else if (modoFormal === 'enforce' && restaurado > 0) {
+            throw new ActionError(
+              'No se pudo valorar el costo FIFO restaurado',
+              'FX_INSUFICIENTE',
+            );
+          }
           const costoUnitario =
             restaurado > 0
-              ? Math.round(costoTotal / restaurado)
+              ? costoFifoValorado
+                ? Math.round(costoFifoValorado.montoFuncional.toNumber() / restaurado)
+                : modoFormal === 'off'
+                  ? Math.round(costoTotal / restaurado)
+                  : origen.producto.precioCosto
               : origen.producto.precioCosto;
 
           const ubicacion = actual.puntoDeVentaId
@@ -330,7 +452,23 @@ export const DevolucionVentaService = {
                 : []),
             ],
           },
-          select: { id: true, montoDeuda: true, montoPagado: true },
+          select: {
+            id: true,
+            montoDeuda: true,
+            montoPagado: true,
+            montoPagadoFuncional: true,
+            monedaOriginal: true,
+            montoOriginal: true,
+            montoDeudaFuncional: true,
+            monedaFuncional: true,
+            tasaCambio: true,
+            rateEffectiveAt: true,
+            fxProvenanceKind: true,
+            fxProvenanceSource: true,
+            fxCatalogRateId: true,
+            fxEvidenceFingerprint: true,
+            fxEvidenceVersion: true,
+          },
           orderBy: { createdAt: 'asc' },
         });
         const saldoCxc = cuentasPorCobrar.reduce(
@@ -364,11 +502,33 @@ export const DevolucionVentaService = {
           const aplicar = Math.min(pendienteCxc, saldo);
           if (aplicar <= 0) continue;
           const nuevoPagado = Number(cxc.montoPagado) + aplicar;
+          let montoPagadoFuncional: Prisma.Decimal | undefined;
+          if (modoFormal !== 'off' && cxc.montoPagadoFuncional != null) {
+            try {
+              const devolucionFuncional = resolverValoracionDevolucion({
+                montoOriginal: aplicar,
+                monedaFuncional: cxc.monedaFuncional ?? monedaFuncional ?? '',
+                snapshotCxc: cxc,
+              });
+              montoPagadoFuncional = new Prisma.Decimal(cxc.montoPagadoFuncional)
+                .add(devolucionFuncional.montoFuncional);
+            } catch (error) {
+              if (
+                modoFormal !== 'shadow' ||
+                !(error instanceof ActionError) ||
+                error.code !== 'FX_INSUFICIENTE'
+              ) {
+                throw error;
+              }
+              valoracionDisponible = false;
+            }
+          }
           await tx.cuentaPorCobrar.update({
             where: { id: cxc.id },
             data: {
               montoPagado: nuevoPagado,
               estado: nuevoPagado >= Number(cxc.montoDeuda) ? 'PAGADA' : 'PARCIAL',
+              ...(montoPagadoFuncional != null ? { montoPagadoFuncional } : {}),
             },
           });
           pendienteCxc -= aplicar;
@@ -381,7 +541,7 @@ export const DevolucionVentaService = {
             tenantId,
             clienteId: actual.clienteId,
             monto: finanzas.saldoFavor,
-            moneda: 'CUP',
+            moneda: monedaDevolucion,
             facturaId: notaCreditoId,
             devolucionId: devolucion.devolucionId,
             usuarioId: user.userId,
@@ -428,8 +588,13 @@ export const DevolucionVentaService = {
           buildEventoDevolucionVenta({
             devolucionId: devolucion.devolucionId,
             total: montos.total,
-            tasaCambio,
-            costoFifoRestaurado,
+            valoracion: modoFormal !== 'off' && valoracionDisponible && costoFifoCompleto
+              ? valoracionDevolucion
+              : null,
+            costoFifoRestaurado:
+              modoFormal !== 'off' && valoracionDisponible && costoFifoCompleto
+                ? costoFifoRestaurado
+                : undefined,
             descripcion: `Devolución de la venta ${actual.ventaId}`,
           }),
         );
@@ -444,6 +609,17 @@ export const DevolucionVentaService = {
         } satisfies ResultadoDevolucion;
       },
       { isolationLevel: Prisma.TransactionIsolationLevel.Serializable },
-    );
+        );
+      } catch (error) {
+        if (
+          !isRetryableDevolucionTransactionError(error) ||
+          attempt === DEVOLUCION_TRANSACTION_MAX_ATTEMPTS
+        ) {
+          throw error;
+        }
+      }
+    }
+
+    throw new Error('No se pudo completar la devolución.');
   },
 };

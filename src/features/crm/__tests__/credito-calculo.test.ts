@@ -5,9 +5,27 @@
  */
 import { describe, it, expect } from 'vitest';
 import {
+	saldoNetoCuenta,
 	saldoVivoCliente,
 	superaLimiteCredito,
 } from '@/features/crm/services/credito-calculo';
+
+describe('saldoNetoCuenta (fórmula única del saldo, 2.6)', () => {
+	it('deuda menos pagado, nunca negativo', () => {
+		expect(saldoNetoCuenta(100, 40)).toBe(60);
+		expect(saldoNetoCuenta(100, 100)).toBe(0);
+	});
+
+	it('sobrepago cae a 0 y valores null/undefined a 0', () => {
+		expect(saldoNetoCuenta(100, 150)).toBe(0);
+		expect(saldoNetoCuenta(null, undefined)).toBe(0);
+		expect(saldoNetoCuenta(100, null)).toBe(100);
+	});
+
+	it('acepta decimales como string de Prisma sin perder centavos', () => {
+		expect(saldoNetoCuenta('2000.01' as never, '400.25' as never)).toBeCloseTo(1599.76, 2);
+	});
+});
 
 describe('saldo vivo del cliente (CRM-T1)', () => {
 	it('sin CxC el saldo vivo es 0', () => {

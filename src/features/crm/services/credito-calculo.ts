@@ -15,6 +15,24 @@ export interface CuentaVivaParaSaldo {
 }
 
 /**
+ * @description Fórmula única del saldo neto de una cuenta por cobrar (tarea
+ * 2.6): deuda menos pagado, nunca negativo. Todos los lectores del cupo la
+ * comparten — `saldoVivoCliente`, `validarCreditoOrigen` y la edición manual
+ * de CxC — para que ninguna decisión de crédito use una variante propia.
+ * @param {number | string | null | undefined} montoDeuda - Deuda total (Decimal de Prisma aceptado).
+ * @param {number | string | null | undefined} montoPagado - Total ya pagado.
+ * @returns {number} Saldo neto (nunca negativo).
+ */
+export function saldoNetoCuenta(
+	montoDeuda: number | string | null | undefined,
+	montoPagado: number | string | null | undefined,
+): number {
+	const deuda = montoDeuda == null ? 0 : Number(montoDeuda);
+	const pagado = montoPagado == null ? 0 : Number(montoPagado);
+	return Math.max(deuda - pagado, 0);
+}
+
+/**
  * @description Suma el saldo pendiente de las CxC activas del cliente.
  * Reglas: sobrepago (montoPagado > montoDeuda) cuenta 0; CxC ANULADA queda fuera.
  * @param {CuentaVivaParaSaldo[]} cuentas - CxC del cliente.
@@ -24,8 +42,7 @@ export function saldoVivoCliente(cuentas: readonly CuentaVivaParaSaldo[]): numbe
 	let total = 0;
 	for (const c of cuentas) {
 		if (c.estado === 'ANULADA') continue;
-		const saldo = Number(c.montoDeuda) - Number(c.montoPagado);
-		if (saldo > 0) total += saldo;
+		total += saldoNetoCuenta(c.montoDeuda, c.montoPagado);
 	}
 	return total;
 }

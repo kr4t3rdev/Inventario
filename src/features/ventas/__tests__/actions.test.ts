@@ -8,7 +8,7 @@ vi.mock("@/lib/server-actions/get-current-user");
 vi.mock("next/cache", () => ({ revalidatePath: vi.fn() }));
 vi.mock("@/lib/services/fifo-allocation", () => ({
 	allocateFifoForSale: vi.fn(),
-	getCostoFifoVenta: vi.fn().mockResolvedValue(0),
+	getCostoFifoVentaValorado: vi.fn().mockResolvedValue(null),
 }));
 vi.mock("@/lib/services/audit-log-service", () => ({
 	AuditLogService: { logStrict: vi.fn() },
@@ -31,6 +31,8 @@ const { mockTx } = vi.hoisted(() => {
 		cuentaBancaria: { updateMany: vi.fn(), findFirst: vi.fn() },
 		auditLog: { create: vi.fn() },
 		purchaseAllocation: { deleteMany: vi.fn() },
+		turnoPuntoVenta: { findFirst: vi.fn().mockResolvedValue({ id: 't-1' }), create: vi.fn() },
+		puntoDeVenta: { findFirst: vi.fn().mockResolvedValue({ tipoCaja: 'MOVIL' }) },
 		stockUbicacion: {
 			findUnique: vi.fn(),
 			upsert: vi.fn(),

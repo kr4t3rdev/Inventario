@@ -1,13 +1,25 @@
 import { NextRequest, NextResponse } from "next/server";
+import { createHash } from "node:crypto";
 import { revalidatePath } from "next/cache";
 import prisma from "@/lib/prisma";
 import { z } from "zod";
 import { Prisma } from "@/generated/prisma";
+import { buildAppliedFxEvidenceExact } from '@/features/contabilidad/domain/fx-evidence';
 import { authenticateUser } from "@/lib/auth-middleware";
 import { AuditLogService } from "@/lib/services/audit-log-service";
 import { postEvento } from "@/features/contabilidad-formal/services/posting-engine";
 import { buildEventoCobroCxc, buildEventoVentaContado } from "@/features/contabilidad-formal/lib/event-builders";
-import { requireTenant } from "@/lib/services/tenant-scope";
+import { requireFeature, requirePermission, requireTenant } from "@/lib/services/tenant-scope";
+import { ActionError } from "@/lib/server-actions";
+import {
+	AccountingReconciliationService,
+	buildPersistedAccountingAmount,
+} from '@/features/contabilidad/services/accounting-reconciliation-service';
+import {
+	auditarCreditoOverride,
+	bloquearClienteCredito,
+	validarCreditoOrigen,
+} from "@/features/ventas/services/credito-override";
 import {
 	validarEscrituraPeriodo,
 	extraerFechaDeBody,
@@ -24,6 +36,8 @@ const reconciliacionVentaSchema = z.object({
 	verificacionTransferenciaId: z.string().optional(),
 	idTransferencia: z.string().optional(),
 	observaciones: z.string().optional(),
+	solicitarCreditoOverride: z.boolean().optional(),
+	motivoCreditoOverride: z.string().trim().max(500).optional(),
 });
 
 /**
@@ -99,6 +113,28 @@ function createReconciliacionError(
 	error.status = status;
 	error.code = code;
 	return error;
+}
+
+/**
+ * @description Serializa un valor con claves ordenadas para huella determinista.
+ * @param {unknown} value - Valor a serializar.
+ * @returns {string} Texto JSON canónico.
+ */
+function stableStringify(value: unknown): string {
+	if (value === null || typeof value !== 'object') return JSON.stringify(value) ?? 'null';
+	if (Array.isArray(value)) return `[${value.map((item) => stableStringify(item)).join(',')}]`;
+	const entries = Object.entries(value as Record<string, unknown>)
+		.sort(([a], [b]) => a.localeCompare(b));
+	return `{${entries.map(([key, item]) => `${JSON.stringify(key)}:${stableStringify(item)}`).join(',')}}`;
+}
+
+/**
+ * @description Calcula la huella SHA-256 del payload validado de una reconciliación.
+ * @param {unknown} payload - Payload validado por Zod.
+ * @returns {string} Huella hexadecimal del payload.
+ */
+function hashReconciliacionPayload(payload: unknown): string {
+	return createHash('sha256').update(stableStringify(payload)).digest('hex');
 }
 
 /**
@@ -385,9 +421,41 @@ export async function POST(request: NextRequest) {
 		if ("status" in authResultUser) return authResultUser as Response;
 		const user = authResultUser.user;
 		const tenantId = requireTenant(user);
+		requireFeature(user, 'contabilidad', 'reconciliar ventas');
+		requirePermission(user, 'financiero.contabilidad.acceder', 'reconciliar ventas');
 
 		const body = await request.json();
 		const validatedData = reconciliacionVentaSchema.parse(body);
+
+		// Idempotencia durable: el reintento con la misma clave devuelve el
+		// resultado previo; la misma clave con payload distinto se rechaza.
+		const idempotencyKey = request.headers.get('Idempotency-Key')?.trim() || undefined;
+		const idempotencyPayloadHash = idempotencyKey
+			? hashReconciliacionPayload(validatedData)
+			: undefined;
+		if (idempotencyKey) {
+			const existingByKey = await prisma.reconciliacionVenta.findFirst({
+				where: { tenantId, idempotencyKey },
+			});
+			if (existingByKey) {
+				if (existingByKey.idempotencyPayloadHash !== idempotencyPayloadHash) {
+					return NextResponse.json(
+						{
+							error: 'La clave de idempotencia ya fue usada con otro payload',
+							code: 'IDEMPOTENCY_CONFLICT',
+						},
+						{ status: 409 },
+					);
+				}
+				return NextResponse.json(
+					{
+						message: 'Venta reconciliada exitosamente',
+						reconciliacion: existingByKey,
+					},
+					{ status: 200 },
+				);
+			}
+		}
 
 		// Validar período contable antes de escribir
 		const fechaOperacion = extraerFechaDeBody(body) ?? new Date();
@@ -490,13 +558,19 @@ export async function POST(request: NextRequest) {
 			? Number(validatedData.tasaCambio)
 			: undefined;
 		const montoBase = Number(validatedData.monto);
-
-		// Monto aplicado a la venta en CUP para control de sobrepago/CxC
-		const montoAplicadoVentaCUP = normalizeMontoToCup(
+		const fechaReconciliacion = fechaOperacion;
+		const conversion = buildPersistedAccountingAmount(
 			montoBase,
 			validatedData.moneda,
 			tasaCambio,
+			fechaReconciliacion,
 		);
+		if (!conversion.fxEvidence || conversion.montoConvertido == null) {
+			return NextResponse.json(
+				{ error: 'Falta evidencia de conversión para el cobro', code: 'FX_INSUFICIENTE' },
+				{ status: 400 },
+			);
+		}
 
 		// Si el tipo de pago requiere cuenta, verificar cuenta defecto
 		let cuentaOrigen = null;
@@ -548,6 +622,9 @@ export async function POST(request: NextRequest) {
 				}
 
 				// Lock de filas críticas para evitar condiciones de carrera en sobrepago/saldos.
+				if (venta.clienteId) {
+					await bloquearClienteCredito(tx, tenantId, venta.clienteId);
+				}
 				await tx.$queryRaw`
         SELECT 1 FROM "Venta"
         WHERE "ventaId" = ${validatedData.ventaId}
@@ -627,72 +704,230 @@ export async function POST(request: NextRequest) {
 					}
 				}
 
+				const facturaId = venta.factura?.idFactura;
+				let existingCxC = facturaId
+					? await tx.cuentaPorCobrar.findFirst({ where: { facturaId, tenantId } })
+					: null;
+				if (!existingCxC) {
+					const numeroFacturaCandidates = getNumeroFacturaCandidates(
+						venta.ordenId,
+						venta.factura?.numeroFactura,
+					);
+					if (numeroFacturaCandidates.length > 0) {
+						existingCxC = await tx.cuentaPorCobrar.findFirst({
+							where: {
+								tenantId,
+								numeroFactura: { in: numeroFacturaCandidates },
+							},
+							orderBy: { updatedAt: 'desc' },
+						});
+					}
+				}
+				if (existingCxC?.estado === 'ANULADA') {
+					throw createReconciliacionError(400, 'CXC_ANULADA', 'La cuenta por cobrar está anulada');
+				}
+				const modoFormal = process.env.CONTABILIDAD_FORMAL_MODE;
+
 				const reconciliacionesPrevias = await tx.reconciliacionVenta.findMany({
 					where: { ventaId: validatedData.ventaId, tenantId },
 					select: {
 						monto: true,
 						moneda: true,
-						tasaCambio: true,
+						montoConvertido: true,
+						functionalCurrency: true,
+						fxEvidenceFingerprint: true,
 					},
 				});
 
-				const totalPagadoPrevio = reconciliacionesPrevias.reduce((sum, rec) => {
-					return (
-						sum +
-						normalizeMontoToCup(
-							Number(rec.monto || 0),
-							rec.moneda || "CUP",
-							rec.tasaCambio ? Number(rec.tasaCambio) : undefined,
-						)
-					);
-				}, 0);
-
-				const totalVenta = Number(venta.total || 0);
-				const nuevoTotalPagado = totalPagadoPrevio + montoAplicadoVentaCUP;
-				if (nuevoTotalPagado > totalVenta + 0.1) {
+				const monedaFuncionalCxC = existingCxC?.monedaFuncional?.trim().toUpperCase() ||
+					conversion.fxEvidence?.functionalCurrency.trim().toUpperCase() || 'CUP';
+				const monedaOriginalCxC = existingCxC?.monedaOriginal?.trim().toUpperCase() ||
+					monedaFuncionalCxC;
+				const cxcTieneSnapshot = existingCxC != null &&
+					Boolean(existingCxC.monedaOriginal && existingCxC.monedaFuncional &&
+						existingCxC.montoOriginal != null && existingCxC.montoDeudaFuncional != null &&
+						existingCxC.tasaCambio != null && existingCxC.fxEvidenceFingerprint &&
+						existingCxC.fxEvidenceVersion === 2);
+				if (existingCxC && !cxcTieneSnapshot &&
+					(modoFormal === 'enforce' || modoFormal === 'shadow')) {
 					throw createReconciliacionError(
 						400,
-						"MONTO_EXCEDIDO",
-						`El monto excede el saldo pendiente. Total venta (CUP): ${totalVenta}, ` +
-							`Pagado (CUP): ${totalPagadoPrevio.toFixed(2)}, ` +
-							`Intento (CUP): ${montoAplicadoVentaCUP.toFixed(2)}`,
+						'FX_INSUFICIENTE',
+						'La cuenta por cobrar no conserva una valoración funcional verificable',
 					);
 				}
 
+				if (existingCxC && cxcTieneSnapshot) {
+					try {
+						const canonical = buildAppliedFxEvidenceExact({
+							originalAmount: existingCxC.montoOriginal!,
+							originalCurrency: monedaOriginalCxC,
+							functionalCurrency: monedaFuncionalCxC,
+							exchangeRate: existingCxC.tasaCambio!,
+							convertedAmount: existingCxC.montoDeudaFuncional!,
+							rateEffectiveAt: existingCxC.rateEffectiveAt,
+							source: existingCxC.fxProvenanceSource!,
+							fxCatalogRateId: existingCxC.fxCatalogRateId,
+							fxProvenanceKind: monedaOriginalCxC === monedaFuncionalCxC
+								? undefined
+								: existingCxC.fxProvenanceKind as 'CATALOG_RATE' | 'MANUAL_GOVERNED',
+						});
+						if (
+							canonical.evidence.fxEvidenceFingerprint !== existingCxC.fxEvidenceFingerprint ||
+							canonical.evidence.fxEvidenceVersion !== existingCxC.fxEvidenceVersion ||
+							!new Prisma.Decimal(existingCxC.montoOriginal!).eq(existingCxC.montoDeuda)
+						) {
+							throw new Error('SNAPSHOT_CXC_FINGERPRINT_MISMATCH');
+						}
+					} catch {
+						throw createReconciliacionError(
+							400,
+							'FX_INSUFICIENTE',
+							'La evidencia de la cuenta por cobrar no coincide con su saldo reconocido',
+						);
+					}
+				}
+
+				if (existingCxC && monedaOriginalCxC !== monedaFuncionalCxC &&
+					validatedData.moneda.trim().toUpperCase() !== monedaOriginalCxC) {
+					throw createReconciliacionError(
+						400,
+						'FX_INSUFICIENTE',
+						'El cobro debe coincidir con la moneda original de la cuenta por cobrar',
+					);
+				}
+
+				const reconciliacionesFuncionales: Prisma.Decimal[] = [];
+				for (const previo of reconciliacionesPrevias) {
+					if (
+						previo.montoConvertido == null ||
+						!previo.fxEvidenceFingerprint ||
+						previo.functionalCurrency?.trim().toUpperCase() !== monedaFuncionalCxC ||
+						(existingCxC && monedaOriginalCxC !== monedaFuncionalCxC &&
+							previo.moneda.trim().toUpperCase() !== monedaOriginalCxC)
+					) {
+						if (modoFormal === 'enforce' || modoFormal === 'shadow') {
+							throw createReconciliacionError(
+								400,
+								'FX_INSUFICIENTE',
+								'Un cobro previo no conserva una valoración funcional homogénea',
+							);
+						}
+						reconciliacionesFuncionales.push(new Prisma.Decimal(normalizeMontoToCup(
+							Number(previo.monto),
+							previo.moneda,
+							undefined,
+						)));
+						continue;
+					}
+					reconciliacionesFuncionales.push(new Prisma.Decimal(previo.montoConvertido));
+				}
+				const totalPagadoFuncionalPrevio = reconciliacionesFuncionales.reduce(
+					(sum, monto) => sum.plus(monto),
+					new Prisma.Decimal(0),
+				);
+				const totalPagadoNominalPrevio = reconciliacionesPrevias.reduce(
+					(sum, rec, index) => sum.plus(
+						existingCxC && monedaOriginalCxC !== monedaFuncionalCxC
+							? rec.monto
+							: reconciliacionesFuncionales[index],
+					),
+					new Prisma.Decimal(0),
+				);
+				const montoPagoNominalCxC = existingCxC &&
+					monedaOriginalCxC !== monedaFuncionalCxC
+					? new Prisma.Decimal(validatedData.monto)
+					: new Prisma.Decimal(conversion.montoConvertido!);
+				const totalPagadoNominal = totalPagadoNominalPrevio.plus(montoPagoNominalCxC);
+				const totalPagadoFuncional = totalPagadoFuncionalPrevio.plus(conversion.montoConvertido!);
+				const totalVenta = new Prisma.Decimal(venta.total || 0);
+				const deudaNominal = existingCxC
+					? new Prisma.Decimal(existingCxC.montoDeuda)
+					: totalVenta;
+				const nuevoTotalPagado = totalPagadoNominal;
+				if (nuevoTotalPagado.gt(deudaNominal.plus('0.1'))) {
+					throw createReconciliacionError(
+						400,
+						"MONTO_EXCEDIDO",
+						`El monto excede el saldo pendiente. Total: ${deudaNominal.toFixed(2)} ${monedaOriginalCxC}, ` +
+							`Pagado: ${totalPagadoNominalPrevio.toFixed(2)}, ` +
+							`Intento: ${montoPagoNominalCxC.toFixed(2)}`,
+					);
+				}
+				const saldoRestante = existingCxC
+					? Math.max(deudaNominal.minus(totalPagadoNominal).toNumber(), 0)
+					: Math.max(totalVenta.minus(totalPagadoFuncional).toNumber(), 0);
+				const nuevoEstado: 'PENDIENTE' | 'PARCIAL' | 'PAGADA' = saldoRestante <= 0.01
+					? 'PAGADA'
+					: totalPagadoNominal.gt(0) ? 'PARCIAL' : 'PENDIENTE';
+				let diferenciaFxCxc = new Prisma.Decimal(0);
+				if (existingCxC && cxcTieneSnapshot && monedaOriginalCxC !== monedaFuncionalCxC) {
+					diferenciaFxCxc = AccountingReconciliationService.calcularDiferenciaFxCxc(
+						existingCxC,
+						validatedData.moneda,
+						totalPagadoNominalPrevio,
+						totalPagadoNominal,
+						conversion,
+					);
+				}
 				// Crear la reconciliación
-				const reconciliacion = await tx.reconciliacionVenta.create({
-					data: {
-						tenantId: venta.tenantId,
-						ventaId: validatedData.ventaId,
-						cuentaId: validatedData.cuentaId,
-						tipoPagoId: validatedData.tipoPagoId,
-						monto: validatedData.monto,
-						moneda: validatedData.moneda,
-						...(validatedData.tasaCambio != null && {
-							tasaCambio: validatedData.tasaCambio,
-						}),
-						montoConvertido: montoDestino,
-						verificacionTransferenciaId: referenciaTransferencia,
-						...(validatedData.observaciones != null && {
-							observaciones: validatedData.observaciones,
-						}),
-						idTransferencia: referenciaTransferencia,
-						reconciliadoPor: user.userId,
-					},
-					include: {
-						venta: {
-							include: {
-								producto: true,
-								puntoDeVenta: true,
-								empleado: true,
-								factura: true,
-								cliente: true,
-							},
+				let reconciliacion;
+				try {
+					reconciliacion = await tx.reconciliacionVenta.create({
+						data: {
+							tenantId: venta.tenantId,
+							ventaId: validatedData.ventaId,
+							cuentaId: validatedData.cuentaId,
+							tipoPagoId: validatedData.tipoPagoId,
+							monto: validatedData.monto,
+							moneda: validatedData.moneda,
+							tasaCambio: conversion.tasaCambio,
+							montoConvertido: conversion.montoConvertido,
+							fechaReconciliacion,
+							...conversion.fxEvidence,
+							verificacionTransferenciaId: referenciaTransferencia,
+							...(validatedData.observaciones != null && {
+								observaciones: validatedData.observaciones,
+							}),
+							idTransferencia: referenciaTransferencia,
+							idempotencyKey,
+							idempotencyPayloadHash,
+							reconciliadoPor: user.userId,
 						},
-						cuentaBancaria: true,
-						tipoPago: true,
-					},
+						include: {
+							venta: {
+								include: {
+									producto: true,
+									puntoDeVenta: true,
+									empleado: true,
+									factura: true,
+									cliente: true,
+								},
+							},
+							cuentaBancaria: true,
+							tipoPago: true,
+						},
 					});
+				} catch (createError) {
+					if (
+						createError instanceof Prisma.PrismaClientKnownRequestError &&
+						createError.code === 'P2002' &&
+						idempotencyKey
+					) {
+						const replay = await tx.reconciliacionVenta.findFirst({
+							where: { tenantId, idempotencyKey },
+						});
+						if (replay && replay.idempotencyPayloadHash === idempotencyPayloadHash) {
+							return replay;
+						}
+						throw createReconciliacionError(
+							409,
+							'IDEMPOTENCY_CONFLICT',
+							'La clave de idempotencia ya fue usada con otro payload',
+						);
+					}
+					throw createError;
+				}
 
 					// Capa de contabilidad formal (CTA-1): cobro legacy de venta.
 					await postEvento(
@@ -700,12 +935,16 @@ export async function POST(request: NextRequest) {
 						{ tenantId: venta.tenantId, userId: user.userId },
 						(venta.factura ? buildEventoCobroCxc : buildEventoVentaContado)({
 							reconciliacionId: reconciliacion.reconciliacionId,
-							fecha: new Date(),
+							fecha: reconciliacion.fechaReconciliacion,
 							tesoreria: {
-								monto: Number(validatedData.monto),
-								moneda: validatedData.moneda || 'CUP',
-								montoFuncional: montoDestino ?? Number(validatedData.monto),
-								tasaCambio: validatedData.tasaCambio ?? null,
+								monto: Number(reconciliacion.monto),
+								moneda: reconciliacion.moneda || 'CUP',
+								montoFuncional: Number(reconciliacion.montoConvertido),
+								tasaCambio: reconciliacion.tasaCambio == null
+									? null : Number(reconciliacion.tasaCambio),
+								fxEvidenceFingerprint: reconciliacion.fxEvidenceFingerprint,
+								diferenciaFx: diferenciaFxCxc,
+								monedaFuncionalCodigo: reconciliacion.functionalCurrency ?? 'CUP',
 								tipoCuenta: cuentaDestinoLocked?.tipoCuenta ?? null,
 								referencia: referenciaTransferencia,
 							},
@@ -792,17 +1031,6 @@ export async function POST(request: NextRequest) {
 				}
 
 				// --- Lógica de Cuentas por Cobrar ---
-				const totalPagado = nuevoTotalPagado;
-				const saldoRestante = Math.max(0, totalVenta - totalPagado);
-
-				// Determinar estado
-				let nuevoEstado: "PENDIENTE" | "PARCIAL" | "PAGADA" = "PENDIENTE";
-				if (saldoRestante <= 0.01) {
-					nuevoEstado = "PAGADA";
-				} else if (totalPagado > 0) {
-					nuevoEstado = "PARCIAL";
-				}
-
 				// Buscar si existe CuentaPorCobrar
 				const ventaRec = venta;
 				if (!ventaRec) {
@@ -812,54 +1040,60 @@ export async function POST(request: NextRequest) {
 						"Venta no encontrada tras reconciliación",
 					);
 				}
-				const facturaId = ventaRec.factura?.idFactura;
-
 				// Solo procedemos si hay cliente (requisito de CxC)
 				if (ventaRec.clienteId) {
-					let existingCxC = null;
-
-					// 1) Prioridad a facturaId (clave única en CxC)
-					if (facturaId) {
-						existingCxC = await tx.cuentaPorCobrar.findFirst({
-							where: { facturaId, tenantId },
-						});
-					}
-
-					// 2) Fallback por número de factura solo si no existe por facturaId
-					if (!existingCxC) {
-						const numeroFacturaCandidates = getNumeroFacturaCandidates(
-							ventaRec.ordenId,
-							ventaRec.factura?.numeroFactura,
-						);
-						if (numeroFacturaCandidates.length > 0) {
-							existingCxC = await tx.cuentaPorCobrar.findFirst({
-								where: {
-									tenantId,
-									numeroFactura: {
-										in: numeroFacturaCandidates,
-									},
-								},
-								orderBy: {
-									updatedAt: "desc",
-								},
-							});
-						}
-					}
+					// Delta neto de exposición dentro de la tx: materializar una CxC
+					// faltante o cambios que eleven el saldo vivo (p. ej. reactivar una
+					// cuenta ANULADA) consumen cupo del origen probado (venta de
+					// productos) y exigen override explícito auditado.
+					const saldoPrevioCxc = existingCxC
+						? Math.max(Number(existingCxC.montoDeuda) - Number(existingCxC.montoPagado), 0)
+						: 0;
+					const saldoPosteriorCxc = existingCxC
+						? Math.max(Number(existingCxC.montoDeuda) - totalPagadoNominal.toNumber(), 0)
+						: saldoRestante;
+					const deltaNetoCxc = saldoPosteriorCxc - saldoPrevioCxc;
+					const decisionCredito = deltaNetoCxc > 0.01
+						? await validarCreditoOrigen({
+							tx,
+							user,
+							tenantId,
+							clienteId: ventaRec.clienteId,
+							moneda: existingCxC?.monedaOriginal ?? "CUP",
+							montoNuevo: deltaNetoCxc,
+							permiso: 'ventas.venta.credito-override',
+							solicitarCreditoOverride: validatedData.solicitarCreditoOverride,
+							motivoCreditoOverride: validatedData.motivoCreditoOverride,
+							clienteLockAdquirido: true,
+						})
+						: null;
 
 					if (existingCxC) {
 						// Actualizar existente
-						await tx.cuentaPorCobrar.update({
-							where: { id: existingCxC.id },
+						const updatedCxC = await tx.cuentaPorCobrar.updateMany({
+							where: { id: existingCxC.id, tenantId },
 							data: {
-								montoPagado: totalPagado,
+								montoPagado: totalPagadoNominal,
+								montoPagadoFuncional: totalPagadoFuncional,
 								estado: nuevoEstado,
 								// Actualizamos idTransferencia con el último pago para referencia rápida
 								idTransferencia:
 									referenciaTransferencia || existingCxC.idTransferencia,
 							},
 						});
+						if (updatedCxC.count !== 1) {
+							throw createReconciliacionError(404, 'CXC_NO_ENCONTRADA', 'Cuenta por cobrar no encontrada');
+						}
 					} else if (saldoRestante > 0.01) {
-						// Crear nueva CxC solo si hay deuda pendiente y no existe registro
+						// La nueva obligación se crea en moneda funcional con evidencia de identidad.
+						const monedaDeuda = monedaFuncionalCxC;
+						const montoDeudaFuncional = totalVenta;
+						const snapshotCxC = buildAppliedFxEvidenceExact({
+							originalAmount: totalVenta,
+							originalCurrency: monedaDeuda,
+							functionalCurrency: monedaDeuda,
+							source: 'legacy-reconciliacion-ventas-cxc',
+						});
 						await tx.cuentaPorCobrar.create({
 							data: {
 								tenantId: venta.tenantId,
@@ -867,11 +1101,36 @@ export async function POST(request: NextRequest) {
 								facturaId: facturaId,
 								numeroFactura:
 									ventaRec.ordenId || ventaRec.factura?.numeroFactura, // Usar ordenId o factura
-								montoDeuda: totalVenta,
-								montoPagado: totalPagado,
+								montoDeuda: montoDeudaFuncional,
+								montoPagado: totalPagadoFuncional,
+								montoPagadoFuncional: totalPagadoFuncional,
+								monedaOriginal: monedaDeuda,
+								montoOriginal: montoDeudaFuncional,
+								montoDeudaFuncional,
+								monedaFuncional: monedaDeuda,
+								tasaCambio: snapshotCxC.tasaCambio,
+								fxProvenanceKind: snapshotCxC.evidence.fxProvenanceKind,
+								fxProvenanceSource: snapshotCxC.evidence.fxProvenanceSource,
+								fxCatalogRateId: snapshotCxC.evidence.fxCatalogRateId,
+								fxEvidenceJson: { ...snapshotCxC.evidence },
+								fxEvidenceFingerprint: snapshotCxC.evidence.fxEvidenceFingerprint,
+								fxEvidenceVersion: snapshotCxC.evidence.fxEvidenceVersion,
 								estado: nuevoEstado,
 								idTransferencia: referenciaTransferencia,
 							},
+						});
+					}
+
+					if (decisionCredito) {
+						await auditarCreditoOverride({
+							tx,
+							user,
+							decision: decisionCredito,
+							tenantId,
+							clienteId: ventaRec.clienteId,
+							origen: 'RECONCILIACION_VENTA',
+							origenId: reconciliacion.reconciliacionId,
+							montoNuevo: deltaNetoCxc,
 						});
 					}
 				}
@@ -916,6 +1175,18 @@ export async function POST(request: NextRequest) {
 			{ status: 201 },
 		);
 	} catch (error) {
+		if (error instanceof ActionError) {
+			const status = error.code === 'FORBIDDEN'
+				? 403
+				: error.code === 'NOT_FOUND'
+					? 404
+					: 400;
+			return NextResponse.json(
+				{ error: error.message, code: error.code },
+				{ status },
+			);
+		}
+
 		if (error instanceof z.ZodError) {
 			return NextResponse.json(
 				{ error: "Datos de entrada inválidos", details: error.errors },

@@ -7,6 +7,7 @@ import {
   ACTIVE_PAYABLE_STATES,
   ACTIVE_RECEIVABLE_STATES,
 } from '@/features/contabilidad/domain/balance-calculator';
+import { bloquearClienteCredito } from '@/features/ventas/services/credito-override';
 
 const CXC_INCLUDE = {
   cliente: { select: { clienteId: true, nombre: true } },
@@ -322,48 +323,50 @@ export const AccountingAccountsService = {
    */
   async annulReceivable(input: { id: string; tenantId: string }) {
     const where = { id: input.id, tenantId: input.tenantId };
-    const existing = await prisma.cuentaPorCobrar.findFirst({
-      where,
-      include: CXC_INCLUDE,
-    });
-    if (!existing) return null;
-    if (existing.estado === 'ANULADA') {
-      return {
-        cuenta: existing as unknown as Record<string, unknown>,
-        changed: false,
-        previousState: 'ANULADA' as const,
-      };
-    }
-
-    const claimed = await prisma.cuentaPorCobrar.updateMany({
-      where: { ...where, estado: { not: 'ANULADA' } },
-      data: { estado: 'ANULADA' },
-    });
-    if (claimed.count === 0) {
-      const current = await prisma.cuentaPorCobrar.findFirst({
+    return prisma.$transaction(async (tx) => {
+      const snapshot = await tx.cuentaPorCobrar.findFirst({
         where,
-        include: CXC_INCLUDE,
+        select: { id: true, clienteId: true, estado: true },
       });
-      return current
+      if (!snapshot) return null;
+      if (snapshot.clienteId) {
+        await bloquearClienteCredito(tx, input.tenantId, snapshot.clienteId);
+      }
+
+      const existing = await tx.cuentaPorCobrar.findFirst({ where, include: CXC_INCLUDE });
+      if (!existing) return null;
+      if (existing.estado === 'ANULADA') {
+        return {
+          cuenta: existing as unknown as Record<string, unknown>,
+          changed: false,
+          previousState: 'ANULADA' as const,
+        };
+      }
+
+      const claimed = await tx.cuentaPorCobrar.updateMany({
+        where: { ...where, estado: { not: 'ANULADA' } },
+        data: { estado: 'ANULADA' },
+      });
+      if (claimed.count === 0) {
+        const current = await tx.cuentaPorCobrar.findFirst({ where, include: CXC_INCLUDE });
+        return current
+          ? {
+              cuenta: current as unknown as Record<string, unknown>,
+              changed: false,
+              previousState: 'ANULADA' as const,
+            }
+          : null;
+      }
+
+      const updated = await tx.cuentaPorCobrar.findFirst({ where, include: CXC_INCLUDE });
+      return updated
         ? {
-            cuenta: current as unknown as Record<string, unknown>,
-            changed: false,
-            previousState: 'ANULADA' as const,
+            cuenta: updated as unknown as Record<string, unknown>,
+            changed: true,
+            previousState: existing.estado,
           }
         : null;
-    }
-
-    const updated = await prisma.cuentaPorCobrar.findFirst({
-      where,
-      include: CXC_INCLUDE,
     });
-    return updated
-      ? {
-          cuenta: updated as unknown as Record<string, unknown>,
-          changed: true,
-          previousState: existing.estado,
-        }
-      : null;
   },
 
   /**

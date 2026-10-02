@@ -14,6 +14,7 @@ export type AuditEntity =
   | "DEUDA_CASH"
   | "PAGO_DEUDA"
   | "PRESTAMO_CASH"
+  | "FISCAL_DOCUMENT"
   | "PAGO_PRESTAMO"
   | "ANTICIPO"
   | "VENTA"

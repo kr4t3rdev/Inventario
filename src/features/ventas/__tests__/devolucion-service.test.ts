@@ -13,12 +13,16 @@ vi.mock('@/features/inventario/movimientos', () => ({
 }));
 vi.mock('@/lib/services/fifo-allocation', () => ({
 	restaurarAllocacionesFifo: vi.fn().mockResolvedValue({ restaurado: 2, costoTotal: 600 }),
+	getCostoFifoVentaValorado: vi.fn().mockResolvedValue(null),
 }));
 vi.mock('@/lib/services/audit-log-service', () => ({
 	AuditLogService: { logStrict: vi.fn() },
 }));
 vi.mock('@/lib/services/anticipos-workflow', () => ({
 	createAnticipoDevolucion: vi.fn().mockResolvedValue({ anticipoId: 'ant-1' }),
+}));
+vi.mock('@/features/contabilidad-formal/services/posting-engine', () => ({
+	postEvento: vi.fn().mockResolvedValue(undefined),
 }));
 
 const { mockTx } = vi.hoisted(() => {
@@ -36,6 +40,7 @@ const { mockTx } = vi.hoisted(() => {
 		factura: { create: vi.fn() },
 		cuentaPorCobrar: { findMany: vi.fn(), update: vi.fn() },
 		turnoPuntoVenta: { findFirst: vi.fn() },
+		tenantAccountingPolicy: { findUnique: vi.fn() },
 	};
 	return { mockTx };
 });
@@ -51,9 +56,15 @@ vi.mock('@/lib/prisma', () => ({
 import { prisma } from '@/lib/prisma';
 import { upsertStockUbicacion } from '@/lib/services/stock-ubicacion-service';
 import { registrarMovimiento } from '@/features/inventario/movimientos';
-import { restaurarAllocacionesFifo } from '@/lib/services/fifo-allocation';
+import {
+	getCostoFifoVentaValorado,
+	restaurarAllocacionesFifo,
+} from '@/lib/services/fifo-allocation';
 import { createAnticipoDevolucion } from '@/lib/services/anticipos-workflow';
 import { AuditLogService } from '@/lib/services/audit-log-service';
+import { postEvento } from '@/features/contabilidad-formal/services/posting-engine';
+import { Prisma } from '@/generated/prisma';
+import { buildAppliedFxEvidenceExact } from '@/features/contabilidad/domain/fx-evidence';
 import { DevolucionVentaService } from '@/features/ventas/services/devolucion-venta-service';
 import type { AuthenticatedUser } from '@/lib/auth-middleware';
 
@@ -125,8 +136,44 @@ const inputBase = {
 	idempotencyKey: KEY,
 };
 
+function cxcUsdValuada() {
+	const rateEffectiveAt = new Date('2026-09-30T00:00:00Z');
+	const evidencia = buildAppliedFxEvidenceExact({
+		originalAmount: '2000',
+		originalCurrency: 'USD',
+		functionalCurrency: 'CUP',
+		exchangeRate: '24',
+		convertedAmount: '48000',
+		rateEffectiveAt,
+		source: 'facturacion-venta-credito-cxc',
+		fxCatalogRateId: 'rate-usd-1',
+		fxProvenanceKind: 'CATALOG_RATE',
+	});
+	return {
+		monedaOriginal: 'USD',
+		montoOriginal: new Prisma.Decimal('2000'),
+		montoDeuda: new Prisma.Decimal('2000'),
+		montoDeudaFuncional: new Prisma.Decimal('48000'),
+		monedaFuncional: 'CUP',
+		tasaCambio: new Prisma.Decimal('24'),
+		rateEffectiveAt,
+		fxProvenanceKind: 'CATALOG_RATE',
+		fxProvenanceSource: 'facturacion-venta-credito-cxc',
+		fxCatalogRateId: 'rate-usd-1',
+		fxEvidenceFingerprint: evidencia.evidence.fxEvidenceFingerprint,
+		fxEvidenceVersion: 2,
+	};
+}
+
 describe('DevolucionVentaService.registrar (DNC-T3)', () => {
-	beforeEach(() => vi.clearAllMocks());
+	beforeEach(() => {
+		vi.clearAllMocks();
+		vi.mocked(postEvento).mockResolvedValue(undefined);
+		vi.mocked(getCostoFifoVentaValorado).mockResolvedValue(null);
+		vi.mocked(prisma.$transaction).mockImplementation(
+			(async (callback: (tx: unknown) => unknown) => callback(mockTx)) as never,
+		);
+	});
 
 	it('registra devolución parcial con NC y saldo a favor (sin CxC)', async () => {
 		preparar({ cxcSaldo: 0 });
@@ -169,6 +216,122 @@ describe('DevolucionVentaService.registrar (DNC-T3)', () => {
 			expect.objectContaining({ monto: 1000, clienteId: 'c-1', facturaId: 'nc-1' }),
 		);
 		expect(AuditLogService.logStrict).toHaveBeenCalled();
+	});
+
+	it('hereda FX autoritativa de la CxC origen y convierte la devolución parcial', async () => {
+		const previousMode = process.env.CONTABILIDAD_FORMAL_MODE;
+		process.env.CONTABILIDAD_FORMAL_MODE = 'enforce';
+		preparar();
+		const ventaFx = {
+			...ventaEntregada,
+			factura: { idFactura: 'f-1', tasaCambio: new Prisma.Decimal('1'), cuentaPorCobrar: cxcUsdValuada() },
+		};
+		vi.mocked(prisma.venta.findUnique).mockResolvedValue(ventaFx as never);
+		mockTx.venta.findUnique.mockResolvedValue(ventaFx as never);
+		mockTx.tenantAccountingPolicy.findUnique.mockResolvedValue({ functionalCurrencyCode: 'CUP' });
+		vi.mocked(getCostoFifoVentaValorado).mockResolvedValue({
+			montoFuncional: new Prisma.Decimal('14400'),
+			monedaFuncional: 'CUP',
+			cantidadValorada: 2,
+		});
+		try {
+			await DevolucionVentaService.registrar({ input: inputBase, user: admin });
+
+			expect(mockTx.devolucionVenta.create).toHaveBeenCalledWith(expect.objectContaining({
+				data: expect.objectContaining({ moneda: 'USD', tasaCambio: new Prisma.Decimal('24') }),
+			}));
+			expect(createAnticipoDevolucion).toHaveBeenCalledWith(
+				expect.anything(),
+				expect.objectContaining({ moneda: 'USD', monto: 1000 }),
+			);
+			const [, , evento] = vi.mocked(postEvento).mock.calls[0];
+			expect(evento).toMatchObject({
+				tipo: 'DEVOLUCION_VENTA',
+				moneda: 'USD',
+				montoFuncional: new Prisma.Decimal('24000'),
+				monedaFuncional: 'CUP',
+				tasaCambio: new Prisma.Decimal('24'),
+				fxEvidenceFingerprint: cxcUsdValuada().fxEvidenceFingerprint,
+			});
+			expect(evento.auxiliares?.costoFifo).toEqual(new Prisma.Decimal('14400'));
+		} finally {
+			if (previousMode === undefined) delete process.env.CONTABILIDAD_FORMAL_MODE;
+			else process.env.CONTABILIDAD_FORMAL_MODE = previousMode;
+		}
+	});
+
+	it('incrementa saldo funcional de CxC con la tasa del snapshot original', async () => {
+		const previousMode = process.env.CONTABILIDAD_FORMAL_MODE;
+		process.env.CONTABILIDAD_FORMAL_MODE = 'enforce';
+		preparar();
+		const snapshot = cxcUsdValuada();
+		const ventaFx = {
+			...ventaEntregada,
+			factura: { idFactura: 'f-1', tasaCambio: 1, cuentaPorCobrar: snapshot },
+		};
+		vi.mocked(prisma.venta.findUnique).mockResolvedValue(ventaFx as never);
+		mockTx.venta.findUnique.mockResolvedValue(ventaFx as never);
+		mockTx.tenantAccountingPolicy.findUnique.mockResolvedValue({ functionalCurrencyCode: 'CUP' });
+		mockTx.cuentaPorCobrar.findMany.mockResolvedValue([{
+			...snapshot,
+			id: 'cxc-1',
+			montoPagado: new Prisma.Decimal('400'),
+			montoPagadoFuncional: new Prisma.Decimal('9600'),
+			estado: 'PARCIAL',
+		}] as never);
+		vi.mocked(getCostoFifoVentaValorado).mockResolvedValue({
+			montoFuncional: new Prisma.Decimal('14400'),
+			monedaFuncional: 'CUP',
+			cantidadValorada: 2,
+		});
+
+		try {
+			await DevolucionVentaService.registrar({ input: inputBase, user: admin });
+
+			expect(mockTx.cuentaPorCobrar.update).toHaveBeenCalledWith(expect.objectContaining({
+				where: { id: 'cxc-1' },
+				data: expect.objectContaining({
+					montoPagado: 1400,
+					montoPagadoFuncional: new Prisma.Decimal('33600'),
+				}),
+			}));
+		} finally {
+			if (previousMode === undefined) delete process.env.CONTABILIDAD_FORMAL_MODE;
+			else process.env.CONTABILIDAD_FORMAL_MODE = previousMode;
+		}
+	});
+
+	it('enforce rechaza CxC histórica sin FX y no empieza efectos de devolución', async () => {
+		const previousMode = process.env.CONTABILIDAD_FORMAL_MODE;
+		process.env.CONTABILIDAD_FORMAL_MODE = 'enforce';
+		preparar();
+		const ventaHistorica = {
+			...ventaEntregada,
+			factura: {
+				idFactura: 'f-1',
+				tasaCambio: new Prisma.Decimal('24'),
+				cuentaPorCobrar: {
+					...cxcUsdValuada(),
+					montoDeudaFuncional: null,
+					monedaFuncional: null,
+					fxEvidenceFingerprint: null,
+					fxEvidenceVersion: null,
+				},
+			},
+		};
+		vi.mocked(prisma.venta.findUnique).mockResolvedValue(ventaHistorica as never);
+		mockTx.venta.findUnique.mockResolvedValue(ventaHistorica as never);
+		mockTx.tenantAccountingPolicy.findUnique.mockResolvedValue({ functionalCurrencyCode: 'CUP' });
+		try {
+			await expect(DevolucionVentaService.registrar({ input: inputBase, user: admin }))
+				.rejects.toMatchObject({ code: 'FX_INSUFICIENTE' });
+			expect(mockTx.devolucionVenta.create).not.toHaveBeenCalled();
+			expect(upsertStockUbicacion).not.toHaveBeenCalled();
+			expect(postEvento).not.toHaveBeenCalled();
+		} finally {
+			if (previousMode === undefined) delete process.env.CONTABILIDAD_FORMAL_MODE;
+			else process.env.CONTABILIDAD_FORMAL_MODE = previousMode;
+		}
 	});
 
 	it('replay por idempotencyKey devuelve la existente sin efectos', async () => {
@@ -339,5 +502,66 @@ describe('DevolucionVentaService.registrar (DNC-T3)', () => {
 				user: admin,
 			}),
 		).rejects.toMatchObject({ code: 'REEMBOLSO_SIN_TURNO' });
+	});
+
+	it('reintenta tras un fallo tardío y confirma una sola vez los efectos transaccionales', async () => {
+		preparar();
+		let transactionCalls = 0;
+		const committedPostings: unknown[] = [];
+		const transactionClients: Array<{ pendingPostings: unknown[] }> = [];
+		vi.mocked(postEvento).mockImplementation(async (tx) => {
+			const transactionalState = tx as typeof transactionClients[number];
+			transactionalState.pendingPostings.push({ entry: transactionClients.length });
+			if (transactionClients.length === 1) throw { code: 'P2034' };
+		});
+		vi.mocked(prisma.$transaction).mockImplementation((async (
+			callback: (tx: unknown) => unknown,
+		) => {
+			transactionCalls += 1;
+			const tx = { ...mockTx, pendingPostings: [] as unknown[] };
+			transactionClients.push(tx);
+			const result = await callback(tx);
+			committedPostings.push(...tx.pendingPostings);
+			return result;
+		}) as never);
+
+		const result = await DevolucionVentaService.registrar({ input: inputBase, user: admin });
+
+		expect(transactionCalls).toBe(2);
+		expect(transactionClients[0]).not.toBe(transactionClients[1]);
+		expect(result.devolucionId).toBe('dev-1');
+		expect(postEvento).toHaveBeenCalledTimes(2);
+		expect(committedPostings).toHaveLength(1);
+	});
+
+	it('detiene los reintentos tras tres fallos transitorios', async () => {
+		preparar();
+		let transactionCalls = 0;
+		mockTx.$queryRaw.mockRejectedValue({ meta: { code: '40001' } });
+		vi.mocked(prisma.$transaction).mockImplementation((async (callback: (tx: unknown) => unknown) => {
+			transactionCalls += 1;
+			return callback(mockTx);
+		}) as never);
+
+		await expect(DevolucionVentaService.registrar({ input: inputBase, user: admin }))
+			.rejects.toMatchObject({ meta: { code: '40001' } });
+		expect(transactionCalls).toBe(3);
+		expect(postEvento).not.toHaveBeenCalled();
+	});
+
+	it('no reintenta errores de negocio/no transitorios', async () => {
+		preparar();
+		let transactionCalls = 0;
+		const error = new Error('invalid input');
+		mockTx.$queryRaw.mockRejectedValue(error);
+		vi.mocked(prisma.$transaction).mockImplementation((async (callback: (tx: unknown) => unknown) => {
+			transactionCalls += 1;
+			return callback(mockTx);
+		}) as never);
+
+		await expect(DevolucionVentaService.registrar({ input: inputBase, user: admin }))
+			.rejects.toBe(error);
+		expect(transactionCalls).toBe(1);
+		expect(postEvento).not.toHaveBeenCalled();
 	});
 });

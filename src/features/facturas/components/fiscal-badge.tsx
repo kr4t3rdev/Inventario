@@ -10,6 +10,7 @@ const ESTADOS: Record<string, { label: string; clase: string }> = {
 	TIMBRADA: { label: 'Fiscal: timbrada', clase: 'border-emerald-300 bg-emerald-50 text-emerald-700 dark:bg-emerald-950 dark:text-emerald-300' },
 	RECHAZADA: { label: 'Fiscal: rechazada', clase: 'border-red-300 bg-red-50 text-red-700 dark:bg-red-950 dark:text-red-300' },
 	CANCELADA: { label: 'Fiscal: cancelada', clase: 'border-gray-300 bg-gray-50 text-gray-700 dark:bg-gray-900 dark:text-gray-300' },
+	INCIERTA: { label: 'Fiscal: incierta', clase: 'border-orange-300 bg-orange-50 text-orange-700 dark:bg-orange-950 dark:text-orange-300' },
 };
 
 /**
@@ -22,7 +23,15 @@ export function FiscalBadge({ estado }: { estado?: string | null }): JSX.Element
 	if (!estado) return null;
 	const cfg = ESTADOS[estado] ?? { label: `Fiscal: ${estado.toLowerCase()}`, clase: '' };
 	return (
-		<Badge variant="outline" className={cn('font-normal', cfg.clase)} title="Documento fiscal">
+		<Badge
+			variant="outline"
+			className={cn('font-normal', cfg.clase)}
+			title={
+				estado === 'INCIERTA'
+					? 'La emisión quedó con resultado externo no verificable. Requiere conciliación con evidencia; nunca se reenvía sola.'
+					: 'Documento fiscal'
+			}
+		>
 			{cfg.label}
 		</Badge>
 	);

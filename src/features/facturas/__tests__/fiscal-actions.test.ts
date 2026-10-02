@@ -88,7 +88,10 @@ describe('acciones fiscales (FE-T3)', () => {
 			numeroFactura: 'FV-000001',
 			fiscalDocument: { estado: 'TIMBRADA' },
 		} as never);
-		const r = await reintentarFiscalAction('fac-1');
+		const r = await reintentarFiscalAction({
+			facturaId: 'fac-1',
+			pruebaNoEmision: 'Ack-PAC-2026-000123: no existe el comprobante',
+		});
 		expect(r.error?.code).toBe('ESTADO_INVALIDO');
 	});
 });

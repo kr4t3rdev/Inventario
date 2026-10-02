@@ -10,7 +10,7 @@ vi.mock("@/lib/server-actions/get-current-user");
 vi.mock("next/cache", () => ({ revalidatePath: vi.fn() }));
 vi.mock("@/lib/services/fifo-allocation", () => ({
 	allocateFifoForSale: vi.fn(),
-	getCostoFifoVenta: vi.fn().mockResolvedValue(0),
+	getCostoFifoVentaValorado: vi.fn().mockResolvedValue(null),
 }));
 vi.mock("@/lib/services/audit-log-service", () => ({
 	AuditLogService: { logStrict: vi.fn() },

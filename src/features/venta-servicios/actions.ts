@@ -14,10 +14,12 @@ import { applyAnticipoAllocations } from '@/lib/services/anticipos-workflow';
 import { ventaServicioLegacySchema, ventaMixtaSchema, updateVentaServicioSchema } from './schemas';
 import type { VentaServicioInput, VentaMixtaInput, VentaServicioUpdateInput } from './schemas';
 import type { AuthenticatedUser } from '@/lib/auth-middleware';
-import { buildPersistedAccountingAmount } from '@/features/contabilidad/services/accounting-reconciliation-service';
+import { buildAppliedFxEvidenceExact } from '@/features/contabilidad/domain/fx-evidence';
+import { Prisma } from '@/generated/prisma';
 import { exchangeRateProvider } from '@/features/contabilidad/services/exchange-rate-provider';
 import { postEvento } from '@/features/contabilidad-formal/services/posting-engine';
-import { buildEventoServicio } from '@/features/contabilidad-formal/lib/event-builders';
+import { buildEventoVentaServicioCredito } from '@/features/contabilidad-formal/lib/event-builders';
+import { auditarCreditoOverride, validarCreditoOrigen } from '@/features/ventas/services/credito-override';
 
 const VENTA_SERVICIO_INCLUDE = {
   servicio: true,
@@ -62,6 +64,86 @@ async function assertClienteDelTenant(tenantId: string, clienteId?: string | nul
   if (!cliente) throw new ActionError('Cliente no encontrado', 'NOT_FOUND');
 }
 
+/**
+ * @description Resuelve la moneda funcional configurada para el tenant sin aplicar valores por defecto.
+ * @param {Prisma.TransactionClient} tx - Cliente transaccional activo.
+ * @param {string} tenantId - Tenant propietario de la política.
+ * @returns {Promise<string>} Código de moneda funcional normalizado.
+ */
+async function requireFunctionalCurrency(
+  tx: Prisma.TransactionClient,
+  tenantId: string,
+): Promise<string> {
+  const policy = await tx.tenantAccountingPolicy.findUnique({
+    where: { tenantId },
+    select: { functionalCurrencyCode: true },
+  });
+  const currency = policy?.functionalCurrencyCode?.trim().toUpperCase();
+  if (!currency) {
+    throw new ActionError(
+      'El tenant no tiene moneda funcional configurada para valorar la cuenta por cobrar',
+      'FX_INSUFICIENTE',
+    );
+  }
+  return currency;
+}
+
+/**
+ * @description Valora una CxC de servicio desde su moneda original y tasa histórica exacta.
+ * @param {object} params - Transacción, tenant, monto y moneda fuente.
+ * @returns {Promise<ReturnType<typeof buildAppliedFxEvidenceExact>>} Valoración con evidencia FX.
+ */
+async function valueServiceReceivable(params: {
+  tx: Prisma.TransactionClient;
+  amount: number;
+  originalCurrency: string;
+  functionalCurrency: string;
+}) {
+  const originalCurrency = params.originalCurrency.trim().toUpperCase();
+  const rate = originalCurrency === params.functionalCurrency
+    ? null
+    : await exchangeRateProvider.getRateAsOfExact({
+        sourceCurrency: originalCurrency,
+        targetCurrency: params.functionalCurrency,
+        boundaryAt: new Date(),
+        client: params.tx,
+      });
+  if (originalCurrency !== params.functionalCurrency && !rate) {
+    throw new ActionError(
+      `No hay tasa de cambio publicada para ${originalCurrency} → ${params.functionalCurrency}; no se puede registrar la cuenta por cobrar`,
+      'FX_INSUFICIENTE',
+    );
+  }
+  if (
+    rate &&
+    (!rate.tasa.mul('10000000000').isInteger() ||
+      !rate.tasa.lt('10000000000'))
+  ) {
+    throw new ActionError(
+      'La tasa de cambio excede la precisión que puede conservar la cuenta por cobrar',
+      'FX_INSUFICIENTE',
+    );
+  }
+  try {
+    return buildAppliedFxEvidenceExact({
+      originalAmount: String(params.amount),
+      originalCurrency,
+      functionalCurrency: params.functionalCurrency,
+      exchangeRate: rate?.tasa,
+      rateEffectiveAt: rate?.fechaVigencia,
+      source: 'service-credit-cxc',
+      fxCatalogRateId: rate?.tasaId,
+      fxProvenanceKind: rate ? 'CATALOG_RATE' : undefined,
+    });
+  } catch (error) {
+    if (error instanceof ActionError) throw error;
+    throw new ActionError(
+      error instanceof Error ? error.message : 'No fue posible valorar la cuenta por cobrar',
+      'FX_INSUFICIENTE',
+    );
+  }
+}
+
 export const getVentaServiciosAction = withAction(async (_input: void, user: AuthenticatedUser) => {
   const tenantId = requireTenant(user);
   requireFeature(user, 'servicios', 'ver servicios');
@@ -88,6 +170,7 @@ export const createVentaServicioAction = withAction(withPeriodValidation(
   async (input: VentaServicioInput | VentaMixtaInput, user: AuthenticatedUser) => {
   const tenantId = requireTenant(user);
   requireFeature(user, 'servicios', 'crear servicios');
+  requirePermission(user, 'ventas.venta.registrar', 'crear ventas de servicios');
 
   // Detectar modo: mixto (con lineas) vs legacy (single servicio)
   if ('lineas' in input && Array.isArray(input.lineas)) {
@@ -111,11 +194,27 @@ export const createVentaServicioAction = withAction(withPeriodValidation(
     const serviciosMonedas = await assertServiciosDelTenant(tenantId, lineasServicio.map((l) => l.servicioId!));
     await assertClienteDelTenant(tenantId, payload.clienteId);
 
-    const created = await prisma.$transaction(
-      lineasServicio.map((linea) => {
+    const created = await prisma.$transaction(async (tx) => {
+      const montoCredito = lineasServicio.reduce((total, linea) =>
+        total + linea.cantidad * serviciosMonedas.get(linea.servicioId!)!.precio, 0,
+      );
+      const credito = payload.condicionPago === 'CREDITO' && payload.clienteId
+        ? await validarCreditoOrigen({
+            tx,
+            user,
+            tenantId,
+            clienteId: payload.clienteId,
+            moneda: serviciosMonedas.get(lineasServicio[0].servicioId!)!.moneda,
+            montoNuevo: montoCredito,
+            permiso: 'ventas.servicios.credito-override',
+            solicitarCreditoOverride: payload.solicitarCreditoOverride,
+            motivoCreditoOverride: payload.motivoCreditoOverride,
+          })
+        : null;
+      const ventas = await Promise.all(lineasServicio.map((linea) => {
         const catalogo = serviciosMonedas.get(linea.servicioId!)!;
         const precioUnitario = catalogo.precio;
-        return prisma.ventaServicios.create({
+        return tx.ventaServicios.create({
           data: {
             tenantId,
             servicioId: linea.servicioId!,
@@ -129,25 +228,61 @@ export const createVentaServicioAction = withAction(withPeriodValidation(
             condicionPago: payload.condicionPago,
           },
         });
-      })
-    );
+      }));
 
-    // B-06: crédito en modo mixto → una CxC por línea (cada fila es una venta).
-    if (payload.condicionPago === 'CREDITO') {
-      await prisma.$transaction((created as Array<{ ventaServicioId: string; total: number }>).map((venta) =>
-        prisma.cuentaPorCobrar.create({
-          data: {
-            tenantId,
-            ventaServicioId: venta.ventaServicioId,
-            clienteId: payload.clienteId!,
-            montoDeuda: venta.total,
-            estado: 'PENDIENTE',
-            tipoCuenta: 'VENTA_SERVICIO',
-            fechaVencimiento,
-          },
-        }),
-      ));
-    }
+      // B-06: crédito en modo mixto → una CxC por línea (cada fila es una venta).
+      if (payload.condicionPago === 'CREDITO') {
+        const functionalCurrency = await requireFunctionalCurrency(tx, tenantId);
+        for (const [index, venta] of ventas.entries()) {
+          const monedaOriginal = serviciosMonedas.get(lineasServicio[index].servicioId!)!.moneda;
+          const valoracion = await valueServiceReceivable({
+            tx,
+            amount: venta.total,
+            originalCurrency: monedaOriginal,
+            functionalCurrency,
+          });
+          await tx.cuentaPorCobrar.create({
+            data: {
+              tenantId,
+              ventaServicioId: venta.ventaServicioId,
+              clienteId: payload.clienteId!,
+              montoDeuda: venta.total,
+              monedaOriginal: valoracion.evidence.originalCurrency,
+              montoOriginal: venta.total,
+              montoDeudaFuncional: valoracion.montoConvertido,
+              montoPagadoFuncional: null,
+              monedaFuncional: valoracion.evidence.functionalCurrency,
+              tasaCambio: valoracion.tasaCambio,
+              rateEffectiveAt: valoracion.rateEffectiveAt,
+              fxProvenanceKind: valoracion.evidence.fxProvenanceKind,
+              fxProvenanceSource: valoracion.evidence.fxProvenanceSource,
+              fxCatalogRateId: valoracion.evidence.fxCatalogRateId,
+              fxEvidenceFingerprint: valoracion.evidence.fxEvidenceFingerprint,
+              fxEvidenceVersion: valoracion.evidence.fxEvidenceVersion,
+              estado: 'PENDIENTE',
+              tipoCuenta: 'VENTA_SERVICIO',
+              fechaVencimiento,
+            },
+          });
+          await postEvento(tx, { tenantId, userId: user.userId },
+            buildEventoVentaServicioCredito({
+              ventaServicioId: venta.ventaServicioId, fecha: venta.createdAt,
+              valoracion: { monto: venta.total, moneda: valoracion.evidence.originalCurrency,
+                montoFuncional: valoracion.montoConvertido,
+                monedaFuncionalCodigo: valoracion.evidence.functionalCurrency,
+                tasaCambio: valoracion.tasaCambio,
+                fxEvidenceFingerprint: valoracion.evidence.fxEvidenceFingerprint },
+            }));
+        }
+        if (credito) await auditarCreditoOverride({
+          tx, user, decision: credito, tenantId, clienteId: payload.clienteId!,
+          origen: 'VENTA_SERVICIO', origenId: ventas.map((venta) => venta.ventaServicioId).join(','),
+          montoNuevo: montoCredito,
+        });
+      }
+
+      return ventas;
+    });
 
     revalidatePath('/busy/venta-servicios');
     return {
@@ -177,6 +312,20 @@ export const createVentaServicioAction = withAction(withPeriodValidation(
 
   const resultado = await prisma.$transaction(async (tx) => {
     const ventaTotal = data.cantidad * precioUnitario;
+    const credito = data.condicionPago === 'CREDITO' && data.clienteId
+      ? await validarCreditoOrigen({
+          tx,
+          user,
+          tenantId,
+          clienteId: data.clienteId,
+          moneda: monedaServicio,
+            montoNuevo: Math.max(ventaTotal - (data.anticipos ?? [])
+              .reduce((sum, allocation) => sum + allocation.montoAplicado, 0), 0),
+          permiso: 'ventas.servicios.credito-override',
+          solicitarCreditoOverride: data.solicitarCreditoOverride,
+          motivoCreditoOverride: data.motivoCreditoOverride,
+        })
+      : null;
     const ventaServicio = await tx.ventaServicios.create({
       data: {
         tenantId,
@@ -193,150 +342,113 @@ export const createVentaServicioAction = withAction(withPeriodValidation(
     });
 
     let allocationsResult: any[] = [];
-    if (data.anticipos && data.anticipos.length > 0) {
-      const tipoPagoDefault = await tx.tipoPago.findFirst({
-        where: { isActive: true, tenantId },
-        orderBy: { createdAt: 'asc' },
-      });
-      const cuentaDefault = await tx.cuentaBancaria.findFirst({
-        where: { isActive: true, tenantId },
-        orderBy: { createdAt: 'asc' },
-      });
-
-      allocationsResult = await applyAnticipoAllocations(tx, data.anticipos, {
-        tenantId,
-        documentoDestinoId: ventaServicio.ventaServicioId,
-        contexto: 'FACTURA_DIRECTA',
-        usuarioId: user.userId || 'system',
-        observaciones: `Anticipo aplicado a venta de servicio ${ventaServicio.ventaServicioId}`,
-      });
-
-      for (const alloc of allocationsResult) {
-        const anticipo = await tx.anticipo.findUnique({
-          where: { anticipoId: alloc.anticipoId },
-          select: { tipo: true, moneda: true, cuentaOrigenId: true, tipoPagoOrigenId: true, clienteId: true },
-        });
-
-        const cuentaId = anticipo?.cuentaOrigenId || cuentaDefault?.cuentaId;
-        const tipoPagoId = anticipo?.tipoPagoOrigenId || tipoPagoDefault?.tipoId;
-        if (!cuentaId || !tipoPagoId) {
-          throw new ActionError(
-            'Configura una cuenta bancaria y un tipo de pago antes de aplicar anticipos',
-            'VALIDATION_ERROR',
-          );
-        }
-
-        // La fila refleja la moneda real del dinero movido (la del anticipo),
-        // no la del servicio: el dinero del anticipo vive en anticipo.moneda.
-        const monedaAnticipo = anticipo?.moneda ?? monedaServicio;
-
-        // Para moneda distinta de la funcional del tenant hay que resolver la
-        // tasa de cambio; si no hay, la fila queda invisible a los lectores
-        // (provenanceLegacy/excluded), así que se rechaza antes de escribir.
-        const policy = await tx.tenantAccountingPolicy.findUnique({
-          where: { tenantId },
-          select: { functionalCurrencyCode: true },
-        });
-        const monedaFuncional = policy?.functionalCurrencyCode?.trim().toUpperCase() ?? 'CUP';
-
-        let tasaCambio: number | undefined;
-        let tasaEffectiveAt: Date | undefined;
-        let tasaFxCatalogId: string | undefined;
-        if (monedaAnticipo.trim().toUpperCase() !== monedaFuncional) {
-          const tasa = await exchangeRateProvider.getRateAsOf({
-            sourceCurrency: monedaAnticipo.trim().toUpperCase(),
-            targetCurrency: monedaFuncional,
-            boundaryAt: new Date(),
-          });
-          if (!tasa) {
-            throw new ActionError(
-              `No hay tasa de cambio publicada para ${monedaAnticipo} → ${monedaFuncional}; no se puede registrar la reconciliación`,
-              'VALIDATION_ERROR',
-            );
-          }
-          tasaCambio = tasa.tasa;
-          tasaEffectiveAt = tasa.fechaVigencia;
-          tasaFxCatalogId = tasa.tasaId;
-        }
-
-        const recServicio = await tx.reconciliacionServicio.create({
-          data: {
-            tenantId,
-            ventaServicioId: ventaServicio.ventaServicioId,
-            cuentaId,
-            tipoPagoId,
-            monto: alloc.montoAplicado,
-            moneda: monedaAnticipo,
-            ...buildPersistedAccountingAmount(
-              alloc.montoAplicado,
-              monedaAnticipo,
-              tasaCambio,
-              tasaEffectiveAt,
-              tasaFxCatalogId,
-            ),
-            observaciones: `Cobro anticipado en servicio ${ventaServicio.ventaServicioId}`,
-            reconciliadoPor: user.userId || 'system',
-          },
-        });
-
-        // Capa de contabilidad formal (CTA-1): servicio cobrado con anticipo de cliente.
-        await postEvento(
+    // B-06: venta a crédito → devengo bruto (ingreso + CxC por el TOTAL) y el
+    // anticipo aplicado reduce la CxC (tratamiento confirmado filas 25/26).
+    if (data.condicionPago === 'CREDITO' || data.anticipos?.length) {
+      if (!data.clienteId) {
+        throw new ActionError('La aplicación de anticipos requiere cliente', 'VALIDATION_ERROR');
+      }
+      const cobradoAnticipo = (data.anticipos ?? []).reduce(
+        (suma, a) => suma + a.montoAplicado, 0);
+      if (cobradoAnticipo > ventaTotal) {
+        throw new ActionError('Los anticipos exceden el total de la venta', 'VALIDATION_ERROR');
+      }
+      const snapshotOriginalVerificable = true;
+      let valoracionCxC: ReturnType<typeof buildAppliedFxEvidenceExact> | null = null;
+      if (snapshotOriginalVerificable) {
+        const functionalCurrency = await requireFunctionalCurrency(tx, tenantId);
+        valoracionCxC = await valueServiceReceivable({
           tx,
-          { tenantId, userId: user.userId || 'system' },
-          buildEventoServicio({
-            cobro: true,
-            reconciliacionId: recServicio.reconciliacionId,
-            tesoreria: {
-              monto: alloc.montoAplicado,
-              moneda: monedaAnticipo,
-              montoFuncional:
-                tasaCambio !== undefined
-                  ? alloc.montoAplicado * tasaCambio
-                  : alloc.montoAplicado,
-              tasaCambio: tasaCambio ?? null,
-              referencia: `Servicio ${ventaServicio.ventaServicioId}`,
-            },
-            descripcion: `Cobro anticipado en servicio ${ventaServicio.ventaServicioId}`,
-          }),
-        );
-
-        // Espejo del flujo manual: tracking de conversión para la moneda extranjera.
-        if (tasaCambio !== undefined) {
-          await tx.transaccionMoneda.create({
-            data: {
-              tenantId,
-              tipoTransaccion: 'servicio',
-              referenciaId: ventaServicio.ventaServicioId,
-              monedaId: monedaAnticipo,
-              montoOriginal: alloc.montoAplicado,
-              tasaCambio,
-              montoConvertido: alloc.montoAplicado * tasaCambio,
-            },
+          amount: ventaTotal,
+          originalCurrency: monedaServicio,
+          functionalCurrency,
+        });
+      }
+      const estadoCxC: 'PENDIENTE' | 'PARCIAL' | 'PAGADA' =
+        ventaTotal - cobradoAnticipo <= 0.01 ? 'PAGADA'
+          : cobradoAnticipo > 0 ? 'PARCIAL' : 'PENDIENTE';
+      const cxc = await tx.cuentaPorCobrar.create({
+        data: {
+          tenantId,
+          ventaServicioId: ventaServicio.ventaServicioId,
+          clienteId: data.clienteId!,
+          montoDeuda: ventaTotal,
+          montoPagado: 0,
+          monedaOriginal: snapshotOriginalVerificable
+            ? valoracionCxC?.evidence.originalCurrency ?? null
+            : null,
+          montoOriginal: snapshotOriginalVerificable ? ventaTotal : null,
+          montoDeudaFuncional: valoracionCxC?.montoConvertido ?? null,
+          montoPagadoFuncional: 0,
+          monedaFuncional: valoracionCxC?.evidence.functionalCurrency ?? null,
+          tasaCambio: valoracionCxC?.tasaCambio ?? null,
+          rateEffectiveAt: valoracionCxC?.rateEffectiveAt ?? null,
+          fxProvenanceKind: valoracionCxC?.evidence.fxProvenanceKind ?? null,
+          fxProvenanceSource: valoracionCxC?.evidence.fxProvenanceSource ?? null,
+          fxCatalogRateId: valoracionCxC?.evidence.fxCatalogRateId ?? null,
+          fxEvidenceFingerprint: valoracionCxC?.evidence.fxEvidenceFingerprint ?? null,
+          fxEvidenceVersion: valoracionCxC?.evidence.fxEvidenceVersion ?? null,
+          estado: 'PENDIENTE',
+          tipoCuenta: 'VENTA_SERVICIO',
+          fechaVencimiento,
+        },
+      });
+      // Devengo bruto del documento: ingreso total contra la CxC total.
+      await postEvento(
+        tx,
+        { tenantId, userId: user.userId },
+        buildEventoVentaServicioCredito({
+          ventaServicioId: ventaServicio.ventaServicioId,
+          valoracion: {
+            monto: ventaTotal,
+            moneda: valoracionCxC!.evidence.originalCurrency,
+            montoFuncional: valoracionCxC!.montoConvertido,
+            monedaFuncionalCodigo: valoracionCxC!.evidence.functionalCurrency,
+            tasaCambio: valoracionCxC!.tasaCambio,
+            fxEvidenceFingerprint: valoracionCxC!.evidence.fxEvidenceFingerprint,
+          },
+          fecha: ventaServicio.createdAt,
+        }),
+      );
+      if (data.anticipos?.length) {
+        allocationsResult = await applyAnticipoAllocations(tx, data.anticipos, {
+          tenantId, documentoDestinoId: ventaServicio.ventaServicioId,
+          contexto: 'FACTURA_DIRECTA', usuarioId: user.userId,
+          clienteId: data.clienteId,
+          monedaDocumento: monedaServicio,
+          tasaDocumento: valoracionCxC!.tasaCambio.toString(),
+        });
+        const montoPagadoFuncional = new Prisma.Decimal(valoracionCxC!.montoConvertido)
+          .mul(cobradoAnticipo).div(ventaTotal)
+          .toDecimalPlaces(4, Prisma.Decimal.ROUND_HALF_UP);
+        const cxcAplicada = await tx.cuentaPorCobrar.updateMany({
+          where: { id: cxc.id, tenantId },
+          data: { montoPagado: cobradoAnticipo, montoPagadoFuncional,
+            estado: estadoCxC },
+        });
+        if (cxcAplicada.count !== 1) {
+          throw new ActionError('Cuenta por cobrar no encontrada', 'NOT_FOUND');
+        }
+        await tx.cuentaPorCobrar.updateMany({
+          where: { id: cxc.id, tenantId },
+          data: {
+            montoPagado: cobradoAnticipo,
+            montoPagadoFuncional: new Prisma.Decimal(cobradoAnticipo)
+              .mul(valoracionCxC!.tasaCambio),
+            estado: estadoCxC,
+          },
+        });
+        if (estadoCxC === 'PAGADA') {
+          await tx.ventaServicios.updateMany({
+            where: { ventaServicioId: ventaServicio.ventaServicioId, tenantId },
+            data: { reconciliado: true },
           });
         }
       }
-    }
-
-    // B-06: venta a crédito → cuenta por cobrar por el remanente tras anticipos.
-    if (data.condicionPago === 'CREDITO') {
-      const cobradoAnticipo = allocationsResult.reduce(
-        (suma: number, a: { montoAplicado: number }) => suma + Number(a.montoAplicado || 0),
-        0,
-      );
-      const remanente = ventaTotal - cobradoAnticipo;
-      if (remanente > 0) {
-        await tx.cuentaPorCobrar.create({
-          data: {
-            tenantId,
-            ventaServicioId: ventaServicio.ventaServicioId,
-            clienteId: data.clienteId!,
-            montoDeuda: remanente,
-            estado: 'PENDIENTE',
-            tipoCuenta: 'VENTA_SERVICIO',
-            fechaVencimiento,
-          },
-        });
-      }
+      if (credito) await auditarCreditoOverride({
+        tx, user, decision: credito, tenantId, clienteId: data.clienteId!,
+        origen: 'VENTA_SERVICIO', origenId: cxc.id, montoNuevo: ventaTotal - cobradoAnticipo,
+      });
     }
 
     return { ventaServicio, allocationsResult };
@@ -355,9 +467,28 @@ export const updateVentaServicioAction = withAction(async (input: VentaServicioU
 
   const existing = await prisma.ventaServicios.findFirst({
     where: { ventaServicioId, tenantId },
-    select: { ventaServicioId: true, cantidad: true, total: true, precioUnitario: true },
+    select: { ventaServicioId: true, cantidad: true, total: true, precioUnitario: true, clienteId: true },
   });
   if (!existing) throw new ActionError('Venta de servicio no encontrada', 'NOT_FOUND');
+
+  // Barrera fail-closed: cambiar el total vía cantidad o reasignar el cliente de una
+  // venta con CxC vinculada desalinearía la exposición del cupo común sin ajuste de
+  // la cuenta en la misma transacción. Mientras esa mutación no migre a mover la CxC
+  // en una sola tx, se rechaza en servidor antes de escribir.
+  const cambiaTotalVigente = data.cantidad !== undefined && data.cantidad !== existing.cantidad;
+  const cambiaCliente = data.clienteId !== undefined && data.clienteId !== existing.clienteId;
+  if (cambiaTotalVigente || cambiaCliente) {
+    const cxcVinculada = await prisma.cuentaPorCobrar.findFirst({
+      where: { ventaServicioId, tenantId },
+      select: { id: true },
+    });
+    if (cxcVinculada) {
+      throw new ActionError(
+        'La venta de servicio tiene una cuenta por cobrar vinculada. Ajusta o anula la cuenta por cobrar antes de cambiar la cantidad o el cliente.',
+        'CXC_VINCULADA',
+      );
+    }
+  }
 
   const updateData: Record<string, unknown> = {};
   if (data.cantidad !== undefined) {

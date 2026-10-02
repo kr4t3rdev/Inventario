@@ -133,6 +133,21 @@ describe('getPermissionByKey', () => {
 });
 
 describe('defaults por rol (anclas de la matriz actual)', () => {
+  it('los overrides de crédito están separados por origen, son sensibles y manager-only', () => {
+    for (const key of [
+      'ventas.venta.credito-override',
+      'ventas.servicios.credito-override',
+      'financiero.prestamos-cash.credito-override',
+      'financiero.cuentas-cobrar.credito-override',
+    ]) {
+      expect(getPermissionByKey(key)).toMatchObject({
+        key,
+        defaultRoles: ['manager'],
+        sensitive: true,
+      });
+    }
+  });
+
   it('rrhh.nomina.calcular es manager-only y sensitive', () => {
     const def = getPermissionByKey('rrhh.nomina.calcular');
     expect(def?.defaultRoles).toEqual(['manager']);
@@ -143,6 +158,25 @@ describe('defaults por rol (anclas de la matriz actual)', () => {
     const def = getPermissionByKey('financiero.auditoria.ver');
     expect(def?.defaultRoles).toEqual(expect.arrayContaining(['manager', 'economico']));
     expect(def?.defaultRoles).not.toContain('dependiente');
+  });
+
+  it('opening evidence permissions are sensitive and separate submission from approval', () => {
+    const submit = getPermissionByKey('financiero.apertura.presentar');
+    const approve = getPermissionByKey('financiero.apertura.aprobar');
+
+    expect(submit).toMatchObject({
+      category: 'financiero',
+      defaultRoles: ['manager', 'economico'],
+      sensitive: true,
+    });
+    expect(approve).toMatchObject({
+      category: 'financiero',
+      defaultRoles: ['manager'],
+      sensitive: true,
+    });
+    expect(getDefaultPermissionsForRole('economico').has('financiero.apertura.presentar')).toBe(true);
+    expect(getDefaultPermissionsForRole('economico').has('financiero.apertura.aprobar')).toBe(false);
+    expect(getDefaultPermissionsForRole('dependiente').has('financiero.apertura.aprobar')).toBe(false);
   });
 
   it('ventas.facturas.consultar cubre manager y dependiente (allowlist REST viva), no economico', () => {

@@ -3,11 +3,15 @@ import { z } from 'zod'
 
 import prisma from '@/lib/prisma'
 import { withAuthGet, withAuthPost, type AuthenticatedUser } from '@/lib/auth-middleware'
-import { requireTenant } from '@/lib/services/tenant-scope'
+import { requireFeature, requireTenant } from '@/lib/services/tenant-scope'
+import { ActionError } from '@/lib/server-actions'
 import { AuditLogService } from '@/lib/services/audit-log-service'
 import { validarEscrituraPeriodo, extraerFechaDeBody } from '@/lib/services/validate-period-write'
 import { calcularSaldoPendientePrestamo, normalizarEstadoPrestamoCash } from '@/lib/utils/prestamo-cash'
 import { buildPersistedAccountingAmount } from '@/features/contabilidad/services/accounting-reconciliation-service';
+import { postEvento } from '@/features/contabilidad-formal/services/posting-engine';
+import { buildEventoPrestamoOtorgado } from '@/features/contabilidad-formal/lib/event-builders';
+import { auditarCreditoOverride, validarCreditoOrigen } from '@/features/ventas/services/credito-override';
 
 const querySchema = z.object({
   estado: z.enum(['ACTIVO', 'PAGADO', 'VENCIDO', 'CANCELADO']).optional(),
@@ -25,6 +29,8 @@ const createSchema = z.object({
   tasaCambioAlCrear: z.coerce.number().positive().optional(),
   fechaVencimiento: z.string().optional(),
   observaciones: z.string().optional(),
+  solicitarCreditoOverride: z.boolean().optional(),
+  motivoCreditoOverride: z.string().trim().max(500).optional(),
   cuentaBancariaId: z.string().min(1, 'La cuenta bancaria es requerida')
 })
 
@@ -133,6 +139,7 @@ export const POST = withAuthPost(async (request: NextRequest, _context: unknown,
     if (!prestamosCashEnabled()) {
       return NextResponse.json({ error: 'Módulo de préstamos cash deshabilitado' }, { status: 404 })
     }
+    requireFeature(user, 'prestamos-cash', 'crear préstamos cash');
 
     const body = createSchema.parse(await request.json())
 
@@ -151,8 +158,15 @@ export const POST = withAuthPost(async (request: NextRequest, _context: unknown,
       )
     }
 
-    const cuentaOrigen = await prisma.cuentaBancaria.findUnique({
-      where: { cuentaId: body.cuentaBancariaId },
+    const cliente = await prisma.cliente.findFirst({
+      where: { clienteId: body.clienteId, tenantId },
+      select: { clienteId: true },
+    });
+    if (!cliente) {
+      return NextResponse.json({ error: 'Cliente no encontrado' }, { status: 404 });
+    }
+    const cuentaOrigen = await prisma.cuentaBancaria.findFirst({
+      where: { cuentaId: body.cuentaBancariaId, tenantId },
       select: { cuentaId: true, saldo: true, isActive: true }
     })
     if (!cuentaOrigen || !cuentaOrigen.isActive) {
@@ -174,14 +188,26 @@ export const POST = withAuthPost(async (request: NextRequest, _context: unknown,
     }
 
     const prestamo = await prisma.$transaction(async (tx) => {
-      await tx.cuentaBancaria.update({
-        where: { cuentaId: body.cuentaBancariaId },
-        data: { saldo: { decrement: body.montoCapital } }
-      })
-
       const montoDeuda = body.tasaInteres
         ? Number((body.montoCapital * (1 + body.tasaInteres / 100)).toFixed(2))
-        : body.montoCapital
+        : body.montoCapital;
+      const decisionCredito = await validarCreditoOrigen({
+        tx,
+        user,
+        tenantId,
+        clienteId: body.clienteId,
+        moneda: body.moneda,
+        montoNuevo: montoDeuda,
+        permiso: 'financiero.prestamos-cash.credito-override',
+        solicitarCreditoOverride: body.solicitarCreditoOverride,
+        motivoCreditoOverride: body.motivoCreditoOverride,
+      });
+      const debit = await tx.cuentaBancaria.updateMany({
+        where: { cuentaId: body.cuentaBancariaId, tenantId, isActive: true,
+          saldo: { gte: body.montoCapital } },
+        data: { saldo: { decrement: body.montoCapital } }
+      });
+      if (debit.count !== 1) throw new Error('Cuenta bancaria no disponible');
 
       const cuentaPorCobrar = await tx.cuentaPorCobrar.create({
         data: {
@@ -202,7 +228,7 @@ export const POST = withAuthPost(async (request: NextRequest, _context: unknown,
         body.tasaCambioAlCrear ?? undefined,
         fechaReconciliacion,
       );
-      await tx.reconciliacionVenta.create({
+      const reconciliacion = await tx.reconciliacionVenta.create({
         data: {
           tenantId,
           cuentaId: body.cuentaBancariaId,
@@ -220,7 +246,7 @@ export const POST = withAuthPost(async (request: NextRequest, _context: unknown,
         }
       })
 
-      return tx.prestamoCash.create({
+      const creado = await tx.prestamoCash.create({
         data: {
           tenantId,
           clienteId: body.clienteId,
@@ -243,7 +269,23 @@ export const POST = withAuthPost(async (request: NextRequest, _context: unknown,
           },
           cuentaPorCobrar: true
         }
-      })
+      });
+      await postEvento(tx, { tenantId, userId: user.userId }, buildEventoPrestamoOtorgado({
+        prestamoId: creado.id,
+        valoracion: {
+          monto: Number(reconciliacion.monto),
+          moneda: reconciliacion.moneda || 'CUP',
+          montoFuncional: reconciliacion.montoConvertido == null ? undefined : Number(reconciliacion.montoConvertido),
+          tasaCambio: reconciliacion.tasaCambio == null ? undefined : Number(reconciliacion.tasaCambio),
+          fxEvidenceFingerprint: reconciliacion.fxEvidenceFingerprint ?? undefined,
+        },
+        fecha: reconciliacion.fechaReconciliacion,
+      }));
+      await auditarCreditoOverride({
+        tx, user, decision: decisionCredito, tenantId, clienteId: body.clienteId,
+        origen: 'PRESTAMO_CASH', origenId: creado.id, montoNuevo: montoDeuda,
+      });
+      return creado;
     })
 
     await AuditLogService.log({
@@ -260,6 +302,10 @@ export const POST = withAuthPost(async (request: NextRequest, _context: unknown,
 
     return NextResponse.json({ prestamo }, { status: 201 })
   } catch (error) {
+    if (error instanceof ActionError) {
+      const status = error.code === 'FORBIDDEN' ? 403 : error.code === 'NOT_FOUND' ? 404 : 400;
+      return NextResponse.json({ error: error.message, code: error.code }, { status });
+    }
     if (error instanceof z.ZodError) {
       return NextResponse.json({ error: 'Parámetros inválidos', details: error.errors }, { status: 400 })
     }

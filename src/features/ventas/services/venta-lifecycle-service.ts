@@ -1,12 +1,19 @@
 import { Prisma } from '@/generated/prisma';
 import { prisma } from '@/lib/prisma';
 import { ActionError } from '@/lib/server-actions';
-import { getOrCreateTurnoActivo } from '@/features/turnos-pos';
+import { resolverTurnoDentroDeTx } from '@/features/turnos-pos/services/turno-tx';
 import { requireFeature, requirePermission, requireTenant } from '@/lib/services/tenant-scope';
 import { upsertStockUbicacion } from '@/lib/services/stock-ubicacion-service';
 import { registrarMovimiento, revertirMovimientosDeOrigen } from '@/features/inventario/movimientos';
 import { allocateFifoForSale } from '@/lib/services/fifo-allocation';
 import { applyFacturacionCobroWorkflow } from '@/features/ventas/services/facturacion-workflow';
+import {
+  auditarCreditoOverride,
+  bloquearClienteCredito,
+  validarCreditoOrigen,
+  type CreditoOverrideDecision,
+} from '@/features/ventas/services/credito-override';
+import { conReintentosCredito } from '@/features/ventas/services/credito-retry';
 import { AuditLogService } from '@/lib/services/audit-log-service';
 import { anularVentaSchema, facturarVentaSchema } from '@/features/ventas/schemas';
 import type { AuthenticatedUser } from '@/lib/auth-middleware';
@@ -80,6 +87,7 @@ const ANULAR_SELECT = {
   ventaId: true,
   tenantId: true,
   estado: true,
+  clienteId: true,
   puntoDeVentaId: true,
   deletedAt: true,
   factura: { select: { idFactura: true, tenantId: true } },
@@ -311,23 +319,11 @@ export const VentaLifecycleService = {
     }
     const clienteId = venta.clienteId;
 
-    // El cobro se amarra al turno vigente AHORA (no al turno del pedido, que puede
-    // estar cerrado). Se resuelve ANTES de abrir la transacción, como en el create
-    // clásico, porque getOrCreateTurnoActivo usa el cliente global de Prisma. Si no
-    // hay turno abierto y no se puede abrir uno, el cobro queda sin turno (igual que
-    // una venta del flujo clásico sin turno); nunca se conserva un turno cerrado.
-    let turnoCobroId: string | null =
-      venta.turnoId && venta.turno?.estado === 'ABIERTO' ? venta.turnoId : null;
-    if (!turnoCobroId) {
-      const turnoActual = await getOrCreateTurnoActivo({
-        puntoDeVentaId: venta.puntoDeVentaId,
-      });
-      if (turnoActual.success) {
-        turnoCobroId = turnoActual.data.turnoId;
-      }
-    }
-
-    return prisma.$transaction(async (tx) => {
+    // Retry de la transacción completa ante P2034/deadlock; la factory crea
+    // una tx nueva por intento. El turno del cobro se resuelve DENTRO de la
+    // tx (3.2.c.iii): un AUTO creado aquí se deshace con el rollback si la
+    // facturación se rechaza; nunca se conserva un turno cerrado.
+    return conReintentosCredito(() => prisma.$transaction(async (tx) => {
       const current = await tx.venta.findUnique({
         where: { ventaId },
         select: { estado: true, deletedAt: true },
@@ -337,6 +333,47 @@ export const VentaLifecycleService = {
           'Solo se puede facturar una venta en estado ENTREGADA.',
           'ESTADO_INVALIDO',
         );
+      }
+
+      // El cobro se amarra al turno vigente AHORA (no al turno del pedido,
+      // que puede estar cerrado); si no hay turno abierto y no se puede abrir
+      // uno, el cobro queda sin turno (igual que una venta clásica sin turno).
+      let turnoCobroId: string | null =
+        venta.turnoId && venta.turno?.estado === 'ABIERTO' ? venta.turnoId : null;
+      if (!turnoCobroId) {
+        turnoCobroId = await resolverTurnoDentroDeTx(tx, {
+          tenantId,
+          puntoDeVentaId: venta.puntoDeVentaId,
+        });
+      }
+
+      let creditoDecision: CreditoOverrideDecision | null = null;
+      const tipoVencimiento = parsed.tipoVencimiento ??
+        (parsed.fechaVencimiento ? 'fecha' : null);
+      const creaCxC = tipoVencimiento === 'fecha' || tipoVencimiento === 'plazo';
+      const creditoDeclarado = parsed.montoCredito ?? 0;
+      // Porción cobrada hoy (efectivo+tarjeta+transferencia): en MIXTO con
+      // vencimiento la CxC queda por el remanente tras lo cobrado hoy.
+      const cobradoContado = (parsed.montoEfectivo ?? 0)
+        + (parsed.montoTarjeta ?? 0)
+        + (parsed.montoTransferencia ?? 0);
+      const montoCreditoRequerido = creaCxC
+        ? Math.max(Math.max(Number(venta.total ?? 0), 0) - cobradoContado, 0)
+        : creditoDeclarado ||
+          (parsed.metodoPago === 'CREDITO' ? Math.max(Number(venta.total ?? 0), 0) : 0);
+      const requiereCupo = montoCreditoRequerido > 0 || parsed.metodoPago === 'CREDITO';
+      if (requiereCupo && montoCreditoRequerido > 0) {
+        creditoDecision = await validarCreditoOrigen({
+          tx,
+          user,
+          tenantId,
+          clienteId,
+          moneda: 'CUP',
+          montoNuevo: montoCreditoRequerido,
+          permiso: 'ventas.venta.credito-override',
+          solicitarCreditoOverride: parsed.solicitarCreditoOverride,
+          motivoCreditoOverride: parsed.motivoCreditoOverride,
+        });
       }
 
       let serie = await tx.serieFacturacion.findFirst({
@@ -420,6 +457,21 @@ export const VentaLifecycleService = {
           tipoVencimiento: parsed.tipoVencimiento || undefined,
           fechaVencimiento: parsed.fechaVencimiento || undefined,
           cuentaBancariaId: parsed.cuentaBancariaId || undefined,
+          // Porción cobrada hoy (MIXTO): concilia hoy, CxC por el remanente.
+          montoCobradoContado: cobradoContado,
+        });
+      }
+
+      if (creditoDecision) {
+        await auditarCreditoOverride({
+          tx,
+          user,
+          decision: creditoDecision,
+          tenantId,
+          clienteId,
+          origen: 'PEDIDO_VENTA_FACTURADO',
+          origenId: ventaId,
+          montoNuevo: montoCreditoRequerido,
         });
       }
 
@@ -435,7 +487,7 @@ export const VentaLifecycleService = {
       );
 
       return { ventaId, estado: 'FACTURADA' as const, facturaId: factura.idFactura };
-    });
+    }));
   },
 
   /**
@@ -482,6 +534,9 @@ export const VentaLifecycleService = {
     }
 
     await prisma.$transaction(async (tx) => {
+      if (venta.estado !== 'PEDIDO' && venta.clienteId) {
+        await bloquearClienteCredito(tx, tenantId, venta.clienteId);
+      }
       await tx.$queryRaw`
         SELECT "ventaId" FROM "Venta"
         WHERE "ventaId" = ${parsed.ventaId} AND "tenantId" = ${tenantId}

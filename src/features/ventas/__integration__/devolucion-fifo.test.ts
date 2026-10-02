@@ -7,6 +7,12 @@
  */
 import { describe, it, expect, afterAll } from 'vitest';
 import { prisma } from '@/lib/prisma';
+import { Prisma } from '@/generated/prisma';
+import { buildAppliedFxEvidence, buildAppliedFxEvidenceExact } from '@/features/contabilidad/domain/fx-evidence';
+import {
+  seedPlanContable,
+  seedPlantillasGlobales,
+} from '@/features/contabilidad-formal/services/seed-plan-contable';
 import { DevolucionVentaService } from '@/features/ventas/services/devolucion-venta-service';
 import type { AuthenticatedUser } from '@/lib/auth-middleware';
 
@@ -18,14 +24,15 @@ const nuevosIds: { tenantIds: string[] } = { tenantIds: [] };
  * venta de 4 unidades (cruza ambos lotes) con factura y CxC parcialmente paga.
  */
 async function crearEscenario() {
+  const scenarioId = crypto.randomUUID();
   const tenant = await prisma.tenant.create({
-    data: { nombre: `T-DNC ${stamp}`, slug: `t-dnc-${stamp}` },
+    data: { nombre: `T-DNC ${stamp}`, slug: `t-dnc-${stamp}-${scenarioId}` },
   });
   nuevosIds.tenantIds.push(tenant.tenantId);
   const tenantId = tenant.tenantId;
 
   const user = await prisma.user.create({
-    data: { name: 'Tester DNC', email: `dnc-${stamp}@test.local`, password: 'x' },
+    data: { name: 'Tester DNC', email: `dnc-${stamp}-${scenarioId}@test.local`, password: 'x' },
   });
   const categoria = await prisma.categoria.create({
     data: { nombre: `Cat ${stamp}`, tenantId },
@@ -262,5 +269,503 @@ describe('devolución FIFO con NC e idempotencia (integración real)', { timeout
       where: { tenantId, origenId: r1.devolucionId },
     });
     expect(kardexTotal).toBe(1);
+  });
+
+  it('reintenta toda la transacción tras SQLSTATE 40001 después del progreso FIFO', async () => {
+    const { tenantId, user, venta, producto, pv } = await crearEscenario();
+    const userCtx = {
+      userId: user.userId,
+      role: 'admin',
+      tenantId,
+      isActive: true,
+    } as unknown as AuthenticatedUser;
+    const key = crypto.randomUUID();
+    const faultId = crypto.randomUUID().replaceAll('-', '');
+    const sequenceName = `r15_retry_${faultId}`;
+    const functionName = `r15_retry_fn_${faultId}`;
+    const triggerName = `r15_retry_trg_${faultId}`;
+
+    // nextval no revierte con la transacción: fuerza exactamente un 40001 en
+    // el INSERT del kardex, después de restaurar FIFO y actualizar stock.
+    try {
+      await prisma.$executeRawUnsafe(`CREATE SEQUENCE "${sequenceName}" START 1`);
+      await prisma.$executeRawUnsafe(`
+        CREATE FUNCTION "${functionName}"() RETURNS trigger AS $$
+        BEGIN
+          IF nextval('"${sequenceName}"') = 1 THEN
+            RAISE EXCEPTION 'injected serialization conflict after FIFO progress'
+              USING ERRCODE = '40001';
+          END IF;
+          RETURN NEW;
+        END;
+        $$ LANGUAGE plpgsql
+      `);
+      await prisma.$executeRawUnsafe(`
+        CREATE TRIGGER "${triggerName}"
+        BEFORE INSERT ON "StockMoveLine"
+        FOR EACH ROW EXECUTE FUNCTION "${functionName}"()
+      `);
+
+      const input = {
+        ventaId: venta.ventaId,
+        items: [{ ventaItemId: venta.items[0].id, cantidad: 2 }],
+        motivo: 'Retry SQLSTATE de prueba',
+        preferenciaFinanciera: 'SALDO_FAVOR' as const,
+        idempotencyKey: key,
+      };
+      const result = await DevolucionVentaService.registrar({ input, user: userCtx });
+
+      expect(await prisma.$queryRawUnsafe<Array<{ last_value: bigint }>>(
+        `SELECT last_value FROM "${sequenceName}"`,
+      )).toEqual([{ last_value: 2n }]);
+      expect(await prisma.devolucionVenta.count({ where: { tenantId } })).toBe(1);
+      expect(await prisma.devolucionVentaItem.count({ where: { devolucionId: result.devolucionId } })).toBe(1);
+      expect(await prisma.stockMoveLine.count({ where: { origenId: result.devolucionId } })).toBe(1);
+      expect(await prisma.factura.count({ where: { tenantId, tipoDocumento: 'NOTA_CREDITO' } })).toBe(1);
+      expect(Number((await prisma.cuentaPorCobrar.findFirstOrThrow({ where: { tenantId } })).montoPagado)).toBe(1400);
+
+      const stock = await prisma.stockUbicacion.findFirstOrThrow({
+        where: { tenantId, productoId: producto.id, tipoUbicacion: 'punto_venta', ubicacionId: pv.pvId },
+      });
+      expect(stock.cantidadDisponible).toBe(3);
+      const allocations = await prisma.purchaseAllocation.findMany({
+        where: { tenantId, ventaItemId: venta.items[0].id },
+        orderBy: { compraDocumentoItem: { createdAt: 'asc' } },
+      });
+      expect(allocations.map(({ cantidad }) => cantidad)).toEqual([1, 1]);
+
+      const replay = await DevolucionVentaService.registrar({ input, user: userCtx });
+      expect(replay.devolucionId).toBe(result.devolucionId);
+      expect(replay.repetida).toBe(true);
+      expect(await prisma.stockMoveLine.count({ where: { origenId: result.devolucionId } })).toBe(1);
+      expect(Number((await prisma.cuentaPorCobrar.findFirstOrThrow({ where: { tenantId } })).montoPagado)).toBe(1400);
+    } finally {
+      await prisma.$executeRawUnsafe(`DROP TRIGGER IF EXISTS "${triggerName}" ON "StockMoveLine"`);
+      await prisma.$executeRawUnsafe(`DROP FUNCTION IF EXISTS "${functionName}"()`);
+      await prisma.$executeRawUnsafe(`DROP SEQUENCE IF EXISTS "${sequenceName}"`);
+    }
+  });
+
+  it('hereda FX del snapshot CxC y revierte ingreso/COGS con asientos balanceados', async () => {
+    const previousMode = process.env.CONTABILIDAD_FORMAL_MODE;
+    process.env.CONTABILIDAD_FORMAL_MODE = 'enforce';
+    const scenarioId = crypto.randomUUID();
+    const tenant = await prisma.tenant.create({
+      data: { nombre: `T-DNC-FX ${scenarioId}`, slug: `t-dnc-fx-${scenarioId}` },
+    });
+    nuevosIds.tenantIds.push(tenant.tenantId);
+    const tenantId = tenant.tenantId;
+    await prisma.moneda.upsert({
+      where: { codigo: 'CUP' },
+      create: { codigo: 'CUP', nombre: 'Peso cubano', simbolo: 'CUP' },
+      update: {},
+    });
+    await prisma.moneda.upsert({
+      where: { codigo: 'USD' },
+      create: { codigo: 'USD', nombre: 'Dólar estadounidense', simbolo: 'USD' },
+      update: {},
+    });
+    const user = await prisma.user.create({
+      data: {
+        name: 'Tester DNC FX',
+        email: `dnc-fx-${scenarioId}@test.local`,
+        password: 'integration-test-only',
+      },
+    });
+    const [categoria, almacen, pv, cliente, proveedor] = await Promise.all([
+      prisma.categoria.create({ data: { nombre: `DNC FX Cat ${scenarioId}`, tenantId } }),
+      prisma.almacen.create({ data: { nombre: `DNC FX Alm ${scenarioId}`, tenantId } }),
+      prisma.puntoDeVenta.create({ data: { nombre: `DNC FX PV ${scenarioId}`, tenantId } }),
+      prisma.cliente.create({ data: { nombre: `DNC FX Cliente ${scenarioId}`, tenantId } }),
+      prisma.vendor.create({ data: { nombre: `DNC FX Vendor ${scenarioId}`, tenantId } }),
+    ]);
+    const producto = await prisma.producto.create({
+      data: {
+        tenantId,
+        nombre: `DNC FX Producto ${scenarioId}`,
+        precioCosto: 100,
+        precioVenta: 500,
+        stock: 1,
+        categoriaId: categoria.catId,
+        almacenId: almacen.almacenId,
+      },
+    });
+
+    await prisma.$transaction(async (tx) => {
+      await seedPlantillasGlobales(tx);
+      await seedPlanContable(tx, tenantId);
+    });
+    await prisma.tenantAccountingPolicy.create({
+      data: { tenantId, functionalCurrencyCode: 'CUP', updatedBy: user.userId },
+    });
+    await prisma.tenantLicense.create({
+      data: {
+        tenantId,
+        activa: true,
+        expiracion: new Date('2099-01-01T00:00:00Z'),
+        features: { 'contabilidad-formal': true },
+      },
+    });
+    const now = new Date();
+    await prisma.periodoContable.create({
+      data: {
+        tenantId,
+        tipo: 'MENSUAL',
+        estado: 'ABIERTO',
+        fechaInicio: new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), 1)),
+        fechaFin: new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth() + 1, 0, 23, 59, 59)),
+      },
+    });
+
+    const tasaVigente = new Date('2026-09-30T00:00:00Z');
+    const compraAEvidencia = buildAppliedFxEvidence({
+      originalAmount: 300,
+      originalCurrency: 'USD',
+      functionalCurrency: 'CUP',
+      exchangeRate: 24,
+      convertedAmount: 7200,
+      rateEffectiveAt: tasaVigente,
+      source: 'accounting-reconciliation-service',
+    });
+    const compraBEvidencia = buildAppliedFxEvidence({
+      originalAmount: 600,
+      originalCurrency: 'USD',
+      functionalCurrency: 'CUP',
+      exchangeRate: 24,
+      convertedAmount: 14400,
+      rateEffectiveAt: tasaVigente,
+      source: 'accounting-reconciliation-service',
+    });
+    const compraA = await prisma.compraDocumento.create({
+      data: {
+        tenantId,
+        proveedorId: proveedor.vendorId,
+        formaPago: 'PAGO_COMPLETO',
+        moneda: 'USD',
+        tasaCambio: 24,
+        montoConvertido: 7200,
+        functionalCurrency: 'CUP',
+        rateEffectiveAt: tasaVigente,
+        fxProvenanceKind: compraAEvidencia.fxProvenanceKind,
+        fxProvenanceSource: compraAEvidencia.fxProvenanceSource,
+        fxCatalogRateId: compraAEvidencia.fxCatalogRateId,
+        fxEvidenceFingerprint: compraAEvidencia.fxEvidenceFingerprint,
+        fxEvidenceVersion: compraAEvidencia.fxEvidenceVersion,
+        estado: 'RECIBIDA',
+        total: 300,
+      },
+    });
+    const compraB = await prisma.compraDocumento.create({
+      data: {
+        tenantId,
+        proveedorId: proveedor.vendorId,
+        formaPago: 'PAGO_COMPLETO',
+        moneda: 'USD',
+        tasaCambio: 24,
+        montoConvertido: 14400,
+        functionalCurrency: 'CUP',
+        rateEffectiveAt: tasaVigente,
+        fxProvenanceKind: compraBEvidencia.fxProvenanceKind,
+        fxProvenanceSource: compraBEvidencia.fxProvenanceSource,
+        fxCatalogRateId: compraBEvidencia.fxCatalogRateId,
+        fxEvidenceFingerprint: compraBEvidencia.fxEvidenceFingerprint,
+        fxEvidenceVersion: compraBEvidencia.fxEvidenceVersion,
+        estado: 'RECIBIDA',
+        total: 600,
+      },
+    });
+    const [itemA, itemB] = await Promise.all([
+      prisma.compraDocumentoItem.create({
+        data: {
+          tenantId,
+          compraDocumentoId: compraA.compraDocumentoId,
+          productoId: producto.id,
+          cantidad: 3,
+          precioUnitario: 100,
+          totalLinea: 300,
+          createdAt: new Date('2026-09-01T00:00:00Z'),
+        },
+      }),
+      prisma.compraDocumentoItem.create({
+        data: {
+          tenantId,
+          compraDocumentoId: compraB.compraDocumentoId,
+          productoId: producto.id,
+          cantidad: 2,
+          precioUnitario: 300,
+          totalLinea: 600,
+          createdAt: new Date('2026-09-02T00:00:00Z'),
+        },
+      }),
+    ]);
+    const venta = await prisma.venta.create({
+      data: {
+        tenantId,
+        cantidad: 4,
+        puntoDeVentaId: pv.pvId,
+        clienteId: cliente.clienteId,
+        total: 2000,
+        estado: 'FACTURADA',
+        metodoPago: 'CREDITO',
+        esVentaUnica: true,
+        items: { create: [{ productoId: producto.id, cantidad: 4, precioUnitario: 500, total: 2000 }] },
+      },
+      include: { items: true },
+    });
+    const ventaItem = venta.items[0];
+    await prisma.purchaseAllocation.createMany({
+      data: [
+        { tenantId, compraDocumentoItemId: itemA.compraDocumentoItemId, ventaItemId: ventaItem.id, cantidad: 3 },
+        { tenantId, compraDocumentoItemId: itemB.compraDocumentoItemId, ventaItemId: ventaItem.id, cantidad: 1 },
+      ],
+    });
+    const serie = await prisma.serieFacturacion.create({
+      data: { tenantId, prefijo: 'FVFX', descripcion: 'Facturas FX', consecutivo: 2 },
+    });
+    const factura = await prisma.factura.create({
+      data: {
+        tenantId,
+        serieId: serie.serieId,
+        numeroConsecutivo: 1,
+        numeroFactura: `FVFX-${scenarioId.slice(0, 8)}`,
+        clienteId: cliente.clienteId,
+        ventaId: venta.ventaId,
+        subtotal: 2000,
+        total: 2000,
+        estado: 'PENDIENTE',
+        creadoPor: user.userId,
+      },
+    });
+    const snapshot = buildAppliedFxEvidenceExact({
+      originalAmount: '2000',
+      originalCurrency: 'USD',
+      functionalCurrency: 'CUP',
+      exchangeRate: '24',
+      convertedAmount: '48000',
+      rateEffectiveAt: tasaVigente,
+      source: 'facturacion-venta-credito-cxc',
+      fxCatalogRateId: 'rate-usd-return',
+      fxProvenanceKind: 'CATALOG_RATE',
+    });
+    await prisma.cuentaPorCobrar.create({
+      data: {
+        tenantId,
+        clienteId: cliente.clienteId,
+        facturaId: factura.idFactura,
+        montoDeuda: 2000,
+        montoPagado: 400,
+        montoPagadoFuncional: 9600,
+        estado: 'PARCIAL',
+        monedaOriginal: 'USD',
+        montoOriginal: 2000,
+        montoDeudaFuncional: 48000,
+        monedaFuncional: 'CUP',
+        tasaCambio: 24,
+        rateEffectiveAt: snapshot.rateEffectiveAt,
+        fxProvenanceKind: snapshot.evidence.fxProvenanceKind,
+        fxProvenanceSource: snapshot.evidence.fxProvenanceSource,
+        fxCatalogRateId: snapshot.evidence.fxCatalogRateId,
+        fxEvidenceJson: snapshot.evidence,
+        fxEvidenceFingerprint: snapshot.evidence.fxEvidenceFingerprint,
+        fxEvidenceVersion: snapshot.evidence.fxEvidenceVersion,
+      },
+    });
+    await prisma.stockUbicacion.create({
+      data: {
+        tenantId,
+        productoId: producto.id,
+        tipoUbicacion: 'punto_venta',
+        ubicacionId: pv.pvId,
+        cantidad: 5,
+        cantidadDisponible: 1,
+      },
+    });
+    const userCtx = {
+      userId: user.userId,
+      role: 'admin',
+      tenantId,
+      isActive: true,
+    } as unknown as AuthenticatedUser;
+
+    try {
+      const result = await DevolucionVentaService.registrar({
+        input: {
+          ventaId: venta.ventaId,
+          items: [{ ventaItemId: ventaItem.id, cantidad: 2 }],
+          motivo: 'Devolución FX parcial',
+          preferenciaFinanciera: 'SALDO_FAVOR',
+          idempotencyKey: crypto.randomUUID(),
+        },
+        user: userCtx,
+      });
+
+      const devolucion = await prisma.devolucionVenta.findUniqueOrThrow({
+        where: { devolucionId: result.devolucionId },
+      });
+      expect(devolucion.moneda).toBe('USD');
+      expect(devolucion.tasaCambio?.eq(new Prisma.Decimal('24'))).toBe(true);
+      const asiento = await prisma.asiento.findFirstOrThrow({
+        where: { tenantId, origenTipo: 'devolucion_venta', origenId: result.devolucionId },
+        include: { lineas: true },
+      });
+      const ingreso = asiento.lineas.filter((linea) => linea.monedaOriginal === 'USD');
+      const costo = asiento.lineas.filter((linea) => linea.monedaOriginal === 'CUP');
+      expect(ingreso).toHaveLength(2);
+      expect(ingreso.every((linea) =>
+        linea.montoOriginal.eq(new Prisma.Decimal('1000')) &&
+        linea.tasaCambio?.eq(new Prisma.Decimal('24')) &&
+        linea.fxEvidenceFingerprint === snapshot.evidence.fxEvidenceFingerprint,
+      )).toBe(true);
+      expect(costo).toHaveLength(2);
+      expect(costo.reduce((sum, linea) => sum.add(linea.debe), new Prisma.Decimal(0))
+        .eq(new Prisma.Decimal('4800'))).toBe(true);
+      const debe = asiento.lineas.reduce((sum, linea) => sum.add(linea.debe), new Prisma.Decimal(0));
+      const haber = asiento.lineas.reduce((sum, linea) => sum.add(linea.haber), new Prisma.Decimal(0));
+      expect(debe.eq(haber)).toBe(true);
+      const cxcActualizada = await prisma.cuentaPorCobrar.findFirstOrThrow({
+        where: { facturaId: factura.idFactura },
+      });
+      expect(Number(cxcActualizada.montoPagado)).toBe(1400);
+      expect(cxcActualizada.montoPagadoFuncional?.eq(new Prisma.Decimal('33600'))).toBe(true);
+
+      const triggerSuffix = crypto.randomUUID().replaceAll('-', '');
+      const functionName = `dnc_fx_fail_${triggerSuffix}_fn`;
+      const triggerName = `dnc_fx_fail_${triggerSuffix}`;
+      await prisma.$executeRawUnsafe(`CREATE FUNCTION "${functionName}"() RETURNS trigger
+        LANGUAGE plpgsql AS $$ BEGIN
+          IF NEW."origenTipo" = 'devolucion_venta' THEN
+            RAISE EXCEPTION 'forced devolución formal posting failure' USING ERRCODE = '22012';
+          END IF;
+          RETURN NEW;
+        END $$`);
+      await prisma.$executeRawUnsafe(`CREATE TRIGGER "${triggerName}" BEFORE INSERT ON "asientos"
+        FOR EACH ROW EXECUTE FUNCTION "${functionName}"()`);
+      try {
+        const before = {
+          devoluciones: await prisma.devolucionVenta.count({ where: { tenantId } }),
+          items: await prisma.devolucionVentaItem.count({ where: { devolucion: { tenantId } } }),
+          kardex: await prisma.stockMoveLine.count({ where: { tenantId, tipoOrigen: 'VENTA' } }),
+          asiento: await prisma.asiento.count({ where: { tenantId, origenTipo: 'devolucion_venta' } }),
+          pagado: cxcActualizada.montoPagado,
+          pagadoFuncional: cxcActualizada.montoPagadoFuncional,
+        };
+        await expect(DevolucionVentaService.registrar({
+          input: {
+            ventaId: venta.ventaId,
+            items: [{ ventaItemId: ventaItem.id, cantidad: 1 }],
+            motivo: 'Rollback SQL de devolución FX',
+            preferenciaFinanciera: 'SALDO_FAVOR',
+            idempotencyKey: crypto.randomUUID(),
+          },
+          user: userCtx,
+        })).rejects.toThrow('forced devolución formal posting failure');
+        expect(await prisma.devolucionVenta.count({ where: { tenantId } })).toBe(before.devoluciones);
+        expect(await prisma.devolucionVentaItem.count({ where: { devolucion: { tenantId } } }))
+          .toBe(before.items);
+        expect(await prisma.stockMoveLine.count({ where: { tenantId, tipoOrigen: 'VENTA' } }))
+          .toBe(before.kardex);
+        expect(await prisma.asiento.count({ where: { tenantId, origenTipo: 'devolucion_venta' } }))
+          .toBe(before.asiento);
+        const cxcPostFallo = await prisma.cuentaPorCobrar.findFirstOrThrow({
+          where: { facturaId: factura.idFactura },
+        });
+        expect(cxcPostFallo.montoPagado.eq(before.pagado)).toBe(true);
+        expect(cxcPostFallo.montoPagadoFuncional?.eq(before.pagadoFuncional!)).toBe(true);
+      } finally {
+        await prisma.$executeRawUnsafe(`DROP TRIGGER IF EXISTS "${triggerName}" ON "asientos"`);
+        await prisma.$executeRawUnsafe(`DROP FUNCTION IF EXISTS "${functionName}"()`);
+      }
+    } finally {
+      if (previousMode === undefined) delete process.env.CONTABILIDAD_FORMAL_MODE;
+      else process.env.CONTABILIDAD_FORMAL_MODE = previousMode;
+    }
+  });
+
+  it('enforce rechaza CxC histórica sin snapshot y no usa Factura.tasaCambio aislada', async () => {
+    const previousMode = process.env.CONTABILIDAD_FORMAL_MODE;
+    process.env.CONTABILIDAD_FORMAL_MODE = 'enforce';
+    try {
+      const { tenantId, user, venta } = await crearEscenario();
+      await prisma.tenantAccountingPolicy.create({
+        data: { tenantId, functionalCurrencyCode: 'CUP', updatedBy: user.userId },
+      });
+      const userCtx = {
+        userId: user.userId,
+        role: 'admin',
+        tenantId,
+        isActive: true,
+      } as unknown as AuthenticatedUser;
+
+      await expect(DevolucionVentaService.registrar({
+        input: {
+          ventaId: venta.ventaId,
+          items: [{ ventaItemId: venta.items[0].id, cantidad: 2 }],
+          motivo: 'Histórico sin FX',
+          preferenciaFinanciera: 'SALDO_FAVOR',
+          idempotencyKey: crypto.randomUUID(),
+        },
+        user: userCtx,
+      })).rejects.toMatchObject({ code: 'FX_INSUFICIENTE' });
+
+      expect(await prisma.devolucionVenta.count({ where: { tenantId } })).toBe(0);
+      expect(await prisma.devolucionVentaItem.count({ where: { devolucion: { tenantId } } })).toBe(0);
+    } finally {
+      if (previousMode === undefined) delete process.env.CONTABILIDAD_FORMAL_MODE;
+      else process.env.CONTABILIDAD_FORMAL_MODE = previousMode;
+    }
+  });
+
+  it('shadow conserva devolución histórica sin FX y deja causa durable en el outbox', async () => {
+    const previousMode = process.env.CONTABILIDAD_FORMAL_MODE;
+    process.env.CONTABILIDAD_FORMAL_MODE = 'shadow';
+    try {
+      const { tenantId, user, venta } = await crearEscenario();
+      await prisma.tenantAccountingPolicy.create({
+        data: { tenantId, functionalCurrencyCode: 'CUP', updatedBy: user.userId },
+      });
+      await prisma.tenantLicense.create({
+        data: {
+          tenantId,
+          activa: true,
+          expiracion: new Date('2099-01-01T00:00:00Z'),
+          features: { 'contabilidad-formal': true },
+        },
+      });
+      const userCtx = {
+        userId: user.userId,
+        role: 'admin',
+        tenantId,
+        isActive: true,
+      } as unknown as AuthenticatedUser;
+
+      const result = await DevolucionVentaService.registrar({
+        input: {
+          ventaId: venta.ventaId,
+          items: [{ ventaItemId: venta.items[0].id, cantidad: 2 }],
+          motivo: 'Histórico sin FX en shadow',
+          preferenciaFinanciera: 'SALDO_FAVOR',
+          idempotencyKey: crypto.randomUUID(),
+        },
+        user: userCtx,
+      });
+
+      expect(result.devolucionId).toBeTruthy();
+      const outbox = await prisma.shadowPosteoOutbox.findFirstOrThrow({
+        where: {
+          tenantId,
+          tipoEvento: 'DEVOLUCION_VENTA',
+          origenTipo: 'devolucion_venta',
+          origenId: result.devolucionId,
+        },
+      });
+      expect(outbox.estado).toBe('ERROR_SHADOW');
+      expect(outbox.causa).toContain('valoración monetaria');
+      expect(await prisma.asiento.count({
+        where: { tenantId, origenTipo: 'devolucion_venta', origenId: result.devolucionId },
+      })).toBe(0);
+    } finally {
+      if (previousMode === undefined) delete process.env.CONTABILIDAD_FORMAL_MODE;
+      else process.env.CONTABILIDAD_FORMAL_MODE = previousMode;
+    }
   });
 });

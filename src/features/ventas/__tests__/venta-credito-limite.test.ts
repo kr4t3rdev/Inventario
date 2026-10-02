@@ -13,25 +13,27 @@ vi.mock('@/features/inventario/movimientos', () => ({
 }));
 vi.mock('@/lib/services/fifo-allocation', () => ({
 	allocateFifoForSale: vi.fn(),
-	getCostoFifoVenta: vi.fn().mockResolvedValue(0),
+	getCostoFifoVentaValorado: vi.fn().mockResolvedValue(null),
 }));
 vi.mock('@/lib/services/audit-log-service', () => ({
 	AuditLogService: { logStrict: vi.fn() },
 }));
 vi.mock('@/features/turnos-pos', () => ({
-	getOrCreateTurnoActivo: vi.fn().mockResolvedValue({
-		success: true,
-		data: { turnoId: 't-1' },
-	}),
+	getOrCreateTurnoActivo: vi.fn(),
 }));
 
 const { mockTx } = vi.hoisted(() => {
 	const mockTx = {
+		$queryRaw: vi.fn().mockResolvedValue([]),
 		serieFacturacion: { findFirst: vi.fn(), create: vi.fn(), update: vi.fn() },
 		venta: { create: vi.fn().mockResolvedValue({ ventaId: 'v-1' }) },
 		producto: { findUnique: vi.fn() },
 		stockUbicacion: { findUnique: vi.fn() },
 		factura: { create: vi.fn() },
+		cliente: { findFirst: vi.fn() },
+		cuentaPorCobrar: { findMany: vi.fn() },
+		turnoPuntoVenta: { findFirst: vi.fn(), create: vi.fn() },
+		puntoDeVenta: { findFirst: vi.fn() },
 	};
 	return { mockTx };
 });
@@ -65,8 +67,14 @@ function prepararEntorno(opts: { limiteCredito: number | null; saldoCxc: number 
 		pvId: 'pv-1',
 		listaPrecioId: null,
 	} as never);
+	// Turno ABIERTO existente dentro de la tx (3.2.c.iii).
+	mockTx.turnoPuntoVenta.findFirst.mockResolvedValue({ id: 't-1' });
+	mockTx.puntoDeVenta.findFirst.mockResolvedValue({ tipoCaja: 'MOVIL' });
 	vi.mocked(prisma.cliente.findFirst).mockResolvedValue({
 		listaPrecioId: null,
+	} as never);
+	mockTx.cliente.findFirst.mockResolvedValue({
+		clienteId: 'c-1',
 		limiteCredito: opts.limiteCredito,
 	} as never);
 	vi.mocked(prisma.producto.findMany).mockResolvedValue([
@@ -87,9 +95,9 @@ function prepararEntorno(opts: { limiteCredito: number | null; saldoCxc: number 
 	});
 	mockTx.serieFacturacion.update.mockResolvedValue({ consecutivo: 2 });
 	mockTx.factura.create.mockResolvedValue({ idFactura: 'fac-1' });
-	vi.mocked(prisma.cuentaPorCobrar.findMany).mockResolvedValue(
+	mockTx.cuentaPorCobrar.findMany.mockResolvedValue(
 		opts.saldoCxc > 0
-			? [{ id: 'cxc-1', montoDeuda: opts.saldoCxc, montoPagado: 0, estado: 'PENDIENTE' }]
+			? [{ id: 'cxc-1', montoDeuda: opts.saldoCxc, montoPagado: 0, estado: 'PENDIENTE', monedaOriginal: 'CUP' }]
 			: [],
 	);
 }
@@ -115,6 +123,10 @@ describe('enforcement del límite de crédito (CRM-T2)', () => {
 		prepararEntorno({ limiteCredito: 2000, saldoCxc: 500 });
 		const r = await VentaMutationService.create({ input: baseVentaACredito, user: manager });
 		expect(r.ventaId).toBe('v-1');
+		expect(mockTx.$queryRaw).toHaveBeenCalledOnce();
+		expect(mockTx.$queryRaw.mock.invocationCallOrder[0]).toBeLessThan(
+			mockTx.venta.create.mock.invocationCallOrder[0] ?? Infinity,
+		);
 	});
 
 	it('superar el tope sin permiso → CREDITO_EXCEDIDO, sin crear venta', async () => {
@@ -132,11 +144,39 @@ describe('enforcement del límite de crédito (CRM-T2)', () => {
 			...manager,
 			role: 'admin',
 		} as unknown as AuthenticatedUser;
-		const r = await VentaMutationService.create({ input: baseVentaACredito, user: managerConOverride });
+		const r = await VentaMutationService.create({
+			input: {
+				...baseVentaACredito,
+				solicitarCreditoOverride: true,
+				motivoCreditoOverride: 'Autorización aprobada',
+			},
+			user: managerConOverride,
+		});
 		expect(r.ventaId).toBe('v-1');
 		expect(AuditLogService.logStrict).toHaveBeenCalledWith(
 			expect.objectContaining({ detalles: expect.objectContaining({ tipo: 'CREDITO_OVERRIDE' }) }),
 			expect.anything(),
 		);
+	});
+
+	it('reintenta la transacción completa ante P2034 y confirma la venta', async () => {
+		prepararEntorno({ limiteCredito: null, saldoCxc: 0 });
+		const delegado = vi.mocked(prisma.$transaction).getMockImplementation();
+		let llamadas = 0;
+		vi.mocked(prisma.$transaction).mockImplementation(async (cb: (tx: unknown) => unknown) => {
+			llamadas += 1;
+			if (llamadas === 1) {
+				const error = new Error('Transaction conflict or write conflict') as Error & { code: string };
+				error.code = 'P2034';
+				throw error;
+			}
+			return (delegado as (cb: (tx: unknown) => unknown) => unknown)(cb);
+		});
+
+		const r = await VentaMutationService.create({ input: baseVentaACredito, user: manager });
+
+		expect(r).toEqual({ ventaId: 'v-1' });
+		expect(llamadas).toBe(2);
+		expect(mockTx.venta.create).toHaveBeenCalledOnce();
 	});
 });

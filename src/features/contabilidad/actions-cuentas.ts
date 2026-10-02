@@ -15,6 +15,13 @@ import { revalidatePath } from "next/cache";
 import type { AuthenticatedUser } from "@/lib/auth-middleware";
 import { AccountingAccountsService } from "@/features/contabilidad/services/accounting-accounts-service";
 import { AuditLogService } from "@/lib/services/audit-log-service";
+import { assertCuentaPorCobrarClienteDeVenta } from "@/features/contabilidad/lib/cuentas-por-cobrar-flow";
+import {
+	auditarCreditoOverride,
+	bloquearClienteCredito,
+	validarCreditoOrigen,
+} from "@/features/ventas/services/credito-override";
+import { saldoNetoCuenta } from "@/features/crm/services/credito-calculo";
 import {
 	getCuentasPorCobrarSchema,
 	createCuentaPorCobrarSchema,
@@ -52,7 +59,7 @@ export interface CuentaPorCobrarEnriquecida {
 	totalFactura: number;
 	totalPagadoFactura: number;
 	saldoFactura: number;
-	moneda: string;
+	moneda: string | null;
 	cliente: { clienteId: string; nombre: string } | null;
 	factura: Record<string, unknown> | null;
 	prestamoCash: Record<string, unknown> | null;
@@ -291,7 +298,7 @@ function enriquecerCuentaPorCobrar(
 		totalFactura,
 		totalPagadoFactura,
 		saldoFactura,
-		moneda: cuenta.moneda as string,
+		moneda: (cuenta.monedaOriginal as string | null | undefined) ?? null,
 		cliente: cuenta.cliente as { clienteId: string; nombre: string } | null,
 		factura: facturaRecord
 			? {
@@ -420,13 +427,32 @@ export const createCuentaPorCobrarAction = withAction(
 
 		const venta = await prisma.venta.findFirst({
 			where: { ventaId: p.ventaId, tenantId },
-			select: { ventaId: true, factura: { select: { idFactura: true } } },
+			select: {
+				ventaId: true,
+				clienteId: true,
+				factura: { select: { idFactura: true } },
+			},
 		});
 		if (!venta)
 			throw new ActionError(
 				"Venta no encontrada o no pertenece al tenant",
 				"NOT_FOUND",
 			);
+		try {
+			assertCuentaPorCobrarClienteDeVenta(venta.clienteId, p.clienteId);
+		} catch (error) {
+			throw new ActionError(
+				error instanceof Error ? error.message : "El cliente no corresponde a la venta",
+				"VALIDATION_ERROR",
+			);
+		}
+
+		const cliente = await prisma.cliente.findFirst({
+			where: { clienteId: p.clienteId, tenantId },
+			select: { clienteId: true },
+		});
+		if (!cliente)
+			throw new ActionError("Cliente no encontrado o no pertenece al tenant", "NOT_FOUND");
 
 		const facturaIdReal = venta.factura?.idFactura;
 
@@ -445,24 +471,41 @@ export const createCuentaPorCobrarAction = withAction(
 				"DUPLICATE",
 			);
 
-		const cuenta = await prisma.cuentaPorCobrar.create({
-			data: {
+		const cuenta = await prisma.$transaction(async (tx) => {
+          const decision = await validarCreditoOrigen({
+            tx,
+            user,
+            tenantId,
+            clienteId: p.clienteId,
+            moneda: p.moneda,
+            montoNuevo: p.monto,
+            permiso: 'financiero.cuentas-cobrar.credito-override',
+            solicitarCreditoOverride: p.solicitarCreditoOverride,
+            motivoCreditoOverride: p.motivoCreditoOverride,
+          });
+          const creada = await tx.cuentaPorCobrar.create({
+          data: {
 				tenantId,
 				clienteId: p.clienteId,
 				montoDeuda: p.monto,
 				montoPagado: 0,
-				// @ts-expect-error — Prisma schema has moneda column but type def may lack it
-				moneda: p.moneda,
+				monedaOriginal: p.moneda,
+				montoOriginal: p.monto,
 				estado: "PENDIENTE",
 				facturaId: facturaIdReal || p.ventaId,
 				numeroFactura: p.numeroFactura ?? null,
 				fechaVencimiento: p.fechaVencimiento
 					? new Date(p.fechaVencimiento)
 					: null,
-			},
-			include: CXC_INCLUDE,
+          },
+          include: CXC_INCLUDE,
+        });
+          await auditarCreditoOverride({
+            tx, user, decision, tenantId, clienteId: p.clienteId,
+            origen: 'CUENTA_POR_COBRAR_MANUAL', origenId: creada.id, montoNuevo: p.monto,
+          });
+			return creada;
 		});
-
 		AuditLogService.log({
 			accion: "CREATE",
 			entidad: "CUENTA_POR_COBRAR",
@@ -480,6 +523,9 @@ export const createCuentaPorCobrarAction = withAction(
 
 /**
  * @description Actualiza una cuenta por cobrar existente con tenant isolation.
+ * Un incremento neto de exposición (saldo vivo posterior mayor al previo) consume
+ * cupo común: exige override explícito con permiso `financiero.cuentas-cobrar.credito-override`,
+ * motivo y auditoría estricta dentro de la misma transacción. Reducciones no requieren override.
  */
 export const updateCuentaPorCobrarAction = withAction(
 	async (
@@ -512,15 +558,78 @@ export const updateCuentaPorCobrarAction = withAction(
 				? new Date(p.fechaVencimiento)
 				: null;
 
-		const updated = await prisma.cuentaPorCobrar.updateMany({
-			where: { id: p.id, tenantId, estado: { not: "ANULADA" } },
-			data,
+		await prisma.$transaction(async (tx) => {
+			// El cliente se conoce por la lectura tenant-scoped anterior; tomar su
+			// lock antes de releer la cuenta y calcular cualquier delta, también para
+			// pagos/reducciones que deben serializarse con nuevas obligaciones.
+			await bloquearClienteCredito(tx, tenantId, existente.clienteId);
+			// Relectura tenant-scoped dentro de la tx: el delta neto se decide con
+			// el estado vigente de la cuenta, no con la lectura previa.
+			const vigente = await tx.cuentaPorCobrar.findFirst({
+				where: { id: p.id, tenantId },
+				select: {
+					id: true,
+					clienteId: true,
+					monedaOriginal: true,
+					montoDeuda: true,
+					montoPagado: true,
+					estado: true,
+				},
+			});
+			if (!vigente)
+				throw new ActionError("Cuenta por cobrar no encontrada", "NOT_FOUND");
+			if (vigente.estado === "ANULADA")
+				throw new ActionError(
+					"Una cuenta por cobrar anulada no puede reactivarse mediante una actualización genérica",
+					"VALIDATION_ERROR",
+				);
+
+			const deudaPosterior = Number(p.montoDeuda ?? vigente.montoDeuda);
+			const pagadoPosterior = Number(p.montoPagado ?? vigente.montoPagado);
+			// Fórmula única compartida (2.6): el delta neto se decide con el
+			// mismo saldo neto que usa el validador del cupo.
+			const saldoPrevio = saldoNetoCuenta(Number(vigente.montoDeuda), Number(vigente.montoPagado));
+			const saldoPosterior = saldoNetoCuenta(deudaPosterior, pagadoPosterior);
+			const deltaNeto = saldoPosterior - saldoPrevio;
+
+			const decision = deltaNeto > 0.005
+				? await validarCreditoOrigen({
+					tx,
+					user,
+					tenantId,
+					clienteId: vigente.clienteId,
+					moneda: vigente.monedaOriginal ?? '',
+					montoNuevo: deltaNeto,
+					permiso: 'financiero.cuentas-cobrar.credito-override',
+					solicitarCreditoOverride: p.solicitarCreditoOverride,
+					motivoCreditoOverride: p.motivoCreditoOverride,
+					clienteLockAdquirido: true,
+				})
+				: null;
+
+			const updated = await tx.cuentaPorCobrar.updateMany({
+				where: { id: p.id, tenantId, estado: { not: "ANULADA" } },
+				data,
+			});
+			if (updated.count !== 1)
+				throw new ActionError(
+					"La cuenta por cobrar cambió mientras se actualizaba; vuelve a cargarla",
+					"VALIDATION_ERROR",
+				);
+
+			if (decision) {
+				await auditarCreditoOverride({
+					tx,
+					user,
+					decision,
+					tenantId,
+					clienteId: vigente.clienteId,
+					origen: 'CUENTA_POR_COBRAR_MANUAL',
+					origenId: p.id,
+					montoNuevo: deltaNeto,
+				});
+			}
 		});
-		if (updated.count !== 1)
-			throw new ActionError(
-				"La cuenta por cobrar cambió mientras se actualizaba; vuelve a cargarla",
-				"VALIDATION_ERROR",
-			);
 
 		const cuenta = await prisma.cuentaPorCobrar.findFirst({
 			where: { id: p.id, tenantId },

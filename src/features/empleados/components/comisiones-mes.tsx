@@ -12,7 +12,6 @@ import {
 	SelectTrigger,
 	SelectValue,
 } from '@/components/ui/select';
-import { toast } from 'sonner';
 import { getComisionesDelMesAction } from '@/features/empleados/actions-comisiones';
 
 interface FilaComision {
@@ -76,26 +75,46 @@ export function ComisionesMesClient() {
 	return (
 		<div className="container mx-auto py-6 space-y-4">
 			<div>
-				<h1 className="text-2xl font-bold">Comisiones por mes</h1>
+				<div className="flex flex-wrap items-center gap-2">
+					<h1 className="text-2xl font-bold">Comisiones por mes</h1>
+					<Badge
+						variant="outline"
+						className="text-xs"
+						title="Reporte derivado del período de las ventas: las devoluciones se imputan al mes de su venta original. No constituye una liquidación."
+					>
+						Cálculo actualizado
+					</Badge>
+				</div>
 				<p className="text-sm text-muted-foreground">
-					Ventas efectivamente cobradas (ENTREGADA/FACTURADA) − devoluciones, por empleado.
+					Ventas efectivamente cobradas (ENTREGADA/FACTURADA) del período.
+					Las devoluciones se imputan al mes de su venta original.
 				</p>
 			</div>
 
-			<div className="flex gap-2">
+			<div className="flex flex-wrap gap-2">
 				<Select value={mes} onValueChange={setMes}>
-					<SelectTrigger className="w-40"><SelectValue placeholder="Mes" /></SelectTrigger>
+					<SelectTrigger className="w-40" aria-label="Mes del reporte"><SelectValue placeholder="Mes" /></SelectTrigger>
 					<SelectContent>
 						{MESES.map((m) => <SelectItem key={m.v} value={m.v}>{m.label}</SelectItem>)}
 					</SelectContent>
 				</Select>
 				<Select value={anio} onValueChange={setAnio}>
-					<SelectTrigger className="w-28"><SelectValue placeholder="Año" /></SelectTrigger>
+					<SelectTrigger className="w-28" aria-label="Año del reporte"><SelectValue placeholder="Año" /></SelectTrigger>
 					<SelectContent>
 						{anios.map((a) => <SelectItem key={a} value={a}>{a}</SelectItem>)}
 					</SelectContent>
 				</Select>
 			</div>
+
+			<p role="status" aria-live="polite" className="sr-only">
+				{isLoading
+					? 'Cargando el reporte de comisiones.'
+					: error
+						? 'No fue posible cargar el reporte.'
+						: filas.length === 0
+							? 'Sin comisiones para el período seleccionado.'
+							: `Reporte listo: ${filas.length} ${filas.length === 1 ? 'empleado' : 'empleados'} con comisión.`}
+			</p>
 
 			{isLoading ? (
 				<div className="space-y-2">

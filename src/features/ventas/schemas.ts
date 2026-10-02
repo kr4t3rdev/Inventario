@@ -33,6 +33,8 @@ export const createVentaSchema = z.object({
   montoTarjeta: z.coerce.number().int().min(0).optional().nullable(),
   montoTransferencia: z.coerce.number().int().min(0).optional().nullable(),
   montoCredito: z.coerce.number().int().min(0).optional().nullable(),
+  solicitarCreditoOverride: z.boolean().optional(),
+  motivoCreditoOverride: z.string().trim().max(500).optional().nullable(),
   // VC: efectivo recibido del cliente y vuelto entregado (centavos).
   montoRecibidoEfectivo: z.coerce.number().int().min(0).optional().nullable(),
   cambioDevuelto: z.coerce.number().int().min(0).optional().nullable(),
@@ -112,6 +114,8 @@ export const facturarVentaSchema = z.object({
   montoTarjeta: z.coerce.number().int().min(0).optional().nullable(),
   montoTransferencia: z.coerce.number().int().min(0).optional().nullable(),
   montoCredito: z.coerce.number().int().min(0).optional().nullable(),
+  solicitarCreditoOverride: z.boolean().optional(),
+  motivoCreditoOverride: z.string().trim().max(500).optional().nullable(),
   tipoVencimiento: z.enum(['contra_pago', 'fecha', 'plazo']).optional().nullable(),
   fechaVencimiento: z.string().optional().nullable(),
   cuentaBancariaId: z.string().optional().nullable(),

@@ -13,7 +13,10 @@ vi.mock('@/features/inventario/movimientos', () => ({
 }));
 vi.mock('@/lib/services/fifo-allocation', () => ({
 	allocateFifoForSale: vi.fn(),
-	getCostoFifoVenta: vi.fn().mockResolvedValue(0),
+	getCostoFifoVentaValorado: vi.fn().mockResolvedValue(null),
+}));
+vi.mock('@/features/contabilidad-formal/services/posting-engine', () => ({
+	postEvento: vi.fn().mockResolvedValue({ estado: 'CONTABILIZADO', asientoId: 'asiento-1' }),
 }));
 vi.mock('@/lib/services/audit-log-service', () => ({
 	AuditLogService: { logStrict: vi.fn() },
@@ -22,10 +25,7 @@ vi.mock('@/features/ventas/services/facturacion-workflow', () => ({
 	applyFacturacionCobroWorkflow: vi.fn(),
 }));
 vi.mock('@/features/turnos-pos', () => ({
-	getOrCreateTurnoActivo: vi.fn().mockResolvedValue({
-		success: true,
-		data: { turnoId: 't-1' },
-	}),
+	getOrCreateTurnoActivo: vi.fn(),
 }));
 
 const { mockTx } = vi.hoisted(() => {
@@ -39,6 +39,8 @@ const { mockTx } = vi.hoisted(() => {
 		producto: { findUnique: vi.fn() },
 		stockUbicacion: { findUnique: vi.fn() },
 		factura: { create: vi.fn() },
+		turnoPuntoVenta: { findFirst: vi.fn().mockResolvedValue({ id: 't-1' }), create: vi.fn() },
+		puntoDeVenta: { findFirst: vi.fn() },
 	};
 	return { mockTx };
 });
@@ -56,6 +58,10 @@ import { prisma } from '@/lib/prisma';
 import { upsertStockUbicacion } from '@/lib/services/stock-ubicacion-service';
 import { registrarMovimiento } from '@/features/inventario/movimientos';
 import { allocateFifoForSale } from '@/lib/services/fifo-allocation';
+import { getCostoFifoVentaValorado } from '@/lib/services/fifo-allocation';
+import { postEvento } from '@/features/contabilidad-formal/services/posting-engine';
+import { Prisma } from '@/generated/prisma';
+import { ActionError } from '@/lib/server-actions';
 import { VentaMutationService } from '@/features/ventas/services/venta-mutation-service';
 import type { AuthenticatedUser } from '@/lib/auth-middleware';
 
@@ -72,6 +78,8 @@ const items = [{ productoId: 'prod-1', cantidad: 2, precioUnitario: 500 }];
 
 beforeEach(() => {
 	vi.clearAllMocks();
+	vi.mocked(getCostoFifoVentaValorado).mockResolvedValue(null);
+	vi.mocked(postEvento).mockResolvedValue({ estado: 'CONTABILIZADO', asientoId: 'asiento-1' });
 	vi.mocked(prisma.puntoDeVenta.findFirst).mockResolvedValue({
 		pvId: 'pv-1',
 		listaPrecioId: null,
@@ -99,6 +107,99 @@ beforeEach(() => {
 });
 
 describe('create como orquestador del ciclo (PVE-T3)', () => {
+	it('off conserva el flujo legacy y no resuelve moneda formal para FIFO', async () => {
+		const previousMode = process.env.CONTABILIDAD_FORMAL_MODE;
+		process.env.CONTABILIDAD_FORMAL_MODE = 'off';
+		try {
+			await expect(VentaMutationService.create({
+				input: { puntoDeVentaId: 'pv-1', items, metodoPago: 'EFECTIVO', montoEfectivo: 1000 },
+				user: adminUser,
+			})).resolves.toEqual({ ventaId: 'v-1' });
+			expect(getCostoFifoVentaValorado).not.toHaveBeenCalled();
+			expect(postEvento).not.toHaveBeenCalled();
+		} finally {
+			if (previousMode === undefined) delete process.env.CONTABILIDAD_FORMAL_MODE;
+			else process.env.CONTABILIDAD_FORMAL_MODE = previousMode;
+		}
+	});
+
+	it('postea COGS en moneda funcional con el costo FIFO persistido', async () => {
+		const previousMode = process.env.CONTABILIDAD_FORMAL_MODE;
+		process.env.CONTABILIDAD_FORMAL_MODE = 'enforce';
+		vi.mocked(getCostoFifoVentaValorado).mockResolvedValue({
+			montoFuncional: new Prisma.Decimal('7200'),
+			monedaFuncional: 'CUP',
+			cantidadValorada: 2,
+		});
+		try {
+			await VentaMutationService.create({
+				input: { puntoDeVentaId: 'pv-1', items, metodoPago: 'EFECTIVO', montoEfectivo: 1000 },
+				user: adminUser,
+			});
+
+			expect(getCostoFifoVentaValorado).toHaveBeenCalledWith(mockTx, 'tenant-1', 'v-1');
+			expect(postEvento).toHaveBeenCalledWith(
+				mockTx,
+				{ tenantId: 'tenant-1', userId: 'user-1' },
+				expect.objectContaining({
+					tipo: 'COSTO_VENTA_DEVENGADO',
+					moneda: 'CUP',
+					monedaFuncional: 'CUP',
+					monto: new Prisma.Decimal('7200'),
+					montoFuncional: new Prisma.Decimal('7200'),
+					auxiliares: { costoFifo: new Prisma.Decimal('7200') },
+				}),
+			);
+		} finally {
+			if (previousMode === undefined) delete process.env.CONTABILIDAD_FORMAL_MODE;
+			else process.env.CONTABILIDAD_FORMAL_MODE = previousMode;
+		}
+	});
+
+	it('en shadow conserva la venta y reporta costo no valorizado', async () => {
+		const previousMode = process.env.CONTABILIDAD_FORMAL_MODE;
+		process.env.CONTABILIDAD_FORMAL_MODE = 'shadow';
+		vi.mocked(getCostoFifoVentaValorado).mockRejectedValue(
+			new ActionError('La compra origen no tiene FX verificable', 'FX_INSUFICIENTE'),
+		);
+		try {
+			await expect(VentaMutationService.create({
+				input: { puntoDeVentaId: 'pv-1', items, metodoPago: 'EFECTIVO', montoEfectivo: 1000 },
+				user: adminUser,
+			})).resolves.toEqual({ ventaId: 'v-1' });
+
+			expect(mockTx.venta.create).toHaveBeenCalledOnce();
+			const [, , evento] = vi.mocked(postEvento).mock.calls[0];
+			expect(evento).toMatchObject({
+				tipo: 'COSTO_VENTA_DEVENGADO',
+				moneda: null,
+				monedaFuncional: null,
+				montoFuncional: null,
+			});
+		} finally {
+			if (previousMode === undefined) delete process.env.CONTABILIDAD_FORMAL_MODE;
+			else process.env.CONTABILIDAD_FORMAL_MODE = previousMode;
+		}
+	});
+
+	it('en enforce revierte la orquestación si el costo FIFO carece de FX', async () => {
+		const previousMode = process.env.CONTABILIDAD_FORMAL_MODE;
+		process.env.CONTABILIDAD_FORMAL_MODE = 'enforce';
+		vi.mocked(getCostoFifoVentaValorado).mockRejectedValue(
+			new ActionError('La compra origen no tiene FX verificable', 'FX_INSUFICIENTE'),
+		);
+		try {
+			await expect(VentaMutationService.create({
+				input: { puntoDeVentaId: 'pv-1', items, metodoPago: 'EFECTIVO', montoEfectivo: 1000 },
+				user: adminUser,
+			})).rejects.toMatchObject({ code: 'FX_INSUFICIENTE' });
+			expect(postEvento).not.toHaveBeenCalled();
+		} finally {
+			if (previousMode === undefined) delete process.env.CONTABILIDAD_FORMAL_MODE;
+			else process.env.CONTABILIDAD_FORMAL_MODE = previousMode;
+		}
+	});
+
 	it('flujo clásico con cliente y plan de facturación termina FACTURADA', async () => {
 		const result = await VentaMutationService.create({
 			input: {

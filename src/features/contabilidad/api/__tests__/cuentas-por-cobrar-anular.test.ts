@@ -1,12 +1,18 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { anularCuentaPorCobrarAction } from '@/features/contabilidad/actions-cuentas'
 
-const prismaMock = vi.hoisted(() => ({
-  cuentaPorCobrar: {
-    findFirst: vi.fn(),
-    updateMany: vi.fn(),
-  },
-}))
+const prismaMock = vi.hoisted(() => {
+  const mock = {
+    cuentaPorCobrar: {
+      findFirst: vi.fn(),
+      updateMany: vi.fn(),
+    },
+    $queryRaw: vi.fn().mockResolvedValue([]),
+    $transaction: vi.fn(),
+  }
+  mock.$transaction.mockImplementation((callback: (tx: typeof mock) => unknown) => callback(mock))
+  return mock
+})
 
 const auditLogMock = vi.hoisted(() => ({ log: vi.fn() }))
 
@@ -83,6 +89,7 @@ describe('Cuentas por Cobrar — anularCuentaPorCobrarAction', () => {
 
   it('marks the receivable as ANULADA while preserving historical amounts and payment link', async () => {
     prismaMock.cuentaPorCobrar.findFirst
+      .mockResolvedValueOnce({ id: cuenta.id, clienteId: cuenta.clienteId, estado: cuenta.estado })
       .mockResolvedValueOnce(cuenta)
       .mockResolvedValueOnce({ ...cuenta, estado: 'ANULADA' })
     prismaMock.cuentaPorCobrar.updateMany.mockResolvedValue({ count: 1 })
@@ -107,7 +114,9 @@ describe('Cuentas por Cobrar — anularCuentaPorCobrarAction', () => {
   })
 
   it('is idempotent and does not write or audit an already annulled receivable', async () => {
-    prismaMock.cuentaPorCobrar.findFirst.mockResolvedValue({ ...cuenta, estado: 'ANULADA' })
+    prismaMock.cuentaPorCobrar.findFirst
+      .mockResolvedValueOnce({ id: cuenta.id, clienteId: cuenta.clienteId, estado: 'ANULADA' })
+      .mockResolvedValueOnce({ ...cuenta, estado: 'ANULADA' })
 
     const result = await anularCuentaPorCobrarAction({ id: 'cxc-1' })
 
@@ -119,6 +128,7 @@ describe('Cuentas por Cobrar — anularCuentaPorCobrarAction', () => {
 
   it('returns the raced ANULADA row when another request claims the transition first', async () => {
     prismaMock.cuentaPorCobrar.findFirst
+      .mockResolvedValueOnce({ id: cuenta.id, clienteId: cuenta.clienteId, estado: cuenta.estado })
       .mockResolvedValueOnce(cuenta)
       .mockResolvedValueOnce({ ...cuenta, estado: 'ANULADA' })
     prismaMock.cuentaPorCobrar.updateMany.mockResolvedValue({ count: 0 })

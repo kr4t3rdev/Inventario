@@ -84,12 +84,16 @@ describe('FiscalEmisionService (FE-T2)', () => {
 	it('procesarSiguientePendiente con LocalAdapter → TIMBRADA con uuid y eventos', async () => {
 		mockPrisma.fiscalDocument.findFirst.mockResolvedValue({
 			fiscalDocumentId: 'doc-1',
-			estado: 'PENDIENTE',
+			facturaId: 'fac-1',
+			estado: 'TIMBRADA',
 			factura: facturaStub,
 		});
 		const r = await FiscalEmisionService.procesarSiguientePendiente('tenant-1', LocalAdapter);
 		expect(r?.estado).toBe('TIMBRADA');
-		expect(r?.uuidExterno).toMatch(/^LOCAL-/);
+		// La finalización es CAS por attemptId (no update a ciegas).
+		const finalArgs = mockPrisma.fiscalDocument.updateMany.mock.calls.at(-1)[0];
+		expect(finalArgs.data).toMatchObject({ estado: 'TIMBRADA' });
+		expect(finalArgs.where).toHaveProperty('attemptId');
 		expect(mockPrisma.fiscalEmisionEvent.create).toHaveBeenCalledWith(
 			expect.objectContaining({ data: expect.objectContaining({ estado: 'PROCESANDO' }) }),
 		);
@@ -98,10 +102,11 @@ describe('FiscalEmisionService (FE-T2)', () => {
 		);
 	});
 
-	it('error del adaptador → RECHAZADA con intento y mensaje', async () => {
+	it('error genérico del adaptador → INCIERTA (ya no RECHAZADA a ciegas)', async () => {
 		mockPrisma.fiscalDocument.findFirst.mockResolvedValue({
 			fiscalDocumentId: 'doc-1',
-			estado: 'PENDIENTE',
+			facturaId: 'fac-1',
+			estado: 'INCIERTA',
 			intentos: 0,
 			factura: facturaStub,
 		});
@@ -110,17 +115,14 @@ describe('FiscalEmisionService (FE-T2)', () => {
 			generar: vi.fn().mockRejectedValue(new Error('PAC fuera de servicio')),
 		};
 		const r = await FiscalEmisionService.procesarSiguientePendiente('tenant-1', adapterRoto as never);
-		expect(r?.estado).toBe('RECHAZADA');
-		expect(mockPrisma.fiscalDocument.update).toHaveBeenCalledWith(
-			expect.objectContaining({
-				data: expect.objectContaining({
-					estado: 'RECHAZADA',
-					intentos: { increment: 1 },
-				}),
-			}),
-		);
+		expect(r?.estado).toBe('INCIERTA');
+		const finalArgs = mockPrisma.fiscalDocument.updateMany.mock.calls.at(-1)[0];
+		expect(finalArgs.data).toMatchObject({
+			estado: 'INCIERTA',
+			intentos: { increment: 1 },
+		});
 		expect(mockPrisma.fiscalEmisionEvent.create).toHaveBeenCalledWith(
-			expect.objectContaining({ data: expect.objectContaining({ estado: 'RECHAZADO' }) }),
+			expect.objectContaining({ data: expect.objectContaining({ estado: 'INCIERTO' }) }),
 		);
 	});
 

@@ -1,15 +1,28 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { createCuentaPorCobrarAction } from '@/features/contabilidad/actions-cuentas'
 
-const prismaMock = vi.hoisted(() => ({
-  venta: {
-    findFirst: vi.fn(),
-  },
-  cuentaPorCobrar: {
-    findFirst: vi.fn(),
-    create: vi.fn(),
-  },
-}))
+const prismaMock = vi.hoisted(() => {
+  const mock = {
+    venta: {
+      findFirst: vi.fn(),
+    },
+    cliente: {
+      findFirst: vi.fn().mockResolvedValue({ clienteId: 'cli-1' }),
+    },
+    cuentaPorCobrar: {
+      findFirst: vi.fn(),
+      findMany: vi.fn().mockResolvedValue([]),
+      create: vi.fn(),
+    },
+    auditLog: {
+      create: vi.fn().mockResolvedValue({ id: 'audit-1' }),
+    },
+    $queryRaw: vi.fn().mockResolvedValue([]),
+    $transaction: vi.fn(),
+  }
+  mock.$transaction.mockImplementation((callback: (tx: typeof mock) => unknown) => callback(mock))
+  return mock
+})
 
 vi.mock('@/lib/prisma', () => ({
   prisma: prismaMock,
@@ -82,6 +95,7 @@ describe('Cuentas por Cobrar — createCuentaPorCobrarAction', () => {
 
     prismaMock.venta.findFirst.mockResolvedValue({
       ventaId: 'venta-1',
+      clienteId: 'cli-1',
       factura: { idFactura: 'fac-1' },
     })
 
@@ -115,6 +129,7 @@ describe('Cuentas por Cobrar — createCuentaPorCobrarAction', () => {
 
     prismaMock.venta.findFirst.mockResolvedValue({
       ventaId: 'venta-1',
+      clienteId: 'cli-1',
       factura: { idFactura: 'fac-1' },
     })
 
