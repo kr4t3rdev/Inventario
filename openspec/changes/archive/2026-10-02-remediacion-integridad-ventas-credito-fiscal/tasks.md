@@ -83,3 +83,13 @@ El artefacto original de este change fue borrado por un `git clean` de una sesi�
 - **Phase 7 (QA)**: batería 63 archivos/431 unit verdes; integración 39/44 (5 fallos ajenos pre-documentados: BD hardcodeada otro change + backfills branch activo); typecheck/ESLint/diff-check limpios; checklist de activación por tenant y rollback documentados (secciones históricas de gates-iniciales.md restauradas en el adendum del 24-09 + este adendum).
 
 **Restante (externo):** primer PAC real por jurisdicción, evidencia de despliegue operativo y QA manual post-deploy (checklist 7.4). Sin commits previos: el commit selectivo de este cierre protege el trabajo.
+
+
+## Adendum post-cierre (02-10-2026, noche) — writer de ofertas cubierto
+
+El cierre detectó un writer residual fuera del protocolo: `facturarOfertaAction` crea venta+factura y llama al workflow de cobro **sin bloquear al cliente ni validar el límite** cuando la oferta lleva vencimiento (CxC). Corregido con TDD:
+
+- RED: `src/features/ofertas/__tests__/facturar-oferta-cupo.test.ts` 4/4 fallos auténticos (cupón agotado, sin lock, sin auditoría de override, sin-vencimiento pasando).
+- GREEN: `actions.ts` toma `bloquearClienteCredito` + `validarCreditoOrigen` con `clienteLockAdquirido` dentro de la tx **antes** de crear venta/factura; override por origen (`ventas.venta.credito-override` para el origen venta subyacente) exige intención+motivo y audita `logStrict` en la tx; sin vencimiento no consume cupo. Schema extendido con `solicitarCreditoOverride`/`motivoCreditoOverride`. Suite ofertas 38/38; conjunto ofertas+ventas 265/265; typecheck/ESLint/diff-check limpios. Commit `428378a5`.
+
+**Inventario final tras el adendum**: los 13 archivos runtime que escriben CxC están todos bajo el protocolo: 10 con lock propio del cliente dentro de su transacción, `facturacion-workflow.ts` cubierto indirectamente (sus únicos callers —`VentaMutationService.create`, `facturarVenta` y `facturarOfertaAction`— toman el lock antes de invocarlo) y `devolucion-venta-service.ts`/`venta-lifecycle-service.ts` con locks ya cubiertos en slices anteriores. Raw SQL sobre CuentaPorCobrar sigue sin existir fuera de migraciones offline y fixtures de test. Ningún writer activo queda fuera del protocolo en el código local; la certificación del despliegue sigue siendo externa.
