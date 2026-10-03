@@ -15,6 +15,11 @@ import { getOrCreateTurnoActivo } from '@/features/turnos-pos';
 import { ofertaSchema, ofertaUpdateSchema, facturarOfertaSchema } from './schemas';
 import { facturarOfertaWorkflow } from './services/facturar-oferta-workflow';
 import {
+  auditarCreditoOverride,
+  bloquearClienteCredito,
+  validarCreditoOrigen,
+} from '@/features/ventas/services/credito-override';
+import {
   getOfertaForTenant,
   listOfertasForTenant,
   OFERTA_INCLUDE,
@@ -151,7 +156,11 @@ export const deleteOfertaAction = withAction(async (id: string, user: Authentica
 
 export const facturarOfertaAction = withAction(async (input: FacturarOfertaInput, user: AuthenticatedUser) => {
   requireFeature(user, 'ofertas', 'gestionar ofertas');
+  requirePermission(user, 'ventas.ofertas.gestionar', 'facturar ofertas');
   const parsed = facturarOfertaSchema.parse(input);
+  if (parsed.anticipoCobroId && !parsed.idempotencyKey) {
+    throw new ActionError('Aplicar un anticipo requiere una clave de idempotencia', 'VALIDATION_ERROR');
+  }
   const tenantId = requireTenant(user);
 
   const oferta = await prisma.oferta.findFirst({
@@ -172,6 +181,36 @@ export const facturarOfertaAction = withAction(async (input: FacturarOfertaInput
   const turnoId = turnoResult.data.turnoId;
 
   const resultado = await prisma.$transaction(async (tx: any) => {
+    // Protocolo de cupo (change remediacion-integridad-ventas-credito-fiscal):
+    // la oferta con vencimiento crea CxC — se bloquea al cliente, se valida el
+    // límite bajo el lock (override por origen con motivo y auditoría) y sólo
+    // entonces se factura. Sin vencimiento no consume cupo.
+    const creaCxC = (parsed.anticipoCobroId ? 'fecha' : parsed.tipoVencimiento || null) !== null ||
+      Boolean(parsed.fechaVencimiento);
+    if (creaCxC) {
+      await bloquearClienteCredito(tx, tenantId, oferta.clienteId);
+      const decision = await validarCreditoOrigen({
+        tx,
+        user,
+        tenantId,
+        clienteId: oferta.clienteId,
+        moneda: 'CUP',
+        montoNuevo: Math.max(Number(oferta.total), 0),
+        permiso: 'ventas.venta.credito-override',
+        solicitarCreditoOverride: parsed.solicitarCreditoOverride,
+        motivoCreditoOverride: parsed.motivoCreditoOverride,
+        clienteLockAdquirido: true,
+      });
+      if (decision.exceeded) {
+        await auditarCreditoOverride({
+          tx, user, decision, tenantId,
+          clienteId: oferta.clienteId,
+          origen: 'OFERTA_FACTURADA', origenId: oferta.id,
+          montoNuevo: Math.max(Number(oferta.total), 0),
+        });
+      }
+    }
+
     const workflow = await facturarOfertaWorkflow(tx, {
       tenantId,
       ofertaId: oferta.id,
@@ -198,14 +237,24 @@ export const facturarOfertaAction = withAction(async (input: FacturarOfertaInput
       observaciones: parsed.observaciones || null,
       cargoTransporte: parsed.cargoTransporte || 0,
       serieId: parsed.serieId || null,
-      tipoVencimiento: parsed.tipoVencimiento || null,
-      fechaVencimiento: parsed.fechaVencimiento || null,
+       tipoVencimiento: parsed.anticipoCobroId ? 'fecha' : parsed.tipoVencimiento || null,
+       fechaVencimiento: parsed.anticipoCobroId
+         ? parsed.fechaVencimiento || new Date().toISOString()
+         : parsed.fechaVencimiento || null,
       cuentaBancariaId: parsed.cuentaBancariaId || null,
       usuarioId: user.userId,
     });
 
     // Anticipo
     if (parsed.anticipoCobroId && parsed.idempotencyKey) {
+      const cxc = await tx.cuentaPorCobrar.findFirst({ where: {
+        tenantId, facturaId: workflow.facturaId,
+      } });
+      if (!cxc || !cxc.monedaOriginal || cxc.tasaCambio == null ||
+        cxc.montoDeudaFuncional == null) {
+        throw new ActionError('La oferta no conserva una obligación bruta verificable',
+          'FX_INSUFICIENTE');
+      }
       await applyAnticipoAllocations(tx, [{
       anticipoId: parsed.anticipoCobroId, montoAplicado: Number(oferta.total)
       }], {
@@ -213,8 +262,17 @@ export const facturarOfertaAction = withAction(async (input: FacturarOfertaInput
         documentoDestinoId: workflow.facturaId,
         contexto: 'FACTURA_OFERTA',
         usuarioId: user.userId,
+        idempotencyKey: parsed.idempotencyKey,
+        clienteId: oferta.clienteId, monedaDocumento: cxc.monedaOriginal,
+        tasaDocumento: cxc.tasaCambio.toString(),
         observaciones: `Anticipo aplicado a facturación de oferta ${oferta.id}`,
       });
+      await tx.cuentaPorCobrar.updateMany({ where: { id: cxc.id, tenantId }, data: {
+        montoPagado: cxc.montoDeuda, montoPagadoFuncional: cxc.montoDeudaFuncional,
+        estado: 'PAGADA',
+      } });
+      await tx.factura.updateMany({ where: { idFactura: workflow.facturaId, tenantId },
+        data: { estado: 'PAGADA' } });
     }
 
     // Marcar oferta como facturada

@@ -43,6 +43,8 @@ export const facturarOfertaSchema = z.object({
   anticipoCobroId: z.string().optional(),
   formaPagoAnticipo: z.enum(['ANTICIPO_COBRO']).optional(),
   idempotencyKey: z.string().optional(),
+  solicitarCreditoOverride: z.boolean().optional(),
+  motivoCreditoOverride: z.string().trim().max(500).optional().nullable(),
 }).refine(
   (data) => (data.anticipoCobroId ? !!data.idempotencyKey : true),
   { message: 'idempotencyKey es obligatorio con anticipo', path: ['idempotencyKey'] }

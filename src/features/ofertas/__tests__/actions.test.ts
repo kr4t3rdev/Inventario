@@ -12,11 +12,19 @@ vi.mock('@/lib/services/fifo-allocation', () => ({ allocateFifoForSale: vi.fn() 
 vi.mock('@/lib/services/stock-ubicacion-service', () => ({ upsertStockUbicacion: vi.fn() }));
 
 const mockTx = {
+  $queryRaw: vi.fn().mockResolvedValue([]),
   oferta: { update: vi.fn() },
   venta: { create: vi.fn() },
   ventaServicios: { create: vi.fn() },
   servicios: { findFirst: vi.fn() },
-  factura: { create: vi.fn() },
+  cliente: { findFirst: vi.fn() },
+  factura: { create: vi.fn(), updateMany: vi.fn().mockResolvedValue({ count: 1 }) },
+  cuentaPorCobrar: {
+    findFirst: vi.fn().mockResolvedValue({ id: 'cxc-1', monedaOriginal: 'CUP',
+      tasaCambio: 1, montoDeuda: 500, montoDeudaFuncional: 500 }),
+    findMany: vi.fn().mockResolvedValue([]),
+    updateMany: vi.fn().mockResolvedValue({ count: 1 }),
+  },
   serieFacturacion: { findFirst: vi.fn(), create: vi.fn(), update: vi.fn() },
   producto: { findUnique: vi.fn() },
   stockUbicacion: { findUnique: vi.fn() },
@@ -137,6 +145,22 @@ describe('Ofertas Server Actions', () => {
   });
 
   describe('facturarOfertaAction', () => {
+    it('exige permiso de gestión de ofertas antes de consultar la oferta', async () => {
+      vi.mocked(getCurrentUser).mockResolvedValue({
+        ...mockUser,
+        role: 'user',
+        tenantRole: 'manager',
+        permissions: new Set<string>(),
+        planFeatures: { ofertas: true },
+      });
+
+      const result = await facturarOfertaAction({ ofertaId: 'of-1', puntoDeVentaId: 'pv-1' });
+
+      expect(result.success).toBe(false);
+      expect(result.error!.code).toBe('FORBIDDEN');
+      expect(prisma.oferta.findFirst).not.toHaveBeenCalled();
+    });
+
     it('factura oferta exitosamente', async () => {
       vi.mocked(getCurrentUser).mockResolvedValue(mockUser);
       vi.mocked(prisma.oferta.findFirst).mockResolvedValue({
@@ -284,6 +308,13 @@ describe('Ofertas Server Actions', () => {
       vi.mocked(applyFacturacionCobroWorkflow).mockResolvedValue({ ventaId: 'ven-1' } as any);
       vi.mocked(applyAnticipoAllocations).mockResolvedValue([]);
       mockTx.factura.create.mockResolvedValue({ idFactura: 'fac-1' });
+      // Gate de cupo (remediación): el anticipo crea CxC por vencimiento; el
+      // validador bajo lock consulta límite y CxC del cliente en la tx.
+      mockTx.cliente.findFirst.mockResolvedValue({ clienteId: 'cli-1', limiteCredito: null });
+      mockTx.cuentaPorCobrar.findMany.mockResolvedValue([]);
+      mockTx.cuentaPorCobrar.findFirst.mockResolvedValue({
+        id: 'cxc-1', monedaOriginal: 'CUP', tasaCambio: 1, montoDeuda: 500, montoDeudaFuncional: 500,
+      });
 
       const result = await facturarOfertaAction({
         ofertaId: 'of-1',
