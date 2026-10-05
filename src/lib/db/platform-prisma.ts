@@ -19,7 +19,12 @@ export interface PlatformPrismaAccess {
 
 type PlatformAccessReporter = (access: PlatformPrismaAccess) => void;
 
+// Log de acceso estructurado por operacion. En produccion puede silenciarse
+// con PLATFORM_ACCESS_LOGS=false (por query es costoso bajo carga alta).
+const platformAccessLogsEnabled = process.env.PLATFORM_ACCESS_LOGS !== 'false';
+
 const defaultReporter: PlatformAccessReporter = (access) => {
+  if (!platformAccessLogsEnabled) return;
   console.info('[prisma-platform]', JSON.stringify(access));
 };
 
