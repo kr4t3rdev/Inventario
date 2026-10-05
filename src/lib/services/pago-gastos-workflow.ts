@@ -1,6 +1,8 @@
 import type { Prisma } from '@/generated/prisma'
 import { buildAppliedFxEvidence } from '@/features/contabilidad/domain/fx-evidence';
 import { normalizeAccountingAmount } from '@/features/contabilidad/domain/accounting-amount'
+import { resolveAccountingAccountMovement } from '@/features/contabilidad/services/accounting-account-movement-valuation'
+import { AuditLogService } from '@/lib/services/audit-log-service'
 import { postEvento } from '@/features/contabilidad-formal/services/posting-engine'
 import { buildEventoEgreso, resolverTipoEventoEgreso } from '@/features/contabilidad-formal/lib/event-builders'
 
@@ -31,8 +33,10 @@ export interface ApplyPagoGastoWorkflowParams {
   descripcion: string
   monto: number
   moneda: string
+  functionalCurrency?: string
   tenantId: string
   tasaCambio?: number
+  tasaCambioCuenta?: number
   periodo?: string
   observaciones?: string
   estado?: 'PENDIENTE' | 'PAGADA' | 'PARCIAL'
@@ -58,6 +62,8 @@ export interface ApplyPagoGastoWorkflowResult {
     monto: number
     moneda: string
     montoConvertido: number | null
+    montoCuenta: number
+    monedaCuenta: string
     descripcion: string
   }>
   cuentaPorPagar: {
@@ -140,11 +146,13 @@ async function lockAndValidateReference(
       ? { cuentaPorPagarId: params.cuentaPorPagarId, tenantId: params.tenantId, gastosDEId: params.referenciaId }
       : params.tipoGasto === 'compra'
         ? { cuentaPorPagarId: params.cuentaPorPagarId, tenantId: params.tenantId, gastoCompraId: params.referenciaId }
-        : {
+        : params.tipoGasto === 'servicio'
+          ? { cuentaPorPagarId: params.cuentaPorPagarId, tenantId: params.tenantId,
+              compraServicioId: params.referenciaId }
+          : {
             cuentaPorPagarId: params.cuentaPorPagarId,
             tenantId: params.tenantId,
-            tipo: 'servicio' as const,
-            numeroFactura: source.numeroFactura || '__MISSING_SERVICE_INVOICE__',
+            tipoDeuda: 'VENTA_SERVICIO',
           }
     const payable = await tx.cuentaPorPagar.findFirst({ where: payableWhere, select: { cuentaPorPagarId: true } })
     if (!payable) {
@@ -167,25 +175,26 @@ export function isGastoWorkflowError(error: unknown): error is GastoWorkflowErro
 }
 
 /**
- * @description Normaliza un monto a CUP y rechaza conversiones incompletas.
+ * @description Normaliza un monto a la moneda funcional y rechaza conversiones incompletas.
  * @param {number} monto - Monto original.
  * @param {string} moneda - Moneda origen.
  * @param {number | undefined} tasaCambio - Tasa opcional.
  * @param {Date} fechaOperacion - Fecha en que se aplicó la tasa informada.
- * @returns {number} Monto normalizado en CUP.
+ * @returns {number} Monto normalizado en moneda funcional.
  */
-function normalizeMontoToCup(
+function normalizeMontoToFunctional(
   monto: number,
   moneda: string,
   tasaCambio: number | undefined,
   fechaOperacion: Date,
+  functionalCurrency: string,
 ): number {
   const hasValidRate =
     typeof tasaCambio === 'number' && Number.isFinite(tasaCambio) && tasaCambio > 0
   const result = normalizeAccountingAmount({
     amount: monto,
     currency: moneda,
-    functionalCurrency: 'CUP',
+    functionalCurrency,
     convertedAmount: hasValidRate ? monto * tasaCambio : null,
     exchangeRate: tasaCambio,
     operationAt: fechaOperacion,
@@ -196,7 +205,7 @@ function normalizeMontoToCup(
     throw createGastoWorkflowError(
       400,
       'CONVERSION_REQUERIDA',
-      `No se puede expresar el pago en CUP: ${result.issue}`,
+      `No se puede expresar el pago en ${functionalCurrency}: ${result.issue}`,
     )
   }
   return result.amount
@@ -216,13 +225,19 @@ function convertMontoToCuentaMoneda(
   monedaCuenta: string,
   tasaCambio?: number
 ): number {
-  if (monedaPago === monedaCuenta) {
+  const monedaOrigenNormalizada = monedaPago.trim().toUpperCase()
+  const monedaCuentaNormalizada = monedaCuenta.trim().toUpperCase()
+  if (monedaOrigenNormalizada === monedaCuentaNormalizada) {
     return monto
   }
   if (typeof tasaCambio === 'number' && Number.isFinite(tasaCambio) && tasaCambio > 0) {
     return monto * tasaCambio
   }
-  return monto
+  throw createGastoWorkflowError(
+    400,
+    'FX_CUENTA_INSUFICIENTE',
+    `No se puede convertir ${monedaOrigenNormalizada} a ${monedaCuentaNormalizada} sin una tasa explícita`,
+  )
 }
 
 /**
@@ -360,11 +375,31 @@ export async function applyPagoGastoWorkflow(
     throw createGastoWorkflowError(400, 'MONTO_INVALIDO', 'El monto debe ser mayor que cero')
   }
   const fechaOperacion = params.fechaPago ? new Date(params.fechaPago) : new Date()
-  const montoTotalConvertido = normalizeMontoToCup(
+  const accountingPolicy = await tx.tenantAccountingPolicy.findUnique({
+    where: { tenantId: params.tenantId },
+    select: { functionalCurrencyCode: true },
+  })
+  const functionalCurrency = accountingPolicy?.functionalCurrencyCode?.trim().toUpperCase()
+  if (!functionalCurrency) {
+    throw createGastoWorkflowError(
+      400,
+      'POLITICA_MONETARIA_REQUERIDA',
+      'El tenant debe tener una moneda funcional configurada para registrar pagos',
+    )
+  }
+  if (params.functionalCurrency && params.functionalCurrency.trim().toUpperCase() !== functionalCurrency) {
+    throw createGastoWorkflowError(
+      409,
+      'POLITICA_MONETARIA_CAMBIADA',
+      'La moneda funcional del pago no coincide con la política vigente del tenant',
+    )
+  }
+  const montoTotalConvertido = normalizeMontoToFunctional(
     montoTotal,
     params.moneda,
     params.tasaCambio,
     fechaOperacion,
+    functionalCurrency,
   )
 
   // Every source reference is a non-composite foreign key. Lock and validate
@@ -507,11 +542,13 @@ export async function applyPagoGastoWorkflow(
       throw createGastoWorkflowError(404, 'CUENTA_NO_ENCONTRADA', 'Cuenta bancaria no encontrada o inactiva')
     }
 
+    const tasaCuenta = params.tasaCambioCuenta
+      ?? (cuenta.moneda.trim().toUpperCase() === functionalCurrency ? params.tasaCambio : undefined)
     const montoEnCuenta = convertMontoToCuentaMoneda(
       Number(pago.monto),
       params.moneda,
       cuenta.moneda,
-      params.tasaCambio
+      tasaCuenta,
     )
 
     const acumulado = saldosADescontar.get(cuenta.cuentaId) || 0
@@ -537,20 +574,34 @@ export async function applyPagoGastoWorkflow(
   const reconciliaciones: ApplyPagoGastoWorkflowResult['reconciliaciones'] = []
   for (const pago of distribucion) {
     const montoPago = Number(pago.monto)
-    const montoConvertido = normalizeMontoToCup(
+    const montoConvertido = normalizeMontoToFunctional(
       montoPago,
       params.moneda,
       params.tasaCambio,
       fechaOperacion,
+      functionalCurrency,
     )
     const fxEvidence = buildAppliedFxEvidence({
       originalAmount: montoPago,
       originalCurrency: params.moneda,
-      functionalCurrency: 'CUP',
+      functionalCurrency,
       exchangeRate: params.tasaCambio ?? null,
       convertedAmount: montoConvertido,
-      rateEffectiveAt: params.moneda.trim().toUpperCase() === 'CUP' ? null : fechaOperacion,
+      rateEffectiveAt: params.moneda.trim().toUpperCase() === functionalCurrency ? null : fechaOperacion,
       source: 'pago-gastos-workflow'
+    })
+
+    // Snapshot de cuenta nativa (FX-3): el débito sale de la cuenta en su propia moneda.
+    const cuentaReconciliacion = cuentaMap.get(pago.cuentaId)
+    if (!cuentaReconciliacion) {
+      throw createGastoWorkflowError(404, 'CUENTA_NO_ENCONTRADA', 'Cuenta bancaria no encontrada o inactiva')
+    }
+    const movimientoCuenta = resolveAccountingAccountMovement({
+      tenderAmount: montoPago,
+      tenderCurrency: params.moneda,
+      functionalAmount: montoConvertido,
+      functionalCurrency,
+      accountCurrency: cuentaReconciliacion.moneda,
     })
 
     const reconciliacion = await tx.reconciliacionGasto.create({
@@ -568,6 +619,8 @@ export async function applyPagoGastoWorkflow(
         moneda: params.moneda,
         tasaCambio: params.tasaCambio,
         montoConvertido,
+        montoCuenta: movimientoCuenta.amount,
+        monedaCuenta: movimientoCuenta.currency,
         fechaReconciliacion: fechaOperacion,
         functionalCurrency: fxEvidence.functionalCurrency,
         fxProvenanceKind: fxEvidence.fxProvenanceKind,
@@ -604,32 +657,52 @@ export async function applyPagoGastoWorkflow(
       moneda: reconciliacion.moneda,
       montoConvertido:
         reconciliacion.montoConvertido === null ? null : Number(reconciliacion.montoConvertido),
+      montoCuenta: Number(movimientoCuenta.amount),
+      monedaCuenta: movimientoCuenta.currency,
       descripcion: reconciliacion.descripcion
     })
 
-    // Capa de contabilidad formal (CTA-1): la conciliación de gasto genera su
-    // asiento según el destino del pago (CxP, nómina, compra al contado, gasto).
-    const cuentaPago = cuentaMap.get(reconciliacion.cuentaId)
-    await postEvento(tx, { tenantId: params.tenantId, userId: params.reconciliadoPor }, buildEventoEgreso({
-      tipo: resolverTipoEventoEgreso({
-        cuentaPorPagarId: params.cuentaPorPagarId,
-        pgId: params.pgId,
-        gastoCompraId: params.gastoCompraId,
-      }),
-      reconciliacionId: reconciliacion.reconciliacionId,
-      descripcion: reconciliacion.descripcion ?? undefined,
-      fecha: fechaOperacion,
-      tesoreria: {
+    // A reconciliación PENDIENTE no ha movido tesorería; no debe crear asiento.
+    if (estadoReconciliacion !== 'PENDIENTE') {
+      const cuentaPago = cuentaMap.get(reconciliacion.cuentaId)
+      await postEvento(tx, { tenantId: params.tenantId, userId: params.reconciliadoPor }, buildEventoEgreso({
+        tipo: resolverTipoEventoEgreso({
+          cuentaPorPagarId: params.cuentaPorPagarId,
+          pgId: params.pgId,
+          gastoCompraId: params.gastoCompraId,
+        }),
+        reconciliacionId: reconciliacion.reconciliacionId,
+        descripcion: reconciliacion.descripcion ?? undefined,
+        fecha: fechaOperacion,
+        tesoreria: {
+          monto: montoPago,
+          moneda: params.moneda,
+          montoFuncional: montoConvertido,
+          monedaFuncionalCodigo: fxEvidence.functionalCurrency,
+          tasaCambio: params.tasaCambio ?? null,
+          fxEvidenceFingerprint: fxEvidence.fxEvidenceFingerprint,
+          tipoCuenta: cuentaPago?.tipoCuenta ?? null,
+          referencia: params.referenciaId,
+        },
+      }))
+    }
+
+    await AuditLogService.logStrict({
+      accion: 'CREATE',
+      entidad: 'RECONCILIACION',
+      entidadId: reconciliacion.reconciliacionId,
+      usuarioId: params.reconciliadoPor,
+      detalles: {
+        tipo: 'GASTO',
+        tipoGasto: params.tipoGasto,
+        referenciaId: params.referenciaId,
+        cuentaId: reconciliacion.cuentaId,
         monto: montoPago,
         moneda: params.moneda,
-        montoFuncional: montoConvertido,
-        monedaFuncionalCodigo: fxEvidence.functionalCurrency,
-        tasaCambio: params.tasaCambio ?? null,
-        fxEvidenceFingerprint: fxEvidence.fxEvidenceFingerprint,
-        tipoCuenta: cuentaPago?.tipoCuenta ?? null,
-        referencia: params.referenciaId,
+        montoConvertido,
+        monedaFuncional: functionalCurrency,
       },
-    }))
+    }, tx)
   }
 
   if (estadoReconciliacion !== 'PENDIENTE') {
@@ -648,7 +721,7 @@ export async function applyPagoGastoWorkflow(
     }
   }
 
-  if (params.moneda !== 'CUP' && params.tasaCambio) {
+  if (params.moneda.trim().toUpperCase() !== functionalCurrency && params.tasaCambio) {
     await tx.transaccionMoneda.create({
       data: {
         tenantId: params.tenantId,
@@ -701,9 +774,10 @@ export async function applyPagoGastoWorkflow(
       throw createGastoWorkflowError(404, 'CUENTA_POR_PAGAR_NO_ENCONTRADA', 'Cuenta por pagar no encontrada')
     }
 
+    const monedaPagoNorm = params.moneda.trim().toUpperCase()
     const cuentaProveedor =
       params.cuentaProveedor ||
-      (params.moneda === 'USD'
+      (monedaPagoNorm === 'USD'
         ? cuentaPorPagarActual.proveedor?.cuentaUSD
         : cuentaPorPagarActual.proveedor?.cuentaCUP) ||
       'N/A'

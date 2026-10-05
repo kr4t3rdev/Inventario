@@ -84,6 +84,16 @@ model InyeccionCapital {
   tipo               TipoInyeccion
   montoRecibido      Decimal
   moneda             String         @default("CUP")
+  tasaCambio         Decimal?
+  montoConvertido    Decimal?
+  functionalCurrency    String?
+  rateEffectiveAt       DateTime?
+  fxProvenanceKind      String?
+  fxProvenanceSource    String?
+  fxCatalogRateId       String?
+  fxEvidenceJson        Json?
+  fxEvidenceFingerprint String?
+  fxEvidenceVersion     Int?
   tasaInteres        Decimal?
   montoInteres       Decimal?
   montoTotalDeuda    Decimal?
@@ -103,6 +113,7 @@ model InyeccionCapital {
 
   @@index([cuentaId, createdAt])
   @@index([tenantId])
+  @@index([tenantId, fxProvenanceKind])
 }
 
 model PagoDeuda {
@@ -110,6 +121,17 @@ model PagoDeuda {
   tenantId       String?
   inyeccionId    String
   montoPagado    Decimal
+  moneda         String           @default("CUP")
+  tasaCambio     Decimal?
+  montoConvertido Decimal?
+  functionalCurrency    String?
+  rateEffectiveAt       DateTime?
+  fxProvenanceKind      String?
+  fxProvenanceSource    String?
+  fxCatalogRateId       String?
+  fxEvidenceJson        Json?
+  fxEvidenceFingerprint String?
+  fxEvidenceVersion     Int?
   fechaPago      DateTime         @default(now())
   cuentaId       String
   numeroCuota    Int?
@@ -122,6 +144,7 @@ model PagoDeuda {
 
   @@index([cuentaId, fechaPago])
   @@index([tenantId])
+  @@index([tenantId, fxProvenanceKind])
 }
 
 model Cliente {
@@ -244,6 +267,8 @@ model Tenant {
   fiscalDocuments                FiscalDocument[]
   fiscalEmisionEvents            FiscalEmisionEvent[]
   aperturaPeriodos               AperturaPeriodo[]
+  aperturaRevisiones             AperturaRevision[]
+  lineasAperturaPeriodo          LineaAperturaPeriodo[]
   arqueosCaja                    ArqueoCaja[]
   auditoriaPeriodos              AuditoriaPeriodo[]
   backupLogs                     BackupLog[]
@@ -272,6 +297,9 @@ model Tenant {
   diarios                        Diario[]
   asientos                       Asiento[]
   cuentasRol                     CuentaRolTenant[]
+  replayPreflights                ReplayPreflight[]
+  replayApprovals                 ReplayApproval[]
+  replayRuns                      ReplayRun[]
 
   @@index([slug])
   @@map("tenants")
@@ -290,6 +318,10 @@ model TenantMembership {
   tenant       Tenant      @relation(fields: [tenantId], references: [tenantId], onDelete: Cascade)
   user         User        @relation(fields: [userId], references: [userId], onDelete: Cascade)
   customRole   TenantRole? @relation(fields: [customRoleId], references: [roleId], onDelete: Restrict)
+  replayPreflightRequests ReplayPreflight[] @relation("ReplayPreflightRequester")
+  replayApprovalRequests ReplayApproval[] @relation("ReplayApprovalRequester")
+  replayApprovals ReplayApproval[] @relation("ReplayApprovalApprover")
+  replayRuns ReplayRun[] @relation("ReplayRunActor")
 
   @@unique([tenantId, userId])
   @@index([userId])
@@ -1403,6 +1435,16 @@ model CompraDocumento {
   facturaUrl        String                @default("")
   formaPago         String
   moneda            String                @default("CUP")
+  tasaCambio        Decimal?
+  montoConvertido   Decimal?
+  functionalCurrency     String?
+  rateEffectiveAt        DateTime?
+  fxProvenanceKind       String?
+  fxProvenanceSource     String?
+  fxCatalogRateId        String?
+  fxEvidenceJson         Json?
+  fxEvidenceFingerprint  String?
+  fxEvidenceVersion      Int?
   estado            String
   tipoOperacion     String                @default("REGULAR")
   descripcion       String?
@@ -1431,6 +1473,7 @@ model CompraDocumento {
   @@index([fechaCompra])
   @@index([deletedAt])
   @@index([tenantId, ordenCompraId])
+  @@index([tenantId, fxProvenanceKind])
 }
 
 /// * Línea de detalle de una compra múltiple.
@@ -1630,6 +1673,7 @@ model CompraServicio {
   createdAt        DateTime  @default(now())
   updatedAt        DateTime  @updatedAt
   moneda           String?
+  cuentaPorPagar   CuentaPorPagar?
   proveedor        Vendor?   @relation(fields: [proveedorId], references: [vendorId])
   servicio         Servicios @relation(fields: [servicioId], references: [servicioId], onDelete: Cascade)
   tenant           Tenant    @relation(fields: [tenantId], references: [tenantId])
@@ -1933,6 +1977,11 @@ model ReconciliacionVenta {
   moneda                      String         @default("CUP")
   tasaCambio                  Decimal?
   montoConvertido             Decimal?
+  montoCuenta                 Decimal?       @db.Decimal(20, 4)
+  monedaCuenta                String?
+  cuentaOrigenId              String?
+  montoCuentaOrigen           Decimal?       @db.Decimal(20, 4)
+  monedaCuentaOrigen          String?
   functionalCurrency          String?
   rateEffectiveAt             DateTime?
   fxProvenanceKind            String?
@@ -1948,6 +1997,8 @@ model ReconciliacionVenta {
   updatedAt                   DateTime       @updatedAt
   idTransferencia             String?
   verificacionTransferenciaId String?
+  idempotencyKey              String?
+  idempotencyPayloadHash      String?
   deudaCashId                 String?
   prestamoCashId              String?
   tipoReconciliacion          String?
@@ -1962,17 +2013,25 @@ model ReconciliacionVenta {
   @@index([tenantId, fxProvenanceKind])
   @@index([tenantId, fechaReconciliacion])
   @@index([tenantId, cuentaId, fechaReconciliacion])
+  @@unique([tenantId, idempotencyKey])
 }
 
 model ReconciliacionServicio {
   reconciliacionId      String         @id @default(cuid())
   tenantId              String
+  idempotencyKey        String?
+  idempotencyHash       String?
   cuentaId              String
   tipoPagoId            String
   monto                 Decimal
   moneda                String         @default("CUP")
   tasaCambio            Decimal?
   montoConvertido       Decimal?
+  montoCuenta           Decimal?       @db.Decimal(20, 4)
+  monedaCuenta          String?
+  cuentaOrigenId        String?
+  montoCuentaOrigen     Decimal?       @db.Decimal(20, 4)
+  monedaCuentaOrigen    String?
   functionalCurrency    String?
   rateEffectiveAt       DateTime?
   fxProvenanceKind      String?
@@ -1996,6 +2055,7 @@ model ReconciliacionServicio {
   @@index([tenantId, fxProvenanceKind])
   @@index([tenantId, fechaReconciliacion])
   @@index([tenantId, cuentaId, fechaReconciliacion])
+  @@unique([tenantId, idempotencyKey])
 }
 
 model ReconciliacionGasto {
@@ -2009,6 +2069,8 @@ model ReconciliacionGasto {
   moneda                String          @default("CUP")
   tasaCambio            Decimal?
   montoConvertido       Decimal?
+  montoCuenta           Decimal?        @db.Decimal(20, 4)
+  monedaCuenta          String?
   functionalCurrency    String?
   rateEffectiveAt       DateTime?
   fxProvenanceKind      String?
@@ -2053,6 +2115,14 @@ model AjusteBancario {
   moneda          String         @default("CUP")
   tasaCambio      Decimal?
   montoConvertido Decimal?
+  functionalCurrency    String?
+  rateEffectiveAt       DateTime?
+  fxProvenanceKind      String?
+  fxProvenanceSource    String?
+  fxCatalogRateId       String?
+  fxEvidenceJson        Json?
+  fxEvidenceFingerprint String?
+  fxEvidenceVersion     Int?
   descripcion     String
   motivo          String
   realizadoPor    String
@@ -2063,6 +2133,7 @@ model AjusteBancario {
   tenant          Tenant         @relation(fields: [tenantId], references: [tenantId])
 
   @@index([tenantId])
+  @@index([tenantId, fxProvenanceKind])
   @@index([tenantId, fechaOperacion])
   @@index([tenantId, cuentaId, fechaOperacion])
 }
@@ -2078,6 +2149,15 @@ model TransferenciaBancaria {
   montoDestino        Decimal
   monedaDestino       String
   tasaCambio          Decimal?
+  montoConvertido     Decimal?
+  functionalCurrency    String?
+  rateEffectiveAt       DateTime?
+  fxProvenanceKind      String?
+  fxProvenanceSource    String?
+  fxCatalogRateId       String?
+  fxEvidenceJson        Json?
+  fxEvidenceFingerprint String?
+  fxEvidenceVersion     Int?
   motivo              String
   descripcion         String?
   fechaTransferencia  DateTime       @default(now())
@@ -2092,6 +2172,7 @@ model TransferenciaBancaria {
 
   @@unique([tenantId, numeroComprobante])
   @@index([tenantId])
+  @@index([tenantId, fxProvenanceKind])
   @@index([tenantId, fechaTransferencia])
   @@index([tenantId, cuentaOrigenId, fechaTransferencia])
   @@index([tenantId, cuentaDestinoId, fechaTransferencia])
@@ -2452,6 +2533,20 @@ model CuentaPorCobrar {
   clienteId        String
   montoDeuda       Decimal
   montoPagado      Decimal               @default(0)
+  /// Valuación inmutable capturada al crear la cuenta; null en históricos no verificables.
+  monedaOriginal           String?
+  montoOriginal            Decimal?       @db.Decimal(20, 4)
+  montoDeudaFuncional      Decimal?       @db.Decimal(20, 4)
+  montoPagadoFuncional     Decimal?       @db.Decimal(20, 4)
+  monedaFuncional          String?
+  tasaCambio               Decimal?       @db.Decimal(20, 10)
+  rateEffectiveAt          DateTime?
+  fxProvenanceKind         String?
+  fxProvenanceSource       String?
+  fxCatalogRateId          String?
+  fxEvidenceJson           Json?
+  fxEvidenceFingerprint    String?
+  fxEvidenceVersion        Int?
   idTransferencia  String?
   estado           EstadoCuentaPorCobrar @default(PENDIENTE)
   fechaVencimiento DateTime?
@@ -2469,6 +2564,9 @@ model CuentaPorCobrar {
 }
 
 model CuentaPorPagar {
+  compraServicioId String? @unique
+  compraServicio CompraServicio? @relation(fields: [compraServicioId], references: [compraServicioId])
+  fxSnapshot Json?
   cuentaPorPagarId String                @id @default(cuid())
   tenantId         String
   numeroFactura    String
@@ -2919,6 +3017,9 @@ model Anticipo {
   facturaId         String?              @unique
   compraProductoId  String?              @unique
   montoOriginal     Decimal
+  fxSnapshot        Json?
+  creationKey       String?
+  creationHash      String?
   saldoDisponible   Decimal
   moneda            String               @default("CUP")
   cuentaOrigenId    String?
@@ -2941,6 +3042,7 @@ model Anticipo {
   devoluciones      DevolucionVenta[]
 
   @@index([tenantId])
+  @@unique([tenantId, creationKey])
   @@index([contratoId])
   @@index([proveedorId])
   @@index([clienteId])
@@ -2962,6 +3064,7 @@ model AnticipoMovimiento {
   moneda                String
   tasaAplicada          Decimal?
   montoConvertido       Decimal?
+  fxSnapshot            Json?
   saldoAntes            Decimal
   saldoDespues          Decimal
   usuarioId             String
@@ -3047,6 +3150,9 @@ model FiscalDocument {
   /// Tipo lógico interno que mapea al régimen fiscal ('FACTURA', 'NOTA_CREDITO').
   tipoDocumento    String               @default("FACTURA")
   estado           EstadoFiscalDocumento @default(PENDIENTE)
+  /// Identidad durable del intento en curso (claim): la finalización es CAS
+  /// por attemptId para que dos workers no resuelvan el mismo intento.
+  attemptId        String?
   uuidExterno      String?
   xml              String?
   folio            String?
@@ -3069,6 +3175,8 @@ model FiscalEmisionEvent {
   tenantId         String
   fiscalDocumentId String
   estado           String
+  /// Intento al que pertenece el evento (append-only por intento).
+  attemptId        String?
   detalle          Json?
   createdAt        DateTime       @default(now())
   fiscalDocument   FiscalDocument @relation(fields: [fiscalDocumentId], references: [fiscalDocumentId], onDelete: Cascade)
@@ -3111,6 +3219,8 @@ model PeriodoContable {
   categoria          CategoriaPeriodo   @default(ORDINARIO)
   modoContable       ModoContable       @default(CAJA)
   apertura           AperturaPeriodo?
+  aperturaRevisiones AperturaRevision[]
+  lineasApertura      LineaAperturaPeriodo[]
   auditoria          AuditoriaPeriodo[]
   asientos           Asiento[]
   periodoPadre       PeriodoContable?   @relation("PeriodoHierarchy", fields: [periodoPadreId], references: [periodoId])
@@ -3118,8 +3228,10 @@ model PeriodoContable {
   tenant             Tenant             @relation(fields: [tenantId], references: [tenantId])
   snapshots          SaldoSnapshot[]
   snapshotPeriodos   SnapshotPeriodo[]
+  replayPreflights    ReplayPreflight[]
 
   @@unique([tenantId, codigo])
+  @@unique([tenantId, periodoId])
   @@index([tenantId, estado])
   @@index([tenantId, periodoPadreId])
   @@map("periodos_contables")
@@ -3169,14 +3281,87 @@ model AperturaPeriodo {
   saldoCapitalInicial       Decimal         @default(0)
   saldoResultadoAcumInicial Decimal         @default(0)
   detalleJson               Json?
+  monedaFuncional           String          @default("CUP")
   createdAt                 DateTime        @default(now())
   updatedAt                 DateTime        @updatedAt
-  periodo                   PeriodoContable @relation(fields: [periodoId], references: [periodoId], onDelete: Cascade)
+  periodo                   PeriodoContable @relation(fields: [tenantId, periodoId], references: [tenantId, periodoId], onDelete: Cascade)
   tenant                    Tenant          @relation(fields: [tenantId], references: [tenantId])
+  lineas                    LineaAperturaPeriodo[]
+  revisiones                AperturaRevision[]
 
+  @@unique([tenantId, periodoId])
+  @@unique([tenantId, periodoId, aperturaId])
   @@index([tenantId])
   @@index([origenPeriodoId])
   @@map("apertura_periodos")
+}
+
+model LineaAperturaPeriodo {
+  lineaId                 String          @id @default(cuid())
+  aperturaId              String
+  revisionId              String
+  tenantId                String
+  periodoId               String
+  fechaEfectiva           DateTime
+  lado                    String
+  rolCuenta               String
+  cuentaId                String?
+  monedaNativa            String
+  importeNativo           Decimal         @db.Decimal(20, 4)
+  monedaFuncional         String          @default("CUP")
+  importeFuncional        Decimal?        @db.Decimal(20, 4)
+  tasaCambio              Decimal?        @db.Decimal(20, 10)
+  fechaTasaCambio         DateTime?
+  fuenteTasaCambio        String?
+  fuenteSnapshot          Json?
+  /// Global catalog ID is non-authoritative; approval must re-resolve tenant-eligible evidence.
+  fxCatalogRateId         String?
+  fxFingerprint           String?
+  fuenteTipo              String
+  fuenteId                String?
+  evidenciaVersion        Int
+  evidenciaSha256         String
+  createdAt               DateTime        @default(now())
+  apertura                AperturaPeriodo @relation(fields: [tenantId, periodoId, aperturaId], references: [tenantId, periodoId, aperturaId], onDelete: Restrict)
+  revision                AperturaRevision @relation(fields: [tenantId, periodoId, aperturaId, revisionId], references: [tenantId, periodoId, aperturaId, revisionId], onDelete: Restrict)
+  periodo                 PeriodoContable @relation(fields: [tenantId, periodoId], references: [tenantId, periodoId], onDelete: Restrict)
+  tenant                  Tenant          @relation(fields: [tenantId], references: [tenantId], onDelete: Restrict)
+
+  @@unique([tenantId, periodoId, revisionId, lineaId], map: "opening_line_revision_identity_key")
+  @@index([aperturaId, fechaEfectiva])
+  @@index([tenantId, periodoId, monedaNativa])
+  @@index([tenantId, periodoId, rolCuenta])
+  @@map("lineas_apertura_periodo")
+}
+
+model AperturaRevision {
+  revisionId       String          @id @default(cuid())
+  aperturaId       String
+  tenantId         String
+  periodoId        String
+  version          Int
+  /// Accounting cut-off supplied explicitly and validated inside the period by the service.
+  fechaCorte       DateTime
+  estado           String          @default("BORRADOR")
+  presentadaPor    String?
+  presentadaAt     DateTime?
+  revisadaPor      String?
+  revisadaAt       DateTime?
+  digestVersion    Int?
+  digestSha256     String?
+  evidenciaVersion Int?
+  evidenciaSha256  String?
+  createdAt        DateTime        @default(now())
+  updatedAt        DateTime        @updatedAt
+  apertura         AperturaPeriodo @relation(fields: [tenantId, periodoId, aperturaId], references: [tenantId, periodoId, aperturaId], onDelete: Restrict)
+  periodo          PeriodoContable @relation(fields: [tenantId, periodoId], references: [tenantId, periodoId], onDelete: Restrict)
+  tenant           Tenant          @relation(fields: [tenantId], references: [tenantId], onDelete: Restrict)
+  lineas           LineaAperturaPeriodo[]
+
+  @@unique([aperturaId, version])
+  @@unique([tenantId, periodoId, aperturaId, revisionId], map: "opening_revision_composite_key")
+  @@index([tenantId, periodoId, estado])
+  @@map("apertura_revisiones")
 }
 
 model SaldoSnapshot {
@@ -3387,6 +3572,9 @@ enum EstadoFiscalDocumento {
   TIMBRADA
   RECHAZADA
   CANCELADA
+  /// Emisión con resultado externo no verificable (timeout/fallo post-envío):
+  /// jamás se reprocesa sola; sólo conciliación con evidencia la resuelve.
+  INCIERTA
 }
 
 enum TipoDocumento {
@@ -3600,21 +3788,29 @@ model Asiento {
   /// SHA256 de la representación canónica (líneas + número + fecha + hashAnterior)
   hash           String
   hashAnterior   String?
+  /// Null until historical chain classification is explicitly verified.
+  hashVersion    String?
+  /// Tenant-wide chain position assigned under the tenant advisory lock.
+  tenantSequence BigInt?
   revertidoPorId String?
   observaciones  String?
   createdBy      String
   createdAt      DateTime        @default(now())
   updatedAt      DateTime        @updatedAt
+  replayRunId    String?
   diario         Diario          @relation(fields: [diarioId], references: [diarioId])
   periodo        PeriodoContable @relation(fields: [periodoId], references: [periodoId])
   tenant         Tenant          @relation(fields: [tenantId], references: [tenantId])
   lineas         AsientoLinea[]
+  replayRun      ReplayRun?      @relation(fields: [tenantId, replayRunId], references: [tenantId, replayRunId])
 
   @@unique([tenantId, origenTipo, origenId])
   @@unique([diarioId, periodoId, numero])
   @@index([tenantId, fecha])
   @@index([tenantId, periodoId])
   @@index([tenantId, hash])
+  @@unique([tenantId, tenantSequence])
+  @@index([tenantId, replayRunId])
   @@map("asientos")
 }
 
@@ -3639,6 +3835,114 @@ model AsientoLinea {
   @@index([asientoId, orden])
   @@index([cuentaId])
   @@map("asiento_lineas")
+}
+
+/// Evidencia de simulación shadow: se inserta en la transacción del writer.
+/// Una fila visible al consumidor implica commit del writer, nunca posteo real.
+model ShadowPosteoOutbox {
+  id          String    @id @default(cuid())
+  tenantId    String
+  tipoEvento  String
+  origenTipo  String
+  origenId    String
+  estado      String
+  causa       String?
+  duracionMs  Int
+  createdAt   DateTime  @default(now())
+  entregadoAt DateTime?
+
+  @@unique([tenantId, tipoEvento, origenTipo, origenId])
+  @@index([entregadoAt, createdAt])
+  @@index([tenantId, tipoEvento, estado])
+  @@map("shadow_posteo_outbox")
+}
+
+/// Snapshot versionado y expirable de un preflight de replay por tenant/período.
+model ReplayPreflight {
+  replayPreflightId String   @id @default(cuid())
+  tenantId          String
+  periodoId         String
+  requestedByUserId String
+  generatedAt       DateTime @default(now())
+  expiresAt         DateTime
+  digestVersion     Int
+  digest            String
+  snapshot          Json
+  status            String   @default("READY")
+  createdAt         DateTime @default(now())
+  tenant            Tenant   @relation(fields: [tenantId], references: [tenantId], onDelete: Restrict)
+  periodo           PeriodoContable @relation(fields: [tenantId, periodoId], references: [tenantId, periodoId], onDelete: Restrict)
+  requester         TenantMembership @relation("ReplayPreflightRequester", fields: [tenantId, requestedByUserId], references: [tenantId, userId], onDelete: Restrict)
+  approval          ReplayApproval?
+  runs              ReplayRun[]
+
+  @@unique([tenantId, replayPreflightId], map: "contab_replay_preflight_id_key")
+  @@unique([tenantId, replayPreflightId, requestedByUserId], map: "contab_replay_preflight_requester_key")
+  @@unique([tenantId, replayPreflightId, requestedByUserId, digestVersion, digest], map: "contab_replay_preflight_digest_key")
+  @@index([tenantId, periodoId, generatedAt])
+  @@index([tenantId, expiresAt, status])
+  @@map("contabilidad_replay_preflights")
+}
+
+/// Aprobación inmutable ligada a un único preflight/digest y un aprobador tenant.
+model ReplayApproval {
+  replayApprovalId  String   @id @default(cuid())
+  tenantId          String
+  replayPreflightId String
+  requestedByUserId String
+  approvedByUserId  String
+  digestVersion     Int
+  digest            String
+  status            String   @default("APPROVED")
+  approvedAt        DateTime @default(now())
+  createdAt         DateTime @default(now())
+  tenant            Tenant   @relation(fields: [tenantId], references: [tenantId], onDelete: Restrict)
+  preflight         ReplayPreflight @relation(fields: [tenantId, replayPreflightId, requestedByUserId, digestVersion, digest], references: [tenantId, replayPreflightId, requestedByUserId, digestVersion, digest], onDelete: Restrict)
+  requester         TenantMembership @relation("ReplayApprovalRequester", fields: [tenantId, requestedByUserId], references: [tenantId, userId], onDelete: Restrict)
+  approver          TenantMembership @relation("ReplayApprovalApprover", fields: [tenantId, approvedByUserId], references: [tenantId, userId], onDelete: Restrict)
+  runs              ReplayRun[]
+
+  @@unique([tenantId, replayApprovalId])
+  @@unique([tenantId, replayPreflightId], map: "contab_replay_approval_preflight_key")
+  @@unique([tenantId, replayPreflightId, requestedByUserId], map: "contab_replay_approval_actor_key")
+  @@unique([tenantId, replayPreflightId, replayApprovalId], map: "contab_replay_approval_binding_key")
+  @@unique([tenantId, replayPreflightId, requestedByUserId, digestVersion, digest], map: "contab_replay_approval_preflight_digest_key")
+  @@unique([tenantId, replayPreflightId, replayApprovalId, digestVersion, digest], map: "contab_replay_approval_digest_binding_key")
+  @@index([tenantId, approvedByUserId, approvedAt])
+  @@map("contabilidad_replay_approvals")
+}
+
+/// Resultado durable de cada intento de replay; asientos publicados guardan su ID.
+model ReplayRun {
+  replayRunId       String   @id @default(cuid())
+  tenantId          String
+  replayPreflightId String
+  replayApprovalId  String
+  startedByUserId   String
+  digestVersion     Int
+  digest            String
+  status            String   @default("RUNNING")
+  sourceCount       Int      @default(0)
+  postedCount       Int      @default(0)
+  omittedCount      Int      @default(0)
+  ambiguousCount    Int      @default(0)
+  noFxCount         Int      @default(0)
+  noCostCount       Int      @default(0)
+  outOfPeriodCount  Int      @default(0)
+  diagnostic        Json?
+  startedAt         DateTime @default(now())
+  completedAt       DateTime?
+  createdAt         DateTime @default(now())
+  tenant            Tenant   @relation(fields: [tenantId], references: [tenantId], onDelete: Restrict)
+  preflight         ReplayPreflight @relation(fields: [tenantId, replayPreflightId], references: [tenantId, replayPreflightId], onDelete: Restrict)
+  approval          ReplayApproval @relation(fields: [tenantId, replayPreflightId, replayApprovalId, digestVersion, digest], references: [tenantId, replayPreflightId, replayApprovalId, digestVersion, digest], onDelete: Restrict)
+  actor             TenantMembership @relation("ReplayRunActor", fields: [tenantId, startedByUserId], references: [tenantId, userId], onDelete: Restrict)
+  asientos          Asiento[]
+
+  @@unique([tenantId, replayRunId])
+  @@index([tenantId, replayPreflightId, startedAt])
+  @@index([tenantId, status, startedAt])
+  @@map("contabilidad_replay_runs")
 }
 
 /// Plantilla global (plataforma): evento de negocio → líneas por rol de cuenta.
@@ -3747,6 +4051,7 @@ enum RolCuenta {
 }
 
 enum TipoEventoContable {
+  VENTA_SERVICIO_CREDITO
   VENTA_CONTADO
   VENTA_CREDITO
   COBRO_CXC

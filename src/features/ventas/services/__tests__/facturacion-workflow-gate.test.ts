@@ -1,8 +1,12 @@
-import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { afterAll, beforeEach, describe, expect, it, vi } from 'vitest';
+import { Prisma } from '@/generated/prisma';
 
 vi.mock('@/lib/prisma', () => ({ prisma: {} }));
+const { buildPersistedAccountingAmountMock } = vi.hoisted(() => ({
+  buildPersistedAccountingAmountMock: vi.fn(),
+}));
 vi.mock('@/features/contabilidad/services/accounting-reconciliation-service', () => ({
-  buildPersistedAccountingAmount: () => ({}),
+  buildPersistedAccountingAmount: buildPersistedAccountingAmountMock,
 }));
 vi.mock('@/features/contabilidad-formal/services/posting-engine', () => ({
   postEvento: vi.fn().mockResolvedValue(undefined),
@@ -48,8 +52,35 @@ function fixture() {
   return { tx, params };
 }
 
+// Estas pruebas ejercitan la lógica del writer con prisma mockeado: el gate
+// de la capa formal (licencia/savepoint/outbox) exige PostgreSQL real, así que
+// el modo queda fijado a 'off' y la cobertura en shadow/enforce vive en las
+// suites __integration__ correspondientes.
+const originalMode = process.env.CONTABILIDAD_FORMAL_MODE;
+vi.stubEnv('CONTABILIDAD_FORMAL_MODE', 'off');
+afterAll(() => {
+	if (originalMode === undefined) vi.unstubAllEnvs();
+	else vi.stubEnv('CONTABILIDAD_FORMAL_MODE', originalMode);
+});
+
 describe('gate 1.2: CxC observable del workflow actual (Prisma mock)', () => {
-  beforeEach(() => vi.clearAllMocks());
+  beforeEach(() => {
+    vi.clearAllMocks();
+    buildPersistedAccountingAmountMock.mockImplementation(
+      (amount: Prisma.Decimal | number, _currency: string, _rate?: unknown, _at?: Date | null, _catalog?: string | null, functionalCurrency = 'CUP') => ({
+        montoConvertido: new Prisma.Decimal(amount),
+        tasaCambio: new Prisma.Decimal(1),
+        fxEvidence: {
+          functionalCurrency,
+          fxProvenanceKind: 'SAME_CURRENCY',
+          fxProvenanceSource: 'test',
+          fxCatalogRateId: null,
+          fxEvidenceFingerprint: 'fp-test',
+          fxEvidenceVersion: 2,
+        },
+      }),
+    );
+  });
 
   it.each(['fecha', 'plazo'])(
     'crea CxC por total y sin pago aplicado para vencimiento %s', async (tipoVencimiento) => {
@@ -58,8 +89,8 @@ describe('gate 1.2: CxC observable del workflow actual (Prisma mock)', () => {
         ...params, tipoVencimiento, fechaVencimiento: '2026-10-10',
       });
       const { create, update } = tx.cuentaPorCobrar.upsert.mock.calls[0][0];
-      expect(create).toMatchObject({ montoDeuda: 100, montoPagado: 0, tenantId: 'tenant' });
-      expect(update).toMatchObject({ montoDeuda: 100 });
+      expect(create).toMatchObject({ montoDeuda: new Prisma.Decimal(100), montoPagado: 0, tenantId: 'tenant' });
+      expect(update).toMatchObject({ montoDeuda: new Prisma.Decimal(100) });
       expect(update.montoPagado).toBeUndefined();
       expect(tx.reconciliacionVenta.create).not.toHaveBeenCalled();
     },
@@ -70,8 +101,12 @@ describe('gate 1.2: CxC observable del workflow actual (Prisma mock)', () => {
     await applyFacturacionCobroWorkflow(tx as never, { ...params, tipoVencimiento: 'contra_pago' });
     expect(tx.cuentaPorCobrar.upsert).not.toHaveBeenCalled();
     expect(tx.reconciliacionVenta.create).toHaveBeenCalledWith(
-      expect.objectContaining({ data: expect.objectContaining({ monto: 100 }) }),
+      expect.objectContaining({ data: expect.objectContaining({ monto: new Prisma.Decimal(100) }) }),
     );
+    // FX-3: snapshot de cuenta nativa persistido junto al cobro.
+    const data = tx.reconciliacionVenta.create.mock.calls[0][0].data;
+    expect((data.montoCuenta as Prisma.Decimal).toNumber()).toBe(100);
+    expect(data.monedaCuenta).toBe('CUP');
   });
 
   it('saldo vivo no descuenta dos veces pago y excluye anulada/sobrepago', () => {
@@ -100,15 +135,15 @@ describe('gate 1.2: CxC observable del workflow actual (Prisma mock)', () => {
 
     // La porción cobrada hoy se concilia y abona al banco.
     expect(tx.reconciliacionVenta.create).toHaveBeenCalledWith(
-      expect.objectContaining({ data: expect.objectContaining({ monto: 40 }) }),
+      expect.objectContaining({ data: expect.objectContaining({ monto: new Prisma.Decimal(40) }) }),
     );
     expect(tx.cuentaBancaria.update).toHaveBeenCalledWith(
       expect.objectContaining({ data: expect.objectContaining({ saldo: { increment: 40 } }) }),
     );
     // La CxC queda sólo por la deuda realmente pendiente.
     const { create, update } = tx.cuentaPorCobrar.upsert.mock.calls[0][0];
-    expect(create).toMatchObject({ montoDeuda: 60, montoPagado: 0 });
-    expect(update).toMatchObject({ montoDeuda: 60 });
+    expect(create).toMatchObject({ montoDeuda: new Prisma.Decimal(60), montoPagado: 0 });
+    expect(update).toMatchObject({ montoDeuda: new Prisma.Decimal(60) });
   });
 
   it('plazo con porción cobrada hoy también concilia hoy y deja el remanente', async () => {
@@ -118,9 +153,9 @@ describe('gate 1.2: CxC observable del workflow actual (Prisma mock)', () => {
       montoCobradoContado: 25,
     });
     expect(tx.reconciliacionVenta.create).toHaveBeenCalledWith(
-      expect.objectContaining({ data: expect.objectContaining({ monto: 25 }) }),
+      expect.objectContaining({ data: expect.objectContaining({ monto: new Prisma.Decimal(25) }) }),
     );
-    expect(tx.cuentaPorCobrar.upsert.mock.calls[0][0].create).toMatchObject({ montoDeuda: 75 });
+    expect(tx.cuentaPorCobrar.upsert.mock.calls[0][0].create).toMatchObject({ montoDeuda: new Prisma.Decimal(75) });
   });
 
   it('porción cobrada que cubre el total se trata como contra_pago: sin CxC y factura PAGADA', async () => {
@@ -131,7 +166,7 @@ describe('gate 1.2: CxC observable del workflow actual (Prisma mock)', () => {
     });
     expect(tx.cuentaPorCobrar.upsert).not.toHaveBeenCalled();
     expect(tx.reconciliacionVenta.create).toHaveBeenCalledWith(
-      expect.objectContaining({ data: expect.objectContaining({ monto: 100 }) }),
+      expect.objectContaining({ data: expect.objectContaining({ monto: new Prisma.Decimal(100) }) }),
     );
     expect(tx.factura.update).toHaveBeenCalledWith(
       expect.objectContaining({ data: expect.objectContaining({ estado: 'PAGADA' }) }),
@@ -145,7 +180,7 @@ describe('gate 1.2: CxC observable del workflow actual (Prisma mock)', () => {
       montoCobradoContado: 150,
     });
     expect(tx.reconciliacionVenta.create).toHaveBeenCalledWith(
-      expect.objectContaining({ data: expect.objectContaining({ monto: 100 }) }),
+      expect.objectContaining({ data: expect.objectContaining({ monto: new Prisma.Decimal(100) }) }),
     );
     expect(tx.cuentaPorCobrar.upsert).not.toHaveBeenCalled();
   });
@@ -159,5 +194,98 @@ describe('gate 1.2: CxC observable del workflow actual (Prisma mock)', () => {
     });
     expect(parsed.montoCredito).toBe(60);
     expect(parsed.tipoVencimiento).toBe('fecha');
+  });
+
+  it('contra_pago valora con la moneda funcional del tenant (no CUP por defecto)', async () => {
+    const { tx, params } = fixture();
+    tx.tenantAccountingPolicy.findUnique.mockResolvedValue({ functionalCurrencyCode: 'USD' });
+    tx.cuentaBancaria.findFirst.mockResolvedValue({ cuentaId: 'cuenta', moneda: 'USD', tipoCuenta: null });
+    buildPersistedAccountingAmountMock.mockImplementationOnce(
+      (amount: Prisma.Decimal | number, _currency: string, _rate?: number, _at?: Date | null, _catalog?: string | null, functionalCurrency = 'CUP') => ({
+        montoConvertido: new Prisma.Decimal(amount),
+        tasaCambio: new Prisma.Decimal(1),
+        fxEvidence: {
+          functionalCurrency,
+          fxProvenanceKind: 'SAME_CURRENCY',
+          fxProvenanceSource: 'test',
+          fxCatalogRateId: null,
+          fxEvidenceFingerprint: 'fp-test',
+          fxEvidenceVersion: 2,
+        },
+      }),
+    );
+
+    await applyFacturacionCobroWorkflow(tx as never, { ...params, tipoVencimiento: 'contra_pago' });
+
+    expect(buildPersistedAccountingAmountMock).toHaveBeenCalledWith(
+      new Prisma.Decimal(100), 'USD', undefined, expect.any(Date), undefined, 'USD',
+    );
+    expect(tx.reconciliacionVenta.create).toHaveBeenCalledWith(
+      expect.objectContaining({
+        data: expect.objectContaining({ functionalCurrency: 'USD', montoConvertido: new Prisma.Decimal(100) }),
+      }),
+    );
+  });
+
+  it('MIXTO valora la porción contado con la moneda funcional del tenant', async () => {
+    const { tx, params } = fixture();
+    tx.tenantAccountingPolicy.findUnique.mockResolvedValue({ functionalCurrencyCode: 'USD' });
+    tx.cuentaBancaria.findFirst.mockResolvedValue({ cuentaId: 'cuenta', moneda: 'USD', tipoCuenta: null });
+    buildPersistedAccountingAmountMock.mockImplementationOnce(
+      (amount: Prisma.Decimal | number, _currency: string, _rate?: number, _at?: Date | null, _catalog?: string | null, functionalCurrency = 'CUP') => ({
+        montoConvertido: new Prisma.Decimal(amount),
+        tasaCambio: new Prisma.Decimal(1),
+        fxEvidence: {
+          functionalCurrency,
+          fxProvenanceKind: 'SAME_CURRENCY',
+          fxProvenanceSource: 'test',
+          fxCatalogRateId: null,
+          fxEvidenceFingerprint: 'fp-test',
+          fxEvidenceVersion: 2,
+        },
+      }),
+    );
+
+    await applyFacturacionCobroWorkflow(tx as never, {
+      ...params, tipoVencimiento: 'fecha', fechaVencimiento: '2026-10-10',
+      montoCobradoContado: 40,
+    });
+
+    expect(buildPersistedAccountingAmountMock).toHaveBeenCalledWith(
+      new Prisma.Decimal(40), 'USD', undefined, expect.any(Date), undefined, 'USD',
+    );
+    expect(tx.reconciliacionVenta.create).toHaveBeenCalledWith(
+      expect.objectContaining({
+        data: expect.objectContaining({ monto: new Prisma.Decimal(40), functionalCurrency: 'USD' }),
+      }),
+    );
+  });
+
+  it('contra_pago falla cerrado sin política contable del tenant', async () => {
+    const { tx, params } = fixture();
+    tx.tenantAccountingPolicy.findUnique.mockResolvedValue(null);
+
+    await expect(applyFacturacionCobroWorkflow(tx as never, {
+      ...params, tipoVencimiento: 'contra_pago',
+    })).rejects.toMatchObject({ code: 'FX_INSUFICIENTE' });
+    expect(tx.reconciliacionVenta.create).not.toHaveBeenCalled();
+    expect(tx.cuentaBancaria.update).not.toHaveBeenCalled();
+  });
+
+  it('contra_pago falla cerrado si la valoración no trae evidencia funcional', async () => {
+    const { tx, params } = fixture();
+    tx.tenantAccountingPolicy.findUnique.mockResolvedValue({ functionalCurrencyCode: 'USD' });
+    tx.cuentaBancaria.findFirst.mockResolvedValue({ cuentaId: 'cuenta', moneda: 'USD', tipoCuenta: null });
+    buildPersistedAccountingAmountMock.mockImplementationOnce(() => ({
+      montoConvertido: null,
+      tasaCambio: null,
+      fxEvidence: null,
+    }));
+
+    await expect(applyFacturacionCobroWorkflow(tx as never, {
+      ...params, tipoVencimiento: 'contra_pago',
+    })).rejects.toMatchObject({ code: 'FX_INSUFICIENTE' });
+    expect(tx.reconciliacionVenta.create).not.toHaveBeenCalled();
+    expect(tx.cuentaBancaria.update).not.toHaveBeenCalled();
   });
 });
