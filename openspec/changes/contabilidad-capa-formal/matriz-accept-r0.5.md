@@ -109,10 +109,15 @@ Writers con origen único declarado pero sin prueba de reintento:
 **Fase C:** para cada uno, reintento con misma clave/payload → un único asiento;
 reintento concurrente → serialización sin duplicados.
 
-### G3 — Sesión HTTP real en producción/completar ⚠️
-`produccion/ordenes/[id]/completar` usa `withAuthPost` inyectado en test; no hay
-certificación con sesión Bearer real (patrón `*-http-real.test.ts`). **Fase C:**
-test HTTP real 401/201 como los de cash/operaciones.
+### G3 — Sesión HTTP real en producción/completar ✅
+**Cerrado 05-10:** `completar/__integration__/auth-http-real.test.ts` (4/4) ejercita el
+wrapper real de `withAuthPost` contra `userSession` en la DB desechable, sin mock de
+`auth-middleware`: 401 sin Bearer, 401 con JWT sin sesión registrada, 401 con sesión
+expirada (que queda `isActive=false`) y 200 con Bearer de manager (la ruta responde 200,
+no 201) que completa la orden usando la identidad de la sesión. El test corrió también
+contra la route de HEAD mediante una copia temporal, con lo que la evidencia no depende
+del endurecimiento de tenant/feature/permiso que sigue sin commitear; residuo de fixtures
+verificado en 0.
 
 ### G4 — `reconciliarVentaDirecta` sin caller ✅
 **Cerrado 05-10 (retirar con tombstone, no excluir):** la función y `ReconciliacionDirectaParams`

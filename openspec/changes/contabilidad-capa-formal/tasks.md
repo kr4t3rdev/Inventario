@@ -2555,7 +2555,16 @@ reabre FX-2/FX-4 por brechas reproducidas de propagación, Decimal/evidencia y f
   - [ ] G2: reintento/idempotencia física en `pago-gastos-workflow`, `mermas`, `restock`,
     `produccion/completar` (sin evidencia), rutas web cash, `compras-servicios`,
     transferencias/ajustes/capital y devengo directo de `venta-servicios` (parcial).
-  - [ ] G3: sesión HTTP real (Bearer 401/201) en `produccion/ordenes/[id]/completar`.
+  - [x] G3: sesión HTTP real (Bearer 401/201) en `produccion/ordenes/[id]/completar`.
+    **Cerrado 05-10:** nuevo `completar/__integration__/auth-http-real.test.ts` (4/4) con el
+    wrapper real de `withAuthPost` y `userSession` en la DB desechable, sin mock de
+    `auth-middleware`: 401 sin Bearer, 401 con JWT sin sesión, 401 con sesión expirada (queda
+    `isActive=false`) y alta con Bearer de manager (la ruta responde 200, no 201) que usa la
+    identidad de la sesión (`historial.usuarioId` y `reconciliacionGasto.reconciliadoPor` =
+    manager, `lastActive` refrescado). El test pasó también contra la route de HEAD mediante
+    una copia temporal, por lo que no depende del endurecimiento de tenant/feature/permiso
+    que sigue sin commitear. Posteo en `off`; el caso enforce ya está certificado por
+    `rollback-real.test.ts`.
   - [x] G4: decidir `reconciliarVentaDirecta` (retirar con tombstone o excluir formalmente).
     **Cerrado 05-10 — retirar con tombstone:** la función y `ReconciliacionDirectaParams`
     tenían cero callers productivos en `src/` (code graph + búsqueda del árbol, reverificado
