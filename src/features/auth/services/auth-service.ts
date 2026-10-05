@@ -1,4 +1,5 @@
 import bcrypt from 'bcryptjs';
+import { randomUUID } from 'crypto';
 import jwt from 'jsonwebtoken';
 import type { SignOptions } from 'jsonwebtoken';
 import { z } from 'zod';
@@ -76,11 +77,15 @@ function signAuthTokens(
   accessTokenMaxAge = ACCESS_TOKEN_MAX_AGE_SECONDS,
   accessTokenExpiresIn: SignOptions['expiresIn'] = '30d',
 ) {
-  const accessToken = jwt.sign(payload, getJwtSecret(), {
+  // jti (JWT ID) unico por emision: jwt.sign es deterministico, por lo que dos
+  // logins del mismo usuario dentro del mismo segundo producian tokens
+  // identicos y colisionaban contra el unique de UserSession.token (P2002).
+  const jti = randomUUID();
+  const accessToken = jwt.sign({ ...payload, jti }, getJwtSecret(), {
     expiresIn: accessTokenExpiresIn,
   });
   const refreshToken = jwt.sign(
-    { ...payload, refreshId: Date.now() },
+    { ...payload, refreshId: Date.now(), jti },
     getRefreshJwtSecret(),
     { expiresIn: '30d' },
   );
