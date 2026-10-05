@@ -80,6 +80,10 @@ Subguias de contabilidad:
 - [Produccion](./produccion/README.md)
 - [Reparaciones](./reparaciones/README.md)
 
+## Ingenieria y Operacion Tecnica
+
+- [Pruebas de Carga](./load-testing/README.md)
+
 ## Criterio de agrupacion
 
 - Los modulos estan agrupados por dominio operativo, no por orden alfabetico.
