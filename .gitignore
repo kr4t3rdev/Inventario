@@ -109,3 +109,6 @@ worktrees
 # Artefactos de auditoría/UX y reportes de tests (locales por convención)
 .impeccable/
 playwright-report/
+
+# Logs de corridas k6 (no commitear)
+load-tests/*.log
