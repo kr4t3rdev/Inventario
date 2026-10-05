@@ -1446,7 +1446,7 @@ idempotencia concurrente aún no verificados. R0.5/R6.1/R6.2 permanecen [ ]; no
 activar modos ni replay.
 
   - [ ] R6.1 **PARCIAL:** existen cierres focales por fila (ver inventario); no todas las rutas/adaptadores
-  de los 32 callsites tienen autorización, valoración, reintento y rollback certificados. Filas
+  de los 31 callsites tienen autorización, valoración, reintento y rollback certificados. Filas
   114–119 avanzaron; la ejecución/reversión manual de anticipos falla cerrada y los workflows
   activos de cancelación formal (venta, nómina, compra de producto, GastoDE y compra de servicio)
   crean asientos inversos atómicos. La corrida completa de integración quedó 51/51 archivos,
@@ -2540,15 +2540,15 @@ reabre FX-2/FX-4 por brechas reproducidas de propagación, Decimal/evidencia y f
 
 ### R0.5 — Certificación completa del inventario
 
-- [ ] **R0.5-ACCEPT — Certificar los 32 callsites/19 archivos y todos sus adaptadores vivos.**
+- [ ] **R0.5-ACCEPT — Certificar los 31 callsites/19 archivos y todos sus adaptadores vivos.**
   Para cada writer probar actor/permiso, aislamiento tenant, referencia/origen único,
   moneda/FX, transacción, idempotencia/retry, error de posting/auditoría y rollback SQL.
   Incluir web, Server Actions, móvil y workflows; los unit tests mock no cuentan como prueba
   física de rollback.
-  **Fase B 05-10:** matriz sistemática en `matriz-accept-r0.5.md` (32 callsites ×
-  adaptadores vivos × 8 dimensiones). 31 vivos en ✅ para actor/permiso, tenant, origen,
-  FX, tx y posting/auditoría; `reconciliarVentaDirecta` sin caller (decisión pendiente:
-  retirar o excluir formalmente). Gaps para Fase C:
+  **Fase B 05-10:** matriz sistemática en `matriz-accept-r0.5.md` (31 callsites ×
+  adaptadores vivos × 8 dimensiones). Los 31 vivos están en ✅ para actor/permiso, tenant,
+  origen, FX, tx y posting/auditoría; G4 cerrado con el retiro de `reconciliarVentaDirecta`
+  (sin caller). Gaps para Fase C:
   - [x] G1: rollback físico por fallo de AuditLog en `pago-gastos-workflow` (trigger SQL
     que falle el AuditLog dentro del tx; revierte saldo, obligación, reconciliación y asiento).
     **Cerrado 05-10:** `pago-gastos-workflow-real.test.ts` 2/2; suite 52/52 archivos, 301/301 tests.
@@ -2556,7 +2556,13 @@ reabre FX-2/FX-4 por brechas reproducidas de propagación, Decimal/evidencia y f
     `produccion/completar` (sin evidencia), rutas web cash, `compras-servicios`,
     transferencias/ajustes/capital y devengo directo de `venta-servicios` (parcial).
   - [ ] G3: sesión HTTP real (Bearer 401/201) en `produccion/ordenes/[id]/completar`.
-  - [ ] G4: decidir `reconciliarVentaDirecta` (retirar con tombstone o excluir formalmente).
+  - [x] G4: decidir `reconciliarVentaDirecta` (retirar con tombstone o excluir formalmente).
+    **Cerrado 05-10 — retirar con tombstone:** la función y `ReconciliacionDirectaParams`
+    tenían cero callers productivos en `src/` (code graph + búsqueda del árbol, reverificado
+    02-10); se eliminaron de `facturacion-workflow.ts` (−102 líneas). Fila 1 de la matriz de
+    writers marcada RETIRADO al estilo de las filas 8/13–16; inventario 31 callsites/19
+    archivos. Evidencia: `writers-matrix.test.ts` (guard de conteo) y los tests de
+    `facturacion-workflow` sin referencias a la función; typecheck limpio.
   - [ ] G5: reintento por adaptador en `accounting-cash-operations-mutation-service`
     (actions + mobile; la evidencia de carrera vive solo en el servicio).
 - [x] **R0.5-LEGACY — Resolver los cinco writers/exclusiones históricas y handlers huérfanos.**
@@ -2569,7 +2575,7 @@ reabre FX-2/FX-4 por brechas reproducidas de propagación, Decimal/evidencia y f
   filas 8, 13–16 conserva los tombstones y canales vivos correspondientes. Verificación:
   `pnpm exec vitest run src/features/contabilidad-formal/__tests__/writers-matrix.test.ts
   src/features/contabilidad/api` → 8 archivos, 44/44 tests.
-  `reconciliarVentaDirecta` sin caller sigue pendiente de decisión en R0.5-ACCEPT/G4; los otros
+  `reconciliarVentaDirecta` se retiró en G4 (05-10, tombstone en la matriz); los otros
   exports huérfanos de `api/handlers.ts` y `api/exchange-handlers.ts` siguen en R6-ORPHANS.
 
 ### R6 — Auditoría durable y despliegue

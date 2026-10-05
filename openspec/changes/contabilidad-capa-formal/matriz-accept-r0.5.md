@@ -1,6 +1,6 @@
 # R0.5-ACCEPT — Matriz de aceptación writer × adaptador (Fase B, 2026-10-05)
 
-**Alcance:** los 32 callsites productivos en 19 archivos del inventario reproducible
+**Alcance:** los 31 callsites productivos en 19 archivos del inventario reproducible
 (`writers-matrix.test.ts`), cruzados con sus adaptadores vivos y evaluados en 8
 dimensiones de aceptación. No es certificación: es el mapa sistemático que alimenta
 la Fase C (integración PostgreSQL por canal + rollback físico).
@@ -16,7 +16,7 @@ workflow/service = caller intermedio (el adaptador real está un salto más arri
 
 | Writer (callsite → evento) | Adaptadores vivos | actor/permiso | tenant | origen único | moneda/FX | tx | idem/retry | posting/auditoría | rollback SQL |
 |---|---|---|---|---|---|---|---|---|---|
-| `facturacion-workflow.ts:595` → VENTA_CONTADO (`reconciliarVentaDirecta`) | **ninguno** (cero callers productivos) | ➖ | ➖ | ➖ | ➖ | ➖ | ➖ | ➖ | ➖ |
+| `facturacion-workflow.ts` (`reconciliarVentaDirecta`) | **RETIRADO (05-10, G4)** — sin callers productivos; función y rama eliminadas | ➖ | ➖ | ➖ | ➖ | ➖ | ➖ | ➖ | ➖ |
 | `facturacion-workflow.ts:692` → VENTA_CONTADO (`contra_pago`, vía `applyFacturacionCobroWorkflow`) | action POS `createVentaAction` → `venta-lifecycle-service` / `venta-mutation-service`; workflow ofertas; `reparaciones/ordenes` | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
 | `facturacion-workflow.ts:761` → VENTA_CONTADO (porción contado mixta) | mismos que :692 | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
 | `facturacion-workflow.ts:872` → VENTA_CREDITO | mismos que :692 + lifecycle/ofertas | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
@@ -114,10 +114,14 @@ reintento concurrente → serialización sin duplicados.
 certificación con sesión Bearer real (patrón `*-http-real.test.ts`). **Fase C:**
 test HTTP real 401/201 como los de cash/operaciones.
 
-### G4 — `reconciliarVentaDirecta` sin caller ➖
-`facturacion-workflow.ts:595` conserva cero callers productivos. **Decisión pendiente:**
-retirarla (tombstone como filas 8/13–16) o excluirla formalmente del inventario de
-aceptación. No certificar permiso por delegación.
+### G4 — `reconciliarVentaDirecta` sin caller ✅
+**Cerrado 05-10 (retirar con tombstone, no excluir):** la función y `ReconciliacionDirectaParams`
+no tenían callers productivos en `src/` (code graph + búsqueda del árbol, reverificado 02-10),
+por lo que se eliminaron de `facturacion-workflow.ts`. La fila 1 de `matriz-writers-r0.5.md`
+queda como tombstone RETIRADO, en pie de igualdad con las filas 8/13–16; el inventario baja
+a 31 callsites en 19 archivos y la aceptación de las ramas vivas de venta al contado
+(`contra_pago`, porción contado mixta) es la de las filas 2/30. **No** se certifica permiso
+por delegación: no existe adaptador que ejercite esa rama.
 
 ### G5 — Cobertura por canal de `accounting-cash-operations-mutation-service` ⚠️
 El servicio canónico tiene carreras y rollback probados, pero sus adaptadores
