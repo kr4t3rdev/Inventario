@@ -14,17 +14,28 @@ import {
 function createTxMock() {
   return {
     cuentaPorCobrar: {
-      upsert: vi.fn()
+      upsert: vi.fn().mockImplementation(({ create }) =>
+        Promise.resolve({ id: 'cxc-1', ...create })
+      )
     },
     factura: {
       update: vi.fn()
     },
     tipoPago: {
-      findMany: vi.fn()
+      findMany: vi.fn().mockResolvedValue([
+        { tipoId: 'tipo-1', nombre: 'Efectivo', cuentaDefecto: null }
+      ])
     },
     cuentaBancaria: {
-      findFirst: vi.fn(),
+      findFirst: vi.fn().mockResolvedValue({
+        cuentaId: 'cuenta-1',
+        moneda: 'CUP',
+        tipoCuenta: null
+      }),
       update: vi.fn()
+    },
+    tenantAccountingPolicy: {
+      findUnique: vi.fn().mockResolvedValue({ functionalCurrencyCode: 'CUP' })
     },
     reconciliacionVenta: {
       create: vi.fn()
@@ -56,7 +67,6 @@ describe('facturacion-ventas-workflow', () => {
 
   it('crea CxC pendiente para vencimiento por fecha', async () => {
     const tx = createTxMock()
-    tx.cuentaPorCobrar.upsert.mockResolvedValue({})
     tx.factura.update.mockResolvedValue({})
 
     const result = await applyFacturacionCobroWorkflow(tx as any, {
@@ -90,7 +100,6 @@ describe('facturacion-ventas-workflow', () => {
     vi.setSystemTime(new Date('2026-02-14T12:00:00.000Z'))
 
     const tx = createTxMock()
-    tx.cuentaPorCobrar.upsert.mockResolvedValue({})
     tx.factura.update.mockResolvedValue({})
 
     const result = await applyFacturacionCobroWorkflow(tx as any, {
@@ -218,12 +227,13 @@ describe('facturacion-ventas-workflow', () => {
         ventaId: 'venta-directa-1',
         cuentaId: 'caja-principal',
         tipoPagoId: 'efectivo',
-        monto: 500,
         moneda: 'CUP',
         reconciliadoPor: 'cajero-1',
         observaciones: 'Venta rápida'
       })
     })
+    // FX-2: el monto se persiste como Decimal exacto.
+    expect(tx.reconciliacionVenta.create.mock.calls[0][0].data.monto.toString()).toBe('500')
 
     // Verifica actualización de saldo
     expect(tx.cuentaBancaria.update).toHaveBeenCalledWith({

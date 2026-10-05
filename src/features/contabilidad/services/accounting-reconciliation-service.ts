@@ -1,9 +1,13 @@
+import { createHash } from 'node:crypto';
+
 import { prisma } from '@/lib/prisma';
 import { ActionError } from '@/lib/server-actions';
 import type { AuthenticatedUser } from '@/lib/auth-middleware';
 import { requireFeature, requirePermission, requireTenant } from '@/lib/services/tenant-scope';
+import { AuditLogService } from '@/lib/services/audit-log-service';
 import { Prisma } from '@/generated/prisma';
-import { buildAppliedFxEvidence } from '@/features/contabilidad/domain/fx-evidence';
+import { buildAppliedFxEvidenceExact } from '@/features/contabilidad/domain/fx-evidence';
+import type { CrossQuoteEvidence, FxProvenanceKind } from '@/features/contabilidad/domain/fx-evidence';
 import { getPayrollPaymentAmount } from '@/features/pago-salario/payroll-amounts';
 import { postEvento } from '@/features/contabilidad-formal/services/posting-engine';
 import {
@@ -14,92 +18,79 @@ import {
 import { acquireAccountingTenantLock } from './accounting-tenant-lock-service';
 import { bloquearClienteCredito } from '@/features/ventas/services/credito-override';
 import { valueAnticipoApplication } from '@/lib/services/anticipo-valuation';
+import { resolveTenantInventoryCostValuation } from '@/lib/services/inventory-cost-valuation';
+import { resolveAccountingAccountMovement } from './accounting-account-movement-valuation';
+import { getRequiredTenantAccountingPolicy } from './tenant-accounting-policy-service';
 
 /**
  * @description Construye los metadatos de conversión y la evidencia FX que se guardan junto a
  * una reconciliación. Para moneda extranjera exige tasa válida y fecha efectiva explícita;
  * nunca fabrica evidencia ausente.
- * @param {number} amount - Importe en la moneda de origen.
+ * @param {number | string | Prisma.Decimal} amount - Importe en la moneda de origen.
  * @param {string} currency - Moneda del importe.
- * @param {number | undefined} exchangeRate - Tasa aplicada hacia CUP.
+ * @param {number | string | Prisma.Decimal | null | undefined} exchangeRate - Tasa aplicada hacia la moneda funcional.
  * @param {Date | null | undefined} effectiveAt - Fecha en que se aplicó la tasa informada.
- * @returns {{montoConvertido: number | null; tasaCambio: number | null; fxEvidence: object | null}} Metadatos y evidencia inmutable.
+ * @param {string | null | undefined} fxCatalogRateId - ID de la tasa de catálogo, si aplica.
+ * @param {string} functionalCurrency - Moneda funcional del tenant (los callers productivos la pasan explícita).
+ * @returns {{montoConvertido: Prisma.Decimal | null; tasaCambio: Prisma.Decimal | null; fxEvidence: object | null}} Metadatos y evidencia inmutable.
  */
 export function buildPersistedAccountingAmount(
-  amount: number,
+  amount: number | string | Prisma.Decimal,
   currency: string,
-  exchangeRate?: number,
+  exchangeRate?: number | string | Prisma.Decimal | null,
   effectiveAt?: Date | null,
   fxCatalogRateId?: string | null,
+  functionalCurrency = 'CUP',
+  options?: {
+    fxProvenanceKind?: Exclude<FxProvenanceKind, 'SAME_CURRENCY'>;
+    crossQuote?: CrossQuoteEvidence;
+    source?: string;
+  },
 ): {
-  montoConvertido: number | null;
-  tasaCambio: number | null;
+  montoConvertido: Prisma.Decimal | null;
+  tasaCambio: Prisma.Decimal | null;
   fxEvidence:
     | {
         functionalCurrency: string;
-        rateEffectiveAt?: Date;
-        fxProvenanceKind: string;
+        rateEffectiveAt: Date | null;
+        fxProvenanceKind: FxProvenanceKind;
         fxProvenanceSource: string;
-        fxCatalogRateId: null;
+        fxCatalogRateId: string | null;
         fxEvidenceFingerprint: string;
-        fxEvidenceVersion: number;
+        fxEvidenceVersion: 2;
+        fxEvidenceJson: Prisma.InputJsonValue;
       }
     | null;
 } {
-  const source = 'accounting-reconciliation-service';
-
-  if (currency.trim().toUpperCase() === 'CUP') {
-    const evidence = buildAppliedFxEvidence({
-      originalAmount: amount,
-      originalCurrency: currency,
-      functionalCurrency: 'CUP',
-      source,
-    });
-    return {
-      montoConvertido: amount,
-      tasaCambio: 1,
-      fxEvidence: {
-        functionalCurrency: evidence.functionalCurrency,
-        fxProvenanceKind: evidence.fxProvenanceKind,
-        fxProvenanceSource: evidence.fxProvenanceSource,
-        fxCatalogRateId: evidence.fxCatalogRateId,
-        fxEvidenceFingerprint: evidence.fxEvidenceFingerprint,
-        fxEvidenceVersion: evidence.fxEvidenceVersion,
-      } as any,
-    };
-  }
-
-  if (exchangeRate == null || !Number.isFinite(exchangeRate) || exchangeRate <= 0) {
-    return { montoConvertido: null, tasaCambio: null, fxEvidence: null };
-  }
-
-  if (effectiveAt == null || Number.isNaN(effectiveAt.getTime())) {
-    return { montoConvertido: null, tasaCambio: null, fxEvidence: null };
-  }
-
+  const source = options?.source?.trim() || 'accounting-reconciliation-service';
   try {
-    const evidence = buildAppliedFxEvidence({
-      originalAmount: amount,
+    const valued = buildAppliedFxEvidenceExact({
+      originalAmount: new Prisma.Decimal(amount as number | string | Prisma.Decimal),
       originalCurrency: currency,
-      functionalCurrency: 'CUP',
-      exchangeRate,
-      convertedAmount: amount * exchangeRate,
+      functionalCurrency,
+      exchangeRate:
+        exchangeRate == null
+          ? null
+          : new Prisma.Decimal(exchangeRate as number | string | Prisma.Decimal),
       rateEffectiveAt: effectiveAt,
       source,
-      fxCatalogRateId: fxCatalogRateId ?? null,
+      fxCatalogRateId,
+      fxProvenanceKind: options?.fxProvenanceKind,
+      crossQuote: options?.crossQuote,
     });
     return {
-      montoConvertido: amount * exchangeRate,
-      tasaCambio: exchangeRate,
+      montoConvertido: valued.montoConvertido,
+      tasaCambio: valued.tasaCambio,
       fxEvidence: {
-        functionalCurrency: evidence.functionalCurrency,
-        rateEffectiveAt: new Date(effectiveAt.getTime()),
-        fxProvenanceKind: evidence.fxProvenanceKind,
-        fxProvenanceSource: evidence.fxProvenanceSource,
-        fxCatalogRateId: evidence.fxCatalogRateId,
-        fxEvidenceFingerprint: evidence.fxEvidenceFingerprint,
-        fxEvidenceVersion: evidence.fxEvidenceVersion,
-      } as any,
+        functionalCurrency: valued.evidence.functionalCurrency,
+        rateEffectiveAt: valued.rateEffectiveAt,
+        fxProvenanceKind: valued.evidence.fxProvenanceKind,
+        fxProvenanceSource: valued.evidence.fxProvenanceSource,
+        fxCatalogRateId: valued.evidence.fxCatalogRateId,
+        fxEvidenceFingerprint: valued.evidence.fxEvidenceFingerprint,
+        fxEvidenceVersion: 2,
+        fxEvidenceJson: valued.evidence as unknown as Prisma.InputJsonValue,
+      },
     };
   } catch {
     return { montoConvertido: null, tasaCambio: null, fxEvidence: null };
@@ -338,22 +329,26 @@ export const AccountingReconciliationService = {
       throw new ActionError('Fecha de reconciliación inválida', 'VALIDATION_ERROR');
     }
     const moneda = input.moneda || 'CUP';
-    const fechaEfectivaTasa = moneda.trim().toUpperCase() === 'CUP'
-      ? fechaReconciliacion
-      : input.fechaReconciliacion ? fechaReconciliacion : null;
-    const conversion = buildPersistedAccountingAmount(
-      input.monto,
-      moneda,
-      input.tasaCambio,
-      fechaEfectivaTasa,
-      fxCatalogRateId,
-    );
-    if (!conversion.fxEvidence || conversion.montoConvertido == null) {
-      throw new ActionError('Falta evidencia de conversión para la venta', 'FX_INSUFICIENTE');
-    }
 
     return prisma.$transaction(async (tx) => {
       await acquireAccountingTenantLock(tx, tenantId);
+      const policy = await getRequiredTenantAccountingPolicy(tenantId, tx);
+      const monedaFuncional = policy.functionalCurrencyCode.trim().toUpperCase();
+      const fechaEfectivaTasa = moneda.trim().toUpperCase() === monedaFuncional
+        ? fechaReconciliacion
+        : input.fechaReconciliacion ? fechaReconciliacion : null;
+      const conversion = buildPersistedAccountingAmount(
+        input.monto,
+        moneda,
+        input.tasaCambio,
+        fechaEfectivaTasa,
+        fxCatalogRateId,
+        monedaFuncional,
+      );
+      if (!conversion.fxEvidence || conversion.montoConvertido == null) {
+        throw new ActionError('Falta evidencia FX funcional para la venta', 'FX_INSUFICIENTE');
+      }
+
       const ventaPrevia = await tx.venta.findUnique({
         where: { ventaId: input.ventaId },
         select: { tenantId: true, deletedAt: true, clienteId: true },
@@ -389,7 +384,7 @@ export const AccountingReconciliationService = {
 
       const cuentaBancaria = await tx.cuentaBancaria.findFirst({
           where: { cuentaId: input.cuentaId, tenantId, isActive: true },
-          select: { cuentaId: true, isActive: true, tipoCuenta: true },
+          select: { cuentaId: true, isActive: true, tipoCuenta: true, moneda: true },
       });
       if (!cuentaBancaria || !cuentaBancaria.isActive) {
         throw new ActionError('Cuenta bancaria no encontrada o inactiva', 'NOT_FOUND');
@@ -401,6 +396,13 @@ export const AccountingReconciliationService = {
       if (!tipoPago || !tipoPago.isActive) {
         throw new ActionError('Tipo de pago no encontrado o inactivo', 'NOT_FOUND');
       }
+      const movimientoCuenta = resolveAccountingAccountMovement({
+        tenderAmount: input.monto,
+        tenderCurrency: moneda,
+        functionalAmount: conversion.montoConvertido,
+        functionalCurrency: monedaFuncional,
+        accountCurrency: cuentaBancaria.moneda,
+      });
 
       const cuentaPorCobrar = await tx.cuentaPorCobrar.findFirst({
         where: {
@@ -514,7 +516,7 @@ export const AccountingReconciliationService = {
 
       const saldoActualizado = await tx.cuentaBancaria.updateMany({
         where: { cuentaId: input.cuentaId, tenantId },
-        data: { saldo: { increment: input.monto } },
+        data: { saldo: { increment: movimientoCuenta.amount.toNumber() } },
       });
       if (saldoActualizado.count !== 1) {
         throw new ActionError('Cuenta bancaria no encontrada', 'NOT_FOUND');
@@ -528,6 +530,8 @@ export const AccountingReconciliationService = {
           monto: input.monto,
           moneda,
           montoConvertido: conversion.montoConvertido,
+          montoCuenta: movimientoCuenta.amount,
+          monedaCuenta: movimientoCuenta.currency,
           tasaCambio: conversion.tasaCambio,
           ...conversion.fxEvidence,
           fechaReconciliacion,
@@ -569,6 +573,23 @@ export const AccountingReconciliationService = {
         });
       }
 
+      await AuditLogService.logStrict({
+        accion: 'CREATE',
+        entidad: 'RECONCILIACION',
+        entidadId: reconciliacion.reconciliacionId,
+        usuarioId: user.userId,
+        detalles: {
+          tipo: cuentaPorCobrar ? 'COBRO_CXC' : 'VENTA',
+          ventaId: input.ventaId,
+          cuentaId: reconciliacion.cuentaId,
+          tipoPagoId: reconciliacion.tipoPagoId,
+          monto: Number(reconciliacion.monto),
+          moneda: reconciliacion.moneda,
+          montoConvertido: Number(reconciliacion.montoConvertido),
+          functionalCurrency: reconciliacion.functionalCurrency,
+        },
+      }, tx);
+
       return reconciliacion;
     });
   },
@@ -595,7 +616,10 @@ export const AccountingReconciliationService = {
     monedaCobro: string,
     montoPagadoPreviamente: Prisma.Decimal,
     montoPagadoActual: Prisma.Decimal,
-    conversion: ReturnType<typeof buildPersistedAccountingAmount>,
+    conversion: {
+      montoConvertido: Prisma.Decimal | null;
+      fxEvidence: { functionalCurrency: string } | null;
+    },
   ): Prisma.Decimal {
     const original = cxc.monedaOriginal?.trim().toUpperCase();
     const funcional = cxc.monedaFuncional?.trim().toUpperCase();
@@ -742,10 +766,11 @@ export const AccountingReconciliationService = {
           monto: number;
           moneda?: string;
            tasaCambio?: number;
-           fechaTasa?: string;
+          fechaTasa?: string;
         observaciones?: string;
       }>;
       fechaReconciliacion?: string;
+      idempotencyKey?: string;
     };
     user: AuthenticatedUser;
   }) {
@@ -757,72 +782,95 @@ export const AccountingReconciliationService = {
       throw new ActionError('Debe incluir al menos una distribución', 'INVALID_INPUT');
     }
 
-    const fechaPreflight = input.fechaReconciliacion
+    const idempotencyKey = input.idempotencyKey?.trim();
+    if (input.idempotencyKey !== undefined &&
+      (!idempotencyKey || idempotencyKey.length > 128)) {
+      throw new ActionError('Idempotency-Key inválida', 'VALIDATION_ERROR');
+    }
+    const idempotencyKeyHash = idempotencyKey
+      ? createHash('sha256').update(idempotencyKey).digest('hex').slice(0, 48)
+      : null;
+    const idempotencyHash = idempotencyKey
+      ? createHash('sha256').update(JSON.stringify({
+          tenantId,
+          ventaServicioId: input.ventaServicioId,
+          fechaReconciliacion: input.fechaReconciliacion ?? null,
+          distribuciones: input.distribuciones.map((distribution) => ({
+            cuentaId: distribution.cuentaId,
+            tipoPagoId: distribution.tipoPagoId,
+            monto: String(distribution.monto),
+            moneda: (distribution.moneda ?? 'CUP').trim().toUpperCase(),
+            tasaCambio: distribution.tasaCambio ?? null,
+            fechaTasa: distribution.fechaTasa ?? null,
+            observaciones: distribution.observaciones ?? null,
+          })),
+        })).digest('hex')
+      : null;
+    const idempotencyKeys = idempotencyKeyHash
+      ? input.distribuciones.map((_, index) =>
+          `${idempotencyKeyHash}:${String(index).padStart(4, '0')}`,
+        )
+      : [];
+
+    const fechaOperacion = input.fechaReconciliacion
       ? new Date(input.fechaReconciliacion)
       : new Date();
-    if (Number.isNaN(fechaPreflight.getTime())) {
+    if (Number.isNaN(fechaOperacion.getTime())) {
       throw new ActionError('Fecha de reconciliación inválida', 'VALIDATION_ERROR');
     }
-    const tiposPagoPreflight = new Map<string, { requiereCuenta: boolean; cuentaDefecto: string | null }>();
-    const saldosOrigenNecesarios = new Map<string, Prisma.Decimal>();
-    for (const dist of input.distribuciones) {
-      if (!Number.isFinite(dist.monto) || dist.monto <= 0) {
-        throw new ActionError('El monto de cada distribución debe ser positivo', 'INVALID_INPUT');
-      }
-      if (!tiposPagoPreflight.has(dist.tipoPagoId)) {
-        const tipoPago = await prisma.tipoPago.findFirst({
-          where: { tipoId: dist.tipoPagoId, tenantId, isActive: true },
-          select: { requiereCuenta: true, cuentaDefecto: true },
-        });
-        if (!tipoPago) {
-          throw new ActionError('Cuenta o tipo de pago no encontrado', 'NOT_FOUND');
-        }
-        tiposPagoPreflight.set(dist.tipoPagoId, tipoPago);
-      }
 
-      const tipoPago = tiposPagoPreflight.get(dist.tipoPagoId)!;
-      const cuentaOrigenId = tipoPago.requiereCuenta ? tipoPago.cuentaDefecto : null;
-      if (!cuentaOrigenId || cuentaOrigenId === dist.cuentaId) continue;
-
-      const fechaTasa = dist.fechaTasa
-        ? new Date(dist.fechaTasa)
-        : input.fechaReconciliacion ? fechaPreflight : null;
-      if (fechaTasa && Number.isNaN(fechaTasa.getTime())) {
-        throw new ActionError('Fecha de tasa inválida', 'VALIDATION_ERROR');
-      }
-      const conversion = buildPersistedAccountingAmount(
-        dist.monto, dist.moneda || 'CUP', dist.tasaCambio, fechaTasa,
-      );
-      if (conversion.montoConvertido == null || !conversion.fxEvidence) {
-        throw new ActionError('Falta evidencia de conversión para el servicio', 'FX_INSUFICIENTE');
-      }
-      const importeFuncional = new Prisma.Decimal(conversion.montoConvertido)
-        .toDecimalPlaces(4, Prisma.Decimal.ROUND_HALF_UP);
-      saldosOrigenNecesarios.set(
-        cuentaOrigenId,
-        (saldosOrigenNecesarios.get(cuentaOrigenId) ?? new Prisma.Decimal(0))
-          .plus(importeFuncional),
-      );
-    }
-
-    for (const [cuentaOrigenId, importeNecesario] of saldosOrigenNecesarios) {
-      const cuentaOrigen = await prisma.cuentaBancaria.findFirst({
-        where: { cuentaId: cuentaOrigenId, tenantId, isActive: true },
-        select: { saldo: true },
-      });
-      if (!cuentaOrigen) {
-        throw new ActionError('Cuenta bancaria de origen no encontrada o inactiva', 'NOT_FOUND');
-      }
-      if (new Prisma.Decimal(cuentaOrigen.saldo).lt(importeNecesario)) {
-        throw new ActionError('Saldo insuficiente en la cuenta de origen', 'SALDO_INSUFICIENTE');
-      }
-    }
-
-    return prisma.$transaction(async (tx) => {
+    const result = await prisma.$transaction(async (tx) => {
       await acquireAccountingTenantLock(tx, tenantId);
+      if (idempotencyKeys.length > 0) {
+        const previous = await tx.reconciliacionServicio.findMany({
+          where: { tenantId, idempotencyKey: { in: idempotencyKeys } },
+          include: { ventasServicio: true, cuentaBancaria: true, tipoPago: true },
+          orderBy: { idempotencyKey: 'asc' },
+        });
+        if (previous.length > 0) {
+          const orderedPrevious = [...previous].sort((left, right) =>
+            (left.idempotencyKey ?? '').localeCompare(right.idempotencyKey ?? ''),
+          );
+          if (orderedPrevious.length !== idempotencyKeys.length ||
+            orderedPrevious.some((row, index) =>
+              row.idempotencyKey !== idempotencyKeys[index] ||
+              row.idempotencyHash !== idempotencyHash)) {
+            throw new ActionError(
+              'Idempotency-Key ya se utilizó con otra reconciliación',
+              'IDEMPOTENCY_CONFLICT',
+            );
+          }
+          return {
+            reconciliado: orderedPrevious.some((row) => row.ventasServicio.reconciliado),
+            distribuciones: input.distribuciones.length,
+            reconciliaciones: orderedPrevious.map((row) => ({
+              reconciliacionId: row.reconciliacionId,
+              ventaServicioId: row.ventaServicioId,
+              cuentaId: row.cuentaId,
+              tipoPagoId: row.tipoPagoId,
+              monto: row.monto,
+              moneda: row.moneda,
+              montoConvertido: row.montoConvertido,
+              montoCuenta: row.montoCuenta,
+              monedaCuenta: row.monedaCuenta,
+              cuentaOrigenId: row.cuentaOrigenId,
+              montoCuentaOrigen: row.montoCuentaOrigen,
+              monedaCuentaOrigen: row.monedaCuentaOrigen,
+              tasaCambio: row.tasaCambio,
+              fxEvidenceFingerprint: row.fxEvidenceFingerprint,
+              functionalCurrency: row.functionalCurrency,
+              fxEvidenceVersion: row.fxEvidenceVersion,
+              fechaReconciliacion: row.fechaReconciliacion,
+              ventasServicio: row.ventasServicio,
+              cuentaBancaria: row.cuentaBancaria,
+              tipoPago: row.tipoPago,
+            })),
+            replayed: true,
+          };
+        }
+      }
       const servicio = await tx.ventaServicios.findFirst({
         where: { ventaServicioId: input.ventaServicioId, tenantId },
-        select: { total: true, reconciliado: true, clienteId: true },
       });
       if (!servicio) {
         throw new ActionError('Servicio no encontrado', 'NOT_FOUND');
@@ -855,13 +903,17 @@ export const AccountingReconciliationService = {
         throw new ActionError('La cuenta por cobrar no tiene saldo pendiente', 'VALIDATION_ERROR');
       }
 
-      const fechaOperacion = input.fechaReconciliacion
-        ? new Date(input.fechaReconciliacion)
-        : new Date();
-      if (Number.isNaN(fechaOperacion.getTime())) {
-        throw new ActionError('Fecha de reconciliación inválida', 'VALIDATION_ERROR');
+      const policy = await getRequiredTenantAccountingPolicy(tenantId, tx);
+      const monedaFuncional = policy.functionalCurrencyCode.trim().toUpperCase();
+      const monedaServicio = (servicio.moneda || 'CUP').trim().toUpperCase();
+      if (cxc && cxc.monedaFuncional?.trim().toUpperCase() !== monedaFuncional) {
+        throw new ActionError(
+          'La cuenta por cobrar no coincide con la moneda funcional configurada',
+          'FX_INSUFICIENTE',
+        );
       }
-      const distribuciones = input.distribuciones.map((dist) => {
+      const distribuciones = [];
+      for (const dist of input.distribuciones) {
         if (!Number.isFinite(dist.monto) || dist.monto <= 0) {
           throw new ActionError('El monto de cada distribución debe ser positivo', 'INVALID_INPUT');
         }
@@ -872,48 +924,62 @@ export const AccountingReconciliationService = {
             'VALIDATION_ERROR',
           );
         }
-        const fecha = input.fechaReconciliacion ? fechaOperacion : new Date();
+        const monedaTender = (dist.moneda || 'CUP').trim().toUpperCase();
+        const monedaObligacion = cxc?.monedaOriginal?.trim().toUpperCase() ?? monedaServicio;
+        if (monedaTender !== monedaObligacion) {
+          throw new ActionError(
+            'La moneda del cobro debe coincidir con la moneda del servicio o su cuenta por cobrar',
+            'FX_INSUFICIENTE',
+          );
+        }
         const fechaTasa = dist.fechaTasa
           ? new Date(dist.fechaTasa)
-          : (input.fechaReconciliacion ? fecha : null);
-        let conversion = buildPersistedAccountingAmount(
-          dist.monto, dist.moneda || 'CUP', dist.tasaCambio, fechaTasa,
-        );
-        if (cxc && conversion.montoConvertido != null && conversion.fxEvidence) {
-          const montoFuncional = new Prisma.Decimal(conversion.montoConvertido)
-            .toDecimalPlaces(4, Prisma.Decimal.ROUND_HALF_UP);
-          if (!montoFuncional.gt(0)) {
-            throw new ActionError('El importe convertido es menor a la precisión funcional', 'INVALID_INPUT');
-          }
-          const fxEvidence = buildAppliedFxEvidence({
-            originalAmount: dist.monto,
-            originalCurrency: dist.moneda || 'CUP',
-            functionalCurrency: conversion.fxEvidence.functionalCurrency,
-            exchangeRate: conversion.tasaCambio,
-            convertedAmount: montoFuncional.toNumber(),
-            rateEffectiveAt: fechaTasa,
-            source: conversion.fxEvidence.fxProvenanceSource,
-            fxCatalogRateId: conversion.fxEvidence.fxCatalogRateId,
+          : input.fechaReconciliacion ? fechaOperacion : null;
+        if (fechaTasa && Number.isNaN(fechaTasa.getTime())) {
+          throw new ActionError('Fecha de tasa inválida', 'VALIDATION_ERROR');
+        }
+        let valoracion;
+        try {
+          valoracion = await resolveTenantInventoryCostValuation(tx, {
+            amount: montoOriginal,
+            sourceCurrency: monedaTender,
+            functionalCurrency: monedaFuncional,
+            exchangeRateToCup: dist.tasaCambio,
+            effectiveAt: fechaTasa,
           });
-          conversion = {
-            montoConvertido: montoFuncional.toNumber(),
-            tasaCambio: conversion.tasaCambio,
+        } catch (error) {
+          if (error instanceof Error && error.message.includes('COST_FX_RATE_MISSING')) {
+            throw new ActionError('Falta evidencia de conversión para el servicio', 'FX_INSUFICIENTE');
+          }
+          throw error;
+        }
+        const montoFuncional = valoracion.amount
+          .toDecimalPlaces(4, Prisma.Decimal.ROUND_HALF_UP);
+        if (!montoFuncional.gt(0)) {
+          throw new ActionError('El importe convertido es menor a la precisión funcional', 'INVALID_INPUT');
+        }
+        const fxEvidence = valoracion.evidence;
+        distribuciones.push({
+          dist,
+          fecha: fechaOperacion,
+          conversion: {
+            montoConvertido: montoFuncional,
+            tasaCambio: valoracion.exchangeRate,
             fxEvidence: {
               functionalCurrency: fxEvidence.functionalCurrency,
-              ...(fechaTasa ? { rateEffectiveAt: fechaTasa } : {}),
+              ...(fxEvidence.rateEffectiveAt
+                ? { rateEffectiveAt: new Date(fxEvidence.rateEffectiveAt) }
+                : {}),
               fxProvenanceKind: fxEvidence.fxProvenanceKind,
               fxProvenanceSource: fxEvidence.fxProvenanceSource,
               fxCatalogRateId: fxEvidence.fxCatalogRateId,
               fxEvidenceFingerprint: fxEvidence.fxEvidenceFingerprint,
               fxEvidenceVersion: fxEvidence.fxEvidenceVersion,
-            } as NonNullable<typeof conversion.fxEvidence>,
-          };
-        }
-        if (!conversion.fxEvidence || conversion.montoConvertido == null) {
-          throw new ActionError('Falta evidencia de conversión para el servicio', 'FX_INSUFICIENTE');
-        }
-        return { dist, fecha, conversion };
-      });
+              fxEvidenceJson: fxEvidence as unknown as Prisma.InputJsonValue,
+            },
+          },
+        });
+      }
       const montoTotalDistribuido = distribuciones.reduce(
         (sum, { dist }) => sum.plus(new Prisma.Decimal(dist.monto)),
         new Prisma.Decimal(0),
@@ -936,6 +1002,28 @@ export const AccountingReconciliationService = {
         completa: boolean;
         diferenciasFx: Prisma.Decimal[];
       } | null = null;
+      const reconciliaciones: Array<{
+        reconciliacionId: string;
+        ventaServicioId: string;
+        cuentaId: string;
+        tipoPagoId: string;
+        monto: Prisma.Decimal;
+        moneda: string;
+        montoConvertido: Prisma.Decimal | null;
+        montoCuenta: Prisma.Decimal | null;
+        monedaCuenta: string | null;
+        cuentaOrigenId: string | null;
+        montoCuentaOrigen: Prisma.Decimal | null;
+        monedaCuentaOrigen: string | null;
+        tasaCambio: Prisma.Decimal | null;
+        fxEvidenceFingerprint: string | null;
+        functionalCurrency: string | null;
+        fxEvidenceVersion: number | null;
+        fechaReconciliacion: Date;
+        ventasServicio: unknown;
+        cuentaBancaria: unknown;
+        tipoPago: unknown;
+      }> = [];
       if (cxc) {
         const monedaOriginal = cxc.monedaOriginal?.trim().toUpperCase();
         const monedaFuncional = cxc.monedaFuncional?.trim().toUpperCase();
@@ -1058,30 +1146,57 @@ export const AccountingReconciliationService = {
           diferenciasFx,
         };
       }
+      if (cxc && !idempotencyKey) {
+        throw new ActionError(
+          'Idempotency-Key es requerida para cobrar una cuenta por cobrar de servicio',
+          'IDEMPOTENCY_KEY_REQUIRED',
+        );
+      }
 
       for (const [index, { dist, fecha, conversion }] of distribuciones.entries()) {
         const cuenta = await tx.cuentaBancaria.findFirst({
           where: { cuentaId: dist.cuentaId, tenantId, isActive: true },
-          select: { tipoCuenta: true },
         });
         const tipoPago = await tx.tipoPago.findFirst({
           where: { tipoId: dist.tipoPagoId, tenantId, isActive: true },
-          select: { tipoId: true, requiereCuenta: true, cuentaDefecto: true },
         });
         if (!cuenta || !tipoPago) {
           throw new ActionError('Cuenta o tipo de pago no encontrado', 'NOT_FOUND');
         }
         const importeFuncional = new Prisma.Decimal(conversion.montoConvertido!);
+        const monedaTender = (dist.moneda || 'CUP').trim().toUpperCase();
+        const movimientoDestino = resolveAccountingAccountMovement({
+          tenderAmount: dist.monto,
+          tenderCurrency: monedaTender,
+          functionalAmount: importeFuncional,
+          functionalCurrency: monedaFuncional,
+          accountCurrency: cuenta.moneda,
+        });
         const cuentaOrigenId = tipoPago.requiereCuenta ? tipoPago.cuentaDefecto : null;
+        let movimientoOrigen: ReturnType<typeof resolveAccountingAccountMovement> | null = null;
         if (cuentaOrigenId && cuentaOrigenId !== dist.cuentaId) {
+          const cuentaOrigen = await tx.cuentaBancaria.findFirst({
+            where: { cuentaId: cuentaOrigenId, tenantId, isActive: true },
+            select: { moneda: true },
+          });
+          if (!cuentaOrigen) {
+            throw new ActionError('Cuenta bancaria de origen no encontrada o inactiva', 'NOT_FOUND');
+          }
+          movimientoOrigen = resolveAccountingAccountMovement({
+            tenderAmount: dist.monto,
+            tenderCurrency: monedaTender,
+            functionalAmount: importeFuncional,
+            functionalCurrency: monedaFuncional,
+            accountCurrency: cuentaOrigen.moneda,
+          });
           const debitoOrigen = await tx.cuentaBancaria.updateMany({
             where: {
               cuentaId: cuentaOrigenId,
               tenantId,
               isActive: true,
-              saldo: { gte: importeFuncional.toNumber() },
+              saldo: { gte: movimientoOrigen.amount.toNumber() },
             },
-            data: { saldo: { decrement: importeFuncional.toNumber() } },
+            data: { saldo: { decrement: movimientoOrigen.amount.toNumber() } },
           });
           if (debitoOrigen.count !== 1) {
             throw new ActionError('Saldo insuficiente en la cuenta de origen', 'SALDO_INSUFICIENTE');
@@ -1089,7 +1204,7 @@ export const AccountingReconciliationService = {
         }
         const saldo = await tx.cuentaBancaria.updateMany({
           where: { cuentaId: dist.cuentaId, tenantId, isActive: true },
-          data: { saldo: { increment: importeFuncional.toNumber() } },
+          data: { saldo: { increment: movimientoDestino.amount.toNumber() } },
         });
         if (saldo.count !== 1) {
           throw new ActionError('Cuenta bancaria no encontrada', 'NOT_FOUND');
@@ -1104,12 +1219,63 @@ export const AccountingReconciliationService = {
             moneda: dist.moneda || 'CUP',
             montoConvertido: conversion.montoConvertido,
             tasaCambio: conversion.tasaCambio,
+            montoCuenta: movimientoDestino.amount,
+            monedaCuenta: movimientoDestino.currency,
+            ...(movimientoOrigen && cuentaOrigenId
+              ? {
+                  cuentaOrigenId,
+                  montoCuentaOrigen: movimientoOrigen.amount,
+                  monedaCuentaOrigen: movimientoOrigen.currency,
+                }
+              : {}),
             ...conversion.fxEvidence,
             fechaReconciliacion: fecha,
             observaciones: dist.observaciones,
             tenantId,
             reconciliadoPor: user.userId,
+            ...(idempotencyKeys[index]
+              ? {
+                  idempotencyKey: idempotencyKeys[index],
+                  idempotencyHash: idempotencyHash ?? undefined,
+                }
+              : {}),
           },
+        });
+        const reconciliacionConRelaciones = {
+          ...reconciliacion,
+          ventasServicio: servicio,
+          cuentaBancaria: cuenta,
+          tipoPago,
+        };
+        reconciliaciones.push({
+          reconciliacionId: reconciliacionConRelaciones.reconciliacionId,
+          ventaServicioId: reconciliacionConRelaciones.ventaServicioId,
+          cuentaId: reconciliacionConRelaciones.cuentaId,
+          tipoPagoId: reconciliacionConRelaciones.tipoPagoId,
+          monto: new Prisma.Decimal(reconciliacionConRelaciones.monto),
+          moneda: reconciliacionConRelaciones.moneda,
+          montoConvertido: reconciliacionConRelaciones.montoConvertido == null
+            ? null
+            : new Prisma.Decimal(reconciliacionConRelaciones.montoConvertido),
+          montoCuenta: reconciliacionConRelaciones.montoCuenta == null
+            ? null
+            : new Prisma.Decimal(reconciliacionConRelaciones.montoCuenta),
+          monedaCuenta: reconciliacionConRelaciones.monedaCuenta,
+          cuentaOrigenId: reconciliacionConRelaciones.cuentaOrigenId,
+          montoCuentaOrigen: reconciliacionConRelaciones.montoCuentaOrigen == null
+            ? null
+            : new Prisma.Decimal(reconciliacionConRelaciones.montoCuentaOrigen),
+          monedaCuentaOrigen: reconciliacionConRelaciones.monedaCuentaOrigen,
+          tasaCambio: reconciliacionConRelaciones.tasaCambio == null
+            ? null
+            : new Prisma.Decimal(reconciliacionConRelaciones.tasaCambio),
+          fxEvidenceFingerprint: reconciliacionConRelaciones.fxEvidenceFingerprint,
+          functionalCurrency: reconciliacionConRelaciones.functionalCurrency,
+          fxEvidenceVersion: reconciliacionConRelaciones.fxEvidenceVersion,
+          fechaReconciliacion: reconciliacionConRelaciones.fechaReconciliacion,
+          ventasServicio: reconciliacionConRelaciones.ventasServicio,
+          cuentaBancaria: reconciliacionConRelaciones.cuentaBancaria,
+          tipoPago: reconciliacionConRelaciones.tipoPago,
         });
         if (reconciliacion.montoConvertido == null) {
           throw new ActionError('Falta evidencia de conversión para el servicio', 'FX_INSUFICIENTE');
@@ -1177,8 +1343,37 @@ export const AccountingReconciliationService = {
         }
       }
 
-      return { reconciliado: completa, distribuciones: input.distribuciones.length };
+      for (const reconciliacion of reconciliaciones) {
+        await AuditLogService.logStrict({
+          accion: 'CREATE',
+          entidad: 'RECONCILIACION',
+          entidadId: reconciliacion.reconciliacionId,
+          usuarioId: user.userId,
+          detalles: {
+            tipo: 'SERVICIO',
+            ventaServicioId: input.ventaServicioId,
+            cuentaId: reconciliacion.cuentaId,
+            monto: reconciliacion.monto.toString(),
+            moneda: reconciliacion.moneda,
+            montoConvertido: reconciliacion.montoConvertido?.toString() ?? null,
+            montoCuenta: reconciliacion.montoCuenta?.toString() ?? null,
+            monedaCuenta: reconciliacion.monedaCuenta,
+            cuentaOrigenId: reconciliacion.cuentaOrigenId,
+            montoCuentaOrigen: reconciliacion.montoCuentaOrigen?.toString() ?? null,
+            monedaCuentaOrigen: reconciliacion.monedaCuentaOrigen,
+          },
+        }, tx);
+      }
+
+      return {
+        reconciliado: completa,
+        distribuciones: input.distribuciones.length,
+        reconciliaciones,
+        replayed: false,
+      };
     });
+
+    return result;
   },
 
   async listPendingExpenses(params: {

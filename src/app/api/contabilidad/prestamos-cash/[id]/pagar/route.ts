@@ -2,8 +2,9 @@ import { NextRequest, NextResponse } from 'next/server'
 import { z } from 'zod'
 
 import prisma from '@/lib/prisma'
+import { Prisma } from '@/generated/prisma'
 import { withAuthPost, type AuthenticatedUser } from '@/lib/auth-middleware'
-import { requireTenant } from '@/lib/services/tenant-scope'
+import { requireFeature, requirePermission, requireTenant } from '@/lib/services/tenant-scope'
 import { AuditLogService } from '@/lib/services/audit-log-service'
 import { validarEscrituraPeriodo, extraerFechaDeBody } from '@/lib/services/validate-period-write'
 import { calcularSaldoPendientePrestamo } from '@/lib/utils/prestamo-cash'
@@ -12,6 +13,8 @@ import { postEvento } from '@/features/contabilidad-formal/services/posting-engi
 import { buildEventoCobroPrestamo } from '@/features/contabilidad-formal/lib/event-builders';
 import { ActionError } from '@/lib/server-actions';
 import { bloquearClienteCredito } from '@/features/ventas/services/credito-override';
+import { resolveCashDebtCurrencyAmounts } from '@/features/contabilidad/services/cash-debt-payment-valuation';
+import { getRequiredTenantAccountingPolicy } from '@/features/contabilidad/services/tenant-accounting-policy-service';
 
 const pagoSchema = z.object({
   monto: z.coerce.number().positive('El monto debe ser positivo'),
@@ -42,6 +45,8 @@ export const POST = withAuthPost(async (request: NextRequest, context: unknown, 
     }
 
     const tenantId = requireTenant(user);
+    requireFeature(user, 'prestamos-cash', 'registrar pagos de préstamos cash');
+    requirePermission(user, 'financiero.contabilidad.acceder', 'registrar pagos de préstamos cash');
     const { params } = context as { params: Promise<{ id: string }> }
     const { id } = await params
     const body = pagoSchema.parse(await request.json())
@@ -75,64 +80,77 @@ export const POST = withAuthPost(async (request: NextRequest, context: unknown, 
       return NextResponse.json({ error: 'El préstamo no admite más pagos' }, { status: 400 })
     }
 
-    const saldoPendiente = calcularSaldoPendientePrestamo(
-      Number(prestamo.cuentaPorCobrar.montoDeuda),
-      Number(prestamo.cuentaPorCobrar.montoPagado)
-    )
-
-    if (body.monto > saldoPendiente) {
-      return NextResponse.json(
-        { error: `El monto excede el saldo pendiente de ${saldoPendiente}` },
-        { status: 400 }
-      )
-    }
-
     // Referencia de la cuenta resuelta antes de abrir la transacción.
     const cuentaOrigen = await prisma.cuentaBancaria.findFirst({
       where: { cuentaId: body.cuentaId, tenantId, isActive: true },
-      select: { cuentaId: true }
+      select: { cuentaId: true, moneda: true }
     })
     if (!cuentaOrigen) {
       return NextResponse.json({ error: 'Cuenta bancaria no encontrada o inactiva' }, { status: 400 })
     }
 
-    // Valoración persistida una sola vez; sin tasa explícita en moneda extranjera
-    // se rechaza antes de escribir (el camino CUP legítimo siempre tiene evidencia).
+    // Valoración funcional desde la política del tenant dentro de la transacción.
     const fechaReconciliacion = new Date();
-    const conversion = buildPersistedAccountingAmount(
-      Number(body.monto),
-      body.moneda || String(prestamo.moneda),
-      body.tasaCambio ?? undefined,
-      fechaReconciliacion,
-    );
-    if (conversion.montoConvertido == null ||
-        ((body.moneda || String(prestamo.moneda)).toUpperCase() !== 'CUP' && !conversion.fxEvidence)) {
-      return NextResponse.json(
-        { error: 'Falta evidencia de conversión para el pago del préstamo', code: 'FX_INSUFICIENTE' },
-        { status: 400 }
-      )
-    }
+    const moneda = body.moneda || String(prestamo.moneda);
 
     const resultado = await prisma.$transaction(async (tx) => {
+      const policy = await getRequiredTenantAccountingPolicy(tenantId, tx);
+      const functionalCurrency = policy.functionalCurrencyCode.trim().toUpperCase();
+      const conversion = buildPersistedAccountingAmount(
+        new Prisma.Decimal(body.monto),
+        moneda,
+        body.tasaCambio ?? undefined,
+        fechaReconciliacion,
+        undefined,
+        functionalCurrency,
+      );
+      if (conversion.montoConvertido == null || !conversion.fxEvidence) {
+        throw new ActionError(
+          'Falta evidencia FX funcional para el pago del préstamo', 'FX_INSUFICIENTE',
+        );
+      }
       await bloquearClienteCredito(tx, tenantId, prestamo.clienteId);
       const cxcVigente = await tx.cuentaPorCobrar.findFirst({
         where: { id: prestamo.cuentaPorCobrarId, tenantId },
-        select: { id: true, montoDeuda: true, montoPagado: true, estado: true },
+        select: {
+          id: true, montoDeuda: true, montoPagado: true, estado: true, monedaOriginal: true,
+        },
       });
       if (!cxcVigente || cxcVigente.estado === 'ANULADA') {
         throw new ActionError('La cuenta por cobrar ya no está disponible', 'CREDITO_CONFLICTO');
       }
+      const tipoPago = await tx.tipoPago.findFirst({
+        where: { tipoId: body.tipoPagoId, tenantId, isActive: true },
+        select: { tipoId: true },
+      });
+      if (!tipoPago) {
+        throw new ActionError('Tipo de pago no encontrado o inactivo', 'NOT_FOUND');
+      }
+      const monedaObligacion = cxcVigente.monedaOriginal || prestamo.moneda;
+      if (monedaObligacion !== prestamo.moneda) {
+        throw new ActionError('La moneda de la obligación no coincide con el préstamo', 'FX_INSUFICIENTE');
+      }
+      const importes = resolveCashDebtCurrencyAmounts({
+        monedaObligacion,
+        monedaFondos: moneda,
+        monedaCuenta: cuentaOrigen.moneda,
+        montoFondos: body.monto,
+        montoFuncional: conversion.montoConvertido!,
+        functionalCurrency,
+      });
       const saldoVigente = calcularSaldoPendientePrestamo(
-        Number(cxcVigente.montoDeuda),
-        Number(cxcVigente.montoPagado),
+        cxcVigente.montoDeuda, cxcVigente.montoPagado,
       );
-      if (body.monto > saldoVigente) {
+      if (importes.montoObligacion.gt(saldoVigente)) {
         throw new ActionError('El saldo del préstamo cambió; vuelve a consultar', 'CREDITO_CONFLICTO');
       }
 
       const credit = await tx.cuentaBancaria.updateMany({
-        where: { cuentaId: body.cuentaId, tenantId, isActive: true },
-        data: { saldo: { increment: body.monto } }
+        where: {
+          cuentaId: body.cuentaId, tenantId, isActive: true,
+          moneda: cuentaOrigen.moneda,
+        },
+        data: { saldo: { increment: importes.montoCuenta.toNumber() } }
       })
       if (credit.count !== 1) throw new Error('Cuenta bancaria no disponible')
 
@@ -142,8 +160,10 @@ export const POST = withAuthPost(async (request: NextRequest, context: unknown, 
           cuentaId: body.cuentaId,
           tipoPagoId: body.tipoPagoId,
           monto: body.monto,
-          moneda: body.moneda || prestamo.moneda,
+          moneda,
           ...(conversion.montoConvertido != null ? { montoConvertido: conversion.montoConvertido } : {}),
+          montoCuenta: importes.montoCuenta,
+          monedaCuenta: cuentaOrigen.moneda.trim().toUpperCase(),
           ...(conversion.tasaCambio != null ? { tasaCambio: conversion.tasaCambio } : {}),
           fechaReconciliacion,
           ...(conversion.fxEvidence ?? {}),
@@ -154,24 +174,37 @@ export const POST = withAuthPost(async (request: NextRequest, context: unknown, 
         }
       })
 
-      const nuevoMontoPagado = Number((Number(cxcVigente.montoPagado) + body.monto).toFixed(2))
-      const totalDeuda = Number(cxcVigente.montoDeuda)
+      const nuevoMontoPagado = new Prisma.Decimal(cxcVigente.montoPagado)
+        .plus(importes.montoObligacion)
+        .toDecimalPlaces(2, Prisma.Decimal.ROUND_HALF_UP)
+      const totalDeuda = cxcVigente.montoDeuda
       const nuevoSaldo = calcularSaldoPendientePrestamo(totalDeuda, nuevoMontoPagado)
-      const nuevoEstadoCuenta = nuevoSaldo <= 0.01 ? 'PAGADA' : 'PARCIAL'
+      const nuevoEstadoCuenta = nuevoSaldo.lte('0.01') ? 'PAGADA' : 'PARCIAL'
 
-      await tx.cuentaPorCobrar.update({
-        where: { id: prestamo.cuentaPorCobrarId, tenantId },
+      const actualizadaCxc = await tx.cuentaPorCobrar.updateMany({
+        where: {
+          id: prestamo.cuentaPorCobrarId,
+          tenantId,
+          montoPagado: cxcVigente.montoPagado,
+          estado: cxcVigente.estado,
+        },
         data: {
           montoPagado: nuevoMontoPagado,
           estado: nuevoEstadoCuenta
         }
       })
+      if (actualizadaCxc.count !== 1) {
+        throw new ActionError('El saldo del préstamo cambió; vuelve a consultar', 'CREDITO_CONFLICTO')
+      }
 
       if (nuevoEstadoCuenta === 'PAGADA') {
-        await tx.prestamoCash.update({
-          where: { id: prestamo.id },
+        const actualizadoPrestamo = await tx.prestamoCash.updateMany({
+          where: { id: prestamo.id, tenantId, estado: prestamo.estado, deletedAt: null },
           data: { estado: 'PAGADO' }
         })
+        if (actualizadoPrestamo.count !== 1) {
+          throw new ActionError('El estado del préstamo cambió; vuelve a consultar', 'CREDITO_CONFLICTO')
+        }
       }
 
       // Capa de contabilidad formal (CTA-1/R6): cobro de préstamo, una vez por
@@ -181,29 +214,30 @@ export const POST = withAuthPost(async (request: NextRequest, context: unknown, 
       await postEvento(tx, { tenantId, userId: user.userId }, buildEventoCobroPrestamo({
         reconciliacionId: reconciliacion.reconciliacionId,
         valoracion: {
-          monto: Number(reconciliacion.monto),
+          monto: reconciliacion.monto,
           moneda: reconciliacion.moneda || 'CUP',
-          montoFuncional: reconciliacion.montoConvertido == null ? undefined : Number(reconciliacion.montoConvertido),
-          tasaCambio: reconciliacion.tasaCambio == null ? undefined : Number(reconciliacion.tasaCambio),
+          montoFuncional: reconciliacion.montoConvertido ?? undefined,
+          monedaFuncionalCodigo: functionalCurrency,
+          tasaCambio: reconciliacion.tasaCambio ?? undefined,
           fxEvidenceFingerprint: reconciliacion.fxEvidenceFingerprint ?? undefined,
         },
         fecha: reconciliacion.fechaReconciliacion,
         descripcion: body.observaciones || `Cobro de préstamo ${prestamo.id}`,
       }))
 
-      return reconciliacion
-    })
+      await AuditLogService.logStrict({
+        accion: 'CREATE',
+        entidad: 'PAGO_PRESTAMO',
+        entidadId: reconciliacion.reconciliacionId,
+        usuarioId: user.userId,
+        detalles: {
+          prestamoId: prestamo.id,
+          monto: body.monto,
+          moneda: body.moneda || prestamo.moneda,
+        },
+      }, tx)
 
-    await AuditLogService.log({
-      accion: 'CREATE',
-      entidad: 'PAGO_PRESTAMO',
-      entidadId: resultado.reconciliacionId,
-      usuarioId: user.userId,
-      detalles: {
-        prestamoId: prestamo.id,
-        monto: body.monto,
-        moneda: body.moneda || prestamo.moneda
-      }
+      return reconciliacion
     })
 
     return NextResponse.json({ reconciliacion: resultado }, { status: 201 })
@@ -212,7 +246,14 @@ export const POST = withAuthPost(async (request: NextRequest, context: unknown, 
       return NextResponse.json({ error: 'Parámetros inválidos', details: error.errors }, { status: 400 })
     }
     if (error instanceof ActionError) {
-      return NextResponse.json({ error: error.message, code: error.code }, { status: 409 })
+      const status = error.code === 'FORBIDDEN' || error.code === 'FEATURE_NOT_AVAILABLE'
+        ? 403
+        : error.code === 'NOT_FOUND'
+          ? 404
+          : error.code === 'FX_INSUFICIENTE'
+            ? 400
+            : 409
+      return NextResponse.json({ error: error.message, code: error.code }, { status })
     }
     console.error('Error registrando pago de préstamo:', error)
     return NextResponse.json({ error: 'Error registrando pago de préstamo' }, { status: 500 })

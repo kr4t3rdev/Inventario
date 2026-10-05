@@ -2,12 +2,18 @@ import { NextRequest, NextResponse } from 'next/server'
 import { z } from 'zod'
 
 import prisma from '@/lib/prisma'
+import { Prisma } from '@/generated/prisma'
+import { ActionError } from '@/lib/server-actions'
 import { withAuthGet, withAuthPost, type AuthenticatedUser } from '@/lib/auth-middleware'
-import { requireTenant } from '@/lib/services/tenant-scope'
+import { requireFeature, requirePermission, requireTenant } from '@/lib/services/tenant-scope'
 import { AuditLogService } from '@/lib/services/audit-log-service'
 import { validarEscrituraPeriodo, extraerFechaDeBody } from '@/lib/services/validate-period-write'
 import { calcularSaldoPendienteDeuda, calcularTotalDeudaConInteres, normalizarEstadoDeudaCash } from '@/lib/utils/deuda-cash'
 import { buildPersistedAccountingAmount } from '@/features/contabilidad/services/accounting-reconciliation-service';
+import { resolveCashDebtCurrencyAmounts } from '@/features/contabilidad/services/cash-debt-payment-valuation';
+import { getRequiredTenantAccountingPolicy } from '@/features/contabilidad/services/tenant-accounting-policy-service';
+import { postEvento } from '@/features/contabilidad-formal/services/posting-engine';
+import { buildEventoDeudaRecibida } from '@/features/contabilidad-formal/lib/event-builders';
 
 const querySchema = z.object({
   estado: z.enum(['ACTIVO', 'PAGADO', 'VENCIDO', 'CANCELADO']).optional(),
@@ -22,6 +28,7 @@ const createSchema = z.object({
   montoCapital: z.coerce.number().positive('El monto debe ser positivo'),
   moneda: z.string().optional().default('CUP'),
   tasaInteres: z.coerce.number().min(0).optional(),
+  tasaCambio: z.coerce.number().positive().optional(),
   fechaVencimiento: z.string().optional(),
   observaciones: z.string().optional(),
   comprobanteUrl: z.string().url().optional(),
@@ -138,6 +145,8 @@ export const POST = withAuthPost(async (request: NextRequest, _context: unknown,
     }
 
     const tenantId = requireTenant(user);
+    requireFeature(user, 'deudas-cash', 'crear deudas cash');
+    requirePermission(user, 'financiero.contabilidad.acceder', 'crear deudas cash');
     const rawBody = await request.json()
     console.log('[DeudaCash POST] body recibido:', JSON.stringify(rawBody))
     const body = createSchema.parse(rawBody)
@@ -159,8 +168,9 @@ export const POST = withAuthPost(async (request: NextRequest, _context: unknown,
 
     const totalDeuda = calcularTotalDeudaConInteres(body.montoCapital, body.tasaInteres)
 
-    const proveedor = await prisma.vendor.findUnique({
-      where: { vendorId: body.proveedorId },
+    // Referencias del tenant resueltas antes de abrir la transacción.
+    const proveedor = await prisma.vendor.findFirst({
+      where: { vendorId: body.proveedorId, tenantId },
       select: { nombre: true }
     })
 
@@ -168,19 +178,58 @@ export const POST = withAuthPost(async (request: NextRequest, _context: unknown,
       return NextResponse.json({ error: 'Proveedor no encontrado' }, { status: 404 })
     }
 
+    const cuentaOrigen = await prisma.cuentaBancaria.findFirst({
+      where: { cuentaId: body.cuentaBancariaId, tenantId, isActive: true },
+      select: { cuentaId: true, moneda: true }
+    })
+    if (!cuentaOrigen) {
+      return NextResponse.json({ error: 'Cuenta bancaria no encontrada o inactiva' }, { status: 400 })
+    }
+
+    const tipoPagoDesembolso =
+      (await prisma.tipoPago.findFirst({ where: { nombre: 'Transferencia', isActive: true, tenantId } })) ||
+      (await prisma.tipoPago.findFirst({ where: { nombre: 'Efectivo', isActive: true, tenantId } }))
+
+    if (!tipoPagoDesembolso) {
+      return NextResponse.json({ error: 'No existe un tipo de pago válido para el desembolso de deuda' }, { status: 400 })
+    }
+
+    // La política funcional y la conversión se leen dentro de la transacción.
+    const fechaReconciliacion = new Date();
+
     const deuda = await prisma.$transaction(async (tx) => {
-      const tipoPagoDesembolso =
-        (await tx.tipoPago.findFirst({ where: { nombre: 'Transferencia', isActive: true, tenantId } })) ||
-        (await tx.tipoPago.findFirst({ where: { nombre: 'Efectivo', isActive: true, tenantId } }))
-
-      if (!tipoPagoDesembolso) {
-        throw new Error('No existe un tipo de pago válido para el desembolso de deuda')
+      const policy = await getRequiredTenantAccountingPolicy(tenantId, tx);
+      const functionalCurrency = policy.functionalCurrencyCode.trim().toUpperCase();
+      const conversion = buildPersistedAccountingAmount(
+        new Prisma.Decimal(body.montoCapital),
+        body.moneda || 'CUP',
+        body.tasaCambio ?? undefined,
+        fechaReconciliacion,
+        undefined,
+        functionalCurrency,
+      );
+      if (conversion.montoConvertido == null || !conversion.fxEvidence) {
+        throw new ActionError(
+          'Falta evidencia FX funcional para la deuda', 'FX_INSUFICIENTE',
+        );
       }
-
-      await tx.cuentaBancaria.update({
-        where: { cuentaId: body.cuentaBancariaId },
-        data: { saldo: { increment: body.montoCapital } }
+      const importes = resolveCashDebtCurrencyAmounts({
+        monedaObligacion: body.moneda || 'CUP',
+        monedaFondos: body.moneda || 'CUP',
+        monedaCuenta: cuentaOrigen.moneda,
+        montoFondos: body.montoCapital,
+        montoFuncional: conversion.montoConvertido,
+        functionalCurrency,
       })
+
+      const debit = await tx.cuentaBancaria.updateMany({
+        where: {
+          cuentaId: body.cuentaBancariaId, tenantId, isActive: true,
+          moneda: cuentaOrigen.moneda,
+        },
+        data: { saldo: { increment: importes.montoCuenta.toNumber() } }
+      })
+      if (debit.count !== 1) throw new Error('Cuenta bancaria no disponible')
 
       const lastDeuda = await tx.deudaCash.findFirst({
         orderBy: { idNumerico: 'desc' },
@@ -205,14 +254,7 @@ export const POST = withAuthPost(async (request: NextRequest, _context: unknown,
         }
       })
 
-      const fechaReconciliacion = new Date();
-      const conversion = buildPersistedAccountingAmount(
-        Number(body.montoCapital),
-        body.moneda || 'CUP',
-        undefined,
-        fechaReconciliacion,
-      );
-      await tx.reconciliacionVenta.create({
+      const reconciliacion = await tx.reconciliacionVenta.create({
         data: {
           tenantId,
           cuentaId: body.cuentaBancariaId,
@@ -220,6 +262,8 @@ export const POST = withAuthPost(async (request: NextRequest, _context: unknown,
           monto: body.montoCapital,
           moneda: body.moneda,
           ...(conversion.montoConvertido != null ? { montoConvertido: conversion.montoConvertido } : {}),
+          montoCuenta: importes.montoCuenta,
+          monedaCuenta: cuentaOrigen.moneda.trim().toUpperCase(),
           ...(conversion.tasaCambio != null ? { tasaCambio: conversion.tasaCambio } : {}),
           fechaReconciliacion,
           ...(conversion.fxEvidence ?? {}),
@@ -230,7 +274,7 @@ export const POST = withAuthPost(async (request: NextRequest, _context: unknown,
         }
       })
 
-      return tx.deudaCash.create({
+      const deudaCreada = await tx.deudaCash.create({
         data: {
           tenantId,
           proveedorId: body.proveedorId,
@@ -254,18 +298,37 @@ export const POST = withAuthPost(async (request: NextRequest, _context: unknown,
           cuentaPorPagar: true
         }
       })
-    })
 
-    await AuditLogService.log({
-      accion: 'CREATE',
-      entidad: 'DEUDA_CASH',
-      entidadId: deuda.id,
-      usuarioId: user.userId,
-      detalles: {
-        proveedorId: body.proveedorId,
-        montoCapital: body.montoCapital,
-        moneda: body.moneda
-      }
+      // Capa de contabilidad formal (CTA-1/R6): deuda recibida de terceros, una vez
+      // por origen dentro de la misma transacción; valoración heredada de la fila
+      // de caja persistida, sin recalcular la tasa.
+      await postEvento(tx, { tenantId, userId: user.userId }, buildEventoDeudaRecibida({
+        deudaId: deudaCreada.id,
+        valoracion: {
+          monto: reconciliacion.monto,
+          moneda: reconciliacion.moneda || 'CUP',
+          montoFuncional: reconciliacion.montoConvertido ?? undefined,
+          monedaFuncionalCodigo: functionalCurrency,
+          tasaCambio: reconciliacion.tasaCambio ?? undefined,
+          fxEvidenceFingerprint: reconciliacion.fxEvidenceFingerprint ?? undefined,
+        },
+        fecha: reconciliacion.fechaReconciliacion,
+        descripcion: body.observaciones || `Deuda recibida de proveedor ${body.proveedorId}`,
+      }))
+
+      await AuditLogService.logStrict({
+        accion: 'CREATE',
+        entidad: 'DEUDA_CASH',
+        entidadId: deudaCreada.id,
+        usuarioId: user.userId,
+        detalles: {
+          proveedorId: body.proveedorId,
+          montoCapital: body.montoCapital,
+          moneda: body.moneda,
+        },
+      }, tx)
+
+      return deudaCreada;
     })
 
     return NextResponse.json({ deuda }, { status: 201 })
@@ -275,6 +338,11 @@ export const POST = withAuthPost(async (request: NextRequest, _context: unknown,
       return NextResponse.json({ error: 'Parámetros inválidos', details: error.errors }, { status: 400 })
     }
     console.error('Error creando deuda cash:', error)
+    if (error instanceof ActionError) {
+      const status = error.code === 'FORBIDDEN' || error.code === 'TENANT_REQUIRED' ? 403
+        : error.code === 'NOT_FOUND' ? 404 : 400;
+      return NextResponse.json({ error: error.message, code: error.code }, { status })
+    }
     return NextResponse.json({ error: 'Error creando deuda cash' }, { status: 500 })
   }
 })

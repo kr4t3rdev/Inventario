@@ -1,6 +1,5 @@
 import type { Prisma } from '@/generated/prisma'
-import { buildAppliedFxEvidence } from '@/features/contabilidad/domain/fx-evidence';
-import { normalizeAccountingAmount } from '@/features/contabilidad/domain/accounting-amount'
+import { buildPersistedAccountingAmount } from '@/features/contabilidad/services/accounting-reconciliation-service'
 import { resolveAccountingAccountMovement } from '@/features/contabilidad/services/accounting-account-movement-valuation'
 import { AuditLogService } from '@/lib/services/audit-log-service'
 import { postEvento } from '@/features/contabilidad-formal/services/posting-engine'
@@ -172,43 +171,6 @@ export function isGastoWorkflowError(error: unknown): error is GastoWorkflowErro
   }
   const candidate = error as { status?: unknown; code?: unknown }
   return typeof candidate.status === 'number' && typeof candidate.code === 'string'
-}
-
-/**
- * @description Normaliza un monto a la moneda funcional y rechaza conversiones incompletas.
- * @param {number} monto - Monto original.
- * @param {string} moneda - Moneda origen.
- * @param {number | undefined} tasaCambio - Tasa opcional.
- * @param {Date} fechaOperacion - Fecha en que se aplicó la tasa informada.
- * @returns {number} Monto normalizado en moneda funcional.
- */
-function normalizeMontoToFunctional(
-  monto: number,
-  moneda: string,
-  tasaCambio: number | undefined,
-  fechaOperacion: Date,
-  functionalCurrency: string,
-): number {
-  const hasValidRate =
-    typeof tasaCambio === 'number' && Number.isFinite(tasaCambio) && tasaCambio > 0
-  const result = normalizeAccountingAmount({
-    amount: monto,
-    currency: moneda,
-    functionalCurrency,
-    convertedAmount: hasValidRate ? monto * tasaCambio : null,
-    exchangeRate: tasaCambio,
-    operationAt: fechaOperacion,
-    rateEffectiveAt: hasValidRate ? fechaOperacion : null,
-  })
-
-  if (result.status === 'unresolved') {
-    throw createGastoWorkflowError(
-      400,
-      'CONVERSION_REQUERIDA',
-      `No se puede expresar el pago en ${functionalCurrency}: ${result.issue}`,
-    )
-  }
-  return result.amount
 }
 
 /**
@@ -394,13 +356,23 @@ export async function applyPagoGastoWorkflow(
       'La moneda funcional del pago no coincide con la política vigente del tenant',
     )
   }
-  const montoTotalConvertido = normalizeMontoToFunctional(
+  const conversionTotal = buildPersistedAccountingAmount(
     montoTotal,
     params.moneda,
-    params.tasaCambio,
+    params.tasaCambio ?? undefined,
     fechaOperacion,
+    undefined,
     functionalCurrency,
+    { source: 'pago-gastos-workflow' },
   )
+  if (conversionTotal.montoConvertido == null || !conversionTotal.fxEvidence) {
+    throw createGastoWorkflowError(
+      400,
+      'CONVERSION_REQUERIDA',
+      `No se puede expresar el pago en ${functionalCurrency}: tasa o fecha efectiva ausente`,
+    )
+  }
+  const montoTotalConvertido = conversionTotal.montoConvertido
 
   // Every source reference is a non-composite foreign key. Lock and validate
   // tenant ownership before touching bank/CxP state to close deletion races.
@@ -574,22 +546,24 @@ export async function applyPagoGastoWorkflow(
   const reconciliaciones: ApplyPagoGastoWorkflowResult['reconciliaciones'] = []
   for (const pago of distribucion) {
     const montoPago = Number(pago.monto)
-    const montoConvertido = normalizeMontoToFunctional(
+    const conversion = buildPersistedAccountingAmount(
       montoPago,
       params.moneda,
-      params.tasaCambio,
+      params.tasaCambio ?? undefined,
       fechaOperacion,
+      undefined,
       functionalCurrency,
+      { source: 'pago-gastos-workflow' },
     )
-    const fxEvidence = buildAppliedFxEvidence({
-      originalAmount: montoPago,
-      originalCurrency: params.moneda,
-      functionalCurrency,
-      exchangeRate: params.tasaCambio ?? null,
-      convertedAmount: montoConvertido,
-      rateEffectiveAt: params.moneda.trim().toUpperCase() === functionalCurrency ? null : fechaOperacion,
-      source: 'pago-gastos-workflow'
-    })
+    if (conversion.montoConvertido == null || !conversion.fxEvidence) {
+      throw createGastoWorkflowError(
+        400,
+        'CONVERSION_REQUERIDA',
+        `No se puede expresar el pago en ${functionalCurrency}: tasa o fecha efectiva ausente`,
+      )
+    }
+    const montoConvertido = conversion.montoConvertido
+    const fxEvidence = conversion.fxEvidence
 
     // Snapshot de cuenta nativa (FX-3): el débito sale de la cuenta en su propia moneda.
     const cuentaReconciliacion = cuentaMap.get(pago.cuentaId)
@@ -629,7 +603,7 @@ export async function applyPagoGastoWorkflow(
         fxEvidenceFingerprint: fxEvidence.fxEvidenceFingerprint,
         fxEvidenceVersion: fxEvidence.fxEvidenceVersion,
         ...(fxEvidence.rateEffectiveAt
-          ? { rateEffectiveAt: new Date(fxEvidence.rateEffectiveAt) }
+          ? { rateEffectiveAt: fxEvidence.rateEffectiveAt }
           : {}),
         descripcion:
           typeof pago.porcentaje === 'number'
@@ -699,7 +673,7 @@ export async function applyPagoGastoWorkflow(
         cuentaId: reconciliacion.cuentaId,
         monto: montoPago,
         moneda: params.moneda,
-        montoConvertido,
+        montoConvertido: montoConvertido.toNumber(),
         monedaFuncional: functionalCurrency,
       },
     }, tx)

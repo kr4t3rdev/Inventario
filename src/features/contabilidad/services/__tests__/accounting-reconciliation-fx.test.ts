@@ -12,22 +12,22 @@ describe('buildPersistedAccountingAmount evidencia FX', () => {
   it('produce evidencia SAME_CURRENCY sin fecha efectiva para CUP', () => {
     const result = buildPersistedAccountingAmount(100, 'cup', undefined);
 
-    expect(result.montoConvertido).toBe(100);
-    expect(result.tasaCambio).toBe(1);
+    expect(result.montoConvertido?.toString()).toBe('100');
+    expect(result.tasaCambio?.toString()).toBe('1');
     expect(result.fxEvidence).not.toBeNull();
     expect(result.fxEvidence?.fxProvenanceKind).toBe('SAME_CURRENCY');
     expect(result.fxEvidence?.functionalCurrency).toBe('CUP');
-    expect(result.fxEvidence?.rateEffectiveAt).toBeUndefined();
+    expect(result.fxEvidence?.rateEffectiveAt).toBeNull();
     expect(result.fxEvidence?.fxEvidenceFingerprint).toMatch(/^[a-f0-9]{64}$/);
-    expect(result.fxEvidence?.fxEvidenceVersion).toBe(1);
+    expect(result.fxEvidence?.fxEvidenceVersion).toBe(2);
   });
 
   it('produce evidencia MANUAL_GOVERNED con fecha efectiva para moneda extranjera', () => {
     const effectiveAt = new Date('2026-08-19T12:00:00.000Z');
     const result = buildPersistedAccountingAmount(100, 'USD', 24.5, effectiveAt);
 
-    expect(result.montoConvertido).toBe(2450);
-    expect(result.tasaCambio).toBe(24.5);
+    expect(result.montoConvertido?.toString()).toBe('2450');
+    expect(result.tasaCambio?.toString()).toBe('24.5');
     expect(result.fxEvidence?.fxProvenanceKind).toBe('MANUAL_GOVERNED');
     expect(result.fxEvidence?.rateEffectiveAt).toEqual(effectiveAt);
     expect(result.fxEvidence?.functionalCurrency).toBe('CUP');

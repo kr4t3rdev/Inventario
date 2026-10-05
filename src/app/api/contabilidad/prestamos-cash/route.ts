@@ -2,13 +2,16 @@ import { NextRequest, NextResponse } from 'next/server'
 import { z } from 'zod'
 
 import prisma from '@/lib/prisma'
+import { Prisma } from '@/generated/prisma'
 import { withAuthGet, withAuthPost, type AuthenticatedUser } from '@/lib/auth-middleware'
-import { requireFeature, requireTenant } from '@/lib/services/tenant-scope'
+import { requireFeature, requirePermission, requireTenant } from '@/lib/services/tenant-scope'
 import { ActionError } from '@/lib/server-actions'
 import { AuditLogService } from '@/lib/services/audit-log-service'
 import { validarEscrituraPeriodo, extraerFechaDeBody } from '@/lib/services/validate-period-write'
-import { calcularSaldoPendientePrestamo, normalizarEstadoPrestamoCash } from '@/lib/utils/prestamo-cash'
+import { calcularMontoTotalACobrar, calcularSaldoPendientePrestamo, normalizarEstadoPrestamoCash } from '@/lib/utils/prestamo-cash'
 import { buildPersistedAccountingAmount } from '@/features/contabilidad/services/accounting-reconciliation-service';
+import { resolveCashDebtCurrencyAmounts } from '@/features/contabilidad/services/cash-debt-payment-valuation';
+import { getRequiredTenantAccountingPolicy } from '@/features/contabilidad/services/tenant-accounting-policy-service';
 import { postEvento } from '@/features/contabilidad-formal/services/posting-engine';
 import { buildEventoPrestamoOtorgado } from '@/features/contabilidad-formal/lib/event-builders';
 import { auditarCreditoOverride, validarCreditoOrigen } from '@/features/ventas/services/credito-override';
@@ -104,10 +107,10 @@ export const GET = withAuthGet(async (request: NextRequest, _context: unknown, u
         montoPagado: Number(prestamo.cuentaPorCobrar?.montoPagado ?? 0),
         estado: prestamo.cuentaPorCobrar?.estado,
       }),
-      saldoPendiente: calcularSaldoPendientePrestamo(
+      saldoPendiente: Number(calcularSaldoPendientePrestamo(
         Number(prestamo.cuentaPorCobrar?.montoDeuda ?? prestamo.montoCapital),
         Number(prestamo.cuentaPorCobrar?.montoPagado ?? 0)
-      ),
+      )),
     }))
 
     return NextResponse.json({
@@ -140,6 +143,7 @@ export const POST = withAuthPost(async (request: NextRequest, _context: unknown,
       return NextResponse.json({ error: 'Módulo de préstamos cash deshabilitado' }, { status: 404 })
     }
     requireFeature(user, 'prestamos-cash', 'crear préstamos cash');
+    requirePermission(user, 'financiero.contabilidad.acceder', 'crear préstamos cash');
 
     const body = createSchema.parse(await request.json())
 
@@ -167,16 +171,10 @@ export const POST = withAuthPost(async (request: NextRequest, _context: unknown,
     }
     const cuentaOrigen = await prisma.cuentaBancaria.findFirst({
       where: { cuentaId: body.cuentaBancariaId, tenantId },
-      select: { cuentaId: true, saldo: true, isActive: true }
+      select: { cuentaId: true, saldo: true, isActive: true, moneda: true }
     })
     if (!cuentaOrigen || !cuentaOrigen.isActive) {
       return NextResponse.json({ error: 'Cuenta bancaria no encontrada o inactiva' }, { status: 400 })
-    }
-    if (cuentaOrigen.saldo < body.montoCapital) {
-      return NextResponse.json(
-        { error: `Saldo insuficiente en la cuenta. Disponible: ${cuentaOrigen.saldo}` },
-        { status: 400 }
-      )
     }
 
     const tipoPagoDesembolso =
@@ -187,25 +185,54 @@ export const POST = withAuthPost(async (request: NextRequest, _context: unknown,
       return NextResponse.json({ error: 'No existe un tipo de pago válido para registrar el desembolso' }, { status: 400 })
     }
 
+    const fechaReconciliacion = new Date();
+    const moneda = body.moneda || 'CUP';
+
     const prestamo = await prisma.$transaction(async (tx) => {
+      const policy = await getRequiredTenantAccountingPolicy(tenantId, tx);
+      const functionalCurrency = policy.functionalCurrencyCode.trim().toUpperCase();
+      const conversion = buildPersistedAccountingAmount(
+        new Prisma.Decimal(body.montoCapital), moneda, body.tasaCambioAlCrear ?? undefined,
+        fechaReconciliacion, undefined, functionalCurrency,
+      );
+      if (conversion.montoConvertido == null || !conversion.fxEvidence) {
+        throw new ActionError(
+          'Falta evidencia FX funcional para el préstamo', 'FX_INSUFICIENTE',
+        );
+      }
+      const importes = resolveCashDebtCurrencyAmounts({
+        monedaObligacion: moneda,
+        monedaFondos: moneda,
+        monedaCuenta: cuentaOrigen.moneda,
+        montoFondos: body.montoCapital,
+        montoFuncional: conversion.montoConvertido,
+        functionalCurrency,
+      });
+      if (Number(cuentaOrigen.saldo) < importes.montoCuenta.toNumber()) {
+        throw new ActionError(
+          `Saldo insuficiente en la cuenta. Disponible: ${cuentaOrigen.saldo}`,
+          'VALIDATION_ERROR',
+        );
+      }
       const montoDeuda = body.tasaInteres
-        ? Number((body.montoCapital * (1 + body.tasaInteres / 100)).toFixed(2))
-        : body.montoCapital;
+        ? calcularMontoTotalACobrar(body.montoCapital, body.tasaInteres)
+        : new Prisma.Decimal(body.montoCapital);
       const decisionCredito = await validarCreditoOrigen({
         tx,
         user,
         tenantId,
         clienteId: body.clienteId,
         moneda: body.moneda,
-        montoNuevo: montoDeuda,
+        montoNuevo: montoDeuda.toNumber(),
         permiso: 'financiero.prestamos-cash.credito-override',
         solicitarCreditoOverride: body.solicitarCreditoOverride,
         motivoCreditoOverride: body.motivoCreditoOverride,
       });
       const debit = await tx.cuentaBancaria.updateMany({
         where: { cuentaId: body.cuentaBancariaId, tenantId, isActive: true,
-          saldo: { gte: body.montoCapital } },
-        data: { saldo: { decrement: body.montoCapital } }
+          moneda: cuentaOrigen.moneda,
+          saldo: { gte: importes.montoCuenta.toNumber() } },
+        data: { saldo: { decrement: importes.montoCuenta.toNumber() } }
       });
       if (debit.count !== 1) throw new Error('Cuenta bancaria no disponible');
 
@@ -215,27 +242,24 @@ export const POST = withAuthPost(async (request: NextRequest, _context: unknown,
           clienteId: body.clienteId,
           montoDeuda,
           montoPagado: 0,
+          monedaOriginal: moneda.toUpperCase(),
+          montoOriginal: montoDeuda,
           tipoCuenta: 'PRESTAMO_CASH',
           estado: 'PENDIENTE',
           fechaVencimiento: body.fechaVencimiento ? new Date(body.fechaVencimiento) : undefined
         }
       })
 
-      const fechaReconciliacion = new Date();
-      const conversion = buildPersistedAccountingAmount(
-        Number(body.montoCapital),
-        body.moneda || 'CUP',
-        body.tasaCambioAlCrear ?? undefined,
-        fechaReconciliacion,
-      );
       const reconciliacion = await tx.reconciliacionVenta.create({
         data: {
           tenantId,
           cuentaId: body.cuentaBancariaId,
           tipoPagoId: tipoPagoDesembolso.tipoId,
           monto: body.montoCapital,
-          moneda: body.moneda,
-          ...(conversion.montoConvertido != null ? { montoConvertido: conversion.montoConvertido } : {}),
+          moneda,
+          montoConvertido: conversion.montoConvertido,
+          montoCuenta: importes.montoCuenta,
+          monedaCuenta: cuentaOrigen.moneda.trim().toUpperCase(),
           ...(conversion.tasaCambio != null ? { tasaCambio: conversion.tasaCambio } : {}),
           fechaReconciliacion,
           ...(conversion.fxEvidence ?? {}),
@@ -273,31 +297,31 @@ export const POST = withAuthPost(async (request: NextRequest, _context: unknown,
       await postEvento(tx, { tenantId, userId: user.userId }, buildEventoPrestamoOtorgado({
         prestamoId: creado.id,
         valoracion: {
-          monto: Number(reconciliacion.monto),
+          monto: reconciliacion.monto,
           moneda: reconciliacion.moneda || 'CUP',
-          montoFuncional: reconciliacion.montoConvertido == null ? undefined : Number(reconciliacion.montoConvertido),
-          tasaCambio: reconciliacion.tasaCambio == null ? undefined : Number(reconciliacion.tasaCambio),
+          montoFuncional: reconciliacion.montoConvertido ?? undefined,
+          monedaFuncionalCodigo: functionalCurrency,
+          tasaCambio: reconciliacion.tasaCambio ?? undefined,
           fxEvidenceFingerprint: reconciliacion.fxEvidenceFingerprint ?? undefined,
         },
         fecha: reconciliacion.fechaReconciliacion,
       }));
       await auditarCreditoOverride({
         tx, user, decision: decisionCredito, tenantId, clienteId: body.clienteId,
-        origen: 'PRESTAMO_CASH', origenId: creado.id, montoNuevo: montoDeuda,
+        origen: 'PRESTAMO_CASH', origenId: creado.id, montoNuevo: montoDeuda.toNumber(),
       });
+      await AuditLogService.logStrict({
+        accion: 'CREATE',
+        entidad: 'PRESTAMO_CASH',
+        entidadId: creado.id,
+        usuarioId: user.userId,
+        detalles: {
+          clienteId: body.clienteId,
+          montoCapital: body.montoCapital,
+          moneda: body.moneda,
+        },
+      }, tx)
       return creado;
-    })
-
-    await AuditLogService.log({
-      accion: 'CREATE',
-      entidad: 'PRESTAMO_CASH',
-      entidadId: prestamo.id,
-      usuarioId: user.userId,
-      detalles: {
-        clienteId: body.clienteId,
-        montoCapital: body.montoCapital,
-        moneda: body.moneda
-      }
     })
 
     return NextResponse.json({ prestamo }, { status: 201 })

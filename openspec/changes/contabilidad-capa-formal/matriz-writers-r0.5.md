@@ -271,6 +271,44 @@ valoración que se pretendan extender a funcional no-CUP o integridad de cotizac
 - La evidencia histórica de autorización/CUP/rollback conserva su alcance; no certifica
   eventos MLC en las cuatro rutas web cash ni sensibilidad del hash a los campos anidados.
 
+## Cierre de hallazgos F1/F2/F3 — Fase A R0.5-ACCEPT (2026-10-05)
+
+Los hallazgos F1, F2 y F3 de `auditoria-fx-1-2-4-2026-10-05.md` quedan cerrados:
+
+- **F1 (moneda funcional en eventos web cash):** las cuatro rutas
+  (`prestamos-cash/route.ts`, `prestamos-cash/[id]/pagar/route.ts`,
+  `deudas-cash/route.ts`, `deudas-cash/[id]/pagar/route.ts`) ahora pasan
+  `monedaFuncionalCodigo: functionalCurrency` (política del tenant) al construir
+  el evento; además se eliminaron los `Number()` sobre valores persistidos (se
+  pasa `Prisma.Decimal` directo, que `DecimalInput` acepta).
+- **F2 (fingerprint de crossQuote):** `fingerprint()` en `fx-evidence.ts` ahora usa
+  canonicalización recursiva (`canonicalStringify`: ordena claves en cada nivel
+  sin filtrar campos anidados). Para payloads sin objetos anidados el resultado es
+  idéntico al anterior; solo cambian huellas de evidencias con `crossQuote` no
+  nulo (transferencias cruzadas FX-4 del último día; sistema aún sin producción —
+  R7 pendiente — corte limpio documentado aquí explícitamente).
+- **F3 (Number antes del posteo + evidencia v1):**
+  - POST `reconciliacion/ventas`: el bloque `tesoreria` ya no convierte a `Number`
+    los valores persistidos (`monto`, `montoFuncional`, `tasaCambio` como `Decimal`);
+    `monedaFuncionalCodigo` usa la funcional persistida con fallback a la política
+    (antes `?? 'CUP'`). El borde de entrada Zod ya tipa `number` (no-op, sin cambio).
+  - `pago-gastos-workflow.ts`: migrado a `buildPersistedAccountingAmount`
+    (evidencia v2, `CONVERSION_REQUERIDA` 400 preservado); el helper acepta ahora
+    `source` opcional (`'pago-gastos-workflow'`); se eliminó
+    `normalizeMontoToFunctional` y el import v1.
+  - `inventory-cost-valuation.ts`: la rama extranjera (triangulación vía CUP) ahora
+    produce evidencia v2 con redondeo declarado `HALF_UP_4DP` (nuevo campo en
+    `buildAppliedFxEvidenceExact`, cubierto por el fingerprint): el contrato exacto
+    de v2 es incompatible con cocientes no terminantes, así que la evidencia
+    registra el redondeo de negocio a 4 decimales en vez de la tolerancia float
+    de v1.
+
+**Evidencia 05-10:** `pnpm run typecheck` limpio + **49/49 unit focales**:
+`fx-evidence.test.ts` 15/15 (6 nuevos de sensibilidad del fingerprint a cada campo
+anidado de `crossQuote` + 2 de redondeo declarado), `inventory-cost-valuation.test.ts`
+6/6 (nuevo: EUR 100 → USD produce v2), `pago-gastos-workflow.test.ts` 15/15 (ajustes a
+v2/Decimal), `prestamos-cash/[id]/pagar` route 13/13.
+
 ## Matriz de llamadas (una fila por callsite)
 
 Prefijos de rutas: `V=src/features/ventas/services/`,

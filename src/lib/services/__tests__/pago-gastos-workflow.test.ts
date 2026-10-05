@@ -252,7 +252,7 @@ describe('pago-gastos-workflow', () => {
           monto: 100,
           moneda: 'USD',
           tasaCambio: 24.5,
-          montoConvertido: 2450
+          montoConvertido: new Prisma.Decimal(2450)
         })
       })
     )
@@ -287,7 +287,7 @@ describe('pago-gastos-workflow', () => {
       select: { functionalCurrencyCode: true }
     })
     expect(tx.reconciliacionGasto.create).toHaveBeenCalledWith(expect.objectContaining({
-      data: expect.objectContaining({ functionalCurrency: 'MLC', montoConvertido: 250 })
+      data: expect.objectContaining({ functionalCurrency: 'MLC', montoConvertido: new Prisma.Decimal(250) })
     }))
   })
 
@@ -367,7 +367,7 @@ describe('pago-gastos-workflow', () => {
     expect(data.fxProvenanceKind).toBe('MANUAL_GOVERNED')
     expect(data.fxProvenanceSource).toBe('pago-gastos-workflow')
     expect(data.rateEffectiveAt).toEqual(new Date('2026-08-19T12:00:00.000Z'))
-    expect(data.fxEvidenceVersion).toBe(1)
+    expect(data.fxEvidenceVersion).toBe(2)
     expect(data.fxEvidenceFingerprint).toMatch(/^[a-f0-9]{64}$/)
   })
 
@@ -653,7 +653,7 @@ describe('pago-gastos-workflow', () => {
     const data = tx.reconciliacionGasto.create.mock.calls[0][0].data
     expect((data.montoCuenta as Prisma.Decimal).toNumber()).toBe(100)
     expect(data.monedaCuenta).toBe('USD')
-    expect(data.montoConvertido).toBe(2450)
+    expect((data.montoConvertido as Prisma.Decimal).toNumber()).toBe(2450)
   })
 
   it('FX-3: persiste el snapshot funcional (CUP) cuando la cuenta es CUP y el tender es USD', async () => {

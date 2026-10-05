@@ -26,7 +26,7 @@ Rama sugerida: `feat/contabilidad-capa-formal` desde `main` (después del merge 
 - [ ] **T7 — Shadow activable.** `shadow` en staging con contadores por evento; reporte de cobertura (eventos vistos vs contabilizados) visible en `actions-health`.
 - Commit por lote: `feat(contabilidad): motor de asientos + hooks ventas (CTA-1/T1–T4)` etc.
 
-<!-- CTA-1 ejecutado 2026-09-22: 16 writers cableados (venta contado/crédito, cobros CxC, devolución, costo FIFO, compras contado/crédito, pago CxP, gastos, nómina, anticipos crear+aplicar, préstamos, deudas, ajustes, transferencias, capital, mermas, producción, servicios, restock). Decisiones v1 documentadas: cobros de préstamo/deuda sin split capital/interés (los writers cobran monto total de CxC/CxP); el handler legacy `api/handlers.ts:createTransferencia` NO se hookea (path legacy sin user en-contexto; el canal canónico es accounting-operations-mutation-service). -->
+<!-- CTA-1 ejecutado 2026-09-22: 16 writers cableados (venta contado/crédito, cobros CxC, devolución, costo FIFO, compras contado/crédito, pago CxP, gastos, nómina, anticipos crear+aplicar, préstamos, deudas, ajustes, transferencias, capital, mermas, producción, servicios, restock). Decisiones v1 documentadas: cobros de préstamo/deuda sin split capital/interés (los writers cobran monto total de CxC/CxP); el handler huérfano `api/handlers.ts:createTransferencia` se retiró el 2026-10-04 tras confirmar que no tenía callers; el canal canónico es `accounting-operations-mutation-service`. -->
 
 ## CTA-2 — Libros formales y conciliación cruzada
 
@@ -2415,8 +2415,9 @@ reabre FX-2/FX-4 por brechas reproducidas de propagación, Decimal/evidencia y f
   ausencia del default en disco y prueba focal MLC del pago web de préstamo (13/13). La
   aceptación por canal/moneda, incluyendo tasa ausente/vencida y rollback, continúa en
   R0.5-ACCEPT. El inventario incluye 17 llamadas activas y una sin caller productivo localizado.
-  **Auditoría 05-10:** queda pendiente propagar `monedaFuncionalCodigo` al evento en las cuatro
-  rutas web cash; el POST de préstamo para tenant MLC emite CUP. FX-2 y FX-4 se reabren.
+  **Auditoría 05-10:** F1 cerrado en Fase A el 05-10 (ver abajo): las cuatro rutas web cash
+  pasan `monedaFuncionalCodigo` de la política al evento y conservan `Prisma.Decimal`.
+  La aceptación por canal/moneda continúa en R0.5-ACCEPT.
   **Decisión de producto 05-10:** mantener rechazo `FX_INSUFICIENTE` cuando la moneda de la
   obligación difiere tanto de la moneda de fondos como de la moneda funcional; no añadir
   conversión adicional a CUP para permitir ese caso.
@@ -2439,12 +2440,15 @@ reabre FX-2/FX-4 por brechas reproducidas de propagación, Decimal/evidencia y f
     `venta-servicios`, `devolucion-venta-service`, `anticipos-workflow` y `mermas` no llaman
     al builder. FX-1 queda cerrado solo al invocar el helper; no incluye la propagación al evento
     ni certifica como activo `reconciliarVentaDirecta` (una de las tres llamadas de facturación).
-  - [ ] Propagar la funcional persistida al evento de las cuatro rutas web cash; comprobar el
+  - [x] Propagar la funcional persistida al evento de las cuatro rutas web cash; comprobar el
     payload completo y el guard real del posteo para tenants no-CUP (hallazgo F1 de la auditoría).
+    **Cerrado 05-10 (Fase A):** `monedaFuncionalCodigo: functionalCurrency` en los cuatro eventos;
+    `Number()` eliminados sobre valores persistidos. Evidencia: typecheck limpio +
+    `prestamos-cash/[id]/pagar` route 13/13.
   - Criterio de salida: tests RED→GREEN por moneda funcional no-CUP, tasa ausente/vencida,
     cuenta en moneda tender/funcional/tercera, precisión y rollback; actualizar filas de la
     matriz solo con cobertura de cada canal.
-- [ ] **R0.5-FX-2 — Sacar aritmética `Number` y evidencia v1 de los writers contables.** Migrar
+- [x] **R0.5-FX-2 — Sacar aritmética `Number` y evidencia v1 de los writers contables.** Migrar
   valoraciones a Decimal exacto, evidencia canónica v2 y snapshot que ligue importe, moneda,
   tasa, fecha efectiva, procedencia y `fxCatalogRateId`; no reinterpretar históricos sin
   evidencia.
@@ -2468,10 +2472,20 @@ reabre FX-2/FX-4 por brechas reproducidas de propagación, Decimal/evidencia y f
   todos corregidos y re-verificados en ese slice histórico; no equivale a aceptación de FX-2.
   **Auditoría 05-10:** 86/86 tests existentes aprobados; probe temporal 6 RED, incluidos evento
   MLC emitido como CUP/Number y evidencia v1 de inventario extranjero. Ver hallazgos F1–F3.
-  - [ ] Mantener Decimal en los payloads de eventos web cash y reconciliación de ventas.
-  - [ ] Migrar generación nueva de evidencia en gastos e inventario extranjero a v2;
-    preservar compatibilidad explícita de lectura histórica v1.
-  - [ ] Proteger todos los campos de `crossQuote` en el fingerprint canónico (compartido con FX-4).
+  - [x] Mantener Decimal en los payloads de eventos web cash y reconciliación de ventas.
+    **Cerrado 05-10 (Fase A):** cuatro rutas cash + POST `reconciliacion/ventas` sin `Number()`
+    sobre valores persistidos.
+  - [x] Migrar generación nueva de evidencia en gastos e inventario extranjero a v2;
+    preservar compatibilidad explícita de lectura histórica v1. **Cerrado 05-10 (Fase A):**
+    `pago-gastos-workflow` e `inventory-cost-valuation` (rama extranjera) generan v2;
+    el fingerprint solo cambia para evidencias con `crossQuote` no nulo (transferencias
+    cruzadas de los últimos días; sin producción — R7 pendiente — corte limpio documentado
+    en la matriz).
+  - [x] Proteger todos los campos de `crossQuote` en el fingerprint canónico (compartido con FX-4).
+    **Cerrado 05-10 (Fase A):** `canonicalStringify` recursivo; 6 tests nuevos de sensibilidad.
+  **Cierre Fase A 05-10:** typecheck limpio + 49/49 unit focales (`fx-evidence` 15/15,
+  `inventory-cost-valuation` 6/6, `pago-gastos-workflow` 15/15, `prestamos-cash/[id]/pagar`
+  route 13/13). La aceptación por canal/moneda y rollback físico continúa en R0.5-ACCEPT.
 - [x] **R0.5-FX-3 — Completar snapshots de cuenta nativa.** Los nuevos campos y CHECKs de
   `ReconciliacionVenta` ya se escriben por `reconcileSale`, su POST web y los writers cash de
   deuda/préstamo (canal web y servicio compartido); el pago web de préstamo tiene caso MLC.
@@ -2492,7 +2506,7 @@ reabre FX-2/FX-4 por brechas reproducidas de propagación, Decimal/evidencia y f
   - [ ] Seguimiento fuera del slice: préstamos cash deben crear/actualizar `CuentaPorCobrar`
     con `montoDeudaFuncional`, `montoPagadoFuncional` y `monedaFuncional` (hoy el cobro solo
     acumula `montoPagado` nominal); revisar el snapshot equivalente de CxP para deudas cash.
-- [ ] **R0.5-FX-4 — Cerrar FX cruzado con política explícita.** Resolver catálogo de pares y
+- [x] **R0.5-FX-4 — Cerrar FX cruzado con política explícita.** Resolver catálogo de pares y
   validar importes por moneda nativa; rechazar las transferencias sin cotización suficiente.
   Los callers sin campo para tasa cuenta deben rechazar antes de crear
   reconciliación, obligación o mover saldo.
@@ -2516,7 +2530,11 @@ reabre FX-2/FX-4 por brechas reproducidas de propagación, Decimal/evidencia y f
   `accounting-operations-mutation-service` 26/26, `accounting-reconciliation-service` 6/6).
   Esa evidencia no prueba integridad de los campos anidados. La auditoría vuelve a confirmar
   resolución y rechazo sin quote, pero no acepta FX-4 hasta cerrar el fingerprint.
-  - [ ] Canonicalización recursiva y pruebas de sensibilidad a todos los campos de la cotización.
+  **Cierre Fase A 05-10:** fingerprint canónico recursivo en `fx-evidence.ts` (ver matriz);
+  typecheck limpio + `fx-evidence.test.ts` 15/15 (6 de sensibilidad a campos anidados + 2 de
+  redondeo declarado `HALF_UP_4DP`). La certificación PostgreSQL continúa en R0.5-ACCEPT.
+  - [x] Canonicalización recursiva y pruebas de sensibilidad a todos los campos de la cotización.
+    **Cerrado 05-10 (Fase A).**
   - [ ] Certificar rechazo sin quote/pata funcional y persistencia de evidencia con PostgreSQL
     dentro de R0.5-ACCEPT; conservar el rechazo acordado para obligaciones sin conversión soportada.
 

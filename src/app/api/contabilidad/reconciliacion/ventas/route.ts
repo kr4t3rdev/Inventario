@@ -15,6 +15,8 @@ import {
 	AccountingReconciliationService,
 	buildPersistedAccountingAmount,
 } from '@/features/contabilidad/services/accounting-reconciliation-service';
+import { resolveAccountingAccountMovement } from '@/features/contabilidad/services/accounting-account-movement-valuation';
+import { getRequiredTenantAccountingPolicy } from '@/features/contabilidad/services/tenant-accounting-policy-service';
 import {
 	auditarCreditoOverride,
 	bloquearClienteCredito,
@@ -39,63 +41,6 @@ const reconciliacionVentaSchema = z.object({
 	solicitarCreditoOverride: z.boolean().optional(),
 	motivoCreditoOverride: z.string().trim().max(500).optional(),
 });
-
-/**
- * @description Convierte un monto de pago a CUP para control de sobrepago y CxC.
- * @param {number} monto - Monto original del pago.
- * @param {string} moneda - Moneda del monto.
- * @param {number | undefined} tasaCambio - Tasa opcional para conversión.
- * @returns {number} Monto normalizado en CUP.
- */
-function normalizeMontoToCup(
-	monto: number,
-	moneda: string,
-	tasaCambio?: number,
-): number {
-	if (moneda === "CUP") {
-		return monto;
-	}
-
-	if (
-		typeof tasaCambio === "number" &&
-		Number.isFinite(tasaCambio) &&
-		tasaCambio > 0
-	) {
-		return monto * tasaCambio;
-	}
-
-	// Fallback para históricos sin tasa registrada
-	return monto;
-}
-
-/**
- * @description Convierte un monto hacia la moneda de una cuenta bancaria.
- * @param {number} monto - Monto original del pago.
- * @param {string} monedaPago - Moneda en la que viene el pago.
- * @param {string} monedaCuenta - Moneda de la cuenta destino/origen.
- * @param {number | undefined} tasaCambio - Tasa para conversión cuando aplica.
- * @returns {number} Monto expresado en moneda de la cuenta.
- */
-function convertMontoToCuentaMoneda(
-	monto: number,
-	monedaPago: string,
-	monedaCuenta: string,
-	tasaCambio?: number,
-): number {
-	if (monedaPago === monedaCuenta) {
-		return monto;
-	}
-
-	if (
-		typeof tasaCambio === "number" &&
-		Number.isFinite(tasaCambio) &&
-		tasaCambio > 0
-	) {
-		return monto * tasaCambio;
-	}
-
-	return monto;
-}
 
 /**
  * @description Crea un error de validación con status HTTP para el flujo de reconciliación.
@@ -537,40 +482,11 @@ export async function POST(request: NextRequest) {
 			);
 		}
 
-		const monedasDifierenEnCuenta =
-			validatedData.moneda !== cuentaBancaria.moneda;
-		const requiereTasaCambioCuenta = monedasDifierenEnCuenta;
-		const requiereTasaCambioVenta = validatedData.moneda !== "CUP";
-		if (
-			(requiereTasaCambioCuenta || requiereTasaCambioVenta) &&
-			!validatedData.tasaCambio
-		) {
-			return NextResponse.json(
-				{
-					error: "Se requiere tasa de cambio para convertir el pago.",
-					code: "TASA_CAMBIO_REQUERIDA",
-				},
-				{ status: 400 },
-			);
-		}
-
 		const tasaCambio = validatedData.tasaCambio
 			? Number(validatedData.tasaCambio)
 			: undefined;
 		const montoBase = Number(validatedData.monto);
 		const fechaReconciliacion = fechaOperacion;
-		const conversion = buildPersistedAccountingAmount(
-			montoBase,
-			validatedData.moneda,
-			tasaCambio,
-			fechaReconciliacion,
-		);
-		if (!conversion.fxEvidence || conversion.montoConvertido == null) {
-			return NextResponse.json(
-				{ error: 'Falta evidencia de conversión para el cobro', code: 'FX_INSUFICIENTE' },
-				{ status: 400 },
-			);
-		}
 
 		// Si el tipo de pago requiere cuenta, verificar cuenta defecto
 		let cuentaOrigen = null;
@@ -593,6 +509,24 @@ export async function POST(request: NextRequest) {
 		// Realizar la reconciliación en una transacción
 		const result = await prisma.$transaction(
 			async (tx: Prisma.TransactionClient) => {
+				const policy = await getRequiredTenantAccountingPolicy(tenantId, tx);
+				const functionalCurrency = policy.functionalCurrencyCode.trim().toUpperCase();
+				const conversion = buildPersistedAccountingAmount(
+					montoBase,
+					validatedData.moneda,
+					tasaCambio,
+					fechaReconciliacion,
+					undefined,
+					functionalCurrency,
+				);
+				if (!conversion.fxEvidence || conversion.montoConvertido == null) {
+					throw createReconciliacionError(
+						400,
+					'FX_INSUFICIENTE',
+					'Falta evidencia FX funcional para el cobro',
+					);
+				}
+
 				// Idempotencia por referencia de transferencia si fue enviada
 				if (referenciaTransferencia) {
 					const existingByReference = await tx.reconciliacionVenta.findFirst({
@@ -658,18 +592,21 @@ export async function POST(request: NextRequest) {
 					);
 				}
 
-				const montoDestino = convertMontoToCuentaMoneda(
-					montoBase,
-					validatedData.moneda,
-					cuentaDestinoLocked.moneda,
-					tasaCambio,
-				);
+				const movimientoDestino = resolveAccountingAccountMovement({
+					tenderAmount: montoBase,
+					tenderCurrency: validatedData.moneda,
+					functionalAmount: conversion.montoConvertido,
+					functionalCurrency,
+					accountCurrency: cuentaDestinoLocked.moneda,
+				});
+				const montoDestino = movimientoDestino.amount.toNumber();
 
 				let cuentaOrigenLocked: {
 					cuentaId: string;
 					saldo: number;
 					moneda: string;
 				} | null = null;
+				let movimientoOrigen: ReturnType<typeof resolveAccountingAccountMovement> | null = null;
 				if (cuentaOrigen) {
 					cuentaOrigenLocked = await tx.cuentaBancaria.findFirst({
 						where: { cuentaId: cuentaOrigen.cuentaId, tenantId },
@@ -688,12 +625,14 @@ export async function POST(request: NextRequest) {
 						);
 					}
 
-					const montoOrigen = convertMontoToCuentaMoneda(
-						montoBase,
-						validatedData.moneda,
-						cuentaOrigenLocked.moneda,
-						tasaCambio,
-					);
+					movimientoOrigen = resolveAccountingAccountMovement({
+						tenderAmount: montoBase,
+						tenderCurrency: validatedData.moneda,
+						functionalAmount: conversion.montoConvertido,
+						functionalCurrency,
+						accountCurrency: cuentaOrigenLocked.moneda,
+					});
+					const montoOrigen = movimientoOrigen.amount.toNumber();
 
 					if (cuentaOrigenLocked.saldo < montoOrigen) {
 						throw createReconciliacionError(
@@ -813,11 +752,14 @@ export async function POST(request: NextRequest) {
 								'Un cobro previo no conserva una valoración funcional homogénea',
 							);
 						}
-						reconciliacionesFuncionales.push(new Prisma.Decimal(normalizeMontoToCup(
-							Number(previo.monto),
-							previo.moneda,
-							undefined,
-						)));
+						if (previo.moneda.trim().toUpperCase() !== functionalCurrency) {
+							throw createReconciliacionError(
+								400,
+								'FX_INSUFICIENTE',
+								'Un cobro histórico sin evidencia funcional no se puede convertir de forma segura',
+							);
+						}
+						reconciliacionesFuncionales.push(new Prisma.Decimal(previo.monto));
 						continue;
 					}
 					reconciliacionesFuncionales.push(new Prisma.Decimal(previo.montoConvertido));
@@ -879,9 +821,18 @@ export async function POST(request: NextRequest) {
 							ventaId: validatedData.ventaId,
 							cuentaId: validatedData.cuentaId,
 							tipoPagoId: validatedData.tipoPagoId,
-							monto: validatedData.monto,
-							moneda: validatedData.moneda,
-							tasaCambio: conversion.tasaCambio,
+						monto: validatedData.monto,
+						moneda: validatedData.moneda,
+						montoCuenta: movimientoDestino.amount,
+						monedaCuenta: movimientoDestino.currency,
+						...(movimientoOrigen && cuentaOrigenLocked
+							? {
+								cuentaOrigenId: cuentaOrigenLocked.cuentaId,
+								montoCuentaOrigen: movimientoOrigen.amount,
+								monedaCuentaOrigen: movimientoOrigen.currency,
+							}
+							: {}),
+						tasaCambio: conversion.tasaCambio,
 							montoConvertido: conversion.montoConvertido,
 							fechaReconciliacion,
 							...conversion.fxEvidence,
@@ -936,15 +887,15 @@ export async function POST(request: NextRequest) {
 						(venta.factura ? buildEventoCobroCxc : buildEventoVentaContado)({
 							reconciliacionId: reconciliacion.reconciliacionId,
 							fecha: reconciliacion.fechaReconciliacion,
-							tesoreria: {
-								monto: Number(reconciliacion.monto),
-								moneda: reconciliacion.moneda || 'CUP',
-								montoFuncional: Number(reconciliacion.montoConvertido),
-								tasaCambio: reconciliacion.tasaCambio == null
-									? null : Number(reconciliacion.tasaCambio),
+						tesoreria: {
+							monto: reconciliacion.monto,
+							moneda: reconciliacion.moneda || 'CUP',
+								montoFuncional: reconciliacion.montoConvertido ?? reconciliacion.monto,
+								tasaCambio: reconciliacion.tasaCambio ?? null,
+									
 								fxEvidenceFingerprint: reconciliacion.fxEvidenceFingerprint,
 								diferenciaFx: diferenciaFxCxc,
-								monedaFuncionalCodigo: reconciliacion.functionalCurrency ?? 'CUP',
+								monedaFuncionalCodigo: reconciliacion.functionalCurrency ?? functionalCurrency,
 								tipoCuenta: cuentaDestinoLocked?.tipoCuenta ?? null,
 								referencia: referenciaTransferencia,
 							},
@@ -956,13 +907,15 @@ export async function POST(request: NextRequest) {
 				const saldoIncrementoDestino = parseFloat(montoDestino.toString());
 
 				if (cuentaOrigen && tipoPago.cuentaDefecto !== validatedData.cuentaId) {
-					const montoOrigen = convertMontoToCuentaMoneda(
-						montoBase,
-						validatedData.moneda,
-						cuentaOrigenLocked?.moneda || validatedData.moneda,
-						tasaCambio,
-					);
-					const saldoDecrementoOrigen = parseFloat(montoOrigen.toString());
+					const montoOrigen = movimientoOrigen?.amount.toNumber();
+					if (montoOrigen == null) {
+						throw createReconciliacionError(
+							400,
+						'FX_INSUFICIENTE',
+						'No se pudo resolver el movimiento de la cuenta origen',
+						);
+					}
+					const saldoDecrementoOrigen = montoOrigen;
 
 					// Transferir: decrementar de cuenta origen e incrementar en cuenta destino
 					const cuentaOrigenUpdate = await tx.cuentaBancaria.updateMany({
@@ -1135,33 +1088,25 @@ export async function POST(request: NextRequest) {
 					}
 				}
 
+				await AuditLogService.logStrict({
+					accion: 'CREATE',
+					entidad: 'RECONCILIACION',
+					entidadId: reconciliacion.reconciliacionId,
+					usuarioId: user.userId,
+					detalles: {
+						tipo: 'VENTA',
+						ventaId: reconciliacion.ventaId,
+						cuentaId: reconciliacion.cuentaId,
+						tipoPagoId: reconciliacion.tipoPagoId,
+						monto: Number(reconciliacion.monto),
+						moneda: reconciliacion.moneda,
+						montoConvertido: Number(reconciliacion.montoConvertido),
+					},
+				}, tx);
+
 				return reconciliacion;
 			},
 		);
-
-		// Auditoría no bloqueante para no devolver error si el log falla.
-		try {
-			await AuditLogService.log({
-				accion: "CREATE",
-				entidad: "RECONCILIACION",
-				entidadId: result.reconciliacionId,
-				usuarioId: user.userId,
-				detalles: {
-					tipo: "VENTA",
-					ventaId: result.ventaId,
-					cuenta: cuentaBancaria.nombreBanco,
-					monto: result.monto,
-					moneda: result.moneda,
-					montoConvertido: result.montoConvertido,
-					tipoPago: tipoPago.nombre,
-				},
-			});
-		} catch (auditError) {
-			console.error(
-				"Error registrando auditoría de reconciliación de venta:",
-				auditError,
-			);
-		}
 
 		// Invalidar caché de Next.js para que RSC y Server Actions vean datos frescos
 		revalidatePath("/busy/contabilidad/reconciliacion");

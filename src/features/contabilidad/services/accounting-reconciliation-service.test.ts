@@ -1,7 +1,7 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { Prisma } from '@/generated/prisma';
 
-const { tx, transaction, postEvento, preflight } = vi.hoisted(() => {
+const { tx, transaction, postEvento, auditLogStrict } = vi.hoisted(() => {
   const tx = {
     $executeRaw: vi.fn(),
     $queryRaw: vi.fn(),
@@ -9,26 +9,26 @@ const { tx, transaction, postEvento, preflight } = vi.hoisted(() => {
     ventaServicios: { findFirst: vi.fn(), updateMany: vi.fn() },
     cuentaBancaria: { findFirst: vi.fn(), updateMany: vi.fn() },
     tipoPago: { findFirst: vi.fn() },
+    tenantAccountingPolicy: { findUnique: vi.fn() },
     reconciliacionServicio: { create: vi.fn(), findMany: vi.fn() },
     cuentaPorCobrar: { findFirst: vi.fn(), updateMany: vi.fn() },
     anticipoMovimiento: { findMany: vi.fn().mockResolvedValue([]) },
     reconciliacionVenta: { create: vi.fn(), findMany: vi.fn() },
   };
-  const preflight = {
-    cuentaBancaria: { findFirst: vi.fn() },
-    tipoPago: { findFirst: vi.fn() },
-  };
   return {
     tx,
     transaction: vi.fn(async (callback) => callback(tx)),
     postEvento: vi.fn(),
-    preflight,
+    auditLogStrict: vi.fn().mockResolvedValue({ auditId: 'audit-1' }),
   };
 });
 
-vi.mock('@/lib/prisma', () => ({ prisma: { ...preflight, $transaction: transaction } }));
+vi.mock('@/lib/prisma', () => ({ prisma: { $transaction: transaction } }));
 vi.mock('@/features/contabilidad-formal/services/posting-engine', () => ({ postEvento }));
 vi.mock('./accounting-tenant-lock-service', () => ({ acquireAccountingTenantLock: vi.fn() }));
+vi.mock('@/lib/services/audit-log-service', () => ({
+  AuditLogService: { log: vi.fn(), logStrict: auditLogStrict },
+}));
 
 import { AccountingReconciliationService } from './accounting-reconciliation-service';
 
@@ -44,22 +44,24 @@ describe('reconcileService — posteo transaccional móvil', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     tx.ventaServicios.findFirst.mockReset().mockResolvedValue({
-      total: 10, reconciliado: null, clienteId: 'client-1',
+      total: 10, moneda: 'CUP', reconciliado: null, clienteId: 'client-1',
     });
     tx.ventaServicios.updateMany.mockReset().mockResolvedValue({ count: 1 });
-    tx.cuentaBancaria.findFirst.mockReset().mockResolvedValue({ tipoCuenta: 'BANCO', isActive: true });
+    tx.cuentaBancaria.findFirst.mockReset().mockResolvedValue({
+      cuentaId: 'bank-1', tipoCuenta: 'BANCO', moneda: 'CUP', isActive: true,
+    });
     tx.cuentaBancaria.updateMany.mockReset().mockResolvedValue({ count: 1 });
     tx.tipoPago.findFirst.mockReset().mockResolvedValue({ isActive: true });
     tx.cuentaPorCobrar.findFirst.mockReset().mockResolvedValue(null);
+    tx.tenantAccountingPolicy.findUnique.mockReset().mockResolvedValue({
+      tenantId: 'tenant-1', functionalCurrencyCode: 'CUP',
+    });
+    auditLogStrict.mockReset().mockResolvedValue({ auditId: 'audit-1' });
     tx.cuentaPorCobrar.updateMany.mockReset().mockResolvedValue({ count: 1 });
     tx.reconciliacionServicio.findMany.mockReset().mockResolvedValue([]);
     tx.reconciliacionServicio.create.mockReset().mockImplementation(async ({ data }) => ({
       ...data, reconciliacionId: 'rec-1',
     }));
-    preflight.tipoPago.findFirst.mockReset().mockResolvedValue({
-      isActive: true, requiereCuenta: true, cuentaDefecto: null,
-    });
-    preflight.cuentaBancaria.findFirst.mockReset().mockResolvedValue(null);
   });
 
   it('deniega reconciliación a quien no tiene permiso financiero antes de iniciar la transacción', async () => {
@@ -98,7 +100,10 @@ describe('reconcileService — posteo transaccional móvil', () => {
   });
 
   it('postea exactamente una vez por fila dentro de la misma transacción y hereda FX', async () => {
-    await AccountingReconciliationService.reconcileService({
+    tx.ventaServicios.findFirst.mockResolvedValueOnce({
+      total: 10, moneda: 'USD', reconciliado: null, clienteId: 'client-1',
+    });
+    const result = await AccountingReconciliationService.reconcileService({
       user,
       input: {
         ventaServicioId: 'service-1', fechaReconciliacion: '2026-09-25',
@@ -112,17 +117,49 @@ describe('reconcileService — posteo transaccional móvil', () => {
     expect(postEvento).toHaveBeenCalledTimes(1);
     expect(postEvento).toHaveBeenCalledWith(tx, { tenantId: 'tenant-1', userId: 'actor-1' },
       expect.objectContaining({ origen: { tipo: 'reconciliacion_servicio', id: 'rec-1' },
-        montoFuncional: 240, tasaCambio: 24, fxEvidenceFingerprint: saved.fxEvidenceFingerprint }));
+        fxEvidenceFingerprint: saved.fxEvidenceFingerprint }));
+    const evento = postEvento.mock.calls[0][2];
+    // FX-2: la valoración del evento viaja como Decimal exacto.
+    expect(evento.montoFuncional.toString()).toBe('240');
+    expect(evento.tasaCambio.toString()).toBe('24');
+    expect(result.reconciliaciones).toHaveLength(1);
+    expect(auditLogStrict).toHaveBeenCalledTimes(1);
+    expect(auditLogStrict).toHaveBeenCalledWith(expect.objectContaining({
+      entidadId: 'rec-1', usuarioId: 'actor-1',
+    }), tx);
   });
 
-  it('rechaza por saldo insuficiente de la cuenta origen antes de abrir la transacción', async () => {
-    preflight.tipoPago.findFirst.mockResolvedValue({
-      isActive: true, requiereCuenta: true, cuentaDefecto: 'source-bank-1',
-    });
-    preflight.cuentaBancaria.findFirst.mockResolvedValue({
-      cuentaId: 'source-bank-1', saldo: 239, moneda: 'CUP', isActive: true,
+  it('requiere una clave idempotente para modificar una CxC de servicios', async () => {
+    tx.cuentaPorCobrar.findFirst.mockResolvedValue({
+      idCC: 7, montoDeuda: 100, montoPagado: 0, montoOriginal: 100,
+      montoDeudaFuncional: 2400, montoPagadoFuncional: 0,
+      monedaOriginal: 'USD', monedaFuncional: 'CUP', tasaCambio: 24,
+      fxEvidenceFingerprint: 'cxc-fx-v2', fxEvidenceVersion: 2, estado: 'PENDIENTE',
     });
 
+    await expect(AccountingReconciliationService.reconcileService({ user, input: {
+      ventaServicioId: 'service-1', fechaReconciliacion: '2026-09-25T12:00:00Z',
+      distribuciones: [{ cuentaId: 'bank-1', tipoPagoId: 'cash-1', monto: 40,
+        moneda: 'USD', tasaCambio: 25, fechaTasa: '2026-09-25' }],
+    } })).rejects.toMatchObject({ code: 'IDEMPOTENCY_KEY_REQUIRED' });
+
+    expect(tx.cuentaBancaria.updateMany).not.toHaveBeenCalled();
+    expect(tx.reconciliacionServicio.create).not.toHaveBeenCalled();
+    expect(tx.cuentaPorCobrar.updateMany).not.toHaveBeenCalled();
+    expect(postEvento).not.toHaveBeenCalled();
+  });
+
+  it('rechaza saldo insuficiente en la cuenta origen dentro de la transacción', async () => {
+    tx.ventaServicios.findFirst.mockResolvedValueOnce({
+      total: 10, moneda: 'USD', reconciliado: null, clienteId: 'client-1',
+    });
+    tx.tipoPago.findFirst.mockResolvedValue({
+      tipoId: 'cash-1', isActive: true, requiereCuenta: true, cuentaDefecto: 'source-bank-1',
+    });
+    tx.cuentaBancaria.findFirst
+      .mockResolvedValueOnce({ tipoCuenta: 'BANCO', moneda: 'CUP', isActive: true })
+      .mockResolvedValueOnce({ moneda: 'CUP' });
+    tx.cuentaBancaria.updateMany.mockResolvedValueOnce({ count: 0 });
     await expect(AccountingReconciliationService.reconcileService({
       user,
       input: {
@@ -132,25 +169,22 @@ describe('reconcileService — posteo transaccional móvil', () => {
       },
     })).rejects.toMatchObject({ code: 'SALDO_INSUFICIENTE' });
 
-    expect(transaction).not.toHaveBeenCalled();
-    expect(tx.cuentaBancaria.updateMany).not.toHaveBeenCalled();
+    expect(transaction).toHaveBeenCalledTimes(1);
+    expect(tx.cuentaBancaria.updateMany).toHaveBeenCalledTimes(1);
     expect(tx.reconciliacionServicio.create).not.toHaveBeenCalled();
     expect(postEvento).not.toHaveBeenCalled();
   });
 
   it('mueve el importe funcional de la cuenta origen a destino dentro de una transacción', async () => {
-    preflight.tipoPago.findFirst.mockResolvedValue({
-      isActive: true, requiereCuenta: true, cuentaDefecto: 'source-bank-1',
-    });
-    preflight.cuentaBancaria.findFirst.mockResolvedValue({
-      cuentaId: 'source-bank-1', saldo: 1000, moneda: 'CUP', isActive: true,
+    tx.ventaServicios.findFirst.mockResolvedValueOnce({
+      total: 10, moneda: 'USD', reconciliado: null, clienteId: 'client-1',
     });
     tx.tipoPago.findFirst.mockResolvedValue({
       tipoId: 'cash-1', isActive: true, requiereCuenta: true, cuentaDefecto: 'source-bank-1',
     });
     tx.cuentaBancaria.findFirst
-      .mockResolvedValueOnce({ saldo: 1000, moneda: 'CUP', tipoCuenta: 'BANCO', isActive: true })
-      .mockResolvedValueOnce({ tipoCuenta: 'BANCO', isActive: true });
+      .mockResolvedValueOnce({ tipoCuenta: 'BANCO', moneda: 'CUP', isActive: true })
+      .mockResolvedValueOnce({ moneda: 'CUP' });
 
     const result = await AccountingReconciliationService.reconcileService({
       user,
@@ -162,8 +196,6 @@ describe('reconcileService — posteo transaccional móvil', () => {
     });
 
     expect(result.reconciliado).toBe(true);
-    expect(preflight.tipoPago.findFirst.mock.invocationCallOrder[0])
-      .toBeLessThan(transaction.mock.invocationCallOrder[0]);
     expect(tx.cuentaBancaria.updateMany).toHaveBeenNthCalledWith(1, expect.objectContaining({
       where: expect.objectContaining({
         cuentaId: 'source-bank-1', tenantId: 'tenant-1', saldo: { gte: 240 },
@@ -177,34 +209,47 @@ describe('reconcileService — posteo transaccional móvil', () => {
     expect(transaction).toHaveBeenCalledTimes(1);
   });
 
-  it('rechaza si el saldo origen cae después del precheck sin acreditar destino ni postear', async () => {
-    preflight.tipoPago.findFirst.mockResolvedValue({
-      isActive: true, requiereCuenta: true, cuentaDefecto: 'source-bank-1',
-    });
-    preflight.cuentaBancaria.findFirst.mockResolvedValue({
-      cuentaId: 'source-bank-1', saldo: 1000, moneda: 'CUP', isActive: true,
+  it('mueve cada cuenta en su moneda nativa y persiste ambos importes', async () => {
+    tx.ventaServicios.findFirst.mockResolvedValueOnce({
+      total: 40, moneda: 'USD', reconciliado: null, clienteId: 'client-1',
     });
     tx.tipoPago.findFirst.mockResolvedValue({
       tipoId: 'cash-1', isActive: true, requiereCuenta: true, cuentaDefecto: 'source-bank-1',
     });
-    tx.cuentaBancaria.updateMany.mockResolvedValueOnce({ count: 0 });
+    tx.cuentaBancaria.findFirst
+      .mockResolvedValueOnce({ tipoCuenta: 'BANCO', moneda: 'CUP', isActive: true })
+      .mockResolvedValueOnce({ moneda: 'USD' });
 
-    await expect(AccountingReconciliationService.reconcileService({
+    await AccountingReconciliationService.reconcileService({
       user,
       input: {
         ventaServicioId: 'service-1',
-        distribuciones: [{ cuentaId: 'bank-1', tipoPagoId: 'cash-1', monto: 10,
+        distribuciones: [{ cuentaId: 'bank-1', tipoPagoId: 'cash-1', monto: 40,
           moneda: 'USD', tasaCambio: 24, fechaTasa: '2026-09-25' }],
       },
-    })).rejects.toMatchObject({ code: 'SALDO_INSUFICIENTE' });
+    });
 
-    expect(tx.cuentaBancaria.updateMany).toHaveBeenCalledTimes(1);
-    expect(tx.reconciliacionServicio.create).not.toHaveBeenCalled();
-    expect(tx.cuentaPorCobrar.updateMany).not.toHaveBeenCalled();
-    expect(postEvento).not.toHaveBeenCalled();
+    expect(tx.cuentaBancaria.updateMany).toHaveBeenNthCalledWith(1, expect.objectContaining({
+      where: expect.objectContaining({ cuentaId: 'source-bank-1', saldo: { gte: 40 } }),
+      data: { saldo: { decrement: 40 } },
+    }));
+    expect(tx.cuentaBancaria.updateMany).toHaveBeenNthCalledWith(2, expect.objectContaining({
+      where: expect.objectContaining({ cuentaId: 'bank-1' }),
+      data: { saldo: { increment: 960 } },
+    }));
+    expect(tx.reconciliacionServicio.create.mock.calls[0][0].data).toMatchObject({
+      montoCuenta: new Prisma.Decimal(960),
+      monedaCuenta: 'CUP',
+      cuentaOrigenId: 'source-bank-1',
+      montoCuentaOrigen: new Prisma.Decimal(40),
+      monedaCuentaOrigen: 'USD',
+    });
   });
 
   it('rechaza FX sin fecha efectiva antes de escribir y conserva CUP sin fecha', async () => {
+    tx.ventaServicios.findFirst.mockResolvedValueOnce({
+      total: 10, moneda: 'USD', reconciliado: null, clienteId: 'client-1',
+    });
     const input = { ventaServicioId: 'service-1', distribuciones: [
       { cuentaId: 'bank-1', tipoPagoId: 'cash-1', monto: 10, moneda: 'USD', tasaCambio: 24 },
     ] };
@@ -278,6 +323,7 @@ describe('reconcileService — posteo transaccional móvil', () => {
 
     const result = await AccountingReconciliationService.reconcileService({ user, input: {
       ventaServicioId: 'service-1', fechaReconciliacion: '2026-09-25',
+      idempotencyKey: 'accept-zero-paid-cxc-0001',
       distribuciones: [{ cuentaId: 'bank-1', tipoPagoId: 'cash-1', monto: 40,
         moneda: 'USD', tasaCambio: 25, fechaTasa: '2026-09-25' }],
     } });
@@ -310,6 +356,8 @@ describe('reconcileService — posteo transaccional móvil', () => {
     });
     tx.reconciliacionServicio.findMany
       .mockResolvedValueOnce([])
+      .mockResolvedValueOnce([])
+      .mockResolvedValueOnce([])
       .mockResolvedValueOnce([{
         monto: 40, moneda: 'USD', montoConvertido: 1000, functionalCurrency: 'CUP',
         fxEvidenceFingerprint: 'receipt-1-fx', fxEvidenceVersion: 2,
@@ -326,6 +374,7 @@ describe('reconcileService — posteo transaccional móvil', () => {
 
     const first = await AccountingReconciliationService.reconcileService({ user, input: {
       ventaServicioId: 'service-1', fechaReconciliacion: '2026-09-25T12:00:00Z',
+      idempotencyKey: 'partial-service-0001',
       distribuciones: [{ cuentaId: 'bank-1', tipoPagoId: 'cash-1', monto: 40,
         moneda: 'USD', tasaCambio: 25 }],
     } });
@@ -347,6 +396,7 @@ describe('reconcileService — posteo transaccional móvil', () => {
 
     const second = await AccountingReconciliationService.reconcileService({ user, input: {
       ventaServicioId: 'service-1', fechaReconciliacion: '2026-09-26T12:00:00Z',
+      idempotencyKey: 'final-service-0001',
       distribuciones: [{ cuentaId: 'bank-1', tipoPagoId: 'cash-1', monto: 60,
         moneda: 'USD', tasaCambio: 25 }],
     } });
@@ -385,6 +435,7 @@ describe('reconcileService — posteo transaccional móvil', () => {
       user,
       input: {
         ventaServicioId: 'service-false-state', fechaReconciliacion: '2026-09-25',
+        idempotencyKey: 'service-false-state-0001',
         distribuciones: [{ cuentaId: 'bank-1', tipoPagoId: 'cash-1', monto: 100,
           moneda: 'USD', tasaCambio: 24, fechaTasa: '2026-09-25' }],
       },
@@ -416,6 +467,7 @@ describe('reconcileService — posteo transaccional móvil', () => {
 
     await AccountingReconciliationService.reconcileService({ user, input: {
       ventaServicioId: 'service-precision', fechaReconciliacion: '2026-09-25T12:00:00Z',
+      idempotencyKey: 'service-precision-0001',
       distribuciones: [{ cuentaId: 'bank-1', tipoPagoId: 'cash-1', monto: 0.005,
         moneda: 'USD', tasaCambio: 1.25 }],
     } });
@@ -535,7 +587,9 @@ describe('reconcileSale — saldo CxC con evidencia FX persistida', () => {
     tx.venta.findUnique.mockResolvedValue({
       tenantId: 'tenant-1', deletedAt: null, clienteId: 'client-1', factura: null,
     });
-    tx.cuentaBancaria.findFirst.mockResolvedValue({ cuentaId: 'bank-1', isActive: true, tipoCuenta: 'BANCO' });
+    tx.cuentaBancaria.findFirst.mockResolvedValue({
+      cuentaId: 'bank-1', isActive: true, tipoCuenta: 'BANCO', moneda: 'CUP',
+    });
     tx.tipoPago.findFirst.mockResolvedValue({ tipoId: 'cash-1', isActive: true });
     tx.cuentaBancaria.updateMany.mockResolvedValue({ count: 1 });
     tx.cuentaPorCobrar.findFirst.mockResolvedValue({
@@ -619,7 +673,7 @@ describe('reconcileSale — saldo CxC con evidencia FX persistida', () => {
       user,
       input: {
         ventaId: 'sale-1', cuentaId: 'bank-1', tipoPagoId: 'cash-1',
-        monto: 0.005, moneda: 'USD', tasaCambio: 1.25,
+        monto: 0.005, moneda: 'USD', tasaCambio: 1.26,
         fechaReconciliacion: '2026-09-25T12:00:00.000Z',
       },
     });
@@ -662,9 +716,19 @@ describe('reconcileSale — saldo CxC con evidencia FX persistida', () => {
     expect(update.data.estado).toBe('PARCIAL');
     expect(update.data.montoPagado.toString()).toBe('60');
     expect(update.data.montoPagadoFuncional.toString()).toBe('1500');
+    expect(tx.reconciliacionVenta.create.mock.calls[0]?.[0].data.montoCuenta.toString()).toBe('1000');
+    expect(tx.reconciliacionVenta.create.mock.calls[0]?.[0].data.monedaCuenta).toBe('CUP');
     const evento = postEvento.mock.calls[0][2];
     expect(evento.tipo).toBe('COBRO_CXC');
     expect(evento.auxiliares.diferenciaFx.toString()).toBe('40');
+    expect(tx.cuentaBancaria.updateMany).toHaveBeenCalledWith(expect.objectContaining({
+      data: { saldo: { increment: 1000 } },
+    }));
+    expect(auditLogStrict).toHaveBeenCalledWith(expect.objectContaining({
+      entidad: 'RECONCILIACION',
+      entidadId: 'rec-sale-1',
+      usuarioId: user.userId,
+    }), tx);
   });
 
   it('registra diferencia FX desfavorable como gasto sin alterar el saldo nominal', async () => {
@@ -705,5 +769,56 @@ describe('reconcileSale — saldo CxC con evidencia FX persistida', () => {
     expect(tx.cuentaBancaria.updateMany).not.toHaveBeenCalled();
     expect(tx.reconciliacionVenta.create).not.toHaveBeenCalled();
     expect(postEvento).not.toHaveBeenCalled();
+  });
+
+  it('rechaza cuenta en moneda tercera sin cotización funcional', async () => {
+    tx.cuentaPorCobrar.findFirst.mockResolvedValue(null);
+    tx.cuentaBancaria.findFirst.mockResolvedValue({
+      cuentaId: 'bank-1', tipoCuenta: 'BANCO', moneda: 'EUR', isActive: true,
+    });
+
+    await expect(AccountingReconciliationService.reconcileSale({
+      user,
+      input: {
+        ventaId: 'sale-1', cuentaId: 'bank-1', tipoPagoId: 'cash-1',
+        monto: 40, moneda: 'USD', tasaCambio: 25,
+        fechaReconciliacion: '2026-09-25T12:00:00.000Z',
+      },
+    })).rejects.toMatchObject({ code: 'FX_INSUFICIENTE' });
+
+    expect(tx.cuentaBancaria.updateMany).not.toHaveBeenCalled();
+    expect(tx.reconciliacionVenta.create).not.toHaveBeenCalled();
+  });
+
+  it('usa la política MLC para valorar un cobro y mover la cuenta en moneda nativa', async () => {
+    tx.tenantAccountingPolicy.findUnique.mockResolvedValue({
+      tenantId: 'tenant-1', functionalCurrencyCode: 'MLC',
+    });
+    tx.cuentaPorCobrar.findFirst.mockResolvedValue(null);
+    tx.cuentaBancaria.findFirst.mockResolvedValue({
+      cuentaId: 'bank-1', isActive: true, tipoCuenta: 'BANCO', moneda: 'MLC',
+    });
+    tx.reconciliacionVenta.create.mockImplementation(async ({ data }) => ({
+      ...data,
+      reconciliacionId: 'rec-mlc',
+    }));
+
+    await AccountingReconciliationService.reconcileSale({
+      user,
+      input: {
+        ventaId: 'sale-1', cuentaId: 'bank-1', tipoPagoId: 'cash-1',
+        monto: 40, moneda: 'USD', tasaCambio: 2.5,
+        fechaReconciliacion: '2026-09-25T12:00:00.000Z',
+      },
+    });
+
+    const reconciliacion = tx.reconciliacionVenta.create.mock.calls[0]?.[0].data;
+    expect(reconciliacion.functionalCurrency).toBe('MLC');
+    expect(reconciliacion.montoConvertido.toString()).toBe('100');
+    expect(reconciliacion.montoCuenta.toString()).toBe('100');
+    expect(reconciliacion.monedaCuenta).toBe('MLC');
+    expect(tx.cuentaBancaria.updateMany).toHaveBeenCalledWith(expect.objectContaining({
+      data: { saldo: { increment: 100 } },
+    }));
   });
 });
