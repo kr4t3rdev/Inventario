@@ -2545,9 +2545,32 @@ reabre FX-2/FX-4 por brechas reproducidas de propagación, Decimal/evidencia y f
   moneda/FX, transacción, idempotencia/retry, error de posting/auditoría y rollback SQL.
   Incluir web, Server Actions, móvil y workflows; los unit tests mock no cuentan como prueba
   física de rollback.
-- [ ] **R0.5-LEGACY — Resolver los cinco writers/exclusiones históricas y handlers huérfanos.**
-  Confirmar caller vigente antes de retirar/certificar; documentar la decisión en la matriz y
-  evitar que un canal legacy mantenga una segunda implementación financiera.
+  **Fase B 05-10:** matriz sistemática en `matriz-accept-r0.5.md` (32 callsites ×
+  adaptadores vivos × 8 dimensiones). 31 vivos en ✅ para actor/permiso, tenant, origen,
+  FX, tx y posting/auditoría; `reconciliarVentaDirecta` sin caller (decisión pendiente:
+  retirar o excluir formalmente). Gaps para Fase C:
+  - [x] G1: rollback físico por fallo de AuditLog en `pago-gastos-workflow` (trigger SQL
+    que falle el AuditLog dentro del tx; revierte saldo, obligación, reconciliación y asiento).
+    **Cerrado 05-10:** `pago-gastos-workflow-real.test.ts` 2/2; suite 52/52 archivos, 301/301 tests.
+  - [ ] G2: reintento/idempotencia física en `pago-gastos-workflow`, `mermas`, `restock`,
+    `produccion/completar` (sin evidencia), rutas web cash, `compras-servicios`,
+    transferencias/ajustes/capital y devengo directo de `venta-servicios` (parcial).
+  - [ ] G3: sesión HTTP real (Bearer 401/201) en `produccion/ordenes/[id]/completar`.
+  - [ ] G4: decidir `reconciliarVentaDirecta` (retirar con tombstone o excluir formalmente).
+  - [ ] G5: reintento por adaptador en `accounting-cash-operations-mutation-service`
+    (actions + mobile; la evidencia de carrera vive solo en el servicio).
+- [x] **R0.5-LEGACY — Resolver los cinco writers/exclusiones históricas y handlers huérfanos.**
+  **Cerrado 05-10:** verificadas las cinco tombstones de matriz (filas 8, 13–16): cero callers
+  productivos para los módulos legacy de reconciliación de servicios, préstamos cash y deudas
+  cash; se eliminaron `handlers-reconciliacion-servicios.ts`, `handlers-prestamos-cash.ts`,
+  `handlers-deudas-cash.ts` y el test exclusivo del handler de préstamos. Revisión de referencias
+  por símbolos y módulos tras la eliminación: cero importadores/callers; permanecen las rutas
+  web canónicas (ventas/cobros de servicio, crear/pagar préstamos y crear/pagar deudas). Matriz
+  filas 8, 13–16 conserva los tombstones y canales vivos correspondientes. Verificación:
+  `pnpm exec vitest run src/features/contabilidad-formal/__tests__/writers-matrix.test.ts
+  src/features/contabilidad/api` → 8 archivos, 44/44 tests.
+  `reconciliarVentaDirecta` sin caller sigue pendiente de decisión en R0.5-ACCEPT/G4; los otros
+  exports huérfanos de `api/handlers.ts` y `api/exchange-handlers.ts` siguen en R6-ORPHANS.
 
 ### R6 — Auditoría durable y despliegue
 
