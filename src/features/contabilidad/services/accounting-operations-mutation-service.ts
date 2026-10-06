@@ -1,10 +1,15 @@
 import { z } from 'zod';
 import { prisma } from '@/lib/prisma';
+import { Prisma } from '@/generated/prisma';
 import { ActionError } from '@/lib/server-actions';
 import { AuditLogService } from '@/lib/services/audit-log-service';
-import { requireTenant } from '@/lib/services/tenant-scope';
+import { requireFeature, requirePermission, requireTenant } from '@/lib/services/tenant-scope';
+import { buildPersistedAccountingAmount } from '@/features/contabilidad/services/accounting-reconciliation-service';
+import { resolveCrossQuote } from '@/features/contabilidad/domain/fx-cross-quote';
+import type { CrossQuoteResolution } from '@/features/contabilidad/domain/fx-cross-quote';
 import type { AuthenticatedUser } from '@/lib/auth-middleware';
 import { acquireAccountingTenantLock } from './accounting-tenant-lock-service';
+import { getRequiredTenantAccountingPolicy } from './tenant-accounting-policy-service';
 import { postEvento } from '@/features/contabilidad-formal/services/posting-engine';
 import {
   buildEventoAjusteBancario,
@@ -58,6 +63,7 @@ export const createCapitalInjectionSchema = z.object({
   socio: optionalText,
   entidadPrestamista: optionalText,
   tasaInteres: z.coerce.number().min(0).optional(),
+  tasaCambio: z.coerce.number().positive().optional(),
   plazoMeses: z.coerce.number().int().positive().optional(),
   fechaInicioPago: z.coerce.date().optional(),
   fechaOperacion: z.coerce.date().optional(),
@@ -83,6 +89,9 @@ const registerCapitalPaymentSchema = z.object({
   monto: z.coerce.number().positive(),
   cuentaBancariaId: z.string().min(1),
   tipoPagoId: z.string().min(1),
+  moneda: z.string().trim().min(1).optional(),
+  tasaCambio: z.coerce.number().positive().optional(),
+  fechaOperacion: z.coerce.date().optional(),
   observaciones: z.string().optional(),
 });
 
@@ -169,14 +178,20 @@ export const AccountingOperationsMutationService = {
   }) {
     const parsed = createBankTransferSchema.parse(input);
     const tenantId = requireTenant(user);
+    requireFeature(user, 'transferencias-bancarias', 'registrar transferencias bancarias');
+    requirePermission(user, 'financiero.contabilidad.acceder', 'registrar transferencias bancarias');
 
     if (parsed.cuentaOrigenId === parsed.cuentaDestinoId) {
       throw new ActionError('La cuenta origen y destino deben ser diferentes', 'VALIDATION_ERROR');
     }
 
     const [cuentaOrigen, cuentaDestino] = await Promise.all([
-      prisma.cuentaBancaria.findUnique({ where: { cuentaId: parsed.cuentaOrigenId } }),
-      prisma.cuentaBancaria.findUnique({ where: { cuentaId: parsed.cuentaDestinoId } }),
+      prisma.cuentaBancaria.findFirst({
+        where: { cuentaId: parsed.cuentaOrigenId, tenantId, isActive: true },
+      }),
+      prisma.cuentaBancaria.findFirst({
+        where: { cuentaId: parsed.cuentaDestinoId, tenantId, isActive: true },
+      }),
     ]);
 
     if (!cuentaOrigen) {
@@ -191,46 +206,141 @@ export const AccountingOperationsMutationService = {
     if (!cuentaDestino.isActive) {
       throw new ActionError('La cuenta destino no está activa', 'VALIDATION_ERROR');
     }
-    if (Number(cuentaOrigen.saldo) < parsed.montoOrigen) {
+    if (new Prisma.Decimal(cuentaOrigen.saldo).lt(new Prisma.Decimal(parsed.montoOrigen))) {
       throw new ActionError('Saldo insuficiente en la cuenta origen', 'VALIDATION_ERROR');
     }
 
-    let montoDestino = parsed.montoDestino || parsed.montoOrigen;
-    let tasaCambioFinal = parsed.tasaCambio;
+    const monedaOrigen = cuentaOrigen.moneda.trim().toUpperCase();
+    const monedaDestino = cuentaDestino.moneda.trim().toUpperCase();
+    const fechaTransferencia = new Date();
+    // La política funcional y la conversión se resuelven dentro de la transacción,
+    // después del lock del tenant (la moneda funcional solo se conoce tras leerla).
 
-    if (cuentaOrigen.moneda !== cuentaDestino.moneda || cuentaDestino.moneda !== 'CUP') {
-      if (!parsed.tasaCambio) {
-        throw new ActionError(
-          'Tasa de cambio requerida para transferencias entre diferentes monedas',
-          'VALIDATION_ERROR',
-        );
+    // Idempotencia (C3/G2): si el cliente provee numeroComprobante, se usa como clave.
+    let numeroComprobante = (input as { numeroComprobante?: string }).numeroComprobante?.trim();
+    if (!numeroComprobante) {
+      const lastTransferencia = await prisma.transferenciaBancaria.findFirst({
+        where: { tenantId },
+        orderBy: { numeroComprobante: 'desc' },
+        select: { numeroComprobante: true },
+      });
+
+      let nextNumber = 1;
+      if (lastTransferencia?.numeroComprobante) {
+        const lastNumber = Number.parseInt(lastTransferencia.numeroComprobante.replace(/\D/g, ''), 10);
+        nextNumber = lastNumber + 1;
       }
-      montoDestino = parsed.montoOrigen * parsed.tasaCambio;
-      tasaCambioFinal = parsed.tasaCambio;
+      numeroComprobante = `TRF-${nextNumber.toString().padStart(6, '0')}`;
     }
-
-    const lastTransferencia = await prisma.transferenciaBancaria.findFirst({
-      orderBy: { numeroComprobante: 'desc' },
-      select: { numeroComprobante: true },
-    });
-
-    let nextNumber = 1;
-    if (lastTransferencia?.numeroComprobante) {
-      const lastNumber = Number.parseInt(lastTransferencia.numeroComprobante.replace(/\D/g, ''), 10);
-      nextNumber = lastNumber + 1;
-    }
-    const numeroComprobante = `TRF-${nextNumber.toString().padStart(6, '0')}`;
 
     const transferencia = await prisma.$transaction(async (tx: any) => {
       await acquireAccountingTenantLock(tx, tenantId);
-      await tx.cuentaBancaria.update({
-        where: { cuentaId: parsed.cuentaOrigenId },
-        data: { saldo: { decrement: parsed.montoOrigen } },
+      const policy = await getRequiredTenantAccountingPolicy(tenantId, tx);
+      const monedaFuncional = policy.functionalCurrencyCode.trim().toUpperCase();
+      // FX-4: par cruzado (ninguna pata es la funcional). La cotización se resuelve
+      // del catálogo de tasas; no se acepta tasa manual para este caso.
+      const esCruzada =
+        monedaOrigen !== monedaDestino &&
+        monedaOrigen !== monedaFuncional &&
+        monedaDestino !== monedaFuncional;
+      if (esCruzada && parsed.tasaCambio != null) {
+        throw new ActionError(
+          'La cotización cruzada se resuelve del catálogo de tasas; no se acepta tasa manual',
+          'FX_INSUFICIENTE',
+        );
+      }
+      if (monedaOrigen !== monedaDestino && !esCruzada && parsed.tasaCambio == null) {
+        throw new ActionError('Tasa de cambio requerida para la transferencia', 'FX_INSUFICIENTE');
+      }
+      let crossQuote: CrossQuoteResolution | null = null;
+      if (esCruzada) {
+        crossQuote = await resolveCrossQuote({
+          client: tx,
+          from: monedaOrigen,
+          to: monedaDestino,
+          functionalCurrency: monedaFuncional,
+          at: fechaTransferencia,
+        });
+        if (!crossQuote || !crossQuote.functionalLeg) {
+          throw new ActionError(
+            'La transferencia entre dos monedas extranjeras requiere una cotización cruzada persistida',
+            'FX_INSUFICIENTE',
+          );
+        }
+      }
+      const pataFuncional = esCruzada ? crossQuote!.functionalLeg! : null;
+      const conversion = buildPersistedAccountingAmount(
+        parsed.montoOrigen,
+        monedaOrigen,
+        monedaOrigen === monedaFuncional
+          ? undefined
+          : esCruzada
+            ? pataFuncional!.rate
+            : parsed.tasaCambio,
+        esCruzada ? pataFuncional!.rateEffectiveAt : fechaTransferencia,
+        esCruzada ? pataFuncional!.catalogRateId : undefined,
+        monedaFuncional,
+        esCruzada
+          ? {
+              fxProvenanceKind: 'CATALOG_RATE',
+              crossQuote: {
+                rate: crossQuote!.rate.toFixed(),
+                fromCurrency: monedaOrigen,
+                toCurrency: monedaDestino,
+                kind: crossQuote!.kind,
+                catalogRateIds: crossQuote!.catalogRateIds,
+                rateEffectiveAt: crossQuote!.rateEffectiveAt.toISOString(),
+              },
+            }
+          : undefined,
+      );
+      if (!conversion.fxEvidence || conversion.montoConvertido == null) {
+        throw new ActionError('Falta evidencia FX funcional para la transferencia', 'FX_INSUFICIENTE');
+      }
+      // Aritmética decimal exacta: la pata extranjera de una transferencia funcional→extranjera
+      // se deriva por división y se redondea a 4 decimales (escala de las columnas de cuenta);
+      // la pata destino de un par cruzado se deriva por multiplicación con la tasa cruzada.
+      const montoOrigenDecimal = new Prisma.Decimal(parsed.montoOrigen);
+      const tasaParaDivision = parsed.tasaCambio != null ? new Prisma.Decimal(parsed.tasaCambio) : null;
+      const montoDestino =
+        monedaOrigen === monedaDestino
+          ? montoOrigenDecimal
+          : monedaDestino === monedaFuncional
+            ? (conversion.montoConvertido as Prisma.Decimal)
+            : esCruzada
+              ? montoOrigenDecimal
+                  .mul(crossQuote!.rate)
+                  .toDecimalPlaces(4, Prisma.Decimal.ROUND_HALF_UP)
+              : montoOrigenDecimal
+                .div(tasaParaDivision as Prisma.Decimal)
+                .toDecimalPlaces(4, Prisma.Decimal.ROUND_HALF_UP);
+      if (parsed.montoDestino != null) {
+        const diferenciaDestino = new Prisma.Decimal(parsed.montoDestino).sub(montoDestino).abs();
+        if (diferenciaDestino.gt('0.0001')) {
+          throw new ActionError(
+            'El monto destino no coincide con la tasa aplicada a la transferencia',
+            'VALIDATION_ERROR',
+          );
+        }
+      }
+      const tasaCambioFinal = esCruzada ? crossQuote!.rate : (tasaParaDivision ?? conversion.tasaCambio);
+      const debitoOrigen = await tx.cuentaBancaria.updateMany({
+        where: {
+          cuentaId: parsed.cuentaOrigenId, tenantId, isActive: true,
+          saldo: { gte: montoOrigenDecimal.toNumber() },
+        },
+        data: { saldo: { decrement: montoOrigenDecimal.toNumber() } },
       });
-      await tx.cuentaBancaria.update({
-        where: { cuentaId: parsed.cuentaDestinoId },
-        data: { saldo: { increment: montoDestino } },
+      if (debitoOrigen.count !== 1) {
+        throw new ActionError('Cuenta origen no disponible o saldo insuficiente', 'VALIDATION_ERROR');
+      }
+      const creditoDestino = await tx.cuentaBancaria.updateMany({
+        where: { cuentaId: parsed.cuentaDestinoId, tenantId, isActive: true },
+        data: { saldo: { increment: montoDestino.toNumber() } },
       });
+      if (creditoDestino.count !== 1) {
+        throw new ActionError('Cuenta destino no disponible', 'VALIDATION_ERROR');
+      }
 
       const creada = await tx.transferenciaBancaria.create({
         data: {
@@ -238,11 +348,14 @@ export const AccountingOperationsMutationService = {
           cuentaOrigen: { connect: { cuentaId: parsed.cuentaOrigenId } },
           cuentaDestino: { connect: { cuentaId: parsed.cuentaDestinoId } },
           tenant: { connect: { tenantId } },
-          montoOrigen: parsed.montoOrigen,
-          monedaOrigen: cuentaOrigen.moneda,
+          montoOrigen: montoOrigenDecimal,
+          monedaOrigen,
           montoDestino,
-          monedaDestino: cuentaDestino.moneda,
+          monedaDestino,
           tasaCambio: tasaCambioFinal,
+          montoConvertido: conversion.montoConvertido,
+          ...conversion.fxEvidence,
+          fechaTransferencia,
           motivo: parsed.motivo,
           descripcion: parsed.descripcion,
           comprobanteGenerado: true,
@@ -264,34 +377,38 @@ export const AccountingOperationsMutationService = {
         { tenantId, userId: user.userId },
         buildEventoTransferenciaBancaria({
           transferenciaId: creada.transferenciaId,
-          montoOrigen: parsed.montoOrigen,
-          monedaOrigen: cuentaOrigen.moneda,
+          montoOrigen: montoOrigenDecimal,
+          monedaOrigen,
           montoDestino,
-          monedaDestino: cuentaDestino.moneda,
-          tasaCambio: tasaCambioFinal ?? null,
+          monedaDestino,
+          tasaCambio: conversion.tasaCambio,
+          montoFuncional: conversion.montoConvertido,
+          monedaFuncionalCodigo: creada.functionalCurrency ?? 'CUP',
+          fxEvidenceFingerprint: creada.fxEvidenceFingerprint ?? null,
+          fecha: creada.fechaTransferencia,
           referencia: numeroComprobante,
           descripcion: parsed.motivo,
         }),
       );
 
-      return creada;
-    });
+      await AuditLogService.logStrict({
+        accion: 'CREATE',
+        entidad: 'TRANSFERENCIA',
+        entidadId: creada.transferenciaId,
+        usuarioId: user.userId,
+        detalles: {
+          numeroComprobante: creada.numeroComprobante,
+          cuentaOrigen: creada.cuentaOrigen.nombreBanco,
+          cuentaDestino: creada.cuentaDestino.nombreBanco,
+          montoOrigen: Number(creada.montoOrigen),
+          monedaOrigen: creada.monedaOrigen,
+          montoDestino: Number(creada.montoDestino),
+          monedaDestino: creada.monedaDestino,
+          motivo: creada.motivo,
+        },
+      }, tx);
 
-    await AuditLogService.log({
-      accion: 'CREATE',
-      entidad: 'TRANSFERENCIA',
-      entidadId: transferencia.transferenciaId,
-      usuarioId: user.userId,
-      detalles: {
-        numeroComprobante: transferencia.numeroComprobante,
-        cuentaOrigen: transferencia.cuentaOrigen.nombreBanco,
-        cuentaDestino: transferencia.cuentaDestino.nombreBanco,
-        montoOrigen: Number(transferencia.montoOrigen),
-        monedaOrigen: transferencia.monedaOrigen,
-        montoDestino: Number(transferencia.montoDestino),
-        monedaDestino: transferencia.monedaDestino,
-        motivo: transferencia.motivo,
-      },
+      return creada;
     });
 
     return {
@@ -314,43 +431,68 @@ export const AccountingOperationsMutationService = {
   }) {
     const parsed = createBankAdjustmentSchema.parse(input);
     const tenantId = requireTenant(user);
+    requireFeature(user, 'contabilidad', 'crear ajustes bancarios');
+    requirePermission(user, 'financiero.contabilidad.acceder', 'crear ajustes bancarios');
 
-    const cuenta = await prisma.cuentaBancaria.findUnique({ where: { cuentaId: parsed.cuentaId } });
+    const cuenta = await prisma.cuentaBancaria.findFirst({
+      where: { cuentaId: parsed.cuentaId, tenantId, isActive: true },
+    });
     if (!cuenta) {
       throw new ActionError('Cuenta bancaria no encontrada', 'CUENTA_NO_ENCONTRADA');
     }
     if (!cuenta.isActive) {
       throw new ActionError('La cuenta bancaria está inactiva', 'CUENTA_INACTIVA');
     }
+    if (cuenta.moneda.toUpperCase() !== parsed.moneda.toUpperCase()) {
+      throw new ActionError('La moneda del ajuste debe coincidir con la cuenta bancaria', 'VALIDATION_ERROR');
+    }
 
-    const montoAjuste = parsed.tipo === 'ingreso' ? parsed.monto : -parsed.monto;
-    const nuevoSaldo = Number(cuenta.saldo) + montoAjuste;
-    const saldoNegativo = nuevoSaldo < 0;
+    const montoAjuste = parsed.tipo === 'ingreso'
+      ? new Prisma.Decimal(parsed.monto)
+      : new Prisma.Decimal(parsed.monto).neg();
+    const nuevoSaldo = new Prisma.Decimal(cuenta.saldo).add(montoAjuste);
+    const saldoNegativo = nuevoSaldo.lt(0);
+    const fechaOperacion = parsed.fechaOperacion ?? new Date();
 
     const resultado = await prisma.$transaction(async (tx: any) => {
       await acquireAccountingTenantLock(tx, tenantId);
+      const policy = await getRequiredTenantAccountingPolicy(tenantId, tx);
+      const monedaFuncional = policy.functionalCurrencyCode.trim().toUpperCase();
+      const conversion = buildPersistedAccountingAmount(
+        parsed.monto,
+        parsed.moneda,
+        parsed.tasaCambio,
+        fechaOperacion,
+        undefined,
+        monedaFuncional,
+      );
+      if (!conversion.fxEvidence || conversion.montoConvertido == null) {
+        throw new ActionError('Falta evidencia de conversión para el ajuste', 'FX_INSUFICIENTE');
+      }
       const ajuste = await tx.ajusteBancario.create({
         data: {
           cuentaBancaria: { connect: { cuentaId: parsed.cuentaId } },
           tipo: parsed.tipo,
            monto: parsed.monto,
            moneda: parsed.moneda,
-           tasaCambio: parsed.moneda.toUpperCase() === 'CUP' ? 1 : parsed.tasaCambio,
-           montoConvertido: parsed.moneda.toUpperCase() === 'CUP'
-             ? parsed.monto
-             : parsed.tasaCambio ? parsed.monto * parsed.tasaCambio : null,
+           tasaCambio: conversion.tasaCambio,
+           montoConvertido: conversion.montoConvertido,
+           ...conversion.fxEvidence,
            descripcion: parsed.descripcion,
           motivo: parsed.motivo,
           realizadoPor: user.userId,
-          fechaOperacion: parsed.fechaOperacion ?? new Date(),
+           fechaOperacion,
           tenant: { connect: { tenantId } },
         },
       });
 
-      await tx.cuentaBancaria.update({
-        where: { cuentaId: parsed.cuentaId },
-        data: { saldo: nuevoSaldo },
+      const saldoActualizado = await tx.cuentaBancaria.updateMany({
+        where: { cuentaId: parsed.cuentaId, tenantId, isActive: true },
+        data: { saldo: { increment: montoAjuste.toNumber() } },
       });
+      if (saldoActualizado.count !== 1) {
+        throw new ActionError('Cuenta bancaria no encontrada', 'CUENTA_NO_ENCONTRADA');
+      }
 
       // Capa de contabilidad formal (CTA-1): ajuste bancario manual.
       await postEvento(
@@ -360,43 +502,41 @@ export const AccountingOperationsMutationService = {
           ajusteId: ajuste.ajusteId,
           tipo: parsed.tipo,
           valoracion: {
-            monto: parsed.monto,
-            moneda: parsed.moneda,
-            montoFuncional:
-              parsed.moneda.toUpperCase() === 'CUP'
-                ? parsed.monto
-                : parsed.tasaCambio
-                  ? parsed.monto * parsed.tasaCambio
-                  : parsed.monto,
-            tasaCambio: parsed.moneda.toUpperCase() === 'CUP' ? 1 : parsed.tasaCambio,
+            monto: ajuste.monto,
+            moneda: ajuste.moneda,
+            montoFuncional: ajuste.montoConvertido ?? undefined,
+            monedaFuncionalCodigo: ajuste.functionalCurrency ?? 'CUP',
+            tasaCambio: ajuste.tasaCambio,
+            fxEvidenceFingerprint: ajuste.fxEvidenceFingerprint ?? null,
           },
           descripcion: parsed.descripcion ?? undefined,
+          fecha: ajuste.fechaOperacion ?? fechaOperacion,
         }),
       );
 
-      return ajuste;
-    });
+      await AuditLogService.logStrict({
+        accion: 'CREATE',
+        entidad: 'AJUSTE_BANCARIO',
+        entidadId: ajuste.ajusteId,
+        usuarioId: user.userId,
+        detalles: {
+          tipo: parsed.tipo,
+          monto: parsed.monto,
+          moneda: parsed.moneda,
+          cuenta: cuenta.nombreBanco,
+          motivo: parsed.motivo,
+          saldoAnterior: Number(cuenta.saldo),
+          saldoNuevo: nuevoSaldo.toNumber(),
+        },
+      }, tx);
 
-    await AuditLogService.log({
-      accion: 'CREATE',
-      entidad: 'AJUSTE_BANCARIO',
-      entidadId: resultado.ajusteId,
-      usuarioId: user.userId,
-      detalles: {
-        tipo: parsed.tipo,
-        monto: parsed.monto,
-        moneda: parsed.moneda,
-        cuenta: cuenta.nombreBanco,
-        motivo: parsed.motivo,
-        saldoAnterior: Number(cuenta.saldo),
-        saldoNuevo: nuevoSaldo,
-      },
+      return ajuste;
     });
 
     return {
       ajuste: resultado,
       saldoAnterior: Number(cuenta.saldo),
-      saldoNuevo: nuevoSaldo,
+      saldoNuevo: nuevoSaldo.toNumber(),
       advertenciaSaldoNegativo: saldoNegativo,
       message: saldoNegativo
         ? 'Ajuste creado exitosamente. ADVERTENCIA: El saldo de la cuenta es negativo.'
@@ -413,6 +553,8 @@ export const AccountingOperationsMutationService = {
   }) {
     const parsed = createCapitalInjectionSchema.parse(input);
     const tenantId = requireTenant(user);
+    requireFeature(user, 'inyeccion-capital', 'registrar inyecciones de capital');
+    requirePermission(user, 'financiero.contabilidad.acceder', 'registrar inyecciones de capital');
 
     const inyeccion = await prisma.$transaction(async (tx: any) => {
       await acquireAccountingTenantLock(tx, tenantId);
@@ -441,17 +583,42 @@ export const AccountingOperationsMutationService = {
         );
       }
 
+      const fechaOperacion = parsed.fechaOperacion ?? new Date();
+      const policy = await getRequiredTenantAccountingPolicy(tenantId, tx);
+      const monedaFuncional = policy.functionalCurrencyCode.trim().toUpperCase();
+      const conversion = buildPersistedAccountingAmount(
+        new Prisma.Decimal(parsed.montoRecibido),
+        parsed.moneda,
+        parsed.tasaCambio,
+        fechaOperacion,
+        undefined,
+        monedaFuncional,
+      );
+      if (!conversion.fxEvidence || conversion.montoConvertido == null) {
+        throw new ActionError('Falta evidencia de conversión para el aporte', 'FX_INSUFICIENTE');
+      }
+
       const isDebt = parsed.tipo === 'DEUDA_EXTERNA';
+      const montoRecibidoDecimal = new Prisma.Decimal(parsed.montoRecibido);
       const montoInteres = isDebt
-        ? parsed.montoRecibido * ((parsed.tasaInteres ?? 0) / 100)
+        ? montoRecibidoDecimal
+            .mul(new Prisma.Decimal(parsed.tasaInteres ?? 0).div(100))
+            .toDecimalPlaces(2, Prisma.Decimal.ROUND_HALF_UP)
         : null;
-      const montoTotalDeuda = isDebt ? parsed.montoRecibido + (montoInteres ?? 0) : null;
+      const montoTotalDeuda = isDebt
+        ? montoRecibidoDecimal
+            .add(montoInteres as Prisma.Decimal)
+            .toDecimalPlaces(2, Prisma.Decimal.ROUND_HALF_UP)
+        : null;
 
       const created = await tx.inyeccionCapital.create({
         data: {
           tenantId,
-          montoRecibido: parsed.montoRecibido,
+          montoRecibido: montoRecibidoDecimal,
           moneda: parsed.moneda,
+          tasaCambio: conversion.tasaCambio,
+          montoConvertido: conversion.montoConvertido,
+          ...conversion.fxEvidence,
           tipo: parsed.tipo,
           cuentaId: parsed.cuentaId,
           descripcion: parsed.descripcion,
@@ -463,22 +630,25 @@ export const AccountingOperationsMutationService = {
           saldoPendiente: montoTotalDeuda,
           plazoMeses: isDebt ? parsed.plazoMeses : null,
           fechaInicioPago: isDebt ? parsed.fechaInicioPago : null,
-          fechaRegistro: parsed.fechaOperacion ?? new Date(),
+          fechaRegistro: fechaOperacion,
           estado: isDebt ? 'ACTIVA' : null,
         },
       });
 
       await tx.cuentaBancaria.update({
         where: { cuentaId: parsed.cuentaId },
-        data: { saldo: { increment: parsed.montoRecibido } },
+        data: { saldo: { increment: montoRecibidoDecimal.toNumber() } },
       });
 
       // Capa de contabilidad formal (CTA-1): aporte propio sube capital social;
       // deuda externa sube deudas recibidas (mismo dinero entrando a caja).
       const valoracionCapital = {
-        monto: parsed.montoRecibido,
-        moneda: parsed.moneda,
-        montoFuncional: parsed.montoRecibido,
+        monto: created.montoRecibido,
+        moneda: created.moneda,
+        montoFuncional: created.montoConvertido ?? undefined,
+        monedaFuncionalCodigo: created.functionalCurrency ?? 'CUP',
+        tasaCambio: created.tasaCambio,
+        fxEvidenceFingerprint: created.fxEvidenceFingerprint ?? null,
       };
       await postEvento(
         tx,
@@ -488,12 +658,14 @@ export const AccountingOperationsMutationService = {
               deudaId: created.id,
               valoracion: valoracionCapital,
               tipoCuenta: cuenta.tipoCuenta,
+              fecha: created.fechaRegistro,
               descripcion: parsed.descripcion ?? undefined,
             })
           : buildEventoInyeccionCapital({
               inyeccionId: created.id,
               valoracion: valoracionCapital,
               tipoCuenta: cuenta.tipoCuenta,
+              fecha: created.fechaRegistro,
               descripcion: parsed.descripcion ?? undefined,
             }),
       );
@@ -526,6 +698,8 @@ export const AccountingOperationsMutationService = {
   }) {
     const parsed = registerCapitalPaymentSchema.parse(input);
     const tenantId = requireTenant(user);
+    requireFeature(user, 'inyeccion-capital', 'registrar pagos de deuda de capital');
+    requirePermission(user, 'financiero.contabilidad.acceder', 'registrar pagos de deuda de capital');
 
     const pago = await prisma.$transaction(async (tx: any) => {
       await acquireAccountingTenantLock(tx, tenantId);
@@ -533,7 +707,7 @@ export const AccountingOperationsMutationService = {
       // InyeccionCapital tiene tenantId propio (AS-05 ola 3); se busca también por cuenta bancaria como defensa.
       const inyeccion = await tx.inyeccionCapital.findFirst({
         where: { id: parsed.inyeccionId, cuentaBancaria: { tenantId } },
-        select: { id: true, tipo: true, saldoPendiente: true, pagos: { select: { id: true } } },
+        select: { id: true, tipo: true, moneda: true, saldoPendiente: true, pagos: { select: { id: true } } },
       });
 
       if (!inyeccion) {
@@ -545,7 +719,7 @@ export const AccountingOperationsMutationService = {
 
       const cuenta = await tx.cuentaBancaria.findFirst({
         where: { cuentaId: parsed.cuentaBancariaId, tenantId },
-        select: { cuentaId: true, isActive: true, moneda: true },
+        select: { cuentaId: true, isActive: true, moneda: true, tipoCuenta: true },
       });
       if (!cuenta) {
         throw new ActionError('Cuenta bancaria no encontrada', 'NOT_FOUND');
@@ -554,9 +728,28 @@ export const AccountingOperationsMutationService = {
         throw new ActionError('La cuenta bancaria está inactiva', 'VALIDATION_ERROR');
       }
 
-      const saldoPendiente = Number(inyeccion.saldoPendiente ?? 0);
-      if (parsed.monto > saldoPendiente) {
+      const monedaPago = (parsed.moneda ?? cuenta.moneda).toUpperCase();
+      if (monedaPago !== cuenta.moneda.toUpperCase()) {
+        throw new ActionError('La moneda del pago debe coincidir con la cuenta bancaria', 'VALIDATION_ERROR');
+      }
+      const monedaDeuda = (inyeccion.moneda ?? 'CUP').toUpperCase();
+      if (monedaPago !== monedaDeuda) {
+        throw new ActionError('La moneda del pago debe coincidir con la moneda de la deuda', 'VALIDATION_ERROR');
+      }
+
+      const montoPagoDecimal = new Prisma.Decimal(parsed.monto);
+      const saldoPendiente = new Prisma.Decimal(inyeccion.saldoPendiente ?? 0);
+      if (montoPagoDecimal.gt(saldoPendiente)) {
         throw new ActionError('El pago excede el saldo pendiente de la deuda', 'VALIDATION_ERROR');
+      }
+      const policy = await getRequiredTenantAccountingPolicy(tenantId, tx);
+      const monedaFuncional = policy.functionalCurrencyCode.trim().toUpperCase();
+      const fechaPago = parsed.fechaOperacion ?? new Date();
+      const conversion = buildPersistedAccountingAmount(
+        montoPagoDecimal, monedaPago, parsed.tasaCambio, fechaPago, undefined, monedaFuncional,
+      );
+      if (!conversion.fxEvidence || conversion.montoConvertido == null) {
+        throw new ActionError('Falta evidencia de conversión para el pago de capital', 'FX_INSUFICIENTE');
       }
 
       // PagoDeuda no tiene columna de tipo de pago: se acepta `tipoPagoId` para
@@ -565,23 +758,31 @@ export const AccountingOperationsMutationService = {
         data: {
           tenantId,
           inyeccionId: parsed.inyeccionId,
-          montoPagado: parsed.monto,
+          montoPagado: montoPagoDecimal,
+          moneda: monedaPago,
+          tasaCambio: conversion.tasaCambio,
+          montoConvertido: conversion.montoConvertido,
+          ...conversion.fxEvidence,
+          fechaPago,
           cuentaId: parsed.cuentaBancariaId,
           numeroCuota: inyeccion.pagos.length + 1,
           observaciones: parsed.observaciones,
         },
       });
 
-      await tx.cuentaBancaria.update({
-        where: { cuentaId: parsed.cuentaBancariaId },
-        data: { saldo: { decrement: parsed.monto } },
+      const saldoActualizado = await tx.cuentaBancaria.updateMany({
+        where: { cuentaId: parsed.cuentaBancariaId, tenantId, isActive: true },
+        data: { saldo: { decrement: montoPagoDecimal.toNumber() } },
       });
+      if (saldoActualizado.count !== 1) {
+        throw new ActionError('Cuenta bancaria no encontrada', 'NOT_FOUND');
+      }
 
       await tx.inyeccionCapital.update({
         where: { id: parsed.inyeccionId },
         data: {
-          saldoPendiente: { decrement: parsed.monto },
-          ...(parsed.monto >= saldoPendiente ? { estado: 'PAGADA' as const } : {}),
+          saldoPendiente: { decrement: montoPagoDecimal },
+          ...(montoPagoDecimal.gte(saldoPendiente) ? { estado: 'PAGADA' as const } : {}),
         },
       });
 
@@ -592,10 +793,15 @@ export const AccountingOperationsMutationService = {
         buildEventoPagoDeudaCapital({
           pagoDeudaId: created.id,
           valoracion: {
-            monto: parsed.monto,
-            moneda: cuenta.moneda ?? 'CUP',
-            montoFuncional: parsed.monto,
+            monto: created.montoPagado,
+            moneda: created.moneda,
+            montoFuncional: created.montoConvertido ?? undefined,
+            monedaFuncionalCodigo: created.functionalCurrency ?? 'CUP',
+            tasaCambio: created.tasaCambio,
+            fxEvidenceFingerprint: created.fxEvidenceFingerprint ?? null,
           },
+          tipoCuenta: cuenta.tipoCuenta,
+          fecha: created.fechaPago,
           descripcion: parsed.observaciones ?? undefined,
         }),
       );

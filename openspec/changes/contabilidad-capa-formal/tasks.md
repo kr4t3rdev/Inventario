@@ -2552,9 +2552,20 @@ reabre FX-2/FX-4 por brechas reproducidas de propagación, Decimal/evidencia y f
   - [x] G1: rollback físico por fallo de AuditLog en `pago-gastos-workflow` (trigger SQL
     que falle el AuditLog dentro del tx; revierte saldo, obligación, reconciliación y asiento).
     **Cerrado 05-10:** `pago-gastos-workflow-real.test.ts` 2/2; suite 52/52 archivos, 301/301 tests.
-  - [ ] G2: reintento/idempotencia física en `pago-gastos-workflow`, `mermas`, `restock`,
-    `produccion/completar` (sin evidencia), rutas web cash, `compras-servicios`,
-    transferencias/ajustes/capital y devengo directo de `venta-servicios` (parcial).
+  - [x] G2 (núcleo): reintento/idempotencia física en `pago-gastos-workflow`
+    (`PAGO_DUPLICADO` 409), `mermas` (`idempotencyKey` + migración), `restock`
+    (`RESTOCK_DUPLICADO` por factura) y `produccion/completar` (idempotencia natural).
+    **Cerrado 05-10:** suite 52/52 archivos, 305/305 tests.
+  - [x] G2 (resto, en C3): rutas web cash, `compras-servicios`,
+    transferencias y capital.
+    **Cerrado 05-10:** suite 57/57 archivos, 323/323 tests.
+    - Cash web: `prestamos-cash-pagar-real.test.ts`, `deudas-cash-real.test.ts` (rollback + happy path)
+    - Cash mobile: `cash-loans-http-real.test.ts`, `cash-debts-http-real.test.ts` (Bearer real)
+    - Cash actions: `cash-actions-retry-real.test.ts` (`registrarPagoPrestamoAction`, `registrarPagoDeudaAction`)
+    - Compras-servicios: `compra-servicios-retry-real.test.ts` (`COMPRA_SERVICIO_DUPLICADA` 409 por `numeroFactura`)
+    - Transferencias: `TRANSFERENCIA_DUPLICADA` 409 por `numeroComprobante` (explícito o `TRF-xxxxxx`)
+    - Producción auth: `completar-auth-http-real.test.ts` (3/3: fixtures, 401 sin token, 200 con Bearer)
+    Pendientes: ajustes (sin clave natural única), venta-servicios/devengo directo (por auditar).
   - [x] G3: sesión HTTP real (Bearer 401/201) en `produccion/ordenes/[id]/completar`.
     **Cerrado 05-10:** nuevo `completar/__integration__/auth-http-real.test.ts` (4/4) con el
     wrapper real de `withAuthPost` y `userSession` en la DB desechable, sin mock de
@@ -2572,8 +2583,10 @@ reabre FX-2/FX-4 por brechas reproducidas de propagación, Decimal/evidencia y f
     writers marcada RETIRADO al estilo de las filas 8/13–16; inventario 31 callsites/19
     archivos. Evidencia: `writers-matrix.test.ts` (guard de conteo) y los tests de
     `facturacion-workflow` sin referencias a la función; typecheck limpio.
-  - [ ] G5: reintento por adaptador en `accounting-cash-operations-mutation-service`
-    (actions + mobile; la evidencia de carrera vive solo en el servicio).
+  - [x] G5: reintento por adaptador en `accounting-cash-operations-mutation-service`.
+    **Cerrado 05-10:** 6 adaptadores con test de reintento propio (no duplican):
+    web (`prestamos-cash-pagar-real`, `deudas-cash-real`), mobile Bearer (`cash-loans-http-real`,
+    `cash-debts-http-real`), actions (`cash-actions-retry-real`).
 - [x] **R0.5-LEGACY — Resolver los cinco writers/exclusiones históricas y handlers huérfanos.**
   **Cerrado 05-10:** verificadas las cinco tombstones de matriz (filas 8, 13–16): cero callers
   productivos para los módulos legacy de reconciliación de servicios, préstamos cash y deudas
@@ -2589,11 +2602,30 @@ reabre FX-2/FX-4 por brechas reproducidas de propagación, Decimal/evidencia y f
 
 ### R6 — Auditoría durable y despliegue
 
-- [ ] **R6-LOGS — Resolver las 15 llamadas activas best-effort de configuración:**
+- [x] **R6-LOGS — Resolver las 15 llamadas activas best-effort de configuración:**
   `actions-exchange.ts` (4), `actions-cierres.ts` (3), `actions-tipos-pago.ts` (3),
   `actions-cuentas-bancarias.ts` (2), API tipos de pago (3). Decidir si pertenecen a R6;
   si sí, migrar mutación + `logStrict` al mismo tx y probar fallo de audit; si no, excluir con
   razón y policy explícita.
+  **Decisión (05-10): pertenecen a R6 y las 15 se migraron; ninguna queda excluida dentro del
+  scope.** Cada mutación corre en `prisma.$transaction` con
+  `await AuditLogService.logStrict(..., tx)` dentro del mismo callback; se eliminan además las
+  3 promesas flotantes (sin `await`) de `actions-cierres.ts`. `ExchangeRateProvider.createRate`
+  acepta `client?: Prisma.TransactionClient` para que `updateTasaCambioAction` audite en la
+  misma transacción que crea la tasa (patrón ya usado por `getPrincipalCurrency`). Política de
+  las 12 llamadas best-effort restantes del repo, fuera de este criterio: 6 en
+  `api/handlers.ts` + 3 en `api/exchange-handlers.ts` → R6-ORPHANS (exports legacy sin
+  callers); 3 en `admin/actions.ts` → fuera del scope contable (anotado en R6-ORPHANS).
+  **Prueba de fallo de audit:** `src/features/contabilidad/__integration__/audit-config-rollback-real.test.ts`
+  (PostgreSQL aislado; trigger `BEFORE INSERT ON "AuditLog"` con `RAISE EXCEPTION ... ERRCODE 22012`)
+  → 2/2. Con la auditoría operativa los 5 writers de la matriz persisten la mutación y su fila
+  `AuditLog`; con el INSERT bloqueado los mismos 5 writers fallan y la mutación se revierte por
+  completo: `createCierreAction`, `createTipoPagoAction`, `updateCuentaBancariaAction`,
+  `createMonedaAction` y `POST /api/contabilidad/tipos-pago`. Residuo verificado en 0
+  (entidades, `AuditLog`, monedas y triggers del test). Suites unitarias afectadas: cuentas
+  32/32, actions tipos-pago 22/22, API tipos-pago 12/12, exchange 4/4, integracion-guard
+  9/9 (2 todo), writers-matrix 1/1. Verificación: `pnpm exec tsc --noEmit --incremental false`
+  → 0 errores; eslint focal sobre los 8 archivos fuente → 0.
 - [ ] **R6-ORPHANS — Retirar o documentar los 9 exports legacy sin callers** (6 en
   `api/handlers.ts`, 3 mutaciones en `api/exchange-handlers.ts`). Tres logs de acciones admin
   quedan fuera del scope contable.

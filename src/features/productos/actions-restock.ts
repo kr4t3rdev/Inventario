@@ -4,11 +4,15 @@ import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import { withAction, ActionError } from "@/lib/server-actions";
 import { prisma } from "@/lib/prisma";
-import { requireTenant, requirePermission } from "@/lib/services/tenant-scope";
+import { Prisma } from "@/generated/prisma";
+import { requireTenant, requirePermission, requireFeature } from "@/lib/services/tenant-scope";
 import { withPeriodValidation } from "@/lib/services/with-period-validation";
 import { upsertStockUbicacion } from "@/lib/services/stock-ubicacion-service";
 import { postEvento } from '@/features/contabilidad-formal/services/posting-engine';
 import { buildEventoEgreso } from '@/features/contabilidad-formal/lib/event-builders';
+import { buildPersistedAccountingAmount } from '@/features/contabilidad/services/accounting-reconciliation-service';
+import { resolveAccountingAccountMovement } from '@/features/contabilidad/services/accounting-account-movement-valuation';
+import { getRequiredTenantAccountingPolicy } from '@/features/contabilidad/services/tenant-accounting-policy-service';
 import { executeProductInstanceCreationWorkflow } from "@/lib/restock-utils";
 import { recordCostChange, CostChangeReason } from "@/lib/cost-history-utils";
 import { restockSchema } from "./schemas";
@@ -63,6 +67,7 @@ export const restockProductoAction = withAction(
 		() => new Date(),
 		async (input: RestockInput, user: AuthenticatedUser) => {
 			requirePermission(user, 'inventario.productos.restock', 'hacer restock de productos');
+			requireFeature(user, 'restock', 'realizar restock de productos');
 			const parsed = restockSchema.parse(input);
 			const {
 				productoId,
@@ -98,6 +103,27 @@ export const restockProductoAction = withAction(
 
 			if (!producto) {
 				throw new ActionError("Producto no encontrado", "NOT_FOUND");
+			}
+			if (producto.tenantId !== tenantId) {
+				throw new ActionError("Producto no encontrado", "NOT_FOUND");
+			}
+
+			// ── Idempotencia: si se provee número de factura, un reintento con la
+			// misma factura se rechaza en lugar de duplicar el restock (gasto,
+			// stock, asiento). Sin factura provista cada llamada genera su propio
+			// número (RESTOCK-<timestamp>) y no colisiona.
+			const numeroFacturaNormalizado = numeroFactura?.trim();
+			if (numeroFacturaNormalizado) {
+				const compraExistente = await prisma.gastoCompra.findFirst({
+					where: { tenantId, numeroFactura: numeroFacturaNormalizado },
+					select: { gastoCompraId: true },
+				});
+				if (compraExistente) {
+					throw new ActionError(
+						`Ya existe un restock registrado con la factura ${numeroFacturaNormalizado}`,
+						"RESTOCK_DUPLICADO",
+					);
+				}
 			}
 
 			// ── 2. Ejecutar workflow de instancia ──
@@ -175,7 +201,7 @@ export const restockProductoAction = withAction(
 
 						const targetProducto = newProductInstance;
 						const costPrice = precioCosto ?? targetProducto.precioCosto;
-						const totalCost = cantidad * costPrice;
+						const totalCost = new Prisma.Decimal(cantidad).mul(costPrice);
 
 						// GastoCompra asociado a la nueva instancia
 						gastoCompra = await tx.gastoCompra.create({
@@ -184,7 +210,7 @@ export const restockProductoAction = withAction(
 								vendorId: targetProducto.vendorId!,
 								cantidad,
 								precioUnitario: costPrice,
-								total: totalCost,
+								total: totalCost.toNumber(),
 								fechaCompra: now,
 								descripcion:
 									descripcion || `Restock - ${targetProducto.nombre}`,
@@ -204,7 +230,7 @@ export const restockProductoAction = withAction(
 									facturaUrl: facturaUrl || "",
 									cantidad,
 									precioUnitario: costPrice,
-									total: totalCost,
+									total: totalCost.toNumber(),
 									formaPago: formaPago || "PAGO_COMPLETO",
 									estado: estado || "PAGADA",
 									tipoOperacion: "RESTOCK",
@@ -311,7 +337,7 @@ export const restockProductoAction = withAction(
 						}
 
 						const costPrice = precioCosto ?? producto.precioCosto;
-						const totalCost = cantidad * costPrice;
+						const totalCost = new Prisma.Decimal(cantidad).mul(costPrice);
 
 						// GastoCompra
 						gastoCompra = await tx.gastoCompra.create({
@@ -320,7 +346,7 @@ export const restockProductoAction = withAction(
 								vendorId: producto.vendorId!,
 								cantidad,
 								precioUnitario: costPrice,
-								total: totalCost,
+								total: totalCost.toNumber(),
 								fechaCompra: now,
 								descripcion: descripcion || `Restock - ${producto.nombre}`,
 								periodo,
@@ -339,7 +365,7 @@ export const restockProductoAction = withAction(
 									facturaUrl: facturaUrl || "",
 									cantidad,
 									precioUnitario: costPrice,
-									total: totalCost,
+									total: totalCost.toNumber(),
 									formaPago: formaPago || "PAGO_COMPLETO",
 									estado: estado || "PAGADA",
 									tipoOperacion: "RESTOCK",
@@ -420,11 +446,11 @@ export const restockProductoAction = withAction(
 interface PaymentParams {
 	formaPagoFinal: string;
 	cuentaIdParam?: string;
-	totalCost: number;
+	totalCost: Prisma.Decimal | number | string;
 	monedaOriginal?: string;
-	montoOriginal?: number;
-	tasaCambio?: number;
-	montoConvertido?: number;
+	montoOriginal?: Prisma.Decimal | number | string;
+	tasaCambio?: Prisma.Decimal | number | string;
+	montoConvertido?: Prisma.Decimal | number | string;
 	periodo: string;
 	productoNombre: string;
 	userId: string;
@@ -470,10 +496,13 @@ async function handlePaymentInTransaction(
 
 	const canRun =
 		!!tx.tipoPago?.findFirst &&
-		!!tx.cuentaBancaria?.findUnique &&
+		!!tx.cuentaBancaria?.findFirst &&
 		!!tx.reconciliacionGasto?.create &&
-		!!tx.cuentaBancaria?.update &&
+		!!tx.cuentaBancaria?.updateMany &&
 		!!tx.cuentaPorPagar?.create;
+
+	const policy = await getRequiredTenantAccountingPolicy(tenantId, tx);
+	const monedaFuncional = policy.functionalCurrencyCode.trim().toUpperCase();
 
 	if (formaPagoFinal === "PAGO_COMPLETO" && canRun) {
 		let cuentaId = cuentaIdParam;
@@ -506,9 +535,9 @@ async function handlePaymentInTransaction(
 			);
 		}
 
-		const cuentaBancaria = await tx.cuentaBancaria.findUnique({
-			where: { cuentaId },
-			select: { cuentaId: true, isActive: true },
+		const cuentaBancaria = await tx.cuentaBancaria.findFirst({
+			where: { cuentaId, tenantId, isActive: true },
+			select: { cuentaId: true, isActive: true, moneda: true, tipoCuenta: true },
 		});
 
 		if (!cuentaBancaria || !cuentaBancaria.isActive) {
@@ -524,16 +553,34 @@ async function handlePaymentInTransaction(
 			select: { tipoId: true },
 		});
 
-		const isForeignCurrency = monedaOriginal && monedaOriginal !== "CUP";
+		const isForeignCurrency = !!monedaOriginal && monedaOriginal.trim().toUpperCase() !== monedaFuncional;
 
-		const reconciliacionMonto = isForeignCurrency ? montoOriginal! : totalCost;
-		const reconciliacionMoneda = isForeignCurrency ? monedaOriginal! : "CUP";
-		const reconciliacionTasaCambio = isForeignCurrency
-			? (tasaCambio ?? null)
-			: null;
-		const reconciliacionMontoConvertido = isForeignCurrency
-			? (montoConvertido ?? null)
-			: null;
+		const reconciliacionMonto = isForeignCurrency
+			? new Prisma.Decimal(montoOriginal!)
+			: new Prisma.Decimal(totalCost);
+		const reconciliacionMoneda = isForeignCurrency ? monedaOriginal!.trim().toUpperCase() : monedaFuncional;
+		if (isForeignCurrency && (montoOriginal == null || tasaCambio == null)) {
+			throw new ActionError('Falta monto/tasa FX para el restock extranjero', 'FX_INSUFICIENTE');
+		}
+		const conversion = buildPersistedAccountingAmount(
+			reconciliacionMonto,
+			reconciliacionMoneda,
+			tasaCambio,
+			now,
+			undefined,
+			monedaFuncional,
+		);
+		if (!conversion.fxEvidence || conversion.montoConvertido == null) {
+			throw new ActionError('Falta evidencia FX para el restock', 'FX_INSUFICIENTE');
+		}
+		if (montoConvertido != null) {
+			const montoConvertidoEsperado = new Prisma.Decimal(montoConvertido);
+			if (!montoConvertidoEsperado.eq(conversion.montoConvertido)) {
+				throw new ActionError('El monto convertido no coincide con la tasa aplicada', 'FX_INCONSISTENTE');
+			}
+		}
+		const reconciliacionTasaCambio = conversion.tasaCambio;
+		const reconciliacionMontoConvertido = conversion.montoConvertido;
 
 		const restockRec = await tx.reconciliacionGasto.create({
 			data: {
@@ -546,10 +593,11 @@ async function handlePaymentInTransaction(
 				moneda: reconciliacionMoneda,
 				tasaCambio: reconciliacionTasaCambio,
 				montoConvertido: reconciliacionMontoConvertido,
+				...conversion.fxEvidence,
 				descripcion: `Restock pagado - ${productoNombre}`,
 				periodo,
 				estado: "PAGADA",
-				reconciliadoPor: userId || "system",
+				reconciliadoPor: userId,
 				tenantId,
 			},
 		});
@@ -557,34 +605,55 @@ async function handlePaymentInTransaction(
 		// Capa de contabilidad formal (CTA-1): restock al contado consume inventario pagado.
 		await postEvento(
 			tx,
-			{ tenantId, userId: userId || 'system' },
+			{ tenantId, userId },
 			buildEventoEgreso({
 				tipo: 'COMPRA_CONTADO',
 				reconciliacionId: restockRec.reconciliacionId,
 				descripcion: `Restock pagado - ${productoNombre}`,
 				tesoreria: {
-					monto: reconciliacionMonto,
-					moneda: reconciliacionMoneda,
-					montoFuncional: reconciliacionMontoConvertido ?? totalCost,
-					tasaCambio: reconciliacionTasaCambio,
+					monto: restockRec.monto,
+					moneda: restockRec.moneda,
+					montoFuncional: restockRec.montoConvertido ?? undefined,
+					monedaFuncionalCodigo: restockRec.functionalCurrency ?? 'CUP',
+					tasaCambio: restockRec.tasaCambio,
+					fxEvidenceFingerprint: restockRec.fxEvidenceFingerprint,
 					referencia: gastoCompraId,
 				},
 			}),
 		);
 
-		const saldoADescontar = isForeignCurrency
-			? (montoConvertido ?? totalCost)
-			: totalCost;
-
-		await tx.cuentaBancaria.update({
-			where: { cuentaId },
-			data: { saldo: { decrement: saldoADescontar } },
+		const movimientoCuenta = resolveAccountingAccountMovement({
+			tenderAmount: reconciliacionMonto,
+			tenderCurrency: reconciliacionMoneda,
+			functionalAmount: reconciliacionMontoConvertido,
+			functionalCurrency: monedaFuncional,
+			accountCurrency: cuentaBancaria.moneda,
 		});
+		const montoDebito = movimientoCuenta.amount.toNumber();
+		// Débito atómico: la condición de saldo suficiente evita sobregiros
+		// bajo concurrencia (dos restocks simultáneos no pueden vaciar la cuenta).
+		const saldoActualizado = await tx.cuentaBancaria.updateMany({
+			where: { cuentaId, tenantId, isActive: true, saldo: { gte: montoDebito } },
+			data: { saldo: { decrement: montoDebito } },
+		});
+		if (saldoActualizado.count !== 1) {
+			const cuentaVigente = await tx.cuentaBancaria.findFirst({
+				where: { cuentaId, tenantId, isActive: true },
+				select: { cuentaId: true },
+			});
+			if (!cuentaVigente) {
+				throw new ActionError('Cuenta bancaria no encontrada', 'NOT_FOUND');
+			}
+			throw new ActionError(
+				'Saldo insuficiente en la cuenta bancaria para completar el restock',
+				'SALDO_INSUFICIENTE',
+			);
+		}
 	} else if (formaPagoFinal === "PAGO_PARCIAL" && canRun) {
-		const isForeignCurrency = monedaOriginal && monedaOriginal !== "CUP";
+		const isForeignCurrency = !!monedaOriginal && monedaOriginal.trim().toUpperCase() !== monedaFuncional;
 
-		const deudaMonto = isForeignCurrency ? montoOriginal! : totalCost;
-		const deudaMoneda = isForeignCurrency ? monedaOriginal! : "CUP";
+		const deudaMonto = isForeignCurrency ? new Prisma.Decimal(montoOriginal!) : new Prisma.Decimal(totalCost);
+		const deudaMoneda = isForeignCurrency ? monedaOriginal!.trim().toUpperCase() : monedaFuncional;
 
 		const cuentaPorPagar = await tx.cuentaPorPagar.create({
 			data: {

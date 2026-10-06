@@ -783,6 +783,7 @@ model Merma {
   costoTotal  Int?
   almacenId   String?
   creadoPorId String?
+  idempotencyKey String?
   almacen     Almacen? @relation(fields: [almacenId], references: [almacenId], onDelete: Restrict)
   producto    Producto @relation(fields: [productoId], references: [id], onDelete: Cascade)
   tenant      Tenant   @relation(fields: [tenantId], references: [tenantId])
@@ -790,6 +791,7 @@ model Merma {
 
   @@index([tenantId])
   @@index([tenantId, createdAt])
+  @@unique([tenantId, idempotencyKey])
 }
 
 model Transferencia {

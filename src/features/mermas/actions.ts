@@ -8,7 +8,7 @@
 import { revalidatePath } from "next/cache";
 import { withAction, ActionError } from "@/lib/server-actions";
 import { prisma } from "@/lib/prisma";
-import { requireTenant } from "@/lib/services/tenant-scope";
+import { requireFeature, requirePermission, requireTenant } from "@/lib/services/tenant-scope";
 import { notificarMerma } from "@/lib/notificaciones-utils";
 import { upsertStockUbicacion } from "@/lib/services/stock-ubicacion-service";
 import {
@@ -21,12 +21,38 @@ import { createMermaSchema, updateMermaSchema } from "./schemas";
 import type { CreateMermaInput, UpdateMermaInput } from "./schemas";
 import { postEvento } from "@/features/contabilidad-formal/services/posting-engine";
 import { buildEventoMerma } from "@/features/contabilidad-formal/lib/event-builders";
+import { getRequiredTenantAccountingPolicy } from "@/features/contabilidad/services/tenant-accounting-policy-service";
 import type { AuthenticatedUser } from "@/lib/auth-middleware";
 
 const MERMA_INCLUDE = {
   producto: true,
   creadoPor: { select: { userId: true, name: true } },
 } as const;
+
+/**
+ * @description Impide alterar o borrar una merma cuyo evento formal ya está registrado.
+ * @param {string} tenantId - Tenant propietario.
+ * @param {string} mermaId - Identificador de la merma.
+ * @returns {Promise<void>} Resuelve cuando aún no existe evidencia formal.
+ */
+async function assertMermaAccountingNotPosted(tenantId: string, mermaId: string): Promise<void> {
+	const [asiento, shadow] = await Promise.all([
+		prisma.asiento.findFirst({
+			where: { tenantId, origenTipo: 'merma', origenId: mermaId },
+			select: { asientoId: true },
+		}),
+		prisma.shadowPosteoOutbox.findFirst({
+			where: { tenantId, tipoEvento: 'MERMA_INVENTARIO', origenTipo: 'merma', origenId: mermaId },
+			select: { id: true },
+		}),
+	]);
+	if (asiento || shadow) {
+		throw new ActionError(
+			'No se puede editar ni eliminar una merma con evidencia contable. Revierta el asiento desde Contabilidad primero.',
+			'MERMA_ACCOUNTING_IMMUTABLE',
+		);
+	}
+}
 
 export const getMermasAction = withAction(
 	async (_input: void, user: AuthenticatedUser) => {
@@ -55,6 +81,8 @@ export const createMermaAction = withAction(
 	async (input: CreateMermaInput, user: AuthenticatedUser) => {
 		const parsed = createMermaSchema.parse(input);
 		const tenantId = requireTenant(user);
+		requireFeature(user, 'mermas', 'registrar mermas');
+		requirePermission(user, 'inventario.mermas.registrar', 'registrar mermas');
 
 		const producto = await prisma.producto.findUnique({
 			where: { id: parsed.productoId },
@@ -90,8 +118,20 @@ export const createMermaAction = withAction(
 
 		const costoTotal = producto.precioCosto * parsed.cantidad;
 
+		// Idempotencia: si el cliente provee clave, un reintento devuelve la merma
+		// existente en lugar de duplicar stock, movimientos y asiento.
+		const idempotencyKey = parsed.idempotencyKey?.trim() || null;
+		if (idempotencyKey) {
+			const existente = await prisma.merma.findUnique({
+				where: { tenantId_idempotencyKey: { tenantId, idempotencyKey } },
+				include: MERMA_INCLUDE,
+			});
+			if (existente) return existente;
+		}
+
 		// Crear merma y actualizar stock en transacción
 		const merma = await prisma.$transaction(async (tx: any) => {
+			const accountingPolicy = await getRequiredTenantAccountingPolicy(tenantId, tx);
 			const creada = await tx.merma.create({
 				data: {
 					productoId: parsed.productoId,
@@ -99,6 +139,7 @@ export const createMermaAction = withAction(
 					motivo: parsed.motivo ?? null,
 					costoTotal,
 					tenantId,
+					idempotencyKey,
 					almacenId: almacenIdEfectivo,
 					creadoPorId: user.userId,
 				},
@@ -154,6 +195,7 @@ export const createMermaAction = withAction(
 				buildEventoMerma({
 					mermaId: creada.mermaId,
 					costo: costoTotal,
+					monedaFuncional: accountingPolicy.functionalCurrencyCode,
 					descripcion: parsed.motivo ?? undefined,
 					referencia: parsed.productoId,
 				}),
@@ -178,6 +220,8 @@ export const updateMermaAction = withAction(
 		const parsed = updateMermaSchema.parse(input);
 		const { mermaId, ...data } = parsed;
 		const tenantId = requireTenant(user);
+		requireFeature(user, 'mermas', 'editar mermas');
+		requirePermission(user, 'inventario.mermas.editar', 'editar mermas');
 
 		const mermaActual = await prisma.merma.findFirst({
 			where: { mermaId, tenantId },
@@ -190,6 +234,7 @@ export const updateMermaAction = withAction(
 			},
 		});
 		if (!mermaActual) throw new ActionError("Merma no encontrada", "NOT_FOUND");
+		await assertMermaAccountingNotPosted(tenantId, mermaId);
 
 		const productoId = data.productoId ?? mermaActual.productoId;
 		const cantidad = data.cantidad ?? mermaActual.cantidad;
@@ -372,6 +417,8 @@ export const updateMermaAction = withAction(
 export const deleteMermaAction = withAction(
 	async (id: string, user: AuthenticatedUser) => {
 		const tenantId = requireTenant(user);
+		requireFeature(user, 'mermas', 'eliminar mermas');
+		requirePermission(user, 'inventario.mermas.eliminar', 'eliminar mermas');
 		const merma = await prisma.merma.findFirst({
 			where: { mermaId: id, tenantId },
 			select: {
@@ -382,6 +429,7 @@ export const deleteMermaAction = withAction(
 			},
 		});
 		if (!merma) throw new ActionError("Merma no encontrada", "NOT_FOUND");
+		await assertMermaAccountingNotPosted(tenantId, merma.mermaId);
 
 		await prisma.$transaction(async (tx: any) => {
 			await revertirMovimientosDeOrigen(tx, {

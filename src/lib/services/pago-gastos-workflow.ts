@@ -378,6 +378,30 @@ export async function applyPagoGastoWorkflow(
   // tenant ownership before touching bank/CxP state to close deletion races.
   await lockAndValidateReference(tx, params)
 
+  // Idempotencia: un pago directo (sin cuenta por pagar) liquida la fuente en su
+  // totalidad. Si ya existe una reconciliación directa para esta referencia, el
+  // reintento se rechaza con 409 en lugar de duplicar pago, asiento y débito.
+  // La rama CxP queda excluida porque admite pagos parciales múltiples.
+  // El FOR UPDATE de lockAndValidateReference serializa reintentos concurrentes.
+  if (!params.cuentaPorPagarId) {
+    const reconciliacionExistente = await tx.reconciliacionGasto.findFirst({
+      where: {
+        tenantId: params.tenantId,
+        tipoGasto: params.tipoGasto,
+        referenciaId: params.referenciaId,
+        cuentaPorPagarId: null,
+      },
+      select: { reconciliacionId: true },
+    })
+    if (reconciliacionExistente) {
+      throw createGastoWorkflowError(
+        409,
+        'PAGO_DUPLICADO',
+        'El gasto ya tiene un pago directo registrado',
+      )
+    }
+  }
+
   const estadoSolicitado = params.estado || 'PAGADA'
   let estadoReconciliacion: 'PENDIENTE' | 'PAGADA' | 'PARCIAL' = estadoSolicitado
   const tipoPago = await resolveTipoPago(tx, params.tipoPagoId, params.tenantId)

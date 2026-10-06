@@ -15,10 +15,10 @@ import { createCompraServicioSchema, updateCompraServicioSchema } from './schema
 import type { CreateCompraServicioInput, UpdateCompraServicioInput } from './schemas';
 import type { AuthenticatedUser } from '@/lib/auth-middleware';
 import { reverseExpenseEffects } from '@/features/gastosDE/reversal';
-import { buildPersistedAccountingAmount } from '@/features/contabilidad/services/accounting-reconciliation-service';
-import { exchangeRateProvider } from '@/features/contabilidad/services/exchange-rate-provider';
+import { valueAnticipo, anticipoEventValuation } from '@/lib/services/anticipo-valuation';
+import { Prisma } from '@/generated/prisma';
 import { postEvento } from '@/features/contabilidad-formal/services/posting-engine';
-import { buildEventoGastoConAnticipoProveedor } from '@/features/contabilidad-formal/lib/event-builders';
+import { buildEventoGastoCredito } from '@/features/contabilidad-formal/lib/event-builders';
 
 const COMPRA_SERVICIO_INCLUDE = {
   servicio: true,
@@ -79,6 +79,20 @@ export const createCompraServicioAction = withAction(withPeriodValidation(
     throw new ActionError('Fecha de vencimiento inválida', 'VALIDATION_ERROR');
   }
 
+  // Idempotencia por factura: si se provee numeroFactura, rechazar duplicados (C3/G2).
+  if (parsed.numeroFactura) {
+    const existente = await prisma.compraServicio.findFirst({
+      where: { tenantId, numeroFactura: parsed.numeroFactura },
+      select: { compraServicioId: true },
+    });
+    if (existente) {
+      throw new ActionError(
+        `Ya existe una compra de servicio con la factura ${parsed.numeroFactura}`,
+        'COMPRA_SERVICIO_DUPLICADA',
+      );
+    }
+  }
+
   const resultado = await prisma.$transaction(async (tx) => {
     const compraServicio = await tx.compraServicio.create({
       data: {
@@ -101,126 +115,69 @@ export const createCompraServicioAction = withAction(withPeriodValidation(
 
     let allocationsResult: any[] = [];
     if (parsed.anticipos && parsed.anticipos.length > 0) {
-      const tipoPagoDefault = await tx.tipoPago.findFirst({
-        where: { isActive: true, tenantId },
-        orderBy: { createdAt: 'asc' },
-      });
-      const cuentaDefault = await tx.cuentaBancaria.findFirst({
-        where: { isActive: true, tenantId },
-        orderBy: { createdAt: 'asc' },
-      });
-
-      allocationsResult = await applyAnticipoAllocations(tx, parsed.anticipos, {
-        tenantId,
-        documentoDestinoId: compraServicio.compraServicioId,
-        contexto: 'COMPRA_SERVICIO',
-        usuarioId: user.userId || 'system',
-        observaciones: `Anticipo aplicado a servicio recibido ${compraServicio.compraServicioId}`,
-      });
-
-      for (const alloc of allocationsResult) {
-        const anticipo = await tx.anticipo.findUnique({
-          where: { anticipoId: alloc.anticipoId },
-          select: { tipo: true, moneda: true, cuentaOrigenId: true, tipoPagoOrigenId: true, proveedorId: true },
-        });
-
-        const cuentaId = anticipo?.cuentaOrigenId || cuentaDefault?.cuentaId;
-        const tipoPagoId = anticipo?.tipoPagoOrigenId || tipoPagoDefault?.tipoId;
-        if (!cuentaId || !tipoPagoId) {
-          throw new ActionError(
-            'Configura una cuenta bancaria y un tipo de pago antes de aplicar anticipos',
-            'VALIDATION_ERROR',
-          );
-        }
-
-        // La fila refleja la moneda real del dinero movido (la del anticipo).
-        const monedaAnticipo = anticipo?.moneda ?? servicio.moneda;
-
-        // Si la moneda difiere de la funcional del tenant, se exige una tasa
-        // publicada; sin ella la fila quedaría invisible para el reporting.
-        const policy = await tx.tenantAccountingPolicy.findUnique({
-          where: { tenantId },
-          select: { functionalCurrencyCode: true },
-        });
-        const monedaFuncional = policy?.functionalCurrencyCode?.trim().toUpperCase() ?? 'CUP';
-
-        let tasaCambio: number | undefined;
-        let tasaEffectiveAt: Date | undefined;
-        let tasaFxCatalogId: string | undefined;
-        if (monedaAnticipo.trim().toUpperCase() !== monedaFuncional) {
-          const tasa = await exchangeRateProvider.getRateAsOf({
-            sourceCurrency: monedaAnticipo.trim().toUpperCase(),
-            targetCurrency: monedaFuncional,
-            boundaryAt: new Date(),
-          });
-          if (!tasa) {
-            throw new ActionError(
-              `No hay tasa de cambio publicada para ${monedaAnticipo} → ${monedaFuncional}; no se puede registrar la reconciliación`,
-              'VALIDATION_ERROR',
-            );
-          }
-          tasaCambio = tasa.tasa;
-          tasaEffectiveAt = tasa.fechaVigencia;
-          tasaFxCatalogId = tasa.tasaId;
-        }
-
-        const recAnticipo = await tx.reconciliacionGasto.create({
-          data: {
-            tenantId,
-            tipoGasto: 'servicio',
-            referenciaId: compraServicio.compraServicioId,
-            cuentaId: cuentaId,
-            tipoPagoId: tipoPagoId,
-            monto: alloc.montoAplicado,
-            moneda: monedaAnticipo,
-            ...buildPersistedAccountingAmount(
-              alloc.montoAplicado,
-              monedaAnticipo,
-              tasaCambio,
-              tasaEffectiveAt,
-              tasaFxCatalogId,
-            ),
-            descripcion: `Pago anticipado de servicio ${compraServicio.compraServicioId}`,
-            reconciliadoPor: user.userId || 'system',
-          },
-        });
-
-        // Capa de contabilidad formal (CTA-1): gasto pagado con anticipo de
-        // proveedor — no hay movimiento bancario, se liquida el anticipo.
-        await postEvento(
-          tx,
-          { tenantId, userId: user.userId || 'system' },
-          buildEventoGastoConAnticipoProveedor({
-            reconciliacionId: recAnticipo.reconciliacionId,
-            descripcion: `Pago de servicio con anticipo (${compraServicio.compraServicioId})`,
-            tesoreria: {
-              monto: alloc.montoAplicado,
-              moneda: monedaAnticipo,
-              montoFuncional: tasaCambio !== undefined
-                ? alloc.montoAplicado * tasaCambio
-                : alloc.montoAplicado,
-              monedaFuncionalCodigo: monedaFuncional,
-              tasaCambio: tasaCambio ?? null,
-              referencia: `Servicio ${compraServicio.compraServicioId}`,
-            },
-          }),
-        );
-
-        // Espejo del flujo manual: tracking de conversión para la moneda extranjera.
-        if (tasaCambio !== undefined) {
-          await tx.transaccionMoneda.create({
-            data: {
-              tenantId,
-              tipoTransaccion: 'servicio_egreso',
-              referenciaId: compraServicio.compraServicioId,
-              monedaId: monedaAnticipo,
-              montoOriginal: alloc.montoAplicado,
-              tasaCambio,
-              montoConvertido: alloc.montoAplicado * tasaCambio,
-            },
-          });
-        }
+      if (!parsed.proveedorId) {
+        throw new ActionError('Aplicar anticipos requiere proveedor', 'VALIDATION_ERROR');
       }
+
+      // Tratamiento confirmado (filas 25/26): devengo bruto del documento —
+      // gasto total contra CxP total; el anticipo aplicado reduce la CxP.
+      const cobradoAnticipo = parsed.anticipos.reduce((sum, a) => sum + a.montoAplicado, 0);
+      if (cobradoAnticipo > total) {
+        throw new ActionError('Los anticipos exceden el total de la compra', 'VALIDATION_ERROR');
+      }
+      const monedaCompra = servicio.moneda;
+      const snapshot = await valueAnticipo(tx, tenantId, new Prisma.Decimal(total),
+        monedaCompra, 'service-purchase-accrual');
+      const estadoCxP: 'PENDIENTE' | 'PARCIAL' | 'PAGADA' =
+        total - cobradoAnticipo <= 0.01 ? 'PAGADA'
+          : cobradoAnticipo > 0 ? 'PARCIAL' : 'PENDIENTE';
+      const cxp = await tx.cuentaPorPagar.create({
+        data: {
+          tenantId,
+          compraServicioId: compraServicio.compraServicioId,
+          fxSnapshot: snapshot,
+          numeroFactura: parsed.numeroFactura || `CS-${compraServicio.compraServicioId.slice(-8)}`,
+          proveedorId: parsed.proveedorId || null,
+          proveedorNombre: parsed.proveedorId ? (await tx.vendor.findFirst({
+            where: { vendorId: parsed.proveedorId, tenantId },
+            select: { nombre: true },
+          }))?.nombre ?? null : null,
+          gastoCompraId: null,
+          montoDeuda: total,
+          montoPagado: 0,
+          saldoPendiente: total,
+          moneda: monedaCompra,
+          tipo: 'servicio',
+          estado: 'PENDIENTE',
+          fechaVencimiento: fechaVencimiento ?? undefined,
+        },
+      });
+      await postEvento(
+        tx,
+        { tenantId, userId: user.userId },
+        buildEventoGastoCredito({
+          compraId: compraServicio.compraServicioId,
+          origenTipo: 'compra_servicio',
+          valoracion: anticipoEventValuation(snapshot),
+          descripcion: `Servicio recibido ${compraServicio.compraServicioId}`,
+          fecha: fechaServicio,
+          referencia: parsed.numeroFactura || undefined,
+        }),
+      );
+      const montoPagadoFuncional = new Prisma.Decimal(snapshot.functionalAmount)
+        .mul(cobradoAnticipo).div(total).toDecimalPlaces(4, Prisma.Decimal.ROUND_HALF_UP);
+      allocationsResult = await applyAnticipoAllocations(tx, parsed.anticipos, {
+        tenantId, documentoDestinoId: compraServicio.compraServicioId,
+        contexto: 'COMPRA_SERVICIO', usuarioId: user.userId,
+        proveedorId: parsed.proveedorId, monedaDocumento: monedaCompra,
+        monedaFuncionalDocumento: snapshot.functionalCurrency,
+        montoFuncionalDocumento: montoPagadoFuncional,
+      });
+      await tx.cuentaPorPagar.updateMany({
+        where: { cuentaPorPagarId: cxp.cuentaPorPagarId, tenantId },
+        data: { montoPagado: cobradoAnticipo, saldoPendiente: total - cobradoAnticipo,
+          estado: estadoCxP },
+      });
     }
 
     return { compraServicio, allocationsResult };

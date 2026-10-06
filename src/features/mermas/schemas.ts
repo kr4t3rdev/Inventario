@@ -9,6 +9,9 @@ export const createMermaSchema = z.object({
   motivo: z.string().optional().nullable(),
   /** Almacén del que se descuenta el stock. Si se omite, se usa el stock global. */
   almacenId: z.string().optional().nullable(),
+  /** Clave de idempotencia provista por el cliente. Un reintento con la misma
+   * clave devuelve la merma existente en lugar de duplicarla. */
+  idempotencyKey: z.string().min(1).max(64).optional().nullable(),
 });
 
 export const updateMermaSchema = z.object({

@@ -95,19 +95,24 @@ auditoría); `operations-channels-http-real.test.ts` 4/4 (Bearer web/móvil, fil
 
 ## Gaps para Fase C (priorizados)
 
-### G1 — Rollback físico por fallo de AuditLog en `pago-gastos-workflow` ❌
-El workflow usa `logStrict` dentro del tx pero no hay prueba PostgreSQL de que un fallo
-del AuditLog revierta saldo, obligación, reconciliación y asiento. Es el caso que
-R6-ROLLBACK ya lista como pendiente para gasto/CxP. **Fase C:** test de integración
-con trigger SQL que falle el `AuditLog` dentro del tx (patrón `*-real.test.ts` existente).
+### G1 — Rollback físico por fallo de AuditLog en `pago-gastos-workflow` ✅
+**Cerrado 05-10:** `pago-gastos-workflow-real.test.ts` 2/2 en PostgreSQL desechable:
+trigger `BEFORE INSERT ON "AuditLog"` (entidad `RECONCILIACION`, ERRCODE 22012)
+hace rechazar el workflow y revierte saldo bancario, `ReconciliacionGasto`, asiento
+y marca de pagado en `GastosDE`. El camino feliz confirma asiento único por
+`reconciliacion_gasto` y débito 1000→880. Suite completa: 52/52 archivos, 301/301 tests.
 
-### G2 — Reintento/idempotencia sin evidencia física ❌/⚠️
-Writers con origen único declarado pero sin prueba de reintento:
-- `pago-gastos-workflow` ❌, `mermas` ❌, `restock` ❌, `produccion/completar` ❌
-- rutas web cash ⚠️ (carrera probada solo en el servicio canónico), `compras-servicios` ⚠️,
-  transferencias/ajustes/capital ⚠️, `venta-servicios` devengo directo ⚠️
-**Fase C:** para cada uno, reintento con misma clave/payload → un único asiento;
-reintento concurrente → serialización sin duplicados.
+### G2 — Reintento/idempotencia ✅ (parcial: queda C3)
+**Cerrado 05-10 para el núcleo:** suite 52/52 archivos, 305/305 tests.
+- `pago-gastos-workflow` ✅: guarda `PAGO_DUPLICADO` (409) si ya existe reconciliación
+  directa para la referencia; serializado por `FOR UPDATE` en la fuente.
+- `mermas` ✅: columna `idempotencyKey` + migración `20261005160000_merma_idempotency_key`
+  (unique `[tenantId, idempotencyKey]`); reintento con la misma clave devuelve la merma existente.
+- `restock` ✅: guarda `RESTOCK_DUPLICADO` si `numeroFactura` provista ya existe en `gastoCompra`.
+- `produccion/completar` ✅: idempotencia natural por máquina de estados (rechaza si no está
+  `EN_PROCESO`); test de reintento verifica un solo historial y una sola reconciliación.
+**Pendiente en C3:** rutas web cash, `compras-servicios`, transferencias/ajustes/capital,
+`venta-servicios` y adaptadores cash (G5).
 
 ### G3 — Sesión HTTP real en producción/completar ✅
 **Cerrado 05-10:** `completar/__integration__/auth-http-real.test.ts` (4/4) ejercita el
@@ -128,11 +133,13 @@ a 31 callsites en 19 archivos y la aceptación de las ramas vivas de venta al co
 (`contra_pago`, porción contado mixta) es la de las filas 2/30. **No** se certifica permiso
 por delegación: no existe adaptador que ejercite esa rama.
 
-### G5 — Cobertura por canal de `accounting-cash-operations-mutation-service` ⚠️
-El servicio canónico tiene carreras y rollback probados, pero sus adaptadores
-(actions `actions-prestamos-cash`/`actions-deudas-cash` y rutas mobile) no tienen
-prueba de reintento propia; la evidencia de idempotencia vive en el servicio.
-**Fase C:** al menos un test por adaptador de que el reintento no duplica.
+### G5 — Cobertura por canal de `accounting-cash-operations-mutation-service` ✅
+**Cerrado 05-10 (Fase C):** cada adaptador tiene test de reintento propio que demuestra
+que no duplica:
+- `prestamos-cash-pagar-real.test.ts` y `deudas-cash-real.test.ts`: rutas web con rollback
+- `cash-loans-http-real.test.ts` y `cash-debts-http-real.test.ts`: rutas mobile con Bearer real
+- `cash-actions-retry-real.test.ts`: server actions `registrarPagoPrestamoAction` y `registrarPagoDeudaAction`
+Los 6 adaptadores verifican idempotencia en reintento sin duplicar registros.
 
 ## Notas
 

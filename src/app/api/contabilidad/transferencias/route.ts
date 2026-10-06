@@ -1,10 +1,13 @@
 import { NextRequest, NextResponse } from 'next/server'
 import prisma from '@/lib/prisma'
 import { z } from 'zod'
+import { Prisma } from '@/generated/prisma'
 import { authenticateUser } from '@/lib/auth-middleware'
-import { AuditLogService } from '@/lib/services/audit-log-service'
+import { ActionError } from '@/lib/server-actions'
+import { requireTenant } from '@/lib/services/tenant-scope'
 import { validarEscrituraPeriodo, extraerFechaDeBody } from '@/lib/services/validate-period-write'
 import { canAccessAccountingItem } from '@/lib/plan-access'
+import { AccountingOperationsMutationService } from '@/features/contabilidad/services/accounting-operations-mutation-service'
 
 // Schema for creating a bank transfer
 const createTransferenciaSchema = z.object({
@@ -13,7 +16,8 @@ const createTransferenciaSchema = z.object({
   montoOrigen: z.number().positive('El monto debe ser positivo'),
   motivo: z.string().min(1, 'El motivo es requerido'),
   descripcion: z.string().optional(),
-  tasaCambio: z.number().positive().optional()
+  tasaCambio: z.number().positive().optional(),
+  numeroComprobante: z.string().min(1).max(64).optional(),
 })
 
 // GET /api/contabilidad/transferencias - List bank transfers
@@ -26,6 +30,7 @@ export async function GET(request: NextRequest) {
     if (user.role !== 'admin' && !canAccessAccountingItem(user, 'Transferencias Bancarias')) {
       return NextResponse.json({ error: 'Prohibido' }, { status: 403 })
     }
+    const tenantId = requireTenant(user)
 
     const { searchParams } = new URL(request.url)
     const page = parseInt(searchParams.get('page') || '1')
@@ -37,7 +42,7 @@ export async function GET(request: NextRequest) {
     const skip = (page - 1) * limit
 
     // Build where clause
-    const where: any = {}
+    const where: any = { tenantId }
     
     if (cuentaId) {
       where.OR = [
@@ -139,6 +144,7 @@ export async function POST(request: NextRequest) {
     if (user.role !== 'admin' && !canAccessAccountingItem(user, 'Transferencias Bancarias')) {
       return NextResponse.json({ error: 'Prohibido' }, { status: 403 })
     }
+    const tenantId = requireTenant(user)
 
     const body = await request.json()
     const validatedData = createTransferenciaSchema.parse(body)
@@ -147,7 +153,7 @@ export async function POST(request: NextRequest) {
     const fechaOperacion = extraerFechaDeBody(body) ?? new Date()
     const validacionPeriodo = await validarEscrituraPeriodo({
       fecha: fechaOperacion,
-      tenantId: user.tenantId ?? '',
+      tenantId,
       tipoOperacion: 'transferencia',
       actor: user.userId,
     })
@@ -158,180 +164,13 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    const {
-      cuentaOrigenId,
-      cuentaDestinoId,
-      montoOrigen,
-      motivo,
-      descripcion,
-      tasaCambio
-    } = validatedData
-
-    // Validate that origin and destination accounts are different
-    if (cuentaOrigenId === cuentaDestinoId) {
-      return NextResponse.json(
-        { error: 'La cuenta origen y destino deben ser diferentes' },
-        { status: 400 }
-      )
-    }
-
-    // Get both accounts
-    const [cuentaOrigen, cuentaDestino] = await Promise.all([
-      prisma.cuentaBancaria.findUnique({
-        where: { cuentaId: cuentaOrigenId }
-      }),
-      prisma.cuentaBancaria.findUnique({
-        where: { cuentaId: cuentaDestinoId }
-      })
-    ])
-
-    if (!cuentaOrigen) {
-      return NextResponse.json(
-        { error: 'Cuenta origen no encontrada' },
-        { status: 404 }
-      )
-    }
-
-    if (!cuentaDestino) {
-      return NextResponse.json(
-        { error: 'Cuenta destino no encontrada' },
-        { status: 404 }
-      )
-    }
-
-    // Check if both accounts are active
-    if (!cuentaOrigen.isActive) {
-      return NextResponse.json(
-        { error: 'La cuenta origen no está activa' },
-        { status: 400 }
-      )
-    }
-
-    if (!cuentaDestino.isActive) {
-      return NextResponse.json(
-        { error: 'La cuenta destino no está activa' },
-        { status: 400 }
-      )
-    }
-
-    // Check sufficient balance
-    if (cuentaOrigen.saldo < montoOrigen) {
-      return NextResponse.json(
-        { error: 'Saldo insuficiente en la cuenta origen' },
-        { status: 400 }
-      )
-    }
-
-    // Calculate destination amount - simplified logic
-    let montoDestino = montoOrigen
-    let tasaCambioFinal = tasaCambio
-   // const decrementarDestino = false
-
-    if (cuentaOrigen.moneda !== cuentaDestino.moneda || cuentaDestino.moneda !== 'CUP') {
-      if (!tasaCambio) {
-        return NextResponse.json(
-          { error: 'Tasa de cambio requerida para transferencias entre diferentes monedas o cuando la cuenta destino no es la principal' },
-          { status: 400 }
-        )
-      }
-      
-      // Always subtract amount * exchange rate from destination account
-      montoDestino = montoOrigen * tasaCambio
-      //decrementarDestino = true
-      tasaCambioFinal = tasaCambio
-    }
-
-    // Generate consecutive voucher number
-    const lastTransferencia = await prisma.transferenciaBancaria.findFirst({
-      orderBy: { numeroComprobante: 'desc' },
-      select: { numeroComprobante: true }
+    const result = await AccountingOperationsMutationService.createBankTransfer({
+      input: validatedData,
+      user,
     })
-
-    let nextNumber = 1
-    if (lastTransferencia?.numeroComprobante) {
-      const lastNumber = parseInt(lastTransferencia.numeroComprobante.replace(/\D/g, ''))
-      nextNumber = lastNumber + 1
-    }
-
-    const numeroComprobante = `TRF-${nextNumber.toString().padStart(6, '0')}`
-
-    // Execute transfer in transaction
-    const transferencia = await prisma.$transaction(async (tx: any) => {
-      // Update origin account balance
-      await tx.cuentaBancaria.update({
-        where: { cuentaId: cuentaOrigenId },
-        data: {
-          saldo: {
-            decrement: montoOrigen
-          }
-        }
-      })
-
-      // Update destination account balance
-      await tx.cuentaBancaria.update({
-        where: { cuentaId: cuentaDestinoId },
-        data: {
-          saldo: { increment: montoDestino }
-        }
-      })
-
-      // Create transfer record
-      const nuevaTransferencia = await tx.transferenciaBancaria.create({
-        data: {
-          numeroComprobante,
-          cuentaOrigenId,
-          cuentaDestinoId,
-          montoOrigen,
-          monedaOrigen: cuentaOrigen.moneda,
-          montoDestino,
-          monedaDestino: cuentaDestino.moneda,
-          tasaCambio: tasaCambioFinal,
-          motivo,
-          descripcion,
-          comprobanteGenerado: true,
-          // Temporary actor until auth wiring is added
-        } as any,
-        include: {
-          cuentaOrigen: {
-            select: {
-              nombreBanco: true,
-              numeroCuenta: true,
-              moneda: true
-            }
-          },
-          cuentaDestino: {
-            select: {
-              nombreBanco: true,
-              numeroCuenta: true,
-              moneda: true
-            }
-          }
-        }
-      })
-
-      return nuevaTransferencia
-    })
-
-    await AuditLogService.log({
-      accion: "CREATE",
-      entidad: "TRANSFERENCIA",
-      entidadId: transferencia.transferenciaId,
-      usuarioId: user.userId,
-      detalles: {
-        numeroComprobante: transferencia.numeroComprobante,
-        cuentaOrigen: transferencia.cuentaOrigen.nombreBanco,
-        cuentaDestino: transferencia.cuentaDestino.nombreBanco,
-        montoOrigen: transferencia.montoOrigen,
-        monedaOrigen: transferencia.monedaOrigen,
-        montoDestino: transferencia.montoDestino,
-        monedaDestino: transferencia.monedaDestino,
-        motivo: transferencia.motivo
-      }
-    });
-
     return NextResponse.json({
       message: 'Transferencia ejecutada exitosamente',
-      transferencia
+      ...result,
     }, { status: 201 })
 
   } catch (error) {
@@ -339,6 +178,24 @@ export async function POST(request: NextRequest) {
       return NextResponse.json(
         { error: 'Datos inválidos', details: error.errors },
         { status: 400 }
+      )
+    }
+
+    if (error instanceof ActionError) {
+      const status = error.code === 'NOT_FOUND' ? 404
+        : error.code === 'FORBIDDEN' || error.code === 'TENANT_REQUIRED' ? 403
+          : 400
+      return NextResponse.json({ error: error.message, code: error.code }, { status })
+    }
+
+    // Idempotencia (C3/G2): numeroComprobante es único por tenant.
+    if (
+      error instanceof Prisma.PrismaClientKnownRequestError &&
+      error.code === 'P2002'
+    ) {
+      return NextResponse.json(
+        { error: 'Ya existe una transferencia con ese número de comprobante', code: 'TRANSFERENCIA_DUPLICADA' },
+        { status: 409 },
       )
     }
 
