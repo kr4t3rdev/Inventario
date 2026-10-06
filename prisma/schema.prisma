@@ -290,6 +290,7 @@ model Tenant {
   fxEvidence                     FxEvidence[]
   financialAuxiliaryCheckpoints  FinancialAuxiliaryCheckpoint[]
   snapshotPeriodos               SnapshotPeriodo[]
+  cashSnapshots                  CashSnapshot[]
   stockMoveLines                 StockMoveLine[]
   ajustesInventario              AjusteInventario[]
   conteosInventario              ConteoInventario[]
@@ -3248,6 +3249,7 @@ model PeriodoContable {
   subperiodos        PeriodoContable[]  @relation("PeriodoHierarchy")
   tenant             Tenant             @relation(fields: [tenantId], references: [tenantId])
   snapshots          SaldoSnapshot[]
+  cashSnapshots      CashSnapshot[]
   snapshotPeriodos   SnapshotPeriodo[]
   replayPreflights    ReplayPreflight[]
 
@@ -3400,6 +3402,45 @@ model SaldoSnapshot {
   @@index([cuentaBancariaId])
   @@index([tenantId])
   @@map("saldos_snapshot")
+}
+
+/// Snapshot funcional cash: congela el estado funcional (saldo pendiente en
+/// moneda funcional + evidencia FX) de una CxC de prestamo cash o una CxP de
+/// deuda cash en un punto del tiempo. El snapshot NO reconvierte: congela los
+/// montos funcionales ya persistidos en la cuenta. Util para auditoria y
+/// conciliacion historica.
+model CashSnapshot {
+  snapshotId           String           @id @default(cuid())
+  tenantId             String
+  /// PRESTAMO_CASH | DEUDA_CASH
+  tipo                 String
+  /// PrestamoCash.id o DeudaCash.id segun el tipo
+  origenId             String
+  cuentaPorCobrarId    String?
+  cuentaPorPagarId     String?
+  monedaFuncional      String
+  montoDeudaFuncional  Decimal          @db.Decimal(20, 4)
+  montoPagadoFuncional Decimal          @db.Decimal(20, 4)
+  /// Inmutable al capturar: montoDeudaFuncional - montoPagadoFuncional
+  saldoFuncional       Decimal          @db.Decimal(20, 4)
+  tasaCambio           Decimal?         @db.Decimal(20, 10)
+  rateEffectiveAt      DateTime?
+  fxEvidenceFingerprint String?
+  /// Dia de corte al que pertenece el snapshot (agrupacion)
+  fechaCorte           DateTime
+  capturedAt           DateTime         @default(now())
+  /// Opcional: periodo contable si el snapshot acompana un cierre
+  periodoId            String?
+  motivo               String?
+  /// Idempotencia: una fila por (tenant, tipo, cuenta, dia de corte)
+  idempotencyKey       String           @unique
+  createdAt            DateTime         @default(now())
+  tenant               Tenant           @relation(fields: [tenantId], references: [tenantId])
+  periodo              PeriodoContable? @relation(fields: [periodoId], references: [periodoId], onDelete: SetNull)
+
+  @@index([tenantId, fechaCorte])
+  @@index([tenantId, tipo, origenId])
+  @@map("cash_snapshots")
 }
 
 model AuditoriaPeriodo {
