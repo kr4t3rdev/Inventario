@@ -77,7 +77,7 @@ auditoría); `operations-channels-http-real.test.ts` 4/4 (Bearer web/móvil, fil
 | `mermas/actions.ts:180` → MERMA_INVENTARIO | action (UI) | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ (reintento secuencial + 5 concurrentes P2002) | ✅ | ✅ |
 | `productos/actions-restock.ts:588` → COMPRA_CONTADO (restock) | action (UI) | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ (reintento secuencial + 5 concurrentes P2002→RESTOCK_DUPLICADO) | ✅ | ✅ |
 | `produccion/ordenes/[id]/completar/route.ts:204` → PRODUCCION_SALIDA | web (ruta propia) | ✅ (`auth-http-real.test.ts` 4/4: Bearer <redacted>) | ✅ | ✅ | ✅ | ✅ | ✅ (`completar-concurrente.test.ts`: 5 concurrentes, 1 gana, 4 CONFLICT; claim optimista) | ✅ | ✅ |
-| `venta-servicios/actions.ts:267/:397` → VENTA_SERVICIO_CREDITO (devengo ×2) | action (UI) | ✅ | ✅ | ✅ | ✅ | ✅ | ⚠️ | ✅ | ✅ (`service-devengo-directo-real.test.ts`: rollback por fallo en asiento) |
+| `venta-servicios/actions.ts:267/:397` → VENTA_SERVICIO_CREDITO (devengo ×2) | action (UI) | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ (`idempotencyKey` + unique constraint; P2002 → devuelve ganadoras) | ✅ | ✅ (`service-devengo-directo-real.test.ts`: rollback por fallo en asiento) |
 
 **Evidencia:** `purchase-credit-fx-real.test.ts` 6/6; `anticipos-devengo-bruto-real.test.ts` 7/7;
 `merma-formal-real.test.ts` 3/3; `restock-formal-real.test.ts` 2/2; `rollback-real.test.ts` 3/3

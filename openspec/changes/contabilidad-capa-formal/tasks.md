@@ -2541,14 +2541,15 @@ reabre FX-2/FX-4 por brechas reproducidas de propagación, Decimal/evidencia y f
 ### R0.5 — Certificación completa del inventario
 
 - [x] **R0.5-ACCEPT — Certificar los 31 callsites/19 archivos y todos sus adaptadores vivos.**
-  **Firmado 06-10:** matriz `matriz-accept-r0.5.md` actualizada. 30/31 callsites en ✅ para las
+  **Firmado 06-10:** matriz `matriz-accept-r0.5.md` actualizada. 31/31 callsites en ✅ para las
   8 dimensiones (actor/permiso, tenant, origen único, moneda/FX, tx, idem/retry, posting/auditoría,
-  rollback SQL) con evidencia citada. Excepción documentada: `venta-servicios/actions.ts:267/:397`
-  (VENTA_SERVICIO_CREDITO) tiene ⚠️ en idem/retry — no implementa `idempotencyKey`; el devengo
-  directo está auditado (`service-devengo-directo-real.test.ts` 2/2: happy path + rollback) pero
-  sin prueba de reintento concurrente. Se registra como deuda técnica para R0.6.
+  rollback SQL) con evidencia citada.
+  **Excepción resuelta 06-10:** `venta-servicios` recibió `idempotencyKey` + `@@unique([tenantId,
+  idempotencyKey])` + migración `20261006120000_venta_servicios_idempotency`; el action maneja
+  reintento (check previo) y carrera concurrente (P2002 → devuelve ganadoras). Commit `95a7e837`.
   Evidencia de cierre: `completar-concurrente.test.ts` (producción: 5 concurrentes, 1 gana);
-  matriz actualizada con tests de reintento para cash web, bank ops, compras-servicios y producción.
+  matriz actualizada con tests de reintento para cash web, bank ops, compras-servicios, producción
+  y venta-servicios.
   Para cada writer probar actor/permiso, aislamiento tenant, referencia/origen único,
   moneda/FX, transacción, idempotencia/retry, error de posting/auditoría y rollback SQL.
   Incluir web, Server Actions, móvil y workflows; los unit tests mock no cuentan como prueba
