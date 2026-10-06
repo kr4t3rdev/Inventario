@@ -1,12 +1,20 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { createCuentaPorPagarAction } from '@/features/contabilidad/actions-cuentas'
 
-const prismaMock = vi.hoisted(() => ({
-  cuentaPorPagar: {
-    findFirst: vi.fn(),
-    create: vi.fn(),
-  },
-}))
+const prismaMock = vi.hoisted(() => {
+  const mock = {
+    cuentaPorPagar: {
+      findFirst: vi.fn(),
+      create: vi.fn(),
+    },
+    auditLog: {
+      create: vi.fn().mockResolvedValue({ id: 'audit-1' }),
+    },
+    $transaction: vi.fn(),
+  }
+  mock.$transaction.mockImplementation((callback: (tx: typeof mock) => unknown) => callback(mock))
+  return mock
+})
 
 vi.mock('@/lib/prisma', () => ({
   prisma: prismaMock,
@@ -35,6 +43,7 @@ describe('Cuentas por Pagar — createCuentaPorPagarAction', () => {
   beforeEach(() => {
     vi.clearAllMocks()
     getCurrentUserMock.mockResolvedValue(AUTH_USER)
+    prismaMock.auditLog.create.mockResolvedValue({ id: 'audit-1' })
   })
 
   it('retorna DUPLICATE cuando existe factura con mismo numero y mismo proveedor', async () => {
@@ -101,6 +110,15 @@ describe('Cuentas por Pagar — createCuentaPorPagarAction', () => {
     })
 
     expect(result.success).toBe(true)
+    expect(prismaMock.$transaction).toHaveBeenCalledOnce()
+    expect(prismaMock.auditLog.create).toHaveBeenCalledWith(expect.objectContaining({
+      data: expect.objectContaining({
+        accion: 'CREATE',
+        entidad: 'CUENTA_POR_PAGAR',
+        entidadId: 'cxp-2',
+        usuarioId: 'user-1',
+      }),
+    }))
     // Verificar que findFirst buscó con proveedorId
     const findCall = prismaMock.cuentaPorPagar.findFirst.mock.calls[0][0]
     expect(findCall.where.proveedorId).toBe('prov-2')
@@ -168,5 +186,26 @@ describe('Cuentas por Pagar — createCuentaPorPagarAction', () => {
 
     expect(result.success).toBe(false)
     expect(result.error?.code).toBe('AUTH_REQUIRED')
+  })
+
+  it('falla la operación si no se puede persistir su auditoría', async () => {
+    prismaMock.cuentaPorPagar.findFirst.mockResolvedValue(null)
+    prismaMock.cuentaPorPagar.create.mockResolvedValue({
+      cuentaPorPagarId: 'cxp-audit-fail',
+      tenantId: 'tenant-1',
+      numeroFactura: 'FAC-AUDIT',
+    })
+    prismaMock.auditLog.create.mockRejectedValueOnce(new Error('audit unavailable'))
+
+    const result = await createCuentaPorPagarAction({
+      numeroFactura: 'FAC-AUDIT',
+      tipo: 'compra',
+      proveedorId: 'prov-1',
+      montoDeuda: 100,
+    })
+
+    expect(result.success).toBe(false)
+    expect(prismaMock.cuentaPorPagar.create).toHaveBeenCalledOnce()
+    expect(prismaMock.auditLog.create).toHaveBeenCalledOnce()
   })
 })

@@ -504,15 +504,20 @@ export const createCuentaPorCobrarAction = withAction(
             tx, user, decision, tenantId, clienteId: p.clienteId,
             origen: 'CUENTA_POR_COBRAR_MANUAL', origenId: creada.id, montoNuevo: p.monto,
           });
+			await AuditLogService.logStrict({
+				accion: "CREATE",
+				entidad: "CUENTA_POR_COBRAR",
+				entidadId: creada.id,
+				usuarioId: user.userId,
+				detalles: {
+					clienteId: p.clienteId,
+					monto: p.monto,
+					moneda: p.moneda,
+					ventaId: p.ventaId,
+				},
+			}, tx);
 			return creada;
 		});
-		AuditLogService.log({
-			accion: "CREATE",
-			entidad: "CUENTA_POR_COBRAR",
-			entidadId: cuenta.id,
-			usuarioId: user.userId,
-			detalles: { clienteId: p.clienteId, monto: p.monto, moneda: p.moneda, ventaId: p.ventaId },
-		}).catch((err) => console.error("[AuditLog] Error logging cuenta por cobrar:", err));
 
 		revalidatePath("/busy/contabilidad/cuentas-por-cobrar");
 		return enriquecerCuentaPorCobrar(
@@ -616,6 +621,13 @@ export const updateCuentaPorCobrarAction = withAction(
 					"La cuenta por cobrar cambió mientras se actualizaba; vuelve a cargarla",
 					"VALIDATION_ERROR",
 				);
+			await AuditLogService.logStrict({
+				accion: "UPDATE",
+				entidad: "CUENTA_POR_COBRAR",
+				entidadId: p.id,
+				usuarioId: user.userId,
+				detalles: { cambios: data },
+			}, tx);
 
 			if (decision) {
 				await auditarCreditoOverride({
@@ -637,14 +649,6 @@ export const updateCuentaPorCobrarAction = withAction(
 		});
 		if (!cuenta)
 			throw new ActionError("Cuenta por cobrar no encontrada", "NOT_FOUND");
-
-		AuditLogService.log({
-			accion: "UPDATE",
-			entidad: "CUENTA_POR_COBRAR",
-			entidadId: p.id,
-			usuarioId: user.userId,
-			detalles: { cambios: data },
-		}).catch((err) => console.error("[AuditLog] Error logging cuenta por cobrar update:", err));
 
 		revalidatePath("/busy/contabilidad/cuentas-por-cobrar");
 		return enriquecerCuentaPorCobrar(
@@ -671,23 +675,14 @@ export const anularCuentaPorCobrarAction = withAction(
 		const result = await AccountingAccountsService.annulReceivable({
 			id: p.id,
 			tenantId,
+			usuarioId: user.userId,
+			motivo: p.motivo,
 		});
 		if (!result) {
 			throw new ActionError('Cuenta por cobrar no encontrada', 'NOT_FOUND');
 		}
 
 		if (result.changed) {
-			AuditLogService.log({
-				accion: 'UPDATE',
-				entidad: 'CUENTA_POR_COBRAR',
-				entidadId: p.id,
-				usuarioId: user.userId,
-				detalles: {
-					estadoAnterior: result.previousState,
-					estadoNuevo: 'ANULADA',
-					motivo: p.motivo ?? null,
-				},
-			}).catch((err) => console.error('[AuditLog] Error logging cuenta por cobrar annulment:', err));
 			revalidatePath('/busy/contabilidad/cuentas-por-cobrar');
 		}
 
@@ -768,35 +763,42 @@ export const createCuentaPorPagarAction = withAction(
 				"DUPLICATE",
 			);
 
-		const cuenta = await prisma.cuentaPorPagar.create({
-			data: {
-				tenantId,
-				numeroFactura: p.numeroFactura,
-				tipo: p.tipo,
-				proveedorId: p.proveedorId,
-				proveedorNombre: p.proveedorNombre ?? null,
-				montoDeuda: p.montoDeuda,
-				montoPagado: 0,
-				saldoPendiente: p.montoDeuda,
-				moneda: p.moneda,
-				fechaEmision: p.fechaEmision ? new Date(p.fechaEmision) : new Date(),
-				fechaVencimiento: p.fechaVencimiento
-					? new Date(p.fechaVencimiento)
-					: null,
-				estado: "PENDIENTE",
-				gastoCompraId: p.gastoCompraId ?? null,
-				gastosDEId: p.gastosDEId ?? null,
-			},
-			include: CXP_INCLUDE,
+		const cuenta = await prisma.$transaction(async (tx) => {
+			const creada = await tx.cuentaPorPagar.create({
+				data: {
+					tenantId,
+					numeroFactura: p.numeroFactura,
+					tipo: p.tipo,
+					proveedorId: p.proveedorId,
+					proveedorNombre: p.proveedorNombre ?? null,
+					montoDeuda: p.montoDeuda,
+					montoPagado: 0,
+					saldoPendiente: p.montoDeuda,
+					moneda: p.moneda,
+					fechaEmision: p.fechaEmision ? new Date(p.fechaEmision) : new Date(),
+					fechaVencimiento: p.fechaVencimiento
+						? new Date(p.fechaVencimiento)
+						: null,
+					estado: "PENDIENTE",
+					gastoCompraId: p.gastoCompraId ?? null,
+					gastosDEId: p.gastosDEId ?? null,
+				},
+				include: CXP_INCLUDE,
+			});
+			await AuditLogService.logStrict({
+				accion: "CREATE",
+				entidad: "CUENTA_POR_PAGAR",
+				entidadId: creada.cuentaPorPagarId,
+				usuarioId: user.userId,
+				detalles: {
+					numeroFactura: p.numeroFactura,
+					proveedorId: p.proveedorId,
+					montoDeuda: p.montoDeuda,
+					moneda: p.moneda,
+				},
+			}, tx);
+			return creada;
 		});
-
-		AuditLogService.log({
-			accion: "CREATE",
-			entidad: "CUENTA_POR_PAGAR",
-			entidadId: cuenta.cuentaPorPagarId,
-			usuarioId: user.userId,
-			detalles: { numeroFactura: p.numeroFactura, proveedorId: p.proveedorId, montoDeuda: p.montoDeuda, moneda: p.moneda },
-		}).catch((err) => console.error("[AuditLog] Error logging cuenta por pagar:", err));
 
 		revalidatePath("/busy/contabilidad/cuentas-por-pagar");
 		return enriquecerCuentaPorPagar(

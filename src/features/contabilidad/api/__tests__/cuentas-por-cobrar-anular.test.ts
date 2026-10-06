@@ -14,7 +14,7 @@ const prismaMock = vi.hoisted(() => {
   return mock
 })
 
-const auditLogMock = vi.hoisted(() => ({ log: vi.fn() }))
+const auditLogMock = vi.hoisted(() => ({ log: vi.fn(), logStrict: vi.fn() }))
 
 vi.mock('@/lib/prisma', () => ({ prisma: prismaMock }))
 vi.mock('@/lib/services/audit-log-service', () => ({ AuditLogService: auditLogMock }))
@@ -62,6 +62,7 @@ describe('Cuentas por Cobrar — anularCuentaPorCobrarAction', () => {
     vi.clearAllMocks()
     getCurrentUserMock.mockResolvedValue(user)
     auditLogMock.log.mockResolvedValue(null)
+    auditLogMock.logStrict.mockResolvedValue({ auditId: 'audit-1' })
   })
 
   it('requires authentication', async () => {
@@ -104,13 +105,13 @@ describe('Cuentas por Cobrar — anularCuentaPorCobrarAction', () => {
       where: { id: 'cxc-1', tenantId: 'tenant-1', estado: { not: 'ANULADA' } },
       data: { estado: 'ANULADA' },
     })
-    expect(auditLogMock.log).toHaveBeenCalledWith(expect.objectContaining({
+    expect(auditLogMock.logStrict).toHaveBeenCalledWith(expect.objectContaining({
       accion: 'UPDATE',
       entidad: 'CUENTA_POR_COBRAR',
       entidadId: 'cxc-1',
       usuarioId: 'user-123',
       detalles: expect.objectContaining({ motivo: 'Venta anulada', estadoNuevo: 'ANULADA' }),
-    }))
+    }), prismaMock)
   })
 
   it('is idempotent and does not write or audit an already annulled receivable', async () => {
@@ -123,7 +124,7 @@ describe('Cuentas por Cobrar — anularCuentaPorCobrarAction', () => {
     expect(result.success).toBe(true)
     expect(result.data?.estado).toBe('ANULADA')
     expect(prismaMock.cuentaPorCobrar.updateMany).not.toHaveBeenCalled()
-    expect(auditLogMock.log).not.toHaveBeenCalled()
+    expect(auditLogMock.logStrict).not.toHaveBeenCalled()
   })
 
   it('returns the raced ANULADA row when another request claims the transition first', async () => {
@@ -137,6 +138,6 @@ describe('Cuentas por Cobrar — anularCuentaPorCobrarAction', () => {
 
     expect(result.success).toBe(true)
     expect(result.data?.estado).toBe('ANULADA')
-    expect(auditLogMock.log).not.toHaveBeenCalled()
+    expect(auditLogMock.logStrict).not.toHaveBeenCalled()
   })
 })

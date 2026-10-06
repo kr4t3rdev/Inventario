@@ -203,4 +203,34 @@ describe('Cuentas por Cobrar — createCuentaPorCobrarAction', () => {
       })
     )
   })
+
+  it('falla la acción cuando la auditoría estricta no se puede guardar', async () => {
+    getCurrentUserMock.mockResolvedValue({
+      userId: 'user-123',
+      tenantId: 'tenant-1',
+      name: 'Test',
+      email: 'test@test.com',
+      role: 'ADMIN' as const,
+      isActive: true,
+      planFeatures: { 'cuentas-cobrar': true },
+    })
+    prismaMock.venta.findFirst.mockResolvedValue({
+      ventaId: 'venta-1',
+      clienteId: 'cli-1',
+      factura: { idFactura: 'fac-1' },
+    })
+    prismaMock.cuentaPorCobrar.findFirst.mockResolvedValue(null)
+    prismaMock.cuentaPorCobrar.create.mockResolvedValue({ id: 'cxc-audit-fail' })
+    prismaMock.auditLog.create.mockRejectedValueOnce(new Error('audit unavailable'))
+
+    const result = await createCuentaPorCobrarAction({
+      ventaId: 'venta-1',
+      clienteId: 'cli-1',
+      monto: 1000,
+      moneda: 'CUP',
+    })
+
+    expect(result.success).toBe(false)
+    expect(prismaMock.auditLog.create).toHaveBeenCalledOnce()
+  })
 })
