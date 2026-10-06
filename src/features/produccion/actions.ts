@@ -516,6 +516,22 @@ export const completarOrdenProduccionAction = withAction(
 				);
 			}
 
+			// Claim optimista: solo un completado concurrente puede ganar.
+			// Si otro ya la completó, el updateMany no afecta filas.
+			const claimed = await tx.ordenProduccion.updateMany({
+				where: {
+					ordenProduccionId: id,
+					estado: PRODUCTION_STATES.EN_PROCESO,
+				},
+				data: { estado: PRODUCTION_STATES.COMPLETADA },
+			});
+			if (claimed.count === 0) {
+				throw new ActionError(
+					"La orden ya fue completada por otro proceso",
+					"CONFLICT",
+				);
+			}
+
 			if (!orden.Receta.Producto) {
 				throw new ActionError(
 					"Producto final no configurado para esta receta",
@@ -587,11 +603,10 @@ export const completarOrdenProduccionAction = withAction(
 				});
 			}
 
-			// Actualizar orden
+			// Actualizar costo (el estado ya fue cambiado por el claim)
 			const ordenActualizada = await tx.ordenProduccion.update({
 				where: { ordenProduccionId: id },
 				data: {
-					estado: PRODUCTION_STATES.COMPLETADA,
 					costoMateriales,
 				},
 				include: {
