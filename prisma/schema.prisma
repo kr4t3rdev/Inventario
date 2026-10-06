@@ -1656,8 +1656,10 @@ model VentaServicios {
   venta            Venta?                   @relation(fields: [ventaId], references: [ventaId], onDelete: SetNull)
   cuentaPorCobrar  CuentaPorCobrar?
   tenant           Tenant                   @relation(fields: [tenantId], references: [tenantId])
+  idempotencyKey String?
 
   @@index([tenantId])
+  @@unique([tenantId, idempotencyKey])
   @@index([ventaId])
 }
 

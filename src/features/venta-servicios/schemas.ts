@@ -35,6 +35,7 @@ export const ventaMixtaSchema = z.object({
   fechaVencimiento: z.string().optional().nullable(),
   solicitarCreditoOverride: z.boolean().optional(),
   motivoCreditoOverride: z.string().trim().max(500).optional().nullable(),
+  idempotencyKey: z.string().trim().max(64).optional().nullable(),
 }).strict();
 
 export const ventaServicioLegacySchema = z.object({

@@ -194,7 +194,23 @@ export const createVentaServicioAction = withAction(withPeriodValidation(
     const serviciosMonedas = await assertServiciosDelTenant(tenantId, lineasServicio.map((l) => l.servicioId!));
     await assertClienteDelTenant(tenantId, payload.clienteId);
 
-    const created = await prisma.$transaction(async (tx) => {
+    // Idempotencia: si el cliente provee clave, un reintento devuelve las ventas
+    // existentes en lugar de duplicar.
+    const idempotencyKey = payload.idempotencyKey?.trim() || null;
+    if (idempotencyKey) {
+      const existentes = await prisma.ventaServicios.findMany({
+        where: {
+          tenantId,
+          idempotencyKey: { startsWith: `${idempotencyKey}:` },
+        },
+        orderBy: { idempotencyKey: 'asc' },
+      });
+      if (existentes.length > 0) return existentes;
+    }
+
+    let created: any[];
+    try {
+      created = await prisma.$transaction(async (tx) => {
       const montoCredito = lineasServicio.reduce((total, linea) =>
         total + linea.cantidad * serviciosMonedas.get(linea.servicioId!)!.precio, 0,
       );
@@ -211,7 +227,7 @@ export const createVentaServicioAction = withAction(withPeriodValidation(
             motivoCreditoOverride: payload.motivoCreditoOverride,
           })
         : null;
-      const ventas = await Promise.all(lineasServicio.map((linea) => {
+      const ventas = await Promise.all(lineasServicio.map((linea, idx) => {
         const catalogo = serviciosMonedas.get(linea.servicioId!)!;
         const precioUnitario = catalogo.precio;
         return tx.ventaServicios.create({
@@ -226,6 +242,8 @@ export const createVentaServicioAction = withAction(withPeriodValidation(
             observaciones: linea.observaciones ?? payload.observaciones ?? null,
             clienteId: payload.clienteId ?? null,
             condicionPago: payload.condicionPago,
+            // Sufijo por índice para que multi-línea no viole el unique constraint
+            idempotencyKey: idempotencyKey ? `${idempotencyKey}:${idx}` : null,
           },
         });
       }));
@@ -281,8 +299,28 @@ export const createVentaServicioAction = withAction(withPeriodValidation(
         });
       }
 
-      return ventas;
-    });
+        return ventas;
+      });
+    } catch (error: any) {
+      // Carrera concurrente con la misma clave: el unique constraint hace fallar
+      // a los perdedores con P2002; devolver las ventas ganadoras.
+      if (idempotencyKey && error?.code === 'P2002') {
+        const ganadoras = await prisma.ventaServicios.findMany({
+          where: {
+            tenantId,
+            idempotencyKey: { startsWith: `${idempotencyKey}:` },
+          },
+          orderBy: { idempotencyKey: 'asc' },
+        });
+        if (ganadoras.length > 0) return {
+          mode: 'MIXED_LINES' as const,
+          lineasProcesadas: ganadoras.length,
+          lineasProductoPendientes: 0,
+          ventasServicios: ganadoras,
+        };
+      }
+      throw error;
+    }
 
     revalidatePath('/busy/venta-servicios');
     return {
@@ -411,16 +449,17 @@ export const createVentaServicioAction = withAction(withPeriodValidation(
         }),
       );
       if (data.anticipos?.length) {
+        const montoPagadoFuncional = new Prisma.Decimal(valoracionCxC!.montoConvertido)
+          .mul(cobradoAnticipo).div(ventaTotal)
+          .toDecimalPlaces(4, Prisma.Decimal.ROUND_HALF_UP);
         allocationsResult = await applyAnticipoAllocations(tx, data.anticipos, {
           tenantId, documentoDestinoId: ventaServicio.ventaServicioId,
           contexto: 'FACTURA_DIRECTA', usuarioId: user.userId,
           clienteId: data.clienteId,
           monedaDocumento: monedaServicio,
-          tasaDocumento: valoracionCxC!.tasaCambio.toString(),
+          monedaFuncionalDocumento: valoracionCxC!.evidence.functionalCurrency,
+          montoFuncionalDocumento: montoPagadoFuncional,
         });
-        const montoPagadoFuncional = new Prisma.Decimal(valoracionCxC!.montoConvertido)
-          .mul(cobradoAnticipo).div(ventaTotal)
-          .toDecimalPlaces(4, Prisma.Decimal.ROUND_HALF_UP);
         const cxcAplicada = await tx.cuentaPorCobrar.updateMany({
           where: { id: cxc.id, tenantId },
           data: { montoPagado: cobradoAnticipo, montoPagadoFuncional,
@@ -429,15 +468,6 @@ export const createVentaServicioAction = withAction(withPeriodValidation(
         if (cxcAplicada.count !== 1) {
           throw new ActionError('Cuenta por cobrar no encontrada', 'NOT_FOUND');
         }
-        await tx.cuentaPorCobrar.updateMany({
-          where: { id: cxc.id, tenantId },
-          data: {
-            montoPagado: cobradoAnticipo,
-            montoPagadoFuncional: new Prisma.Decimal(cobradoAnticipo)
-              .mul(valoracionCxC!.tasaCambio),
-            estado: estadoCxC,
-          },
-        });
         if (estadoCxC === 'PAGADA') {
           await tx.ventaServicios.updateMany({
             where: { ventaServicioId: ventaServicio.ventaServicioId, tenantId },
