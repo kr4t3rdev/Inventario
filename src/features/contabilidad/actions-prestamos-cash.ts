@@ -25,6 +25,8 @@ const createSchema = z.object({
   tasaCambioAlCrear: z.coerce.number().positive().optional(),
   fechaVencimiento: z.string().optional(),
   observaciones: z.string().optional(),
+  solicitarCreditoOverride: z.boolean().optional(),
+  motivoCreditoOverride: z.string().trim().max(500).optional().nullable(),
   cuentaBancariaId: z.string().min(1, 'La cuenta bancaria es requerida'),
 })
 
@@ -41,6 +43,7 @@ const pagoSchema = z.object({
   moneda: z.string().optional(),
   tasaCambio: z.coerce.number().positive().optional(),
   observaciones: z.string().optional(),
+  idempotencyKey: z.string().trim().min(1).max(64).optional(),
 })
 
 const PRESTAMO_INCLUDE = {

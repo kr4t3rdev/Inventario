@@ -97,6 +97,41 @@ describe('ajuste bancario idempotente — PostgreSQL aislado', { timeout: 90_000
     expect(Number(saldoFinal)).toBe(Number(saldoTrasPrimero));
   });
 
+  it('misma clave con payload distinto rechaza con IDEMPOTENCY_CONFLICT', async () => {
+    const idempotencyKey = `idem-conflict-${crypto.randomUUID()}`;
+    await AccountingOperationsMutationService.createBankAdjustment({
+      input: {
+        cuentaId, tipo: 'ingreso' as const, monto: 100, moneda: 'CUP',
+        descripcion: `${prefix}-desc`, motivo: `${prefix}-motivo`,
+        idempotencyKey,
+      },
+      user: manager(),
+    });
+
+    // Mismo key, monto distinto → conflicto
+    let thrown: any = null;
+    try {
+      await AccountingOperationsMutationService.createBankAdjustment({
+        input: {
+          cuentaId, tipo: 'ingreso' as const, monto: 200, moneda: 'CUP',
+          descripcion: `${prefix}-desc`, motivo: `${prefix}-motivo`,
+          idempotencyKey,
+        },
+        user: manager(),
+      });
+    } catch (e) {
+      thrown = e;
+    }
+    expect(thrown).toBeTruthy();
+    expect(`${thrown?.code ?? ''} ${thrown?.message ?? ''}`).toContain('IDEMPOTENCY_CONFLICT');
+
+    // Solo un ajuste con esa clave
+    const count = await prisma.ajusteBancario.count({
+      where: { tenantId, idempotencyKey },
+    });
+    expect(count).toBe(1);
+  });
+
   it('sin clave cada llamada crea un ajuste nuevo', async () => {
     const input = {
       cuentaId, tipo: 'ingreso' as const, monto: 50, moneda: 'CUP',

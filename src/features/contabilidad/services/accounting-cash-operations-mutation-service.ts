@@ -1,4 +1,10 @@
+import { createHash } from 'crypto';
 import { prisma } from '@/lib/prisma';
+import { Prisma } from '@/generated/prisma';
+
+function sha256Hex(s: string): string {
+  return createHash('sha256').update(s).digest('hex');
+}
 import { buildPersistedAccountingAmount } from '@/features/contabilidad/services/accounting-reconciliation-service';
 import { ActionError } from '@/lib/server-actions';
 import { AuditLogService } from '@/lib/services/audit-log-service';
@@ -7,7 +13,7 @@ import {
   bloquearClienteCredito,
   validarCreditoOrigen,
 } from '@/features/ventas/services/credito-override';
-import { calcularSaldoPendientePrestamo } from '@/lib/utils/prestamo-cash';
+import { calcularMontoTotalACobrar, calcularSaldoPendientePrestamo } from '@/lib/utils/prestamo-cash';
 import {
   calcularSaldoPendienteDeuda,
   calcularTotalDeudaConInteres,
@@ -15,6 +21,8 @@ import {
 import type { AuthenticatedUser } from '@/lib/auth-middleware';
 import { requireFeature, requirePermission, requireTenant } from '@/lib/services/tenant-scope';
 import { acquireAccountingTenantLock } from './accounting-tenant-lock-service';
+import { resolveCashDebtCurrencyAmounts } from './cash-debt-payment-valuation';
+import { getRequiredTenantAccountingPolicy } from './tenant-accounting-policy-service';
 import { postEvento } from '@/features/contabilidad-formal/services/posting-engine';
 import {
   buildEventoDeudaRecibida,
@@ -79,20 +87,13 @@ export const AccountingCashOperationsMutationService = {
       }),
       prisma.cuentaBancaria.findFirst({
         where: { cuentaId: input.cuentaBancariaId, tenantId, isActive: true },
-        select: { cuentaId: true, saldo: true, isActive: true, tipoCuenta: true },
+        select: { cuentaId: true, saldo: true, isActive: true, tipoCuenta: true, moneda: true },
       }),
     ]);
     if (!cliente) throw new ActionError('Cliente no encontrado', 'NOT_FOUND');
     if (!cuentaOrigen) {
       throw new ActionError('Cuenta bancaria no encontrada o inactiva', 'VALIDATION_ERROR');
     }
-    if (cuentaOrigen.saldo < input.montoCapital) {
-      throw new ActionError(
-        `Saldo insuficiente en la cuenta. Disponible: ${cuentaOrigen.saldo}`,
-        'VALIDATION_ERROR',
-      );
-    }
-
     const tp =
       (await prisma.tipoPago.findFirst({ where: { nombre: 'Transferencia', isActive: true, tenantId } })) ||
       (await prisma.tipoPago.findFirst({ where: { nombre: 'Efectivo', isActive: true, tenantId } }));
@@ -105,24 +106,36 @@ export const AccountingCashOperationsMutationService = {
 
     const fechaReconciliacion = new Date();
     const moneda = input.moneda || 'CUP';
-    const conversion = buildPersistedAccountingAmount(
-      Number(input.montoCapital),
-      moneda,
-      input.tasaCambioAlCrear,
-      fechaReconciliacion,
-    );
-    const montoFuncional = conversion.montoConvertido;
-    const evidenciaFx = conversion.fxEvidence;
-    if (montoFuncional == null || !evidenciaFx) {
-      throw new ActionError('Falta evidencia de conversión para el préstamo', 'FX_INSUFICIENTE');
-    }
 
     const prestamo = await prisma.$transaction(async (tx: any) => {
       await acquireAccountingTenantLock(tx, tenantId);
+      const policy = await getRequiredTenantAccountingPolicy(tenantId, tx);
+      const functionalCurrency = policy.functionalCurrencyCode.trim().toUpperCase();
+      const conversion = buildPersistedAccountingAmount(
+        new Prisma.Decimal(input.montoCapital),
+        moneda,
+        input.tasaCambioAlCrear,
+        fechaReconciliacion,
+        undefined,
+        functionalCurrency,
+      );
+      const montoFuncional = conversion.montoConvertido;
+      const evidenciaFx = conversion.fxEvidence;
+      if (montoFuncional == null || !evidenciaFx) {
+        throw new ActionError('Falta evidencia FX funcional para el préstamo', 'FX_INSUFICIENTE');
+      }
+      const importes = resolveCashDebtCurrencyAmounts({
+        monedaObligacion: moneda,
+        monedaFondos: moneda,
+        monedaCuenta: cuentaOrigen.moneda,
+        montoFondos: input.montoCapital,
+        montoFuncional,
+        functionalCurrency,
+      });
 
       const montoDeuda = input.tasaInteres
-        ? Number((input.montoCapital * (1 + input.tasaInteres / 100)).toFixed(2))
-        : input.montoCapital;
+        ? calcularMontoTotalACobrar(input.montoCapital, input.tasaInteres)
+        : new Prisma.Decimal(input.montoCapital);
 
       // Cupo común: el desembolso nace como deuda PRESTAMO_CASH completa. Exceso
       // requiere override explícito del origen con motivo y auditoría en la misma tx.
@@ -132,7 +145,7 @@ export const AccountingCashOperationsMutationService = {
         tenantId,
         clienteId: input.clienteId,
         moneda,
-        montoNuevo: montoDeuda,
+        montoNuevo: montoDeuda.toNumber(),
         permiso: 'financiero.prestamos-cash.credito-override',
         solicitarCreditoOverride: input.solicitarCreditoOverride,
         motivoCreditoOverride: input.motivoCreditoOverride,
@@ -143,9 +156,10 @@ export const AccountingCashOperationsMutationService = {
           cuentaId: input.cuentaBancariaId,
           tenantId,
           isActive: true,
-          saldo: { gte: input.montoCapital },
+          moneda: cuentaOrigen.moneda,
+          saldo: { gte: importes.montoCuenta.toNumber() },
         },
-        data: { saldo: { decrement: input.montoCapital } },
+        data: { saldo: { decrement: importes.montoCuenta.toNumber() } },
       });
       if (debito.count !== 1) {
         throw new ActionError('Cuenta bancaria no disponible o saldo insuficiente', 'VALIDATION_ERROR');
@@ -170,9 +184,11 @@ export const AccountingCashOperationsMutationService = {
         tenant: { connect: { tenantId } },
         cuentaBancaria: { connect: { cuentaId: input.cuentaBancariaId } },
         tipoPago: { connect: { tipoId: tp.tipoId } },
-        monto: input.montoCapital,
+        monto: new Prisma.Decimal(input.montoCapital),
         moneda,
         montoConvertido: montoFuncional,
+        montoCuenta: importes.montoCuenta,
+        monedaCuenta: cuentaOrigen.moneda.trim().toUpperCase(),
         fechaReconciliacion,
         ...evidenciaFx,
         observaciones:
@@ -208,11 +224,11 @@ export const AccountingCashOperationsMutationService = {
       await postEvento(tx, { tenantId, userId: user.userId }, buildEventoPrestamoOtorgado({
         prestamoId: prestamoCreado.id,
         valoracion: {
-          monto: Number(reconciliacion.monto),
+          monto: reconciliacion.monto,
           moneda: reconciliacion.moneda,
-          montoFuncional: Number(reconciliacion.montoConvertido),
+          montoFuncional: reconciliacion.montoConvertido ?? undefined,
           monedaFuncionalCodigo: reconciliacion.functionalCurrency ?? 'CUP',
-          tasaCambio: reconciliacion.tasaCambio == null ? null : Number(reconciliacion.tasaCambio),
+          tasaCambio: reconciliacion.tasaCambio,
           fxEvidenceFingerprint: reconciliacion.fxEvidenceFingerprint ?? null,
         },
         tipoCuenta: cuentaOrigen.tipoCuenta,
@@ -228,22 +244,22 @@ export const AccountingCashOperationsMutationService = {
         clienteId: input.clienteId,
         origen: 'PRESTAMO_CASH',
         origenId: prestamoCreado.id,
-        montoNuevo: montoDeuda,
+        montoNuevo: montoDeuda.toNumber(),
       });
 
-      return prestamoCreado;
-    });
+      await AuditLogService.logStrict({
+        accion: 'CREATE',
+        entidad: 'PRESTAMO_CASH',
+        entidadId: prestamoCreado.id,
+        usuarioId: user.userId,
+        detalles: {
+          clienteId: input.clienteId,
+          montoCapital: input.montoCapital,
+          moneda: input.moneda || 'CUP',
+        },
+      }, tx);
 
-    await AuditLogService.log({
-      accion: 'CREATE',
-      entidad: 'PRESTAMO_CASH',
-      entidadId: prestamo.id,
-      usuarioId: user.userId,
-      detalles: {
-        clienteId: input.clienteId,
-        montoCapital: input.montoCapital,
-        moneda: input.moneda || 'CUP',
-      },
+      return prestamoCreado;
     });
 
     return prestamo;
@@ -253,29 +269,40 @@ export const AccountingCashOperationsMutationService = {
     if (!prestamosCashEnabled()) {
       throw new ActionError('Módulo de préstamos cash deshabilitado', 'DISABLED');
     }
+    const tenantId = requireTenant(user);
+    requireCashLoanMutationAccess(user, 'actualizar préstamos cash');
 
-    const existing = await prisma.prestamoCash.findFirst({ where: { id: input.id, deletedAt: null } });
-    if (!existing) throw new ActionError('Préstamo no encontrado', 'NOT_FOUND');
+    return prisma.$transaction(async (tx: any) => {
+      const existing = await tx.prestamoCash.findFirst({
+        where: { id: input.id, tenantId, deletedAt: null },
+        select: { id: true },
+      });
+      if (!existing) throw new ActionError('Préstamo no encontrado', 'NOT_FOUND');
 
-    const prestamo = await prisma.prestamoCash.update({
-      where: { id: input.id },
-      data: {
-        ...(input.fechaVencimiento ? { fechaVencimiento: new Date(input.fechaVencimiento) } : {}),
-        ...(input.tasaInteres !== undefined ? { tasaInteres: input.tasaInteres } : {}),
-        ...(input.observaciones !== undefined ? { observaciones: input.observaciones } : {}),
-      },
-      include: { cliente: { select: { clienteId: true, nombre: true } }, cuentaPorCobrar: true },
+      const updated = await tx.prestamoCash.updateMany({
+        where: { id: input.id, tenantId, deletedAt: null },
+        data: {
+          ...(input.fechaVencimiento ? { fechaVencimiento: new Date(input.fechaVencimiento) } : {}),
+          ...(input.tasaInteres !== undefined ? { tasaInteres: input.tasaInteres } : {}),
+          ...(input.observaciones !== undefined ? { observaciones: input.observaciones } : {}),
+        },
+      });
+      if (updated.count !== 1) throw new ActionError('Préstamo no encontrado', 'NOT_FOUND');
+
+      const prestamo = await tx.prestamoCash.findFirst({
+        where: { id: input.id, tenantId, deletedAt: null },
+        include: { cliente: { select: { clienteId: true, nombre: true } }, cuentaPorCobrar: true },
+      });
+      if (!prestamo) throw new ActionError('Préstamo no encontrado', 'NOT_FOUND');
+      await AuditLogService.logStrict({
+        accion: 'UPDATE',
+        entidad: 'PRESTAMO_CASH',
+        entidadId: input.id,
+        usuarioId: user.userId,
+        detalles: { cambios: { ...input } },
+      }, tx);
+      return prestamo;
     });
-
-    await AuditLogService.log({
-      accion: 'UPDATE',
-      entidad: 'PRESTAMO_CASH',
-      entidadId: input.id,
-      usuarioId: user.userId,
-      detalles: { cambios: { ...input } },
-    });
-
-    return prestamo;
   },
 
   async registerCashLoanPayment({
@@ -290,6 +317,7 @@ export const AccountingCashOperationsMutationService = {
       moneda?: string;
       tasaCambio?: number;
       observaciones?: string;
+      idempotencyKey?: string;
     };
     user: AuthenticatedUser;
   }) {
@@ -299,6 +327,33 @@ export const AccountingCashOperationsMutationService = {
 
     const tenantId = requireTenant(user);
     requireCashLoanMutationAccess(user, 'registrar pagos de préstamos cash');
+
+    // Idempotencia: misma clave + mismo payload → devuelve el pago existente;
+    // misma clave + payload distinto → 409 IDEMPOTENCY_CONFLICT.
+    const idempotencyKey = input.idempotencyKey?.trim() || null;
+    let idempotencyPayloadHash: string | null = null;
+    if (idempotencyKey) {
+      const payload = JSON.stringify({
+        prestamoId: input.id,
+        monto: input.monto,
+        cuentaId: input.cuentaId,
+        tipoPagoId: input.tipoPagoId,
+        moneda: input.moneda ?? null,
+      });
+      idempotencyPayloadHash = sha256Hex(payload);
+      const existente = await prisma.reconciliacionVenta.findUnique({
+        where: { tenantId_idempotencyKey: { tenantId, idempotencyKey } },
+      });
+      if (existente) {
+        if (existente.idempotencyPayloadHash !== idempotencyPayloadHash) {
+          throw new ActionError(
+            'La clave de idempotencia ya fue usada con datos diferentes',
+            'IDEMPOTENCY_CONFLICT',
+          );
+        }
+        return existente;
+      }
+    }
 
     const resultado = await prisma.$transaction(async (tx: any) => {
       await acquireAccountingTenantLock(tx, tenantId);
@@ -317,24 +372,18 @@ export const AccountingCashOperationsMutationService = {
 
       const cxcVigente = await tx.cuentaPorCobrar.findFirst({
         where: { id: prestamo.cuentaPorCobrarId, tenantId },
-        select: { id: true, montoDeuda: true, montoPagado: true, estado: true },
+        select: {
+          id: true, montoDeuda: true, montoPagado: true, estado: true, monedaOriginal: true,
+        },
       });
       if (!cxcVigente || cxcVigente.estado === 'ANULADA') {
         throw new ActionError('La cuenta por cobrar del préstamo ya no está disponible', 'CREDITO_CONFLICTO');
       }
 
-      const saldoPendiente = calcularSaldoPendientePrestamo(
-        Number(cxcVigente.montoDeuda),
-        Number(cxcVigente.montoPagado),
-      );
-      if (input.monto > saldoPendiente) {
-        throw new ActionError('El saldo del préstamo cambió; vuelve a consultar', 'CREDITO_CONFLICTO');
-      }
-
       const [cuenta, tipoPago] = await Promise.all([
         tx.cuentaBancaria.findFirst({
           where: { cuentaId: input.cuentaId, tenantId, isActive: true },
-          select: { cuentaId: true, tipoCuenta: true },
+          select: { cuentaId: true, tipoCuenta: true, moneda: true },
         }),
         tx.tipoPago.findFirst({
           where: { tipoId: input.tipoPagoId, tenantId, isActive: true },
@@ -347,25 +396,51 @@ export const AccountingCashOperationsMutationService = {
 
       const fechaReconciliacion = new Date();
       const moneda = input.moneda || String(prestamo.moneda);
+      const policy = await getRequiredTenantAccountingPolicy(tenantId, tx);
+      const functionalCurrency = policy.functionalCurrencyCode.trim().toUpperCase();
       const conversion = buildPersistedAccountingAmount(
-        Number(input.monto),
+        new Prisma.Decimal(input.monto),
         moneda,
         input.tasaCambio ?? undefined,
         fechaReconciliacion,
+        undefined,
+        functionalCurrency,
       );
       const montoFuncional = conversion.montoConvertido;
       const evidenciaFx = conversion.fxEvidence;
       if (montoFuncional == null || !evidenciaFx) {
         throw new ActionError('Falta evidencia de conversión para el pago del préstamo', 'FX_INSUFICIENTE');
       }
+      const monedaObligacion = cxcVigente.monedaOriginal || prestamo.moneda;
+      if (monedaObligacion !== prestamo.moneda) {
+        throw new ActionError('La moneda de la obligación no coincide con el préstamo', 'FX_INSUFICIENTE');
+      }
+      const importes = resolveCashDebtCurrencyAmounts({
+        monedaObligacion,
+        monedaFondos: moneda,
+        monedaCuenta: cuenta.moneda,
+        montoFondos: new Prisma.Decimal(input.monto),
+        montoFuncional,
+        functionalCurrency,
+      });
+      const saldoPendiente = calcularSaldoPendientePrestamo(
+        cxcVigente.montoDeuda, cxcVigente.montoPagado,
+      );
+      if (importes.montoObligacion.gt(saldoPendiente)) {
+        throw new ActionError('El saldo del préstamo cambió; vuelve a consultar', 'CREDITO_CONFLICTO');
+      }
       const pagoData: Record<string, unknown> = {
         tenant: { connect: { tenantId } },
         cuentaBancaria: { connect: { cuentaId: input.cuentaId } },
         tipoPago: { connect: { tipoId: input.tipoPagoId } },
         prestamoCash: { connect: { id: prestamo.id } },
-        monto: input.monto,
+        idempotencyKey,
+        idempotencyPayloadHash,
+        monto: new Prisma.Decimal(input.monto),
         moneda,
         montoConvertido: montoFuncional,
+        montoCuenta: importes.montoCuenta,
+        monedaCuenta: cuenta.moneda.trim().toUpperCase(),
         fechaReconciliacion,
         ...evidenciaFx,
         reconciliadoPor: user.userId,
@@ -376,16 +451,18 @@ export const AccountingCashOperationsMutationService = {
 
       const reconciliacion = await tx.reconciliacionVenta.create({ data: pagoData });
       const credito = await tx.cuentaBancaria.updateMany({
-        where: { cuentaId: input.cuentaId, tenantId, isActive: true },
-        data: { saldo: { increment: input.monto } },
+        where: { cuentaId: input.cuentaId, tenantId, isActive: true, moneda: cuenta.moneda },
+        data: { saldo: { increment: importes.montoCuenta.toNumber() } },
       });
       if (credito.count !== 1) {
         throw new ActionError('La cuenta bancaria no pertenece al tenant', 'VALIDATION_ERROR');
       }
-      const nuevoMontoPagado = Number((Number(cxcVigente.montoPagado) + input.monto).toFixed(2));
-      const totalDeuda = Number(cxcVigente.montoDeuda);
+      const nuevoMontoPagado = new Prisma.Decimal(cxcVigente.montoPagado)
+        .add(importes.montoObligacion)
+        .toDecimalPlaces(2, Prisma.Decimal.ROUND_HALF_UP);
+      const totalDeuda = cxcVigente.montoDeuda;
       const nuevoSaldo = calcularSaldoPendientePrestamo(totalDeuda, nuevoMontoPagado);
-      const nuevoEstadoCuenta = nuevoSaldo <= 0.01 ? 'PAGADA' : 'PARCIAL';
+      const nuevoEstadoCuenta = nuevoSaldo.lte('0.01') ? 'PAGADA' : 'PARCIAL';
       const cuentaActualizada = await tx.cuentaPorCobrar.updateMany({
         where: {
           id: prestamo.cuentaPorCobrarId,
@@ -406,7 +483,7 @@ export const AccountingCashOperationsMutationService = {
       await postEvento(tx, { tenantId, userId: user.userId }, buildEventoCobroPrestamo({
         reconciliacionId: reconciliacion.reconciliacionId,
         valoracion: {
-          monto: Number(input.monto),
+          monto: new Prisma.Decimal(input.monto),
           moneda,
           montoFuncional,
           monedaFuncionalCodigo: evidenciaFx.functionalCurrency,
@@ -418,22 +495,17 @@ export const AccountingCashOperationsMutationService = {
         descripcion: input.observaciones ?? undefined,
         referencia: prestamo.id,
       }));
-      return { reconciliacion, prestamoId: prestamo.id };
+      await AuditLogService.logStrict({
+        accion: 'CREATE',
+        entidad: 'PAGO_PRESTAMO',
+        entidadId: reconciliacion.reconciliacionId,
+        usuarioId: user.userId,
+        detalles: { prestamoId: prestamo.id, monto: input.monto, moneda },
+      }, tx);
+      return reconciliacion;
     });
 
-    await AuditLogService.log({
-      accion: 'CREATE',
-      entidad: 'PAGO_PRESTAMO',
-      entidadId: resultado.reconciliacion.reconciliacionId,
-      usuarioId: user.userId,
-      detalles: {
-        prestamoId: resultado.prestamoId,
-        monto: input.monto,
-        moneda: input.moneda,
-      },
-    });
-
-    return resultado.reconciliacion;
+    return resultado;
   },
 
   async createCashDebt({
@@ -475,18 +547,30 @@ export const AccountingCashOperationsMutationService = {
 
     const fechaReconciliacion = new Date();
     const moneda = input.moneda || 'CUP';
-    const conversion = buildPersistedAccountingAmount(
-      Number(input.montoCapital),
-      moneda,
-      input.tasaCambio,
-      fechaReconciliacion,
-    );
-    if (conversion.montoConvertido == null || !conversion.fxEvidence) {
-      throw new ActionError('Falta evidencia de conversión para la deuda', 'FX_INSUFICIENTE');
-    }
 
     const deuda = await prisma.$transaction(async (tx: any) => {
       await acquireAccountingTenantLock(tx, tenantId);
+      const policy = await getRequiredTenantAccountingPolicy(tenantId, tx);
+      const functionalCurrency = policy.functionalCurrencyCode.trim().toUpperCase();
+      const conversion = buildPersistedAccountingAmount(
+        new Prisma.Decimal(input.montoCapital),
+        moneda,
+        input.tasaCambio,
+        fechaReconciliacion,
+        undefined,
+        functionalCurrency,
+      );
+      if (conversion.montoConvertido == null || !conversion.fxEvidence) {
+        throw new ActionError('Falta evidencia FX funcional para la deuda', 'FX_INSUFICIENTE');
+      }
+      const importes = resolveCashDebtCurrencyAmounts({
+        monedaObligacion: moneda,
+        monedaFondos: moneda,
+        monedaCuenta: cuentaOrigen.moneda,
+        montoFondos: new Prisma.Decimal(input.montoCapital),
+        montoFuncional: conversion.montoConvertido,
+        functionalCurrency,
+      });
       const tp =
         (await tx.tipoPago.findFirst({ where: { nombre: 'Transferencia', isActive: true, tenantId } })) ||
         (await tx.tipoPago.findFirst({ where: { nombre: 'Efectivo', isActive: true, tenantId } }));
@@ -495,8 +579,13 @@ export const AccountingCashOperationsMutationService = {
       }
 
       const cuentaActualizada = await tx.cuentaBancaria.updateMany({
-        where: { cuentaId: input.cuentaBancariaId, tenantId, isActive: true },
-        data: { saldo: { increment: input.montoCapital } },
+        where: {
+          cuentaId: input.cuentaBancariaId,
+          tenantId,
+          isActive: true,
+          moneda: cuentaOrigen.moneda,
+        },
+        data: { saldo: { increment: importes.montoCuenta.toNumber() } },
       });
       if (cuentaActualizada.count !== 1) {
         throw new ActionError('Cuenta bancaria no encontrada o inactiva', 'VALIDATION_ERROR');
@@ -527,9 +616,11 @@ export const AccountingCashOperationsMutationService = {
           tenant: { connect: { tenantId } },
           cuentaBancaria: { connect: { cuentaId: input.cuentaBancariaId } },
           tipoPago: { connect: { tipoId: tp.tipoId } },
-          monto: input.montoCapital,
+          monto: new Prisma.Decimal(input.montoCapital),
           moneda,
           montoConvertido: conversion.montoConvertido,
+          montoCuenta: importes.montoCuenta,
+          monedaCuenta: cuentaOrigen.moneda.trim().toUpperCase(),
           fechaReconciliacion,
           ...(conversion.fxEvidence ?? {}),
           observaciones:
@@ -560,11 +651,11 @@ export const AccountingCashOperationsMutationService = {
       await postEvento(tx, { tenantId, userId: user.userId }, buildEventoDeudaRecibida({
         deudaId: deudaCreada.id,
         valoracion: {
-          monto: Number(reconciliacion.monto),
+          monto: reconciliacion.monto,
           moneda: reconciliacion.moneda,
-          montoFuncional: Number(reconciliacion.montoConvertido),
+          montoFuncional: reconciliacion.montoConvertido ?? undefined,
           monedaFuncionalCodigo: reconciliacion.functionalCurrency ?? 'CUP',
-          tasaCambio: reconciliacion.tasaCambio == null ? null : Number(reconciliacion.tasaCambio),
+          tasaCambio: reconciliacion.tasaCambio,
           fxEvidenceFingerprint: reconciliacion.fxEvidenceFingerprint ?? null,
         },
         tipoCuenta: cuentaOrigen.tipoCuenta,
@@ -572,15 +663,19 @@ export const AccountingCashOperationsMutationService = {
         descripcion: input.observaciones || `Desembolso de deuda cash para proveedor ${input.proveedorId}`,
       }));
 
-      return deudaCreada;
-    });
+      await AuditLogService.logStrict({
+        accion: 'CREATE',
+        entidad: 'DEUDA_CASH',
+        entidadId: deudaCreada.id,
+        usuarioId: user.userId,
+        detalles: {
+          proveedorId: input.proveedorId,
+          montoCapital: input.montoCapital,
+          moneda: input.moneda || 'CUP',
+        },
+      }, tx);
 
-    await AuditLogService.log({
-      accion: 'CREATE',
-      entidad: 'DEUDA_CASH',
-      entidadId: deuda.id,
-      usuarioId: user.userId,
-      detalles: { proveedorId: input.proveedorId, montoCapital: input.montoCapital, moneda: input.moneda || 'CUP' },
+      return deudaCreada;
     });
 
     return deuda;
@@ -590,29 +685,40 @@ export const AccountingCashOperationsMutationService = {
     if (!deudasCashEnabled()) {
       throw new ActionError('Módulo de deudas cash deshabilitado', 'DISABLED');
     }
+    const tenantId = requireTenant(user);
+    requireDeudaMutationAccess(user, 'actualizar deudas cash');
 
-    const existing = await prisma.deudaCash.findFirst({ where: { id: input.id, deletedAt: null } });
-    if (!existing) throw new ActionError('Deuda no encontrada', 'NOT_FOUND');
+    return prisma.$transaction(async (tx: any) => {
+      const existing = await tx.deudaCash.findFirst({
+        where: { id: input.id, tenantId, deletedAt: null },
+        select: { id: true },
+      });
+      if (!existing) throw new ActionError('Deuda no encontrada', 'NOT_FOUND');
 
-    const deuda = await prisma.deudaCash.update({
-      where: { id: input.id },
-      data: {
-        ...(input.fechaVencimiento ? { fechaVencimiento: new Date(input.fechaVencimiento) } : {}),
-        ...(input.tasaInteres !== undefined ? { tasaInteres: input.tasaInteres } : {}),
-        ...(input.observaciones !== undefined ? { observaciones: input.observaciones } : {}),
-      },
-      include: { proveedor: { select: { vendorId: true, nombre: true } }, cuentaPorPagar: true },
+      const updated = await tx.deudaCash.updateMany({
+        where: { id: input.id, tenantId, deletedAt: null },
+        data: {
+          ...(input.fechaVencimiento ? { fechaVencimiento: new Date(input.fechaVencimiento) } : {}),
+          ...(input.tasaInteres !== undefined ? { tasaInteres: input.tasaInteres } : {}),
+          ...(input.observaciones !== undefined ? { observaciones: input.observaciones } : {}),
+        },
+      });
+      if (updated.count !== 1) throw new ActionError('Deuda no encontrada', 'NOT_FOUND');
+
+      const deuda = await tx.deudaCash.findFirst({
+        where: { id: input.id, tenantId, deletedAt: null },
+        include: { proveedor: { select: { vendorId: true, nombre: true } }, cuentaPorPagar: true },
+      });
+      if (!deuda) throw new ActionError('Deuda no encontrada', 'NOT_FOUND');
+      await AuditLogService.logStrict({
+        accion: 'UPDATE',
+        entidad: 'DEUDA_CASH',
+        entidadId: input.id,
+        usuarioId: user.userId,
+        detalles: { cambios: { ...input } },
+      }, tx);
+      return deuda;
     });
-
-    await AuditLogService.log({
-      accion: 'UPDATE',
-      entidad: 'DEUDA_CASH',
-      entidadId: input.id,
-      usuarioId: user.userId,
-      detalles: { cambios: { ...input } },
-    });
-
-    return deuda;
   },
 
   async registerCashDebtPayment({
@@ -636,22 +742,6 @@ export const AccountingCashOperationsMutationService = {
 
     const tenantId = requireTenant(user);
     requireDeudaMutationAccess(user, 'registrar pagos de deuda cash');
-    const deuda = await prisma.deudaCash.findFirst({
-      where: { id: input.id, tenantId, deletedAt: null },
-      include: { cuentaPorPagar: true },
-    });
-    if (!deuda) throw new ActionError('Deuda no encontrada', 'NOT_FOUND');
-    if (deuda.estado === 'PAGADO' || deuda.estado === 'CANCELADO') {
-      throw new ActionError('La deuda no admite más pagos', 'VALIDATION_ERROR');
-    }
-
-    const saldoPendiente = calcularSaldoPendienteDeuda(
-      Number(deuda.cuentaPorPagar.montoDeuda),
-      Number(deuda.cuentaPorPagar.montoPagado),
-    );
-    if (input.monto > saldoPendiente) {
-      throw new ActionError(`El monto excede el saldo pendiente de ${saldoPendiente}`, 'VALIDATION_ERROR');
-    }
 
     const [cuenta, tipoPago] = await Promise.all([
       prisma.cuentaBancaria.findFirst({
@@ -668,29 +758,69 @@ export const AccountingCashOperationsMutationService = {
     }
 
     const fechaReconciliacion = new Date();
-    const moneda = input.moneda || deuda.moneda;
-    const conversion = buildPersistedAccountingAmount(
-      Number(input.monto),
-      moneda,
-      input.tasaCambio,
-      fechaReconciliacion,
-    );
-    const montoFuncional = conversion.montoConvertido;
-    const evidenciaFx = conversion.fxEvidence;
-    if (montoFuncional == null || !evidenciaFx) {
-      throw new ActionError('Falta evidencia de conversión para el pago de la deuda', 'FX_INSUFICIENTE');
-    }
 
-    const resultado = await prisma.$transaction(async (tx: any) => {
+    const resultado = await prisma.$transaction(async (tx) => {
       await acquireAccountingTenantLock(tx, tenantId);
+
+      // Leer deuda y obligación después del lock; nunca calcular un nuevo pago
+      // desde el saldo observado antes de serializar writers del tenant.
+      const deuda = await tx.deudaCash.findFirst({
+        where: { id: input.id, tenantId, deletedAt: null },
+        include: { cuentaPorPagar: true },
+      });
+      if (!deuda) throw new ActionError('Deuda no encontrada', 'NOT_FOUND');
+      if (deuda.estado === 'PAGADO' || deuda.estado === 'CANCELADO') {
+        throw new ActionError('La deuda no admite más pagos', 'VALIDATION_ERROR');
+      }
+
+      const moneda = input.moneda || deuda.moneda;
+      const policy = await getRequiredTenantAccountingPolicy(tenantId, tx);
+      const functionalCurrency = policy.functionalCurrencyCode.trim().toUpperCase();
+      const conversion = buildPersistedAccountingAmount(
+        new Prisma.Decimal(input.monto), moneda, input.tasaCambio, fechaReconciliacion,
+        undefined, functionalCurrency,
+      );
+      const montoFuncional = conversion.montoConvertido;
+      const evidenciaFx = conversion.fxEvidence;
+      if (montoFuncional == null || !evidenciaFx) {
+        throw new ActionError(
+          'Falta evidencia de conversión para el pago de la deuda', 'FX_INSUFICIENTE',
+        );
+      }
+      if (deuda.cuentaPorPagar.moneda !== deuda.moneda) {
+        throw new ActionError(
+          'La moneda de la obligación no coincide con la deuda', 'FX_INSUFICIENTE',
+        );
+      }
+      const importes = resolveCashDebtCurrencyAmounts({
+        monedaObligacion: deuda.cuentaPorPagar.moneda,
+        monedaFondos: moneda,
+        monedaCuenta: cuenta.moneda,
+        montoFondos: new Prisma.Decimal(input.monto),
+        montoFuncional,
+        functionalCurrency,
+      });
+      const saldoPendiente = calcularSaldoPendienteDeuda(
+        deuda.cuentaPorPagar.montoDeuda,
+        deuda.cuentaPorPagar.montoPagado,
+      );
+      if (importes.montoObligacion.gt(saldoPendiente)) {
+        throw new ActionError(
+          `El monto excede el saldo pendiente de ${saldoPendiente}`,
+          'CREDITO_CONFLICTO',
+        );
+      }
+
       const reconciliacion = await tx.reconciliacionVenta.create({
         data: {
           tenant: { connect: { tenantId } },
           cuentaBancaria: { connect: { cuentaId: input.cuentaId } },
           tipoPago: { connect: { tipoId: input.tipoPagoId } },
-          monto: input.monto,
+          monto: new Prisma.Decimal(input.monto),
           moneda,
           montoConvertido: conversion.montoConvertido,
+          montoCuenta: importes.montoCuenta,
+          monedaCuenta: cuenta.moneda.trim().toUpperCase(),
           fechaReconciliacion,
           ...(conversion.fxEvidence ?? {}),
           ...(conversion.tasaCambio != null && { tasaCambio: conversion.tasaCambio }),
@@ -701,31 +831,53 @@ export const AccountingCashOperationsMutationService = {
         },
       });
       const cuentaActualizada = await tx.cuentaBancaria.updateMany({
-        where: { cuentaId: input.cuentaId, tenantId, isActive: true },
-        data: { saldo: { decrement: input.monto } },
+        where: {
+          cuentaId: input.cuentaId,
+          tenantId,
+          isActive: true,
+          moneda: cuenta.moneda,
+          saldo: { gte: importes.montoCuenta.toNumber() },
+        },
+        data: { saldo: { decrement: importes.montoCuenta.toNumber() } },
       });
       if (cuentaActualizada.count !== 1) {
-        throw new ActionError('La cuenta bancaria no pertenece al tenant', 'VALIDATION_ERROR');
+        throw new ActionError('La cuenta no tiene saldo suficiente o no pertenece al tenant', 'VALIDATION_ERROR');
       }
-      const nuevoMontoPagado = Number((Number(deuda.cuentaPorPagar.montoPagado) + input.monto).toFixed(2));
-      const totalDeuda = Number(deuda.cuentaPorPagar.montoDeuda);
+      const nuevoMontoPagado = new Prisma.Decimal(deuda.cuentaPorPagar.montoPagado)
+        .add(importes.montoObligacion)
+        .toDecimalPlaces(2, Prisma.Decimal.ROUND_HALF_UP);
+      const totalDeuda = deuda.cuentaPorPagar.montoDeuda;
       const nuevoSaldoPendiente = calcularSaldoPendienteDeuda(totalDeuda, nuevoMontoPagado);
-      const nuevoEstadoCuenta = nuevoSaldoPendiente <= 0.01 ? 'PAGADA' : 'PARCIAL';
-      await tx.cuentaPorPagar.update({
-        where: { cuentaPorPagarId: deuda.cuentaPorPagarId },
+      const nuevoEstadoCuenta = nuevoSaldoPendiente.lte('0.01') ? 'PAGADA' : 'PARCIAL';
+      const cuentaPorPagarActualizada = await tx.cuentaPorPagar.updateMany({
+        where: {
+          cuentaPorPagarId: deuda.cuentaPorPagarId,
+          tenantId,
+          montoPagado: deuda.cuentaPorPagar.montoPagado,
+          estado: deuda.cuentaPorPagar.estado,
+        },
         data: {
           montoPagado: nuevoMontoPagado,
           saldoPendiente: nuevoSaldoPendiente,
           estado: nuevoEstadoCuenta,
         },
       });
+      if (cuentaPorPagarActualizada.count !== 1) {
+        throw new ActionError('El saldo de la deuda cambió; vuelve a consultar', 'CREDITO_CONFLICTO');
+      }
       if (nuevoEstadoCuenta === 'PAGADA') {
-        await tx.deudaCash.update({ where: { id: deuda.id }, data: { estado: 'PAGADO' } });
+        const deudaActualizada = await tx.deudaCash.updateMany({
+          where: { id: deuda.id, tenantId, estado: deuda.estado, deletedAt: null },
+          data: { estado: 'PAGADO' },
+        });
+        if (deudaActualizada.count !== 1) {
+          throw new ActionError('El estado de la deuda cambió; vuelve a consultar', 'CREDITO_CONFLICTO');
+        }
       }
       await postEvento(tx, { tenantId, userId: user.userId }, buildEventoPagoDeuda({
         reconciliacionId: reconciliacion.reconciliacionId,
         valoracion: {
-          monto: Number(input.monto),
+          monto: new Prisma.Decimal(input.monto),
           moneda,
           montoFuncional,
           monedaFuncionalCodigo: evidenciaFx.functionalCurrency,
@@ -737,15 +889,14 @@ export const AccountingCashOperationsMutationService = {
         descripcion: input.observaciones ?? undefined,
         referencia: deuda.id,
       }));
+      await AuditLogService.logStrict({
+        accion: 'CREATE',
+        entidad: 'PAGO_DEUDA',
+        entidadId: reconciliacion.reconciliacionId,
+        usuarioId: user.userId,
+        detalles: { deudaId: deuda.id, monto: input.monto, moneda },
+      }, tx);
       return reconciliacion;
-    });
-
-    await AuditLogService.log({
-      accion: 'CREATE',
-      entidad: 'PAGO_DEUDA',
-      entidadId: resultado.reconciliacionId,
-      usuarioId: user.userId,
-      detalles: { deudaId: deuda.id, monto: input.monto, moneda: input.moneda || deuda.moneda },
     });
 
     return resultado;

@@ -81,6 +81,7 @@ model Vendor {
 model InyeccionCapital {
   id                 String         @id @default(cuid())
   tenantId           String?
+  idempotencyKey     String?
   tipo               TipoInyeccion
   montoRecibido      Decimal
   moneda             String         @default("CUP")
@@ -114,6 +115,7 @@ model InyeccionCapital {
   @@index([cuentaId, createdAt])
   @@index([tenantId])
   @@index([tenantId, fxProvenanceKind])
+  @@unique([tenantId, idempotencyKey])
 }
 
 model PagoDeuda {

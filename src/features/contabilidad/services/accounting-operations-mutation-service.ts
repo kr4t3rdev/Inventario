@@ -68,6 +68,7 @@ export const createCapitalInjectionSchema = z.object({
   plazoMeses: z.coerce.number().int().positive().optional(),
   fechaInicioPago: z.coerce.date().optional(),
   fechaOperacion: z.coerce.date().optional(),
+  idempotencyKey: z.string().trim().min(1).max(64).optional(),
 }).superRefine((input, ctx) => {
   if (input.tipo === 'CAPITAL_SOCIAL' && !input.socio) {
     ctx.addIssue({
@@ -455,14 +456,26 @@ export const AccountingOperationsMutationService = {
     const saldoNegativo = nuevoSaldo.lt(0);
     const fechaOperacion = parsed.fechaOperacion ?? new Date();
 
-    // Idempotencia: si el cliente provee clave, un reintento devuelve el ajuste
-    // existente en lugar de duplicar ajuste, movimiento de saldo y asiento.
+    // Idempotencia: si el cliente provee clave, un reintento con el mismo payload
+    // devuelve el ajuste existente en lugar de duplicar ajuste, movimiento de saldo
+    // y asiento. Si el payload difiere, se rechaza con 409 (conflicto de clave).
     const idempotencyKey = parsed.idempotencyKey?.trim() || null;
     if (idempotencyKey) {
       const existente = await prisma.ajusteBancario.findUnique({
         where: { tenantId_idempotencyKey: { tenantId, idempotencyKey } },
       });
       if (existente) {
+        const mismoPayload =
+          existente.tipo === parsed.tipo &&
+          Number(existente.monto) === parsed.monto &&
+          existente.moneda.toUpperCase() === parsed.moneda.toUpperCase() &&
+          existente.cuentaId === parsed.cuentaId;
+        if (!mismoPayload) {
+          throw new ActionError(
+            'La clave de idempotencia ya fue usada con datos diferentes',
+            'IDEMPOTENCY_CONFLICT',
+          );
+        }
         return {
           ajuste: existente,
           saldoAnterior: Number(cuenta.saldo),
@@ -576,6 +589,29 @@ export const AccountingOperationsMutationService = {
     requireFeature(user, 'inyeccion-capital', 'registrar inyecciones de capital');
     requirePermission(user, 'financiero.contabilidad.acceder', 'registrar inyecciones de capital');
 
+    // Idempotencia: misma clave + mismo payload → devuelve el existente;
+    // misma clave + payload distinto → 409 IDEMPOTENCY_CONFLICT.
+    const idempotencyKey = parsed.idempotencyKey?.trim() || null;
+    if (idempotencyKey) {
+      const existente = await prisma.inyeccionCapital.findUnique({
+        where: { tenantId_idempotencyKey: { tenantId, idempotencyKey } },
+      });
+      if (existente) {
+        const mismoPayload =
+          Number(existente.montoRecibido) === parsed.montoRecibido &&
+          existente.moneda.toUpperCase() === parsed.moneda.toUpperCase() &&
+          existente.tipo === parsed.tipo &&
+          existente.cuentaId === parsed.cuentaId;
+        if (!mismoPayload) {
+          throw new ActionError(
+            'La clave de idempotencia ya fue usada con datos diferentes',
+            'IDEMPOTENCY_CONFLICT',
+          );
+        }
+        return existente;
+      }
+    }
+
     const inyeccion = await prisma.$transaction(async (tx: any) => {
       await acquireAccountingTenantLock(tx, tenantId);
 
@@ -634,6 +670,7 @@ export const AccountingOperationsMutationService = {
       const created = await tx.inyeccionCapital.create({
         data: {
           tenantId,
+          idempotencyKey,
           montoRecibido: montoRecibidoDecimal,
           moneda: parsed.moneda,
           tasaCambio: conversion.tasaCambio,
