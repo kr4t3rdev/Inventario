@@ -7,6 +7,7 @@ vi.mock('@/lib/auth-middleware', () => ({
 
 vi.mock('@/lib/prisma', () => ({
   prisma: {
+    $transaction: vi.fn(),
     tipoPago: {
       findFirst: vi.fn(),
       updateMany: vi.fn(),
@@ -24,7 +25,7 @@ vi.mock('@/lib/services/validate-period-write', () => ({
 }));
 
 vi.mock('@/lib/services/audit-log-service', () => ({
-  AuditLogService: { log: vi.fn(async () => undefined) },
+  AuditLogService: { log: vi.fn(async () => undefined), logStrict: vi.fn(async () => undefined) },
 }));
 
 import { authenticateUser } from '@/lib/auth-middleware';
@@ -46,6 +47,7 @@ describe('/api/contabilidad/tipos-pago/[id] tenant isolation', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     vi.mocked(authenticateUser).mockResolvedValue({ user } as never);
+    vi.mocked(prisma.$transaction).mockImplementation(async (callback) => callback(prisma as never));
   });
 
   it('does not return a payment type from another tenant', async () => {

@@ -191,32 +191,35 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    const nuevoTipoPago = await prisma.tipoPago.create({
-      data: { ...validatedData, tenantId },
-      include: {
-        _count: {
-          select: {
-            reconciliacionesVenta: true,
-            reconciliacionesServicio: true,
-            reconciliacionesGasto: true
+    const nuevoTipoPago = await prisma.$transaction(async (tx) => {
+      const creado = await tx.tipoPago.create({
+        data: { ...validatedData, tenantId },
+        include: {
+          _count: {
+            select: {
+              reconciliacionesVenta: true,
+              reconciliacionesServicio: true,
+              reconciliacionesGasto: true
+            }
           }
         }
-      }
-    })
+      })
 
-    // Registrar en auditoría
-    await AuditLogService.log({
-      accion: "CREATE",
-      entidad: "TIPO_PAGO",
-      entidadId: nuevoTipoPago.tipoId,
-      usuarioId: user.userId,
-      detalles: {
-        nombre: nuevoTipoPago.nombre,
-        requiereCuenta: nuevoTipoPago.requiereCuenta,
-        cuentaDefecto: nuevoTipoPago.cuentaDefecto,
-        tenantId
-      }
-    });
+      await AuditLogService.logStrict({
+        accion: "CREATE",
+        entidad: "TIPO_PAGO",
+        entidadId: creado.tipoId,
+        usuarioId: user.userId,
+        detalles: {
+          nombre: creado.nombre,
+          requiereCuenta: creado.requiereCuenta,
+          cuentaDefecto: creado.cuentaDefecto,
+          tenantId
+        }
+      }, tx);
+
+      return creado;
+    })
 
     return NextResponse.json({
       success: true,

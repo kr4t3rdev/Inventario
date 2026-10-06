@@ -5,10 +5,11 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 vi.mock('next/cache', () => ({ revalidatePath: vi.fn() }));
 vi.mock('@/lib/services/audit-log-service', () => ({
-  AuditLogService: { log: vi.fn(async () => undefined) },
+  AuditLogService: { log: vi.fn(async () => undefined), logStrict: vi.fn(async () => undefined) },
 }));
 vi.mock('@/lib/prisma', () => ({
   prisma: {
+    $transaction: vi.fn(),
     tipoPago: {
       findMany: vi.fn(),
       findUnique: vi.fn(),
@@ -113,6 +114,13 @@ vi.mock('@/lib/server-actions/get-current-user', () => ({
 }));
 
 import { getCurrentUser } from '@/lib/server-actions/get-current-user';
+
+// El `tx` de las transacciones se resuelve al propio mock raíz:
+// `tx.tipoPago.* === prisma.tipoPago.*`, así las aserciones existentes
+// sobre los modelos siguen valiendo sin duplicar mocks.
+beforeEach(() => {
+  vi.mocked(prisma.$transaction).mockImplementation(async (callback) => callback(prisma as never));
+});
 
 describe('getTiposPagoAction — tenant isolation', () => {
   beforeEach(() => {

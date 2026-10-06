@@ -51,31 +51,36 @@ export const convertMoneyAction = withAction(
       const quote = await CurrencyConversionService.quoteConversion(input, exchangeRateProvider);
       const referenciaId = input.referenciaId ?? `exchange:${randomUUID()}`;
 
-      await prisma.transaccionMoneda.create({
-        data: {
-          tenantId: user.tenantId,
-          tipoTransaccion: 'exchange',
-          referenciaId,
-          monedaId: quote.monedaOrigen,
-          montoOriginal: quote.montoOriginal,
-          tasaCambio: quote.tasaAplicada,
-          montoConvertido: quote.montoConvertido,
-        },
-      });
+      await prisma.$transaction(async (tx) => {
+        await tx.transaccionMoneda.create({
+          data: {
+            tenantId: user.tenantId,
+            tipoTransaccion: 'exchange',
+            referenciaId,
+            monedaId: quote.monedaOrigen,
+            montoOriginal: quote.montoOriginal,
+            tasaCambio: quote.tasaAplicada,
+            montoConvertido: quote.montoConvertido,
+          },
+        });
 
-      await AuditLogService.log({
-        accion: 'CREATE',
-        entidad: 'ESCENARIO_EXCHANGE',
-        entidadId: referenciaId,
-        usuarioId: user.userId,
-        detalles: {
-          monedaOrigen: quote.monedaOrigen,
-          monedaDestino: quote.monedaDestino,
-          ruta: quote.ruta,
-          tasaAplicada: quote.tasaAplicada,
-          montoOriginal: quote.montoOriginal,
-          montoConvertido: quote.montoConvertido,
-        },
+        await AuditLogService.logStrict(
+          {
+            accion: 'CREATE',
+            entidad: 'ESCENARIO_EXCHANGE',
+            entidadId: referenciaId,
+            usuarioId: user.userId,
+            detalles: {
+              monedaOrigen: quote.monedaOrigen,
+              monedaDestino: quote.monedaDestino,
+              ruta: quote.ruta,
+              tasaAplicada: quote.tasaAplicada,
+              montoOriginal: quote.montoOriginal,
+              montoConvertido: quote.montoConvertido,
+            },
+          },
+          tx,
+        );
       });
 
       revalidatePath('/busy/contabilidad/exchange');
@@ -103,26 +108,33 @@ export const createMonedaAction = withAction(
       throw new ActionError('Ya existe una moneda con ese código', 'DUPLICATE');
     }
 
-    if (input.esPrincipal) {
-      await prisma.moneda.updateMany({ where: { esPrincipal: true }, data: { esPrincipal: false } });
-    }
+    const moneda = await prisma.$transaction(async (tx) => {
+      if (input.esPrincipal) {
+        await tx.moneda.updateMany({ where: { esPrincipal: true }, data: { esPrincipal: false } });
+      }
 
-    const moneda = await prisma.moneda.create({
-      data: {
-        codigo: input.codigo.toUpperCase(),
-        nombre: input.nombre,
-        simbolo: input.simbolo,
-        esPrincipal: input.esPrincipal ?? false,
-        isActive: true,
-      },
-    });
+      const creada = await tx.moneda.create({
+        data: {
+          codigo: input.codigo.toUpperCase(),
+          nombre: input.nombre,
+          simbolo: input.simbolo,
+          esPrincipal: input.esPrincipal ?? false,
+          isActive: true,
+        },
+      });
 
-    await AuditLogService.log({
-      accion: 'CREATE',
-      entidad: 'MONEDA',
-      entidadId: moneda.codigo,
-      usuarioId: user.userId,
-      detalles: { codigo: moneda.codigo, nombre: moneda.nombre, simbolo: moneda.simbolo },
+      await AuditLogService.logStrict(
+        {
+          accion: 'CREATE',
+          entidad: 'MONEDA',
+          entidadId: creada.codigo,
+          usuarioId: user.userId,
+          detalles: { codigo: creada.codigo, nombre: creada.nombre, simbolo: creada.simbolo },
+        },
+        tx,
+      );
+
+      return creada;
     });
 
     revalidatePath('/busy/contabilidad/exchange');
@@ -142,21 +154,28 @@ export const updateMonedaAction = withAction(
       throw new ActionError('Moneda no encontrada', 'NOT_FOUND');
     }
 
-    if (data.esPrincipal) {
-      await prisma.moneda.updateMany({
-        where: { codigo: { not: codigo }, esPrincipal: true },
-        data: { esPrincipal: false },
-      });
-    }
+    const moneda = await prisma.$transaction(async (tx) => {
+      if (data.esPrincipal) {
+        await tx.moneda.updateMany({
+          where: { codigo: { not: codigo }, esPrincipal: true },
+          data: { esPrincipal: false },
+        });
+      }
 
-    const moneda = await prisma.moneda.update({ where: { codigo }, data });
+      const actualizada = await tx.moneda.update({ where: { codigo }, data });
 
-    await AuditLogService.log({
-      accion: 'UPDATE',
-      entidad: 'MONEDA',
-      entidadId: codigo,
-      usuarioId: user.userId,
-      detalles: { cambios: data },
+      await AuditLogService.logStrict(
+        {
+          accion: 'UPDATE',
+          entidad: 'MONEDA',
+          entidadId: codigo,
+          usuarioId: user.userId,
+          detalles: { cambios: data },
+        },
+        tx,
+      );
+
+      return actualizada;
     });
 
     revalidatePath('/busy/contabilidad/exchange');
@@ -201,22 +220,32 @@ export const updateTasaCambioAction = withAction(
       return tasaExistente;
     }
 
-    const nueva = await exchangeRateProvider.createRate({
-      monedaOrigenId: input.monedaOrigenId,
-      monedaDestino: input.monedaDestino,
-      tasa: input.tasa,
-    });
+    const nueva = await prisma.$transaction(async (tx) => {
+      const creada = await exchangeRateProvider.createRate(
+        {
+          monedaOrigenId: input.monedaOrigenId,
+          monedaDestino: input.monedaDestino,
+          tasa: input.tasa,
+        },
+        tx,
+      );
 
-    await AuditLogService.log({
-      accion: 'CREATE',
-      entidad: 'TASA_CAMBIO',
-      entidadId: nueva.tasaId,
-      usuarioId: user.userId,
-      detalles: {
-        monedaOrigenId: input.monedaOrigenId,
-        monedaDestino: input.monedaDestino,
-        tasa: input.tasa,
-      },
+      await AuditLogService.logStrict(
+        {
+          accion: 'CREATE',
+          entidad: 'TASA_CAMBIO',
+          entidadId: creada.tasaId,
+          usuarioId: user.userId,
+          detalles: {
+            monedaOrigenId: input.monedaOrigenId,
+            monedaDestino: input.monedaDestino,
+            tasa: input.tasa,
+          },
+        },
+        tx,
+      );
+
+      return creada;
     });
 
     revalidatePath('/busy/contabilidad/exchange');

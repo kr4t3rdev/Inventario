@@ -1,6 +1,7 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 
 const prismaMock = vi.hoisted(() => ({
+  $transaction: vi.fn(),
   moneda: {
     findUnique: vi.fn(),
     findFirst: vi.fn(),
@@ -55,6 +56,7 @@ vi.mock('next/cache', () => ({
 describe('actions-exchange', () => {
   beforeEach(() => {
     vi.clearAllMocks()
+    prismaMock.$transaction.mockImplementation(async (callback) => callback(prismaMock))
     getCurrentUserMock.mockResolvedValue({
       userId: 'user-1',
       tenantId: 'tenant-1',

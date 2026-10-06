@@ -44,17 +44,21 @@ export const createCierreAction = withAction(withPeriodValidation(
   async (input: z.infer<typeof createSchema>, user: AuthenticatedUser) => {
   const parsed = createSchema.parse(input);
   const tenantId = requireTenant(user);
-  const cierre = await prisma.cierreContable.create({
-    data: { tipo: parsed.tipo, fechaInicio: new Date(parsed.fechaInicio), fechaFin: new Date(parsed.fechaFin), creadoPor: parsed.creadoPor, observaciones: parsed.observaciones, tenantId, estado: 'BORRADOR' },
-  });
+  const cierre = await prisma.$transaction(async (tx) => {
+    const creado = await tx.cierreContable.create({
+      data: { tipo: parsed.tipo, fechaInicio: new Date(parsed.fechaInicio), fechaFin: new Date(parsed.fechaFin), creadoPor: parsed.creadoPor, observaciones: parsed.observaciones, tenantId, estado: 'BORRADOR' },
+    });
 
-  AuditLogService.log({
-    accion: 'CREATE',
-    entidad: 'CIERRE_CONTABLE',
-    entidadId: cierre.cierreId,
-    usuarioId: user.userId,
-    detalles: { tipo: parsed.tipo, fechaInicio: parsed.fechaInicio, fechaFin: parsed.fechaFin },
-  }).catch((err) => console.error('[AuditLog] Error logging cierre:', err));
+    await AuditLogService.logStrict({
+      accion: 'CREATE',
+      entidad: 'CIERRE_CONTABLE',
+      entidadId: creado.cierreId,
+      usuarioId: user.userId,
+      detalles: { tipo: parsed.tipo, fechaInicio: parsed.fechaInicio, fechaFin: parsed.fechaFin },
+    }, tx);
+
+    return creado;
+  });
 
   revalidatePath('/busy/contabilidad/cierres');
   return cierre;
@@ -65,18 +69,22 @@ export const updateCierreAction = withAction(async (input: z.infer<typeof update
   const tenantId = requireTenant(user);
   const existing = await prisma.cierreContable.findFirst({ where: { cierreId: parsed.id, tenantId } });
   if (!existing) throw new ActionError('Cierre no encontrado', 'NOT_FOUND');
-  const cierre = await prisma.cierreContable.update({
-    where: { cierreId: parsed.id },
-    data: { ...(parsed.estado && { estado: parsed.estado }), ...(parsed.aprobadoPor && { aprobadoPor: parsed.aprobadoPor }), ...(parsed.observaciones && { observaciones: parsed.observaciones }) },
-  });
+  const cierre = await prisma.$transaction(async (tx) => {
+    const actualizado = await tx.cierreContable.update({
+      where: { cierreId: parsed.id },
+      data: { ...(parsed.estado && { estado: parsed.estado }), ...(parsed.aprobadoPor && { aprobadoPor: parsed.aprobadoPor }), ...(parsed.observaciones && { observaciones: parsed.observaciones }) },
+    });
 
-  AuditLogService.log({
-    accion: 'UPDATE',
-    entidad: 'CIERRE_CONTABLE',
-    entidadId: parsed.id,
-    usuarioId: user.userId,
-    detalles: { cambios: { estado: parsed.estado, aprobadoPor: parsed.aprobadoPor, observaciones: parsed.observaciones } },
-  }).catch((err) => console.error('[AuditLog] Error logging cierre update:', err));
+    await AuditLogService.logStrict({
+      accion: 'UPDATE',
+      entidad: 'CIERRE_CONTABLE',
+      entidadId: parsed.id,
+      usuarioId: user.userId,
+      detalles: { cambios: { estado: parsed.estado, aprobadoPor: parsed.aprobadoPor, observaciones: parsed.observaciones } },
+    }, tx);
+
+    return actualizado;
+  });
 
   revalidatePath('/busy/contabilidad/cierres');
   return cierre;
@@ -86,15 +94,17 @@ export const deleteCierreAction = withAction(async (id: string, user: Authentica
   const tenantId = requireTenant(user);
   const existing = await prisma.cierreContable.findFirst({ where: { cierreId: id, tenantId } });
   if (!existing) throw new ActionError('Cierre no encontrado', 'NOT_FOUND');
-  await prisma.cierreContable.delete({ where: { cierreId: id } });
+  await prisma.$transaction(async (tx) => {
+    await tx.cierreContable.delete({ where: { cierreId: id } });
 
-  AuditLogService.log({
-    accion: 'DELETE',
-    entidad: 'CIERRE_CONTABLE',
-    entidadId: id,
-    usuarioId: user.userId,
-    detalles: { tipo: existing.tipo, fechaInicio: existing.fechaInicio, fechaFin: existing.fechaFin },
-  }).catch((err) => console.error('[AuditLog] Error logging cierre delete:', err));
+    await AuditLogService.logStrict({
+      accion: 'DELETE',
+      entidad: 'CIERRE_CONTABLE',
+      entidadId: id,
+      usuarioId: user.userId,
+      detalles: { tipo: existing.tipo, fechaInicio: existing.fechaInicio, fechaFin: existing.fechaFin },
+    }, tx);
+  });
 
   revalidatePath('/busy/contabilidad/cierres');
   return { success: true };

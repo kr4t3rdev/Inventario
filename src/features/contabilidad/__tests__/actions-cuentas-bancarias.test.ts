@@ -55,7 +55,7 @@ import {
 import type { AuthenticatedUser } from '@/lib/auth-middleware';
 
 const txClient = {
-  cuentaBancaria: { create: vi.fn() },
+  cuentaBancaria: { create: vi.fn(), update: vi.fn(), delete: vi.fn() },
   inyeccionCapital: { create: vi.fn() },
   auditLog: { create: vi.fn() },
 };
@@ -91,6 +91,8 @@ describe('Cuentas Bancarias Actions', () => {
     periodGuardState.blocked = false;
     vi.mocked(prisma.$transaction).mockImplementation(async (callback) => callback(txClient as never));
     txClient.cuentaBancaria.create.mockReset();
+    txClient.cuentaBancaria.update.mockReset();
+    txClient.cuentaBancaria.delete.mockReset();
     txClient.inyeccionCapital.create.mockReset();
     txClient.auditLog.create.mockReset();
   });
@@ -338,11 +340,12 @@ describe('Cuentas Bancarias Actions', () => {
       expect(result.success).toBe(false);
       expect(result.error?.code).toBe('VALIDATION_ERROR');
       expect(prisma.cuentaBancaria.update).not.toHaveBeenCalled();
+      expect(prisma.$transaction).not.toHaveBeenCalled();
     });
 
     it('debe actualizar solo los campos enviados', async () => {
       vi.mocked(prisma.cuentaBancaria.findFirst).mockResolvedValue(mockCuenta);
-      vi.mocked(prisma.cuentaBancaria.update).mockResolvedValue({
+      txClient.cuentaBancaria.update.mockResolvedValue({
         ...mockCuenta,
         nombreBanco: 'Banco Actualizado',
       });
@@ -353,17 +356,22 @@ describe('Cuentas Bancarias Actions', () => {
       });
 
       expect(result.success).toBe(true);
-      expect(prisma.cuentaBancaria.update).toHaveBeenCalledWith(
+      expect(txClient.cuentaBancaria.update).toHaveBeenCalledWith(
         expect.objectContaining({
           where: { cuentaId: 'c1' },
           data: { nombreBanco: 'Banco Actualizado' },
         })
       );
+      expect(AuditLogService.logStrict).toHaveBeenCalledWith(
+        expect.objectContaining({ accion: 'UPDATE', entidad: 'CUENTA_BANCARIA' }),
+        expect.anything(),
+      );
+      expect(AuditLogService.log).not.toHaveBeenCalled();
     });
 
     it('debe permitir toggle de isActive sin otros campos', async () => {
       vi.mocked(prisma.cuentaBancaria.findFirst).mockResolvedValue(mockCuenta);
-      vi.mocked(prisma.cuentaBancaria.update).mockResolvedValue({
+      txClient.cuentaBancaria.update.mockResolvedValue({
         ...mockCuenta,
         isActive: false,
       });
@@ -374,7 +382,7 @@ describe('Cuentas Bancarias Actions', () => {
       });
 
       expect(result.success).toBe(true);
-      expect(prisma.cuentaBancaria.update).toHaveBeenCalledWith(
+      expect(txClient.cuentaBancaria.update).toHaveBeenCalledWith(
         expect.objectContaining({
           data: { isActive: false },
         })
@@ -391,6 +399,7 @@ describe('Cuentas Bancarias Actions', () => {
       expect(result.success).toBe(false);
       expect(result.error?.code).toBe('VALIDATION_ERROR');
       expect(prisma.cuentaBancaria.update).not.toHaveBeenCalled();
+      expect(prisma.$transaction).not.toHaveBeenCalled();
     });
 
     it('rechaza cambiar moneda cuando existe una contrapartida con monto', async () => {
@@ -403,6 +412,7 @@ describe('Cuentas Bancarias Actions', () => {
       expect(result.success).toBe(false);
       expect(result.error?.code).toBe('VALIDATION_ERROR');
       expect(prisma.cuentaBancaria.update).not.toHaveBeenCalled();
+      expect(prisma.$transaction).not.toHaveBeenCalled();
     });
 
     it('rechaza cambiar moneda con saldo cero cuando existe movimiento histórico', async () => {
@@ -415,6 +425,7 @@ describe('Cuentas Bancarias Actions', () => {
       expect(result.success).toBe(false);
       expect(result.error?.code).toBe('VALIDATION_ERROR');
       expect(prisma.cuentaBancaria.update).not.toHaveBeenCalled();
+      expect(prisma.$transaction).not.toHaveBeenCalled();
       expect(prisma.cuentaBancaria.findFirst).toHaveBeenCalledWith(
         expect.objectContaining({
           where: expect.objectContaining({
@@ -440,7 +451,7 @@ describe('Cuentas Bancarias Actions', () => {
       vi.mocked(prisma.cuentaBancaria.findFirst)
         .mockResolvedValueOnce({ ...mockCuenta, saldo: 0 } as never)
         .mockResolvedValueOnce(null);
-      vi.mocked(prisma.cuentaBancaria.update).mockResolvedValue({
+      txClient.cuentaBancaria.update.mockResolvedValue({
         ...mockCuenta,
         saldo: 0,
         moneda: 'USD',
@@ -449,7 +460,7 @@ describe('Cuentas Bancarias Actions', () => {
       const result = await updateCuentaBancariaAction({ cuentaId: 'c1', moneda: 'USD' });
 
       expect(result.success).toBe(true);
-      expect(prisma.cuentaBancaria.update).toHaveBeenCalledWith(
+      expect(txClient.cuentaBancaria.update).toHaveBeenCalledWith(
         expect.objectContaining({ data: { moneda: 'USD' } }),
       );
     });
@@ -470,15 +481,20 @@ describe('Cuentas Bancarias Actions', () => {
   describe('deleteCuentaBancariaAction', () => {
     it('debe eliminar una cuenta existente', async () => {
       vi.mocked(prisma.cuentaBancaria.findFirst).mockResolvedValue(mockCuenta);
-      vi.mocked(prisma.cuentaBancaria.delete).mockResolvedValue(mockCuenta);
+      txClient.cuentaBancaria.delete.mockResolvedValue(mockCuenta);
 
       const result = await deleteCuentaBancariaAction('c1');
 
       expect(result.success).toBe(true);
       expect(result.data?.eliminado).toBe(true);
-      expect(prisma.cuentaBancaria.delete).toHaveBeenCalledWith({
+      expect(txClient.cuentaBancaria.delete).toHaveBeenCalledWith({
         where: { cuentaId: 'c1' },
       });
+      expect(AuditLogService.logStrict).toHaveBeenCalledWith(
+        expect.objectContaining({ accion: 'DELETE', entidad: 'CUENTA_BANCARIA' }),
+        expect.anything(),
+      );
+      expect(AuditLogService.log).not.toHaveBeenCalled();
     });
 
     it('debe fallar si la cuenta no existe', async () => {

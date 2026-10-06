@@ -97,14 +97,18 @@ export const createTipoPagoAction = withAction(async (input: z.infer<typeof crea
     if (!cuenta.isActive) throw new ActionError('La cuenta por defecto especificada no está activa', 'DEFAULT_ACCOUNT_INACTIVE');
   }
 
-  const nuevo = await prisma.tipoPago.create({
-    data: { ...parsed, tenantId },
-    include: { _count: _countSelect }
-  });
+  const nuevo = await prisma.$transaction(async (tx) => {
+    const creado = await tx.tipoPago.create({
+      data: { ...parsed, tenantId },
+      include: { _count: _countSelect }
+    });
 
-  await AuditLogService.log({
-    accion: 'CREATE', entidad: 'TIPO_PAGO', entidadId: nuevo.tipoId, usuarioId: user.userId,
-    detalles: { nombre: nuevo.nombre, requiereCuenta: nuevo.requiereCuenta, cuentaDefecto: nuevo.cuentaDefecto, tenantId }
+    await AuditLogService.logStrict({
+      accion: 'CREATE', entidad: 'TIPO_PAGO', entidadId: creado.tipoId, usuarioId: user.userId,
+      detalles: { nombre: creado.nombre, requiereCuenta: creado.requiereCuenta, cuentaDefecto: creado.cuentaDefecto, tenantId }
+    }, tx);
+
+    return creado;
   });
 
   revalidatePath('/busy/contabilidad/configuracion');
@@ -157,23 +161,27 @@ export const updateTipoPagoAction = withAction(async (input: z.infer<typeof upda
   const toUpdate: any = { ...data };
   if (data.requiereCuenta === false) toUpdate.cuentaDefecto = null;
 
-  const updateResult = await prisma.tipoPago.updateMany({
-    where: { tipoId: id, tenantId },
-    data: toUpdate
-  });
-  if (updateResult.count !== 1) {
-    throw new ActionError('Tipo de pago no encontrado', 'PAYMENT_TYPE_NOT_FOUND');
-  }
+  const updated = await prisma.$transaction(async (tx) => {
+    const updateResult = await tx.tipoPago.updateMany({
+      where: { tipoId: id, tenantId },
+      data: toUpdate
+    });
+    if (updateResult.count !== 1) {
+      throw new ActionError('Tipo de pago no encontrado', 'PAYMENT_TYPE_NOT_FOUND');
+    }
 
-  const updated = await prisma.tipoPago.findFirst({
-    where: { tipoId: id, tenantId },
-    include: { _count: _countSelect }
-  });
-  if (!updated) throw new ActionError('Tipo de pago no encontrado', 'PAYMENT_TYPE_NOT_FOUND');
+    const actualizado = await tx.tipoPago.findFirst({
+      where: { tipoId: id, tenantId },
+      include: { _count: _countSelect }
+    });
+    if (!actualizado) throw new ActionError('Tipo de pago no encontrado', 'PAYMENT_TYPE_NOT_FOUND');
 
-  await AuditLogService.log({
-    accion: 'UPDATE', entidad: 'TIPO_PAGO', entidadId: id, usuarioId: user.userId,
-    detalles: { cambios: data, nombreAnterior: existing.nombre, nombreNuevo: updated.nombre, tenantId }
+    await AuditLogService.logStrict({
+      accion: 'UPDATE', entidad: 'TIPO_PAGO', entidadId: id, usuarioId: user.userId,
+      detalles: { cambios: data, nombreAnterior: existing.nombre, nombreNuevo: actualizado.nombre, tenantId }
+    }, tx);
+
+    return actualizado;
   });
 
   let cuentaDefectoInfo = null;
@@ -201,16 +209,18 @@ export const deleteTipoPagoAction = withAction(async (id: string, user: Authenti
   const total = existing._count.reconciliacionesVenta + existing._count.reconciliacionesServicio + existing._count.reconciliacionesGasto;
   if (total > 0) throw new ActionError('No se puede eliminar un tipo de pago que tiene reconciliaciones asociadas', 'PAYMENT_TYPE_HAS_RECONCILIATIONS');
 
-  const deleteResult = await prisma.tipoPago.deleteMany({
-    where: { tipoId: id, tenantId }
-  });
-  if (deleteResult.count !== 1) {
-    throw new ActionError('Tipo de pago no encontrado', 'PAYMENT_TYPE_NOT_FOUND');
-  }
+  await prisma.$transaction(async (tx) => {
+    const deleteResult = await tx.tipoPago.deleteMany({
+      where: { tipoId: id, tenantId }
+    });
+    if (deleteResult.count !== 1) {
+      throw new ActionError('Tipo de pago no encontrado', 'PAYMENT_TYPE_NOT_FOUND');
+    }
 
-  await AuditLogService.log({
-    accion: 'DELETE', entidad: 'TIPO_PAGO', entidadId: id, usuarioId: user.userId,
-    detalles: { nombre: existing.nombre, requiereCuenta: existing.requiereCuenta, cuentaDefecto: existing.cuentaDefecto, tenantId }
+    await AuditLogService.logStrict({
+      accion: 'DELETE', entidad: 'TIPO_PAGO', entidadId: id, usuarioId: user.userId,
+      detalles: { nombre: existing.nombre, requiereCuenta: existing.requiereCuenta, cuentaDefecto: existing.cuentaDefecto, tenantId }
+    }, tx);
   });
 
   revalidatePath('/busy/contabilidad/configuracion');

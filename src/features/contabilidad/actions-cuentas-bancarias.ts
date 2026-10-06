@@ -247,25 +247,29 @@ export const updateCuentaBancariaAction = withAction(async (input: z.infer<typeo
     );
   }
 
-  const cuenta = await prisma.cuentaBancaria.update({
-    where: { cuentaId },
-    data: {
-      ...(data.nombreBanco !== undefined && { nombreBanco: data.nombreBanco }),
-      ...(data.numeroCuenta !== undefined && { numeroCuenta: data.numeroCuenta }),
-      ...(data.tipoCuenta !== undefined && { tipoCuenta: data.tipoCuenta }),
-      ...(data.moneda !== undefined && { moneda: data.moneda }),
-      ...(data.isActive !== undefined && { isActive: data.isActive }),
-    },
-    select: CUENTA_SELECT,
-  });
+  const cuenta = await prisma.$transaction(async (tx) => {
+    const updated = await tx.cuentaBancaria.update({
+      where: { cuentaId },
+      data: {
+        ...(data.nombreBanco !== undefined && { nombreBanco: data.nombreBanco }),
+        ...(data.numeroCuenta !== undefined && { numeroCuenta: data.numeroCuenta }),
+        ...(data.tipoCuenta !== undefined && { tipoCuenta: data.tipoCuenta }),
+        ...(data.moneda !== undefined && { moneda: data.moneda }),
+        ...(data.isActive !== undefined && { isActive: data.isActive }),
+      },
+      select: CUENTA_SELECT,
+    });
 
-  AuditLogService.log({
-    accion: 'UPDATE',
-    entidad: 'CUENTA_BANCARIA',
-    entidadId: cuentaId,
-    usuarioId: user.userId,
-    detalles: { cambios: data },
-  }).catch((err) => console.error('[AuditLog] Error logging cuenta bancaria update:', err));
+    await AuditLogService.logStrict({
+      accion: 'UPDATE',
+      entidad: 'CUENTA_BANCARIA',
+      entidadId: cuentaId,
+      usuarioId: user.userId,
+      detalles: { cambios: data },
+    }, tx);
+
+    return updated;
+  });
 
   revalidatePath('/busy/contabilidad/cuentas');
   return cuenta;
@@ -280,15 +284,17 @@ export const deleteCuentaBancariaAction = withAction(async (cuentaId: string, us
   });
   if (!existing) throw new ActionError('Cuenta bancaria no encontrada', 'NOT_FOUND');
 
-  await prisma.cuentaBancaria.delete({ where: { cuentaId } });
+  await prisma.$transaction(async (tx) => {
+    await tx.cuentaBancaria.delete({ where: { cuentaId } });
 
-  AuditLogService.log({
-    accion: 'DELETE',
-    entidad: 'CUENTA_BANCARIA',
-    entidadId: cuentaId,
-    usuarioId: user.userId,
-    detalles: {},
-  }).catch((err) => console.error('[AuditLog] Error logging cuenta bancaria delete:', err));
+    await AuditLogService.logStrict({
+      accion: 'DELETE',
+      entidad: 'CUENTA_BANCARIA',
+      entidadId: cuentaId,
+      usuarioId: user.userId,
+      detalles: {},
+    }, tx);
+  });
 
   revalidatePath('/busy/contabilidad/cuentas');
   return { id: cuentaId, eliminado: true };

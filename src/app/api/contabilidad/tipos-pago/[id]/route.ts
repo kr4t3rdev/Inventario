@@ -248,33 +248,48 @@ export async function PUT(
       dataToUpdate.cuentaDefecto = null
     }
 
-    const updateResult = await prisma.tipoPago.updateMany({
-      where: { tipoId: id, tenantId },
-      data: dataToUpdate,
-    })
-    if (updateResult.count !== 1) {
-      return NextResponse.json(
-        {
-          success: false,
-          error: 'Tipo de pago no encontrado',
-          code: 'PAYMENT_TYPE_NOT_FOUND',
-        },
-        { status: 404 },
-      )
-    }
+    const txUpdate = await prisma.$transaction(async (tx) => {
+      const updateResult = await tx.tipoPago.updateMany({
+        where: { tipoId: id, tenantId },
+        data: dataToUpdate,
+      })
+      if (updateResult.count !== 1) {
+        return { tipoPago: null }
+      }
 
-    const tipoPagoActualizado = await prisma.tipoPago.findFirst({
-      where: { tipoId: id, tenantId },
-      include: {
-        _count: {
-          select: {
-            reconciliacionesVenta: true,
-            reconciliacionesServicio: true,
-            reconciliacionesGasto: true
+      const actualizado = await tx.tipoPago.findFirst({
+        where: { tipoId: id, tenantId },
+        include: {
+          _count: {
+            select: {
+              reconciliacionesVenta: true,
+              reconciliacionesServicio: true,
+              reconciliacionesGasto: true
+            }
           }
         }
+      })
+      if (!actualizado) {
+        return { tipoPago: null }
       }
+
+      await AuditLogService.logStrict({
+        accion: "UPDATE",
+        entidad: "TIPO_PAGO",
+        entidadId: id,
+        usuarioId: user.userId,
+        detalles: {
+          cambios: validatedData,
+          nombreAnterior: tipoPagoExistente.nombre,
+          nombreNuevo: actualizado.nombre,
+          tenantId
+        }
+      }, tx);
+
+      return { tipoPago: actualizado }
     })
+
+    const tipoPagoActualizado = txUpdate.tipoPago
     if (!tipoPagoActualizado) {
       return NextResponse.json(
         {
@@ -285,20 +300,6 @@ export async function PUT(
         { status: 404 },
       )
     }
-
-    // Registrar en auditoría
-    await AuditLogService.log({
-      accion: "UPDATE",
-      entidad: "TIPO_PAGO",
-      entidadId: id,
-      usuarioId: user.userId,
-      detalles: {
-        cambios: validatedData,
-        nombreAnterior: tipoPagoExistente.nombre,
-        nombreNuevo: tipoPagoActualizado.nombre,
-        tenantId
-      }
-    });
 
     // Obtener información de la cuenta por defecto actualizada
     let cuentaDefectoInfo = null
@@ -431,10 +432,31 @@ export async function DELETE(
       )
     }
 
-    const deleteResult = await prisma.tipoPago.deleteMany({
-      where: { tipoId: id, tenantId }
+    const txDelete = await prisma.$transaction(async (tx) => {
+      const deleteResult = await tx.tipoPago.deleteMany({
+        where: { tipoId: id, tenantId }
+      })
+      if (deleteResult.count !== 1) {
+        return { eliminado: false }
+      }
+
+      await AuditLogService.logStrict({
+        accion: "DELETE",
+        entidad: "TIPO_PAGO",
+        entidadId: id,
+        usuarioId: user.userId,
+        detalles: {
+          nombre: tipoPagoExistente.nombre,
+          requiereCuenta: tipoPagoExistente.requiereCuenta,
+          cuentaDefecto: tipoPagoExistente.cuentaDefecto,
+          tenantId
+        }
+      }, tx);
+
+      return { eliminado: true }
     })
-    if (deleteResult.count !== 1) {
+
+    if (!txDelete.eliminado) {
       return NextResponse.json(
         {
           success: false,
@@ -444,20 +466,6 @@ export async function DELETE(
         { status: 404 },
       )
     }
-
-    // Registrar en auditoría
-    await AuditLogService.log({
-      accion: "DELETE",
-      entidad: "TIPO_PAGO",
-      entidadId: id,
-      usuarioId: user.userId,
-      detalles: {
-        nombre: tipoPagoExistente.nombre,
-        requiereCuenta: tipoPagoExistente.requiereCuenta,
-        cuentaDefecto: tipoPagoExistente.cuentaDefecto,
-        tenantId
-      }
-    });
 
     return NextResponse.json({
       success: true,

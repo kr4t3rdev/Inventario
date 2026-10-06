@@ -1,4 +1,4 @@
-import type { Prisma, PrismaClient } from '@/generated/prisma';
+import { Prisma, type PrismaClient } from '@/generated/prisma';
 
 import { prisma as defaultPrisma } from '@/lib/prisma';
 
@@ -104,10 +104,26 @@ export class PrismaExchangeRateProvider implements ExchangeRateProvider {
     boundaryAt: Date;
     client?: Prisma.TransactionClient;
   }): Promise<{ tasaId: string; tasa: number; fechaVigencia: Date } | null> {
+    const exact = await this.getRateAsOfExact(params);
+    if (!exact) return null;
+    return { ...exact, tasa: exact.tasa.toNumber() };
+  }
+
+  /**
+   * @description Obtiene la tasa histórica preservando el Decimal de Prisma sin convertirlo a number.
+   * @param {object} params - Moneda origen/destino, límite temporal y cliente opcional.
+   * @returns {Promise<{tasaId: string; tasa: Prisma.Decimal; fechaVigencia: Date} | null>} Tasa exacta o null.
+   */
+  async getRateAsOfExact(params: {
+    sourceCurrency: string;
+    targetCurrency?: string;
+    boundaryAt: Date;
+    client?: Prisma.TransactionClient;
+  }): Promise<{ tasaId: string; tasa: Prisma.Decimal; fechaVigencia: Date } | null> {
     const source = params.sourceCurrency?.trim().toUpperCase();
     if (!source) return null;
     const target = params.targetCurrency?.trim().toUpperCase() || 'CUP';
-    const db = params.client ?? defaultPrisma;
+    const db = params.client ?? this.db;
 
     const rate = await db.tasaCambio.findFirst({
       where: {
@@ -120,7 +136,11 @@ export class PrismaExchangeRateProvider implements ExchangeRateProvider {
       select: { tasaId: true, tasa: true, fechaVigencia: true },
     });
     if (!rate) return null;
-    return { tasaId: rate.tasaId, tasa: Number(rate.tasa), fechaVigencia: rate.fechaVigencia };
+    return {
+      tasaId: rate.tasaId,
+      tasa: new Prisma.Decimal(rate.tasa),
+      fechaVigencia: rate.fechaVigencia,
+    };
   }
 
   async listCurrencies(): Promise<ExchangeCurrencyRecord[]> {
@@ -263,12 +283,16 @@ export class PrismaExchangeRateProvider implements ExchangeRateProvider {
     };
   }
 
-  async createRate(input: {
-    monedaOrigenId: string;
-    monedaDestino: string;
-    tasa: number;
-  }): Promise<ExchangeRateRecord> {
-    const tasa = await this.db.tasaCambio.create({
+  async createRate(
+    input: {
+      monedaOrigenId: string;
+      monedaDestino: string;
+      tasa: number;
+    },
+    client?: Prisma.TransactionClient,
+  ): Promise<ExchangeRateRecord> {
+    const db = client ?? this.db;
+    const tasa = await db.tasaCambio.create({
       data: {
         monedaOrigenId: input.monedaOrigenId,
         monedaDestino: input.monedaDestino,
