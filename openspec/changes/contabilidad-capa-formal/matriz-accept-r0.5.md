@@ -35,10 +35,10 @@ asiento cuadrado, rollback por falta FX, shadow/outbox); `facturacion-workflow-g
 
 | Writer (callsite → evento) | Adaptadores vivos | actor/permiso | tenant | origen único | moneda/FX | tx | idem/retry | posting/auditoría | rollback SQL |
 |---|---|---|---|---|---|---|---|---|---|
-| `prestamos-cash/route.ts:297` → PRESTAMO_OTORGADO (POST web) | web (ruta propia) | ✅ (Bearer real) | ✅ | ✅ | ✅ | ✅ | ⚠️ (origen único DB; carrera probada en servicio, no en ruta web) | ✅ | ✅ |
-| `prestamos-cash/[id]/pagar/route.ts:214` → COBRO_PRESTAMO (POST web) | web (ruta propia) | ✅ (Bearer real 401/403) | ✅ | ✅ | ✅ | ✅ | ⚠️ (igual que anterior) | ✅ | ✅ |
-| `deudas-cash/route.ts:305` → DEUDA_RECIBIDA (POST web) | web (ruta propia) | ✅ (Bearer real) | ✅ | ✅ | ✅ | ✅ | ⚠️ (igual) | ✅ | ✅ |
-| `deudas-cash/[id]/pagar/route.ts:203` → PAGO_DEUDA (POST web) | web (ruta propia) | ✅ (Bearer real) | ✅ | ✅ | ✅ | ✅ | ⚠️ (igual) | ✅ | ✅ |
+| `prestamos-cash/route.ts:297` → PRESTAMO_OTORGADO (POST web) | web (ruta propia) | ✅ (Bearer real) | ✅ | ✅ | ✅ | ✅ | ✅ (`prestamos-cash-pagar-real.test.ts` y `deudas-cash-real.test.ts`: reintento no duplica) | ✅ | ✅ |
+| `prestamos-cash/[id]/pagar/route.ts:214` → COBRO_PRESTAMO (POST web) | web (ruta propia) | ✅ (Bearer real 401/403) | ✅ | ✅ | ✅ | ✅ | ✅ (`prestamos-cash-pagar-real.test.ts`: reintento no duplica) | ✅ | ✅ |
+| `deudas-cash/route.ts:305` → DEUDA_RECIBIDA (POST web) | web (ruta propia) | ✅ (Bearer real) | ✅ | ✅ | ✅ | ✅ | ✅ (ver fila anterior) | ✅ | ✅ |
+| `deudas-cash/[id]/pagar/route.ts:203` → PAGO_DEUDA (POST web) | web (ruta propia) | ✅ (Bearer real) | ✅ | ✅ | ✅ | ✅ | ✅ (ver fila anterior) | ✅ | ✅ |
 | `accounting-cash-operations-mutation-service.ts` (4: `:208/:406/:560/:725`) | actions `actions-prestamos-cash` / `actions-deudas-cash`; mobile `cash-loans/**`, `cash-debts/**` | ✅ (gates en servicio; Bearer real) | ✅ | ✅ | ✅ | ✅ | ✅ (carrera multi-conexión: un ganador, `CREDITO_CONFLICTO`) | ✅ | ✅ |
 
 **Evidencia:** `cash-loans-http-real.test.ts` 3/3 + `cash-debts-http-real.test.ts` 3/3
@@ -49,9 +49,9 @@ asiento cuadrado, rollback por falta FX, shadow/outbox); `facturacion-workflow-g
 
 | Writer (callsite → evento) | Adaptadores vivos | actor/permiso | tenant | origen único | moneda/FX | tx | idem/retry | posting/auditoría | rollback SQL |
 |---|---|---|---|---|---|---|---|---|---|
-| `accounting-operations-mutation-service.ts:307` → TRANSFERENCIA_BANCARIA | web `/contabilidad/transferencias`; mobile `/bank-transfers/**`; action `contabilidad/actions.ts` | ✅ (Bearer real web/móvil) | ✅ | ✅ | ✅ (FX-4 cross-quote + fingerprint) | ✅ | ⚠️ (numeración tenant probada; reintento genérico no) | ✅ (strict en tx) | ✅ |
-| `...:424` → AJUSTE_BANCARIO | web/mobile `/bank-adjustments` | ✅ | ✅ | ✅ | ✅ | ✅ | ⚠️ (igual) | ✅ | ✅ |
-| `...:568` → DEUDA_RECIBIDA / INYECCION_CAPITAL | web/mobile `/capital-injections` | ✅ | ✅ | ✅ | ✅ | ✅ | ⚠️ (igual) | ✅ | ✅ |
+| `accounting-operations-mutation-service.ts:307` → TRANSFERENCIA_BANCARIA | web `/contabilidad/transferencias`; mobile `/bank-transfers/**`; action `contabilidad/actions.ts` | ✅ (Bearer real web/móvil) | ✅ | ✅ | ✅ (FX-4 cross-quote + fingerprint) | ✅ | ✅ (`TRANSFERENCIA_DUPLICADA` 409; `ajuste-idempotency-real.test.ts` 2/2) | ✅ (strict en tx) | ✅ |
+| `...:424` → AJUSTE_BANCARIO | web/mobile `/bank-adjustments` | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ (ver fila anterior) | ✅ | ✅ |
+| `...:568` → DEUDA_RECIBIDA / INYECCION_CAPITAL | web/mobile `/capital-injections` | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ (ver fila anterior) | ✅ | ✅ |
 | `...:698` → PAGO_DEUDA_CAPITAL | mobile `/capital-injections/[id]/payments` | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ (carrera 350+350 vs saldo 500) | ✅ | ✅ |
 
 **Evidencia:** `accounting-bank-transfers-real.test.ts` 9/9 (rollback por error SQL de
@@ -73,11 +73,11 @@ auditoría); `operations-channels-http-real.test.ts` 4/4 (Bearer web/móvil, fil
 | Writer (callsite → evento) | Adaptadores vivos | actor/permiso | tenant | origen único | moneda/FX | tx | idem/retry | posting/auditoría | rollback SQL |
 |---|---|---|---|---|---|---|---|---|---|
 | `compras-productos/actions.ts:446` → COMPRA_CREDITO / COMPRA_CONTADO | action (UI) | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ (debita una vez) | ✅ | ✅ |
-| `compras-servicios/actions.ts:141` → GASTO_CON_ANTICIPO_PROVEEDOR | action (UI) | ✅ | ✅ | ✅ | ✅ | ✅ | ⚠️ | ✅ | ✅ |
+| `compras-servicios/actions.ts:141` → GASTO_CON_ANTICIPO_PROVEEDOR | action (UI) | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ (`compra-servicios-retry-real.test.ts`: `COMPRA_SERVICIO_DUPLICADA` 409) | ✅ | ✅ |
 | `mermas/actions.ts:180` → MERMA_INVENTARIO | action (UI) | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ (reintento secuencial + 5 concurrentes P2002) | ✅ | ✅ |
 | `productos/actions-restock.ts:588` → COMPRA_CONTADO (restock) | action (UI) | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ (reintento secuencial + 5 concurrentes P2002→RESTOCK_DUPLICADO) | ✅ | ✅ |
-| `produccion/ordenes/[id]/completar/route.ts:204` → PRODUCCION_SALIDA | web (ruta propia) | ⚠️ (`withAuthPost` inyectado en test; sin sesión HTTP real) | ✅ | ✅ | ✅ | ✅ | ❌ (sin prueba de reintento) | ✅ | ✅ |
-| `venta-servicios/actions.ts:267/:397` → VENTA_SERVICIO_CREDITO (devengo ×2) | action (UI) | ✅ | ✅ | ✅ | ✅ | ✅ | ⚠️ | ✅ | ⚠️ (cubierto con anticipo; devengo directo sin prueba propia) |
+| `produccion/ordenes/[id]/completar/route.ts:204` → PRODUCCION_SALIDA | web (ruta propia) | ✅ (`auth-http-real.test.ts` 4/4: Bearer <redacted>) | ✅ | ✅ | ✅ | ✅ | ✅ (`completar-concurrente.test.ts`: 5 concurrentes, 1 gana, 4 CONFLICT; claim optimista) | ✅ | ✅ |
+| `venta-servicios/actions.ts:267/:397` → VENTA_SERVICIO_CREDITO (devengo ×2) | action (UI) | ✅ | ✅ | ✅ | ✅ | ✅ | ⚠️ | ✅ | ✅ (`service-devengo-directo-real.test.ts`: rollback por fallo en asiento) |
 
 **Evidencia:** `purchase-credit-fx-real.test.ts` 6/6; `anticipos-devengo-bruto-real.test.ts` 7/7;
 `merma-formal-real.test.ts` 3/3; `restock-formal-real.test.ts` 2/2; `rollback-real.test.ts` 3/3
