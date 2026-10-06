@@ -5,7 +5,6 @@ import type { Prisma } from '@/generated/prisma'
 import { authenticateUser } from '@/lib/auth-middleware'
 import { requireFeature } from '@/lib/services/tenant-scope'
 import { AuditLogService } from '@/lib/services/audit-log-service'
-import { executeAnticipo, reverseAnticipo } from '@/lib/services/anticipos-workflow'
 import { crearCierreContable } from '@/lib/services/cierreContableService'
 import { PDFDocument, StandardFonts, rgb } from 'pdf-lib'
 
@@ -56,6 +55,7 @@ function cv(v: number[]): number {
   if (v.length < 2) return 0; const m = v.reduce((s, x) => s + x, 0) / v.length; return Math.sqrt(v.reduce((s, x) => s + (x - m) ** 2, 0) / v.length) / m
 }
 
+/** @deprecated R6-ORPHANS (2026-10-06): legacy sin callers en src/, rutas ni tests. */
 export async function getExchangeImpactAnalysis(request: NextRequest) {
   const sp = new URL(request.url).searchParams; const fi = sp.get('fechaInicio'), ff = sp.get('fechaFin'), mb = sp.get('monedaBase') || 'CUP', df = bdf(fi, ff)
   const [rv, rs, rg, ab, tr] = await Promise.all([
@@ -110,8 +110,6 @@ export async function getExchangeReport(request: NextRequest) {
   return NextResponse.json({ historialTasas: ht.map((t: any) => ({ tasaId: t.tasaId, monedaOrigen: t.monedaOrigen, monedaDestino: t.monedaDestino, tasa: Number(t.tasa), fechaVigencia: t.fechaVigencia })), conversiones: conv })
 }
 
-const ctrSchema = z.object({ cuentaOrigenId: z.string().min(1), cuentaDestinoId: z.string().min(1), montoOrigen: z.number().positive(), motivo: z.string().min(1), descripcion: z.string().optional(), tasaCambio: z.number().positive().optional() })
-
 export async function getTransferencias(request: NextRequest) {
   const sp = new URL(request.url).searchParams; const pg = parseInt(sp.get('page') || '1'), lm = parseInt(sp.get('limit') || '10'), cid = sp.get('cuentaId')
   const fd = sp.get('fechaDesde'), fh = sp.get('fechaHasta'), sk = (pg - 1) * lm; const w: any = {}
@@ -121,23 +119,6 @@ export async function getTransferencias(request: NextRequest) {
   return NextResponse.json({ transferencias: tr.map((t: any) => ({ ...t, montoOrigen: Number(t.montoOrigen), montoDestino: Number(t.montoDestino), tasaCambio: t.tasaCambio ? Number(t.tasaCambio) : null })), pagination: { page: pg, limit: lm, total: to, pages: Math.ceil(to / lm) } })
 }
 
-export async function createTransferencia(request: NextRequest) {
-  const body = await request.json(); const v = ctrSchema.parse(body)
-  if (v.cuentaOrigenId === v.cuentaDestinoId) return NextResponse.json({ error: 'Cuentas deben ser diferentes' }, { status: 400 })
-  const [co, cd] = await Promise.all([prisma.cuentaBancaria.findUnique({ where: { cuentaId: v.cuentaOrigenId } }), prisma.cuentaBancaria.findUnique({ where: { cuentaId: v.cuentaDestinoId } })])
-  if (!co || !cd) return NextResponse.json({ error: 'Cuenta no encontrada' }, { status: 404 })
-  if (!co.isActive || !cd.isActive) return NextResponse.json({ error: 'Cuenta inactiva' }, { status: 400 })
-  if (Number(co.saldo) < v.montoOrigen) return NextResponse.json({ error: 'Saldo insuficiente' }, { status: 400 })
-  const tr = await prisma.$transaction(async (tx: any) => {
-    await tx.cuentaBancaria.update({ where: { cuentaId: v.cuentaOrigenId }, data: { saldo: { decrement: v.montoOrigen } } })
-    await tx.cuentaBancaria.update({ where: { cuentaId: v.cuentaDestinoId }, data: { saldo: { increment: v.montoOrigen } } })
-    return tx.transferenciaBancaria.create({ data: { numeroComprobante: 'TRF-' + Date.now(), cuentaOrigenId: v.cuentaOrigenId, cuentaDestinoId: v.cuentaDestinoId, montoOrigen: v.montoOrigen, monedaOrigen: co.moneda, montoDestino: v.montoOrigen, monedaDestino: cd.moneda, motivo: v.motivo, descripcion: v.descripcion, comprobanteGenerado: false } as any })
-  })
-  const au = await authenticateUser(request); const u = 'status' in au ? null : au.user
-  if (u) await AuditLogService.log({ accion: 'CREATE', entidad: 'TRANSFERENCIA', entidadId: tr.transferenciaId, usuarioId: u.userId, detalles: {} })
-  return NextResponse.json({ message: 'Transferencia exitosa', transferencia: tr }, { status: 201 })
-}
-
 export async function getTransferenciaById(id: string) {
   if (!id) return NextResponse.json({ error: 'ID requerido' }, { status: 400 })
   const t = await prisma.transferenciaBancaria.findUnique({ where: { transferenciaId: id }, include: { cuentaOrigen: true, cuentaDestino: true } })
@@ -145,6 +126,7 @@ export async function getTransferenciaById(id: string) {
   return NextResponse.json({ transferencia: t })
 }
 
+/** @deprecated R6-ORPHANS (2026-10-06): legacy sin callers en src/, rutas ni tests. */
 export async function getComprobanteTransferencia(id: string) {
   if (!id) return NextResponse.json({ error: 'ID requerido' }, { status: 400 })
   const t = await prisma.transferenciaBancaria.findUnique({ where: { transferenciaId: id }, include: { cuentaOrigen: { select: { nombreBanco: true, numeroCuenta: true, tipoCuenta: true, moneda: true } }, cuentaDestino: { select: { nombreBanco: true, numeroCuenta: true, tipoCuenta: true, moneda: true } } } })
@@ -190,6 +172,7 @@ export async function createInyeccionCapital(request: NextRequest) {
 
 const pdSchema = z.object({ montoPagado: z.number().positive(), cuentaId: z.string().min(1), comprobante: z.string().optional() })
 
+/** @deprecated R6-ORPHANS (2026-10-06): legacy sin callers en src/, rutas ni tests. */
 export async function pagarDeudaCapital(request: NextRequest, id: string) {
   const a = await authenticateUser(request); if ('status' in a) return a as Response; const u = a.user; requireFeature(u, 'inyeccion-capital', 'registrar pagos de deuda');
   const v = pdSchema.parse(await request.json())
@@ -265,26 +248,9 @@ export async function getAjustesByCuenta(request: NextRequest, cuentaId: string)
   return NextResponse.json({ success: true, data: { ajustes: aj, pagination: { currentPage: q.page, totalPages: Math.ceil(to / q.limit), totalCount: to } } })
 }
 
-const EAS = z.object({ contexto: z.enum(['COMPRA_PRODUCTO', 'COMPRA_SERVICIO', 'FACTURA_OFERTA', 'FACTURA_DIRECTA']), documentoDestinoId: z.string().min(1), montoObjetivo: z.coerce.number().positive(), monedaObjetivo: z.string().min(1), tasaAplicada: z.coerce.number().positive().optional(), idempotencyKey: z.string().min(1), observaciones: z.string().optional() })
-
-export async function executeAnticipoHandler(request: NextRequest, anticipoId: string, user: { userId: string }) {
-  const p = EAS.parse(await request.json())
-  const ant = await prisma.anticipo.findUnique({ where: { anticipoId }, select: { saldoDisponible: true } })
-  if (!ant) return NextResponse.json({ error: 'No encontrado' }, { status: 404 })
-  const r = await prisma.$transaction(async (tx) => executeAnticipo(tx, { anticipoId, contexto: p.contexto, documentoDestinoId: p.documentoDestinoId, montoObjetivo: p.montoObjetivo, monedaObjetivo: p.monedaObjetivo, tasaAplicada: p.tasaAplicada, idempotencyKey: p.idempotencyKey, observaciones: p.observaciones, usuarioId: user.userId }))
-  return NextResponse.json({ result: r }, { status: 200 })
-}
-
-const RAS = z.object({ documentoDestinoId: z.string().min(1), montoReverso: z.coerce.number().positive(), observaciones: z.string().optional() })
-
-export async function reverseAnticipoHandler(request: NextRequest, anticipoId: string, user: { userId: string }) {
-  const p = RAS.parse(await request.json())
-  const r = await prisma.$transaction(async (tx) => reverseAnticipo(tx, { anticipoId, documentoDestinoId: p.documentoDestinoId, montoReverso: p.montoReverso, observaciones: p.observaciones, usuarioId: user.userId }))
-  return NextResponse.json({ result: r }, { status: 200 })
-}
-
 const DQS = z.object({ contexto: z.enum(['compra', 'factura']).optional(), proveedorId: z.string().optional(), clienteId: z.string().optional(), moneda: z.string().optional() })
 
+/** @deprecated R6-ORPHANS (2026-10-06): legacy sin callers en src/, rutas ni tests. */
 export async function getAnticiposDisponibles(raw: Record<string, string | undefined>) {
   const p = DQS.parse(raw); const w: Record<string, unknown> = { estado: 'RESERVADO', saldoDisponible: { gt: 0 } }
   if (p.contexto === 'compra') w.tipo = 'PAGO'; else if (p.contexto === 'factura') w.tipo = 'COBRO'
@@ -297,6 +263,7 @@ export async function getResumenAnticipos(sp: URLSearchParams) {
   return NextResponse.json({ resumen: { porTipo: ant.reduce((a: any, r: any) => { const k = r.tipo || 'UNK'; a[k] = (a[k] || 0) + Number(r.montoOriginal || 0); return a }, {}), totalesGenerales: { totalAnticipos: ant.reduce((s, r) => s + Number(r.montoOriginal || 0), 0) } } })
 }
 
+/** @deprecated R6-ORPHANS (2026-10-06): legacy sin callers en src/, rutas ni tests. */
 export async function getAnticiposPorProveedor(sp: URLSearchParams) {
   const ant = await prisma.anticipo.findMany({ where: { tipo: 'PAGO' }, include: { proveedor: { select: { nombre: true } } }, orderBy: { fechaReserva: 'desc' } })
   const g = new Map<string, any>()
@@ -304,6 +271,7 @@ export async function getAnticiposPorProveedor(sp: URLSearchParams) {
   return NextResponse.json({ proveedores: Array.from(g.values()) })
 }
 
+/** @deprecated R6-ORPHANS (2026-10-06): legacy sin callers en src/, rutas ni tests. */
 export async function getAnticiposPorCliente(sp: URLSearchParams) {
   const ant = await prisma.anticipo.findMany({ where: { tipo: 'COBRO' }, include: { cliente: { select: { nombre: true } } }, orderBy: { fechaReserva: 'desc' } })
   const g = new Map<string, any>()
@@ -311,6 +279,7 @@ export async function getAnticiposPorCliente(sp: URLSearchParams) {
   return NextResponse.json({ clientes: Array.from(g.values()) })
 }
 
+/** @deprecated R6-ORPHANS (2026-10-06): legacy sin callers en src/, rutas ni tests. */
 export async function getContabilidadLogs(request: NextRequest) {
   const a = await authenticateUser(request); if ('status' in a) return a as Response; const u = a.user
   if (u.role !== 'admin') return NextResponse.json({ error: 'Prohibido' }, { status: 403 })

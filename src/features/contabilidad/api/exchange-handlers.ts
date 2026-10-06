@@ -142,6 +142,7 @@ export async function getTasas() {
  * @param {NextRequest} request - Request HTTP entrante.
  * @returns {Promise<Response>} Respuesta JSON con la tasa creada.
  */
+/** @deprecated R6-ORPHANS (2026-10-06): legacy sin callers en src/, rutas ni tests. */
 export async function createTasa(request: NextRequest) {
   try {
     const authResultUser = await authenticateUser(request)
@@ -164,6 +165,7 @@ export async function createTasa(request: NextRequest) {
   }
 }
 
+/** @deprecated R6-ORPHANS (2026-10-06): legacy sin callers en src/, rutas ni tests. */
 export async function getTasasHistorial(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url)

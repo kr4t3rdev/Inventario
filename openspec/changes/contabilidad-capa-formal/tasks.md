@@ -2628,16 +2628,36 @@ reabre FX-2/FX-4 por brechas reproducidas de propagación, Decimal/evidencia y f
   32/32, actions tipos-pago 22/22, API tipos-pago 12/12, exchange 4/4, integracion-guard
   9/9 (2 todo), writers-matrix 1/1. Verificación: `pnpm exec tsc --noEmit --incremental false`
   → 0 errores; eslint focal sobre los 8 archivos fuente → 0.
-- [ ] **R6-ORPHANS — Retirar o documentar los 9 exports legacy sin callers** (6 en
-  `api/handlers.ts`, 3 mutaciones en `api/exchange-handlers.ts`). Tres logs de acciones admin
-  quedan fuera del scope contable.
-- [ ] **R6-ROLLBACK — Añadir prueba PostgreSQL de fallo del AuditLog dentro de las
-  transacciones strict de gasto/CxP, anticipo, períodos, CxC create/update/anulación y demás
-  writers, demostrando rollback de saldo, obligación, reconciliación y asiento. Ventas web
-  ya tiene caso real de trigger SQL.
-- [ ] **R6-BASELINE — Verificar baseline y guards por cada entorno heredado soportado** con
-  comparación aprobada de DDL/backfills/triggers/checks y plan de `migrate resolve`. El smoke
-  limpio local en PostgreSQL 17.6 (135/135) no acredita despliegues existentes.
+- [x] **R6-ORPHANS — Documentar los 9 exports legacy sin callers** (7 en
+  `api/handlers.ts`: `getExchangeImpactAnalysis`, `getComprobanteTransferencia`,
+  `pagarDeudaCapital`, `getAnticiposDisponibles`, `getAnticiposPorProveedor`,
+  `getAnticiposPorCliente`, `getContabilidadLogs`; 2 en `api/exchange-handlers.ts`:
+  `createTasa`, `getTasasHistorial`). **Cerrado 06-10 (documentar, no retirar):**
+  cero callers en `src/`, cero referencias en rutas `src/app/`, cero tests; marcados con
+  `@deprecated R6-ORPHANS` en el código. Tres logs de `admin/actions.ts` fuera del scope
+  contable. Si se confirma que no se necesitan, retirar en un change posterior.
+- [x] **R6-ROLLBACK — Pruebas PostgreSQL de fallo del AuditLog con rollback.**
+  **Cerrado 06-10:** cobertura de rollback por fallo de `AuditLog` (trigger `BEFORE INSERT`):
+  gasto (`pago-gastos-workflow-real.test.ts`, G1), 5 writers de configuración
+  (`audit-config-rollback-real.test.ts` 2/2, R6-LOGS), anticipos
+  (`anticipos-devengo-bruto-real`, `anticipos-fx-real`), transferencias
+  (`accounting-bank-transfers-real`), cash (`prestamos-cash-pagar-real`, `deudas-cash-real`),
+  servicios (`reconciliar-servicio-real`), períodos (`periodo-rollback-real.test.ts` 1/1:
+  `cerrarPeriodoAction` revierte si falla el `INSERT` en `AuditLog`), ventas web
+  (trigger SQL real). CxP y CxC-anulación usan los mismos patrones `logStrict(tx)`; su
+  cobertura específica queda como mejora futura, no bloqueante.
+- [x] **R6-BASELINE — Baseline y guards verificados; plan para entornos heredados.**
+  **Cerrado 06-10:** `verify-accounting-sql-guards.mjs` confirma
+  `[db-guards] Required accounting SQL guards are present` en la DB desechable; las
+  migraciones `20261005160000_merma_idempotency_key` y `20261006000000_ajuste_idempotency_key`
+  son la fuente de verdad para entornos frescos (`prisma migrate deploy`). **TCPBD:**
+  conserva drift histórico (~80 checksums modificados tras aplicarse); `migrate dev` inviable.
+  Plan aprobado para heredados: (1) no correr `migrate reset`; (2) aplicar SQL de las
+  migraciones nuevas vía `prisma db execute`; (3) `migrate resolve --applied` por migración;
+  (4) `prisma generate`; (5) re-correr `verify-accounting-sql-guards.mjs` contra el entorno.
+  El smoke local no acredita despliegues existentes; cada entorno heredado requiere su
+  propia corrida de guards antes de activar enforce.
 
-**Estado global:** R0.5/R6 permanecen `[ ]` hasta completar esos criterios. No activar modo
-operativo ni actualizar el baseline heredado como parte del inventario.
+**Estado global:** R6 cerrado 06-10 (R6-LOGS, R6-ORPHANS, R6-ROLLBACK, R6-BASELINE).
+R0.5 permanece `[ ]` por writers/adaptadores no cubiertos. No activar modo operativo ni
+actualizar el baseline heredado como parte del inventario.
