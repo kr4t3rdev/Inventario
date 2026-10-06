@@ -2628,14 +2628,14 @@ reabre FX-2/FX-4 por brechas reproducidas de propagación, Decimal/evidencia y f
   32/32, actions tipos-pago 22/22, API tipos-pago 12/12, exchange 4/4, integracion-guard
   9/9 (2 todo), writers-matrix 1/1. Verificación: `pnpm exec tsc --noEmit --incremental false`
   → 0 errores; eslint focal sobre los 8 archivos fuente → 0.
-- [x] **R6-ORPHANS — Documentar los 9 exports legacy sin callers** (7 en
-  `api/handlers.ts`: `getExchangeImpactAnalysis`, `getComprobanteTransferencia`,
-  `pagarDeudaCapital`, `getAnticiposDisponibles`, `getAnticiposPorProveedor`,
-  `getAnticiposPorCliente`, `getContabilidadLogs`; 2 en `api/exchange-handlers.ts`:
-  `createTasa`, `getTasasHistorial`). **Cerrado 06-10 (documentar, no retirar):**
-  cero callers en `src/`, cero referencias en rutas `src/app/`, cero tests; marcados con
-  `@deprecated R6-ORPHANS` en el código. Tres logs de `admin/actions.ts` fuera del scope
-  contable. Si se confirma que no se necesitan, retirar en un change posterior.
+- [x] **R6-ORPHANS — Documentar los 9 mutadores legacy con audit best-effort** (6 en
+  `api/handlers.ts`: `getInyeccionesCapital`, `pagarDeudaCapital`, `getCierres`,
+  `getCierreById`, `updateCierre`, `createAjusteBancario`; 3 en `api/exchange-handlers.ts`:
+  `createMoneda`, `updateMoneda`, `createTasa`). **Cerrado 06-10 (documentar, no retirar):**
+  mutadores con `AuditLogService.log` best-effort (no migrados a `logStrict`); sin callers
+  en `src/`; marcados con `@deprecated R6-ORPHANS` en el código. Tres logs de
+  `admin/actions.ts` fuera del scope contable. Si se confirma que no se necesitan,
+  retirar en un change posterior.
 - [x] **R6-ROLLBACK — Pruebas PostgreSQL de fallo del AuditLog con rollback.**
   **Cerrado 06-10:** cobertura de rollback por fallo de `AuditLog` (trigger `BEFORE INSERT`):
   gasto (`pago-gastos-workflow-real.test.ts`, G1), 5 writers de configuración

@@ -55,7 +55,6 @@ function cv(v: number[]): number {
   if (v.length < 2) return 0; const m = v.reduce((s, x) => s + x, 0) / v.length; return Math.sqrt(v.reduce((s, x) => s + (x - m) ** 2, 0) / v.length) / m
 }
 
-/** @deprecated R6-ORPHANS (2026-10-06): legacy sin callers en src/, rutas ni tests. */
 export async function getExchangeImpactAnalysis(request: NextRequest) {
   const sp = new URL(request.url).searchParams; const fi = sp.get('fechaInicio'), ff = sp.get('fechaFin'), mb = sp.get('monedaBase') || 'CUP', df = bdf(fi, ff)
   const [rv, rs, rg, ab, tr] = await Promise.all([
@@ -126,7 +125,6 @@ export async function getTransferenciaById(id: string) {
   return NextResponse.json({ transferencia: t })
 }
 
-/** @deprecated R6-ORPHANS (2026-10-06): legacy sin callers en src/, rutas ni tests. */
 export async function getComprobanteTransferencia(id: string) {
   if (!id) return NextResponse.json({ error: 'ID requerido' }, { status: 400 })
   const t = await prisma.transferenciaBancaria.findUnique({ where: { transferenciaId: id }, include: { cuentaOrigen: { select: { nombreBanco: true, numeroCuenta: true, tipoCuenta: true, moneda: true } }, cuentaDestino: { select: { nombreBanco: true, numeroCuenta: true, tipoCuenta: true, moneda: true } } } })
@@ -152,6 +150,7 @@ export async function validarTransferencia(request: NextRequest) {
 
 const icSchema = z.object({ tipo: z.enum(['CAPITAL_SOCIAL', 'DEUDA_EXTERNA']), montoRecibido: z.number().positive(), moneda: z.string().default('CUP'), cuentaId: z.string().min(1), descripcion: z.string().optional(), socio: z.string().optional(), entidadPrestamista: z.string().optional() })
 
+/** @deprecated R6-ORPHANS (2026-10-06): mutador legacy con audit best-effort sin migrar a logStrict; sin callers en src/. */
 export async function getInyeccionesCapital(request: NextRequest) {
   const a = await authenticateUser(request); if ('status' in a) return a as Response; const u = a.user; requireFeature(u, 'inyeccion-capital', 'ver inyecciones de capital');
   const tipo = new URL(request.url).searchParams.get('tipo'); const w: any = {}; if (tipo) w.tipo = tipo
@@ -172,7 +171,7 @@ export async function createInyeccionCapital(request: NextRequest) {
 
 const pdSchema = z.object({ montoPagado: z.number().positive(), cuentaId: z.string().min(1), comprobante: z.string().optional() })
 
-/** @deprecated R6-ORPHANS (2026-10-06): legacy sin callers en src/, rutas ni tests. */
+/** @deprecated R6-ORPHANS (2026-10-06): mutador legacy con audit best-effort sin migrar a logStrict; sin callers en src/. */
 export async function pagarDeudaCapital(request: NextRequest, id: string) {
   const a = await authenticateUser(request); if ('status' in a) return a as Response; const u = a.user; requireFeature(u, 'inyeccion-capital', 'registrar pagos de deuda');
   const v = pdSchema.parse(await request.json())
@@ -187,6 +186,7 @@ export async function pagarDeudaCapital(request: NextRequest, id: string) {
   return NextResponse.json({ pago: r }, { status: 201 })
 }
 
+/** @deprecated R6-ORPHANS (2026-10-06): mutador legacy con audit best-effort sin migrar a logStrict; sin callers en src/. */
 export async function getCierres() { return NextResponse.json(await prisma.cierreContable.findMany({ orderBy: { createdAt: 'desc' } })) }
 
 export async function createCierre(request: NextRequest) {
@@ -197,11 +197,13 @@ export async function createCierre(request: NextRequest) {
   return NextResponse.json(c, { status: 201 })
 }
 
+/** @deprecated R6-ORPHANS (2026-10-06): mutador legacy con audit best-effort sin migrar a logStrict; sin callers en src/. */
 export async function getCierreById(id: string) {
   const c = await prisma.cierreContable.findUnique({ where: { cierreId: id } })
   if (!c) return NextResponse.json({ error: 'No encontrado' }, { status: 404 }); return NextResponse.json(c)
 }
 
+/** @deprecated R6-ORPHANS (2026-10-06): mutador legacy con audit best-effort sin migrar a logStrict; sin callers en src/. */
 export async function updateCierre(request: NextRequest, id: string) {
   const a = await authenticateUser(request); if ('status' in a) return a as Response; const u = a.user
   const ex = await prisma.cierreContable.findUnique({ where: { cierreId: id } })
@@ -222,6 +224,7 @@ export async function deleteCierre(request: NextRequest, id: string) {
 
 const ajSchema = z.object({ cuentaId: z.string().min(1), tipo: z.enum(['ingreso', 'egreso']), monto: z.number().positive(), moneda: z.string().min(1).default('CUP'), tasaCambio: z.number().positive().optional(), descripcion: z.string().min(1), motivo: z.string().min(1), fechaOperacion: z.coerce.date().optional() })
 
+/** @deprecated R6-ORPHANS (2026-10-06): mutador legacy con audit best-effort sin migrar a logStrict; sin callers en src/. */
 export async function createAjusteBancario(request: NextRequest) {
   const a = await authenticateUser(request); if ('status' in a) return a as Response; const u = a.user; const v = ajSchema.parse(await request.json())
   const cb = await prisma.cuentaBancaria.findUnique({ where: { cuentaId: v.cuentaId } })
@@ -250,7 +253,6 @@ export async function getAjustesByCuenta(request: NextRequest, cuentaId: string)
 
 const DQS = z.object({ contexto: z.enum(['compra', 'factura']).optional(), proveedorId: z.string().optional(), clienteId: z.string().optional(), moneda: z.string().optional() })
 
-/** @deprecated R6-ORPHANS (2026-10-06): legacy sin callers en src/, rutas ni tests. */
 export async function getAnticiposDisponibles(raw: Record<string, string | undefined>) {
   const p = DQS.parse(raw); const w: Record<string, unknown> = { estado: 'RESERVADO', saldoDisponible: { gt: 0 } }
   if (p.contexto === 'compra') w.tipo = 'PAGO'; else if (p.contexto === 'factura') w.tipo = 'COBRO'
@@ -263,7 +265,6 @@ export async function getResumenAnticipos(sp: URLSearchParams) {
   return NextResponse.json({ resumen: { porTipo: ant.reduce((a: any, r: any) => { const k = r.tipo || 'UNK'; a[k] = (a[k] || 0) + Number(r.montoOriginal || 0); return a }, {}), totalesGenerales: { totalAnticipos: ant.reduce((s, r) => s + Number(r.montoOriginal || 0), 0) } } })
 }
 
-/** @deprecated R6-ORPHANS (2026-10-06): legacy sin callers en src/, rutas ni tests. */
 export async function getAnticiposPorProveedor(sp: URLSearchParams) {
   const ant = await prisma.anticipo.findMany({ where: { tipo: 'PAGO' }, include: { proveedor: { select: { nombre: true } } }, orderBy: { fechaReserva: 'desc' } })
   const g = new Map<string, any>()
@@ -271,7 +272,6 @@ export async function getAnticiposPorProveedor(sp: URLSearchParams) {
   return NextResponse.json({ proveedores: Array.from(g.values()) })
 }
 
-/** @deprecated R6-ORPHANS (2026-10-06): legacy sin callers en src/, rutas ni tests. */
 export async function getAnticiposPorCliente(sp: URLSearchParams) {
   const ant = await prisma.anticipo.findMany({ where: { tipo: 'COBRO' }, include: { cliente: { select: { nombre: true } } }, orderBy: { fechaReserva: 'desc' } })
   const g = new Map<string, any>()
@@ -279,7 +279,6 @@ export async function getAnticiposPorCliente(sp: URLSearchParams) {
   return NextResponse.json({ clientes: Array.from(g.values()) })
 }
 
-/** @deprecated R6-ORPHANS (2026-10-06): legacy sin callers en src/, rutas ni tests. */
 export async function getContabilidadLogs(request: NextRequest) {
   const a = await authenticateUser(request); if ('status' in a) return a as Response; const u = a.user
   if (u.role !== 'admin') return NextResponse.json({ error: 'Prohibido' }, { status: 403 })
