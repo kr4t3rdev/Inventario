@@ -137,6 +137,20 @@ export const AccountingCashOperationsMutationService = {
         ? calcularMontoTotalACobrar(input.montoCapital, input.tasaInteres)
         : new Prisma.Decimal(input.montoCapital);
 
+      // Monto funcional de la deuda total (con intereses si aplica)
+      const conversionDeuda = buildPersistedAccountingAmount(
+        montoDeuda,
+        moneda,
+        input.tasaCambioAlCrear,
+        fechaReconciliacion,
+        undefined,
+        functionalCurrency,
+      );
+      const montoDeudaFuncional = conversionDeuda.montoConvertido;
+      if (montoDeudaFuncional == null) {
+        throw new ActionError('Falta evidencia FX funcional para la deuda del préstamo', 'FX_INSUFICIENTE');
+      }
+
       // Cupo común: el desembolso nace como deuda PRESTAMO_CASH completa. Exceso
       // requiere override explícito del origen con motivo y auditoría en la misma tx.
       const decisionCredito = await validarCreditoOrigen({
@@ -173,6 +187,16 @@ export const AccountingCashOperationsMutationService = {
         // Sello de moneda verificable: el cupo común la exige en validaciones futuras.
         monedaOriginal: moneda.trim().toUpperCase(),
         montoOriginal: montoDeuda,
+        // Montos funcionales para valuación multi-moneda
+        montoDeudaFuncional,
+        montoPagadoFuncional: new Prisma.Decimal(0),
+        monedaFuncional: functionalCurrency,
+        tasaCambio: conversionDeuda.tasaCambio,
+        rateEffectiveAt: evidenciaFx.rateEffectiveAt,
+        fxProvenanceKind: evidenciaFx.fxProvenanceKind,
+        fxProvenanceSource: evidenciaFx.fxProvenanceSource,
+        fxCatalogRateId: evidenciaFx.fxCatalogRateId,
+        fxEvidenceJson: evidenciaFx.fxEvidenceJson,
         tipoCuenta: 'PRESTAMO_CASH',
         estado: 'PENDIENTE',
       };
@@ -460,6 +484,9 @@ export const AccountingCashOperationsMutationService = {
       const nuevoMontoPagado = new Prisma.Decimal(cxcVigente.montoPagado)
         .add(importes.montoObligacion)
         .toDecimalPlaces(2, Prisma.Decimal.ROUND_HALF_UP);
+      const nuevoMontoPagadoFuncional = new Prisma.Decimal(cxcVigente.montoPagadoFuncional ?? 0)
+        .add(montoFuncional)
+        .toDecimalPlaces(2, Prisma.Decimal.ROUND_HALF_UP);
       const totalDeuda = cxcVigente.montoDeuda;
       const nuevoSaldo = calcularSaldoPendientePrestamo(totalDeuda, nuevoMontoPagado);
       const nuevoEstadoCuenta = nuevoSaldo.lte('0.01') ? 'PAGADA' : 'PARCIAL';
@@ -469,7 +496,11 @@ export const AccountingCashOperationsMutationService = {
           tenantId,
           montoPagado: cxcVigente.montoPagado,
         },
-        data: { montoPagado: nuevoMontoPagado, estado: nuevoEstadoCuenta },
+        data: {
+          montoPagado: nuevoMontoPagado,
+          montoPagadoFuncional: nuevoMontoPagadoFuncional,
+          estado: nuevoEstadoCuenta,
+        },
       });
       if (cuentaActualizada.count !== 1) {
         throw new ActionError('El saldo del préstamo cambió; vuelve a consultar e intenta de nuevo', 'CONFLICT');
