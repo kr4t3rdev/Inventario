@@ -19,10 +19,11 @@ export async function crearNotificacion(data: NotificationData) {
         throw new Error("tenantId is required when creating a broadcast notification")
       }
 
-      const usuarios = await prisma.user.findMany({
-        where: { isActive: true, tenantId: data.tenantId } as any,
+      const membresias = await prisma.tenantMembership.findMany({
+        where: { tenantId: data.tenantId, isActive: true },
         select: { userId: true },
       })
+      const usuarios = membresias.map((m: { userId: string }) => ({ userId: m.userId }))
 
       const notificaciones = await Promise.all(
         usuarios.map((usuario: { userId: string }) =>
