@@ -129,8 +129,13 @@ export const createMermaAction = withAction(
 			if (existente) return existente;
 		}
 
-		// Crear merma y actualizar stock en transacción
-		const merma = await prisma.$transaction(async (tx: any) => {
+		// Crear merma y actualizar stock en transacción.
+		// Ante carrera concurrente con la misma clave, el unique constraint
+		// (tenantId, idempotencyKey) hace fallar con P2002 a los perdedores;
+		// en ese caso se devuelve la merma ganadora.
+		let merma: any;
+		try {
+		merma = await prisma.$transaction(async (tx: any) => {
 			const accountingPolicy = await getRequiredTenantAccountingPolicy(tenantId, tx);
 			const creada = await tx.merma.create({
 				data: {
@@ -203,6 +208,20 @@ export const createMermaAction = withAction(
 
 			return creada;
 		});
+		} catch (error: any) {
+			if (idempotencyKey && error?.code === 'P2002') {
+				// El ganador puede no haber hecho commit aún; reintentar la lectura.
+				for (let intento = 0; intento < 5; intento++) {
+					const ganadora = await prisma.merma.findUnique({
+						where: { tenantId_idempotencyKey: { tenantId, idempotencyKey } },
+						include: MERMA_INCLUDE,
+					});
+					if (ganadora) return ganadora;
+					await new Promise((r) => setTimeout(r, 50 * (intento + 1)));
+				}
+			}
+			throw error;
+		}
 
 		try {
 			await notificarMerma(merma.mermaId);

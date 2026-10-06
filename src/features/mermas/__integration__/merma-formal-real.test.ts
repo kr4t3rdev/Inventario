@@ -270,4 +270,27 @@ describe('createMermaAction — posting enforce y rollback real', { timeout: 60_
 		// reintento no duplicó la merma (el conteo de arriba es la guarda real).
 		expect(stock.cantidadDisponible).toBeGreaterThanOrEqual(0);
 	});
+
+	it('5 llamadas concurrentes con la misma clave crean una sola merma (P2002)', async () => {
+		const key = `conc-${randomUUID().replaceAll('-', '').slice(0, 16)}`;
+		const input = {
+			productoId, cantidad: 1, motivo: 'Concurrente',
+			almacenId: almacenId as string, idempotencyKey: key,
+		} as never;
+
+		const resultados = await Promise.all(
+			Array.from({ length: 5 }, () => createMermaAction(input)),
+		);
+
+		for (const r of resultados) {
+			expect(r.success).toBe(true);
+		}
+
+		expect(await prisma.merma.count({ where: { tenantId, idempotencyKey: key } })).toBe(1);
+
+		const ids = new Set(
+			resultados.map((r) => r.success ? (r.data as { mermaId: string }).mermaId : null),
+		);
+		expect(ids.size).toBe(1);
+	});
 });
