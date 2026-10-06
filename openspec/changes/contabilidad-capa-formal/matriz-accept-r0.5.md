@@ -135,7 +135,12 @@ por delegación: no existe adaptador que ejercite esa rama.
 
 ### G5 — Cobertura por canal de `accounting-cash-operations-mutation-service` ✅
 **Cerrado 05-10 (Fase C):** cada adaptador tiene test de reintento propio que demuestra
-que no duplica:
+que no duplica.
+**Cierre C3-extra (06-10):** `AjusteBancario` recibió `idempotencyKey` (`@@unique([tenantId, idempotencyKey])`
++ migración `20261006000000_ajuste_idempotency_key`); `createBankAdjustment` devuelve el ajuste
+existente ante reintento con la misma clave sin duplicar saldo ni asiento
+(`ajuste-idempotency-real.test.ts` 2/2). `venta-servicios` devengo directo auditado:
+`service-devengo-directo-real.test.ts` verifica venta + CxC + asiento `VENTA_SERVICIO_CREDITO`.
 - `prestamos-cash-pagar-real.test.ts` y `deudas-cash-real.test.ts`: rutas web con rollback
 - `cash-loans-http-real.test.ts` y `cash-debts-http-real.test.ts`: rutas mobile con Bearer real
 - `cash-actions-retry-real.test.ts`: server actions `registrarPagoPrestamoAction` y `registrarPagoDeudaAction`

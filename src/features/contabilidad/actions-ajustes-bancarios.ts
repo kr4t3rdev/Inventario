@@ -23,6 +23,7 @@ const createSchema = z.object({
   motivo: z.string().min(1, 'Motivo es obligatorio'),
   tasaCambio: z.number().positive().optional(),
   fechaOperacion: z.coerce.date().optional(),
+  idempotencyKey: z.string().trim().min(1).max(64).optional(),
 });
 
 export const getAjustesByCuentaAction = withAction(async (params: { cuentaId: string; page?: number; limit?: number; fechaInicio?: string; fechaFin?: string; tipo?: string }, user: AuthenticatedUser) => {

@@ -47,6 +47,7 @@ const createBankAdjustmentSchema = z.object({
   motivo: z.string().min(1, 'Motivo es obligatorio'),
   tasaCambio: z.number().positive().optional(),
   fechaOperacion: z.coerce.date().optional(),
+  idempotencyKey: z.string().trim().min(1).max(64).optional(),
 });
 
 const optionalText = z.preprocess(
@@ -454,6 +455,24 @@ export const AccountingOperationsMutationService = {
     const saldoNegativo = nuevoSaldo.lt(0);
     const fechaOperacion = parsed.fechaOperacion ?? new Date();
 
+    // Idempotencia: si el cliente provee clave, un reintento devuelve el ajuste
+    // existente en lugar de duplicar ajuste, movimiento de saldo y asiento.
+    const idempotencyKey = parsed.idempotencyKey?.trim() || null;
+    if (idempotencyKey) {
+      const existente = await prisma.ajusteBancario.findUnique({
+        where: { tenantId_idempotencyKey: { tenantId, idempotencyKey } },
+      });
+      if (existente) {
+        return {
+          ajuste: existente,
+          saldoAnterior: Number(cuenta.saldo),
+          saldoNuevo: Number(cuenta.saldo),
+          advertenciaSaldoNegativo: false,
+          message: 'Ajuste bancario ya registrado (reintento idempotente)',
+        };
+      }
+    }
+
     const resultado = await prisma.$transaction(async (tx: any) => {
       await acquireAccountingTenantLock(tx, tenantId);
       const policy = await getRequiredTenantAccountingPolicy(tenantId, tx);
@@ -472,6 +491,7 @@ export const AccountingOperationsMutationService = {
       const ajuste = await tx.ajusteBancario.create({
         data: {
           cuentaBancaria: { connect: { cuentaId: parsed.cuentaId } },
+          idempotencyKey,
           tipo: parsed.tipo,
            monto: parsed.monto,
            moneda: parsed.moneda,

@@ -2111,6 +2111,7 @@ model ReconciliacionGasto {
 model AjusteBancario {
   ajusteId        String         @id @default(cuid())
   tenantId        String
+  idempotencyKey  String?
   cuentaId        String
   tipo            String
   monto           Decimal
@@ -2138,6 +2139,7 @@ model AjusteBancario {
   @@index([tenantId, fxProvenanceKind])
   @@index([tenantId, fechaOperacion])
   @@index([tenantId, cuentaId, fechaOperacion])
+  @@unique([tenantId, idempotencyKey])
 }
 
 model TransferenciaBancaria {

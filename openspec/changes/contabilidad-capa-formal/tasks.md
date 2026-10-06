@@ -2565,7 +2565,9 @@ reabre FX-2/FX-4 por brechas reproducidas de propagación, Decimal/evidencia y f
     - Compras-servicios: `compra-servicios-retry-real.test.ts` (`COMPRA_SERVICIO_DUPLICADA` 409 por `numeroFactura`)
     - Transferencias: `TRANSFERENCIA_DUPLICADA` 409 por `numeroComprobante` (explícito o `TRF-xxxxxx`)
     - Producción auth: `completar-auth-http-real.test.ts` (3/3: fixtures, 401 sin token, 200 con Bearer)
-    Pendientes: ajustes (sin clave natural única), venta-servicios/devengo directo (por auditar).
+    **Cierre 06-10:** ajustes con `idempotencyKey` + migración + test 2/2 (reintento no duplica
+    saldo/asiento); venta-servicios devengo directo auditado con test 1/1 (venta + CxC + asiento
+    `VENTA_SERVICIO_CREDITO`). Suite 59/59 archivos, 326/326 tests.
   - [x] G3: sesión HTTP real (Bearer 401/201) en `produccion/ordenes/[id]/completar`.
     **Cerrado 05-10:** nuevo `completar/__integration__/auth-http-real.test.ts` (4/4) con el
     wrapper real de `withAuthPost` y `userSession` en la DB desechable, sin mock de
