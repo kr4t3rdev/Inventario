@@ -266,8 +266,9 @@ export const DevolucionVentaService = {
 
         const monedaDevolucion = valoracionDevolucion?.moneda ??
           actual.factura?.cuentaPorCobrar?.monedaOriginal ?? monedaFuncional ?? 'CUP';
+        // Shadow degradado (sin valoracion FX): conservar tasa historica de la factura, como en off.
         const tasaCambio = valoracionDevolucion?.tasaCambio ??
-          (modoFormal === 'off' ? actual.factura?.tasaCambio ?? 1 : null);
+          (modoFormal === 'enforce' ? null : actual.factura?.tasaCambio ?? 1);
 
         // 1) Persistir la devolución con sus líneas.
         const devolucion = await tx.devolucionVenta.create({
