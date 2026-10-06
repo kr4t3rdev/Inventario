@@ -594,6 +594,18 @@ export const AccountingCashOperationsMutationService = {
       if (conversion.montoConvertido == null || !conversion.fxEvidence) {
         throw new ActionError('Falta evidencia FX funcional para la deuda', 'FX_INSUFICIENTE');
       }
+      // Monto funcional de la deuda total (con intereses si aplica)
+      const conversionDeuda = buildPersistedAccountingAmount(
+        totalDeuda,
+        moneda,
+        input.tasaCambio,
+        fechaReconciliacion,
+        undefined,
+        functionalCurrency,
+      );
+      if (conversionDeuda.montoConvertido == null) {
+        throw new ActionError('Falta evidencia FX funcional para la deuda total', 'FX_INSUFICIENTE');
+      }
       const importes = resolveCashDebtCurrencyAmounts({
         monedaObligacion: moneda,
         monedaFondos: moneda,
@@ -635,6 +647,16 @@ export const AccountingCashOperationsMutationService = {
           montoPagado: 0,
           saldoPendiente: totalDeuda,
           moneda,
+          // Montos funcionales para valuación multi-moneda
+          montoDeudaFuncional: conversionDeuda.montoConvertido,
+          montoPagadoFuncional: new Prisma.Decimal(0),
+          monedaFuncional: functionalCurrency,
+          tasaCambio: conversionDeuda.tasaCambio,
+          rateEffectiveAt: conversion.fxEvidence.rateEffectiveAt,
+          fxProvenanceKind: conversion.fxEvidence.fxProvenanceKind,
+          fxProvenanceSource: conversion.fxEvidence.fxProvenanceSource,
+          fxCatalogRateId: conversion.fxEvidence.fxCatalogRateId,
+          fxEvidenceJson: conversion.fxEvidence.fxEvidenceJson,
           tipo: 'compra',
           tipoDeuda: 'DEUDA_CASH',
           estado: 'PENDIENTE',
@@ -877,6 +899,9 @@ export const AccountingCashOperationsMutationService = {
       const nuevoMontoPagado = new Prisma.Decimal(deuda.cuentaPorPagar.montoPagado)
         .add(importes.montoObligacion)
         .toDecimalPlaces(2, Prisma.Decimal.ROUND_HALF_UP);
+      const nuevoMontoPagadoFuncional = new Prisma.Decimal(deuda.cuentaPorPagar.montoPagadoFuncional ?? 0)
+        .add(montoFuncional)
+        .toDecimalPlaces(2, Prisma.Decimal.ROUND_HALF_UP);
       const totalDeuda = deuda.cuentaPorPagar.montoDeuda;
       const nuevoSaldoPendiente = calcularSaldoPendienteDeuda(totalDeuda, nuevoMontoPagado);
       const nuevoEstadoCuenta = nuevoSaldoPendiente.lte('0.01') ? 'PAGADA' : 'PARCIAL';
@@ -889,6 +914,7 @@ export const AccountingCashOperationsMutationService = {
         },
         data: {
           montoPagado: nuevoMontoPagado,
+          montoPagadoFuncional: nuevoMontoPagadoFuncional,
           saldoPendiente: nuevoSaldoPendiente,
           estado: nuevoEstadoCuenta,
         },

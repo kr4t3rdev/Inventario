@@ -2574,6 +2574,18 @@ model CuentaPorPagar {
   compraServicioId String? @unique
   compraServicio CompraServicio? @relation(fields: [compraServicioId], references: [compraServicioId])
   fxSnapshot Json?
+  /// Valuación funcional para deudas cash multi-moneda.
+  montoDeudaFuncional      Decimal?       @db.Decimal(20, 4)
+  montoPagadoFuncional     Decimal?       @db.Decimal(20, 4)
+  monedaFuncional          String?
+  tasaCambio               Decimal?       @db.Decimal(20, 10)
+  rateEffectiveAt          DateTime?
+  fxProvenanceKind         String?
+  fxProvenanceSource       String?
+  fxCatalogRateId          String?
+  fxEvidenceJson           Json?
+  fxEvidenceFingerprint    String?
+  fxEvidenceVersion        Int?
   cuentaPorPagarId String                @id @default(cuid())
   tenantId         String
   numeroFactura    String
