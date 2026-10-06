@@ -131,10 +131,44 @@ describe('venta servicio a crédito — devengo directo', { timeout: 90_000 }, (
     expect(cxc!.estado).toBe('PENDIENTE');
     expect(cxc!.tipoCuenta).toBe('VENTA_SERVICIO');
 
-    // Asiento del devengo (evento VENTA_SERVICIO_CREDITO)
+    // Asiento del devengo (evento VENTA_SERVICIO_CREDITO) — exactamente uno
     const asientos = await prisma.asiento.findMany({
       where: { tenantId, origenId: ventaId },
     });
-    expect(asientos.length).toBeGreaterThanOrEqual(1);
+    expect(asientos.length).toBe(1);
+    expect(asientos[0].origenTipo).toBe('venta_servicio');
+  });
+
+  it('fallo en el asiento revierte venta y CxC (rollback)', async () => {
+    const trigger = `trg_asiento_fail_${prefix.replaceAll('-', '_')}`.slice(0, 50);
+    const fn = `${trigger}_fn`;
+    await prisma.$executeRawUnsafe(`
+      CREATE OR REPLACE FUNCTION "${fn}"() RETURNS trigger AS $$
+      BEGIN
+        RAISE EXCEPTION 'asiento bloqueado' USING ERRCODE = '22012';
+      END; $$ LANGUAGE plpgsql;
+    `);
+    await prisma.$executeRawUnsafe(`DROP TRIGGER IF EXISTS "${trigger}" ON "asientos";`);
+    await prisma.$executeRawUnsafe(`
+      CREATE TRIGGER "${trigger}" BEFORE INSERT ON "asientos"
+      FOR EACH ROW EXECUTE FUNCTION "${fn}"();
+    `);
+    try {
+      await expect(createVentaServicioAction({
+        servicioId: serviceId,
+        cantidad: 1,
+        condicionPago: 'CREDITO',
+        clienteId: customerId,
+      }, admin())).rejects.toThrow();
+
+      // Nada debe persistir: ni venta, ni CxC, ni asiento
+      const ventas = await prisma.ventaServicios.count({
+        where: { tenantId, clienteId: customerId, total: 1250 },
+      });
+      expect(ventas).toBe(0);
+    } finally {
+      await prisma.$executeRawUnsafe(`DROP TRIGGER IF EXISTS "${trigger}" ON "asientos"`).catch(() => undefined);
+      await prisma.$executeRawUnsafe(`DROP FUNCTION IF EXISTS "${fn}"() CASCADE`).catch(() => undefined);
+    }
   });
 });
