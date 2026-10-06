@@ -155,7 +155,12 @@ export const restockProductoAction = withAction(
 			});
 
 			// ── 3. Transacción: stock + gastos + pagos ──
-			const result = await prisma.$transaction(
+			// Ante carrera concurrente con la misma factura, el unique
+			// constraint (tenantId, numeroFactura) hace fallar con P2002;
+			// se convierte a RESTOCK_DUPLICADO.
+			let result: any;
+			try {
+			result = await prisma.$transaction(
 				async (tx) => {
 					let updatedProducto: any = null;
 					let newProductInstance: typeof producto | null = null;
@@ -413,6 +418,15 @@ export const restockProductoAction = withAction(
 					timeout: 10000,
 				},
 			);
+			} catch (error: any) {
+				if (numeroFacturaNormalizado && error?.code === 'P2002') {
+					throw new ActionError(
+						`Ya existe un restock registrado con la factura ${numeroFacturaNormalizado}`,
+						"RESTOCK_DUPLICADO",
+					);
+				}
+				throw error;
+			}
 
 			revalidatePath("/busy/products");
 
