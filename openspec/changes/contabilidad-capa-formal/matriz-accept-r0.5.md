@@ -63,7 +63,7 @@ auditoría); `operations-channels-http-real.test.ts` 4/4 (Bearer web/móvil, fil
 |---|---|---|---|---|---|---|---|---|---|
 | `accounting-reconciliation-service.ts:547` → COBRO_CXC/VENTA_CONTADO (`reconcileSale`) | action `actions-reconciliacion`; web `reconciliacion/ventas`; mobile `reconciliation/sales` | ✅ | ✅ | ✅ (clave idempotente + hash bajo lock) | ✅ | ✅ | ✅ (replay sec./concurrente, 409) | ✅ (AuditLog estricto) | ✅ |
 | `...:1140` → COBRO_SERVICIO (`reconcileService`) | action; web `reconciliacion/servicios`; mobile `reconciliation/services` | ✅ (HTTP real 401/201 en servicios) | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
-| `pago-gastos-workflow.ts:642` → PAGO_CXP / PAGO_NOMINA / COMPRA_CONTADO / GASTO_CONTADO | action `compras-productos/actions`, `contabilidad/actions-reconciliacion`; adapter `reconciliacion-gastos-adapter` | ✅ (permiso en ambos invocadores) | ✅ | ✅ | ✅ (v2 desde Fase A) | ✅ | ❌ (sin prueba de reintento) | ✅ (`logStrict` en tx) | ❌ (sin prueba de fallo de AuditLog) |
+| `pago-gastos-workflow.ts:642` → PAGO_CXP / PAGO_NOMINA / COMPRA_CONTADO / GASTO_CONTADO | action `compras-productos/actions`, `contabilidad/actions-reconciliacion`; adapter `reconciliacion-gastos-adapter` | ✅ (permiso en ambos invocadores) | ✅ | ✅ | ✅ (v2 desde Fase A) | ✅ | ✅ (409 PAGO_DUPLICADO) | ✅ (`logStrict` en tx) | ✅ (trigger AuditLog revierte) |
 
 **Evidencia:** `reconciliar-servicio-real.test.ts` 23/23 (rollback CxC y auditoría);
 `service-cxc-pago-fx-real.test.ts` 4/4; `pago-gastos-workflow.test.ts` 15/15 (unitario).
@@ -74,8 +74,8 @@ auditoría); `operations-channels-http-real.test.ts` 4/4 (Bearer web/móvil, fil
 |---|---|---|---|---|---|---|---|---|---|
 | `compras-productos/actions.ts:446` → COMPRA_CREDITO / COMPRA_CONTADO | action (UI) | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ (debita una vez) | ✅ | ✅ |
 | `compras-servicios/actions.ts:141` → GASTO_CON_ANTICIPO_PROVEEDOR | action (UI) | ✅ | ✅ | ✅ | ✅ | ✅ | ⚠️ | ✅ | ✅ |
-| `mermas/actions.ts:180` → MERMA_INVENTARIO | action (UI) | ✅ | ✅ | ✅ | ✅ | ✅ | ❌ (sin prueba de reintento) | ✅ | ✅ |
-| `productos/actions-restock.ts:588` → COMPRA_CONTADO (restock) | action (UI) | ✅ | ✅ | ✅ | ✅ | ✅ | ❌ (sin prueba de reintento) | ✅ | ✅ |
+| `mermas/actions.ts:180` → MERMA_INVENTARIO | action (UI) | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ (reintento secuencial + 5 concurrentes P2002) | ✅ | ✅ |
+| `productos/actions-restock.ts:588` → COMPRA_CONTADO (restock) | action (UI) | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ (reintento secuencial + 5 concurrentes P2002→RESTOCK_DUPLICADO) | ✅ | ✅ |
 | `produccion/ordenes/[id]/completar/route.ts:204` → PRODUCCION_SALIDA | web (ruta propia) | ⚠️ (`withAuthPost` inyectado en test; sin sesión HTTP real) | ✅ | ✅ | ✅ | ✅ | ❌ (sin prueba de reintento) | ✅ | ✅ |
 | `venta-servicios/actions.ts:267/:397` → VENTA_SERVICIO_CREDITO (devengo ×2) | action (UI) | ✅ | ✅ | ✅ | ✅ | ✅ | ⚠️ | ✅ | ⚠️ (cubierto con anticipo; devengo directo sin prueba propia) |
 
