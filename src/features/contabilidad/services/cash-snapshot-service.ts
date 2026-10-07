@@ -1,3 +1,16 @@
+/**
+ * @description Servicio de snapshots funcionales cash (préstamos y deudas).
+ *
+ * @nota A10 (auditoría 2026-10-07): este servicio es correcto como mecanismo
+ * aislado de copia (4/4 tests). Limitaciones conocidas:
+ * - No está conectado a ningún flujo operativo (cierre, conciliación); no hay
+ *   callers productivos fuera de tests.
+ * - `fechaCorte` etiqueta el estado leído "ahora"; no hay reconstrucción histórica
+ *   real por fecha pasada/futura.
+ * - La captura no es un snapshot transaccional común de ambas fuentes; bajo
+ *   concurrencia, `creados = después - antes` puede atribuir inserciones ajenas.
+ * No declarar comparabilidad histórica global con este servicio aislado.
+ */
 import { prisma } from '@/lib/prisma';
 import { Prisma } from '@/generated/prisma';
 
