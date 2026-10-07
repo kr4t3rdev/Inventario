@@ -143,6 +143,7 @@ describe('gate 1.3: autorización efectiva del origen servicios', () => {
     const result = await createVentaServicioAction({ servicioId: 'sv-1', cantidad: 1 });
 
     expect(result.success).toBe(false);
+    if (result.success) expect.unreachable('Se esperaba que la accion fallara');
     expect(result.error?.code).toBe('FORBIDDEN');
     expect(prisma.$transaction).not.toHaveBeenCalled();
     expect(mockTx.ventaServicios.create).not.toHaveBeenCalled();
@@ -159,6 +160,7 @@ describe('gate 1.3: autorización efectiva del origen servicios', () => {
     });
 
     expect(result.success).toBe(false);
+    if (result.success) expect.unreachable('Se esperaba que la accion fallara');
     expect(result.error?.code).toBe('CREDITO_EXCEDIDO');
     expect(requirePermission).toHaveBeenCalledWith(
       expect.anything(), 'ventas.venta.registrar', expect.any(String),

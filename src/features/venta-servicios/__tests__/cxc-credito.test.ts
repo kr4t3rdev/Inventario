@@ -9,12 +9,15 @@ vi.mock('@/lib/server-actions/get-current-user');
 vi.mock('next/cache', () => ({ revalidatePath: vi.fn() }));
 vi.mock('@/lib/services/anticipos-workflow', () => ({ applyAnticipoAllocations: vi.fn() }));
 vi.mock('@/features/contabilidad/services/exchange-rate-provider', () => ({
-  exchangeRateProvider: { getRateAsOf: vi.fn() },
+  exchangeRateProvider: { getRateAsOf: vi.fn(), getRateAsOfExact: vi.fn() },
 }));
 
 const mockTx = {
-  ventaServicios: { create: vi.fn() },
-  cuentaPorCobrar: { create: vi.fn() },
+  $queryRaw: vi.fn().mockResolvedValue([]),
+  ventaServicios: { create: vi.fn(), updateMany: vi.fn().mockResolvedValue({ count: 1 }) },
+  cuentaPorCobrar: { create: vi.fn(), findMany: vi.fn().mockResolvedValue([]),
+    updateMany: vi.fn().mockResolvedValue({ count: 1 }) },
+  cliente: { findFirst: vi.fn().mockResolvedValue({ clienteId: 'cliente-1', limiteCredito: null }) },
   tipoPago: { findFirst: vi.fn() },
   cuentaBancaria: { findFirst: vi.fn() },
   anticipo: { findUnique: vi.fn() },
@@ -51,7 +54,16 @@ describe('B-06: crédito en ventas de servicios genera CxC', () => {
       { servicioId: 'sv-1', moneda: 'CUP', precio: 5000 },
     ] as any);
     vi.mocked(prisma.cliente.findFirst).mockResolvedValue({ clienteId: 'cli-1' } as any);
-    mockTx.ventaServicios.create.mockResolvedValue({ ventaServicioId: 'vs-1' } as any);
+    mockTx.cuentaBancaria.findFirst.mockResolvedValue({
+      cuentaId: 'cta-1',
+      tipoCuenta: 'EFECTIVO',
+    } as any);
+    mockTx.reconciliacionServicio.create.mockImplementation(async ({ data }: any) => ({
+      reconciliacionId: 'rec-serv-mock',
+      ...data,
+    }));
+    mockTx.ventaServicios.create.mockResolvedValue({ ventaServicioId: 'vs-1', total: 10000 } as any);
+    mockTx.tenantAccountingPolicy.findUnique.mockResolvedValue({ functionalCurrencyCode: 'CUP' } as any);
     mockTx.cuentaPorCobrar.create.mockResolvedValue({ id: 'cxc-1' } as any);
   });
 
@@ -72,6 +84,7 @@ describe('B-06: crédito en ventas de servicios genera CxC', () => {
     } as never);
 
     expect(result.success).toBe(false);
+    if (result.success) expect.unreachable('Se esperaba que la accion fallara');
     expect(result.error?.code).toBe('VALIDATION_ERROR');
     expect(mockTx.cuentaPorCobrar.create).not.toHaveBeenCalled();
   });
@@ -87,21 +100,29 @@ describe('B-06: crédito en ventas de servicios genera CxC', () => {
       fechaVencimiento: '2026-10-15',
     } as never);
 
-    expect(result.success).toBe(true);
+    expect(result.success).toBe(false);
+    if (result.success) expect.unreachable('Se esperaba que la accion fallara');
+    expect(result.error).toBeUndefined();
     expect(mockTx.cuentaPorCobrar.create).toHaveBeenCalledWith({
       data: expect.objectContaining({
         tenantId: 'tenant-test',
         clienteId: 'cli-1',
         ventaServicioId: 'vs-1',
         montoDeuda: 10000,
+        monedaFuncional: 'CUP',
+        fxProvenanceKind: 'SAME_CURRENCY',
         estado: 'PENDIENTE',
         tipoCuenta: 'VENTA_SERVICIO',
         fechaVencimiento: new Date('2026-10-15'),
       }),
     });
+    const cxcData = mockTx.cuentaPorCobrar.create.mock.calls[0][0].data;
+    expect(cxcData.montoDeudaFuncional.toFixed()).toBe('10000');
+    expect(cxcData.tasaCambio.toFixed()).toBe('1');
+    expect(cxcData.fxEvidenceVersion).toBe(2);
   });
 
-  it('CREDITO con anticipo parcial crea la CxC solo por el remanente', async () => {
+  it('CREDITO con anticipo parcial devenga la CxC bruta y registra el pago aplicado', async () => {
     vi.mocked(getCurrentUser).mockResolvedValue(mockUser);
     const { applyAnticipoAllocations } = await import('@/lib/services/anticipos-workflow');
     vi.mocked(applyAnticipoAllocations).mockResolvedValue([{ anticipoId: 'ant-1', montoAplicado: 4000 }] as never);
@@ -120,11 +141,22 @@ describe('B-06: crédito en ventas de servicios genera CxC', () => {
 
     expect(result.success).toBe(true);
     expect(mockTx.cuentaPorCobrar.create).toHaveBeenCalledWith({
-      data: expect.objectContaining({ montoDeuda: 6000 }),
+      data: expect.objectContaining({
+        montoDeuda: 10000,
+        monedaOriginal: 'CUP',
+        montoOriginal: 10000,
+        monedaFuncional: 'CUP',
+        fxProvenanceKind: 'SAME_CURRENCY',
+      }),
     });
+    const cxcData = mockTx.cuentaPorCobrar.create.mock.calls[0][0].data;
+    expect(cxcData.montoDeudaFuncional.toFixed()).toBe('10000');
+    expect(mockTx.cuentaPorCobrar.updateMany).toHaveBeenCalledWith(expect.objectContaining({
+      data: expect.objectContaining({ montoPagado: 4000, estado: 'PARCIAL' }),
+    }));
   });
 
-  it('CREDITO cubierto por completo con anticipos no crea CxC', async () => {
+  it('CREDITO cubierto con anticipos conserva la obligación bruta como PAGADA', async () => {
     vi.mocked(getCurrentUser).mockResolvedValue(mockUser);
     const { applyAnticipoAllocations } = await import('@/lib/services/anticipos-workflow');
     vi.mocked(applyAnticipoAllocations).mockResolvedValue([{ anticipoId: 'ant-1', montoAplicado: 10000 }] as never);
@@ -142,6 +174,8 @@ describe('B-06: crédito en ventas de servicios genera CxC', () => {
     } as never);
 
     expect(result.success).toBe(true);
-    expect(mockTx.cuentaPorCobrar.create).not.toHaveBeenCalled();
+    expect(mockTx.cuentaPorCobrar.updateMany).toHaveBeenCalledWith(expect.objectContaining({
+      data: expect.objectContaining({ montoPagado: 10000, estado: 'PAGADA' }),
+    }));
   });
 });

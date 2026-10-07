@@ -6,6 +6,7 @@
 'use server';
 
 import { revalidatePath } from 'next/cache';
+import { createHash } from 'node:crypto';
 import { withAction, ActionError } from '@/lib/server-actions';
 import { prisma } from '@/lib/prisma';
 import { requireTenant, requireFeature, requirePermission } from '@/lib/services/tenant-scope';
@@ -25,6 +26,145 @@ const VENTA_SERVICIO_INCLUDE = {
   servicio: true,
   cliente: true,
 } as const;
+
+type VentaServicioRow = {
+  ventaServicioId: string;
+  tenantId?: string;
+  servicioId: string;
+  cantidad: number;
+  costo?: number | null;
+  total: number;
+  moneda?: string | null;
+  precioUnitario?: number | null;
+  observaciones?: string | null;
+  clienteId?: string | null;
+  condicionPago?: string | null;
+  idempotencyKey?: string | null;
+  createdAt?: Date;
+  [key: string]: unknown;
+};
+
+type VentaServicioResult = {
+  mode: 'LEGACY';
+  ventaServicio: unknown;
+  allocationsResult: unknown[];
+  replayed?: boolean;
+};
+
+/** Ordena recursivamente objetos para que el hash no dependa del orden de sus claves. */
+function canonicalize(value: unknown): unknown {
+  if (Array.isArray(value)) return value.map(canonicalize);
+  if (value && typeof value === 'object') {
+    return Object.fromEntries(
+      Object.entries(value as Record<string, unknown>)
+        .sort(([left], [right]) => left.localeCompare(right))
+        .map(([key, nested]) => [key, canonicalize(nested)]),
+    );
+  }
+  return value;
+}
+
+/** Calcula la huella completa del request, incluyendo todas las líneas y su cardinalidad. */
+function hashIdempotencyPayload(value: unknown): string {
+  return createHash('sha256')
+    .update(JSON.stringify(canonicalize(value)))
+    .digest('hex');
+}
+
+/**
+ * El modelo de VentaServicios solo dispone de una columna de clave. Se guarda
+ * la clave del cliente como prefijo y la huella como sufijo para poder detectar
+ * conflictos sin inventar una columna adicional ni perder la clave original.
+ */
+function persistedIdempotencyKey(key: string, hash: string, index?: number): string {
+  return `${key}:${hash}${index === undefined ? '' : `:${index}`}`;
+}
+
+function extractPersistedHash(storedKey: string | null | undefined, key: string): string | null {
+  if (!storedKey?.startsWith(`${key}:`)) return null;
+  const suffix = storedKey.slice(key.length + 1).split(':')[0];
+  return /^[0-9a-f]{64}$/i.test(suffix) ? suffix : null;
+}
+
+function conflictIdempotency(): never {
+  throw new ActionError(
+    'La clave de idempotencia ya fue usada con datos diferentes',
+    'IDEMPOTENCY_CONFLICT',
+  );
+}
+
+function normalizedDate(value: string | null | undefined): string | null {
+  if (!value) return null;
+  const date = new Date(value);
+  return Number.isNaN(date.getTime()) ? value : date.toISOString();
+}
+
+function legacyPayloadForHash(input: VentaServicioInput) {
+  return {
+    mode: 'LEGACY',
+    servicioId: input.servicioId,
+    cantidad: input.cantidad,
+    costo: input.costo ?? 0,
+    observaciones: input.observaciones ?? null,
+    clienteId: input.clienteId ?? null,
+    anticipos: input.anticipos ?? [],
+    condicionPago: input.condicionPago ?? 'CONTADO',
+    fechaVencimiento: normalizedDate(input.fechaVencimiento),
+    solicitarCreditoOverride: input.solicitarCreditoOverride ?? false,
+    motivoCreditoOverride: input.motivoCreditoOverride ?? null,
+  };
+}
+
+function mixedPayloadForHash(input: VentaMixtaInput) {
+  return {
+    mode: 'MIXED_LINES',
+    clienteId: input.clienteId ?? null,
+    observaciones: input.observaciones ?? null,
+    condicionPago: input.condicionPago ?? 'CONTADO',
+    fechaVencimiento: normalizedDate(input.fechaVencimiento),
+    solicitarCreditoOverride: input.solicitarCreditoOverride ?? false,
+    motivoCreditoOverride: input.motivoCreditoOverride ?? null,
+    // No deduplicar ni ordenar: la cardinalidad y el orden de las líneas son
+    // parte del contrato de idempotencia.
+    lineas: input.lineas.map((linea) => ({
+      tipoLinea: linea.tipoLinea,
+      servicioId: linea.servicioId ?? null,
+      productoId: linea.productoId ?? null,
+      cantidad: linea.cantidad,
+      costo: linea.costo ?? 0,
+      observaciones: linea.observaciones ?? null,
+    })),
+  };
+}
+
+function sameLegacyPersistedPayload(row: VentaServicioRow, input: VentaServicioInput): boolean {
+  const expected = legacyPayloadForHash(input);
+  return (row.servicioId === undefined || row.servicioId === expected.servicioId) &&
+    (row.cantidad === undefined || row.cantidad === expected.cantidad) &&
+    (row.costo === undefined || row.costo === expected.costo) &&
+    (row.observaciones === undefined || (row.observaciones ?? null) === expected.observaciones) &&
+    (row.clienteId === undefined || (row.clienteId ?? null) === expected.clienteId) &&
+    (row.condicionPago === undefined || (row.condicionPago ?? 'CONTADO') === expected.condicionPago);
+}
+
+function sameMixedPersistedPayload(
+  rows: VentaServicioRow[],
+  input: VentaMixtaInput,
+): boolean {
+  const serviceLines = input.lineas.filter((linea) => linea.tipoLinea === 'SERVICIO');
+  if (rows.length !== serviceLines.length) return false;
+  return rows.every((row, index) => {
+    const line = serviceLines[index];
+    return (row.servicioId === undefined || row.servicioId === line.servicioId) &&
+      (row.cantidad === undefined || row.cantidad === line.cantidad) &&
+      (row.costo === undefined || row.costo === (line.costo ?? 0)) &&
+      (row.observaciones === undefined ||
+        (row.observaciones ?? null) === (line.observaciones ?? input.observaciones ?? null)) &&
+      (row.clienteId === undefined || (row.clienteId ?? null) === (input.clienteId ?? null)) &&
+      (row.condicionPago === undefined ||
+        (row.condicionPago ?? 'CONTADO') === (input.condicionPago ?? 'CONTADO'));
+  });
+}
 
 /**
  * @description Valida que todos los servicios referenciados pertenezcan al tenant
@@ -197,15 +337,35 @@ export const createVentaServicioAction = withAction(withPeriodValidation(
     // Idempotencia: si el cliente provee clave, un reintento devuelve las ventas
     // existentes en lugar de duplicar.
     const idempotencyKey = payload.idempotencyKey?.trim() || null;
-    if (idempotencyKey) {
+    const idempotencyHash = idempotencyKey
+      ? hashIdempotencyPayload(mixedPayloadForHash(payload))
+      : null;
+    if (idempotencyKey && idempotencyHash) {
       const existentes = await prisma.ventaServicios.findMany({
         where: {
           tenantId,
-          idempotencyKey: { startsWith: `${idempotencyKey}:` },
+          OR: [
+            { idempotencyKey },
+            { idempotencyKey: { startsWith: `${idempotencyKey}:` } },
+          ],
         },
         orderBy: { idempotencyKey: 'asc' },
-      });
-      if (existentes.length > 0) return existentes;
+      }) as VentaServicioRow[];
+      if (existentes.length > 0) {
+        const storedHashes = existentes.map((row) =>
+          extractPersistedHash(row.idempotencyKey, idempotencyKey));
+        const samePayload = storedHashes.every((storedHash) => storedHash === idempotencyHash) ||
+          (storedHashes.some((storedHash) => storedHash === null) &&
+            sameMixedPersistedPayload(existentes, payload));
+        if (!samePayload) conflictIdempotency();
+        return {
+          mode: 'MIXED_LINES' as const,
+          lineasProcesadas: existentes.length,
+          lineasProductoPendientes: payload.lineas.filter((linea) => linea.tipoLinea === 'PRODUCTO').length,
+          ventasServicios: existentes,
+          replayed: true,
+        };
+      }
     }
 
     let created: any[];
@@ -243,7 +403,9 @@ export const createVentaServicioAction = withAction(withPeriodValidation(
             clienteId: payload.clienteId ?? null,
             condicionPago: payload.condicionPago,
             // Sufijo por índice para que multi-línea no viole el unique constraint
-            idempotencyKey: idempotencyKey ? `${idempotencyKey}:${idx}` : null,
+            idempotencyKey: idempotencyKey && idempotencyHash
+              ? persistedIdempotencyKey(idempotencyKey, idempotencyHash, idx)
+              : null,
           },
         });
       }));
@@ -308,16 +470,30 @@ export const createVentaServicioAction = withAction(withPeriodValidation(
         const ganadoras = await prisma.ventaServicios.findMany({
           where: {
             tenantId,
-            idempotencyKey: { startsWith: `${idempotencyKey}:` },
+            OR: [
+              { idempotencyKey },
+              { idempotencyKey: { startsWith: `${idempotencyKey}:` } },
+            ],
           },
           orderBy: { idempotencyKey: 'asc' },
-        });
-        if (ganadoras.length > 0) return {
-          mode: 'MIXED_LINES' as const,
-          lineasProcesadas: ganadoras.length,
-          lineasProductoPendientes: 0,
-          ventasServicios: ganadoras,
-        };
+        }) as VentaServicioRow[];
+        if (ganadoras.length > 0) {
+          const storedHashes = ganadoras.map((row) =>
+            extractPersistedHash(row.idempotencyKey, idempotencyKey));
+          if (idempotencyHash &&
+            !storedHashes.every((storedHash) => storedHash === idempotencyHash) &&
+            !(storedHashes.some((storedHash) => storedHash === null) &&
+              sameMixedPersistedPayload(ganadoras, payload))) {
+            conflictIdempotency();
+          }
+          return {
+            mode: 'MIXED_LINES' as const,
+            lineasProcesadas: ganadoras.length,
+            lineasProductoPendientes: lineasProducto.length,
+            ventasServicios: ganadoras,
+            replayed: true,
+          };
+        }
       }
       throw error;
     }
@@ -328,6 +504,7 @@ export const createVentaServicioAction = withAction(withPeriodValidation(
       lineasProcesadas: created.length,
       lineasProductoPendientes: lineasProducto.length,
       ventasServicios: created,
+      replayed: false,
     };
   }
 
@@ -348,6 +525,38 @@ export const createVentaServicioAction = withAction(withPeriodValidation(
     throw new ActionError('La fecha de vencimiento no es válida', 'VALIDATION_ERROR');
   }
 
+  const idempotencyKey = data.idempotencyKey?.trim() || null;
+  const idempotencyHash = idempotencyKey
+    ? hashIdempotencyPayload(legacyPayloadForHash(data))
+    : null;
+  if (idempotencyKey && idempotencyHash) {
+    const existentes = await prisma.ventaServicios.findMany({
+      where: {
+        tenantId,
+        OR: [
+          { idempotencyKey },
+          { idempotencyKey: { startsWith: `${idempotencyKey}:` } },
+        ],
+      },
+      orderBy: { idempotencyKey: 'asc' },
+    }) as VentaServicioRow[];
+    if (existentes.length > 0) {
+      if (existentes.length !== 1) conflictIdempotency();
+      const storedHash = extractPersistedHash(existentes[0].idempotencyKey, idempotencyKey);
+      if (storedHash !== idempotencyHash &&
+        !(storedHash === null && sameLegacyPersistedPayload(existentes[0], data))) {
+        conflictIdempotency();
+      }
+      return {
+        mode: 'LEGACY' as const,
+        ventaServicio: existentes[0],
+        allocationsResult: [],
+        replayed: true,
+      } satisfies VentaServicioResult;
+    }
+  }
+
+  try {
   const resultado = await prisma.$transaction(async (tx) => {
     const ventaTotal = data.cantidad * precioUnitario;
     const credito = data.condicionPago === 'CREDITO' && data.clienteId
@@ -376,6 +585,9 @@ export const createVentaServicioAction = withAction(withPeriodValidation(
         observaciones: data.observaciones ?? null,
         clienteId: data.clienteId ?? null,
         condicionPago: data.condicionPago,
+        idempotencyKey: idempotencyKey && idempotencyHash
+          ? persistedIdempotencyKey(idempotencyKey, idempotencyHash)
+          : null,
       },
     });
 
@@ -485,7 +697,40 @@ export const createVentaServicioAction = withAction(withPeriodValidation(
   });
 
   revalidatePath('/busy/venta-servicios');
-  return resultado;
+  return {
+    mode: 'LEGACY' as const,
+    ventaServicio: resultado.ventaServicio,
+    allocationsResult: resultado.allocationsResult,
+    replayed: false,
+  } satisfies VentaServicioResult;
+  } catch (error: any) {
+    if (idempotencyKey && error?.code === 'P2002') {
+      const ganadoras = await prisma.ventaServicios.findMany({
+        where: {
+          tenantId,
+          OR: [
+            { idempotencyKey },
+            { idempotencyKey: { startsWith: `${idempotencyKey}:` } },
+          ],
+        },
+        orderBy: { idempotencyKey: 'asc' },
+      }) as VentaServicioRow[];
+      if (ganadoras.length === 1) {
+        const storedHash = extractPersistedHash(ganadoras[0].idempotencyKey, idempotencyKey);
+        if (storedHash !== idempotencyHash &&
+          !(storedHash === null && sameLegacyPersistedPayload(ganadoras[0], data))) {
+          conflictIdempotency();
+        }
+        return {
+          mode: 'LEGACY' as const,
+          ventaServicio: ganadoras[0],
+          allocationsResult: [],
+          replayed: true,
+        } satisfies VentaServicioResult;
+      }
+    }
+    throw error;
+  }
 }));
 
 export const updateVentaServicioAction = withAction(async (input: VentaServicioUpdateInput, user: AuthenticatedUser) => {

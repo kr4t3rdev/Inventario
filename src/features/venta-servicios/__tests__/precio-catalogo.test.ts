@@ -77,18 +77,14 @@ describe('CU-05 precio de catálogo en venta de servicios (RED)', () => {
 
   it('modo carrito: persiste precios del catálogo por línea', async () => {
     vi.mocked(getCurrentUser).mockResolvedValue(mockUser);
-    vi.mocked(prisma.$transaction).mockImplementation((args: any) => {
-      if (Array.isArray(args)) return Promise.all(args);
-      return args(mockTx);
-    });
-    vi.mocked(prisma.ventaServicios.create).mockResolvedValue({ ventaServicioId: 'vs-1' } as any);
+    mockTx.ventaServicios.create.mockResolvedValue({ ventaServicioId: 'vs-1' } as any);
 
     const result = await createVentaServicioAction({
       lineas: [{ tipoLinea: 'SERVICIO', servicioId: 'sv-1', cantidad: 3 }],
     } as any);
 
     expect(result.success).toBe(true);
-    expect(prisma.ventaServicios.create).toHaveBeenCalledWith(
+    expect(mockTx.ventaServicios.create).toHaveBeenCalledWith(
       expect.objectContaining({
         data: expect.objectContaining({ precioUnitario: 5000, total: 15000 }),
       }),

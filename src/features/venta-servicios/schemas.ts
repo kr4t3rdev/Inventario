@@ -50,6 +50,8 @@ export const ventaServicioLegacySchema = z.object({
   fechaVencimiento: z.string().optional().nullable(),
   solicitarCreditoOverride: z.boolean().optional(),
   motivoCreditoOverride: z.string().trim().max(500).optional().nullable(),
+  // La clave se conserva para que el cliente pueda reintentar sin duplicar la venta.
+  idempotencyKey: z.string().trim().max(64).optional().nullable(),
   // Nota: `precioUnitario` y `total` se resuelven en el servidor desde el
   // catálogo (cantidad × precio); no se aceptan del cliente.
 }).strict();
@@ -64,6 +66,6 @@ export const updateVentaServicioSchema = z.object({
   // recalcula el total con el precio unitario derivado del registro.
 });
 
-export type VentaServicioInput = z.infer<typeof ventaServicioLegacySchema>;
-export type VentaMixtaInput = z.infer<typeof ventaMixtaSchema>;
+export type VentaServicioInput = z.input<typeof ventaServicioLegacySchema>;
+export type VentaMixtaInput = z.input<typeof ventaMixtaSchema>;
 export type VentaServicioUpdateInput = z.infer<typeof updateVentaServicioSchema>;
