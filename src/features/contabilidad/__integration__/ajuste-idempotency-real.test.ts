@@ -132,6 +132,65 @@ describe('ajuste bancario idempotente — PostgreSQL aislado', { timeout: 90_000
     expect(count).toBe(1);
   });
 
+  it('misma clave con fechaOperacion distinta rechaza con IDEMPOTENCY_CONFLICT (A2)', async () => {
+    const idempotencyKey = `idem-fecha-${crypto.randomUUID()}`;
+    await AccountingOperationsMutationService.createBankAdjustment({
+      input: {
+        cuentaId, tipo: 'ingreso' as const, monto: 100, moneda: 'CUP',
+        descripcion: `${prefix}-desc`, motivo: `${prefix}-motivo`,
+        fechaOperacion: new Date('2026-10-01T12:00:00Z'),
+        idempotencyKey,
+      },
+      user: manager(),
+    });
+
+    let thrown = null;
+    try {
+      await AccountingOperationsMutationService.createBankAdjustment({
+        input: {
+          cuentaId, tipo: 'ingreso' as const, monto: 100, moneda: 'CUP',
+          descripcion: `${prefix}-desc`, motivo: `${prefix}-motivo`,
+          fechaOperacion: new Date('2026-09-01T12:00:00Z'),
+          idempotencyKey,
+        },
+        user: manager(),
+      });
+    } catch (e) {
+      thrown = e;
+    }
+    expect(thrown).toBeTruthy();
+    const thrownAny = thrown;
+    expect(`${thrownAny?.code ?? ''} ${thrownAny?.message ?? ''}`).toContain('IDEMPOTENCY_CONFLICT');
+
+    const count = await prisma.ajusteBancario.count({
+      where: { tenantId, idempotencyKey },
+    });
+    expect(count).toBe(1);
+  });
+
+  it('dos requests simultáneos con la misma clave devuelven el mismo ajuste', async () => {
+    const idempotencyKey = `idem-race-${crypto.randomUUID()}`;
+    const input = {
+      cuentaId, tipo: 'ingreso' as const, monto: 75, moneda: 'CUP',
+      descripcion: `${prefix}-race`, motivo: `${prefix}-race-motivo`, idempotencyKey,
+    };
+    const saldoAntes = Number((await prisma.cuentaBancaria.findUnique({
+      where: { cuentaId }, select: { saldo: true },
+    }))!.saldo);
+
+    const resultados = await Promise.all([
+      AccountingOperationsMutationService.createBankAdjustment({ input, user: manager() }),
+      AccountingOperationsMutationService.createBankAdjustment({ input, user: manager() }),
+    ]);
+
+    expect(resultados[0].ajuste.ajusteId).toBe(resultados[1].ajuste.ajusteId);
+    expect(await prisma.ajusteBancario.count({ where: { tenantId, idempotencyKey } })).toBe(1);
+    const saldoDespues = Number((await prisma.cuentaBancaria.findUnique({
+      where: { cuentaId }, select: { saldo: true },
+    }))!.saldo);
+    expect(saldoDespues).toBe(saldoAntes + 75);
+  });
+
   it('sin clave cada llamada crea un ajuste nuevo', async () => {
     const input = {
       cuentaId, tipo: 'ingreso' as const, monto: 50, moneda: 'CUP',

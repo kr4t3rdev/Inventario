@@ -125,4 +125,59 @@ describe('inyección de capital idempotente — PostgreSQL aislado', { timeout: 
     expect(thrown).toBeTruthy();
     expect(`${thrown?.code ?? ''} ${thrown?.message ?? ''}`).toContain('IDEMPOTENCY_CONFLICT');
   });
+
+  it('misma clave con tasaInteres distinta (0->10) rechaza con IDEMPOTENCY_CONFLICT (A2)', async () => {
+    const idempotencyKey = `idem-tasa-${crypto.randomUUID()}`;
+    await AccountingOperationsMutationService.createCapitalInjection({
+      input: {
+        montoRecibido: 1000, moneda: 'CUP', tipo: 'DEUDA_EXTERNA' as const,
+        cuentaId, entidadPrestamista: `${prefix}-banco`, tasaInteres: 0,
+        plazoMeses: 12, idempotencyKey,
+      },
+      user: manager(),
+    });
+
+    let thrown = null;
+    try {
+      await AccountingOperationsMutationService.createCapitalInjection({
+        input: {
+          montoRecibido: 1000, moneda: 'CUP', tipo: 'DEUDA_EXTERNA' as const,
+          cuentaId, entidadPrestamista: `${prefix}-banco`, tasaInteres: 10,
+          plazoMeses: 12, idempotencyKey,
+        },
+        user: manager(),
+      });
+    } catch (e) {
+      thrown = e;
+    }
+    expect(thrown).toBeTruthy();
+    const thrownAny = thrown;
+    expect(`${thrownAny?.code ?? ''} ${thrownAny?.message ?? ''}`).toContain('IDEMPOTENCY_CONFLICT');
+
+    const count = await prisma.inyeccionCapital.count({ where: { tenantId, idempotencyKey } });
+    expect(count).toBe(1);
+  });
+
+  it('dos requests simultáneos con la misma clave devuelven la misma inyección', async () => {
+    const idempotencyKey = `idem-race-${crypto.randomUUID()}`;
+    const input = {
+      montoRecibido: 125, moneda: 'CUP', tipo: 'CAPITAL_SOCIAL' as const,
+      cuentaId, socio: `${prefix}-race-socio`, idempotencyKey,
+    };
+    const saldoAntes = Number((await prisma.cuentaBancaria.findUnique({
+      where: { cuentaId }, select: { saldo: true },
+    }))!.saldo);
+
+    const resultados = await Promise.all([
+      AccountingOperationsMutationService.createCapitalInjection({ input, user: manager() }),
+      AccountingOperationsMutationService.createCapitalInjection({ input, user: manager() }),
+    ]);
+
+    expect(resultados[0].id).toBe(resultados[1].id);
+    expect(await prisma.inyeccionCapital.count({ where: { tenantId, idempotencyKey } })).toBe(1);
+    const saldoDespues = Number((await prisma.cuentaBancaria.findUnique({
+      where: { cuentaId }, select: { saldo: true },
+    }))!.saldo);
+    expect(saldoDespues).toBe(saldoAntes + 125);
+  });
 });
