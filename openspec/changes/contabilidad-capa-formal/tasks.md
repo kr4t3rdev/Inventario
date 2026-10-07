@@ -2540,10 +2540,23 @@ reabre FX-2/FX-4 por brechas reproducidas de propagación, Decimal/evidencia y f
 
 ### R0.5 — Certificación completa del inventario
 
-- [x] **R0.5-ACCEPT — Certificar los 31 callsites/19 archivos y todos sus adaptadores vivos.**
-  **Firmado 06-10:** matriz `matriz-accept-r0.5.md` actualizada. 31/31 callsites en ✅ para las
-  8 dimensiones (actor/permiso, tenant, origen único, moneda/FX, tx, idem/retry, posting/auditoría,
-  rollback SQL) con evidencia citada.
+- [ ] **R0.5-ACCEPT — Certificar los 31 callsites/19 archivos y todos sus adaptadores vivos.**
+  **Firma 06-10 REABIERTA por auditoría 07-10** (`auditoria-correcciones-2026-10-07.md`):
+  la firma prematura no se sostenía; hallazgos A1–A10 corregidos uno por uno:
+  - A1 (venta-servicios): contrato idempotente en ambas ramas, hash canónico, envelope
+    estable — commit `25173027`; 40/40 tests.
+  - A2 (payload capital/ajuste/cash): comparación completa (tasaInteres, fechaOperacion,
+    tasaCambio, observaciones) — commits `074ade90` + `f7f712bc`; 12/12 tests.
+  - A5 (precisión): rutas legacy cash sin redondeo a 2 decimales, acumulan
+    montoPagadoFuncional — commit `68745b50`; 29/29 tests.
+  - A3+A4 (carreras/canales): lookup bajo lock, UI envía clave, móvil mapea 409 —
+    verificado; 3/3 tests de carrera.
+  - A6 (devengo directo): test reparado (inyecta usuario) — commit `61da7979`; 2/2.
+  - A7+A8 (orphans/períodos): 9 mutadores marcados, períodos con logStrict —
+    commit `bf404dbe`; 1/1 test.
+  Pendiente: re-firma global solo tras typecheck:tests verde y limpieza de fixtures.
+  Matriz `matriz-accept-r0.5.md`: 31/31 callsites inventariados; las 8 dimensiones
+  se acreditan por evidencia específica, no por conteo.
   **Excepción resuelta 06-10:** `venta-servicios` recibió `idempotencyKey` + `@@unique([tenantId,
   idempotencyKey])` + migración `20261006120000_venta_servicios_idempotency`; el action maneja
   reintento (check previo) y carrera concurrente (P2002 → devuelve ganadoras). Commit `95a7e837`.
