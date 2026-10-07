@@ -19,7 +19,11 @@ vi.mock('@/lib/server-actions', async (importOriginal) => {
     // Simula la inyección de identidad del wrapper real; no se debe ejecutar
     // el handler raw sin actor porque la validación de período lo necesita.
     withAction: (handler: (input: unknown, user: AuthenticatedUser) => unknown) =>
-      async (input: unknown) => handler(input, await getCurrentUser()),
+      async (input: unknown) => {
+        const user = await getCurrentUser();
+        if (!user) throw new Error('getCurrentUser mock no configurado');
+        return handler(input, user);
+      },
   };
 });
 vi.mock('next/cache', () => ({ revalidatePath: vi.fn() }));

@@ -159,7 +159,7 @@ describe('ajuste bancario idempotente — PostgreSQL aislado', { timeout: 90_000
       thrown = e;
     }
     expect(thrown).toBeTruthy();
-    const thrownAny = thrown;
+    const thrownAny = thrown as { code?: string; message?: string };
     expect(`${thrownAny?.code ?? ''} ${thrownAny?.message ?? ''}`).toContain('IDEMPOTENCY_CONFLICT');
 
     const count = await prisma.ajusteBancario.count({

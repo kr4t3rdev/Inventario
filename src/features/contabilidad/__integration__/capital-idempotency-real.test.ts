@@ -151,7 +151,7 @@ describe('inyección de capital idempotente — PostgreSQL aislado', { timeout: 
       thrown = e;
     }
     expect(thrown).toBeTruthy();
-    const thrownAny = thrown;
+    const thrownAny = thrown as { code?: string; message?: string };
     expect(`${thrownAny?.code ?? ''} ${thrownAny?.message ?? ''}`).toContain('IDEMPOTENCY_CONFLICT');
 
     const count = await prisma.inyeccionCapital.count({ where: { tenantId, idempotencyKey } });

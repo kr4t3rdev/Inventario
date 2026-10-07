@@ -98,7 +98,7 @@ describe('API contabilidad/prestamos-cash/[id]/pagar', () => {
   it('deniega si el plan no habilita préstamos cash antes de consultar el préstamo', async () => {
     authUser.value = {
       ...authUser.value,
-      planFeatures: {},
+      planFeatures: { 'prestamos-cash': false },
     }
     const prisma = (await import('@/lib/prisma')).default as any
     const { POST } = await import('../route')
