@@ -167,12 +167,15 @@ export const POST = withAuthPost(async (request: NextRequest, context: unknown, 
         },
       })
 
+      // A5: sin redondeo a 2 decimales; se preservan los 4 decimales
+      // significativos acordados en R0.1.
       const nuevoMontoPagado = new Prisma.Decimal(deuda.cuentaPorPagar.montoPagado)
-        .plus(importes.montoObligacion)
-        .toDecimalPlaces(2, Prisma.Decimal.ROUND_HALF_UP)
+        .plus(importes.montoObligacion);
+      const nuevoMontoPagadoFuncional = new Prisma.Decimal(deuda.cuentaPorPagar.montoPagadoFuncional ?? 0)
+        .plus(conversion.montoConvertido ?? importes.montoObligacion);
       const totalDeuda = deuda.cuentaPorPagar.montoDeuda
       const nuevoSaldoPendiente = calcularSaldoPendienteDeuda(totalDeuda, nuevoMontoPagado)
-      const nuevoEstadoCuenta = nuevoSaldoPendiente.lte('0.01') ? 'PAGADA' : 'PARCIAL'
+      const nuevoEstadoCuenta = nuevoSaldoPendiente.lte(0) ? 'PAGADA' : 'PARCIAL'
       const actualizadoCxP = await tx.cuentaPorPagar.updateMany({
         where: {
           cuentaPorPagarId: deuda.cuentaPorPagarId,
@@ -182,6 +185,7 @@ export const POST = withAuthPost(async (request: NextRequest, context: unknown, 
         },
         data: {
           montoPagado: nuevoMontoPagado,
+          montoPagadoFuncional: nuevoMontoPagadoFuncional,
           saldoPendiente: nuevoSaldoPendiente,
           estado: nuevoEstadoCuenta,
         },

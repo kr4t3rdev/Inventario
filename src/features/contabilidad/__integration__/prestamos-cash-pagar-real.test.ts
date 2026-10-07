@@ -239,6 +239,33 @@ describe('préstamos cash legacy [id]/pagar — PostgreSQL aislado', { timeout: 
       linea.fxEvidenceFingerprint === rec.fxEvidenceFingerprint)).toBe(true);
   });
 
+  it('preserva 4 decimales en montoPagadoFuncional al pagar 0.0123 CUP (A5)', async () => {
+    // Prestamo dedicado para no interferir con el estado compartido.
+    const cxcA5 = await prisma.cuentaPorCobrar.create({ data: {
+      tenantId, clienteId, montoDeuda: 1000, montoPagado: 0,
+      tipoCuenta: 'PRESTAMO_CASH', estado: 'PENDIENTE',
+    } });
+    const prestamoA5 = (await prisma.prestamoCash.create({ data: {
+      tenantId, clienteId, cuentaPorCobrarId: cxcA5.id,
+      montoCapital: 1000, moneda: 'CUP', cuentaBancariaId: cuentaIdPagar,
+      createdById: 'actor-real',
+    } })).id;
+    const response = await POST_PAGAR(new NextRequest(
+      `http://localhost/api/contabilidad/prestamos-cash/${prestamoA5}/pagar`, {
+        method: 'POST', body: JSON.stringify({ monto: 0.0123, cuentaId: cuentaIdPagar,
+          tipoPagoId: (await prisma.tipoPago.findFirstOrThrow({
+            where: { tenantId, nombre: 'Transferencia' },
+          })).tipoId }),
+      }), { params: Promise.resolve({ id: prestamoA5 }) });
+    expect(response.status).toBe(201);
+    const cxcActualizada = await prisma.cuentaPorCobrar.findUniqueOrThrow({
+      where: { id: cxcA5.id },
+    });
+    // A5: no debe truncarse a 0.01
+    expect(cxcActualizada.montoPagadoFuncional?.toString()).toBe('0.0123');
+    expect(cxcActualizada.montoPagado.toString()).toBe('0.0123');
+  });
+
   it('paga préstamo extranjero con tasa y hereda evidencia FX en el asiento', async () => {
     const saldoAntes = Number((await prisma.cuentaBancaria.findUniqueOrThrow({
       where: { cuentaId: cuentaFxId },
