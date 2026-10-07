@@ -150,13 +150,13 @@ export async function validarTransferencia(request: NextRequest) {
 
 const icSchema = z.object({ tipo: z.enum(['CAPITAL_SOCIAL', 'DEUDA_EXTERNA']), montoRecibido: z.number().positive(), moneda: z.string().default('CUP'), cuentaId: z.string().min(1), descripcion: z.string().optional(), socio: z.string().optional(), entidadPrestamista: z.string().optional() })
 
-/** @deprecated R6-ORPHANS (2026-10-06): mutador legacy con audit best-effort sin migrar a logStrict; sin callers en src/. */
 export async function getInyeccionesCapital(request: NextRequest) {
   const a = await authenticateUser(request); if ('status' in a) return a as Response; const u = a.user; requireFeature(u, 'inyeccion-capital', 'ver inyecciones de capital');
   const tipo = new URL(request.url).searchParams.get('tipo'); const w: any = {}; if (tipo) w.tipo = tipo
   return NextResponse.json({ inyecciones: await prisma.inyeccionCapital.findMany({ where: w, include: { cuentaBancaria: { select: { nombreBanco: true, numeroCuenta: true, moneda: true } }, pagos: true }, orderBy: { createdAt: 'desc' } }) })
 }
 
+/** @deprecated R6-ORPHANS (2026-10-06): mutador legacy con audit best-effort sin migrar a logStrict; sin callers en src/. */
 export async function createInyeccionCapital(request: NextRequest) {
   const a = await authenticateUser(request); if ('status' in a) return a as Response; const u = a.user; requireFeature(u, 'inyeccion-capital', 'registrar inyecciones de capital');
   const v = icSchema.parse(await request.json())
@@ -186,9 +186,9 @@ export async function pagarDeudaCapital(request: NextRequest, id: string) {
   return NextResponse.json({ pago: r }, { status: 201 })
 }
 
-/** @deprecated R6-ORPHANS (2026-10-06): mutador legacy con audit best-effort sin migrar a logStrict; sin callers en src/. */
 export async function getCierres() { return NextResponse.json(await prisma.cierreContable.findMany({ orderBy: { createdAt: 'desc' } })) }
 
+/** @deprecated R6-ORPHANS (2026-10-06): mutador legacy con audit best-effort sin migrar a logStrict; sin callers en src/. */
 export async function createCierre(request: NextRequest) {
   const a = await authenticateUser(request); if ('status' in a) return a as Response; const u = a.user; const b = await request.json()
   if (!b.tipo || !b.fechaInicio || !b.fechaFin) return NextResponse.json({ error: 'Campos requeridos' }, { status: 400 })
@@ -197,7 +197,6 @@ export async function createCierre(request: NextRequest) {
   return NextResponse.json(c, { status: 201 })
 }
 
-/** @deprecated R6-ORPHANS (2026-10-06): mutador legacy con audit best-effort sin migrar a logStrict; sin callers en src/. */
 export async function getCierreById(id: string) {
   const c = await prisma.cierreContable.findUnique({ where: { cierreId: id } })
   if (!c) return NextResponse.json({ error: 'No encontrado' }, { status: 404 }); return NextResponse.json(c)
@@ -213,6 +212,7 @@ export async function updateCierre(request: NextRequest, id: string) {
   return NextResponse.json(c)
 }
 
+/** @deprecated R6-ORPHANS (2026-10-06): mutador legacy con audit best-effort sin migrar a logStrict; sin callers en src/. */
 export async function deleteCierre(request: NextRequest, id: string) {
   const a = await authenticateUser(request); if ('status' in a) return a as Response; const u = a.user
   const ex = await prisma.cierreContable.findUnique({ where: { cierreId: id } })

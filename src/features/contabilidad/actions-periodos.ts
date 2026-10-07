@@ -60,6 +60,21 @@ import {
 function requirePeriodManagementAccess(user: AuthenticatedUser, action: string): void {
   requireFeature(user, 'contabilidad', action);
 }
+
+/**
+ * @description Impide confirmar transiciones sin asiento formal cuando enforce está activo.
+ * @param {string} estado - Estado devuelto por el generador formal.
+ * @param {string} operacion - Nombre de la transición contable.
+ * @returns {void} No retorna cuando la transición incumple el contrato formal.
+ */
+function requireFormalAsientoEnforce(estado: string, operacion: string): void {
+	if (process.env.CONTABILIDAD_FORMAL_MODE === 'enforce' && estado === 'OMITIDO') {
+		throw new ActionError(
+			`No se puede completar ${operacion}: la formalización contable fue omitida`,
+			'FORMAL_ACCOUNTING_REQUIRED',
+		);
+	}
+}
  
 
 
@@ -375,6 +390,7 @@ export const abrirPeriodoAction = withAction(
 
 		// Transacción: período + apertura se crean juntos o nada
 		const { periodo } = await prisma.$transaction(async (tx) => {
+			await acquireAccountingTenantLock(tx, tenantId);
 			const p = await PeriodoContableService.abrirPeriodo(
 				{
 					tenantId,
@@ -397,23 +413,28 @@ export const abrirPeriodoAction = withAction(
 			);
 
 			// Capa de contabilidad formal (CTA-3): asiento de apertura con saldos.
-			await generarAsientoApertura(tx as never, {
+			const asientoApertura = await generarAsientoApertura(tx as never, {
 				periodoId: p.periodoId,
 				tenantId,
 				actorId: user.userId,
 				fecha: fechaInicio,
 			});
+			requireFormalAsientoEnforce(asientoApertura.estado, 'la apertura del período');
+			await AuditLogService.logStrict({
+				accion: 'CREATE',
+				entidad: 'CIERRE_CONTABLE',
+				entidadId: p.periodoId,
+				usuarioId: user.userId,
+				detalles: {
+					tipo: parsed.tipo,
+					fechaInicio: parsed.fechaInicio,
+					fechaFin: parsed.fechaFin,
+					accion: 'ABRIR',
+				},
+			}, tx);
 
 			return { periodo: p };
-		});
-
-		AuditLogService.log({
-			accion: "CREATE",
-			entidad: "CIERRE_CONTABLE",
-			entidadId: periodo.periodoId,
-			usuarioId: user.userId,
-			detalles: { tipo: parsed.tipo, fechaInicio: parsed.fechaInicio, fechaFin: parsed.fechaFin, accion: "ABRIR" },
-		}).catch((err) => console.error("[AuditLog] Error logging abrir periodo:", err));
+		}, { isolationLevel: 'Serializable' });
 
 		await invalidateCache(tenantId);
 		revalidatePath("/busy/contabilidad/periodos");
@@ -640,27 +661,31 @@ export const cerrarPeriodoAction = withAction(
 					tx,
 				);
 
-				// Capa de contabilidad formal (CTA-3): si el cierre ya aprobó el
-				// período (cierre auto-aprobado del manager/admin), emitir el asiento
-				// de cierre dentro de la misma transacción.
-				if (resultadoCierre.estado === 'APROBADO') {
-					await generarAsientoCierre(tx as never, {
+				// El auto-cierre ya emitía asiento; enforce exige lo mismo para la
+				// transición ordinaria a CERRADO. Si no hay asiento formal, la tx
+				// revierte el estado y deja el período abierto.
+				if (
+					resultadoCierre.estado === 'APROBADO' ||
+					(process.env.CONTABILIDAD_FORMAL_MODE === 'enforce' &&
+						resultadoCierre.estado === EstadoPeriodo.CERRADO)
+				) {
+					const asientoCierre = await generarAsientoCierre(tx as never, {
 						periodoId: parsed.periodoId,
 						tenantId,
 						actorId: user.userId,
 					});
-				}
+						requireFormalAsientoEnforce(asientoCierre.estado, 'el cierre del período');
+					}
+				await AuditLogService.logStrict({
+					accion: 'UPDATE',
+					entidad: 'CIERRE_CONTABLE',
+					entidadId: parsed.periodoId,
+					usuarioId: user.userId,
+					detalles: { accion: 'CERRAR', snapshotsCount },
+				}, tx);
 
 				return { cerrado: resultadoCierre };
 			}, { isolationLevel: "Serializable" });
-
-		AuditLogService.log({
-			accion: "UPDATE",
-			entidad: "CIERRE_CONTABLE",
-			entidadId: parsed.periodoId,
-			usuarioId: user.userId,
-			detalles: { accion: "CERRAR", snapshotsCount },
-		}).catch((err) => console.error("[AuditLog] Error logging cerrar periodo:", err));
 
 		// Invalidar caché del guard
 		await invalidateCache(tenantId);
@@ -704,19 +729,23 @@ export const reabrirPeriodoAction = withAction(
 			throw new ActionError("Período no encontrado", "NOT_FOUND");
 		}
 
-		const reabierto = await PeriodoContableService.reabrirPeriodo(
-			parsed.periodoId,
-			user.userId,
-			parsed.motivo,
-		);
-
-		AuditLogService.log({
-			accion: "UPDATE",
-			entidad: "CIERRE_CONTABLE",
-			entidadId: parsed.periodoId,
-			usuarioId: user.userId,
-			detalles: { accion: "REABRIR", motivo: parsed.motivo },
-		}).catch((err) => console.error("[AuditLog] Error logging reopen periodo:", err));
+		const reabierto = await prisma.$transaction(async (tx) => {
+			await acquireAccountingTenantLock(tx, tenantId);
+			const actualizado = await PeriodoContableService.reabrirPeriodo(
+				parsed.periodoId,
+				user.userId,
+				parsed.motivo,
+				tx,
+			);
+			await AuditLogService.logStrict({
+				accion: 'UPDATE',
+				entidad: 'CIERRE_CONTABLE',
+				entidadId: parsed.periodoId,
+				usuarioId: user.userId,
+				detalles: { accion: 'REABRIR', motivo: parsed.motivo },
+			}, tx);
+			return actualizado;
+		}, { isolationLevel: 'Serializable' });
 
 		// Invalidar caché del guard
 		await invalidateCache(tenantId);
@@ -759,28 +788,36 @@ export const aprobarPeriodoAction = withAction(
 		// Aprobar y emitir asiento de cierre dentro de la misma transacción:
 		// si el período queda en CERRADO o APROBADO, la formalización es atómica.
 		const aprobado = await prisma.$transaction(async (tx) => {
-			const resultado = await PeriodoContableService.aprobarPeriodo(
-				parsed.periodoId,
-				user.userId,
-				tx,
-			);
+			await acquireAccountingTenantLock(tx, tenantId);
+			const estadoActual = await tx.periodoContable.findUnique({
+				where: { periodoId: parsed.periodoId },
+				select: { estado: true },
+			});
+			if (!estadoActual) throw new ActionError('Período no encontrado', 'NOT_FOUND');
+			const resultado = estadoActual.estado === EstadoPeriodo.APROBADO
+				? await tx.periodoContable.findUniqueOrThrow({ where: { periodoId: parsed.periodoId } })
+				: await PeriodoContableService.aprobarPeriodo(
+					parsed.periodoId,
+					user.userId,
+					tx,
+				);
 
-			await generarAsientoCierre(tx as never, {
+			const asientoCierre = await generarAsientoCierre(tx as never, {
 				periodoId: parsed.periodoId,
 				tenantId,
 				actorId: user.userId,
 			});
+			requireFormalAsientoEnforce(asientoCierre.estado, 'la aprobación del período');
+			await AuditLogService.logStrict({
+				accion: 'UPDATE',
+				entidad: 'CIERRE_CONTABLE',
+				entidadId: parsed.periodoId,
+				usuarioId: user.userId,
+				detalles: { accion: 'APROBAR' },
+			}, tx);
 
 			return resultado;
-		});
-
-		AuditLogService.log({
-			accion: "UPDATE",
-			entidad: "CIERRE_CONTABLE",
-			entidadId: parsed.periodoId,
-			usuarioId: user.userId,
-			detalles: { accion: "APROBAR" },
-		}).catch((err) => console.error("[AuditLog] Error logging approve periodo:", err));
+		}, { isolationLevel: 'Serializable' });
 
 		revalidatePath("/busy/contabilidad/periodos");
 
