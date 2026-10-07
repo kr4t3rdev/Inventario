@@ -113,7 +113,7 @@ export const POST = withAuthPost(async (request: NextRequest, context: unknown, 
       const cxcVigente = await tx.cuentaPorCobrar.findFirst({
         where: { id: prestamo.cuentaPorCobrarId, tenantId },
         select: {
-          id: true, montoDeuda: true, montoPagado: true, estado: true, monedaOriginal: true,
+          id: true, montoDeuda: true, montoPagado: true, montoPagadoFuncional: true, estado: true, monedaOriginal: true,
         },
       });
       if (!cxcVigente || cxcVigente.estado === 'ANULADA') {
