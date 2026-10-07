@@ -19,6 +19,68 @@ import {
   buildEventoTransferenciaBancaria,
 } from '@/features/contabilidad-formal/lib/event-builders';
 
+/**
+ * @description Serializa payloads de idempotencia con claves ordenadas y decimales exactos.
+ * @param {unknown} value - Valor que se incluirá en la comparación idempotente.
+ * @returns {string} Representación estable para comparar sin conversiones a Number.
+ */
+function canonicalIdempotencyValue(value: unknown): string {
+  if (value == null) return 'null';
+  if (value instanceof Date) return JSON.stringify(value.toISOString());
+  if (value instanceof Prisma.Decimal) return JSON.stringify(value.toFixed());
+  if (typeof value === 'number') return JSON.stringify(new Prisma.Decimal(value).toFixed());
+  if (typeof value === 'string' || typeof value === 'boolean') return JSON.stringify(value);
+  if (Array.isArray(value)) return `[${value.map(canonicalIdempotencyValue).join(',')}]`;
+  if (typeof value === 'object') {
+    const record = value as Record<string, unknown>;
+    return `{${Object.keys(record)
+      .filter((key) => record[key] !== undefined)
+      .sort()
+      .map((key) => `${JSON.stringify(key)}:${canonicalIdempotencyValue(record[key])}`)
+      .join(',')}}`;
+  }
+  return JSON.stringify(value) ?? 'null';
+}
+
+/**
+ * @description Compara decimales persistidos y de entrada sin perder precisión.
+ * @param {unknown} left - Valor persistido.
+ * @param {unknown} right - Valor recibido.
+ * @param {string | null} defaultValue - Valor equivalente cuando ambos representan una omisión.
+ * @returns {boolean} Si ambos importes/tasas son contablemente iguales.
+ */
+function sameIdempotencyDecimal(
+  left: unknown,
+  right: unknown,
+  defaultValue: string | null = null,
+): boolean {
+  const leftValue = left == null ? defaultValue : left;
+  const rightValue = right == null ? defaultValue : right;
+  if (leftValue == null || rightValue == null) return leftValue == null && rightValue == null;
+  try {
+    return new Prisma.Decimal(leftValue as Prisma.Decimal.Value).eq(
+      new Prisma.Decimal(rightValue as Prisma.Decimal.Value),
+    );
+  } catch {
+    return canonicalIdempotencyValue(leftValue) === canonicalIdempotencyValue(rightValue);
+  }
+}
+
+/**
+ * @description Compara fechas solo cuando el cliente las declaró explícitamente.
+ * @param {Date | null | undefined} persisted - Fecha guardada.
+ * @param {Date | undefined} supplied - Fecha enviada por el cliente.
+ * @returns {boolean} Si no hay fecha declarada o ambas fechas coinciden exactamente.
+ */
+function sameSuppliedDate(
+  persisted: Date | null | undefined,
+  supplied: Date | undefined,
+): boolean {
+  return supplied === undefined
+    ? true
+    : persisted != null && persisted.getTime() === supplied.getTime();
+}
+
 const validateBankTransferSchema = z.object({
   cuentaOrigenId: z.string().min(1, 'Cuenta origen es requerida'),
   cuentaDestinoId: z.string().min(1, 'Cuenta destino es requerida'),
@@ -436,58 +498,74 @@ export const AccountingOperationsMutationService = {
     requireFeature(user, 'contabilidad', 'crear ajustes bancarios');
     requirePermission(user, 'financiero.contabilidad.acceder', 'crear ajustes bancarios');
 
-    const cuenta = await prisma.cuentaBancaria.findFirst({
-      where: { cuentaId: parsed.cuentaId, tenantId, isActive: true },
-    });
-    if (!cuenta) {
-      throw new ActionError('Cuenta bancaria no encontrada', 'CUENTA_NO_ENCONTRADA');
-    }
-    if (!cuenta.isActive) {
-      throw new ActionError('La cuenta bancaria está inactiva', 'CUENTA_INACTIVA');
-    }
-    if (cuenta.moneda.toUpperCase() !== parsed.moneda.toUpperCase()) {
-      throw new ActionError('La moneda del ajuste debe coincidir con la cuenta bancaria', 'VALIDATION_ERROR');
-    }
-
     const montoAjuste = parsed.tipo === 'ingreso'
       ? new Prisma.Decimal(parsed.monto)
       : new Prisma.Decimal(parsed.monto).neg();
-    const nuevoSaldo = new Prisma.Decimal(cuenta.saldo).add(montoAjuste);
-    const saldoNegativo = nuevoSaldo.lt(0);
     const fechaOperacion = parsed.fechaOperacion ?? new Date();
 
     // Idempotencia: si el cliente provee clave, un reintento con el mismo payload
     // devuelve el ajuste existente en lugar de duplicar ajuste, movimiento de saldo
     // y asiento. Si el payload difiere, se rechaza con 409 (conflicto de clave).
     const idempotencyKey = parsed.idempotencyKey?.trim() || null;
-    if (idempotencyKey) {
-      const existente = await prisma.ajusteBancario.findUnique({
-        where: { tenantId_idempotencyKey: { tenantId, idempotencyKey } },
-      });
-      if (existente) {
-        const mismoPayload =
-          existente.tipo === parsed.tipo &&
-          Number(existente.monto) === parsed.monto &&
-          existente.moneda.toUpperCase() === parsed.moneda.toUpperCase() &&
-          existente.cuentaId === parsed.cuentaId;
-        if (!mismoPayload) {
-          throw new ActionError(
-            'La clave de idempotencia ya fue usada con datos diferentes',
-            'IDEMPOTENCY_CONFLICT',
-          );
-        }
-        return {
-          ajuste: existente,
-          saldoAnterior: Number(cuenta.saldo),
-          saldoNuevo: Number(cuenta.saldo),
-          advertenciaSaldoNegativo: false,
-          message: 'Ajuste bancario ya registrado (reintento idempotente)',
-        };
-      }
-    }
 
     const resultado = await prisma.$transaction(async (tx: any) => {
       await acquireAccountingTenantLock(tx, tenantId);
+
+      // La comprobación debe ocurrir después de adquirir el lock y dentro de
+      // la transacción. Así, el perdedor de una carrera observa el registro
+      // confirmado y nunca intenta duplicar el asiento/saldo.
+      if (idempotencyKey) {
+        const existente = await tx.ajusteBancario.findUnique({
+          where: { tenantId_idempotencyKey: { tenantId, idempotencyKey } },
+        });
+        if (existente) {
+          const mismoPayload =
+            existente.tipo === parsed.tipo &&
+            sameIdempotencyDecimal(existente.monto, parsed.monto) &&
+            existente.moneda.toUpperCase() === parsed.moneda.toUpperCase() &&
+            existente.cuentaId === parsed.cuentaId &&
+            sameIdempotencyDecimal(existente.tasaCambio, parsed.tasaCambio, '1') &&
+            existente.descripcion === parsed.descripcion &&
+            existente.motivo === parsed.motivo &&
+            sameSuppliedDate(existente.fechaOperacion, parsed.fechaOperacion);
+          if (!mismoPayload) {
+            throw new ActionError(
+              'La clave de idempotencia ya fue usada con datos diferentes',
+              'IDEMPOTENCY_CONFLICT',
+            );
+          }
+
+          const cuentaExistente = await tx.cuentaBancaria.findFirst({
+            where: { cuentaId: existente.cuentaId, tenantId },
+            select: { saldo: true },
+          });
+          const saldoNuevo = new Prisma.Decimal(cuentaExistente?.saldo ?? 0);
+          const saldoAnterior = saldoNuevo.sub(montoAjuste);
+          return {
+            ajuste: existente,
+            saldoAnterior: saldoAnterior.toNumber(),
+            saldoNuevo: saldoNuevo.toNumber(),
+            advertenciaSaldoNegativo: saldoNuevo.lt(0),
+            message: 'Ajuste bancario ya registrado (reintento idempotente)',
+          };
+        }
+      }
+
+      const cuenta = await tx.cuentaBancaria.findFirst({
+        where: { cuentaId: parsed.cuentaId, tenantId, isActive: true },
+      });
+      if (!cuenta) {
+        throw new ActionError('Cuenta bancaria no encontrada', 'CUENTA_NO_ENCONTRADA');
+      }
+      if (!cuenta.isActive) {
+        throw new ActionError('La cuenta bancaria está inactiva', 'CUENTA_INACTIVA');
+      }
+      if (cuenta.moneda.toUpperCase() !== parsed.moneda.toUpperCase()) {
+        throw new ActionError('La moneda del ajuste debe coincidir con la cuenta bancaria', 'VALIDATION_ERROR');
+      }
+
+      const nuevoSaldo = new Prisma.Decimal(cuenta.saldo).add(montoAjuste);
+      const saldoNegativo = nuevoSaldo.lt(0);
       const policy = await getRequiredTenantAccountingPolicy(tenantId, tx);
       const monedaFuncional = policy.functionalCurrencyCode.trim().toUpperCase();
       const conversion = buildPersistedAccountingAmount(
@@ -563,18 +641,18 @@ export const AccountingOperationsMutationService = {
         },
       }, tx);
 
-      return ajuste;
+      return {
+        ajuste,
+        saldoAnterior: Number(cuenta.saldo),
+        saldoNuevo: nuevoSaldo.toNumber(),
+        advertenciaSaldoNegativo: saldoNegativo,
+        message: saldoNegativo
+          ? 'Ajuste creado exitosamente. ADVERTENCIA: El saldo de la cuenta es negativo.'
+          : 'Ajuste bancario creado exitosamente',
+      };
     });
 
-    return {
-      ajuste: resultado,
-      saldoAnterior: Number(cuenta.saldo),
-      saldoNuevo: nuevoSaldo.toNumber(),
-      advertenciaSaldoNegativo: saldoNegativo,
-      message: saldoNegativo
-        ? 'Ajuste creado exitosamente. ADVERTENCIA: El saldo de la cuenta es negativo.'
-        : 'Ajuste bancario creado exitosamente',
-    };
+    return resultado;
   },
 
   async createCapitalInjection({
@@ -589,31 +667,45 @@ export const AccountingOperationsMutationService = {
     requireFeature(user, 'inyeccion-capital', 'registrar inyecciones de capital');
     requirePermission(user, 'financiero.contabilidad.acceder', 'registrar inyecciones de capital');
 
-    // Idempotencia: misma clave + mismo payload → devuelve el existente;
-    // misma clave + payload distinto → 409 IDEMPOTENCY_CONFLICT.
     const idempotencyKey = parsed.idempotencyKey?.trim() || null;
-    if (idempotencyKey) {
-      const existente = await prisma.inyeccionCapital.findUnique({
-        where: { tenantId_idempotencyKey: { tenantId, idempotencyKey } },
-      });
-      if (existente) {
-        const mismoPayload =
-          Number(existente.montoRecibido) === parsed.montoRecibido &&
-          existente.moneda.toUpperCase() === parsed.moneda.toUpperCase() &&
-          existente.tipo === parsed.tipo &&
-          existente.cuentaId === parsed.cuentaId;
-        if (!mismoPayload) {
-          throw new ActionError(
-            'La clave de idempotencia ya fue usada con datos diferentes',
-            'IDEMPOTENCY_CONFLICT',
-          );
-        }
-        return existente;
-      }
-    }
 
     const inyeccion = await prisma.$transaction(async (tx: any) => {
       await acquireAccountingTenantLock(tx, tenantId);
+
+      // Lookup idempotente bajo el mismo lock que protege el saldo y el asiento.
+      // Esto evita que el perdedor de dos requests simultáneos vea un snapshot
+      // vacío y termine en P2002 después de haber ejecutado efectos parciales.
+      if (idempotencyKey) {
+        const existente = await tx.inyeccionCapital.findUnique({
+          where: { tenantId_idempotencyKey: { tenantId, idempotencyKey } },
+        });
+        if (existente) {
+          const isDebt = parsed.tipo === 'DEUDA_EXTERNA';
+          const mismoPayload =
+            sameIdempotencyDecimal(existente.montoRecibido, parsed.montoRecibido) &&
+            existente.moneda.toUpperCase() === parsed.moneda.toUpperCase() &&
+            existente.tipo === parsed.tipo &&
+            existente.cuentaId === parsed.cuentaId &&
+            existente.descripcion === (parsed.descripcion ?? null) &&
+            existente.socio === (parsed.socio ?? null) &&
+            existente.entidadPrestamista === (parsed.entidadPrestamista ?? null) &&
+            sameIdempotencyDecimal(
+              existente.tasaInteres,
+              isDebt ? parsed.tasaInteres ?? 0 : null,
+            ) &&
+            sameIdempotencyDecimal(existente.tasaCambio, parsed.tasaCambio, '1') &&
+            existente.plazoMeses === (parsed.plazoMeses ?? null) &&
+            sameSuppliedDate(existente.fechaInicioPago, parsed.fechaInicioPago) &&
+            sameSuppliedDate(existente.fechaRegistro, parsed.fechaOperacion);
+          if (!mismoPayload) {
+            throw new ActionError(
+              'La clave de idempotencia ya fue usada con datos diferentes',
+              'IDEMPOTENCY_CONFLICT',
+            );
+          }
+          return existente;
+        }
+      }
 
       const cuenta = await tx.cuentaBancaria.findFirst({
         where: { cuentaId: parsed.cuentaId, tenantId },
