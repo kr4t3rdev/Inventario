@@ -1,6 +1,8 @@
-import { afterAll, beforeAll, describe, expect, it, vi } from 'vitest';
+import { afterAll, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { assertDisposableDatabase } from '../../../../scripts/ci/disposable-database.mjs';
+import { getCurrentUser } from '@/lib/server-actions/get-current-user';
+import type { AuthenticatedUser } from '@/lib/auth-middleware';
 
 assertDisposableDatabase(process.env);
 
@@ -8,12 +10,20 @@ let prisma!: typeof import('@/lib/prisma').prisma;
 let PeriodoGuard!: typeof import('@/lib/services/periodo-contable-guard').PeriodoGuard;
 let createVentaServicioAction!: typeof import('@/features/venta-servicios/actions').createVentaServicioAction;
 let seedPlanContable!: typeof import('@/features/contabilidad-formal/services/seed-plan-contable').seedPlanContable;
+let seedPlantillasGlobales!: typeof import('@/features/contabilidad-formal/services/seed-plan-contable').seedPlantillasGlobales;
 
 vi.mock('@/lib/server-actions', async (importOriginal) => {
   const original = await importOriginal<typeof import('@/lib/server-actions')>();
-  return { ...original, withAction: (handler: (...args: any[]) => unknown) => handler };
+  return {
+    ...original,
+    // Simula la inyección de identidad del wrapper real; no se debe ejecutar
+    // el handler raw sin actor porque la validación de período lo necesita.
+    withAction: (handler: (input: unknown, user: AuthenticatedUser) => unknown) =>
+      async (input: unknown) => handler(input, await getCurrentUser()),
+  };
 });
 vi.mock('next/cache', () => ({ revalidatePath: vi.fn() }));
+vi.mock('@/lib/server-actions/get-current-user');
 
 const prefix = `cta-serv-devengo-${crypto.randomUUID()}`;
 const userId = 'actor-service-devengo';
@@ -21,13 +31,16 @@ let tenantId = '';
 let serviceId = '';
 let customerId = '';
 
-const admin = () => ({
+const admin = (): AuthenticatedUser => ({
   userId,
+  name: 'Actor Integracion',
+  email: 'actor-integracion@test.local',
   role: 'admin',
+  isActive: true,
   tenantId,
   tenantRole: 'manager',
   planFeatures: { servicios: true, 'contabilidad-formal': true },
-}) as never;
+});
 
 /** @description Devengo directo de venta de servicio a crédito (sin anticipos) con posteo contable. */
 describe('venta servicio a crédito — devengo directo', { timeout: 90_000 }, () => {
@@ -42,6 +55,7 @@ describe('venta servicio a crédito — devengo directo', { timeout: 90_000 }, (
     PeriodoGuard = periodoModule.PeriodoGuard;
     createVentaServicioAction = actionsModule.createVentaServicioAction;
     seedPlanContable = seedModule.seedPlanContable;
+    seedPlantillasGlobales = seedModule.seedPlantillasGlobales;
 
     const target = new URL(process.env.DATABASE_URL ?? '');
     const identity = await prisma.$queryRaw<Array<{ db: string; port: number }>>`
@@ -78,6 +92,7 @@ describe('venta servicio a crédito — devengo directo', { timeout: 90_000 }, (
       tenantId, functionalCurrencyCode: 'CUP', updatedBy: userId,
     } });
     await prisma.$transaction((tx) => seedPlanContable(tx, tenantId));
+    await prisma.$transaction((tx) => seedPlantillasGlobales(tx));
     const now = new Date();
     await prisma.periodoContable.create({ data: {
       tenantId,
@@ -91,6 +106,10 @@ describe('venta servicio a crédito — devengo directo', { timeout: 90_000 }, (
       actorTipo: 'USUARIO',
       origen: { tipo: 'venta_servicio', id: prefix },
     });
+  });
+
+  beforeEach(() => {
+    vi.mocked(getCurrentUser).mockResolvedValue(admin());
   });
 
   afterAll(async () => {
@@ -109,7 +128,7 @@ describe('venta servicio a crédito — devengo directo', { timeout: 90_000 }, (
       cantidad: 2,
       condicionPago: 'CREDITO',
       clienteId: customerId,
-    }, admin());
+    });
 
     // La action en modo legacy retorna { ventaServicio, allocationsResult }
     const venta = (result as any).ventaServicio;
@@ -154,18 +173,24 @@ describe('venta servicio a crédito — devengo directo', { timeout: 90_000 }, (
       FOR EACH ROW EXECUTE FUNCTION "${fn}"();
     `);
     try {
+      const before = await Promise.all([
+        prisma.ventaServicios.count({ where: { tenantId, servicioId: serviceId } }),
+        prisma.cuentaPorCobrar.count({ where: { tenantId, tipoCuenta: 'VENTA_SERVICIO' } }),
+        prisma.asiento.count({ where: { tenantId } }),
+      ]);
       await expect(createVentaServicioAction({
         servicioId: serviceId,
         cantidad: 1,
         condicionPago: 'CREDITO',
         clienteId: customerId,
-      }, admin())).rejects.toThrow();
+      })).rejects.toThrow('asiento bloqueado');
 
-      // Nada debe persistir: ni venta, ni CxC, ni asiento
-      const ventas = await prisma.ventaServicios.count({
-        where: { tenantId, clienteId: customerId, total: 1250 },
-      });
-      expect(ventas).toBe(0);
+      const after = await Promise.all([
+        prisma.ventaServicios.count({ where: { tenantId, servicioId: serviceId } }),
+        prisma.cuentaPorCobrar.count({ where: { tenantId, tipoCuenta: 'VENTA_SERVICIO' } }),
+        prisma.asiento.count({ where: { tenantId } }),
+      ]);
+      expect(after).toEqual(before);
     } finally {
       await prisma.$executeRawUnsafe(`DROP TRIGGER IF EXISTS "${trigger}" ON "asientos"`).catch(() => undefined);
       await prisma.$executeRawUnsafe(`DROP FUNCTION IF EXISTS "${fn}"() CASCADE`).catch(() => undefined);
