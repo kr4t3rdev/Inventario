@@ -15,8 +15,17 @@ import { hasPermission } from "@/lib/services/tenant-scope";
 import type { AuthenticatedUser } from "@/lib/auth-middleware";
 import { prismaPlatform as prisma } from "@/lib/db/platform-prisma";
 import { addDays } from "@/lib/date-utils";
-import { resolveLicenseDurationDays } from "@/lib/services/license-duration";
-import { resolveLicensePricing } from "@/lib/services/plan-pricing";
+function resolveLicenseDurationDays(planDurationDays, overrideDays) {
+  const resolved = overrideDays ?? planDurationDays;
+  if (resolved === undefined) return undefined;
+  if (!Number.isInteger(resolved) || resolved <= 0) {
+    throw new ActionError("La duracion de la licencia debe ser mayor que cero", "VALIDATION_ERROR");
+  }
+  return resolved;
+}
+function resolveLicensePricing(price, _isDemo) {
+  return { precio: price };
+}
 import { AuditLogService } from "@/lib/services/audit-log-service";
 import { normalizeUserRole } from "@/lib/auth/roles";
 import { signOnboardingToken } from "@/lib/auth/onboarding";
