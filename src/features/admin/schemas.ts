@@ -257,3 +257,16 @@ export type AdminAssignTenantInput = z.infer<typeof adminAssignTenantSchema>;
 export type AdminChangeTenantRoleInput = z.infer<
   typeof adminChangeTenantRoleSchema
 >;
+
+export const adminLicenciaIdSchema = z.object({
+  tenantLicenseId: z.string().min(1),
+});
+
+export const adminRenewLicenciaSchema = z.object({
+  tenantLicenseId: z.string().min(1),
+  planId: z.string().min(1).optional(),
+  durationDays: z.number().int().min(1).max(3650).optional(),
+});
+
+export type AdminLicenciaIdInput = z.infer<typeof adminLicenciaIdSchema>;
+export type AdminRenewLicenciaInput = z.infer<typeof adminRenewLicenciaSchema>;

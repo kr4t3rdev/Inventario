@@ -6329,6 +6329,374 @@
         }
       }
     },
+    "/admin/licenses/renew": {
+      "post": {
+        "tags": [
+          "Admin"
+        ],
+        "summary": "Renovar una licencia",
+        "description": "Renueva una licencia extendiendo su expiración según la duración del plan indicado (o el actual), sincronizando límites y reactivando a los usuarios de la empresa. No registra pagos; el registro de pagos se hace desde la web.",
+        "operationId": "mobileRenewAdminLicense",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RenewAdminLicenseRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Operación completada",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PostAdminLicensesRenewResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Solicitud inválida",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "No autenticado",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "No autorizado",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "No encontrado",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Error interno",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/admin/licenses/activate": {
+      "post": {
+        "tags": [
+          "Admin"
+        ],
+        "summary": "Activar una licencia",
+        "description": "Activa una licencia desactivada de una empresa, restituyendo el acceso a sus usuarios dentro del período de vigencia.",
+        "operationId": "mobileActivateAdminLicense",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AdminLicenciaIdRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Operación completada",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PostAdminLicensesActivateResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Solicitud inválida",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "No autenticado",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "No autorizado",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "No encontrado",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflicto",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Error interno",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/admin/licenses/deactivate": {
+      "post": {
+        "tags": [
+          "Admin"
+        ],
+        "summary": "Desactivar una licencia",
+        "description": "Desactiva una licencia activa de una empresa, suspendiendo el acceso de sus usuarios hasta que se reactive o renueve.",
+        "operationId": "mobileDeactivateAdminLicense",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AdminLicenciaIdRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Operación completada",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PostAdminLicensesDeactivateResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Solicitud inválida",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "No autenticado",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "No autorizado",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "No encontrado",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflicto",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Error interno",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/admin/licenses/delete": {
+      "post": {
+        "tags": [
+          "Admin"
+        ],
+        "summary": "Eliminar una licencia",
+        "description": "Elimina permanentemente una licencia de una empresa. Es una operación irreversible: la empresa queda sin licencia hasta que se le asigne una nueva.",
+        "operationId": "mobileDeleteAdminLicense",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AdminLicenciaIdRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Operación completada",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PostAdminLicensesDeleteResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Solicitud inválida",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "No autenticado",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "No autorizado",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "No encontrado",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Error interno",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/admin/memberships/approve": {
       "post": {
         "tags": [
@@ -15899,6 +16267,164 @@
             "minimum": 0
           },
           "message": {
+            "type": "string"
+          }
+        }
+      },
+      "AdminLicenciaIdRequest": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "tenantLicenseId"
+        ],
+        "properties": {
+          "tenantLicenseId": {
+            "type": "string",
+            "minLength": 1
+          }
+        }
+      },
+      "RenewAdminLicenseRequest": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "tenantLicenseId"
+        ],
+        "properties": {
+          "tenantLicenseId": {
+            "type": "string",
+            "minLength": 1
+          },
+          "planId": {
+            "type": "string",
+            "minLength": 1
+          },
+          "durationDays": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 3650
+          }
+        }
+      },
+      "AdminLicenseSummary": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "tenantLicenseId",
+          "tenantId",
+          "activa"
+        ],
+        "properties": {
+          "tenantLicenseId": {
+            "type": "string"
+          },
+          "tenantId": {
+            "type": "string"
+          },
+          "planId": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "activa": {
+            "type": "boolean"
+          },
+          "inicio": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "expiracion": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "isDemo": {
+            "type": "boolean"
+          },
+          "isAdminTest": {
+            "type": "boolean"
+          }
+        }
+      },
+      "PostAdminLicensesRenewResponse": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "tenantLicenseId",
+          "newExpiracion",
+          "newPlanId",
+          "message"
+        ],
+        "properties": {
+          "tenantLicenseId": {
+            "type": "string"
+          },
+          "newExpiracion": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "newPlanId": {
+            "type": "string"
+          },
+          "previousExpiracion": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "previousPlanId": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "message": {
+            "type": "string"
+          }
+        }
+      },
+      "PostAdminLicensesActivateResponse": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "license",
+          "message"
+        ],
+        "properties": {
+          "license": {
+            "$ref": "#/components/schemas/AdminLicenseSummary"
+          },
+          "message": {
+            "type": "string"
+          }
+        }
+      },
+      "PostAdminLicensesDeactivateResponse": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "license",
+          "message"
+        ],
+        "properties": {
+          "license": {
+            "$ref": "#/components/schemas/AdminLicenseSummary"
+          },
+          "message": {
+            "type": "string"
+          }
+        }
+      },
+      "PostAdminLicensesDeleteResponse": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "success",
+          "tenantLicenseId"
+        ],
+        "properties": {
+          "success": {
+            "type": "boolean"
+          },
+          "tenantLicenseId": {
             "type": "string"
           }
         }

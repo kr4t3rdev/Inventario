@@ -14,6 +14,10 @@ import { ActionError } from "@/lib/server-actions";
 import { hasPermission } from "@/lib/services/tenant-scope";
 import type { AuthenticatedUser } from "@/lib/auth-middleware";
 import { prismaPlatform as prisma } from "@/lib/db/platform-prisma";
+import { addDays } from "@/lib/date-utils";
+import { resolveLicenseDurationDays } from "@/lib/services/license-duration";
+import { resolveLicensePricing } from "@/lib/services/plan-pricing";
+import { AuditLogService } from "@/lib/services/audit-log-service";
 import { normalizeUserRole } from "@/lib/auth/roles";
 import { signOnboardingToken } from "@/lib/auth/onboarding";
 import { getConfiguredPublicAppUrl } from "@/features/sales-agent/public-url";
@@ -33,6 +37,8 @@ import {
 	adminUpdateUserSchema,
 	adminAssignTenantSchema,
 	adminChangeTenantRoleSchema,
+	adminLicenciaIdSchema,
+	adminRenewLicenciaSchema,
 } from "../schemas";
 import type {
 	GetLicenciasQueryInput,
@@ -42,6 +48,8 @@ import type {
 	AdminUpdateUserInput,
 	AdminAssignTenantInput,
 	AdminChangeTenantRoleInput,
+	AdminLicenciaIdInput,
+	AdminRenewLicenciaInput,
 } from "../schemas";
 
 /**
@@ -1487,4 +1495,246 @@ export async function revokeAdminUserSessions(
         ? "El usuario no tenía sesiones activas"
         : `Se revocaron ${result.count} sesiones activas`,
   };
+}
+
+// ─── Gestión de licencias ────────────────────────────────────────────
+
+const adminLicenseSummarySelect = {
+  tenantLicenseId: true,
+  tenantId: true,
+  planId: true,
+  activa: true,
+  inicio: true,
+  expiracion: true,
+  isDemo: true,
+  isAdminTest: true,
+} satisfies Record<string, boolean>;
+
+/**
+ * @description Renueva una licencia extendiendo su expiración según el plan.
+ *
+ * Vía canónica de renovación (igual que `renewLicenciaAction` web pero sin
+ * registro de pago): extiende desde la expiración vigente (o desde hoy si ya
+ * venció), aplica el plan indicado (o mantiene el actual), sincroniza límites
+ * y reactiva a los usuarios del tenant.
+ * @param {AdminRenewLicenciaInput} input - Licencia, plan y duración opcional.
+ * @param {AuthenticatedUser} user - Usuario autenticado (debe ser admin).
+ * @returns {Promise<object>} Resultado de la renovación y mensaje.
+ */
+export async function renewAdminLicense(
+  input: AdminRenewLicenciaInput,
+  user: AuthenticatedUser,
+): Promise<Record<string, unknown>> {
+  assertPlatformAdmin(user);
+  const parsed = adminRenewLicenciaSchema.parse(input ?? {});
+
+  const outcome = await prisma.$transaction(async (tx) => {
+    const [license, newPlan] = await Promise.all([
+      tx.tenantLicense.findUnique({
+        where: { tenantLicenseId: parsed.tenantLicenseId },
+        include: { plan: true },
+      }),
+      parsed.planId
+        ? tx.plan.findUnique({ where: { planId: parsed.planId } })
+        : Promise.resolve(null),
+    ]);
+
+    if (!license) throw new ActionError("Licencia no encontrada", "NOT_FOUND");
+    if (parsed.planId && !newPlan)
+      throw new ActionError("Plan no encontrado", "NOT_FOUND");
+
+    const targetPlan = newPlan ?? license.plan;
+    if (!targetPlan) {
+      throw new ActionError(
+        "La licencia no tiene un plan asociado",
+        "VALIDATION",
+      );
+    }
+
+    const durationDays = resolveLicenseDurationDays(
+      targetPlan.duracionDias,
+      parsed.durationDays,
+    );
+    if (!durationDays) {
+      throw new ActionError(
+        "No se pudo resolver la duración de la licencia",
+        "VALIDATION",
+      );
+    }
+
+    const now = new Date();
+    const baseExpiracion =
+      license.expiracion.getTime() > now.getTime() ? license.expiracion : now;
+    const newExpiracion = addDays(baseExpiracion, durationDays);
+    const samePlan = targetPlan.planId === license.planId;
+
+    const updated = await tx.tenantLicense.update({
+      where: { tenantLicenseId: license.tenantLicenseId },
+      data: {
+        planId: targetPlan.planId,
+        expiracion: newExpiracion,
+        activa: true,
+        maxUsuarios: targetPlan.maxUsuarios,
+        maxAlmacenes: targetPlan.maxAlmacenes,
+        maxProductos: targetPlan.maxProductos,
+        maxClientes: targetPlan.maxClientes,
+        features: samePlan
+          ? (license.features as Prisma.InputJsonValue)
+          : Prisma.JsonNull,
+        featureOverrides: samePlan ? (license.featureOverrides ?? {}) : {},
+        ...resolveLicensePricing(Number(targetPlan.precio), false),
+      },
+    });
+
+    await tx.user.updateMany({
+      where: {
+        tenantMemberships: {
+          some: { tenantId: license.tenantId, isActive: true },
+        },
+        isActive: true,
+      } as never,
+      data: { expiresAt: newExpiracion, isActive: true },
+    });
+
+    await AuditLogService.logStrict(
+      {
+        accion: "UPDATE",
+        entidad: "TENANT_LICENSE",
+        entidadId: updated.tenantLicenseId,
+        usuarioId: user.userId,
+        detalles: {
+          previousExpiracion: license.expiracion.toISOString(),
+          newExpiracion: newExpiracion.toISOString(),
+          previousPlanId: license.planId,
+          newPlanId: targetPlan.planId,
+          via: "mobile-admin",
+        },
+      },
+      tx,
+    );
+
+    return {
+      tenantLicenseId: updated.tenantLicenseId,
+      newExpiracion,
+      newPlanId: targetPlan.planId,
+      previousExpiracion: license.expiracion,
+      previousPlanId: license.planId ?? null,
+    };
+  });
+
+  revalidatePath("/admin");
+  return { ...outcome, message: "Licencia renovada correctamente" };
+}
+
+/**
+ * @description Activa una licencia desactivada.
+ * @param {AdminLicenciaIdInput} input - Identificador de la licencia.
+ * @param {AuthenticatedUser} user - Usuario autenticado (debe ser admin).
+ * @returns {Promise<object>} Licencia actualizada y mensaje.
+ */
+export async function activateAdminLicense(
+  input: AdminLicenciaIdInput,
+  user: AuthenticatedUser,
+): Promise<Record<string, unknown>> {
+  assertPlatformAdmin(user);
+  const parsed = adminLicenciaIdSchema.parse(input ?? {});
+
+  const license = await prisma.tenantLicense.findUnique({
+    where: { tenantLicenseId: parsed.tenantLicenseId },
+    select: { tenantLicenseId: true, activa: true },
+  });
+  if (!license) throw new ActionError("Licencia no encontrada", "NOT_FOUND");
+  if (license.activa) {
+    throw new ActionError("La licencia ya está activa", "CONFLICT");
+  }
+
+  const updated = await prisma.tenantLicense.update({
+    where: { tenantLicenseId: parsed.tenantLicenseId },
+    data: { activa: true },
+    select: adminLicenseSummarySelect,
+  });
+
+  await AuditLogService.logStrict({
+    accion: "UPDATE",
+    entidad: "TENANT_LICENSE",
+    entidadId: updated.tenantLicenseId,
+    usuarioId: user.userId,
+    detalles: { activa: true, via: "mobile-admin" },
+  });
+  revalidatePath("/admin");
+  return { license: updated, message: "Licencia activada correctamente" };
+}
+
+/**
+ * @description Desactiva una licencia activa.
+ * @param {AdminLicenciaIdInput} input - Identificador de la licencia.
+ * @param {AuthenticatedUser} user - Usuario autenticado (debe ser admin).
+ * @returns {Promise<object>} Licencia actualizada y mensaje.
+ */
+export async function deactivateAdminLicense(
+  input: AdminLicenciaIdInput,
+  user: AuthenticatedUser,
+): Promise<Record<string, unknown>> {
+  assertPlatformAdmin(user);
+  const parsed = adminLicenciaIdSchema.parse(input ?? {});
+
+  const license = await prisma.tenantLicense.findUnique({
+    where: { tenantLicenseId: parsed.tenantLicenseId },
+    select: { tenantLicenseId: true, activa: true },
+  });
+  if (!license) throw new ActionError("Licencia no encontrada", "NOT_FOUND");
+  if (!license.activa) {
+    throw new ActionError("La licencia ya está desactivada", "CONFLICT");
+  }
+
+  const updated = await prisma.tenantLicense.update({
+    where: { tenantLicenseId: parsed.tenantLicenseId },
+    data: { activa: false },
+    select: adminLicenseSummarySelect,
+  });
+
+  await AuditLogService.logStrict({
+    accion: "UPDATE",
+    entidad: "TENANT_LICENSE",
+    entidadId: updated.tenantLicenseId,
+    usuarioId: user.userId,
+    detalles: { activa: false, via: "mobile-admin" },
+  });
+  revalidatePath("/admin");
+  return { license: updated, message: "Licencia desactivada correctamente" };
+}
+
+/**
+ * @description Elimina permanentemente una licencia.
+ * @param {AdminLicenciaIdInput} input - Identificador de la licencia.
+ * @param {AuthenticatedUser} user - Usuario autenticado (debe ser admin).
+ * @returns {Promise<object>} Confirmación de eliminación.
+ */
+export async function deleteAdminLicense(
+  input: AdminLicenciaIdInput,
+  user: AuthenticatedUser,
+): Promise<Record<string, unknown>> {
+  assertPlatformAdmin(user);
+  const parsed = adminLicenciaIdSchema.parse(input ?? {});
+
+  const license = await prisma.tenantLicense.findUnique({
+    where: { tenantLicenseId: parsed.tenantLicenseId },
+    select: { tenantLicenseId: true, tenantId: true },
+  });
+  if (!license) throw new ActionError("Licencia no encontrada", "NOT_FOUND");
+
+  await AuditLogService.logStrict({
+    accion: "DELETE",
+    entidad: "TENANT_LICENSE",
+    entidadId: license.tenantLicenseId,
+    usuarioId: user.userId,
+    detalles: { tenantId: license.tenantId, via: "mobile-admin" },
+  });
+
+  await prisma.tenantLicense.delete({
+    where: { tenantLicenseId: parsed.tenantLicenseId },
+  });
+
+  revalidatePath("/admin");
+  return { success: true, tenantLicenseId: parsed.tenantLicenseId };
 }
